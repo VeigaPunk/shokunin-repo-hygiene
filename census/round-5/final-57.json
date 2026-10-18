@@ -1,0 +1,158 @@
+{
+  "seat": "S57",
+  "round": 5,
+  "kind": "final-judge",
+  "date": "2026-10-18",
+  "assignment": "Aggregate rounds 1–4 contradictions, missed items, regressions, and cross-audit confirmations; issue per-round verdicts.",
+  "required_wait": {
+    "duration_seconds": 420,
+    "task_id": "bash-uvt2gazj",
+    "exit_code": 0
+  },
+  "round_verdicts": [
+    {
+      "round": 1,
+      "verdict": "DEFECTS-FOUND",
+      "findings": [
+        {
+          "id": "R1-FALSE-SAFE-LOGS-TIER",
+          "severity": "material census false-SAFE; no later prune action",
+          "evidence": "census/round-1/census.tsv:112 records logs_tier.txt as SAFE/pushed while its original verdict is NOT-SAFE and its note says absent from worktree and HEAD. The target's delete commit a1b44b1 is timestamped 2026-10-18T11:22:25-03:00, before the r1 census commit 652b6f8 at 12:39:42-03:00. S12 independently reran the verifier and confirmed NOT-SAFE(unreachable); test -e and HEAD-tree checks confirmed absent. The parent correction treated the introducing commit's origin/master ancestry as sufficient, despite the deleted path.",
+          "adjudication": "Confirmed round-1 false-SAFE; the r1 report's zero-false-SAFE claim is disproved. Round 3 correctly recut the list to 96 approvals and 15 already-removed no-op rows; logs_tier.txt is absent from the actionable operator-approval-list.tsv."
+        },
+        {
+          "id": "R1-LOG-APPEND-ONLY",
+          "severity": "recordkeeping/process",
+          "evidence": "S11 found r1 commit 652b6f8 inserted a LOG.md section mid-file. No content was deleted, but a strict append-only claim is not accurate."
+        }
+      ],
+      "historical_context": "The first-pass author SAFE proposals were all falsified before admission, but this separately parent-corrected row escaped that calibration gate. Round 1 itself was a dry-run; no prune was performed."
+    },
+    {
+      "round": 2,
+      "verdict": "DEFECTS-FOUND",
+      "findings": [
+        {
+          "id": "R2-HIDDEN-REFERENCE-FALSE-SAFE",
+          "severity": "live stale-gate safety defect",
+          "evidence": "Installed impl-12 tools/souji-verify.sh:200 invokes rg -l --no-ignore --fixed-strings without --hidden. On /tmp/s23-gap-probe2, the same search omitted .ufo/waves/note.md without --hidden and found it with --hidden. Running tools/souji-verify.sh against the stale scratch-type fixture returned SAFE stale with refs=0 although the hidden reference existed."
+        },
+        {
+          "id": "R2-DRIVER-RUNTIME-PATH-FALSE-SAFE",
+          "severity": "protected-path refusal defect",
+          "evidence": "S06 ran the installed tool on /home/vgpnk/Projects/shokunin/.ufo/state; it returned SAFE/pushed. The implementation has no early .ufo/state refusal, although its comments say this path is not to be touched. S06 reports metadata lookups only; no state contents were read."
+        }
+      ],
+      "remediated_historical_issue": "Round 2's unauthorized seat-generated verifier was removed and replaced with the measured impl-12 byte-identically; the installed hash is confirmed as 7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820."
+    },
+    {
+      "round": 3,
+      "verdict": "VERIFIED",
+      "basis": "The authorized work was 21 metadata-only prunes (19 lore plus 2 detached gd2d), preserving the three named gd2d branches. S57 seat-57 reports 21/21 author/blind agreements, zero disagreements, and 21/21 tool confirmations. The final approval set was correctly recut to 96 actionable SAFE/pushed rows plus 15 already-removed no-ops; the latter were not treated as deletion authorizations.",
+      "independent_confirmation": "R5 S08 rechecked the post-prune state 5/5; S30 found no post-cutoff Git-history regression in either lane and confirmed current registrations; S03 independently confirmed the three named branches persist with one unremote commit each. S10 found 96/96 approval paths present and 8/8 sampled SAFE(pushed); S27 found 0/96 targets newer than the cutoff; S40 reran all 96 and got SAFE(pushed) in 3.274 seconds."
+    },
+    {
+      "round": 4,
+      "verdict": "DEFECTS-FOUND",
+      "findings": [
+        {
+          "id": "R4-HIDDEN-REFERENCE-FALSE-SAFE",
+          "severity": "live stale-gate safety defect",
+          "evidence": "Installed impl-20 tools/souji-vault-verify.sh:424 invokes rg -l --no-ignore --fixed-strings without --hidden. The same hidden-reference stale fixture returned SAFE stale, refs=0, then VERIFIED(stale), despite .ufo/waves/note.md containing the reference."
+        },
+        {
+          "id": "R4-DRIVER-RUNTIME-PATH-FALSE-SAFE",
+          "severity": "protected-path refusal defect",
+          "evidence": "S06's .ufo/state probe returned SAFE/pushed from the installed vault verifier as well as the r2 verifier; implementation lacks the intended early refusal. No file contents under .ufo/state were intentionally read."
+        },
+        {
+          "id": "R4-VAULT-RAIL-BREACH",
+          "severity": "historical read-only boundary breach; remediated harness",
+          "evidence": "census/round-4/seat-58-rail-breach.json confirms backticks in the S53 harness triggered the real Obsidian launcher; .obsidian/appearance.json, app.json, and core-plugins.json were re-mtimed, and core-plugins.json differs from vault HEAD by key ordering. The 58 Markdown notes remained unchanged and the live ledger stayed header-only. The harness was hardened; do not describe the vault as read-only throughout."
+        },
+        {
+          "id": "R4-USAGE-OUTPUT-LEAK",
+          "severity": "low; usage-output defect",
+          "evidence": "S39 found tools/souji-vault-verify.sh:73-77 prints source lines 2-52; executable initialization lines appear after the documented header in no-args and bad-flag output. The six tested exit codes still matched contract."
+        },
+        {
+          "id": "R4-SCORECARD-COUNT-DRIFT",
+          "severity": "documentation consistency",
+          "evidence": "S13 reports operability count 8 while stale saturation text says 7."
+        }
+      ],
+      "not_a_defect": "The operator explicitly withdrew/waived Obsidian CLI integration; CLI unavailability is not counted against the round's amended ledger-verifier goal."
+    }
+  ],
+  "contradiction_adjudication": {
+    "material_cross-source_contradictions": 1,
+    "resolved": 1,
+    "unresolved": 0,
+    "resolution": "The round-1 logs_tier.txt row conflicts with the report's zero-false-SAFE assertion. Timestamped deletion, the row's own absent-path evidence, and S12's independent rerun establish that it was a false-SAFE at r1, not a post-r1 state change. This is closed as an R1 defect; R3 later excluded it from actionable approvals. Confirmed tool defects remain open for remediation but are not unresolved evidence disputes."
+  },
+  "missed_items_and_carryovers": [
+    {
+      "item": "Unexpected fleet-root tree named 'bash: '",
+      "status": "NOT-SAFE; preserve and route to operator",
+      "evidence": "S23 found a post-r1, untracked/ignored tree timestamped 14:01 with a 10,139-byte leaf. No content was read, no r1 target row exists, and origin is unverified. No removal performed."
+    },
+    {
+      "item": "/tmp fixture residue routed to tsukuroi/operator",
+      "status": "CARRYOVER QUANTIFIED; no deletion",
+      "evidence": "S22's count-only globs matched 3,109 entries (prior snapshot 3,106); rounded aggregate usage stayed 382M. These are not a classified inventory."
+    },
+    {
+      "item": "kotodama-shokunin .scratch growth",
+      "status": "FOLLOW-UP; preserve / no prune",
+      "evidence": "S18 reports 16G current .scratch and confirms prior NOT-SAFE/no-prune decisions; growth warrants owner review."
+    },
+    {
+      "item": "15 shell-stray files removed by fleet commit a1b44b1 before round 3",
+      "status": "CLOSED AS ROUND-3 NO-OPS",
+      "evidence": "S28 reports all 15 absent locally with origin/master blobs retained; the approval summary split 96 actionable rows from 15 already-removed rows. The cleanup was not a round-3 prune action."
+    },
+    {
+      "item": "Sibling worktree/repository drift",
+      "status": "ROUTED / NOT ATTRIBUTED TO SOUJI",
+      "evidence": "S19 found unpushed growth in game-dev-3d (+2) and kaidoku (+6), plus other nonzero baselines; tool outputs remained NOT-SAFE. S14 found 0 souji-attributable dirty sibling paths among 20 checked. No sibling repo was modified by S57."
+    },
+    {
+      "item": "Round-4 harness side effect",
+      "status": "REMEDIATED, operator-owned config follow-up",
+      "evidence": "Harness backtick guard and PATH stubs were added; do not revert vault-owned config from this seat."
+    }
+  ],
+  "live_regressions": [
+    {
+      "root_cause": "Both stale-reference counters skip hidden directories because rg is called without --hidden.",
+      "affected_rounds": [2, 4],
+      "reproduction": "On /tmp/s23-gap-probe2, rg without --hidden produced no match (exit 1); with --hidden it found ./.ufo/waves/note.md (exit 0). souji-verify returned SAFE stale, refs=0; souji-vault-verify.sh --fallback returned SAFE stale, refs=0, then VERIFIED(stale)."
+    },
+    {
+      "root_cause": "The intended .ufo/state/driver-runtime refusal is documented but not enforced before generic pushed-artifact evaluation.",
+      "affected_rounds": [2, 4],
+      "reproduction": "S06 obtained SAFE/pushed from both installed tools for /home/vgpnk/Projects/shokunin/.ufo/state; this was metadata-only, with no intentional content reads."
+    }
+  ],
+  "cross_audit_confirmations": {
+    "round1_census": "64/64 seat fragments and 246 rows; 109/109 pushed ancestry checks reported. The r1 false-SAFE above invalidates its broader zero-false-SAFE claim.",
+    "round3_pair_and_tools": "21/21 author/blind pairs agree; 21/21 tool confirmations; 0 pair disagreements.",
+    "round3_approval_set": "S10: 96/96 paths exist and 8/8 sampled SAFE(pushed); S27: 0/96 newer than cutoff; S40: 96/96 SAFE(pushed), 3.274s.",
+    "round3_prune_state": "S08: 5/5 checks agree; S30: 2/2 lane histories agree; S03 confirms r98/r99/r100 registrations persist and each branch has one unremote commit.",
+    "tool_identity": "S09 and S41 agree 2/2 installed/judged pairs. S57 independently checked SHA-256: souji-verify 7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820; vault verifier d312263ac8ebc9e23555402dc5ae63167f78dcd01ddccc5ddcfa7623b85879e0.",
+    "cross_tool_and_edge_cases": "S44: exact verdict/receipt agreement 3/3 across both tools and two ledger setups. S36: 2/2 vault-pair cases agree. S48: 20/20 fake path-normalization cases were NOT-SAFE in scoped probes. S39: 6/6 exit-code probes match; its separate vault usage output leak is recorded above.",
+    "peer_selftests": "S33 reports souji-verify 24/24; S34 reports 24/24 and 35/35 with both installed hashes matching judged implementations. These are peer reports, not reruns by S57."
+  },
+  "s57_direct_checks": {
+    "shell_syntax": "bash -n tools/souji-verify.sh tools/souji-vault-verify.sh passed.",
+    "secret_refusal_fake_path_probes": "Both tools returned NOT-SAFE with secrets-refusal for fake /tmp/s57-fake/.env/sentinel; no secret-shaped file contents were read.",
+    "git_state": "Before this file was written, lane status was ## master with census/round-5/ untracked; tracked verifier diff was clean. No prune, removal, or Git mutation was performed.",
+    "selftests": "Not run by S57: these selftests delete their temporary fixtures, contrary to the no-delete constraint. Peer-reported results are separated above."
+  },
+  "scope": {
+    "write_authorization": "Only this assigned fragment: census/round-5/final-57.json",
+    "fleet_lane_sibling_mutations": "none",
+    "git_mutations": "none",
+    "final_disposition": "Three rounds have confirmed defects (R1, R2, R4); R3 is verified. One material cross-source contradiction was adjudicated, with zero unresolved evidence contradictions. Live verifier defects and documented follow-ups remain for remediation."
+  }
+}

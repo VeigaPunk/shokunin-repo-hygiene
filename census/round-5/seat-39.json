@@ -1,0 +1,93 @@
+{
+  "seat": "S39",
+  "round": 5,
+  "role": "tool-regression",
+  "axes": ["exit-code-contract", "usage-output"],
+  "scope": "No-arguments usage, unknown flag, and missing target for both installed tools.",
+  "isolation": {
+    "env": "SHOKUNIN_ROOT=/tmp/s39-fake-fleet-20261018 SOUJI_LEDGER=/tmp/s39-fake-ledger-20261018.tsv",
+    "missing_target": "/tmp/s39-missing-target-20261018",
+    "missing_target_check": {
+      "command": "[ ! -e /tmp/s39-missing-target-20261018 ] && [ ! -L /tmp/s39-missing-target-20261018 ]",
+      "observed": "absent (confirmed)"
+    }
+  },
+  "contract": {
+    "allowed_exit_codes": [0, 1, 2],
+    "souji-verify": "tools/souji-verify.spec.md:17-18 — 0 evaluated, 1 selftest/evaluation error, 2 usage; line 60 says missing target stays exit 0.",
+    "souji-vault-verify": "census/round-4/seat-20.json:18-20 — 0 evaluated (NOT-VERIFIED is not an error), 1 runtime error, 2 usage."
+  },
+  "tools": [
+    {
+      "path": "tools/souji-verify.sh",
+      "sha256": "7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820",
+      "checks": [
+        {
+          "case": "no-args (usage)",
+          "command": "env SHOKUNIN_ROOT=/tmp/s39-fake-fleet-20261018 SOUJI_LEDGER=/tmp/s39-fake-ledger-20261018.tsv bash tools/souji-verify.sh",
+          "expected_exit": 2,
+          "observed_exit": 2,
+          "observed_output_excerpt": "souji-verify: no targets given\\nsouji-verify — receipt-gated removal verdicts for fleet artifacts (round 2).\\n[usage text follows]"
+        },
+        {
+          "case": "bad flag",
+          "command": "env SHOKUNIN_ROOT=/tmp/s39-fake-fleet-20261018 SOUJI_LEDGER=/tmp/s39-fake-ledger-20261018.tsv bash tools/souji-verify.sh --s39-bad-flag",
+          "expected_exit": 2,
+          "observed_exit": 2,
+          "observed_output_excerpt": "souji-verify: unknown flag: --s39-bad-flag\\nsouji-verify — receipt-gated removal verdicts for fleet artifacts (round 2).\\n[usage text follows]"
+        },
+        {
+          "case": "missing target file",
+          "command": "env SHOKUNIN_ROOT=/tmp/s39-fake-fleet-20261018 SOUJI_LEDGER=/tmp/s39-fake-ledger-20261018.tsv bash tools/souji-verify.sh /tmp/s39-missing-target-20261018",
+          "expected_exit": 0,
+          "observed_exit": 0,
+          "observed_output": "VERDICT\\t/tmp/s39-missing-target-20261018\\tNOT-SAFE\\tunreachable\\tmissing path"
+        }
+      ]
+    },
+    {
+      "path": "tools/souji-vault-verify.sh",
+      "sha256": "d312263ac8ebc9e23555402dc5ae63167f78dcd01ddccc5ddcfa7623b85879e0",
+      "checks": [
+        {
+          "case": "no-args (usage)",
+          "command": "env SHOKUNIN_ROOT=/tmp/s39-fake-fleet-20261018 SOUJI_LEDGER=/tmp/s39-fake-ledger-20261018.tsv bash tools/souji-vault-verify.sh",
+          "expected_exit": 2,
+          "observed_exit": 2,
+          "observed_output_excerpt": "souji-vault-verify: no targets given\\nsouji-vault-verify — ledger-backed moved-to-obsidian verification with\\n[usage text follows, then unintended source lines: set -euo pipefail; unset GIT_DIR...; SCRIPT_PATH=...; SCRIPT_DIR=...; SELF=...; REPO_ROOT=...]"
+        },
+        {
+          "case": "bad flag",
+          "command": "env SHOKUNIN_ROOT=/tmp/s39-fake-fleet-20261018 SOUJI_LEDGER=/tmp/s39-fake-ledger-20261018.tsv bash tools/souji-vault-verify.sh --s39-bad-flag",
+          "expected_exit": 2,
+          "observed_exit": 2,
+          "observed_output_excerpt": "souji-vault-verify: unknown flag: --s39-bad-flag\\nsouji-vault-verify — ledger-backed moved-to-obsidian verification with\\n[usage text follows, then unintended source lines: set -euo pipefail; unset GIT_DIR...; SCRIPT_PATH=...; SCRIPT_DIR=...; SELF=...; REPO_ROOT=...]"
+        },
+        {
+          "case": "missing target file",
+          "command": "env SHOKUNIN_ROOT=/tmp/s39-fake-fleet-20261018 SOUJI_LEDGER=/tmp/s39-fake-ledger-20261018.tsv bash tools/souji-vault-verify.sh /tmp/s39-missing-target-20261018",
+          "expected_exit": 0,
+          "observed_exit": 0,
+          "observed_output": "VERDICT\\t/tmp/s39-missing-target-20261018\\tNOT-SAFE\\tunreachable\\tmissing path\\nNOT-VERIFIED(unreachable)"
+        }
+      ]
+    }
+  ],
+  "verdict": {
+    "exit_code_contract": "AGREE",
+    "agreement": "6/6 probes match the precise expected code and all observed codes are in {0,1,2}; no exit-code regression found.",
+    "exit_code_defects": 0,
+    "separate_output_defect": {
+      "tool": "tools/souji-vault-verify.sh",
+      "finding": "Usage output leaks executable source lines after the documented usage block (observed on both no-args and bad-flag calls).",
+      "evidence": "tools/souji-vault-verify.sh:73-77 reads source lines 2-52 for usage; the comment header ends at line 42 and executable code starts at line 43. The captured outputs end with the source initialization through REPO_ROOT=... . This does not alter the exit-code verdict."
+    }
+  },
+  "safety": {
+    "read_only": true,
+    "repo_changes": ["census/round-5/seat-39.json"],
+    "fleet_or_sibling_changes": [],
+    "git_mutations": [],
+    "deletions": []
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "seat": "S37",
+  "kind": "tool-regression",
+  "round": 5,
+  "run_utc": "2026-10-18T18:17:19Z",
+  "assignment": "souji-verify.sh secrets-refusal battery: x.env, creds.pem, id_rsa, normal.txt, dir-with-.env-child",
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "lane_head": "48a64d8763fcf77dd53211e6c5fc717bc95eefed",
+  "tool": {
+    "path": "tools/souji-verify.sh",
+    "sha256": "7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820"
+  },
+  "axes": [
+    "secret-shaped components are refused",
+    "refusal happens before reading target content",
+    "non-secret control paths retain the correct verdict"
+  ],
+  "verdict": "AGREE",
+  "agreement_count": "5/5: 3 secret-shaped paths refuse; 2 non-secret missing paths are unreachable",
+  "checks": {
+    "command": "SHOKUNIN_ROOT=/tmp/s37-probe.Za2Hko/fleet SOUJI_LEDGER=/tmp/s37-probe.Za2Hko/ledger.tsv bash tools/souji-verify.sh --json /tmp/s37-probe.Za2Hko/x.env /tmp/s37-probe.Za2Hko/creds.pem /tmp/s37-probe.Za2Hko/id_rsa /tmp/s37-probe.Za2Hko/normal.txt /tmp/s37-probe.Za2Hko/dir-with-.env-child",
+    "setup_output": "fake root absent: /tmp/s37-probe.Za2Hko",
+    "observed_output": [
+      "{\"path\":\"/tmp/s37-probe.Za2Hko/x.env\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"secrets-refusal\",\"evidence\":\"secret-shaped path component\"}",
+      "{\"path\":\"/tmp/s37-probe.Za2Hko/creds.pem\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"secrets-refusal\",\"evidence\":\"secret-shaped path component\"}",
+      "{\"path\":\"/tmp/s37-probe.Za2Hko/id_rsa\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"secrets-refusal\",\"evidence\":\"secret-shaped path component\"}",
+      "{\"path\":\"/tmp/s37-probe.Za2Hko/normal.txt\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"unreachable\",\"evidence\":\"missing path\"}",
+      "{\"path\":\"/tmp/s37-probe.Za2Hko/dir-with-.env-child\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"unreachable\",\"evidence\":\"missing path\"}"
+    ],
+    "independent_derivation": {
+      "source": "tools/souji-verify.sh:105-119 defines component matching for *.env, .env, .env.*, .envrc, *credential*, *secret*, id_*, and *.pem; evaluate_path at :375-380 returns secrets-refusal before target existence or artifact handling.",
+      "classifications": [
+        "x.env matches *.env -> NOT-SAFE(secrets-refusal), observed match",
+        "creds.pem matches *.pem -> NOT-SAFE(secrets-refusal), observed match",
+        "id_rsa matches id_* -> NOT-SAFE(secrets-refusal), observed match",
+        "normal.txt matches no secret pattern; absent target -> NOT-SAFE(unreachable), observed match",
+        "dir-with-.env-child matches no listed component pattern; absent target -> NOT-SAFE(unreachable), observed match"
+      ]
+    },
+    "no_content_read": {
+      "command": "test ! -e /tmp/s37-probe.Za2Hko && test ! -L /tmp/s37-probe.Za2Hko && printf 'probe tree absent after: yes\\n'",
+      "observed_output": "probe tree absent after: yes",
+      "basis": "The parent was absent before and after the invocation, so none of the five fake target paths existed. For secret-shaped inputs, the source matcher returns before any target content access."
+    }
+  },
+  "defects_found": [],
+  "preamble": {
+    "fragment_path": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-5/seat-37.json",
+    "scope": "Read-only over fleet and lane except this assigned fragment; no secret-shaped content read, no prune/removal, no git mutation, and no .ufo/state, .ufo/watchdog.log, or ~/.config access."
+  }
+}

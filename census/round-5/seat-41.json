@@ -1,0 +1,55 @@
+{
+  "seat": "S41",
+  "round": 5,
+  "role": "tool regression — installed artifact identity and post-install changes",
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "verdict": "AGREE — both installed tools match the full recorded SHA-256 pins. No post-install modification is evidenced by mtime/ctime, Git history, or working-tree state.",
+  "agreement_counts": {
+    "audited_tools": 2,
+    "agree": 2,
+    "disagree": 0,
+    "post_install_modifications_detected": 0
+  },
+  "defects_found": [],
+  "evidence": [
+    {
+      "claim": "r2 install record pin",
+      "source": "tests/results/INSTALL.json",
+      "command": "python3 -c 'import json; d=json.load(open(\"tests/results/INSTALL.json\")); print(\"r2|{}|{}\".format(d[\"installed\"],d[\"sha256\"]))'",
+      "observed_output": "r2|tools/souji-verify.sh|7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820"
+    },
+    {
+      "claim": "r4 install is the judged impl-20 winner",
+      "source": "tests/results/vfinal-64.json; census/round-4/seat-20.json; ../.ufo/reports/round-4/souji.md:39-40",
+      "commands": [
+        "python3 -c 'import json; d=json.load(open(\"tests/results/vfinal-64.json\")); print(\"r4|{}|{}\".format(d[\"winner_recommendation\"],d[\"winner_sha256\"]))'",
+        "python3 -c 'import json; d=json.load(open(\"census/round-4/seat-20.json\")); print(\"r4_candidate|{}|{}\".format(d[\"artifact\"],d[\"sha256\"]))'",
+        "python3 -c 'p=\"../.ufo/reports/round-4/souji.md\"; lines=open(p).read().splitlines(); print(chr(10).join(f\"{i+1}:{line}\" for i,line in enumerate(lines) if \"Winner installed byte-identical\" in line or \"sha256 d312263a\" in line))'"
+      ],
+      "observed_output": "r4|souji-vault-verify.impl-20|d312263ac8ebc9e23555402dc5ae63167f78dcd01ddccc5ddcfa7623b85879e0\nr4_candidate|tools/souji-vault-verify.impl-20.sh|d312263ac8ebc9e23555402dc5ae63167f78dcd01ddccc5ddcfa7623b85879e0\n39:  (header-only). Winner installed byte-identical: `tools/souji-vault-verify.sh`\n40:  (sha256 d312263a…)."
+    },
+    {
+      "claim": "installed tool hashes equal the r2/r4 pins and corresponding judged implementations",
+      "command": "sha256sum tools/souji-verify.sh tools/souji-verify.impl-12.sh tools/souji-vault-verify.sh tools/souji-vault-verify.impl-20.sh",
+      "observed_output": "7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820  tools/souji-verify.sh\n7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820  tools/souji-verify.impl-12.sh\nd312263ac8ebc9e23555402dc5ae63167f78dcd01ddccc5ddcfa7623b85879e0  tools/souji-vault-verify.sh\nd312263ac8ebc9e23555402dc5ae63167f78dcd01ddccc5ddcfa7623b85879e0  tools/souji-vault-verify.impl-20.sh"
+    },
+    {
+      "claim": "file timestamps show no post-install rewrite",
+      "command": "stat -c '%n|mtime=%y|mtime_epoch=%Y|ctime=%z|mode=%a' tools/souji-verify.sh tools/souji-vault-verify.sh; stat -c '%n|mtime=%y|ctime=%z' tests/results/INSTALL.json",
+      "observed_output": "tools/souji-verify.sh|mtime=2026-10-18 13:31:09.096239808 -0300|mtime_epoch=1792341069|ctime=2026-10-18 13:31:09.097042562 -0300|mode=755\ntools/souji-vault-verify.sh|mtime=2026-10-18 15:07:07.651845968 -0300|mtime_epoch=1792346827|ctime=2026-10-18 15:07:07.652994290 -0300|mode=755\ntests/results/INSTALL.json|mtime=2026-10-18 13:31:09.524491395 -0300|ctime=2026-10-18 13:31:09.524491395 -0300"
+    },
+    {
+      "claim": "no tracked tool changes after install",
+      "commands": [
+        "git status --short -- tools/souji-verify.sh tools/souji-vault-verify.sh",
+        "git diff --quiet HEAD -- tools/souji-verify.sh tools/souji-vault-verify.sh; printf 'git_diff_exit=%s\\n' \"$?\"",
+        "git log -1 --format='r2_latest|%h|%cI|%s' -- tools/souji-verify.sh; git log -1 --format='r4_latest|%h|%cI|%s' -- tools/souji-vault-verify.sh"
+      ],
+      "observed_output": "(git status produced no lines)\ngit_diff_exit=0\nr2_latest|9435e46|2026-10-18T13:32:58-03:00|round-2: tools/souji-verify.sh — impl-12 installed byte-identical (7efda63b), spec D1-D3, selftest+live verified\nr4_latest|48a64d8|2026-10-18T15:09:36-03:00|round-4 (amended): obsidian claim withdrawn by operator; ledger-verify tool installed (impl-20, d312263a), CLI findings banked"
+    }
+  ],
+  "notes": [
+    "The checkout has no census/round-2/ directory; the r2 INSTALL pin is available in tests/results/INSTALL.json. The r4 install identity is confirmed by the round-4 report and the judged impl-20 hash."
+  ],
+  "scope": "Read-only verification across fleet and lane; only this assigned fragment was written."
+}

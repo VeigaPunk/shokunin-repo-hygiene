@@ -1,0 +1,50 @@
+{
+  "seat": "S34",
+  "round": 5,
+  "role": "tool regression — independent installed-tool battery",
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "assignment": "Independently exercise both installed verifiers with their self-test suites, shell syntax, judged-implementation identity checks, and fake-path secret-refusal JSON probes.",
+  "verdict": "AGREE — no tool regression reproduced; both installed verifier batteries pass and both installed scripts match the corresponding judged implementation byte-for-byte.",
+  "agreement_counts": {
+    "selftest_batteries": { "passed": 2, "failed": 0 },
+    "selftest_checks": { "souji-verify.sh": { "passed": 24, "failed": 0 }, "souji-vault-verify.sh": { "passed": 35, "failed": 0 } },
+    "installed_vs_judged_impl_pairs": { "agree": 2, "disagree": 0 },
+    "fake_secret_path_json_refusals": { "passed": 2, "failed": 0 }
+  },
+  "defects_found": [],
+  "evidence": [
+    {
+      "command": "bash tools/souji-verify.sh --selftest",
+      "observed_output": "selftest: 24 checks, 0 failed (exit 0)"
+    },
+    {
+      "command": "bash tools/souji-vault-verify.sh --selftest",
+      "observed_output": "selftest: 35 checks, 0 failed (exit 0); honest CLI agrees; hanging CLI bounded at 2s and verdict kept; lying CLI annotated without replacing ledger receipt; fallback skips CLI"
+    },
+    {
+      "command": "bash -n tools/souji-verify.sh tools/souji-vault-verify.sh && printf 'bash -n: exit 0\\n'",
+      "observed_output": "bash -n: exit 0"
+    },
+    {
+      "command": "sha256sum tools/souji-verify.sh tools/souji-verify.impl-12.sh tools/souji-vault-verify.sh tools/souji-vault-verify.impl-20.sh",
+      "observed_output": "7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820  tools/souji-verify.sh\n7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820  tools/souji-verify.impl-12.sh\nd312263ac8ebc9e23555402dc5ae63167f78dcd01ddccc5ddcfa7623b85879e0  tools/souji-vault-verify.sh\nd312263ac8ebc9e23555402dc5ae63167f78dcd01ddccc5ddcfa7623b85879e0  tools/souji-vault-verify.impl-20.sh"
+    },
+    {
+      "command": "cmp -s tools/souji-verify.sh tools/souji-verify.impl-12.sh; printf 'verify-vs-impl12 cmp exit:%s\\n' \"$?\"; cmp -s tools/souji-vault-verify.sh tools/souji-vault-verify.impl-20.sh; printf 'vault-vs-impl20 cmp exit:%s\\n' \"$?\"",
+      "observed_output": "verify-vs-impl12 cmp exit:0\nvault-vs-impl20 cmp exit:0"
+    },
+    {
+      "command": "set -o pipefail; bash tools/souji-verify.sh --json /tmp/souji-fake-secret.env | python3 -c 'import json,sys; d=json.load(sys.stdin); print(\"json valid: path=%s verdict=%s receipt=%s\" % (d[\"path\"],d[\"verdict\"],d[\"receipt\"]))'; bash tools/souji-vault-verify.sh --fallback --json /tmp/souji-fake-secret.env | python3 -c 'import json,sys; d=json.load(sys.stdin); print(\"json valid: path=%s verdict=%s verified=%s reason=%s\" % (d[\"path\"],d[\"verdict\"],d[\"verified\"],d[\"reason\"]))'",
+      "observed_output": "json valid: path=/tmp/souji-fake-secret.env verdict=NOT-SAFE receipt=secrets-refusal\njson valid: path=/tmp/souji-fake-secret.env verdict=NOT-SAFE verified=NOT-VERIFIED(secrets-refusal) reason=secrets-refusal"
+    },
+    {
+      "command": "test ! -e /tmp/souji-verify-selftest.Zs0VWJ; printf 'verify selftest temp removed: exit:%s\\n' \"$?\"; test ! -e /tmp/souji-vault-verify-selftest.lUNnLX; printf 'vault selftest temp removed: exit:%s\\n' \"$?\"",
+      "observed_output": "verify selftest temp removed: exit:0\nvault selftest temp removed: exit:0"
+    },
+    {
+      "command": "Glob census/round-5/seat-33.json",
+      "observed_output": "No matches found; no peer agreement comparison available at audit time"
+    }
+  ],
+  "scope": "Read-only over fleet and lane except this assigned fragment; self-test fixtures stayed under /tmp and were removed by the tools. Fake refusal probe path only; no secret-shaped file contents read."
+}

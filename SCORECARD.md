@@ -11,7 +11,7 @@ counting command and the commit it was measured against.
 | axis | score | verdict / observation | counting command | measured commit | last change |
 |---|---|---|---|---|---|
 | coverage | 8 | improved (C1, r3): 21/21 metadata prunes executed with receipts (lore 20→1, gd2d 6→4, lock-preserve for 3 pinned); worktree surface closed | `git -C lore-shokunin worktree list \| wc -l` → 1; `git -C game-dev-2d-shokunin worktree list \| wc -l` → 4 | r3 report | r3 |
-| calibration | 6 | improved (C2, r3): 0/21 blind-pair disagreements; 96-row approval list re-verified, 0 false-SAFE; 3 blockers adjudicated pre-execution | `census/round-3/seat-57.json` disagreements:[]; `wc -l census/round-3/operator-approval-list.tsv` → 97 (hdr) | r3 report | r3 |
+| calibration | 7 | improved (V1, r5): verification round found 3 material defects (symlink false-SAFE class; local-master pushed fallback; r1 logs_tier row) — all corrected in-round with re-run evidence; 0 unresolved | `census/round-5/final-57..64.json`; lessons/round-5.md; probes in r5 report | r5 report | r5 |
 | operability | 8 | improved (O1', r4): tools/souji-vault-verify.sh live — ledger+sha256 moved-to-obsidian verification, parent battery 4/4 + real-vault probe VERIFIED, self-referential rows refused | `bash tools/souji-vault-verify.sh --selftest; echo $?` → 0; `tests/results/parent-vault-battery.json` | r4 report | r4 |
 
 ## Capabilities

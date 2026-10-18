@@ -1,0 +1,109 @@
+{
+  "seat": "S18",
+  "round": 5,
+  "role": "missed-items sweep",
+  "kind": "scratch-growth-audit",
+  "result": {
+    "verdict": "FLAG",
+    "threshold": ">100M",
+    "repo_count": 21,
+    "lane_scratch_present": {
+      "kotodama-shokunin/.scratch": "16G",
+      "lore-shokunin/.scratch": "272K"
+    },
+    "fleet_root_scratch": "40K",
+    "flagged": [
+      {
+        "path": "kotodama-shokunin/.scratch",
+        "observed_du_sh": "16G",
+        "comparison": "about 8.4x the recorded 1.9G observation and about 29x the 553M mint observation, using rounded display values",
+        "disposition": "flag for follow-up; do not prune"
+      }
+    ],
+    "prior_verdict_audit": {
+      "relevant_no_prune_decisions": 2,
+      "agree": 2,
+      "disagree": 0,
+      "r1": "AGREE: kotodama set was NOT-SAFE; scratch had live writes/references.",
+      "r3": "AGREE: prune_authorization=false for kotodama repo and .scratch due live lane trap."
+    },
+    "defects_found": [
+      "Current scratch growth is a new size finding, not evidence that either prior NOT-SAFE/no-prune verdict was wrong. No prior safety-verdict defect independently established."
+    ],
+    "baseline_source_note": "The retrievable round-1 report records 553M at 11:45 and 1.9G at 12:35 during live round-22 writes. Round-3 seat-58 records the no-prune decision but no numeric scratch-size sample; the 1.9G value was not independently located in that round-3 fragment."
+  },
+  "evidence": {
+    "cwd": "/home/vgpnk/Projects/shokunin",
+    "measurement": {
+      "cmd": "for d in *-shokunin; do if [ -d \"$d/.scratch\" ]; then du -sh \"$d/.scratch\"; else printf 'ABSENT %s/.scratch\\n' \"$d\"; fi; done; if [ -d .scratch ]; then du -sh .scratch; else printf 'ABSENT .scratch\\n'; fi",
+      "out": [
+        "ABSENT audio-shokunin/.scratch",
+        "ABSENT chousa-shokunin/.scratch",
+        "ABSENT game-dev-2d-shokunin/.scratch",
+        "ABSENT game-dev-3d-shokunin/.scratch",
+        "ABSENT kagi-shokunin/.scratch",
+        "ABSENT kaidoku-shokunin/.scratch",
+        "ABSENT kake-shokunin/.scratch",
+        "ABSENT kama-shokunin/.scratch",
+        "ABSENT kasegi-shokunin/.scratch",
+        "ABSENT kengaku-shokunin/.scratch",
+        "ABSENT kotoba-shokunin/.scratch",
+        "16G\tkotodama-shokunin/.scratch",
+        "ABSENT kumitate-shokunin/.scratch",
+        "272K\tlore-shokunin/.scratch",
+        "ABSENT mado-shokunin/.scratch",
+        "ABSENT mori-shokunin/.scratch",
+        "ABSENT revenger-shokunin/.scratch",
+        "ABSENT souji-shokunin/.scratch",
+        "ABSENT tabi-shokunin/.scratch",
+        "ABSENT tameshi-shokunin/.scratch",
+        "ABSENT tsukuroi-shokunin/.scratch",
+        "40K\t.scratch"
+      ],
+      "interpretation": "21 lane repos enumerated; only kotodama and lore have lane .scratch directories. Fleet-root .scratch measured separately. Kotodama is the sole path above 100M."
+    },
+    "count_and_timestamp": {
+      "cmd": "date --iso-8601=seconds; printf 'repos='; printf '%s\\n' *-shokunin | wc -l; printf 'recorded scratch paths='; for d in *-shokunin; do [ -d \"$d/.scratch\" ] && printf '%s\\n' \"$d/.scratch\"; done; [ -d .scratch ] && printf '%s\\n' .scratch",
+      "out": [
+        "2026-10-18T15:13:57-03:00",
+        "repos=21",
+        "recorded scratch paths=kotodama-shokunin/.scratch",
+        "lore-shokunin/.scratch",
+        ".scratch"
+      ]
+    },
+    "historical_size_evidence": [
+      {
+        "source": "souji-shokunin/MINT.md:26-29",
+        "record": "kotodama .scratch = 553M (du -sh); the operator's 1.7G figure was corrected at mint."
+      },
+      {
+        "source": "souji-shokunin/census/round-1/census-summary.json:38; ../.ufo/reports/round-1/souji.md:19; souji-shokunin/LOG.md:71-73",
+        "record": "553M at mint (11:45) -> 1.9G at 12:35, attributed to live round-22 writes. These are recorded historical observations; the source text does not preserve the raw 1.9G command output."
+      }
+    ],
+    "prior_decision_evidence": [
+      {
+        "source": "souji-shokunin/census/round-1/census-summary.json:34-38; ../.ufo/reports/round-1/souji.md:19",
+        "record": "kotodama verdict NOT-SAFE; 37 unpushed commits, 17 dirty paths, and live .scratch writes/references."
+      },
+      {
+        "source": "souji-shokunin/census/round-3/seat-58.json:528-531",
+        "record": "prune_authorization=false for kotodama repo and .scratch; `git -C kotodama-shokunin log --branches --not --remotes | wc -l` -> 42; `git -C kotodama-shokunin status --porcelain | wc -l` -> 17. This R3 fragment does not report a scratch-size measurement."
+      }
+    ],
+    "live_scan_caveat": {
+      "cmd": "du -sh kotodama-shokunin/.scratch lore-shokunin/.scratch .scratch; du -sb kotodama-shokunin/.scratch",
+      "out": [
+        "16G\tkotodama-shokunin/.scratch",
+        "272K\tlore-shokunin/.scratch",
+        "40K\t.scratch",
+        "du: cannot access 'kotodama-shokunin/.scratch/tmpqbu6m47j': No such file or directory",
+        "15802328360\tkotodama-shokunin/.scratch",
+        "Command failed with exit code: 1"
+      ],
+      "note": "The later byte-count scan raced with a transient directory disappearing, so its byte total is not treated as complete or stable. The full all-repo du -sh sweep above completed and is the basis for the 16G rounded observation."
+    },
+    "safety": "Read-only. No scratch paths were removed or modified; only this assigned seat fragment was written."
+  }
+}

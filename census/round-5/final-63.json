@@ -1,0 +1,106 @@
+{
+  "seat": "S63",
+  "round": 5,
+  "role": "final judge",
+  "assignment": "Independent verification audit of rounds 1-4: census, verdict tool, worktree prunes, vault verifier",
+  "verdict": "PARTIAL DISAGREE — r1 summary arithmetic and r3 completed prune/approval counts agree; both installed verdict tools have an independently reproduced false-SAFE directory case; r3's retained gd2d registrations are currently eligible for a future bare prune.",
+  "agreement_counts": {
+    "rounds_audited": 4,
+    "agree_on_checked_claims": 1,
+    "agree_with_follow_up": 1,
+    "disagree": 2,
+    "basis": "r1 count/correction record; r3 executed counts with a pin-risk follow-up; r2 and r4 tool-safety claims contradicted by the same independent fixture. r1 row receipts were not all re-derived in this seat."
+  },
+  "round_verdicts": {
+    "round-1": {
+      "verdict": "AGREE on census counts and recorded correction status",
+      "finding": "The delivered census has 246 rows and 64 seat fragments; census-summary records 160 SAFE / 86 NOT-SAFE and says the six author-stage SAFE proposals were all caught before admission. This seat checked those totals, not every row receipt.",
+      "evidence": "python3 read-only census/round-1/census.tsv + count census/round-1/seat-*.json -> rows 246; verdicts {'SAFE': 160, 'NOT-SAFE': 86}; fragments 64. census/round-1/census-summary.json records SAFE_proposed=6, SAFE_falsified_by_critic=6, final false-SAFE=0."
+    },
+    "round-2": {
+      "verdict": "DISAGREE on general false-SAFE/calibration claim",
+      "finding": "The installed tool passes its 24-case self-test and matches impl-12, but `pushed` on a directory ignores untracked/local-only contents. An isolated fixture containing one pushed file plus an untracked file in the same target directory returned SAFE(pushed).",
+      "evidence_ref": "tools/souji-verify.sh:213-230; tools/souji-verify.spec.md:34-41"
+    },
+    "round-3": {
+      "verdict": "AGREE on completed prune and approval counts; FOLLOW-UP on retained-pin exposure",
+      "finding": "Current worktree lists match the reported post-prune counts (lore 1; gd2d 4), and the 111-row approval union is 96 SAFE + 15 NOT-SAFE with 0 duplicates. However, the three retained named-branch registrations are marked prunable now; an unqualified dry-run would remove their metadata. Their branches still each have one unpushed commit. No prune was executed by this seat.",
+      "evidence_ref": "See r3 worktree, branch, approval-union, and dry-run evidence below. This is metadata exposure, not evidence that branch commits were lost."
+    },
+    "round-4": {
+      "verdict": "DISAGREE on general tool safety; AGREE on the exercised self-test cases and recorded CLI withdrawal",
+      "finding": "The 35-case self-test passes and the installed file matches impl-20. The same directory false-SAFE is reproduced against this tool. Separately, cli-contract.json records other-round side effects: ~/.config/obsidian/obsidian.json was rewritten and vault .obsidian/core-plugins.json touched; it also records S08's inspector writing two non-secret files under ~/.config. This qualifies blanket read-only wording, though it was not caused by this audit.",
+      "evidence_ref": "tools/souji-vault-verify.sh:379-395; census/round-4/cli-contract.json live_state_after_1358.side_effects and safety.side_effect_disclosure"
+    }
+  },
+  "defects_found": [
+    {
+      "id": "D1",
+      "severity": "high",
+      "scope": ["round-2 tool", "round-4 tool"],
+      "title": "Directory pushed receipt is false-SAFE when any local-only content is present",
+      "reproduction": "In /tmp/souji-r5-directory-push.tCOxgS, committed docs/published.txt, set master and origin/master to that commit, then created untracked docs/local-only.txt. `git status --short -- docs` showed `?? docs/local-only.txt`; `git log --diff-filter=A --format=%H -1 -- docs` returned the pushed seed commit; `git merge-base --is-ancestor <seed> refs/remotes/origin/master` returned 0. Both installed tools nevertheless returned SAFE(pushed) for the docs directory. Removing that directory would lose local-only.txt.",
+      "recommendation": "Do not grant `pushed` to directories from one introducing commit. Require a directory-wide content receipt or return NOT-SAFE for directory targets without one; add the isolated local-only-directory case to both suites."
+    },
+    {
+      "id": "D2",
+      "severity": "follow-up",
+      "scope": ["round-3 gd2d pins"],
+      "title": "Temporary prune locks are no longer protecting the retained registrations",
+      "reproduction": "`git -C game-dev-2d-shokunin worktree prune -n -v` currently prints Removing lines for wt-r98, wt-r99, wt-r100. `git -C game-dev-2d-shokunin worktree list --porcelain` marks all three prunable. `git log --oneline refs/heads/wt-r98 --not --remotes` (and r99/r100) returns one commit each.",
+      "impact": "A future bare prune can discard the three registration/admin records; the unpushed branch refs and commits remain. This seat performed dry-run only."
+    },
+    {
+      "id": "N1",
+      "severity": "audit caveat",
+      "scope": ["round-4 side-effect reporting"],
+      "title": "Read-only summary needs a scoped qualification",
+      "evidence": "Read-only JSON extraction from census/round-4/cli-contract.json returned: live_state_after_1358.side_effects = `~/.config/obsidian/obsidian.json rewritten 13:58:38 (content unchanged, cli:true); vault .obsidian/core-plugins.json touched 13:58:43; workspace.json untouched`; safety.side_effect_disclosure says S08's inspector wrote two non-secret files under ~/.config/obsidian-cli-inspector/logs/. The file attributes the first two to another seat's harness, not S08."
+    }
+  ],
+  "evidence": [
+    {
+      "command": "bash tools/souji-verify.sh --selftest",
+      "observed_output": "selftest: 24 checks, 0 failed (exit 0)"
+    },
+    {
+      "command": "bash tools/souji-vault-verify.sh --selftest",
+      "observed_output": "selftest: 35 checks, 0 failed (exit 0)"
+    },
+    {
+      "command": "cmp -s tools/souji-verify.sh tools/souji-verify.impl-12.sh; printf 'r2_cmp_exit=%s\\n' \"$?\"; cmp -s tools/souji-vault-verify.sh tools/souji-vault-verify.impl-20.sh; printf 'r4_cmp_exit=%s\\n' \"$?\"; sha256sum tools/souji-verify.sh tools/souji-vault-verify.sh",
+      "observed_output": "r2_cmp_exit=0\nr4_cmp_exit=0\n7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820  tools/souji-verify.sh\nd312263ac8ebc9e23555402dc5ae63167f78dcd01ddccc5ddcfa7623b85879e0  tools/souji-vault-verify.sh"
+    },
+    {
+      "command": "Isolated /tmp fixture: git init -q --initial-branch=master <tmp>/fleet/fixture-shokunin; git add docs/published.txt; git write-tree; printf 'fixture seed\\n' | git -c user.name='souji audit' -c user.email='souji-audit@example.invalid' commit-tree <tree>; update-ref refs/heads/master and refs/remotes/origin/master to that commit; symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/master; printf 'local-only file\\n' > docs/local-only.txt; run git status/log/merge-base and both installed tools on docs.",
+      "observed_output": "scratch=/tmp/souji-r5-directory-push.tCOxgS; commit=3b0232728a88d4c840416bd373c00503164c384d\ngit status --short -- docs: ?? docs/local-only.txt\ngit log --diff-filter=A --format=%H -1 -- docs: 3b0232728a88d4c840416bd373c00503164c384d\ngit merge-base --is-ancestor <commit> refs/remotes/origin/master: rc=0\nr2: {\"verdict\":\"SAFE\",\"receipt\":\"pushed\",\"evidence\":\"intro=3b0232728a88 ref=refs/remotes/origin/master ancestor=yes\"}\nr4: {\"verdict\":\"SAFE\",\"verified\":\"VERIFIED(pushed)\",\"receipt\":\"pushed\",\"evidence\":\"intro=3b0232728a88 ref=refs/remotes/origin/master ancestor=yes cli=unavailable\"}"
+    },
+    {
+      "command": "git -C lore-shokunin worktree list --porcelain; git -C lore-shokunin worktree prune -n -v",
+      "observed_output": "worktree /home/vgpnk/Projects/shokunin/lore-shokunin; HEAD 6cec83aede47575beeeda6b7dc0e4ea74927be78; branch refs/heads/main; no Removing lines"
+    },
+    {
+      "command": "git -C game-dev-2d-shokunin worktree list --porcelain; git -C game-dev-2d-shokunin worktree prune -n -v",
+      "observed_output": "worktree entries: main + wt-r100 + wt-r98 + wt-r99 (4 total); each named branch entry has `prunable gitdir file points to non-existent location`; dry-run: Removing worktrees/game-dev-2d-shokunin-wt-r98; Removing worktrees/game-dev-2d-shokunin-wt-r99; Removing worktrees/game-dev-2d-shokunin-wt-r100"
+    },
+    {
+      "command": "for ref in wt-r98 wt-r99 wt-r100; do printf '%s ' \"$ref\"; git -C game-dev-2d-shokunin log --oneline \"refs/heads/$ref\" --not --remotes | wc -l; done",
+      "observed_output": "wt-r98 1\nwt-r99 1\nwt-r100 1"
+    },
+    {
+      "command": "python3 parse census/round-3/approvals-53.tsv through approvals-56.tsv; count all rows, unique paths, duplicates, and verdicts",
+      "observed_output": "rows=111 unique_paths=111 duplicates=0 verdicts={'SAFE': 96, 'NOT-SAFE': 15}"
+    },
+    {
+      "command": "python3 read census/round-4/cli-contract.json keys live_state_after_1358.side_effects, safety.vault_writes, safety.side_effect_disclosure",
+      "observed_output": "live state: ~/.config/obsidian/obsidian.json rewritten; vault .obsidian/core-plugins.json touched; safety.vault_writes=none; S08 disclosure: two non-secret ~/.config/obsidian-cli-inspector/logs files written"
+    }
+  ],
+  "safety": {
+    "fleet_and_sibling_repositories_modified": false,
+    "worktree_prune_remove_lock_executed": false,
+    "user_config_or_vault_written_by_this_seat": false,
+    "temp_fixture": "/tmp/souji-r5-directory-push.tCOxgS",
+    "only_allowed_repo_write": "census/round-5/final-63.json"
+  }
+}

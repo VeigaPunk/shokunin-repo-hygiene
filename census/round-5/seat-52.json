@@ -1,0 +1,91 @@
+{
+  "seat": "S52",
+  "round": 5,
+  "role": "cross-audit",
+  "assignment": "Wait 360 seconds, then tally S33-S44 tool-regression results; assess both installed tools and live defect classes.",
+  "wait_seconds": 360,
+  "verdict": "PARTIAL TALLY — 10 of 12 regression fragments were available at audit time. Both tools pass core operability/safety checks with no false-SAFE regression reported in available results; a vault-verifier usage-output defect was independently reproduced. S35 and S43 were not present at tally time.",
+  "tally": {
+    "seats_expected": 12,
+    "seats_available": 10,
+    "seats_missing": ["S35", "S43"],
+    "core_tool_behavior_or_identity_supportive": ["S33", "S34", "S36", "S37", "S38", "S39", "S40", "S41", "S44"],
+    "documentation_drift_disagreement": ["S42"],
+    "false_safe_regressions_reported_or_reproduced": 0,
+    "code_defects_found": [
+      {
+        "class": "Usage output includes executable source lines after documented help text",
+        "tool": "tools/souji-vault-verify.sh",
+        "reported_by": "S39",
+        "independently_reproduced": true,
+        "scope": "Output/interface defect only; exit-code contract remains correct. No secret content was exposed."
+      }
+    ],
+    "documentation_defects_found": [
+      {
+        "class": "SKILL.md receipt/command guidance is stale versus installed tools",
+        "reported_by": "S42",
+        "independently_rederived": true,
+        "details": "SKILL.md:12-18 omits metadata-prune, lists stale criteria/types not matching the tools, and recommends git fetch; installed verifier source forbids fetch and supports metadata-prune. This disagrees with the round-4 report's narrow statement that the receipt taxonomy was extended."
+      },
+      {
+        "class": "Binding spec includes unsupported rg --basename command",
+        "reported_by": "S42",
+        "details": "The installed verifier records the deviation and uses an alternate fixed-string content sweep (tools/souji-verify.sh:44-52)."
+      }
+    ]
+  },
+  "seat_results": [
+    {"seat":"S33","result":"AGREE; 24/24 self-test checks and 3 live probes matched expected verdicts.","evidence":"census/round-5/seat-33.json:16-41"},
+    {"seat":"S34","result":"AGREE; souji-verify 24/24 and souji-vault-verify 35/35 self-tests passed; both implementation hashes matched; two fake-path refusals passed.","evidence":"census/round-5/seat-34.json:17-38"},
+    {"seat":"S35","result":"MISSING at tally time.","evidence":"Glob census/round-5/seat-{35,43}.json returned only seat-37.json; subsequent complete-list Glob contained no seat-35.json."},
+    {"seat":"S36","result":"AGREE; vault self-pair refused and distinct source/vault pair verified (2/2).","evidence":"census/round-5/seat-36.json:31-40"},
+    {"seat":"S37","result":"AGREE; 5/5 fake-path secret-refusal/control-path cases matched expected verdicts.","evidence":"census/round-5/seat-37.json:21-43"},
+    {"seat":"S38","result":"AGREE; registered, present, clean worktree returned NOT-SAFE(none) with dir=present evidence.","evidence":"census/round-5/seat-38.json:30-34"},
+    {"seat":"S39","result":"AGREE on 6/6 exit-code probes; additionally found a usage-output defect on souji-vault-verify.","evidence":"census/round-5/seat-39.json:26-44,53-83"},
+    {"seat":"S40","result":"PASS; 96/96 approval targets were SAFE(pushed), 3.274 seconds vs 120-second threshold.","evidence":"census/round-5/seat-40.json:16-44"},
+    {"seat":"S41","result":"AGREE; both installed tool hashes match recorded pins; no post-install change detected.","evidence":"census/round-5/seat-41.json:16-48"},
+    {"seat":"S42","result":"PARTIAL DRIFT; valid tool spot-checks, but independently found documentation drift and disagreed with the round-4 taxonomy-extension statement.","evidence":"census/round-5/seat-42.json:5-8,24-72"},
+    {"seat":"S43","result":"MISSING at tally time.","evidence":"Glob census/round-5/seat-{35,43}.json returned only seat-37.json; subsequent complete-list Glob contained no seat-43.json."},
+    {"seat":"S44","result":"AGREE; cross-tool verdict/receipt agreement on 3/3 targets in both snapshots; kotodama dirty count changed with live churn.","evidence":"census/round-5/seat-44.json:23-40,47-81"}
+  ],
+  "independent_evidence": [
+    {
+      "command": "sha256sum tools/souji-verify.sh tools/souji-verify.impl-12.sh tools/souji-vault-verify.sh tools/souji-vault-verify.impl-20.sh",
+      "observed_output": "7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820  tools/souji-verify.sh\n7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820  tools/souji-verify.impl-12.sh\nd312263ac8ebc9e23555402dc5ae63167f78dcd01ddccc5ddcfa7623b85879e0  tools/souji-vault-verify.sh\nd312263ac8ebc9e23555402dc5ae63167f78dcd01ddccc5ddcfa7623b85879e0  tools/souji-vault-verify.impl-20.sh"
+    },
+    {
+      "command": "bash -n tools/souji-verify.sh tools/souji-vault-verify.sh && printf 'bash -n: OK\\n'",
+      "observed_output": "bash -n: OK"
+    },
+    {
+      "command": "bash tools/souji-verify.sh --json \"$PWD/tools/souji-verify.sh\"",
+      "observed_output": "{\"path\":\"/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh\",\"verdict\":\"SAFE\",\"receipt\":\"pushed\",\"evidence\":\"intro=9435e464a2dc ref=refs/heads/master ancestor=yes\"}"
+    },
+    {
+      "command": "bash tools/souji-vault-verify.sh --fallback --json \"$PWD/tools/souji-vault-verify.sh\"",
+      "observed_output": "{\"path\":\"/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-vault-verify.sh\",\"verdict\":\"SAFE\",\"verified\":\"VERIFIED(pushed)\",\"receipt\":\"pushed\",\"reason\":\"pushed\",\"evidence\":\"intro=48a64d8763fc ref=refs/heads/master ancestor=yes cli=unavailable\"}"
+    },
+    {
+      "command": "bash tools/souji-verify.sh --json /tmp/souji-audit-fake/.env.fake",
+      "observed_output": "{\"path\":\"/tmp/souji-audit-fake/.env.fake\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"secrets-refusal\",\"evidence\":\"secret-shaped path component\"}"
+    },
+    {
+      "command": "bash tools/souji-vault-verify.sh --fallback --json /tmp/souji-audit-fake/.env.fake",
+      "observed_output": "{\"path\":\"/tmp/souji-audit-fake/.env.fake\",\"verdict\":\"NOT-SAFE\",\"verified\":\"NOT-VERIFIED(secrets-refusal)\",\"receipt\":\"secrets-refusal\",\"reason\":\"secrets-refusal\",\"evidence\":\"secret-shaped path component basename=.env.fake\"}"
+    },
+    {
+      "command": "set +e; out=$(env SHOKUNIN_ROOT=/tmp/s52-fake-fleet SOUJI_LEDGER=/tmp/s52-fake-ledger.tsv bash tools/souji-vault-verify.sh --s52-bad-flag 2>&1); rc=$?; printf 'exit=%s\\n%s\\n' \"$rc\" \"$out\"",
+      "observed_output_excerpt": "exit=2; souji-vault-verify: unknown flag: --s52-bad-flag; documented usage text followed by `set -euo pipefail` and executable initialization lines through REPO_ROOT=..."
+    },
+    {
+      "source_rederivation": "tools/souji-vault-verify.sh:73-77 calls sed -n '2,52p' on SELF; its header comments end at line 42 and executable code starts at line 43. The reproduced usage output starts with executable source at `set -euo pipefail` after the documented Env overrides line.",
+      "documentation_rederivation": "Read SKILL.md:12-18 and .ufo/reports/round-4/souji.md:63 alongside tools/souji-verify.sh:4-5,18-27 and tools/souji-vault-verify.sh:23-26. SKILL.md still recommends git fetch and lacks metadata-prune; installed tool contracts forbid fetch and include metadata-prune."
+    },
+    {
+      "command": "Glob census/round-5/seat-{33,34,35,36,37,38,39,40,41,42,43,44}.json",
+      "observed_output": "seat-37.json, seat-42.json, seat-36.json, seat-33.json, seat-40.json, seat-38.json, seat-44.json, seat-41.json, seat-34.json, seat-39.json (10 fragments; S35 and S43 absent)"
+    }
+  ],
+  "scope": "Read-only over fleet/lane/siblings except this assigned fragment; no git mutations, pruning, deletions, secret-shaped file content reads, or access to protected config/state files."
+}

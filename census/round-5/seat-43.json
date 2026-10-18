@@ -1,0 +1,140 @@
+{
+  "seat": "S43",
+  "round": 5,
+  "role": "tool regression — r2 makers and r4 vault ledgers",
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "axes": [
+    "r2 fixture maker regression",
+    "vault-ledger replay and r2/r4 agreement",
+    "temporary-root reproducibility"
+  ],
+  "assignment": "Re-run any 3 tests/fixtures/case-F* makers and any 3 tests/vault/case-V* targets via committed ledgers; use regenerated targets only if committed /tmp roots have rotted.",
+  "verdict": "AGREE — F1, F2, and F3 makers reproduced their expected r2 verdicts; V1, V6, and V8 verified through the committed ledgers in both r4 and r2. No tool regression found.",
+  "agreement_counts": {
+    "maker_cases": {"audited": 3, "agree": 3, "disagree": 0},
+    "r2_maker_target_verdicts": {"audited": 5, "agree": 5, "disagree": 0},
+    "vault_cases": {"audited": 3, "r4_agree": 3, "r2_crosscheck_agree": 3, "disagree": 0},
+    "all_tool_target_verdicts": {"audited": 11, "agree": 11, "disagree": 0}
+  },
+  "defects_found": [],
+  "r2_maker_cases": [
+    {
+      "case": "F1",
+      "maker_command": "bash tests/fixtures/case-F1/make-fixture.sh /tmp/s43-F1.ilXfwF > /tmp/s43-F1.ilXfwF/maker.stdout 2> /tmp/s43-F1.ilXfwF/maker.stderr",
+      "maker_exit": 0,
+      "maker_expected": {
+        "targets": [
+          "/tmp/souji-fixture-case-F1.GPOIN8/repo/pushed.txt",
+          "/tmp/souji-fixture-case-F1.GPOIN8/repo/local-only.txt"
+        ],
+        "expect": ["SAFE(pushed)", "NOT-SAFE"]
+      },
+      "verifications": [
+        {
+          "command": "SHOKUNIN_ROOT=/tmp/s43-F1.ilXfwF SOUJI_LEDGER=/dev/null tools/souji-verify.sh /tmp/souji-fixture-case-F1.GPOIN8/repo/pushed.txt",
+          "observed_output": "VERDICT\t/tmp/souji-fixture-case-F1.GPOIN8/repo/pushed.txt\tSAFE\tpushed\tintro=477b42f68935 ref=refs/remotes/origin/master ancestor=yes"
+        },
+        {
+          "command": "SHOKUNIN_ROOT=/tmp/s43-F1.ilXfwF SOUJI_LEDGER=/dev/null tools/souji-verify.sh /tmp/souji-fixture-case-F1.GPOIN8/repo/local-only.txt",
+          "observed_output": "VERDICT\t/tmp/souji-fixture-case-F1.GPOIN8/repo/local-only.txt\tNOT-SAFE\tnone\tpushed=not-ancestor intro=3215cedb6351 ref=refs/remotes/origin/master; obsidian=no-ledger; stale=not-scratch-type"
+        }
+      ]
+    },
+    {
+      "case": "F2",
+      "maker_command": "bash tests/fixtures/case-F2/make-fixture.sh /tmp/s43-F2.aLZlnl > /tmp/s43-F2.aLZlnl/maker.stdout 2> /tmp/s43-F2.aLZlnl/maker.stderr",
+      "maker_exit": 0,
+      "maker_expected": {
+        "targets": [
+          "/tmp/souji-fixture-case-F2.ffzn4Z/repo/pushed.txt",
+          "/tmp/souji-fixture-case-F2.ffzn4Z/repo/local-only.txt"
+        ],
+        "expect": ["SAFE(pushed)", "NOT-SAFE"]
+      },
+      "verifications": [
+        {
+          "command": "SHOKUNIN_ROOT=/tmp/s43-F2.aLZlnl SOUJI_LEDGER=/dev/null tools/souji-verify.sh /tmp/souji-fixture-case-F2.ffzn4Z/repo/pushed.txt",
+          "observed_output": "VERDICT\t/tmp/souji-fixture-case-F2.ffzn4Z/repo/pushed.txt\tSAFE\tpushed\tintro=477b42f68935 ref=refs/remotes/origin/master ancestor=yes"
+        },
+        {
+          "command": "SHOKUNIN_ROOT=/tmp/s43-F2.aLZlnl SOUJI_LEDGER=/dev/null tools/souji-verify.sh /tmp/souji-fixture-case-F2.ffzn4Z/repo/local-only.txt",
+          "observed_output": "VERDICT\t/tmp/souji-fixture-case-F2.ffzn4Z/repo/local-only.txt\tNOT-SAFE\tnone\tpushed=not-ancestor intro=3215cedb6351 ref=refs/remotes/origin/master; obsidian=no-ledger; stale=not-scratch-type"
+        }
+      ]
+    },
+    {
+      "case": "F3",
+      "maker_command": "bash tests/fixtures/case-F3/make-fixture.sh --json",
+      "maker_exit": 0,
+      "maker_stdout": "{\"case\":\"F3\",\"schema\":\"souji-verify-fixture/1\",\"target\":\"/tmp/souji-fixture-F3.nQSrjo\",\"kind\":\"repo-root\",\"verdict\":\"NOT-SAFE\",\"unpushed\":2,\"dirty\":1,\"staged\":0,\"untracked\":0,\"shas\":{\"base\":\"a30d8f0b8af90522af5fde05ab07ed54208b55ed\",\"c2\":\"6784d6c1a625f24272995208ebbabd00f6c367a1\",\"head\":\"6206b7d325f75452eabd7b9d3e54f76fdd33a89c\"}}",
+      "maker_stderr": "[case-F3] target=/tmp/souji-fixture-F3.nQSrjo\n[case-F3] shas base=a30d8f0b8af90522af5fde05ab07ed54208b55ed c2=6784d6c1a625f24272995208ebbabd00f6c367a1 head=6206b7d325f75452eabd7b9d3e54f76fdd33a89c\n[case-F3] unpushed=2 dirty=1 staged=0 untracked=0 (expected verdict NOT-SAFE)",
+      "verification": {
+        "command": "SHOKUNIN_ROOT=/tmp/souji-fixture-F3.nQSrjo SOUJI_LEDGER=/dev/null tools/souji-verify.sh /tmp/souji-fixture-F3.nQSrjo",
+        "observed_output": "VERDICT\t/tmp/souji-fixture-F3.nQSrjo\tNOT-SAFE\tunpushed\tunpushed=2 dirty=1"
+      }
+    }
+  ],
+  "vault_cases": [
+    {
+      "case": "V1",
+      "committed_ledger": "tests/vault/ledger-V1.tsv",
+      "target": "/tmp/souji-vault-V1.kjvKri/source/note.md",
+      "tmp_root_status": "present; source and vault file hashes both equal committed SHA-256 a63192a11325e61f3aebfd483c34f21c05c5bf815bc83cef7866a92b8132f840; no regeneration needed",
+      "r4": {
+        "command": "SHOKUNIN_ROOT=/home/vgpnk/Projects/shokunin/souji-shokunin tools/souji-vault-verify.sh --fallback --ledger tests/vault/ledger-V1.tsv /tmp/souji-vault-V1.kjvKri/source/note.md",
+        "exit": 0,
+        "observed_output": "VERDICT\t/tmp/souji-vault-V1.kjvKri/source/note.md\tSAFE\tmoved-to-obsidian\tledger-row ledger=/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/ledger-V1.tsv vault=/tmp/souji-vault-V1.kjvKri/vault/note.md source-sha256=a63192a11325 cli=skipped(fallback)\nVERIFIED(moved-to-obsidian)"
+      },
+      "r2_crosscheck": {
+        "command": "SHOKUNIN_ROOT=/home/vgpnk/Projects/shokunin/souji-shokunin SOUJI_LEDGER=tests/vault/ledger-V1.tsv tools/souji-verify.sh /tmp/souji-vault-V1.kjvKri/source/note.md",
+        "exit": 0,
+        "observed_output": "VERDICT\t/tmp/souji-vault-V1.kjvKri/source/note.md\tSAFE\tmoved-to-obsidian\tledger-row vault=/tmp/souji-vault-V1.kjvKri/vault/note.md source-sha256=a63192a11325"
+      }
+    },
+    {
+      "case": "V6",
+      "committed_ledger": "tests/vault/ledger-V6.tsv",
+      "target": "tests/vault/case-V6/src/payload.md",
+      "tmp_root_status": "repository fixture present; source and vault file hashes both equal committed SHA-256 127ac886a92b2d75784d8bbf12834d514aae8e334417a21d5b272b82f09eaece",
+      "r4": {
+        "command": "SHOKUNIN_ROOT=/home/vgpnk/Projects/shokunin/souji-shokunin tools/souji-vault-verify.sh --fallback --ledger tests/vault/ledger-V6.tsv tests/vault/case-V6/src/payload.md",
+        "exit": 0,
+        "observed_output": "VERDICT\ttests/vault/case-V6/src/payload.md\tSAFE\tmoved-to-obsidian\tledger-row ledger=/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/ledger-V6.tsv vault=/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/case-V6/vault/payload.md source-sha256=127ac886a92b cli=skipped(fallback)\nVERIFIED(moved-to-obsidian)"
+      },
+      "r2_crosscheck": {
+        "command": "SHOKUNIN_ROOT=/home/vgpnk/Projects/shokunin/souji-shokunin SOUJI_LEDGER=tests/vault/ledger-V6.tsv tools/souji-verify.sh tests/vault/case-V6/src/payload.md",
+        "exit": 0,
+        "observed_output": "VERDICT\ttests/vault/case-V6/src/payload.md\tSAFE\tmoved-to-obsidian\tledger-row vault=/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/case-V6/vault/payload.md source-sha256=127ac886a92b"
+      }
+    },
+    {
+      "case": "V8",
+      "committed_ledger": "tests/vault/ledger-V8.tsv",
+      "target": "/tmp/souji-vault-V8.2XO9iZ/source/meeting notes 2026-10.md",
+      "tmp_root_status": "present; source and vault file hashes both equal committed SHA-256 2fc29f1f563835d0e66139afa269b4de51355859ed30232b41847a2862f1084e; no regeneration needed",
+      "r4": {
+        "command": "SHOKUNIN_ROOT=/home/vgpnk/Projects/shokunin/souji-shokunin tools/souji-vault-verify.sh --fallback --ledger tests/vault/ledger-V8.tsv '/tmp/souji-vault-V8.2XO9iZ/source/meeting notes 2026-10.md'",
+        "exit": 0,
+        "observed_output": "VERDICT\t/tmp/souji-vault-V8.2XO9iZ/source/meeting notes 2026-10.md\tSAFE\tmoved-to-obsidian\tledger-row ledger=/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/ledger-V8.tsv vault=/tmp/souji-vault-V8.2XO9iZ/vault/Meeting Notes 2026-10.md source-sha256=2fc29f1f5638 cli=skipped(fallback)\nVERIFIED(moved-to-obsidian)"
+      },
+      "r2_crosscheck": {
+        "command": "SHOKUNIN_ROOT=/home/vgpnk/Projects/shokunin/souji-shokunin SOUJI_LEDGER=tests/vault/ledger-V8.tsv tools/souji-verify.sh '/tmp/souji-vault-V8.2XO9iZ/source/meeting notes 2026-10.md'",
+        "exit": 0,
+        "observed_output": "VERDICT\t/tmp/souji-vault-V8.2XO9iZ/source/meeting notes 2026-10.md\tSAFE\tmoved-to-obsidian\tledger-row vault=/tmp/souji-vault-V8.2XO9iZ/vault/Meeting Notes 2026-10.md source-sha256=2fc29f1f5638"
+      }
+    }
+  ],
+  "evidence": [
+    {
+      "claim": "V1, V6, and V8 vault fixture data matched their committed SHA-256 declarations before replay; V1/V8 temporary roots were present so no target regeneration was required",
+      "command": "for root in /tmp/souji-vault-V1.kjvKri /tmp/souji-vault-V8.2XO9iZ; do if [ -d \"$root\" ]; then printf 'PRESENT %s\\n' \"$root\"; else printf 'MISSING %s\\n' \"$root\"; fi; done; for path in /tmp/souji-vault-V1.kjvKri/source/note.md /tmp/souji-vault-V1.kjvKri/vault/note.md '/tmp/souji-vault-V8.2XO9iZ/source/meeting notes 2026-10.md' '/tmp/souji-vault-V8.2XO9iZ/vault/Meeting Notes 2026-10.md' tests/vault/case-V6/src/payload.md tests/vault/case-V6/vault/payload.md; do if [ -f \"$path\" ]; then printf 'FILE %s ' \"$path\"; sha256sum -- \"$path\"; else printf 'MISSING_FILE %s\\n' \"$path\"; fi; done",
+      "observed_output": "PRESENT /tmp/souji-vault-V1.kjvKri\nPRESENT /tmp/souji-vault-V8.2XO9iZ\nFILE /tmp/souji-vault-V1.kjvKri/source/note.md a63192a11325e61f3aebfd483c34f21c05c5bf815bc83cef7866a92b8132f840  /tmp/souji-vault-V1.kjvKri/source/note.md\nFILE /tmp/souji-vault-V1.kjvKri/vault/note.md a63192a11325e61f3aebfd483c34f21c05c5bf815bc83cef7866a92b8132f840  /tmp/souji-vault-V1.kjvKri/vault/note.md\nFILE /tmp/souji-vault-V8.2XO9iZ/source/meeting notes 2026-10.md 2fc29f1f563835d0e66139afa269b4de51355859ed30232b41847a2862f1084e  /tmp/souji-vault-V8.2XO9iZ/source/meeting notes 2026-10.md\nFILE /tmp/souji-vault-V8.2XO9iZ/vault/Meeting Notes 2026-10.md 2fc29f1f563835d0e66139afa269b4de51355859ed30232b41847a2862f1084e  /tmp/souji-vault-V8.2XO9iZ/vault/Meeting Notes 2026-10.md\nFILE tests/vault/case-V6/src/payload.md 127ac886a92b2d75784d8bbf12834d514aae8e334417a21d5b272b82f09eaece  tests/vault/case-V6/src/payload.md\nFILE tests/vault/case-V6/vault/payload.md 127ac886a92b2d75784d8bbf12834d514aae8e334417a21d5b272b82f09eaece  tests/vault/case-V6/vault/payload.md"
+    },
+    {
+      "claim": "installed tools are at the reported r2/r4 SHA-256s",
+      "command": "sha256sum tools/souji-verify.sh tools/souji-vault-verify.sh",
+      "observed_output": "7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820  tools/souji-verify.sh\nd312263ac8ebc9e23555402dc5ae63167f78dcd01ddccc5ddcfa7623b85879e0  tools/souji-vault-verify.sh"
+    }
+  ],
+  "scope": "Round-5 S43 tool regression only. R1 census and R3 prune operations were not rerun or re-adjudicated. Fixture builders and verification commands wrote only under /tmp; this seat wrote only its assigned census/round-5/seat-43.json fragment."
+}

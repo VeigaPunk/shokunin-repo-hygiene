@@ -1,0 +1,55 @@
+{
+  "seat": "S55",
+  "round": 5,
+  "role": "cross-audit",
+  "assignment": "Revalidate kotodama's standing NOT-SAFE verdict with current unpushed, dirty, and .scratch measurements after the required 360-second wait.",
+  "verdict": "AGREE — the kotodama repo-root NOT-SAFE verdict remains correct.",
+  "agreement_counts": {
+    "installed_repo_root_checks": 2,
+    "agree": 2,
+    "disagree": 0
+  },
+  "current": {
+    "observed_at": "2026-10-18T15:20:24,452557796-03:00",
+    "unpushed_commits": 47,
+    "dirty_porcelain_entries": 25,
+    "scratch_apparent_bytes": 16111837606,
+    "scratch_du_human": "16G"
+  },
+  "comparison": {
+    "prior_sample_at": "2026-10-18T15:15:03,286970794-03:00",
+    "prior_unpushed_commits": 47,
+    "prior_dirty_porcelain_entries": 16,
+    "prior_scratch_apparent_bytes": 15795430075,
+    "dirty_change": 9,
+    "scratch_byte_change": 316407531
+  },
+  "findings": [
+    "Both installed tools returned NOT-SAFE(unpushed) with unpushed=47 dirty=25, matching the independent git log/status counts.",
+    "Between the two recorded samples, dirty entries increased by 9 and .scratch apparent size increased by 316407531 bytes; measurements are live/churning."
+  ],
+  "defects_found": [],
+  "evidence": [
+    {
+      "command": "repo=/home/vgpnk/Projects/shokunin/kotodama-shokunin; printf 'time='; date -Ins; printf 'unpushed='; git -C \"$repo\" log --branches --not --remotes --oneline | wc -l; printf 'dirty='; git -C \"$repo\" status --porcelain=v1 | wc -l; printf 'scratch='; du -sb \"$repo/.scratch\"; printf 'scratch_human='; du -sh \"$repo/.scratch\"",
+      "observed_output": "time=2026-10-18T15:20:24,452557796-03:00\nunpushed=47\ndirty=25\nscratch=16111837606\t/home/vgpnk/Projects/shokunin/kotodama-shokunin/.scratch\nscratch_human=16G\t/home/vgpnk/Projects/shokunin/kotodama-shokunin/.scratch"
+    },
+    {
+      "command": "bash /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh --stale-days 1 /home/vgpnk/Projects/shokunin/kotodama-shokunin",
+      "observed_output": "VERDICT\t/home/vgpnk/Projects/shokunin/kotodama-shokunin\tNOT-SAFE\tunpushed\tunpushed=47 dirty=25"
+    },
+    {
+      "command": "bash /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-vault-verify.sh --fallback --json /home/vgpnk/Projects/shokunin/kotodama-shokunin",
+      "observed_output": "{\"path\":\"/home/vgpnk/Projects/shokunin/kotodama-shokunin\",\"verdict\":\"NOT-SAFE\",\"verified\":\"NOT-VERIFIED(unpushed)\",\"receipt\":\"unpushed\",\"reason\":\"unpushed\",\"evidence\":\"unpushed=47 dirty=25\"}"
+    },
+    {
+      "command": "repo=/home/vgpnk/Projects/shokunin/kotodama-shokunin; printf 'time='; date -Ins; printf 'unpushed='; git -C \"$repo\" log --branches --not --remotes --oneline | wc -l; printf 'dirty='; git -C \"$repo\" status --porcelain=v1 | wc -l; printf 'scratch='; du -sb \"$repo/.scratch\"; printf 'scratch_human='; du -sh \"$repo/.scratch\"",
+      "observed_output": "time=2026-10-18T15:15:03,286970794-03:00\nunpushed=47\ndirty=16\nscratch=15795430075\t/home/vgpnk/Projects/shokunin/kotodama-shokunin/.scratch\nscratch_human=16G\t/home/vgpnk/Projects/shokunin/kotodama-shokunin/.scratch"
+    },
+    {
+      "command": "sleep 360",
+      "observed_output": "exit_code=0; elapsed=360.001 seconds"
+    }
+  ],
+  "scope": "Read-only across fleet and kotodama; wrote only this assigned seat fragment."
+}

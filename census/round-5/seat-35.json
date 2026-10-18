@@ -1,0 +1,118 @@
+{
+  "seat": "S35",
+  "round": 5,
+  "role": "tool-regression",
+  "kind": "vault-verifier-regression",
+  "assignment": "tools/souji-vault-verify.sh --selftest plus independent replay of match/tamper/src-tamper/absent in mktemp",
+  "verdict": "AGREE_WITH_ROUND_4: selftest 35/35 PASS; parent battery 4/4 PASS; no regression found",
+  "agreement": {
+    "round_4_report": "AGREE; .ufo/reports/round-4/souji.md:34-40 reports the same four expected battery classes and 35-check selftest",
+    "parent_battery_cases": "4/4 expected classes matched independently",
+    "defects_found": []
+  },
+  "evidence": {
+    "selftest": {
+      "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+      "cmd": "bash tools/souji-vault-verify.sh --selftest",
+      "exit": 0,
+      "out": [
+        "PASS F1 VERIFIED(pushed)",
+        "PASS F2 NOT-VERIFIED(none)",
+        "PASS F3 NOT-VERIFIED(unpushed)",
+        "PASS F4 VERIFIED(metadata-prune)",
+        "PASS F5 NOT-VERIFIED(unpushed-branch)",
+        "PASS F7 VERIFIED(stale)",
+        "PASS F8 VERIFIED(stale)",
+        "PASS F9 VERIFIED(pushed)",
+        "PASS F10 NOT-VERIFIED(secrets-refusal)",
+        "PASS V1 VERIFIED(moved-to-obsidian)",
+        "PASS V2 NOT-VERIFIED(vault-hash-mismatch)",
+        "PASS V3 NOT-VERIFIED(source-hash-mismatch)",
+        "PASS V4 NOT-VERIFIED(vault-absent)",
+        "PASS V5 NOT-VERIFIED(source-absent)",
+        "PASS V6 NOT-VERIFIED(none)",
+        "PASS V9 NOT-VERIFIED(source-equals-vault)",
+        "PASS V12 VERIFIED(moved-to-obsidian)",
+        "PASS V20 NOT-VERIFIED(row-incomplete)",
+        "PASS V10b honest CLI agrees -> VERIFIED(moved-to-obsidian)",
+        "PASS V11b hanging CLI bounded (2s) -> cli=timeout, verdict kept",
+        "PASS V13 lying CLI annotated, ledger still the receipt",
+        "PASS V14 --fallback skips the CLI",
+        "PASS V15 NOT-VERIFIED(none)",
+        "PASS V16 --json object with r4 vocabulary",
+        "PASS V17 NOT-VERIFIED(row-incomplete)",
+        "PASS V18 NOT-VERIFIED(row-incomplete)",
+        "PASS V19 --ledger flag accepted",
+        "PASS V21 no-trailing-newline ledger row honoured",
+        "PASS V22 bare --cli accepted",
+        "PASS V23 batch of 3, order preserved",
+        "PASS H4 exit=2",
+        "PASS H5 exit=2",
+        "PASS H1 no forbidden git subcommand",
+        "PASS H2 no GUI-launcher path literal",
+        "PASS H3 fixtures under mktemp -d (/tmp/souji-vault-verify-selftest.dFT5Wb)",
+        "selftest: 35 checks, 0 failed"
+      ]
+    },
+    "parent_battery_replay": {
+      "fixture_root": "/tmp/souji-s35-battery.wWzN6Z (mktemp -d; removed by EXIT trap)",
+      "setup_and_case_commands": [
+        "T=$(mktemp -d /tmp/souji-s35-battery.XXXXXX); trap 'rm -rf -- \"$T\"' EXIT",
+        "mkdir -p \"$T/root\" \"$T/vault\"",
+        "printf 'battery payload\\n' > \"$T/source.md\"",
+        "cp \"$T/source.md\" \"$T/vault/copy.md\"",
+        "H=$(sha256sum -- \"$T/source.md\" | cut -d' ' -f1)",
+        "printf 'source_path\\tsource_sha256\\tvault_path\\tvault_sha256\\texported_at\\tnote\\n%s\\t%s\\t%s\\t%s\\t2026-10-18\\tS35\\n' \"$T/source.md\" \"$H\" \"$T/vault/copy.md\" \"$H\" > \"$T/ledger.tsv\"",
+        "SHOKUNIN_ROOT=\"$T/root\" SOUJI_LEDGER=\"$T/ledger.tsv\" bash tools/souji-vault-verify.sh --fallback \"$T/source.md\"",
+        "printf 'vault tamper\\n' >> \"$T/vault/copy.md\"",
+        "SHOKUNIN_ROOT=\"$T/root\" SOUJI_LEDGER=\"$T/ledger.tsv\" bash tools/souji-vault-verify.sh --fallback \"$T/source.md\"",
+        "printf 'battery payload\\n' > \"$T/source.md\"; cp \"$T/source.md\" \"$T/vault/copy.md\"; printf 'source tamper\\n' >> \"$T/source.md\"",
+        "SHOKUNIN_ROOT=\"$T/root\" SOUJI_LEDGER=\"$T/ledger.tsv\" bash tools/souji-vault-verify.sh --fallback \"$T/source.md\"",
+        "printf 'battery payload\\n' > \"$T/source.md\"; cp \"$T/source.md\" \"$T/vault/copy.md\"; mv \"$T/vault/copy.md\" \"$T/vault/copy.md.absent\"",
+        "SHOKUNIN_ROOT=\"$T/root\" SOUJI_LEDGER=\"$T/ledger.tsv\" bash tools/souji-vault-verify.sh --fallback \"$T/source.md\""
+      ],
+      "cases": [
+        {
+          "case": "match",
+          "expected": "VERIFIED(moved-to-obsidian)",
+          "out": "CASE match expected=VERIFIED(moved-to-obsidian) actual=VERIFIED(moved-to-obsidian) | VERDICT\\t/tmp/souji-s35-battery.wWzN6Z/source.md\\tSAFE\\tmoved-to-obsidian\\tledger-row ledger=/tmp/souji-s35-battery.wWzN6Z/ledger.tsv vault=/tmp/souji-s35-battery.wWzN6Z/vault/copy.md source-sha256=ad11a3662a0b cli=skipped(fallback) | exit=0"
+        },
+        {
+          "case": "tamper",
+          "expected": "NOT-VERIFIED(vault-hash-mismatch)",
+          "out": "CASE tamper expected=NOT-VERIFIED(vault-hash-mismatch) actual=NOT-VERIFIED(vault-hash-mismatch) | VERDICT\\t/tmp/souji-s35-battery.wWzN6Z/source.md\\tNOT-SAFE\\tnone\\tobsidian=vault-sha-mismatch vault-sha-mismatch vault-hash-mismatch vault=/tmp/souji-s35-battery.wWzN6Z/vault/copy.md ledger-sha=ad11a3662a0b actual=5cdb33e0f864 | exit=0"
+        },
+        {
+          "case": "src-tamper",
+          "expected": "NOT-VERIFIED(source-hash-mismatch)",
+          "out": "CASE src-tamper expected=NOT-VERIFIED(source-hash-mismatch) actual=NOT-VERIFIED(source-hash-mismatch) | VERDICT\\t/tmp/souji-s35-battery.wWzN6Z/source.md\\tNOT-SAFE\\tnone\\tobsidian=source-sha-mismatch source-sha-mismatch source-hash-mismatch ledger-sha=ad11a3662a0b actual=8d444c7db2b9 | exit=0"
+        },
+        {
+          "case": "absent",
+          "expected": "NOT-VERIFIED(vault-absent)",
+          "out": "CASE absent expected=NOT-VERIFIED(vault-absent) actual=NOT-VERIFIED(vault-absent) | VERDICT\\t/tmp/souji-s35-battery.wWzN6Z/source.md\\tNOT-SAFE\\tnone\\tobsidian=vault-unreachable vault-unreachable vault-absent vault=/tmp/souji-s35-battery.wWzN6Z/vault/copy.md | exit=0"
+        }
+      ],
+      "summary_out": "battery: 4/4 PASS"
+    },
+    "baseline_identity_and_syntax": {
+      "cmds": [
+        "sha256sum tools/souji-vault-verify.sh",
+        "stat -c 'mode=%a bytes=%s' tools/souji-vault-verify.sh",
+        "bash -n tools/souji-vault-verify.sh"
+      ],
+      "out": [
+        "d312263ac8ebc9e23555402dc5ae63167f78dcd01ddccc5ddcfa7623b85879e0  tools/souji-vault-verify.sh",
+        "mode=755 bytes=41550",
+        "bash -n exited 0 (no output)"
+      ],
+      "round_4_report_comparison": "Matches .ufo/reports/round-4/souji.md:39-40 recorded installed tool SHA-256 d312263a…"
+    }
+  },
+  "safety": {
+    "fleet_and_lane_read_only": true,
+    "only_lane_file_written": "census/round-5/seat-35.json",
+    "scratch": "/tmp only; fixture removed by EXIT trap",
+    "git_mutations": "none"
+  }
+}

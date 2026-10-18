@@ -36,12 +36,16 @@ tools/souji-verify.sh [--selftest] [--stale-days N] [--json] <path>...
      -- <path>` is an ancestor of the default branch ref (D1: resolve with
      `git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null
      | sed 's@^origin/@@'`; fallback: the single local
-     `refs/remotes/origin/*` branch ref if exactly one exists; fallback
-     'master' if it exists locally; else `NOT-SAFE(pushed-unverifiable)`).
+     `refs/remotes/origin/*` branch ref if exactly one exists; else
+     `NOT-SAFE(pushed-unverifiable)` — r5 amendment: local refs such as
+     `refs/heads/master` can NEVER establish a pushed receipt).
      NO `git fetch` — existing refs only.
    - `moved-to-obsidian`: row in `corpus/knowledge/obsidian-ledger.tsv`
      with matching source path AND source sha256 AND vault path AND vault
-     sha256 (`sha256sum` on both sides, vault side read-only).
+     sha256 (`sha256sum` on both sides, vault side read-only). r5
+     amendment: any symlink inside a digest scope fails closed
+     (`NOT-SAFE(symlink-present)`) — dropped `-type l` entries produced a
+     false-SAFE class.
    - `stale`: scratch type (`.scratch/`, `*.out`, `*.log`, checkpoint
      json/png, `*-draft.*`) AND zero live references (D3: `rg -l
      --no-ignore --basename <name> <repo> -g '!.git' -g

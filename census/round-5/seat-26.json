@@ -1,0 +1,130 @@
+{
+  "seat": "S26",
+  "kind": "missed-items-sweep",
+  "scope": "rounds 1-4 census artifacts, reports, verifier tools, and live-ledger discipline",
+  "agreement_counts": {
+    "sampled_primary_checks": "4/4 agree on the observed core outcome/count",
+    "confirmed_report_disagreement": 1,
+    "traceability_gaps": 2
+  },
+  "round_checks": [
+    {
+      "round": 1,
+      "verdict": "AGREE (counts)",
+      "evidence": [
+        {
+          "cmd": "python3 -c 'from pathlib import Path; base=Path(\"census\"); [print(n+\": \"+(\"present\" if (base/n).is_dir() else \"absent\")+\", seat_json=\"+str(len(list((base/n).glob(\"seat-*.json\"))))) for n in (\"round-1\",\"round-2\",\"round-3\",\"round-4\")]; p=base/\"round-1/census.tsv\"; print(\"round1_census_rows=\"+str(sum(1 for _ in p.open())-1))'",
+          "out": "round-1: present, seat_json=64; round1_census_rows=246"
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "verdict": "AGREE (tool behavior); census provenance gap",
+      "evidence": [
+        {
+          "cmd": "bash -n tools/souji-verify.sh && bash -n tools/souji-vault-verify.sh && sha256sum tools/souji-verify.sh tools/souji-vault-verify.sh",
+          "out": "7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820  tools/souji-verify.sh; d312263ac8ebc9e23555402dc5ae63167f78dcd01ddccc5ddcfa7623b85879e0  tools/souji-vault-verify.sh"
+        },
+        {
+          "cmd": "env HOME=/nonexistent bash tools/souji-verify.sh --selftest",
+          "out": "selftest: 24 checks, 0 failed"
+        },
+        {
+          "cmd": "if [ -d census/round-2 ]; then printf 'round2_dir=present\\n'; else printf 'round2_dir=absent\\n'; fi; git ls-tree --name-only HEAD census/round-2; printf 'round2_tree_lookup_exit=%s\\n' \"$?\"",
+          "out": "round2_dir=absent; git ls-tree emitted no path; round2_tree_lookup_exit=0"
+        }
+      ]
+    },
+    {
+      "round": 3,
+      "verdict": "AGREE (reported counts)",
+      "evidence": [
+        {
+          "cmd": "git -C /home/vgpnk/Projects/shokunin/lore-shokunin worktree list | wc -l; git -C /home/vgpnk/Projects/shokunin/game-dev-2d-shokunin worktree list | wc -l; awk 'NR>1 && NF {n++} END {print \"approval_rows=\" (n+0)}' census/round-3/operator-approval-list.tsv",
+          "out": "1; 4; approval_rows=96"
+        },
+        {
+          "cmd": "python3 -c 'from pathlib import Path; base=Path(\"census\"); [print(n+\": \"+(\"present\" if (base/n).is_dir() else \"absent\")+\", seat_json=\"+str(len(list((base/n).glob(\"seat-*.json\"))))) for n in (\"round-1\",\"round-2\",\"round-3\",\"round-4\")]; p=base/\"round-1/census.tsv\"; print(\"round1_census_rows=\"+str(sum(1 for _ in p.open())-1))'",
+          "out": "round-3: present, seat_json=64"
+        }
+      ]
+    },
+    {
+      "round": 4,
+      "verdict": "AGREE (verifier behavior); DISAGREE (vault-read-only report claim)",
+      "evidence": [
+        {
+          "cmd": "env HOME=/nonexistent bash tools/souji-vault-verify.sh --selftest",
+          "out": "selftest: 35 checks, 0 failed"
+        },
+        {
+          "cmd": "python3 -c 'from pathlib import Path; p=Path(\".ufo/reports/round-4/souji.md\"); print(\"66:\"+p.read_text().splitlines()[65])'",
+          "out": "66:- [~] No cross-domain bleed — vault read-only throughout; obsidian deferred to the operator; PROVINCE.md unchanged."
+        },
+        {
+          "cmd": "python3 -c 'import json; from pathlib import Path; d=json.loads(Path(\"census/round-4/seat-58-rail-breach.json\").read_text()); print(\"rail_verdict=\"+d[\"rail_verdict\"]); print(\"blast_radius=\"+d[\"blast_radius\"][\"vault_config\"]); print(\"live_ledger=\"+d[\"blast_radius\"][\"live_ledger\"]); q=json.loads(Path(\"tests/results/vadv-53.json\").read_text()); print(\"vadv_safety=\"+q[\"safety\"][\"vault_writes_by_this_seat\"])'",
+          "out": "rail_verdict=VIOLATED-THEN-REMEDIATED — report says real-vault read-only rule breached by a seat harness; blast_radius=3 .obsidian files re-mtimed at 14:10:31, core-plugins.json differs from vault repo HEAD; live_ledger=header-only, 1 line, sha256 3f7e9f2ab9e614464cb031d3f00a812a21f0e889f7666309a90d7784b75a9599; vadv_safety=app launch triggered by earlier harness bug, .obsidian/core-plugins.json and app.json re-mtimed"
+        },
+        {
+          "cmd": "bash -n tests/vault/adv53-harness.sh && sha256sum tests/vault/adv53-harness.sh",
+          "out": "ad00edbd8b8ad64c79f206866fdfe224bf77c5e944ed7aa6f5155a8b9f42abe5  tests/vault/adv53-harness.sh"
+        }
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "M1",
+      "severity": "traceability-gap",
+      "finding": "census/round-2/ is absent (and has no tracked HEAD entry), so no round-2 census seat fragments are available at the supplied round-artifact path. The round-2 report instead points to tests/results artifacts; this does not establish that the reported tool work is missing.",
+      "evidence": {
+        "cmd": "python3 -c 'from pathlib import Path; base=Path(\"census\"); [print(n+\": \"+(\"present\" if (base/n).is_dir() else \"absent\")+\", seat_json=\"+str(len(list((base/n).glob(\"seat-*.json\"))))) for n in (\"round-1\",\"round-2\",\"round-3\",\"round-4\")]; p=base/\"round-1/census.tsv\"; print(\"round1_census_rows=\"+str(sum(1 for _ in p.open())-1))'",
+        "out": "round-2: absent, seat_json=0"
+      }
+    },
+    {
+      "id": "M2",
+      "severity": "material-reporting-defect",
+      "finding": "Round-4 report line 66 says the vault was read-only throughout, but the independent S58 rail-breach fragment and the vadv-53 result both document the harness-launched GUI app and .obsidian config mtime/content changes. The report should record the incident and remediation. I did not re-run the hazardous adversarial harness; the current hardened source passes bash -n and its recorded SHA matches.",
+      "evidence": {
+        "cmd": "python3 -c 'import json; from pathlib import Path; d=json.loads(Path(\"census/round-4/seat-58-rail-breach.json\").read_text()); print(\"rail_verdict=\"+d[\"rail_verdict\"]); print(\"blast_radius=\"+d[\"blast_radius\"][\"vault_config\"]); print(\"live_ledger=\"+d[\"blast_radius\"][\"live_ledger\"]); q=json.loads(Path(\"tests/results/vadv-53.json\").read_text()); print(\"vadv_safety=\"+q[\"safety\"][\"vault_writes_by_this_seat\"])'",
+        "out": "rail_verdict=VIOLATED-THEN-REMEDIATED — the round's 'read-only over the real vault' rule was breached by a seat harness, detected by S58, self-documented and fixed by S53. No note loss; config-only side effect. Any future harness must be audited for command substitution in message strings before execution.\nblast_radius=3 files under .obsidian/ re-mtimed at 14:10:31; core-plugins.json differs from the vault repo HEAD (git diff: 'markdown-importer' key reordered); workspace.json already modified before this round (13:58 per S53).\nlive_ledger=corpus/knowledge/obsidian-ledger.tsv still header-only (1 line, sha256 3f7e9f2ab9e614464cb031d3f00a812a21f0e889f7666309a90d7784b75a9599).\nvadv_safety=none. NOTE: .obsidian/core-plugins.json and .obsidian/app.json carry mtime 2026-10-18 13:58:43 from the app launch triggered by an earlier bug in this harness (fixed; see harness_self_hardening). No notes were created or modified (58 .md files, unchanged)."
+      }
+    },
+    {
+      "id": "M3",
+      "severity": "unresolved-traceability-gap",
+      "finding": "Round-4 census/round-4 has 29 conventional seat-NN.json files (IDs 01-18, 20-24, 27, 29, 37-38, 40, 45) plus supplemental seat-58-rail-breach.json, while the report says 63/64 completed. Some evidence is in tests/results; 34 reported completions lack a conventional seat-NN.json here. This is a traceability mismatch, not proof those seats failed.",
+      "evidence": {
+        "cmd": "python3 -c 'from pathlib import Path; import re; d=Path(\"census/round-4\"); names=sorted(p.name for p in d.glob(\"seat-*.json\")); ordinary=[n for n in names if re.fullmatch(r\"seat-\\d{2}\\.json\", n)]; extra=[n for n in names if n not in ordinary]; print(\"seat_star_files=\"+str(len(names))); print(\"standard_seat_files=\"+str(len(ordinary))+\" ids=\"+\",\".join(n[5:7] for n in ordinary)); print(\"supplemental=\"+\",\".join(extra))'",
+        "out": "seat_star_files=30; standard_seat_files=29 ids=01,02,03,04,05,06,07,08,09,10,11,12,13,14,15,16,17,18,20,21,22,23,24,27,29,37,38,40,45; supplemental=seat-58-rail-breach.json"
+      }
+    }
+  ],
+  "live_ledger": {
+    "verdict": "PASS: header-only; no live row",
+    "evidence": {
+      "cmd": "wc -l corpus/knowledge/obsidian-ledger.tsv; sha256sum corpus/knowledge/obsidian-ledger.tsv; awk 'NR==1 {next} NF {n++} END {print \"nonheader_rows=\" (n+0)}' corpus/knowledge/obsidian-ledger.tsv",
+      "out": "1 corpus/knowledge/obsidian-ledger.tsv; 3f7e9f2ab9e614464cb031d3f00a812a21f0e889f7666309a90d7784b75a9599  corpus/knowledge/obsidian-ledger.tsv; nonheader_rows=0"
+    }
+  },
+  "live_fail_closed_probe": {
+    "verdict": "AGREE: both verifier versions remain NOT-SAFE on kotodama",
+    "evidence": [
+      {
+        "cmd": "SHOKUNIN_ROOT=/home/vgpnk/Projects/shokunin tools/souji-verify.sh --json /home/vgpnk/Projects/shokunin/kotodama-shokunin",
+        "out": "{\"path\":\"/home/vgpnk/Projects/shokunin/kotodama-shokunin\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"unpushed\",\"evidence\":\"unpushed=47 dirty=18\"}"
+      },
+      {
+        "cmd": "SHOKUNIN_ROOT=/home/vgpnk/Projects/shokunin tools/souji-vault-verify.sh --fallback --json /home/vgpnk/Projects/shokunin/kotodama-shokunin",
+        "out": "{\"path\":\"/home/vgpnk/Projects/shokunin/kotodama-shokunin\",\"verdict\":\"NOT-SAFE\",\"verified\":\"NOT-VERIFIED(unpushed)\",\"receipt\":\"unpushed\",\"reason\":\"unpushed\",\"evidence\":\"unpushed=47 dirty=18\"}"
+      }
+    ],
+    "note": "Counts now 47/18 versus the round-2 report snapshot 42/14-15; verdict remains NOT-SAFE, consistent with ongoing worktree changes rather than a false-SAFE."
+  },
+  "rails": {
+    "write_scope": "Only this assigned fragment was written; tool fixtures used selftest-owned /tmp scratch. No prune/remove or git history operation was run; no .ufo state/watchdog or operator config accessed.",
+    "hazardous_harness": "Not re-executed; static syntax check only."
+  }
+}

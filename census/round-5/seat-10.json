@@ -1,0 +1,98 @@
+{
+  "seat": "S10",
+  "role": "verdict audit — operator approval list consistency",
+  "round": 5,
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "repo_head": "48a64d8",
+  "assignment": "Check census/round-3/operator-approval-list.tsv: all 96 data-row paths still exist; run tools/souji-verify.sh on first, last, and six random physical data-line numbers and expect SAFE(pushed).",
+  "verdict": "AGREE with round-3 approval-list claim on this audit: all 96 paths exist; sample 8/8 independently re-verify SAFE(pushed); no defect found.",
+  "agreement": {
+    "round3_claim": "../.ufo/reports/round-3/souji.md, Before → after measurements: 96 unique approve-remove rows, all SAFE/pushed, 0 false-SAFE",
+    "audited_claims": 1,
+    "agree": 1,
+    "disagree": 0,
+    "scope_note": "Only the required eight-row SAFE(pushed) sample was re-verified; this does not claim all 96 rows were re-run through the verifier."
+  },
+  "counts": {
+    "list_physical_lines": 97,
+    "header_rows": 1,
+    "data_rows": 96,
+    "paths_existing": 96,
+    "paths_missing": 0,
+    "sampled_rows": 8,
+    "sample_safe_pushed": 8,
+    "sample_not_safe_or_other_receipt": 0,
+    "defects_found": 0
+  },
+  "sample": {
+    "selection": "Physical line 2 (first data row), line 97 (last data row), plus six unique random physical line numbers selected with shuf -i 3-96 -n 6.",
+    "selected_physical_line_numbers": [2, 44, 48, 66, 72, 73, 76, 97],
+    "results": [
+      {
+        "line": 2,
+        "path": "/home/vgpnk/Projects/shokunin/.ufo/interactive-l1-20261015T050057Z/launch-chousa.json",
+        "result": "SAFE(pushed)",
+        "evidence": "intro=b2f2efae7549 ref=refs/remotes/origin/master ancestor=yes"
+      },
+      {
+        "line": 44,
+        "path": "/home/vgpnk/Projects/shokunin/.ufo/interactive-l1-20261015T050057Z/surface/mado.txt",
+        "result": "SAFE(pushed)",
+        "evidence": "intro=b2f2efae7549 ref=refs/remotes/origin/master ancestor=yes"
+      },
+      {
+        "line": 48,
+        "path": "/home/vgpnk/Projects/shokunin/.ufo/interactive-l1-20261015T050057Z/surface/tameshi.txt",
+        "result": "SAFE(pushed)",
+        "evidence": "intro=b2f2efae7549 ref=refs/remotes/origin/master ancestor=yes"
+      },
+      {
+        "line": 66,
+        "path": "/home/vgpnk/Projects/shokunin/.ufo/waves/aggregator-r10/before.json",
+        "result": "SAFE(pushed)",
+        "evidence": "intro=b2f2efae7549 ref=refs/remotes/origin/master ancestor=yes"
+      },
+      {
+        "line": 72,
+        "path": "/home/vgpnk/Projects/shokunin/.ufo/waves/aggregator-r10/seats/scout.md",
+        "result": "SAFE(pushed)",
+        "evidence": "intro=b2f2efae7549 ref=refs/remotes/origin/master ancestor=yes"
+      },
+      {
+        "line": 73,
+        "path": "/home/vgpnk/Projects/shokunin/.ufo/waves/aggregator-r10/seats/scribe.md",
+        "result": "SAFE(pushed)",
+        "evidence": "intro=b2f2efae7549 ref=refs/remotes/origin/master ancestor=yes"
+      },
+      {
+        "line": 76,
+        "path": "/home/vgpnk/Projects/shokunin/.ufo/l0-recovery-20261015T054007Z/stop-verification.json",
+        "result": "SAFE(pushed)",
+        "evidence": "intro=b2f2efae7549 ref=refs/remotes/origin/master ancestor=yes"
+      },
+      {
+        "line": 97,
+        "path": "/home/vgpnk/Projects/shokunin/.ufo/waves/round-14/registry-home-rerun/scribe.md",
+        "result": "SAFE(pushed)",
+        "evidence": "intro=b2f2efae7549 ref=refs/remotes/origin/master ancestor=yes"
+      }
+    ]
+  },
+  "commands": [
+    {
+      "command": "python3 -c 'import csv, pathlib, sys; p=pathlib.Path(sys.argv[1]); rows=list(csv.DictReader(p.open(), delimiter=\"\\t\")); missing=[r[\"path\"] for r in rows if not pathlib.Path(r[\"path\"]).exists()]; print(f\"data_rows={len(rows)} existing={len(rows)-len(missing)} missing={len(missing)}\"); print(\"missing=\" + repr(missing))' census/round-3/operator-approval-list.tsv",
+      "observed_stdout": "data_rows=96 existing=96 missing=0\nmissing=[]"
+    },
+    {
+      "command": "set -euo pipefail\nfile=census/round-3/operator-approval-list.tsv\nmapfile -t samples < <({ printf '2\\n97\\n'; shuf -i 3-96 -n 6; } | sort -n)\nprintf 'selected_physical_line_numbers=%s\\n' \"${samples[*]}\"\npassed=0\nfor n in \"${samples[@]}\"; do\n  path=$(awk -F '\\t' -v n=\"$n\" 'NR==n { print $1 }' \"$file\")\n  printf 'sample_line_%s_path=%s\\n' \"$n\" \"$path\"\n  out=$(tools/souji-verify.sh \"$path\")\n  printf '%s\\n' \"$out\"\n  IFS=$'\\t' read -r tag reported verdict receipt evidence <<< \"$out\"\n  if [[ \"$tag\" != VERDICT || \"$reported\" != \"$path\" || \"$verdict\" != SAFE || \"$receipt\" != pushed ]]; then\n    printf 'sample_line_%s_check=FAIL\\n' \"$n\"\n    exit 1\n  fi\n  passed=$((passed + 1))\ndone\nprintf 'sample_results=%s/8 SAFE(pushed)\\n' \"$passed\"",
+      "observed_stdout": "selected_physical_line_numbers=2 44 48 66 72 73 76 97\nsample_line_2_path=/home/vgpnk/Projects/shokunin/.ufo/interactive-l1-20261015T050057Z/launch-chousa.json\nVERDICT\\t/home/vgpnk/Projects/shokunin/.ufo/interactive-l1-20261015T050057Z/launch-chousa.json\\tSAFE\\tpushed\\tintro=b2f2efae7549 ref=refs/remotes/origin/master ancestor=yes\nsample_line_44_path=/home/vgpnk/Projects/shokunin/.ufo/interactive-l1-20261015T050057Z/surface/mado.txt\nVERDICT\\t/home/vgpnk/Projects/shokunin/.ufo/interactive-l1-20261015T050057Z/surface/mado.txt\\tSAFE\\tpushed\\tintro=b2f2efae7549 ref=refs/remotes/origin/master ancestor=yes\nsample_line_48_path=/home/vgpnk/Projects/shokunin/.ufo/interactive-l1-20261015T050057Z/surface/tameshi.txt\nVERDICT\\t/home/vgpnk/Projects/shokunin/.ufo/interactive-l1-20261015T050057Z/surface/tameshi.txt\\tSAFE\\tpushed\\tintro=b2f2efae7549 ref=refs/remotes/origin/master ancestor=yes\nsample_line_66_path=/home/vgpnk/Projects/shokunin/.ufo/waves/aggregator-r10/before.json\nVERDICT\\t/home/vgpnk/Projects/shokunin/.ufo/waves/aggregator-r10/before.json\\tSAFE\\tpushed\\tintro=b2f2efae7549 ref=refs/remotes/origin/master ancestor=yes\nsample_line_72_path=/home/vgpnk/Projects/shokunin/.ufo/waves/aggregator-r10/seats/scout.md\nVERDICT\\t/home/vgpnk/Projects/shokunin/.ufo/waves/aggregator-r10/seats/scout.md\\tSAFE\\tpushed\\tintro=b2f2efae7549 ref=refs/remotes/origin/master ancestor=yes\nsample_line_73_path=/home/vgpnk/Projects/shokunin/.ufo/waves/aggregator-r10/seats/scribe.md\nVERDICT\\t/home/vgpnk/Projects/shokunin/.ufo/waves/aggregator-r10/seats/scribe.md\\tSAFE\\tpushed\\tintro=b2f2efae7549 ref=refs/remotes/origin/master ancestor=yes\nsample_line_76_path=/home/vgpnk/Projects/shokunin/.ufo/l0-recovery-20261015T054007Z/stop-verification.json\nVERDICT\\t/home/vgpnk/Projects/shokunin/.ufo/l0-recovery-20261015T054007Z/stop-verification.json\\tSAFE\\tpushed\\tintro=b2f2efae7549 ref=refs/remotes/origin/master ancestor=yes\nsample_line_97_path=/home/vgpnk/Projects/shokunin/.ufo/waves/round-14/registry-home-rerun/scribe.md\nVERDICT\\t/home/vgpnk/Projects/shokunin/.ufo/waves/round-14/registry-home-rerun/scribe.md\\tSAFE\\tpushed\\tintro=b2f2efae7549 ref=refs/remotes/origin/master ancestor=yes\nsample_results=8/8 SAFE(pushed)"
+    }
+  ],
+  "defects": [],
+  "read_only_scope": "No files were read for contents outside the lane; approval-list path existence was checked with Path.exists(), not file-content reads. No worktree, git data, or fleet files were modified; the only write is this assigned seat fragment.",
+  "preamble": {
+    "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+    "fragment_path": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-5/seat-10.json",
+    "mode": "read-only audit; only assigned fragment written"
+  }
+}

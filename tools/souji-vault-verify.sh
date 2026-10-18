@@ -109,6 +109,12 @@ file_sha() { [ -f "$1" ] || return 1; sha256sum -- "$1" 2>/dev/null | cut -d' ' 
 dir_digest() {
   local d=$1
   [ -d "$d" ] || return 1
+  # r5 fix: any symlink in the digest scope fails closed (return 2);
+  # silently dropping -type l entries produced a false-SAFE
+  # moved-to-obsidian class (r5 verification finding).
+  if ( cd "$d" && find . -path './.git' -prune -o -type l -print -quit 2>/dev/null | grep -q . ); then
+    return 2
+  fi
   ( cd "$d" && find . -path './.git' -prune -o -type f -print0 \
       | sort -z | xargs -0 -r sha256sum | sha256sum | cut -d' ' -f1 ) 2>/dev/null
 }
@@ -261,7 +267,10 @@ try_ledger() { # $1 target (canonical), $2 isdir 0/1, $3 raw arg
         NOTES+=("row-incomplete missing-or-nonhex source-sha256 col2")
         reason="${reason:-row-incomplete}"; continue
       fi
-      actual=$(dir_digest "$target" || true)
+      actual=$(dir_digest "$target"); _drc=$?
+      if [ "$_drc" = 2 ]; then
+        NOTES+=("obsidian=symlink-present symlink-present scope=source"); reason="${reason:-symlink-present}"; continue
+      fi
       if [ "$actual" != "$ss" ]; then
         NOTES+=("obsidian=source-sha-mismatch source-sha-mismatch source-hash-mismatch ledger-sha=${ss:0:12} actual=${actual:0:12}")
         reason="${reason:-source-hash-mismatch}"; continue
@@ -274,7 +283,10 @@ try_ledger() { # $1 target (canonical), $2 isdir 0/1, $3 raw arg
         NOTES+=("row-incomplete missing-or-nonhex vault-sha256 col4")
         reason="${reason:-row-incomplete}"; continue
       fi
-      lv=$(dir_digest "$vp" || true)
+      lv=$(dir_digest "$vp"); _drc=$?
+      if [ "$_drc" = 2 ]; then
+        NOTES+=("obsidian=symlink-present symlink-present scope=vault vault=$vp"); reason="${reason:-symlink-present}"; continue
+      fi
       if [ "$lv" != "$vs" ]; then
         NOTES+=("obsidian=vault-sha-mismatch vault-sha-mismatch vault-hash-mismatch vault=$vp ledger-sha=${vs:0:12} actual=${lv:0:12}")
         reason="${reason:-vault-hash-mismatch}"; continue
@@ -370,9 +382,8 @@ resolve_default_ref() {
   refs=$(git -C "$repo" for-each-ref --format='%(refname)' refs/remotes/origin 2>/dev/null | grep -v '^refs/remotes/origin/HEAD$' || true)
   n=$(printf '%s\n' "$refs" | grep -c . || true)
   if [ "$n" = 1 ]; then printf '%s\n' "$refs"; return 0; fi
-  if git -C "$repo" show-ref --verify --quiet refs/heads/master 2>/dev/null; then
-    printf 'refs/heads/master\n'; return 0
-  fi
+  # r5 fix: no remote-tracking ref -> pushed is unverifiable. Local refs
+  # (refs/heads/master) can NEVER establish a pushed receipt.
   return 1
 }
 

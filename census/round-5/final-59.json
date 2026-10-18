@@ -1,0 +1,90 @@
+{
+  "seat": "S59",
+  "round": 5,
+  "role": "final judge — verification of rounds 1–4",
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "assignment": "Independently audit the r1 census, r2 verifier, r3 prune evidence, and r4 vault verifier.",
+  "verdict": "MIXED — r1 and r3 claims agree; r2 and r4 artifacts pass their checks but expose an unsafe local-master fallback, and r4's read-only attestation conflicts with its own incident evidence.",
+  "agreement_counts": {
+    "audited_rounds": 4,
+    "agree": 2,
+    "mixed": 2,
+    "disagree": 0
+  },
+  "round_verdicts": {
+    "round_1_census": {
+      "verdict": "AGREE",
+      "summary": "64/64 seat fragments and 246 evidence rows match the summary; all 109 files added by b2f2efa occur in the census and their introducing commits are ancestors of origin/master."
+    },
+    "round_2_tool_build": {
+      "verdict": "MIXED — literal spec conformance passes; safety semantics have an open defect",
+      "summary": "Installed souji-verify.sh is byte-identical to impl-12 and its 24-check selftest passes. Independently reproduced J3: with zero origin refs, AGENTS.md is reported SAFE(pushed) via refs/heads/master. The binding spec explicitly permits this local-master fallback, so this is a semantic/spec safety gap rather than a literal implementation mismatch."
+    },
+    "round_3_prunes": {
+      "verdict": "AGREE",
+      "summary": "The consolidated actionable list is 96/96 unique, present, and has introducing commits ancestral to origin/master. The four shards contain 111 rows; 15 are already-removed no-ops, as the final report states. Current worktree counts and three withheld unpushed branches match the report."
+    },
+    "round_4_vault_verify": {
+      "verdict": "MIXED — installed verifier passes; semantic and rail findings remain",
+      "summary": "Installed vault verifier is byte-identical to impl-20 and passes all 35 selftests. It reproduces the same SAFE(pushed) local-master fallback with no origin refs. Separately, the round report's 'vault read-only throughout' claim is contradicted by S53/S58 artifacts documenting an app launch and .obsidian config mtime changes from an earlier harness bug; the artifacts report no note changes and remediation."
+    }
+  },
+  "defects_found": [
+    {
+      "id": "J3-local-master-fallback",
+      "severity": "high",
+      "scope": ["round 2 installed tool", "round 4 installed tool"],
+      "finding": "Both pushed verifiers accept refs/heads/master as proof of a pushed receipt when refs/remotes/origin has no refs. On this lane, AGENTS.md's introducing commit is only shown to be an ancestor of the local master ref; the tools nevertheless emit SAFE(pushed)/VERIFIED(pushed). This cannot establish that the commit reached a remote. The current r2 spec does allow the local-master fallback, so amend the policy/spec and both tools before relying on SAFE(pushed) as proof of push.",
+      "reproduction": "origin_ref_count=0; intro=ccbb1326204bbf21034820430e9923cb96ef4c17; ancestor_of_local_master_exit=0; r2 output SAFE pushed with ref=refs/heads/master; r4 output SAFE pushed and VERIFIED(pushed)."
+    },
+    {
+      "id": "R4-read-only-attestation",
+      "severity": "medium",
+      "finding": "The r4 report says the vault was read-only throughout. tests/results/vadv-53.json itself records .obsidian/core-plugins.json and app.json mtime changes from an app launch triggered by an earlier harness bug; census/round-4/seat-58-rail-breach.json records VIOLATED-THEN-REMEDIATED and identifies backtick command substitution. The artifacts say no markdown notes changed; treat this as a historical configuration-write incident and correct the broad attestation. The live incident was not re-run in this read-only audit.",
+      "evidence": "Python extraction output recorded below: report claim says read-only throughout; S53 records the app-launch mtime; S58 records the rail breach and command-substitution cause. Current harness SHA matches the hardened SHA ad00edbd8b8ad64c79f206866fdfe224bf77c5e944ed7aa6f5155a8b9f42abe5."
+    }
+  ],
+  "evidence": [
+    {
+      "command": "python3 -c 'import csv,glob,collections,json; rows=list(csv.DictReader(open(\"census/round-1/census.tsv\"),delimiter=\"\\t\")); print(\"seat_fragments=%d\" % len(glob.glob(\"census/round-1/seat-*.json\"))); print(\"rows=%d verdicts=%s\" % (len(rows), dict(collections.Counter(r[\"verdict\"] for r in rows)))); print(\"unique_paths=%d\" % len({r[\"path\"] for r in rows})); s=json.load(open(\"census/round-1/census-summary.json\")); print(\"summary_fragments=%s summary_rows=%s summary_verdicts=%s\" % (s[\"fragments\"],s[\"rows_total\"],s[\"final_verdicts\"]]))'",
+      "observed_output": "seat_fragments=64; rows=246 verdicts={'SAFE': 160, 'NOT-SAFE': 86}; unique_paths=218; summary_fragments=64/64 summary_rows=246 summary_verdicts={'SAFE': 160, 'NOT-SAFE': 86}"
+    },
+    {
+      "command": "python3 -c \"import csv,os,subprocess; root='/home/vgpnk/Projects/shokunin'; seen={r['path'] for r in csv.DictReader(open('census/round-1/census.tsv'),delimiter=chr(9))}; added=subprocess.check_output(['git','-C',root,'diff-tree','--no-commit-id','--name-only','-r','--diff-filter=A','b2f2efa'],text=True).splitlines(); missing=[p for p in added if os.path.join(root,p) not in seen and p not in seen]; ok=sum(bool((i:=subprocess.run(['git','-C',root,'log','--diff-filter=A','--format=%H','-1','--',p],capture_output=True,text=True).stdout.strip())) and subprocess.run(['git','-C',root,'merge-base','--is-ancestor',i.splitlines()[0],'refs/remotes/origin/master']).returncode==0 for p in added); print(f'added_paths={len(added)} census_unique_paths={len(seen)} missing_from_census={len(missing)} intro_ancestors_of_origin_master={ok}/{len(added)}')\"",
+      "observed_output": "added_paths=109 census_unique_paths=218 missing_from_census=0 intro_ancestors_of_origin_master=109/109"
+    },
+    {
+      "command": "bash tools/souji-verify.sh --selftest",
+      "observed_output": "selftest: 24 checks, 0 failed (F1–F10, E1–E8, H1–H6 as reported by the tool)"
+    },
+    {
+      "command": "bash tools/souji-vault-verify.sh --selftest",
+      "observed_output": "selftest: 35 checks, 0 failed"
+    },
+    {
+      "command": "sha256sum tools/souji-verify.sh tools/souji-verify.impl-12.sh tools/souji-vault-verify.sh tools/souji-vault-verify.impl-20.sh && cmp -s tools/souji-verify.sh tools/souji-verify.impl-12.sh; printf 'cmp r2 exit=%s\\n' \"$?\"; cmp -s tools/souji-vault-verify.sh tools/souji-vault-verify.impl-20.sh; printf 'cmp r4 exit=%s\\n' \"$?\"",
+      "observed_output": "7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820  tools/souji-verify.sh; same for impl-12; d312263ac8ebc9e23555402dc5ae63167f78dcd01ddccc5ddcfa7623b85879e0  tools/souji-vault-verify.sh; same for impl-20; cmp r2 exit=0; cmp r4 exit=0"
+    },
+    {
+      "command": "printf 'origin_ref_count='; git -C /home/vgpnk/Projects/shokunin/souji-shokunin for-each-ref --format='%(refname)' refs/remotes/origin | wc -l; intro=$(git -C /home/vgpnk/Projects/shokunin/souji-shokunin log --diff-filter=A --format=%H -1 -- AGENTS.md); printf 'intro=%s\\n' \"$intro\"; git -C /home/vgpnk/Projects/shokunin/souji-shokunin merge-base --is-ancestor \"$intro\" refs/heads/master; printf 'ancestor_of_local_master_exit=%s\\n' \"$?\"; bash tools/souji-verify.sh /home/vgpnk/Projects/shokunin/souji-shokunin/AGENTS.md",
+      "observed_output": "origin_ref_count=0; intro=ccbb1326204bbf21034820430e9923cb96ef4c17; ancestor_of_local_master_exit=0; VERDICT <AGENTS.md> SAFE pushed intro=ccbb1326204b ref=refs/heads/master ancestor=yes"
+    },
+    {
+      "command": "bash tools/souji-vault-verify.sh /home/vgpnk/Projects/shokunin/souji-shokunin/AGENTS.md",
+      "observed_output": "VERDICT <AGENTS.md> SAFE pushed intro=ccbb1326204b ref=refs/heads/master ancestor=yes cli=unavailable; VERIFIED(pushed)"
+    },
+    {
+      "command": "python3 -c \"import csv,glob,os,subprocess; root='/home/vgpnk/Projects/shokunin'; rows=list(csv.DictReader(open('census/round-3/operator-approval-list.tsv'),delimiter=chr(9))); paths=[r['path'] for r in rows]; intro=lambda p:subprocess.run(['git','-C',root,'log','--diff-filter=A','--format=%H','-1','--',os.path.relpath(p,root)],capture_output=True,text=True).stdout.strip().splitlines(); chk=[(p,intro(p)) for p in paths]; missing=[p for p in paths if not os.path.exists(p)]; no_intro=[p for p,i in chk if not i]; nonancestor=[p for p,i in chk if i and subprocess.run(['git','-C',root,'merge-base','--is-ancestor',i[0],'refs/remotes/origin/master']).returncode]; shards=sum(sum(1 for _ in csv.DictReader(open(f),delimiter=chr(9))) for f in glob.glob('census/round-3/approvals-*.tsv')); print(f'rows={len(rows)} distinct={len(set(paths))} missing={len(missing)} intro_missing={len(no_intro)} nonancestor={len(nonancestor)} shard_rows={shards}')\"",
+      "observed_output": "rows=96 distinct=96 missing=0 intro_missing=0 nonancestor=0 shard_rows=111"
+    },
+    {
+      "command": "for b in wt-r98 wt-r99 wt-r100; do printf '%s unpushed=' \"$b\"; git -C /home/vgpnk/Projects/shokunin/game-dev-2d-shokunin log --oneline \"$b\" --not --remotes | wc -l; done; printf 'lore_worktrees='; git -C /home/vgpnk/Projects/shokunin/lore-shokunin worktree list --porcelain | awk '/^worktree / {n++} END {print n+0}'; printf 'gd2d_worktrees='; git -C /home/vgpnk/Projects/shokunin/game-dev-2d-shokunin worktree list --porcelain | awk '/^worktree / {n++} END {print n+0}'",
+      "observed_output": "wt-r98 unpushed=1\\nwt-r99 unpushed=1\\nwt-r100 unpushed=1\\nlore_worktrees=1\\ngd2d_worktrees=4"
+    },
+    {
+      "command": "python3 -c \"import json; from pathlib import Path; report=Path('/home/vgpnk/Projects/shokunin/.ufo/reports/round-4/souji.md').read_text().splitlines(); print('round4_readonly_claim='+next(x.strip() for x in report if 'vault read-only throughout' in x)); d=json.load(open('tests/results/vadv-53.json')); print('S53_real_vault='+d['safety']['real_vault']); print('S53_writes='+d['safety']['vault_writes_by_this_seat']); rail=json.load(open('census/round-4/seat-58-rail-breach.json')); print('S58_rail_verdict='+rail['rail_verdict'])\"; sha256sum tests/vault/adv53-harness.sh",
+      "observed_output": "round4_readonly_claim=- [~] No cross-domain bleed — vault read-only throughout; obsidian deferred to the operator; PROVINCE.md unchanged.\\nS53_real_vault=read-only throughout; only sha256sum/stat/git-status/find issued\\nS53_writes=none. NOTE: .obsidian/core-plugins.json and .obsidian/app.json carry mtime 2026-10-18 13:58:43 from the app launch triggered by an earlier bug in this harness (fixed; see harness_self_hardening). No notes were created or modified (58 .md files, unchanged).\\nS58_rail_verdict=VIOLATED-THEN-REMEDIATED — the round's 'read-only over the real vault' rule was breached by a seat harness, detected by S58, self-documented and fixed by S53. No note loss; config-only side effect. Any future harness must be audited for command substitution in message strings before execution.\\nad00edbd8b8ad64c79f206866fdfe224bf77c5e944ed7aa6f5155a8b9f42abe5  tests/vault/adv53-harness.sh"
+    }
+  ],
+  "scope": "Read-only across fleet/lane/siblings; no prune or deletion commands run. Both selftests used their own temporary /tmp fixtures. Only this assigned fragment was written. No live vault probe was repeated."
+}

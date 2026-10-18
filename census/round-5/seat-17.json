@@ -1,0 +1,180 @@
+{
+  "seat": "S17",
+  "round": 5,
+  "role": "missed-items sweep",
+  "kind": "coverage-audit",
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "assignment": "Independently reconcile rounds 1-4 coverage and audit current fleet worktree registrations without modifying fleet/lane/sibling repos.",
+  "agreement_counts": {
+    "rounds_fully_agree": 3,
+    "rounds_partial": 1,
+    "false_safe_found": 0,
+    "confirmed_coverage_or_spec_gaps": 1
+  },
+  "round_verdicts": [
+    {
+      "round": 1,
+      "verdict": "AGREE",
+      "finding": "The final census coverage claim is independently reproduced: 64/64 seat JSONs parse, 246 census rows exist, and every path touched by b2f2efa is present in the census path set (109/109).",
+      "evidence": [
+        {
+          "cmd": "python3 -c 'from pathlib import Path; import json,csv; root=Path(\"census\");\nfor rn in (1,3,4):\n d=root/f\"round-{rn}\"; fs=sorted(d.glob(\"seat-*.json\")); ids=[]; bad=[]\n for f in fs:\n  try: ids.append(json.loads(f.read_text()).get(\"seat\"))\n  except Exception as e: bad.append((f.name,str(e)))\n print(f\"round-{rn}: seat_json={len(fs)} seat_ids={len([x for x in ids if x])} bad_json={bad}\")\n if rn==1:\n  with (d/\"census.tsv\").open() as h: print(f\"round-1 rows={sum(1 for _ in csv.DictReader(h,delimiter=chr(9)))}\")\n if rn==3:\n  with (d/\"operator-approval-list.tsv\").open() as h: print(f\"round-3 approval_data_rows={sum(1 for _ in csv.DictReader(h,delimiter=chr(9)))}\")\nprint(\"round-2 directory:\", (root/\"round-2\").exists())'",
+          "out": "round-1: seat_json=64 seat_ids=64 bad_json=[]\nround-1 rows=246\nround-2 directory: False"
+        },
+        {
+          "cmd": "python3 -c 'import csv,subprocess; from pathlib import Path; root=\"/home/vgpnk/Projects/shokunin\"; lane=Path(root)/\"souji-shokunin\"; expected=set(filter(None,subprocess.check_output([\"git\",\"-C\",root,\"show\",\"--format=\",\"--name-only\",\"b2f2efa\"],text=True).splitlines())); rows=list(csv.DictReader((lane/\"census/round-1/census.tsv\").open(),delimiter=\"\\t\")); observed={r[\"path\"].removeprefix(root+\"/\") if r[\"path\"].startswith(root+\"/\") else r[\"path\"] for r in rows}; print(\"commit_paths={} matched={} missing={}\".format(len(expected),len(expected & observed),sorted(expected-observed)))'",
+          "out": "commit_paths=109 matched=109 missing=[]"
+        }
+      ],
+      "source": "../.ufo/reports/round-1/souji.md:16-21,32-34; census/round-1/census-summary.json"
+    },
+    {
+      "round": 2,
+      "verdict": "PARTIAL",
+      "finding": "Agree that the installed impl-12 passes its selftest and is hash-identical to INSTALL.json; disagree with the stronger 'per spec' conformance claim because the spec allows only Bash/coreutils/Git/rg, while the installed script invokes grep, find, and xargs. The selftest does not check the dependency allowlist. No false-SAFE is established by this finding.",
+      "evidence": [
+        {
+          "cmd": "bash tools/souji-verify.sh --selftest",
+          "out": "selftest: 24 checks, 0 failed"
+        },
+        {
+          "cmd": "sha256sum tools/souji-verify.sh",
+          "out": "7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820  tools/souji-verify.sh"
+        },
+        {
+          "cmd": "python3 -c 'from pathlib import Path; import re; p=Path(\"tools/souji-verify.sh\");\nfor i,line in enumerate(p.read_text().splitlines(),1):\n if re.search(r\"\\b(grep|find|xargs)\\b\",line): print(f\"{i}:{line.strip()}\")'",
+          "out": "144:refs=$(git -C \"$repo\" for-each-ref --format='%(refname)' refs/remotes/origin 2>/dev/null | grep -v '^refs/remotes/origin/HEAD$' || true)\n145:n=$(printf '%s\\n' \"$refs\" | grep -c . || true)\n157:( cd \"$d\" && find . -path './.git' -prune -o -type f -print0 \\\n158:| sort -z | xargs -0 -r sha256sum | sha256sum | cut -d' ' -f1 ) 2>/dev/null\n209:n=$(printf '%s\\n' \"$out\" | grep -c . || true)\n333:dirty=$(printf '%s\\n' \"$st\" | grep -c . || true)\n623:n=$(grep -nE '^[^#]*git +(-C +[^ ]+ +)?(fetch|push|commit|branch|checkout|reset|rebase)( |$)' \"$SELF\" | wc -l || true)"
+        },
+        {
+          "cmd": "Read tools/souji-verify.spec.md:3-4 and tools/souji-verify.sh:144-158,209,333,623; Read tests/results/INSTALL.json:2-5",
+          "out": "Spec: 'bash + coreutils + git + rg only'. Source contains the listed grep/find/xargs invocations. INSTALL.json selects impl-12, installed SHA 7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820 (matches sha256sum)."
+        }
+      ],
+      "source": "tools/souji-verify.spec.md:3-4; tools/souji-verify.sh:144-158,209,333,623; tests/results/INSTALL.json"
+    },
+    {
+      "round": 3,
+      "verdict": "AGREE",
+      "finding": "All 64 seat fragments parse. The approval list is 96 distinct paths, exactly the SAFE subset of 111 distinct shard rows; the remaining 15 are NOT-SAFE(unreachable) no-op rows. Current worktree counts still match the post-prune report: lore=1 and game-dev-2d=4 (main plus three intentionally retained named-branch registrations).",
+      "evidence": [
+        {
+          "cmd": "python3 -c 'from pathlib import Path; import json,csv; root=Path(\"census\");\nfor rn in (1,3,4):\n d=root/f\"round-{rn}\"; fs=sorted(d.glob(\"seat-*.json\")); ids=[]; bad=[]\n for f in fs:\n  try: ids.append(json.loads(f.read_text()).get(\"seat\"))\n  except Exception as e: bad.append((f.name,str(e)))\n print(f\"round-{rn}: seat_json={len(fs)} seat_ids={len([x for x in ids if x])} bad_json={bad}\")\n if rn==1:\n  with (d/\"census.tsv\").open() as h: print(f\"round-1 rows={sum(1 for _ in csv.DictReader(h,delimiter=chr(9)))}\")\n if rn==3:\n  with (d/\"operator-approval-list.tsv\").open() as h: print(f\"round-3 approval_data_rows={sum(1 for _ in csv.DictReader(h,delimiter=chr(9)))}\")\nprint(\"round-2 directory:\", (root/\"round-2\").exists())'",
+          "out": "round-3: seat_json=64 seat_ids=64 bad_json=[]\nround-3 approval_data_rows=96"
+        },
+        {
+          "cmd": "python3 -c 'import csv,collections; from pathlib import Path; d=Path(\"census/round-3\"); a=list(csv.DictReader((d/\"operator-approval-list.tsv\").open(),delimiter=\"\\t\")); shards=[r for n in (53,54,55,56) for r in csv.DictReader((d/f\"approvals-{n}.tsv\").open(),delimiter=\"\\t\")]; A={r[\"path\"] for r in a}; S={r[\"path\"] for r in shards}; print(\"approval_rows={} distinct={} shard_rows={} distinct={} duplicate_rows={}\".format(len(a),len(A),len(shards),len(S),len(shards)-len(S))); print(\"shard_verdicts={}\".format(dict(collections.Counter(r[\"verdict\"] for r in shards)))); print(\"approval_paths_match_shard_SAFE={}\".format(A=={r[\"path\"] for r in shards if r[\"verdict\"]==\"SAFE\"})); print(\"remaining_shard_paths={} all_unreachable={}\".format(len(S-A),all(r[\"verdict\"]==\"NOT-SAFE\" and r[\"receipt\"]==\"unreachable\" for r in shards if r[\"path\"] not in A)))'",
+          "out": "approval_rows=96 distinct=96 shard_rows=111 distinct=111 duplicate_rows=0\nshard_verdicts={'SAFE': 96, 'NOT-SAFE': 15}\napproval_paths_match_shard_SAFE=True\nremaining_shard_paths=15 all_unreachable=True"
+        },
+        {
+          "cmd": "for r in /home/vgpnk/Projects/shokunin/*-shokunin; do echo \"$r $(git -C \"$r\" worktree list | wc -l)\"; done",
+          "out": "21 repos enumerated; all counts 1 except /home/vgpnk/Projects/shokunin/game-dev-2d-shokunin 4"
+        }
+      ],
+      "source": "../.ufo/reports/round-3/souji.md:18-31,35-55; census/round-3/approval-summary.json; census/round-3/seat-57.json; census/round-3/seat-64.json"
+    },
+    {
+      "round": 4,
+      "verdict": "AGREE_WITH_CAVEAT",
+      "finding": "The amended O1' deliverable is installed and reproducibly passes; the official CLI claim was explicitly withdrawn by the operator, so FALLBACK-ONLY is not a missed item. Independent selftest pass and winner hash agree with the report. Dispatch completion is not fully represented by census fragments: only 30 seat-named JSONs are in census/round-4; other outputs are spread across tests/results and tests/vault, so this count alone neither proves nor disproves the report's 63/64 completion.",
+      "evidence": [
+        {
+          "cmd": "bash tools/souji-vault-verify.sh --selftest",
+          "out": "selftest: 35 checks, 0 failed"
+        },
+        {
+          "cmd": "sha256sum tools/souji-vault-verify.sh",
+          "out": "d312263ac8ebc9e23555402dc5ae63167f78dcd01ddccc5ddcfa7623b85879e0  tools/souji-vault-verify.sh"
+        },
+        {
+          "cmd": "python3 -c 'from pathlib import Path; import json; d=Path(\"census/round-4\"); fs=sorted(d.glob(\"seat-*.json\")); ids=[]; bad=[]\nfor f in fs:\n try: ids.append(json.loads(f.read_text()).get(\"seat\"))\n except Exception as e: bad.append((f.name,str(e)))\nprint(\"round-4 seat_json={} parsed_ids={} malformed={}\".format(len(fs),len([x for x in ids if x]),bad)); print(\"other_json={}\".format([p.name for p in sorted(d.glob(\"*.json\")) if not p.name.startswith(\"seat-\")]))'",
+          "out": "round-4 seat_json=30 parsed_ids=30 malformed=[]\nother_json=['cli-contract.json', 'vadv-53.json', 'vadv-55.json']"
+        }
+      ],
+      "source": "../.ufo/reports/round-4/souji.md:7-15,34-40,53-59; census/round-4/cli-contract.json:20-21; tests/results/parent-vault-battery.json"
+    }
+  ],
+  "worktree_drift": {
+    "summary": "21 repositories, 24 registrations. Only game-dev-2d-shokunin has more than one (4 total). Three extra registrations are marked prunable because their worktree directories are absent; each named branch still has one unpushed commit. This status was observed only; no prune/removal/lock was run.",
+    "count_command": "for r in /home/vgpnk/Projects/shokunin/*-shokunin; do echo \"$r $(git -C \"$r\" worktree list | wc -l)\"; done",
+    "count_output": [
+      "/home/vgpnk/Projects/shokunin/audio-shokunin 1",
+      "/home/vgpnk/Projects/shokunin/chousa-shokunin 1",
+      "/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin 4",
+      "/home/vgpnk/Projects/shokunin/game-dev-3d-shokunin 1",
+      "/home/vgpnk/Projects/shokunin/kagi-shokunin 1",
+      "/home/vgpnk/Projects/shokunin/kaidoku-shokunin 1",
+      "/home/vgpnk/Projects/shokunin/kake-shokunin 1",
+      "/home/vgpnk/Projects/shokunin/kama-shokunin 1",
+      "/home/vgpnk/Projects/shokunin/kasegi-shokunin 1",
+      "/home/vgpnk/Projects/shokunin/kengaku-shokunin 1",
+      "/home/vgpnk/Projects/shokunin/kotoba-shokunin 1",
+      "/home/vgpnk/Projects/shokunin/kotodama-shokunin 1",
+      "/home/vgpnk/Projects/shokunin/kumitate-shokunin 1",
+      "/home/vgpnk/Projects/shokunin/lore-shokunin 1",
+      "/home/vgpnk/Projects/shokunin/mado-shokunin 1",
+      "/home/vgpnk/Projects/shokunin/mori-shokunin 1",
+      "/home/vgpnk/Projects/shokunin/revenger-shokunin 1",
+      "/home/vgpnk/Projects/shokunin/souji-shokunin 1",
+      "/home/vgpnk/Projects/shokunin/tabi-shokunin 1",
+      "/home/vgpnk/Projects/shokunin/tameshi-shokunin 1",
+      "/home/vgpnk/Projects/shokunin/tsukuroi-shokunin 1"
+    ],
+    "registrations_command": "python3 -c 'from pathlib import Path; import subprocess,glob; root=\"/home/vgpnk/Projects/shokunin\"; regs=0; repos=glob.glob(root+\"/*-shokunin\")\nfor repo in sorted(repos):\n out=subprocess.run([\"git\",\"-C\",repo,\"worktree\",\"list\",\"--porcelain\"],text=True,capture_output=True,check=True).stdout\n path=None; prune=False\n for line in out.splitlines()+[\"\"]:\n  if line.startswith(\"worktree \"):\n   if path is not None:\n    status=\"prunable\" if prune else \"not-prunable\"\n    print(\"{}\\t{}\\t{}\".format(Path(repo).name,path,status)); regs+=1\n   path=line[9:]; prune=False\n  elif line.startswith(\"prunable\"):\n   prune=True\n if path is not None:\n  status=\"prunable\" if prune else \"not-prunable\"\n  print(\"{}\\t{}\\t{}\".format(Path(repo).name,path,status)); regs+=1\nprint(\"repos={} registrations={}\".format(len(repos),regs))'",
+    "registrations": [
+      {"repo":"audio-shokunin","path":"/home/vgpnk/Projects/shokunin/audio-shokunin","prunable":false},
+      {"repo":"chousa-shokunin","path":"/home/vgpnk/Projects/shokunin/chousa-shokunin","prunable":false},
+      {"repo":"game-dev-2d-shokunin","path":"/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin","prunable":false},
+      {"repo":"game-dev-2d-shokunin","path":"/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r100","prunable":true},
+      {"repo":"game-dev-2d-shokunin","path":"/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r98","prunable":true},
+      {"repo":"game-dev-2d-shokunin","path":"/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r99","prunable":true},
+      {"repo":"game-dev-3d-shokunin","path":"/home/vgpnk/Projects/shokunin/game-dev-3d-shokunin","prunable":false},
+      {"repo":"kagi-shokunin","path":"/home/vgpnk/Projects/shokunin/kagi-shokunin","prunable":false},
+      {"repo":"kaidoku-shokunin","path":"/home/vgpnk/Projects/shokunin/kaidoku-shokunin","prunable":false},
+      {"repo":"kake-shokunin","path":"/home/vgpnk/Projects/shokunin/kake-shokunin","prunable":false},
+      {"repo":"kama-shokunin","path":"/home/vgpnk/Projects/shokunin/kama-shokunin","prunable":false},
+      {"repo":"kasegi-shokunin","path":"/home/vgpnk/Projects/shokunin/kasegi-shokunin","prunable":false},
+      {"repo":"kengaku-shokunin","path":"/home/vgpnk/Projects/shokunin/kengaku-shokunin","prunable":false},
+      {"repo":"kotoba-shokunin","path":"/home/vgpnk/Projects/shokunin/kotoba-shokunin","prunable":false},
+      {"repo":"kotodama-shokunin","path":"/home/vgpnk/Projects/shokunin/kotodama-shokunin","prunable":false},
+      {"repo":"kumitate-shokunin","path":"/home/vgpnk/Projects/shokunin/kumitate-shokunin","prunable":false},
+      {"repo":"lore-shokunin","path":"/home/vgpnk/Projects/shokunin/lore-shokunin","prunable":false},
+      {"repo":"mado-shokunin","path":"/home/vgpnk/Projects/shokunin/mado-shokunin","prunable":false},
+      {"repo":"mori-shokunin","path":"/home/vgpnk/Projects/shokunin/mori-shokunin","prunable":false},
+      {"repo":"revenger-shokunin","path":"/home/vgpnk/Projects/shokunin/revenger-shokunin","prunable":false},
+      {"repo":"souji-shokunin","path":"/home/vgpnk/Projects/shokunin/souji-shokunin","prunable":false},
+      {"repo":"tabi-shokunin","path":"/home/vgpnk/Projects/shokunin/tabi-shokunin","prunable":false},
+      {"repo":"tameshi-shokunin","path":"/home/vgpnk/Projects/shokunin/tameshi-shokunin","prunable":false},
+      {"repo":"tsukuroi-shokunin","path":"/home/vgpnk/Projects/shokunin/tsukuroi-shokunin","prunable":false}
+    ],
+    "unpushed_branch_check": {
+      "cmd": "for b in wt-r98 wt-r99 wt-r100; do printf '%s ' \"$b\"; git -C /home/vgpnk/Projects/shokunin/game-dev-2d-shokunin log --oneline \"refs/heads/$b\" --not --remotes | wc -l; done; for p in /home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r98 /home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r99 /home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r100; do if test -d \"$p\"; then echo \"$p PRESENT\"; else echo \"$p ABSENT\"; fi; done",
+      "out": "wt-r98 1\nwt-r99 1\nwt-r100 1\n/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r98 ABSENT\n/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r99 ABSENT\n/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r100 ABSENT"
+    }
+  },
+  "defects_found": [
+    {
+      "id": "R2-dependency-allowlist",
+      "severity": "spec-conformance / missed test",
+      "finding": "tools/souji-verify.sh depends on grep, find, and xargs despite the binding spec permitting only Bash, coreutils, Git, and rg; selftest's H1 checks forbidden git subcommands, not command dependencies.",
+      "evidence": "tools/souji-verify.spec.md:3-4; tools/souji-verify.sh:144-158,209,333,623. Source scan output is recorded under round_verdicts[round=2]. This is a dependency/spec mismatch, not an independently reproduced verdict-safety defect."
+    }
+  ],
+  "coverage_caveats": [
+    {
+      "id": "R4-seat-artifact-index",
+      "note": "Report claims 63/64 dispatch completions; census/round-4 contains 30 parsed seat-named JSON files plus cli-contract.json, vadv-53.json, and vadv-55.json. R4 work products are also under tests/results and tests/vault, so the census-directory fragment count alone cannot establish missing seats; no verdict disagreement is asserted.",
+      "evidence": "python3 -c count recorded under round_verdicts[round=4]; report ../.ufo/reports/round-4/souji.md:3-5"
+    }
+  ],
+  "safety": {
+    "git_mutations": "none",
+    "prune_remove_lock": "none",
+    "secret_content_read": "none",
+    "writes": ["census/round-5/seat-17.json", "/tmp scratch created and cleaned by the two tool selftests"]
+  },
+  "preamble": {
+    "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+    "fragment_path": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-5/seat-17.json",
+    "mode": "read-only over fleet/lane/sibling repos except this assigned fragment"
+  }
+}

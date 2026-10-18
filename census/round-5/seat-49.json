@@ -1,0 +1,55 @@
+{
+  "seat": "S49",
+  "round": 5,
+  "role": "cross-audit — checker evidence independence",
+  "assignment": "Check round-5 checker fragments S45-S48 for exact evidence-text duplication with the seats they audit; flag rubber-stamping only where independent evidence supports it.",
+  "wait_seconds": 300,
+  "verdict": "INCOMPLETE — S45 and S46 are absent. In available S47, one historical-record string exactly matches audited S40's recorded output, but S47's separate delayed reruns differ from both historical outputs; this is an explicit quotation, not evidence of rubber-stamping. S48 audits tools, not a named seat; rerunning its fake-target probes reproduced its reported tool outputs.",
+  "agreement_counts": {
+    "checker_fragments_expected": 4,
+    "present": 2,
+    "missing": 2,
+    "auditee_seat_pairs_comparable": 2,
+    "exact_historical_quote_matches": 1,
+    "independent_rerun_exact_matches_to_historical": 0,
+    "demonstrated_rubber_stamps": 0
+  },
+  "defects_found": [
+    "Coverage gap: round-5 checker fragments S45 and S46 were not present after the requested 300-second wait, so they could not be audited."
+  ],
+  "findings": [
+    {
+      "checker": "S47",
+      "audited_seats": ["S37", "S40"],
+      "exact_text_match": "S47 claims[seat=S40].historical_record.reported_output exactly equals one string in S40 receipt_evidence.out. S37's recorded JSON result is semantically the same, but not byte-for-byte equal because its exit suffix differs.",
+      "independent_evidence": "S47 records delayed_rerun.observed_output as NOT-SAFE/unreachable/missing path for each target, which matches neither historical_record string. This is a changed result after the round-3 prune, not a copied SAFE verdict.",
+      "assessment": "The exact S40 equality is inside an explicitly labeled historical quote; the separate rerun evidence is distinct. No rubber-stamping demonstrated."
+    },
+    {
+      "checker": "S48",
+      "audited_seats": [],
+      "audited_targets": ["tools/souji-verify.sh", "tools/souji-vault-verify.sh"],
+      "assessment": "S48's assignment targets the installed tools and names no auditee seat. Its repeated r2 no-ledger evidence is an invariant tool response for the fake targets; the r2 and r4 commands were rerun against its /tmp fixtures and reproduced the reported 10/10 NOT-SAFE outcomes. Repeated text alone is not evidence of copying."
+    }
+  ],
+  "evidence": [
+    {
+      "command": "python3 -c 'from pathlib import Path; p=Path(\"census/round-5\"); print(\" \".join((\"S%d=%s\" % (i, \"present\" if (p / (\"seat-%d.json\" % i)).is_file() else \"missing\")) for i in range(45,49)))'",
+      "observed_output": "S45=missing S46=missing S47=present S48=present"
+    },
+    {
+      "command": "python3 - <<'PY'\nimport json\nfrom pathlib import Path\nchecker = json.loads(Path(\"census/round-5/seat-47.json\").read_text())\nfor claim in checker[\"claims\"]:\n    target_path = claim[\"source\"].split(\":\", 1)[0]\n    target = json.loads(Path(target_path).read_text())\n    quoted = claim[\"historical_record\"][\"reported_output\"]\n    target_outputs = target[\"receipt_evidence\"][\"out\"]\n    rerun = claim[\"delayed_rerun\"][\"observed_output\"]\n    print(f'{claim[\"seat\"]}: historical_record_exact_match={quoted in target_outputs}; delayed_rerun_matches_historical={rerun == quoted}')\nPY",
+      "observed_output": "S37: historical_record_exact_match=False; delayed_rerun_matches_historical=False\nS40: historical_record_exact_match=True; delayed_rerun_matches_historical=False"
+    },
+    {
+      "command": "repo=/home/vgpnk/Projects/shokunin/souji-shokunin; cd /tmp/souji-s48-weird.2940Bk || exit 2; root=$PWD; long=$(printf '%255s' '' | tr ' ' n); printf '%s\\n' '--- r2 command ---'; env SHOKUNIN_ROOT=\"$root/empty-fleet\" SOUJI_LEDGER=\"$root/no-ledger\" bash \"$repo/tools/souji-verify.sh\" \"$root/ordinary.md\" \"$root/ordinary.md/\" \"$root//ordinary.md\" \"//$root/ordinary.md\" /proc/self/cwd/ordinary.md \"$root/plain-dir\" \"$root/plain-dir/\" \"$root//plain-dir\" /proc/self/cwd/plain-dir \"$root/$long\"; printf '%s\\n' '--- r4 command ---'; env SHOKUNIN_ROOT=\"$root/empty-fleet\" SOUJI_LEDGER=\"$root/no-ledger\" bash \"$repo/tools/souji-vault-verify.sh\" --fallback \"$root/ordinary.md\" \"$root/ordinary.md/\" \"$root//ordinary.md\" \"//$root/ordinary.md\" /proc/self/cwd/ordinary.md \"$root/plain-dir\" \"$root/plain-dir/\" \"$root//plain-dir\" /proc/self/cwd/plain-dir \"$root/$long\"",
+      "observed_output": "r2: 10 VERDICT records, all NOT-SAFE/none with evidence=obsidian=no-ledger; stale=not-scratch-type. r4: 10 VERDICT records, all NOT-SAFE/none with evidence=pushed=no-repo; stale=not-scratch-type cli=unavailable; each followed by NOT-VERIFIED(none). The outputs matched the corresponding observations in S48."
+    }
+  ],
+  "scope": "Read-only audit of fleet/lane/sibling data; only this assigned fragment was written. The S48 rerun used its existing fake /tmp fixture; no prune/remove/delete or git mutation was performed.",
+  "preamble": {
+    "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+    "fragment_path": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-5/seat-49.json",
+    "mode": "read-only cross-audit except this fragment"
+  }
+}

@@ -1,0 +1,81 @@
+{
+  "seat": "S11",
+  "round": 5,
+  "kind": "verdict-audit",
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "repo_head": "48a64d8",
+  "run_utc": "2026-10-18T18:16:02Z",
+  "run_local": "2026-10-18T15:16:02-03:00",
+  "assignment": "Audit LOG.md append-only discipline across rounds 1–4.",
+  "verdict": "DISAGREE with strict append-only PASS: one commit inserted a new section mid-file. No existing content lines were removed.",
+  "agreement_counts": {
+    "LOG.md_commits_reviewed": 7,
+    "initial_file_additions": 1,
+    "subsequent_commits_appending_at_eof": 5,
+    "subsequent_commits_inserting_mid_file": 1,
+    "content_lines_removed": 0,
+    "current_section_headings": 7
+  },
+  "findings": [
+    {
+      "claim": "The requested deletion-line probe finds no removed content lines.",
+      "result": "PASS",
+      "command": "git log -p --follow LOG.md | grep '^-' | grep -v '^---'",
+      "observed_output": "empty stdout; grep pipeline exit 1"
+    },
+    {
+      "claim": "Every post-initial LOG.md commit only appended at EOF.",
+      "result": "FAIL",
+      "evidence": "Commit 652b6f8f1a279d2d977f2db208384ca5179994b1 inserts the round-1 section between the mint section and the already-existing obsidian-cli probe section. It adds 44 lines and deletes 0; therefore the deletion probe passes, but strict EOF append-only discipline does not."
+    }
+  ],
+  "evidence": [
+    {
+      "claim": "Seven commits touched LOG.md in the first-20 history listing; there are seven current section headings.",
+      "commands": [
+        "git log --format='%H' -- LOG.md | head -20",
+        "grep -c '^## ' LOG.md"
+      ],
+      "observed_outputs": [
+        "48a64d8763fcf77dd53211e6c5fc717bc95eefed\n78694acefa316edfc77842583409b7133350718c\n36746332cab0617c1ef23a63fee727c8869bd25e\n9435e464a2dc8c421f0d97b0ce178463748ce38d\n652b6f8f1a279d2d977f2db208384ca5179994b1\na2c460dfc1a1c65f75b250601580ac3b3538dd34\nccbb1326204bbf21034820430e9923cb96ef4c17",
+        "7"
+      ]
+    },
+    {
+      "claim": "The exact requested removed-content probe emits no removed lines.",
+      "command": "git log -p --follow LOG.md | grep '^-' | grep -v '^---'; rc=$?; printf 'pipeline_exit=%s\\n' \"$rc\"; test \"$rc\" -eq 1",
+      "observed_output": "pipeline_exit=1"
+    },
+    {
+      "claim": "Numstat reports additions and zero deletions in all seven LOG.md commits.",
+      "command": "git log --numstat --format='commit %H %s' --follow -- LOG.md",
+      "observed_output": "commit 48a64d8763fcf77dd53211e6c5fc717bc95eefed round-4 (amended): obsidian claim withdrawn by operator; ledger-verify tool installed (impl-20, d312263a), CLI findings banked\n30\t0\tLOG.md\ncommit 78694acefa316edfc77842583409b7133350718c operator directive: session deepseek-v4.1-flash routes to devin/deepseek-v4-1-flash-max\n8\t0\tLOG.md\ncommit 36746332cab0617c1ef23a63fee727c8869bd25e round-3: 21 metadata prunes executed (lore 20->1, gd2d 6->4 lock-preserve), 96-row operator approval list, probation gate cleared\n32\t0\tLOG.md\ncommit 9435e464a2dc8c421f0d97b0ce178463748ce38d round-2: tools/souji-verify.sh — impl-12 installed byte-identical (7efda63b), spec D1-D3, selftest+live verified\n30\t0\tLOG.md\ncommit 652b6f8f1a279d2d977f2db208384ca5179994b1 round-1: dry-run census — 64 seats, 246 rows, 109/109 b2f2efa pushed, 21 metadata-prune candidates, 0 surviving false-SAFE\n44\t0\tLOG.md\ncommit a2c460dfc1a1c65f75b250601580ac3b3538dd34 mint: bank obsidian-cli probe evidence for the deferred integration task\n14\t0\tLOG.md\ncommit ccbb1326204bbf21034820430e9923cb96ef4c17 mint: seed souji-shokunin (掃除) — fleet repo & workspace hygiene, operator directive 2026-10-18\n32\t0\tLOG.md"
+    },
+    {
+      "claim": "Prefix comparison shows five of six non-initial updates append at EOF; the round-1 update is not a prefix-preserving append.",
+      "command": "git log --format='%H' -- LOG.md | while IFS= read -r c; do p=$(git rev-parse \"$c^\" 2>/dev/null) || { printf '%s INITIAL-LOG.md-ADDITION\\n' \"$c\"; continue; }; if git cat-file -e \"$p:LOG.md\" 2>/dev/null; then n=$(git show \"$p:LOG.md\" | wc -l); if git show \"$c:LOG.md\" | head -n \"$n\" | cmp -s <(git show \"$p:LOG.md\"); then printf '%s APPEND-PREFIX-PRESERVED (%s parent lines)\\n' \"$c\" \"$n\"; else printf '%s FAIL-NOT-PREFIX (%s parent lines)\\n' \"$c\" \"$n\"; fi; else printf '%s INITIAL-LOG.md-ADDITION\\n' \"$c\"; fi; done",
+      "observed_output": "48a64d8763fcf77dd53211e6c5fc717bc95eefed APPEND-PREFIX-PRESERVED (160 parent lines)\n78694acefa316edfc77842583409b7133350718c APPEND-PREFIX-PRESERVED (152 parent lines)\n36746332cab0617c1ef23a63fee727c8869bd25e APPEND-PREFIX-PRESERVED (120 parent lines)\n9435e464a2dc8c421f0d97b0ce178463748ce38d APPEND-PREFIX-PRESERVED (90 parent lines)\n652b6f8f1a279d2d977f2db208384ca5179994b1 FAIL-NOT-PREFIX (46 parent lines)\na2c460dfc1a1c65f75b250601580ac3b3538dd34 APPEND-PREFIX-PRESERVED (32 parent lines)\nccbb1326204bbf21034820430e9923cb96ef4c17 INITIAL-LOG.md-ADDITION"
+    },
+    {
+      "claim": "The round-1 commit inserts its section before the pre-existing obsidian-cli section; this is the concrete reason prefix preservation fails.",
+      "commands": [
+        "git show 652b6f8f1a279d2d977f2db208384ca5179994b1^:LOG.md | grep -n '^## '; git show 652b6f8f1a279d2d977f2db208384ca5179994b1:LOG.md | grep -n '^## '",
+        "git show --format= --unified=0 652b6f8f1a279d2d977f2db208384ca5179994b1 -- LOG.md | head -8"
+      ],
+      "observed_outputs": [
+        "parent section headings:\n3:## 2026-10-18 — mint (operator directive, orchestrator-minted)\n34:## 2026-10-18 — obsidian-cli probe (deferred integration task, pre-round evidence)\n\ncommitted section headings:\n3:## 2026-10-18 — mint (operator directive, orchestrator-minted)\n34:## 2026-10-18 — round 1 admitted (claims: coverage + calibration)\n78:## 2026-10-18 — obsidian-cli probe (deferred integration task, pre-round evidence)",
+        "diff --git a/LOG.md b/LOG.md\nindex ad64722..b671dde 100644\n--- a/LOG.md\n+++ b/LOG.md\n@@ -33,0 +34,44 @@ figure corrections above are the first.\n+## 2026-10-18 — round 1 admitted (claims: coverage + calibration)\n+"
+      ]
+    }
+  ],
+  "disagreements": [
+    "The strict append-only claim is contradicted by round-1 commit 652b6f8: it inserts a section mid-file. The requested no-removed-lines check is still clean; this is insertion, not deleted/replaced content."
+  ],
+  "uncertainty": "none",
+  "preamble": {
+    "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+    "fragment_path": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-5/seat-11.json",
+    "written_at": "2026-10-18T15:16:02-03:00",
+    "mode": "read-only over lane/fleet/siblings except this assigned fragment; no history or source files changed"
+  }
+}

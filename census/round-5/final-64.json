@@ -1,0 +1,158 @@
+{
+  "seat": "S64",
+  "round": 5,
+  "kind": "final-judge",
+  "role": "independent audit of rounds 1-4",
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "axes": [
+    "correctness of round measurements and verdicts",
+    "receipt false-SAFE risk",
+    "evidence and safety-rail consistency"
+  ],
+  "verdict": "QUALIFIED: rounds 1 and 3 agree; round 2's stated operability result agrees with a material receipt-integrity caveat; round 4's clean-calibration conclusion is contradicted by an independently reproduced false-SAFE. Both r2 and r4 installed tools share that defect.",
+  "agreement_counts": {
+    "rounds_audited": 4,
+    "agree": 2,
+    "agree_with_caveat": 1,
+    "disagree_on_safety_or_calibration": 1,
+    "peer_r4_final_files_naming_impl20": "7/8",
+    "peer_r4_no_clean_candidate": "1/8"
+  },
+  "round_verdicts": [
+    {
+      "round": 1,
+      "verdict": "AGREE",
+      "basis": "The census parses to 246 rows (160 SAFE, 86 NOT-SAFE); independently re-derived all 109 b2f2efa paths and each introducing commit is an ancestor of origin/master. The report's final-table zero-false-SAFE conclusion is supported by its recorded critic/parent process; this seat's direct re-derivation covers the 109 committed files, not every one of the 132 final SAFE proposals."
+    },
+    {
+      "round": 2,
+      "verdict": "AGREE-WITH-CAVEAT",
+      "basis": "Installed souji-verify.sh matches judged impl-12 SHA and bundled selftest passes 24/24; the reported operability/kotodama gate is consistent. However, its directory receipt hash omits symlink entries and accepts an incomplete directory copy as SAFE (reproduced below), so the evidence does not establish complete receipt integrity."
+    },
+    {
+      "round": 3,
+      "verdict": "AGREE",
+      "basis": "Current worktree counts are lore 1 and gd2d 4; the three named-branch registrations remain NOT-SAFE with one unpushed commit each. All 96 approval-list paths independently re-verify SAFE(pushed) with the installed tool."
+    },
+    {
+      "round": 4,
+      "verdict": "DISAGREE-ON-CALIBRATION; AGREE-ON-IDENTITY-AND-SELFTEST",
+      "basis": "Installed vault verifier matches impl-20 SHA and passes 35/35 selftest checks, and the operator's CLI waiver is recorded. But an independent directory-tree probe returns SAFE when the vault copy omits a source symlink, contradicting the no-false-SAFE/clean-verification conclusion. The round's read-only claim is also contradicted by its documented GUI-spawn/config-write incident."
+    }
+  ],
+  "defects_found": [
+    {
+      "id": "R2-R4-D1",
+      "severity": "high — directory receipt integrity",
+      "affects": ["tools/souji-verify.sh", "tools/souji-vault-verify.sh"],
+      "finding": "Both directory-digest implementations use find -type f and omit symbolic-link entries. A source tree containing alias.md -> payload.md and a vault tree containing only payload.md produce identical digests; both tools return SAFE(moved-to-obsidian). This is a false-SAFE for an incomplete directory-tree receipt and is untested by the bundled selftests.",
+      "source_locations": ["tools/souji-verify.sh:155-159", "tools/souji-vault-verify.sh:109-114"],
+      "probe_fixture": "/tmp/souji-r5-dirlink-wh99b_qg (left in /tmp; not removed)",
+      "remediation_note": "Include symlink type and target in a deterministic directory manifest, or explicitly refuse directory receipts containing symlinks; add the omitted-link case to both selftests."
+    },
+    {
+      "id": "R4-D2",
+      "severity": "medium — report/result snapshot mismatch",
+      "finding": "The round-4 report names seats 60/62/64 as NO-CLEAN-CANDIDATE and elsewhere says 4/8 dissent was resolved; current tests/results/vfinal-57.json through vfinal-64.json show seven impl-20 winner decisions and only vfinal-60 as NO-CLEAN-CANDIDATE. This may be a timing/revision mismatch, but the final tally needs reconciliation."
+    },
+    {
+      "id": "R4-D3",
+      "severity": "historical safety-rail incident; remediation recorded",
+      "finding": "Round-4 SHONEN says the vault was read-only throughout, but seat-58-rail-breach.json and vfinal-61/vfinal-63 document the adversarial harness executing the GUI launcher and the app re-mtiming/writing .obsidian config. Notes and the live ledger were reported unchanged; the harness was hardened afterward. This is an incident, not a defect in the installed verifier itself."
+    }
+  ],
+  "evidence": [
+    {
+      "claim": "Round 1 counts and committed-path ancestry",
+      "commands": [
+        "python3 read census/round-1/census.tsv with csv.DictReader(delimiter='\\t') and count verdict prefixes",
+        "python3 read-only loop: git show --pretty=format: --name-only b2f2efa; for each path run git log -1 --format=%H --diff-filter=A b2f2efa -- <path>, then git merge-base --is-ancestor <intro> refs/remotes/origin/master"
+      ],
+      "observed_output": [
+        "round1 census rows=246; SAFE=160; NOT-SAFE=86",
+        "commit=b2f2efa unique_paths=109 introducing_commit_found=109 ancestor_of_origin_master=109 nonancestor=0 missing_intro=0"
+      ]
+    },
+    {
+      "claim": "Round 2 installed identity and runtime selftest",
+      "commands": [
+        "sha256sum tools/souji-verify.sh tools/souji-verify.impl-12.sh tools/souji-vault-verify.sh tools/souji-vault-verify.impl-20.sh",
+        "cmp -s tools/souji-verify.sh tools/souji-verify.impl-12.sh; printf 'cmp r2 exit=%s\\n' \"$?\"; cmp -s tools/souji-vault-verify.sh tools/souji-vault-verify.impl-20.sh; printf 'cmp r4 exit=%s\\n' \"$?\"",
+        "bash tools/souji-verify.sh --selftest"
+      ],
+      "observed_output": [
+        "7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820  tools/souji-verify.sh",
+        "7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820  tools/souji-verify.impl-12.sh",
+        "d312263ac8ebc9e23555402dc5ae63167f78dcd01ddccc5ddcfa7623b85879e0  tools/souji-vault-verify.sh",
+        "d312263ac8ebc9e23555402dc5ae63167f78dcd01ddccc5ddcfa7623b85879e0  tools/souji-vault-verify.impl-20.sh",
+        "cmp r2 exit=0; cmp r4 exit=0",
+        "selftest: 24 checks, 0 failed"
+      ]
+    },
+    {
+      "claim": "Round 3 approvals and protected worktree registrations",
+      "commands": [
+        "python3 read census/round-3/operator-approval-list.tsv, pass all 96 path fields to bash tools/souji-verify.sh, count VERDICT fields",
+        "git -C /home/vgpnk/Projects/shokunin/lore-shokunin worktree list --porcelain",
+        "git -C /home/vgpnk/Projects/shokunin/game-dev-2d-shokunin worktree list --porcelain",
+        "SHOKUNIN_ROOT=/home/vgpnk/Projects/shokunin bash tools/souji-verify.sh /home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r98 /home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r99 /home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r100"
+      ],
+      "observed_output": [
+        "input_paths=96 exit=0 verdict_lines=96 SAFE_pushed=96 other=0",
+        "lore-shokunin entries=1; game-dev-2d-shokunin entries=4",
+        "wt-r98, wt-r99, wt-r100 each NOT-SAFE unpushed-branch; branch-specific unpushed=1; dir=absent"
+      ]
+    },
+    {
+      "claim": "Same false-SAFE reproduced in both installed directory verifiers",
+      "fixture_and_digest_command": "Under /tmp/souji-r5-dirlink-wh99b_qg, source-dir has payload.md plus alias.md -> payload.md; vault-dir has payload.md only. For each directory, ran: cd -- \"$1\" && find . -path './.git' -prune -o -type f -print0 | sort -z | xargs -0 -r sha256sum | sha256sum | cut -d' ' -f1",
+      "observed_output": "source_dir_digest=1714f54016fd50271ce9dd91dbef0b2b2872c3a49d5a685a6499618a7c771e22; vault_dir_digest=1714f54016fd50271ce9dd91dbef0b2b2872c3a49d5a685a6499618a7c771e22; source_symlinks=[('alias.md','payload.md')]; vault_paths=['payload.md']",
+      "commands_and_outputs": [
+        {
+          "command": "SHOKUNIN_ROOT=/tmp/souji-r5-dirlink-wh99b_qg/empty-fleet SOUJI_LEDGER=/tmp/souji-r5-dirlink-wh99b_qg/ledger.tsv bash tools/souji-verify.sh /tmp/souji-r5-dirlink-wh99b_qg/source-dir",
+          "observed_output": "VERDICT\\t/tmp/souji-r5-dirlink-wh99b_qg/source-dir\\tSAFE\\tmoved-to-obsidian\\tledger=source+vault-digest vault=/tmp/souji-r5-dirlink-wh99b_qg/vault-dir"
+        },
+        {
+          "command": "bash tools/souji-vault-verify.sh --fallback --ledger /tmp/souji-r5-dirlink-wh99b_qg/ledger.tsv /tmp/souji-r5-dirlink-wh99b_qg/source-dir",
+          "observed_output": "VERDICT\\t/tmp/souji-r5-dirlink-wh99b_qg/source-dir\\tSAFE\\tmoved-to-obsidian\\tledger-row ledger=/tmp/souji-r5-dirlink-wh99b_qg/ledger.tsv vault=/tmp/souji-r5-dirlink-wh99b_qg/vault-dir source-digest=1714f54016fd vault-digest=1714f54016fd cli=unavailable\\nVERIFIED(moved-to-obsidian); exit=0"
+        }
+      ]
+    },
+    {
+      "claim": "Round 4 installed identity and bundled test",
+      "commands": [
+        "sha256sum tools/souji-verify.sh tools/souji-vault-verify.sh",
+        "bash tools/souji-vault-verify.sh --selftest"
+      ],
+      "observed_output": [
+        "d312263ac8ebc9e23555402dc5ae63167f78dcd01ddccc5ddcfa7623b85879e0  tools/souji-vault-verify.sh",
+        "selftest: 35 checks, 0 failed"
+      ]
+    },
+    {
+      "claim": "Current round-4 judge result-file tally",
+      "command": "python3 -c 'import json,collections; ds=[json.load(open(\"tests/results/vfinal-%d.json\"%i)) for i in range(57,65)]; c=collections.Counter(\"impl20 winner\" if (d.get(\"winner\")==\"souji-vault-verify.impl-20\" or isinstance(d.get(\"winner\"),dict) and d[\"winner\"].get(\"name\") in (\"souji-vault-verify.impl-20\",\"souji-vault-verify.impl-20.sh\") or isinstance(d.get(\"verdict\"),str) and \"WINNER-NAMED\" in d[\"verdict\"] and \"impl-20\" in d[\"verdict\"]) else \"no-clean\" if d.get(\"winner\") is None and isinstance(d.get(\"verdict\"),str) and \"NO-CLEAN-CANDIDATE\" in d[\"verdict\"] else \"other\" for d in ds); print(c)'", 
+      "observed_output": "vfinal-57,58,59,61,62,63,64=impl-20 winner; vfinal-60=no-clean; counts={'impl20 winner': 7, 'no-clean': 1}"
+    },
+    {
+      "claim": "Historical round-4 GUI/config-write rail breach",
+      "evidence_files": ["census/round-4/seat-58-rail-breach.json", "tests/results/vfinal-61.json", "tests/results/vfinal-63.json"],
+      "recorded_commands": [
+        "ps -o pid,ppid,lstart,args -p 4127347",
+        "ps -o pid,ppid,lstart,args -p 1994731",
+        "stat -c '%y %n' <vault>/.obsidian/{core-plugins,app,appearance}.json",
+        "git -C <vault> --no-optional-locks diff --stat .obsidian/"
+      ],
+      "recorded_observations": "Harness backtick command substitution ran obsidian; GUI app launched at 14:05 and 14:10; .obsidian/app.json, appearance.json, core-plugins.json were re-mtimed at 14:10:31; notes manifest unchanged and live ledger remained header-only; harness hardening recorded."
+    }
+  ],
+  "scope": {
+    "lane_writes": ["census/round-5/final-64.json"],
+    "other_writes": "none; verification selftests used their documented /tmp fixtures; the independent symlink probe remains in /tmp and was not removed",
+    "git_or_prune_actions": "none"
+  },
+  "preamble": {
+    "fragment_path": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-5/final-64.json",
+    "mode": "read-only audit except this assigned fragment and /tmp scratch"
+  }
+}

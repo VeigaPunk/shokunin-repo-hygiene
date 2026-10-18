@@ -1,0 +1,75 @@
+{
+  "seat": "S53",
+  "round": 5,
+  "role": "cross-audit — pinned gd2d registrations",
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "assignment": "Wait 360 seconds, independently recheck whether game-dev-2d pushed the exact wt-r98/wt-r99/wt-r100 tips, and update their prune ticket.",
+  "verdict": "AGREE — all three exact pinned branch tips remain unpublished; keep their registrations NOT-SAFE for pruning.",
+  "agreement_counts": {
+    "registrations": 3,
+    "agree": 3,
+    "disagree": 0
+  },
+  "updated_ticket": {
+    "decision": "RETAIN all three pins; no prune authorized.",
+    "receipt": "none (exact branch tips are absent from live origin refs and not retrievable from the public remote).",
+    "targets": [
+      {
+        "path": "/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r98",
+        "branch": "wt-r98",
+        "local_tip": "68bee6e7c07638a8abeb2812f249fc382ba7d50a",
+        "local_not_remote_count": 1,
+        "disposition": "KEEP — NOT-SAFE(unpushed-branch)"
+      },
+      {
+        "path": "/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r99",
+        "branch": "wt-r99",
+        "local_tip": "fe1a996ed21fd048558ef31cc1d0c77253404101",
+        "local_not_remote_count": 1,
+        "disposition": "KEEP — NOT-SAFE(unpushed-branch)"
+      },
+      {
+        "path": "/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r100",
+        "branch": "wt-r100",
+        "local_tip": "2d5622828d6d985d70326367f8023f89f00a02f0",
+        "local_not_remote_count": 1,
+        "disposition": "KEEP — NOT-SAFE(unpushed-branch)"
+      }
+    ],
+    "important_distinction": "Live origin/main contains r98/r99/r100 author commits under different SHAs (9d421fb2, 254e79dd, 2dcbb6f6). The exact pinned local tips are not those commits and are not present on remote refs; do not treat those integration commits as proof that the pinned tips were pushed.",
+    "recheck_condition": "Reconsider only after a fresh live-origin check proves each exact tip (or a descendant containing it) is reachable from a remote ref, or the operator explicitly dispositions retirement."
+  },
+  "prior_lane_verdict": "Agrees with census/round-3/seat-52.json (PINNED/NOT-SAFE for all three) and seat-61.json:183 (NO-GO until pushed or explicitly dispositioned).",
+  "defects_found": [],
+  "caveats": [
+    "The local refs/remotes/origin/main is stale at c687a18d while live origin/main is 5b799aaca405c6e9980dbb051e2e7f8d91dab04f. The lane verifier's NOT-SAFE result was therefore cross-checked against live remote refs and GitHub API, not accepted alone.",
+    "The worktree list marks all three registrations prunable because their checkout directories are absent. No prune or removal command was run."
+  ],
+  "evidence": [
+    {
+      "command": "git ls-remote --heads origin main wt-r98 wt-r99 wt-r100; rc=$?; printf 'ls-remote-exit=%s\\n' \"$rc\"",
+      "observed_output": "5b799aaca405c6e9980dbb051e2e7f8d91dab04f\trefs/heads/main\nls-remote-exit=0"
+    },
+    {
+      "command": "for b in wt-r98 wt-r99 wt-r100; do printf '%s tip=' \"$b\"; git rev-parse \"$b\"; printf '%s not-remotes=' \"$b\"; git rev-list --count \"$b\" --not --remotes; done; printf 'local remotes:\\n'; git for-each-ref --format='%(refname) %(objectname:short)' refs/remotes/origin",
+      "observed_output": "wt-r98 tip=68bee6e7c07638a8abeb2812f249fc382ba7d50a\nwt-r98 not-remotes=1\nwt-r99 tip=fe1a996ed21fd048558ef31cc1d0c77253404101\nwt-r99 not-remotes=1\nwt-r100 tip=2d5622828d6d985d70326367f8023f89f00a02f0\nwt-r100 not-remotes=1\nlocal remotes:\nrefs/remotes/origin/HEAD c687a18d\nrefs/remotes/origin/main c687a18d"
+    },
+    {
+      "command": "SHOKUNIN_ROOT=/home/vgpnk/Projects/shokunin /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh /home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r98 /home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r99 /home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r100",
+      "observed_output": "VERDICT\t/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r98\tNOT-SAFE\tunpushed-branch\tbranch=wt-r98 unpushed=1 dir=absent owner=game-dev-2d-shokunin\nVERDICT\t/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r99\tNOT-SAFE\tunpushed-branch\tbranch=wt-r99 unpushed=1 dir=absent owner=game-dev-2d-shokunin\nVERDICT\t/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r100\tNOT-SAFE\tunpushed-branch\tbranch=wt-r100 unpushed=1 dir=absent owner=game-dev-2d-shokunin"
+    },
+    {
+      "command": "gh api repos/VeigaPunk/shokunin-godot-2d/compare/89f85ed844c27ffb2a1760cc359c334caa92ef1...main --jq '{status,ahead_by,behind_by,total_commits,commits:[.commits[]|select(.commit.message|test(\"^r(98|99|100) author:\"))|{sha:.sha,subject:(.commit.message|split(\"\\n\")[0])}]}'",
+      "observed_output": "{\"ahead_by\":16,\"behind_by\":0,\"commits\":[{\"sha\":\"9d421fb2c0577488cf6f34399c123d81a91a067b\",\"subject\":\"r98 author: canvas/draw-flush lattice (32 rows, 426->458)\"},{\"sha\":\"254e79dd81202b2f25b3064681c96d95a37ccdfe\",\"subject\":\"r99 author: headless audio lattice (21 rows, +150/-0), green 447/447\"},{\"sha\":\"2dcbb6f6ed491e51aa76237b96f80c0b38fe607f\",\"subject\":\"r100 author: GUI/input routing lattice (25 rows, +132/-0), green 451/451 x2\"}],\"status\":\"ahead\",\"total_commits\":16}"
+    },
+    {
+      "command": "for s in 68bee6e7c07638a8abeb2812f249fc382ba7d50a fe1a996ed21fd048558ef31cc1d0c77253404101 2d5622828d6d985d70326367f8023f89f00a02f0; do if out=$(gh api \"repos/VeigaPunk/shokunin-godot-2d/commits/$s\" --jq .sha 2>/dev/null); then printf 'remote-commit=%s\\n' \"$out\"; else rc=$?; printf 'remote-commit-not-found for %s (gh exit=%s)\\n' \"$s\" \"$rc\"; fi; done",
+      "observed_output": "remote-commit-not-found for 68bee6e7c07638a8abeb2812f249fc382ba7d50a (gh exit=1)\nremote-commit-not-found for fe1a996ed21fd048558ef31cc1d0c77253404101 (gh exit=1)\nremote-commit-not-found for 2d5622828d6d985d70326367f8023f89f00a02f0 (gh exit=1)"
+    },
+    {
+      "command": "git rev-parse refs/remotes/origin/main; git ls-remote --heads origin main",
+      "observed_output": "c687a18dee4bc0f32c3d7e663b4667ca9bd1d15c\n5b799aaca405c6e9980dbb051e2e7f8d91dab04f\trefs/heads/main"
+    }
+  ],
+  "scope": "Read-only over fleet/lane/sibling repos. Only census/round-5/seat-53.json was written; no prune/remove/delete or git-mutating command was run."
+}

@@ -1,0 +1,80 @@
+{
+  "seat": "S05",
+  "kind": "verdict-audit",
+  "targets": [
+    {
+      "path": "/home/vgpnk/Projects/shokunin/.ufo/waves/round-14/registry-home/context.md",
+      "expected_verdict": "SAFE",
+      "expected_receipt": "pushed",
+      "verdict": "SAFE",
+      "receipt": "pushed",
+      "agreement": "AGREE",
+      "evidence": [
+        {
+          "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+          "cmd": "bash tools/souji-verify.sh /home/vgpnk/Projects/shokunin/.ufo/waves/round-14/registry-home/context.md /home/vgpnk/Projects/shokunin",
+          "out": "VERDICT\t/home/vgpnk/Projects/shokunin/.ufo/waves/round-14/registry-home/context.md\tSAFE\tpushed\tintro=b2f2efae7549 ref=refs/remotes/origin/master ancestor=yes\nVERDICT\t/home/vgpnk/Projects/shokunin\tNOT-SAFE\tunpushed\tunpushed=15 dirty=1"
+        },
+        {
+          "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+          "cmd": "bash tools/souji-vault-verify.sh --fallback /home/vgpnk/Projects/shokunin/.ufo/waves/round-14/registry-home/context.md /home/vgpnk/Projects/shokunin",
+          "out": "VERDICT\t/home/vgpnk/Projects/shokunin/.ufo/waves/round-14/registry-home/context.md\tSAFE\tpushed\tintro=b2f2efae7549 ref=refs/remotes/origin/master ancestor=yes cli=unavailable\nVERIFIED(pushed)\nVERDICT\t/home/vgpnk/Projects/shokunin\tNOT-SAFE\tunpushed\tunpushed=15 dirty=1\nNOT-VERIFIED(unpushed)"
+        },
+        {
+          "cwd": "/home/vgpnk/Projects/shokunin",
+          "cmd": "git log --diff-filter=A --format=%H -1 -- .ufo/waves/round-14/registry-home/context.md; git symbolic-ref --short refs/remotes/origin/HEAD; git merge-base --is-ancestor b2f2efae7549c6692d9af6dcea9f9d9c5d797e9d refs/remotes/origin/master; printf 'ancestor_exit=%s\\n' \"$?\"; git ls-files --error-unmatch .ufo/waves/round-14/registry-home/context.md; git status --porcelain -- .ufo/waves/round-14/registry-home/context.md; sha256sum .ufo/waves/round-14/registry-home/context.md",
+          "out": "b2f2efae7549c6692d9af6dcea9f9d9c5d797e9d\norigin/master\nancestor_exit=0\n.ufo/waves/round-14/registry-home/context.md\n5caeb97a3f90804b8d73b1c3eabb2304e480f36f26150a3ee4f306675768c5ac  .ufo/waves/round-14/registry-home/context.md"
+        }
+      ],
+      "round_history": [
+        "Round 1 census/round-1/seat-09.json:3 initially recorded NOT-SAFE because origin/main was absent; that same evidence notes b2f2efa is an ancestor of origin/master (exit 0). census/round-1/census.tsv:90 records the later parent correction to SAFE/pushed after the 109-file re-derivation.",
+        "Round 2 ../.ufo/reports/round-2/souji.md:43-45 records tools/souji-verify.sh installed byte-identical to impl-12; tools/souji-verify.sh:137-150 dynamically resolves origin/HEAD or its remote-ref fallback, avoiding the origin/main assumption. The current invocation resolves origin/master.",
+        "Round 3 census/round-3/operator-approval-list.tsv:80 records this exact path SAFE/pushed, tracked+clean, introduction b2f2efa, and HOLD (still cited; parent decides). This verdict audit does not grant separate removal authorization.",
+        "Round 4 ../.ufo/reports/round-4/souji.md:39-45 records installation of the vault verifier; current --fallback invocation independently returns VERIFIED(pushed)."
+      ],
+      "disagreements": []
+    },
+    {
+      "path": "/home/vgpnk/Projects/shokunin",
+      "expected_verdict": "NOT-SAFE",
+      "expected_receipt": "unpushed",
+      "expected_rationale": "live repository; 15 unpushed commits and one dirty/untracked path; do not remove",
+      "verdict": "NOT-SAFE",
+      "receipt": "unpushed",
+      "agreement": "AGREE",
+      "evidence": [
+        {
+          "cwd": "/home/vgpnk/Projects/shokunin",
+          "cmd": "git status --short --branch; printf 'unpushed='; git log --branches --not --remotes --oneline | wc -l; printf 'dirty='; git status --porcelain | wc -l; printf 'repo_root='; git rev-parse --show-toplevel; printf 'git_dir='; git rev-parse --absolute-git-dir",
+          "out": "## master...origin/master [ahead 15]\n?? .scratch/\nunpushed=15\ndirty=1\nrepo_root=/home/vgpnk/Projects/shokunin\ngit_dir=/home/vgpnk/Projects/shokunin/.git"
+        },
+        {
+          "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+          "cmd": "bash tools/souji-verify.sh /home/vgpnk/Projects/shokunin",
+          "out": "VERDICT\t/home/vgpnk/Projects/shokunin\tNOT-SAFE\tunpushed\tunpushed=15 dirty=1"
+        },
+        {
+          "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+          "cmd": "bash tools/souji-vault-verify.sh --fallback /home/vgpnk/Projects/shokunin",
+          "out": "VERDICT\t/home/vgpnk/Projects/shokunin\tNOT-SAFE\tunpushed\tunpushed=15 dirty=1\nNOT-VERIFIED(unpushed)"
+        }
+      ],
+      "disagreements": []
+    }
+  ],
+  "agreement_counts": {
+    "targets_matching_assigned_verdict": "2/2",
+    "tool_target_outputs_matching_expected": "4/4"
+  },
+  "defects_found": [
+    {
+      "status": "historical, corrected; no unresolved defect",
+      "finding": "Round-1 first-pass census mislabeled context.md NOT-SAFE by requiring absent origin/main. The actual fleet default is origin/master; the later parent correction and round-3 approval are independently reconfirmed here by the introduction commit's ancestor check (exit 0)."
+    }
+  ],
+  "actions": {
+    "removal_or_prune_performed": false,
+    "writes": ["census/round-5/seat-05.json"],
+    "other_surfaces_modified": false
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "seat": "S31",
+  "round": 5,
+  "kind": "missed-items-sweep",
+  "assignment": "SHONEN.md canonical-form check against current PROTOCOL.md seed, modulo the name line",
+  "verdict": "PASS",
+  "target": "souji-shokunin/SHONEN.md",
+  "reference": {
+    "file": "PROTOCOL.md",
+    "lines": "417, 423-435",
+    "name_substitution": "<name> -> souji-shokunin (repository directory name)"
+  },
+  "finding": "The 11-line SHONEN.md is byte-identical to the current canonical seed after the sole <name> substitution. No stale text, missing/extra boxes, or other drift from the current promotion-gate template was found.",
+  "gate_evolution": "The current file contract says SHONEN.md must be regenerated verbatim from the current seed when gates evolve. The comparison uses that seed and its current marks/verifier rule; no regeneration drift is present.",
+  "evidence": {
+    "command": "python3 - <<'PY'\nfrom pathlib import Path\nimport difflib\n\nprotocol = Path(\"PROTOCOL.md\").read_bytes().decode().splitlines(keepends=True)\nstart = next(i for i, line in enumerate(protocol) if line.rstrip(\"\\r\\n\") == \"    # <name> — Promotion checklist\")\nseed = \"\".join(line[4:] if line.startswith(\"    \") else line for line in protocol[start:start + 11])\nseed = seed.replace(\"# <name> —\", \"# souji-shokunin —\", 1)\nactual = Path(\"souji-shokunin/SHONEN.md\").read_bytes().decode()\ndiff = list(difflib.unified_diff(seed.splitlines(keepends=True), actual.splitlines(keepends=True), fromfile=\"PROTOCOL.md canonical\", tofile=\"souji-shokunin/SHONEN.md\"))\nprint(f\"template_seed_lines={len(seed.splitlines())}\")\nprint(f\"target_lines={len(actual.splitlines())}\")\nprint(f\"byte_identical_modulo_name={seed == actual}\")\nprint(\"diff=empty\" if not diff else \"\".join(diff), end=\"\\n\" if not diff else \"\")\nPY",
+    "observed_output": [
+      "template_seed_lines=11",
+      "target_lines=11",
+      "byte_identical_modulo_name=True",
+      "diff=empty"
+    ]
+  },
+  "agreement": "Not scored: no prior round-5 lane verdict was available for comparison during this sweep.",
+  "disagreements": [],
+  "defects_found": [],
+  "write_scope": "Only this assigned fragment was written; SHONEN.md and all other fleet/lane files were read-only."
+}

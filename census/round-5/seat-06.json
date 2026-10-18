@@ -1,0 +1,67 @@
+{
+  "seat": "S06",
+  "round": 5,
+  "kind": "verdict-audit",
+  "targets": [
+    {
+      "path": "/home/vgpnk/Projects/shokunin/.ufo/interactive-l1-20261015T050057Z/interactive-wall.png",
+      "required": "SAFE/pushed",
+      "verdict": "AGREE",
+      "souji_verify": {
+        "command": "bash tools/souji-verify.sh --json /home/vgpnk/Projects/shokunin/.ufo/interactive-l1-20261015T050057Z/interactive-wall.png",
+        "exit": 0,
+        "output": "{\"path\":\"/home/vgpnk/Projects/shokunin/.ufo/interactive-l1-20261015T050057Z/interactive-wall.png\",\"verdict\":\"SAFE\",\"receipt\":\"pushed\",\"evidence\":\"intro=b2f2efae7549 ref=refs/remotes/origin/master ancestor=yes\"}"
+      },
+      "vault_verify": {
+        "command": "bash tools/souji-vault-verify.sh --fallback --json /home/vgpnk/Projects/shokunin/.ufo/interactive-l1-20261015T050057Z/interactive-wall.png",
+        "exit": 0,
+        "output": "{\"path\":\"/home/vgpnk/Projects/shokunin/.ufo/interactive-l1-20261015T050057Z/interactive-wall.png\",\"verdict\":\"SAFE\",\"verified\":\"VERIFIED(pushed)\",\"receipt\":\"pushed\",\"reason\":\"pushed\",\"evidence\":\"intro=b2f2efae7549 ref=refs/remotes/origin/master ancestor=yes cli=unavailable\"}"
+      },
+      "independent_rederivation": {
+        "commands": "target=/home/vgpnk/Projects/shokunin/.ufo/interactive-l1-20261015T050057Z/interactive-wall.png; intro=$(git -C /home/vgpnk/Projects/shokunin log --diff-filter=A --format=%H -1 -- \"$target\"); printf 'introducing_commit=%s\\n' \"$intro\"; printf 'origin_head='; git -C /home/vgpnk/Projects/shokunin symbolic-ref --quiet --short refs/remotes/origin/HEAD; git -C /home/vgpnk/Projects/shokunin merge-base --is-ancestor \"$intro\" refs/remotes/origin/master; printf 'ancestor_exit=%s\\n' \"$?\"; sha256sum -- \"$target\"; git -C /home/vgpnk/Projects/shokunin status --short -- .ufo/interactive-l1-20261015T050057Z/interactive-wall.png",
+        "output": "introducing_commit=b2f2efae7549c6692d9af6dcea9f9d9c5d797e9d\\norigin_head=origin/master\\nancestor_exit=0\\n71d6c3ae1a38f942f3b41c78ef6ad186b897a7bd22cdb3c5776b0e46cad432e5  /home/vgpnk/Projects/shokunin/.ufo/interactive-l1-20261015T050057Z/interactive-wall.png\\n"
+      },
+      "historical_lane_evidence": {
+        "command": "Grep literal interactive-wall.png in census/round-3/approvals-54.tsv",
+        "output": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-3/approvals-54.tsv:28:/home/vgpnk/Projects/shokunin/.ufo/interactive-l1-20261015T050057Z/interactive-wall.png<TAB>SAFE<TAB>pushed<TAB>intro=b2f2efae7549 ref=refs/remotes/origin/master ancestor=yes"
+      }
+    },
+    {
+      "path": "/home/vgpnk/Projects/shokunin/.ufo/state",
+      "required": "NOT-SAFE/refused (driver runtime)",
+      "verdict": "DISAGREE — false SAFE in both current tools",
+      "souji_verify": {
+        "command": "bash tools/souji-verify.sh --json /home/vgpnk/Projects/shokunin/.ufo/state",
+        "exit": 0,
+        "output": "{\"path\":\"/home/vgpnk/Projects/shokunin/.ufo/state\",\"verdict\":\"SAFE\",\"receipt\":\"pushed\",\"evidence\":\"intro=7d02e9671f86 ref=refs/remotes/origin/master ancestor=yes\"}"
+      },
+      "vault_verify": {
+        "command": "bash tools/souji-vault-verify.sh --fallback --json /home/vgpnk/Projects/shokunin/.ufo/state",
+        "exit": 0,
+        "output": "{\"path\":\"/home/vgpnk/Projects/shokunin/.ufo/state\",\"verdict\":\"SAFE\",\"verified\":\"VERIFIED(pushed)\",\"receipt\":\"pushed\",\"reason\":\"pushed\",\"evidence\":\"intro=7d02e9671f86 ref=refs/remotes/origin/master ancestor=yes cli=unavailable\"}"
+      },
+      "defect_evidence": {
+        "source": "tools/souji-verify.sh:369-390 and :349-355; tools/souji-vault-verify.sh:536-567 and :513-533",
+        "observed": "Both active evaluate_path functions guard only secret-shaped paths and repo/worktree types, then fall through to generic artifact evaluation. That evaluator accepts the generic pushed receipt before the NOT-SAFE fallback. Neither has an early .ufo/state/driver-runtime refusal. The file comments claim .ufo/state is never touched (souji-verify.sh:35; souji-vault-verify.sh:36), but the implementation does not enforce that claim."
+      },
+      "ledger_check": {
+        "command": "Grep literal .ufo/state in corpus/knowledge/obsidian-ledger.tsv",
+        "output": "No non-sensitive matches found"
+      },
+      "metadata_only_trace": {
+        "command": "strace -f -qq -e trace=%file -- bash tools/souji-verify.sh --json /home/vgpnk/Projects/shokunin/.ufo/state",
+        "output": "tool_stdout={\"path\":\"/home/vgpnk/Projects/shokunin/.ufo/state\",\"verdict\":\"SAFE\",\"receipt\":\"pushed\",\"evidence\":\"intro=7d02e9671f86 ref=refs/remotes/origin/master ancestor=yes\"}; tool_exit=0; 12 path-matching syscall lines: readlink(state), newfstatat(state), newfstatat(state/.git)=ENOENT, chdir(state), getcwd(state), newfstatat(state/HEAD)=ENOENT, and repeated path metadata lookups. No open-family syscall under state appeared in the filtered lines."
+      },
+      "safety_note": "No .ufo/state file contents were intentionally read. The defective probe did enter the directory via chdir and queried path metadata (including state/HEAD and state/.git); this incidental metadata access is disclosed. No further state access was made."
+    }
+  ],
+  "agreement_counts": {
+    "souji_verify": "1/2 expected verdicts agree; false SAFE for .ufo/state",
+    "souji_vault_verify": "1/2 expected verdicts agree; false SAFE for .ufo/state"
+  },
+  "defects_found": [
+    "Both active verification tools emit SAFE(pushed) for the protected driver-runtime directory .ufo/state; the intended refusal is absent."
+  ],
+  "read_only": true,
+  "writes": ["census/round-5/seat-06.json"]
+}

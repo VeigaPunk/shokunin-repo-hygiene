@@ -144,9 +144,8 @@ resolve_default_ref() {
   refs=$(git -C "$repo" for-each-ref --format='%(refname)' refs/remotes/origin 2>/dev/null | grep -v '^refs/remotes/origin/HEAD$' || true)
   n=$(printf '%s\n' "$refs" | grep -c . || true)
   if [ "$n" = 1 ]; then printf '%s\n' "$refs"; return 0; fi
-  if git -C "$repo" show-ref --verify --quiet refs/heads/master 2>/dev/null; then
-    printf 'refs/heads/master\n'; return 0
-  fi
+  # r5 fix: no remote-tracking ref -> pushed is unverifiable. Local refs
+  # (refs/heads/master) can NEVER establish a pushed receipt.
   return 1
 }
 
@@ -154,6 +153,12 @@ file_sha() { sha256sum -- "$1" 2>/dev/null | cut -d' ' -f1; }
 
 dir_digest() { # deterministic manifest digest of a directory (ignores .git)
   local d=$1
+  # r5 fix: any symlink in the digest scope fails closed (return 2);
+  # silently dropping -type l entries produced a false-SAFE
+  # moved-to-obsidian class (r5 verification finding).
+  if ( cd "$d" && find . -path './.git' -prune -o -type l -print -quit 2>/dev/null | grep -q . ); then
+    return 2
+  fi
   ( cd "$d" && find . -path './.git' -prune -o -type f -print0 \
       | sort -z | xargs -0 -r sha256sum | sha256sum | cut -d' ' -f1 ) 2>/dev/null
 }
@@ -240,11 +245,15 @@ try_obsidian() { # $1 target (canonical), $2 isdir(0/1)
     [ "$sp" = "$target" ] || continue
     if [ "$isdir" = 1 ]; then
       [ -d "$vp" ] || { NOTES+=("obsidian=vault-unreachable vault=$vp"); continue; }
-      if [ -n "$ss" ] && [ "$(dir_digest "$target")" != "$ss" ]; then
-        NOTES+=("obsidian=source-digest-mismatch"); continue
+      if [ -n "$ss" ]; then
+        _ds=$(dir_digest "$target"); _drc=$?
+        if [ "$_drc" = 2 ]; then NOTES+=("obsidian=symlink-present scope=source"); continue; fi
+        if [ "$_ds" != "$ss" ]; then NOTES+=("obsidian=source-digest-mismatch"); continue; fi
       fi
-      if [ -n "$vs" ] && [ "$(dir_digest "$vp")" != "$vs" ]; then
-        NOTES+=("obsidian=vault-digest-mismatch"); continue
+      if [ -n "$vs" ]; then
+        _ds=$(dir_digest "$vp"); _drc=$?
+        if [ "$_drc" = 2 ]; then NOTES+=("obsidian=symlink-present scope=vault"); continue; fi
+        if [ "$_ds" != "$vs" ]; then NOTES+=("obsidian=vault-digest-mismatch"); continue; fi
       fi
       R_VERDICT=SAFE; R_RECEIPT=moved-to-obsidian
       R_EVIDENCE="ledger=source+vault-digest vault=$vp"

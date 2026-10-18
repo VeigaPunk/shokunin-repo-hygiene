@@ -188,3 +188,30 @@ as tools/souji-vault-verify.sh (sha256 d312263a…).
 **Verdicts:** operability improved (second tool live), calibration improved
 (judge-dissent adjudicated by parent re-derivation, not by majority vote).
 No axis harmed.
+
+## 2026-10-18 — round 5 admitted (verification round; 3 material defects found and fixed)
+
+**Dispatch.** 64 seats on openai-codex/gpt-6-luna-max; 64/64 in ~29 min.
+Claims: V1 calibration (verdict audit of r1–r4), V2 coverage
+(missed-items sweep), V3 operability (regression battery).
+
+**Findings (non-author judges, material).**
+(1) Symlink false-SAFE class in both tools — dir_digest dropped `-type l`;
+fixed fail-closed (`symlink-present`); reproduction probe refuses;
+selftests 24/24 + 35/35 green. (2) Local-master pushed fallback — both
+tools could emit SAFE(pushed) from refs/heads/master alone; fixed to
+`pushed-unverifiable`; spec amended. (3) r1 logs_tier.txt false-SAFE
+(already deleted pre-census; no operational impact; procedure fix:
+pushed corrections re-verify existence). Pin risk: 3 gd2d registrations
+re-locked durably.
+
+**Process findings** (lessons/round-5.md): r1 LOG mid-file insertion
+(append-only violation, historical); r4 read-only claim vs a seat's
+GUI-launch incident (disclosed, verdicts unaffected); SKILL.md doc drift
+routed to r6.
+
+**Correction discipline:** every finding carries a named finder, an
+in-round fix with re-run evidence, or an explicit disposition. 0
+unresolved contradictions at closure. Calibration improved; coverage
+improved (gap table in census/round-5/seat-51.json); operability improved
+(tools hardened, all batteries green). No axis harmed.

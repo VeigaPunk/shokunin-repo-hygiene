@@ -1,0 +1,81 @@
+{
+  "seat": "S08",
+  "round": 5,
+  "kind": "verdict-audit",
+  "assignment": "Independently verify the hindsight correctness of round-3 executed worktree prunes.",
+  "verdict": "AGREE",
+  "agreement_count": "5/5",
+  "disagreement_count": 0,
+  "defects_found": [],
+  "checks": [
+    {
+      "criterion": "lore-shokunin worktree list is main only (count 1)",
+      "commands": [
+        "git -C /home/vgpnk/Projects/shokunin/lore-shokunin worktree list",
+        "git -C /home/vgpnk/Projects/shokunin/lore-shokunin worktree list | wc -l"
+      ],
+      "observed": [
+        "/home/vgpnk/Projects/shokunin/lore-shokunin 6cec83a [main]",
+        "1"
+      ],
+      "verdict": "AGREE"
+    },
+    {
+      "criterion": "game-dev-2d-shokunin has main plus the three named registrations (count 4)",
+      "commands": [
+        "git -C /home/vgpnk/Projects/shokunin/game-dev-2d-shokunin worktree list",
+        "git -C /home/vgpnk/Projects/shokunin/game-dev-2d-shokunin worktree list | wc -l"
+      ],
+      "observed": [
+        "/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin         05a72899 [main]\n/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r100 2d562282 [wt-r100] prunable\n/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r98  68bee6e7 [wt-r98] prunable\n/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r99  fe1a996e [wt-r99] prunable",
+        "4"
+      ],
+      "verdict": "AGREE"
+    },
+    {
+      "criterion": "game-dev-2d-shokunin .git/worktrees contains exactly the three named admin dirs",
+      "commands": [
+        "ls -1 /home/vgpnk/Projects/shokunin/game-dev-2d-shokunin/.git/worktrees"
+      ],
+      "observed": [
+        "game-dev-2d-shokunin-wt-r100\ngame-dev-2d-shokunin-wt-r98\ngame-dev-2d-shokunin-wt-r99"
+      ],
+      "verdict": "AGREE"
+    },
+    {
+      "criterion": "main SHAs match the expected unchanged values (lore 6cec83a; gd2d 05a72899)",
+      "commands": [
+        "git -C /home/vgpnk/Projects/shokunin/lore-shokunin rev-parse --short=7 HEAD",
+        "git -C /home/vgpnk/Projects/shokunin/game-dev-2d-shokunin rev-parse --short=8 HEAD",
+        "git -C /home/vgpnk/Projects/shokunin/lore-shokunin rev-parse --short=7 refs/heads/main",
+        "git -C /home/vgpnk/Projects/shokunin/game-dev-2d-shokunin rev-parse --short=8 refs/heads/main"
+      ],
+      "observed": [
+        "6cec83a",
+        "05a72899",
+        "6cec83a",
+        "05a72899"
+      ],
+      "verdict": "AGREE"
+    },
+    {
+      "criterion": "lore fsck shows no corruption diagnostics after the prune",
+      "commands": [
+        "git -C /home/vgpnk/Projects/shokunin/lore-shokunin fsck --no-progress 2>/dev/null | head -5",
+        "git -C /home/vgpnk/Projects/shokunin/lore-shokunin fsck --no-progress"
+      ],
+      "observed": [
+        "dangling tree c91c0420c816ed3b6ab79a6a21774e450fd9b6b7\ndangling tree 79d0839f8b130cca29d4ac7af2cf520c468615d9",
+        "dangling tree c91c0420c816ed3b6ab79a6a21774e450fd9b6b7\ndangling tree 79d0839f8b130cca29d4ac7af2cf520c468615d9\nexit=0"
+      ],
+      "interpretation": "Only dangling-tree notices were emitted; the unredirected fsck exited 0 and emitted no corruption diagnostics.",
+      "verdict": "AGREE"
+    }
+  ],
+  "read_only": true,
+  "preamble": {
+    "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+    "fragment_path": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-5/seat-08.json",
+    "mode": "read-only audit; only this assigned fragment written"
+  }
+}

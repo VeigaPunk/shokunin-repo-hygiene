@@ -1,0 +1,70 @@
+{
+  "seat": "S47",
+  "round": 5,
+  "role": "cross-audit — delayed regression rerun",
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "wait_seconds": 300,
+  "sample": {
+    "method": "uniform draw without replacement from S33–S44",
+    "command": "shuf -i 33-44 -n 2",
+    "observed_output": "37\n40"
+  },
+  "verdict": "AGREE with both historical pre-prune SAFE(metadata-prune) claims. After the round-3 prune, rerunning the now-absent paths correctly yields NOT-SAFE(unreachable); this is a lifecycle change, not a disagreement.",
+  "agreement_counts": {
+    "audited_claims": 2,
+    "agree": 2,
+    "disagree": 0
+  },
+  "defects_found": [],
+  "claims": [
+    {
+      "seat": "S37",
+      "source": "census/round-3/seat-37.json:5-6, 41-43, 66-68",
+      "target": "/tmp/r87-V2",
+      "historical_claim": "SAFE(metadata-prune)",
+      "historical_record": {
+        "command": "cd /home/vgpnk/Projects/shokunin/souji-shokunin && SHOKUNIN_ROOT=/home/vgpnk/Projects/shokunin tools/souji-verify.sh --json /tmp/r87-V2; echo tool_rc=$?",
+        "reported_output": "{\"path\":\"/tmp/r87-V2\",\"verdict\":\"SAFE\",\"receipt\":\"metadata-prune\",\"evidence\":\"dir=absent unique=0 head=28706dc73a9b owner=lore-shokunin\"}\ntool_rc=0"
+      },
+      "delayed_rerun": {
+        "command": "SHOKUNIN_ROOT=/home/vgpnk/Projects/shokunin tools/souji-verify.sh --json /tmp/r87-V2",
+        "observed_output": "{\"path\":\"/tmp/r87-V2\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"unreachable\",\"evidence\":\"missing path\"}"
+      },
+      "assessment": "AGREE with the historical verdict. The delayed result reflects the successful later prune recorded by the round-3 report; the target and its registration no longer exist."
+    },
+    {
+      "seat": "S40",
+      "source": "census/round-3/seat-40.json:5-7, 40, 59-60",
+      "target": "/tmp/r87-X3",
+      "historical_claim": "SAFE(metadata-prune)",
+      "historical_record": {
+        "command": "cd /home/vgpnk/Projects/shokunin/souji-shokunin && SHOKUNIN_ROOT=/home/vgpnk/Projects/shokunin tools/souji-verify.sh --json /tmp/r87-X3",
+        "reported_output": "{\"path\":\"/tmp/r87-X3\",\"verdict\":\"SAFE\",\"receipt\":\"metadata-prune\",\"evidence\":\"dir=absent unique=0 head=28706dc73a9b owner=lore-shokunin\"} (exit 0)"
+      },
+      "delayed_rerun": {
+        "command": "SHOKUNIN_ROOT=/home/vgpnk/Projects/shokunin tools/souji-verify.sh --json /tmp/r87-X3",
+        "observed_output": "{\"path\":\"/tmp/r87-X3\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"unreachable\",\"evidence\":\"missing path\"}"
+      },
+      "assessment": "AGREE with the historical verdict. The delayed result reflects the successful later prune recorded by the round-3 report; the target and its registration no longer exist."
+    }
+  ],
+  "regression_check": {
+    "command": "tools/souji-verify.sh --selftest",
+    "observed_output": "PASS F1 SAFE(pushed)\nPASS F2 NOT-SAFE(none)\nPASS F3 NOT-SAFE(unpushed)\nPASS F4 SAFE(metadata-prune)\nPASS F5 NOT-SAFE(unpushed-branch)\nPASS F6 SAFE(moved-to-obsidian)\nPASS F7 SAFE(stale)\nPASS F8 SAFE(stale)\nPASS F9 SAFE(pushed)\nPASS F10 NOT-SAFE(secrets-refusal)\nPASS E1 NOT-SAFE(dirty)\nPASS E2 NOT-SAFE(secrets-refusal)\nPASS E3 SAFE(metadata-prune)\nPASS E4 NOT-SAFE(unreachable)\nPASS E5 NOT-SAFE(unreachable)\nPASS E6 SAFE(moved-to-obsidian)\nPASS E7 NOT-SAFE(pushed-unverifiable)\nPASS E8 NOT-SAFE(none)\nPASS H2 exit=2\nPASS H3 exit=2\nPASS H4 exit=2\nPASS H6 json shape\nPASS H1 no forbidden git subcommand\nPASS H5 fixtures under mktemp -d (/tmp/souji-verify-selftest.GockHq)\nselftest: 24 checks, 0 failed"
+  },
+  "current_state_evidence": {
+    "command": "for p in /tmp/r87-V2 /tmp/r87-X3 /home/vgpnk/Projects/shokunin/lore-shokunin/.git/worktrees/r87-V2 /home/vgpnk/Projects/shokunin/lore-shokunin/.git/worktrees/r87-X3; do if test -e \"$p\" || test -L \"$p\"; then printf 'present %s\\n' \"$p\"; else printf 'absent %s\\n' \"$p\"; fi; done; printf 'matching worktree registrations: '; git -C /home/vgpnk/Projects/shokunin/lore-shokunin worktree list --porcelain | awk '/^worktree \\/tmp\\/r87-(V2|X3)$/ {print; found=1} END {if (!found) print \"none\"}'",
+    "observed_output": "absent /tmp/r87-V2\nabsent /tmp/r87-X3\nabsent /home/vgpnk/Projects/shokunin/lore-shokunin/.git/worktrees/r87-V2\nabsent /home/vgpnk/Projects/shokunin/lore-shokunin/.git/worktrees/r87-X3\nmatching worktree registrations: none"
+  },
+  "round3_lifecycle_crosscheck": {
+    "source": "../.ufo/reports/round-3/souji.md:35-38",
+    "reported_action": "The parent pruned lore-shokunin's 19 stale worktree registrations after a dry-run; list count went 20 to 1. This explains why the two selected /tmp paths and admin registrations are now absent."
+  },
+  "scope": "Read-only over fleet, lane, and sibling repos; only this assigned seat fragment was written. No fleet/lane/sibling artifact was pruned, removed, or deleted. The verifier self-test used and cleaned up its own temporary /tmp fixture.",
+  "preamble": {
+    "cwd": "/home/vgpnk/Projects/shokunin",
+    "fragment_path": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-5/seat-47.json",
+    "written_at": "2026-10-18T15:19:43-03:00",
+    "mode": "read-only cross-audit; 300-second wait completed"
+  }
+}

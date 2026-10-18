@@ -1,0 +1,112 @@
+{
+  "seat": "S62",
+  "round": 5,
+  "role": "final judge — verification audit of rounds 1–4",
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "verdict": "PARTIAL-DISAGREE — round 1 and round 3 claims agree with the checked artifacts; round 2 is partial because both installed tools can certify pushed from a local-only master ref; round 4 is partial because the read-only rail was breached by the adversarial harness.",
+  "agreement_counts": {
+    "reports_audited": 4,
+    "agree": 2,
+    "partial_disagree": 2,
+    "full_disagree": 0
+  },
+  "round_verdicts": [
+    {
+      "round": 1,
+      "verdict": "AGREE",
+      "basis": "Summary and census counts match: 64/64 fragments, 246 rows, 160 SAFE and 86 NOT-SAFE."
+    },
+    {
+      "round": 2,
+      "verdict": "PARTIAL-DISAGREE",
+      "basis": "Installed tool identity and current probes match the reported winner; however, no remote-tracking refs exist locally and both scripts emit SAFE(pushed) from refs/heads/master. That ref cannot establish that a commit was pushed."
+    },
+    {
+      "round": 3,
+      "verdict": "AGREE",
+      "basis": "96 unique approval rows all record origin/master ancestry; summary records 15 already-removed no-ops. Current worktree listing retains the three pinned gd2d registrations as prunable metadata."
+    },
+    {
+      "round": 4,
+      "verdict": "PARTIAL-DISAGREE",
+      "basis": "Winner identity is confirmed, but the claim that the vault remained read-only throughout conflicts with the xtrace and recorded .obsidian config retimestamps. Notes and the live ledger remained unchanged."
+    }
+  ],
+  "defects_found": [
+    {
+      "id": "D1",
+      "rounds": [2, 4],
+      "severity": "high",
+      "finding": "Both installed verifiers can return SAFE(pushed) when the only candidate ref is local refs/heads/master. On this lane, refs/remotes/origin is empty, yet the tools returned SAFE(pushed) for their own installed files with ref=refs/heads/master. This is an unverified-push false positive risk, not proof that those specific commits were not pushed. The binding spec itself mandates the local-master fallback.",
+      "status": "confirmed behavior; remote status unverified"
+    },
+    {
+      "id": "D2",
+      "rounds": [2, 4],
+      "severity": "high",
+      "finding": "Both stale-reference sweeps use rg -l --no-ignore over the repo and exclude .git/census/tests/quarantine patterns but no secret-shaped filenames. A stale check for a benign target can therefore read unrelated .env/credential/secret/id_*/pem files. Static code-path finding only; this audit did not execute the sweep or read secret contents.",
+      "status": "static risk confirmed; not exercised"
+    },
+    {
+      "id": "D3",
+      "rounds": [4],
+      "severity": "high",
+      "finding": "The S53 adversarial harness launched the Obsidian GUI via backtick command substitution while constructing a message. Xtrace records `++ obsidian`; S58 records .obsidian/appearance.json, app.json, and core-plugins.json retimestamps at 14:10:31. The recorded blast radius is config-only: 58 markdown notes unchanged and live ledger header-only. Current harness contains a backtick self-audit and GUI guard.",
+      "status": "historical rail breach; harness remediation present"
+    }
+  ],
+  "artifact_gaps": [
+    {
+      "path": "census/round-2/",
+      "finding": "Directory is absent. Round-2 evidence is present under tests/results and tests/fixtures, as the round-2 report describes, but not at the census path named in the audit assignment."
+    }
+  ],
+  "evidence": [
+    {
+      "id": "E1",
+      "command": "python3 -c 'import csv,json; p=\"census/round-1/census.tsv\"; rows=list(csv.DictReader(open(p),delimiter=\"\\t\")); print(\"r1 rows=%d fields=%s\"%(len(rows),\",\".join(rows[0].keys()) if rows else \"none\")); s=json.load(open(\"census/round-1/census-summary.json\")); print(\"r1 summary rows_total=%s fragments=%s verdicts=%s\"%(s[\"rows_total\"],s[\"fragments\"],s[\"final_verdicts\"])); p=\"census/round-3/operator-approval-list.tsv\"; a=list(csv.DictReader(open(p),delimiter=\"\\t\")); print(\"r3 approvals=%d unique_paths=%d ancestor_yes=%d rows=%d\"%(len(a),len({r[\"path\"] for r in a}),sum(\"ancestor=yes\" in r[\"evidence\"] for r in a),len(a))); s=json.load(open(\"census/round-3/approval-summary.json\")); print(\"r3 summary approve_remove=%s no_op=%s\"%(s[\"approve_remove\"],s[\"no_op_already_removed\"]))'",
+      "observed_output": "r1 rows=246 fields=seat,path,size_bytes,mtime,receipt,verdict,orig_verdict,corrected_by,note\nr1 summary rows_total=246 fragments=64/64 verdicts={'SAFE': 160, 'NOT-SAFE': 86}\nr3 approvals=96 unique_paths=96 ancestor_yes=75 rows=96\nr3 summary approve_remove=96 no_op=15"
+    },
+    {
+      "id": "E2",
+      "command": "python3 -c 'import csv; rows=list(csv.DictReader(open(\"census/round-3/operator-approval-list.tsv\"),delimiter=\"\\t\")); print(\"rows=%d unique=%d origin_master_ancestor_evidence=%d tracked_clean=%d\"%(len(rows),len({r[\"path\"] for r in rows}),sum(\"ancestor\" in r[\"evidence\"] and \"origin/master\" in r[\"evidence\"] for r in rows),sum(r[\"evidence\"].startswith(\"tracked+clean\") for r in rows)))'",
+      "observed_output": "rows=96 unique=96 origin_master_ancestor_evidence=96 tracked_clean=21"
+    },
+    {
+      "id": "E3",
+      "command": "sha256sum tools/souji-verify.sh tools/souji-verify.impl-12.sh tools/souji-vault-verify.sh tools/souji-vault-verify.impl-20.sh && cmp -s tools/souji-verify.sh tools/souji-verify.impl-12.sh; printf 'cmp r2 exit=%s\\n' \"$?\"; cmp -s tools/souji-vault-verify.sh tools/souji-vault-verify.impl-20.sh; printf 'cmp r4 exit=%s\\n' \"$?\"",
+      "observed_output": "7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820  tools/souji-verify.sh\n7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820  tools/souji-verify.impl-12.sh\nd312263ac8ebc9e23555402dc5ae63167f78dcd01ddccc5ddcfa7623b85879e0  tools/souji-vault-verify.sh\nd312263ac8ebc9e23555402dc5ae63167f78dcd01ddccc5ddcfa7623b85879e0  tools/souji-vault-verify.impl-20.sh\ncmp r2 exit=0\ncmp r4 exit=0"
+    },
+    {
+      "id": "E4",
+      "command": "bash tools/souji-verify.sh --json \"$PWD/tools/souji-verify.sh\"; bash tools/souji-vault-verify.sh --fallback --json \"$PWD/tools/souji-vault-verify.sh\"",
+      "observed_output": "{\"path\":\"/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh\",\"verdict\":\"SAFE\",\"receipt\":\"pushed\",\"evidence\":\"intro=9435e464a2dc ref=refs/heads/master ancestor=yes\"}\n{\"path\":\"/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-vault-verify.sh\",\"verdict\":\"SAFE\",\"verified\":\"VERIFIED(pushed)\",\"receipt\":\"pushed\",\"reason\":\"pushed\",\"evidence\":\"intro=48a64d8763fc ref=refs/heads/master ancestor=yes cli=unavailable\"}"
+    },
+    {
+      "id": "E5",
+      "command": "git remote -v; printf 'origin refs: '; git for-each-ref --format='%(refname)' refs/remotes/origin | tr '\\n' ' '; printf '\\nlocal master: '; git rev-parse --verify --short refs/heads/master",
+      "observed_output": "origin\thttps://github.com/VeigaPunk/shokunin-repo-hygiene.git (fetch)\norigin\thttps://github.com/VeigaPunk/shokunin-repo-hygiene.git (push)\norigin refs: \nlocal master: 48a64d8"
+    },
+    {
+      "id": "E6",
+      "command": "python3 -c 'from pathlib import Path; specs=[(\"tools/souji-verify.sh\",200,205),(\"tools/souji-vault-verify.sh\",424,429)]; [(print(f\"== {p}:{a}-{b} ==\"),[print(f\"{n}: {line}\") for n,line in enumerate(Path(p).read_text().splitlines(),1) if a<=n<=b],print(\"secret-shaped glob exclusion present:\",any(\"secret\" in line.lower() or \".env\" in line.lower() or \"credential\" in line.lower() for n,line in enumerate(Path(p).read_text().splitlines(),1) if a<=n<=b))) for p,a,b in specs]'",
+      "observed_output": "tools/souji-verify.sh:200 rg -l --no-ignore --fixed-strings -e \"$base\" .; lines 201-204 exclude .git, census, tests, quarantine only; secret-shaped glob exclusion present: False.\ntools/souji-vault-verify.sh:424 rg -l --no-ignore --fixed-strings -e \"$base\" .; lines 425-428 exclude .git, census, tests, quarantine only; secret-shaped glob exclusion present: False."
+    },
+    {
+      "id": "E7",
+      "command": "python3 -c 'from pathlib import Path; import json; lines=Path(\"/tmp/adv53/dbg-xtrace.log\").read_text().splitlines(); d=json.loads(Path(\"census/round-4/seat-58-rail-breach.json\").read_text()); print(\"xtrace_1059=%s\"%lines[1058]); print(\"rail=%s\"%d[\"rail_verdict\"]); print(\"config_write=%s\"%d[\"timeline\"][\"vault_config_write\"]); print(\"vault_notes=%s\"%d[\"blast_radius\"][\"vault_notes\"]); print(\"ledger=%s\"%d[\"blast_radius\"][\"live_ledger\"])'",
+      "observed_output": "xtrace_1059=++ obsidian\nrail=VIOLATED-THEN-REMEDIATED — the round's 'read-only over the real vault' rule was breached by a seat harness, detected by S58, self-documented and fixed by S53. No note loss; config-only side effect. Any future harness must be audited for command substitution in message strings before execution.\nconfig_write=2026-10-18 14:10:31 -03 — .obsidian/appearance.json, app.json, core-plugins.json all re-mtimed\nvault_notes=NONE — 58 *.md files, unchanged count and content (sha manifest verified by S53 and S64 independently).\nledger=corpus/knowledge/obsidian-ledger.tsv still header-only (1 line, sha256 3f7e9f2ab9e614464cb031d3f00a812a21f0e889f7666309a90d7784b75a9599)."
+    },
+    {
+      "id": "E8",
+      "command": "for rev in ab7f2f7 187ebb2 36746332 48a64d8; do git merge-base --is-ancestor \"$rev\" HEAD; rc=$?; printf '%s ancestor=%s\\n' \"$rev\" \"$rc\"; done; printf 'HEAD '; git rev-parse --short=12 HEAD",
+      "observed_output": "ab7f2f7 ancestor=0\n187ebb2 ancestor=0\n36746332 ancestor=0\n48a64d8 ancestor=0\nHEAD 48a64d8763fc"
+    },
+    {
+      "id": "E9",
+      "command": "if [ -d census/round-2 ]; then printf 'census/round-2 present\\n'; else printf 'census/round-2 absent\\n'; fi",
+      "observed_output": "census/round-2 absent"
+    }
+  ],
+  "scope": "Read-only over fleet, lane, siblings; only census/round-5/final-62.json was written. No selftest or secret-content probe was run; direct verifier probes used committed non-secret tool files."
+}

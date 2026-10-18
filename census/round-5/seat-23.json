@@ -1,0 +1,64 @@
+{
+  "seat": "S23",
+  "round": 5,
+  "kind": "missed-items-sweep",
+  "role": "verification",
+  "assignment": "Fleet-root stray re-sweep against round-1 classification",
+  "verdict": "MISS: one root-level directory tree appeared after the round-1 census and has no round-1 target row. NOT-SAFE; no removal or other fleet change performed.",
+  "axes": ["root coverage", "independent evidence", "read-only compliance"],
+  "root_filter": {
+    "cmd": "ls -1 /home/vgpnk/Projects/shokunin | grep -vE '^[a-z0-9-]+-shokunin$|^(AXES|CORPUS|LEARNING|LOG|MANIFEST|MISSION|PROTOCOL|ROADMAP|SCORECARD|README|SHONEN)?.*\\.md$|^shokunin.conf|^templates$|^scripts$|^research$|^reports$|^\\.ufo$|^\\.git$|^\\.scratch$|^\\.devin$|^\\.omp$|^\\.tower$'",
+    "out": ["audio-publish-commit-map-20261016.txt", "bash: ", "MANIFEST.json"]
+  },
+  "items": [
+    {
+      "path": "/home/vgpnk/Projects/shokunin/bash: ",
+      "r1_target_row": false,
+      "current_verdict": "NOT-SAFE",
+      "receipt": "none",
+      "note": "Root-level directory tree timestamped after the round-1 census snapshot. It contains a 10,139-byte leaf whose filename ends in ': No such file or directory'. The tree is untracked/ignored via the fleet .gitignore pattern; no content was read and its origin is unverified. Preserve; do not remove.",
+      "evidence": [
+        {
+          "cmd": "stat -c '%n|%F|%s|%y' -- 'bash: ' 'bash: /home/vgpnk/Projects/shokunin/souji-shokunin/tests/tools/souji-verify.sh: No such file or directory' souji-shokunin/census/round-1/census.tsv",
+          "out": "bash: |directory|8|2026-10-18 14:01:47.324772589 -0300; bash: /home/vgpnk/Projects/shokunin/souji-shokunin/tests/tools/souji-verify.sh: No such file or directory|regular file|10139|2026-10-18 14:01:47.326772594 -0300; souji-shokunin/census/round-1/census.tsv|regular file|85753|2026-10-18 12:38:09.856252587 -0300"
+        },
+        {
+          "cmd": "du -sb -- 'bash: '; find 'bash: ' -maxdepth 9 -printf '%y|%s|%TY-%Tm-%TdT%TH:%TM:%TS|%p\\n'",
+          "out": "10139\\tbash: ; d|8|2026-10-18T14:01:47.3247725890|bash: ; d|10|2026-10-18T14:01:47.3247725890|bash: /home; d|16|2026-10-18T14:01:47.3247725890|bash: /home/vgpnk; d|16|2026-10-18T14:01:47.3247725890|bash: /home/vgpnk/Projects; d|28|2026-10-18T14:01:47.3247725890|bash: /home/vgpnk/Projects/shokunin; d|10|2026-10-18T14:01:47.3247725890|bash: /home/vgpnk/Projects/shokunin/souji-shokunin; d|10|2026-10-18T14:01:47.3247725890|bash: /home/vgpnk/Projects/shokunin/souji-shokunin/tests; d|84|2026-10-18T14:01:47.3247725890|bash: /home/vgpnk/Projects/shokunin/souji-shokunin/tests/tools; f|10139|2026-10-18T14:01:47.3267725940|bash: /home/vgpnk/Projects/shokunin/souji-shokunin/tests/tools/souji-verify.sh: No such file or directory"
+        },
+        {
+          "cmd": "git status --short --ignored --untracked-files=all -- 'bash: '; git check-ignore -v --no-index -- 'bash: /home/vgpnk/Projects/shokunin/souji-shokunin/tests/tools/souji-verify.sh: No such file or directory'; echo check_ignore_exit=$?",
+          "out": "!! \\\"bash: /home/vgpnk/Projects/shokunin/souji-shokunin/tests/tools/souji-verify.sh: No such file or directory\\\"; .gitignore:1:*-shokunin/\\tbash: /home/vgpnk/Projects/shokunin/souji-shokunin/tests/tools/souji-verify.sh: No such file or directory; check_ignore_exit=0"
+        },
+        {
+          "cmd": "python3 -c 'import csv,os; root=\"/home/vgpnk/Projects/shokunin\"; rows=list(csv.DictReader(open(\"souji-shokunin/census/round-1/census.tsv\",encoding=\"utf-8\"),delimiter=\"\\t\")); targets=[os.path.join(root,n) for n in (\"MANIFEST.json\",\"bash: \",\"audio-publish-commit-map-20261016.txt\")];\nfor p in targets:\n hits=[(r[\"seat\"],r[\"verdict\"],r[\"path\"]) for r in rows if r[\"path\"]==p]; print(repr(p),\"r1_exact_rows=\",hits)'",
+          "out": "'/home/vgpnk/Projects/shokunin/MANIFEST.json' r1_exact_rows= []; '/home/vgpnk/Projects/shokunin/bash: ' r1_exact_rows= []; '/home/vgpnk/Projects/shokunin/audio-publish-commit-map-20261016.txt' r1_exact_rows= [('S12', 'SAFE', '/home/vgpnk/Projects/shokunin/audio-publish-commit-map-20261016.txt'), ('S61', 'SAFE', '/home/vgpnk/Projects/shokunin/audio-publish-commit-map-20261016.txt')]"
+        },
+        {
+          "cmd": "Read(souji-shokunin/corpus/knowledge/obsidian-ledger.tsv)",
+          "out": "1 source_path\\tsource_sha256\\tvault_path\\tvault_sha256\\texported_at\\tnote (header only; 1 line)"
+        }
+      ]
+    },
+    {
+      "path": "/home/vgpnk/Projects/shokunin/audio-publish-commit-map-20261016.txt",
+      "r1_target_row": true,
+      "r1_final_verdict": "SAFE (S12 and S61; parent-corrected)",
+      "evidence": "The exact round-1 path lookup returned rows S12 and S61, both verdict SAFE. Current stat output: regular file, 21,201 bytes, mtime 2026-10-16 12:55:04.526221927 -0300."
+    },
+    {
+      "path": "/home/vgpnk/Projects/shokunin/MANIFEST.json",
+      "r1_target_row": false,
+      "current_classification": "Tracked active root manifest, not a stray; not counted as a new stray discovery.",
+      "evidence": "Exact round-1 target lookup returned no row. `git ls-files --stage -- MANIFEST.json` returned `100644 82ae79352fef46090a271ff5a555a432ad06d656 0 MANIFEST.json`; `git status --short -- MANIFEST.json` was empty; `git log -1 --format='%h %cs %s' -- MANIFEST.json` returned `3e1f1a1 2026-10-18 round-4: souji report + closure (amended; obsidian deferred, ledger-verify shipped)`. Round-1 fragments cite MANIFEST.json as a live-reference surface (e.g. seat-02 and seat-18)."
+    }
+  ],
+  "agreement": {
+    "round1_exact_targets_rechecked": 1,
+    "agree": 1,
+    "disagree": 0,
+    "new_unclassified_target": 1,
+    "note": "The only prior stray target appearing in the exact filter output is the audio commit-map, independently matched to r1 rows. MANIFEST.json is a known tracked root artifact, not a stray target. The bash:-prefixed tree is absent from the r1 target table and timestamped after the r1 census file."
+  },
+  "changes_performed": "Only this assigned evidence fragment was created. No fleet/lane/sibling path was changed; no deletion or git mutation was performed."
+}

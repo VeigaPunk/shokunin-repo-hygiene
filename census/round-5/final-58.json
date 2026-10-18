@@ -1,0 +1,181 @@
+{
+  "seat": "S58",
+  "round": 5,
+  "role": "final judge — independent verification audit of rounds 1–4",
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "date": "2026-10-18",
+  "axes": ["correctness", "reproducibility", "write scope"],
+  "verdict": "PARTIAL-DISAGREE",
+  "agreement_counts": {
+    "rounds_audited": 4,
+    "agree": 1,
+    "qualified_agree": 0,
+    "partial_disagree": 3,
+    "full_disagree": 0
+  },
+  "round_verdicts": [
+    {
+      "round": 1,
+      "verdict": "PARTIAL-DISAGREE",
+      "basis": "The census arithmetic reproduces: 246 rows, 160 SAFE / 86 NOT-SAFE, and 132 canonical unique SAFE paths with no normalized verdict/receipt conflicts. All 109 paths added by b2f2efa are in the census and have introducing commits ancestral to origin/master. However, logs_tier.txt is a confirmed false-SAFE: the row itself records orig_verdict=NOT-SAFE and absent-from-worktree-and-HEAD, while the corrected row is SAFE/pushed; its deletion commit a1b44b1 predates the census commit. This was a dry-run; no prune followed from this row. The report's 109+21+2 grouping also differs from TSV receipt categories 111 pushed + 21 none, without changing the total of 132.",
+      "findings": ["R1-LOGS-TIER-FALSE-SAFE", "R1-RECEIPT-CATEGORY-DESCRIPTION-DRIFT"]
+    },
+    {
+      "round": 2,
+      "verdict": "PARTIAL-DISAGREE",
+      "basis": "Installed souji-verify.sh matches impl-12. An isolated /tmp fixture with a hidden .ufo/waves/note.md reference was independently returned SAFE(stale), refs=0. A direct live-repo probe also returned SAFE(pushed) for the installed verifier while refs/remotes/origin is empty and the selected ref is local refs/heads/master. The R2 binding spec explicitly permits that local-master fallback, so this is a receipt-policy/spec safety gap rather than an implementation/spec conformance mismatch.",
+      "findings": ["R2-HIDDEN-REFERENCE-FALSE-SAFE", "R2-R4-LOCAL-MASTER-PUSH-RECEIPT"]
+    },
+    {
+      "round": 3,
+      "verdict": "AGREE-WITH-FOLLOW-UP",
+      "basis": "The operator list is 96/96 unique, present, and each path's introducing commit is ancestral to origin/master; the four shards contain 111 rows (96 SAFE, 15 NOT-SAFE). Seventy-five rows spell ancestor=yes; the other 21 use the alternate phrase 'intro ancestor of origin/master', and all 96 passed independent ancestry checks. Current lists show lore=1 and gd2d=4; wt-r98/99/100 each still have one unpushed commit. Their registrations are currently marked prunable because their gitdir locations are absent, so preserve-and-verify before any future prune. No prune was run.",
+      "follow_up": "Current registration metadata is prunable even though all three named branch refs and their unpushed commits remain; route to the owner before any future metadata cleanup."
+    },
+    {
+      "round": 4,
+      "verdict": "PARTIAL-DISAGREE",
+      "basis": "Installed souji-vault-verify.sh matches impl-20. The independent hidden-reference fixture again returned SAFE(stale), refs=0. A zero-origin-ref live probe again returned SAFE(pushed) via refs/heads/master, the same policy gap as R2. Stored finals vfinal-57..64 give 7 impl-20 recommendations and one NO-CLEAN-CANDIDATE (S60), not the report/lesson's 5/3 dissent split. S62 and S64 name impl-20. S60's individual no-clean result is not rejected here: the committed V6 ledgers point to a stale /tmp fixture root, and explicit use against the committed target still fails to match. The S53 Obsidian launch/config retiming is a confirmed lane-level harness rail breach, not an impl-20 verifier defect. Help output also leaks executable initialization lines.",
+      "findings": ["R2-R4-HIDDEN-REFERENCE-FALSE-SAFE", "R2-R4-LOCAL-MASTER-PUSH-RECEIPT", "R4-FINAL-TALLY-DRIFT", "R4-VAULT-RAIL-BREACH", "R4-HELP-OUTPUT-LEAK"]
+    }
+  ],
+  "defects_found": [
+    {
+      "id": "R1-LOGS-TIER-FALSE-SAFE",
+      "severity": "material census classification error; no prune action",
+      "finding": "The logs_tier.txt row overrides its own NOT-SAFE original verdict and absent-path evidence with SAFE/pushed after its deletion. The delete commit predates the census commit, disproving the report's zero-false-SAFE claim."
+    },
+    {
+      "id": "R2-R4-HIDDEN-REFERENCE-FALSE-SAFE",
+      "severity": "high — live stale-gate safety defect",
+      "finding": "Both stale-reference searches call rg without --hidden. In an isolated fixture the hidden note contained the target basename, but both installed tools emitted SAFE(stale), refs=0."
+    },
+    {
+      "id": "R2-R4-LOCAL-MASTER-PUSH-RECEIPT",
+      "severity": "high semantic/policy gap; behavior permitted by the R2 spec",
+      "finding": "With zero remote-tracking refs, both installed tools emitted SAFE(pushed) for their own files using refs/heads/master. A local branch ancestry check cannot establish remote publication; the R2 spec currently allows this fallback."
+    },
+    {
+      "id": "R4-FINAL-TALLY-DRIFT",
+      "severity": "medium — report and lesson aggregation error",
+      "finding": "Stored vfinal-57..64 records contain seven impl-20 recommendations and one no-clean result (S60). The R4 report and lesson count S60/S62/S64 as no-clean."
+    },
+    {
+      "id": "R4-VAULT-RAIL-BREACH",
+      "severity": "historical read-only boundary breach; harness-side, remediated",
+      "finding": "seat-58-rail-breach.json records the S53 harness launching the real Obsidian app and retiming .obsidian/appearance.json, app.json, and core-plugins.json. The same artifact reports 58 Markdown notes unchanged and a header-only live ledger. Do not describe the round as read-only throughout; this is not an impl-20 defect."
+    },
+    {
+      "id": "R4-HELP-OUTPUT-LEAK",
+      "severity": "low — CLI help/usage output defect",
+      "finding": "--help prints source lines 43–52 after the documented header, including set -euo pipefail, GIT environment unsetting, and path initialization, because usage() prints lines 2–52 and strips only comment markers."
+    }
+  ],
+  "not_counted_as_defects": [
+    "R3's 21 alternate ancestry-evidence strings are semantically equivalent and all 96 paths independently passed ancestry checks.",
+    "--vault/SOUJI_VAULT behavior remains unclassified: the code labels the environment value a hint, relative vault ledger paths fail closed, and no binding root-containment contract was found. Isolated tests show the value does not constrain an absolute-path ledger row, but that alone does not establish a contract violation.",
+    "S60's individual NO-CLEAN-CANDIDATE is not dismissed: its V6 results are consistent with stale fixture paths. Only the report's 5/3 tally is disproved."
+  ],
+  "evidence": [
+    {
+      "claim": "R1 totals, normalized SAFE set, and logs_tier row",
+      "cwd": "/home/vgpnk/Projects/shokunin",
+      "command": "python3 -c 'import csv,collections,pathlib,json; rows=list(csv.DictReader(open(\"souji-shokunin/census/round-1/census.tsv\"),delimiter=\"\\t\")); root=pathlib.Path.cwd(); canon=lambda p:str((root/p).resolve()) if not pathlib.Path(p).is_absolute() else str(pathlib.Path(p).resolve()); g=collections.defaultdict(list); [g[canon(r[\"path\"])].append(r) for r in rows]; safe={p:rs for p,rs in g.items() if any(x[\"verdict\"]==\"SAFE\" for x in rs)}; print(\"rows=%d unique_raw=%d unique_canonical=%d SAFE_canonical=%d SAFE_receipts=%s conflicts=%d\"%(len(rows),len({r[\"path\"] for r in rows}),len(g),len(safe),dict(collections.Counter(next(x[\"receipt\"] for x in rs if x[\"verdict\"]==\"SAFE\") for rs in safe.values())),sum(len({(x[\"verdict\"],x[\"receipt\"]) for x in rs})>1 for rs in g.values()))); print(\"logs_tier=\"+json.dumps(next({k:r[k] for k in (\"path\",\"receipt\",\"verdict\",\"orig_verdict\",\"note\")} for r in rows if r[\"path\"].endswith(\"logs_tier.txt\"))))'",
+      "observed_output": "rows=246 unique_raw=218 unique_canonical=214 SAFE_canonical=132 SAFE_receipts={'pushed': 111, 'none': 21} conflicts=0\nlogs_tier={\"path\": \"logs_tier.txt\", \"receipt\": \"pushed\", \"verdict\": \"SAFE\", \"orig_verdict\": \"NOT-SAFE\", \"note\": \"catchall; unreachable:absent-from-worktree-and-HEAD. Introduced b2f2efa, deleted a1b44b1 (ancestor of HEAD exit 0; NOT ancestor of origin/master exit 1 -> unpus | CORRECTED(r1-parent): b2f2efa introducing commit is ancestor of origin/master (parent loop: 109/109)\"}"
+    },
+    {
+      "claim": "R1 deletion predates census and path is currently absent",
+      "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+      "commands": [
+        "git -C /home/vgpnk/Projects/shokunin show -s --format='%H %ci' a1b44b1",
+        "git show -s --format='%H %ci' 652b6f8",
+        "if test -e /home/vgpnk/Projects/shokunin/logs_tier.txt; then echo yes; else echo no; fi"
+      ],
+      "observed_output": "a1b44b152a1c65313c09e6e6a7bd90d026eb93a8 2026-10-18 11:22:25 -0300\n652b6f8f1a279d2d977f2db208384ca5179994b1 2026-10-18 12:39:42 -0300\nno"
+    },
+    {
+      "claim": "All 109 b2f2efa additions are in census and ancestral to origin/master",
+      "cwd": "/home/vgpnk/Projects/shokunin",
+      "command": "python3 - <<'PY'\nimport subprocess\nraw=subprocess.check_output(['git','show','--format=','--name-only','-z','b2f2efa']).decode().split('\\0')\nadded=sorted({p for p in raw if p})\npushed=[]; missing=[]\nfor p in added:\n intro=subprocess.check_output(['git','log','--diff-filter=A','--format=%H','-1','--',p],text=True).strip()\n if intro and not subprocess.run(['git','merge-base','--is-ancestor',intro,'refs/remotes/origin/master']).returncode: pushed.append(p)\n if not any(r['path'].endswith(p) for r in __import__('csv').DictReader(open('souji-shokunin/census/round-1/census.tsv'),delimiter='\\t')): missing.append(p)\nprint(f'b2f2efa_added={len(added)} census_missing={len(missing)} intro_ancestor_origin_master={len(pushed)}/{len(added)}')\nPY",
+      "observed_output": "b2f2efa_added=109 census_missing=0 intro_ancestor_origin_master=109/109"
+    },
+    {
+      "claim": "R2 and R4 both miss a reference in a hidden note and return SAFE(stale)",
+      "cwd": "/home/vgpnk/Projects/shokunin",
+      "commands": [
+        "tmp=$(mktemp -d /tmp/souji-s58-r5.XXXXXX); mkdir -p \"$tmp/source\" \"$tmp/vault\" \"$tmp/fleet/.scratch\" \"$tmp/fleet/.ufo/waves\"; printf 'old-s58.log\\n' > \"$tmp/fleet/.scratch/old-s58.log\"; printf 'this hidden note references old-s58.log\\n' > \"$tmp/fleet/.ufo/waves/note.md\"; touch -d '3 days ago' \"$tmp/fleet/.scratch/old-s58.log\"; printf 'source_path\\tsource_sha256\\tvault_path\\tvault_sha256\\texported_at\\tnote\\n' > \"$tmp/ledger-empty.tsv\"",
+        "tmp=/tmp/souji-s58-r5.FuzJkA; printf 'without_hidden='; (cd \"$tmp/fleet\" && rg -l --no-ignore --fixed-strings -e old-s58.log . -g '!**/.git/**' 2>/dev/null | tr '\\n' ' '); printf '\\nwith_hidden='; (cd \"$tmp/fleet\" && rg -l --hidden --no-ignore --fixed-strings -e old-s58.log . -g '!**/.git/**' 2>/dev/null | tr '\\n' ' '); printf '\\nr2='; SHOKUNIN_ROOT=\"$tmp/fleet\" bash souji-shokunin/tools/souji-verify.sh \"$tmp/fleet/.scratch/old-s58.log\"; printf 'r4='; SHOKUNIN_ROOT=\"$tmp/fleet\" SOUJI_LEDGER=\"$tmp/ledger-empty.tsv\" bash souji-shokunin/tools/souji-vault-verify.sh --fallback \"$tmp/fleet/.scratch/old-s58.log\""
+      ],
+      "observed_output": "without_hidden=\nwith_hidden=./.scratch/old-s58.log ./.ufo/waves/note.md \nr2=VERDICT /tmp/souji-s58-r5.FuzJkA/fleet/.scratch/old-s58.log SAFE stale scratch-type=scratch-dir refs=0 mtime-age-days=3\nr4=VERDICT /tmp/souji-s58-r5.FuzJkA/fleet/.scratch/old-s58.log SAFE stale scratch-type=scratch-dir refs=0 mtime-age-days=3 cli=unavailable\nVERIFIED(stale)"
+    },
+    {
+      "claim": "Both installed tools use local master for SAFE(pushed) despite no origin-tracking refs; installed files match selected implementations",
+      "cwd": "/home/vgpnk/Projects/shokunin",
+      "commands": [
+        "printf 'origin_refs='; git -C souji-shokunin for-each-ref --format='%(refname)' refs/remotes/origin | wc -l",
+        "bash souji-shokunin/tools/souji-verify.sh --json \"$PWD/souji-shokunin/tools/souji-verify.sh\"",
+        "bash souji-shokunin/tools/souji-vault-verify.sh --fallback --json \"$PWD/souji-shokunin/tools/souji-vault-verify.sh\"",
+        "sha256sum souji-shokunin/tools/souji-verify.sh souji-shokunin/tools/souji-verify.impl-12.sh souji-shokunin/tools/souji-vault-verify.sh souji-shokunin/tools/souji-vault-verify.impl-20.sh; cmp -s souji-shokunin/tools/souji-verify.sh souji-shokunin/tools/souji-verify.impl-12.sh; printf 'cmp_r2_exit=%s\\n' \"$?\"; cmp -s souji-shokunin/tools/souji-vault-verify.sh souji-shokunin/tools/souji-vault-verify.impl-20.sh; printf 'cmp_r4_exit=%s\\n' \"$?\""
+      ],
+      "observed_output": "origin_refs=0; r2: {\"path\":\"/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh\",\"verdict\":\"SAFE\",\"receipt\":\"pushed\",\"evidence\":\"intro=9435e464a2dc ref=refs/heads/master ancestor=yes\"}; r4: {\"path\":\"/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-vault-verify.sh\",\"verdict\":\"SAFE\",\"verified\":\"VERIFIED(pushed)\",\"receipt\":\"pushed\",\"reason\":\"pushed\",\"evidence\":\"intro=48a64d8763fc ref=refs/heads/master ancestor=yes cli=unavailable\"}; r2 SHA 7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820 (installed=impl-12, cmp=0); r4 SHA d312263ac8ebc9e23555402dc5ae63167f78dcd01ddccc5ddcfa7623b85879e0 (installed=impl-20, cmp=0)."
+    },
+    {
+      "claim": "R3 approval paths and preserved branches",
+      "cwd": "/home/vgpnk/Projects/shokunin",
+      "command": "python3 - <<'PY'\nimport collections,csv,glob,os,subprocess\nroot=os.getcwd(); rows=list(csv.DictReader(open('souji-shokunin/census/round-3/operator-approval-list.tsv'),delimiter='\\t')); paths=[r['path'] for r in rows]\nmissing=[]; no_intro=[]; nonancestor=[]\nfor p in paths:\n rel=os.path.relpath(p,root)\n if not os.path.exists(p): missing.append(p)\n intro=subprocess.run(['git','-C',root,'log','--diff-filter=A','--format=%H','-1','--',rel],capture_output=True,text=True).stdout.strip().splitlines()\n if not intro: no_intro.append(p)\n elif subprocess.run(['git','-C',root,'merge-base','--is-ancestor',intro[0],'refs/remotes/origin/master']).returncode: nonancestor.append(p)\nshards=[r for f in glob.glob('souji-shokunin/census/round-3/approvals-*.tsv') for r in csv.DictReader(open(f),delimiter='\\t')]\nprint('approval_rows=%d unique_paths=%d missing=%d intro_missing=%d nonancestor_origin_master=%d shard_rows=%d shard_verdicts=%s' % (len(rows),len(set(paths)),len(missing),len(no_intro),len(nonancestor),len(shards),dict(collections.Counter(r['verdict'] for r in shards))))\nprint('literal_ancestor_yes=%d alternate_intro_ancestor_origin_master=%d' % (sum('ancestor=yes' in r['evidence'] for r in rows),sum('intro ancestor of origin/master' in r['evidence'] for r in rows)))\nfor repo in ('lore-shokunin','game-dev-2d-shokunin'):\n out=subprocess.check_output(['git','-C',os.path.join(root,repo),'worktree','list','--porcelain'],text=True)\n print('%s_worktree_entries=%d' % (repo,sum(x.startswith('worktree ') for x in out.splitlines())))\nfor b in ('wt-r98','wt-r99','wt-r100'):\n out=subprocess.check_output(['git','-C',os.path.join(root,'game-dev-2d-shokunin'),'log','--oneline',b,'--not','--remotes'],text=True)\n print('%s_unpushed_commits=%d' % (b,sum(bool(x) for x in out.splitlines())))\nPY",
+      "observed_output": "approval_rows=96 unique_paths=96 missing=0 intro_missing=0 nonancestor_origin_master=0 shard_rows=111 shard_verdicts={'SAFE': 96, 'NOT-SAFE': 15}; literal_ancestor_yes=75 alternate_intro_ancestor_origin_master=21; lore_worktree_entries=1; gd2d_worktree_entries=4; wt-r98/wt-r99/wt-r100 unpushed_commits=1 each. git worktree list marks the three named registrations prunable because gitdir files point to non-existent locations."
+    },
+    {
+      "claim": "R4 final-judge tally and report/lesson text",
+      "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+      "command": "python3 - <<'PY'\nimport collections,json,pathlib\np=pathlib.Path('tests/results'); items=[]\nfor i in range(57,65):\n d=json.loads((p/f'vfinal-{i}.json').read_text()); w=d.get('winner') or d.get('winner_recommendation') or d.get('recommendation')\n if isinstance(w,dict): w=w.get('name') or w.get('path') or w.get('verdict')\n items.append((i,'impl-20' if 'impl-20' in str(w) else str(d.get('verdict') or w or 'other')))\nprint(items); print(dict(collections.Counter(v for _,v in items)))\nprint(next(x.strip() for x in pathlib.Path('../.ufo/reports/round-4/souji.md').read_text().splitlines() if 'Dissent (' in x))\nprint(next(x.strip() for x in pathlib.Path('corpus/lessons/round-4.md').read_text().splitlines() if 'declared' in x))\nPY",
+      "observed_output": "[(57, 'impl-20'), (58, 'impl-20'), (59, 'impl-20'), (60, 'NO-CLEAN-CANDIDATE'), (61, 'impl-20'), (62, 'impl-20'), (63, 'impl-20'), (64, 'impl-20')]\n{'impl-20': 7, 'NO-CLEAN-CANDIDATE': 1}\nrivals accepted). Dissent (60/62/64: NO-CLEAN-CANDIDATE over fixture\n- Judge dissent is informative: vfinal-60/62/64 declared"
+    },
+    {
+      "claim": "S60 V6 result is consistent with stale fixture roots; do not dismiss its individual no-clean conclusion",
+      "source_artifacts": ["tests/results/vfinal-60.json:1294-1307", "tests/vault/case-V6/ledger-crlf.tsv:2", "tests/vault/case-V6/ledger-lf-control.tsv:2"],
+      "commands": [
+        "SOUJI_CLI_BIN=/bin/false bash tools/souji-vault-verify.sh --fallback --ledger tests/vault/case-V6/ledger-crlf.tsv tests/vault/case-V6/src/payload.md",
+        "SOUJI_CLI_BIN=/bin/false bash tools/souji-vault-verify.sh --fallback --ledger tests/vault/case-V6/ledger-lf-control.tsv tests/vault/case-V6/src/payload.md"
+      ],
+      "observed_output": "Both calls: VERDICT tests/vault/case-V6/src/payload.md NOT-SAFE none pushed=no-introducing-commit; stale=not-scratch-type cli=available; NOT-VERIFIED(none). Both committed ledger rows point to /tmp/souji-final61-v6.tKnTSz/fixture/... rather than the committed case-V6 source path; tests/results/vfinal-60.json records no-introducing-commit failures for impl-20."
+    },
+    {
+      "claim": "S58's prior R4 artifact records a real-vault configuration side effect and no Markdown/ledger change",
+      "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+      "command": "python3 -c 'import json; d=json.load(open(\"census/round-4/seat-58-rail-breach.json\")); print(\"rail=%s\\nconfig=%s\\nnotes=%s\\nledger=%s\"%(d[\"rail_verdict\"],d[\"timeline\"][\"vault_config_write\"],d[\"blast_radius\"][\"vault_notes\"],d[\"blast_radius\"][\"live_ledger\"]))'",
+      "observed_output": "rail=VIOLATED-THEN-REMEDIATED; config=2026-10-18 14:10:31 -03 — .obsidian/appearance.json, app.json, core-plugins.json all re-mtimed; notes=NONE — 58 *.md files unchanged; ledger=header-only (1 line)."
+    },
+    {
+      "claim": "R4 help output includes executable source initialization; isolated --vault behavior",
+      "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+      "commands": [
+        "bash tools/souji-vault-verify.sh --help | head -n 55",
+        "tmp=/tmp/souji-s58-r5.FuzJkA; SHOKUNIN_ROOT=\"$tmp/fleet\" bash tools/souji-vault-verify.sh --fallback --ledger \"$tmp/ledger-absolute.tsv\" --vault \"$tmp/vault\" \"$tmp/source/note.md\"",
+        "tmp=/tmp/souji-s58-r5.FuzJkA; SHOKUNIN_ROOT=\"$tmp/fleet\" bash tools/souji-vault-verify.sh --fallback --ledger \"$tmp/ledger-absolute.tsv\" --vault \"$tmp/nonexistent-vault\" \"$tmp/source/note.md\"",
+        "tmp=/tmp/souji-s58-r5.FuzJkA; SHOKUNIN_ROOT=\"$tmp/fleet\" bash tools/souji-vault-verify.sh --fallback --ledger \"$tmp/ledger-relative.tsv\" --vault \"$tmp/vault\" \"$tmp/source/note.md\""
+      ],
+      "observed_output": "Help output contains set -euo pipefail, unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_NAMESPACE, SCRIPT_PATH=..., SCRIPT_DIR=..., REPO_ROOT=..., and SHOKUNIN_ROOT=... after the help text. The correct and nonexistent hints each returned VERDICT /tmp/souji-s58-r5.FuzJkA/source/note.md SAFE moved-to-obsidian followed by VERIFIED(moved-to-obsidian); the relative row returned VERDICT /tmp/souji-s58-r5.FuzJkA/source/note.md NOT-SAFE none row-incomplete relative-vault-path vault=vault/note.md followed by NOT-VERIFIED(row-incomplete). The matching absolute ledger row's explicit vault path is hashed; the hint does not constrain it."
+    },
+    {
+      "claim": "Static audit found no hidden-search flag in either stale-reference sweep",
+      "source_artifacts": ["tools/souji-verify.sh:200-205", "tools/souji-vault-verify.sh:424-429"],
+      "command": "python3 - <<'PY'\nfrom pathlib import Path\nfor f,a,b in [('tools/souji-verify.sh',200,205),('tools/souji-vault-verify.sh',424,429)]:\n lines=Path(f).read_text().splitlines()\n print(f'{f}:{a}-{b}')\n for n in range(a,b+1): print(f'{n}: {lines[n-1]}')\nPY",
+      "observed_output": "Both source ranges invoke rg -l --no-ignore --fixed-strings without --hidden; the runtime hidden-reference probe returned SAFE(stale) from both tools."
+    }
+  ],
+  "verification_limits": {
+    "shell_syntax": "bash -n tools/souji-verify.sh tools/souji-vault-verify.sh passed.",
+    "selftests": "Not rerun: both selftests automatically rm -rf their /tmp fixture directories, forbidden by this task's no-delete rule. Stored prior reports record 24/24 and 35/35 passing, but those are not fresh S58 runs.",
+    "vault_flag": "No real vault was probed; --vault tests used only the /tmp fixture. The S53 harness and Obsidian launcher were not run."
+  },
+  "scope": {
+    "only_repo_file_written": "census/round-5/final-58.json",
+    "scratch": "/tmp/souji-s58-r5.FuzJkA (left in place; no deletion permitted)",
+    "fleet_lane_sibling_mutations": "none",
+    "git_mutations": "none; only read-only log/ref/list/ancestry queries",
+    "protected_paths_or_contents_read": "none: no .ufo/state, .ufo/watchdog.log, ~/.config, credential, or secret-shaped contents",
+    "round4_result_preservation": "tests/results/vfinal-58.json was not modified",
+    "disposition": "R3 verified with a prune-risk follow-up; R1, R2, and R4 receive partial-disagree verdicts for the findings above. No prune, removal, delete, fetch, push, commit, branch, checkout, reset, or rebase was run."
+  }
+}

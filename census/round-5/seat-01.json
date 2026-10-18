@@ -1,0 +1,57 @@
+{
+  "seat": "S01",
+  "checks": [
+    {
+      "target": "/home/vgpnk/Projects/shokunin/.ufo/interactive-l1-20261015T050057Z/launch-tsukuroi.json",
+      "lane_verdict": "SAFE/pushed",
+      "your_verdict": "SAFE/pushed",
+      "agree": true,
+      "evidence": [
+        {
+          "command": "tools/souji-verify.sh /home/vgpnk/Projects/shokunin/.ufo/interactive-l1-20261015T050057Z/launch-tsukuroi.json /home/vgpnk/Projects/shokunin/kotodama-shokunin",
+          "observed_output": "VERDICT\t/home/vgpnk/Projects/shokunin/.ufo/interactive-l1-20261015T050057Z/launch-tsukuroi.json\tSAFE\tpushed\tintro=b2f2efae7549 ref=refs/remotes/origin/master ancestor=yes"
+        },
+        {
+          "command": "git -C /home/vgpnk/Projects/shokunin diff-tree --root --no-commit-id --name-status -r b2f2efae7549c6692d9af6dcea9f9d9c5d797e9d -- .ufo/interactive-l1-20261015T050057Z/launch-tsukuroi.json",
+          "observed_output": "A\t.ufo/interactive-l1-20261015T050057Z/launch-tsukuroi.json"
+        },
+        {
+          "command": "repo=/home/vgpnk/Projects/shokunin; intro=b2f2efae7549c6692d9af6dcea9f9d9c5d797e9d; ref=refs/remotes/origin/master; git -C \"$repo\" merge-base --is-ancestor \"$intro\" \"$ref\"; printf 'ancestor-exit=%s\\n' \"$?\"",
+          "observed_output": "ancestor-exit=0"
+        },
+        {
+          "command": "repo=/home/vgpnk/Projects/shokunin; target=.ufo/interactive-l1-20261015T050057Z/launch-tsukuroi.json; ref=refs/remotes/origin/master; local_blob=$(git -C \"$repo\" hash-object \"$repo/$target\"); remote_blob=$(git -C \"$repo\" rev-parse \"$ref:$target\"); printf 'git hash-object: %s\\nremote blob:     %s\\n' \"$local_blob\" \"$remote_blob\"; test \"$local_blob\" = \"$remote_blob\"; printf 'blob-match-exit=%s\\n' \"$?\"",
+          "observed_output": "git hash-object: 085e588e145f8e7be1bfa4381b6c9df8d8a949ef\nremote blob:     085e588e145f8e7be1bfa4381b6c9df8d8a949ef\nblob-match-exit=0"
+        }
+      ]
+    },
+    {
+      "target": "/home/vgpnk/Projects/shokunin/kotodama-shokunin",
+      "lane_verdict": "NOT-SAFE",
+      "your_verdict": "NOT-SAFE",
+      "agree": true,
+      "evidence": [
+        {
+          "command": "tools/souji-verify.sh /home/vgpnk/Projects/shokunin/.ufo/interactive-l1-20261015T050057Z/launch-tsukuroi.json /home/vgpnk/Projects/shokunin/kotodama-shokunin",
+          "observed_output": "VERDICT\t/home/vgpnk/Projects/shokunin/kotodama-shokunin\tNOT-SAFE\tunpushed\tunpushed=47 dirty=16"
+        },
+        {
+          "command": "repo=/home/vgpnk/Projects/shokunin/kotodama-shokunin; git -C \"$repo\" log --branches --not --remotes --oneline | tee /tmp/souji-r5-s01-kotodama-unpushed.txt | wc -l",
+          "observed_output": "47"
+        },
+        {
+          "command": "repo=/home/vgpnk/Projects/shokunin/kotodama-shokunin; git -C \"$repo\" status --porcelain | tee /tmp/souji-r5-s01-kotodama-status.txt | wc -l",
+          "observed_output": "16 (initial manual snapshot; souji-verify.sh also reported dirty=16)"
+        },
+        {
+          "command": "repo=/home/vgpnk/Projects/shokunin/kotodama-shokunin; printf 'unpushed='; git -C \"$repo\" log --branches --not --remotes --oneline | wc -l; printf 'dirty='; git -C \"$repo\" status --porcelain | wc -l",
+          "observed_output": "unpushed=47\ndirty=25 (later live snapshot; intervening snapshots showed 17)"
+        },
+        {
+          "command": "repo=/home/vgpnk/Projects/shokunin/kotodama-shokunin; if rg -F \"$repo\" /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/knowledge/obsidian-ledger.tsv; then :; else printf '%s\\n' NO_MATCH; fi",
+          "observed_output": "NO_MATCH"
+        }
+      ]
+    }
+  ]
+}

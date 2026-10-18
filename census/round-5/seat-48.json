@@ -1,0 +1,72 @@
+{
+  "seat": "S48",
+  "round": 5,
+  "role": "cross-audit — adversarial path handling",
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "assignment": "Try to obtain SAFE on unreceipted fake targets using trailing slash, double slash, /proc/self/cwd, and a 255-character basename.",
+  "axes": [
+    "false-SAFE resistance under path normalization",
+    "reproducible command/output evidence",
+    "agreement with the installed r2 and r4 tool verdict contracts"
+  ],
+  "verdict": "AGREE — 20/20 fake-target checks returned NOT-SAFE in both installed tools; no false-SAFE or live defect found.",
+  "agreement_counts": {
+    "tools_audited": 2,
+    "cases_per_tool": 10,
+    "expected_not_safe": 20,
+    "observed_not_safe": 20,
+    "false_safe": 0,
+    "disagreements": 0
+  },
+  "fixtures": {
+    "root": "/tmp/souji-s48-weird.2940Bk",
+    "creation_command": "root=$(mktemp -d /tmp/souji-s48-weird.XXXXXX); mkdir -p \"$root/empty-fleet\" \"$root/plain-dir\"; printf 'unreceipted fake target\\n' > \"$root/ordinary.md\"; printf 'unreceipted fake target\\n' > \"$root/plain-dir/item.md\"; long=$(printf '%255s' '' | tr ' ' n); printf 'unreceipted long-name fake target\\n' > \"$root/$long\"",
+    "inspection_command": "stat -c '%F %n' -- \"$root/ordinary.md\" \"$root/plain-dir\" \"$root/$long\"; test -e \"$root/no-ledger\"; printf 'fake_ledger=absent\\n'; ls -A \"$root/empty-fleet\" | wc -l",
+    "observed_fixture_facts": [
+      "fixture=/tmp/souji-s48-weird.2940Bk",
+      "ordinary.md is a regular file; plain-dir is a directory; the 255-character basename is a regular file",
+      "fake_ledger=absent",
+      "fake_fleet_entries=0",
+      "long_component_bytes=255",
+      "readlink -m /proc/self/cwd/ordinary.md and readlink -m //${root}/ordinary.md both resolved to /tmp/souji-s48-weird.2940Bk/ordinary.md when cwd was the fixture root"
+    ],
+    "safety": "Only fake files/directories and an empty fake fleet under /tmp were used. SOUJI_LEDGER pointed to an absent fake path; no real ledger or secret-shaped file contents were read. No fleet or lane files were modified except this assigned fragment."
+  },
+  "probes": [
+    {
+      "tool": "tools/souji-verify.sh",
+      "cwd": "/tmp/souji-s48-weird.2940Bk",
+      "command": "repo=/home/vgpnk/Projects/shokunin/souji-shokunin; root=$PWD; long=$(printf '%255s' '' | tr ' ' n); env SHOKUNIN_ROOT=\"$root/empty-fleet\" SOUJI_LEDGER=\"$root/no-ledger\" bash \"$repo/tools/souji-verify.sh\" \"$root/ordinary.md\" \"$root/ordinary.md/\" \"$root//ordinary.md\" \"//$root/ordinary.md\" /proc/self/cwd/ordinary.md \"$root/plain-dir\" \"$root/plain-dir/\" \"$root//plain-dir\" /proc/self/cwd/plain-dir \"$root/$long\"",
+      "observed_stdout": [
+        "VERDICT<TAB>/tmp/souji-s48-weird.2940Bk/ordinary.md<TAB>NOT-SAFE<TAB>none<TAB>obsidian=no-ledger; stale=not-scratch-type",
+        "VERDICT<TAB>/tmp/souji-s48-weird.2940Bk/ordinary.md/<TAB>NOT-SAFE<TAB>none<TAB>obsidian=no-ledger; stale=not-scratch-type",
+        "VERDICT<TAB>/tmp/souji-s48-weird.2940Bk//ordinary.md<TAB>NOT-SAFE<TAB>none<TAB>obsidian=no-ledger; stale=not-scratch-type",
+        "VERDICT<TAB>///tmp/souji-s48-weird.2940Bk/ordinary.md<TAB>NOT-SAFE<TAB>none<TAB>obsidian=no-ledger; stale=not-scratch-type",
+        "VERDICT<TAB>/proc/self/cwd/ordinary.md<TAB>NOT-SAFE<TAB>none<TAB>obsidian=no-ledger; stale=not-scratch-type",
+        "VERDICT<TAB>/tmp/souji-s48-weird.2940Bk/plain-dir<TAB>NOT-SAFE<TAB>none<TAB>obsidian=no-ledger; stale=not-scratch-type",
+        "VERDICT<TAB>/tmp/souji-s48-weird.2940Bk/plain-dir/<TAB>NOT-SAFE<TAB>none<TAB>obsidian=no-ledger; stale=not-scratch-type",
+        "VERDICT<TAB>/tmp/souji-s48-weird.2940Bk//plain-dir<TAB>NOT-SAFE<TAB>none<TAB>obsidian=no-ledger; stale=not-scratch-type",
+        "VERDICT<TAB>/proc/self/cwd/plain-dir<TAB>NOT-SAFE<TAB>none<TAB>obsidian=no-ledger; stale=not-scratch-type",
+        "VERDICT<TAB>\"$root/$long\" (a 255-byte basename)<TAB>NOT-SAFE<TAB>none<TAB>obsidian=no-ledger; stale=not-scratch-type"
+      ],
+      "result": "10/10 NOT-SAFE; 0 SAFE outputs"
+    },
+    {
+      "tool": "tools/souji-vault-verify.sh",
+      "cwd": "/tmp/souji-s48-weird.2940Bk",
+      "command": "repo=/home/vgpnk/Projects/shokunin/souji-shokunin; root=$PWD; long=$(printf '%255s' '' | tr ' ' n); env SHOKUNIN_ROOT=\"$root/empty-fleet\" SOUJI_LEDGER=\"$root/no-ledger\" bash \"$repo/tools/souji-vault-verify.sh\" --fallback \"$root/ordinary.md\" \"$root/ordinary.md/\" \"$root//ordinary.md\" \"//$root/ordinary.md\" /proc/self/cwd/ordinary.md \"$root/plain-dir\" \"$root/plain-dir/\" \"$root//plain-dir\" /proc/self/cwd/plain-dir \"$root/$long\"",
+      "observed_output_summary": "10 VERDICT records each reported NOT-SAFE / receipt=none / evidence=pushed=no-repo; stale=not-scratch-type cli=unavailable; each was followed by NOT-VERIFIED(none). Inputs and order were identical to the souji-verify.sh command above.",
+      "result": "10/10 NOT-SAFE and NOT-VERIFIED(none); 0 SAFE outputs"
+    }
+  ],
+  "code_path_review": [
+    "tools/souji-verify.sh:103,375 canonicalizes each target using readlink -m before secret-shape and target-kind classification.",
+    "tools/souji-vault-verify.sh:79,543 uses the same readlink -m canonicalization before classification."
+  ],
+  "defects_found": [],
+  "preamble": {
+    "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+    "fragment_path": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-5/seat-48.json",
+    "mode": "read-only audit except this assigned fragment and /tmp scratch; no prune/remove/delete or git mutation"
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "seat": "S46",
+  "round": 5,
+  "role": "cross-audit",
+  "assignment": "After a 300-second wait, randomly re-run two missed-items-sweep claims from S17-S32.",
+  "wait": {
+    "command": "sleep 300",
+    "exit_code": 0
+  },
+  "selection": {
+    "eligible_claim_seats_present": ["S18", "S19", "S22", "S23", "S27", "S28", "S29", "S31"],
+    "command": "shuf -e S18 S19 S22 S23 S27 S28 S29 S31 -n 2",
+    "observed_output": ["S27", "S19"]
+  },
+  "verdict": "AGREE with both selected claims at their stated decision scope; S19 has one current-count drift noted below.",
+  "agreement_counts": {
+    "audited_claims": 2,
+    "agree": 2,
+    "disagree": 0
+  },
+  "defects_found": [],
+  "audits": [
+    {
+      "source_seat": "S27",
+      "source_file": "census/round-5/seat-27.json",
+      "claim": "All 96 approval-list paths remain present and unique, with none newer than the 2026-10-18 13:45:00 -03:00 cutoff; this staleness sweep does not invalidate a receipt.",
+      "verdict": "AGREE",
+      "evidence": [
+        {
+          "command": "python3 -c 'import csv,datetime,os,sys; p=sys.argv[1]; c=datetime.datetime.fromisoformat(\"2026-10-18T13:45:00-03:00\").timestamp(); rows=list(csv.DictReader(open(p,newline=\"\"),delimiter=\"\\t\")); paths=[r[\"path\"] for r in rows]; missing=[x for x in paths if not os.path.lexists(x)]; stats=[(x,os.lstat(x)) for x in paths if os.path.lexists(x)]; changed=[(x,s) for x,s in stats if s.st_mtime>c]; links=[x for x,s in stats if os.path.islink(x)]; print(\"rows={} unique_paths={} mtime_newer={} at_or_before={} missing={} symlinks={}\".format(len(rows),len(set(paths)),len(changed),len(stats)-len(changed),len(missing),len(links))); n=max(stats,key=lambda x:x[1].st_mtime); print(\"newest_mtime={} path={}\".format(datetime.datetime.fromtimestamp(n[1].st_mtime).astimezone().isoformat(timespec=\"seconds\"),n[0])); [print(\"NEWER\\t{}\".format(x)) for x,s in changed]; [print(\"MISSING\\t{}\".format(x)) for x in missing]' /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-3/operator-approval-list.tsv",
+          "observed_output": "rows=96 unique_paths=96 mtime_newer=0 at_or_before=96 missing=0 symlinks=0\nnewest_mtime=2026-10-16T12:55:04-03:00 path=/home/vgpnk/Projects/shokunin/audio-publish-commit-map-20261016.txt"
+        }
+      ],
+      "scope_note": "This independently rechecks the mtime/existence condition only; it does not re-run all 96 SAFE(pushed) receipt checks."
+    },
+    {
+      "source_seat": "S19",
+      "source_file": "census/round-5/seat-19.json",
+      "claim": "Re-run the round-1 unpushed-commit counter across all 21 lane repositories and compare the 17-repository cohort with its round-1 baseline; S19 found growth in game-dev-3d and kaidoku.",
+      "verdict": "AGREE_WITH_CURRENT-SNAPSHOT-CAVEAT",
+      "current_comparison": {
+        "repositories_counted": 21,
+        "round1_cohort_count": 17,
+        "growth_cohort_still": ["game-dev-3d-shokunin", "kaidoku-shokunin"],
+        "game_dev_3d_reported_unpushed": 2,
+        "game_dev_3d_rerun_unpushed": 3,
+        "kaidoku_reported_unpushed": 6,
+        "kaidoku_rerun_unpushed": 6,
+        "interpretation": "The same two round-1-baseline repositories remain the growth findings. The game-dev-3d count is now one higher than the S19 fragment; its latest unpushed commit is c6f655d at 2026-10-18T15:20:00-03:00. Because S19 does not record the counter's execution time, this is treated as snapshot drift rather than a proven error in its earlier observation."
+      },
+      "evidence": [
+        {
+          "command": "for d in *-shokunin; do printf '%s\\t' \"$d\"; git -C \"$d\" log --branches --not --remotes --oneline | wc -l; done",
+          "cwd": "/home/vgpnk/Projects/shokunin",
+          "observed_output": "audio-shokunin\t24\nchousa-shokunin\t0\ngame-dev-2d-shokunin\t6\ngame-dev-3d-shokunin\t3\nkagi-shokunin\t0\nkaidoku-shokunin\t6\nkake-shokunin\t0\nkama-shokunin\t0\nkasegi-shokunin\t0\nkengaku-shokunin\t0\nkotoba-shokunin\t1\nkotodama-shokunin\t47\nkumitate-shokunin\t0\nlore-shokunin\t3\nmado-shokunin\t0\nmori-shokunin\t0\nrevenger-shokunin\t0\nsouji-shokunin\t10\ntabi-shokunin\t1\ntameshi-shokunin\t0\ntsukuroi-shokunin\t0"
+        },
+        {
+          "command": "args=(); for d in *-shokunin; do [ -d \"$d\" ] && args+=(\"$PWD/$d\"); done; printf 'target_count=%s\\n' \"${#args[@]}\"; /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh \"${args[@]}\"",
+          "cwd": "/home/vgpnk/Projects/shokunin",
+          "observed_output": "target_count=21\nVERDICT\t/home/vgpnk/Projects/shokunin/audio-shokunin\tNOT-SAFE\tunpushed\tunpushed=24 dirty=0\nVERDICT\t/home/vgpnk/Projects/shokunin/chousa-shokunin\tNOT-SAFE\tnone\tunpushed=0 dirty=0\nVERDICT\t/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin\tNOT-SAFE\tunpushed\tunpushed=6 dirty=0\nVERDICT\t/home/vgpnk/Projects/shokunin/game-dev-3d-shokunin\tNOT-SAFE\tunpushed\tunpushed=3 dirty=3\nVERDICT\t/home/vgpnk/Projects/shokunin/kagi-shokunin\tNOT-SAFE\tnone\tunpushed=0 dirty=0\nVERDICT\t/home/vgpnk/Projects/shokunin/kaidoku-shokunin\tNOT-SAFE\tunpushed\tunpushed=6 dirty=1\nVERDICT\t/home/vgpnk/Projects/shokunin/kake-shokunin\tNOT-SAFE\tnone\tunpushed=0 dirty=0\nVERDICT\t/home/vgpnk/Projects/shokunin/kama-shokunin\tNOT-SAFE\tnone\tunpushed=0 dirty=0\nVERDICT\t/home/vgpnk/Projects/shokunin/kasegi-shokunin\tNOT-SAFE\tnone\tunpushed=0 dirty=0\nVERDICT\t/home/vgpnk/Projects/shokunin/kengaku-shokunin\tNOT-SAFE\tnone\tunpushed=0 dirty=0\nVERDICT\t/home/vgpnk/Projects/shokunin/kotoba-shokunin\tNOT-SAFE\tunpushed\tunpushed=1 dirty=0\nVERDICT\t/home/vgpnk/Projects/shokunin/kotodama-shokunin\tNOT-SAFE\tunpushed\tunpushed=47 dirty=26\nVERDICT\t/home/vgpnk/Projects/shokunin/kumitate-shokunin\tNOT-SAFE\tnone\tunpushed=0 dirty=0\nVERDICT\t/home/vgpnk/Projects/shokunin/lore-shokunin\tNOT-SAFE\tunpushed\tunpushed=3 dirty=1\nVERDICT\t/home/vgpnk/Projects/shokunin/mado-shokunin\tNOT-SAFE\tnone\tunpushed=0 dirty=0\nVERDICT\t/home/vgpnk/Projects/shokunin/mori-shokunin\tNOT-SAFE\tnone\tunpushed=0 dirty=0\nVERDICT\t/home/vgpnk/Projects/shokunin/revenger-shokunin\tNOT-SAFE\tnone\tunpushed=0 dirty=0\nVERDICT\t/home/vgpnk/Projects/shokunin/souji-shokunin\tNOT-SAFE\tunpushed\tunpushed=10 dirty=1\nVERDICT\t/home/vgpnk/Projects/shokunin/tabi-shokunin\tNOT-SAFE\tunpushed\tunpushed=1 dirty=0\nVERDICT\t/home/vgpnk/Projects/shokunin/tameshi-shokunin\tNOT-SAFE\tnone\tunpushed=0 dirty=0\nVERDICT\t/home/vgpnk/Projects/shokunin/tsukuroi-shokunin\tNOT-SAFE\tnone\tunpushed=0 dirty=0"
+        },
+        {
+          "command": "git -C /home/vgpnk/Projects/shokunin/game-dev-3d-shokunin log --branches --not --remotes --format='%h %aI %s' --max-count=1; printf 'unpushed_count='; git -C /home/vgpnk/Projects/shokunin/game-dev-3d-shokunin log --branches --not --remotes --oneline | wc -l",
+          "observed_output": "c6f655d 2026-10-18T15:20:00-03:00 r102: close-out gate for unreal-mcp subtree (hardened, 11/11 attacks detected) + r102 lesson + 5 routed defect repairs + engines/rea updates (64-seat swarm, devin/deepseek-v4.1-flash)\nunpushed_count=3"
+        },
+        {
+          "sources": [
+            "census/round-1/seat-48.json (game-dev-3d baseline 0)",
+            "census/round-1/seat-49.json (kaidoku baseline 0)",
+            "census/round-1/seat-48.json through seat-53.json (remaining assigned cohort baselines)",
+            "census/round-5/seat-19.json (reported snapshot and cohort classification)"
+          ]
+        }
+      ],
+      "scope_note": "Current direct counters and the installed verifier agree for all 21 repos. Current run agrees that the same two measured baseline repos have growth, but S19's recorded game-dev-3d value (2) is not the current value (3); no disagreement is asserted without the original measurement timestamp."
+    }
+  ],
+  "scope": "Read-only across the fleet and lane. Only this assigned fragment was written; no removals or Git mutations performed."
+}

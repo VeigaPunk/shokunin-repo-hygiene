@@ -1,0 +1,76 @@
+{
+  "seat": "S42",
+  "round": 5,
+  "role": "tool regression / README-spec drift",
+  "verdict": "PARTIAL DRIFT: souji-verify.spec.md mostly describes the installed r2 tool, but its rg --basename recipe is not executable as written; SKILL.md is stale versus installed receipt behavior.",
+  "lane_report_agreement": {
+    "verdict": "DISAGREE with round-4 report's narrow claim that the SKILL.md receipt taxonomy was extended to reflect r4 findings.",
+    "basis": "Independent read of current SKILL.md:12-20 lists exactly pushed, moved-to-obsidian, stale; installed souji-verify.sh and souji-vault-verify.sh both implement metadata-prune, and the vault verifier also emits r4 reasons/vocabulary. The current taxonomy still omits metadata-prune. This disagreement is limited to the taxonomy-extension claim, not the round-4 tool result."
+  },
+  "installed_tools": {
+    "souji_verify": {
+      "path": "tools/souji-verify.sh",
+      "sha256": "7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820"
+    },
+    "souji_vault_verify": {
+      "path": "tools/souji-vault-verify.sh",
+      "sha256": "d312263ac8ebc9e23555402dc5ae63167f78dcd01ddccc5ddcfa7623b85879e0"
+    },
+    "syntax_check": {
+      "command": "bash -n tools/souji-verify.sh tools/souji-vault-verify.sh",
+      "output": "exit=0"
+    }
+  },
+  "spot_checks": [
+    {
+      "behavior": "Legacy stale receipt for an old .out file",
+      "doc": "SKILL.md:18 defines scratch types without *.out and uses the owning lane's last admitted round as the age condition.",
+      "command": "SHOKUNIN_ROOT=/tmp/souji-s42-empty-fleet SOUJI_LEDGER=/tmp/souji-s42-no-ledger.tsv tools/souji-verify.sh --json --stale-days 1 /tmp/souji-s42-stale.k4KkLP/unique-s42-artifact.out",
+      "output": "{\"path\":\"/tmp/souji-s42-stale.k4KkLP/unique-s42-artifact.out\",\"verdict\":\"SAFE\",\"receipt\":\"stale\",\"evidence\":\"scratch-type=ext refs=0 mtime-age-days=3\"}",
+      "result": "DRIFT: installed behavior recognizes *.out and uses the explicit --stale-days threshold (default 1), not the lane-round date described by SKILL.md. Fixture lived under /tmp and was not removed."
+    },
+    {
+      "behavior": "Two-sided ledger receipt and installed r4 JSON vocabulary",
+      "doc": "SKILL.md:17 requires source and vault paths plus hashes; souji-verify.spec.md:42-44 describes both-side hash verification.",
+      "command": "SHOKUNIN_ROOT=/tmp/souji-s42-empty-fleet tools/souji-vault-verify.sh --json --fallback --ledger /tmp/souji-s42-ledger.sw8pwC/ledger.tsv /tmp/souji-s42-ledger.sw8pwC/source.md",
+      "output": "{\"path\":\"/tmp/souji-s42-ledger.sw8pwC/source.md\",\"verdict\":\"SAFE\",\"verified\":\"VERIFIED(moved-to-obsidian)\",\"receipt\":\"moved-to-obsidian\",\"reason\":\"moved-to-obsidian\",\"evidence\":\"ledger-row ledger=/tmp/souji-s42-ledger.sw8pwC/ledger.tsv vault=/tmp/souji-s42-ledger.sw8pwC/vault.md source-sha256=abb7f0ae43ba cli=skipped(fallback)\"}",
+      "result": "MATCH on ledger qualification; current SKILL.md does not describe the installed vault verifier's additional JSON fields or VERIFIED/NOT-VERIFIED vocabulary."
+    },
+    {
+      "behavior": "Secret-shaped fake path refused before reading",
+      "doc": "souji-verify.spec.md:55-56 and SKILL.md:47-48 prohibit credential/secret handling.",
+      "commands": [
+        "SHOKUNIN_ROOT=/tmp/souji-s42-empty-fleet tools/souji-verify.sh --json /tmp/souji-s42-fake.env",
+        "SHOKUNIN_ROOT=/tmp/souji-s42-empty-fleet tools/souji-vault-verify.sh --json --fallback --ledger /tmp/souji-s42-no-ledger.tsv /tmp/souji-s42-fake.env"
+      ],
+      "outputs": [
+        "{\"path\":\"/tmp/souji-s42-fake.env\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"secrets-refusal\",\"evidence\":\"secret-shaped path component\"}",
+        "{\"path\":\"/tmp/souji-s42-fake.env\",\"verdict\":\"NOT-SAFE\",\"verified\":\"NOT-VERIFIED(secrets-refusal)\",\"receipt\":\"secrets-refusal\",\"reason\":\"secrets-refusal\",\"evidence\":\"secret-shaped path component basename=souji-s42-fake.env\"}"
+      ],
+      "result": "MATCH: both installed tools return secrets-refusal for a non-existent fake path; no secret file was accessed."
+    }
+  ],
+  "additional_regressions": [
+    {
+      "finding": "Spec stale-reference command uses an unsupported ripgrep option.",
+      "doc": "tools/souji-verify.spec.md:46-50",
+      "command": "rg --basename souji-s42-fake /tmp/souji-s42-empty-fleet",
+      "output": "rg: unrecognized flag --basename\nexit=2",
+      "implementation": "tools/souji-verify.sh:44-52 explicitly records D-a and uses a fixed-string content sweep instead."
+    },
+    {
+      "finding": "Spec lists overlapping worktree rules but does not state priority; installed tool checks named-branch unpushed commits first.",
+      "doc": "tools/souji-verify.spec.md:29-33",
+      "command": "SHOKUNIN_ROOT=/home/vgpnk/Projects/shokunin tools/souji-verify.sh --json /home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r98",
+      "output": "{\"path\":\"/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r98\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"unpushed-branch\",\"evidence\":\"branch=wt-r98 unpushed=1 dir=absent owner=game-dev-2d-shokunin\"}",
+      "implementation": "tools/souji-verify.sh:53-58 documents the priority; this live absent registration has unique=0 and an unpushed named branch, so it is correctly NOT-SAFE. No worktree operation was run."
+    },
+    {
+      "finding": "SKILL.md pushed recipe directs git fetch, contrary to the installed verifier's no-fetch contract; taxonomy also omits metadata-prune.",
+      "doc": "SKILL.md:12-20, especially line 16",
+      "implementation": "tools/souji-verify.sh:4-5, 137-150; tools/souji-vault-verify.sh:23-26, 471-489",
+      "result": "DRIFT: installed receipt resolution uses existing refs only and emits metadata-prune for absent worktree registrations with zero unique commits. The three-entry SKILL taxonomy is not exhaustive."
+    }
+  ],
+  "safety": "Read-only over fleet/lane/siblings; fake paths only for refusal probes. Only /tmp fixtures and this assigned census/round-5/seat-42.json fragment were written. No git mutation, prune, delete, selftest cleanup, or credential access."
+}

@@ -1,0 +1,64 @@
+{
+  "seat": "S54",
+  "round": 5,
+  "role": "cross-audit — round-1..4 evidence path resolution",
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "assignment": "Sweep rounds 1–4 reports for cited evidence paths that no longer resolve.",
+  "verdict": "AGREE — in path-resolution scope, all four round reports' cited report/evidence artifacts resolve; no dead evidence pointers found. This is not a re-adjudication of the underlying claims.",
+  "agreement_counts": {
+    "reports_audited": 4,
+    "agree_on_pointer_health": 4,
+    "disagree": 0,
+    "dead_evidence_pointers": 0
+  },
+  "defects_found": [],
+  "evidence": [
+    {
+      "claim": "File-backed pointers explicitly cited in each report, plus the corresponding persisted report files, resolve.",
+      "command": "python3 - <<'PY'\nfrom pathlib import Path\nfleet=Path('/home/vgpnk/Projects/shokunin'); lane=fleet/'souji-shokunin'\nsets={\n'r1': [fleet/'.ufo/reports/round-1/souji.md',lane/'census/round-1/census.tsv',lane/'census/round-1/census-summary.json',lane/'corpus/lessons/round-1.md',lane/'SCORECARD.md',lane/'SKILL.md',lane/'LOG.md'],\n'r2': [fleet/'.ufo/reports/round-2/souji.md',lane/'tools/souji-verify.sh',lane/'tools/souji-verify.spec.md',lane/'tests/results/parent-harness-live.json',lane/'tests/results/INSTALL.json',lane/'tests/results/final-57.json',lane/'tests/results/runner-17.json',lane/'corpus/lessons/round-2.md'],\n'r3': [fleet/'.ufo/reports/round-3/souji.md',lane/'census/round-3/operator-approval-list.tsv',lane/'census/round-3/approval-summary.json',lane/'corpus/lessons/round-3.md'],\n'r4': [fleet/'.ufo/reports/round-4/souji.md',fleet/'.ufo/scopes/souji-mint-20261018/obsidian-cli-probe.md',Path('/home/vgpnk/Documents/shokoknowledge/Home.md'),lane/'tools/souji-vault-verify.sh',lane/'tools/souji-vault-verify.impl-20.sh',lane/'corpus/lessons/round-4.md']}\nfor rnd,paths in sets.items():\n missing=[str(p) for p in paths if not p.exists()]\n print(f'{rnd}: pointer_paths={len(paths)} missing={len(missing)}'+(' '+','.join(missing) if missing else ''))\nfor rnd in (1,3):\n files=list((lane/f'census/round-{rnd}').glob('seat-[0-9][0-9].json'))\n ids=sorted(int(p.stem.split('-')[1]) for p in files)\n print(f'{rnd}: seat_fragments={len(ids)} missing_ids={[i for i in range(1,65) if i not in ids]}')\nprint(f'r2: fixture_cases_F1-F10={sum((lane/f\"tests/fixtures/case-F{i}\").is_dir() for i in range(1,11))}/10')\nprint(f'r4: tests_vault_exists={(lane/\"tests/vault\").is_dir()} results_v_json={len(list((lane/\"tests/results\").glob(\"v*.json\")))} census_files={sum(p.is_file() for p in (lane/\"census/round-4\").rglob(\"*\"))}')\nPY",
+      "observed_output": "r1: pointer_paths=7 missing=0\nr2: pointer_paths=8 missing=0\nr3: pointer_paths=4 missing=0\nr4: pointer_paths=6 missing=0\n1: seat_fragments=64 missing_ids=[]\n3: seat_fragments=64 missing_ids=[]\nr2: fixture_cases_F1-F10=10/10\nr4: tests_vault_exists=True results_v_json=67 census_files=33"
+    },
+    {
+      "claim": "The reports' cited commit/ref evidence remains resolvable.",
+      "checks": [
+        {
+          "command": "for entry in 'fleet /home/vgpnk/Projects/shokunin b2f2efa' 'r1-lane /home/vgpnk/Projects/shokunin/souji-shokunin 652b6f8' 'r1-score /home/vgpnk/Projects/shokunin/souji-shokunin ab7f2f7' 'r2-tool /home/vgpnk/Projects/shokunin/souji-shokunin 9435e46' 'r2-score /home/vgpnk/Projects/shokunin/souji-shokunin 97f22c9' 'r2-final /home/vgpnk/Projects/shokunin/souji-shokunin 187ebb2' 'r3-lane /home/vgpnk/Projects/shokunin/souji-shokunin 36746332' 'r3-fleet /home/vgpnk/Projects/shokunin a1b44b1' 'r3-gd2d /home/vgpnk/Projects/shokunin/game-dev-2d-shokunin 05a72899' 'r4-lane /home/vgpnk/Projects/shokunin/souji-shokunin 48a64d8'; do set -- $entry; label=$1; repo=$2; sha=$3; if git -C \"$repo\" cat-file -e \"$sha^{commit}\"; then printf 'RESOLVES %s %s\\n' \"$label\" \"$sha\"; else printf 'MISSING %s %s\\n' \"$label\" \"$sha\"; fi; done; git -C /home/vgpnk/Projects/shokunin rev-parse --verify refs/remotes/origin/master; git -C /home/vgpnk/Projects/shokunin/lore-shokunin rev-parse --verify refs/remotes/origin/main; git -C /home/vgpnk/Projects/shokunin merge-base --is-ancestor b2f2efa refs/remotes/origin/master; printf 'fleet b2f2efa ancestor exit=%s\\n' \"$?\"",
+          "observed_output": "RESOLVES fleet b2f2efa\\nRESOLVES r1-lane 652b6f8\\nRESOLVES r1-score ab7f2f7\\nRESOLVES r2-tool 9435e46\\nRESOLVES r2-score 97f22c9\\nRESOLVES r2-final 187ebb2\\nRESOLVES r3-lane 36746332\\nRESOLVES r3-fleet a1b44b1\\nRESOLVES r4-lane 48a64d8\\n35b17a60bd91ac8710c61ec731da969d7a52ede2\\n099b4bc7a2b444df4222e6ba9880420fe0cc0443\\nfleet b2f2efa ancestor exit=0"
+        },
+        {
+          "command": "git -C /home/vgpnk/Projects/shokunin/lore-shokunin cat-file -e '28706dc^{commit}'; printf 'lore tip 28706dc commit exit=%s\\n' \"$?\"",
+          "observed_output": "lore tip 28706dc commit exit=0"
+        }
+      ]
+    },
+    {
+      "claim": "Two absent /tmp paths in the reports are expected missing worktree targets, not dead evidence pointers; their stored evidence still resolves.",
+      "command": "for p in /tmp/r87-C5 /tmp/r87-B1; do if [ -e \"$p\" ]; then printf 'target-present %s\\n' \"$p\"; else printf 'target-absent %s\\n' \"$p\"; fi; done; for p in /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-1/seat-21.json /home/vgpnk/Projects/shokunin/souji-shokunin/tests/results/parent-harness-live.json; do if [ -f \"$p\" ]; then printf 'evidence-present %s\\n' \"$p\"; else printf 'evidence-missing %s\\n' \"$p\"; fi; done",
+      "observed_output": "target-absent /tmp/r87-C5\ntarget-absent /tmp/r87-B1\nevidence-present /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-1/seat-21.json\nevidence-present /home/vgpnk/Projects/shokunin/souji-shokunin/tests/results/parent-harness-live.json",
+      "supporting_records": [
+        {
+          "path": "census/round-1/seat-21.json:32-40,47",
+          "recorded_commands": [
+            "ls -lad /tmp/r87-C5",
+            "git -C /home/vgpnk/Projects/shokunin/lore-shokunin worktree list --porcelain | grep -A4 '^worktree /tmp/r87-C5$'"
+          ],
+          "recorded_output": "target ls: No such file or directory; registration is prunable and its gitdir points to a non-existent location; origin/main ancestry check exit 0."
+        },
+        {
+          "path": "tests/results/parent-harness-live.json:20-24",
+          "recorded_output": "target /tmp/r87-B1: SAFE metadata-prune; evidence dir=absent unique=0. The missing target is the expected metadata-prune condition."
+        }
+      ]
+    },
+    {
+      "claim": "The absent app.env mentioned as a refusal target is not a cited evidence file; no secret-shaped file content was read.",
+      "command": "p=/home/vgpnk/Projects/shokunin/kotodama-shokunin/app.env; if [ -e \"$p\" ]; then printf 'PRESENT %s\\n' \"$p\"; else printf 'ABSENT %s\\n' \"$p\"; fi",
+      "observed_output": "ABSENT /home/vgpnk/Projects/shokunin/kotodama-shokunin/app.env",
+      "related_record": {
+        "path": "tests/results/parent-harness-live.json:34-38",
+        "observed_output": "souji-verify.impl-09.sh app.env: got=NOT-SAFE, exp=NOT-SAFE, ok=true; VERDICT /home/vgpnk/Projects/shokunin/kotodama-shokunin/app.env NOT-SAFE secrets-refusal secret-shaped path refused basename=app.env"
+      }
+    }
+  ],
+  "scope": "Read-only across fleet, lane, and sibling repos; wrote only this assigned seat fragment. No tool selftests, pruning, deletion, or secret-content reads."
+}

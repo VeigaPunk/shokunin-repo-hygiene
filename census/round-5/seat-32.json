@@ -1,0 +1,167 @@
+{
+  "seat": "S32",
+  "round": 5,
+  "kind": "missed-items-sweep",
+  "assignment": "Recheck rounds 1–4 evidence and verifier boundary cases; parse MANIFEST.json and verify recent rounds[] append-only history.",
+  "verdict": "PARTIAL — round-1/3 recounts agree and recent manifest history is append-only, but synthetic probes expose two secret-path read-boundary defects in both verifier tools; an older in-place manifest edit also exists outside the last-10 window.",
+  "agreement_counts": {
+    "round_reports_reviewed": 4,
+    "full_agreement": 2,
+    "partial": 2,
+    "directly_contradicted_prior_test_outputs": 0,
+    "secret_boundary_claims_disconfirmed": 2,
+    "basis": "R1 and R3 arithmetic agree. R2 and R4 installed hashes and direct fake-secret refusal outputs agree, but are partial because independent fake-only cases expose untested vault-path and recursive-reference reads."
+  },
+  "round_assessments": [
+    {
+      "round": 1,
+      "assessment": "AGREE on census totals: 246 rows, 218 unique paths, final SAFE=160 and NOT-SAFE=86; original verdict counts also match."
+    },
+    {
+      "round": 2,
+      "assessment": "PARTIAL: installed souji-verify.sh is byte-identical to impl-12 and direct fake credentials/fake.env is refused; ledger-vault path and live-reference sweep probes expose secret-boundary gaps."
+    },
+    {
+      "round": 3,
+      "assessment": "AGREE on the final 96-row approval list (96 unique paths) and the report's corrected 96 approve-remove + 15 already-removed no-op accounting. The four-shard schema variation and literal 111-all-SAFE contract mismatch were already recorded by the round-3 auditors, not newly discovered here. Current read-only worktree counts remain lore=1 and gd2d=4."
+    },
+    {
+      "round": 4,
+      "assessment": "PARTIAL: installed souji-vault-verify.sh is byte-identical to impl-20 and direct fake credentials/fake.env is refused; fallback ledger and live-reference sweep probes expose the same secret-boundary gaps. The report correctly records the Obsidian CLI claim as withdrawn/fallback-only."
+    }
+  ],
+  "defects_found": [
+    {
+      "id": "ledger-vault-secret-path-not-refused",
+      "tools": ["round 2 souji-verify.sh", "round 4 souji-vault-verify.sh --fallback"],
+      "finding": "For a synthetic ordinary source.md with a matching fake-only ledger row pointing vault_path at /tmp/.../vault/credentials/fake.env, both tools hash that secret-shaped vault path and return SAFE(moved-to-obsidian); r4 also emits VERIFIED(moved-to-obsidian). This is a secret-read/refusal-boundary defect, not classified as a false-SAFE under the receipt rule.",
+      "code": ["tools/souji-verify.sh:234-267 (vault path reaches file_sha at 258-263 without secret-shape refusal)", "tools/souji-vault-verify.sh:234-310 (vault path reaches file_sha at 308 without secret-shape refusal)"]
+    },
+    {
+      "id": "stale-reference-sweep-traverses-secret-shaped-files",
+      "tools": ["round 2 souji-verify.sh", "round 4 souji-vault-verify.sh --fallback"],
+      "finding": "For a synthetic stale .scratch/old.out and a synthetic credentials/fake.env containing the literal old.out, both live-reference sweeps report live-refs=1. Their rg -l --no-ignore scans do not exclude secret-shaped paths and read the fake file contents. The resulting NOT-SAFE outcome is conservative, but traversal violates the secret-read boundary.",
+      "code": ["tools/souji-verify.sh:191-205", "tools/souji-vault-verify.sh:415-429"]
+    }
+  ],
+  "manifest": {
+    "verdict": "PASS for the targeted last 10 manifest-touching commits; historical append-only claim needs qualification.",
+    "current_rounds_length": 229,
+    "last_10_round_type_sequence": [[21, "closure"], [0, "mint"], [22, "closure"], [1, "closure"], [23, "closure"], [2, "closure"], [3, "closure"], [24, "closure"], [25, "closure"], [4, "closure"]],
+    "last_10_added_round_lines": 10,
+    "last_10_removed_round_lines": 0,
+    "historical_exception": "An all-history line scan finds 273 removed lines containing the key \"round\" across 8 commits (some are nested fields, so this is not a count of deleted rounds[] members). Semantic comparison confirms commit e183bc170023 edited rounds[1] in place: array length stayed 2, but its lanes value changed from a six-lane array to a status object and new fields were added. This is outside the last-10 window."
+  },
+  "evidence": [
+    {
+      "topic": "round-1 and round-3 recounts",
+      "command": "python3 - <<'PY'\nimport csv, json, subprocess\nfrom collections import Counter\nwith open('souji-shokunin/census/round-1/census.tsv', newline='') as f:\n    r1=list(csv.DictReader(f, delimiter='\\t'))\nprint('R1 rows/unique_paths',len(r1),len({r['path'] for r in r1}))\nprint('R1 final',dict(Counter(r['verdict'] for r in r1)))\nprint('R1 original',dict(Counter(r['orig_verdict'] for r in r1)))\nwith open('souji-shokunin/census/round-3/operator-approval-list.tsv', newline='') as f:\n    r3=list(csv.DictReader(f, delimiter='\\t'))\nprint('R3 rows/unique_paths',len(r3),len({r['path'] for r in r3}))\nprint('R3 sources',dict(Counter(r['source'] for r in r3)))\nPY",
+      "observed_output": [
+        "R1 rows/unique_paths 246 218",
+        "R1 final {'SAFE': 160, 'NOT-SAFE': 86}",
+        "R1 original {'NOT-SAFE': 230, 'SAFE': 6, 'SAFE-FALSIFIED': 10}",
+        "R3 rows/unique_paths 96 96",
+        "R3 sources {'approvals-53.tsv': 27, 'approvals-54.tsv': 27, 'approvals-55.tsv': 21, 'approvals-56.tsv': 21}"
+      ],
+      "additional_round3_source": "census/round-3/approval-summary.json: approve_remove=96, no_op_already_removed=15. S59/S60/S64 record 111 unique paths, 96 SAFE/pushed and 15 NOT-SAFE/unreachable no-ops; the four shard headers differ."
+    },
+    {
+      "topic": "installed verifier hashes",
+      "command": "sha256sum souji-shokunin/tools/souji-verify.sh souji-shokunin/tools/souji-verify.impl-12.sh souji-shokunin/tools/souji-vault-verify.sh souji-shokunin/tools/souji-vault-verify.impl-20.sh",
+      "observed_output": [
+        "7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820  souji-shokunin/tools/souji-verify.sh",
+        "7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820  souji-shokunin/tools/souji-verify.impl-12.sh",
+        "d312263ac8ebc9e23555402dc5ae63167f78dcd01ddccc5ddcfa7623b85879e0  souji-shokunin/tools/souji-vault-verify.sh",
+        "d312263ac8ebc9e23555402dc5ae63167f78dcd01ddccc5ddcfa7623b85879e0  souji-shokunin/tools/souji-vault-verify.impl-20.sh"
+      ]
+    },
+    {
+      "topic": "synthetic fixture setup",
+      "fixture_root": "/tmp/souji-s32-audit-k6j65p4n",
+      "setup": "The Python probe created only /tmp fixtures: fleet/repo/.scratch/old.out; fleet/repo/credentials/fake.env containing 'SYNTHETIC FIXTURE ONLY: old.out'; an ordinary source.md and matching vault/credentials/fake.env with matching SHA-256 ledger fields; and an empty ledger for refusal/reference-sweep controls. All files were left in place; no cleanup/removal was run.",
+      "real_secret_content_read": false
+    },
+    {
+      "topic": "ledger vault-path boundary reproductions",
+      "cases": [
+        {
+          "command": "bash /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh /tmp/souji-s32-audit-k6j65p4n/source.md",
+          "environment": {"SHOKUNIN_ROOT": "/tmp/souji-s32-audit-k6j65p4n/fleet", "SOUJI_LEDGER": "/tmp/souji-s32-audit-k6j65p4n/ledger.tsv"},
+          "exit": 0,
+          "stdout": "VERDICT\\t/tmp/souji-s32-audit-k6j65p4n/source.md\\tSAFE\\tmoved-to-obsidian\\tledger-row vault=/tmp/souji-s32-audit-k6j65p4n/vault/credentials/fake.env source-sha256=95159f88f688",
+          "stderr": ""
+        },
+        {
+          "command": "bash /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-vault-verify.sh --fallback --ledger /tmp/souji-s32-audit-k6j65p4n/ledger.tsv /tmp/souji-s32-audit-k6j65p4n/source.md",
+          "environment": {"SHOKUNIN_ROOT": "/tmp/souji-s32-audit-k6j65p4n/fleet"},
+          "exit": 0,
+          "stdout": "VERDICT\\t/tmp/souji-s32-audit-k6j65p4n/source.md\\tSAFE\\tmoved-to-obsidian\\tledger-row ledger=/tmp/souji-s32-audit-k6j65p4n/ledger.tsv vault=/tmp/souji-s32-audit-k6j65p4n/vault/credentials/fake.env source-sha256=95159f88f688 cli=skipped(fallback) | VERIFIED(moved-to-obsidian)",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "topic": "secret-shaped traversal in stale-reference sweeps",
+      "cases": [
+        {
+          "command": "bash /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh --stale-days 0 /tmp/souji-s32-audit-k6j65p4n/fleet/repo/.scratch/old.out",
+          "environment": {"SHOKUNIN_ROOT": "/tmp/souji-s32-audit-k6j65p4n/fleet", "SOUJI_LEDGER": "/tmp/souji-s32-audit-k6j65p4n/empty-ledger.tsv"},
+          "exit": 0,
+          "stdout": "VERDICT\\t/tmp/souji-s32-audit-k6j65p4n/fleet/repo/.scratch/old.out\\tNOT-SAFE\\tnone\\tobsidian=no-matching-ledger-row; stale=live-refs=1",
+          "stderr": ""
+        },
+        {
+          "command": "bash /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-vault-verify.sh --fallback --ledger /tmp/souji-s32-audit-k6j65p4n/empty-ledger.tsv --stale-days 0 /tmp/souji-s32-audit-k6j65p4n/fleet/repo/.scratch/old.out",
+          "environment": {"SHOKUNIN_ROOT": "/tmp/souji-s32-audit-k6j65p4n/fleet"},
+          "exit": 0,
+          "stdout": "VERDICT\\t/tmp/souji-s32-audit-k6j65p4n/fleet/repo/.scratch/old.out\\tNOT-SAFE\\tnone\\tpushed=no-repo; stale=live-refs=1 cli=unavailable | NOT-VERIFIED(none)",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "topic": "direct-path refusal controls",
+      "cases": [
+        {
+          "command": "bash /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh /tmp/souji-s32-audit-k6j65p4n/fleet/repo/credentials/fake.env",
+          "environment": {"SHOKUNIN_ROOT": "/tmp/souji-s32-audit-k6j65p4n/fleet", "SOUJI_LEDGER": "/tmp/souji-s32-audit-k6j65p4n/empty-ledger.tsv"},
+          "exit": 0,
+          "stdout": "VERDICT\\t/tmp/souji-s32-audit-k6j65p4n/fleet/repo/credentials/fake.env\\tNOT-SAFE\\tsecrets-refusal\\tsecret-shaped path component",
+          "stderr": ""
+        },
+        {
+          "command": "bash /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-vault-verify.sh --fallback --ledger /tmp/souji-s32-audit-k6j65p4n/empty-ledger.tsv /tmp/souji-s32-audit-k6j65p4n/fleet/repo/credentials/fake.env",
+          "environment": {"SHOKUNIN_ROOT": "/tmp/souji-s32-audit-k6j65p4n/fleet"},
+          "exit": 0,
+          "stdout": "VERDICT\\t/tmp/souji-s32-audit-k6j65p4n/fleet/repo/credentials/fake.env\\tNOT-SAFE\\tsecrets-refusal\\tsecret-shaped path component basename=fake.env | NOT-VERIFIED(secrets-refusal)",
+          "stderr": ""
+        }
+      ]
+    },
+    {
+      "topic": "MANIFEST.json current and historical append-only check",
+      "command": "python3 - <<'PY'\nimport json, subprocess\nmanifest=json.load(open('MANIFEST.json'))\nprint('manifest_rounds',len(manifest['rounds']))\nprint('manifest_last10',[(e.get('round'),e.get('type')) for e in manifest['rounds'][-10:]])\ncommits=subprocess.check_output(['git','log','-10','--format=%H','--','MANIFEST.json'],text=True).splitlines()\nadded=removed=0\nfor c in commits:\n    diff=subprocess.check_output(['git','show','--format=','--unified=0',c,'--','MANIFEST.json'],text=True).splitlines()\n    added+=sum(x.startswith('+') and not x.startswith('+++') and '\"round\"' in x for x in diff)\n    removed+=sum(x.startswith('-') and not x.startswith('---') and '\"round\"' in x for x in diff)\nprint('last10_manifest_changes_added_round_lines/removed_round_lines',added,removed)\nall_commits=subprocess.check_output(['git','log','--format=%H','--','MANIFEST.json'],text=True).splitlines()\nremoved_commits=[]; removed_lines=0\nfor c in all_commits:\n    diff=subprocess.check_output(['git','show','--format=','--unified=0',c,'--','MANIFEST.json'],text=True).splitlines()\n    n=sum(x.startswith('-') and not x.startswith('---') and '\"round\"' in x for x in diff)\n    if n:\n        removed_commits.append((c,n)); removed_lines+=n\nprint('all_history_removed_round_lines/commits',removed_lines,len(removed_commits))\nfor rev in ('e183bc170023^','e183bc170023'):\n    data=json.loads(subprocess.check_output(['git','show',f'{rev}:MANIFEST.json'],text=True))\n    print(rev,'length',len(data['rounds']),'round1_lanes',json.dumps(data['rounds'][1].get('lanes'),sort_keys=True))\nPY",
+      "observed_output": [
+        "manifest_rounds 229",
+        "manifest_last10 [(21, 'closure'), (0, 'mint'), (22, 'closure'), (1, 'closure'), (23, 'closure'), (2, 'closure'), (3, 'closure'), (24, 'closure'), (25, 'closure'), (4, 'closure')]",
+        "last10_manifest_changes_added_round_lines/removed_round_lines 10 0",
+        "all_history_removed_round_lines/commits 273 8",
+        "e183bc170023^ length 2 round1_lanes [\"protocol\", \"kasegi\", \"kengaku\", \"kake\", \"kumitate\", \"kotoba\"]",
+        "e183bc170023 length 2 round1_lanes {\"aggregator\": \"in-flight\", \"kagi\": \"not-dispatched\", \"kake\": \"ok\", \"kasegi\": \"ok\", \"kengaku\": \"ok\", \"kotoba\": \"ok\", \"kumitate\": \"ok\", \"protocol\": \"ok\"}"
+      ]
+    },
+    {
+      "topic": "post-prune current read-only counts",
+      "commands": [
+        "git -C lore-shokunin worktree list --porcelain | python3 -c 'import sys; print(\"lore registrations\",sum(x.startswith(\"worktree \") for x in sys.stdin.read().splitlines()))'",
+        "git -C game-dev-2d-shokunin worktree list --porcelain | python3 -c 'import sys; print(\"gd2d registrations\",sum(x.startswith(\"worktree \") for x in sys.stdin.read().splitlines()))'"
+      ],
+      "observed_output": ["lore registrations 1", "gd2d registrations 4"]
+    }
+  ],
+  "verification_limits": [
+    "The tools' own selftests were not run: they create and remove temporary fixtures, which is prohibited by this assignment's no-delete rule. Manual probes used only synthetic /tmp files and left them in place.",
+    "No real secret-shaped file contents were read. No fleet, lane, or sibling repository content was modified; no git worktree prune/remove or other git mutation was run."
+  ],
+  "write_scope": "Only census/round-5/seat-32.json was written in the repository."
+}

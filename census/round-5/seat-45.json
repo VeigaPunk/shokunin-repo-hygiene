@@ -1,0 +1,176 @@
+{
+  "seat": "S45",
+  "round": 5,
+  "role": "cross-audit",
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "axes": ["audit correctness", "independent reproducibility", "evidence traceability"],
+  "wait": {
+    "command": "sleep 300",
+    "observed_exit": 0
+  },
+  "selection": {
+    "population": "available verdict-audit fragments among S01-S16 after the 300-second wait",
+    "available_seats": ["S09", "S10", "S12", "S13", "S14", "S16"],
+    "command": "printf '%s\\n' 09 10 12 13 14 16 | shuf -n 2",
+    "observed_output": ["14", "10"],
+    "selected_seats": ["S14", "S10"]
+  },
+  "audits": [
+    {
+      "seat": "S10",
+      "target": "census/round-3/operator-approval-list.tsv: existence of all 96 data paths; eight sampled rows 2, 44, 48, 66, 72, 73, 76, 97",
+      "seat_verdict": "AGREE",
+      "independent_verdict": "AGREE",
+      "agreement_counts": {"claims": 1, "agree": 1, "disagree": 0},
+      "defects_found": [],
+      "evidence": [
+        {
+          "command_lines": [
+            "python3 - <<'PY'",
+            "import csv, pathlib, subprocess",
+            "root='/home/vgpnk/Projects/shokunin'",
+            "nums=[2,44,48,66,72,73,76,97]",
+            "with open('census/round-3/operator-approval-list.tsv', newline='') as f:",
+            "    rows=list(csv.DictReader(f, delimiter='\\t'))",
+            "missing=[row['path'] for row in rows if not pathlib.Path(row['path']).exists()]",
+            "print(f'data_rows={len(rows)} existing={len(rows)-len(missing)} missing={len(missing)}')",
+            "print(f'missing={missing!r}')",
+            "paths=[rows[n-2]['path'] for n in nums]",
+            "checks=[]",
+            "for n,path in zip(nums,paths):",
+            "    intro=subprocess.check_output(['git','-C',root,'log','--diff-filter=A','--format=%H','-1','--',path],text=True).strip()",
+            "    ancestor=subprocess.run(['git','-C',root,'merge-base','--is-ancestor',intro,'refs/remotes/origin/master']).returncode==0",
+            "    checks.append((n,path,pathlib.Path(path).exists(),intro,ancestor))",
+            "run=subprocess.run(['tools/souji-verify.sh',*paths],text=True,capture_output=True,check=True)",
+            "verdicts=run.stdout.splitlines()",
+            "for (n,path,exists,intro,ancestor),line in zip(checks,verdicts):",
+            "    fields=line.split('\\t',4)",
+            "    print(f'line={n} exists={exists} intro={intro[:12]} ancestor={ancestor} verifier={fields[2]}({fields[3]}) evidence={fields[4]}')",
+            "print(f'sample_results={sum(line.split(\"\\t\")[2:4]==[\"SAFE\",\"pushed\"] for line in verdicts)}/{len(nums)} SAFE(pushed)')",
+            "PY"
+          ],
+          "observed_output": [
+            "data_rows=96 existing=96 missing=0",
+            "missing=[]",
+            "line=2 exists=True intro=b2f2efae7549 ancestor=True verifier=SAFE(pushed) evidence=intro=b2f2efae7549 ref=refs/remotes/origin/master ancestor=yes",
+            "line=44 exists=True intro=b2f2efae7549 ancestor=True verifier=SAFE(pushed) evidence=intro=b2f2efae7549 ref=refs/remotes/origin/master ancestor=yes",
+            "line=48 exists=True intro=b2f2efae7549 ancestor=True verifier=SAFE(pushed) evidence=intro=b2f2efae7549 ref=refs/remotes/origin/master ancestor=yes",
+            "line=66 exists=True intro=b2f2efae7549 ancestor=True verifier=SAFE(pushed) evidence=intro=b2f2efae7549 ref=refs/remotes/origin/master ancestor=yes",
+            "line=72 exists=True intro=b2f2efae7549 ancestor=True verifier=SAFE(pushed) evidence=intro=b2f2efae7549 ref=refs/remotes/origin/master ancestor=yes",
+            "line=73 exists=True intro=b2f2efae7549 ancestor=True verifier=SAFE(pushed) evidence=intro=b2f2efae7549 ref=refs/remotes/origin/master ancestor=yes",
+            "line=76 exists=True intro=b2f2efae7549 ancestor=True verifier=SAFE(pushed) evidence=intro=b2f2efae7549 ref=refs/remotes/origin/master ancestor=yes",
+            "line=97 exists=True intro=b2f2efae7549 ancestor=True verifier=SAFE(pushed) evidence=intro=b2f2efae7549 ref=refs/remotes/origin/master ancestor=yes",
+            "sample_results=8/8 SAFE(pushed)"
+          ]
+        }
+      ]
+    },
+    {
+      "seat": "S14",
+      "target": "all sibling *-shokunin repos except souji-shokunin; attribute dirty paths and census/tests/tools spillover",
+      "seat_verdict": "AGREE",
+      "independent_verdict": "AGREE — no souji-round spillover found among scanned paths",
+      "agreement_counts": {"claims": 1, "agree": 1, "disagree": 0},
+      "defects_found": [],
+      "snapshot_note": "S14 reported 16 repo-root tools paths at 15:15:42-03:00. At 15:24:40-03:00 the read-only scan found 33: 16 gate-input paths, 16 post-register paths, and tools/gates/typed-pipelines.json. The post-register receipt is timestamped 18:22:07Z (15:22:07-03:00), after S14's observation. These are Kotodama round-26 artifacts, so this is time-dependent count drift, not evidence of souji spillover.",
+      "scope_note": "Git status scans explicitly excluded .ufo/state and .ufo/watchdog.log to honor the no-touch rule; no conclusion is made about those excluded runtime paths.",
+      "evidence": [
+        {
+          "command_lines": [
+            "date '+observed_at=%Y-%m-%dT%H:%M:%S%z'",
+            "python3 - <<'PY'",
+            "import glob, subprocess",
+            "root='/home/vgpnk/Projects/shokunin'",
+            "repos=[]",
+            "for repo in sorted(glob.glob(root+'/*-shokunin')):",
+            "    name=repo.rsplit('/',1)[-1]",
+            "    if name=='souji-shokunin':",
+            "        continue",
+            "    if subprocess.run(['git','-C',repo,'rev-parse','--is-inside-work-tree'],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL).returncode:",
+            "        continue",
+            "    status=subprocess.check_output(['git','-C',repo,'status','--porcelain','--untracked-files=all','--','.',' :(exclude).ufo/state'.strip(),' :(exclude).ufo/watchdog.log'.strip()],text=True)",
+            "    repos.append((name,[line[3:] for line in status.splitlines() if line]))",
+            "counts={key:sum(path.startswith(key+'/') for _,paths in repos for path in paths) for key in ('census','tests','tools')}",
+            "print(f'sibling_repos={len(repos)} clean={sum(not paths for _,paths in repos)} dirty={sum(bool(paths) for _,paths in repos)}')",
+            "print('dirty_repo_rows='+','.join(f'{name}:{len(paths)}' for name,paths in repos if paths))",
+            "print(f\"repo_root_census_paths={counts['census']} repo_root_tests_paths={counts['tests']} repo_root_tools_paths={counts['tools']}\")",
+            "kotodama=dict(repos)['kotodama-shokunin']",
+            "print('kotodama_tool_paths='+str(sum(path.startswith('tools/') for path in kotodama)))",
+            "print('kotodama_round26_gate_input='+str(sum(path.startswith('tools/gates/frozen/round-26/gate-input/') for path in kotodama)))",
+            "print('kotodama_round26_post_register='+str(sum(path.startswith('tools/gates/frozen/round-26/post-register/') for path in kotodama)))",
+            "print('kotodama_other_tools='+repr([path for path in kotodama if path.startswith('tools/') and not path.startswith(('tools/gates/frozen/round-26/gate-input/','tools/gates/frozen/round-26/post-register/'))]))",
+            "PY"
+          ],
+          "observed_output": [
+            "observed_at=2026-10-18T15:24:40-0300",
+            "sibling_repos=20 clean=16 dirty=4",
+            "dirty_repo_rows=game-dev-3d-shokunin:3,kaidoku-shokunin:53,kotodama-shokunin:128,lore-shokunin:26",
+            "repo_root_census_paths=0 repo_root_tests_paths=0 repo_root_tools_paths=33",
+            "kotodama_tool_paths=33",
+            "kotodama_round26_gate_input=16",
+            "kotodama_round26_post_register=16",
+            "kotodama_other_tools=['tools/gates/typed-pipelines.json']"
+          ]
+        },
+        {
+          "command_lines": [
+            "python3 - <<'PY'",
+            "from pathlib import Path",
+            "root=Path('/home/vgpnk/Projects/shokunin')",
+            "checks=[",
+            " ('game-dev-3d-shokunin/reports/round-102/r102-report.md',(1,2,3,4,13,14,15,16,17,18,19,20)),",
+            " ('kaidoku-shokunin/.ufo/waves/arc2-loop1-round3/CR1.md',(3,4,5)),",
+            " ('kotodama-shokunin/tools/gates/frozen/round-26/gate-input/freeze-receipt.json',(2,3,4,9,10,11)),",
+            " ('kotodama-shokunin/tools/gates/frozen/round-26/post-register/freeze-receipt.json',(2,3,4,15,16,17)),",
+            " ('kotodama-shokunin/tools/gates/typed-pipelines.json',(33,34,35,36,37,38)),",
+            " ('souji-shokunin/census/round-3/seat-14.json',(59,60,61)),",
+            "]",
+            "for rel,numbers in checks:",
+            "    lines=(root/rel).read_text().splitlines()",
+            "    for n in numbers:",
+            "        print(f'{rel}:{n}:{lines[n-1]}')",
+            "PY"
+          ],
+          "observed_output": [
+            "game-dev-3d-shokunin/reports/round-102/r102-report.md:1:# r102 round report — gate integration + routed-defect repair (game-dev-3d shokunin)",
+            "game-dev-3d-shokunin/reports/round-102/r102-report.md:3:**Seat:** SEAT-46 REPORT-DRAFT · **Lane:** `/home/vgpnk/Projects/shokunin/game-dev-3d-shokunin`",
+            "game-dev-3d-shokunin/reports/round-102/r102-report.md:4:**Round:** 102 · **Axes:** depth / coverage / calibration (coverage = lowest non-retired)",
+            "game-dev-3d-shokunin/reports/round-102/r102-report.md:13:**Tracked-tree state at write [moving]:** `git status --porcelain` → **5 modified tracked files**",
+            "game-dev-3d-shokunin/reports/round-102/r102-report.md:14:(`corpus/artifacts/unreal-r22/README.md`, `corpus/knowledge/engines.md`, `corpus/knowledge/rea.md`,",
+            "game-dev-3d-shokunin/reports/round-102/r102-report.md:15:`corpus/knowledge/unreal-mcp/README.md`, `corpus/lessons/r22-unreal-review.md`) + **3 untracked",
+            "game-dev-3d-shokunin/reports/round-102/r102-report.md:16:paths** (`corpus/knowledge/unreal-mcp/gate/`, `corpus/lessons/r102-unreal-integration.md`,",
+            "game-dev-3d-shokunin/reports/round-102/r102-report.md:17:`reports/round-102/`); **54** entries with `-uall`. No `LOG.md`, `SCORECARD.md`, `SHONEN.md`,",
+            "game-dev-3d-shokunin/reports/round-102/r102-report.md:18:`SKILL.md`, `PROVINCE.md`, fixture byte or `reports/round-101/**` byte was modified this round",
+            "kaidoku-shokunin/.ufo/waves/arc2-loop1-round3/CR1.md:3:Seat CR1, wave arc2-loop1-round3, 2026-10-18, read-only. HEAD `679af5d749f2fd48b9d543e3c99d348d5458f90f`",
+            "kaidoku-shokunin/.ufo/waves/arc2-loop1-round3/CR1.md:4:(`git rev-parse HEAD`); `git status --porcelain` → `?? .ufo/waves/arc2-loop1-round3/` only. My only",
+            "kaidoku-shokunin/.ufo/waves/arc2-loop1-round3/CR1.md:5:write is this file. Every command below was run by this seat this session (stamps 17:58:31Z–18:06:10Z);",
+            "kotodama-shokunin/tools/gates/frozen/round-26/gate-input/freeze-receipt.json:2: \"frozen_at\": \"2026-10-18T18:08:08.652644+00:00\",",
+            "kotodama-shokunin/tools/gates/frozen/round-26/gate-input/freeze-receipt.json:3: \"frozen_by\": \"round-26 D17..D20 gate+tests seats\",",
+            "kotodama-shokunin/tools/gates/frozen/round-26/gate-input/freeze-receipt.json:4: \"generation\": \"round-26 gate-input re-pin (R26-D17..D20)\",",
+            "kotodama-shokunin/tools/gates/frozen/round-26/gate-input/freeze-receipt.json:9: \"replay\": \"python3 tools/replay-frozen.py tools/gates/frozen/round-26/gate-input/MANIFEST.tsv --json (TMPDIR must sit outside the repository)\",",
+            "kotodama-shokunin/tools/gates/frozen/round-26/gate-input/freeze-receipt.json:10: \"rows\": 6,",
+            "kotodama-shokunin/tools/gates/frozen/round-26/gate-input/freeze-receipt.json:11: \"schema\": \"kotodama-r26-gate-input-freeze-v1\",",
+            "kotodama-shokunin/tools/gates/frozen/round-26/post-register/freeze-receipt.json:2: \"frozen_at\": \"2026-10-18T18:22:07.734042+00:00\",",
+            "kotodama-shokunin/tools/gates/frozen/round-26/post-register/freeze-receipt.json:3: \"frozen_by\": \"round-26 D17..D20 gate+tests seats\",",
+            "kotodama-shokunin/tools/gates/frozen/round-26/post-register/freeze-receipt.json:4: \"generation\": \"round-26 post-register (R26-D17..D20)\",",
+            "kotodama-shokunin/tools/gates/frozen/round-26/post-register/freeze-receipt.json:15: \"replay\": \"python3 tools/replay-frozen.py tools/gates/frozen/round-26/post-register/MANIFEST.tsv --json (TMPDIR must sit outside the repository)\",",
+            "kotodama-shokunin/tools/gates/frozen/round-26/post-register/freeze-receipt.json:16: \"rows\": 6,",
+            "kotodama-shokunin/tools/gates/frozen/round-26/post-register/freeze-receipt.json:17: \"schema\": \"kotodama-r26-gate-input-freeze-v1\",",
+            "kotodama-shokunin/tools/gates/typed-pipelines.json:33:   \"repin\": {",
+            "kotodama-shokunin/tools/gates/typed-pipelines.json:34:    \"round\": 26,",
+            "kotodama-shokunin/tools/gates/typed-pipelines.json:35:    \"claim\": \"D (R26-D05..D12 register stratum)\",",
+            "kotodama-shokunin/tools/gates/typed-pipelines.json:36:    \"date\": \"2026-10-18\",",
+            "kotodama-shokunin/tools/gates/typed-pipelines.json:37:    \"command\": \"sha256sum examples/culture-d4/packet.d4.yml examples/culture-d4/typed-labels.d4.yml examples/culture-d4/expected-holds.json\",",
+            "kotodama-shokunin/tools/gates/typed-pipelines.json:38:    \"recorded_in\": \"reports/round-26/register/repin.json\",",
+            "souji-shokunin/census/round-3/seat-14.json:59:      \"## main...origin/main [ahead 3] + '?? .scratch/' ; unpushed = 6cec83a, 1659a42, f553a27 (3)\",",
+            "souji-shokunin/census/round-3/seat-14.json:60:      \"changed paths in those 3 commits: .gitignore and .ufo/waves/** only (seat scratch/archive drops)\",",
+            "souji-shokunin/census/round-3/seat-14.json:61:      \"0 and 0 -> worktree admin metadata is never tracked, and 28706dc's tree contains no .git/worktrees path; the lane's in-flight work does not touch this artifact\""
+          ]
+        }
+      ]
+    }
+  ],
+  "agreement_counts": {"audited_seats": 2, "agree": 2, "disagree": 0},
+  "defects_found": [],
+  "read_only_scope": "All fleet/lane/sibling inspection was read-only; sibling status commands excluded .ufo/state and .ufo/watchdog.log. The only write was this assigned S45 fragment; no git mutations, pruning, secret-shaped file content, or operator config were touched."
+}

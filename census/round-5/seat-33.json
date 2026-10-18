@@ -1,0 +1,45 @@
+{
+  "seat": "S33",
+  "round": 5,
+  "role": "tool regression (operability)",
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "assignment": "Run the installed souji-verify self-test and live probes for the pruned /tmp/r87-B1 registration, kotodama-shokunin, and the full-roster snapshot; verify no crash or false SAFE.",
+  "verdict": "AGREE — self-test passed (24/24); all three live outputs matched expected safety outcomes. The pruned target returned NOT-SAFE(unreachable), not SAFE(metadata-prune); kotodama was NOT-SAFE(unpushed); the snapshot was SAFE(pushed).",
+  "agreement_counts": {
+    "audited_cases": 4,
+    "agree": 4,
+    "disagree": 0
+  },
+  "defects_found": [],
+  "evidence": [
+    {
+      "command": "tools/souji-verify.sh --selftest",
+      "observed_output": "PASS F1 SAFE(pushed)\nPASS F2 NOT-SAFE(none)\nPASS F3 NOT-SAFE(unpushed)\nPASS F4 SAFE(metadata-prune)\nPASS F5 NOT-SAFE(unpushed-branch)\nPASS F6 SAFE(moved-to-obsidian)\nPASS F7 SAFE(stale)\nPASS F8 SAFE(stale)\nPASS F9 SAFE(pushed)\nPASS F10 NOT-SAFE(secrets-refusal)\nPASS E1 NOT-SAFE(dirty)\nPASS E2 NOT-SAFE(secrets-refusal)\nPASS E3 SAFE(metadata-prune)\nPASS E4 NOT-SAFE(unreachable)\nPASS E5 NOT-SAFE(unreachable)\nPASS E6 SAFE(moved-to-obsidian)\nPASS E7 NOT-SAFE(pushed-unverifiable)\nPASS E8 NOT-SAFE(none)\nPASS H2 exit=2\nPASS H3 exit=2\nPASS H4 exit=2\nPASS H6 json shape\nPASS H1 no forbidden git subcommand\nPASS H5 fixtures under mktemp -d (/tmp/souji-verify-selftest.gIIP07)\nselftest: 24 checks, 0 failed"
+    },
+    {
+      "command": "tools/souji-verify.sh --json /tmp/r87-B1",
+      "observed_output": "{\"path\":\"/tmp/r87-B1\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"unreachable\",\"evidence\":\"missing path\"}"
+    },
+    {
+      "command": "for repo in /home/vgpnk/Projects/shokunin /home/vgpnk/Projects/shokunin/*-shokunin; do [ -e \"$repo/.git\" ] || continue; out=$(git -C \"$repo\" worktree list --porcelain 2>/dev/null); case \"$out\" in *\"/tmp/r87-B1\"*) printf 'registered=%s\\n' \"$repo\";; esac; done; if [ -e /tmp/r87-B1 ] || [ -L /tmp/r87-B1 ]; then printf 'target_exists=yes\\n'; else printf 'target_exists=no\\n'; fi",
+      "observed_output": "target_exists=no"
+    },
+    {
+      "command": "tools/souji-verify.sh --json /home/vgpnk/Projects/shokunin/kotodama-shokunin",
+      "observed_output": "{\"path\":\"/home/vgpnk/Projects/shokunin/kotodama-shokunin\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"unpushed\",\"evidence\":\"unpushed=47 dirty=16\"}"
+    },
+    {
+      "command": "git -C /home/vgpnk/Projects/shokunin/kotodama-shokunin log --branches --not --remotes --oneline | wc -l; git -C /home/vgpnk/Projects/shokunin/kotodama-shokunin status --porcelain=v1 | wc -l",
+      "observed_output": "47\n16"
+    },
+    {
+      "command": "tools/souji-verify.sh --json /home/vgpnk/Projects/shokunin/shokunin.conf.full-roster-20261015",
+      "observed_output": "{\"path\":\"/home/vgpnk/Projects/shokunin/shokunin.conf.full-roster-20261015\",\"verdict\":\"SAFE\",\"receipt\":\"pushed\",\"evidence\":\"intro=99efc52b3a6f ref=refs/remotes/origin/master ancestor=yes\"}"
+    },
+    {
+      "command": "intro=$(git -C /home/vgpnk/Projects/shokunin log --diff-filter=A --format=%H -1 -- shokunin.conf.full-roster-20261015); printf 'intro=%s\\n' \"$intro\"; git -C /home/vgpnk/Projects/shokunin merge-base --is-ancestor \"$intro\" refs/remotes/origin/master; printf 'ancestor_exit=%s\\n' \"$?\"; printf 'default_ref='; git -C /home/vgpnk/Projects/shokunin symbolic-ref --quiet --short refs/remotes/origin/HEAD",
+      "observed_output": "intro=99efc52b3a6f3648f7d8e097d78460901ad3c91c\nancestor_exit=0\ndefault_ref=origin/master"
+    }
+  ],
+  "scope": "Read-only verification across fleet and lane; only census/round-5/seat-33.json was written."
+}

@@ -1,0 +1,44 @@
+{
+  "seat": "S36",
+  "round": 5,
+  "role": "tool-regression",
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "run_local": "2026-10-18T15:15:23-03:00",
+  "verdict": "AGREE — both live-vault edge cases match the round-4 vault-verify verdict: self-pairs are refused as source-equals-vault, and a valid distinct /tmp source pair verifies.",
+  "agreement_counts": {
+    "audited_cases": 2,
+    "agree": 2,
+    "disagree": 0
+  },
+  "defects_found": [],
+  "evidence": [
+    {
+      "claim": "Welcome.md exists and was used as the live vault file; README.md was not selected.",
+      "command": "for p in /home/vgpnk/Documents/shokoknowledge/README.md /home/vgpnk/Documents/shokoknowledge/Welcome.md; do if [ -f \"$p\" ]; then printf 'FOUND %s\\n' \"$p\"; fi; done",
+      "observed_output": "FOUND /home/vgpnk/Documents/shokoknowledge/Welcome.md"
+    },
+    {
+      "claim": "The /tmp copy and live vault file had identical bytes for the ledger hashes.",
+      "command": "sha256sum -- /home/vgpnk/Documents/shokoknowledge/Welcome.md /tmp/souji-s36-vault-verify.2pXs1O/source-copy.md",
+      "observed_output": "ecd0dfb6b21143ff52cfe36f93636df57e5b21773c101491b86f10ce17556ca8  /home/vgpnk/Documents/shokoknowledge/Welcome.md\necd0dfb6b21143ff52cfe36f93636df57e5b21773c101491b86f10ce17556ca8  /tmp/souji-s36-vault-verify.2pXs1O/source-copy.md"
+    },
+    {
+      "claim": "Live self-pair ledger row (source and vault both canonicalize to Welcome.md).",
+      "ledger": "/tmp/souji-s36-vault-verify.2pXs1O/self-ledger.tsv",
+      "observed_row": "/home/vgpnk/Documents/shokoknowledge/Welcome.md\tecd0dfb6b21143ff52cfe36f93636df57e5b21773c101491b86f10ce17556ca8\t/home/vgpnk/Documents/shokoknowledge/Welcome.md\tecd0dfb6b21143ff52cfe36f93636df57e5b21773c101491b86f10ce17556ca8\t2026-10-18\ts36-self-pair"
+    },
+    {
+      "claim": "Verifier refused the self-pair as the source-equals-vault class.",
+      "command": "SOUJI_LEDGER=/tmp/souji-s36-vault-verify.2pXs1O/self-ledger.tsv SHOKUNIN_ROOT=/home/vgpnk/Projects/shokunin bash /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-vault-verify.sh --fallback /home/vgpnk/Documents/shokoknowledge/Welcome.md",
+      "observed_output": "VERDICT\t/home/vgpnk/Documents/shokoknowledge/Welcome.md\tNOT-SAFE\tnone\tsource-equals-vault: the row points the artifact at itself vault=/home/vgpnk/Documents/shokoknowledge/Welcome.md\nNOT-VERIFIED(source-equals-vault)"
+    },
+    {
+      "claim": "A proper pair with a distinct /tmp source copy verified against the live vault file.",
+      "ledger": "/tmp/souji-s36-vault-verify.2pXs1O/pair-ledger.tsv",
+      "observed_row": "/tmp/souji-s36-vault-verify.2pXs1O/source-copy.md\tecd0dfb6b21143ff52cfe36f93636df57e5b21773c101491b86f10ce17556ca8\t/home/vgpnk/Documents/shokoknowledge/Welcome.md\tecd0dfb6b21143ff52cfe36f93636df57e5b21773c101491b86f10ce17556ca8\t2026-10-18\ts36-valid-pair",
+      "command": "SOUJI_LEDGER=/tmp/souji-s36-vault-verify.2pXs1O/pair-ledger.tsv SHOKUNIN_ROOT=/home/vgpnk/Projects/shokunin bash /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-vault-verify.sh --fallback /tmp/souji-s36-vault-verify.2pXs1O/source-copy.md",
+      "observed_output": "VERDICT\t/tmp/souji-s36-vault-verify.2pXs1O/source-copy.md\tSAFE\tmoved-to-obsidian\tledger-row ledger=/tmp/souji-s36-vault-verify.2pXs1O/pair-ledger.tsv vault=/home/vgpnk/Documents/shokoknowledge/Welcome.md source-sha256=ecd0dfb6b211 cli=skipped(fallback)\nVERIFIED(moved-to-obsidian)"
+    }
+  ],
+  "scope": "Read-only verification of the lane tool and live vault. Both commands used temp ledgers under /tmp and --fallback; only this assigned seat fragment was written."
+}

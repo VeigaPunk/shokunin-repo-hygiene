@@ -1,0 +1,114 @@
+{
+  "seat": "S28",
+  "round": 5,
+  "kind": "missed-items-sweep",
+  "mode": "read-only over fleet and lane; only this fragment written",
+  "verdict": {
+    "quarantine": "CONFIRMED_NONE_FOUND",
+    "round_prune_scope": "AGREE_WITH_LANE_REPORTS",
+    "reports_agreed": "4/4 at prune-action scope; 0 disagreements",
+    "strict_no-nonmetadata-deletion-claim": "QUALIFIED: separate code/build cleanup and a pre-round-3 fleet cleanup are documented below"
+  },
+  "findings": [
+    {
+      "id": "Q1",
+      "result": "PASS",
+      "claim": "No .ufo-quarantine directories exist under the fleet tree; this is consistent with the quarantine flow not having run.",
+      "evidence": {
+        "cmd": "find /home/vgpnk/Projects/shokunin -type d -name .ufo-quarantine -print; rc=$?; printf 'find_exit=%s\\n' \"$rc\"",
+        "out": "(no matching paths); find_exit=0"
+      }
+    },
+    {
+      "id": "R1",
+      "result": "AGREE",
+      "claim": "Round 1 was a dry-run census; no removal was performed.",
+      "evidence": {
+        "cmd": "for c in 652b6f8 ab7f2f7; do git -C /home/vgpnk/Projects/shokunin/souji-shokunin show --format= --name-status --diff-filter=D \"$c\"; done",
+        "out": "(no deletion records)",
+        "source": "souji-shokunin/LOG.md:34-76; .ufo/reports/round-1/souji.md:23-28"
+      }
+    },
+    {
+      "id": "R2",
+      "result": "AGREE_WITH_SCOPE_NOTE",
+      "claim": "Round 2 did not perform a fleet hygiene prune. One tracked fixture gitlink was removed in a build correction; the log also records that the parent removed an unauthorized, seat-generated verifier before installing the measured winner.",
+      "evidence": {
+        "cmd": "git -C /home/vgpnk/Projects/shokunin/souji-shokunin show --name-status --format='%h %s' 187ebb2",
+        "out": "187ebb2 round-2 fix: remove embedded fixture repo gitlink (F9 maker built in-tree); ignore fixture build outputs\\nA tests/fixtures/.gitignore\\nD tests/fixtures/case-F9/repo",
+        "source": "souji-shokunin/LOG.md:92-120; corpus/lessons/round-2.md:6-11; .ufo/reports/round-2/souji.md:28-31",
+        "scope_note": "The transient seat-generated tool deletion is documented in the report/log, not represented as a committed deletion; it is a correction to an out-of-scope tool install, not a fleet-artifact prune."
+      }
+    },
+    {
+      "id": "R3",
+      "result": "AGREE_WITH_SCOPE_NOTE",
+      "claim": "The authorized prune was 21 worktree metadata registrations (19 lore + 2 detached gd2d); the 3 named gd2d branches were retained. The 15 shell files in a1b44b1 were already deleted before the prune and were correctly classified as no-op rows, not round-3 removal actions.",
+      "evidence": [
+        {
+          "cmd": "git -C /home/vgpnk/Projects/shokunin/lore-shokunin worktree list --porcelain | awk '/^worktree /{n++} /^prunable/{p++} END{printf \\\"lore_records=%d lore_prunable=%d\\n\\\",n,p}'; git -C /home/vgpnk/Projects/shokunin/game-dev-2d-shokunin worktree list --porcelain | awk '/^worktree /{n++} /^prunable/{p++} END{printf \\\"gd2d_records=%d gd2d_prunable=%d\\n\\\",n,p}'",
+          "out": "lore_records=1 lore_prunable=0\\ngd2d_records=4 gd2d_prunable=3"
+        },
+        {
+          "cmd": "for b in wt-r98 wt-r99 wt-r100; do if git -C /home/vgpnk/Projects/shokunin/game-dev-2d-shokunin show-ref --verify --quiet \"refs/heads/$b\"; then n=$(git -C /home/vgpnk/Projects/shokunin/game-dev-2d-shokunin log --oneline \"$b\" --not --remotes | wc -l); printf '%s=branch-present,unpushed=%s\\n' \"$b\" \"$n\"; else printf '%s=branch-absent\\n' \"$b\"; fi; done",
+          "out": "wt-r98=branch-present,unpushed=1\\nwt-r99=branch-present,unpushed=1\\nwt-r100=branch-present,unpushed=1",
+          "interpretation": "Current remaining prunable metadata is the intentionally preserved trio; their unpushed branch refs remain. No cleanup was run during this audit."
+        },
+        {
+          "cmd": "git show --name-status --format='%h %s' a1b44b1; git merge-base --is-ancestor a1b44b1 origin/master; printf 'origin_ancestor_exit=%s\\n' \"$?\"",
+          "out": "a1b44b1 cleanup: drop stray shell-experiment redirects at fleet root; D records: commit-watch.stderr, f2.out-f8.out, forgeB.log, forgeC.log, forgeD.log, kwin.txt, logs_dummy.txt, logs_mut.txt, logs_tier.txt; origin_ancestor_exit=1"
+        },
+        {
+          "cmd": [
+            "python3 -c 'import json; d=json.load(open(\"census/round-3/approval-summary.json\")); print(\"approve_remove=%s no_op_already_removed=%s\"%(d[\"approve_remove\"],d[\"no_op_already_removed\"]))'",
+            "python3 - <<'PY'",
+            "import subprocess",
+            "root='/home/vgpnk/Projects/shokunin'",
+            "paths=subprocess.check_output(['git','-C',root,'show','--format=','--name-only','a1b44b1'],text=True).splitlines()",
+            "paths=[p for p in paths if p]",
+            "absent=[]; on_origin=[]",
+            "for p in paths:",
+            "    if not __import__('os').path.lexists(root+'/'+p): absent.append(p)",
+            "    rc=subprocess.run(['git','-C',root,'cat-file','-e',f'origin/master:{p}'],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL).returncode",
+            "    if rc==0: on_origin.append(p)",
+            "print(f'a1b44b1_paths={len(paths)} currently_absent={len(absent)} origin_master_blobs={len(on_origin)}')",
+            "print('all_absent_and_origin_present='+str(len(absent)==len(paths)==len(on_origin)).lower())",
+            "PY"
+          ],
+          "out": [
+            "approve_remove=96 no_op_already_removed=15",
+            "a1b44b1_paths=15 currently_absent=15 origin_master_blobs=15",
+            "all_absent_and_origin_present=true"
+          ],
+          "source": "souji-shokunin/census/round-3/approval-summary.json; .ufo/reports/round-3/souji.md:24-31; souji-shokunin/census/round-3/seat-63.json:67-78"
+        }
+      ],
+      "scope_note": "a1b44b1 is a separate fleet-root file cleanup, not a worktree-metadata prune and not an action of the round-3 prune execution; all 15 are explicitly no-op/NOT-SAFE in the round-3 approval record."
+    },
+    {
+      "id": "R4",
+      "result": "AGREE",
+      "claim": "Round 4 installed/verified the vault checker; no tracked paths were deleted in its lane commit.",
+      "evidence": {
+        "cmd": "git -C /home/vgpnk/Projects/shokunin/souji-shokunin show --format= --name-status --diff-filter=D 48a64d8",
+        "out": "(no deletion records)",
+        "source": "souji-shokunin/LOG.md:162-190; .ufo/reports/round-4/souji.md:42-49"
+      }
+    },
+    {
+      "id": "TOOLS",
+      "result": "PASS",
+      "claim": "Both verifier scripts parse, and fake secret-shaped path probes refuse before reading any content.",
+      "evidence": {
+        "cmd": "bash -n tools/souji-verify.sh; bash -n tools/souji-vault-verify.sh; tools/souji-verify.sh --json /tmp/souji-s28-never-created.env; tools/souji-vault-verify.sh --fallback --json /tmp/souji-s28-never-created.env",
+        "out": "souji-verify.sh: bash -n OK\\nsouji-vault-verify.sh: bash -n OK\\n{\\\"path\\\":\\\"/tmp/souji-s28-never-created.env\\\",\\\"verdict\\\":\\\"NOT-SAFE\\\",\\\"receipt\\\":\\\"secrets-refusal\\\",\\\"evidence\\\":\\\"secret-shaped path component\\\"}\\n{\\\"path\\\":\\\"/tmp/souji-s28-never-created.env\\\",\\\"verdict\\\":\\\"NOT-SAFE\\\",\\\"verified\\\":\\\"NOT-VERIFIED(secrets-refusal)\\\",\\\"receipt\\\":\\\"secrets-refusal\\\",\\\"reason\\\":\\\"secrets-refusal\\\",\\\"evidence\\\":\\\"secret-shaped path component basename=souji-s28-never-created.env\\\"}"
+      }
+    }
+  ],
+  "round_commit_sweep": {
+    "cmd": "git -C /home/vgpnk/Projects/shokunin/souji-shokunin show --format= --name-status 652b6f8 ab7f2f7 9435e46 97f22c9 187ebb2 36746332 48a64d8 | awk 'BEGIN{n=0} /^D\\t/{print;n++} END{printf \\\"tracked_deletion_records=%d\\n\\\",n}'",
+    "out": "D tests/fixtures/case-F9/repo\\ntracked_deletion_records=1",
+    "note": "Only tracked deletion in the inspected r1-r4 lane commits was the r2 fixture gitlink correction above. This does not include the r2 transient untracked-tool correction or round-3 runtime worktree metadata pruning."
+  },
+  "conflicts": []
+}

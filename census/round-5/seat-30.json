@@ -1,0 +1,67 @@
+{
+  "seat": "S30",
+  "round": 5,
+  "kind": "cross-lane-prune-observability",
+  "assignment": "Check lore-shokunin and game-dev-2d-shokunin Git history for post-round-3 prune errors and reverify .git/worktrees state.",
+  "verdict": "AGREE: no round-3 prune regression observed in either lane's Git history or current worktree registrations",
+  "agreement": {
+    "lore-shokunin": "AGREE with round-3 report: old prune target registrations are absent; main is the sole registered worktree.",
+    "game-dev-2d-shokunin": "AGREE with round-3 report: wt-r98/wt-r99/wt-r100 registrations and their named branches remain; three preserved entries are still prunable because their checkout paths are absent."
+  },
+  "agreement_count": "2/2 lanes",
+  "defects_found": [],
+  "basis": {
+    "round_3_source": "/home/vgpnk/Projects/shokunin/.ufo/reports/round-3/souji.md (records lore 20->1 and gd2d 6->4 after lock-preserving prune; measurements ~13:45 on 2026-10-18)",
+    "round_3_close_commit": {
+      "cmd": "git -C souji-shokunin show -s --format='%H %aI %cI %s' 36746332",
+      "out": "36746332cab0617c1ef23a63fee727c8869bd25e 2026-10-18T13:49:06-03:00 2026-10-18T13:49:06-03:00 round-3: 21 metadata prunes executed (lore 20->1, gd2d 6->4 lock-preserve), 96-row operator approval list, probation gate cleared"
+    },
+    "post_prune_history": {
+      "cutoff": "2026-10-18T13:45:00-03:00, the round-3 report's approximate execution window",
+      "commands": [
+        "git -C lore-shokunin rev-list --all --since='2026-10-18T13:45:00-03:00' --count",
+        "git -C lore-shokunin log --all --regexp-ignore-case --grep='error\\|failed\\|failure\\|broken\\|regression\\|worktree\\|prune' --format='%H' --since='2026-10-18T13:45:00-03:00' | wc -l",
+        "git -C game-dev-2d-shokunin rev-list --all --since='2026-10-18T13:45:00-03:00' --count",
+        "git -C game-dev-2d-shokunin log --all --regexp-ignore-case --grep='error\\|failed\\|failure\\|broken\\|regression\\|worktree\\|prune' --format='%H' --since='2026-10-18T13:45:00-03:00' | wc -l"
+      ],
+      "out": [
+        "lore post-cutoff commits=0",
+        "lore post-cutoff error/regression/worktree subjects=0",
+        "gd2d post-cutoff commits=0",
+        "gd2d post-cutoff error/regression/worktree subjects=0"
+      ],
+      "interpretation": "No post-cutoff commit records or matching error/regression/worktree subjects are present in either repository. This is a Git-history check, not a runtime error-log audit."
+    },
+    "lore_worktrees": {
+      "cmd": "git -C lore-shokunin worktree list --porcelain; printf '\\n--- admin metadata directories ---\\n'; ls -1 lore-shokunin/.git/worktrees 2>/dev/null || true; printf '\\n--- dry-run prune ---\\n'; git -C lore-shokunin worktree prune --dry-run --verbose",
+      "out": "worktree /home/vgpnk/Projects/shokunin/lore-shokunin; HEAD 6cec83aede47575beeeda6b7dc0e4ea74927be78; branch refs/heads/main; .git/worktrees listing empty; dry-run prune produced no output.",
+      "interpretation": "Only the main worktree is registered; no stale admin metadata is listed. The S08 target /tmp/r87-M1-myth is absent from the worktree list."
+    },
+    "game_dev_2d_worktrees": {
+      "cmd": "git -C game-dev-2d-shokunin worktree list --porcelain; printf '\\n--- admin metadata directories ---\\n'; ls -1 game-dev-2d-shokunin/.git/worktrees 2>/dev/null || true; printf '\\n--- dry-run prune ---\\n'; git -C game-dev-2d-shokunin worktree prune --dry-run --verbose",
+      "out": "Main worktree at /home/vgpnk/Projects/shokunin/game-dev-2d-shokunin, HEAD 05a7289961bafad79b041309d74913dff577ef1c, branch main. Three entries: game-dev-2d-shokunin-wt-r100 at HEAD 2d5622828d6d985d70326367f8023f89f00a02f0, branch wt-r100; wt-r98 at HEAD 68bee6e7c07638a8abeb2812f249fc382ba7d50a, branch wt-r98; wt-r99 at HEAD fe1a996ed21fd048558ef31cc1d0c77253404101, branch wt-r99. Each has 'prunable gitdir file points to non-existent location'. Admin metadata dirs list those three names. Dry-run reports Removing worktrees/game-dev-2d-shokunin-wt-r98, ...wt-r99, ...wt-r100, each because gitdir points to non-existent location.",
+      "interpretation": "The three round-3-preserved registrations remain intact, but are now unlocked and marked prunable; this dry-run was read-only and no additional prune was performed."
+    },
+    "preserved_branches_and_paths": {
+      "cmd": "for branch in wt-r98 wt-r99 wt-r100; do printf '%s ' \"$branch\"; git -C game-dev-2d-shokunin log --oneline --decorate -1 \"$branch\"; printf 'unpulled-from-remotes='; git -C game-dev-2d-shokunin log --oneline \"$branch\" --not --remotes | wc -l; done; for p in /home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r98 /home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r99 /home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r100; do if test -d \"$p\"; then printf 'PRESENT %s\\n' \"$p\"; else printf 'ABSENT %s\\n' \"$p\"; fi; done; for d in game-dev-2d-shokunin/.git/worktrees/*; do printf '%s ' \"$d\"; if test -e \"$d/locked\"; then printf 'LOCKED '; else printf 'UNLOCKED '; fi; done",
+      "out": "wt-r98 HEAD 68bee6e7 (r98 author canvas/draw-flush lattice; green x2 458/458), unpulled-from-remotes=1; wt-r99 HEAD fe1a996e (r99 author audio lattice; green 447/447), unpulled-from-remotes=1; wt-r100 HEAD 2d562282 (r100 author GUI/input lattice; green 451/451 x2), unpulled-from-remotes=1. All three checkout paths ABSENT; all three metadata directories UNLOCKED.",
+      "interpretation": "Named branch refs and their one unpushed commit each are present. R3 did not remove these refs or registrations; subsequent unguarded worktree prune could remove only the stale registrations, so keep the report's selective-preservation caution in view."
+    },
+    "lane_status": {
+      "commands": [
+        "git -C lore-shokunin status --short --branch",
+        "git -C game-dev-2d-shokunin status --short --branch"
+      ],
+      "out": [
+        "## main...origin/main [ahead 3]; ?? .scratch/",
+        "## main...origin/main [ahead 3]"
+      ],
+      "note": "Existing sibling-repo state observed read-only; no sibling repo was modified."
+    }
+  },
+  "safety": {
+    "read_only_over_siblings": true,
+    "git_mutations": "none; worktree prune was invoked only with --dry-run --verbose",
+    "files_written": ["/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-5/seat-30.json"]
+  }
+}

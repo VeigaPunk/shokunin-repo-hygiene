@@ -1,0 +1,323 @@
+{
+  "seat": "S51",
+  "round": 5,
+  "role": "cross-audit",
+  "assignment": "Wait 360s; tally missed-sweep findings from S17-S32 into a consolidated coverage-gap table.",
+  "wait_seconds": 360,
+  "review": {
+    "seat_range": "S17-S32",
+    "fragments_present_and_reviewed": 16,
+    "independent_claim_corrections": 2,
+    "corrections": [
+      {
+        "seat": "S17",
+        "claim": "false_safe_found=0",
+        "result": "DISAGREE: independent synthetic hidden-reference probe makes both installed tools return SAFE(stale) while a live reference exists in a hidden .ufo file."
+      },
+      {
+        "seat": "S25",
+        "claim": "fleet-root .scratch baseline missing",
+        "result": "DISAGREE: round-1 seat S15 measured the exact root path at 0 bytes; current scan measured 1208 bytes and 10 files. S16 alone had no row."
+      }
+    ],
+    "reconfirmed_counts": {
+      "S18_prior_kotodama_no_prune": "2/2",
+      "S21_prior_repo_NOT_SAFE": "1/1",
+      "S24_souji_round_closure_rows": "4/4",
+      "S27_approval_targets_invalidated_by_mtime": "0/96",
+      "S30_worktree_lanes": "2/2"
+    },
+    "notes": [
+      "S17 round-1 and round-3 totals and S26 round-1/3 counts agree with their cited records.",
+      "S20's bounded sweep limitation and historical R3 sibling-scope breach are confirmed; S23's new root tree is unclassified, not attributed to Souji.",
+      "S26's R4 read-only reporting and seat-index findings are confirmed; its read-only report claim conflicts with the S58/vadv-53 incident record.",
+      "S32's two fake-only secret-boundary cases are supported by the installed source paths; no real secret content was read in this audit."
+    ]
+  },
+  "coverage_gap_table": [
+    {
+      "finding": "Both installed verifiers' stale-reference sweep omits hidden files. Independent fake-fleet test: a 3-day-old .scratch/needle.log is referenced only by .ufo/current.md, yet both tools report SAFE(stale), refs=0. This is an independently reproduced false-SAFE class.",
+      "severity": "HIGH — false-SAFE; downstream cleanup could break a live reference",
+      "receipt-needed": "Add hidden-file traversal while preserving census/tests/quarantine exclusions, add a hidden-reference regression case, and re-run both selftests before granting stale receipts.",
+      "owner": "Souji verifier maintainer / parent integrator",
+      "evidence_ids": ["E1", "E2"]
+    },
+    {
+      "finding": "A ledger row can point vault_path at a secret-shaped component such as credentials/fake.env; both installed verifiers hash it and return SAFE(moved-to-obsidian) instead of refusing the path. S32's case used only a synthetic /tmp fixture.",
+      "severity": "HIGH — secret-read refusal boundary bypass",
+      "receipt-needed": "Check every source and vault ledger path for secret-shaped components before stat/hash; add fake-only source-and-vault refusal tests and re-run the battery.",
+      "owner": "Souji verifier maintainer / parent integrator",
+      "evidence_ids": ["E3"]
+    },
+    {
+      "finding": "Both stale-reference sweeps use rg --no-ignore without excluding secret-shaped paths, so the synthetic credentials/fake.env reference fixture is scanned. Existing target-path refusal does not protect files traversed by the sweep.",
+      "severity": "HIGH — secret-read boundary violation in sweep",
+      "receipt-needed": "Exclude secret-shaped paths before content traversal and add a fake-only regression proving the sweep never opens them; retain fail-closed behavior.",
+      "owner": "Souji verifier maintainer / parent integrator",
+      "evidence_ids": ["E4"]
+    },
+    {
+      "finding": "R2's installed souji-verify.sh invokes grep, find, and xargs although its binding spec allows only Bash, coreutils, Git, and rg; the selftest checks forbidden Git verbs but not the dependency allowlist.",
+      "severity": "MEDIUM — spec-conformance and missed-test gap",
+      "receipt-needed": "Either remove the undeclared dependencies or explicitly amend the binding contract, then add a dependency-allowlist check.",
+      "owner": "R2 tool/spec owner and parent integrator",
+      "evidence_ids": ["E5"]
+    },
+    {
+      "finding": "The supplied census/round-2 artifact directory is absent, so there are no round-2 seat fragments at the advertised round-artifact path. The report points to tests/results; this is a provenance gap, not proof the tool work is missing.",
+      "severity": "MEDIUM — traceability gap",
+      "receipt-needed": "Provide a canonical round-2 artifact index or record why no census directory exists and map the report's claims to retained tests/results evidence.",
+      "owner": "R2 report/artifact integrator",
+      "evidence_ids": ["E6"]
+    },
+    {
+      "finding": "R3 reports executed worktree prunes in lore-shokunin and game-dev-2d-shokunin, while souji-shokunin/AGENTS.md says sibling repos are read-only. The metadata-only nature does not remove the scope conflict.",
+      "severity": "HIGH — historical scope/policy breach",
+      "receipt-needed": "Record the incident and the authorization or policy exception that permitted sibling metadata writes; confirm no further sibling changes are planned.",
+      "owner": "R3 execution parent / Souji lane lead / operator",
+      "evidence_ids": ["E7"]
+    },
+    {
+      "finding": "R4 closure text says the real vault was read-only throughout, but S58 records a harness-launched GUI app and three .obsidian files re-mtimed; vadv-53 also records the app/config side effect. The harness was later hardened; no notes were reported lost.",
+      "severity": "MEDIUM-HIGH — material reporting/safety-rail record defect",
+      "receipt-needed": "Amend the R4 closure/LOG to state violated-then-remediated, preserve the blast-radius and remediation evidence, and avoid claiming read-only throughout.",
+      "owner": "R4 report owner / parent integrator",
+      "evidence_ids": ["E8"]
+    },
+    {
+      "finding": "R4 report says 63/64 seats completed, but census/round-4 has 29 conventional seat-NN JSONs plus one supplemental seat-58-rail-breach.json. Other work is under tests/results and tests/vault, so this is unresolved indexing, not proof seats failed.",
+      "severity": "MEDIUM — completion traceability gap",
+      "receipt-needed": "Map each reported completion to its canonical seat fragment or retained test/result artifact; do not infer failures from the census directory count alone.",
+      "owner": "R4 dispatch/report integrator",
+      "evidence_ids": ["E9"]
+    },
+    {
+      "finding": "S20's fleet resweep is bounded by maxdepth 2 and head -40, and the first listing mixes directories with files. It yields 0 root .scratch paths in the first 40 lines while the file-only listing has 10; it also cannot reach the deeper R4 .ufo/scopes probe document.",
+      "severity": "MEDIUM — incomplete sweep coverage",
+      "receipt-needed": "Repeat as an untruncated, file-only path inventory with explicit exclusions and classify each omitted path before any action.",
+      "owner": "Souji fleet-sweep owner / parent integrator",
+      "evidence_ids": ["E10"]
+    },
+    {
+      "finding": "Fleet-root .scratch was measured at 0 bytes in R1 (S15), not missing; current metadata-only scan finds 1208 bytes across 10 .out files. S25's baseline-missing label used S16 only; these same-day files have no removal receipt established here.",
+      "severity": "MEDIUM — current root artifact coverage; no removal authorized",
+      "receipt-needed": "Classify each current file by owner, live references, age, and receipt; preserve until a per-file decision is supported.",
+      "owner": "Fleet-root artifact producer unknown; route attribution to operator/Souji parent",
+      "evidence_ids": ["E11"]
+    },
+    {
+      "finding": "A root-level ignored tree named 'bash: ' has a 10,139-byte leaf and an R1 census lookup returned no exact row. Its timestamp is after the R1 census snapshot; its origin/owner is unknown and no contents were read.",
+      "severity": "MEDIUM — unclassified post-census artifact",
+      "receipt-needed": "Identify the creating command/process and owning lane, then obtain a path-specific receipt before considering cleanup; preserve it meanwhile.",
+      "owner": "Unknown; fleet operator/parent to attribute",
+      "evidence_ids": ["E12"]
+    },
+    {
+      "finding": "Kotodama .scratch is now 16G versus the R1 report's 1.9G observation during live writes. R1/R3 NOT-SAFE/no-prune decisions remain correct; this is new growth, not a verdict reversal.",
+      "severity": "HIGH — capacity growth; no prune authorization",
+      "receipt-needed": "After owner work settles, take a stable per-target size/reference/receipt inventory and obtain operator disposition; do not treat size alone as a removal receipt.",
+      "owner": "kotodama lane owner/operator; Souji remains read-only census",
+      "evidence_ids": ["E13"]
+    },
+    {
+      "finding": "The /tmp residue sweep is count-only and unclassified: S22 measured 3109 glob matches / 382M versus a prior 3106 / 382M; a later live scan during round-5 activity measured 3123 / 428M. This audit's retained /tmp/souji-sweep-audit.MAzb1w fixture is one matching path, so current totals are not a stable residue inventory.",
+      "severity": "LOW-MEDIUM — unstable count, no target-level decision",
+      "receipt-needed": "After test activity settles, enumerate exact paths, classify owners and receipts, and only then submit any removal proposal.",
+      "owner": "tsukuroi/operator per the R3 carry-over routing",
+      "evidence_ids": ["E14"]
+    },
+    {
+      "finding": "Fleet-wide MANIFEST/report reconciliation found 37 root report files without a matching closure lane-round or exact report-path reference. This is reporting traceability, not evidence that the underlying lane work is missing; Souji rounds 1-4 each have closure rows.",
+      "severity": "MEDIUM — fleet report/closure traceability gap",
+      "receipt-needed": "Add a closure association or explicit non-closure classification for each affected report file; retain path-level mapping.",
+      "owner": "Fleet MANIFEST curator and the affected report-owning lanes",
+      "evidence_ids": ["E15"]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "E1",
+      "topic": "Independent hidden-reference synthetic setup",
+      "commands_and_outputs": [
+        {
+          "command": "tmp=$(mktemp -d /tmp/souji-sweep-audit.XXXXXX); fleet=\"$tmp/fleet\"; target=\"$fleet/repo/.scratch/needle.log\"; mkdir -p \"$(dirname \"$target\")\" \"$fleet/repo/.ufo\"; printf 'old scratch candidate\\n' > \"$target\"; touch -d '3 days ago' \"$target\"; printf 'live reference to needle.log\\n' > \"$fleet/repo/.ufo/current.md\"; printf 'fixture_root=%s\\n' \"$tmp\"",
+          "observed_output": "fixture_root=/tmp/souji-sweep-audit.MAzb1w"
+        },
+        {
+          "command": "(cd \"$fleet\" && rg -l --no-ignore --fixed-strings -e 'needle.log' . -g '!.git' -g '!**/.git/**' -g '!souji-shokunin/census/**' -g '!**/souji-shokunin/census/**' -g '!souji-shokunin/tests/**' -g '!**/souji-shokunin/tests/**' -g '!**/.ufo-quarantine/**')",
+          "observed_output": "no path; exit=1"
+        },
+        {
+          "command": "(cd \"$fleet\" && rg -l --no-ignore --hidden --fixed-strings -e 'needle.log' . -g '!.git' -g '!**/.git/**' -g '!souji-shokunin/census/**' -g '!**/souji-shokunin/census/**' -g '!souji-shokunin/tests/**' -g '!**/souji-shokunin/tests/**' -g '!**/.ufo-quarantine/**')",
+          "observed_output": "./repo/.ufo/current.md; exit=0"
+        }
+      ]
+    },
+    {
+      "id": "E2",
+      "topic": "Installed tools misclassify the hidden live reference",
+      "commands_and_outputs": [
+        {
+          "command": "SOUJI_LEDGER=\"$tmp/ledger.tsv\" SHOKUNIN_ROOT=\"$fleet\" bash tools/souji-verify.sh --stale-days 1 --json \"$target\"",
+          "observed_output": "{\"path\":\"/tmp/souji-sweep-audit.MAzb1w/fleet/repo/.scratch/needle.log\",\"verdict\":\"SAFE\",\"receipt\":\"stale\",\"evidence\":\"scratch-type=scratch-dir refs=0 mtime-age-days=3\"}"
+        },
+        {
+          "command": "SOUJI_LEDGER=\"$tmp/ledger.tsv\" SHOKUNIN_ROOT=\"$fleet\" bash tools/souji-vault-verify.sh --stale-days 1 --fallback --json \"$target\"",
+          "observed_output": "{\"path\":\"/tmp/souji-sweep-audit.MAzb1w/fleet/repo/.scratch/needle.log\",\"verdict\":\"SAFE\",\"verified\":\"VERIFIED(stale)\",\"receipt\":\"stale\",\"reason\":\"stale\",\"evidence\":\"scratch-type=scratch-dir refs=0 mtime-age-days=3 cli=unavailable\"}"
+        }
+      ],
+      "independent_code_check": "tools/souji-verify.sh:200-205 and tools/souji-vault-verify.sh:424-429 omit --hidden."
+    },
+    {
+      "id": "E3",
+      "topic": "Secret-shaped ledger vault path bypass; S32 fake-only fixture",
+      "source": "census/round-5/seat-32.json",
+      "commands_and_outputs": [
+        {
+          "command": "bash /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh /tmp/souji-s32-audit-k6j65p4n/source.md (SHOKUNIN_ROOT=/tmp/souji-s32-audit-k6j65p4n/fleet; SOUJI_LEDGER=/tmp/souji-s32-audit-k6j65p4n/ledger.tsv)",
+          "observed_output": "exit=0; SAFE moved-to-obsidian; ledger vault=/tmp/souji-s32-audit-k6j65p4n/vault/credentials/fake.env"
+        },
+        {
+          "command": "bash /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-vault-verify.sh --fallback --ledger /tmp/souji-s32-audit-k6j65p4n/ledger.tsv /tmp/souji-s32-audit-k6j65p4n/source.md (SHOKUNIN_ROOT=/tmp/souji-s32-audit-k6j65p4n/fleet)",
+          "observed_output": "exit=0; SAFE moved-to-obsidian; VERIFIED(moved-to-obsidian); ledger vault=/tmp/souji-s32-audit-k6j65p4n/vault/credentials/fake.env"
+        }
+      ],
+      "note": "The fixture path and contents were synthetic; S51 did not access the fixture files. The installed source branches to hashing a ledger vault path without applying is_secret_shaped to that path (r2 lines 253-265; r4 lines 287-340)."
+    },
+    {
+      "id": "E4",
+      "topic": "Stale-reference sweep traverses fake secret-shaped path; S32 fixture",
+      "source": "census/round-5/seat-32.json",
+      "commands_and_outputs": [
+        {
+          "command": "bash tools/souji-verify.sh --stale-days 0 /tmp/souji-s32-audit-k6j65p4n/fleet/repo/.scratch/old.out (SHOKUNIN_ROOT=/tmp/souji-s32-audit-k6j65p4n/fleet; SOUJI_LEDGER=/tmp/souji-s32-audit-k6j65p4n/empty-ledger.tsv)",
+          "observed_output": "exit=0; NOT-SAFE none; obsidian=no-matching-ledger-row; stale=live-refs=1"
+        },
+        {
+          "command": "bash tools/souji-vault-verify.sh --fallback --ledger /tmp/souji-s32-audit-k6j65p4n/empty-ledger.tsv --stale-days 0 /tmp/souji-s32-audit-k6j65p4n/fleet/repo/.scratch/old.out (SHOKUNIN_ROOT=/tmp/souji-s32-audit-k6j65p4n/fleet)",
+          "observed_output": "exit=0; NOT-SAFE none; pushed=no-repo; stale=live-refs=1 cli=unavailable | NOT-VERIFIED(none)"
+        }
+      ],
+      "note": "S32's synthetic fake.env contained only a fake reference token; no real credential content was used. Installed sweep code is at r2 lines 191-205 and r4 lines 415-429."
+    },
+    {
+      "id": "E5",
+      "topic": "R2 dependency allowlist mismatch",
+      "source": "census/round-5/seat-17.json",
+      "command": "python3 -c 'from pathlib import Path; import re; p=Path(\"tools/souji-verify.sh\");\nfor i,line in enumerate(p.read_text().splitlines(),1):\n if re.search(r\"\\b(grep|find|xargs)\\b\",line): print(f\"{i}:{line.strip()}\")'",
+      "observed_output": "144: grep -v origin/HEAD; 145: grep -c; 157: find; 158: xargs; 209: grep -c; 333: grep -c; 623: grep static audit. Binding spec tools/souji-verify.spec.md:3-4 says Bash + coreutils + Git + rg only."
+    },
+    {
+      "id": "E6",
+      "topic": "R2 census artifact absence",
+      "source": "census/round-5/seat-26.json",
+      "command": "python3 -c 'from pathlib import Path; p=Path(\"census/round-2\"); print(\"round2_dir_exists={}\".format(p.is_dir()))'; git ls-tree --name-only HEAD census/round-2; printf 'round2_tree_lookup_exit=%s\\n' \"$?\"",
+      "observed_output": "round2_dir_exists=False; git ls-tree emitted no path; round2_tree_lookup_exit=0"
+    },
+    {
+      "id": "E7",
+      "topic": "R3 sibling write scope conflict",
+      "command": "python3 - <<'PY'\nfrom pathlib import Path\nfor name, spans in [(\"souji-shokunin/AGENTS.md\", [(3,4)]), (\".ufo/reports/round-3/souji.md\", [(35,38)])]:\n lines=Path(name).read_text().splitlines()\n for a,b in spans:\n  print(f\"{name}:{a}-{b}\")\n  for n in range(a,b+1): print(f\"{n}:{lines[n-1]}\")\nPY",
+      "observed_output": "AGENTS.md:3-4 says sibling repos are read-only; R3 report lines 35-38 says lore worktree prune and game-dev-2d lock/prune/unlock were executed."
+    },
+    {
+      "id": "E8",
+      "topic": "R4 read-only report contradiction",
+      "command": "python3 -c 'import json; from pathlib import Path; d=json.loads(Path(\"souji-shokunin/census/round-4/seat-58-rail-breach.json\").read_text()); q=json.loads(Path(\"souji-shokunin/tests/results/vadv-53.json\").read_text()); r=Path(\".ufo/reports/round-4/souji.md\").read_text().splitlines(); print(\"rail_verdict=\"+d[\"rail_verdict\"]); print(\"vault_config=\"+d[\"blast_radius\"][\"vault_config\"]); print(\"vadv_note=\"+q[\"safety\"][\"vault_writes_by_this_seat\"]); print(\"report_line_66=\"+r[65])'",
+      "observed_output": "rail_verdict=VIOLATED-THEN-REMEDIATED; vault_config=3 .obsidian files re-mtimed at 14:10:31 and core-plugins.json differs from vault HEAD; vadv note records .obsidian core-plugins.json and app.json mtimes; report_line_66 says 'vault read-only throughout'."
+    },
+    {
+      "id": "E9",
+      "topic": "R4 seat fragment index",
+      "command": "python3 -c 'from pathlib import Path; import re; d=Path(\"census/round-4\"); names=sorted(p.name for p in d.glob(\"seat-*.json\")); std=[n for n in names if re.fullmatch(r\"seat-\\d{2}\\.json\",n)]; print(\"round4_seat_json={} standard_ids={} supplemental={}\".format(len(names),len(std),[n for n in names if n not in std])); print(\"report_completion=63/64 (round-4 report)\")'",
+      "observed_output": "round4_seat_json=30 standard_ids=29 supplemental=['seat-58-rail-breach.json']; report_completion=63/64"
+    },
+    {
+      "id": "E10",
+      "topic": "Bounded fleet root sweep coverage",
+      "commands_and_outputs": [
+        {
+          "command": "find /home/vgpnk/Projects/shokunin -maxdepth 2 -newermt '2026-10-18 11:00' -not -path '*/.git/*' -not -path '*/souji-shokunin/*' -not -path '*/.ufo/reports/*' | head -40 | wc -l; find /home/vgpnk/Projects/shokunin -maxdepth 2 -newermt '2026-10-18 11:00' -not -path '*/.git/*' -not -path '*/souji-shokunin/*' -not -path '*/.ufo/reports/*' -type f -printf '%p\\n' | wc -l; find /home/vgpnk/Projects/shokunin/.scratch -maxdepth 1 -type f -printf '%p\\n' | wc -l",
+          "observed_output": "40; 24; 10"
+        },
+        {
+          "command": "find /home/vgpnk/Projects/shokunin -maxdepth 2 -newermt '2026-10-18 11:00' -not -path '*/.git/*' -not -path '*/souji-shokunin/*' -not -path '*/.ufo/reports/*' | head -40 | grep -F '/.scratch/' | wc -l; find /home/vgpnk/Projects/shokunin -maxdepth 2 -newermt '2026-10-18 11:00' -not -path '*/.git/*' -not -path '*/souji-shokunin/*' -not -path '*/.ufo/reports/*' -type f -printf '%p\\n' | grep -F '/.scratch/' | wc -l; find /home/vgpnk/Projects/shokunin -maxdepth 2 -newermt '2026-10-18 11:00' -not -path '*/.git/*' -not -path '*/souji-shokunin/*' -not -path '*/.ufo/reports/*' -name 'obsidian-cli-probe.md' -printf '%p\\n' | wc -l",
+          "observed_output": "0; 10; 0"
+        }
+      ],
+      "note": "The R4 report names the deeper .ufo/scopes/souji-mint-20261018/obsidian-cli-probe.md artifact; maxdepth 2 does not enumerate it."
+    },
+    {
+      "id": "E11",
+      "topic": "Fleet-root scratch R1 baseline and current contents",
+      "commands_and_outputs": [
+        {
+          "command": "R1 census.tsv exact row for /home/vgpnk/Projects/shokunin/.scratch/; source census/round-1/seat-15.json",
+          "observed_output": "S15 /home/vgpnk/Projects/shokunin/.scratch/ 0 2026-10-18T12:18:03-03:00 none NOT-SAFE"
+        },
+        {
+          "command": "du -sb .scratch; find .scratch -maxdepth 1 -type f -printf '%s\\t%TY-%Tm-%TdT%TH:%TM:%TS\\t%p\\n' | sort",
+          "observed_output": "1208 .scratch; 10 files: battery.out, coupling.out, craft.out, d2check.out, d3check.out, replay-r22.out, replay-r3.out, rv5-p.out, rv6-p.out, rv7-p.out (all mtimes 2026-10-18 13:10-13:15 -0300)"
+        }
+      ]
+    },
+    {
+      "id": "E12",
+      "topic": "New root-level ignored tree, metadata only",
+      "command": "stat -c '%n|%F|%s|%y' -- 'bash: ' 'bash: /home/vgpnk/Projects/shokunin/souji-shokunin/tests/tools/souji-verify.sh: No such file or directory' souji-shokunin/census/round-1/census.tsv; du -sb -- 'bash: '; git status --short --ignored --untracked-files=all -- 'bash: '; git check-ignore -v --no-index -- 'bash: /home/vgpnk/Projects/shokunin/souji-shokunin/tests/tools/souji-verify.sh: No such file or directory'; echo check_ignore_exit=$?; python3 -c 'import csv,os; rows=list(csv.DictReader(open(\"souji-shokunin/census/round-1/census.tsv\",encoding=\"utf-8\"),delimiter=\"\\t\")); p=\"/home/vgpnk/Projects/shokunin/bash: \"; print([r for r in rows if r[\"path\"]==p])'",
+      "observed_output": "bash: is an 8-byte directory; leaf is a 10,139-byte regular file timestamped 2026-10-18 14:01; du=10139; git status marks it ignored; .gitignore pattern *-shokunin/ matches the nested leaf; check_ignore_exit=0; R1 exact target lookup=[]"
+    },
+    {
+      "id": "E13",
+      "topic": "Kotodama scratch growth, no-prune status retained",
+      "commands_and_outputs": [
+        {
+          "command": "du -sh kotodama-shokunin/.scratch; date --iso-8601=seconds",
+          "observed_output": "16G\\tkotodama-shokunin/.scratch; 2026-10-18T15:18:23-03:00"
+        },
+        {
+          "command": "R1 report/census-summary historical observation",
+          "observed_output": "553M at mint 11:45 -> 1.9G at 12:35 during live round-22 writes; R3 seat-58 says prune_authorization=false for kotodama repo and .scratch."
+        }
+      ]
+    },
+    {
+      "id": "E14",
+      "topic": "Unclassified /tmp residue counts and activity interference",
+      "source": "census/round-5/seat-22.json plus S51 later read-only scan",
+      "commands_and_outputs": [
+        {
+          "command": "ls -d /tmp/souji* /tmp/svv-parent-* /tmp/adv-* /tmp/s08* /tmp/s33* /tmp/s64* 2>/dev/null | wc -l; du -sch /tmp/souji* /tmp/svv-parent-* /tmp/adv-* /tmp/s08* /tmp/s33* /tmp/s64* 2>/dev/null | tail -n 1",
+          "observed_output": "S22 at 2026-10-18T18:15:12Z: 3109; 382M total. S51 later scan: 3123; 428M total."
+        },
+        {
+          "command": "ls -d /tmp/souji-sweep-audit.MAzb1w",
+          "observed_output": "/tmp/souji-sweep-audit.MAzb1w (S51's own retained synthetic test fixture, one glob match)"
+        }
+      ]
+    },
+    {
+      "id": "E15",
+      "topic": "Fleet-wide MANIFEST/report reconciliation",
+      "source": "census/round-5/seat-24.json",
+      "command": "python3 /tmp/s24-report-sweep.py",
+      "observed_output": "closure_entries=147; closure_rounds=41; report_dirs=64, dirs_with_closure=41; report_files=210; closure_associated=151; nonclosure_only=22; unpaired=37; souji_reports=round-1:True,round-2:True,round-3:True,round-4:True"
+    },
+    {
+      "id": "E16",
+      "topic": "Verifier selftests pass but miss hidden-reference case",
+      "commands_and_outputs": [
+        {"command": "bash tools/souji-verify.sh --selftest", "observed_output": "selftest: 24 checks, 0 failed"},
+        {"command": "bash tools/souji-vault-verify.sh --selftest", "observed_output": "selftest: 35 checks, 0 failed"}
+      ]
+    }
+  ],
+  "safety": {
+    "repository_writes": ["census/round-5/seat-51.json only"],
+    "manual_tmp_fixture": "/tmp/souji-sweep-audit.MAzb1w retained; synthetic hidden-reference test only",
+    "real_secret_content_read": false,
+    "fleet_or_sibling_mutations": false,
+    "git_mutations": false,
+    "selftest_behavior": "The two built-in selftests created and auto-cleaned only their own /tmp fixtures; no fleet, lane, or sibling artifacts were removed."
+  }
+}

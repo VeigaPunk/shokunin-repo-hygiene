@@ -1,0 +1,161 @@
+{
+  "seat": "S50",
+  "round": 5,
+  "kind": "cross-audit",
+  "assignment": "Tally verdict-audit disagreements in S01-S16 and S45; classify as evidenced real contradictions or wording/status-neutral discrepancies.",
+  "verdict": "PARTIAL — S01-S16 reviewed; S45 fragment is absent. Two current real verdict contradictions are supported.",
+  "coverage": {
+    "reviewed": ["S01", "S02", "S03", "S04", "S05", "S06", "S07", "S08", "S09", "S10", "S11", "S12", "S13", "S14", "S15", "S16"],
+    "missing": ["S45"],
+    "evidence": {
+      "command": "for n in $(seq -w 1 16); do test -f \"census/round-5/seat-$n.json\" || { printf 'missing=S%s\\n' \"$n\"; exit 1; }; done; if test -f census/round-5/seat-45.json; then printf 'S45=present\\n'; else printf 'S45=missing\\n'; fi; if test -e census/round-5/seat-50.json; then printf 'S50=already-exists\\n'; else printf 'S50=absent\\n'; fi",
+      "observed_output": "S45=missing\nS50=absent",
+      "exit": 0
+    }
+  },
+  "tally": {
+    "current_real_verdict_contradictions": 2,
+    "historical_false_NOT_SAFE_to_SAFE_corrected_by_parent": 2,
+    "substantive_non_verdict_compliance_contradictions": 1,
+    "no_verdict_flip_receipt_documentation_or_metadata_discrepancies": 3,
+    "other_reviewed_seats_with_no_verdict_disagreement": ["S01", "S03", "S04", "S08", "S09", "S10", "S14", "S16"],
+    "counting_note": "Counts are distinct findings/targets. S06 is one target despite two tools. S12 census lines 112 and 221 are duplicate rows for the same deleted path, not two artifacts. The historical S02/S05 first-pass errors were parent-corrected and independently re-derive SAFE now. S11 is a real append-only policy violation but is not a SAFE/NOT-SAFE verdict flip."
+  },
+  "findings": [
+    {
+      "seat": "S06",
+      "classification": "current_real_verdict_contradiction",
+      "target": "/home/vgpnk/Projects/shokunin/.ufo/state",
+      "disagreement": "Required refusal / NOT-SAFE versus SAFE(pushed) from both installed tools.",
+      "independent_rederivation": "Static inspection confirms evaluate_path has no explicit .ufo/state refusal in either tool and falls through to generic artifact evaluation; try_pushed returns SAFE/pushed when the introducing commit is an ancestor of the selected ref. The recorded S06 probe is not rerun.",
+      "evidence": [
+        {
+          "source": "census/round-5/seat-06.json:34-45",
+          "command": "bash tools/souji-verify.sh --json /home/vgpnk/Projects/shokunin/.ufo/state",
+          "observed_output": "{\"path\":\"/home/vgpnk/Projects/shokunin/.ufo/state\",\"verdict\":\"SAFE\",\"receipt\":\"pushed\",\"evidence\":\"intro=7d02e9671f86 ref=refs/remotes/origin/master ancestor=yes\"}",
+          "provenance": "Captured in S06; not rerun by S50."
+        },
+        {
+          "source": "census/round-5/seat-06.json:38-45",
+          "command": "bash tools/souji-vault-verify.sh --fallback --json /home/vgpnk/Projects/shokunin/.ufo/state",
+          "observed_output": "{\"path\":\"/home/vgpnk/Projects/shokunin/.ufo/state\",\"verdict\":\"SAFE\",\"verified\":\"VERIFIED(pushed)\",\"receipt\":\"pushed\",\"reason\":\"pushed\",\"evidence\":\"intro=7d02e9671f86 ref=refs/remotes/origin/master ancestor=yes cli=unavailable\"}",
+          "provenance": "Captured in S06; not rerun by S50."
+        },
+        {
+          "command": "python3 - <<'PY'\nfrom pathlib import Path\nfor name in ('tools/souji-verify.sh','tools/souji-vault-verify.sh'):\n    text=Path(name).read_text()\n    start=text.index('evaluate_path() {')\n    end=text.index('\\n}',start)\n    body=text[start:end]\n    print(f'{name}: evaluate_path_has_explicit_state_refusal={\".ufo/state\" in body}; pushes_to_generic_artifact={\"evaluate_artifact \\\"$target\\\"\" in body}')\nPY",
+          "observed_output": "tools/souji-verify.sh: evaluate_path_has_explicit_state_refusal=False; pushes_to_generic_artifact=True\ntools/souji-vault-verify.sh: evaluate_path_has_explicit_state_refusal=False; pushes_to_generic_artifact=True"
+        },
+        {
+          "source": "census/round-5/seat-06.json:51-55",
+          "command": "strace -f -qq -e trace=%file -- bash tools/souji-verify.sh --json /home/vgpnk/Projects/shokunin/.ufo/state",
+          "observed_output": "S06 recorded 12 path-matching syscall lines, including chdir(state), newfstatat(state/HEAD)=ENOENT, and repeated metadata lookups; no open-family syscall under state appeared in its filtered lines. No further state access was made."
+        }
+      ]
+    },
+    {
+      "seat": "S12",
+      "classification": "current_real_verdict_contradiction",
+      "target": "/home/vgpnk/Projects/shokunin/logs_tier.txt",
+      "disagreement": "Round-1 final census says SAFE/pushed; current verifier says NOT-SAFE/unreachable because the path is absent. Both census rows refer to this one path.",
+      "independent_rederivation": "The file is absent from the worktree and HEAD. Commit a1b44b1 deleted it before the round-1 census commit, so this is not explained by later disappearance.",
+      "evidence": [
+        {
+          "command": "tools/souji-verify.sh /home/vgpnk/Projects/shokunin/logs_tier.txt",
+          "observed_output": "VERDICT\\t/home/vgpnk/Projects/shokunin/logs_tier.txt\\tNOT-SAFE\\tunreachable\\tmissing path"
+        },
+        {
+          "command": "if test -e /home/vgpnk/Projects/shokunin/logs_tier.txt; then printf 'exists=yes\\n'; else printf 'exists=no\\n'; fi; git -C /home/vgpnk/Projects/shokunin ls-tree HEAD -- logs_tier.txt; git -C /home/vgpnk/Projects/shokunin show -s --format='%H %ad %s' --date=iso-strict a1b44b152a1c65313c09e6e6a7bd90d026eb93a8; git -C /home/vgpnk/Projects/shokunin show --format= --name-status a1b44b152a1c65313c09e6e6a7bd90d026eb93a8 -- logs_tier.txt",
+          "observed_output": "exists=no\\nHEAD tree output empty\\na1b44b152a1c65313c09e6e6a7bd90d026eb93a8 2026-10-18T11:22:25-03:00 cleanup: drop stray shell-experiment redirects at fleet root\\nD\\tlogs_tier.txt"
+        },
+        {
+          "command": "python3 - <<'PY'\nimport csv, os\nwith open('census/round-1/census.tsv', newline='') as f:\n for line,row in enumerate(csv.DictReader(f,delimiter='\\t'), start=2):\n  if os.path.basename(row['path']) == 'logs_tier.txt':\n   print(f\"line={line} seat={row['seat']} path={row['path']} receipt={row['receipt']} final={row['verdict']} original={row['orig_verdict']} corrected_by={row['corrected_by']}\")\nPY",
+          "observed_output": "line=112 seat=S10 path=logs_tier.txt receipt=pushed final=SAFE original=NOT-SAFE corrected_by=parent\\nline=221 seat=S57 path=/home/vgpnk/Projects/shokunin/logs_tier.txt receipt=pushed final=SAFE original=NOT-SAFE corrected_by=parent"
+        },
+        {
+          "commands": [
+            "git -C /home/vgpnk/Projects/shokunin show -s --format='%H %ad %s' --date=iso-strict a1b44b152a1c65313c09e6e6a7bd90d026eb93a8",
+            "git -C /home/vgpnk/Projects/shokunin/souji-shokunin show -s --format='%H %ad %s' --date=iso-strict 652b6f8f1a279d2d977f2db208384ca5179994b1"
+          ],
+          "observed_output": "a1b44b1: 2026-10-18T11:22:25-03:00; round-1 census commit 652b6f8: 2026-10-18T12:39:42-03:00"
+        }
+      ]
+    },
+    {
+      "seats": ["S02", "S05"],
+      "classification": "historical_false_NOT_SAFE_to_SAFE_corrected_by_parent",
+      "targets": [
+        "/home/vgpnk/Projects/shokunin/shokunin.conf.full-roster-20261015",
+        "/home/vgpnk/Projects/shokunin/.ufo/waves/round-14/registry-home/context.md"
+      ],
+      "disagreement": "Round-1 original verdicts were NOT-SAFE because origin/main was absent; the final table was parent-corrected to SAFE/pushed.",
+      "independent_rederivation": "Current souji-verify outputs SAFE/pushed for both targets. Their introducing commits are ancestors of origin/master (merge-base exit 0). These are resolved historical false negatives, not current defects.",
+      "evidence": [
+        {
+          "command": "python3 - <<'PY'\nimport csv, os\nwith open('census/round-1/census.tsv', newline='') as f:\n for line,row in enumerate(csv.DictReader(f,delimiter='\\t'), start=2):\n  if os.path.basename(row['path']) in ('shokunin.conf.full-roster-20261015','context.md'):\n   print(f\"line={line} path={row['path']} final={row['verdict']} original={row['orig_verdict']} corrected_by={row['corrected_by']}\")\nPY",
+          "observed_output": "Full-roster rows: lines 113 and 215 both final=SAFE original=NOT-SAFE corrected_by=parent. Context rows include registry-home/context.md at lines 90 and 220 with the same final/original/correction; context.md rows are duplicated across paths, so the finding is one target."
+        },
+        {
+          "command": "for p in /home/vgpnk/Projects/shokunin/shokunin.conf.full-roster-20261015 /home/vgpnk/Projects/shokunin/.ufo/waves/round-14/registry-home/context.md; do tools/souji-verify.sh \"$p\"; done",
+          "observed_output": "VERDICT\\t/home/vgpnk/Projects/shokunin/shokunin.conf.full-roster-20261015\\tSAFE\\tpushed\\tintro=99efc52b3a6f ref=refs/remotes/origin/master ancestor=yes\\nVERDICT\\t/home/vgpnk/Projects/shokunin/.ufo/waves/round-14/registry-home/context.md\\tSAFE\\tpushed\\tintro=b2f2efae7549 ref=refs/remotes/origin/master ancestor=yes"
+        },
+        {
+          "command": "for p in /home/vgpnk/Projects/shokunin/shokunin.conf.full-roster-20261015 /home/vgpnk/Projects/shokunin/.ufo/waves/round-14/registry-home/context.md; do intro=$(git -C /home/vgpnk/Projects/shokunin log --diff-filter=A --format=%H -1 -- \"$p\"); printf 'path=%s intro=%s ' \"$p\" \"$intro\"; git -C /home/vgpnk/Projects/shokunin merge-base --is-ancestor \"$intro\" refs/remotes/origin/master; printf 'ancestor_exit=%s\\n' \"$?\"; done",
+          "observed_output": "full-roster intro=99efc52b3a6f3648f7d8e097d78460901ad3c91c ancestor_exit=0\\ncontext.md intro=b2f2efae7549c6692d9af6dcea9f9d9c5d797e9d ancestor_exit=0"
+        }
+      ]
+    },
+    {
+      "seat": "S11",
+      "classification": "substantive_non_verdict_compliance_contradiction",
+      "target": "souji-shokunin/LOG.md append-only discipline",
+      "disagreement": "Strict EOF append-only compliance fails for commit 652b6f8, although no content lines were removed. This is not a SAFE/NOT-SAFE flip.",
+      "evidence": [
+        {
+          "commands": [
+            "git diff --numstat 652b6f8f1a279d2d977f2db208384ca5179994b1^ 652b6f8f1a279d2d977f2db208384ca5179994b1 -- LOG.md",
+            "git diff --unified=0 652b6f8f1a279d2d977f2db208384ca5179994b1^ 652b6f8f1a279d2d977f2db208384ca5179994b1 -- LOG.md | head -5"
+          ],
+          "observed_output": "44\\t0\\tLOG.md\\n@@ -33,0 +34,44 @@ figure corrections above are the first.\\n"
+        },
+        {
+          "command": "git show 652b6f8f1a279d2d977f2db208384ca5179994b1^:LOG.md | grep -n '^## '; git show 652b6f8f1a279d2d977f2db208384ca5179994b1:LOG.md | grep -n '^## '",
+          "observed_output": "parent headings: 3 mint; 34 obsidian-cli probe. Commit headings: 3 mint; 34 round 1; 78 obsidian-cli probe."
+        }
+      ]
+    },
+    {
+      "seat": "S07",
+      "classification": "no_verdict_flip_receipt_label_discrepancy",
+      "disagreement": "The stale-receipt challenge changed receipt reasoning/label, not the final SAFE verdict: all five audited launch files independently remain SAFE/pushed.",
+      "evidence": {
+        "source": "census/round-5/seat-07.json:73-95",
+        "commands": "The fragment records the round-1 census query, round-3 approval query, souji-verify and souji-vault-verify --fallback on five launch files, plus commit-ancestry/blob comparisons.",
+        "observed_output": "5/5 admitted SAFE(pushed) confirmed; round-3 approvals 5/5; both tools 5/5 SAFE/pushed; drift=0."
+      }
+    },
+    {
+      "seat": "S13",
+      "classification": "documentation_only_score_mismatch",
+      "disagreement": "SCORECARD.md assigns operability 8 in its axes table and 7 in the saturation text; all three audited axis verdicts still agree.",
+      "evidence": {
+        "command": "python3 - <<'PY'\nfrom pathlib import Path\nlines=Path('SCORECARD.md').read_text().splitlines()\nfor n in (15,45,46): print(f'{n}: {lines[n-1]}')\nPY",
+        "observed_output": "15: operability score 8 (r4); 45: operability 7, calibration 6; 46: carries the calibration flavor."
+      }
+    },
+    {
+      "seat": "S15",
+      "classification": "metadata_only_closure_timestamp_chronology",
+      "disagreement": "MANIFEST.closed_at and record-commit timestamps are chronologically inconsistent, but all four round rows remain type=closure and lanes.souji=ok; no closure-verdict flip.",
+      "evidence": {
+        "command": "python3 - <<'PY'\nimport json, subprocess\nwith open('/home/vgpnk/Projects/shokunin/MANIFEST.json') as f: d=json.load(f)\nfor e in d['rounds']:\n    r=e.get('round')\n    if r in (1,2,3,4) and 'souji' in e.get('lanes',{}):\n        print(f\"round={r} type={e.get('type')} souji={e['lanes']['souji']} closed_at={e.get('closed_at')}\")\n        sha={1:'ea3f092',2:'025dc63',3:'e6e5061',4:'3e1f1a1'}[r]\n        out=subprocess.check_output(['git','-C','/home/vgpnk/Projects/shokunin','show','-s','--format=%ad','--date=iso-strict',sha],text=True).strip()\n        print(f'row_commit={sha} commit_time={out}')\nPY",
+        "observed_output": "round=1 closure ok closed_at=13:05:00-03:00; row commit ea3f092=12:41:12-03:00. round=2 closure ok closed_at=13:55:00-03:00; row commit 025dc63=13:34:03-03:00. round=3 closure ok closed_at=13:55:00-03:00; row commit e6e5061=13:49:52-03:00. round=4 closure ok closed_at=15:10:00-03:00; row commit 3e1f1a1=15:10:25-03:00."
+      }
+    }
+  ],
+  "non_disagreement_note": "S01's Kotodama dirty counts vary by observation snapshot, while the verdict remains NOT-SAFE in each; this is live count churn, not a verdict flip.",
+  "wait_requirement": {
+    "command": "sleep 360",
+    "observed_output": "Completed after 360.000 seconds; exit_code=0 (background task bash-ooxkelkd)."
+  },
+  "scope": "Read-only over fleet/lane/siblings except this assigned fragment. Did not rerun S06's .ufo/state probe; did not touch .ufo/state, .ufo/watchdog.log, ~/.config, or secret-shaped file contents. No prune, removal, deletion, or mutating Git command was performed."
+}

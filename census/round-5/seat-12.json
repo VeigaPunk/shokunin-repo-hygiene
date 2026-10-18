@@ -1,0 +1,38 @@
+{
+  "seat": "S12",
+  "round": 5,
+  "role": "verdict audit — r1 SAFE sample",
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "assignment": "Randomly sample three rows with verdict=SAFE from census/round-1/census.tsv, rerun tools/souji-verify.sh, and compare against independent path/history checks.",
+  "verdict": "DISAGREE — 2/3 sampled SAFE verdicts reproduce. The S10 logs_tier.txt row reruns NOT-SAFE(unreachable); independent checks confirm the target is absent from both the worktree and HEAD and was deleted in commit a1b44b1, so the mismatch is real for the current artifact state.",
+  "agreement_counts": {
+    "sampled": 3,
+    "agree": 2,
+    "disagree": 1
+  },
+  "defects_found": [
+    {
+      "row": "census/round-1/census.tsv:112",
+      "seat": "S10",
+      "path": "logs_tier.txt",
+      "table_verdict": "SAFE",
+      "rerun_verdict": "NOT-SAFE(unreachable)",
+      "independent_basis": "test -e reports absent; HEAD tree has no entry; git history shows delete commit a1b44b152a1c65313c09e6e6a7bd90d026eb93a8. The introducing commit b2f2efae7549c6692d9af6dcea9f9d9c5d797e9d is an ancestor of origin/master, but the current target is missing."
+    }
+  ],
+  "evidence": [
+    {
+      "command": "python3 - <<'PY'\nimport csv, pathlib, secrets\np=pathlib.Path('census/round-1/census.tsv')\nwith p.open(newline='') as f:\n    rows=list(csv.reader(f, delimiter='\\t'))\nheader=rows[0]\nsafe=[(n+1,row) for n,row in enumerate(rows[1:]) if len(row)>5 and row[5]=='SAFE']\nprint(f'header={header!r}')\nprint(f'safe_rows={len(safe)}')\nfor n,row in secrets.SystemRandom().sample(safe, 3):\n    print(f'line={n}\\tseat={row[0]}\\tpath={row[1]}\\tr1_receipt={row[4]}\\tr1_verdict={row[5]}\\tcorrected_by={row[7]}')\nPY",
+      "observed_output": "header=['seat', 'path', 'size_bytes', 'mtime', 'receipt', 'verdict', 'orig_verdict', 'corrected_by', 'note']\nsafe_rows=160\nline=111\tseat=S10\tpath=logs_tier.txt\tr1_receipt=pushed\tr1_verdict=SAFE\tcorrected_by=parent\nline=57\tseat=S05\tpath=/home/vgpnk/Projects/shokunin/.ufo/l0-recovery-20261015T054007Z/stop-verification.json\tr1_receipt=pushed\tr1_verdict=SAFE\tcorrected_by=parent\nline=36\tseat=S03\tpath=/home/vgpnk/Projects/shokunin/.ufo/interactive-l1-20261015T050057Z/surface/kake.txt\tr1_receipt=pushed\tr1_verdict=SAFE\tcorrected_by=parent"
+    },
+    {
+      "command": "tools/souji-verify.sh '/home/vgpnk/Projects/shokunin/logs_tier.txt' '/home/vgpnk/Projects/shokunin/.ufo/l0-recovery-20261015T054007Z/stop-verification.json' '/home/vgpnk/Projects/shokunin/.ufo/interactive-l1-20261015T050057Z/surface/kake.txt'",
+      "observed_output": "VERDICT\t/home/vgpnk/Projects/shokunin/logs_tier.txt\tNOT-SAFE\tunreachable\tmissing path\nVERDICT\t/home/vgpnk/Projects/shokunin/.ufo/l0-recovery-20261015T054007Z/stop-verification.json\tSAFE\tpushed\tintro=b2f2efae7549 ref=refs/remotes/origin/master ancestor=yes\nVERDICT\t/home/vgpnk/Projects/shokunin/.ufo/interactive-l1-20261015T050057Z/surface/kake.txt\tSAFE\tpushed\tintro=b2f2efae7549 ref=refs/remotes/origin/master ancestor=yes"
+    },
+    {
+      "command": "root=/home/vgpnk/Projects/shokunin\nfor rel in 'logs_tier.txt' '.ufo/l0-recovery-20261015T054007Z/stop-verification.json' '.ufo/interactive-l1-20261015T050057Z/surface/kake.txt'; do\n  printf '\\nPATH %s\\n' \"$rel\"\n  if [ -e \"$root/$rel\" ]; then printf 'test -e: present (exit 0)\\n'; else printf 'test -e: absent (exit 1)\\n'; fi\n  printf 'HEAD tree entries: '\n  git -C \"$root\" ls-tree -r --name-only HEAD -- \"$rel\"\n  intro=$(git -C \"$root\" log --diff-filter=A --format='%H' -1 -- \"$rel\")\n  printf 'introducing commit: %s\\n' \"${intro:-none}\"\n  if [ -n \"$intro\" ]; then\n    git -C \"$root\" merge-base --is-ancestor \"$intro\" refs/remotes/origin/master\n    rc=$?\n    printf 'intro ancestor of refs/remotes/origin/master: exit %s\\n' \"$rc\"\n  fi\n  deleted=$(git -C \"$root\" log --diff-filter=D --format='%H %s' -1 -- \"$rel\")\n  printf 'latest delete commit: %s\\n' \"${deleted:-none}\"\ndone",
+      "observed_output": "PATH logs_tier.txt\ntest -e: absent (exit 1)\nHEAD tree entries: introducing commit: b2f2efae7549c6692d9af6dcea9f9d9c5d797e9d\nintro ancestor of refs/remotes/origin/master: exit 0\nlatest delete commit: a1b44b152a1c65313c09e6e6a7bd90d026eb93a8 cleanup: drop stray shell-experiment redirects at fleet root\n\nPATH .ufo/l0-recovery-20261015T054007Z/stop-verification.json\ntest -e: present (exit 0)\nHEAD tree entries: .ufo/l0-recovery-20261015T054007Z/stop-verification.json\nintroducing commit: b2f2efae7549c6692d9af6dcea9f9d9c5d797e9d\nintro ancestor of refs/remotes/origin/master: exit 0\nlatest delete commit: none\n\nPATH .ufo/interactive-l1-20261015T050057Z/surface/kake.txt\ntest -e: present (exit 0)\nHEAD tree entries: .ufo/interactive-l1-20261015T050057Z/surface/kake.txt\nintroducing commit: b2f2efae7549c6692d9af6dcea9f9d9c5d797e9d\nintro ancestor of refs/remotes/origin/master: exit 0\nlatest delete commit: none"
+    }
+  ],
+  "scope": "Read-only verification across fleet and lane; only this assigned fragment was written."
+}

@@ -1,0 +1,117 @@
+{
+  "seat": "S60",
+  "round": 5,
+  "role": "final judge — independent audit of rounds 1–4",
+  "lane": "souji-shokunin",
+  "axes": ["coverage", "calibration", "operability"],
+  "verdict": "PARTIAL-AGREE",
+  "agreement_counts": {
+    "rounds_audited": 4,
+    "agree": 2,
+    "qualified_agree": 1,
+    "partial_disagree": 1,
+    "round4_stored_final_records": 8,
+    "round4_impl20_winner": 7,
+    "round4_no_clean_candidate": 1
+  },
+  "round_verdicts": [
+    {
+      "round": 1,
+      "verdict": "AGREE — final census totals reproduce",
+      "detail": "64/64 fragments, 246 rows, final SAFE=160 and NOT-SAFE=86 match census-summary.json. The 0-false-SAFE claim is supported by the recorded critic/parent correction process; I rechecked the totals, not every historical target against today's changed fleet."
+    },
+    {
+      "round": 2,
+      "verdict": "QUALIFIED-AGREE — installed identity and original selftest pass; historical false-SAFE found",
+      "detail": "Installed souji-verify is byte-identical to impl-12 and its current selftest passes 24/24. Independent synthetic reproduction shows the r2 implementation returns SAFE(moved-to-obsidian) for a 3-column directory ledger row with valid source digest and an existing but content-mismatched vault directory. The binding spec requires both source and vault hashes. The r4 verifier rejects the same incomplete row as NOT-VERIFIED(row-incomplete), so this is a historical predecessor defect, not a finding against the currently installed r4 verifier."
+    },
+    {
+      "round": 3,
+      "verdict": "AGREE — approval counts and selective-prune end state reproduce",
+      "detail": "Four shards contain 111 unique paths: 96 SAFE and 15 NOT-SAFE; the operator-facing approval list is 96 unique rows. Current worktree metadata shows lore only at its main worktree and gd2d at main plus the three preserved named branches, each still carrying one unpushed commit. No prune/remove was run in this audit."
+    },
+    {
+      "round": 4,
+      "verdict": "PARTIAL-DISAGREE — agree impl-20 is the winner; disagree with the reported dissent tally and S60 NO-CLEAN result",
+      "detail": "Installed vault verifier matches impl-20 and passes 35/35 selftest checks. Stored final records vfinal-57..64 currently yield 7 impl-20 winner records and one NO-CLEAN-CANDIDATE (S60), not the 5/3 split claimed by the round report and lesson. S60's two impl-20 failures are both V6 rows whose observed evidence names the default header-only lane ledger, not the fixture ledger; explicitly supplying each committed V6 ledger makes both CRLF and LF-control cases VERIFIED. The S60 no-clean conclusion is therefore unsupported."
+    }
+  ],
+  "defects_found": [
+    {
+      "id": "D1",
+      "severity": "critical — historical r2 verifier false-SAFE; superseded by r4",
+      "finding": "A directory moved-to-obsidian row without a vault_sha256 field is accepted as SAFE when the vault directory exists, even though its contents differ. This contradicts tools/souji-verify.spec.md:42-44. The later r4 S55 audit also identified this class; current r4 code checks the digest field and fails closed.",
+      "references": ["tools/souji-verify.sh:241-251", "tools/souji-verify.spec.md:42-44", "tools/souji-vault-verify.sh:273-280"]
+    },
+    {
+      "id": "D2",
+      "severity": "medium — incorrect round-4 judge/report aggregation",
+      "finding": "corpus/lessons/round-4.md and .ufo/reports/round-4/souji.md report S60/S62/S64 as NO-CLEAN-CANDIDATE and give a 5/3 winner/dissent split. The stored tests/results/vfinal-62.json and vfinal-64.json name impl-20; a read-only parse of all eight vfinal files gives seven impl-20 results and only S60 NO-CLEAN. S60's two impl-20 failures are V6 only; the recorded actual output points at the default corpus ledger, while rerunning both committed V6 ledgers explicitly returns VERIFIED. Correct the tally and record S60's fixture-ledger invocation defect rather than attributing it solely to stale /tmp roots/schema variance.",
+      "references": ["corpus/lessons/round-4.md:14-18", ".ufo/reports/round-4/souji.md:28-33", "tests/results/vfinal-60.json", "tests/results/vfinal-62.json:31-42", "tests/results/vfinal-64.json:9-20"]
+    },
+    {
+      "id": "D3",
+      "severity": "high — historical read-only rail breach omitted from round summary and contradicted by its SHONEN claim",
+      "finding": "The S53 adversarial harness launched the real Obsidian GUI and re-mtimed/changed app-owned .obsidian configuration. This is documented in tests/results/vfinal-57.json and census/round-4/seat-58-rail-breach.json, but the round-4 report/lesson omit the incident; the report's SHONEN line 66 says the vault was read-only throughout. The incident was harness-side, not an impl-20 tool defect; note-level vault content was reported unchanged. Parent should retain the incident and correct the contradicted summary claim.",
+      "references": ["tests/results/vfinal-57.json:1238-1242", "census/round-4/seat-58-rail-breach.json:10-32", ".ufo/reports/round-4/souji.md:61-66", "corpus/lessons/round-4.md"]
+    }
+  ],
+  "evidence": [
+    {
+      "claim": "Installed tools remain identical to the selected implementations; both selftests pass.",
+      "commands": [
+        "sha256sum tools/souji-verify.sh tools/souji-verify.impl-12.sh tools/souji-vault-verify.sh tools/souji-vault-verify.impl-20.sh",
+        "cmp -s tools/souji-verify.sh tools/souji-verify.impl-12.sh; printf 'cmp r2=%s\\n' \"$?\"; cmp -s tools/souji-vault-verify.sh tools/souji-vault-verify.impl-20.sh; printf 'cmp r4=%s\\n' \"$?\"",
+        "bash tools/souji-verify.sh --selftest",
+        "SOUJI_CLI_BIN=/bin/false bash tools/souji-vault-verify.sh --selftest"
+      ],
+      "observed_output": "r2 installed+impl-12 sha256=7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820; r4 installed+impl-20 sha256=d312263ac8ebc9e23555402dc5ae63167f78dcd01ddccc5ddcfa7623b85879e0; cmp r2=0; cmp r4=0; r2 selftest: 24 checks, 0 failed; r4 selftest: 35 checks, 0 failed."
+    },
+    {
+      "claim": "Round 1 census totals agree with its summary.",
+      "command": "python3 -c 'import csv,json; r=list(csv.DictReader(open(\"census/round-1/census.tsv\"),delimiter=chr(9))); s=json.load(open(\"census/round-1/census-summary.json\")); print(len(r),s[\"final_verdicts\"],s[\"fragments\"])'",
+      "observed_output": "246 {'SAFE': 160, 'NOT-SAFE': 86} 64/64"
+    },
+    {
+      "claim": "Round 3 approval shards and final operator list have the recorded set sizes.",
+      "command": "python3 -c 'import csv,collections; ps=[\"census/round-3/approvals-%d.tsv\"%i for i in (53,54,55,56)]; r=[(p,x) for p in ps for x in csv.DictReader(open(p),delimiter=\"\\t\")]; print(\"union=%d unique=%d verdicts=%s\"%(len(r),len({x[\"path\"] for _,x in r}),dict(collections.Counter(x[\"verdict\"] for _,x in r)))); q=list(csv.DictReader(open(\"census/round-3/operator-approval-list.tsv\"),delimiter=\"\\t\")); print(\"operator_list=%d unique=%d\"%(len(q),len({x[\"path\"] for x in q})))'",
+      "observed_output": "union=111 unique=111 verdicts={'SAFE': 96, 'NOT-SAFE': 15}; operator_list=96 unique=96"
+    },
+    {
+      "claim": "The post-prune worktree state preserves only the three gd2d named branches, each still unpushed.",
+      "command": "for repo in lore-shokunin game-dev-2d-shokunin; do printf '%s\\n' \"[$repo]\"; git -C \"/home/vgpnk/Projects/shokunin/$repo\" worktree list --porcelain | awk '/^worktree /{print substr($0,10)}'; done; for branch in wt-r98 wt-r99 wt-r100; do printf '%s=' \"$branch\"; git -C /home/vgpnk/Projects/shokunin/game-dev-2d-shokunin log --oneline \"$branch\" --not --remotes 2>/dev/null | wc -l; done",
+      "observed_output": "lore: /home/vgpnk/Projects/shokunin/lore-shokunin only; gd2d: main plus game-dev-2d-shokunin-wt-r100, -wt-r98, -wt-r99; wt-r98=1, wt-r99=1, wt-r100=1"
+    },
+    {
+      "claim": "The malformed r2 directory ledger is false-SAFE; the r4 verifier rejects the same row.",
+      "commands": [
+        "tmp=$(mktemp -d /tmp/souji-r5-malformed-ledger.XXXXXX); mkdir -p \"$tmp/source\" \"$tmp/vault\" \"$tmp/fleet\"; printf 'source bytes\\n' > \"$tmp/source/note.txt\"; printf 'different vault bytes\\n' > \"$tmp/vault/note.txt\"; srcsha=$(cd \"$tmp/source\" && find . -type f -print0 | sort -z | xargs -0 -r sha256sum | sha256sum | cut -d' ' -f1); printf '%s\\t%s\\t%s\\n' \"$tmp/source\" \"$srcsha\" \"$tmp/vault\" > \"$tmp/ledger.tsv\"; printf 'ledger-fields='; awk -F '\\t' 'NR==1{print NF}' \"$tmp/ledger.tsv\"; SHOKUNIN_ROOT=\"$tmp/fleet\" SOUJI_LEDGER=\"$tmp/ledger.tsv\" bash tools/souji-verify.sh \"$tmp/source\"",
+        "SHOKUNIN_ROOT=/tmp/souji-r5-malformed-ledger.b2PPkp/fleet SOUJI_LEDGER=/tmp/souji-r5-malformed-ledger.b2PPkp/ledger.tsv bash tools/souji-vault-verify.sh --fallback /tmp/souji-r5-malformed-ledger.b2PPkp/source"
+      ],
+      "observed_output": "ledger-fields=3; souji-verify: VERDICT /tmp/souji-r5-malformed-ledger.b2PPkp/source SAFE moved-to-obsidian ledger=source+vault-digest vault=/tmp/souji-r5-malformed-ledger.b2PPkp/vault; source fixture bytes='source bytes' and vault fixture bytes='different vault bytes'. Same row on r4: VERDICT ... NOT-SAFE none row-incomplete missing-or-nonhex vault-sha256 col4 / NOT-VERIFIED(row-incomplete)."
+    },
+    {
+      "claim": "The stored round-4 final records currently yield seven impl-20 selections and one no-clean result.",
+      "command": "python3 -c 'import json,pathlib,collections; p=pathlib.Path(\"tests/results\"); a=[]\nfor i in range(57,65):\n d=json.loads((p/f\"vfinal-{i}.json\").read_text()); w=d.get(\"winner\") or d.get(\"winner_recommendation\"); w=(w.get(\"name\") or w.get(\"path\")) if isinstance(w,dict) else w; a.append((i,\"impl-20\" if isinstance(w,str) and \"impl-20\" in w else d.get(\"verdict\",\"other\")))\nprint(a); print(dict(collections.Counter(v for _,v in a)))'",
+      "observed_output": "[(57, 'impl-20'), (58, 'impl-20'), (59, 'impl-20'), (60, 'NO-CLEAN-CANDIDATE'), (61, 'impl-20'), (62, 'impl-20'), (63, 'impl-20'), (64, 'impl-20')]; {'impl-20': 7, 'NO-CLEAN-CANDIDATE': 1}"
+    },
+    {
+      "claim": "Round-4 S60 V6 results failed against the default ledger; explicitly supplying the committed fixture ledgers succeeds.",
+      "commands": [
+        "SOUJI_LEDGER=tests/vault/case-V6/ledger-crlf.tsv bash tools/souji-vault-verify.sh --fallback tests/vault/case-V6/src/payload.md",
+        "SOUJI_LEDGER=tests/vault/case-V6/ledger-lf-control.tsv bash tools/souji-vault-verify.sh --fallback tests/vault/case-V6/src/payload.md"
+      ],
+      "observed_output": "Both explicit-ledger runs: VERDICT tests/vault/case-V6/src/payload.md SAFE moved-to-obsidian; VERIFIED(moved-to-obsidian). In tests/results/vfinal-60.json, both failed V6 actuals instead say ledger=/home/vgpnk/Projects/shokunin/souji-shokunin/corpus/knowledge/obsidian-ledger.tsv (the default ledger), not either case-V6 fixture ledger."
+    },
+    {
+      "claim": "A round-4 GUI-launch rail breach is recorded in contemporaneous audit artifacts, contrary to the round report's read-only-throughout claim.",
+      "source_artifacts": [
+        "tests/results/vfinal-57.json:1238-1242",
+        "census/round-4/seat-58-rail-breach.json:10-32",
+        ".ufo/reports/round-4/souji.md:61-66"
+      ],
+      "recorded_commands_and_output": "ps -o pid,ppid,lstart,args -p 4127347 and -p 1994731 identified GUI launches by adv53-harness.sh; stat -c '%y %n' <vault>/.obsidian/{core-plugins,app,appearance}.json recorded 2026-10-18 14:10:31. core-plugins.json was reordered; workspace.json was already modified before the round. The audit records 58 markdown files unchanged and app-owned config writes only."
+    }
+  ],
+  "scope": "Read-only audit of fleet/lane/sibling surfaces. Only this assigned fragment and /tmp test fixtures were written; no fleet/lane files were pruned, removed, or changed by this seat; no secret-shaped file contents, vault note contents, .ufo/state, .ufo/watchdog.log, or ~/.config were read."
+}

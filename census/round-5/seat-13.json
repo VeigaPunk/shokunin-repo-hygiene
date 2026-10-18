@@ -1,0 +1,95 @@
+{
+  "seat": "S13",
+  "round": 5,
+  "role": "verdict audit — SCORECARD counting commands",
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "repo_head": "48a64d8763fcf77dd53211e6c5fc717bc95eefed",
+  "run_local": "2026-10-18T15:15:35-03:00",
+  "assignment": "Independently re-run SCORECARD.md axis counting commands and verify the coverage/calibration/operability claims against their census and test artifacts.",
+  "verdict": "AGREE — all three axis verdicts and counting outputs are supported. One internal scorecard inconsistency is flagged: operability is 8 in the axes table but 7 in the saturation text.",
+  "agreement_counts": {
+    "audited_axis_verdicts": 3,
+    "agree": 3,
+    "disagree": 0,
+    "internal_scorecard_mismatches": 1
+  },
+  "defects_found": [
+    {
+      "kind": "internal-scorecard-score-mismatch",
+      "evidence": "SCORECARD.md:15 assigns operability 8; SCORECARD.md:44-45 says coverage 8, operability 7, calibration 6. LOG.md:188 says operability improved in r4, while LOG.md:119 records the prior 0-to-7 score. The saturation line is stale relative to the axes table/r4 entry and should be reconciled.",
+      "impact": "Documentation inconsistency only; the audited self-test and r4 operability evidence pass."
+    }
+  ],
+  "axis_verdicts": {
+    "coverage": "AGREE — live worktree counts are 1 and 4; the r1 census has 246 data rows.",
+    "calibration": "AGREE — S57 records no disagreements, the approval TSV has 96 data rows, and r1 summary verdict counts match the 246-row census.",
+    "operability": "AGREE — r4 vault verifier selftest exits 0 (35 checks, 0 failed); r2 verifier selftest also exits 0 (24 checks, 0 failed)."
+  },
+  "evidence": [
+    {
+      "claim": "coverage axis table: lore worktree list count",
+      "command": "git -C lore-shokunin worktree list | wc -l",
+      "observed_output": "1"
+    },
+    {
+      "claim": "coverage axis table: gd2d worktree list count",
+      "command": "git -C game-dev-2d-shokunin worktree list | wc -l",
+      "observed_output": "4"
+    },
+    {
+      "claim": "r1 census coverage row count",
+      "command": "python3 -c 'import csv; print(sum(1 for _ in csv.DictReader(open(\"census/round-1/census.tsv\"),delimiter=\"\\t\")))'",
+      "observed_output": "246"
+    },
+    {
+      "claim": "r1 TSV physical line count (header plus data)",
+      "command": "wc -l census/round-1/census.tsv",
+      "observed_output": "247 census/round-1/census.tsv"
+    },
+    {
+      "claim": "r1 census-summary fields independently cross-checked against census.tsv",
+      "command": "python3 -c 'import collections,csv,json; s=json.load(open(\"census/round-1/census-summary.json\")); rows=list(csv.DictReader(open(\"census/round-1/census.tsv\"),delimiter=\"\\t\")); counts=dict(collections.Counter(r[\"verdict\"] for r in rows)); print(\"rows_total=%s csv_rows=%s verdict_counts=%s\" % (s[\"rows_total\"],len(rows),counts)); print(\"summary_verdicts=%s matches=%s\" % (s[\"final_verdicts\"],counts==s[\"final_verdicts\"])); print(\"author_stage=%s\" % {k:s[\"author_stage\"][k] for k in (\"SAFE_proposed\",\"SAFE_falsified_by_critic\",\"author_first_pass_precision\")}); print(\"claim_verdicts=%s\" % s[\"claim_verdicts\"])'",
+      "observed_output": "rows_total=246 csv_rows=246 verdict_counts={'SAFE': 160, 'NOT-SAFE': 86}\nsummary_verdicts={'SAFE': 160, 'NOT-SAFE': 86} matches=True\nauthor_stage={'SAFE_proposed': 6, 'SAFE_falsified_by_critic': 6, 'author_first_pass_precision': '0/6'}\nclaim_verdicts={'coverage_C1': 'verified', 'calibration_C2': 'verified on final table: 0 false-SAFE survive; author-stage 6/6 caught pre-admission (critic+parent); blind-seat disagreements traced to template defects'}"
+    },
+    {
+      "claim": "calibration axis table: blind-pair disagreements",
+      "command": "python3 -c 'import json; d=json.load(open(\"census/round-3/seat-57.json\")); print(d[\"disagreements\"])'",
+      "observed_output": "[]"
+    },
+    {
+      "claim": "calibration axis table: approval-list line count",
+      "command": "wc -l census/round-3/operator-approval-list.tsv",
+      "observed_output": "97 census/round-3/operator-approval-list.tsv"
+    },
+    {
+      "claim": "calibration axis table: approval-list data rows (excluding header)",
+      "command": "python3 -c 'import csv; print(sum(1 for _ in csv.DictReader(open(\"census/round-3/operator-approval-list.tsv\"),delimiter=\"\\t\")))'",
+      "observed_output": "96"
+    },
+    {
+      "claim": "operability axis table: r4 vault verifier selftest",
+      "command": "bash tools/souji-vault-verify.sh --selftest; echo $?",
+      "observed_output_tail": "selftest: 35 checks, 0 failed\n0"
+    },
+    {
+      "claim": "r2 verifier capability selftest",
+      "command": "bash tools/souji-verify.sh --selftest; echo $?",
+      "observed_output_tail": "selftest: 24 checks, 0 failed\n0"
+    },
+    {
+      "claim": "r4 parent battery and installed tool identity",
+      "command": "python3 -c 'import json; d=json.load(open(\"tests/results/parent-vault-battery.json\")); print(\"cases\", len(d[\"results\"])); print({k:(v[\"want\"], all(x.get(\"ok\") is True for x in v.values() if isinstance(x,dict))) for k,v in d[\"results\"].items()})'; sha256sum tools/souji-vault-verify.sh tools/souji-verify.sh",
+      "observed_output": "cases 4\n{'V1-match': ('VERIFIED', True), 'V2-tamper': ('NOT-VERIFIED', True), 'V3-src-tamper': ('NOT-VERIFIED', True), 'V4-vault-absent': ('NOT-VERIFIED', True)}\nd312263ac8ebc9e23555402dc5ae63167f78dcd01ddccc5ddcfa7623b85879e0  tools/souji-vault-verify.sh\n7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820  tools/souji-verify.sh"
+    },
+    {
+      "claim": "r4 real-vault probe evidence (reported artifact; not re-run in this audit)",
+      "source": ".ufo/reports/round-4/souji.md:34-39; tests/results/vfinal-62.json:654-658",
+      "observed_output": "Parent report: live Home.md probe VERIFIED; vfinal-62 live_probes: real vault Home.md match => VERIFIED; wrong vault hash => NOT-VERIFIED; vault path absent => NOT-VERIFIED."
+    }
+  ],
+  "scope": "Read-only across fleet and lane; only this assigned seat fragment was written. Selftests used and cleaned their isolated /tmp fixtures; no prune/removal, git mutation, secret content, .ufo/state, .ufo/watchdog.log, or ~/.config was touched.",
+  "preamble": {
+    "fragment_path": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-5/seat-13.json",
+    "mode": "read-only verdict audit; only this seat fragment written"
+  }
+}

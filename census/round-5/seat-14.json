@@ -1,0 +1,98 @@
+{
+  "seat": "S14",
+  "role": "verdict audit — sibling-repo cleanliness",
+  "round": 5,
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "repo_head": "48a64d8763fcf77dd53211e6c5fc717bc95eefed",
+  "run_local": "2026-10-18T15:15:42-03:00",
+  "assignment": "Check git status --porcelain across all *-shokunin repos except souji-shokunin; determine whether modified/untracked sibling files are souji-seat spillover, especially census/tests/tools.",
+  "verdict": "AGREE — no dirty sibling path is attributable to souji rounds 1–4. Four sibling repos are dirty, but their artifacts are independently identified as current lane work or pre-existing scratch.",
+  "agreement": {
+    "audited_claims": 1,
+    "agree": 1,
+    "disagree": 0,
+    "defects_found": 0,
+    "scope_note": "Agreement is with the claim that souji rounds left no sibling-repo spillover, not with a claim that all sibling working trees are clean."
+  },
+  "counts": {
+    "sibling_repos_checked": 20,
+    "clean_sibling_repos": 16,
+    "dirty_sibling_repos": 4,
+    "dirty_sibling_repos_names": [
+      "game-dev-3d-shokunin",
+      "kaidoku-shokunin",
+      "kotodama-shokunin",
+      "lore-shokunin"
+    ],
+    "repo_root_census_paths": 0,
+    "repo_root_tests_paths": 0,
+    "repo_root_tools_paths": 16,
+    "souji_attributable_sibling_paths": 0
+  },
+  "dirty_repo_disposition": [
+    {
+      "repo": "game-dev-3d-shokunin",
+      "status_rows": 8,
+      "disposition": "Unrelated Unreal integration and round-102 work; no census/tests/tools paths.",
+      "basis": "corpus/lessons/r102-unreal-integration.md identifies itself as an r102 Unreal lesson (lines 1-15, 189-207); all status paths are under corpus/artifacts/unreal-r22, corpus/knowledge/unreal-mcp, corpus/lessons, or reports/round-102."
+    },
+    {
+      "repo": "kaidoku-shokunin",
+      "status_rows": 1,
+      "disposition": "Own arc2-loop1-round3 evidence, not souji; its CR1 fragment says it is read-only and its only write is that assigned fragment.",
+      "basis": ".ufo/waves/arc2-loop1-round3/CR1.md:3-6; its recorded git status is exactly `?? .ufo/waves/arc2-loop1-round3/`."
+    },
+    {
+      "repo": "kotodama-shokunin",
+      "status_rows": 16,
+      "disposition": "Round-26 Kotodama artifacts. The only repo-root `tools/` matches are the frozen gate-input generation, explicitly attributed to Kotodama round-26 D17–D20 gate/tests seats.",
+      "basis": "tools/gates/frozen/round-26/gate-input/freeze-receipt.json:2-11 names `round-26 D17..D20 gate+tests seats`, generation `R26-D17..D20`, and schema `kotodama-r26-gate-input-freeze-v1`; reports/round-26/scope.md:8-15 says round 26 and records round-26 peer writes."
+    },
+    {
+      "repo": "lore-shokunin",
+      "status_rows": 1,
+      "disposition": "The repo-level `?? .scratch/` was already observed in souji S14's round-3 evidence; its nested `corpus/tools` copies are scratch-root paths, not repo-root tool spillover.",
+      "basis": "souji-shokunin/census/round-3/seat-14.json:39,59,67,71,76-78 records `git status -sb` output `?? .scratch/` and read-only scope. A full untracked-file check finds four nested `dependency-freeze` files under `.scratch/*/scratch-root/corpus/tools/`."
+    }
+  ],
+  "evidence": [
+    {
+      "command": "for repo in /home/vgpnk/Projects/shokunin/*-shokunin; do name=${repo##*/}; [ \"$name\" = souji-shokunin ] && continue; git -C \"$repo\" rev-parse --is-inside-work-tree >/dev/null 2>&1 || continue; status=$(git -C \"$repo\" status --porcelain); if [ -n \"$status\" ]; then printf '=== %s ===\\n%s\\n' \"$name\" \"$status\"; fi; done",
+      "observed_stdout": "=== game-dev-3d-shokunin ===\n M corpus/artifacts/unreal-r22/README.md\n M corpus/knowledge/engines.md\n M corpus/knowledge/rea.md\n M corpus/knowledge/unreal-mcp/README.md\n M corpus/lessons/r22-unreal-review.md\n?? corpus/knowledge/unreal-mcp/gate/\n?? corpus/lessons/r102-unreal-integration.md\n?? reports/round-102/\n=== kaidoku-shokunin ===\n?? .ufo/waves/arc2-loop1-round3/\n=== kotodama-shokunin ===\n?? corpus/lessons/round-26.md\n?? reports/round-26/adjacency.md\n?? reports/round-26/argot/\n?? reports/round-26/audit/\n?? reports/round-26/availability.json\n?? reports/round-26/fragment-index-x54.md\n?? reports/round-26/gate-tests/\n?? reports/round-26/lessons/\n?? reports/round-26/open-questions/\n?? reports/round-26/register/\n?? reports/round-26/remainders/\n?? reports/round-26/report-draft.md\n?? reports/round-26/run-validation.py\n?? reports/round-26/scope.md\n?? reports/round-26/scribe/\n?? tools/gates/frozen/round-26/\n=== lore-shokunin ===\n?? .scratch/\n"
+    },
+    {
+      "command": "hits=0; for repo in /home/vgpnk/Projects/shokunin/*-shokunin; do name=${repo##*/}; [ \"$name\" = souji-shokunin ] && continue; git -C \"$repo\" rev-parse --is-inside-work-tree >/dev/null 2>&1 || continue; while IFS= read -r line; do [ -n \"$line\" ] || continue; path=${line:3}; case \"$path\" in census/*|tests/*|tools/*) printf '%s: %s\\n' \"$name\" \"$line\"; hits=$((hits+1));; esac; done < <(git -C \"$repo\" status --porcelain --untracked-files=all); done; printf 'root_census_tests_tools_paths=%d\\n' \"$hits\"",
+      "observed_stdout": "kotodama-shokunin: ?? tools/gates/frozen/round-26/gate-input/MANIFEST.tsv\nkotodama-shokunin: ?? tools/gates/frozen/round-26/gate-input/control-stale-source.out\nkotodama-shokunin: ?? tools/gates/frozen/round-26/gate-input/control-without-source.out\nkotodama-shokunin: ?? tools/gates/frozen/round-26/gate-input/controls/typed-stale-source.yml\nkotodama-shokunin: ?? tools/gates/frozen/round-26/gate-input/controls/typed-without-source.yml\nkotodama-shokunin: ?? tools/gates/frozen/round-26/gate-input/d2-source.out\nkotodama-shokunin: ?? tools/gates/frozen/round-26/gate-input/d2-typed.out\nkotodama-shokunin: ?? tools/gates/frozen/round-26/gate-input/d4-source.out\nkotodama-shokunin: ?? tools/gates/frozen/round-26/gate-input/d4-typed.out\nkotodama-shokunin: ?? tools/gates/frozen/round-26/gate-input/freeze-receipt.json\nkotodama-shokunin: ?? tools/gates/frozen/round-26/gate-input/inputs/examples/culture-d2/packet.d2.typed.yml\nkotodama-shokunin: ?? tools/gates/frozen/round-26/gate-input/inputs/examples/culture-d2/packet.d2.yml\nkotodama-shokunin: ?? tools/gates/frozen/round-26/gate-input/inputs/examples/culture-d4/packet.d4.typed.yml\nkotodama-shokunin: ?? tools/gates/frozen/round-26/gate-input/inputs/examples/culture-d4/packet.d4.yml\nkotodama-shokunin: ?? tools/gates/frozen/round-26/gate-input/inputs/tools/gates/frozen/round-26/gate-input/controls/typed-stale-source.yml\nkotodama-shokunin: ?? tools/gates/frozen/round-26/gate-input/inputs/tools/gates/frozen/round-26/gate-input/controls/typed-without-source.yml\nroot_census_tests_tools_paths=16"
+    },
+    {
+      "command": "hits=0; while IFS= read -r line; do [ -n \"$line\" ] || continue; path=${line:3}; case \"$path\" in .scratch/*/scratch-root/corpus/tools/*) printf 'lore-shokunin: %s\\n' \"$line\"; hits=$((hits+1));; esac; done < <(git -C /home/vgpnk/Projects/shokunin/lore-shokunin status --porcelain --untracked-files=all); printf 'lore_nested_scratch_tool_paths=%d\\n' \"$hits\"",
+      "observed_stdout": "lore-shokunin: ?? .scratch/V02/scratch-root/corpus/tools/dependency-freeze-contract.json\nlore-shokunin: ?? .scratch/V02/scratch-root/corpus/tools/dependency_freeze.py\nlore-shokunin: ?? .scratch/v26/scratch-root/corpus/tools/dependency-freeze-contract.json\nlore-shokunin: ?? .scratch/v26/scratch-root/corpus/tools/dependency_freeze.py\nlore_nested_scratch_tool_paths=4"
+    },
+    {
+      "source": "/home/vgpnk/Projects/shokunin/kotodama-shokunin/tools/gates/frozen/round-26/gate-input/freeze-receipt.json:2-11",
+      "observed": "frozen_by=round-26 D17..D20 gate+tests seats; generation=round-26 gate-input re-pin (R26-D17..D20); schema=kotodama-r26-gate-input-freeze-v1; rows=6."
+    },
+    {
+      "source": "/home/vgpnk/Projects/shokunin/kaidoku-shokunin/.ufo/waves/arc2-loop1-round3/CR1.md:3-6",
+      "observed": "Seat CR1, wave arc2-loop1-round3, 2026-10-18, read-only; git status --porcelain -> ?? .ufo/waves/arc2-loop1-round3/ only; 'My only write is this file.'"
+    },
+    {
+      "source": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-3/seat-14.json:39,59,67,71,76-78",
+      "observed": "Prior S14 command `git -C <lore> status -sb` returned `## main...origin/main [ahead 3] + '?? .scratch/'`; that round's evidence says the writing was read-only and only its assigned fragment was written. Current status is again `?? .scratch/`."
+    },
+    {
+      "source": "/home/vgpnk/Projects/shokunin/game-dev-3d-shokunin/corpus/lessons/r102-unreal-integration.md:1-15,189-207",
+      "observed": "The modified/untracked corpus files are explicitly in an r102 Unreal integration lesson; the lesson discusses Unreal-specific r102 fixes and status, matching the observed `unreal-r22`, `unreal-mcp`, and `reports/round-102` paths."
+    },
+    {
+      "source": "/home/vgpnk/Projects/shokunin/.ufo/reports/round-3/souji.md:35-45; /home/vgpnk/Projects/shokunin/.ufo/reports/round-4/souji.md:42-49",
+      "observed": "Round 3 reports only metadata worktree pruning plus souji-owned census/lessons/log/scorecard artifacts; round 4 lists souji-owned tools/tests/census artifacts and the fleet `.ufo` report addendum, not sibling lane file writes."
+    }
+  ],
+  "preamble": {
+    "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+    "fragment_path": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-5/seat-14.json",
+    "written_at": "2026-10-18T15:15:42-03:00",
+    "mode": "read-only sibling audit; only assigned seat fragment written"
+  }
+}

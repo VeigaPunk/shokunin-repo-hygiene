@@ -1,0 +1,97 @@
+{
+  "seat": "S04",
+  "round": 5,
+  "kind": "verdict-audit",
+  "axes": [
+    "receipt validity",
+    "secret-path refusal",
+    "read-only evidence traceability"
+  ],
+  "verdict": "AGREE",
+  "agreement_count": "2/2 assigned lane verdicts",
+  "targets": [
+    {
+      "path": "/home/vgpnk/Projects/shokunin/.ufo/l0-recovery-20261015T054007Z/operator-stop.json",
+      "required": "SAFE/pushed",
+      "verdict": "AGREE SAFE(pushed)",
+      "independent_rederivation": {
+        "checks": [
+          {
+            "command": "git -C /home/vgpnk/Projects/shokunin log --diff-filter=A --format=%H -1 -- .ufo/l0-recovery-20261015T054007Z/operator-stop.json",
+            "output": "b2f2efae7549c6692d9af6dcea9f9d9c5d797e9d"
+          },
+          {
+            "command": "git -C /home/vgpnk/Projects/shokunin symbolic-ref --short refs/remotes/origin/HEAD",
+            "output": "origin/master"
+          },
+          {
+            "command": "git -C /home/vgpnk/Projects/shokunin merge-base --is-ancestor b2f2efae7549c6692d9af6dcea9f9d9c5d797e9d refs/remotes/origin/master; printf 'rc=%s\\n' \"$?\"",
+            "output": "rc=0"
+          },
+          {
+            "command": "git -C /home/vgpnk/Projects/shokunin ls-tree refs/remotes/origin/master -- .ufo/l0-recovery-20261015T054007Z/operator-stop.json",
+            "output": "100644 blob a59677184ede625468dd57ac9beea2729e39df3c\t.ufo/l0-recovery-20261015T054007Z/operator-stop.json"
+          },
+          {
+            "command": "git -C /home/vgpnk/Projects/shokunin hash-object /home/vgpnk/Projects/shokunin/.ufo/l0-recovery-20261015T054007Z/operator-stop.json",
+            "output": "a59677184ede625468dd57ac9beea2729e39df3c"
+          },
+          {
+            "command": "git -C /home/vgpnk/Projects/shokunin status --porcelain -- .ufo/l0-recovery-20261015T054007Z/operator-stop.json",
+            "output": "(empty; no path status rows)"
+          },
+          {
+            "command": "sha256sum -- /home/vgpnk/Projects/shokunin/.ufo/l0-recovery-20261015T054007Z/operator-stop.json",
+            "output": "20861542f8bc880f343373de70fa29bc102bdef0a92d603349f72eaabeb8ab27  /home/vgpnk/Projects/shokunin/.ufo/l0-recovery-20261015T054007Z/operator-stop.json"
+          }
+        ],
+        "conclusion": "The actual origin/HEAD is origin/master, the introducing commit is its ancestor, and the origin/master blob matches the current worktree object."
+      },
+      "tool_probes": {
+        "souji_verify": {
+          "command": "SHOKUNIN_ROOT=/home/vgpnk/Projects/shokunin bash /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh --json /home/vgpnk/Projects/shokunin/.ufo/l0-recovery-20261015T054007Z/operator-stop.json /tmp/souji-round5-s04-absent-20261018/.env",
+          "exit": 0,
+          "output": [
+            "{\"path\":\"/home/vgpnk/Projects/shokunin/.ufo/l0-recovery-20261015T054007Z/operator-stop.json\",\"verdict\":\"SAFE\",\"receipt\":\"pushed\",\"evidence\":\"intro=b2f2efae7549 ref=refs/remotes/origin/master ancestor=yes\"}",
+            "{\"path\":\"/tmp/souji-round5-s04-absent-20261018/.env\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"secrets-refusal\",\"evidence\":\"secret-shaped path component\"}"
+          ]
+        },
+        "souji_vault_verify": {
+          "command": "SHOKUNIN_ROOT=/home/vgpnk/Projects/shokunin bash /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-vault-verify.sh --json /home/vgpnk/Projects/shokunin/.ufo/l0-recovery-20261015T054007Z/operator-stop.json /tmp/souji-round5-s04-absent-20261018/.env",
+          "exit": 0,
+          "output": [
+            "{\"path\":\"/home/vgpnk/Projects/shokunin/.ufo/l0-recovery-20261015T054007Z/operator-stop.json\",\"verdict\":\"SAFE\",\"verified\":\"VERIFIED(pushed)\",\"receipt\":\"pushed\",\"reason\":\"pushed\",\"evidence\":\"intro=b2f2efae7549 ref=refs/remotes/origin/master ancestor=yes cli=unavailable\"}",
+            "{\"path\":\"/tmp/souji-round5-s04-absent-20261018/.env\",\"verdict\":\"NOT-SAFE\",\"verified\":\"NOT-VERIFIED(secrets-refusal)\",\"receipt\":\"secrets-refusal\",\"reason\":\"secrets-refusal\",\"evidence\":\"secret-shaped path component basename=.env\"}"
+          ]
+        }
+      },
+      "historical_lane_evidence": [
+        "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-1/census.tsv:56 and :213 record a preliminary NOT-SAFE under origin/main, then the r1 parent correction to SAFE after checking origin/master.",
+        "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-3/approvals-55.tsv:20 records SAFE/pushed with matching blob and SHA-256 evidence."
+      ]
+    },
+    {
+      "path": "/home/vgpnk/Projects/shokunin/kotodama-shokunin/app.env",
+      "required": "NOT-SAFE/secrets-refusal",
+      "verdict": "AGREE on secret-path behavior; real target untouched",
+      "probe": {
+        "fake_path": "/tmp/souji-round5-s04-absent-20261018/.env",
+        "precheck_command": "test ! -e /tmp/souji-round5-s04-absent-20261018/.env && test ! -L /tmp/souji-round5-s04-absent-20261018/.env",
+        "precheck_output": "true (absent)",
+        "actual_target_opened_or_probed": false,
+        "interpretation": "Both tools refuse the nonexistent fake path before path-existence evaluation. This confirms the requested secret-shaped-path behavior only; it does not assert the real app.env file's existence or inspect its contents."
+      }
+    }
+  ],
+  "agreement_counts": {
+    "assigned_verdicts": "2/2 agree",
+    "souji_verify_fake_env_probe": "NOT-SAFE(secrets-refusal)",
+    "souji_vault_verify_fake_env_probe": "NOT-SAFE(secrets-refusal)"
+  },
+  "defects_found": [],
+  "preamble": {
+    "cwd": "/home/vgpnk/Projects/shokunin",
+    "fragment_path": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-5/seat-04.json",
+    "mode": "read-only audit; only this assigned fragment written; no real secret-shaped target opened"
+  }
+}

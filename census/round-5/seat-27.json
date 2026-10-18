@@ -1,0 +1,36 @@
+{
+  "seat": "S27",
+  "round": 5,
+  "assignment": "Missed-items sweep: approval-list staleness since round 3",
+  "verdict": "AGREE",
+  "finding": "No approval targets changed by the specified mtime criterion; no receipts voided.",
+  "counts": {
+    "approval_rows": 96,
+    "unique_paths": 96,
+    "mtime_newer_than_cutoff": 0,
+    "at_or_before_cutoff": 96,
+    "missing": 0,
+    "symlinks": 0
+  },
+  "cutoff": "2026-10-18T13:45:00-03:00",
+  "newest_target": {
+    "path": "/home/vgpnk/Projects/shokunin/audio-publish-commit-map-20261016.txt",
+    "mtime": "2026-10-16T12:55:04-03:00"
+  },
+  "agreement_basis": "Round-3 report says the 96 approval-list targets were all SAFE/pushed; independent S27 mtime sweep found none newer than the stated cutoff, so this sweep does not invalidate any receipt.",
+  "evidence": [
+    {
+      "command": "date '+local_now=%Y-%m-%dT%H:%M:%S%:z timezone=%Z'; date -d '2026-10-18 13:45:00' '+cutoff_local=%Y-%m-%dT%H:%M:%S%:z epoch=%s'",
+      "output": "local_now=2026-10-18T15:13:37-03:00 timezone=-03\ncutoff_local=2026-10-18T13:45:00-03:00 epoch=1792341900"
+    },
+    {
+      "command": "python3 -c 'import csv,datetime,os,sys; p=sys.argv[1]; c=datetime.datetime.fromisoformat(\"2026-10-18T13:45:00-03:00\").timestamp(); rows=list(csv.DictReader(open(p,newline=\"\"),delimiter=\"\\t\")); paths=[r[\"path\"] for r in rows]; missing=[x for x in paths if not os.path.lexists(x)]; stats=[(x,os.lstat(x)) for x in paths if os.path.lexists(x)]; changed=[(x,s) for x,s in stats if s.st_mtime>c]; links=[x for x,s in stats if os.path.islink(x)]; print(\"rows={} unique_paths={} mtime_newer={} at_or_before={} missing={} symlinks={}\".format(len(rows),len(set(paths)),len(changed),len(stats)-len(changed),len(missing),len(links))); n=max(stats,key=lambda x:x[1].st_mtime); print(\"newest_mtime={} path={}\".format(datetime.datetime.fromtimestamp(n[1].st_mtime).astimezone().isoformat(timespec=\"seconds\"),n[0])); [print(\"NEWER\\t{}\".format(x)) for x,s in changed]; [print(\"MISSING\\t{}\".format(x)) for x in missing]' /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-3/operator-approval-list.tsv",
+      "output": "rows=96 unique_paths=96 mtime_newer=0 at_or_before=96 missing=0 symlinks=0\nnewest_mtime=2026-10-16T12:55:04-03:00 path=/home/vgpnk/Projects/shokunin/audio-publish-commit-map-20261016.txt"
+    },
+    {
+      "source": "/home/vgpnk/Projects/shokunin/.ufo/reports/round-3/souji.md:52-55",
+      "observed": "96 unique approve-remove rows, all SAFE/pushed; re-verified with 0 false-SAFE."
+    }
+  ],
+  "method": "Read approval-list paths and metadata only; os.lstat checked each target mtime without reading target contents."
+}

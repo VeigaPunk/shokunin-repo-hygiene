@@ -1,0 +1,225 @@
+{
+  "seat": "S61",
+  "round": 5,
+  "role": "independent read-only audit of rounds 1-4",
+  "date": "2026-10-18",
+  "lane": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "verdict": "PARTIAL-AGREE",
+  "agreement_counts": {
+    "rounds_audited": 4,
+    "agree": 1,
+    "qualified_agree": 1,
+    "partial_agree": 1,
+    "partial_disagree": 1,
+    "disagree": 0
+  },
+  "round_verdicts": [
+    {
+      "round": 1,
+      "verdict": "AGREE — final census totals and pushed coverage reproduce",
+      "detail": "Reproduced 246 rows / 218 unique paths, SAFE=160 and NOT-SAFE=86; independently rechecked all 109 b2f2efa introducing commits as ancestors of origin/master. The recorded calibration conclusion (zero false-SAFE in the admitted table) is supported by the critic/parent correction record, but I did not re-evaluate all 246 historical targets against today's changed fleet.",
+      "evidence": [
+        {
+          "assertion": "Round-1 totals and unique-path count",
+          "command": "python3: csv.DictReader(census/round-1/census.tsv, delimiter='\\t'); count rows, distinct path, verdicts",
+          "observed_output": "round1 rows=246 unique_paths=218\nverdicts={'SAFE': 160, 'NOT-SAFE': 86}",
+          "source_record": "census/round-1/census-summary.json:6-16,45-48"
+        },
+        {
+          "assertion": "Each of the 109 b2f2efa paths has an introducing commit ancestral to origin/master",
+          "command": "python3 read-only loop: git show --name-only --format= b2f2efa; per path run git log --diff-filter=A --format=%H -1 -- <path> and git merge-base --is-ancestor <intro> origin/master",
+          "observed_output": "b2f2efa_paths=109 introducing_commit_ancestor_origin_master=109 other=0 no_introducer=0"
+        },
+        {
+          "assertion": "Calibration was admitted only after author SAFE proposals were challenged",
+          "command": "Read census/round-1/census-summary.json and LOG.md r1 section",
+          "observed_output": "author-stage SAFE proposals=6; critic S63 falsified 6/6; final table reports 0 false-SAFE survive; LOG.md records C2 verified. This is accepted as recorded process evidence, not a fresh 246-target replay."
+        }
+      ],
+      "recorded_defects_upheld": [
+        "fleet default is origin/master, not origin/main",
+        "worktree dir-absent metadata-prune rule must precede no generic unreachable verdict, except named branches with unpushed commits remain NOT-SAFE",
+        "reference sweep must exclude souji-shokunin/census/** to avoid self-pollution"
+      ]
+    },
+    {
+      "round": 2,
+      "verdict": "QUALIFIED-AGREE — impl-12 identity and selftest pass; two real ledger edge defects",
+      "detail": "The installed r2 verifier is exactly impl-12 and passes its 24-check selftest. Synthetic fixtures independently reproduce one false-SAFE and one conservative false-NOT-SAFE. The later r4 verifier rejects the incomplete row and accepts the valid unterminated row.",
+      "evidence": [
+        {
+          "assertion": "Installed r2 verifier is byte-identical to impl-12",
+          "command": "sha256sum tools/souji-verify.sh tools/souji-verify.impl-12.sh; cmp -s tools/souji-verify.sh tools/souji-verify.impl-12.sh; printf 'cmp exit=%s\\n' \"$?\"",
+          "observed_output": "both SHA-256=7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820; cmp exit=0"
+        },
+        {
+          "assertion": "Installed r2 selftest and syntax check",
+          "command": "bash -n tools/souji-verify.sh && bash tools/souji-verify.sh --selftest",
+          "observed_output": "selftest: 24 checks, 0 failed; exit=0"
+        },
+        {
+          "assertion": "A three-column directory ledger row with different existing vault bytes is wrongly accepted by r2 and refused by r4",
+          "fixture": "Synthetic /tmp fixture; source-dir contains source.txt='source-side\\n', vault-dir contains different.txt='different-vault-side\\n'; row contains source path, correct source directory digest, and vault path only (3 fields); temporary root /tmp/souji-final61-r2-0hxgx4_l was removed after test.",
+          "commands": [
+            "SHOKUNIN_ROOT=/tmp/souji-final61-r2-0hxgx4_l/fleet SOUJI_LEDGER=/tmp/souji-final61-r2-0hxgx4_l/ledger-3col.tsv bash /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh /tmp/souji-final61-r2-0hxgx4_l/source-dir",
+            "SHOKUNIN_ROOT=/tmp/souji-final61-r2-0hxgx4_l/fleet bash /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-vault-verify.sh --fallback --ledger /tmp/souji-final61-r2-0hxgx4_l/ledger-3col.tsv /tmp/souji-final61-r2-0hxgx4_l/source-dir"
+          ],
+          "observed_output": "r2: exit=0 VERDICT\\t/tmp/souji-final61-r2-0hxgx4_l/source-dir\\tSAFE\\tmoved-to-obsidian\\tledger=source+vault-digest vault=/tmp/souji-final61-r2-0hxgx4_l/vault-dir\nr4: exit=0 VERDICT\\t/tmp/souji-final61-r2-0hxgx4_l/source-dir\\tNOT-SAFE\\tnone\\trow-incomplete missing-or-nonhex vault-sha256 col4; then NOT-VERIFIED(row-incomplete)"
+        },
+        {
+          "assertion": "A valid final file row without trailing newline is dropped by r2 and accepted by r4",
+          "fixture": "Synthetic /tmp source-file.md and byte-identical vault-file.md; canonical row with correct hashes and no final newline in ledger-noeol.tsv; same temporary root as above, removed after test.",
+          "commands": [
+            "SHOKUNIN_ROOT=/tmp/souji-final61-r2-0hxgx4_l/fleet SOUJI_LEDGER=/tmp/souji-final61-r2-0hxgx4_l/ledger-noeol.tsv bash /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh /tmp/souji-final61-r2-0hxgx4_l/source-file.md",
+            "SHOKUNIN_ROOT=/tmp/souji-final61-r2-0hxgx4_l/fleet bash /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-vault-verify.sh --fallback --ledger /tmp/souji-final61-r2-0hxgx4_l/ledger-noeol.tsv /tmp/souji-final61-r2-0hxgx4_l/source-file.md"
+          ],
+          "observed_output": "r2: exit=0 VERDICT\\t/tmp/souji-final61-r2-0hxgx4_l/source-file.md\\tNOT-SAFE\\tnone\\tobsidian=no-matching-ledger-row; stale=not-scratch-type\nr4: exit=0 VERDICT\\t/tmp/souji-final61-r2-0hxgx4_l/source-file.md\\tSAFE\\tmoved-to-obsidian\\tledger-row ledger=/tmp/souji-final61-r2-0hxgx4_l/ledger-noeol.tsv vault=/tmp/souji-final61-r2-0hxgx4_l/vault-file.md source-sha256=91ff8a9a5b8c cli=skipped(fallback); then VERIFIED(moved-to-obsidian)"
+        }
+      ],
+      "defects_found": [
+        {
+          "id": "R2-D1",
+          "severity": "critical — false-SAFE",
+          "finding": "Directory ledger rows lacking vault_sha256 pass when source digest matches and the vault directory exists; r2 skips the vault digest check when the field is empty. The fixture's vault contents differed from source.",
+          "location": "tools/souji-verify.sh:241-251",
+          "fixed_in": "tools/souji-vault-verify.sh:273-280; missing/non-hex col4 yields row-incomplete"
+        },
+        {
+          "id": "R2-D2",
+          "severity": "medium — false-NOT-SAFE / conservative refusal",
+          "finding": "ledger_lines() uses while read without an EOF nonempty-line clause, dropping a valid final row lacking trailing newline.",
+          "location": "tools/souji-verify.sh:161-170",
+          "fixed_in": "tools/souji-vault-verify.sh:126-137; load_ledger() retains a nonempty final line"
+        }
+      ]
+    },
+    {
+      "round": 3,
+      "verdict": "PARTIAL-AGREE — row counts and selective-prune end state reproduce; action labeling and one evidence row need correction",
+      "detail": "The four approval shards have 111 unique paths (96 SAFE, 15 NOT-SAFE), and the candidate operator list has 96 unique rows. The post-prune state leaves lore at main only and gd2d at main plus the three named unpushed registrations. However, 96 SAFE/candidate rows are not 96 completed operator authorizations: approvals-56 explicitly marks 19 registry rows HOLD and only 2 root-file rows APPROVE-REMOVE; LOG.md says the list awaits operator sign-off. The aggregated row for shokunin.conf.full-roster-20261015 is truncated, but its source shard contains the complete explanation.",
+      "evidence": [
+        {
+          "assertion": "Approval shards and candidate list sizes",
+          "command": "python3 parse census/round-3/approvals-{53,54,55,56}.tsv and operator-approval-list.tsv; count rows, distinct paths, verdicts",
+          "observed_output": "union=111 unique=111 verdicts={'SAFE': 96, 'NOT-SAFE': 15}; operator_list=96 unique=96"
+        },
+        {
+          "assertion": "Source-specific rows and operator dispositions",
+          "command": "python3 parse operator-approval-list.tsv source column and approvals-56.tsv operator_decision column",
+          "observed_output": "operator_list_rows=96 unique_paths=96 sources={'approvals-53.tsv': 27, 'approvals-54.tsv': 27, 'approvals-55.tsv': 21, 'approvals-56.tsv': 21}; approvals-56: rows=28, decisions={'NO-ACTION (already gone)': 7, 'APPROVE-REMOVE (recoverable from origin/master)': 2, 'HOLD (still cited; parent decides)': 19}"
+        },
+        {
+          "assertion": "Worktree state after the r3 selective-prune execution",
+          "commands": [
+            "git -C /home/vgpnk/Projects/shokunin/lore-shokunin worktree list --porcelain",
+            "git -C /home/vgpnk/Projects/shokunin/game-dev-2d-shokunin worktree list --porcelain",
+            "for branch in wt-r98 wt-r99 wt-r100; do git -C /home/vgpnk/Projects/shokunin/game-dev-2d-shokunin log --oneline \"$branch\" --not --remotes | wc -l; done"
+          ],
+          "observed_output": "lore: main only (HEAD 6cec83aede47575beeeda6b7dc0e4ea74927be78); gd2d: main 05a72899 plus wt-r100 2d562282, wt-r98 68bee6e7, wt-r99 fe1a996e (each marked prunable because directory absent); unpushed counts wt-r98=1, wt-r99=1, wt-r100=1"
+        },
+        {
+          "assertion": "The config snapshot evidence text is truncated in the aggregate but complete in its source shard",
+          "commands": [
+            "python3 print census/round-3/operator-approval-list.tsv line 77",
+            "python3 print census/round-3/approvals-56.tsv line 9"
+          ],
+          "observed_output": "aggregate ends: 'cmp vs shokunin.conf DIFFERS (3859 vs 4432B) -> superseded snapshot, not'; source shard continues: 'superseded snapshot, not duplicate; 6 historical refs' and operator_decision=APPROVE-REMOVE (recoverable from origin/master)"
+        },
+        {
+          "assertion": "The summary is a pending operator sign-off list, not proof that every row is approved for removal",
+          "command": "Read LOG.md r3 section and census/round-3/seat-60.json:114-118",
+          "observed_output": "LOG.md: 'The list awaits operator sign-off; no file deletions this round'; seat-60: 2 APPROVE-REMOVE, 19 HOLD, 7 NO-ACTION in approvals-56"
+        }
+      ],
+      "defects_found": [
+        {
+          "id": "R3-D1",
+          "severity": "medium — action-label ambiguity",
+          "finding": "approval-summary.json labels 96 rows approve_remove, but approvals-56 explicitly holds 19 still-cited registry rows; do not interpret 96 SAFE receipt/candidate rows as signed operator permission. The list itself awaits sign-off. No false-SAFE receipt was found in the 15 no-op rows."
+        },
+        {
+          "id": "R3-D2",
+          "severity": "low — evidence truncation",
+          "finding": "operator-approval-list.tsv line 77 truncates the explanation after 'superseded snapshot, not'; approvals-56.tsv line 9 supplies 'duplicate; 6 historical refs' and the explicit disposition. Substantive conclusion is recoverable from the source shard."
+        }
+      ],
+      "read_only_execution_note": "This audit ran only read-only git worktree list/log commands. The earlier r3 prune execution is historical; no prune/remove/lock was run by this audit."
+    },
+    {
+      "round": 4,
+      "verdict": "PARTIAL-DISAGREE — impl-20 remains supported; stored judge tally and read-only claim are inaccurate",
+      "detail": "Installed souji-vault-verify matches impl-20 and passes 35/35. The eight stored vfinal records resolve to seven impl-20 winner-named records and one NO-CLEAN-CANDIDATE (S60), not the report/lesson's 5/3 split; LOG.md separately says 4/8 dissented. S60's shared V6 failures are a fixture-root/path problem, not evidence of an impl-20 defect: a fresh /tmp V6 build verified both CRLF and LF rows using impl-20. Separately, S53's harness launched the real GUI through backtick command substitution and changed app-owned .obsidian metadata; the report's 'vault read-only throughout' statement is contradicted. This is a harness rail breach, not a verifier defect. The official Obsidian CLI requirement was withdrawn by the operator mid-round.",
+      "evidence": [
+        {
+          "assertion": "Installed r4 verifier is byte-identical to impl-20; r2 and r4 installed hashes remain pinned",
+          "commands": [
+            "sha256sum tools/souji-verify.sh tools/souji-verify.impl-12.sh tools/souji-vault-verify.sh tools/souji-vault-verify.impl-20.sh",
+            "cmp -s tools/souji-verify.sh tools/souji-verify.impl-12.sh; printf 'cmp r2 installed/impl exit=%s\\n' \"$?\"; cmp -s tools/souji-vault-verify.sh tools/souji-vault-verify.impl-20.sh; printf 'cmp r4 installed/impl exit=%s\\n' \"$?\""
+          ],
+          "observed_output": "r2 installed and impl-12: 7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820; r4 installed and impl-20: d312263ac8ebc9e23555402dc5ae63167f78dcd01ddccc5ddcfa7623b85879e0; cmp r2 exit=0; cmp r4 exit=0"
+        },
+        {
+          "assertion": "Installed r4 syntax and selftest",
+          "command": "bash -n tools/souji-vault-verify.sh && bash tools/souji-vault-verify.sh --selftest",
+          "observed_output": "selftest: 35 checks, 0 failed; exit=0"
+        },
+        {
+          "assertion": "All eight stored final records, vfinal-57 through vfinal-64",
+          "command": "python3 load tests/results/vfinal-57.json through vfinal-64.json; select winner or winner_recommendation, otherwise verdict",
+          "observed_output": "[(57, 'souji-vault-verify.impl-20'), (58, 'souji-vault-verify.impl-20'), (59, 'souji-vault-verify.impl-20'), (60, 'NO-CLEAN-CANDIDATE'), (61, 'souji-vault-verify.impl-20'), (62, 'souji-vault-verify.impl-20'), (63, 'souji-vault-verify.impl-20.sh'), (64, 'souji-vault-verify.impl-20')]; normalized counts={'impl-20': 7, 'NO-CLEAN-CANDIDATE': 1}"
+        },
+        {
+          "assertion": "Fresh end-to-end V6 CRLF and LF-control fixtures pass on installed r4 verifier",
+          "commands": [
+            "tmp=$(mktemp -d /tmp/souji-final61-v6.XXXXXX); trap 'rm -rf -- \"$tmp\"' EXIT; bash tests/vault/case-V6/make-fixture.sh --out \"$tmp/fixture\" --ledger \"$tmp/builder-ledger.tsv\" --quiet",
+            "SHOKUNIN_ROOT=\"$tmp/empty-fleet\" bash tools/souji-vault-verify.sh --fallback --ledger \"$tmp/fixture/ledger-crlf.tsv\" \"$tmp/fixture/src/payload.md\"",
+            "SHOKUNIN_ROOT=\"$tmp/empty-fleet\" bash tools/souji-vault-verify.sh --fallback --ledger \"$tmp/fixture/ledger-lf-control.tsv\" \"$tmp/fixture/src/payload.md\""
+          ],
+          "observed_output": "FIXTURE_READY V6 /tmp/souji-final61-v6.tKnTSz/fixture; EXPECT=VERIFIED(moved-to-obsidian); CRLF: VERDICT ... SAFE moved-to-obsidian ... cli=skipped(fallback), then VERIFIED(moved-to-obsidian); LF-control: VERDICT ... SAFE moved-to-obsidian ... cli=skipped(fallback), then VERIFIED(moved-to-obsidian). Temp root removed by trap."
+        },
+        {
+          "assertion": "The report's judge tally differs from stored final records",
+          "source_artifacts": [
+            ".ufo/reports/round-4/souji.md:28-33",
+            "LOG.md:179-189",
+            "corpus/lessons/round-4.md:14-18",
+            "tests/results/vfinal-57.json through tests/results/vfinal-64.json"
+          ],
+          "observed_output": "souji.md lists 57/58/59/61/63 as majority impl-20 and 60/62/64 as NO-CLEAN (5/3); LOG.md says 4/8 dissented; stored vfinal records yield 7 impl-20 selections and only S60 NO-CLEAN. S60 V6 actuals are NOT-SAFE on case-V6/src/payload.md; vfinal-64 records stale absolute /tmp fixture paths, and the case-V6 contract says ledger rows embed per-root absolute paths. Fresh current-root V6 build passes both judged probes."
+        },
+        {
+          "assertion": "Historical read-only rail breach by S53 adversarial harness",
+          "source_artifact": "census/round-4/seat-58-rail-breach.json:10-32",
+          "commands_as_recorded": [
+            "ps -o pid,ppid,lstart,args -p 4127347",
+            "ps -o pid,ppid,lstart,args -p 1994731",
+            "stat -c '%y %n' <vault>/.obsidian/{core-plugins,app,appearance}.json",
+            "git -C <vault> --no-optional-locks diff --stat .obsidian/",
+            "bash /tmp/s58/backtick-proof.sh"
+          ],
+          "observed_output": "GUI launches were children of adv53-harness.sh at 14:05:04 and 14:10:27; .obsidian appearance.json, app.json and core-plugins.json were re-mtimed at 14:10:31; core-plugins.json differed from vault HEAD; marker proof printed 'PROOF: backticks executed the command'. 58 markdown files and the one-line live ledger were unchanged. Harness was hardened afterward."
+        }
+      ],
+      "defects_found": [
+        {
+          "id": "R4-D1",
+          "severity": "medium — verdict/report aggregation",
+          "finding": "Round-4 final tally is inconsistent: report/lesson say 5/3 and LOG says 4/8 dissent, but the stored vfinal-57..64 records select impl-20 seven times and have only one NO-CLEAN-CANDIDATE. S60's V6 result is explained by stale root-specific ledger paths; a fresh isolated build passes on installed impl-20."
+        },
+        {
+          "id": "R4-D2",
+          "severity": "high — lane rail breach, not impl-20 defect",
+          "finding": "Backticks in a double-quoted S53 harness message triggered command substitution and launched bare obsidian (the GUI launcher); three app-owned .obsidian metadata files were touched. This contradicts the report's claim that the vault was read-only throughout, though vault note content and the live ledger were unchanged. The harness records subsequent hardening."
+        }
+      ],
+      "scope_note": "The operator withdrew the official Obsidian CLI integration claim mid-round; the reviewed r4 deliverable is standalone ledger/hash verification with fallback."
+    }
+  ],
+  "scope": {
+    "read_only": true,
+    "mutations": "Only this assigned fragment was written in the project; synthetic fixtures were created under unique /tmp directories and removed. No git worktree prune/remove/lock or forbidden git subcommand was run.",
+    "not_read": [".env or credential-shaped file contents", ".ufo/state", ".ufo/watchdog.log", "~/.config", "real vault note contents"],
+    "preexisting_untracked_paths_observed": ["souji-shokunin/census/round-5/", "fleet-root .scratch/"]
+  },
+  "fragment_path": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-5/final-61.json"
+}
