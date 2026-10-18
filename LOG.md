@@ -288,3 +288,9 @@ regeneration for the gd2d pins.
 **Notes.** r7's gate2 contradiction dissolved (untracked stale flows
 clean); parent awk bug caught by the tool's fail-closed refusal; /tmp
 quota is now host-critical. Operability +1 capability row.
+
+## 2026-10-18 — operator routing amendment 2 (session-scoped)
+
+Round 10 (the remaining deepseek-v4.1-flash round of the schedule) uses
+the **hyper provider** (`hyper/deepseek-v4.1-flash`) instead of devin, per
+operator request. All other routing stands.
