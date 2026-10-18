@@ -30,3 +30,17 @@ roster row; recorded as `MANIFEST.json rounds[]` type `mint`.
 
 Corrections to earlier claims are new entries, never rewrites — the two
 figure corrections above are the first.
+
+## 2026-10-18 — obsidian-cli probe (deferred integration task, pre-round evidence)
+
+Per operator: Obsidian integration is a later task inside the training
+(goal), not mint work. Probe results banked at
+`../.ufo/scopes/souji-mint-20261018/obsidian-cli-probe.md` (main repo):
+official CLI bundled since Obsidian 1.12; host on 1.14.4 with `"cli":true`
+in `~/.config/obsidian/obsidian.json`; one vault registered at
+`/home/vgpnk/Documents/shokoknowledge`. `/usr/bin/obsidian` is the GUI
+launcher — launching it as a probe spawns the app; the registered CLI shim
+was not in `~/.local/bin` or `/usr/local/bin` at probe time (to-verify:
+`obsidian-cli-inspector`, and the real entry point — first claim of the
+integration task). Until then, vault-side receipt checks fall back to
+read-only `sha256sum` under the vault path.
