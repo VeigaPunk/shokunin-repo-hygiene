@@ -1,0 +1,59 @@
+{
+  "round": 7,
+  "seat": "S04",
+  "role": "author",
+  "generated_at": "2026-10-18T21:10:54Z",
+  "repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "shard": "tests/fixtures/ — case-F1..case-F10 + tests/fixtures/.gitignore",
+  "question": "which cases still run (exit-0 makers), which are rot; removal candidates = rot cases with zero references from committed files",
+  "verdict": "NO-REMOVAL — zero rot, zero removal candidates. All 9 makers exit 0 (re-verified live 2026-10-18); case-F10 is maker-less by design, not rot. Every case carries 4-10 external committed references. Independently: the unpushed-touching gate fails for 100% of shard paths, so any hypothetical candidate would be NOT-SAFE.",
+  "running_status": {
+    "method": "each maker re-run from lane root into fresh /tmp/s04 scratch with repo-safe argv (never default outdir where it lands in the live tree); exit code + stderr tail captured; post-run `git status --porcelain` re-checked empty for the shard; results cross-checked against committed tests/results/fixture-audit.json (S08, 2026-10-18T16:01:16Z, fingerprint f59e66f6b79a7811) — agree on all 10",
+    "case-F1": { "maker": "make-fixture.sh", "argv": "<outdir>", "exit": 0, "evidence": "stdout json 401B; commit_pushed=477b42f68935 commit_local_only=3215cedb6351 (matches audit + round-5/seat-43)" },
+    "case-F2": { "maker": "make-fixture.sh", "argv": "<outdir>", "exit": 0, "evidence": "stdout json 401B, same deterministic SHAs" },
+    "case-F3": { "maker": "make-fixture.sh", "argv": "<fresh-empty-outdir>", "exit": 0, "evidence": "prints fixture root; self-check unpushed=2 dirty=1 as designed (expected NOT-SAFE case)" },
+    "case-F4": { "maker": "make-fixture.sh", "argv": "<outdir>", "exit": 0, "evidence": "stdout json, wt-f4 worktree built" },
+    "case-F5": { "maker": "make-fixture.sh", "argv": "<outdir>", "exit": 0, "evidence": "stdout json, wt-f5 worktree built" },
+    "case-F6": { "maker": "make-fixture.sh", "argv": "--out <dir> --inject <file>", "exit": 0, "evidence": "source/+vault/ built, 3 ledger rows emitted to --inject path" },
+    "case-F7": { "maker": "make-fixture.sh", "argv": "<outdir>", "exit": 0, "evidence": "FIXTURE_READY F7 + SAFE(stale) expect json; setup.sh materializes 3-day-old mtime probe" },
+    "case-F8": { "maker": "make-fixture.sh", "argv": "<outdir>", "exit": 0, "evidence": "FIXTURE_READY F8 + decoy seat-decoy.json materialized" },
+    "case-F9": { "maker": "build.sh (no make-fixture.sh — documented in its header)", "argv": "<dest>", "exit": 0, "evidence": "repo built, 7 invariant assertions pass, printed 'case-F9 repo built at ...'" },
+    "case-F10": { "maker": "NONE by design — static secrets-refusal payload", "exit": "n/a", "evidence": "README.md: payload_files app.env/creds.pem/notes.txt are synthetic mode-600 decoys a selftest copies; 'Run exit code for this case is 0: refusal is a verdict, not an evaluation error'; contents untouched, not read (secret-shaped rule)" },
+    "dot-gitignore": { "kind": "functional ignore, not a case", "rules": ["tests/fixtures/*/repo/", "tests/fixtures/*/*/repo/"], "evidence": "added in 187ebb2 ('ignore fixture build outputs') together with removal of the case-F9/repo gitlink; live shard is porcelain-clean because of it — load-bearing, never a removal candidate" }
+  },
+  "rot": [],
+  "rot_zero_reference_removal_candidates": [],
+  "external_committed_reference_counts": {
+    "method": "git grep -l 'case-<F>' HEAD excluding the case's own dir",
+    "case-F1": 10, "case-F2": 8, "case-F3": 5, "case-F4": 4, "case-F5": 4,
+    "case-F6": 6, "case-F7": 6, "case-F8": 5, "case-F9": 7, "case-F10": 7,
+    "referencing_files_sample": ["tests/results/fixture-audit.json", "tests/results/parent-harness-fixtures.json", "tests/results/runner-17..31.json", "census/round-5/seat-43.json", "census/round-5/seat-28.json", "tests/fixtures/case-F8/setup.sh", "tests/fixtures/case-F10/README.md", "tests/results/ledger-inject.txt", "tests/results/final-64.json"]
+  },
+  "receipt_gates": {
+    "note": "no candidates exist; gates documented shard-wide for the record. Gate command as assigned: git -C <repo> log --branches --not --remotes --oneline -- <path>",
+    "gate1_unpushed": {
+      "result": "FAIL for every shard path",
+      "evidence": "refs/remotes is empty (git for-each-ref refs/remotes -> 0 refs); all 12 commits count as unpushed. Per-path unpushed_touching: tests/fixtures/.gitignore=1 (187ebb2), case-F1..F8,F10=1 each (9435e46 introduced all case content), case-F9=2 (9435e46 + 187ebb2 which deleted the embedded case-F9/repo gitlink)",
+      "root_cause": "git remote -v -> origin https://github.com/VeigaPunk/shokunin-repo-hygiene.git but `git ls-remote --heads origin` -> 'Repository not found' (probed 2026-10-18, read-only). The repo was never pushable; no remote-tracking refs can ever exist."
+    },
+    "gate2_dirty": {
+      "result": "PASS",
+      "evidence": "git status --porcelain tests/fixtures empty before and after all 9 maker runs; only ignored-by-design payload files exist (case-F7/F8 repo-tree/.scratch/*.tmp ignored by the committed repo-tree/.scratch/.gitignore)"
+    },
+    "gate3_receipt": {
+      "result": "FAIL for any hypothetical candidate -> NOT-SAFE",
+      "evidence": "receipt type `pushed` requires introducing commit ancestor of the remote-tracking default ref: no remote-tracking refs exist and origin is unreachable, so it cannot be documented (even though 9435e46 IS an ancestor of local master b5db5cf — the lane's local-master fallback does not satisfy this assignment's receipt definition). Not stale-type: shard is committed source, not scratch, and dir mtimes are 2026-10-18 12:46-13:33 (<1 day). Not metadata-prune: all dirs present, unique refs > 0."
+    }
+  },
+  "write_hazards_for_future_runners": [
+    "case-F1/F2 make-fixture.sh with NO argument defaults OUT_DIR to the case directory and rewrites the committed expected.json — always pass an outdir",
+    "case-F6 make-fixture.sh default --inject path is $LANE_ROOT/tests/results/ledger-inject.txt (a COMMITTED file) — always pass --inject into scratch",
+    "case-F9 build.sh default dest is its own case directory — always pass a dest",
+    "case-F3 with non-empty outdir exits 1 unless --force (by design)"
+  ],
+  "notes": [
+    "secret-shaped fixture files case-F10/app.env and case-F10/creds.pem were never opened, read, hashed or copied — described from README.md metadata and git stat only",
+    "read-only discipline held: the only write this seat made is this fragment (census/round-7/seat-04.json); all maker output went to /tmp/s04 (fresh, disposable)",
+    "corroboration: committed tests/results/fixture-audit.json totals run_clean=9/10, emits_fixture_ready=2 (F7,F8), valid=2 under that audit's stricter FIXTURE_READY contract — its 'invalid' labels are contract-shape judgments, not rot: every judged case still exits 0"
+  ]
+}

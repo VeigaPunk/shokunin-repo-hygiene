@@ -1,0 +1,104 @@
+{
+  "seat": "S23",
+  "round": 7,
+  "kind": "final-judge",
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "measured_at": "2026-10-18T18:13:59-03:00",
+  "independent": true,
+  "independence_note": "verdicts re-derived from git/filesystem/tools before and independent of reading the two fragments; fragments read afterwards for adjudication only",
+  "inputs_read": [
+    "census/round-7/fleet-census.tsv",
+    "census/round-7/seat-06.json",
+    "census/round-7/seat-09.json",
+    "LOG.md (tail: rounds 4-6 closure)",
+    "AGENTS.md, MINT.md",
+    "tools/*.sh headers as needed"
+  ],
+  "repo_facts_rederived": {
+    "head": "b5db5cf (master, round-6 REJECTED filing)",
+    "total_commits": 12,
+    "unpushed_commits": 12,
+    "unpushed_command": "git log --branches --not --remotes --oneline (git 2.55.0 r6 pitfall form)",
+    "remote_tracking_refs": 0,
+    "origin": "https://github.com/VeigaPunk/shokunin-repo-hygiene.git",
+    "origin_status": "DEAD — timeout-15s git ls-remote origin → 'remote: Repository not found.' + fatal (query-only, no fetch performed)",
+    "dirty_paths": "git status --porcelain = '?? census/round-7/' + '?? results/' — both are round-7 era writes, zero dirty paths elsewhere",
+    "tracked_files": 1250,
+    "decisive_lemma": "all 12 commits are unpushed ⇒ every tracked path's introducing commit is unpushed ⇒ gate 1 fails for all 1250 tracked paths; with refs/remotes empty and origin 404, the pushed receipt is unestablishable repo-wide ⇒ gate 3 cannot pass for any path"
+  },
+  "gate_model": {
+    "gate1": "git log --branches --not --remotes --oneline -- <path> empty",
+    "gate2": "git status --porcelain -- <path> empty",
+    "gate3": "exactly one receipt required: pushed (introducing commit ancestor of remote-tracking default ref + no unpushed touching) | stale (scratch type + zero refs excl. .git/souji census+tests + mtime >1 day) | metadata-prune (dir absent + unique=0 + no lock)",
+    "rule": "all three documented and passing, else NOT-SAFE"
+  },
+  "verdicts": {
+    "repo_wide": "ALL CANDIDATES NOT-SAFE — 0 SAFE, 0 quarantine-eligible paths in the lane repo",
+    "by_class": [
+      {
+        "class": "tracked files (1250, incl. tools/ 41, tests/vault 687, tests/fixtures, tests/results 136, census/round-1..6, corpus/, *.md)",
+        "count": 1250,
+        "verdict": "NOT-SAFE",
+        "gate1": "FAIL: introducing commit unpushed for every path (lemma above); spot-checks: tools/impl-09/24/44/48=1, souji-verify.sh=3, SCORECARD.md=7, tests/fixtures=2, census/round-1=1, obsidian-ledger.tsv=1, INSTALL.json=1",
+        "gate2": "PASS for all (only round-7 writes are dirty)",
+        "gate3": "FAIL: pushed unestablishable (0 remote-tracking refs, origin 404); stale unavailable (not scratch-type; mtimes today); metadata-prune n/a"
+      },
+      {
+        "class": "untracked round-7 in-flight writes (census/round-7/* incl. fleet-census.tsv + 2 fragments; results/ = 10 json + crun-59-tmp dir, parent mtimes 17:22-17:51)",
+        "count": "13+",
+        "verdict": "NOT-SAFE",
+        "gate1": "PASS vacuously (no commits touch)",
+        "gate2": "FAIL: untracked = dirty (?? in porcelain); in-flight parent evidence",
+        "gate3": "FAIL: no receipt class; spot-run souji-verify.sh results/crun-59-tmp → NOT-SAFE receipt=none"
+      },
+      {
+        "class": "ignored .git-internals under tests/vault fixtures (182 entries) + untracked empty dirs tests/vault/fixtures, tests/vault/s44-vault (both verified empty via ls)",
+        "verdict": "NOT-SAFE",
+        "gate1": "PASS vacuously",
+        "gate2": "PASS (git-invisible)",
+        "gate3": "FAIL: no applicable receipt (untracked/ignored, not scratch-type, ledger header-only)"
+      }
+    ]
+  },
+  "adjudication": {
+    "seat_06_tools": {
+      "verdict": "AFFIRMED — all listed candidates NOT-SAFE, none overturned",
+      "correction_1_coverage": "removal-candidate list is incomplete: 33 listed, true count 34 — tools/impl-44.sh omitted. Verified: header 'souji-census.impl-44 — repeatable read-only fleet census (round 6, seat S44)'; unpushed_touching=1; souji-verify.sh → NOT-SAFE pushed-unverifiable intro=b5db5cf27b5c. No verdict flips (same NOT-SAFE)",
+      "correction_2_counts": "tools/ holds 40 *.sh + 1 spec.md = 41 files (their 'sha256sum tools/*.sh (41 files)' miscounts by 1); census-family = 17 impls (9 named souji-census.impl-* + 8 unnamed incl. impl-44), not 16",
+      "agreements": "12 unpushed (not 11), 4 unpushed touching tools/, no dirty paths under tools/, origin dead, pin drift documented — all re-derived and confirmed"
+    },
+    "seat_09_tests_vault": {
+      "verdict": "AFFIRMED IN FULL — 135/135 NOT-SAFE, none overturned",
+      "count_reconciliation": "shard_entries=135 = top-level entries (ls tests/vault | wc -l = 135); tracked_files=687 = git ls-files tests/vault; raw fs entries 1044 (862 excl. .git, 182 ignored .git-internals) — all consistent with their rows",
+      "spot_recheck": "souji-vault-verify.sh tests/vault/adv53-harness.sh → NOT-SAFE receipt=none intro=48a64d8763fc, matches their row",
+      "empty_dirs": "their 2 no-receipt rows verified: tests/vault/fixtures and tests/vault/s44-vault are empty"
+    }
+  },
+  "quarantine_tickets": [],
+  "quarantine_exercise_verdict": "EXERCISED, FAIL-CLOSED, 0 TICKETS — with 12/12 commits unpushed and a dead origin, nothing in the lane can pass the pushed receipt, so zero actionable rows is the correct outcome, not a shortfall; the fail-closed path was exercised end-to-end (both tools + this judge agree) with zero false-SAFE verdicts found in re-derivation",
+  "reaudit_triggers": [
+    "push the lane or restore/replace origin so refs/remotes is non-empty, then re-run per-path gate1 (git log --branches --not --remotes --oneline -- <path>) — only then can any tracked path become receipt-eligible",
+    "stale receipts additionally require age > 1 day: artifacts with mtime 2026-10-18 are eligible no earlier than 2026-10-19 ~18:00 local, and only if scratch-type + zero refs (souji census+tests dirs excluded)",
+    "results/ and census/round-7/ become gate2-checkable only after the parent commits them; until then they are in-flight",
+    "moved-to-obsidian receipt requires live ledger rows (corpus/knowledge/obsidian-ledger.tsv is header-only)"
+  ],
+  "round7_scope_verdict": {
+    "small_artifact_receipts": "DELIVERED — 169 candidates adjudicated across the two shards (34 tools after correction, 135 tests/vault) + repo-wide sweep; every verdict carries all three gates or an explicit unavailability reason; 0 false-SAFE",
+    "first_quarantine_exercise": "DELIVERED as fail-closed — 0 tickets, correct per gates",
+    "final_judge_verdict": "SOUND — affirm all NOT-SAFE verdicts from both fragments; 1 coverage defect + 2 count corrections recorded, none verdict-flipping"
+  },
+  "out_of_scope_notes": [
+    "fleet-wide rows in fleet-census.tsv (kotodama .scratch 40.4G dirty+unpushed, gd2d worktrees, etc.) are parent-owned: they remain NOT-SAFE/hands-off per r6; no lane write-scope exercised here",
+    "no souji round-7 prompt found under .ufo/prompts (other lanes only); judged against the assigned scope: small-artifact receipts + first quarantine exercise"
+  ],
+  "safety": {
+    "read_only_except": ["census/round-7/final-23.json"],
+    "git_mutations": false,
+    "fetch": false,
+    "ls_remote": "query-only, no local state written",
+    "removals": 0,
+    "secret_content_read": false,
+    "ufo_state_or_watchdog_accessed": false
+  },
+  "writes": ["census/round-7/final-23.json"]
+}

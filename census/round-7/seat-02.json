@@ -1,0 +1,40 @@
+{
+ "seat": "S02",
+ "round": 7,
+ "kind": "worktree-registration-audit",
+ "role": "author — lore-shokunin worktree registrations (metadata-prune candidates vs NOT-SAFE)",
+ "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+ "lane_head": "b5db5cf27b5c993ed1832cb917ddeff77a080dd0",
+ "target_repo": "/home/vgpnk/Projects/shokunin/lore-shokunin",
+ "run_local": "2026-10-18T18:07:40-03:00",
+ "run_utc": "2026-10-18T21:08:24+00:00",
+ "assignment": "r6 census premise was 'lore-shokunin worktrees: 3 — main + 2'. For each non-main registration: present-or-absent dir, unique commits, named-branch unpushed count, verdict per registration (metadata-prune candidate vs NOT-SAFE). Read-only outside census/round-7/.",
+ "premise_reconciliation": {
+  "premise": "r6 census says 3 worktrees (main + 2)",
+  "finding": "COLUMN MISREAD. The r6 fleet census TSV columns are repo|worktrees|unpushed|dirty|scratch_bytes|mtime|verdict_flags. The lore row reads worktrees=1, unpushed=3 (census/round-6/fleet-census-a.tsv:15 and fleet-census-b.tsv:15, header at :1). The '3' is the unpushed-commit count on main, not extra registrations. No r6 source claims 3 worktrees: r6 seat-13 measured `git -C lore-shokunin worktree list | wc -l` = 1; r6 seat-04 measured worktrees=1 prunable=0.",
+  "consequence": "There are no non-main registrations to audit. No quarantine action on lore worktree metadata is warranted this round."
+ },
+ "live_evidence": [
+  {"command": "git -C /home/vgpnk/Projects/shokunin/lore-shokunin worktree list --porcelain", "observed_output": "worktree /home/vgpnk/Projects/shokunin/lore-shokunin\nHEAD 6cec83aede47575beeeda6b7dc0e4ea74927be78\nbranch refs/heads/main", "interpretation": "exactly 1 registration: main"},
+  {"command": "ls /home/vgpnk/Projects/shokunin/lore-shokunin/.git/worktrees/", "observed_output": "ls: cannot access '.git/worktrees/': No such file or directory", "interpretation": "zero non-main admin dirs; nothing locked or unlockable"},
+  {"command": "git -C /home/vgpnk/Projects/shokunin/lore-shokunin worktree prune --dry-run --verbose", "observed_output": "(no output, rc=0)", "interpretation": "no stale registrations for git itself to prune"},
+  {"command": "git -C /home/vgpnk/Projects/shokunin/lore-shokunin branch -a", "observed_output": "* main; remotes/origin/HEAD -> origin/main; remotes/origin/main", "interpretation": "no named branches attributable to registrations"},
+  {"command": "git -C /home/vgpnk/Projects/shokunin/lore-shokunin log --branches --not --remotes --oneline | wc -l", "observed_output": "3 (6cec83a, 1659a42, f553a27 — all on main)", "interpretation": "the census '3' resolved: unpushed commits on main, not worktrees"},
+  {"command": "git -C /home/vgpnk/Projects/shokunin/lore-shokunin status --porcelain", "observed_output": "?? .scratch/", "interpretation": "dirty = untracked .scratch only; matches r6 flags dirty,unpushed,scratch"}
+ ],
+ "registrations": [],
+ "per_registration_table": {
+  "columns": "registration | dir present-or-absent | unique commits | named-branch unpushed | receipt gates (unpushed-touching / dirty-touching / receipt class) | verdict",
+  "rows": []
+ },
+ "history": "r3 executed the real metadata prune: lore listed 19 prunable registrations (r87-* synthetic admin dirs) → pruned → worktree list 20→1 (souji LOG.md r3 entry; census/round-3/seat-01/07/19.json document r87-B1, r87-JDEP3, r87-X3). Nothing has re-registered since: r6 re-measures agree (seat-04, seat-06, seat-13), and this audit's live checks agree with all of them.",
+ "receipt_gates": {
+  "note": "Universal gates applied against every candidate the premise could name: none exist, so no gate can be satisfied in the candidate direction and no candidate may be manufactured from the column misread.",
+  "gate_1_unpushed_touching": "VACUOUS — no registration path exists to evaluate; repo-level unpushed=3 touches main only, not any registration.",
+  "gate_2_dirty_touching": "VACUOUS — no registration path exists; dirty set is {/home/vgpnk/Projects/shokunin/lore-shokunin/.scratch/} (untracked), not any registration.",
+  "gate_3_receipt_class": "VACUOUS — metadata-prune receipt requires a registration (dir absent + unique=0 + no lock); .git/worktrees is absent entirely, so there is nothing left to receipt, lock, or prune. `git worktree prune --dry-run` independently confirms a no-op."
+ },
+ "verdict": "NO-CANDIDATES / PRUNE-NO-OP. lore-shokunin has exactly 1 worktree registration (main, 6cec83a) and zero non-main registrations; metadata-prune quarantine for lore worktrees must be DROPPED from the r7 plan. The parent's '3 — main + 2' premise is a census-column misread (unpushed column), not a new registration event — no re-registration occurred between r6 and r7.",
+ "do_not_act_flag": "Independent of worktrees, lore-shokunin currently holds 3 unpushed commits on main (6cec83a, 1659a42, f553a27) and dirty untracked .scratch/ (218489 B per r6 TSV). Any non-worktree removal activity in lore this round would trip the dirty/unpushed rule — hands off lore entirely for r7 removals.",
+ "read_only_declaration": "Commands run in lore-shokunin were read-only (worktree list/prune --dry-run/log/branch/status/ls). The only file written this round is census/round-7/seat-02.json. .ufo/state and .ufo/watchdog.log untouched; no secret-shaped files read."
+}

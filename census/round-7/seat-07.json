@@ -1,0 +1,72 @@
+{
+  "seat": "S07",
+  "round": 7,
+  "role": "scratch-receipt-blind-recheck",
+  "assignment": "BLIND pair of S01: re-derive the lore .scratch receipt independently (same gates, no reading seat-01). Targets: lore-shokunin/.scratch and its two children .scratch/V02, .scratch/v26.",
+  "lane": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "surface": "/home/vgpnk/Projects/shokunin/lore-shokunin/.scratch",
+  "read_only": true,
+  "secrets_read": false,
+  "derived_without_reading_seat_01": true,
+  "freeze": {
+    "at": "2026-10-18T18:08:20-03:00",
+    "scratch_bytes": 218489,
+    "n_files": 26,
+    "n_dirs": 14,
+    "targets": [".scratch", ".scratch/V02", ".scratch/v26"]
+  },
+  "gate_1_unpushed": {
+    "command": "git -C /home/vgpnk/Projects/shokunin/lore-shokunin log --branches --not --remotes --oneline -- <path>",
+    "result": "EMPTY for .scratch, .scratch/V02, .scratch/v26",
+    "caveat_documented": "Repo itself has 3 unpushed commits on main (6cec83a, 1659a42, f553a27) but none touch .scratch paths — 6cec83a touches only .gitignore. Gate 1 passes (empty) per the gate's exact definition."
+  },
+  "gate_2_dirty": {
+    "command": "git -C /home/vgpnk/Projects/shokunin/lore-shokunin status --porcelain",
+    "result": "?? .scratch/ — untracked path touches all three targets",
+    "note": "check-ignore confirms .scratch is NOT gitignored (6cec83a's new ignore rules do not cover it); gate 2 FAILS for every target"
+  },
+  "gate_3_receipt": {
+    "tool": "tools/souji-verify.sh --json <path>...",
+    "exit": 0,
+    "per_target": [
+      {
+        "path": "/home/vgpnk/Projects/shokunin/lore-shokunin/.scratch",
+        "verdict": "NOT-SAFE",
+        "receipt": "none",
+        "tool_evidence": "pushed=no-introducing-commit; obsidian=no-matching-ledger-row; stale=mtime-age-days=0<=1"
+      },
+      {
+        "path": "/home/vgpnk/Projects/shokunin/lore-shokunin/.scratch/V02",
+        "verdict": "NOT-SAFE",
+        "receipt": "none",
+        "tool_evidence": "pushed=no-introducing-commit; obsidian=no-matching-ledger-row; stale=mtime-age-days=0<=1"
+      },
+      {
+        "path": "/home/vgpnk/Projects/shokunin/lore-shokunin/.scratch/v26",
+        "verdict": "NOT-SAFE",
+        "receipt": "none",
+        "tool_evidence": "pushed=no-introducing-commit; obsidian=no-matching-ledger-row; stale=mtime-age-days=0<=1"
+      }
+    ],
+    "pushed_branch": "path never tracked: `git log --all -- .scratch/V02 .scratch/v26` empty, `git ls-files .scratch` empty; root .scratch has zero commits in full history (the 1809 'scratch' paths in HEAD are .ufo/waves/*/scratch/, a different tree). No introducing commit → pushed cannot fire.",
+    "obsidian_branch": "corpus/knowledge/obsidian-ledger.tsv does not exist in lore-shokunin → no matching ledger row.",
+    "stale_branch": "scratches type YES (.scratch/ prefix), but fails on BOTH remaining conditions: (a) mtime age 0 days (newest file .scratch/v26/scratch-root/corpus/fixtures/r100-docket-review/timeline.json at 2026-10-18T00:16:49-03:00, ~18h before freeze; threshold 1 day); (b) zero-refs gate FALSE — live references exist, see refs_audit.",
+    "metadata_prune_branch": "inapplicable: dirs present and .scratch is not a worktree registration."
+  },
+  "refs_audit": {
+    "tool_defect_found": "souji-verify.spec.md D3 command uses `rg --basename`, which is not a valid rg flag in this environment (rg errors 'unrecognized flag --basename' and returns 0 lines). A naive zero-refs reading of that command would be WRONG. Corrected with plain content+path search:",
+    "corrected_commands": [
+      "rg -l --no-ignore -F V02 . -g '!.git'  → 3 files: LOG.md, SCORECARD.md, corpus/knowledge/r102-debt-ledger.json",
+      "rg -l --no-ignore -F v26 . -g '!.git'  → 1 file: LOG.md",
+      "find . -name '*V02*' -not -path './.git/*' → .ufo/waves/round-95..102 seat files, .ufo/waves/round-96/scratch/V02, .scratch/V02",
+      "find . -name '*v26*' -not -path './.git/*' → .scratch/v26"
+    ],
+    "decisive_ref": "lore-shokunin/LOG.md:3530 names the exact artifacts verbatim: \"location variants (V04's in-scratch mirror, V02/v26 lane-root .scratch)\" — the LOG documents V02/v26 as deliberate location variants, so zero-refs cannot hold for either name.",
+    "scope_note": "SCORECARD.md and r102-debt-ledger.json 'V02' mentions refer to wave seat V02, not .scratch/V02 — but LOG.md:3530 alone is sufficient to defeat the zero-refs gate for both."
+  },
+  "corroboration": "Independent of this seat, census/round-7/fleet-census.tsv (2026-10-18T11:28:47-03:00) row lore-shokunin: unpushed=3 dirty=1 scratch_bytes=218489 flags=dirty,unpushed,scratch — matches this seat's gate 1/2/du exactly.",
+  "content_note": ".scratch/V02 and .scratch/v26 are near-identical mirrors (V02 is v26's fixture tree minus poll.sh/poll.log) copying corpus/fixtures/r100-docket-review + corpus/tools under a scratch-root/, plus a poll.sh/poll.log polling harness in v26. All mtimes 2026-10-18T00:03–00:16 — created hours before this freeze, likely by an earlier wave seat; treat as possibly-active output.",
+  "verdict": "NOT-SAFE — do not remove, do not quarantine",
+  "do_not_remove": "All three gates must pass for a SAFE receipt; gate 2 (dirty `?? .scratch/`) fails outright and the stale receipt is double-blocked (mtime age 0d + nonzero refs incl. LOG.md:3530). The quarantine plan must NOT include lore-shokunin/.scratch, .scratch/V02, or .scratch/v26 in this round. Re-examine only after the owning lane's tree is clean AND mtimes exceed 1 day AND the LOG.md:3530 reference is retired.",
+  "spec_amend_candidate": "souji-verify.spec.md D3 references `rg --basename` (invalid flag); zero-refs evidence produced by the spec command verbatim is vacuously 0. Recommend spec fix to `rg -l --no-ignore -F <name>` plus a path-name `find` sweep."
+}

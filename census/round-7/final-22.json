@@ -1,0 +1,101 @@
+{
+  "seat": "S22",
+  "round": 7,
+  "kind": "final-judge",
+  "role": "aggregate the round: pair agreements, gate cleanliness, plan auditability; emit C1/O1/K1 verdicts + AUTHORIZED-REMOVALS",
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "lane_head_measured": "b5db5cf27b5c993ed1832cb917ddeff77a080dd0",
+  "measured_at": "2026-10-18T18:21:00-03:00",
+  "wait_discipline": "360s hold honored before aggregating (18:12:xx -> 18:18:26); final straggler poll at 18:20:10",
+  "inputs_read": [
+    "census/round-7/fleet-census.tsv",
+    "census/round-7/seat-01..14.json (all landed), seat-18, seat-19, seat-20, seat-21",
+    "census/round-7/final-23.json (co-judge, read for cross-check)",
+    "census/round-6/fleet-census-a.tsv (K1 diff base)",
+    "AGENTS.md, PROVINCE.md, SCORECARD.md, LOG.md tail, corpus/lessons/round-6.md"
+  ],
+  "independent_rederivation": {
+    "note": "re-derived by this judge with own commands before weighting any fragment",
+    "unpushed_total": "git log --branches --not --remotes --oneline | wc -l -> 12 (r6 pitfall form)",
+    "remote_tracking_refs": "git for-each-ref refs/remotes | wc -l -> 0; git branch -r empty",
+    "dirty": "git status --porcelain -> '?? census/round-7/' + '?? results/' only (in-flight round writes)",
+    "gate1_spotchecks": "tools/souji-verify.sh=3 commits, tools/souji-census.impl-44.sh=1 (b5db5cf), tests/vault/adv53-harness.sh=1 (48a64d8), tests/fixtures/case-F1=1 (9435e46), SCORECARD.md=7, census/round-1/seat-01.json=1 (652b6f8) — 6/6 NON-EMPTY => gate 1 FAILS for every tracked path",
+    "gate3_spotchecks": "bash tools/souji-verify.sh -> NOT-SAFE pushed-unverifiable(no-default-ref) on impl-44 and adv53-harness, matching S06/S09/S23 rows",
+    "lemma": "12/12 commits unpushed + 0 remote-tracking refs + origin dead (404 per S06 and S23, both query-only) => no tracked path in the lane can hold a pushed receipt; stale blocked by mtime<1day on every probed artifact; metadata-prune vacuous in-lane",
+    "lore": "unpushed=3; gate1 on .scratch EMPTY; dirty set is exactly '?? .scratch/' => gate2 overlap => NOT-SAFE; worktree list=1 (main), .git/worktrees absent => zero registrations",
+    "kotodama": "unpushed=53, dirty=4+ (live round-29 writes), .scratch 41.0G growing => hands-off re-confirmed",
+    "k1_diff_reproduced": "r7 fleet-census.tsv vs r6 fleet-census-a.tsv: same 21 repos, added=[], removed=[], worktree-count changes=[], 5 changed rows all live-delta (mtime bumps gd2d/gd3d/kaidoku; kotodama dirty 0->4 + scratch 40.45G->41.04G; souji unpushed 11->12, dirty 25->2)"
+  },
+  "pair_agreements": {
+    "evaluable_pairs": 6,
+    "agreeing_pairs": 6,
+    "score": "6/6",
+    "pairs": [
+      {"pair": "S01+S07", "target": "lore-shokunin/.scratch (+V02, v26)", "s01": "NOT-SAFE", "s07": "NOT-SAFE (blind, without reading S01)", "agreement": true},
+      {"pair": "S02+S08", "target": "lore worktree registrations", "s02": "NO-CANDIDATES (r6 '3 worktrees' premise = census column misread)", "s08": "NO-CANDIDATES (blind pair of S02)", "agreement": true},
+      {"pair": "S03+S09", "target": "tests/vault/ (135 entries)", "s03": "0 SAFE (116 removal candidates + 19 keep)", "s09": "0 SAFE (135 candidates: 133 gate1-fail + 2 untracked empty dirs)", "agreement": true, "framing_note": "candidate-set granularity differs; zero-SAFE action identical"},
+      {"pair": "S04+S10", "target": "tests/fixtures/ (case-F1..F10 + .gitignore)", "s04": "NO-REMOVAL — zero rot, all referenced, 9/9 makers exit 0", "s10": "11/11 tracked candidates NOT-SAFE (gate1 non-empty + pushed-unverifiable)", "agreement": true, "framing_note": "S04 graded zero candidates, S10 graded all-NOT-SAFE; action identical: remove nothing"},
+      {"pair": "S05+S11", "target": "census archive (round-1..6 fragments)", "s05": "NOT-SAFE now, proposal-only, P0=push first", "s11": "5/5 round dirs NOT-SAFE (filing commits unpushed, no receipt obtainable)", "agreement": true},
+      {"pair": "S06+S12", "target": "tools/ impl shard", "s06": "KEEP-ALL, 33 candidates NOT-SAFE (impl-44 coverage correction by S23; this judge's probe concurs)", "s12": "41/41 tracked entries NOT-SAFE, 0 quarantine-eligible", "agreement": true}
+    ],
+    "bonus_independent_rerun": {"pair": "S13+S14", "target": "fleet census + diff vs r6", "verdict": "both NO-STRUCTURAL-DRIFT, conclusions agree on every material point; S21 zero-trust re-gate concurs (4/4 registrations NOT-SAFE: wt-r98/99/100 locked+pinned 1 unpushed each, r102-S1 live+dirty)"}
+  },
+  "gates_clean": {
+    "gate1_unpushed_touching": "documented per candidate by S03/S05/S06/S09/S10/S11/S12/S19; judge spot-checks 6/6 concur (all fail in-lane)",
+    "gate2_dirty_touching": "lane dirty set = in-flight round-7 writes only; lore dirty set = .scratch itself; no undocumented overlaps found",
+    "gate3_receipt": "pushed unestablishable repo-wide (0 refs/remotes, origin dead — two independent 404 observations); stale fails mtime<1day everywhere probed + scratch-type on tracked test artifacts; metadata-prune: lore vacuous (0 registrations), gd2d 4/4 fail (lock/pin + unpushed-branch + unique commits)",
+    "tool_support": "tools/souji-verify.sh --selftest 24/24 (S21 run); judge's live probes match hand-derived gates"
+  },
+  "plan_auditable": true,
+  "plan_auditability_evidence": "every landed verdict carries per-candidate commands, commits, and gate outcomes; three independent re-derivations (S21 hand-gates vs tool, S23 lemma, S22 this file) reach the same 0-SAFE result with zero contradicting SAFE verdicts anywhere",
+  "per_claim_verdicts": {
+    "C1_blind_pair": {
+      "claim": "blind pairs independently agree on receipt verdicts (target 6/6)",
+      "verdict": "MET",
+      "evidence": "6/6 evaluable pairs agree; S13+S14 independent census re-run also agrees; zero cross-pair contradictions; no seat read its pair-mate's fragment per blind discipline declarations (S07, S08, S09, S12 all declare independence)"
+    },
+    "O1_quarantine": {
+      "claim": "first quarantine exercise: receipt-gated tickets + auditable plan for the parent",
+      "verdict": "MET (fail-closed, 0 authorized removals — the correct output under the gates)",
+      "evidence": "plan is auditable (see plan_auditability_evidence); AUTHORIZED-REMOVALS is empty because gate 1 fails repo-wide and no other receipt class holds; caveat: the four physical flow stages (quarantine dir -> hold -> second check -> delete) were NOT observed executed — S18 records the SKILL/AGENTS UNEXERCISED->exercised flip as CONDITIONAL; with 0 tickets there is nothing to execute and a dummy execution would be fabricated evidence. If the parent's O1 wording required physical execution of all four stages this round, downgrade O1 to PARTIAL for exactly that reason, not for any gate or audit defect",
+      "docs_flip": "DO NOT apply S18's flip this round"
+    },
+    "K1_delta": {
+      "claim": "fleet delta vs round-6: no structural drift",
+      "verdict": "MET",
+      "evidence": "judge reproduced the diff: same 21 repos, 0 added/removed, 0 worktree-count changes, 0 new absent-dir registrations; 5 changed rows all live-delta; S13/S14/S21 concur independently"
+    }
+  },
+  "authorized_removals": [],
+  "authorized_removals_rationale": [
+    "LEMMA: all 12 lane commits unpushed + 0 remote-tracking refs + origin 404 => pushed receipt unestablishable and gate 1 failing for every tracked path (judge spot-checks 6/6 non-empty)",
+    "untracked candidates: lore .scratch fails gate2 (dirty set IS .scratch, 218489 B, mtime 18h<1day); kotodama .scratch NOT-SAFE/hands-off (41G live growth, r6 parent handoff); results/ and census/round-7/ are in-flight round writes",
+    "worktree registrations fleet-wide: 4/4 NOT-SAFE (wt-r98/99/100 locked + souji r5 pin + 1 unpushed commit each; r102-S1 present, detached, 24 dirty)",
+    "empty list is the fail-closed correct outcome, not a shortfall; the exercise banked per-candidate receipts on 200+ adjudicated paths with 0 false-SAFE found in any re-derivation"
+  ],
+  "reaudit_triggers": [
+    "push the lane (or restore/replace origin) so refs/remotes is non-empty, then re-run gate1 per path — only then can tracked paths become receipt-eligible",
+    "stale receipts: artifacts need mtime >1 day — earliest 2026-10-19 ~18:00 local for today's writes, and only if scratch-type + zero refs (souji census+tests dirs excluded)",
+    "lore .scratch becomes gate2-clean only when lore's ?? .scratch/ is committed or the lane goes clean; kotodama stays hands-off per r6",
+    "gd2d wt-r98/99/100 unlock only when that lane pushes the wt branches or the operator dispositions the lock pins",
+    "census archive (S05/S11): P0 prerequisite is the same push; gzip estimates pin gzip version/flags at receipt time"
+  ],
+  "coverage_gaps": [
+    "late landings incorporated before sign-off: seat-15 + quarantine-plan.json (quarantine planner, ZERO-AUTHORIZED-TICKETS, execution_ready=false) — concurs with this judge's empty authorized-removals list on the same authorization rule (both seats SAFE + same receipt + 3 documented gates)",
+    "seats S16, S17, S24 produced no fragment by final poll (18:20:10) — none of the 6 assigned pairs was left incomplete and the planner + two judges reached the same 0-ticket result without them; parent may chase if they held assigned lanes this judge cannot see",
+    "final-24 not observed; aggregation is S22+S23 (two independent judges, same 0-SAFE conclusion)"
+  ],
+  "round_verdict": "ROUND 7 SOUND — receipts delivered fail-closed, 6/6 pairs agree, plan auditable, zero false-SAFE, zero authorized removals; ledger note: lane repo origin is the single blocker for any future removal round",
+  "safety": {
+    "read_only_except": ["census/round-7/final-22.json"],
+    "git_mutations": false,
+    "fetch_push": false,
+    "removals": 0,
+    "moves": 0,
+    "network": "none by this judge (origin status cited from S06/S23 query-only observations)",
+    "secret_content_read": false,
+    "ufo_state_or_watchdog_accessed": false,
+    "quarantine_executed_by_this_seat": false
+  },
+  "writes": ["census/round-7/final-22.json"]
+}

@@ -1,0 +1,184 @@
+{
+  "plan": "souji-shokunin round-7 quarantine execution plan (author/blind pair adjudication)",
+  "seat": "S15",
+  "round": 7,
+  "generated_at": "2026-10-18T18:20:10-03:00",
+  "fragment": "census/round-7/quarantine-plan.json",
+  "seat_fragment": "census/round-7/seat-15.json",
+  "mode": "planner; read-only everywhere except the two census/round-7 fragments named above; no fetch/push/commit/branch/prune; no removals; no secret-shaped reads; .ufo/state and .ufo/watchdog.log not opened",
+  "verdict": "ZERO-AUTHORIZED-TICKETS — no target in round 7 has author AND blind both SAFE on the same receipt; every candidate is NOT-AUTHORIZED for quarantine this round",
+  "execution_ready": false,
+  "parent_directive": "Do NOT create any .ufo-quarantine/ directory. Do NOT execute any mv, git mv, or rm this round. There is nothing to stage, hold, second-check, or delete. The first-quarantine exercise is satisfied by the fail-closed path: pairs were adjudicated, gates were applied, and the correct ticket count is 0 (corroborated by final-23).",
+  "authorization_rule": "A ticket exists only if (a) author and blind seat both emit SAFE with the SAME receipt class for the target, AND (b) all three gates pass and are documented: gate1 unpushed-touching empty (git -C <repo> log --branches --not --remotes --oneline -- <path> is empty), gate2 dirty-touching empty (git -C <repo> status --porcelain --untracked-files=all -- <path> is empty), gate3 receipt holds (stale: scratch type + zero refs excluding .git/souji census+tests dirs + mtime older than 1 day; pushed: introducing commit ancestor of a remote-tracking default ref + no unpushed touching; metadata-prune: dir absent + unique=0 + no lock). Any gate failure, receipt mismatch between pair members, or undocumented gate => NOT-AUTHORIZED.",
+  "ticket_count": 0,
+  "tickets": [],
+  "pair_adjudications": [
+    {
+      "pair": "S03 (author) / S09 (blind, independent)",
+      "shard": "souji-shokunin tests/vault/ (135 top-level entries)",
+      "author_verdict": "ALL 116 removal candidates NOT-SAFE (0 safeToRemoveNow)",
+      "blind_verdict": "135/135 NOT-SAFE, safe=0",
+      "agreement": "full agreement — both NOT-SAFE",
+      "ticket": null,
+      "reason": "No SAFE+SAFE overlap exists. gate1 FAIL 133/135 (introducing commit 48a64d8, 2026-10-18, unpushed); the 2 remaining untracked empty dirs have no receipt class. gate3 pushed is unestablishable repo-wide: refs/remotes is empty (origin https://github.com/VeigaPunk/shokunin-repo-hygiene.git is dead, ls-remote 'Repository not found')."
+    },
+    {
+      "pair": "S06 (author) / S12 (blind, independent)",
+      "shard": "souji-shokunin tools/ (impl drafts + installed tools)",
+      "author_verdict": "KEEP-ALL, 33 listed candidates NOT-SAFE on gate1",
+      "blind_verdict": "41/41 NOT-SAFE, quarantine_eligible=0",
+      "agreement": "full agreement — both NOT-SAFE (count discrepancy noted: final-23 corrected the true candidate count to 34 incl. impl-44.sh; no verdict flips)",
+      "ticket": null,
+      "reason": "4 unpushed commits touch tools/ (gate1 FAIL); zero remote-tracking refs make the pushed receipt unestablishable (gate3 FAIL); gate2 PASS but two fails are enough."
+    },
+    {
+      "pair": "S13 (author) / S14 (blind, independent)",
+      "shard": "fleet delta — worktree registrations, absent-dir prune candidates, sibling .scratch trees",
+      "author_verdict": "NO-STRUCTURAL-DRIFT; zero SAFE prune candidates",
+      "blind_verdict": "independently reproduced; wt-r98/99/100 and r102-S1 NOT-SAFE; both .scratch dirs NOT-SAFE",
+      "agreement": "full agreement — both NOT-SAFE",
+      "ticket": null,
+      "reason": "Per candidate below in candidate_gate_table. No receipt class is establishable anywhere in the delta."
+    },
+    {
+      "pair": "S01 (single-seat author) / S20 (repo gate, independent corroboration)",
+      "shard": "lore-shokunin/.scratch (218,489 B) + lore worktree registrations",
+      "author_verdict": "NOT-SAFE (gates c/d/e fail)",
+      "corroborating_verdict": "S20 NOT-SAFE — dirty path overlaps the candidate; zero worktree registrations so the lore metadata-prune half is empty",
+      "agreement": "agreement — both NOT-SAFE",
+      "ticket": null,
+      "reason": "gate1 PASS vacuously (untracked: 0 unpushed commits touch it — re-verified first-hand, gate1_lines=0) but gate2 FAIL (porcelain '?? .scratch/...' non-empty, re-verified first-hand) and gate3 FAIL (dir mtime 2026-10-18 00:03:50 -0300 = age 0.76d < 1d; live citation survives: lore LOG.md:3530 'lane-root .scratch'). Additionally lore commit 6cec83a (unpushed) edits .gitignore, so ignore-status is not durable. S02 independently rules the lore metadata-prune half NO-CANDIDATES: lore has exactly 1 worktree registration (main, 6cec83a) and zero non-main registrations."
+    },
+    {
+      "pair": "S05 (archive planning) / S11 (small-artifact receipt audit, independent)",
+      "shard": "souji-shokunin census/round-1..6 archive candidates",
+      "author_verdict": "S05: archiving now NOT-SAFE on two independent gates (unpushed commits touch each dir; no receipt class establishable)",
+      "blind_verdict": "S11: 5/5 archive-round candidates NOT-SAFE — each fails gate1 on its own filing commit; no upstream configured, refs/remotes empty, origin dead",
+      "agreement": "agreement — both NOT-SAFE",
+      "ticket": null,
+      "reason": "census/round-1 exemplar: gate1 FAIL (652b6f8 unpushed), gate2 PASS, gate3 FAIL (stale unavailable — all mtimes today; pushed unverifiable — refs/remotes empty). Fragments are load-bearing: SCORECARD and r5 evidence line-cite individual files (e.g. census.tsv is the live --compare baseline for crun-57/58/59/62 and 3 census impl help texts)."
+    },
+    {
+      "pair": "S19 / S20 (repo gates, single-seat) / final-23 (final judge)",
+      "shard": "souji-shokunin repo-wide gate + adjudication",
+      "author_verdict": "S19: tests/vault, tests/fixtures, census/, tools/ all NOT-SAFE; S20: NOT-SAFE",
+      "corroborating_verdict": "final-23: ALL CANDIDATES NOT-SAFE — 0 SAFE, 0 quarantine-eligible paths; quarantine_tickets=[]; EXERCISED, FAIL-CLOSED, 0 TICKETS",
+      "agreement": "unanimous",
+      "ticket": null,
+      "reason": "12/12 commits on master are local-only and the origin is dead (404). Nothing in the lane can pass the pushed receipt this round."
+    }
+  ],
+  "candidate_gate_table": [
+    {
+      "candidate": "souji-shokunin tests/vault/** (135 entries; 687 tracked files; 182 ignored .git-internals; 2 untracked empty dirs)",
+      "gate1_unpushed_touching": "FAIL 133/135 — introducing commit 48a64d8 (round-4, 2026-10-18 15:09 -0300) unpushed",
+      "gate2_dirty_touching": "PASS (only round-7 census writes are dirty)",
+      "gate3_receipt": "FAIL — pushed unestablishable (0 remote-tracking refs, origin 404); stale n/a (not scratch-type, mtimes today); metadata-prune n/a; moved-to-obsidian n/a (ledger header-only). The 2 empty untracked dirs (tests/vault/fixtures, tests/vault/s44-vault) have no receipt class at all",
+      "verdict": "NOT-AUTHORIZED",
+      "evidence_source": "S03 seat-03.json + S09 seat-09.json (blind pair) + final-23 spot-recheck"
+    },
+    {
+      "candidate": "souji-shokunin tools/** (41 files: 40 *.sh + spec.md)",
+      "gate1_unpushed_touching": "FAIL — 4 unpushed commits touch tools/ (12 unpushed total, incl. b5db5cf)",
+      "gate2_dirty_touching": "PASS (S06)",
+      "gate3_receipt": "FAIL — pushed unestablishable (no remote-tracking default ref to be ancestor of); impl files are the wrong type for stale; metadata-prune n/a",
+      "verdict": "NOT-AUTHORIZED",
+      "evidence_source": "S06 seat-06.json + S12 seat-12.json (blind pair) + final-23 corrections (34 true candidates incl. impl-44.sh)"
+    },
+    {
+      "candidate": "souji-shokunin census/round-1 .. round-6 (archive/gzip candidates)",
+      "gate1_unpushed_touching": "FAIL — each round's filing commit is unpushed (652b6f8 round-1, 48a64d8 round-4, b5db5cf round-6, etc.)",
+      "gate2_dirty_touching": "PASS for rounds 1-6 (round-7 writes are dirty but are not candidates)",
+      "gate3_receipt": "FAIL — mtimes all today (stale unavailable); pushed unverifiable (refs/remotes empty); contents load-bearing (SCORECARD/r5 line-citations; census.tsv live baseline)",
+      "verdict": "NOT-AUTHORIZED",
+      "evidence_source": "S05 seat-05.json + S11 seat-11.json"
+    },
+    {
+      "candidate": "lore-shokunin/.scratch (218,489 B, byte-identical to r6 census)",
+      "gate1_unpushed_touching": "PASS vacuously — untracked, 0 unpushed commits touch it (re-verified first-hand: git log --branches --not --remotes --oneline -- .scratch → empty)",
+      "gate2_dirty_touching": "FAIL — porcelain '?? .scratch/V02/...' non-empty (re-verified first-hand)",
+      "gate3_receipt": "FAIL — dir mtime 2026-10-18T00:03:50-03:00, age 0.76d < 1d; live reference LOG.md:3530 ('V02/v26 lane-root .scratch'); pushed/moved-to-obsidian unavailable; metadata-prune inapplicable",
+      "verdict": "NOT-AUTHORIZED",
+      "evidence_source": "S01 seat-01.json + S20 seat-20.json; gates re-verified first-hand by S15 at 2026-10-18T18:19-03:00"
+    },
+    {
+      "candidate": "lore-shokunin worktree metadata-prune (parent premise: '3 — main + 2')",
+      "gate1_unpushed_touching": "n/a — NO CANDIDATES",
+      "gate2_dirty_touching": "n/a",
+      "gate3_receipt": "FAIL — lore has exactly 1 worktree registration (main, 6cec83a), zero non-main registrations; metadata-prune has no object. The '3' was a census-column misread (unpushed column), not a re-registration event",
+      "verdict": "NOT-AUTHORIZED — drop from any plan",
+      "evidence_source": "S02 seat-02.json; S20 corroborates zero registrations"
+    },
+    {
+      "candidate": "game-dev-2d-shokunin worktrees wt-r98 / wt-r99 / wt-r100 (+ /var/tmp/r102-S1 detached)",
+      "gate1_unpushed_touching": "FAIL — repo has 8 unpushed commits; each wt branch carries 1 unique commit reachable only from that branch (unique != 0)",
+      "gate2_dirty_touching": "n/a for metadata-prune class",
+      "gate3_receipt": "FAIL — registrations are explicitly locked (re-verified first-hand: 'locked' on all three in git worktree list); no-lock condition violated; dirs not prunable in worktree list; metadata-prune requires dir absent + unique=0 + no lock — all three fail",
+      "verdict": "NOT-AUTHORIZED",
+      "evidence_source": "S13 seat-13.json + S14 seat-14.json (blind pair); lock/unique state re-verified first-hand by S15"
+    },
+    {
+      "candidate": "kotodama-shokunin/.scratch (~38-41 GB, growing)",
+      "gate1_unpushed_touching": "FAIL — repo has 53 unpushed commits (re-verified first-hand at 18:19)",
+      "gate2_dirty_touching": "FAIL — 7 dirty paths (re-verified first-hand; was 4 at the 18:06 fleet-census snapshot)",
+      "gate3_receipt": "insufficient even if gates passed — classification of the tree is not settled and live counts are unstable; do not freeze numbers",
+      "verdict": "NOT-AUTHORIZED",
+      "evidence_source": "S13/S14 blind pair + fleet-census.tsv 18:06:08"
+    },
+    {
+      "candidate": "souji-shokunin results/ (10 json + crun-59-tmp) and census/round-7/* in-flight writes",
+      "gate1_unpushed_touching": "PASS vacuously (no commits touch)",
+      "gate2_dirty_touching": "FAIL — untracked (?? in porcelain); in-flight parent evidence 17:22-17:51",
+      "gate3_receipt": "FAIL — no receipt class; final-23 spot-run of souji-verify.sh on results/crun-59-tmp → NOT-SAFE receipt=none",
+      "verdict": "NOT-AUTHORIZED",
+      "evidence_source": "final-23.json by_class[1]"
+    }
+  ],
+  "execution_plan_template": {
+    "note": "PARENT: nothing below is authorized for execution this round. Zero tickets. This scaffolding is pre-staged so the next round with a nonempty ticket list can execute without redesign. A ticket becomes executable only when its pair agreement + 3 gates are re-verified at execution time.",
+    "step_0_recheck": [
+      "git -C <repo> log --branches --not --remotes --oneline -- <path>   # must print nothing (gate1)",
+      "git -C <repo> status --porcelain=v1 --untracked-files=all -- <path>   # must print nothing (gate2)",
+      "bash tools/souji-verify.sh --json <path>   # must print SAFE with the ticket's receipt (gate3, tool A)",
+      "bash tools/souji-vault-verify.sh --json <path>   # must print SAFE/VERIFIED with the same receipt (gate3, tool B)"
+    ],
+    "step_1_stage": [
+      "mkdir -p <repo>/.ufo-quarantine/2026-10-18",
+      "mv <path> <repo>/.ufo-quarantine/2026-10-18/<path with / → __>   # tracked paths: use 'git mv' ONLY if the lane repo convention requires index updates; plain mv + recorded path is preferred to avoid index churn"
+    ],
+    "step_2_hold": "Hold window = this round (round 7). The path stays under .ufo-quarantine/2026-10-18/ untouched; no commit, no delete.",
+    "step_3_second_check": "After the hold window, re-run ALL of step_0_recheck against the ORIGINAL path (must still be SAFE + gates clean on the quarantine location being stable), and re-run the receipt tool once more on the quarantined copy.",
+    "step_4_delete": "Only after operator sign-off (AGENTS.md: 'Any removal requires a receipt, quarantine staging, a hold period, and a second receipt check'): rm -rf <repo>/.ufo-quarantine/2026-10-18/<staged-path>, then record the deletion in LOG.md with the receipt evidence. Never rm anything outside .ufo-quarantine/."
+  },
+  "reaudit_triggers": [
+    "Operator pushes souji-shokunin master (12 local-only commits) or restores a live origin — refs/remotes non-empty re-opens gate3/pushed for every lane path; re-run gate1+gate3 fleet-wide then",
+    "1-day stale age: earliest vault-shard stale eligibility 2026-10-19 ~14:00 -0300 per S09 mtime math; lore .scratch dir mtime 2026-10-18T00:03 → eligible no earlier than 2026-10-19T00:04 -0300 AND only if its live LOG.md:3530 citation is retired and the dirty/ignore state resolves (lore commit 6cec83a edits .gitignore and is unpushed)",
+    "game-dev-2d wt-r98/99/100: only if operator unlocks them, branches' unique commits land or are abandoned per receipt, and dirs become genuinely absent",
+    "kotodama .scratch: after repo is clean and pushed AND a per-file classification pass exists; do not act on unstable byte counts",
+    "After parent integration of round-7 fragments into LOG.md, re-run gates on census/round-7/* and results/* — they are dirty by construction until committed"
+  ],
+  "exercise_outcome": {
+    "first_quarantine_exercise": "EXERCISED — fail-closed path taken end-to-end",
+    "result": "0 authorized tickets is the CORRECT outcome, not a shortfall: with 12/12 commits unpushed and a dead origin, no path can pass the pushed receipt; both tools and final-23 independently agree, and re-derivation found zero false-SAFE verdicts",
+    "corroboration": "final-23.json quarantine_exercise_verdict 'EXERCISED, FAIL-CLOSED, 0 TICKETS'"
+  },
+  "discrepancies_noted": [
+    "S06 listed 33 removal candidates; S12 counted 41; final-23 corrected the true count to 34 (tools/impl-44.sh omitted from S06's list; '41 *.sh' miscounts by 1 — 40 *.sh + 1 spec.md). Direction unaffected: all NOT-SAFE",
+    "S19 observed 12 unpushed commits vs parent's assignment figure of 11 (b5db5cf landed ~17:2x). All verdicts use observed state",
+    "kotodama dirty count moved 4 (18:06 census) → 7 (18:19 first-hand). Live counts must not be frozen"
+  ],
+  "not_claimed": [
+    "No .ufo-quarantine directory was created anywhere; no mv/git mv/rm executed; the parent alone executes any future plan",
+    "No gate was re-derived for all 1250 tracked lane files individually — class-level gate documentation follows final-23's adjudication, with first-hand re-verification only for lore/.scratch, gd2d worktrees, kotodama counts, and souji remote/unpushed state",
+    "No secret-shaped file was read; .ufo/state and .ufo/watchdog.log were not opened",
+    "Nothing was committed; both fragments are untracked round-7 writes pending parent integration"
+  ],
+  "inputs_read": [
+    "census/round-7/fleet-census.tsv",
+    "census/round-7/seat-01.json", "census/round-7/seat-02.json", "census/round-7/seat-03.json", "census/round-7/seat-04.json",
+    "census/round-7/seat-05.json", "census/round-7/seat-06.json", "census/round-7/seat-07.json", "census/round-7/seat-08.json",
+    "census/round-7/seat-09.json", "census/round-7/seat-10.json", "census/round-7/seat-11.json", "census/round-7/seat-12.json",
+    "census/round-7/seat-13.json", "census/round-7/seat-14.json", "census/round-7/seat-19.json", "census/round-7/seat-20.json",
+    "census/round-7/final-23.json"
+  ]
+}

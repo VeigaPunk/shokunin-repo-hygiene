@@ -1,0 +1,144 @@
+{
+  "seat": "S17",
+  "round": 7,
+  "kind": "quarantine-plan-audit",
+  "role": "independent auditor of S15's quarantine plan: paired-agreement + 3-gate coverage per planned move; reversibility (quarantine-first); missing-item flags",
+  "fragment": "census/round-7/seat-17.json",
+  "audited_artifacts": [
+    "census/round-7/quarantine-plan.json (S15 plan, generated_at 2026-10-18T18:20:10-03:00)",
+    "census/round-7/seat-15.json"
+  ],
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "written_at": "2026-10-18T18:25:06-03:00",
+  "wait_protocol": "300s wait observed (dispatch ~18:05, audit pass started after it expired); S15's plan landed at 18:20 and was audited from disk",
+  "verdict": "PLAN-SOUND / CONCUR — ZERO-AUTHORIZED-TICKETS is correct. No planned move exists to execute (tickets=[]), so paired-agreement + gates + reversibility are satisfied vacuously for execution; every NOT-AUTHORIZED row was independently re-derived and holds. 3 non-blocking flags recorded below.",
+  "audit_rule_applied": "A planned move requires (a) author+blind both SAFE on the SAME receipt, (b) gate1 unpushed-touching empty + gate2 dirty-touching empty + gate3 receipt holds (stale | pushed | metadata-prune) all documented, (c) reversible quarantine-first command path. Any gap => NOT-SAFE / NOT-AUTHORIZED.",
+  "pair_coverage_audit": {
+    "plan_pair_rows": 6,
+    "plan_omissions": [
+      "tests/fixtures shard (S04 author + S10 blind, 11 tracked candidates): absent from plan pair_adjudications AND candidate_gate_table; both fragments are NOT-SAFE/NO-REMOVAL so no ticket was lost",
+      "lore .scratch blind pair mis-credited: plan pairs S01 with repo-gate S20; the actual blind is S07 (NOT-SAFE, derived without reading S01)",
+      "lore worktree registrations pair S02+S08 (both NO-CANDIDATES) appears only in prose inside the S01/S20 row reason"
+    ],
+    "flip_risk": "none — final-22 (round final judge) independently reconstructs the full 6/6 pair map including S01+S07, S02+S08, S03+S09, S04+S10, S05+S11, S13+S14, and records authorized_removals=[]",
+    "verdict_on_coverage": "FLAG-F1 (coverage nit, no verdict flip): the plan's pair map under-reports 3 of the round's pairs; parent should cite final-22's pair_agreements alongside the plan"
+  },
+  "gates_reverified_first_hand": [
+    {
+      "claim": "souji lane: pushed receipt unestablishable repo-wide (refs/remotes empty, origin dead, 12 unpushed)",
+      "commands": [
+        "git for-each-ref refs/remotes | wc -l -> 0; git branch -r | wc -l -> 0",
+        "git log --branches --not --remotes --oneline | wc -l -> 12",
+        "GIT_TERMINAL_PROMPT=0 timeout 15 git ls-remote origin HEAD -> 'remote: Repository not found.' (query-only, no fetch, no state written)"
+      ],
+      "observed": "all as claimed",
+      "result": "CONFIRMED"
+    },
+    {
+      "claim": "gate1 non-empty for tools/ (4), tests/vault (intro 48a64d8), tests/fixtures (2), census/round-1 (1); tests/ porcelain clean",
+      "commands": [
+        "git log --branches --not --remotes --oneline -- <path> | wc -l per path",
+        "git log --diff-filter=A --format='%H %ci' -1 -- tests/vault -> 48a64d8763fc… 2026-10-18 15:09:36 -0300 (unpushed)",
+        "git status --porcelain=v1 --untracked-files=all -- tests -> 0 lines"
+      ],
+      "observed": "tools=4, tests/vault=1, tests/fixtures=2, census/round-1=1; dirty tests/ = 0",
+      "result": "CONFIRMED (matches plan rows for tests/vault, tools, fixtures, census rounds)"
+    },
+    {
+      "claim": "lore .scratch NOT-SAFE: gate1 empty, gate2 FAIL, gate3 FAIL (age 0.75d < 1d; live cite)",
+      "commands": [
+        "git -C lore-shokunin status --porcelain -> '?? .scratch/'",
+        "git -C lore-shokunin log --branches --not --remotes --oneline -- .scratch | wc -l -> 0",
+        "stat -c '%y' .scratch -> 2026-10-18 00:03:50 -0300 (age 0.76d at audit time)",
+        "grep -n '\\.scratch' LOG.md -> line 3530 live citation"
+      ],
+      "observed": "as claimed; plus lore 6cec83a (unpushed) edits .gitignore so ignore-status is not durable",
+      "result": "CONFIRMED NOT-SAFE"
+    },
+    {
+      "claim": "lore worktree metadata-prune: NO CANDIDATES (parent's '3 — main + 2' premise was a census-column misread)",
+      "commands": [
+        "git -C lore-shokunin worktree list -> single main entry 6cec83a [main]",
+        "ls lore-shokunin/.git/worktrees -> No such file or directory"
+      ],
+      "observed": "zero non-main registrations; nothing to prune",
+      "result": "CONFIRMED (S02 + S08 blind pair agree)"
+    },
+    {
+      "claim": "game-dev-2d wt-r98/99/100 (+ /var/tmp/r102-S1): metadata-prune impossible",
+      "commands": [
+        "git -C game-dev-2d-shokunin worktree list -> wt-r98/99/100 all 'locked'; r102-S1 detached at 1392ca21",
+        "git -C game-dev-2d-shokunin rev-list --count main..wt-r98|wt-r99|wt-r100 -> 1 each (unique != 0)",
+        "git -C game-dev-2d-shokunin rev-list --count --branches --not --remotes -> 8"
+      ],
+      "observed": "locked on all three; unique=1 per branch; repo unpushed=8 — all three metadata-prune conditions (dir absent + unique=0 + no lock) fail",
+      "result": "CONFIRMED NOT-SAFE"
+    },
+    {
+      "claim": "kotodama .scratch NOT-SAFE; live counts must not be frozen",
+      "commands": [
+        "git -C kotodama-shokunin rev-list --count --branches --not --remotes -> 53",
+        "git -C kotodama-shokunin status --porcelain | wc -l -> 7"
+      ],
+      "observed": "53 unpushed / 7 dirty at ~18:22 (matches S15's 18:19 re-probe; fleet-census.tsv had 4 dirty at 18:06 — movement is real, plan correctly refuses to freeze counts)",
+      "result": "CONFIRMED NOT-SAFE"
+    },
+    {
+      "claim": "shard-level zero-SAFE agreement: tests/vault S03 116 candidates safeToRemoveNow=0 / S09 135 safe=0; tools/ S06 33 + S12 41, safe=0; archive S05/S11 5/5 NOT-SAFE; repo gates S19/S20 + final-23 ALL NOT-SAFE",
+      "commands": [
+        "parsed seat-03/05/06/09/11/12/19/20/final-22/final-23 verdict fields from census/round-7/"
+      ],
+      "observed": "every fragment verdict is NOT-SAFE / NO-CANDIDATES / NO-REMOVAL / ZERO-AUTHORIZED; final-22 pair_agreements 6/6 agreeing, authorized_removals=[]; count discrepancy 33 vs 41 vs 34 (final-23 correction: tools/ = 40 *.sh + spec.md, impl-44.sh omitted from S06) — direction unaffected",
+      "result": "CONFIRMED — no SAFE+SAFE pair exists anywhere; zero tickets is the forced outcome"
+    }
+  ],
+  "reversibility_audit": {
+    "this_round": "MOOT-BY-DESIGN — plan authorizes nothing: parent_directive forbids mkdir/mv/git mv/rm; tickets=[]; nothing to make reversible. Correct per AGENTS.md (parent executes after tickets land).",
+    "template_steps_0_to_4": "Reversible by construction: stage into <repo>/.ufo-quarantine/<date>/ (in-repo, same filesystem), hold, second check, delete only after operator sign-off, rm confined to .ufo-quarantine/. Ordering correct.",
+    "flags": [
+      {
+        "id": "FLAG-F2",
+        "severity": "MEDIUM",
+        "title": "Template staging conflicts with SKILL.md for tracked paths",
+        "detail": "SKILL.md removal flow step 3 prescribes `git mv` (plain mv only for untracked) and calls quarantine 'a normal commit in the owning repo', with a pre-quarantine commit checklist (message names receipt class + evidence pointer, identity souji-shokunin <souji@shokunin.local>). The plan template prefers 'plain mv … to avoid index churn' and step_2_hold says 'no commit'. For a TRACKED path plain mv leaves the owning repo dirty over the original path (deletion + untracked copy), which fails gate2 for the whole hold and skips the commit checklist. Nothing executes this round, so no violation occurred — fix the template before any future execution: tracked -> git mv + commit; untracked -> plain mv.",
+        "blocking": false
+      },
+      {
+        "id": "FLAG-F3",
+        "severity": "MEDIUM",
+        "title": "step_3 second check cannot pass for pushed-class tickets as written (S18's second_check_trap)",
+        "detail": "The template re-runs the receipt tools on the quarantined copy. After a lawful git mv, the quarantine commit becomes the introducing commit of the moved path and touches both paths, so the pushed receipt is unestablishable at the new location by construction (tools/souji-verify.sh:220,230-234 mechanism, fixture-probed by S18). Second check must instead re-verify the ORIGINAL path's receipt and gates at decision time plus stability of the quarantine location — otherwise step 5 of the documented flow can never be satisfied even when everything was done correctly. Corroborates S18 (seat-18.json second_check_trap); the spec/SKILL fix must land with the flow flip.",
+        "blocking": false
+      },
+      {
+        "id": "FLAG-F4",
+        "severity": "LOW",
+        "title": "Hold-period floor unstated in template",
+        "detail": "SKILL.md step 4 requires hold ≥ one driver tick (450s minimum; prefer 24h for non-pushed). Template's 'hold window = this round' satisfies it in spirit but should state the 450s floor and the 24h preference explicitly so a future execution cannot shortcut it.",
+        "blocking": false
+      }
+    ]
+  },
+  "missing_item_checks": {
+    "operator_approval": "not applicable this round (no removal list); AGENTS.md sign-off requirement correctly embedded in template step_4",
+    "secret_exclusions": "plan and audited fragments declare no secret-shaped reads; .ufo/state and .ufo/watchdog.log untouched — consistent with everything read this seat",
+    "kotodama_standing_rule": "respected (NOT-SAFE, hands-off, no frozen counts)",
+    "reaudit_triggers": "present and correct; origin restore + push is the single gate3 blocker for the whole lane (operator-owned; ls-remote evidence in final-23 and re-confirmed by this seat)",
+    "ledger_dependency": "moved-to-obsidian correctly n/a (corpus/knowledge/obsidian-ledger.tsv header-only)",
+    "untracked_inflight_writes": "results/ and census/round-7/* correctly classified NOT-AUTHORIZED (dirty by construction) — no self-targeting ticket; correct"
+  },
+  "disagreements": [
+    "none material with S15's verdicts; FLAG-F1 (pair-map omissions) and FLAG-F2/F3 (template defects) are corrections to the plan document, not to the zero-ticket outcome",
+    "S19's 'observed 12 vs assignment 11' and kotodama dirty 4->7 movement: this seat's probes agree with the observed-state choice"
+  ],
+  "not_claimed": [
+    "No removal, prune, move, quarantine dir, fetch, push, commit, or branch anywhere; the only bytes this seat wrote are this fragment",
+    "Did not re-gate all 1250 tracked lane files individually — class-level adjudication accepted from final-23 after spot-checks",
+    "ls-remote origin was a query-only network probe (no local git state written; PROVINCE.md allows read-only origin access for pushed-receipt checks)",
+    "Did not read seat-03/09 full row-level tables (135/41 entries); verdicts and count fields reconciled instead",
+    "Did not audit fleet-root candidate surfaces (b2f2efa checkpoint files, shokunin.conf snapshot) — r7 plan scopes them out and they are parent-owned fleet rows; no r7 ticket proposes them, so no gate was owed"
+  ],
+  "bottom_line_for_parent": "Execute nothing from round 7: the plan's zero-ticket verdict is correct and independently confirmed (final-22 authorized_removals=[]). Do not create .ufo-quarantine/ anywhere. Before any future execution round: fix the template per FLAG-F2/F3/F4 (git mv + commit for tracked paths; second check against the original path; explicit 450s/24h hold), and cite final-22's pair map to cover FLAG-F1. The single re-opening lever for the lane is operator-side: restore/push origin so refs/remotes is non-empty.",
+  "mode": "read-only everywhere except census/round-7/seat-17.json; no secret-shaped reads; .ufo/state and .ufo/watchdog.log not opened",
+  "writes": ["census/round-7/seat-17.json"]
+}

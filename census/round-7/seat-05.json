@@ -1,0 +1,142 @@
+{
+  "seat": "S05",
+  "round": 7,
+  "shard": 3,
+  "kind": "archive-planning",
+  "assignment": "census/round-{1,2,3}: are the seat fragments still load-bearing evidence (reports/SCORECARD/lessons)? census data vs raw fragments size; propose archive strategy (keep TSVs+summary, gzip raw fragments?) WITHOUT acting.",
+  "written_at": "2026-10-18T18:14:39-0300",
+  "mode": "read-only over every surface except this fragment; zero mutations outside census/round-7/seat-05.json",
+  "headline": "Both surviving rounds' raw fragments are load-bearing (SCORECARD and r5 evidence line-cite individual fragments); archiving them NOW is NOT-SAFE on two independent gates: unpushed commits touch each dir, and refs/remotes is empty so no receipt class (pushed included) is establishable. Keep data TSVs+summaries hot; defer gzip of seat fragments until after a push plus a line-citation map; the big byte win is in round-6, not this shard.",
+  "environment": {
+    "git": "2.55.0",
+    "remote": "origin https://github.com/VeigaPunk/shokunin-repo-hygiene.git",
+    "remote_tracking_refs": 0,
+    "local_refs": ["refs/heads/master b5db5cf"],
+    "pitfall": "bare `--not --remotes` returns nothing on git 2.55 (r6 recorded pitfall); all unpushed counts here use `--branches --not --remotes`."
+  },
+  "candidates": [
+    {
+      "candidate": "census/round-1/",
+      "contents": "64 seat fragments (seat-01..64.json, 665287 B) + census.tsv (85753 B, 247 lines = 1 header + 246 data rows) + census-summary.json (2288 B); tracked=66",
+      "gate_1_unpushed_touching": {
+        "cmd": "git log --branches --not --remotes --oneline -- census/round-1",
+        "observed": "652b6f8 round-1: dry-run census — 64 seats, 246 rows, 109/109 b2f2efa pushed, 21 metadata-prune candidates, 0 surviving false-SAFE",
+        "result": "FAIL (non-empty)"
+      },
+      "gate_2_dirty_touching": {
+        "cmd": "git status --porcelain=v1 --untracked-files=all -- census/round-1",
+        "observed": "(empty)",
+        "result": "PASS"
+      },
+      "gate_3_receipt": {
+        "stale": "unavailable: all 64+2 files mtime 2026-10-18T12:18..12:38 (today); `find census/round-1 -type f ! -newermt 2026-10-17 | wc -l` → 0",
+        "pushed": "unverifiable: introducing commit 652b6f8 (2026-10-18 12:39:42 -0300, --diff-filter=A) cannot be tested against a remote-tracking default ref — refs/remotes is empty (for-each-ref refs/remotes → none; symbolic-ref refs/remotes/origin/HEAD → fails). Per the r5 fix, local-master fallback would yield pushed-unverifiable, not pushed.",
+        "metadata-prune": "inapplicable: dir present",
+        "locks": "none under census/ (find -name '*.lock' maxdepth 2 → none)",
+        "result": "FAIL (no receipt class establishable)"
+      },
+      "load_bearing": "YES — hot",
+      "evidence": [
+        "SCORECARD.md:21 capability row 'fleet census (receipt taxonomy)' evidence pointer = census/round-1/census-summary.json + census.tsv (246 rows)",
+        "census.tsv is the live --compare baseline: results/crun-57.json:160,196; crun-58.json:158,164; crun-59.json (9 impl argvs :1658-1738); crun-62.json:22,167,219; crun-59-tmp/pass1.json (5 argvs); tools/souji-census.impl-44.sh:48, impl-45.sh:68, impl-48.sh:39 name it in their help text",
+        "census-summary.json is a cited source: results/crun-57.json:204, crun-59-tmp/run2.py:261, r5 final-61.json:26, r5 seat-32.json",
+        "fragments line-cited by r5 evidence: seat-09.json:3 (r5 seat-05.json:30), seat-21.json:32-40,47 (r5 seat-54.json:40), seat-60.json:6-27 (r5 seat-02.json:50), seat-48..53 as cohort baselines (r5 seat-19.json ×18, seat-46.json:68-70), seat-16.json rows[0..2] (r5 seat-25.json:13-82), seat-15 (r5 seat-51.json:255), seat-11 (r5 seat-02.json:109), seat-60+44 (r5 seat-21.json:33)",
+        "fragments cited inside r3 cross-checks: seat-34 (r3 seat-36.json:61), seat-31 (r3 seat-33.json:64), seat-22 (r3 seat-03.json:80), seat-23 (r3 seat-25.json:84), seat-21 (r3 seat-21.json:110), seat-42/43 (r3 seat-42.json:31-32)",
+        "LOG.md:42 records the class census/round-1/seat-*.json as r1 dispatch evidence; .ufo/reports/round-1/souji.md:16,25,32 cites fragments + TSV + commit 652b6f8; lessons/round-1.md calibration measurement (author precision 0/6, critic 6/6) is grounded in seat-01/54/63 fragments",
+        "verifier selftests synthesize census/round-1 paths only inside mktemp fixtures (souji-verify.impl-09.sh:523, impl-15.sh:536-538, impl-16.sh:628-633) — no live-file dependency, but they hardcode the round-1 path as the canonical census location"
+      ],
+      "verdict": "NOT-SAFE to archive/mutate now (gates 1 and 3 fail; all three documented)"
+    },
+    {
+      "candidate": "census/round-2/",
+      "contents": "ABSENT. `ls -d census/round-2` → exit 2; `git ls-files census/round-2/**` → 0; round-2's on-disk record is the lesson (corpus/lessons/round-2.md), the installed verifier (tools/souji-verify.sh, sha 7efda63b…), tests/results/, and LOG.md r2 entry — r6 seat-31.json:89-90",
+      "gate_1_unpushed_touching": {
+        "cmd": "git log --branches --not --remotes --oneline -- census/round-2",
+        "observed": "(empty)",
+        "result": "PASS (vacuous: nothing tracked or on disk)"
+      },
+      "gate_2_dirty_touching": {
+        "cmd": "git status --porcelain=v1 --untracked-files=all -- census/round-2",
+        "observed": "(empty)",
+        "result": "PASS"
+      },
+      "gate_3_receipt": {
+        "metadata-prune": "conditions hold and are already the documented steady state: dir absent + unique=0 (never tracked at any commit) + no lock; absence is deliberate and recorded (r6 seat-31.json:89-90,281-289; readme-amend-31.diff:83, readme-amend-32.diff:51; r5 seat-51.json:67 'provenance gap, not proof the tool work is missing')",
+        "stale_pushed": "inapplicable: no artifact exists",
+        "result": "documented; no action required — the prune already happened at the history level (nothing was ever committed)"
+      },
+      "load_bearing": "N/A — no fragments exist to be load-bearing; do NOT recreate or backfill the directory",
+      "verdict": "NO-CANDIDATE (nothing to archive; metadata-prune steady state already holds and is documented)"
+    },
+    {
+      "candidate": "census/round-3/",
+      "contents": "64 seat fragments (802135 B) + operator-approval-list.tsv (21112 B, 96 rows) + approval-summary.json (310 B) + approvals-53..56.tsv (4355..8964 B); tracked=70",
+      "gate_1_unpushed_touching": {
+        "cmd": "git log --branches --not --remotes --oneline -- census/round-3",
+        "observed": "3674633 round-3: 21 metadata prunes executed (lore 20->1, gd2d 6->4 lock-preserve), 96-row operator approval list, probation gate cleared",
+        "result": "FAIL (non-empty)"
+      },
+      "gate_2_dirty_touching": {
+        "cmd": "git status --porcelain=v1 --untracked-files=all -- census/round-3",
+        "observed": "(empty)",
+        "result": "PASS"
+      },
+      "gate_3_receipt": {
+        "stale": "unavailable: all 70 files mtime 2026-10-18T13:37..13:46 (today); newer-than-cutoff count 0",
+        "pushed": "unverifiable: introducing commit 3674633 (2026-10-18 13:49:06 -0300) — same empty refs/remotes problem as round-1",
+        "metadata-prune": "inapplicable: dir present",
+        "locks": "none under census/ (lock-preserve pins live in game-dev-2d-shokunin .git/worktrees, not here)",
+        "extra": "operator-approval-list.tsv is byte-pinned since r5: sha256 0a33e223… matches census/round-5/seat-40.json:40 exactly; LOG.md:147 'the list awaits operator sign-off' — mutating it before sign-off would orphan the pinned evidence",
+        "result": "FAIL (no receipt class establishable; hot operator artifact)"
+      },
+      "load_bearing": "YES — hot",
+      "evidence": [
+        "SCORECARD.md:23 capability row 'worktree metadata prune' evidence pointer = census/round-3/seat-61.json (plan) + census/round-3/seat-62.json (lore assertions)",
+        "fragments line-cited by r5 evidence: seat-14.json:39,59-61,67,71,76-78 (r5 seat-14.json:55,80 and seat-45.json:126,165-167), seat-58.json:528-531 (r5 seat-18.json:91), seat-60.json:114-118 (r5 final-61.json:130), seat-63.json:67-78 (r5 seat-28.json:83)",
+        "operator-approval-list.tsv re-verified across r5 (final-58.json:125, final-64.json:95, seat-45, seat-40, seat-46, seat-32) and r6 (seat-13.json:108: 96 data rows; seat-09.json:230)",
+        "approval shards line-cited: approvals-54.tsv:28 (r5 seat-06.json:26), approvals-56.tsv:9 (r5 final-61.json:124), approvals-55.tsv:20 (r5 seat-04.json:70), all four shards re-parsed by final-58.json:125",
+        "approval-summary.json cited: r5 seat-28.json:63, seat-32.json:66, seat-40.json:43; r6 seat-13.json:109",
+        "LOG.md:145-147 records census/round-3/{seat-01..64.json, approvals-*.tsv, operator-approval-list.tsv (96 rows), approval-summary.json} as the admitted round's artifacts; .ufo/reports/round-3/souji.md:39 lists the directory; lessons/round-3.md numbers (21+111 candidates, 96-row re-cut) resolve to these files"
+      ],
+      "verdict": "NOT-SAFE to archive/mutate now (gates 1 and 3 fail; all three documented)"
+    }
+  ],
+  "sizes": {
+    "method": "stat byte sizes; gzip estimate via `gzip -c` piped to wc -c — no files written",
+    "round-1": { "seats": "64 files, 665287 B", "data": "census.tsv + census-summary.json = 88041 B", "ratio": "7.56x", "dir_total": 753328 },
+    "round-3": { "seats": "64 files, 802135 B", "data": "operator-approval-list.tsv + approval-summary.json + approvals-53..56.tsv = 47749 B", "ratio": "16.80x", "dir_total": 849884 },
+    "combined": { "raw": 1603212, "seats_raw": 1467422, "seats_gzip_est": 383721, "gzip_saving_est": 1083701, "gzip_est_ratio": "3.8x (r1 4.60x, r3 3.36x)" },
+    "hashes_at_write_time": {
+      "census/round-1/census.tsv": "d25ea728643628711c2fc29412cf30a4fc6b2c3522d208d64f8522f426a73304",
+      "census/round-1/census-summary.json": "14c27de30fd7100b409827d01764891b183e5fe116671024219d1314a2229e86",
+      "census/round-3/operator-approval-list.tsv": "0a33e223ecf8439a823324e6775bd0f3b6a6c17b5e1eb98d05ee55a283e107f8 (== r5 seat-40 pin)",
+      "census/round-3/approval-summary.json": "85930bce8ca1fd33f1bf0db7e5a6771507475be72c35334bbf25cc86998da22a",
+      "census/round-3/approvals-53.tsv": "a33d3f1c5098046f59bc8f6adcc161eb09773e2bf68b53d1986e473e2d544f14",
+      "census/round-3/approvals-54.tsv": "6f6ebd26bfc85254d2d409944cec8c0e40f0791cc7e81ef01f19e2016acef8ab",
+      "census/round-3/approvals-55.tsv": "b544741bf238280f7bf98b790fab7c6d5f609757c7395397f0f98ac3ab2b509c",
+      "census/round-3/approvals-56.tsv": "de9725cb433408ff0013996fc91a050351d8552a477245322a7345b1a324a583"
+    }
+  },
+  "archive_proposal": {
+    "status": "PROPOSAL ONLY — nothing executed, per assignment",
+    "prerequisite_P0": "Push master to origin and fetch so refs/remotes/origin/HEAD resolves. With 0 remote-tracking refs and 12 unpushed commits (ccbb132..b5db5cf), no receipt-bearing action on any tracked artifact is currently possible: `pushed` is unverifiable repo-wide. This is a parent-level prerequisite.",
+    "prerequisite_P1": "After push, re-run all three gates per candidate. Gates will then read: unpushed-touching empty (post-push), dirty empty (already), receipt=pushed (introducing commits 652b6f8/3674633 ancestors of the remote default). Only then may a gzip commit land.",
+    "keep_hot_uncompressed": [
+      "census/round-1/census.tsv + census-summary.json — the --compare baseline for the census tool and a SCORECARD.md:21 evidence pointer; also keep census.tsv parseable while tools/souji-census implementations name it in --help",
+      "census/round-3/operator-approval-list.tsv + approval-summary.json + approvals-53..56.tsv — operator sign-off pending (LOG.md:147), sha-pinned since r5, line-cited (approvals-54.tsv:28, approvals-56.tsv:9)"
+    ],
+    "gzip_candidates_if_still_wanted": "census/round-1/seat-*.json (est. 665287→144648 B) and census/round-3/seat-*.json (est. 802135→239073 B). Counter-evidence: ≥14 r1 fragments and ≥6 r3 fragments are cited by later-round evidence, several with path:line precision (seat-21.json:32-40,47; seat-09.json:3; seat-60.json:6-27; r3 seat-14.json:59-61; seat-58.json:528-531; seat-60.json:114-118; seat-63.json:67-78). Gzip breaks plain sed/rg line resolution against evidence already admitted in SCORECARD/LOG/finals.",
+    "recommended_variant": "Defer gzip of shards 1/3 entirely. Combined saving is ~1.06 MB of working tree (git packfiles already zlib-compress these blobs, so .git barely shrinks). The real footprint problem is round-6 (out of my shard, flagged for whoever holds it): census/round-6/seat-69..77 measure 3.2–11.4 MB each (~44 MB total, seat-73 alone 11372412 B) — archive effort belongs there first.",
+    "if_operator_overrides_and_orders_gzip": "gzip -k9 the seat fragments only after committing a citation map (fragment → citing file:line) so admitted evidence stays resolvable; update the two verifier selftest fixtures' comments that name census/round-1 as a live path pattern; record mtime/rotation in LOG as a new append-only entry; second receipt check after hold per AGENTS.md.",
+    "never_do": [
+      "Do not delete any fragment outright — every one is the raw evidence behind a TSV row or a SCORECARD/lessons claim",
+      "Do not recreate census/round-2 — its absence is the documented record",
+      "Do not touch operator-approval-list.tsv before operator sign-off (byte-pinned)"
+    ]
+  },
+  "self_gate_note": "This fragment (census/round-7/seat-05.json) is newly created and untracked by construction — the same integration-gap class census.tsv:231-233 recorded in r1; it lands with this write and awaits parent integration. It is the only path this seat wrote.",
+  "to_verify": [
+    "Whether a push to origin is scheduled by the parent/operator (P0 prerequisite) — outside seat scope",
+    "gzip estimates are `gzip -c` defaults; a committed variant should pin the gzip version/flags in the receipt"
+  ]
+}

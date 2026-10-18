@@ -1,0 +1,51 @@
+{
+  "seat": "S20",
+  "round": 7,
+  "kind": "repo-gate",
+  "role": "lore-shokunin gate: do the unpushed commits and the dirty path touch .scratch or the worktree registrations under .git/worktrees? Overlap → NOT-SAFE",
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "subject_repo": "/home/vgpnk/Projects/shokunin/lore-shokunin",
+  "run_local_first_scan": "2026-10-18T18:14:06-03:00",
+  "input_discrepancy": "Assignment stated 1 unpushed commit; git -C lore-shokunin log --branches --not --remotes --oneline returns 3 (main ahead of origin/main by 3). Matches census/round-7/fleet-census.tsv lore row (unpushed=3, dirty=1, flags dirty,unpushed,scratch). Gate evaluated against the actual 3.",
+  "unpushed_commits": [
+    {"sha": "6cec83a", "subject": "gitignore: stop re-tracking per-seat wave scratch and baseline copies", "paths": ["M .gitignore"]},
+    {"sha": "1659a42", "subject": "cleanup: drop closed-round seat scratch trees (rounds <= 100)", "paths": "374 deletions, all under .ufo/waves/"},
+    {"sha": "f553a27", "subject": "chore: drop seat scratch/archive caches (reports and receipts retained)", "paths": "153,283 deletions, all under .ufo/waves/"}
+  ],
+  "dirty_paths": ["?? .scratch/ (untracked; 26 files, 218,489 bytes; subdirs V02/scratch-root and v26; dir mtime 2026-10-18 00:03:50 -03, v26 mtime 00:16:42 -03)"],
+  "gates": {
+    "candidate_a__scratch": {
+      "gate1_unpushed_touching": "PASS — git log --branches --not --remotes --oneline -- .scratch → EMPTY. None of the 3 unpushed commits touch a tracked path under .scratch (they touch .ufo/waves/** and .gitignore only).",
+      "gate2_dirty_touching": "FAIL — the sole dirty path IS ?? .scratch/ (untracked live tree). Direct overlap.",
+      "gate3_receipt": "FAIL — no valid receipt class. Not pushed (untracked, no introducing commit). Not stale: scratch-type but fails BOTH required conditions — mtime is TODAY 2026-10-18 (needs > 1 day old) and refs are nonzero (LOG.md:3530 explicitly references 'V02/v26 lane-root .scratch', and LOG.md is not an excluded souji census/tests path). Not metadata-prune (plain dir, not a .git/worktrees registration).",
+      "verdict": "NOT-SAFE (fails gates 2 and 3 independently)"
+    },
+    "candidate_b__git_worktrees_registrations": {
+      "registrations_found": 0,
+      "evidence": "ls .git/worktrees → dir absent ('no .git/worktrees dir'); git worktree list → main only (6cec83a [main]); census row worktrees=1 (main only). No registrations, no locks, no branches to disposition.",
+      "gate1_unpushed_touching": "PASS (vacuous) — git log --branches --not --remotes --oneline -- .git/worktrees → EMPTY; nothing tracked there and the dir does not exist.",
+      "gate2_dirty_touching": "PASS (vacuous) — no dirty path under .git/worktrees.",
+      "gate3_metadata_prune": "N/A — zero registrations → zero prune candidates.",
+      "verdict": "NO CANDIDATES (nothing to quarantine; vacuously safe)"
+    }
+  },
+  "verdict": "NOT-SAFE",
+  "verdict_rationale": "The dirty path ?? .scratch/ overlaps the .scratch candidate directly (gate 2), and no receipt class holds for it (gate 3): it was written today, is referenced by LOG.md:3530, and is untracked. The lore worktree-registration side has zero registrations, so that half of the gate is empty. Parent must NOT quarantine, prune, or touch lore-shokunin .scratch this round; also note 6cec83a (unpushed) modifies .gitignore, so ignore-status of scratch paths is not yet durable — one more reason to wait until lore is pushed.",
+  "post_wait_recheck": "STABLE at 2026-10-18T18:16:45-03:00 after the mandated 300s hold: identical unpushed set (6cec83a 1659a42 f553a27, ahead 3), identical dirty set (?? .scratch/ only), gate1 per-path still empty for .scratch and .git/worktrees, .git/worktrees still absent, worktree list still main-only. No drift; verdict unchanged.",
+  "commands": [
+    "git -C lore-shokunin log --branches --not --remotes --oneline  → 3 commits",
+    "git -C lore-shokunin status --porcelain  → '?? .scratch/' only",
+    "git -C lore-shokunin status -sb  → '## main...origin/main [ahead 3]'",
+    "git -C lore-shokunin log --branches --not --remotes --oneline -- .scratch  → empty",
+    "git -C lore-shokunin log --branches --not --remotes --oneline -- .git/worktrees  → empty",
+    "git -C lore-shokunin diff-tree --name-status -r <sha> (per unpushed commit, path-classified)",
+    "ls lore-shokunin/.git/worktrees  → absent; git worktree list  → main only",
+    "du -sb .scratch = 218489; find .scratch -type f | wc -l = 26; stat mtimes 2026-10-18 00:03/00:16 -03",
+    "grep -n '\\.scratch' LOG.md  → line 3530"
+  ],
+  "scope": "Read-only git metadata + stat queries in lore-shokunin; file contents of .scratch never opened (names/sizes/mtimes only). No fetch/push/commit/prune/remove/move anywhere. .ufo/state and .ufo/watchdog.log untouched. Only write: this fragment.",
+  "preamble": {
+    "fragment_path": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-7/seat-20.json",
+    "mode": "read-only repo gate; this seat fragment written"
+  }
+}

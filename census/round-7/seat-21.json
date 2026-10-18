@@ -1,0 +1,91 @@
+{
+  "seat": "S21",
+  "round": 7,
+  "kind": "census-tool-gates",
+  "role": "receipt-gate verification of S13/S14 prune candidates (new dead registrations) before the parent's first quarantine exercise",
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "fleet_root": "/home/vgpnk/Projects/shokunin",
+  "run_local": "2026-10-18T17:55-18:20-03:00 (waited the 300s window, then polled S13/S14)",
+  "inputs": {
+    "s13": "census/round-7/seat-13.json — absent-dir screen: 0 new absent-dir registrations, prune_candidates=[]",
+    "s14": "census/round-7/seat-14.json — independent re-run: structural_changes all zero, prune_candidates=[]",
+    "producer_agreement": "S13 and S14 agree on every material point (both NO-STRUCTURAL-DRIFT; same NOT-SAFE x3 on wt-r98/99/100, same hands-off on r102-S1)"
+  },
+  "candidate_intake": {
+    "new_dead_registrations_from_S13_S14": 0,
+    "consequence": "Both candidate producers emitted empty prune-candidate lists. There is nothing new to quarantine from the dead-registration class this round. To not leave the parent's quarantine plan resting on the producers alone, the full registration space was independently re-gated below (zero-trust cross-check)."
+  },
+  "independent_sweep": {
+    "method": "for every immediate child of the fleet root with .git/worktrees, enumerate registrations (ls .git/worktrees/*/), read HEAD/gitdir/locked, test -d the gitdir target; fleet root itself and lore-shokunin have no .git/worktrees at all",
+    "result": "exactly 4 non-main registrations fleet-wide, all owned by game-dev-2d-shokunin: wt-r98, wt-r99, wt-r100 (dirs ABSENT, each LOCKED), r102-S1 (dir PRESENT at /var/tmp/r102-S1, detached, no lock). Registration set identical to round-6 — no new registrations of any kind."
+  },
+  "gate_results": [
+    {
+      "registration": "game-dev-2d-shokunin/.git/worktrees/game-dev-2d-shokunin-wt-r98",
+      "dir": "/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r98",
+      "head": "68bee6e7c07638a8abeb2812f249fc382ba7d50a (branch refs/heads/wt-r98)",
+      "gate1_unpushed_touching": "path-scoped: git -C gd2d log --branches --not --remotes --oneline -- .git/worktrees/<name> => 0 lines (empty, PASS). Registration-scoped reading (S13/S14 and tool D-b): the worktree's own branch holds 1 unpushed commit (rev-list --count refs/heads/wt-r98 --not --remotes = 1) — the receipt cannot ride on the path-scoped pass; documented both ways per the r3 artifact-scoped precedent.",
+      "gate2_dirty_touching": "PASS — gd2d status --porcelain = 8 entries (7 untracked corpus/fixtures/export_launch*.gd + '?? reports/round-102/'), none touching the registration; 'git status --porcelain -- .git/worktrees' => 0 lines; target dir absent so no worktree status is possible by construction.",
+      "gate3_metadata_prune": "FAIL on two of three legs. absent-dir: TRUE (test -d rc!=0; gitdir points at the absent path). unique=0: FALSE vs remotes — unique_vs_all=0 but unique_vs_remotes=1 (tip 68bee6e7 reachable from NO ref except its own branch; merge-base --is-ancestor tip refs/remotes/origin/main => rc=1; origin/HEAD -> origin/main, no origin/master in this repo). no-lock: FALSE — .git/worktrees/…-wt-r98/locked present (79 B, mtime 2026-10-18 15:46): 'souji r5: pinned until game-dev-2d pushes wt branches or operator dispositions'; no *.lock files.",
+      "verdict": "NOT-SAFE"
+    },
+    {
+      "registration": "game-dev-2d-shokunin/.git/worktrees/game-dev-2d-shokunin-wt-r99",
+      "dir": "/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r99",
+      "head": "fe1a996ed21fd048558ef31cc1d0c77253404101 (branch refs/heads/wt-r99)",
+      "gate1_unpushed_touching": "path-scoped: 0 (empty, PASS); registration-scoped: unpushed=1 (same reading as wt-r98)",
+      "gate2_dirty_touching": "PASS — same evidence as wt-r98 (dir absent; no dirty path touches the registration)",
+      "gate3_metadata_prune": "FAIL — absent-dir TRUE; unique_vs_remotes=1 (ancestor_of origin/main rc=1); 'locked' file present with the same r5 pin text",
+      "verdict": "NOT-SAFE"
+    },
+    {
+      "registration": "game-dev-2d-shokunin/.git/worktrees/game-dev-2d-shokunin-wt-r100",
+      "dir": "/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r100",
+      "head": "2d5622828d6d985d70326367f8023f89f00a02f0 (branch refs/heads/wt-r100)",
+      "gate1_unpushed_touching": "path-scoped: 0 (empty, PASS); registration-scoped: unpushed=1",
+      "gate2_dirty_touching": "PASS — same evidence as wt-r98",
+      "gate3_metadata_prune": "FAIL — absent-dir TRUE; unique_vs_remotes=1 (ancestor_of origin/main rc=1); 'locked' file present with the same r5 pin text",
+      "verdict": "NOT-SAFE"
+    },
+    {
+      "registration": "game-dev-2d-shokunin/.git/worktrees/r102-S1",
+      "dir": "/var/tmp/r102-S1",
+      "head": "1392ca21276e8beb007c5b96fa24758d166e6bc9 (detached; equals gd2d main tip — zero unique commits, moot)",
+      "gate1_unpushed_touching": "moot — fails gate at absent-dir (dir is PRESENT)",
+      "gate2_dirty_touching": "FAIL — worktree status --porcelain = 24 dirty paths (tool evidence: dirty=24)",
+      "gate3_metadata_prune": "FAIL — absent-dir leg fails outright; this is a LIVE round-102 seat-harness workspace (registration mtime 17:40, admin dir touched 17:52; no lock). Live-process check: no /proc/*/cwd inside it at probe time, but the lane is actively writing.",
+      "verdict": "NOT-SAFE (live; hands-off)"
+    }
+  ],
+  "verdicts_summary": {
+    "screened": 4,
+    "SAFE": 0,
+    "NOT-SAFE": 4,
+    "new_candidates_for_quarantine": 0,
+    "quarantine_plan_impact": "the dead-registration class contributes ZERO entries to the parent's first quarantine exercise; wt-r98/99/100 stay pinned until game-dev-2d pushes the wt branches or the operator dispositions them (lock text), r102-S1 is a live lane"
+  },
+  "tool_cross_check": {
+    "tool": "tools/souji-verify.sh",
+    "sha256": "a91049c96e5fba7c3db83df288a261717156c3834532e54d712ed0c555e350c4",
+    "selftest": "bash tools/souji-verify.sh --selftest -> exit 0, 'selftest: 24 checks, 0 failed'",
+    "live": [
+      "wt-r98 -> {\"verdict\":\"NOT-SAFE\",\"receipt\":\"unpushed-branch\",\"evidence\":\"branch=wt-r98 unpushed=1 dir=absent owner=game-dev-2d-shokunin\"} exit=0",
+      "wt-r99 -> NOT-SAFE(unpushed-branch) unpushed=1 dir=absent, exit=0",
+      "wt-r100 -> NOT-SAFE(unpushed-branch) unpushed=1 dir=absent, exit=0",
+      "/var/tmp/r102-S1 -> NOT-SAFE(dirty) dir=present dirty=24, exit=0"
+    ],
+    "agreement": "tool verdicts agree with the hand-derived gates on all four (the D-b named-branch pre-check fires before the metadata-prune shortcut)",
+    "tool_gap_observed": "souji-verify.sh never consults the admin dir's 'locked' file — a hypothetical absent+unique=0+LOCKED registration would get SAFE(metadata-prune) from the tool where the seat gate (and this round's instruction) says NOT-SAFE. No live divergence today (D-b fires first on all three), but it is a candidate hardening item for a later round."
+  },
+  "out_of_class_spot_check": {
+    "note": "S14 additionally gated two .scratch dirs under the stale receipt; re-verified here since they are the only other quarantine-adjacent candidates named this round",
+    "kotodama .scratch": "gate1 PASS (log --branches --not --remotes -- .scratch => 0), gate2 PASS (status --porcelain -- .scratch => 0), stale receipt FAIL (mtime 2026-10-18 18:19 — minutes old, needs >1 day; lane actively writing, 41.1 GB and growing) -> NOT-SAFE. Agrees with S14 and the r6 K1 hands-off.",
+    "lore .scratch": "gate2 FAIL — lore's single dirty path IS '?? .scratch/' (touches it directly); stale receipt FAIL (mtime 2026-10-18 00:03, ~18h < 1 day threshold) -> NOT-SAFE. Agrees with S14."
+  },
+  "scope": "Wrote only census/round-7/seat-21.json (this file; dir pre-existed from S13). Read-only everywhere else: no prune/remove/move/unlock/lock, no fetch/push/commit, no quarantine action (parent owns execution). No secret-shaped file read; lock reason strings are metadata. .ufo/state and .ufo/watchdog.log untouched.",
+  "preamble": {
+    "fragment_path": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-7/seat-21.json",
+    "mode": "dry-run gate verification; nothing outside this fragment was written",
+    "written_at": "2026-10-18T18:20:30-03:00"
+  }
+}

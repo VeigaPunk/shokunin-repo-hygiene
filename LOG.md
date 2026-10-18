@@ -242,3 +242,24 @@ instead; kotodama stays NOT-SAFE/hands-off.
 **Ledger.** r6 = failed (2/3 claims); the schedule continues at r7 — the
 completion criterion's "12 admitted" is now unattainable verbatim; flagged
 for the final completion audit.
+
+## 2026-10-18 — round 7 REJECTED as a round (2/3); receipts deny every candidate
+
+**Dispatch.** 24 seats on zai-coding-plan/glm-5.3-flash; 24/24. Claims:
+C1 blind-pair receipts, O1 first quarantine exercise, K1 fleet delta.
+
+**Findings.** Receipts denied everything: lore .scratch fails 3 gates
+(untracked, live LOG reference, mtime too young); souji's own tracked
+files are unpushed-tangled (its bookkeeping commits touch tools/, tests/,
+census/); **the lane's remote does not exist (origin 404 — creation is
+operator-owned), so every pushed receipt inside the lane repo is
+unverifiable**. Calibration win: S02 caught the parent's column misread
+(lore worktrees=3 was unpushed=3; registrations=0). Blind pairs agreed
+everywhere; no candidate manufactured. K1: delta census run; live deltas
+only; no new dead registrations.
+
+**O1 NOT-MET** — the quarantine flow stays UNEXERCISED: no authorized
+target exists in scope (the 96 approval rows await the operator; other
+lanes are unpushed). Reported as such; nothing forced. Rounds r6-r7 are
+the lane discovering its true boundary: the remaining gates are external
+(operator sign-off, lane pushes, remote creation).

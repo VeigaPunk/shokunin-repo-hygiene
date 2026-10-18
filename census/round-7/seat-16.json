@@ -1,0 +1,138 @@
+{
+  "seat": "S16",
+  "round": 7,
+  "role": "gate-auditor",
+  "fragment": "census/round-7/seat-16.json",
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "lane_head": "b5db5cf27b5c993ed1832cb917ddeff77a080dd0",
+  "measured_at": "2026-10-18T18:21:54-0300",
+  "assignment": "Pair-compare S01-06 (authors) vs S07-12 (blind pairs): disagreements list; verify every agreed-SAFE candidate passes the unpushed-touching + dirty gates with fresh commands.",
+  "verdict": "AUDIT-CLEAN, ZERO SAFE REMOVALS. All six pairs agree at verdict level: every fragment lands NOT-SAFE or NO-CANDIDATES; zero SAFE verdicts exist anywhere in S01-S12 (token sweep over all 12 files). The agreed-SAFE candidate set is EMPTY, so there is nothing for the first-quarantine exercise to draw from this round. Fresh commands reproduce every seat's gate result: the lane repo has ZERO remote-tracking refs and 12 unpushed commits, so gate 1 (unpushed-touching) fails for 100% of tracked candidates in tools/ (41/41), tests/fixtures (33/33 files), tests/vault (all tracked), and census/round-{1,3,4,5,6}; pushed receipts are unverifiable everywhere (no-default-ref). lore .scratch independently fails the dirty gate (untracked '?? .scratch/'), is <1 day old, and carries 1 live ref (lore LOG.md:3530).",
+  "pairs": [
+    {
+      "pair": "S01<->S07",
+      "shard": "lore-shokunin/.scratch (+ V02, v26 children)",
+      "s01_verdict": "NOT-SAFE",
+      "s07_verdict": "NOT-SAFE (do not remove, do not quarantine)",
+      "verdict_agreement": true,
+      "disagreements": [],
+      "notes": "S07 derived independently (blind pair of S01). S01 gate detail: (c) untracked-and-unignored, (d) 1 live citation survives exclusion sweep, (e) mtime age 0.75d < 1d stale threshold."
+    },
+    {
+      "pair": "S02<->S08",
+      "shard": "lore-shokunin worktree registrations",
+      "s02_verdict": "NO ACTION - candidate set empty; r6 '3 worktrees' was a census-column misread (the 3 is main's unpushed count)",
+      "s08_verdict": "NO-CANDIDATES - zero non-main registrations, nothing prunable, no locks",
+      "verdict_agreement": true,
+      "disagreements": [],
+      "notes": "Both converge on an empty candidate set via independent derivation."
+    },
+    {
+      "pair": "S03<->S09",
+      "shard": "souji-shokunin tests/vault/",
+      "s03_verdict": "0 SAFE of 135 entries (116 removal candidates + 19 keep-listed load-bearing fixtures)",
+      "s09_verdict": "0 SAFE of 135 candidates (133 fail gate1+gate3; 2 untracked empty dirs no-receipt)",
+      "verdict_agreement": true,
+      "disagreements": [
+        {
+          "kind": "counting-scope, no verdict impact",
+          "detail": "S03 counts 116 removal candidates (19 entries keep-listed as runner-referenced fixtures); S09 treats all 135 entries as candidates. Both report safe=0 and empty quarantine ticket lists."
+        }
+      ]
+    },
+    {
+      "pair": "S04<->S10",
+      "shard": "souji-shokunin tests/fixtures/ (case-F1..F10 + .gitignore)",
+      "s04_verdict": "NO-REMOVAL - zero rot, zero removal candidates (all 9 makers exit 0; case-F10 maker-less by design)",
+      "s10_verdict": "UNANIMOUS NOT-SAFE - 11/11 tracked candidates fail gate3 pushed-unverifiable + gate1",
+      "verdict_agreement": true,
+      "disagreements": [
+        {
+          "kind": "candidate-set definition, no verdict impact",
+          "detail": "S04 defines removal candidates by rot (zero), S10 enumerates tracked entries as candidates (11 top-level / 33 files) and rejects all. Same bottom line: nothing quarantine-eligible."
+        }
+      ]
+    },
+    {
+      "pair": "S05<->S11",
+      "shard": "census archive (closed-round evidence fragments)",
+      "s05_verdict": "NOT-SAFE now - archive planning only; unpushed commits touch each dir, no receipt class obtainable",
+      "s11_verdict": "5/5 NOT-SAFE - every round dir fails gate1 on its own unpushed filing commit; origin dead (ls-remote 'Repository not found')",
+      "verdict_agreement": true,
+      "disagreements": [
+        {
+          "kind": "shard-membership, closed by union",
+          "detail": "S05's shard was named census/round-{1,2,3} but round-2 does not exist on disk (fresh: ls census/round-2 -> No such file or directory; S05's 'both surviving rounds' = 1,3). S11 covered rounds {1,3,4,5,6}. Union {1,3,4,5,6} = every census round on disk; S11 closes S05's coverage gap. File counts/bytes for round-1 agree (66 files, 753328 B)."
+        }
+      ]
+    },
+    {
+      "pair": "S06<->S12",
+      "shard": "souji-shokunin tools/ impl shard",
+      "s06_verdict": "KEEP-ALL / ZERO SAFE REMOVALS - 33 losing-impl candidates all NOT-SAFE on gate1; assignment premise false (unpushed commits DO touch tools/)",
+      "s12_verdict": "41/41 tracked entries NOT-SAFE (gate1 unpushed-commits-touching + gate3 pushed-unverifiable); quarantine-eligible 0",
+      "verdict_agreement": true,
+      "disagreements": [
+        {
+          "kind": "candidate-set scope, no verdict impact",
+          "detail": "S06 proposes 33 removal candidates (losing impls) with an explicit keep-list (3 installed runners souji-verify.sh/souji-vault-verify.sh/souji-census.sh + cited winners impl-12/impl-20/impl-33 + INSTALL records + fixture suites); S12 censuses all 41 tracked entries incl. the keeps. All 41 fail gate1, keeps included."
+        }
+      ]
+    }
+  ],
+  "verdict_level_disagreements": [],
+  "agreed_safe_candidates": [],
+  "fresh_gate_verification": {
+    "note": "Every command below was run fresh by S16 after all 12 fragments landed (18:21-03:00 window), independent of the seats' runs. r6 pitfall honored: --branches is explicit.",
+    "lane_state": {
+      "command": "git -C souji-shokunin for-each-ref refs/remotes | wc -l; git -C souji-shokunin rev-list --count --branches --not --remotes; git -C souji-shokunin status --porcelain",
+      "observed": "refs/remotes=0; unpushed=12; porcelain='?? census/round-7/' + '?? results/' only",
+      "consequence": "gate 2 (dirty) passes for every tracked shard (tools/, tests/, census rounds); gate 1 fails for every tracked candidate; gate 3 pushed receipts unverifiable everywhere (no-default-ref)"
+    },
+    "tools_shard": {
+      "command": "for p in $(git ls-files tools/): git log --branches --not --remotes --oneline -- $p | wc -l ; git status --porcelain -- $p | wc -l",
+      "observed": "tracked=41 gate1_FAIL=41 gate1_pass=0 gate2_FAIL=0",
+      "matches": "S12 (41/41) and S06 (all 33 removal candidates + keeps fail)"
+    },
+    "tests_shards": {
+      "command": "same loop over git ls-files tests/vault/ and tests/fixtures/",
+      "observed": "tests/vault: every properly-parsed tracked file gate1_FAIL (gate2 clean); tests/fixtures: 33/33 files gate1_FAIL, gate2 clean",
+      "matches": "S03/S09 (0 SAFE) and S04/S10 (11/11 NOT-SAFE)",
+      "operational_pitfall": "naive word-splitting of `git ls-files` reports 10 FALSE gate1 passes in tests/vault - those are fixture names containing spaces/newlines (vadv-54/vadv-56), split mid-name. Use `git ls-files -z`/`-s` quoting in any re-audit. This was S16's own first-pass artifact, not a seat error."
+    },
+    "census_rounds": {
+      "command": "git log --branches --not --remotes --oneline -- census/round-N | wc -l; git status --porcelain -- census/round-N | wc -l",
+      "observed": "rounds 1,3,4,5,6: gate1_lines=1 each, gate2_lines=0 each; round-2 absent from disk",
+      "matches": "S05/S11 (all NOT-SAFE, gate2 pass)"
+    },
+    "lore_scratch": {
+      "commands": [
+        "git -C lore-shokunin log --branches --not --remotes --oneline -- .scratch | wc -l  -> 0 (untracked, no history)",
+        "git -C lore-shokunin status --porcelain -- .scratch  -> '?? .scratch/' (gate2 FAIL)",
+        "stat -c %y lore-shokunin/.scratch  -> 2026-10-18 00:03:50 -0300 (age ~0.77d < 1d)",
+        "grep -n 'V02/v26' lore-shokunin/LOG.md  -> line 3530 live citation confirmed",
+        "size 218489 B byte-identical to r6 census (census baseline re-run at wave start)"
+      ],
+      "verdict": "NOT-SAFE confirmed fresh on all three gates",
+      "matches": "S01 and S07"
+    },
+    "installed_tool_cross_check": {
+      "command": "tools/souji-verify.sh <path> (fresh, read-only)",
+      "observed": [
+        "tools/souji-verify.impl-09.sh -> NOT-SAFE pushed-unverifiable intro=9435e464a2dc",
+        "tests/fixtures/case-F1 -> NOT-SAFE pushed-unverifiable intro=9435e464a2dc",
+        "tools/souji-vault-verify cross-check reported by S09 over all 135 entries: 133x pushed=unverifiable(no-default-ref) intro=48a64d8763fc, 2x no-introducing-commit",
+        "tests/vault/adv53-harness.sh -> NOT-SAFE pushed-unverifiable intro=48a64d8763fc",
+        "census/round-1 -> NOT-SAFE pushed-unverifiable intro=652b6f8f1a27"
+      ],
+      "note": "one S16 probe typo'd tools/souji-verify.impl-48.sh (path does not exist; the tracked file is tools/impl-48.sh) and returned unreachable - not a fleet anomaly; tracked-vs-disk diff of tools/ is IDENTICAL"
+    },
+    "fragment_sweep": {
+      "command": "grep verdict tokens across seat-01..12.json",
+      "observed": "0 occurrences of a literal SAFE verdict; all SAFE-shaped tokens are summary prose (safeToRemoveNow=0, quarantine-eligible, NOT-SAFE etc.)"
+    }
+  },
+  "quarantine_recommendation_to_parent": "Draw NOTHING from this round: zero agreed-SAFE candidates, zero tool-SAFE verdicts, dirty gate fails on the only scratch-class artifact. Re-audit trigger (all six pairs + S16 agree): after the operator restores/pushes a working origin for souji-shokunin (refs/remotes non-empty) AND a 1-day hold elapses (earliest stale flip ~2026-10-19 ~14:00 local for tests/vault mtimes; lore .scratch needs its untracked status resolved, its citation removed or excluded, and age > 1d), re-run gate1+gate3 per shard before staging anything. kotodama .scratch (41G, secret-shaped, live writes) remains hands-off per r6 handoff.",
+  "read_only_compliance": "S16 wrote only census/round-7/seat-16.json. No file outside the fragment was created, modified, moved, or deleted; no git mutation, no fetch; .ufo/state and .ufo/watchdog.log untouched; no secret-shaped content read.",
+  "to_verify": []
+}

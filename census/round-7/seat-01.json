@@ -1,0 +1,119 @@
+{
+  "seat": "S01",
+  "round": 7,
+  "role": "receipt-audit-author",
+  "fragment": "census/round-7/seat-01.json",
+  "target": "/home/vgpnk/Projects/shokunin/lore-shokunin/.scratch",
+  "target_kind": "default artifact, scratch-dir family (path contains a .scratch component; not a repo root, not a worktree registration — lore-shokunin has only its main worktree per r6 M16, re-confirmed this round)",
+  "r6_census_bytes": 218489,
+  "current_bytes": {
+    "du_sb": 218489,
+    "file_bytes_sum": 218489,
+    "files": 26,
+    "dirs": 13,
+    "matches_r6_census_exactly": true,
+    "note": "du -sb and the summed file sizes agree at 218489; directory st_size contributes 0 apparent bytes on this filesystem."
+  },
+  "probed_at": "2026-10-18T18:08:12-0300",
+  "verdict": "NOT-SAFE",
+  "verdict_rule": "SAFE(stale) only if ALL gates pass. Gate (c) dirty-touching, gate (d) zero-refs, and gate (e) mtime-age all fail; verdict is NOT-SAFE.",
+  "gates": {
+    "a_scratch_type": {
+      "result": "PASS",
+      "scratch_type": "scratch-dir",
+      "how_determined": "souji-verify.sh scratch_type() returns 'scratch-dir' for any path with a .scratch component; try_stale proceeded past the kind check (tool evidence has stale=mtime-age-days=0<=1 and no stale=not-scratch-type note).",
+      "tool_command": "cd /home/vgpnk/Projects/shokunin && tools/souji-verify.sh --stale-days 1 --json lore-shokunin/.scratch"
+    },
+    "b_unpushed_touching": {
+      "result": "PASS",
+      "command": "git -C /home/vgpnk/Projects/shokunin/lore-shokunin log --branches --not --remotes --oneline -- .scratch",
+      "observed_output": "(empty)",
+      "count": 0,
+      "context": "repo-wide --branches --not --remotes is 3 commits on main, none touch .scratch; git log --all --oneline -- .scratch is also empty (path never tracked)."
+    },
+    "c_dirty_touching": {
+      "result": "FAIL",
+      "command": "git -C /home/vgpnk/Projects/shokunin/lore-shokunin status --porcelain -- .scratch",
+      "observed_output": "?? .scratch/",
+      "count": 1,
+      "context": "untracked and NOT gitignored: .gitignore covers .ufo/interactive-sessions/, __pycache__/, *-self-test-*/, .ufo/waves/**/*-scratch/, .ufo/waves/**/baseline-tree/ — none matches a lane-root .scratch. Per the assigned gate and AGENTS.md ('never touch an artifact whose owning lane has dirty or unpushed work'), this alone forces NOT-SAFE."
+    },
+    "d_reference_sweep": {
+      "result": "FAIL (stale zero-refs condition not met)",
+      "command": "cd lore-shokunin && rg -l --no-ignore --fixed-strings -e '.scratch' . -g '!.git' -g '!**/.git/**' -g '!souji-shokunin/census/**' -g '!**/souji-shokunin/census/**' -g '!souji-shokunin/tests/**' -g '!**/souji-shokunin/tests/**' -g '!**/.ufo-quarantine/**' -g '!.scratch' -g '!./.scratch'",
+      "scope": "owning repo (lore-shokunin), matching souji-verify.sh count_live_refs: census/tests/quarantine/.git excluded, artifact self-excluded; a first fleet-wide sweep was over-broad and discarded.",
+      "observed_output": "./LOG.md",
+      "live_refs": 1,
+      "citation": "lore-shokunin/LOG.md:3530 'location variants (V04's in-scratch mirror, V02/v26 lane-root .scratch).' — names this exact target."
+    },
+    "e_mtime_age": {
+      "result": "FAIL",
+      "command": "stat -c %Y .scratch; date +%s",
+      "mtime_epoch": 1792292630,
+      "mtime_human": "2026-10-18 00:03:50.921241400 -0300",
+      "now_epoch": 1792357692,
+      "now_human": "2026-10-18 18:08:12 -0300",
+      "age_seconds": 65062,
+      "age_days_integer": 0,
+      "rule": "stale requires age > STALE_DAYS*86400 (86400 s at --stale-days 1); 65062 <= 86400",
+      "tool_evidence_echo": "stale=mtime-age-days=0<=1"
+    },
+    "f_file_listing": {
+      "result": "COMPLETE (26 files, 13 dirs; every entry listed with size/mtime; all times -0300)",
+      "entries": [
+        {"path": ".scratch", "type": "d", "size": 12, "mtime": "2026-10-18 00:03:50.921241400"},
+        {"path": ".scratch/V02", "type": "d", "size": 24, "mtime": "2026-10-18 00:04:55.002398296"},
+        {"path": ".scratch/V02/scratch-root", "type": "d", "size": 12, "mtime": "2026-10-18 00:04:55.002398296"},
+        {"path": ".scratch/V02/scratch-root/corpus", "type": "d", "size": 26, "mtime": "2026-10-18 00:04:55.002398296"},
+        {"path": ".scratch/V02/scratch-root/corpus/fixtures", "type": "d", "size": 36, "mtime": "2026-10-18 00:04:55.002398296"},
+        {"path": ".scratch/V02/scratch-root/corpus/fixtures/r100-docket-review", "type": "d", "size": 314, "mtime": "2026-10-18 00:04:55.004181338"},
+        {"path": ".scratch/V02/scratch-root/corpus/tools", "type": "d", "size": 102, "mtime": "2026-10-18 00:04:55.002398296"},
+        {"path": ".scratch/v26", "type": "d", "size": 54, "mtime": "2026-10-18 00:16:42.738918117"},
+        {"path": ".scratch/v26/scratch-root", "type": "d", "size": 12, "mtime": "2026-10-18 00:16:42.738918117"},
+        {"path": ".scratch/v26/scratch-root/corpus", "type": "d", "size": 26, "mtime": "2026-10-18 00:16:42.738918117"},
+        {"path": ".scratch/v26/scratch-root/corpus/fixtures", "type": "d", "size": 36, "mtime": "2026-10-18 00:16:42.738918117"},
+        {"path": ".scratch/v26/scratch-root/corpus/fixtures/r100-docket-review", "type": "d", "size": 314, "mtime": "2026-10-18 00:16:42.739918119"},
+        {"path": ".scratch/v26/scratch-root/corpus/tools", "type": "d", "size": 102, "mtime": "2026-10-18 00:16:42.738918117"},
+        {"path": ".scratch/V02/scratch-root/corpus/fixtures/r100-docket-review/claim-excerpt-map.md", "type": "f", "size": 18555, "mtime": "2026-10-18 00:12:49.776447766"},
+        {"path": ".scratch/V02/scratch-root/corpus/fixtures/r100-docket-review/contradictions.json", "type": "f", "size": 3, "mtime": "2026-10-18 00:12:49.776447766"},
+        {"path": ".scratch/V02/scratch-root/corpus/fixtures/r100-docket-review/entities.json", "type": "f", "size": 1793, "mtime": "2026-10-18 00:12:49.776447766"},
+        {"path": ".scratch/V02/scratch-root/corpus/fixtures/r100-docket-review/fictional-excerpts.md", "type": "f", "size": 5961, "mtime": "2026-10-18 00:12:49.776447766"},
+        {"path": ".scratch/V02/scratch-root/corpus/fixtures/r100-docket-review/inspiration-note.md", "type": "f", "size": 1956, "mtime": "2026-10-18 00:12:49.776447766"},
+        {"path": ".scratch/V02/scratch-root/corpus/fixtures/r100-docket-review/README.md", "type": "f", "size": 7074, "mtime": "2026-10-18 00:12:49.776447766"},
+        {"path": ".scratch/V02/scratch-root/corpus/fixtures/r100-docket-review/relations.json", "type": "f", "size": 139, "mtime": "2026-10-18 00:12:49.777447768"},
+        {"path": ".scratch/V02/scratch-root/corpus/fixtures/r100-docket-review/source-excerpt.md", "type": "f", "size": 640, "mtime": "2026-10-18 00:12:49.777447768"},
+        {"path": ".scratch/V02/scratch-root/corpus/fixtures/r100-docket-review/sources.json", "type": "f", "size": 3876, "mtime": "2026-10-18 00:12:49.777447768"},
+        {"path": ".scratch/V02/scratch-root/corpus/fixtures/r100-docket-review/timeline.json", "type": "f", "size": 3417, "mtime": "2026-10-18 00:12:49.817722247"},
+        {"path": ".scratch/V02/scratch-root/corpus/tools/dependency-freeze-contract.json", "type": "f", "size": 34095, "mtime": "2026-10-18 00:12:49.776447766"},
+        {"path": ".scratch/V02/scratch-root/corpus/tools/dependency_freeze.py", "type": "f", "size": 30142, "mtime": "2026-10-18 00:12:49.776447766"},
+        {"path": ".scratch/v26/poll.log", "type": "f", "size": 2294, "mtime": "2026-10-18 00:16:39.793912282"},
+        {"path": ".scratch/v26/poll.sh", "type": "f", "size": 892, "mtime": "2026-10-18 00:03:10.327269502"},
+        {"path": ".scratch/v26/scratch-root/corpus/fixtures/r100-docket-review/claim-excerpt-map.md", "type": "f", "size": 18555, "mtime": "2026-10-18 00:16:42.739918119"},
+        {"path": ".scratch/v26/scratch-root/corpus/fixtures/r100-docket-review/contradictions.json", "type": "f", "size": 3, "mtime": "2026-10-18 00:16:42.739918119"},
+        {"path": ".scratch/v26/scratch-root/corpus/fixtures/r100-docket-review/entities.json", "type": "f", "size": 1793, "mtime": "2026-10-18 00:16:42.739918119"},
+        {"path": ".scratch/v26/scratch-root/corpus/fixtures/r100-docket-review/fictional-excerpts.md", "type": "f", "size": 5961, "mtime": "2026-10-18 00:16:42.739918119"},
+        {"path": ".scratch/v26/scratch-root/corpus/fixtures/r100-docket-review/inspiration-note.md", "type": "f", "size": 1956, "mtime": "2026-10-18 00:16:42.739918119"},
+        {"path": ".scratch/v26/scratch-root/corpus/fixtures/r100-docket-review/README.md", "type": "f", "size": 7074, "mtime": "2026-10-18 00:16:42.739918119"},
+        {"path": ".scratch/v26/scratch-root/corpus/fixtures/r100-docket-review/relations.json", "type": "f", "size": 139, "mtime": "2026-10-18 00:16:42.739918119"},
+        {"path": ".scratch/v26/scratch-root/corpus/fixtures/r100-docket-review/source-excerpt.md", "type": "f", "size": 640, "mtime": "2026-10-18 00:16:42.739918119"},
+        {"path": ".scratch/v26/scratch-root/corpus/fixtures/r100-docket-review/sources.json", "type": "f", "size": 3876, "mtime": "2026-10-18 00:16:42.739918119"},
+        {"path": ".scratch/v26/scratch-root/corpus/fixtures/r100-docket-review/timeline.json", "type": "f", "size": 3418, "mtime": "2026-10-18 00:16:49.561414938"},
+        {"path": ".scratch/v26/scratch-root/corpus/tools/dependency-freeze-contract.json", "type": "f", "size": 34095, "mtime": "2026-10-18 00:16:42.738918117"},
+        {"path": ".scratch/v26/scratch-root/corpus/tools/dependency_freeze.py", "type": "f", "size": 30142, "mtime": "2026-10-18 00:16:42.738918117"}
+      ],
+      "shape_note": "Two near-identical scratch-root mirrors (V02 from ~00:04, v26 from ~00:16) holding the same r100-docket-review fixtures and dependency_freeze tools; v26 additionally has poll.sh/poll.log. The mirrors differ in exactly one file: v26 timeline.json is 3418 B vs V02's 3417 B."
+    }
+  },
+  "receipt_checks": {
+    "pushed": "N/A — no introducing commit: git log --all --oneline -- .scratch is empty (path never tracked); tool evidence pushed=no-introducing-commit. Default ref origin/main exists (refs/remotes/origin/HEAD -> origin/main), so pushed would be testable once the path is ever committed.",
+    "moved-to-obsidian": "No matching ledger row (tool evidence obsidian=no-matching-ledger-row; the live ledger is header-only per r6 S01).",
+    "stale": "FAILS — 1 of 3 conditions holds. scratch type scratch-dir holds; live refs = 1 (LOG.md:3530) fails zero-refs; mtime age 0.75 d <= 1 day fails the age rule.",
+    "metadata-prune": "N/A — target is not a worktree registration."
+  },
+  "tool_output": {
+    "command": "cd /home/vgpnk/Projects/shokunin && tools/souji-verify.sh --stale-days 1 --json lore-shokunin/.scratch",
+    "observed_output": "{\"path\":\"lore-shokunin/.scratch\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"none\",\"evidence\":\"pushed=no-introducing-commit; obsidian=no-matching-ledger-row; stale=mtime-age-days=0<=1\"}"
+  },
+  "summary": "NOT-SAFE. lore-shokunin/.scratch (218,489 B, byte-identical to the r6 census) is a scratch-dir with two same-day V02/v26 mirror subtrees created 2026-10-18 00:03-00:16 -0300. Three gates fail: (c) the path is untracked-and-unignored (status porcelain '?? .scratch/'), (d) one live citation survives the exclusion sweep (LOG.md:3530 names 'V02/v26 lane-root .scratch'), and (e) dir mtime age is 0.75 d, under the 1-day stale threshold. Pushed and obsidian receipts are unavailable; metadata-prune is inapplicable. Do not quarantine this round. It becomes a stale candidate only when ALL of: zero live refs outside census/tests, mtime older than 1 day, and the dirty-touching gate empty (tracked, ignored, or resolved by the lane) hold.",
+  "safety": "Read-only over the fleet, lane, and every sibling except this fragment. No fetch/push/commit/branch/checkout/reset, no removals or moves anywhere, no secret-shaped file reads, no .ufo/state or .ufo/watchdog.log access, no ledger writes. All git/rg/stat/find invocations were read-only probes; the only bytes written are this fragment."
+}

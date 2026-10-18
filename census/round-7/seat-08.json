@@ -1,0 +1,110 @@
+{
+  "seat": "S08",
+  "round": 7,
+  "kind": "small-artifact-receipts",
+  "claim": "C-quarantine",
+  "assignment": "Lore worktree registrations, independent (blind pair of S02). Produce receipt-gated tickets for every lore worktree registration candidate; parent executes any quarantine plan.",
+  "written_at": "2026-10-18T18:13:52-03:00",
+  "mode": "Read-only over the lane except this fragment. No git fetch/push/commit/branch/checkout/reset/rebase/prune executed anywhere; `worktree prune -n` dry-run only. No deletes, no moves. Secret-shaped file bodies not read; .ufo/state and .ufo/watchdog.log untouched. Blind discipline: census/round-7/seat-02.json was never opened.",
+  "target_class": "worktree registrations owned by lore-shokunin (non-main `git worktree` entries: admin dirs under lore-shokunin/.git/worktrees/, their registered dirs, locks)",
+  "headline": "The lore worktree-registration candidate set is EMPTY. As of 2026-10-18T18:13-03:00 lore-shokunin has zero non-main worktree registrations: no admin dirs, no locks, nothing prunable, no lore-named worktree directories anywhere in the fleet. There is nothing for the quarantine plan to act on in this class; any quarantine step against lore worktree registrations would be a no-op or a defect. The only lore registration that exists is the main worktree, which is the repo root itself — out of class for worktree-registration receipts and independently NOT-SAFE(unpushed).",
+  "verdict": "NO-CANDIDATES",
+  "quarantine_action": "none",
+  "inventory": {
+    "measured_at": "2026-10-18T18:13:12-03:00",
+    "registrations_non_main": 0,
+    "evidence": [
+      {
+        "cmd": "git -C /home/vgpnk/Projects/shokunin/lore-shokunin worktree list --porcelain",
+        "out": "worktree /home/vgpnk/Projects/shokunin/lore-shokunin\\nHEAD 6cec83aede47575beeeda6b7dc0e4ea74927be78\\nbranch refs/heads/main",
+        "note": "single entry = main worktree; no prunable lines"
+      },
+      {
+        "cmd": "ls /home/vgpnk/Projects/shokunin/lore-shokunin/.git/worktrees",
+        "out": "No such file or directory",
+        "note": "zero admin dirs -> zero locks by construction"
+      },
+      {
+        "cmd": "git -C /home/vgpnk/Projects/shokunin/lore-shokunin worktree prune -n -v",
+        "out": "(empty), exit 0",
+        "note": "dry-run: nothing prunable; no mutation (gate-3 lock/absence confirmed both ways)"
+      },
+      {
+        "cmd": "git -C /home/vgpnk/Projects/shokunin/lore-shokunin config --get-regexp worktree",
+        "out": "(empty), exit 1",
+        "note": "no worktree.* config overrides"
+      },
+      {
+        "cmd": "find /home/vgpnk/Projects/shokunin -maxdepth 4 -name .git -type f  (and root-listing check for lore-shokunin-* siblings)",
+        "out": "only /home/vgpnk/Projects/shokunin/souji-shokunin/results/crun-59-tmp/tmp.pBQvZmPji2/wt-dirty/.git (a r6 selftest fixture, not lore); no lore-shokunin-* directories exist",
+        "note": "no registered lore worktree dir lives anywhere in the fleet"
+      },
+      {
+        "cmd": "git -C /home/vgpnk/Projects/shokunin worktree list --porcelain",
+        "out": "worktree /home/vgpnk/Projects/shokunin (branch refs/heads/master)",
+        "note": "fleet-root repo registers no worktrees pointing into lore either"
+      }
+    ]
+  },
+  "receipt_gates": {
+    "note": "Universal round-7 gate spec: (1) unpushed commits touching the candidate (git log --branches --not --remotes --oneline -- <path> empty), (2) dirty paths touching it, (3) the receipt itself (stale | pushed | metadata-prune). All three documented per candidate or verdict is NOT-SAFE.",
+    "per_candidate": [],
+    "class_level_documentation": "With zero candidates, gates (1)(2)(3) are vacuously satisfied and documented at class level by the inventory block above: nothing exists for an unpushed/dirty path to touch, and the metadata-prune receipt cannot attach to a registration that does not exist (dir-absent + unique=0 + no-lock all hold trivially, but there is no registration left to prune — round 3 already pruned it).",
+    "tool_gate_nuance": "tools/souji-verify.sh metadata-prune checks dir-absent + unique=0 but does not itself test a `locked` file; moot here (admin dir absent entirely). The gd2d locked-registration concern from round 5 belongs to game-dev-2d-shokunin, not this target."
+  },
+  "out_of_class_but_gated": {
+    "path": "/home/vgpnk/Projects/shokunin/lore-shokunin",
+    "why": "the main worktree IS the repo root; the tool excludes path==repo from worktree-registration receipts, but the parent's quarantine plan touches lore, so the repo root is receipt-gated here too",
+    "gate_1_unpushed": {
+      "cmd": "git -C lore-shokunin log --branches --not --remotes --oneline",
+      "out": "6cec83a gitignore: stop re-tracking per-seat wave scratch and baseline copies; 1659a42 cleanup: drop closed-round seat scratch trees (rounds <= 100); f553a27 chore: drop seat scratch/archive caches (reports and receipts retained)",
+      "count": 3,
+      "note": "non-empty -> gate fails; also note 1659a42/f553a27 are local-only DELETION commits: lore's tree legitimately lacks scratch files that older census text may cite, and a quarantine overlay must not 'restore' or double-count them"
+    },
+    "gate_2_dirty": {
+      "cmd": "git -C lore-shokunin status --porcelain",
+      "out": "?? .scratch/",
+      "count": 1
+    },
+    "gate_3_receipt": "none attachable: pushed n/a (dir has no introducing commit; try_pushed -> no-introducing-commit), obsidian no (ledger /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/knowledge/obsidian-ledger.tsv is header-only, 1 line, mtime 2026-10-18 13:29:51.552252277 -0300 unchanged), stale no (not scratch-type)",
+    "tool_probe": {
+      "cmd": "bash tools/souji-verify.sh --json /home/vgpnk/Projects/shokunin/lore-shokunin",
+      "out": "{\"path\":\"/home/vgpnk/Projects/shokunin/lore-shokunin\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"unpushed\",\"evidence\":\"unpushed=3 dirty=1\"}"
+    },
+    "verdict": "NOT-SAFE(unpushed) — hands-off; per AGENTS.md no artifact of a lane with unpushed/dirty work may be touched"
+  },
+  "control_probes": [
+    {
+      "id": "historical-registration-name-is-gone",
+      "cmd": "bash tools/souji-verify.sh --json /home/vgpnk/Projects/shokunin/lore-shokunin-wt-r87-B1",
+      "out": "{\"path\":\"/home/vgpnk/Projects/shokunin/lore-shokunin-wt-r87-B1\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"unreachable\",\"evidence\":\"missing path\"}",
+      "note": "r3-era registration shape returns unreachable, not metadata-prune: the class is truly empty, not merely clean"
+    },
+    {
+      "id": "lore-scratch-is-another-seats-target",
+      "cmd": "bash tools/souji-verify.sh --json /home/vgpnk/Projects/shokunin/lore-shokunin/.scratch/v26",
+      "out": "{\"verdict\":\"NOT-SAFE\",\"receipt\":\"none\",\"evidence\":\"pushed=no-introducing-commit; obsidian=no-matching-ledger-row; stale=mtime-age-days=0<=1\"}",
+      "note": "out of scope for S08 (worktree registrations); recorded so the parent does not double-ticket it as mine; .scratch/V02 and v05-self-test-scratch likewise not ticketed here"
+    }
+  ],
+  "history": {
+    "why_empty": "Lore's non-main worktree registrations were pruned in round 3 (admin dirs r87-B1, r87-X3, r87-JDEP3 under lore-shokunin/.git/worktrees/; census/round-3/seat-01.json records the prune with commit 28706dc fully reachable from refs/heads/main and origin/main, so no object loss). The r5-era SKILL.md figure 'lore 19 prunable worktrees' was already retired in round 6 (census/round-6/final-113/114/116/117 re-measured lore worktree-list lines = 1). Round-5 S08 independently verified 'lore worktree list is main only (count 1)'. This seat re-measures the same state fresh at 18:13 and adds the stronger absence evidence (.git/worktrees absent, prune -n empty, fleet-wide dir scan)."
+  },
+  "not_claimed": [
+    "Did not verify lore's unpushed commits' full file lists beyond their subjects; only the repo-root gate needed their existence.",
+    "Did not ticket lore .scratch/ or v05-self-test-scratch artifacts (different target class; probe on one shown as control only).",
+    "Did not run tools/souji-census.sh fleet-wide (kotodama-scale walk unnecessary for a zero-candidate class).",
+    "Blind pair: no attempt made to learn S02's fragment; seat-02.json never read.",
+    "souji-verify.sh worktree scan (SHOKUNIN_ROOT default = fleet root) was not re-run as a whole; per-target probes cover every lore path in the class."
+  ],
+  "safety": {
+    "ledger_mtime": "2026-10-18 13:29:51.552252277 -0300 (unchanged; header-only, not opened beyond stat)",
+    "writes": ["census/round-7/seat-08.json"],
+    "git_mutators_on_live_repos": "none (read-only git except `worktree prune -n -v` dry-run and `prune -n` prints without removing)",
+    "tool_pin": {
+      "path": "/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh",
+      "sha256": "a91049c96e5fba7c3db83df288a261717156c3834532e54d712ed0c555e350c4"
+    },
+    "lore_head_pin": "6cec83aede47575beeeda6b7dc0e4ea74927be78 (branch main)"
+  }
+}

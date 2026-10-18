@@ -1,0 +1,124 @@
+{
+ "seat": "S18",
+ "round": 7,
+ "kind": "docs-audit-quarantine-flow",
+ "role": "docs auditor — verify the r7 plan truly exercises the quarantine flow (quarantine dir -> hold -> second check -> delete); prepare exact SKILL.md/AGENTS.md UNEXERCISED->exercised flip as a diff, NOT applied",
+ "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+ "repo_head": "b5db5cf27b5c993ed1832cb917ddeff77a080dd0",
+ "patch_base": {
+  "SKILL.md": {
+   "git_blob": "4a621c93750b62c0a5342cf3aec94bea6274be02",
+   "sha256": "7d5f4c18943717f37317314ccd85819626be366a7b0fed016adb53aa268ea599"
+  },
+  "AGENTS.md": {
+   "git_blob": "984100cb549095a335d6c00412df574e16b72cbe",
+   "sha256": "bbf4fd41308674c3c95ec40b887488b2feaf95b206e2a9e8eac0e33c01ff7948"
+  }
+ },
+ "run_local": "2026-10-18T18:19:17-0300",
+ "run_utc": "2026-10-18T21:19:17Z",
+ "measurement_windows": [
+  {
+   "at": "2026-10-18T21:05:11Z",
+   "ufo_quarantine_dirs_fleet_maxdepth4": 0,
+   "lane_head": "b5db5cf",
+   "lane_dirty": [
+    "?? results/"
+   ]
+  },
+  {
+   "at": "2026-10-18T21:14:17Z (after assigned 300s wait)",
+   "ufo_quarantine_dirs_fleet_maxdepth4": 0,
+   "quarantine_commits": 0,
+   "lane_head": "b5db5cf",
+   "lane_dirty": [
+    "?? census/round-7/ (9 sibling fragments)",
+    "?? results/"
+   ]
+  }
+ ],
+ "verdict": "PLAN-STAGE-COMPLETE, EXECUTION-NOT-YET-OBSERVED; FLIP IS CONDITIONAL. The r7 dispatch exercises all four flow stages (quarantine dir -> hold -> second check -> delete) and the parent executes after tickets land, so at both measurement windows nothing had run (0 .ufo-quarantine dirs fleet-wide, no quarantine commit). The docs flip MUST NOT be applied until the parent observes all four stages; applying it earlier would fabricate exercise evidence — the exact r6 defect class T1 (census/round-6/seat-03.json implied_working_traps). One spec gap must be fixed with the flip or step 5 cannot pass as written (see second_check_trap).",
+ "plan_stage_table": {
+  "stage_1_quarantine_dir": {
+   "doc_line": "SKILL.md step 3 + checklist item 1",
+   "plan_covers": "yes — dispatch names the quarantine dir; evidence will be a .ufo-quarantine/<utc-date>/ dir inside the OWNING repo + a normal commit there",
+   "lawful_targets_seat_visible": "fleet-root pushed artifacts only. souji-internal surfaces have zero remote-tracking refs -> no pushed receipt establishable (S19); lore is hands-off (3 unpushed commits + dirty .scratch/, S02/S08); kotodama standing NOT-SAFE. Fixture rehearsal in /tmp exercises mechanics without a fleet removal."
+  },
+  "stage_2_hold": {
+   "doc_line": "SKILL.md step 4",
+   "plan_covers": "yes — hard minimum 450s (one driver tick) for ANY receipt; 24h is a preference for non-pushed. A same-session exercise is lawful at >=450s for a pushed target; evidence = delta between quarantine commit timestamp and second-check run."
+  },
+  "stage_3_second_check": {
+   "doc_line": "SKILL.md step 5",
+   "plan_covers": "NAMES the stage, but the literal text 're-run the receipt command' is UNSATISFIABLE post-move — see second_check_trap. Plan must spec the digest+scoped-history form or step 5 fails."
+  },
+  "stage_4_delete": {
+   "doc_line": "SKILL.md step 6",
+   "plan_covers": "yes — evidence = path gone from quarantine; for a pushed target no hold beyond the second check is required."
+  },
+  "step_2_operator_approval": {
+   "doc_line": "SKILL.md step 2",
+   "status": "UNVERIFIABLE from seat-visible evidence — no r7 LOG entry exists yet; the 96-row r3 list remains unsigned. Flip of step 2 is conditional on the r7 LOG entry recording the approval for the exercise list."
+  }
+ },
+ "second_check_trap": {
+  "claim": "tools/souji-verify.sh re-run cannot hold after a lawful git mv quarantine, either path.",
+  "mechanism": [
+   "tools/souji-verify.sh:220 intro=$(git log --diff-filter=A ... -- $target) — for the moved path the introducing commit IS the quarantine commit",
+   "tools/souji-verify.sh:230-234 pushed receipt additionally requires zero unpushed commits touching the path — the quarantine commit touches BOTH the moved path (addition) and the original path (deletion)"
+  ],
+  "probe_dir": "/tmp/s18-2ndcheck.18MHc (hermetic fixture, GIT_CONFIG_GLOBAL=/dev/null, SHOKUNIN_ROOT/empty fleet, ledger empty)",
+  "evidence": [
+   {
+    "cmd": "bash tools/souji-verify.sh $T/r/note-draft.log  (before quarantine; remote-tracking refs at intro commit)",
+    "out": "VERDICT\t/tmp/s18-2ndcheck.18MHc/r/note-draft.log\tSAFE\tpushed\tintro=e726a63ea026 ref=refs/remotes/origin/main ancestor=yes"
+   },
+   {
+    "cmd": "git mv note-draft.log .ufo-quarantine/2026-10-18/ && git commit (quarantine commit c55ee54); re-run on moved path",
+    "out": "VERDICT\t.../.ufo-quarantine/2026-10-18/note-draft.log\tNOT-SAFE\tnone\tpushed=unpushed-commits-touching intro=c55ee541ea76; obsidian=no-ledger; stale=mtime-age-days=0<=1"
+   },
+   {
+    "cmd": "re-run on original path",
+    "out": "VERDICT\t.../r/note-draft.log\tNOT-SAFE\tunreachable\tmissing path"
+   },
+   {
+    "cmd": "correct form: sha256(quarantined) == census row sha AND git log --branches --not --remotes --oneline -- <path> lists ONLY the quarantine commit",
+    "out": "sha256 6a179c73c3c7abb7... recorded; unpushed_touching_new_path: c55ee54 (only the quarantine commit itself) -> receipt HOLDS under the scoped form"
+   }
+  ],
+  "consequence": "SKILL.md step 5 flip embeds the passing form: content sha equal to the approved census row + owning-repo gates re-run excluding the quarantine commit itself + quarantined path still present (the r1 logs_tier.txt existence lesson). If the parent's execution passes step 5 with a different form, parent edits that one line before applying."
+ },
+ "flip_diffs": {
+  "apply_rules": [
+   "Do NOT apply until all four stages are observed complete with evidence recorded in the r7 LOG entry + census/round-7/.",
+   "Step 2 hunk text is self-guarding: it only claims r7 exercise 'if the r7 LOG entry records that approval'.",
+   "Supersedes (never reverts) the r6 UNEXERCISED record: census/round-6/seat-03.json; the r6 skill-amend-22/24 diffs were never applied and are superseded by this pair.",
+   "Both diffs verified to apply cleanly: git apply -p1 on HEAD copies -> byte-identical to intended content (APPLY_OK)."
+  ],
+  "skill_diff": "diff --git a/SKILL.md b/SKILL.md\nindex 4a621c9..691d2e9 100644\n--- a/SKILL.md\n+++ b/SKILL.md\n@@ -39,12 +39,16 @@ verifies (pushed before obsidian).\n \n ### Removal flow (default dry run)\n \n-1. Dry-run census: classify every candidate, print the table, change nothing.\n-2. Operator approves the removal list.\n-3. `git mv` (or plain `mv` for untracked) into `<repo>/.ufo-quarantine/<utc-date>/...` — quarantine is a normal commit in the owning repo.\n-4. Hold period (≥ one driver tick, 450s minimum; prefer 24h for anything not `pushed`).\n-5. Second check: re-run the receipt command; receipt must still hold.\n-6. Delete from quarantine. `pushed` artifacts need no hold beyond the second check.\n+Exercise status after round 7 (supersedes the r6 UNEXERCISED record,\n+`census/round-6/seat-03.json`; first end-to-end exercise r7 — evidence in\n+the r7 LOG entry and `census/round-7/`):\n+\n+1. Dry-run census: classify every candidate, print the table, change nothing. (EXERCISED r1, r3)\n+2. Operator approves the removal list. (EXERCISED r7 for the r7 exercise list, if the r7 LOG entry records that approval; the 96-row r3 list remains unsigned)\n+3. `git mv` (or plain `mv` for untracked) into `<repo>/.ufo-quarantine/<utc-date>/...` — quarantine is a normal commit in the owning repo. (EXERCISED r7)\n+4. Hold period (≥ one driver tick, 450s minimum; prefer 24h for anything not `pushed`). (EXERCISED r7)\n+5. Second check: re-verify the receipt at decision time — artifact sha256 equal to the approved census row, owning-repo receipt gates re-run excluding the quarantine commit itself (its deletion touches the original path; its commit is the moved path's intro commit), and the quarantined path still present. (EXERCISED r7)\n+6. Delete from quarantine. `pushed` artifacts need no hold beyond the second check. (EXERCISED r7)\n \n ### Never\n \n@@ -84,7 +88,7 @@ Pre-removal (all must answer yes):\n - [ ] Entry is in a dry-run table the operator has seen, unless receipt is `pushed` and quarantine hold elapsed\n - [ ] Nothing references the artifact (`rg -l` across owning repo, 0 hits)\n \n-Pre-quarantine commit:\n+Pre-quarantine commit (all three items first verified on the r7 quarantine commit):\n - [ ] Quarantine path is inside the owning repo (`.ufo-quarantine/<date>/`)\n - [ ] Commit message names the receipt class and the evidence pointer\n - [ ] Lane identity: `souji-shokunin <souji@shokunin.local>`\n",
+  "agents_diff": "diff --git a/AGENTS.md b/AGENTS.md\nindex 984100c..b8e05ea 100644\n--- a/AGENTS.md\n+++ b/AGENTS.md\n@@ -5,7 +5,9 @@\n - Default to a dry run. Any removal requires a receipt (`pushed` /\n   `moved-to-obsidian` / `stale`), quarantine staging, a hold period, and a\n   second receipt check. No receipt, no removal — and when uncertain, the\n-  verdict is `NOT-SAFE`.\n+  verdict is `NOT-SAFE`. Exercised end-to-end first in r7 (receipt →\n+  `.ufo-quarantine/` staging commit → ≥450s hold → second receipt check →\n+  delete); evidence: the r7 LOG entry and `census/round-7/`.\n - Never rewrite history; never touch credentials or operator config; never\n   touch an artifact whose owning lane has dirty or unpushed work.\n - Every change is recorded in an append-only LOG.md entry with the evidence\n"
+ },
+ "receipt_gates_for_this_fragment": {
+  "candidate": "census/round-7/seat-18.json (this file; created, never removed)",
+  "gate_1_unpushed_commits_touching": {
+   "cmd": "git -C souji-shokunin log --branches --not --remotes --oneline -- census/round-7/seat-18.json",
+   "out_at_write": "EMPTY (path never committed)",
+   "note": "repo-level: all 12 commits are unpushed — origin remote configured but zero remote-tracking refs, so no pushed receipt is establishable in-lane (matches S19). This fragment is an evidence artifact, not a removal candidate; the parent commits it with the round."
+  },
+  "gate_2_dirty_paths_touching": {
+   "cmd": "git status --porcelain -- census/round-7/",
+   "out": "this fragment is the only path this seat creates; 9 sibling fragments + results/ are other seats'/pre-existing dirty paths, untouched by S18"
+  },
+  "gate_3_receipt": {
+   "class": "N/A — creation of the seat's assigned evidence fragment is not a removal; no receipt is required and none is claimed. Removal candidates this round are ticketed by their own seats (S19 etc.), NOT-SAFE per their fragments."
+  }
+ },
+ "cross_refs": [
+  "census/round-6/seat-03.json (r6 UNEXERCISED record this flip supersedes)",
+  "census/round-6/skill-amend-22.diff + skill-amend-24.diff (unapplied r6 proposals, superseded)",
+  "census/round-7/seat-19.json (souji-internal surfaces lack pushed receipts)",
+  "census/round-7/seat-02.json + seat-08.json (lore hands-off; no worktree candidates)",
+  "LOG.md r6 entry (round REJECTED; quarantine flow UNEXERCISED carries into r7)"
+ ],
+ "read_only_declaration": "Writes: census/round-7/seat-18.json only. /tmp scratch: s18-flip.UsdO, s18-2ndcheck.18MHc, s18-apply.* (probe fixtures; residue routed to tsukuroi/operator per r5 convention). No .ufo/state, no .ufo/watchdog.log, no secret-shaped files read; no fleet file outside the fragment modified; both target docs untouched."
+}
