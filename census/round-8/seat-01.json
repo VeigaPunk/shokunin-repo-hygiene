@@ -1,0 +1,41 @@
+{
+  "seat": "S01",
+  "round": 8,
+  "role": "quarantine-flow-implementor",
+  "fragment": "census/round-8/seat-01.json",
+  "probed_at": "2026-10-18T19:20:28-03:00",
+  "deliverable": {
+    "file": "tools/souji-quarantine.impl-01.sh",
+    "sha256_16": "5780ad751aa49d1b",
+    "lines": 971,
+    "deps": "bash + coreutils + git only; receipt authority delegated to tools/souji-verify.sh as a child process with explicit SHOKUNIN_ROOT/SOUJI_LEDGER context"
+  },
+  "verdict": "DELIVERED-AND-VERIFIED — the r7 execution_plan_template is now one executable, fail-closed tool; selftest 63/63 on two consecutive runs; live fleet untouched (dry-run + guard proven)",
+  "contract": {
+    "cli": "[--dry-run] [--hold seconds] [--list FILE] [--selftest] <repo> <target>...",
+    "stage1": "souji-verify SAFE-or-abort (NOT-AUTHORIZED); receipt pin enforced in --list mode; extra fail-closed refusals: secrets, symlinks, outside-repo, .ufo-quarantine/.git prefixes, .., quarantine collisions, dirty-tracked (r7 gate2)",
+    "stage2": "<repo>/.ufo-quarantine/<utc-date>/<repo-relative-path>; git mv tracked / mv untracked; never commits",
+    "stage3": "hold window, default 450s, --hold 0 for fixtures",
+    "stage4": "prong1 souji-verify re-run on the quarantine path (binding for stale — receipt is path-local; tolerated+recorded for pushed/moved-to-obsidian — receipts are keyed to the original path); prong2 class re-derivation: pushed = unpushed gate + intro-commit blob hash of quarantine bytes; moved-to-obsidian = ledger re-hash of quarantine copy AND vault copy (dirs via symlink-fail-closed digests); universal content-digest + mtime pins for every class",
+    "stage5": "delete from quarantine only on PASS; abort leaves the copy staged and reports ABORTED",
+    "exit_codes": "0 ok / 1 internal / 2 usage / 3 any NOT-AUTHORIZED-ABORTED-STAGE2-FAILED-DRY-RUN-BLOCKED / 4 live-fleet guard"
+  },
+  "safety_properties_proven": [
+    "mutation anywhere inside the live fleet root is refused exit 4 unless SOUJI_QUARANTINE_ALLOW_LIVE=1; --dry-run runs anywhere and changes nothing",
+    "the only tree mutation is the stage-2 move into .ufo-quarantine; deletion only ever targets .ufo-quarantine paths",
+    "tamper between staging and second check is caught by the content pin (A1: ABORTED, file kept, vault intact)",
+    "a dirty tracked file is refused before staging even when the pushed receipt alone would pass (engine pins commits, tool pins worktree state — r7 gate2 enforced)",
+    "no forbidden git porcelain in the tool source (H1 audit); fixtures only under mktemp (H2); live-lane porcelain count, LOG.md sha and .ufo-quarantine absence unchanged across the whole battery (H3)"
+  ],
+  "evidence": {
+    "selftest": "bash tools/souji-quarantine.impl-01.sh --selftest -> 'selftest: 63 checks, 0 failed' (runA rc=0, runB rc=0)",
+    "full_evidence_fragment": "results/qrun-01.json",
+    "state_transitions_exercised": "DELETED (pushed git-mv, stale mv, obsidian mv, list mode), ABORTED (tamper), NOT-AUTHORIZED (unpushed, unreachable, dirty-tracked, no-receipt, receipt-mismatch), SKIPPED (metadata-prune), DRY-RUN-PASS, DRY-RUN-BLOCKED, GUARD exit 4, usage exit 2 x5"
+  },
+  "boundary_note": "live fleet still has zero authorized targets (r7 finding stands): the lane has no remote (pushed unverifiable), the ledger is header-only (obsidian n/a), and fresh mtimes deny stale — so the tool's positive path is proven on fixtures only, which is exactly the round-8 discipline",
+  "not_claimed": [
+    "no live mutation of any kind; lane writes are this fragment and results/qrun-01.json only",
+    ".ufo/state, .ufo/watchdog.log and secret-shaped files never opened",
+    "no fetch/push/commit/branch executed on any repo; fixtures built with plumbing only"
+  ]
+}

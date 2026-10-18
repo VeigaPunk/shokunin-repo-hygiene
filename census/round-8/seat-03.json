@@ -1,0 +1,55 @@
+{
+ "seat": "S03",
+ "round": 8,
+ "repo": "souji-shokunin",
+ "role": "implementor — quarantine-flow tooling",
+ "fragment": "census/round-8/seat-03.json",
+ "generatedAt": "2026-10-18T19:47:30-03:00",
+ "deliverable": {
+  "tool": "tools/souji-quarantine.impl-03.sh (sha256 5a60d5627834a054...59f711, full sha in results/qrun-03.json)",
+  "dispatcher": "tools/impl-03.sh (seat assignment name; execs the tool)",
+  "what": "souji-quarantine — fail-closed quarantine ticket runner turning census/round-7/quarantine-plan.json execution_plan_template into executable, sandbox-guarded steps: --check (step_0 gates), --stage (step_1 mv + sidecar record), --verify-staged (step_3 second check), --retire (step_4, signoff-gated), --plan (runbook), --selftest (27-case fixture battery)",
+  "run_evidence": "results/qrun-03.json"
+ },
+ "authorization_rule_implemented": {
+  "gate1": "git -C <repo> log --branches --not --remotes --oneline -- <path> must be empty; the explicit --branches form is mandatory — selftest Q7 proves the bare --not --remotes form is silently empty on a zero-remote repo (git 2.55 r6 pitfall)",
+  "gate2": "git -C <repo> status --porcelain=v1 --untracked-files=all -- <path> must be empty; untracked counts as dirty, ignored-clean is the only passable untracked shape (Q3 vs Q3b)",
+  "gate3": "tools/souji-verify.sh --json AND tools/souji-vault-verify.sh --json both SAFE with the SAME receipt, equal to --expect-receipt when given (Q5 exercises mismatch)",
+  "verdict": "AUTHORIZED only when all three pass; else NOT-AUTHORIZED with per-gate evidence; secrets-refusal precedes any read"
+ },
+ "selftest": "27 checks, 0 failed, exit 0 (Q1-Q18 + H1/H2/H5/H8; case list and dev-fix history in results/qrun-03.json)",
+ "live_fleet_proof": {
+  "tools/souji-verify.sh": "NOT-AUTHORIZED gate1=3 unpushed-touching gate3 no-safe-receipt pushed-unverifiable — corroborates round-7 (dead origin, zero remote-tracking refs)",
+  "census/round-7/seat-03.json": "NOT-AUTHORIZED gate1=1 (filing commit unpushed)",
+  "stage refusal": "--stage on a live path with SOUJI_Q_SANDBOX unset -> REFUSED exit 1, target survived, no .ufo-quarantine directory created anywhere",
+  "mutations": "all mutations this run occurred inside a single trap-cleaned mktemp -d root"
+ },
+ "gate_opening_runbook": {
+  "how_gates_open_today": [
+   "1. Operator pushes souji-shokunin master (12 local-only commits) or restores a live origin: refs/remotes becomes non-empty, making gate3/pushed establishable (introducing commit ancestor of refs/remotes/origin/HEAD + zero unpushed touching) and gate1 a meaningful unpushed filter. Re-run: bash tools/souji-quarantine.impl-03.sh --check --expect-receipt pushed <path>",
+   "2. Scratch-type artifacts (per souji-verify scratch_type families) age past the 1-day stale hold AND are ignore-clean (gate2) AND have zero live refs: bash tools/souji-quarantine.impl-03.sh --check --expect-receipt stale <path>",
+   "3. Any candidate: bash tools/souji-quarantine.impl-03.sh --plan <path> prints the operator's exact 5-step command sequence"
+  ],
+  "execution_semantics": "AUTHORIZED -> --stage moves the path (only inside the operator-declared SOUJI_Q_SANDBOX) into <repo>/.ufo-quarantine/<date>/<rel __-flattened> with a digest sidecar; hold = the round; --verify-staged requires original absent + gates still clean + digest unchanged; --retire requires sandbox + signoff + record digest match and rm's only the staged copy and its record",
+  "fail_closed_by_construction": [
+   "tracked paths cannot complete the flow: the mv leaves a worktree deletion, gate2 goes dirty at the second check (Q-design note; held, not silently passed)",
+   "tool disagreement, ticket/tree receipt mismatch, digest drift, original reappearing, missing signoff, or sandbox not covering the target each independently block the flow",
+   "nested --selftest refused; production defaults refuse every mutation (SOUJI_Q_SANDBOX unset)"
+  ],
+  "inherited_reatudit_triggers": "census/round-7/quarantine-plan.json reaudit_triggers remain the trigger list; this tool is the recheck instrument for all of them"
+ },
+ "not_claimed": [
+  "zero tickets authorized this round — every live verdict observed is NOT-AUTHORIZED; no path was staged, held, or retired anywhere outside mktemp",
+  "no LOG.md entry, no commit, no fetch/push; fragment untracked pending parent integration",
+  "no secret-shaped file read; .ufo/state and .ufo/watchdog.log not opened"
+ ],
+ "inputs_read": [
+  "census/round-7/quarantine-plan.json",
+  "census/round-7/seat-03.json",
+  "tools/souji-verify.sh",
+  "tools/souji-vault-verify.sh (header + emit/selftest sections)",
+  "tools/impl-48.sh (dispatcher convention)",
+  "LOG.md (round 5-7 entries)",
+  "AGENTS.md"
+ ]
+}

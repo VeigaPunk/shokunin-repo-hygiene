@@ -1,0 +1,86 @@
+{
+  "seat": "S16",
+  "round": 8,
+  "role": "pointer sweep (independent re-run, own token extraction)",
+  "fragment": "census/round-8/seat-16.json",
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "lane_head_measured": "1cf5fa8cc1a4598dd78ec5e716fb0ea9ee870478",
+  "measured_at": "2026-10-18T19:27:15-0300",
+  "assignment": "Independent pointer sweep with own token extraction; reconcile counts vs S15 (census/round-8/seat-15.json).",
+  "method": {
+    "extraction": "mechanical regex tokenizer (census/round-8/seat-16-extract.py) over the same 9 sources S15 used: .ufo/reports/round-{1..7}/souji.md (fleet root) + LOG.md + SCORECARD.md. No token list copied from S15; extraction ran before seat-15.json was read.",
+    "policy": "slash-bearing tokens + hex runs + refs + URLs + globs; bare filenames (no slash) are out of extraction scope (documented policy delta vs S15's hand curation).",
+    "verification": "census/round-8/seat-16-verify.py: existence-only probes (no content reads of targets), git cat-file/rev-parse/for-each-ref (lane, fleet, gd2d), glob/range counting, one read-only `git ls-remote origin` against the lane (mirrors r7 probe). Raw inventory: seat-16-inventory.json; raw verdicts: seat-16-verdicts.json.",
+    "refusals": "secret-shaped components refused pre-probe (1 token: 'kotodama/secret-shaped' — prose adjective); .ufo/state and watchdog.log excluded from probing by rule; no git mutation, no fetch/push/commit."
+  },
+  "counts": {
+    "tokens_extracted": 134,
+    "pointer_shaped_verified": 73,
+    "non_pointer": 61,
+    "status_breakdown_pointer": {
+      "ALIVE": 55,
+      "ALIVE(at measured commit)": 3,
+      "ALIVE(glob)": 4,
+      "ALIVE(range)": 2,
+      "ALIVE(pattern-empty)": 2,
+      "ALIVE(fleet)/DEAD(lane)": 1,
+      "CONFIRMED-404": 1,
+      "ABSENT-EXPECTED": 2,
+      "UNRESOLVED(real-path-shaped)": 1,
+      "manual_adjudications_reclassified_to_ALIVE": 3
+    },
+    "non_pointer_breakdown": {
+      "prose-list": 32,
+      "fraction": 21,
+      "model": 6,
+      "date": 2,
+      "glob-syntax": 1,
+      "rhetorical-negative": 1
+    },
+    "undocumented_dead_pointers": 0
+  },
+  "manual_adjudications": [
+    {
+      "token": ".git/worktrees (LG:138)",
+      "mechanical": "UNRESOLVED lane-relative (souji-shokunin/.git/worktrees does not exist: ls -> No such file or directory)",
+      "adjudication": "repo-ambiguous token: the LG:138 entry is about game-dev-2d-shokunin. ls game-dev-2d-shokunin/.git/worktrees/ -> 8 dirs: game-dev-2d-shokunin-wt-r98/-r99/-r100, r102-S1, r103-S3, repo, wt, wt1",
+      "finding": "ALIVE in gd2d, but LG:138 'holds exactly the 3 preserved admin dirs' is STALE: 3 preserved dirs all present, +5 foreign admin dirs accumulated from fleet rounds 102/103 work. DRIFT."
+    },
+    {
+      "token": "wt-r98/99/100 (R1:18,34, R3:38, R5:51, LG:70)",
+      "adjudication": "git -C game-dev-2d-shokunin rev-parse refs/heads/wt-r98|wt-r99|wt-r100 -> rc=0: 68bee6e7, fe1a996e, 2d562282 (shas identical to S15's). worktree list: all three registrations present and locked — r5 durable re-lock intact.",
+      "finding": "ALIVE (3 git refs)."
+    },
+    {
+      "token": "seat-01.json/seat-54.json (LG:55)",
+      "adjudication": "both exist: census/round-1/seat-01.json, census/round-1/seat-54.json (ls rc=0).",
+      "finding": "ALIVE (2 files joined by a slash in prose)."
+    }
+  ],
+  "reconciliation_vs_S15": {
+    "s15_counts": "111 tokens (hand-curated), status: 95 ALIVE-flavored, 3 ABSENT-EXPECTED, 1 DEAD-CONFIRMS-R7, 1 DRIFT (launch-*.json), 1 NOT-A-POINTER, 1 CONFIRMED-404, 1 CONFIRMED",
+    "s16_counts": "134 tokens (mechanical), 73 pointer-shaped verified, 61 non-pointer, 0 undocumented dead pointers",
+    "agreements": [
+      "VERDICT LEVEL: both sweeps conclude zero undocumented dead pointers; the only dead pointer is lane origin/master, and it CONFIRMS the r7 404 finding (lane rev-parse rc=128 'Needed a single revision'; fleet's origin/master alive at 35b17a60bd91).",
+      "All 13 git commit tokens resolve with matching subjects (10 lane incl. 652b6f8..1cf5fa8, 2 fleet b2f2efa/a1b44b1, 1 gd2d 05a72899) — S15's '13 commits' reproduced exactly.",
+      "All 3 cited sha256 prefixes match at their cited measurement commits (7efda63bd760@souji-verify.sh:9435e46, d312263a@souji-vault-verify.sh:48a64d8, 11bf9cdf@souji-census.sh:b5db5cf).",
+      "Glob counts identical: round-1 seat-*.json=64, round-5 final-57..64=8/8, round-6 final-*.json=17, tests/fixtures/case-*=10, tests/results/v*.json=67.",
+      "ABSENT-EXPECTED set agrees for shared tokens: /tmp/r87-B1 (r5 pruned), /tmp/r87-C5 (r1 unreachable). S15 has a 3rd (logs_tier.txt, bare name — outside my slash policy).",
+      "origin/main = rhetorical negative example in both sweeps (never-hardcode citation R1:27/R6:19/LG:63).",
+      "ls-remote origin -> 'Repository not found' re-confirmed fresh (CONFIRMED-404); lane refs/remotes/origin = 0 refs, fleet = 3."
+    ],
+    "deltas_and_who_holds_them": [
+      "S15-only coverage (my extraction policy excludes bare names): AGENTS.md/SKILL.md/LOG.md/SCORECARD.md/MINT.md/tools/, tests/, shokunin.conf*, launch-*.json, logs_tier.txt, final-57.json. Spot-corroborations run anyway: launch-*.json glob -> 16 (CONFIRMS S15's DRIFT finding vs LG:9 '15x'); final-57.json exists at BOTH tests/results/ and census/round-5/ (confirms S15).",
+      "S16-only coverage (mechanical sweep adds tokens S15's curation skipped): 21 metric fractions, 6 model ids, 2 date substrings, 32 prose slash-lists, refs/remotes/origin (bare), fleet-prefixed range souji-shokunin/census/round-1/seat-01..64.json (64/64), lessons/round-5.md two-hop resolve via corpus/.",
+      "REFINEMENT of an S15 note: S15's census-digest detail said the working tree 'differs'; fresh sha256sum shows tools/souji-census.sh working tree IS byte-identical to the cited 11bf9cdf (census tool was never patched after r6 install). Only souji-verify.sh (a91049c9…) and souji-vault-verify.sh (53f92421…) drift in the working tree, both documented r5/r6 patches."
+    ],
+    "new_findings_unique_to_S16": [
+      "DRIFT: gd2d .git/worktrees 'exactly 3' (LG:138) -> 8 admin dirs now (r102-S1, r103-S3, repo, wt, wt1 added by foreign fleet-round work). The 3 preserved dirs remain, all locked.",
+      "LIVE DELTA for the fleet census: gd2d `git worktree list` -> 9 registrations (main + wt-r98/99/100 + /var/tmp/r102-S1 + 4 new /var/tmp/r103-* at 6e3e87f7/1392ca21), up from 5 at the r7 census. External lane (game-dev-2d round-102/103) is actively registering worktrees; nothing here is a souji quarantine candidate (dirs exist and are foreign-lane live work).",
+      "gd2d main has advanced again beyond S15's 1392ca21 observation: worktree list shows main at 6e3e87f7 (external, expected)."
+    ]
+  },
+  "verdict": "RECONCILED — S15 and S16 agree at verdict level: no undocumented dead pointers anywhere in the lane's evidence surfaces; single dead pointer = lane origin/master (r7 404, re-confirmed); single count-drift in shared coverage = launch-*.json 15x vs 16 (LG:9, corroborated). S16 adds one new stale-claim finding (gd2d .git/worktrees 3 -> 8, LG:138) and one live delta (gd2d worktree registrations 5 -> 9 since r7). No quarantine candidate created by any pointer finding; quarantine-flow tooling unaffected. 73 pointer-shaped tokens verified with commands; 61 non-pointer tokens classified mechanically.",
+  "read_only_compliance": "S16 wrote only census/round-8/{seat-16.json, seat-16-inventory.json, seat-16-verdicts.json, seat-16-extract.py, seat-16-verify.py}. No file outside the fragment set created/modified/moved/deleted; no git mutation; no fetch (one read-only ls-remote + get-url against lane origin); .ufo/state and .ufo/watchdog.log never opened; no secret-shaped content read (1 prose token refused pre-probe); existence checks only on referenced targets.",
+  "to_verify": []
+}

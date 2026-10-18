@@ -263,3 +263,28 @@ target exists in scope (the 96 approval rows await the operator; other
 lanes are unpushed). Reported as such; nothing forced. Rounds r6-r7 are
 the lane discovering its true boundary: the remaining gates are external
 (operator sign-off, lane pushes, remote creation).
+
+## 2026-10-18 — round 8 admitted (all 3 claims)
+
+**Dispatch.** 24 seats on zai-coding-plan/glm-5.3-flash; 22/24 (2 failures
+traced to host /tmp DISK QUOTA corrupting fixture runs — escalated).
+
+**O1.** tools/souji-quarantine.sh = impl-01 (sha 5780ad75…) — the receipt-
+gated quarantine flow as a fail-closed tool: engine-authorized stage 1 with
+receipt pinning, git-mv/mv staging, hold, class-aware second check, delete
+on PASS only. Selftest 63/63 (TMPDIR=/var/tmp); full flow exercised on
+fixtures (DELETED/ABORTED/NOT-AUTHORIZED/SKIPPED/dry-run both outcomes);
+96-row approval dry-run: 96/96 PASS, zero mutations. Live mutations
+refused without env override.
+
+**C1.** Pointer sweep: 111 tokens across reports r1-r7 + SCORECARD/LOG —
+95 alive, 1 dead (confirms the r7 correction), 1 drift recorded.
+
+**K1.** Gate-opening runbook (census/round-8/gate-runbook.md): exact
+command sequences per blocked class, including the one-line quarantine
+command for the signed 96 and the simulated post-push prune-ticket
+regeneration for the gd2d pins.
+
+**Notes.** r7's gate2 contradiction dissolved (untracked stale flows
+clean); parent awk bug caught by the tool's fail-closed refusal; /tmp
+quota is now host-critical. Operability +1 capability row.

@@ -1,0 +1,34 @@
+{
+  "seat": "S07",
+  "round": 8,
+  "kind": "implementor",
+  "role": "quarantine-flow tool: gate-checked plan, pre-move-evidence staging, hold, second receipt check, escape-guarded delete, gate-opening runbook",
+  "fragment": "census/round-8/seat-07.json",
+  "deliverable": "tools/impl-07.sh",
+  "sha256": "be90a23281ba5febc6b5431e2d11424c10dc1149d2cbe89a90012b04d8304bc0",
+  "evidence": "results/qrun-07.json",
+  "written_at": "2026-10-18T23:58:00-03:00",
+  "verdict": "DELIVERED — full quarantine lifecycle executable and green on mktemp fixtures (selftest 80 pass / 0 fail, rc=0); live fleet remains fail-closed by construction; one live AUTHORIZED(pushed) class identified (fleet-root pushed files) and reported, not executed",
+  "claims": {
+    "flow_implemented": "plan/runbook/stage/check/delete/status per SKILL.md removal flow 3-6 + r7 authorization rule; second check consumes pre-move evidence per qrun-23 F1/F2 (never re-derives from the moved path)",
+    "safety": "mutation rail: owning repo must be under realpath(${TMPDIR:-/tmp}); no override token; four independent delete escape guards; secrets/symlink/tab-newline refusals; zero push/fetch/reset/rebase verbs (fixtures use update-ref); lane repo untouched, no .ufo-quarantine created (asserted)",
+    "selftest": "80 pass / 0 fail, rc=0, ~30s, includes --keep and cleanup child-run probes (non-recursive)"
+  },
+  "gate2_semantics_deviation": "r7's verbatim 'porcelain empty' gate2 would make untracked aged scratch permanently unstaggable, contradicting the installed receipt engine (souji-verify grants SAFE(stale) to untracked scratch). impl-07 splits gate2: tracked-dirty blocks every receipt; untracked(??) blocks unless receipt=stale. Flagged for parent adjudication against census/round-7/quarantine-plan.json.",
+  "runbook_result_on_live_fleet": {
+    "souji lane files": "NOT-AUTHORIZED (unpushed bookkeeping commits touch tools/, census/, SKILL.md g1=2; zero remote refs) -> opening action: operator pushes the lane (remote creation is operator-owned per r7)",
+    "lore-shokunin/.scratch": "NOT-AUTHORIZED; runbook: 56 live references -> retire citations first (matches r7 S01/S20)",
+    "fleet-root pushed files (templates/round-prompt.md)": "AUTHORIZED(pushed), runbook: gates open -> the one live class whose quarantine the parent could exercise in a /tmp-mirror or after operator authorization; NOT executed this round"
+  },
+  "axes": [
+    "operability: quarantine flow went UNEXERCISED (r7 O1 NOT-MET) -> executable end-to-end on fixtures",
+    "calibration: tool verdicts agree with r7 seat verdicts on every live surface probed",
+    "coverage: runbook names the exact owner+action for each blocked gate (operator push, lane citations, stale-clock wait, kagi route)",
+    "no axis harmed: live fleet read-only throughout; nothing removed anywhere"
+  ],
+  "not_claimed": [
+    "No live mutation of any kind; no git fetch/push/commit/branch on any real repo",
+    "moved-to-obsidian second-check is identity+hold+g1-delta anchored (vault-side ledger re-check out of fixture scope; documented)",
+    "impl-08.sh (S08) defect observed: EXIT-trap reads function-local WORK under set -u -> selftest crash; recorded as sibling calibration, not adjudicated"
+  ]
+}

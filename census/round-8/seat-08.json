@@ -1,0 +1,99 @@
+{
+  "seat": "S08",
+  "role": "implementor",
+  "fragment": "census/round-8/seat-08.json",
+  "round": 8,
+  "date": "2026-10-18",
+  "mode": "implementor; writes limited to tools/impl-08.sh + this fragment + results/qrun-08.json + results/qrun-08-selftest.tsv; tool mutations confined to mktemp fixture repos (/tmp/souji08-selftest.*) via the fixture-root rail; live fleet touched read-only only (git log/status/for-each-ref/rev-parse, rg, stat); no fetch/push/commit/branch on any live repo; no secret-shaped reads; .ufo/state and .ufo/watchdog.log not opened",
+  "deliverable": {
+    "tool": "tools/impl-08.sh",
+    "sha256": "fc1ff29c89c76f2967abbdbe4aae9e00dd320725b2950a0696fb1e915b5903ab",
+    "lines": 676,
+    "language": "bash (bash + coreutils + git + rg only, lane substrate rule)",
+    "cli": {
+      "plan": "plan [--json] [--stale-days N] [--root REPO] <path>... (read-only; TICKET rows AUTHORIZED|NOT-AUTHORIZED)",
+      "stage": "stage [--hold-seconds N] [--operator-token T] <path>... (mutating, rail-gated; STAGED/REFUSED rows; exit 1 on any refusal)",
+      "check": "check --repo REPO --ticket ID (read-only second receipt check after hold; exit 1 on FAIL)",
+      "delete": "delete --repo REPO --ticket ID [--operator-token T] (mutating, escape-guarded; DELETED/REFUSED)",
+      "runbook": "runbook [--json] <path>... (read-only; GATE rows naming the operator-owned action that opens each blocked gate)",
+      "selftest": "--selftest (mktemp fixture battery, exit 0/1)"
+    },
+    "exit_codes": "plan/runbook 0 always (evaluated clean); stage 0 ok / 1 refused; check/delete 0 ok / 1 refused-or-failed / 2 usage; selftest 0/1; usage 2"
+  },
+  "flow_mapping": {
+    "source": "census/round-7/quarantine-plan.json execution_plan_template (step_0_recheck..step_4_delete) + SKILL.md removal flow + AGENTS.md receipt/hold/signoff rules",
+    "step_0_recheck": "plan re-derives gate1 (git log --branches --not --remotes --oneline -- <path> empty), gate2 (status --porcelain=v1 --untracked-files=all -- <path> empty), gate3 (tools/souji-verify.sh verdict SAFE with non-none receipt; inline pushed/stale fallback ONLY when that tool is absent). stage re-runs ALL gates before any write",
+    "step_1_stage": "plain mv (never git mv, never commit) to <repo>/.ufo-quarantine/<UTC-date>/<rel with / -> __>; append-only manifest.tsv (ticket, date, orig, receipt, sha256, stage_epoch/iso, hold_seconds, status, qpath) + journal.log; ticket id q<utc>-<pid>-<rand>",
+    "step_2_hold": "hold floor 450s for pushed, 86400s otherwise (SKILL.md 'prefer 24h for anything not pushed' encoded as the non-pushed default); --hold-seconds applies in full only to /tmp fixture repos — live repos get max(default, N) (fail-closed)",
+    "step_3_second_check": "check enforces: hold elapsed; staged copy digest equals manifest sha (tamper caught, copy preserved); original path NOT recreated (concurrency); zero unpushed commits with committer-time > stage_epoch touching the original path (lane woke up); receipt re-derived from pinned manifest (pushed: recorded intro still ancestor of resolved default ref; stale: zero live references) — history-based re-derivation, never engine-on-copy, so the quarantine deletion being uncommitted cannot false-break and cannot false-pass",
+    "step_4_delete": "delete requires status=second-checked + hold elapsed; realpath escape guard resolves the rm target to <qc>/<single-date-dir>/<basename> and refuses crafted manifest dates ('..' → date-dir-guard) and traversal basenames (can only resolve inside the date dir); rm strictly inside .ufo-quarantine; manifest status -> deleted + journal"
+  },
+  "authorization_rail": {
+    "rule": "stage/check/delete on a repo whose root is outside /tmp are REFUSED before any filesystem effect unless env SOUJI_OPERATOR_TOKEN is set AND --operator-token matches (operator sign-off). Live refusals journal ONLY if <repo>/.ufo-quarantine already exists — round rule 'no live-lane writes' respected even on the refusal path",
+    "fixture_evidence": "selftest T10: stage of $LANE_ROOT/LOG.md refused (stage-denied, gates: g1=10) and ls -d $LANE_ROOT/.ufo-quarantine -> absent; delete on $LANE_ROOT with env token + mismatching flag -> operator-token-mismatch, lane still untouched",
+    "note": "on /tmp fixture repos the rail is inert by design (the sandbox is the authorization); the token path is exercised against the live lane precisely because refusal is its only possible outcome this round"
+  },
+  "verification": {
+    "syntax": "bash -n exit 0",
+    "selftest": {
+      "result": "44/44 PASS, exit 0, deterministic",
+      "runs": "3x full green on sha c314e6e6... (pre-refusal-guard-fix), then 1x full green on the final sha fc1ff29c... after the refusal-path journal guard; full TSV preserved at results/qrun-08-selftest.tsv",
+      "battery": "T1/T2 plan pushed+scratch receipts; T3 gate1 unpushed-touching block; T4 gate2 untracked dirty block; T5 full pushed lifecycle (stage->hold-refusal->check PASS->delete->re-delete refused); T6 staged-scratch lifecycle; T7 tamper -> digest-drift FAIL -> delete refused -> tampered copy preserved; T8 new unpushed commit mid-hold -> new-unpushed-commits-touching FAIL; T9 secrets-refusal + symlink-present + unreachable; T10 live-lane refusal + token mismatch + lane untouched; T11 crafted-manifest escape attempts (date='..' and traversal qpath) -> refused, root file survives; T12 runbook push/age/open actions; T13 inline fallback (souji-verify hidden) authorizes pushed; T14 --json JSONL shape"
+    },
+    "live_readonly_probes": {
+      "plan": "LOG.md NOT-AUTHORIZED g1=10; tools/souji-verify.sh NOT-AUTHORIZED g1=3; census/round-7/quarantine-plan.json NOT-AUTHORIZED g1=1; lore-shokunin/.scratch NOT-AUTHORIZED g2=26; shokunin.conf.full-roster-20261015 AUTHORIZED pushed — reproduces r7's receipts (S06 tools shard gate1 FAIL; S01 lore gate2 FAIL; fleet-root snapshot SAFE/pushed from r1/r5); zero false-AUTHORIZED on any r7-denied candidate",
+      "runbook": "derived opening actions: souji paths -> 'operator: push souji-shokunin (N unpushed commit(s)) + restore/push origin (no remote-tracking refs locally)'; lore .scratch -> 'lane-owner: commit/revert + retire citations (56 refs) + wait (eligible after 2026-10-19T03:03:50Z — matches r7 S09 mtime math)'; conf snapshot -> gates open",
+      "stage_refusal": "stage of the one AUTHORIZED live candidate (conf snapshot) without operator token -> REFUSED live-operator-token-required, exit 1, target still in place, no .ufo-quarantine created in lane or fleet root (ls verified)",
+      "lane_cleanliness": "git status shows only the seat's own untracked writes (tools/impl-08.sh, results/, census/round-8/)"
+    }
+  },
+  "claims": {
+    "Q1_operability": {
+      "claim": "the r7 execution_plan_template runs end-to-end as one self-tested tool (plan->stage->hold->second-check->delete) with the hold window enforced",
+      "verdict": "MET",
+      "evidence": "results/qrun-08-selftest.tsv: 44/44 x4 runs exit 0, including the complete T5 lifecycle and the hold-not-elapsed refusal"
+    },
+    "Q2_safety": {
+      "claim": "the live fleet is untouchable through this tool this round; every refusal happens before any filesystem effect and even authorized live candidates cannot be staged without the operator token",
+      "verdict": "MET",
+      "evidence": "selftest T10/T11 + live stage-refusal probe on shokunin.conf.full-roster-20261015 (rc=1, nothing created anywhere, target intact); escape-guard battery T11"
+    },
+    "Q3_calibration": {
+      "claim": "live read-only verdicts reproduce round-7's receipts with zero false-AUTHORIZED, and the runbook names the operator-owned gate-opening action per candidate",
+      "verdict": "MET",
+      "evidence": "live plan rows above (all r7-denied candidates still blocked on the same gate numbers); runbook rows match gate-runbook-17/18's blocker scoreboard (operator sign-off / origin restore / push are the openers)"
+    }
+  },
+  "design_divergences_from_peers": {
+    "gate3_engine": "single-engine (tools/souji-verify.sh, installed behavior wins per SKILL.md) + inline fail-closed fallback; S02 requires both engines. Parent adjudication should pick one; switching my gate3 to dual-engine is a ~10-line change in verify_receipt",
+    "second_check": "never runs an engine on the quarantined copy; re-derives from the pinned manifest (history-based). This dodges final-22's second_check_semantics trap by construction (staging never commits, so the copy has no intro commit to mis-read); matches the S10 four-line procedure form the judge endorsed",
+    "cli_shape": "subcommand style (plan/stage/check/delete/runbook) with TSV grammar mirroring souji-verify.spec.md; S02 uses flag modes, impl-01 repo-anchored flow. Same multiple-CLI situation the judges flagged for adjudication; outcomes agree on every probe",
+    "runbook_in_tool": "the gate-opening runbook is a tool subcommand derived live per target (GATE rows), complementing S17/S18's document runbooks; both agree on the material gates"
+  },
+  "defects_found_and_fixed_during_development": [
+    "bash case-pattern parser break on mixed quote-concatenated globs (bashed parse surfaced lines away from cause) — replaced with grep -F assertions",
+    "owning_repo passed an existing FILE to git -C (needs a directory) -> every repo lookup empty; fixed to dir-vs-dirname branch",
+    "verify_receipt read column 1 as the verdict; souji-verify grammar is VERDICT<TAB>path<TAB>SAFE<TAB>receipt<TAB>evidence -> column 3",
+    "default_ref double-prefixed origin/ (for-each-ref short name already carries origin/) and counted the origin/HEAD symref as a branch ref -> both fixed; exactly-one-branch rule preserved",
+    "expected-failure commands under set -e aborted the selftest harness -> rc captured via || rc=$?",
+    "trap referenced function-local WORK after scope exit -> globalized",
+    "refusal paths journaled unconditionally -> guarded to journal only where .ufo-quarantine already exists (round rule: no live-lane writes even on refusal)",
+    "mutation_allowed printf missing its repo argument"
+  ],
+  "known_limits": {
+    "metadata_prune": "out of scope for staging (file/dir artifacts only); plan surfaces gate evidence on the owning repo and runbook prints the opening action — matches r7's finding that registrations retire via worktree tooling, not mv",
+    "obsidian_receipt": "delegated to souji-verify.sh when present; inline fallback refuses it (fail-closed, receipt-unverifiable)",
+    "inline_stale_branch": "effectively unreachable through the gated flow (a committed scratch file verifies as pushed first; an untracked one fails gate2) — kept as defense-in-depth, documented honestly",
+    "ignored_paths": "gate2-invisible to git status (same caveat S02 recorded); manifest + second check + operator signoff bound the exposure"
+  },
+  "judge_snapshot_correction": {
+    "final_21": "recorded 'impl-08.sh: bash syntax error line 637 -> fixed, 19/43 pass at freeze (exit 1)' — that state (and final-22's older 'WORK: unbound variable' state) predates the finished tool; current sha fc1ff29c... passes 44/44 with exit 0, re-run after their freeze timestamp. Request parent re-run or accept results/qrun-08-selftest.tsv as the correction evidence",
+    "no_finding_upheld": "no judge finding applies to the current sha; both cited failures were intermediate development states fixed in-round"
+  },
+  "not_claimed": [
+    "No live quarantine staged, checked, or deleted — the live fleet still has zero authorized targets (live probes re-confirm r7); the single AUTHORIZED live candidate was refused at stage by the operator-token rail and remains in place",
+    "Nothing committed; all writes are untracked seat files pending parent integration",
+    "No cross-impl fixes: other seats' impls (01/02/03/04/05/06/S12) not touched, not benchmarked beyond reading peers' fragments for contract consistency",
+    "qrun evidence does not include a full second live plan re-run at the final sha (the refusal-journal guard touches only refusal paths; plan/runbook code unchanged between c314e6e6 and fc1ff29c) — flagged to-verify for the parent if it wants sha-exact live rows"
+  ]
+}

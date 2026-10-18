@@ -1,0 +1,86 @@
+{
+  "seat": "S17",
+  "round": 8,
+  "kind": "gate-runbook",
+  "role": "runbook drafter: exact command sequences, executors, and verifiers for each blocked class (96 approval rows, gd2d pins, kotodama push, lane-remote creation, lore .scratch re-check), plus the quarantine dry-run for the 96-row list",
+  "fragment": "census/round-8/seat-17.json",
+  "deliverable": "census/round-8/gate-runbook-17.md",
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "written_at": "2026-10-18T18:39:35-03:00",
+  "verdict": "RUNBOOK-READY — all five blocked classes have gate-open conditions, exact command sequences, named executors, and verifiers; the 96-row quarantine dry-run was executed live (read-only) with 96/96 SAFE(pushed) and is embedded verbatim in the runbook; nothing was staged, moved, or deleted; no live repo was mutated.",
+  "dry_run_result": {
+    "command_class": "runbook §1 Step A0",
+    "rows": 96,
+    "tally": "96 SAFE/pushed, 0 NOT-SAFE",
+    "sample_line": "VERDICT\t/home/vgpnk/Projects/shokunin/.ufo/interactive-l1-20261015T050057Z/launch-chousa.json\tSAFE\tpushed\tintro=b2f2efae7549 ref=refs/remotes/origin/master ancestor=yes",
+    "gate1_gate2_recheck": "total=96 gate_fails=0 (runbook §1 Step A0b)",
+    "absent_path_behavior": "NOT-SAFE unreachable missing path (fail-closed), probed on /tmp/s17-absent-probe-xyz",
+    "selftest": "tools/souji-verify.sh --selftest exit 0 (fixture-only)"
+  },
+  "class_evidence": [
+    {
+      "class": "A — 96 approval rows",
+      "source": "census/round-3/operator-approval-list.tsv (97 lines = header + 96 rows; only path/source/evidence populated)",
+      "blocker": "operator sign-off pending",
+      "observed": "96/96 SAFE(pushed); fleet root merge-base --is-ancestor b2f2efae7549 origin/master → true; fleet-root unpushed touching the rows = 0",
+      "gate_open": "operator approves the list (LOG.md directive); then §1 staging → hold → second check → operator final OK → delete"
+    },
+    {
+      "class": "B — gd2d pins",
+      "observed_at": "2026-10-18T18:33-03:00",
+      "observed": "wt-r98/99/100 unique_vs_remotes=1 each; all three LOCKED (locked marker + .git/worktrees/<n>/locked present); checkout dirs present; main ahead origin/main by 5; admin dirs = 3 pinned + r102-S1",
+      "gate_open": "gd2d lane pushes main+wt-r98/99/100 (rev-list counts → 0, ls-remote tips match), retires its checkout dirs (abort on dirty), then souji verifies SAFE(metadata-prune) per registration, unlocks, prunes: worktree list 5 → 2 lines (main + /var/tmp/r102-S1, the latter out of scope)"
+    },
+    {
+      "class": "C — kotodama",
+      "observed_at": "2026-10-18T18:34-03:00",
+      "observed": "53 unpushed commits, 9 dirty paths, .scratch 41G live-growing",
+      "gate_open": "lane pushes (→0) + clean tree (→0) + identical du -sb across a 300s window + per-file classification re-derived from census/round-6/kotodama-scratch-handoff.md; else NOT-SAFE/hands-off stands"
+    },
+    {
+      "class": "D — lane remote",
+      "observed_at": "2026-10-18T18:31-03:00",
+      "observed": "origin configured as https://github.com/VeigaPunk/shokunin-repo-hygiene.git; GIT_TERMINAL_PROMPT=0 git ls-remote origin HEAD → 'remote: Repository not found.'; 13 local-only commits on master",
+      "gate_open": "OPERATOR creates the empty repo and pushes (publishing/remote-creation is operator-owned per PROVINCE.md); verify ls-remote succeeds, unpushed_total → 0, origin/master present; then fleet-wide reaudit (r7 reaudit trigger 1)"
+    },
+    {
+      "class": "E — lore .scratch",
+      "observed_at": "2026-10-18T18:33-18:36 -03:00",
+      "observed": "272K (grew from r7's 218,489 B — live tree); dir mtime 2026-10-18 00:03:50 -0300; gate1 PASS (0 unpushed-touching); gate2 FAIL (?? entries non-empty); gate3 FAIL (age 0.77d < 1d; live citations LOG.md:3529-3530); lore 3 unpushed commits incl. 6cec83a",
+      "key_proof": "6cec83a's .gitignore covers only .ufo/waves/**/*-scratch/ and baseline-tree/ — git check-ignore -v on a .scratch/V02 file → exit 1, so pushing 6cec83a does NOT satisfy gate2; the lore lane must physically retire the contents",
+      "gate_open": "stale-eligible no earlier than 2026-10-19T00:03:50-03:00 AND gate1=0 AND gate2=0 AND live citations retired AND souji-verify --stale-days 1 → SAFE(stale); then quarantine-first flow"
+    }
+  ],
+  "executors": {
+    "A": "operator signs off → souji parent stages/holds/second-checks → operator final OK before delete; non-author blind seat verifies",
+    "B": "gd2d lane owner pushes + retires checkouts; souji parent verifies receipts, unlocks, prunes metadata; blind seat re-verifies",
+    "C": "kotodama lane pushes/cleans; souji parent re-checks gates; operator sign-off before any .scratch action",
+    "D": "OPERATOR only (creates repo + push; PROVINCE: remote creation/publishing operator-owned); souji parent verifies and re-runs fleet gates",
+    "E": "lore lane retires contents; souji parent re-checks the 3 gates in one sitting; quarantine-first; operator final OK"
+  },
+  "safety_compliance": {
+    "files_written": ["census/round-8/seat-17.json", "census/round-8/gate-runbook-17.md"],
+    "mutations": "none — every executed command was read-only (souji-verify invocations, git log/rev-list/status/ls-remote/check-ignore, stat, du, sha256 of nothing, awk/wc tallies)",
+    "no_fetch_push_commit_branch": true,
+    "no_secret_reads": true,
+    "ufo_state_and_watchdog_untouched": true,
+    "temp_artifacts": "/tmp/s17-dryrun-96.tsv (dry-run output evidence only)"
+  },
+  "inputs_read": [
+    "AGENTS.md",
+    "PROVINCE.md",
+    "LOG.md",
+    "census/round-3/operator-approval-list.tsv",
+    "census/round-7/quarantine-plan.json",
+    "census/round-7/seat-17.json (schema reference)",
+    "tools/souji-verify.sh (--help, --selftest, live invocations)",
+    "tools/souji-vault-verify.sh (--help)",
+    "live read-only state: fleet root, game-dev-2d-shokunin, kotodama-shokunin, lore-shokunin"
+  ],
+  "not_claimed": [
+    "No gate was opened; no approval, push, remote creation, or removal was executed or simulated on any live path",
+    "The r102-S1 gd2d worktree registration was measured but deliberately left out of Class B scope (owning round decides)",
+    "Stale-eligibility timestamps drift if lore .scratch is touched again; the runbook re-stats at execution time by construction",
+    "Class C stability probe (du -sb 300s apart) is written but was not run to completion this round (41G tree, live writes) — it is an execution-time gate, not a round-8 claim"
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "seat": "S06",
+  "round": 8,
+  "role": "implementor",
+  "generated_at": "2026-10-18T19:39:42-03:00",
+  "fragment": "census/round-8/seat-06.json",
+  "deliverable": "tools/impl-06.sh (souji-quarantine.impl-06) — quarantine-flow runner + gate-opening runbook",
+  "mode": "mutating scenarios only inside mktemp fixture repos (TMPDIR-honored mktemp, repo roots required to carry a tmp.* component); live fleet and lane repo touched read-only only; no fetch/push/commit/branch anywhere; no secret-shaped reads; .ufo/state and .ufo/watchdog.log not opened",
+  "spec_source": "census/round-7/quarantine-plan.json execution_plan_template + authorization_rule, machine-implemented: ticket -> stage -> hold -> second-check -> delete, fail-closed, dry-run default",
+  "claims": {
+    "C1_quarantine_flow_tooling": "MET on fixtures — the full round-7 template executes end-to-end on mktemp fixture repos with per-entry receipts; every refusal class in the round-7 authorization rule is enforced and tested",
+    "C2_gate_opening_runbook": "MET — `runbook` subcommand (read-only, safe on live trees) reports per-gate PASS/FAIL with the operator-owned opening action per blocked gate (push touching branches / restore origin / commit-or-clean / stale window / ledger+vault / re-adjudicate pair)",
+    "C3_safety": "MET — mutation is structurally impossible outside tmp.* fixture roots (exit 4 SAFETY-REFUSAL precedes authorization logic); live-lane stage --execute refused with zero writes and empty git-status diff"
+  },
+  "authorization_rule_implemented": {
+    "gate1": "git -C <repo> log --branches --not --remotes --oneline -- <path> empty",
+    "gate2": "git -C <repo> status --porcelain=v1 --untracked-files=all -- <path> empty",
+    "gate3": "tool pair agreement: tools/souji-verify.sh SAFE AND tools/souji-vault-verify.sh SAFE + VERIFIED with the SAME receipt class",
+    "pair": "--pair-file TSV with author AND blind seats SAFE, same receipt, matching the tool-emitted receipt",
+    "toctou_guard": "stage --execute re-evaluates every gate at execution time; a stale ticket refuses (exit 3)",
+    "observed_dominance": "gate2 binds tighter than the receipt engines: an untracked old scratch file gets SAFE(stale)-class tool verdicts yet is NOT-AUTHORIZED (the round-7 lore .scratch shape)"
+  },
+  "evidence": {
+    "run_record": "results/qrun-01.json (commands + observed outputs for every claim)",
+    "selftest": "2 recorded runs, each `SUMMARY selftest pass=40 fail=0`, exit 0; assertion list covers usage errors, gate1/gate2/secrets/unreachable refusals, pair-missing/mismatch, dry-run no-write, non-fixture and live-lane execute refusals (exit 4), happy-path stage/second-check/delete with sha256 manifest, tamper refusal, double-execute refusals, delete-without-stamp refusal, per-entry isolation, runbook text+json, live read-only runbook",
+    "fixture_construction": "git plumbing only (init/add/write-tree/commit-tree/update-ref/symbolic-ref), 3-commit history with refs/remotes/origin/master + origin/HEAD symref at C2, C3 beyond origin, worktree-dirty and untracked stale/secret files, backdated mtimes",
+    "dependency_selftests": "tools/souji-verify.sh --selftest exit 0 (24 checks, 0 failed); tools/souji-vault-verify.sh --selftest exit 0 (35 checks, 0 failed)",
+    "live_probe": "ticket + runbook on tools/impl-06.sh itself: gate2-fail(dirty-touching=1) as expected for an untracked file; stage --execute exit 4; lane git-status diff empty; no .ufo-quarantine created"
+  },
+  "defects_found_and_fixed_in_round": [
+    "fixture safety-guard ran after ticket evaluation (non-fixture --execute leaked exit 3 instead of 4) — guard moved to precede authorization logic",
+    "manifest + second-check stamp were per-date-dir, so a second staged entry overwrote the first manifest and inherited its stamp — moved to per-entry sidecars (<entry>.manifest.sq06.txt, <entry>.second-check-pass) with an isolation test"
+  ],
+  "deviations_documented_in_tool_header": [
+    "D-a pair verdicts carried as fixed 5-column TSV (house toolchain is bash+coreutils+git+rg; no JSON parser)",
+    "D-b second-check re-verifies by byte re-hash + gate1 stability on the original path instead of re-running receipt engines on the quarantined copy (the copy sits under .ufo-quarantine/** which the engines' sweep excludes by design)",
+    "D-c delete requires the entry's stamped second-check file; operator sign-off stays external and is never simulated",
+    "D-d fixture gate = tmp.* path-component convention of mktemp -d (deny-by-default), honoring TMPDIR"
+  ],
+  "not_claimed": [
+    "No live path was quarantined, moved, or deleted; no .ufo-quarantine directory exists anywhere outside fixtures",
+    "No operator authorization exists in the live fleet; the tool's refusal paths, not an authorized removal, are the deliverable",
+    "Round-7's receipt landscape is taken as given (origin dead, 12 unpushed lane commits): every live target this round remains NOT-SAFE/NOT-AUTHORIZED by that standing evidence"
+  ],
+  "inputs_read": [
+    "AGENTS.md",
+    "LOG.md (rounds 4-7 entries)",
+    "tools/souji-verify.spec.md",
+    "tools/souji-verify.sh (header + CLI)",
+    "tools/souji-vault-verify.sh (header + CLI)",
+    "census/round-7/quarantine-plan.json",
+    "census/round-7/final-22.json, final-23.json, final-24.json (grep excerpts)",
+    "tools/impl-44.sh (house conventions)"
+  ]
+}

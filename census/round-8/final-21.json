@@ -1,0 +1,84 @@
+{
+  "seat": "S21",
+  "round": 8,
+  "kind": "final-judge",
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "measured_at_freeze": "2026-10-18T19:37:47-03:00",
+  "lane_head": "1cf5fa8 (r7 report commit, still HEAD; round-8 work is untracked/uncommitted by protocol)",
+  "claims": ["O1 quarantine tool", "C1 pointer integrity", "K1 gate runbook"],
+  "verdicts": {
+    "O1_quarantine_tool": "MET",
+    "C1_pointer_integrity": "MET",
+    "K1_gate_runbook": "MET"
+  },
+  "winner": {
+    "claim": "O1",
+    "name": "souji-quarantine.impl-01.sh (seat S01)",
+    "path": "tools/souji-quarantine.impl-01.sh",
+    "sha256_16": "5780ad751aa49d1b",
+    "mtime": "2026-10-18 19:04:29 -03:00 (stable through all three probe rounds)",
+    "why": "Only impl selftest-green in every round (19:10, ~19:39, freeze) while four rivals were red mid-tournament; only impl subjected to and passing a full independent adversarial battery (8/8, this seat, evidence below); deepest second-check design — two-prong, receipt-class-split (stale binding via prong1 on the quarantined copy; pushed/obsidian re-derived against original context via intro-blob digest + unpushed-touching + quarantine-bytes identity) — which independently anticipates qrun-13 findings F1/F2; --list receipt pinning makes the operator list an authorization pin (mismatch => NOT-AUTHORIZED); never runs git commit; deletes only on PASS, abort keeps the staged copy."
+  },
+  "O1_evidence": {
+    "field_at_freeze": [
+      {"tool": "souji-quarantine.impl-01.sh", "seat": "S01", "selftest": "GREEN x3 rounds", "sha16": "5780ad751aa49d1b"},
+      {"tool": "impl-05.sh", "seat": "S05", "selftest": "red 9/22 at 19:10 -> GREEN at final sweep", "sha16": "66b36902286eb480"},
+      {"tool": "impl-06.sh", "seat": "S06", "selftest": "GREEN at final sweep", "sha16": "78db85722677a118"},
+      {"tool": "souji-quarantine.impl-02.sh", "seat": "S02", "selftest": "red 20/26 fails at 19:10 (colliding deterministic fixture path /tmp/souji-quarantine-selftest.QSDqS3 shared with impl-06/S12 — defect, later fixed) -> GREEN at final sweep", "sha16": "709ff22b168d7ea4"},
+      {"tool": "souji-quarantine.impl-S12.sh", "seat": "S12", "selftest": "same shared-fixture defect, later fixed -> GREEN at final sweep", "sha16": "06e2530794ee84e2"},
+      {"tool": "souji-quarantine.impl-03.sh", "seat": "S03", "selftest": "bash syntax error line 685 at 19:10 -> fixed, assertion fails at freeze (exit 1)", "sha16": "19d424a3e25e11e0"},
+      {"tool": "impl-08.sh", "seat": "S08", "selftest": "bash syntax error line 637 at 19:10 -> fixed, 19/43 pass at freeze (exit 1)", "sha16": "6b4c3b7f913282ba"},
+      {"tool": "qrun-11.sh", "seat": "S11", "note": "tournament runner, no --selftest mode by design (exit 2 correct)"}
+    ],
+    "adversarial_battery_on_winner": {
+      "runner": "this seat, /tmp/s21-adv.enWLnb (fixture preserved for parent re-audit)",
+      "T1_live_dryrun": "tools/souji-verify.sh under lane repo -> GUARD emitted, stage1 computed read-only, DRY-RUN-BLOCKED pushed-unverifiable; git status --porcelain byte-identical before/after: PASS",
+      "T2a_no_receipt": "untracked non-scratch file -> NOT-AUTHORIZED(none), untouched: PASS",
+      "T2b_pushed_happy_path": "fake-remote fixture, --hold 0 -> stage2 (quarantine .ufo-quarantine/<utc-date>/ preserving rel path), stage4 second check PASS (pin=ok mtime=ok intro-blob=ok unpushed-touching=0, prong1-tolerated class-not-path-local), stage5 DELETED; end state: staged-deletion in index, empty date dir rmdir'd: PASS",
+      "T2d_dirty_tracked": "NOT-AUTHORIZED dirty-tracked with r7-gate2 porcelain evidence: PASS",
+      "T2e_receipt_pin_mismatch": "--list pins stale, engine derives pushed -> NOT-AUTHORIZED receipt-mismatch (listed=stale engine=pushed): PASS",
+      "T3_secrets": "a.env and id_probe.pem -> NOT-AUTHORIZED secrets-refusal each, files untouched: PASS (note: '.envseed' in first probe is NOT spec-secret-shaped; NOT-SAFE(none) there was correct)",
+      "T4_tamper_during_hold": "staged stale scratch tampered mid-hold -> ABORTED, pin=FAIL digest-mismatch (01d09d19c213 -> 314cbe4410c1) + mtime FAIL + prong1 NOT-SAFE; copy LEFT IN QUARANTINE (recoverable), delete refused: PASS",
+      "score": "8/8 PASS"
+    },
+    "independent_flow_proofs": [
+      "results/qrun-11.json (S11 runner qrun-11.sh): 48 checks, 0 failed, PASS — quarantine flow end-to-end on fixture fleet with gates OPENED (bare remotes, backdated mtimes, matching ledger rows, absent-dir worktree registration)",
+      "results/qrun-13.json (S13): all 6 SKILL.md flow steps on fixture fleet with negative controls; findings F1-F4 (below)",
+      "results/qrun-01.json (S01): winner's own contract + selftest record (5-stage flow, receipt-pin list mode, pre-flight refusal list)",
+      "results/qrun-23.json (S23): 4-phase fixture scenario, baseline selftests 24/24 + 32/32 + 35/35 on installed tools",
+      "results/qrun-10.json (S10): 40 events, 25 pass, 5 findings, 0 tool failures — findings converge on the same second-check/gate themes"
+    ],
+    "containment": "zero live mutations observed: git-status snapshots identical across ~15 tool executions by this seat; every seat fragment declares mktemp-only mutation scope; no impl contains git commit (winner verified by grep); live quarantine correctly remains UNEXERCISED — no authorized target exists (external gates), fail-closed per AGENTS.md"
+  },
+  "C1_evidence": {
+    "sweeps": [
+      "census/round-8/seat-15.json (S15): 111 tokens over 9 sources (.ufo/reports/round-1..7/souji.md, SCORECARD.md, LOG.md); 95 ALIVE; every other token accounted: 3 ABSENT-EXPECTED (documented deletions), origin/master DEAD-CONFIRMS-R7, CONFIRMED-404 remote, 3 sha256 pins ALIVE at cited measurement commits (git show <commit>:<path> | sha256sum verified), 2 documented-drift (gd2d worktrees 4->5 external; conf 4092->4432B), exactly 1 true DRIFT: launch-*.json glob = 16 files vs '15x' in LOG mint entry (off-by-one)",
+      "census/round-8/seat-16-inventory.json (S16): independent extraction of 134 tokens over the same 9 sources; verdict column not yet filed at freeze (extraction half only) — noted, does not gate the claim given S15 completeness",
+      "this seat's independent baseline: all 14 SCORECARD/SKILL evidence pointers resolve on disk; current tool digests a91049c9 (souji-verify), 53f92421 (vault-verify), 11bf9cdf (census) — pins 7efda63b/d312263a reconciled by S15 as historical (tools patched r5/r6); census pin matches current bytes"
+    ],
+    "verdict_basis": "no undisclosed dangling pointer anywhere; 1 minor drift (off-by-one) + 2 externally-caused documented drifts; claim MET with the LOG '15x' line flagged for the parent's integration pass"
+  },
+  "K1_evidence": {
+    "runbooks": [
+      "census/round-8/gate-runbook-17.md (S17) — WINNER: 5 blocked classes A-E (96 approval rows / gd2d pins / kotodama / lane remote 404 / lore .scratch), every command TESTED read-only on the live fleet with observed output, executors named (operator / owning lane / souji parent / blind seat), recommended order D->A->B->C->E, standing-refusals section, 96/96 SAFE(pushed) dry-run embedded with gate1/gate2 re-derivation (total=96 gate_fails=0)",
+      "census/round-8/gate-runbook-18.md (S18) — complementary independent cross-check: 6 gates G1-G6 (adds stale-clock G4, fleet-backlog caveat G6), tool-readiness precondition ('a gate check whose tool selftest is red is VOID'), fixture-proven transcript, 6/6 sampled rows SAFE(pushed)"
+    ],
+    "simulation": "results/qrun-20.json (S20): SIMULATION-PASS — gd2d pin gate-opening proven on fixture: NOT-SAFE(unpushed-branch) x3 -> push-sim (update-ref) -> SAFE(metadata-prune) x3 -> unlock -> prune metadata-only, branch refs survive; discovered mandatory runbook step: locks BLOCK git worktree prune, unlock-by-path works with absent dirs (runbook-17 class B and runbook-18 G5 both carry the unlock step)",
+    "runner_corrections_to_integrate": [
+      "qrun-13 F1 (runbook-material): r7 execution_plan_template step_3 is unimplementable as written — after staging the original-path gate1 shows the quarantine commit itself (observed lines=1); a pushed receipt cannot survive its own staging commit",
+      "qrun-13 F2 (validated): second check must be receipt-class-split — pushed = pre-stage evidence of record + post-hold sha256 identity + no-resurrection; stale = real tool re-run on quarantined copy (sweep excludes quarantine) + identity",
+      "qrun-13 F3 (defect found+remediated): staging commits must be path-scoped — git add -A silently committed a secret-shaped .env alongside staged paths (9f976d1); remediated in feb73f2 (exactly 2 paths)",
+      "qrun-13 F4 (calibration): --stale-days 0 turns brand-new scratch into SAFE(stale)",
+      "qrun-10: 3 flow-design findings converge with F1/F2 (second-check definition, gate-opening steps, dirty divergence)"
+    ],
+    "verdict_basis": "both runbooks agree on the gate inventory and every gate has an exact command sequence + named owner; mechanics proven by simulation; runner findings supply the step-3 correction both runbooks must fold in during parent integration"
+  },
+  "findings_for_parent": [
+    "/tmp quota pressure: 13G/16G (80%) at 19:30, dominated by OTHER lanes' fixture residue (arc2-l3r3-C1-inst 1.6G, seat50 927M, seat44-a4b 885M, coldrun-b 518M, kotodama-r8-o14 345M ...); caused 'Disk quota exceeded' failures inside late-tournament selftests — environmental, distinct from code defects (impl-03/08 red states are code-level: syntax errors pre-quota, then assertion mismatches); this seat cleaned only its own residue (/tmp/tmp.vz4dTZxHo2, /tmp/tmp.JIIziN617e)",
+    "two impl seats (S03, S08) still converging at freeze: both fixed their syntax errors in-flight, both positive trajectory; final-21 records the 19:37:47 freeze, not their end state",
+    "S16 verdict fragment (companion to seat-16-inventory.json) not landed at freeze",
+    "live quarantine remains unexercised by design: the three external gates (operator sign-off on the 96 rows, souji lane remote creation, sibling-lane pushes) are operator/lane-owned; runbooks make them executable the moment they open",
+    "LOG.md '15x launch-*.json' should read 16 (16th is tsukuroi) — only true drift found by C1"
+  ],
+  "safety_envelope_of_this_judge": "read-only over live fleet and lane repo except this file (census/round-8/final-21.json); all tool executions were --selftest / --dry-run / mktemp fixtures (/tmp/s21-judge, /tmp/s21-adv.enWLnb preserved); no git fetch/push/commit/branch anywhere; no .ufo/state or .ufo/watchdog.log access; no secret-shaped file content read (secret-shaped paths used only as refusal probes); /tmp residue of other seats left untouched"
+}

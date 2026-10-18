@@ -1,0 +1,102 @@
+{
+  "seat": "S24",
+  "round": 8,
+  "kind": "final-judge",
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "lane_head": "1cf5fa8 (r7 report commit; round-8 work untracked by protocol)",
+  "measured_at": "2026-10-18T19:35:00-03:00 .. 19:56:00-03:00 (judging window; all live re-derivations timestamped inside it)",
+  "claims": ["O1 quarantine-flow tooling", "C1 pointer integrity", "K1 gate-opening runbook"],
+  "round_verdict": "ROUND 8 SOUND — 3/3 claims MET as measured; zero live mutations anywhere in the round (verified by this judge's own byte-level probes); authorized_removals=[] is CORRECT (every remaining gate is external and still closed). Corrections to co-judge freeze-table facts and one rule/tool contradiction are recorded in census/round-8/dissent-24.md; none flips a claim verdict.",
+  "per_claim_verdicts": {
+    "O1_quarantine_tooling": {
+      "verdict": "MET",
+      "winner": "tools/souji-quarantine.impl-01.sh (S01), sha256_16 5780ad751aa49d1b, byte-stable 19:04 through judging time — the only candidate green in every probe round AND triple-judge adversarially verified",
+      "triple_judge_convergence": "S21 battery 8/8 (final-21), S22 battery 9/9 (final-22), S24 battery 8/8 + 1 dry-run probe (this fragment) — all three independent, all three green on the same bytes",
+      "s24_own_battery": [
+        "P0 engine baseline: pushed/stale/none verdicts correct on a 3-class fixture",
+        "P1 pushed happy path: 5-stage flow -> DELETED, rc=0, original gone; second check = pin=ok mtime=ok intro-blob=ok unpushed-touching=0 prong1-tolerated class-not-path-local (this resolves qrun-23 F1 and qrun-13 F1/F2: the pushed second check consumes pre-move evidence, never a post-move re-derivation)",
+        "P2 stale happy path: prong1 SAFE(stale) BINDING on the quarantine copy, DELETED",
+        "P3 no-receipt control: NOT-AUTHORIZED rc=3, file intact",
+        "P4 live guard: exit 4 GUARD on the lane repo, `git status --porcelain | sha256sum` byte-identical before/after",
+        "P5 tamper-during-hold (background tamper at t+1s of a --hold 3 run): ABORTED rc=3, digest+mtime FAIL surfaced, staged copy KEPT and untouched after abort (sha equal pre/post)",
+        "P6 --list receipt pin: listed=stale vs engine=pushed -> NOT-AUTHORIZED receipt-mismatch, file intact — the operator list functions as an authorization pin",
+        "P7 secrets: .env -> NOT-AUTHORIZED secrets-refusal without content read, file intact",
+        "P8 --dry-run on live lane LOG.md: DRY-RUN-BLOCKED rc=0, read-only; live-confirms LOG.md NOT-SAFE(pushed-unverifiable) — r7 boundary stands"
+      ],
+      "field_at_judging_time": {
+        "impl-01 (S01)": "GREEN selftest 63/63 (re-run by S24 clean-env), battery 8/8 — WINNER",
+        "impl-02 (S02)": "GREEN selftest rc=0, 0 FAIL under clean TMPDIR; an S24 run under the exhausted /tmp produced 16 assertion fails ALL traced to 'Disk quota exceeded' fixture corruption — and even that corrupted run REFUSED to retire (RETIRE-REFUSED no-valid-record): fail-closed held under environmental corruption; S02's 76/76 x3 claim stands in a sane environment",
+        "impl-03 (S03)": "GREEN selftest 27/27 rc=0 at judging time on the SAME bytes final-21 recorded as red at its 19:37:47 freeze — freeze-red was environmental (the /tmp quota pressure final-21 itself reported), not code",
+        "impl-04 (unclaimed)": "GREEN selftest 37/37 rc=0; no seat fragment landed — treated as unattributed bonus candidate, not scored",
+        "impl-05 (S05)": "GREEN 21/21",
+        "impl-06 (S06)": "GREEN 40/40 (bytes amended after final-21's freeze: dd7bf896 vs recorded 78db8572 — seat-06.json documents the final version, selftest count matches)",
+        "impl-07 (unclaimed)": "RED — bash syntax error line 107 (parse failure); no fragment",
+        "impl-08 (S08)": "GREEN 44/44 rc=0 — bytes rewritten 19:39:48 AFTER final-21's freeze (which recorded 19/43); no seat-08 fragment landed at judging time",
+        "impl-S12 (S12)": "GREEN 26/26",
+        "qrun-11.sh (S11)": "tournament runner, no --selftest by design; file of record results/qrun-11.json says checks=53 failed=0 (final-21's '48 checks' is a transcription slip — see dissent)"
+      },
+      "adjudication_of_cli_divergence": "S02 flagged impl-01 vs impl-02 CLI divergence (repo-anchored single flow vs per-path modes). RULING: impl-01 is canonical — it is the r7 execution_plan_template shape (one flow, --list TSV receipt pins matching census/round-3/operator-approval-list.tsv's path-keyed rows), it is the triple-verified artifact, and its second-check design is the deepest. impl-02's --check/--plan read-only modes and dual-engine gate3 (souji-verify AND souji-vault-verify) are strengthening feature requests for a future revision, not blockers. No live behavior difference exists today: every probe of every candidate ends NOT-AUTHORIZED on the live fleet.",
+      "design_findings_convergent_and_adopted": [
+        "qrun-23 F1 + qrun-13 F1: a pushed receipt cannot survive its own staging commit; second check must consume PRE-MOVE evidence — impl-01 prong2 implements exactly this (S24 P1 observed), runbooks 17/18 must fold it in during parent integration",
+        "qrun-11 F-4 + S18 §3: tool-on-quarantine-copy is necessary-not-sufficient; byte-identity + gate stability required — implemented by impl-01 content pins (P5 tamper catch)",
+        "impl-01 prong1/prong2 receipt-class split (stale binding on copy; pushed/obsidian re-derived against original context) independently anticipates all runner findings — a design validation, not an accident"
+      ]
+    },
+    "C1_pointer_integrity": {
+      "verdict": "MET",
+      "basis": "S15: 111 tokens over 9 sources, all resolve or documented-absent, 3 sha256 pins re-verified at measurement commits; S16: independent 134-token extraction, RECONCILED with S15 at verdict level",
+      "drifts": {
+        "true_drift_1": "LOG.md:9 mint entry says '15× launch-*.json'; disk measures 16 (15 lanes + launch-tsukuroi.json) — S24 re-derived independently: find .ufo -maxdepth 3 -name 'launch-*.json' | wc -l -> 16. CORRECTION REQUIRED in the parent's LOG integration pass (append-only correction entry; off-by-one, the 16th is tsukuroi)",
+        "external_documented": "gd2d worktrees 4->5 (live lane work) and conf snapshot 4092->4432B — both externally caused, both documented by S15/S16; S16 adds gd2d .git/worktrees admin 3->8 (stale-claim finding on LOG:138) — routed to the parent's correction pass, none affects a round verdict",
+        "dead_confirms": "lane origin/master 404 re-confirmed first-hand by S24 at judging time (GIT_TERMINAL_PROMPT=0 git ls-remote origin HEAD -> 'Repository not found', 0 remote-tracking refs, 13 unpushed) — matches r7 and both runbooks"
+      }
+    },
+    "K1_gate_runbook": {
+      "verdict": "MET",
+      "basis": "gate-runbook-17.md (S17) + gate-runbook-18.md (S18) are independent, agree on every material gate, and name owners for every opening action; S20's fixture simulation (qrun-20) proves the gd2d pin mechanics end-to-end (push-sim -> SAFE(metadata-prune) x3 -> unlock MANDATORY before prune -> prune is metadata-only, branch refs survive)",
+      "s24_live_rederivation_at_judging_time": [
+        "Class A: 96-row dry-run re-run by S24 -> tally `96 SAFE pushed`, 0 NOT-SAFE; gate1/gate2 re-derivation clean; fleet-root unpushed now 27 (moving number, none touch the 96) — receipts healthy, sign-off still the only missing act",
+        "Class D/G2: lane origin 404, refs/remotes=0, unpushed=13 — CLOSED, operator-owned, re-confirmed first-hand",
+        "Class E/G4: stale clock not crossed in scope before 2026-10-19 ~00:04 -03 (lore .scratch dir mtime 2026-10-18T00:03:50-03:00 + 1d); citation+dirt gates still fail — taken from r7/r8 measurements, re-stat at execution time by construction",
+        "runbook-18 §4 procedure: S24 end-to-end executed the equivalent flow via impl-01 on fixtures (P1/P2): staged -> held -> second check -> deleted with rollback never needed; the §3 four-line direct re-derivation is exactly impl-01's prong2 — runbook and tool agree"
+      ],
+      "gate2_contradiction_ruling": "S18 §2 + qrun-11 F-2 + S06's observed gate2-dominance: gate2 AS WRITTEN (porcelain empty over the path) is unpassable for any untracked candidate (its own `??` line always prints) while the installed engine emits SAFE(stale) for the same file — S24 reproduced this exact shape on its own fixture (untracked .scratch/old.out: engine SAFE/stale; `git status --porcelain --untracked-files=all -- .scratch/old.out` non-empty). RULING: this is a real rule/tool contradiction, not a safety feature; ADOPT S18's refinement for parent integration (gate2' = no porcelain line touching the path EXCEPT the candidate's own untracked entry; tracked dirt and third-party paths still fail). Until adopted, untracked stale candidates stay NOT-AUTHORIZED — fail-closed wins ties. Same ruling admits qrun-11 F-1 (gate1 unreachability for obsidian-class tickets in zero-remote repos; fixture-proven amendment: both-digest ledger re-verification substitutes for the unpushed half when refs/remotes is empty)."
+    }
+  },
+  "quarantine_exercise_verdict": {
+    "authorized_removals": [],
+    "rationale": [
+      "no operator sign-off on the 96 rows exists (r3->r8 unchanged; re-verified receipts today by three seats plus this judge)",
+      "souji lane origin 404 (S24 re-confirmed) -> every in-lane pushed receipt unverifiable",
+      "stale clock: nothing in scope crosses 1d before 2026-10-19 ~00:04 -03; lore citation+dirt gates still fail",
+      "gd2d pins: branches unpushed (S20: unique=1 each, locked); kotodama: 40+ GB live scratch, 50+ unpushed — hands-off stands",
+      "the round's O1 is proven ON FIXTURES by design (round-8 universal rule); the live flow stays UNEXERCISED correctly — nothing forced"
+    ],
+    "gate_order_recommendation": "runbook-17's D -> A -> B -> C -> E stands (live lane origin first: it re-opens pushed receipts lane-wide; A is independent and ready the moment the operator signs)",
+    "integration_requirements_for_parent": [
+      "install impl-01 as tools/souji-quarantine.sh (parent's call; triple-judge verified)",
+      "fold qrun-23 F1/F2 + qrun-13 F1/F2 + S18 §3 second-check semantics into gate-runbook-17 §1 Steps A1-A4 (pre-move receipt evidence + byte identity; never a post-move re-derivation)",
+      "adopt the gate2' refinement (or obtain explicit operator waiver per untracked-stale ticket) before any stale-class authorization",
+      "append-only LOG corrections: '15× launch-*.json' -> 16; gd2d worktree/admin counts re-stamped; final-21 freeze-table supersession per dissent-24.md",
+      "re-measure candidate bytes at integration (impl-06 amended post-freeze; impl-08 rewritten post-freeze; impl-04/07 unclaimed)"
+    ]
+  },
+  "safety": {
+    "live_mutations": "zero — P4 lane-status sha256 byte-identical across impl-01 execute probe; P8 dry-run read-only; 96-row dry-run and all gate re-checks are reads; the only remote-facing call was ls-remote (runbook §6 permits it)",
+    "fixture_discipline": "all mutating probes on mktemp fixtures under /var/tmp/s24-judging (relocated off the exhausted /tmp after quota corruption was diagnosed); fixture .env created as a refusal probe, never read back",
+    "forbidden_surfaces": ".ufo/state and .ufo/watchdog.log not opened; no secret-shaped file content read",
+    "residue_cleaned": "only S24's own evidenced fixture dirs (/tmp/tmp.XaLhNZB9W0, /tmp/tmp.yR9vN7rNzj — both printed in S24's captured logs); all other seats' /tmp residue untouched",
+    "no_fetch_push_commit_branch": "none on any live repo; fixture repos carried their own throwaway commits (mktemp-scoped)"
+  },
+  "writes": [
+    "census/round-8/final-24.json",
+    "census/round-8/dissent-24.md",
+    "/var/tmp/s24-judging/* (scratch, preserved for re-audit)",
+    "/tmp/s24-impl02-*.log, /tmp/s24-impl04-selftest.log (evidence logs)"
+  ],
+  "uncertain": [
+    "impl-04 (green 37/37) and impl-07 (syntax error) have no seat fragments — their seats may still be in flight; they are recorded as unattributed and do not gate any verdict",
+    "seat-08 fragment had not landed by 19:56 despite impl-08 being green — winner selection is unaffected (impl-01 triple-verified), but the parent should wait briefly for late fragments before filing the round",
+    "the fleet-root unpushed count (27 at 19:51) is a moving fleet number; it cannot invalidate the 96 (per-path gate1 clean, re-run at 19:52)"
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "seat": "S02",
+  "role": "implementor",
+  "fragment": "census/round-8/seat-02.json",
+  "round": 8,
+  "date": "2026-10-18",
+  "mode": "implementor; writes limited to tools/souji-quarantine.impl-02.sh + this fragment + results/qrun-S02-0{1,2}.json; quarantine tool mutations confined to mktemp fixtures via the SOUJI_Q_SANDBOX gate; no fetch/push/commit/branch on any live repo; no secret-shaped reads; .ufo/state and .ufo/watchdog.log not opened",
+  "deliverable": {
+    "tool": "tools/souji-quarantine.impl-02.sh",
+    "sha256": "709ff22b168d7ea4734e0c244c86fb5c70c769d31052d835848432b54491742d",
+    "bytes": 46497,
+    "language": "bash (bash + coreutils + git + rg only, same substrate rule as the lane engines)",
+    "cli": {
+      "check": "--check [--json] [--expect-receipt CLASS] <path>... (read-only, always exit 0)",
+      "plan": "--plan <path> (read-only 5-step runbook, resolves the concrete quarantine dir/dest/record paths)",
+      "stage": "--stage [--dry-run] <path> (mutating; sandbox-gated)",
+      "verify_staged": "--verify-staged <original-path> (read-only second check)",
+      "retire": "--retire --operator-signoff ID [--hold-min-seconds N] <staged-path> (mutating; sandbox-gated)",
+      "selftest": "--selftest (mktemp fixture battery, exit 0/1)"
+    },
+    "exit_codes": "check/plan/verify-staged 0; stage/retire 0 ok 1 refused 2 usage; selftest 0/1; usage 2"
+  },
+  "flow_mapping": {
+    "source": "census/round-7/quarantine-plan.json execution_plan_template + SKILL.md removal flow + AGENTS.md receipt/hold/signoff rules",
+    "step_0_recheck": "--check: gate1 unpushed-touching (explicit --branches --not --remotes form; r6 pitfall respected), gate2 dirty-touching (--untracked-files=all), gate3 dual-engine receipt (souji-verify AND souji-vault-verify both SAFE, same class in {pushed, moved-to-obsidian, stale, metadata-prune}, --expect-receipt pin)",
+    "step_1_stage": "--stage: AUTHORIZED required, then plain mv (never git mv) to <repo>/.ufo-quarantine/<UTC-date>/<rel with / -> __> + sidecar <dest>.souji-qrecord.json (original, repo, receipt, both engine receipts, intro commit, vault path/sha for obsidian rows, content digest, staged epoch, hold floor). The owning repo's quarantine commit is left to parent/operator by design (AGENTS.md; this tool never commits)",
+    "step_2_hold": "hold floor default 450s (one driver tick) from the record's staged_at_epoch; SKILL.md's 24h preference for non-pushed is surfaced in --plan, enforcement floor is 450s, waived only for receipt pushed",
+    "step_3_second_check": "--verify-staged: record integrity + staged-copy digest re-hash + gate1 re-run on the original (history-based, mv-proof) + gate2 re-run tolerating ONLY the quarantine's own ` D <orig>` deletion lines + class-appropriate receipt re-verification (stale -> both engines on the copy; pushed -> recorded intro still ancestor of resolved default ref; moved-to-obsidian -> recorded vault side re-hashed read-only)",
+    "step_4_retire": "--retire: second check must pass NOW + nonempty --operator-signoff + hold elapsed (unless pushed) -> rm ONLY the staged copy and its record; every refusal names its reason and exits 1 leaving everything in place"
+  },
+  "claims": {
+    "Q1_operability": {
+      "claim": "the r7 execution_plan_template runs end-to-end as one self-tested tool",
+      "verdict": "MET",
+      "evidence": "results/qrun-S02-01.json: --selftest 76/76 x3 runs exit 0; 18 scenario groups covering all 5 steps, all 4 receipt classes, all 3 gates, tamper/hold/signoff/usage/sandbox refusals"
+    },
+    "Q2_safety": {
+      "claim": "the live fleet is untouchable through this tool; fail-closed everywhere",
+      "verdict": "MET",
+      "evidence": "results/qrun-S02-02.json mutation_refusal_probes (no-sandbox -> REFUSED before any filesystem effect, no .ufo-quarantine created); T7/T8 sandbox/dry-run; T6 secrets-refusal before read; T10 retire refused on tampered copy keeps the copy; zero live mutations this round"
+    },
+    "Q3_calibration": {
+      "claim": "live read-only verdicts reproduce round-7's receipts with zero false-AUTHORIZED",
+      "verdict": "MET",
+      "evidence": "results/qrun-S02-02.json live_readonly_probes: LOG.md gate1-unpushed-touching(count=10); lore .scratch gate2-dirty-touching(lines=26); kotodama .scratch gate3-no-safe-receipt — all three match r7's fail-closed outcome; no candidate manufactured"
+    }
+  },
+  "deliberate_restrictions": [
+    "metadata-prune classifies via --check but --stage REFUSES stage-unsupported-receipt: worktree registrations retire via worktree tooling, not file mv (T15)",
+    "nested stale targets refuse to stage: flattening dir/name -> dir__name breaks the engines' anchored scratch patterns, so the mandatory copy-side re-check could never pass (T18)",
+    "moved-to-obsidian staging requires regular-file source AND vault (dir rows need dir-digest machinery this tool does not duplicate)",
+    "gate2 second-check waiver tolerates exactly the quarantine's own deletions; anything else regresses the check",
+    "known limitation (carried from r7, documented in the tool header): ignored paths are gate2-invisible, so an ignored target's cleanliness is only as durable as its .gitignore rule; record + second check + operator signoff bound the exposure and the operator should confirm the ignore rule is itself pushed"
+  ],
+  "cross_impl_findings": {
+    "impl_03": "bash syntax error at line 685 (bash -n exit 2) — cannot run at all; reported for S03/integrator, untouched by this seat",
+    "impl_01": "parses, --selftest exit 0, but a DIFFERENT CLI interpretation of the round-8 contract (repo-anchored single flow vs per-path modes); semantic agreement verified on two live probes (both impls refuse LOG.md and lore .scratch); flagged for parent adjudication of the round's canonical CLI",
+    "adjudication_note": "on today's fleet both implementations reach the same outcome on every probe — zero authorized tickets; the r7 fail-closed result is reproduced independently by two seats"
+  },
+  "not_claimed": [
+    "No live quarantine staged/retired this round — the live fleet still has zero authorized targets (re-confirmed by live probes)",
+    "impl-01/impl-03 not modified or fixed by this seat",
+    "Nothing committed; all four files are untracked pending parent integration",
+    "The 24h-hold preference is plan-surfaced prose, not an enforced second floor (see results/qrun-S02-01.json to_verify)"
+  ]
+}

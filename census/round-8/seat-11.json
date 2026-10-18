@@ -1,0 +1,62 @@
+{
+  "seat": "S11",
+  "round": 8,
+  "kind": "runner",
+  "role": "quarantine-flow runner: exercise the round-7 pre-staged execution plan (step_0_recheck .. step_4_delete) END-TO-END on mktemp fixture repos where every gate is deliberately OPENED, plus fail-closed controls, a read-only live dry-run probe, and a gate-opening runbook",
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "runner": "tools/qrun-11.sh",
+  "runner_sha256": "2a30837918dd0007be8bde261391dd046a28da04eab5c81d2c9aa9ba8d3450c6",
+  "result_file": "results/qrun-11.json",
+  "tools_under_test": {
+    "A": "tools/souji-verify.sh",
+    "A_sha256_16": "a91049c96e5fba7c",
+    "B": "tools/souji-vault-verify.sh",
+    "B_sha256_16": "53f92421b254426c"
+  },
+  "measured_at": "2026-10-18T22:34:50Z (final run; wave runs at 21:58, 22:06, 22:31 before hardening)",
+  "verdict": "PASS — 53/53 checks, 0 failed, runner exit 0. The quarantine flow is EXERCISED end-to-end on fixtures: all four receipt classes (pushed, stale, moved-to-obsidian, metadata-prune) prove SAFE through BOTH installed tools, steps 0-4 complete on three mv-flow scenarios, five fail-closed controls refuse correctly, live probe confirms the round-7 boundary still stands.",
+  "scenario_results": {
+    "pushed (r7 gates verbatim)": "step0 gate1=EMPTY gate2=EMPTY toolA=SAFE/pushed toolB=SAFE/pushed -> staged .ufo-quarantine/2026-10-18/docs_retire-q11-note.md -> byte-identity sha e4beca60ba7b -> gate1 stable -> delete via scope guard. Final porcelain ' D docs/retire-q11-note.md' (F-5).",
+    "stale (gate amendment F-2)": "toolA/B SAFE/stale (scratch-type=scratch-dir refs=0 age 3d) -> staged .scratch_q11-stale-artifact.out -> byte-identity cdd767e220fb -> staged copy STILL verifies SAFE/stale (mv preserves mtime+basename; F-4) -> deleted; worktree left <clean>.",
+    "moved-to-obsidian (gate amendment F-1)": "remoteless repo; toolA/B SAFE/moved-to-obsidian on ledger digests -> staged notes_q11-archived.md -> byte-identity a47825e29a73 -> staged copy NOT-SAFE/none (receipt is ledger-bound to original path) -> deleted. Final porcelain ' D notes/q11-archived.md'.",
+    "metadata-prune": "gate proof only (registration dir absent, unique=0, no lock; staging op is unregister/prune — operator-gated, no mv flow). toolA/B SAFE/metadata-prune.",
+    "fail-closed controls": "unpushed-touching (gate1 non-empty) refuse; dirty-touching (gate2 non-empty, toolA still says SAFE/pushed — F-3) refuse; live-ref (stale=live-refs=1) tool-denied; secrets-shaped docs/keys.env -> secrets-refusal without any read; scope-guard probe outside .ufo-quarantine -> refused rc=97, file intact.",
+    "live dry-run probe": "LOG.md -> NOT-SAFE/pushed-unverifiable; results/cross-100.json -> NOT-SAFE/none; toolB LOG.md -> NOT-VERIFIED(none); mtimes+inodes identical across probes; live phase executes no git."
+  },
+  "negative_test": "Sabotaged copy (quarantine-scope guard turned into a no-op) in a mktemp tools/ tree: exit 1, results JSON still written, control-scope-guard FAIL + live-zero-mutation FAIL, no silent skip, no crash. Proves the suite fails loudly and the results file survives failure.",
+  "findings": [
+    "F-1 (material, r7 template defect): authorization gate1 'git log --branches --not --remotes -- <path> empty' is UNREACHABLE in any repo with zero remote-tracking refs — every commit ever made is listed. Obsidian-class tickets are therefore impossible gate1-as-written in the live lane (dead origin). Amendment proven on fixture: when refs/remotes is empty, toolB VERIFIED(moved-to-obsidian) (both digests re-hash) substitutes for the unpushed-half.",
+    "F-2 (material, r7 template defect): authorization gate2 'status --porcelain --untracked-files=all -- <path> empty' forbids every UNTRACKED candidate by definition ('?? <path>' always prints) — the stale class is unreachable as written; this is exactly how lore/.scratch-style candidates were auto-denied in r7. Amendment proven on fixture: gate2' = porcelain excluding untracked lines (tracked dirt only); untracked-ness is the ticket's own substance, re-checked by refs=0.",
+    "F-3 (calibration): tool receipts alone are NOT authorization — toolA emits SAFE(pushed) for a file with UNCOMMITTED worktree modifications (try_pushed never inspects the worktree). The r7 gate2 layer is what catches it. Keep gates AND tools in step_0_recheck.",
+    "F-4 (flow semantics): plain mv staging preserves mtime+basename, so a stale-class staged copy still verifies SAFE(stale) under the mangled path while pushed/obsidian-class staged copies verify NOT-SAFE. The staged copy carries NO independent authorization — the second check must gate on byte-identity + gate stability (as implemented), never on the staged copy's own receipt.",
+    "F-5 (close-out): quarantining a TRACKED path leaves an unstaged deletion (' D <path>') after step_4; untracked (stale-class) staging leaves the worktree clean. Runbook close-out: record the deletion receipt in LOG.md; the parent decides when the deletion is committed.",
+    "F-6 (boundary): live probe re-confirms r7 — lane paths NOT-SAFE/pushed-unverifiable (refs/remotes empty, origin 404). The pushed class opens ONLY via an operator-owned origin create+push; every other class is blocked by live citations, header-only ledger, locked/unique worktrees, or dirty trees.",
+    "F-7 (incident, self-reported, NO HARM): the first draft embedded git command examples in backticks inside double-quoted note strings; bash command-substituted them in the process cwd — one instance attempted 'git push origin master' against the LANE repo's dead origin. It failed terminally (fatal: could not read Username for 'https://github.com': terminal prompts disabled — remote is the r7 404 remote), transferred nothing, created no refs. Verified post-incident: lane HEAD unchanged (1cf5fa8), reflog top unchanged, refs/remotes/origin empty. Fixed: strings de-backticked + audit-no-backticks (grep pattern built via printf '\\140') fails any regression."
+  ],
+  "runbook": "Full gate-opening recipes in results/qrun-11.json 'runbook[]' (6 entries: gate-open-pushed / gate-open-stale / gate-open-obsidian / gate-open-metadataprune / flow-contract / guard), each with the fixture-proven command sequence and its live-fleet equivalent. Headline: pushed opens operator-side by recreating the lane origin and pushing master; stale opens 2026-10-19 at the earliest and only after live citations retire; obsidian opens with any real both-digest ledger row; metadata-prune opens only if the operator unlocks gd2d wt-r98/99/100 AND their unique commits land or are abandoned.",
+  "hardening_found_by_this_seat": "The runner's own first draft used '[ cond ] && check' patterns that SILENTLY SKIP a check on failure — 3 audits and several flow checks were invisible. Converted every check to explicit if/else; the hardened run then surfaced 5 real defects (2 of them in the fixture semantics, 3 in audit self-matching). Lesson for the fleet: a check framework must count the checks that DID NOT fire; a green summary with a variable check count is not evidence.",
+  "safety_record": {
+    "mutations": "every mutating git verb routed through fixture_git() (refuses any repo outside the mktemp root); every rm routed through guarded_rm_q() (refuses any path outside a fixture .ufo-quarantine/); fixtures removed on exit",
+    "live_surface": "read-only dry-run probe through the installed tools on LOG.md and results/cross-100.json only; zero mutations (mtime+inode assertion); live phase executes no git",
+    "forbidden": "no .ufo/state, no .ufo/watchdog.log, no ~/.config access; one secrets-shaped FIXTURE file created under mktemp and never read; no LOG.md edits (fragment only); nothing committed",
+    "incident": "F-7 above — disclosed, verified harmless, regression-audited"
+  },
+  "inputs_read": [
+    "census/round-7/quarantine-plan.json (execution_plan_template, authorization_rule, reaudit_triggers)",
+    "AGENTS.md",
+    "tools/souji-verify.sh",
+    "tools/souji-vault-verify.sh (header + receipt paths)",
+    "LOG.md (r4-r7 entries)",
+    "tests/runner-23.sh (house style)"
+  ],
+  "files_written": [
+    "tools/qrun-11.sh",
+    "results/qrun-11.json",
+    "census/round-8/seat-11.json"
+  ],
+  "not_claimed": [
+    "No live-fleet removal, staging, or quarantine directory was created; the live probe removed and wrote nothing",
+    "metadata-prune staging (unregister/prune) was proven at the receipt layer only, not executed against any registration",
+    "The F-1/F-2 gate amendments are FIXTURE-PROVEN proposals for the parent to adjudicate; r7's verbatim text stands until the parent amends it"
+  ]
+}
