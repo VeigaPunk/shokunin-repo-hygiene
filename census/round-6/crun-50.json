@@ -1,0 +1,379 @@
+{
+  "seat": "S50",
+  "round": 6,
+  "role": "runner",
+  "kind": "independent",
+  "artifact": "census/round-6/crun-50.json",
+  "lane_head": "ce58c2b",
+  "run_local_start": "2026-10-18T15:58:00-03:00",
+  "run_local_end": "2026-10-18T17:22:04-03:00",
+  "verdict": "NOT-CLOSED. C1 drift is not 0. O1 entry point tools/souji-census.sh is absent. K1 kotodama .scratch is live and NOT-SAFE; a header snapshot was classified, the later larger tree was sized only.",
+  "axes": {
+    "C1_calibration": {
+      "claim": "docs/tools reconciliation, drift to 0",
+      "result": "DRIFT",
+      "drift_count": 8,
+      "drift_zero": false,
+      "note": "Counted distinct SKILL.md claims that contradict tools/souji-verify.spec.md and/or the installed tools, plus one spec/tool gap confirmed statically. Province amend diffs under census/round-6/ are proposals, not installed docs, and are not counted as the live contract."
+    },
+    "O1_operability": {
+      "claim": "tools/souji-census.sh repeatable fleet census",
+      "result": "ABSENT",
+      "installed_path_present": false,
+      "installed_verifiers": "still green (regression, not the census tool)",
+      "best_draft_live_run": "souji-census.impl-39.sh frozen sha 62315085a3ba676391010f7861432bb084f61d12df7b182e676a13fb89d6fd57 completed a 22-row census; a second run 6s later was not byte-identical because the fleet is live",
+      "note": "Drafts kept landing and being rewritten during the run. Results below are for the frozen bytes that were actually executed, not for the hashes present at 17:22."
+    },
+    "K1_coverage": {
+      "claim": "kotodama 16G .scratch fully classified read-only plus a handoff note",
+      "result": "NOT-SAFE snapshot classified; later growth not re-classified",
+      "handoff": "Do not remove kotodama-shokunin/.scratch. The owning repo is unpushed and dirty, the directory is gitignored, and its byte size grew during this seat's run. A census row is not an approval."
+    }
+  },
+  "drift": [
+    {
+      "id": "D1",
+      "where": "SKILL.md:16",
+      "doc": "pushed receipt requires git fetch and origin/main",
+      "installed": "spec lines 39-42: no git fetch; resolve refs/remotes/origin/HEAD, else the single origin/* branch, else NOT-SAFE(pushed-unverifiable). Installed tools contain git fetch only in comments. Fleet origin/HEAD is origin/master.",
+      "class": "SKILL vs spec+tools"
+    },
+    {
+      "id": "D2",
+      "where": "SKILL.md:29",
+      "doc": "last commit ancestor of origin/<default> is SAFE(pushed)",
+      "installed": "spec lines 35-41: introducing commit (diff-filter=A) must be an ancestor of a remote-tracking ref; a local ref never establishes pushed",
+      "class": "SKILL vs spec+tools"
+    },
+    {
+      "id": "D3",
+      "where": "SKILL.md:18",
+      "doc": "stale sweep is rg -l with no --hidden, no --no-ignore, and no census/tests exclusions",
+      "installed": "spec lines 50-53: rg -l --no-ignore plus census/tests/quarantine exclusions. Neither SKILL, spec, nor either installed tool contains --hidden. Shared hidden-file gap is recorded separately and is not an extra drift row.",
+      "class": "SKILL vs spec"
+    },
+    {
+      "id": "D4",
+      "where": "SKILL.md:17 and SKILL.md:30",
+      "doc": "ledger row matching path+hash is enough for moved-to-obsidian",
+      "installed": "spec lines 43-48: both hashes re-checked, and any symlink in a digest scope is NOT-SAFE(symlink-present). Installed souji-verify.sh contains symlink-present.",
+      "class": "SKILL vs spec+tools"
+    },
+    {
+      "id": "D5",
+      "where": "SKILL.md:60 and SKILL.md:91",
+      "doc": "kotodama .scratch is 553M",
+      "installed": "du -sb measured 18292985803 (16:01), 19785269159 (16:16), 27546116270 (impl-39 at 16:33), 27553684043 (du immediately after). All are above 16 GiB. 553MiB is 579862528 bytes.",
+      "class": "SKILL surface fact vs measurement"
+    },
+    {
+      "id": "D6",
+      "where": "SKILL.md:89",
+      "doc": "lore-shokunin has 19 prunable worktrees",
+      "installed": "git -C lore-shokunin worktree list printed one line: main at 6cec83a. No prunable token.",
+      "class": "SKILL surface fact vs measurement"
+    },
+    {
+      "id": "D7",
+      "where": "SKILL.md:90",
+      "doc": "game-dev-2d-shokunin has 5 prunable worktrees",
+      "installed": "worktree list printed 4 lines: main plus locked wt-r98, wt-r99, wt-r100. Not 5, and the three extras are locked, not prunable.",
+      "class": "SKILL surface fact vs measurement"
+    },
+    {
+      "id": "D8",
+      "where": "tools/souji-verify.spec.md:62",
+      "doc": "the tool never touches .ufo/state or .ufo/watchdog.log",
+      "installed": "static: evaluate_path in both installed tools does not contain .ufo/state or .ufo/watchdog.log. Each file mentions those paths once, in a comment. Live probe was not re-run; those paths are off-limits this round. Historical r5 S06 SAFE(pushed) is not re-derived here.",
+      "class": "spec vs tools, static only"
+    }
+  ],
+  "shared_gap_not_counted_as_drift": {
+    "id": "G-hidden",
+    "fact": "rg --hidden is absent from SKILL.md, souji-verify.spec.md, souji-verify.sh, and souji-vault-verify.sh (rg count of the flag was 0 at 16:15). Docs and tools agree. This is the r5 hidden-reference false-SAFE class, still unfixed, not a docs/tools contradiction."
+  },
+  "installed_regressions": [
+    {
+      "command": "timeout 180 bash tools/souji-verify.sh --selftest",
+      "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+      "when": "2026-10-18T16:15:17-03:00",
+      "exit": 0,
+      "observed_tail": "selftest: 24 checks, 0 failed",
+      "sha256": "53239fdfe5bcaaaf448e8525845ab962dd7ab6a4e7f75c0f4f051614f1c99200"
+    },
+    {
+      "command": "timeout 240 bash tools/souji-vault-verify.sh --selftest",
+      "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+      "when": "2026-10-18T16:15:17-03:00",
+      "exit": 0,
+      "observed_tail": "selftest: 35 checks, 0 failed",
+      "sha256": "00d59b1b36d87db37518b5ef9fb98cd472888a075ed7b97bd5b8ff93bd559455"
+    }
+  ],
+  "census_entry_point": {
+    "path": "tools/souji-census.sh",
+    "checks": [
+      "2026-10-18T15:58:00-03:00 absent",
+      "2026-10-18T16:11 absent",
+      "2026-10-18T16:29 absent",
+      "2026-10-18T16:42 absent",
+      "2026-10-18T17:22:04-03:00 absent"
+    ]
+  },
+  "selftest_matrix": {
+    "method": "Copied each draft to /tmp/s50-snap or /tmp/s50-snap2, then `timeout 180 bash <copy> --selftest`. Lane files were not chmod'd. A later third wave was not executed: cp to /tmp returned 'Disk quota exceeded'.",
+    "rows": [
+      {
+        "impl": "souji-census.impl-33.sh",
+        "tested_sha256": "7fb390add4669e30830edc8857cfd50cc3f32a12ec48d2209b35336aee304f42",
+        "tested_bytes": 26739,
+        "mode": "755",
+        "selftest_exit": 0,
+        "observed": "selftest: 30 checks, 0 failed",
+        "on_disk_at_17:22": "6a0878c7ec5b78d4a688ca0b388d8c31aec00a108acc30ad6e1d8a2e3f6fb8ed — rewritten after the run, not re-tested"
+      },
+      {
+        "impl": "souji-census.impl-34.sh",
+        "tested_sha256": "d8253127f9b9183a93394cf16e2f4b420e613cab74b904ab95752cdef9ce398c",
+        "tested_bytes": 37835,
+        "mode": "755",
+        "selftest_exit": 1,
+        "observed": "selftest: 30 checks, 3 failed. FAIL G2 evidence lacks 'not hashed'; FAIL G4 got NOT-SAFE(none) want NOT-SAFE(symlink-present); FAIL H2 exit=0 want=2",
+        "on_disk_at_17:22": "b5a959f643756baa97051e2ad2bc306955da29dd07c8a744bc3ac8ed7ef67af1 — rewritten after the run, not re-tested"
+      },
+      {
+        "impl": "souji-census.impl-36.sh",
+        "tested_sha256": "e9a3d67c647c5db046245ae5952c3b67b7667ddaf5ab9bdc6fc4f56802a04879",
+        "tested_bytes": 32739,
+        "mode": "755",
+        "selftest_exit": 1,
+        "observed": "selftest: 45 checks, 4 failed. Captured tail shows two FAIL lines: positional root differs; uses untracked-files=all. The other two FAIL lines were above the captured tail and were not copied into this fragment.",
+        "on_disk_at_17:22": "a9075b2f3010dbb29a7a70bcd34405596d9dfd68c33b8b2bc358f770ca782ffb — rewritten after the run, not re-tested"
+      },
+      {
+        "impl": "souji-census.impl-39.sh",
+        "tested_sha256": "62315085a3ba676391010f7861432bb084f61d12df7b182e676a13fb89d6fd57",
+        "tested_bytes": 19759,
+        "mode": "755",
+        "selftest_exit": 0,
+        "observed": "selftest: 15 checks, 0 failed, including S15 repeat census byte-identical on the fixture",
+        "on_disk_at_17:22": "5dc14e684a14fcab94d95175260d750cc5893ee885901c2c7e0fd32229c65cd0 — rewritten after the run, not re-tested. impl-39.sh is a symlink to this file and was not run separately."
+      },
+      {
+        "impl": "souji-census.impl-44.sh",
+        "tested_sha256": "c4f46464426ff3b68d51f11d457198bb5ccef4cfa0709f278ff14c5feb5db0c3",
+        "tested_bytes": 28719,
+        "mode": "755",
+        "selftest_exit": 1,
+        "observed": "FAIL T00 census exit 126; line 634 FIELDS[1] unbound variable; line 1 W unbound variable",
+        "on_disk_at_17:22": "6a65ff9d14de472d4b836ff263d786fab7988b29571a5db438742ca169c0e3f0 — rewritten after the run, not re-tested"
+      },
+      {
+        "impl": "souji-census.impl-45.sh",
+        "tested_sha256": "b3ee81b14160f895c126c83809dfc4f4529524adf2049a3d0870a9a7532b64b5",
+        "tested_bytes": 30154,
+        "mode": "755",
+        "selftest_exit": 1,
+        "observed": "selftest FAIL scratch bytes not above payload: 4"
+      },
+      {
+        "impl": "souji-census.impl-48.sh",
+        "tested_sha256": "9e415555f2dacead1ff5b74790bc95efd3eca7752a45ef717cb299af1ec876cb",
+        "tested_bytes": 25639,
+        "mode": "644",
+        "selftest_exit": 1,
+        "observed": "selftest: 31/32. FAIL census-stderr-empty: printf: -\\: invalid option",
+        "on_disk_at_17:22": "b9a0c666be393c73924ca81b483753c7b212067bbdb9add7e0ad4e23dd821d1a — rewritten after the run, not re-tested"
+      },
+      {
+        "impl": "impl-37.sh",
+        "tested_sha256": "b1929b8f3850cd7ae47a8f5edf99b449a5633e464a0260170ceb8cde1426f8a8",
+        "tested_bytes": 47129,
+        "mode": "644",
+        "selftest_exit": 1,
+        "observed": "sha256sum: /tmp/SKILL.md: No such file or directory"
+      },
+      {
+        "impl": "impl-38.sh",
+        "tested_sha256": "ee9d197aea2fd43ba09e332c2198106538492569ab3921000a3ed8331f5dcd55",
+        "tested_bytes": 28569,
+        "mode": "755",
+        "selftest_exit": 0,
+        "observed": "selftest: 18 checks, 0 failed. PASS drift-count-6 is the tool's own fixture expectation, not this seat's live drift count.",
+        "on_disk_at_17:22": "ba2f03a70ddb7df4f117ebf80c9831f5f21e734054b11b45074294fe9771b98e — rewritten after the run, not re-tested"
+      },
+      {
+        "impl": "impl-40.sh",
+        "tested_sha256": "04a9be2dfb4b631133ce2e0d67320127f5331dab791b9639081f2d98c0385418",
+        "tested_bytes": 29042,
+        "mode": "644",
+        "selftest_exit": 1,
+        "observed": "re-exec of the non-executable copy: Permission denied (exit 126 class). Earlier 644 copy of a different hash failed 41 checks."
+      },
+      {
+        "impl": "impl-41.sh",
+        "tested_sha256": "ed95bf3f956b63b37a675193d2b923c2f619aae27cce5f73cdcda5a5ecaaff7c",
+        "tested_bytes": 44729,
+        "mode": "644",
+        "selftest_exit": 1,
+        "observed": "line 1099: missing fixture path under /tmp/impl-41-selftest.../.ufo/state/live.json. The live fleet .ufo/state was not opened."
+      },
+      {
+        "impl": "impl-43.sh",
+        "tested_sha256": "7c4c1ab6ca09396d1073e31069dff53d9bc11651f522717ff0f6164187c19d70",
+        "tested_bytes": 27966,
+        "mode": "644",
+        "selftest_exit": 1,
+        "observed": "FAIL selftest exit=126. File remained mode 644 at 17:22."
+      },
+      {
+        "impl": "impl-47.sh",
+        "tested_sha256": "72530f3aad37e801dac67361339e354b419b218d55495448b089d180eb2b4fdc",
+        "tested_bytes": 49968,
+        "mode": "755",
+        "selftest_exit": 1,
+        "observed": "DIRTY_SECRET unbound; census row count 0 want 4. PASS aligned docs drift_count=0 is the tool's fixture, contradicted by this seat's live drift count."
+      }
+    ],
+    "seen_not_executed": [
+      "impl-35.sh sha 83c4547254e189d66406b23bcb8ee30e975f121bb3460ffc7dfdf094ce53f2b6 at 17:22",
+      "impl-42.sh sha a11f68377c211531bc64fd5189ab30a2233ee60b718fb1dddc87844e92c216b8 at 17:22",
+      "souji-census.impl-46.sh sha 72960345e73f81ed2edf6606ca6119a9003486d43db91990a1c06364a0f7578f at 17:22",
+      "impl-48.sh sha 1399400a2082331a36d16113dc3aab254b945a1dc1ed13fd24fc98250a1531aa at 17:22",
+      "souji-census.impl-40.sh mode 777 symlink, not executed separately"
+    ]
+  },
+  "live_census": {
+    "impl33": {
+      "command": "timeout 120 bash /tmp/s50-snap/souji-census.impl-33.sh --root /home/vgpnk/Projects/shokunin --include-root",
+      "tested_sha256": "7fb390add4669e30830edc8857cfd50cc3f32a12ec48d2209b35336aee304f42",
+      "runs": [
+        {"when": "2026-10-18T16:29:47-03:00", "exit": 124, "stdout_lines": 1, "stderr_bytes": 0},
+        {"when": "2026-10-18T16:31:47-03:00", "exit": 124, "stdout_lines": 1, "stderr_bytes": 0}
+      ],
+      "stdout": "repo\\tworktrees\\tunpushed\\tdirty\\tscratch_bytes\\tmtime_iso\\tverdict_flags",
+      "cause": "Header is printed before rows (line 320). The first sorted path with --include-root is the fleet root. census_one then calls newest_mtime, which find-walks every regular file under that work tree, pruning only .git, ./.ufo/state, and ./.ufo/watchdog.log (lines 176-198). That walk enters nested lane repos, including kotodama .scratch. Exit 124 is the timeout, not a tool verdict. Default mode without --include-root was not run; the same newest_mtime function would still walk kotodama .scratch when that repo is the row. That default-mode timeout is inferred, not observed."
+    },
+    "impl39": {
+      "command": "timeout 120 bash /tmp/s50-snap/souji-census.impl-39.sh --root /home/vgpnk/Projects/shokunin",
+      "tested_sha256": "62315085a3ba676391010f7861432bb084f61d12df7b182e676a13fb89d6fd57",
+      "run_a": {"when": "2026-10-18T16:33:47-03:00", "exit": 0, "lines": 23, "stderr_bytes": 0},
+      "run_b": {"when": "2026-10-18T16:33:54-03:00", "exit": 0, "lines": 23, "stderr_bytes": 0},
+      "byte_identical": false,
+      "churn_in_6s": "mtime_iso moved on the fleet root, game-dev-2d, and game-dev-3d; game-dev-3d dirty 12479 to 12929; kotodama scratch_bytes 27546116270 to 27548422881; souji dirty 48 to 49. Worktree counts and verdict flags did not flip.",
+      "observed_tsv_run_a": [
+        "repo\tworktrees\tunpushed\tdirty\tscratch_bytes\tmtime_iso\tverdict_flags",
+        "/home/vgpnk/Projects/shokunin\t1\t21\t12\t7751\t2026-10-18T19:33:48Z\tunpushed,dirty,scratch",
+        "/home/vgpnk/Projects/shokunin/audio-shokunin\t1\t24\t0\t0\t2026-10-17T03:23:52Z\tunpushed",
+        "/home/vgpnk/Projects/shokunin/chousa-shokunin\t1\t0\t0\t0\t2026-10-17T03:28:13Z\tclean",
+        "/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin\t4\t6\t283\t0\t2026-10-18T19:33:49Z\tunpushed,dirty,multi-worktree",
+        "/home/vgpnk/Projects/shokunin/game-dev-3d-shokunin\t1\t6\t12479\t0\t2026-10-18T19:33:50Z\tunpushed,dirty",
+        "/home/vgpnk/Projects/shokunin/kagi-shokunin\t1\t0\t0\t0\t2026-10-17T03:28:14Z\tclean",
+        "/home/vgpnk/Projects/shokunin/kaidoku-shokunin\t1\t10\t54\t0\t2026-10-18T19:09:04Z\tunpushed,dirty",
+        "/home/vgpnk/Projects/shokunin/kake-shokunin\t1\t0\t0\t0\t2026-10-17T03:29:02Z\tclean",
+        "/home/vgpnk/Projects/shokunin/kama-shokunin\t1\t4\t2\t0\t2026-10-18T18:42:48Z\tunpushed,dirty",
+        "/home/vgpnk/Projects/shokunin/kasegi-shokunin\t1\t0\t0\t0\t2026-10-17T03:28:16Z\tclean",
+        "/home/vgpnk/Projects/shokunin/kengaku-shokunin\t1\t0\t0\t0\t2026-10-17T03:29:00Z\tclean",
+        "/home/vgpnk/Projects/shokunin/kotoba-shokunin\t1\t1\t0\t0\t2026-10-17T03:29:05Z\tunpushed",
+        "/home/vgpnk/Projects/shokunin/kotodama-shokunin\t1\t49\t125\t27546116270\t2026-10-18T19:33:53Z\tunpushed,dirty,scratch",
+        "/home/vgpnk/Projects/shokunin/kumitate-shokunin\t1\t0\t0\t0\t2026-10-17T03:28:18Z\tclean",
+        "/home/vgpnk/Projects/shokunin/lore-shokunin\t1\t3\t26\t218489\t2026-10-18T14:28:48Z\tunpushed,dirty,scratch",
+        "/home/vgpnk/Projects/shokunin/mado-shokunin\t1\t0\t0\t0\t2026-10-17T03:29:07Z\tclean",
+        "/home/vgpnk/Projects/shokunin/mori-shokunin\t1\t0\t0\t0\t2026-10-17T03:28:33Z\tclean",
+        "/home/vgpnk/Projects/shokunin/revenger-shokunin\t1\t0\t0\t0\t2026-10-17T03:29:08Z\tclean",
+        "/home/vgpnk/Projects/shokunin/souji-shokunin\t1\t11\t48\t0\t2026-10-18T19:32:50Z\tunpushed,dirty,no-remote",
+        "/home/vgpnk/Projects/shokunin/tabi-shokunin\t1\t1\t0\t0\t2026-10-17T03:28:36Z\tunpushed",
+        "/home/vgpnk/Projects/shokunin/tameshi-shokunin\t1\t0\t0\t0\t2026-10-17T03:29:10Z\tclean",
+        "/home/vgpnk/Projects/shokunin/tsukuroi-shokunin\t1\t0\t0\t0\t2026-10-17T03:28:34Z\tclean"
+      ]
+    }
+  },
+  "independent_census_16:01": {
+    "command": "for each of $SHOKUNIN_ROOT and $SHOKUNIN_ROOT/*-shokunin: git worktree list | wc; git for-each-ref refs/remotes | wc; git rev-list --count --branches [--not --remotes]; git status --porcelain | wc; du -sb .scratch",
+    "when": "2026-10-18T16:01:33-03:00",
+    "finished": "2026-10-18T16:01:34-03:00",
+    "agreement_with_impl39": "Worktree counts agree on lore=1, game-dev-2d=4, kotodama=1, souji=1. souji had 0 refs/remotes at 16:11 (remote URL is configured; no remote-tracking refs). impl-39's no-remote flag matches that. Numeric dirty/unpushed/scratch values moved between 16:01 and 16:33 because other seats were writing. They are snapshots, not a contradiction.",
+    "souji_pushedness": "unverifiable without fetch, which this seat did not run. The count 11 is local commits on branches, not a proof they are absent from origin.",
+    "rows_of_note": [
+      "fleet root worktrees=1 unpushed=20 dirty=2 scratch_bytes=7751 nremotes=3 head=adc3d33",
+      "lore-shokunin worktrees=1 unpushed=3 dirty=1 scratch_bytes=218489 head=6cec83a",
+      "game-dev-2d-shokunin worktrees=4 unpushed=6 dirty=0 scratch_bytes=0 head=05a72899",
+      "kotodama-shokunin worktrees=1 unpushed=47 dirty=31 scratch_bytes=18292985803 head=1ad491a",
+      "souji-shokunin worktrees=1 unpushed=11 dirty=6 scratch_bytes=0 nremotes=0 head=ce58c2b"
+    ]
+  },
+  "kotodama_scratch": {
+    "path": "/home/vgpnk/Projects/shokunin/kotodama-shokunin/.scratch",
+    "gitignore": ".gitignore:6 ignores .scratch/ (check-ignore confirmed on .scratch and on .scratch/r22-d04/baseline.json)",
+    "verdict": "NOT-SAFE",
+    "why": "Owning repo had unpushed commits (47 at 16:01, 49 at 16:11 and 16:33) and a dirty worktree (31 at 16:01, 1 at 16:11, 125 in impl-39 at 16:33, 25 in a status | wc immediately after the 16:34 du). Size grew during the run. Live lane. Not a removal authorization.",
+    "size_series_bytes": [
+      {"when": "2026-10-18T16:01:33-03:00", "command": "du -sb inside the independent census", "bytes": 18292985803, "gib": 17.036},
+      {"when": "2026-10-18T16:11", "command": "du -sb /home/vgpnk/Projects/shokunin/kotodama-shokunin/.scratch", "bytes": 18932880337},
+      {"when": "2026-10-18T16:16:44-03:00", "command": "du -sb at header-scan start", "bytes": 19785269159, "gib": 18.426},
+      {"when": "2026-10-18T16:17:01-03:00", "command": "du -sb at header-scan end", "bytes": 19785346739},
+      {"when": "2026-10-18T16:33:53Z", "command": "impl-39 scratch_bytes column", "bytes": 27546116270, "gib": 25.655},
+      {"when": "2026-10-18T16:34", "command": "du -sb after impl-39", "bytes": 27553684043, "gib": 25.662, "top_entries": 321}
+    ],
+    "header_snapshot": {
+      "when_start": "2026-10-18T16:16:44-0300",
+      "when_end": "2026-10-18T16:17:01-0300",
+      "method": "os.walk followlinks=false; lstat every name; secret-shaped basenames counted and not opened; other regular files read at most 200 bytes; symlinks not followed; .ufo/state and .ufo/watchdog.log would have been pruned",
+      "files": 587975,
+      "dirs": 95998,
+      "symlinks": 85,
+      "other": 0,
+      "secret_shaped_unread": 63,
+      "secret_pattern": "*secret* 63; no .env, id_*, or *.pem names in this snapshot",
+      "forbidden_pruned": 0,
+      "unique_inodes": 579668,
+      "hardlink_extra_files": 8307,
+      "st_size_sum": 20722478212,
+      "header_classes": {
+        "markdown-or-hash": 360440,
+        "json": 133306,
+        "text-other": 76964,
+        "empty": 10447,
+        "binary-nul": 5830,
+        "pdf": 819,
+        "symlink-unread": 85,
+        "jpeg": 84,
+        "secret-shaped-unread": 63,
+        "gzip": 21,
+        "frontmatter-or-yaml": 1
+      },
+      "class_sum_check": "588060 = 587975 regular files + 85 symlinks",
+      "scope_limit": "This classification covers the tree that existed at 16:16. The tree grew by 77580 bytes during the 17s scan and by about 7 GiB before the 16:33 impl-39 row. The later bytes were not header-classified. 'Fully classified' is true only of that snapshot, not of the 25.6 GiB tree."
+    }
+  },
+  "surface_commands": [
+    {
+      "command": "git -C /home/vgpnk/Projects/shokunin/lore-shokunin worktree list",
+      "observed": "/home/vgpnk/Projects/shokunin/lore-shokunin 6cec83a [main]"
+    },
+    {
+      "command": "git -C /home/vgpnk/Projects/shokunin/game-dev-2d-shokunin worktree list",
+      "observed": "main 05a72899; wt-r100 2d562282 locked; wt-r98 68bee6e7 locked; wt-r99 fe1a996e locked"
+    },
+    {
+      "command": "git -C /home/vgpnk/Projects/shokunin symbolic-ref --short refs/remotes/origin/HEAD",
+      "observed": "origin/master"
+    },
+    {
+      "command": "git -C /home/vgpnk/Projects/shokunin/souji-shokunin for-each-ref --format='%(refname)' refs/remotes | wc -l",
+      "observed": "0",
+      "also": "git remote -v prints origin https://github.com/VeigaPunk/shokunin-repo-hygiene.git. A remote URL without remote-tracking refs does not establish pushed."
+    }
+  ],
+  "safety": {
+    "git_fetch": "not run",
+    "git_mutations": "none",
+    "deletes": "none",
+    "ufo_state": "not opened",
+    "watchdog_log": "not opened",
+    "secret_shaped_contents": "not read. 63 kotodama scratch names matched *secret* and were counted by lstat only",
+    "kotodama": "read-only. No file under kotodama-shokunin was written",
+    "lane_writes": "this file only",
+    "tmp_quota": "a third selftest wave was abandoned after cp reported Disk quota exceeded. Earlier /tmp logs were left in place; this seat did not delete them"
+  }
+}

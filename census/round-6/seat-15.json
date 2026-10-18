@@ -1,0 +1,419 @@
+{
+  "seat": "S15",
+  "round": 6,
+  "kind": "drift-audit",
+  "claim": "C1",
+  "role": "aggregate seats 01-14 drift lists; independent re-run; dedupe; severity-rank",
+  "fragment": "census/round-6/seat-15.json",
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "lane_head": "ce58c2b457c8ffb7886b36a509bf957f90d1f296",
+  "fleet_head_at_rerun": "cdd444d",
+  "written_at": "2026-10-18T17:45:30-03:00",
+  "mode": "read-only except this fragment; no fetch/push/commit/branch/prune/remove; no secret reads; .ufo/state and .ufo/watchdog.log not opened",
+  "verdict": "DRIFT",
+  "drift_to_zero": false,
+  "summary": "14/14 seat fragments were read. After dedupe, drift is not zero. The worst confirmed split is behavioral: both installed tools return SAFE(pushed) for a dirty file and for a file whose last commit is not an ancestor of origin, while SKILL.md says those cases are NOT-SAFE. A hidden citation still yields SAFE(stale). SCORECARD/LOG hash pins identify impl-12 and impl-20, not the r5-patched installed tools. SKILL.md itself is still the mint commit ccbb132.",
+  "coverage": {
+    "expected": ["S01", "S02", "S03", "S04", "S05", "S06", "S07", "S08", "S09", "S10", "S11", "S12", "S13", "S14"],
+    "present": 14,
+    "missing": [],
+    "wait": "Required 240s ended with only S05 and S11 on disk. Polling continued until S06 landed at 17:33. All 14 were read before this write.",
+    "fragments": {
+      "S01": "census/round-6/seat-01.json",
+      "S02": "census/round-6/seat-02.json",
+      "S03": "census/round-6/seat-03.json",
+      "S04": "census/round-6/seat-04.json",
+      "S05": "census/round-6/seat-05.json",
+      "S06": "census/round-6/seat-06.json",
+      "S07": "census/round-6/seat-07.json",
+      "S08": "census/round-6/seat-08.json",
+      "S09": "census/round-6/seat-09.json",
+      "S10": "census/round-6/seat-10.json",
+      "S11": "census/round-6/seat-11.json",
+      "S12": "census/round-6/seat-12.json",
+      "S13": "census/round-6/seat-13.json",
+      "S14": "census/round-6/seat-14.json"
+    }
+  },
+  "axes": [
+    "completeness of the 01-14 aggregate",
+    "dedupe fidelity",
+    "severity ranking against removal harm",
+    "independent re-run, not rubber-stamp"
+  ],
+  "severity_scale": {
+    "HIGH": "Following the doc or the installed tool can authorize a false-SAFE, or an evidence pin no longer identifies the bytes an operator would run.",
+    "MEDIUM": "Current-state or procedure text is false or incomplete, but does not by itself authorize a removal.",
+    "LOW": "Wording, mint-time trailer, dead pattern, or an evidence-scope nit that does not change the finding."
+  },
+  "ranked": [
+    {
+      "id": "D01",
+      "severity": "HIGH",
+      "title": "File dirty or later-unpushed still SAFE(pushed)",
+      "deduped_from": ["S01 M8", "S01 M9", "S02 row 1", "S02 row 2 partial"],
+      "claim": "SKILL.md:28-29 says a dirty worktree or unpushed commit touching the path is NOT-SAFE, and SAFE(pushed) requires the artifact's last commit to be an ancestor of origin/<default>. Both installed tools emit SAFE(pushed) from the introducing commit alone.",
+      "rerun": "confirmed",
+      "evidence": [
+        {
+          "command": "git --no-optional-locks -C /tmp/souji-s02-classify.ufQr3s/r2-lane merge-base --is-ancestor HEAD refs/remotes/origin/master; echo head_anc_master=$?; intro=$(git --no-optional-locks -C /tmp/souji-s02-classify.ufQr3s/r2-lane log --diff-filter=A --format=%H -1 -- intro-pushed-last-local.txt); git --no-optional-locks -C /tmp/souji-s02-classify.ufQr3s/r2-lane merge-base --is-ancestor \"$intro\" refs/remotes/origin/HEAD; echo intro_anc=$?",
+          "observed": "head_anc_master=1; intro=0145c7aa2e9515e2f38a3eb765b95bedc9142491; intro_anc=0"
+        },
+        {
+          "command": "SHOKUNIN_ROOT=/tmp/souji-s02-classify.ufQr3s SOUJI_LEDGER=/tmp/souji-s02-classify.ufQr3s/no-ledger.tsv bash tools/souji-verify.sh --json /tmp/souji-s02-classify.ufQr3s/r2-lane/intro-pushed-last-local.txt /tmp/souji-s02-classify.ufQr3s/r1-lane/tracked.txt; same two paths through tools/souji-vault-verify.sh --json",
+          "observed": "Both tools: SAFE receipt=pushed on both paths. tracked.txt hash-object differs from HEAD:tracked.txt (dirty). vault tool also VERIFIED(pushed)."
+        }
+      ]
+    },
+    {
+      "id": "D02",
+      "severity": "HIGH",
+      "title": "Hidden citation still SAFE(stale)",
+      "deduped_from": ["S01 omission P32", "S05 PR-5", "S14 D5"],
+      "claim": "A scratch file referenced only from a hidden file is SAFE(stale) refs=0. SKILL.md's unqualified rg -l and both installed tools omit --hidden. This is a shared blind spot, not a SKILL-vs-tool split, and it is still a false-SAFE class.",
+      "rerun": "confirmed",
+      "evidence": [
+        {
+          "command": "SHOKUNIN_ROOT=/tmp/souji-s01-r6.HYq41E/fleet SOUJI_LEDGER=/tmp/souji-s01-r6.HYq41E/no-ledger.tsv bash tools/souji-verify.sh --json --stale-days 1 /tmp/souji-s01-r6.HYq41E/ownrepo/.scratch/unique-s01-hiddencite.out; (cd /tmp/souji-s01-r6.HYq41E/ownrepo && rg -l --no-ignore --fixed-strings unique-s01-hiddencite.out .); echo default_rg_rc=$?; (cd /tmp/souji-s01-r6.HYq41E/ownrepo && rg -l --hidden --no-ignore --fixed-strings unique-s01-hiddencite.out .)",
+          "observed": "tool {\"verdict\":\"SAFE\",\"receipt\":\"stale\",\"evidence\":\"scratch-type=scratch-dir refs=0 mtime-age-days=3\"}; default rg exit 1; rg --hidden printed ./.hidden-cite exit 0. rg --hidden is absent from both installed tools."
+        }
+      ]
+    },
+    {
+      "id": "D03",
+      "severity": "HIGH",
+      "title": "Installed-tool hash pins identify the pre-r5 blobs",
+      "deduped_from": ["S09 installed-verify-sha", "S09 installed-vault-sha", "S14 D3", "S13 content pin"],
+      "claim": "SCORECARD capabilities and LOG cite 7efda63b for tools/souji-verify.sh and d312263a for tools/souji-vault-verify.sh. Those hashes match impl-12 and impl-20. The installed paths are the r5-patched files.",
+      "rerun": "confirmed",
+      "evidence": [
+        {
+          "command": "sha256sum tools/souji-verify.sh tools/souji-verify.impl-12.sh tools/souji-vault-verify.sh tools/souji-vault-verify.impl-20.sh; cmp -s tools/souji-verify.sh tools/souji-verify.impl-12.sh; echo verify_vs_impl12=$?; cmp -s tools/souji-vault-verify.sh tools/souji-vault-verify.impl-20.sh; echo vault_vs_impl20=$?",
+          "observed": "verify installed 53239fdfe5bcaaaf448e8525845ab962dd7ab6a4e7f75c0f4f051614f1c99200; impl-12 7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820; vault installed 00d59b1b36d87db37518b5ef9fb98cd472888a075ed7b97bd5b8ff93bd559455; impl-20 d312263ac8ebc9e23555402dc5ae63167f78dcd01ddccc5ddcfa7623b85879e0; both cmp exits 1"
+        }
+      ]
+    },
+    {
+      "id": "D04",
+      "severity": "HIGH",
+      "title": "SKILL pushed command is git fetch plus origin/main",
+      "deduped_from": ["S01 M2", "S01 M3", "S05 PR-1", "S02 row 2 partial"],
+      "claim": "SKILL.md:16 tells an agent to git fetch and merge-base against origin/main. The tools never fetch. Fleet origin/HEAD is origin/master. origin/main does not exist. Following the command fails closed (does not authorize removal) and violates the no-fetch rail.",
+      "rerun": "confirmed",
+      "evidence": [
+        {
+          "command": "git -C /home/vgpnk/Projects/shokunin symbolic-ref --short refs/remotes/origin/HEAD; git -C /home/vgpnk/Projects/shokunin show-ref --verify --quiet refs/remotes/origin/main; echo fleet_origin_main_rc=$?; grep -nE '^[^#]*git +(-C +[^ ]+ +)?fetch( |$)' tools/souji-verify.sh tools/souji-vault-verify.sh || echo no-fetch-lines; rg -n 'git fetch' SKILL.md",
+          "observed": "origin/master; fleet_origin_main_rc=1; no-fetch-lines; SKILL.md:16 contains git fetch -q && git merge-base --is-ancestor <commit> origin/main. Lane for-each-ref refs/remotes/origin printed no refs. Fixture merge-base against origin/main: fatal: Not a valid object name origin/main, exit 128."
+        }
+      ]
+    },
+    {
+      "id": "D05",
+      "severity": "HIGH",
+      "title": "Owner-wide unpushed trap is not the tool's prune gate",
+      "deduped_from": ["S01 M13", "S04 Unpushed-lane trap"],
+      "claim": "SKILL.md:56-57 blocks prune when the owning repo's git log --branches --not --remotes is nonempty. evaluate_worktree checks the named branch, then unique commits of that HEAD. A detached absent registration with unique=0 is SAFE(metadata-prune) even if the owner has other unpushed commits. The cited kotodama instance is not prunable (1 worktree, 0 prunable), so the live hazard is unpushed work, not that clause.",
+      "rerun": "partial",
+      "evidence": [
+        {
+          "command": "SHOKUNIN_ROOT=/tmp/souji-s01-r6.HYq41E/fleet SOUJI_LEDGER=/tmp/souji-s01-r6.HYq41E/no-ledger.tsv bash tools/souji-verify.sh --json /tmp/souji-s01-r6.HYq41E/wt-absent",
+          "observed": "{\"verdict\":\"SAFE\",\"receipt\":\"metadata-prune\",\"evidence\":\"dir=absent unique=0 head=94514e53eba5 owner=wtowner-shokunin\"}. Owner-wide contrast was read from tools/souji-verify.sh:316-335, not rebuilt as a fresh fixture. Fleet prunable scan of $SHOKUNIN_ROOT and every *-shokunin returned prunable_total=0."
+        }
+      ]
+    },
+    {
+      "id": "D06",
+      "severity": "MEDIUM",
+      "title": "SKILL Known surfaces and error-pattern sizes are the mint snapshot",
+      "deduped_from": ["S01 M14", "S01 M15", "S01 M16", "S01 M17", "S01 M18", "S04 adjacent_known_surfaces", "S06 entries", "S09 skill-known-surfaces", "S09 conf-live-bytes", "S09 kotodama-scratch-553M", "S09 kotodama-scratch-1.9G", "S09 kotodama-unpushed-42", "S09 kotodama-dirty-14-15"],
+      "claim": "SKILL.md is still mint commit ccbb132. It says lore 19 prunable, gd2d 5 prunable, kotodama 553M beside rounds 17-22, and conf 3859 vs 4092. Those current-state sentences are false. Kotodama remains NOT-SAFE. Do not freeze a scratch byte count: the tree was still growing during this audit.",
+      "rerun": "confirmed",
+      "evidence": [
+        {
+          "command": "git -C souji-shokunin log --format='%h %ci %s' -- SKILL.md; git -C lore-shokunin worktree list | wc -l; git -C game-dev-2d-shokunin worktree list | grep -c prunable; git -C game-dev-2d-shokunin worktree list | grep -c locked; stat -c '%s' /home/vgpnk/Projects/shokunin/shokunin.conf /home/vgpnk/Projects/shokunin/shokunin.conf.full-roster-20261015; cmp -s those two; echo cmp_rc=$?; git -C /home/vgpnk/Projects/shokunin cat-file -s refs/remotes/origin/master:shokunin.conf",
+          "observed": "SKILL.md only ccbb132 2026-10-18 11:50:12 -0300. lore lines=1, gd2d prunable=0, locked=3. live conf 4432, snapshot 3859, cmp_rc=1, origin/master conf 4092."
+        },
+        {
+          "command": "at 2026-10-18T17:42:59-03:00: git --no-optional-locks -C kotodama-shokunin rev-list --count --branches --not --remotes; git --no-optional-locks status --porcelain | wc -l; du -sb kotodama-shokunin/.scratch",
+          "observed": "unpushed=51; dirty_lines=30; du_sb=39168679314. S06 at 17:24:49 recorded du_sb=37570116954 dirty=26 unpushed=51. S09 at 16:09 recorded 19G / 18699253922 and unpushed=47. All three disagree with 553M. The number is not stable. NOT-SAFE still holds (unpushed and dirty both nonzero)."
+        }
+      ]
+    },
+    {
+      "id": "D07",
+      "severity": "MEDIUM",
+      "title": "Stale type, age, and reference predicates are not the table's",
+      "deduped_from": ["S01 M5", "S01 M6", "S01 M11", "S02 row 4"],
+      "claim": "SKILL.md names *.tmp, out/, checkpoint blobs, and age older than the last admitted round. The tool's scratch families are .scratch, *.out, *.log, *-draft.*, and checkpoint json/png. Age is --stale-days (default 1), not the round date.",
+      "rerun": "confirmed",
+      "evidence": [
+        {
+          "command": "bash tools/souji-verify.sh --json --stale-days 1 on S01 fixture unique-s01-r6-artifact.tmp, unique-s01-r6-artifact.out, and .scratch/unique-s01-age20.txt; stat -c %y the age20 file",
+          "observed": "*.tmp NOT-SAFE receipt=none stale=not-scratch-type. *.out SAFE receipt=stale scratch-type=ext refs=0 mtime-age-days=3. age20 mtime=2026-10-17 20:00:31 -0300; tool NOT-SAFE stale=mtime-age-days=0<=1."
+        }
+      ]
+    },
+    {
+      "id": "D08",
+      "severity": "MEDIUM",
+      "title": "Receipt taxonomy omits metadata-prune",
+      "deduped_from": ["S01 M1", "S05 headline", "S05 PR-1"],
+      "claim": "SKILL.md names only pushed, moved-to-obsidian, and stale. The only removal the lane executed used metadata-prune. The installed tool emits that receipt.",
+      "rerun": "confirmed",
+      "evidence": [
+        {
+          "command": "rg -n metadata-prune SKILL.md || echo ABSENT; bash tools/souji-verify.sh --json on /tmp/souji-s01-r6.HYq41E/wt-absent",
+          "observed": "ABSENT. Tool SAFE receipt=metadata-prune dir=absent unique=0."
+        }
+      ]
+    },
+    {
+      "id": "D09",
+      "severity": "MEDIUM",
+      "title": "Quarantine flow was never exercised",
+      "deduped_from": ["S03 steps 2-6", "S05 PR-4", "S12 quarantine gap"],
+      "claim": "SKILL.md removal steps 2-6 and the pre-quarantine checklist are written as the live procedure. No .ufo-quarantine directory exists. r3's worktree prune is a different procedure. The 96-row list still awaits sign-off.",
+      "rerun": "partial",
+      "evidence": [
+        {
+          "command": "find /home/vgpnk/Projects/shokunin -maxdepth 3 -type d -name .ufo-quarantine | wc -l",
+          "observed": "0. LOG.md:147 still says the approval list awaits operator sign-off and no file deletions that round. Full historical re-derivation of every r1-r5 command was not repeated; S03's UNEXERCISED marks are accepted on that directory evidence plus the LOG sentence."
+        }
+      ]
+    },
+    {
+      "id": "D10",
+      "severity": "MEDIUM",
+      "title": "SCORECARD table, saturation, and Planned tense disagree",
+      "deduped_from": ["S09 scorecard-saturation-scores", "S10 D4", "S14 D1", "S14 D2", "S14 D4"],
+      "claim": "Axes table is coverage 8, calibration 7, operability 8. Saturation prose still says operability 7, calibration 6. ## Planned was not rewritten after r5. The coverage counting command, run from the lane repo as written, prints 0 because the relative path does not exist, and wc makes the pipeline exit 0.",
+      "rerun": "confirmed",
+      "evidence": [
+        {
+          "command": "rg -n 'Saturation line' -A2 SCORECARD.md; git diff --numstat 48a64d8 ce58c2b -- SCORECARD.md; (cd souji-shokunin && git -C lore-shokunin worktree list | wc -l); echo lore_pipe_rc=$?",
+          "observed": "Saturation line says Coverage 8, operability 7, calibration 6. diff numstat is 1 1 SCORECARD.md (the calibration cell only). lane-relative command: fatal: cannot change to 'lore-shokunin'; wc printed 0; lore_pipe_rc=0. Absolute paths still print lore 1 and gd2d 4."
+        }
+      ]
+    },
+    {
+      "id": "D11",
+      "severity": "MEDIUM",
+      "title": "corpus/README.md gaps and lesson index are false",
+      "deduped_from": ["S10 D1", "S10 D2", "S10 D3", "S10 D4", "S10 D5", "S10 D6"],
+      "claim": "The index says no census data yet, no gate tool yet, lessons each have a ## Gate section, and scores start at 0. Census data and souji-verify.sh exist. Five lesson files exist and are unindexed. Zero ## Gate headings.",
+      "rerun": "confirmed",
+      "evidence": [
+        {
+          "command": "rg -n 'No census data yet|No gate tool yet|## Gate' corpus/README.md; rg -n '^## Gate$' corpus/lessons || echo NO_GATE_HEADINGS; find corpus/lessons -type f | wc -l; git ls-files 'census/**' | wc -l; test -f tools/souji-verify.sh && echo VERIFY_EXISTS; wc -l corpus/knowledge/obsidian-ledger.tsv",
+          "observed": "README lines 17 and 22-23 contain the Gate pattern claim and the two false gaps. NO_GATE_HEADINGS. 5 lesson files. tracked census files=233 (matches S10). VERIFY_EXISTS. ledger lines=1."
+        }
+      ]
+    },
+    {
+      "id": "D12",
+      "severity": "MEDIUM",
+      "title": "AGENTS.md does not state seat write-scope",
+      "deduped_from": ["S08"],
+      "claim": "The only fragment sentence is a clause of the LOG bullet. It does not name tools/ or 'the parent installs'. AGENTS.md is unchanged since mint. The r2 canonical-install overstep happened under that text.",
+      "rerun": "partial",
+      "evidence": [
+        {
+          "command": "git log -1 --format='%h %s' -- AGENTS.md; rg -n -e 'tools/' -e 'write-scope' -e 'parent installs' -e 'install' AGENTS.md || echo NO_MATCH; sha256sum AGENTS.md; git cat-file -t 586bc36c6039b9c9bf5846b85156b02dd3daa6f594c03d6ba474a9c71f2fc812; echo cat_rc=$?; rg -l -F 586bc36c6039b9c9bf5846b85156b02dd3daa6f594c03d6ba474a9c71f2fc812 tests/results | wc -l",
+          "observed": "ccbb132 mint. NO_MATCH. sha256 830fe08b2ade1df107b0b61a2d35a909467e737ac745f7373ca6c89c54e77f11 (matches S08). cat_rc=128 (synthesized blob is not a git object). 27 result files contain 586bc36c (matches S08). The 3-7% similarity figure was not recomputed."
+        }
+      ]
+    },
+    {
+      "id": "D13",
+      "severity": "MEDIUM",
+      "title": "PROVINCE Refuses do not name the r4 GUI-launch incident",
+      "deduped_from": ["S07 G1", "S07 R3 approached", "S07 R4 approached"],
+      "claim": "S07 found no removal, rewrite, publish, or secret-content violation of the six Refuses bullets. The r4 adv53 harness launched the Obsidian GUI and the app re-mtimed vault config. No Refuses bullet names seat harnesses. Closest sentence is Adjacency 'never on processes'.",
+      "rerun": "not-rerun",
+      "evidence": [
+        {
+          "command": "not re-opened. Ledger line count only: wc -l corpus/knowledge/obsidian-ledger.tsv",
+          "observed": "1. S07's historical incident is accepted as their cited record, not re-derived here. Do not treat this as a fresh reproduction."
+        }
+      ]
+    },
+    {
+      "id": "D14",
+      "severity": "MEDIUM",
+      "title": "Frontmatter anti-triggers omit symlink and quarantine-is-not-deletion",
+      "deduped_from": ["S12"],
+      "claim": "Triggers match the lane's verbs. The anti-trigger list does not say symlink fail-closed or that quarantine is a hold, not a deletion.",
+      "rerun": "partial",
+      "evidence": [
+        {
+          "command": "rg -n 'symlink|quarantine' SKILL.md | head",
+          "observed": "Frontmatter line 2 lists quarantine as a trigger and does not contain symlink. Body lines 38-41 describe quarantine then delete. The 11/11 trigger count was not re-counted."
+        }
+      ]
+    },
+    {
+      "id": "D15",
+      "severity": "MEDIUM",
+      "title": "First receipt wins; both receipts are not noted",
+      "deduped_from": ["S01 M7", "S02 row 3"],
+      "claim": "SKILL.md:20 says two receipts suffice and both are noted. S01/S02 say evaluate_artifact stops at pushed and does not note a matching ledger row. The two tools can also pick different SAFE receipts when both apply.",
+      "rerun": "not-rerun",
+      "evidence": [
+        {
+          "command": "not re-fixtured this seat",
+          "observed": "Accepted from S01 P18 and S02 row 3. Not independently reproduced."
+        }
+      ]
+    },
+    {
+      "id": "D16",
+      "severity": "MEDIUM",
+      "title": "Ledger command cell uses a relative path",
+      "deduped_from": ["S01 M4"],
+      "claim": "SKILL.md:17 awk matches $1 to a relpath. The tool matches the canonical absolute source path. A relpath row is not a receipt.",
+      "rerun": "not-rerun",
+      "evidence": [
+        {
+          "command": "not re-fixtured this seat",
+          "observed": "Accepted from S01 P13/P23. Not independently reproduced."
+        }
+      ]
+    },
+    {
+      "id": "D17",
+      "severity": "MEDIUM",
+      "title": "LOG launch count is 15; current listing is 16. Sibling unpushed counts moved after S06.",
+      "deduped_from": ["S09 launch-json-count", "S06 drift_since_r5_S19"],
+      "claim": "LOG's 15 launch-*.json count is one short. S06's 17:24 sibling unpushed sample was already stale at 17:42 for two live lanes. Qualitative movement since r5 holds. Exact counts must not be frozen.",
+      "rerun": "confirmed",
+      "evidence": [
+        {
+          "command": "find /home/vgpnk/Projects/shokunin/.ufo/interactive-l1-20261015T050057Z -maxdepth 1 -name 'launch-*.json' | wc -l; at 2026-10-18T17:42:59-03:00 git --no-optional-locks rev-list --count --branches --not --remotes in game-dev-3d, kaidoku, kama, souji, kotodama",
+          "observed": "launch count=16. unpushed: game-dev-3d=8 (S06 said 7), kaidoku=16 (S06 said 13), kama=4 (agrees), souji=11 (agrees), kotodama=51 (agrees). No fetch was run."
+        }
+      ]
+    },
+    {
+      "id": "D18",
+      "severity": "MEDIUM",
+      "title": "Four r1 surfaces were never re-measured until S06",
+      "deduped_from": ["S06 never_rechecked_since_r1"],
+      "claim": "research/, fleet reports/, .ufo/scopes byte total, and the r1 whole-repo du column had no r2-r5 re-measurement. Sizes S06 reported for the first three still match. None of these is a removal receipt.",
+      "rerun": "confirmed",
+      "evidence": [
+        {
+          "command": "du -sb /home/vgpnk/Projects/shokunin/research /home/vgpnk/Projects/shokunin/reports /home/vgpnk/Projects/shokunin/.ufo/scopes",
+          "observed": "4641795 research; 0 reports; 363079 .ufo/scopes. Matches S06. Whole-repo du column was not repeated by this seat either. NOT-SAFE. No removal."
+        }
+      ]
+    },
+    {
+      "id": "D19",
+      "severity": "LOW",
+      "title": "SHONEN.md is a mint trailer, not a box edit",
+      "deduped_from": ["S11"],
+      "claim": "After <name>→souji-shokunin, SHONEN.md is not byte-identical to the seed. The 362-byte named seed is a prefix. The extra 140 bytes are the protocol Marks paragraph. All four boxes remain [ ]. No post-mint edit.",
+      "rerun": "confirmed",
+      "evidence": [
+        {
+          "command": "sha256 of SHONEN.md, dedented named seed, and the extra slice; git log --follow -- SHONEN.md; git diff --exit-code -- SHONEN.md",
+          "observed": "SHONEN sha256 f18b9bcc163308dbd21a9ca2f487e24d97544723929ff58db2dd04028e882d48 bytes 502. named seed sha256 dc85327d7aff77f317e8c172c6f4ea5ce70ff5f83de9e30116721dee05bb2475 bytes 362. prefix_equal True. extra_bytes 140. only commit ccbb132. diff_exit=0. boxes all [ ]."
+        }
+      ]
+    },
+    {
+      "id": "D20",
+      "severity": "LOW",
+      "title": "r5 'logs_tier.txt absent everywhere' is false for origin/master",
+      "deduped_from": ["S13 defect", "S04 Checkpoint-blob bloat", "S06 b2f2efa bullet"],
+      "claim": "Pointers resolve. The wording overreaches. The 15 a1b44b1 deletions are absent from HEAD and the worktree and still present on origin/master. a1b44b1 is an ancestor of HEAD and not of origin/master.",
+      "rerun": "confirmed",
+      "evidence": [
+        {
+          "command": "git show --name-only --format='' b2f2efa | per-path cat-file -e HEAD: and origin/master: and test -e; merge-base --is-ancestor a1b44b1 HEAD and origin/master",
+          "observed": "introduced 109; in_HEAD 94; on_disk 94; on_origin_master 109; missing 15, the same names S06 and S13 list, including logs_tier.txt. a1b44b1_anc_HEAD=0; a1b44b1_anc_origin=1. S06's ancestor fields are those exit codes, not a negation. Their prose is right."
+        }
+      ]
+    },
+    {
+      "id": "D21",
+      "severity": "LOW",
+      "title": "Worktree-with-unique-commits pattern is not reproducible",
+      "deduped_from": ["S04 pattern 4"],
+      "claim": "No prunable worktree remains. The documented probe does not test unique commits. The live gd2d withhold is unpushed-branch plus r5 locks, not this pattern.",
+      "rerun": "confirmed",
+      "evidence": [
+        {
+          "command": "for each $SHOKUNIN_ROOT and *-shokunin: git worktree list | grep -c prunable; lore and gd2d lists",
+          "observed": "prunable_total=0. lore 1 line, no prunable. gd2d 4 lines, 3 locked, 0 prunable."
+        }
+      ]
+    },
+    {
+      "id": "D22",
+      "severity": "LOW",
+      "title": "S05 evidence scope overclaimed a unique command hit",
+      "deduped_from": ["S05 this_seat_commands"],
+      "claim": "S05 said rg of the PR-2 command string hit SKILL.md:76 only. census/round-6/province-amend-26.diff, mtime 15:54, already contained that string before S05 wrote at 15:58. The SKILL.md finding itself holds.",
+      "rerun": "confirmed",
+      "evidence": [
+        {
+          "command": "rg -n -F 'git log --not --remotes --oneline --' souji-shokunin",
+          "observed": "Hits in SKILL.md:76, census/round-6/province-amend-26.diff, and seat-05.json itself. Does not change PR-2."
+        }
+      ]
+    }
+  ],
+  "non_drift": [
+    "S02 row 5 and S01 credential-path refusal: not re-run; no contrary evidence.",
+    "S02 row 3 isolated absolute ledger match: not re-run; no contrary evidence.",
+    "S07 R1, R2, R5, R6 marked NOT-VIOLATED: not re-run.",
+    "S11: no box edit and no post-mint drift. Re-run agrees.",
+    "S13: 0 broken pointers. Spot-checked the 15-path split and the hash pins. Not all 30 present-path tokens were re-resolved.",
+    "S14: phantom_count 0. Not re-derived from every historical Planned blob. The r5 SCORECARD diff being a single calibration hunk was re-run and agrees, so Planned was not closed in that commit.",
+    "S03 step 1 (dry-run census) exercised: not re-run.",
+    "S05 PR-1, PR-2, PR-3, PR-5 verified-in-use: checklist text, metadata-prune absence, round-3 file counts 4/26/34, worktree lists, and lock file text were re-run and agree. Historical gate application was not fully re-derived.",
+    "S10 listed file corpus/knowledge/obsidian-ledger.tsv exists, header only. Re-run agrees on existence and wc -l 1. Column names were not re-parsed.",
+    "S12 trigger phrases: not re-counted."
+  ],
+  "disagreements": [
+    {
+      "seat": "S05",
+      "point": "The PR-2 command string is not unique to SKILL.md:76.",
+      "effect": "none on the checklist finding"
+    },
+    {
+      "seat": "S01",
+      "point": "keep.txt in /tmp/souji-s01-r6.HYq41E/fleet/pushed-shokunin now matches HEAD (hash-object equals HEAD:keep.txt). The dirty SAFE(pushed) case was reproduced on S02 r1-lane/tracked.txt instead. One git status on the S01 fixture printed 'index.lock write error: Disk quota exceeded'. Later probes used --no-optional-locks and succeeded. /tmp df at that time showed 3.1G free.",
+      "effect": "D01 still confirmed, on a different fixture"
+    },
+    {
+      "seat": "S06",
+      "point": "17:24 unpushed counts for game-dev-3d (7) and kaidoku (13), and kotodama dirty/size, had moved by 17:42 (8, 16, dirty 30, du_sb 39168679314). Unpushed 51 still matched.",
+      "effect": "do not dedupe live lane counts to one number; qualitative drift holds"
+    },
+    {
+      "seat": "S08",
+      "point": "3-7% similarity of the deleted r2 install was not recomputed. S08 already marked it to-verify.",
+      "effect": "existence of 586bc36c in 27 result files confirmed; percentage not confirmed"
+    },
+    {
+      "seat": "S14",
+      "point": "D5 '0 unresolved' overstates the r5 record. This seat confirmed --hidden is absent and did not re-adjudicate census/round-5/final-57.json.",
+      "effect": "direction accepted; full adjudication not repeated"
+    }
+  ],
+  "not_claimed": [
+    "drift_to_zero is false. This fragment does not edit SKILL.md, SCORECARD.md, AGENTS.md, PROVINCE.md, or the tools.",
+    "No removal, prune, or quarantine was performed.",
+    "Kotodama .scratch contents were not read. Classification of that tree is another seat's job.",
+    "souji-census.sh was absent at the S10 measurement and was not treated as a C1 docs claim. Later impl drafts under tools/ were not audited here.",
+    "Selftests were not re-run. An earlier /tmp git status hit a lock write error; selftest writes fixtures and was skipped."
+  ],
+  "preamble": {
+    "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+    "fragment_path": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-6/seat-15.json",
+    "written_at": "2026-10-18T17:45:30-03:00",
+    "mode": "read-only aggregate; only this assigned fragment written"
+  }
+}

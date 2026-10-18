@@ -1,0 +1,213 @@
+{
+  "seat": "S114",
+  "round": 6,
+  "kind": "final-judge",
+  "role": "independent judge of C1, O1, K1",
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "lane_head": "ce58c2b",
+  "measured_at": "2026-10-18T16:14:07-03:00",
+  "axes": [
+    "calibration: docs/tools drift is 0",
+    "operability: tools/souji-census.sh is a repeatable fleet census",
+    "coverage: kotodama .scratch fully classified read-only, with a handoff"
+  ],
+  "verdict": "NOT-MET. 0/3 claims hold on the installed tree at measurement time. Unapplied diffs and census drafts do not reconcile docs, do not install the census tool, and do not close a live scratch tree.",
+  "claims": [
+    {
+      "id": "C1",
+      "claim": "docs/tools reconciliation, drift→0",
+      "verdict": "NOT-MET",
+      "drift_docs_tools": 7,
+      "drift_doc_internal": 1,
+      "basis": "SKILL.md is still the 11:48 mint text. SCORECARD and the spec still name tool behavior the installed scripts do not have. Both installed verifiers selftest green, so the tools are the authority and the docs are behind them."
+    },
+    {
+      "id": "O1",
+      "claim": "tools/souji-census.sh repeatable fleet census",
+      "verdict": "NOT-MET",
+      "basis": "The claimed path is absent. Drafts under tools/ are not the installed entry point. This seat did not execute drafts. Repeatability of tools/souji-census.sh was therefore not demonstrated."
+    },
+    {
+      "id": "K1",
+      "claim": "kotodama 16G .scratch fully classified read-only + handoff note",
+      "verdict": "NOT-MET",
+      "basis": "16G matches none of this seat's measurements. A snapshot of 547733 files was classified with 0 read errors, then a recount found +3 files. The tree is live, gitignored, and beside 49 unpushed commits. Handoff in this file: NOT-SAFE, do not remove."
+    }
+  ],
+  "drift": [
+    {
+      "id": "D1",
+      "where": "SKILL.md:16",
+      "docs": "pushed receipt requires `git fetch -q` and `origin/main`",
+      "tools": "souji-verify.sh and souji-vault-verify.sh contain 0 executable fetch/push/commit/branch/checkout/reset/rebase lines. Default ref is refs/remotes/origin/HEAD, else the single refs/remotes/origin/* branch, else pushed-unverifiable. Local refs/heads/master never establishes pushed.",
+      "measured": "git -C /home/vgpnk/Projects/shokunin symbolic-ref --short refs/remotes/origin/HEAD → origin/master (exit 0). souji-shokunin has no refs/remotes/origin (symbolic-ref exit 1, for-each-ref empty)."
+    },
+    {
+      "id": "D2",
+      "where": "SKILL.md:18 and decision table lines 28-32",
+      "docs": "stale families are .scratch/, *.tmp, checkpoint blobs, out/, reports/round-*/**-draft.*, older than the lane's last admitted round, rg -l with no D3 exclusions. Decision table has no pushed-unverifiable, symlink-present, metadata-prune, secrets-refusal, or existence re-check.",
+      "tools": "scratch_type() accepts a .scratch path component, *.out, *.log, *-draft.*, or checkpoint/launch json/png. Age is --stale-days, default 1. Reference sweep excludes census, tests, and .ufo-quarantine. r5 gates symlink-present and pushed-unverifiable are in both installed tools and absent from SKILL.md."
+    },
+    {
+      "id": "D3",
+      "where": "SKILL.md:60,89-91",
+      "docs": "lore 19 prunable worktrees; game-dev-2d 5 prunable; kotodama .scratch 553M",
+      "measured": "git worktree list | wc -l → lore 1, game-dev-2d 4. Scratch apparent size during this seat's walk was 19865859069 bytes (18.502 GiB), not 553M and not 16G."
+    },
+    {
+      "id": "D4",
+      "where": "SCORECARD.md:22",
+      "docs": "tools/souji-verify.sh sha256 7efda63bd760…",
+      "measured": "53239fdfe5bcaaaf448e8525845ab962dd7ab6a4e7f75c0f4f051614f1c99200"
+    },
+    {
+      "id": "D5",
+      "where": "SCORECARD.md:24",
+      "docs": "tools/souji-vault-verify.sh sha256 d312263a…",
+      "measured": "00d59b1b36d87db37518b5ef9fb98cd472888a075ed7b97bd5b8ff93bd559455"
+    },
+    {
+      "id": "D6",
+      "where": "tools/souji-verify.spec.md:51",
+      "docs": "stale sweep uses rg --basename",
+      "tools": "installed souji-verify.sh header D-a: rg 15 has no --basename. Implementation is rg -l --no-ignore --fixed-strings. Spec mtime 15:47 is after the tool (15:45) and still contains the flag."
+    },
+    {
+      "id": "D7",
+      "where": "tools/souji-verify.sh:8",
+      "docs_in_tool": "header CLI names tools/souji-verify.impl-12.sh",
+      "installed": "tools/souji-verify.sh. Spec CLI name matches the installed path; the tool comment does not."
+    },
+    {
+      "id": "I1",
+      "kind": "doc-internal, not a tool contradiction",
+      "where": "SCORECARD.md:13-15 vs :44-45",
+      "docs": "table says calibration 7, operability 8; saturation paragraph says calibration 6, operability 7"
+    }
+  ],
+  "not_counted_as_reconciliation": [
+    "census/round-6/*-amend-*.diff files are unapplied proposals. SKILL.md, PROVINCE.md, and SCORECARD.md mtimes were unchanged at 16:14:07.",
+    "LOG.md hashes 7efda63bd760 and d312263a are historical install records, not current identity claims. SCORECARD still cites them as the current evidence pointer, which is D4/D5.",
+    "An unapplied amend that says the reference sweep passes --hidden would be a new false claim. count_live_refs in souji-verify.sh:205-210 does not pass --hidden."
+  ],
+  "handoff_note": {
+    "subject": "/home/vgpnk/Projects/shokunin/kotodama-shokunin/.scratch",
+    "removal": "NOT-SAFE",
+    "do_not": [
+      "do not delete, quarantine, or git-clean .scratch",
+      "do not follow the 85 symlinks",
+      "do not read the 61 secret-shaped files",
+      "do not treat this snapshot as a closed inventory"
+    ],
+    "why": "Owning lane is live and unpushed. At 16:14:07, git status --porcelain showed 3 untracked dirs (reports/round-27/audit, readme, scribe) and rev-list --count --branches --not --remotes was 49. .scratch is gitignored (.gitignore:6). Apparent size moved during this round: du -sb 18293701245, then 18292985803, then this walk 19865859069. A peer /tmp classification at 15:56:59 counted 535526 files; this walk at 16:12:44 counted 547733; recount at 16:12:56 counted 547736.",
+    "size": {
+      "claim_16G": false,
+      "walk_apparent_bytes": 19865859069,
+      "walk_gib": 18.502,
+      "earlier_du_sb_bytes": 18292985803,
+      "earlier_du_allocated_bytes": 19434205184,
+      "earlier_du_sh": "19G"
+    },
+    "classification": {
+      "method": "os.walk followlinks=False; regular non-secret files read at most 200 bytes; secret-shaped names unread; symlinks classified by readlink only",
+      "snapshot_start": "2026-10-18T16:12:44-03:00",
+      "snapshot_end": "2026-10-18T16:12:56-03:00",
+      "elapsed_s": 9.895,
+      "files_classified": 547733,
+      "dirs_walked": 89819,
+      "symlinks": 85,
+      "header_reads": 547587,
+      "header_refused_secret": 61,
+      "read_errors": 0,
+      "class_sum_equals_files": true,
+      "recount_files": 547736,
+      "live_delta_files": 3,
+      "classes": {
+        "text": 363552,
+        "json-like": 123971,
+        "shebang": 31010,
+        "binary-other": 12498,
+        "empty": 9658,
+        "binary-nul": 5504,
+        "pdf": 819,
+        "yaml-frontmatter": 249,
+        "git-pack": 221,
+        "symlink": 85,
+        "jpeg": 84,
+        "secret-shaped-unread": 61,
+        "gzip": 21
+      },
+      "top_level_dirs": 131,
+      "largest_top_level": [
+        {"dir": "x37", "files": 22589, "bytes": 3576323986},
+        {"dir": "r58", "files": 86845, "bytes": 1747466161},
+        {"dir": "x64", "files": 64444, "bytes": 1301330055},
+        {"dir": "x46", "files": 7571, "bytes": 922662282},
+        {"dir": "cold-run-4", "files": 5369, "bytes": 877931019}
+      ],
+      "symlinks_outside_scratch": {"sibling_in_repo": 68, "tmp": 17},
+      "secret_shaped": "61 files named outside-secret.txt, 8 bytes, mode 0644, contents not read",
+      "full_table": "/tmp/s114-k1-class.json"
+    }
+  },
+  "evidence": [
+    {
+      "claim": "C1 installed identity and selftests",
+      "commands": [
+        "sha256sum tools/souji-verify.sh tools/souji-vault-verify.sh",
+        "grep -nE '^[^#]*git +(-C +[^ ]+ +)?(fetch|push|commit|branch|checkout|reset|rebase)( |$)' tools/souji-verify.sh tools/souji-vault-verify.sh | wc -l",
+        "bash tools/souji-verify.sh --selftest",
+        "bash tools/souji-vault-verify.sh --selftest",
+        "git -C /home/vgpnk/Projects/shokunin symbolic-ref --quiet --short refs/remotes/origin/HEAD",
+        "git -C lore-shokunin worktree list | wc -l; git -C game-dev-2d-shokunin worktree list | wc -l"
+      ],
+      "observed_output": [
+        "53239fdfe5bcaaaf448e8525845ab962dd7ab6a4e7f75c0f4f051614f1c99200  tools/souji-verify.sh",
+        "00d59b1b36d87db37518b5ef9fb98cd472888a075ed7b97bd5b8ff93bd559455  tools/souji-vault-verify.sh",
+        "fetch-command count 0 in both installed tools",
+        "souji-verify.sh --selftest: 24 checks, 0 failed, exit 0",
+        "souji-vault-verify.sh --selftest: 35 checks, 0 failed, exit 0",
+        "fleet origin/HEAD = origin/master",
+        "lore worktree lines=1; game-dev-2d worktree lines=4"
+      ]
+    },
+    {
+      "claim": "O1 claimed path",
+      "commands": [
+        "ls -la tools/souji-census.sh",
+        "ls -1 tools/souji-census* tools/impl-3*.sh tools/impl-4*.sh"
+      ],
+      "observed_output": [
+        "CENSUS_ABSENT at 16:14:07 (ls: cannot access tools/souji-census.sh)",
+        "drafts present at the prior listing, not installed: souji-census.impl-33.sh, impl-34.sh, impl-36.sh, impl-39.sh, impl-44.sh, impl-38.sh, impl-39.sh, impl-43.sh"
+      ]
+    },
+    {
+      "claim": "K1 independent classification",
+      "command": "python3 os.walk of kotodama-shokunin/.scratch, followlinks=False, read<=200 bytes, secret-shaped names unread; summary /tmp/s114-k1-class.json",
+      "observed_output": "files=547733 dirs=89819 links=85 bytes=19865859069 gib=18.502 elapsed=9.895 errors=0 header_reads=547587 refused=61 recount_files=547736 delta=3"
+    },
+    {
+      "claim": "K1 owning lane still live",
+      "commands": [
+        "git -C kotodama-shokunin check-ignore -v .scratch",
+        "git -C kotodama-shokunin status --porcelain=v1",
+        "git -C kotodama-shokunin rev-list --count --branches --not --remotes"
+      ],
+      "observed_output": [
+        ".gitignore:6:.scratch/ .scratch",
+        "?? reports/round-27/audit/; ?? reports/round-27/readme/; ?? reports/round-27/scribe/",
+        "unpushed:49"
+      ]
+    }
+  ],
+  "scope": {
+    "lane_writes": ["census/round-6/final-114.json"],
+    "other_writes": ["/tmp/s114-k1-class.json"],
+    "git_or_prune_actions": "none",
+    "secret_reads": "none",
+    "obsidian_ledger": "not opened",
+    "ufo_state_and_watchdog": "not opened",
+    "peer_fragments": "not used as verdict inputs; /tmp/s128-scratch-class.json cited only as an earlier file count showing the tree grew"
+  }
+}

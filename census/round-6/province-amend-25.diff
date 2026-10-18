@@ -1,0 +1,139 @@
+diff --git a/PROVINCE.md b/PROVINCE.md
+--- a/PROVINCE.md
++++ b/PROVINCE.md
+@@ -8,38 +8,123 @@
+ - The fleet root repo's hygiene surfaces: stray checkpoint/scratch files,
+   superseded config snapshots, quarantine staging.
+ - Lane-repo hygiene surfaces, per-lane and only with a receipt:
+-  `.scratch/`, dead worktree *metadata* (`git worktree prune` after the
+-  commits are proven pushed or empty), duplicate configs, stale generated
++  `.scratch/`, dead worktree *metadata* (receipt `metadata-prune` only;
++  see Receipts — a named branch with commits absent from
++  `refs/remotes/*` is locked, not pruned), duplicate configs as
++  candidates only (`duplicate` is not a receipt), stale generated
+   output with no live references.
+ - The Obsidian-preservation ledger: `corpus/knowledge/obsidian-ledger.tsv`
+-  (source path+hash, vault path+hash). Nothing qualifies as
+-  "moved to Obsidian" without a matching row.
++  (source path + sha256, vault path + sha256). A matching row is
++  necessary and not sufficient; see Receipts. This lane never writes
++  the live ledger, and never writes the live vault.
+ - Dry-run censuses and removal-list proposals for operator approval.
++  A census classifies; it does not remove and it does not add a receipt
++  class. Installed verdict tools are `tools/souji-verify.sh` and
++  `tools/souji-vault-verify.sh`. `tools/souji-census.sh`, if present, is
++  a read-only wrapper over that vocabulary, not a fifth receipt. A draft
++  impl script is not the installed tool.
++
++## Receipts
++
++Four removal receipts, and no others: `pushed`, `moved-to-obsidian`,
++`stale`, `metadata-prune`. No receipt, or any doubt, is `NOT-SAFE`.
++A tool line is a receipt only when it satisfies the rule below. A
++looser tool line does not waive this section or Refuses.
++
++- `pushed`: the path exists, and its introducing commit
++  (`git log --diff-filter=A --format=%H -1 -- <path>`) is an ancestor of
++  the default remote-tracking ref. Resolve that ref from existing refs
++  only: `refs/remotes/origin/HEAD` when it resolves, else the single
++  `refs/remotes/origin/*` branch ref if exactly one exists. No
++  remote-tracking ref → `NOT-SAFE(pushed-unverifiable)`. Local
++  `refs/heads/*`, including `master`, never establishes `pushed`. Do
++  not assume `origin/main`. No `git fetch`. Dirty or missing at act
++  time → not a receipt (see Refuses).
++- `moved-to-obsidian`: a ledger row whose source path and vault path
++  are absolute, both sha256 fields are lowercase hex-64, both re-hash
++  to the current bytes (vault side read-only), the two paths are not
++  the same file, and the vault copy is not inside the source tree. Any
++  symlink in either digest scope → `NOT-SAFE(symlink-present)`. The
++  Obsidian CLI is not a receipt. A row alone is not a receipt.
++  Secret-shaped components on either path → not a receipt, even if a
++  tool hashed them. `tools/souji-vault-verify.sh` is the receipt of
++  record for this class; a `moved-to-obsidian` line from
++  `tools/souji-verify.sh` alone is not sufficient (it does not enforce
++  absolute paths, lowercase hex-64, source-equals-vault, or
++  vault-inside-source).
++- `stale`: scratch-shaped — a `.scratch` path component, or basename
++  `*.out`, `*.log`, `*-draft.*`, `*checkpoint*.json`,
++  `*checkpoint*.png`, `*ckpt*.json`, `*ckpt*.png`, `*.ckpt`, or
++  `launch-*.json` — AND a reference sweep of the owning repo returns
++  zero hits AND mtime older than the decision threshold (tool default
++  `--stale-days 1`). The sweep counts hidden files. It excludes `.git`,
++  `souji-shokunin/census/**`, `souji-shokunin/tests/**`, and
++  `.ufo-quarantine/**`, and it does not open secret-shaped paths; an
++  unreadable or secret-shaped hit is `NOT-SAFE`, not zero refs. A
++  `stale` line from a tool whose sweep omits hidden files is not a
++  removal receipt.
++- `metadata-prune`: the path is a non-main `worktree <path>`
++  registration, the directory is absent, unique commits
++  (`git log --oneline <HEAD> --not --all`) are 0, and it is not a named
++  branch with commits absent from `refs/remotes/*`
++  (`git log --oneline <branch> --not --remotes`). That named-branch
++  case is `NOT-SAFE(unpushed-branch)` and stays locked until the branch
++  is pushed or the operator dispositions it. A present directory is
++  never `metadata-prune` (dirty → `NOT-SAFE(dirty)`; clean →
++  `NOT-SAFE`).
++- A directory containing `.git` (a repo root) is not `pushed`, `stale`,
++  or `metadata-prune`. The only receipt that can cover it is
++  `moved-to-obsidian`.
+ 
+ ## Work surfaces (resolve and re-verify each round)
+ 
+ - `$SHOKUNIN_ROOT` (fleet repo, cwd `.`)
+-- `$SHOKUNIN_ROOT/<lane>-shokunin/` for every rostered + probation lane
+-- GitHub remotes (`origin`) of the fleet and lane repos — read-only, for
+-  `pushed` receipt checks only
++- `$SHOKUNIN_ROOT/<lane>-shokunin/` for every rostered + probation lane.
++  Census is read-only. The only sibling writes this province authorizes
++  are: lock of a `NOT-SAFE(unpushed-branch)` registration (the lock
++  stays until that branch is pushed or the operator dispositions it),
++  and `git worktree prune` of a registration already graded
++  `SAFE(metadata-prune)`, re-verified at act time, with those locks
++  held. No unlock of an unpushed-branch registration. No other sibling
++  write.
++- Existing `refs/remotes/origin/*` of the fleet and lane repos — local
++  refs only, for `pushed` checks. Not a license to `git fetch` or to
++  contact GitHub. Absence of those refs means `pushed` is unverifiable
++  for that repo.
+ 
+ ## Refuses
+ 
+-- Git history rewrite in any repo (reset/rebase/amend of published commits)
+-  — operator-owned; kura is unminted.
++- Git history rewrite in any repo (reset/rebase/amend of published
++  commits) — operator-owned; kura is unminted. Verdict tools also never
++  `fetch`, `push`, `commit`, `branch`, or `checkout`. `git fetch` is
++  not a pushed-receipt step.
+ - Credentials, secrets, tokens, vault refs — kagi-shokunin's province.
+-  Souji cites paths/modes only and never reads secret content.
++  Souji cites paths and modes only and never reads secret content.
++  Secret-shaped path components (`*.env`, `.env`, `.env.*`, `.envrc`,
++  `*credential*`, `*secret*`, `id_*`, `*.pem`, case-insensitive) are
++  refused before read on the target, on every ledger path, and on every
++  reference-sweep path. A tool that hashed such a path did not create a
++  receipt.
+ - Operator config (`~/.config/**`, driver `scripts/`, driver runtime
+-  `.ufo/state/`, `.ufo/watchdog.log`).
++  `.ufo/state/`, `.ufo/watchdog.log`). A tool line on these paths is
++  not a receipt.
+ - Any artifact whose owning lane has dirty or unpushed work touching it.
++  Re-checked at act time. A `pushed` line is not a receipt while
++  `git status --porcelain -- <path>` is non-empty, or while the path
++  is missing.
+ - Publishing, vault approval, remote creation — operator-owned.
+ - Live lane work products (current-round drafts, uncommitted reports).
++- Reading a live lane's `.scratch` beyond metadata and a 200-byte
++  content header per file. Size is not a receipt. Do not prune it.
++  kotodama-shokunin `.scratch` is the known live instance; any live
++  unpushed lane scratch is classified the same way.
+ 
+ ## Adjacency
+ 
+ - mori-shokunin observes fleet health and reports; souji acts on artifacts
+   and never on processes. Complementary.
+ - tsukuroi-shokunin repairs host operability and never removes packages;
+-  souji removes files and never touches the OS.
++  souji removes files and never touches the OS. `/tmp` residue stays
++  with tsukuroi or the operator; souji does not absorb it.
+ - kagi-shokunin owns credential hygiene evidence; souji routes any
+   credential-shaped finding to kagi.

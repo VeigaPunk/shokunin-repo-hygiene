@@ -1,0 +1,367 @@
+{
+  "seat": "S01",
+  "round": 6,
+  "claim": "C1",
+  "role": "drift-audit",
+  "fragment": "census/round-6/seat-01.json",
+  "audited": "souji-shokunin/SKILL.md section 'Receipt taxonomy' (lines 12-20), plus every other SKILL.md sentence that misstates installed-tool or current fleet state",
+  "verdict": "DRIFT",
+  "drift_is_not_zero": true,
+  "probed_at": "2026-10-18T16:03:15-0300",
+  "summary": "SKILL.md Receipt taxonomy does not describe installed tools/souji-verify.sh. pushed is specified as git fetch plus origin/main; the tool never fetches, resolves an existing remote-tracking ref (fleet: refs/remotes/origin/master), and emits pushed-unverifiable when no such ref exists. stale types, the reference sweep, and the age rule all disagree with probed verdicts. The heading's three-receipt set omits SAFE(metadata-prune). symlink-present is not a receipt string on souji-verify.sh (evidence note only; receipt stays none). souji-vault-verify.sh disagrees with souji-verify.sh on the pushed-unverifiable and symlink-present receipt fields. Seven taxonomy sentences misstate tool behavior; eleven further SKILL.md sentences misstate tool behavior or current fleet state.",
+  "installed_tools": {
+    "souji_verify": {
+      "path": "tools/souji-verify.sh",
+      "sha256": "53239fdfe5bcaaaf448e8525845ab962dd7ab6a4e7f75c0f4f051614f1c99200",
+      "selftest": "24 checks, 0 failed (PASS F1-F10, E1-E8, H1-H6)"
+    },
+    "souji_vault_verify": {
+      "path": "tools/souji-vault-verify.sh",
+      "sha256": "00d59b1b36d87db37518b5ef9fb98cd472888a075ed7b97bd5b8ff93bd559455",
+      "note": "Not byte-identical to tools/souji-vault-verify.impl-24.sh (e8b4fdf142f423a3984d832cad355ebe4fb367adba9a4746da99841c86d726c9). tools/souji-verify.impl-16.sh is also not the installed verifier (c1e1078358ac5353f0636f153508ab5e714ef0e838fa1024a3609a0d38a6403e)."
+    },
+    "fetch_in_executable_lines": {
+      "command": "grep -nE '^[^#]*git +(-C +[^ ]+ +)?fetch( |$)' tools/souji-verify.sh tools/souji-vault-verify.sh || echo no-fetch-lines",
+      "observed_output": "no-fetch-lines"
+    },
+    "live_ledger": "corpus/knowledge/obsidian-ledger.tsv is a header row only (source_path, source_sha256, vault_path, vault_sha256, exported_at, note). No live moved-to-obsidian row."
+  },
+  "taxonomy_sentences_that_hold": [
+    {
+      "location": "SKILL.md:17 qualifies-when cell",
+      "sentence": "a matching row exists in corpus/knowledge/obsidian-ledger.tsv with source path + sha256 AND vault path + sha256",
+      "why_not_a_misstatement": "For a regular file, both absolute hashes are necessary and sufficient. Source-hash mismatch and vault-hash mismatch are NOT-SAFE. The cell does not say relpath (the command cell does) and does not mention symlink fail-closed; those are omissions, not a false conjunct for the file case.",
+      "evidence": [
+        {
+          "id": "P4",
+          "command": "SHOKUNIN_ROOT=$FLEET SOUJI_LEDGER=$LEDGER tools/souji-verify.sh --json /tmp/souji-s01-r6.HYq41E/src-match.md",
+          "observed_output": "{\"path\":\"/tmp/souji-s01-r6.HYq41E/src-match.md\",\"verdict\":\"SAFE\",\"receipt\":\"moved-to-obsidian\",\"evidence\":\"ledger-row vault=/tmp/souji-s01-r6.HYq41E/vault-match.md source-sha256=18d8b768e700\"}"
+        },
+        {
+          "id": "P17",
+          "command": "SHOKUNIN_ROOT=$FLEET SOUJI_LEDGER=$LEDGER tools/souji-verify.sh --json /tmp/souji-s01-r6.HYq41E/src-mismatch.md",
+          "observed_output": "{\"path\":\"/tmp/souji-s01-r6.HYq41E/src-mismatch.md\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"none\",\"evidence\":\"obsidian=source-sha-mismatch; obsidian=no-matching-ledger-row; stale=not-scratch-type\"}"
+        },
+        {
+          "id": "P24",
+          "command": "SHOKUNIN_ROOT=$FLEET SOUJI_LEDGER=$LEDGER tools/souji-verify.sh --json /tmp/souji-s01-r6.HYq41E/src-vault-mismatch.md",
+          "observed_output": "{\"path\":\"/tmp/souji-s01-r6.HYq41E/src-vault-mismatch.md\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"none\",\"evidence\":\"obsidian=vault-sha-mismatch; obsidian=no-matching-ledger-row; stale=not-scratch-type\"}"
+        }
+      ]
+    },
+    {
+      "location": "SKILL.md:20 first sentence",
+      "sentence": "No receipt → no removal.",
+      "why_not_a_misstatement": "Holds as a removal rule. The tool's non-authorizing outcomes are NOT-SAFE (exit 0). The receipt field is not always the string none: see pushed-unverifiable, unreachable, secrets-refusal, unpushed, dirty, unpushed-branch.",
+      "evidence": [
+        {
+          "id": "P11",
+          "command": "SHOKUNIN_ROOT=/tmp/souji-s01-r6.HYq41E/empty-fleet SOUJI_LEDGER=/tmp/souji-s01-r6.HYq41E/no-ledger.tsv tools/souji-verify.sh --json /tmp/souji-s01-r6.HYq41E/plain-s01.txt",
+          "observed_output": "{\"path\":\"/tmp/souji-s01-r6.HYq41E/plain-s01.txt\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"none\",\"evidence\":\"obsidian=no-ledger; stale=not-scratch-type\"}"
+        }
+      ]
+    }
+  ],
+  "misstatements": [
+    {
+      "id": "M1",
+      "class": "docs/tools",
+      "location": "SKILL.md:12",
+      "sentence": "Receipt taxonomy — every removal needs exactly one",
+      "actual": "The table lists only pushed, moved-to-obsidian, and stale. Installed souji-verify.sh also authorizes SAFE(metadata-prune). It does not require exactly one receipt and does not record a second qualifying receipt (see M7).",
+      "evidence": [
+        {
+          "id": "P26",
+          "command": "SHOKUNIN_ROOT=/tmp/souji-s01-r6.HYq41E/fleet SOUJI_LEDGER=/tmp/souji-s01-r6.HYq41E/no-ledger.tsv tools/souji-verify.sh --json /tmp/souji-s01-r6.HYq41E/wt-absent",
+          "observed_output": "{\"path\":\"/tmp/souji-s01-r6.HYq41E/wt-absent\",\"verdict\":\"SAFE\",\"receipt\":\"metadata-prune\",\"evidence\":\"dir=absent unique=0 head=94514e53eba5 owner=wtowner-shokunin\"}"
+        },
+        {
+          "id": "selftest-F4",
+          "command": "tools/souji-verify.sh --selftest",
+          "observed_output": "PASS F4 SAFE(metadata-prune); selftest: 24 checks, 0 failed"
+        }
+      ]
+    },
+    {
+      "id": "M2",
+      "class": "docs/tools",
+      "location": "SKILL.md:16 qualifies-when cell",
+      "sentence": "after git fetch, the commit carrying the artifact passes git merge-base --is-ancestor <commit> origin/<branch>",
+      "actual": "The tool never fetches. It tests the introducing commit (git log --diff-filter=A), not the commit that currently carries the bytes, against an existing remote-tracking ref from resolve_default_ref (origin/HEAD, else the single refs/remotes/origin/* ref). No remote-tracking ref yields NOT-SAFE(pushed-unverifiable), not a fetch failure. A dirty worktree or a later unpushed commit does not cancel SAFE(pushed) once the introducing commit is an ancestor.",
+      "evidence": [
+        {
+          "id": "P1",
+          "command": "SHOKUNIN_ROOT=$FLEET SOUJI_LEDGER=$LEDGER tools/souji-verify.sh --json $FLEET/pushed-shokunin/keep.txt",
+          "observed_output": "{\"path\":\"/tmp/souji-s01-r6.HYq41E/fleet/pushed-shokunin/keep.txt\",\"verdict\":\"SAFE\",\"receipt\":\"pushed\",\"evidence\":\"intro=a51d244b1ed8 ref=refs/remotes/origin/master ancestor=yes\"}"
+        },
+        {
+          "id": "P19",
+          "command": "same keep.txt after appending a line to the worktree, before any commit",
+          "observed_output": "{\"path\":\"/tmp/souji-s01-r6.HYq41E/fleet/pushed-shokunin/keep.txt\",\"verdict\":\"SAFE\",\"receipt\":\"pushed\",\"evidence\":\"intro=a51d244b1ed8 ref=refs/remotes/origin/master ancestor=yes\"}"
+        },
+        {
+          "id": "P20",
+          "command": "git -C $R1 merge-base --is-ancestor HEAD origin/master; echo exit=$?; SHOKUNIN_ROOT=$FLEET SOUJI_LEDGER=/tmp/souji-s01-r6.HYq41E/no-ledger.tsv tools/souji-verify.sh --json $R1/keep.txt",
+          "observed_output": "last-commit-ancestor=no exit=1; tool {\"verdict\":\"SAFE\",\"receipt\":\"pushed\",\"evidence\":\"intro=a51d244b1ed8 ref=refs/remotes/origin/master ancestor=yes\"}. HEAD=cefe663 origin=a51d244."
+        },
+        {
+          "id": "P2",
+          "command": "SHOKUNIN_ROOT=$FLEET SOUJI_LEDGER=$LEDGER tools/souji-verify.sh --json $FLEET/norefs-shokunin/tracked.txt",
+          "observed_output": "{\"path\":\"/tmp/souji-s01-r6.HYq41E/fleet/norefs-shokunin/tracked.txt\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"pushed-unverifiable\",\"evidence\":\"pushed=unverifiable(no-default-ref) intro=23b20f653192; obsidian=no-matching-ledger-row; stale=not-scratch-type\"}"
+        },
+        {
+          "id": "live-souji-tool",
+          "command": "tools/souji-verify.sh --json /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh",
+          "observed_output": "{\"path\":\"/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"pushed-unverifiable\",\"evidence\":\"pushed=unverifiable(no-default-ref) intro=9435e464a2dc; obsidian=no-matching-ledger-row; stale=not-scratch-type\"}"
+        }
+      ]
+    },
+    {
+      "id": "M3",
+      "class": "docs/tools",
+      "location": "SKILL.md:16 command cell",
+      "sentence": "git fetch -q && git merge-base --is-ancestor <commit> origin/main && echo PUSHED",
+      "actual": "origin/main does not exist on the fleet repo or on souji-shokunin. Fleet origin/HEAD is origin/master. The tool never runs git fetch. Fetch was not run in this audit.",
+      "evidence": [
+        {
+          "command": "git -C /home/vgpnk/Projects/shokunin symbolic-ref --short refs/remotes/origin/HEAD; git -C /home/vgpnk/Projects/shokunin show-ref --verify --quiet refs/remotes/origin/main; echo fleet-origin-main-exit=$?",
+          "observed_output": "origin/master; fleet-origin-main-exit=1"
+        },
+        {
+          "command": "intro=$(git -C /home/vgpnk/Projects/shokunin/souji-shokunin log --diff-filter=A --format=%H -1 -- tools/souji-verify.sh); git -C /home/vgpnk/Projects/shokunin/souji-shokunin merge-base --is-ancestor \"$intro\" origin/main; echo origin-main-exit=$?; git -C /home/vgpnk/Projects/shokunin/souji-shokunin for-each-ref --format='%(refname)' refs/remotes/origin",
+          "observed_output": "intro=9435e464a2dc8c421f0d97b0ce178463748ce38d; fatal: Not a valid object name origin/main; origin-main-exit=128; for-each-ref printed no refs"
+        },
+        {
+          "id": "P20-origin-main",
+          "command": "git -C /tmp/souji-s01-r6.HYq41E/fleet/pushed-shokunin merge-base --is-ancestor HEAD origin/main",
+          "observed_output": "fatal: Not a valid object name origin/main; origin-main-ancestor=no exit=128. Same repo's tool verdict was SAFE(pushed) against refs/remotes/origin/master."
+        },
+        {
+          "id": "live-launch",
+          "command": "tools/souji-verify.sh --json /home/vgpnk/Projects/shokunin/.ufo/interactive-l1-20261015T050057Z/launch-tsukuroi.json",
+          "observed_output": "{\"path\":\"/home/vgpnk/Projects/shokunin/.ufo/interactive-l1-20261015T050057Z/launch-tsukuroi.json\",\"verdict\":\"SAFE\",\"receipt\":\"pushed\",\"evidence\":\"intro=b2f2efae7549 ref=refs/remotes/origin/master ancestor=yes\"}"
+        }
+      ]
+    },
+    {
+      "id": "M4",
+      "class": "docs/tools",
+      "location": "SKILL.md:17 command cell",
+      "sentence": "awk -F'\\t' -v p=\"<relpath>\" '$1==p{print}' corpus/knowledge/obsidian-ledger.tsv then sha256sum both sides",
+      "actual": "souji-verify.sh matches the canonical absolute source path (readlink -m), not a relative path. A relpath awk hit is not a receipt. An absolute awk hit is what the tool matched in P4.",
+      "evidence": [
+        {
+          "id": "P13",
+          "command": "awk -F'\\t' -v p='src-match.md' '$1==p{print}' /tmp/souji-s01-r6.HYq41E/ledger.tsv; echo awk-exit=$?",
+          "observed_output": "awk-exit=0 and no row printed. The same ledger's absolute row was matched by the tool in P4."
+        },
+        {
+          "id": "P23",
+          "command": "awk -F'\\t' -v p='src-match.md' '$1==p{print}' /tmp/souji-s01-r6.HYq41E/rel-ledger.tsv; SHOKUNIN_ROOT=$FLEET SOUJI_LEDGER=/tmp/souji-s01-r6.HYq41E/rel-ledger.tsv tools/souji-verify.sh --json /tmp/souji-s01-r6.HYq41E/src-match.md",
+          "observed_output": "awk printed the relative row; tool {\"verdict\":\"NOT-SAFE\",\"receipt\":\"none\",\"evidence\":\"obsidian=no-matching-ledger-row; stale=not-scratch-type\"}"
+        }
+      ]
+    },
+    {
+      "id": "M5",
+      "class": "docs/tools",
+      "location": "SKILL.md:18 qualifies-when cell",
+      "sentence": "known scratch type (.scratch/, *.tmp, checkpoint blobs, out/, reports/round-*/**-draft.*), nothing references it (rg --files-with-matches <name> across the owning repo returns 0 live hits), AND mtime older than the owning lane's last admitted round",
+      "actual": "Tool scratch families are: a .scratch path component; basename *.out or *.log; basename *-draft.* anywhere; basename *checkpoint*.json|*.png, *ckpt*.json|*.png, *.ckpt, launch-*.json. *.tmp, out/, and checkpoint.bin are not scratch. A census-only citation does not block stale. A gitignored citation does. Age is mtime age > --stale-days (default 1), not the last admitted round date. LOG.md records every admitted round on 2026-10-18, so that date is the lane's last admitted round date.",
+      "evidence": [
+        {"id": "P7", "command": "tools/souji-verify.sh --json --stale-days 1 /tmp/souji-s01-r6.HYq41E/scratch-out/unique-s01-r6-artifact.tmp", "observed_output": "NOT-SAFE receipt=none evidence=obsidian=no-ledger; stale=not-scratch-type"},
+        {"id": "P8", "command": "tools/souji-verify.sh --json --stale-days 1 /tmp/souji-s01-r6.HYq41E/out/unique-s01-r6-blob.bin", "observed_output": "NOT-SAFE receipt=none evidence=obsidian=no-ledger; stale=not-scratch-type"},
+        {"id": "P30", "command": "tools/souji-verify.sh --json --stale-days 1 /tmp/souji-s01-r6.HYq41E/unique-s01-checkpoint.bin", "observed_output": "NOT-SAFE receipt=none evidence=obsidian=no-ledger; stale=not-scratch-type"},
+        {"id": "P6", "command": "tools/souji-verify.sh --json --stale-days 1 /tmp/souji-s01-r6.HYq41E/scratch-out/unique-s01-r6-artifact.out", "observed_output": "SAFE receipt=stale evidence=scratch-type=ext refs=0 mtime-age-days=3"},
+        {"id": "P25", "command": "tools/souji-verify.sh --json --stale-days 1 /tmp/souji-s01-r6.HYq41E/unique-s01-r6-run.log and launch-unique-s01-r6.json", "observed_output": "both SAFE receipt=stale; scratch-type=ext and scratch-type=checkpoint"},
+        {"id": "P14b", "command": "tools/souji-verify.sh --json --stale-days 1 /tmp/souji-s01-r6.HYq41E/unique-s01-r6-elsewhere-draft.md", "observed_output": "SAFE receipt=stale evidence=scratch-type=draft refs=0 mtime-age-days=3 (not under reports/round-*)"},
+        {"id": "P21b-census", "command": "rg -l unique-s01-censusu.out /tmp/souji-s01-r6.HYq41E/ownrepo; tools/souji-verify.sh --json --stale-days 1 /tmp/souji-s01-r6.HYq41E/ownrepo/.scratch/unique-s01-censusu.out", "observed_output": "rg hit souji-shokunin/census/only.json exit=0; tool SAFE receipt=stale refs=0"},
+        {"id": "P21b-ignore", "command": "rg -l unique-s01-igncite.out /tmp/souji-s01-r6.HYq41E/ownrepo; tools/souji-verify.sh --json --stale-days 1 /tmp/souji-s01-r6.HYq41E/ownrepo/.scratch/unique-s01-igncite.out", "observed_output": "default rg exit=1 (no hit); tool NOT-SAFE receipt=none evidence includes stale=live-refs=1"},
+        {"id": "P21b-live", "command": "tools/souji-verify.sh --json --stale-days 1 /tmp/souji-s01-r6.HYq41E/ownrepo/.scratch/unique-s01-livehit.out", "observed_output": "NOT-SAFE receipt=none evidence=pushed=no-introducing-commit; obsidian=no-ledger; stale=live-refs=1"},
+        {"id": "P29", "command": "touch -d '20 hours ago' /tmp/souji-s01-r6.HYq41E/.scratch/unique-s01-age20.txt; stat -c %y; find that file -newermt 2026-10-18 | wc -l; tools/souji-verify.sh --json that file", "observed_output": "mtime=2026-10-17 20:00:31 -0300; find-newermt-2026-10-18-count=0; tool NOT-SAFE receipt=none evidence=obsidian=no-ledger; stale=mtime-age-days=0<=1"}
+      ]
+    },
+    {
+      "id": "M6",
+      "class": "docs/tools",
+      "location": "SKILL.md:18 command cell",
+      "sentence": "find <path> -newermt <last-round-date> | wc -l == 0 and rg -l <basename> <repo> == 0",
+      "actual": "Same divergence as M5. The tool uses stat -c %Y against STALE_DAYS*86400 (default 1) and rg -l --no-ignore --fixed-strings with census/tests/quarantine/.git exclusions and a self-exclusion. It does not run find -newermt and it does not pass --hidden. A 20-hour-old .scratch file is not newer than 2026-10-18 (SKILL age check passes) and is NOT-SAFE under the tool.",
+      "evidence": [
+        {"id": "P29", "command": "see M5 P29", "observed_output": "find count=0; tool NOT-SAFE stale=mtime-age-days=0<=1"},
+        {"id": "P28-contrast", "command": "touch -d '36 hours ago' unique-s01-age.txt; tools/souji-verify.sh --json; find -newermt 2026-10-18 | wc -l", "observed_output": "tool SAFE receipt=stale mtime-age-days=1; find-newermt-2026-10-18-count=0. Both age checks pass at 36h; they diverge at 20h (P29)."}
+      ]
+    },
+    {
+      "id": "M7",
+      "class": "docs/tools",
+      "location": "SKILL.md:20 second sentence",
+      "sentence": "Two receipts → either suffices, note both.",
+      "actual": "evaluate_artifact stops at the first hit in order pushed, then moved-to-obsidian, then stale. A file that is both pushed and ledger-matched is reported only as pushed. The ledger is not noted.",
+      "evidence": [
+        {
+          "id": "P18",
+          "command": "ledger row appended for keep.txt with matching sha256 both sides; SHOKUNIN_ROOT=$FLEET SOUJI_LEDGER=$LEDGER tools/souji-verify.sh --json $FLEET/pushed-shokunin/keep.txt",
+          "observed_output": "{\"path\":\"/tmp/souji-s01-r6.HYq41E/fleet/pushed-shokunin/keep.txt\",\"verdict\":\"SAFE\",\"receipt\":\"pushed\",\"evidence\":\"intro=a51d244b1ed8 ref=refs/remotes/origin/master ancestor=yes\"}"
+        }
+      ]
+    },
+    {
+      "id": "M8",
+      "class": "docs/tools",
+      "location": "SKILL.md:28",
+      "sentence": "Owning repo has unpushed commits touching the artifact's path, or a dirty worktree over it | NOT-SAFE — live work; record and skip",
+      "actual": "True for repo-root and present worktree kinds (selftest F3 NOT-SAFE(unpushed), E1 NOT-SAFE(dirty)). False for an ordinary file whose introducing commit is already an ancestor: dirty worktree and a later unpushed commit still yield SAFE(pushed).",
+      "evidence": [
+        {"id": "P19", "command": "see M2 P19", "observed_output": "SAFE pushed after a dirty append"},
+        {"id": "P20", "command": "see M2 P20", "observed_output": "SAFE pushed while HEAD is not an ancestor of origin/master"}
+      ]
+    },
+    {
+      "id": "M9",
+      "class": "docs/tools",
+      "location": "SKILL.md:29",
+      "sentence": "Artifact's last commit is an ancestor of origin/<default> | SAFE(pushed)",
+      "actual": "The installed test is the introducing commit against refs/remotes/origin/<resolved>, with no fetch. P20 is SAFE(pushed) even though the last commit is not an ancestor of origin/master. origin/main is not the fleet default.",
+      "evidence": [
+        {"id": "P20", "command": "see M2 P20", "observed_output": "last-commit-ancestor=no; tool SAFE pushed ref=refs/remotes/origin/master"},
+        {"id": "fleet-HEAD", "command": "git -C /home/vgpnk/Projects/shokunin symbolic-ref --short refs/remotes/origin/HEAD", "observed_output": "origin/master"}
+      ]
+    },
+    {
+      "id": "M10",
+      "class": "docs/tools",
+      "location": "SKILL.md:30",
+      "sentence": "Ledger row matches path + hash | SAFE(moved-to-obsidian)",
+      "actual": "One matching hash is not enough. Source path + source sha256 with a vault sha256 mismatch is NOT-SAFE.",
+      "evidence": [
+        {"id": "P24", "command": "see taxonomy_sentences_that_hold P24", "observed_output": "NOT-SAFE receipt=none evidence=obsidian=vault-sha-mismatch"}
+      ]
+    },
+    {
+      "id": "M11",
+      "class": "docs/tools",
+      "location": "SKILL.md:31",
+      "sentence": "Scratch type + zero live references + older than lane's last admitted round | SAFE(stale)",
+      "actual": "Restates the stale cell. Same false type list, reference rule, and age rule as M5/M6. P29 is the counterexample against the last-admitted-round date 2026-10-18.",
+      "evidence": [{"id": "P29", "command": "see M5 P29", "observed_output": "find -newermt 2026-10-18 count=0; tool NOT-SAFE mtime-age-days=0<=1"}]
+    },
+    {
+      "id": "M12",
+      "class": "docs/tools",
+      "location": "SKILL.md:32 content clause",
+      "sentence": "any credential-shaped content | NOT-SAFE",
+      "actual": "The tool refuses secret-shaped path components before reading (*.env, .env, .env.*, .envrc, *credential*, *secret*, id_*, *.pem). It does not inspect file content. A nonexistent .env path is secrets-refusal. A plain missing path is unreachable. Content of a normal-named file was not probed; do not treat this as a content-inspection result.",
+      "evidence": [
+        {"id": "P27", "command": "tools/souji-verify.sh --json /tmp/souji-s01-r6.HYq41E/.env", "observed_output": "{\"path\":\"/tmp/souji-s01-r6.HYq41E/.env\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"secrets-refusal\",\"evidence\":\"secret-shaped path component\"}"},
+        {"id": "P31", "command": "tools/souji-verify.sh --json /tmp/souji-s01-r6.HYq41E/plain-control.txt", "observed_output": "{\"path\":\"/tmp/souji-s01-r6.HYq41E/plain-control.txt\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"unreachable\",\"evidence\":\"missing path\"}"}
+      ]
+    },
+    {
+      "id": "M13",
+      "class": "docs/tools",
+      "location": "SKILL.md:56-57",
+      "sentence": "git worktree list says prunable, but git log --branches --not --remotes --oneline in the owning repo is non-empty → the worktree metadata is NOT safe to prune yet",
+      "actual": "A detached absent registration with unique=0 is SAFE(metadata-prune) even when the owner has unpushed commits on another branch. The tool checks the named branch first, then unique commits of that HEAD, not the owner's full --branches --not --remotes set.",
+      "evidence": [
+        {
+          "id": "P56",
+          "command": "git -C /tmp/souji-s01-r6.HYq41E/fleet56/owner-shokunin log --branches --not --remotes --oneline | wc -l; SHOKUNIN_ROOT=/tmp/souji-s01-r6.HYq41E/fleet56 SOUJI_LEDGER=/tmp/souji-s01-r6.HYq41E/no-ledger.tsv tools/souji-verify.sh --json /tmp/souji-s01-r6.HYq41E/wt-f4shape",
+          "observed_output": "1; {\"path\":\"/tmp/souji-s01-r6.HYq41E/wt-f4shape\",\"verdict\":\"SAFE\",\"receipt\":\"metadata-prune\",\"evidence\":\"dir=absent unique=0 head=68a2acfcf2eb owner=owner-shokunin\"}"
+        },
+        {
+          "id": "P26-porcelain",
+          "command": "git -C /tmp/souji-s01-r6.HYq41E/fleet/wtowner-shokunin worktree list --porcelain",
+          "observed_output": "worktree /tmp/souji-s01-r6.HYq41E/wt-absent / HEAD 94514e53eba51cdc9faca9c4bd9a0f15cc9e24f8 / detached / prunable gitdir file points to non-existent location. Porcelain was not re-run on wt-f4shape; that registration uses the same absent-gitdir shape."
+        }
+      ]
+    },
+    {
+      "id": "M14",
+      "class": "docs/fleet",
+      "location": "SKILL.md:59",
+      "sentence": "Live instance: kotodama-shokunin 2026-10-18 (round-17..22 unpushed, dirty tree, 553M .scratch/).",
+      "actual": "Dirty tree holds (porcelain count 29). Unpushed commit subjects are not limited to round-17..22; the first 30 unpushed subjects include round-14 through round-26. .scratch is not 553M.",
+      "evidence": [
+        {"command": "git -C /home/vgpnk/Projects/shokunin/kotodama-shokunin log --branches --not --remotes --oneline | wc -l", "observed_output": "47"},
+        {"command": "git -C /home/vgpnk/Projects/shokunin/kotodama-shokunin status --porcelain | wc -l", "observed_output": "29"},
+        {"command": "git -C /home/vgpnk/Projects/shokunin/kotodama-shokunin log --branches --not --remotes --oneline | awk '{print $2}' | head -30", "observed_output": "subjects include round-26, round-25, round-24, round-23, round-22, round-21, round-20, round-19, round-18, round-17, round-16, round-15, round-14"},
+        {"command": "du -sh /home/vgpnk/Projects/shokunin/kotodama-shokunin/.scratch", "observed_output": "19G"},
+        {"command": "du -sb /home/vgpnk/Projects/shokunin/kotodama-shokunin/.scratch", "observed_output": "du: cannot access '/home/vgpnk/Projects/shokunin/kotodama-shokunin/.scratch/tmpb8yovofe': No such file or directory; then 18292985803. Exact byte total is uncertain by that vanished path. 553M is false either way. No scratch file contents were read."}
+      ]
+    },
+    {
+      "id": "M15",
+      "class": "docs/fleet",
+      "location": "SKILL.md:64-65",
+      "sentence": "shokunin.conf.full-roster-20261015 vs live shokunin.conf (3859 vs 4092 B, 2026-10-18).",
+      "actual": "Snapshot size 3859 still holds. Live size is 4432, not 4092. They still differ (cmp exit 1). The 'not byte-identical' conclusion holds; the live byte count does not.",
+      "evidence": [
+        {"command": "stat -c '%s %n' /home/vgpnk/Projects/shokunin/shokunin.conf /home/vgpnk/Projects/shokunin/shokunin.conf.full-roster-20261015", "observed_output": "4432 shokunin.conf; 3859 shokunin.conf.full-roster-20261015"},
+        {"command": "cmp -s /home/vgpnk/Projects/shokunin/shokunin.conf /home/vgpnk/Projects/shokunin/shokunin.conf.full-roster-20261015; echo cmp-exit=$?", "observed_output": "cmp-exit=1"}
+      ]
+    },
+    {
+      "id": "M16",
+      "class": "docs/fleet",
+      "location": "SKILL.md:89",
+      "sentence": "lore-shokunin: 19 prunable worktrees (git worktree list).",
+      "actual": "One worktree, the main checkout, no prunable flag.",
+      "evidence": [
+        {"command": "git -C /home/vgpnk/Projects/shokunin/lore-shokunin worktree list", "observed_output": "/home/vgpnk/Projects/shokunin/lore-shokunin 6cec83a [main]"},
+        {"command": "git -C /home/vgpnk/Projects/shokunin/lore-shokunin worktree list --porcelain | awk '/^worktree |^prunable/'", "observed_output": "worktree /home/vgpnk/Projects/shokunin/lore-shokunin"}
+      ]
+    },
+    {
+      "id": "M17",
+      "class": "docs/fleet",
+      "location": "SKILL.md:90",
+      "sentence": "game-dev-2d-shokunin: 5 prunable worktrees.",
+      "actual": "Four worktrees. Three linked registrations are locked, not prunable. The tool classifies wt-r98 as NOT-SAFE(unpushed-branch), which the taxonomy does not name.",
+      "evidence": [
+        {"command": "git -C /home/vgpnk/Projects/shokunin/game-dev-2d-shokunin worktree list", "observed_output": "main 05a72899; wt-r100 locked; wt-r98 locked; wt-r99 locked"},
+        {"command": "git -C /home/vgpnk/Projects/shokunin/game-dev-2d-shokunin worktree list --porcelain | awk '/^worktree |^prunable/'", "observed_output": "four worktree lines, no prunable line"},
+        {"command": "tools/souji-verify.sh --json /home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r98", "observed_output": "{\"path\":\"/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r98\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"unpushed-branch\",\"evidence\":\"branch=wt-r98 unpushed=1 dir=absent owner=game-dev-2d-shokunin\"}"}
+      ]
+    },
+    {
+      "id": "M18",
+      "class": "docs/fleet",
+      "location": "SKILL.md:91",
+      "sentence": "kotodama-shokunin: 553M .scratch/ beside unpushed round-17..22 work — NOT-SAFE.",
+      "actual": "The NOT-SAFE conclusion is consistent with unpushed=47 and dirty=29, but this audit did not re-run souji-verify.sh on the kotodama root. The size and the round range are false, same measurements as M14. 553M is not the current size.",
+      "evidence": [
+        {"command": "see M14", "observed_output": "unpushed=47; dirty=29; du -sh 19G; subjects round-14 through round-26"}
+      ]
+    }
+  ],
+  "required_cases": {
+    "pushed": "P1 SAFE(pushed) against refs/remotes/origin/master with no fetch. Live launch-tsukuroi.json SAFE(pushed) intro=b2f2efae7549 ref=refs/remotes/origin/master. SKILL command origin/main does not resolve.",
+    "moved-to-obsidian": "P4 SAFE when both absolute sha256s match. P23 relpath row is not a receipt. P17/P24 hash mismatch is NOT-SAFE(none).",
+    "stale": "P6/P9/P14/P15/P25 SAFE for tool scratch types older than 1 day with refs=0. P7/P8/P30 NOT-SAFE for *.tmp, out/, checkpoint.bin. P29 20h-old .scratch file is NOT-SAFE despite find -newermt 2026-10-18 count=0.",
+    "none": "P11 ordinary file NOT-SAFE(none). P3 introducing commit not an ancestor of origin/master is also receipt=none, not pushed-unverifiable.",
+    "symlink-present": "P5 souji-verify.sh NOT-SAFE receipt=none evidence=obsidian=symlink-present scope=source. It does not emit receipt symlink-present. P5b souji-vault-verify.sh --fallback --json: receipt=none reason=symlink-present verified=NOT-VERIFIED(symlink-present).",
+    "pushed-unverifiable": "P2 souji-verify.sh NOT-SAFE receipt=pushed-unverifiable. Live tools/souji-verify.sh same receipt (no refs/remotes/origin). P2b souji-vault-verify.sh --fallback: receipt=none reason=none, with pushed=unverifiable(no-default-ref) only in evidence."
+  },
+  "omissions_not_sentences": [
+    "SAFE(metadata-prune) is a removal receipt the taxonomy does not name (P26, selftest F4/E3).",
+    "NOT-SAFE(pushed-unverifiable) is a distinct receipt on souji-verify.sh and is not named. Do not document it as the vault verifier's receipt field: that tool leaves receipt=none.",
+    "symlink-present is an evidence note on souji-verify.sh, not the receipt field. Spec text that says NOT-SAFE(symlink-present) matches souji-vault-verify.sh reason, not souji-verify.sh receipt.",
+    "Other non-authorizing receipt strings the taxonomy folds into 'no receipt': unreachable, secrets-refusal, unpushed, dirty, unpushed-branch.",
+    "Tool and default rg both miss a citation in a hidden file (P32: rg exit=1, rg --hidden finds .hidden-cite, tool SAFE stale refs=0). Shared blind spot, not a SKILL-vs-tool disagreement.",
+    "Empty directory-hash columns were not shown to authorize SAFE. A TSV row with empty sha fields was mis-parsed (bash IFS collapses consecutive tabs) and failed closed: souji-verify evidence obsidian=vault-unreachable vault=2026-10-18. Do not treat the source's empty-hash skip as observed behavior."
+  ],
+  "sentences_checked_and_not_listed": [
+    "SKILL.md:66-67 and :87: b2f2efa launch JSON/PNG files are still in HEAD (adc3d33; merge-base --is-ancestor b2f2efa HEAD exit 0). launch-tsukuroi.json is SAFE(pushed) individually. Those sentences were not listed.",
+    "SKILL.md:20 first sentence holds. SKILL.md:17 qualifies-when cell holds for regular files with both absolute hashes.",
+    "Checklists at SKILL.md:76-79 prescribe operator commands (git log --not --remotes -- <path>, rg -l with no exclusions). They are requirements, not descriptions of current tool behavior, so they are not in misstatements. They do not match the installed sweep."
+  ],
+  "counts": {
+    "taxonomy_sentences_misstating_tool_behavior": 7,
+    "taxonomy_sentences_holding": 2,
+    "other_skill_sentences_misstating_tool_behavior": 6,
+    "other_skill_sentences_misstating_fleet_state": 5,
+    "misstatement_entries": 18
+  },
+  "safety": "Read-only over fleet, lane, and siblings except this fragment. Probes used /tmp/souji-s01-r6.HYq41E and the tool's own --selftest mktemp dir. No git fetch/push/commit/branch/prune/remove, no deletes, no secret-file reads, no .ufo/state or .ufo/watchdog.log access, no live obsidian ledger write. kotodama was measured with git log/status counts, subject tokens, and du only. /tmp fixtures were left in place."
+}

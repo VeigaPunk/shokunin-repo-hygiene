@@ -11,13 +11,19 @@ verdict is `NOT-SAFE` and the artifact stays.
 
 ## Receipt taxonomy — every removal needs exactly one
 
-| Receipt | Qualifies when | Counting / verification command |
-|---|---|---|
-| `pushed` | after `git fetch`, the commit carrying the artifact passes `git merge-base --is-ancestor <commit> origin/<branch>` | `git fetch -q && git merge-base --is-ancestor <commit> origin/main && echo PUSHED` |
-| `moved-to-obsidian` | a matching row exists in `corpus/knowledge/obsidian-ledger.tsv` with source path + sha256 AND vault path + sha256 | `awk -F'\t' -v p="<relpath>" '$1==p{print}' corpus/knowledge/obsidian-ledger.tsv` then `sha256sum` both sides |
-| `stale` | known scratch type (`.scratch/`, `*.tmp`, checkpoint blobs, `out/`, `reports/round-*/**-draft.*`), nothing references it (`rg --files-with-matches <name>` across the owning repo returns 0 live hits), AND mtime older than the owning lane's last admitted round | `find <path> -newermt <last-round-date> | wc -l` == 0 and `rg -l <basename> <repo>` == 0 |
+The machine form of this table is `tools/souji-verify.sh` (installed
+behavior wins over this prose; r6 reconciliation). Verdicts also include
+`SAFE(metadata-prune)` for dead worktree registrations and fail-closed
+refusals (`pushed-unverifiable`, `symlink-present`, `secrets-refusal`).
 
-No receipt → no removal. Two receipts → either suffices, note both.
+| Receipt | Qualifies when (as the tool checks it, r6) |
+|---|---|
+| `pushed` | the path exists now; its introducing commit (`git log --diff-filter=A --format=%H -1 -- <path>`) is an ancestor of the resolved default ref (`refs/remotes/origin/HEAD`, else the single `refs/remotes/origin/*` ref — existing refs only, NEVER `git fetch`, NEVER a local ref such as `refs/heads/master`); AND no unpushed commit touches the path (`git log --branches --not --remotes --oneline -- <path>` empty — bare `--not --remotes` alone returns nothing on git 2.55). Any failure → `pushed-unverifiable` / `unpushed-commits-touching`. |
+| `moved-to-obsidian` | a ledger row whose canonical ABSOLUTE source path matches AND both sha256 pairs verify (vault side read-only). Symlinks in a digest scope → `symlink-present`. No row → no qualification. |
+| `stale` | scratch type as the tool classifies: `.scratch/`, `*.out`, `*.log`, `launch-*.json`, `*-draft.*` (NOT `*.tmp`, not `out/`) AND zero live references (sweep excludes `.git`, `souji-shokunin/census/**`, `souji-shokunin/tests/**`, quarantine) AND mtime older than `--stale-days` (default 1). |
+
+No receipt → no removal. Two receipts → the tool reports the first that
+verifies (pushed before obsidian).
 
 ## Decision tables
 
@@ -83,10 +89,18 @@ Pre-quarantine commit:
 - [ ] Commit message names the receipt class and the evidence pointer
 - [ ] Lane identity: `souji-shokunin <souji@shokunin.local>`
 
-## Known surfaces (fleet, 2026-10-18)
+## Known surfaces (fleet, refreshed r6)
 
-- Fleet root: `b2f2efa` checkpoint files at HEAD; `shokunin.conf.full-roster-20261015`.
-- lore-shokunin: 19 prunable worktrees (`git worktree list`).
-- game-dev-2d-shokunin: 5 prunable worktrees.
-- kotodama-shokunin: 553M `.scratch/` beside unpushed round-17..22 work — NOT-SAFE.
-- Sibling lane repos: census rounds extend the surface table.
+- Fleet root: `b2f2efa` checkpoint files at HEAD (96 actionable approval
+  rows await the operator; 15 shell strays were already removed by a1b44b1);
+  `shokunin.conf.full-roster-20261015` (superseded snapshot, SAFE/pushed).
+- lore-shokunin: 19 dead worktree registrations PRUNED r3 (list now 1); a
+  small `.scratch` (218 KB) flagged by the r6 fleet census.
+- game-dev-2d-shokunin: 2 detached registrations pruned r3; 3 named-branch
+  registrations PINNED (locks held; each branch has 1 unpushed commit) —
+  a 5th worktree appeared by r6 (live lane work; classified by census).
+- kotodama-shokunin: `.scratch` measured 553M → 1.9G → 16G → **40.4 GB**
+  across r1–r6, live-written by its unpushed round-14..53 work — NOT-SAFE;
+  handoff note at `census/round-6/kotodama-scratch-handoff.md`.
+- Repeatable fleet census: `tools/souji-census.sh --root $SHOKUNIN_ROOT`
+  (r6; per-repo worktrees/unpushed/dirty/scratch/mtime/flags).

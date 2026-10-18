@@ -1,0 +1,151 @@
+diff --git a/corpus/README.md b/corpus/README.md
+--- a/corpus/README.md
++++ b/corpus/README.md
+@@ -1,25 +1,137 @@
+ # souji-shokunin corpus
+ 
+ Memory of the fleet's hygiene state. Index rows are claims — write the row
+-when the file exists, not before.
++when the file exists, not before. This file is the index, not a row.
++Re-measured 2026-10-18T17:49:49-03:00 from this repo at HEAD ce58c2b.
++A count is `<number> — <command> <date>` (`../CORPUS.md:33-37`).
++Re-run the command before trusting a cell.
+ 
+ ## knowledge/
+ 
+-- `obsidian-ledger.tsv` — the Obsidian-preservation ledger. Columns:
+-  `source_path`, `source_sha256`, `vault_path`, `vault_sha256`,
++- `knowledge/obsidian-ledger.tsv` — the Obsidian-preservation ledger.
++  Columns: `source_path`, `source_sha256`, `vault_path`, `vault_sha256`,
+   `exported_at`, `note`. A removal qualifies as `moved-to-obsidian` only
+   with a matching row (both hashes). Rows enter only when the operator
+   records an export; nothing automated writes here.
+-- (census tables land here from r1 onward)
++  bytes=67 — `wc -c corpus/knowledge/obsidian-ledger.tsv` — 2026-10-18T17:49:49-03:00
++  lines=1 — `wc -l corpus/knowledge/obsidian-ledger.tsv` — 2026-10-18T17:49:49-03:00
++  data_rows=0 — `awk 'NR>1{c++} END{print c+0}' corpus/knowledge/obsidian-ledger.tsv` — 2026-10-18T17:49:49-03:00
++  sha8=3f7e9f2a — `sha256sum corpus/knowledge/obsidian-ledger.tsv` — 2026-10-18T17:49:49-03:00
++  Census tables do not live here (R6-README-01).
+ 
+ ## lessons/
+ 
+-- per-round training lessons, one file per round, each with a `## Gate`
+-  section (candidates / admitted / rejected / spot-check).
++One row per file `ls -1 corpus/lessons` returned at the stamp above.
++  files=5 — `ls -1 corpus/lessons | wc -l` — 2026-10-18T17:49:49-03:00
++  No file has a `## Gate` heading (R6-README-02, R6-README-07).
++  Fields below are `Label:` tokens, not that heading.
++
++- `lessons/round-1.md` — Round 1 — census gate.
++  bytes=1334 — `wc -c corpus/lessons/round-1.md` — 2026-10-18T17:49:49-03:00
++  lines=28 — `wc -l corpus/lessons/round-1.md` — 2026-10-18T17:49:49-03:00
++  sha8=d307ed5b — `sha256sum corpus/lessons/round-1.md` — 2026-10-18T17:49:49-03:00
++  gate_h2=0 — `rg -n '^## Gate$' corpus/lessons/round-1.md` — 2026-10-18T17:49:49-03:00
++  Line-start fields: Candidates, Admitted, Rejected, Spot-check.
++
++- `lessons/round-2.md` — Round 2 — tool gate.
++  bytes=1616 — `wc -c corpus/lessons/round-2.md` — 2026-10-18T17:49:49-03:00
++  lines=30 — `wc -l corpus/lessons/round-2.md` — 2026-10-18T17:49:49-03:00
++  sha8=b32f3251 — `sha256sum corpus/lessons/round-2.md` — 2026-10-18T17:49:49-03:00
++  gate_h2=0 — `rg -n '^## Gate$' corpus/lessons/round-2.md` — 2026-10-18T17:49:49-03:00
++  Line-start fields: Candidates, Admitted, Rejected. Absent fields: Spot-check.
++
++- `lessons/round-3.md` — Round 3 — prune gate.
++  bytes=1677 — `wc -c corpus/lessons/round-3.md` — 2026-10-18T17:49:49-03:00
++  lines=31 — `wc -l corpus/lessons/round-3.md` — 2026-10-18T17:49:49-03:00
++  sha8=375cc7fc — `sha256sum corpus/lessons/round-3.md` — 2026-10-18T17:49:49-03:00
++  gate_h2=0 — `rg -n '^## Gate$' corpus/lessons/round-3.md` — 2026-10-18T17:49:49-03:00
++  Line-start fields: Candidates, Admitted, Rejected, Spot-check.
++
++- `lessons/round-4.md` — Round 4 — vault-verify gate (amended).
++  bytes=1262 — `wc -c corpus/lessons/round-4.md` — 2026-10-18T17:49:49-03:00
++  lines=22 — `wc -l corpus/lessons/round-4.md` — 2026-10-18T17:49:49-03:00
++  sha8=0efa20db — `sha256sum corpus/lessons/round-4.md` — 2026-10-18T17:49:49-03:00
++  gate_h2=0 — `rg -n '^## Gate$' corpus/lessons/round-4.md` — 2026-10-18T17:49:49-03:00
++  Line-start fields: Candidates. Inline fields: Admitted. Absent fields: Rejected, Spot-check.
++
++- `lessons/round-5.md` — Round 5 — verification gate.
++  bytes=2598 — `wc -c corpus/lessons/round-5.md` — 2026-10-18T17:49:49-03:00
++  lines=45 — `wc -l corpus/lessons/round-5.md` — 2026-10-18T17:49:49-03:00
++  sha8=9a5ad657 — `sha256sum corpus/lessons/round-5.md` — 2026-10-18T17:49:49-03:00
++  gate_h2=0 — `rg -n '^## Gate$' corpus/lessons/round-5.md` — 2026-10-18T17:49:49-03:00
++  Line-start fields: Admitted. Absent fields: Candidates, Rejected, Spot-check.
++
++## Coverage map
++
++- Ledger: the knowledge row above. Header only at this stamp.
++- Lessons: the five rows above. `corpus/lessons/round-6.md` is not
++  a row — the file does not exist.
++- `corpus/QUALITY.md` absent — `test -f corpus/QUALITY.md` —
++  2026-10-18T17:49:49-03:00 (exit 1, R6-README-06). Required by `../CORPUS.md:12`.
++- Work-tree census directories — `ls -d census/round-*` — 2026-10-18T17:49:49-03:00:
++  `census/round-1`, `census/round-3`, `census/round-4`, `census/round-5`, `census/round-6`.
++- `census/round-2` absent — `ls -d census/round-2` —
++  2026-10-18T17:49:49-03:00 (exit 2, R6-README-09).
++- HEAD tree census entries — `git ls-tree --name-only HEAD:census`
++  — 2026-10-18T17:49:49-03:00: `census/round-1`, `census/round-3`, `census/round-4`, `census/round-5`. `census/round-6` is not in that tree.
++- `census/round-1/census.tsv` data_rows=246 —
++  `awk 'NR>1{c++} END{print c+0}' census/round-1/census.tsv` —
++  2026-10-18T17:49:49-03:00. Not a corpus row (R6-README-03).
++- Gate tools present — `test -f tools/souji-verify.sh` and
++  `test -f tools/souji-vault-verify.sh` —
++  2026-10-18T17:49:49-03:00 (both exit 0, R6-README-04). Not corpus rows.
++- `tools/souji-census.sh` absent — `test -f tools/souji-census.sh` —
++  2026-10-18T17:49:49-03:00 (exit 1). Draft impl names are not an install and are not
++  indexed.
++- `census/round-6/` is this round's open fragment directory.
++  Not a corpus row.
+ 
+ ## Known gaps
+ 
+-- No census data yet (r1).
+-- No gate tool yet (r2).
+-- Numeric rubric: axis scores start at 0 with explicit counting commands;
+-  a calibrated numeric rubric is a standing gap, per the kotodama precedent.
++- R6-README-06. `corpus/QUALITY.md` absent. `../CORPUS.md:12`
++  requires it. Sweep: `test -f corpus/QUALITY.md` → exit 1 —
++  2026-10-18T17:49:49-03:00.
++- R6-README-07. No `## Gate` heading in `corpus/lessons/`.
++  `../CORPUS.md:18-19` requires that section. Sweep:
++  `rg -n '^## Gate$' corpus/lessons` → no matches, exit 1 —
++  2026-10-18T17:49:49-03:00. Inline gate prose is not the heading.
++- R6-README-10. The four gate fields are not uniform.
++  Line-start `Candidates:` / `Admitted:` / `Rejected:` /
++  `Spot-check:` hold for round-1 and round-3 only. round-2 has no
++  `Spot-check:`. round-4 has line-start `Candidates:` and inline
++  `Admitted:`; no `Rejected:` or `Spot-check:`. round-5 has
++  line-start `Admitted:` only. Prose, not a field: round-1 line 26
++  ("Final admitted table"), round-4 line 20 ("other candidates").
++- R6-README-08. No sourced knowledge note. Sweep:
++  `rg -n '^(source:|verified-at:|recheck:)' corpus/knowledge` →
++  no matches, exit 1 — 2026-10-18T17:49:49-03:00. The only knowledge file is the
++  header-only ledger. This amendment does not rewrite it.
++- R6-README-05. No rubric file. Sweep:
++  `find . -name '*rubric*' -not -path './.git/*' -print` → no
++  paths — 2026-10-18T17:49:49-03:00 (`find` exit 0 is not the absence proof; the empty
++  print is). Axis-table cells are not 0: coverage 8, calibration 7,
++  operability 8 — `rg -n '^\| (coverage|calibration|operability) \|' SCORECARD.md`
++  — 2026-10-18T17:49:49-03:00 (lines 13–15). Withdrawn: "axis scores start at 0".
++  A rubric file remains a standing gap. The kotodama precedent was
++  not re-audited by this seat.
++
++## Closed claims
++
++- R6-README-01. Withdrawn: "(census tables land here from r1
++  onward)". `ls -1 corpus/knowledge` → `obsidian-ledger.tsv`
++  only — 2026-10-18T17:49:49-03:00.
++- R6-README-03. "No census data yet (r1)" is false. See the
++  coverage map.
++- R6-README-04. "No gate tool yet (r2)" is false. Both verifier
++  scripts exist at this stamp.
++
++## Frontier
++
++Not filled by this index fix. This seat does not create the missing
++files and does not rewrite filed lessons or the ledger:
++
++- `corpus/QUALITY.md`
++- a `## Gate` section in each existing lesson (a new lesson entry,
++  or a parent edit — not an in-place rewrite by this seat)
++- sourced knowledge notes (`source:` / `verified-at:` / `recheck:`)
++- a rubric file, if a mapping is written separately from SCORECARD.md

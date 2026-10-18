@@ -1,0 +1,117 @@
+diff --git a/SCORECARD.md b/SCORECARD.md
+--- a/SCORECARD.md
++++ b/SCORECARD.md
+@@ -4,47 +4,89 @@
+ coverage**. Following the kotodama precedent, rows carry per-axis verdicts
+ and checkable observations plus a 0–10 score only where a reproducible
+ mapping from evidence to number exists. Every observation carries its
+-counting command and the commit it was measured against.
++counting command and the commit it was measured against. An integer with
++no formula from that command's output is a parent increment: the row names
++the commit that set it and does not re-derive it. Counting commands are
++run from this repo unless the cell gives an absolute path. A relative
++`git -C <sibling>` does not resolve here.
+ 
+ ## Axes
+ 
+ | axis | score | verdict / observation | counting command | measured commit | last change |
+ |---|---|---|---|---|---|
+-| coverage | 8 | improved (C1, r3): 21/21 metadata prunes executed with receipts (lore 20→1, gd2d 6→4, lock-preserve for 3 pinned); worktree surface closed | `git -C lore-shokunin worktree list \| wc -l` → 1; `git -C game-dev-2d-shokunin worktree list \| wc -l` → 4 | r3 report | r3 |
+-| calibration | 7 | improved (V1, r5): verification round found 3 material defects (symlink false-SAFE class; local-master pushed fallback; r1 logs_tier row) — all corrected in-round with re-run evidence; 0 unresolved | `census/round-5/final-57..64.json`; lessons/round-5.md; probes in r5 report | r5 report | r5 |
+-| operability | 8 | improved (O1', r4): tools/souji-vault-verify.sh live — ledger+sha256 moved-to-obsidian verification, parent battery 4/4 + real-vault probe VERIFIED, self-referential rows refused | `bash tools/souji-vault-verify.sh --selftest; echo $?` → 0; `tests/results/parent-vault-battery.json` | r4 report | r4 |
++| coverage | 8 | score unchanged (set 7→8 at `3674633`). r3 prune still holds on absolute paths: lore 1, gd2d 4, three pins locked, unpushed 1/1/1. The published relative command does not reproduce that: from this repo it exits 128 and `wc -l` prints 0. K1 not admitted. Kotodama `.scratch` is 18292985803 bytes (19G), not 16G; 47 unpushed; porcelain dirty 29 then 31. NOT-SAFE. No removal. Sibling headers (`scratch-judge-82.json`: per-file rows false; `handoff-92.md`: do not admit; `seat-76.json`: one residue of 16) are not a full classification and not a receipt. | Measurement | ce58c2b (score set 3674633; re-measure 2026-10-18T15:55:29-03:00 and 16:00:58-03:00) | r6 text; score r3 |
++| calibration | 7 | score unchanged (set 6→7 at `ce58c2b`). r5 closed 3 tool defects. This card at that commit still contradicted itself: saturation said operability 7 / calibration 6; Planned still scheduled r5; capability shas named pre-patch impl copies; the coverage command false-zeros; the calibration cell said "0 unresolved". This amendment clears those five card defects. C1 drift→0 is not met. `SKILL.md` still has `git fetch`, `origin/main`, and mint surfaces (19 prunable, 5 prunable, 553M). Spec still names `rg --basename`. Both installed tools omit `--hidden`. `corpus/lessons/round-5.md` "0 unresolved" is that file's r5-closure sentence, not a current docs/tools count. | Measurement | ce58c2b | r6 text; score r5 |
++| operability | 8 | score unchanged (set 7→8 at `48a64d8`). Selftests re-run on the r5-patched installed bytes: 24 checks, 0 failed, exit 0; 35 checks, 0 failed, exit 0. O1 not met: `tools/souji-census.sh` absent at 16:16:46-03:00. Untracked drafts were not executed by S30 and are not this row. | Measurement | ce58c2b (score set 48a64d8; selftest ~15:55) | r6 text; score r4 |
+ 
+ ## Capabilities
+ 
+ | name | what it can now do | evidence pointer | first-working round |
+ |---|---|---|---|
+-| fleet census (receipt taxonomy) | classify every fleet artifact into pushed / moved-to-obsidian / stale / none with per-row command evidence, at 64-seat parallelism, dry-run | `census/round-1/census-summary.json`, `census/round-1/census.tsv` (246 rows) | r1 |
+-| souji-verify | per-artifact SAFE/NOT-SAFE verdict from receipts, D1–D3 fixed, --selftest over F1–F10 fixtures, read-only, secrets-refusal | `tools/souji-verify.sh` (sha256 7efda63bd760…), `tests/results/INSTALL.json`, `tests/results/parent-harness-live.json` | r2 |
+-| worktree metadata prune | selective prune with lock-preserve of pinned registrations; receipts re-verified at act time | `census/round-3/seat-61.json` (plan), `census/round-3/seat-62.json` (lore assertions), LOG r3 | r3 |
+-| ledger-verify (moved-to-obsidian receipt) | verify a ledger row's source + vault sha256 pairs read-only; refuses self-referential rows; --ledger override; obsidian-CLI probe path reserved (no usable CLI entry point on this host — banked for operator) | `tools/souji-vault-verify.sh` (sha256 d312263a…), `tests/results/parent-vault-battery.json`, LOG r4 | r4 |
++| fleet census (receipt taxonomy) | r1 dry-run classification, 246 data rows. Not a repeating tool. `tools/souji-census.sh` was absent at 16:16:46-03:00. | `census/round-1/census-summary.json` (`rows_total` 246); `wc -l census/round-1/census.tsv` → 247 | r1 |
++| souji-verify | SAFE/NOT-SAFE from receipts; r5 fail-closed (`symlink-present`, `pushed-unverifiable`); selftest 24/0 exit 0 | `tools/souji-verify.sh` sha256 `53239fdfe5bcaaaf448e8525845ab962dd7ab6a4e7f75c0f4f051614f1c99200` at `ce58c2b`. r2 install `7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820` is `9435e46` only; `tests/results/INSTALL.json` still records it. | r2 |
++| worktree metadata prune | executed once (r3), metadata only, lock-preserve. No standalone prune tool. The 3 gd2d pins are locked; each `rev-list --count <branch> --not --remotes` = 1. A repeat needs a fresh receipt. | LOG r3; Measurement lock listing | r3 |
++| ledger-verify (moved-to-obsidian receipt) | read-only source+vault sha256 check; refuses self-referential rows; `--ledger` override. Live ledger has 0 data rows, so the capability is fixture-proved, not exercised on a populated live ledger. | `tools/souji-vault-verify.sh` sha256 `00d59b1b36d87db37518b5ef9fb98cd472888a075ed7b97bd5b8ff93bd559455` at `ce58c2b`. r4 install `d312263ac8ebc9e23555402dc5ae63167f78dcd01ddccc5ddcfa7623b85879e0` is `48a64d8` only. `awk 'NR>1{c++} END{print c+0}' corpus/knowledge/obsidian-ledger.tsv` → 0. Selftest 35/0 exit 0. | r4 |
+ 
+ ## Planned
+ 
+-- **r4 — AMENDED by operator mid-round:** the Obsidian-CLI integration
+-  claim was withdrawn ("forget the obsidian integration for now"); closed
+-  instead on the standalone ledger-verify capability
+-  (`tools/souji-vault-verify.sh`, installed r4). Finding: no usable CLI
+-  entry point on this host — banked in
+-  `.ufo/scopes/souji-mint-20261018/obsidian-cli-probe.md` for the operator.
+-  Completion-criterion obsidian-row requirement waived by the operator.
+-- **r5 (verification round, all axes):** audit rounds 1–4 verdicts and
+-  outputs for correctness and missed items, folded into the round's own
+-  claims (scheduled model: gpt-6-luna-max). Carry-overs: the 96-row
+-  approval list awaits operator sign-off; the 3 pinned gd2d registrations
+-  await that lane's push; `/tmp` fixture residue routed to
+-  tsukuroi/operator.
++Closed rounds are not plans. r4 and r5 are admitted (LOG.md; commits
++`48a64d8`, `ce58c2b`). The operator r4 amendment — obsidian claim
++withdrawn, ledger-verify installed, CLI finding banked at
++`../.ufo/scopes/souji-mint-20261018/obsidian-cli-probe.md` — stays in
++LOG.md.
++
++Still open, not re-decided here:
++
++- 96-row operator approval list
++  (`wc -l census/round-3/operator-approval-list.tsv` → 97) awaits
++  operator sign-off. No later LOG sign-off was found in the r3 "awaits"
++  sentence. A sign-off outside LOG is `to-verify`.
++- 3 pinned gd2d registrations (wt-r98/99/100) remain locked, unpushed
++  counts 1/1/1 (re-measured, no fetch). Disposition is that lane's push
++  or an operator call.
++- `/tmp` fixture residue was routed to tsukuroi/operator (r5 report).
++  Not re-swept here.
++
++Dispatched r6, not admitted by S30. Do not treat as landed:
++
++- C1 calibration — docs/tools reconciliation, drift→0. Not met.
++  See Measurement.
++- O1 operability — `tools/souji-census.sh`. Path absent at
++  16:16:46-03:00.
++- K1 coverage — kotodama `.scratch` fully classified read-only, plus a
++  handoff note. Not met as a stable full classification. Point size is
++  19G, not 16G. Tree verdict: NOT-SAFE (47 unpushed, dirty). No removal.
+ 
+ ## Saturation / stagnation
+ 
+-Saturation line: 8 per axis; stagnation window 3 rounds. Coverage 8,
+-operability 7, calibration 6 — calibration lowest; r5 verification work
+-carries the calibration flavor.
++Saturation line: 8 per axis; stagnation window 3 rounds. Reconciled to
++the axes table: coverage 8, operability 8, calibration 7. Calibration is
++lowest and below the line, so the stagnation nudge does not fire. The
++superseded sentence, copied unchanged from `3674633` through `ce58c2b`
++while the table moved (operability 7→8 at `48a64d8`; calibration 6→7 at
++`ce58c2b`), was: "operability 7, calibration 6".
+ 
+ ## Retired
+ 
+ None.
++
++## Measurement (S30)
++
++Base `SCORECARD.md` sha256
++`7c0039a528a2a760622ce9d9b69427e2ee695a993b7acca72968fc048cfd2378`
++at `ce58c2b457c8ffb7886b36a509bf957f90d1f296`. No git fetch. No
++secret-shaped file opened. `.ufo/state` and `.ufo/watchdog.log` not
++touched. Scores not changed.
++
++- Relative coverage command, from this repo: `git -C lore-shokunin worktree list` → exit 128, `fatal: cannot change to 'lore-shokunin': No such file or directory`, stdout empty. Piped to `wc -l` prints 0 (wc exit 0). `git -C game-dev-2d-shokunin worktree list` → exit 128, same fatal. Absolute: `git -C /home/vgpnk/Projects/shokunin/lore-shokunin worktree list | wc -l` → 1; gd2d → 4.
++- Locks at 16:16:46-03:00: `game-dev-2d-shokunin/.git/worktrees/game-dev-2d-shokunin-wt-r98`, `wt-r99`, `wt-r100` each have a `locked` file. Earlier `rev-list --count <branch> --not --remotes` → 1, 1, 1.
++- Historical tool shas: `git show 9435e46:tools/souji-verify.sh | sha256sum` → `7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820`. `git show ce58c2b:tools/souji-verify.sh | sha256sum` → `53239fdfe5bcaaaf448e8525845ab962dd7ab6a4e7f75c0f4f051614f1c99200`. `git show 48a64d8:tools/souji-vault-verify.sh | sha256sum` → `d312263ac8ebc9e23555402dc5ae63167f78dcd01ddccc5ddcfa7623b85879e0`. `git show ce58c2b:tools/souji-vault-verify.sh | sha256sum` → `00d59b1b36d87db37518b5ef9fb98cd472888a075ed7b97bd5b8ff93bd559455`. `cmp` installed verify vs `impl-12` exit 1; vault vs `impl-20` exit 1.
++- Selftests, about 15:55: `bash tools/souji-verify.sh --selftest` → `selftest: 24 checks, 0 failed`, exit 0. `bash tools/souji-vault-verify.sh --selftest` → `selftest: 35 checks, 0 failed`, exit 0. Fixtures were the tools' own `/tmp/souji-verify-selftest.G9xkWB` and `/tmp/souji-vault-verify-selftest.xfySGs`.
++- `test -e tools/souji-census.sh` at 16:16:46-03:00 → absent. Drafts under `tools/souji-census.impl-*.sh` were not run.
++- Kotodama `.scratch`: `du -sb` → 18292985803 at 15:55:29-03:00 and again at 16:00:58-03:00; `du -sh` → 19G. `find -printf '%y' | sort | uniq -c` at 15:55:30 → 87913 directories, 535526 files, 80 symlinks. That type count was not re-run at 16:00. `rev-list --count --branches --not --remotes` → 47 at both samples. `git status --porcelain | wc -l` → 29 at 15:55:29, 31 at 16:00:58. Dirty count is not stable.
++- Ledger: `wc -l corpus/knowledge/obsidian-ledger.tsv` → 1; data rows → 0; sha256 `3f7e9f2ab9e614464cb031d3f00a812a21f0e889f7666309a90d7784b75a9599`. First line is the header.
++- Drift still open after this amendment (C1 not 0), while `SKILL.md` was unpatched (`grep -c origin/main` → 1, `grep -c 'git fetch'` → 1; known surfaces still say 19 prunable, 5 prunable, 553M): spec line 51 still says `rg --basename`; `rg --basename needle /dev/null` → `rg: unrecognized flag --basename` (ripgrep 15.2.0). `--hidden` count is 0 in SKILL.md, the spec, and both installed tools. Installed verify's non-comment body has 8 `grep`/`find`/`xargs` hits; the spec allowlist is bash + coreutils + git + rg only.
++- Sibling fragments sampled, not re-executed, present in `census/round-6/` at 16:16:46-03:00: `handoff-92.md` says do not admit C1/O1/K1; `scratch-judge-82.json` header has `sixteen_g_holds` false and `fully_classified_per_file_rows` false, verdict NOT-SAFE; `seat-76.json` header is residue `i % 16 == 11` of 535606 paths, not the full tree. `province-amend-26.diff` and `skill-amend-*.diff` were not applied by S30.
++- This lane: `for-each-ref refs/remotes/origin | wc -l` → 0. A pushed receipt for a souji path cannot be established from local `refs/heads/master`. Fleet root `symbolic-ref refs/remotes/origin/HEAD` → `origin/master`.
++
++Card defects this diff clears: 5. It does not clear SKILL/spec/tool drift, so calibration stays 7 and C1 is not drift→0.

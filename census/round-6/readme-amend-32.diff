@@ -1,0 +1,93 @@
+diff --git a/corpus/README.md b/corpus/README.md
+--- a/corpus/README.md
++++ b/corpus/README.md
+@@ -1,25 +1,78 @@
+ # souji-shokunin corpus
+ 
+ Memory of the fleet's hygiene state. Index rows are claims — write the row
+-when the file exists, not before.
++when the file exists, not before. Re-measured 2026-10-18T16:17:23-03:00
++from this repo (round 6). Every count below is from that sweep.
+ 
+ ## knowledge/
+ 
+ - `obsidian-ledger.tsv` — the Obsidian-preservation ledger. Columns:
+   `source_path`, `source_sha256`, `vault_path`, `vault_sha256`,
+-  `exported_at`, `note`. A removal qualifies as `moved-to-obsidian` only
+-  with a matching row (both hashes). Rows enter only when the operator
+-  records an export; nothing automated writes here.
+-- (census tables land here from r1 onward)
++  `exported_at`, `note` (tab-separated header). A removal qualifies as
++  `moved-to-obsidian` only with a matching row (both hashes). Rows enter
++  only when the operator records an export; nothing automated writes here.
++  Data rows: 0 — `awk 'NR>1{c++} END{print c+0}' corpus/knowledge/obsidian-ledger.tsv`
++  → 0; `wc -l` → 1; `wc -c` → 67.
++
++`ls -1 corpus/knowledge` → `obsidian-ledger.tsv` only. Census tables are
++not in this directory (R6-README-01).
+ 
+ ## lessons/
+ 
+-- per-round training lessons, one file per round, each with a `## Gate`
+-  section (candidates / admitted / rejected / spot-check).
++`ls -1 corpus/lessons` → `round-1.md` `round-2.md` `round-3.md`
++`round-4.md` `round-5.md` (`ls -1 corpus/lessons | wc -l` → 5).
++`rg -n '^## Gate' corpus/lessons` → no matches, exit 1. A `## Gate`
++section is not claimed (R6-README-02).
++
++- `round-1.md` — Round 1 — census gate.
++- `round-2.md` — Round 2 — tool gate.
++- `round-3.md` — Round 3 — prune gate.
++- `round-4.md` — Round 4 — vault-verify gate (amended).
++- `round-5.md` — Round 5 — verification gate.
++
++## Coverage map
++
++- Ledger: `corpus/knowledge/obsidian-ledger.tsv` — present, 0 data rows.
++- Lessons: the five files above — present.
++- Quality bar: `corpus/QUALITY.md` — absent (`test -f` → missing).
++- Census directories present (`ls -d`): `census/round-1`,
++  `census/round-3`, `census/round-4`, `census/round-5`.
++- Census directory absent: `census/round-2` (`ls -d census/round-2` →
++  No such file or directory) (R6-README-09). Round 2's lesson file and
++  `tools/souji-verify.sh` are present. This index does not enumerate
++  `tests/` or `LOG.md`.
++- Gate tools present (`ls -l`): `tools/souji-verify.sh`,
++  `tools/souji-vault-verify.sh`.
+ 
+ ## Known gaps
+ 
+-- No census data yet (r1).
+-- No gate tool yet (r2).
+-- Numeric rubric: axis scores start at 0 with explicit counting commands;
+-  a calibrated numeric rubric is a standing gap, per the kotodama precedent.
++- R6-README-06. `corpus/QUALITY.md` absent. Fleet `../CORPUS.md` layout
++  requires it. Sweep: `test -f corpus/QUALITY.md` → missing.
++- R6-README-07. No `## Gate` heading in `corpus/lessons/` (5 files, 0
++  headings). Fleet `../CORPUS.md` requires that section. Inline gate
++  prose, where a file has it, is not the heading.
++- R6-README-08. No sourced knowledge note. Sweep:
++  `rg -n '^(source:|verified-at:|recheck:)' corpus/knowledge` → no matches,
++  exit 1. The only knowledge file is the header-only ledger.
++- R6-README-05. No numeric rubric file. Sweep:
++  `find . -name 'QUALITY.md' -o -name '*rubric*'` → 0 paths;
++  `rg -l -i rubric --glob '!census/**' --glob '!.git/**' .` →
++  `./corpus/README.md` only. Scores are the SCORECARD axis-table cells,
++  not a rubric file: coverage 8, calibration 7, operability 8
++  (`rg -n '^\| (coverage|calibration|operability)' SCORECARD.md`,
++  lines 13–15). The mint zero-baseline clause is withdrawn. A separate
++  rubric remains a standing gap (opinion: kotodama precedent; not
++  re-measured).
++
++## Closed claims
++
++- R6-README-03. The mint known-gap row for census data is false.
++  Directories for rounds 1, 3, 4, and 5 exist. See the coverage map.
++- R6-README-04. The mint known-gap row for the gate tool is false.
++  Both verifier scripts are on disk.
++
++## Frontier
++
++Not filled by this index fix: `corpus/QUALITY.md`, a `## Gate` section in
++each lesson file, sourced knowledge notes, and a rubric file if a mapping
++is written separately from SCORECARD.

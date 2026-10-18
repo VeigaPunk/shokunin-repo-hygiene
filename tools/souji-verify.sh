@@ -227,6 +227,13 @@ try_pushed() { # $1 target, $2 repo; SAFE(pushed) or fail-with-note
     NOTES+=("pushed=unverifiable(no-default-ref) intro=${intro:0:12}")
     return 1
   fi
+  # r6 fix: a pushed receipt also requires that NO unpushed commit
+  # touches the path -- a later local-only commit on the file was still
+  # certified SAFE(pushed) by ancestry alone (r6 drift audit finding).
+  if [ "$(git -C "$repo" log --branches --not --remotes --oneline -- "$target" 2>/dev/null | wc -l)" != "0" ]; then
+    NOTES+=("pushed=unpushed-commits-touching intro=${intro:0:12}")
+    return 1
+  fi
   if git -C "$repo" merge-base --is-ancestor "$intro" "$ref" 2>/dev/null; then
     R_VERDICT=SAFE; R_RECEIPT=pushed
     R_EVIDENCE="intro=${intro:0:12} ref=$ref ancestor=yes"

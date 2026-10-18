@@ -1,0 +1,303 @@
+diff --git a/SKILL.md b/SKILL.md
+--- a/SKILL.md
++++ b/SKILL.md
+@@ -1,5 +1,5 @@
+ ---
+-description: "Fleet repo & workspace hygiene (掃除). Triggers: 'clean', 'prune', 'sweep', 'stale artifacts', 'dead worktrees', 'duplicate config', 'scratch bloat', 'quarantine', 'hygiene census', 'obsidian ledger', 'can I delete this'. Anti-trigger: NEVER git history rewrite, NEVER credentials/secrets handling (kagi-shokunin owns credential hygiene), NEVER operator config, NEVER live/unpushed lane work; publishing and vault actions are operator-owned. Sibling arbitration: contested artifact ownership is reported to the integrator, never silently absorbed."
++description: "Fleet repo & workspace hygiene (掃除). Triggers: 'clean', 'prune', 'sweep', 'stale artifacts', 'dead worktrees', 'duplicate config', 'scratch bloat', 'quarantine', 'hygiene census', 'obsidian ledger', 'can I delete this'. Anti-trigger: NEVER git history rewrite, NEVER git fetch/push, NEVER credentials/secrets handling (kagi-shokunin owns credential hygiene; refuse secret-shaped paths unread), NEVER operator config, NEVER .ufo/state or .ufo/watchdog.log, NEVER the Obsidian GUI, NEVER live/unpushed lane work; publishing and vault writes are operator-owned. A local branch ref is not a pushed receipt. Sibling arbitration: contested artifact ownership is reported to the integrator, never silently absorbed."
+ ---
+ 
+ # souji-shokunin — fleet repository & workspace hygiene
+@@ -9,15 +9,38 @@
+ unrecoverable or live — is this lane's worst failure; when uncertain, the
+ verdict is `NOT-SAFE` and the artifact stays.
+ 
+-## Receipt taxonomy — every removal needs exactly one
+-
+-| Receipt | Qualifies when | Counting / verification command |
++Verdict of record, re-run at decision time: `tools/souji-verify.sh`, and for
++`moved-to-obsidian` `tools/souji-vault-verify.sh --fallback` (the CLI is
++advisory only; `--fallback` does not invoke it). Do not run
++`tools/souji-verify.impl-12.sh` or `tools/souji-vault-verify.impl-20.sh`:
++those drafts are not the installed scripts (D22-IMPL). No `git fetch`.
++Where this page is stricter than a tool line, the stricter reading wins.
++Those cases are residuals, not a silent SAFE. Always print the verdict line.
++
++Reconciled 2026-10-18 to the installed scripts. Closed drift: M1–M18
++(seat-01 taxonomy audit). Added: D22-FM, D22-IMPL, D22-FLOW, D22-CHK,
++D22-NEVER. Residuals stay open. `census/round-6/drift-canonical.json` was
++not on disk when this amendment was drafted.
++
++## Receipt taxonomy
++
++Authorizing receipts are the four below. On a file or ordinary directory the
++tools try `pushed`, then `moved-to-obsidian`, then `stale`, and emit the
++first match. They do not record a second (M1, M7). `metadata-prune` is a
++worktree-registration kind, not a fourth try on a file. No receipt → no
++removal.
++
++| Receipt | Qualifies when | Verification |
+ |---|---|---|
+-| `pushed` | after `git fetch`, the commit carrying the artifact passes `git merge-base --is-ancestor <commit> origin/<branch>` | `git fetch -q && git merge-base --is-ancestor <commit> origin/main && echo PUSHED` |
+-| `moved-to-obsidian` | a matching row exists in `corpus/knowledge/obsidian-ledger.tsv` with source path + sha256 AND vault path + sha256 | `awk -F'\t' -v p="<relpath>" '$1==p{print}' corpus/knowledge/obsidian-ledger.tsv` then `sha256sum` both sides |
+-| `stale` | known scratch type (`.scratch/`, `*.tmp`, checkpoint blobs, `out/`, `reports/round-*/**-draft.*`), nothing references it (`rg --files-with-matches <name>` across the owning repo returns 0 live hits), AND mtime older than the owning lane's last admitted round | `find <path> -newermt <last-round-date> | wc -l` == 0 and `rg -l <basename> <repo>` == 0 |
+-
+-No receipt → no removal. Two receipts → either suffices, note both.
++| `pushed` | The path exists (`test -e`). Its introducing commit (`git log --diff-filter=A --format=%H -1 -- <path>`) is an ancestor of a remote-tracking default ref. Resolve that ref as the tools do: `git symbolic-ref --quiet --short refs/remotes/origin/HEAD`, strip `origin/`, and require `refs/remotes/origin/<name>` to exist; else the single `refs/remotes/origin/*` branch ref if exactly one exists. Zero remote-tracking refs → this receipt does not qualify. `refs/heads/master` and `refs/heads/main` never qualify. Fleet default, measured 2026-10-18T16:40:14-03:00: `origin/master`, not `origin/main`. No `git fetch` (M2, M3, M9). | `bash tools/souji-verify.sh <path>` prints `VERDICT<TAB><path><TAB>SAFE<TAB>pushed<TAB>…`, and `test -e <path>`, and the dirty/unpushed override (D22-R-DIRTY) |
++| `moved-to-obsidian` | A ledger row matches an absolute source path + source sha256 and an absolute vault path + vault sha256, both re-hashed read-only. A directory digest that contains a symlink does not qualify. Not a receipt when source path equals vault path, either path is relative, either hash is not 64 lowercase hex, or either path is secret-shaped (M4, M10). The live ledger is header-only, so no live row qualifies. | `bash tools/souji-vault-verify.sh --fallback <path>` second line is `VERIFIED(moved-to-obsidian)`. A `souji-verify.sh` `SAFE` / `moved-to-obsidian` is not sufficient: that script does not refuse source-equals-vault |
++| `stale` | A scratch family the tools implement: a `.scratch` path component, or basename `*.out`, `*.log`, `*-draft.*`, `*checkpoint*.json`, `*checkpoint*.png`, `*ckpt*.json`, `*ckpt*.png`, `*.ckpt`, `launch-*.json`. `*.tmp`, a bare `out/` directory, and `reports/round-*/` are not families (probed: `noise.tmp` → `stale=not-scratch-type`). mtime age strictly greater than `--stale-days` × 86400 seconds (default 1). Zero live references from `rg -l --hidden --no-ignore --fixed-strings` on the basename. Exclude `.git`, `souji-shokunin/census/**`, `souji-shokunin/tests/**`, and `**/.ufo-quarantine/**`. A hit under `.ufo/**` still counts (M5, M6, M11). | The hidden-inclusive sweep. A tool `SAFE` / `stale` is not sufficient (D22-R-HIDDEN) |
++| `metadata-prune` | A non-main worktree registration whose directory is absent, whose tip has 0 commits outside `--all`, and whose named branch has 0 commits outside `--remotes`. The named-branch check runs first: an absent directory does not prune an unpushed branch. Positive case not re-fixtured by this seat; the withholding case was (wt-r98). The branch is `evaluate_worktree` in `tools/souji-verify.sh`. | `bash tools/souji-verify.sh <worktree-path>` receipt field `metadata-prune` |
++
++Non-authorizing outcomes — print them, do not remove: `pushed-unverifiable`,
++`unreachable`, `secrets-refusal`, `unpushed`, `dirty`, `unpushed-branch`,
++`none`. `symlink-present` is a vault-verify reason and a verify evidence
++note; verify's receipt field stays `none` (D22-R-LABEL).
+ 
+ ## Decision tables
+ 
+@@ -25,68 +48,198 @@
+ 
+ | Observation | Verdict |
+ |---|---|
+-| Owning repo has unpushed commits touching the artifact's path, or a dirty worktree over it | `NOT-SAFE` — live work; record and skip |
+-| Artifact's last commit is an ancestor of `origin/<default>` | `SAFE(pushed)` — removable after quarantine |
+-| Ledger row matches path + hash | `SAFE(moved-to-obsidian)` — source copy removable |
+-| Scratch type + zero live references + older than lane's last admitted round | `SAFE(stale)` — removable |
+-| Anything else, any doubt, any credential-shaped content | `NOT-SAFE` — stay silent in the dry run |
++| Secret-shaped path component (`*.env`, `.env`, `.env.*`, `.envrc`, `*credential*`, `*secret*`, `id_*`, `*.pem`) | `NOT-SAFE(secrets-refusal)` — do not open the file (M12) |
++| Path is `.ufo/state/**`, `.ufo/watchdog.log`, `~/.config/**`, or driver `scripts/**` | `NOT-SAFE` — do not run the verifiers on these paths (D22-R-STATE) |
++| Repo root (a directory containing `.git`) | `SAFE` only via `moved-to-obsidian`; otherwise `NOT-SAFE` with `unpushed=N dirty=M`. Never `SAFE(pushed)` |
++| Unpushed commit touching the path, or a dirty worktree over it | `NOT-SAFE`. The file verifier does not apply this check; you must (D22-R-DIRTY, M8) |
++| Introducing commit is an ancestor of the resolved `refs/remotes/origin/*` ref, the path exists, the worktree is clean over the path, and no later unpushed commit touches it | `SAFE(pushed)` — still needs quarantine and a second existence check (M9) |
++| No remote-tracking ref | `NOT-SAFE`. `souji-verify.sh` receipt `pushed-unverifiable`. Vault-verify may print receipt `none` with that evidence. Never SAFE from `refs/heads/*` |
++| `souji-vault-verify.sh --fallback` second line is `VERIFIED(moved-to-obsidian)` | `SAFE(moved-to-obsidian)` (M10) |
++| Symlink inside a directory digest | Not a receipt (D22-R-LABEL) |
++| Worktree registration, named branch, `git log <branch> --not --remotes` non-empty | `NOT-SAFE(unpushed-branch)`, even if the directory is absent or the registration is locked |
++| Worktree registration, directory absent, unique commits = 0, named branch not unpushed, not locked | `SAFE(metadata-prune)` — metadata only |
++| Scratch family, hidden-inclusive sweep returns 0, older than `--stale-days` | `SAFE(stale)` (M11) |
++| Path missing | `NOT-SAFE(unreachable)`. A deleted path is not a pushed receipt |
++| Anything else, any doubt | `NOT-SAFE` |
+ 
+ ### Removal flow (default dry run)
+ 
+ 1. Dry-run census: classify every candidate, print the table, change nothing.
+-2. Operator approves the removal list.
+-3. `git mv` (or plain `mv` for untracked) into `<repo>/.ufo-quarantine/<utc-date>/...` — quarantine is a normal commit in the owning repo.
+-4. Hold period (≥ one driver tick, 450s minimum; prefer 24h for anything not `pushed`).
+-5. Second check: re-run the receipt command; receipt must still hold.
+-6. Delete from quarantine. `pushed` artifacts need no hold beyond the second check.
++   `tools/souji-census.sh` was absent at 2026-10-18T16:40:14-03:00. Do not
++   call a path that is not installed.
++2. Operator approves the removal list. A census row is not an approval
++   (D22-FLOW; S05 PR-4, never-exercised as a recorded gate).
++3. UNEXERCISED. Quarantine with `git mv` (or `mv` for untracked) into
++   `<repo>/.ufo-quarantine/<utc-date>/...`. `find -name .ufo-quarantine`
++   under the fleet root returned 0 paths at 16:40:14. A worktree metadata
++   prune is not this step, and this page does not authorize one.
++4. UNEXERCISED. Hold period (≥ one driver tick, 450s minimum; prefer 24h
++   for anything not `pushed`).
++5. UNEXERCISED as a deletion gate. Second check: re-run the receipt. A
++   `pushed` re-check must also `test -e` the path. Round-1 `logs_tier.txt`
++   was recorded SAFE after deletion; 16:40:14 probe: `NOT-SAFE` /
++   `unreachable` / `missing path`.
++6. UNEXERCISED. Delete from quarantine. `pushed` artifacts need no hold
++   beyond the second check.
++
++The only removal this lane has executed is the round-3 worktree metadata
++prune (21 registrations). Do not treat steps 3–6 as proven.
+ 
+ ### Never
+ 
+-- History rewrite (`reset --hard`, rebase, amend of published commits) — that
+-  stays with the operator (kura is unminted).
+-- Credentials, tokens, `op://` refs, `.env` content — kagi's province; souji
+-  cites paths and modes only.
++- History rewrite (`reset --hard`, rebase, amend of published commits) —
++  operator-owned (kura is unminted).
++- `git fetch`, `git push`, and remote creation. The retired command is
++  `git fetch -q && git merge-base --is-ancestor <commit> origin/main` (M3,
++  D22-NEVER).
++- Credentials, tokens, `op://` refs, `.env` content — kagi's province; cite
++  paths and modes only. Do not open a secret-shaped path to classify it (M12).
+ - Operator config (`~/.config/**`), the driver (`scripts/`), `.ufo/state/`,
+-  `.ufo/watchdog.log`.
+-- A lane repo with dirty or unpushed work — quarantine-only, and even then
+-  the receipt must not depend on the dirty state.
++  `.ufo/watchdog.log`. A tool SAFE does not override this (D22-R-STATE).
++- The live Obsidian vault and the live ledger. Hash them read-only. Never
++  write either. Never launch the Obsidian GUI.
++- A lane repo with dirty or unpushed work touching the artifact.
++- kotodama-shokunin `.scratch` beyond metadata or a 200-byte content header.
++  That tree is live. Do not modify it.
+ 
+ ## Error patterns (false-SAFE signatures)
+ 
+-- **Unpushed-lane trap**: `git worktree list` says `prunable`, but
+-  `git log --branches --not --remotes --oneline` in the owning repo is
+-  non-empty → the worktree metadata is NOT safe to prune yet; classify the
+-  *commits* first. Live instance: kotodama-shokunin 2026-10-18 (round-17..22
+-  unpushed, dirty tree, 553M `.scratch/`).
+-- **Superseded-snapshot drift**: a config copy claimed "byte-identical" that
+-  `cmp` shows differing from the live file — it is a stale *snapshot*, not a
+-  duplicate; classify as `stale` only after diff shows it holds no unique
+-  edits. Live instance: `shokunin.conf.full-roster-20261015` vs live
+-  `shokunin.conf` (3859 vs 4092 B, 2026-10-18).
+-- **Checkpoint-blob bloat**: fleet-root commits like `b2f2efa` that land
+-  launch JSON / PNG checkpoint files at the fleet root — classify per file;
+-  if pushed, they qualify for `pushed` receipts individually.
+-- **Worktree-with-unique-commits**: `git worktree list` + `git log <wt-sha> --oneline | head` —
+-  a prunable worktree whose tip has commits not on any branch is NOT-SAFE.
++- **Local-master trap.** Ancestry against `refs/heads/master` is not pushed.
++  Probe 16:40:14, `souji-verify.sh` on this lane's
++  `corpus/knowledge/obsidian-ledger.tsv` (zero `refs/remotes/origin/*`):
++  `NOT-SAFE` / `pushed-unverifiable` /
++  `pushed=unverifiable(no-default-ref) intro=ccbb1326204b`.
++- **Dirty-or-later-commit trap (D22-R-DIRTY, M8).** A file whose introducing
++  commit is an ancestor of `origin/master` still verifies `SAFE(pushed)`
++  after a dirty edit and after a later unpushed commit. `/tmp` probe
++  2026-10-18, both cases: `SAFE` / `pushed` / `intro=bc68054b634f`. Run
++  `git status --porcelain -- <path>` and
++  `git log --branches --not --remotes --oneline -- <path>`. Non-empty →
++  `NOT-SAFE`.
++- **Unpushed-lane trap (M13, M14, M18).** `git worktree list` can say
++  prunable while `git log --branches --not --remotes` is non-empty.
++  Re-measured 2026-10-18T16:40:14-03:00: `souji-verify.sh` on
++  kotodama-shokunin → `NOT-SAFE` / `unpushed` / `unpushed=49 dirty=26`.
++  `.scratch` was 28G (`du -sb` → 27589076925). Three minutes earlier the
++  byte count was 27589001752. Mint's 553M and the round-5 report's 16G are
++  not current. NOT-SAFE. Do not prune. Do not read past a 200-byte header.
++- **Superseded-snapshot drift (M15).** `shokunin.conf.full-roster-20261015`
++  is not a duplicate of live `shokunin.conf` (`cmp` DIFFER; 3859 vs 4432 B
++  at 16:40:14). The skill's 4092 B figure is stale. It is also not a `stale`
++  receipt: the basename is not a scratch family. Installed tool: `SAFE` /
++  `pushed` / `intro=99efc52b3a6f ref=refs/remotes/origin/master`. Recoverable
++  from origin is not operator approval.
++- **Checkpoint-blob bloat.** `b2f2efa` is an ancestor of fleet HEAD. Of its
++  109 paths, 94 were present and 15 absent at 15:55. Present example,
++  probed before 16:00:
++  `.ufo/interactive-l1-20261015T050057Z/launch-tsukuroi.json` → `SAFE` /
++  `pushed` / `intro=b2f2efae7549`. Absent example, re-probed 16:40:14:
++  `logs_tier.txt` → `NOT-SAFE` / `unreachable`. Classify per file.
++  Existence is part of the receipt.
++- **Worktree-with-unpushed-branch.** Unique commits vs `--all` = 0 does not
++  make a named branch safe. Probe 16:40:14:
++  `game-dev-2d-shokunin-wt-r98` → `NOT-SAFE` / `unpushed-branch` /
++  `branch=wt-r98 unpushed=1 dir=absent`. `wt-r98`, `wt-r99`, and `wt-r100`
++  are locked (`souji r5: pinned until game-dev-2d pushes wt branches or
++  operator dispositions`). Do not bare-prune.
++- **Hidden-reference trap (D22-R-HIDDEN).** `count_live_refs` runs
++  `rg -l --no-ignore` without `--hidden` (ripgrep 15.2.0; `--basename` is
++  not a flag). A `/tmp` token living only in `.note` was invisible to that
++  invocation (`rc=1`) and visible with `--hidden` (`rc=0`). Do not grant
++  `stale` on the tool line alone.
++- **Repo-root trap.** A directory containing `.git` is not `SAFE(pushed)`.
++  `/tmp` probe: `NOT-SAFE` / `unpushed` / `unpushed=1 dirty=1`. Live:
++  lore-shokunin at 16:40:14 was `NOT-SAFE` / `unpushed` / `unpushed=3 dirty=1`
++  even though its worktree list is one line.
+ 
+ ## Checklists
+ 
+-Pre-removal (all must answer yes):
+-- [ ] Receipt class named and its command re-run at decision time
+-- [ ] Owning repo has no unpushed commits touching the artifact (`git log --not --remotes --oneline -- <path>` empty)
+-- [ ] Owning repo worktree is clean over the artifact (`git status --porcelain -- <path>` empty)
+-- [ ] Entry is in a dry-run table the operator has seen, unless receipt is `pushed` and quarantine hold elapsed
+-- [ ] Nothing references the artifact (`rg -l` across owning repo, 0 hits)
+-
+-Pre-quarantine commit:
++Pre-removal (all must answer yes). Marks follow the round-3/5 gates
++(D22-CHK; S05 PR-1..PR-5). The receipt actually used for the only executed
++removal, `metadata-prune`, was absent from the old taxonomy.
++
++- [ ] Receipt class is one of `pushed`, `moved-to-obsidian`, `stale`,
++  `metadata-prune`, and its command was re-run at decision time (PR-1,
++  analogue). The written `git fetch` command was not the command used.
++- [ ] No unpushed commit touches the path:
++  `git log --branches --not --remotes --oneline -- <path>` empty. The old
++  form without `--branches` is retired (PR-2). Zero `refs/remotes/*` →
++  `pushed-unverifiable`, not pushed.
++- [ ] Worktree clean over the path: `git status --porcelain -- <path>` empty
++  (PR-3). The file verifier does not do this (D22-R-DIRTY).
++- [ ] never-exercised: the row is in a dry-run table the operator has
++  approved. A census row is not approval. The old `pushed` exception does
++  not skip approval (PR-4).
++- [ ] For `stale` only: hidden-inclusive reference sweep returns 0 after
++  excluding census, tests, and quarantine (PR-5). Not a precondition of
++  `pushed`.
++- [ ] For `pushed`: `test -e <path>` at decision time.
++- [ ] For `moved-to-obsidian`: vault-verify `VERIFIED(moved-to-obsidian)`;
++  both hashes; no symlink in either digest; source path ≠ vault path;
++  neither path secret-shaped.
++- [ ] For `metadata-prune`: directory absent, unique vs `--all` = 0, named
++  branch not unpushed, registration not locked.
++
++Pre-quarantine commit (UNEXERCISED — 0 `.ufo-quarantine` directories at
++16:40:14):
++
+ - [ ] Quarantine path is inside the owning repo (`.ufo-quarantine/<date>/`)
+ - [ ] Commit message names the receipt class and the evidence pointer
+ - [ ] Lane identity: `souji-shokunin <souji@shokunin.local>`
+ 
+-## Known surfaces (fleet, 2026-10-18)
+-
+-- Fleet root: `b2f2efa` checkpoint files at HEAD; `shokunin.conf.full-roster-20261015`.
+-- lore-shokunin: 19 prunable worktrees (`git worktree list`).
+-- game-dev-2d-shokunin: 5 prunable worktrees.
+-- kotodama-shokunin: 553M `.scratch/` beside unpushed round-17..22 work — NOT-SAFE.
+-- Sibling lane repos: census rounds extend the surface table.
++## Known surfaces (re-measured 2026-10-18T16:40:14-03:00)
++
++Replace the mint figures. Do not quote 553M, 19 lore prunables, or 5 gd2d
++prunables as current (M16, M17, M18).
++
++- Fleet `refs/remotes/origin/HEAD` → `origin/master`. Two origin branch refs
++  besides HEAD (`master`, `devin/1792007067-readme-wiki-link`), so a missing
++  `origin/HEAD` is `pushed-unverifiable`, not a single-ref fallback. Fleet
++  HEAD at this timestamp was `f4e1e9b`; it had been `adc3d33` earlier the
++  same afternoon. Re-resolve; do not pin.
++- `b2f2efa` is an ancestor of HEAD. 94/109 of its paths were present at
++  15:55, 15 absent. Per-file existence check required.
++- `shokunin.conf` 4432 B vs `shokunin.conf.full-roster-20261015` 3859 B,
++  `cmp` DIFFER. Tool receipt `pushed`, not `stale` (M15).
++- lore-shokunin: `git worktree list` → 1 line (main). The 19 metadata prunes
++  landed in round 3. The repo itself was `NOT-SAFE` / `unpushed=3 dirty=1`.
++  Do not describe the lane as clean (M16).
++- game-dev-2d-shokunin: `git worktree list` → 4 lines. Main plus three locked
++  named-branch registrations. Do not bare-prune (M17).
++- kotodama-shokunin: `.scratch` 28G / 27589076925 bytes, unpushed=49,
++  dirty=26. Live; the byte count moved within the same minute. NOT-SAFE.
++  Read-only classification only (M14, M18).
++- Ledger: `corpus/knowledge/obsidian-ledger.tsv` is header-only, sha256
++  `3f7e9f2ab9e614464cb031d3f00a812a21f0e889f7666309a90d7784b75a9599`. This
++  lane has an `origin` URL and zero `refs/remotes/origin/*`. The ledger file
++  verifies `pushed-unverifiable`. Do not fetch to manufacture a receipt.
++- Installed verifiers, snapshot not a pin (D22-IMPL): `tools/souji-verify.sh`
++  sha256 `53239fdfe5bcaaaf448e8525845ab962dd7ab6a4e7f75c0f4f051614f1c99200`;
++  `tools/souji-vault-verify.sh` sha256
++  `00d59b1b36d87db37518b5ef9fb98cd472888a075ed7b97bd5b8ff93bd559455`.
++  `impl-12` is `7efda63bd760…` and `impl-20` is `d312263ac8eb…` — different
++  bytes. The usage comments inside the installed scripts still name those
++  impl paths. `tools/souji-census.sh` was absent.
++- Sibling lane repos: census rounds extend this table.
++
++## Residuals (tool defects; fail closed)
++
++Editing this page does not close these. A tool SAFE on them is not a receipt.
++
++- **D22-R-HIDDEN.** The stale sweep omits `--hidden`. Confirm with
++  `rg -l --hidden` before `SAFE(stale)`.
++- **D22-R-DIRTY.** File verdicts ignore a dirty worktree and a later
++  unpushed commit. Confirm both git checks before `SAFE(pushed)`.
++- **D22-R-STATE.** No early refusal for `.ufo/state` or `.ufo/watchdog.log`.
++  Introducing commit of `.ufo/state/.gitkeep` is `e0b4d9b35ab4`, an ancestor
++  of `refs/remotes/origin/master` (git metadata only; the verifier was not
++  run; the path is off-limits). The Never list wins.
++- **D22-R-VAULTSECRET.** `is_secret_shaped` runs on the target, not on the
++  ledger vault path, before `file_sha` (`souji-vault-verify.sh` `try_ledger`;
++  `souji-verify.sh` `try_obsidian`). Do not point a row at a secret-shaped
++  vault path. Not executed.
++- **D22-R-LABEL.** Same refusal, different fields. Symlink directory, `/tmp`
++  probe 2026-10-18: `souji-verify.sh --json` → `receipt=none`, evidence
++  `obsidian=symlink-present scope=source`. `souji-vault-verify.sh --fallback
++  --json` → `reason=symlink-present`,
++  `verified=NOT-VERIFIED(symlink-present)`, `receipt=none`.

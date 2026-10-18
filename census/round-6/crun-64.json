@@ -1,0 +1,639 @@
+{
+  "seat": "S64",
+  "round": 6,
+  "kind": "runner",
+  "file": "census/round-6/crun-64.json",
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "lane_head": "ce58c2b457c8ffb7886b36a509bf957f90d1f296",
+  "written_at": "2026-10-18T20:42:22Z",
+  "axes": [
+    "calibration",
+    "operability",
+    "coverage"
+  ],
+  "claims": {
+    "C1": "docs/tools reconciliation, drift\u21920",
+    "O1": "tools/souji-census.sh repeatable fleet census",
+    "K1": "kotodama .scratch fully classified read-only + handoff note"
+  },
+  "verdict": {
+    "C1": "NOT-ZERO",
+    "O1": "NOT-MET",
+    "K1": "CLASSIFIED-POINT-IN-TIME; NOT-SAFE; do not prune"
+  },
+  "safety": {
+    "writes": [
+      "census/round-6/crun-64.json",
+      "/tmp/souji-s64-k1.json",
+      "/tmp/souji-s64-k1b.json",
+      "/tmp/souji-s64-census/*"
+    ],
+    "not_touched": [
+      "live obsidian ledger",
+      "secret-shaped file contents",
+      ".ufo/state",
+      ".ufo/watchdog.log",
+      "git fetch/push/commit/branch/prune/remove"
+    ],
+    "kotodama": "read-only; content reads capped at 200 bytes; secret-shaped paths unread"
+  },
+  "C1": {
+    "drift_to_zero": false,
+    "unresolved_mismatch_count": 11,
+    "note": "Counted only mismatches this seat re-measured. Historical MINT.md/LOG.md figures were not treated as current contract. province-amend-26.diff is an unapplied draft and its 19G figure is already stale; it does not close the drift.",
+    "mismatches": [
+      {
+        "id": "D1",
+        "where": "SKILL.md:16",
+        "doc": "pushed receipt requires `git fetch -q` and `origin/main`",
+        "against": "tools/souji-verify.spec.md:42 NO git fetch; tools/souji-verify.sh:5 no git fetch; fleet refs/remotes/origin/HEAD is origin/master",
+        "command": "git -C /home/vgpnk/Projects/shokunin symbolic-ref --short refs/remotes/origin/HEAD",
+        "observed": "origin/master"
+      },
+      {
+        "id": "D2",
+        "where": "SKILL.md receipt taxonomy",
+        "doc": "no pushed-unverifiable token",
+        "against": "spec.md:40 and souji-verify.sh:226",
+        "command": "rg -n 'pushed-unverifiable|symlink-present|metadata-prune' SKILL.md",
+        "observed": "no matches (exit would be 1; the combined rg that also searched origin/main hit only lines 16, 60, 89, 90, 91)"
+      },
+      {
+        "id": "D3",
+        "where": "SKILL.md receipt taxonomy",
+        "doc": "no symlink-present fail-closed",
+        "against": "spec.md:47; souji-verify.sh:250 and :255"
+      },
+      {
+        "id": "D4",
+        "where": "SKILL.md receipt taxonomy",
+        "doc": "no metadata-prune receipt",
+        "against": "spec.md:29-32; installed verifier selftest PASS F4 SAFE(metadata-prune)"
+      },
+      {
+        "id": "D5",
+        "where": "SKILL.md:60 and SKILL.md:91",
+        "doc": "kotodama .scratch 553M",
+        "against": "remeasured apparent size, still growing",
+        "series": [
+          {
+            "at": "seat start, du -sh",
+            "observed": "18G"
+          },
+          {
+            "at": "after first walk, du -sh / du -sb",
+            "observed": "19G / 18292985803"
+          },
+          {
+            "at": "2026-10-18T19:30:04Z du -sh",
+            "observed": "27G"
+          },
+          {
+            "at": "2026-10-18T19:51:00Z du -sb",
+            "observed": "27589079916"
+          },
+          {
+            "at": "2026-10-18T20:30:39Z",
+            "command": "du -sb -P kotodama-shokunin/.scratch; du -sh",
+            "observed": "38059726682 and 37G"
+          }
+        ]
+      },
+      {
+        "id": "D6",
+        "where": "SKILL.md:89",
+        "doc": "lore-shokunin 19 prunable worktrees",
+        "command": "git -C lore-shokunin worktree list",
+        "observed": "1 line: lore-shokunin 6cec83a [main]"
+      },
+      {
+        "id": "D7",
+        "where": "SKILL.md:90",
+        "doc": "game-dev-2d-shokunin 5 prunable worktrees",
+        "command": "git -C game-dev-2d-shokunin worktree list",
+        "observed": "4 lines; wt-r98, wt-r99, wt-r100 locked"
+      },
+      {
+        "id": "D8",
+        "where": "SCORECARD.md:44-45 vs :14-15",
+        "doc": "prose says operability 7, calibration 6",
+        "against": "table says calibration 7, operability 8",
+        "kind": "doc-internal"
+      },
+      {
+        "id": "D9",
+        "where": "tools/souji-verify.spec.md:51 vs tools/souji-verify.sh:205",
+        "doc": "stale sweep specified as `rg -l --no-ignore --basename`",
+        "against": "installed tool uses `rg -l --no-ignore --fixed-strings -e` and neither invocation passes --hidden. Tool comment lines 45-48 admit `rg: unrecognized flag --basename` on ripgrep 15.2.0. Spec text was not updated.",
+        "command": "rg -n -- --basename tools/souji-verify.spec.md tools/souji-verify.sh"
+      },
+      {
+        "id": "D10",
+        "where": "tools/souji-verify.sh:8",
+        "doc": "header CLI path is tools/souji-verify.impl-12.sh",
+        "against": "installed sha != impl-12 sha",
+        "command": "sha256sum tools/souji-verify.sh tools/souji-verify.impl-12.sh",
+        "observed": [
+          "53239fdfe5bcaaaf448e8525845ab962dd7ab6a4e7f75c0f4f051614f1c99200  tools/souji-verify.sh",
+          "7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820  tools/souji-verify.impl-12.sh"
+        ]
+      },
+      {
+        "id": "D11",
+        "where": "tools/souji-vault-verify.sh:3",
+        "doc": "header says seat S20 / impl-20",
+        "against": "installed sha != impl-20 sha",
+        "command": "sha256sum tools/souji-vault-verify.sh tools/souji-vault-verify.impl-20.sh",
+        "observed": [
+          "00d59b1b36d87db37518b5ef9fb98cd472888a075ed7b97bd5b8ff93bd559455  tools/souji-vault-verify.sh",
+          "d312263ac8ebc9e23555402dc5ae63167f78dcd01ddccc5ddcfa7623b85879e0  tools/souji-vault-verify.impl-20.sh"
+        ]
+      }
+    ],
+    "tools_selftest": {
+      "command": "bash tools/souji-verify.sh --selftest; bash tools/souji-vault-verify.sh --selftest",
+      "observed": [
+        "selftest: 24 checks, 0 failed",
+        "verify_selftest_rc=0",
+        "selftest: 35 checks, 0 failed",
+        "vault_selftest_rc=0"
+      ]
+    },
+    "not_reproduced": "Another seat's unapplied diff claims .ufo/state can return SAFE(pushed) and that a secret-shaped vault path is hashed. This seat did not invoke the verifier on .ufo/state (off-limits) and did not open the live ledger. Code read: is_secret_shaped is applied to the target (souji-verify.sh:385) before classification; try_obsidian (line 269) calls file_sha on the vault path with no secret-shaped check in that function. That is a code observation, not a live reproduction."
+  },
+  "O1": {
+    "installed_path": "tools/souji-census.sh",
+    "installed_present": false,
+    "checks": [
+      "ABSENT at 2026-10-18T19:30:04Z",
+      "ABSENT at 2026-10-18T19:48:11Z",
+      "ABSENT at 2026-10-18T20:22:58Z",
+      "ABSENT at 2026-10-18T20:30:39Z",
+      "ABSENT immediately before this file was written"
+    ],
+    "drafts_seen": [
+      "tools/souji-census.impl-33.sh",
+      "tools/souji-census.impl-34.sh",
+      "tools/souji-census.impl-36.sh",
+      "tools/souji-census.impl-39.sh",
+      "tools/souji-census.impl-40.sh",
+      "tools/souji-census.impl-44.sh",
+      "tools/souji-census.impl-45.sh",
+      "tools/souji-census.impl-46.sh",
+      "tools/souji-census.impl-48.sh"
+    ],
+    "drafts_are_not_the_claim": true,
+    "selftests_on_bytes_present_at_about_19:30Z": {
+      "impl-33": {
+        "sha256_then": "7fb390add4669e30830edc8857cfd50cc3f32a12ec48d2209b35336aee304f42",
+        "sha256_now": "6a0878c7ec5b78d4a688ca0b388d8c31aec00a108acc30ad6e1d8a2e3f6fb8ed",
+        "rc": 0,
+        "observed": "selftest: 30 checks, 0 failed; PASS repeat: two runs byte-identical"
+      },
+      "impl-39": {
+        "sha256_then": "62315085a3ba676391010f7861432bb084f61d12df7b182e676a13fb89d6fd57",
+        "sha256_now": "09055e755d9863a94fb7a8042567b670c50c623ecf65e517f82c5505305b92e3",
+        "rc": 0,
+        "observed": "selftest: 15 checks, 0 failed; PASS S15 repeat census byte-identical"
+      },
+      "impl-34": {
+        "sha256_then": "d8253127f9b9183a93394cf16e2f4b420e613cab74b904ab95752cdef9ce398c",
+        "sha256_now": "aa554ad9eb6d9cfb8571fea4acb9bb953b4f7d3038c75e4e8ca5c1d04b89ac6a",
+        "rc": 1,
+        "observed": "selftest: 30 checks, 3 failed; FAIL G2 lacks 'not hashed'; FAIL G4 got NOT-SAFE(none) want NOT-SAFE(symlink-present); FAIL H2 exit=0 want=2"
+      },
+      "caveat": "Drafts were rewritten by other seats after these selftests. Results apply only to the sha256_then bytes. Not re-run on sha256_now."
+    },
+    "live_impl33": {
+      "command": "bash tools/souji-census.impl-33.sh --include-root",
+      "started": "2026-10-18T19:30:04Z",
+      "result": "killed at 300s; stdout was the header line only",
+      "header": "repo\tworktrees\tunpushed\tdirty\tscratch_bytes\tmtime_iso\tverdict_flags",
+      "cause": "newest_mtime (impl-33.sh:183-198) runs `stat -c %Y` once per file in bash. --include-root walks the fleet root, which contains every lane .scratch. A later find -printf count of kotodama .scratch alone was 662852 files in <1s, so du/find are not the bottleneck; the bash stat loop is. Live double-run was not completed.",
+      "not_retried": "A full retry would be many minutes of per-file stat on a still-growing tree. Not started, so this file could be written."
+    },
+    "live_impl39": {
+      "runs_1_2": {
+        "file_size_at_20:22:58Z": 20874,
+        "sha256": "not captured for that exact size; file later hashed as 09055e755d9863a94fb7a8042567b670c50c623ecf65e517f82c5505305b92e3 before run 3",
+        "rc": [
+          0,
+          0
+        ],
+        "window": "2026-10-18T20:22:58Z to 2026-10-18T20:23:10Z",
+        "lines": 23,
+        "cmp_exit": 1,
+        "kotodama_run1": "/home/vgpnk/Projects/shokunin/kotodama-shokunin\t1\t51\t26\t37117932500\t2026-10-18T20:23:04Z\tunpushed,dirty,scratch",
+        "kotodama_run2": "/home/vgpnk/Projects/shokunin/kotodama-shokunin\t1\t51\t26\t0\t1970-01-01T00:00:00Z\tunpushed,dirty",
+        "other_diffs": "mtime_iso only, on the fleet root, game-dev-3d-shokunin, and souji-shokunin",
+        "false_zero": "Run 2 reported scratch_bytes=0 and mtime epoch, dropping the scratch flag. A concurrent content walk of the same .scratch (20:23:10Z-20:23:39Z) saw 763168 files and 38088628975 apparent bytes. The zero is a measurement failure, not an empty tree."
+      },
+      "run_3": {
+        "sha256_before": "09055e755d9863a94fb7a8042567b670c50c623ecf65e517f82c5505305b92e3",
+        "started": "2026-10-18T20:30:41Z",
+        "rc": 0,
+        "ended": "2026-10-18T20:30:46Z",
+        "kotodama": "/home/vgpnk/Projects/shokunin/kotodama-shokunin\t1\t51\t27\t38062563846\t2026-10-18T20:30:46Z\tunpushed,dirty,scratch"
+      },
+      "repeatable_on_live_fleet": false
+    },
+    "impl34_live_skipped": "Default ledger is corpus/knowledge/obsidian-ledger.tsv. This seat did not run the live path. Selftest uses a mktemp ledger and was the only impl-34 execution."
+  },
+  "K1": {
+    "assignment_size": "16G",
+    "current_size_is_not_16G": true,
+    "handoff_note": "kotodama-shokunin .scratch is live unpushed work. Do not prune, quarantine, or otherwise modify it. Classification below is a read-only point-in-time partition, not a removal list and not a stable inventory. Owning repo at 2026-10-18T20:30:46Z: NOT-SAFE unpushed=51 dirty=27 (souji-verify.sh and git rev-list/status agree). Secret-shaped files were not opened. Symlinks were not followed.",
+    "verifier": {
+      "early": {
+        "command": "bash tools/souji-verify.sh kotodama-shokunin",
+        "observed": "VERDICT\t/home/vgpnk/Projects/shokunin/kotodama-shokunin\tNOT-SAFE\tunpushed\tunpushed=47 dirty=29",
+        "rc": 0
+      },
+      "scratch_early": {
+        "command": "bash tools/souji-verify.sh kotodama-shokunin/.scratch",
+        "observed": "VERDICT\t.../.scratch\tNOT-SAFE\tnone\tpushed=no-introducing-commit; obsidian=no-matching-ledger-row; stale=mtime-age-days=0<=1",
+        "rc": 0
+      },
+      "at_close": {
+        "command": "bash tools/souji-verify.sh kotodama-shokunin; git status --porcelain | wc -l; git rev-list --count --branches --not --remotes",
+        "observed": [
+          "NOT-SAFE unpushed=51 dirty=27",
+          "porcelain_lines=27",
+          "unpushed=51"
+        ],
+        "at": "2026-10-18T20:30:46Z"
+      }
+    },
+    "snapshots": [
+      {
+        "id": "walk-1",
+        "start": "2026-10-18T18:55:44Z",
+        "end": "2026-10-18T18:56:21Z",
+        "elapsed_s": 36.658,
+        "files_seen": 535606,
+        "dirs_including_root": 87913,
+        "byte_sum_lstat": 19230125122,
+        "primary_sum_matches": true,
+        "secret_shaped_unread": 60,
+        "symlinks_not_opened": 80,
+        "read_errors": 0,
+        "primary_class_counts": {
+          "text-other": 42204,
+          "secret-shaped-unread": 60,
+          "python-source": 365,
+          "json-header": 121379,
+          "empty": 9414,
+          "script-python": 26397,
+          "markdown": 295638,
+          "yaml-header": 13061,
+          "binary-nul": 5881,
+          "script-shell": 3672,
+          "script-other": 213,
+          "binary-non-utf8": 13351,
+          "table-text": 2509,
+          "markup": 1360,
+          "binary-gzip": 20,
+          "symlink": 80,
+          "shell-source": 2
+        }
+      },
+      {
+        "id": "walk-2",
+        "start": "2026-10-18T20:23:10Z",
+        "end": "2026-10-18T20:23:39Z",
+        "elapsed_s": 29.191,
+        "files_seen": 763168,
+        "dirs_including_root": 127973,
+        "byte_sum_lstat": 38088628975,
+        "primary_sum": 763168,
+        "primary_sum_matches": true,
+        "read_errors": 0,
+        "content_read_cap_bytes": 200,
+        "method": "os.walk followlinks=False; lstat; secret-shaped names unread; other regular files read(200); PDF magic sniffed before NUL test",
+        "primary_class_counts": {
+          "text-other": 66955,
+          "secret-shaped-unread": 75,
+          "python-source": 964,
+          "json-header": 171099,
+          "empty": 14229,
+          "script-python": 40326,
+          "yaml-header": 21554,
+          "markdown": 412601,
+          "script-shell": 4436,
+          "table-text": 3986,
+          "binary-nul": 6948,
+          "script-other": 247,
+          "binary-non-utf8": 13436,
+          "markup": 3808,
+          "binary-pdf": 2184,
+          "binary-gzip": 56,
+          "symlink": 260,
+          "shell-source": 4
+        },
+        "primary_class_bytes": {
+          "text-other": 2741958289,
+          "secret-shaped-unread": 600,
+          "python-source": 476137,
+          "json-header": 3574012182,
+          "empty": 0,
+          "script-python": 1733303766,
+          "yaml-header": 2297646691,
+          "markdown": 7141008114,
+          "script-shell": 12038909,
+          "table-text": 15013613,
+          "binary-nul": 1359222997,
+          "script-other": 1147558,
+          "binary-non-utf8": 121718259,
+          "markup": 728163128,
+          "binary-pdf": 18362134000,
+          "binary-gzip": 755496,
+          "symlink": 23244,
+          "shell-source": 5992
+        },
+        "round_buckets_counts": {
+          "x05": 6,
+          "r23": 65982,
+          "unscoped": 10243,
+          "x1": 1,
+          "x2": 1,
+          "r24": 5731,
+          "r25": 89978,
+          "x38": 23,
+          "x39": 3,
+          "r58": 86846,
+          "r26": 95366,
+          "x52": 11789,
+          "x54": 474,
+          "r27": 20425,
+          "x63": 8,
+          "x64": 73810,
+          "r28": 80676,
+          "r22": 56014,
+          "x07": 3,
+          "x08": 6,
+          "x41": 20,
+          "x44": 7,
+          "x46": 7561,
+          "x43": 8,
+          "x37": 22569,
+          "x45": 3,
+          "x59": 8926,
+          "x56": 19708,
+          "x57": 18,
+          "x62": 29,
+          "x60": 4234,
+          "x61": 4455,
+          "x18": 32,
+          "r4": 3192,
+          "x53": 21,
+          "x51": 15,
+          "x50": 45,
+          "x58": 89312,
+          "x55": 5368
+        },
+        "round_buckets_bytes": {
+          "x05": 7606,
+          "r23": 1775786839,
+          "unscoped": 1370023323,
+          "x1": 82,
+          "x2": 81,
+          "r24": 532416284,
+          "r25": 3136226108,
+          "x38": 787664,
+          "x39": 10608,
+          "r58": 1747470533,
+          "r26": 3033427778,
+          "x52": 246655654,
+          "x54": 16178792,
+          "r27": 849917579,
+          "x63": 691147,
+          "x64": 1501536574,
+          "r28": 8367870198,
+          "r22": 1186485185,
+          "x07": 32215,
+          "x08": 23159,
+          "x41": 122763,
+          "x44": 53379,
+          "x46": 922661388,
+          "x43": 85259,
+          "x37": 3576322198,
+          "x45": 28285,
+          "x59": 187815027,
+          "x56": 403392230,
+          "x57": 104939,
+          "x62": 568023,
+          "x60": 84708986,
+          "x61": 100720329,
+          "x18": 1317649,
+          "r4": 461581810,
+          "x53": 342149,
+          "x51": 70703,
+          "x50": 845536,
+          "x58": 8082369102,
+          "x55": 499948567
+        },
+        "extension_counts_top": {
+          ".md": 379985,
+          ".json": 167541,
+          ".yml": 55012,
+          ".txt": 43661,
+          ".py": 41293,
+          ".out": 27434,
+          "(none)": 20516,
+          ".html": 4592,
+          ".expected": 4449,
+          ".tsv": 3986,
+          ".log": 3576,
+          ".sample": 3430,
+          ".pdf": 2240,
+          ".sh": 1255,
+          ".pyc": 871
+        },
+        "symlink_total": 260,
+        "symlink_targets": {
+          "/home/vgpnk/Projects/shokunin/kotodama-shokunin/reports/supplement-opencode-1/scratch/round7-15/outside-target.json": 52,
+          "/home/vgpnk/Projects/shokunin/kotodama-shokunin/examples/culture-d3/components/04-language.json": 104,
+          "/home/vgpnk/Projects/shokunin/kotodama-shokunin/reports/supplement-opencode-1/scratch/round7-15/outside-target2.json": 52,
+          "/tmp/d3-outside-probe.json": 52
+        },
+        "secret_shaped": {
+          "total": 75,
+          "listed": 75,
+          "basename": "outside-secret.txt",
+          "size_each": 8,
+          "mode": "-rw-r--r--",
+          "content": "NOT READ",
+          "paths": [
+            "outside-secret.txt",
+            "r22-o12-regression/initial/tmp/packet-links-selftest/outside-secret.txt",
+            "r22-o12-regression/integrated-candidate/tmp/packet-links-selftest/outside-secret.txt",
+            "r22-o12-regression/closing/tmp/packet-links-selftest/outside-secret.txt",
+            "r22-x04/tmp/checkpoint-a/packet-links-selftest/outside-secret.txt",
+            "r23-o11-o12-regression/initial/tmp/packet-links-selftest/outside-secret.txt",
+            "r23-o11-o12-regression/closing/tmp/packet-links-selftest/outside-secret.txt",
+            "r23-x04/tmp/checkpoint-a/packet-links-selftest/outside-secret.txt",
+            "r25-o04/vclone/.scratch/round-25/validation/links-selftest/outside-secret.txt",
+            "r25-o18/clone/.scratch/round-25/validation/links-selftest/outside-secret.txt",
+            "r25-o18/clone2/.scratch/round-25/validation/links-selftest/outside-secret.txt",
+            "r25-o18/clone3/.scratch/round-25/validation/links-selftest/outside-secret.txt",
+            "r25-o18/c4/.scratch/round-25/validation/links-selftest/outside-secret.txt",
+            "r25-o18/c5/.scratch/round-25/validation/links-selftest/outside-secret.txt",
+            "r25-o18/final/.scratch/round-25/validation/links-selftest/outside-secret.txt",
+            "r25-o18/f2/.scratch/round-25/validation/links-selftest/outside-secret.txt",
+            "r25-o18/f3/.scratch/round-25/validation/links-selftest/outside-secret.txt",
+            "r25-o18/f4/.scratch/round-25/validation/links-selftest/outside-secret.txt",
+            "x46/clone/.scratch/round-25/validation/links-selftest/outside-secret.txt",
+            "r25-x42/clone/repo/.scratch/round-25/validation/links-selftest/outside-secret.txt",
+            "r25-o08/vclone/.scratch/round-25/validation/links-selftest/outside-secret.txt",
+            "r25-x40/tmp/checkpoint-a/packet-links-selftest/outside-secret.txt",
+            "r25-x40/checkpoint-b/.scratch/round-25/validation/links-selftest/outside-secret.txt",
+            "r25-x40/checkpoint-c/.scratch/round-25/validation/links-selftest/outside-secret.txt",
+            "r25-x40/checkpoint-d/.scratch/round-25/validation/links-selftest/outside-secret.txt",
+            "r25-x40/checkpoint-e/.scratch/round-25/validation/links-selftest/outside-secret.txt",
+            "r25-o16-o17-regression/initial/tmp/packet-links-selftest/outside-secret.txt",
+            "r25-o16-o17-regression/closing/tmp/packet-links-selftest/outside-secret.txt",
+            "x37/clone/repo/.scratch/round-25/validation/links-selftest/outside-secret.txt",
+            "x37/neg/repo/.scratch/round-25/validation/links-selftest/outside-secret.txt",
+            "x37/teeth/gate-input/.scratch/round-25/validation/links-selftest/outside-secret.txt",
+            "x37/teeth/v3/.scratch/round-25/validation/links-selftest/outside-secret.txt",
+            "x37/teeth/argot/.scratch/round-25/validation/links-selftest/outside-secret.txt",
+            "x37/teeth/lessons/.scratch/round-25/validation/links-selftest/outside-secret.txt",
+            "x37/verify/repo/.scratch/round-25/validation/links-selftest/outside-secret.txt",
+            "x37/final/repo/.scratch/round-25/validation/links-selftest/outside-secret.txt",
+            "r25-d05/clone/.scratch/round-25/validation/links-selftest/outside-secret.txt",
+            "r25-run/.scratch/round-25/validation/links-selftest/outside-secret.txt",
+            "r26-o37-o38-regression/initial/tmp/packet-links-selftest/outside-secret.txt",
+            "r26-o37-o38-regression/closing/tmp/packet-links-selftest/outside-secret.txt",
+            "x56/clone/.scratch/round-26/validation/links-selftest/outside-secret.txt",
+            "x56/clone2/.scratch/round-26/validation/links-selftest/outside-secret.txt",
+            "x56/clone3/.scratch/round-26/validation/links-selftest/outside-secret.txt",
+            "x56/clone4/.scratch/round-26/validation/links-selftest/outside-secret.txt",
+            "x56/clone5/.scratch/round-26/validation/links-selftest/outside-secret.txt",
+            "x56/final/.scratch/round-26/validation/links-selftest/outside-secret.txt",
+            "x56/final2/.scratch/round-26/validation/links-selftest/outside-secret.txt",
+            "r26-c47/clone/.scratch/round-25/validation/links-selftest/outside-secret.txt",
+            "x64/clone-run/.scratch/round-26/validation/links-selftest/outside-secret.txt",
+            "x64/clone-run2/.scratch/round-26/validation/links-selftest/outside-secret.txt",
+            "r58/tmp/checkpoint-a/links-selftest/outside-secret.txt",
+            "r58/checkpoint-b/.scratch/round-25/validation/links-selftest/outside-secret.txt",
+            "r58/checkpoint-c/.scratch/round-26/validation/links-selftest/outside-secret.txt",
+            "r58/checkpoint-d/.scratch/round-26/validation/links-selftest/outside-secret.txt",
+            "r58/checkpoint-e/.scratch/round-26/validation/links-selftest/outside-secret.txt",
+            "r26c/rvclone/repo/.scratch/round-26/validation/links-selftest/outside-secret.txt",
+            "r26c/rvclone2/repo/.scratch/round-26/validation/links-selftest/outside-secret.txt",
+            "r26c/rv3/repo/.scratch/round-26/validation/links-selftest/outside-secret.txt",
+            "round-26/validation/links-selftest/outside-secret.txt",
+            "r26-run/.scratch/round-26/validation/links-selftest/outside-secret.txt",
+            "r27-o33-o36-regression/initial-unoverlaid/tmp/packet-links-selftest/outside-secret.txt",
+            "r27-o33-o36-regression/initial/tmp/packet-links-selftest/outside-secret.txt",
+            "r27-o33-o36-regression/closing-v1/tmp/packet-links-selftest/outside-secret.txt",
+            "r27-o33-o36-regression/closing/tmp/packet-links-selftest/outside-secret.txt",
+            "x52/tmp/checkpoint-a/links-selftest/outside-secret.txt",
+            "x52/tmp/checkpoint-d/links-selftest/outside-secret.txt",
+            "x52/checkpoint-b/.scratch/round-27/validation/links-selftest/outside-secret.txt",
+            "x52/checkpoint-c/.scratch/round-27/validation/links-selftest/outside-secret.txt",
+            "x52/checkpoint-d/.scratch/round-27/validation/links-selftest/outside-secret.txt",
+            "x52/checkpoint-e/.scratch/round-27/validation/links-selftest/outside-secret.txt",
+            "round-27/validation/links-selftest/outside-secret.txt",
+            "r27-run/.scratch/round-27/validation/links-selftest/outside-secret.txt",
+            "r28-x58/clone-live/.scratch/round-28/validation/links-selftest/outside-secret.txt",
+            "r28-o33-o36-regression/baseline/tmp/packet-links-selftest/outside-secret.txt",
+            "round-28/validation/links-selftest/outside-secret.txt"
+          ]
+        },
+        "header_samples": {
+          "text-other": {
+            "path": "x05-live-shas-d4.txt",
+            "size": 697,
+            "header_80": "e7ecd2045ef0e5f9823ce0a067d21b8221b2ceb5e8f5799736981a1c88fa50d3  examples/cultu"
+          },
+          "python-source": {
+            "path": "extract_cites.py",
+            "size": 1073,
+            "header_80": "import re, os, json, sys\\n\\nsrc = open('SKILL.md', encoding='utf-8').read().splitl"
+          },
+          "json-header": {
+            "path": "cites.json",
+            "size": 12075,
+            "header_80": "[\\n{\\n\"path\": \"<SHORT-REF>\",\\n\"loc\": \":100\",\\n\"sklines\": [\\n121\\n]\\n},\\n{\\n\"path\": \"<SHOR"
+          },
+          "empty": {
+            "path": "lex-d2.out",
+            "size": 0,
+            "header_80": ""
+          },
+          "script-python": {
+            "path": "x39-watch.py",
+            "size": 4510,
+            "header_80": "#!/usr/bin/env python3\\n\"\"\"X39 scope watch: filed rounds 8-24 untouched; fleet ro"
+          },
+          "yaml-header": {
+            "path": "x54-baseline-packet.yml",
+            "size": 82859,
+            "header_80": "name: \"D4 culture drill \u2014 round-17 design build (NON-CANON)\"\\ncanon: \"not canon"
+          },
+          "markdown": {
+            "path": "r27d-syl4.py",
+            "size": 1948,
+            "header_80": "# greedy maximal-onset WITH legality, exactly as design-language.md:191-196 word"
+          },
+          "script-shell": {
+            "path": "r27-wait-stable.sh",
+            "size": 733,
+            "header_80": "#!/bin/bash\\n# wait until the D4 packet + holds + all components agree over 3 con"
+          },
+          "table-text": {
+            "path": "r28-d24-census.tsv",
+            "size": 5846,
+            "header_80": "adjacency.md\t44110\td91634ec\t20:16:11\\nargot/D17-law-bypass.md\t25053\tbdc632eb\t20:1"
+          },
+          "binary-nul": {
+            "path": "r22-d04/verify/.git/index",
+            "size": 204791,
+            "header_80": "DIRC\u0000\u0000\u0000\u0002\u0000\u0000\u0006\ufffdj\ufffd\ufffdj\u0003\u000772j\ufffd\ufffdj\u0003\u000772\u0000\u0000\u00009\u0001\ufffd1\"\u0000\u0000\ufffd\ufffd\u0000\u0000\u0003\ufffd\u0000\u0000\u0003\ufffd\u0000\u0000\u0000c\ufffd6\ufffd\u0007)8C`z\u02b0\u0697\ufffd\ufffd\ufffd\ufffd\u001e\ufffd\ufffd\u0000\\n.gitig"
+          },
+          "script-other": {
+            "path": "r22-d04/verify/.git/hooks/fsmonitor-watchman.sample",
+            "size": 4611,
+            "header_80": "#!/usr/bin/perl\\n\\nuse strict;\\nuse warnings;\\nuse IPC::Open2;\\n\\n# An example hook sc"
+          },
+          "binary-non-utf8": {
+            "path": "r22-d04/verify/.git/objects/a2/dacb276c5d1bcbaacfbf6ef1a52b2aec7861f7",
+            "size": 2722,
+            "header_80": "x\u0001K\ufffd\ufffdOR01\ufffd0dPV\b22\ufffd\ufffd70Wx\ufffd0E\ufffd8#\ufffd(E\ufffdX\ufffd\ufffdJ!7\ufffd\ufffd(\ufffdH!-1\ufffd$#\ufffd4'/\ufffd\ufffdX\ufffd<\ufffd$#\ufffd\ufffdD\ufffd$#U!-\ufffd(53=O!\ufffd\""
+          },
+          "markup": {
+            "path": "r23-run/reports/supplement-opencode-1/scratch/source-recheck-turkic/clauson_djvu.txt",
+            "size": 172,
+            "header_80": "<html>\r\\n<head><title>401 Authorization Required</title></head>\r\\n<body>\r\\n<center>"
+          },
+          "binary-pdf": {
+            "path": "r23-run/reports/supplement-opencode-1/scratch/source-recheck-turkic/kincses2019.pdf",
+            "size": 577214,
+            "header_80": "%PDF-1.4\\n%\ufffd\ufffd\ufffd\ufffd\\n1 0 obj\\n<<\\n/Type /Catalog\\n/Version /1.4\\n/Pages 2 0 R\\n>>\\nendobj\\n2 "
+          },
+          "binary-gzip": {
+            "path": "r23-run/reports/supplement-opencode-1/scratch/round5-07/pageindex.json.gz",
+            "size": 13491,
+            "header_80": "\u001f\ufffd\b\u0000\u0000\u0000\u0000\u0000\u0000\u0003U\ufffdk\ufffd\ufffd(\ufffd\ufffd\ufffd\ufffd\u0003\ufffd?\ufffd_\u0192O\ufffd\u007f\u001a\u0015\u0011\\n\u1567OWE\ufffdW\ufffd\ufffd\ufffd1\b\u0010\ufffd\ufffd\u007f\ufffd\ufffd?\ufffd\u03bf\u007f\ufffd\ufffd\ufffd\ufffd2\ufffd\ufffd\ufffd\ufffd\ufffd7\ufffdRv\ufffd\u0005\u0016\ufffd\ufffdJ\ufffd\ufffd"
+          },
+          "shell-source": {
+            "path": "x44/control.sh",
+            "size": 3120,
+            "header_80": "export TMPDIR=$PWD/.scratch\\nexport PYTHONDONTWRITEBYTECODE=1\\npython3 -B - <<'PY'"
+          }
+        }
+      }
+    ],
+    "later_size": {
+      "at": "2026-10-18T20:30:39Z",
+      "command": "du -sb -P .scratch; du -sh .scratch",
+      "observed": [
+        "38059726682",
+        "37G"
+      ],
+      "vs_walk2_lstat_sum": "du -sb 38059726682 vs walk lstat sum 38088628975 (about 29MB lower). Hardlink double-count vs post-walk deletion was not separated. Uncertain which."
+    },
+    "fully_classified_meaning": "Every directory entry seen in walk-2 received exactly one primary class, and the class counts sum to files_seen (763168). That is a complete partition of that walk, not of the tree after the walk. The tree grew from the assignment's 16G through 18G, 19G, 27G, to about 37G during this seat."
+  }
+}

@@ -1,0 +1,231 @@
+{
+  "seat": "S03",
+  "round": 6,
+  "kind": "drift-audit",
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "target": "SKILL.md Removal flow (lines 34-41) plus pre-quarantine checklist (lines 81-84)",
+  "repo_head": "ce58c2b457c8ffb7886b36a509bf957f90d1f296",
+  "skill_blob": "ccbb1326204bbf21034820430e9923cb96ef4c17",
+  "skill_sha256": "422c0c3f71eeaae271c23226324da088e1516360ba46638361a93e42d35bdacf",
+  "skill_worktree_dirty": false,
+  "run_utc": "2026-10-18T19:26:29Z",
+  "run_local": "2026-10-18T16:26:29-0300",
+  "assignment": "Audit SKILL.md Removal flow quarantine steps against what the lane actually did in rounds 1-5 (LOG.md and corpus/lessons). Steps never exercised must be UNEXERCISED, not implied-working.",
+  "verdict": "DRIFT. Quarantine never ran. Numbered steps 3, 4, 5, and 6, and the whole pre-quarantine checklist, are UNEXERCISED. Step 2 (operator approves) is also UNEXERCISED: a 96-row list was prepared and is still awaiting sign-off. Only step 1 (dry-run census) was exercised. Round 3's git worktree prune is a different procedure and does not exercise these steps.",
+  "axes": [
+    "step completeness",
+    "evidence fidelity",
+    "status accuracy (UNEXERCISED vs implied-working)",
+    "scope (this fragment only)"
+  ],
+  "counts": {
+    "numbered_steps": 6,
+    "exercised": 1,
+    "unexercised": 5,
+    "quarantine_steps_3_to_6_unexercised": 4,
+    "pre_quarantine_checklist_items_unexercised": 3,
+    "fleet_ufo_quarantine_dirs": 0,
+    "log_quarantine_hits": 0,
+    "lessons_quarantine_hits": 0,
+    "souji_commits_mentioning_quarantine": 0
+  },
+  "steps": [
+    {
+      "n": 1,
+      "text": "Dry-run census: classify every candidate, print the table, change nothing.",
+      "source": "SKILL.md:36",
+      "status": "EXERCISED",
+      "rounds": ["r1", "r3"],
+      "not_quarantine": true,
+      "evidence": [
+        {
+          "cmd": "nl -ba SKILL.md | sed -n '36p'; wc -l census/round-1/census.tsv; find census/round-1 -maxdepth 1 -name 'seat-*.json' | wc -l",
+          "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+          "out": "    36\t1. Dry-run census: classify every candidate, print the table, change nothing.\n247 census/round-1/census.tsv\n64"
+        },
+        {
+          "cmd": "nl -ba LOG.md | sed -n '34,36p;74,76p'",
+          "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+          "out": "    34\t## 2026-10-18 — round 1 admitted (claims: coverage + calibration)\n    35\t\n    36\t**Claims.** C1 (coverage): dry-run census classifying every mint demand\n    74\t\n    75\t**Verdicts:** coverage improved (C1), calibration improved (C2), no axis\n    76\tharmed. Nothing was removed — dry run throughout."
+        }
+      ],
+      "note": "247 TSV lines = 1 header + 246 data rows, matching LOG.md's '246 rows'. Exercising the census does not exercise quarantine."
+    },
+    {
+      "n": 2,
+      "text": "Operator approves the removal list.",
+      "source": "SKILL.md:37",
+      "status": "UNEXERCISED",
+      "qualifier": "list_prepared_not_approved",
+      "rounds_that_prepared_a_list": ["r3"],
+      "evidence": [
+        {
+          "cmd": "nl -ba LOG.md | sed -n '145,150p'; nl -ba SCORECARD.md | sed -n '37,38p'; python3 -c 'import csv; p=\"census/round-3/operator-approval-list.tsv\"; rows=list(csv.DictReader(open(p), delimiter=\"\\t\")); print(len(rows), list(rows[0])); print(\"approved_field\", any(\"approv\" in k.lower() for k in rows[0]))'",
+          "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+          "out": "   145\t**Artifacts.** census/round-3/{seat-01..64.json, approvals-*.tsv,\n   146\toperator-approval-list.tsv (96 rows), approval-summary.json}. The list\n   147\tawaits operator sign-off; no file deletions this round.\n   148\t\n   149\t**Verdicts:** coverage improved, calibration improved; no axis harmed.\n   150\tNothing deleted except the 21 authorized metadata registrations.\n    37\t  claims (scheduled model: gpt-6-luna-max). Carry-overs: the 96-row\n    38\t  approval list awaits operator sign-off; the 3 pinned gd2d registrations\n96 ['path', 'size_bytes', 'intro_commit', 'sha256', 'source', 'evidence']\napproved_field False"
+        }
+      ],
+      "note": "A prepared list is not approval. Do not mark step 2 exercised because the TSV exists. No LOG or lessons sentence records an operator sign-off."
+    },
+    {
+      "n": 3,
+      "text": "git mv (or plain mv for untracked) into <repo>/.ufo-quarantine/<utc-date>/... — quarantine is a normal commit in the owning repo.",
+      "source": "SKILL.md:38",
+      "status": "UNEXERCISED",
+      "evidence": [
+        {
+          "cmd": "find /home/vgpnk/Projects/shokunin -type d -name .ufo-quarantine -print | wc -l",
+          "out": "0",
+          "observed_at": "2026-10-18T19:26:29Z"
+        },
+        {
+          "cmd": "for d in /home/vgpnk/Projects/shokunin /home/vgpnk/Projects/shokunin/*-shokunin; do n=$(git -C \"$d\" ls-files | grep -c ufo-quarantine || true); printf '%s ls-files_hits=%s\\n' \"$(basename \"$d\")\" \"$n\"; done",
+          "out": "shokunin ls-files_hits=0\naudio-shokunin ls-files_hits=0\nchousa-shokunin ls-files_hits=0\ngame-dev-2d-shokunin ls-files_hits=0\ngame-dev-3d-shokunin ls-files_hits=0\nkagi-shokunin ls-files_hits=0\nkaidoku-shokunin ls-files_hits=0\nkake-shokunin ls-files_hits=0\nkama-shokunin ls-files_hits=0\nkasegi-shokunin ls-files_hits=0\nkengaku-shokunin ls-files_hits=0\nkotoba-shokunin ls-files_hits=0\nkotodama-shokunin ls-files_hits=0\nkumitate-shokunin ls-files_hits=0\nlore-shokunin ls-files_hits=0\nmado-shokunin ls-files_hits=0\nmori-shokunin ls-files_hits=0\nrevenger-shokunin ls-files_hits=0\nsouji-shokunin ls-files_hits=0\ntabi-shokunin ls-files_hits=0\ntameshi-shokunin ls-files_hits=0\ntsukuroi-shokunin ls-files_hits=0"
+        },
+        {
+          "cmd": "git -C /home/vgpnk/Projects/shokunin/souji-shokunin log --all --oneline --grep=quarantine --grep=ufo-quarantine --regexp-ignore-case; echo grep_exit=$?; git -C /home/vgpnk/Projects/shokunin/souji-shokunin log --all --oneline --grep='git mv'; echo gmv_exit=$?; printf 'LOG.md '; rg -c -i quarantine LOG.md || echo 0; printf 'lessons '; rg -c -i quarantine corpus/lessons || echo 0",
+          "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+          "out": "grep_exit=0\ngmv_exit=0\nLOG.md 0\nlessons 0"
+        }
+      ],
+      "note": "git log -S '.ufo-quarantine' does hit souji commits ccbb132, 9435e46, 3674633, 48a64d8, ce58c2b. Those introduce the string in SKILL.md, rg exclude globs, and census command text. None is a quarantine commit. See pickaxe_is_not_exercise."
+    },
+    {
+      "n": 4,
+      "text": "Hold period (≥ one driver tick, 450s minimum; prefer 24h for anything not pushed).",
+      "source": "SKILL.md:39",
+      "status": "UNEXERCISED",
+      "evidence": [
+        {
+          "cmd": "rg -n -i 'hold period|450s|driver tick' LOG.md corpus/lessons; echo rg_exit=$?",
+          "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+          "out": "rg_exit=1"
+        }
+      ],
+      "note": "No hold can have elapsed: step 3 never staged anything. Absence of the words in LOG/lessons is consistent, not a proof by itself; the proof is the missing quarantine trees and commits."
+    },
+    {
+      "n": 5,
+      "text": "Second check: re-run the receipt command; receipt must still hold.",
+      "source": "SKILL.md:40",
+      "status": "UNEXERCISED",
+      "do_not_count_as_this_step": "Round 3 re-checked receipts at act time before git worktree prune (LOG.md:132-136, corpus/lessons/round-3.md). That re-check is bound to metadata prune, not to a post-hold quarantine second check. Counting it here would imply step 5 worked.",
+      "evidence": [
+        {
+          "cmd": "nl -ba SKILL.md | sed -n '40p'; nl -ba LOG.md | sed -n '132,136p'",
+          "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+          "out": "    40\t5. Second check: re-run the receipt command; receipt must still hold.\n   132\t**Execution (parent, serialized).** Gate re-check: lore + gd2d unpushed = 0\n   133\tat act time (artifact-scoped reading of the dirty/unpushed rule; both\n   134\treadings satisfied). Lore: dry-run listed exactly the 19 → pruned →\n   135\tworktree list 20→1. gd2d: locked the 3 pinned named-branch registrations,\n   136\tpruned (2 detached removed) → list 6→4, unlocked; main sha unchanged"
+        }
+      ]
+    },
+    {
+      "n": 6,
+      "text": "Delete from quarantine. pushed artifacts need no hold beyond the second check.",
+      "source": "SKILL.md:41",
+      "status": "UNEXERCISED",
+      "evidence": [
+        {
+          "cmd": "find /home/vgpnk/Projects/shokunin -type d -name .ufo-quarantine -print | wc -l",
+          "out": "0",
+          "observed_at": "2026-10-18T19:26:29Z"
+        }
+      ],
+      "note": "Nothing was ever placed in a repo .ufo-quarantine, so nothing was deleted from one. LOG.md:147 'no file deletions this round' and LOG.md:150 'Nothing deleted except the 21 authorized metadata registrations' name the worktree-prune exception, not a quarantine delete."
+    }
+  ],
+  "pre_quarantine_checklist": {
+    "source": "SKILL.md:81-84",
+    "status": "UNEXERCISED",
+    "items": [
+      {
+        "text": "Quarantine path is inside the owning repo (.ufo-quarantine/<date>/)",
+        "source": "SKILL.md:82",
+        "status": "UNEXERCISED"
+      },
+      {
+        "text": "Commit message names the receipt class and the evidence pointer",
+        "source": "SKILL.md:83",
+        "status": "UNEXERCISED"
+      },
+      {
+        "text": "Lane identity: souji-shokunin <souji@shokunin.local>",
+        "source": "SKILL.md:84",
+        "status": "UNEXERCISED",
+        "note": "The identity string is the lane's commit identity in other commits. No quarantine commit exists to carry it, so this checklist item was never exercised."
+      }
+    ]
+  },
+  "what_actually_ran": {
+    "label": "NOT the Removal flow. Do not use these to mark steps 3-6 exercised.",
+    "r1": "Dry-run census only. LOG.md:76 'Nothing was removed — dry run throughout.'",
+    "r2": "Installed tools/souji-verify.sh. No fleet removal. Lessons record a parent deletion of an unauthorized seat-installed verifier (corpus/lessons/round-2.md) — a tool correction, not quarantine.",
+    "r3": "git worktree prune of 21 metadata registrations (lore 20→1, gd2d 6→4 with lock-preserve). LOG.md:134-150. Re-measured this audit: git -C lore-shokunin worktree list | wc -l → 1; git -C game-dev-2d-shokunin worktree list | wc -l → 4. That is metadata prune, not git mv into .ufo-quarantine.",
+    "r4": "Installed tools/souji-vault-verify.sh. No removal flow.",
+    "r5": "Verdict audit and tool fixes. LOG.md:208-211 routes SKILL.md doc drift to r6. No quarantine.",
+    "already_deleted_before_souji": "Fleet commit a1b44b1 deleted 15 shell strays before the r3 list was cut (LOG.md:142-143, census/round-3/approval-summary.json no_op_already_removed=15). Not a souji quarantine delete."
+  },
+  "implied_working_traps": [
+    {
+      "id": "T1",
+      "where": "/home/vgpnk/Projects/shokunin/.ufo/reports/round-3/souji.md:61-62",
+      "claim": "[~] SKILL.md decision tables/error patterns/checklists — exercised with the lock-preserve pattern added to lessons. [~] End-to-end domain task executed and logged — first receipt-gated removal in the fleet, fully logged.",
+      "correction": "The logged removal is git worktree prune plus an unsigned approval list. Removal-flow steps 3-6 were not part of that execution. The [~] mark implies the SKILL.md removal procedure was exercised. It was not. Lock-preserve is in corpus/lessons/round-3.md; the word quarantine is absent from all five lesson files."
+    },
+    {
+      "id": "T2",
+      "where": "SKILL.md:29",
+      "claim": "SAFE(pushed) — removable after quarantine",
+      "correction": "This is procedure text, written at mint (only SKILL.md commit is ccbb132) and never amended. It must not be read as evidence that quarantine has been used. Status of the quarantine that sentence depends on: UNEXERCISED."
+    },
+    {
+      "id": "T3",
+      "where": "tools/souji-verify.sh:209 and tools/souji-vault-verify.sh:439 and tools/souji-verify.spec.md:53",
+      "claim": "rg exclude glob **/.ufo-quarantine/**",
+      "correction": "A sweep exclusion for a directory class. Installed tools contain no git mv and no mkdir of .ufo-quarantine (rg 'git mv|mkdir .*ufo-quarantine' on the two installed scripts → no hits). Not an exercise of step 3."
+    },
+    {
+      "id": "T4",
+      "where": "/tmp/souji-verify.* and sibling probe dirs",
+      "claim": "Directories named .ufo-quarantine exist on the host",
+      "correction": "FIXTURE_ONLY. They are under /tmp, not inside a fleet repo, and they are not commits. Sampled headers (head -c 200): impl-shaped 'quarantine note scratch-2.out' (matches tools/souji-verify.impl-10.sh:729-735), 'quarantine copy: s24-f8-checkpoint.json', 'quarantine-mention-f8c.out staged here', 'see only-q.out'. A maxdepth-5 count during this audit moved (16 listed, then 19) because concurrent round-6 probes write /tmp. That count is unstable. The fleet-tree count is the binding one: 0. These fixtures do not exercise the Removal flow."
+    },
+    {
+      "id": "T5",
+      "where": "fleet commits cd7377b and de6822b",
+      "claim": "git log --grep=quarantine on the fleet root returns commits",
+      "correction": "Those messages use 'quarantine' for model-routing pool entries (kengaku round 18), not souji removal. git -C fleet log -S '.ufo-quarantine' returned no commits."
+    },
+    {
+      "id": "T6",
+      "where": "census/round-6/province-amend-26.diff (unapplied sibling draft; not edited by this seat)",
+      "claim": "The draft still presents steps 3-6 as the live procedure and adds worktree prune as a sibling exception, without marking steps 3-6 UNEXERCISED.",
+      "correction": "Applying that diff would improve the prune-vs-quarantine distinction and would still leave the quarantine steps looking operational. This fragment is the UNEXERCISED mark. The diff is not evidence the flow ran."
+    },
+    {
+      "id": "T7",
+      "where": "/home/vgpnk/Projects/shokunin/.ufo/reports/round-5/souji.md:69",
+      "claim": "SKILL.md decision tables — receipt taxonomy amended this round",
+      "correction": "Related, not a quarantine-step finding. git log -- SKILL.md is only ccbb132. Lessons round-5.md:38-39 and LOG.md:210-211 say the drift was routed to r6, not patched. The report sentence contradicts itself ('amended this round' and 'routed to r6'). SKILL.md Removal flow text is still the mint text."
+    }
+  ],
+  "pickaxe_is_not_exercise": {
+    "cmd": "git -C /home/vgpnk/Projects/shokunin/souji-shokunin log --all -S '.ufo-quarantine' --pretty=format:'COMMIT %h %s' --name-only",
+    "commits": {
+      "ccbb132": ["SKILL.md"],
+      "9435e46": ["tools/souji-verify.sh", "tools/souji-verify.spec.md", "tools/souji-verify.impl-09.sh through impl-16.sh", "tests fixtures and runner results that quote the exclude glob"],
+      "3674633": ["census/round-3/seat-14.json", "seat-23.json", "seat-30.json", "seat-34.json", "seat-40.json", "seat-53.json"],
+      "48a64d8": ["tools/souji-vault-verify.sh", "tools/souji-vault-verify.impl-20.sh", "tools/souji-vault-verify.impl-21.sh"],
+      "ce58c2b": ["census/round-5/seat-28.json", "census/round-5/seat-51.json"]
+    },
+    "reading": "String presence in those files is documentation, an rg exclude, or a later seat quoting the exclude. Round-5 seat-28 already recorded CONFIRMED_NONE_FOUND for live .ufo-quarantine dirs. This audit re-derived that independently (fleet find count 0 at 2026-10-18T19:26:29Z) and adds the step-level UNEXERCISED marks the r5 sweep did not make."
+  },
+  "uncertain": [
+    "The live /tmp .ufo-quarantine count is not stable during this round (other seats are writing probe fixtures). It is not uncertain that those dirs are outside the fleet repos.",
+    "This seat did not re-execute the r3 prune and did not re-read every seat fragment for a buried 'we ran git mv' sentence. The binding negatives are: zero fleet .ufo-quarantine directories, zero git ls-files hits in 22 repos, zero souji commit subjects matching quarantine or 'git mv', and zero hits of the word quarantine in LOG.md and corpus/lessons/round-1.md through round-5.md. A removal that left none of those traces is not established. If one exists, it is to-verify and still not evidence the Removal flow ran."
+  ],
+  "preamble": {
+    "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+    "fragment_path": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-6/seat-03.json",
+    "mode": "read-only except this assigned fragment; no git fetch/push/commit/branch/prune/remove; no deletes; .ufo/state and .ufo/watchdog.log not touched; live obsidian ledger not touched"
+  }
+}

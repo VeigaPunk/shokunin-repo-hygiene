@@ -1,0 +1,684 @@
+{
+  "seat": "S02",
+  "round": 6,
+  "kind": "drift-audit",
+  "claim": "C1",
+  "assignment": "Audit SKILL.md 'Decision tables / Classify an artifact' against installed behavior. Probe each row's condition on fixtures in /tmp.",
+  "written_at": "2026-10-18T16:17:11-0300",
+  "mode": "read-only over the lane except this fragment. Fixtures only under /tmp/souji-s02-classify.ufQr3s. No git fetch/push/commit/branch/prune/remove. No deletes. Live obsidian ledger not opened. Secret-shaped file bodies not read. SHOKUNIN_ROOT overridden to the fixture root so worktree scan did not walk the live fleet.",
+  "source": {
+    "path": "/home/vgpnk/Projects/shokunin/souji-shokunin/SKILL.md",
+    "heading": "Decision tables / Classify an artifact",
+    "lines": "22-32",
+    "sha256": "422c0c3f71eeaae271c23226324da088e1516360ba46638361a93e42d35bdacf",
+    "rows": [
+      "Owning repo has unpushed commits touching the artifact's path, or a dirty worktree over it → NOT-SAFE",
+      "Artifact's last commit is an ancestor of origin/<default> → SAFE(pushed)",
+      "Ledger row matches path + hash → SAFE(moved-to-obsidian)",
+      "Scratch type + zero live references + older than lane's last admitted round → SAFE(stale)",
+      "Anything else, any doubt, any credential-shaped content → NOT-SAFE"
+    ]
+  },
+  "installed": {
+    "lane_head": "ce58c2b457c8ffb7886b36a509bf957f90d1f296",
+    "souji-verify.sh": {
+      "path": "/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh",
+      "sha256": "53239fdfe5bcaaaf448e8525845ab962dd7ab6a4e7f75c0f4f051614f1c99200",
+      "order": "file/dir: pushed (introducing commit), then ledger, then stale. No dirty/unpushed gate on files. Repo-root: ledger or NOT-SAFE. Secret-shaped path refused before any read."
+    },
+    "souji-vault-verify.sh": {
+      "path": "/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-vault-verify.sh",
+      "sha256": "00d59b1b36d87db37518b5ef9fb98cd472888a075ed7b97bd5b8ff93bd559455",
+      "order": "ledger first (line 569), then evaluate_artifact which tries pushed then stale (lines 524-534). Same introducing-commit pushed test. Same no dirty gate on files."
+    }
+  },
+  "fixture_root": "/tmp/souji-s02-classify.ufQr3s",
+  "headline": "Drift is not zero. 3 probed conditions that the table marks NOT-SAFE come back SAFE from the installed verifier. The worst is a file whose introducing commit is on origin but whose last commit, or a dirty overlay, is not: both tools emit SAFE(pushed). A clean repo whose HEAD is origin/main comes back NOT-SAFE, the opposite miss. Row 3's isolated ledger match agrees. Scratch-type, age, and live-reference predicates are not the table's predicates.",
+  "counts": {
+    "table_rows": 5,
+    "rows_fully_reconciled": 1,
+    "rows_with_verdict_drift": 3,
+    "rows_verdict_agrees_label_or_predicate_drifts": 1,
+    "material_false_SAFE": 3,
+    "predicate_false_SAFE": 4,
+    "false_NOT_SAFE": 5,
+    "drift_to_zero": false
+  },
+  "rows": [
+    {
+      "row": 1,
+      "observation": "Owning repo has unpushed commits touching the artifact's path, or a dirty worktree over it",
+      "table_verdict": "NOT-SAFE",
+      "score": "DRIFT",
+      "material": true,
+      "summary": "On a file, neither tool checks unpushed-touching-path or dirty-over-path before SAFE(pushed). Repo-root and a registered worktree directory do return NOT-SAFE. An untracked scratch file inside a dirty worktree is SAFE(stale).",
+      "probes": [
+        {
+          "id": "unpushed-touch-clean-worktree",
+          "condition_holds": true,
+          "table": "NOT-SAFE",
+          "observed": "SAFE(pushed) from both tools",
+          "agree": false,
+          "false_SAFE": true,
+          "truth": [
+            {
+              "cmd": "git -C /tmp/souji-s02-classify.ufQr3s/r1u status --porcelain -- tracked.txt",
+              "out": "(empty)",
+              "exit": 0
+            },
+            {
+              "cmd": "git -C /tmp/souji-s02-classify.ufQr3s/r1u log --oneline --branches --not --remotes -- tracked.txt",
+              "out": "a389225 u2",
+              "exit": 0
+            },
+            {
+              "cmd": "git -C /tmp/souji-s02-classify.ufQr3s/r1u merge-base --is-ancestor a389225113f7609e2636e3fa2339a4146ef8f3d8 refs/remotes/origin/master",
+              "out": "last-ancestor-exit=1",
+              "exit": 1
+            },
+            {
+              "cmd": "git -C /tmp/souji-s02-classify.ufQr3s/r1u merge-base --is-ancestor 40d872b94dcd3fd998984b438399fc409fa5a00b refs/remotes/origin/master",
+              "out": "intro-ancestor-exit=0",
+              "exit": 0
+            }
+          ],
+          "tool": [
+            {
+              "cmd": "SHOKUNIN_ROOT=/tmp/souji-s02-classify.ufQr3s SOUJI_LEDGER=/tmp/souji-s02-classify.ufQr3s/ledger-clean.tsv bash tools/souji-verify.sh --json /tmp/souji-s02-classify.ufQr3s/r1u/tracked.txt",
+              "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+              "out": "{\"path\":\"/tmp/souji-s02-classify.ufQr3s/r1u/tracked.txt\",\"verdict\":\"SAFE\",\"receipt\":\"pushed\",\"evidence\":\"intro=40d872b94dcd ref=refs/remotes/origin/master ancestor=yes\"}",
+              "exit": 0
+            },
+            {
+              "cmd": "SHOKUNIN_ROOT=/tmp/souji-s02-classify.ufQr3s SOUJI_LEDGER=/tmp/souji-s02-classify.ufQr3s/ledger-clean.tsv bash tools/souji-vault-verify.sh --fallback --json /tmp/souji-s02-classify.ufQr3s/r1u/tracked.txt",
+              "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+              "out": "{\"path\":\"/tmp/souji-s02-classify.ufQr3s/r1u/tracked.txt\",\"verdict\":\"SAFE\",\"verified\":\"VERIFIED(pushed)\",\"receipt\":\"pushed\",\"reason\":\"pushed\",\"evidence\":\"intro=40d872b94dcd ref=refs/remotes/origin/master ancestor=yes cli=unavailable\"}",
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "id": "dirty-overlay-no-unpushed-commit",
+          "condition_holds": true,
+          "table": "NOT-SAFE",
+          "observed": "SAFE(pushed) from souji-verify.sh. souji-vault-verify.sh not re-run on this exact fixture.",
+          "agree": false,
+          "false_SAFE": true,
+          "truth": [
+            {
+              "cmd": "git -C /tmp/souji-s02-classify.ufQr3s/r1b-lane status --porcelain -- tracked.txt",
+              "out": " M tracked.txt",
+              "exit": 0
+            },
+            {
+              "cmd": "git -C /tmp/souji-s02-classify.ufQr3s/r1b-lane log --oneline --branches --not --remotes -- tracked.txt | wc -l",
+              "out": "0",
+              "exit": 0
+            }
+          ],
+          "tool": [
+            {
+              "cmd": "SHOKUNIN_ROOT=/tmp/souji-s02-classify.ufQr3s SOUJI_LEDGER=/tmp/souji-s02-classify.ufQr3s/ledger-clean.tsv bash tools/souji-verify.sh --json /tmp/souji-s02-classify.ufQr3s/r1b-lane/tracked.txt",
+              "out": "{\"path\":\"/tmp/souji-s02-classify.ufQr3s/r1b-lane/tracked.txt\",\"verdict\":\"SAFE\",\"receipt\":\"pushed\",\"evidence\":\"intro=1506933167df ref=refs/remotes/origin/master ancestor=yes\"}",
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "id": "unpushed-and-dirty-file",
+          "condition_holds": true,
+          "table": "NOT-SAFE",
+          "observed": "SAFE(pushed)",
+          "agree": false,
+          "false_SAFE": true,
+          "truth": [
+            {
+              "cmd": "git -C /tmp/souji-s02-classify.ufQr3s/r1fix status --porcelain -- tracked.txt",
+              "out": " M tracked.txt",
+              "exit": 0
+            },
+            {
+              "cmd": "git -C /tmp/souji-s02-classify.ufQr3s/r1fix log --oneline --branches --not --remotes -- tracked.txt",
+              "out": "1813d63 c2 unpushed touch",
+              "exit": 0
+            }
+          ],
+          "tool": [
+            {
+              "cmd": "SHOKUNIN_ROOT=/tmp/souji-s02-classify.ufQr3s SOUJI_LEDGER=/tmp/souji-s02-classify.ufQr3s/ledger-clean.tsv bash tools/souji-verify.sh --json /tmp/souji-s02-classify.ufQr3s/r1fix/tracked.txt",
+              "out": "{\"path\":\"/tmp/souji-s02-classify.ufQr3s/r1fix/tracked.txt\",\"verdict\":\"SAFE\",\"receipt\":\"pushed\",\"evidence\":\"intro=f52bafb123af ref=refs/remotes/origin/master ancestor=yes\"}",
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "id": "repo-root-unpushed-and-dirty",
+          "condition_holds": true,
+          "table": "NOT-SAFE",
+          "observed": "NOT-SAFE(unpushed)",
+          "agree": true,
+          "tool": [
+            {
+              "cmd": "SHOKUNIN_ROOT=/tmp/souji-s02-classify.ufQr3s SOUJI_LEDGER=/tmp/souji-s02-classify.ufQr3s/ledger-clean.tsv bash tools/souji-verify.sh --json /tmp/souji-s02-classify.ufQr3s/r1fix",
+              "out": "{\"path\":\"/tmp/souji-s02-classify.ufQr3s/r1fix\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"unpushed\",\"evidence\":\"unpushed=1 dirty=1\"}",
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "id": "registered-worktree-dir-dirty",
+          "condition_holds": true,
+          "table": "NOT-SAFE",
+          "observed": "NOT-SAFE(dirty)",
+          "agree": true,
+          "tool": [
+            {
+              "cmd": "SHOKUNIN_ROOT=/tmp/souji-s02-classify.ufQr3s SOUJI_LEDGER=/tmp/souji-s02-classify.ufQr3s/ledger-clean.tsv bash tools/souji-verify.sh --json /tmp/souji-s02-classify.ufQr3s/wt-dirty-dir",
+              "out": "{\"path\":\"/tmp/souji-s02-classify.ufQr3s/wt-dirty-dir\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"dirty\",\"evidence\":\"dir=present dirty=3 owner=wt-owner-shokunin\"}",
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "id": "untracked-scratch-inside-dirty-worktree",
+          "condition_holds": true,
+          "table": "NOT-SAFE",
+          "observed": "SAFE(stale). Row 4 also matches; the table does not say which row wins. The checklist requires a clean worktree before removal, so treating row 1 as a gate makes this false-SAFE.",
+          "agree": false,
+          "false_SAFE": true,
+          "truth": [
+            {
+              "cmd": "git -C /tmp/souji-s02-classify.ufQr3s/wt-dirty-dir status --porcelain -- .scratch/old.bin",
+              "out": "?? .scratch/old.bin",
+              "exit": 0
+            }
+          ],
+          "tool": [
+            {
+              "cmd": "SHOKUNIN_ROOT=/tmp/souji-s02-classify.ufQr3s SOUJI_LEDGER=/tmp/souji-s02-classify.ufQr3s/ledger-clean.tsv bash tools/souji-verify.sh --json /tmp/souji-s02-classify.ufQr3s/wt-dirty-dir/.scratch/old.bin",
+              "out": "{\"path\":\"/tmp/souji-s02-classify.ufQr3s/wt-dirty-dir/.scratch/old.bin\",\"verdict\":\"SAFE\",\"receipt\":\"stale\",\"evidence\":\"scratch-type=scratch-dir refs=0 mtime-age-days=10\"}",
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "id": "untracked-new-non-scratch",
+          "condition_holds": true,
+          "table": "NOT-SAFE",
+          "observed": "NOT-SAFE(none). Verdict agrees. Mechanism is residual, not a dirty check.",
+          "agree": true,
+          "truth": [
+            {
+              "cmd": "git -C /tmp/souji-s02-classify.ufQr3s/r1n status --porcelain -- new.txt",
+              "out": "?? new.txt",
+              "note": "captured in the rebuild script before the tool probe; not re-printed in probe-final.txt"
+            }
+          ],
+          "tool": [
+            {
+              "cmd": "SHOKUNIN_ROOT=/tmp/souji-s02-classify.ufQr3s SOUJI_LEDGER=/tmp/souji-s02-classify.ufQr3s/ledger-clean.tsv bash tools/souji-verify.sh --json /tmp/souji-s02-classify.ufQr3s/r1n/new.txt",
+              "out": "{\"path\":\"/tmp/souji-s02-classify.ufQr3s/r1n/new.txt\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"none\",\"evidence\":\"pushed=no-introducing-commit; obsidian=no-matching-ledger-row; stale=not-scratch-type\"}",
+              "exit": 0
+            }
+          ]
+        }
+      ],
+      "mechanism": "tools/souji-verify.sh try_pushed (lines 218-220) tests the introducing commit (`git log --diff-filter=A`), not the last commit, and evaluate_artifact (lines 358-364) never runs `git status`. Repo-root (lines 301-313) and worktree-registration (lines 316-355) do check unpushed/dirty.",
+      "doc_command_also_misses": {
+        "note": "SKILL.md:76 tells an agent to test this row with `git log --not --remotes --oneline -- <path>`. That form has no positive revision, so it is empty even when an unpushed commit touches the path.",
+        "cmd": "git -C /tmp/souji-s02-classify.ufQr3s/r1u log --oneline --not --remotes -- tracked.txt | wc -l",
+        "out": "0",
+        "contrast": "same repo with --branches printed a389225 u2"
+      }
+    },
+    {
+      "row": 2,
+      "observation": "Artifact's last commit is an ancestor of origin/<default>",
+      "table_verdict": "SAFE(pushed)",
+      "score": "PARTIAL",
+      "summary": "A file whose last commit is the introducing commit and is an ancestor of the resolved origin default comes back SAFE(pushed), including when that default is main. A clean repo-root whose HEAD is origin/main comes back NOT-SAFE(none). No remote-tracking ref stays NOT-SAFE(pushed-unverifiable); the r5 local-master fallback is not back.",
+      "probes": [
+        {
+          "id": "file-last-commit-ancestor-of-origin-master",
+          "condition_holds": true,
+          "table": "SAFE(pushed)",
+          "observed": "SAFE(pushed)",
+          "agree": true,
+          "tool": [
+            {
+              "cmd": "SHOKUNIN_ROOT=/tmp/souji-s02-classify.ufQr3s SOUJI_LEDGER=/tmp/souji-s02-classify.ufQr3s/ledger-clean.tsv bash tools/souji-verify.sh --json /tmp/souji-s02-classify.ufQr3s/r2-lane/pushed.txt",
+              "out": "{\"path\":\"/tmp/souji-s02-classify.ufQr3s/r2-lane/pushed.txt\",\"verdict\":\"SAFE\",\"receipt\":\"pushed\",\"evidence\":\"intro=642edbd89736 ref=refs/remotes/origin/master ancestor=yes\"}",
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "id": "file-ancestor-of-origin-main",
+          "condition_holds": true,
+          "table": "SAFE(pushed)",
+          "observed": "SAFE(pushed) ref=refs/remotes/origin/main",
+          "agree": true,
+          "note": "The table says origin/<default>, not origin/main. The tool resolved origin/HEAD to origin/main. Agree.",
+          "tool": [
+            {
+              "cmd": "SHOKUNIN_ROOT=/tmp/souji-s02-classify.ufQr3s SOUJI_LEDGER=/tmp/souji-s02-classify.ufQr3s/ledger-clean.tsv bash tools/souji-verify.sh --json /tmp/souji-s02-classify.ufQr3s/r2b-lane/on-main.txt",
+              "out": "{\"path\":\"/tmp/souji-s02-classify.ufQr3s/r2b-lane/on-main.txt\",\"verdict\":\"SAFE\",\"receipt\":\"pushed\",\"evidence\":\"intro=2b8bcae69a90 ref=refs/remotes/origin/main ancestor=yes\"}",
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "id": "clean-repo-root-HEAD-equals-origin-main",
+          "condition_holds": true,
+          "table": "SAFE(pushed)",
+          "observed": "NOT-SAFE(none) unpushed=0 dirty=0",
+          "agree": false,
+          "false_SAFE": false,
+          "false_NOT_SAFE": true,
+          "truth": [
+            {
+              "cmd": "git -C /tmp/souji-s02-classify.ufQr3s/r2b-lane status --porcelain",
+              "out": "(empty)",
+              "exit": 0
+            },
+            {
+              "cmd": "git -C /tmp/souji-s02-classify.ufQr3s/r2b-lane log --oneline --branches --not --remotes | wc -l",
+              "out": "0",
+              "exit": 0
+            },
+            {
+              "cmd": "git -C /tmp/souji-s02-classify.ufQr3s/r2b-lane rev-parse HEAD refs/remotes/origin/main",
+              "out": "HEAD=2b8bcae69a90a704287d8a3183857f1cd506074f origin=2b8bcae69a90a704287d8a3183857f1cd506074f",
+              "exit": 0
+            }
+          ],
+          "tool": [
+            {
+              "cmd": "SHOKUNIN_ROOT=/tmp/souji-s02-classify.ufQr3s SOUJI_LEDGER=/tmp/souji-s02-classify.ufQr3s/ledger-clean.tsv bash tools/souji-verify.sh --json /tmp/souji-s02-classify.ufQr3s/r2b-lane",
+              "out": "{\"path\":\"/tmp/souji-s02-classify.ufQr3s/r2b-lane\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"none\",\"evidence\":\"unpushed=0 dirty=0\"}",
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "id": "introducing-commit-not-ancestor",
+          "condition_holds": false,
+          "table": "row 2 does not apply; row 5 NOT-SAFE",
+          "observed": "NOT-SAFE(none)",
+          "agree": true,
+          "tool": [
+            {
+              "cmd": "SHOKUNIN_ROOT=/tmp/souji-s02-classify.ufQr3s SOUJI_LEDGER=/tmp/souji-s02-classify.ufQr3s/ledger-clean.tsv bash tools/souji-verify.sh --json /tmp/souji-s02-classify.ufQr3s/r2x/not-ancestor.txt",
+              "out": "{\"path\":\"/tmp/souji-s02-classify.ufQr3s/r2x/not-ancestor.txt\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"none\",\"evidence\":\"pushed=not-ancestor intro=b6b2984b3882 ref=refs/remotes/origin/master; obsidian=no-matching-ledger-row; stale=not-scratch-type\"}",
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "id": "no-remote-tracking-ref",
+          "condition_holds": false,
+          "table": "row 2 cannot hold; row 5 NOT-SAFE",
+          "observed": "NOT-SAFE(pushed-unverifiable)",
+          "agree": true,
+          "note": "r5 amendment holds on this fixture. Local master alone did not produce SAFE(pushed).",
+          "tool": [
+            {
+              "cmd": "SHOKUNIN_ROOT=/tmp/souji-s02-classify.ufQr3s SOUJI_LEDGER=/tmp/souji-s02-classify.ufQr3s/ledger-clean.tsv bash tools/souji-verify.sh --json /tmp/souji-s02-classify.ufQr3s/r2d-lane/localmaster.txt",
+              "out": "{\"path\":\"/tmp/souji-s02-classify.ufQr3s/r2d-lane/localmaster.txt\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"pushed-unverifiable\",\"evidence\":\"pushed=unverifiable(no-default-ref) intro=ae863beaff34; obsidian=no-matching-ledger-row; stale=not-scratch-type\"}",
+              "exit": 0
+            }
+          ]
+        }
+      ],
+      "adjacent_taxonomy_command": {
+        "note": "Receipt taxonomy (SKILL.md:16) hardcodes `git fetch` and `origin/main`. The table says origin/<default> and the tools never fetch. On the master-default fixture the literal taxonomy command cannot resolve origin/main.",
+        "cmd": "git -C /tmp/souji-s02-classify.ufQr3s/r2-lane merge-base --is-ancestor <intro> origin/main",
+        "out": "fatal: Not a valid object name origin/main",
+        "exit": 128
+      }
+    },
+    {
+      "row": 3,
+      "observation": "Ledger row matches path + hash",
+      "table_verdict": "SAFE(moved-to-obsidian)",
+      "score": "AGREE",
+      "summary": "Isolated path+both-hashes match is SAFE(moved-to-obsidian) from both tools. Hash mismatch and missing vault side are NOT-SAFE. When the file is also an ancestor of origin, the two tools pick different SAFE receipts. Taxonomy says either receipt suffices, so the SAFE class still agrees.",
+      "probes": [
+        {
+          "id": "untracked-path-and-both-hashes-match",
+          "condition_holds": true,
+          "table": "SAFE(moved-to-obsidian)",
+          "observed": "SAFE(moved-to-obsidian) both tools",
+          "agree": true,
+          "tool": [
+            {
+              "cmd": "SHOKUNIN_ROOT=/tmp/souji-s02-classify.ufQr3s SOUJI_LEDGER=/tmp/souji-s02-classify.ufQr3s/ledger-clean.tsv bash tools/souji-verify.sh --json /tmp/souji-s02-classify.ufQr3s/r3fix/kept.txt",
+              "out": "{\"path\":\"/tmp/souji-s02-classify.ufQr3s/r3fix/kept.txt\",\"verdict\":\"SAFE\",\"receipt\":\"moved-to-obsidian\",\"evidence\":\"ledger-row vault=/tmp/souji-s02-classify.ufQr3s/vault2/kept.txt source-sha256=afa343f00625\"}",
+              "exit": 0
+            },
+            {
+              "cmd": "SHOKUNIN_ROOT=/tmp/souji-s02-classify.ufQr3s SOUJI_LEDGER=/tmp/souji-s02-classify.ufQr3s/ledger-clean.tsv bash tools/souji-vault-verify.sh --fallback --json /tmp/souji-s02-classify.ufQr3s/r3fix/kept.txt",
+              "out": "{\"path\":\"/tmp/souji-s02-classify.ufQr3s/r3fix/kept.txt\",\"verdict\":\"SAFE\",\"verified\":\"VERIFIED(moved-to-obsidian)\",\"receipt\":\"moved-to-obsidian\",\"reason\":\"moved-to-obsidian\",\"evidence\":\"ledger-row ledger=/tmp/souji-s02-classify.ufQr3s/ledger-clean.tsv vault=/tmp/souji-s02-classify.ufQr3s/vault2/kept.txt source-sha256=afa343f00625 cli=skipped(fallback)\"}",
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "id": "path-matches-hash-does-not",
+          "condition_holds": false,
+          "table": "NOT-SAFE",
+          "observed": "NOT-SAFE(none) source-sha-mismatch",
+          "agree": true,
+          "tool": [
+            {
+              "cmd": "SHOKUNIN_ROOT=/tmp/souji-s02-classify.ufQr3s SOUJI_LEDGER=/tmp/souji-s02-classify.ufQr3s/ledger-clean.tsv bash tools/souji-verify.sh --json /tmp/souji-s02-classify.ufQr3s/r3fix/mismatch.txt",
+              "out": "{\"path\":\"/tmp/souji-s02-classify.ufQr3s/r3fix/mismatch.txt\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"none\",\"evidence\":\"pushed=no-introducing-commit; obsidian=source-sha-mismatch; obsidian=no-matching-ledger-row; stale=not-scratch-type\"}",
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "id": "also-ancestor-of-origin",
+          "condition_holds": true,
+          "table": "SAFE(moved-to-obsidian); row 2 also says SAFE(pushed). Taxonomy: either suffices.",
+          "observed": "both SAFE. souji-verify.sh receipt=pushed. souji-vault-verify.sh receipt=moved-to-obsidian.",
+          "agree": true,
+          "receipt_label_split": true,
+          "tool": [
+            {
+              "cmd": "SHOKUNIN_ROOT=/tmp/souji-s02-classify.ufQr3s SOUJI_LEDGER=/tmp/souji-s02-classify.ufQr3s/ledger.tsv bash tools/souji-verify.sh --json /tmp/souji-s02-classify.ufQr3s/r3-lane/both.txt",
+              "out": "{\"path\":\"/tmp/souji-s02-classify.ufQr3s/r3-lane/both.txt\",\"verdict\":\"SAFE\",\"receipt\":\"pushed\",\"evidence\":\"intro=ddbc3e9e91fa ref=refs/remotes/origin/master ancestor=yes\"}",
+              "exit": 0
+            },
+            {
+              "cmd": "SHOKUNIN_ROOT=/tmp/souji-s02-classify.ufQr3s SOUJI_LEDGER=/tmp/souji-s02-classify.ufQr3s/ledger.tsv bash tools/souji-vault-verify.sh --fallback --json /tmp/souji-s02-classify.ufQr3s/r3-lane/both.txt",
+              "out": "{\"path\":\"/tmp/souji-s02-classify.ufQr3s/r3-lane/both.txt\",\"verdict\":\"SAFE\",\"verified\":\"VERIFIED(moved-to-obsidian)\",\"receipt\":\"moved-to-obsidian\",\"reason\":\"moved-to-obsidian\",\"evidence\":\"ledger-row ledger=/tmp/souji-s02-classify.ufQr3s/ledger.tsv vault=/tmp/souji-s02-classify.ufQr3s/vault/both.txt source-sha256=f6dfac81ebf3 cli=skipped(fallback)\"}",
+              "exit": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "row": 4,
+      "observation": "Scratch type + zero live references + older than the owning lane's last admitted round",
+      "table_verdict": "SAFE(stale)",
+      "score": "DRIFT",
+      "summary": "The .scratch happy path agrees under the tool's own age gate (default --stale-days 1) and a real content hit blocks it. The installed scratch set, the age predicate, and the reference exclusions are not the table's. Taxonomy scratch types come from SKILL.md:18.",
+      "scratch_set": {
+        "table_via_taxonomy": [".scratch/", "*.tmp", "checkpoint blobs", "out/", "reports/round-*/**-draft.*"],
+        "installed_scratch_type": [".scratch path component", "*.out", "*.log", "*-draft.* anywhere", "*checkpoint*.json", "*checkpoint*.png", "*ckpt*.json", "*ckpt*.png", "*.ckpt", "launch-*.json"]
+      },
+      "probes": [
+        {
+          "id": "scratch-dir-zero-refs-10d",
+          "condition_holds": "scratch-dir yes; refs see below; age predicate not the table's",
+          "table": "SAFE(stale) if age is older than last admitted round. That date is not an input.",
+          "observed": "SAFE(stale) scratch-type=scratch-dir refs=0 mtime-age-days=10",
+          "agree": "happy-path under default day gate only",
+          "tool": [
+            {
+              "cmd": "SHOKUNIN_ROOT=/tmp/souji-s02-classify.ufQr3s SOUJI_LEDGER=/tmp/souji-s02-classify.ufQr3s/ledger-clean.tsv bash tools/souji-verify.sh --json /tmp/souji-s02-classify.ufQr3s/r4-lane/.scratch/blob.bin",
+              "out": "{\"path\":\"/tmp/souji-s02-classify.ufQr3s/r4-lane/.scratch/blob.bin\",\"verdict\":\"SAFE\",\"receipt\":\"stale\",\"evidence\":\"scratch-type=scratch-dir refs=0 mtime-age-days=10\"}",
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "id": "live-reference-blocks",
+          "condition_holds": "zero live references is false",
+          "table": "NOT-SAFE",
+          "observed": "NOT-SAFE live-refs=1",
+          "agree": true,
+          "tool": [
+            {
+              "cmd": "SHOKUNIN_ROOT=/tmp/souji-s02-classify.ufQr3s SOUJI_LEDGER=/tmp/souji-s02-classify.ufQr3s/ledger-clean.tsv bash tools/souji-verify.sh --json /tmp/souji-s02-classify.ufQr3s/r4-lane/.scratch/old.tmp",
+              "out": "{\"path\":\"/tmp/souji-s02-classify.ufQr3s/r4-lane/.scratch/old.tmp\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"none\",\"evidence\":\"pushed=no-introducing-commit; obsidian=no-matching-ledger-row; stale=live-refs=1\"}",
+              "exit": 0
+            }
+          ],
+          "truth": [
+            {
+              "cmd": "rg -l --fixed-strings -e old.tmp /tmp/souji-s02-classify.ufQr3s/r4-lane -g '!.git'",
+              "out": "/tmp/souji-s02-classify.ufQr3s/r4-lane/NOTES.md",
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "id": "census-only-citation-ignored",
+          "condition_holds": "zero live references is false if census counts",
+          "table": "NOT-SAFE",
+          "observed": "SAFE(stale) refs=0. The citation was written before this probe.",
+          "agree": false,
+          "false_SAFE": true,
+          "severity": "predicate drift; spec D3 excludes census on purpose. The table does not.",
+          "truth": [
+            {
+              "cmd": "rg -l -F blob.bin /tmp/souji-s02-classify.ufQr3s/r4-lane -g '!.git'",
+              "out": "/tmp/souji-s02-classify.ufQr3s/r4-lane/souji-shokunin/census/note.txt",
+              "exit": 0
+            }
+          ],
+          "tool": [
+            {
+              "cmd": "SHOKUNIN_ROOT=/tmp/souji-s02-classify.ufQr3s SOUJI_LEDGER=/tmp/souji-s02-classify.ufQr3s/ledger-clean.tsv bash tools/souji-verify.sh --json /tmp/souji-s02-classify.ufQr3s/r4-lane/.scratch/blob.bin",
+              "out": "{\"path\":\"/tmp/souji-s02-classify.ufQr3s/r4-lane/.scratch/blob.bin\",\"verdict\":\"SAFE\",\"receipt\":\"stale\",\"evidence\":\"scratch-type=scratch-dir refs=0 mtime-age-days=10\"}",
+              "exit": 0,
+              "observed_at": "2026-10-18T16:30:01-0300, after rg -l -F blob.bin printed only the census note"
+            }
+          ]
+        },
+        {
+          "id": "taxonomy-family-refused",
+          "condition_holds": "SKILL scratch type yes; other conjuncts yes (10d, no basename hits)",
+          "table": "SAFE(stale)",
+          "observed": "NOT-SAFE stale=not-scratch-type",
+          "agree": false,
+          "false_NOT_SAFE": true,
+          "paths": [
+            "/tmp/souji-s02-classify.ufQr3s/r4-lane/loose.tmp",
+            "/tmp/souji-s02-classify.ufQr3s/r4-lane/out",
+            "/tmp/souji-s02-classify.ufQr3s/r4-lane/out/result.dat",
+            "/tmp/souji-s02-classify.ufQr3s/r4-lane/checkpoint-blob"
+          ],
+          "tool": [
+            {
+              "cmd": "SHOKUNIN_ROOT=/tmp/souji-s02-classify.ufQr3s SOUJI_LEDGER=/tmp/souji-s02-classify.ufQr3s/ledger-clean.tsv bash tools/souji-verify.sh --json /tmp/souji-s02-classify.ufQr3s/r4-lane/loose.tmp",
+              "out": "{\"path\":\"/tmp/souji-s02-classify.ufQr3s/r4-lane/loose.tmp\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"none\",\"evidence\":\"pushed=no-introducing-commit; obsidian=no-matching-ledger-row; stale=not-scratch-type\"}",
+              "exit": 0
+            },
+            {
+              "cmd": "SHOKUNIN_ROOT=/tmp/souji-s02-classify.ufQr3s SOUJI_LEDGER=/tmp/souji-s02-classify.ufQr3s/ledger-clean.tsv bash tools/souji-verify.sh --json /tmp/souji-s02-classify.ufQr3s/r4-lane/out",
+              "out": "{\"path\":\"/tmp/souji-s02-classify.ufQr3s/r4-lane/out\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"none\",\"evidence\":\"pushed=no-introducing-commit; obsidian=no-matching-ledger-row; stale=not-scratch-type\"}",
+              "exit": 0
+            },
+            {
+              "cmd": "SHOKUNIN_ROOT=/tmp/souji-s02-classify.ufQr3s SOUJI_LEDGER=/tmp/souji-s02-classify.ufQr3s/ledger-clean.tsv bash tools/souji-verify.sh --json /tmp/souji-s02-classify.ufQr3s/r4-lane/out/result.dat",
+              "out": "{\"path\":\"/tmp/souji-s02-classify.ufQr3s/r4-lane/out/result.dat\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"none\",\"evidence\":\"pushed=no-introducing-commit; obsidian=no-matching-ledger-row; stale=not-scratch-type\"}",
+              "exit": 0
+            },
+            {
+              "cmd": "SHOKUNIN_ROOT=/tmp/souji-s02-classify.ufQr3s SOUJI_LEDGER=/tmp/souji-s02-classify.ufQr3s/ledger-clean.tsv bash tools/souji-verify.sh --json /tmp/souji-s02-classify.ufQr3s/r4-lane/checkpoint-blob",
+              "out": "{\"path\":\"/tmp/souji-s02-classify.ufQr3s/r4-lane/checkpoint-blob\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"none\",\"evidence\":\"pushed=no-introducing-commit; obsidian=no-matching-ledger-row; stale=not-scratch-type\"}",
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "id": "installed-family-not-in-taxonomy",
+          "condition_holds": "taxonomy scratch type no",
+          "table": "NOT-SAFE",
+          "observed": "SAFE(stale)",
+          "agree": false,
+          "false_SAFE": true,
+          "tool": [
+            {
+              "cmd": "bash tools/souji-verify.sh --json /tmp/souji-s02-classify.ufQr3s/r4-lane/old.log",
+              "out": "{\"path\":\"/tmp/souji-s02-classify.ufQr3s/r4-lane/old.log\",\"verdict\":\"SAFE\",\"receipt\":\"stale\",\"evidence\":\"scratch-type=ext refs=0 mtime-age-days=10\"}",
+              "exit": 0
+            },
+            {
+              "cmd": "bash tools/souji-verify.sh --json /tmp/souji-s02-classify.ufQr3s/r4-lane/old.out",
+              "out": "{\"path\":\"/tmp/souji-s02-classify.ufQr3s/r4-lane/old.out\",\"verdict\":\"SAFE\",\"receipt\":\"stale\",\"evidence\":\"scratch-type=ext refs=0 mtime-age-days=10\"}",
+              "exit": 0
+            },
+            {
+              "cmd": "bash tools/souji-verify.sh --json /tmp/souji-s02-classify.ufQr3s/r4-lane/notes-draft.md",
+              "out": "{\"path\":\"/tmp/souji-s02-classify.ufQr3s/r4-lane/notes-draft.md\",\"verdict\":\"SAFE\",\"receipt\":\"stale\",\"evidence\":\"scratch-type=draft refs=0 mtime-age-days=10\"}",
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "id": "draft-under-reports-round",
+          "condition_holds": true,
+          "table": "SAFE(stale) under the day gate, not under a round date",
+          "observed": "SAFE(stale) scratch-type=draft",
+          "agree": "path family agrees; age predicate does not",
+          "tool": [
+            {
+              "cmd": "bash tools/souji-verify.sh --json /tmp/souji-s02-classify.ufQr3s/r4-lane/reports/round-9/x-draft.md",
+              "out": "{\"path\":\"/tmp/souji-s02-classify.ufQr3s/r4-lane/reports/round-9/x-draft.md\",\"verdict\":\"SAFE\",\"receipt\":\"stale\",\"evidence\":\"scratch-type=draft refs=0 mtime-age-days=10\"}",
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "id": "age-gate-is-stale-days-not-last-admitted-round",
+          "condition_holds": "no last-admitted-round input exists",
+          "table": "older than the owning lane's last admitted round",
+          "observed": "wall-clock age <= N*86400 refuses; default N=1. Same 10-day file flips with --stale-days.",
+          "agree": false,
+          "note": "Not scored as a measured false-SAFE against a specific round date, because the tool has no such date. Scored as predicate-not-installed.",
+          "tool": [
+            {
+              "cmd": "bash tools/souji-verify.sh --json --stale-days 30 /tmp/souji-s02-classify.ufQr3s/r4-lane/.scratch/blob.bin",
+              "out": "{\"path\":\"/tmp/souji-s02-classify.ufQr3s/r4-lane/.scratch/blob.bin\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"none\",\"evidence\":\"pushed=no-introducing-commit; obsidian=no-matching-ledger-row; stale=mtime-age-days=10<=30\"}",
+              "exit": 0
+            },
+            {
+              "cmd": "bash tools/souji-verify.sh --json --stale-days 0 /tmp/souji-s02-classify.ufQr3s/r4-lane/.scratch/fresh.tmp",
+              "out": "{\"path\":\"/tmp/souji-s02-classify.ufQr3s/r4-lane/.scratch/fresh.tmp\",\"verdict\":\"SAFE\",\"receipt\":\"stale\",\"evidence\":\"scratch-type=scratch-dir refs=0 mtime-age-days=0\"}",
+              "exit": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "row": 5,
+      "observation": "Anything else, any doubt, any credential-shaped content",
+      "table_verdict": "NOT-SAFE",
+      "score": "AGREE",
+      "summary": "Residual paths and missing paths are NOT-SAFE. Secret-shaped path components are NOT-SAFE(secrets-refusal) even when the introducing commit is an ancestor — stricter than row-2-first, aligned with the Never section. Credential-shaped content in an ordinary name is not detected. 'Stay silent' is ambiguous and not scored as drift.",
+      "probes": [
+        {
+          "id": "ordinary-untracked",
+          "condition_holds": true,
+          "table": "NOT-SAFE",
+          "observed": "NOT-SAFE(none)",
+          "agree": true,
+          "tool": [
+            {
+              "cmd": "SHOKUNIN_ROOT=/tmp/souji-s02-classify.ufQr3s SOUJI_LEDGER=/tmp/souji-s02-classify.ufQr3s/ledger-clean.tsv bash tools/souji-verify.sh --json /tmp/souji-s02-classify.ufQr3s/r5-lane/mystery.txt",
+              "out": "{\"path\":\"/tmp/souji-s02-classify.ufQr3s/r5-lane/mystery.txt\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"none\",\"evidence\":\"pushed=no-introducing-commit; obsidian=no-matching-ledger-row; stale=not-scratch-type\"}",
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "id": "missing-path",
+          "condition_holds": true,
+          "table": "NOT-SAFE",
+          "observed": "NOT-SAFE(unreachable)",
+          "agree": true,
+          "tool": [
+            {
+              "cmd": "SHOKUNIN_ROOT=/tmp/souji-s02-classify.ufQr3s SOUJI_LEDGER=/tmp/souji-s02-classify.ufQr3s/ledger-clean.tsv bash tools/souji-verify.sh --json /tmp/souji-s02-classify.ufQr3s/no-such-row5",
+              "out": "{\"path\":\"/tmp/souji-s02-classify.ufQr3s/no-such-row5\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"unreachable\",\"evidence\":\"missing path\"}",
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "id": "secret-shaped-path-also-ancestor",
+          "condition_holds": true,
+          "table": "NOT-SAFE if credential clause overrides row 2; SAFE(pushed) if row order is first-match",
+          "observed": "NOT-SAFE(secrets-refusal). Body not read.",
+          "agree": "verdict agrees with the Never section and with a credential override. Stricter than first-match row 2.",
+          "false_SAFE": false,
+          "tool": [
+            {
+              "cmd": "SHOKUNIN_ROOT=/tmp/souji-s02-classify.ufQr3s SOUJI_LEDGER=/tmp/souji-s02-classify.ufQr3s/ledger-clean.tsv bash tools/souji-verify.sh --json /tmp/souji-s02-classify.ufQr3s/r5pushed/credentials.txt",
+              "out": "{\"path\":\"/tmp/souji-s02-classify.ufQr3s/r5pushed/credentials.txt\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"secrets-refusal\",\"evidence\":\"secret-shaped path component\"}",
+              "exit": 0
+            },
+            {
+              "cmd": "SHOKUNIN_ROOT=/tmp/souji-s02-classify.ufQr3s SOUJI_LEDGER=/tmp/souji-s02-classify.ufQr3s/ledger-clean.tsv bash tools/souji-verify.sh --json /tmp/souji-s02-classify.ufQr3s/r5-lane/.env",
+              "out": "{\"path\":\"/tmp/souji-s02-classify.ufQr3s/r5-lane/.env\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"secrets-refusal\",\"evidence\":\"secret-shaped path component\"}",
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "id": "credential-content-ordinary-name",
+          "condition_holds": "content is credential-shaped; path is not",
+          "table": "NOT-SAFE if no earlier row matches",
+          "observed": "NOT-SAFE(none). Not secrets-refusal. Body not printed. Tool did not have to detect the content to land on NOT-SAFE.",
+          "agree": true,
+          "tool": [
+            {
+              "cmd": "SHOKUNIN_ROOT=/tmp/souji-s02-classify.ufQr3s SOUJI_LEDGER=/tmp/souji-s02-classify.ufQr3s/ledger-clean.tsv bash tools/souji-verify.sh --json /tmp/souji-s02-classify.ufQr3s/r5content/notes.txt",
+              "out": "{\"path\":\"/tmp/souji-s02-classify.ufQr3s/r5content/notes.txt\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"none\",\"evidence\":\"obsidian=no-matching-ledger-row; stale=not-scratch-type\"}",
+              "exit": 0
+            }
+          ]
+        },
+        {
+          "id": "credential-content-inside-old-scratch",
+          "condition_holds": "row 4 and the credential clause can both be read as applying",
+          "table": "ambiguous: first-match row 4 is SAFE(stale); an override reading of row 5 is NOT-SAFE",
+          "observed": "SAFE(stale). Content not inspected. marker hit count was 1; the line was not printed.",
+          "agree": "not scored",
+          "tool": [
+            {
+              "cmd": "rg -c -F 'op://' /tmp/souji-s02-classify.ufQr3s/r4-lane/.scratch/marker.out",
+              "out": "1",
+              "exit": 0
+            },
+            {
+              "cmd": "SHOKUNIN_ROOT=/tmp/souji-s02-classify.ufQr3s SOUJI_LEDGER=/tmp/souji-s02-classify.ufQr3s/ledger-clean.tsv bash tools/souji-verify.sh --json /tmp/souji-s02-classify.ufQr3s/r4-lane/.scratch/marker.out",
+              "out": "{\"path\":\"/tmp/souji-s02-classify.ufQr3s/r4-lane/.scratch/marker.out\",\"verdict\":\"SAFE\",\"receipt\":\"stale\",\"evidence\":\"scratch-type=scratch-dir refs=0 mtime-age-days=10\"}",
+              "exit": 0
+            }
+          ]
+        }
+      ],
+      "silence_clause": "The table says stay silent in the dry run. Both tools emit a verdict line for NOT-SAFE. Removal flow step 1 says print the classification table. Not scored: 'silent' can mean 'do not propose removal' (then a NOT-SAFE line agrees) or 'omit the path' (then it does not). No evidence decides that."
+    }
+  ],
+  "reconciliation": {
+    "drift_to_zero": false,
+    "do_not_silently_pick": "False-SAFE rows should move toward the table (check last commit and dirty/unpushed before SAFE on files). False-NOT-SAFE rows (repo-root pushed, *.tmp, out/) are the tool being stricter or narrower; reconciling those the other way would widen removal. This seat did not patch either side.",
+    "blockers_for_C1": [
+      "File whose introducing commit is an ancestor of origin, but whose last commit is not, is SAFE(pushed). Table row 1 says NOT-SAFE.",
+      "File with a dirty overlay and no unpushed commit is SAFE(pushed). Table row 1 says NOT-SAFE.",
+      "Untracked scratch file inside a dirty worktree is SAFE(stale).",
+      "Clean repo-root whose HEAD is origin/<default> is NOT-SAFE(none). Table row 2 says SAFE(pushed).",
+      "Scratch family, age gate, and census exclusion do not match the table's scratch/zero-refs/last-admitted-round conjuncts."
+    ]
+  },
+  "not_claimed": [
+    "Did not run --selftest (its trap deletes the mktemp dir; this seat does not delete).",
+    "Did not classify live fleet artifacts.",
+    "Did not read secret-shaped file bodies or the live obsidian ledger.",
+    "An earlier fixture build was discarded: a later git add -A absorbed files that were meant to stay untracked, and git log --not --remotes without a positive revision looked empty. Cited probes are from the rebuilt fixtures only.",
+    "souji-vault-verify.sh was not re-run on the dirty-only file (r1b). Its evaluate_artifact also calls try_pushed before any status check (lines 524-531); that is code, not an observed output on r1b."
+  ],
+  "safety": {
+    "live_ledger_mtime": "2026-10-18 13:29:51.552252277 -0300 corpus/knowledge/obsidian-ledger.tsv (unchanged; not opened)",
+    "writes": ["census/round-6/seat-02.json", "/tmp/souji-s02-classify.ufQr3s/**"],
+    "git_mutators_on_live_repos": "none"
+  }
+}

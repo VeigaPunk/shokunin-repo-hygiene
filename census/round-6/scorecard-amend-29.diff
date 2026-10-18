@@ -1,0 +1,95 @@
+diff --git a/SCORECARD.md b/SCORECARD.md
+--- a/SCORECARD.md
++++ b/SCORECARD.md
+@@ -4,46 +4,67 @@
+ coverage**. Following the kotodama precedent, rows carry per-axis verdicts
+ and checkable observations plus a 0–10 score only where a reproducible
+ mapping from evidence to number exists. Every observation carries its
+-counting command and the commit it was measured against.
++counting command and the commit it was measured against. Where no formula
++maps that command's output onto the integer, the integer is a parent
++increment — the row says so, and the integer is not re-derived here.
++Counting commands are run from this repo. A relative `git -C <sibling>`
++does not resolve here.
+ 
+ ## Axes
+ 
+ | axis | score | verdict / observation | counting command | measured commit | last change |
+ |---|---|---|---|---|---|
+-| coverage | 8 | improved (C1, r3): 21/21 metadata prunes executed with receipts (lore 20→1, gd2d 6→4, lock-preserve for 3 pinned); worktree surface closed | `git -C lore-shokunin worktree list \| wc -l` → 1; `git -C game-dev-2d-shokunin worktree list \| wc -l` → 4 | r3 report | r3 |
+-| calibration | 7 | improved (V1, r5): verification round found 3 material defects (symlink false-SAFE class; local-master pushed fallback; r1 logs_tier row) — all corrected in-round with re-run evidence; 0 unresolved | `census/round-5/final-57..64.json`; lessons/round-5.md; probes in r5 report | r5 report | r5 |
+-| operability | 8 | improved (O1', r4): tools/souji-vault-verify.sh live — ledger+sha256 moved-to-obsidian verification, parent battery 4/4 + real-vault probe VERIFIED, self-referential rows refused | `bash tools/souji-vault-verify.sh --selftest; echo $?` → 0; `tests/results/parent-vault-battery.json` | r4 report | r4 |
++| coverage | 8 | improved (C1, r3): 21/21 metadata prunes executed with receipts (lore 20→1, gd2d 6→4, lock-preserve for 3 pinned). Not closed: those 3 remain locked, 1 unpushed commit each (re-locked r5). Score 8 is the r3 parent increment from 7 (`ab7f2f7`) to 8 (`3674633`); the worktree counts are the observation, not the score. The published relative command, run from this repo, does not reproduce 1 and 4 (see counting command). | `git -C /home/vgpnk/Projects/shokunin/lore-shokunin worktree list \| wc -l` → 1; `git -C /home/vgpnk/Projects/shokunin/game-dev-2d-shokunin worktree list \| wc -l` → 4; `git -C /home/vgpnk/Projects/shokunin/game-dev-2d-shokunin log --oneline wt-r98 --not --remotes \| wc -l` → 1 (wt-r99 → 1, wt-r100 → 1). No fetch. Relative `git -C lore-shokunin worktree list \| wc -l` from this repo: fatal on stderr, stdout 0, PIPE_EXIT=0. | ce58c2b (score set at 3674633; re-measure 2026-10-18T16:28:41-03:00) | r3 |
++| calibration | 7 | improved (V1, r5): 3 material defects corrected in-round (symlink false-SAFE class; local-master pushed fallback; r1 logs_tier row). `corpus/lessons/round-5.md` states 0 unresolved contradictions at closure. Score 7 is the parent increment from 6 at `48a64d8` to 7 at `ce58c2b`; it is not derived from the finding count or from the judge-file count. | `ls census/round-5/final-57.json census/round-5/final-58.json census/round-5/final-59.json census/round-5/final-60.json census/round-5/final-61.json census/round-5/final-62.json census/round-5/final-63.json census/round-5/final-64.json \| wc -l` → 8; `rg -n '0 unresolved contradictions at closure' corpus/lessons/round-5.md` → match exit 0 | ce58c2b | r5 |
++| operability | 8 | improved (O1', r4): score set when ledger-verify landed (`48a64d8`, 7→8). r5 patched both tools; selftests re-proved at `ce58c2b` (verify: selftest: 24 checks, 0 failed, exit 0; vault: selftest: 35 checks, 0 failed, exit 0) at 2026-10-18T16:28:41-03:00. Vault selftest stdout contains PASS V9 (source-equals-vault). `tests/results/parent-vault-battery.json` is the r4 tournament record (impl-20 ok on V1–V4), not a re-run of the installed binary. The r4 real-vault probe was not re-run in this hygiene pass. Score 8 is that parent increment; exit 0 does not by itself equal 8. | `bash tools/souji-verify.sh --selftest; echo $?` → 0; `bash tools/souji-vault-verify.sh --selftest; echo $?` → 0 | ce58c2b (score set at 48a64d8; re-measure 2026-10-18T16:28:41-03:00) | r4 |
+ 
+ ## Capabilities
+ 
+ | name | what it can now do | evidence pointer | first-working round |
+ |---|---|---|---|
+-| fleet census (receipt taxonomy) | classify every fleet artifact into pushed / moved-to-obsidian / stale / none with per-row command evidence, at 64-seat parallelism, dry-run | `census/round-1/census-summary.json`, `census/round-1/census.tsv` (246 rows) | r1 |
+-| souji-verify | per-artifact SAFE/NOT-SAFE verdict from receipts, D1–D3 fixed, --selftest over F1–F10 fixtures, read-only, secrets-refusal | `tools/souji-verify.sh` (sha256 7efda63bd760…), `tests/results/INSTALL.json`, `tests/results/parent-harness-live.json` | r2 |
+-| worktree metadata prune | selective prune with lock-preserve of pinned registrations; receipts re-verified at act time | `census/round-3/seat-61.json` (plan), `census/round-3/seat-62.json` (lore assertions), LOG r3 | r3 |
+-| ledger-verify (moved-to-obsidian receipt) | verify a ledger row's source + vault sha256 pairs read-only; refuses self-referential rows; --ledger override; obsidian-CLI probe path reserved (no usable CLI entry point on this host — banked for operator) | `tools/souji-vault-verify.sh` (sha256 d312263a…), `tests/results/parent-vault-battery.json`, LOG r4 | r4 |
++| fleet census (receipt taxonomy) | recorded r1 dry-run classification (246 data rows). Not a repeating tool: `tools/souji-census.sh` was absent at 2026-10-18T16:28:41-03:00. Untracked `tools/souji-census.impl-*.sh` drafts, if present, are not that entry point and were not inspected here. | `census/round-1/census-summary.json` (`rows_total` 246); `census/round-1/census.tsv` (`wc -l` → 247) | r1 |
++| souji-verify | per-artifact SAFE/NOT-SAFE; r5 fail-closed (symlink-present, pushed-unverifiable); selftest re-proved (selftest: 24 checks, 0 failed, exit 0) at HEAD; secrets-refusal | `tools/souji-verify.sh` HEAD sha256 `53239fdfe5bc…` (`ce58c2b`). r2 install `7efda63bd760…` is `9435e46` only; `tests/results/INSTALL.json` still records that superseded hash. `tests/results/parent-harness-live.json` is the r2 harness, not a re-run of HEAD. | r2 |
++| worktree metadata prune | executed once (r3), metadata only, with lock-preserve. No standalone prune tool. A repeat needs a fresh receipt re-measure; the 3 gd2d pins are still locked (unpushed counts in the coverage row). | LOG.md r3 entry; coverage-row commands. `census/round-3/seat-61.json` is the plan and `census/round-3/seat-62.json` is lore assertions — neither is the act-time receipt. | r3 |
++| ledger-verify (moved-to-obsidian receipt) | verify a ledger row's source + vault sha256 pairs read-only; refuses self-referential rows; `--ledger` override. Live ledger is header-only (0 data rows), so the capability is fixture-proved, not exercised on a populated live ledger. No usable Obsidian CLI entry point on this host (banked). | `tools/souji-vault-verify.sh` HEAD sha256 `00d59b1b36d8…` (`ce58c2b`). r4 install `d312263ac8eb…` is `48a64d8` only. `tests/results/parent-vault-battery.json` (r4, impl-20, 4/4 ok). `awk 'NR>1{c++} END{print c+0}' corpus/knowledge/obsidian-ledger.tsv` → 0. Probe: `../.ufo/scopes/souji-mint-20261018/obsidian-cli-probe.md` | r4 |
+ 
+ ## Planned
+ 
+-- **r4 — AMENDED by operator mid-round:** the Obsidian-CLI integration
+-  claim was withdrawn ("forget the obsidian integration for now"); closed
+-  instead on the standalone ledger-verify capability
+-  (`tools/souji-vault-verify.sh`, installed r4). Finding: no usable CLI
+-  entry point on this host — banked in
+-  `.ufo/scopes/souji-mint-20261018/obsidian-cli-probe.md` for the operator.
+-  Completion-criterion obsidian-row requirement waived by the operator.
+-- **r5 (verification round, all axes):** audit rounds 1–4 verdicts and
+-  outputs for correctness and missed items, folded into the round's own
+-  claims (scheduled model: gpt-6-luna-max). Carry-overs: the 96-row
+-  approval list awaits operator sign-off; the 3 pinned gd2d registrations
+-  await that lane's push; `/tmp` fixture residue routed to
+-  tsukuroi/operator.
++Closed rounds are not plans. r4 and r5 are admitted (LOG.md;
++`../.ufo/reports/round-4/souji.md`, `../.ufo/reports/round-5/souji.md`;
++commits `48a64d8`, `ce58c2b`). The operator r4 amendment — obsidian claim
++withdrawn, ledger-verify installed, CLI finding banked at
++`../.ufo/scopes/souji-mint-20261018/obsidian-cli-probe.md` — stays in
++LOG.md. It is not a plan.
++
++Still open (carried; not re-decided here):
++
++- 96-row operator approval list
++  (`census/round-3/operator-approval-list.tsv`, `wc -l` → 97)
++  awaits operator sign-off. LOG.md has no later sign-off entry beyond the
++  r3 "awaits" sentence.
++- 3 pinned gd2d registrations (wt-r98/99/100) remain locked, unpushed
++  1/1/1, re-measured 2026-10-18T16:28:41-03:00, no
++  fetch. Disposition is that lane's push or an operator call.
++- `/tmp` fixture residue was routed to tsukuroi/operator (r5 report).
++  Not re-swept here.
++
++Dispatched r6, not admitted (do not treat as landed):
++
++- C1 calibration — docs/tools reconciliation, drift→0.
++- O1 operability — `tools/souji-census.sh` repeatable fleet census.
++  That path was absent at 2026-10-18T16:28:41-03:00.
++- K1 coverage — kotodama `.scratch` read-only classification plus a
++  handoff note. Not measured by this seat.
+ 
+ ## Saturation / stagnation
+ 
+-Saturation line: 8 per axis; stagnation window 3 rounds. Coverage 8,
+-operability 7, calibration 6 — calibration lowest; r5 verification work
+-carries the calibration flavor.
++Saturation line: 8 per axis; stagnation window 3 rounds. Reconciled to
++the axes table at `ce58c2b`: coverage 8, operability 8, calibration 7.
++Calibration is lowest and below the line, so the stagnation nudge does
++not fire. Superseded sentence, copied unchanged from `3674633` through
++`ce58c2b` while the table moved (operability 7→8 at `48a64d8`;
++calibration 6→7 at `ce58c2b`): "operability 7, calibration 6 — r5
++verification work carries the calibration flavor."
+ 
+ ## Retired
+ 

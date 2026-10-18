@@ -1,0 +1,209 @@
+{
+  "seat": "S05",
+  "round": 6,
+  "kind": "drift-audit",
+  "claim": "C1",
+  "assignment": "Audit SKILL.md Checklists / Pre-removal against the r3+r5 actual gates used. Mark each item verified-in-use vs never-exercised.",
+  "written_at": "2026-10-18T15:58:09-0300",
+  "mode": "read-only over every surface except this fragment",
+  "source": {
+    "path": "SKILL.md",
+    "heading": "Checklists / Pre-removal",
+    "lines": "74-79",
+    "text": [
+      "Pre-removal (all must answer yes):",
+      "Receipt class named and its command re-run at decision time",
+      "Owning repo has no unpushed commits touching the artifact (`git log --not --remotes --oneline -- <path>` empty)",
+      "Owning repo worktree is clean over the artifact (`git status --porcelain -- <path>` empty)",
+      "Entry is in a dry-run table the operator has seen, unless receipt is `pushed` and quarantine hold elapsed",
+      "Nothing references the artifact (`rg -l` across owning repo, 0 hits)"
+    ]
+  },
+  "rubric": {
+    "verified-in-use": "An r3 gate seat, the r3 parent execution, or an r5 verification seat applied this item's predicate to a real target. The recorded command may differ from the checkbox example; that difference is fidelity.",
+    "never-exercised": "No r3 or r5 gate applied this item's predicate. Absence of an off-record operator glance is stated as not-evidenced, not as a proof the operator never saw a table.",
+    "fidelity": "exact = written command/threshold was the gate; analogue = a related check ran; absent = no check recorded."
+  },
+  "scope_of_gates": {
+    "r3_removal": "The only removal r3+r5 executed: 21 worktree metadata prunes (lore 19 + gd2d 2 detached). Receipt class metadata-prune. LOG.md:132-150. Commit 36746332.",
+    "r3_not_removed": "96-row operator-approval-list.tsv classified SAFE(pushed) and left in place. LOG.md:147 'awaits operator sign-off; no file deletions this round.'",
+    "r5_removal": "None. r5 verified r1-r4, patched both tools (symlink-present, pushed-unverifiable), and re-locked the 3 gd2d pins. It did not delete artifacts and did not re-apply Pre-removal as a removal precondition."
+  },
+  "headline": "4/5 Pre-removal items were applied in some form; 1/5 never-exercised. 0/5 was an exact, decisive gate of the only removal. The receipt class actually used (metadata-prune) is absent from SKILL.md.",
+  "counts": {
+    "checklist_items": 5,
+    "verified_in_use": 4,
+    "never_exercised": 1,
+    "exact_and_decisive_for_r3_removal": 0
+  },
+  "items": [
+    {
+      "id": "PR-1",
+      "line": 75,
+      "text": "Receipt class named and its command re-run at decision time",
+      "mark": "verified-in-use",
+      "fidelity": "analogue",
+      "decisive_for_r3_removal": true,
+      "r3": "Class named: metadata-prune. Conditions re-run before prune: dir absent, unique commits vs --all = 0, souji-verify.sh, and `git worktree prune --dry-run -v` set-identity (S58 method, S62 A1-A12, S64 independent_rederivation, LOG.md:132-136).",
+      "r5": "No removal decision. S08/S30 re-checked post-prune worktree lists. S10/S40/S45 re-ran the pushed receipt on the unexecuted 96-row list.",
+      "drift": "SKILL.md receipt taxonomy (lines 16-18) names only pushed, moved-to-obsidian, stale. `rg -n metadata-prune SKILL.md` → ABSENT. The taxonomy command `git fetch -q && git merge-base --is-ancestor <commit> origin/main` was not the command re-run. The installed tool forbids git fetch and resolves refs/remotes/origin/HEAD (fleet: origin/master), not origin/main."
+    },
+    {
+      "id": "PR-2",
+      "line": 76,
+      "text": "Owning repo has no unpushed commits touching the artifact (`git log --not --remotes --oneline -- <path>` empty)",
+      "mark": "verified-in-use",
+      "fidelity": "analogue",
+      "decisive_for_r3_removal": false,
+      "written_command": "never-exercised",
+      "r3": "Predicate applied with a sharper command. 26 round-3 seat files contain `log --branches --not --remotes --`. Examples: S63 `git log --branches --not --remotes --oneline -- .git/worktrees` → 0; S53 same form over the approval-list directory → 0 lines; S64 comm of unpushed-touched paths vs 96 SAFE paths → 0. LOG.md:132 also records a repo-global re-check: lore + gd2d unpushed = 0 at act time. lessons/round-3.md:15-18 cites this checklist item as the artifact-scoped gate.",
+      "r5": "Not re-run as a removal gate. S05 (round 5) used `git log --branches --not --remotes --oneline | wc -l` on the fleet root, not the path-scoped checklist form.",
+      "drift": "The written command string has one hit in the lane: SKILL.md:76 only. It omits --branches, so it would miss unpushed commits not reachable from HEAD. It also cannot see untracked .git/worktrees admin dirs (S23: ls-files .git → 0), so it would not have withheld the 3 gd2d pins. The gate that withheld them is not in this checklist: `git log --oneline <branch> --not --remotes` (tool evaluate_worktree, souji-verify.sh:321)."
+    },
+    {
+      "id": "PR-3",
+      "line": 77,
+      "text": "Owning repo worktree is clean over the artifact (`git status --porcelain -- <path>` empty)",
+      "mark": "verified-in-use",
+      "fidelity": "exact-on-seats",
+      "decisive_for_r3_removal": false,
+      "r3": "Exact command recorded in 4 round-3 seats: S23 and S25 on `.git/worktrees/<name>` (empty, and non-informative because .git is untracked); S53 claims it empty for approval-list rows that were not deleted; S50 on MANIFEST.json/LOG.md/SCORECARD.md, not a removal target. The executed targets' checkout dirs were absent, so path-scoped status could not be taken there (round-3 S05 dirty_check: impossible).",
+      "r5": "S05 ran `git status --porcelain -- .ufo/waves/round-14/registry-home/context.md` during a verdict audit of a file that was not removed. S44 ran it on tools/souji-verify.sh. Neither was a removal gate.",
+      "drift": "Installed tools do not implement the path-scoped form. evaluate_repo_root uses repo-global `git status --porcelain` (souji-verify.sh:305). evaluate_worktree uses `git -C \"$target\" status --porcelain` only when the dir is present (souji-verify.sh:341), which is the case the r3 prune explicitly did not have. Absent dir short-circuits to metadata-prune."
+    },
+    {
+      "id": "PR-4",
+      "line": 78,
+      "text": "Entry is in a dry-run table the operator has seen, unless receipt is `pushed` and quarantine hold elapsed",
+      "mark": "never-exercised",
+      "fidelity": "absent",
+      "decisive_for_r3_removal": false,
+      "r3": "A dry-run listing existed (S62: `git worktree prune --dry-run -v` named exactly the 19 lore registrations). No lane record shows that listing, or the 21-set, was a table the operator had seen before the parent pruned. The exception clause does not cover the removal: receipt was metadata-prune, not pushed, and no quarantine hold elapsed. The 96 pushed rows, which the exception could have covered, were not removed. LOG.md:147: the approval list awaits operator sign-off.",
+      "r5": "S28 recorded `find /home/vgpnk/Projects/shokunin -type d -name .ufo-quarantine -print` → no matching paths, find_exit=0. r5 did not start a hold and did not remove the approval-list rows.",
+      "uncertainty": "This seat did not search operator chat outside the lane. 'Operator has seen' is not evidenced in LOG.md, .ufo/reports/round-3/souji.md, or the r3 gate seats. That is not a proof no off-record glance happened."
+    },
+    {
+      "id": "PR-5",
+      "line": 79,
+      "text": "Nothing references the artifact (`rg -l` across owning repo, 0 hits)",
+      "mark": "verified-in-use",
+      "fidelity": "analogue",
+      "decisive_for_r3_removal": false,
+      "r3": "S58 prune authorization included a live-pin sweep: `rg -l --no-ignore --hidden -F <name>` with census/tests excluded, hits classified historical, live_gate_or_fixture_pin=0. 34 round-3 seat files mention `rg -l`. The literal '0 hits' rule was not the gate: historical prose hits were allowed.",
+      "r5": "Not a removal gate. S51/final-57 reproduced a false-SAFE: installed `rg -l` omits --hidden, so a scratch file referenced only from a hidden path still verifies SAFE(stale). That defect is not in the three r5 material fixes (symlink-present, pushed-unverifiable, logs_tier existence). Current tools still lack --hidden.",
+      "drift": "Checklist says unqualified `rg -l` and 0 hits. r3 gate added --hidden --no-ignore -F plus exclusions and a historical-hit exception. Installed count_live_refs (souji-verify.sh:205, souji-vault-verify.sh:435) is `rg -l --no-ignore --fixed-strings` with census/tests/quarantine globs and no --hidden."
+    }
+  ],
+  "gates_used_not_in_checklist": [
+    {
+      "gate": "dir absent",
+      "where": "r3 removal, decisive",
+      "command": "test -e <worktree-path> / test -d; git worktree list --porcelain prunable"
+    },
+    {
+      "gate": "unique commits vs --all = 0",
+      "where": "r3 removal, decisive",
+      "command": "git -C <owner> log --oneline <HEAD> --not --all | wc -l"
+    },
+    {
+      "gate": "named-branch unpushed withhold",
+      "where": "r3 removal, decisive for the 3 gd2d pins",
+      "command": "git -C <owner> log --oneline <branch> --not --remotes | wc -l"
+    },
+    {
+      "gate": "lock-then-prune",
+      "where": "r3 execution mechanism (S61/S64 BLOCKER-1); r5 re-lock",
+      "command": "git worktree lock on wt-r98/99/100, then prune, then unlock (r3); r5 left them locked"
+    },
+    {
+      "gate": "admin present, HEAD match, unlocked, registered once, no live cwd, HEAD ancestor of origin default",
+      "where": "r3 S58 authorization",
+      "command": "admin HEAD file vs registration HEAD; ls locked; merge-base --is-ancestor <HEAD> refs/remotes/origin/main (lore/gd2d) or origin/master (fleet files)"
+    },
+    {
+      "gate": "dry-run set identity",
+      "where": "r3 S62, parent LOG",
+      "command": "git worktree prune --dry-run -v equals admin dirs equals prunable list"
+    },
+    {
+      "gate": "symlink-present fail-closed",
+      "where": "r5 tool patch, not a removal",
+      "command": "find -type l in dir_digest → NOT-SAFE(symlink-present)"
+    },
+    {
+      "gate": "no remote-tracking ref → pushed-unverifiable",
+      "where": "r5 tool patch, not a removal",
+      "command": "resolve_default_ref returns 1 when refs/remotes/origin/* is empty; local refs/heads/master cannot establish pushed"
+    },
+    {
+      "gate": "pushed correction must re-verify existence",
+      "where": "r5 procedure finding (logs_tier.txt), not a removal",
+      "command": "test -e / git rev-parse HEAD:<path> at correction time, not only merge-base --is-ancestor of the introducing commit"
+    }
+  ],
+  "this_seat_commands": [
+    {
+      "cmd": "python3 extract SKILL.md lines 72-85",
+      "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+      "out": "74:Pre-removal (all must answer yes): then the five checkbox lines 75-79 as quoted in source.text. Adjacent Pre-quarantine checklist is lines 81-84 and was not audited."
+    },
+    {
+      "cmd": "rg -n -F 'git log --not --remotes --oneline --' /home/vgpnk/Projects/shokunin/souji-shokunin",
+      "out": "SKILL.md:76 only"
+    },
+    {
+      "cmd": "rg -n metadata-prune SKILL.md",
+      "out": "ABSENT"
+    },
+    {
+      "cmd": "rg -l -F 'git status --porcelain --' census/round-3 | wc -l; rg -l 'log --branches --not --remotes --' census/round-3 | wc -l; rg -l 'rg -l' census/round-3 | wc -l",
+      "out": "4; 26; 34"
+    },
+    {
+      "cmd": "find /home/vgpnk/Projects/shokunin -maxdepth 3 -type d -name .ufo-quarantine -print",
+      "out": "(no paths)"
+    },
+    {
+      "cmd": "python3 csv.DictReader census/round-3/operator-approval-list.tsv",
+      "out": "data_rows 96; header path, size_bytes, intro_commit, sha256, source, evidence; receipt column absent"
+    },
+    {
+      "cmd": "git -C /home/vgpnk/Projects/shokunin/lore-shokunin worktree list; git -C /home/vgpnk/Projects/shokunin/game-dev-2d-shokunin worktree list",
+      "out": "lore_count=1: /home/vgpnk/Projects/shokunin/lore-shokunin 6cec83a [main]. gd2d_count=4: main 05a72899 plus wt-r100 2d562282 locked, wt-r98 68bee6e7 locked, wt-r99 fe1a996e locked."
+    },
+    {
+      "cmd": "for d in game-dev-2d-shokunin/.git/worktrees/*/locked; do wc -c; cat; done",
+      "out": "3 files, 79 bytes each: 'souji r5: pinned until game-dev-2d pushes wt branches or operator dispositions'"
+    },
+    {
+      "cmd": "git -C souji-shokunin show -s --format='%H %s' 36746332; git -C souji-shokunin log --oneline -5",
+      "out": "36746332cab0617c1ef23a63fee727c8869bd25e round-3: 21 metadata prunes executed (lore 20->1, gd2d 6->4 lock-preserve), 96-row operator approval list, probation gate cleared. HEAD ce58c2b round-5 verification audit."
+    },
+    {
+      "cmd": "rg -n 'rg -l' tools/souji-verify.sh tools/souji-vault-verify.sh; rg -n -- '--hidden' tools/souji-verify.sh tools/souji-vault-verify.sh",
+      "out": "souji-verify.sh:205 and souji-vault-verify.sh:435 are `rg -l --no-ignore --fixed-strings`. NO --hidden in either installed tool."
+    },
+    {
+      "cmd": "date +%Y-%m-%dT%H:%M:%S%z",
+      "out": "2026-10-18T15:58:09-0300"
+    }
+  ],
+  "citations": [
+    "SKILL.md:16-18 receipt taxonomy; SKILL.md:74-79 Pre-removal",
+    "LOG.md:132-150 round-3 execution and 'awaits operator sign-off; no file deletions'",
+    "corpus/lessons/round-3.md:15-18 artifact-scoped dirty/unpushed gate cites the checklist",
+    "corpus/lessons/round-5.md:8-25 three material fixes; hidden-rg false-SAFE is not among them",
+    "census/round-3/seat-58.json method + prune_authorization; seat-62.json A1-A12; seat-64.json final_gate",
+    "census/round-5/seat-08.json post-prune counts; seat-28.json quarantine find empty; seat-51.json hidden-ref probe",
+    "tools/souji-verify.sh:137-149 resolve_default_ref; :205 count_live_refs; :301-356 evaluate_repo_root / evaluate_worktree"
+  ],
+  "reconciliation_note": "To drive this checklist's drift to 0, either add the r3 worktree-registration gates (dir-absent, unique=0, named-branch unpushed, lock-preserve) and name metadata-prune, or stop citing Pre-removal as the removal gate. Do not treat the written PR-2 command as sufficient for worktree admin dirs. PR-4 remains an open precondition for any future file deletion of the 96-row list.",
+  "actions": {
+    "removal_or_prune_performed": false,
+    "writes": ["census/round-6/seat-05.json"],
+    "other_surfaces_modified": false,
+    "git_fetch_push_commit_branch_prune_remove": false,
+    "obsidian_ledger_touched": false,
+    "secret_shaped_files_read": false
+  }
+}

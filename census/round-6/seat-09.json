@@ -1,0 +1,272 @@
+{
+  "seat": "S09",
+  "round": 6,
+  "kind": "drift-audit",
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "fleet_root": "/home/vgpnk/Projects/shokunin",
+  "repo_head": "ce58c2b457c8ffb7886b36a509bf957f90d1f296",
+  "fleet_head": "adc3d330eb88beaf699dc94822c654765a52392f",
+  "run_utc": "2026-10-18T19:09:53Z",
+  "run_local": "2026-10-18T16:09:53-03:00",
+  "assignment": "Verify each LOG.md counting-command still reproduces. Run the commands cited in SCORECARD axes rows and LOG entries. List stale ones.",
+  "verdict": "DRIFT. SCORECARD axes counting commands still reproduce from the fleet root (lore worktree lines 1, game-dev-2d worktree lines 4, vault selftest exit 0). Eight LOG citations do not reproduce as current facts. drift_to_zero is false.",
+  "drift_to_zero": false,
+  "agreement_counts": {
+    "axes_runnable_commands": 3,
+    "axes_reproduce_from_fleet_root": 3,
+    "axes_numerically_stale": 0,
+    "stale_rows": 8,
+    "superseded_rows": 2,
+    "qualified_nonreproduce_rows": 1,
+    "not_a_command_rows": 1,
+    "adjacent_doc_drift_rows": 2,
+    "reproduce_rows": 13,
+    "reproduce_rows_that_are_log_citations": 9,
+    "note": "reproduce_rows includes 4 SCORECARD rows (2 axes commands, vault selftest, battery file) plus 9 LOG citations. stale_rows are the open LOG mismatches. Counts are the lengths of the arrays below."
+  },
+  "stale": [
+    {
+      "id": "conf-live-bytes",
+      "class": "standing",
+      "source": "LOG.md mint; also SKILL.md:65 and MINT.md (adjacent, not rewritten)",
+      "cited": "cmp DIFFER, 3859 vs 4092 B",
+      "command": "wc -c shokunin.conf shokunin.conf.full-roster-20261015; cmp shokunin.conf shokunin.conf.full-roster-20261015; echo cmp_exit=$?",
+      "cwd": "/home/vgpnk/Projects/shokunin",
+      "observed": "4432 shokunin.conf; 3859 shokunin.conf.full-roster-20261015; cmp exit 1 (DIFFER still true). git cat-file -s 7bf2b1a^:shokunin.conf = 4092; git cat-file -s HEAD:shokunin.conf = 4432 (mint commit 7bf2b1a wrote the new size and is the latest commit touching the file).",
+      "reproduces": "DIFFER and snapshot 3859 yes; live 4092 no"
+    },
+    {
+      "id": "kotodama-scratch-553M",
+      "class": "standing-live",
+      "source": "LOG.md mint `du -sh .scratch` → 553M",
+      "cited": "553M",
+      "command": "du -sh .scratch; du -sb .scratch",
+      "cwd": "/home/vgpnk/Projects/shokunin/kotodama-shokunin",
+      "observed": "At 2026-10-18T16:09:53-03:00: du -sh → 19G; du -sb → 18699253922. Earlier this seat, before 15:58:13-03:00, du -sh printed 18G; an intermediate du -sb printed 18292985803 while du -sh already printed 19G. Tree is live; the human label and the byte count are not a stable pair. Both are incompatible with 553M.",
+      "reproduces": false
+    },
+    {
+      "id": "kotodama-scratch-1.9G",
+      "class": "standing-live",
+      "source": "LOG.md round 1: 553M at mint 11:45 and 1.9G at 12:35",
+      "cited": "1.9G",
+      "command": "du -sh /home/vgpnk/Projects/shokunin/kotodama-shokunin/.scratch; du -sb /home/vgpnk/Projects/shokunin/kotodama-shokunin/.scratch",
+      "observed": "Same latest pair as kotodama-scratch-553M: 19G and 18699253922 bytes. No later LOG entry updates the size.",
+      "reproduces": false
+    },
+    {
+      "id": "installed-verify-sha",
+      "class": "standing",
+      "source": "LOG.md round 2: installed byte-identical sha256 7efda63bd760…; SCORECARD capabilities row repeats the prefix (adjacent to the axes table)",
+      "cited": "7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820 on tools/souji-verify.sh",
+      "command": "sha256sum tools/souji-verify.sh tools/souji-verify.impl-12.sh; cmp -s tools/souji-verify.sh tools/souji-verify.impl-12.sh; echo cmp_exit=$?",
+      "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+      "observed": "53239fdfe5bcaaaf448e8525845ab962dd7ab6a4e7f75c0f4f051614f1c99200  tools/souji-verify.sh; 7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820  tools/souji-verify.impl-12.sh; cmp exit 1. git log -1 -- tools/souji-verify.sh = ce58c2b (r5 fail-closed symlink + local-master). diff vs impl-12 adds the symlink-present check. The judged impl still matches the cited hash; the installed path does not.",
+      "reproduces": false
+    },
+    {
+      "id": "installed-vault-sha",
+      "class": "standing",
+      "source": "LOG.md round 4: installed byte-identical sha256 d312263a…; SCORECARD capabilities row repeats the prefix",
+      "cited": "d312263ac8ebc9e23555402dc5ae63167f78dcd01ddccc5ddcfa7623b85879e0 on tools/souji-vault-verify.sh",
+      "command": "sha256sum tools/souji-vault-verify.sh tools/souji-vault-verify.impl-20.sh; cmp -s tools/souji-vault-verify.sh tools/souji-vault-verify.impl-20.sh; echo cmp_exit=$?",
+      "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+      "observed": "00d59b1b36d87db37518b5ef9fb98cd472888a075ed7b97bd5b8ff93bd559455  tools/souji-vault-verify.sh; d312263ac8ebc9e23555402dc5ae63167f78dcd01ddccc5ddcfa7623b85879e0  tools/souji-vault-verify.impl-20.sh; cmp exit 1. Same r5 commit ce58c2b. impl-20 still matches the cited hash; the installed path does not.",
+      "reproduces": false
+    },
+    {
+      "id": "launch-json-count",
+      "class": "immutable-mismatch",
+      "source": "LOG.md mint: 15× launch-*.json in b2f2efa",
+      "cited": "15",
+      "command": "git show --name-only --format='' b2f2efa | sed '/^$/d' | grep -c 'launch-.*\\.json$'",
+      "cwd": "/home/vgpnk/Projects/shokunin",
+      "observed": "16. Names: launch-chousa, launch-kagi, launch-kaidoku, launch-kake, launch-kama, launch-kasegi, launch-kengaku, launch-kotoba, launch-kumitate, launch-lore, launch-mado, launch-mori, launch-revenger, launch-tabi, launch-tameshi, launch-tsukuroi (all under .ufo/interactive-l1-20261015T050057Z/). Commit is immutable, so this citation did not match the named commit. prompts/*.md in the same commit also count 16. name-only path count is 109, which does match the later LOG claim.",
+      "reproduces": false
+    },
+    {
+      "id": "kotodama-unpushed-42",
+      "class": "point-in-time-live",
+      "source": "LOG.md round 2 parent harness: kotodama NOT-SAFE unpushed=42",
+      "cited": "42",
+      "command": "git log --branches --not --remotes --oneline | wc -l",
+      "cwd": "/home/vgpnk/Projects/shokunin/kotodama-shokunin",
+      "observed": "47 at 2026-10-18T16:09:53-03:00. branch -vv: main 1ad491a [origin/main: ahead 47]. The mint inequality ≥10 still holds. The NOT-SAFE conclusion still holds (count ≠ 0). The number 42 does not.",
+      "reproduces": false
+    },
+    {
+      "id": "kotodama-dirty-14-15",
+      "class": "point-in-time-live",
+      "source": "LOG.md round 2 parent harness: dirty=14–15",
+      "cited": "14-15",
+      "command": "git status --porcelain | awk '{print substr($0,1,2)}' | sort | uniq -c",
+      "cwd": "/home/vgpnk/Projects/shokunin/kotodama-shokunin",
+      "observed": "At 16:09:53-03:00: 23 ?? and 8 M (31 porcelain lines). Earlier this seat: 22 ?? and 7 M (29). Neither observation is 14 or 15. Live lane; do not freeze 31. NOT-SAFE still holds (dirty ≠ 0). Paths not listed; contents not read.",
+      "reproduces": false
+    }
+  ],
+  "qualified_nonreproduce": [
+    {
+      "id": "r3-unpushed-zero",
+      "class": "prose-no-exact-command",
+      "source": "LOG.md round 3: lore + gd2d unpushed = 0 at act time (artifact-scoped reading; both readings satisfied)",
+      "cited": "0",
+      "command_used": "git rev-list --count HEAD --not --remotes; git branch -vv; git log --format='%h %ci %s' HEAD --not --remotes",
+      "observed": "lore main 6cec83a [origin/main: ahead 3]; gd2d main 05a72899 [origin/main: ahead 3]. The six commits are dated 2026-10-18 11:22–11:28, before r3 commit 3674633 at 13:49:06. Neither lane has origin/master (fleet default-branch defect does not apply here; their upstream is origin/main). Fetch was not run. If these local remote-tracking refs are the refs the r3 gate used, the repo-wide reading does not reproduce and was already false at act time. The artifact-scoped reading was not re-run: the pruned worktrees are gone. Preserved wt-r98/wt-r99/wt-r100 each still have exactly 1 commit --not --remotes, which matches the later LOG sentence.",
+      "reproduces": "repo-wide reading no; artifact-scoped reading not re-verified"
+    }
+  ],
+  "superseded_not_open_drift": [
+    {
+      "id": "lore-worktree-20",
+      "source": "LOG.md mint: git worktree list | wc -l → 20; 19 marked prunable",
+      "current_command": "git -C lore-shokunin worktree list | wc -l",
+      "cwd": "/home/vgpnk/Projects/shokunin",
+      "observed": "1. grep -c prunable on that list = 0. SCORECARD axes row cites the same command → 1, and that citation reproduces. r3 end state 20→1 is the later fact.",
+      "class": "superseded"
+    },
+    {
+      "id": "gd2d-worktree-6",
+      "source": "LOG.md mint: 5 prunable of 6 total (no backtick command; implied worktree list)",
+      "current_command": "git -C game-dev-2d-shokunin worktree list | wc -l",
+      "cwd": "/home/vgpnk/Projects/shokunin",
+      "observed": "4. Lines: main 05a72899, wt-r100 locked, wt-r98 locked, wt-r99 locked. grep -c prunable = 0. .git/worktrees holds exactly game-dev-2d-shokunin-wt-r100, -wt-r98, -wt-r99. SCORECARD axes → 4 reproduces.",
+      "class": "superseded"
+    }
+  ],
+  "reproduces": [
+    {
+      "id": "axes-lore-wc",
+      "source": "SCORECARD.md axes coverage",
+      "command": "git -C lore-shokunin worktree list | wc -l",
+      "cwd": "/home/vgpnk/Projects/shokunin",
+      "cited": "1",
+      "observed": "1",
+      "cwd_footgun": "From souji-shokunin the same command exits 128 (fatal: cannot change to 'lore-shokunin') and wc -l on empty stdout prints 0. Province cwd is the fleet root. Reproduces only there."
+    },
+    {
+      "id": "axes-gd2d-wc",
+      "source": "SCORECARD.md axes coverage",
+      "command": "git -C game-dev-2d-shokunin worktree list | wc -l",
+      "cwd": "/home/vgpnk/Projects/shokunin",
+      "cited": "4",
+      "observed": "4",
+      "cwd_footgun": "Same lane-directory failure mode as axes-lore-wc (earlier this seat: fatal on stderr, wc printed 0)."
+    },
+    {
+      "id": "axes-vault-selftest",
+      "source": "SCORECARD.md axes operability",
+      "command": "bash tools/souji-vault-verify.sh --selftest; echo $?",
+      "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+      "cited": "0",
+      "observed": "exit 0; stdout ends 'selftest: 35 checks, 0 failed'; stderr empty. Matches LOG r4/r5 35/35."
+    },
+    {
+      "id": "axes-battery-file",
+      "source": "SCORECARD.md axes operability pointer tests/results/parent-vault-battery.json",
+      "command": "python3 count of results[*].souji-vault-verify.impl-20.sh.ok",
+      "cited": "4/4",
+      "observed": "4 cases (V1-match, V2-tamper, V3-src-tamper, V4-vault-absent), each impl-20 ok true. File not re-executed. It attests impl-20, not the current installed bytes (see installed-vault-sha).",
+      "reproduces": "artifact yes; current installed tool not attested"
+    },
+    {
+      "id": "merge-base-b2f2efa",
+      "source": "LOG.md mint",
+      "command": "git merge-base --is-ancestor b2f2efa HEAD; echo exit=$?",
+      "cwd": "/home/vgpnk/Projects/shokunin",
+      "cited": "true",
+      "observed": "exit 0. Also ancestor of origin/master: exit 0. origin/main does not exist (rev-parse exit 1)."
+    },
+    {
+      "id": "b2f2efa-109-pushed",
+      "source": "LOG.md round 1: git show --name-only --format='' b2f2efa + per-file introducing commit vs origin/master → 0 NOTPUSHED; 109/109",
+      "command": "git show --name-only --format='' b2f2efa | sed '/^$/d' | wc -l; per-path git log --diff-filter=A --format=%H --reverse -- <path> then merge-base --is-ancestor <intro> origin/master",
+      "cwd": "/home/vgpnk/Projects/shokunin",
+      "cited": "109 paths, 0 NOTPUSHED",
+      "observed": "paths 109; not_pushed 0; no_intro 0. Separately, 15 of those paths are absent from the worktree and from HEAD (the r3 already-removed shell strays, including logs_tier.txt). Absence does not falsify the pushed-ancestry count."
+    },
+    {
+      "id": "census-246",
+      "source": "LOG.md round 1: 246 rows",
+      "command": "python3 line count of census/round-1/census.tsv minus header; census-summary.json rows_total",
+      "cited": "246",
+      "observed": "tsv lines 247 including header, data 246; summary rows_total 246; fragments 64/64."
+    },
+    {
+      "id": "unpushed-ge-10",
+      "source": "LOG.md mint: git log --branches --not --remotes --oneline | wc -l → ≥10",
+      "command": "git log --branches --not --remotes --oneline | wc -l",
+      "cwd": "/home/vgpnk/Projects/shokunin/kotodama-shokunin",
+      "cited": "≥10",
+      "observed": "47. Inequality holds. The tighter later numbers do not (see kotodama-unpushed-42)."
+    },
+    {
+      "id": "verify-selftest-24",
+      "source": "LOG.md round 5: selftests 24/24",
+      "command": "bash tools/souji-verify.sh --selftest; echo $?",
+      "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+      "cited": "24/24",
+      "observed": "exit 0; stdout ends 'selftest: 24 checks, 0 failed'; stderr empty."
+    },
+    {
+      "id": "gd2d-main-sha",
+      "source": "LOG.md round 3: main sha unchanged 05a72899",
+      "command": "git rev-parse --short HEAD",
+      "cwd": "/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin",
+      "cited": "05a72899",
+      "observed": "05a72899"
+    },
+    {
+      "id": "wt-one-unpushed-each",
+      "source": "LOG.md round 3: wt-r98/99/100 each hold 1 unpushed commit",
+      "command": "git rev-list --count <branch> --not --remotes",
+      "cwd": "/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin",
+      "cited": "1 each",
+      "observed": "wt-r98=1, wt-r99=1, wt-r100=1. All three still locked."
+    },
+    {
+      "id": "approval-96-15",
+      "source": "LOG.md round 3: 96 approve-remove + 15 already-removed",
+      "command": "wc -l census/round-3/operator-approval-list.tsv; approval-summary.json scalars",
+      "cited": "96 and 15",
+      "observed": "tsv 97 lines, header + 96 data rows. summary approve_remove=96, no_op_already_removed=15. a1b44b1 is an ancestor of fleet HEAD (exit 0)."
+    },
+    {
+      "id": "obsidian-shim-paths",
+      "source": "LOG.md obsidian-cli probe: shim was not in ~/.local/bin or /usr/local/bin",
+      "command": "ls -1 those four candidate paths",
+      "cited": "absent from ~/.local/bin and /usr/local/bin",
+      "observed": "all four absent. /usr/bin/obsidian and /usr/bin/obsidian-cli-inspector exist. command -v obsidian-cli-inspector → /usr/bin/obsidian-cli-inspector. That matches the banked probe (present in PATH; r4 later identified it as a third-party stats tool). Not a contradiction of the cited paths. ~/.config/obsidian/obsidian.json was not read (operator config). 1.14.4 and cli:true were not re-checked this seat."
+    }
+  ],
+  "not_a_command": [
+    {
+      "id": "axes-calibration-pointer",
+      "source": "SCORECARD.md axes calibration counting-command cell",
+      "cited": "census/round-5/final-57..64.json; lessons/round-5.md; probes in r5 report; prose 0 unresolved",
+      "observed": "final-57.json through final-64.json all exist (8 files). corpus/lessons/round-5.md exists and still says 0 unresolved contradictions at r5 closure. This seat did not re-derive that closure. The cell is not a runnable counting command. Standing doc drift found here is outside that sentence."
+    }
+  ],
+  "adjacent_doc_drift": [
+    {
+      "id": "scorecard-saturation-scores",
+      "source": "SCORECARD.md saturation paragraph, not an axes counting command",
+      "cited": "Coverage 8, operability 7, calibration 6",
+      "observed": "Axes table on the same file: coverage 8, calibration 7, operability 8. Saturation was not updated when operability moved 7→8 (r4) and calibration 6→7 (r5)."
+    },
+    {
+      "id": "skill-known-surfaces",
+      "source": "SKILL.md Known surfaces (2026-10-18), lines 60, 65, 89-91",
+      "cited": "lore 19 prunable; gd2d 5 prunable; kotodama 553M .scratch; conf 3859 vs 4092",
+      "observed": "Same re-runs as the LOG citations: lore worktree list is 1 with 0 prunable; gd2d list is 4 with 0 prunable and 3 locked; scratch du -sh is 19G; live conf is 4432 B. Presented as current known surfaces, so these are standing, not historical mint notes. Not edited this seat."
+    }
+  ],
+  "refused": [
+    "did not read ~/.config/obsidian/obsidian.json or any secret-shaped file",
+    "did not read .ufo/state or .ufo/watchdog.log",
+    "did not git fetch, push, commit, branch, prune, or remove",
+    "did not walk kotodama-shokunin/.scratch contents (du and git metadata only)",
+    "did not rewrite LOG.md, SCORECARD.md, SKILL.md, or MINT.md"
+  ],
+  "scope": "Read-only re-run of cited counting commands. Only census/round-6/seat-09.json was written."
+}

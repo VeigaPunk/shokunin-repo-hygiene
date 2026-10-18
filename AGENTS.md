@@ -14,4 +14,7 @@
   the batch. Workers never race to append shared bookkeeping.
 - Never fabricate evidence: cite a file, a command output, or a commit;
   claims you cannot verify are marked `to-verify`.
+- Seat harnesses (adversarial test rigs) stay headless: launching GUI apps
+  or writing app config is a defect (r4 incident: a harness spawned
+  Obsidian, rewriting `.obsidian` metadata).
 - Commit as `souji-shokunin <souji@shokunin.local>`.

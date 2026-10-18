@@ -1,0 +1,296 @@
+{
+  "seat": "S96",
+  "round": 6,
+  "role": "cross-audit",
+  "wrote": "census/round-6/cross-96.json",
+  "independent": true,
+  "removal_authorization": false,
+  "verdicts": {
+    "C1": "DRIFT_NOT_ZERO",
+    "O1": "NOT_INSTALLED",
+    "K1": "NOT_SAFE_SAMPLE_ONLY"
+  },
+  "summary": "Installed docs still disagree with the installed tools, so calibration drift is not 0. tools/souji-census.sh was absent at 17:04:30-03:00. Kotodama .scratch is live and larger than 16GiB; this seat classified a hash-residue sample of 67 files, not the tree. Do not prune.",
+  "sample_method": {
+    "scratch": "int(sha256(relpath_posix).hexdigest()[:8], 16) % 9973 == 96",
+    "lanes": "int(sha256('s96-lane:'+basename).hexdigest()[:8], 16) % 5 == 1",
+    "different_from": [
+      "S72 i%16==7 on a sorted absolute-path index",
+      "S76 i%16==11",
+      "S79 i%16==14",
+      "S82 top-level entries only"
+    ],
+    "selector_check": {
+      "rel": "r22-o11-replay.cWR49r/clone/reports/round-16/fixes/edge-source.md",
+      "sha256_8": "46cd377f",
+      "mod_9973": 96
+    }
+  },
+  "handoff": "Do not prune kotodama-shokunin/.scratch from this audit. S96 did not fully classify it. Walk 2026-10-18T16:43:39-03:00 to 16:43:52-03:00: 662849 regular files, 109497 dirs, 165 symlinks, unique-inode bytes 27589063211, apparent bytes counting each hardlink 28526202083. Both exceed 16GiB (17179869184) and 16GB (16000000000). Newest regular-file mtime during the walk was 2026-10-18T16:43:30-03:00. Lane at 16:43:52: unpushed 49, porcelain dirty 134, 10 remote-tracking refs. 69 files named outside-secret.txt (8 bytes each, 552 bytes) were counted and not opened. Symlinks were not followed. Hash residue 96 hit 67 regular files and no secret name and no symlink; that absence is sampling, not a population fact. Do not join these rows to an earlier i%16 snapshot. Re-walk after the lane is quiet. Even then this tree is NOT-SAFE until a receipt exists. No removal.",
+  "C1": {
+    "verdict": "DRIFT_NOT_ZERO",
+    "installed_drift_rows": 8,
+    "docs_mtime": {
+      "SKILL.md": "2026-10-18 11:48:33.389638168 -0300",
+      "PROVINCE.md": "2026-10-18 11:48:33.389638168 -0300",
+      "SCORECARD.md": "2026-10-18 15:48:07.611052390 -0300",
+      "tools/souji-verify.spec.md": "2026-10-18 15:47:43.323358466 -0300"
+    },
+    "note": "census/round-6/*-amend-*.diff files are unapplied proposals. They do not move installed drift to 0.",
+    "rows": [
+      {
+        "id": "skill-pushed-fetch-main",
+        "status": "DRIFT",
+        "doc": "SKILL.md:16 still says git fetch and origin/main",
+        "tool": "souji-verify.sh:5 and spec:42 say no git fetch; tool resolves refs/remotes/origin/HEAD",
+        "observed": "git -C /home/vgpnk/Projects/shokunin symbolic-ref --quiet --short refs/remotes/origin/HEAD → origin/master (exit 0)"
+      },
+      {
+        "id": "skill-lore-worktrees",
+        "status": "DRIFT",
+        "doc": "SKILL.md:89 says 19 prunable worktrees",
+        "observed": "git -C lore-shokunin worktree list | wc -l → 1; only main 6cec83a"
+      },
+      {
+        "id": "skill-gd2d-worktrees",
+        "status": "DRIFT",
+        "doc": "SKILL.md:90 says 5 prunable worktrees",
+        "observed": "git -C game-dev-2d-shokunin worktree list | wc -l → 4; main plus locked wt-r98 wt-r99 wt-r100"
+      },
+      {
+        "id": "skill-kotodama-553M",
+        "status": "DRIFT",
+        "doc": "SKILL.md:91 says 553M .scratch",
+        "observed": "walk unique-inode bytes 27589063211; du -sb -P at 16:43:52 → 27589077515"
+      },
+      {
+        "id": "spec-basename",
+        "status": "DRIFT",
+        "doc": "souji-verify.spec.md:51 still specifies rg --basename",
+        "tool": "souji-verify.sh:45-48 documents that --basename does not exist; line 205 uses --fixed-strings",
+        "observed": "sed -n '50,53p' tools/souji-verify.spec.md still contains --basename"
+      },
+      {
+        "id": "scorecard-internal",
+        "status": "DRIFT",
+        "doc": "SCORECARD.md table says calibration 7 and operability 8; saturation paragraph says operability 7 and calibration 6",
+        "observed": "sed -n '13,16p;44,47p' SCORECARD.md"
+      },
+      {
+        "id": "header-impl-names",
+        "status": "DRIFT",
+        "doc": "souji-verify.sh:8 names tools/souji-verify.impl-12.sh; souji-vault-verify.sh:14 names impl-20",
+        "observed": "installed paths are tools/souji-verify.sh sha256 53239fdfe5bcaaaf448e8525845ab962dd7ab6a4e7f75c0f4f051614f1c99200 and tools/souji-vault-verify.sh sha256 00d59b1b36d87db37518b5ef9fb98cd472888a075ed7b97bd5b8ff93bd559455"
+      },
+      {
+        "id": "vault-path-secret-not-refused",
+        "status": "DRIFT",
+        "doc": "spec:59-60 says never read a secret-shaped basename",
+        "tool": "souji-vault-verify.sh:555 refuses only the target argument; line 320 file_sha on the ledger vault path has no is_secret_shaped check",
+        "probe": "not run; a probe would open a secret-shaped path"
+      }
+    ],
+    "open_tool_defect_not_closed_by_docs": {
+      "id": "stale-sweep-no-hidden",
+      "status": "OPEN",
+      "source": "souji-verify.sh:205 and souji-vault-verify.sh:435 call rg -l --no-ignore --fixed-strings with no --hidden. rg -n --hidden on both files returned no matches.",
+      "probe_invalid": "/tmp write failed with Disk quota exceeded; those exit codes are not evidence",
+      "probe_valid": {
+        "when": "2026-10-18T17:04:30-03:00",
+        "command": "rg -l --no-ignore --fixed-strings -e <first line of /home/vgpnk/Projects/shokunin/.gitignore, 11 bytes> /home/vgpnk/Projects/shokunin --glob '!.git/**' --glob '!*-shokunin/**' --glob '!**/.ufo/**'",
+        "without_hidden_exit": 1,
+        "with_hidden_exit": 0,
+        "with_hidden_hit": "/home/vgpnk/Projects/shokunin/.gitignore"
+      }
+    },
+    "ufo_state": {
+      "status": "SOURCE_HAS_NO_EARLY_REFUSAL",
+      "evidence": "souji-verify.sh mentions .ufo/state only in the comment at line 35. evaluate_path (line 378) checks secret-shaped, repo-root, worktree, missing, then evaluate_artifact. No .ufo/state branch.",
+      "live_probe": "not run; .ufo/state is off-limits",
+      "prior_SAFE_pushed_claim": "not re-observed by this seat"
+    }
+  },
+  "O1": {
+    "verdict": "NOT_INSTALLED",
+    "path": "tools/souji-census.sh",
+    "present_at": {
+      "2026-10-18T15:59:36-03:00": "ABSENT",
+      "2026-10-18T16:43:52-03:00": "ABSENT",
+      "2026-10-18T17:04:30-03:00": "ABSENT"
+    },
+    "drafts_not_the_entry_point": [
+      "tools/souji-census.impl-33.sh",
+      "tools/souji-census.impl-34.sh",
+      "tools/souji-census.impl-36.sh",
+      "tools/souji-census.impl-39.sh",
+      "tools/souji-census.impl-40.sh",
+      "tools/souji-census.impl-44.sh",
+      "tools/souji-census.impl-45.sh",
+      "tools/souji-census.impl-48.sh"
+    ],
+    "contract_split": "impl-33 emits a 7-column repo TSV and exits 3 on --compare diff. impl-34 emits receipt-taxonomy CENSUS rows and forbids grep/xargs/sed/awk. impl-39 uses the 7-column shape but does not fail --compare on mtime alone. Those are not one repeatable tool.",
+    "selftest": "not run. /tmp was over quota, and a draft selftest would not install tools/souji-census.sh",
+    "lane_sample": {
+      "when": "2026-10-18T16:43:52-03:00",
+      "rule": "sha256('s96-lane:'+name) first 8 hex % 5 == 1",
+      "population": 21,
+      "rows": [
+        {"lane": "kake-shokunin", "worktrees": 1, "unpushed": 0, "dirty": 0, "remotes": 2, "scratch_bytes": 0},
+        {"lane": "kengaku-shokunin", "worktrees": 1, "unpushed": 0, "dirty": 0, "remotes": 2, "scratch_bytes": 0},
+        {"lane": "kotodama-shokunin", "worktrees": 1, "unpushed": 49, "dirty": 134, "remotes": 10, "scratch_bytes": 27589077515},
+        {"lane": "revenger-shokunin", "worktrees": 1, "unpushed": 0, "dirty": 0, "remotes": 2, "scratch_bytes": 0},
+        {"lane": "tabi-shokunin", "worktrees": 1, "unpushed": 1, "dirty": 0, "remotes": 2, "scratch_bytes": 0},
+        {"lane": "tsukuroi-shokunin", "worktrees": 1, "unpushed": 0, "dirty": 0, "remotes": 2, "scratch_bytes": 0}
+      ],
+      "commands": [
+        "git -C <lane> worktree list",
+        "git -C <lane> rev-list --count --branches --not --remotes",
+        "git -C <lane> status --porcelain=v1 --untracked-files=all",
+        "git -C <lane> for-each-ref --format=%(refname) refs/remotes",
+        "du -sb -P -- <lane>/.scratch"
+      ],
+      "note": "tabi unpushed=1 is a census flag, not a removal receipt. kotodama scratch_bytes is du -sb -P, which counts hardlinks once."
+    }
+  },
+  "K1": {
+    "verdict": "NOT_SAFE_SAMPLE_ONLY",
+    "sixteen_g_holds": false,
+    "fully_classified": false,
+    "receipt": "none",
+    "walk": {
+      "started": "2026-10-18T16:43:39-03:00",
+      "finished": "2026-10-18T16:43:52-03:00",
+      "elapsed_s": 13.335,
+      "method": "os.walk(followlinks=False); symlink dirs not descended; regular-file st_size summed",
+      "files": 662849,
+      "dirs_excluding_root": 109497,
+      "symlinks": 165,
+      "other": 0,
+      "apparent_bytes_hardlinks_each": 28526202083,
+      "unique_inode_bytes": 27589063211,
+      "unique_inodes": 654542,
+      "sixteen_GiB": 17179869184,
+      "sixteen_GB": 16000000000,
+      "unique_minus_16GiB": 10409194027,
+      "newest_mtime": "2026-10-18T16:43:30-03:00",
+      "oldest_mtime": "2026-10-17T01:26:05-03:00",
+      "secret_shaped_files": 69,
+      "secret_shaped_bytes": 552,
+      "secret_shaped_names": "69 × outside-secret.txt, not opened",
+      "top_extensions": [[".md", 335218], [".json", 146788], [".yml", 45424], [".txt", 37330], [".py", 34456], [".out", 22461], ["(none)", 19825]]
+    },
+    "git_series": [
+      {"when": "about 16:00", "command": "git rev-list --count --branches --not --remotes; git status --porcelain | wc -l", "unpushed": 47, "dirty": 31, "remotes": 10},
+      {"when": "2026-10-18T16:11", "dirty": 0, "note": "porcelain wc -l was 0. Not reproduced. Do not treat the tree as clean."},
+      {"when": "2026-10-18T16:19:40-03:00", "unpushed": 49, "dirty": 60, "remotes": 10},
+      {"when": "2026-10-18T16:43:52-03:00", "unpushed": 49, "dirty": 134, "remotes": 10}
+    ],
+    "cross_seat_notes": [
+      "S82 pin walk (535526 files, unique-inode about 18292979098) is an earlier snapshot. Direction agrees: above 16G, NOT-SAFE, unstable. Current counts do not agree.",
+      "S82 counted 60 outside-secret.txt files. This seat later counted 69, still 8 bytes each, still unread.",
+      "province-amend-26.diff quotes 19G, 47 unpushed, 29 dirty. Those figures are not current at 16:43:52.",
+      "S72/S76/S79 positional slices are a different sample. This seat did not re-label their rows."
+    ],
+    "sample": {
+      "n": 67,
+      "opened": 67,
+      "secret_hits": 0,
+      "symlink_hits": 0,
+      "header_cap": 200,
+      "class_counts": {"markdown": 35, "json": 17, "yaml": 7, "script": 3, "text": 3, "nested-git-object": 2},
+      "class_rule": "secret name → unread; symlink → readlink only, not opened; path component .git → nested-git-*; NUL or PDF/PNG/JPEG/gzip/zip/PACK magic → binary family; else extension or leading token. No html class: an HTML file is text.",
+      "exemplars": [
+        {"class": "markdown", "rel": "r22-o11-replay.cWR49r/clone/reports/round-16/fixes/edge-source.md", "magic_hex": "23205231362d4f30", "prefix60": "# R16-O01 / F10-1 — edge `source` resolved through the recor"},
+        {"class": "json", "rel": "r22-o11-replay.T75tzH/clone/examples/culture-d2/expected-holds.json", "magic_hex": "7b0a202273636865", "prefix60": "{  \"schema\": \"kotodama-typed-pipeline-holds-v1\",  \"packet_sh"},
+        {"class": "yaml", "rel": "x37/clone/repo/tools/gates/frozen/round-22/d4-repin/inputs/examples/culture-d4/components/02-phonology.yml", "magic_hex": "23207265706f7274", "prefix60": "# reports/round-17/d4/components/02-phonology.yml # D4 desig"},
+        {"class": "script", "rel": "r25-o08/clone2/tools/gates/frozen/round-22/d4-repin/inputs/tools/gates/costume-era-consistency-gate.py", "magic_hex": "23212f7573722f62", "prefix60": "#!/usr/bin/env python3"},
+        {"class": "text", "rel": "r25-x40/r23/tools/gates/fixtures/handoff-packet-check.expected", "magic_hex": "484f2d424153454c", "prefix60": "HO-BASELINE HO-CANON-CLAIM HO-CANON-MARKER HO-CONTRACT-REF H"},
+        {"class": "text", "rel": "x37/teeth/gate-input/reports/supplement-opencode-1/scratch/round8-f11/livius-behistun.html", "magic_hex": "3c21444f43545950", "prefix60": "<!DOCTYPE html>", "note": "html has no class of its own under this rule"},
+        {"class": "nested-git-object", "rel": "r22-o10-snapshot.5YrOYy/clone/.git/objects/fc/f3609d1ed760c0f0e8ec170b89917e20fc23b1", "magic_hex": "78014bcac94f5230", "note": "zlib header; prefix not stored"}
+      ],
+      "rows": [
+        ["r22-o11-replay.cWR49r/clone/reports/round-16/fixes/edge-source.md", 4212, "markdown", 1],
+        ["r22-d07/before/corpus/knowledge/civilizations/hawaii.md", 31041, "markdown", 1],
+        ["r22-d07/after-01/reports/round-17/civ/rapa-nui.md", 14787, "markdown", 1],
+        ["r22-o10-snapshot.5m7dYy/clone/reports/round-20/regression.md", 15191, "markdown", 1],
+        ["r22-o11-replay.T75tzH/clone/examples/culture-d2/expected-holds.json", 3923, "json", 1],
+        ["r22-o10-snapshot.5YrOYy/clone/.git/objects/fc/f3609d1ed760c0f0e8ec170b89917e20fc23b1", 1742, "nested-git-object", 1],
+        ["r23-o11-o12-regression/closing/repo/reports/supplement-opencode-1/02-interface-map.md", 20026, "markdown", 1],
+        ["r23-x04/checkpoint-a/reports/supplement-opencode-1/25-handoff-boundary.md", 14819, "markdown", 1],
+        ["r23-x04/r21/reports/round-20/handoff/shard-3.md", 1984, "markdown", 1],
+        ["r23-x04/r21/.scratch/round-21/validator-r17/corpus/knowledge/linguistics/writing-systems.md", 25325, "markdown", 1],
+        ["r23-wording/clone/reports/round-19/entries/review-C12.md", 5623, "markdown", 1],
+        ["r23-x10-post-PgX4qG59/repo/examples/culture-d3/handoff.md", 33152, "markdown", 1],
+        ["r23-x10-post-PgX4qG59/repo/reports/round-13/targets.json", 785, "json", 1],
+        ["round-23/x03-selftest/repo/.scratch/round-23/wording-run-check/.git/objects/b3/b065cd4d25cd8c49692fe0dd54d03a0fea8a2e", 1324, "nested-git-object", 1],
+        ["cold-run-4/tree2/reports/round-11/recheck/row-141.json", 2369, "json", 2],
+        ["r25-o08/clone2/reports/round-19/audit/receipt-coverage-final.json", 2032, "json", 1],
+        ["r25-o08/clone2/tools/gates/frozen/round-22/d4-repin/inputs/tools/gates/costume-era-consistency-gate.py", 71174, "script", 1],
+        ["r25-x40/r21/.scratch/round-21/validator-r20/reports/round-23/run-validation.py", 59458, "script", 1],
+        ["r25-x40/r23/tools/gates/fixtures/handoff-packet-check.expected", 124, "text", 1],
+        ["r25-o16-o17-regression/closing/repo/reports/round-17/civ/maya-classic.md", 12673, "markdown", 1],
+        ["r25-o16-o17-regression/closing/repo/reports/round-9/freshness/R9-F01a-receipt.json", 39961, "json", 1],
+        ["x37/clone/repo/tools/gates/frozen/round-22/d4-repin/inputs/examples/culture-d4/components/02-phonology.yml", 17921, "yaml", 1],
+        ["x37/neg/repo/reports/round-15/handoff/frozen-verify.py", 24770, "script", 1],
+        ["x37/teeth/gate-input/reports/supplement-opencode-1/scratch/round8-f11/livius-behistun.html", 14315, "text", 1],
+        ["x37/final/repo/corpus/lessons/round-3-triage/orchestrator-direct.md", 2664, "markdown", 1],
+        ["r25-o11-clone/reports/round-8/metadata/m10-culture.md", 18999, "markdown", 1],
+        ["x59/wire2/reports/round-25/v3-supersession/declared-in-r4/freeze.txt", 4724, "text", 1],
+        ["x59/wire2/tools/gates/frozen/round-22/d4-repin/inputs/examples/culture-d4/components/06-myth.yml", 9406, "yaml", 1],
+        ["r26-o37-o38-regression/closing/repo/corpus/knowledge/civilizations/ryukyu.md", 28996, "markdown", 1],
+        ["r26-o37-o38-regression/closing/repo/reports/round-11/recheck/row-081.json", 1537, "json", 1],
+        ["x56/clone3/examples/culture-d2/reviews/10-materials.md", 22455, "markdown", 1],
+        ["x64/scratch-ctl/ctl-argot-gate-corrupt-input/reports/supplement-opencode-1/02-interface-map.md", 20026, "markdown", 1],
+        ["x64/scratch-ctl/ctl-adapter-drift/corpus/knowledge/civilizations/hopi.md", 32169, "markdown", 1],
+        ["x64/t1/reports/round-23/rule/fragment-D01.md", 4582, "markdown", 1],
+        ["x64/scratch-pre2/det2/reports/round-9/baselines/lexicon-coverage-audit/rerun.md", 12594, "markdown", 1],
+        ["x64/scratch-live/nowrite/corpus/knowledge/verification/two-reader-interop-agreement.md", 12333, "markdown", 1],
+        ["r58/r20/tools/gates/frozen/round-22/d4-repin/inputs/examples/culture-d4/components/01-brief.yml", 32484, "yaml", 1],
+        ["r58/r21/.scratch/round-21/validator-r17/reports/round-11/recheck/row-164.json", 1191, "json", 1],
+        ["r58/r23/.scratch/round-23/repin-d2-tamper/reports/round-11/handoff/review-18.md", 20620, "markdown", 1],
+        ["r58/checkpoint-b/reports/round-11/depth/shard-validator.md", 99468, "markdown", 1],
+        ["r58/r24/reports/round-17/d4/components/08-eras.yml", 9387, "yaml", 1],
+        ["r58/ctl23/reports/round-10/fix-09.md", 32889, "markdown", 1],
+        ["r58/checkpoint-d/reports/round-11/recheck/row-076.json", 1554, "json", 1],
+        ["r58/checkpoint-e/corpus/lessons/round-1-triage/C7.md", 6449, "markdown", 1],
+        ["r26c/partctl/repo/reports/round-8/depth/design-spec.md", 43572, "markdown", 1],
+        ["r26c/rvclone2/repo/corpus/lessons/round-19.md", 64818, "markdown", 1],
+        ["r26c/rv3/repo/reports/round-11/recheck/row-140.json", 2390, "json", 1],
+        ["r26-o39-ctl/tools/gates/frozen/round-20/repin-d2/run-receipt-repin.json", 5487, "json", 1],
+        ["r26-o39-ctl2/reports/round-17/civ/v03-v04-never-swept-verify.md", 16630, "markdown", 1],
+        ["r26-x55-probe/clone/corpus/knowledge/verification/gate-frozen-run-standard.md", 21777, "markdown", 1],
+        ["r26-o29-base/reports/round-5/integration-attempts.json", 4115, "json", 1],
+        ["round-26/checkers/r4-twin-verifier/reports/supplement-opencode-1/05-replay.md", 18198, "markdown", 1],
+        ["round-26/checkers/r4-twin-verifier/tools/gates/frozen/myth-consistency-gate/r18-post/packet.yml", 156071, "yaml", 1],
+        ["r26-o39-ctl5/reports/round-6/outcome.json", 5471, "json", 1],
+        ["r26-o29-final/corpus/lessons/supplement-opencode-1/sources/slavs.json", 13827, "json", 1],
+        ["r4c/reports/round-18/gate/impl-3.md", 11056, "markdown", 1],
+        ["x58/scratch-t0/det2/corpus/lessons/round-1-triage/Z15.md", 10031, "markdown", 1],
+        ["x58/scratch-t0/det2/reports/round-10/availability-attempt-3.json", 529, "json", 1],
+        ["x58/scratch-t0/nowrite/reports/round-21/defects/fix-11.md", 1114, "markdown", 1],
+        ["x58/ctl-t0/ctl-packet-byte-tamper/reports/round-12/claims.json", 2357, "json", 1],
+        ["x58/ctl-t0/ctl-thirteenth-component-refused/reports/round-11/recheck/row-131.json", 2416, "json", 1],
+        ["x58/ctl-t0/ctl-register-clean-propagates/reports/round-11/handoff/contract-check.md", 20444, "markdown", 1],
+        ["x58/clone-r26/tools/gates/frozen/round-22/d4-repin/inputs/examples/culture-d4/components/08-eras.yml", 9387, "yaml", 1],
+        ["x58/scratch-law/det2/reports/round-21/recount/r17-1.md", 1357, "markdown", 1],
+        ["x58/ctl-law/ctl-assembly-drift/reports/round-11/recheck/row-163.json", 2151, "json", 1],
+        ["x58/ctl-law/ctl-register-violation-propagates/corpus/knowledge/verification/citation-format-and-source-registry.md", 28521, "markdown", 1],
+        ["x52/checkpoint-b/tools/gates/frozen/round-22/d4-repin/inputs/examples/culture-d4/components/10-ritual-calendar.yml", 7044, "yaml", 1]
+      ],
+      "row_columns": ["rel", "bytes", "class", "nlink"]
+    }
+  },
+  "ledger": {
+    "path": "corpus/knowledge/obsidian-ledger.tsv",
+    "lines": 1,
+    "bytes": 67,
+    "sha256": "3f7e9f2ab9e614464cb031d3f00a812a21f0e889f7666309a90d7784b75a9599",
+    "header_prefix": "source_path",
+    "note": "read-only hash and header token only; file not written"
+  },
+  "process": {
+    "wrote_only": "census/round-6/cross-96.json",
+    "git_mutations": "none",
+    "disclosure": "A /tmp mktemp probe failed with Disk quota exceeded. The same shell then rm -rf that empty temp dir. No lane file was deleted. The invalid probe exits were not used."
+  }
+}

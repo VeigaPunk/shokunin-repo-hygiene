@@ -1,0 +1,30 @@
+souji-verify: unknown flag: --not-a-flag
+souji-verify — receipt-gated removal verdicts for fleet artifacts (round 2).
+
+Binding spec: tools/souji-verify.spec.md. One bash tool; bash + coreutils +
+git + rg only; read-only over every surface it inspects; no git fetch.
+
+CLI
+  tools/souji-verify.impl-12.sh [--selftest] [--stale-days N] [--json] <path>...
+
+Output (default, one line per target):
+  VERDICT<TAB>path<TAB>SAFE|NOT-SAFE<TAB>receipt-or-reason<TAB>evidence
+NOT-SAFE means "no removal receipt" — the safe default, not an error.
+
+Artifact kinds
+  repo-root   dir containing a real .git directory; SAFE only via the
+              moved-to-obsidian ledger row, else NOT-SAFE with
+              unpushed=N dirty=M in the evidence field.
+  worktree-registration
+              path equals a `worktree <path>` entry (other than the main
+              worktree) of a repo scanned under $SHOKUNIN_ROOT:
+              named branch with unpushed commits -> NOT-SAFE(unpushed-branch);
+              dir absent and 0 unique commits   -> SAFE(metadata-prune);
+              dir present and dirty              -> NOT-SAFE(dirty);
+              dir present and clean              -> NOT-SAFE(none).
+  file/dir artifact (default)
+              receipts tried in order: pushed, moved-to-obsidian, stale;
+              none -> NOT-SAFE(none).
+
+Safety rails (mirrored from the spec)
+  * Path components matching *.env/.env/.env./.envrc/*credential*/*secret*/

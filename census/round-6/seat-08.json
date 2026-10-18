@@ -1,0 +1,187 @@
+{
+  "seat": "S08",
+  "round": 6,
+  "kind": "drift-audit",
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "target": "AGENTS.md",
+  "repo_head": "ce58c2b457c8ffb7886b36a509bf957f90d1f296",
+  "agents_sha256": "830fe08b2ade1df107b0b61a2d35a909467e737ac745f7373ca6c89c54e77f11",
+  "agents_bytes": 1023,
+  "agents_lines": 17,
+  "run_local": "2026-10-18T17:16:52-03:00",
+  "run_utc": "2026-10-18T20:16:52Z",
+  "assignment": "Audit AGENTS.md rules vs observed seat behavior r2-r5 (write-scope overstep happened) — does AGENTS.md state the seat-write-scope rule explicitly enough? Recommend. Do not apply.",
+  "verdict": "NOT-EXPLICIT-ENOUGH",
+  "apply": false,
+  "answer": "No. The seat-write-scope rule is not stated explicitly enough. The only sentence is a subordinate clause of the LOG.md bookkeeping bullet. It does not name tools/, canonical install paths, or 'the parent installs'. Line 3 reads as an in-repo write grant, which is the reading that permits the r2 overstep. The post-incident restatement lives in lessons and the r2 report, not in AGENTS.md. git log shows AGENTS.md unchanged since mint ccbb132, which predates the overstep.",
+  "axes": {
+    "explicitness": "failed — no standalone rule, no install-path names, zero hits for tools/|install|write-scope|parent installs",
+    "closedness": "failed — 'work only within this repo' is an open write grant inside the lane",
+    "durability": "failed — restatement never landed in the file seats load",
+    "observed_harm": "r2 canonical install overstep happened under this text; r4 repeated adjacent writes the same sentence does not forbid"
+  },
+  "current_rule": {
+    "file": "AGENTS.md",
+    "last_commit": "ccbb132 mint: seed souji-shokunin (掃除) — fleet repo & workspace hygiene, operator directive 2026-10-18",
+    "unchanged_since_mint": true,
+    "ancestor_of_head": true,
+    "lines_3_4": "Work only within this repo and its PROVINCE.md scope; sibling repos and domain source trees are read-only — census them, never modify them.",
+    "lines_11_14": "Every change is recorded in an append-only LOG.md entry with the evidence that motivated it. During a parallel wave, workers write only their assigned evidence fragments; the parent integrates them into LOG.md after the batch. Workers never race to append shared bookkeeping.",
+    "why_insufficient": [
+      "The fragment sentence is clause 2 of the LOG bullet. A seat can satisfy it by not appending LOG.md and still install tools/souji-verify.sh.",
+      "'Assigned evidence fragments' is undefined. It does not say which filenames are seat-owned and which are parent-owned.",
+      "Line 3 positively authorizes any write inside this repo. The r2 overstep file was inside this repo.",
+      "grep -E 'tools/|parent installs|write-scope|install' AGENTS.md → NO_MATCH (exit 1).",
+      "The operator-config ban (line 9) is a deny-list entry. It did not stop r4 ~/.config inspector-log writes, and it does not name the canonical install path at all."
+    ]
+  },
+  "restatement_did_not_land": {
+    "stated_in": [
+      "corpus/lessons/round-2.md:8-11 (commit 9435e46)",
+      "LOG.md:114-115 (narrative, not a rule)",
+      "tests/results/INSTALL.json disqualified key (commit 9435e46)",
+      "../.ufo/reports/round-2/souji.md:28-31"
+    ],
+    "not_stated_in": ["AGENTS.md", "SKILL.md", "tools/souji-verify.spec.md", "PROVINCE.md"],
+    "lessons_quote": "Seat write-scope overstep: a seat synthesized and installed its own tools/souji-verify.sh (3–7% similar to any reviewed impl, lineage unverifiable). Deleted by parent; rule restated: seats produce named fragments only, the parent installs.",
+    "proof_agents_untouched": "git log -- AGENTS.md → only ccbb132. git blame -L 11,14 AGENTS.md → ^ccbb132. git merge-base --is-ancestor ccbb132 HEAD → exit 0. Lessons landed in 9435e46, which does not touch AGENTS.md."
+  },
+  "observed": {
+    "r2": {
+      "class": "canonical-install overstep — the named defect",
+      "what": "A seat wrote the live install path tools/souji-verify.sh during the wave. Reviewers and runners treated that path as a tournament candidate. The parent deleted it and installed impl-12 byte-identical.",
+      "seat_id": "not recoverable from committed artifacts",
+      "live_path_sha256_during_wave": "586bc36c6039b9c9bf5846b85156b02dd3daa6f594c03d6ba474a9c71f2fc812",
+      "installed_winner_sha256": "7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820",
+      "winner_equals_impl_12": true,
+      "synthesized_blob_in_git": false,
+      "evidence": [
+        {
+          "command": "python3 hashlib over `git show 9435e46:tools/souji-verify.sh` and `git show 9435e46:tools/souji-verify.impl-12.sh`",
+          "observed": "both 7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820 bytes=27543"
+        },
+        {
+          "command": "git cat-file -t 586bc36c6039b9c9bf5846b85156b02dd3daa6f594c03d6ba474a9c71f2fc812",
+          "observed": "fatal: Not a valid object name 586bc36c6039b9c9bf5846b85156b02dd3daa6f594c03d6ba474a9c71f2fc812"
+        },
+        {
+          "command": "count tests/results/*.json containing 586bc36c",
+          "observed": "27"
+        },
+        {
+          "command": "tests/results/compliance-55.json tool block (S55)",
+          "observed": "path tools/souji-verify.sh present=true sha256=586bc36c6039b9c9bf5846b85156b02dd3daa6f594c03d6ba474a9c71f2fc812 changed_during_run=false verdict=COMPLIANT"
+        },
+        {
+          "command": "tests/results/review-33.json ranking and reviewed_revisions (S33)",
+          "observed": "ranking[0]=souji-verify sha 586bc36c6039, ahead of impl-09 and impl-12 (7efda63bd760). The install path entered the tournament and was ranked first."
+        },
+        {
+          "command": "tests/results/INSTALL.json disqualified key",
+          "observed": "\"synthesized tools/souji-verify.sh (seat-installed)\": \"deleted — out of seat write-scope, 3-7% similar to any impl\""
+        },
+        {
+          "command": "census/round-2 present in git?",
+          "observed": "git ls-tree HEAD census rounds: round-1 66, round-3 70, round-4 33, round-5 64. round-2 census fragments were not committed. The overstep file is gone; the hash survives only inside r2 result JSON."
+        }
+      ]
+    },
+    "r3": {
+      "class": "no seat write-scope overstep observed",
+      "what": "Seats did read-side verification. The parent executed the prunes. AGENTS.md still did not state the rule; compliance came from the round prompt, not from AGENTS.md.",
+      "evidence": [
+        {
+          "command": "read ../.ufo/reports/round-3/souji.md lines 7-8",
+          "observed": "Seats did read-side verification only; the parent executed the prunes serially."
+        },
+        {
+          "command": "census/round-3/seat-*.json self-reports",
+          "observed": "Seat notes say no git worktree prune/remove was executed by the seat. This is documentary. The processes are gone; not re-derived from a process table."
+        }
+      ]
+    },
+    "r4": {
+      "class": "canonical install not repeated; two adjacent oversteps the fragment sentence does not forbid",
+      "canonical_install": "Not repeated. S18 wrote tools/souji-vault-verify.impl-18.sh and recorded that the installed name remains tools/souji-vault-verify.sh (parent's choice). Parent commit 48a64d8 installed impl-20 byte-identical (sha256 d312263ac8ebc9e23555402dc5ae63167f78dcd01ddccc5ddcfa7623b85879e0, same blob as tools/souji-vault-verify.impl-20.sh).",
+      "adjacent": [
+        {
+          "who": "S01 and S08",
+          "what": "obsidian-cli-inspector wrote logs under ~/.config/obsidian-cli-inspector/logs/. AGENTS.md line 9 already bans operator config. Explicit deny-list, still violated. Not re-stated here by opening ~/.config.",
+          "evidence": "census/round-4/seat-01.json side_effect: timeout-5 probe appended ~/.config/obsidian-cli-inspector/logs/stats_20261018_140453.log. census/round-4/seat-08.json side_effect_disclosure: bare view stats wrote stats_20261018_135356.log and view.stats_20261018_135356.log. writes_by_S08 also lists census/round-4/cli-contract.json, which the assignment named — that write is in scope."
+        },
+        {
+          "who": "S53 harness, confirmed by S58",
+          "what": "adv53-harness.sh backticks inside double quotes executed the real obsidian GUI launcher. The app rewrote live vault .obsidian config. AGENTS.md does not name host-process launch or the Obsidian vault. The round prompt's read-only-vault rule is what was breached, and that rule is not in AGENTS.md.",
+          "evidence": "census/round-4/seat-58-rail-breach.json rail_verdict=VIOLATED-THEN-REMEDIATED. Parent chain named: bash tests/vault/adv53-harness.sh --only m. Vault notes unchanged; 3 .obsidian files re-mtimed 2026-10-18 14:10:31 -03. Parallel S07 (census/round-6/seat-07.json) recommends the PROVINCE harness clause. Do not duplicate that clause here."
+        }
+      ]
+    },
+    "r5": {
+      "class": "no seat self-claim of a live tools/ edit; parent installed the fixes; AGENTS.md still mint text",
+      "what": "Commit ce58c2b changes tools/souji-verify.sh (7efda63b → 53239fdfe5bcaaaf448e8525845ab962dd7ab6a4e7f75c0f4f051614f1c99200) and tools/souji-vault-verify.sh. No census/round-5 seat fragment claims 'patched tools/' or 'edited tools/'. The gap in AGENTS.md remained open at HEAD.",
+      "evidence": "git show --name-only ce58c2b | grep ^tools/ → tools/souji-vault-verify.sh, tools/souji-verify.sh, tools/souji-verify.spec.md. git log -1 -- AGENTS.md still ccbb132."
+    }
+  },
+  "parallel_draft_conflict": {
+    "file": "census/round-6/agents-amend-28.diff",
+    "scope_of_this_judgment": "Only the write-scope sentence. The rest of that diff is another seat's calibration draft and is not judged here.",
+    "their_sentence": "In a parallel wave, workers write only their assigned fragment (this round: the named file under census/round-6/, tools/, or results/). Workers never append LOG.md, SCORECARD.md, SKILL.md, PROVINCE.md, or AGENTS.md; the parent integrates.",
+    "fails_the_r2_test": true,
+    "why": [
+      "Still nested under the LOG bullet.",
+      "Grants tools/ as a writable directory. That is the surface the r2 seat used.",
+      "Does not reserve canonical install paths for the parent.",
+      "'This round' expires. The next implementor wave reopens tools/.",
+      "Does not say uncertainty means do not write."
+    ],
+    "recommendation": "Do not integrate that sentence as written. Bookkeeping bans (seats do not append LOG/SCORECARD/SKILL/PROVINCE/AGENTS) are fine. The tools/ directory grant is not."
+  },
+  "recommendation": {
+    "apply": false,
+    "owner": "parent, after the wave",
+    "action": "Add a standalone seat-write-scope bullet. Delete the fragment clause from the LOG bullet so it cannot be read as the whole rule. Do not treat 'work only within this repo' as a write grant.",
+    "rewrite_line_3_note": "Keep the sibling read-only ban. Add one clause: 'Work only within this repo' is a read boundary, not a write grant.",
+    "replace_lines_11_14_with": "- Every change is recorded in an append-only LOG.md entry at EOF with the evidence that motivated it. The parent writes that entry after the batch. Workers never append shared bookkeeping.",
+    "add_bullet": "- Seat write-scope is a closed allow-list. In a parallel wave a seat writes only paths named in its own assignment. A role candidate uses the assigned filename (`tools/<tool>.impl-NN.sh`, `tests/fixtures/case-FN/`, `census/round-N/seat-NN.json`, or the one path the assignment names). A seat must not create or overwrite a canonical install path (`tools/souji-verify.sh`, `tools/souji-vault-verify.sh`, and `tools/souji-census.sh` once that name is the installed tool). The parent installs winners. The parent is the only writer of LOG.md, SCORECARD.md, SKILL.md, PROVINCE.md, and AGENTS.md. `/tmp/<seat>/` scratch is allowed. `~/.config/**`, the live Obsidian vault, sibling repos, `.ufo/state`, and `.ufo/watchdog.log` are not. If the assignment does not name the path, do not write it. Reviewers and runners score `*.impl-NN.sh` only — never the canonical install path.",
+    "parent_check": "Before install, if tools/souji-verify.sh or tools/souji-vault-verify.sh changed during the wave and the bytes are not the parent-selected impl, delete that file and install the winner byte-identical. That is the r2 recovery. Do not leave the canonical path in the tournament.",
+    "compose_with_s07": "Take the harness/process clause from census/round-6/seat-07.json for PROVINCE.md. This fragment does not restate it. Allow-list stops file writes; the harness clause stops process launches. Both are needed. The r4 GUI launch is not fixed by a file allow-list alone."
+  },
+  "uncertain": [
+    "Seat id of the r2 installer is not in lessons, LOG, INSTALL.json, the r2 report, review-33, compliance-55, or final-57.",
+    "The 3–7% similarity figure is parent-asserted (lessons + INSTALL.json). The measuring command is not in the repo. The synthesized blob is not a git object. Not independently recomputed. Existence of the file at the install path is verified by the 586bc36c captures; the percentage is to-verify.",
+    "r3 'seats did not prune' is documentary (report + self-reports). No live process table remains.",
+    "r4 inspector logs were not re-stated. ~/.config is operator config and was not opened.",
+    "No r5 seat fragment claims a live tools/ edit. That does not prove no seat edited the files before the parent commit. The commit message attributes the fix to the parent."
+  ],
+  "commands": [
+    {
+      "cmd": "git log -1 --format='%h %s' -- AGENTS.md",
+      "out": "ccbb132 mint: seed souji-shokunin (掃除) — fleet repo & workspace hygiene, operator directive 2026-10-18"
+    },
+    {
+      "cmd": "git blame -L 11,14 --date=iso AGENTS.md",
+      "out": "^ccbb132 (souji-shokunin 2026-10-18 11:50:12 -0300 11-14) the LOG bullet including the fragment clause"
+    },
+    {
+      "cmd": "wc -l AGENTS.md; wc -c AGENTS.md; grep -n -E 'tools/|parent installs|write-scope|install' AGENTS.md",
+      "out": "17 AGENTS.md; 1023 AGENTS.md; NO_MATCH exit=1"
+    },
+    {
+      "cmd": "sha256sum AGENTS.md; git rev-parse HEAD; git merge-base --is-ancestor ccbb132 HEAD",
+      "out": "830fe08b2ade1df107b0b61a2d35a909467e737ac745f7373ca6c89c54e77f11 AGENTS.md; ce58c2b457c8ffb7886b36a509bf957f90d1f296; ancestor_ok exit 0"
+    },
+    {
+      "cmd": "git cat-file -t 586bc36c6039b9c9bf5846b85156b02dd3daa6f594c03d6ba474a9c71f2fc812",
+      "out": "fatal: Not a valid object name"
+    },
+    {
+      "cmd": "count tests/results/*.json containing 586bc36c",
+      "out": "27"
+    }
+  ],
+  "preamble": {
+    "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+    "fragment_path": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-6/seat-08.json",
+    "mode": "read-only audit; only this assigned fragment written; AGENTS.md not edited"
+  }
+}

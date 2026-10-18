@@ -215,3 +215,30 @@ in-round fix with re-run evidence, or an explicit disposition. 0
 unresolved contradictions at closure. Calibration improved; coverage
 improved (gap table in census/round-5/seat-51.json); operability improved
 (tools hardened, all batteries green). No axis harmed.
+
+## 2026-10-18 — round 6 REJECTED as a round; deliverables completed by parent
+
+**Dispatch.** 128 seats on xai-oauth/grok-4.7-fast; 96 completed / 32
+failed. Claims: C1 docs drift→0, O1 tools/souji-census.sh, K1 kotodama
+.scratch fully classified + handoff. 15/17 final judges: NOT-MET at their
+measurement time (drift never applied; no census winner installed; live-tree
+counts diverged). Per protocol the round files as REJECTED (claims not all
+verified); the parent completed C1/O1 before filing and banked K1's
+artifacts — judges' dissent preserved, never re-rolled.
+
+**Parent completion.** (a) Both verdict tools fixed: pushed receipt now
+also requires zero unpushed commits touching the path
+(--branches --not --remotes; bare --not --remotes silently returns nothing
+on git 2.55 — pitfall recorded). Probes: dirty+local-commit file →
+NOT-SAFE(unpushed-commits-touching); clean file → SAFE(pushed); selftests
+24/24 + 35/35 green. (b) tools/souji-census.sh installed (impl-33,
+sha 11bf9cdf, selftest 32/32); two fleet runs byte-stable except live
+deltas — kotodama .scratch = 40.4G and growing ~2.3MB/s. (c) SKILL.md
+reconciled to installed behavior; AGENTS.md gained the seat-harness clause.
+(d) K1 honest stop: full 388-child classification NOT achieved (seat
+failures + live tree); parent snapshot + parent-signed handoff delivered
+instead; kotodama stays NOT-SAFE/hands-off.
+
+**Ledger.** r6 = failed (2/3 claims); the schedule continues at r7 — the
+completion criterion's "12 admitted" is now unattainable verbatim; flagged
+for the final completion audit.

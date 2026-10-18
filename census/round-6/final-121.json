@@ -1,0 +1,181 @@
+{
+  "seat": "S121",
+  "round": 6,
+  "kind": "final-judge",
+  "role": "independent judge of C1, O1, K1",
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "lane_head": "ce58c2b457c8ffb7886b36a509bf957f90d1f296",
+  "measured_at": "2026-10-18T17:24:47-03:00",
+  "axes": [
+    "calibration: live docs match installed tools, drift to 0",
+    "operability: tools/souji-census.sh is a repeatable fleet census",
+    "coverage: kotodama .scratch fully classified read-only, with a handoff",
+    "harm-none: no false-SAFE baked in by 'sync the docs to the tools'"
+  ],
+  "verdict": "NOT-MET. 0/3 claims hold on the installed tree. Do not admit the round. Do not remove kotodama .scratch. Unapplied diffs are not a reconciliation.",
+  "claims": {
+    "C1": {
+      "claim": "docs/tools reconciliation, drift to 0",
+      "verdict": "NOT-MET",
+      "drift": "not 0",
+      "live_docs_match_head": true,
+      "basis": "SKILL.md is still the mint receipt procedure. SCORECARD still cites the pre-r5 tool hashes and contradicts its own axis table. Spec and the installed verifiers agree with each other on no-fetch, pushed-unverifiable, and symlink-present. That subset is not the operator-facing docs. Amendment diffs under census/round-6/ are unapplied."
+    },
+    "O1": {
+      "claim": "tools/souji-census.sh repeatable fleet census",
+      "verdict": "NOT-MET",
+      "installed_path": "absent",
+      "basis": "The named path was absent at 17:24:47. Drafts are not that entry point. This seat ran their --selftest and did not install any of them. One draft's selftest is green; the others failed. Two contracts are on disk (row-per-repo census vs receipt classifier)."
+    },
+    "K1": {
+      "claim": "kotodama 16G .scratch fully classified read-only + handoff note",
+      "verdict": "NOT-MET",
+      "sixteen_g_holds": false,
+      "removal": "NOT-SAFE",
+      "receipt": "none",
+      "basis": "16GiB is 17179869184 bytes. This seat's walk summed 37566359416 regular-file bytes across 757391 names. A later du -sb printed 36629608968 and also reported a path vanishing mid-walk. Peer shards pin incompatible denominators (535606, 661234, 663012, 772513). A handoff note exists and does not freeze the live tree."
+    }
+  },
+  "handoff": "Do not prune, quarantine, or otherwise remove /home/vgpnk/Projects/shokunin/kotodama-shokunin/.scratch. The lane is live and unpushed (HEAD 69cecbc, 51 commits on local branches not in any remote-tracking ref, 96 porcelain lines). .scratch is not a receipt. Secret-shaped names were counted and not opened (75 in this walk). Symlinks were not followed (256). Size is not a receipt. Re-census only after the lane is clean and pushed, and even then require a per-path reference check that sees hidden files, secret-name refusal, and symlink fail-closed.",
+  "drift": [
+    {
+      "id": "D1",
+      "where": "SKILL.md:16",
+      "docs": "git fetch -q && git merge-base --is-ancestor <commit> origin/main",
+      "tools": "tools/souji-verify.sh:5 and tools/souji-verify.spec.md:42 forbid git fetch. Resolver uses refs/remotes/origin/HEAD. Fleet default is origin/master.",
+      "observed": "rg token counts: SKILL.md git-fetch=2 origin/main=1; spec git-fetch=2 (both 'NO git fetch' / 'Never run git fetch'); verify.sh origin/main hits are a selftest fixture ref, not the fleet default."
+    },
+    {
+      "id": "D2",
+      "where": "SKILL.md receipt taxonomy",
+      "docs": "tokens metadata-prune, pushed-unverifiable, symlink-present, secrets-refusal, unpushed-branch are absent (count 0)",
+      "tools": "present in tools/souji-verify.spec.md and tools/souji-verify.sh; selftest emits F4 SAFE(metadata-prune), F5 NOT-SAFE(unpushed-branch), F10 NOT-SAFE(secrets-refusal), E7 NOT-SAFE(pushed-unverifiable)"
+    },
+    {
+      "id": "D3",
+      "where": "SKILL.md:18 vs scratch_type and count_live_refs",
+      "docs": "*.tmp, out/, last-admitted-round mtime, rg -l with no D3 exclusions",
+      "tools": "path component .scratch, *.out, *.log, *-draft.*, checkpoint basenames, --stale-days default 1; rg -l --no-ignore without --hidden, excluding census/tests/quarantine (souji-verify.sh:178-216)"
+    },
+    {
+      "id": "D4",
+      "where": "SKILL.md:89-91 and :60",
+      "docs": "lore 19 prunable; gd2d 5 prunable; kotodama .scratch 553M",
+      "observed": "lore worktree-list lines=1; gd2d lines=4 (main + locked wt-r98/wt-r99/wt-r100); scratch du -sb at first measure 27564015131 (27G), walk regular bytes 37566359416"
+    },
+    {
+      "id": "D5",
+      "where": "SCORECARD.md capability hashes",
+      "docs": "souji-verify.sh 7efda63bd760…; souji-vault-verify.sh d312263a…",
+      "installed": "53239fdfe5bcaaaf448e8525845ab962dd7ab6a4e7f75c0f4f051614f1c99200 and 00d59b1b36d87db37518b5ef9fb98cd472888a075ed7b97bd5b8ff93bd559455. Old hashes remain on tools/souji-verify.impl-12.sh and tools/souji-vault-verify.impl-20.sh only."
+    },
+    {
+      "id": "D6",
+      "where": "SCORECARD.md:44-45 vs the axis table",
+      "docs": "saturation paragraph says operability 7, calibration 6",
+      "table": "operability 8, calibration 7",
+      "kind": "doc-internal, not docs-vs-tools"
+    },
+    {
+      "id": "D7",
+      "where": "installed script headers vs installed paths",
+      "docs_in_tool": "CLI comments name tools/souji-verify.impl-12.sh and tools/souji-vault-verify.impl-20.sh",
+      "installed_paths": "tools/souji-verify.sh and tools/souji-vault-verify.sh"
+    }
+  ],
+  "do_not_close_c1_by_copying_tools": {
+    "reason": "Two tool behaviors disagree with the tools' own safety comments. Copying current tool behavior into SKILL.md would set drift toward 0 and keep a false-SAFE class.",
+    "hidden_ref_false_safe": {
+      "command": "SHOKUNIN_ROOT=/dev/shm/souji-r6-s121-probe/hidden SOUJI_LEDGER=/dev/shm/souji-r6-s121-probe/no-ledger.tsv bash tools/souji-verify.sh --stale-days 1 /dev/shm/souji-r6-s121-probe/hidden/scratch.out",
+      "fixture": "untracked scratch.out mtime 2020-01-01; only reference is tracked .live-ref containing the basename. rg -l --no-ignore without --hidden exit 1, empty. rg -l --hidden exit 0, out=./.live-ref.",
+      "observed": "VERDICT\\t.../scratch.out\\tSAFE\\tstale\\tscratch-type=ext refs=0 mtime-age-days=2482; exit 0"
+    },
+    "offlimits_path_not_refused": {
+      "command": "same verifier against a /dev/shm fixture repo whose committed paths are .ufo/state/note.txt and .ufo/watchdog.log, with refs/remotes/origin/HEAD -> origin/master. Live fleet .ufo/state and .ufo/watchdog.log were not opened.",
+      "observed": "both SAFE pushed, ancestor=yes, exit 0. Header comment at souji-verify.sh:35 says those surfaces are never touched. There is no early refusal in evaluate_path."
+    },
+    "secret_vault_path_not_probed": "try_obsidian (souji-verify.sh:267-273) and the vault verifier (souji-vault-verify.sh:312-320) call file_sha on the ledger vault path without is_secret_shaped. This seat did not invoke that path, because doing so would read a secret-shaped name. Code citation only; not a reproduced run."
+  },
+  "o1_selftests": {
+    "tmp_note": "/tmp user quota rejected git template copy (Disk quota exceeded). Selftests used TMPDIR=/dev/shm. A draft that requires the fixture path to contain /tmp can fail for that reason alone; impl-39 S14 is that case and is not charged as a logic failure.",
+    "installed_verifiers": {
+      "souji-verify.sh": "selftest: 24 checks, 0 failed; exit 0",
+      "souji-vault-verify.sh": "selftest: 35 checks, 0 failed; exit 0"
+    },
+    "drafts": [
+      {"path": "tools/souji-census.impl-33.sh", "selftest": "30 checks, 1 failed", "exit": 1, "note": "FAIL dirty count=2 want 3"},
+      {"path": "tools/souji-census.impl-34.sh", "selftest": "30 checks, 3 failed", "exit": 1, "note": "G2/G4/H2; receipt-classifier contract, not the row-per-repo contract"},
+      {"path": "tools/souji-census.impl-36.sh", "selftest": "45 checks, 4 failed", "exit": 1},
+      {"path": "tools/souji-census.impl-39.sh", "selftest": "16 checks, 2 failed", "exit": 1, "note": "S6b content-read is a real fail; S14 is the TMPDIR caveat"},
+      {"path": "tools/souji-census.impl-40.sh", "selftest": "not completed", "exit": 1, "note": "symlink to impl-40.sh; cat write error Disk quota exceeded on /tmp"},
+      {"path": "tools/souji-census.impl-44.sh", "selftest": "33 checks, 0 failed", "exit": 0, "note": "green draft only. Not installed. This seat did not run it against the live fleet."},
+      {"path": "tools/souji-census.impl-45.sh", "selftest": "FAIL scratch bytes not above payload", "exit": 1},
+      {"path": "tools/souji-census.impl-46.sh", "selftest": "multiple FAIL including clean dirty and compare", "exit": 1},
+      {"path": "tools/souji-census.impl-48.sh", "selftest": "31/32", "exit": 1, "note": "printf: -\\: invalid option"}
+    ]
+  },
+  "k1_measurement": {
+    "target": "/home/vgpnk/Projects/shokunin/kotodama-shokunin/.scratch",
+    "walk": "python3 os.walk followlinks=False; lstat only; secret-shaped basenames not opened; four non-secret headers read at most 200 bytes",
+    "elapsed_s": 2.707,
+    "files_indexed": 757391,
+    "regular_files": 757135,
+    "symlinks_not_followed": 256,
+    "dirs_walked": 127029,
+    "tops": 225,
+    "regular_bytes": 37566359416,
+    "secret_shaped_names_not_opened": 75,
+    "errors": 0,
+    "newest": "2026-10-18T17:20:41-03:00 round-28/validation/d4-label-gate-selftest/tmp8q7b7zbf/repo/examples/culture-d4/invalid-tag-output.yml",
+    "oldest": "2026-10-17T01:26:05-03:00 r23-run/.git/description",
+    "header_samples": [
+      "audit4/battery.stdout size=0 class=empty (matches seat-76 exemplar; file still present)",
+      "audit4/export/tools/check-gate-battery.py head starts #!/usr/bin/env python3",
+      "sai-st.out head starts CANNOT-EVALUATE:",
+      "r28-sweep-final.json head starts {\"footer\""
+    ],
+    "git": {
+      "command": "git -C kotodama-shokunin rev-parse --short HEAD; rev-list --count --branches --not --remotes; status --porcelain --untracked-files=all | wc -l",
+      "observed": "69cecbc; 51; 96"
+    },
+    "du": {
+      "first": "du -sb -P → 27564015131 (27G) before the walk",
+      "second": "du -sb -P during/after the walk printed 36629608968 and exited 1: cannot access .scratch/receipt-guard-q1hc9772 (path vanished). Tree is live."
+    },
+    "peer_snapshots_not_adopted": {
+      "seat-76.json": "pinned_n=535606 slice residue i%16==11 n=33475; this seat confirmed audit4/battery.stdout still exists and is empty, not the slice total",
+      "seat-77.json": "pinned_n=663012",
+      "seat-71.json": "48282/772513 at 16:49, du -sb 27589079743",
+      "kotodama-scratch-handoff-90.md": "claims a closed walk of 661234 files ending 16:32:46, summed st_size 28467104711. That file exists. It is not the tree this seat walked at 17:20 (757391 names)."
+    }
+  },
+  "evidence": [
+    {
+      "claim": "named census path absent; SKILL.md:16 unchanged; lane docs clean vs HEAD",
+      "command": "date -Is; test -e tools/souji-census.sh; sed -n 16p SKILL.md; git status --porcelain -- SKILL.md SCORECARD.md PROVINCE.md tools/souji-census.sh",
+      "observed": "2026-10-18T17:24:47-03:00; CENSUS_ABSENT; line 16 still 'git fetch' and 'origin/main'; porcelain empty"
+    },
+    {
+      "claim": "fleet default ref and worktree counts",
+      "command": "git -C /home/vgpnk/Projects/shokunin symbolic-ref --short refs/remotes/origin/HEAD; git -C lore-shokunin worktree list | wc -l; git -C game-dev-2d-shokunin worktree list",
+      "observed": "origin/master; lore lines=1; gd2d 4 lines, three locked named branches"
+    },
+    {
+      "claim": "installed verifier identity and selftests",
+      "command": "sha256sum tools/souji-verify.sh tools/souji-vault-verify.sh; TMPDIR=/dev/shm bash tools/souji-verify.sh --selftest; TMPDIR=/dev/shm bash tools/souji-vault-verify.sh --selftest",
+      "observed": "53239fdfe5bcaaaf448e8525845ab962dd7ab6a4e7f75c0f4f051614f1c99200; 00d59b1b36d87db37518b5ef9fb98cd472888a075ed7b97bd5b8ff93bd559455; 24/24 exit 0; 35/35 exit 0"
+    },
+    {
+      "claim": "ledger has no data row",
+      "command": "wc -l corpus/knowledge/obsidian-ledger.tsv",
+      "observed": "1"
+    }
+  ],
+  "scope": {
+    "lane_writes": ["census/round-6/final-121.json"],
+    "other_writes": "/dev/shm/souji-r6-s121-probe and /dev/shm/souji-r6-s121-gitemplates left in place (not deleted). A partial /tmp/souji-r6-s121-probe may exist from a git-init that died on /tmp quota; not removed.",
+    "git_mutations": "none in fleet, lane, or kotodama. The .ufo/state probe ran git commit and git push only inside the /dev/shm fixture bare remote, to create a remote-tracking ref. No fetch against a network remote.",
+    "secrets": "secret-shaped names counted, not opened. Live .ufo/state and .ufo/watchdog.log not opened.",
+    "peer_finals": "final-114.json and final-122.json were read for schema only. Their numbers were not copied."
+  }
+}

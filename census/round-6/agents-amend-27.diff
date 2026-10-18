@@ -1,0 +1,121 @@
+--- a/AGENTS.md
++++ b/AGENTS.md
+@@ -1,17 +1,104 @@
+ # souji-shokunin operating rules
+ 
+-- Work only within this repo and its PROVINCE.md scope; sibling repos and
+-  domain source trees are read-only — census them, never modify them.
+-- Default to a dry run. Any removal requires a receipt (`pushed` /
+-  `moved-to-obsidian` / `stale`), quarantine staging, a hold period, and a
+-  second receipt check. No receipt, no removal — and when uncertain, the
+-  verdict is `NOT-SAFE`.
+-- Never rewrite history; never touch credentials or operator config; never
+-  touch an artifact whose owning lane has dirty or unpushed work.
+-- Every change is recorded in an append-only LOG.md entry with the evidence
+-  that motivated it. During a parallel wave, workers write only their
+-  assigned evidence fragments; the parent integrates them into LOG.md after
+-  the batch. Workers never race to append shared bookkeeping.
+-- Never fabricate evidence: cite a file, a command output, or a commit;
+-  claims you cannot verify are marked `to-verify`.
++- Work only within this repo and its PROVINCE.md scope. Sibling repos and
++  domain source trees are census-only: read them, never modify them. A
++  parallel-wave worker never writes a sibling. The only sibling writes the
++  parent may execute, and only under an operator ticket re-checked at act
++  time, are: a lock on a registration the tools grade
++  `NOT-SAFE(unpushed-branch)` (the lock stays until that branch is pushed
++  or the operator dispositions it), and `git worktree prune` of a
++  registration already graded `SAFE` / `metadata-prune`, with those locks
++  held. No unlock of an unpushed-branch registration. No `git worktree
++  remove` of a directory that still exists. No other sibling write.
++  Round 3 executed the prune; round 5 re-locked the three game-dev-2d
++  registrations. This file does not widen that exception.
++- Default to a dry run. File removal needs exactly one of `pushed`,
++  `moved-to-obsidian`, or `stale`, plus quarantine staging, a hold, and a
++  second receipt check. `metadata-prune` is a fourth receipt and removes
++  worktree admin-dir metadata only — it is not a receipt to delete a file
++  or a directory that still exists. No receipt, no removal. Uncertain →
++  `NOT-SAFE`.
++- Verdict procedure is the installed tools, not a recipe copied from
++  SKILL.md. Binding files: `tools/souji-verify.sh`,
++  `tools/souji-vault-verify.sh`, and `tools/souji-verify.spec.md` (the r5
++  amendments in that spec included). Do not copy CLI flags into this file.
++  Where SKILL.md disagrees with those files, the tools win, and the
++  disagreement is `to-verify` until SKILL.md is patched. Do not run the
++  drifted command (`git fetch` plus `origin/main` is that command).
++  - No `git fetch`, `push`, `commit`, `branch`, `checkout`, `reset`,
++    `rebase`, or `prune`, except the ticketed metadata-prune above.
++  - `pushed`: the path still exists, and its introducing commit
++    (`git log --diff-filter=A --format=%H -1 -- <path>`) is an ancestor of
++    `refs/remotes/origin/HEAD` when that resolves, else of the single
++    `refs/remotes/origin/*` branch ref. No remote-tracking ref →
++    `NOT-SAFE(pushed-unverifiable)`. A `refs/heads/*` ref never establishes
++    pushed. Do not hardcode `origin/main`. `tools/souji-verify.sh` sets
++    `FAIL_REASON=pushed-unverifiable`. `tools/souji-vault-verify.sh` only
++    notes `pushed=unverifiable(no-default-ref)` and may surface receipt
++    `none`. Disagreement → `NOT-SAFE`, not the permissive token.
++  - `moved-to-obsidian`: a ledger row whose source path+sha256 and vault
++    path+sha256 both re-hash to the current bytes, vault side read-only.
++    `tools/souji-vault-verify.sh` is the receipt of record for this class.
++    A `moved-to-obsidian` line from `tools/souji-verify.sh` alone is not
++    sufficient. A symlink in a digest scope is not this receipt:
++    `souji-verify.sh` records `obsidian=symlink-present` in evidence and
++    leaves the receipt `none`; `souji-vault-verify.sh` reports
++    `NOT-VERIFIED(symlink-present)`. Either line means do not remove. A row whose vault path is the source
++    is not a receipt: `tools/souji-vault-verify.sh` notes
++    `source-equals-vault`; `tools/souji-verify.sh` has no such check. A
++    SAFE from the latter does not override the former. Never write
++    `corpus/knowledge/obsidian-ledger.tsv`. Never launch the Obsidian GUI;
++    a CLI shim is advisory only and is not a receipt.
++  - `stale`: the scratch family the tool implements, zero live references
++    with `souji-shokunin/census/**`, `souji-shokunin/tests/**`, and
++    `.ufo-quarantine/**` excluded, and mtime older than `--stale-days`
++    (default 1). A census fragment that names the basename is not a live
++    reference. A `stale` line from a sweep that skips hidden files is not
++    a removal receipt (`census/round-5/seat-51.json` E1) until that sweep
++    is patched and its selftest is re-run.
++  - A missing path is `NOT-SAFE(unreachable)`, not a receipt.
++- Never rewrite history. Never read or remove credentials. A path
++  component matching `*.env`, `.env`, `.env.*`, `.envrc`, `*credential*`,
++  `*secret*`, `id_*`, or `*.pem` is `NOT-SAFE(secrets-refusal)` before any
++  read — cite the path and mode only. That covers the target, every ledger
++  path, and every reference-sweep path. A tool that hashed a secret-shaped
++  component did not create a receipt (`census/round-5/seat-51.json` E3).
++- Never touch an artifact whose owning lane has dirty or unpushed work on
++  that artifact. The guard is path-scoped and re-checked at act time:
++  unpushed commits or a dirty status that do not touch the path do not
++  void a `metadata-prune` receipt, and they do void removal of a path they
++  touch. A `pushed` line is not a receipt while
++  `git status --porcelain -- <path>` is non-empty or the path is missing.
++  Uncertain intersection → `NOT-SAFE`. A repo root with unpushed commits
++  or a dirty tree is not `pushed`, `stale`, or `metadata-prune`; the only
++  receipt that can cover it is `moved-to-obsidian`. Tools report
++  `unpushed=N dirty=M`.
++- A live lane's `.scratch/` is classified read-only: metadata (`du`,
++  `stat`, `find -printf`) and at most 200 bytes of header per non-secret
++  file. Never modify it. Never open a secret-shaped name, not even for a
++  header. A size is not a receipt, and a size copied from SKILL.md Known
++  surfaces is not evidence — re-measure. The handoff is a classification
++  note. While that lane is dirty or unpushed, the verdict stays
++  `NOT-SAFE`. kotodama-shokunin `.scratch/` is the known live instance;
++  classify any live unpushed lane scratch the same way.
++- Repeatable fleet census, once a parent installs it, is
++  `tools/souji-census.sh`. If that path is absent, no
++  `tools/souji-census.impl-*.sh` is the operating contract; a census is a
++  dry-run fragment under `census/round-N/`. A census is not a removal list
++  and adds no receipt class. It stays read-only, does not `git fetch`, and
++  writes only to the assigned fragment, an explicit `--out` under
++  `census/` or `results/`, or `mktemp`.
++- Never touch operator config (`~/.config/**`), driver `scripts/`, or
++  driver runtime `.ufo/state/` and `.ufo/watchdog.log`. A tool line on
++  those paths is not a receipt.
++- Every change is recorded in an append-only LOG.md entry at EOF, with
++  the evidence that motivated it. Never insert a section mid-file. During
++  a parallel wave, workers write only their assigned fragments (under
++  `census/round-N/`, an assigned `tools/` file, or `results/`). The parent
++  integrates LOG.md after the batch. Workers do not race shared
++  bookkeeping and do not edit this file in place — an AGENTS.md change
++  ships as an unapplied diff the parent applies.
++- Never fabricate evidence: cite a file, a command output, or a commit.
++  Claims you cannot verify are marked `to-verify`. SKILL.md Known surfaces
++  counts are not evidence.
+ - Commit as `souji-shokunin <souji@shokunin.local>`.

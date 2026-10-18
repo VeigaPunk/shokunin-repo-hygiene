@@ -1,0 +1,190 @@
+{
+  "seat": "S04",
+  "round": 6,
+  "kind": "drift-audit",
+  "target": "SKILL.md ## Error patterns (false-SAFE signatures), lines 54-70",
+  "axes": [
+    "reproducibility",
+    "citation fidelity",
+    "resolution accuracy",
+    "read-only evidence"
+  ],
+  "verdict": "DRIFT: 3/4 patterns still have a live hazard; 0/4 citations are exact. worktree-unique-commits is not reproducible as written. The unqualified 'resolved r3' note would be false.",
+  "patterns": [
+    {
+      "name": "Unpushed-lane trap",
+      "skill_claim": "git worktree list says prunable, but git log --branches --not --remotes --oneline in the owning repo is non-empty, so worktree metadata is not safe to prune. Live instance: kotodama-shokunin 2026-10-18 (round-17..22 unpushed, dirty tree, 553M .scratch/).",
+      "still_reproducible": "hazard yes; cited conjunction no",
+      "citation_exact": false,
+      "probes": [
+        {
+          "t": "2026-10-18T15:52:55-03:00",
+          "command": "git -C /home/vgpnk/Projects/shokunin/kotodama-shokunin worktree list --porcelain | awk '/^worktree /{n++} /^prunable/{p++} END{print \"worktrees=\" n \" prunable_lines=\" p}'",
+          "output": "worktrees=1 prunable_lines=0"
+        },
+        {
+          "t": "2026-10-18T15:52:55-03:00",
+          "command": "git -C /home/vgpnk/Projects/shokunin/kotodama-shokunin worktree list",
+          "output": "/home/vgpnk/Projects/shokunin/kotodama-shokunin 1ad491a [main]"
+        },
+        {
+          "t": "2026-10-18T16:09:56-03:00",
+          "command": "git -C kotodama-shokunin log --branches --not --remotes --oneline | wc -l; git rev-list --count origin/main..HEAD",
+          "output": "unpushed=47 ahead_origin_main=47"
+        },
+        {
+          "t": "2026-10-18T15:52:55-03:00",
+          "command": "git -C kotodama-shokunin log --branches --not --remotes --oneline | grep -E 'round-1[7-9]|round-2[0-2]'",
+          "output": "13 subject lines still name round-17 through round-22 (9b49a4a..37a523d). Same log also contains later unpushed subjects through round-26 (1ad491a). awk subject_round17_to_26=22 of total_unpushed=47."
+        },
+        {
+          "t": "2026-10-18T15:52:55-03:00",
+          "command": "git -C kotodama-shokunin status --porcelain | wc -l; awk status prefix counts",
+          "output": "29 lines (7 M, 22 ??)"
+        },
+        {
+          "t": "2026-10-18T16:09:56-03:00",
+          "command": "git -C kotodama-shokunin status --porcelain | wc -l",
+          "output": "31 lines (8 M, 23 ??). Tracked modifications include examples/culture-d4/* and tools/exercise-handoff-e2e.py, tools/gates/typed-pipelines.json. Untracked names are reports/round-26/** and corpus/lessons/round-26.md. Contents not opened."
+        },
+        {
+          "t": "2026-10-18T15:52:55-03:00",
+          "command": "du -sb /home/vgpnk/Projects/shokunin/kotodama-shokunin/.scratch",
+          "output": "18133901143 (du -sh 18G)"
+        },
+        {
+          "t": "2026-10-18T16:09:56-03:00",
+          "command": "du -sb /home/vgpnk/Projects/shokunin/kotodama-shokunin/.scratch; find -mindepth 1 -maxdepth 1 -printf '%y'",
+          "output": "18699253922 (du -sh 19G); 141 directories, 81 files. git check-ignore -v .scratch -> .gitignore:6:.scratch/ .scratch. Grew 565352779 bytes during this audit. Metadata only; no file contents read."
+        },
+        {
+          "command": "SHOKUNIN_ROOT=/home/vgpnk/Projects/shokunin bash tools/souji-verify.sh --json /home/vgpnk/Projects/shokunin/kotodama-shokunin",
+          "output": "{\"path\":\"/home/vgpnk/Projects/shokunin/kotodama-shokunin\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"unpushed\",\"evidence\":\"unpushed=47 dirty=31\"} exit 0. dirty=31 matches the 16:09:56 porcelain count, not the 15:52:55 count."
+        }
+      ],
+      "conclusion": "The NOT-SAFE hazard is live and larger than the citation: 47 unpushed commits (round-17..22 still inside that set, plus rounds through 26), dirty tree, .scratch 19G not 553M. The pattern's prunable clause is not reproducible on this instance: kotodama has one worktree (main) and zero prunable lines. A fleet scan of $SHOKUNIN_ROOT and every *-shokunin found prunable_total=0. The SKILL text conflates a prunable-worktree trap with a repo-root unpushed lane. Needed note: keep the NOT-SAFE rule; drop 'worktree list says prunable' from the kotodama citation; replace 553M and round-17..22 with a decision-time measurement (this audit: 47 unpushed, porcelain 31, scratch 18699253922 at 16:09:56-03:00, and still growing)."
+    },
+    {
+      "name": "Superseded-snapshot drift",
+      "skill_claim": "shokunin.conf.full-roster-20261015 claimed byte-identical to live shokunin.conf; cmp differs; 3859 vs 4092 B on 2026-10-18. Stale only after diff shows no unique edits.",
+      "still_reproducible": true,
+      "citation_exact": false,
+      "probes": [
+        {
+          "command": "stat -c '%n %s %y' /home/vgpnk/Projects/shokunin/shokunin.conf /home/vgpnk/Projects/shokunin/shokunin.conf.full-roster-20261015",
+          "output": "shokunin.conf 4432 2026-10-18 11:54:47.589669861 -0300; shokunin.conf.full-roster-20261015 3859 2026-10-15 01:50:47.874159787 -0300"
+        },
+        {
+          "t": "2026-10-18T16:25:59-03:00",
+          "command": "wc -c worktree conf; git cat-file -s HEAD:shokunin.conf; git cat-file -s refs/remotes/origin/master:shokunin.conf; git cat-file -s <snapshot blob>",
+          "output": "worktree=4432 HEAD=4432 origin/master=4092 snapshot=3859. hash-object(worktree)==HEAD blob (7f1eb550535c7a0a0e831749cae296908a2db6e0). snapshot blob e01d089504bcab280495969e2ea14b81f48319ac equals refs/remotes/origin/master:shokunin.conf.full-roster-20261015."
+        },
+        {
+          "command": "cmp shokunin.conf.full-roster-20261015 shokunin.conf; cmp snapshot vs origin/master:shokunin.conf (extracted to /tmp, then removed)",
+          "output": "both cmp exit 1. cmp: EOF on snapshot after byte 3859, line 67."
+        },
+        {
+          "command": "comm -23 <(sort snapshot) <(sort worktree); comm -23 snapshot origin/master conf; comm -23 origin/master worktree",
+          "output": "0, 0, and 0. Snapshot holds no unique lines against either file. origin/master is a line-subset of the worktree. origin/master adds the kotodama roster block (5 sorted lines, including the 2026-10-17 mint comment) over the snapshot. Worktree adds the souji roster block (5 sorted lines, 2026-10-18 mint comment) over origin/master."
+        },
+        {
+          "command": "git -C /home/vgpnk/Projects/shokunin log --format='%H %ci %s' -- shokunin.conf; git cat-file -s <commit>:shokunin.conf",
+          "output": "4432 at 7bf2b1ab7d7c (2026-10-18 11:55:14 -0300, mint: souji lane wiring). 4092 at 417b1c242784 (2026-10-17 01:27:58 -0300, kotodama wiring). 3859 at 99efc52b3a6f (2026-10-15 01:52:09 -0300), which is also the snapshot's introducing commit and is an ancestor of refs/remotes/origin/master (merge-base exit 0)."
+        },
+        {
+          "command": "SHOKUNIN_ROOT=/home/vgpnk/Projects/shokunin bash tools/souji-verify.sh --json <snapshot> <live conf>",
+          "output": "snapshot SAFE/pushed intro=99efc52b3a6f ref=refs/remotes/origin/master ancestor=yes. live conf SAFE/pushed intro=e0b4d9b35ab4 ref=refs/remotes/origin/master ancestor=yes. That receipt checks the introducing commit only (tools/souji-verify.sh try_pushed). It does not mean the worktree bytes match origin/master: they do not (4432 vs 4092)."
+        }
+      ],
+      "conclusion": "Still a superseded snapshot, not a duplicate. cmp still differs, and the snapshot still has zero unique lines, so the 'no unique edits' half of the stale gate still holds. The cited 4092 B is origin/master:shokunin.conf, not the live worktree (4432 B since 7bf2b1ab). Needed note: 3859 (snapshot, on origin/master) vs 4092 (origin/master conf) vs 4432 (worktree/HEAD). Do not treat SAFE(pushed) on either path as byte-identity."
+    },
+    {
+      "name": "Checkpoint-blob bloat",
+      "skill_claim": "Fleet-root commits like b2f2efa land launch JSON / PNG checkpoint files at the fleet root. Classify per file; if pushed, they qualify for pushed receipts individually. Known surfaces also say 'b2f2efa checkpoint files at HEAD'.",
+      "still_reproducible": "class yes; 'at the fleet root' and 'all at HEAD' no",
+      "citation_exact": false,
+      "probes": [
+        {
+          "command": "git -C /home/vgpnk/Projects/shokunin rev-parse b2f2efa; git show --format='%H %ci %s' --stat b2f2efa | head",
+          "output": "b2f2efae7549c6692d9af6dcea9f9d9c5d797e9d; 2026-10-15 09:02:32 -0300; fleet state: checkpoint remaining WIP before round-18 mission merges (tower merge-gate recovery, part 2). name-only count=109. extensions: 39 md, 35 json, 20 txt, 7 out, 5 log, 1 stderr, 1 png, 1 mjs. launch-*.json in the commit=16."
+        },
+        {
+          "t": "2026-10-18T16:34:44-03:00",
+          "command": "for each b2f2efa path: test HEAD blob vs b2f2efa blob; merge-base --is-ancestor b2f2efa refs/remotes/origin/master and HEAD",
+          "output": "HEAD=f4e1e9bf6e27 present=94 missing=15 blob_differ=0. ancestor of origin/master exit 0; ancestor of HEAD exit 0. Per-file introducing commit vs origin/master: intro_ancestor_ok=109 intro_not_ancestor=0 (checked before the HEAD move adc3d330 -> f4e1e9bf; presence and blob identity rechecked after)."
+        },
+        {
+          "command": "path prefix count of b2f2efa --name-only; ls launch-*.json; test interactive-wall.png",
+          "output": "94 paths under .ufo/; 15 paths at the repo root. worktree launch-*.json count=16; interactive-wall.png present. The 94 still-at-HEAD files are under .ufo/interactive-l1-20261015T050057Z/, not the repo root."
+        },
+        {
+          "command": "for the 15 missing-at-HEAD paths: cat-file -e origin/master and worktree existence; git log -1",
+          "output": "all 15 present on refs/remotes/origin/master, absent from the worktree. last commit a1b44b152a1c65313c09e6e6a7bd90d026eb93a8 2026-10-18 11:22:25 -0300 cleanup: drop stray shell-experiment redirects at fleet root. merge-base --is-ancestor a1b44b1 HEAD exit 0; vs refs/remotes/origin/master exit 1. branch -r --contains a1b44b1 printed nothing. Paths: commit-watch.stderr f2.out f3.out f4.out f5.out f6.out f7.out f8.out forgeB.log forgeC.log forgeD.log kwin.txt logs_dummy.txt logs_mut.txt logs_tier.txt."
+        },
+        {
+          "command": "SHOKUNIN_ROOT=/home/vgpnk/Projects/shokunin bash tools/souji-verify.sh --json launch-tsukuroi.json interactive-wall.png logs_tier.txt",
+          "output": "launch-tsukuroi.json SAFE/pushed intro=b2f2efae7549 ref=refs/remotes/origin/master ancestor=yes. interactive-wall.png SAFE/pushed same evidence. logs_tier.txt NOT-SAFE/unreachable missing path. exit 0."
+        }
+      ],
+      "conclusion": "Per-file pushed classification is still the right rule and is still reproducible for the 94 .ufo checkpoint files (blob-identical to b2f2efa, introducing commit pushed). Two citation errors: those files are not 'at the fleet root', and 'checkpoint files at HEAD' is false for the 15 root strays. Those 15 are deleted locally by an unpushed commit but still on origin/master, so a pushed receipt against the missing worktree path is a false-SAFE (tool correctly says unreachable). Needed note: classify the 94 .ufo files individually as pushed only while they exist; the 15 root strays are already absent locally and their deletion is not on origin/master."
+    },
+    {
+      "name": "Worktree-with-unique-commits",
+      "skill_claim": "git worktree list + git log <wt-sha> --oneline | head — a prunable worktree whose tip has commits not on any branch is NOT-SAFE.",
+      "still_reproducible": false,
+      "citation_exact": false,
+      "parent_hypothesis": "pruned now — pattern needs a note it was resolved r3",
+      "parent_hypothesis_verdict": "REJECT unqualified. r3 resolved only the unique=0 prunable registrations. The unpushed tips were locked, not pruned, and they are on local branches.",
+      "probes": [
+        {
+          "command": "for repo in $SHOKUNIN_ROOT $SHOKUNIN_ROOT/*-shokunin; git worktree list --porcelain | grep -c '^prunable'",
+          "output": "prunable_total=0. Only extra registrations: game-dev-2d-shokunin worktrees=4 extra=3 prunable_lines=0, all three locked."
+        },
+        {
+          "command": "git -C lore-shokunin worktree list; test -d lore-shokunin/.git/worktrees",
+          "output": "/home/vgpnk/Projects/shokunin/lore-shokunin 6cec83a [main]; worktrees=1 prunable=0; lore .git/worktrees absent. Matches LOG.md r3: lore list 20->1 after metadata prune of the 19 unique=0 registrations."
+        },
+        {
+          "command": "git -C game-dev-2d-shokunin worktree list --porcelain; test -d the three wt paths; rev-list --count origin/main..branch; log --oneline tip --not --remotes | wc -l; log --oneline tip --not --all | wc -l",
+          "output": "wt-r98 68bee6e7, wt-r99 fe1a996e, wt-r100 2d562282. Dirs ABSENT. Each locked ('souji r5: pinned until game-dev-2d pushes wt branches or operator dispositions', 79B). Each: origin/main..=1, --not --remotes=1, --not --all=0. branch --contains shows only the local wt branch. Not prunable."
+        },
+        {
+          "command": "SHOKUNIN_ROOT=/home/vgpnk/Projects/shokunin bash tools/souji-verify.sh --json /home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r98",
+          "output": "{\"path\":\"/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r98\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"unpushed-branch\",\"evidence\":\"branch=wt-r98 unpushed=1 dir=absent owner=game-dev-2d-shokunin\"} exit 0"
+        },
+        {
+          "command": "git -C souji-shokunin blame -L 69,70 SKILL.md",
+          "output": "text unchanged since mint ccbb132 2026-10-18 11:50:12 -0300. No r3 resolution note was ever added."
+        }
+      ],
+      "conclusion": "Not reproducible. There is no prunable worktree, and no tip with commits not on any branch. r3 pruned lore's 19 and gd2d's 2 detached registrations; r1/LOG recorded those as unique=0, which is the opposite of this pattern. The gd2d named-branch tips were locked in r3 and re-locked in r5; they remain NOT-SAFE(unpushed-branch). The documented probe `git log <wt-sha> --oneline | head` does not test uniqueness at all. Needed note, replacing an unqualified 'resolved r3': prunable unique=0 registrations were metadata-pruned in r3 and are gone (prunable_total=0); unpushed-branch tips wt-r98/99/100 were not pruned and stay NOT-SAFE until pushed or operator-dispositioned; uniqueness is `git log <tip> --oneline --not --all` (0 here) and unpushed-ness is `--not --remotes` (1 here)."
+    }
+  ],
+  "adjacent_known_surfaces": {
+    "skill_lines": "86-91",
+    "drift": [
+      "lore-shokunin: 19 prunable worktrees — now 0 (list is main only).",
+      "game-dev-2d-shokunin: 5 prunable worktrees — now 0 prunable; 3 locked named-branch registrations remain.",
+      "kotodama 553M .scratch beside round-17..22 — now 19G (18699253922 at 16:09:56-03:00) beside 47 unpushed commits through round-26.",
+      "b2f2efa checkpoint files at HEAD — 94/109 still at HEAD; 15 root strays absent locally, still on origin/master."
+    ]
+  },
+  "needed_skill_notes": [
+    "Unpushed-lane trap: kotodama is still NOT-SAFE, but it is not a prunable worktree. Cite decision-time unpushed/dirty/scratch, not 553M or round-17..22 alone.",
+    "Superseded-snapshot: still not byte-identical and still has 0 unique lines. Sizes are 3859 snapshot / 4092 origin/master / 4432 worktree, not 3859 vs 4092 as the live pair.",
+    "Checkpoint-blob: per-file pushed still holds for the 94 .ufo files. They are not at the repo root. The 15 root strays are missing locally; do not emit pushed against an absent path.",
+    "Worktree-with-unique-commits: do not write 'resolved r3' alone. r3 removed unique=0 prunable metadata only. gd2d wt-r98/99/100 remain locked NOT-SAFE(unpushed-branch). Fix the probe command."
+  ],
+  "not_done": [
+    "SKILL.md was not edited. This seat writes only census/round-6/seat-04.json.",
+    "No git fetch. Pushed checks use the existing refs/remotes/origin/* tips.",
+    "kotodama .scratch was not content-classified (K1's job). Size and top-level type counts only.",
+    "Kotodama and fleet HEAD moved during the audit (scratch 18133901143 -> 18699253922; fleet HEAD adc3d330 -> f4e1e9bf, unpushed vs origin/master 20 -> 21). Counts above are labeled with the command time. Do not treat them as stable."
+  ],
+  "preamble": {
+    "cwd": "/home/vgpnk/Projects/shokunin",
+    "fragment_path": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-6/seat-04.json",
+    "written_at": "2026-10-18T16:34:44-03:00",
+    "mode": "read-only audit; only this fragment written; no fetch/push/commit/prune/delete of fleet objects; no secret-shaped file opened; .ufo/state and .ufo/watchdog.log not touched"
+  }
+}
