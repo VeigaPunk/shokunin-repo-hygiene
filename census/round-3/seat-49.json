@@ -1,0 +1,107 @@
+{
+  "seat": "S49",
+  "kind": "pin-audit",
+  "target": "lore-shokunin live surfaces vs r87 worktrees",
+  "owner": "/home/vgpnk/Projects/shokunin/lore-shokunin",
+  "head": "6cec83aede47575beeeda6b7dc0e4ea74927be78",
+  "question": "Do lore-shokunin live surfaces reference the r87 worktrees?",
+  "answer": "NO — zero live gate/fixture references to any r87 worktree.",
+  "verdict": "SAFE",
+  "r87_worktree_names": [
+    "r87-B1", "r87-C5", "r87-C6", "r87-C6-X1", "r87-F1", "r87-F1-applycheck",
+    "r87-JDEP3", "r87-M1-myth", "r87-M1-verify", "r87-M3", "r87-M4", "r87-S1",
+    "r87-T1", "r87-V1", "r87-V1-x1", "r87-V2", "r87-V4", "r87-X2", "r87-X3"
+  ],
+  "classification": {
+    "assignment_command": "rg -ln 'r87-' /home/vgpnk/Projects/shokunin/lore-shokunin --glob '!.git' | head -20",
+    "assignment_hits_total": 19,
+    "class_live_gate_or_fixture": 0,
+    "class_historical_report_or_lesson": 19,
+    "detail": [
+      {
+        "class": "round-label fixture/knowledge NAME (not a worktree)",
+        "files": [
+          "SCORECARD.md", "SKILL.md", "corpus/README.md", "LOG.md",
+          "corpus/tools/README.md", "corpus/knowledge/r102-freshness-sweep.md",
+          "corpus/knowledge/r94-cross-myth-design-comparison.md",
+          "corpus/knowledge/holder-assessment-boundary.md",
+          "corpus/knowledge/r89-cross-cluster-contradiction.md",
+          "corpus/knowledge/r87-provenance-chain-decision-table.md",
+          "corpus/fixtures/r93-m2-kojiki-cluster/README.md",
+          "corpus/fixtures/README.md",
+          "corpus/fixtures/r87-probe-record-and-chain/README.md",
+          "corpus/fixtures/r87-probe-entry-shape/README.md",
+          "corpus/fixtures/r87-masked-break-from-ambiguous/README.md",
+          "corpus/fixtures/r87-chain-unique-valid/README.md",
+          "corpus/fixtures/r87-masked-break-to-ambiguous/README.md",
+          "corpus/fixtures/r87-chain-unique-broken/README.md",
+          "corpus/fixtures/r87-myth-cluster/README.md"
+        ],
+        "note": "Every r87- token is a round-87 fixture directory name (r87-myth-cluster, r87-probe-*, r87-chain-*, r87-masked-break-*) or a round-87 knowledge artifact name (r87-provenance-chain-decision-table.md). These name repo-relative paths that EXIST on disk as live fixtures/knowledge, not worktree paths."
+      },
+      {
+        "class": "worktree-PATH reference, historical only",
+        "files": [
+          "LOG.md:1888 (\"Scratch probes used by P3 lived under /tmp/r87-P3-* and are not deliverables.\")",
+          ".ufo/waves/round-87/** (141 tracked wave-receipt/seat .md + .json files)"
+        ],
+        "note": "Absolute /tmp/r87-* paths appear ONLY in the historical LOG entry and in tracked .ufo/waves/round-87 wave receipts. Not live gates, not fixtures, not executable. /tmp/r87-P3 is not even a registered worktree."
+      }
+    ]
+  },
+  "checks": {
+    "no_live_gate_r87_ref": true,
+    "no_fixture_worktree_collision": true,
+    "no_worktree_name_in_live_surface": true,
+    "r87_worktree_head_shas_reachable": true
+  },
+  "receipt_evidence": {
+    "cmds": [
+      "rg -ln 'r87-' /home/vgpnk/Projects/shokunin/lore-shokunin --glob '!.git' | head -20",
+      "rg -ln 'r87-' ... --glob '!.git' | wc -l",
+      "rg -o 'r87-[A-Za-z0-9._-]*' --glob '!.git' . | sed 's/^[^:]*://' | sort | uniq -c | sort -rn",
+      "git worktree list --porcelain | grep '^worktree /tmp/r87-' | sed 's|worktree /tmp/||' | sort",
+      "rg -n '/tmp/r87' --glob '!.git' .",
+      "rg -n 'r87-[A-Z]' --glob '!.git' .",
+      "rg -n 'r87' corpus/tools/*.py corpus/fixtures/*.py",
+      "rg -n '/tmp/|/home/' corpus/fixtures/check_bible.py",
+      "for w in $(cat /tmp/s49_wt.txt); do rg -l --fixed-strings \"$w\" --glob '!.git' . | wc -l; done",
+      "comm -12 <(ls corpus/fixtures/r87-* | xargs -n1 basename | sort) <(git worktree list --porcelain | grep '^worktree /tmp/r87-' | sed 's|worktree /tmp/||' | sort)",
+      "rg -ln '/tmp/r87' --glob '!.git' --glob '!.ufo/**' --glob '!reports/**' .",
+      "rg -ln 'r87-[A-Z]' corpus/ SKILL.md PROVINCE.md README.md SHONEN.md",
+      "git rev-parse 28706dc 2b48ca7; git branch -a --contains 28706dc",
+      "git status --porcelain | wc -l",
+      "git rev-parse HEAD"
+    ],
+    "out": [
+      "19 files (list above) -> all round-label fixture/knowledge names",
+      "19 -> assignment hit count, all classified historical (0 live-gate/fixture worktree refs)",
+      "token census: r87-probe-record-and-chain(33) r87-myth-cluster(28) r87-masked-break-to-ambiguous(12) r87-probe-entry-shape(11) r87-provenance-chain-decision-table.md(9) r87-masked-break-from-ambiguous(9) ... r87-era(1) -> all fixture/knowledge/round labels; NO r87-<Capital-letter worktree name>",
+      "19 worktree registrations, all 'detached' + 'prunable gitdir file points to non-existent location': r87-B1 r87-C5 r87-C6 r87-C6-X1 r87-F1 r87-F1-applycheck r87-JDEP3 r87-M1-myth r87-M1-verify r87-M3 r87-M4 r87-S1 r87-T1 r87-V1 r87-V1-x1 r87-V2 r87-V4 r87-X2 r87-X3",
+      "rg -n '/tmp/r87' --glob '!.git' . -> 1 hit: ./LOG.md:1888 (historical note)",
+      "rg -n 'r87-[A-Z]' --glob '!.git' . -> exit 1 (no matches): NO worktree-shaped name anywhere in the repo",
+      "NONE -> corpus/tools/*.py and corpus/fixtures/*.py contain ZERO 'r87' strings (live gates carry no r87 reference at all)",
+      "exit 1 / no output -> check_bible.py contains NO absolute path (/tmp or /home)",
+      "collision-scan-done with 0 HIT lines -> none of the 19 worktree names appears in any tracked file",
+      "collisions=0 -> the 12 live r87-* fixture dirs share no name with any of the 19 r87 worktrees",
+      "./LOG.md only -> outside .ufo/ and reports/, the sole /tmp/r87 reference is the historical LOG.md:1888 line",
+      "NONE -> no worktree-shaped r87 name in corpus/, SKILL.md, PROVINCE.md, README.md, SHONEN.md",
+      "28706dc73a9b7667851fd82adb71e905ae5eb896 ; 2b48ca72033dfd1060b6f81c4cf27ad83deae57f ; * main / remotes/origin/HEAD / remotes/origin/main -> both r87 worktree HEAD SHAs reachable from local main and origin/main",
+      "1 -> only untracked '?? .scratch/' (pre-existing, not touched by this seat)",
+      "6cec83aede47575beeeda6b7dc0e4ea74927be78 -> lane HEAD observed during audit"
+    ]
+  },
+  "notes": [
+    "Every r87- token in lore-shokunin resolves to a round-87 fixture directory or round-87 knowledge/report artifact — a repo-relative name that exists on disk — never to a /tmp/r87-* worktree path.",
+    "Absolute worktree paths (/tmp/r87-*) survive only as history: one LOG.md line and tracked .ufo/waves/round-87 receipts. Neither is a gate, a fixture, or executable; no live checker reads them.",
+    "The two r87 worktree HEAD SHAs (28706dc, 2b48ca7) cited in live knowledge docs are ordinary reachable commits, not worktree paths — citing a SHA does not pin a worktree.",
+    "Because zero live surfaces reference the r87 worktrees, metadata-pruning the 19 prunable r87 registrations in lore-shokunin breaks no gate, fixture, or documented reproduction path. This corroborates seat-01's SAFE(metadata-prune) ticket for /tmp/r87-B1 and extends it to the whole r87 set.",
+    "Read-only run: no git worktree prune/remove was executed; nothing outside this fragment was written."
+  ],
+  "preamble": {
+    "cwd": "/home/vgpnk/Projects/shokunin",
+    "fragment_path": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-3/seat-49.json",
+    "written_at": "2026-10-18T13:52:00-03:00",
+    "mode": "dry-run; no modifications outside this fragment"
+  }
+}

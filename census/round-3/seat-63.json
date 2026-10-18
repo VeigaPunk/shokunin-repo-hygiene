@@ -1,0 +1,157 @@
+{
+  "seat": "S63",
+  "round": 3,
+  "kind": "global-consistency-audit",
+  "role": "auditor",
+  "assignment": "Global consistency check over the round-3 prune-authorization set, the live-pin set, and the operator approval rows. Emit blocking conflicts.",
+  "waited_s": 360,
+  "scope": {
+    "prune_authorization_set": {
+      "size": 21,
+      "lore_19": ["/tmp/r87-B1", "/tmp/r87-C5", "/tmp/r87-C6", "/tmp/r87-C6-X1", "/tmp/r87-F1", "/tmp/r87-F1-applycheck", "/tmp/r87-JDEP3", "/tmp/r87-M1-myth", "/tmp/r87-M1-verify", "/tmp/r87-M3", "/tmp/r87-M4", "/tmp/r87-S1", "/tmp/r87-T1", "/tmp/r87-V1", "/tmp/r87-V1-x1", "/tmp/r87-V2", "/tmp/r87-V4", "/tmp/r87-X2", "/tmp/r87-X3"],
+      "gd2d_2": ["/home/vgpnk/Projects/shokunin/r80-baseline-frozen-worktree", "/tmp/r81-frozen"],
+      "source": "census/round-1/census.tsv SAFE rows with receipt=none that are worktree-registrations (21), re-derived live by `git worktree list --porcelain` + `git worktree prune -n -v` in both owning repos"
+    },
+    "live_pin_set": {
+      "size": 0,
+      "note": "No prune target is pinned by a live gate, fixture, runner, config, or registry row. Four independent pin-audit seats concur (S43 sweep, S48 gd2d shas, S49 lore live surfaces, S50 fleet records).",
+      "must_survive_set": {
+        "size": 3,
+        "paths": ["/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r98", "/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r99", "/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r100"],
+        "why": "gd2d named-branch registrations, 1 unpushed commit each; S52 PINNED / NOT-SAFE(unpushed-branch)"
+      }
+    },
+    "approval_rows": {
+      "files": ["census/round-3/approvals-53.tsv", "census/round-3/approvals-54.tsv", "census/round-3/approvals-55.tsv", "census/round-3/approvals-56.tsv"],
+      "rows_total": 111,
+      "distinct_paths": 111,
+      "duplicates": 0,
+      "bucket": {"under_.ufo/": 94, "fleet_root_strays": 17, "other": 0},
+      "safe_rows": 96,
+      "not_safe_or_noop_rows": 15
+    }
+  },
+  "questions": {
+    "Q1_target_in_both_prune_and_pin": {
+      "answer": "NO",
+      "result": "prune_set ∩ pin_set = {} (empty). No prune target appears in a live-pin list, and no prune target appears as an approval row in any approvals-*.tsv.",
+      "cmds": [
+        "python3 set-intersection over the 21-path prune set and the 3-path pin set -> set()",
+        "grep of all four approvals-*.tsv for any prune or pin path -> no HIT lines"
+      ]
+    },
+    "Q2_approval_row_outside_ufo_or_root_stray": {
+      "answer": "NO",
+      "result": "0 violations. All 111 rows resolve to either a path under .ufo/ (94) or a fleet-root basename with no slash (17). No row points into a lane repo, into a sibling tree, or anywhere else.",
+      "cmds": [
+        "python3: for each approvals-*.tsv row, strip /home/vgpnk/Projects/shokunin/ -> classify .ufo/ vs root-stray vs OTHER -> Counter({'.ufo/': 94, 'root-stray': 17}), 0 OTHER"
+      ]
+    }
+  },
+  "blocking_conflicts": [
+    {
+      "id": "B1",
+      "severity": "blocking",
+      "title": "A bare `git worktree prune` in game-dev-2d-shokunin destroys the 3 PINNED registrations",
+      "detail": "git worktree prune takes no path argument (`git worktree prune -h` -> usage: [-n] [-v] [--expire <expire>]) and is repo-wide. In game-dev-2d-shokunin it lists ALL FIVE registrations, including wt-r98/wt-r99/wt-r100, which the pin set says MUST survive. Executing the naive prune command against gd2d would remove the pins.",
+      "my_reproduction": [
+        "git -C game-dev-2d-shokunin worktree prune -n -v 2>&1",
+        "-> Removing worktrees/r80-baseline-frozen-worktree | Removing worktrees/r81-frozen | Removing worktrees/game-dev-2d-shokunin-wt-r98 | Removing worktrees/game-dev-2d-shokunin-wt-r99 | Removing worktrees/game-dev-2d-shokunin-wt-r100"
+      ],
+      "required_mitigation": "Either (a) `git worktree lock --reason '<r3 pin>' <each of the 3 pin paths>` before any bare prune (a locked registration is skipped), or (b) skip prune in gd2d and remove exactly the two UNPINNED registrations by path: `git worktree remove <path>` (works on an already-absent dir; S52/S61 both verified this on an isolated /tmp fixture). Mechanism (c) `--expire <ts>` is NOT-SAFE: S52 showed the split is incidental mtime luck and that `--expire '@2026-10-16'` silently pruned all five.",
+      "corrected_sub_claim": "S52 framed the risk as possible loss of the pin commits. S61 fixture-verified the opposite: prune deletes only .git/worktrees/<name>/ (index, ORIG_HEAD, worktree-local reflog, registration pointer); refs/heads/wt-r98|wt-r99|wt-r100 and their commits survive untouched. The residual harm of pruning a pin is loss of the materialisation pointer + worktree-local evidence, not data loss. Still blocking, lower blast radius than S52 stated."
+    },
+    {
+      "id": "B2",
+      "severity": "blocking",
+      "title": "Approval-list arithmetic is stale: 15 of the 109 b2f2efa paths were already deleted",
+      "detail": "SCORECARD.md r3 plan and LOG.md both promise 'the operator approval list for the 109 pushed files and 2 root strays' (111). The delivered approvals cover 111 rows, but they are NOT those 111 paths: 15 of the b2f2efa paths no longer exist on disk, and 2 approval rows (shokunin.conf.full-roster-20261015, audio-publish-commit-map-20261016.txt) are outside b2f2efa.",
+      "my_reproduction": [
+        "git show --name-only --format='' b2f2efa | wc -l -> 109",
+        "of those, still on disk -> 94 ; already deleted -> 15 (commit-watch.stderr, f2..f8.out, forgeB/C/D.log, kwin.txt, logs_dummy.txt, logs_mut.txt, logs_tier.txt)",
+        "git show --stat a1b44b1 -> 'cleanup: drop stray shell-experiment redirects at fleet root' (ci <ci@local>, 2026-10-18 11:22:25) removes exactly those 15 files, 141 deletions",
+        "git merge-base --is-ancestor a1b44b1 origin/master -> rc=1 (NOT pushed; the deletion is local-only, origin/master still holds the blobs)",
+        "approvals SAFE rows -> 96 (94 b2f2efa-still-present + 2 root strays); approvals NOT-SAFE/no-op rows -> 15 (the deleted files, correctly labelled no-op-already-removed)",
+        "arithmetic: 109 - 15 = 94 ; 94 + 2 = 96 SAFE rows ; 96 + 15 no-op = 111 rows"
+      ],
+      "why_blocking": "The parent must not present '109 pushed files' to the operator as an actionable removal list. 15 of those 109 are already gone from the worktree (the deletions are unpushed, so origin/master is the only remaining copy), and the actionable SAFE set is 96. Presenting the stale count invites an operator approval for removals that are already done or that cannot be re-executed.",
+      "required_action": "Restate the deliverable as: 96 approve-remove rows (94 b2f2efa paths still present + 2 root strays) + 15 no-op rows already removed by unpushed a1b44b1. No false-SAFE found: every deleted path is labelled NOT-SAFE/no-op, and no deleted path is listed SAFE."
+    }
+  ],
+  "non_blocking_findings": [
+    {
+      "id": "N1",
+      "severity": "low",
+      "title": "S62 claims r87-C6 has no round-3 ticket; two tickets exist",
+      "detail": "seat-62.json asserts 'targets_without_r3_ticket: [r87-C6]'. Both seat-03.json and seat-24.json carry target /tmp/r87-C6 with verdict SAFE(metadata-prune). S62's preamble is written_at 13:45:00 and seat-24's is 13:45:00 — a write race, not a missing ticket. Every one of the 19 lore prune targets therefore has at least one ticket; S62's coverage table undercounts by one.",
+      "evidence": ["python3: json target of seat-03.json -> /tmp/r87-C6 ; seat-24.json -> /tmp/r87-C6"]
+    },
+    {
+      "id": "N2",
+      "severity": "low",
+      "title": "r80-baseline-frozen-worktree is referenced by .tower orchestrator records",
+      "detail": "S48 declared the path UNPINNED. My own sweep excluding .git/, waves, reports, LOG and census still returns 5 .tower references: .tower/comms/state.json, .tower/comms/missions/M1-r18-provider-model-census.md and three .tower/comms/reviews/*.md. All five are records of a MERGED mission (state.json shows M1..M10 all status=merged, roster agents []) describing the 2026-10-15 branch surgery that kept the 1.6G snapshot out of master. They are historical prose, not a live consumer, and .tower is outside souji's declared work surfaces (PROVINCE: fleet root + lane repos + remotes). Consistent with S48's UNPINNED verdict, but the operator may want to know the token survives in tower records.",
+      "evidence": ["rg -l --no-ignore --hidden -F r80-baseline-frozen-worktree . -g '!**/.git/**' -g '!souji-shokunin/census/**' -g '!souji-shokunin/tests/**' -g '!**/.ufo/waves/**' -g '!**/reports/**' -g '!**/LOG.md' -> .gitignore, 5x .tower/*"]
+    },
+    {
+      "id": "N3",
+      "severity": "info",
+      "title": "Name collisions produce false live-reference hits for r87 targets",
+      "detail": "My first live-reference sweep returned 1-5 'live-ish' hits for every r87 target. Inspection shows all are either the worktree's own .git/worktrees/<name>/gitdir file (part of the artifact being pruned) or plain-text name collisions: e.g. audio-shokunin/corpus/live/r88-verifier/labrat/labrat-report.md:84 mentions 'the r87-F1 tail-window shape' in prose, and audio-shokunin/.git/logs/HEAD matches the substring 'r87-F1' inside an unrelated commit hash. No '/tmp/r87-F1' path string exists in the audio corpus. Confirms S43/S49: live-pin count 0.",
+      "evidence": ["rg -c --no-ignore --hidden -F '/tmp/r87-F1' audio-shokunin -> no output (0 files)"]
+    },
+    {
+      "id": "N4",
+      "severity": "info",
+      "title": "Verdict wording differs but semantics agree for double-claimed targets",
+      "detail": "All 19 lore targets are claimed by 2-6 seats each (e.g. /tmp/r87-B1 by seats 01,07,22,28,57,58). seat-04 writes 'SAFE(metadata-prune)' and seat-25 writes 'SAFE' with receipt 'metadata-prune' for the same /tmp/r87-C6-X1. That is a string-formatting difference, not a verdict disagreement: both name the metadata-prune receipt. The only real conflict class is round-1's NOT-SAFE(ENOENT) rows, already resolved by the parent as r1 defect D2."
+    }
+  ],
+  "independent_verification": {
+    "tool": {
+      "path": "tools/souji-verify.sh",
+      "sha256": "7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820",
+      "selftest": "bash tools/souji-verify.sh --selftest -> 'selftest: 24 checks, 0 failed', exit 0"
+    },
+    "cmds": [
+      "cd souji-shokunin && bash tools/souji-verify.sh --selftest 2>&1 | tail -1 -> 'selftest: 24 checks, 0 failed'",
+      "SHOKUNIN_ROOT=/home/vgpnk/Projects/shokunin bash tools/souji-verify.sh <all 19 /tmp/r87-* targets> | awk -F'\\t' '{print $3,$4}' | sort | uniq -c -> 19 SAFE metadata-prune, 0 NOT-SAFE",
+      "SHOKUNIN_ROOT=... bash tools/souji-verify.sh r80-baseline-frozen-worktree /tmp/r81-frozen -> both SAFE metadata-prune",
+      "SHOKUNIN_ROOT=... bash tools/souji-verify.sh wt-r98 wt-r99 wt-r100 -> all three NOT-SAFE unpushed-branch (branch=wt-r9x unpushed=1 dir=absent)",
+      "git -C lore-shokunin worktree prune -n -v 2>&1 | wc -l -> 19 ; grep -v 'r87-' -> empty (all 19 lines are r87 registrations, main excluded)",
+      "git -C game-dev-2d-shokunin worktree prune -n -v 2>&1 -> 5 lines (the blocking finding B1)",
+      "git -C game-dev-2d-shokunin log --branches --not --remotes --oneline -- .git/worktrees | wc -l -> 0 (no gd2d unpushed commit touches the registrations; the lane-dirty rule does not block)",
+      "git -C lore-shokunin log --branches --not --remotes --oneline -- .git/worktrees/r87-* -> 0 lines (same for lore)",
+      "ls -l /proc/*/cwd | grep -E 'r87-|r80-baseline|r81-frozen' -> no match (no live process holds any target as cwd)",
+      "python3 set-intersection (prune 21) x (pin 3) -> empty",
+      "python3 approvals parse: 111 rows / 111 distinct paths / 0 duplicates / 0 outside .ufo-or-root"
+    ],
+    "git_state": "read-only throughout. No git worktree prune/remove/lock was executed against any fleet repo; `prune` was invoked only with -n (dry-run). No file outside this fragment was written."
+  },
+  "verdicts": {
+    "Q1_no_prune_pin_overlap": "CONFIRMED (no overlap)",
+    "Q2_no_out_of_scope_approval_row": "CONFIRMED (0 violations)",
+    "prune_21_targets": "SAFE(metadata-prune) as a set, re-derived live; 19 lore + 2 gd2d detached, all dir-absent, unique=0, heads reachable",
+    "gd2d_execution": "NO-GO as written: a bare prune would take the 3 pins (B1). GO only via lock-then-prune or remove-by-path.",
+    "approval_deliverable": "GO with corrected arithmetic (B2): 96 approve-remove + 15 no-op, not 109+2"
+  },
+  "go_no_go": "GO for the 19 lore registrations (single bare prune in lore-shokunin is safe — every prune line is an r87 registration and main is excluded). CONDITIONAL-GO for the 2 gd2d registrations, only with the pin-protection mechanism from B1. GO for the operator approval list only after the parent restates the count per B2. No target appears in both a prune list and a live-pin list; no approval row falls outside .ufo/ or the fleet-root stray set.",
+  "conflicts": [
+    {"with": "seat-62.json coverage table", "their": "r87-C6 has no round-3 ticket", "mine": "seat-03 and seat-24 both ticket it", "resolution": "write race (both preambles 13:45:00); S62 undercounts by one, no verdict impact"},
+    {"with": "seat-52.json risk framing", "their": "pruning a pin risks losing commits", "mine": "S61 fixture-verified refs/heads/* and commits survive; only the registration + worktree-local index/reflog are lost", "resolution": "adopt S61's corrected reading; B1 stays blocking on registration-pointer grounds, not data-loss grounds"},
+    {"with": "SCORECARD.md / LOG.md r3 plan", "their": "109 pushed files + 2 root strays", "mine": "96 actionable (94 + 2) + 15 already deleted by unpushed a1b44b1", "resolution": "B2; parent must restate the deliverable count"}
+  ],
+  "notes": [
+    "The 360s seat wait was observed before auditing; fragments and all four approvals-*.tsv landed during it. 60 JSON fragments + 4 TSVs were present at audit time.",
+    "Approval TSVs use two different schemas: approvals-53/54 use header [path, verdict, receipt, evidence]; approvals-55 uses [seat, path, kind, ...]; approvals-56 uses [seat, group, path, state, ...]. Any downstream parser must read the header, not assume column 1.",
+    "All four TSVs are mutually non-overlapping (0 duplicate paths), so the 111-row union is clean.",
+    "Evidence discipline: every decisive claim above carries the exact command and its observed output. Nothing was assumed from another seat's fragment without an independent re-derivation.",
+    "No secrets, credentials, .ufo/state, .ufo/watchdog.log, or ~/.config surface was read."
+  ],
+  "preamble": {
+    "cwd": "/home/vgpnk/Projects/shokunin",
+    "fragment_path": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-3/seat-63.json",
+    "written_at": "2026-10-18T14:20:00-03:00",
+    "mode": "dry-run; read-only over all fleet and lane surfaces except this fragment"
+  }
+}

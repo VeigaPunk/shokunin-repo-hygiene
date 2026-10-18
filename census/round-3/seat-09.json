@@ -1,0 +1,63 @@
+{
+  "seat": "S09",
+  "kind": "worktree-metadata-prune-verify-ticket",
+  "target": "/tmp/r87-M1-verify",
+  "owner": "/home/vgpnk/Projects/shokunin/lore-shokunin",
+  "head": "28706dc73a9b7667851fd82adb71e905ae5eb896",
+  "admin_dir": "/home/vgpnk/Projects/shokunin/lore-shokunin/.git/worktrees/r87-M1-verify",
+  "checks": {
+    "absent": true,
+    "unique": 0,
+    "admin": true,
+    "tip_pushed": true,
+    "hidden_index_work": 0,
+    "detached": true
+  },
+  "verdict": "SAFE(metadata-prune)",
+  "receipt_evidence": {
+    "cmds": [
+      "ls -d /tmp/r87-M1-verify; echo exit=$?",
+      "cd /home/vgpnk/Projects/shokunin/lore-shokunin && git log --oneline 28706dc73a9b7667851fd82adb71e905ae5eb896 --not --all | wc -l",
+      "cd /home/vgpnk/Projects/shokunin/lore-shokunin && git worktree list --porcelain | grep -A3 'worktree /tmp/r87-M1-verify'",
+      "cd /home/vgpnk/Projects/shokunin/lore-shokunin && git merge-base --is-ancestor 28706dc73a9b7667851fd82adb71e905ae5eb896 origin/main; echo exit=$?; git rev-parse origin/main main",
+      "cd /home/vgpnk/Projects/shokunin/lore-shokunin && git branch -a --contains 28706dc73a9b7667851fd82adb71e905ae5eb896; git rev-list main | grep -c 28706dc73a9b7667851fd82adb71e905ae5eb896",
+      "cd /home/vgpnk/Projects/shokunin/lore-shokunin && ls -la .git/worktrees/r87-M1-verify/; du -sb .git/worktrees/r87-M1-verify",
+      "cat /home/vgpnk/Projects/shokunin/lore-shokunin/.git/worktrees/r87-M1-verify/HEAD; cat /home/vgpnk/Projects/shokunin/lore-shokunin/.git/worktrees/r87-M1-verify/gitdir; cat /home/vgpnk/Projects/shokunin/lore-shokunin/.git/worktrees/r87-M1-verify/ORIG_HEAD; cat /home/vgpnk/Projects/shokunin/lore-shokunin/.git/worktrees/r87-M1-verify/logs/HEAD",
+      "cd /home/vgpnk/Projects/shokunin/lore-shokunin && GIT_INDEX_FILE=.git/worktrees/r87-M1-verify/index git diff-index --cached --quiet 28706dc73a9b7667851fd82adb71e905ae5eb896; echo diff_index_quiet_exit=$?",
+      "cd /home/vgpnk/Projects/shokunin/lore-shokunin && GIT_INDEX_FILE=.git/worktrees/r87-M1-verify/index git ls-files --stage | wc -l",
+      "cd /home/vgpnk/Projects/shokunin/lore-shokunin && test -e \"$(cat .git/worktrees/r87-M1-verify/gitdir)\" && echo EXISTS || echo MISSING",
+      "grep -c 'r87-M1-verify' /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/knowledge/obsidian-ledger.tsv",
+      "cd /home/vgpnk/Projects/shokunin/souji-shokunin && SHOKUNIN_ROOT=/home/vgpnk/Projects/shokunin bash tools/souji-verify.sh --json /tmp/r87-M1-verify; echo exit=$?"
+    ],
+    "out": [
+      "ls: cannot access '/tmp/r87-M1-verify': No such file or directory (exit=2) -> dir absent",
+      "0 -> zero unique commits vs --not --all",
+      "worktree /tmp/r87-M1-verify | HEAD 28706dc73a9b7667851fd82adb71e905ae5eb896 | detached | prunable gitdir file points to non-existent location",
+      "exit=0 -> 28706dc IS an ancestor of lore origin/main; origin/main=099b4bc7a2b444df4222e6ba9880420fe0cc0443, main=6cec83aede47575beeeda6b7dc0e4ea74927be78",
+      "* main; remotes/origin/HEAD -> origin/main; remotes/origin/main -> tip contained in main (grep -c = 1) => reachable from refs, no object at risk",
+      "commondir(6B) gitdir(24B) HEAD(41B) index(286255B) logs/ ORIG_HEAD(41B) refs/(empty); du -sb=286502 -> admin dir present",
+      "HEAD=28706dc73a9b7667851fd82adb71e905ae5eb896 (matches registration); gitdir=/tmp/r87-M1-verify/.git; ORIG_HEAD=28706dc...; logs/HEAD single entry 0000...->28706dc (worktree created at tip, never moved)",
+      "diff_index_quiet_exit=0 -> the worktree index is identical to the tip tree: ZERO staged/unique work is discarded by pruning",
+      "2565 -> index carries 2565 tracked entries, all matching the tip tree",
+      "MISSING -> gitdir target /tmp/r87-M1-verify/.git does not exist; this is the 'prunable' condition",
+      "grep count 0 (exit 1) -> ledger is header-only; no moved-to-obsidian row applies",
+      "{\"path\":\"/tmp/r87-M1-verify\",\"verdict\":\"SAFE\",\"receipt\":\"metadata-prune\",\"evidence\":\"dir=absent unique=0 head=28706dc73a9b owner=lore-shokunin\"} (exit=0)"
+    ]
+  },
+  "notes": [
+    "Independent re-derivation of all three metadata-prune conditions at verify time; they agree with the assigned registration (owner lore-shokunin, HEAD 28706dc).",
+    "Hidden-work attack: the only state prune could destroy beyond the registration itself is the worktree's own index. `GIT_INDEX_FILE=.git/worktrees/r87-M1-verify/index git diff-index --cached --quiet 28706dc` returns 0 -> index == tip tree, so no staged, uncommitted or conflicted content exists. Contrast: sibling registrations r87-F1 (24), r87-JDEP3 (111), r87-M1-myth (8) and r87-M3 (9) DO carry staged diffs and are therefore not covered by this ticket.",
+    "Commit safety: 28706dc is an ancestor of lore origin/main (exit 0) and is reachable from refs/heads/main and refs/remotes/origin/main, so pruning the admin dir loses no object. The 3 unpushed commits on lore main (6cec83a/1659a42/f553a27, gitignore + scratch-tree cleanup) do not touch any worktree registration and do not carry 28706dc.",
+    "dirty_check: `git -C /tmp/r87-M1-verify status --porcelain` is impossible (fatal: cannot change to '/tmp/r87-M1-verify', exit 128) because the dir is absent; the dir-absent/unique=0 shortcut applies and no dirty state can exist. lore-shokunin's main worktree shows only `?? .scratch/` (untracked, its own live scratch) and is otherwise clean.",
+    "Prior-art reconciliation: r1 seat-28 proposed pushed->NOT-SAFE (D1 misfire, origin/main unresolved); r1 seat-63 SAFE-FALSIFIED the metadata prune. Neither contradicts this ticket — r1 had no metadata-prune receipt class admitted for worktrees (D2). This r3 ticket rests on the r2 tool's rule order and on the index-equals-tip check, both re-run now.",
+    "Scope: this ticket covers ONLY /tmp/r87-M1-verify. lore-shokunin has 19 prunable registrations of 20 total; the parent must not generalize this verdict to the siblings (4 of them carry staged index work).",
+    "Read-only: no `git worktree prune`/`remove` was executed anywhere; nothing outside this fragment was written. Parent executes the prune after the ticket lands."
+  ],
+  "preamble": {
+    "cwd": "/home/vgpnk/Projects/shokunin",
+    "fragment_path": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-3/seat-09.json",
+    "written_at": "2026-10-18T13:42:00-03:00",
+    "mode": "dry-run; no modifications outside this fragment",
+    "tool": "souji-shokunin/tools/souji-verify.sh (sha256 7efda63bd760... installed r2)"
+  }
+}

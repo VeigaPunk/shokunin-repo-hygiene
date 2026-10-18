@@ -1,0 +1,72 @@
+{
+  "seat": "S11",
+  "kind": "worktree-metadata-prune-ticket",
+  "target": "/tmp/r87-M4",
+  "owner": "/home/vgpnk/Projects/shokunin/lore-shokunin",
+  "head": "28706dc73a9b7667851fd82adb71e905ae5eb896",
+  "admin_dir": "/home/vgpnk/Projects/shokunin/lore-shokunin/.git/worktrees/r87-M4",
+  "checks": {
+    "absent": true,
+    "unique": 0,
+    "admin": true,
+    "detached": true,
+    "branch": null
+  },
+  "verdict": "SAFE(metadata-prune)",
+  "tool_verdict": "SAFE(metadata-prune)",
+  "agreement": "agrees with tools/souji-verify.sh",
+  "receipt_evidence": {
+    "cmds": [
+      "test -e /tmp/r87-M4 && echo PRESENT || echo ABSENT",
+      "git -C /home/vgpnk/Projects/shokunin/lore-shokunin worktree list --porcelain",
+      "git -C /home/vgpnk/Projects/shokunin/lore-shokunin log --oneline 28706dc --not --all | wc -l",
+      "git -C /home/vgpnk/Projects/shokunin/lore-shokunin log --oneline 28706dc --not --remotes | wc -l",
+      "git -C /home/vgpnk/Projects/shokunin/lore-shokunin merge-base --is-ancestor 28706dc origin/HEAD; echo $?",
+      "git -C /home/vgpnk/Projects/shokunin/lore-shokunin for-each-ref --contains 28706dc --format='%(refname)'",
+      "git -C /home/vgpnk/Projects/shokunin/lore-shokunin rev-parse main origin/main origin/HEAD",
+      "git -C /home/vgpnk/Projects/shokunin/lore-shokunin rev-list --count 28706dc..main",
+      "cat .git/worktrees/r87-M4/HEAD .git/worktrees/r87-M4/gitdir .git/worktrees/r87-M4/ORIG_HEAD; ls -la .git/worktrees/r87-M4/refs/",
+      "GIT_DIR=.git/worktrees/r87-M4 git ls-files -s | awk '{print $2\" \"$4}' | sort > idx; git ls-tree -r 28706dc | awk '{print $3\" \"$4}' | sort > tree; diff idx tree | wc -l",
+      "cd /home/vgpnk/Projects/shokunin && for r in */; do git -C \"$r\" worktree list --porcelain 2>/dev/null | grep -c '^worktree /tmp/r87-M4$'; done",
+      "grep -rl --fixed-strings '/tmp/r87-M4' --include=gitdir /home/vgpnk/Projects/shokunin",
+      "cd /home/vgpnk/Projects/shokunin/souji-shokunin && bash tools/souji-verify.sh --json /tmp/r87-M4; echo exit=$?",
+      "cd /home/vgpnk/Projects/shokunin/souji-shokunin && bash tools/souji-verify.sh --selftest; echo exit=$?",
+      "cd /home/vgpnk/Projects/shokunin/lore-shokunin && git worktree list --porcelain | sha256sum  # BEFORE/AFTER tool run",
+      "cd /home/vgpnk/Projects/shokunin/lore-shokunin && find .git/worktrees -type f | sort | xargs sha256sum | sha256sum  # BEFORE/AFTER tool run"
+    ],
+    "out": [
+      "ABSENT (test -e exit 1; ls: cannot access '/tmp/r87-M4': No such file or directory)",
+      "worktree /tmp/r87-M4\\nHEAD 28706dc73a9b7667851fd82adb71e905ae5eb896\\ndetached\\nprunable gitdir file points to non-existent location  (no `branch` line, no `locked` line)",
+      "0 -> zero unique commits vs --all",
+      "0 -> zero unique commits vs --remotes",
+      "ancestor_exit=0 (28706dc IS an ancestor of origin/HEAD)",
+      "refs/heads/main\\nrefs/remotes/origin/HEAD\\nrefs/remotes/origin/main -> commit fully reachable from refs; nothing lost by prune",
+      "main=6cec83aede47575beeeda6b7dc0e4ea74927be78; origin/main=099b4bc7a2b444df4222e6ba9880420fe0cc0443; origin/HEAD=099b4bc7a2b444df4222e6ba9880420fe0cc0443",
+      "52 -> 28706dc is 52 commits behind the branch tip (old but contained)",
+      "HEAD file=28706dc73a9b7667851fd82adb71e905ae5eb896 (matches registration); gitdir=/tmp/r87-M4/.git (points at the absent dir = the prunable condition); ORIG_HEAD=28706dc...; refs/ empty (no per-worktree refs to lose)",
+      "index vs commit tree: 2565 entries each, diff_lines=0 -> the orphaned admin index is byte-identical to 28706dc's tree; NO staged/uncommitted content is destroyed by the prune",
+      "fleet-root registration count for /tmp/r87-M4 = 0; scan of all *-shokunin: only lore-shokunin registers it",
+      "only lore-shokunin/.git/worktrees/r87-M4/gitdir references the path -> sole owner",
+      "{\"path\":\"/tmp/r87-M4\",\"verdict\":\"SAFE\",\"receipt\":\"metadata-prune\",\"evidence\":\"dir=absent unique=0 head=28706dc73a9b owner=lore-shokunin\"} exit=0",
+      "selftest: 24 checks, 0 failed; exit=0",
+      "worktree list hash 3a50c5c2...bfbcf76a BEFORE == AFTER; admin-tree hash 117b30ca...a6bd17be BEFORE == AFTER -> tool run is read-only, no git state mutated",
+      "stable across --stale-days 0 and --stale-days 99999; also correct for relative and trailing-slash forms"
+    ]
+  },
+  "dirty_check": "impossible: target dir /tmp/r87-M4 is absent, so no status can be taken (git -C /tmp/r87-M4 status -> fatal: cannot change to '/tmp/r87-M4': No such file or directory, exit 128). Per the souji-verify rule order the dir-absent/unique=0 metadata-prune shortcut applies; no dirty state can exist.",
+  "notes": [
+    "All three conditions re-derived NOW and they agree with the assigned registration (owner lore-shokunin, HEAD 28706dc, detached).",
+    "Detached-vs-named-branch hazard (round-2 deviation D-b) does NOT apply: this registration has no branch line at all, so the unpushed-branch rule cannot fire; the metadata-prune shortcut is the correct branch and the tool takes it.",
+    "The prune removes only the admin dir lore-shokunin/.git/worktrees/r87-M4 and its index/ORIG_HEAD/logs. Commit 28706dc is reachable from refs/heads/main and refs/remotes/origin/main, and the admin index is identical to 28706dc's tree, so no object and no uncommitted content is lost.",
+    "lore-shokunin has 20 worktree registrations, 19 of them prunable; this ticket covers only /tmp/r87-M4. `git worktree prune --dry-run -v` lists r87-M4 among the 19 removals (dry-run only, never executed).",
+    "Read-only run: no git worktree prune/remove executed; worktree-list and admin-file hashes unchanged before/after; nothing written outside this fragment."
+  ],
+  "disagreements": [],
+  "uncertainty": "none — verdict is SAFE with a receipt; no element of the prune path is unresolved.",
+  "preamble": {
+    "cwd": "/home/vgpnk/Projects/shokunin",
+    "fragment_path": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-3/seat-11.json",
+    "written_at": "2026-10-18T13:42:00-03:00",
+    "mode": "dry-run; no modifications outside this fragment"
+  }
+}

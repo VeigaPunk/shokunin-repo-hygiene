@@ -1,0 +1,165 @@
+{
+  "seat": "S50",
+  "kind": "pin-audit",
+  "round": 3,
+  "assignment": "Check MANIFEST.json, fleet LOG.md, fleet SCORECARD.md for mentions of r87 / r80-baseline / r81-frozen; these are historical records (fine) but list them so the prune decision records them.",
+  "scope": {
+    "cwd": "/home/vgpnk/Projects/shokunin",
+    "fleet_root": "/home/vgpnk/Projects/shokunin",
+    "audited_surfaces": [
+      "MANIFEST.json",
+      "LOG.md",
+      "SCORECARD.md"
+    ],
+    "mode": "dry-run; read-only; no git state mutated; no prune/remove executed"
+  },
+  "verdict": "SAFE(historical-record)",
+  "verdict_basis": "No fleet record names any of the round-3 prune targets in a way that would block pruning. Every hit is historical prose (lane round labels / wave-evidence hashes). Two of the three assigned tokens (r80-baseline, r81-frozen) have ZERO occurrences in all three fleet records; they exist only in lane-side bookkeeping. The prune targets are therefore UNRECORDED at fleet level, so the parent must add its own LOG.md/MANIFEST.json entry to record the prune decision (see notes).",
+  "hits": {
+    "MANIFEST.json": {
+      "r87": {
+        "line_hits": 5,
+        "occurrences": 6,
+        "lines": [
+          "2903:   \"notes\": \"lore r87 ADMITTED (luna round 1 of 12, two-wave AgentSwarm regimen): ... Wave evidence 2b48ca7 (39 luna-max seats); ...\"",
+          "2916:   \"notes\": \"lore r88 ADMITTED (luna round 2 of 12): ... r87 table superseded-bannered; ...\"",
+          "2929:   \"notes\": \"lore r89 ADMITTED (luna round 3 of 12): ... r87 cluster 14/14 anchors ...\"",
+          "2989:   \"notes\": \"Integrator append during r93: ... This correction does not independently re-verify all r87 axis claims ...\"",
+          "3275:   \"notes\": \"lore r95 admitted, operator regimen 1/6: ... r87/r89 fail-closed preserved ...\""
+        ],
+        "classification": "historical-record; all five are `notes` prose in lore-lane admission entries naming a LANE ROUND NUMBER (r87 = lore round 1 of 12), NOT the /tmp/r87-* worktree registrations. No worktree path is present.",
+        "embedded_hash": {
+          "value": "2b48ca7",
+          "line": 2903,
+          "note": "2b48ca7 is the full HEAD of the /tmp/r87-JDEP3 registration (git -C lore-shokunin rev-parse 2b48ca72033dfd1060b6f81c4cf27ad83deae57f -> 2b48ca72033dfd1060b6f81c4cf27ad83deae57f). It appears as 'Wave evidence 2b48ca7 (39 luna-max seats)' — a wave-evidence citation, historical, not a live-ref pin on the worktree path. Does not block the metadata prune."
+        }
+      },
+      "r80-baseline": {"occurrences": 0},
+      "r81-frozen": {"occurrences": 0},
+      "exact_path_tokens": {
+        "/tmp/r87": 0,
+        "r87-B1": 0,
+        "r80-baseline": 0,
+        "r81-frozen": 0
+      }
+    },
+    "LOG.md": {
+      "r87": {"occurrences": 0},
+      "r80": {"occurrences": 0},
+      "r81": {"occurrences": 0},
+      "r80-baseline": {"occurrences": 0},
+      "r81-frozen": {"occurrences": 0},
+      "classification": "no mention at all; the token 'baseline' (7 lines) and 'frozen' (8 lines) never pair with r80/r81"
+    },
+    "SCORECARD.md": {
+      "r87": {"occurrences": 0},
+      "r80": {"occurrences": 0},
+      "r81": {"occurrences": 0},
+      "r80-baseline": {"occurrences": 0},
+      "r81-frozen": {"occurrences": 0},
+      "classification": "no mention at all; 'baseline' (11 lines) and 'frozen' (21 lines) never pair with r80/r81"
+    }
+  },
+  "where_the_pins_actually_live": {
+    "note": "The assignment's premise — that the fleet records mention r80-baseline/r81-frozen — does NOT hold. Those two tokens exist only in the LANE's own bookkeeping, plus /tmp/r87-B1 in the lane LOG. Recorded here so the prune decision cites the correct surfaces.",
+    "rows": [
+      {
+        "surface": "/home/vgpnk/Projects/shokunin/souji-shokunin/SCORECARD.md",
+        "line": 27,
+        "text": "registrations (19 lore + r80-baseline + r81-frozen; commits untouched) +",
+        "context": "## Planned -> r3 (coverage): prune the 21 SAFE(metadata-prune) worktree registrations (19 lore + r80-baseline + r81-frozen)",
+        "role": "lane-side plan statement; names the prune family"
+      },
+      {
+        "surface": "/home/vgpnk/Projects/shokunin/souji-shokunin/LOG.md",
+        "line": 108,
+        "text": "dirty=14–15; launch-tsukuroi.json SAFE/pushed; /tmp/r87-B1",
+        "context": "parent-harness live-target receipt: '/tmp/r87-B1 SAFE/metadata-prune'",
+        "role": "lane-side tool-verification receipt; names one prune target"
+      },
+      {
+        "surface": "/home/vgpnk/Projects/shokunin/souji-shokunin/LOG.md",
+        "line": 56,
+        "text": "r87-C5 SAFE(pushed) conflicted with its own unreachable evidence.",
+        "context": "round-1 census conflict note (false-SAFE caught)",
+        "role": "lane-side census record"
+      }
+    ]
+  },
+  "registration_family_cross_check": {
+    "cmd": "for r in . *-shokunin; do [ -e \"$r/.git\" ] || continue; git -C \"$r\" worktree list --porcelain 2>/dev/null | awk -v repo=\"$r\" '/^worktree /{p=$2} /^HEAD /{h=$2} /^branch /{b=$3} /^detached/{b=\"detached\"} /^prunable/{print repo\"\\t\"p\"\\t\"b}' ; done | sort",
+    "prunable_total": 24,
+    "prune_family_count": 21,
+    "prune_family": [
+      "game-dev-2d-shokunin\t/home/vgpnk/Projects/shokunin/r80-baseline-frozen-worktree\tdetached",
+      "game-dev-2d-shokunin\t/tmp/r81-frozen\tdetached",
+      "lore-shokunin\t/tmp/r87-B1\tdetached",
+      "lore-shokunin\t/tmp/r87-C5\tdetached",
+      "lore-shokunin\t/tmp/r87-C6\tdetached",
+      "lore-shokunin\t/tmp/r87-C6-X1\tdetached",
+      "lore-shokunin\t/tmp/r87-F1-applycheck\tdetached",
+      "lore-shokunin\t/tmp/r87-F1\tdetached",
+      "lore-shokunin\t/tmp/r87-JDEP3\tdetached",
+      "lore-shokunin\t/tmp/r87-M1-myth\tdetached",
+      "lore-shokunin\t/tmp/r87-M1-verify\tdetached",
+      "lore-shokunin\t/tmp/r87-M3\tdetached",
+      "lore-shokunin\t/tmp/r87-M4\tdetached",
+      "lore-shokunin\t/tmp/r87-S1\tdetached",
+      "lore-shokunin\t/tmp/r87-T1\tdetached",
+      "lore-shokunin\t/tmp/r87-V1\tdetached",
+      "lore-shokunin\t/tmp/r87-V1-x1\tdetached",
+      "lore-shokunin\t/tmp/r87-V2\tdetached",
+      "lore-shokunin\t/tmp/r87-V4\tdetached",
+      "lore-shokunin\t/tmp/r87-X2\tdetached",
+      "lore-shokunin\t/tmp/r87-X3\tdetached"
+    ],
+    "composition": "19 lore-shokunin + 2 game-dev-2d-shokunin = 21, exactly matching the lane SCORECARD.md:27 claim (19 lore + r80-baseline + r81-frozen).",
+    "excluded_from_family": [
+      "game-dev-2d-shokunin\t/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r98\t(named branch, NOT-SAFE)",
+      "game-dev-2d-shokunin\t/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r99\t(named branch, NOT-SAFE)",
+      "game-dev-2d-shokunin\t/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r100\t(named branch, NOT-SAFE)"
+    ]
+  },
+  "receipt_evidence": {
+    "cmds": [
+      "grep -n -F 'r87' MANIFEST.json | cut -c1-190",
+      "grep -o -F 'r87' MANIFEST.json | wc -l   # and likewise r80 / r81",
+      "for f in MANIFEST.json LOG.md SCORECARD.md; do for t in r87 r80 r81; do echo \"$f $t $(grep -o -F -- \"$t\" \"$f\" | wc -l)\"; done; done",
+      "grep -c -F -- '/tmp/r87' MANIFEST.json LOG.md SCORECARD.md   # and r87-B1 / r80-baseline / r81-frozen / wt-r87",
+      "grep -in -E 'r80-baseline|r81-frozen|/tmp/r8[017]|r87-B1' MANIFEST.json LOG.md SCORECARD.md",
+      "grep -n -E 'baseline|frozen' MANIFEST.json | grep -E 'r8[01]'   # and LOG.md / SCORECARD.md -> empty",
+      "grep -rn -E 'r80-baseline|r81-frozen|/tmp/r87' --include=*.md --include=*.json --include=*.sh --include=*.tsv souji-shokunin/",
+      "git -C lore-shokunin rev-parse 2b48ca72033dfd1060b6f81c4cf27ad83deae57f",
+      "for r in . *-shokunin; do [ -e \"$r/.git\" ] || continue; git -C \"$r\" worktree list --porcelain 2>/dev/null | awk ...; done | sort",
+      "git ls-files -- MANIFEST.json LOG.md SCORECARD.md; git status --porcelain -- MANIFEST.json LOG.md SCORECARD.md",
+      "git rev-parse HEAD; git log -1 --format='%h %an %ad %s' --date=short"
+    ],
+    "out": [
+      "MANIFEST.json r87 occurrences=6 ; r80=0 ; r81=0",
+      "LOG.md r87=0 r80=0 r81=0 ; SCORECARD.md r87=0 r80=0 r81=0",
+      "exact-path sweep: MANIFEST/LOG/SCORECARD -> 0 for every one of /tmp/r87, r87-B1, r80-baseline, r81-frozen, wt-r87, wt-r80, wt-r81",
+      "case-insensitive sweep of the three fleet files -> no output (no hits)",
+      "r80/r81 never pair with 'baseline'/'frozen' in any of the three fleet files -> empty",
+      "lane-only hits: souji-shokunin/SCORECARD.md:27 'r80-baseline + r81-frozen'; souji-shokunin/LOG.md:108 '/tmp/r87-B1'; souji-shokunin/LOG.md:56 'r87-C5'",
+      "git -C lore-shokunin rev-parse 2b48ca72... -> 2b48ca72033dfd1060b6f81c4cf27ad83deae57f (matches the JDEP3 registration HEAD)",
+      "prunable registrations total = 24 ; family (19 lore + 2 gd2d) = 21 ; 3 gd2d named-branch (wt-r98/99/100) excluded",
+      "git ls-files -> MANIFEST.json, LOG.md, SCORECARD.md all tracked; git status --porcelain -> empty (all three clean)",
+      "HEAD = 025dc63bfc1c524716530bd7a18df881c323ba9d '025dc63 souji-shokunin 2026-10-18 round-2: souji report + closure (ok; souji-verify installed)'"
+    ]
+  },
+  "notes": [
+    "All fleet-record mentions of r87 are historical records and are FINE — none is a live-ref pin that would make a prune unsafe, and none names a worktree path.",
+    "ASSIGNMENT PREMISE CORRECTION: r80-baseline and r81-frozen have zero occurrences in MANIFEST.json, fleet LOG.md and fleet SCORECARD.md. They live only in lane bookkeeping (souji-shokunin/SCORECARD.md:27). The parent's prune-decision record must cite the lane surface, not a fleet surface, for these two names.",
+    "The prune targets are UNRECORDED at fleet level: fleet LOG.md and SCORECARD.md contain no mention of 'souji', 'metadata-prune' or any prune target (grep -i souji LOG.md -> empty; grep -i souji SCORECARD.md -> empty; MANIFEST.json has exactly one 'metadata-prune' occurrence, line 3814, the souji r1 admission note, which does not enumerate targets).",
+    "RECOMMENDATION for the parent: the round-3 prune decision must be recorded in fleet LOG.md and/or MANIFEST.json itself, because nothing at fleet level currently names the 21 prunable registrations. The audit of r87/r80-baseline/r81-frozen cannot 'record them' from fleet surfaces — there is nothing there to record beyond the historical lore round labels.",
+    "The three fleet records are tracked and clean at HEAD 025dc63 (git status --porcelain empty), so any parent-authored record entry will be a clean append on a clean base.",
+    "Cross-seat consistency: the 21-member family matches the lane SCORECARD.md:27 plan exactly; the 3 game-dev-2d named-branch worktrees (wt-r98/99/100) are correctly outside it.",
+    "Read-only run: no git worktree prune/remove was executed; no file outside this fragment was written."
+  ],
+  "preamble": {
+    "cwd": "/home/vgpnk/Projects/shokunin",
+    "fragment_path": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-3/seat-50.json",
+    "written_at": "2026-10-18T13:45:00-03:00",
+    "mode": "dry-run; no modifications outside this fragment"
+  }
+}

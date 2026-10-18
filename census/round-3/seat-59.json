@@ -1,0 +1,97 @@
+{
+  "seat": "S59",
+  "kind": "auditor-recount",
+  "round": 3,
+  "assignment": "WAIT 300s, then recount approval TSVs: total rows must be 111, every row SAFE with receipt pushed, zero NOT-SAFE.",
+  "audited_at": "2026-10-18T13:42:13-03:00",
+  "commands": [
+    "cd .../souji-shokunin/census/round-3 && ls -la approvals-*.tsv",
+    "for f in approvals-*.tsv; do echo \"$f: $(($(wc -l < $f)-1))\"; done",
+    "python3 -c \"import csv,glob; [print(f, len(list(csv.DictReader(open(f),delimiter='\\t')))) for f in sorted(glob.glob('approvals-*.tsv'))]\"",
+    "cat approvals-*.tsv | grep -v '^path' | grep -v '^seat' | wc -l",
+    "git -C /home/vgpnk/Projects/shokunin log --diff-filter=A --format=%H -1 -- <rel>   # per row",
+    "git -C /home/vgpnk/Projects/shokunin merge-base --is-ancestor <intro> origin/master",
+    "git -C /home/vgpnk/Projects/shokunin hash-object <path>; git -C ... rev-parse origin/master:<rel>",
+    "sha256sum <path>  # vs declared sha256 column"
+  ],
+  "counts": {
+    "total_rows": 111,
+    "per_shard": {
+      "approvals-53.tsv": 27,
+      "approvals-54.tsv": 27,
+      "approvals-55.tsv": 29,
+      "approvals-56.tsv": 28
+    },
+    "distinct_paths": 111,
+    "duplicate_paths": 0,
+    "safe": 96,
+    "not_safe": 15,
+    "receipt_pushed": 96,
+    "receipt_unreachable": 15
+  },
+  "contract_checks": {
+    "total_rows_111": "PASS (111)",
+    "every_row_SAFE": "FAIL (96 SAFE / 15 NOT-SAFE)",
+    "every_row_receipt_pushed": "FAIL (96 pushed / 15 unreachable)",
+    "zero_NOT_SAFE": "FAIL (15 NOT-SAFE)",
+    "target_set_identity": "PASS (rows == the 111-path set exactly; no extra, none missing)",
+    "no_duplicate_rows": "PASS (111 distinct paths, 0 duplicates)"
+  },
+  "independent_verification": {
+    "safe_rows_reverified": 96,
+    "safe_row_failures": 0,
+    "safe_row_checks": "exists on disk; introducing commit exists; intro is ancestor of origin/master; worktree blob hash == origin/master:<rel>",
+    "sha256_declared_rows_checked": 42,
+    "sha256_mismatches": 0,
+    "not_safe_rows_reverified": 15,
+    "not_safe_rows_absent_on_disk": 15,
+    "not_safe_rows_present_in_origin_master": 15,
+    "raw_outputs": [
+      "approvals-53.tsv: 27 rows | approvals-54.tsv: 27 rows | approvals-55.tsv: 29 rows | approvals-56.tsv: 28 rows",
+      "TOTAL ROWS: 111 | verdict Counter({SAFE: 96, NOT-SAFE: 15}) | receipt Counter({pushed: 96, unreachable: 15})",
+      "distinct paths: 111 dupes: 0 | rows not in 111 set: [] | 111 set not in rows: []",
+      "SAFE row failures: 0",
+      "sha256 checked 42 bad 0",
+      "NOT-SAFE rows all exists=False in_origin_master=True"
+    ]
+  },
+  "not_safe_rows": [
+    "commit-watch.stderr",
+    "f2.out",
+    "f3.out",
+    "f4.out",
+    "f5.out",
+    "f6.out",
+    "f7.out",
+    "f8.out",
+    "forgeB.log",
+    "forgeC.log",
+    "forgeD.log",
+    "kwin.txt",
+    "logs_dummy.txt",
+    "logs_mut.txt",
+    "logs_tier.txt"
+  ],
+  "operator_decision_tallies": {
+    "decision": {
+      "approve-candidate": 21,
+      "no-op-already-removed": 8
+    },
+    "operator_decision": {
+      "NO-ACTION (already gone)": 7,
+      "APPROVE-REMOVE (recoverable from origin/master)": 2,
+      "HOLD (still cited; parent decides)": 19
+    }
+  },
+  "deviations": [
+    "CONTRACT DEVIATION: the approval TSVs contain 15 NOT-SAFE rows (receipt=unreachable, decision=no-op-already-removed, operator_decision=NO-ACTION (already gone)) for the 15 top-level shell-experiment strays. The assignment required \"every row SAFE ... zero NOT-SAFE\". The rows are factually correct (all 15 paths are absent on disk and were deleted by unpushed a1b44b1; blobs survive in origin/master), so this is a contract/design mismatch, not a false verdict. Flagged for the parent: either the contract should read \"111 rows, 96 SAFE + 15 NOT-SAFE-already-removed\", or the TSVs should be re-cut to exclude already-deleted paths (yielding 96 rows).",
+    "SCHEMA INCONSISTENCY (non-blocking): the four shards do not share one header. approvals-53/54 use path,verdict,receipt,evidence; approvals-55 adds seat,kind,size_bytes,mtime,sha256,decision; approvals-56 adds seat,group,state,intro_commit,operator_decision. A consumer must handle four layouts. Also approvals-53/54 carry no sha256/intro_commit columns, so only 42 of 111 rows expose a declared sha256.",
+    "shard approvals-54.tsv was rewritten in place between 13:39:21 and 13:39:34 (9-column seat-shaped -> 4-column path-shaped) while I was auditing; the final on-disk content is the 4-column form and is what I recounted."
+  ],
+  "go_no_go": "CONDITIONAL GO on the row set (111 rows, target-identical, all SAFE rows independently re-verified, 0 false-SAFE); NO-GO on the literal contract wording \"every row SAFE, zero NOT-SAFE\" \u2014 15 rows are NOT-SAFE by design.",
+  "preamble": {
+    "cwd": "/home/vgpnk/Projects/shokunin",
+    "fragment_path": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-3/seat-59.json",
+    "mode": "read-only audit; no git state mutated; nothing outside this fragment written"
+  }
+}

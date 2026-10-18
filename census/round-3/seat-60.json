@@ -1,0 +1,126 @@
+{
+  "seat": "S60",
+  "kind": "spot-check",
+  "round": 3,
+  "role": "auditor",
+  "assignment": "WAIT 300s, then independently re-run tools/souji-verify.sh on 10 random targets from approvals-5{3,4,5,6}.tsv and confirm verdicts match.",
+  "waited_seconds": 300,
+  "approval_files_present_at_audit": {
+    "census/round-3/approvals-53.tsv": {
+      "rows": 27,
+      "header": "path\tverdict\treceipt\tevidence",
+      "sha256": "a33d3f1c5098046f59bc8f6adcc161eb09773e2bf68b53d1986e473e2d544f14"
+    },
+    "census/round-3/approvals-54.tsv": {
+      "rows": 27,
+      "header": "path\tverdict\treceipt\tevidence",
+      "sha256": "6f6ebd26bfc85254d2d409944cec8c0e40f0791cc7e81ef01f19e2016acef8ab"
+    },
+    "census/round-3/approvals-55.tsv": {
+      "rows": 29,
+      "header": "seat\tpath\tkind\tsize_bytes\tmtime\tsha256\treceipt\tverdict\tdecision\tevidence",
+      "sha256": "b544741bf238280f7bf98b790fab7c6d5f609757c7395397f0f98ac3ab2b509c"
+    },
+    "census/round-3/approvals-56.tsv": {
+      "rows": 28,
+      "header": "seat\tgroup\tpath\tstate\tsize_bytes\tsha256\tverdict\treceipt\tintro_commit\tevidence\toperator_decision",
+      "sha256": "de9725cb433408ff0013996fc91a050351d8552a477245322a7345b1a324a583"
+    }
+  },
+  "union": {
+    "rows_total": 111,
+    "unique_paths": 111,
+    "duplicate_paths_across_files": 0,
+    "verdicts": { "SAFE": 96, "NOT-SAFE": 15 },
+    "per_file": {
+      "approvals-53.tsv": { "SAFE": 27, "NOT-SAFE": 0 },
+      "approvals-54.tsv": { "SAFE": 27, "NOT-SAFE": 0 },
+      "approvals-55.tsv": { "SAFE": 21, "NOT-SAFE": 8 },
+      "approvals-56.tsv": { "SAFE": 21, "NOT-SAFE": 7 }
+    }
+  },
+  "sample": {
+    "method": "seed-fixed random.sample(seed=20261018, k=10) over the sorted 111-path union; spans all four files",
+    "rows": [
+      { "path": "/home/vgpnk/Projects/shokunin/.ufo/interactive-l1-20261015T050057Z/launch-kasegi.json", "file": "approvals-53.tsv", "claimed": "SAFE/pushed", "observed": "SAFE/pushed", "match": true },
+      { "path": "/home/vgpnk/Projects/shokunin/.ufo/interactive-l1-20261015T050057Z/prompts/kasegi.md", "file": "approvals-53.tsv", "claimed": "SAFE/pushed", "observed": "SAFE/pushed", "match": true },
+      { "path": "/home/vgpnk/Projects/shokunin/.ufo/interactive-l1-20261015T050057Z/surface/kengaku.txt", "file": "approvals-54.tsv", "claimed": "SAFE/pushed", "observed": "SAFE/pushed", "match": true },
+      { "path": "/home/vgpnk/Projects/shokunin/.ufo/waves/aggregator-r10-resume/before.json", "file": "approvals-55.tsv", "claimed": "SAFE/pushed", "observed": "SAFE/pushed", "match": true },
+      { "path": "/home/vgpnk/Projects/shokunin/.ufo/waves/aggregator-r10-resume/preservation-pins.json", "file": "approvals-55.tsv", "claimed": "SAFE/pushed", "observed": "SAFE/pushed", "match": true },
+      { "path": "/home/vgpnk/Projects/shokunin/.ufo/waves/aggregator-r10/count-before.log", "file": "approvals-55.tsv", "claimed": "SAFE/pushed", "observed": "SAFE/pushed", "match": true },
+      { "path": "/home/vgpnk/Projects/shokunin/f5.out", "file": "approvals-55.tsv", "claimed": "NOT-SAFE/unreachable", "observed": "NOT-SAFE/unreachable", "match": true },
+      { "path": "/home/vgpnk/Projects/shokunin/f6.out", "file": "approvals-55.tsv", "claimed": "NOT-SAFE/unreachable", "observed": "NOT-SAFE/unreachable", "match": true },
+      { "path": "/home/vgpnk/Projects/shokunin/shokunin.conf.full-roster-20261015", "file": "approvals-56.tsv", "claimed": "SAFE/pushed", "observed": "SAFE/pushed", "match": true },
+      { "path": "/home/vgpnk/Projects/shokunin/logs_tier.txt", "file": "approvals-56.tsv", "claimed": "NOT-SAFE/unreachable", "observed": "NOT-SAFE/unreachable", "match": true }
+    ],
+    "matches": "10/10",
+    "disagreements": []
+  },
+  "full_sweep": {
+    "note": "Beyond the assigned 10, the entire 111-path union was re-run through tools/souji-verify.sh in one invocation to widen the audit without extra cost.",
+    "checked": 111,
+    "mismatches": 0,
+    "tool_exit": 0
+  },
+  "independent_ground_truth": {
+    "note": "Verdicts re-derived from git primitives, not from the tool, to make the spot-check independent rather than circular.",
+    "pushed_rows": {
+      "cmd": "for p in <7 sampled SAFE paths>; do wt=$(git hash-object $p); om=$(git rev-parse origin/master:$p); hd=$(git rev-parse HEAD:$p); done",
+      "out": "all 7 sampled SAFE paths: worktree blob == HEAD blob == origin/master blob -> MATCH",
+      "ancestor_cmd": "git log --diff-filter=A --format=%H -1 -- <path>; git merge-base --is-ancestor <intro> origin/master",
+      "out_53_54": "prompts/kasegi.md, surface/kengaku.txt, launch-kasegi.json intro=b2f2efae7549 ancestor=yes; default branch resolved as origin/master",
+      "out_56_conf": "shokunin.conf.full-roster-20261015 intro=99efc52b3a6f ancestor=yes (distinct intro, not b2f2efa)"
+    },
+    "not_safe_rows": {
+      "cmd": "for p in logs_tier.txt f6.out f5.out; do [ -e $p ]; git log --diff-filter=D --format='%H %s' -1 -- $p; git merge-base --is-ancestor <del> origin/master; done",
+      "out": "all three ABSENT from worktree; deletion commit a1b44b152a1c in each case; a1b44b1 NOT an ancestor of origin/master (fleet has 11 unpushed commits) -> path is unreachable and its removal is a no-op already performed by unpushed work; NOT-SAFE is the correct safe default"
+    }
+  },
+  "counts_audited": {
+    "approval_rows_audited": 111,
+    "sample_size": 10,
+    "sample_matches": 10,
+    "full_sweep_matches": 111,
+    "disagreements": 0,
+    "uncertainties": 0
+  },
+  "go_no_go": "GO — the four approval TSVs are mutually consistent (0 duplicate paths), and every verdict reproduces under a cold independent re-run of tools/souji-verify.sh (10/10 assigned sample, 111/111 full sweep). No false-SAFE found in the audited set; 15 NOT-SAFE rows are all unreachable/already-removed no-ops. No disagreement to escalate to the parent.",
+  "evidence": {
+    "cmds": [
+      "cd /home/vgpnk/Projects/shokunin/souji-shokunin && bash tools/souji-verify.sh --selftest; echo EXIT=$?",
+      "python3 - <<'PY' (seed 20261018 random.sample over union of the 4 TSVs, k=10) PY",
+      "while read p; do tools/souji-verify.sh \"$p\"; done < /tmp/s60-cmds.txt",
+      "cut -f1 /tmp/s60-all.txt | xargs -d '\\n' tools/souji-verify.sh",
+      "for p in <7 SAFE paths>; do git hash-object $p; git rev-parse origin/master:$p; git rev-parse HEAD:$p; done",
+      "for p in logs_tier.txt f6.out f5.out; do ls $p; git log --diff-filter=D --format=%H -1 -- $p; done",
+      "git -C /home/vgpnk/Projects/shokunin merge-base --is-ancestor a1b44b152a1c origin/master; echo $?",
+      "git -C /home/vgpnk/Projects/shokunin symbolic-ref --quiet --short refs/remotes/origin/HEAD",
+      "git -C /home/vgpnk/Projects/shokunin log --branches --not --remotes --oneline | wc -l",
+      "sha256sum census/round-3/approvals-5*.tsv"
+    ],
+    "out": [
+      "selftest: 24 checks, 0 failed; EXIT=0",
+      "111 rows, 111 unique paths, 0 cross-file duplicates",
+      "10 sampled lines: 7x VERDICT ... SAFE pushed ... ; 3x VERDICT ... NOT-SAFE unreachable missing path",
+      "checked=111 mismatches=0 badlines=0; per file 53:27/0, 54:27/0, 55:29/0, 56:28/0",
+      "7x MATCH (worktree==HEAD==origin/master blob)",
+      "logs_tier.txt/f6.out/f5.out: ABSENT; del=a1b44b152a1c",
+      "exit 1 -> a1b44b1 NOT ancestor of origin/master (unpushed); fleet unpushed count=11",
+      "origin/master",
+      "11",
+      "a33d3f1c... approvals-53.tsv; 6f6ebd26... approvals-54.tsv; b544741b... approvals-55.tsv; de9725cb... approvals-56.tsv"
+    ]
+  },
+  "notes": [
+    "The 300s wait elapsed before the audit; approvals-53/54 landed at 13:39, 55/56 at 13:40 — all four were present when the sample was drawn, so the audit ran against the final producer output.",
+    "Schema differs between the files (53/54 carry path/verdict/receipt/evidence; 55 adds seat/kind/size/mtime/sha256/decision; 56 adds group/state/intro_commit/operator_decision). Verdict+receipt are the common comparable columns; the audit compares on those.",
+    "Operator-facing distinction worth noting to the parent: approvals-56 tags 2 rows APPROVE-REMOVE (shokunin.conf.full-roster-20261015, audio-publish-commit-map-20261016.txt), 19 registry_home rows HOLD (still cited), and 7 root_stray rows NO-ACTION (already gone). approvals-55's 8 NOT-SAFE rows are all already-deleted f*.out/commit-watch.stderr paths.",
+    "Read-only run: no git worktree prune/remove, no deletion, no git-state mutation. Only files written are this fragment and the four producer TSVs (untouched). No .env/credential-shaped path, .ufo/state or ~/.config was read."
+  ],
+  "preamble": {
+    "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+    "fragment_path": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-3/seat-60.json",
+    "written_at": "2026-10-18T13:42:00-03:00",
+    "mode": "dry-run audit; no modifications outside this fragment"
+  }
+}

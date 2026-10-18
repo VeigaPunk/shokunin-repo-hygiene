@@ -1,0 +1,204 @@
+{
+  "seat": "S45",
+  "kind": "worktree-metadata-prune-ticket",
+  "sweep": true,
+  "owner": "/home/vgpnk/Projects/shokunin/lore-shokunin",
+  "head": "28706dc73a9b7667851fd82adb71e905ae5eb896",
+  "targets": [
+    {
+      "target": "/tmp/r87-M1-verify",
+      "admin_dir": "/home/vgpnk/Projects/shokunin/lore-shokunin/.git/worktrees/r87-M1-verify",
+      "checks": {
+        "absent": true,
+        "unique": 0,
+        "admin": true,
+        "head_match": true,
+        "index_clean_vs_head": true,
+        "staged_blobs_reachable": "n/a (no staged delta)"
+      },
+      "verdict": "SAFE(metadata-prune)",
+      "index_note": "2565 index entries; `git diff-index --cached 28706dc` empty -> index matches the worktree HEAD exactly, no uncommitted staged content.",
+      "evidence": {
+        "cmds": [
+          "ls -d /tmp/r87-M1-verify; echo exit:$?",
+          "ls -la /home/vgpnk/Projects/shokunin/lore-shokunin/.git/worktrees/r87-M1-verify/",
+          "cat /home/vgpnk/Projects/shokunin/lore-shokunin/.git/worktrees/r87-M1-verify/HEAD",
+          "cat /home/vgpnk/Projects/shokunin/lore-shokunin/.git/worktrees/r87-M1-verify/gitdir",
+          "git -C /home/vgpnk/Projects/shokunin/lore-shokunin worktree list --porcelain",
+          "git -C /home/vgpnk/Projects/shokunin/lore-shokunin log --oneline 28706dc --not --all | wc -l",
+          "git -C /home/vgpnk/Projects/shokunin/lore-shokunin merge-base --is-ancestor 28706dc origin/main && echo YES-pushed",
+          "GIT_INDEX_FILE=.git/worktrees/r87-M1-verify/index git diff-index --cached 28706dc --stat",
+          "cd /home/vgpnk/Projects/shokunin/souji-shokunin && SHOKUNIN_ROOT=/home/vgpnk/Projects/shokunin tools/souji-verify.sh --json /tmp/r87-M1-verify"
+        ],
+        "out": [
+          "ls: cannot access '/tmp/r87-M1-verify': No such file or directory (exit 2) -> dir absent",
+          "commondir(6B) gitdir(24B) HEAD(41B) index(286255B) logs/HEAD ORIG_HEAD(41B) refs/ -> admin dir present",
+          "28706dc73a9b7667851fd82adb71e905ae5eb896 -> admin HEAD",
+          "/tmp/r87-M1-verify/.git -> gitdir points at the absent dir (the prunable condition)",
+          "worktree /tmp/r87-M1-verify\\nHEAD 28706dc73a9b7667851fd82adb71e905ae5eb896\\ndetached\\nprunable gitdir file points to non-existent location",
+          "0 -> zero unique commits",
+          "YES-pushed -> 28706dc is an ancestor of refs/remotes/origin/main (tip 099b4bc7a2b444df4222e6ba9880420fe0cc0443)",
+          "empty -> no staged delta against the worktree HEAD",
+          "{\"path\":\"/tmp/r87-M1-verify\",\"verdict\":\"SAFE\",\"receipt\":\"metadata-prune\",\"evidence\":\"dir=absent unique=0 head=28706dc73a9b owner=lore-shokunin\"} (exit 0)"
+        ]
+      }
+    },
+    {
+      "target": "/tmp/r87-M3",
+      "admin_dir": "/home/vgpnk/Projects/shokunin/lore-shokunin/.git/worktrees/r87-M3",
+      "checks": {
+        "absent": true,
+        "unique": 0,
+        "admin": true,
+        "head_match": true,
+        "index_clean_vs_head": false,
+        "staged_blobs_reachable": true
+      },
+      "verdict": "SAFE(metadata-prune)",
+      "index_note": "DIVERGENCE from the other three seats: this admin index holds 2574 entries vs 2565 in r87-M1-verify/r87-M4/r87-S1. `git diff-index --cached 28706dc` shows exactly 9 added files (+256 lines) under corpus/fixtures/r87-myth-cluster/ that are NOT in the worktree HEAD tree. The staged index was therefore NOT reset when the worktree was torn down. Investigated for the worktree-with-unique-commits false-SAFE pattern; it is NOT unique content: all 9 staged blobs are byte-identical to the tree of commit e4708cb ('lore r87 C3: r87-myth-cluster world-bible fixture'), and every one of the 9 blob SHAs is reachable from refs (`git rev-list --all --objects`) and is referenced by >=2 commits including origin/main ancestors. `git fsck --dangling` -> 0 dangling blobs. Nothing unrecoverable is lost by pruning the metadata.",
+      "evidence": {
+        "cmds": [
+          "ls -d /tmp/r87-M3; echo exit:$?",
+          "git -C /home/vgpnk/Projects/shokunin/lore-shokunin log --oneline 28706dc --not --all | wc -l",
+          "git -C /home/vgpnk/Projects/shokunin/lore-shokunin merge-base --is-ancestor 28706dc origin/main && echo YES-pushed",
+          "GIT_INDEX_FILE=.git/worktrees/r87-M3/index git diff-index --cached 28706dc --stat",
+          "GIT_INDEX_FILE=.git/worktrees/r87-M3/index git ls-files -s -- corpus/fixtures/r87-myth-cluster | awk '{print $2\"\\t\"$4}'",
+          "for f in <9 files>; do git ls-tree e4708cb -- corpus/fixtures/r87-myth-cluster/$f; done",
+          "for b in <9 blob shas>; do git cat-file -e $b; git log --all --oneline --find-object=$b | wc -l; done",
+          "git rev-list --all --objects | awk '{print $1}' | sort -u > /tmp/s45-reachable.txt; grep -q '^<blob>$' /tmp/s45-reachable.txt",
+          "git fsck --no-progress --dangling | grep -c 'dangling blob'",
+          "cd /home/vgpnk/Projects/shokunin/souji-shokunin && SHOKUNIN_ROOT=/home/vgpnk/Projects/shokunin tools/souji-verify.sh --json /tmp/r87-M3"
+        ],
+        "out": [
+          "ls: cannot access '/tmp/r87-M3': No such file or directory (exit 2) -> dir absent",
+          "0 -> zero unique commits",
+          "YES-pushed -> 28706dc is an ancestor of origin/main",
+          " corpus/fixtures/r87-myth-cluster/README.md         | 13 ++++\\n .../contradictions.json | 14 ++++\\n entities.json | 86 ++++\\n inspiration-note.md | 19 ++++\\n lowwater-hymn-excerpt.md | 7 ++\\n relations.json | 26 ++++\\n sources.json | 32 ++++\\n symbolism-clause-map.md | 15 ++++\\n timeline.json | 44 ++++\\n 9 files changed, 256 insertions(+)",
+          "staged: 18bdc8fe.. lowwater-hymn-excerpt.md, 301a7e9e.. relations.json, 3031f7a5.. timeline.json, 42ab42e7.. README.md, 5d89c2d6.. sources.json, 88accddb.. inspiration-note.md, 9ecb2b6c.. symbolism-clause-map.md, b7b31555.. entities.json, cba88adb.. contradictions.json",
+          "MATCH-e4708cb for all 9 files -> staged content is byte-identical to the committed e4708cb fixture",
+          "all 9 blobs: EXISTS-IN-ODB, commits-referencing=2 or 9 (e.g. 18bdc8fe -> e4708cb, 2ea9ef1; cba88adb -> ceeef43, f553a27)",
+          "all 9 blobs: REACHABLE-FROM-REFS",
+          "0 -> no dangling blobs in the object store",
+          "{\"path\":\"/tmp/r87-M3\",\"verdict\":\"SAFE\",\"receipt\":\"metadata-prune\",\"evidence\":\"dir=absent unique=0 head=28706dc73a9b owner=lore-shokunin\"} (exit 0)"
+        ]
+      }
+    },
+    {
+      "target": "/tmp/r87-M4",
+      "admin_dir": "/home/vgpnk/Projects/shokunin/lore-shokunin/.git/worktrees/r87-M4",
+      "checks": {
+        "absent": true,
+        "unique": 0,
+        "admin": true,
+        "head_match": true,
+        "index_clean_vs_head": true,
+        "staged_blobs_reachable": "n/a (no staged delta)"
+      },
+      "verdict": "SAFE(metadata-prune)",
+      "index_note": "2565 index entries; `git diff-index --cached 28706dc` empty -> index matches the worktree HEAD exactly.",
+      "evidence": {
+        "cmds": [
+          "ls -d /tmp/r87-M4; echo exit:$?",
+          "ls -la /home/vgpnk/Projects/shokunin/lore-shokunin/.git/worktrees/r87-M4/",
+          "cat /home/vgpnk/Projects/shokunin/lore-shokunin/.git/worktrees/r87-M4/HEAD",
+          "cat /home/vgpnk/Projects/shokunin/lore-shokunin/.git/worktrees/r87-M4/gitdir",
+          "git -C /home/vgpnk/Projects/shokunin/lore-shokunin log --oneline 28706dc --not --all | wc -l",
+          "git -C /home/vgpnk/Projects/shokunin/lore-shokunin merge-base --is-ancestor 28706dc origin/main && echo YES-pushed",
+          "GIT_INDEX_FILE=.git/worktrees/r87-M4/index git diff-index --cached 28706dc --stat",
+          "cd /home/vgpnk/Projects/shokunin/souji-shokunin && SHOKUNIN_ROOT=/home/vgpnk/Projects/shokunin tools/souji-verify.sh --json /tmp/r87-M4"
+        ],
+        "out": [
+          "ls: cannot access '/tmp/r87-M4': No such file or directory (exit 2) -> dir absent",
+          "commondir(6B) gitdir(17B) HEAD(41B) index(286255B) logs/HEAD ORIG_HEAD(41B) refs/ -> admin dir present",
+          "28706dc73a9b7667851fd82adb71e905ae5eb896 -> admin HEAD",
+          "/tmp/r87-M4/.git -> gitdir points at the absent dir (the prunable condition)",
+          "0 -> zero unique commits",
+          "YES-pushed -> 28706dc is an ancestor of origin/main",
+          "empty -> no staged delta against the worktree HEAD",
+          "{\"path\":\"/tmp/r87-M4\",\"verdict\":\"SAFE\",\"receipt\":\"metadata-prune\",\"evidence\":\"dir=absent unique=0 head=28706dc73a9b owner=lore-shokunin\"} (exit 0)"
+        ]
+      }
+    },
+    {
+      "target": "/tmp/r87-S1",
+      "admin_dir": "/home/vgpnk/Projects/shokunin/lore-shokunin/.git/worktrees/r87-S1",
+      "checks": {
+        "absent": true,
+        "unique": 0,
+        "admin": true,
+        "head_match": true,
+        "index_clean_vs_head": true,
+        "staged_blobs_reachable": "n/a (no staged delta)"
+      },
+      "verdict": "SAFE(metadata-prune)",
+      "index_note": "2565 index entries; `git diff-index --cached 28706dc` empty -> index matches the worktree HEAD exactly.",
+      "evidence": {
+        "cmds": [
+          "ls -d /tmp/r87-S1; echo exit:$?",
+          "ls -la /home/vgpnk/Projects/shokunin/lore-shokunin/.git/worktrees/r87-S1/",
+          "cat /home/vgpnk/Projects/shokunin/lore-shokunin/.git/worktrees/r87-S1/HEAD",
+          "cat /home/vgpnk/Projects/shokunin/lore-shokunin/.git/worktrees/r87-S1/gitdir",
+          "git -C /home/vgpnk/Projects/shokunin/lore-shokunin log --oneline 28706dc --not --all | wc -l",
+          "git -C /home/vgpnk/Projects/shokunin/lore-shokunin merge-base --is-ancestor 28706dc origin/main && echo YES-pushed",
+          "GIT_INDEX_FILE=.git/worktrees/r87-S1/index git diff-index --cached 28706dc --stat",
+          "cd /home/vgpnk/Projects/shokunin/souji-shokunin && SHOKUNIN_ROOT=/home/vgpnk/Projects/shokunin tools/souji-verify.sh --json /tmp/r87-S1"
+        ],
+        "out": [
+          "ls: cannot access '/tmp/r87-S1': No such file or directory (exit 2) -> dir absent",
+          "commondir(6B) gitdir(17B) HEAD(41B) index(286255B) logs/HEAD ORIG_HEAD(41B) refs/ -> admin dir present",
+          "28706dc73a9b7667851fd82adb71e905ae5eb896 -> admin HEAD",
+          "/tmp/r87-S1/.git -> gitdir points at the absent dir (the prunable condition)",
+          "0 -> zero unique commits",
+          "YES-pushed -> 28706dc is an ancestor of origin/main",
+          "empty -> no staged delta against the worktree HEAD",
+          "{\"path\":\"/tmp/r87-S1\",\"verdict\":\"SAFE\",\"receipt\":\"metadata-prune\",\"evidence\":\"dir=absent unique=0 head=28706dc73a9b owner=lore-shokunin\"} (exit 0)"
+        ]
+      }
+    }
+  ],
+  "owner_state": {
+    "repo": "/home/vgpnk/Projects/shokunin/lore-shokunin",
+    "local_head": "6cec83aede47575beeeda6b7dc0e4ea74927be78 (main)",
+    "origin_main": "099b4bc7a2b444df4222e6ba9880420fe0cc0443",
+    "unpushed_commits": 3,
+    "unpushed_touching_worktree_metadata": 0,
+    "unpushed_touching_git_dir": 0,
+    "dirty": "?? .scratch/ (untracked only)",
+    "dirty_over_admin_dir": 0,
+    "worktree_metadata_tracked_by_git": 0,
+    "prunable_registrations": 19,
+    "admin_dirs_on_disk": 19,
+    "note": "lore-shokunin carries 3 unpushed commits on main (6cec83a, 1659a42, f553a27) and an untracked .scratch/, but none of them touch .git/worktrees/ (0 hits for both `git log --branches --not --remotes -- '.git/worktrees'` and `-- '.git'`), and worktree admin metadata is not a tracked path (`git ls-files -- '.git/worktrees'` -> 0). The pre-removal checklist item 'owning repo has no unpushed commits touching the artifact' is therefore satisfied: the artifacts are the admin dirs, and no unpushed or dirty change touches them."
+  },
+  "sweep_summary": {
+    "assigned": 4,
+    "safe": 4,
+    "not_safe": 0,
+    "verdict_uniform": "SAFE(metadata-prune)",
+    "all_heads_identical": true,
+    "head": "28706dc73a9b7667851fd82adb71e905ae5eb896",
+    "all_heads_ancestor_of_origin_main": true,
+    "note": "All four targets are registrations of the SAME detached commit 28706dc, which is an ancestor of origin/main (tip 099b4bc7). This commit is also the HEAD of 15 of the 19 prunable lore registrations, so the parent's single-commit reachability check covers most of the batch. None of the four has unique commits, none has a present directory, and the only index that was not reset (r87-M3) holds blobs that are byte-identical to committed, ref-reachable content."
+  },
+  "disagreements": [
+    "r87-M3's admin index diverges from its worktree HEAD (9 extra staged entries, +256 lines under corpus/fixtures/r87-myth-cluster/), unlike r87-M1-verify/r87-M4/r87-S1. A naive 'index present -> content at risk' reading would call this NOT-SAFE. Resolved to SAFE after proving all 9 staged blobs are byte-identical to commit e4708cb's tree and are reachable from refs (0 dangling blobs). Flagging because it is the one target in this sweep where the plain prune shortcut hides a non-empty index."
+  ],
+  "prune_scope": [
+    "Removing the registration for each target deletes the admin dir /home/vgpnk/Projects/shokunin/lore-shokunin/.git/worktrees/<name>/ (commondir, gitdir, HEAD, index, logs/HEAD, ORIG_HEAD, refs/).",
+    "Commit 28706dc is reachable from refs/heads/main and refs/remotes/origin/main, so no object is lost.",
+    "For r87-M3 additionally the 9 staged-but-uncommitted index blobs are dropped, but each is byte-identical to the committed e4708cb fixture and reachable from refs, so nothing unrecoverable is lost.",
+    "No other path in lore-shokunin is touched; the 3 unpushed main commits and the untracked .scratch/ are untouched by this prune."
+  ],
+  "notes": [
+    "Read-only run: no `git worktree prune`/`remove` was executed anywhere; nothing outside this fragment was written. The parent executes the prune.",
+    "tools/souji-verify.sh sha256 7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820; --selftest exit 0 ('selftest: 24 checks, 0 failed').",
+    "All four verdicts are the tool's independent output AND hand-derived from the raw commands; the two agree.",
+    "Uncertainty rule not triggered: every check (absent, unique=0, head match, reachability, index contents) was positively confirmed rather than assumed."
+  ],
+  "preamble": {
+    "cwd": "/home/vgpnk/Projects/shokunin",
+    "fragment_path": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-3/seat-45.json",
+    "written_at": "2026-10-18T13:38:31-03:00",
+    "mode": "dry-run; no modifications outside this fragment"
+  }
+}

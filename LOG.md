@@ -118,3 +118,35 @@ over-strictness; signal hierarchy = runners > reviews.
 
 **Operability:** 0 → 7 — a runnable, self-tested, live-verified verdict
 tool. Capability row added.
+
+## 2026-10-18 — round 3 admitted (claims: coverage + calibration) — PROBATION GATE CLEARED
+
+**Claims.** C1 (coverage): prune the 21 SAFE(metadata-prune) worktree
+registrations (metadata only). C2 (calibration): operator approval list
+with zero false-SAFE. Both verified.
+
+**Dispatch.** 64 seats on devin/deepseek-v4-1-flash-high (operator devin
+test; the operator then directed devin/deepseek-v4-1-flash-max for all
+future devin dispatches — recorded here). 64/64 completed, 404s.
+
+**Execution (parent, serialized).** Gate re-check: lore + gd2d unpushed = 0
+at act time (artifact-scoped reading of the dirty/unpushed rule; both
+readings satisfied). Lore: dry-run listed exactly the 19 → pruned →
+worktree list 20→1. gd2d: locked the 3 pinned named-branch registrations,
+pruned (2 detached removed) → list 6→4, unlocked; main sha unchanged
+(05a72899), wt-r98/99/100 branches intact with 1 unpushed commit each,
+.git/worktrees holds exactly the 3 preserved admin dirs. Blind pairs 21/21
+agreed (S57); gate seats S58–S64 all GO with 3 blockers handled: (B1) no
+bare gd2d prune — lock mechanism used; (B2) wording — both readings
+satisfied at execution; (B3) the 111-row contract re-cut to 96
+approve-remove + 15 already-removed (fleet commit a1b44b1 had already
+deleted the 15 shell strays; blobs survive in origin/master).
+
+**Artifacts.** census/round-3/{seat-01..64.json, approvals-*.tsv,
+operator-approval-list.tsv (96 rows), approval-summary.json}. The list
+awaits operator sign-off; no file deletions this round.
+
+**Verdicts:** coverage improved, calibration improved; no axis harmed.
+Nothing deleted except the 21 authorized metadata registrations.
+**Rounds 1–3 verified → probation gate satisfied; the roster row remains
+the operator's decision.**

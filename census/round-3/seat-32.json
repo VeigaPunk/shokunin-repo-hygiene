@@ -1,0 +1,67 @@
+{
+  "seat": "S32",
+  "kind": "worktree-metadata-prune-ticket",
+  "blind": true,
+  "target": "/tmp/r87-M4",
+  "owner": "/home/vgpnk/Projects/shokunin/lore-shokunin",
+  "head": "28706dc73a9b7667851fd82adb71e905ae5eb896",
+  "admin_dir": "/home/vgpnk/Projects/shokunin/lore-shokunin/.git/worktrees/r87-M4",
+  "checks": {
+    "absent": true,
+    "unique": 0,
+    "admin": true,
+    "ancestor_of_origin_main": true,
+    "owner_unique": true
+  },
+  "verdict": "SAFE(metadata-prune)",
+  "dirty_check": "impossible: target dir /tmp/r87-M4 absent, so no status can be taken (git -C /tmp/r87-M4 status --porcelain -> fatal: cannot change to '/tmp/r87-M4': No such file or directory, exit 128). Per souji-verify rule order the dir-absent/unique=0 metadata-prune shortcut applies; no dirty state can exist.",
+  "receipt_evidence": {
+    "cmds": [
+      "ls -d /tmp/r87-M4; echo exit:$?",
+      "git -C /home/vgpnk/Projects/shokunin/lore-shokunin log --oneline 28706dc73a9b7667851fd82adb71e905ae5eb896 --not --all | wc -l",
+      "git -C /home/vgpnk/Projects/shokunin/lore-shokunin worktree list --porcelain",
+      "git -C /home/vgpnk/Projects/shokunin/lore-shokunin rev-parse 28706dc73a9b7667851fd82adb71e905ae5eb896",
+      "git -C /home/vgpnk/Projects/shokunin/lore-shokunin branch -a --contains 28706dc73a9b7667851fd82adb71e905ae5eb896",
+      "git -C /home/vgpnk/Projects/shokunin/lore-shokunin merge-base --is-ancestor 28706dc73a9b7667851fd82adb71e905ae5eb896 origin/main; echo exit:$?",
+      "ls -la /home/vgpnk/Projects/shokunin/lore-shokunin/.git/worktrees/r87-M4/",
+      "cat /home/vgpnk/Projects/shokunin/lore-shokunin/.git/worktrees/r87-M4/HEAD",
+      "cat /home/vgpnk/Projects/shokunin/lore-shokunin/.git/worktrees/r87-M4/gitdir",
+      "git -C /tmp/r87-M4 status --porcelain; echo exit:$?",
+      "ls -d /home/vgpnk/Projects/shokunin/*/.git/worktrees/r87-M4 2>/dev/null | wc -l",
+      "cd /home/vgpnk/Projects/shokunin/souji-shokunin && SHOKUNIN_ROOT=/home/vgpnk/Projects/shokunin tools/souji-verify.sh --json /tmp/r87-M4"
+    ],
+    "out": [
+      "ls: cannot access '/tmp/r87-M4': No such file or directory (exit 2) -> dir absent",
+      "0 -> zero unique commits",
+      "worktree /tmp/r87-M4\\nHEAD 28706dc73a9b7667851fd82adb71e905ae5eb896\\ndetached\\nprunable gitdir file points to non-existent location",
+      "28706dc73a9b7667851fd82adb71e905ae5eb896",
+      "* main\\n  remotes/origin/HEAD -> origin/main\\n  remotes/origin/main  -> reachable from refs, no unique commits",
+      "exit 0 -> HEAD is an ancestor of origin/main (reachable)",
+      "commondir(6B) gitdir(17B) HEAD(41B) index(286255B) logs/ ORIG_HEAD(41B) refs/ -> admin dir present, 300K",
+      "28706dc73a9b7667851fd82adb71e905ae5eb896 -> admin HEAD matches ticket HEAD",
+      "/tmp/r87-M4/.git -> admin gitdir points at the absent dir (the prunable condition)",
+      "fatal: cannot change to '/tmp/r87-M4': No such file or directory (exit 128) -> dirty state impossible",
+      "1 -> exactly one admin dir fleet-wide for this path; owner is lore-shokunin",
+      "{\"path\":\"/tmp/r87-M4\",\"verdict\":\"SAFE\",\"receipt\":\"metadata-prune\",\"evidence\":\"dir=absent unique=0 head=28706dc73a9b owner=lore-shokunin\"} (exit 0)"
+    ]
+  },
+  "tool_selftest": {
+    "cmd": "cd /home/vgpnk/Projects/shokunin/souji-shokunin && tools/souji-verify.sh --selftest",
+    "out": "selftest: 24 checks, 0 failed (exit 0)",
+    "note": "F4 metadata-prune fixture and F3 dirty fixture both pass; tool is fit for this verdict class."
+  },
+  "notes": [
+    "Blind seat: no seat-32 assignment file existed in /tmp/r87-M4 (that path does not exist); target and owner were re-derived independently from `git worktree list --porcelain` across the fleet.",
+    "All three conditions re-derived NOW: dir absent, unique commits = 0, admin dir present with HEAD matching the registration.",
+    "The prune removes admin dir lore-shokunin/.git/worktrees/r87-M4 (300K: index, ORIG_HEAD, logs, refs); commit 28706dc is reachable from refs/heads/main, refs/remotes/origin/main and origin/HEAD, so no object is lost.",
+    "owner-repo caveat (does NOT block this metadata prune, but flag for the parent): lore-shokunin has 3 unpushed commits on main (6cec83a, 1659a42, f553a27) and an untracked .scratch/ tree. Nothing this ticket removes lives in the working tree, but per AGENTS.md the parent should sequence any lore-shokunin worktree cleanup after those commits are handled.",
+    "18 sibling prunable registrations exist in the same repo at the same HEAD 28706dc (r87-B1, C5, C6, C6-X1, F1, F1-applycheck, M1-myth, M1-verify, M3, S1, T1, V1, V1-x1, V2, V4, X2, X3) plus r87-JDEP3 at 2b48ca7; this ticket covers only /tmp/r87-M4.",
+    "Read-only run: no git worktree prune/remove was executed; nothing outside this fragment was written."
+  ],
+  "preamble": {
+    "cwd": "/home/vgpnk/Projects/shokunin",
+    "fragment_path": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-3/seat-32.json",
+    "written_at": "2026-10-18T13:40:00-03:00",
+    "mode": "dry-run; no modifications outside this fragment"
+  }
+}

@@ -1,0 +1,242 @@
+{
+  "seat": "S51",
+  "round": 3,
+  "kind": "pin-audit",
+  "blind": true,
+  "targets": [
+    "/home/vgpnk/Projects/shokunin/lore-shokunin (19 prunable worktree registrations, all /tmp/r87-*)",
+    "/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin (2 prunable registrations: r80-baseline-frozen-worktree, /tmp/r81-frozen)"
+  ],
+  "question": "Can pruning these 21 registrations affect the lore-shokunin / game-dev-2d-shokunin CHECKOUTS? Specifically: (a) is there a git hook, (b) is there a worktree-based gate script consuming `git worktree list`, and (c) does each caller tolerate the registrations disappearing?",
+  "verdict": "SAFE(checkout-inert)",
+  "verdict_basis": "No consumer of worktree-registration state exists in either lane or anywhere in the fleet, so the registrations' disappearance cannot change any checkout behaviour. (a) No active git hook: both hooks dirs contain only *.sample files, core.hooksPath is unset in both repos and at global/system scope, and no non-sample hook file exists in any fleet lane. (b) No worktree-based gate: the fleet-wide sweep for an actual `git worktree` INVOCATION returns ZERO matches; the assignment's own command finds `worktree list` in exactly 2 files and both are historical prose .md reports, not scripts. (c) Both prose callers already recommend the very cleanup being performed and require nothing to persist. Caveat carried forward (not a blocker): both owning lanes are dirty/unpushed — see lane_state_gate.",
+
+  "checks": {
+    "active_git_hook_present": false,
+    "worktree_list_consumed_by_any_script": false,
+    "callers_tolerate_disappearance": true,
+    "checkout_behaviour_depends_on_registrations": false
+  },
+
+  "a_no_git_hook": {
+    "summary": "No hook can fire on, or depend on, a worktree registration.",
+    "lore_hooks_dir": {
+      "cmd": "ls -la lore-shokunin/.git/hooks/",
+      "observed": "14 files, every one named *.sample (applypatch-msg, commit-msg, fsmonitor-watchman, post-update, pre-applypatch, pre-commit, pre-merge-commit, prepare-commit-msg, pre-push, pre-rebase, pre-receive, push-to-checkout, sendemail-validate, update) — all mtime Oct 13 16:40, i.e. stock `git init` samples",
+      "active_hooks": 0
+    },
+    "gd2d_hooks_dir": {
+      "cmd": "ls -la game-dev-2d-shokunin/.git/hooks/",
+      "observed": "identical 14-file *.sample set, all Oct 13 16:40",
+      "active_hooks": 0
+    },
+    "hooks_path_unset": {
+      "cmd": "git -C <repo> config --get core.hooksPath; echo exit=$?  (lore, gd2d); git config --global --get core.hooksPath; git config --system --get core.hooksPath",
+      "observed": "lore exit=1; gd2d exit=1; global exit=1; system exit=1 — unset at every scope, so hooks resolve to the (sample-only) .git/hooks dirs",
+      "note": "also: `grep -nE '\\[include|worktree|hooksPath|extensions' <repo>/.git/config` -> rc=1 (no include, no core.worktree, no extensions.worktreeConfig)"
+    },
+    "fleet_wide_non_sample_hooks": {
+      "cmd": "find . -path '*/.git/hooks/*' -type f ! -name '*.sample'",
+      "observed": "no output (rc=0) — zero active hooks in any fleet repo"
+    }
+  },
+
+  "b_no_worktree_based_gate": {
+    "assignment_command_exact": {
+      "cmd": "rg -ln 'worktree list' lore-shokunin game-dev-2d-shokunin --glob '!.git'",
+      "observed": [
+        "game-dev-2d-shokunin/reports/round-81/r81-baseline.md",
+        "game-dev-2d-shokunin/reports/round-80/r80-baseline.md"
+      ],
+      "rc": 0,
+      "finding": "2 files, BOTH Markdown prose. No executable file matches. Verified types: `file -b --mime-type` on both -> text/plain."
+    },
+    "decisive_negative_sweep": {
+      "cmd": "rg -n --no-heading 'git[[:space:]]+worktree' .",
+      "observed": "no output; rc=1",
+      "scope": "entire fleet root, ALL file types, INCLUDING .git internals, .ufo, .tower, .omp, .scratch",
+      "finding": "ZERO `git worktree` invocations anywhere in the fleet. Nothing can call `git worktree list`, `prune`, `remove`, or `add` — there is no worktree-based gate, checker, or harness in any lane."
+    },
+    "gate_shaped_sweep": {
+      "cmd": "rg -n --glob '*.{sh,py,js,mjs,ts,cjs,json,toml,conf,yml,yaml,cfg,ini}' --glob 'Makefile*' -e 'worktree +(list|prune|remove|add)' lore-shokunin game-dev-2d-shokunin",
+      "observed": "no output; rc=1",
+      "note": "no CI/hook surfaces either: find for .github/.githooks/.pre-commit-config.yaml/Makefile/lefthook/husky in both lanes -> empty"
+    },
+    "prunable_token_not_parsed": {
+      "cmd": "rg -n 'prunable' . -g '!.git' -g '!*.md' -g '!*.log' -g '!*.txt' -g '!**/souji-shokunin/census/**'",
+      "observed": "single hit: MANIFEST.json:3780 (the souji lane's own admission note prose)",
+      "finding": "no program parses the `prunable` marker or the porcelain output"
+    },
+    "only_lane_scripts_present_are_unrelated": {
+      "cmd": "find lore-shokunin game-dev-2d-shokunin -maxdepth 3 -type f \\( -name '*.sh' -o -name '*.py' -o -name '*.mjs' -o -name '*.js' \\) -not -path '*/.git/*' -not -path '*/corpus/*'",
+      "observed": "lore-shokunin/reports/round-1/measure_preservation.py, lore-shokunin/.ufo/waves/poll_wait.sh, lore-shokunin/v05-self-test-scratch/*.sh|*.py, lore-shokunin/.scratch/v26/poll.sh",
+      "finding": "none references a worktree (they appear only because of the broad sweep); gd2d has no root-level scripts at all"
+    }
+  },
+
+  "c_caller_tolerance": {
+    "caller_inventory": [
+      {
+        "file": "game-dev-2d-shokunin/reports/round-80/r80-baseline.md",
+        "lines": "68-75 (Frozen worktree), 265-273 (C6)",
+        "usage": "descriptive: records that `/home/vgpnk/Projects/shokunin/r80-baseline-frozen-worktree` is a detached `d9320dd` worktree that 'appears in `git worktree list`', and that it 'is the round's frozen-tree evidence'",
+        "tolerance": "TOLERATES — C6 is itself a cleanup instruction: 'operator cleanup is `git worktree remove /home/vgpnk/Projects/shokunin/r80-baseline-frozen-worktree` (no branch, no commit, main worktree untouched)'. The report explicitly authorises and expects the removal. The registration is a *pointer to* the evidence, not the evidence; the frozen-tree content claim is backed by tracked report tables with sha256 digests (lines 122-125), and the referenced `freeze/worktree-receipt.txt` is absent from disk and was never tracked (`git ls-files corpus/live/r80-baseline` -> empty; `find -name 'worktree-receipt.txt'` -> empty), so nothing verifiable is lost."
+      },
+      {
+        "file": "game-dev-2d-shokunin/reports/round-81/r81-baseline.md",
+        "lines": "64-72 (Frozen worktree), 176-190 (C6)",
+        "usage": "descriptive: 'Frozen worktree: `/tmp/r81-frozen`, detached at `27f465c`, registered in `git worktree list` (`freeze/worktree-receipt.txt`)'",
+        "tolerance": "TOLERATES — C6 states the registration is 'deliberate, ephemeral. `/tmp` does not survive reboot; the stale registration is then prunable with `git worktree prune`. Cleanup now: `git worktree remove /tmp/r81-frozen`'. The report anticipates and recommends exactly this prune. Receipt file also absent/untracked."
+      },
+      {
+        "file": "game-dev-2d-shokunin/reports/round-81/r81-author.md",
+        "line": "157",
+        "usage": "cites `/tmp/r81-frozen` + harness sha `d13797a8…` + `phys2d_joints_frozen=absent` as a frozen-state fact",
+        "tolerance": "TOLERATES — a past-tense measurement citation in prose; it records what was measured, and does not re-read the registration. No later round re-checks it (see no_later_round_revalidates)."
+      },
+      {
+        "file": "game-dev-2d-shokunin/reports/round-99/{r99-verifier,r99-critic,r99-author}.md and reports/round-98/{r98-scribe,r98-author}.md",
+        "usage": "these name `game-dev-2d-shokunin-wt-r98/r99/r100` as the author worktree that produced receipts",
+        "tolerance": "N/A for this prune — these are the 3 NOT-SAFE named-branch registrations that STAY. Recorded only to show the sweep's full caller inventory."
+      },
+      {
+        "file": "lore-shokunin/LOG.md:1888 and tracked .ufo/waves/round-87 receipts",
+        "usage": "historical mention of `/tmp/r87-P3-*` scratch probe paths",
+        "tolerance": "TOLERATES — history only; corroborates sibling seat-49 ('absolute worktree paths survive only as history … no live checker reads them')"
+      }
+    ],
+    "no_later_round_revalidates": {
+      "cmd": "rg -ln 'r80-baseline-frozen|r81-frozen' game-dev-2d-shokunin/reports; rg -ln 'r80-baseline-frozen|r81-frozen' game-dev-2d-shokunin/corpus",
+      "observed": "reports: only round-80/r80-baseline.md, round-81/r81-baseline.md, round-81/r81-author.md. corpus: no output.",
+      "finding": "No round after 81 re-checks either registration; the newest referencing report is round-81 (2026-10-15). 100+ subsequent rounds did not depend on it."
+    },
+    "live_reference_sweep": {
+      "cmd": "for n in r87-B1 r87-C5 r87-JDEP3 r87-M3 r87-V1 r80-baseline-frozen-worktree r81-frozen; do rg -ln --fixed-strings \"$n\" lore-shokunin game-dev-2d-shokunin -g '!.git'; done",
+      "observed": "r80-baseline-frozen-worktree -> reports/round-80/r80-baseline.md; r81-frozen -> reports/round-81/r81-baseline.md + reports/round-81/r81-author.md; every /tmp/r87-* name -> NO hits in either lane",
+      "finding": "the 19 lore targets have ZERO name references in their own lane; the 2 gd2d targets are referenced only by the 3 historical prose reports above"
+    }
+  },
+
+  "checkout_mechanism_ground_truth": {
+    "prune_touches_admin_dirs_only": {
+      "cmd": "git -C lore-shokunin worktree prune --dry-run -v ; git -C game-dev-2d-shokunin worktree prune --dry-run -v",
+      "observed": [
+        "lore: 19 lines, all 'Removing worktrees/<r87-name>: gitdir file points to non-existent location'",
+        "gd2d: 5 lines — r80-baseline-frozen-worktree, r81-frozen, AND game-dev-2d-shokunin-wt-r98/r99/r100"
+      ],
+      "finding": "A prune removes only `.git/worktrees/<name>/` (registration + per-worktree index/ORIG_HEAD/reflog). It never deletes a ref or commit: branch refs live in the COMMON dir (`git rev-parse --git-common-dir` -> `.git` for both repos) and the per-worktree `refs/` dirs are EMPTY (find .git/worktrees -type f -path '*/refs/*' -> no output). The main checkouts (`<lane>` worktrees) have present dirs, so prune cannot touch them."
+    },
+    "candidate_verdicts_reconfirmed_now": {
+      "cmd": "cd souji-shokunin && SHOKUNIN_ROOT=/home/vgpnk/Projects/shokunin tools/souji-verify.sh <each target>",
+      "observed": [
+        "/tmp/r87-B1 -> SAFE metadata-prune dir=absent unique=0 head=28706dc73a9b owner=lore-shokunin",
+        "/tmp/r87-JDEP3 -> SAFE metadata-prune dir=absent unique=0 head=2b48ca72033d owner=lore-shokunin",
+        "/home/vgpnk/Projects/shokunin/r80-baseline-frozen-worktree -> SAFE metadata-prune dir=absent unique=0 head=d9320ddf339a owner=game-dev-2d-shokunin",
+        "/tmp/r81-frozen -> SAFE metadata-prune dir=absent unique=0 head=27f465c67995 owner=game-dev-2d-shokunin",
+        "game-dev-2d-shokunin-wt-r98/99/100 -> NOT-SAFE unpushed-branch unpushed=1 dir=absent (all three)"
+      ],
+      "note": "every registration in the 21-family is dir-absent (present-dir test: only the two main lane checkouts exist), so no checkout is being deleted by any route."
+    },
+    "commit_reachability_of_the_pruned_tips": {
+      "cmd": "git -C lore-shokunin merge-base --is-ancestor <head> HEAD; git -C game-dev-2d-shokunin branch -a --contains <head>",
+      "observed": [
+        "lore 28706dc73a9b… -> ancestor of lore HEAD 6cec83a, exit 0; `log <head> --not --all | wc -l` -> 0",
+        "lore 2b48ca72033d… -> ancestor of lore HEAD, exit 0; unique -> 0",
+        "gd2d d9320ddf339a… and 27f465c67995… -> both contained in main + origin/main + wt-r98/r99/r100"
+      ],
+      "finding": "no object is made unreachable by pruning these registrations; the only commits at stake are the 3 wt-r9x branch tips, whose refs survive untouched"
+    }
+  },
+
+  "lane_state_gate": {
+    "flag": "BOTH owning lanes are dirty/unpushed at measure time — surfaced for the parent, not treated as a blocker for the registrations themselves.",
+    "cmd": "git -C <lane> log --branches --not --remotes --oneline | wc -l ; git -C <lane> status --porcelain | wc -l",
+    "observed": [
+      "lore-shokunin: unpushed=3 (6cec83a 2026-10-18 11:28:50 'gitignore: stop re-tracking per-seat wave scratch and baseline copies'; 1659a42 11:26:30 'cleanup: drop closed-round seat scratch trees (rounds <= 100)'; f553a27 11:26:13 'chore: drop seat scratch/archive caches'); dirty=1 ('?? .scratch/')",
+      "game-dev-2d-shokunin: unpushed=6 (3 wt-r9x branch tips + main's 05a72899/4925ee4e/7b47aa0f cleanup commits); dirty=0"
+    ],
+    "do_the_unpushed_commits_touch_the_targets": "NO. lore's 3 commits touch .gitignore and .ufo/waves/** seat scratch trees; gd2d's 3 main commits touch round-local freeze/scratch materializations. None names or edits any of the 21 registrations or their admin dirs. Round-1 seats (25, 26, 37) reached the same reading: 'lore main carries 3 unpushed commits … but none touch this path'.",
+    "assessment": "PROVINCE refuses removal of 'any artifact whose owning lane has dirty or unpushed work TOUCHING it' — the touch test is negative for all 21. The registrations are inert metadata whose commits are fully reachable (or, for the 3 wt-r9x pins, explicitly excluded from this prune). Flag recorded because the lane-level clean-ness assumption in the r3 plan is stale: the SCORECARD r3 line was written before lore's 11:26-11:28 cleanup commits landed. Round-1's 12:38 census already measured this state (census.tsv S37/S26/S25/S35), so it is not a new change — but the operator approval list should state it."
+  },
+
+  "cross_seat_consistency": {
+    "agrees_with": [
+      "seat-49 (pin-audit, lore r87 vs live surfaces): SAFE — 'zero live surfaces reference the r87 worktrees; metadata-pruning the 19 prunable r87 registrations breaks no gate, fixture, or documented reproduction path'",
+      "seat-48 (pin-audit, gd2d r80/r81 UNPINNED) and seat-52 (pin-audit, gd2d 3 pins): this seat independently confirms the same 21/3 split",
+      "seat-01 (ticket, /tmp/r87-B1): SAFE(metadata-prune)"
+    ],
+    "extends": "seats 49/48/52 each audited ONE lane or ONE name family against live references. This seat adds the two negatives neither ran: (1) a fleet-wide sweep for an actual `git worktree` INVOCATION (zero, rc=1), and (2) the git-hook / core.hooksPath audit in both lanes (none active). Together these close the 'worktree-based gate script' hypothesis outright rather than per-name.",
+    "endorses_seat_52_scope_finding": "seat-52's critical finding is correct and matters here: `git worktree prune` takes no path argument (`usage: git worktree prune [-n] [-v] [--expire <expire>]`, git 2.55.0), so a bare prune in game-dev-2d-shokunin would ALSO remove the 3 wt-r9x pins. The parent must use lock-then-prune or per-path `git worktree remove` for the 2 unpinned gd2d targets. This does not change my verdict (the pins' refs survive a prune), but it does change the required execution form."
+  },
+
+  "disagreements": [
+    "None with any round-1 or round-3 seat on substance. One premise correction: the assignment says 'verify pruning these registrations cannot affect lore/gd2d CHECKOUTS' — pruning cannot affect the checkouts because the registrations were never load-bearing for any checkout in the first place (no consumer exists), not merely because the commits are reachable. Those are different guarantees and I establish the stronger one.",
+    "Minor: the r3 plan's framing that these 21 are simply 'SAFE(metadata-prune)' omits that both owning lanes are currently dirty/unpushed. The per-artifact touch test is negative, so the prune stands, but the plan text is stale relative to the 11:26-11:28 lane commits."
+  ],
+
+  "receipt_evidence": {
+    "cmds": [
+      "rg -ln 'worktree list' lore-shokunin game-dev-2d-shokunin --glob '!.git'   # assignment command",
+      "rg -n --no-heading 'git[[:space:]]+worktree' .                            # fleet-wide invocation sweep",
+      "rg -n --glob '*.{sh,py,js,mjs,ts,cjs,json,toml,conf,yml,yaml,cfg,ini}' --glob 'Makefile*' -e 'worktree +(list|prune|remove|add)' lore-shokunin game-dev-2d-shokunin",
+      "ls -la lore-shokunin/.git/hooks/ ; ls -la game-dev-2d-shokunin/.git/hooks/",
+      "git -C lore-shokunin config --get core.hooksPath ; git -C game-dev-2d-shokunin config --get core.hooksPath",
+      "git config --global --get core.hooksPath ; git config --system --get core.hooksPath",
+      "find . -path '*/.git/hooks/*' -type f ! -name '*.sample'",
+      "grep -nE '\\[include|worktree|hooksPath|extensions' lore-shokunin/.git/config game-dev-2d-shokunin/.git/config",
+      "git -C lore-shokunin worktree list --porcelain ; git -C game-dev-2d-shokunin worktree list --porcelain",
+      "git -C lore-shokunin worktree prune --dry-run -v ; git -C game-dev-2d-shokunin worktree prune --dry-run -v",
+      "git --version ; git worktree prune -h ; git worktree remove -h",
+      "for d in $(git -C <lane> worktree list --porcelain | awk '/^worktree /{print $2}'); do [ -d \"$d\" ] && echo PRESENT $d; done",
+      "git -C lore-shokunin rev-parse --git-common-dir ; find lore-shokunin/.git/worktrees -type f -path '*/refs/*'",
+      "git -C lore-shokunin merge-base --is-ancestor 28706dc73a9b7667851fd82adb71e905ae5eb896 HEAD ; git -C lore-shokunin merge-base --is-ancestor 2b48ca72033dfd1060b6f81c4cf27ad83deae57f HEAD",
+      "git -C game-dev-2d-shokunin branch -a --contains d9320ddf339a600997de363878d81c698a43b427",
+      "for n in r87-B1 r87-C5 r87-JDEP3 r87-M3 r87-V1 r80-baseline-frozen-worktree r81-frozen; do rg -ln --fixed-strings \"$n\" lore-shokunin game-dev-2d-shokunin -g '!.git'; done",
+      "rg -ln 'r80-baseline-frozen|r81-frozen' game-dev-2d-shokunin/reports game-dev-2d-shokunin/corpus",
+      "git -C lore-shokunin log --branches --not --remotes --oneline ; git -C lore-shokunin status --porcelain",
+      "git -C game-dev-2d-shokunin log --branches --not --remotes --oneline ; git -C game-dev-2d-shokunin status --porcelain",
+      "cd souji-shokunin && SHOKUNIN_ROOT=/home/vgpnk/Projects/shokunin tools/souji-verify.sh <7 target paths>",
+      "find game-dev-2d-shokunin -name '*worktree-receipt*' ; git -C game-dev-2d-shokunin ls-files corpus/live/r80-baseline corpus/live/r81-baseline"
+    ],
+    "out": [
+      "assignment sweep -> 2 files, both .md (gd2d r81-baseline.md, r80-baseline.md); `file -b --mime-type` -> text/plain for both",
+      "fleet-wide 'git worktree' sweep -> NO OUTPUT, rc=1 (zero invocations in any file type, incl. .git/.ufo/.tower/.omp)",
+      "gate-shaped sweep -> NO OUTPUT, rc=1",
+      "lore hooks: 14 files, all *.sample ; gd2d hooks: identical, all *.sample",
+      "core.hooksPath: lore exit=1, gd2d exit=1, global exit=1, system exit=1 (all unset)",
+      "fleet-wide non-sample hooks -> no output (zero)",
+      "config grep for include/worktree/hooksPath/extensions -> rc=1 (none)",
+      "lore porcelain: 20 registrations = 1 main (branch refs/heads/main, 6cec83a) + 19 detached prunable at 28706dc (18x) / 2b48ca7 (1x, r87-JDEP3)",
+      "gd2d porcelain: 6 registrations = 1 main (branch refs/heads/main, 05a72899) + wt-r100 2d562282, wt-r98 68bee6e7, wt-r99 fe1a996e (all named-branch, prunable) + r80-baseline-frozen-worktree d9320ddf detached prunable + /tmp/r81-frozen 27f465c6 detached prunable",
+      "prune --dry-run -v: lore removes 19; gd2d removes 5 (incl. the 3 pins)",
+      "git 2.55.0; prune usage has NO path arg; remove usage is 'remove [-f] <worktree>'",
+      "present-dir test -> only lore-shokunin and game-dev-2d-shokunin (the main checkouts)",
+      "--git-common-dir -> .git for both; per-worktree refs/ dirs -> EMPTY (no output)",
+      "merge-base --is-ancestor 28706dc… HEAD -> exit 0 ; 2b48ca7… HEAD -> exit 0 ; `log <head> --not --all | wc -l` -> 0 for both",
+      "d9320ddf and 27f465c contained in: * main, remotes/origin/HEAD -> origin/main, remotes/origin/main, + wt-r100, + wt-r99, + wt-r98",
+      "live-name sweep: r80-baseline-frozen-worktree -> 1 file (round-80/r80-baseline.md); r81-frozen -> 2 files (round-81/r81-baseline.md, round-81/r81-author.md); all 6 /tmp/r87-* names -> 0 files",
+      "later-round revalidation sweep -> only round-80/r81 reports; corpus -> empty",
+      "lore unpushed=3 (6cec83a/1659a42/f553a27, 2026-10-18 11:26-11:28), dirty=1 ('?? .scratch/')",
+      "gd2d unpushed=6, dirty=0",
+      "souji-verify (tool sha 7efda63b…): 4x SAFE metadata-prune (r87-B1, r87-JDEP3, r80-baseline, r81-frozen) + 3x NOT-SAFE unpushed-branch (wt-r98/99/100), exit 0",
+      "worktree-receipt.txt search -> no files; git ls-files corpus/live/r80-baseline corpus/live/r81-baseline -> EMPTY (the referenced receipt dirs were never tracked and are not on disk)"
+    ]
+  },
+
+  "notes": [
+    "GO on pruning all 21 registrations. No git hook, no worktree-based gate script, and no live surface in either lane consumes the registration state — the assignment's two hypotheses are both falsified by direct sweep, not by absence of evidence.",
+    "The two prose callers are not obstacles but collaborators: r80-baseline.md C6 and r81-baseline.md C6 each already prescribe the exact cleanup (`git worktree remove …`) and describe the registration as deliberate-but-disposable. No report after round-81 re-checks either registration.",
+    "The frozen-tree evidence the r80/r81 reports describe is already unrecoverable from disk: the referenced `freeze/worktree-receipt.txt` (and the whole `corpus/live/r8{0,1}-baseline/` trees) are absent and were never tracked. The retained evidence is the tracked report text with sha256 digests (r80-baseline.md lines 122-125), which the prune does not touch.",
+    "EXECUTION FORM MATTERS (endorsing seat-52): a bare `git worktree prune` in game-dev-2d-shokunin removes all 5 registrations including the 3 wt-r9x pins. Use per-path `git worktree remove <path>` for the 2 unpinned gd2d targets, or lock the 3 pins first. In lore-shokunin a bare prune is safe (all 19 are candidates).",
+    "FLAG for the operator approval list: lore-shokunin is 3 commits ahead of origin/main with an untracked .scratch/, and game-dev-2d-shokunin is 6 ahead. The touch test is negative for all 21 registrations, so this does not block, but the r3 plan's lane-clean framing should be corrected to match the 12:38 census measurement.",
+    "Read-only run: no `git worktree prune`/`remove`/`lock` was executed against any fleet repo (only `prune --dry-run -v`, which mutates nothing); no file outside this fragment was written.",
+    "to-verify (not established here): whether anything OUTSIDE the fleet root (an operator runbook, a shell history, an external tool) expects the 3 gd2d pin registrations or the 19 lore registrations to exist."
+  ],
+
+  "preamble": {
+    "cwd": "/home/vgpnk/Projects/shokunin",
+    "fragment_path": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-3/seat-51.json",
+    "written_at": "2026-10-18T13:52:00-03:00",
+    "mode": "dry-run; read-only over all fleet and lane surfaces; no modifications outside this fragment"
+  }
+}

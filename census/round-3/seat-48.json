@@ -1,0 +1,97 @@
+{
+  "seat": "S48",
+  "kind": "pin-audit",
+  "question": "Are the frozen baselines d9320ddf (r80) and 27f465c6 (r81) referenced by live gd2d tooling/gates/fixtures? PINNED if yes, else UNPINNED.",
+  "targets": [
+    {
+      "sha": "d9320ddf339a600997de363878d81c698a43b427",
+      "short": "d9320ddf",
+      "label": "r80-baseline-frozen-worktree",
+      "worktree_path": "/home/vgpnk/Projects/shokunin/r80-baseline-frozen-worktree",
+      "owner": "/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin",
+      "admin_dir": "/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin/.git/worktrees/r80-baseline-frozen-worktree",
+      "dir_present": false,
+      "unique_commits": 0,
+      "ancestor_of_origin_main": true,
+      "prunable": true,
+      "verdict": "UNPINNED"
+    },
+    {
+      "sha": "27f465c67995dfe3607bc4b7ed0b7492b95ec835",
+      "short": "27f465c6",
+      "label": "/tmp/r81-frozen",
+      "worktree_path": "/tmp/r81-frozen",
+      "owner": "/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin",
+      "admin_dir": "/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin/.git/worktrees/r81-frozen",
+      "dir_present": false,
+      "unique_commits": 0,
+      "ancestor_of_origin_main": true,
+      "prunable": true,
+      "verdict": "UNPINNED"
+    }
+  ],
+  "decisive_result": "UNPINNED (both). No live gate, fixture, runner, or config in game-dev-2d-shokunin references either frozen baseline. The only sha references are (a) two historical round reports inside the lane and (b) souji round-1 census fragments. gd2d has no tools/ and no tests/ directories; corpus/fixtures and corpus/knowledge and corpus/lessons contain zero sha hits; no lane-level *.sh exists; no .ufo/waves or .ufo/scopes file in the fleet matches either sha or either worktree path.",
+  "evidence": {
+    "cmds": [
+      "rg -ln 'd9320ddf|27f465c6' /home/vgpnk/Projects/shokunin/game-dev-2d-shokunin --glob '!.git'",
+      "rg -ln 'd9320ddf|27f465c6' --hidden -g '!.git/**' /home/vgpnk/Projects/shokunin",
+      "rg -ln 'd9320ddf|27f465c6' game-dev-2d-shokunin/corpus game-dev-2d-shokunin/reports",
+      "ls -la game-dev-2d-shokunin/ game-dev-2d-shokunin/tests/ game-dev-2d-shokunin/tools/",
+      "rg -ln 'd9320ddf|27f465c6' corpus/fixtures/ corpus/knowledge/ corpus/lessons/ corpus/README.md README.md PROVINCE.md SHONEN.md LOG.md SCORECARD.md",
+      "rg -ln 'r80-baseline-frozen-worktree|/tmp/r81-frozen' --glob '*.sh' --glob '*.py' --glob '*.json' --glob '*.yaml' --glob '*.yml' --glob '!.git' /home/vgpnk/Projects/shokunin",
+      "for d in kaidoku-shokunin lore-shokunin mado-shokunin revenger-shokunin tameshi-shokunin tsukuroi-shokunin; do rg -n 'd9320ddf|27f465c6|r80-baseline-frozen|r81-frozen' \"$d/.ufo/waves\"; done",
+      "ls -d */.ufo/waves */.ufo/scopes",
+      "git -C game-dev-2d-shokunin worktree list",
+      "git -C game-dev-2d-shokunin log --oneline d9320ddf --not --all | wc -l ; git -C game-dev-2d-shokunin log --oneline 27f465c6 --not --all | wc -l",
+      "git -C game-dev-2d-shokunin merge-base --is-ancestor d9320ddf origin/main; echo rc=$? ; git -C game-dev-2d-shokunin merge-base --is-ancestor 27f465c6 origin/main; echo rc=$?",
+      "git -C game-dev-2d-shokunin worktree prune --dry-run -v",
+      "ls -d /home/vgpnk/Projects/shokunin/r80-baseline-frozen-worktree /tmp/r81-frozen",
+      "du -sb game-dev-2d-shokunin/.git/worktrees/r80-baseline-frozen-worktree game-dev-2d-shokunin/.git/worktrees/r81-frozen",
+      "wc -l souji-shokunin/corpus/knowledge/obsidian-ledger.tsv; rg -n 'd9320ddf|27f465c6|r80-baseline-frozen|r81-frozen' souji-shokunin/corpus/knowledge/obsidian-ledger.tsv",
+      "grep -n 'round-8' game-dev-2d-shokunin/corpus/live/r81-scout/MANIFEST.sha256; grep -c 'baseline-frozen\\|r81-frozen' game-dev-2d-shokunin/corpus/live/r89-verify2/freeze-lstree.txt",
+      "sed -n '265,280p' game-dev-2d-shokunin/reports/round-80/r80-baseline.md; sed -n '176,186p' game-dev-2d-shokunin/reports/round-81/r81-baseline.md"
+    ],
+    "out": [
+      "gd2d sha sweep (non-.git): game-dev-2d-shokunin/reports/round-80/r80-baseline.md (d9320ddf), game-dev-2d-shokunin/reports/round-81/r81-baseline.md (27f465c6) -- 2 files, both report docs",
+      "fleet sha sweep --hidden: additionally souji-shokunin/census/round-1/{census.tsv,seat-43.json,seat-59.json,seat-63.json} and souji-shokunin/tests/results/*.json (souji's own records), plus gd2d .git/ internals (worktrees/*/HEAD, logs) -- no live tooling",
+      "ls game-dev-2d-shokunin/tools/ -> No such file or directory ; ls game-dev-2d-shokunin/tests/ -> No such file or directory",
+      "corpus/fixtures, corpus/knowledge, corpus/lessons, corpus/README.md, README.md, PROVINCE.md, SHONEN.md, LOG.md, SCORECARD.md -> zero sha hits (rg exit 1)",
+      "fleet *.sh/*.py/*.json/*.yaml/*.yml sweep for the two worktree PATHS -> zero hits",
+      ".ufo/waves sweep in all 6 repos that have it (kaidoku, lore, mado, revenger, tameshi, tsukuroi) -> zero hits; no */.ufo/scopes exists anywhere",
+      "worktree list: game-dev-2d-shokunin 05a72899 [main]; ...-wt-r100/-wt-r98/-wt-r99 prunable; /home/vgpnk/Projects/shokunin/r80-baseline-frozen-worktree d9320ddf (detached HEAD) prunable; /tmp/r81-frozen 27f465c6 (detached HEAD) prunable",
+      "unique commits: d9320ddf=0 ; 27f465c6=0",
+      "merge-base --is-ancestor origin/main: d9320ddf rc=0 ; 27f465c6 rc=0 (both contained in origin/main)",
+      "worktree prune --dry-run -v: 'Removing worktrees/r80-baseline-frozen-worktree: gitdir file points to non-existent location' ; 'Removing worktrees/r81-frozen: gitdir file points to non-existent location' (plus wt-r98/99/100)",
+      "ls -d r80-baseline-frozen-worktree /tmp/r81-frozen -> No such file or directory (both dirs absent)",
+      "du -sb admin dirs: r80-baseline-frozen-worktree=16723282 B ; r81-frozen=16724023 B (residual index+ORIG_HEAD+logs; registration only)",
+      "obsidian-ledger.tsv = 1 line (header only); rg for shas/paths -> exit 1, 0 rows",
+      "corpus/live hits are benign: r81-scout/MANIFEST.sha256 line 9 lists reports/round-81/r81-scout.md (a different file, sha256 of a report, not the pin); r89-verify2/freeze-lstree.txt and r91-verifier/tmp/*.txt are 99633-line frozen-tree file listings that contain 'reports/round-80/r80-baseline.md' as a tracked path, and grep -c for 'baseline-frozen|r81-frozen' = 0 (no worktree-path reference)",
+      "r80-baseline.md C6: 'frozen worktree left registered (deliberate) ... operator cleanup is git worktree remove /home/vgpnk/Projects/shokunin/r80-baseline-frozen-worktree (no branch, no commit, main worktree untouched)'",
+      "r81-baseline.md C6: 'frozen worktree left registered at /tmp/r81-frozen (deliberate, ephemeral) ... prunable with git worktree prune. Cleanup now: git worktree remove /tmp/r81-frozen (no branch, no commit, main worktree untouched)'"
+    ]
+  },
+  "analysis": [
+    "A pin means a live gate/fixture/runner consumes the frozen baseline. Neither sha, nor either worktree path, appears in any executable or configuration surface: gd2d has no tools/ or tests/ at all, no lane-level shell scripts, and zero hits in corpus/fixtures, corpus/knowledge, corpus/lessons, or the lane's top-level docs.",
+    "The two in-lane sha hits are narrative provenance inside historical round reports, and each report's own C6 note declares the registration expendable and supplies the cleanup command -- the opposite of a pin.",
+    "The corpus/live hits are frozen-tree file listings (byte archives of the round trees) that merely contain the baseline .md path as a tracked file; they do not reference the worktree registration and were produced by later rounds (r89/r91).",
+    "Fleet-wide .ufo/waves and .ufo/scopes carry no reference; souji's own census/test-result files are the auditor's records, not gd2d tooling.",
+    "Both targets are dir-absent, detached-HEAD, 0-unique-commit, ancestor-of-origin/main, prunable registrations -- i.e. metadata-prune candidates, consistent with the round-1 parent correction ('worktree dir absent + unique commits = 0 -> metadata-prune candidate for r3') and the round-1 r80/r81 rows."
+  ],
+  "disagreements": [
+    "Round-1 census recorded S42 (r80) and S43/S59/S63 (r81) as NOT-SAFE under the removal-receipt rule. That answers 'may this be removed without a receipt?', not 'is it pinned?'. Round-3's pin question resolves UNPINNED for both; the round-1 verdicts are not contradicted, they measure a different axis.",
+    "One nuance worth the parent's attention: the r80 path is listed in the fleet-root .gitignore ('r80-baseline-frozen-worktree/'), which is a hygiene marker, not a live reference. It does not pin the registration."
+  ],
+  "safety": {
+    "read_only": true,
+    "git_mutations": "none (no prune/remove/reset; prune was run only with --dry-run -v)",
+    "wrote": ["souji-shokunin/census/round-3/seat-48.json"],
+    "secrets_touched": "none"
+  },
+  "go_no_go": "GO for metadata-prune of both registrations from the pin-audit standpoint: UNPINNED, no live gate or fixture depends on them, and no unique work is at risk (unique=0, both ancestors of origin/main).",
+  "preamble": {
+    "cwd": "/home/vgpnk/Projects/shokunin",
+    "fragment_path": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-3/seat-48.json",
+    "written_at": "2026-10-18T13:38:11-03:00",
+    "mode": "dry-run; no modifications outside this fragment"
+  }
+}

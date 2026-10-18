@@ -1,0 +1,145 @@
+{
+  "seat": "S64",
+  "round": 3,
+  "kind": "final-gate-tally",
+  "role": "auditor",
+  "assignment": "Tally seats 57-63 results into one go/no-go JSON {prune_lore, prune_gd2d_detached, approval_list_ready, blockers}. Waited 420s for the gate seats to land.",
+  "written_at": "2026-10-18T13:44:00-03:00",
+  "mode": "dry-run; read-only over every fleet and lane surface; only this fragment written",
+  "waited_seconds": 420,
+  "gate_seats_present": {
+    "seat-57": "pair-comparison-audit (auditor)",
+    "seat-58": "prune-authorization-audit (auditor)",
+    "seat-59": "auditor-recount",
+    "seat-60": "spot-check (auditor)",
+    "seat-61": "selective-prune-execution-plan (auditor, gd2d)",
+    "seat-62": "lore-prune-execution-plan-audit (auditor)",
+    "seat-63": "global-consistency-audit (auditor)"
+  },
+  "gate_seats_missing": [],
+  "peer_seats_present": "63/63 (seat-01..63 all on disk; seat-64 is this fragment)",
+
+  "per_seat_tally": [
+    {
+      "seat": "S57",
+      "go_no_go": "GO for the parent to execute a metadata-only prune of the 21 registrations",
+      "blocking_disagreements": 0,
+      "note": "21/21 author-vs-blind pairs agree; effective agreement 63/63 seat-verdicts (21 author + 21 blind + 21 tool). Raised the PROVINCE-vs-AGENTS lane-unpushed wording as a soft finding (not a disagreement)."
+    },
+    {
+      "seat": "S58",
+      "go_no_go": "GO for all 21 as metadata-only prunes, PROVIDED the operator accepts the artifact-scoped reading of the dirty/unpushed gate; NO-GO on any blanket git worktree prune in game-dev-2d-shokunin",
+      "blocking_disagreements": 0,
+      "note": "prune_authorization_true=21, false=0; gd2d registrations excluded=3. Flagged r87-M1-myth as the only target with unreferenced-content residue (8 staged blobs unreachable from every ref; reproducible from the tracked patch, 8/8 sha1 match)."
+    },
+    {
+      "seat": "S59",
+      "go_no_go": "CONDITIONAL GO on the row set (111 rows, target-identical, all SAFE rows independently re-verified, 0 false-SAFE); NO-GO on the literal contract wording 'every row SAFE, zero NOT-SAFE'",
+      "blocking_disagreements": 0,
+      "note": "111 rows / 111 distinct paths / 0 duplicates; 96 SAFE(pushed) + 15 NOT-SAFE(unreachable, no-op-already-removed). Deviations: 15 NOT-SAFE rows are by design; four shards carry four headers; approvals-54.tsv was rewritten in place mid-audit."
+    },
+    {
+      "seat": "S60",
+      "go_no_go": "GO — four approval TSVs mutually consistent (0 duplicate paths); every verdict reproduces under a cold independent re-run of tools/souji-verify.sh (10/10 sample, 111/111 full sweep)",
+      "blocking_disagreements": 0,
+      "note": "0 false-SAFE; 15 NOT-SAFE rows are all unreachable/already-removed no-ops. No disagreement to escalate."
+    },
+    {
+      "seat": "S61",
+      "go_no_go": "GO for the 2 unpinned gd2d registrations (r80-baseline-frozen-worktree, /tmp/r81-frozen) via lock-then-prune or remove-by-path; NO-GO/WITHHELD for the 3 pinned registrations wt-r98/wt-r99/wt-r100",
+      "blocking_disagreements": 0,
+      "note": "Mechanism proven on an isolated /tmp fixture: prune skips locked registrations; --expire=never is NOT a selector (disables all pruning); git worktree remove <path> works on an already-absent dir. Corrects S52's framing: pruning a registration does not lose the commits, only the materialisation pointer + worktree-local reflog."
+    },
+    {
+      "seat": "S62",
+      "go_no_go": "GO",
+      "blocking_disagreements": 0,
+      "note": "Lore 19-set identity CONFIRMED: 12 assertions PASS; dry-run names == admin dirs == prunable list, md5 1f4367b0e7e95d6f04fde10905652109. 19/19 dir absent, unique=0, admin present, none locked, no live process, heads reachable. r87-C6-X1 admin index touched 2026-10-18 12:19:17 (younger than 1 day) but the dir is absent, so it is still prunable."
+    },
+    {
+      "seat": "S63",
+      "go_no_go": "GO for the 19 lore registrations (a single bare prune in lore-shokunin is safe); CONDITIONAL-GO for the 2 gd2d registrations, only with the pin-protection mechanism; GO for the operator approval list only after the count is restated",
+      "blocking_disagreements": 1,
+      "note": "B1 (blocking): a bare git worktree prune in game-dev-2d-shokunin lists all 5 registrations, including the 3 pins — repo-wide, no path selector. Required mitigation: lock the 3 pins then prune, or remove exactly the two unpinned registrations by path. B2 (arithmetic): restate the approval count as 96 approve-remove + 15 no-op, not 109+2."
+    }
+  ],
+
+  "independent_rederivation": {
+    "by": "S64, raw git + tools/souji-verify.sh, run before reading any gate-seat verdict",
+    "tool": "tools/souji-verify.sh sha256 7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820 (matches tests/results/INSTALL.json and S57/S61)",
+    "selftest": "24 checks, 0 failed (exit 0)",
+    "prune_set_cmds": [
+      "cd /home/vgpnk/Projects/shokunin/lore-shokunin && git worktree list --porcelain   -> 20 entries (1 main + 19 prunable)",
+      "cd souji-shokunin && SHOKUNIN_ROOT=/home/vgpnk/Projects/shokunin tools/souji-verify.sh <19 lore paths> <r80-baseline-frozen-worktree> </tmp/r81-frozen>",
+      "cd souji-shokunin && tools/souji-verify.sh <wt-r98> <wt-r99> <wt-r100>"
+    ],
+    "prune_set_out": [
+      "21/21 -> VERDICT <path> SAFE metadata-prune dir=absent unique=0 head=<sha> owner=<lane>",
+      "3/3 -> VERDICT <path> NOT-SAFE unpushed-branch branch=wt-r9[89]/wt-r100 unpushed=1 dir=absent owner=game-dev-2d-shokunin"
+    ],
+    "prune_set_detail": "19 lore-shokunin (18 @28706dc73a9b7667851fd82adb71e905ae5eb896, 1 @2b48ca72033dfd1060b6f81c4cf27ad83deae57f) + gd2d r80-baseline-frozen-worktree @d9320ddf339a600997de363878d81c698a43b427 + /tmp/r81-frozen @27f465c67995dfe3607bc4b7ed0b7492b95ec835 = 21.",
+    "reachability_proof": [
+      "lore: git merge-base --is-ancestor 28706dc refs/remotes/origin/main -> exit 0; same for 2b48ca7; git rev-list --count <head> --not --all -> 0 for both",
+      "gd2d: git merge-base --is-ancestor d9320ddf refs/remotes/origin/main -> exit 0; same for 27f465c6; git rev-list --count <head> --not --all -> 0 for both; both are also ancestors of local main",
+      "no target dir exists on disk; no registration carries a `locked` file; ls -l /proc/*/cwd | grep -E 'r87-|r81-frozen|r80-baseline' -> no match"
+    ],
+    "approval_union_cmds": [
+      "python3 union over census/round-3/approvals-{53,54,55,56}.tsv",
+      "sed 's|^/home/vgpnk/Projects/shokunin/||' safe-paths | sort -u; comm -12 <that> <paths touched by the fleet's 11 unpushed commits>",
+      "for each of the 96 SAFE paths: git rev-parse HEAD:<rel> vs origin/master:<rel>",
+      "tools/souji-verify.sh $(cat 96-safe-paths)"
+    ],
+    "approval_union_out": [
+      "111 distinct paths, 0 duplicate/conflicting verdicts; 96 SAFE(pushed) + 15 NOT-SAFE(unreachable)",
+      "per-shard: 53=27 SAFE, 54=27 SAFE, 55=21 SAFE + 8 NOT-SAFE, 56=21 SAFE + 7 NOT-SAFE",
+      "set identity: the 111-path union == the round-1 final table's 111 unique pushed paths (identical sets; 0 tsv-only, 0 r1-only)",
+      "96/96 HEAD:<rel> == origin/master:<rel> (byte-identical)",
+      "96/96 -> SAFE pushed on a cold tool re-run (independent confirmation of S60's 111/111)"
+    ],
+    "lane_unpushed_touching_check": [
+      "git -C /home/vgpnk/Projects/shokunin rev-list --branches --not --remotes   -> 11 unpushed commits (fleet root itself is 11 ahead of origin/master, whose HEAD is 025dc63)",
+      "git -C <each> log --name-only --format='' <those 11> | sort -u   -> 31 distinct paths touched",
+      "comm -12 <31 touched paths> <96 SAFE relative paths>   -> 0"
+    ],
+    "lane_state_at_audit": {
+      "lore-shokunin": "3 unpushed commits (6cec83a, 1659a42, f553a27) + untracked .scratch/; 0 unpushed commit touches .git/worktrees/ or any of the 19 targets",
+      "game-dev-2d-shokunin": "6 unpushed commits (05a72899, 4925ee4e, 7b47aa0f, 2d562282, fe1a996e, 68bee6e7), 0 dirty paths; 0 touches .git/worktrees/ or the 2 targets",
+      "fleet root": "11 unpushed commits; the a1b44b1 cleanup deleted 15 strays locally but is NOT an ancestor of origin/master (merge-base --is-ancestor a1b44b1 origin/master -> exit 1)"
+    },
+    "admin_dir_mtime_note": "Two lore admin dirs carry today's mtimes (r87-C6-X1 index 2026-10-18 12:19:17; r87-M1-myth index 13:39, moving during the wave). Investigated: round-3 seats copy the worktree index out to /tmp (s44-r87-*.idx, s26-*), which touches the admin mtime; the dirs themselves remain absent and every target still verifies SAFE(metadata-prune). This is wave noise, not a live checkout.",
+    "reclaimable": "lore-shokunin/.git/worktrees = 5.6M; game-dev-2d-shokunin/.git/worktrees = 95M (the 2 authorized gd2d admin dirs hold 16.7-21.8M indexes each). Modest, metadata hygiene not a space win."
+  },
+
+  "final_gate": {
+    "prune_lore": true,
+    "prune_gd2d_detached": true,
+    "approval_list_ready": true,
+    "blockers": [
+      "BLOCKER-1 (gd2d execution mechanism, from S63-B1/S52/S61): a bare `git worktree prune` in game-dev-2d-shokunin is repo-wide and lists ALL FIVE registrations, including the 3 PINNED named-branch ones (wt-r98/wt-r99/wt-r100, 1 unpushed commit each). The parent must NOT run a bare prune there. Required: (a) `git worktree lock --reason '<r3 pin>'` on the 3 pins before pruning, or (b) skip prune in gd2d and `git worktree remove <path>` exactly the two unpinned registrations. `--expire <ts>` is NOT-SAFE (S52: split is mtime luck; `--expire '@2026-10-16'` prunes all five).",
+      "BLOCKER-2 (policy wording, operator decision, from S57/S58): PROVINCE.md blocks only an artifact whose owning lane has dirty/unpushed work TOUCHING IT; AGENTS.md's 'never touch an artifact whose owning lane has dirty or unpushed work' read literally would block all 19 lore rows and both gd2d rows. Measured: 0 of the 31 paths touched by the fleet's 11 unpushed commits overlap the 96 approval targets, and no unpushed commit in any lane touches .git/worktrees/. Under the artifact-scoped reading the gate does not fire; if the operator requires the owning lane to be entirely clean, all 21 authorizations flip to NOT-SAFE until lore's 3 and gd2d's 6 commits are pushed.",
+      "BLOCKER-3 (arithmetic restatement, non-safety, from S59/S63-B2): the operator approval list is 96 approve-remove + 15 no-op (already-removed), NOT '109 + 2'. The TSVs' 15 NOT-SAFE(unreachable) rows are factually correct no-ops, not failures; the parent should restate the count when it integrates.",
+      "BLOCKER-4 (residue, from S58): r87-M1-myth's admin index stages 8 blobs unreachable from every ref; content is reproducible from the tracked patch (8/8 sha1 match), but if the operator wants belt-and-braces, extract the blobs before pruning."
+    ],
+    "conditions_for_go": [
+      "prune ONLY the 21; wt-r98/wt-r99/wt-r100 must survive (selective mechanism per BLOCKER-1)",
+      "metadata only: no git worktree remove of any live directory; commits, refs and objects untouched",
+      "quarantine hold before any actual deletion of the 96 approval candidates (per SKILL removal flow)",
+      "resolve the PROVINCE-vs-AGENTS lane-unpushed wording once (BLOCKER-2) before executing, since it gates the 19 lore rows as a block"
+    ],
+    "agreement": "7/7 gate seats GO for the 21-registration metadata prune (S58/S63 conditionally on the gd2d pin mechanism); 0 seats NO-GO on the prune set; 1 blocking conflict recorded (S63-B1) and it is an execution-mechanism requirement, not a verdict disagreement.",
+    "false_safe_found": 0,
+    "seats_disagreeing_on_verdicts": 0
+  },
+
+  "notes": [
+    "The gate is GO on all three deliverables (prune_lore, prune_gd2d_detached, approval_list_ready). The blockers are execution-mechanism and policy-wording requirements plus an arithmetic restatement — none is a false verdict and none invalidates the prune set.",
+    "Round-1's own claim text ('prune the 24 dead worktree entries') is superseded: the correct set is 21 (19 lore + 2 gd2d detached); the 3 gd2d named-branch registrations are NOT prunable until game-dev-2d pushes.",
+    "Read-only run: no git worktree prune/remove/lock was executed against any fleet repo; no file outside this fragment was written; no .env/credential/secret file, .ufo/state, .ufo/watchdog.log or ~/.config path was read. Mutating mechanisms cited here were exercised by peer seats only inside mktemp -d fixtures."
+  ],
+  "preamble": {
+    "cwd": "/home/vgpnk/Projects/shokunin",
+    "fragment_path": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-3/seat-64.json",
+    "written_at": "2026-10-18T13:44:00-03:00",
+    "mode": "dry-run; no modifications outside this fragment"
+  }
+}

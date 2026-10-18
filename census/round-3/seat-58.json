@@ -1,0 +1,634 @@
+{
+ "seat": "S58",
+ "round": 3,
+ "role": "auditor",
+ "kind": "prune-authorization-audit",
+ "assignment": "WAIT 300s, then verify every SAFE ticket carries dir-absent + unique=0 + no live pin (cross-ref sweep seats 43-52). Emit per-target prune-authorization (true/false + reason).",
+ "written_at": "2026-10-18T13:41:00-03:00",
+ "mode": "dry-run; read-only over every fleet and lane surface; only this fragment written",
+ "decisive_result": {
+  "candidates_audited": 21,
+  "prune_authorization_true": 21,
+  "prune_authorization_false": 0,
+  "conditional_on_operator_rule_reading": true,
+  "go_no_go": "GO for all 21 as metadata-only prunes, PROVIDED the operator accepts the artifact-scoped reading of the dirty/unpushed gate (see lane_state_caveat). NO-GO on any blanket `git worktree prune` in game-dev-2d-shokunin.",
+  "gd2d_registrations_excluded": 3
+ },
+ "method": {
+  "independent": true,
+  "steps": [
+   "Enumerated all worktree registrations across the fleet: `for r in */; do git -C $r worktree list --porcelain; done` -> 22 registrations total (1 each in 19 lanes; lore 20 incl. main; gd2d 6 incl. main). 21 of them are prunable candidates.",
+   "For each of the 21: `test -e <path>` -> all absent (no PRESENT! line); `git -C <owner> log --oneline <HEAD> --not --all | wc -l` -> 0; admin dir HEAD file vs registration HEAD -> match; `ls <admin>/locked` -> ENOENT (unlocked); `ls -l /proc/*/cwd | grep -E 'r87-|r80-baseline|r81-frozen'` -> empty (no live cwd).",
+   "Fleet-wide uniqueness: counted registrations of each basename across every *-shokunin repo -> exactly 1 for all 21.",
+   "Hidden-aware live-pin sweep (the S43 correction: ripgrep skips dot-dirs unless --hidden): `rg -l --no-ignore --hidden -F <name> . -g '!.git' -g '!souji-shokunin/census/**' -g '!souji-shokunin/tests/**'` -> every hit classified historical (see live_pin_sweep).",
+   "Independent tool run: `tools/souji-verify.sh --selftest` -> 'selftest: 24 checks, 0 failed' (exit 0); `SHOKUNIN_ROOT=... tools/souji-verify.sh --json <all 21>` -> 21/21 SAFE/metadata-prune.",
+   "Index-residue audit: `GIT_INDEX_FILE=<admin>/index git diff-index --cached --name-only <HEAD>` for all 19 lore admin dirs -> 16 clean, 3 with staged-only entries (r87-F1 24, r87-M1-myth 8, r87-M3 9).",
+   "Recoverability proof for the 3 residues: per-blob `git rev-list --all --objects | grep -c ^<blob>` and, for the unreachable M1-myth blobs, reconstruction from the tracked patch with git-blob hashing (8/8 sha1 match).",
+   "Hazard check: `git -C game-dev-2d-shokunin worktree prune --dry-run -v` -> lists ALL 5 gd2d registrations including the 3 must-survive wt-r98/99/100; `git -C lore-shokunin worktree prune --dry-run -v | wc -l` -> 19 (exactly the candidate set, nothing else)."
+  ]
+ },
+ "candidate_set_identity": {
+  "count": 21,
+  "lore": 19,
+  "gd2d": 2,
+  "note": "Matches S62's prune_set (19 lore, md5 1f4367b0e7e95d6f04fde10905652109) plus the 2 gd2d detached registrations that S61 authorizes.",
+  "extra_prunable_but_NOT_authorized": [
+   "game-dev-2d-shokunin/.git/worktrees/game-dev-2d-shokunin-wt-r98 (branch wt-r98, 1 unpushed commit)",
+   "game-dev-2d-shokunin/.git/worktrees/game-dev-2d-shokunin-wt-r99 (branch wt-r99, 1 unpushed commit)",
+   "game-dev-2d-shokunin/.git/worktrees/game-dev-2d-shokunin-wt-r100 (branch wt-r100, 1 unpushed commit)"
+  ]
+ },
+ "targets": [
+  {
+   "target": "/tmp/r87-B1",
+   "owner": "/home/vgpnk/Projects/shokunin/lore-shokunin",
+   "owner_lane": "lore-shokunin",
+   "head": "28706dc73a9b7667851fd82adb71e905ae5eb896",
+   "admin_dir": "/home/vgpnk/Projects/shokunin/lore-shokunin/.git/worktrees/r87-B1",
+   "checks": {
+    "dir_absent": true,
+    "unique_commits_vs_not_all": 0,
+    "unique_commits_vs_not_remotes": 0,
+    "admin_dir_present": true,
+    "admin_head_matches_registration": true,
+    "locked": false,
+    "live_process_cwd_inside": false,
+    "registrations_fleetwide": 1,
+    "head_reachable_from_refs": true,
+    "live_gate_or_fixture_pin": 0,
+    "staged_index_entries": 0,
+    "staged_content_recoverable": null
+   },
+   "prune_authorization": true,
+   "reason": "dir absent + unique=0 + admin present + no lock + no live cwd + registered exactly once fleet-wide + HEAD reachable from refs/heads/main and refs/remotes/origin/main. Zero live gate/fixture pins (only historical prose)."
+  },
+  {
+   "target": "/tmp/r87-C5",
+   "owner": "/home/vgpnk/Projects/shokunin/lore-shokunin",
+   "owner_lane": "lore-shokunin",
+   "head": "28706dc73a9b7667851fd82adb71e905ae5eb896",
+   "admin_dir": "/home/vgpnk/Projects/shokunin/lore-shokunin/.git/worktrees/r87-C5",
+   "checks": {
+    "dir_absent": true,
+    "unique_commits_vs_not_all": 0,
+    "unique_commits_vs_not_remotes": 0,
+    "admin_dir_present": true,
+    "admin_head_matches_registration": true,
+    "locked": false,
+    "live_process_cwd_inside": false,
+    "registrations_fleetwide": 1,
+    "head_reachable_from_refs": true,
+    "live_gate_or_fixture_pin": 0,
+    "staged_index_entries": 0,
+    "staged_content_recoverable": null
+   },
+   "prune_authorization": true,
+   "reason": "dir absent + unique=0 + admin present + no lock + no live cwd + registered exactly once fleet-wide + HEAD reachable from refs/heads/main and refs/remotes/origin/main. Zero live gate/fixture pins (only historical prose)."
+  },
+  {
+   "target": "/tmp/r87-C6",
+   "owner": "/home/vgpnk/Projects/shokunin/lore-shokunin",
+   "owner_lane": "lore-shokunin",
+   "head": "28706dc73a9b7667851fd82adb71e905ae5eb896",
+   "admin_dir": "/home/vgpnk/Projects/shokunin/lore-shokunin/.git/worktrees/r87-C6",
+   "checks": {
+    "dir_absent": true,
+    "unique_commits_vs_not_all": 0,
+    "unique_commits_vs_not_remotes": 0,
+    "admin_dir_present": true,
+    "admin_head_matches_registration": true,
+    "locked": false,
+    "live_process_cwd_inside": false,
+    "registrations_fleetwide": 1,
+    "head_reachable_from_refs": true,
+    "live_gate_or_fixture_pin": 0,
+    "staged_index_entries": 0,
+    "staged_content_recoverable": null
+   },
+   "prune_authorization": true,
+   "reason": "dir absent + unique=0 + admin present + no lock + no live cwd + registered exactly once fleet-wide + HEAD reachable from refs/heads/main and refs/remotes/origin/main. Zero live gate/fixture pins (only historical prose)."
+  },
+  {
+   "target": "/tmp/r87-C6-X1",
+   "owner": "/home/vgpnk/Projects/shokunin/lore-shokunin",
+   "owner_lane": "lore-shokunin",
+   "head": "28706dc73a9b7667851fd82adb71e905ae5eb896",
+   "admin_dir": "/home/vgpnk/Projects/shokunin/lore-shokunin/.git/worktrees/r87-C6-X1",
+   "checks": {
+    "dir_absent": true,
+    "unique_commits_vs_not_all": 0,
+    "unique_commits_vs_not_remotes": 0,
+    "admin_dir_present": true,
+    "admin_head_matches_registration": true,
+    "locked": false,
+    "live_process_cwd_inside": false,
+    "registrations_fleetwide": 1,
+    "head_reachable_from_refs": true,
+    "live_gate_or_fixture_pin": 0,
+    "staged_index_entries": 0,
+    "staged_content_recoverable": null
+   },
+   "prune_authorization": true,
+   "reason": "dir absent + unique=0 + admin present + no lock + no live cwd + registered exactly once fleet-wide + HEAD reachable from refs/heads/main and refs/remotes/origin/main. Zero live gate/fixture pins (only historical prose)."
+  },
+  {
+   "target": "/tmp/r87-F1",
+   "owner": "/home/vgpnk/Projects/shokunin/lore-shokunin",
+   "owner_lane": "lore-shokunin",
+   "head": "28706dc73a9b7667851fd82adb71e905ae5eb896",
+   "admin_dir": "/home/vgpnk/Projects/shokunin/lore-shokunin/.git/worktrees/r87-F1",
+   "checks": {
+    "dir_absent": true,
+    "unique_commits_vs_not_all": 0,
+    "unique_commits_vs_not_remotes": 0,
+    "admin_dir_present": true,
+    "admin_head_matches_registration": true,
+    "locked": false,
+    "live_process_cwd_inside": false,
+    "registrations_fleetwide": 1,
+    "head_reachable_from_refs": true,
+    "live_gate_or_fixture_pin": 0,
+    "staged_index_entries": 24,
+    "staged_content_recoverable": true
+   },
+   "prune_authorization": true,
+   "reason": "dir absent + unique=0 + admin present + no lock + no live cwd + registered exactly once fleet-wide + HEAD reachable from refs/heads/main and refs/remotes/origin/main. Zero live gate/fixture pins (only historical prose). Staged-index residue present but recoverable: every staged blob reachable from refs (rev-list --all --objects hit=1 each); S26 showed the 24 (blob,path) pairs are committed verbatim in 03c6746, an ancestor of origin/main"
+  },
+  {
+   "target": "/tmp/r87-F1-applycheck",
+   "owner": "/home/vgpnk/Projects/shokunin/lore-shokunin",
+   "owner_lane": "lore-shokunin",
+   "head": "28706dc73a9b7667851fd82adb71e905ae5eb896",
+   "admin_dir": "/home/vgpnk/Projects/shokunin/lore-shokunin/.git/worktrees/r87-F1-applycheck",
+   "checks": {
+    "dir_absent": true,
+    "unique_commits_vs_not_all": 0,
+    "unique_commits_vs_not_remotes": 0,
+    "admin_dir_present": true,
+    "admin_head_matches_registration": true,
+    "locked": false,
+    "live_process_cwd_inside": false,
+    "registrations_fleetwide": 1,
+    "head_reachable_from_refs": true,
+    "live_gate_or_fixture_pin": 0,
+    "staged_index_entries": 0,
+    "staged_content_recoverable": null
+   },
+   "prune_authorization": true,
+   "reason": "dir absent + unique=0 + admin present + no lock + no live cwd + registered exactly once fleet-wide + HEAD reachable from refs/heads/main and refs/remotes/origin/main. Zero live gate/fixture pins (only historical prose)."
+  },
+  {
+   "target": "/tmp/r87-JDEP3",
+   "owner": "/home/vgpnk/Projects/shokunin/lore-shokunin",
+   "owner_lane": "lore-shokunin",
+   "head": "2b48ca72033dfd1060b6f81c4cf27ad83deae57f",
+   "admin_dir": "/home/vgpnk/Projects/shokunin/lore-shokunin/.git/worktrees/r87-JDEP3",
+   "checks": {
+    "dir_absent": true,
+    "unique_commits_vs_not_all": 0,
+    "unique_commits_vs_not_remotes": 0,
+    "admin_dir_present": true,
+    "admin_head_matches_registration": true,
+    "locked": false,
+    "live_process_cwd_inside": false,
+    "registrations_fleetwide": 1,
+    "head_reachable_from_refs": true,
+    "live_gate_or_fixture_pin": 0,
+    "staged_index_entries": 0,
+    "staged_content_recoverable": null
+   },
+   "prune_authorization": true,
+   "reason": "dir absent + unique=0 + admin present + no lock + no live cwd + registered exactly once fleet-wide + HEAD reachable from refs/heads/main and refs/remotes/origin/main. Zero live gate/fixture pins (only historical prose)."
+  },
+  {
+   "target": "/tmp/r87-M1-myth",
+   "owner": "/home/vgpnk/Projects/shokunin/lore-shokunin",
+   "owner_lane": "lore-shokunin",
+   "head": "28706dc73a9b7667851fd82adb71e905ae5eb896",
+   "admin_dir": "/home/vgpnk/Projects/shokunin/lore-shokunin/.git/worktrees/r87-M1-myth",
+   "checks": {
+    "dir_absent": true,
+    "unique_commits_vs_not_all": 0,
+    "unique_commits_vs_not_remotes": 0,
+    "admin_dir_present": true,
+    "admin_head_matches_registration": true,
+    "locked": false,
+    "live_process_cwd_inside": false,
+    "registrations_fleetwide": 1,
+    "head_reachable_from_refs": true,
+    "live_gate_or_fixture_pin": 0,
+    "staged_index_entries": 8,
+    "staged_content_recoverable": true
+   },
+   "prune_authorization": true,
+   "reason": "dir absent + unique=0 + admin present + no lock + no live cwd + registered exactly once fleet-wide + HEAD reachable from refs/heads/main and refs/remotes/origin/main. Zero live gate/fixture pins (only historical prose). Staged-index residue present but recoverable: the 8 staged blobs are UNREACHABLE from every ref (rev-list --all --objects hit=0 for all 8) BUT byte-identical to the tracked patch .ufo/waves/round-87/patches/M1-myth-cluster.patch; I reconstructed all 8 from the patch and their git-blob sha1 matched the staged index exactly (8/8 MATCH). Patch commit 2b48ca7 is an ancestor of origin/main."
+  },
+  {
+   "target": "/tmp/r87-M1-verify",
+   "owner": "/home/vgpnk/Projects/shokunin/lore-shokunin",
+   "owner_lane": "lore-shokunin",
+   "head": "28706dc73a9b7667851fd82adb71e905ae5eb896",
+   "admin_dir": "/home/vgpnk/Projects/shokunin/lore-shokunin/.git/worktrees/r87-M1-verify",
+   "checks": {
+    "dir_absent": true,
+    "unique_commits_vs_not_all": 0,
+    "unique_commits_vs_not_remotes": 0,
+    "admin_dir_present": true,
+    "admin_head_matches_registration": true,
+    "locked": false,
+    "live_process_cwd_inside": false,
+    "registrations_fleetwide": 1,
+    "head_reachable_from_refs": true,
+    "live_gate_or_fixture_pin": 0,
+    "staged_index_entries": 0,
+    "staged_content_recoverable": null
+   },
+   "prune_authorization": true,
+   "reason": "dir absent + unique=0 + admin present + no lock + no live cwd + registered exactly once fleet-wide + HEAD reachable from refs/heads/main and refs/remotes/origin/main. Zero live gate/fixture pins (only historical prose)."
+  },
+  {
+   "target": "/tmp/r87-M3",
+   "owner": "/home/vgpnk/Projects/shokunin/lore-shokunin",
+   "owner_lane": "lore-shokunin",
+   "head": "28706dc73a9b7667851fd82adb71e905ae5eb896",
+   "admin_dir": "/home/vgpnk/Projects/shokunin/lore-shokunin/.git/worktrees/r87-M3",
+   "checks": {
+    "dir_absent": true,
+    "unique_commits_vs_not_all": 0,
+    "unique_commits_vs_not_remotes": 0,
+    "admin_dir_present": true,
+    "admin_head_matches_registration": true,
+    "locked": false,
+    "live_process_cwd_inside": false,
+    "registrations_fleetwide": 1,
+    "head_reachable_from_refs": true,
+    "live_gate_or_fixture_pin": 0,
+    "staged_index_entries": 9,
+    "staged_content_recoverable": true
+   },
+   "prune_authorization": true,
+   "reason": "dir absent + unique=0 + admin present + no lock + no live cwd + registered exactly once fleet-wide + HEAD reachable from refs/heads/main and refs/remotes/origin/main. Zero live gate/fixture pins (only historical prose). Staged-index residue present but recoverable: all 9 staged blobs reachable from refs (hit=1 each), byte-identical to the tree of e4708cb per S45"
+  },
+  {
+   "target": "/tmp/r87-M4",
+   "owner": "/home/vgpnk/Projects/shokunin/lore-shokunin",
+   "owner_lane": "lore-shokunin",
+   "head": "28706dc73a9b7667851fd82adb71e905ae5eb896",
+   "admin_dir": "/home/vgpnk/Projects/shokunin/lore-shokunin/.git/worktrees/r87-M4",
+   "checks": {
+    "dir_absent": true,
+    "unique_commits_vs_not_all": 0,
+    "unique_commits_vs_not_remotes": 0,
+    "admin_dir_present": true,
+    "admin_head_matches_registration": true,
+    "locked": false,
+    "live_process_cwd_inside": false,
+    "registrations_fleetwide": 1,
+    "head_reachable_from_refs": true,
+    "live_gate_or_fixture_pin": 0,
+    "staged_index_entries": 0,
+    "staged_content_recoverable": null
+   },
+   "prune_authorization": true,
+   "reason": "dir absent + unique=0 + admin present + no lock + no live cwd + registered exactly once fleet-wide + HEAD reachable from refs/heads/main and refs/remotes/origin/main. Zero live gate/fixture pins (only historical prose)."
+  },
+  {
+   "target": "/tmp/r87-S1",
+   "owner": "/home/vgpnk/Projects/shokunin/lore-shokunin",
+   "owner_lane": "lore-shokunin",
+   "head": "28706dc73a9b7667851fd82adb71e905ae5eb896",
+   "admin_dir": "/home/vgpnk/Projects/shokunin/lore-shokunin/.git/worktrees/r87-S1",
+   "checks": {
+    "dir_absent": true,
+    "unique_commits_vs_not_all": 0,
+    "unique_commits_vs_not_remotes": 0,
+    "admin_dir_present": true,
+    "admin_head_matches_registration": true,
+    "locked": false,
+    "live_process_cwd_inside": false,
+    "registrations_fleetwide": 1,
+    "head_reachable_from_refs": true,
+    "live_gate_or_fixture_pin": 0,
+    "staged_index_entries": 0,
+    "staged_content_recoverable": null
+   },
+   "prune_authorization": true,
+   "reason": "dir absent + unique=0 + admin present + no lock + no live cwd + registered exactly once fleet-wide + HEAD reachable from refs/heads/main and refs/remotes/origin/main. Zero live gate/fixture pins (only historical prose)."
+  },
+  {
+   "target": "/tmp/r87-T1",
+   "owner": "/home/vgpnk/Projects/shokunin/lore-shokunin",
+   "owner_lane": "lore-shokunin",
+   "head": "28706dc73a9b7667851fd82adb71e905ae5eb896",
+   "admin_dir": "/home/vgpnk/Projects/shokunin/lore-shokunin/.git/worktrees/r87-T1",
+   "checks": {
+    "dir_absent": true,
+    "unique_commits_vs_not_all": 0,
+    "unique_commits_vs_not_remotes": 0,
+    "admin_dir_present": true,
+    "admin_head_matches_registration": true,
+    "locked": false,
+    "live_process_cwd_inside": false,
+    "registrations_fleetwide": 1,
+    "head_reachable_from_refs": true,
+    "live_gate_or_fixture_pin": 0,
+    "staged_index_entries": 0,
+    "staged_content_recoverable": null
+   },
+   "prune_authorization": true,
+   "reason": "dir absent + unique=0 + admin present + no lock + no live cwd + registered exactly once fleet-wide + HEAD reachable from refs/heads/main and refs/remotes/origin/main. Zero live gate/fixture pins (only historical prose)."
+  },
+  {
+   "target": "/tmp/r87-V1",
+   "owner": "/home/vgpnk/Projects/shokunin/lore-shokunin",
+   "owner_lane": "lore-shokunin",
+   "head": "28706dc73a9b7667851fd82adb71e905ae5eb896",
+   "admin_dir": "/home/vgpnk/Projects/shokunin/lore-shokunin/.git/worktrees/r87-V1",
+   "checks": {
+    "dir_absent": true,
+    "unique_commits_vs_not_all": 0,
+    "unique_commits_vs_not_remotes": 0,
+    "admin_dir_present": true,
+    "admin_head_matches_registration": true,
+    "locked": false,
+    "live_process_cwd_inside": false,
+    "registrations_fleetwide": 1,
+    "head_reachable_from_refs": true,
+    "live_gate_or_fixture_pin": 0,
+    "staged_index_entries": 0,
+    "staged_content_recoverable": null
+   },
+   "prune_authorization": true,
+   "reason": "dir absent + unique=0 + admin present + no lock + no live cwd + registered exactly once fleet-wide + HEAD reachable from refs/heads/main and refs/remotes/origin/main. Zero live gate/fixture pins (only historical prose)."
+  },
+  {
+   "target": "/tmp/r87-V1-x1",
+   "owner": "/home/vgpnk/Projects/shokunin/lore-shokunin",
+   "owner_lane": "lore-shokunin",
+   "head": "28706dc73a9b7667851fd82adb71e905ae5eb896",
+   "admin_dir": "/home/vgpnk/Projects/shokunin/lore-shokunin/.git/worktrees/r87-V1-x1",
+   "checks": {
+    "dir_absent": true,
+    "unique_commits_vs_not_all": 0,
+    "unique_commits_vs_not_remotes": 0,
+    "admin_dir_present": true,
+    "admin_head_matches_registration": true,
+    "locked": false,
+    "live_process_cwd_inside": false,
+    "registrations_fleetwide": 1,
+    "head_reachable_from_refs": true,
+    "live_gate_or_fixture_pin": 0,
+    "staged_index_entries": 0,
+    "staged_content_recoverable": null
+   },
+   "prune_authorization": true,
+   "reason": "dir absent + unique=0 + admin present + no lock + no live cwd + registered exactly once fleet-wide + HEAD reachable from refs/heads/main and refs/remotes/origin/main. Zero live gate/fixture pins (only historical prose)."
+  },
+  {
+   "target": "/tmp/r87-V2",
+   "owner": "/home/vgpnk/Projects/shokunin/lore-shokunin",
+   "owner_lane": "lore-shokunin",
+   "head": "28706dc73a9b7667851fd82adb71e905ae5eb896",
+   "admin_dir": "/home/vgpnk/Projects/shokunin/lore-shokunin/.git/worktrees/r87-V2",
+   "checks": {
+    "dir_absent": true,
+    "unique_commits_vs_not_all": 0,
+    "unique_commits_vs_not_remotes": 0,
+    "admin_dir_present": true,
+    "admin_head_matches_registration": true,
+    "locked": false,
+    "live_process_cwd_inside": false,
+    "registrations_fleetwide": 1,
+    "head_reachable_from_refs": true,
+    "live_gate_or_fixture_pin": 0,
+    "staged_index_entries": 0,
+    "staged_content_recoverable": null
+   },
+   "prune_authorization": true,
+   "reason": "dir absent + unique=0 + admin present + no lock + no live cwd + registered exactly once fleet-wide + HEAD reachable from refs/heads/main and refs/remotes/origin/main. Zero live gate/fixture pins (only historical prose)."
+  },
+  {
+   "target": "/tmp/r87-V4",
+   "owner": "/home/vgpnk/Projects/shokunin/lore-shokunin",
+   "owner_lane": "lore-shokunin",
+   "head": "28706dc73a9b7667851fd82adb71e905ae5eb896",
+   "admin_dir": "/home/vgpnk/Projects/shokunin/lore-shokunin/.git/worktrees/r87-V4",
+   "checks": {
+    "dir_absent": true,
+    "unique_commits_vs_not_all": 0,
+    "unique_commits_vs_not_remotes": 0,
+    "admin_dir_present": true,
+    "admin_head_matches_registration": true,
+    "locked": false,
+    "live_process_cwd_inside": false,
+    "registrations_fleetwide": 1,
+    "head_reachable_from_refs": true,
+    "live_gate_or_fixture_pin": 0,
+    "staged_index_entries": 0,
+    "staged_content_recoverable": null
+   },
+   "prune_authorization": true,
+   "reason": "dir absent + unique=0 + admin present + no lock + no live cwd + registered exactly once fleet-wide + HEAD reachable from refs/heads/main and refs/remotes/origin/main. Zero live gate/fixture pins (only historical prose)."
+  },
+  {
+   "target": "/tmp/r87-X2",
+   "owner": "/home/vgpnk/Projects/shokunin/lore-shokunin",
+   "owner_lane": "lore-shokunin",
+   "head": "28706dc73a9b7667851fd82adb71e905ae5eb896",
+   "admin_dir": "/home/vgpnk/Projects/shokunin/lore-shokunin/.git/worktrees/r87-X2",
+   "checks": {
+    "dir_absent": true,
+    "unique_commits_vs_not_all": 0,
+    "unique_commits_vs_not_remotes": 0,
+    "admin_dir_present": true,
+    "admin_head_matches_registration": true,
+    "locked": false,
+    "live_process_cwd_inside": false,
+    "registrations_fleetwide": 1,
+    "head_reachable_from_refs": true,
+    "live_gate_or_fixture_pin": 0,
+    "staged_index_entries": 0,
+    "staged_content_recoverable": null
+   },
+   "prune_authorization": true,
+   "reason": "dir absent + unique=0 + admin present + no lock + no live cwd + registered exactly once fleet-wide + HEAD reachable from refs/heads/main and refs/remotes/origin/main. Zero live gate/fixture pins (only historical prose)."
+  },
+  {
+   "target": "/tmp/r87-X3",
+   "owner": "/home/vgpnk/Projects/shokunin/lore-shokunin",
+   "owner_lane": "lore-shokunin",
+   "head": "28706dc73a9b7667851fd82adb71e905ae5eb896",
+   "admin_dir": "/home/vgpnk/Projects/shokunin/lore-shokunin/.git/worktrees/r87-X3",
+   "checks": {
+    "dir_absent": true,
+    "unique_commits_vs_not_all": 0,
+    "unique_commits_vs_not_remotes": 0,
+    "admin_dir_present": true,
+    "admin_head_matches_registration": true,
+    "locked": false,
+    "live_process_cwd_inside": false,
+    "registrations_fleetwide": 1,
+    "head_reachable_from_refs": true,
+    "live_gate_or_fixture_pin": 0,
+    "staged_index_entries": 0,
+    "staged_content_recoverable": null
+   },
+   "prune_authorization": true,
+   "reason": "dir absent + unique=0 + admin present + no lock + no live cwd + registered exactly once fleet-wide + HEAD reachable from refs/heads/main and refs/remotes/origin/main. Zero live gate/fixture pins (only historical prose)."
+  },
+  {
+   "target": "/home/vgpnk/Projects/shokunin/r80-baseline-frozen-worktree",
+   "owner": "/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin",
+   "owner_lane": "game-dev-2d-shokunin",
+   "head": "d9320ddf339a600997de363878d81c698a43b427",
+   "admin_dir": "/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin/.git/worktrees/r80-baseline-frozen-worktree",
+   "checks": {
+    "dir_absent": true,
+    "unique_commits_vs_not_all": 0,
+    "admin_dir_present": true,
+    "locked": false,
+    "live_process_cwd_inside": false,
+    "registrations_fleetwide": 1,
+    "head_reachable_from_origin_main": true,
+    "live_gate_or_fixture_pin": 0,
+    "staged_index_entries": 0
+   },
+   "prune_authorization": true,
+   "reason": "dir absent + unique=0 + admin present + unlocked + HEAD ancestor of origin/main. Live references are historical only (r80-baseline.md report prose, .tower/comms prose, .gitignore line 4 is an IGNORE rule for the path, not a dependency). MANDATORY CONDITION: must be executed selectively (lock-then-prune or `git worktree remove <path>`), because a blanket `git worktree prune` in gd2d also removes the 3 must-survive wt-r98/99/100 registrations."
+  },
+  {
+   "target": "/tmp/r81-frozen",
+   "owner": "/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin",
+   "owner_lane": "game-dev-2d-shokunin",
+   "head": "27f465c67995dfe3607bc4b7ed0b7492b95ec835",
+   "admin_dir": "/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin/.git/worktrees/r81-frozen",
+   "checks": {
+    "dir_absent": true,
+    "unique_commits_vs_not_all": 0,
+    "admin_dir_present": true,
+    "locked": false,
+    "live_process_cwd_inside": false,
+    "registrations_fleetwide": 1,
+    "head_reachable_from_origin_main": true,
+    "live_gate_or_fixture_pin": 0,
+    "staged_index_entries": 0
+   },
+   "prune_authorization": true,
+   "reason": "dir absent + unique=0 + admin present + unlocked + HEAD ancestor of origin/main. Live references historical only (r81-baseline.md/r81-author.md prose, which themselves state C6 'deliberate, ephemeral' and give the cleanup command; souji SCORECARD prose). MANDATORY CONDITION: selective execution only (see r80 note)."
+  }
+ ],
+ "rejected_targets": [
+  {
+   "target": "game-dev-2d-shokunin-wt-r98 / -wt-r99 / -wt-r100",
+   "prune_authorization": false,
+   "reason": "Each is a NAMED-branch registration whose branch tip is NOT on any remote ref: `git -C gd2d log --oneline <branch> --not --remotes | wc -l` = 1 for each; `git rev-parse --verify origin/wt-r98` -> 'fatal: Needed a single revision'. Per the spec D-b rule (named-branch-unpushed pre-check fires BEFORE the dir-absent/unique=0 shortcut) these are NOT-SAFE(unpushed-branch). Their tips exist only in refs/heads (68bee6e7 / fe1a996e / 2d562282) and would survive a metadata prune, but the unpushed work is exactly the SKILL 'unpushed-lane trap'. Operator disposition required.",
+   "survives_prune": true
+  },
+  {
+   "target": "kotodama-shokunin (repo root) and its .scratch/",
+   "prune_authorization": false,
+   "reason": "Live trap, unchanged at audit time: `git -C kotodama-shokunin log --branches --not --remotes | wc -l` = 42, `status --porcelain | wc -l` = 17. No round-3 worktree ticket targets it; seat-03/seat-30 mention it only as context."
+  }
+ ],
+ "lane_state_caveat": {
+  "observation": "Both owning lanes are NOT clean at audit time: lore-shokunin has 3 unpushed commits on main (6cec83a, 1659a42, f553a27) + 1 untracked path (?? .scratch/); game-dev-2d-shokunin has 6 unpushed commits (05a72899, 4925ee4e, 7b47aa0f, 2d562282, fe1a996e, 68bee6e7) and 0 dirty paths.",
+  "why_it_does_not_block_under_the_artifact_scoped_reading": [
+   "PROVINCE.md / SKILL.md block 'any artifact whose owning lane has dirty or unpushed work TOUCHING IT'. Checked precisely: `git -C lore-shokunin log --name-only --format='' --branches --not --remotes` -> .gitignore and .ufo/waves/round-100/** only; grep for 'worktrees/' -> 0 files. `git -C game-dev-2d-shokunin log --name-only --format='' --branches --not --remotes | grep -c 'worktrees/'` -> 0. No unpushed commit touches any admin dir or any of the 21 target paths.",
+   "The registration metadata (.git/worktrees/<name>/) is untracked git state; no commit in either lane can touch it, so the gate can never fire on it as written."
+  ],
+  "operator_decision_required": true,
+  "if_stricter_reading_is_applied": "If the operator instead requires the owning lane to be entirely clean (no unpushed commits at all), then all 21 authorizations flip to FALSE until lore's 3 and gd2d's 6 unpushed commits are pushed. Flagged explicitly because PROVINCE's sentence admits both readings."
+ },
+ "residual_risks": [
+  "r87-M1-myth: its 8 staged blobs are unreachable from every ref, so a future `git gc`/`git prune` would drop those objects. Content is NOT lost (verified reproducible from the tracked patch, 8/8 sha1 match), but if the operator wants belt-and-braces, `git cat-file blob <sha>` the 8 blobs out before pruning, or note the patch path as the recovery source. This is the only target with an unreferenced-content residue.",
+  "lore-shokunin carries 1 pre-existing dangling tree (79d0839f8b130cca29d4ac7af2cf520c468615d9, `git fsck --dangling`), unrelated to these registrations.",
+  "Metadata prune deletes each admin dir's index (lore ~286 KB each, gd2d ~16.7-21.8 MB each) and worktree-local reflog. It does NOT touch refs/heads, so no commit is lost (confirms S61's correction of S52's framing).",
+  "Reclaimed disk is modest: lore ~5.4 MB total across 19 registrations; gd2d ~77 MB across the 2 authorized ones. This is metadata hygiene, not a space win."
+ ],
+ "live_pin_sweep": {
+  "assigned_cross_ref": "seats 43-52",
+  "agreement": "AGREE with all of 43-52. No disagreement found.",
+  "s43_correction_upheld": "S43 is right that the assigned ripgrep form undercounts because it skips dot-dirs (.ufo/). I re-ran the hidden-aware form for all 21 names.",
+  "result": "Every hit is a historical record. Zero live gate, fixture, hook, or executable consumer.",
+  "classes": {
+   "historical_prose_wave_receipts": "lore-shokunin/.ufo/waves/round-87/**.md and patches/*.json (tracked wave evidence, records commands already run)",
+   "historical_prose_lane_reports": "game-dev-2d-shokunin/reports/round-80/r80-baseline.md, round-81/r81-*.md; audio-shokunin/reports/round-88|89 + corpus/live/... (r87-F1 there is a CONCEPT name, not the /tmp path: `rg -o '/tmp/r87-F1' audio-shokunin/` -> empty)",
+   "historical_prose_own_lane": "souji-shokunin/LOG.md, SCORECARD.md, .ufo/reports/round-1|2/souji.md",
+   "fleet_comms_prose": ".tower/comms/state.json + missions/*.md + reviews/*.md (untracked in git; prose about the 2026-10-15 branch surgery)",
+   "ignore_rule_not_a_pin": ".gitignore:4 'r80-baseline-frozen-worktree/' is an ignore RULE for the path, not a dependency on the registration"
+  },
+  "corroboration": {
+   "s49": "0 live gate/fixture references to any r87 worktree; confirmed.",
+   "s51": "No active git hook and no script anywhere consumes `git worktree list`; the registrations are checkout-inert. Confirmed independently (both hooks dirs hold only *.sample).",
+   "s48_s50": "r80/r81 baselines UNPINNED; fleet MANIFEST.json/LOG.md/SCORECARD.md are silent on both. Confirmed.",
+   "s61": "Prune has no path selector; lock-then-prune or remove-by-path is required for gd2d. Confirmed by my own `prune --dry-run -v` (5 names, not 2)."
+  }
+ },
+ "evidence": {
+  "cmds": [
+   "for r in */; do git -C \"$r\" worktree list --porcelain; done",
+   "for p in /tmp/r87-{B1,C5,C6,C6-X1,F1,F1-applycheck,JDEP3,M1-myth,M1-verify,M3,M4,S1,T1,V1,V1-x1,V2,V4,X2,X3} /home/vgpnk/Projects/shokunin/r80-baseline-frozen-worktree /tmp/r81-frozen; do [ -e \"$p\" ] && echo \"PRESENT! $p\"; done",
+   "for h in 28706dc73a9b7667851fd82adb71e905ae5eb896 2b48ca72033dfd1060b6f81c4cf27ad83deae57f; do git -C lore-shokunin log --oneline $h --not --all | wc -l; done",
+   "for h in d9320ddf339a600997de363878d81c698a43b427 27f465c67995dfe3607bc4b7ed0b7492b95ec835; do git -C game-dev-2d-shokunin log --oneline $h --not --all | wc -l; done",
+   "git -C lore-shokunin merge-base --is-ancestor 28706dc73a9b7667851fd82adb71e905ae5eb896 origin/main; echo $?",
+   "for d in lore-shokunin/.git/worktrees/*/; do echo \"$d HEAD=$(cat $d/HEAD) gitdir=$(cat $d/gitdir)\"; done",
+   "for d in lore-shokunin/.git/worktrees/*/; do [ -e \"$d/locked\" ] && echo LOCKED $d; done",
+   "ls -l /proc/*/cwd 2>/dev/null | grep -E 'r87-|r80-baseline|r81-frozen'",
+   "for n in <21 names>; do c=$(for r in *-shokunin; do git -C \"$r\" worktree list --porcelain | grep -c \"^worktree .*/$n$\"; done | awk '{s+=$1} END{print s+0}'); echo \"$n $c\"; done",
+   "for n in <21 names>; do rg -l --no-ignore --hidden -F \"$n\" . -g '!.git' -g '!souji-shokunin/census/**' -g '!souji-shokunin/tests/**'; done",
+   "for d in lore-shokunin/.git/worktrees/*/; do GIT_INDEX_FILE=\"$PWD/$d/index\" git -C lore-shokunin diff-index --cached --name-only $(cat $d/HEAD) | wc -l; done",
+   "GIT_INDEX_FILE=.git/worktrees/r87-M1-myth/index git ls-files -s corpus/fixtures/r87-myth-cluster/",
+   "for b in <8 M1-myth blobs>; do git -C lore-shokunin rev-list --all --objects | grep -c \"^$b\"; done",
+   "python3 reconstruction of the 8 blobs from .ufo/waves/round-87/patches/M1-myth-cluster.patch with git-blob sha1 -> 8/8 MATCH",
+   "git -C game-dev-2d-shokunin worktree prune --dry-run -v",
+   "git -C lore-shokunin worktree prune --dry-run -v | wc -l",
+   "for b in wt-r98 wt-r99 wt-r100; do git -C game-dev-2d-shokunin log --oneline $b --not --remotes | wc -l; done",
+   "git -C lore-shokunin log --name-only --format='' --branches --not --remotes | grep -c 'worktrees/'",
+   "git -C game-dev-2d-shokunin log --name-only --format='' --branches --not --remotes | grep -c 'worktrees/'",
+   "cd souji-shokunin && bash tools/souji-verify.sh --selftest",
+   "cd souji-shokunin && SHOKUNIN_ROOT=/home/vgpnk/Projects/shokunin bash tools/souji-verify.sh --json <all 21>"
+  ],
+  "out": [
+   "22 worktree registrations fleet-wide; 21 prunable candidates (lore 19 + gd2d 2); no PRESENT! line -> all 21 dirs absent",
+   "lore 28706dc -> 0 ; lore 2b48ca7 -> 0 ; gd2d d9320ddf -> 0 ; gd2d 27f465c6 -> 0  (unique commits, all four tips)",
+   "lore merge-base --is-ancestor 28706dc origin/main -> exit 0 (reachable)",
+   "every lore admin dir: HEAD=28706dc... (JDEP3=2b48ca7...), gitdir=/tmp/<name>/.git (points into the absent dir = the prunable condition)",
+   "no LOCKED line -> none locked; no /proc cwd line -> no live process",
+   "registrations_fleetwide: 1 for each of the 21",
+   "hidden-aware sweep: hits only under souji-shokunin/{LOG.md,SCORECARD.md}, lore .ufo/waves/round-87/**, gd2d reports/round-80|81, audio-shokunin reports+corpus/live (concept-name only), .tower/comms/**, .gitignore:4 (ignore rule). Zero executable/config pins.",
+   "index residues: r87-F1=24, r87-M1-myth=8, r87-M3=9 staged-only entries; other 16 lore admin dirs = 0",
+   "M1-myth staged blobs: rev-list --all --objects hit = 0 for all 8; reconstructed from the tracked patch -> 8/8 git-blob sha1 MATCH",
+   "gd2d prune --dry-run -v: 5 names (r80-baseline-frozen-worktree, r81-frozen, wt-r98, wt-r99, wt-r100) -> blanket prune is NOT selective",
+   "lore prune --dry-run -v: 19 lines = exactly the candidate set, nothing else",
+   "wt-r98/wt-r99/wt-r100 unpushed-vs-remotes = 1 each; origin/wt-r98 -> fatal: Needed a single revision",
+   "grep -c 'worktrees/' over unpushed commits: lore 0, gd2d 0 -> no unpushed work touches any admin dir",
+   "souji-verify --selftest -> 'selftest: 24 checks, 0 failed' (exit 0)",
+   "souji-verify --json <21 targets> -> 21/21 {\"verdict\":\"SAFE\",\"receipt\":\"metadata-prune\"}"
+  ]
+ },
+ "disagreements": [],
+ "notes": [
+  "Read-only run: I executed no git worktree prune/remove and mutated no git state anywhere. The two `prune --dry-run -v` invocations are read-only.",
+  "Only this fragment was written; nothing else in the fleet or the lane was modified.",
+  "r87-C6 has no round-3 ticket of its own (S62 flagged this). I re-derived it here: dir absent, unique=0, admin present, HEAD contained in refs/heads/main + origin/main -> SAFE(metadata-prune). Authorization true.",
+  "Cross-check on the two duplicate-covered targets r87-C6-X1 (S25 said NOT-SAFE, S04 said SAFE) and r87-X3 (S19 NOT-SAFE, S40 SAFE): the r1 'unreachable -> NOT-SAFE' reading was a documented rule misfire on worktree seats (r1 lessons D2); the dir-absent + unique=0 shortcut governs. I side with SAFE(metadata-prune) on both, independently re-derived."
+ ],
+ "safe_ticket_audit": {
+  "scope": "EVERY SAFE ticket in round-3, not only the 21 worktree candidates",
+  "method": [
+   "Parsed all census/round-3/seat-*.json and approvals-*.tsv; extracted every path-shaped SAFE claim (target/verdict, targets[]/rows[]/tickets[], verdicts{} map, and the path column of each TSV).",
+   "Deduplicated to 117 unique SAFE-claimed path targets; re-derived each with `tools/souji-verify.sh --json <all>`.",
+   "Separately re-derived all 111 approval-list rows (approvals-53: 27, -54: 27, -55: 29, -56: 28) with header-aware column parsing."
+  ],
+  "result": {
+   "unique_SAFE_claimed_paths": 117,
+   "tool_confirms_SAFE": 117,
+   "claims_the_tool_does_NOT_confirm": 0,
+   "approval_rows_checked": 111,
+   "approval_rows_claiming_SAFE_now_NOT_SAFE": 0,
+   "receipt_breakdown": "53: 27 pushed; 54: 27 pushed; 55: 21 pushed + 8 correctly NOT-SAFE(unreachable, already-deleted f*.out/commit-watch.stderr); 56: 21 pushed + 7 correctly NOT-SAFE(unreachable, already-deleted forge*.log/kwin.txt/logs_*.txt)."
+  },
+  "note": "The NOT-SAFE rows inside approvals-55/-56 are the builders' own honest rows for targets that are already gone (receipt=unreachable) — not contradictions. Every row the builder labelled SAFE re-derives SAFE. No false-SAFE survived into round-3.",
+  "disagreements": []
+ }
+}

@@ -1,0 +1,160 @@
+{
+  "seat": "S62",
+  "kind": "lore-prune-execution-plan-audit",
+  "role": "auditor (fleet-hygiene worktree prune + operator approval list)",
+  "target": "lore-shokunin worktree registrations (prune set)",
+  "owner": "/home/vgpnk/Projects/shokunin/lore-shokunin",
+  "verdict": "SAFE(metadata-prune) x19; set-identity CONFIRMED",
+  "prune_command_audited": "git -C /home/vgpnk/Projects/shokunin/lore-shokunin worktree prune --dry-run -v",
+  "prune_set_size": 19,
+  "expected_safe_registrations": 19,
+  "covers_expected_19": true,
+  "extra_or_missing": "none",
+  "assertions": {
+    "A1_dryrun_emits_19": "PASS",
+    "A2_set_equals_admin_dirs": "PASS",
+    "A3_set_equals_prunable_list": "PASS",
+    "A4_main_worktree_excluded": "PASS",
+    "A5_no_gd2d_or_fleet_root_path": "PASS",
+    "A6_all19_dir_absent": "PASS",
+    "A7_all19_unique_commits_zero": "PASS",
+    "A8_all19_admin_dir_present": "PASS",
+    "A9_none_locked": "PASS",
+    "A10_no_live_process": "PASS",
+    "A11_heads_reachable": "PASS",
+    "A12_nothing_else_prunable_in_lore": "PASS"
+  },
+  "prune_set": [
+    "r87-B1", "r87-C5", "r87-C6", "r87-C6-X1", "r87-F1", "r87-F1-applycheck",
+    "r87-JDEP3", "r87-M1-myth", "r87-M1-verify", "r87-M3", "r87-M4", "r87-S1",
+    "r87-T1", "r87-V1", "r87-V1-x1", "r87-V2", "r87-V4", "r87-X2", "r87-X3"
+  ],
+  "receipt_evidence": {
+    "cmds": [
+      "cd /home/vgpnk/Projects/shokunin && git -C lore-shokunin worktree prune --dry-run -v",
+      "git -C lore-shokunin worktree prune --dry-run -v 2>&1 | wc -l",
+      "git -C lore-shokunin worktree prune --dry-run -v >/tmp/s62.out 2>/tmp/s62.err; echo exit=$? stdout=$(wc -l </tmp/s62.out) stderr=$(wc -l </tmp/s62.err)",
+      "diff <(git -C lore-shokunin worktree prune --dry-run -v 2>&1 | sed 's/^Removing worktrees\\///; s/: gitdir.*//' | sort) <(ls -1 lore-shokunin/.git/worktrees/ | sort)",
+      "diff <(git -C lore-shokunin worktree prune --dry-run -v 2>&1 | sed 's/^Removing worktrees\\///; s/: gitdir.*//' | sort) <(git -C lore-shokunin worktree list --porcelain | awk '/^worktree /{p=$2} /^prunable/{print p}' | sed 's|^/tmp/||' | sort)",
+      "git -C lore-shokunin worktree list --porcelain",
+      "for n in $(ls -1 lore-shokunin/.git/worktrees/); do cat lore-shokunin/.git/worktrees/$n/HEAD; done | sort | uniq -c",
+      "for n in $(...); do d=/tmp/$n; [ -e \"$d\" ] && echo PRESENT || echo absent; h=$(cat .git/worktrees/$n/HEAD); git -C lore-shokunin log --oneline $h --not --all | wc -l; done",
+      "git -C lore-shokunin for-each-ref --contains 28706dc --format='%(refname)'",
+      "git -C lore-shokunin for-each-ref --contains 2b48ca72 --format='%(refname)'",
+      "for n in $(...); do [ -e .git/worktrees/$n/locked ] && echo LOCKED; done",
+      "ls -l /proc/*/cwd 2>/dev/null | grep -E 'r87-(B1|...|X3)(/|$)'",
+      "git -C lore-shokunin worktree prune --dry-run -v --expire now | wc -l ; --expire 1.day.ago | wc -l ; --expire 2.days.ago | wc -l ; --expire 3.months.ago | wc -l",
+      "for n in $(ls -1 lore-shokunin/.git/worktrees/); do stat -c '%n %y' lore-shokunin/.git/worktrees/$n; done",
+      "git -C game-dev-2d-shokunin worktree prune --dry-run -v",
+      "git -C game-dev-2d-shokunin worktree list --porcelain",
+      "git -C lore-shokunin log --branches --not --remotes --oneline | wc -l ; git -C lore-shokunin status --porcelain",
+      "wc -l < corpus/knowledge/obsidian-ledger.tsv; grep -c 'r87' corpus/knowledge/obsidian-ledger.tsv"
+    ],
+    "out": [
+      "19 lines, every one 'Removing worktrees/<name>: gitdir file points to non-existent location'; exit=0; all 19 on STDERR, stdout empty (stdout=0 stderr=19)",
+      "sorted dry-run names == `ls -1 lore-shokunin/.git/worktrees/` -> diff EMPTY",
+      "sorted dry-run names == `worktree list --porcelain` prunable entries -> diff EMPTY",
+      "md5 equality: dryrun=admin=prunable=1f4367b0e7e95d6f04fde10905652109 -> ALL-THREE-IDENTICAL(19); dry-run deterministic over 3 runs (4dd57265...)",
+      "worktree list total = 20 (1 main branch refs/heads/main + 19 detached-prunable); only 1 `branch` line in porcelain (main)",
+      "heads: 18 x 28706dc73a9b7667851fd82adb71e905ae5eb896, 1 x 2b48ca72033dfd1060b6f81c4cf27ad83deae57f (r87-JDEP3); both `cat-file -t` -> commit",
+      "for-each-ref --contains 28706dc -> refs/heads/main, refs/remotes/origin/HEAD, refs/remotes/origin/main; same for 2b48ca72",
+      "all 19: dir absent (test -e false), unique vs `--not --all` = 0, admin dir present, no `locked` file, gitdir target absent (19/19), no /proc cwd match -> none-live",
+      "prune expiry probe: no-flag=19, --expire now=19, --expire 1.day.ago=18, --expire 2.days.ago=0, --expire 3.months.ago=0",
+      "admin dir mtimes: 18 dated 2026-10-17 01:06-01:44; r87-C6-X1 = 2026-10-18 12:19:17 (index touched today) -> the ONLY entry younger than 1 day",
+      "gd2d prune --dry-run lists 5: r80-baseline-frozen-worktree, r81-frozen, game-dev-2d-shokunin-wt-r98, -wt-r99, -wt-r100; wt-r98/99/100 each have 1 unpushed commit (`log --oneline <branch> --not --remotes` = 1); r80/r81 detached unique=0",
+      "lore lane: unpushed=3 (6cec83a, 1659a42, f553a27); dirty=1 ('?? .scratch/')",
+      "ledger: 1 line (header only); grep -c 'r87' = 0 -> moved-to-obsidian inapplicable"
+    ]
+  },
+  "checks": {
+    "dry_run_line_count": 19,
+    "admin_dir_count": 19,
+    "prunable_list_count": 19,
+    "main_worktree_in_set": false,
+    "gd2d_path_in_set": false,
+    "fleet_root_path_in_set": false,
+    "set_md5": "1f4367b0e7e95d6f04fde10905652109",
+    "all_dir_absent": true,
+    "all_unique_zero": true,
+    "all_admin_present": true,
+    "any_locked": false,
+    "any_live_process": false,
+    "heads_reachable_from_refs": true,
+    "dry_run_read_only_verified": true
+  },
+  "r3_ticket_coverage": {
+    "targets_with_r3_tickets": 18,
+    "targets_without_r3_ticket": ["r87-C6"],
+    "duplicate_coverage": [
+      "r87-B1: S01 + S22",
+      "r87-M1-verify: S09 + S30",
+      "r87-M3: S10 + S31",
+      "r87-M4: S11 + S32",
+      "r87-T1: S13 + S34",
+      "r87-V1: S14 + S35",
+      "r87-V1-x1: S15 + S36",
+      "r87-X3: S19 + S40"
+    ],
+    "note": "18 of the 19 prune-set names carry at least one round-3 ticket fragment; every ticket present returns SAFE(metadata-prune) and none contradicts. r87-C6 is in the prune set but has no r3 fragment; I audited it directly here (see r87_C6_audit) so the operator list is complete."
+  },
+  "r87_C6_audit": {
+    "dir": "absent",
+    "head": "28706dc73a9b7667851fd82adb71e905ae5eb896",
+    "unique_vs_not_all": 0,
+    "admin_dir": "present",
+    "locked": false,
+    "gitdir": "/tmp/r87-C6/.git (target absent)",
+    "contained_in": ["refs/heads/main", "refs/remotes/origin/HEAD", "refs/remotes/origin/main"],
+    "verdict": "SAFE(metadata-prune) — same three conditions as the other 18, re-derived independently"
+  },
+  "operator_warnings": [
+    {
+      "id": "W1-expire",
+      "severity": "blocking-if-ignored",
+      "finding": "Plain `git worktree prune` (no --expire) prunes all 19. Adding `--expire 1.day.ago` prunes only 18, and `--expire 2.days.ago` prunes 0.",
+      "cause": "prune compares the admin-dir mtime against the expiry; r87-C6-X1's index/dir mtime is 2026-10-18 12:19:17 (refreshed by a round-1 seat probe), so it is younger than 1 day.",
+      "action": "The parent MUST run `git -C lore-shokunin worktree prune` (optionally `--dry-run -v` first) with NO --expire flag, or with `--expire now`. Passing a recent --expire silently leaves r87-C6-X1 registered."
+    },
+    {
+      "id": "W2-gd2d-not-this-prune",
+      "severity": "high",
+      "finding": "A `git -C game-dev-2d-shokunin worktree prune` would remove 5 registrations, including the 3 named-branch worktrees wt-r98/wt-r99/wt-r100 that each hold 1 unpushed commit — they are NOT-SAFE and NOT part of the 19/21.",
+      "action": "Do NOT run gd2d prune. The r3 '21' = 19 lore + 2 gd2d DETACHED (r80-baseline-frozen-worktree, r81-frozen) only; gd2d cannot be pruned selectively without also hitting the 3 protected named-branch entries. Prune lore only; leave gd2d alone."
+    },
+    {
+      "id": "W3-lane-unpushed",
+      "severity": "informational",
+      "finding": "lore-shokunin carries 3 unpushed commits (6cec83a, 1659a42, f553a27) and untracked .scratch/.",
+      "action": "Not a blocker for this prune: `worktree prune` removes only .git/worktrees/* admin metadata and never touches refs/heads/main, so those 3 commits are preserved. The registrations themselves are detached (no branch), so the D-b named-branch-unpushed trap does not apply."
+    },
+    {
+      "id": "W4-content-lossless",
+      "severity": "informational",
+      "finding": "Both registered tips (28706dc x18, 2b48ca7 x1) are contained by refs/heads/main and refs/remotes/origin/main; every reflog has a single '0000..0 -> <head>' checkout entry (no local-only commits hidden in the worktree reflogs); no /tmp/r87-* directory exists on disk (only unrelated /tmp/r87-*.json/.txt/.py scratch files).",
+      "action": "The prune is metadata-only and loses no commit and no working-tree file. The tracked .ufo/waves/*.md files that mention these worktree names are separate files and are not touched."
+    }
+  ],
+  "go_no_go": {
+    "verdict": "GO",
+    "scope": "git -C /home/vgpnk/Projects/shokunin/lore-shokunin worktree prune  (no --expire, or --expire now)",
+    "removes": "exactly 19 admin dirs under lore-shokunin/.git/worktrees/ (5.6M total)",
+    "does_not_remove": "refs/heads/main, any commit, any working-tree file, any gd2d registration, the main worktree",
+    "conditions": ["run plain prune without a recent --expire (W1)", "do not prune game-dev-2d-shokunin (W2)"],
+    "assertion_summary": "dry-run output == the 19 SAFE registrations, and nothing else: byte-for-byte identical (md5 1f4367b0…) to the admin-dir listing and to the `prunable` entries of `worktree list --porcelain`; main worktree, gd2d paths and the fleet root are absent."
+  },
+  "notes": [
+    "Set identity is proven three ways and all three agree exactly: (a) `worktree prune --dry-run -v` output, (b) `ls -1 lore-shokunin/.git/worktrees/`, (c) the `prunable` entries of `worktree list --porcelain`. Same 19 names, same md5, diff-empty.",
+    "Every one of the 19 re-derives the spec's worktree-registration SAFE rule independently: dir absent AND unique commits vs `--not --all` = 0 (plus admin dir present, unlocked, no live cwd). 18 detached at 28706dc, r87-JDEP3 detached at 2b48ca7; both commits are reachable from local main and origin/main, so nothing is lost.",
+    "Reconciliation with the parent's '19 SAFE': the r1 final table lists exactly 19 distinct /tmp/r87-* paths, all final=SAFE, and the r1 summary says 'lore_19: ABSENT dir + unique=0 -> SAFE(metadata-prune) r3 candidates'. The dry-run set equals that set 1:1.",
+    "Coverage gap for the parent: r87-C6 is in the prune set but has no r3 ticket fragment. I re-derived its three conditions here (SAFE) so the operator list of 19 is complete. Separately, 8 of the 19 names are double-covered by two r3 seats, and all pairs agree — no contradiction found across any r3 fragment.",
+    "gd2d boundary re-confirmed: its prune would sweep 5 registrations including the 3 protected named-branch worktrees (1 unpushed commit each). The r3 '21' can only be achieved safely as 19 (lore) + 2 (gd2d detached), and gd2d has no selective-prune path — so only the lore prune should be executed now.",
+    "Read-only audit: I executed `worktree prune --dry-run -v` only (never a real prune/remove), mutated no git state, and deleted nothing. `worktree list --porcelain` md5 and the admin-dir count were unchanged before/after my runs (19/19). The sole write is this fragment."
+  ],
+  "preamble": {
+    "cwd": "/home/vgpnk/Projects/shokunin",
+    "fragment_path": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-3/seat-62.json",
+    "written_at": "2026-10-18T13:45:00-03:00",
+    "mode": "dry-run; no modifications outside this fragment",
+    "git_version": "git version 2.55.0"
+  }
+}
