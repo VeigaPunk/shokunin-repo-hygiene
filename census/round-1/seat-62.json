@@ -1,0 +1,85 @@
+{
+  "seat": "S62",
+  "kind": "integration-audit",
+  "rows": [
+    {
+      "path": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-1/seat-63.json",
+      "size_bytes": 0,
+      "mtime": "-",
+      "receipt": "none",
+      "verdict": "NOT-SAFE",
+      "cmds": [
+        "sleep 120; echo SLEEP_DONE $(date -Is)",
+        "ls /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-1/seat-*.json | wc -l",
+        "python3 - <<'PY' glob('seat-*.json'); json.loads each; expected 1..64; print PRESENT/DISTINCT/MISSING/PARSE_FAIL PY",
+        "cd /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-1 && ls seat-63.json 2>&1; echo exit=$?"
+      ],
+      "out": [
+        "SLEEP_DONE 2026-10-18T12:20:53-03:00",
+        "T0=2026-10-18T12:21:07-03:00 COUNT1=54; MISSING_1_64=[1, 2, 10, 30, 51, 52, 59, 62, 63, 64]; PARSE_FAIL=0",
+        "TSNAP=2026-10-18T12:23:02-03:00 COUNT=61; PRESENT=61 DISTINCT=61 PARSE_FAIL=0; MISSING=[62, 63, 64]",
+        "ls: cannot access 'seat-63.json': No such file or directory; exit=2"
+      ],
+      "note": "integration-gap: S63 fragment absent at both snapshots (12:21:07 2-min mark and 12:23:02 final); no receipt class applies -> NOT-SAFE. Nothing was modified; awaits S63 author."
+    },
+    {
+      "path": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-1/seat-64.json",
+      "size_bytes": 0,
+      "mtime": "-",
+      "receipt": "none",
+      "verdict": "NOT-SAFE",
+      "cmds": [
+        "sleep 120; echo SLEEP_DONE $(date -Is)",
+        "ls /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-1/seat-*.json | wc -l",
+        "python3 - <<'PY' glob('seat-*.json'); json.loads each; expected 1..64; print PRESENT/DISTINCT/MISSING/PARSE_FAIL PY",
+        "cd /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-1 && ls seat-64.json 2>&1; echo exit=$?"
+      ],
+      "out": [
+        "T0=2026-10-18T12:21:07-03:00 COUNT1=54; MISSING_1_64=[1, 2, 10, 30, 51, 52, 59, 62, 63, 64]",
+        "TSNAP=2026-10-18T12:23:02-03:00 COUNT=61; MISSING=[62, 63, 64]",
+        "ls: cannot access 'seat-64.json': No such file or directory; exit=2"
+      ],
+      "note": "integration-gap: S64 fragment absent at both snapshots; no receipt class applies -> NOT-SAFE. Nothing was modified; awaits S64 author."
+    },
+    {
+      "path": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-1/seat-62.json",
+      "size_bytes": 0,
+      "mtime": "-",
+      "receipt": "none",
+      "verdict": "NOT-SAFE",
+      "cmds": [
+        "cd /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-1 && ls seat-62.json 2>&1; echo exit=$?",
+        "python3 - <<'PY' glob('seat-*.json') snapshot at TSNAP=12:23:02; MISSING=[62, 63, 64] PY"
+      ],
+      "out": [
+        "ls: cannot access 'seat-62.json': No such file or directory; exit=2 (before this write)",
+        "TSNAP=2026-10-18T12:23:02-03:00 MISSING=[62, 63, 64]"
+      ],
+      "note": "integration-gap (self): S62 is this auditor seat; the fragment is absent at snapshot by construction and lands with this very write. No receipt class applies -> NOT-SAFE."
+    },
+    {
+      "path": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-1/",
+      "size_bytes": 622103,
+      "mtime": "2026-10-18T12:22:27.477423303-03:00",
+      "receipt": "none",
+      "verdict": "NOT-SAFE",
+      "cmds": [
+        "ls /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-1/seat-*.json | wc -l",
+        "du -sb /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-1/ ; stat -c '%y' .",
+        "python3 - <<'PY' glob+json.loads all seat-*.json at TSNAP; check keys and seat-vs-filename; print PRESENT/DISTINCT/MISSING/PARSE_FAIL PY",
+        "wc -l /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/knowledge/obsidian-ledger.tsv",
+        "git -C /home/vgpnk/Projects/shokunin rev-parse --verify origin/main; echo exit=$?"
+      ],
+      "out": [
+        "T0=2026-10-18T12:21:07-03:00 COUNT1=54 PRESENT_FILES=54 DISTINCT_NUMBERS=54 DUP_NUMBERS={} MISSING_1_64=[1, 2, 10, 30, 51, 52, 59, 62, 63, 64] MISSING_COUNT=10 OUT_OF_RANGE=[] PARSE_FAIL=0",
+        "TSNAP=2026-10-18T12:23:02-03:00 COUNT=61 PRESENT=61 DISTINCT=61 PARSE_FAIL=0 MISSING=[62, 63, 64]",
+        "all 54 early fragments OK: keys=['conflicts','kind','rows','seat'], seat field matches filename number (S03..S61), 0 mismatches",
+        "DU=622103  DIR_STAT=2026-10-18 12:22:27.477423303 -0300",
+        "wc -l obsidian-ledger.tsv -> 1 (header-only: source_path/source_sha256/vault_path/vault_sha256/exported_at/note) => moved-to-obsidian: no row can match",
+        "git rev-parse --verify origin/main -> fatal: Needed a single revision; exit=128 => pushed receipts unverifiable fleet-wide this round"
+      ],
+      "note": "GROUP totals at final snapshot 12:23:02: expected 64 seats (S1..S64 per assignment 'one seat of 64', seat id S62); present 61 (after this write: 62), absent 3 -> S62(self), S63, S64; 0 invalid/0 parse failures; 0 duplicate numbers; 0 out-of-range files. Integration gap is temporal: at the instructed 120s mark (12:21:07) 10 fragments were still missing ([1,2,10,30,51,52,59,62,63,64]) of which 7 landed by 12:23:02. Receipts: pushed irresolvable (origin/main absent; remote refs are origin/HEAD, origin/master, origin/devin/1792007067-readme-wiki-link), moved-to-obsidian impossible (ledger header-only), stale not applicable (live round-1 evidence, not scratch) => group receipt none, NOT-SAFE. Dry run: nothing removed or modified except this own fragment."
+    }
+  ],
+  "conflicts": []
+}

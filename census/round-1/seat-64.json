@@ -1,0 +1,35 @@
+{
+  "seat": "S64",
+  "kind": "completeness",
+  "rows": [
+    {
+      "path": "b2f2efa::coverage-by-round-1-fragments",
+      "size_bytes": 0,
+      "mtime": "-",
+      "receipt": "none",
+      "verdict": "NOT-SAFE",
+      "cmds": [
+        "sleep 180  # mandated stagger before recount",
+        "git -C /home/vgpnk/Projects/shokunin show --name-only --format='' b2f2efa | sort -u > /tmp/seat64-want.txt; wc -l < /tmp/seat64-want.txt",
+        "ls /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-1/ | sort  # fragment snapshots at 12:22:16 / 12:23:23 / 12:23:41 / 12:23:54",
+        "python3 - <<'PY' ... PY  # load all census/round-1/*.json, collect rows[].path; for each of the 109 want paths check exact-or-dir-prefix match against any row path; separately realpath() abspath check of every row path vs ROOT=/home/vgpnk/Projects/shokunin",
+        "for d in /tmp/r87-B1 /tmp/r87-C5 /tmp/r87-C6 /tmp/r87-C6-X1 /tmp/r87-F1 /tmp/r87-F1-applycheck /tmp/r87-JDEP3 /tmp/r87-M1-myth /tmp/r87-M1-verify /tmp/r87-M3 /tmp/r87-M4 /tmp/r87-S1 /tmp/r87-T1 /tmp/r87-V1 /tmp/r87-V1-x1 /tmp/r87-V2 /tmp/r87-V4 /tmp/r87-X2 /tmp/r87-X3 /tmp/r81-frozen; do if [ -e \"$d\" ] || [ -L \"$d\" ]; then echo \"EXISTS $d -> $(realpath \"$d\")\"; else echo \"ABSENT $d\"; fi; done",
+        "python3 - <<'PY'  # list seat-02.json rows containing prompts/ PY"
+      ],
+      "out": [
+        "want=109 (expected 109) PASS",
+        "12:22:16 first post-wait snapshot: 60 fragments (seats 02,62,63,64 absent), 213 rows, covered=94/109; missing 15 = .ufo/interactive-l1-20261015T050057Z/prompts/{chousa,kagi,kaidoku,kake,kama,kasegi,kengaku,kotoba,kumitate,mado,mori,revenger,tabi,tameshi,tsukuroi}.md",
+        "12:23:23: 61 fragments (seat-02.json landed), 229 rows -> covered=109/109, missing=0",
+        "12:23:54 final snapshot: 62 fragments (absent: 63,64), 233 rows, covered=109/109, missing=0 []",
+        "seat-02.json: 16 rows include all 15 prompts/*.md from the 109 (plus prompts/lore.md, not in the 109) -> transient gap closed by seat 02",
+        "abspath: inside=206 rows; outside=23 rows / 20 unique paths, ALL under /tmp (r87-*, r81-frozen); non-/tmp outside = 0; 4 rows use synthetic b2f2efa::* identifiers (not filesystem paths, same convention as seat-19)",
+        "/tmp probe: ABSENT /tmp/r87-B1 ... ABSENT /tmp/r81-frozen (ls: cannot access '/tmp/r87-B1': No such file or directory; same for /tmp/r81-frozen); no symlink resolved"
+      ],
+      "note": "Completeness/verification seat (one group row; no receipt class applies -> receipt=none, verdict=NOT-SAFE as proposed). After the mandated 180s wait, b2f2efa touches exactly 109 paths as expected. First post-wait snapshot (12:22:16) had only 60 fragments and 94/109 coverage (the 15 prompts/*.md uncovered); seat-02.json landed during collection and the final snapshot (12:23:54) shows all 109 covered by at least one row (exact or dir-prefix match) -> coverage PASS. Fragments absent at close: seat-63.json and this seat's own seat-64.json (self, written by this run). Abspath check: all row paths resolve inside /home/vgpnk/Projects/shokunin except 23 rows (20 unique paths) targeting /tmp/r87-*|r81-frozen scratch worktrees, every one verified absent from disk. Snapshot caveat: seats 63/64 fragments may land after collection; rerun the check post-integration for final numbers."
+    }
+  ],
+  "conflicts": [
+    "abspath: 23 rows across fragments (seat-20..43,58,59) target /tmp/r87-*|/tmp/r81-frozen paths that resolve outside the fleet root; all verified absent from disk (no data at risk, but rows reference out-of-root targets)",
+    "seat-63.json absent at close 12:23:54; seat-64.json is this fragment (self)"
+  ]
+}

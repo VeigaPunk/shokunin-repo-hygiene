@@ -1,0 +1,93 @@
+{
+  "seat": "S19",
+  "kind": "b2f2efa-verify",
+  "rows": [
+    {
+      "path": "b2f2efa::paths-touched-count",
+      "size_bytes": 0,
+      "mtime": "-",
+      "receipt": "none",
+      "verdict": "NOT-SAFE",
+      "cmds": [
+        "git -C /home/vgpnk/Projects/shokunin show --name-only --format='' b2f2efa | sort > /tmp/seat19-all.txt; wc -l < /tmp/seat19-all.txt"
+      ],
+      "out": [
+        "109"
+      ],
+      "note": "Expected 109; observed 109. PASS."
+    },
+    {
+      "path": "b2f2efa::paths-exist-at-HEAD",
+      "size_bytes": 0,
+      "mtime": "-",
+      "receipt": "none",
+      "verdict": "NOT-SAFE",
+      "cmds": [
+        "cd /home/vgpnk/Projects/shokunin && while read p; do [ -n \"$p\" ] && { [ -e \"./$p\" ] || echo \"MISSING $p\"; }; done < /tmp/seat19-all.txt > /tmp/seat19-missing.txt; wc -l < /tmp/seat19-missing.txt",
+        "cd /home/vgpnk/Projects/shokunin && for p in $(cat /tmp/seat19-missing.txt | sed 's/^MISSING //'); do if git cat-file -e \"HEAD:$p\" 2>/dev/null; then echo \"IN-HEAD $p\"; else echo \"NOT-IN-HEAD $p\"; fi; done",
+        "cd /home/vgpnk/Projects/shokunin && present=0; absent=0; while read p; do [ -n \"$p\" ] || continue; if git cat-file -e \"HEAD:$p\" 2>/dev/null; then present=$((present+1)); else absent=$((absent+1)); fi; done < /tmp/seat19-all.txt; echo \"in-HEAD=$present not-in-HEAD=$absent\""
+      ],
+      "out": [
+        "15",
+        "MISSING commit-watch.stderr",
+        "MISSING f2.out",
+        "MISSING f3.out",
+        "MISSING f4.out",
+        "MISSING f5.out",
+        "MISSING f6.out",
+        "MISSING f7.out",
+        "MISSING f8.out",
+        "MISSING forgeB.log",
+        "MISSING forgeC.log",
+        "MISSING forgeD.log",
+        "MISSING kwin.txt",
+        "MISSING logs_dummy.txt",
+        "MISSING logs_mut.txt",
+        "MISSING logs_tier.txt",
+        "NOT-IN-HEAD commit-watch.stderr",
+        "NOT-IN-HEAD f2.out ... NOT-IN-HEAD logs_tier.txt (all 15 confirmed absent from HEAD tree via git cat-file -e HEAD:<path>)",
+        "in-HEAD=94 not-in-HEAD=15"
+      ],
+      "note": "Expected 0 missing; observed 15 (94/109 present). FAIL. The 15 are absent from the HEAD tree itself, not merely the working copy. Deletion history sample: f2.out, forgeB.log, kwin.txt deleted by a1b44b1 'cleanup: drop stray shell-experiment redirects at fleet root'. HEAD is 3335751b161cedbde7903f06d7bb62c2a546a191 (master)."
+    },
+    {
+      "path": "b2f2efa::ancestor-of-origin/main",
+      "size_bytes": 0,
+      "mtime": "-",
+      "receipt": "none",
+      "verdict": "NOT-SAFE",
+      "cmds": [
+        "git -C /home/vgpnk/Projects/shokunin merge-base --is-ancestor b2f2efa origin/main; echo $?",
+        "git -C /home/vgpnk/Projects/shokunin for-each-ref --format='%(refname)' | grep -E 'origin|remotes'",
+        "git -C /home/vgpnk/Projects/shokunin merge-base --is-ancestor b2f2efa origin/master; echo \"exit=$?\""
+      ],
+      "out": [
+        "fatal: Not a valid object name origin/main",
+        "exit=128",
+        "refs/remotes/origin/HEAD",
+        "refs/remotes/origin/devin/1792007067-readme-wiki-link",
+        "refs/remotes/origin/master",
+        "exit=0"
+      ],
+      "note": "origin/main does not exist locally (no fetch performed); remote-tracking ref is origin/master. Against origin/master b2f2efa IS an ancestor (exit 0), but the specified check cannot pass as written. FAIL/unverifiable for origin/main."
+    },
+    {
+      "path": "b2f2efa::commit-metadata",
+      "size_bytes": 0,
+      "mtime": "-",
+      "receipt": "none",
+      "verdict": "NOT-SAFE",
+      "cmds": [
+        "git -C /home/vgpnk/Projects/shokunin log -1 --format='%H %ci %s' b2f2efa"
+      ],
+      "out": [
+        "b2f2efae7549c6692d9af6dcea9f9d9c5d797e9d 2026-10-15 09:02:32 -0300 fleet state: checkpoint remaining WIP before round-18 mission merges (tower merge-gate recovery, part 2)"
+      ],
+      "note": "Commit exists and metadata read cleanly. PASS (informational)."
+    }
+  ],
+  "conflicts": [
+    "check-b: expected 0 missing paths, observed 15 (15/109 absent from HEAD tree)",
+    "check-c: origin/main ref absent locally; exit 128 (ancestor test only passes against origin/master, exit 0)"
+  ]
+}

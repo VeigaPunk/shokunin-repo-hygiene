@@ -31,6 +31,50 @@ roster row; recorded as `MANIFEST.json rounds[]` type `mint`.
 Corrections to earlier claims are new entries, never rewrites — the two
 figure corrections above are the first.
 
+## 2026-10-18 — round 1 admitted (claims: coverage + calibration)
+
+**Claims.** C1 (coverage): dry-run census classifying every mint demand
+instance. C2 (calibration): zero false-SAFE in the admitted table under
+non-author spot-check.
+
+**Dispatch.** Seat batch 1 of 64 on opencode-go never spawned (user
+interrupted; lane switch). Batch 2 of 64 on opencode-go-6/deepseek-v4.1-flash
+completed 788s, 64/64 fragments, 246 rows (`census/round-1/seat-*.json`,
+`census.tsv`, `census-summary.json`).
+
+**C1 verified.** 109/109 b2f2efa paths classified; parent loop
+`git show --name-only --format='' b2f2efa` + per-file introducing commit vs
+`origin/master` → 0 NOTPUSHED. 24 worktrees re-derived (19 lore + 2 gd2d
+detached: dir absent + unique commits = 0; 3 gd2d named branches hold 1
+unpushed commit each → NOT-SAFE). 18 lane recon rows (S48–S53). kotodama
+set NOT-SAFE.
+
+**C2 verified with the full process told.** Author-stage SAFE proposals: 6;
+critic seat (S63, non-author) falsified 6/6 — 5 launch-*.json stale receipts
+self-polluted by reference sweeps hitting the census's own fragments
+(seat-01's own out shows hits only in seat-01.json/seat-54.json); seat-21
+r87-C5 SAFE(pushed) conflicted with its own unreachable evidence. Parent
+then re-derived the final table: 132 unique SAFE proposals (109 pushed +
+21 metadata-prune + 2 root strays), 0 false-SAFE survive. Blind seats S54–61
+(21 targets) all independently NOT-SAFE; their disagreement with final
+SAFE(pushed) rows is traced to defect D1 below, not to missed evidence.
+
+**Defects (lessons, corpus/lessons/round-1.md):** D1 fleet default branch is
+`origin/master`, not origin/main — the receipt procedure must resolve the
+default branch (blind seats stopped at pushed-unverifiable). D2 the
+unreachable→NOT-SAFE rule misfires on worktree metadata seats; absent dir
+IS the prune condition. D3 reference sweeps must exclude
+`souji-shokunin/census/**`.
+
+**Cross-domain (reported, not absorbed):** game-dev-2d-shokunin branches
+wt-r98/99/100 each carry 1 unpushed commit — the 3 NOT-SAFE worktree
+registrations stay until that lane pushes. kotodama `.scratch` measured
+553M at mint (11:45) and 1.9G at 12:35 — live writes by its in-flight
+round-22 work; the operator's "1.7G" figure is this time variance.
+
+**Verdicts:** coverage improved (C1), calibration improved (C2), no axis
+harmed. Nothing was removed — dry run throughout.
+
 ## 2026-10-18 — obsidian-cli probe (deferred integration task, pre-round evidence)
 
 Per operator: Obsidian integration is a later task inside the training
