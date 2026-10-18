@@ -150,3 +150,11 @@ awaits operator sign-off; no file deletions this round.
 Nothing deleted except the 21 authorized metadata registrations.
 **Rounds 1–3 verified → probation gate satisfied; the roster row remains
 the operator's decision.**
+
+## 2026-10-18 — operator routing directive (session-scoped, post-r3)
+
+Future deepseek-v4.1-flash dispatches in this session use **devin as the
+provider at max effort**: model `devin/deepseek-v4-1-flash-max`. This
+supersedes the training schedule's hyper lane for r4 (and r10). Rounds
+scheduled on other families (luna-max, grok-4.7, glm-5.3, gemini-3.8,
+gpt-6.1-sol-max) are unchanged.

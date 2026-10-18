@@ -27,8 +27,9 @@ counting command and the commit it was measured against.
 - **r4 (operability, capability):** Obsidian-CLI integration per
   `.ufo/scopes/souji-mint-20261018/obsidian-cli-probe.md` — ledger-backed
   moved-to-obsidian verification via the official CLI (read-only vault
-  access; sha256sum fallback). Devin lane directed to
-  devin/deepseek-v4-1-flash-max for any devin dispatch (operator, r3).
+  access; sha256sum fallback). All session deepseek-v4.1-flash dispatches route to
+  devin/deepseek-v4-1-flash-max (operator directive, post-r3; supersedes the
+  hyper lane for r4/r10).
 - **r5 (verification round, all axes):** audit rounds 1–4 verdicts and
   outputs for correctness and missed items, folded into the round's own
   claims. Carry-overs: the 96-row approval list awaits operator sign-off;
