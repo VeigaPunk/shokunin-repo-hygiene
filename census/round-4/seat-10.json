@@ -1,0 +1,133 @@
+{
+  "seat": "S10",
+  "role": "fixture author \u2014 case-V2 (vault file whose content differs from the ledger's vault sha256; tamper case)",
+  "round": 4,
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "repo_head": "78694ac",
+  "run_utc": "2026-10-18T17:15:00Z",
+  "assignment": "tests/vault/case-V2/: vault file whose content differs from what the ledger's vault sha256 says (tamper case). Expected: NOT-VERIFIED with reason mentioning hash mismatch.",
+  "verdict": "DELIVERED \u2014 fixture built, expectation pinned, discrimination proven in both directions; per-target accept fix verified against runner-28 with two live r4 impls",
+  "artifacts": {
+    "tests/vault/case-V2/payload/source/src/tamper-notes.md": {
+      "sha256": "59bea10a81540fd2252880d03f32ce22761d82b997ca276f58150223c1a90bd7",
+      "bytes": 215,
+      "role": "export-time source bytes (primary tamper target); matches the ledger row's source_sha256"
+    },
+    "tests/vault/case-V2/payload/vault/tamper-notes.md": {
+      "sha256": "91d9f779647195141205fd585456e4bfbaef72f6ceef89c9c95375eddcf997e4",
+      "bytes": 215,
+      "role": "tampered vault copy: SAME byte count as source, different bytes; differs from the row's vault_sha256 (59bea10a...)"
+    },
+    "tests/vault/case-V2/payload/source/src/subtle-notes.md": {
+      "sha256": "a0d7a278477b87ea36f42d1ad27bd777ee791f1594200500f172c2b7b7344b96",
+      "bytes": 200,
+      "role": "second tamper target source; matches its row"
+    },
+    "tests/vault/case-V2/payload/vault/subtle-notes.md": {
+      "sha256": "f1ebc6ec0aa343dd04c172a2e3f47ee603ad28ceae27243fa9a79b93e03b7423",
+      "bytes": 199,
+      "role": "subtle tamper: exactly one byte shorter (dropped trailing newline); catches coarse/size-based comparison"
+    },
+    "tests/vault/case-V2/payload/source/src/matched-notes.md": {
+      "sha256": "2aa2322dc2298a6dba5f7005108ef4a196ce59f94ef0ee98600b2c70640f277b",
+      "bytes": 169,
+      "role": "matched control source (byte-identical to its vault copy)"
+    },
+    "tests/vault/case-V2/payload/vault/matched-notes.md": {
+      "sha256": "2aa2322dc2298a6dba5f7005108ef4a196ce59f94ef0ee98600b2c70640f277b",
+      "bytes": 169,
+      "role": "matched control vault copy; both sides equal the row"
+    },
+    "tests/vault/case-V2/make-fixture.sh": {
+      "sha256": "3afa93fe61541354edd7ec5023e12487d621b99d0d40a43131768c24a2ba49a2",
+      "role": "builder: root + ledger.tsv + substituted expected.json; --selftest asserts fixture coherence (A1-A8)",
+      "cli": "make-fixture.sh [--out DIR] [--ledger FILE] [--quiet] [--case-copy] [--print-ledger] [--print-hashes] [--selftest]",
+      "exit_codes": "0 built, 1 build/assertion failure, 2 usage"
+    },
+    "tests/vault/case-V2/expected.template.json": {
+      "sha256": "8d0e8f3ad59543947d3fd42df6269af7d1eea3a27e7deaa42d39b3a50716200d",
+      "role": "declaration with @FIXTURE_ROOT@ placeholders; schema souji-vault-fixture/1; per-target accept on the subtle entry (runner-28 binds case-level accept to the primary target only)"
+    },
+    "tests/vault/case-V2/expected.json": {
+      "sha256": "8d0e8f3ad59543947d3fd42df6269af7d1eea3a27e7deaa42d39b3a50716200d",
+      "role": "placeholder-form copy (identical to the template); the builder writes the substituted copy to <ROOT>/expected.json (--case-copy also refreshes this one)"
+    },
+    "tests/vault/case-V2/selftest.sh": {
+      "sha256": "4a9d03638ededd66e635fc660c748c2bbc944dca90a890378c1eb1a417d9a799",
+      "role": "26 checks (T1-T5) incl. tool probes; --tool PATH; --out JSON",
+      "cli": "selftest.sh [--keep] [--out JSON] [--tool PATH]"
+    },
+    "tests/vault/case-V2/README.md": {
+      "sha256": "e9e83a84f186644dfcf2cf43b3083838cc3ee0ababd5553cc5e3814d516ff1ec",
+      "role": "contract: layout, rows, expected verdicts, failure modes, vocabulary, safety"
+    },
+    "tests/results/v2-selftest.json": {
+      "role": "machine-readable selftest result: pass=26 fail=0"
+    },
+    "tests/results/vrun-28-s10-case-V2.json": {
+      "role": "durable case-V2 rows from the final runner-28 matrix (impl-20 3/3, impl-24 3/3, impl-21 0/3 candidate defect)"
+    }
+  },
+  "fixture_facts": {
+    "ledger": "<ROOT>/ledger.tsv \u2014 header + exactly 3 data rows (tamper, subtle, matched)",
+    "row_tamper": "source(59bea10a\u2026) 59bea10a\u2026 vault(91d9f779 actual) 59bea10a\u2026 \u2014 vault_sha256 is the export-time digest; the vault side is the only failing conjunct",
+    "row_subtle": "source(a0d7a278\u2026) a0d7a278\u2026 vault(f1ebc6ec actual) a0d7a278\u2026 \u2014 one-byte-shorter tamper",
+    "row_matched": "source 2aa2322d\u2026 vault 2aa2322d\u2026 \u2014 control, all four conjuncts hold",
+    "vault_modes": "0444 on all three vault copies",
+    "git_context": "offline git init only (no commits) so repo-discovery code paths behave as on a real lane",
+    "design_points": [
+      "primary tamper keeps the source byte count identical (215) so size/mtime shortcuts cannot detect it \u2014 only a content hash can",
+      "subtle tamper differs by exactly one byte so coarse equality (length/prefix/truncated read) fails",
+      "matched control prevents a blanket NOT-VERIFIED answer from passing",
+      "row vault_sha256 is the export-time digest, so the failure is attributable to the vault side alone"
+    ]
+  },
+  "measured_results": {
+    "builder_selftest": {
+      "command": "bash tests/vault/case-V2/make-fixture.sh --selftest",
+      "exit": 0,
+      "result": "PASS A1..A8, SELFTEST case-V2: PASS"
+    },
+    "fixture_selftest": {
+      "command": "bash tests/vault/case-V2/selftest.sh --out tests/results/v2-selftest.json",
+      "exit": 0,
+      "result": "SELFTEST PASS pass=26 fail=0",
+      "highlights": [
+        "T3.no_false_verified pass \u2014 tamper never VERIFIED/SAFE",
+        "T3.r2_evidence_substr pass \u2014 r2 baseline reports obsidian=vault-sha-mismatch",
+        "T3.control_verified pass \u2014 matched pair still verifies",
+        "T4.vault_restored + T4.control_verified pass \u2014 after restoring the vault bytes the same row flips to verified, so the case cannot pass by always answering mismatch",
+        "T5.live_ledger_header_only pass \u2014 live ledger stays header-only (sha 3f7e9f2a\u2026, 1 line)"
+      ]
+    },
+    "r2_baseline_tool": {
+      "tool": "tools/souji-verify.sh",
+      "tool_sha256": "7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820",
+      "command": "SOUJI_LEDGER=<ROOT>/ledger.tsv tools/souji-verify.sh <ROOT>/source/src/tamper-notes.md <subtle> <matched>",
+      "observed": "tamper -> NOT-SAFE none (\u2026obsidian=vault-sha-mismatch\u2026); subtle -> NOT-SAFE none (\u2026obsidian=vault-sha-mismatch\u2026); matched -> SAFE moved-to-obsidian",
+      "finding": "the r2 tool detects the tamper but collapses the class to NOT-SAFE(none); it cannot express NOT-VERIFIED(vault-hash-mismatch) \u2014 the delta the r4 harness must close"
+    },
+    "runner28_matrix": {
+      "runner": "tests/vault/runner-28.sh (seat S28, independent)",
+      "command": "bash tests/vault/runner-28.sh --wait 0 --out /tmp/vrun-28-s10d.json (final run, 2026-10-18 ~17:20Z)",
+      "case_v2_rows": {
+        "souji-vault-verify.impl-20": "3/3 pass \u2014 NOT-VERIFIED(vault-hash-mismatch) x2 + VERIFIED(matched)",
+        "souji-vault-verify.impl-24": "3/3 pass \u2014 NOT-VERIFIED(vault-sha-mismatch) x2 (alias accepted via per-target accept) + VERIFIED(matched)",
+        "souji-vault-verify.impl-21": "0/3 \u2014 candidate rejects --ledger (rc=2); not a fixture defect"
+      },
+      "finding": "before the per-target accept fix, impl-24 failed only the subtle row (runner-28 binds the case-level accept block to the primary target only, so the subtle row was judged on exact reason-string equality: vault-sha-mismatch != vault-hash-mismatch); the fix moved both impls to 3/3"
+    }
+  },
+  "interface_alignment": {
+    "schema": "souji-vault-fixture/1 \u2014 same schema string as case-V1/V5/V6",
+    "vocabulary": "VERIFIED / NOT-VERIFIED(+reason) per the r4 vault harness; r2 baseline vocabulary NOT-SAFE(receipt) also accepted and pinned in selftest T3",
+    "loader_shape": "targets[] + expect[] (F1-F6 compat), expect[].receipt null (vault verification is not a removal receipt), primary_target declared",
+    "protocol": "FIXTURE_READY case-V2 <ROOT> on stdout plus single-line JSON; LEDGER=/TARGET=/VAULT=/SOURCE_SHA256=/VAULT_SHA256=/EXPECT= lines; builder accepts --out/--ledger/--quiet (runner-28 contract)"
+  },
+  "notes_for_parent": [
+    "V2 is the only case pinning a SAME-BYTE-COUNT vault tamper; V3 pins the source-side counterpart, V4 vault-absent, V5 source-absent \u2014 together they isolate each conjunct of the ledger match.",
+    "The primary tamper's byte-count equality (215/215) is deliberate: any tool that shortcuts on size or mtime will report VERIFIED and be caught.",
+    "Do not change the payload bytes without updating SHA_* constants in make-fixture.sh, the selftest constants, and expected.template.json (--print-hashes prints the table; the builder asserts the constants at build time).",
+    "The case-dir expected.json stays in placeholder form (identical to expected.template.json); only the built root receives the substituted copy, so the committed copy never points at a reaped temp root. Runner-28 builds its own root under mktemp and reads <ROOT>/expected.json."
+  ]
+}

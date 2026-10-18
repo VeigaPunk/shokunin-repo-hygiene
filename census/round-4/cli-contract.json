@@ -1,0 +1,63 @@
+{
+  "contract": "obsidian-cli-contract",
+  "round": 4,
+  "lane": "souji-shokunin",
+  "generated_by": "S08 (synthesis seat)",
+  "generated_at": "2026-10-18T14:05:00-03:00",
+  "entry_point": null,
+  "invocation": [
+    "PROHIBITED / NEVER RUN: /usr/bin/obsidian [args] — GUI launcher (bash wrapper -> exec electron43 /usr/lib/obsidian/app.asar); with no running instance it starts the desktop app (single-instance-lock branch)",
+    "Official CLI form (would be): obsidian [vault=<name|id>] <verb> [param=value ...] [--json|--md|--tsv|--csv|--copy|--help] — dispatched via a second instance of the app binary that loses requestSingleInstanceLock() and becomes a socket client",
+    "Wire protocol (decoded from asar, server side empirically observed): unix socket $XDG_RUNTIME_DIR/.obsidian-cli.sock (fallback ~/.obsidian-cli.sock); client writes ONE newline-terminated JSON line {argv:[...], tty:bool, cwd:string}; server replies on the same socket and ends; TTY + empty argv = interactive TUI",
+    "No CLI entry point exists on this host: shim ~/.local/bin/obsidian never registered; /usr/lib/electron43/obsidian-cli (copy source) absent; register-cli argv0 gate would refuse ('electron' != contains 'obsidian')",
+    "Verified read-only fallback: sha256sum <vault>/<relpath> (stable across repeated runs)",
+    "Third-party read-only readers (NOT the official CLI): notesmd-cli (list-vaults|list|print|search|search-content only — its create/delete/move are forbidden), obsidian-cli-inspector (search/analyze/diagnose/view; own stale SQLite DB; hash column is NOT sha256)"
+  ],
+  "app_running": false,
+  "app_running_note": "false for the entire measurement window (13:52-13:58: 7 independent checks across S03/S05/S06/S07/S08). At 13:58:37 ANOTHER SEAT's harness (S53 tests/vault/adv53-harness.sh case M8) launched the real app; from 13:58:38 onward app_running=true (electron PID 2203988) with the socket live. Contract field records the state during the sanctioned measurement window; the post-launch window is recorded under live_state_after_1358.",
+  "socket": null,
+  "socket_note": "Expected path /run/user/1000/.obsidian-cli.sock (XDG_RUNTIME_DIR=/run/user/1000). ABSENT in every pre-13:58 check (S03, S05, S06, S07, S08 x4). PRESENT and LISTENING from 13:58:38: ss -xlp -> u_str LISTEN ... users:((\"electron\",pid=2203988,fd=41)) — empirical confirmation of the decoded path and of unconditional listen-at-startup.",
+  "verdict": "FALLBACK-ONLY",
+  "verdict_justification": "Two independent blockers: (1) no sanctioned entry point (shim unregistered, obsidian-cli source absent, argv0 gate structurally refuses under this Arch electron43 packaging); (2) the app was not running during the measurement window (cold-start of the binary opens the GUI rather than answering). Post-13:58 the server side is up (socket listening, cli:true), but blocker (1) still holds, so no `obsidian <verb>` invocation is possible for souji. Ledger verification must use the sha256sum fallback under the vault path. Any CLI-based path stays operator-gated.",
+  "evidence_pointers": [
+    "census/round-4/seat-01.json — entry-point negative with evidence (no shim in PATH/packages/desktop), verbatim CLI help text ('Usage: obsidian <command> [options]'), raw-socket live probes (4 attempts, 0-byte replies, renderer ~110% CPU during vault init), argv0 gate scoping (register-cli only), 3rd app launch instance observed",
+    "census/round-4/seat-02.json — obsidian-cli-inspector definitive analysis (hash = hex(size):mtime not sha256; link resolution 0/N; no pruning of deleted files; config/log side-effect behavior; official CLI state at 14:05)",
+    "census/round-4/seat-03.json — socket path decode from both bundles, server lifecycle, shim registration logic, app-down/socket-absent state",
+    "census/round-4/seat-04.json — full 73-verb x 176-flag table from registerHandler parse (both bundles identical), argument shapes for read/create/vault, proof that `search` is not a verb",
+    "census/round-4/seat-05.json — obsidian-cli-inspector decisive negative (third-party, hash column not sha256), client/server logic verbatim, shim absence",
+    "census/round-4/seat-06.json — same-binary socket-client mechanism, register-cli handler analysis (argv0 gate, Linux copy/symlink branches), CLI surface, fallback verification",
+    "census/round-4/seat-07.json — vault-side recon (.obsidian has no CLI/API surface, 21/31 core plugins enabled, none CLI), argv0 control probe (symlink named obsidian -> includes('obsidian')=true), sha256sum stability control",
+    "census/round-4/seat-08.json — S08 recon (117-handler surface across both bundles incl. plugin-provided verbs, socket absent x4, app not running, ledger header-only, fallback verified, live-state change attribution)",
+    ".ufo/scopes/souji-mint-20261018/obsidian-cli-probe.md (fleet repo) — prior probe evidence bank this round builds on",
+    "corpus/knowledge/obsidian-ledger.tsv — receipt of record; header-only (sha256 3f7e9f2ab9e614464cb031d3f00a812a21f0e889f7666309a90d7784b75a9599) throughout the round"
+  ],
+  "command_surface_summary": {
+    "verbs_core_registry": 73,
+    "verbs_total_incl_plugins": 117,
+    "reconciliation": "S01: 73 registered handlers total, of which 44 are registerCliHandler (plugin-provided); S04: 73 core verbs parsed from registerHandler + flag descriptors; S08: 117 unique names matching BOTH patterns (registerHandler | registerCliHandler) — 73 + 44 = 117, consistent.",
+    "verb_table": "see census/round-4/seat-04.json (verb_table_tsv: 73 rows with flags) and census/round-4/seat-01.json (44 plugin-handler list)",
+    "plugin_provided_additions": ["search", "search:context", "search:open", "daily*", "history*", "sync*", "publish*", "template(s)*", "base(s)*", "bookmark(s)", "web", "wordcount", "outline", "links", "unique", "workspaces", "workspace:save/load/delete"],
+    "help_text_verbatim": "see census/round-4/seat-01.json invocation_contract.help_text ('Usage: obsidian <command> [options]' + vault=<name> note + quoting rules)",
+    "global_flags_kept": ["--copy", "--help", "--json", "--md", "--tsv", "--csv"],
+    "read_only_verbs_for_future_use": ["vault", "vaults", "files", "folders", "file", "folder", "read", "backlinks", "unresolved", "orphans", "deadends", "tags", "tag", "tasks", "task", "properties", "property:read", "version", "recents", "hotkeys", "hotkey", "aliases", "tabs", "workspace"],
+    "write_verbs_never_to_be_invoked_by_souji": ["create", "append", "prepend", "move", "rename", "delete", "property:set", "property:remove", "plugin:enable/disable/install/uninstall", "theme:set/install/uninstall", "snippet:enable/disable", "sync:restore", "history:restore", "workspace:save/delete", "publish:*", "daily:append", "daily:prepend", "template:insert", "base:create", "bookmark"]
+  },
+  "live_state_after_1358": {
+    "app_pid": 2203988,
+    "launched_by": "another seat's harness (S53 adv53-harness.sh case M8), not S08",
+    "socket": "/run/user/1000/.obsidian-cli.sock (LISTEN, electron fd=41)",
+    "side_effects": "~/.config/obsidian/obsidian.json rewritten 13:58:38 (content unchanged, cli:true); vault .obsidian/core-plugins.json touched 13:58:43; workspace.json untouched",
+    "s08_discipline": "no socket connection, no obsidian execution by S08 (ls/stat/ss/ps only)",
+    "lifecycle_pattern": "launch/quit cycles observed (each = one M8 hazard-case run of adv53-harness.sh): launch #1 PID 2203988 at 13:58:37 (exited ~14:05), launch #2 PID 4127347 at 14:05:04 (parent bash adv53-harness.sh --only m --out /tmp/adv53/base3-m.json), launch #3 PID 1994731 at 14:10 (S01 observation) — socket recreated per launch at the same path, LISTENing. The app dies when the harness kills obsidian.asar processes after each case. Socket gone again by 14:10 (lifecycle confirmed: socket exists iff app runs).",
+    "socket_probe_data_point": "S01 attempted raw unix-socket requests against the live socket (13:59-14:08, 4 attempts): connect OK every time, request written, then 0 bytes back — final measured run 'BYTES: 0 eof=False in 92.1s'. The concurrent renderer process was at ~109-110% CPU (vault initialization), so the server's renderer-dispatch path (executeJavaScript window.handleCli) was plausibly saturated; reply path NOT-VERIFIED. A raw socket client is therefore not a working invocation path — do not build on it.",
+    "operational_note": "While a launch is alive, the server side of the official CLI is fully up (socket + cli:true); the missing piece remains the client entry point. A future operator-sanctioned CLI path can simply check for this socket before invoking; the client must be the app's own second-instance logic (not a raw socket write) for the reply path to be dependable."
+  },
+  "safety": {
+    "read_only": true,
+    "executed_gui_launcher": "never",
+    "vault_writes": "none",
+    "git_mutations": "none",
+    "writes_by_s08": ["census/round-4/seat-08.json", "census/round-4/cli-contract.json", "/tmp/s08/"],
+    "side_effect_disclosure": "S08's obsidian-cli-inspector `view stats` probe wrote 2 non-secret log files under ~/.config/obsidian-cli-inspector/logs/ (13:53:56); all other S08 probes wrote nothing."
+  }
+}

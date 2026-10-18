@@ -1,0 +1,84 @@
+{
+  "seat": "S08",
+  "round": 4,
+  "kind": "cli-recon-synthesis",
+  "role": "synthesizer",
+  "assignment": "Wait 240s, collect seat 01-07 fragments, produce consolidated CLI contract census/round-4/cli-contract.json",
+  "own_recon": {
+    "method": "Read-only asar extraction (python3 byte scans), PATH/fs sweeps, process/socket state checks. Never executed /usr/bin/obsidian or `obsidian`.",
+    "socket_path_expr_verbatim": "T=oe?`\\\\\\\\.\\\\pipe\\\\obsidian-cli-${ge.userInfo().username}`:F.join(!W&&process.env.XDG_RUNTIME_DIR||ge.homedir(),\".obsidian-cli.sock\")",
+    "socket_path_resolved": "/run/user/1000/.obsidian-cli.sock (XDG_RUNTIME_DIR=/run/user/1000; fallback ~/.obsidian-cli.sock if unset)",
+    "socket_state": "ABSENT at 13:53, 13:56, 13:57, 13:58 (ls -> No such file or directory); ss -xl no obsidian listener; ~/.obsidian-cli.sock also absent",
+    "app_running": false,
+    "app_process_check": "ps aux | grep -iE 'obsidian|electron43' -> no match (repeated at 13:53/13:56/13:57/13:58)",
+    "last_app_start": "obsidian.log 2026-10-18 14:50:37 UTC = 11:50:37 -03 (Loaded updated app /home/vgpnk/.config/obsidian/obsidian-1.14.4.asar); obsidian.json mtime 11:50:37; Session Storage 11:52 -> app ran ~11:50-11:52 then exited",
+    "client_protocol_verbatim": "On requestSingleInstanceLock() failure: createConnection(socket); write JSON.stringify({argv,tty,cwd})+'\\n'; pipe stdin<->socket<->stdout; on connect error console.error('Unable to connect to main process'), process.exit(1). On lock success: process becomes the full GUI app.",
+    "server_side": "Main instance creates net server at startup; if(!isWin) unlinkSync(socket) then listen(socket) — UNCONDITIONAL (no C.cli guard around listen; C.cli gates only command execution: 'if(!C.cli) return Command line interface is not enabled. Please turn it on in Settings > General > Advanced.'). On will-quit: unlinkSync(socket).",
+    "request_dispatch": "Server reads one newline-terminated JSON line (5s header timeout), then Pt(socket, argv, tty, cwd): leading 'vault=<name|id>' token stripped & resolved (else last-opened vault); 'obsidian://' URI and existing file-path argv are handled before the cli gate; otherwise executeCliRequest -> renderer window.handleCli(argv) in the target vault; TTY-attached with empty argv -> interactive TUI mode (zt(...)).",
+    "command_surface": "117 unique handler names extracted from registerHandler/registerCliHandler across BOTH bundles (/usr/lib/obsidian/obsidian.asar 1.13.7 and ~/.config/obsidian/obsidian-1.14.4.asar): core (help, vault(s), files, folders, file, folder, read, create, append, prepend, move, rename, delete, open, random, tags, tasks, properties, backlinks, unresolved, orphans, deadends, aliases, recents, tabs, workspace, hotkeys, themes, snippets, plugins, commands, eval, devtools, reload, restart, version, diff) + plugin-provided (search, search:context, search:open, daily*, history*, sync*, publish*, template(s)*, base(s)*, bookmark(s), web, wordcount, outline, links, unique, workspaces, workspace:save/load/delete).",
+    "flag_whitelist": "argv filter keeps --copy --help --json --md --tsv --csv (all other --flags stripped before dispatch)",
+    "shim_registration": "ipcMain.handle('register-cli'): requires basename(process.argv0).toLowerCase().includes('obsidian') else refuses ('Unable to add to command line because the executable is \"<name>\" instead of \"obsidian\".'); Linux branch: if <execdir>/obsidian-cli exists -> copy to ~/.local/bin/obsidian (0755); else symlink execPath -> ~/.local/bin/obsidian. On this host execPath=/usr/lib/electron43/electron (argv0 basename 'electron') and /usr/lib/electron43/obsidian-cli is absent -> both branches fail.",
+    "shim_state": "ABSENT: ~/.local/bin/obsidian and /usr/local/bin/obsidian do not exist; /usr/lib/electron43/obsidian-cli does not exist; ~/.zprofile has no obsidian lines; pacman -Ql obsidian ships no CLI entry point",
+    "config_flag": "~/.config/obsidian/obsidian.json = {\"vaults\":{\"357200b26f64b4e9\":{\"path\":\"/home/vgpnk/Documents/shokoknowledge\",\"ts\":1791912393905,\"open\":true}},\"cli\":true} — cli:true present (sha256 bc1b5a3425228889bd351251eae1d29482ab5001d13f739b804b84ad8c3c4496)",
+    "gui_launcher": "/usr/bin/obsidian (sha256 0df6f2b28187a84917eaf33e089abe980a407fd4b195d69eab1f2a70ad2234ca) = bash wrapper 'exec electron43 /usr/lib/obsidian/app.asar $OBSIDIAN_USER_FLAGS \"$@\"' — passthrough, inspects no subcommand; NEVER executed by S08",
+    "adjacent_tools": {
+      "obsidian-cli-inspector": "/usr/bin/obsidian-cli-inspector, pacman pkg obsidian-cli-inspector 1.0.3-1, third-party Rust read-only tool with own SQLite DB (~/.config/obsidian-cli-inspector/{config.toml,vault.db 105MB,logs}). v1.0.3 --help/--version exit 0. Its per-note 'Hash: 15ed:1791146' style value is NOT sha256 -> unusable for ledger receipts. NOTE: S08 ran `timeout 5 obsidian-cli-inspector --help` (exit 0) and `--version` (exit 0, 'obsidian-cli-inspector 1.0.3') and one bare `view stats` (exit 0) — the view stats invocation wrote 2 log files into ~/.config/obsidian-cli-inspector/logs/ (stats_20261018_135356.log, view.stats_20261018_135356.log, 327B/58B, non-secret); disclosed as an unintended minor config-dir write; nothing else touched.",
+      "notesmd-cli": "/home/vgpnk/.local/bin/notesmd-cli v0.3.7 (sha256 412dc532d278b9e4aaf502891ea1f7b5c60e7572fb82935778ebdb728000802d), third-party Go CLI. S08 probes: `timeout 10 notesmd-cli list-vaults` -> 'shokoknowledge  /home/vgpnk/Documents/shokoknowledge  (default)' exit 0; `timeout 10 notesmd-cli print --help` exit 0; `timeout 10 notesmd-cli print Home` -> prints note content, exit 0. READ-ONLY subcommands only used; wrote nothing (~/.config/notesmd-cli/preferences.json mtime unchanged 2026-10-13). Its create/delete/move/daily/frontmatter commands are WRITE-capable and must never be used by souji.",
+      "electron43": "/usr/bin/electron43 -> /usr/lib/electron43/electron (Electron 43.6.0-1); not a CLI"
+    },
+    "fallback_verified": {
+      "path": "sha256sum over /home/vgpnk/Documents/shokoknowledge/** (read-only)",
+      "probe": "sha256sum <vault>/Home.md <vault>/Welcome.md -> 98afa2b81887ca13f1f06243f3f0d1e24cd411d7f9321b332fc998d52ff242a4, ecd0dfb6b21143ff52cfe36f93636df57e5b21773c101491b86f10ce17556ca8 (exit 0)",
+      "note": "Matches S05/S06 independently; vault untouched (read-only)."
+    },
+    "ledger_state": "corpus/knowledge/obsidian-ledger.tsv remains header-only (1 line, sha256 3f7e9f2ab9e614464cb031d3f00a812a21f0e889f7666309a90d7784b75a9599) — verified twice (13:56, 13:57)",
+    "bundle_hashes": {
+      "/home/vgpnk/.config/obsidian/obsidian-1.14.4.asar": "146ef8470d8cbb4a6db209bdc19bf2bad13350444186c0fd93c31087b142b92f (live, running bundle)",
+      "/usr/lib/obsidian/obsidian.asar": "a52a7daf1e2460bae03de80f2816604bd16a56cd374fbe5ce8d1a9ef5604059d (packaged 1.13.7 bundle) — same 117-handler surface, same socket path expression",
+      "/usr/bin/obsidian": "0df6f2b28187a84917eaf33e089abe980a407fd4b195d69eab1f2a70ad2234ca"
+    }
+  },
+  "collected_fragments": ["seat-01.json", "seat-02.json", "seat-03.json", "seat-04.json", "seat-05.json", "seat-06.json", "seat-07.json"],
+  "pending_fragments": [],
+  "collection_complete_note": "All 7 assigned fragments collected by 14:13. seat-01 (landed 14:13:10) added: verbatim CLI help text, argv0-gate scoping (register-cli only), 4 raw-socket probes (0-byte replies, renderer ~110% CPU), launch #3 PID 1994731 at 14:10. seat-02 (landed 14:07) added: inspector hash formula hex(size):mtime, link resolution broken 0/78, no-pruning, config/log side-effect warnings. Consolidated contract: census/round-4/cli-contract.json.",
+  "live_state_change_during_synthesis": {
+    "event": "At 13:58:37-13:58:38 the real Obsidian app was launched by ANOTHER SEAT's harness (S53's tests/vault/adv53-harness.sh, case M8 GUI-launch-hazard; parent chain: bash adv53-harness.sh --only m -> timeout -> harness -> /usr/lib/electron43/electron -disable-gpu --enable-wayland-ime /usr/lib/obsidian/app.asar). NOT launched by S08.",
+    "socket_observed": "/run/user/1000/.obsidian-cli.sock appeared at 13:58:38 (srwxr-xr-x, owner vgpnk, mode 755) and is LISTENING: ss -xlp -> u_str LISTEN ... users:((\"electron\",pid=2203988,fd=41)). This EMPIRICALLY CONFIRMS the asar-decoded contract (socket path + listen-at-startup, unconditional).",
+    "app_pid": "2203988 (electron main; children: gpu/network/renderer processes; user-data-dir=/home/vgpnk/.config/obsidian)",
+    "side_effects_of_that_launch": "~/.config/obsidian/obsidian.json rewritten 13:58:38 (content unchanged incl. cli:true); vault .obsidian/core-plugins.json touched 13:58:43 (app-side); workspace.json untouched (2026-10-14).",
+    "s08_discipline": "S08 did NOT connect to the socket and did NOT execute any obsidian binary; observations are via ls/stat/ss/ps only.",
+    "implication": "While the app is running, the ONLY missing piece for a usable CLI is an `obsidian`-named client entry point (shim) — the server side is up and cli:true is set. Cold-start prohibition still applies to `obsidian`/`/usr/bin/obsidian` from souji."
+  },
+  "consensus": {
+    "entry_point": null,
+    "entry_point_note": "No official CLI entry point exists on this host: shim ~/.local/bin/obsidian never registered; /usr/lib/electron43/obsidian-cli (the copy source) absent; argv0 gate would refuse anyway. `obsidian <subcommand>` currently resolves only to /usr/bin/obsidian (GUI launcher).",
+    "invocation_shapes_measured_or_decoded": [
+      "NEVER run: /usr/bin/obsidian [args] — GUI launcher; without a running instance it starts the app (single-instance-lock branch)",
+      "Official CLI (if shim existed + app running): obsidian [vault=<name>] <command> [param=value ...] [--json|--md|--tsv|--csv|--copy|--help]",
+      "Protocol (decoded from asar): unix socket $XDG_RUNTIME_DIR/.obsidian-cli.sock; client sends one newline-terminated JSON line {argv:[...], tty:bool, cwd:string}; server replies on same socket",
+      "Fallback (verified working, read-only): sha256sum <vault>/<relpath>",
+      "Third-party read-only readers: notesmd-cli list-vaults|list|print|search|search-content (read verbs only); obsidian-cli-inspector search/analyze/diagnose/view (own stale DB, no sha256)"
+    ],
+    "app_running": false,
+    "app_running_note": "During S08's measurement window (13:52-13:58) app_running=false in every check (S08 x4, S03, S05, S06, S07). At 13:58:37 another seat's harness launched the app; since then app_running=true (electron PID 2203988) and the socket is live. The consolidated contract records both phases; the measured-window value is false.",
+    "socket": null,
+    "socket_note": "expected /run/user/1000/.obsidian-cli.sock; absent in all pre-13:58 checks (S08 x4, S03, S05, S06, S07); PRESENT and LISTENING from 13:58:38 (empirical confirmation of the decoded path; see live_state_change_during_synthesis).",
+    "verdict": "FALLBACK-ONLY",
+    "verdict_justification": "Official CLI is not exercisable via a sanctioned entry point on this host today for two independent reasons: (1) no entry point (shim unregistered, source binary absent, argv0 gate would refuse), (2) app was not running during the measurement window (cold-start of the binary opens the GUI instead of answering). Even in the post-13:58 window where the app IS running and the socket IS live, requirement (1) still blocks any `obsidian <verb>` invocation: `obsidian` resolves to /usr/bin/obsidian (GUI launcher, argv0 'electron' chain). Verification of moved-to-obsidian ledger rows must use the sha256sum fallback under the vault path. Any CLI-based path stays operator-gated (register an obsidian-named client)."
+  },
+  "safety": {
+    "read_only": true,
+    "executed_gui_launcher": "never",
+    "vault_writes": "none (ls/find/stat/sha256sum only)",
+    "ledger_untouched": true,
+    "git_mutations": "none",
+    "writes_by_S08": ["census/round-4/seat-08.json", "census/round-4/cli-contract.json", "/tmp/s08/ scratch"],
+    "side_effect_disclosure": "obsidian-cli-inspector bare `view stats` wrote 2 log files under ~/.config/obsidian-cli-inspector/logs/ (non-secret, 13:53:56); all other S08 probes wrote nothing."
+  },
+  "preamble": {
+    "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+    "fragment_path": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-4/seat-08.json",
+    "written_at": "2026-10-18T14:00:00-03:00",
+    "mode": "read-only recon + synthesis; no modifications outside census fragments and /tmp/s08"
+  }
+}

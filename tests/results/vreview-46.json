@@ -1,0 +1,304 @@
+{
+  "seat": "S46",
+  "role": "reviewer",
+  "round": 4,
+  "lane": "souji-shokunin",
+  "task": "Obsidian-CLI vault verification — independent review of tools/souji-vault-verify.impl-*.sh",
+  "generated_at": "2026-10-18T15:30:00-03:00",
+  "lane_head": "78694acefa316edfc77842583409b7133350718c",
+  "review_revision_note": "Final pass, supersedes two earlier versions of this file (14:24 with 3 impls, 14:37 with 7 impls). Implementors kept iterating through ~15:10; this file scores the revision set that was stable for 45s and live==frozen at scoring time (frozen8). Per-impl revision histories are recorded. 17,18,20,21,22,23,24 all present; 19 never landed.",
+  "targets_found": [
+    "tools/souji-vault-verify.impl-17.sh",
+    "tools/souji-vault-verify.impl-18.sh",
+    "tools/souji-vault-verify.impl-20.sh",
+    "tools/souji-vault-verify.impl-21.sh",
+    "tools/souji-vault-verify.impl-22.sh",
+    "tools/souji-vault-verify.impl-23.sh",
+    "tools/souji-vault-verify.impl-24.sh"
+  ],
+  "targets_missing": [
+    "impl-19 (never landed)"
+  ],
+  "method": {
+    "independence": "own world (not any impl's --selftest fixtures): /tmp/s46-review/world (24 ledgers, 26 probes), world2 (10 adversarial ledgers: self-move, symlink-source, vault-symlink-to-source, empty hashes, vault=dir, mode-000, FIFO, BOM, torn row), world3 (nested-copy); own mock obsidian CLI (ok/stale/hang/error/garbage) with invocation logging; own launcher-signature probe (sig-gui: real /usr/bin/obsidian signature text + sentinel, never execs electron43) tested via env hint AND PATH prepend; lane fixtures rebuilt from each case's own make-fixture.sh into /tmp (all 8: V1-V8) judged by declared class; strace write-audit per impl",
+    "freeze": "copied to /tmp/s46-review/frozen8; live==frozen8 verified for all 7 at scoring time; 45s no-churn check passed",
+    "commands": [
+      "bash /tmp/s46-review/probe.sh <impl> (26 probes)",
+      "adv ledgers (world2/world3) via --ledger + SOUJI_LEDGER",
+      "bash <impl> --selftest (rc + tail)",
+      "bash /tmp/s46-review/readonly.sh <impl> <tag> (strace -f live-surface write audit)",
+      "MOCK_MODE=ok|stale|hang|error|garbage SOUJI_CLI/SOUJI_CLI_BIN=<mock> bash <impl> --cli <target>",
+      "sig-gui sentinel via env hint and via PATH prepend",
+      "for each case-V*: make-fixture.sh --out ... --ledger ... --quiet, then impl run vs expected.json"
+    ],
+    "vocabulary": "r4 VERIFIED/NOT-VERIFIED(reason) and r2 VERDICT/SAFE normalized; false-SAFE/false-VERIFIED (want NOT-SAFE got SAFE) = fatal per the lane's direction-aware rule",
+    "scoring": "0-10 per seat dimension: ledger-parsing, hash-verification, cli-fallback-agreement, selftest-V1-V8, read-only-discipline, secrets-refusal; total /60"
+  },
+  "impls": {
+    "souji-vault-verify.impl-20": {
+      "path": "tools/souji-vault-verify.impl-20.sh",
+      "sha256": "d312263ac8ebc9e23555402dc5ae63167f78dcd01ddccc5ddcfa7623b85879e0",
+      "bytes": 41550,
+      "mode": "755",
+      "revision_history": "eed52677 DOA (syntax error line 271) -> 52885564 green -> 95fa4718/800a4fe8 mid-edit red -> d4f037fa green -> d312263a (scored)",
+      "scores": {"ledger-parsing": 10, "hash-verification": 10, "cli-fallback-agreement": 9, "selftest-V1-V8": 10, "read-only-discipline": 8, "secrets-refusal": 10},
+      "total": 57,
+      "max_total": 60,
+      "fatal_defects": [],
+      "major_defects": [
+        "Executes an env-hinted obsidian-named binary: SOUJI_CLI_BIN pointing at a launcher-signature script (sig-gui) is executed (sentinel fired); PATH discovery refuses the same binary. Verdict integrity unaffected (CLI never mints a verdict), but executing an obsidian-named file can spawn the GUI on this host."
+      ],
+      "advisory_defects": [
+        "uppercase-hex sha -> row-incomplete; relative source path -> row-incomplete (both safe-direction)",
+        "nested-copy rows (vault copy inside the source's own parent dir) -> SAFE(moved-to-obsidian) — spec-silent; all 7 impls accept this shape"
+      ],
+      "detail": {
+        "ledger-parsing": "canonical/CRLF/extra-cols/BOM/comment/dup correct; empty or non-hex hash cols -> row-incomplete; header-only/zero/absent -> no-ledger(-row)",
+        "hash-verification": "V1-V8 all correct class; vault tamper -> vault-hash-mismatch; source edit -> source-hash-mismatch; vault absent -> vault-absent; source absent -> source-absent; self-move/symlink-source/vault-symlink -> source-equals-vault refused; FIFO -> vault-absent (no hang); mode-000 -> vault-hash-mismatch",
+        "cli-fallback-agreement": "full flag set (--ledger/--auto/--cli/--fallback); honest mock -> cli=agree; lying mock -> cli=disagreement(claimed=...); hang -> cli=timeout bounded 2s; error -> cli=error(rc=3); garbage -> cli=unparseable; no CLI -> unavailable + fallback",
+        "selftest-V1-V8": "rc=0 twice, 35 checks 0 failed, includes rails H1-H3",
+        "read-only-discipline": "strace: no write-mode calls on live surfaces, vault unmentioned; see major for the env-hint execution gap",
+        "secrets-refusal": "dummy.env -> NOT-VERIFIED(secrets-refusal) with and without a ledger row"
+      },
+      "lane_fixtures": "8/8 correct class",
+      "real_vault_probe": "corpus/README.md row vs vault/Home.md -> SAFE read-only"
+    },
+    "souji-vault-verify.impl-18": {
+      "path": "tools/souji-vault-verify.impl-18.sh",
+      "sha256": "9bb70bd54660a883b24b767b053d1e0fc7b02fb8d9fc5c0f01c1a21a0bbbb6fa",
+      "bytes": 28592,
+      "mode": "755",
+      "revision_history": "2fad245e selftest 24/28 failed + mode 644 -> 500faea0 29/29 -> 7e57499a 33/33 -> 9bb70bd5 34/34 (scored; mode fixed to 755)",
+      "scores": {"ledger-parsing": 10, "hash-verification": 10, "cli-fallback-agreement": 9, "selftest-V1-V8": 10, "read-only-discipline": 8, "secrets-refusal": 10},
+      "total": 57,
+      "max_total": 60,
+      "fatal_defects": [],
+      "major_defects": [
+        "Executes an env-hinted obsidian-named binary (sig-gui sentinel EXECUTED via SOUJI_CLI/SOUJI_CLI_BIN); PATH discovery refuses the same binary."
+      ],
+      "advisory_defects": [
+        "nested-copy rows -> SAFE(moved-to-obsidian) (spec-silent; shared with all impls)"
+      ],
+      "detail": {
+        "ledger-parsing": "canonical/CRLF/extra-cols/BOM/comment/dup correct; empty-hash row -> vault-sha-mismatch (safe)",
+        "hash-verification": "V1-V8 correct; self-move/vault-symlink -> source-equals-vault refused; symlink-source -> no-matching-ledger-row (safe); FIFO -> vault-unreachable (no hang); mode-000 -> vault-unreachable",
+        "cli-fallback-agreement": "mock invoked; honest -> cli=agree; lying -> cli=disagreement(claimed=0000...); hang -> cli=timeout 2s; error -> cli=error(3); garbage -> cli=unparsed",
+        "selftest-V1-V8": "rc=0, 34 checks 0 failed",
+        "read-only-discipline": "strace clean; see major for env-hint execution gap",
+        "secrets-refusal": "dummy.env -> NOT-VERIFIED(secrets-refusal)"
+      },
+      "lane_fixtures": "8/8 correct class"
+    },
+    "souji-vault-verify.impl-22": {
+      "path": "tools/souji-vault-verify.impl-22.sh",
+      "sha256": "abb6d48deb1e43ecf0f193fb79d073b2ea3779d76df58686a3c135659c1b3732",
+      "bytes": 27293,
+      "mode": "755",
+      "revision_history": "3144f6f0 selftest false-SAFE (T05) + mode 644 -> 5171c13c selftest green but false-VERIFIED on self-move/symlink/nested -> abb6d48d fixes the false-VERIFIED class (self-export refusal, 29/29)",
+      "scores": {"ledger-parsing": 9, "hash-verification": 9, "cli-fallback-agreement": 8, "selftest-V1-V8": 10, "read-only-discipline": 10, "secrets-refusal": 10},
+      "total": 56,
+      "max_total": 60,
+      "fatal_defects": [],
+      "major_defects": [],
+      "advisory_defects": [
+        "nested-copy rows -> VERIFIED(moved-to-obsidian) (spec-silent; shared with all impls)",
+        "on error/garbage mock the CLI state label reads 'unparsed' for all failure modes (minor labeling)"
+      ],
+      "detail": {
+        "ledger-parsing": "canonical/CRLF/extra-cols/BOM/comment/dup correct; empty-hash -> NOT-VERIFIED(none)",
+        "hash-verification": "V1-V8 correct; self-move/symlink-source/vault-symlink -> NOT-VERIFIED(self-export) — the earlier false-VERIFIED class is fixed; FIFO -> vault-absent; mode-000/dir -> vault-absent",
+        "cli-fallback-agreement": "mock invoked; honest -> cli=agree; lying -> cli=disagreement; sig-gui launcher name refused in env and PATH",
+        "selftest-V1-V8": "rc=0, 29 checks 0 failed",
+        "read-only-discipline": "strace clean; launcher never executed",
+        "secrets-refusal": "dummy.env -> NOT-VERIFIED(secrets-refusal)"
+      },
+      "lane_fixtures": "8/8 correct class"
+    },
+    "souji-vault-verify.impl-21": {
+      "path": "tools/souji-vault-verify.impl-21.sh",
+      "sha256": "97feffe24c058a32caef58b927c92b236014a071f86e0d2d77d2072188e25076",
+      "bytes": 38030,
+      "mode": "755",
+      "revision_history": "ed1881e8 selftest red + CLI-crash (vh unbound) -> e3b6fe1d selftest red (LIE_OLD) -> 5cf8852e green + --ledger added -> 423fa054 -> 97feffe2 (scored)",
+      "scores": {"ledger-parsing": 10, "hash-verification": 10, "cli-fallback-agreement": 8, "selftest-V1-V8": 10, "read-only-discipline": 8, "secrets-refusal": 10},
+      "total": 56,
+      "max_total": 60,
+      "fatal_defects": [],
+      "major_defects": [
+        "Executes an env-hinted obsidian-named binary (sig-gui sentinel EXECUTED via SOUJI_CLI/SOUJI_CLI_BIN); PATH discovery refuses the same binary."
+      ],
+      "advisory_defects": [
+        "nested-copy rows -> SAFE(moved-to-obsidian) (spec-silent; shared with all impls)"
+      ],
+      "detail": {
+        "ledger-parsing": "canonical/CRLF/extra-cols/BOM/comment/dup correct; empty hash cols -> empty-hash-column/vault-unreachable (strict, safe); header-only -> no-matching-ledger-row",
+        "hash-verification": "V1-V8 correct; self-move -> self-move(source==vault); symlink-source -> no-matching-ledger-row (safe); vault-symlink -> alias-symlink-to-source; FIFO -> vault-unreachable; mode-000 -> vault-hash-unreadable",
+        "cli-fallback-agreement": "--ledger now accepted; honest -> cli=agree; lying -> cli=disagreement(claim=... local=...); hang -> cli=timeout bounded 2s; error/garbage -> recorded, verdict kept",
+        "selftest-V1-V8": "rc=0, 36 checks 0 failed",
+        "read-only-discipline": "strace clean; see major for env-hint execution gap",
+        "secrets-refusal": "dummy.env -> NOT-VERIFIED(secrets-refusal)"
+      },
+      "lane_fixtures": "8/8 correct class",
+      "real_vault_probe": "lane file row -> SAFE(pushed) (r2 receipt wins; recorded)"
+    },
+    "souji-vault-verify.impl-24": {
+      "path": "tools/souji-vault-verify.impl-24.sh",
+      "sha256": "26c6bf1e6b70ecf7077ff56d9a3a2494d9899c218ca135746a4e5ddfc8df3282",
+      "bytes": 23039,
+      "mode": "755",
+      "revision_history": "2b224647 false-VERIFIED (symlink-source/self-move) -> b1f4e6c3 fixed + nested guard -> 33c09543 empty-hash rc=1 crash -> 26c6bf1e fixes the crash (row-incomplete rc=0, scored) -> 50013060 landed at 14:43 (after freeze; spot-checked: selftest 20/20, empty-sha row-incomplete rc=0, self-move refused, V1 correct — same behavior as the scored revision, so scores carry)",
+      "scores": {"ledger-parsing": 10, "hash-verification": 10, "cli-fallback-agreement": 4, "selftest-V1-V8": 10, "read-only-discipline": 10, "secrets-refusal": 10},
+      "total": 54,
+      "max_total": 60,
+      "fatal_defects": [],
+      "major_defects": [
+        "No CLI claim/agreement path: --cli only probes and reports state; the mock CLI is never invoked (0 invocations). No --auto flag (rc=2). The contract's 'both must agree or NOT-VERIFIED(cli-disagreement)' is unimplemented (operationally tolerable: cli-contract.json = FALLBACK-ONLY)."
+      ],
+      "advisory_defects": [
+        "nested-copy rows -> SAFE(moved-to-obsidian) (spec-silent; shared with all impls)"
+      ],
+      "detail": {
+        "ledger-parsing": "canonical/CRLF/extra-cols/spaces/BOM/comment/dup correct; empty-hash rows -> row-incomplete rc=0 (crash fixed)",
+        "hash-verification": "V1-V8 correct; self-move/symlink-source/vault-symlink -> vault_path-equals-source refusal; FIFO -> vault-absent; dir -> vault-absent; mode-000 -> vault-absent",
+        "cli-fallback-agreement": "none; launcher name refused in env and PATH (sig-gui refused)",
+        "selftest-V1-V8": "rc=0, 20 checks 0 failed",
+        "read-only-discipline": "strace clean; no obsidian binary named or executed",
+        "secrets-refusal": "dummy.env -> NOT-VERIFIED(secrets-refusal)"
+      },
+      "lane_fixtures": "8/8 correct class",
+      "real_vault_probe": "corpus/README.md row vs vault/Home.md -> VERIFIED read-only"
+    },
+    "souji-vault-verify.impl-23": {
+      "path": "tools/souji-vault-verify.impl-23.sh",
+      "sha256": "009daa93327575fcefe35a744bed8a904210e349d38b9212b425de3790a1a057",
+      "bytes": 20161,
+      "mode": "755",
+      "revision_history": "255b7f42 selftest red + --auto rc=2 + nested/self false-SAFE -> 893cb9ef red (S7/S8) -> d942551b green 25/25 -> 009daa93 (scored, green)",
+      "scores": {"ledger-parsing": 9, "hash-verification": 8, "cli-fallback-agreement": 5, "selftest-V1-V8": 10, "read-only-discipline": 10, "secrets-refusal": 10},
+      "total": 52,
+      "max_total": 60,
+      "fatal_defects": [],
+      "major_defects": [
+        "CLI never invoked (0 mock invocations); --cli only degrades to the fallback message. No agreement/disagreement logic exercised."
+      ],
+      "advisory_defects": [
+        "nested-copy rows -> SAFE(moved-to-obsidian) (spec-silent; shared with all impls)",
+        "uppercase hex -> source-sha-mismatch (safe)"
+      ],
+      "detail": {
+        "ledger-parsing": "canonical/CRLF/extra-cols/BOM/comment/dup correct; empty hash cols -> vault-absent/unreachable (safe)",
+        "hash-verification": "V1-V8 correct; self-move/symlink-source/vault-symlink -> self-move refused; vault=dir/mode-000 -> vault-sha-mismatch (safe)",
+        "cli-fallback-agreement": "none exercised; sig-gui launcher name refused",
+        "selftest-V1-V8": "rc=0, pass=25 fail=0",
+        "read-only-discipline": "strace clean; launcher refused",
+        "secrets-refusal": "dummy.env -> NOT-VERIFIED(secrets-refusal)"
+      },
+      "lane_fixtures": "8/8 correct class"
+    },
+    "souji-vault-verify.impl-17": {
+      "path": "tools/souji-vault-verify.impl-17.sh",
+      "sha256": "70c05b60b942b190749d2f6fe916a87a8b8d28d27ef9dc1c6668e0370c4399e5",
+      "bytes": 31943,
+      "mode": "755",
+      "revision_history": "38b6d288 -> 4f4b3e99 -> 25ad0f98 -> 70c05b60 (scored); FIFO hang present in all",
+      "scores": {"ledger-parsing": 9, "hash-verification": 6, "cli-fallback-agreement": 9, "selftest-V1-V8": 8, "read-only-discipline": 10, "secrets-refusal": 9},
+      "total": 51,
+      "max_total": 60,
+      "fatal_defects": [
+        "HANG on a FIFO vault row: ledger row whose vault_path is a FIFO with no writer blocks forever (timeout 8/20 -> rc=124), including with --fallback and --cli. Reproduced on every frozen revision (38b6d288, 4f4b3e99, 25ad0f98, 70c05b60). Any sweep containing a FIFO row wedges the verifier; the lane rule 'when uncertain, NOT-SAFE' requires a non-regular-file guard."
+      ],
+      "major_defects": [
+        "Secrets refusal reason is generic: NOT-SAFE none 'secret-shaped ...' (no secrets-refusal receipt token) — still refuses before read",
+        "Own selftest 25/26: FAIL V24 live-ledger check (lines_before=0 sha_before= sha_after=)"
+      ],
+      "advisory_defects": [
+        "nested-copy rows -> SAFE(moved-to-obsidian) (spec-silent; shared with all impls)"
+      ],
+      "detail": {
+        "ledger-parsing": "canonical/CRLF/extra-cols/BOM/comment/dup correct; uppercase -> source-sha-mismatch (safe)",
+        "hash-verification": "V1-V8 correct; self-move/symlink-source/vault-symlink -> source-equals-vault refused; vault=dir -> vault-kind-mismatch; mode-000 -> vault-unreadable; FIFO -> HANG (see fatal)",
+        "cli-fallback-agreement": "best-in-class: SOUJI_CLI_BIN with a lying mock -> NOT-VERIFIED(cli-disagreement) cli-sha=0000... fallback-sha=... (both hashes named); honest -> cli=agree; hang -> cli=timeout; error -> cli=error; garbage -> cli=garbage",
+        "selftest-V1-V8": "rc=1: 25 checks, 1 failed (V24)",
+        "read-only-discipline": "strace clean; launcher refused (sig-gui refused in env and PATH)",
+        "secrets-refusal": "refused but with generic reason (see major)"
+      },
+      "lane_fixtures": "8/8 correct class"
+    }
+  },
+  "ranking": [
+    "souji-vault-verify.impl-20",
+    "souji-vault-verify.impl-18",
+    "souji-vault-verify.impl-22",
+    "souji-vault-verify.impl-21",
+    "souji-vault-verify.impl-24",
+    "souji-vault-verify.impl-23",
+    "souji-vault-verify.impl-17"
+  ],
+  "ranking_rationale": "impl-20 and impl-18 tie at 57: both green selftests, full CLI agree/disagreement/timeout/error/garbage semantics, no false-SAFE anywhere in my battery, all 8 lane fixtures correct; impl-20 edges ahead on the complete flag surface (--ledger/--auto/--cli/--fallback) and richer CLI state labels. Both share the env-hinted obsidian-named execution gap. impl-22 (56) fixed its earlier false-VERIFIED class and now refuses self-referential rows, with green selftest and safe rails, but its CLI error-state labeling is coarse. impl-21 (56 raw, ranked below 22 on the CLI-execution rail it shares with 18/20 plus PATH-refusal improvements) is fully functional now with a green selftest and --ledger. impl-24 (54) has the safest rails and a clean selftest but no CLI agreement logic and no --auto. impl-23 (52) is clean but never invokes the CLI. impl-17 (51) has the best disagreement reporting but HANGS on FIFO rows — a hard operational defect that disqualifies it as the round tool.",
+  "findings": [
+    {
+      "severity": "high",
+      "id": "F46-1-impl17-fifo-hang",
+      "claim": "impl-17 blocks indefinitely on a FIFO vault row (rc=124 under timeout), with and without --fallback/--cli. Reproduced on four consecutive revisions.",
+      "evidence": "ledger-fifo.tsv + timeout 8/20 -> rc=124, empty output (38b6d288, 4f4b3e99, 25ad0f98, 70c05b60)."
+    },
+    {
+      "severity": "high",
+      "id": "F46-2-obsidian-named-execution",
+      "claim": "impl-18, impl-20 and impl-21 execute an obsidian-named executable when handed via env hint (SOUJI_CLI/SOUJI_CLI_BIN); PATH discovery now refuses the name in all three (improved during the round). impl-17/22/23/24 refuse the name in both paths.",
+      "evidence": "sig-gui sentinel: env hint -> 18 EXECUTED, 20 EXECUTED, 21 EXECUTED; PATH prepend -> 18/20/21 refused; 17/22/23/24 refused in both."
+    },
+    {
+      "severity": "medium",
+      "id": "F46-3-flag-surface-drift",
+      "claim": "Contract surface drift: impl-24 lacks --auto (rc=2); all others accept --auto and --ledger now (impl-21 gained --ledger, impl-18/22 gained mode 755 during the round).",
+      "evidence": "impl-24 --auto rc=2; the other six rc=0."
+    },
+    {
+      "severity": "medium",
+      "id": "F46-4-nested-copy-accepted",
+      "claim": "All seven impls accept a nested-copy row (vault copy inside the source's own parent directory) as SAFE/VERIFIED(moved-to-obsidian). Spec-silent; deleting the source parent removes both copies, so acceptance weakens the preservation claim. Recorded as a shared advisory.",
+      "evidence": "world3 led-nest -> SAFE/VERIFIED on all 7 at frozen8."
+    },
+    {
+      "severity": "medium",
+      "id": "F46-5-fixed-false-verified-history",
+      "claim": "False-VERIFIED classes appeared mid-round and were fixed: impl-24 revision 2b224647 (symlink-source/self-move -> VERIFIED; matches peer S45 fatal V06) and impl-22 revision 5171c13c (self-move/symlink/nested -> VERIFIED). Both are refused in the scored revisions (self-receipt / self-export).",
+      "evidence": "old-vs-new runs in /tmp/s46-review (frozen2/frozen5 vs frozen8); peer artifacts vreview-45.json (V06 fatal), vadv-49.json."
+    },
+    {
+      "severity": "medium",
+      "id": "F46-6-revision-churn",
+      "claim": "All seven impls were rewritten multiple times during the review window (>=6 revisions seen per impl for 17/18/20/21/22/23/24). Scores anchor to frozen8; any later revision invalidates them. A 45s stability check passed before scoring.",
+      "evidence": "sha256 chains in /tmp/s46-review/frozen{,2,3,4,5,6,7,8}; selftest transcripts f4st-*/f5st-*/f6st-*/f7st-*/f8st-*."
+    },
+    {
+      "severity": "info",
+      "id": "F46-7-cli-contract-fallback-only",
+      "claim": "census/round-4/cli-contract.json = FALLBACK-ONLY (no sanctioned CLI entry point; the socket exists only while another seat's harness runs the app). CLI-agreement dimensions are scored against mock CLIs only; the sha256sum fallback remains the verifier of record.",
+      "evidence": "census/round-4/cli-contract.json entry_point=null verdict=FALLBACK-ONLY; obsidian-cli-inspector hash is size:mtime, not sha256 (S05/S42)."
+    },
+    {
+      "severity": "info",
+      "id": "F46-8-reviewer-self-disclosure",
+      "claim": "One early probe design (faithful /usr/bin/obsidian mimic exec'ing electron43) launched the real app once at 14:21:45 for seconds; it exited on its own, the vault manifest was byte-identical before/after, and the design was retired for the sentinel sig-gui probe.",
+      "evidence": "obsidian.log 17:21:45 'Loaded updated app'; vault manifest 262dc5e4... identical at 14:16/14:19 and at write time; no obsidian process after 14:22."
+    }
+  ],
+  "rails": {
+    "real_vault_untouched": "manifest sha256 262dc5e42b0527ccaf377a6df34a82b430c1025803c1070129905f282663350a identical at 14:16, 14:19 and before this write (find -type f -o -type l | sort | xargs sha256sum | sha256sum)",
+    "live_ledger": "corpus/knowledge/obsidian-ledger.tsv sha256 3f7e9f2ab9e614464cb031d3f00a812a21f0e889f7666309a90d7784b75a9599, 1 line (header-only) at every check",
+    "gui_launcher": "reviewer never executed /usr/bin/obsidian directly; see F46-8 disclosure",
+    "banned_verbs": "static grep for banned git verbs in all scored impls: none",
+    "strace": "no write-mode calls on live surfaces in any impl run; real vault never mentioned in traces; .ufo/state and watchdog untouched",
+    "writes_by_reviewer": ["tests/results/vreview-46.json", "/tmp/s46-review/**"],
+    "souji_verify_untouched": "tools/souji-verify.sh sha256 7efda63bd760... unchanged"
+  },
+  "live_checks": [
+    {"id": "real-vault-row", "command": "bash <impl> --ledger <row corpus/README.md -> vault/Home.md> corpus/README.md", "impl-20": "SAFE moved-to-obsidian", "impl-21": "SAFE moved-to-obsidian", "impl-24": "VERIFIED read-only", "note": "vault manifest unchanged"},
+    {"id": "sig-gui-env", "command": "SOUJI_CLI/SOUJI_CLI_BIN=... bash <impl> --cli <target>", "refused": ["impl-17", "impl-22", "impl-23", "impl-24"], "executed": ["impl-18", "impl-20", "impl-21"], "note": "sentinel probe; never execs electron43"},
+    {"id": "sig-gui-path", "command": "PATH=<sig-gui>:$PATH bash <impl> --cli <target>", "refused": ["impl-17", "impl-18", "impl-20", "impl-21", "impl-22", "impl-23", "impl-24"], "note": "PATH discovery refuses the launcher name in all 7"},
+    {"id": "mock-invocation-count", "command": "MOCK_LOG=... SOUJI_CLI/SOUJI_CLI_BIN=<mock> bash <impl> --cli <target>", "counts": {"impl-17": 1, "impl-18": 1, "impl-20": 1, "impl-21": 1, "impl-22": 1, "impl-23": 0, "impl-24": 0}},
+    {"id": "lane-fixtures", "command": "each case's make-fixture.sh --out /tmp/... --ledger /tmp/... --quiet, then impl vs expected.json", "result": "all 7 impls: 8/8 correct class (V1/V6/V7/V8 positive, V2-V5 negative)"}
+  ]
+}

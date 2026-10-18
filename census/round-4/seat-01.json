@@ -1,0 +1,108 @@
+{
+  "seat": "S01",
+  "kind": "obsidian-cli-recon",
+  "role": "recon",
+  "round": 4,
+  "assignment": "CLI recon — discover the registered Obsidian CLI entry point WITHOUT launching the GUI: (a) obsidian-cli-inspector identity, (b) /usr/bin/obsidian read-only, (c) ~/.local/bin + desktop entries, (d) Preferences cli grep, (e) live socket. Emit the exact invocation contract if found, else a negative finding with evidence. Never execute /usr/bin/obsidian or obsidian.",
+  "verdict": "NO-ENTRY-POINT (fallback-only). No registered official-CLI entry point exists on this host: the shim ~/.local/bin/obsidian is absent, the pacman package ships no CLI shim, and the app's own register-cli action structurally refuses under this packaging (argv0 'electron' != contains 'obsidian'). The official CLI is NOT a separate binary — it is the app binary acting as a second-instance socket client; its exact contract was decoded from the asar. Live socket confirmed empirically while a sibling seat's harness ran the real app; my bounded read-only probes connected and sent, but replies never arrived (renderer saturated at ~110% CPU) — reply path NOT-VERIFIED. sha256sum remains the sanctioned vault fallback.",
+  "answers": {
+    "a_obsidian-cli-inspector": {
+      "identity": "THIRD-PARTY, NOT the official CLI. /usr/bin/obsidian-cli-inspector = ELF 64-bit LSB pie, stripped; pacman pkg obsidian-cli-inspector 1.0.3-1; sha256 0522cd2eaeda54da9609d3a121203d3a1241d22bfba770a6cc3039ced9bee9b1",
+      "cmds": [
+        "command -v obsidian-cli-inspector; file $(command -v obsidian-cli-inspector)",
+        "pacman -Qo /usr/bin/obsidian-cli-inspector",
+        "timeout 5 /usr/bin/obsidian-cli-inspector --help",
+        "timeout 5 obsidian-cli-inspector view stats",
+        "cat ~/.config/obsidian-cli-inspector/config.toml"
+      ],
+      "out": [
+        "/usr/bin/obsidian-cli-inspector; ELF 64-bit LSB pie executable, x86-64, stripped",
+        "is owned by obsidian-cli-inspector 1.0.3-1",
+        "help: 'Obsidian CLI Inspector - A local-first, read-only CLI/TUI for Obsidian vaults', groups init/index/search/graph/analyze/diagnose/view, Version: 1.0.3",
+        "'view stats' -> Notes: 3714, Links: 78, Tags: 191, Chunks: 38685 (own stale SQLite DB, 105000960 B vault.db)",
+        "config ~/.config/obsidian-cli-inspector/config.toml: vault_path = /home/vgpnk/Documents/shokoknowledge"
+      ],
+      "side_effect": "the sanctioned timeout-5 probe appended its own log ~/.config/obsidian-cli-inspector/logs/stats_20261018_140453.log (tool self-logging; vault untouched)"
+    },
+    "b_usr_bin_obsidian": {
+      "identity": "GUI launcher only — read, NEVER executed. 344 bytes, bash. sha256 0df6f2b28187a84917eaf33e089abe980a407fd4b195d69eab1f2a70ad2234ca",
+      "content": "exec electron43 /usr/lib/obsidian/app.asar $OBSIDIAN_USER_FLAGS \"$@\"",
+      "chain": "/usr/bin/obsidian -> electron43 (bash -> exec /usr/lib/electron43/electron) -> electron. process.argv0 basename = 'electron'",
+      "pacman": "owned by obsidian 1.13.7-2; full file list: /usr/bin/obsidian, /usr/lib/obsidian/{app.asar,app.asar.unpacked/*,icon.png,obsidian.asar}, /usr/share/applications/obsidian.desktop, icon, license — NO CLI shim in the package"
+    },
+    "c_local_bin_desktop": {
+      "cmds": ["ls -la ~/.local/bin ~/.local/share/applications 2>/dev/null | grep -i obsidian", "for d in ${PATH//:/ }; do ls \"$d\" | grep -i '^obsidian'; done"],
+      "out": ["no matches (rc=1) — no ~/.local/bin/obsidian, no obsidian-cli, no desktop entry in ~/.local/share/applications", "PATH loop finds only /usr/bin/obsidian and /usr/bin/obsidian-cli-inspector", "obsidian-cli NOT in PATH (command -v obsidian-cli -> empty)", "~/.local/bin/obsidian absent; /usr/local/bin/obsidian absent; /usr/lib/electron43/obsidian-cli absent; /usr/lib/obsidian contains only app.asar/obsidian.asar/icon.png"]
+    },
+    "d_preferences": {
+      "cmds": ["grep -ri 'cli' ~/.config/obsidian/Preferences", "cat ~/.config/obsidian/obsidian.json"],
+      "out": ["Preferences: no 'cli' match (rc=1); file = partition/spellcheck JSON only", "obsidian.json = {\"vaults\":{\"357200b26f64b4e9\":{\"path\":\"/home/vgpnk/Documents/shokoknowledge\",\"ts\":1791912393905,\"open\":true}},\"cli\":true} sha256 bc1b5a3425228889bd351251eae1d29482ab5001d13f739b804b84ad8c3c4496 — the CLI feature flag is ON"]
+    },
+    "e_live_socket": {
+      "cmds": ["ss -xlp 2>/dev/null | grep -i obsidian", "ls -la /run/user/1000/.obsidian-cli.sock", "pgrep -af 'electron43/electron'"],
+      "out": [
+        "13:52-13:58 window: no socket, no app process (matches sibling S03/S05/S08)",
+        "13:58:37 onwards: sibling seat S53's harness (tests/vault/adv53-harness.sh --only m, case M8) launched the real app; socket appeared: 'u_str LISTEN ... /run/user/1000/.obsidian-cli.sock ... users:((\"electron\",pid=2203988,fd=41))' — the socket path decoded from the asar is empirically correct and the app listens unconditionally at startup",
+        "the same harness kills the app after each case (pkill -f obsidian\\.asar), so the socket cycles on/off; observed instances pid 2203988 (13:58), 4127347 (14:05), 1994731 (14:10) — none launched by this seat"
+      ]
+    }
+  },
+  "invocation_contract": {
+    "note": "decoded from the app payload asar (read-only strings), two copies agree: /usr/lib/obsidian/obsidian.asar (1.13.7, sha256 a52a7daf1e2460bae03de80f2816604bd16a56cd374fbe5ce8d1a9ef5604059d) and ~/.config/obsidian/obsidian-1.14.4.asar (sha256 146ef8470d8cbb4a6db209bdc19bf2bad13350444186c0fd93c31087b142b92f); corroborated by sibling seats S06/S08",
+    "would_be_form": "obsidian [vault=<name>] <verb> [param=value ...] [--json|--md|--tsv|--csv|--copy|--help]",
+    "help_text": "Obsidian CLI\\n\\nUsage: obsidian <command> [options]\\n\\nOptions:\\n  vault=<name>          Target a specific vault by name\\n\\nNotes:\\n  file resolves by name (like wikilinks), path is exact (folder/note.md)\\n  Most commands default to the active file when file/path is omitted\\n  Quote values with spaces: name=\"My Note\"\\n  Use \\\\n for newline, \\\\t for tab in content values\\n\\nCommands:\\n<...>",
+    "wire_protocol": "unix socket T = join(XDG_RUNTIME_DIR || homedir(), '.obsidian-cli.sock') -> /run/user/1000/.obsidian-cli.sock; client = a second invocation of the app binary whose requestSingleInstanceLock() fails; client writes ONE newline-terminated JSON line {argv:[...], tty:bool, cwd:string}, pipes stdin<->socket, t.on('end') -> exit 0; server (running main instance) reads with a 5s header timeout and dispatches",
+    "gates": [
+      "server-side feature gate: if(!C.cli) -> 'Command line interface is not enabled. Please turn it on in Settings > General > Advanced.' (C.cli = obsidian.json \"cli\":true — ON here)",
+      "argv filter: only --copy --help --json --md --tsv --csv survive; --copy copies the reply to the clipboard",
+      "bare TTY invocation (empty argv) -> interactive TUI branch",
+      "TUI/URI special cases: last arg starting obsidian:// -> process URI; last arg an existing file path -> open file"
+    ],
+    "handlers": "73 registered handlers total; 44 via registerCliHandler: base:create, base:query, base:views, bases, bookmark, bookmarks, daily(:append/:path/:prepend/:read), history(:list/:open/:read/:restore), links, outline, publish(:add/:list/:open/:remove/:site/:status), search(:context/:open), sync(:deleted/:history/:open/:read/:restore/:status), template:insert, template:read, templates, unique, web, wordcount, workspace:delete/:load/:save, workspaces. Core handlers include help, read ('Read file contents'), file ('Show file info' -> path/name/extension/size/created/modified, NO hash), files, create, move, delete, open, search, tags, backlinks, orphans, unresolved, vault, vaults, version, plus __completions/__commands/__files",
+    "registration_action": "in-app Settings -> General -> Advanced 'Register' -> ipc 'register-cli': Linux branch (non-darwin) = if <execDir>/obsidian-cli exists copy it to ~/.local/bin/obsidian chmod 0755, else symlink process.execPath -> ~/.local/bin/obsidian. Guard: if(!p) refuse with 'Unable to add to command line because the executable is \"<argv0>\" instead of \"obsidian\".' where p = basename(process.argv0).toLowerCase().includes('obsidian').",
+    "why_unregistered_here": "under this Arch electron43 packaging argv0 basename = 'electron' -> the register action would refuse; and no ~/.local/bin/obsidian or obsidian-cli exists (registration was never done). The argv0 gate applies ONLY to the register-cli handler (sole use of p besides its definition — verified by scanning the whole bootstrap module region); the client-mode branch itself is gated only on the single-instance lock."
+  },
+  "live_probe": {
+    "method": "bounded read-only protocol probes against the live socket while a sibling harness's app instance was running; one JSON line {\"argv\":[\"help\"|\"version\"],\"tty\":false,\"cwd\":\"/tmp/s01-cli-recon\"}; never executed /usr/bin/obsidian or obsidian; no vault writes",
+    "cmds": [
+      "timeout 8/30/35/100 python3 (socket connect + one JSON line + bounded recv) -> /tmp/s01-cli-recon/socket-help{,2,3,4}.txt"
+    ],
+    "out": [
+      "probe1 13:59 (8s): connect OK, sent, 0 bytes back, timeout (BYTES: 0)",
+      "probe2 14:02 (25s): 0 bytes",
+      "probe3 14:03 (30.4s): 0 bytes, eof=False (socket accepted and held; server never replied)",
+      "probe4 14:08 (92.1s): 0 bytes, eof=False",
+      "concurrent renderer process at ~109-110% CPU (vault initialization) — server dispatch path (executeJavaScript into renderer) plausibly blocked; reply path NOT-VERIFIED"
+    ],
+    "verdict": "connect+send path empirically confirmed on a live socket; reply path never observed within any bounded window; no CLI output was ever obtained. Uncertain -> NOT-VERIFIED."
+  },
+  "consequences": [
+    "souji cannot invoke the official CLI on this host today; vault-side verification must use the read-only sha256sum fallback under /home/vgpnk/Documents/shokoknowledge",
+    "the GUI launcher name `obsidian` must never be executed from any tool (it starts the desktop app when no instance is running; host rule + sibling harness M8 hazard check)",
+    "obsidian-cli-inspector is a third-party indexer with a stale DB and a non-sha256 'hash' column (size:mtime per sibling S42) — at most a read-only convenience, never the verifier of record",
+    "corpus/knowledge/obsidian-ledger.tsv stays header-only (verified: 1 line, columns source_path/source_sha256/vault_path/vault_sha256/exported_at/note); no vault file was read-modified or written by this seat"
+  ],
+  "evidence_scratch": {
+    "dir": "/tmp/s01-cli-recon/",
+    "files": {
+      "s14-strings.txt": "19559720 B, strings -n 10 of obsidian-1.14.4.asar (source for all decoded code)",
+      "asar-evidence.txt": "8577 B sha256 4c317f14947774d079029d3e396d87e5eb964462f1b6434ff6d4961a7272faf6 (extracted code windows)",
+      "bootstrap.txt": "16000 B sha256 320bc622868ad2d9858b9944259a29bd54ea8bad95f903fe2701ee6317b34220 (client-mode block)",
+      "socket-help.txt / socket-help2.txt": "0 B (empty = no reply)",
+      "socket-help3.txt": "18 B ('BYTES: 0 in 30.4s')",
+      "socket-help4.txt": "28 B ('BYTES: 0 eof=False in 92.1s')"
+    }
+  },
+  "negative_checks_clean": [
+    "/usr/bin/obsidian never executed (read only; bash syntax + content inspected)",
+    "obsidian / obsidian-cli / electron43 never executed",
+    "no writes to ~/.config/obsidian, ~/.config/obsidian-cli-inspector (beyond the sanctioned tool's own log), vault, ledger, or any sibling repo",
+    "app instances on the socket were launched and killed by sibling seat S53's harness, not by this seat"
+  ],
+  "preamble": {
+    "cwd": "/home/vgpnk/Projects/shokunin",
+    "fragment_path": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-4/seat-01.json",
+    "written_at": "2026-10-18T14:12:00-03:00",
+    "mode": "read-only recon; no modifications outside this fragment and /tmp scratch"
+  }
+}

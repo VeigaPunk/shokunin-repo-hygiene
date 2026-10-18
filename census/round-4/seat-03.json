@@ -1,0 +1,114 @@
+{
+  "seat": "S03",
+  "kind": "obsidian-cli-recon",
+  "target": "Obsidian app CLI server / socket / shim on host",
+  "verdict": "CLI-NOT-AVAILABLE (app not running; no socket; no shim; expected socket path identified)",
+  "checks": {
+    "app_running": {
+      "verdict": "NO",
+      "cmds": [
+        "ps aux | grep -i obsidian | grep -v grep; echo rc=$?",
+        "pgrep -af 'electron|obsidian'; echo rc=$?",
+        "for p in $(ls /proc | grep -E '^[0-9]+$'); do c=$(readlink /proc/$p/exe 2>/dev/null); case \"$c\" in *obsidian*|*electron43*) echo \"$p $c\";; esac; done",
+        "systemctl --user list-units --all | grep -i obsidian; echo rc=$?"
+      ],
+      "out": [
+        "rc=1 (empty) -> no obsidian process",
+        "only self-match of the grep wrapper command (PID 1952774); no electron/obsidian process",
+        "no /proc/*/exe matching obsidian or electron43",
+        "rc=1 (empty) -> no systemd user unit"
+      ],
+      "last_run": "App last started 2026-10-18 11:50:37 local (obsidian.log line '2026-10-18 14:50:37 Loaded updated app' is UTC = 11:50:37 -03, cross-checked against file mtimes: obsidian.json/obsidian.log/DIPS-wal mtime 'Oct 18 11:50', Session Storage + window-state json mtime 11:52 -> app ran ~11:50-11:52 then quit cleanly)."
+    },
+    "socket": {
+      "verdict": "ABSENT",
+      "expected_path": "/run/user/1000/.obsidian-cli.sock",
+      "expected_path_source": "bundle string: T=oe?`\\\\\\\\.\\\\pipe\\\\\\\\obsidian-cli-${ge.userInfo().username}`:F.join(!W&&process.env.XDG_RUNTIME_DIR||ge.homedir(),\".obsidian-cli.sock\") (Linux non-Windows branch -> $XDG_RUNTIME_DIR/.obsidian-cli.sock; XDG_RUNTIME_DIR=/run/user/1000 on this host)",
+      "cmds": [
+        "stat /run/user/1000/.obsidian-cli.sock; stat ~/.obsidian-cli.sock; stat /tmp/.obsidian-cli.sock",
+        "find /run/user/$(id -u) -maxdepth 2 -iname '*obsidian*' 2>/dev/null",
+        "find /tmp -maxdepth 2 \\( -name '*.sock' -o -name '*Singleton*' \\)",
+        "ss -xl | grep -i obsidian; echo rc=$?",
+        "ls -A /run/user/1000/"
+      ],
+      "out": [
+        "all three: 'No such file or directory' (rc=1 each)",
+        "empty (rc=0) -> no obsidian artifact under /run/user/1000",
+        "only /tmp/org.chromium.Chromium.jKUtWF/SingletonSocket (owner: chromium), /tmp/scoped_dirrcXMoV/SingletonSocket (owner: ZCode PID 2385909, verified via lsof), /tmp/scoped_dirCCXcez/SingletonSocket (unowned now), /tmp/znr-*.sock (unrelated)",
+        "rc=1 (empty) -> no obsidian unix socket listening",
+        "no hidden .obsidian-cli.sock entry"
+      ],
+      "server_lifecycle_from_bundle": "App startup: `let Qe=(0,Ie.createServer)(...)` ... `if(!oe)try{m.unlinkSync(T)}catch(t){}; Qe.on(\"error\",...); Qe.listen(T)` -> server is created and LISTENS unconditionally at app start (no C.cli guard around listen; C.cli only gates command execution: `if(!C.cli)return f(\"Command line interface is not enabled...\")`). Client mode: a second launch that loses `requestSingleInstanceLock()` connects to T, writes newline-terminated JSON header {argv,tty,cwd}, pipes stdin/stdout. Perms unobservable (socket absent); /run/user/1000 is drwx------ vgpnk:vgpnk so it would be user-private regardless. NOT CONNECTED (per assignment)."
+    },
+    "config_dir_artifacts": {
+      "verdict": "no cli/socket/ipc artifacts; registry file carries cli:true",
+      "cmds": [
+        "ls -la ~/.config/obsidian/",
+        "cat ~/.config/obsidian/obsidian.json",
+        "find ~/.config/obsidian /run/user/1000 /tmp -maxdepth 2 -name 'cli.json' 2>/dev/null; echo rc=$?",
+        "sha256sum ~/.config/obsidian/obsidian.json ~/.config/obsidian/obsidian.log"
+      ],
+      "out": [
+        "~/.config/obsidian/ contains only Electron/Chromium state + obsidian.json/obsidian.log/Preferences/user-flags.conf/obsidian-1.14.4.asar; NO obsidian.sock, NO cli.json, NO ipc files",
+        "{\"vaults\":{\"357200b26f64b4e9\":{\"path\":\"/home/vgpnk/Documents/shokoknowledge\",\"ts\":1791912393905,\"open\":true}},\"cli\":true}",
+        "rc=1 (empty) -> no cli.json anywhere probed",
+        "bc1b5a3425228889bd351251eae1d29482ab5001d13f739b804b84ad8c3c4496  obsidian.json; e85e7ccdc8005b9c9fd4cd330fb33866c3337c8aff107b5c52c51760dcd30d5f  obsidian.log"
+      ],
+      "semantics": "`cli:true` is exactly the AppConfig field toggled by `l.ipcMain.on(\"cli\",(o,i)=>{i===!0&&!C.cli?(C.cli=!0,...)})` -> matches Settings > General > Advanced > 'Command line interface' ('Allow interactions with Obsidian from the command line', optionCliDescription in bundle). ts=1791912393905 = 2026-10-13 14:26:33 -0300 (vault first-open time; 'open:true' is stale, app is closed)."
+    },
+    "shim": {
+      "verdict": "NOT REGISTERED",
+      "cmds": [
+        "ls -la /usr/bin/obsidian* /usr/local/bin/obsidian* ~/.local/bin/obsidian* 2>&1",
+        "find /usr /opt /home/vgpnk/.local -maxdepth 6 -name 'obsidian-cli' 2>/dev/null; echo rc=$?",
+        "ls -la /usr/lib/electron43/obsidian-cli 2>&1",
+        "pacman -Qo /usr/bin/obsidian /usr/bin/obsidian-cli-inspector; pacman -Q obsidian obsidian-cli-inspector"
+      ],
+      "out": [
+        "/usr/bin/obsidian (bash wrapper -> exec electron43 /usr/lib/obsidian/app.asar), /usr/bin/obsidian-cli-inspector (3.4MB rust binary); NO ~/.local/bin/obsidian, NO /usr/local/bin/obsidian",
+        "rc=1 (empty) -> no obsidian-cli binary anywhere",
+        "No such file or directory (rc=2) -> dirname(execPath)=/usr/lib/electron43 has no obsidian-cli",
+        "obsidian 1.13.7-2 (package), obsidian-cli-inspector 1.0.3-1 (separate third-party package)"
+      ],
+      "bundle_registration_logic": "ipc 'register-cli': precondition `p = basename(process.argv0).toLowerCase().includes(\"obsidian\")` else refuses (\"Unable to add to command line because the executable is ... instead of obsidian\"); Linux branch looks for `obsidian-cli` next to execPath and copies it to ~/.local/bin/obsidian, else symlinks execPath (or $APPIMAGE) to ~/.local/bin/obsidian. On this Arch electron43 packaging execPath basename is 'electron' and no obsidian-cli ships in the package -> registration is bundle-derived BROKEN/unregistered (marked to-verify in-vivo; cannot test without launching the GUI, which is forbidden). Current state measured: never registered.",
+      "path_alias": "~/.bashrc:65 `alias oci=\"obsidian-cli-inspector\"` — unrelated to the official CLI."
+    },
+    "inspector_tool": {
+      "verdict": "independent tool, not the official CLI",
+      "out": [
+        "obsidian-cli-inspector --version -> 'obsidian-cli-inspector 1.0.3'",
+        "--help -> 'A local-first, read-only CLI/TUI for Obsidian vaults ... All data is stored locally in a SQLite database'",
+        "owns its own store: ~/.config/obsidian-cli-inspector/{config.toml,vault.db(105MB),logs/}; strings show config key database_path = \"~/.config/obsidian-cli-inspector/vault.db\"",
+        "It does NOT talk to the Obsidian app/socket; usable as an independent read-only vault reader, but it cannot serve as the official-CLI entry point."
+      ]
+    },
+    "bundle_hashes": {
+      "cmds": ["sha256sum ~/.config/obsidian/obsidian-1.14.4.asar /usr/lib/obsidian/obsidian.asar /usr/lib/obsidian/app.asar"],
+      "out": [
+        "146ef8470d8cbb4a6db209bdc19bf2bad13350444186c0fd93c31087b142b92f  ~/.config/obsidian/obsidian-1.14.4.asar (running 1.14.4 main bundle)",
+        "a52a7daf1e2460bae03de80f2816604bd16a56cd374fbe5ce8d1a9ef5604059d  /usr/lib/obsidian/obsidian.asar (1.13.7 packaged bundle)",
+        "8588f1fd23c9f63d3507a9740d656252cf0fbe0538e00e5d8eb7660533416c52  /usr/lib/obsidian/app.asar (electron launcher asar)",
+        "Both main bundles contain the .obsidian-cli.sock construction (minifier variable names differ: ge/F vs de/k) -> socket path constant across 1.13.7 and 1.14.4."
+      ]
+    },
+    "vault_side": {
+      "verdict": "no CLI artifacts in vault",
+      "cmds": ["find /home/vgpnk/Documents/shokoknowledge/.obsidian -maxdepth 3; find /home/vgpnk/Documents/shokoknowledge -maxdepth 2 -iname '*cli*' -o -maxdepth 2 -iname '*.sock'"],
+      "out": [
+        ".obsidian/ = {graph.json, core-plugins.json, app.json ({}), appearance.json, workspace.json}; no cli/sock/ipc files",
+        "no *cli* or *.sock under the vault (read-only probe; nothing written)"
+      ]
+    }
+  },
+  "consequences_for_round": [
+    "The official-CLI verification path is NOT exercisable right now: app down (no socket), no CLI shim registered, and no obsidian-cli binary exists on this host. Any ledger verification in this round must use the sha256sum fallback under the vault path (read-only) as the receipt method of record.",
+    "Even with the app running, the client entry point is missing on this Arch electron43 packaging (bundle-derived; to-verify). The operator path to a working CLI would be: start the app (socket appears at /run/user/1000/.obsidian-cli.sock), then 'Set up CLI to work in the terminal' — likely broken on this packaging per the bundle logic above; operator-owned decision.",
+    "Future CLI tests (mocks) can rely on the client protocol measured in the bundle: unix socket at $XDG_RUNTIME_DIR/.obsidian-cli.sock; request = one newline-terminated JSON line {argv:[...], tty:bool, cwd:string}; server executes window.handleCli(argv) in the target vault renderer; refuses unless cli:true with 'Command line interface is not enabled. Please turn it on in Settings > General > Advanced.'; vault selection via argv 'vault=<id-or-name>' or cwd."
+  ],
+  "preamble": {
+    "cwd": "/home/vgpnk/Projects/shokunin",
+    "fragment_path": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-4/seat-03.json",
+    "written_at": "2026-10-18T14:05:00-03:00",
+    "mode": "read-only recon; no socket connection attempted; no vault writes; no app launch; scratch files /tmp/s03-asar-strings.txt, /tmp/s03-app-asar-strings.txt only"
+  }
+}

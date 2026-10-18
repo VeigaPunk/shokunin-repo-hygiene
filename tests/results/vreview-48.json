@@ -1,0 +1,151 @@
+{
+ "seat": "S48",
+ "role": "reviewer",
+ "round": 4,
+ "lane": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+ "task": "Obsidian-CLI vault verification \u2014 independent review of round-4 candidates",
+ "reviewed_at_local": "2026-10-18T14:16:00-03:00",
+ "spec": {
+  "contract": "tests/vault/runner-*.sh + tests/vault/case-V*/expected.json (no tools/*.spec.md for round 4)",
+  "vocabulary_rule": "runner-26.sh:428-433 \u2014 a pass requires the literal VERIFIED / NOT-VERIFIED token in the tool's own output; SAFE/NOT-SAFE is the r2 baseline vocabulary and is recorded but NEVER counted as a pass. runner-26.sh:310-311 prefers a line starting with VERIFIED|NOT-VERIFIED, falling back to VERDICT|SAFE|NOT-SAFE.",
+  "case_accept_rule": "case-level accept.exact / accept.contains binds to the case's PRIMARY target only (runner-28 scopes it via primary_target); positive control targets inside a case (V2/V3 matched-notes) must be judged on verdict class, not on the negative-case accept list."
+ },
+ "method": {
+  "independence": "own fixture world under /tmp/s48-review (23 single-row ledgers so every verdict is attributable to exactly one row \u2014 no shadowing by later valid rows), own CLI/rails sandbox with a poisoned `obsidian` GUI shim and a logging `obsidian-cli-inspector` shim, plus the authors' own tests/vault/case-V* fixtures built into fresh mktemp roots.",
+  "harness": "/tmp/s48-review/{mkworld48.sh,probe48.sh,probe48b.sh,vcases48.py,run48.sh}; every score is revision-pinned (sha256 before and after the run) because candidates were edited live by their authors.",
+  "families": {
+   "f1": "25 probes \u2014 ledger semantics: matched / vault-tamper / source-tamper / vault-missing / header-only / empty / CRLF / extra-cols / spaces / no-trailing-newline / empty-hash columns (src, vault, both) / uppercase hex / FIFO / /proc/version / dangling symlink / traversal / secret-shaped / dir digest / source symlink escape, plus --help and --selftest.",
+   "f2": "10 probes \u2014 CLI + rails: valid row under a poisoned PATH, GUI launcher never invoked, app process count never grows, ~/.config/obsidian{,-cli-inspector} untouched, inspector never asked to run init/index, real vault + live ledger byte-identical, no-trailing-newline row, uppercase hex, relative-path row.",
+   "f3": "the authors' own tests/vault/case-V* contracts (V1..V8), built into fresh roots, scored against each case's expected.json."
+  },
+  "rails_kept": "read-only over /home/vgpnk/Documents/shokoknowledge (sha256sum/stat/find only), never executed /usr/bin/obsidian or `obsidian`, live ledger stayed header-only (1 line, sha256 3f7e9f2a\u2026 before and after), no writes outside /tmp and this fragment."
+ },
+ "impls": {
+  "souji-vault-verify.impl-20": {
+   "sha256": "95fa47182cc163f570f032da398e4bb6f7506c2d7befbc49641e830eccc9a32a",
+   "shipped_mode": "755",
+   "edited_mid_run": false,
+   "scores": {
+    "f1": 49,
+    "f1_axis": "families f1+f2+f3 (probe pass count)",
+    "detail": {
+     "f1": "24/25",
+     "f2": "10/10",
+     "f3": "15/15"
+    }
+   },
+   "selftest_exit": 0,
+   "r4_vocabulary": true,
+   "fatal_defects": [],
+   "observations": [
+    "Emits BOTH vocabularies per target: `VERDICT<TAB>path<TAB>SAFE|NOT-SAFE<TAB>receipt<TAB>evidence` first, then `VERIFIED(receipt)` / `NOT-VERIFIED(reason)` on the next line. runner-26.sh:310 picks the r4 line, so the r4 requirement is satisfied; a harness that takes the FIRST line only would score it r2 \u2014 noted for the parent, not counted as a defect.",
+    "Only failing probe: V13-uppercase-hex \u2014 a ledger row whose hash columns are uppercase hex is refused (conservative NOT-VERIFIED, never a false VERIFIED).",
+    "Ships a documented two-line contract and refuses the GUI launcher by construction."
+   ],
+   "cross_check": "Independent runner matrices agree: vrun-26 17/17, vrun-27 26/26, vrun-28 16/17, vrun-31 18/20, vrun-34 16/16, vrun-37 10/10. S54 adversarial: 13 pass / 2 fail / 6 warn.",
+   "total": 49,
+   "max_total": 50,
+   "selectable": true
+  },
+  "souji-vault-verify.impl-24": {
+   "sha256": "2b224647abedc3ee00b38c3d5e1dee38baab05a705a8bebbdc65fb7b4cc47a50",
+   "shipped_mode": "755",
+   "edited_mid_run": false,
+   "scores": {
+    "f1": 46,
+    "f1_axis": "families f1+f2+f3 (probe pass count)",
+    "detail": {
+     "f1": "22/25",
+     "f2": "9/10",
+     "f3": "15/15"
+    }
+   },
+   "selftest_exit": 0,
+   "r4_vocabulary": true,
+   "fatal_defects": [
+    "false-VERIFIED self-receipt: a ledger row whose vault_path equals its source_path yields `VERIFIED moved-to-obsidian` (reproduced: /tmp/s48-review/selfrow, single-row ledger; impl-20 refuses it as NOT-VERIFIED(source-equals-vault)). Removing the target deletes the only copy \u2014 the lane's worst failure. Corroborated by S41 (vreview-41 V06) and S45 (V06)."
+   ],
+   "observations": [
+    "Clean r4 output: `VERIFIED<TAB>path<TAB>moved-to-obsidian<TAB>vault=\u2026 source-sha256=\u2026 vault-sha256=\u2026` / `NOT-VERIFIED(reason)<TAB>path<TAB>none<TAB>evidence`.",
+    "V11/W8 (same defect, found twice): a ledger whose final data row has NO trailing newline is read as zero rows (`rows=0` in its own evidence) -> a valid row is dropped -> NOT-VERIFIED(no-ledger-row). Conservative direction, but it is a missed receipt: `while read` discards an unterminated final line.",
+    "V20: a directory row is refused with NOT-VERIFIED(source-absent) even though the source directory exists and its digest matches \u2014 directory-digest receipts are not implemented.",
+    "V13: uppercase-hex row refused (same conservative behaviour as impl-20).",
+    "Refuses the GUI launcher by name and never executes a resolved `obsidian`.",
+    "Self-receipt trap (vault_path == source_path): false VERIFIED. Also reproduces with a symlink alias (alias.md -> self.md) \u2014 refused there, but only as vault-absent, not as a self-receipt.",
+    "Nested receipt (vault copy inside the source directory) is refused as source-absent, i.e. directory-digest receipts are unimplemented rather than wrongly credited."
+   ],
+   "cross_check": "vrun-24 12/14, vrun-26 17/17, vrun-27 26/26, vrun-28 13/17, vrun-31 18/20, vrun-34 15/16, vrun-37 9/10. S54 adversarial: 3 fail.",
+   "total": 46,
+   "max_total": 50,
+   "selectable": false
+  },
+  "souji-vault-verify.impl-21": {
+   "sha256": "ed1881e8fd82748934a6f086164698aa7a30b4c47149adc93df1f4e349eba4dc",
+   "shipped_mode": "755",
+   "edited_mid_run": false,
+   "scores": {
+    "f1": 41,
+    "f1_axis": "families f1+f2+f3 (probe pass count)",
+    "detail": {
+     "f1": "23/25",
+     "f2": "10/10",
+     "f3": "8/15"
+    }
+   },
+   "selftest_exit": 1,
+   "r4_vocabulary": false,
+   "fatal_defects": [
+    "--selftest does not exit 0 as shipped: 4 failures (E6 evidence substring, L2 dir-row digest, C1 cli=agree evidence) plus an unhandled `LIE_OLD: unbound variable` crash at line 786 that aborts the selftest run.",
+    "Emits the r2 vocabulary only (`VERDICT<TAB>path<TAB>SAFE|NOT-SAFE<TAB>\u2026`): runner-26.sh:430-433 records r2-vocabulary output as a non-pass, which is why independent matrices score it 0/17 and 0/26."
+   ],
+   "observations": [
+    "Same content as tools/impl-21.sh (identical sha256).",
+    "On my f3 battery its verdict CLASS is right on 13/15 targets \u2014 the losses are vocabulary (V1/V7/V8 VERIFIED expected, got r2 SAFE) and reason spelling (V4 vault-absent vs vault-unreachable, V5 source-absent vs unreachable).",
+    "Conservative on the two probes it loses in f1: uppercase-hex refused, and its own selftest red."
+   ],
+   "cross_check": "vrun-26 0/17, vrun-27 10/26, vrun-28 0/17, vrun-31 17/20, vrun-34 15/16, vrun-36 4/5. S54 adversarial: 7 false-SAFE/contract failures (worst of the three).",
+   "total": 41,
+   "max_total": 50,
+   "selectable": false
+  }
+ },
+ "ranking": [
+  "souji-vault-verify.impl-20",
+  "souji-vault-verify.impl-24",
+  "souji-vault-verify.impl-21"
+ ],
+ "ranking_basis": "review totals with fatal classes first: impl-21 (2 fatals: selftest red, r2 vocabulary) and impl-24 (1 fatal: false-VERIFIED self-receipt) rank below impl-20 (0 fatals, 49/50), whose only miss is a conservative refusal of an uppercase-hex ledger row.",
+ "winner_input": {
+  "recommended": "souji-vault-verify.impl-20 (95fa4718\u2026)",
+  "why": "Only candidate clean on all three of my families (24/25, 10/10, 15/15) with selftest exit 0, r4 vocabulary, shipped mode 755, and zero fatal classes; independently corroborated by 6 runner matrices and the S54 adversarial battery.",
+  "residual_risk": "The self-receipt trap is a CONTRACT gap, not only an impl bug: two of three candidates mint a receipt whose removal destroys the only copy. impl-20 closes it; any future implementation must check that the vault copy is a distinct file outside the source tree (S54's critical findings p-self-move / p-alias / p-nested).",
+  "advisory_for_parent": "S54's critical findings (self-move rows, symlink aliases, nested receipts yielding VERIFIED) apply to the ledger contract itself, not to one candidate: any implementation that verifies 'the vault copy matches the row' without checking that the vault copy is a DISTINCT file outside the source tree will mint a receipt whose removal destroys the only copy. Worth a spec sentence before this capability is used for real removals."
+ },
+ "disagreements": [
+  "S55's probe log (tests/vault/s55-raw/probe-log.txt) records ~14 FAILs against the r2 tool as 'false-SAFE'. I reproduced its ledger files and disagree with the classification: s55-ledger-s.tsv holds many rows for the SAME source path in one file, so a wrong-hash row is skipped and a later valid row supplies the receipt \u2014 SAFE is correct there, and the FAILs are fixture artifacts. My single-row ledgers isolate the same semantics and show the r2 tool at 23/25.",
+  "A sibling seat launched the Obsidian GUI mid-round (PID 2203988 at 13:58:37, socket /run/user/1000/.obsidian-cli.sock appearing at 13:58:38) after the recon seats had measured 'app not running'. This does not change the round verdict (the shim is still absent, so no CLI entry point exists), but it means any seat's 'no GUI spawn' claim must be read as before/after-relative, not as a claim about the host. I verified the real vault is byte-identical across the whole window (63 files, identical sha256 manifest)."
+ ],
+ "safety": {
+  "read_only": true,
+  "gui_launcher_executed": "never",
+  "vault_writes": "none",
+  "vault_untouched_proof": "63-file sha256 manifest identical before and after all runs (/tmp/s48-review/vault-before.sha vs vault-after-applaunch.sha, diff rc=0)",
+  "live_ledger": "header-only, 1 line, unchanged (sha256 3f7e9f2ab9e614464cb031d3f00a812a21f0e889f7666309a90d7784b75a9599)",
+  "git_mutations": "none",
+  "secrets": "no credential-shaped file read; secret-shaped targets were used only as refusal fixtures",
+  "wrote": [
+   "/tmp/s48-review/**",
+   "tests/results/vreview-48.json"
+  ]
+ },
+ "evidence_cmds": [
+  "bash /tmp/s48-review/run48.sh tools/souji-vault-verify.impl-20.sh /tmp/s48-review/final-i20",
+  "bash /tmp/s48-review/run48.sh tools/souji-vault-verify.impl-24.sh /tmp/s48-review/final-i24",
+  "bash /tmp/s48-review/run48.sh tools/souji-vault-verify.impl-21.sh /tmp/s48-review/final-i21",
+  "bash -n tools/souji-vault-verify.impl-20.sh   # rc=0 on 95fa4718; the earlier revision failed at line 271 with \"syntax error near unexpected token `;;'\"",
+  "bash tools/impl-21.sh --selftest ; echo rc=$?   # rc=1, FAIL E6/L2/C1 + 'line 786: LIE_OLD: unbound variable'",
+  "timeout 30 env SOUJI_LEDGER=/tmp/s48-review/world/ledgers/V11-noeol.tsv bash tools/souji-vault-verify.impl-24.sh /tmp/s48-review/world/src/notes/noeol.md   # NOT-VERIFIED(no-ledger-row) ... rows=0",
+  "cd /home/vgpnk/Documents/shokoknowledge && find . -type f -not -path './.git/*' -print0 | sort -z | xargs -0 sha256sum | diff - /tmp/s48-review/vault-before.sha   # empty",
+  "python3 /tmp/s48-review/vcases48.py <repo> <out> tools/souji-vault-verify.impl-20.sh   # vcases: 15/15"
+ ]
+}

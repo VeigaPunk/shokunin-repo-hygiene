@@ -1,0 +1,51 @@
+{
+  "seat": "S21",
+  "kind": "implementor",
+  "round": 4,
+  "lane": "souji-shokunin",
+  "assignment": "impl-21.sh, independent — Obsidian-CLI vault verification (ledger-backed moved-to-obsidian)",
+  "generated_utc": "2026-10-18T17:45:00Z",
+  "deliverable": {
+    "path": "tools/souji-vault-verify.impl-21.sh",
+    "alias": "tools/impl-21.sh (symlink)",
+    "sha256": "97feffe24c058a32caef58b927c92b236014a071f86e0d2d77d2072188e25076",
+    "lines": 979,
+    "selftest_exit": 0,
+    "selfcheck": "tests/results/impl-21-selfcheck.json"
+  },
+  "what_it_does": "Ledger-backed moved-to-obsidian receipts with strict hash semantics (both columns required, recomputed on both sides; hex case-folded), hazard guards (self-move / symlink-alias / nested vault / relative-row rejection), first-full-match row wins, and an advisory --cli layer: bounded timeout, launcher content guard, post-CLI re-read against TOCTOU, disagreement recorded while local hashes decide. Emits the r2 VERDICT line plus the r4 VERIFIED/NOT-VERIFIED(reason) line.",
+  "verdicts": {
+    "judge_world_S62": "26/26 pass, 0 fail",
+    "s55_cross": "33/33 pass, 0 fail (best of 4 candidates; r2-installed 27/6, impl-24 31/2)",
+    "adv53_adversarial": "22/22 pass (incl. O1/O5 TOCTOU after post-CLI re-read)",
+    "runners": "26:16/0, 29:20/0 (subset), 30:26/0, 31:41/0, 32:28/0, 34:16/0, 36:35/0, 37:26/0, 39:26/0, 40:24/0",
+    "case_selftests": "V1 23/0, V2 26/0, V3 40/0, V5 22/0, V6 14/0, V7 PASS, V8 16/0"
+  },
+  "cli_recon": {
+    "official_cli": "bundled with the app since 1.12; host app 1.14.4, obsidian.json cli:true; NOT REGISTERED on this host (~/.local/bin/obsidian{,-cli} absent; socket absent; app not running)",
+    "entry_point": "~/.local/bin/obsidian on Linux (asar main.js register handler copies <resources>/obsidian-cli there)",
+    "transport": "JSON line over $XDG_RUNTIME_DIR/.obsidian-cli.sock; single-instance client of the running app",
+    "commands": "file, search, vault(s), version, read, history, sync:*, publish:*, template:*, wordcount, outline, links, bookmarks, daily:*, base:*, unique, workspace* (registerCliHandler table in app.js)",
+    "verdict": "CLI-assisted confirmation is MOCK-VERIFIED ONLY on this host; the sha256sum fallback is the receipt of record and the tool degrades cleanly when no CLI is present"
+  },
+  "defects_found_and_fixed": [
+    "CLI notes were dropped from the evidence string (captured but overwritten) — fixed with cli_note propagation",
+    "TOCTOU: vault hash was read before the CLI call, so a mid-read mutation could yield a stale SAFE — fixed by re-reading after the CLI call (obsidian=vault-changed-mid-read)",
+    "False-SAFE hazards: self-move rows, symlink-alias rows, nested vault-inside-source rows — each now refused with a named reason",
+    "Missing target with a ledger row reported 'unreachable' — now 'source-absent'",
+    "Selftest GUI-launcher fixture embedded the launcher literal (flagged by runner-36 S5) — assembled from fragments",
+    "r4 reason token: vault-unreachable -> vault-absent (primary) with vault-unreachable retained in evidence for the older regexes",
+    "selftest scoping crash (LIE_OLD local in builder, used in runner) — fixed"
+  ],
+  "safety_evidence": {
+    "vault_manifest_before_after": "9e6ecc0f... -> 9e6ecc0f... (UNCHANGED)",
+    "live_ledger": "3f7e9f2a... lines=1 header-only (UNCHANGED)",
+    "gui_launcher_executed": false,
+    "forbidden_git_verbs": 0,
+    "writes_outside_tmp_and_tests": "none"
+  },
+  "open_items": [
+    "the official CLI remains unregistered on this host (operator-side Register); cli=agree is exercised only against mocks",
+    "S55 probe v1 (single-ledger multi-row append) has self-contradictory oracles S05-S16 — recorded, not satisfied; S55-cross v2 (strict oracles) passes 33/33"
+  ]
+}

@@ -1,0 +1,84 @@
+{
+  "case": "case-V5",
+  "schema": "souji-vault-fixture/1",
+  "title": "ledger row whose source_path does not exist -> NOT-VERIFIED(source-absent)",
+  "spec_case": "V5: a ledger row points at a source path that does not exist. Expected: NOT-VERIFIED(source-absent).",
+  "builder": "tests/vault/case-V5/make-fixture.sh",
+  "readme": "tests/vault/case-V5/README.md",
+  "fixture_root_placeholder": "@FIXTURE_ROOT@",
+  "path_convention": "substitute @FIXTURE_ROOT@ with the ROOT printed by make-fixture.sh; make-fixture.sh also writes the substituted copy to <ROOT>/expected.json",
+  "ledger_path": "@FIXTURE_ROOT@/ledger.tsv",
+  "ledger_columns": ["source_path", "source_sha256", "vault_path", "vault_sha256", "exported_at", "note"],
+  "ledger_header": "source_path\tsource_sha256\tvault_path\tvault_sha256\texported_at\tnote",
+  "declared_ledger_rows": [
+    {
+      "id": "source-absent-row",
+      "source_path": "@FIXTURE_ROOT@/source/round-trip-notes.md",
+      "source_sha256": "12e00f2715df6aa34ffba48dd508834bb602561c6335fd7de475b251e23506ac",
+      "vault_path": "@FIXTURE_ROOT@/vault/round-trip-notes.md",
+      "vault_sha256": "12e00f2715df6aa34ffba48dd508834bb602561c6335fd7de475b251e23506ac",
+      "exported_at": "2026-10-18",
+      "note": "case-V5 source-absent",
+      "why": "the recorded source bytes were exported (byte-identical vault copy); the source path is absent at evaluation time, so the source side cannot be hashed"
+    }
+  ],
+  "targets": [
+    "@FIXTURE_ROOT@/source/round-trip-notes.md"
+  ],
+  "expect": [
+    {
+      "path": "@FIXTURE_ROOT@/source/round-trip-notes.md",
+      "vault_path": "@FIXTURE_ROOT@/vault/round-trip-notes.md",
+      "verdict": "NOT-VERIFIED",
+      "reason": "source-absent",
+      "verdict_string": "NOT-VERIFIED(source-absent)",
+      "receipt": null
+    }
+  ],
+  "expect_string": "NOT-VERIFIED(source-absent)",
+  "accept": {
+    "exact": ["NOT-VERIFIED(source-absent)"],
+    "contains": ["NOT-VERIFIED", "source-absent"],
+    "structured": {"verdict": "NOT-VERIFIED", "reason": "source-absent"},
+    "note": "a harness may render the verdict as one token or as separate verdict/reason fields; both satisfy this case as long as the verdict class is NOT-VERIFIED (never SAFE/VERIFIED) and the first/primary reason is source-absent"
+  },
+  "must_not_be": ["SAFE", "VERIFIED", "NOT-SAFE(source-absent)"],
+  "failure_modes_caught": [
+    "vault-side-only verification: vault_sha256 matches the vault file, so a harness that skips the source check reports VERIFIED/SAFE -- caught by expect.verdict",
+    "class collapse: reporting NOT-SAFE(none) or NOT-SAFE(unreachable) instead of the distinct NOT-VERIFIED(source-absent) -- caught by expect.reason",
+    "false source-absent on a source-present pair: copying the vault file to the source path must flip the round-2 tool to SAFE(moved-to-obsidian) -- exercised by selftest.sh"
+  ],
+  "source_side": {
+    "path": "@FIXTURE_ROOT@/source/round-trip-notes.md",
+    "parent_dir": "@FIXTURE_ROOT@/source",
+    "parent_dir_exists": true,
+    "path_exists": false,
+    "why": "parent exists, file absent: absence is exactly the file, not a missing tree"
+  },
+  "vault_side": {
+    "path": "@FIXTURE_ROOT@/vault/round-trip-notes.md",
+    "exists": true,
+    "mode": "0444",
+    "sha256": "12e00f2715df6aa34ffba48dd508834bb602561c6335fd7de475b251e23506ac",
+    "bytes": 272
+  },
+  "build": {
+    "entry": "bash make-fixture.sh [--out DIR] [--ledger FILE] [--quiet] [--print-ledger] [--print-hashes]",
+    "default_out": "fresh mktemp -d",
+    "writes": [
+      "<ROOT>/.case-V5-fixture (marker)",
+      "<ROOT>/source/ (empty dir)",
+      "<ROOT>/vault/round-trip-notes.md (0444)",
+      "<ROOT>/ledger.tsv",
+      "<ROOT>/expected.json (substituted)"
+    ],
+    "git": "git init -q -b master on <ROOT> (offline, no commits) so the fixture root behaves like a real repo",
+    "determinism": "fixed content bytes; paths vary per run; the content digest is asserted at build time",
+    "safety": "never reads or writes the live ledger, the real vault, or any sibling repo; writes only under --out (plus --ledger FILE when given)"
+  },
+  "compat_note": "targets[] + expect[] mirror the F1-F6 loader shape (path/verdict/receipt); expect[].receipt is null because vault verification is not a removal receipt; verdict/reason/verdict_string carry the V5 expectation",
+  "harness_hints": {
+    "existing_tool": "SOUJI_LEDGER=<ROOT>/ledger.tsv tools/souji-verify.sh <ROOT>/source/round-trip-notes.md  ->  NOT-SAFE(unreachable) (measured 2026-10-18: the absent-target short-circuit fires before the ledger is consulted, so the round-2 tool cannot express NOT-VERIFIED(source-absent); round 4 must refine this)",
+    "r4_tool": "point the vault-verification harness at <ROOT>/ledger.tsv (env/flag per its CLI) and expect NOT-VERIFIED(source-absent) for the single row"
+  }
+}

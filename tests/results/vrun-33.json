@@ -1,0 +1,983 @@
+{
+  "seat": "S33",
+  "role": "test-runner",
+  "round": 4,
+  "runner": "tests/vault/vrun-33.sh",
+  "runner_sha256": "89d2ca729f92fe902b8d8f7eee4c860bf6d676877cc10ebe3a40e128e025090e",
+  "tool": "tools/souji-verify.sh",
+  "tool_present": true,
+  "tool_sha256_at_start": "7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820",
+  "tool_sha256_at_write": "7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820",
+  "lane_head": "78694acefa316edfc77842583409b7133350718c",
+  "started_at": "2026-10-18T17:11:56Z",
+  "finished_at": "2026-10-18T17:12:01Z",
+  "stale_days": 1,
+  "cases": [
+    {
+      "id": "A0",
+      "name": "tool-presence",
+      "kind": "info",
+      "cmd": "test -f + sha256sum tools/souji-verify.sh",
+      "expect": "present",
+      "rc": 0,
+      "actual": "present sha256=7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820 mode=-rwxr-xr-x",
+      "pass": null,
+      "note": ""
+    },
+    {
+      "id": "A3",
+      "name": "r4-cli-surface",
+      "kind": "info",
+      "cmd": "grep -c -- '--cli' tools/souji-verify.sh",
+      "expect": "cli flag declared or not",
+      "rc": 0,
+      "actual": "cli_refs=0 gui_abs_refs=0",
+      "pass": null,
+      "note": "r4 integration surface; gui_abs_refs must stay 0 (GUI launcher never named as exec target)"
+    },
+    {
+      "id": "GL0",
+      "name": "fixture digests (alpha/beta/dir)",
+      "kind": "groundtruth",
+      "cmd": "echo alpha_ss=390faf862dbddae3add4f37471f8933f6ea375c2c143426b10e164d4b455ee23 alpha_vs=390faf862dbddae3add4f37471f8933f6ea375c2c143426b10e164d4b455ee23 dir_dig=efc981f8596f0946f03d00236f4fa21de691dc78765ddcc12b4f8deec9925806 dir_vs=efc981f8596f0946f03d00236f4fa21de691dc78765ddcc12b4f8deec9925806",
+      "expect": "fixture ground-truth",
+      "rc": 0,
+      "actual": "alpha_ss=390faf862dbddae3add4f37471f8933f6ea375c2c143426b10e164d4b455ee23 alpha_vs=390faf862dbddae3add4f37471f8933f6ea375c2c143426b10e164d4b455ee23 dir_dig=efc981f8596f0946f03d00236f4fa21de691dc78765ddcc12b4f8deec9925806 dir_vs=efc981f8596f0946f03d00236f4fa21de691dc78765ddcc12b4f8deec9925806",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "id": "GL7",
+      "name": "L7 ledger last byte",
+      "kind": "groundtruth",
+      "cmd": "tail -c1 '/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-led-l7.tsv' | od -c | head -1",
+      "expect": "fixture ground-truth",
+      "rc": 0,
+      "actual": "0000000   7",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "id": "A1",
+      "name": "bash-n-syntax",
+      "kind": "cli",
+      "cmd": "bash -n tools/souji-verify.sh",
+      "expect": "exit 0",
+      "rc": 0,
+      "actual": "bash -n rc=0",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "id": "A2",
+      "name": "selftest-rc0-and-isolation",
+      "kind": "cli",
+      "cmd": "bash tools/souji-verify.sh --selftest",
+      "expect": "rc=0 and live lane tree untouched",
+      "rc": 0,
+      "actual": "PASS H5 fixtures under mktemp -d (/tmp/souji-verify-selftest.63wSfp)|selftest: 24 checks, 0 failed|",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "id": "C1",
+      "name": "usage-unknown-flag",
+      "kind": "cli",
+      "cmd": "souji-verify.sh --bogus-flag",
+      "expect": "rc=2",
+      "rc": 2,
+      "actual": "(no VERDICT line for target '')",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "id": "C2",
+      "name": "usage-no-args",
+      "kind": "cli",
+      "cmd": "souji-verify.sh (no args)",
+      "expect": "rc=2",
+      "rc": 2,
+      "actual": "(no VERDICT line for target '')",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "id": "C3",
+      "name": "missing-target",
+      "kind": "cli",
+      "cmd": "souji-verify.sh <nonexistent>",
+      "expect": "rc=0 NOT-SAFE unreachable",
+      "rc": 0,
+      "actual": "VERDICT\\t/tmp/souji-vrun33.M9VN1Z/missing-vrun33\\tNOT-SAFE\\tunreachable\\tmissing path",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "id": "C4",
+      "name": "json-flag-parseable",
+      "kind": "cli",
+      "cmd": "souji-verify.sh --json <missing>",
+      "expect": "rc=0, stdout parses as JSON or JSONL",
+      "rc": 0,
+      "actual": "parse=object",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "id": "C5",
+      "name": "cli-flag-absent",
+      "kind": "cli",
+      "cmd": "souji-verify.sh --cli <missing>",
+      "expect": "no --cli declared -> unknown flag rc=2 (never hang/ignore)",
+      "rc": 2,
+      "actual": "(no VERDICT line for target '')",
+      "pass": true,
+      "note": "fallback-only tool; r4 upgrade flips this to rc=0"
+    },
+    {
+      "id": "C6",
+      "name": "cli-hang-bounded",
+      "kind": "blocked-interface",
+      "cmd": "souji-verify.sh --cli <target> with hanging cli",
+      "expect": "requires --cli in the tool",
+      "rc": 0,
+      "actual": "tool has no --cli (cli_refs=0)",
+      "pass": null,
+      "note": "unblocked by the r4 integration; re-run this runner after the upgrade"
+    },
+    {
+      "id": "L1",
+      "name": "ledger-correct-file-row",
+      "kind": "fixture",
+      "cmd": "souji-verify.sh </home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/alpha.md> (ledger=/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-led-l1.tsv)",
+      "expect": "spec: ^SAFE$/^moved-to-obsidian$",
+      "rc": 0,
+      "actual": "VERDICT\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/alpha.md\\tSAFE\\tmoved-to-obsidian\\tledger-row vault=/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-vault/alpha.md source-sha256=390faf862dbd",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "id": "L2",
+      "name": "ledger-wrong-source-hash",
+      "kind": "fixture",
+      "cmd": "souji-verify.sh </home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/alpha.md> (ledger=/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-led-l2.tsv)",
+      "expect": "spec: ^NOT-SAFE$/",
+      "rc": 0,
+      "actual": "VERDICT\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/alpha.md\\tNOT-SAFE\\tnone\\tpushed=no-introducing-commit; obsidian=source-sha-mismatch; obsidian=no-matching-ledger-row; stale=not-scratch-type",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "id": "L3",
+      "name": "ledger-wrong-vault-hash",
+      "kind": "fixture",
+      "cmd": "souji-verify.sh </home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/alpha.md> (ledger=/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-led-l3.tsv)",
+      "expect": "spec: ^NOT-SAFE$/",
+      "rc": 0,
+      "actual": "VERDICT\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/alpha.md\\tNOT-SAFE\\tnone\\tpushed=no-introducing-commit; obsidian=vault-sha-mismatch; obsidian=no-matching-ledger-row; stale=not-scratch-type",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "id": "L4",
+      "name": "ledger-empty-source-hash-file",
+      "kind": "fixture",
+      "cmd": "souji-verify.sh </home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/alpha.md> (ledger=/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-led-l4.tsv)",
+      "expect": "spec: ^NOT-SAFE$/",
+      "rc": 0,
+      "actual": "VERDICT\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/alpha.md\\tNOT-SAFE\\tnone\\tpushed=no-introducing-commit; obsidian=source-sha-mismatch; obsidian=no-matching-ledger-row; stale=not-scratch-type",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "id": "L5",
+      "name": "ledger-empty-vault-hash-file",
+      "kind": "fixture",
+      "cmd": "souji-verify.sh </home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/alpha.md> (ledger=/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-led-l5.tsv)",
+      "expect": "spec: ^NOT-SAFE$/",
+      "rc": 0,
+      "actual": "VERDICT\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/alpha.md\\tNOT-SAFE\\tnone\\tpushed=no-introducing-commit; obsidian=vault-sha-mismatch; obsidian=no-matching-ledger-row; stale=not-scratch-type",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "id": "L6a",
+      "name": "ledger-empty-vault-hash-dir",
+      "kind": "fixture",
+      "cmd": "souji-verify.sh </home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/dir-case> (ledger=/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-led-l6a.tsv)",
+      "expect": "spec: ^NOT-SAFE$/",
+      "rc": 0,
+      "actual": "VERDICT\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/dir-case\\tSAFE\\tmoved-to-obsidian\\tledger=source+vault-digest vault=/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-vault/dir-diff",
+      "pass": false,
+      "note": ""
+    },
+    {
+      "id": "L6b",
+      "name": "ledger-3field-dir-row",
+      "kind": "fixture",
+      "cmd": "souji-verify.sh </home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/dir-case> (ledger=/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-led-l6b.tsv)",
+      "expect": "spec: ^NOT-SAFE$/",
+      "rc": 0,
+      "actual": "VERDICT\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/dir-case\\tSAFE\\tmoved-to-obsidian\\tledger=source+vault-digest vault=/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-vault/dir-diff",
+      "pass": false,
+      "note": ""
+    },
+    {
+      "id": "L6c",
+      "name": "ledger-wrong-vault-hash-dir",
+      "kind": "fixture",
+      "cmd": "souji-verify.sh </home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/dir-case> (ledger=/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-led-l6c.tsv)",
+      "expect": "spec: ^NOT-SAFE$/",
+      "rc": 0,
+      "actual": "VERDICT\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/dir-case\\tNOT-SAFE\\tnone\\tpushed=no-introducing-commit; obsidian=vault-digest-mismatch; obsidian=no-matching-ledger-row; stale=not-scratch-type",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "id": "L7",
+      "name": "ledger-row-no-trailing-newline",
+      "kind": "fixture",
+      "cmd": "souji-verify.sh </home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/alpha.md> (ledger=/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-led-l7.tsv)",
+      "expect": "spec: ^SAFE$/^moved-to-obsidian$",
+      "rc": 0,
+      "actual": "VERDICT\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/alpha.md\\tNOT-SAFE\\tnone\\tpushed=no-introducing-commit; obsidian=no-matching-ledger-row; stale=not-scratch-type",
+      "pass": false,
+      "note": ""
+    },
+    {
+      "id": "L8",
+      "name": "ledger-header-only",
+      "kind": "fixture",
+      "cmd": "souji-verify.sh </home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/alpha.md> (ledger=/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-led-l8.tsv)",
+      "expect": "spec: ^NOT-SAFE$/",
+      "rc": 0,
+      "actual": "VERDICT\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/alpha.md\\tNOT-SAFE\\tnone\\tpushed=no-introducing-commit; obsidian=no-matching-ledger-row; stale=not-scratch-type",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "id": "L9",
+      "name": "ledger-correct-dir-row",
+      "kind": "fixture",
+      "cmd": "souji-verify.sh </home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/dir-case> (ledger=/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-led-l9.tsv)",
+      "expect": "spec: ^SAFE$/^moved-to-obsidian$",
+      "rc": 0,
+      "actual": "VERDICT\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/dir-case\\tSAFE\\tmoved-to-obsidian\\tledger=source+vault-digest vault=/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-vault/dir-case",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "id": "L10",
+      "name": "ledger-vault-path-is-a-dir",
+      "kind": "fixture",
+      "cmd": "souji-verify.sh </home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/alpha.md> (ledger=/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-led-l10.tsv)",
+      "expect": "spec: ^NOT-SAFE$/",
+      "rc": 0,
+      "actual": "VERDICT\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/alpha.md\\tNOT-SAFE\\tnone\\tpushed=no-introducing-commit; obsidian=vault-unreachable vault=/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-vault/isadir; obsidian=no-matching-ledger-row; stale=not-scratch-type",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "id": "L11",
+      "name": "ledger-garbage-exported-at",
+      "kind": "fixture",
+      "cmd": "souji-verify.sh </home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/alpha.md> (ledger=/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-led-l11.tsv)",
+      "expect": "spec: ^SAFE$/^moved-to-obsidian$",
+      "rc": 0,
+      "actual": "VERDICT\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/alpha.md\\tSAFE\\tmoved-to-obsidian\\tledger-row vault=/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-vault/alpha.md source-sha256=390faf862dbd",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "id": "L12",
+      "name": "ledger-beta-both-hashes-match",
+      "kind": "fixture",
+      "cmd": "souji-verify.sh </home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/beta.md> (ledger=/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-led-l12.tsv)",
+      "expect": "spec: ^SAFE$/^moved-to-obsidian$",
+      "rc": 0,
+      "actual": "VERDICT\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/beta.md\\tSAFE\\tmoved-to-obsidian\\tledger-row vault=/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-vault/beta.md source-sha256=dbfe48a23fa0",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "id": "L14",
+      "name": "ledger-second-row-matches",
+      "kind": "fixture",
+      "cmd": "souji-verify.sh </home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/alpha.md> (ledger=/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-led-l14.tsv)",
+      "expect": "spec: ^SAFE$/^moved-to-obsidian$",
+      "rc": 0,
+      "actual": "VERDICT\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/alpha.md\\tSAFE\\tmoved-to-obsidian\\tledger-row vault=/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-vault/alpha.md source-sha256=390faf862dbd",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "id": "L16",
+      "name": "ledger-empty-vault-hash-dir-missing",
+      "kind": "fixture",
+      "cmd": "souji-verify.sh </home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/dir-case> (ledger=/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-led-l16.tsv)",
+      "expect": "spec: ^NOT-SAFE$/^none$",
+      "rc": 0,
+      "actual": "VERDICT\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/dir-case\\tNOT-SAFE\\tnone\\tpushed=no-introducing-commit; obsidian=vault-unreachable vault=/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-vault/nope-dir; obsidian=no-matching-ledger-row; stale=not-scratch-type",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "id": "L15",
+      "name": "ledger-crlf-row",
+      "kind": "info:fixture",
+      "cmd": "souji-verify.sh <alpha> (CRLF ledger row)",
+      "expect": "informational: CRLF tolerance unspecified",
+      "rc": 0,
+      "actual": "VERDICT\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/alpha.md\\tSAFE\\tmoved-to-obsidian\\tledger-row vault=/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-vault/alpha.md source-sha256=390faf862dbd",
+      "pass": null,
+      "note": "observed above; no assertion"
+    },
+    {
+      "id": "L13",
+      "name": "live-ledger-grants-nothing",
+      "kind": "live",
+      "cmd": "souji-verify.sh <fixture> (default live ledger)",
+      "expect": "header-only live ledger -> NOT-SAFE",
+      "rc": 0,
+      "actual": "VERDICT\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/alpha.md\\tNOT-SAFE\\tnone\\tpushed=no-introducing-commit; obsidian=no-matching-ledger-row; stale=not-scratch-type",
+      "pass": true,
+      "note": "live ledger stays header-only; read-only"
+    },
+    {
+      "id": "V1",
+      "name": "live-vault-real-file",
+      "kind": "live",
+      "cmd": "souji-verify.sh <live-src> (real vault row)",
+      "expect": "rc=0 SAFE(moved-to-obsidian), evidence names the real vault",
+      "rc": 0,
+      "actual": "VERDICT\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/live-src.md\\tSAFE\\tmoved-to-obsidian\\tledger-row vault=/home/vgpnk/Documents/shokoknowledge/Home.md source-sha256=2b865739fa0b",
+      "pass": true,
+      "note": "read-only sha256sum of /home/vgpnk/Documents/shokoknowledge/Home.md"
+    },
+    {
+      "id": "V2",
+      "name": "live-vault-wrong-hash",
+      "kind": "live",
+      "cmd": "souji-verify.sh <live-src> (wrong vault hash)",
+      "expect": "NOT-SAFE — vault digest mismatch",
+      "rc": 0,
+      "actual": "VERDICT\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/live-src.md\\tNOT-SAFE\\tnone\\tpushed=no-introducing-commit; obsidian=vault-sha-mismatch; obsidian=no-matching-ledger-row; stale=not-scratch-type",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "id": "V3",
+      "name": "live-vault-missing-path",
+      "kind": "live",
+      "cmd": "souji-verify.sh <live-src> (vault path missing)",
+      "expect": "NOT-SAFE — vault unreachable",
+      "rc": 0,
+      "actual": "VERDICT\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/live-src.md\\tNOT-SAFE\\tnone\\tpushed=no-introducing-commit; obsidian=vault-unreachable vault=/home/vgpnk/Documents/shokoknowledge/NOPE-vrun33-missing.md; obsidian=no-matching-ledger-row; stale=not-scratch-type",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "id": "X1",
+      "name": "exit-code-domain",
+      "kind": "cli",
+      "cmd": "all tool runs collected",
+      "expect": "rc in {0,1,2} only",
+      "rc": 0,
+      "actual": "observed=0 2 ",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "id": "X2",
+      "name": "determinism-L1-twice",
+      "kind": "cli",
+      "cmd": "souji-verify.sh <L1 target> x2",
+      "expect": "identical verdict lines",
+      "rc": 0,
+      "actual": "VERDICT\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/alpha.md\\tSAFE\\tmoved-to-obsidian\\tledger-row vault=/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-vault/alpha.md source-sha256=390faf862dbd",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "id": "M20-sha",
+      "name": "candidate-20-sha",
+      "kind": "info",
+      "cmd": "sha256sum souji-vault-verify.impl-20.sh",
+      "expect": "evidence",
+      "rc": 0,
+      "actual": "sha256=52885564f324ef6b739d71b19e87253b1ecb28ff521b9af9f7e1e6905e58033e",
+      "pass": null,
+      "note": ""
+    },
+    {
+      "id": "M20-selftest",
+      "name": "candidate-20-selftest",
+      "kind": "cli",
+      "cmd": "souji-vault-verify.impl-20.sh --selftest",
+      "expect": "rc=0",
+      "rc": 0,
+      "actual": "selftest: 35 checks, 0 failed",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "id": "M20-L1",
+      "name": "candidate-20",
+      "kind": "fixture",
+      "cmd": "20 (probe M20-L1)",
+      "expect": "expect SAFE",
+      "rc": 0,
+      "actual": "got=SAFE first=VERIFIED(moved-to-obsidian)",
+      "pass": true,
+      "note": "control: correct ledger row"
+    },
+    {
+      "id": "M20-L6a",
+      "name": "candidate-20",
+      "kind": "fixture",
+      "cmd": "20 (probe M20-L6a)",
+      "expect": "expect NOT-SAFE",
+      "rc": 0,
+      "actual": "got=NOT-SAFE first=NOT-VERIFIED(row-incomplete)",
+      "pass": true,
+      "note": "F1 regression probe"
+    },
+    {
+      "id": "M20-L6b",
+      "name": "candidate-20",
+      "kind": "fixture",
+      "cmd": "20 (probe M20-L6b)",
+      "expect": "expect NOT-SAFE",
+      "rc": 0,
+      "actual": "got=NOT-SAFE first=NOT-VERIFIED(row-incomplete)",
+      "pass": true,
+      "note": "F1 regression probe (3-field row)"
+    },
+    {
+      "id": "M20-L7",
+      "name": "candidate-20",
+      "kind": "fixture",
+      "cmd": "20 (probe M20-L7)",
+      "expect": "expect SAFE",
+      "rc": 0,
+      "actual": "got=SAFE first=VERIFIED(moved-to-obsidian)",
+      "pass": true,
+      "note": "F2 regression probe"
+    },
+    {
+      "id": "M20-V2",
+      "name": "candidate-20",
+      "kind": "fixture",
+      "cmd": "20 (probe M20-V2)",
+      "expect": "expect NOT-SAFE",
+      "rc": 0,
+      "actual": "got=NOT-SAFE first=NOT-VERIFIED(vault-hash-mismatch)",
+      "pass": true,
+      "note": "live vault wrong hash"
+    },
+    {
+      "id": "M20-L8",
+      "name": "candidate-20",
+      "kind": "fixture",
+      "cmd": "20 (probe M20-L8)",
+      "expect": "expect NOT-SAFE",
+      "rc": 0,
+      "actual": "got=NOT-SAFE first=NOT-VERIFIED(none)",
+      "pass": true,
+      "note": "header-only ledger"
+    },
+    {
+      "id": "M20-L5",
+      "name": "candidate-20",
+      "kind": "fixture",
+      "cmd": "20 (probe M20-L5)",
+      "expect": "expect NOT-SAFE",
+      "rc": 0,
+      "actual": "got=NOT-SAFE first=NOT-VERIFIED(row-incomplete)",
+      "pass": true,
+      "note": "file empty vault hash"
+    },
+    {
+      "id": "M24-sha",
+      "name": "candidate-24-sha",
+      "kind": "info",
+      "cmd": "sha256sum souji-vault-verify.impl-24.sh",
+      "expect": "evidence",
+      "rc": 0,
+      "actual": "sha256=2b224647abedc3ee00b38c3d5e1dee38baab05a705a8bebbdc65fb7b4cc47a50",
+      "pass": null,
+      "note": ""
+    },
+    {
+      "id": "M24-selftest",
+      "name": "candidate-24-selftest",
+      "kind": "cli",
+      "cmd": "souji-vault-verify.impl-24.sh --selftest",
+      "expect": "rc=0",
+      "rc": 0,
+      "actual": "selftest: 13 checks, 0 failed",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "id": "M24-L1",
+      "name": "candidate-24",
+      "kind": "fixture",
+      "cmd": "24 (probe M24-L1)",
+      "expect": "expect SAFE",
+      "rc": 0,
+      "actual": "got=SAFE first=VERIFIED\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/alpha.md\\tmoved-to-obsidian\\tledger-row vault=/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-vault/alpha.md source-sha256=390faf862dbd vault-sha256=390faf862dbd verified=live",
+      "pass": true,
+      "note": "control: correct ledger row"
+    },
+    {
+      "id": "M24-L6a",
+      "name": "candidate-24",
+      "kind": "fixture",
+      "cmd": "24 (probe M24-L6a)",
+      "expect": "expect NOT-SAFE",
+      "rc": 0,
+      "actual": "got=NOT-SAFE first=NOT-VERIFIED(source-absent)\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/dir-case\\tnone\\tsource=/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/dir-case unreadable",
+      "pass": true,
+      "note": "F1 regression probe"
+    },
+    {
+      "id": "M24-L6b",
+      "name": "candidate-24",
+      "kind": "fixture",
+      "cmd": "24 (probe M24-L6b)",
+      "expect": "expect NOT-SAFE",
+      "rc": 0,
+      "actual": "got=NOT-SAFE first=NOT-VERIFIED(source-absent)\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/dir-case\\tnone\\tsource=/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/dir-case unreadable",
+      "pass": true,
+      "note": "F1 regression probe (3-field row)"
+    },
+    {
+      "id": "M24-L7",
+      "name": "candidate-24",
+      "kind": "fixture",
+      "cmd": "24 (probe M24-L7)",
+      "expect": "expect SAFE",
+      "rc": 0,
+      "actual": "got=NOT-SAFE first=NOT-VERIFIED(no-ledger-row)\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/alpha.md\\tnone\\tobsidian=no-matching-ledger-row ledger=/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-led-l7.tsv rows=0",
+      "pass": false,
+      "note": "F2 regression probe"
+    },
+    {
+      "id": "M24-V2",
+      "name": "candidate-24",
+      "kind": "fixture",
+      "cmd": "24 (probe M24-V2)",
+      "expect": "expect NOT-SAFE",
+      "rc": 0,
+      "actual": "got=NOT-SAFE first=NOT-VERIFIED(vault-sha-mismatch)\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/live-src.md\\tnone\\tobsidian=vault-sha-mismatch live=98afa2b81887 row=111111111111",
+      "pass": true,
+      "note": "live vault wrong hash"
+    },
+    {
+      "id": "M24-L8",
+      "name": "candidate-24",
+      "kind": "fixture",
+      "cmd": "24 (probe M24-L8)",
+      "expect": "expect NOT-SAFE",
+      "rc": 0,
+      "actual": "got=NOT-SAFE first=NOT-VERIFIED(no-ledger-row)\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/alpha.md\\tnone\\tobsidian=no-matching-ledger-row ledger=/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-led-l8.tsv rows=0",
+      "pass": true,
+      "note": "header-only ledger"
+    },
+    {
+      "id": "M24-L5",
+      "name": "candidate-24",
+      "kind": "fixture",
+      "cmd": "24 (probe M24-L5)",
+      "expect": "expect NOT-SAFE",
+      "rc": 0,
+      "actual": "got=NOT-SAFE first=NOT-VERIFIED(vault-sha-mismatch)\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/alpha.md\\tnone\\tobsidian=vault-sha-mismatch live=390faf862dbd row=2026-10-18",
+      "pass": true,
+      "note": "file empty vault hash"
+    },
+    {
+      "id": "M21-sha",
+      "name": "candidate-21-sha",
+      "kind": "info",
+      "cmd": "sha256sum impl-21.sh",
+      "expect": "evidence",
+      "rc": 0,
+      "actual": "sha256=ed1881e8fd82748934a6f086164698aa7a30b4c47149adc93df1f4e349eba4dc",
+      "pass": null,
+      "note": ""
+    },
+    {
+      "id": "M21-selftest",
+      "name": "candidate-21-selftest",
+      "kind": "cli",
+      "cmd": "impl-21.sh --selftest",
+      "expect": "rc=0",
+      "rc": 1,
+      "actual": "/home/vgpnk/Projects/shokunin/souji-shokunin/tools/impl-21.sh: line 786: LIE_OLD: unbound variable",
+      "pass": false,
+      "note": ""
+    },
+    {
+      "id": "M21-L1",
+      "name": "candidate-21",
+      "kind": "fixture",
+      "cmd": "21 (probe M21-L1)",
+      "expect": "expect SAFE",
+      "rc": 0,
+      "actual": "got=SAFE first=VERDICT\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/alpha.md\\tSAFE\\tmoved-to-obsidian\\tledger-row vault=/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-vault/alpha.md source-sha256=390faf862dbd",
+      "pass": true,
+      "note": "control: correct ledger row"
+    },
+    {
+      "id": "M21-L6a",
+      "name": "candidate-21",
+      "kind": "fixture",
+      "cmd": "21 (probe M21-L6a)",
+      "expect": "expect NOT-SAFE",
+      "rc": 0,
+      "actual": "got=NOT-SAFE first=VERDICT\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/dir-case\\tNOT-SAFE\\tnone\\tpushed=no-introducing-commit; obsidian=empty-hash-column; stale=not-scratch-type",
+      "pass": true,
+      "note": "F1 regression probe"
+    },
+    {
+      "id": "M21-L6b",
+      "name": "candidate-21",
+      "kind": "fixture",
+      "cmd": "21 (probe M21-L6b)",
+      "expect": "expect NOT-SAFE",
+      "rc": 0,
+      "actual": "got=NOT-SAFE first=VERDICT\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/dir-case\\tNOT-SAFE\\tnone\\tpushed=no-introducing-commit; obsidian=empty-hash-column; stale=not-scratch-type",
+      "pass": true,
+      "note": "F1 regression probe (3-field row)"
+    },
+    {
+      "id": "M21-L7",
+      "name": "candidate-21",
+      "kind": "fixture",
+      "cmd": "21 (probe M21-L7)",
+      "expect": "expect SAFE",
+      "rc": 0,
+      "actual": "got=SAFE first=VERDICT\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/alpha.md\\tSAFE\\tmoved-to-obsidian\\tledger-row vault=/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-vault/alpha.md source-sha256=390faf862dbd",
+      "pass": true,
+      "note": "F2 regression probe"
+    },
+    {
+      "id": "M21-V2",
+      "name": "candidate-21",
+      "kind": "fixture",
+      "cmd": "21 (probe M21-V2)",
+      "expect": "expect NOT-SAFE",
+      "rc": 0,
+      "actual": "got=NOT-SAFE first=VERDICT\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/live-src.md\\tNOT-SAFE\\tnone\\tpushed=no-introducing-commit; obsidian=vault-sha-mismatch; stale=not-scratch-type",
+      "pass": true,
+      "note": "live vault wrong hash"
+    },
+    {
+      "id": "M21-L8",
+      "name": "candidate-21",
+      "kind": "fixture",
+      "cmd": "21 (probe M21-L8)",
+      "expect": "expect NOT-SAFE",
+      "rc": 0,
+      "actual": "got=NOT-SAFE first=VERDICT\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/alpha.md\\tNOT-SAFE\\tnone\\tpushed=no-introducing-commit; obsidian=no-matching-ledger-row; stale=not-scratch-type",
+      "pass": true,
+      "note": "header-only ledger"
+    },
+    {
+      "id": "M21-L5",
+      "name": "candidate-21",
+      "kind": "fixture",
+      "cmd": "21 (probe M21-L5)",
+      "expect": "expect NOT-SAFE",
+      "rc": 0,
+      "actual": "got=NOT-SAFE first=VERDICT\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/alpha.md\\tNOT-SAFE\\tnone\\tpushed=no-introducing-commit; obsidian=empty-hash-column; stale=not-scratch-type",
+      "pass": true,
+      "note": "file empty vault hash"
+    },
+    {
+      "id": "RO1",
+      "name": "read-only-vault-and-ledger",
+      "kind": "live",
+      "cmd": "vault manifest + live ledger sha before/after all runs",
+      "expect": "unchanged",
+      "rc": 0,
+      "actual": "vault=299d6b6a9828cfc613f46daee146a995a28345849f2183714a6a4662f843a401 ledger_lines=1/1",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "id": "RO2",
+      "name": "gui-not-spawned",
+      "kind": "live",
+      "cmd": "pgrep -f obsidian.asar",
+      "expect": "no process",
+      "rc": 1,
+      "actual": "no obsidian.asar process",
+      "pass": true,
+      "note": ""
+    },
+    {
+      "id": "RO3",
+      "name": "tool-unchanged",
+      "kind": "info",
+      "cmd": "sha256sum tools/souji-verify.sh at write",
+      "expect": "same as at start",
+      "rc": 0,
+      "actual": "start=7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820 write=7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820",
+      "pass": null,
+      "note": "stable "
+    }
+  ],
+  "summary": {
+    "counted": 57,
+    "passed": 52,
+    "failed": 5,
+    "blocked_interface": 1,
+    "informational": 7
+  },
+  "failed_cases": [
+    "L6a",
+    "L6b",
+    "L7",
+    "M24-L7",
+    "M21-selftest"
+  ],
+  "verdict": "TOOL-FAIL",
+  "findings": [
+    {
+      "id": "F1",
+      "severity": "high",
+      "direction": "false-SAFE",
+      "class": "dir-branch empty/absent vault_sha256 skips the vault-digest check",
+      "where": "tools/souji-verify.sh try_obsidian() dir branch: `[ -n \"$vs\" ] && ...` guard",
+      "evidence": [
+        {
+          "id": "L6a",
+          "name": "ledger-empty-vault-hash-dir",
+          "pass": false,
+          "observed": "VERDICT\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/dir-case\\tSAFE\\tmoved-to-obsidian\\tledger=source+vault-digest vault=/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-vault/"
+        },
+        {
+          "id": "L6b",
+          "name": "ledger-3field-dir-row",
+          "pass": false,
+          "observed": "VERDICT\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/dir-case\\tSAFE\\tmoved-to-obsidian\\tledger=source+vault-digest vault=/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-vault/"
+        },
+        {
+          "id": "L16",
+          "name": "ledger-empty-vault-hash-dir-missing",
+          "pass": true,
+          "observed": "VERDICT\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/dir-case\\tNOT-SAFE\\tnone\\tpushed=no-introducing-commit; obsidian=vault-unreachable vault=/home/vgpnk/Projects/shokunin/souji-shokunin/test"
+        },
+        {
+          "id": "L6c",
+          "name": "ledger-wrong-vault-hash-dir",
+          "pass": true,
+          "observed": "VERDICT\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/dir-case\\tNOT-SAFE\\tnone\\tpushed=no-introducing-commit; obsidian=vault-digest-mismatch; obsidian=no-matching-ledger-row; stale=not-scratch"
+        }
+      ],
+      "control": "L6c (wrong-but-present hash) -> NOT-SAFE; L16 (vault missing) -> NOT-SAFE; file branch L5 fail-closed — so the hole is dir-branch + vault-present + empty hash only",
+      "why_it_matters": "a row missing the vault hash (e.g. a torn append or a hand-edited row) yields SAFE(moved-to-obsidian) although the vault copy was never digest-checked"
+    },
+    {
+      "id": "F2",
+      "severity": "medium",
+      "direction": "false-NOT-SAFE",
+      "class": "ledger row without trailing newline is dropped (bash read at EOF)",
+      "where": "tools/souji-verify.sh ledger_lines(): `while IFS= read -r line`",
+      "evidence": [
+        {
+          "id": "L7",
+          "name": "ledger-row-no-trailing-newline",
+          "pass": false,
+          "observed": "VERDICT\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/alpha.md\\tNOT-SAFE\\tnone\\tpushed=no-introducing-commit; obsidian=no-matching-ledger-row; stale=not-scratch-type"
+        },
+        {
+          "id": "L1",
+          "name": "ledger-correct-file-row",
+          "pass": true,
+          "observed": "VERDICT\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/alpha.md\\tSAFE\\tmoved-to-obsidian\\tledger-row vault=/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-vault/alpha.md source-"
+        }
+      ],
+      "control": "L1 identical row WITH newline -> SAFE(moved-to-obsidian)",
+      "why_it_matters": "a valid final row written without a trailing newline is invisible; the verdict is a false NOT-SAFE (conservative direction, but a contract break)"
+    }
+  ],
+  "integration_state": {
+    "cli_flag_present": "cli_refs=0 gui_abs_refs=0",
+    "blocked": [
+      {
+        "id": "C6",
+        "name": "cli-hang-bounded",
+        "pass": null,
+        "observed": "tool has no --cli (cli_refs=0)"
+      }
+    ],
+    "note": "r4 --cli surface absent from the r2 baseline tool; C6 stays blocked-interface until the upgrade lands"
+  },
+  "candidate_matrix": {
+    "impl-20": {
+      "sha256": "52885564f324ef6b739d71b19e87253b1ecb28ff521b9af9f7e1e6905e58033e",
+      "selftest": {
+        "id": "M20-selftest",
+        "name": "candidate-20-selftest",
+        "pass": true,
+        "observed": "selftest: 35 checks, 0 failed"
+      },
+      "F1_dir_empty_vault_hash": {
+        "id": "M20-L6a",
+        "name": "candidate-20",
+        "pass": true,
+        "observed": "got=NOT-SAFE first=NOT-VERIFIED(row-incomplete)"
+      },
+      "F1_3field_row": {
+        "id": "M20-L6b",
+        "name": "candidate-20",
+        "pass": true,
+        "observed": "got=NOT-SAFE first=NOT-VERIFIED(row-incomplete)"
+      },
+      "F2_no_trailing_newline": {
+        "id": "M20-L7",
+        "name": "candidate-20",
+        "pass": true,
+        "observed": "got=SAFE first=VERIFIED(moved-to-obsidian)"
+      },
+      "control_correct_row": {
+        "id": "M20-L1",
+        "name": "candidate-20",
+        "pass": true,
+        "observed": "got=SAFE first=VERIFIED(moved-to-obsidian)"
+      },
+      "live_vault_wrong_hash": {
+        "id": "M20-V2",
+        "name": "candidate-20",
+        "pass": true,
+        "observed": "got=NOT-SAFE first=NOT-VERIFIED(vault-hash-mismatch)"
+      },
+      "header_only_ledger": {
+        "id": "M20-L8",
+        "name": "candidate-20",
+        "pass": true,
+        "observed": "got=NOT-SAFE first=NOT-VERIFIED(none)"
+      },
+      "file_empty_vault_hash": {
+        "id": "M20-L5",
+        "name": "candidate-20",
+        "pass": true,
+        "observed": "got=NOT-SAFE first=NOT-VERIFIED(row-incomplete)"
+      }
+    },
+    "impl-21": {
+      "sha256": "ed1881e8fd82748934a6f086164698aa7a30b4c47149adc93df1f4e349eba4dc",
+      "selftest": {
+        "id": "M21-selftest",
+        "name": "candidate-21-selftest",
+        "pass": false,
+        "observed": "/home/vgpnk/Projects/shokunin/souji-shokunin/tools/impl-21.sh: line 786: LIE_OLD: unbound variable"
+      },
+      "F1_dir_empty_vault_hash": {
+        "id": "M21-L6a",
+        "name": "candidate-21",
+        "pass": true,
+        "observed": "got=NOT-SAFE first=VERDICT\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/dir-case\\tNOT-SAFE\\tnone\\tpushed=no-introducing-commit; obsidian=empty-hash-column; stale=not-scratch-type"
+      },
+      "F1_3field_row": {
+        "id": "M21-L6b",
+        "name": "candidate-21",
+        "pass": true,
+        "observed": "got=NOT-SAFE first=VERDICT\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/dir-case\\tNOT-SAFE\\tnone\\tpushed=no-introducing-commit; obsidian=empty-hash-column; stale=not-scratch-type"
+      },
+      "F2_no_trailing_newline": {
+        "id": "M21-L7",
+        "name": "candidate-21",
+        "pass": true,
+        "observed": "got=SAFE first=VERDICT\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/alpha.md\\tSAFE\\tmoved-to-obsidian\\tledger-row vault=/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-vault/a"
+      },
+      "control_correct_row": {
+        "id": "M21-L1",
+        "name": "candidate-21",
+        "pass": true,
+        "observed": "got=SAFE first=VERDICT\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/alpha.md\\tSAFE\\tmoved-to-obsidian\\tledger-row vault=/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-vault/a"
+      },
+      "live_vault_wrong_hash": {
+        "id": "M21-V2",
+        "name": "candidate-21",
+        "pass": true,
+        "observed": "got=NOT-SAFE first=VERDICT\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/live-src.md\\tNOT-SAFE\\tnone\\tpushed=no-introducing-commit; obsidian=vault-sha-mismatch; stale=not-scratch-type"
+      },
+      "header_only_ledger": {
+        "id": "M21-L8",
+        "name": "candidate-21",
+        "pass": true,
+        "observed": "got=NOT-SAFE first=VERDICT\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/alpha.md\\tNOT-SAFE\\tnone\\tpushed=no-introducing-commit; obsidian=no-matching-ledger-row; stale=not-scratch-type"
+      },
+      "file_empty_vault_hash": {
+        "id": "M21-L5",
+        "name": "candidate-21",
+        "pass": true,
+        "observed": "got=NOT-SAFE first=VERDICT\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/alpha.md\\tNOT-SAFE\\tnone\\tpushed=no-introducing-commit; obsidian=empty-hash-column; stale=not-scratch-type"
+      }
+    },
+    "impl-24": {
+      "sha256": "2b224647abedc3ee00b38c3d5e1dee38baab05a705a8bebbdc65fb7b4cc47a50",
+      "selftest": {
+        "id": "M24-selftest",
+        "name": "candidate-24-selftest",
+        "pass": true,
+        "observed": "selftest: 13 checks, 0 failed"
+      },
+      "F1_dir_empty_vault_hash": {
+        "id": "M24-L6a",
+        "name": "candidate-24",
+        "pass": true,
+        "observed": "got=NOT-SAFE first=NOT-VERIFIED(source-absent)\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/dir-case\\tnone\\tsource=/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/dir"
+      },
+      "F1_3field_row": {
+        "id": "M24-L6b",
+        "name": "candidate-24",
+        "pass": true,
+        "observed": "got=NOT-SAFE first=NOT-VERIFIED(source-absent)\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/dir-case\\tnone\\tsource=/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/dir"
+      },
+      "F2_no_trailing_newline": {
+        "id": "M24-L7",
+        "name": "candidate-24",
+        "pass": false,
+        "observed": "got=NOT-SAFE first=NOT-VERIFIED(no-ledger-row)\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/alpha.md\\tnone\\tobsidian=no-matching-ledger-row ledger=/home/vgpnk/Projects/shokunin/souji-shokunin"
+      },
+      "control_correct_row": {
+        "id": "M24-L1",
+        "name": "candidate-24",
+        "pass": true,
+        "observed": "got=SAFE first=VERIFIED\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/alpha.md\\tmoved-to-obsidian\\tledger-row vault=/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-vault/alpha."
+      },
+      "live_vault_wrong_hash": {
+        "id": "M24-V2",
+        "name": "candidate-24",
+        "pass": true,
+        "observed": "got=NOT-SAFE first=NOT-VERIFIED(vault-sha-mismatch)\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/live-src.md\\tnone\\tobsidian=vault-sha-mismatch live=98afa2b81887 row=111111111111"
+      },
+      "header_only_ledger": {
+        "id": "M24-L8",
+        "name": "candidate-24",
+        "pass": true,
+        "observed": "got=NOT-SAFE first=NOT-VERIFIED(no-ledger-row)\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/alpha.md\\tnone\\tobsidian=no-matching-ledger-row ledger=/home/vgpnk/Projects/shokunin/souji-shokunin"
+      },
+      "file_empty_vault_hash": {
+        "id": "M24-L5",
+        "name": "candidate-24",
+        "pass": true,
+        "observed": "got=NOT-SAFE first=NOT-VERIFIED(vault-sha-mismatch)\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vrun33-fixtures/alpha.md\\tnone\\tobsidian=vault-sha-mismatch live=390faf862dbd row=2026-10-18"
+      }
+    }
+  },
+  "recommendation": {
+    "summary": "On my probes, impl-20 and impl-21 fix both F1 and F2; impl-24 still drops unterminated rows (F2); the r2 baseline tool has both defects.",
+    "verdict_inputs": {
+      "impl-20": "F1 fixed (row-incomplete), F2 fixed (VERIFIED), own selftest 35/35 rc=0",
+      "impl-21": "F1 fixed (empty-hash-column), F2 fixed (SAFE), own selftest RED (3 FAILs, rc=1, unbound $LIE_OLD line 786)",
+      "impl-24": "F2 NOT fixed (row dropped: no-ledger-row), F1 dir probe answered source-absent, own selftest 13/13 rc=0",
+      "r2-baseline": "F1 present (false SAFE), F2 present (row dropped)"
+    }
+  }
+}

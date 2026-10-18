@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+# s30 mock obsidian CLI — runner fixture (souji-shokunin round 4, seat S30).
+#
+# This is NOT the real Obsidian CLI. It never launches the desktop app; it
+# only logs its argv and emulates one contract mode chosen by $MOCK_MODE, so
+# the runner harness can exercise the tool's CLI handling without ever
+# resolving `obsidian` to /usr/bin/obsidian (the GUI launcher).
+#
+# Modes (MOCK_MODE):
+#   ok       print the real sha256 of the first existing file argument
+#   stale    print $MOCK_CLAIM_HASH regardless of file content (stale index)
+#   hang     sleep 600 (the tool must bound the call itself)
+#   error    exit 3 with a stderr diagnostic
+#   missing  exit 127, stderr "command not found" (simulates CLI absent)
+#   garbage  exit 0 with non-parseable output
+#   empty    exit 0 with no output
+#
+# Env: MOCK_MODE, MOCK_LOG, MOCK_CLAIM_HASH
+set -uo pipefail
+
+MOCK_MODE=${MOCK_MODE:-ok}
+MOCK_LOG=${MOCK_LOG:-/tmp/s30-vrun/mock.log}
+MOCK_CLAIM_HASH=${MOCK_CLAIM_HASH:-0000000000000000000000000000000000000000000000000000000000000000}
+
+if [ -n "$MOCK_LOG" ]; then
+  {
+    flock 9
+    printf '%s\t%s\t%s\n' "$(date +%s.%N)" "$MOCK_MODE" "$*" >>"$MOCK_LOG"
+  } 9>>"$MOCK_LOG" 2>/dev/null || true
+fi
+
+case "${1:-}" in
+  --version|-V|version)
+    printf 'obsidian 1.14.4 (s30 mock shim; not the real app)\n'
+    exit 0
+    ;;
+esac
+
+case "$MOCK_MODE" in
+  missing)
+    printf 'obsidian: command not found (s30 mock)\n' >&2
+    exit 127
+    ;;
+  error)
+    printf 's30 mock: vault index unavailable\n' >&2
+    exit 3
+    ;;
+  garbage)
+    printf '\x00\x01not-a-hash-not-json\n'
+    exit 0
+    ;;
+  empty)
+    exit 0
+    ;;
+  hang)
+    sleep 600
+    exit 0
+    ;;
+  stale)
+    printf '{"ok":true,"path":"%s","sha256":"%s"}\n' "${2:-}" "$MOCK_CLAIM_HASH"
+    exit 0
+    ;;
+  ok|*)
+    f=""
+    for a in "$@"; do
+      if [ -f "$a" ]; then f=$a; break; fi
+    done
+    if [ -n "$f" ]; then
+      h=$(sha256sum -- "$f" 2>/dev/null | cut -d' ' -f1)
+      printf '{"ok":true,"path":"%s","sha256":"%s"}\n' "$f" "$h"
+    else
+      printf '{"ok":true,"sha256":null,"note":"s30 mock: no file argument"}\n'
+    fi
+    exit 0
+    ;;
+esac

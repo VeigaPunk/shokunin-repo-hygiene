@@ -1,0 +1,133 @@
+{
+  "seat": "S12",
+  "role": "fixture-author",
+  "round": 4,
+  "kind": "vault-verification-fixture",
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "repo_head": "78694acefa316edfc77842583409b7133350718c",
+  "run_utc": "2026-10-18T17:01:45Z",
+  "run_local": "2026-10-18T14:01:45-0300",
+  "assignment": "SEAT S12 — fixture author. tests/vault/case-V4/: ledger row points at a vault path that does not exist. Expected: NOT-VERIFIED(vault-absent).",
+  "verdict": "DELIVERED — case-V4 fixture authored, selftest 24/24 PASS, accepted by all four round-4 runner parsers on disk (26/27/28/29); live ledger and real vault untouched.",
+  "artifacts": {
+    "tests/vault/case-V4/make-fixture.sh": {
+      "sha256": "defb23c6b377d2612bd188bd558de2f355ff5e6d5f830c02c73bb6ca0373d67f",
+      "role": "builder; creates source file (present, 0444, hash-matching), empty vault dir, own test ledger <ROOT>/ledger.tsv, substituted expected.json; emits FIXTURE_READY + KEY=VALUE lines; never touches the live ledger or real vault"
+    },
+    "tests/vault/case-V4/expected.json": {
+      "sha256": "4811ecee666ae2b965e2a3364611395c95f30e7ac858dc37f27f4aed7c582ba4",
+      "role": "declaration; expect_string NOT-VERIFIED(vault-absent), accept.exact/contains/structured, failure_modes_caught, harness_hints"
+    },
+    "tests/vault/case-V4/selftest.sh": {
+      "sha256": "ecdefe66b26cb112eef8e42a8685a56cc0afa00e91153712c665a0e6e3f86d36",
+      "role": "T1 build invariants; T2 substituted expected.json incl. must_not_be self-collision guard; T3 r2-tool delta; T4 materialize-control; T5 live-surface invariants"
+    },
+    "tests/vault/case-V4/README.md": {
+      "sha256": "7edca817910bf8359fb2db688082ed5e59e0d067dda8d260199d0f4b24c4d2b2",
+      "role": "contract: consumption steps, verdict matrix, failure modes, harness-token caveat"
+    }
+  },
+  "fixture_facts": {
+    "source_path": "<ROOT>/source/round-trip-notes.md",
+    "source_present": true,
+    "source_mode": "0444",
+    "source_sha256": "d9cae6dfd163e93e34fcc1c9d90a3b910160a3fb2981b7dc2741ba3bdbe3ab2d",
+    "source_bytes": 308,
+    "vault_path": "<ROOT>/vault/round-trip-notes.md",
+    "vault_parent_dir_exists": true,
+    "vault_path_exists": false,
+    "ledger": "<ROOT>/ledger.tsv (header + exactly 1 data row)",
+    "row_conjuncts": "source path matches, source_sha256 matches the file, vault path is absent -> the ONLY failing conjunct is the vault path's presence",
+    "discriminator": "source side fully present and hash-matching, so a source-side-only verifier reports VERIFIED/SAFE; class-collapse answer NOT-SAFE(none)/unreachable is also wrong; T4 control materializes the vault file and flips the r2 tool to SAFE(moved-to-obsidian), so the case cannot pass by always answering vault-absent"
+  },
+  "measured_results": {
+    "selftest": {
+      "cmd": "bash tests/vault/case-V4/selftest.sh",
+      "exit": 0,
+      "out": "SELFTEST PASS pass=24 fail=0",
+      "checks": [
+        "T1.vault_absent no / T1.vault_parent_present yes / T1.source_present yes / T1.source_mode 444 / T1.source_digest d9cae6dfd163… / T1.ledger_lines 2 / T1.marker yes",
+        "T1.row_source_path|row_vault_path|row_source_sha|row_vault_sha all match build",
+        "T2.expected_present yes / T2.expected_matches_build 0 (includes must_not_be self-collision guard)",
+        "T3.round2_verdict NOT-SAFE / T3.round2_reason none / T3.round2_note_vault_unreachable yes / T3.no_false_verified pass",
+        "T4.vault_materialized yes / T4.vault_sha_matches_row yes / T4.control_verdict SAFE / T4.control_receipt moved-to-obsidian",
+        "T5.live_ledger_unchanged 3f7e9f2ab9e614464cb031d3f00a812a21f0e889f7666309a90d7784b75a9599 / T5.live_ledger_rows 1 / T5.live_ledger_header_only 1"
+      ]
+    },
+    "r2_tool_behavior": {
+      "cmd": "ROOT=$(bash tests/vault/case-V4/make-fixture.sh --quiet | sed -n 's/^FIXTURE_READY case-V4 //p'); SOUJI_LEDGER=\"$ROOT/ledger.tsv\" tools/souji-verify.sh \"$ROOT/source/round-trip-notes.md\"",
+      "exit": 0,
+      "observed": "VERDICT<TAB><src><TAB>NOT-SAFE<TAB>none<TAB>pushed=no-introducing-commit; obsidian=vault-unreachable vault=<ROOT>/vault/round-trip-notes.md; obsidian=no-matching-ledger-row; stale=not-scratch-type",
+      "delta_for_r4": "the r2 tool collapses this into NOT-SAFE(none) with an obsidian=vault-unreachable note; the r4 vault harness must refine it into the distinct NOT-VERIFIED(vault-absent)"
+    },
+    "runner_parser_acceptance": [
+      {
+        "runner": "runner-28.sh (prep phase, extracted verbatim to /tmp and run against a /tmp fake repo)",
+        "cmd": "python3 <extracted prep> /tmp/s12-fakerepo /tmp/s12-prep-out",
+        "exit": 0,
+        "out": "cases.tsv row: case-V4 | <ROOT> | <ROOT>/ledger.tsv | <ROOT>/source/round-trip-notes.md | NOT-VERIFIED | vault-absent | [\"NOT-VERIFIED(vault-absent)\"] | [\"NOT-VERIFIED\",\"vault-absent\"] | [\"SAFE\",\"NOT-SAFE(vault-absent)\"]"
+      },
+      {
+        "runner": "runner-28.sh (judge phase, 5 synthetic answers)",
+        "cmd": "python3 <extracted judge> results.tsv out.json impls.txt",
+        "exit": 0,
+        "out": "correct NOT-VERIFIED(vault-absent) -> PASS; VERIFIED(moved-to-obsidian) -> FAIL; NOT-SAFE(none) collapse -> FAIL; NOT-VERIFIED(source-absent) -> FAIL; NOT-SAFE(vault-absent) -> FAIL (must_not_be hit)"
+      },
+      {
+        "runner": "runner-26.sh (prep phase, extracted verbatim)",
+        "cmd": "python3 <extracted prep> /tmp/s12-fake26 /tmp/s12-prep26-out",
+        "exit": 0,
+        "out": "cases.tsv row: V4 | <ledger> | <src> | NOT-VERIFIED(vault-absent) | [\"NOT-VERIFIED\",\"vault-absent\"] | [\"SAFE\",\"NOT-SAFE(vault-absent)\"]"
+      },
+      {
+        "runner": "runner-27.sh (prep phase, extracted verbatim)",
+        "cmd": "python3 <extracted prep> /tmp/s12-fake27/tests/vault /tmp/s12-w27",
+        "exit": 0,
+        "out": "cases.tsv row: case-V4 | /tmp/s12-w27/case-V4 | ledger-case-V4.tsv | <src> | NOT-VERIFIED | (reason empty in this parser) | expected.json path"
+      },
+      {
+        "runner": "runner-29.sh (prep phase, extracted verbatim)",
+        "cmd": "python3 <extracted prep> /tmp/s12-fake29 /tmp/s12-out29 /home/vgpnk/Documents/shokoknowledge",
+        "exit": 0,
+        "out": "prep.tsv row: case-V4 | <ledger> | fx-case-V4/source/round-trip-notes.md | NOT-VERIFIED | vault-absent | fx root"
+      }
+    ],
+    "builder_edge_cases": {
+      "rebuild_on_marker": "second run with same --out carrying .case-V4-fixture -> rc 0 (rebuilds)",
+      "refuse_foreign_dir": "non-empty --out without marker -> rc 1, foreign file preserved",
+      "empty_dir": "empty --out -> rc 0",
+      "print_hashes": "SHA_ROUND_TRIP=d9cae6dfd163e93e34fcc1c9d90a3b910160a3fb2981b7dc2741ba3bdbe3ab2d bytes=308",
+      "syntax": "bash -n clean on builder and selftest; expected.json parses with python3 json"
+    },
+    "live_surfaces": {
+      "live_ledger": "corpus/knowledge/obsidian-ledger.tsv unchanged all run: 1 line, sha256 3f7e9f2ab9e614464cb031d3f00a812a21f0e889f7666309a90d7784b75a9599",
+      "real_vault": "read-only only; /home/vgpnk/Documents/shokoknowledge/Home.md sha256 98afa2b81887ca13f1f06243f3f0d1e24cd411d7f9321b332fc998d52ff242a4 (matches seat-05's measurement; no writes, no new notes)",
+      "no_forbidden_actions": "no /usr/bin/obsidian execution, no obsidian/obsidian-cli-inspector execution, no git fetch/push/commit/branch, no ~/.config writes, no .ufo/state or watchdog reads, no credential-shaped files"
+    }
+  },
+  "defect_found_and_fixed": {
+    "id": "must_not_be substring self-collision",
+    "summary": "runner-26 and runner-28 apply expected.json must_not_be entries as substring vetoes. The bare token VERIFIED is a substring of the correct answer NOT-VERIFIED(vault-absent), so a must_not_be list containing VERIFIED vetoes every correct response (observed with runner-28's judge: 0/5 pass including the correct answer).",
+    "fix": "case-V4 must_not_be is [\"SAFE\", \"NOT-SAFE(vault-absent)\"] — bare VERIFIED removed, with an explicit must_not_be_note explaining why; a false VERIFIED answer is still caught by the verdict-class comparison (want NOT-VERIFIED). The selftest T2 now asserts the invariant (no must_not_be token may be a substring of expect_string).",
+    "sibling_warning": "case-V5/expected.json (seat S13) carries the same [\"SAFE\", \"VERIFIED\", \"NOT-SAFE(source-absent)\"] list and will fail the same way under runner-26/28; S13's file was NOT edited by S12 (out of seat write-scope) — the parent or S13 should apply the same fix."
+  },
+  "interface_alignment": {
+    "builder_cli": "bash make-fixture.sh [--out DIR] [--ledger FILE] [--quiet] [--print-ledger] [--print-hashes]",
+    "stdout": "JSON line {case,root,ledger,targets,expect}; FIXTURE_READY case-V4 <ROOT>; LEDGER=/TARGET=/VAULT=/SOURCE_SHA256=/VAULT_SHA256=/EXPECT= lines",
+    "expected_json": "targets[] + expect[] F1-F6 loader shape (path/verdict/receipt) plus V-family verdict/reason/verdict_string/accept block, mirroring case-V5",
+    "ledger_seam": "SOUJI_LEDGER env override (r2 tool) / --ledger arg (r4 tools); fixture ledger lives at <ROOT>/ledger.tsv; live ledger never written",
+    "readme_consumption": "ROOT=$(bash tests/vault/case-V4/make-fixture.sh --quiet | sed -n 's/^FIXTURE_READY case-V4 //p'); SOUJI_LEDGER=\"$ROOT/ledger.tsv\" tools/souji-verify.sh \"$ROOT/source/round-trip-notes.md\""
+  },
+  "notes_for_parent": [
+    "case-V4 is self-contained under its root; no test ledger lives under tests/vault/ outside the fixture root (unlike case-V1's tests/vault/ledger-V1.tsv).",
+    "The fixture is deliberately NOT-YET-passable by the r2 tool: it encodes the r4 expectation NOT-VERIFIED(vault-absent). The T3 check pins the r2 behavior as NOT-SAFE(none)+vault-unreachable so the delta is measurable, not assumed.",
+    "runner-39.sh (S39) independently expects the r2 tool to report NOT-SAFE with vault-unreachable evidence for a vault-absent row (assert_line V4.fixture-vault-absent ... 'vault-unreachable'); my T3 check matches that expectation exactly.",
+    "All writes by S12 are within tests/vault/case-V4/ and /tmp; census fragment is this file."
+  ],
+  "preamble": {
+    "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+    "fragment_path": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-4/seat-12.json",
+    "written_at": "2026-10-18T14:01:45-0300",
+    "mode": "fixture authoring; no modifications outside tests/vault/case-V4/ and /tmp"
+  }
+}

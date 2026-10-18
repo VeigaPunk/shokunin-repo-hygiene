@@ -1,0 +1,1529 @@
+{
+ "seat": "S55",
+ "kind": "adversarial",
+ "round": 4,
+ "lane": "souji-shokunin",
+ "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+ "generated_utc": "2026-10-18T17:25:00Z",
+ "assignment": "(s) sha256 mismatch ONLY in exported_at column (must still VERIFY \u2014 only hashes matter); (t) vault file on a fuse/overlay mount (stat quirks) \u2014 simulated with /proc/version reads; (u) concurrent ledger read while another process appends. Deliverable vadv-55.json.",
+ "targets": {
+  "r2-installed": {
+   "path": "/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh",
+   "argv": "SOUJI_LEDGER=<L> bash <tool> --stale-days 1 -- <target>",
+   "selftest": "exit 0 \u2014 24 checks, 0 failed",
+   "sha256": "7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820",
+   "sha256_at_first_matrix": "7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820",
+   "revision_stable": true
+  },
+  "impl-20": {
+   "path": "/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-vault-verify.impl-20.sh",
+   "argv": "bash <tool> --ledger <L> --vault <V> --fallback <target>",
+   "selftest": "exit 0 \u2014 35 checks, 0 failed (run on the 52885564 revision)",
+   "sha256": "86f5ffbcdacd6e6d9d8fdddf9a084541ab335689dd7014b555e13dd0adeb9383",
+   "sha256_at_first_matrix": "52885564f324ef6b739d71b19e87253b1ecb28ff521b9af9f7e1e6905e58033e",
+   "revision_stable": false
+  },
+  "impl-24": {
+   "path": "/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-vault-verify.impl-24.sh",
+   "argv": "bash <tool> --ledger <L> --vault <V> --fallback <target>",
+   "selftest": "not run by this seat (see seat-20/24 own evidence)",
+   "sha256": "2b224647abedc3ee00b38c3d5e1dee38baab05a705a8bebbdc65fb7b4cc47a50",
+   "sha256_at_first_matrix": "2b224647abedc3ee00b38c3d5e1dee38baab05a705a8bebbdc65fb7b4cc47a50",
+   "revision_stable": true
+  },
+  "impl-21": {
+   "path": "/home/vgpnk/Projects/shokunin/souji-shokunin/tools/impl-21.sh",
+   "argv": "SOUJI_LEDGER=<L> bash <tool> <target>",
+   "selftest": "not run by this seat",
+   "sha256": "ed1881e8fd82748934a6f086164698aa7a30b4c47149adc93df1f4e349eba4dc",
+   "sha256_at_first_matrix": "ed1881e8fd82748934a6f086164698aa7a30b4c47149adc93df1f4e349eba4dc",
+   "revision_stable": true
+  }
+ },
+ "oracle": "VERIFIED is correct only when the ledger row is fully self-consistent AND the vault copy exists and its digest equals the row's vault_sha256. Every deviation must be NOT-VERIFIED. The stronger oracle for removal safety (a receipt must name a copy that SURVIVES removal of the target) makes self-move rows (C7/C7d) NOT-VERIFIED.",
+ "method": {
+  "harness": "tests/vault/s55-cross.sh (36 cases x 4 tools = 144 scored runs)",
+  "harness_sha256": "ab3f3c200324a857e944ad15339a2392a20ab9bc108e3614b8fc2ab88eef9ef1",
+  "supporting_probes": [
+   {
+    "file": "tests/vault/s55-probe2.sh",
+    "sha256": "8613364ea37ba26a2582eee6fbe9816d525eb31b7cc10c8a4a75b1a76297c49f",
+    "role": "family s/t/u single-tool sweep against the r2 artifact"
+   },
+   {
+    "file": "tests/vault/s55-probe3.sh",
+    "sha256": "fefbff99e437db14a4895624664113a6c77fae8a0ee04500ca2cf932ac7539e9",
+    "role": "decisive isolation of the absent-vault-digest false-SAFE (D1) + torn-append D8"
+   },
+   {
+    "file": "tests/vault/s55-probe4.sh",
+    "sha256": "efb132146ad785ee93390916c7a46ad039e38b8164036ce5a5f2ee6c894a277f",
+    "role": "two-write torn append reproduces the false-SAFE under concurrency (E1/E2/E3)"
+   }
+  ],
+  "raw": {
+   "cross_matrix": "tests/vault/s55-raw/cross2.tsv",
+   "probe_logs": [
+    "tests/vault/s55-raw/probe-log.txt",
+    "tests/vault/s55-raw/probe2-log.txt"
+   ],
+   "probe_tables": [
+    "tests/vault/s55-raw/probes.tsv",
+    "tests/vault/s55-raw/probes2.tsv",
+    "tests/vault/s55-raw/probes3.tsv",
+    "tests/vault/s55-raw/probes4.tsv"
+   ]
+  },
+  "fixtures": "tests/vault/s55-src/**, tests/vault/s55-vault/** (never the real vault)",
+  "revision_note": "impl-20 was edited by its own seat during this run (52885564\u2026 -> 86f5ffbc\u2026). The full 36-case matrix was re-run against the NEW revision and produced an identical per-case result set (0 FAIL, 3 WARN); the pre-revision matrix is preserved at tests/vault/s55-raw/cross2.rev-52885564.tsv. All other tools were byte-stable.",
+  "invocation_note": "v1 of the harness wrongly passed --ledger/--vault to tools that do not accept them (r2-installed, impl-21) which produced EXIT-2 for every case; v2 uses per-tool argv. The v1 matrix is kept at tests/vault/s55-raw/cross.tsv as the recorded probe error."
+ },
+ "per_tool_summary": {
+  "r2-installed": {
+   "pass": 27,
+   "fail": 6,
+   "warn": 3,
+   "false_verified": 4,
+   "under_verified": 2
+  },
+  "impl-20": {
+   "pass": 33,
+   "fail": 0,
+   "warn": 3,
+   "false_verified": 0,
+   "under_verified": 0
+  },
+  "impl-24": {
+   "pass": 29,
+   "fail": 4,
+   "warn": 3,
+   "false_verified": 2,
+   "under_verified": 2
+  },
+  "impl-21": {
+   "pass": 31,
+   "fail": 2,
+   "warn": 3,
+   "false_verified": 2,
+   "under_verified": 0
+  }
+ },
+ "ranking_by_failures": [
+  "impl-20",
+  "impl-21",
+  "impl-24",
+  "r2-installed"
+ ],
+ "verdict": "FAIL \u2014 3 of 4 tools admit at least one false-VERIFIED; impl-20 is the only clean tool",
+ "key_findings": [
+  {
+   "id": "s1-absent-vault-digest",
+   "family": "s",
+   "severity": "critical",
+   "finding": "A DIRECTORY ledger row whose vault_sha256 column is absent or empty verifies as SAFE(moved-to-obsidian) even when the vault copy does not match the source. The tool reports 'ledger=source+vault-digest' while never computing the vault digest.",
+   "root_cause": "try_obsidian parses rows with `IFS=$'\\t' read -r sp ss vp vs _rest`. Bash IFS whitespace collapses runs of tabs, so a row with an empty/absent 4th field shifts the remaining columns left and leaves vs empty; the guard `[ -n \"$vs\" ]` then SKIPS the vault-digest comparison instead of failing. Proved independently: bash read gives sp=[SRC] ss=[VAULT] vp=[date] vs=[x]; awk -F'\\t' gives sp=[SRC] ss=[] vp=[VAULT] vs=[].",
+   "affected_tools": [
+    "r2-installed"
+   ],
+   "cases": [
+    "C2",
+    "C3"
+   ],
+   "evidence": "C2: 3-field dir row, vault digest differs -> `VERDICT /tmp/s55-cross2/src/dx SAFE moved-to-obsidian ledger=source+vault-digest vault=/tmp/s55-cross2/vault/dx` (exit 0). C3: same shape with matching content -> also SAFE."
+  },
+  {
+   "id": "u1-torn-append-false-safe",
+   "family": "u",
+   "severity": "critical",
+   "finding": "The s1 defect is reachable by CONCURRENCY alone: a writer that appends a dir row in two write() calls leaves a complete 3-field row readable for a window, and every evaluation during that window returns SAFE while the vault content differs. After the tail lands (with a WRONG digest) the verdict STILL stays SAFE, because the collapsed 3-field row is now a complete line in the file.",
+   "affected_tools": [
+    "r2-installed"
+   ],
+   "cases": [
+    "C22"
+   ],
+   "evidence": "C22 r2-installed: verified=40/40 with every complete row carrying digest 0000...0000; supporting probe4 E1 verified=260/260; E2 (static, post-tail) still SAFE. impl-20 / impl-24 / impl-21: 0/40."
+  },
+  {
+   "id": "s2-self-move-receipt",
+   "family": "s",
+   "severity": "critical",
+   "finding": "A row whose vault_path equals its own source_path verifies as moved-to-obsidian. The receipt names no second copy: acting on it removes the artifact's only copy.",
+   "affected_tools": [
+    "r2-installed",
+    "impl-24",
+    "impl-21"
+   ],
+   "cases": [
+    "C7",
+    "C7d"
+   ],
+   "evidence": "r2: `SAFE moved-to-obsidian ledger-row vault=/tmp/s55-cross2/src/fa.md`. impl-24: `VERIFIED ... vault=/tmp/s55-cross2/src/fa.md ... verified=live`. impl-21: `SAFE moved-to-obsidian`. impl-20 alone refuses: `NOT-VERIFIED(source-equals-vault)`."
+  },
+  {
+   "id": "s3-empty-vault-hash-file",
+   "family": "s",
+   "severity": "critical",
+   "finding": "impl-24 admits a FILE row with the vault_sha256 column absent, even though the vault bytes differ; its own evidence line prints `vault-sha256= verified=live`.",
+   "affected_tools": [
+    "impl-24"
+   ],
+   "cases": [
+    "C6"
+   ],
+   "evidence": "`VERIFIED /tmp/s55-cross2/src/fb.md moved-to-obsidian ledger-row vault=/tmp/s55-cross2/vault/fb.md source-sha256=1ecced9559eb vault-sha256= verified=live`"
+  },
+  {
+   "id": "u2-last-line-without-newline",
+   "family": "u",
+   "severity": "medium",
+   "finding": "A valid final ledger row that lacks a trailing newline is invisible to r2 and impl-24 (their read loops drop the unterminated last line). Fail-safe direction (false NOT-VERIFIED, coverage loss), but it makes an appended-without-newline ledger row unreceiptable while a torn row of the same shape IS accepted.",
+   "affected_tools": [
+    "r2-installed",
+    "impl-24"
+   ],
+   "cases": [
+    "C12b"
+   ],
+   "evidence": "Same valid row: r2 -> `NOT-SAFE none obsidian=no-matching-ledger-row`; impl-24 -> `NOT-VERIFIED(no-ledger-row)`; with a trailing newline added both flip to SAFE/VERIFIED. impl-20 and impl-21 read the unterminated line correctly (impl-21 `SAFE moved-to-obsidian`)."
+  },
+  {
+   "id": "t1-stat-quirks-clean",
+   "family": "t",
+   "severity": "info",
+   "finding": "No stat-based shortcut found in any tool. A vault path with stat size 0 (/proc/version) is hashed by content and verifies with the true digest; an empty-file digest as bait is rejected; FIFO, dangling symlink, mode-000, and 2030-mtime vault paths all behave correctly (no hang, no false VERIFIED).",
+   "affected_tools": [],
+   "cases": [
+    "C13",
+    "C14",
+    "C15",
+    "C16",
+    "C17",
+    "C18"
+   ],
+   "evidence": "C13 all four tools VERIFIED with sha256 of /proc/version (b3978bdfb29a\u2026, stat size 0). C14/C15/C16/C17 all NOT-VERIFIED for all four. FIFO probes returned in ~14 ms, no timeout."
+  },
+  {
+   "id": "s4-exported-at-ignored",
+   "family": "s",
+   "severity": "info",
+   "finding": "Confirmed as REQUIRED: the exported_at column never participates in the verdict. Empty, garbage, or absent exported_at values all still VERIFY when the hashes match; a mismatched exported_at with matching hashes does not block the receipt. This is the correct behaviour for 'only hashes matter'.",
+   "affected_tools": [],
+   "cases": [
+    "C10",
+    "C11",
+    "C11b"
+   ],
+   "evidence": "C10/C11/C11b PASS for all four tools."
+  }
+ ],
+ "matrix": [
+  {
+   "case": "C0",
+   "tool": "r2-installed",
+   "expect": "VERIFIED",
+   "observed": "VERIFIED",
+   "result": "PASS",
+   "note": "baseline file true-positive"
+  },
+  {
+   "case": "C0",
+   "tool": "impl-20",
+   "expect": "VERIFIED",
+   "observed": "VERIFIED",
+   "result": "PASS",
+   "note": "baseline file true-positive"
+  },
+  {
+   "case": "C0",
+   "tool": "impl-24",
+   "expect": "VERIFIED",
+   "observed": "VERIFIED",
+   "result": "PASS",
+   "note": "baseline file true-positive"
+  },
+  {
+   "case": "C0",
+   "tool": "impl-21",
+   "expect": "VERIFIED",
+   "observed": "VERIFIED",
+   "result": "PASS",
+   "note": "baseline file true-positive"
+  },
+  {
+   "case": "C1",
+   "tool": "r2-installed",
+   "expect": "WARN",
+   "observed": "VERIFIED",
+   "result": "WARN",
+   "note": "row self-consistent but vault bytes differ from source (ambiguity: WARN)"
+  },
+  {
+   "case": "C1",
+   "tool": "impl-20",
+   "expect": "WARN",
+   "observed": "VERIFIED",
+   "result": "WARN",
+   "note": "row self-consistent but vault bytes differ from source (ambiguity: WARN)"
+  },
+  {
+   "case": "C1",
+   "tool": "impl-24",
+   "expect": "WARN",
+   "observed": "VERIFIED",
+   "result": "WARN",
+   "note": "row self-consistent but vault bytes differ from source (ambiguity: WARN)"
+  },
+  {
+   "case": "C1",
+   "tool": "impl-21",
+   "expect": "WARN",
+   "observed": "VERIFIED",
+   "result": "WARN",
+   "note": "row self-consistent but vault bytes differ from source (ambiguity: WARN)"
+  },
+  {
+   "case": "C1b",
+   "tool": "r2-installed",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "file, STALE vault digest"
+  },
+  {
+   "case": "C1b",
+   "tool": "impl-20",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "file, STALE vault digest"
+  },
+  {
+   "case": "C1b",
+   "tool": "impl-24",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "file, STALE vault digest"
+  },
+  {
+   "case": "C1b",
+   "tool": "impl-21",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "file, STALE vault digest"
+  },
+  {
+   "case": "C10",
+   "tool": "r2-installed",
+   "expect": "VERIFIED",
+   "observed": "VERIFIED",
+   "result": "PASS",
+   "note": "exported_at EMPTY, hashes ok"
+  },
+  {
+   "case": "C10",
+   "tool": "impl-20",
+   "expect": "VERIFIED",
+   "observed": "VERIFIED",
+   "result": "PASS",
+   "note": "exported_at EMPTY, hashes ok"
+  },
+  {
+   "case": "C10",
+   "tool": "impl-24",
+   "expect": "VERIFIED",
+   "observed": "VERIFIED",
+   "result": "PASS",
+   "note": "exported_at EMPTY, hashes ok"
+  },
+  {
+   "case": "C10",
+   "tool": "impl-21",
+   "expect": "VERIFIED",
+   "observed": "VERIFIED",
+   "result": "PASS",
+   "note": "exported_at EMPTY, hashes ok"
+  },
+  {
+   "case": "C11",
+   "tool": "r2-installed",
+   "expect": "VERIFIED",
+   "observed": "VERIFIED",
+   "result": "PASS",
+   "note": "exported_at GARBAGE, hashes ok"
+  },
+  {
+   "case": "C11",
+   "tool": "impl-20",
+   "expect": "VERIFIED",
+   "observed": "VERIFIED",
+   "result": "PASS",
+   "note": "exported_at GARBAGE, hashes ok"
+  },
+  {
+   "case": "C11",
+   "tool": "impl-24",
+   "expect": "VERIFIED",
+   "observed": "VERIFIED",
+   "result": "PASS",
+   "note": "exported_at GARBAGE, hashes ok"
+  },
+  {
+   "case": "C11",
+   "tool": "impl-21",
+   "expect": "VERIFIED",
+   "observed": "VERIFIED",
+   "result": "PASS",
+   "note": "exported_at GARBAGE, hashes ok"
+  },
+  {
+   "case": "C11b",
+   "tool": "r2-installed",
+   "expect": "VERIFIED",
+   "observed": "VERIFIED",
+   "result": "PASS",
+   "note": "exported_at column ABSENT (5 fields)"
+  },
+  {
+   "case": "C11b",
+   "tool": "impl-20",
+   "expect": "VERIFIED",
+   "observed": "VERIFIED",
+   "result": "PASS",
+   "note": "exported_at column ABSENT (5 fields)"
+  },
+  {
+   "case": "C11b",
+   "tool": "impl-24",
+   "expect": "VERIFIED",
+   "observed": "VERIFIED",
+   "result": "PASS",
+   "note": "exported_at column ABSENT (5 fields)"
+  },
+  {
+   "case": "C11b",
+   "tool": "impl-21",
+   "expect": "VERIFIED",
+   "observed": "VERIFIED",
+   "result": "PASS",
+   "note": "exported_at column ABSENT (5 fields)"
+  },
+  {
+   "case": "C9",
+   "tool": "r2-installed",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "uppercase hex hash"
+  },
+  {
+   "case": "C9",
+   "tool": "impl-20",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "uppercase hex hash"
+  },
+  {
+   "case": "C9",
+   "tool": "impl-24",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "uppercase hex hash"
+  },
+  {
+   "case": "C9",
+   "tool": "impl-21",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "uppercase hex hash"
+  },
+  {
+   "case": "C2",
+   "tool": "r2-installed",
+   "expect": "NOT-VERIFIED",
+   "observed": "VERIFIED",
+   "result": "FAIL",
+   "note": "DIR, vault_sha256 column ABSENT, vault DIFFERS"
+  },
+  {
+   "case": "C2",
+   "tool": "impl-20",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "DIR, vault_sha256 column ABSENT, vault DIFFERS"
+  },
+  {
+   "case": "C2",
+   "tool": "impl-24",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "DIR, vault_sha256 column ABSENT, vault DIFFERS"
+  },
+  {
+   "case": "C2",
+   "tool": "impl-21",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "DIR, vault_sha256 column ABSENT, vault DIFFERS"
+  },
+  {
+   "case": "C3",
+   "tool": "r2-installed",
+   "expect": "NOT-VERIFIED",
+   "observed": "VERIFIED",
+   "result": "FAIL",
+   "note": "DIR, vault hash ABSENT (strict: never a receipt)"
+  },
+  {
+   "case": "C3",
+   "tool": "impl-20",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "DIR, vault hash ABSENT (strict: never a receipt)"
+  },
+  {
+   "case": "C3",
+   "tool": "impl-24",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "DIR, vault hash ABSENT (strict: never a receipt)"
+  },
+  {
+   "case": "C3",
+   "tool": "impl-21",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "DIR, vault hash ABSENT (strict: never a receipt)"
+  },
+  {
+   "case": "C4",
+   "tool": "r2-installed",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "DIR, trailing EMPTY vault hash, vault DIFFERS"
+  },
+  {
+   "case": "C4",
+   "tool": "impl-20",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "DIR, trailing EMPTY vault hash, vault DIFFERS"
+  },
+  {
+   "case": "C4",
+   "tool": "impl-24",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "DIR, trailing EMPTY vault hash, vault DIFFERS"
+  },
+  {
+   "case": "C4",
+   "tool": "impl-21",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "DIR, trailing EMPTY vault hash, vault DIFFERS"
+  },
+  {
+   "case": "C5",
+   "tool": "r2-installed",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "DIR, STALE vault digest, vault DIFFERS"
+  },
+  {
+   "case": "C5",
+   "tool": "impl-20",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "DIR, STALE vault digest, vault DIFFERS"
+  },
+  {
+   "case": "C5",
+   "tool": "impl-24",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "DIR, STALE vault digest, vault DIFFERS"
+  },
+  {
+   "case": "C5",
+   "tool": "impl-21",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "DIR, STALE vault digest, vault DIFFERS"
+  },
+  {
+   "case": "C5b",
+   "tool": "r2-installed",
+   "expect": "VERIFIED",
+   "observed": "VERIFIED",
+   "result": "PASS",
+   "note": "DIR, both digests correct (true-positive)"
+  },
+  {
+   "case": "C5b",
+   "tool": "impl-20",
+   "expect": "VERIFIED",
+   "observed": "VERIFIED",
+   "result": "PASS",
+   "note": "DIR, both digests correct (true-positive)"
+  },
+  {
+   "case": "C5b",
+   "tool": "impl-24",
+   "expect": "VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "FAIL",
+   "note": "DIR, both digests correct (true-positive)"
+  },
+  {
+   "case": "C5b",
+   "tool": "impl-21",
+   "expect": "VERIFIED",
+   "observed": "VERIFIED",
+   "result": "PASS",
+   "note": "DIR, both digests correct (true-positive)"
+  },
+  {
+   "case": "C6",
+   "tool": "r2-installed",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "FILE, vault hash column ABSENT, vault DIFFERS"
+  },
+  {
+   "case": "C6",
+   "tool": "impl-20",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "FILE, vault hash column ABSENT, vault DIFFERS"
+  },
+  {
+   "case": "C6",
+   "tool": "impl-24",
+   "expect": "NOT-VERIFIED",
+   "observed": "VERIFIED",
+   "result": "FAIL",
+   "note": "FILE, vault hash column ABSENT, vault DIFFERS"
+  },
+  {
+   "case": "C6",
+   "tool": "impl-21",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "FILE, vault hash column ABSENT, vault DIFFERS"
+  },
+  {
+   "case": "C6b",
+   "tool": "r2-installed",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "FILE, trailing EMPTY vault hash, vault DIFFERS"
+  },
+  {
+   "case": "C6b",
+   "tool": "impl-20",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "FILE, trailing EMPTY vault hash, vault DIFFERS"
+  },
+  {
+   "case": "C6b",
+   "tool": "impl-24",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "FILE, trailing EMPTY vault hash, vault DIFFERS"
+  },
+  {
+   "case": "C6b",
+   "tool": "impl-21",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "FILE, trailing EMPTY vault hash, vault DIFFERS"
+  },
+  {
+   "case": "C6c",
+   "tool": "r2-installed",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "FILE, source hash EMPTY"
+  },
+  {
+   "case": "C6c",
+   "tool": "impl-20",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "FILE, source hash EMPTY"
+  },
+  {
+   "case": "C6c",
+   "tool": "impl-24",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "FILE, source hash EMPTY"
+  },
+  {
+   "case": "C6c",
+   "tool": "impl-21",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "FILE, source hash EMPTY"
+  },
+  {
+   "case": "C6d",
+   "tool": "r2-installed",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "FILE, BOTH hash columns EMPTY"
+  },
+  {
+   "case": "C6d",
+   "tool": "impl-20",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "FILE, BOTH hash columns EMPTY"
+  },
+  {
+   "case": "C6d",
+   "tool": "impl-24",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "FILE, BOTH hash columns EMPTY"
+  },
+  {
+   "case": "C6d",
+   "tool": "impl-21",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "FILE, BOTH hash columns EMPTY"
+  },
+  {
+   "case": "C7",
+   "tool": "r2-installed",
+   "expect": "NOT-VERIFIED",
+   "observed": "VERIFIED",
+   "result": "FAIL",
+   "note": "self-move (source == vault path)"
+  },
+  {
+   "case": "C7",
+   "tool": "impl-20",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "self-move (source == vault path)"
+  },
+  {
+   "case": "C7",
+   "tool": "impl-24",
+   "expect": "NOT-VERIFIED",
+   "observed": "VERIFIED",
+   "result": "FAIL",
+   "note": "self-move (source == vault path)"
+  },
+  {
+   "case": "C7",
+   "tool": "impl-21",
+   "expect": "NOT-VERIFIED",
+   "observed": "VERIFIED",
+   "result": "FAIL",
+   "note": "self-move (source == vault path)"
+  },
+  {
+   "case": "C7d",
+   "tool": "r2-installed",
+   "expect": "NOT-VERIFIED",
+   "observed": "VERIFIED",
+   "result": "FAIL",
+   "note": "self-move, DIRECTORY"
+  },
+  {
+   "case": "C7d",
+   "tool": "impl-20",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "self-move, DIRECTORY"
+  },
+  {
+   "case": "C7d",
+   "tool": "impl-24",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "self-move, DIRECTORY"
+  },
+  {
+   "case": "C7d",
+   "tool": "impl-21",
+   "expect": "NOT-VERIFIED",
+   "observed": "VERIFIED",
+   "result": "FAIL",
+   "note": "self-move, DIRECTORY"
+  },
+  {
+   "case": "C8",
+   "tool": "r2-installed",
+   "expect": "WARN",
+   "observed": "VERIFIED",
+   "result": "WARN",
+   "note": "vault_path outside the vault root (ambiguity: WARN)"
+  },
+  {
+   "case": "C8",
+   "tool": "impl-20",
+   "expect": "WARN",
+   "observed": "VERIFIED",
+   "result": "WARN",
+   "note": "vault_path outside the vault root (ambiguity: WARN)"
+  },
+  {
+   "case": "C8",
+   "tool": "impl-24",
+   "expect": "WARN",
+   "observed": "VERIFIED",
+   "result": "WARN",
+   "note": "vault_path outside the vault root (ambiguity: WARN)"
+  },
+  {
+   "case": "C8",
+   "tool": "impl-21",
+   "expect": "WARN",
+   "observed": "VERIFIED",
+   "result": "WARN",
+   "note": "vault_path outside the vault root (ambiguity: WARN)"
+  },
+  {
+   "case": "C13",
+   "tool": "r2-installed",
+   "expect": "VERIFIED",
+   "observed": "VERIFIED",
+   "result": "PASS",
+   "note": "vault=/proc/version, REAL hash"
+  },
+  {
+   "case": "C13",
+   "tool": "impl-20",
+   "expect": "VERIFIED",
+   "observed": "VERIFIED",
+   "result": "PASS",
+   "note": "vault=/proc/version, REAL hash"
+  },
+  {
+   "case": "C13",
+   "tool": "impl-24",
+   "expect": "VERIFIED",
+   "observed": "VERIFIED",
+   "result": "PASS",
+   "note": "vault=/proc/version, REAL hash"
+  },
+  {
+   "case": "C13",
+   "tool": "impl-21",
+   "expect": "VERIFIED",
+   "observed": "VERIFIED",
+   "result": "PASS",
+   "note": "vault=/proc/version, REAL hash"
+  },
+  {
+   "case": "C14",
+   "tool": "r2-installed",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "vault=/proc/version, EMPTY-FILE digest bait"
+  },
+  {
+   "case": "C14",
+   "tool": "impl-20",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "vault=/proc/version, EMPTY-FILE digest bait"
+  },
+  {
+   "case": "C14",
+   "tool": "impl-24",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "vault=/proc/version, EMPTY-FILE digest bait"
+  },
+  {
+   "case": "C14",
+   "tool": "impl-21",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "vault=/proc/version, EMPTY-FILE digest bait"
+  },
+  {
+   "case": "C13b",
+   "tool": "r2-installed",
+   "expect": "WARN",
+   "observed": "VERIFIED",
+   "result": "WARN",
+   "note": "self-move on /proc/version (ambiguity: WARN)"
+  },
+  {
+   "case": "C13b",
+   "tool": "impl-20",
+   "expect": "WARN",
+   "observed": "NOT-VERIFIED",
+   "result": "WARN",
+   "note": "self-move on /proc/version (ambiguity: WARN)"
+  },
+  {
+   "case": "C13b",
+   "tool": "impl-24",
+   "expect": "WARN",
+   "observed": "VERIFIED",
+   "result": "WARN",
+   "note": "self-move on /proc/version (ambiguity: WARN)"
+  },
+  {
+   "case": "C13b",
+   "tool": "impl-21",
+   "expect": "WARN",
+   "observed": "VERIFIED",
+   "result": "WARN",
+   "note": "self-move on /proc/version (ambiguity: WARN)"
+  },
+  {
+   "case": "C15",
+   "tool": "r2-installed",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "vault=FIFO (must not hang)"
+  },
+  {
+   "case": "C15",
+   "tool": "impl-20",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "vault=FIFO (must not hang)"
+  },
+  {
+   "case": "C15",
+   "tool": "impl-24",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "vault=FIFO (must not hang)"
+  },
+  {
+   "case": "C15",
+   "tool": "impl-21",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "vault=FIFO (must not hang)"
+  },
+  {
+   "case": "C16",
+   "tool": "r2-installed",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "vault=dangling symlink"
+  },
+  {
+   "case": "C16",
+   "tool": "impl-20",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "vault=dangling symlink"
+  },
+  {
+   "case": "C16",
+   "tool": "impl-24",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "vault=dangling symlink"
+  },
+  {
+   "case": "C16",
+   "tool": "impl-21",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "vault=dangling symlink"
+  },
+  {
+   "case": "C17",
+   "tool": "r2-installed",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "vault file mode 000 (unreadable)"
+  },
+  {
+   "case": "C17",
+   "tool": "impl-20",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "vault file mode 000 (unreadable)"
+  },
+  {
+   "case": "C17",
+   "tool": "impl-24",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "vault file mode 000 (unreadable)"
+  },
+  {
+   "case": "C17",
+   "tool": "impl-21",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "vault file mode 000 (unreadable)"
+  },
+  {
+   "case": "C18",
+   "tool": "r2-installed",
+   "expect": "VERIFIED",
+   "observed": "VERIFIED",
+   "result": "PASS",
+   "note": "vault mtime 2030, hashes match"
+  },
+  {
+   "case": "C18",
+   "tool": "impl-20",
+   "expect": "VERIFIED",
+   "observed": "VERIFIED",
+   "result": "PASS",
+   "note": "vault mtime 2030, hashes match"
+  },
+  {
+   "case": "C18",
+   "tool": "impl-24",
+   "expect": "VERIFIED",
+   "observed": "VERIFIED",
+   "result": "PASS",
+   "note": "vault mtime 2030, hashes match"
+  },
+  {
+   "case": "C18",
+   "tool": "impl-21",
+   "expect": "VERIFIED",
+   "observed": "VERIFIED",
+   "result": "PASS",
+   "note": "vault mtime 2030, hashes match"
+  },
+  {
+   "case": "C18b",
+   "tool": "r2-installed",
+   "expect": "VERIFIED",
+   "observed": "VERIFIED",
+   "result": "PASS",
+   "note": "genuine empty file, empty digest"
+  },
+  {
+   "case": "C18b",
+   "tool": "impl-20",
+   "expect": "VERIFIED",
+   "observed": "VERIFIED",
+   "result": "PASS",
+   "note": "genuine empty file, empty digest"
+  },
+  {
+   "case": "C18b",
+   "tool": "impl-24",
+   "expect": "VERIFIED",
+   "observed": "VERIFIED",
+   "result": "PASS",
+   "note": "genuine empty file, empty digest"
+  },
+  {
+   "case": "C18b",
+   "tool": "impl-21",
+   "expect": "VERIFIED",
+   "observed": "VERIFIED",
+   "result": "PASS",
+   "note": "genuine empty file, empty digest"
+  },
+  {
+   "case": "C12",
+   "tool": "r2-installed",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "torn final line, no trailing newline"
+  },
+  {
+   "case": "C12",
+   "tool": "impl-20",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "torn final line, no trailing newline"
+  },
+  {
+   "case": "C12",
+   "tool": "impl-24",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "torn final line, no trailing newline"
+  },
+  {
+   "case": "C12",
+   "tool": "impl-21",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "torn final line, no trailing newline"
+  },
+  {
+   "case": "C12b",
+   "tool": "r2-installed",
+   "expect": "VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "FAIL",
+   "note": "VALID row, no trailing newline"
+  },
+  {
+   "case": "C12b",
+   "tool": "impl-20",
+   "expect": "VERIFIED",
+   "observed": "VERIFIED",
+   "result": "PASS",
+   "note": "VALID row, no trailing newline"
+  },
+  {
+   "case": "C12b",
+   "tool": "impl-24",
+   "expect": "VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "FAIL",
+   "note": "VALID row, no trailing newline"
+  },
+  {
+   "case": "C12b",
+   "tool": "impl-21",
+   "expect": "VERIFIED",
+   "observed": "VERIFIED",
+   "result": "PASS",
+   "note": "VALID row, no trailing newline"
+  },
+  {
+   "case": "C19",
+   "tool": "r2-installed",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "header-only ledger"
+  },
+  {
+   "case": "C19",
+   "tool": "impl-20",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "header-only ledger"
+  },
+  {
+   "case": "C19",
+   "tool": "impl-24",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "header-only ledger"
+  },
+  {
+   "case": "C19",
+   "tool": "impl-21",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "header-only ledger"
+  },
+  {
+   "case": "C20",
+   "tool": "r2-installed",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "ledger file missing"
+  },
+  {
+   "case": "C20",
+   "tool": "impl-20",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "ledger file missing"
+  },
+  {
+   "case": "C20",
+   "tool": "impl-24",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "ledger file missing"
+  },
+  {
+   "case": "C20",
+   "tool": "impl-21",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "ledger file missing"
+  },
+  {
+   "case": "C21",
+   "tool": "r2-installed",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "target absent"
+  },
+  {
+   "case": "C21",
+   "tool": "impl-20",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "target absent"
+  },
+  {
+   "case": "C21",
+   "tool": "impl-24",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "target absent"
+  },
+  {
+   "case": "C21",
+   "tool": "impl-21",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "target absent"
+  },
+  {
+   "case": "C23",
+   "tool": "r2-installed",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "vault path absent"
+  },
+  {
+   "case": "C23",
+   "tool": "impl-20",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "vault path absent"
+  },
+  {
+   "case": "C23",
+   "tool": "impl-24",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "vault path absent"
+  },
+  {
+   "case": "C23",
+   "tool": "impl-21",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "vault path absent"
+  },
+  {
+   "case": "C24",
+   "tool": "r2-installed",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "file row, vault path is a DIR"
+  },
+  {
+   "case": "C24",
+   "tool": "impl-20",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "file row, vault path is a DIR"
+  },
+  {
+   "case": "C24",
+   "tool": "impl-24",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "file row, vault path is a DIR"
+  },
+  {
+   "case": "C24",
+   "tool": "impl-21",
+   "expect": "NOT-VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "PASS",
+   "note": "file row, vault path is a DIR"
+  },
+  {
+   "case": "C25",
+   "tool": "r2-installed",
+   "expect": "VERIFIED",
+   "observed": "VERIFIED",
+   "result": "PASS",
+   "note": "extra trailing columns"
+  },
+  {
+   "case": "C25",
+   "tool": "impl-20",
+   "expect": "VERIFIED",
+   "observed": "VERIFIED",
+   "result": "PASS",
+   "note": "extra trailing columns"
+  },
+  {
+   "case": "C25",
+   "tool": "impl-24",
+   "expect": "VERIFIED",
+   "observed": "VERIFIED",
+   "result": "PASS",
+   "note": "extra trailing columns"
+  },
+  {
+   "case": "C25",
+   "tool": "impl-21",
+   "expect": "VERIFIED",
+   "observed": "VERIFIED",
+   "result": "PASS",
+   "note": "extra trailing columns"
+  },
+  {
+   "case": "C22",
+   "tool": "r2-installed",
+   "expect": "safe=0",
+   "observed": "verified=40/40",
+   "result": "FAIL",
+   "note": "concurrent torn append; complete rows carry a WRONG digest"
+  },
+  {
+   "case": "C22",
+   "tool": "impl-20",
+   "expect": "safe=0",
+   "observed": "verified=0/40",
+   "result": "PASS",
+   "note": "concurrent torn append; complete rows carry a WRONG digest"
+  },
+  {
+   "case": "C22",
+   "tool": "impl-24",
+   "expect": "safe=0",
+   "observed": "verified=0/40",
+   "result": "PASS",
+   "note": "concurrent torn append; complete rows carry a WRONG digest"
+  },
+  {
+   "case": "C22",
+   "tool": "impl-21",
+   "expect": "safe=0",
+   "observed": "verified=0/40",
+   "result": "PASS",
+   "note": "concurrent torn append; complete rows carry a WRONG digest"
+  }
+ ],
+ "false_verified_rows": [
+  {
+   "case": "C2",
+   "tool": "r2-installed",
+   "expect": "NOT-VERIFIED",
+   "observed": "VERIFIED",
+   "result": "FAIL",
+   "note": "DIR, vault_sha256 column ABSENT, vault DIFFERS"
+  },
+  {
+   "case": "C3",
+   "tool": "r2-installed",
+   "expect": "NOT-VERIFIED",
+   "observed": "VERIFIED",
+   "result": "FAIL",
+   "note": "DIR, vault hash ABSENT (strict: never a receipt)"
+  },
+  {
+   "case": "C6",
+   "tool": "impl-24",
+   "expect": "NOT-VERIFIED",
+   "observed": "VERIFIED",
+   "result": "FAIL",
+   "note": "FILE, vault hash column ABSENT, vault DIFFERS"
+  },
+  {
+   "case": "C7",
+   "tool": "r2-installed",
+   "expect": "NOT-VERIFIED",
+   "observed": "VERIFIED",
+   "result": "FAIL",
+   "note": "self-move (source == vault path)"
+  },
+  {
+   "case": "C7",
+   "tool": "impl-24",
+   "expect": "NOT-VERIFIED",
+   "observed": "VERIFIED",
+   "result": "FAIL",
+   "note": "self-move (source == vault path)"
+  },
+  {
+   "case": "C7",
+   "tool": "impl-21",
+   "expect": "NOT-VERIFIED",
+   "observed": "VERIFIED",
+   "result": "FAIL",
+   "note": "self-move (source == vault path)"
+  },
+  {
+   "case": "C7d",
+   "tool": "r2-installed",
+   "expect": "NOT-VERIFIED",
+   "observed": "VERIFIED",
+   "result": "FAIL",
+   "note": "self-move, DIRECTORY"
+  },
+  {
+   "case": "C7d",
+   "tool": "impl-21",
+   "expect": "NOT-VERIFIED",
+   "observed": "VERIFIED",
+   "result": "FAIL",
+   "note": "self-move, DIRECTORY"
+  }
+ ],
+ "under_verified_rows": [
+  {
+   "case": "C5b",
+   "tool": "impl-24",
+   "expect": "VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "FAIL",
+   "note": "DIR, both digests correct (true-positive)"
+  },
+  {
+   "case": "C12b",
+   "tool": "r2-installed",
+   "expect": "VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "FAIL",
+   "note": "VALID row, no trailing newline"
+  },
+  {
+   "case": "C12b",
+   "tool": "impl-24",
+   "expect": "VERIFIED",
+   "observed": "NOT-VERIFIED",
+   "result": "FAIL",
+   "note": "VALID row, no trailing newline"
+  },
+  {
+   "case": "C22",
+   "tool": "r2-installed",
+   "expect": "safe=0",
+   "observed": "verified=40/40",
+   "result": "FAIL",
+   "note": "concurrent torn append; complete rows carry a WRONG digest"
+  }
+ ],
+ "case_legend": {
+  "C2": "DIR row, vault_sha256 column ABSENT, vault content DIFFERS",
+  "C3": "DIR row, vault hash column ABSENT, vault content MATCHES (strict: still not a receipt)",
+  "C6": "FILE row, vault_sha256 column ABSENT, vault content DIFFERS",
+  "C7": "self-move: vault_path == source_path (file)",
+  "C7d": "self-move: vault_path == source_path (directory)",
+  "C12b": "VALID ledger row, file has no trailing newline",
+  "C22": "torn concurrent append, DIR target, every complete row carries a WRONG vault digest",
+  "C5b": "DIR row, both digests correct (legitimate true-positive)"
+ },
+ "readonly_proof": {
+  "vault": "/home/vgpnk/Documents/shokoknowledge",
+  "vault_manifest_before": "24b42e1149a4ceacd61004170e3062ebde1e6f7cfd1bd0c0639f05bad5a43ecd",
+  "vault_manifest_after": "24b42e1149a4ceacd61004170e3062ebde1e6f7cfd1bd0c0639f05bad5a43ecd",
+  "live_ledger": "corpus/knowledge/obsidian-ledger.tsv",
+  "live_ledger_sha_before": "3f7e9f2ab9e614464cb031d3f00a812a21f0e889f7666309a90d7784b75a9599",
+  "live_ledger_sha_after": "3f7e9f2ab9e614464cb031d3f00a812a21f0e889f7666309a90d7784b75a9599",
+  "live_ledger_lines_before": 1,
+  "live_ledger_lines_after": 1,
+  "readonly_ok": true,
+  "note": "Manifest digest = sha256 of `find <vault> -printf '%P\\t%s\\t%T@\\n' | sort`. Sibling seats read the same vault concurrently, so only my own before/after window is claimed."
+ },
+ "safety": {
+  "gui_launcher_executed": "never \u2014 /usr/bin/obsidian was never run; no `obsidian` name executed",
+  "vault_writes": "none",
+  "git_mutations": "none",
+  "secrets_read": "none",
+  "writes_by_s55": [
+   "tests/vault/s55-probe.sh (v1, superseded)",
+   "tests/vault/s55-probe2.sh",
+   "tests/vault/s55-probe3.sh",
+   "tests/vault/s55-probe4.sh",
+   "tests/vault/s55-cross.sh",
+   "tests/vault/s55-src/**",
+   "tests/vault/s55-vault/**",
+   "tests/vault/s55-raw/**",
+   "census/round-4/vadv-55.json"
+  ],
+  "live_ledger_untouched": true
+ },
+ "limitations": [
+  "fuse/overlay mounts were NOT exercised directly \u2014 the assignment sanctioned simulating stat quirks with /proc/version (stat size 0, real content). No real fuse mount was created.",
+  "C1/C8/C13b are WARN observations with defensible alternative readings; they are excluded from both PASS and FAIL counts.",
+  "C5b (impl-24 under-verified) is a coverage limit rather than a false-SAFE: impl-24 is file-oriented and reports source-absent for directory targets; it never over-approves.",
+  "The C22 concurrency window is timing-dependent by construction; the static E2 probe reproduces the same accepted-row state without any race, which is the stronger evidence.",
+  "impl-20/impl-24 selftest was run only for impl-20 (exit 0, 35 checks); impl-24/impl-21 selftest results belong to their own seats.",
+  "Probe-harness defects found and recorded during the run: v1 harness argv error (cross.tsv), one shared-ledger probe masking (probes.tsv), and two unbound-variable bugs; all were fixed before the final matrix and the superseded artifacts are retained."
+ ],
+ "winner_inputs": {
+  "clean_tool": "souji-vault-verify.impl-20.sh",
+  "clean_tool_sha256": "86f5ffbcdacd6e6d9d8fdddf9a084541ab335689dd7014b555e13dd0adeb9383",
+  "failures": 0,
+  "false_verified": 0,
+  "note": "impl-20 is the only tool with 0 FAILs across the 36-case s/t/u matrix and it uniquely refuses self-move rows (source-equals-vault)."
+ }
+}

@@ -1,0 +1,98 @@
+{
+  "seat": "S09",
+  "role": "fixture author — case-V1 (clean pair: source + byte-identical vault copy + matching ledger row)",
+  "round": 4,
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "repo_head": "78694ac",
+  "run_utc": "2026-10-18T17:10:00Z",
+  "assignment": "tests/vault/case-V1/ (make-fixture.sh + expected.json): a fake vault dir with note.md, a source file with identical bytes, and a ledger row (tests/vault/ledger-V1.tsv) with matching source path+sha256 and vault path+sha256. Expected: VERIFIED.",
+  "verdict": "DELIVERED — fixture built, expectation pinned, contract-aligned to the shared V1–V8 runner interface, discrimination proven in both directions; selftest 23/23 PASS",
+  "artifacts": {
+    "tests/vault/case-V1/make-fixture.sh": {
+      "sha256": "7ecddab006a6a184738dbb30dd70f22ffdcbd11e01ff750d1a254263aff1b5cc",
+      "role": "builder: source/note.md + vault/note.md (byte-identical, 0444) + <ROOT>/ledger.tsv + substituted <ROOT>/expected.json + git-init'd root; --ledger copy defaults to tests/vault/ledger-V1.tsv",
+      "cli": "make-fixture.sh [--out DIR | DIR] [--ledger FILE] [--quiet] [--skip-ledger] [--print-row] [--print-hashes]",
+      "exit_codes": "0 built, 1 build/assertion failure, 2 usage",
+      "stdout_contract": "line 1 JSON {case,root,targets,expect,vault,ledger,sha256}; line 2 `FIXTURE_READY V1 <ROOT>` (third token is the ROOT, never the target); --quiet emits KEY=VALUE lines plus the FIXTURE_READY line"
+    },
+    "tests/vault/case-V1/expected.json": {
+      "sha256": "b6bd1321f8ffb38c5dcddbb40c2e2cb2f14b0d3ba18e1db134a003404e044c4d",
+      "role": "declaration: schema souji-vault-fixture/1, one declared row, string targets, expect VERIFIED/moved-to-obsidian, accept/must_not_be, crosscheck (r2 tool), failure_modes_caught, disarmed"
+    },
+    "tests/vault/case-V1/selftest.sh": {
+      "sha256": "69c667d541b108432f625b18cee3bb4470a1728762f6545f9bbd094c2e19256b",
+      "role": "23 checks over T1 build invariants, T2 r2-tool armed/disarmed, T3 three conjunct negatives, T4 determinism + marker/refusal, T5 live-ledger-untouched",
+      "cli": "selftest.sh [--keep] [--out JSON] [--tool PATH]"
+    },
+    "tests/vault/ledger-V1.tsv": {
+      "sha256": "0f2e83dedf96f51cd550036ff08d6dc1657a81bb085b36d1425cb80d1fadaf68",
+      "role": "the case's default ledger copy: header + one row for the last built root (concrete paths, V8 convention)"
+    },
+    "tests/results/v1-selftest.json": {
+      "sha256": "bf18ce66183b274d55b62393286dd8abdfa988bf2891b39366fb556d6d592d60",
+      "role": "machine-readable selftest result: pass=23 fail=0"
+    }
+  },
+  "fixture_facts": {
+    "content_sha256": "a63192a11325e61f3aebfd483c34f21c05c5bf815bc83cef7866a92b8132f840",
+    "content_bytes": 161,
+    "source_path": "<ROOT>/source/note.md — present",
+    "vault_path": "<ROOT>/vault/note.md — present, mode 0444, byte-identical (cmp -s exit 0)",
+    "ledger": "<ROOT>/ledger.tsv — header + exactly one data row",
+    "row": "source_path\tsource_sha256=a63192a1…\tvault_path\tvault_sha256=a63192a1…\t2026-10-18\tcase-V1 clean pair",
+    "design_point": "all four conjuncts pass; this is the positive control of the V-series — a false NOT-VERIFIED here is a false negative, and the three conjunct negatives (T3) prove the row is doing real work rather than being skipped"
+  },
+  "measured_results": {
+    "selftest": {
+      "command": "bash tests/vault/case-V1/selftest.sh",
+      "exit": 0,
+      "result": "SELFTEST PASS pass=23 fail=0"
+    },
+    "round2_tool_crosscheck": {
+      "tool": "tools/souji-verify.sh",
+      "tool_sha256": "7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820",
+      "armed_command": "SOUJI_LEDGER=<ROOT>/ledger.tsv bash tools/souji-verify.sh <ROOT>/source/note.md",
+      "armed_line": "VERDICT\t<ROOT>/source/note.md\tSAFE\tmoved-to-obsidian\tledger-row vault=<ROOT>/vault/note.md source-sha256=a63192a11325",
+      "disarmed_command": "SOUJI_LEDGER=<header-only-ledger> bash tools/souji-verify.sh <ROOT>/source/note.md",
+      "disarmed_line": "VERDICT\t<ROOT>/source/note.md\tNOT-SAFE\tnone\tobsidian=no-matching-ledger-row; stale=not-scratch-type",
+      "finding": "the installed r2 tool expresses this case as SAFE/moved-to-obsidian; the r4 harness must express it as VERIFIED/moved-to-obsidian (accept.exact in expected.json). The class mapping is the only vocabulary delta."
+    },
+    "conjunct_negatives": {
+      "vault_hash": "vault copy corrupted after row -> obsidian=vault-sha-mismatch, NOT-SAFE",
+      "source_hash": "source edited after row -> obsidian=source-sha-mismatch, NOT-SAFE",
+      "vault_presence": "vault file removed -> obsidian=vault-unreachable, NOT-SAFE",
+      "finding": "each conjunct independently falsifies the receipt; a tool that checks only some of the four cannot pass both T1 and T3"
+    },
+    "consumer_prep_simulations": {
+      "runner-26": "argv --out TMP/case-V1 --ledger TMP/V1-ledger.tsv --quiet: rc=0, root parsed from FIXTURE_READY, ledger copy written, target=<root>/source/note.md, want=VERIFIED contains=[VERIFIED]",
+      "runner-28": "argv --quiet cwd=case dir: rc=0, root parsed, <ROOT>/ledger.tsv found, targets are strings, want=VERIFIED accept.exact=[VERIFIED]",
+      "runner-29": "argv --out TMP/fx-case-V1 --ledger TMP/ledger-case-V1.tsv: rc=0, root parsed, own ledger written, want=VERIFIED token=moved-to-obsidian"
+    },
+    "safety": {
+      "live_ledger": "corpus/knowledge/obsidian-ledger.tsv sha256 3f7e9f2ab9e614464cb031d3f00a812a21f0e889f7666309a90d7784b75a9599 unchanged, 1 line (header only), before and after every run",
+      "real_vault": "never touched (fixture vault is a fake dir under the fixture root; no Obsidian process, no CLI, no network)",
+      "r2_selftest": "bash tools/souji-verify.sh --selftest exit 0 (24 checks, 0 failed) after the fixture work"
+    }
+  },
+  "interface_notes": {
+    "contract_discovered_mid_run": "sibling seats S13/S16 (V5/V8) and runners 26/28/29 converged on: FIXTURE_READY third token = ROOT; <ROOT>/ledger.tsv canonical; <ROOT>/expected.json substituted; string targets; schema souji-vault-fixture/1. The first builder revision emitted FIXTURE_READY with the target and only wrote tests/vault/ledger-V1.tsv; both were fixed (the target-shaped token would have made runner-28 read the wrong ledger and runner-26/29 fall back inconsistently).",
+    "positional_out": "a positional OUT_DIR argument is accepted (runner-26's build.sh-style fallback form), alongside --out",
+    "ledger_copy_semantics": "--ledger FILE writes a copy; the canonical ledger is always <ROOT>/ledger.tsv; --skip-ledger writes neither",
+    "refusal": "a non-empty --out without the .case-V1-fixture marker is refused (exit 2); marker re-runs rebuild in place"
+  },
+  "cross_seat_notes": {
+    "for_runners": "build with `bash tests/vault/case-V1/make-fixture.sh --quiet`; parse `FIXTURE_READY V1 <ROOT>`; the ledger is <ROOT>/ledger.tsv (or the --ledger copy you pass); evaluate <ROOT>/source/note.md; expect VERIFIED (r2 tool: SAFE/moved-to-obsidian via SOUJI_LEDGER)",
+    "for_impls": "the case is the positive control — matching on all four conjuncts must yield VERIFIED; the three T3 negatives pin each conjunct; never write to the vault, the fixture vault is read-only (0444) by construction",
+    "gitignore": "tests/vault/ is currently untracked and carries no .gitignore; sibling seats keep ledgers with concrete /tmp roots there too (ledger-V8.tsv precedent). Parent should decide the commit policy for tests/vault/ fixtures at integration."
+  },
+  "hygiene": {
+    "tmp_scratch_cleaned": ["/tmp/s09-*", "/tmp/neg*.tsv", "/tmp/s09-sim-consumers.py", "/tmp/v1-note.md"],
+    "default_root_kept": "one /tmp/souji-vault-V1.OoQTYt root kept so tests/vault/ledger-V1.tsv points at an existing fixture (V8 convention); safe to delete, marked .case-V1-fixture",
+    "stray_fixed": "an early revision wrote tests/tests/vault/ledger-V1.tsv due to a LANE_ROOT depth bug; the stray tree was removed and the builder now resolves the lane root correctly"
+  },
+  "followups": [
+    "parent: decide commit policy for tests/vault/ (untracked fixtures + ledgers with /tmp paths)",
+    "runners: V1 is now contract-aligned; runner-28/29 consume it directly, runner-26 via the --out/--ledger form",
+    "no writes anywhere outside tests/vault/case-V1/, tests/vault/ledger-V1.tsv, tests/results/v1-selftest.json, census/round-4/seat-09.json and /tmp scratch"
+  ]
+}

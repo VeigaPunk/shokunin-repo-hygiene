@@ -1,0 +1,86 @@
+{
+  "seat": "S23",
+  "kind": "implementor",
+  "round": 4,
+  "role": "implementor (independent)",
+  "assignment": "impl-23.sh — round-4 Obsidian-CLI vault verification tool; ledger-backed moved-to-obsidian receipt with read-only sha256sum vault verification",
+  "artifact": "tools/souji-vault-verify.impl-23.sh",
+  "artifact_sha256": "cbfce90166c8247aaa05d8e28f47ce98e85ace63b2a841de53de9e52e6a8de6a",
+  "artifact_bytes": 20227,
+  "bash_syntax": "ok (bash -n)",
+  "verdict": "IMPLEMENTED-AND-VERIFIED — sixteen r4 harness families run against the final artifact with zero counted failures",
+
+  "design": {
+    "verification_primitive": "read-only sha256sum under the vault path (files) + deterministic manifest digest (directories); the official Obsidian CLI is NEVER executed",
+    "cli_state": "official CLI shim absent on this host (no ~/.local/bin/obsidian, no /usr/local/bin/obsidian, no socket); --cli is accepted, its state is reported on stderr (cli=unavailable(...)), and verification never depends on it — a lying/hanging/absent CLI can never produce a false SAFE",
+    "ledger": "resolved from --ledger flag > SOUJI_LEDGER env > corpus/knowledge/obsidian-ledger.tsv; matching is path-exact plus canonical-form (dotdot/symlink spelling) equality; empty hash columns never qualify; CRLF rows parse; extra columns ignored",
+    "output": "two lines per target: r2 record 'VERDICT<TAB>path<TAB>SAFE|NOT-SAFE<TAB>receipt<TAB>evidence' then r4 token 'VERIFIED(moved-to-obsidian)' / 'NOT-VERIFIED(reason)<TAB>evidence'; --json emits one parseable object per target with the exact path; missing target -> receipt field 'unreachable' (vrun-33 C3 convention)",
+    "false-safe_refusals": [
+      "self-move (vault_path == source_path)",
+      "path alias (dotdot spelling, symlink, hardlink via -ef) -> self-move",
+      "nested copy (vault path inside the source directory) -> nested-copy",
+      "vault edit after row -> vault-hash-mismatch",
+      "source edit after row -> source-hash",
+      "missing vault side -> vault-absent; missing source side -> source-absent",
+      "row with empty hash columns -> row-incomplete",
+      "FIFO/device vault path -> vault-unreachable (never hashed, no hang)",
+      "dangling / /dev/null ledger -> no-ledger",
+      "secret-shaped path -> secrets-refusal (receipt field also names it)"
+    ]
+  },
+
+  "harness_matrix": {
+    "note": "every entry below was re-run against the FINAL artifact bytes (sha256 cbfce90166c8247aaa05d8e28f47ce98e85ace63b2a841de53de9e52e6a8de6a)",
+    "runner-28.sh": {"result": "17/17 rows for impl-23 (post-fix re-run)", "out": "/tmp/s23-vrun28b.json"},
+    "runner-39.sh": {"result": "pass=26 fail=0 skip=0 info=12 (post-fix re-run)", "out": "/tmp/s23-vrun39b.json"},
+    "vrun-33.sh": {"result": "TOOL-PASS counted=119 failed=0 (post-fix re-run; was 118/119 on C3 before the receipt-field fix)", "out": "/tmp/s23-vrun33b.json"},
+    "judge-60-vault.sh": {"result": "hard_pass=45 hard_fail=0 info=2; winner=impl-23, verdict=PASS (post-fix re-run)", "out": "/tmp/s23-vfinal60b.json"},
+    "adv53-harness.sh": {"result": "pass=22 fail=0 (final-bytes re-run)", "note": "cli degrade family, 100MB sparse hash correctness, racy vault; M8 GUI sentinel untouched; no rc=124", "out": "/tmp/s23-vadv53b.json"},
+    "vadv54-harness.sh": {"result": "PASS=18 FAIL=0 WARN=3 INFO=1, readonly_ok=true (post-fix re-run)", "out": "/tmp/s23-vadv54b.json"},
+    "runner-31.sh": {"result": "pass=23 fail=0 skip=0 info=4 (final-bytes re-run)", "out": "/tmp/s23-vrun31b.json"},
+    "runner-34.sh": {"result": "rows=16 pass=16 fail=0 (final-bytes re-run)", "out": "/tmp/s23-vrun34b.json"},
+    "runner-36.sh": {"result": "pass=30 fail=0 skip=0 info=11; impl-matrix rows=35 pass=35 (final-bytes re-run, seat 923 to avoid shared-dir collision)", "out": "/tmp/s23-vrun36b.json"},
+    "runner-37.sh": {"result": "pass=26 fail=0 skip=0 info=9 (final-bytes re-run)", "out": "/tmp/s23-vrun37b.json"},
+    "runner-40.sh": {"result": "pass=24 fail=0 skip=0 info=11 (final-bytes re-run)", "out": "/tmp/s23-vrun40b.json"},
+    "runner-29.sh": {"result": "counted=40 pass=40 fail=0 (final-bytes re-run)", "out": "/tmp/s23-vrun29b.json"},
+    "runner-27.sh": {"result": "impl-23 26/26 (matrix over all impls)", "out": "/tmp/s23-vrun27.json"},
+    "runner-26.sh": {"result": "impl-23 pass=16 fail=0 (+selftest)", "out": "/tmp/s23-vrun26.json"},
+    "runner-25.sh": {"result": "17/17 rows, live_ledger_unchanged=true, vault_unchanged=true, gui 0->0", "out": "/tmp/s23-vrun25.json"},
+    "reviewer-43.sh": {"result": "pass=22 fail=0 skip=0 info=3 (final-bytes re-run)", "out": "/tmp/s23-vreview43b.json"},
+    "s61-judge.sh": {"result": "9 pass / 0 fail; P6 outside-vault-root advisory per its own design", "out": "/tmp/s23-vfinal61.json"},
+    "selftest": {"result": "pass=25 fail=0 exit 0 (post-fix)", "note": "own fixture battery S1-S25 incl. all false-safe families, batch, json, determinism, newline record, cli degrade, exit domain"}
+  },
+
+  "live_surfaces": {
+    "live_ledger": {"path": "corpus/knowledge/obsidian-ledger.tsv", "lines": 1, "sha256": "3f7e9f2ab9e614464cb031d3f00a812a21f0e889f7666309a90d7784b75a9599", "state": "header-only, unchanged across every run"},
+    "real_vault": {"path": "/home/vgpnk/Documents/shokoknowledge", "files": 220, "manifest_sha256": "299d6b6a9828cfc613f46daee146a995a28345849f2183714a6a4662f843a401", "state": "read-only; unchanged (judge-60 rails vault_ok=1, 220->220; reviewer-43 and runner-25/39 confirm)"},
+    "live_vault_end_to_end": "verified: a distinct source copy of the real Home.md with a matching ledger row -> SAFE(moved-to-obsidian) naming vault=/home/vgpnk/Documents/shokoknowledge/Home.md; wrong vault hash control -> NOT-SAFE(vault-hash-mismatch); self-move row on the real path -> NOT-SAFE(self-move)",
+    "gui_launcher": "never executed; judge-60 gui_before=0 gui_after=0; adv53 M8 sentinel untouched; grep -c '/usr/bin/obsidian' in artifact = 0",
+    "forbidden_actions": "no git fetch/push/commit/branch, no ~/.config writes, no .ufo/state or watchdog writes, no credential files read"
+  },
+
+  "cli_recon": {
+    "official_cli_state": "non-functional non-interactively: shim absent in ~/.local/bin and /usr/local/bin, socket $XDG_RUNTIME_DIR/.obsidian-cli.sock absent, no app process; consistent with census/round-4/seat-05.json and seat-06.json",
+    "inspector": "obsidian-cli-inspector is a third-party read-only tool (v1.0.3); its 4-hex+epoch 'Hash' column cannot confirm a sha256 receipt — not used for verdicts",
+    "consequence": "the r4 contract is satisfiable today only through the read-only sha256sum fallback, which this artifact implements as the sole primitive"
+  },
+
+  "winner_inputs": [
+    "The artifact is at tools/souji-vault-verify.impl-23.sh (sha256 cbfce90166c8247aaa05d8e28f47ce98e85ace63b2a841de53de9e52e6a8de6a).",
+    "Every r4 harness present in the lane passes on the final bytes: r28 17/17, r39 26/0, vrun-33 119/0, r31 23/0, r34 16/16, r36 30/0, r37 26/0, r40 24/0, r29 40/0, r27 26/26, r26 16/0, r25 17/17, judge-60 45/0 winner, adv53 22/0, vadv54 18/0, reviewer-43 22/0, s61 9/0, own selftest 25/0.",
+    "The only observed red anywhere was vrun-33 C3 before the receipt-field fix; after emitting 'unreachable' in field 4 for missing targets, vrun-33 is 119/0 and every receipt-sensitive harness stayed green.",
+    "Two-line output is deliberate: line 1 is the r2-addressable VERDICT record (field 3 class, field 4 receipt, field 5 evidence); line 2 is the r4 single-token verdict with an evidence tail so contains-token harnesses resolve on the same line they grep.",
+    "Reinstall target for the round's integration step: copy this file to the judge's chosen installed name byte-identical; no other file needs to change."
+  ],
+
+  "uncertainties": [
+    "The official-CLI-assisted path (socket protocol, --json/--md/--tsv/--csv flags) remains NOT-VERIFIED on this host: it requires the operator to run the app and register the shim; the tool deliberately never touches that path.",
+    "runner-33.sh was run via its SOUJI_VERIFY_TOOL override (it defaults to the r2 artifact); runner-25's default settle gate had to be skipped with --settle 0 because sibling seats keep rewriting impls mid-run."
+  ],
+
+  "notes": [
+    "Probe window 2026-10-18 13:56-15:10 -03:00.",
+    "All fixture ledgers used by this seat live under /tmp or tests/vault/; the live ledger was never written.",
+    "This fragment is written by the seat; LOG.md/SCORECARD.md integration stays with the parent per AGENTS.md."
+  ]
+}

@@ -1,0 +1,106 @@
+{
+  "seat": "S07",
+  "kind": "vault-cli-surface-recon",
+  "round": 4,
+  "target": "/home/vgpnk/Documents/shokoknowledge",
+  "scope": "read-only vault-side recon: .obsidian/ contents, enabled core plugins, CLI/API config surfaces; plus host-side CLI entry-point measurements needed to interpret the vault findings",
+  "verdicts": {
+    "vault_cli_surface": "NONE",
+    "official_cli_available": "NO (NOT-INSTALLED; GUI registration structurally blocked under this packaging)",
+    "ledger_vault_sha256_oracle": "sha256sum ONLY (verified stable); obsidian-cli-inspector DB is NOT a sha256 oracle"
+  },
+  "checks": {
+    "obsidian_dir_files": 5,
+    "obsidian_dir_subdirs": 0,
+    "plugins_dir": "absent",
+    "community_plugins_json": "absent",
+    "local_rest_api_plugin": "absent",
+    "cli_section_in_vault_config": "absent (app.json == {})",
+    "cli_api_grep_all_vault_configs": "0 matches",
+    "core_plugins_enabled": 21,
+    "core_plugins_disabled": 10,
+    "host_cli_shim": "absent (~/.local/bin/obsidian, /usr/local/bin/obsidian, ~/.local/bin/obsidian-cli, /usr/lib/electron43/obsidian-cli all missing)",
+    "cli_socket": "absent (no /run/user/1000/.obsidian-cli.sock, no ~/.obsidian-cli.sock; app not running)",
+    "host_config_cli_flag": true,
+    "host_config_cli_flag_contradicted_by_artifacts": true
+  },
+  "core_plugins": {
+    "enabled": ["file-explorer", "global-search", "switcher", "graph", "backlink", "canvas", "outgoing-link", "tag-pane", "properties", "page-preview", "daily-notes", "templates", "note-composer", "command-palette", "editor-status", "bookmarks", "outline", "word-count", "file-recovery", "sync", "bases"],
+    "disabled": ["footnotes", "slash-command", "zk-prefixer", "random-note", "slides", "audio-recorder", "workspaces", "publish", "markdown-importer", "webviewer"],
+    "note": "None of the enabled core plugins provides a CLI/API surface. The official CLI is a host-level app feature (unix socket + shim), not a plugin; the vault config carries no CLI enablement. No community plugins exist at all, so no local-rest-api / obsidian-local-rest-api surface either. sync=true is the only network-facing surface enabled."
+  },
+  "receipt_evidence": {
+    "cmds": [
+      "ls -la /home/vgpnk/Documents/shokoknowledge/.obsidian/",
+      "find /home/vgpnk/Documents/shokoknowledge/.obsidian -maxdepth 3",
+      "grep -ri 'cli\\|rest\\|api\\|plugin' /home/vgpnk/Documents/shokoknowledge/.obsidian/*.json; echo exit:$?",
+      "jq -r 'to_entries | map(select(.value==true) | .key) | join(\", \")' .obsidian/core-plugins.json",
+      "jq '[.[] | select(.==true)] | length' .obsidian/core-plugins.json; jq '[.[] | select(.==false)] | length' .obsidian/core-plugins.json",
+      "cat ~/.config/obsidian/obsidian.json; sha256sum ~/.config/obsidian/obsidian.json",
+      "command -v obsidian obsidian-cli obsidian-cli-inspector",
+      "ls -la ~/.local/bin/obsidian ~/.local/bin/obsidian-cli /usr/local/bin/obsidian /usr/lib/electron43/obsidian-cli",
+      "find / -maxdepth 5 -name 'obsidian-cli' -not -path '/proc/*' -not -path '/sys/*' 2>/dev/null",
+      "ls -la ${XDG_RUNTIME_DIR:-/run/user/1000}/.obsidian-cli.sock ~/.obsidian-cli.sock",
+      "ps -eo pid,comm,args | grep -i obsidian | grep -v grep",
+      "strings -n 8 ~/.config/obsidian/obsidian-1.14.4.asar | grep -o 'register-cli...' (context extraction)",
+      "timeout 5 env ELECTRON_RUN_AS_NODE=1 electron43 -e 'console.log(require(\"path\").basename(process.argv0))'  -> 'electron'",
+      "ln -s /usr/lib/electron43/electron /tmp/s07-argv0/obsidian; timeout 5 env ELECTRON_RUN_AS_NODE=1 /tmp/s07-argv0/obsidian -e 'console.log(...includes(\"obsidian\"))' -> 'true'",
+      "sqlite3 -readonly 'file:$HOME/.config/obsidian-cli-inspector/vault.db?mode=ro' 'select count(*) from notes;' -> 3714",
+      "sqlite3 -readonly ... 'select path, hash, mtime from notes where path=\"Home.md\";' -> Home.md|15ed:1791921146|1791921146",
+      "sha256sum Home.md -> 98afa2b81887ca13f1f06243f3f0d1e24cd411d7f9321b332fc998d52ff242a4",
+      "cd vault && git --no-optional-locks status --porcelain; git --no-optional-locks rev-list --count origin/main..HEAD",
+      "cd vault && xargs -a /tmp/s07-sample.txt sha256sum (run twice, diff) -> identical"
+    ],
+    "out": [
+      "'.obsidian/' = 5 files, 0 subdirs: appearance.json(2B) app.json(2B) core-plugins.json(696B) graph.json(493B) workspace.json(5736B). No plugins/, no community-plugins.json, no CLI/API/REST keys anywhere.",
+      "grep -ri 'cli|rest|api|plugin' over .obsidian/*.json -> exit 1 (zero matches).",
+      "core-plugins.json: 31 entries, 21 enabled / 10 disabled; enabled list above; sync=true, bases=true, publish=false, webviewer=false.",
+      "~/.config/obsidian/obsidian.json = {\"vaults\":{\"357200b26f64b4e9\":{\"path\":\"/home/vgpnk/Documents/shokoknowledge\",\"ts\":1791912393905,\"open\":true}},\"cli\":true} (sha256 bc1b5a3425228889bd351251eae1d29482ab5001d13f739b804b84ad8c3c4496, mtime 2026-10-18 11:50:37 -0300).",
+      "which: /usr/bin/obsidian (GUI bash wrapper -> exec electron43 /usr/lib/obsidian/app.asar), /usr/bin/obsidian-cli-inspector (third-party). No obsidian-cli anywhere.",
+      "All CLI shim paths absent: ~/.local/bin/obsidian, ~/.local/bin/obsidian-cli, /usr/local/bin/obsidian, /usr/lib/electron43/obsidian-cli. find / -maxdepth 5 -name 'obsidian-cli' -> only /usr/bin/obsidian-cli-inspector. Sockets absent. No obsidian process running.",
+      "obsidian-1.14.4.asar (sha256 146ef8470d8cbb4a6db209bdc19bf2bad13350444186c0fd93c31087b142b92f) contains the registration code: l.ipcMain.handle('register-cli') with guard `if(!p)` where `u=path.basename(process.argv0), p=u.toLowerCase().includes('obsidian')` -> refusal message 'Unable to add to command line because the executable is \"<name>\" instead of \"obsidian\"'. Linux branch: if `<dirname(process.execPath)>/obsidian-cli` exists -> copyFileSync to ~/.local/bin/obsidian + chmod 0755; else symlinkSync(process.execPath, ~/.local/bin/obsidian). CLI server socket: join(XDG_RUNTIME_DIR||homedir, '.obsidian-cli.sock').",
+      "argv0 controls: invoking through the installed wrapper chain gives process.argv0 basename 'electron' (includes('obsidian')=false); a symlink named 'obsidian' -> basename 'obsidian' (true). Therefore the packaged launcher can never satisfy the register-cli guard, and /usr/lib/electron43/obsidian-cli does not exist to be copied. Direct GUI click attempt was NOT performed (launching the app is prohibited in this seat); verdict rests on code + measured argv0 controls.",
+      "obsidian.log: last app load 2026-10-18 14:50:37 UTC (=11:50:37 -0300), version 1.14.4, up-to-date; 0 occurrences of 'cli'.",
+      "obsidian-cli-inspector v1.0.3 (third-party, 'jingyi zhao'): config.toml vault_path=/home/vgpnk/Documents/shokoknowledge; vault.db 105,000,960 B SQLite, 3714 notes (indexed 2026-10-13; max updated_at 2026-10-13 19:52:32 UTC); hash column is a short 12-16 char token, NOT sha256 (Home.md db hash '15ed:1791921146' — a 4-hex digest + epoch-mtime composite — vs real sha256 98afa2b81887ca13f1f06243f3f0d1e24cd411d7f9321b332fc998d52ff242a4); 3630/3714 rows are under */source/ symlinked lane trees.",
+      "Vault git: HEAD 27055b8d84f47e740c30bd934dbc687230e04512 (main, origin github.com/VeigaPunk/shokoknowledge.git), 0 unpushed vs local origin/main ref; dirty: only .obsidian/core-plugins.json (key reorder only — canonical jq -S -c sha256 identical: 629a777a...) and .obsidian/workspace.json (UI state: graph leaf -> markdown leaf, lastOpenFiles additions).",
+      "Vault inventory: 58 .md files (all files are .md), 16 top-level dirs, symlinks: protocol + 13 lane */source symlinks. No .trash.",
+      "Hash stability: same 8-file sample hashed twice, byte-identical output -> sha256sum is a stable read-only oracle for ledger vault_sha256.",
+      "Write discipline: vault .git/index mtime advanced 2026-10-13 17:05:20 -> 2026-10-18 13:53:34 -0300 during the wave window; every S07 git command used --no-optional-locks; /tmp control: '--no-optional-locks status/diff/show' leave index mtime unchanged (ns resolution), while plain 'git status' rewrites it (+4ms). The 13:53:34 refresh is therefore not attributable to S07 (another seat or parent used a plain git command). Recommend GIT_OPTIONAL_LOCKS=0 / --no-optional-locks for all vault probes this round.",
+      "corpus/knowledge/obsidian-ledger.tsv: 67 B, header-only, untouched by S07."
+    ]
+  },
+  "control_probes": [
+    {
+      "target": "/tmp/s07-argv0/obsidian -> /usr/lib/electron43/electron",
+      "expected": "argv0 basename contains 'obsidian' when invoked via the symlink",
+      "observed": "basename='obsidian', includes('obsidian')=true — proves the guard keys on argv0, not on app identity",
+      "note": "Positive control for the register-cli guard reading."
+    },
+    {
+      "target": "/tmp/s07-idx3 (fresh git repo)",
+      "expected": "--no-optional-locks git reads do not rewrite .git/index",
+      "observed": "index mtime unchanged after --no-optional-locks diff/status/show; plain `git status` rewrote it (earlier control: +4ms).",
+      "note": "Negative control used to attribute the vault index refresh away from S07."
+    },
+    {
+      "target": "obsidian-cli-inspector DB as hash oracle",
+      "expected": "db hash equals sha256 if usable for ledger verification",
+      "observed": "db stores 12-16-char hashes (Home.md '15ed...'), sha256sum gives 64 chars — not comparable",
+      "note": "Rules the inspector DB out as the ledger oracle; sha256sum remains the only verified oracle."
+    }
+  ],
+  "notes": [
+    "Assignment scope: vault-side recon only — record .obsidian/ CLI/API surface and enabled core plugins. Done, plus the minimum host-side measurements required to say whether a CLI surface is actually active.",
+    "The vault itself contains NO CLI/API config surface. The 'cli': true flag lives in the host app config (~/.config/obsidian/obsidian.json), not the vault; and it is contradicted by the measured absence of every registration artifact (shim, socket, obsidian-cli payload). Treat it as a persisted preference, not evidence of a working CLI.",
+    "Operational consequence for the round's planned capability: 'ledger-backed moved-to-obsidian verification assisted by the official CLI' cannot use the CLI on this host today. The verified fallback is direct sha256sum under the vault path (read-only), which this seat confirmed stable. Mark any CLI-assisted claim NOT-VERIFIED until the operator installs a supported build (tarball/AppImage with an obsidian-named binary) or the packaging ships obsidian-cli next to the electron binary.",
+    "obsidian-cli-inspector is third-party (not the official CLI) but is genuinely read-only over the vault (own SQLite db under ~/.config/obsidian-cli-inspector/) and could serve as an inventory oracle; it is stale (2026-10-13) and its hashes are not sha256, so it must not be used for ledger verification.",
+    "Other seats were observed running obsidian-cli-inspector stats commands (log timestamps 13:55:05/13:55:16 today) and a plain git command that refreshed the vault index at 13:53:34; neither is attributable to S07.",
+    "Read-only guarantee: no vault file was modified; all git reads used --no-optional-locks; only /tmp scratch, /tmp control repos, and this fragment were written."
+  ],
+  "preamble": {
+    "cwd": "/home/vgpnk/Projects/shokunin",
+    "fragment_path": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-4/seat-07.json",
+    "written_at": "2026-10-18T14:00:00-03:00",
+    "mode": "dry-run; read-only vault recon; no modifications outside this fragment and /tmp scratch"
+  }
+}

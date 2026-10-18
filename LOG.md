@@ -158,3 +158,33 @@ provider at max effort**: model `devin/deepseek-v4-1-flash-max`. This
 supersedes the training schedule's hyper lane for r4 (and r10). Rounds
 scheduled on other families (luna-max, grok-4.7, glm-5.3, gemini-3.8,
 gpt-6.1-sol-max) are unchanged.
+
+## 2026-10-18 — round 4 admitted AMENDED (operator withdrew the obsidian claim)
+
+**Claims as dispatched:** O1 obsidian-CLI capability + C1 calibration.
+**Operator directive mid-round:** "forget the obsidian integration for
+now" — O1 withdrawn; replaced by O1': standalone ledger-backed
+moved-to-obsidian verification (the receipt machinery, Obsidian-free).
+Completion-criterion obsidian-row requirement waived by the operator.
+
+**Dispatch.** 64 seats on devin/deepseek-v4-1-flash-max (operator devin
+test); 63/64 completed, ~72 min.
+
+**Finding (banked for the operator).** The official Obsidian CLI has NO
+usable entry point on this host: it is the app as a socket client to
+$XDG_RUNTIME_DIR/.obsidian-cli.sock; registration is refused by an argv0
+gate under the pacman wrapper; bounded socket probes returned 0 bytes.
+Details: ../.ufo/scopes/souji-mint-20261018/obsidian-cli-probe.md (updated).
+
+**Measurement.** 7 impls; runner matrices + 8 judges: majority converged on
+impl-20 (selftest 35/35; refuses self-referential ledger rows — a false-SAFE
+class rivals accepted; 4/8 judges dissented NO-CLEAN-CANDIDATE over fixture
+rot, recorded). Parent battery: 4/4 decisive cases + real-vault live probe
+(SAFE/moved-to-obsidian against
+/home/vgpnk/Documents/shokoknowledge/Home.md with a temp ledger; cli=
+unavailable; live ledger still header-only). Winner installed byte-identical
+as tools/souji-vault-verify.sh (sha256 d312263a…).
+
+**Verdicts:** operability improved (second tool live), calibration improved
+(judge-dissent adjudicated by parent re-derivation, not by majority vote).
+No axis harmed.

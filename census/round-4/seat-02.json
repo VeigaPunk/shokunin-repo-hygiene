@@ -1,0 +1,232 @@
+{
+ "seat": "S02",
+ "kind": "obsidian-cli-recon",
+ "target": "obsidian-cli-inspector 1.0.3 CLI surface + package ownership + fixture-backed behavior; official Obsidian CLI invocability",
+ "verdict": "INSPECTOR-SURFACE-MAPPED: obsidian-cli-inspector is a third-party read-only Rust/SQLite inspector (pacman pkg obsidian-cli-inspector 1.0.3-1, github.com/jingyi-zhao-01), NOT the official Obsidian CLI. Full flag surface recovered and exercised against a /tmp fixture vault (init/index/search/diagnose/view all work; vault sha256-verified untouched). Three blocking defects for ledger verification: (1) notes.hash = hex(size):mtime, NOT a content hash — cannot verify ledger sha256; (2) link resolution is broken (0/N dst_note_id resolved in every run, real vault 0/78); (3) rows are never pruned (474 stale rows survive index -f; deleted files persist). Official Obsidian CLI: not invocable — no shim registered on host (verified again at 14:05), app currently running with live socket /run/user/1000/.obsidian-cli.sock but no obsidian-named client exists.",
+ "assigned_probes": {
+  "cmd1_file": {
+   "cmd": "command -v obsidian-cli-inspector; file \"$(command -v obsidian-cli-inspector)\"",
+   "exit": 0,
+   "out": [
+    "/usr/bin/obsidian-cli-inspector",
+    "/usr/bin/obsidian-cli-inspector: ELF 64-bit LSB pie executable, x86-64, dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=9068344be468933117ef753c44d7238ed5b55e63, for GNU/Linux 4.4.0, stripped",
+    "-rwxr-xr-x 1 root root 3493072 Oct 13 16:20 /usr/bin/obsidian-cli-inspector"
+   ],
+   "interpretation": "Real ELF binary, 3.3 MB, root-owned, installed 2026-10-13 16:20. Safe to execute: it is a CLI, not a GUI launcher (unlike /usr/bin/obsidian)."
+  },
+  "cmd2_help": {
+   "cmd": "timeout 5 obsidian-cli-inspector --help",
+   "exit": 0,
+   "out_summary": "Self-description: 'A local-first, read-only CLI/TUI for Obsidian vaults'. Groups: init/index/search/graph/analyze/diagnose/view + tui. Version 1.0.3. Global flags: -c/--config <FILE>, -o/--output <FORMAT>, -h, -V.",
+   "help_accuracy_defects": [
+    "ABOUT text advertises a 'graph' group — `obsidian-cli-inspector graph` returns: error: unrecognized subcommand 'graph' (exit 2).",
+    "ABOUT workflow says 'Run index status' — `index status` returns: error: unrecognized subcommand 'status' (exit 2).",
+    "ABOUT says config at ~/.config/obsidian-cli-inspector/config.toml — true on this host."
+   ]
+  },
+  "cmd3_man": {
+   "cmd": "timeout 5 man obsidian-cli-inspector",
+   "exit": 0,
+   "out": "No manual entry for obsidian-cli-inspector",
+   "interpretation": "No man page shipped; --help is the only doc."
+  },
+  "cmd4_dpkg": {
+   "cmd": "dpkg -S \"$(command -v obsidian-cli-inspector)\" 2>/dev/null",
+   "exit": 127,
+   "out": "(no output; dpkg not present on this Arch host)",
+   "interpretation": "dpkg absent — not a Debian system."
+  },
+  "cmd5_pacman": {
+   "cmd": "pacman -Qo \"$(command -v obsidian-cli-inspector)\"",
+   "exit": 0,
+   "out": "/usr/bin/obsidian-cli-inspector is owned by obsidian-cli-inspector 1.0.3-1",
+   "interpretation": "OWNER IDENTIFIED: pacman package `obsidian-cli-inspector` version 1.0.3-1, explicitly installed 2026-10-13 16:21, built 2026-10-13 16:20, packager Unknown, depends sqlite, URL https://github.com/jingyi-zhao-01/obsidian-cli-inspector, license Apache-2.0, files: only /usr/bin/obsidian-cli-inspector. This is a third-party AUR-style tool, NOT an Obsidian product."
+  },
+  "cmd6_rpm": {
+   "cmd": "rpm -qf \"$(command -v obsidian-cli-inspector)\" 2>/dev/null",
+   "exit": 127,
+   "out": "(rpm not present)"
+  }
+ },
+ "owning_package": {
+  "manager": "pacman",
+  "name": "obsidian-cli-inspector",
+  "version": "1.0.3-1",
+  "install_date": "2026-10-13 16:21:20 -03",
+  "build_date": "2026-10-13 16:20:56 -03",
+  "files_owned": [
+   "/usr/bin/obsidian-cli-inspector"
+  ],
+  "depends_on": [
+   "sqlite"
+  ],
+  "url": "https://github.com/jingyi-zhao-01/obsidian-cli-inspector",
+  "upstream": "jingyi-zhao-01 (third party)",
+  "not_official": "The official Obsidian CLI is NOT a separate package; it is bundled in the app asar and, when registered, installs a shim at ~/.local/bin/obsidian. No such shim exists on this host."
+ },
+ "command_surface_exact": {
+  "global": {
+   "config": "-c, --config <FILE> (must appear BEFORE the subcommand: `obsidian-cli-inspector init -c x` fails with exit 2; `-c x init` works)",
+   "output": "-o, --output <FORMAT> (accepted before or after subcommand; value 'json' switches to JSON)",
+   "version": "-V / --version -> 'obsidian-cli-inspector 1.0.3'",
+   "defaults": "config ~/.config/obsidian-cli-inspector/config.toml; DB ~/.config/obsidian-cli-inspector/vault.db; logs ~/.config/obsidian-cli-inspector/logs (NOT the documented ~/.local/share/...)"
+  },
+  "init": {
+   "init": "init init [-f/--force] — creates schema (version 1); -f drops and re-creates; without -f on an existing populated DB it is a no-op (7 notes before and after).",
+   "observed": "init init -> 'Initializing database at: <db>; Database initialized successfully (schema version: 1)'"
+  },
+  "index": {
+   "index": "index index [-n/--dry-run] [-f/--force] [-v/--verbose]",
+   "observed": "3 files -> 'Indexed 3 notes successfully'. Incremental: 'Indexed 1 notes successfully (skipped 5 unchanged)'. Dry run: '[DRY RUN] Would index 7 files' (no writes). Force: full re-parse.",
+   "no_status": "`index status` does NOT exist despite ABOUT text (exit 2)."
+  },
+  "search": {
+   "notes": "search notes <QUERY> [-l/--limit <N>, default 20] — FTS over chunks; returns chunk_text/heading_path/note_path/rank",
+   "backlinks": "search backlinks <NOTE> — BROKEN: always 'No backlinks found for: <note>' even for notes with real backlinks (dst_note_id always NULL)",
+   "links": "search links <NOTE> — BROKEN: always 'No forward links found' for the same reason",
+   "tags": "search tags [TAG] [-l/--list] — works: 'All Tags (3 total): alpha/beta/demo'",
+   "unresolved": "search unresolved — lists all links with dst_note_id IS NULL (i.e. every link)"
+  },
+  "analyze": {
+   "bloat": "analyze bloat [-t/--threshold <bytes>, default 50000] [-l/--limit <N>, default 10] — STUB: prints 'Bloat command not yet implemented' (exit 0)",
+   "related": "analyze related <NOTE> [-l/--limit <N>] — STUB: prints 'Related command not yet implemented' (exit 0)"
+  },
+  "diagnose": {
+   "orphans": "diagnose orphans [--exclude-templates] [--exclude-daily] — works (found note-c orphan)",
+   "broken-links": "diagnose broken-links — works but MISLEADS: reports every wikilink as broken because resolution is broken (3/3 in fixture including valid [[note-b]] and [[note-a]])"
+  },
+  "view": {
+   "stats": "view stats — works; counts notes/links/tags/chunks/unresolved",
+   "describe": "view describe <FILENAME> — works; prints ID/Title/Path/Modified/Hash/Created/Updated. With -o json the result object is only {'status':'success'} — the metadata fields are NOT in the JSON, only in the human text."
+  },
+  "tui": "tui — launches interactive TUI; with stdin </dev/null it exits 0 immediately (no hang)"
+ },
+ "vault_and_file_operations_exact": {
+  "note": "This tool has NO file/vault write operations at all — it cannot create, read-out, move, or delete vault files. Its only vault-facing operations are: index (scan+parse, read-only over the vault), and the query commands. There is no `vault` verb, no `file` verb, no read-file-to-stdout command.",
+  "read_side_commands": {
+   "search notes <query>": "FTS search across chunked note text; --limit",
+   "view describe <file|title>": "metadata for one note (hash = size:mtime as shown)",
+   "view stats": "aggregate counts",
+   "search backlinks/links <note>": "link graph queries (broken, see defects)",
+   "diagnose orphans / broken-links": "graph diagnostics (broken-links misleading)",
+   "analyze bloat/related": "stubs"
+  },
+  "config_keys": {
+   "vault_path": "required; absolute path to vault",
+   "database_path": "optional; where SQLite index lives (default ~/.config/obsidian-cli-inspector/vault.db)",
+   "log_path": "optional; honored when set (logs go there), but DEFAULT logs land in ~/.config/obsidian-cli-inspector/logs — contradicting the config template comment that says ~/.local/share/obsidian-cli-inspector/logs",
+   "exclude.patterns": "defaults .obsidian/, .git/, .trash/ — note: these are exclusions only; symlinked `source/` dirs are FOLLOWED and node_modules content IS indexed",
+   "search.default_limit": "default 20",
+   "graph.max_depth": "present in template but graph group does not exist"
+  },
+  "config_auto_creation": "Running with a nonexistent -c path CREATES that file with the default template ('Created default config at: <path>') and continues with the default vault_path '/path/to/your/obsidian/vault' — a surprising write side effect outside the requested scope."
+ },
+ "fixture_evidence": {
+  "setup": "Fixture vault at /tmp/s02-vault (6 notes: note-a..f + sub/note-c.md; wikilinks [[note-b]], [[missing-note]], [[note-a]], [[sub/note-c]] etc.), isolated config /tmp/s02-config.toml (database_path=/tmp/s02-db/vault.db, log_path=/tmp/s02-logs). Vault file sha256s taken before and after all probes.",
+  "vault_integrity": "VAULT-UNCHANGED — all 6 note sha256s identical before/after every command (init, index, index -f, index --dry-run, search, diagnose, view, tui). The tool never writes into the vault (no .obsidian/ created, no db/log files inside the vault).",
+  "works": [
+   "init init -> schema v1 created",
+   "index index -> 3 notes/3 links/3 tags/4 chunks; incremental skip works; --dry-run writes nothing; -f full re-parse works",
+   "view stats / describe / search notes / search tags / search unresolved / diagnose orphans -> all produce sensible output",
+   "JSON output is parseable after skipping the human preamble: prefix lines 7, then valid JSON with keys command/meta/params/result/timestamp"
+  ],
+  "defects_measured": {
+   "hash_is_not_a_content_hash": {
+    "formula": "hash = lowercase_hex(size_bytes) + ':' + mtime_epoch_seconds",
+    "proof": [
+     "note-a.md size=106 (0x6a) mtime=1792342365 -> hash '6a:1792342365'",
+     "note-b.md size=35 (0x23) -> '23:1792342365'; sub/note-c.md size=24 (0x18) -> '18:1792342365'",
+     "real vault Home.md size=5575 (0x15c7) mtime=1791921918 -> '15c7:1791921918'; atlas/Corpus-Map.md size=1754 (0x6da) mtime=1791921146 -> '6da:1791921146'",
+     "binary contains no sha/xxhash/blake/md5 crate — only hashbrown (a hash table), so no content hashing is implemented"
+    ],
+    "consequence": "The ledger's source_sha256/vault_sha256 contract CANNOT be satisfied by this tool. At most it cross-checks size+mtime. sha256sum under the vault path remains the verification method."
+   },
+   "link_resolution_broken": {
+    "proof": [
+     "Fixture: [[note-b]] from note-a.md (exact filename), [[note-b.md]], [[Note B.md]], [[Note B]], [[sub/note-c]], [[note-c]] — ALL dst_note_id NULL after index -f",
+     "Real vault copy: links table 78 rows, SUM(dst_note_id IS NOT NULL) = 0",
+     "Fresh full re-index of real vault: 224 links, 0 resolved",
+     "search backlinks/links return nothing; diagnose broken-links lists valid links as broken"
+    ],
+    "consequence": "backlinks/links/orphans/broken-links outputs are unreliable; only FTS search and metadata views are usable."
+   },
+   "no_pruning_of_deleted_files": {
+    "proof": [
+     "Fixture: created note-f.md, indexed (row present), deleted the file, re-ran index -> row note-f.md STILL present (7 rows for 6 files; duplicate note-c.md vs sub/note-c.md both listed).",
+     "Real vault: after `index -f` (forced full re-index, 6.54s, 'Indexed 7680 notes successfully') the DB has 8154 note rows — 474 rows point at files that no longer exist (mostly game-dev-3d [... ]/source/corpus/... paths from earlier runs)."
+    ],
+    "consequence": "index stats overcount; staleness is unbounded; a verification tool must never trust note counts."
+   },
+   "json_stdout_not_pure": "With -o json, human text is printed on stdout BEFORE the JSON (7 lines for view stats). Parsers must locate the first '{'. JSON is valid from there.",
+   "error_exit_codes_inconsistent": [
+    "index index with missing DB -> prints 'Command ... failed' + 'Error: Database not found...' and exits 1",
+    "view describe <nonexistent> -> prints 'Note not found: ...' and exits 0",
+    "bad subcommand -> clap error, exit 2",
+    "missing config path -> creates it, exits 0"
+   ],
+   "stderr_empty": "All output, including errors, goes to stdout; stderr observed empty in every probe."
+  }
+ },
+ "real_vault_index_probe": {
+  "shared_db": "~/.config/obsidian-cli-inspector/vault.db — 105,000,960 bytes, mtime 2026-10-13 16:52:32 (built by an earlier session), sha256 b2cdff128669e9b15d59d416163d35fd...",
+  "method": "Copied to /tmp (read-only usage of the copy); never opened the live DB with the tool for writes; original DB mtime+size unchanged at end (2026-10-13 16:52:32, 105000960 bytes).",
+  "observed_stats_from_copy": {
+   "notes": 3714,
+   "links": 78,
+   "tags": 191,
+   "chunks": 38685,
+   "unresolved_links": 78
+  },
+  "staleness": "474 of 3714 rows point at paths absent from disk. The vault's lane `source` dirs are SYMLINKS into sibling repos; the indexer follows them (and indexes node_modules, .ufo scratch, etc.).",
+  "fresh_reindex": {
+   "cmd": "obsidian-cli-inspector -c /tmp/s02-fresh.toml index index -f (vault_path=/home/vgpnk/Documents/shokoknowledge, database_path=/tmp/s02-fresh.db)",
+   "exit": 0,
+   "out": "Indexed 7680 notes successfully; Command 'index.index' completed in 6.54s",
+   "result": "notes=8154, links=224, resolved=0; 474 rows still reference nonexistent files; 48 rows match node_modules paths",
+   "note": "7680 = markdown files reachable on disk following symlinks (find -L: 7680); 8154 = 7680 fresh + 474 stale survivors. Confirms no pruning."
+  },
+  "vault_untouched": "No file under /home/vgpnk/Documents/shokoknowledge (outside .git) modified by my probes; .git/index mtime moved due to other seats/processes, HEAD unchanged 27055b8. atlas/Corpus-Map.md and Home.md sha256s identical before/after (895065dd..., 98afa2b8...)."
+ },
+ "official_cli_state": {
+  "what_it_is": "Bundled in the app (no separate package). Client-server: client connects to unix socket $XDG_RUNTIME_DIR/.obsidian-cli.sock, sends one newline-terminated JSON line; the running app serves it. Register writes shim to ~/.local/bin/obsidian (copy of <appdir>/obsidian-cli, chmod 493).",
+  "host_state_1405": {
+   "app_running": "YES — /usr/lib/electron43/electron ... /usr/lib/obsidian/app.asar running since 14:05 (an instance also ran 13:58-14:05; restarted, not by this seat)",
+   "socket": "/run/user/1000/.obsidian-cli.sock exists, mtime 2026-10-18 14:05:05",
+   "shim": "ABSENT — ~/.local/bin/obsidian, ~/.local/bin/obsidian-cli, /usr/local/bin/obsidian all missing; no obsidian-cli binary in /usr/lib/electron43/",
+   "cli_flag": "~/.config/obsidian/obsidian.json = {\"vaults\":{...},\"cli\":true}",
+   "consequence": "No invocable official CLI. Socket is live but the client binary/shim that would speak to it does not exist on this packaging; NOT-VERIFIED whether raw socket calls work, and not attempted (out of read-only recon scope)."
+  },
+  "do_not_run": "/usr/bin/obsidian is the GUI launcher (bash wrapper exec'ing electron43 /usr/lib/obsidian/app.asar) — running it spawns the app. No probe this seat executed it."
+ },
+ "consequences_for_round": [
+  "Ledger verification must NOT depend on obsidian-cli-inspector's hash column: it is size:mtime, not sha256. Use sha256sum under the vault path (read-only) as the receipt method; optionally use the inspector's size+mtime as a weak cross-check.",
+  "The inspector is safe to run read-only against the vault (fixture-verified no vault writes), but its queries are only trustworthy for: FTS search (search notes), tag listing, metadata describe, and raw SQLite inspection of the DB copy. backlinks/links/orphans/broken-links outputs must not be cited as evidence.",
+  "A vault-verification helper that shells out MUST always pass an explicit -c config with database_path+log_path under tests/ or /tmp: controlled test shows with -c + absolute log_path the tool logs to that path only (/tmp/s02-logs 57->59 files; operator config dir unchanged 64->64), while WITHOUT -c it logs to the default ~/.config/obsidian-cli-inspector/logs (62->64 files) — i.e. any seat invoking the tool with the default config writes into operator config-dir state on every call. Also never call `init init -f` or `index index` against the operator's shared DB (~/.config/.../vault.db) unless the operator opts in — indexing writes operator state, though never the vault.",
+  "Fresh-index baseline for future rounds: 7680 markdown files reachable via symlinks; 224 wikilinks; 0 resolvable. If a later round needs graph truth, it cannot come from this tool version.",
+  "Official CLI remains non-invocable; any future 'moved-to-obsidian' confirmation stays on direct vault sha256 comparison. The live socket is promising but the client shim is absent — do not build the round on it."
+ ],
+ "scratch_artifacts": [
+  "/tmp/s02-vault (fixture vault; copies preserved under tests/vault/s02-fixture/vault)",
+  "/tmp/s02-config.toml (isolated config; copy under tests/vault/s02-fixture/config.toml)",
+  "/tmp/s02-db/vault.db (fixture index; copy under tests/vault/s02-fixture/db/vault.db)",
+  "/tmp/s02-real-index.db (copy of operator's shared DB, read-only use)",
+  "/tmp/s02-fresh.db (fresh full re-index of real vault, 194 MB)",
+  "/tmp/s02-asar.bin (copy of /usr/lib/obsidian/obsidian.asar for strings extraction)",
+  "/tmp/s02-before.sha, /tmp/s02-after.sha (fixture vault integrity)",
+  "/tmp/s02-fresh-paths.txt, /tmp/s02-db-paths.txt (note path listings)"
+ ],
+ "preamble": {
+  "cwd": "/home/vgpnk/Projects/shokunin",
+  "fragment_path": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-4/seat-02.json",
+  "written_at": "2026-10-18T14:07:07-03:00",
+  "mode": "read-only recon; no app launch; no socket connection; no vault writes; fixture + /tmp scratch; operator shared DB only read via copy",
+  "revision": "v3 — precise log attribution"
+ },
+ "log_path_behavior": {
+  "with_c_and_explicit_log_path": "Logs go to the configured log_path only (verified 2x: /tmp/s02-logs gained files, operator config-dir log count unchanged).",
+  "without_c_default": "Logs go to ~/.config/obsidian-cli-inspector/logs (verified: controlled no--c run added 2 files, 62->64).",
+  "config_dir_logs_origin": "The ~/.config/obsidian-cli-inspector/logs dir contains many logs from CONCURRENT SEATS probing the real vault (timestamps 13:53-14:06 today; e.g. a 'search Home' log with real-vault results this seat never ran). This seat's own tool invocations used -c with log_path=/tmp/s02-logs, EXCEPT two deliberate no--c probes (a -o placement test at 13:54:27 and the controlled test at 14:06:31), each of which added 2 log files to the operator config dir — the tool's default-log behavior, recorded for completeness; no config files were edited by this seat.",
+  "config_template_contradiction": "Generated config template comments claim default log_path is ~/.local/share/obsidian-cli-inspector/logs, but observed default is ~/.config/obsidian-cli-inspector/logs (dir exists and is written; ~/.local/share/obsidian-cli-inspector does not exist)."
+ },
+ "ledger_untouched": "corpus/knowledge/obsidian-ledger.tsv remains header-only: 1 line, sha256 3f7e9f2ab9e614464cb031d3f00a812a21f0e889f7666309a90d7784b75a9599; no test ledger was needed (all fixture work used /tmp + tests/vault/s02-fixture)."
+}

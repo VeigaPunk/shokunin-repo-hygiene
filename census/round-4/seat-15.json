@@ -1,0 +1,130 @@
+{
+  "seat": "S15",
+  "role": "fixture author — case-V7 (ledger row with extra columns beyond the 6 canonical)",
+  "round": 4,
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "repo_head": "78694acefa316edfc77842583409b7133350718c",
+  "run_utc": "2026-10-18T17:08:37Z",
+  "assignment": "tests/vault/case-V7/: ledger row with extra columns beyond the 6 canonical. Expected: VERIFIED (extra columns ignored, note recorded).",
+  "verdict": "DELIVERED — fixture built, expectation pinned, r2 baseline measured on all four rows, disarmed control verified, selftest 25/25",
+  "artifacts": {
+    "tests/vault/case-V7/make-fixture.sh": {
+      "sha256": "f852d62c00b826124bc9c6fa6e8ce07c45b5ee0088bebdb9bef357abd3369b80",
+      "role": "builder: 4 payload pairs + test ledger (rows of 7/8/6/7 columns) + substituted expected.json",
+      "cli": "make-fixture.sh [--out DIR] [--ledger FILE] [--quiet] [--print-ledger] [--print-hashes]",
+      "exit_codes": "0 built, 1 build/assertion failure, 2 usage"
+    },
+    "tests/vault/case-V7/expected.json": {
+      "sha256": "9871d131b323d310e6b77fcde5b3800bb700182dda6f6a831d0a80809f7c29db",
+      "role": "declaration: schema souji-vault-fixture/1, 4 declared rows, 4 targets, 3x VERIFIED + 1x NOT-VERIFIED(vault-hash-mismatch), note_recording block, failure_modes_caught"
+    },
+    "tests/vault/case-V7/selftest.sh": {
+      "sha256": "5dfbb9f3e18555199934956d3dfb82b814ebffe7b901ed0f9543eb86b8658206",
+      "role": "25 checks (T1 build invariants, T2 ledger shape + note recovery, T3 expected.json, T4 r2 baseline, T5 disarmed control, T6 live-surface guard); --tool PATH probes a candidate",
+      "cli": "selftest.sh [--keep] [--out JSON] [--tool PATH]"
+    },
+    "tests/vault/case-V7/README.md": {
+      "sha256": "6c227ac14f6352c6e3d280017f624f4f5a36d2d64e1f941e70a2e8df5337823d",
+      "role": "contract: layout, rows table, digests, consumption, measured baselines, discrimination table"
+    },
+    "tests/vault/case-V7/payload/": {
+      "role": "8 files: source/src/{extra-cols-notes,extra-cols-8-notes,six-cols-notes,extra-cols-mismatch}.md + vault/ copies (3 identical, 1 edited; all vault copies 0444)",
+      "digests": {
+        "six-cols-notes.md": "ada33bd81eeab6375081b16fe83dc8db9418131bc62e97a68b6439ac6a68a781",
+        "extra-cols-notes.md": "1543cfa1785f270374b6f16407440152cbfd27dd08b1ad1f24f71267ab456206",
+        "extra-cols-8-notes.md": "f2b8420064e81b6efc0eab1917cbb4ff6a088cef150251c66d4b3545a36eef53",
+        "extra-cols-mismatch.md source": "2ceca233cfc70cfd9a07e6e889ea21951c9ee433250cc6b6cc0cd6e9bf3f4239",
+        "extra-cols-mismatch.md vault": "6e28bf53541405576602483a415a368a088845fe63f683085a379d7d2b1b632f"
+      }
+    },
+    "tests/results/v7-selftest.json": {
+      "sha256": "7aaeaf4118f9c5b574cf9115a070281def22d2c09b3113369de9c98beec60ae8",
+      "role": "machine-readable selftest result: pass=25 fail=0 (deterministic across reruns)"
+    }
+  },
+  "fixture_facts": {
+    "ledger": "<ROOT>/ledger.tsv — header + exactly 4 data rows, column counts 7,8,6,7",
+    "row_1_extra_cols": "source=extra-cols-notes.md, 7 columns (extra exported_by=souji-fixture), note col6='case-V7 extra-cols', both digests 1543cfa1…, vault 0444 — expected VERIFIED (PRIMARY)",
+    "row_2_extra_cols_8": "source=extra-cols-8-notes.md, 8 columns (extra + empty trailing), note col6='case-V7 extra-cols-8', both digests f2b84200… — expected VERIFIED",
+    "row_3_control": "source=six-cols-notes.md, canonical 6 columns, note col6='case-V7 six-cols control', both digests ada33bd8… — expected VERIFIED (control proving no loosened parser)",
+    "row_4_mismatch": "source=extra-cols-mismatch.md, 7 columns, vault edited after export (actual 6e28bf53…, recorded 2ceca233…), note col6='case-V7 extra-cols mismatch' — expected NOT-VERIFIED(vault-hash-mismatch)",
+    "design_point": "only the column count varies across rows 1-3, so a parser that rejects >6 columns fails rows 1/2 while the control passes; row 4 pins that ignoring extras must not weaken hash checking; the note text must survive in every row (recoverable from column 6)"
+  },
+  "measured_results": {
+    "selftest": {
+      "command": "bash tests/vault/case-V7/selftest.sh --out tests/results/v7-selftest.json",
+      "exit": 0,
+      "result": "SELFTEST PASS pass=25 fail=0",
+      "checks": "T1.builder_exit, 3 pair-digest checks, mismatch-differs, 4x vault_mode 444, 5x column-count, notes_recovered, expected_json_valid, 5x r2 baseline, 2x disarmed, 2x live-surface"
+    },
+    "round2_tool_baseline": {
+      "tool": "tools/souji-verify.sh",
+      "tool_sha256": "7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820",
+      "command": "SOUJI_LEDGER=<ROOT>/ledger.tsv SHOKUNIN_ROOT=<ROOT> bash tools/souji-verify.sh <4 targets>",
+      "observed_lines": [
+        "VERDICT\t<ROOT>/source/src/extra-cols-notes.md\tSAFE\tmoved-to-obsidian\tledger-row vault=<ROOT>/vault/extra-cols-notes.md source-sha256=1543cfa1785f",
+        "VERDICT\t<ROOT>/source/src/extra-cols-8-notes.md\tSAFE\tmoved-to-obsidian\tledger-row vault=<ROOT>/vault/extra-cols-8-notes.md source-sha256=f2b8420064e8",
+        "VERDICT\t<ROOT>/source/src/six-cols-notes.md\tSAFE\tmoved-to-obsidian\tledger-row vault=<ROOT>/vault/six-cols-notes.md source-sha256=ada33bd81eea",
+        "VERDICT\t<ROOT>/source/src/extra-cols-mismatch.md\tNOT-SAFE\tnone\tpushed=no-introducing-commit; obsidian=vault-sha-mismatch; obsidian=no-matching-ledger-row; stale=not-scratch-type"
+      ],
+      "finding": "the r2 row parser (IFS=TAB read -r sp ss vp vs _rest) ignores extra columns by construction: rows 1-3 (7/8/6 cols) all verify, row 4 stays NOT-SAFE(vault-sha-mismatch). The r4 delta this case pins is the VERIFIED vocabulary, the NOT-VERIFIED(vault-hash-mismatch) class, and note recording — the r2 tool never surfaces the row's note text"
+    },
+    "disarmed_control": {
+      "setup": "header-only copy of <ROOT>/ledger.tsv (head -1), SOUJI_LEDGER pointed at it",
+      "observed": "all 4 targets NOT-SAFE(none), 0 SAFE",
+      "conclusion": "the row is the receipt; no verdict leaks from the vault copy alone"
+    },
+    "note_recovery": {
+      "command": "awk -F'\\t' 'NR>1 {print $6}' <ROOT>/ledger.tsv",
+      "observed": "case-V7 extra-cols | case-V7 extra-cols-8 | case-V7 six-cols control | case-V7 extra-cols mismatch",
+      "conclusion": "column 6 still yields the declared note after 0, 1 and 2 extra columns; asserted as T2.notes_recovered"
+    },
+    "builder_invocations": {
+      "no_args": "exit 0, mints under $TMPDIR (FIXTURE_READY case-V7 <root>)",
+      "out_flag": "exit 0",
+      "positional": "exit 0",
+      "rebuild_on_marker": "exit 0 (same --out, .case-V7-fixture marker present)",
+      "refuse_foreign_nonempty": "exit 1 (non-empty dir without marker; file kept)",
+      "ledger_copy": "--ledger FILE byte-identical to <ROOT>/ledger.tsv (cmp exit 0)",
+      "print_ledger": "prints 4 rows with 7/8/6/7 columns (verified)",
+      "print_hashes": "prints the 8-file payload digest table; asserts the 5 constants"
+    },
+    "determinism": {
+      "method": "two builds at different roots (A=/tmp/souji-fixture-case-V7.jxWgNb, B=/tmp/souji-fixture-case-V7.W5HYhr); compared per-file sha256 with the root path normalized",
+      "observed": "source/vault trees byte-identical; ledger.tsv and expected.json identical modulo the embedded root path (the only differences are the absolute paths, as designed)",
+      "conclusion": "payload is deterministic; path embedding is by design (ledger matching is path-exact)"
+    },
+    "rails_verified": {
+      "live_ledger_sha_before": "3f7e9f2ab9e614464cb031d3f00a812a21f0e889f7666309a90d7784b75a9599",
+      "live_ledger_sha_after": "3f7e9f2ab9e614464cb031d3f00a812a21f0e889f7666309a90d7784b75a9599",
+      "live_ledger_rows": 1,
+      "live_ledger_header_only": true,
+      "real_vault": "/home/vgpnk/Documents/shokoknowledge — not accessed by this fixture at all (the vault here is a fake dir under the fixture root)",
+      "git_in_fixture": "git init only (offline, no commits); no fetch/push/commit/branch/checkout/reset/rebase anywhere",
+      "secrets": "no .env/credential/secret-shaped file read",
+      "gui_launcher": "/usr/bin/obsidian never executed; no Obsidian process involved",
+      "write_scope": "only tests/vault/case-V7/**, tests/results/v7-selftest.json, /tmp scratch"
+    }
+  },
+  "interface_alignment": {
+    "schema": "souji-vault-fixture/1 — same schema string as case-V1 (S09), case-V2 (S10), case-V4 (S12), case-V5 (S13)",
+    "runner_28": "satisfies runner-28.sh's fixture interface: make-fixture.sh [--quiet] emits FIXTURE_READY <case> <ROOT>; <ROOT>/ledger.tsv exists; expected.json (substituted in the root) carries targets[] + expect[] with verdict fields",
+    "vocabulary": "VERIFIED / NOT-VERIFIED(+reason) per the r4 vault harness; the r2 crosscheck is recorded in expected.json under 'crosscheck'",
+    "compat": "targets[] + expect[] loader shape from F1-F6; expect[].receipt is 'moved-to-obsidian' for the VERIFIED rows (this case IS a moved-to-obsidian verification) and null for the NOT-VERIFIED row",
+    "accept_note": "doc-level accept is class-level (VERIFIED); note-recording is declared per target (expect[].note_recorded) and in the note_recording block, so a class-only judge does not false-fail a tool that renders the verdict without the note, while the selftest/README still pin the r4 note-recording expectation"
+  },
+  "notes_for_parent": [
+    "V7 is the only case in the V-family that varies the ledger COLUMN COUNT; it complements V1 (clean pair), V2 (vault tamper), V4 (vault absent), V5 (source absent) and V6 (CRLF) by isolating schema tolerance: extras ignored, canonical positions authoritative, note still read.",
+    "The r2 tool passes the three matched rows by construction (its `read -r sp ss vp vs _rest` drops extras) — so V7 alone does not discriminate r2 from a correct r4 tool; the discrimination targets a STRICTER parser that rejects >6 columns (caught by rows 1/2) and a looser one that drops hash checks (caught by row 4).",
+    "Note recording is the second half of the assignment ('note recorded'): the row's note is declared per target and recoverable from column 6; the r2 tool never surfaces it, so an r4 harness that renders VERIFIED + the note satisfies the full expectation.",
+    "The r2 tool rejects `--ledger FILE` (usage error) and takes the ledger only via SOUJI_LEDGER; runner-28 invokes r4 impls with `--ledger`. V7 declares both invocation forms in expected.json 'notes'.",
+    "Do not change the five payload digest constants without rebuilding payload/ and re-running --print-hashes; the builder fails loudly on any drift."
+  ],
+  "conflicts": [],
+  "disagreements": [],
+  "preamble": {
+    "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+    "fragment_path": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-4/seat-15.json",
+    "mode": "fixture authoring; writes limited to tests/vault/case-V7/**, tests/results/v7-selftest.json, /tmp scratch; read-only elsewhere"
+  }
+}

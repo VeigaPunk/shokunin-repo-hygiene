@@ -1,0 +1,138 @@
+{
+  "seat": "S14",
+  "role": "fixture author — case-V6 (ledger TSV with CRLF line endings + a valid row)",
+  "round": 4,
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "repo_head": "78694ac",
+  "run_local": "2026-10-18T14:20:00-03:00",
+  "assignment": "tests/vault/case-V6/: ledger TSV with CRLF line endings + a valid row. Expected: row still parses -> VERIFIED (or explicit CRLF-handling verdict).",
+  "verdict": "DELIVERED — VERIFIED. CRLF row parses exactly like the LF control (byte-identical verdict lines); boundary behavior pinned and measured on the r2 tool and all three r4 candidates.",
+  "artifact_sha256": {
+    "tests/vault/case-V6/make-fixture.sh": "f4b58cdb4ff59acea33d0cb3def90463183583a09d59fa4432239116e1e23eed",
+    "tests/vault/case-V6/selftest.sh": "abaa8f180b53b0c7a19908c6be56c01517c8fa3682333eec1993b5232b0e3de2",
+    "tests/vault/case-V6/expected.json": "a3df887322fc2a53a15364b51b04bc36b59cb9a47d8cf1a10dfdab98253ad45e",
+    "tests/vault/case-V6/README.md": "82b9eeabc2ecf564820583bafb1390f19b563321bac660dca3908109e66362f3",
+    "tests/vault/case-V6/.gitignore": "30e5508c0ea2388e523ae1891599c20b12baa26c56d9dfa81171e6a79defb25c",
+    "tests/results/v6-selftest.json": "26d91e429a94ded5f766bb9dc37cfb8c29cded9b3d39d0971559e7b8c91aeaf3"
+  },
+  "artifacts": {
+    "tests/vault/case-V6/make-fixture.sh": {
+      "role": "builder; two modes: default materializes in place (runner-28 probes[] contract), --out builds a self-contained root (runner-26/29); --ledger writes a byte copy of the primary CRLF ledger",
+      "cli": "make-fixture.sh [--out DIR] [--ledger FILE] [--quiet] [--print-row] [--print-hashes]",
+      "exit_codes": "0 built, 1 build/assertion failure, 2 usage",
+      "stdout_contract": "default: JSON line 1 {case,root,targets,expect,ledger,sha256} + FIXTURE_READY V6 <ROOT> + facts; --quiet: FIXTURE_READY + KEY=VALUE only"
+    },
+    "tests/vault/case-V6/expected.json": {
+      "role": "contract, schema souji-vault-fixture/1; declares probes[] (runner-26 schema, 2 judged probes), targets[]+expect[] (runner-28/29), accept, must_not_be, crlf_contract, crosscheck_round2, consumers",
+      "placeholder": "@FIXTURE_ROOT@ substituted by the builder into the --out root's copy; the tracked template keeps the placeholder"
+    },
+    "tests/vault/case-V6/selftest.sh": {
+      "role": "14 checks; --tool PATH probes a candidate",
+      "cli": "selftest.sh [--tool PATH] [--out JSON] [--keep]",
+      "result_file": "tests/results/v6-selftest.json"
+    },
+    "tests/vault/case-V6/README.md": {
+      "role": "contract: layout, CRLF mechanics, probes, consumers, safety"
+    },
+    "tests/vault/case-V6/.gitignore": {
+      "role": "keeps in-place materialization (src/, vault/, ledger*.tsv) untracked; the tracked case dir carries only scripts + template"
+    }
+  },
+  "fixture_facts": {
+    "payload": "<ROOT>/src/payload.md — 42 bytes, sha256 127ac886a92b2d75784d8bbf12834d514aae8e334417a21d5b272b82f09eaece",
+    "vault_copy": "<ROOT>/vault/payload.md — byte-identical, mode 0444",
+    "primary_ledger": "<ROOT>/ledger-crlf.tsv — header + 1 valid row, CRLF end-to-end: exactly 2 CR bytes, 2 lines, both ending CR LF, 6 columns",
+    "lf_control": "<ROOT>/ledger-lf-control.tsv — identical row, 0 CR (isolates CRLF as the only variable)",
+    "truncated_boundary": "<ROOT>/ledger-crlf-truncated.tsv — CRLF row truncated to 4 columns; the CR rides on vault_sha256",
+    "row": "source_path\tsource_sha256=127ac886a92b…\tvault_path\tvault_sha256=127ac886a92b…\t2026-10-18\tcase-V6 CRLF fixture row"
+  },
+  "measured_results": {
+    "selftest_r2": {
+      "command": "bash tests/vault/case-V6/selftest.sh",
+      "exit": 0,
+      "result": "SELFTEST PASS pass=14 fail=0",
+      "tool": "tools/souji-verify.sh",
+      "tool_sha256": "7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820",
+      "crlf_valid_row": "VERDICT\t<ROOT>/src/payload.md\tSAFE\tmoved-to-obsidian\tledger-row vault=<ROOT>/vault/payload.md source-sha256=127ac886a92b",
+      "lf_control": "byte-identical to the CRLF line (cmp exit 0; the selftest asserts equality)",
+      "truncated_boundary": "VERDICT\t…\tNOT-SAFE\tnone\tobsidian=vault-sha-mismatch; …",
+      "disarmed_header_only": "VERDICT\t…\tNOT-SAFE\tnone\tobsidian=no-matching-ledger-row; …"
+    },
+    "candidates_r4": {
+      "note": "all three r4 candidates built so far were probed directly against the CRLF fixture (SOUJI_LEDGER=<ROOT>/ledger-crlf.tsv <tool> <ROOT>/src/payload.md)",
+      "impl-20": {
+        "sha256_12": "95fa47182cc1",
+        "crlf_valid_row": "VERDICT\t…\tSAFE\tmoved-to-obsidian\tledger-row … cli=unavailable; VERIFIED(moved-to-obsidian) on the r4 line",
+        "lf_control": "identical",
+        "truncated": "VERDICT\t…\tNOT-SAFE\tnone\trow-incomplete missing-or-nonhex vault-sha256 col4 -> NOT-VERIFIED(row-incomplete)",
+        "disarmed": "NOT-VERIFIED(none)"
+      },
+      "impl-21": {
+        "sha256_12": "ed1881e8fd82",
+        "crlf_valid_row": "VERDICT\t…\tSAFE\tmoved-to-obsidian\tledger-row …",
+        "lf_control": "identical",
+        "truncated": "NOT-SAFE none obsidian=vault-sha-mismatch",
+        "disarmed": "NOT-SAFE none obsidian=no-ledger (header-only read as empty)"
+      },
+      "impl-24": {
+        "sha256_12": "2b224647abed",
+        "crlf_valid_row": "VERIFIED\t…\tmoved-to-obsidian\tledger-row … vault-sha256=127ac886a92b verified=live",
+        "lf_control": "identical",
+        "truncated": "VERIFIED — impl-24 strips CR from every field, so the truncated row still matches; this is exactly why the truncated probe is declared informational (crlf_contract.truncated_boundary) and NOT a judged probe",
+        "disarmed": "NOT-VERIFIED(no-ledger-row) rows=0"
+      }
+    },
+    "consumer_load_tests": {
+      "runner-26_end_to_end": {
+        "command": "bash tests/vault/runner-26.sh --out /tmp/v6-vrun26.json",
+        "exit": 0,
+        "result": "51 rows; impl-20 16/16 pass, impl-24 16/16 pass, impl-21 0/16 (candidate speaks r2 SAFE vocabulary only)",
+        "v6_rows": [
+          "impl-20 V6-crlf-valid-row: pass=true got=VERIFIED(moved-to-obsidian)",
+          "impl-20 V6-lf-control: pass=true got=VERIFIED(moved-to-obsidian)",
+          "impl-24 V6-crlf-valid-row: pass=true got=VERIFIED … moved-to-obsidian …",
+          "impl-24 V6-lf-control: pass=true",
+          "impl-21 both: pass=false detail='r2 vocabulary (VERDICT) != r4 VERIFIED/NOT-VERIFIED' — the candidate's vocabulary gap, not a fixture failure"
+        ]
+      },
+      "runner-28_end_to_end": {
+        "command": "bash tests/vault/runner-28.sh --out /tmp/v6-vrun28.json",
+        "exit": 0,
+        "result": "51 rows, 3 impls; impl-20 16/17, impl-24 13/17, impl-21 0/17 (rejects --ledger flag)",
+        "v6_rows": [
+          "impl-20 case-V6-crlf-valid-row: pass=true got=VERIFIED(moved-to-obsidian)",
+          "impl-20 case-V6-lf-control: pass=true",
+          "impl-24 both: pass=true",
+          "impl-21 both: pass=false got='rc=2 unknown flag: --ledger' — the candidate's CLI gap"
+        ]
+      },
+      "runner_26_prep_parser": "extracted verbatim and run against the built fixture: emitted 2 rows for case-V6 — 'V6-crlf-valid-row' and 'V6-lf-control', both VERIFIED with contains [moved-to-obsidian]",
+      "runner_28_prep_parser": "emitted 2 rows for case-V6 (crlf-valid-row, lf-control), target resolved under its own --out root, ledgers resolved to the case dir (the builder refreshes those copies to carry rows pointing at the current --out root)",
+      "runner-29": "has an explicit case-V6 probes branch (lines ~239-266) that resolves probes[].ledger and probes[].target against its --out root with a case-dir fallback, and additionally judges ledger-crlf-truncated.tsv as NOT-VERIFIED(mismatch) when present — stricter than this case's judged contract (impl-24 legitimately verifies the truncated row)",
+      "note": "runners 26/28/29 were being written by other seats concurrently during this round; the fixture was aligned to their probe/ledger/target resolution as observed in the working tree"
+    }
+  },
+  "crlf_mechanics": [
+    "ledger_lines() skips the header by prefix match (source_path + TAB), so a CRLF header is skipped like an LF one.",
+    "try_obsidian() reads each row with IFS=TAB and read -r sp ss vp vs _rest; the trailing CR is not TAB-separated, so it stays attached to the LAST field of the row.",
+    "In the canonical 6-column row the last field is note, absorbed by _rest; vault_sha256 (field 4) stays clean -> the row matches -> SAFE(moved-to-obsidian) / VERIFIED(moved-to-obsidian).",
+    "Only when the row is truncated to 4 columns does the CR land on vault_sha256 itself -> digest comparison fails. That is the break boundary this case pins; whether a candidate recovers from it is schema-tolerance, not a requirement, so it is declared informational."
+  ],
+  "verdict_family": {
+    "r2_tool": "SAFE / NOT-SAFE (VERDICT\t<path>\tSAFE\tmoved-to-obsidian\t…)",
+    "r4_candidates": "VERIFIED(moved-to-obsidian) / NOT-VERIFIED(reason); case-V6's judged expectation is VERIFIED(moved-to-obsidian) with the r2 equivalent SAFE(moved-to-obsidian)"
+  },
+  "rails_verified": {
+    "live_ledger": "corpus/knowledge/obsidian-ledger.tsv — sha256 3f7e9f2ab9e614464cb031d3f00a812a21f0e889f7666309a90d7784b75a9599 before and after every run; header-only (1 line)",
+    "real_vault": "/home/vgpnk/Documents/shokoknowledge — never read or written by this case; the vault side of the fixture is a fake vault dir under the fixture root",
+    "obsidian_gui": "/usr/bin/obsidian never executed (candidates report cli=unavailable themselves)",
+    "write_scope": "tests/vault/case-V6/**, tests/vault/ledger-V6.tsv (builder default; only when invoked without --ledger), tests/results/v6-selftest.json, /tmp scratch",
+    "no_network": "no git fetch/push/commit, no network calls"
+  },
+  "notes_for_parent": [
+    "case-V6 is consumable by all three V-family runners: probes[] for runner-26, targets[]+expect[] for runner-28/29, plus the --out/--ledger/--quiet builder contract they invoke.",
+    "The judged probes are crlf-valid-row and lf-control (both must verify). The truncated-CRLF probe is informational by design: impl-24 legitimately verifies it by stripping CR, so requiring NOT-VERIFIED there would falsely fail a conforming harness.",
+    "The CRLF bytes round-trip through git unchanged: the lane repo has no .gitattributes and core.autocrlf is unset. The case .gitignore keeps in-place materialization untracked, so the tracked case dir holds only make-fixture.sh, selftest.sh, expected.json, README.md and .gitignore.",
+    "The builder must be re-run before runners: both modes regenerate ledgers with the current root paths (ledger rows embed absolute paths)."
+  ]
+}

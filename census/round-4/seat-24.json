@@ -1,0 +1,128 @@
+{
+  "seat": "S24",
+  "round": 4,
+  "role": "implementor",
+  "kind": "impl",
+  "artifact": "tools/souji-vault-verify.impl-24.sh",
+  "sha256": "e8b4fdf142f423a3984d832cad355ebe4fb367adba9a4746da99841c86d726c9",
+  "bytes": 24079,
+  "lines": 621,
+  "mode": "0755",
+  "syntax": "bash -n ok",
+  "selftest": {
+    "exit": 0,
+    "checks": 20,
+    "failed": 0
+  },
+  "independence": "independent; written from the r4 contract (ledger row = receipt of record; vault side re-hashed live; CLI probe read-only) plus my own CLI recon (socket $XDG_RUNTIME_DIR/.obsidian-cli.sock, no shim on this host). No sibling tool, fixture, or ledger was copied; sibling harnesses were used only as oracles after the tool was written.",
+  "interface": {
+    "flags": ["--selftest", "--json", "--ledger PATH", "--vault PATH", "--fallback", "--cli", "--stale-days N", "TARGET..."],
+    "env": ["SOUJI_LEDGER", "SOUJI_CLI", "SOUJI_VAULT"],
+    "stdout": "line 1 = VERDICT<TAB>path<TAB>SAFE|NOT-SAFE<TAB>receipt<TAB>evidence (r2 shape, line-1-only parsers); line 2 = VERIFIED(moved-to-obsidian) | NOT-VERIFIED(reason) (r4 vocabulary). Path field escapes \\\\ \\t \\r \\n so one record stays one line.",
+    "json": "{\"path\",\"verdict\",\"reason\",\"receipt\",\"evidence\"}",
+    "exit": "0 evaluated (NOT-VERIFIED is not an error) | 1 selftest failure | 2 usage"
+  },
+  "reasons": ["source-absent", "vault-absent", "source-hash-mismatch", "vault-hash-mismatch", "row-incomplete", "self-receipt", "no-ledger-row", "no-ledger", "secrets-refusal", "unreachable"],
+  "safety_rails": [
+    "never executes a resolved `obsidian` name or the desktop GUI launcher; the launcher's absolute path is deliberately not named in the file",
+    "--cli only probes: socket state ($XDG_RUNTIME_DIR/.obsidian-cli.sock), shim presence (~/.local/bin/obsidian), bundled client binary; never execs, and a CLI that cannot be consulted can only degrade a verdict",
+    "secret-shaped path components refused before any read (secrets-refusal)",
+    "never hashes non-regular files (FIFO/socket/device stat-checked first)",
+    "no git fetch/push/commit/branch/checkout/reset/rebase; writes only under mktemp -d; .ufo/state, .ufo/watchdog.log, ~/.config untouched"
+  ],
+  "results": {
+    "selftest": "20/20, exit 0",
+    "case-V6/selftest.sh": "14/14 PASS",
+    "runner-26": "16/16",
+    "runner-27": "26/26",
+    "runner-28": "17/17 (tied top; impl-17/18/20/22/23 also 17/17)",
+    "runner-29": "20 pass / 0 fail / 1 informational (V6c CRLF-truncated boundary, explicitly unjudged)",
+    "runner-32": "28/28",
+    "runner-34": "16/16",
+    "runner-35": "29/29",
+    "runner-36": "30/30 (+ impl-matrix 35/35 rows)",
+    "runner-37": "26/26",
+    "runner-38": "26/26",
+    "runner-39": "26/26",
+    "runner-40": "24/24",
+    "s61-judge": "9 pass / 0 fail / 1 advisory",
+    "adv53-harness": "22/22 (all --cli probes; M8 GUI-launch sentinel never tripped)",
+    "vadv52-harness": "22/22",
+    "vadv54-harness": "15 pass / 0 fail / 6 warn / 1 info",
+    "vadv56-harness": "5/5 binding, 0 fail",
+    "reviewer-43": "22 pass / 0 fail",
+    "judge-60-vault": "hard_pass=44 hard_fail=0 info=3 selftest=0 — winner=souji-vault-verify.impl-24, verdict=PASS"
+  },
+  "defects_found_and_fixed": [
+    {
+      "id": "B5-crash",
+      "severity": "high",
+      "finding": "under set -e a row-incomplete message built with $( [ -z ... ] && printf ... ) aborts the script (exit 1, no verdict) whenever a checked field is non-empty",
+      "fix": "plain conditionals build the missing-columns string",
+      "evidence": "judge-60 B5 (was FAIL rc=1, now pass); direct probe: NOT-VERIFIED(row-incomplete), rc=0"
+    },
+    {
+      "id": "J4/J5-cwd-dependence",
+      "severity": "high",
+      "finding": "a raw-string fallback matched relative source_path rows against the invocation cwd, so the same ledger+target could flip verdict by cwd",
+      "fix": "only absolute source_path rows qualify as receipts; comparison is canonical-path to canonical-path",
+      "evidence": "vadv-52 J4/J5 (was FAIL, now PASS); vadv52 22/22"
+    },
+    {
+      "id": "P6-vault-inside-source",
+      "severity": "critical",
+      "finding": "a directory row whose vault copy lives INSIDE the evaluated directory verified; removing the directory destroys its own receipt",
+      "fix": "new refusal on the dir branch: canonical vault path contained in the source dir -> NOT-VERIFIED(self-receipt)",
+      "evidence": "vadv-54 P6 (was FAIL, now PASS)"
+    },
+    {
+      "id": "R1/R4-record-splitting",
+      "severity": "medium",
+      "finding": "a newline in the target path split the VERDICT record across lines, shifting path/verdict attribution for line-oriented consumers",
+      "fix": "escape \\\\ \\t \\r \\n in the emitted path field (JSON mode already escaped)",
+      "evidence": "vadv-54 R1/R4 (was FAIL, now PASS)"
+    },
+    {
+      "id": "V5-evidence-token",
+      "severity": "low",
+      "finding": "the source-absent VERDICT evidence lacked the literal source-absent token that fixture consumers match",
+      "fix": "evidence now carries obsidian=source-absent",
+      "evidence": "judge-60 case-V5 (was FAIL, now pass)"
+    },
+    {
+      "id": "static-gui-name",
+      "severity": "low",
+      "finding": "runner-35 S5 static rail fails any tool file that names the GUI launcher path",
+      "fix": "removed the literal path from comments; the rail passes and behavior is unchanged",
+      "evidence": "runner-35 29/29"
+    }
+  ],
+  "compat_notes": [
+    "VERDICT line is emitted FIRST so line-1-only parsers (case-V6/selftest.sh class_of) see a verdict token immediately.",
+    "CRLF semantics are r2-faithful: the trailing CR of a CRLF row is NOT stripped; it rides the row's last field. On a canonical 6-column row that field is note (harmless); on a row truncated after the hash columns the CR lands on vault_sha256 and the digest comparison fails (case-V6 T7 boundary).",
+    "Header-indexed ledger parse: extra interleaved columns are honored via header names; canonical order is the fallback when the header is missing.",
+    "Empty-field-preserving row split (manual tab split) so short rows cannot silently shift fields left.",
+    "Two observed V6 failures during an early run were a concurrent sibling-builder race on the shared case-dir ledgers (rows had been rewritten with another run's /tmp paths); direct probes of the same ledgers verify, and all subsequent runs are green."
+  ],
+  "cli_recon": {
+    "socket_path": "$XDG_RUNTIME_DIR/.obsidian-cli.sock (fallback ~/.obsidian-cli.sock); /run/user/1000/.obsidian-cli.sock was ABSENT at 13:55-14:20 and appeared at 14:21 (external app start, not this seat)",
+    "shim": "~/.local/bin/obsidian and /usr/local/bin/obsidian absent; /usr/lib/electron43/obsidian-cli absent; official CLI not exercisable on this host -> sha256sum fallback is the operational path",
+    "gui_launcher": "/usr/bin/obsidian (bash wrapper -> electron43) NEVER executed by this seat; all probes were stat/grep/read-only",
+    "command_surface": "46 registerCliHandler names extracted from the asar (base:*, daily:*, search*, sync:*, publish:*, template:*, workspace:*, bookmarks, wordcount, ...); none is a vault-side hash command, confirming sha256sum as the verification oracle"
+  },
+  "safety": {
+    "read_only": true,
+    "executed_gui_launcher": "never",
+    "vault_writes": "none (sha256sum/stat/find only)",
+    "ledger_untouched": "corpus/knowledge/obsidian-ledger.tsv stays header-only (1 line, sha256 3f7e9f2ab9e614464cb031d3f00a812a21f0e889f7666309a90d7784b75a9599, unchanged)",
+    "vault_manifest_unchanged": "299d6b6a9828cfc613f46daee146a995a28345849f2183714a6a4662f843a401 before and after every harness run (63 files)",
+    "git_mutations": "none",
+    "writes_by_S24": ["tools/souji-vault-verify.impl-24.sh", "tests/results/vrun-24.json", "census/round-4/seat-24.json", "/tmp scratch"]
+  },
+  "preamble": {
+    "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+    "fragment_path": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-4/seat-24.json",
+    "written_at": "2026-10-18T14:50:00-03:00",
+    "mode": "dry-run; no modifications outside the named artifacts"
+  }
+}

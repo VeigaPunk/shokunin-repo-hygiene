@@ -1,0 +1,90 @@
+{
+  "seat": "S17",
+  "round": 4,
+  "kind": "implementor",
+  "role": "implementor",
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "run_utc": "2026-10-18T17:41:00Z",
+  "assignment": "SEAT S17 — implementor. tools/souji-vault-verify.impl-17.sh per contract: [--ledger PATH] [--cli|--fallback|--auto] <source-path>; reads the ledger row for source-path, recomputes sha256 of source and vault file (read-only), prints VERIFIED or NOT-VERIFIED<TAB>reason; exit 0 evaluated / 1 error. --auto: try the CLI entry point from census/round-4/cli-contract.json if CLI-USABLE, else sha256sum fallback; both must agree or NOT-VERIFIED(cli-disagreement). --selftest runs V1-V8 from tests/vault/ and asserts expected verdicts.",
+  "artifact": {
+    "path": "tools/souji-vault-verify.impl-17.sh",
+    "sha256": "70c05b60b942b190749d2f6fe916a87a8b8d28d27ef9dc1c6668e0370c4399e5",
+    "bytes": 31943,
+    "syntax": "bash -n exit 0",
+    "mode": "-rwxr-xr-x"
+  },
+  "interface": {
+    "cli": "[--ledger PATH] [--vault PATH] [--cli|--fallback|--auto] [--json] [--stale-days N] [--selftest] [--] <source-path>...",
+    "default_mode": "auto",
+    "output_r2": "VERDICT<TAB>path<TAB>SAFE|NOT-SAFE<TAB>receipt|none<TAB>evidence  (line 1)",
+    "output_r4": "VERIFIED(<receipt>) | NOT-VERIFIED(<reason>)  (line 2)",
+    "json": "one JSON object per target with path/verdict/reason/receipt/evidence",
+    "exit_codes": "0 evaluated (VERIFIED or NOT-VERIFIED) / 1 internal error / 2 usage",
+    "reasons": ["source-absent", "source-hash", "vault-absent", "vault-hash-mismatch", "none", "no-ledger", "source-equals-vault", "secrets-refusal", "unreachable", "row-incomplete", "cli-disagreement"],
+    "env_overrides": ["SOUJI_LEDGER", "SOUJI_CLI_BIN", "SOUJI_CLI_TIMEOUT", "SOUJI_CONTRACT", "SOUJI_VAULT", "SOUJI_SELFTEST_ACTIVE"]
+  },
+  "cli_contract_integration": {
+    "contract": "census/round-4/cli-contract.json (verdict FALLBACK-ONLY at integration time; entry_point null)",
+    "auto_behavior": "contract not CLI-USABLE -> sha256sum fallback path, evidence mode=auto cli=fallback-only",
+    "cli_usable_behavior": "probe entry point with timeout; hash must equal the sha256sum fallback hash or NOT-VERIFIED(cli-disagreement)",
+    "degradation": "cli absent/timeout/error/empty/garbage -> fallback decides, evidence cli=<state>; CLI alone is never a receipt (M7)",
+    "gui_hazard": "the bare `obsidian` name and the GUI launcher are never executed; entry point must come from the contract or SOUJI_CLI_BIN; basename obsidian / app-bundle prefix refused (hazard-refused)"
+  },
+  "measured_results": {
+    "selftest": {
+      "command": "bash tools/souji-vault-verify.impl-17.sh --selftest",
+      "exit": 0,
+      "checks": 41,
+      "failed": 0,
+      "coverage": "25 synthetic checks (V1-V24 incl. batch, json, live-ledger invariant, CLI mock matrix: ok/lie/timeout/unavailable) + 16 live targets from tests/vault/case-V1..V8 builders (all builders run, all expected.json verdicts asserted)",
+      "foreign_ledger_invariance": "selftest exit 0 with SOUJI_LEDGER pointing at a foreign ledger (runners' environment)"
+    },
+    "runners": {
+      "runner-26": {"command": "tests/vault/runner-26.sh --impls 'souji-vault-verify.impl-17.sh'", "rows": 17, "pass": 17, "fail": 0, "note": "final run: selftest row + 16 fixture targets, all pass", "artifact": "tests/results/vrun-26-impl-17.json"},
+      "runner-28": {"command": "tests/vault/runner-28.sh", "impl_rows": "17/17 for impl-17 (final matrix of 7 impls: 17=17/17, 18=17/17, 20=17/17, 21=14/17, 22=17/17, 23=17/17, 24=17/17)", "artifact": "tests/results/vrun-28-matrix.json"},
+      "runner-32": {"command": "tests/vault/runner-32.sh --tool tools/souji-vault-verify.impl-17.sh", "status": "pass", "exit": 0, "pass": 28, "fail": 0, "skip": 0, "info": 11},
+      "runner-35": {"command": "tests/vault/runner-35.sh --tool tools/souji-vault-verify.impl-17.sh", "status": "pass", "exit": 0, "pass": 29, "fail": 0, "skip": 0, "info": 10},
+      "runner-36": {"command": "tests/vault/runner-36.sh --tool tools/souji-vault-verify.impl-17.sh", "status": "pass", "exit": 0, "pass": 30, "fail": 0, "skip": 0, "info": 11, "impl_matrix": "7 impls, 35 rows, 35 pass"},
+      "runner-37": {"command": "tests/vault/runner-37.sh --tool tools/souji-vault-verify.impl-17.sh", "status": "pass", "exit": 0, "pass": 26, "fail": 0, "skip": 0, "info": 9},
+      "runner-38": {"command": "tests/vault/runner-38.sh --tool tools/souji-vault-verify.impl-17.sh", "status": "pass", "exit": 0, "pass": 26, "fail": 0, "skip": 0, "info": 12},
+      "runner-39": {"command": "tests/vault/runner-39.sh --tool tools/souji-vault-verify.impl-17.sh", "status": "pass", "exit": 0, "pass": 26, "fail": 0, "skip": 0, "info": 12},
+      "runner-40": {"command": "tests/vault/runner-40.sh --tool tools/souji-vault-verify.impl-17.sh", "status": "pass", "exit": 0, "pass": 24, "fail": 0, "skip": 0, "info": 11}
+    },
+    "adversarial": {
+      "adv53": {"command": "tests/vault/adv53-harness.sh --tool tools/souji-vault-verify.impl-17.sh", "pass": 22, "fail": 0, "families": "m: --cli degradation (no cli / hang / error / garbage / empty / no-ledger / GUI hazard) never hangs, never SAFE from a bad CLI; n: 100MB sparse hash correctness (equal pair SAFE, byte-diff at 50MB NOT-SAFE, truncated NOT-SAFE); o: mid-read mutation/rename-swap never false-SAFE; lying CLI (stale) -> NOT-SAFE"},
+      "vadv54": {"command": "tests/vault/vadv54-harness.sh --tool tools/souji-vault-verify.impl-17.sh", "pass": 18, "fail": 0, "warn": 3, "info": 1, "readonly_ok": true, "tool_sha_stable": true, "warn_note": "WARN P5/Q2/Q4b are harness advisories: vault_path outside the registered vault root tolerated, symlink-chain/external-symlink ledger followed (Q1 PASS: resolved ledger path IS recorded in evidence); zero FAIL"}
+    },
+    "live_vault_probe": {
+      "transcript": "tests/results/s17-live-vault-probe.txt",
+      "vault": "/home/vgpnk/Documents/shokoknowledge",
+      "oracle_sha256_home_md": "98afa2b81887ca13f1f06243f3f0d1e24cd411d7f9321b332fc998d52ff242a4",
+      "match_row": "VERIFIED(moved-to-obsidian), exit 0",
+      "wrong_hash_row": "NOT-VERIFIED(vault-hash-mismatch)",
+      "absent_row": "NOT-VERIFIED(vault-absent)",
+      "vault_fingerprint_before_after": "ee36c0c8095f1274e6d6d25b11c56d78def0743168843d5bcb9ba08071347cc9 (identical)",
+      "live_ledger_sha": "3f7e9f2ab9e614464cb031d3f00a812a21f0e889f7666309a90d7784b75a9599 (header-only, 1 line, unchanged)",
+      "obsidian_app_processes": 0
+    }
+  },
+  "defect_found_and_fixed": [
+    "note column misread (exported_at vs note): fixed to col5=exported_at, col6=note; V7/V8 note-recording checks then pass",
+    "selftest live-phase builder refused a pre-created --out dir; logs moved beside the fixture root",
+    "read collapsed empty TSV columns (tab is IFS whitespace) -> '-' sentinel for absent per-probe ledger",
+    "V24 live-ledger invariant checked the env-overridable $LEDGER instead of the canonical path; under runners with SOUJI_LEDGER set to their fixture ledger the check false-failed -> now checks <repo>/corpus/knowledge/obsidian-ledger.tsv",
+    "runner-35/36 S5: literal GUI launcher path in a comment tripped the static gate -> literal removed (refusal by basename + bundle prefix unchanged)",
+    "runner-37 r2-parity: negatives now carry an `obsidian=<reason>` evidence token"
+  ],
+  "safety": {
+    "vault": "read-only (sha256sum/stat/find/readlink); fingerprint identical before/after every battery",
+    "live_ledger": "read-only; header-only and byte-identical throughout",
+    "gui_launcher": "never executed by the tool or by any probe run here; no Obsidian app process observed at any point (pgrep count 0)",
+    "git": "no git commands issued; no fetch/push/commit/branch",
+    "secrets": "secret-shaped basenames refused before any read",
+    "writes": ["tools/souji-vault-verify.impl-17.sh", "census/round-4/seat-17.json", "tests/results/*-impl-17.json", "tests/results/selftest-impl-17*.log", "tests/results/s17-live-vault-probe.txt", "/tmp scratch"]
+  },
+  "notes_for_parent": [
+    "Output contract is dual-vocabulary: line 1 r2 VERDICT record, line 2 r4 VERIFIED/NOT-VERIFIED token; runner-26/28 grep the r4 line, runner-32/35-40 parse the r2 record — both families pass.",
+    "census/round-4/cli-contract.json says FALLBACK-ONLY; --auto therefore uses the sha256sum path today. When a future contract marks CLI-USABLE, --auto probes the entry point and requires agreement (cli-disagreement otherwise).",
+    "Obsidian app was launched by another seat's adv53 M8 run at 13:58 and killed; at S17 measurement time app count was 0 and stayed 0."
+  ]
+}

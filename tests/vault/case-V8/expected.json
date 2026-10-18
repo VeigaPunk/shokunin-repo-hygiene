@@ -1,0 +1,136 @@
+{
+  "case": "case-V8",
+  "schema": "souji-vault-fixture/1",
+  "title": "space-bearing names — source file + vault file whose basenames contain spaces, matching ledger row",
+  "spec_case": "V8: vault file + source file whose names contain spaces. Expected: VERIFIED.",
+  "seat": "S16",
+  "round": 4,
+  "intent": "A fake vault file and a source file whose basenames BOTH contain literal spaces (and are deliberately different names, the shape a real export produces: source `meeting notes 2026-10.md` -> vault `Meeting Notes 2026-10.md`). A ledger row in tests/vault/ledger-V8.tsv matches source path + source sha256 + vault path + vault sha256 (all four conjuncts, both path fields carrying literal spaces). Expected verdict: VERIFIED (receipt moved-to-obsidian).",
+  "builder": "tests/vault/case-V8/make-fixture.sh",
+  "builder_cli": "bash tests/vault/case-V8/make-fixture.sh [--out DIR] [--ledger FILE] [--quiet] [--skip-ledger] [--print-row] [--print-hashes]",
+  "readme": "tests/vault/case-V8/README.md",
+  "selftest": "tests/vault/case-V8/selftest.sh",
+  "fixture_root_placeholder": "@FIXTURE_ROOT@",
+  "path_convention": "substitute @FIXTURE_ROOT@ with the FIXTURE_ROOT printed by make-fixture.sh; make-fixture.sh also writes the substituted copy to <ROOT>/expected.json. Evaluate the target by that exact absolute path — ledger matching is path-exact and the path contains spaces, so it must be quoted in every shell use.",
+  "ledger_path": "tests/vault/ledger-V8.tsv",
+  "ledger_path_in_root": "@FIXTURE_ROOT@/ledger.tsv",
+  "ledger_columns": ["source_path", "source_sha256", "vault_path", "vault_sha256", "exported_at", "note"],
+  "ledger_header": "source_path\tsource_sha256\tvault_path\tvault_sha256\texported_at\tnote",
+  "live_ledger_untouched": "corpus/knowledge/obsidian-ledger.tsv stays header-only; the builder never writes it (test ledgers live under tests/vault/)",
+  "space_bearing_names": {
+    "source_basename": "meeting notes 2026-10.md",
+    "vault_basename": "Meeting Notes 2026-10.md",
+    "note": "both basenames contain literal spaces; they are intentionally different names, so a tool that matches on basename instead of full path is caught"
+  },
+  "content": {
+    "source_file": "@FIXTURE_ROOT@/source/meeting notes 2026-10.md",
+    "vault_file": "@FIXTURE_ROOT@/vault/Meeting Notes 2026-10.md",
+    "sha256": "2fc29f1f563835d0e66139afa269b4de51355859ed30232b41847a2862f1084e",
+    "bytes": 225,
+    "identical": "cmp -s on the two files exits 0; both sha256sum values equal the constant",
+    "vault_mode": "0444"
+  },
+  "declared_ledger_rows": [
+    {
+      "id": "space-name-row",
+      "source_path": "@FIXTURE_ROOT@/source/meeting notes 2026-10.md",
+      "source_sha256": "2fc29f1f563835d0e66139afa269b4de51355859ed30232b41847a2862f1084e",
+      "vault_path": "@FIXTURE_ROOT@/vault/Meeting Notes 2026-10.md",
+      "vault_sha256": "2fc29f1f563835d0e66139afa269b4de51355859ed30232b41847a2862f1084e",
+      "exported_at": "2026-10-18",
+      "note": "case-V8 space-bearing names",
+      "why": "full match: both paths exist (literal spaces included) and both hashes are the actual file bytes"
+    }
+  ],
+  "targets": [
+    "@FIXTURE_ROOT@/source/meeting notes 2026-10.md"
+  ],
+  "expect": [
+    {
+      "path": "@FIXTURE_ROOT@/source/meeting notes 2026-10.md",
+      "vault_path": "@FIXTURE_ROOT@/vault/Meeting Notes 2026-10.md",
+      "verdict": "VERIFIED",
+      "receipt": "moved-to-obsidian",
+      "why": "byte-identical pair on both sides (space-bearing basenames) plus a fully matching ledger row (all four conjuncts)"
+    }
+  ],
+  "expect_string": "VERIFIED",
+  "accept": {
+    "exact": ["VERIFIED"],
+    "contains": ["VERIFIED"],
+    "structured": {"verdict": "VERIFIED", "receipt": "moved-to-obsidian"},
+    "note": "a harness may render the verdict as one token or as verdict+receipt fields; both satisfy this case as long as the verdict class is VERIFIED (never NOT-VERIFIED and never SAFE/NOT-SAFE r2 vocabulary) and the receipt, where printed, is moved-to-obsidian"
+  },
+  "must_not_be": ["NOT-VERIFIED", "NOT-SAFE"],
+  "failure_modes_caught": [
+    "unquoted path handling: any component that word-splits or re-tokenizes the space-bearing path fails to find the file (or the ledger row) and reports NOT-VERIFIED",
+    "basename matching: the vault basename differs from the source basename, so a tool that matches on basename rather than the exact full path cannot receipt this pair",
+    "column splitting: a ledger parser that splits on runs of whitespace instead of tab breaks the path fields at the spaces, so the row never matches (the row's path fields contain literal spaces)",
+    "secret-shape false positive: neither path component matches the secrets-refusal shapes; a tool refusing this target for secret-shaped reasons is wrong"
+  ],
+  "disarmed": {
+    "method": "run with a header-only ledger (e.g. `bash make-fixture.sh --ledger <tmp>/empty.tsv --skip-ledger`, then point the tool's ledger override at that file, or restore tests/vault/ledger-V8.tsv to header-only)",
+    "expected": {
+      "verdict": "NOT-VERIFIED",
+      "receipt": "none"
+    },
+    "why": "the row is the receipt: without it the vault copy is not evidence"
+  },
+  "auxiliary_checks": [
+    {
+      "id": "space-control-no-row",
+      "source_path": "@FIXTURE_ROOT@/source/control notes.md",
+      "vault_path": "@FIXTURE_ROOT@/vault/Control Notes.md",
+      "sha256": "3f5d8d2f08280a356f765ef393a762ac8bf93d423103b569347a12ad50ee1ab1",
+      "bytes": 143,
+      "identical": true,
+      "ledger_row": null,
+      "expected": {"verdict": "NOT-VERIFIED", "receipt": "none"},
+      "why": "byte-identical pair with space-bearing names but no ledger row: the row is the receipt, not the copy. Not listed in targets so runners evaluating the single-target contract are unaffected; exercised by selftest.sh."
+    }
+  ],
+  "crosscheck": {
+    "note": "the r2 tool tools/souji-verify.sh predates the r4 VERIFIED vocabulary; for these inputs its expected output is the same verdict pair under r2 names",
+    "tool_sha256": "7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820",
+    "command": "env SOUJI_LEDGER=<FIXTURE_ROOT>/ledger.tsv bash tools/souji-verify.sh \"<FIXTURE_ROOT>/source/meeting notes 2026-10.md\"",
+    "expected_line": "VERDICT\t@FIXTURE_ROOT@/source/meeting notes 2026-10.md\tSAFE\tmoved-to-obsidian\tledger-row vault=@FIXTURE_ROOT@/vault/Meeting Notes 2026-10.md source-sha256=2fc29f1f5638",
+    "seam": "SOUJI_LEDGER env override (defaults to corpus/knowledge/obsidian-ledger.tsv, which stays header-only)"
+  },
+  "determinism": {
+    "note": "fixed content; two builds at different roots produce byte-identical files and equal sha256 values (paths vary per run); the builder asserts the constants and cross-checks this file",
+    "sha256": "2fc29f1f563835d0e66139afa269b4de51355859ed30232b41847a2862f1084e",
+    "control_sha256": "3f5d8d2f08280a356f765ef393a762ac8bf93d423103b569347a12ad50ee1ab1"
+  },
+  "build": {
+    "entry": "bash make-fixture.sh [--out DIR] [--ledger FILE] [--quiet] [--skip-ledger] [--print-row] [--print-hashes]",
+    "default_out": "fresh mktemp -d",
+    "writes": [
+      "<ROOT>/.case-V8-fixture (marker)",
+      "<ROOT>/source/meeting notes 2026-10.md (0444 not required; vault side is 0444)",
+      "<ROOT>/vault/Meeting Notes 2026-10.md (0444)",
+      "<ROOT>/source/control notes.md",
+      "<ROOT>/vault/Control Notes.md (0444)",
+      "<ROOT>/ledger.tsv",
+      "<ROOT>/expected.json (substituted)",
+      "<LEDGER> (default tests/vault/ledger-V8.tsv)"
+    ],
+    "git": "git init -q -b master on <ROOT> (offline, no commits) so the fixture root behaves like a real repo and the pushed receipt must fall through to the ledger",
+    "safety": "never reads or writes the live ledger, the real vault, or any sibling repo; writes only under --out and --ledger FILE"
+  },
+  "files_expected_in_fixture_root": [
+    ".case-V8-fixture",
+    "source/meeting notes 2026-10.md",
+    "vault/Meeting Notes 2026-10.md",
+    "source/control notes.md",
+    "vault/Control Notes.md",
+    "ledger.tsv",
+    "expected.json"
+  ],
+  "notes": [
+    "The builder writes ONLY: <FIXTURE_ROOT>/** and <LEDGER> (default tests/vault/ledger-V8.tsv). The live ledger and the real vault /home/vgpnk/Documents/shokoknowledge are never touched; this case is self-contained under tests/vault/.",
+    "The vault here is a fake vault dir under the fixture root — no Obsidian process, no CLI, no network is involved. /usr/bin/obsidian (the GUI launcher) is never executed by this case.",
+    "stdout contract: line 1 = JSON {case,root,targets,expect,vault,ledger,sha256}; line 2 = FIXTURE_READY V8 <absolute target path>; --quiet emits KEY=VALUE lines plus the FIXTURE_READY line.",
+    "Exit codes: 0 ok, 1 build/assertion failure, 2 usage.",
+    "Both target paths contain spaces: every consumer must quote them (including in the FIXTURE_READY line and in runner argv construction)."
+  ]
+}

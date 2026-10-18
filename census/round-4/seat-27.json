@@ -1,0 +1,53 @@
+{
+  "seat": "S27",
+  "role": "runner (identical twin of S26/S28)",
+  "round": 4,
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "repo_head": "78694ac",
+  "run_utc": "2026-10-18T17:40:24Z",
+  "assignment": "SEAT S27 — runner. Identical, vrun-27.json.",
+  "artifacts": {
+    "tests/vault/runner-27.sh": {
+      "sha256_prefix": "8675e47d87a25daa",
+      "role": "independent runner: rebuilds every tests/vault/case-V* fixture with its own make-fixture.sh into a fresh mktemp root with a per-run --ledger under /tmp; own expected.json parser (all declared schema shapes) and own judge; never consumes another seat's fixture root or ledger",
+      "cli": "runner-27.sh [--wait SECS] [--out PATH] [--impls-dir DIR] [--cases-dir DIR] [--timeout SECS] [--keep]",
+      "exit_codes": "0 matrix completed | 1 blocked (no impls/fixtures after wait) | 2 usage",
+      "calibration": "positive control (spec-conformant reference in /tmp): 29/29 rows pass; negative control (mutant ignoring the source-sha conjunct): status=fail with 7 false-verdicts on case-V2/V3/V4/V5/V6. Re-verified after the final judge revision."
+    },
+    "tests/results/vrun-27.json": {
+      "role": "machine-readable result: seat/status/counts/impls/rows{impl,case,pass,got,want,rc,cmd,detail}/invariants; rows consumable by the S57 aggregator (rows[].impl/pass)",
+      "matrix": "7 candidates x (selftest + 13 fixture rows + ledger-negatives + determinism + bytes-stable) = 185 rows, 185 pass / 0 fail"
+    }
+  },
+  "matrix": {
+    "souji-vault-verify.impl-17": {"sha256_prefix": "70c05b60b942b190", "pass": 26, "total": 26},
+    "souji-vault-verify.impl-18": {"sha256_prefix": "9bb70bd54660a883", "pass": 26, "total": 26},
+    "souji-vault-verify.impl-20": {"sha256_prefix": "d312263ac8ebc9e2", "pass": 26, "total": 26},
+    "souji-vault-verify.impl-21": {"sha256_prefix": "97feffe24c058a32", "pass": 26, "total": 26},
+    "souji-vault-verify.impl-22": {"sha256_prefix": "abb6d48deb1e43ec", "pass": 26, "total": 26},
+    "souji-vault-verify.impl-23": {"sha256_prefix": "009daa93327575fc", "pass": 26, "total": 26},
+    "souji-vault-verify.impl-24": {"sha256_prefix": "26c6bf1e6b70ecf7", "pass": 26, "total": 26},
+    "note": "full sha256 values in tests/results/vrun-27.json (impls.<name>.sha256), each verified byte-stable across the run (sha_match true for all seven)"
+  },
+  "verdict": "PASS — 7/7 candidates at 26/26 (185/185 rows). The matrix is saturated: it no longer discriminates between candidates; winner selection must come from the adversarial/review seats.",
+  "key_findings": [
+    "All 105 fixture rows across all candidates emit the r4 vocabulary (VERIFIED / NOT-VERIFIED) with correct reason classes: observed negative reasons = vault-hash-mismatch (18), source-hash (4), vault-absent (7), source-absent (7), source-hash-mismatch (8), vault-sha-mismatch (3), source-sha-mismatch (2) — the alias spellings are the fixtures' declared equivalents (V2/V3 accept.note reason families).",
+    "Transient states observed and resolved by their authors mid-round: impl-20 mid-write syntax error (14:03); impl-21 initially shipped the r2 VERDICT/SAFE/NOT-SAFE contract with zero VERIFIED tokens (fixed in its 14:38 rewrite); impl-22/23 selftests failed while mid-write, pass after. Only the final bytes are scored.",
+    "impl-17's selftest is load-sensitive: its live-case leg reads tests/vault/case-V* while sibling seats rewrite them, so it can report 'FAIL live case-V1/note.md: got=NOT-VERIFIED(none)' or 'FAIL V19 rc=127' (2s CLI bound racing process startup) under load. Sequential runs: rc=0. Recorded as environmental; not a fixture failure.",
+    "case-V6's truncated-CRLF probe (V6c) was dropped by its author mid-round; an earlier impl-24 V6c miss is no longer part of the frozen fixture contract.",
+    "Judge semantics implemented from the fixtures' own declarations: class equality for bare must_not_be tokens (substring matching would veto the correct NOT-VERIFIED(...) answer — V3 must_not_be_note), substring for composite tokens, reason families per V2/V3 accept.note, must_not_be scoped off VERIFIED controls (V2 must_not_be_applies_to=the primary target). Rows are read with a 0x1f separator because bash `read` collapses empty TAB fields.",
+    "The official Obsidian CLI is FALLBACK-ONLY on this host (S08 census/round-4/cli-contract.json): no shim, no socket during the measurement window. All candidates correctly treat the ledger + sha256sum as the receipt of record; CLI is advisory at most."
+  ],
+  "safety": {
+    "real_vault": "read-only throughout (sha256sum/find only); fingerprint files=58 unchanged before/after every run",
+    "live_ledger": "corpus/knowledge/obsidian-ledger.tsv header-only and byte-identical before/after (sha 3f7e9f2ab9e6...)",
+    "gui_launcher": "/usr/bin/obsidian never executed; a PATH tripwire named `obsidian` counts attempts through this runner (0 in every run). The raw app-process delta is recorded but a sibling seat's adversarial harness cycles the real app concurrently, so the tripwire is the invariant.",
+    "fixture_writes": "mktemp -d roots under /tmp and per-run ledgers only; no writes to tests/vault/case-V* (builders write their own roots), no writes to any sibling repo",
+    "git": "no fetch/push/commit/branch/checkout/reset/rebase anywhere; fixture builders run unmodified"
+  },
+  "to_verify": [
+    "case-V7's note-recording expectation (note_recorded per target) is declared but not judged by this runner — verdict/receipt/reason are judged, note text is not",
+    "A background watcher (/tmp/s27-watch.sh, logs /tmp/s27-watch.log) re-runs the matrix on any impl/fixture change and refreshes tests/results/vrun-27.json; if impls are rewritten after 17:40Z, re-read the JSON rather than trusting this fragment",
+    "Saturation: all 7 candidates green means this runner cannot rank them; adversarial (vadv-*) and review (vreview-*) seats carry the discrimination"
+  ]
+}

@@ -1,0 +1,42 @@
+{
+ "seat": "S58",
+ "round": 4,
+ "kind": "evidence-fragment",
+ "role": "final judge (independent replicate of S57) — rail-breach evidence",
+ "date": "2026-10-18",
+ "subject": "real-vault write caused by the S53 adversarial harness (backtick defect)",
+ "status": "CONFIRMED-BY-S58",
+ "timeline": {
+  "app_launch_1": "2026-10-18 14:05:04 -03 (pid 4127347, parent: bash tests/vault/adv53-harness.sh --only m)",
+  "app_launch_2": "2026-10-18 14:10:27 -03 (pid 1994731, parent: bash -x tests/vault/adv53-harness.sh --only m --out /tmp/adv53/dbg-m.json)",
+  "vault_config_write": "2026-10-18 14:10:31 -03 — .obsidian/appearance.json, app.json, core-plugins.json all re-mtimed",
+  "app_exit": "no electron43 app.asar processes after 14:12; socket /run/user/1000/.obsidian-cli.sock absent at 14:19"
+ },
+ "mechanism": {
+  "defect": "adv53-harness.sh message strings used backticks inside double quotes, e.g. why=\"HAZARD: --cli executed the `obsidian` name, ...\" — backticks are command substitution in bash, so the harness itself executed `obsidian` (the GUI launcher) at the moment it composed that message.",
+  "proof_local": "/tmp/s58/backtick-proof.sh: the identical byte pattern with a marker command executed the marker (\"PROOF: backticks executed the command\").",
+  "proof_xtrace": "/tmp/adv53/dbg-xtrace.log line 1059 shows '++ obsidian' immediately after the M8 branch; the observed env had PATH=<mock-cli>:... and the mock did NOT record the call (mock.log has no gui entry), so the executed `obsidian` was the REAL one resolved from the post-harness PATH context.",
+  "mock_distinction": "tests/vault/mock-cli/obsidian gui-mode only touches MOCK_GUI_SENTINEL; the sentinel /tmp/adv53.xYNdAS/m/gui.sentinel stayed 0 bytes — the mock was never reached, consistent with the real launcher being executed by the harness's own command substitution."
+ },
+ "blast_radius": {
+  "vault_notes": "NONE — 58 *.md files, unchanged count and content (sha manifest verified by S53 and S64 independently).",
+  "vault_config": "3 files under .obsidian/ re-mtimed at 14:10:31; core-plugins.json differs from the vault repo HEAD (git diff: 'markdown-importer' key reordered); workspace.json already modified before this round (13:58 per S53).",
+  "live_ledger": "corpus/knowledge/obsidian-ledger.tsv still header-only (1 line, sha256 3f7e9f2ab9e614464cb031d3f00a812a21f0e889f7666309a90d7784b75a9599).",
+  "notes_on_reversibility": "the .obsidian writes are Obsidian-app-owned config (not souji artifacts); reverting them would be a vault write and is operator-owned."
+ },
+ "remediation_observed": {
+  "harness_hardened": "tests/vault/adv53-harness.sh now self-audits: refuses to run if a backtick appears inside a double-quoted string (self_audit_backticks, exit 64), and prepends a GUARD_DIR stub (obsidian/obsidian-cli/electron43 -> hazard + exit 127) to PATH.",
+  "harness_sha256": "ad00edbd8b8ad64c79f206866fdfe224bf77c5e944ed7aa6f5155a8b9f42abe5",
+  "self_reported": "tests/results/vadv-53.json harness_self_hardening[] documents the defect, the guard, and the removal of an earlier pkill (passive pgrep observation only)."
+ },
+ "rail_verdict": "VIOLATED-THEN-REMEDIATED — the round's 'read-only over the real vault' rule was breached by a seat harness, detected by S58, self-documented and fixed by S53. No note loss; config-only side effect. Any future harness must be audited for command substitution in message strings before execution.",
+ "commands": [
+  "ps -o pid,ppid,lstart,args -p 4127347  # app launch + parent harness",
+  "ps -o pid,ppid,lstart,args -p 1994731  # second launch, parent bash -x harness",
+  "stat -c '%y %n' <vault>/.obsidian/{core-plugins,app,appearance}.json  # 14:10:31",
+  "git -C <vault> --no-optional-locks diff --stat .obsidian/  # core-plugins.json + workspace.json modified",
+  "sha256sum tests/vault/adv53-harness.sh  # ad00edbd... (hardened revision)",
+  "bash /tmp/s58/backtick-proof.sh  # PROOF: backticks executed the command"
+ ],
+ "vault_read_only_attestation": "S58 issued only sha256sum/stat/git-status/find/pgrep against the vault and the lane repo; no writes outside /tmp/s58 and the assigned tests/results/vfinal-58.json + this fragment."
+}

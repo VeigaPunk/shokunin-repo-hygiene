@@ -1,0 +1,142 @@
+{
+  "seat": "S63",
+  "role": "final-judge",
+  "round": 4,
+  "lane": "souji-shokunin",
+  "task": "Obsidian-CLI vault verification (ledger-backed moved-to-obsidian)",
+  "judged_at_utc": "2026-10-18T17:16:30Z",
+  "judged_at_local": "2026-10-18T14:16:30-03:00",
+  "repo_head": "78694acefa316edfc77842583409b7133350718c",
+  "independence": {
+    "statement": "This seat's verdict rests on its own oracle and battery, run against the candidates on disk; peer vrun/vreview/vadv/vfinal artifacts were consulted only as corroboration and each corroborating claim is re-derived or re-reproduced below before use.",
+    "oracle": {
+      "path": "/tmp/s63/ref-vault-verify.sh",
+      "sha256": "b4beceaac44a8b82d735",
+      "note": "seat S63's independent spec implementation (four-conjunct ledger match, read-only, CR-tolerant); not landed in the repo"
+    },
+    "harness": {
+      "path": "/tmp/s63/judge63.sh",
+      "sha256": "81ddb027b7ecfd3770dd",
+      "note": "18-row matrix: case-V1..V8 fixtures (built fresh per run) + 2 live-vault rows (Home.md match / wrong-hash control) + rails (vault manifest, live-ledger digest, PATH-poison obsidian shim, determinism)"
+    }
+  },
+  "candidates": [
+    {
+      "name": "souji-vault-verify.impl-20.sh",
+      "path": "tools/souji-vault-verify.impl-20.sh",
+      "sha256": "95fa47182cc163f570f0",
+      "bytes": 40317,
+      "mtime_local": "2026-10-18T14:13:57-03:00",
+      "stability": "stable for >=2 minutes at judgment close; earlier revisions observed at 14:03 (broken syntax), 14:07 (52885564f324), 14:12 (ebf3a6c9 broken selftest), 14:13 (95fa4718 final)",
+      "selftest": {"exit": 0, "checks": "35/35"},
+      "s63_battery": "18/18",
+      "runner_corroboration": {"vrun-31": "18/18", "vrun-30-r4": "16/16", "vrun-27": "26/26", "vrun-32": "28/28", "vrun-37": "10/10", "aggregate": "201/202 across 12 vrun files (the one miss is vrun-28 16/17)"},
+      "review_corroboration": {"vreview-45": "26/30, 0 fatal", "vreview-47": "59/60, 0 fatal"},
+      "verified_fixes_by_direct_repro": [
+        "V06 self-row (ledger row whose vault_path == source path): NOT-SAFE(source-equals-vault) - reproduced by S63 at /tmp/s63/selfrow; the r2 baseline and impl-24 both accept this row as moved-to-obsidian",
+        "V4-D2 no-trailing-newline final row: row is read and verified - reproduced by S63 at /tmp/s63/nonl; impl-24 and baseline drop the row"
+      ],
+      "defects_found_by_s63": [
+        {"id": "F4-mode000-ledger", "severity": "minor", "evidence": "SOUJI_LEDGER=<mode-000 ledger> ... --ledger <same> -> bash: Permission denied at line 126, no verdict line, exit 1; impl-24 and baseline degrade cleanly to NOT-VERIFIED/NOT-SAFE with exit 0. Reproduced at /tmp/s63/f4.", "status": "open in 95fa4718"}
+      ]
+    },
+    {
+      "name": "souji-vault-verify.impl-24.sh",
+      "path": "tools/souji-vault-verify.impl-24.sh",
+      "sha256": "2b224647abedc3ee00b3",
+      "bytes": 17530,
+      "mtime_local": "2026-10-18T14:03:25-03:00",
+      "stability": "stable for >=13 minutes at judgment close",
+      "selftest": {"exit": 0, "checks": "13/13"},
+      "s63_battery": "18/18",
+      "runner_corroboration": {"vrun-38": "26/26", "vrun-39": "26/26", "vrun-31": "18/18", "vrun-30-r4": "16/16", "vrun-27": "26/26", "aggregate": "206/214 across 13 vrun files"},
+      "review_corroboration": {"vreview-45": "24/30 with FATAL V06 (disqualified)", "vreview-47": "57/60, 0 fatal"},
+      "defects_found_by_s63": [
+        {"id": "V06-self-row", "severity": "fatal", "evidence": "S63 direct repro: row with vault_path == source_path and matching hashes -> VERIFIED moved-to-obsidian; deleting the source would destroy the only copy the receipt names. Same behavior in the r2 baseline and in S63's own first oracle revision - it is the lineage default, and impl-20 is the only candidate that refuses it.", "status": "open in 2b224647; corroborated by vreview-45 fatal V06"},
+        {"id": "V4-D2-no-newline", "severity": "major", "evidence": "S63 direct repro: final ledger row without trailing newline -> NOT-VERIFIED(no-ledger-row) rows=0, although the row is complete and matching. Same in the r2 baseline; fixed in impl-20.", "status": "open in 2b224647; corroborated by vfinal-61 defect registry V4-D2"}
+      ]
+    },
+    {
+      "name": "souji-verify.sh (installed r2 baseline)",
+      "path": "tools/souji-verify.sh",
+      "sha256": "7efda63bd7607009f986",
+      "selftest": {"exit": 0, "checks": "24/24"},
+      "s63_battery": "18/18",
+      "runner_corroboration": {"vrun-30": "26/26", "vrun-35": "28/28", "vrun-38-r2": "26/26", "vrun-40": "24/24", "vrun-33": "TOOL-FAIL (3 failed: L6a/L6b/L7)"},
+      "defects_found_by_s63": [
+        {"id": "V06-self-row", "severity": "fatal", "evidence": "same direct repro as impl-24: SAFE moved-to-obsidian on a self-referential row", "status": "open"},
+        {"id": "V4-D2-no-newline", "severity": "major", "evidence": "same direct repro: final no-newline row dropped", "status": "open"},
+        {"id": "V4-D1-empty-hash-collapse", "severity": "fatal", "evidence": "corroborated by vfinal-61 P3 repro and S55 probe family S (S05/S07/S08/S09 false-SAFE on empty-hash rows); not independently re-run by S63 in this window", "status": "corroborated, not re-derived"}
+      ]
+    },
+    {
+      "name": "impl-21 (ghost candidate)",
+      "path": "not on disk at judgment close (runner/review artifacts only; sha ed1881e8fd82)",
+      "s63_battery": "not run - candidate absent from tools/",
+      "runner_corroboration": {"vrun-31": "17/18", "vrun-30-r4": "14/16", "vrun-26/27/28": "0/17, 10/26, 0/17"},
+      "review_corroboration": {"vreview-45": "22/30 with FATAL V06", "vreview-47": "49/60"},
+      "note": "recorded for completeness; cannot be promoted - not a file in the lane"
+    }
+  ],
+  "winner": {
+    "name": "souji-vault-verify.impl-20.sh",
+    "sha256": "95fa47182cc163f570f0",
+    "verdict": "WINNER-NAMED",
+    "selection_order": ["selftest exit 0", "no fatal defect (V06-class false-SAFE absent)", "S63 battery pass rate", "runner aggregate", "review score", "stability at close"],
+    "rationale": "Only candidate that (a) passes its own selftest and the S63 18/18 battery, (b) refuses the V06 self-referential receipt row that the installed baseline and impl-24 accept as moved-to-obsidian, and (c) reads a complete final ledger row without trailing newline. Its one open defect (rc=1 with no verdict on a mode-000 ledger) is minor and fail-closed in direction (no false-SAFE)."
+  },
+  "contested_findings": [
+    {
+      "id": "V6c-CRLF-truncated",
+      "status": "moot at judgment close",
+      "history": "case-V6 v1 (14:03) expected NOT-SAFE on a CRLF row truncated to 4 columns. S63 adjudication: the same row with LF endings yields SAFE under the r2 parser (line-ending-dependent verdict = parser accident, not semantics); impl-24/impl-20 strip CR and verify. The fixture was rewritten at 14:07-14:10 and the truncated probe no longer exists; the rewritten V6 expects VERIFIED for both CRLF and LF valid rows, which all three tools satisfy."
+    },
+    {
+      "id": "E3-hostile-PATH",
+      "status": "shared, not a discriminator",
+      "history": "s50-vadv E3 (PATH-hijacked sha256sum forging a claim hash) yields VERIFIED/SAFE for all three tools (impl-20, impl-24, r2 baseline) - reproduced by S63 at /tmp/s63/e3. A tool cannot defend against a hostile hasher on its own PATH; recorded as a harness-level caveat, not scored against any candidate."
+    }
+  ],
+  "rails_at_judgment_close": {
+    "real_vault": {
+      "path": "/home/vgpnk/Documents/shokoknowledge",
+      "content_files_unchanged": true,
+      "note": "58 .md files intact; .obsidian/core-plugins.json + workspace.json modified by the Obsidian app itself while the GUI ran 13:58-14:12 (not by any seat; verified via git status - only .obsidian runtime files modified)",
+      "manifest_sha256_at_14:12": "299d6b6a9828cfc613f46daee146a995a28345849f2183714a6a4662f843a401"
+    },
+    "live_ledger": {
+      "path": "corpus/knowledge/obsidian-ledger.tsv",
+      "sha256": "3f7e9f2ab9e614464cb031d3f00a812a21f0e889f7666309a90d7784b75a9599",
+      "lines": 1,
+      "header_only": true
+    },
+    "obsidian_gui": "never executed by this seat; PATH-poison shim logged 0 executions across all S63 battery runs",
+    "socket_state": "/run/user/1000/.obsidian-cli.sock existed only while the app was running (13:58-14:12); absent at close; shim ~/.local/bin/obsidian never registered"
+  },
+  "cli_entry_point_finding": {
+    "official_cli_available": false,
+    "mechanism": "second launch of the app binary connects to $XDG_RUNTIME_DIR/.obsidian-cli.sock as a client of the running app; no shim at ~/.local/bin/obsidian or /usr/local/bin/obsidian; socket absent at close (app not running)",
+    "third_party_tools": "obsidian-cli-inspector v1.0.3 (hash field is NOT sha256 - 4-hex+epoch; unusable for ledger receipts), notesmd-cli v0.3.7 (write-capable; read-only commands only)",
+    "operational_path": "read-only sha256sum under the vault path is the only valid vault-side oracle today; official-CLI-based verification is NOT-VERIFIED until the operator runs the app and registers the shim"
+  },
+  "peer_judge_notes": {
+    "vfinal-57": "written at 13:58 before any vrun existed - premature, superseded",
+    "vfinal-59": "named souji-verify (baseline) when it was the only tool with artifacts",
+    "vfinal-61": "named impl-20 (52885564f324 revision); defect registry V4-D1/V4-D2 independently matches S63 repros",
+    "vfinal-62": "named souji-verify; its fixture matrix shows rc=2/NONE for the baseline tool - S63 re-ran the same tool and got 18/18, so that zero-rate is a harness-invocation artifact (flag mismatch), not a tool defect"
+  },
+  "artifact_counts": {
+    "vrun_files": 18,
+    "vreview_files": 5,
+    "vadv_files": 10,
+    "vfinal_files_before_this": 3,
+    "census_round4_seats": 19
+  },
+  "landed_by_this_seat": ["tests/results/vfinal-63.json"],
+  "not_modified_by_this_seat": [
+    "tools/** (no candidate or baseline was edited)",
+    "tests/vault/** (fixtures read and rebuilt under /tmp only)",
+    "corpus/knowledge/obsidian-ledger.tsv (header-only before and after)",
+    "/home/vgpnk/Documents/shokoknowledge/** (read-only; no writes, no notes created)"
+  ]
+}

@@ -1,0 +1,75 @@
+{
+ "seat": "S18",
+ "round": 4,
+ "role": "implementor",
+ "kind": "impl",
+ "artifact": "tools/souji-vault-verify.impl-18.sh",
+ "sha256": "9bb70bd54660a883b24b767b053d1e0fc7b02fb8d9fc5c0f01c1a21a0bbbb6fa",
+ "bytes": 28592,
+ "lines": 707,
+ "mode": "0755",
+ "syntax": "bash -n ok",
+ "selftest": {
+  "exit": 0,
+  "checks": 34,
+  "failed": 0,
+  "scope": "V1-V34: clean pair, vault tamper, source tamper, vault absent, source absent, CRLF ledger, extra columns, duplicate rows, comment rows, uppercase sha, secrets refusal, self-move, symlink alias, hardlink alias, nested vault, vault-outside-root (strict), ledger-symlink refusal, fifo vault, spaces, empty/zero/header-only ledger, unreachable, no-ledger-row, --json shape, determinism, newline-path single record, bounded CLI (agree/disagreement/timeout/mid-probe mutation), dir digest, ledger-path evidence"
+ },
+ "independence": "independent; no sibling tool, fixture, or ledger copied. Sibling harnesses (runner-28/39, adv53, vadv54/56, judge-60) were used only as oracles after the tool was written; the four defects they exposed (subshell CLI-state loss, hardlink alias, vault-nested-in-source, over-strict SOUJI_VAULT) were each fixed and re-verified against the same harness.",
+ "interface": {
+  "flags": ["--selftest", "--json", "--ledger PATH", "--vault PATH", "--fallback", "--auto", "--cli", "--stale-days N", "--"],
+  "env": ["SOUJI_LEDGER", "SOUJI_VAULT (hint)", "SOUJI_VAULT_STRICT=1 (constraint)", "SOUJI_CLI_BIN", "SOUJI_CLI", "SOUJI_CLI_TIMEOUT", "SOUJI_SELFTEST_ACTIVE"],
+  "stdout": "line 1 = VERDICT<TAB>path<TAB>SAFE|NOT-SAFE<TAB>receipt<TAB>evidence (r2 form); line 2 = VERIFIED(receipt) | NOT-VERIFIED(reason) (r4 vocabulary). Path fields escape tab/newline (\\t \\n) so one target = one physical record.",
+  "json": "{\"path\",\"verdict\",\"verified\",\"receipt\",\"reason\",\"evidence\"} one object per target",
+  "exit": "0 evaluated (NOT-VERIFIED is not an error) | 1 selftest failure | 2 usage"
+ },
+ "reasons": [
+  "source-absent",
+  "source-hash-mismatch",
+  "vault-absent",
+  "vault-hash-mismatch",
+  "source-equals-vault (self-move, symlink alias, hardlink alias)",
+  "vault-nested-in-source",
+  "vault-outside-root (SOUJI_VAULT_STRICT=1 only)",
+  "ledger-symlink",
+  "row-incomplete",
+  "no-ledger",
+  "no-ledger-row",
+  "secrets-refusal",
+  "unreachable",
+  "none"
+ ],
+ "receipts": ["moved-to-obsidian"],
+ "semantics": {
+  "receipt_of_record": "the ledger row: both sides (source path+sha256, vault path+sha256) must re-hash byte-exact; matching is path-exact on the canonical absolute path; extra columns ignored (canonical 6 decide); the row's note is recorded in the evidence of a VERIFIED line",
+  "cli": "advisory only, bounded by timeout (default 6s): resolved as SOUJI_CLI_BIN/SOUJI_CLI or the `obsidian-cli` name on PATH; a lying/hanging/erroring/empty CLI cannot flip the verdict; after any executed probe the vault side is re-hashed, so a file that changed mid-probe cannot ride an earlier match to VERIFIED; the GUI launcher name is never resolved or executed",
+  "vault_readonly": "sha256sum/stat/readlink/find only; nothing is ever written under a vault path; the live ledger is never written; writes exist only inside a mktemp -d selftest tree"
+ },
+ "results": {
+  "runner-28 (7-impl matrix)": "17/17 on frozen rev 9bb70bd5 (tied best of 7; impl-21 14/17)",
+  "runner-39": "pass 26 / fail 0 / skip 0; vault fingerprint unchanged (files=58 manifest identical); live ledger header-only, sha256 3f7e9f2ab9e61446... before==after",
+  "adv53 (adversarial m/n/o)": "pass 22 / fail 0 — no false-SAFE on 100MB sparse, TOCTOU swap, lying/hanging/empty CLI, GUI sentinel untouched",
+  "vadv54": "PASS 20 / FAIL 0 / WARN 1 — sole WARN is the harness-tolerated P5 (a distinct copy outside the registered vault root is accepted when no strict hint is set)",
+  "vadv56": "all probes pass (cli + fallback modes, zero/header-only ledgers, spaces, tamper)",
+  "judge-60 (41-case battery)": "hard_pass 45 / hard_fail 0 / info 2, winner=souji-vault-verify.impl-18, verdict PASS; rails: gui_before=0 gui_after=0, vault files 220==220, ledger sha stable, .ufo state/watchdog untouched",
+  "case matrix V1-V8": "16/16 target rows match expected.json verdicts (all builders re-run on the frozen revision)",
+  "live probe": "real vault Home.md + atlas/Corpus-Map.md -> NOT-VERIFIED(no-ledger-row) (correct: live ledger is header-only); vault manifest + live ledger bit-identical after the run"
+ },
+ "defects_found_and_fixed_by_adversarial_seats": [
+  "adv53 O1/O5 (race/TOCTOU): added post-CLI-probe re-hash -> NOT-VERIFIED(vault-hash-mismatch) with vault-changed-during-cli-probe evidence",
+  "vadv54 P4 (hardlink alias): vault path sharing the source inode is refused (source-equals-vault)",
+  "vadv54 P6 (critical, false-SAFE): a vault copy nested inside the source directory being evaluated is refused (vault-nested-in-source)",
+  "vadv54 Q2/Q4b (symlinked ledger): refused (ledger-symlink) so a receipt always traces to a concrete file",
+  "judge-60 (over-strict SOUJI_VAULT): the vault-root constraint now fires only under SOUJI_VAULT_STRICT=1; SOUJI_VAULT alone is a hint (harnesses pass it even when rows point at fixture vaults)"
+ ],
+ "rails_verified": [
+  "no writes outside /tmp scratch: vault and live ledger hashed before/after by runner-39, judge-60 and a manual live probe — all identical",
+  "never executed /usr/bin/obsidian or the `obsidian` name: adv53 M8 sentinel untouched; judge-60 gui_before=gui_after=0",
+  "no git fetch/push/commit/branch/checkout/reset/rebase; no .ufo/state, .ufo/watchdog.log or ~/.config writes",
+  "secret-shaped paths refused before any read (V11)"
+ ],
+ "notes": [
+  "One residual, harness-tolerated WARN: with no SOUJI_VAULT_STRICT the tool does not constrain vault_path to the registered vault root (vadv54 P5 rates this minor/tolerated). SOUJI_VAULT_STRICT=1 provides the strict mode.",
+  "The tool is an independent candidate for the round-4 install decision; the installed name remains tools/souji-vault-verify.sh (parent's choice per runner/judge results)."
+ ]
+}

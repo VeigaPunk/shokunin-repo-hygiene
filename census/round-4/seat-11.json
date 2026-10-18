@@ -1,0 +1,115 @@
+{
+  "seat": "S11",
+  "role": "fixture author — case-V3 (source file differs from the ledger row's source_sha256)",
+  "round": 4,
+  "kind": "vault-fixture-author",
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "repo_head": "78694ac",
+  "run_utc": "2026-10-18T17:30:00Z",
+  "run_local": "2026-10-18T14:30:00-03:00",
+  "assignment": "tests/vault/case-V3/: source file differs from ledger source sha256. Expected: NOT-VERIFIED(source-hash).",
+  "verdict": "DELIVERED — fixture built, expectation pinned, discrimination proven in both directions and end-to-end through the live runner matrix",
+  "artifacts": {
+    "tests/vault/case-V3/make-fixture.sh": {
+      "sha256": "7d734d7f808077df3d5bcb1301042f5c6b8f8550213801f29b27d0e85a7f7d54",
+      "role": "builder: three source files (primary edited, subtle one-byte edit, matched control), three 0444 vault copies, test ledger with 3 rows carrying export-time digests, substituted expected.json",
+      "cli": "make-fixture.sh [--out DIR] [--ledger FILE] [--quiet] [--print-ledger] [--print-hashes]",
+      "exit_codes": "0 built, 1 build/assertion failure, 2 usage"
+    },
+    "tests/vault/case-V3/expected.json": {
+      "sha256": "1f85e02c388e6c3797723f4b87ebf381bfa18cf154f186b5b770b47f78fbe176",
+      "role": "declaration: schema souji-vault-fixture/1, three declared rows, three targets, expect NOT-VERIFIED(source-hash) x2 + VERIFIED control, per-target accept blocks, must_not_be scoped to the primary, failure_modes_caught"
+    },
+    "tests/vault/case-V3/selftest.sh": {
+      "sha256": "618c188208614e4f920e3bfca0a20df6c48189b697772e0ad3b8be884b61e315",
+      "role": "40 checks; T1 build invariants + exit codes, T2 substituted expected.json, T3 r2-tool class gap, T4 control + restore-flip, T5 live surfaces untouched",
+      "cli": "selftest.sh [--keep] [--out JSON] [--tool PATH]"
+    },
+    "tests/vault/case-V3/README.md": {
+      "sha256": "75ca4a44c4671ea202fcbf7f55ef5d0c1899e8d7c67a0dc06310e31b0b857103",
+      "role": "contract: layout, row digests, verdict matrix, accept/veto structure, discriminators, r2 cross-check, determinism"
+    },
+    "tests/results/v3-selftest.json": {
+      "role": "machine-readable selftest result: pass=40 fail=0 verdict=PASS against tools/souji-verify.sh (r2 sha 7efda63b)"
+    }
+  },
+  "fixture_facts": {
+    "export_sha256": "655cb8c2ea693fbe500b6c32a1f8cc5ff5f5ba0900ccb80606a0714f7be4aea8",
+    "export_bytes": 289,
+    "edited_sha256": "bac6faf0d62df655f6700f5f530a76801c150322a8962dce4bd5785506abd845",
+    "edited_bytes": 276,
+    "subtle_export_sha256": "e6a4c2fb6142dd29eaf544690593ff24f68055ccc06f56a8271b45e147d6005e",
+    "subtle_source_sha256": "45d91bb27469d389946266e6793fe7d492751110ad9dfc5d3cd51c9b2a9509e5",
+    "matched_sha256": "9f461f329c6568e871180cab3e05434ae9e7d01abeb094b96fcba1a65f529f44",
+    "targets": "<ROOT>/source/src/{edited-notes,subtle-notes,matched-notes}.md",
+    "vault_copies": "<ROOT>/vault/{edited-notes,subtle-notes,matched-notes}.md — mode 0444, digests equal the row vault_sha256",
+    "ledger": "<ROOT>/ledger.tsv — header + exactly 3 rows, export-time digests on both sides",
+    "design_point": "for both negatives the vault side verifies (vault digest == row vault_sha256); the ONLY failing conjunct is the source-side hash (primary: full edit 289->276 B; subtle: one dropped byte, the trailing newline). A vault-side-only verifier reports VERIFIED and is caught. The third target is byte-identical both sides and must verify, so the case cannot pass by always answering source-hash."
+  },
+  "measured_results": {
+    "selftest": {
+      "command": "bash tests/vault/case-V3/selftest.sh --out tests/results/v3-selftest.json",
+      "exit": 0,
+      "result": "selftest: 40 checks, 0 failed"
+    },
+    "round2_tool_baseline": {
+      "tool": "tools/souji-verify.sh",
+      "tool_sha256": "7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820",
+      "command": "SOUJI_LEDGER=<ROOT>/ledger.tsv tools/souji-verify.sh <ROOT>/source/src/edited-notes.md",
+      "observed_line": "VERDICT\t<ROOT>/source/src/edited-notes.md\tNOT-SAFE\tnone\tpushed=no-introducing-commit; obsidian=source-sha-mismatch; obsidian=no-matching-ledger-row; stale=not-scratch-type",
+      "finding": "the r2 tool detects the mismatch (evidence obsidian=source-sha-mismatch) but cannot express the r4 NOT-VERIFIED(source-hash) class; control target returns SAFE + moved-to-obsidian under the same ledger"
+    },
+    "runner_matrix": {
+      "runner_28": {
+        "command": "bash tests/vault/runner-28.sh --out /tmp/s11-vrun-28d.json",
+        "v3_rows": 12,
+        "v3_pass": 12,
+        "per_impl": {
+          "souji-vault-verify.impl-17": "3/3 (NOT-VERIFIED(source-hash) x2, VERIFIED)",
+          "souji-vault-verify.impl-20": "3/3 (NOT-VERIFIED(source-hash-mismatch) x2, VERIFIED)",
+          "souji-vault-verify.impl-21": "3/3",
+          "souji-vault-verify.impl-24": "3/3 (NOT-VERIFIED(source-hash-mismatch) x2, VERIFIED)"
+        }
+      },
+      "runner_26": {
+        "command": "bash tests/vault/runner-26.sh --out /tmp/s11-vrun-26d.json",
+        "v3_rows": 12,
+        "v3_pass": 9,
+        "per_impl": {
+          "souji-vault-verify.impl-17": "3/3",
+          "souji-vault-verify.impl-20": "3/3",
+          "souji-vault-verify.impl-21": "0/3 — deliberately refused: r2 vocabulary (VERDICT/SAFE/NOT-SAFE) is never counted as an r4 pass by runner-26; a runner rule, not a fixture defect",
+          "souji-vault-verify.impl-24": "3/3"
+        }
+      },
+      "offline_judge_simulation": "runner-28 prep+judge replicated in Python against the final expected.json: correct answers (impl-20/impl-24 spellings, canonical) pass 3/3; blanket source-hash fails the control; vault-only VERIFIED fails both negatives; wrong-side NOT-VERIFIED(vault-hash-mismatch) fails both negatives; r2-class NOT-SAFE(none) fails all three. Discrimination verified before the real runs."
+    },
+    "live_surface_invariants": {
+      "live_ledger": "corpus/knowledge/obsidian-ledger.tsv sha256 3f7e9f2ab9e614464cb031d3f00a812a21f0e889f7666309a90d7784b75a9599, 1 line (header-only) — unchanged before/after every run",
+      "real_vault": "read-only; never hashed or opened by this fixture (fixture vault lives under the fixture root); no writes to /home/vgpnk/Documents/shokoknowledge",
+      "writes": "only <FIXTURE_ROOT>/** (mktemp dirs) and, with --ledger FILE, that file; /tmp scratch only"
+    }
+  },
+  "interface_alignment": {
+    "house_contract": "matches the V4/V5 interface: make-fixture.sh --out DIR --ledger FILE --quiet prints FIXTURE_READY case-V3 <ROOT> and writes <ROOT>/ledger.tsv + substituted <ROOT>/expected.json; key=value lines on stdout/stderr; exit 0/1/2",
+    "vocabulary": "expects the r4 VERIFIED/NOT-VERIFIED vocabulary; canonical reason token source-hash, with sha/hash spelling aliases (source-hash-mismatch, source-sha-mismatch, source-sha256-mismatch, source-digest-mismatch) accepted via per-target accept.exact and doc-level reason_aliases_accepted",
+    "veto_scoping": "must_not_be_applies_to names the primary target (V2 house pattern) so class and wrong-side vetoes cannot fire against the VERIFIED control; bare VERIFIED is deliberately absent from all veto lists",
+    "spec_case": "V3: source file differs from ledger source sha256 -> NOT-VERIFIED(source-hash)"
+  },
+  "defect_found_and_fixed": {
+    "defect": "first draft declared doc-level accept without per-target exact lists and an unscoped must_not_be containing SAFE; under the (concurrently edited) runner-28 judge this both false-passed a blanket answer on the control and false-vetoed the control's correct VERIFIED answer, and the canonical-only exact list rejected the real impls' source-hash-mismatch/source-sha-mismatch spellings",
+    "fix": "per-target accept.exact lists (bare class + spelling aliases) with contains ['source']; must_not_be scoped via must_not_be_applies_to to the primary; verified by offline judge simulation then by the live runners (runner-28 12/12, runner-26 9/9 among r4-vocabulary impls)",
+    "note": "runner-28 was edited by its own seat three times during this window; the final verification ran against md5 6e72e98203fe3d4fb4cfa56f807d30b4, stable for 60s before the run"
+  },
+  "notes_for_parent": [
+    "The fixture pins the source-side hash as a required conjunct and is the counterpart of V2 (vault-side mismatch): together they prove a receipt requires BOTH hashes to re-hash to current bytes.",
+    "Observed r4 vocabulary: impl-17 emits canonical NOT-VERIFIED(source-hash); impl-20 emits source-hash-mismatch; impl-24 emits source-sha-mismatch. The fixture accepts all three; a grader requiring the literal canonical token only would fail two of three impls.",
+    "runner-26 refuses r2 vocabulary by design (impl-21 recorded 0/3 there but 3/3 on runner-28); the aggregator should read vocabulary-aware."
+  ],
+  "preamble": {
+    "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+    "fragment_path": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-4/seat-11.json",
+    "written_at": "2026-10-18T14:30:00-03:00",
+    "mode": "fixture author; read-only over the real vault and every sibling repo; live ledger untouched (header-only, sha 3f7e9f2a…)"
+  }
+}

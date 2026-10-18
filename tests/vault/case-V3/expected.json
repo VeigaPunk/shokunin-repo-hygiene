@@ -1,0 +1,178 @@
+{
+  "case": "case-V3",
+  "schema": "souji-vault-fixture/1",
+  "title": "source file differs from the ledger row's source_sha256 -> NOT-VERIFIED(source-hash)",
+  "spec_case": "V3: the source file's content no longer matches the ledger row's source_sha256 (edited after export). The vault copy still matches the row exactly. Expected: NOT-VERIFIED(source-hash).",
+  "seat": "S11",
+  "round": 4,
+  "builder": "tests/vault/case-V3/make-fixture.sh",
+  "readme": "tests/vault/case-V3/README.md",
+  "fixture_root_placeholder": "@FIXTURE_ROOT@",
+  "path_convention": "substitute @FIXTURE_ROOT@ with the ROOT printed by make-fixture.sh; make-fixture.sh also writes the substituted copy to <ROOT>/expected.json",
+  "ledger_path": "@FIXTURE_ROOT@/ledger.tsv",
+  "ledger_columns": ["source_path", "source_sha256", "vault_path", "vault_sha256", "exported_at", "note"],
+  "ledger_header": "source_path\tsource_sha256\tvault_path\tvault_sha256\texported_at\tnote",
+  "live_ledger_untouched": "corpus/knowledge/obsidian-ledger.tsv stays header-only; the builder never writes it (test ledgers live under tests/vault/)",
+  "declared_ledger_rows": [
+    {
+      "id": "source-hash-row",
+      "source_path": "@FIXTURE_ROOT@/source/src/edited-notes.md",
+      "source_sha256": "655cb8c2ea693fbe500b6c32a1f8cc5ff5f5ba0900ccb80606a0714f7be4aea8",
+      "vault_path": "@FIXTURE_ROOT@/vault/edited-notes.md",
+      "vault_sha256": "655cb8c2ea693fbe500b6c32a1f8cc5ff5f5ba0900ccb80606a0714f7be4aea8",
+      "exported_at": "2026-10-18",
+      "note": "case-V3 source-hash-mismatch",
+      "why": "the row records the export-time bytes on both sides; the vault copy still carries them (digest matches), but the source file was edited afterwards (current digest bac6faf0...) — the source-side conjunct is the only failure"
+    },
+    {
+      "id": "source-hash-subtle-row",
+      "source_path": "@FIXTURE_ROOT@/source/src/subtle-notes.md",
+      "source_sha256": "e6a4c2fb6142dd29eaf544690593ff24f68055ccc06f56a8271b45e147d6005e",
+      "vault_path": "@FIXTURE_ROOT@/vault/subtle-notes.md",
+      "vault_sha256": "e6a4c2fb6142dd29eaf544690593ff24f68055ccc06f56a8271b45e147d6005e",
+      "exported_at": "2026-10-18",
+      "note": "case-V3 source-hash-subtle",
+      "why": "same shape as the primary target, but the source copy differs from the row's source_sha256 by exactly one byte (the dropped trailing newline; current digest 45d91bb2...): catches size- or mtime-based shortcuts and any non-byte-exact comparison"
+    },
+    {
+      "id": "matched-row",
+      "source_path": "@FIXTURE_ROOT@/source/src/matched-notes.md",
+      "source_sha256": "9f461f329c6568e871180cab3e05434ae9e7d01abeb094b96fcba1a65f529f44",
+      "vault_path": "@FIXTURE_ROOT@/vault/matched-notes.md",
+      "vault_sha256": "9f461f329c6568e871180cab3e05434ae9e7d01abeb094b96fcba1a65f529f44",
+      "exported_at": "2026-10-18",
+      "note": "case-V3 control matched",
+      "why": "control row: both sides are byte-identical to the row's recorded digest, so a correct tool returns VERIFIED — proving the mismatch verdicts are not a blanket failure"
+    }
+  ],
+  "primary_target": "@FIXTURE_ROOT@/source/src/edited-notes.md",
+  "targets": [
+    "@FIXTURE_ROOT@/source/src/edited-notes.md",
+    "@FIXTURE_ROOT@/source/src/subtle-notes.md",
+    "@FIXTURE_ROOT@/source/src/matched-notes.md"
+  ],
+  "expect": [
+    {
+      "path": "@FIXTURE_ROOT@/source/src/edited-notes.md",
+      "vault_path": "@FIXTURE_ROOT@/vault/edited-notes.md",
+      "verdict": "NOT-VERIFIED",
+      "reason": "source-hash",
+      "receipt": null,
+      "verdict_string": "NOT-VERIFIED(source-hash)",
+      "contains": ["source"],
+      "must_not_be": ["NOT-SAFE(source-hash)", "NOT-VERIFIED(vault-sha-mismatch)", "NOT-VERIFIED(vault-hash-mismatch)", "NOT-VERIFIED(source-absent)", "NOT-VERIFIED(vault-absent)"],
+      "accept": {
+        "exact": ["NOT-VERIFIED", "NOT-VERIFIED(source-hash)", "NOT-VERIFIED(source-hash-mismatch)", "NOT-VERIFIED(source-sha-mismatch)", "NOT-VERIFIED(source-sha256-mismatch)", "NOT-VERIFIED(source-digest-mismatch)"],
+        "contains": ["source"],
+        "structured": {"verdict": "NOT-VERIFIED", "reason": "source-hash"}
+      },
+      "why": "the source path exists and the vault path exists with a digest equal to the row's vault_sha256; the source file's sha256 (bac6faf0...) differs from the row's source_sha256 (655cb8c2...) — the source-side hash is the only failing conjunct. The exact list carries the bare class plus the sha/hash spelling aliases the r4 impls emit (source-hash-mismatch, source-sha-mismatch); contains 'source' is present in every accepted spelling and absent in wrong-side (vault-*) answers"
+    },
+    {
+      "path": "@FIXTURE_ROOT@/source/src/subtle-notes.md",
+      "vault_path": "@FIXTURE_ROOT@/vault/subtle-notes.md",
+      "verdict": "NOT-VERIFIED",
+      "reason": "source-hash",
+      "receipt": null,
+      "verdict_string": "NOT-VERIFIED(source-hash)",
+      "contains": ["source"],
+      "must_not_be": ["NOT-SAFE(source-hash)", "NOT-VERIFIED(vault-sha-mismatch)", "NOT-VERIFIED(vault-hash-mismatch)", "NOT-VERIFIED(source-absent)", "NOT-VERIFIED(vault-absent)"],
+      "accept": {
+        "exact": ["NOT-VERIFIED", "NOT-VERIFIED(source-hash)", "NOT-VERIFIED(source-hash-mismatch)", "NOT-VERIFIED(source-sha-mismatch)", "NOT-VERIFIED(source-sha256-mismatch)", "NOT-VERIFIED(source-digest-mismatch)"],
+        "contains": ["source"],
+        "structured": {"verdict": "NOT-VERIFIED", "reason": "source-hash"}
+      },
+      "why": "same shape as the primary target but the source copy differs by exactly one byte (dropped trailing newline): a one-byte edit must flip the source-side conjunct"
+    },
+    {
+      "path": "@FIXTURE_ROOT@/source/src/matched-notes.md",
+      "vault_path": "@FIXTURE_ROOT@/vault/matched-notes.md",
+      "verdict": "VERIFIED",
+      "reason": null,
+      "receipt": "moved-to-obsidian",
+      "verdict_string": "VERIFIED",
+      "accept": {
+        "exact": ["VERIFIED"],
+        "contains": ["VERIFIED"],
+        "structured": {"verdict": "VERIFIED", "receipt": "moved-to-obsidian"}
+      },
+      "why": "control: both paths exist and both digests equal the row's recorded values"
+    }
+  ],
+  "expect_string": "NOT-VERIFIED(source-hash)",
+  "accept": {
+    "exact": ["NOT-VERIFIED(source-hash)"],
+    "contains": ["NOT-VERIFIED", "source", "mismatch"],
+    "structured": {"verdict": "NOT-VERIFIED", "reason": "source-hash"},
+    "reason_aliases_accepted": ["source-hash", "source-hash-mismatch", "source-sha-mismatch", "source-sha256-mismatch", "source-digest-mismatch"],
+    "r2_baseline": {"verdict": "NOT-SAFE", "receipt": "none", "evidence_substr": "obsidian=source-sha-mismatch"},
+    "note": "canonical token NOT-VERIFIED(source-hash); the contains fallback admits the hash/sha spelling variants the r4 impls emit (source-hash-mismatch, source-sha-mismatch). Case-level accept binds to the primary target only; the VERIFIED control and the subtle target carry their own per-target accept blocks."
+  },
+  "must_not_be": ["SAFE", "NOT-SAFE(source-hash)", "NOT-VERIFIED(vault-sha-mismatch)", "NOT-VERIFIED(vault-hash-mismatch)", "NOT-VERIFIED(source-absent)", "NOT-VERIFIED(vault-absent)"],
+  "must_not_be_applies_to": "the primary target (edited-notes.md)",
+  "must_not_be_note": "the bare token VERIFIED is deliberately absent: harnesses apply must_not_be as a substring veto and 'VERIFIED' is a substring of the correct answer 'NOT-VERIFIED(source-hash)'; a false VERIFIED answer is still caught by the verdict-class comparison. The list is scoped to the primary target (must_not_be_applies_to) so its SAFE class-veto cannot fire against the VERIFIED control's correct answer, matching the V2 house pattern.",
+  "failure_modes_caught": [
+    "vault-side-only verification: the vault file digest matches the row's vault_sha256, so a harness that skips the source hash check reports VERIFIED/SAFE — caught by expect.verdict",
+    "class collapse: reporting NOT-SAFE(none) or NOT-SAFE(unreachable) instead of the distinct NOT-VERIFIED(source-hash) — caught by expect.reason",
+    "false source-hash on a matching pair: the control target (byte-identical both sides) must be VERIFIED — a blanket source-hash answer fails the control"
+  ],
+  "source_side": {
+    "path": "@FIXTURE_ROOT@/source/src/edited-notes.md",
+    "exists": true,
+    "sha256": "bac6faf0d62df655f6700f5f530a76801c150322a8962dce4bd5785506abd845",
+    "row_source_sha256": "655cb8c2ea693fbe500b6c32a1f8cc5ff5f5ba0900ccb80606a0714f7be4aea8",
+    "bytes": 276,
+    "row_bytes": 289,
+    "why": "the file was edited in place after export; its current digest is the edited revision, not the row's export-time digest"
+  },
+  "vault_side": {
+    "path": "@FIXTURE_ROOT@/vault/edited-notes.md",
+    "exists": true,
+    "mode": "0444",
+    "sha256": "655cb8c2ea693fbe500b6c32a1f8cc5ff5f5ba0900ccb80606a0714f7be4aea8",
+    "bytes": 289,
+    "why": "the vault copy still carries the export-time bytes, so its digest equals the row's vault_sha256 — the vault side verifies, the source side does not"
+  },
+  "build": {
+    "entry": "bash make-fixture.sh [--out DIR] [--ledger FILE] [--quiet] [--print-ledger] [--print-hashes]",
+    "default_out": "fresh mktemp -d",
+    "writes": [
+      "<ROOT>/.case-V3-fixture (marker)",
+      "<ROOT>/source/src/edited-notes.md",
+      "<ROOT>/source/src/subtle-notes.md",
+      "<ROOT>/source/src/matched-notes.md",
+      "<ROOT>/vault/edited-notes.md (0444)",
+      "<ROOT>/vault/subtle-notes.md (0444)",
+      "<ROOT>/vault/matched-notes.md (0444)",
+      "<ROOT>/ledger.tsv",
+      "<ROOT>/expected.json (substituted)"
+    ],
+    "git": "git init -q -b master on <ROOT> (offline, no commits) so the fixture root behaves like a real repo",
+    "determinism": "fixed content bytes; paths vary per run; every content digest and byte count is asserted at build time",
+    "safety": "never reads or writes the live ledger, the real vault, or any sibling repo; writes only under --out (plus --ledger FILE when given)"
+  },
+  "crosscheck": {
+    "note": "the r2 tool tools/souji-verify.sh predates the r4 VERIFIED vocabulary; for the primary target its expected output is the same verdict class under r2 names",
+    "command": "SOUJI_LEDGER=<ROOT>/ledger.tsv bash tools/souji-verify.sh <ROOT>/source/src/edited-notes.md",
+    "expected_line": "VERDICT\t<ROOT>/source/src/edited-notes.md\tNOT-SAFE\tnone\tpushed=...; obsidian=source-sha-mismatch; obsidian=no-matching-ledger-row; stale=...",
+    "expected_substring": "source-sha-mismatch",
+    "control": "the same tool with the same ledger must report SAFE/moved-to-obsidian for <ROOT>/source/src/matched-notes.md"
+  },
+  "files_expected_in_fixture_root": [
+    ".case-V3-fixture",
+    "source/src/edited-notes.md",
+    "source/src/subtle-notes.md",
+    "source/src/matched-notes.md",
+    "vault/edited-notes.md",
+    "vault/subtle-notes.md",
+    "vault/matched-notes.md",
+    "ledger.tsv",
+    "expected.json"
+  ],
+  "notes": [
+    "The builder writes ONLY: <FIXTURE_ROOT>/** and, when --ledger FILE is given, FILE. The live ledger and the real vault /home/vgpnk/Documents/shokoknowledge are never touched; this case is self-contained under tests/vault/.",
+    "The vault here is a fake vault dir under the fixture root — no Obsidian process, no CLI, no network is involved.",
+    "stdout contract: line 1 = JSON {case,root,ledger,targets,expect}; then FIXTURE_READY case-V3 <ROOT>; then KEY=VALUE lines; --quiet emits the FIXTURE_READY + KEY=VALUE lines only.",
+    "Exit codes: 0 built (also for --print-*), 1 build/assertion failure, 2 usage."
+  ]
+}

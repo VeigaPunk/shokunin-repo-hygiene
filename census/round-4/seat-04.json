@@ -1,0 +1,139 @@
+{
+  "seat": "S04",
+  "kind": "obsidian-cli-recon",
+  "target": "Official Obsidian CLI verb surface + argument shapes, recovered from installed asar bundles (read-only, no app launch, no socket connection)",
+  "verdict": "CLI-SURFACE-RECOVERED: 73 verbs + 176 flag entries parsed from registerHandler(...) calls; the assigned `obsidian <verb>` literal-string form yields ZERO lines; there is NO `search` verb. LIVE-CLI-NOT-VERIFIED: app not running, socket absent, shim unregistered (consistent with S03/S05/S06).",
+  "assigned_probes": {
+    "cmd1": {
+      "cmd": "strings /usr/lib/obsidian/obsidian.asar 2>/dev/null | grep -i 'command line' | head -10",
+      "exit": 0,
+      "match_count_full_grep": 6,
+      "out": [
+        "\",tooltipHotkeyMultipleConflicts:\"This hotkey conflicts with {{count}} other commands\",labelBlankHotkey:\"Blank\"... (i18n noise)",
+        " command line  (bare fragment, i18n noise)",
+        "Did you mean: ${w.slice(1).join(\" \")}`),this.writeOutput(F,P.yellow);return}if(w[0]===\"vault:open\"){... (TUI dispatcher)",
+        "...separator\",id:\"copy-section\"... (menu noise)",
+        "`);if(d!==-1){o.removeListener(\"data\",n);...y(JSON.parse(f))... (socket header parser)",
+        "`)};!u&&r.length===0&&ye();let C=r.at(-1);...if(!D.cli)return g(\"Command line interface is not enabled. Please turn it on in Settings > General > Advanced.\")"
+      ],
+      "interpretation": "The CLI exists in the bundled app code. The single actionable hit is the enablement gate string; the rest are i18n/menu/socket noise. Identical count (6) in the running 1.14.4 bundle."
+    },
+    "cmd2": {
+      "cmd": "strings /usr/lib/obsidian/obsidian.asar | grep -E '^obsidian (read|search|create|vault)' | head -20",
+      "exit": 0,
+      "match_count": 0,
+      "out": [
+        "(zero lines; grep -c over both asars = 0)"
+      ],
+      "interpretation": "DECISIVE NEGATIVE for the assumed shape: the bundle never prints `obsidian read|search|create|vault` usage lines. Verbs are registry keys passed to registerHandler(); usage is generated at runtime by the help handler from flag descriptors. Recovered the real surface via `grep -o 'registerHandler(\"[a-z:_-]*\",\"[^\"]*\"'` + brace-balanced flag extraction."
+    }
+  },
+  "cli_registry": {
+    "verb_count": 73,
+    "flag_entries": 176,
+    "extraction_cmd": "python3 (brace-balanced parse of registerHandler(\"<verb>\",\"<desc>\",{flags...},handler) over `strings` output)",
+    "asars_compared": [
+      "/usr/lib/obsidian/obsidian.asar (1.13.7 packaged bundle) sha256 a52a7daf1e2460bae03de80f2816604bd16a56cd374fbe5ce8d1a9ef5604059d",
+      "~/.config/obsidian/obsidian-1.14.4.asar (running 1.14.4 bundle) sha256 146ef8470d8cbb4a6db209bdc19bf2bad13350444186c0fd93c31087b142b92f"
+    ],
+    "identical": "73/73 same verb keys, 0 value diffs between the two bundles",
+    "assigned_verbs": {
+      "command": {
+        "description": "Execute an Obsidian command",
+        "flags": "id=<command-id>"
+      },
+      "commands": {
+        "description": "List available commands",
+        "flags": "filter=<prefix>"
+      },
+      "create": {
+        "description": "Create a new file",
+        "flags": "name=<name>; path=<path>; content=<text>; template=<name>; overwrite; open; newtab"
+      },
+      "files": {
+        "description": "List files in the vault",
+        "flags": "folder=<path>; ext=<extension>; total"
+      },
+      "help": {
+        "description": "Show list of all available commands",
+        "flags": "<command>"
+      },
+      "read": {
+        "description": "Read file contents",
+        "flags": "file=<name>; path=<path>"
+      },
+      "vault": {
+        "description": "Show vault info",
+        "flags": "info=name|path|files|folders|size"
+      },
+      "vaults": {
+        "description": "List known vaults",
+        "flags": "total; verbose"
+      },
+      "version": {
+        "description": "Show Obsidian version",
+        "flags": ""
+      }
+    },
+    "search_verb_absent": "grep -c 'registerHandler(\"search\"' = 0 in both bundles; grep -c 'Usage: search' = 0. Nearest capabilities: `command id=<command-id>` (executes an Obsidian command by ID, e.g. the global-search command) and `commands filter=<prefix>` (lists command IDs).",
+    "verb_table_tsv": "verb\tdescription\tflags (value flags shown as name=<value>; bare flags boolean; (required) marked)\n__commands\t\t\n__completions\t\t\n__files\t\t\naliases\tList aliases in the vault\tfile=<name>; path=<path>; total; verbose; active\nappend\tAppend content to a file\tfile=<name>; path=<path>; content=<text>; inline\nbacklinks\tList backlinks to a file\tfile=<name>; path=<path>; counts; total; format=json|tsv|csv\ncommand\tExecute an Obsidian command\tid=<command-id>\ncommands\tList available commands\tfilter=<prefix>\ncreate\tCreate a new file\tname=<name>; path=<path>; content=<text>; template=<name>; overwrite; open; newtab\ndeadends\tList files with no outgoing links\ttotal; all\ndelete\tDelete a file\tfile=<name>; path=<path>; permanent\ndev:cdp\tRun a Chrome DevTools Protocol command\tmethod=<CDP.method>; params=<json>\ndev:console\tShow captured console messages\tclear; limit=<n>; level=log|warn|error|info|debug\ndev:css\tInspect CSS with source locations\tselector=<css>; prop=<name>\ndev:debug\tAttach/detach Chrome DevTools Protocol debugger\ton; off\ndev:dom\tQuery DOM elements\tselector=<css>; total; text; inner; all; attr=<name>; css=<prop>\ndev:errors\tShow captured errors\tclear\ndev:mobile\tToggle mobile emulation\ton; off\ndev:screenshot\tTake a screenshot\tpath=<filename>\ndevtools\tToggle Electron dev tools\t\ndiff\tList or diff local/sync versions\tfile=<name>; path=<path>; from=<n>; to=<n>; filter=local|sync\neval\tExecute JavaScript and return result\tcode=<javascript>\nfile\tShow file info\tfile=<name>; path=<path>\nfiles\tList files in the vault\tfolder=<path>; ext=<extension>; total\nfolder\tShow folder info\tpath=<path>; info=files|folders|size\nfolders\tList folders in the vault\tfolder=<path>; total\nhelp\tShow list of all available commands\t<command>\nhotkey\tGet hotkey for a command\tid=<command-id>; verbose\nhotkeys\tList hotkeys\ttotal; verbose; format=json|tsv|csv; all\nmove\tMove or rename a file\tfile=<name>; path=<path>; to=<path>\nopen\tOpen a file\tfile=<name>; path=<path>; newtab\norphans\tList files with no incoming links\ttotal; all\nplugin\tGet plugin info\tid=<plugin-id>\nplugin:disable\tDisable a plugin\tid=<id>; filter=core|community\nplugin:enable\tEnable a plugin\tid=<id>; filter=core|community\nplugin:install\tInstall a community plugin\tid=<id>; enable\nplugin:reload\tReload a plugin (for developers)\tid=<id>\nplugin:uninstall\tUninstall a community plugin\tid=<id>\nplugins\tList installed plugins\tfilter=core|community; versions; format=json|tsv|csv\nplugins:enabled\tList enabled plugins\tfilter=core|community; versions; format=json|tsv|csv\nplugins:restrict\tToggle or check restricted mode\ton; off\nprepend\tPrepend content to a file\tfile=<name>; path=<path>; content=<text>; inline\nproperties\tList properties in the vault\tfile=<name>; path=<path>; name=<name>; total; sort=count; counts; format=yaml|json|tsv; active\nproperty:read\tRead a property value from a file\tname=<name>; file=<name>; path=<path>\nproperty:remove\tRemove a property from a file\tname=<name>; file=<name>; path=<path>\nproperty:set\tSet a property on a file\tname=<name>; value=<value>; type=text|list|number|checkbox|date|datetime; file=<name>; path=<path>\nrandom\tOpen a random note\tfolder=<path>; newtab\nrandom:read\tRead a random note\tfolder=<path>\nread\tRead file contents\tfile=<name>; path=<path>\nrecents\tList recently opened files\ttotal\nreload\tReload the vault\t\nrename\tRename a file\tfile=<name>; path=<path>; name=<name>\nrestart\tRestart the app\t\nsnippet:disable\tDisable a CSS snippet\tname=<name>\nsnippet:enable\tEnable a CSS snippet\tname=<name>\nsnippets\tList installed CSS snippets\t\nsnippets:enabled\tList enabled CSS snippets\t\ntab:open\tOpen a new tab\tgroup=<id>; file=<path>; view=<type>\ntabs\tList open tabs\tids\ntag\tGet tag info\tname=<tag>; total; verbose\ntags\tList tags in the vault\tfile=<name>; path=<path>; total; counts; sort=count; format=json|tsv|csv; active\ntask\tShow or update a task\tref=<path:line>; file=<name>; path=<path>; line=<n>; toggle; done; todo; daily; status=\"<char>\"\ntasks\tList tasks in the vault\tfile=<name>; path=<path>; total; done; todo; status=\"<char>\"; verbose; format=json|tsv|csv; active; daily\ntheme\tShow active theme or get info\tname=<name>\ntheme:install\tInstall a community theme\tname=<name>; enable\ntheme:set\tSet active theme\tname=<name>\ntheme:uninstall\tUninstall a theme\tname=<name>\nthemes\tList installed themes\tversions\nunresolved\tList unresolved links in vault\ttotal; counts; verbose; format=json|tsv|csv\nvault\tShow vault info\tinfo=name|path|files|folders|size\nvaults\tList known vaults\ttotal; verbose\nversion\tShow Obsidian version\t\nworkspace\tShow workspace tree\tids",
+    "flag_parse_note": "Flag descriptors are JS objects {value:\"<...>\", description:\"...\"} (value => takes an argument). One descriptor uses single quotes (tasks status:'\"<char>\"'); parser handles both. `usage:\"sort\"` appears once in the bundle but is unrelated app code, not CLI."
+  },
+  "argument_shapes_assigned": {
+    "read": "obsidian read [file=<name>] [path=<path>] — file resolves like a wikilink (metadataCache.getFirstLinkpathDest), path is exact; falls back to the active file; throws 'No active file...' when neither given and none active.",
+    "create": "obsidian create [name=<name>] [path=<path>] [content=<text>] [template=<name>] [overwrite] [open] [newtab] — name cannot contain '/'; path is the full file path; extension defaults to md; overwrite/open/newtab are bare booleans.",
+    "vault": "obsidian vault [info=name|path|files|folders|size] — returns one field, or the full info block when info omitted.",
+    "search": "DOES NOT EXIST as a CLI verb (0 handlers). The assignment's assumed `obsidian search` shape is not present in 1.13.7 or 1.14.4."
+  },
+  "transport": {
+    "socket_path": "$XDG_RUNTIME_DIR/.obsidian-cli.sock (Linux; falls back to $HOME/.obsidian-cli.sock when XDG_RUNTIME_DIR unset) — bundle: T=oe?`\\\\.\\pipe\\obsidian-cli-${userInfo().username}`:join(!isDarwin&&process.env.XDG_RUNTIME_DIR||homedir(),'.obsidian-cli.sock')",
+    "socket_path_resolved": "/run/user/1000/.obsidian-cli.sock (XDG_RUNTIME_DIR=/run/user/1000 on this host; stat -> No such file or directory, app down)",
+    "protocol": "client (2nd instance losing requestSingleInstanceLock) connects, writes ONE newline-terminated JSON line {\"argv\":[...],\"tty\":bool,\"cwd\":\"...\"}, then pipes stdin/stdout; server replies on the same socket and ends.",
+    "server": "the already-running app's main process serves the socket; will-quit -> unlinkSync(socket)",
+    "enable_gate": "server checks C.cli before executing: 'Command line interface is not enabled. Please turn it on in Settings > General > Advanced.' — measured obsidian.json: {\"vaults\":{...},\"cli\":true} (enabled)",
+    "verb_dispatch": "renderer window.handleCli(argv): argv[0]=verb (default 'help'); key=value args; bare tokens => 'true'; bare format words (json/tsv/csv) map to format=<word> when the verb declares a format flag; unknown verb => 'Command \"X\" not found. Did you mean: ...'; missing required flag => 'Missing required parameter: ...\\nUsage: <verb> ...'.",
+    "global_flags_kept_by_launcher": [
+      "--copy",
+      "--help",
+      "--json",
+      "--md",
+      "--tsv",
+      "--csv"
+    ],
+    "tui_mode": "when stdin+stdout are TTY and argv empty -> interactive TUI (readline over the same socket; Tab completion from __completions/__files/__commands; commands exit/quit/vault:open <name>; per-command vault=<name> prefix switches target).",
+    "vault_selection": "argv[0] 'vault=<id-or-name>' or cwd inside a registered vault path",
+    "last_arg_specials": "last argv obsidian://... => URI processed; 1.14.4 ONLY: last argv an existing filesystem path => 'Opened <path>' (version delta vs 1.13.7)"
+  },
+  "registration_linux": {
+    "handler": "ipcMain.handle('register-cli') in the main bundle",
+    "precondition": "basename(process.argv0).toLowerCase().includes('obsidian') else refuses: 'Unable to add to command line because the executable is \"<name>\" instead of \"obsidian\".'",
+    "linux_branch": "if <dirname(execPath)>/obsidian-cli exists -> copy it to ~/.local/bin/obsidian (chmod 493); else symlink execPath (FLATPAK export path or $APPIMAGE if set) to ~/.local/bin/obsidian. Message: 'Successfully registered to ~/.local/bin. Make sure this directory is in your PATH.'",
+    "host_state": "no shim registered: /usr/local/bin/obsidian and ~/.local/bin/obsidian absent; /usr/lib/electron43/obsidian-cli absent; /usr/bin/obsidian is the GUI launcher (bash -> exec electron43 /usr/lib/obsidian/app.asar). Registration likely refuses/fails on this Arch packaging (argv0 basename 'electron'/'electron43'); not executed (GUI launch forbidden) -> to-verify, consistent with S03/S05/S06."
+  },
+  "live_state": {
+    "app_running": "NO (no obsidian/electron43 process; socket absent)",
+    "socket_absent": "stat /run/user/1000/.obsidian-cli.sock -> No such file or directory",
+    "consequence": "No live CLI invocation was possible or attempted this seat; live socket behavior remains NOT-VERIFIED. Vault-side verification stays on the sha256sum fallback.",
+    "ledger_untouched": "corpus/knowledge/obsidian-ledger.tsv remains header-only (1 line, sha256 3f7e9f2ab9e614464cb031d3f00a812a21f0e889f7666309a90d7784b75a9599); read-only hash only."
+  },
+  "inspector_note": "obsidian-cli-inspector 1.0.3 (separate third-party read-only tool; groups init/index/search/analyze/diagnose/view/tui; own SQLite store) — confirmed NOT the official CLI entry point; probes in S03/S05 already decisive, re-confirmed command surface here.",
+  "consequences_for_round": [
+    "Ledger verification cannot use `obsidian read` this round: app down + no shim. Fallback (sha256sum under the vault path, read-only) remains the receipt method.",
+    "If the integration later needs the official CLI, the executable path is: app running (socket at /run/user/1000/.obsidian-cli.sock) AND an `obsidian`-named client. On this host the client can only come from Register (broken on this packaging per bundle logic) or a wrapper script that re-execs /usr/bin/obsidian with the subcommand when the app is already running. Wrapper scripts are operator-owned; propose, don't install.",
+    "Test doubles can be protocol-faithful now: mock server = unix socket at $XDG_RUNTIME_DIR/.obsidian-cli.sock accepting one JSON line {argv,tty,cwd} and replying; mock client = same framing. The 73-verb table (embedded) is the contract for fixture command lists.",
+    "A read-only verification script could use: `obsidian vault info=path` (resolves vault root), `obsidian read path=<vault-rel path>` (content), `obsidian file path=...` (metadata) — all read-only verbs, no vault writes. Write verbs (create/append/delete/move/property:set/...) must never be invoked by souji."
+  ],
+  "scratch_artifacts": [
+    "/tmp/s04-cli-recon/strings-usr.txt (strings of /usr/lib/obsidian/obsidian.asar)",
+    "/tmp/s04-cli-recon/strings-cfg.txt (strings of ~/.config/obsidian/obsidian-1.14.4.asar)",
+    "/tmp/s04-cli-recon/strings-app.txt (strings of /usr/lib/obsidian/app.asar)",
+    "/tmp/s04-cli-recon/verb-table.tsv (73 rows; embedded above)",
+    "/tmp/s04-cli-recon/handlers.txt, handlers-cfg.txt"
+  ],
+  "preamble": {
+    "cwd": "/home/vgpnk/Projects/shokunin",
+    "fragment_path": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-4/seat-04.json",
+    "written_at": "2026-10-18T14:01:26.631480-03:00",
+    "mode": "read-only recon; no app launch; no socket connection; no vault writes; /tmp scratch only"
+  }
+}

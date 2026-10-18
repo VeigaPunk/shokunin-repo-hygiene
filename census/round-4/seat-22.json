@@ -1,0 +1,98 @@
+{
+ "seat": "S22",
+ "round": 4,
+ "role": "implementor",
+ "kind": "impl",
+ "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+ "repo_head": "78694acefa316edfc77842583409b7133350718c",
+ "run_utc": "2026-10-18T17:40:00Z",
+ "run_local": "2026-10-18T14:40:00-0300",
+ "assignment": "SEAT S22 — implementor. impl-22.sh, independent. Round-4 Obsidian-CLI vault verification: ledger-backed moved-to-obsidian verification with the official CLI as optional advisory confirmer.",
+ "verdict": "DELIVERED — tools/impl-22.sh (alias tools/souji-vault-verify.impl-22.sh, byte-identical) implements the round-4 vault-verification contract. Selftest 29/29 exit 0. adv53 adversarial battery 22/22 PASS. judge-60-vault battery 45 pass / 0 fail / 2 info (PASS). runner-34 16/16, runner-26 16/16, runner-38/27/29/31 in flight at write time (results appended below where known).",
+ "artifacts": {
+  "tools/impl-22.sh": {
+   "sha256": "abb6d48deb1e43ecf0f193fb79d073b2ea3779d76df58686a3c135659c1b3732",
+   "bytes": 27293,
+   "lines": 654,
+   "mode": "0755",
+   "role": "the tool under test"
+  },
+  "tools/souji-vault-verify.impl-22.sh": {
+   "sha256": "abb6d48deb1e43ecf0f193fb79d073b2ea3779d76df58686a3c135659c1b3732",
+   "role": "byte-identical copy under the runner-glob name (runner-25/26/27/28/29/31/32/34/37 glob tools/souji-vault-verify.impl-*.sh; runner-30-r4/31/34 glob tools/impl-*.sh; judge-60 globs tools/impl-2*.sh)"
+  }
+ },
+ "independence": "independent; written from the runner/judge contracts read directly (adv53-harness.sh, judge-60-vault.sh, runner-25..40, case-V1..V8 expected.json), not copied from any other seat's impl. Sibling harnesses were used only as oracles after the tool was written.",
+ "interface": {
+  "flags": ["--selftest", "--json", "--cli", "--fallback", "--auto", "--ledger PATH", "--vault PATH", "--stale-days N"],
+  "env": ["SOUJI_LEDGER", "OBSIDIAN_LEDGER", "SOUJI_VAULT", "SOUJI_VAULT_PATH", "VAULT_PATH", "SOUJI_CLI", "SOUJI_CLI_TIMEOUT", "SHOKUNIN_ROOT", "SOUJI_SELFTEST_ACTIVE"],
+  "stdout": "line 1 = VERIFIED<TAB>moved-to-obsidian | NOT-VERIFIED(<reason>) (r4 token, for grep-first parsers); line 2 = VERDICT<TAB>path<TAB>SAFE|NOT-SAFE<TAB>receipt<TAB>evidence (r2 form, field2==path for awk parsers). The r4 token line is first so runners 26/27/28/29/31 that grep '^(VERIFIED|NOT-VERIFIED)' and take head -1 read r4 vocabulary; awk-based runners (30/32/34/36/37/38/39/40) match on field2 and accept either order.",
+  "json": "{\"path\",\"verdict\":\"SAFE|NOT-SAFE\",\"receipt\",\"evidence\"} one object per target (jsonl)",
+  "exit": "0 evaluated (NOT-SAFE is not an error) | 1 selftest failure | 2 usage"
+ },
+ "reasons": [
+  "moved-to-obsidian (receipt on VERIFIED)",
+  "vault-hash-mismatch",
+  "source-hash-mismatch",
+  "vault-absent",
+  "source-absent",
+  "self-export",
+  "secrets-refusal",
+  "unreachable",
+  "none"
+ ],
+ "receipts": {
+  "moved-to-obsidian": "ledger row matches source path AND source sha256/dir-digest AND vault path AND vault sha256/dir-digest; vault side read-only (sha256sum). Relative vault paths resolve against SOUJI_VAULT (default /home/vgpnk/Documents/shokoknowledge).",
+  "ledger semantics": "header skipped by prefix match; CR stripped from every row (CRLF ledgers parse); rows with <4 columns or empty hash columns are never a receipt; extra columns ignored; unterminated final row still parsed; duplicate rows: first fully-matching row wins."
+ },
+ "cli_contract": {
+  "mode": "--cli opt-in; the CLI is advisory only — a CLI claim is never a receipt, the ledger row is",
+  "discovery": "$SOUJI_CLI, else obsidian-cli on PATH, else ~/.local/bin/obsidian-cli, else ~/.local/bin/obsidian",
+  "gui_safety": "a bare `obsidian` resolved from PATH is NEVER executed (this host: desktop launcher); any candidate whose first 2KB references app.asar/electron43/user-flags is refused unread -> cli=refused-launcher-shape. Verified by adv53 M8 (mock gui sentinel untouched) and selftest H2.",
+  "bound": "timeout SOUJI_CLI_TIMEOUT (default 10s) per call; a hanging CLI degrades to cli=unparsed; the verdict still comes from local hashes",
+  "race_guard": "the whole ledger probe is re-run after the CLI read, so a mutation or rename-swap under the CLI read can never yield a stale SAFE (adv53 O1/O2/O5/O6 PASS)",
+  "notes": ["cli=agree (claim==ledger hash==post-read hash)", "cli=disagreement claim=.. post=.. (recorded; local hashes still decide)", "cli=unparsed / cli=unavailable / cli=refused-launcher-shape / cli=explicit-missing / cli=skipped-dir-or-fifo"]
+ },
+ "safety_rails_verified": {
+  "read_only_real_vault": "judge-60 rails vault_ok=1 files_before=220 files_after=220; adv53 snapshot() before/after equal; runner-34 16/16 includes its own live-vault fingerprint checks",
+  "live_ledger_header_only": "judge-60 ledger_ok=1 lines_after=1 sha unchanged; never written by the tool (no write path exists)",
+  "no_gui_process": "judge-60 gui_before=0 gui_after=0; adv53 GUI_SEEN=0; H2 selftest proves the launcher-shaped CLI is refused unexecuted",
+  "no_git_subcommands": "judge-60 gitwrite hits=0; selftest H1 scans its own executable lines for forbidden git porcelain",
+  "no_forbidden_paths": "the tool never touches .ufo/state, .ufo/watchdog.log, ~/.config; judge-60 watchdog_ok=1 ufo_state_ok=1 head_ok=1",
+  "secrets_refusal": "secret-shaped path components (*.env, *credential*, *secret*, id_*, *.pem) refused before any read"
+ },
+ "measured_results": {
+  "selftest": {"command": "bash tools/impl-22.sh --selftest", "exit": 0, "checks": 29, "failed": 0, "cases": "T01-T25 + H1-H4 (match, vault-tamper, source-tamper, vault-absent, source-absent, header-only, zero-byte, CRLF, no-EOL, empty-hash, empty-file, dir-digest, dir-bad, symlink-ok, secrets, FIFO, cli-no-row, cli-honest, cli-lying, cli-hang, self-move, path-alias, symlink-alias, usage x2, gui-refusal, json, git-rail, mktemp)"},
+  "adv53_harness": {"command": "bash tests/vault/adv53-harness.sh --tool tools/impl-22.sh --out tests/results/impl-22-adv53b.json", "result": "pass=22 fail=0", "highlights": ["M1-M9 socket/no-cli degradation: never hang, never SAFE", "M8 gui sentinel untouched", "N1 100MB sparse pair SAFE(moved-to-obsidian); N2 byte-diff at 50MB NOT-SAFE; N3 truncated NOT-SAFE", "O1 mutate-race NOT-SAFE; O2 lying CLI NOT-SAFE; O3 control SAFE; O4 fallback-only SAFE; O5 rename-swap NOT-SAFE; O6 race-fallback NOT-SAFE"]},
+  "judge_60_vault": {"command": "bash tests/vault/judge-60-vault.sh --only impl-22.sh --out tests/results/impl-22-vfinal-60b.json", "result": "hard_pass=45 hard_fail=0 info=2, winner=impl-22 verdict=PASS", "note": "first run (before the self-export guard) was 40/5: B22 self-move, B23 path-alias, B24 symlink-alias (all fixed by the guard) + V6 crlf-valid-row/lf-control (fixture race: a concurrent seat's case-V6 builder rewrote the case-dir ledger mid-run; re-run against a fresh --out is VERIFIED)"},
+  "runner_34": {"command": "bash tests/vault/runner-34.sh --impls 'impl-22.sh' --results tests/results/impl-22-vrun-34b.json", "result": "status=pass rows=16 pass=16 fail=0"},
+  "runner_26": {"command": "bash tests/vault/runner-26.sh --impls 'impl-22.sh' --out tests/results/impl-22-vrun-26.json", "result": "17 rows: 16/16 judged pass (r4 vocabulary; the extra row is the selftest exit=0 row)"},
+  "runner_27": {"command": "bash tests/vault/runner-27.sh --impls-dir <dir with souji-vault-verify.impl-22.sh> --out tests/results/impl-22-vrun-27.json", "result": "status=pass rows=29 pass=29 fail=0"},
+  "runner_29": {"command": "bash tests/vault/runner-29.sh --out tests/results/impl-22-vrun-29.json", "result": "impl-22 rows: 21/21 pass, 0 fail (matrix ran all candidates; only impl-22 rows counted here)"},
+  "runner_31": {"command": "bash tests/vault/runner-31.sh --impls \"22\" --results tests/results/impl-22-vrun-31b.json", "result": "status=pass exit=0 pass=41 fail=0 skip=0 info=6 (tools: impl-22.sh, souji-vault-verify.impl-22.sh); note: the default --results path tests/results/vrun-31.json was clobbered by a concurrent seat's run before this rerun, hence the suffixed path"},
+  "runner_38": {"command": "bash tests/vault/runner-38.sh --seat 22 --tool tools/impl-22.sh", "result": "status=pass exit=0 pass=26 fail=0 skip=0 info=12"},
+  "runner_28": {"command": "bash tests/vault/runner-28.sh --out tests/results/impl-22-vrun-28.json", "result": "matrix rows=119 impls=7; impl-22 rows 17/17, 0 fail"},
+  "real_vault_cross_check": {"result": "Home.md row -> VERIFIED moved-to-obsidian; wrong-hash isolated row -> NOT-VERIFIED(vault-hash-mismatch); absent real-vault path -> NOT-VERIFIED(vault-absent); vault untouched (find -newermt 1 minute ago empty)"},
+  "case_fixture_probes": {
+   "V1": "VERIFIED moved-to-obsidian; disarmed (header-only ledger) NOT-VERIFIED(none)",
+   "V2": "tamper + subtle -> NOT-VERIFIED(vault-hash-mismatch); matched control -> VERIFIED",
+   "V4": "NOT-VERIFIED(vault-absent)",
+   "V5": "NOT-VERIFIED(source-absent)",
+   "V6": "crlf + lf-control -> VERIFIED moved-to-obsidian; truncated boundary -> VERIFIED (informational; case-V6 declares it NOT judged)"
+  }
+ },
+ "defects_found_and_fixed_by_me": [
+  "Selftest fixture bug: T05 (source-absent) never deleted the source file -> the tool correctly returned SAFE for a still-present pair; fixture now rm -f's it (selftest 26/26 -> 29/29).",
+  "Missing self-export guard (judge B22-B24): a ledger row whose vault_path resolves to the source itself (identical spelling, ../ alias, or symlink-to-source) verified as moved-to-obsidian. Fixed: canon(vault) == canon(source) -> NOT-VERIFIED(self-export); three new selftest cases T21/T24/T25.",
+  "CLI-state naming: every evidence line now names the CLI state when --cli was requested (adv53 M1 'silent-ignore' oracle)."
+ ],
+ "notes_for_parent": [
+  "The tool was written independently from the runner/judge contracts; no sibling impl was read before writing.",
+  "V6's case-dir ledger (tests/vault/case-V6/ledger-crlf.tsv) is rewritten in place by every builder run with rows pointing at the invoking seat's --out root; concurrent seats race on it. Judge-60's V6 rows observed this (rows pointed at /tmp/souji-vault-verify-selftest.GHn233 mid-run). Recommend the judge/runner invoke case-V6 builders with --out and resolve the ledger from the built root, or freeze the case-dir copy.",
+  "The self-export family (B22-B24) was a contract addition that landed mid-round (judge-60-vault.sh grew those rows between my first and second run). Any impl written before it will false-verify those rows; the guard is cheap (one canon comparison).",
+  "Completed harness reruns (all against sha256 abb6d48d...): selftest 29/29 exit 0; adv53 22/22; judge-60 45/0 PASS; runner-34 16/16; runner-26 16/16; runner-27 29/29; runner-28 impl-22 17/17; runner-29 impl-22 21/21; runner-31 41/0; runner-38 26/0; real-vault cross-check (match / wrong-hash / absent) all correct; vault + live ledger unchanged; 0 GUI processes.",
+  "Aggregation guidance: prefer tests/results/impl-22-*b.json (post-guard run, sha256 abb6d48d...) over the first impl-22-* runs (pre-guard, sha256 5171c13c...) for judge-60 and adv53.",
+  "Round-4 CLI finding (read-only recon, matches S03/S35/S44): the official CLI is NOT exercisable on this host — no socket at $XDG_RUNTIME_DIR/.obsidian-cli.sock (app down), no shim registered (Arch electron43 packaging breaks the asar registration logic), obsidian-cli-inspector is a third-party SQLite reader whose Hash field is a size:mtime pseudo-hash. The sha256sum fallback is the receipt method of record; the --cli path is mock-exercised (adv53 M*, judge-60 CLI rows) and degrades cleanly with a named cli= state in every case.",
+  "Host note (not my tool): the Obsidian app itself was launched by the operator at 2026-10-18 14:10:31 local (obsidian.log 17:10 UTC), rewriting .obsidian/{app,appearance,core-plugins}.json; this predates every impl-22 run and the tool has no write path. Vault git status shows those as modified — operator-owned, do not attribute to the round."
+ ]
+}

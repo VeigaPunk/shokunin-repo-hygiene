@@ -1,0 +1,102 @@
+{
+  "seat": "S05",
+  "kind": "obsidian-cli-recon",
+  "target": "obsidian-cli-inspector (assigned 3-command probe) + official Obsidian CLI entry-point hunt",
+  "verdict": "DECISIVE-NEGATIVE: obsidian-cli-inspector is NOT the official Obsidian CLI (third-party read-only inspector v1.0.3, own SQLite index). Official CLI on this host: socket client of the running app; no shim registered, socket absent, app not running -> currently NON-FUNCTIONAL. Third-party notesmd-cli v0.3.7 does implement list-vaults. obsidian-cli-inspector CANNOT verify ledger sha256 rows (its hash field is 4-hex + epoch mtime).",
+  "assigned_probes": {
+    "cmd1": {
+      "cmd": "timeout 5 obsidian-cli-inspector --help",
+      "exit": 0,
+      "stdout": "Obsidian CLI Inspector - A local-first, read-only CLI/TUI for Obsidian vaults\n\nABOUT:\n    This tool helps you inspect, search, and navigate your Obsidian vault from the terminal.\n  All data is stored locally in a SQLite database for fast, offline access.\n\nUSE CASES:\n  • Search: Find notes quickly with full-text search across your entire vault\n  • Link Analysis: Discover backlinks, forward links, and unresolved references\n  • Tag Management: Filter and organize notes by tags with AND/OR logic\n  • Graph Exploration: Visualize note relationships and connection depths\n  • Content Quality: Identify bloated notes that may need refactoring\n  • Related Notes: Get AI-style suggestions for notes you might want to link\n  • Scripting: Integrate with shell scripts and automation workflows\n  • Interactive TUI: Browse your vault in a terminal user interface\n\nWORKFLOW:\n  1. Run 'init init' to set up the database\n  2. Run 'index index' to scan and parse your vault\n  3. Use search commands (notes, backlinks, tags, etc.)\n  4. Re-run 'index index' periodically to catch changes\n\nCLI STRUCTURE:\n  obsidian-cli-inspector <group> <function> [args...]\n\n  Groups:\n    init     - Database initialization\n    index    - Vault indexing (scan, status)\n    search   - Search and retrieval (notes, backlinks, links, tags, unresolved)\n    graph    - Graph operations (neighbors, paths, centrality, components)\n    analyze  - Content analysis (bloat, related, similar, quality)\n    diagnose - Diagnostics (orphans, broken-links, conflicts)\n    view     - Display commands (stats, describe, health)\n\nEXAMPLES:\n  # Initialize and index your vault\n  obsidian-cli-inspector init init\n  obsidian-cli-inspector index index\n\n  # Search for notes containing 'rust'\n  obsidian-cli-inspector search notes rust --limit 10\n\n  # Find all notes linking to 'Project Idea'\n  obsidian-cli-inspector search backlinks \"Project Idea\"\n\n  # List all notes tagged with 'work'\n  obsidian-cli-inspector search tags work\n\n  # Find large notes that might need splitting\n  obsidian-cli-inspector analyze bloat --threshold 100000\n\n  # Launch interactive mode\n  obsidian-cli-inspector tui\n\nCONFIG:\n  Place config at ~/.config/obsidian-cli-inspector/config.toml\n  Specify vault path and database location there.\n\nVersion: 1.0.3\n\nUsage: obsidian-cli-inspector [OPTIONS] <COMMAND>\n\nCommands:\n  init      Database initialization commands\n  index     Vault indexing commands\n  search    Search and retrieval commands\n  analyze   Content analysis commands\n  diagnose  Diagnostic commands\n  view      Display commands\n  tui       Launch interactive TUI\n  help      Print this message or the help of the given subcommand(s)\n\nOptions:\n  -c, --config <FILE>\n          Path to config file\n\n  -o, --output <FORMAT>\n          Output in JSON format (for machine integration)\n\n  -h, --help\n          Print help (see a summary with '-h')\n\n  -V, --version\n          Print version\n",
+      "stderr": "",
+      "raw_capture": "/tmp/s05-probe/cmd1.out (2934 B), cmd1.err (0 B)"
+    },
+    "cmd2": {
+      "cmd": "timeout 5 obsidian-cli-inspector version",
+      "exit": 2,
+      "stdout": "",
+      "stderr": "error: unrecognized subcommand 'version'\n\nUsage: obsidian-cli-inspector [OPTIONS] <COMMAND>\n\nFor more information, try '--help'.\n"
+    },
+    "cmd3": {
+      "cmd": "timeout 5 obsidian-cli-inspector list-vaults",
+      "exit": 2,
+      "stdout": "",
+      "stderr": "error: unrecognized subcommand 'list-vaults'\n\nUsage: obsidian-cli-inspector [OPTIONS] <COMMAND>\n\nFor more information, try '--help'.\n"
+    },
+    "extra": [
+      "timeout 5 obsidian-cli-inspector -V -> exit 0, stdout 'obsidian-cli-inspector 1.0.3'",
+      "timeout 5 obsidian-cli-inspector index status -> exit 2, stderr \"error: unrecognized subcommand 'status'\"",
+      "obsidian-cli-inspector file: ELF 64-bit LSB pie, x86-64, dynamically linked, stripped, root:root, 3493072 B, /usr/bin/obsidian-cli-inspector; sha256 0522cd2eaeda54da9609d3a121203d3a1241d22bfba770a6cc3039ced9bee9b1"
+    ]
+  },
+  "not_official_cli_evidence": [
+    "Name/usage/commands do not match the official CLI (official: app-bundled, agent-oriented; probe evidence bank line 'obsidian-cli-inspector is present in PATH (unprobed)' is now resolved: it is a THIRD-PARTY tool).",
+    "It maintains its own SQLite index: ~/.config/obsidian-cli-inspector/config.toml (vault_path=/home/vgpnk/Documents/shokoknowledge; commented database_path=~/.config/obsidian-cli-inspector/vault.db, log_path=~/.local/share/obsidian-cli-inspector/logs); vault.db = 105,000,960 B, mtime 2026-10-13 16:52:32; 23 pre-existing logs from 2026-10-13.",
+    "It requires NO running app: with no obsidian process (pgrep obsidian -> empty), running against a copy of its DB in /tmp succeeded: view stats -> exit 0 'Notes: 3714 / Links: 78 / Tags: 191 / Chunks: 38685 / Unresolved links: 78'; search notes souji -> exit 0 'No results found for: souji'; diagnose broken-links -> exit 0 'Found 78 broken link(s)'.",
+    "The official CLI by contrast is a client of the running app over a UNIX socket (extracted verbatim from /usr/lib/obsidian/obsidian.asar, 1 occurrence of '.obsidian-cli.sock' at byte offset 23579741): x = X ? '\\\\\\\\.\\\\pipe\\\\obsidian-cli-' + userInfo().username : join(!W && process.env.XDG_RUNTIME_DIR || homedir(), '.obsidian-cli.sock')  [X=Windows, W=darwin]."
+  ],
+  "hash_verification_negative": {
+    "claim": "obsidian-cli-inspector CANNOT confirm a ledger row's vault-side sha256.",
+    "evidence": [
+      "obsidian-cli-inspector -c /tmp/s05-probe/config.toml view describe Home.md -> exit 0; output contains 'Hash: 15ed:1791921146' (4 hex chars + ':' + epoch seconds).",
+      "notes table schema: hash TEXT NOT NULL stores exactly that string (sample rows: '15ed:1791921146', 'cb:1791912394', '6da:1791921146').",
+      "Real sha256sum of /home/vgpnk/Documents/shokoknowledge/Home.md = 98afa2b81887ca13f1f06243f3f0d1e24cd411d7f9321b332fc998d52ff242a4 (mtime 1791921918). Tool's hash part (15ed, 4 chars) is not any truncation of that sha256 (starts 98afa2...).",
+      "-> For ledger sha256 verification the read-only fallback sha256sum under the vault path remains required; the inspector's hash is unusable."
+    ]
+  },
+  "official_cli_state_on_host": {
+    "socket_path_linux": "$XDG_RUNTIME_DIR/.obsidian-cli.sock (XDG_RUNTIME_DIR=/run/user/1000 set) -> /run/user/1000/.obsidian-cli.sock",
+    "socket_absent": "ls -la /run/user/1000/.obsidian-cli.sock -> 'No such file or directory' (exit 2); ls -la ~/.obsidian-cli.sock -> same; find /run/user/1000 /home/vgpnk -maxdepth 1 -name '.obsidian-cli*' -> no output; ss -xl | grep -i obsidian -> no match (grep exit 1); pgrep -af obsidian -> no app process.",
+    "client_logic_verbatim": "If requestSingleInstanceLock() fails (app already running): createConnection(socket); on connect error console.error('Unable to connect to main process'), process.exit(1); else write JSON.stringify({argv, tty, cwd})+'\\n', pipe stdin/stdout. If lock succeeds (app NOT running): the process becomes the full GUI app (this is why executing `obsidian`/the shim when the app is down spawns the app).",
+    "argv_filter_verbatim": "o = o.filter(u => !u.startsWith('--') || u==='--copy' || u==='--help' || u==='--json' || u==='--md' || u==='--tsv' || u==='--csv')  -> official CLI supports --json/--md/--tsv/--csv/--copy; internal commands include 'vaults', '__completions', '__files', '__commands' (seen via executeCliRequest calls).",
+    "register_cli_handler": "ipcMain.handle('register-cli'): refuses when basename(process.argv0) lacks 'obsidian' with 'Unable to add to command line because the executable is \"<c>\" instead of \"obsidian\".'; on Linux (non-mac/win): f=join(dirname(process.execPath),'obsidian-cli'); if exists -> copy to ~/.local/bin/obsidian chmod 0755; ELSE -> symlink ~/.local/bin/obsidian -> process.execPath (or APPIMAGE/FLATPAK export).",
+    "shim_present": "NO: find /usr/lib/obsidian -name 'obsidian-cli*' -> none (only app.asar, icon.png, obsidian.asar, app.asar.unpacked/{btime,get-fonts}); ls ~/.local/bin/obsidian -> No such file or directory; ls /usr/local/bin/obsidian -> No such file or directory.",
+    "gui_launcher": "/usr/bin/obsidian = bash wrapper: 'exec electron43 /usr/lib/obsidian/app.asar $OBSIDIAN_USER_FLAGS \"$@\"' -> NOT the CLI; never executed by S05 (confirmed: pgrep obsidian shows no app process during and after the probes; obsidian.log's last app-side entry 2026-10-18 14:50:37 is UTC = 11:50:37 local -0300, i.e. before all S05 probes at 13:52-13:54 local).",
+    "config_flag": "~/.config/obsidian/obsidian.json = {\"vaults\":{\"357200b26f64b4e9\":{\"path\":\"/home/vgpnk/Documents/shokoknowledge\",\"ts\":1791912393905,\"open\":true}},\"cli\":true} -> CLI feature flag enabled; 'Register' PATH shim is a separate action and is NOT present.",
+    "conclusion": "Official CLI is currently NON-FUNCTIONAL non-interactively on this host: no shim in PATH, socket absent, app not running. Any future official-CLI verification requires the operator to start the app (socket server) and register the shim; S05 did not and must not launch the app."
+  },
+  "third_party_notesmd_cli": {
+    "path": "/home/vgpnk/.local/bin/notesmd-cli, v0.3.7, static ELF x86-64, sha256 412dc532d278b9e4aaf502891ea1f7b5c60e7572fb82935778ebdb728000802d",
+    "list_vaults": "timeout 5 notesmd-cli list-vaults -> exit 0; stdout: 'shokoknowledge  /home/vgpnk/Documents/shokoknowledge  (default)'",
+    "note": "Separate third-party tool (Go-style CLI: create/move/delete/print/search). NOT the official CLI either; its mutation commands (create/delete/move) must never be used by souji."
+  },
+  "side_effects_and_safety": {
+    "config_writes_avoided": "All S05 subcommand probes used -c /tmp/s05-probe/config.toml with database_path=/tmp/s05-probe/vault-copy.db and log_path=/tmp/s05-probe/logs -> all logs landed in /tmp/s05-probe/logs (9 files); DB copy mtime/size unchanged before/after (2026-10-18 13:52:53.221434004, 105000960 B).",
+    "bare_probes_wrote_nothing": "The 3 assigned bare probes (--help/version/list-vaults) failed at argument parsing before logging init: find ~/.config/obsidian-cli-inspector -newermt '2026-10-18 13:45' returned empty immediately after them.",
+    "sibling_seat_side_effect": "At 13:53:26-13:54:16 new log files appeared in ~/.config/obsidian-cli-inspector/logs/ (view.stats/stats/search.notes/search/view.describe) from OTHER seats running bare obsidian-cli-inspector invocations. WARNING for the round: bare invocation writes into ~/.config/obsidian-cli-inspector/logs/ (a config write); seats must use -c with a /tmp config or avoid non-help subcommands. S05 did not cause these files.",
+    "vault_read_only": "Real vault touched read-only only: sha256sum + stat on Home.md. No vault writes by S05; ledger corpus/knowledge/obsidian-ledger.tsv still header-only (1 line, sha256 3f7e9f2ab9e614464cb031d3f00a812a21f0e889f7666309a90d7784b75a9599).",
+    "no_forbidden_actions": "No obsidian GUI launch, no git fetch/push/commit/branch, no ~/.config writes by S05, no .ufo/state or watchdog reads, no credential files."
+  },
+  "adversarial_probes": [
+    "Tried to falsify 'inspector needs app running': ran view stats / describe / search / diagnose with app down -> all exit 0 -> confirmed app-independent; the decisive negative stands (it is not the official CLI, but it does work).",
+    "Tried to falsify 'inspector hash is sha256': compared against real sha256sum -> mismatch shape (4 hex + epoch) and value -> confirmed unusable for ledger sha256.",
+    "Tried to find an official CLI entry point: PATH (~/.local/bin, /usr/local/bin, /usr/bin), /opt, /usr/lib/obsidian, ~/.local/share, fleet-wide find for name 'obsidian-cli' (maxdepth 6, excluding /proc,/sys) -> nothing. Only /usr/bin/obsidian (GUI wrapper) and third-party binaries. Registration code confirms the shim would be ~/.local/bin/obsidian and its source <exedir>/obsidian-cli which is absent.",
+    "Checked whether the socket exists under an alternate location (~/.obsidian-cli.sock per code fallback) -> absent too; ss shows no obsidian listener.",
+    "Checked whether an app process could serve the socket right now -> pgrep empty; thus even a hypothetical correct shim invocation would either spawn the GUI or print 'Unable to connect to main process'."
+  ],
+  "winner_inputs": {
+    "for_integration_task": [
+      "Do not use obsidian-cli-inspector's hash for ledger verification; use sha256sum under the vault path (read-only) as the fallback the evidence bank anticipated. The inspector is useful only for read-only vault stats/search (offline, DB-backed) and never for receipts.",
+      "The official CLI is a socket client, not a standalone binary: verification via it requires the operator to run the app and register the shim; protocol = JSON line {argv,tty,cwd} over $XDG_RUNTIME_DIR/.obsidian-cli.sock; supports --json/--md/--tsv/--csv. Until the operator registers it, mark official-CLI-based verification NOT-VERIFIED.",
+      "Never run /usr/bin/obsidian or bare `obsidian`: without a running app it launches the GUI (single-instance-lock branch).",
+      "If a CLI-based vault read is wanted today, notesmd-cli (read commands only: list/list-vaults/print/search-content) works without the app; its mutating commands (create/delete/move/daily) are forbidden."
+    ]
+  },
+  "notes": [
+    "Probe window 2026-10-18T13:52-13:54 -03:00. All commands recorded with timeout 5 as instructed.",
+    "Evidence bank file .ufo/scopes/souji-mint-20261018/obsidian-cli-probe.md line 35 ('obsidian-cli-inspector ... unprobed') is now resolved by this fragment.",
+    "The 'Hash' column in the inspector DB is per-file (path,mtime,hash) and covers all 3714 notes at index time 2026-10-13 16:52; it cannot serve as a receipt for a source->vault export hash chain.",
+    "Round-4 census dir was empty at 13:52; this fragment is the first file written into it."
+  ],
+  "disagreements": [],
+  "preamble": {
+    "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+    "fragment_path": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-4/seat-05.json",
+    "written_at": "2026-10-18T13:57:00-03:00",
+    "mode": "read-only recon; writes limited to this fragment and /tmp/s05-probe scratch",
+    "tool_hashes": {
+      "obsidian-cli-inspector": "0522cd2eaeda54da9609d3a121203d3a1241d22bfba770a6cc3039ced9bee9b1",
+      "notesmd-cli": "412dc532d278b9e4aaf502891ea1f7b5c60e7572fb82935778ebdb728000802d"
+    }
+  }
+}

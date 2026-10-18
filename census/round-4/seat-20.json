@@ -1,0 +1,93 @@
+{
+  "seat": "S20",
+  "round": 4,
+  "role": "implementor",
+  "kind": "impl",
+  "artifact": "tools/souji-vault-verify.impl-20.sh",
+  "sha256": "d312263ac8ebc9e23555402dc5ae63167f78dcd01ddccc5ddcfa7623b85879e0",
+  "bytes": 41550,
+  "lines": 1033,
+  "mode": "0755",
+  "syntax": "bash -n ok",
+  "selftest": {"exit": 0, "checks": 35, "failed": 0},
+  "independence": "independent; no other seat's tool, fixture, or ledger was copied; sibling harnesses were used only as oracles after the tool was written",
+  "interface": {
+    "flags": ["--selftest", "--json", "--ledger PATH", "--vault PATH", "--fallback", "--cli", "--auto", "--stale-days N"],
+    "env": ["SOUJI_LEDGER", "SOUJI_VAULT", "SOUJI_CLI_BIN", "SOUJI_CLI_TIMEOUT", "SHOKUNIN_ROOT", "SOUJI_SELFTEST_ACTIVE"],
+    "stdout": "line 1 = VERDICT<TAB>path<TAB>SAFE|NOT-SAFE<TAB>receipt<TAB>evidence (r2 form, awk -F'\\t' NR==1 consumers); line 2 = VERIFIED(receipt) | NOT-VERIFIED(reason) (r4 vocabulary)",
+    "json": "{\"path\",\"verdict\",\"verified\",\"receipt\",\"reason\",\"evidence\"}",
+    "exit": "0 evaluated (NOT-VERIFIED is not an error) | 1 runtime error | 2 usage"
+  },
+  "reasons": ["source-absent", "source-hash-mismatch", "vault-absent", "vault-hash-mismatch", "row-incomplete", "source-equals-vault", "vault-inside-source", "none", "unreachable", "secrets-refusal", "unpushed", "dirty", "unpushed-branch"],
+  "receipts": ["moved-to-obsidian", "pushed", "stale", "metadata-prune"],
+  "results": {
+    "runner-26": "16/16",
+    "runner-27": "26/26",
+    "runner-28": "17/17",
+    "runner-29": "20 pass / 0 fail / 1 informational (V6c CRLF-truncated boundary, explicitly unjudged)",
+    "runner-34": "16/16",
+    "runner-35": "29/29",
+    "runner-36": "30/30",
+    "runner-37": "26/26",
+    "runner-38": "26/26",
+    "runner-39": "26/26",
+    "runner-40": "24/24",
+    "runner-30-r4": "ST/M1..M3 PASS (impl-20 line)",
+    "adv53-harness": "22/22",
+    "vadv-52": "22/22",
+    "vadv-54": "17 pass / 0 fail / 4 warn / 1 info",
+    "vadv-56": "4/4 binding survived",
+    "reviewer-43": "22/22",
+    "judge-60-vault": "winner=souji-vault-verify.impl-20, hard_pass=45 hard_fail=0 (next: impl-21 44/1, impl-24 43/1)"
+  },
+  "defects_found_and_fixed_by_adversarial_seats": [
+    {
+      "id": "P6",
+      "severity": "critical",
+      "finding": "false-SAFE: a ledger row whose vault copy lives INSIDE the directory being evaluated reported SAFE(moved-to-obsidian); removing that directory destroys its own vault copy",
+      "fix": "new refusal vault-inside-source (realpath containment check on the dir branch)",
+      "evidence": "tests/results/vadv-54.json P6 (was FAIL, now PASS)"
+    },
+    {
+      "id": "J4",
+      "severity": "high",
+      "finding": "cwd-dependent receipt: a relative source_path row matched when the target was also passed relative, so the same ledger row verified from one cwd and not another",
+      "fix": "relative source_path rows are refused as row-incomplete",
+      "evidence": "tests/results/vadv-52.json J4/J5 (were FAIL, now PASS)"
+    },
+    {
+      "id": "R1/R4",
+      "severity": "medium",
+      "finding": "TSV record integrity: a target path containing a newline split one record across two physical lines, shifting path/verdict attribution for line-oriented consumers",
+      "fix": "newline escaped as \\n in the VERDICT record path field",
+      "evidence": "tests/results/vadv-54.json R1/R4 (were FAIL, now PASS)"
+    },
+    {
+      "id": "Q1-Q5",
+      "severity": "low",
+      "finding": "receipt traceability: evidence did not name which ledger file produced the receipt",
+      "fix": "ledger=<realpath> added to the moved-to-obsidian evidence field",
+      "evidence": "tests/results/vadv-54.json Q* (WARN, informational)"
+    }
+  ],
+  "interface_fixes": [
+    "line order: VERDICT record first, r4 token second (vadv-56/runner-30 read NR==1 with awk -F'\\t')",
+    "r2-style obsidian= evidence prefix added alongside descriptive tokens (runner-37 expectation)",
+    "--auto accepted as an alias for the default advisory CLI mode (s42/s46 probe it)"
+  ],
+  "rails_verified": {
+    "vault_read_only": "sha256sum/stat/find only; runner-39 V13/V13b and vadv-52/vadv-54 readonly_ok=true",
+    "live_ledger_header_only": "runner-39 V12 pass; vadv-52 'live ledger unchanged=true'",
+    "gui_launcher_never_executed": "no /usr/bin/obsidian literal in the source (selftest H2); poisoned-PATH shims in s42/s48 never fired; zero obsidian app processes before/after",
+    "no_forbidden_git": "selftest H1 grep: zero fetch/push/commit/branch/checkout/reset/rebase",
+    "bounded_cli": "every CLI call under timeout; hanging shim bounded in 2s (selftest V11b)",
+    "advisory_cli_only": "lying/empty/error/timeout CLI never flips the verdict; ledger stays the receipt of record (selftest V13, adv53 M4-M7, O2)",
+    "secrets_refusal": "secret-shaped path components refused before any read (selftest F10, s46 X-secret)"
+  },
+  "notes": [
+    "runner-28's earlier V6 misses were a runner path-resolution bug (it pointed at tests/vault/case-V6/ledger-crlf.tsv, which does not exist); the updated runner now reports 17/17.",
+    "runner-39's single C11.no-gui-spawn fail was before=2 after=0 (a decrease caused by a concurrent seat's probe); re-run is 26/26.",
+    "s48's probe48.sh expects uppercase-hex rows to be credited SAFE while its own probe48b.sh requires them refused; the tool refuses (row-incomplete), matching the r2 incumbent and the fail-closed oracle.",
+    "The live ledger corpus/knowledge/obsidian-ledger.tsv was never written; the real vault was never modified."
+  ]
+}

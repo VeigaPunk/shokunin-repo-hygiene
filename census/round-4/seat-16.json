@@ -1,0 +1,111 @@
+{
+  "seat": "S16",
+  "role": "fixture-author",
+  "round": 4,
+  "kind": "vault-verification-fixture",
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "repo_head": "78694acefa316edfc77842583409b7133350718c",
+  "run_utc": "2026-10-18T17:05:00Z",
+  "run_local": "2026-10-18T14:05:00-0300",
+  "assignment": "SEAT S16 — fixture author. tests/vault/case-V8/: vault file + source file whose names contain spaces. Expected: VERIFIED.",
+  "verdict": "DELIVERED — case-V8 fixture authored, selftest 16/16 PASS, all four on-disk runner parser styles resolve the fixture root and ledger; installed r2 tool tools/souji-verify.sh returns SAFE + moved-to-obsidian against the target; live ledger stays header-only; real vault never touched.",
+  "artifacts": {
+    "tests/vault/case-V8/make-fixture.sh": {
+      "sha256": "59698d431f66f3a87f9322cc67f6ebe6378cc7c78d2bf2a944fd52d770ebee37",
+      "role": "builder; creates the space-bearing source file + byte-identical vault copy (0444), an auxiliary no-row control pair, own test ledger <ROOT>/ledger.tsv, substituted expected.json; emits JSON line 1 + FIXTURE_READY V8 <ROOT>; never touches the live ledger or real vault"
+    },
+    "tests/vault/case-V8/expected.json": {
+      "sha256": "bf76c1c769a7650426c0071693005bbd8abde9ee2cea2aa9d8c08eb9cf9c547c",
+      "role": "declaration; schema souji-vault-fixture/1; targets + expect VERIFIED/moved-to-obsidian; accept.exact; must_not_be; failure_modes_caught; auxiliary_checks; crosscheck"
+    },
+    "tests/vault/case-V8/selftest.sh": {
+      "sha256": "0c649ba17bf8b8d470c566b25deb7f22f21a31f718994324cf8624a232966e65",
+      "role": "16-check proof: build contract, four space-bearing basenames, pinned hashes, pair identity, 0444 mode, TAB-columned ledger row with literal spaces, armed SAFE/moved-to-obsidian, disarmed NOT-SAFE, control NOT-SAFE, live-ledger header-only"
+    },
+    "tests/vault/case-V8/README.md": {
+      "sha256": "386c6d762ba337b4dc8188fd5754a01f9dc72cabc689b283407ec27931c3b531",
+      "role": "contract: layout, verdict matrix, consumption steps, failure modes, FIXTURE_READY token semantics"
+    },
+    "tests/vault/ledger-V8.tsv": {
+      "sha256": "13c945a9a2dad273550b19ddeaef1a95e536b9758741b69863d1a287a0b6321c",
+      "role": "default test ledger (header + 1 row); transient by design — every builder run without --ledger rewrites it to point at that run's fresh root, same property as ledger-V1.tsv; runners prefer <ROOT>/ledger.tsv"
+    }
+  },
+  "fixture_facts": {
+    "source_path": "<ROOT>/source/meeting notes 2026-10.md",
+    "vault_path": "<ROOT>/vault/Meeting Notes 2026-10.md",
+    "space_bearing": "both basenames contain literal spaces and are deliberately different names (export-title shape); a basename-matching tool cannot receipt the pair",
+    "content_sha256": "2fc29f1f563835d0e66139afa269b4de51355859ed30232b41847a2862f1084e",
+    "content_bytes": 225,
+    "pair_identical": "cmp -s exit 0; both sha256sum equal the constant",
+    "vault_mode": "0444",
+    "aux_control": {
+      "source_path": "<ROOT>/source/control notes.md",
+      "vault_path": "<ROOT>/vault/Control Notes.md",
+      "content_sha256": "3f5d8d2f08280a356f765ef393a762ac8bf93d423103b569347a12ad50ee1ab1",
+      "ledger_row": null,
+      "expected": "NOT-VERIFIED — the row is the receipt, not the copy"
+    },
+    "ledger": "<ROOT>/ledger.tsv (header + exactly 1 data row); path fields carry literal spaces, columns TAB-separated",
+    "discriminator": "whitespace-splitting ledger parsers break the row's path fields at the spaces; unquoted shell use of the target path word-splits; both are caught"
+  },
+  "measured_results": {
+    "selftest": {
+      "cmd": "bash tests/vault/case-V8/selftest.sh",
+      "exit": 0,
+      "out": "SELFTEST PASS: pass=16 fail=0"
+    },
+    "r2_tool_crosscheck_armed": {
+      "cmd": "env SOUJI_LEDGER=<ROOT>/ledger.tsv bash tools/souji-verify.sh \"<ROOT>/source/meeting notes 2026-10.md\"",
+      "tool_sha256": "7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820",
+      "observed": "VERDICT\t<ROOT>/source/meeting notes 2026-10.md\tSAFE\tmoved-to-obsidian\tledger-row vault=<ROOT>/vault/Meeting Notes 2026-10.md source-sha256=2fc29f1f5638",
+      "exit": 0
+    },
+    "r2_tool_crosscheck_disarmed": {
+      "cmd": "header-only ledger via SOUJI_LEDGER; same target",
+      "observed": "NOT-SAFE, receipt none (obsidian=no-matching-ledger-row)",
+      "exit": 0
+    },
+    "determinism": {
+      "cmd": "two builds at different roots; sha256sum of all four payload files",
+      "observed": "all four hashes equal across roots; content constants asserted by the builder and cross-checked against expected.json"
+    },
+    "runner_parser_compat": {
+      "cmd": "python3 simulation of runner-26/27 (`FIXTURE_READY\\s+\\S+\\s+(\\S+)`), runner-28 (same + root expected.json + root ledger.tsv), runner-29 (JSON root > FIXTURE_ROOT= > FIXTURE_READY-isdir priority)",
+      "observed": "every style resolves root=<fixture root> (isdir true); substituted <ROOT>/expected.json found and parses; ledger resolved; target exists; verdict want=VERIFIED"
+    },
+    "live_ledger": {
+      "cmd": "wc -l corpus/knowledge/obsidian-ledger.tsv",
+      "observed": "1 (header only), before and after all runs"
+    },
+    "real_vault": {
+      "observed": "never read or written by this case; no CLI invoked, /usr/bin/obsidian never executed; all work under /tmp and tests/vault/"
+    }
+  },
+  "interface_alignment": {
+    "schema": "souji-vault-fixture/1 (matches case-V1/V4/V5 house schema)",
+    "stdout": "line 1 JSON {case,root,targets,expect,vault,ledger,sha256}; line 2 FIXTURE_READY V8 <ROOT>",
+    "token_rule": "the FIXTURE_READY third token is the ROOT, never the target: the target path contains spaces and runners parse the line with FIXTURE_READY\\s+\\S+\\s+(\\S+); the space-bearing target travels in the JSON line, TARGET=/SOURCE_FILE= KEY=VALUE lines, and <ROOT>/expected.json",
+    "quiet_mode": "KEY=VALUE lines + the same FIXTURE_READY line",
+    "ledger_seam": "SOUJI_LEDGER env override; <ROOT>/ledger.tsv preferred by runners over the default tests/vault/ledger-V8.tsv"
+  },
+  "defect_found_and_fixed": {
+    "defect": "first selftest run: LANE_ROOT derived as $HERE/../.. (tests/) instead of ../../.. (lane root), so the tool path became tests/tools/souji-verify.sh and the selftest exited 3 'tool missing'",
+    "fix": "corrected to $HERE/../../.. — matches the builder's own derivation",
+    "evidence": "before: 'selftest: tool missing: .../tests/tools/souji-verify.sh'; after: SELFTEST PASS pass=16 fail=0"
+  },
+  "notes_for_parent": [
+    "ledger-V8.tsv under tests/vault/ is a transient artifact of the last builder run (house convention, same as ledger-V1.tsv); do not treat its current contents as a stable fixture path — <ROOT>/ledger.tsv is canonical.",
+    "Sibling runners (27/28/29) were observed mid-flight consuming case-V8 (copied into their fake trees, invoked); no failures attributable to V8 were observed in their logs at handoff time.",
+    "Auxiliary no-row control is deliberately NOT in targets[] so single-target runners are unaffected; selftest.sh exercises it.",
+    "I noticed a stray directory tests/tests/vault/vadv-56 (another seat's path error) — not mine, not touched.",
+    "No git commit made (seat scope: write files only); files left uncommitted for the parent to integrate."
+  ],
+  "safety": {
+    "live_ledger_untouched": true,
+    "real_vault_untouched": true,
+    "gui_launcher_never_executed": true,
+    "writes": ["tests/vault/case-V8/**", "tests/vault/ledger-V8.tsv", "/tmp/souji-vault-V8.*", "/tmp/souji-v8-selftest.*"],
+    "read_only_surfaces": ["tools/souji-verify.sh", "corpus/knowledge/obsidian-ledger.tsv", "sibling case-V1/V4/V5 (read for conventions)"]
+  }
+}

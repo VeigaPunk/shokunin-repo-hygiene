@@ -1,0 +1,104 @@
+{
+  "seat": "S13",
+  "role": "fixture author — case-V5 (ledger row with an absent source path)",
+  "round": 4,
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "repo_head": "78694ac",
+  "run_utc": "2026-10-18T16:05:00Z",
+  "assignment": "tests/vault/case-V5/: ledger row points at a source path that does not exist. Expected: NOT-VERIFIED(source-absent).",
+  "verdict": "DELIVERED — fixture built, expectation pinned, discrimination proven in both directions",
+  "artifacts": {
+    "tests/vault/case-V5/make-fixture.sh": {
+      "sha256": "da0ce3bf91f788a166f5b36593233c97827b0d94019898c34d603bbc5278dddb",
+      "role": "builder: absent source path + byte-identical 0444 vault copy + test ledger + substituted expected.json",
+      "cli": "make-fixture.sh [--out DIR] [--ledger FILE] [--quiet] [--print-ledger] [--print-hashes]",
+      "exit_codes": "0 built, 1 build/assertion failure, 2 usage"
+    },
+    "tests/vault/case-V5/expected.json": {
+      "sha256": "7afccd51cc6fbf594e61db715ccc3e7795087dcc6b35b25a1c5133c1e9b1e74e",
+      "role": "declaration: schema souji-vault-fixture/1, one declared row, target, expect NOT-VERIFIED(source-absent), failure_modes_caught, measured baseline"
+    },
+    "tests/vault/case-V5/selftest.sh": {
+      "sha256": "3bbc84725d1cf8b602aedcb131f12650a4db0aa77813e19f950ede8f4e1252f5",
+      "role": "22 checks; --tool PATH probes a candidate and pins its class",
+      "cli": "selftest.sh [--keep] [--out JSON] [--tool PATH]"
+    },
+    "tests/vault/case-V5/README.md": {
+      "sha256": "fcbcf269b51df4cbd07631e027581e1b380b6ae0ea42fc455913152364796ace",
+      "role": "contract: layout, row, expected verdict, failure modes, measured baseline, controls"
+    },
+    "tests/results/v5-selftest.json": {
+      "role": "machine-readable selftest result: pass=22 fail=0"
+    }
+  },
+  "fixture_facts": {
+    "content_sha256": "12e00f2715df6aa34ffba48dd508834bb602561c6335fd7de475b251e23506ac",
+    "content_bytes": 272,
+    "source_path": "<ROOT>/source/round-trip-notes.md — absent (parent dir present)",
+    "vault_path": "<ROOT>/vault/round-trip-notes.md — present, mode 0444, digest equals the row's vault_sha256",
+    "ledger": "<ROOT>/ledger.tsv — header + exactly one data row",
+    "row": "source_path(source absent)\tsource_sha256=12e00f27…\tvault_path(present)\tvault_sha256=12e00f27…\t2026-10-18\tcase-V5 source-absent",
+    "design_point": "every conjunct except source presence passes; the vault side hashes correctly, so vault-side-only verification would report VERIFIED"
+  },
+  "measured_results": {
+    "selftest": {
+      "command": "bash tests/vault/case-V5/selftest.sh --out tests/results/v5-selftest.json",
+      "exit": 0,
+      "result": "SELFTEST PASS pass=22 fail=0",
+      "fixture_root": "/tmp/case-V5-selftest.nCNLLI/root"
+    },
+    "round2_tool_baseline": {
+      "tool": "tools/souji-verify.sh",
+      "tool_sha256": "7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820",
+      "command": "SOUJI_LEDGER=<ROOT>/ledger.tsv SHOKUNIN_ROOT=<ROOT> tools/souji-verify.sh <ROOT>/source/round-trip-notes.md",
+      "observed_line": "VERDICT\t<ROOT>/source/round-trip-notes.md\tNOT-SAFE\tunreachable\tmissing path",
+      "finding": "the absent-target short-circuit fires before the ledger is consulted, so the round-2 tool cannot express NOT-VERIFIED(source-absent) at all; this is the delta the r4 vault harness must close (read the ledger row first, then classify the source side)"
+    },
+    "control_source_present": {
+      "setup": "cp <ROOT>/vault/round-trip-notes.md <ROOT>/source/round-trip-notes.md; chmod 0444",
+      "observed_line": "VERDICT\t<ROOT>/source/round-trip-notes.md\tSAFE\tmoved-to-obsidian\tledger-row vault=<ROOT>/vault/round-trip-notes.md source-sha256=12e00f2715df",
+      "conclusion": "the same row verifies once the source exists, so the case cannot pass by answering source-absent unconditionally"
+    },
+    "discrimination_controls": [
+      {
+        "candidate": "stub printing NOT-VERIFIED(source-absent) for every target",
+        "outcome": "FAIL 20/22 (T4.control_verified, T4.control_not_source_absent)",
+        "conclusion": "always-source-absent is rejected"
+      },
+      {
+        "candidate": "stub verifying when the source exists, source-absent otherwise",
+        "outcome": "PASS 22/22",
+        "conclusion": "a conforming r4 harness passes both branches"
+      }
+    ],
+    "builder_invocations": {
+      "no_args": "exit 0, mints under $TMPDIR (TMPDIR pinned in sandbox)",
+      "out_flag": "exit 0",
+      "positional": "exit 0",
+      "rebuild_on_marker": "exit 0 (same --out, .case-V5-fixture marker present)",
+      "refuse_foreign_nonempty": "exit 1 (non-empty dir without marker)",
+      "ledger_copy": "--ledger FILE byte-identical to <ROOT>/ledger.tsv (cmp exit 0)"
+    },
+    "rails_verified": {
+      "live_ledger_sha_before": "3f7e9f2ab9e614464cb031d3f00a812a21f0e889f7666309a90d7784b75a9599",
+      "live_ledger_sha_after": "3f7e9f2ab9e614464cb031d3f00a812a21f0e889f7666309a90d7784b75a9599",
+      "live_ledger_rows": 1,
+      "live_ledger_header_only": true,
+      "real_vault": "/home/vgpnk/Documents/shokoknowledge — listed only (ls), never read from or written to",
+      "git_porcelain_in_fixture": "git init only (offline, no commits); no fetch/push/commit/branch/checkout/reset/rebase",
+      "secrets": "no .env/credential/secret-shaped file read",
+      "write_scope": "only tests/vault/case-V5/**, tests/results/v5-selftest.json, /tmp scratch"
+    }
+  },
+  "interface_alignment": {
+    "schema": "souji-vault-fixture/1 — same schema string as case-V1 (S09) and case-V6",
+    "vocabulary": "VERIFIED / NOT-VERIFIED(+reason) per the r4 vault harness; expect[].verdict is NOT-VERIFIED, reason source-absent, verdict_string NOT-VERIFIED(source-absent)",
+    "compat": "targets[] + expect[] loader shape from F1-F6; expect[].receipt is null (vault verification is not a removal receipt)",
+    "accept": "one token or separate verdict/reason fields both satisfy the case"
+  },
+  "notes_for_parent": [
+    "V5 is the only case in the V-family that pins an ABSENT source path; it complements V1 (clean pair -> VERIFIED) by isolating source presence as the sole failing conjunct.",
+    "The round-2 baseline (NOT-SAFE(unreachable)) is the strongest evidence that the r4 harness needs a ledger-first branch; the r2 tool never even sees the row.",
+    "The selftest is --tool aware: it recognizes the r2 sha and pins that exact class, and holds any other candidate to NOT-VERIFIED(source-absent). Do not change the r2 sha constant unless tools/souji-verify.sh is replaced."
+  ]
+}

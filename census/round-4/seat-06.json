@@ -1,0 +1,157 @@
+{
+  "seat": "S06",
+  "round": 4,
+  "kind": "cli-recon",
+  "role": "recon",
+  "assignment": "CLI recon — locate where registration stored the shim; decide whether the official CLI is invoked AS `obsidian <subcommand>` (wrapper intercepts) or via a separate binary. Read-only; never execute /usr/bin/obsidian or `obsidian`.",
+  "verdict": "SHIM-ABSENT / SAME-BINARY-CLIENT",
+  "answer": "The CLI is invoked AS `obsidian <subcommand>` — but NOT via a wrapper that intercepts subcommands, and NOT via a separate CLI binary. It is the SAME Electron executable acting as a second-instance socket client. No shim exists on this host, and no `obsidian`-named CLI entry point exists at all, so `obsidian <subcommand>` currently resolves only to /usr/bin/obsidian (the GUI launcher).",
+  "mechanism": {
+    "one_line": "Second invocation of the same binary fails requestSingleInstanceLock(), connects to a unix socket owned by the already-running app, sends {argv,tty,cwd} as JSON, and prints the reply.",
+    "impl_location": "inside the Electron main process — /home/vgpnk/.config/obsidian/obsidian-1.14.4.asar (the app payload), NOT in /usr/bin/obsidian",
+    "launcher_is_passthrough": "true — /usr/bin/obsidian is a 344-byte bash script that only merges user-flags.conf then `exec electron43 /usr/lib/obsidian/app.asar $FLAGS \"$@\"`; it inspects no subcommand",
+    "socket_path_expr": "F.join(!isDarwin && process.env.XDG_RUNTIME_DIR || os.homedir(), \".obsidian-cli.sock\")",
+    "socket_path_resolved": "/run/user/1000/.obsidian-cli.sock",
+    "client_side": "on lock failure: createConnection(socket) -> write(JSON.stringify({argv,tty,cwd})+\"\\n\") -> zt(socket, vault, {executeCliRequest,...}) dispatches and prints",
+    "server_side": "the already-running main instance serves the socket; l.app.on('will-quit') -> unlinkSync(socket)",
+    "enable_gate": "if(!C.cli) return \"Command line interface is not enabled. Please turn it on in Settings > General > Advanced.\" — C.cli is the flag persisted as \"cli\":true in obsidian.json",
+    "critical_requirement": "THE APP MUST ALREADY BE RUNNING. If no instance holds the lock, requestSingleInstanceLock() SUCCEEDS, the whole client block is skipped, and the process launches the GUI instead of answering."
+  },
+  "shim_registration": {
+    "handler": "ipcMain.handle(\"register-cli\", ...) in obsidian-1.14.4.asar",
+    "argv0_gate": "p = basename(process.argv0).toLowerCase().includes(\"obsidian\"); if(!p) return {success:false, message:`Unable to add to command line because the executable is \"${u}\" instead of \"obsidian\".`}",
+    "linux_branch": "b = join(dirname(process.execPath), \"obsidian-cli\"); if exists -> copyFileSync(b, ~/.local/bin/obsidian) + chmodSync(0o755); else -> symlinkSync(execPath, ~/.local/bin/obsidian) (FLATPAK_ID export path or APPIMAGE path override)",
+    "macos_branch": "symlink /usr/local/bin/obsidian -> <appdir>/obsidian-cli (osascript admin prompt)",
+    "windows_branch": "prepend dirname(process.execPath) to user PATH",
+    "conclusion": "the shim the assignment asked to locate is ~/.local/bin/obsidian — NOT /usr/local/bin. It is absent."
+  },
+  "host_state": {
+    "cli_flag": "~/.config/obsidian/obsidian.json = {\"vaults\":{\"357200b26f64b4e9\":{\"path\":\"/home/vgpnk/Documents/shokoknowledge\",\"ts\":1791912393905,\"open\":true}},\"cli\":true} — feature ENABLED",
+    "shim_local_bin": "ABSENT — ls ~/.local/bin/obsidian -> No such file or directory (exit 2); ls ~/.local/bin/obsidian-cli -> No such file or directory",
+    "shim_usr_local_bin": "ABSENT — /usr/local/bin contains only mkinitcpio",
+    "shim_source_for_copy_branch": "ABSENT — /usr/lib/electron43/obsidian-cli does not exist, so the copy branch cannot fire",
+    "exec_path_dir": "/usr/lib/electron43 (electron43 wrapper execs /usr/lib/electron43/electron)",
+    "argv0_would_be": "electron — so basename(argv0).includes(\"obsidian\") is FALSE and Register would refuse with the \"executable is \\\"electron\\\" instead of \\\"obsidian\\\"\" message even if the source existed",
+    "socket": "ABSENT — /run/user/1000/.obsidian-cli.sock not present; ~/.obsidian-cli.sock not present",
+    "app_running": "false — no obsidian/electron43 process in ps -eo pid,comm,args",
+    "filesystem_wide_search": "find /usr /opt /usr/local ~/.local ~/.config -maxdepth 6 -name 'obsidian-cli*' -o -name obsidian -type l -> only /usr/bin/obsidian-cli-inspector and ~/.config/obsidian-cli-inspector (third-party, unrelated)",
+    "pacman_ownership": {
+      "/usr/bin/obsidian": "obsidian 1.13.7-2",
+      "/usr/bin/electron43": "electron43 43.6.0-1",
+      "/usr/bin/obsidian-cli-inspector": "obsidian-cli-inspector 1.0.3-1",
+      "note": "pacman -Ql obsidian lists only /usr/bin/obsidian, /usr/lib/obsidian/{app.asar,obsidian.asar,icon.png,app.asar.unpacked/*}, /usr/share/applications/obsidian.desktop — the Arch package ships NO CLI entry point"
+    },
+    "version_skew": "installed package app.asar is 1.13.7-era; the live payload is the self-updated ~/.config/obsidian/obsidian-1.14.4.asar (obsidian.log: 'Loaded updated app /home/vgpnk/.config/obsidian/obsidian-1.14.4.asar')"
+  },
+  "cli_surface_from_asar": {
+    "note": "handler names extracted read-only from the asar; this is the subcommand vocabulary, observed but NOT executed",
+    "handlers": ["aliases","append","backlinks","command","commands","create","deadends","delete","devtools","diff","eval","file","files","folder","folders","help","hotkey","hotkeys","move","open","orphans","plugin","plugins","prepend","properties","random","read","recents","reload","rename","restart","snippets","tabs","tag","tags","task","tasks","theme","themes","unresolved","vault","vaults","version","workspace"],
+    "internal_handlers": ["__completions","__files","__commands"],
+    "flag_whitelist_in_argv_filter": ["--copy","--help","--json","--md","--tsv","--csv"],
+    "tty_detection": "S = !!process.stdin.isTTY && !!process.stdout.isTTY — interactive TUI mode when a TTY is attached",
+    "vault_selection": "leading `vault=<name>` argv token is stripped and resolved via getIdForVault, else falls back to the last-opened vault"
+  },
+  "adjacent_tools_probed": [
+    {
+      "tool": "obsidian-cli-inspector",
+      "path": "/usr/bin/obsidian-cli-inspector",
+      "sha256": "0522cd2eaeda54da9609d3a121203d3a1241d22bfba770a6cc3039ced9bee9b1",
+      "origin": "third-party (clap/Rust, author 'jingyi zhao', version 1.0.3) — NOT the official Obsidian CLI",
+      "works_readonly": true,
+      "probe": "timeout 5 obsidian-cli-inspector --version -> 'obsidian-cli-inspector 1.0.3' (exit 0); timeout 8 obsidian-cli-inspector view stats -> 'Notes: 3714 / Links: 78 / Tags: 191 / Chunks: 38685 / Unresolved links: 78' (exit 0)",
+      "disqualifier_for_ledger": "its `hash` column is NOT sha256 — `view describe Home` reported Hash: 15ed:1791921146 while sha256sum of that file is 98afa2b81887ca13f1f06243f3f0d1e24cd411d7f9321b332fc998d52ff242a4. Format looks like hex-prefix:mtime. UNUSABLE for the ledger's vault_sha256 cross-check.",
+      "index_staleness": "~/.config/obsidian-cli-inspector/vault.db mtime 2026-10-13 16:52; 76 vault files are newer than the index -> stale",
+      "config": "~/.config/obsidian-cli-inspector/config.toml -> vault_path = \"/home/vgpnk/Documents/shokoknowledge\" (already pointed at the right vault)"
+    },
+    {
+      "tool": "notesmd-cli",
+      "path": "/home/vgpnk/.local/bin/notesmd-cli",
+      "size_bytes": 4808888,
+      "origin": "third-party static Go binary — NOT the official Obsidian CLI",
+      "works_readonly": true,
+      "probe": "timeout 5 /home/vgpnk/.local/bin/notesmd-cli list-vaults -> 'shokoknowledge  /home/vgpnk/Documents/shokoknowledge  (default)' (exit 0)",
+      "caution": "command set includes create/delete/move/daily/frontmatter — WRITE-capable. Only list/print/search/search-content/list-vaults are safe under the read-only rule.",
+      "disqualifier_for_ledger": "no sha256 output surface; not a hash oracle"
+    }
+  ],
+  "fallback_verified": {
+    "path": "sha256sum over /home/vgpnk/Documents/shokoknowledge/**",
+    "works_readonly": true,
+    "probe": "timeout 20 sha256sum <vault>/Home.md <vault>/Welcome.md -> 98afa2b81887ca13f1f06243f3f0d1e24cd411d7f9321b332fc998d52ff242a4 (Home.md), ecd0dfb6b21143ff52cfe36f93636df57e5b21773c101491b86f10ce17556ca8 (Welcome.md); exit 0",
+    "recommendation": "this is the ONLY ledger-capable verification path on this host today; use it for the vault_sha256 side of corpus/knowledge/obsidian-ledger.tsv"
+  },
+  "vault_shape_readonly": {
+    "path": "/home/vgpnk/Documents/shokoknowledge",
+    "total_files": 220,
+    "md_files_top_level_walk": 58,
+    "md_files_following_symlinks": 7680,
+    "symlink_note": "top-level `protocol` is a SYMLINK -> /home/vgpnk/Projects/kimi-shokunin/skills/shokunin/protocol (~7600 md). `find -L` inflates counts ~130x; the inspector's 3714-note index reflects a different walk policy. Any ledger hash walk must decide explicitly whether to follow symlinks.",
+    "git": "vault is a git repo; origin https://github.com/VeigaPunk/shokoknowledge.git; HEAD 27055b8d84f47e740c30bd934dbc687230e04512 (2026-10-13); status shows 2 modified .obsidian files (core-plugins.json, workspace.json) — read-only observation, not touched",
+    "top_level_dirs": ["atlas","audio [game-audio]","game-dev-2d [godot-2d]","game-dev-3d [3d-engines]","kagi [secrets-ops]","kaidoku [reverse-engineering]","kake [web-publishing]","kama [endpoint-health]","kasegi [security-research]","kengaku [llm-research]","kotoba [prompt-craft]","kumitate [orchestration]","lore [world-bible]","protocol","revenger [reverse-engineering]","sources"],
+    "cli_config_inside_vault": "none — no CLI-specific config under the vault or .obsidian/ (community-plugins.json absent)"
+  },
+  "evidence_hashes": {
+    "/usr/bin/obsidian": "0df6f2b28187a84917eaf33e089abe980a407fd4b195d69eab1f2a70ad2234ca",
+    "/home/vgpnk/.config/obsidian/obsidian-1.14.4.asar": "146ef8470d8cbb4a6db209bdc19bf2bad13350444186c0fd93c31087b142b92f",
+    "/home/vgpnk/.config/obsidian/obsidian.json": "bc1b5a3425228889bd351251eae1d29482ab5001d13f739b804b84ad8c3c4496",
+    "/usr/bin/obsidian-cli-inspector": "0522cd2eaeda54da9609d3a121203d3a1241d22bfba770a6cc3039ced9bee9b1",
+    "/home/vgpnk/.config/obsidian/user-flags.conf": "read (95 B): '-disable-gpu', '--enable-wayland-ime'"
+  },
+  "cmds": [
+    "grep -rl 'obsidian-cli' ~/.config/obsidian/ 2>/dev/null -> /home/vgpnk/.config/obsidian/obsidian-1.14.4.asar (ONLY hit; no separate shim file)",
+    "ls -la /usr/local/bin/ | grep -iE 'obsidian|shim' -> (empty)",
+    "ls -la ~/.local/bin/ | grep -iE 'obsidian|shim' -> (empty)",
+    "cat ~/.config/obsidian/obsidian.json -> {\"vaults\":{...},\"cli\":true}",
+    "which -a obsidian obsidian-cli obsidian-cli-inspector -> /usr/bin/obsidian, /usr/bin/obsidian-cli-inspector",
+    "file /usr/bin/obsidian -> Bourne-Again shell script, ASCII text executable (344 B)",
+    "cat /usr/bin/obsidian -> wrapper: exec electron43 /usr/lib/obsidian/app.asar $OBSIDIAN_USER_FLAGS \"$@\"",
+    "file /usr/bin/obsidian-cli-inspector -> ELF 64-bit LSB pie executable, stripped",
+    "ls -la /usr/lib/obsidian/ -> app.asar, app.asar.unpacked, icon.png, obsidian.asar (no obsidian-cli)",
+    "ls -la /usr/lib/electron43/obsidian-cli -> No such file or directory",
+    "ls -la ~/.local/bin/obsidian -> No such file or directory (exit 2)",
+    "grep -aoE '.{100}process.argv0.{100}' <asar> -> u=F.basename(process.argv0),p=u.toLowerCase().includes(\"obsidian\")",
+    "grep -aoE '.{200}Unable to add to command line.{200}' <asar> -> ipcMain.handle(\"register-cli\") ... if(!p) return {success:!1,message:`Unable to add to command line because the executable is \"${u}\" instead of \"obsidian\".`}",
+    "grep -aoE 'let b=F\\.join\\(d,\"obsidian-cli\"\\),k=F\\.join\\(ge\\.homedir\\(\\),\"\\.local\",\"bin\"\\).{0,500}' <asar> -> Linux branch: copyFileSync(obsidian-cli, ~/.local/bin/obsidian) chmod 0o755, else symlinkSync(execPath,...)",
+    "grep -aoE '.{60}\\.obsidian-cli\\.sock.{60}' <asar> -> T=F.join(!W&&process.env.XDG_RUNTIME_DIR||ge.homedir(),\".obsidian-cli.sock\"); if(!l.app.requestSingleInstanceLock()){...createConnection(T)...t.write(JSON.stringify({argv:g,tty:S,cwd:process.cwd()})+\"\\n\")}",
+    "grep -aoE '.{100}Command line interface is not enabled.{60}' <asar> -> if(!C.cli) return \"Command line interface is not enabled. Please turn it on in Settings > General > Advanced.\"",
+    "grep -aoE 'registerHandler\\(\"[a-zA-Z0-9_-]+\"' <asar> | sort -u -> 45 handler names (listed in cli_surface_from_asar)",
+    "ls -la /run/user/1000/ | grep -i obsidian -> (empty); ls -la ~/.obsidian-cli.sock -> No such file or directory",
+    "ps -eo pid,comm,args | grep -iE 'obsidian|electron' | grep -v grep -> no obsidian process",
+    "pacman -Qo /usr/bin/obsidian /usr/bin/electron43 /usr/bin/obsidian-cli-inspector -> obsidian 1.13.7-2 / electron43 43.6.0-1 / obsidian-cli-inspector 1.0.3-1",
+    "pacman -Ql obsidian | grep -iE 'bin|cli' -> only 'obsidian /usr/bin/' and 'obsidian /usr/bin/obsidian'",
+    "timeout 5 obsidian-cli-inspector --version -> obsidian-cli-inspector 1.0.3 (exit 0)",
+    "timeout 8 obsidian-cli-inspector view stats -> Notes: 3714, Links: 78, Tags: 191, Chunks: 38685, Unresolved links: 78 (exit 0)",
+    "timeout 8 obsidian-cli-inspector view describe Home -> Hash: 15ed:1791921146 (NOT sha256)",
+    "timeout 5 /home/vgpnk/.local/bin/notesmd-cli list-vaults -> shokoknowledge  /home/vgpnk/Documents/shokoknowledge  (default) (exit 0)",
+    "timeout 20 sha256sum <vault>/Home.md <vault>/Welcome.md -> 98afa2b8... / ecd0dfb6... (exit 0)",
+    "find <vault> -type f -name '*.md' | wc -l -> 58 ; find -L <vault> -type f -name '*.md' | wc -l -> 7680",
+    "git -C <vault> status --porcelain -> ' M .obsidian/core-plugins.json', ' M .obsidian/workspace.json'",
+    "sha256sum /usr/bin/obsidian <asar> ~/.config/obsidian/obsidian.json /usr/bin/obsidian-cli-inspector -> hashes in evidence_hashes"
+  ],
+  "not_verified": [
+    "`obsidian <subcommand>` was NEVER executed — the assignment forbids it and doing so would spawn the GUI (confirmed by the earlier probe note: 'obsidian --version launches the app'). Its runtime behavior is therefore read from the asar, not observed. Marked NOT-VERIFIED-BY-EXECUTION.",
+    "Whether `~/.local/bin/obsidian` would work if created: the copy branch needs /usr/lib/electron43/obsidian-cli (absent) and the symlink branch needs argv0 to contain 'obsidian' at Register time (it would be 'electron'). Both untested because Register requires GUI interaction.",
+    "The TUI mode, the `--json/--md/--tsv/--csv` output formats, and per-subcommand schemas are read from strings only — no output was observed."
+  ],
+  "disagreements": [],
+  "conflicts": [],
+  "safety": {
+    "read_only": true,
+    "executed_gui_launcher": "never — /usr/bin/obsidian and the `obsidian` command were not run at any point",
+    "vault_writes": "none — vault touched only via ls/find/stat/git-status/sha256sum",
+    "vault_untouched_proof": "only read commands issued; no mkdir/touch/rm/write under /home/vgpnk/Documents/shokoknowledge",
+    "inspector_invocation": "read-only subcommands only (view stats, view describe, search notes); no `init`/`index` (which write vault.db)",
+    "notesmd_cli_invocation": "read-only subcommand only (list-vaults); no create/delete/move",
+    "secrets": "no .env/credential/secret-shaped file read; obsidian.json contains only vault paths and flags",
+    "git_mutations": "none",
+    "writes": "only census/round-4/seat-06.json"
+  },
+  "handoff_for_parent": {
+    "decisive": "There is NO shim and NO separate official CLI binary on this host. The official CLI is the same Electron binary acting as a second-instance socket client of the running app. `obsidian <subcommand>` therefore currently resolves to /usr/bin/obsidian, whose argv0 is 'electron' and whose job is to launch the GUI.",
+    "blocker": "The CLI is unusable here for two independent reasons: (1) the shim ~/.local/bin/obsidian was never created — /usr/lib/electron43/obsidian-cli is absent so the copy branch cannot fire, and argv0='electron' fails the Register gate anyway; (2) even with a shim, the CLI requires a RUNNING app instance — with no instance, the lock succeeds and the process opens the GUI instead of answering.",
+    "recommended_ledger_path": "sha256sum fallback (verified working, read-only) for the vault_sha256 side of corpus/knowledge/obsidian-ledger.tsv. Do NOT use obsidian-cli-inspector for hashes — its hash column is 15ed:1791146-style, not sha256.",
+    "if_the_CLI_is_wanted_later": "Operator-side actions required: (a) start the Obsidian app, (b) create the shim manually — `mkdir -p ~/.local/bin && ln -sf /usr/lib/electron43/electron ~/.local/bin/obsidian` (or fix argv0 by invoking through a copy/symlink named `obsidian`) — then Settings > General > Advanced > Register. Both are operator-owned; souji must not perform them.",
+    "symlink_caveat_for_any_hash_walk": "top-level `protocol` is a symlink into /home/vgpnk/Projects/kimi-shokunin; find -L inflates the vault md count from 58 to 7680. The ledger walk must state its symlink policy explicitly.",
+    "round_implication": "The r4 planned capability ('ledger-backed moved-to-obsidian verification via the official CLI') cannot use the CLI on this host; it must ship as the sha256sum fallback, with the CLI path recorded as blocked/operator-gated."
+  }
+}
