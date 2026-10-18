@@ -1,0 +1,396 @@
+{
+  "seat": "S64",
+  "role": "final-judge (identical independent battery)",
+  "round": 2,
+  "lane": "souji-shokunin",
+  "date": "2026-10-18",
+  "written_at": "2026-10-18T13:03:59-03:00",
+  "mode": "read-only judge; no live-tree writes; every fixture built under a private mktemp scratch dir and removed afterwards",
+  "artifact": {
+    "path": "tools/souji-verify.sh",
+    "sha256": "586bc36c6039b9c9bf5846b85156b02dd3daa6f594c03d6ba474a9c71f2fc812",
+    "size_bytes": 29139,
+    "mode": "755",
+    "mtime": "2026-10-18T13:00:00-03:00",
+    "spec": "tools/souji-verify.spec.md",
+    "spec_sha256": "59b2ba61cf4ecb82e81d37b58c9c2ca436995c288a1a97a878c5bd65d350c067",
+    "stability": "160 s unchanged at 13:02:47; sha identical before and after the pinned battery (13:03:59 re-check)",
+    "version_history_observed": [
+      {
+        "sha256": "268042e7e40f538e022125a69b562660c7d83ea3bab3dea1a504251c32198ab8",
+        "size": 25837,
+        "first_seen": "12:51:42",
+        "selftest": "FAIL 16 pass / 2 fail, exit 1",
+        "status": "superseded (defects J1-J3 below)"
+      },
+      {
+        "sha256": "d32bac5d8ae8c66930418edb8e0b9f064109a00866b87ae1baaa3156dd36c077",
+        "size": 28961,
+        "first_seen": "12:55:17",
+        "selftest": "PASS 26/26",
+        "status": "superseded (J1-J3 fixed)"
+      },
+      {
+        "sha256": "d7edd71df33b4c3ed2b65e7cc4853bc0fb915873efba1ea458e6069d5398a19f",
+        "size": 29107,
+        "mode": "755",
+        "first_seen": "12:57:43",
+        "selftest": "PASS 26/26 x2, normalized-identical",
+        "status": "superseded"
+      },
+      {
+        "sha256": "023c4561324a3998203fe38c1aefc138e263668b18178f2e4da7ec0766a15293",
+        "size": 29128,
+        "first_seen": "12:59:27",
+        "selftest": "not re-tested (superseded within 20 s)",
+        "status": "superseded"
+      },
+      {
+        "sha256": "92c44558bfe79d790b33c4e26fbc0abae1ffc1f9ce348e52c6db0083b409c234",
+        "size": 29129,
+        "first_seen": "12:59:47",
+        "selftest": "not separately re-tested (diff v3->this = worktree-index fix, J4)",
+        "status": "superseded"
+      },
+      {
+        "sha256": "586bc36c6039b9c9bf5846b85156b02dd3daa6f594c03d6ba474a9c71f2fc812",
+        "size": 29139,
+        "first_seen": "13:00:07",
+        "selftest": "PASS 26/26 x2, exit 0, normalized-identical",
+        "status": "JUDGED"
+      }
+    ]
+  },
+  "verdict": {
+    "value": "PASS",
+    "scope": "artifact sha 586bc36c at 13:03:59, judged against tools/souji-verify.spec.md",
+    "summary": "All spec fixture cases F1-F10 pass inside the tool's selftest (26/26, twice, deterministic). My independent battery - 12 own fixtures, 10 live read-only targets, 6 fleet-authored fixture cases, exit-code contract, JSON mode, canary and read-only checks - all pass. Four defects found in earlier, now-superseded versions (J1-J4) are fixed in the judged artifact; residual /tmp pollution from those versions is listed for lane cleanup.",
+    "conditions": [
+      "Interpretation used: the '~/.config' rail forbids writes/alterations of operator config. Git's inert O_RDONLY probe of ~/.config/git/config (strace-verified: no write, no secret read) is not counted as a failure. Under the strict 'no access at all' reading this single finding would flip the verdict to FAIL; see spec_conformance_notes O7 and peer_judge_reconciliation."
+    ]
+  },
+  "gates": [
+    {
+      "id": "G0-syntax",
+      "cmd": "bash -n tools/souji-verify.sh",
+      "expected": "exit 0",
+      "observed": "exit 0",
+      "pass": true
+    },
+    {
+      "id": "G1-selftest",
+      "cmd": "bash tools/souji-verify.sh --selftest (twice)",
+      "expected": "exit 0, all fixture cases pass, deterministic",
+      "observed": "exit 0 both runs; SELFTEST SUMMARY pass=26 fail=0; 0 FAIL lines; outputs identical after normalizing the mktemp path",
+      "pass": true
+    },
+    {
+      "id": "G2-exit-codes",
+      "cmd": "no args; --stale-days bogus X; --stale-days (no value); -x; --stale-days=abc X; clean eval; missing target",
+      "expected": "2,2,2,2,2 then 0,0",
+      "observed": "2,2,2,2,2 then 0,0",
+      "pass": true
+    },
+    {
+      "id": "G3-live-targets",
+      "cmd": "see live_targets[].target; expected values independently derived with read-only git/rg/stat before/after each run",
+      "expected": "all 10 match",
+      "observed": "10/10 match (see live_targets)",
+      "pass": true
+    },
+    {
+      "id": "G4-own-fixtures",
+      "cmd": "plumbing-built repos and trees under mktemp scratch, SHOKUNIN_ROOT isolated per fixture",
+      "expected": "all 12 match",
+      "observed": "12/12 match (see own_fixtures)",
+      "pass": true
+    },
+    {
+      "id": "G5-json-and-stale-days",
+      "cmd": "bash tools/souji-verify.sh --json <pushed> <local-only>; --stale-days 100000 <old scratch>; --stale-days=0 <old scratch>",
+      "expected": "2 valid JSON objects (SAFE pushed / NOT-SAFE none); NOT-SAFE under 100000; SAFE(stale) under 0",
+      "observed": "lines=2, json.loads valid, SAFE/pushed + NOT-SAFE/none; stale-100k -> NOT-SAFE(none); stale-days=0 -> SAFE(stale refs=0)",
+      "pass": true
+    },
+    {
+      "id": "G6-f10-canary",
+      "cmd": "bash tools/souji-verify.sh tests/fixtures/case-F10/{app.env,creds.pem,notes.txt}",
+      "expected": "both secrets NOT-SAFE(secrets-refusal); notes.txt never secrets-refusal; no canary in stdout/stderr; exit 0",
+      "observed": "app.env/creds.pem NOT-SAFE(secrets-refusal); notes.txt NOT-SAFE(none); no SOUJI-F10-CANARY substring in output; exit 0",
+      "pass": true
+    },
+    {
+      "id": "G7-determinism",
+      "cmd": "same two-target evaluation run twice, cmp",
+      "expected": "byte-identical",
+      "observed": "byte-identical; selftest normalized-identical",
+      "pass": true
+    },
+    {
+      "id": "G8-read-only",
+      "cmd": "sha256 snapshot of every fixture file before/after; /tmp/souji-wt-index.* count delta across 5 worktree-target runs; code audit of write paths",
+      "expected": "no fixture change; no temp-file growth; writes only under mktemp",
+      "observed": "fixtures_snapshot_same=yes; leak delta=0 over 5 runs; code writes only mktemp paths (worktree index, selftest fixture) and removes them via the EXIT trap",
+      "pass": true
+    },
+    {
+      "id": "G9-fleet-fixtures",
+      "cmd": "fleet-authored tests/fixtures case-F1..F5, case-F9 built into /tmp and evaluated",
+      "expected": "F1 SAFE(pushed)+NOT-SAFE(none); F2 same; F3 NOT-SAFE(unpushed-dirty unpushed=2 dirty=1); F4 SAFE(metadata-prune); F5 NOT-SAFE(unpushed-branch unpushed=1); F9 SAFE(pushed)",
+      "observed": "all six match exactly",
+      "pass": true
+    }
+  ],
+  "live_targets": [
+    {
+      "id": "kotodama-repo-root",
+      "target": "/home/vgpnk/Projects/shokunin/kotodama-shokunin",
+      "expected": "NOT-SAFE, evidence unpushed=N dirty=M",
+      "observed_line": "VERDICT\t/home/vgpnk/Projects/shokunin/kotodama-shokunin\tNOT-SAFE\tunpushed\tunpushed=41 dirty=0",
+      "independent": "git log --all --not --remotes --oneline | wc -l = 41; git status --porcelain | wc -l = 0; HEAD-unpushed = 41 (exact match). Counts drift during the round (38/22 at 12:53, 39/0 at 12:58, 41/0 at 13:03) because kotodama's own round is writing; the NOT-SAFE verdict is stable.",
+      "pass": true
+    },
+    {
+      "id": "kotodama-scratch",
+      "target": "/home/vgpnk/Projects/shokunin/kotodama-shokunin/.scratch",
+      "expected": "NOT-SAFE",
+      "observed_line": "VERDICT\t/home/vgpnk/Projects/shokunin/kotodama-shokunin/.scratch\tNOT-SAFE\tnone\tuntracked repo=... ledger=miss scratch=no mtime_age_days=0",
+      "pass": true
+    },
+    {
+      "id": "fleet-pushed-file",
+      "target": "/home/vgpnk/Projects/shokunin/.ufo/interactive-l1-20261015T050057Z/launch-chousa.json",
+      "expected": "SAFE(pushed)",
+      "observed_line": "VERDICT\t.../launch-chousa.json\tSAFE\tpushed\tintro=b2f2efae7549 default=refs/remotes/origin/master repo=/home/vgpnk/Projects/shokunin",
+      "independent": "intro full sha b2f2efae7549c6692d9af6dcea9f9d9c5d797e9d; git merge-base --is-ancestor <intro> refs/remotes/origin/master = YES (origin/master 35b17a6)",
+      "pass": true
+    },
+    {
+      "id": "lore-worktree-r87-B1",
+      "target": "/tmp/r87-B1",
+      "expected": "SAFE(metadata-prune)",
+      "observed_line": "VERDICT\t/tmp/r87-B1\tSAFE\tmetadata-prune\towner=/home/vgpnk/Projects/shokunin/lore-shokunin head=28706dc73a9b unique=0 dir=absent",
+      "independent": "dir absent; git -C lore-shokunin log --oneline 28706dc73a9b --not --all | wc -l = 0; worktree list --porcelain lists the path (19 prunable entries total)",
+      "pass": true
+    },
+    {
+      "id": "gd2d-worktree-wt-r100",
+      "target": "/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r100",
+      "expected": "NOT-SAFE(unpushed-branch)",
+      "observed_line": "VERDICT\t...wt-r100\tNOT-SAFE\tunpushed-branch\towner=...game-dev-2d-shokunin branch=wt-r100 unpushed=1",
+      "independent": "git log --oneline refs/heads/wt-r100 --not --remotes | wc -l = 1",
+      "pass": true
+    },
+    {
+      "id": "gd2d-worktree-r80",
+      "target": "/home/vgpnk/Projects/shokunin/r80-baseline-frozen-worktree",
+      "expected": "SAFE(metadata-prune)",
+      "observed_line": "VERDICT\t...r80-baseline-frozen-worktree\tSAFE\tmetadata-prune\thead=d9320ddf339a unique=0 dir=absent",
+      "independent": "dir absent; unique = 0",
+      "pass": true
+    },
+    {
+      "id": "gd2d-worktree-r81",
+      "target": "/tmp/r81-frozen",
+      "expected": "SAFE(metadata-prune)",
+      "observed_line": "VERDICT\t/tmp/r81-frozen\tSAFE\tmetadata-prune\thead=27f465c67995 unique=0 dir=absent",
+      "independent": "dir absent; unique = 0",
+      "pass": true
+    },
+    {
+      "id": "lane-census-tsv",
+      "target": "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-1/census.tsv",
+      "expected": "SAFE(pushed) (D1 local-master fallback; the lane has no refs/remotes at all)",
+      "observed_line": "VERDICT\t...census/round-1/census.tsv\tSAFE\tpushed\tintro=652b6f8f1a27 default=refs/heads/master repo=.../souji-shokunin",
+      "independent": "intro 652b6f8f1a279d2d977f2db208384ca5179994b1; ancestor of refs/heads/master (ab7f2f7) = YES. Note O1: this is spec-prescribed fallback, not remote-publication proof.",
+      "pass": true
+    },
+    {
+      "id": "lane-repo-root",
+      "target": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+      "expected": "NOT-SAFE(unpushed-dirty)",
+      "observed_line": "VERDICT\t.../souji-shokunin\tNOT-SAFE\tunpushed-dirty\tunpushed=4 dirty=2",
+      "independent": "git log --all --not --remotes --oneline | wc -l = 4; git status --porcelain = 2 (untracked tests/, tools/)",
+      "pass": true
+    },
+    {
+      "id": "case-f9-repo",
+      "target": "tests/fixtures/case-F9/repo/pushed-file.txt",
+      "expected": "SAFE(pushed) (origin/HEAD absent, single origin ref)",
+      "observed_line": "VERDICT\t.../case-F9/repo/pushed-file.txt\tSAFE\tpushed\tintro=f16d67eb7233 default=refs/remotes/origin/master",
+      "independent": "matches case-F9/expected.json",
+      "pass": true
+    }
+  ],
+  "own_fixtures": [
+    {
+      "id": "A-pushed",
+      "fixture": "repo with refs/remotes/origin/HEAD -> origin/master; file introduced by the origin tip",
+      "target": "pushed.txt",
+      "expected": "SAFE(pushed)",
+      "observed_line": "VERDICT\t<scratch>/repo-A/pushed.txt\tSAFE\tpushed\tintro=371b5aa08eac default=refs/remotes/origin/master",
+      "pass": true
+    },
+    {
+      "id": "B-local-only",
+      "fixture": "second commit introduces the file; origin/master points at the first commit",
+      "target": "local-only.txt",
+      "expected": "NOT-SAFE(none or pushed-unverifiable)",
+      "observed_line": "VERDICT\t<scratch>/repo-B/local-only.txt\tNOT-SAFE\tnone\tintro=7391ec1dd213 default=refs/remotes/origin/master not-ancestor refs=n/a",
+      "pass": true
+    },
+    {
+      "id": "C-single-origin-ref",
+      "fixture": "no origin/HEAD, exactly one origin ref refs/remotes/origin/main, no local master",
+      "target": "pushed-file.txt",
+      "expected": "SAFE(pushed) via D1 single-origin fallback",
+      "observed_line": "VERDICT\t<scratch>/repo-C/pushed-file.txt\tSAFE\tpushed\tintro=3cbc8e91a335 default=refs/remotes/origin/main",
+      "pass": true
+    },
+    {
+      "id": "F6-ledger-discovered",
+      "fixture": "ledger row (source path + source sha256 + vault path + vault sha256), ledger found via SHOKUNIN_ROOT/corpus/knowledge",
+      "expected": "SAFE(moved-to-obsidian)",
+      "observed_line": "VERDICT\t<scratch>/fleet/f6/source.md\tSAFE\tmoved-to-obsidian\tledger=.../obsidian-ledger.tsv src_sha256=25f8c0cbf065 vault=.../vault/f6/source.md",
+      "pass": true
+    },
+    {
+      "id": "F6-ledger-explicit",
+      "fixture": "same row via SOUJI_LEDGER override",
+      "expected": "SAFE(moved-to-obsidian)",
+      "observed": "SAFE(moved-to-obsidian), identical evidence shape",
+      "pass": true
+    },
+    {
+      "id": "F6-ledger-negative",
+      "fixture": "row present but vault_sha256 tampered",
+      "expected": "NOT-SAFE (ledger miss)",
+      "observed_line": "VERDICT\t<scratch>/fleet/f6/source.md\tNOT-SAFE\tnone\tno-repo ledger=miss scratch=no mtime_age_days=0",
+      "pass": true
+    },
+    {
+      "id": "F7-stale-census-decoy",
+      "fixture": ".scratch file, mtime 3 days, basename mentioned only in souji-shokunin/census/round-2/seat-decoy.json",
+      "expected": "SAFE(stale) refs=0 (D3)",
+      "observed_line": "VERDICT\t<scratch>/fleet2/.scratch/stale-probe-s64.out\tSAFE\tstale\tmtime_age_days=3 refs=0 scratch-type=yes",
+      "independent_control": "raw rg without exclusions lists ./souji-shokunin/census/round-2/seat-decoy.json, so the exclusion is load-bearing and not vacuous",
+      "pass": true
+    },
+    {
+      "id": "F7-clean-control",
+      "fixture": "same shape with no other reference",
+      "expected": "SAFE(stale) refs=0",
+      "observed_line": "VERDICT\t<scratch>/fleet3/.scratch/stale-probe-clean.out\tSAFE\tstale\tmtime_age_days=3 refs=0",
+      "pass": true
+    },
+    {
+      "id": "F8-live-reference-control",
+      "fixture": "same shape, basename genuinely mentioned in notes.md outside the excluded dirs",
+      "expected": "NOT-SAFE (stale refused)",
+      "observed_line": "VERDICT\t<scratch>/fleet2b/.scratch/stale-probe-live.out\tNOT-SAFE\tnone\t... scratch=yes mtime_age_days=3",
+      "pass": true
+    },
+    {
+      "id": "secrets-basename",
+      "fixture": "empty file named app.env",
+      "expected": "NOT-SAFE(secrets-refusal)",
+      "observed_line": "VERDICT\t<scratch>/fleet/probe/app.env\tNOT-SAFE\tsecrets-refusal\tbasename-rule short-circuit (no read)",
+      "pass": true
+    },
+    {
+      "id": "secrets-dotenv-path-component",
+      "fixture": "ordinary control.txt inside a directory literally named .env",
+      "expected": "NOT-SAFE(secrets-refusal)",
+      "observed_line": "VERDICT\t<scratch>/fleet/probe2/.env/control.txt\tNOT-SAFE\tsecrets-refusal\tbasename-rule short-circuit (no read)",
+      "pass": true
+    },
+    {
+      "id": "unreachable",
+      "fixture": "missing path and empty-string target",
+      "expected": "NOT-SAFE(unreachable), exit 0",
+      "observed_line": "VERDICT\t<path>\tNOT-SAFE\tunreachable\tmissing-target | empty-target (exit 0 both)",
+      "pass": true
+    }
+  ],
+  "defects_found": [
+    {
+      "id": "J1",
+      "artifact": "268042e7 (v1, superseded)",
+      "severity": "selftest-failing; D3 regression",
+      "title": "D3 census exclusion inert: rg options placed after --",
+      "evidence": "v1 selftest F8 FAIL: observed NOT-SAFE(none) ... scratch=yes mtime_age_days=290 (sweep counted the census decoy). Root cause: rg was invoked as `... -- \"$name\" . -g '!souji-shokunin/census/**' ...`, so after `--` the -g flags and globs became positional paths; rg exits 2 ('-g: No such file or directory') and no exclusion applies. Reproduced standalone.",
+      "status": "fixed in d32bac5d: globs moved before -- plus literal-relative-path post-filter; verified by F7-census-decoy and the raw-rg control on the judged sha"
+    },
+    {
+      "id": "J2",
+      "artifact": "268042e7 (v1, superseded)",
+      "severity": "selftest harness defect",
+      "title": "JSON-mode selftest case never tested JSON",
+      "evidence": "v1 called `cli_check JSON-mode 0 -- --json <path>`; the `--` turned --json into a target, so the case emitted plain VERDICT lines and FAILed. Same pattern made EXIT-usage/EXIT-usage-noval vacuous.",
+      "status": "fixed in d32bac5d (calls now pass --json / --stale-days directly); judged sha's JSON-mode passes with a valid JSON object"
+    },
+    {
+      "id": "J3",
+      "artifact": "268042e7 (v1, superseded)",
+      "severity": "selftest harness defect",
+      "title": "cli_check counters/output trapped in command substitution",
+      "evidence": "v1 wrapped cli_check in $(...); st_pass/st_fail increments died in the subshell, so EXIT-usage failures were counted nowhere and never printed (v1 summary showed only 2 of the real 4 failures).",
+      "status": "fixed in d32bac5d (CLI_OUT/CLI_CODE globals; plain calls)"
+    },
+    {
+      "id": "J4",
+      "artifact": "v1-v4 (fixed by 92c44558, kept in 586bc36c)",
+      "severity": "hygiene/temp-leak",
+      "title": "worktree index temp file leaked per worktree-target run",
+      "evidence": "`row=$(worktree_row_for ...)` ran in a subshell; WORKTREE_INDEX/CLEANUP_PATHS updates were lost, so `mktemp /tmp/souji-wt-index.XXXXXX` was never cleaned. 2107 such files existed, created 12:51-13:00 (peak 429/min during the parallel wave). Judged sha: 5 worktree-target runs added 0 files (delta=0); the v3->92c44558 diff replaces the subshell call with a WT_ROW global.",
+      "status": "fixed; ~2126 pre-fix files remain in /tmp (plus 154 other /tmp/souji-* fixture-builder dirs) - cleanup candidates for the lane, not the tool"
+    }
+  ],
+  "spec_conformance_notes": [
+    "O1 calibration risk (spec-prescribed, not a tool defect): when a repo has no refs/remotes/origin/* at all, D1 falls back to local refs/heads/master, so lane-repo files receive SAFE(pushed) from local ancestry alone (observed: census/round-1/census.tsv, default=refs/heads/master). The evidence field discloses the ref used, but 'pushed' here is not remote-publication proof.",
+    "O2 `--selftest` with target arguments prints a warning to stderr and ignores the targets; exit code unaffected. CLI grammar in the spec permits paths alongside --selftest.",
+    "O3 secrets refusal is a conservative superset of the spec rule (basename match is case-insensitive; a path component literally '.env' also refuses). No read is attempted: short-circuit precedes realpath/stat.",
+    "O4 exit 1 on 'evaluation error' is implemented via an internal-error guard (empty verdict or nonzero classify rc -> NOT-SAFE(none, internal-error) and exit 1). Not triggerable by any natural target in this battery; verified by code audit only.",
+    "O5 verdict line is exactly 5 tab-separated fields; --json emits one JSON object per target and validates with json.loads.",
+    "O6 worktree ordering matches F5/round-1 semantics: named-branch unpushed check precedes the dir-absent unique=0 prune rule.",
+    "O7 ~/.config access (judgment call, cross-judge disagreement): evaluate mode leaves git's global config probe enabled, so git opens /home/vgpnk/.config/git/config O_RDONLY on every run (strace-confirmed on the judged sha). There are no writes to ~/.config, no secret-shaped reads, and no forbidden git verbs. I read the rail as 'never write/alter ~/.config'; peer final-62.json (judged sha d32bac5d) read it as 'never access at all' and FAILed on this. Mitigation if the strict reading is adopted: export GIT_CONFIG_GLOBAL=/dev/null (and set GIT_ATTR/XDG overrides as needed) in evaluate mode as the selftest already does."
+  ],
+  "environment": {
+    "host_date": "2026-10-18",
+    "rg": "ripgrep 15.2.0",
+    "bash": "5.3.15(1)-release",
+    "git": "/usr/bin/git",
+    "kernel_tools": "coreutils (realpath, sha256sum, mktemp, stat)"
+  },
+  "safety_strace": {
+    "tool_sha": "586bc36c6039b9c9bf5846b85156b02dd3daa6f594c03d6ba474a9c71f2fc812",
+    "method": "strace -f -e trace=openat,open,openat2,creat,unlink,unlinkat,rename,renameat,renameat2,mkdir,mkdirat,rmdir over one evaluate run: /tmp/r87-B1 (worktree) + secret probe + ledger file + stale file",
+    "secret_shaped_read_opens": "none",
+    "write_or_mutation_outside_tmp": "none",
+    "forbidden_git_verbs": "none; subcommands observed: log, merge-base, rev-parse, status, symbolic-ref, worktree",
+    "config_reads": "git opens /home/vgpnk/.config/git/config O_RDONLY (git's normal global-config probe; evaluate mode does not set GIT_CONFIG_GLOBAL). Read-only; no write, no secret content.",
+    "selftest_hermeticity": "selftest exports GIT_CONFIG_GLOBAL=/dev/null and GIT_CONFIG_SYSTEM=/dev/null, so fixture git runs are config-hermetic."
+  },
+  "peer_judge_reconciliation": {
+    "final-62.json": {
+      "verdict": "FAIL",
+      "judged_sha": "d32bac5d8ae8c66930418edb8e0b9f064109a00866b87ae1baaa3156dd36c077",
+      "its_positive_results": "hard cases 26/26, CLI probes 9/9, determinism identical, live 6/6",
+      "deciding_finding": "safety.run[0].pass_=false because strace shows git opening /home/vgpnk/.config/git/config (strict 'never touch ~/.config' reading). Its selftest-run 'writes outside /tmp' list is fixture .git paths under the mktemp tree (relative-path resolution artifact), not lane writes.",
+      "status_here": "The same read-only config probe exists on the judged sha 586bc36c (independently strace-confirmed). I did not treat it as a failure; see verdict.conditions and O7. If the operator adopts the strict reading, this is the only open finding and a GIT_CONFIG_GLOBAL/GIT_ATTR hermeticity change would resolve it; the rest of its FAIL does not reproduce on the judged sha (its 26 hard cases and 9 probes all pass there too)."
+    },
+    "other_final_files_seen": "final-57/58/59/60/61/63 present at write time; only final-62 declared FAIL, on an older sha."
+  },
+  "reproduce": {
+    "note": "Judge scratch (fixtures, selftest and battery logs, harness script) was a private mktemp dir: /tmp/s64-judge.9EVN2q (mktemp -d; removable with rm -rf at any time; not part of the lane). Fixtures are rebuilt by the commands below; nothing outside /tmp is written.",
+    "commands": [
+      "sha256sum tools/souji-verify.sh  # expect 586bc36c...",
+      "bash tools/souji-verify.sh --selftest ; echo $?  # expect 0, SUMMARY pass=26 fail=0",
+      "bash tools/souji-verify.sh /home/vgpnk/Projects/shokunin/kotodama-shokunin  # expect NOT-SAFE unpushed=* dirty=*",
+      "bash tools/souji-verify.sh /home/vgpnk/Projects/shokunin/.ufo/interactive-l1-20261015T050057Z/launch-chousa.json  # expect SAFE(pushed)",
+      "bash tools/souji-verify.sh /tmp/r87-B1  # expect SAFE(metadata-prune)",
+      "bash tools/souji-verify.sh --stale-days bogus X ; echo $?  # expect 2",
+      "bash tools/souji-verify.sh --json <file>  # expect one JSON object per target"
+    ]
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "case": "F7",
+  "schema": "souji-verify-fixture/1",
+  "spec_fixture_line": "F7 scratch file, no refs, old mtime → SAFE(stale)",
+  "intent": "A scratch-typed file with zero live references and an mtime older than --stale-days must earn SAFE(stale).",
+  "target": ".scratch/stale-probe-f7.tmp",
+  "target_relative_to": "fixture repo root",
+  "stale_days": 1,
+  "mtime_age_days": 3,
+  "expect": {
+    "verdict": "SAFE",
+    "receipt": "stale"
+  },
+  "verdict": "SAFE",
+  "receipt": "stale",
+  "targets": [
+    ".scratch/stale-probe-f7.tmp"
+  ],
+  "compat_note": "verdict/receipt/targets mirror expect.* and target so a loader written for the F1–F6 shape (targets[] + expect[]) or the F9 shape (target + verdict + receipt) reads this case unchanged; targets are relative to the fixture repo root.",
+  "build": {
+    "materialize": "bash setup.sh <fixture-repo-root>; this also runs `git init -q -b master` on the root when it is not already a repository (idempotent, offline, no commits), so the target sits inside a repo even when the case is invoked directly instead of by a harness",
+    "entry_point_fixture_contract": "bash make-fixture.sh [--out] [OUT_DIR] materializes the case, then prints on stdout line 1 = the JSON contract {case,root,targets,expect} and a final line = `FIXTURE_READY <case> <absolute target path>`",
+    "copy": "repo-tree/. is copied verbatim into <fixture-repo-root>, paths preserved",
+    "files": [
+      {
+        "path": ".scratch/stale-probe-f7.tmp",
+        "bytes": 177,
+        "sha256": "2d88d97e1fd66c5a4854abeebbc848780d0b524ab9ba22901e4e0c00618ae08a",
+        "mtime_age_days": 3,
+        "why": "the target under test; sits inside .scratch/ so it is scratch-typed, names itself nowhere"
+      },
+      {
+        "path": ".scratch/.gitignore",
+        "bytes": 14,
+        "sha256": "240a3e0d37d2e86b614063f5347eb02d4f99ca6c254de6b82871ff8d95532a7d",
+        "mtime_age_days": 0,
+        "why": "keeps the scratch file unstaged under `git add -A` so the pushed receipt cannot mask the stale branch"
+      },
+      {
+        "path": "notes.md",
+        "bytes": 289,
+        "sha256": "57a53850ed16e337ad1b8aa7433d79ba20691eabaaa5986f736aef9e4a57f358",
+        "mtime_age_days": 0,
+        "why": "seed file only; gives the fixture repo a first commit so git plumbing behaves like a real lane repo"
+      }
+    ],
+    "git": "leave .scratch/stale-probe-f7.tmp untracked: never `git add -f` it and never commit it. With an introducing commit reachable from a default branch the pushed receipt would fire first and the expected verdict would become SAFE(pushed)."
+  },
+  "references": {
+    "with_spec_exclusions": 0,
+    "without_exclusions": 0,
+    "command_with_exclusions": "cd <fixture-repo-root> && rg -l --no-ignore --fixed-strings stale-probe-f7.tmp . -g '!.git' -g '!souji-shokunin/census/**' -g '!souji-shokunin/tests/**' -g '!**/.ufo-quarantine/**'",
+    "command_without_exclusions": "cd <fixture-repo-root> && rg -l --no-ignore --fixed-strings stale-probe-f7.tmp . -g '!.git'",
+    "measured": "2026-10-18"
+  },
+  "scratch_class": "the binding spec lists `.scratch/`, `*.out`, `*.log`, checkpoint json/png and `*-draft.*` as scratch types; `.tmp` alone is not one, so the scratch class is carried by the `.scratch/` path component and the filename stays `stale-probe-*.tmp`",
+  "notes": [
+    "Materialize only repo-tree/. Never copy this case directory (or expected.json/setup.sh) into the swept fixture repo: those files name the target basename by design and would count as live references unless they land under an excluded path such as souji-shokunin/tests/**.",
+    "mtime is set relative to run time (now - 3*86400 s), so the case stays deterministic on every run; --stale-days 1 is the default threshold used by the spec.",
+    "The target's content never contains its own basename, so it cannot self-pollute the reference sweep.",
+    "If the tool's sweep is invoked with an absolute search root, the literal glob -g '!souji-shokunin/census/**' does not fire in ripgrep 15.2.0 (measured); this case does not depend on that, F8 does."
+  ]
+}

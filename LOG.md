@@ -88,3 +88,33 @@ was not in `~/.local/bin` or `/usr/local/bin` at probe time (to-verify:
 `obsidian-cli-inspector`, and the real entry point — first claim of the
 integration task). Until then, vault-side receipt checks fall back to
 read-only `sha256sum` under the vault path.
+
+## 2026-10-18 — round 2 admitted (claim: operability)
+
+**Claim O1.** tools/souji-verify.sh per spec tools/souji-verify.spec.md
+(D1–D3 fixes), NOT-SAFE on kotodama, fixture self-test. Verified; no axis
+harmed.
+
+**Dispatch.** 64 seats on opencode-go-6 (8 fixture authors, 8 implementors,
+16 runners, 8 reviewers, 8 adversarial, 8 compliance, 8 final judges); 49
+completed / 15 failed on staggered waits — redundancy covered all critical
+roles. ~40 min.
+
+**Measurement.** Runner matrices: impl-11..16 at 11/11; impl-09/10 at 9/11.
+Review probes (36/impl): 11 false-SAFE on unpushed-branch worktrees, 15
+false-SAFE on stale-live, 10 selftest exit≠0 — all disqualified. impl-09
+also failed F7/F8 in runners despite a 60/60 review. Parent harness:
+selftest exit 0 + 5/5 live targets (kotodama NOT-SAFE unpushed=42
+dirty=14–15; launch-tsukuroi.json SAFE/pushed; /tmp/r87-B1
+SAFE/metadata-prune; conf snapshot SAFE/pushed; app.env NOT-SAFE
+secrets-refusal) + F1 fixture spot probe. Winner **impl-12**, installed
+byte-identical (sha256 7efda63bd760…, tests/results/INSTALL.json); tie with
+13/16 broken by judge consensus (final-57).
+
+**Defects recorded** (corpus/lessons/round-2.md): seat write-scope overstep
+(a synthesized tools/souji-verify.sh installed by a seat — deleted);
+fixture interface chaos (2/10 contracted protocol); compliance grep
+over-strictness; signal hierarchy = runners > reviews.
+
+**Operability:** 0 → 7 — a runnable, self-tested, live-verified verdict
+tool. Capability row added.

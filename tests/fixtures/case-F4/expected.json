@@ -1,0 +1,54 @@
+{
+  "case": "F4",
+  "title": "registered worktree, directory deleted, 0 unique commits",
+  "spec": "tools/souji-verify.spec.md (fixture case F4)",
+  "artifact_kind": "worktree-registration",
+  "target": "${CASE_ROOT}/wt-f4",
+  "owner_repo": "${CASE_ROOT}/owner-shokunin",
+  "worktree_paths": [
+    "${CASE_ROOT}/wt-f4"
+  ],
+  "extra_paths": {
+    "admin_dir": "${CASE_ROOT}/owner-shokunin/.git/worktrees/wt-f4",
+    "main_worktree": "${CASE_ROOT}/owner-shokunin"
+  },
+  "fixture_state": {
+    "worktree_dir_present": false,
+    "worktree_registered": true,
+    "worktree_head": {
+      "kind": "branch",
+      "ref": "wt-f4"
+    },
+    "unique_commits": 0,
+    "unpushed_commits": 0,
+    "worktree_registration_count": 2,
+    "dirty_owner": 0
+  },
+  "expected": {
+    "verdict": "SAFE",
+    "receipt": "metadata-prune",
+    "reason": "spec rule: dir absent AND unique commits = 0",
+    "line_regex": "^VERDICT\t${CASE_ROOT}/wt-f4\tSAFE\tmetadata-prune\t"
+  },
+  "counting_commands": {
+    "unique_commits": "git -C ${CASE_ROOT}/owner-shokunin log --oneline wt-f4 --not --all | wc -l",
+    "unpushed_commits": "git -C ${CASE_ROOT}/owner-shokunin log --oneline wt-f4 --not --remotes | wc -l",
+    "registration_listed": "git -C ${CASE_ROOT}/owner-shokunin worktree list --porcelain | grep -c '^worktree ${CASE_ROOT}/wt-f4$'",
+    "dir_absent": "[ ! -e ${CASE_ROOT}/wt-f4 ]",
+    "admin_dir_present": "[ -d ${CASE_ROOT}/owner-shokunin/.git/worktrees/wt-f4 ]"
+  },
+  "env": {
+    "SHOKUNIN_ROOT": "${CASE_ROOT}"
+  },
+  "build": {
+    "script": "tests/fixtures/case-F4/make-fixture.sh",
+    "invocation": "make-fixture.sh --out ${CASE_ROOT}",
+    "manifest_from": "stdout: one compact JSON manifest with resolved owner_repo/target paths"
+  },
+  "discriminates": [
+    "a verifier that treats the deleted worktree path as unreachable/empty (it must find the owner by scanning SHOKUNIN_ROOT and read the registration)",
+    "a verifier that reports NOT-SAFE(unpushed-branch) for a worktree branch whose tip is covered by refs/remotes/origin/master",
+    "a verifier that only detects owners through the target's own .git file (the deleted dir has none; discovery must come from the registration)"
+  ],
+  "_note": "${CASE_ROOT} is the --out directory handed to make-fixture.sh; it is printed as case_root in the script's stdout manifest."
+}

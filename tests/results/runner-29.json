@@ -1,0 +1,652 @@
+{
+  "seat": "S29",
+  "role": "test-runner",
+  "lane": "souji-shokunin",
+  "tool_under_test": "tools/souji-verify.sh",
+  "binding_spec": "tools/souji-verify.spec.md",
+  "date": "2026-10-18",
+  "reproduce": [
+    "bash tools/souji-verify.sh --selftest",
+    "bash tests/fixtures/case-F1/make-fixture.sh <tmpdir>  # then run the tool on its two targets",
+    "bash tests/fixtures/case-F9/build.sh <tmpdir>         # then run the tool on repo/pushed-file.txt",
+    "bash tools/souji-verify.sh --json tests/fixtures/case-F10/{app.env,creds.pem,notes.txt}",
+    "git -C /home/vgpnk/Projects/shokunin/kotodama-shokunin status --porcelain  # live NOT-SAFE check"
+  ],
+  "known_limits": [
+    "rg 15.2.0 has no --basename flag; the D3 sweep is implemented as a fixed-string content search for the basename with the spec's exclusion globs plus a bash-level path filter.",
+    "Reference sweeps exclude .ufo/state and .ufo/watchdog.log (safety rail: never touch driver state), so references recorded only there do not block a stale verdict.",
+    "The selftest's fixture repos are synthetic (plumbing-only commits, hand-built worktree admin dirs); live-fleet behaviour is covered by the spot checks, not by the fixture suite.",
+    "git status/log costs scale with repo size; the kotodama-shokunin and b2f2efa runs are the only large-repo calls in this record."
+  ],
+  "selftest": {
+    "command": "bash tools/souji-verify.sh --selftest",
+    "exit_code": 0,
+    "assertions_pass": 26,
+    "assertions_fail": 0,
+    "spec_cases_covered": [
+      "F1",
+      "F2",
+      "F3",
+      "F4",
+      "F5",
+      "F6",
+      "F7",
+      "F8",
+      "F9",
+      "F10"
+    ],
+    "extra_controls": [
+      "EXIT-missing",
+      "EXIT-missing",
+      "EXIT-usage",
+      "EXIT-usage-noval",
+      "EXIT-noargs",
+      "JSON-mode",
+      "JSON-mode"
+    ],
+    "deterministic_across_two_runs": true,
+    "assertions": [
+      {
+        "id": "F1",
+        "status": "PASS",
+        "detail": "SAFE(pushed)\tintro=92150995dbb2 default=refs/remotes/origin/master repo=/tmp/souji-selftest.<X>/fleet/alpha-shokunin\tpushed ancestor pre-tip"
+      },
+      {
+        "id": "F2",
+        "status": "PASS",
+        "detail": "NOT-SAFE(none)\tuntracked repo=/tmp/souji-selftest.<X>/fleet/alpha-shokunin ledger=miss scratch=no mtime_age_days=0\tlocal-only introducing commit"
+      },
+      {
+        "id": "F3",
+        "status": "PASS",
+        "detail": "NOT-SAFE(unpushed-dirty)\tunpushed=2 dirty=1\trepo-root unpushed+dirty"
+      },
+      {
+        "id": "F4",
+        "status": "PASS",
+        "detail": "SAFE(metadata-prune)\towner=/tmp/souji-selftest.<X>/fleet/delta-shokunin head=374e98322b53 unique=0 dir=absent\tworktree dir absent, unique=0"
+      },
+      {
+        "id": "F5",
+        "status": "PASS",
+        "detail": "NOT-SAFE(unpushed-branch)\towner=/tmp/souji-selftest.<X>/fleet/delta-shokunin branch=wtfeat unpushed=1\tworktree named branch, 1 unpushed"
+      },
+      {
+        "id": "F6",
+        "status": "PASS",
+        "detail": "SAFE(moved-to-obsidian)\tledger=/tmp/souji-selftest.<X>/fleet/corpus/knowledge/obsidian-ledger.tsv src_sha256=a5494bd42ccc vault=/tmp/souji-selftest.<X>/vault/sample.bin\tledger row + both sha256"
+      },
+      {
+        "id": "F7",
+        "status": "PASS",
+        "detail": "SAFE(stale)\tmtime_age_days=290 refs=0 scratch-type=yes\tscratch, no refs, old mtime"
+      },
+      {
+        "id": "F8",
+        "status": "PASS",
+        "detail": "SAFE(stale)\tmtime_age_days=290 refs=0 scratch-type=yes\tcensus mention absorbed (D3)"
+      },
+      {
+        "id": "F9",
+        "status": "PASS",
+        "detail": "SAFE(pushed)\tintro=b10bd96e1911 default=refs/remotes/origin/master repo=/tmp/souji-selftest.<X>/fleet/beta-shokunin\torigin/HEAD absent, single origin ref"
+      },
+      {
+        "id": "F8-control",
+        "status": "PASS",
+        "detail": "census-mention-present\t./souji-shokunin/census/round-2/seat-01.json\tD3 exclusion is load-bearing"
+      },
+      {
+        "id": "F7-control",
+        "status": "PASS",
+        "detail": "NOT-SAFE(none)\tuntracked repo=/tmp/souji-selftest.<X>/fleet/alpha-shokunin ledger=miss scratch=yes mtime_age_days=290\tmtime threshold honored"
+      },
+      {
+        "id": "F10-cli",
+        "status": "PASS",
+        "detail": "exit=0\tVERDICT\t/tmp/souji-selftest.<X>/fleet/secrets/app.env\tNOT-SAFE\tsecrets-refusal\tbasename-rule short-circuit (no read) VERDICT\t/tmp/souji-selftest.<X>/fleet/secrets/creds.pem\tNOT-SAFE\tsecrets-refusal\tbasename-rule short-circuit (no read) VERDICT\t/tmp/souji-selftest.<X>/fleet/secrets/notes.txt\tNOT-SAFE\tnone\tuntracked repo=/tmp/souji-selftest.<X>/fleet ledger=miss scratch=no mtime_age_days=0\tcli"
+      },
+      {
+        "id": "F10-cli:app.env",
+        "status": "PASS",
+        "detail": "NOT-SAFE(secrets-refusal)\t5-field line\tsecret-shaped target"
+      },
+      {
+        "id": "F10-cli:creds.pem",
+        "status": "PASS",
+        "detail": "NOT-SAFE(secrets-refusal)\t5-field line\tsecret-shaped target"
+      },
+      {
+        "id": "F10-cli:notes.txt",
+        "status": "PASS",
+        "detail": "plain receipt=none\t5-field line\tordinary file not secret-shaped"
+      },
+      {
+        "id": "F10-canary",
+        "status": "PASS",
+        "detail": "no-canary-leak\tstdout+stderr clean\tsecrets never opened"
+      },
+      {
+        "id": "F10-unchanged",
+        "status": "PASS",
+        "detail": "secret-files-unchanged\thashes stable\tread-only"
+      },
+      {
+        "id": "F10-unreadable",
+        "status": "PASS",
+        "detail": "exit=0\tVERDICT\t/tmp/souji-selftest.<X>/f10-unreadable/app.env\tNOT-SAFE\tsecrets-refusal\tbasename-rule short-circuit (no read) VERDICT\t/tmp/souji-selftest.<X>/f10-unreadable/creds.pem\tNOT-SAFE\tsecrets-refusal\tbasename-rule short-circuit (no read)\tcli"
+      },
+      {
+        "id": "F10-unreadable",
+        "status": "PASS",
+        "detail": "both NOT-SAFE(secrets-refusal)\tmode-000 copies\tno read of secret-shaped files"
+      },
+      {
+        "id": "EXIT-missing",
+        "status": "PASS",
+        "detail": "exit=0\tVERDICT\t/tmp/souji-selftest.<X>/fleet/does-not-exist.bin\tNOT-SAFE\tunreachable\tmissing-target\tcli"
+      },
+      {
+        "id": "EXIT-missing",
+        "status": "PASS",
+        "detail": "NOT-SAFE(unreachable)\texit=0\tmissing target"
+      },
+      {
+        "id": "EXIT-usage",
+        "status": "PASS",
+        "detail": "exit=2\tusage: souji-verify.sh [--selftest] [--stale-days N] [--json] <path>...\tcli"
+      },
+      {
+        "id": "EXIT-usage-noval",
+        "status": "PASS",
+        "detail": "exit=2\tusage: souji-verify.sh [--selftest] [--stale-days N] [--json] <path>...\tcli"
+      },
+      {
+        "id": "EXIT-noargs",
+        "status": "PASS",
+        "detail": "exit=2\tusage: souji-verify.sh [--selftest] [--stale-days N] [--json] <path>...\tcli"
+      },
+      {
+        "id": "JSON-mode",
+        "status": "PASS",
+        "detail": "exit=0\t{\"path\":\"/tmp/souji-selftest.<X>/fleet/beta-shokunin/pushed-file.txt\",\"kind\":\"artifact\",\"verdict\":\"SAFE\",\"receipt\":\"pushed\",\"evidence\":\"intro=b10bd96e1911 default=refs/remotes/origin/master repo=/tmp/souji-selftest.<X>/fleet/beta-shokunin\"}\tcli"
+      },
+      {
+        "id": "JSON-mode",
+        "status": "PASS",
+        "detail": "jsonl SAFE/pushed\t{\"path\":\"/tmp/souji-selftest.<X>/fleet/beta-shokunin/pushed-file.txt\",\"kind\":\"artifact\",\"verdict\":\"SAFE\",\"receipt\":\"pushed\",\"evidence\":\"intro=b10bd96e1911 default=refs/remotes/origin/master repo=/tmp/souji-selftest.<X>/fleet/beta-shokunin\"}\tjson contract"
+      }
+    ]
+  },
+  "cross_fixtures": {
+    "F1": {
+      "fixture": "tests/fixtures/case-F1",
+      "builder": "make-fixture.sh (OUT_DIR into mktemp)",
+      "tool_exit": 0,
+      "checks": [
+        {
+          "target": "pushed.txt",
+          "expected": "SAFE(pushed)",
+          "observed": "SAFE(pushed)",
+          "evidence": "intro=477b42f68935 default=refs/remotes/origin/master repo=/tmp/souji-fixture-case-F1.oUjbGL/repo",
+          "pass": true
+        },
+        {
+          "target": "local-only.txt",
+          "expected": "NOT-SAFE(any)",
+          "observed": "NOT-SAFE(none)",
+          "evidence": "intro=3215cedb6351 default=refs/remotes/origin/master not-ancestor refs=n/a",
+          "pass": true
+        }
+      ],
+      "all_pass": true
+    },
+    "F2": {
+      "fixture": "tests/fixtures/case-F2",
+      "builder": "make-fixture.sh (OUT_DIR into mktemp)",
+      "tool_exit": 0,
+      "checks": [
+        {
+          "target": "pushed.txt",
+          "expected": "SAFE(pushed)",
+          "observed": "SAFE(pushed)",
+          "evidence": "intro=477b42f68935 default=refs/remotes/origin/master repo=/tmp/souji-fixture-case-F2.7frunD/repo",
+          "pass": true
+        },
+        {
+          "target": "local-only.txt",
+          "expected": "NOT-SAFE(any)",
+          "observed": "NOT-SAFE(none)",
+          "evidence": "intro=3215cedb6351 default=refs/remotes/origin/master not-ancestor refs=n/a",
+          "pass": true
+        }
+      ],
+      "all_pass": true
+    },
+    "F9": {
+      "fixture": "tests/fixtures/case-F9",
+      "expected": "SAFE(pushed)",
+      "preconditions": {
+        "origin_head_ref_present": false,
+        "origin_refs": [
+          "refs/remotes/origin/master"
+        ],
+        "origin_ref_count": 1,
+        "local_branches": [
+          "main"
+        ],
+        "local_master_ref_present": false,
+        "remote_configured": false,
+        "default_branch_resolution": "fallback-single-origin-ref"
+      },
+      "runs": [
+        {
+          "variant": "in-place landed repo",
+          "tool_exit": 0,
+          "observed": {
+            "path": "tests/fixtures/case-F9/repo/pushed-file.txt",
+            "kind": "artifact",
+            "verdict": "SAFE",
+            "receipt": "pushed",
+            "evidence": "intro=f16d67eb7233 default=refs/remotes/origin/master repo=/home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/case-F9/repo"
+          },
+          "pass": true
+        },
+        {
+          "variant": "rebuilt via build.sh",
+          "tool_exit": 0,
+          "observed": {
+            "path": "/tmp/souji-runner29.r15b51n1/F9/repo/pushed-file.txt",
+            "kind": "artifact",
+            "verdict": "SAFE",
+            "receipt": "pushed",
+            "evidence": "intro=f16d67eb7233 default=refs/remotes/origin/master repo=/tmp/souji-runner29.r15b51n1/F9/repo"
+          },
+          "pass": true
+        }
+      ],
+      "all_pass": true
+    },
+    "F10": {
+      "fixture": "tests/fixtures/case-F10",
+      "tool_exit": 0,
+      "checks": [
+        {
+          "target": "app.env",
+          "expected": {
+            "verdict": "NOT-SAFE",
+            "receipt": "secrets-refusal"
+          },
+          "observed": {
+            "path": "tests/fixtures/case-F10/app.env",
+            "kind": "artifact",
+            "verdict": "NOT-SAFE",
+            "receipt": "secrets-refusal",
+            "evidence": "basename-rule short-circuit (no read)"
+          },
+          "pass": true
+        },
+        {
+          "target": "creds.pem",
+          "expected": {
+            "verdict": "NOT-SAFE",
+            "receipt": "secrets-refusal"
+          },
+          "observed": {
+            "path": "tests/fixtures/case-F10/creds.pem",
+            "kind": "artifact",
+            "verdict": "NOT-SAFE",
+            "receipt": "secrets-refusal",
+            "evidence": "basename-rule short-circuit (no read)"
+          },
+          "pass": true
+        },
+        {
+          "target": "notes.txt",
+          "expected": {
+            "verdict_set": [
+              "SAFE",
+              "NOT-SAFE"
+            ],
+            "receipt_canonical_plain_copy": "none",
+            "receipt_set": [
+              "none",
+              "pushed",
+              "pushed-unverifiable"
+            ],
+            "forbidden_receipt": "secrets-refusal"
+          },
+          "observed": {
+            "path": "tests/fixtures/case-F10/notes.txt",
+            "kind": "artifact",
+            "verdict": "NOT-SAFE",
+            "receipt": "none",
+            "evidence": "untracked repo=/home/vgpnk/Projects/shokunin/souji-shokunin ledger=miss scratch=no mtime_age_days=0"
+          },
+          "pass": true
+        }
+      ],
+      "canaries_leaked": [],
+      "unreadable_probe": {
+        "variant": "mode-000 copy",
+        "tool_exit": 0,
+        "observed": [
+          "NOT-SAFE(secrets-refusal)",
+          "NOT-SAFE(secrets-refusal)"
+        ],
+        "pass": true
+      },
+      "all_pass": true
+    }
+  },
+  "live_spot_checks": {
+    "kotodama-shokunin": {
+      "target": "kotodama-shokunin (repo-root)",
+      "tool_exit": 0,
+      "observed": {
+        "path": "/home/vgpnk/Projects/shokunin/kotodama-shokunin",
+        "kind": "repo-root",
+        "verdict": "NOT-SAFE",
+        "receipt": "unpushed",
+        "evidence": "unpushed=39 dirty=0"
+      },
+      "expected": "NOT-SAFE (unpushed/dirty lane)",
+      "pass": true
+    },
+    "worktree_registrations": {
+      "lore-shokunin": {
+        "registrations": 19,
+        "tool_exit": 0,
+        "receipt_histogram": {
+          "SAFE(metadata-prune)": 19
+        },
+        "rows": [
+          {
+            "path": "/tmp/r87-B1",
+            "verdict": "SAFE",
+            "receipt": "metadata-prune",
+            "evidence": "owner=/home/vgpnk/Projects/shokunin/lore-shokunin head=28706dc73a9b unique=0 dir=absent"
+          },
+          {
+            "path": "/tmp/r87-C5",
+            "verdict": "SAFE",
+            "receipt": "metadata-prune",
+            "evidence": "owner=/home/vgpnk/Projects/shokunin/lore-shokunin head=28706dc73a9b unique=0 dir=absent"
+          },
+          {
+            "path": "/tmp/r87-C6",
+            "verdict": "SAFE",
+            "receipt": "metadata-prune",
+            "evidence": "owner=/home/vgpnk/Projects/shokunin/lore-shokunin head=28706dc73a9b unique=0 dir=absent"
+          },
+          {
+            "path": "/tmp/r87-C6-X1",
+            "verdict": "SAFE",
+            "receipt": "metadata-prune",
+            "evidence": "owner=/home/vgpnk/Projects/shokunin/lore-shokunin head=28706dc73a9b unique=0 dir=absent"
+          },
+          {
+            "path": "/tmp/r87-F1",
+            "verdict": "SAFE",
+            "receipt": "metadata-prune",
+            "evidence": "owner=/home/vgpnk/Projects/shokunin/lore-shokunin head=28706dc73a9b unique=0 dir=absent"
+          },
+          {
+            "path": "/tmp/r87-F1-applycheck",
+            "verdict": "SAFE",
+            "receipt": "metadata-prune",
+            "evidence": "owner=/home/vgpnk/Projects/shokunin/lore-shokunin head=28706dc73a9b unique=0 dir=absent"
+          },
+          {
+            "path": "/tmp/r87-JDEP3",
+            "verdict": "SAFE",
+            "receipt": "metadata-prune",
+            "evidence": "owner=/home/vgpnk/Projects/shokunin/lore-shokunin head=2b48ca72033d unique=0 dir=absent"
+          },
+          {
+            "path": "/tmp/r87-M1-myth",
+            "verdict": "SAFE",
+            "receipt": "metadata-prune",
+            "evidence": "owner=/home/vgpnk/Projects/shokunin/lore-shokunin head=28706dc73a9b unique=0 dir=absent"
+          },
+          {
+            "path": "/tmp/r87-M1-verify",
+            "verdict": "SAFE",
+            "receipt": "metadata-prune",
+            "evidence": "owner=/home/vgpnk/Projects/shokunin/lore-shokunin head=28706dc73a9b unique=0 dir=absent"
+          },
+          {
+            "path": "/tmp/r87-M3",
+            "verdict": "SAFE",
+            "receipt": "metadata-prune",
+            "evidence": "owner=/home/vgpnk/Projects/shokunin/lore-shokunin head=28706dc73a9b unique=0 dir=absent"
+          },
+          {
+            "path": "/tmp/r87-M4",
+            "verdict": "SAFE",
+            "receipt": "metadata-prune",
+            "evidence": "owner=/home/vgpnk/Projects/shokunin/lore-shokunin head=28706dc73a9b unique=0 dir=absent"
+          },
+          {
+            "path": "/tmp/r87-S1",
+            "verdict": "SAFE",
+            "receipt": "metadata-prune",
+            "evidence": "owner=/home/vgpnk/Projects/shokunin/lore-shokunin head=28706dc73a9b unique=0 dir=absent"
+          },
+          {
+            "path": "/tmp/r87-T1",
+            "verdict": "SAFE",
+            "receipt": "metadata-prune",
+            "evidence": "owner=/home/vgpnk/Projects/shokunin/lore-shokunin head=28706dc73a9b unique=0 dir=absent"
+          },
+          {
+            "path": "/tmp/r87-V1",
+            "verdict": "SAFE",
+            "receipt": "metadata-prune",
+            "evidence": "owner=/home/vgpnk/Projects/shokunin/lore-shokunin head=28706dc73a9b unique=0 dir=absent"
+          },
+          {
+            "path": "/tmp/r87-V1-x1",
+            "verdict": "SAFE",
+            "receipt": "metadata-prune",
+            "evidence": "owner=/home/vgpnk/Projects/shokunin/lore-shokunin head=28706dc73a9b unique=0 dir=absent"
+          },
+          {
+            "path": "/tmp/r87-V2",
+            "verdict": "SAFE",
+            "receipt": "metadata-prune",
+            "evidence": "owner=/home/vgpnk/Projects/shokunin/lore-shokunin head=28706dc73a9b unique=0 dir=absent"
+          },
+          {
+            "path": "/tmp/r87-V4",
+            "verdict": "SAFE",
+            "receipt": "metadata-prune",
+            "evidence": "owner=/home/vgpnk/Projects/shokunin/lore-shokunin head=28706dc73a9b unique=0 dir=absent"
+          },
+          {
+            "path": "/tmp/r87-X2",
+            "verdict": "SAFE",
+            "receipt": "metadata-prune",
+            "evidence": "owner=/home/vgpnk/Projects/shokunin/lore-shokunin head=28706dc73a9b unique=0 dir=absent"
+          },
+          {
+            "path": "/tmp/r87-X3",
+            "verdict": "SAFE",
+            "receipt": "metadata-prune",
+            "evidence": "owner=/home/vgpnk/Projects/shokunin/lore-shokunin head=28706dc73a9b unique=0 dir=absent"
+          }
+        ]
+      },
+      "game-dev-2d-shokunin": {
+        "registrations": 5,
+        "tool_exit": 0,
+        "receipt_histogram": {
+          "NOT-SAFE(unpushed-branch)": 3,
+          "SAFE(metadata-prune)": 2
+        },
+        "rows": [
+          {
+            "path": "/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r100",
+            "verdict": "NOT-SAFE",
+            "receipt": "unpushed-branch",
+            "evidence": "owner=/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin branch=wt-r100 unpushed=1"
+          },
+          {
+            "path": "/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r98",
+            "verdict": "NOT-SAFE",
+            "receipt": "unpushed-branch",
+            "evidence": "owner=/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin branch=wt-r98 unpushed=1"
+          },
+          {
+            "path": "/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r99",
+            "verdict": "NOT-SAFE",
+            "receipt": "unpushed-branch",
+            "evidence": "owner=/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin branch=wt-r99 unpushed=1"
+          },
+          {
+            "path": "/home/vgpnk/Projects/shokunin/r80-baseline-frozen-worktree",
+            "verdict": "SAFE",
+            "receipt": "metadata-prune",
+            "evidence": "owner=/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin head=d9320ddf339a unique=0 dir=absent"
+          },
+          {
+            "path": "/tmp/r81-frozen",
+            "verdict": "SAFE",
+            "receipt": "metadata-prune",
+            "evidence": "owner=/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin head=27f465c67995 unique=0 dir=absent"
+          }
+        ]
+      }
+    },
+    "b2f2efa_fleet_root_paths": {
+      "targets": 109,
+      "tool_exit": 0,
+      "receipt_histogram": {
+        "SAFE(pushed)": 94,
+        "NOT-SAFE(unreachable)": 15
+      },
+      "not_pushed": [
+        {
+          "path": "commit-watch.stderr",
+          "observed": "NOT-SAFE(unreachable)",
+          "evidence": "missing-target"
+        },
+        {
+          "path": "f2.out",
+          "observed": "NOT-SAFE(unreachable)",
+          "evidence": "missing-target"
+        },
+        {
+          "path": "f3.out",
+          "observed": "NOT-SAFE(unreachable)",
+          "evidence": "missing-target"
+        },
+        {
+          "path": "f4.out",
+          "observed": "NOT-SAFE(unreachable)",
+          "evidence": "missing-target"
+        },
+        {
+          "path": "f5.out",
+          "observed": "NOT-SAFE(unreachable)",
+          "evidence": "missing-target"
+        },
+        {
+          "path": "f6.out",
+          "observed": "NOT-SAFE(unreachable)",
+          "evidence": "missing-target"
+        },
+        {
+          "path": "f7.out",
+          "observed": "NOT-SAFE(unreachable)",
+          "evidence": "missing-target"
+        },
+        {
+          "path": "f8.out",
+          "observed": "NOT-SAFE(unreachable)",
+          "evidence": "missing-target"
+        },
+        {
+          "path": "forgeB.log",
+          "observed": "NOT-SAFE(unreachable)",
+          "evidence": "missing-target"
+        },
+        {
+          "path": "forgeC.log",
+          "observed": "NOT-SAFE(unreachable)",
+          "evidence": "missing-target"
+        },
+        {
+          "path": "forgeD.log",
+          "observed": "NOT-SAFE(unreachable)",
+          "evidence": "missing-target"
+        },
+        {
+          "path": "kwin.txt",
+          "observed": "NOT-SAFE(unreachable)",
+          "evidence": "missing-target"
+        },
+        {
+          "path": "logs_dummy.txt",
+          "observed": "NOT-SAFE(unreachable)",
+          "evidence": "missing-target"
+        },
+        {
+          "path": "logs_mut.txt",
+          "observed": "NOT-SAFE(unreachable)",
+          "evidence": "missing-target"
+        },
+        {
+          "path": "logs_tier.txt",
+          "observed": "NOT-SAFE(unreachable)",
+          "evidence": "missing-target"
+        }
+      ],
+      "missing_on_disk": [
+        "commit-watch.stderr",
+        "f2.out",
+        "f3.out",
+        "f4.out",
+        "f5.out",
+        "f6.out",
+        "f7.out",
+        "f8.out",
+        "forgeB.log",
+        "forgeC.log",
+        "forgeD.log",
+        "kwin.txt",
+        "logs_dummy.txt",
+        "logs_mut.txt",
+        "logs_tier.txt"
+      ],
+      "unreachable_equals_missing_on_disk": true,
+      "round1_baseline_receipt": "109/109 classified pushed (census round-1, parent loop)",
+      "note": "the 15 unreachable paths are still tracked in b2f2efa but absent from the working tree (verified with os.path.exists); the rail 'missing target -> NOT-SAFE(unreachable)' applies, so they are not removable artifacts."
+    }
+  },
+  "summary": {
+    "selftest_assertions": "26 pass / 0 fail",
+    "cross_fixtures": {
+      "F1": true,
+      "F2": true,
+      "F9": true,
+      "F10": true
+    },
+    "live": {
+      "kotodama_NOT_SAFE": true,
+      "lore_worktrees": {
+        "SAFE(metadata-prune)": 19
+      },
+      "gd2d_worktrees": {
+        "NOT-SAFE(unpushed-branch)": 3,
+        "SAFE(metadata-prune)": 2
+      },
+      "b2f2efa": {
+        "SAFE(pushed)": 94,
+        "NOT-SAFE(unreachable)": 15
+      }
+    },
+    "failed_checks": [],
+    "verdict": "PASS"
+  }
+}

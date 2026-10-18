@@ -1,0 +1,103 @@
+{
+  "case": "F3",
+  "schema": "souji-verify-fixture/1",
+  "author_seat": "S02",
+  "title": "repo-root: 2 unpushed commits over a stale origin/master + 1 modified tracked file (kotodama-shaped)",
+  "spec_ref": "tools/souji-verify.spec.md — Fixture cases F3, Artifact kinds 1 (repo-root), CLI line format",
+  "why_this_shape": "Round 1 (LOG.md) measured kotodama-shokunin as the callee that carries live unpushed work plus a dirty tree; repo-root is SAFE only via moved-to-obsidian, so this must never come back SAFE.",
+
+  "build": {
+    "command": "bash tests/fixtures/case-F3/make-fixture.sh",
+    "cwd": "any — the script is path-independent",
+    "stdout": "absolute path of the fixture repo root (single line); pass it verbatim as the single <path> argument to tools/souji-verify.sh",
+    "stderr": "deterministic facts: target, shas, unpushed/dirty counts",
+    "exit_codes": { "0": "built + self-checked", "1": "build/self-check error", "2": "usage" },
+    "layout": "the fixture repo IS the printed path (git init in that directory); the .git/souji-fixture-F3 marker lives inside .git so it never shows up as an untracked file",
+    "temp_state": "no argument -> mktemp -d; the caller owns that directory",
+    "variants": {
+      "explicit_outdir": "make-fixture.sh <outdir>   (must be empty, or a previous case-F3 build with --force)",
+      "force": "make-fixture.sh --force <outdir>   (wipes only dirs carrying .git/souji-fixture-F3)",
+      "json": "make-fixture.sh --json   (stdout = one JSON object: case,target,kind,verdict,unpushed,dirty,staged,untracked,shas)",
+      "sourceable": "`source tests/fixtures/case-F3/make-fixture.sh` then `main <outdir>` (main guard suppresses auto-run) — for a verifier that inlines fixtures inside its own --selftest"
+    },
+    "deterministic": true,
+    "hermetic": "GIT_CONFIG_NOSYSTEM=1, GIT_CONFIG_GLOBAL=/dev/null, fixed author/committer identities and dates, fixed file content and mtimes -> identical commit SHAs on every run",
+    "git_commands_used": ["init", "config", "add", "write-tree", "commit-tree", "update-ref", "symbolic-ref", "rev-list", "log", "status", "diff", "ls-files", "for-each-ref"],
+    "banned_commands_used": "none — no fetch/push/commit/branch/checkout/reset/rebase; no remote exists, nothing touches the network"
+  },
+
+  "fixture_facts": {
+    "kind": "repo-root",
+    "detection": "directory containing .git",
+    "head": "symref -> refs/heads/master, 3 commits (c1 base, c2, c3)",
+    "origin_master": "refs/remotes/origin/master written by hand, points at c1 (base)",
+    "origin_head": "refs/remotes/origin/HEAD -> refs/remotes/origin/master",
+    "upstream": "branch.master.remote=origin + branch.master.merge=refs/heads/master, so @{u} resolves to the base",
+    "status_short": "## master...origin/master [ahead 2]",
+    "porcelain_line": " M PROVINCE.md",
+    "dirty_file": "PROVINCE.md (tracked, modified, unstaged; blob size differs so detection never depends on stat/racy-index timing)",
+    "counts": { "unpushed": 2, "dirty": 1, "staged": 0, "untracked": 0 },
+    "counts_cross_checked": {
+      "git rev-list --count HEAD --not --remotes": 2,
+      "git log --oneline HEAD --not --remotes | wc -l": 2,
+      "git log --oneline HEAD --not refs/remotes/origin/master | wc -l": 2,
+      "git rev-list --count @{u}..HEAD": 2,
+      "git rev-list --count origin/master..HEAD": 2,
+      "git status --porcelain | wc -l": 1,
+      "git status --porcelain -uno | wc -l": 1,
+      "git diff --name-only | wc -l": 1,
+      "untracked (git ls-files --others --exclude-standard)": 0,
+      "staged (git diff --cached --name-only)": 0
+    },
+    "shas_informational": {
+      "base_c1": "a30d8f0b8af90522af5fde05ab07ed54208b55ed",
+      "c2": "6784d6c1a625f24272995208ebbabd00f6c367a1",
+      "head_c3": "6206b7d325f75452eabd7b9d3e54f76fdd33a89c",
+      "note": "determinism receipt, verified by building the fixture 3x (explicit dir, default mktemp, --force rebuild) — all three runs produced these SHAs; do not fail the case on a mismatch, but a mismatch means the builder changed"
+    }
+  },
+
+  "expected": {
+    "invocation": "tools/souji-verify.sh <path-from-build.stdout>",
+    "exit_code": {
+      "expected": 0,
+      "tolerated": [1],
+      "strict": false,
+      "note": "spec §CLI: 1 is reserved for selftest failure / evaluation error and 2 for usage; a NOT-SAFE verdict is not an error. If the verifier author instead reads 'evaluated clean' as 'no NOT-SAFE verdicts', exit 1 alongside a correct NOT-SAFE line is a spec ambiguity — record it as a spec question, not as this case failing."
+    },
+    "stdout_lines": { "value": 1, "strict": true },
+    "line_format": "VERDICT<TAB>path<TAB>SAFE|NOT-SAFE<TAB>receipt-or-reason<TAB>decisive-evidence",
+    "fields": {
+      "1": { "value": "VERDICT", "strict": true },
+      "2": { "value": "the target path exactly as passed (the string printed by make-fixture.sh)", "strict": true },
+      "3": { "value": "NOT-SAFE", "strict": true },
+      "4": {
+        "nonempty": true,
+        "strict": false,
+        "expected_any_of_regex": "(^|[^a-z])(unpushed|dirty|repo-root|repo)([^a-z]|$)",
+        "note": "spec notation is NOT-SAFE(unpushed/dirty ...); the author may word the reason token freely — do not fail on wording",
+        "must_not_claim_receipt_regex": "(^|[^a-z-])(pushed|moved-to-obsidian|stale)([^a-z-]|$)",
+        "note_receipt": "careful: the substring 'pushed' occurs inside 'unpushed', so only a boundary-anchored match counts as a receipt claim; repo-root has no receipt here"
+      },
+      "5": {
+        "strict": true,
+        "required_substrings": ["unpushed=2", "dirty=1"],
+        "order_agnostic_regex": "(unpushed=2.*dirty=1|dirty=1.*unpushed=2)",
+        "spec_form": "unpushed=N dirty=M",
+        "note": "the decisive evidence must carry the counts themselves, not just the words unpushed/dirty"
+      }
+    },
+    "json_mode": {
+      "invocation": "tools/souji-verify.sh --json <path>",
+      "strict": false,
+      "note": "the spec defines the --json flag but not its schema; only check that stdout parses as JSON, mentions NOT-SAFE for this target, and that a bare NOT-SAFE word never replaces the default line format"
+    },
+    "false_safe_guard": "any SAFE verdict for this target is a false-SAFE (round-1 calibration axis C2); the case exists precisely to catch that"
+  },
+
+  "harness_notes": [
+    "F3 is the only case whose target is a whole repo root, so it also pins the kind-branch of spec §Artifact kinds 1 — a verifier that treats it as a plain file/dir artifact and reaches 'stale' or 'none' fails here.",
+    "'git status' inside the fixture refreshes the fixture's own .git/index (a write inside the disposable /tmp fixture, not into the inspected live tree); that is acceptable and must not be counted as the tool writing outside mktemp.",
+    "The fixture is built fresh per run, so it can never be confused with a live lane: the temp path is not registered in any worktree list and not scanned by the repo-root worktree-owner detection."
+  ]
+}

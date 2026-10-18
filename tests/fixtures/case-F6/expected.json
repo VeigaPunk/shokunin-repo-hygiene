@@ -1,0 +1,122 @@
+{
+  "case": "F6",
+  "title": "ledger-matched file qualifies SAFE(moved-to-obsidian) only with a fully matching ledger row",
+  "spec": "tools/souji-verify.spec.md",
+  "spec_case": "F6 ledger-matched file (ledger row + matching sha256 both sides) -> SAFE(moved-to-obsidian)",
+  "builder": "tests/fixtures/case-F6/make-fixture.sh",
+  "readme": "tests/fixtures/case-F6/README.md",
+  "fixture_root_placeholder": "@FIXTURE_ROOT@",
+  "path_convention": "substitute @FIXTURE_ROOT@ with the FIXTURE_ROOT printed by make-fixture.sh; evaluate every target by that exact absolute path",
+  "ledger_path": "corpus/knowledge/obsidian-ledger.tsv",
+  "ledger_columns": [
+    "source_path",
+    "source_sha256",
+    "vault_path",
+    "vault_sha256",
+    "exported_at",
+    "note"
+  ],
+  "injection_payload_path": "tests/results/ledger-inject.txt",
+  "injection_method": "append the payload rows below the existing ledger header for the armed run; restore the pre-injection copy to disarm. The payload never contains the header row.",
+  "vault_copy_mode": "0444",
+  "determinism": {
+    "note": "fixed content, identity and dates; git objects are reproducible",
+    "git_objects": {
+      "initial_commit": "36b5fc01f8edf935aef54bda37ade6b7308c8da8",
+      "export_commit": "a03ed477f63b56ba877baf5acbda9ce084f22f6d"
+    },
+    "default_branch": "main",
+    "origin_head": "origin/main",
+    "head_branch": "export-prep"
+  },
+  "matching_row_id": "ledger-match",
+  "declared_ledger_rows": [
+    {
+      "id": "ledger-match",
+      "source_path": "@FIXTURE_ROOT@/source/src/heredoc-quorum-notes.md",
+      "source_sha256": "d095e2ad302dc62d5a0b0ba8c7be9d7ba7dc868d40157a3b4609da071858ff65",
+      "vault_path": "@FIXTURE_ROOT@/vault/heredoc-quorum-notes.md",
+      "vault_sha256": "d095e2ad302dc62d5a0b0ba8c7be9d7ba7dc868d40157a3b4609da071858ff65",
+      "exported_at": "2026-10-18",
+      "note": "case-F6 ledger-match",
+      "why": "full match: both paths exist and both hashes are the actual file bytes"
+    },
+    {
+      "id": "source-hash-mismatch-row",
+      "source_path": "@FIXTURE_ROOT@/source/src/hash-mismatch-notes.md",
+      "source_sha256": "4dc5dd0a7df3e2f08724a3f753c785d0d15ea356808ded4b13db67aa6496ebc4",
+      "vault_path": "@FIXTURE_ROOT@/vault/hash-mismatch-notes.md",
+      "vault_sha256": "4dc5dd0a7df3e2f08724a3f753c785d0d15ea356808ded4b13db67aa6496ebc4",
+      "exported_at": "2026-10-18",
+      "note": "case-F6 source-hash-mismatch",
+      "why": "the source file was edited after export; the row records the pre-edit hash, so source_sha256 no longer matches the file (vault side matches this row)"
+    },
+    {
+      "id": "vault-hash-drift-row",
+      "source_path": "@FIXTURE_ROOT@/source/src/vault-drift-notes.md",
+      "source_sha256": "94953f18b6ac6dd4fd65fd38e4e19183a65676fe532f04f9691e4f60d469bca4",
+      "vault_path": "@FIXTURE_ROOT@/vault/vault-drift-notes.md",
+      "vault_sha256": "94953f18b6ac6dd4fd65fd38e4e19183a65676fe532f04f9691e4f60d469bca4",
+      "exported_at": "2026-10-18",
+      "note": "case-F6 vault-hash-drift",
+      "why": "source matches the row, but the vault copy was edited after export, so vault_sha256 no longer matches the vault file"
+    }
+  ],
+  "targets": [
+    {
+      "id": "ledger-match",
+      "path": "@FIXTURE_ROOT@/source/src/heredoc-quorum-notes.md",
+      "vault_path": "@FIXTURE_ROOT@/vault/heredoc-quorum-notes.md",
+      "source_sha256": "d095e2ad302dc62d5a0b0ba8c7be9d7ba7dc868d40157a3b4609da071858ff65",
+      "vault_sha256": "d095e2ad302dc62d5a0b0ba8c7be9d7ba7dc868d40157a3b4609da071858ff65",
+      "ledger_row": "ledger-match",
+      "expected_when_armed": {"verdict": "SAFE", "receipt": "moved-to-obsidian"},
+      "expected_when_disarmed": {"verdict": "NOT-SAFE", "receipt": "none"},
+      "why": "byte-identical pair on both sides plus a fully matching ledger row"
+    },
+    {
+      "id": "not-exported",
+      "path": "@FIXTURE_ROOT@/source/src/not-exported-notes.md",
+      "vault_path": "@FIXTURE_ROOT@/vault/not-exported-notes.md",
+      "source_sha256": "48e1fd44784875a1fc3cc783fe4e5cc21284e396a3eaf1964590fb71023a168d",
+      "vault_sha256": "48e1fd44784875a1fc3cc783fe4e5cc21284e396a3eaf1964590fb71023a168d",
+      "ledger_row": null,
+      "expected_when_armed": {"verdict": "NOT-SAFE", "receipt": "none"},
+      "expected_when_disarmed": {"verdict": "NOT-SAFE", "receipt": "none"},
+      "why": "the vault copy is byte-identical but no row exists: the row is the receipt, not the copy"
+    },
+    {
+      "id": "source-hash-mismatch",
+      "path": "@FIXTURE_ROOT@/source/src/hash-mismatch-notes.md",
+      "vault_path": "@FIXTURE_ROOT@/vault/hash-mismatch-notes.md",
+      "source_sha256": "6ad80b965e37eed124bbc5344c497bfcaf4ce73646183dae67baacb2216e4692",
+      "vault_sha256": "4dc5dd0a7df3e2f08724a3f753c785d0d15ea356808ded4b13db67aa6496ebc4",
+      "ledger_row": "source-hash-mismatch-row",
+      "expected_when_armed": {"verdict": "NOT-SAFE", "receipt": "none"},
+      "expected_when_disarmed": {"verdict": "NOT-SAFE", "receipt": "none"},
+      "why": "the row's source_sha256 (4dc5dd0a...) does not match the current source file (6ad80b96...): source-side hash is a required conjunct"
+    },
+    {
+      "id": "vault-hash-drift",
+      "path": "@FIXTURE_ROOT@/source/src/vault-drift-notes.md",
+      "vault_path": "@FIXTURE_ROOT@/vault/vault-drift-notes.md",
+      "source_sha256": "94953f18b6ac6dd4fd65fd38e4e19183a65676fe532f04f9691e4f60d469bca4",
+      "vault_sha256": "efbfc7f3752e34f790b25b56b0e2a5d16fffae67b2a2eccde3c04b17f967cb28",
+      "ledger_row": "vault-hash-drift-row",
+      "expected_when_armed": {"verdict": "NOT-SAFE", "receipt": "none"},
+      "expected_when_disarmed": {"verdict": "NOT-SAFE", "receipt": "none"},
+      "why": "the row's vault_sha256 (94953f18...) does not match the current vault file (efbfc7f3...): vault-side hash is a required conjunct"
+    }
+  ],
+  "binding_rules": {
+    "armed_ledger_match": "for target ledger-match the exact pair SAFE(moved-to-obsidian) is binding",
+    "negative_targets": "for the three other targets only the NOT-SAFE verdict is binding; the receipt text is informational because the spec allows NOT-SAFE for more than one reason",
+    "disarmed": "with no injection every target must be NOT-SAFE",
+    "all_four_conjuncts": "SAFE(moved-to-obsidian) requires source path AND source sha256 AND vault path AND vault sha256 to match; the three negative targets each break exactly one conjunct (row absent / source hash / vault hash)"
+  },
+  "pushed_receipt_probe": {
+    "result": "not-pushed",
+    "detail": "the introducing commit a03ed477... sits on export-prep, which is not an ancestor of origin/main (36b5fc01..., reached through origin/HEAD)"
+  },
+  "selftest_hint": "impls covering F6 under --selftest must build the fixture with `make-fixture.sh --out <tmpdir>` and point the ledger lookup at a temporary ledger built as `header row + <tmpdir>/ledger-inject.txt`. Never append to corpus/knowledge/obsidian-ledger.tsv from a selftest. A ledger-path override (e.g. SOUJI_LEDGER) is the expected seam."
+}
