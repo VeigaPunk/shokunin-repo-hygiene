@@ -489,3 +489,13 @@ provider rate limit (resource_exhausted) before writing; re-dispatched as
 fresh seats (R12SourcesExec2, R12ExecGit2, R12ExecFs2).
 Commit is local only: the standing operator rule "No push" overrides
 MISSION.md's commit-then-push (PROTOCOL.md operator-gated hold).
+
+## 2026-10-19 — round 12 closing note (measured commit)
+
+Round-12 work commit: d7266c5e9493a3c78687af68d438c2584f75b3c0 (lane
+identity, `-c maintenance.auto=false`, pathspec-limited). After-numbers
+measured on it with a clean worktree: `census/round-12/after.txt` — C1
+28/52 → 51/53 (mapped criteria), C2 entries 0→5 / frontier rows 0→3 /
+SOURCES 33 rows census clean, C3 gate exit 0 with `selftest=PASS ids=6/6`
+and guard rows 0→3. SCORECARD measured-commit cells point here. Self-
+verdicts only; non-author verification (orchestrator) is pending.
