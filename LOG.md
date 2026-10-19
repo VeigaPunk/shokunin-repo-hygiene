@@ -358,3 +358,80 @@ session's first task. Operator cancelled the 12-round goal after this
 round; the lane stands at rounds 1-11 closed (1,2,3,5,8 admitted; 6,7,9,
 10,11 filed honestly as failed/partial), probation gate already cleared
 (>=3 verified rounds), lane repo pushed to origin.
+
+## 2026-10-19 — operator sweep (execution): root-wide receipts + home-wide cache/tmp cleanup
+
+**Directive.** Operator, 2026-10-18 late session: "use this shokunin to clear
+stale artifacts and stale cache, look everywhere you can think of", scoped in
+three steps: fleet root → `/home/vgpnk/` → `/tmp` (tmpfs, was 80% full).
+
+**Removed — fleet root, receipt `pushed` (96 artifacts).** The r3 approval
+list (`census/round-3/operator-approval-list.tsv`, 96 rows: interactive-l1
+launch-*.json / prompts / surface / PNG / wave checkouts / conf snapshot /
+commit-map) was re-derived at decision time: 96/96 SAFE(pushed) via
+tools/souji-verify.sh (evidence: `census/operator-sweep-20261018/approval-list.tsv`,
+`resume-verdicts.tsv`). Flow: souji-quarantine.sh staged 3 files then hung
+(hit its 20-min driver timeout); completed manually per protocol — 93 staged
+via `git mv` into `.ufo-quarantine/2026-10-19/`, hold (>25 min), second check
+as hash-vs-origin: 94 copies byte-equal to `origin/master` blobs; 2
+(launch-chousa/kagi.json) missing post-timeout, **restored from origin** and
+hash-verified (`a75fc635…`, `fd94b883…`). Unpushed-touching=0 throughout;
+`ls-remote` tip d6ac1b64 unchanged. Deleted from quarantine; committed at
+fleet root as `e20f4fa` (lane identity). Two corrective commits followed
+(`9c220bf`, `99819ec`): `git add -A` had swept in 10 live `.scratch/*.out`
+(r10 certifier outputs) + the in-flight r11 report + a `.gitignore.tmp`
+scaffold — all untracked again, files on disk. **Commits local; publishing
+is operator-owned.**
+
+**Removed — caches, quarantine-staged on /home (≈14G).** `~/.cache`: uv 11G
+(pure package cache), chromium 1.8G (browser cache only; cookies/config live
+in the refused `~/.config`), 14 fleet seat/round dirs (~1.6G; zero open
+handles, zero fleet refs except s18 → s18 kept), 11 small stale CLI/seat
+caches (deno, bun, gh, devin, hop-tester, adm-ev-r3, anchor-verifier,
+bt3-re, d3-r9-review, d24-mirror, empty blender). Staged
+`~/.cache/.souji-quarantine/20261018T2331-0300/`, 17-min hold, second check
+(0 handles, 0 fresh writes) → deleted. `~/.cache` 28G → 14G.
+
+**Removed — /tmp (tmpfs), age+handle receipts.** Census
+(`tmp-census.tsv`): 8,562 items / 13G. OLD>24h band: 1,943 items / 1.1G
+staged → 450s hold → second check (0 handles, 0 originals left) → deleted.
+Operator then directed "free more": MID 1–24h band 6,443 items / 10.4G
+staged the same way (all handles=0; infra/sockets/X11/systemd-private and
+live-session FRESH items skipped; this sweep's own evidence files
+name-excluded) → `/tmp` 13G → 65M. Process kill (evidence-backed): 3
+orphaned r4 `souji-vault-verify.impl-17.sh` judge-fixture processes (~9h,
+ppid=systemd, do_wait) each stuck on `sha256sum` of a **FIFO**
+(`wait_for_partner`); killed parents+children, freeing their /tmp world
+dirs. sqlite3 (3.53.4) checked per operator: live consumers = 1Password
+(own `~/.config` DBs, refused zone, untouched) and the /tmp seat DBs
+(inside the quarantined seat dirs; holders verified 0).
+
+**NOT-SAFE — kept (the honest majority).** (1) kotodama `.scratch` 42G: the
+r6 handoff push-gate is now OPEN (unpushed=0, dirty=0, two-pass delta ~0
+B/s) but receipts deny every child — 256 children all have newest-file mtime
+<24h (round-32 completion rewrote the tree today); the big three (r28-x58
+9.4G, x58 7.8G, x37 3.4G) are additionally `secrets-refusal`
+(secret-shaped descendants — kagi's province; never read). Re-sweep when
+the tree ages past 24h (≈2026-10-20). A seat-archived COPY of the
+interactive-l1 checkpoint tree exists inside `.scratch` — noted, no action.
+(2) Engine-SAFE strays denied at the pre-removal reference gate: 107
+pushed-receipt files — frozen gate fixtures cited in 8+ round reports,
+28 plans/*-record-draft.md cross-referenced 3–7× per lane, research/round-18
+logs cited by PREDICTIONS.md/HYGIENE.md (`stay-strays-verdicts.tsv`).
+(3) `.tower/comms/log/activity.log` (engine SAFE/stale) treated as
+operator-tooling runtime → refused-zone spirit. (4) lore `.scratch` (unpushed
+lane), root `.scratch/*.out` + souji `err4.*` (live/too-young), gd2d
+fixtures `__pycache__` (not scratch-type).
+
+**Report-only (out-of-province or costly-to-regenerate; operator decides).**
+`~/.cache/huggingface` 11G (model weights), `~/.cache/codex-runtimes` 1.7G
+(codex daemon live), `~/.cache/ms-playwright` 681M, `~/.local/share/Trash`
+694M, cargo `target/` 864M + 289M (ufo-fsd-alpha, modelbench),
+`~/Projects/tog/node_modules` 22M.
+
+**Calibration notes.** Pre-removal `git add -A` over live lanes sweeps
+untracked work into hygiene commits — scope adds (lesson, two corrective
+commits). The quarantine tool's per-target staging loop can hang; the
+manual protocol (engine stage-gate → git mv → hash-vs-origin second check)
+is an equivalent-or-stronger receipt path and is now exercised end-to-end
+on live targets. Evidence: `census/operator-sweep-20261018/`.

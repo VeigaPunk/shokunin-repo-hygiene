@@ -91,9 +91,9 @@ Pre-quarantine commit:
 
 ## Known surfaces (fleet, refreshed r6)
 
-- Fleet root: `b2f2efa` checkpoint files at HEAD (96 actionable approval
-  rows await the operator; 15 shell strays were already removed by a1b44b1);
-  `shokunin.conf.full-roster-20261015` (superseded snapshot, SAFE/pushed).
+- Fleet root: the 96 pushed-receipt checkpoint artifacts (r3 approval list)
+  were REMOVED 2026-10-19 (fleet commit e20f4fa, operator sweep; recovery
+  via origin blobs). 15 shell strays were already removed by a1b44b1.
 - lore-shokunin: 19 dead worktree registrations PRUNED r3 (list now 1); a
   small `.scratch` (218 KB) flagged by the r6 fleet census.
 - game-dev-2d-shokunin: 2 detached registrations pruned r3; 3 named-branch
