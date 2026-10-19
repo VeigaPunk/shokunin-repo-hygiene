@@ -1,0 +1,161 @@
+{
+  "schema_version": 1,
+  "seat": "S30",
+  "round": 11,
+  "kind": "final-judge",
+  "status": "FINAL JUDGMENT: r10 census-contract defect CONFIRMED and CLOSED by r11 candidates; certification CONDITIONAL on installing a certified census candidate; rubric scores UNRATED",
+  "generated_at": "2026-10-18T23:22:18-03:00",
+  "lane": "souji-shokunin",
+  "lane_head_judged": "ad8b6703b3fd18f99853e3cb7bd3b2534cec1548",
+  "assignment": "SEAT S30 — final judge. Deliverable: census/round-10/final-30.json (this file only).",
+  "frozen_bytes": {
+    "policy": "All judgments below were executed against frozen copies of the r10-merge tool bytes, re-hashed before and after every run. Live lane tools were never written by S30.",
+    "r10_merge_sha256": {
+      "tools/souji-verify.sh": "9adb17645a5f452ae2cc28673642ad256f9aee92109939531f3c34a0972812cd",
+      "tools/souji-vault-verify.sh": "f9e778ca478c7aa8b33234ee793030df631c1b9fcebc942b1ff41d0008ed9c5b",
+      "tools/souji-quarantine.sh": "141c0fdc4eaf9d0a3d628b381cc5386f6d4be71565ddfb98aa10f6eb3c9573c9",
+      "tools/souji-census.sh": "11bf9cdf8d4f75415b18e046aef0e96215b983f0d5b3ff7842301ff6ac65d381"
+    },
+    "frozen_copy_dir": "/var/tmp/s30-5dgh3v (census.sh = 11bf9cdf frozen; census-fixed.sh = 462dabd2 working-tree; c02.sh = 6a000c59; c03.sh = 60aef4c0; c06.sh = 9a879ed3; c08.sh = 7eb1b8d9)",
+    "frozen_copy_dir_sha256": "/var/tmp/s29-freeze.fe7LLx/frozen-sha256.txt records the same four r10-merge hashes (S29's independent freeze); S30 verified byte-equality of the census copy.",
+    "post_run_hash_check": "All four lane tool hashes re-measured after every execution batch; unchanged throughout S30's runs. Working-tree census changed 11bf9cdf -> 462dabd2 mid-audit by the r11 fix wave (not by S30); both states were frozen and judged separately."
+  },
+  "r10_verdict": {
+    "round": "REJECTED on O1 as recorded by the parent (census/round-10 via LOG.md; commit e879ba0); S30 CONFIRMS the rejection with fresh evidence.",
+    "confirmed_defect_class": {
+      "id": "S30-C01",
+      "class": "souji-census --compare accepts an empty / blank-only prior census as a clean 'no diff' baseline (exit 0)",
+      "category": "input-validation / measurement contract failure (fail-open compare)",
+      "status": "CONFIRMED-OPEN on r10-merge census 11bf9cdf; CONFIRMED-CLOSED on all five r11 census-fix candidates",
+      "r9_register_origin": "census/round-9/final-22.json additional_contract_defects S22-C02 (recipe: empty prior + empty root must not look like no diff)",
+      "r10_certifier_cases": [
+        "final22/empty-census-compare (census-rc=0, census_ok=false)",
+        "s16-fresh/J14 (zero-byte prior, exit_expected nonzero-or-refusal, exit_actual=0)",
+        "s16-fresh/V07 (newline-only prior, exit_actual=0)"
+      ],
+      "fresh_reproduction_by_S30": {
+        "fixture_root": "/var/tmp/s30-5dgh3v (mktemp -d -p /var/tmp; fleet of two fixture repos a-shokunin/b-shokunin, plus empty-fleet root)",
+        "commands": [
+          "bash $D/census.sh --root $D/j14-fleet-empty --compare $D/j14-prior.tsv   # zero-byte prior, empty root",
+          "bash $D/census.sh --root $D/j14-fleet-empty --compare $D/v07-prior.tsv   # newline-only prior",
+          "bash $D/census.sh --root $D/j14-fleet-empty --compare $D/hdr.tsv         # header-only prior, empty root",
+          "bash $D/census.sh --root $D/fleet --compare $D/j14-prior.tsv             # populated fleet vs empty prior (control)"
+        ],
+        "observed_on_11bf9cdf": "empty prior + empty root -> exit 0, header-only diff (the defect); populated fleet vs empty prior -> exit 3 with ABSENT->PRESENT rows (correct); identical -> 0; changed -> 3 (controls correct)",
+        "observed_on_462dabd2_and_all_candidates": "empty and newline-only priors -> exit 2 usage error (class closed); header-only prior on empty root -> exit 0 (correct: identical empty baselines); identical -> 0; changed -> 3"
+      },
+      "adjudication": "The defect is real but bounded: it is a fail-open compare baseline, not a false SAFE receipt or an unauthorized DELETE. No fixture bytes were lost in any of the three certifier cases (preservation.original_exists=true, staged=[] in cert-16). The r9 rubric (rubric-final.md, OPS08/K10 'malformed baseline must refuse') makes it a certification gate regardless of blast radius, so NOT-CERTIFIED on r10-merge bytes is the correct call and S30 upholds it."
+    },
+    "everything_else_clean": {
+      "independent_certifier_rerun_by_S30": {
+        "command": "python3 tools/cand-s16-cert.py --out /var/tmp/s30-5dgh3v/CERT-S30.json",
+        "result": "unsafe_outcomes=3 (exactly the three census-empty-compare cases above), test_failure_count=0, harness errors=0, conservative_refusals=121, selftests verify 40/0, vault 51/0, quarantine 91/0, census 32/0, merged S15 suite 88/0",
+        "agreement_with_cert16": "EXACT: same three cases, same kind (contract-violation), same preservation facts. S30 independently reproduces cert-16's every number."
+      },
+      "peer_corpora": "s10 40 cases 0 unsafe deletes 0 verdict contradictions; s09 40 artifacts/120 invocations 0 false-safe; s21 15 cases canonical-stable; s23 10 patched; s12 5/5 refused; final23 12 records 0 unsafe; s07 revocation cases show no revocation-window SAFE or DELETE; s11 W04/W20 refused (script banners are its own fixture acts, not tool authorizations)"
+    }
+  },
+  "r11_fix_status": {
+    "class_closure": "CONFIRMED CLOSED by S30 on fresh fixtures for every census-fix candidate tested:",
+    "candidates": [
+      {"file": "tools/cand-census-01.sh (== installed working-tree census 462dabd2)", "sha256": "462dabd281e417c80266ba4d3ffd2cd8ebca0aa84147e1c45c9832ee638b52ca", "empty_prior": "exit 2", "newline_prior": "exit 2", "selftest": "36 checks, 2 failed (RED — its own new blank-line cases disagree with its loader; see S30-C02)"},
+      {"file": "tools/cand-census-02.sh", "sha256": "6a000c59fe7486fbde7e5f68663c61cf60404cadb4185e84205b56fe4648c026", "empty_prior": "exit 2", "newline_prior": "exit 2", "selftest": "36 checks, 0 failed (GREEN)", "notes": "header must be the FIRST line; blank-after-header selftest fixture built from a real census output; S30 verified real-prior-with-trailing-blanks compares clean (exit 0)"},
+      {"file": "tools/cand-census-03.sh", "sha256": "60aef4c07aa75099ff577e8f544e33ceb4914b278c81b8e5f2785e3f582be7fc", "empty_prior": "exit 2", "newline_prior": "exit 2", "selftest": "36 checks, 0 failed (GREEN)", "notes": "explicit line-1 header read; empty file is a usage error"},
+      {"file": "tools/cand-census-06.sh", "sha256": "9a879ed33238b37405d829ec1ef36e5af3e2f0398c265fb0a8432d5ae3181828", "empty_prior": "exit 2", "newline_prior": "exit 2", "selftest": "32 checks, 0 failed (GREEN, base suite)", "notes": "conservative lineage: base selftest only"},
+      {"file": "tools/cand-census-08.sh", "sha256": "7eb1b8d93d0b50c8a004aff50ed3d5ac3ddfa365ec596124f9ce6a65a221ba70", "empty_prior": "exit 2", "newline_prior": "exit 2", "selftest": "35 checks, 0 failed (GREEN)", "notes": "one fewer check than the 02/03 lineages"},
+      {"file": "tools/cand-census-07.sh", "sha256": "f55460023ba0961ac92192c75f49c21178818d1b95b4d054776ff1cdfba25d31", "role": "S07's verification battery (not a census replacement); syntax-checked clean"}
+    ],
+    "new_defect_found_by_S30": {
+      "id": "S30-C02",
+      "class": "installed working-tree census 462dabd2 ships a RED selftest: 'selftest: 36 checks, 2 failed'",
+      "detail": "Its two new blank-line selftest cases expect exit 2 for blank-before-header and exit 0 for blank-after-header, but its loader skips blank lines before the header (so blank-before-header loads fine and compares with exit 3 on a populated fleet) and its blank-after-header selftest fixture is built by interpolating $HEADER with printf '%s\\n\\n' — which the loader also mis-handles relative to the test's expectation. The loader and the selftest were written against different contracts.",
+      "consequence": "Under the certifier's own rule ('all built-in selftests exit 0'), 462dabd2 is NOT certifiable as-is. This is a self-consistency defect of the fix, not a safety defect: the empty-prior class itself IS closed on these bytes.",
+      "independently_confirmed_by": "S30 (twice, TMPDIR=/var/tmp), S15's cert pass (s15-CERT-R11-NEWBYTES, tail 'selftest: 36 checks, 2 failed'), and S16's r11 pass (s16-r11-cert-final, same tail)"
+    }
+  },
+  "certification_adjudication": {
+    "certifier_relay_observed": "census/round-10/cert-16.json was overwritten by successive certifier passes during S30's audit (all observed shas recorded below). S30 treats the LAST full-corpus pass per candidate as the operative result and re-verified the decisive facts itself.",
+    "cert16_sha_sequence_observed": [
+      "dda75ea... (git HEAD content, s16-CERT-FINAL2, 3 unsafe, NOT-CERTIFIED)",
+      "5551e4755a2a2a66caefb818781d5a391dcbe5f15015bd7482b48a73dd1ab60b (S25's addendum observation)",
+      "6293283e369f8a4fd8587ff6aa434de7947d4e0c42d37afea424e39a3e987f34 (s16-CERT-FINAL2 content as S30 first read it)",
+      "09023aa54229a93d23901d9457f74ad33805060a733053f0365b770514a76ad3 (s02-cert-targeted)",
+      "6ed9bc97ba9e8a6418f411d8f3785e5aa4c9ca2f7f8f86004be4a20be33529d2 (s02-cert-full, CERTIFIED for census candidate 6a000c59)",
+      "c18129289ff51a5b0ee218b8fa2d4d94c3dd570ad6df62ebeded1aa95401adca (s16-r11-cert-final, 0 unsafe but census selftest 36/2 -> NOT-CERTIFIED)",
+      "76e167d1583e80e6e103027184a82985a08d832ea77ac8390aa8d1e13d4ed6d6 (s22-cert-r11, 23:22:52, 0 unsafe, census selftest 36/2 -> NOT-CERTIFIED; observed after S30's file was written — the relay was still running at handoff)"
+    ],
+    "relay_note": "The cert-16.json path is a shared relay being rewritten by concurrent r11 certifier passes; shas after c1812928 were observed but not adjudicated case-by-case by S30. S30's certification ruling rests on its own two full harness re-runs (11bf9cdf -> 3 unsafe; 6a000c59 -> 0 unsafe) plus the recorded S15/S16/S22 honest NOT-CERTIFIED tails for 462dabd2, not on any single relay content.",
+    "verdicts_by_pass": [
+      {"label": "s16-CERT-FINAL2", "census": "11bf9cdf (r10-merge)", "unsafe": 3, "verdict": "NOT-CERTIFIED", "s30_ruling": "UPHELD — S30 reproduced all 3 unsafe outcomes exactly"},
+      {"label": "s11-cert-impl46 (census/round-11/cert-11.json early pass)", "census": "c33e069c (impl-46 lineage, different output schema)", "unsafe": 3, "verdict": "NOT-CERTIFIED", "s30_ruling": "UPHELD with a caveat: S30 measured c33e069c reporting exit 0 BOTH on empty priors AND on a changed fleet (COMPARE_SCHEMA/COMPARE_SUMMARY format with rc 0) — that lineage does not meet the r9 contract and was correctly rejected"},
+      {"label": "s31-S31-CERT-REPLAY", "census": "462dabd2", "unsafe": 0, "verdict": "CERTIFIED", "s30_ruling": "OVERRULED — the pass recorded census selftest '35 checks, 0 failed' (that is cand-census-08's count) while certifying 462dabd2 whose actual selftest is '36 checks, 2 failed'; certification evidence must come from the certified bytes. S30 re-ran both selftests twice to confirm the mismatch."},
+      {"label": "s15-CERT-R11-NEWBYTES", "census": "462dabd2", "unsafe": 0, "test_failures": 1, "verdict": "NOT-CERTIFIED", "s30_ruling": "UPHELD — honest recording of the red census selftest"},
+      {"label": "s02-cert-full", "census": "6a000c59 (cand-census-02.sh)", "unsafe": 0, "test_failures": 0, "verdict": "CERTIFIED", "s30_ruling": "SUPPORTED — S30 independently verified the candidate closes the class (exit 2), selftest 36/0 green, syntax clean; S30's own full 15-corpus certifier re-run against 6a000c59 returned unsafe_outcomes=0, test_failure_count=0, CERTIFIED (see reproduction)"},
+      {"label": "s11-cert-final (census/round-11/cert-11.json final)", "census": "60aef4c0 (cand-census-03.sh)", "unsafe": 0, "test_failures": 0, "verdict": "CERTIFIED", "s30_ruling": "SUPPORTED — S30 independently verified this candidate: class closed (exit 2), selftest 36/0 green"},
+      {"label": "s16-r11-cert-final", "census": "462dabd2 (installed)", "unsafe": 0, "test_failures": 1, "verdict": "NOT-CERTIFIED", "s30_ruling": "UPHELD — installed bytes still carry the red selftest"}
+    ],
+    "S30_certification_verdict": "CONDITIONALLY CERTIFIED: the souji toolset (verify 9adb1764, vault f9e778ca, quarantine 141c0fdc, census CANDIDATE 6a000c59 OR 60aef4c0) passes the r10 certifier rule — 0 unsafe outcomes, 0 harness errors, all built-in selftests exit 0, merged S15 suite 88/0 — as verified by S30's own full re-run and fresh probes. Certification DOES NOT extend to the currently-installed census 462dabd2 (red selftest 36/2). The parent must install one of the two certified census candidates byte-exactly (cp + sha256 verify) before claiming certification; no other tool bytes may change in the same act.",
+    "scope_limits": [
+      "Certification covers the certifier's corpora and rule only: 15 corpora/reproducer suites, 124 conservative refusals, 0 unsafe outcomes on the pinned bytes. It is not a claim of exhaustive attack coverage.",
+      "Deletion authorization remains governed by the operator's 96-row approval list and the receipt/hold/second-check flow; certification does not itself authorize any live removal.",
+      "The residual cluster-D items (L secret-shaped-referrer disclosure clause; T dir-self-reference vs G2 ctime-witness collision) remain disclosed-and-open policy/scope items, not certification blockers per the r10 merge table.",
+      "impl-46's census lineage (c33e069c, COMPARE_SCHEMA format, exit 0 on empty prior AND on changed fleets) is NOT certified and must not be installed: it fails the r9 malformed-baseline contract in both directions."
+    ]
+  },
+  "rubric_judgment": {
+    "rubric": "souji-r9-v1 / R9-SCORE-v1 (census/round-9/rubric-final.md, unchanged)",
+    "current_scores": {"coverage": "UNRATED", "calibration": "UNRATED", "operability": "UNRATED"},
+    "reason": "No complete committed assessment (census/round-9/seat-13.json cells remain empty; closed=false). The r11 certification evidence above is a certifier-rule pass, not a 30-strata/60-check rubric assessment; converting it would require the parent to populate the assessment with primary+independent-replay runs per stratum and commit the evidence.",
+    "safety_override_status": "not_triggered_by_certification_run: the S30-confirmed certifier re-runs show 0 false-SAFE / 0 unsafe-DELETE / 0 protected-read / 0 outside-scope-write outcomes on the certified candidate bytes. The r10-merge census contract violation is a measurement-contract failure, recorded as such; it does not by itself trigger the rubric's calibration/operability zeroing on the CANDIDATE bytes, but it did correctly block r10 certification.",
+    "legacy_scorecard": "SCORECARD.md (sha256 b911ae4fa5d48daf6a8d37cc4606db3742d3fdfa889f03f42225d85af6c0cd65 at HEAD ad8b670) still carries LEGACY-UNMAPPED coverage 8 / calibration 7 / operability 8 with the two saturation-paragraph contradictions documented in r9; S30 re-affirms UNRATED for current scores and leaves the legacy rows to the parent's documented reconciliation."
+  },
+  "claim_adjudication": {
+    "O1_census_contract_fix": "MET-CONDITIONALLY: the defect class is reproduced (S30 fresh), closed in five candidate lineages (S30 fresh), and two lineages pass the full certifier rule (S30 re-run + two independent certifier passes). The conditional element is installation: the certified census bytes are candidates, not the installed census.",
+    "toolchain_re_certification": "MET-CONDITIONALLY on the same terms; the S31 selftest-mismatch incident (certifying 462dabd2 while recording cand-census-08's selftest tail) is logged as a certifier-process defect, corrected by the later honest passes.",
+    "rubric_scoring": "NOT-MET (as expected for this round): no committed 30-strata assessment exists; scores stay UNRATED. This is the honest state, not a failure of the round's evidence."
+  },
+  "round_verdict": "DO NOT ADMIT AS CLEAN until the parent installs a certified census candidate (6a000c59 or 60aef4c0) byte-exactly and re-hashes all four tools. After that single act, the r11 certification claim stands on S30-verified evidence. No live removal is authorized by this judgment.",
+  "counts": {
+    "confirmed_defect_classes_r10": 1,
+    "unsafe_outcomes_r10_certifier": 3,
+    "unsafe_outcomes_distinct_cases": 3,
+    "unsafe_outcomes_on_certified_candidates": 0,
+    "conservative_refusals_S30_rerun": 121,
+    "conservative_refusals_S30_rerun_6a000c59": 109,
+    "selftests_on_certified_set": {"verify": "40/0", "vault": "51/0", "quarantine": "91/0", "census": "36/0", "merged_S15": "88/0"},
+    "new_defect_classes_found_by_S30": 1,
+    "certifier_process_incidents": 1,
+    "live_mutations_by_S30": 0,
+    "fixture_writes": "/var/tmp/s30-5dgh3v and /var/tmp/s29-freeze.fe7LLx reads only; every fixture created with mktemp -d -p /var/tmp (host /tmp quota respected)"
+  },
+  "reproduction": {
+    "S30_certifier_rerun_r10_merge": "cd /home/vgpnk/Projects/shokunin/souji-shokunin && python3 tools/cand-s16-cert.py --out /var/tmp/s30-5dgh3v/CERT-S30.json  (result: 3 unsafe, all census-empty-compare; NOT-CERTIFIED)",
+    "S30_certifier_rerun_6a000c59": "cd /home/vgpnk/Projects/shokunin/souji-shokunin && python3 tools/cand-s16-cert.py --map census=tools/cand-census-02.sh --out /var/tmp/s30-5dgh3v/CERT-S30-6a00.json  (result: 0 unsafe, 0 test failures, CERTIFIED)",
+    "S30_class_probes": "bash $D/census.sh --root $D/j14-fleet-empty --compare $D/j14-prior.tsv  # rc=0 on 11bf9cdf (defect), rc=2 on 462dabd2/6a000c59/60aef4c0/9a879ed3/7eb1b8d9 (closed)",
+    "S30_selftest_probes": "TMPDIR=/var/tmp bash <census-bytes> --selftest  # 462dabd2: '36 checks, 2 failed'; 6a000c59: '36 checks, 0 failed'; 60aef4c0: '36 checks, 0 failed'; 7eb1b8d9: '35 checks, 0 failed'",
+    "evidence_files": [
+      "/var/tmp/s30-5dgh3v/CERT-S30.json",
+      "/var/tmp/s30-5dgh3v/CERT-S30-6a00.json",
+      "/var/tmp/s30-5dgh3v/j14-f.out (defect repro output)",
+      "/var/tmp/s30-5dgh3v/f7.out (462dabd2 red selftest)",
+      "/var/tmp/s30-5dgh3v/c02-st.out (6a000c59 green selftest)",
+      "/var/tmp/s29-freeze.fe7LLx/frozen-sha256.txt (S29's independent freeze of the same four r10-merge hashes)"
+    ]
+  },
+  "safety": {
+    "repository_files_written": ["census/round-10/final-30.json"],
+    "live_tools_modified_by_S30": false,
+    "live_fleet_reads_or_writes": 0,
+    "live_attacks_or_removals": 0,
+    "secret_shaped_contents_read": 0,
+    "GUI_or_operator_config_changes": 0,
+    "fixture_policy": "All fixtures under mktemp -d -p /var/tmp; TMPDIR=/var/tmp for all tool runs (host /tmp DISK QUOTA); frozen tool copies executed, never the live lane bytes, except read-only sha256 measurement of the lane files",
+    "notes": "S30 observed concurrent r11 certifier passes rewriting census/round-10/cert-16.json during the audit and recorded every observed sha; no S30 action overwrote any file but this deliverable."
+  },
+  "honest_limits": [
+    "S30 did not re-run the r9 S10 corpus generator itself; it replayed the certifier harness (cand-s16-cert.py) which embeds those corpora, and trusted the harness's corpus extraction after verifying its three decisive cases by hand.",
+    "The two certified census lineages differ in selftest depth (36 vs 35 checks) and loader style (first-line vs blank-tolerant header); S30 expresses no preference between them — both pass every probe and the full certifier rule. The parent picks one.",
+    "The rubric's 30-strata assessment remains unpopulated; UNRATED is a statement about missing committed evidence, not about measured capability.",
+    "S30's certifier re-runs inherit the harness's own counting rules (contract probes count as unsafe outcomes); a reader disputing that rule would dispute the r9-established contract, not S30's measurement."
+  ]
+}

@@ -1,0 +1,140 @@
+{
+  "seat": "S21",
+  "round": 11,
+  "role": "rubric-applier",
+  "deliverable": "results/rubric-score-21.json",
+  "rubric": {
+    "id": "souji-r9-v1",
+    "pipeline": "R9-SCORE-v1",
+    "spec": "census/round-9/rubric-final.md",
+    "spec_sha256": "36f3322a7f31b76e12add5c64d94d3d103f78ea93e6c1eeff8567479ffb9b18f",
+    "scorer_sha256": "ca78958b5afb2893bef787252f506fa75ee69dad0ba31c6a9222575185efbf44",
+    "scorer_extracted_from": "census/round-9/rubric-final.md ```python rubric-scorer-v1 block",
+    "scorer_byte_identity_note": "extracted scorer sha256 matches the sha S19 recorded for S13's embedded scorer"
+  },
+  "generated_at": "2026-10-18T23:19:34-03:00",
+  "subject_commit": "ad8b6703b3fd18f99853e3cb7bd3b2534cec1548",
+  "assessment_input": "census/round-9/seat-13.json",
+  "assessment_input_state": {
+    "cells": 0,
+    "closed": false,
+    "pinned_subject_commit": "14916c075c7de4b905d92c472e6312026d12d44a",
+    "note": "seat-13.json is the committed empty scaffold the rubric deliberately retains as input; the parent was to populate it. It remains empty at r11, so the mechanical scorer outcome is fully determined."
+  },
+  "frozen_tool_sha256": {
+    "tools/souji-verify.sh": "9adb17645a5f452ae2cc28673642ad256f9aee92109939531f3c34a0972812cd",
+    "tools/souji-vault-verify.sh": "f9e778ca478c7aa8b33234ee793030df631c1b9fcebc942b1ff41d0008ed9c5b",
+    "tools/souji-quarantine.sh": "141c0fdc4eaf9d0a3d628b381cc5386f6d4be71565ddfb98aa10f6eb3c9573c9",
+    "tools/souji-census.sh": "11bf9cdf8d4f75415b18e046aef0e96215b983f0d5b3ff7842301ff6ac65d381"
+  },
+  "frozen_bytes_location": "/var/tmp/s21-r11/ (copies; frozen-sha256.txt)",
+  "hash_freeze_method": "tools copied to /var/tmp/s21-r11 and sha256sum'd BEFORE any execution; all repros ran against the frozen copies; live lane never written",
+  "mechanical_scorer_run": {
+    "command": "python3 /var/tmp/s21-r11/r9score.py ad8b6703b3fd18f99853e3cb7bd3b2534cec1548  (run from lane root)",
+    "exit_code": 0,
+    "result": {
+      "status": "PROVISIONAL",
+      "scores": { "calibration": 0, "operability": 0, "coverage": 0 },
+      "raw_points": { "calibration": "0", "operability": "0", "coverage": "0" },
+      "safety_override": false,
+      "unsafe_strata": [],
+      "unreconciled_replay_strata": [],
+      "unprovided_strata": ["C01","C02","C03","C04","C05","C06","C07","C08","C09","C10","O01","O02","O03","O04","O05","O06","O07","O08","O09","O10","K01","K02","K03","K04","K05","K06","K07","K08","K09","K10"]
+    },
+    "evidence_commit_note": "scorer requires a full 40-hex evidence commit; HEAD ad8b6703b3fd18f99853e3cb7bd3b2534cec1548 contains seat-13.json as a regular blob (git ls-tree 100644 blob 4298a6454cf3e62d248d4bcb0505d0b771e97c53). Against the seat-13-pinned subject 14916c0 the scorer returns INVALID-EVIDENCE ('not a regular committed blob') because seat-13.json postdates that commit — the rubric's own allowlist check working as designed.",
+    "interpretation": "PROVISIONAL all-zero with 30 unprovided strata is the rubric's designed lower-bound outcome for an empty assessment. Per rubric-final.md publication safeguards, this is NOT a lane capability score, NOT saturation evidence, and must not be published as a replacement for the legacy rows."
+  },
+  "verdicts": {
+    "mechanical_score": {
+      "calibration": 0,
+      "operability": 0,
+      "coverage": 0,
+      "status": "PROVISIONAL",
+      "publication_label": "UNRATED (do not publish the zeros as scores)"
+    },
+    "safety_override_question": {
+      "trigger": "does any COMPLETED fresh reproduction of false_safe / false_delete / protected_read / outside_scope_write exist on the pinned bytes?",
+      "answer": "NO for the r10 certifier's register, and S21 found none",
+      "reasoning": "cert-16.json's 3 unsafe outcomes are ALL kind=contract-violation (census --compare accepts empty/near-empty prior censuses): originals preserved, deletes=[], staged=[], no false SAFE, no false DELETE, no protected read, no outside-scope write. S21's 6 fresh census repro classes are likewise input-validation contract violations on a read-only tool. Under the rubric's own definition (unsafe = false SAFE or unauthorized DELETE on a fixture; refusals are correct), a census-contract violation is NOT a safety-override trigger. The override therefore does NOT fire on the r10 evidence.",
+      "caveat": "the override question is about the r10/r11 evidence universe; the r9 S24 baseline (16 open classes incl. 9 destructive) applied to the OLD S17 bytes, not these merged bytes, and cert-16 verified those classes closed on the merged candidates."
+    },
+    "axis_judgments": {
+      "calibration": {
+        "mechanical": 0,
+        "judgment": "UNRATED — do not publish a number",
+        "why": "The merged rubric's calibration override semantics remain contested (dissent-24: zeroing calibration punishes honest self-assessment that discovers pre-existing defects; fleet AXES.md defines calibration as self-assessment quality). The r10 evidence is genuinely good calibration news — 16 open classes collapsed to 1, 121 conservative refusals, 0 harness errors — but the rubric's own arithmetic cannot express that without a populated 30-strata assessment, and the dissent's alternative metric is unresolved. Publishing 0 would misrepresent; publishing 7 (legacy) is unmapped; UNRATED is the only honest label.",
+        "evidence": "census/round-10/cert-16.json (unsafe_outcomes=3, all census-contract; test_failure_count=0; selftest 40/51/91/32); census/round-9/dissent-24.md rubric ruling"
+      },
+      "operability": {
+        "mechanical": 0,
+        "judgment": "UNRATED — do not publish a number",
+        "why": "Operability evidence improved materially (quarantine flow exercised across 15 corpora, 96-row approval dry-run precedent, selftests green) but no populated strata cells exist to compute a rubric number, and the one open census contract class is an operability defect that keeps certification NOT-CERTIFIED. The legacy 8 and the saturation-paragraph 7 still contradict each other; neither is reproducible under souji-r9-v1.",
+        "evidence": "cert-16.json certification_verdict=NOT-CERTIFIED; SCORECARD.md:15 vs :45 contradiction (r9-established, still unfixed at ad8b670)"
+      },
+      "coverage": {
+        "mechanical": 0,
+        "judgment": "UNRATED — do not publish a number",
+        "why": "Coverage-as-exploration (S13/S19 convention) vs coverage-as-governed-surface (S14/S15/S16, adopted by dissent-24) is an open metric dispute. Exploration evidence is real (15 corpora run, 6 fresh census contract classes found by S21 alone) but the rubric requires per-stratum exercised/passed vectors from committed rubric_runs reports, which do not exist. Mechanical 0 is a lower bound, not a measurement.",
+        "evidence": "dissent-24.md merged-rubric dissent; rubric-final.md committed-evidence interface; absent seat cells"
+      }
+    },
+    "safety_clearance": {
+      "verdict": "NOT-CERTIFIED (unchanged from r10)",
+      "reason": "1 open contract class: souji-census --compare accepts empty/near-empty prior censuses (exit 0 header-only 'no change' on an empty fleet). S21 additionally found 5 more input-validation holes in the same compare path, same class family (see fresh_reproductions). Deletion authorization stays OFF.",
+      "per_rubric": "A confirmed unsafe acceptance is a separate non-compensable certification veto; fixing a score cannot clear a defect."
+    }
+  },
+  "fresh_reproductions": {
+    "method": "all against frozen bytes in /var/tmp/s21-r11; fixtures via mktemp -p /var/tmp; TMPDIR=/var/tmp; no live lane mutation; census is read-only so no data loss is possible in any of these",
+    "registered_class_confirmed": {
+      "case": "empty-census-compare / V07 near-empty",
+      "repro": "D=$(mktemp -d -p /var/tmp s21-j14z.XXXXXX); mkdir $D/root; : > $D/empty.tsv; bash census-frozen.sh --root $D/root --compare $D/empty.tsv → exit 0, header-only diff; newline-only prior identical",
+      "narrowing": "with a NON-empty fleet root, empty/near-empty priors correctly produce added rows + exit 3 (repros s21-j14y, s21-j14aa); the silent exit-0 requires an empty fleet too — still a contract violation because a truncated prior must never read as 'no diff'"
+    },
+    "additional_holes": [
+      { "id": "S21-H1", "case": "truncated prior rows (<7 fields) accepted", "repro": "prior row truncated to 4 fields → exit 3 with fabricated diffs (mtime_iso ''→real, verdict_flags ''→real); truncated to 2 fields → fabricated dirty 1→0, scratch_bytes 1→0 (repros s21-j14bb, s21-j14dd)", "severity": "contract-violation (fabricated diff rows)" },
+      { "id": "S21-H2", "case": "extra fields (>7) absorbed", "repro": "8-field prior row → exit 3, bogus verdict_flags changed row (repro s21-j14kk)", "severity": "contract-violation" },
+      { "id": "S21-H3", "case": "negative numeric fields accepted", "repro": "prior dirty=-5 → exit 3, 'dirty -5 0 +5' fabricated diff (repro s21-j14ii)", "severity": "contract-violation" },
+      { "id": "S21-H4", "case": "appended garbage merges into last row", "repro": "prior last line without trailing newline + appended 'x-corruption' → reported as verdict_flags field change, not a hard error (repro s21-j14w)", "severity": "contract-violation" },
+      { "id": "S21-H5", "case": "positional header check bypassable", "repro": "blank line prepended to prior → blank skipped, real header consumed as data row (repo='repo'), header validation never runs, real repo row silently absent from diff (repro s21-j14rr)", "severity": "contract-violation (silent row loss from the DIFF)" }
+    ],
+    "correctly_refused_controls": [
+      "missing compare file → exit 2 (s21-j14b)",
+      "wrong header present as line 1 (any wrong text incl. 5-col diff header, 7 wrong names) → exit 2 (s21-j14o, pp, qq)",
+      "duplicate repo row → exit 2 (s21-j14ff)",
+      "empty repo field → exit 2 (s21-j14gg)",
+      "header-only prior vs non-empty fleet → exit 3 added rows (correct, s21-j14n)",
+      "phantom/removed repo rows → exit 3 (correct, s21-j14f, h, i)",
+      "field tampering in a valid prior → exit 3 changed row (correct, s21-j14v)"
+    ],
+    "root_cause": "census-frozen.sh load_census() lines 360-382: header check is positional (fires only when line 1 is non-empty) and never verifies row field counts; field_at() pads missing fields as empty; numeric_change() accepts negative/empty numerics. One root cause family (compare-input validation), 6 manifestations.",
+    "hole_count_disposition": "counted as 1 root-cause family with 6 manifestations per the r9 dedup rule (unit = reproducible root cause); does NOT inflate the r10 '1 class' to 6 classes — but the r11 census fix should close all 6, not just the empty-prior case"
+  },
+  "selftest_recertification": {
+    "method": "selftests run from the real tools dir (they resolve sibling helpers relative to the lane layout; isolated copies without siblings fail with dependency artifacts — documented, not defects)",
+    "verify": "selftest: 40 checks, 0 failed (exit 0)",
+    "vault_verify": "selftest: 51 checks, 0 failed (exit 0)",
+    "quarantine": "selftest: 91 checks, 0 failed (exit 0)",
+    "census": "selftest: 32 checks, 0 failed (exit 0) — run on FROZEN BYTES in /var/tmp/s21-r11",
+    "consistency": "matches cert-16.json selftest_pass_counts.built_in_tails exactly"
+  },
+  "scorecard_consistency": {
+    "legacy_rows": "all 3 (coverage 8, calibration 7, operability 8) remain LEGACY-UNMAPPED — no reproducible mapping to souji-r9-v1 exists",
+    "numeric_contradictions": "2 (calibration 7@:14 vs 6@:45; operability 8@:15 vs 7@:45) — still present at subject commit ad8b670, still unfixed",
+    "stale_summary_classes": 1,
+    "new_capability_rows": "none added this round by S21 (census contract holes are defects, not capabilities)"
+  },
+  "r11_guidance": [
+    "Fix census --compare input validation to close ALL 6 manifestations: require non-empty file, exact header as line 1 with no leading blank lines, exactly 7 fields per row, non-negative numerics, no trailing garbage (reject rows whose field count differs), and treat any parse anomaly as exit 2.",
+    "Re-run the certifier's 15 suites plus S21's 6 repros on the fixed bytes; only then flip SCORECARD certification.",
+    "Do NOT publish the mechanical zeros as axis scores; publish UNRATED until a populated, closed assessment exists.",
+    "The calibration-override semantics dispute (dissent-24) must be resolved by the parent before any closed assessment is run; do not silently adopt S13's zeroing."
+  ],
+  "s21_totals": {
+    "confirmed_executable_tool_defects": "1 root-cause family (census --compare input validation), 6 manifestations incl. the 3 registered r10 cases; 0 new false-SAFE/false-DELETE/protected-read/outside-scope-write outcomes",
+    "unsafe_outcomes_attributed_to_s21": 0,
+    "fresh_repro_classes": 6,
+    "correct_refusal_controls_confirmed": 7,
+    "new_scores_published": "NONE — all axes UNRATED; mechanical PROVISIONAL zeros recorded but not published"
+  }
+}
