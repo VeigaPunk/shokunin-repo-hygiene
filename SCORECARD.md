@@ -14,6 +14,11 @@ counting command and the commit it was measured against.
 | calibration | 7 | improved (r12 C1, self-verdict pending non-author; score delta 0): own-mistake classes with a mapped captured-by rule 28/52 → 51/53 (mapped criteria, not demonstrated catches; M27/M39 external). Prior: r5 V1, 3 material defects corrected in-round | `sed 's/\\|/%7C/g' <file> \| awk -F'\|' '/^\| M[0-9]+ \| (defect\|process\|honest-stop\|caught) \|/{n++; if ($6 !~ /^[[:space:]]*none/) c++} END{print c"/"n}'` on `census/round-12/mistakes.md` (before) and `corpus/lessons/round-12.md` (after) | d7266c5 (`census/round-12/after.txt`) | r12 |
 | operability | 8 | improved (r12 C3, self-verdict pending non-author; score delta 0): registered gates 0→1 (`r12-maintenance-guard`, exit 0/1/2, `--selftest` asserts pinned ids); executable Pre-quarantine guard rows 0→3. Prior: r4 O1', souji-vault-verify live | `bash tests/fixtures/r12-maintenance-guard.sh --selftest; echo $?` → 0; `grep -cE 'maintenance\.auto=false\|rev-parse --show-toplevel\|worktree lock --reason' SKILL.md` → 3 (0 at dcc8b9e) | d7266c5 (`census/round-12/after.txt`) | r12 |
 
+Correction (r12 post-review, 2026-10-19): coverage C2 reads 0→4 admitted entries (+1 held,
+K5) on F1/F3/F4, SOURCES census mined=16 queued=15; calibration C1's 28/52 → 51/53 is a
+rule-coverage count, not calibration proof. Details: `corpus/lessons/round-12.md`
+`## Post-review fixes`.
+
 ## Capabilities
 
 | name | what it can now do | evidence pointer | first-working round |

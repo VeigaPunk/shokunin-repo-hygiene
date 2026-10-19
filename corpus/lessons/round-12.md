@@ -347,3 +347,29 @@ this round lands.
 
 ### Omitted
 None. All 30 ART rows were opened this session.
+
+## Post-review fixes (appended 2026-10-19, after the orchestrator's non-author adjudication)
+
+Orchestrator review of d7266c5/de9187e: non-author reviewer HOLD, critic reject as submitted.
+Fixes, append-only except the contract-allowed in-place SOURCES cells (rule 2):
+
+1. **S030 `recheck`** was `—` (census E09). In place: `—` → `365d`.
+2. **K5 moved admitted → HELD.** The Gate row above (ART C6 → K5) said "the pasteable recheck
+   line is the committed fixture"; that was false — no fixture was committed and K5's own
+   Evidence says "scratch-only script, not committed". With Q15 withdrawn (item 3) its
+   `/dev/shm` second device also fails Q4. Correction appended to K5 (`## Admission status —
+   HELD`). Consequent in-place SOURCES changes: S024 `status` mined → queued, `used-by`
+   `corpus/knowledge/quarantine-same-filesystem-rename.md` → `—`; S025 the same.
+3. **Q15 withdrawn** by the superseding row QUALITY.md Q16: Q15's only lesson pointer was the K5
+   admission it served (circular). No mined lesson grounds it.
+4. **K2 recheck** missed the 90-day default because `man` wraps lines; corrected command and
+   output appended to K2 (`## Recheck (corrected r12 post-review)`): 6/6 defaults found with
+   `MANWIDTH=2000`.
+5. **C1 restated:** 28/52 → 51/53 is a *rule-coverage count* (classes whose captured-by cell
+   names an existing rule), not proof of calibration or of demonstrated catches.
+
+Re-measured after the fixes (lane root, 2026-10-19):
+- C2 admitted entries (held excluded):
+  `bash -c 'for f in corpus/knowledge/*.md; do grep -q "^## Admission status — HELD" "$f" && continue; head -3 "$f" | grep -cE "^(source|verified-at|recheck):"; done | grep -c "^3$"'`
+  → 4 (+1 held); frontier rows with an admitted entry still 3 (F1, F3, F4 via K4).
+- SOURCES census: 33 / 0 / A=29 B=3 C=1 / mined=16 queued=15 rejected=2; last three checks silent.

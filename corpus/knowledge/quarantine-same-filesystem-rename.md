@@ -47,3 +47,12 @@ src still: f  dst: 0
 
 ## Limits
 - Fixture is one regular file on tmpfs (`/dev/shm`) vs btrfs (`/var/tmp`); directory trees, xattrs, and interrupted copies were not exercised. `/dev/shm` is outside Q4's `/var/tmp`-only rule; used solely as the second device, created and removed by the fixture.
+
+## Admission status — HELD (r12 post-review, appended 2026-10-19)
+
+This entry is held, not admitted. Its Gate row said the recheck line was a committed fixture;
+no fixture was committed (the Evidence section says "scratch-only script, not committed"), and
+its second device (`/dev/shm`) relied on Q15, now withdrawn by QUALITY.md Q16 — so it fails Q2's
+committed-fixture form and Q4. The facts above stand as recorded; it re-enters admission with a
+committed `/var/tmp`-only fixture or a lesson-grounded cross-device criterion
+(`corpus/lessons/round-12.md` `## Post-review fixes`).

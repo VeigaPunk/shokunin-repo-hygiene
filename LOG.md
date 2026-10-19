@@ -499,3 +499,14 @@ measured on it with a clean worktree: `census/round-12/after.txt` — C1
 SOURCES 33 rows census clean, C3 gate exit 0 with `selftest=PASS ids=6/6`
 and guard rows 0→3. SCORECARD measured-commit cells point here. Self-
 verdicts only; non-author verification (orchestrator) is pending.
+
+## 2026-10-19 — round 12 post-review fixes (orchestrator adjudication)
+
+Non-author review of d7266c5/de9187e returned HOLD / reject-as-submitted. Fixed in round 12,
+append-only (`corpus/lessons/round-12.md` `## Post-review fixes`): S030 recheck `—`→`365d`;
+K5 moved admitted→HELD (its Gate claimed a committed fixture that did not exist; its
+`/dev/shm` device relied on Q15) with S024/S025 mined→queued; Q15 withdrawn by QUALITY Q16
+(circular lesson pointer); K2 recheck corrected (`MANWIDTH=2000`, 6/6 defaults); C1 restated
+as a rule-coverage count. After: C2 admitted entries 4 (+1 held), SOURCES mined=16 queued=15,
+`TZ=UTC bash .tower/worktrees/kaika/fleet-census/scripts/sources-census.sh validate <worktree>`
+→ `souji-shokunin ok`, exit 0. No new claims.

@@ -19,3 +19,17 @@ Google SRE § First Layer: Soft Deletion says: “Common choices of soft deletio
 
 ## Failure case (Q3)
 Git documents that `--prune=now` can risk corruption with concurrent writers (S002, `git-gc.1.txt:113,414-440`). Separately, the r12 reachability probe found the detached worktree commit absent from refs and reflogs, marked unreachable, still present after default two-week pruning, and absent after `gc --prune=now` (`tests/results/r12-maintenance-guard.txt:33-40`). The fixture demonstrates deletion of that orphaned commit under forced expiry; it does not simulate concurrent-writer corruption.
+
+## Recheck (corrected r12 post-review, appended 2026-10-19)
+
+The header `recheck:` misses the 90-day default: `man` wraps lines at the terminal width, so
+"defaults to 90 days" splits across lines. Corrected command and its output (host git 2.55.0):
+
+    MANWIDTH=2000 man git-gc | grep -oE '2\.weeks\.ago|3\.months\.ago|defaults to (90|30) days|default is (60|15) days' | sort -u
+
+    2.weeks.ago
+    3.months.ago
+    default is 15 days
+    default is 60 days
+    defaults to 30 days
+    defaults to 90 days

@@ -53,3 +53,10 @@ when the file exists, not before.
 - "No census data yet (r1)" and "No gate tool yet (r2)" under Known gaps are stale: census tables exist from r1 (`census/round-1/census.tsv`) and verdict tools from r2 (`tools/souji-verify.sh`).
 - "census tables land here from r1 onward" (knowledge/) is wrong: census tables land in `census/round-<N>/` (r2's evidence is in `tests/results/`).
 - "each with a `## Gate` section" under lessons/ held for none of rounds 1–11 (`grep -c '^## Gate' corpus/lessons/round-{1..11}.md` → 0 each); `lessons/round-12.md` is the first to carry it.
+
+### Corrections (r12 post-review, 2026-10-19)
+
+- F4's `knowledge/quarantine-same-filesystem-rename.md` is HELD, not admitted (no committed
+  fixture; its `/dev/shm` device relied on QUALITY Q15, withdrawn by Q16). F4 still holds an
+  admitted entry (`knowledge/trash-spec-restorable-quarantine.md`).
+- `QUALITY.md` now runs Q1–Q16 (Q16 withdraws Q15).
