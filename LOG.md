@@ -320,3 +320,11 @@ MET as prospective spec. Dissent preserved.
 
 **Ledger.** r9 = failed. Hardening closure is r10's mission
 (operator-rerouted to hyper/deepseek-v4.1-flash).
+
+## 2026-10-18 — operator scheduling amendments 3-4 (session-scoped)
+
+(3) Skip 128-seat xai-grok rounds — r6 already executed; no future grok
+rounds remain. (4) sol-6.1 rounds use codex luna-max instead — r9 already
+executed; no future sol rounds remain. Remaining schedule unchanged: r10
+hyper/deepseek-v4.1-flash, r11 devin/glm-5-3-flash-max, r12
+antigravity/gemini-3.8-flash.
