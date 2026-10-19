@@ -1,0 +1,226 @@
+{
+  "seat": "S03",
+  "round": 10,
+  "role": "cluster B lead — ledger authority (B1) and --list schema (B2)",
+  "fragment": "census/round-10/seat-03.json",
+  "axes": [
+    "fail-closed authorization: no false SAFE and no false DELETE",
+    "receipt integrity across the staging/hold window (ledger re-read + fingerprint before every authorization)",
+    "fresh reproducibility on /var/tmp fixtures; no live mutation"
+  ],
+  "verdict": "MET for cluster B: both defect classes freshly reproduced on the installed S17 tools, both closed in full-source candidates that keep every inherited selftest green and every positive flow working",
+  "patch_base": {
+    "note": "Installed tools are S17-patched; these hashes are the audited baseline.",
+    "tools/souji-verify.sh": "4baa8d955c531fcc73edc6b62021cb9531a31e1baed8aa853ba957b204d1cfc1",
+    "tools/souji-vault-verify.sh": "ea43bb0f9b9fe96cc26451df1a41d2df97d2d044852f122c987c209b6ec7b7a7",
+    "tools/souji-quarantine.sh": "f6f8516c15ab654f7e5f2dc2a7840eef0b53b9f9433e2ff70a64490b35fde68f"
+  },
+  "files_written": [
+    "tools/cand-b1-verify.sh",
+    "tools/cand-b1-vault.sh",
+    "tools/cand-b1-quarantine.sh",
+    "tools/cand-b1-regress.sh",
+    "census/round-10/seat-03.json"
+  ],
+  "candidate_hashes": {
+    "tools/cand-b1-verify.sh": "d14c1583837013cb4e0c59a0f8b29b8a5a6348282f7a012b9c4770f119cdd44e",
+    "tools/cand-b1-vault.sh": "fe788c0a5b18d729eb8bf1d200ce748273469461580adf1cec32ff1fff0bd978",
+    "tools/cand-b1-quarantine.sh": "d925cf6ced785abc733fdada19de5454abfeca4a2ae78fe5584701d67ceb991f",
+    "tools/cand-b1-regress.sh": "1bf24d82297d412d55ca8db997f69aeec051742a1eced494a26160f947906ddf"
+  },
+  "counts": {
+    "counting_rule": "Deduplicate by root cause; each (tool, mechanism) pair counted once. A refusal is never counted as a defect. 'destructive' means the bytes are gone from both the live tree and quarantine.",
+    "confirmed_defect_classes": 3,
+    "false_safe_engine_pairs": 2,
+    "false_delete_pairs": 3,
+    "baseline_battery": {"verify": "10/2", "vault": "12/0", "quarantine": "23/8"},
+    "candidate_battery": {"verify": "12/0", "vault": "12/0", "quarantine": "31/0"},
+    "candidate_selftests": {"verify": "52 checks, 0 failed", "vault": "63 checks, 0 failed", "quarantine": "122 checks, 0 failed"},
+    "inherited_selftests_ported": {"verify": "40/40", "vault": "51/51", "quarantine": "91/91"},
+    "new_regression_checks": {"verify": 12, "vault": 12, "quarantine": 31},
+    "positive_flows_preserved": "honest file row, honest dir row, honest stale, CRLF list row, no-EOL list row — all still authorize and delete exactly once",
+    "live_mutations": 0
+  },
+  "confirmed_defects": [
+    {
+      "id": "S03-B2-1",
+      "status": "CONFIRMED: fresh /var/tmp repro; real (non-dry-run) deletion of a target that has no receipt at all",
+      "title": "Engine record parsed by blind field-drop: a TAB inside the target name forges a receipt",
+      "affected": ["tools/souji-quarantine.sh run_verify (installed: lines 206-233)"],
+      "mechanism": "run_verify strips the leading 'VERDICT' and two TAB-delimited fields without anchoring on the echoed path. souji-verify echoes the raw argument in its path field, so a target named 'fresh<TAB>SAFE<TAB>stale<TAB>no-receipt.txt' produces 'VERDICT<TAB><path-part1><TAB>SAFE<TAB>stale<TAB><path-part2>...'; after dropping two fields the parent reads verdict=SAFE, receipt=stale and the stage-4 prong1 becomes SAFE(stale) binding, which authorizes the delete.",
+      "fresh_ground_truth": "souji-verify itself reports NOT-SAFE/none for the same path (its JSON output carries the TABs verbatim), and the --list path rejects the identical row as malformed (exit 2). Only the positional/engine-echo path was exploitable.",
+      "observed_baseline": "exit 0; RESULT ... DELETED stale; source gone from tree and quarantine",
+      "observed_candidate": "exit 3; NOT-AUTHORIZED control-char-path; bytes retained",
+      "contradicted_invariant": "A target with no receipt must never be deleted; the engine's own verdict must not be reinterpretable by the caller's parser.",
+      "evidence_pointers": [
+        "/var/tmp/s03-exp4.z34pitxb (P3: baseline FALSE-DELETE)",
+        "/var/tmp/s03-r10-evidence.1792373997/baseline-battery.txt (verify 10/2, quarantine 23/8)",
+        "reproduction.cases[0]"
+      ]
+    },
+    {
+      "id": "S03-B1-1",
+      "status": "CONFIRMED: fresh /var/tmp repro; false DELETE after the ledger is rewritten during staging/hold",
+      "title": "Quarantine never fingerprints the ledger at stage 1: an in-flight ledger rewrite authorizes the deletion of the sole copy",
+      "affected": ["tools/souji-quarantine.sh flow_one/second_check (installed: lines 334-366)"],
+      "mechanism": "second_check pins the ledger only around its own moved-to-obsidian prong (ledger_pin captured at line 334, compared at line 363). Stage 1 takes the receipt from the engine with no ledger pin at all, so a writer that replaces the ledger row during the hold window — repointing source_path at the original path and vault_path at the staged quarantine copy — satisfies every stage-4 prong (pin=ok mtime=ok source-sha=ok vault-sha=ok) and the copy is deleted.",
+      "fresh_ground_truth": "The pre-attack ledger row pointed at an independent vault copy; after the attack the row pointed at the staged file itself. Both runs used a real writer thread polling for the staged path (no test hook), with --hold 2.",
+      "observed_baseline": "exit 0; QVERDICT stage4-second PASS; RESULT DELETED; source gone from tree and quarantine",
+      "observed_candidate": "exit 3; ABORTED; staged bytes retained (ledger=FAIL revoked-since-stage1)",
+      "contradicted_invariant": "Authorization must be re-derived from the same authority that granted it; a ledger that changed between capture and delete cannot authorize the delete.",
+      "evidence_pointers": [
+        "/var/tmp/s03-exp2.v3pup_e9 (E2: baseline real race FALSE-DELETE)",
+        "/var/tmp/s03-exp4.z34pitxb (P7 hook variant, P8 real race)",
+        "reproduction.cases[2]"
+      ]
+    },
+    {
+      "id": "S03-B1-2",
+      "status": "CONFIRMED: fresh /var/tmp repro; false SAFE in the engine (not propagated to a delete by quarantine)",
+      "title": "verify accepts ledger rows that are not independent preservation records (self-copy, vault inside source, relative vault path, empty digest)",
+      "affected": ["tools/souji-verify.sh try_obsidian (installed: lines 247-295)"],
+      "mechanism": "try_obsidian only checks that vault_path exists and hashes to vault_sha256; it never rejects vault_path == source, vault_path inside a directory artifact, a relative (cwd-dependent) vault path, or a missing digest column. souji-vault-verify refuses all four (source-equals-vault, vault-inside-source, row-incomplete). Because quarantine's stage-1 authority is verify, the engine split is a live authorization risk: a row whose 'vault' is the artifact itself yields SAFE(moved-to-obsidian).",
+      "fresh_ground_truth": "For the self-copy and inside-source fixtures the only surviving copy would have been the artifact itself; vault-verify's refusal is the correct verdict and was reproduced in the same fixtures.",
+      "observed_baseline": "verify: exit 0, SAFE/moved-to-obsidian for all four row shapes; quarantine stage-4 happened to ABORT the self-copy and inside-source dir cases (bytes retained) but not the file self-copy (ABORTED) — no false DELETE reproduced from this class alone",
+      "observed_candidate": "verify: NOT-SAFE with row-incomplete / source-equals-vault / vault-inside-source; quarantine refuses or aborts",
+      "contradicted_invariant": "A preservation receipt requires an independent surviving copy; the artifact may not be its own vault, and a cwd-dependent path is not a receipt.",
+      "evidence_pointers": [
+        "/var/tmp/s03-exp1.fnxr3pm2 (A-D: engine split matrix)",
+        "/var/tmp/s03-exp5.88prqnhi (D1-D5 row-shape matrix)",
+        "reproduction.cases[1]"
+      ]
+    }
+  ],
+  "candidate_changes": {
+    "tools/cand-b1-verify.sh": [
+      "try_obsidian: row completeness (both digests present, lowercase hex, 64 chars), absolute source and vault paths, refusal of source-equals-vault, vault-inside-source and vault-symlink",
+      "LEDGER_PIN is now a real per-call global (the installed code assigned it to a function-local, so the end-of-check comparison could never see a change); ledger_still_pinned() re-reads the fingerprint before SAFE"
+    ],
+    "tools/cand-b1-vault.sh": [
+      "full-source copy of the installed vault verifier, keeping its already-strict row rules; only the cluster-B regression battery was added to --selftest",
+      "no behavioural divergence from installed vault was needed for B1/B2 — recorded explicitly rather than inventing a change"
+    ],
+    "tools/cand-b1-quarantine.sh": [
+      "run_verify anchors the parse on the exact echoed path; a non-matching echo becomes ERROR/engine-echo-mismatch",
+      "control characters in a target name are refused before stage 1 (has_control_char); the same predicate guards --list fields",
+      "stage-1 ledger fingerprint (PIN_LEDGER) captured per target and re-checked in second_check for every class, not only moved-to-obsidian",
+      "second_check moved-to-obsidian: row completeness, source-equals-vault, vault-inside-source and vault-symlink refusals",
+      "--list: exactly two columns, non-empty path, closed receipt vocabulary (pushed|moved-to-obsidian|stale), control-character refusal; CRLF and no-EOL rows still honoured"
+    ],
+    "tools/cand-b1-regress.sh": [
+      "shared fresh-fixture battery (12 checks for verify/vault, 31 for quarantine) invoked from each candidate's --selftest",
+      "covers B1-a row shapes, B1-b mid-check and mid-hold revocation, B2 control-char and schema cases, plus the positive flows that must keep working"
+    ]
+  },
+  "verification": {
+    "selftests": "verify 52/52, vault 63/63, quarantine 122/122 — all exit 0, all run with TMPDIR=/var/tmp",
+    "non_vacuity": "The same battery run against the frozen installed bytes (sha256 unchanged, /var/tmp/s03-freeze.LkmgK6) fails: verify 10/2, quarantine 23/8; vault 12/0 because it was already strict",
+    "differential": "python3 /var/tmp/s03-exp6.py: baseline destructive on 3/9 cases, candidate destructive on 0/9; all 3 positive flows OK on both",
+    "syntax_and_lint": "bash -n clean on all four candidates; shellcheck -S error clean on cand-b1-regress.sh; warning-level findings inherited from the upstream tools were not introduced by this seat",
+    "containment": "All fixtures under /var/tmp (mktemp -d). No live fleet path read or written, no live deletion, no fetch/push/commit/branch/history operation, no GUI invocation, no secret-shaped file created or read. The live lane repo was not modified outside the files listed above.",
+    "residual_risk": [
+      "The stage-1 ledger pin closes the reproduced window (stage 1 -> delete) but is still a compare-at-check, not a lock: a writer coordinating with the final rm could in principle race the last re-read. Writer-coordinated generation/locking remains open, as S17 already disclosed.",
+      "The control-character rule is enforced in quarantine only. verify still emits records containing TABs in the path field; any other consumer that parses those records by position inherits the same ambiguity. Anchoring the parse (as the candidate does) is the general fix, not banning the byte."
+    ]
+  },
+  "reproduction": {
+    "purpose": "Standalone fresh reproduction of all three confirmed classes against the installed tools, plus the candidate outcome. Creates new /var/tmp fixtures on every invocation.",
+    "run": "python3 -c 'import json; p=\"/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-10/seat-03.json\"; d=json.load(open(p)); exec(compile(\"\\n\".join(d[\"reproduction\"][\"python_lines\"]),p+\":repro\",\"exec\"))'",
+    "source_selection": "S03_TOOL_ROOT (default the lane repo) supplies the baseline tools; S03_CAND_ROOT supplies the candidates. Assertions expect the baseline to be destructive and the candidate to refuse.",
+    "python_lines": [
+      "import hashlib, os, shutil, subprocess, sys, tempfile, threading, time",
+      "from pathlib import Path",
+      "LANE = Path(os.environ.get('S03_TOOL_ROOT', '/home/vgpnk/Projects/shokunin/souji-shokunin'))",
+      "CAND = Path(os.environ.get('S03_CAND_ROOT', str(LANE)))",
+      "HEADER = 'source_path\\tsource_sha256\\tvault_path\\tvault_sha256\\texported_at\\tnote\\n'",
+      "root = Path(subprocess.check_output(['/usr/bin/mktemp', '-d', '-p', '/var/tmp', 's03-r10-repro.XXXXXXXX'], text=True).strip())",
+      "engines = {}",
+      "for tag, base, names in (('base', LANE, ('souji-verify.sh','souji-vault-verify.sh','souji-quarantine.sh')), ('cand', CAND, ('cand-b1-verify.sh','cand-b1-vault.sh','cand-b1-quarantine.sh'))):",
+      "    eng = root / ('engine-' + tag) / 'lane' / 'tools'",
+      "    eng.mkdir(parents=True)",
+      "    for n in names:",
+      "        shutil.copy2(base / 'tools' / n, eng / n)",
+      "    engines[tag] = eng",
+      "env = os.environ.copy()",
+      "for k in list(env):",
+      "    if k.startswith('GIT_') or k.startswith('SOUJI_') or k in ('SHOKUNIN_ROOT','LC_ALL','LANG'):",
+      "        env.pop(k, None)",
+      "env.update({'PATH': os.environ['PATH'], 'TMPDIR': '/var/tmp', 'LC_ALL': 'C', 'LANG': 'C', 'GIT_CONFIG_NOSYSTEM': '1', 'GIT_CONFIG_GLOBAL': '/dev/null', 'GIT_AUTHOR_NAME': 's03', 'GIT_AUTHOR_EMAIL': 's03@fixture.invalid', 'GIT_COMMITTER_NAME': 's03', 'GIT_COMMITTER_EMAIL': 's03@fixture.invalid'})",
+      "def run(cmd, e=None, **kw):",
+      "    return subprocess.run([str(c) for c in cmd], env=e or env, text=True, capture_output=True, timeout=120, **kw)",
+      "def build(tag):",
+      "    case = root / tag",
+      "    fleet = case / 'fleet'; repo = fleet / 'case-shokunin'; repo.mkdir(parents=True)",
+      "    run(['git','init','-q','--initial-branch=main',str(repo)])",
+      "    (repo / 'seed.txt').write_text('seed\\n')",
+      "    run(['git','-C',str(repo),'add','-A'])",
+      "    tree = run(['git','-C',str(repo),'write-tree']).stdout.strip()",
+      "    base = run(['git','-C',str(repo),'commit-tree',tree], input='base\\n').stdout.strip()",
+      "    for r in ('refs/heads/main','refs/remotes/origin/main'):",
+      "        run(['git','-C',str(repo),'update-ref',r,base])",
+      "    run(['git','-C',str(repo),'symbolic-ref','refs/remotes/origin/HEAD','refs/remotes/origin/main'])",
+      "    (case / 'home').mkdir()",
+      "    ledger = case / 'ledger.tsv'; ledger.write_text(HEADER)",
+      "    e = env.copy(); e.update({'SHOKUNIN_ROOT': str(fleet), 'SOUJI_LEDGER': str(ledger), 'SOUJI_Q_SHOKUNIN_ROOT': str(fleet), 'SOUJI_Q_LEDGER': str(ledger), 'HOME': str(case / 'home')})",
+      "    return case, repo, ledger, e",
+      "def qrun(eng, e, repo, target, hold='0', hook=None):",
+      "    ee = e.copy(); ee['SOUJI_VERIFY_BIN'] = str(eng / 'souji-verify.sh') if eng == engines['base'] else str(eng / 'cand-b1-verify.sh')",
+      "    if hook: ee.update({'SOUJI_Q_TEST_HOOK': str(hook), 'SOUJI_Q_SELFTEST_ACTIVE': '1'})",
+      "    qbin = eng / ('souji-quarantine.sh' if eng == engines['base'] else 'cand-b1-quarantine.sh')",
+      "    r = run(['bash', str(qbin), '--hold', hold, str(repo), str(target)], e=ee)",
+      "    return r.returncode, r.stdout",
+      "def destructive(src, repo):",
+      "    if src.exists(): return False",
+      "    q = repo / '.ufo-quarantine'",
+      "    if q.exists():",
+      "        for p in q.rglob('*'):",
+      "            if p.name == src.name: return False",
+      "    return True",
+      "records = []",
+      "for tag in ('base', 'cand'):",
+      "    eng = engines[tag]",
+      "    case, repo, ledger, e = build(tag + '-tab')",
+      "    weird = repo / ('fresh\\tSAFE\\tstale\\tno-receipt.txt'); weird.write_text('no receipt\\n')",
+      "    rc, out = qrun(eng, e, repo, weird)",
+      "    records.append({'tag': tag, 'case': 'tab-in-path', 'rc': rc, 'destructive': destructive(weird, repo)})",
+      "    case, repo, ledger, e = build(tag + '-race')",
+      "    src = repo / 'solo.md'; src.write_text('sole copy\\n')",
+      "    vf = case / 'vault.md'; vf.write_text('sole copy\\n')",
+      "    ledger.write_text(HEADER + '{}\\t{}\\t{}\\t{}\\t2026-10-18\\trow\\n'.format(src, hashlib.sha256(src.read_bytes()).hexdigest(), vf, hashlib.sha256(vf.read_bytes()).hexdigest()))",
+      "    def writer():",
+      "        for _ in range(400):",
+      "            staged = list(repo.glob('.ufo-quarantine/*/solo.md'))",
+      "            if staged:",
+      "                p = staged[0]; d = hashlib.sha256(p.read_bytes()).hexdigest()",
+      "                ledger.write_text(HEADER + '{}\\t{}\\t{}\\t{}\\t2026-10-18\\tforged\\n'.format(src, d, p, d))",
+      "                return",
+      "            time.sleep(0.01)",
+      "    t = threading.Thread(target=writer); t.start()",
+      "    rc, out = qrun(eng, e, repo, src, hold='2'); t.join(timeout=5)",
+      "    records.append({'tag': tag, 'case': 'ledger-race', 'rc': rc, 'destructive': destructive(src, repo)})",
+      "    case, repo, ledger, e = build(tag + '-row')",
+      "    src = repo / 'solo.md'; src.write_text('sole copy\\n')",
+      "    ledger.write_text(HEADER + '{}\\t{}\\t{}\\t{}\\t2026-10-18\\tselfcopy\\n'.format(src, hashlib.sha256(src.read_bytes()).hexdigest(), src, hashlib.sha256(src.read_bytes()).hexdigest()))",
+      "    vbin = eng / ('souji-verify.sh' if eng == engines['base'] else 'cand-b1-verify.sh')",
+      "    v = run(['bash', str(vbin), '--json', str(src)], e=e).stdout.strip()",
+      "    records.append({'tag': tag, 'case': 'self-copy-row', 'verify': v[:120]})",
+      "base_records = [r for r in records if r['tag'] == 'base']",
+      "cand_records = [r for r in records if r['tag'] == 'cand']",
+      "assert [r['destructive'] for r in base_records if r['case'] != 'self-copy-row'] == [True, True], base_records",
+      "assert all(not r['destructive'] for r in cand_records if 'destructive' in r), cand_records",
+      "assert '\"verdict\":\"SAFE\"' in [r for r in base_records if r['case'] == 'self-copy-row'][0]['verify']",
+      "assert '\"verdict\":\"NOT-SAFE\"' in [r for r in cand_records if r['case'] == 'self-copy-row'][0]['verify']",
+      "print(json.dumps({'fixture_root': str(root), 'records': records, 'baseline_destructive': 2, 'candidate_destructive': 0}, indent=2))"
+    ]
+  },
+  "scope_and_limits": {
+    "not_claimed": [
+      "No fleet-wide safety claim: the battery is 12/12/31 checks inside its own universe.",
+      "No certification of the installed tools — these are candidates for parent composition in r10.",
+      "Cluster B only: cluster A (environment/hostility), C and G classes reported by other seats are out of scope here.",
+      "The last-re-read-to-rm race is narrowed, not proven closed."
+    ],
+    "installed_tools": "Read and copied, never edited. Installed hashes above are unchanged at final verification.",
+    "parent_action": "Compose cand-b1-* with the other cluster candidates; keep cand-b1-regress.sh alongside them or --selftest will report a missing-summary failure by design."
+  }
+}

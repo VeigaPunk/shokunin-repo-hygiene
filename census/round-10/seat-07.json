@@ -1,0 +1,157 @@
+{
+  "seat": "S07",
+  "round": 10,
+  "role": "cluster D lead — index-flag concealment (D1) and pushed-directory receipt closure (D2)",
+  "fragment": "census/round-10/seat-07.json",
+  "axes": [
+    "fail-closed receipt authority",
+    "coverage of the receipt scope",
+    "operability of the closure",
+    "fresh reproducibility"
+  ],
+  "verdict": "CONFIRMED: both cluster-D defect classes reproduce fresh against the installed S17 tools; the closure closes them with 0 regressions on the r9 S10 differential corpus. Deletion authorization stays OFF — the remaining 4 unsafe-delete / 11 false-SAFE cases in that corpus belong to other clusters.",
+  "scope": {
+    "targets": [
+      "tools/souji-verify.sh",
+      "tools/souji-vault-verify.sh",
+      "tools/souji-quarantine.sh",
+      "tools/souji-census.sh"
+    ],
+    "live_mutations": 0,
+    "tool_edits": 0,
+    "files_written": [
+      "tools/cand-d1-verify.sh",
+      "tools/cand-d1-vault.sh",
+      "tools/cand-d1-quarantine.sh",
+      "tools/cand-d1-census.sh",
+      "census/round-10/S07-cluster-D-repro.py",
+      "census/round-10/seat-07.json"
+    ],
+    "fixture_location": "/var/tmp only; mktemp -d -p /var/tmp; TMPDIR=/var/tmp for every child",
+    "headless": true,
+    "secret_shaped_file_reads": 0,
+    "forbidden_live_git_operations": 0
+  },
+  "measured_base_sha256": {
+    "tools/souji-verify.sh": "4baa8d955c531fcc73edc6b62021cb9531a31e1baed8aa853ba957b204d1cfc1",
+    "tools/souji-vault-verify.sh": "ea43bb0f9b9fe96cc26451df1a41d2df97d2d044852f122c987c209b6ec7b7a7",
+    "tools/souji-quarantine.sh": "f6f8516c15ab654f7e5f2dc2a7840eef0b53b9f9433e2ff70a64490b35fde68f",
+    "tools/souji-census.sh": "11bf9cdf8d4f75415b18e046aef0e96215b983f0d5b3ff7842301ff6ac65d381"
+  },
+  "candidate_sha256": {
+    "tools/cand-d1-verify.sh": "a6c2ffdbcded2d22c4ebea2cc30de7d30080be2dae56caaa09e55c20a9aebc6d",
+    "tools/cand-d1-vault.sh": "8565718ae6b5c62e883a34b2101b2db3c3ed5938d69a022d7a3495256f8fd73c",
+    "tools/cand-d1-quarantine.sh": "f8896173f93cf0d74dcc974bda1fa93afbcbcc6ca4f29d044cad8092ce82531b",
+    "tools/cand-d1-census.sh": "8cc23a7ab9e7f6b5a1337d6f1cd9ac80dd7d6ce16806bc5c61473f09eba7a3ba",
+    "census/round-10/S07-cluster-D-repro.py": "b2f5dc76549b270d5b7cb8037e9ea27d782a9759392e8a49d0e92358ab3a6f9b"
+  },
+  "confirmed_defects": [
+    {
+      "id": "S07-D1",
+      "status": "CONFIRMED",
+      "class": "assume-unchanged / skip-worktree conceal modified bytes from every porcelain-based receipt check",
+      "invariant": "A removal receipt must cover the artifact's CURRENT bytes. `git status --porcelain` and `git diff` under-report the worktree whenever the assume-unchanged (lowercase `ls-files -v` letter) or skip-worktree (`S`) bit is set, so no porcelain-only dirt test can establish preservation.",
+      "fresh_repro": "census/round-10/S07-cluster-D-repro.py --tools tools; cases D1a/D1b/D1c (fresh mktemp fixture per run). `git ls-files -v` shows the flag, `git status --porcelain` over the same scope is empty.",
+      "surfaces": [
+        {
+          "tool": "tools/souji-verify.sh",
+          "observed": "D1a/D1b: SAFE(pushed) for a pushed directory whose tracked child carries unique modified bytes under a flag; D1c: SAFE(pushed) for the same shape on a file.",
+          "expected_under_fail_closed_rule": "NOT-SAFE(pushed-unpreserved) — the flag means the scope cannot be vouched for."
+        },
+        {
+          "tool": "tools/souji-vault-verify.sh",
+          "observed": "identical SAFE(pushed) verdicts in the same three cases.",
+          "expected_under_fail_closed_rule": "NOT-SAFE(pushed-unpreserved)."
+        },
+        {
+          "tool": "tools/souji-quarantine.sh",
+          "observed": "D1a/D1b reach stage 5 and print `RESULT ... DELETED pushed` rc=0 with `intro-blob=dir-pin-only`; the modified child's bytes are destroyed. D1c is caught only by the file-level blob pin (ABORTED) — a file-shaped guard, not a scope guard.",
+          "expected_under_fail_closed_rule": "refuse before staging (`index-flag-refused`), and never delete on a directory pin alone."
+        },
+        {
+          "tool": "tools/souji-census.sh",
+          "observed": "a lane with modified tracked bytes hidden by assume-unchanged reports `dirty=0` and verdict_flags `clean` — the same concealment reaches the fleet census.",
+          "expected_under_fail_closed_rule": "the row must not read clean while a flag hides state."
+        }
+      ]
+    },
+    {
+      "id": "S07-D2",
+      "status": "CONFIRMED",
+      "class": "pushed-directory receipts pin the staged bytes instead of enumerating the full tree against the remote blob set",
+      "invariant": "PROVINCE.md/SKILL.md: a `pushed` receipt means the artifact's content is preserved in the remote. For a directory that must hold for EVERY file in the scope. Ancestry of the introducing commit, plus a digest taken at stage time, proves the bytes did not change between stage 1 and stage 4 — it never proves they were ever pushed.",
+      "fresh_repro": "census/round-10/S07-cluster-D-repro.py --tools tools; cases D2a (ignored child), D2b (untracked child), D2c (dirty tracked child), D2d (backdated descendant of an aged .scratch container).",
+      "surfaces": [
+        {
+          "tool": "tools/souji-verify.sh",
+          "observed": "D2a/D2b/D2c/D2d all return SAFE(pushed) (D2d SAFE(stale)); only D2b/D2c are later blocked by quarantine's porcelain guard.",
+          "expected_under_fail_closed_rule": "NOT-SAFE(pushed-unpreserved) when any regular file in scope has no remote counterpart or differs from it."
+        },
+        {
+          "tool": "tools/souji-vault-verify.sh",
+          "observed": "same four SAFE verdicts.",
+          "expected_under_fail_closed_rule": "NOT-SAFE(pushed-unpreserved)."
+        },
+        {
+          "tool": "tools/souji-quarantine.sh",
+          "observed": "D2a and D2d reach `RESULT ... DELETED` rc=0 and destroy `bundle/local.bin` and `.scratch/aged/{old.txt,fresh.md}`. The stage-4 evidence says `intro-blob=dir-pin-only`, i.e. the check explicitly skipped content verification for directories.",
+          "expected_under_fail_closed_rule": "stage 4 must enumerate the staged scope against the resolved remote ref and ABORT on any uncovered file."
+        }
+      ],
+      "note_on_D2d": "utime can move mtime backward but cannot move the inode change time, so an aged container holding a freshly rewritten descendant is distinguishable from a genuinely old one. The closure judges descendant freshness on BOTH mtime and ctime; this also closes the S15 merge-battery G2 case for the stale class."
+    }
+  ],
+  "closure": {
+    "summary": "One shared read-only helper pair, applied identically to all four tools; no tool re-implements another's authority.",
+    "D1": "`r10_index_flags_reason` reads `git ls-files -v -z` over the receipt scope. Any status letter other than `H` (lowercase assume-unchanged, `S`/`s` skip-worktree, or any other letter) refuses with the flag and path named; an unreadable index refuses as `index-unverifiable`. Every helper query emits an `#rc=<n>` sentinel record that cannot collide with a path or index entry, so a failed git/scan can never be read as 'nothing to refuse'.",
+    "D2": "`r10_scope_reason` enumerates the scope with `find -print0` and the resolved remote ref with `git ls-tree -r -z --full-tree <ref> -- ':(literal)<rel>'`, then compares each regular file's disk blob (`git hash-object --no-filters`) to its remote blob. Missing remote copy, byte difference, symlink, submodule and non-regular entry all refuse. It also verifies every index entry in scope still exists on disk.",
+    "stale_class": "A directory stale receipt additionally requires every descendant to be older than --stale-days on mtime AND ctime, so a backdated child cannot launder a fresh write through an aged container.",
+    "quarantine_layering": "Stage 1 gains a local flag preflight (independent of the child engine), and stage 4 re-runs the full-scope enumeration on the STAGED copy instead of trusting `dir-pin-only`; the stale class re-derives descendant age locally on the staged copy so the tool does not inherit an older engine's blind spots.",
+    "census": "Adds an `index-flag` verdict flag (and problem-flag status) to the existing 7-column schema; `dirty` keeps its porcelain meaning so the schema is unchanged for consumers.",
+    "read_only": "All helpers are read-only: ls-files, ls-tree, hash-object, find, stat. Verified: index bytes are byte-identical before/after all four tools inspect a flagged repo, and the flags remain set."
+  },
+  "selftest_pass_counts": {
+    "tools/cand-d1-verify.sh": {"checks": 50, "failed": 0, "exit": 0, "base_checks": 40},
+    "tools/cand-d1-vault.sh": {"checks": 61, "failed": 0, "exit": 0, "base_checks": 51},
+    "tools/cand-d1-quarantine.sh": {"checks": 123, "failed": 0, "exit": 0, "base_checks": 91},
+    "tools/cand-d1-census.sh": {"checks": 34, "failed": 0, "exit": 0, "base_checks": 32},
+    "note": "Every pre-existing case is ported: the r9 shared helper (ROUND9 16/16 verify+vault, 28/28 quarantine) runs unchanged inside each candidate, and every r2/r4 native selftest case is preserved. New cases: D1a-D1f, D2a-D2d per verdict tool; D4a-D4f2 in quarantine; the index-flag case in census.",
+    "command": "TMPDIR=/var/tmp bash tools/<candidate> --selftest"
+  },
+  "differential_evidence": {
+    "corpus": "census/round-9/seat-10.json -> reproduction.python (the r9 S10 40-case corpus, replayed verbatim)",
+    "installed_S17": {"unsafe_delete_cases": 13, "unsafe_safe_cases": 24, "deleted": 17, "aborted": 10, "not_authorized": 12},
+    "candidates": {"unsafe_delete_cases": 4, "unsafe_safe_cases": 11, "deleted": 8, "aborted": 8, "not_authorized": 24},
+    "delta": {"fixed": 13, "regressed": 0, "fixed_cases": ["S10-121", "S10-122", "S10-123", "S10-127", "S10-128", "S10-131", "S10-132", "S10-133", "S10-134", "S10-135", "S10-136", "S10-137", "S10-139"]},
+    "remaining_unsafe_attribution": {
+      "S10-101..106": "ledger row semantics (self-row, symlinked vault, vault inside source) — cluster A/C, not D",
+      "S10-124, S10-125, S10-126": "unpushed-commit veto bypassed by the stale fallback — cluster B",
+      "S10-129, S10-130": "hidden-file / hidden-directory live references — cluster C"
+    },
+    "cluster_D_repro": {
+      "command": "python3 census/round-10/S07-cluster-D-repro.py --tools <dir>",
+      "installed_S17": {"cases": 7, "unsafe_delete": 4, "false_safe": 7, "cases_with_lost_bytes": 5, "cases_with_destroyed_bytes": 4},
+      "candidates": {"cases": 7, "unsafe_delete": 0, "false_safe": 0, "cases_with_lost_bytes": 0, "cases_with_destroyed_bytes": 0}
+    },
+    "s08_probe": {"installed": {"pass": 1, "defect": 9}, "candidate_verify": {"pass": 6, "defect": 4}, "note": "the 4 remaining are hidden-ref, owner-name and detached-worktree classes"},
+    "s15_merge_battery": {
+      "verify": {"installed": "18 pass / 7 fail", "candidate": "22 pass / 3 fail"},
+      "vault": {"installed": "19 pass / 6 fail", "candidate": "23 pass / 2 fail"},
+      "quarantine": {"installed": "32 pass / 6 fail", "candidate": "32 pass / 6 fail", "candidate_composed_with_candidate_engine": "34 pass / 4 fail"},
+      "note": "The quarantine battery drives the candidate against the INSTALLED engine, so J03 and the S15 G2 case surface as stage-4 ABORTED (bytes retained in quarantine) rather than stage-1 refusal. Paired with the candidate engine they refuse at stage 1. J02/J05/J07/J08 remain and belong to other clusters."
+    }
+  },
+  "controls": [
+    "D1a/D2b/D2c on the installed tools are already fail-closed refusals at the quarantine layer and are NOT counted as defects (only the verdict engines' false SAFE is).",
+    "No over-refusal: an unrelated flag or dirty file outside the receipt scope does not block a clean pushed directory; a clean pushed file stays SAFE(pushed); a fully aged stale directory stays SAFE(stale).",
+    "Live-fleet guard intact: `tools/cand-d1-quarantine.sh --hold 0 <live repo> LOG.md` exits 4 with `live-fleet-mutation-forbidden` and leaves LOG.md byte-identical.",
+    "Census schema unchanged: the live-fleet row set is byte-identical to the installed census except kotodama's growing .scratch byte count (live delta).",
+    "Read-only contract: `.git/index` bytes are unchanged and the planted flags remain set after all four tools inspect a flagged repo."
+  ],
+  "not_claimed": [
+    "No live removal is authorized by this fragment; the r9 freeze (tools PATCHED-NOT-CERTIFIED) stands.",
+    "The closure does not address the other clusters' open classes (ledger semantics, hidden refs, unpushed-stale fallback, worktree owner matching).",
+    "The candidate quarantine's stage-1 flag preflight is redundant when paired with the candidate engine; it exists so the guard holds against an older engine too.",
+    "No fix was attempted for the census's `dirty` column semantics — only the new `index-flag` flag was added, to keep the row schema stable."
+  ]
+}

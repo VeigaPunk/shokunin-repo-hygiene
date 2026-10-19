@@ -1,0 +1,94 @@
+{
+ "seat": "S02",
+ "round": 10,
+ "cluster": "A",
+ "kind": "fresh re-verification of tools/cand-a2-* on the recorded bytes",
+ "date": "2026-10-18",
+ "candidate_sha256": {
+  "verify": "6fec1dce414b6ed57dbfe0bd211ab65c2d01e556999ab7bb62f6cff737da6d66",
+  "vault": "36c567dcaa27d03f8d7a1737b02f053ac68335e510c9bffeb701f84b42027702",
+  "quarantine": "b607975c6c45d4c2924ac0fddf2406bb0e53aeddea643f4bbcef4c0f2528ad0f"
+ },
+ "selftests": {
+  "cand-a2-verify.sh": {
+   "checks": 49,
+   "failed": 0,
+   "exit": 0
+  },
+  "cand-a2-vault.sh": {
+   "checks": 59,
+   "failed": 0,
+   "exit": 0
+  },
+  "cand-a2-quarantine.sh": {
+   "checks": 100,
+   "failed": 0,
+   "exit": 0
+  },
+  "installed_base": {
+   "souji-verify.sh": 40,
+   "souji-vault-verify.sh": 51,
+   "souji-quarantine.sh": 91
+  }
+ },
+ "cluster_a_repro_battery": {
+  "harness": "census/round-10/S02-cluster-A-repro.py",
+  "cases": 13,
+  "installed_base": {
+   "false_safe": 9,
+   "unsafe_delete": 4,
+   "false_safe_cases": [
+    "A1-dirty-pushed-file",
+    "A2-unpushed-stale-fallback",
+    "A3-detached-head-unpushed",
+    "A4-ledger-self-copy",
+    "A5-ledger-vault-inside-source",
+    "A6-ledger-dir-missing-vault-digest",
+    "A7-gitfile-repo-root",
+    "A9-hidden-live-reference",
+    "A10-missing-sweep-scope"
+   ],
+   "unsafe_delete_cases": [
+    "A2-unpushed-stale-fallback",
+    "A8-tab-path-injection",
+    "A9-hidden-live-reference",
+    "A11-quarantine-symlink-root"
+   ]
+  },
+  "candidates": {
+   "false_safe": 0,
+   "unsafe_delete": 0,
+   "bytes_preserved_all": true
+  },
+  "report": "census/round-10/S02-cluster-A-repro-verify.json"
+ },
+ "s18_differential_battery": {
+  "harness": "tools/souji-round9-s18-test.py (37 checks)",
+  "installed_base": {
+   "total": 37,
+   "passed": 12,
+   "false_safe_or_delete": 25,
+   "compatibility_failures": 0
+  },
+  "candidates": {
+   "total": 37,
+   "passed": 34,
+   "false_safe_or_delete": 0,
+   "compatibility_failures": 3
+  },
+  "candidate_failing_cases": [
+   "positive-stale-directory/verify",
+   "positive-stale-directory/vault-verify",
+   "positive-stale-directory/quarantine"
+  ],
+  "note": "the 3 non-passing candidate checks are the positive control whose expectation contradicts the S15 composer case; refusal is the fail-closed choice, 0 unsafe outcomes"
+ },
+ "commands": [
+  "TMPDIR=/var/tmp bash tools/cand-a2-verify.sh --selftest",
+  "TMPDIR=/var/tmp SOUJI_CLI_BIN=/bin/false bash tools/cand-a2-vault.sh --selftest",
+  "TMPDIR=/var/tmp bash tools/cand-a2-quarantine.sh --selftest",
+  "TMPDIR=/var/tmp python3 census/round-10/S02-cluster-A-repro.py --tools <candidate-dir>",
+  "TMPDIR=/var/tmp python3 tools/souji-round9-s18-test.py --tool-dir <dir> --suffix ''"
+ ],
+ "fixture_discipline": "all fixtures fresh under /var/tmp via mktemp; no live fleet artifact read, moved or deleted"
+}

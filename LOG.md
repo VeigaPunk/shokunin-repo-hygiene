@@ -328,3 +328,20 @@ rounds remain. (4) sol-6.1 rounds use codex luna-max instead — r9 already
 executed; no future sol rounds remain. Remaining schedule unchanged: r10
 hyper/deepseek-v4.1-flash, r11 devin/glm-5-3-flash-max, r12
 antigravity/gemini-3.8-flash.
+
+## 2026-10-18 — round 10 REJECTED on O1 (3 residual census-contract); merge installed
+
+**Dispatch.** r10 first attempted on hyper/deepseek-v4.1-flash per the
+operator's test request: lane functional but ~829s per trivial agent —
+functionally unusable for batch work (two interrupted batches, zero
+completions; logged as the operator's hyper test result). Completed on
+devin/deepseek-v4-1-flash-max (session fallback), 16/16 seats.
+
+**Result.** Seven fix clusters (A-G) patched all three tools; composer
+merged; certifier ran 15 corpora/reproducer suites: unsafe outcomes 3,
+ALL one class — souji-census --compare accepts empty/near-empty prior
+censuses (census-contract; originals preserved; no data loss). 121
+conservative refusals. Delta vs r9: >=16 open classes -> 1. Merge
+installed (selftests 40/51/91); tools remain NOT certified. r11 fixes
+the census contract and re-runs the certifier suites before the
+certification flips.

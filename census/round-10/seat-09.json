@@ -1,0 +1,124 @@
+{
+  "seat": "S09",
+  "round": 10,
+  "role": "cluster E lead — git-failure refusal (E1), LC_ALL=C pin (E2), unique-commit skew (E3)",
+  "lane": "souji-shokunin",
+  "measurement_utc": "2026-10-18T22:45Z",
+  "host": "git 2.55.0; TMPDIR pinned to /var/tmp (host /tmp carries a disk quota)",
+  "patch_base": "installed S17 tools (unmodified)",
+  "patch_base_sha256": {
+    "souji-verify.sh": "4baa8d955c531fcc73edc6b62021cb9531a31e1baed8aa853ba957b204d1cfc1",
+    "souji-vault-verify.sh": "ea43bb0f9b9fe96cc26451df1a41d2df97d2d044852f122c987c209b6ec7b7a7",
+    "souji-census.sh": "11bf9cdf8d4f75415b18e046aef0e96215b983f0d5b3ff7842301ff6ac65d381",
+    "souji-quarantine.sh": "f6f8516c15ab654f7e5f2dc2a7840eef0b53b9f9433e2ff70a64490b35fde68f"
+  },
+  "artifacts": {
+    "tools/cand-e1-verify.sh": "31562579259af9439137eadbe2affc02248cdf979ccde31232703c1f1137fb19",
+    "tools/cand-e1-vault.sh": "6a34eebf61ee84d218d7b6b775729fddf211ff65f7188d580551b5bfac9abce1",
+    "tools/cand-e1-census.sh": "10b58bcc041b702cf65b8c67ee1313ecee29aebbf3fcbe2773f0fcbde33cb39b",
+    "tools/cand-e1-quarantine.sh": "7d6189087039c9a2419e4efda52a09957a9d291ca159a330a149ad2806b7dcf7",
+    "tools/cand-e1-regress.sh": "d0934466eaa8e8670c556d62228332711fc86e88c761401551999d52d0e09fee"
+  },
+  "isolation": "Every fixture is a fresh mktemp -d under /var/tmp. No live fleet path, lane repo file, or installed tool was written: the four installed sha256 values above were re-hashed after all runs and are unchanged. Fixtures are removed by EXIT trap.",
+  "selftest_counts": {
+    "cand-e1-verify.sh": {"pre_existing": 40, "ported": 40, "new_regression": 5, "total": 45, "failed": 0, "r9_battery": {"pass": 16, "fail": 0}},
+    "cand-e1-vault.sh": {"pre_existing": 51, "ported": 51, "new_regression": 5, "total": 56, "failed": 0, "r9_battery": {"pass": 16, "fail": 0}},
+    "cand-e1-census.sh": {"pre_existing": 32, "ported": 32, "new_regression": 5, "total": 37, "failed": 0},
+    "cand-e1-quarantine.sh": {"pre_existing": 91, "ported": 91, "new_regression": 3, "total": 94, "failed": 0, "r9_battery": {"pass": 28, "fail": 0}}
+  },
+  "unsafe_counts": {
+    "unsafe_acceptances_in_candidates": 0,
+    "unsafe_acceptances_in_baseline_reproduced": 7,
+    "false_safe_refusals_in_candidates": 0,
+    "regression_battery": {"checks": 29, "failed": 0, "path": "tools/cand-e1-regress.sh"}
+  },
+  "defect_classes": [
+    {
+      "id": "E1",
+      "title": "Any git command failure must refuse — never be counted as zero",
+      "status": "FIXED",
+      "sites": [
+        {"file": "cand-e1-verify.sh", "what": "count_live_refs: unreadable scan scope returned refs=0; try_pushed compared a `|| true` pipeline to \"0\" so a failing history query read as no unpushed commits; evaluate_repo_root piped a failing log through wc -l"},
+        {"file": "cand-e1-vault.sh", "what": "count_live_refs: same scope bug; try_pushed: same history-query laundering; evaluate_repo_root: same log|wc -l laundering"},
+        {"file": "cand-e1-census.sh", "what": "count_worktrees/count_unpushed/scratch_bytes: `|| printf 0` turned a git failure into a clean zero; new flags worktrees-unverifiable, unpushed-unverifiable, scratch-unverifiable and has_problem now includes them, so a failed query can never publish `clean`"},
+        {"file": "cand-e1-quarantine.sh", "what": "git_dirty_tracked ended in `|| true`, so a failing status read as an empty (clean) porcelain and the dirty-tracked gate2 was skipped; the call site now routes a failure to NOT-AUTHORIZED(dirty-unverifiable)"}
+      ],
+      "fresh_repro": {
+        "fixture": "/var/tmp/souji-r10-s09.*/e1* (recreated each run by cand-e1-regress.sh)",
+        "commands": [
+          "SHOKUNIN_ROOT=<missing> bash tools/souji-verify.sh <fleet>/case-shokunin/.scratch/old.log",
+          "bash tools/souji-census.sh --root <fleet>   # repo with refs/heads/broken -> missing object",
+          "PATH=<status-shim> bash tools/souji-quarantine.sh --hold 0 <repo> <repo>/bundle",
+          "SHOKUNIN_ROOT=<fleet> bash tools/souji-verify.sh <repo>/target.txt   # broken branch ref"
+        ],
+        "baseline_observed": [
+          "verify/vault: SAFE(stale) refs=0 for the SAME artifact that is NOT-SAFE(live-refs=1) with a correct root",
+          "census: row published as `clean` while `git rev-list` exited 128",
+          "quarantine: RESULT DELETED pushed — the tracked directory was deleted; original bundle gone",
+          "verify/vault: SAFE(pushed) while `git log --branches` exited 128"
+        ],
+        "candidate_observed": [
+          "verify: NOT-SAFE none 'live-refs=unknown'; vault: NOT-VERIFIED(none)",
+          "census: flags unpushed-unverifiable, never clean",
+          "quarantine: NOT-AUTHORIZED dirty-unverifiable 'r7-gate2 status query failed'; bundle retained",
+          "verify: NOT-SAFE pushed-unverifiable 'history-query-failed'; vault: NOT-VERIFIED(none) with the same evidence token"
+        ]
+      }
+    },
+    {
+      "id": "E2",
+      "title": "Pin LC_ALL=C for case-sensitive matching including id_*",
+      "status": "FIXED (census); verify/vault/quarantine were already pinned",
+      "sites": [
+        {"file": "cand-e1-census.sh", "what": "no LC_ALL at entry and the secret-name fold used awk tolower(), which honors LC_CTYPE; now exports LC_ALL=C and folds A-Z by byte with an index()-based ascii_lower()"}
+      ],
+      "fresh_repro": {
+        "fixture": "privately compiled tr_TR locale via localedef --no-archive, LOCPATH-isolated; sentinel <repo>/.scratch/ID_SENTINEL.log",
+        "fold_proof": "LOCPATH=<fixture>/locale LANG=tr_TR bash -c 's=ID_SENTINEL; printf %s \"${s,,}\"' -> ıd_sentınel",
+        "baseline_observed": "census flags clean,scratch (secret-shaped flag LOST under tr_TR); under C it is clean,scratch,secret-shaped",
+        "candidate_observed": "census flags dirty,scratch,secret-shaped under tr_TR, and the whole TSV is byte-identical to the C-locale run (cmp -s)"
+      },
+      "note": "verify, vault and quarantine already export LC_ALL=C at entry, so the E2 defect never reproduced there; their R9 Turkish-locale checks were re-run and still pass (verify R9 16/16, vault R9 16/16, quarantine R9 28/28)."
+    },
+    {
+      "id": "E3",
+      "title": "Unique-commit count must exclude the candidate's own linked-worktree HEAD",
+      "status": "FIXED",
+      "sites": [
+        {"file": "cand-e1-verify.sh", "what": "`log --oneline <head> --not --all | wc -l` replaced with `rev-list --count <head> --not <durable for-each-ref objects> --`; evidence gains durable-refs-only=yes"},
+        {"file": "cand-e1-vault.sh", "what": "same replacement, keeping the R_REASON plumbing"}
+      ],
+      "fresh_repro": {
+        "fixture": "detached linked worktree holding a private commit, directory removed, registration kept (dir=absent)",
+        "skew_proof": "rev-list --count <priv> --not --all = 0 while rev-list --count <priv> --not refs/heads/master refs/remotes/origin/master = 1",
+        "baseline_observed": "verify SAFE(metadata-prune) unique=0; vault VERIFIED(metadata-prune); following the receipt with fixture-only worktree prune + gc --prune=now destroys the commit (cat-file -e <priv>^{commit} fails)",
+        "candidate_observed": "verify NOT-SAFE none unique=1 durable-refs-only=yes; vault NOT-VERIFIED(none) with the same evidence; the pushed detached registration (wt-f4) still earns SAFE(metadata-prune)/VERIFIED(metadata-prune), so the fix does not over-refuse"
+      }
+    }
+  ],
+  "regression_cases": {
+    "cand-e1-verify.sh": ["RE1 broken-ref history query -> NOT-SAFE(pushed-unverifiable)", "RE2 unreadable scope -> NOT-SAFE live-refs=unknown", "RE3/RE3b private commit -> NOT-SAFE unique=1 durable-refs-only=yes", "RE3c pushed detached registration -> SAFE(metadata-prune) control"],
+    "cand-e1-vault.sh": ["RE1 same -> NOT-VERIFIED(none) with history-query-failed evidence", "RE2 same -> refusal", "RE3/RE3b same", "RE3c VERIFIED(metadata-prune) control"],
+    "cand-e1-census.sh": ["brokenref repo -> unpushed-unverifiable, never clean", "ID_SENTINEL.log -> secret-shaped under C", "tr_TR -> ID_* still flagged", "tr_TR -> TSV byte-identical to C", "row count 5 (fixtures grew by the broken-ref repo)"],
+    "cand-e1-quarantine.sh": ["R10-E1 status shim -> rc=3, dirty-unverifiable, target retained"]
+  },
+  "verification": {
+    "method": "Each defect was reproduced on the UNMODIFIED installed tool first (baseline), then the same fixture construction was run against the candidate. Both halves are asserted in tools/cand-e1-regress.sh, so a check fails if either the baseline stops reproducing or the candidate stops refusing.",
+    "commands": [
+      "bash tools/cand-e1-regress.sh --out /var/tmp/s09-regress-final.txt   # 29 checks, 0 failed",
+      "TMPDIR=/var/tmp bash tools/cand-e1-verify.sh --selftest      # 45 checks, 0 failed + ROUND9 16/0",
+      "TMPDIR=/var/tmp bash tools/cand-e1-vault.sh --selftest       # 56 checks, 0 failed + ROUND9 16/0",
+      "TMPDIR=/var/tmp bash tools/cand-e1-census.sh --selftest      # 37 checks, 0 failed",
+      "TMPDIR=/var/tmp bash tools/cand-e1-quarantine.sh --selftest  # 94 checks, 0 failed + ROUND9 28/0",
+      "bash -n tools/cand-e1-*.sh                                   # all four parse"
+    ],
+    "fail_closed": "Every new refusal is a refusal, not a new acceptance. No candidate was observed to delete, stage, or authorise anything the baseline refused, and no protected content was read: the secret-shaped fixtures are empty/plain files never opened by the tools."
+  },
+  "caveats": [
+    "E2 did not reproduce in verify/vault/quarantine — those three already exported LC_ALL=C. The census fix is the whole E2 delta, and it is corroborated by the tr_TR byte-identity check.",
+    "The r4 vault reason vocabulary has no `pushed-unverifiable`, so its E1 history-query refusal surfaces as NOT-VERIFIED(none) with `pushed=unverifiable(history-query-failed)` in the evidence rather than a new reason string. Adding one would change the documented reason list; left for the composer to decide.",
+    "tools/cand-e1-regress.sh is S09's own harness, not an installed tool; it writes only its own /var/tmp fixtures.",
+    "Sites beyond the assigned cluster E (e.g. quarantine's stage-4 second-check path, the S18 guard candidate) were not modified."
+  ],
+  "handoff_to_composer": "cand-e1-{verify,vault,census,quarantine}.sh are drop-in full-source replacements for the four installed tools with cluster E closed. The composer should re-run the four --selftest batteries plus tools/cand-e1-regress.sh on the frozen merge bytes; a lost PASS or a baseline that stops reproducing invalidates the corresponding claim."
+}

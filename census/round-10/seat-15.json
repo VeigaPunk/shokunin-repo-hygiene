@@ -1,0 +1,197 @@
+{
+  "schema_version": 1,
+  "seat": "S15",
+  "round": 10,
+  "role": "composer — merge the cluster fixes into one composed tool trio with a merged selftest",
+  "fragment": "census/round-10/seat-15.json",
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "lane_head": "29d49b553bb4532beb530192548c555a33594e06",
+  "git_version": "2.55.0",
+  "host_note": "fixtures under mktemp -p /var/tmp only (host /tmp carries a DISK QUOTA); live fleet and lane repo never mutated by any candidate; every destructive call runs inside a fixture repo",
+  "status": "COMPLETE: composed trio built, base selftests at S17 parity, merged selftest extended with non-vacuous regressions for both adopted classes, three independent batteries re-run on the final bytes",
+
+  "deliverables": {
+    "tools/cand-merge-verify.sh": "9adb17645a5f452ae2cc28673642ad256f9aee92109939531f3c34a0972812cd",
+    "tools/cand-merge-vault.sh": "f9e778ca478c7aa8b33234ee793030df631c1b9fcebc942b1ff41d0008ed9c5b",
+    "tools/cand-merge-quarantine.sh": "141c0fdc4eaf9d0a3d628b381cc5386f6d4be71565ddfb98aa10f6eb3c9573c9",
+    "tools/cand-merge-selftest.sh": "113eae32f1932cd8d850612bb5c01b63f63e422427716f8591e38fca0b6bae12",
+    "census/round-10/S15-merge-generate.py": "regenerator; every substitution asserts a single match, so a half-merge fails closed",
+    "census/round-10/S15-g-repro-baseline.json": "S13 cluster-G repro against the installed S17 bytes",
+    "census/round-10/S15-g-repro-merged.json": "S13 cluster-G repro against the composed trio",
+    "census/round-10/S15-clusterA.json": "S02 cluster-A repro against the composed trio",
+    "census/round-10/S15-clusterD.json": "S08 cluster-D repro against the composed trio"
+  },
+
+  "patch_base": {
+    "tools/souji-verify.sh": "4baa8d955c531fcc73edc6b62021cb9531a31e1baed8aa853ba957b204d1cfc1",
+    "tools/souji-vault-verify.sh": "ea43bb0f9b9fe96cc26451df1a41d2df97d2d044852f122c987c209b6ec7b7a7",
+    "tools/souji-quarantine.sh": "f6f8516c15ab654f7e5f2dc2a7840eef0b53b9f9433e2ff70a64490b35fde68f",
+    "tools/souji-census.sh": "11bf9cdf8d4f75415b18e046aef0e96215b983f0d5b3ff7842301ff6ac65d381",
+    "tools/souji-round9-selftest.sh": "dd7c636ebe39e70c489516500440a311167b5280d18c3a5e9db1399d2f62e5c2",
+    "note": "lane working tree is uncommitted; all candidates are uncommitted working-tree files, as in r9"
+  },
+
+  "merge_method": {
+    "problem": "The r9 repair lineages are disjoint and each is a strict subset of the union. S17 patched the INSTALLED tools. S18 wrote a separate guard + three suffixed candidates that are pre-S17 bodies plus late-loaded overrides. Appending the guard to S17 does not compose them: the guard redefines same-named helpers, silently dropping S17 fixes; adopting the S18 candidates wholesale drops the S17 fixes the same way.",
+    "measured_proof_of_both_loss_directions": {
+      "installed_S17_tools_on_merged_harness": "verify 18/7, vault 19/6, quarantine 32/6 — the failures are the S18 families (dirty-pushed, hidden live refs, ignored directory payload, self-referential ledger row, unpushed-stale fallback, symlinked quarantine root) plus the two S15-adopted classes",
+      "S18_candidates_on_merged_harness": "verify 21/4, vault 21/4, quarantine 21/17 — the failures are the S17 families (ledger revocation after capture on file and directory paths; NUL list gate; default-ref rollback and missing default ref in the second check) plus the two S15-adopted classes. Caveat: the harness exports SOUJI_VERIFY_BIN, so the r9-s18 quarantine candidate is measured against the INSTALLED engine rather than its own sibling, which inflates its failure count; the verify/vault figures are unaffected.",
+      "conclusion": "neither lineage alone is sufficient; the composed tool is base union guard, not a copy of either"
+    },
+    "composition": "base = S17 body; guard = S18 shared hardening inlined after the base's function definitions so it overrides same-named helpers; renames = the minimum needed so the guard's delegating wrappers resolve to the S17 implementation instead of recursing; union patches = the two places where an override would otherwise DROP an S17 fix",
+    "renames": {
+      "verify": "evaluate_path -> s18_evaluate_path (guard wrapper delegates to it)",
+      "vault": "evaluate_path -> s18_evaluate_path; try_ledger -> s18_try_ledger (the guard's strict row filter delegates to it, so row validation AND the revocation pin both run)",
+      "quarantine": "flow_one -> s18_flow_one; second_check -> s18_second_check (guard containment wrappers delegate to them)"
+    },
+    "union_patches": {
+      "verify.try_obsidian": "guard override would drop the S17 ledger-revocation pin; the composed version keeps the guard's strict independent-row validation AND compares the ledger digest before returning SAFE",
+      "vault.load_ledger": "guard override would drop LEDGER_PIN capture; the composed version keeps the guard's path validation AND captures the pin",
+      "quarantine.VERIFY_BIN": "the composed quarantine defaults to its merged sibling engine when present, else the installed engine, so the pair is exercised as a unit"
+    },
+    "s17_preserved_verbatim": [
+      "quarantine NUL list gate (usage error before any row executes)",
+      "quarantine second_check default-ref re-derivation + introducing-commit ancestry",
+      "quarantine second_check ledger-drift gate for moved-to-obsidian",
+      "quarantine run_verify engine-record parsing (single VERDICT line, receipt vocabulary)",
+      "verify/vault nested-repo refusal, git-unverifiable worktree refusals, locale and GIT_OPTIONAL_LOCKS exports, ledger pins"
+    ]
+  },
+
+  "adopted_cross_cluster_fixes": [
+    {
+      "class": "G1 index-write contract (defect present in BOTH r9 lineages)",
+      "source": "fresh repro by this seat; also S13 cluster G and S14 cluster G",
+      "finding": "`git diff --quiet <ref> -- <path>` rewrites .git/index on git 2.55 to refresh stat info. GIT_OPTIONAL_LOCKS=0 does NOT suppress it for this subcommand (measured in isolation, four variants: plain, env GIT_OPTIONAL_LOCKS=0, --no-optional-locks, --exit-code — all four WRITE). S13's cluster-G1 case flags the installed tools too, so this is inherited, not merge-induced.",
+      "fix": "s18_snapshot_equal: a private index (read-tree + update-index -q --refresh + diff-index --quiet) reproduces the same tracked-content-vs-ref semantics and touches nothing in the repository",
+      "verification": "cluster-G index_write_violation 1 -> 0; base selftest 40/51/91 unchanged"
+    },
+    {
+      "class": "G2 fresh-descendant laundering",
+      "source": "S13/S14 cluster G (independently authored ctime witness in both)",
+      "finding": "an aged .scratch container whose descendant was rewritten and backdated earned SAFE(stale) and the live subtree was DELETED",
+      "fix": "s18_old_scope now requires every DESCENDANT to be old by mtime AND ctime; ctime is the one witness utime cannot forge backward. Root mtime semantics are unchanged.",
+      "disclosed_trade_off": "S08's cluster-D control case T ages its fixture with utime, which is exactly the forgery shape this rule refuses. A naturally aged artifact has an old ctime and still qualifies (verified on this host: utime moved mtime 6 days back and left ctime at now). This is a fixture-vs-rule collision, reported, not hidden.",
+      "verification": "cluster-G content-fresh-mtime-old: SAFE/DELETED -> NOT-SAFE/NOT-AUTHORIZED"
+    },
+    {
+      "class": "F2 gitfile repository root",
+      "source": "S12 cluster F member 2 / S06 cluster C member 2",
+      "finding": "evaluate_path gated repo-root classification behind `[ -d $target/.git ]`, so a root carrying a .git FILE fell through to the artifact engine and earned a false SAFE(pushed)",
+      "fix": "s18_repo_gitdir/s18_is_repo_root resolve the gitdir pointer and classify the root structurally; a linked-worktree gitdir (under */worktrees/*) is not a root",
+      "verification": "cluster-A A7-gitfile-repo-root: SAFE/pushed -> NOT-SAFE/none; cluster-A total false_safe 1 -> 0"
+    },
+    {
+      "class": "F1/J20/J22 registration ownership and conflicts",
+      "source": "S12 cluster F member 2",
+      "finding": "scan_worktrees iterated a `*-shokunin` name pattern, so a differently-named owner hid its registrations and a dirty linked worktree with a private unpushed branch fell through to a stale receipt and was DELETED; two registrations for one path resolved last-writer-wins, letting a pushed registration mask an unpushed one",
+      "fix": "structural owner discovery via resolved gitdir; _wt_record keeps every claimant; evaluate_worktree evaluates all claimants and fails closed with receipt registration-conflict when a SAFE and a NOT-SAFE claimant coexist",
+      "verification": "cluster-D Q-unmatched-owner-prune-control now resolves (the residual 'unreachable' defect is gone)"
+    }
+  ],
+
+  "selftests": {
+    "base_selftests_on_composed_trio": {
+      "cand-merge-verify.sh": {"pass": 40, "fail": 0, "ported_pre_existing": 40, "r9_runner": "ROUND9 16 0"},
+      "cand-merge-vault.sh": {"pass": 51, "fail": 0, "ported_pre_existing": 51, "r9_runner": "ROUND9 16 0"},
+      "cand-merge-quarantine.sh": {"pass": 91, "fail": 0, "ported_pre_existing": 91, "r9_runner": "ROUND9 28 0"},
+      "env": "TMPDIR=/var/tmp, explicit fixture git identity",
+      "note": "every pre-existing S17 case is preserved verbatim; parity with the installed tools"
+    },
+    "merged_selftest_harness": {
+      "tool": "tools/cand-merge-selftest.sh",
+      "usage": "bash tools/cand-merge-selftest.sh <verify|vault|quarantine> <tool-path>",
+      "composed_trio": {"verify": "R10 25 0", "vault": "R10 25 0", "quarantine": "R10 38 0"},
+      "installed_tools": {"verify": "R10 18 7", "vault": "R10 19 6", "quarantine": "R10 32 6"},
+      "r9_s18_candidates": {"verify": "R10 21 4", "vault": "R10 21 4", "quarantine": "R10 21 17 (measured against the installed engine; see caveat above)"},
+      "ported_cases": "the r9 shared helper battery (nested stale/pushed/gitfile refusal, failed worktree queries, read-only index, Turkish locale, ledger revocation file+directory, NUL list rows, default-ref rollback/missing) plus J01/J02/J03/J05/J06/J07/J08/J12",
+      "new_regression_cases": [
+        {"id": "S15 backdated fresh descendant", "class": "G2", "installed": "SAFE/stale (false-SAFE)", "merged": "refused"},
+        {"id": "S15 gitfile repository root refused as artifact", "class": "F2", "installed": "SAFE/pushed (false-SAFE)", "merged": "refused"}
+      ],
+      "non_vacuous": "both new cases were re-run against the installed tools and fail there (verify 18/7, vault 19/6, quarantine 32/6), so they are not tautologies",
+      "harness_fix": "cm_push hardcoded the fixture repo, so the gitfile case could not publish its own refs; it now takes an optional repo argument"
+    }
+  },
+
+  "battery_matrix_on_final_composed_bytes": {
+    "S13_cluster_G": {
+      "installed": {"unsafe_delete": 6, "false_safe": 6, "index_write_violation": 0},
+      "merged": {"unsafe_delete": 0, "false_safe": 0, "index_write_violation": 0},
+      "cases": "aged .scratch containers with fresh, ignored, live-referenced, hidden-referenced, fresh-directory and backdated descendants; plus index-contract cases"
+    },
+    "S02_cluster_A": {
+      "merged": {"cases": 13, "false_safe": 0, "unsafe_delete": 0},
+      "resolved_this_merge": "A7-gitfile-repo-root (was SAFE/pushed)"
+    },
+    "S08_cluster_D": {
+      "merged": {"pass": 9, "defect": 2},
+      "residuals": [
+        {"case": "L-secret-shaped-referrer", "expected": "SAFE(DISCLOSURE-MISSING)", "got": "SAFE(stale)", "disposition": "cluster-D scope (disclosure clause); no candidate in the fleet satisfies it; unchanged by this merge"},
+        {"case": "T-dir-self-reference-control", "expected": "SAFE(stale)", "got": "NOT-SAFE(none)", "disposition": "fixture ages with utime, colliding with the adopted G2 ctime witness; disclosed trade-off, see G2 above"}
+      ],
+      "comparison": "best measured of any candidate: c1 4/7, e1 3/8, e2 3/8, f1 5/6, f2 5/6, merged 9/2"
+    },
+    "r9_shared_helper": {"verify": "ROUND9 16 0", "vault": "ROUND9 16 0", "quarantine": "ROUND9 28 0"}
+  },
+
+  "merge_table": [
+    {"defect_class": "J01 dirty/uncommitted replacement on a pushed file", "source_lineage": "S18 guard (dirty-pushed)", "adopted": true, "how": "guard try_pushed status --untracked-files=all --ignored=matching", "evidence": "cluster-A A1; harness J01"},
+    {"defect_class": "J02 hidden live reference", "source_lineage": "S18 guard (hidden/binary sweep)", "adopted": true, "how": "guard count_live_refs --hidden --text", "evidence": "cluster-A A9; harness J02"},
+    {"defect_class": "J03 ignored/untracked payload inside a directory receipt", "source_lineage": "S18 guard (complete directory receipt)", "adopted": true, "how": "guard s18_scope_ok + s18_scope_unreferenced", "evidence": "cluster-A A5/A6; harness J03"},
+    {"defect_class": "J05 self-referential ledger row", "source_lineage": "S18 guard (strict independent rows)", "adopted": true, "how": "guard s18_row_ok rejects source==vault", "evidence": "cluster-A A4; harness J05"},
+    {"defect_class": "J06 directory ledger row without a vault digest", "source_lineage": "S18 guard (mandatory digests)", "adopted": true, "how": "guard s18_row_ok requires hex64 source AND vault digest", "evidence": "harness J06"},
+    {"defect_class": "J07 symlinked quarantine root escape", "source_lineage": "S18 guard (containment)", "adopted": true, "how": "guard s18_q_storage_ok requires canonical in-repo path", "evidence": "cluster-A A11; harness J07"},
+    {"defect_class": "J08 unpushed commit vetoes the stale fallback", "source_lineage": "S18 guard (no tracked-to-stale fallback)", "adopted": true, "how": "guard try_stale refuses tracked paths", "evidence": "cluster-A A2; harness J08"},
+    {"defect_class": "J12 detached HEAD with unpushed commits", "source_lineage": "S18 guard (detached history)", "adopted": true, "how": "guard try_pushed includes HEAD in the unpushed query", "evidence": "cluster-A A3; harness J12"},
+    {"defect_class": "J19/J20/J22 worktree registration ownership + uniqueness + conflicts", "source_lineage": "S12/S06 cluster F", "adopted": true, "how": "structural gitdir owner discovery; multi-claimant records; registration-conflict refusal; durable-refs-only uniqueness", "evidence": "cluster-D Q resolved; S12 F1/F1b/F3"},
+    {"defect_class": "J23 gitfile repository root", "source_lineage": "S12/S06 cluster F (F2)", "adopted": true, "how": "s18_is_repo_root before the artifact engine", "evidence": "cluster-A A7"},
+    {"defect_class": "G1 read-only index contract", "source_lineage": "S13/S14 cluster G + this seat", "adopted": true, "how": "s18_snapshot_equal private-index comparison replaces git diff --quiet", "evidence": "cluster-G index violation 1 -> 0"},
+    {"defect_class": "G2 fresh/backdated descendant laundering", "source_lineage": "S13/S14 cluster G", "adopted": true, "how": "descendant mtime AND ctime closure", "evidence": "cluster-G 6 unsafe deletions -> 0"},
+    {"defect_class": "S17 ledger revocation after row capture (file + directory)", "source_lineage": "S17", "adopted": true, "how": "union patch restores the ledger pin inside the guard's try_obsidian; vault load_ledger keeps LEDGER_PIN", "evidence": "harness ledger-file / ledger-directory cases; S18 candidates fail these"},
+    {"defect_class": "S17 NUL list authorization forgery", "source_lineage": "S17", "adopted": true, "how": "quarantine NUL gate preserved verbatim", "evidence": "harness NUL path/pin/prefix cases; S18 candidates fail these"},
+    {"defect_class": "S17 default-ref revocation during hold", "source_lineage": "S17", "adopted": true, "how": "quarantine second_check re-derives the current default ref and re-checks ancestry", "evidence": "harness default-ref rollback/missing cases; S18 candidates fail these"},
+    {"defect_class": "S17 nested repository inside a directory scope", "source_lineage": "S17", "adopted": true, "how": "nested .git/.ufo scan preserved", "evidence": "harness nested-stale/nested-pushed/nested-gitfile cases"},
+    {"defect_class": "S17 git-query failure becomes zero (false metadata-prune)", "source_lineage": "S17", "adopted": true, "how": "checked status/rev-list; guard uses history-unverifiable", "evidence": "harness failed named/detached worktree query cases"},
+    {"defect_class": "S17 Turkish-locale ID_* bypass", "source_lineage": "S17", "adopted": true, "how": "LC_ALL=C exported by both lineages", "evidence": "harness Turkish locale case (localedef active, no skip)"},
+    {"defect_class": "cluster-D L secret-shaped referrer disclosure clause", "source_lineage": "none (open)", "adopted": false, "how": "out of the composed trio's current contract; a disclosure clause is a new receipt vocabulary item", "evidence": "cluster-D residual; unchanged by this merge"},
+    {"defect_class": "cluster-D T control vs G2 ctime witness", "source_lineage": "collision", "adopted": "disclosed", "how": "the control ages its fixture with utime; the witness deliberately refuses that shape", "evidence": "cluster-D residual; trade-off stated above"}
+  ],
+
+  "axes": [
+    "defect-class closure: 12 defect classes closed that neither r9 lineage closes alone (9 guard families + F2 + G1 + G2); 6 S17 classes preserved through the merge",
+    "selftest coverage: base selftests at parity (40/51/91, 0 failed) plus 2 new non-vacuous regressions in the shared harness; harness totals 25/25/38",
+    "no-harm: every pre-existing case ported and passing; r9 shared helper battery 16/16/28 still green; nothing removed from any tool's contract"
+  ],
+
+  "unsafe_counts": {
+    "composed_trio_cluster_G": {"unsafe_delete": 0, "false_safe": 0, "index_write_violation": 0},
+    "composed_trio_cluster_A": {"false_safe": 0, "unsafe_delete": 0},
+    "installed_baseline_cluster_G": {"unsafe_delete": 6, "false_safe": 6, "index_write_violation": 0},
+    "installed_baseline_harness": {"verify_fail": 7, "vault_fail": 6, "quarantine_fail": 6}
+  },
+
+  "independent_reverification": {
+    "by": "S15 composer, resumed session; fresh execution of the delivered bytes",
+    "delivered_hashes_reconfirmed": {
+      "tools/cand-merge-verify.sh": "9adb17645a5f452ae2cc28673642ad256f9aee92109939531f3c34a0972812cd",
+      "tools/cand-merge-vault.sh": "f9e778ca478c7aa8b33234ee793030df631c1b9fcebc942b1ff41d0008ed9c5b",
+      "tools/cand-merge-quarantine.sh": "141c0fdc4eaf9d0a3d628b381cc5386f6d4be71565ddfb98aa10f6eb3c9573c9",
+      "tools/cand-merge-selftest.sh": "113eae32f1932cd8d850612bb5c01b63f63e422427716f8591e38fca0b6bae12"
+    },
+    "base_selftests_rerun": {"verify": "40/0 ROUND9 16 0", "vault": "51/0 ROUND9 16 0", "quarantine": "91/0 ROUND9 28 0"},
+    "merged_harness_rerun": {"verify": "R10 25 0", "vault": "R10 25 0", "quarantine": "R10 38 0"},
+    "installed_baseline_rerun": {"verify": "R10 18 7", "vault": "R10 19 6", "quarantine": "R10 32 6"},
+    "r9_s18_candidates_rerun": {"verify": "R10 21 4", "vault": "R10 21 4", "quarantine": "R10 21 17"},
+    "syntax_check": "bash -n clean on all four delivered files",
+    "sibling_engine_check": "cand-merge-quarantine.sh with SOUJI_VERIFY_BIN unset resolves $SCRIPT_DIR/cand-merge-verify.sh and returns the guard-signature evidence (descendants=old-and-unreferenced) on a fresh /var/tmp fixture",
+    "battery_aggregate_recheck": "cluster-G stored cases: installed verify-SAFE 7 -> merged 1; index_write_violation 0 on both stored runs"
+  },
+
+  "not_claimed": [
+    "no live removal is authorized by this fragment; the candidates are uncommitted working-tree files and deletion authorization stays OFF",
+    "cluster-D residuals L and T are open/disclosed, not fixed",
+    "the composed trio was never pointed at the live fleet; all destructive flows ran inside /var/tmp fixtures",
+    "host /tmp disk quota was avoided by construction (TMPDIR=/var/tmp everywhere)"
+  ]
+}

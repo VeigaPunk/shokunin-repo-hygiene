@@ -1,0 +1,169 @@
+{
+  "seat": "S12",
+  "round": 10,
+  "cluster": "F",
+  "role": "cluster F member 2 (independent patch of the registration/ownership/gitfile class)",
+  "assignment": "Cluster F: (F1) registration ownership by gitdir resolution (not name patterns); (F2) gitfile repo roots resolved before classifying; (F3) quarantine stage 4 revalidates CURRENT default ref + introducing-commit ancestry. cand-f2-*.",
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "patch_base": "installed S17-patched tools (uncommitted working-tree state, lane HEAD 29d49b5)",
+  "git_version": "2.55.0",
+  "host_note": "fixtures under mktemp -p /var/tmp only; live fleet and lane repo never mutated",
+
+  "installed_hashes_before": {
+    "tools/souji-verify.sh": "4baa8d955c531fcc73edc6b62021cb9531a31e1baed8aa853ba957b204d1cfc1",
+    "tools/souji-vault-verify.sh": "ea43bb0f9b9fe96cc26451df1a41d2df97d2d044852f122c987c209b6ec7b7a7",
+    "tools/souji-quarantine.sh": "f6f8516c15ab654f7e5f2dc2a7840eef0b53b9f9433e2ff70a64490b35fde68f"
+  },
+  "candidate_hashes": {
+    "tools/cand-f2-verify.sh": "8ed021fe127e9f97a178f9601bfec52dbed5ffe7db5f259b515e4304464fb28b",
+    "tools/cand-f2-vault.sh": "3716a03d16cfec09282721bb421d1bc35d53fd71b71118bdf443d0f6c08ab122",
+    "tools/cand-f2-quarantine.sh": "88fcb010790a79b36ad2bf25e40e60a7e87cf745f010b133a584adb8f71fa85c"
+  },
+
+  "selftests": {
+    "cand-f2-verify.sh": {"pass": 44, "fail": 0, "ported_pre_existing": 40, "new_regressions": 4, "round9_runner": "16/0"},
+    "cand-f2-vault.sh": {"pass": 55, "fail": 0, "ported_pre_existing": 51, "new_regressions": 4, "round9_runner": "16/0"},
+    "cand-f2-quarantine.sh": {"pass": 97, "fail": 0, "ported_pre_existing": 91, "new_regressions": 6, "round9_runner": "28/0"},
+    "totals": {"pass": 196, "fail": 0, "ported": 182, "new": 14},
+    "env": "TMPDIR=/var/tmp, SOUJI_VERIFY_BIN=<cand-f2-verify.sh> for the quarantine run"
+  },
+
+  "defects": [
+    {
+      "id": "F1",
+      "classes": ["J22", "J20"],
+      "title": "registration ownership discovered by name pattern, not by gitdir",
+      "root_cause": "scan_worktrees iterated `$SHOKUNIN_ROOT` and `$SHOKUNIN_ROOT/*-shokunin`. Any owner repo whose directory name lacks the `-shokunin` suffix was never scanned, so its linked-worktree registrations were absent from WT_MAP. The target then fell through to the artifact engine, matched a stale receipt and was DELETED.",
+      "fresh_repro": "/var/tmp/cand-f1-repro-r9-s11.sh case W20 against the installed tools",
+      "repro_before": "verify=SAFE(stale) `scratch-type=scratch-dir refs=0 mtime-age-days=3`; quarantine RESULT DELETED rc=0; the dirty worktree with its private unpushed branch and live active.txt was removed",
+      "repro_after": "verify=NOT-SAFE(unpushed-branch) `branch=private unpushed=1 dir=present owner=owner`; quarantine NOT-AUTHORIZED rc=3; active.txt intact, no .ufo-quarantine dir created",
+      "fix": "scan_worktrees now iterates `$SHOKUNIN_ROOT/*`, resolves each candidate root's gitdir, and skips linked worktrees (gitdir under */worktrees/*). Ownership is therefore structural, not name-based.",
+      "tools": ["cand-f2-verify.sh", "cand-f2-vault.sh"]
+    },
+    {
+      "id": "F1b",
+      "classes": ["J20"],
+      "title": "duplicate registration resolved last-writer-wins",
+      "root_cause": "WT_MAP keyed only by canonical path, so when two registrations named the same target the second overwrote the first. A later pushed registration masked an earlier unpushed one, producing a false SAFE(metadata-prune).",
+      "fresh_repro": "/var/tmp/cand-f1-repro-r9-s11.sh cases W16 and W17",
+      "repro_before": "verify=SAFE(metadata-prune) `dir=absent unique=0 head=40dfc8491be6 owner=owner-shokunin`; quarantine SKIPPED rc=0. Removing the shadowing registration then revealed NOT-SAFE(unpushed-branch).",
+      "repro_after": "verify=NOT-SAFE(registration-conflict) `multiple registrations disagree (branch=private unpushed=1 dir=absent owner=owner-shokunin)`; quarantine DRY-RUN-BLOCKED rc=3",
+      "fix": "_wt_record appends every claimant (newline-separated) instead of overwriting; evaluate_worktree evaluates all claimants and fails closed with receipt `registration-conflict` when a SAFE and a NOT-SAFE claimant coexist.",
+      "tools": ["cand-f2-verify.sh", "cand-f2-vault.sh"]
+    },
+    {
+      "id": "F2",
+      "classes": ["J23"],
+      "title": "gitfile repository root misclassified as an ordinary artifact",
+      "root_cause": "evaluate_path gated evaluate_repo_root behind `[ -d \"$target/.git\" ]`. A root created with --separate-git-dir carries a `.git` FILE, so the test failed and the root fell through to the artifact engine, which granted a false SAFE(pushed).",
+      "fresh_repro": "fresh /var/tmp fixture: `git init --separate-git-dir=<admin>` root with a pushed origin ref",
+      "repro_before": "verify=SAFE(pushed) `intro=43c5d5970eda ref=refs/remotes/origin/main ancestor=yes` (installed tool); vault VERIFIED(pushed)",
+      "repro_after": "verify=NOT-SAFE(none) `unpushed=0 dirty=0`; vault NOT-VERIFIED(none); quarantine DRY-RUN-BLOCKED rc=3",
+      "fix": "new repo_gitdir()/is_repo_root() helpers resolve a `.git` file's `gitdir:` pointer and reject linked-worktree gitdirs; evaluate_path and the quarantine preflight both use them.",
+      "tools": ["cand-f2-verify.sh", "cand-f2-vault.sh", "cand-f2-quarantine.sh"]
+    },
+    {
+      "id": "F3",
+      "classes": ["J19"],
+      "title": "worktree uniqueness excludes the candidate through its own linked-worktree HEAD",
+      "root_cause": "`git log --oneline <head> --not --all` counts the registration's own HEAD as a reference to the candidate, so a commit reachable only through the registration under evaluation reported unique=0 and earned a false SAFE(metadata-prune).",
+      "fresh_repro": "/var/tmp/cand-f1-repro-r9-s11.sh case W04",
+      "repro_before": "verify=SAFE(metadata-prune) `dir=absent unique=0 head=c4ace32e36fe`; quarantine SKIPPED rc=0",
+      "repro_after": "verify=NOT-SAFE(none) `dir=absent unique=1 head=c4ace32e36fe`; quarantine DRY-RUN-BLOCKED rc=3",
+      "primitive_measurement": {
+        "own_worktree_head_only": {"not_all": 0, "not_branches_remotes_tags": 1, "expected": 1},
+        "main_head": {"not_branches_remotes_tags": 0, "expected": 0},
+        "on_a_branch": {"not_branches_remotes_tags": 0, "expected": 0},
+        "origin_tip": {"not_branches_remotes_tags": 0, "expected": 0},
+        "unrelated_worktree_head": {"not_branches_remotes_tags": 1, "note": "fail-closed direction preserved"}
+      },
+      "fix": "the uniqueness query now uses `--not --branches --remotes --tags`, which ignores every worktree HEAD. `--not refs/heads refs/remotes refs/tags` was tested first and rejected: git fatals with 'ambiguous argument'.",
+      "tools": ["cand-f2-verify.sh", "cand-f2-vault.sh"]
+    },
+    {
+      "id": "F4",
+      "classes": ["J10"],
+      "title": "stage-4 current-default-ref + ancestry revalidation",
+      "status": "ALREADY CLOSED in the S17 patch base — verified, not re-patched",
+      "fresh_repro": "/var/tmp/cand-f1-repro-r9-s05.sh rollback and /var/tmp/cand-f1-repro-r9-s05.sh missing",
+      "repro_after": "both modes: `QVERDICT stage4-second ... FAIL pin=ok mtime=ok intro=<sha> class=FAIL default-ref-unverifiable-or-not-ancestor`, RESULT ABORTED rc=3, staged bytes retained in quarantine",
+      "note": "This is the correct fail-closed behaviour; recorded as a passing control, not a defect. No candidate change was needed and none was made."
+    }
+  ],
+
+  "corpus_replay_candidate_trio": {
+    "corpus": "/var/tmp/cand-f1-repro-r9-s11.sh (S11 r9 corpus, 13 cases, fresh fixtures per invocation)",
+    "tools_under_test": "/var/tmp/s12-shadow/repo/tools (cand-f2-* trio)",
+    "unsafe_deleted_outcomes": 0,
+    "refusal_outcomes": 9,
+    "skipped_legitimate": 1,
+    "per_case": {
+      "W04": "NOT-SAFE(none unique=1) -> DRY-RUN-BLOCKED",
+      "W10": "NOT-SAFE(git-unverifiable) -> DRY-RUN-BLOCKED",
+      "W11": "NOT-SAFE(git-unverifiable) -> DRY-RUN-BLOCKED",
+      "W12": "NOT-SAFE(git-unverifiable) -> DRY-RUN-BLOCKED",
+      "W13": "NOT-SAFE(git-unverifiable) -> DRY-RUN-BLOCKED",
+      "W14": "SAFE(metadata-prune) -> SKIPPED (legitimate: locked registration, single claimant, genuinely pushed HEAD)",
+      "W16": "NOT-SAFE(registration-conflict) -> DRY-RUN-BLOCKED",
+      "W17": "NOT-SAFE(registration-conflict) -> DRY-RUN-BLOCKED",
+      "W19": "NOT-SAFE(git-unverifiable) -> DRY-RUN-BLOCKED",
+      "W20": "NOT-SAFE(unpushed-branch) -> DRY-RUN-BLOCKED then NOT-AUTHORIZED rc=3"
+    },
+    "harness_caveat": "The one `CONFIRMED W04 private commit lost` line is emitted by the repro script's OWN `git worktree prune --expire now` + `git gc --prune=now`, which run after the tool has already refused. It is not a tool action. Verified: the tool's own RESULT for W04 is DRY-RUN-BLOCKED rc=3 and the commit is present (`git cat-file -e` OK) before the harness prunes it."
+  },
+
+  "s05_stage4_replay_candidate_trio": {
+    "rollback": {"rc": 3, "result": "ABORTED", "evidence": "pin=ok mtime=ok intro=7bcf2124f13c class=FAIL default-ref-unverifiable-or-not-ancestor"},
+    "missing": {"rc": 3, "result": "ABORTED", "evidence": "pin=ok mtime=ok intro=a67ad23a0bba class=FAIL default-ref-unverifiable-or-not-ancestor"}
+  },
+
+  "cross_cluster_controls": {
+    "S13_cluster_G_index_contract": {
+      "corpus": "census/round-10/S13-cluster-G-repro.py --tools <cand-f2 trio>",
+      "cases": 9,
+      "index_write_violation": 0,
+      "note": "the candidate trio keeps the read-only index contract; index-stale-stat, index-stale-stat-file and index-absent all report index_write_violation=[]"
+    }
+  },
+
+  "regression_cases_added": {
+    "cand-f2-verify.sh": [
+      "G1 --separate-git-dir repo root -> NOT-SAFE(none) unpushed=0 dirty=0 (was SAFE(pushed))",
+      "G2 owner without -shokunin suffix, dirty linked worktree on unpushed branch -> NOT-SAFE(unpushed-branch)",
+      "G3 detached registration whose HEAD is reachable only via its own worktree HEAD -> NOT-SAFE(none) unique=1",
+      "G4 two registrations for one path, one pushed one unpushed -> NOT-SAFE(registration-conflict)"
+    ],
+    "cand-f2-vault.sh": [
+      "G1..G4 as above with VERIFIED/NOT-VERIFIED vocabulary and R_REASON propagation"
+    ],
+    "cand-f2-quarantine.sh": [
+      "G1 end-to-end F1: non--shokunin owner + dirty linked worktree -> stage1 NOT-SAFE, rc=3, NOT-AUTHORIZED(unpushed-branch), target survives, active.txt intact, nothing staged",
+      "G2 F2 preflight: a --separate-git-dir repo root is accepted (rc != 2) instead of being rejected as 'not a git repo'"
+    ]
+  },
+
+  "safety_rails_preserved": {
+    "no_forbidden_git_subcommands": "grep -nE '^[^#]*git +(-C +[^ ]+ +)?(fetch|push|commit|branch|checkout|reset|rebase)( |$)' -> 0 in all three candidates (H1 assertions pass)",
+    "fixtures_under_mktemp": "H2/H5 assertions pass in all three",
+    "live_lane_untouched": "H3 assertions pass in quarantine; `git status --short` shows only census/round-10/, results/ and tools/cand-* as my writes",
+    "fail_closed_direction": "every new branch refuses; no new SAFE/DELETED path was introduced"
+  },
+
+  "unsafe_outcomes": 0,
+  "unsafe_outcome_definition": "a DELETED result on a target whose work is unpushed/unique/live, or a SAFE verdict on such a target, measured on fresh /var/tmp fixtures against the candidate trio",
+  "conservative_refusals": 9,
+  "live_removals": 0,
+  "status": "CANDIDATE — not promoted, not certified. Deletion authorization remains OFF; composition into cand-merge-* is S15's call.",
+  "writes": [
+    "tools/cand-f2-verify.sh",
+    "tools/cand-f2-vault.sh",
+    "tools/cand-f2-quarantine.sh",
+    "census/round-10/S12-cluster-F-member2.json",
+    "census/round-10/S12-cluster-F-member2.sha256"
+  ],
+  "remaining": [
+    "F3 (stage-4 revalidation) was already closed in the S17 base; no work needed beyond the recorded control",
+    "the candidate trio is not the merged line: S15 must compose clusters A-G, and the S18 banked line still needs its NUL/ledger protections reconciled (S24's merge guidance)",
+    "certification is S16's; this fragment authorizes no live removal"
+  ]
+}

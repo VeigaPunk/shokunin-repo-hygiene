@@ -1,0 +1,225 @@
+{
+  "seat": "S11",
+  "round": 10,
+  "cluster": "F",
+  "role": "cluster F lead (registration ownership, gitfile roots, stage-4 default-ref revalidation)",
+  "assignment": "Cluster F: (F1) registration ownership by gitdir resolution (not name patterns); (F2) gitfile repo roots resolved before classifying; (F3) quarantine stage 4 revalidates CURRENT default ref + introducing-commit ancestry. cand-f1-*.",
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "patch_base": "installed S17-patched tools (working tree, lane HEAD 29d49b5)",
+  "measured_at_utc": "2026-10-18T22:40:00Z",
+  "git_version": "2.55.0",
+  "host_note": "every fixture under mktemp -d -p /var/tmp; live fleet, lane repo, tools/souji-*.sh and shared bookkeeping never mutated",
+
+  "axes": [
+    "fail-closed calibration",
+    "registration and repository identity",
+    "end-to-end removal safety",
+    "cross-tool differential agreement",
+    "reproducibility"
+  ],
+
+  "installed_hashes_before_and_after": {
+    "tools/souji-verify.sh": "4baa8d955c531fcc73edc6b62021cb9531a31e1baed8aa853ba957b204d1cfc1",
+    "tools/souji-vault-verify.sh": "ea43bb0f9b9fe96cc26451df1a41d2df97d2d044852f122c987c209b6ec7b7a7",
+    "tools/souji-quarantine.sh": "f6f8516c15ab654f7e5f2dc2a7840eef0b53b9f9433e2ff70a64490b35fde68f",
+    "tools/souji-census.sh": "11bf9cdf8d4f75415b18e046aef0e96215b983f0d5b3ff7842301ff6ac65d381",
+    "verified_unchanged": true
+  },
+
+  "candidate_hashes": {
+    "tools/cand-f1-verify.sh": "d076f5db626dd3397ee39453d0dd147eb252882b6d8042b33518e180081ae15f",
+    "tools/cand-f1-vault-verify.sh": "ed3f14166bc7ebef94eba31bc3a94c02321dcaa0cfd48554fba718dffaf0b239",
+    "tools/cand-f1-quarantine.sh": "dbc6f5908913e6029a446111d76c5ba1bca0d6f94c7a02ee61fc58b552ca9c40"
+  },
+
+  "selftest_pass_counts": {
+    "cand-f1-verify.sh": {"pass": 50, "fail": 0, "ported_pre_existing_native": 24, "new_regressions": 10, "round9_runner": "16/0", "total_reported": 50},
+    "cand-f1-vault-verify.sh": {"pass": 61, "fail": 0, "ported_pre_existing_native": 35, "new_regressions": 10, "round9_runner": "16/0", "total_reported": 61},
+    "cand-f1-quarantine.sh": {"pass": 111, "fail": 0, "ported_pre_existing_native": 60, "new_regressions": 20, "round9_runner": "28/0", "total_reported": 111},
+    "totals": {"pass": 222, "fail": 0, "new_regressions": 40, "round9_checks": 60},
+    "installed_baseline_for_comparison": {"verify": "40/0", "vault": "51/0", "quarantine": "91/0", "census": "32/0"},
+    "env": "bash <cand> --selftest with no TMPDIR override; the candidate's own temp roots now default to /var/tmp because this host's /tmp is quota-blocked (mktemp under /tmp fails EDQUOT mid-battery).",
+    "all_pre_existing_cases_ported": true,
+    "forbidden_git_subcommand_audit": {"cand-f1-verify.sh": 0, "cand-f1-vault-verify.sh": 0, "cand-f1-quarantine.sh": 0}
+  },
+
+  "unsafe_counts": {
+    "definition": "an unsafe outcome is a SAFE receipt or a DELETED result on a target whose work is unpushed, uniquely retained, or live",
+    "r9_corpus_unsafe_outcomes_installed": 4,
+    "r9_corpus_unsafe_outcomes_candidates": 0,
+    "matrix_unsafe_outcomes_installed": 2,
+    "matrix_unsafe_outcomes_candidates": 0,
+    "live_removals": 0,
+    "conservative_refusals_added": 7,
+    "note": "every new branch refuses; no new SAFE or DELETED path was introduced anywhere in the three candidates"
+  },
+
+  "defects_closed": [
+    {
+      "id": "F1",
+      "r9_classes": ["F05", "W20", "engine_surface_coverage"],
+      "title": "registration ownership discovered by owner-name pattern, not by gitdir resolution",
+      "root_cause": "scan_worktrees iterated only `$SHOKUNIN_ROOT` and `$SHOKUNIN_ROOT/*-shokunin`. A registration owned by a directory whose name lacks the -shokunin suffix was never seen, so its target fell through to the artifact engine, matched a stale receipt and was deleted.",
+      "locations_installed": ["tools/souji-verify.sh:462", "tools/souji-vault-verify.sh:625"],
+      "fresh_repro": "/var/tmp/s11-repro/run2.sh F1a (owner dir `owner`), /var/tmp/s11-repro/w20live.sh",
+      "before": "verify SAFE(stale) `scratch-type=scratch-dir refs=0 mtime-age-days=3`; quarantine RESULT DELETED rc=0; the dirty worktree with an unpushed branch and live active.txt was removed",
+      "after": "verify NOT-SAFE(unpushed-branch) `branch=private unpushed=1 dir=present owner=owner`; quarantine NOT-AUTHORIZED rc=3; active.txt INTACT; no .ufo-quarantine dir created",
+      "fix": "fleet_owner_repos() prints every repo dir under $SHOKUNIN_ROOT (dot dirs skipped) and the loop consumes it in the CURRENT shell, so Git itself answers with the registration list. An unreadable candidate owner dir sets SCAN_INCOMPLETE and every non-root target then refuses (repo-scan-incomplete) instead of falling through to artifact receipts."
+    },
+    {
+      "id": "F1b",
+      "r9_classes": ["F03", "W16", "W17"],
+      "title": "duplicate registration for one path resolved last-writer-wins",
+      "root_cause": "WT_MAP is keyed by canonical target path, so a second registration silently overwrote the first; a later pushed record masked an earlier unpushed one.",
+      "fresh_repro": "/var/tmp/s11-repro/r9corpus-lenient.sh cases W16 and W17",
+      "before": "verify SAFE(metadata-prune) `dir=absent unique=0 head=40dfc8491be6 owner=owner-shokunin`; quarantine SKIPPED rc=0",
+      "after": "verify NOT-SAFE(registration-conflict); quarantine DRY-RUN-BLOCKED (registration-conflict) rc=3",
+      "fix": "_wt_record records a second claim in WT_CONFLICT; evaluate_path refuses that target before consulting WT_MAP."
+    },
+    {
+      "id": "F1c",
+      "r9_classes": ["F01", "W04"],
+      "title": "detached uniqueness masked by the registration's own linked-worktree HEAD",
+      "root_cause": "uniqueness used `--not --all`; on Git 2.55 `--all` includes linked-worktree HEADs, so a registration's own HEAD always excluded itself and every absent detached registration read unique=0. The F1 widening above made this class reachable for owners that had previously been invisible.",
+      "fresh_repro": "/var/tmp/s11-repro/extra.sh W04 segment; r9 corpus W04",
+      "before": "verify SAFE(metadata-prune) `dir=absent unique=0 head=6fda9bd2e1b2`; quarantine SKIPPED rc=0 (a false metadata-prune receipt for a registration whose commit nothing else retains)",
+      "after": "verify NOT-SAFE(none) `dir=absent unique=1 head=6fda9bd2e1b2`; quarantine NOT-AUTHORIZED rc=3",
+      "fix": "uniqueness is measured against durable refs only (for-each-ref object names) after resolving HEAD to a commit with cat-file -e; any resolution or ref-query failure refuses as git-unverifiable."
+    },
+    {
+      "id": "F2",
+      "r9_classes": ["F07", "R05", "engine_surface_coverage"],
+      "title": "repository root with a gitfile .git classified as an artifact",
+      "root_cause": "the root test was `[ -d \"$target/.git\" ]`, so a repo created with `git init --separate-git-dir` (whose .git is a FILE) fell through to the artifact engine and collected SAFE(pushed) for the repository root itself.",
+      "locations_installed": ["tools/souji-verify.sh:397", "tools/souji-vault-verify.sh:567"],
+      "fresh_repro": "/var/tmp/s11-repro/run2.sh F2a, /var/tmp/s11-repro/run3.sh F2d",
+      "before": "verify SAFE(pushed) `intro=2fc86c90bdfc ref=refs/remotes/origin/main ancestor=yes` for the repo root; quarantine refused with exit 2 `not a git repo`",
+      "after": "verify NOT-SAFE(none) `unpushed=0 dirty=0`; the same root with a valid directory ledger row is still SAFE(moved-to-obsidian); a linked-worktree root gets its own token gitfile-worktree-root instead of an artifact receipt",
+      "fix": "a `.git` FILE is resolved through Git: gitdir == git-common-dir means the target is the repository root and is judged as a root; otherwise it is a linked-worktree root and refuses with gitfile-worktree-root. An unreadable gitdir line refuses as gitfile-root-unverifiable. Quarantine additionally accepts a gitfile repo as <repo> (no more exit-2 usage refusal) while its independent root gate still blocks staging the root."
+    },
+    {
+      "id": "F3",
+      "r9_classes": ["second-check missing default-ref revalidation", "F02-adjacent"],
+      "title": "quarantine stage 4 did not revalidate the CURRENT default ref snapshot",
+      "root_cause": "the stage-4 pushed prong re-derived ancestry and the unpushed-touching set, but never compared the remote snapshot at the current default ref against the object authorized at stage 1. A default ref re-pointed during the hold at a commit that MODIFIES or DELETES the staged path still passed every prong and the copy was deleted.",
+      "locations_installed": ["tools/souji-quarantine.sh:331 (second_check pushed prong)"],
+      "fresh_repro": "/var/tmp/s11-repro/run2.sh F3a, /var/tmp/s11-repro/run3.sh F3d, /var/tmp/s11-repro/r5dbg.sh",
+      "before": "stage4-second PASS `pin=ok mtime=ok intro=... default-ref=ok unpushed-touching=0 intro-blob=ok`; RESULT DELETED rc=0; the final default ref did not contain the path at all (`git cat-file -e refs/remotes/origin/legacy:note.txt` -> fatal)",
+      "after": "stage4-second FAIL `... class=FAIL default-snapshot-moved` (or default-snapshot-unverifiable when the path is absent at the current ref); RESULT ABORTED rc=3; staged copy retained, bytes recoverable",
+      "fix": "the pushed prong resolves the path at the current default ref and at the introducing commit and requires them to be the SAME object; either side unresolvable fails closed. A default ref that merely advances while the snapshot at the staged path is unchanged still deletes (control S11Q4 / matrix R6).",
+      "note": "This contradicts peer S12's claim that F3 was already closed in the S17 base: on the installed bytes the default-ref swap deletes (see before evidence above)."
+    }
+  ],
+
+  "r9_corpus_replay": {
+    "corpus": "census/round-9/seat-11.json self_contained_reproduction (13 cases), run through /var/tmp/s11-repro/r9corpus-lenient.sh so every case reports",
+    "installed_baseline": {
+      "unsafe_outcomes": 4,
+      "per_case": {
+        "W04": "SKIPPED (metadata-prune) - false receipt on a registration retaining a private commit",
+        "W16": "SKIPPED (metadata-prune) - duplicate registration masks an unpushed branch",
+        "W17": "SKIPPED (metadata-prune) - duplicate registration masks an unpushed branch",
+        "W20": "DRY-RUN-PASS then DELETED (stale) rc=0 - dirty worktree with unpushed branch and live file removed"
+      }
+    },
+    "candidate_trio": {
+      "unsafe_outcomes": 0,
+      "refusals": 13,
+      "per_case": {
+        "W04": "DRY-RUN-BLOCKED (none, unique=1)",
+        "W10": "DRY-RUN-BLOCKED (git-unverifiable)",
+        "W11": "DRY-RUN-BLOCKED (git-unverifiable)",
+        "W12": "DRY-RUN-BLOCKED (git-unverifiable)",
+        "W13": "DRY-RUN-BLOCKED (git-unverifiable)",
+        "W14": "SKIPPED (metadata-prune) - legitimately locked, single claimant, genuinely pushed HEAD",
+        "W16": "DRY-RUN-BLOCKED (registration-conflict)",
+        "W17": "DRY-RUN-BLOCKED (registration-conflict)",
+        "W19": "DRY-RUN-BLOCKED (git-unverifiable)",
+        "W20": "DRY-RUN-BLOCKED (unpushed-branch) then NOT-AUTHORIZED rc=3",
+        "R04": "DRY-RUN-BLOCKED (target-is-repo-root)",
+        "R05": "DRY-RUN-BLOCKED (none) - root no longer receives a pushed receipt",
+        "R06": "DRY-RUN-BLOCKED (target-is-repo-root)"
+      },
+      "harness_caveat": "the repro script prints `CONFIRMED W04 private commit lost` and `CONFIRMED W20 dirty worktree deleted` unconditionally: those lines come from the script's OWN `git worktree prune --expire now` + `git gc --prune=now` and from its assertion that the target is gone. Neither the installed nor the candidate tool ever runs a prune (proof.sh: `TOOL RAN PRUNE` absent in both runs). The tool-level evidence is the RESULT token above; /var/tmp/s11-repro/proof.sh isolates the W04 commit before/after the tool and shows commit before=present after=present in both, with the receipt flipping SKIPPED -> NOT-AUTHORIZED."
+    }
+  },
+
+  "before_after_matrix": {
+    "harness": "/var/tmp/s11-repro/matrix.sh <verify> <quarantine> <label> <vault>; fresh /var/tmp fixture per row",
+    "rows": [
+      {"id": "R1", "state": "owner dir without -shokunin, present dirty linked worktree on an unpushed branch", "before": "A=SAFE(stale) Q=DELETED(stale) rc=0, live file gone", "after": "A=NOT-SAFE(unpushed-branch) Q=NOT-AUTHORIZED rc=3, live file intact", "verdict": "defect closed"},
+      {"id": "R2", "state": "owner dir without -shokunin, absent registration whose HEAD is an orphan commit", "before": "A=NOT-SAFE(unreachable) - registration invisible, target not even identified", "after": "A=NOT-SAFE(none, unique=1) - identified and refused", "verdict": "defect closed"},
+      {"id": "R3", "state": "gitfile main repo root (git init --separate-git-dir), pushed, no ledger", "before": "A=SAFE(pushed); quarantine exit 2 not-a-git-repo", "after": "A=NOT-SAFE(none); quarantine accepts the repo and blocks the root", "verdict": "defect closed"},
+      {"id": "R4", "state": "linked-worktree root whose owner lives outside the fleet root", "before": "A=NOT-SAFE(none) - correct verdict, no token", "after": "A=NOT-SAFE(gitfile-worktree-root) - explicit fail-closed token", "verdict": "hardened"},
+      {"id": "R5", "state": "pushed file; during the hold the default ref is swapped to a commit that drops the path", "before": "Q=DELETED(pushed) rc=0 despite the path being absent at the final default ref", "after": "Q=ABORTED(pushed) rc=3, class=FAIL default-snapshot-unverifiable, copy retained", "verdict": "defect closed"},
+      {"id": "R6", "state": "control: default ref advances, snapshot at the staged path unchanged", "before": "Q=DELETED(pushed) rc=0", "after": "Q=DELETED(pushed) rc=0, default-snapshot=ok", "verdict": "no over-refusal"},
+      {"id": "R7", "state": "control: plain pushed file, no tamper", "before": "Q=DELETED(pushed) rc=0", "after": "Q=DELETED(pushed) rc=0", "verdict": "no over-refusal"},
+      {"id": "R8", "state": "control: absent registration with a fully pushed HEAD", "before": "A=SAFE(metadata-prune)", "after": "A=SAFE(metadata-prune)", "verdict": "no over-refusal"},
+      {"id": "R9", "state": "control: stale scratch file with zero live refs", "before": "A=SAFE(stale)", "after": "A=SAFE(stale)", "verdict": "no over-refusal"}
+    ],
+    "unsafe_before": 2,
+    "unsafe_after": 0,
+    "over_refusals_introduced": 0
+  },
+
+  "vault_engine_probe": {
+    "harness": "/var/tmp/s11-repro/vprobe.sh <vault-tool>",
+    "P1_non_suffix_owner_dirty_wt": {"before": "SAFE/VERIFIED(stale)", "after": "NOT-SAFE/NOT-VERIFIED(unpushed-branch)"},
+    "P2_gitfile_repo_root": {"before": "SAFE/VERIFIED(pushed)", "after": "NOT-SAFE/NOT-VERIFIED(none)"},
+    "P3_undiscoverable_wt_root": {"before": "NOT-SAFE/NOT-VERIFIED(none)", "after": "NOT-SAFE/NOT-VERIFIED(gitfile-worktree-root)"}
+  },
+
+  "regression_cases_added": {
+    "cand-f1-verify.sh": [
+      "S11F11 gitfile repo root -> NOT-SAFE(none) unpushed=0 dirty=0 (was SAFE(pushed))",
+      "S11F12 gitfile repo root with a valid directory ledger row -> SAFE(moved-to-obsidian) (positive control)",
+      "S11F13 owner without -shokunin, present worktree on an unpushed branch -> NOT-SAFE(unpushed-branch)",
+      "S11F14 owner without -shokunin, absent pushed registration -> SAFE(metadata-prune) (no over-refusal)",
+      "S11F15 owner without -shokunin, absent registration with an orphan commit -> NOT-SAFE(none) unique=1",
+      "S11F16 unreadable candidate owner dir -> NOT-SAFE(repo-scan-incomplete)",
+      "S11F17 same state after permissions restored -> SAFE(pushed) (fail-closed is not sticky)",
+      "S11F18 worktree root now judged through its owner -> NOT-SAFE(unpushed-branch)",
+      "S11F19 linked-worktree root whose owner is outside the fleet -> NOT-SAFE(gitfile-worktree-root)",
+      "S11F20 two registrations claim one path -> NOT-SAFE(registration-conflict)"
+    ],
+    "cand-f1-vault-verify.sh": [
+      "S11F11..S11F20 as above in VERIFIED/NOT-VERIFIED vocabulary with R_REASON propagation"
+    ],
+    "cand-f1-quarantine.sh": [
+      "S11Q1 non--shokunin owner + present worktree on an unpushed branch -> stage1 NOT-SAFE, rc=3, NOT-AUTHORIZED(unpushed-branch), live file intact, nothing staged",
+      "S11Q2 gitfile repo root accepted as <repo> and blocked by the root gate, not a usage error",
+      "S11Q3 default ref swapped during the hold -> ABORTED, class=FAIL default-snapshot*, staged copy retained with recoverable bytes",
+      "S11Q4 control: default ref advances with the snapshot unchanged -> DELETED, default-snapshot=ok",
+      "S11Q5 nested gitfile repository inside a ledger-preserved scratch dir -> NOT-AUTHORIZED(nested-repo-root), inner work intact"
+    ]
+  },
+
+  "defense_in_depth": {
+    "quarantine_nested_repo_root": "quarantine now refuses, independently of the receipt engine, any target that is itself a Git repository or worktree root (nested-repo-root). This is the r9 F05 route: an ancestor receipt must never authorize removing a nested repository's work.",
+    "quarantine_gitfile_repo": "a gitfile repository root is accepted as <repo> so the root gate, not a usage error, decides its fate."
+  },
+
+  "scope_and_safety": {
+    "files_written": [
+      "tools/cand-f1-verify.sh",
+      "tools/cand-f1-vault-verify.sh",
+      "tools/cand-f1-quarantine.sh",
+      "census/round-10/seat-11.json"
+    ],
+    "fixtures": "/var/tmp/s11-repro/** and mktemp -d -p /var/tmp roots only",
+    "live_fleet_mutations": 0,
+    "live_lane_mutations": 0,
+    "installed_tool_bytes_changed": false,
+    "shared_bookkeeping_changed": false,
+    "git_fetch_push_commit_branch_invocations": 0,
+    "operator_config_or_secrets_read": false,
+    "gui_processes_launched": false
+  },
+
+  "caveats": [
+    "Candidate, not promoted: S15 composes clusters A-G and S16 certifies. Deletion authorization stays OFF.",
+    "W14 (locked registration) still receives SAFE(metadata-prune) in my candidates; that is r9's P01 policy mismatch, not a cluster-F code defect. It needs an explicit lock-preserve decision (S12's line leaves it SKIPPED as legitimate).",
+    "W19 (tab inside the owner name) is refused as git-unverifiable rather than through a control-character guard; the refusal direction is correct but the r9 F04 root cause (tab-spliced internal metadata) is only closed incidentally by the new uniqueness resolution, not by a dedicated representation fix.",
+    "Peer S12's fragment asserts F3 was already closed in the S17 base. On the installed bytes a default-ref swap that drops the path still reaches DELETED (r5dbg.sh, run3.sh F3d), so the two fragments disagree on that point; the parent should treat F3 as closed only by a candidate that carries the snapshot prong."
+  ]
+}

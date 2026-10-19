@@ -1,0 +1,193 @@
+{
+  "schema_version": 1,
+  "seat": "S06",
+  "round": 10,
+  "cluster": "C",
+  "member": 2,
+  "role": "cluster C member 2: C2 physical containment of the quarantine destination, plus the directory scope scan and the batch-atomicity path that the containment rail depends on",
+  "fragment": "census/round-10/seat-06.json",
+  "narrative_fragment": "census/round-10/S06-cluster-C-member2.md",
+  "generated_at": "2026-10-19T02:15:00Z",
+  "lane_head": "29d49b553bb4532beb530192548c555a33594e06",
+  "status": "COMPLETE: three defect classes reproduced fresh on the installed (S17) bytes and fixed in tools/cand-c2-*; all 182 pre-existing selftest checks ported and passing; corpus corrected from label-coupled to verdict-coupled after it mis-scored the S15 merged bytes",
+  "axes": [
+    "C2 physical vs lexical containment of the quarantine destination",
+    "directory scope scan must not be blind to symlinks",
+    "batch atomicity: one poisoned row must not abort the run",
+    "regression preservation of every pre-existing selftest case"
+  ],
+  "headline": "Containment was lexical only: a symlinked .ufo-quarantine (or symlinked per-date subdir) was followed by mkdir/mv/rm, so a DELETED run staged and then destroyed payload outside the repository, and an ABORTED run left the only copy outside the repo. The engine's directory scope scan used `find . -path './.git' -prune -o \\( -name .git -o -name .ufo \\) -print -quit`, whose -prune matches only a literal top-level .git, so a directory whose only nested live repository was reachable through a symlinked subdir scanned clean and earned SAFE(pushed) -- and a bare dangling symlink in scope was invisible for the same reason. Third, a bare `pin_sha=$(content_digest \"$ct\")` under set -e aborted a whole --list batch at rc=2 with no SUMMARY after earlier rows had already been deleted. All three now refuse per-row; every pre-existing case still passes.",
+  "installed_baseline_sha256": {
+    "tools/souji-verify.sh": "4baa8d955c531fcc73edc6b62021cb9531a31e1baed8aa853ba957b204d1cfc1",
+    "tools/souji-vault-verify.sh": "ea43bb0f9b9fe96cc26451df1a41d2df97d2d044852f122c987c209b6ec7b7a7",
+    "tools/souji-quarantine.sh": "f6f8516c15ab654f7e5f2dc2a7840eef0b53b9f9433e2ff70a64490b35fde68f",
+    "tools/souji-census.sh": "11bf9cdf8d4f75415b18e046aef0e96215b983f0d5b3ff7842301ff6ac65d381",
+    "tools/souji-round9-selftest.sh": "dd7c636ebe39e70c489516500440a311167b5280d18c3a5e9db1399d2f62e5c2"
+  },
+  "candidate_sha256": {
+    "tools/cand-c2-verify.sh": "7733279e1d844528479fd007019fc4c59b57c6b22f7dc3a3eecf0cc575adcf1c",
+    "tools/cand-c2-vault.sh": "71aad587ec3863ab213a445a49fe9cdd007ec9c88696f93f52def4e26e710c50",
+    "tools/cand-c2-quarantine.sh": "919433e5ee64b2da752c69f64a94e0abed55cf596329860a3117dbb3c5b509c3",
+    "tools/cand-c2-clusterc-selftest.sh": "23a89f8bfd016fe2588189d9e57fcd7a59d6917290e2d203ae74e463c35c9ac6"
+  },
+  "selftest_counts": {
+    "installed_baseline": {
+      "souji-verify": "40 checks, 0 failed",
+      "souji-vault-verify": "51 checks, 0 failed",
+      "souji-quarantine": "91 checks, 0 failed",
+      "souji-census": "32 checks, 0 failed",
+      "total": 214
+    },
+    "candidate": {
+      "tools/cand-c2-verify.sh": "44 checks, 0 failed",
+      "tools/cand-c2-vault.sh": "54 checks, 0 failed",
+      "tools/cand-c2-quarantine.sh": "98 checks, 0 failed",
+      "total": 196,
+      "interpretation": "182 pre-existing checks (40+51+91) retained verbatim and passing; 14 new cluster-C regression checks added (verify +4, vault +3, quarantine +7). Case-ID set diff against the installed tools shows additions only, no removals."
+    },
+    "r9_shared_battery_on_candidates": {
+      "verify": "ROUND9 16 0",
+      "vault": "ROUND9 16 0",
+      "quarantine": "ROUND9 28 0"
+    },
+    "merged_s15_bytes": {
+      "verify": "40 checks, 0 failed",
+      "vault": "51 checks, 0 failed",
+      "quarantine": "91 checks, 0 failed",
+      "note": "The merged bytes carry no cluster-C regression cases of their own -- the S17 baseline counts exactly."
+    }
+  },
+  "counts": {
+    "defect_classes_in_scope": 3,
+    "defect_classes_reproduced_fresh": 3,
+    "defect_classes_fixed_in_candidate": 3,
+    "cluster_c_corpus_cases": 24,
+    "installed_baseline_failures": 12,
+    "candidate_failures": 0,
+    "merged_bytes_failures_verdict_coupled": 0,
+    "merged_bytes_failures_label_coupled": 7,
+    "unsafe_counts_installed": {
+      "false_safe": 3,
+      "false_delete_or_containment": 6,
+      "batch_atomicity_partial_execution": 3,
+      "total": 12,
+      "breakdown": [
+        "C2R03 verify: SAFE(pushed) on a directory whose only nested live repo is behind a symlinked subdir",
+        "C2R03 vault: same false-SAFE",
+        "C2R04 verify: SAFE(pushed) with a dangling symlink in scope",
+        "C2R05: rc=0 DELETED with the payload staged and destroyed through the symlinked quarantine root",
+        "C2R05 original survives: the source is gone",
+        "C2R05b: ABORTED, but the retained bytes rest outside the repository",
+        "C2R05b original preserved: the source is gone",
+        "C2R06: rc=0 DELETED through a symlinked per-date quarantine subdir",
+        "C2R06 original survives: the source is gone",
+        "C2R07 x3: rc=2 mid-batch abort, 1 of 3 rows reported, no SUMMARY, earlier rows already deleted"
+      ]
+    },
+    "unsafe_counts_candidate": {
+      "false_safe": 0,
+      "false_delete_or_containment": 0,
+      "batch_atomicity_partial_execution": 0,
+      "total": 0
+    },
+    "false_refusals_introduced": 0,
+    "false_refusal_controls": "C2R11 (plain tracked+pushed directory must still be SAFE(pushed)) and C2R12 (a symlink as the target itself must refuse) both pass on the candidate, so the new rails do not over-refuse."
+  },
+  "defects": [
+    {
+      "id": "C2-Q1",
+      "class": "symlinked quarantine destination escapes physical containment",
+      "severity": "unsafe-DELETE / containment",
+      "maps_to_r9_register": "J07 (S24-D5, S23-D9, S22-D07)",
+      "installed_behavior": "`<repo>/.ufo-quarantine` (or `<repo>/.ufo-quarantine/<utc-date>`) as a symlink to a directory outside the repo is followed by mkdir -p, git-mv/mv and rm -rf. A pass run returns DELETED rc=0 and destroys bytes staged in the link target; an ABORTED run leaves the only copy -- including hook-appended tampered bytes -- outside the repository. A hold-window repoint moves the staged bytes to an attacker-chosen directory.",
+      "fix": "q_symlink_below() walks every component between the repo root and the quarantine path and refuses on the first symlink; receipt quarantine-root-symlink, rc=3, nothing staged.",
+      "evidence": "census/round-10/S06-installed-clusterc.txt (C2R05, C2R05b, C2R06 fail), census/round-10/S06-cand-clusterc.txt (all pass)"
+    },
+    {
+      "id": "C2-Q2",
+      "class": "directory scope scan is blind to symlinks",
+      "severity": "false-SAFE",
+      "maps_to_r9_register": "feeds J03/J04 directory-closure family; sibling of J02 hidden-reference blind spots",
+      "installed_behavior": "`find . -path './.git' -prune -o \\( -name .git -o -name .ufo \\) -print -quit` prunes only a literal top-level ./.git and never reports -type l, so a directory whose only nested live repository is reachable through a symlinked subdir scans clean and earns SAFE(pushed); a dangling symlink in scope is invisible for the same reason. Reproduced on both souji-verify.sh and souji-vault-verify.sh.",
+      "fix": "The scan also matches -type l and the found-something branch is separated from the scan-failure branch, so an unreadable scope and a dirty scope are both refusals.",
+      "evidence": "census/round-10/S06-installed-clusterc.txt (C2R03 verify/vault, C2R04 fail), census/round-10/S06-cand-clusterc.txt (all pass)"
+    },
+    {
+      "id": "C2-Q3",
+      "class": "one poisoned row aborts the whole --list batch",
+      "severity": "partial execution / no atomicity",
+      "maps_to_r9_register": "batch-atomicity family (r9 S04 wrong-pin/partial-execution observation)",
+      "installed_behavior": "`pin_sha=$(content_digest \"$ct\")` under set -e: content_digest returns 2 for a symlink in scope, which kills the process mid-stream at rc=2 with no SUMMARY, leaving rows before the poisoned one already deleted and rows after it unreported.",
+      "fix": "The status is captured (`|| pin_rc=$?`) and the row is refused with receipt symlink-in-scope; the batch completes and emits SUMMARY.",
+      "evidence": "census/round-10/S06-installed-clusterc.txt (C2R07 x3 fail), census/round-10/S06-cand-clusterc.txt (C2R07 x3 pass)"
+    }
+  ],
+  "new_regression_cases": {
+    "tools/cand-c2-verify.sh": [
+      "C2R01 nested .git directory -> refusal",
+      "C2R03 symlink in scope -> refusal",
+      "C2R04 dangling symlink in scope -> refusal",
+      "C2R08 index-write contract: read-only probe leaves .git/index byte-identical"
+    ],
+    "tools/cand-c2-vault.sh": [
+      "C2R03 symlink in scope -> refusal",
+      "C2R04 dangling symlink in scope -> refusal",
+      "C2R08 index-write contract"
+    ],
+    "tools/cand-c2-quarantine.sh": [
+      "C2R05 symlinked quarantine root -> rc=3 refusal, original survives, nothing written outside (x2 assertions)",
+      "C2R05b abort path -> nothing left outside the repo, original preserved",
+      "C2R06 symlinked per-date subdir -> rc=3 refusal, original survives, nothing outside",
+      "C2R07 poisoned --list batch -> SUMMARY emitted, all 3 rows reported, poisoned row refused (x3 assertions)"
+    ]
+  },
+  "corpus_semantics_correction": {
+    "what_changed": "tools/cand-c2-clusterc-selftest.sh refusal assertions moved from receipt-label equality to verdict inequality (any non-SAFE verdict is a refusal), with C2_STRICT_LABELS=1 restoring exact-label matching.",
+    "why": "The corpus scored the S15 merged bytes 17/7. Direct probing shows the merged tool refuses the same inputs with different labels: NOT-SAFE/secrets-refusal protected-or-unsupported-descendant-refused for the nested/protected-descendant cases, and NOT-AUTHORIZED/quarantine-containment symlink-or-noncanonical-quarantine-path for the containment case. Those are fail-closed verdicts, so the failures were corpus artifacts.",
+    "after": "installed 12/12 (unchanged -- discrimination preserved), cand-c2 24/0, merged 24/0, strict-mode cand-c2 24/0.",
+    "residual_label_drift": "The merged bytes and this candidate mint different receipt strings for the same refusals; whoever freezes the final bytes must pick one label vocabulary and re-run the corpora, or downstream consumers keying on receipt strings will diverge."
+  },
+  "adversarial_self_check": {
+    "hold_window_repoint": "A symlink repoint during the hold window was exercised on the installed bytes and stages the payload in the attacker-chosen directory; the candidate refuses before staging, so the repoint has no payload to move.",
+    "guard_layout_trap": "Staging the candidate toolset anywhere other than a lane-shaped `<stage>/souji-shokunin/tools/` makes the quarantine live-fleet guard fire (rc=4 live-fleet-mutation-forbidden) because LIVE_FLEET_ROOT becomes an ancestor of the fixture root. Observed as a spurious 19/5; the refusal is correct fail-closed behavior, not a defect.",
+    "over_refusal_controls": "C2R11/C2R12 pass on the candidate: legitimate pushed directories still earn SAFE(pushed) and a symlink target still refuses.",
+    "independence": "The C2-Q2 scope fix is in both engines; the C2-Q1/C2-Q3 fixes are in the quarantine wrapper. The quarantine rail refuses the containment shape even when the engine under it is the installed one."
+  },
+  "implementation_notes": {
+    "patch_base": "Installed S17 bytes, measured at the sha256 above.",
+    "diff_shape": "souji-verify.sh / souji-vault-verify.sh: the directory scope scan in evaluate_path (and the directory-digest symlink rail already present in S17) plus 4 and 3 embedded regression cases. souji-quarantine.sh: q_symlink_below + the quarantine-root refusal, the captured content_digest status, and 7 embedded regression cases.",
+    "no_pre_existing_case_dropped": "st_case/st_status/st_check/st_flow id-set diff between installed and candidate is additions-only for all three tools."
+  },
+  "safety": {
+    "repository_files_written": [
+      "census/round-10/seat-06.json",
+      "census/round-10/S06-cluster-C-member2.md",
+      "census/round-10/S06-selftest-counts.txt",
+      "census/round-10/S06-installed-clusterc.txt",
+      "census/round-10/S06-cand-clusterc.txt",
+      "census/round-10/S06-merged-clusterc.txt",
+      "census/round-10/S06-clusterc-installed.txt",
+      "census/round-10/S06-clusterc-cand.txt",
+      "tools/cand-c2-verify.sh",
+      "tools/cand-c2-vault.sh",
+      "tools/cand-c2-quarantine.sh",
+      "tools/cand-c2-clusterc-selftest.sh"
+    ],
+    "installed_tools_modified": false,
+    "live_fleet_targets_mutated": false,
+    "live_git_fetch_push_commit_branch": false,
+    "secrets_read": false,
+    "headless": true,
+    "fixtures": "All fixtures created with mktemp -d -p /var/tmp; TMPDIR=/var/tmp exported for tool-internal temporaries. No /tmp fixtures created.",
+    "shared_bookkeeping_modified": false,
+    "staging_dirs": "/var/tmp/s06-stage/ and /var/tmp/s06-stage2/ (lane-shaped toolset copies used only to point the corpus at candidate/merged bytes)"
+  },
+  "limits": [
+    "The q_symlink_below walk narrows TOCTOU but does not prove it away: a repoint landing between the check and the mkdir/mv is not excluded by construction.",
+    "The outside-write assertion is state-based, not syscall-traced: an outside write that the tool later removes would not be observed. In the installed pass case the tool's own rm -rf is what cleans up the link target, which is exactly why 'no writes outside' passes there while 'original survives' fails.",
+    "The corpus is cluster-C-scoped (24 cases). It is not a full-fleet gate and does not speak to the other 13 open r9 classes.",
+    "The merged-bytes figures are this seat's measurement of S15's artifact on this seat's corpus; S15's own merged harness has no runner in the tree and its 18/5, 19/4, 31/5 numbers are cited, not re-derived.",
+    "souji-census.sh is not a deletion authority and was not patched; only its read-only index contract is exercised (C2R08/C2R09).",
+    "Candidates are not promoted; promotion, byte re-freeze and certification remain the parent's call. Deletion authorization stays OFF."
+  ]
+}

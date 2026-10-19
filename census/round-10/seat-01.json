@@ -1,0 +1,182 @@
+{
+  "seat": "S01",
+  "round": 10,
+  "kind": "cluster-A-lead-implementor",
+  "status": "A1 and A2 repaired and freshly reproduced on all three tools; all inherited selftest cases ported and green; new regressions proven non-vacuous against pre-fix bytes",
+  "cluster": "A",
+  "patch_base": {
+    "description": "The three tools/cand-a1-*.sh files were byte-identical to the installed S17-patched canonical tools before editing; verified by sha256 before the first edit.",
+    "pre_edit_sha256_equals_installed": {
+      "cand-a1-verify.sh": "4baa8d955c531fcc73edc6b62021cb9531a31e1baed8aa853ba957b204d1cfc1",
+      "cand-a1-vault.sh": "ea43bb0f9b9fe96cc26451df1a41d2df97d2d044852f122c987c209b6ec7b7a7",
+      "cand-a1-quarantine.sh": "f6f8516c15ab654f7e5f2dc2a7840eef0b53b9f9433e2ff70a64490b35fde68f"
+    },
+    "reference": "census/round-9/fixes-17.md (S17 repairs), census/round-9/final-24.json (adjudicated register J01-J23)"
+  },
+
+  "defects_addressed": [
+    {
+      "id": "A1",
+      "class": "stale sweeps miss hidden live references",
+      "register_alias": "J02",
+      "prior_alias": ["S24-D7", "S10-D02", "S23-D4", "S22-D02"],
+      "severity": "unsafe-DELETE",
+      "root_cause": "count_live_refs in souji-verify.sh and souji-vault-verify.sh invoked `rg -l --no-ignore --fixed-strings` WITHOUT `--hidden`. ripgrep skips dot-prefixed files by default, so a live reference living in a hidden file (.usage.md, .ufo/..., .gitignore) was invisible: the sweep returned 0 and the stale receipt was issued for an artifact that is still referenced.",
+      "fresh_repro_pre_fix": {
+        "fixture": "/var/tmp/s01-repro-a1.furXYc",
+        "shape": "pushed seed repo; .scratch/old-a.out backdated 3 days; hidden sibling .scratch/.active-reference contains the string 'old-a.out'",
+        "observed": "VERDICT .../.scratch/old-a.out SAFE stale scratch-type=scratch-dir refs=0 mtime-age-days=3",
+        "verdict": "REPRODUCED on the pre-patch candidate bytes"
+      },
+      "fix": {
+        "verify_and_vault": "Sweep is now hidden-inclusive (`rg -l --hidden --no-ignore --fixed-strings`). The sweep was factored into `_sweep_refs` so the total and the hidden subset are counted from ONE scan (no double-scan divergence). New `count_hidden_refs` reports how many hits carry a dot-prefixed component; `_is_hidden_path` is the classifier. Evidence strings now carry `hidden-refs=N` on both the veto path (`stale=live-refs=1 hidden-refs=1`) and the SAFE path (`refs=0 hidden-refs=0`).",
+        "exclusions_preserved": ".git tree, census/tests surfaces, .ufo-quarantine and the artifact's own path stay excluded explicitly; all verified to still prune under --hidden.",
+        "quarantine": "souji-quarantine.sh delegates its stale verdict to the engine, so it gained an INDEPENDENT `q_stale_facts` re-derivation (own `q_scratch_type`, own hidden-inclusive sweep, own hidden count). It is applied twice: as a PREFLIGHT before any staging, and inside second_check. A hidden-only reference now blocks with the target untouched."
+      },
+      "fresh_verification_post_fix": {
+        "hidden_ref_present": "VERDICT .../.scratch/old-a.out NOT-SAFE none ... stale=live-refs=1 hidden-refs=1",
+        "hidden_ref_removed": "VERDICT .../.scratch/old-a.out SAFE stale scratch-type=scratch-dir refs=0 hidden-refs=0 mtime-age-days=3",
+        "vault": "NOT-VERIFIED(none) with stale=live-refs=1 hidden-refs=1 when the hidden referrer is present",
+        "quarantine_vs_unpatched_engine": "with SOUJI_VERIFY_BIN pointed at the UNPATCHED canonical souji-verify.sh, the hidden-reference flow returns RESULT ... NOT-AUTHORIZED stale-recheck=live-refs=1; target untouched, nothing staged"
+      }
+    },
+    {
+      "id": "A2",
+      "class": "directory staleness must digest the FULL tree",
+      "register_alias": "J03/J04 adjacent (directory receipt closure)",
+      "severity": "unsafe-DELETE (directory receipt survives tree growth)",
+      "root_cause": "Two related omissions. (a) `try_stale` aged a directory from `stat -c %Y` of the directory ITSELF, so a change confined to an existing descendant left the age unchanged and a fresh descendant could not veto the receipt. (b) `dir_digest` hashed only `find -type f`, so a NEW descendant -- in particular a new EMPTY directory -- left the digest byte-identical and a moved-to-obsidian/ledger or staged-pin receipt stayed valid across tree growth.",
+      "fresh_repro_pre_fix": {
+        "fixture": "/var/tmp/s01-repro-a2.XItSB6",
+        "shape": ".scratch/old-b/sub/deep.txt rewritten fresh while old-b and sub were backdated 3 days",
+        "observed": "VERDICT .../.scratch/old-b SAFE stale scratch-type=scratch-dir refs=0 mtime-age-days=3 (dir mtime 2026-10-15)",
+        "verdict": "REPRODUCED on the pre-patch candidate bytes"
+      },
+      "fix": {
+        "staleness": "For a directory target, age is derived from the newest mtime anywhere in the tree (`find . -printf '%T@\\n' | sort -rn | head -1`), with .git pruned. A scope that cannot be read refuses (`stale=tree-mtime-unverifiable`) instead of guessing. File targets keep `stat -c %Y`.",
+        "digest": "dir_digest now emits the directory skeleton (`find -type d -printf 'd\\t%p\\0'`) into the manifest alongside the file hashes, so adding or removing any descendant directory changes the digest. Symlinks remain a hard refusal (rc 2) as established in r5.",
+        "applies_to": "all three tools -- souji-verify.sh (moved-to-obsidian directory rows), souji-vault-verify.sh (directory ledger rows), souji-quarantine.sh (stage-2 pin and the staged-pin second check)."
+      },
+      "fresh_verification_post_fix": {
+        "fresh_nested_descendant": "NOT-SAFE none ... stale=mtime-age-days=0<=1",
+        "fully_backdated_tree": "SAFE stale scratch-type=scratch-dir refs=0 hidden-refs=0 mtime-age-days=3 (no over-refusal)",
+        "new_empty_descendant_dir": "NOT-SAFE none ... stale=mtime-age-days=0<=1",
+        "digest_sensitivity": "dir_digest changes when a new EMPTY descendant dir appears (proved by regression G6) and is stable when the tree is unchanged (G7)"
+      }
+    }
+  ],
+
+  "files_changed": [
+    "tools/cand-a1-verify.sh",
+    "tools/cand-a1-vault.sh",
+    "tools/cand-a1-quarantine.sh",
+    "census/round-10/seat-01.json"
+  ],
+
+  "final_sha256": {
+    "tools/cand-a1-verify.sh": "d99fd203dd71efb8591f6cd8578e651920089a20c53f6c621e962f1c44a770a9",
+    "tools/cand-a1-vault.sh": "54446fdeb60865e6d215a7eff69439354ad9039f190833fd1daa88b814c9fa64",
+    "tools/cand-a1-quarantine.sh": "ac445877bb26996a2a15177cbe1dad346eb94965631e555a72cd16ea5c4ad15f"
+  },
+
+  "selftest_results": {
+    "command": "TMPDIR=/var/tmp bash tools/cand-a1-<tool>.sh --selftest (vault additionally SOUJI_CLI_BIN=/bin/false)",
+    "verify": {"baseline_checks": 40, "final_checks": 47, "failed": 0, "exit": 0, "new_regressions": 7},
+    "vault": {"baseline_checks": 51, "final_checks": 58, "failed": 0, "exit": 0, "new_regressions": 7},
+    "quarantine": {"baseline_checks": 91, "final_checks": 101, "failed": 0, "exit": 0, "new_regressions": 10},
+    "total": {"baseline_checks": 182, "final_checks": 206, "failed": 0, "new_regressions": 24},
+    "inherited_cases": "ALL pre-existing cases ported and passing unchanged: the tool's own F/E/H suite plus the shared R9 battery (ROUND9 16/16 for verify and vault, 28/28 for quarantine). Baseline counts 40/51/91 are reproduced exactly before the new G cases are added."
+  },
+
+  "new_regression_cases": {
+    "verify": [
+      "G1 NOT-SAFE none hidden-refs=1 -- hidden referrer vetoes stale",
+      "G2 SAFE stale hidden-refs=0 -- control, no hidden referrer",
+      "G3 NOT-SAFE none mtime-age-days=0 -- fresh nested descendant in a backdated dir",
+      "G4 SAFE stale hidden-refs=0 -- fully backdated dir still earns stale (no over-refusal)",
+      "G5 NOT-SAFE none mtime-age-days=0 -- new EMPTY descendant dir after backdating",
+      "G6 empty descendant changes dir_digest",
+      "G7 dir_digest is stable on an unchanged tree"
+    ],
+    "vault": [
+      "G1 NOT-VERIFIED(none) hidden-refs=1",
+      "G2 VERIFIED(stale) hidden-refs=0",
+      "G3 NOT-VERIFIED(none) mtime-age-days=0",
+      "G4 VERIFIED(stale) hidden-refs=0",
+      "G5 NOT-VERIFIED(none) mtime-age-days=0",
+      "G6 empty descendant changes dir_digest",
+      "G7 dir_digest is stable on an unchanged tree"
+    ],
+    "quarantine": [
+      "G1 hidden live ref blocks stale (rc=3, refused before staging, target untouched, nothing staged, referrer intact)",
+      "G3 fresh descendant blocks stale dir (rc=3, never DELETED, descendant survives in place)",
+      "G6 empty descendant changes dir_digest",
+      "G7 dir_digest stable on unchanged tree"
+    ]
+  },
+
+  "non_vacuity_evidence": {
+    "method": "The three candidates were copied and ONLY the three fix sites reverted to their pre-fix forms (drop --hidden; use the target's own mtime; hash files only; drop the quarantine stale preflight/recheck), keeping the NEW selftest bodies. Each variant was then run with its own --selftest under TMPDIR=/var/tmp.",
+    "verify_pre_fix": "selftest: 32 checks, 4 failed -- G1 got SAFE(stale) want NOT-SAFE; G3 got SAFE(stale) want NOT-SAFE; G6 dir_digest unchanged by empty descendant",
+    "vault_pre_fix": "selftest: 43 checks, 4 failed -- G1 r4='VERIFIED(stale)' want NOT-VERIFIED; G3 same; G6 dir_digest unchanged",
+    "quarantine_pre_fix": "selftest: 101 checks, 8 failed -- G1 rc=0 (flow completed) with no ABORTED token and the target DELETED; G3 rc=0 and DELETED; G6 digest unchanged. The pre-fix tool ACTUALLY DELETED both defect targets, so the regressions are not vacuous.",
+    "note": "The 'R9 runner missing summary exit=127' line in the verify/vault pre-fix runs is an artifact of the scratch copy not sitting next to tools/souji-round9-selftest.sh; it is not a product failure. All pre-fix variants and scratch copies were deleted afterwards."
+  },
+
+  "independent_batteries": {
+    "s08_d2_probe": {
+      "scope": "external cluster-D battery (hidden live refs, recursive dir age, dir receipt completeness, tracked-to-stale fallback, hidden refs, worktree owner naming)",
+      "baseline_canonical_verify": "pass=1 defect=9",
+      "candidate_verify": "pass=3 defect=7",
+      "cluster_A_cases_flipped": [
+        "hidden-live-ref: DEFECT SAFE(stale) -> PASS NOT-SAFE(none)",
+        "stale-dir-fresh-child: DEFECT SAFE(stale) -> PASS NOT-SAFE(none)"
+      ],
+      "remaining_defects": "the other 7 belong to sibling clusters (dir untracked/ignored/dirty children, hidden refs, tracked-to-stale fallback, worktree owner naming) and are explicitly NOT addressed by this seat",
+      "baseline_canonical_vault": "pass=3 defect=7; candidate vault likewise 3/7 with the same two A-class cases flipped"
+    },
+    "s15_merge_battery": {
+      "scope": "cand-merge-selftest.sh, the S15 composer's merged battery (r9 ported cases + one case per adjudicated r9 defect class J01-J23)",
+      "baseline_canonical": {"verify": "R10 18 7", "vault": "R10 19 6", "quarantine": "R10 32 6"},
+      "candidate": {"verify": "R10 19 6", "vault": "R10 20 5", "quarantine": "R10 33 5"},
+      "interpretation": "Every tool gains exactly +1 passed / -1 failed versus its own baseline; no case regressed. The candidate quarantine also newly passes J02 (hidden live reference blocks stale) via the preflight. The remaining failures are sibling-cluster classes (J01 current-byte, J03/J04 directory closure, J05 self-ledger, J07 symlinked quarantine root, J08 tracked-to-stale fallback, S15-G2 ctime-forgery) that this seat did not claim."
+    }
+  },
+
+  "safety": {
+    "fixtures": "Every fixture was created with `mktemp -d -p /var/tmp` and removed on exit (trap). No live fleet path was read or written by any test; the quarantine selftest's own live-lane sentinels (porcelain, LOG.md sha, .ufo-quarantine presence) are asserted unchanged before/after and pass.",
+    "live_artifacts_removed": 0,
+    "authorized_removals": 0,
+    "forbidden_git_operations": "none; H1 'no forbidden git subcommand' passes in all three suites",
+    "scratch_cleanup": "All temporary pre-fix variant scripts written under tools/ during the non-vacuity check (cand-a1-q-prefix.sh, cand-a1-v-prefix.sh, cand-a1-w-prefix.sh) were deleted; tools/ now contains only cand-a1-verify.sh, cand-a1-vault.sh, cand-a1-quarantine.sh for this seat."
+  },
+
+  "static_checks": {
+    "bash -n": "clean on all three candidates",
+    "shellcheck -S error": "clean on all three candidates",
+    "note": "This is an error-severity claim only; inherited warning-level ShellCheck findings from the base tools are untouched and not claimed clean."
+  },
+
+  "diff_summary": {
+    "verify": "~145 changed lines vs the installed S17 base: _sweep_refs/_is_hidden_path/count_hidden_refs factored out of count_live_refs (+--hidden); dir_digest gains the directory skeleton; try_stale gains full-tree age and hidden-refs evidence; 5 G-cases + 2 digest checks added",
+    "vault": "~143 changed lines vs base: the same three fixes in vault's own idiom (R_REASON, is_hex64 style preserved); 5 G-cases + 2 digest checks added",
+    "quarantine": "~155 changed lines vs base: dir_digest gains the directory skeleton; new q_scratch_type/q_hidden_refs/q_stale_facts independent re-derivation; stale class now preflighted before staging AND rechecked in second_check; 4 G-cases + 2 digest checks added"
+  },
+
+  "cluster_A_status": {
+    "A1": "FIXED on all three tools; freshly reproduced before the fix and freshly verified after; regression proven non-vacuous; independently confirmed by the external S08 d2 probe (case hidden-live-ref flips DEFECT->PASS) and the S15 merge battery (J02 newly passes for quarantine)",
+    "A2": "FIXED on all three tools; freshly reproduced before the fix and freshly verified after (fresh nested descendant, new empty descendant dir, and digest sensitivity); regression proven non-vacuous",
+    "open_in_cluster_A_not_claimed": "Directory receipt closure for untracked/ignored/dirty children (J03/J04) is a sibling cluster's class and remains open on these bytes; the S15-G2 ctime-forgery variant also remains open."
+  },
+
+  "limits": {
+    "no_live_use": "Nothing in this fragment authorizes any live removal or any change to the installed canonical tools; these are candidate bytes only.",
+    "scope": "Verification covers the demonstrated A1/A2 shapes and the inherited case universe. It is not an exhaustive proof over arbitrary hidden-file layouts, arbitrary concurrent writers, or ABA changes.",
+    "quarantine_preflight_scope": "The quarantine preflight re-derives the stale predicate only; pushed and moved-to-obsidian classes keep their existing gates."
+  },
+
+  "remaining": [
+    "Parent integrates this fragment into LOG.md and decides on promoting the candidate bytes; do not overwrite the canonical tools without replaying both the S08 and S15 batteries on the merged result.",
+    "Sibling cluster classes remain open and were deliberately not touched: J01 (current-byte/dirty pushed), J03/J04 (directory closure), J05 (self-ledger), J07 (symlinked quarantine root), J08 (tracked-to-stale fallback), J12 (detached HEAD), J20 (registration map), J23 (gitfile root), S15-G2 (ctime forgery)."
+  ]
+}

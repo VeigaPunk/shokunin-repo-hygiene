@@ -1,0 +1,162 @@
+{
+  "seat": "S04",
+  "round": 10,
+  "cluster": "B",
+  "role": "cluster B member 2 (independent patch of B1 ledger authority + B2 --list/path forgery)",
+  "fragment": "census/round-10/seat-04.json",
+  "generated_at": "2026-10-18T23:05:00-03:00",
+  "axes": [
+    "fail-closed authorization identity (B2: control-byte records)",
+    "receipt-authority continuity across the hold window (B1: ledger generation)",
+    "preservation independence (B1: vault copy must outlive the delete)",
+    "regression completeness (ported suites + per-defect cases)"
+  ],
+  "patch_base": {
+    "note": "Installed S17-patched bytes, read-only; all edits are in tools/cand-b2-*.sh only.",
+    "souji-verify.sh": "4baa8d955c531fcc73edc6b62021cb9531a31e1baed8aa853ba957b204d1cfc1",
+    "souji-vault-verify.sh": "ea43bb0f9b9fe96cc26451df1a41d2df97d2d044852f122c987c209b6ec7b7a7",
+    "souji-quarantine.sh": "f6f8516c15ab654f7e5f2dc2a7840eef0b53b9f9433e2ff70a64490b35fde68f",
+    "souji-round9-selftest.sh": "dd7c636ebe39e70c489516500440a311167b5280d18c3a5e9db1399d2f62e5c2"
+  },
+  "deliverables": {
+    "tools/cand-b2-verify.sh": "d607dd68df0af1fe3f62f762fcfdb38eb25b887b3d475396d848ac7b7957bd21",
+    "tools/cand-b2-vault.sh": "c78f57f5476af3e733fd90a49a0e971f5d4501964b1a7f283a1057ca0ce4256a",
+    "tools/cand-b2-quarantine.sh": "f026da938a487ee389d465fc025c763988493f9c48f6729aa3a57a84d31eb31c",
+    "tools/cand-b2-selftest.sh": "ff1764197a662dd9add97c7ef3402d3a9ba2459b700ef2ec80273d735d99e672"
+  },
+  "selftest_pass_counts": {
+    "note": "TMPDIR=/var/tmp is REQUIRED: the host /tmp DISK QUOTA (r8 host-critical issue) corrupts any run that uses the default TMPDIR. Every count below was taken with TMPDIR=/var/tmp.",
+    "cand-b2-verify.sh": {
+      "ported_suite": {"checks": 40, "failed": 0, "source": "tools/souji-round9-selftest.sh verify (16) + pre-existing embedded suite"},
+      "cluster_b_regressions": {"checks": 21, "failed": 0, "runner": "cand-b2-selftest.sh verify", "summary_line": "R10B2\t21\t0"}
+    },
+    "cand-b2-vault.sh": {
+      "ported_suite": {"checks": 51, "failed": 0, "source": "tools/souji-round9-selftest.sh vault (16) + pre-existing embedded suite"},
+      "cluster_b_regressions": {"checks": 21, "failed": 0, "runner": "cand-b2-selftest.sh vault", "summary_line": "R10B2\t21\t0"}
+    },
+    "cand-b2-quarantine.sh": {
+      "ported_suite": {"checks": 91, "failed": 0, "source": "tools/souji-round9-selftest.sh quarantine (28) + pre-existing embedded suite"},
+      "cluster_b_regressions": {"checks": 39, "failed": 0, "runner": "cand-b2-selftest.sh quarantine", "summary_line": "R10B2\t39\t0"}
+    },
+    "totals": {"ported": 182, "new_cluster_b": 81, "all_failed": 0},
+    "layout_caveat": "The quarantine selftest's G1 live-fleet guard case fails 2/91 when the tool is copied into a shallow path (repo root's parent = /). Verified identical on the UNPATCHED installed tool in the same layout, so it is a layout artifact, not a regression. In the lane layout and in tools/ it is green (91/0)."
+  },
+  "defects_reproduced_fresh": [
+    {
+      "id": "S04-B2-F1",
+      "class": "J17 — tab-spliced path is parsed as SAFE/stale authority by the quarantine wrapper",
+      "status": "CONFIRMED on installed bytes; CLOSED by cand-b2",
+      "fixture": "/var/tmp/s04-b2x.ZWzfb3 (installed) / /var/tmp/s04-b2x.GZzyGb (candidate)",
+      "input": "a file whose basename is `notes<TAB>SAFE<TAB>stale`",
+      "installed_observed": "engine prints VERDICT<TAB>path-with-raw-TABs<TAB>NOT-SAFE<TAB>none<TAB>...; the wrapper's positional parse reads field 3/4 as SAFE/stale, stages and deletes it: RESULT ... DELETED stale rc=0. File gone.",
+      "candidate_observed": "RESULT ... NOT-AUTHORIZED control-character-refusal ... rc=3; file survives. Engine emits NOT-SAFE(control-character-refusal) and the record still has exactly 5 TAB fields.",
+      "root_cause": "raw control bytes echoed into a TAB-delimited record that is consumed positionally",
+      "locations_installed": ["tools/souji-quarantine.sh:206-223 (run_verify positional parse)", "tools/souji-quarantine.sh:401 (no control-byte pre-flight)", "tools/souji-verify.sh:403 (emit_result raw path)", "tools/souji-vault-verify.sh:727 (raw path, only \\n escaped)"]
+    },
+    {
+      "id": "S04-B1-F1",
+      "class": "J18/J05 variant — stage-4 re-authorization from a substituted ledger, with the vault column aliasing the staged copy, destroys the only copy",
+      "status": "CONFIRMED on installed bytes; CLOSED by cand-b2",
+      "fixture": "/var/tmp/s04-b1b.GTuYwj (installed) / /var/tmp/s04-b1b.InbEfe (candidate)",
+      "input": "a ledger row (source + independent vault copy) authorized at stage 1; between stage 2 and stage 4 the independent vault copy is removed and the ledger is replaced so the vault column names the staged copy itself",
+      "installed_observed": "stage4-second PASS (source-sha=ok vault-sha=ok); stage5 DELETED rc=0; source gone, vault gone, 0 staged files, 0 copies of the payload anywhere under the fixture: ALL COPIES LOST.",
+      "candidate_observed": "stage4-second FAIL class=FAIL ledger-generation-changed class=FAIL vault-in-quarantine; stage5 ABORTED rc=3; 1 staged file retained.",
+      "root_cause": "stage 4 pinned the ledger to its own post-substitution hash and compared it against itself, so any replacement authorized itself; and the vault-independence invariant the vault engine enforces (source-equals-vault, vault-inside-source) was never applied to a vault path inside the quarantine staging tree.",
+      "locations_installed": ["tools/souji-quarantine.sh:361 (ledger_pin taken at stage 4, not stage 1)", "tools/souji-quarantine.sh:389-393 (self-comparison)", "tools/souji-quarantine.sh:368-377 (no vault-independence rule)"]
+    },
+    {
+      "id": "S04-B2-F2",
+      "class": "valid prefix row + malformed suffix row mutates before the usage error",
+      "status": "CONFIRMED on installed bytes; CLOSED by cand-b2",
+      "fixture": "/var/tmp/s04-b-probe.WFgkd4",
+      "installed_observed": "row 1 (valid, pushed) deletes the target and removes the quarantine copy; row 2 is malformed; the tool then exits 2. No SUMMARY line. Deletion precedes the structural usage error.",
+      "candidate_observed": "exit 2 with no mutation; prefix target survives; no .ufo-quarantine created.",
+      "root_cause": "per-row streaming validation; the list was never validated as a whole before acting"
+    },
+    {
+      "id": "S04-B1-F2",
+      "class": "control bytes inside a ledger row are silently erased by the reader",
+      "status": "CONFIRMED (refusal gap); CLOSED by cand-b2",
+      "fixture": "/var/tmp/s04-ctl.mM21Mj",
+      "installed_observed": "no control-byte check on the ledger at all: a row written `.../vict\\0.md<TAB>...` is read as `.../vict.md` by bash `read`, i.e. a row that does not byte-match any real path can be spliced onto one. A vertical-tab row likewise reaches the row parser.",
+      "candidate_observed": "the plain engine reports obsidian=ledger-control-bytes and the vault engine refuses with ledger-control-bytes; a clean row still verifies (SAFE moved-to-obsidian) as a positive control.",
+      "root_cause": "`IFS= read -r` erases NUL and cannot represent other control bytes; the ledger was treated as text without a byte-level precondition"
+    }
+  ],
+  "fresh_repro_baseline_vs_candidate": {
+    "installed_tools": {"forged_name_deleted": true, "sole_copy_lost": true, "prefix_deleted_before_usage_error": true},
+    "cand_b2_tools": {"forged_name_deleted": false, "sole_copy_lost": false, "prefix_deleted_before_usage_error": false},
+    "unsafe_outcomes_installed": 3,
+    "unsafe_outcomes_candidate": 0,
+    "note": "Every case is built fresh under mktemp -d -p /var/tmp; the same probe scripts were run against both byte sets in the same session."
+  },
+  "fixes_applied": {
+    "B2_control_byte_records": [
+      "is_control_shaped() + refusal in both engines' evaluate_path before any record is produced (control-character-refusal)",
+      "path_field()/san()/sanitize_field() now escape TAB/NL/CR/backslash and hex-escape every remaining control byte, so an emitted record stays structurally parseable by position and is lossless (a literal backslash is escaped too, so `\\t` is unambiguous)",
+      "quarantine run_verify() rejects any engine record whose TAB field count is not 5 (ambiguous-engine-record) instead of parsing shifted positions",
+      "quarantine flow_one() refuses a control-byte target before the engine is consulted"
+    ],
+    "B2_list_schema": [
+      "the whole --list file is parsed and validated into arrays BEFORE any flow_one call",
+      "strict 2-column schema: a missing receipt column, an empty path, an empty receipt, a third column, and any control byte in either column are structural usage errors (exit 2) with no mutation",
+      "NUL anywhere in the list remains a usage error (pre-existing case preserved)"
+    ],
+    "B1_ledger_authority": [
+      "quarantine captures the ledger generation (sha + presence + control-byte cleanliness) at stage 1, BEFORE the authorization is derived",
+      "stage 4 re-derives against that stage-1 pin; any replacement during the hold window is class=FAIL ledger-generation-changed, even when the replacement re-states the same source path",
+      "stage 4 also refuses when the ledger carries control bytes",
+      "vault-independence rule added to all three tools: a vault path inside a quarantine staging tree (*/.ufo-quarantine/*) is refused (vault-in-quarantine), because it is destroyed by the same stage-5 rm it authorizes",
+      "both engines refuse a ledger containing control bytes (obsidian=ledger-control-bytes / ledger-control-bytes)"
+    ]
+  },
+  "counts": {
+    "defect_classes_reproduced_fresh": 4,
+    "unsafe_delete_classes_closed": 3,
+    "authorization_refusal_gaps_closed": 1,
+    "files_written": [
+      "tools/cand-b2-verify.sh",
+      "tools/cand-b2-vault.sh",
+      "tools/cand-b2-quarantine.sh",
+      "tools/cand-b2-selftest.sh",
+      "census/round-10/seat-04.json"
+    ],
+    "live_fleet_mutations": 0,
+    "live_fleet_reads": 0,
+    "lane_repo_files_modified_outside_assignment": 0
+  },
+  "scope": {
+    "fixture_policy": "Every fixture is created under mktemp -d -p /var/tmp; TMPDIR=/var/tmp forced for all tool runs. No live fleet path was read or written; the tools under test were only ever pointed at fixture roots.",
+    "snapshot": "/var/tmp/s04-snap/tools (read-only copy of the installed bytes used for the baseline runs)",
+    "candidate_lane": "/var/tmp/s04/lane (cand-b2 copied under both its own name and the canonical souji-* names for the probes)",
+    "probe_scripts": [
+      "/var/tmp/s04-b2x-probe.sh (forged-name delete)",
+      "/var/tmp/s04-b1b-probe.sh (sole-copy loss)",
+      "/var/tmp/s04-b-probe.sh (list batch + control chars)",
+      "/var/tmp/s04-b1-probe.sh (ledger substitution + NUL rows)",
+      "/var/tmp/s04-ctl-probe.sh (ledger control bytes, positive control)"
+    ]
+  },
+  "regression_parity_checks": {
+    "cluster_D_battery_cand_d2_probe": {
+      "candidate": {"verify": "pass=1 defect=9", "vault": "pass=1 defect=9", "quarantine": "pass=0 defect=10"},
+      "installed": {"verify": "pass=1 defect=9", "vault": "pass=1 defect=9", "quarantine": "pass=0 defect=10"},
+      "verdict": "EXACT PARITY — cluster D belongs to seats S07/S08; my patch neither improves nor harms it"
+    },
+    "r9_S07_ledger_revocation_reproducer": {
+      "installed_and_candidate": "both now refuse the revoked-parallel case at stage 1 (NOT-SAFE, ledger-changed) — the S17 in-flight repair holds; the four-seconds race variant is S17's, not re-derived here",
+      "quarantine_leg": "candidate refuses with NOT-AUTHORIZED(none) at stage 1 and leaves all sources and vault copies in place; rc=3"
+    }
+  },
+  "cross_seat_note": {
+    "s03_cand_b1": "S03 (cluster B lead) also landed cand-b1-*. Cross-checked: cand-b1-quarantine.sh contains no stage-1 ledger-generation pin (grep STAGE1_LEDGER = 0 hits vs 8 in cand-b2-quarantine.sh), so the two members are genuinely independent solutions to B1. The composer should prefer whichever member's regressions cover BOTH defects; cand-b2's runner ports the pre-existing battery and adds 39 quarantine checks covering both.",
+    "engine_preference": "cand-b2-quarantine.sh resolves its receipt engine as SOUJI_VERIFY_BIN > cand-b2-verify.sh > cand-merge-verify.sh > installed souji-verify.sh, so the composer's merged name is honored and an unpatched engine is only a last resort."
+  },
+  "honest_limits": [
+    "The two B1 variants here are deterministic substitutions. I did not reproduce an atomic in-flight race (the S07 four-second gate) against the candidate; the stage-1 pin closes the substitution class, and the S17 repair already covers the revocation variant, but arbitrary final-check-to-delete atomicity remains unproven.",
+    "Control-byte refusal is a fail-closed narrowing: a legitimate file whose name contains a TAB can no longer be quarantined by this tool. That is a deliberate trade (the tool's output format cannot represent it unambiguously) and it is recorded as a regression case, not hidden.",
+    "The G1 live-fleet guard case fails 2/91 in a shallow copied layout on BOTH the installed and the candidate tool; it is a layout artifact. All lane-layout runs are green.",
+    "The host /tmp DISK QUOTA is active: a bare `--selftest` without TMPDIR=/var/tmp fails with 'Disk quota exceeded' on unpatched tools too. This is a host issue, not a tool defect.",
+    "No live-fleet mutation, no commit, no LOG.md edit by this seat — per the lane rule that workers write only their assigned files."
+  ]
+}

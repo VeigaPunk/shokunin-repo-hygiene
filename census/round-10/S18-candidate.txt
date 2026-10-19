@@ -1,0 +1,49 @@
+# S18 cluster-E evidence: CANDIDATES (cand-e2-*) — the patched bytes
+# 2026-10-19T01:40:24Z
+# fixtures: mktemp -d -p /var/tmp only; no live path read or written
+
+=== E1-a: pushed FILE, history query (--branches) fails ===
+=== E1-a: pushed FILE, history query fails (verify/vault) ===
+  verify: VERDICT	/var/tmp/s18-e1-cand.2uLE9X/fleet/case-shokunin/art.txt	NOT-SAFE	git-unverifiable	pushed=unpushed-touching-unverifiable intro=773b4819fa96; obsidian=no-matching-ledger-row; stale=not-scratch-type
+  vault : VERDICT	/var/tmp/s18-e1-cand.2uLE9X/fleet/case-shokunin/art.txt	NOT-SAFE	none	pushed=unpushed-touching-unverifiable intro=773b4819fa96; stale=not-scratch-type cli=unavailable
+=== E1-b: pushed FILE via quarantine stage2, history query fails ===
+  RESULT	/var/tmp/s18-e1-cand.2uLE9X/fleet/case-shokunin/art.txt	NOT-AUTHORIZED	git-unverifiable	stage1=NOT-SAFE(git-unverifiable)
+  art.txt survives: YES
+  staged: 
+=== E1-c: repo-root with git failing (verify/vault evidence) ===
+  verify: VERDICT	/var/tmp/s18-e1-cand.2uLE9X/fleet/case-shokunin	NOT-SAFE	git-unverifiable	repo-root state query failed
+
+=== E1-q: tracked FILE, status query fails ===
+=== control (no shim): mode-only change must block ===
+  RESULT	/var/tmp/s18-e1q.J0T56B/fleet/case-shokunin/mode.txt	NOT-AUTHORIZED	dirty-tracked	r7-gate2 porcelain= M mode.txt
+  survives: YES
+=== E1-q: status query fails, mode-only change ===
+  RESULT	/var/tmp/s18-e1q.J0T56B/fleet/case-shokunin/mode.txt	NOT-AUTHORIZED	dirty-tracked	r10-gate2 status query failed (rc=128)
+  survives: YES
+
+=== E2: compiled tr_TR locale, case-variant secret shapes ===
+locale active: fold(ID_RSA)=ıd_rsa
+--- verify under tr_TR (want NOT-SAFE/secrets-refusal) ---
+  ID_RSA           NOT-SAFE(secrets-refusal)
+  id_rsa           NOT-SAFE(secrets-refusal)
+  Id_Rsa           NOT-SAFE(secrets-refusal)
+  .ENV             NOT-SAFE(secrets-refusal)
+  credENTIALS      NOT-SAFE(secrets-refusal)
+  my-secret.pem    NOT-SAFE(secrets-refusal)
+--- vault under tr_TR ---
+  ID_RSA           NOT-SAFE(secrets-refusal)
+  id_rsa           NOT-SAFE(secrets-refusal)
+  .ENV             NOT-SAFE(secrets-refusal)
+--- quarantine under tr_TR (want NOT-AUTHORIZED/secrets-refusal, file preserved) ---
+  ID_RSA           NOT-AUTHORIZED(secrets-refusal) survives=YES
+  id_rsa           NOT-AUTHORIZED(secrets-refusal) survives=YES
+  .ENV             NOT-AUTHORIZED(secrets-refusal) survives=YES
+
+=== E3: linked-worktree private commit ===
+fixture: private commit 4ef232e876eff15b38650eee6618891410db9811, registration present, dir absent
+  --not --all (old basis)      : 0
+  refs-only (new basis)        : 1
+  verify: NOT-SAFE	none	dir=absent unique=1 head=4ef232e876ef owner=main-shokunin
+  vault : NOT-SAFE	none	dir=absent unique=1 head=4ef232e876ef owner=main-shokunin
+  --- quarantine stage1 (candidate engine) ---
+  q: NOT-AUTHORIZED	none	stage1=NOT-SAFE(none)

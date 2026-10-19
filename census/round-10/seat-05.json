@@ -1,0 +1,174 @@
+{
+  "schema_version": 1,
+  "seat": "S05",
+  "round": 10,
+  "cluster": "C",
+  "role": "cluster C lead: C1 nested .git inside directory targets; C2 symlinked quarantine containment",
+  "fragment": "census/round-10/seat-05.json",
+  "generated_at": "2026-10-19T01:38:44Z",
+  "lane_head": "29d49b553bb4532beb530192548c555a33594e06",
+  "status": "COMPLETE: both cluster-C classes reproduced fresh and fixed in candidates; all pre-existing selftest cases ported and passing",
+  "axes": [
+    "C1 nested repository inside a directory target",
+    "C1 receipt minted from the wrong repository",
+    "C2 physical vs lexical quarantine containment",
+    "C2 containment re-check before the only rm",
+    "regression preservation of the r2 artifact taxonomy"
+  ],
+  "headline": "Both cluster-C classes were real and both were unsafe-DELETE. C1: a directory whose own top-level .git is a FILE (linked worktree, --separate-git-dir, submodule checkout) escaped the r9 nested-metadata gate, and when the outer repo recorded that nested repo as a gitlink the outer tree was clean, so a pushed receipt was granted and the whole inner repository was deleted -- including ignored, never-committed local work that existed nowhere else. C2: containment was purely lexical, so a symlinked .ufo-quarantine staged real bytes outside the repository and then rm -rf'd them there, reporting DELETED/rc=0. Both now refuse; every pre-existing selftest case still passes.",
+  "installed_baseline_sha256": {
+    "tools/souji-verify.sh": "4baa8d955c531fcc73edc6b62021cb9531a31e1baed8aa853ba957b204d1cfc1",
+    "tools/souji-vault-verify.sh": "ea43bb0f9b9fe96cc26451df1a41d2df97d2d044852f122c987c209b6ec7b7a7",
+    "tools/souji-quarantine.sh": "f6f8516c15ab654f7e5f2dc2a7840eef0b53b9f9433e2ff70a64490b35fde68f",
+    "tools/souji-census.sh": "11bf9cdf8d4f75415b18e046aef0e96215b983f0d5b3ff7842301ff6ac65d381",
+    "tools/souji-round9-selftest.sh": "dd7c636ebe39e70c489516500440a311167b5280d18c3a5e9db1399d2f62e5c2"
+  },
+  "candidate_sha256": {
+    "tools/cand-c1-verify.sh": "df81190fa7c36f85dc7f5491cbb7a0041860cfa8b6cc34e1592c42a894728488",
+    "tools/cand-c1-vault.sh": "275cd6f1586438e65cdf5333f1c782279b2f6be6786d5d802d2ce1077836a3ca",
+    "tools/cand-c1-quarantine.sh": "cb93b6e691e35e7269299ebb5dc1e82fa03d168cfb76b7c03fbffe99e5454a86"
+  },
+  "selftest_counts": {
+    "installed_baseline": {
+      "souji-verify": "40 checks, 0 failed",
+      "souji-vault-verify": "51 checks, 0 failed",
+      "souji-quarantine": "91 checks, 0 failed"
+    },
+    "candidate": {
+      "tools/cand-c1-verify.sh": {"checks": 44, "failed": 0, "rc": 0, "new_cases": 4},
+      "tools/cand-c1-vault.sh": {"checks": 54, "failed": 0, "rc": 0, "new_cases": 3},
+      "tools/cand-c1-quarantine.sh": {"checks": 101, "failed": 0, "rc": 0, "new_cases": 10}
+    },
+    "ported": "Every pre-existing case passes unchanged: F1-F10, E1-E8, H1-H6 (verify); F1-F10, V1-V20, H1-H6 (vault); D1-D3, N1-N4, P1-P3, SKIP1, L1, A1, U1-U5, H1-H3, plus the full R9 runner set 28/0 (quarantine). New cases are additive; no existing expectation was changed.",
+    "counting_command": "for t in verify vault quarantine; do TMPDIR=/var/tmp bash tools/cand-c1-$t.sh --selftest; done"
+  },
+  "counts": {
+    "defect_classes_in_scope": 2,
+    "defect_classes_reproduced_fresh": 2,
+    "defect_classes_fixed": 2,
+    "unsafe_executions_on_installed_baseline": "C1: DELETED/rc=0 with inner repo and its local-only files destroyed; C2: DELETED/rc=0 with bytes staged and deleted outside the repository",
+    "unsafe_executions_on_candidate": 0,
+    "false_refusals_introduced": 0,
+    "new_regression_cases": 17,
+    "independent_layers": "The quarantine refusal holds even with the installed (unfixed) receipt engine, which still reports SAFE(pushed) for the gitfile'd nested repo. Each layer fails closed on its own."
+  },
+  "defects": [
+    {
+      "id": "S05-C1",
+      "verdict": "CONFIRMED",
+      "class": "nested repository deleted via an ancestor receipt (sole-copy loss)",
+      "title": "A directory target whose own top-level .git is a FILE escapes the nested-metadata gate",
+      "affected_tools": ["tools/souji-verify.sh", "tools/souji-vault-verify.sh", "tools/souji-quarantine.sh"],
+      "locations": [
+        "tools/souji-verify.sh:416-418 the r9 nested scan",
+        "tools/souji-vault-verify.sh:586-588 the same scan",
+        "tools/souji-quarantine.sh:441-446 lexical containment, 460-461 qdir/qpath construction, 570 rm -rf"
+      ],
+      "mechanism": "The r9 gate runs `find . -path './.git' -prune -o \\( -name .git -o -name .ufo \\) -print -quit`. `-prune` skips the target's OWN top-level .git at any type, so a top-level .git FILE is never printed by the second clause either. A nested .git DIRECTORY deeper down is caught (the -name .git test still matches), but the target's own gitfile is invisible. Shapes: `git worktree add`, `git init --separate-git-dir`, submodule checkouts.",
+      "preconditions": [
+        "A directory target (e.g. bundle/) whose own top-level .git is a file.",
+        "The outer repo records that directory as a gitlink (mode 160000), so the outer porcelain is CLEAN.",
+        "The nested repo has its own origin/master and origin/HEAD, so a pushed receipt is establishable.",
+        "The nested worktree contains ignored or untracked local-only files with no copy anywhere else."
+      ],
+      "expected": "NOT-SAFE: the target is a repository in its own right and must never be staged.",
+      "actual": "SAFE(pushed) with the intro SHA taken from the NESTED repository -- a commit the outer repo cannot resolve (`git cat-file -t` on it returns 'could not get object info'). Quarantine then reached DELETED/rc=0 and removed the entire inner repository.",
+      "impact": "Sole-copy loss. In the decisive repro the ignored files notes.local and scratch/idea.txt existed in exactly one place before the run and in zero places after it.",
+      "evidence": {
+        "installed_repro": "fixture /var/tmp/s05-c1ign.iOE70D -- verify SAFE(pushed); quarantine DELETED/rc=0; notes.local DESTROYED; scratch/idea DESTROYED; copies of those bytes remaining: 0",
+        "second_repro": "fixture /var/tmp/s05-gl.CqDrVq -- intro=21ed84e1b7c9 (nested commit); outer porcelain clean; bundle dir GONE, nested .git GONE",
+        "cross_repo_receipt": "fixture /var/tmp/s05-c1e.EYN3FU -- stage1 SAFE(pushed) intro=290e754f2572 for the nested repo's own subdirectory; quarantine moved inner/sub out of the nested worktree (nested git status: ' D sub/payload.txt') and reported ABORTED only because prong2 could not re-derive"
+      },
+      "fix": "Surgical, preserving the r2 taxonomy: keep the r9 scan semantics for descendants (they are correct for depth >= 2) and add one explicit refusal for a directory whose own top-level .git exists and is NOT a directory. The refusal is ordered AFTER evaluate_repo_root and AFTER the worktree-registration lookup so that registered worktrees keep their existing verdicts (E1 dirty, F5 unpushed-branch) and a real repo root still reaches evaluate_repo_root. The scan itself is also made fail-closed: a walk that cannot complete refuses.",
+      "fix_locations": [
+        "tools/cand-c1-verify.sh:410-419 nested_git_scope; :449-453 the gitfile refusal after the worktree rule",
+        "tools/cand-c1-vault.sh nested_git_scope + the same ordered gitfile refusal",
+        "tools/cand-c1-quarantine.sh:559-566 nested-repo-in-scope (gitfile) and :585-590 nested_git_scope, ordered after the worktree classification"
+      ]
+    },
+    {
+      "id": "S05-C2",
+      "verdict": "CONFIRMED",
+      "class": "containment escape: quarantine destination resolved outside the repository",
+      "title": "Lexical containment accepted a symlinked .ufo-quarantine, staging and deleting bytes outside the repo",
+      "affected_tool": "tools/souji-quarantine.sh",
+      "locations": [
+        "tools/souji-quarantine.sh:441-446 the containment test is `case \"$ct\" in \"$crepo\"/*)` -- a string prefix comparison",
+        "tools/souji-quarantine.sh:460-461 qdir/qpath built by string concatenation from $crepo",
+        "tools/souji-quarantine.sh:570 `rm -rf -- \"$qpath\"`"
+      ],
+      "mechanism": "Containment is decided on path strings. An existing `.ufo-quarantine` that is a symlink satisfies the `\"$crepo\"/*` pattern while pointing anywhere on the filesystem, so stage 2 moves real bytes to a destination outside the repository and stage 5 deletes them there.",
+      "preconditions": ["<repo>/.ufo-quarantine exists as a symlink (to a directory outside the repo, or into a sibling lane repo)."],
+      "expected": "NOT-AUTHORIZED: the physical quarantine destination is outside the repository.",
+      "actual": "DELETED, rc=0, with the staged copy written and then removed outside the repository.",
+      "evidence": {
+        "outside_dir": "fixture /var/tmp/s05fix-c2.shUwu5 -- rc=0, DELETED; the staged file landed under /var/tmp/s05fix-c2.shUwu5/outside/2026-10-19/.scratch/old.out; source GONE",
+        "sibling_lane": "fixture /var/tmp/s05-lane.p5AEwK -- rc=0, DELETED, with .ufo-quarantine -> fleet/otherlane-shokunin/.scratch; the other lane's live artifact survived only because the path happened not to collide",
+        "dry_run": "fixture /var/tmp/s05-dry.X3ledr -- installed engine reported DRY-RUN-PASS, i.e. it would have proceeded"
+      },
+      "fix": "All containment decisions are now taken on realpaths. real_path() resolves every existing component and re-attaches the not-yet-existing remainder, so a symlinked ancestor cannot hide and a destination that does not exist yet still resolves. phys_inside_repo() compares the resolved path against the resolved repo root. Applied at stage 1 for both the target and the quarantine destination, for every quarantine ancestor, and again immediately before the only rm in the tool, because the hold window is an open interval in which an ancestor can become a symlink. An unresolvable realpath refuses.",
+      "fix_locations": [
+        "tools/cand-c1-quarantine.sh:164-180 real_path",
+        "tools/cand-c1-quarantine.sh:182-190 phys_inside_repo",
+        "tools/cand-c1-quarantine.sh:538-557 stage-1 containment + ancestor check",
+        "tools/cand-c1-quarantine.sh:687-700 stage-5 re-check immediately before rm"
+      ]
+    }
+  ],
+  "new_regression_cases": {
+    "tools/cand-c1-verify.sh": [
+      "G1 gitlink'd nested repo with a .git FILE -> NOT-SAFE nested-repo-or-unverifiable (evidence gitfile)",
+      "G2 bare directory with a .git file, not a registered worktree -> same refusal",
+      "G3 control: ordinary pushed directory -> SAFE pushed (proves no over-refusal)",
+      "G4 control: real repo root with a .git DIRECTORY -> NOT-SAFE unpushed via evaluate_repo_root (proves rule ordering)"
+    ],
+    "tools/cand-c1-vault.sh": [
+      "G1 nested gitfile -> NOT-VERIFIED(nested-repo-or-unverifiable)",
+      "G2 bare gitfile directory -> same",
+      "G3 control -> VERIFIED(pushed)"
+    ],
+    "tools/cand-c1-quarantine.sh": [
+      "C1 nested gitfile -> rc=3, refusal token, inner repo bytes and gitfile intact, no quarantine dir created",
+      "C2 symlinked .ufo-quarantine -> rc=3, containment-escape, nothing written outside, source retained",
+      "C2b symlinked ancestor of the target -> rc=3, outside payload intact"
+    ]
+  },
+  "adversarial_self_check": {
+    "toctou_hold": "fixture /var/tmp/s05-toctou.KBWLBg -- .ufo-quarantine replaced by a symlink DURING a real 3-second hold; candidate ABORTED, outside directory untouched. Installed baseline also aborted here, but for an unrelated reason (the staged path vanished when the directory was swapped), so this case is recorded as candidate-safe rather than as a candidate-only fix.",
+    "sibling_lane_symlink": "candidate NOT-AUTHORIZED containment-escape, other lane intact; installed DELETED/rc=0.",
+    "dry_run": "candidate DRY-RUN-BLOCKED containment-escape, source survives; installed DRY-RUN-PASS.",
+    "independence": "cand-c1-quarantine with the INSTALLED engine (which still says SAFE pushed) still refuses the gitfile'd nested repo and preserves notes.local -- the layers do not depend on each other.",
+    "over_refusal_check": "G3/G4 controls confirm the new gate does not refuse legitimate pushed directories or repo roots."
+  },
+  "implementation_notes": {
+    "two_self_inflicted_bugs_found_and_corrected": [
+      "First fix used `-path './.git' -type d -prune` plus a full-depth walk. That over-refused: the E1 selftest case (a registered, dirty worktree, whose top-level .git is a FILE by construction) returned nested-repo-or-unverifiable instead of dirty. Corrected by narrowing the rule to the target's own top-level gitfile and leaving the r9 scan semantics intact for descendants.",
+      "The gitfile refusal was initially placed before the worktree-registration lookup, so it preempted the r2 taxonomy. Moved after evaluate_repo_root and after the WT_MAP lookup; E1 and F5 then pass unchanged.",
+      "The first regression fixture for the quarantine C1 case did not give the nested repo its own remote ref and let the engine default to the installed binary, so the case passed for an unrelated reason. Fixed by giving the nested repo origin/master + origin/HEAD and pinning SOUJI_VERIFY_BIN."
+    ],
+    "fixture_isolation_lesson": "The first version of the verify G-cases wrote into the shared repo-shokunin fixture and advanced its origin/master, which broke F2/F5/F6/F7/F8/E8. The new fixtures live in dedicated repos (gitlink-shokunin, rooted-shokunin)."
+  },
+  "safety": {
+    "repository_files_written": [
+      "census/round-10/seat-05.json",
+      "tools/cand-c1-verify.sh",
+      "tools/cand-c1-vault.sh",
+      "tools/cand-c1-quarantine.sh"
+    ],
+    "installed_tools_modified": false,
+    "installed_tools_diff_check": "git diff --stat -- tools/souji-verify.sh tools/souji-vault-verify.sh tools/souji-quarantine.sh tools/souji-round9-selftest.sh -> empty",
+    "removed": "tools/cand-c1-r9-selftest.sh (an unused byte-identical copy of the installed runner; the candidates invoke the installed souji-round9-selftest.sh)",
+    "live_fleet_targets_mutated": false,
+    "live_git_fetch_push_commit_branch": false,
+    "secrets_read": false,
+    "headless": true,
+    "fixtures": "All fixtures created with mktemp -d -p /var/tmp; TMPDIR=/var/tmp exported for tool-internal temporaries. No /tmp fixtures created.",
+    "shared_bookkeeping_modified": false
+  },
+  "limits": [
+    "souji-census.sh:166 shares the `-name .git` prune pattern but is not a deletion authority and was not exercised; it is not claimed as affected.",
+    "The C1 fix refuses the gitfile shape at the target's top level and keeps the r9 descendant scan. A nested repo reached only through a symlinked subdirectory is refused by the quarantine layer's symlink-in-scope rail, not by the engine; that asymmetry is deliberate but worth a parent review.",
+    "TOCTOU coverage is one concrete race (quarantine dir swapped during the hold). Other race shapes between stage 2 and stage 5 are not enumerated.",
+    "Candidates are not promoted; promotion, byte freezing and certification remain the parent's call."
+  ]
+}
