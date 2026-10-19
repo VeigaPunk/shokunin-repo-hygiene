@@ -1,0 +1,72 @@
+{
+  "seat": "S02",
+  "role": "implementor",
+  "fragment": "results/qrun-S02-02.json",
+  "round": 8,
+  "date": "2026-10-18",
+  "time": "2026-10-18T19:29:04-03:00",
+  "tool": "tools/souji-quarantine.impl-02.sh",
+  "tool_sha256": "709ff22b168d7ea4734e0c244c86fb5c70c769d31052d835848432b54491742d",
+  "claim": "Q2 safety + Q3 calibration: live fleet untouchable through this tool; live read-only verdicts reproduce round-7 receipts with zero false-AUTHORIZED",
+  "verdict": "Q2-MET, Q3-MET",
+  "mutation_refusal_probes": [
+    {
+      "probe": "stage on live path with SOUJI_Q_SANDBOX unset",
+      "cmd": "env -u SOUJI_Q_SANDBOX bash tools/souji-quarantine.impl-02.sh --stage ../lore-shokunin/.scratch",
+      "observed": "Q-REFUSED ... no-sandbox(SOUJI_Q_SANDBOX unset; live fleet untouchable), exit 1",
+      "filesystem_effect": "none — ls ../lore-shokunin/.ufo-quarantine -> No such file or directory"
+    },
+    {
+      "probe": "retire on live path with SOUJI_Q_SANDBOX unset",
+      "cmd": "env -u SOUJI_Q_SANDBOX bash tools/souji-quarantine.impl-02.sh --retire --operator-signoff x LOG.md",
+      "observed": "Q-REFUSED ... no-sandbox, exit 1",
+      "filesystem_effect": "none"
+    }
+  ],
+  "live_readonly_probes": [
+    {
+      "target": "souji-shokunin/LOG.md",
+      "verdict": "NOT-AUTHORIZED",
+      "reason": "gate1-unpushed-touching(count=10)",
+      "agrees_with_r7": "yes — souji lane bookkeeping commits touch LOG.md and are local-only (r7: receipts deny every candidate; remote 404)"
+    },
+    {
+      "target": "lore-shokunin/.scratch",
+      "verdict": "NOT-AUTHORIZED",
+      "reason": "gate2-dirty-touching(lines=26)",
+      "agrees_with_r7": "yes — r7 seat-01/seat-20: porcelain '?? .scratch/...' non-empty"
+    },
+    {
+      "target": "kotodama-shokunin/.scratch",
+      "verdict": "NOT-AUTHORIZED",
+      "reason": "gate3-no-safe-receipt(a=NOT-SAFE/none,b=NOT-SAFE/none)",
+      "agrees_with_r7": "yes — kotodama stays NOT-SAFE/hands-off; here its .scratch passes gate1/gate2 vacuously (ignored) but both engines refuse, so the dual-engine gate3 holds the line"
+    }
+  ],
+  "cross_impl_findings": [
+    {
+      "impl": "tools/souji-quarantine.impl-03.sh",
+      "finding": "CANNOT RUN: bash parse error. Evidence: bash -n tools/souji-quarantine.impl-03.sh -> 'line 685: syntax error near unexpected token `git'' (exit 2); any invocation fails the same way, its --selftest exits 2. Root cause shape: an unbalanced construct above line 685 (the flagged line itself is an ordinary `command -v git ...` guard).",
+      "disposition": "reported to parent for S03/integrator; not touched by this seat"
+    },
+    {
+      "impl": "tools/souji-quarantine.impl-01.sh",
+      "finding": "parses; --selftest exit 0; DIFFERENT CLI interpretation of the same r7 contract (repo-anchored `<repo> <target>...` single-flow with --list receipt pins vs this tool's per-path --check/--plan/--stage/--verify-staged/--retire modes).",
+      "semantic_agreement_probe": [
+        {"target": "souji-shokunin LOG.md", "impl01": "DRY-RUN-BLOCKED pushed-unverifiable", "impl02": "NOT-AUTHORIZED gate1-unpushed-touching(count=10)", "agree": "both refuse"},
+        {"target": "lore-shokunin .scratch", "impl01": "DRY-RUN-BLOCKED none (stale mtime-age-days=0)", "impl02": "NOT-AUTHORIZED gate2-dirty-touching(lines=26)", "agree": "both refuse, complementary refusal reasons"}
+      ],
+      "disposition": "flagged for parent adjudication: the round-8 seat contract 'same contract, independent' landed as two CLI surfaces; gate/flow SEMANTICS agree on every probe so far"
+    }
+  ],
+  "scope_discipline": {
+    "files_written": [
+      "tools/souji-quarantine.impl-02.sh",
+      "results/qrun-S02-01.json",
+      "results/qrun-S02-02.json",
+      "census/round-8/seat-02.json"
+    ],
+    "live_mutations": "none; no .ufo-quarantine created anywhere live; no git fetch/push/commit/branch on any live repo; forbidden verbs absent from the tool (fixture git usage is init/add/commit/worktree add inside mktemp only)",
+    "secrets": "no secret-shaped file opened; the tool refuses them before reading"
+  }
+}

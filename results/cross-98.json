@@ -1,0 +1,216 @@
+{
+  "seat": "S98",
+  "role": "cross-audit",
+  "round": 6,
+  "output": "results/cross-98.json",
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "lane_head": "ce58c2b457c8ffb7886b36a509bf957f90d1f296",
+  "measured_at": "2026-10-18T17:07:35-03:00",
+  "final_poll_at": "2026-10-18T17:07:35-03:00",
+  "axes": ["reproducibility", "calibration", "write-scope"],
+  "verdict": "CONFIRM-WITH-FLAGS",
+  "sample": {
+    "method": "Landed drift seats not in S97's published draw (S97 took 4/8/10 and predicted 95/96 would take 6/9/11/13/14). This seat had already re-derived S01, S05, and S11 before that draw was visible. S11 overlaps the predicted 95/96 set; it is kept because the byte re-derivation was finished. Census repos are game-dev-2d, kagi, souji — not S97's lore/kake/kotodama.",
+    "drift_seats": [1, 5, 11],
+    "census_repos": ["game-dev-2d-shokunin", "kagi-shokunin", "souji-shokunin"],
+    "census_runner_json": "ABSENT"
+  },
+  "summary": {
+    "S01": "CONFIRM the taxonomy and known-surface drift. FLAG the kotodama dirty=29 and 19G figures as time-volatile; 553M remains false.",
+    "S05": "CONFIRM the re-counted gate evidence (4/26/34, metadata-prune absent, quarantine empty, post-prune worktree lists). FLAG the 'one hit in SKILL.md only' search as not reproducible once later round-6 fragments exist.",
+    "S11": "CONFIRM. Named seed is a 362-byte prefix; the only delta is the 140-byte Marks trailer. No box edit, no post-mint edit.",
+    "census": "No crun-49..64.json filed at the final poll. Stable contract fields match in-flight impl-33 TSVs. FLAG souji dirty and gd2d mtime as moving during the round."
+  },
+  "drift_audits": [
+    {
+      "id": "D-S01",
+      "seat": "S01",
+      "sibling_path": "census/round-6/seat-01.json",
+      "sibling_status": "CONFIRM-WITH-FLAG",
+      "sibling_verdict": "DRIFT. SKILL.md Receipt taxonomy does not describe installed tools/souji-verify.sh.",
+      "independent_verdict": "CONFIRM the drift. The pushed command, origin/main, lore/gd2d worktree counts, conf live size, scratch-type list, and symlink receipt field all misstate the installed tool or the current tree. Do not treat S01's kotodama integers as stable.",
+      "confirmed": [
+        {
+          "claim": "SKILL.md:16 command cell requires git fetch and origin/main. The installed tool never fetches. Fleet origin/HEAD is origin/master. origin/main does not exist.",
+          "commands": [
+            "rg -n 'origin/main|git fetch' SKILL.md",
+            "grep -nE '^[^#]*git +(-C +[^ ]+ +)?fetch( |$)' tools/souji-verify.sh || echo no-fetch-lines",
+            "git -C /home/vgpnk/Projects/shokunin symbolic-ref --quiet --short refs/remotes/origin/HEAD; git -C /home/vgpnk/Projects/shokunin show-ref --verify --quiet refs/remotes/origin/main; echo exit=$?"
+          ],
+          "observed": "SKILL.md:16 is the fetch+origin/main command. no-fetch-lines. origin/master; exit=1."
+        },
+        {
+          "claim": "A repo with no remote-tracking ref is NOT-SAFE(pushed-unverifiable), including the installed verifier itself.",
+          "command": "tools/souji-verify.sh --json tools/souji-verify.sh",
+          "observed": "{\"path\":\"/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"pushed-unverifiable\",\"evidence\":\"pushed=unverifiable(no-default-ref) intro=9435e464a2dc; obsidian=no-matching-ledger-row; stale=not-scratch-type\"}"
+        },
+        {
+          "claim": "symlink-present is an evidence note, not the receipt field, on souji-verify.sh.",
+          "command": "SOUJI_LEDGER=/tmp/s98-fix.IMTwtP/ledger.tsv tools/souji-verify.sh /tmp/s98-fix.IMTwtP/src",
+          "observed": "VERDICT\t/tmp/s98-fix.IMTwtP/src\tNOT-SAFE\tnone\tobsidian=symlink-present scope=source; obsidian=no-matching-ledger-row; stale=not-scratch-type"
+        },
+        {
+          "claim": "*.tmp and out/ are not scratch types. An old .scratch/*.out file is SAFE(stale).",
+          "command": "tools/souji-verify.sh --stale-days 1 on /tmp/s98-fix.IMTwtP/repo/.scratch/old.out, note.tmp, out/blob.txt",
+          "observed": "old.out SAFE stale scratch-type=scratch-dir refs=0 mtime-age-days=2482. note.tmp NOT-SAFE none stale=not-scratch-type. out/blob.txt NOT-SAFE none stale=not-scratch-type."
+        },
+        {
+          "claim": "SKILL.md:89 lore has 19 prunable worktrees. Actual list is 1, none prunable.",
+          "command": "git -C /home/vgpnk/Projects/shokunin/lore-shokunin worktree list; porcelain prunable count",
+          "observed": "/home/vgpnk/Projects/shokunin/lore-shokunin 6cec83a [main]. wc -l = 1. prunable lines = 0."
+        },
+        {
+          "claim": "SKILL.md:90 gd2d has 5 prunable worktrees. Actual list is 4, none prunable. wt-r98 is NOT-SAFE(unpushed-branch).",
+          "commands": [
+            "git -C /home/vgpnk/Projects/shokunin/game-dev-2d-shokunin worktree list",
+            "tools/souji-verify.sh --json /home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r98"
+          ],
+          "observed": "4 lines: main 05a72899, wt-r100 locked, wt-r98 locked, wt-r99 locked. prunable lines = 0. JSON: NOT-SAFE receipt=unpushed-branch evidence=branch=wt-r98 unpushed=1 dir=absent owner=game-dev-2d-shokunin."
+        },
+        {
+          "claim": "SKILL.md:64-65 live conf is 4092 B. Snapshot 3859 still holds. They still differ.",
+          "command": "wc -c shokunin.conf shokunin.conf.full-roster-20261015; cmp -s; echo exit=$?",
+          "observed": "4432 live, 3859 snapshot. cmp exit=1."
+        },
+        {
+          "claim": "Installed tool hashes in seat-01.json.",
+          "command": "sha256sum tools/souji-verify.sh tools/souji-vault-verify.sh",
+          "observed": "53239fdfe5bcaaaf448e8525845ab962dd7ab6a4e7f75c0f4f051614f1c99200 tools/souji-verify.sh. 00d59b1b36d87db37518b5ef9fb98cd472888a075ed7b97bd5b8ff93bd559455 tools/souji-vault-verify.sh. Both match seat-01.json. Selftests this seat ran: souji-verify 24/0 exit 0; souji-vault-verify 35/0 exit 0."
+        }
+      ],
+      "flags": [
+        {
+          "id": "S01-M14-VOLATILE",
+          "claim": "seat-01 M14: kotodama porcelain dirty=29, du -sh .scratch = 19G, du -sb about 18292985803, at probe time 2026-10-18T16:03.",
+          "why_flagged": "The qualitative drift holds (not 553M, tree is dirty, unpushed subjects run past round-22). The integers do not. Same commands later in this audit moved.",
+          "commands": [
+            "2026-10-18T15:54 du -sb kotodama-shokunin/.scratch",
+            "2026-10-18T16:21 git status --porcelain | wc -l; du -sh .scratch",
+            "2026-10-18T17:07 git status --porcelain | wc -l; du -sh .scratch",
+            "git log --branches --not --remotes --oneline | wc -l"
+          ],
+          "observed": "15:54 du -sb = 18297492302. 16:21 porcelain=19, du -sh=27G, untracked-files=all=81. 17:07 porcelain=29, du -sh=28G. unpushed vs remotes stayed 47. 553M is false at every sample. 19G and dirty=29 are point-in-time, not a census constant. S01 already noted a vanished path during du -sb; that uncertainty stands."
+        }
+      ]
+    },
+    {
+      "id": "D-S05",
+      "seat": "S05",
+      "sibling_path": "census/round-6/seat-05.json",
+      "sibling_status": "CONFIRM-WITH-FLAG",
+      "sibling_verdict": "4/5 Pre-removal items verified-in-use, 1/5 never-exercised, 0/5 exact-and-decisive. metadata-prune is absent from SKILL.md.",
+      "independent_verdict": "CONFIRM the re-counted evidence. The round-3 command tallies, the missing taxonomy name, the empty quarantine search, the prune commit, and the post-prune worktree lists match. This seat did not re-read every cited round-3 seat JSON, so the narrative glosses on S58/S62/S64 were not re-derived line by line.",
+      "confirmed": [
+        {
+          "claim": "rg counts in census/round-3: path-scoped status 4, log --branches --not --remotes 26, rg -l mentions 34.",
+          "command": "rg -l -F 'git status --porcelain --' census/round-3 | wc -l; rg -l 'log --branches --not --remotes --' census/round-3 | wc -l; rg -l 'rg -l' census/round-3 | wc -l",
+          "observed": "4; 26; 34. Matches seat-05.json this_seat_commands."
+        },
+        {
+          "claim": "metadata-prune is absent from SKILL.md. Installed reference sweep has no --hidden.",
+          "command": "rg -n metadata-prune SKILL.md; rg -n -- '--hidden' tools/souji-verify.sh tools/souji-vault-verify.sh",
+          "observed": "metadata-prune ABSENT. NO --hidden in either installed tool."
+        },
+        {
+          "claim": "No .ufo-quarantine directory under the fleet at maxdepth 3. Prune commit is 36746332.",
+          "command": "find /home/vgpnk/Projects/shokunin -maxdepth 3 -type d -name .ufo-quarantine -print | wc -l; git show -s --format='%H %s' 36746332",
+          "observed": "0. 36746332cab0617c1ef23a63fee727c8869bd25e round-3: 21 metadata prunes executed (lore 20->1, gd2d 6->4 lock-preserve), 96-row operator approval list, probation gate cleared."
+        },
+        {
+          "claim": "Post-prune worktree lists.",
+          "command": "git -C lore-shokunin worktree list; git -C game-dev-2d-shokunin worktree list",
+          "observed": "lore_count=1 at 6cec83a [main]. gd2d_count=4: main 05a72899, wt-r100 2d562282 locked, wt-r98 68bee6e7 locked, wt-r99 fe1a996e locked. Matches seat-05.json."
+        }
+      ],
+      "flags": [
+        {
+          "id": "S05-ONE-HIT-TIMESCOPE",
+          "claim": "The checklist command string 'git log --not --remotes --oneline --' has one hit in the lane: SKILL.md:76 only.",
+          "why_flagged": "True as a pre-round-6 search. Not true if re-run after other seats wrote census/round-6 fragments. Not a falsehood at seat-05's 15:58 measurement.",
+          "command": "rg -n -F 'git log --not --remotes --oneline --' . --glob '!.git/**'",
+          "observed": "Hits now include SKILL.md:76, census/round-6/seat-05.json, skill-amend-20.diff, skill-amend-21.diff, skill-amend-23.diff, and province-amend-26.diff. Those round-6 files are later than seat-05.json's written_at 2026-10-18T15:58:09-0300."
+        }
+      ]
+    },
+    {
+      "id": "D-S11",
+      "seat": "S11",
+      "sibling_path": "census/round-6/seat-11.json",
+      "sibling_status": "CONFIRM",
+      "sibling_verdict": "NO byte-match modulo name. Drift is a mint-time 140-byte Marks trailer, not a box edit. Working tree, HEAD, and the mint blob are the same.",
+      "independent_verdict": "CONFIRM. Every byte figure seat-11 published was reproduced.",
+      "confirmed": [
+        {
+          "claim": "Pinned seed, named expected prefix, and SHONEN.md trailer.",
+          "command": "sha256 of .ufo/waves/round-13/shonen-seed.txt; dedent one 4-space indent; substitute the single <name> with souji-shokunin; compare prefix to SHONEN.md",
+          "observed": "pinned bytes 378 sha256 edb9f01176d97a99f9a30e226e3c9910527d25c84cd4675657514ef37f89b0cc. named bytes 362 sha256 dc85327d7aff77f317e8c172c6f4ea5ce70ff5f83de9e30116721dee05bb2475. SHONEN.md bytes 502 sha256 f18b9bcc163308dbd21a9ca2f487e24d97544723929ff58db2dd04028e882d48. prefix_equal True. extra_bytes 140. extra is a leading newline plus the Marks paragraph. name substitutions 1."
+        },
+        {
+          "claim": "Four boxes remain [ ]. Only the mint commit touches SHONEN.md.",
+          "command": "grep -n '^- \\[' SHONEN.md; git log --follow --format='%H %s' -- SHONEN.md; git status --porcelain -- SHONEN.md",
+          "observed": "Four '- [ ]' lines. One commit: ccbb1326204bbf21034820430e9923cb96ef4c17 mint. Porcelain empty."
+        }
+      ],
+      "flags": []
+    }
+  ],
+  "census": {
+    "runner_json_status": "FLAG-ABSENT",
+    "runner_json_note": "At 2026-10-18T17:07:35-03:00, find of crun-*.json under the lane returned nothing. results/crun-59-tmp is a directory another seat is still writing, not a filed crun-59.json. Confirmation below is against this seat's hand counts and in-flight impl-33 TSVs, not against a filed runner fragment.",
+    "contract": "tools/souji-census.impl-33.sh columns: repo, worktrees, unpushed, dirty, scratch_bytes, mtime_iso, verdict_flags. unpushed = rev-list --count --branches --not --remotes when refs/remotes is nonempty, else rev-list --count --branches plus no-remote. dirty = git status --porcelain --untracked-files=all line count.",
+    "independent_numbers": [
+      {
+        "repo": "game-dev-2d-shokunin",
+        "status": "CONFIRM stable fields",
+        "hand": {"when": "2026-10-18T15:54 and 2026-10-18T16:17", "worktrees": 4, "unpushed": 6, "remote_refs": 2, "dirty": 0, "scratch_bytes": 0},
+        "tool_scoped": {"when": "2026-10-18T15:59:52", "command": "tools/souji-census.impl-33.sh --root /tmp/s98-fleet-root", "row": "/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin\t4\t6\t0\t0\t2026-10-18T11:28:43-03:00\tunpushed"},
+        "inflight_impl33": [
+          {"file": "/tmp/s124/census-a.tsv", "row": "4\t6\t0\t0\t2026-10-18T11:28:43-03:00\tunpushed"},
+          {"file": "/tmp/s57-r6/impl-33.fleet.tsv", "row": "4\t6\t0\t0\t2026-10-18T16:16:24-03:00\tunpushed"}
+        ],
+        "flag": "worktrees/unpushed/dirty/scratch match across hand, this seat's tool run, and both in-flight TSVs. mtime does not: 11:28:43 vs 16:16:24. Newest regular files at 16:45 were sibling-lane writes under game-dev-2d-shokunin/reports/round-101/ (r101-sent2.md), not a souji write. Do not treat mtime_iso as a cross-seat constant."
+      },
+      {
+        "repo": "kagi-shokunin",
+        "status": "CONFIRM numerics",
+        "hand": {"when": "2026-10-18T17:02:22", "worktrees": 1, "unpushed": 0, "remote_refs": 2, "dirty": 0, "scratch_bytes": 0},
+        "inflight_impl33": [
+          {"file": "/tmp/s124/census-a.tsv", "row": "1\t0\t0\t0\t2026-10-17T00:28:14-03:00\tclean,secret-shaped"},
+          {"file": "/tmp/s57-r6/impl-33.fleet.tsv", "row": "1\t0\t0\t0\t2026-10-17T00:28:14-03:00\tclean,secret-shaped"}
+        ],
+        "flag": "Numeric fields match. This seat did not re-derive the secret-shaped flag (names were not listed; contents were not read). s50-indep schema row was 1, 0, 0, 0, nremotes=2, head=aea7a43, which agrees on the shared numeric fields."
+      },
+      {
+        "repo": "souji-shokunin",
+        "status": "CONFIRM stable fields, FLAG dirty",
+        "hand": {
+          "worktrees": 1,
+          "unpushed": 11,
+          "remote_refs": 0,
+          "flag": "no-remote",
+          "scratch_bytes": 0,
+          "dirty_samples": [
+            {"when": "2026-10-18T15:54", "dirty": 3},
+            {"when": "2026-10-18T15:59:52 tool row", "dirty": 7},
+            {"when": "2026-10-18T16:17", "dirty": 33},
+            {"when": "2026-10-18T17:07:35", "dirty": 83}
+          ]
+        },
+        "why_unpushed_11": "origin URL is configured (https://github.com/VeigaPunk/shokunin-repo-hygiene.git) but refs/remotes is empty. No fetch was run. impl-33 therefore counts rev-list --count --branches (11) and sets no-remote. That is not a pushed receipt.",
+        "inflight_impl33": {
+          "file": "/tmp/s124/census-a.tsv",
+          "row": "1\t11\t11\t0\t2026-10-18T16:03:09-03:00\tdirty,no-remote,secret-shaped"
+        },
+        "flag": "worktrees=1, unpushed=11, scratch_bytes=0, no-remote match the in-flight impl-33 row. dirty does not: that row says 11 at 16:03; this seat later counted 33 and 83 with the same --untracked-files=all command. Round-6 seats are writing this repo. s50-indep recorded dirty=6 under a different schema (header repo, worktrees, unpushed, dirty, scratch_bytes, nremotes, head). Do not reconcile that 6 to the impl-33 contract."
+      }
+    ],
+    "selftest_side": {
+      "status": "FLAG historical, not a current verdict",
+      "command": "tools/souji-census.impl-33.sh --selftest",
+      "observed_at_15:54": "28 checks, 3 failed. FAIL clean-shokunin verdict=dirty want clean. DEBUG status: ?? .ufo/state/live.json and ?? .ufo/watchdog.log. FAIL clean dirty=2. FAIL dirty count=3 want 2.",
+      "independent_runner_log": "/tmp/s57-r6/souji-census.impl-33.selftest.out at 15:59 ends with the same 'selftest: 28 checks, 3 failed'.",
+      "why_not_current": "tools/souji-census.impl-33.sh was 26049 bytes at 15:53 and 26739 bytes at 16:07. This seat did not re-run --selftest after that rewrite."
+    }
+  },
+  "safety": "Read-only except this file. No git fetch/push/commit/branch/prune/remove. No deletes. Live obsidian ledger was not written; only its header and byte size were read (67 bytes, header only, 0 data rows). No secret-shaped file contents were read. kotodama .scratch was measured with du and git status/log counts only; no file contents and no head -c. .ufo/state and .ufo/watchdog.log were not opened. /tmp fixtures from this seat's verify probes were left in place."
+}

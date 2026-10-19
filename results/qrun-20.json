@@ -1,0 +1,67 @@
+{
+  "qrun": 20,
+  "seat": "S20",
+  "round": 8,
+  "date": "2026-10-18",
+  "kind": "dry-run gate-opening simulation (gd2d pin situation)",
+  "fixture_root": "/tmp/s20-gate-fixture.VdrqRM (mktemp -d; removed after run)",
+  "mirrored_live_state": {
+    "source": "read-only census of /home/vgpnk/Projects/shokunin/game-dev-2d-shokunin 2026-10-18",
+    "registrations": [
+      {"name": "game-dev-2d-shokunin-wt-r98",  "branch": "refs/heads/wt-r98",  "head_live": "68bee6e7", "dir": "absent", "locked": "souji r5: pinned until game-dev-2d pushes wt branches or operator dispositions"},
+      {"name": "game-dev-2d-shokunin-wt-r99",  "branch": "refs/heads/wt-r99",  "head_live": "fe1a996e", "dir": "absent", "locked": "souji r5: pinned until game-dev-2d pushes wt branches or operator dispositions"},
+      {"name": "game-dev-2d-shokunin-wt-r100", "branch": "refs/heads/wt-r100", "head_live": "2d562282", "dir": "absent", "locked": "souji r5: pinned until game-dev-2d pushes wt branches or operator dispositions"}
+    ],
+    "live_facts": "for each of wt-r98/99/100: dir absent; `git log --oneline refs/heads/<b> --not --remotes | wc -l` = 1; `--not --all` = 0 (verified via commands in commands[0])",
+    "divergence_note": "Fixture's 4th registration r102-S1 modeled dir-absent detached at main tip. The REAL /var/tmp/r102-S1 is dir-PRESENT and dirty (git status shows modified corpus fixtures) -> real r102-S1 is NOT-SAFE(dirty), NOT prune-eligible. Fixture's SAFE row for it does not apply live."
+  },
+  "phases": [
+    {
+      "phase": "A pre-push gate",
+      "command": "SHOKUNIN_ROOT=$FLEET tools/souji-verify.sh --json $FLEET/game-dev-2d-shokunin-wt-r{98,99,100}",
+      "observed": [
+        {"path": ".../game-dev-2d-shokunin-wt-r98",  "verdict": "NOT-SAFE", "receipt": "unpushed-branch", "evidence": "branch=wt-r98 unpushed=1 dir=absent owner=game-dev-2d-shokunin"},
+        {"path": ".../game-dev-2d-shokunin-wt-r99",  "verdict": "NOT-SAFE", "receipt": "unpushed-branch", "evidence": "branch=wt-r99 unpushed=1 dir=absent owner=game-dev-2d-shokunin"},
+        {"path": ".../game-dev-2d-shokunin-wt-r100", "verdict": "NOT-SAFE", "receipt": "unpushed-branch", "evidence": "branch=wt-r100 unpushed=1 dir=absent owner=game-dev-2d-shokunin"}
+      ],
+      "conclusion": "engine reproduces the live pin gate: named branch + unpushed commits => NOT-SAFE(unpushed-branch), checked BEFORE the metadata-prune shortcut (spec deviation D-b holds)"
+    },
+    {
+      "phase": "B push simulation",
+      "command": "git -C $R update-ref refs/remotes/origin/wt-r{98,99,100} $(git -C $R rev-parse refs/heads/wt-...)",
+      "observed": "for-each-ref after: refs/remotes/origin/wt-r98=69d708c, wt-r99=7e1a3da, wt-r100=ea70d52 (branch tips); per-branch `log --oneline <b> --not --remotes | wc -l` all = 0",
+      "conclusion": "update-ref of remote-tracking refs is the exact local effect `git push origin wt-r98 wt-r99 wt-r100` would produce; no network, fixture only"
+    },
+    {
+      "phase": "C post-push gate + re-census",
+      "command": "SHOKUNIN_ROOT=$FLEET tools/souji-verify.sh --json $FLEET/game-dev-2d-shokunin-wt-r{98,99,100}; SHOKUNIN_ROOT=$FLEET tools/souji-census.sh --root $FLEET --compare pre.tsv",
+      "observed": [
+        {"path": ".../game-dev-2d-shokunin-wt-r98",  "verdict": "SAFE", "receipt": "metadata-prune", "evidence": "dir=absent unique=0 head=69d708c27792 owner=game-dev-2d-shokunin"},
+        {"path": ".../game-dev-2d-shokunin-wt-r99",  "verdict": "SAFE", "receipt": "metadata-prune", "evidence": "dir=absent unique=0 head=7e1a3da8d860 owner=game-dev-2d-shokunin"},
+        {"path": ".../game-dev-2d-shokunin-wt-r100", "verdict": "SAFE", "receipt": "metadata-prune", "evidence": "dir=absent unique=0 head=ea70d5260e3d owner=game-dev-2d-shokunin"}
+      ],
+      "census_diff": "repo .../game-dev-2d-shokunin: unpushed 3->0 (-3); verdict_flags dirty,unpushed,wt-absent -> dirty,wt-absent (compare exit 3 = rows differ, per spec)",
+      "conclusion": "VERIFIED: simulated post-push state makes all 3 registrations SAFE(metadata-prune) via tools/souji-verify.sh"
+    },
+    {
+      "phase": "D prune-ticket mechanics",
+      "commands_and_observations": [
+        "git worktree prune --dry-run -v  WITH locks on -> only 'Removing worktrees/r102-S1 ...' printed; all 3 locked pins SKIPPED. Proof: locks block prune even when prunable.",
+        "git worktree unlock $FLEET/game-dev-2d-shokunin-wt-r{98,99,100} -> OK for all 3 despite dir-absent (resolves via .git/worktrees admin dir); locked files gone after",
+        "git worktree prune --dry-run -v  AFTER unlock -> exactly 4 lines: r102-S1 + the 3 named regs ('gitdir file points to non-existent location')",
+        "git worktree prune -v (fixture) -> 4 removals; worktree list -> main only; for-each-ref refs/heads -> main+wt-r98+wt-r99+wt-r100 ALL SURVIVE (prune is metadata-only)",
+        "re-verify post-prune -> NOT-SAFE(unreachable, missing path) x3 (registrations no longer in WT_MAP: work done)"
+      ]
+    }
+  ],
+  "engine_validation": "tools/souji-verify.sh --selftest before use: 24 checks, 0 failed (observed output 'PASS H1 no forbidden git subcommand', 'PASS H5 fixtures under mktemp -d', 'selftest: 24 checks, 0 failed')",
+  "verdict": "SIMULATION-PASS — gate-opening flow verified end-to-end on fixture: NOT-SAFE(unpushed-branch) x3 -> push -> SAFE(metadata-prune) x3 -> unlock -> prune (metadata-only, branches survive). One mandatory runbook step discovered: registrations are LOCKED and git prune skips locked regs; unlock-by-path works with absent dirs.",
+  "safety": "All git mutations confined to /tmp/s20-gate-fixture.VdrqRM (mktemp). No fetch/push/commit/branch on any live repo; live gd2d touched read-only (worktree list, for-each-ref, log counts, ls). No .ufo/state, no .ufo/watchdog.log, no secret-shaped files.",
+  "files_written": [
+    "results/qrun-20.json",
+    "census/round-8/seat-20.json",
+    "census/round-8/s20-census-pre.tsv",
+    "census/round-8/s20-census-post.tsv",
+    "census/round-8/s20-census-diff.tsv"
+  ]
+}

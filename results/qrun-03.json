@@ -1,0 +1,81 @@
+{
+  "run": "qrun-03",
+  "seat": "S03",
+  "round": 8,
+  "generatedAt": "2026-10-18T19:45:38-03:00",
+  "deliverable": {
+    "tool": "tools/souji-quarantine.impl-03.sh",
+    "sha256": "5908b69cc1ce59094c3b19207c2a03978224eab1a3d1f5b40559ea783584d6a5",
+    "dispatcher": "tools/impl-03.sh",
+    "dispatcher_sha256": "d72df9a69f531172d846b97342c7e983d31c07b7af80042483cad489e3d6630f",
+    "implements": "census/round-7/quarantine-plan.json execution_plan_template (step_0_recheck .. step_4_delete) as a fail-closed ticket runner",
+    "note": "sha above is the FINAL file (trap-armed-before-fixtures fix applied after the first green run); live_fleet_proofs below were re-run against this exact sha with identical outputs"
+  },
+  "selftest": {
+    "command": "bash tools/impl-03.sh --selftest",
+    "result": "selftest: 27 checks, 0 failed",
+    "exit": 0,
+    "env_note": "first green attempts hit 'Disk quota exceeded' on /tmp (tmpfs 13G/16G used by parallel seats) during fixture git init; the tool honors TMPDIR, so the recorded green run used TMPDIR=/var/tmp (930G fs, 19% used). A quota-killed run left /tmp/souji-quarantine-selftest.5m7sHJ because its cleanup trap armed only after fixture build; removed by hand, then FIXED IN THE TOOL: the EXIT trap now arms before st_build_fixtures and the final 27/27 run leaks no temp dir (verified: no souji-quarantine-selftest.* in /tmp or /var/tmp).",
+    "final_run": "TMPDIR=/var/tmp bash tools/impl-03.sh --selftest -> 'selftest: 27 checks, 0 failed', exit 0, on sha 5908b69c...",
+    "fixtures": "single mktemp -d root per run (e.g. /var/tmp/souji-quarantine-selftest.GhMfr8), trap-removed on exit; verified no souji-quarantine-selftest.* remains in /tmp or /var/tmp after the run",
+    "cases": {
+      "Q1": "pushed+clean+both-engines- SAFE(pushed) -> AUTHORIZED",
+      "Q1b": "AUTHORIZED holds with --expect-receipt pushed",
+      "Q2": "local-only commit touching path -> NOT-AUTHORIZED gate1=unpushed-touching(1)",
+      "Q3": "untracked non-ignored .out (stale-eligible) -> NOT-AUTHORIZED gate2=dirty-touching(1): receipt alone does not authorize",
+      "Q3b": "same file ignored-clean -> AUTHORIZED(stale): ignored-clean is the only untracked shape that can pass gate2",
+      "Q4": "zero-remote repo, tracked file -> NOT-AUTHORIZED gate1=unpushed-touching(1) (explicit --branches --not --remotes form)",
+      "Q5": "ticket declares pushed, tree offers stale -> NOT-AUTHORIZED gate3=receipt-mismatch",
+      "Q6": "secret-shaped path -> NOT-AUTHORIZED secrets-refusal before any read",
+      "Q7": "r6 pitfall regression: on a zero-remote repo bare 'log --not --remotes -- path' returns 0 lines while the explicit gate1 form returns >=1 — the tool uses only the explicit form",
+      "Q8": "--stage with SOUJI_Q_SANDBOX unset -> REFUSED exit 1, target survived",
+      "Q9": "--stage with sandbox not covering target -> REFUSED exit 1, target survived",
+      "Q10": "--retire outside sandbox -> REFUSED exit 1",
+      "Q11": "sandboxed --stage -> STAGED, original gone, .ufo-quarantine/<date>/<rel __-flattened> created",
+      "Q12": "sidecar record .souji-qrecord.json written; unrelated neighbor file untouched",
+      "Q13": "--verify-staged -> STAGED-VERIFIED (original absent, gates clean, digest equal)",
+      "Q14": "--retire without --operator-signoff -> REFUSED exit 1, staged copy survived",
+      "Q15": "tampered staged copy -> HOLD digest-mismatch",
+      "Q16": "--verify-staged on a still-present original -> HOLD original-present",
+      "Q17": "--retire --operator-signoff <id> -> RETIRED; staged copy + record removed; original stays absent; neighbor intact",
+      "Q18": "--stage --dry-run prints mv commands, tree untouched",
+      "H1": "no forbidden git subcommand (fetch|push|commit|branch|checkout|reset|rebase|mv|rm) in executable lines",
+      "H2": "mutation lines exist and are runtime-sandbox-guarded (proven by Q8/Q9/Q10/Q14)",
+      "H5": "fixtures under mktemp -d",
+      "H8": "--check --json emits the documented object shape"
+    }
+  },
+  "dev_fixes_evidence": [
+    "initial selftest: bash syntax error line 685 — root cause an unbalanced quote in an H8 case-glob; replaced with grep-chain checks",
+    "second run: silent exit 1, zero output — st_check_line parsed JSON keys without passing --json, and the empty grep pipeline under set -o pipefail killed the script mid-assignment; fixed by passing --json and '|| true' on all grep-extraction assignments (run_receipt_tool, verify_staged_path, retire_staged_path)",
+    "third run: Q11 sandbox refusal — the script's own global 'export SOUJI_Q_SANDBOX=\"\"' clobbered the inherited sandbox value in every child; removed the defaulting line, unset-case covered by explicit env -u refusal tests",
+    "fourth run: Q3/Q3b both AUTHORIZED — fixture flaw, unq.out sat inside the ignored .scratch/ dir; moved to repo root so the untracked-non-ignored gate2 case exists; Q3 initially still failed because the mtime touch line referenced the old path; fixed"
+  ],
+  "live_fleet_proofs": {
+    "safety_rule": "live runs were --check (read-only), --plan (print-only), and one --stage refusal attempt with SOUJI_Q_SANDBOX unset; no mutation mode was ever armed against the live fleet",
+    "check_tools_souji_verify_sh": {
+      "command": "bash tools/souji-quarantine.impl-03.sh --check tools/souji-verify.sh",
+      "output": "NOT-AUTHORIZED gate1=fail(3) gate2=pass(0) gate3=fail:no-safe-receipt A=NOT-SAFE(pushed-unverifiable) B=NOT-SAFE(none)",
+      "corroboration": "gate1=3 unpushed commits touch tools/souji-verify.sh (re-verified: git log --branches --not --remotes --oneline -- tools/souji-verify.sh | wc -l = 3); pushed-unverifiable matches round-7 finding of zero remote-tracking refs / dead origin"
+    },
+    "check_census_round7_seat03": {
+      "command": "bash tools/souji-quarantine.impl-03.sh --check census/round-7/seat-03.json",
+      "output": "NOT-AUTHORIZED gate1=fail(1) gate3=fail:no-safe-receipt (filing commit unpushed)"
+    },
+    "stage_refusal_on_live_repo": {
+      "command": "bash tools/souji-quarantine.impl-03.sh --stage tools/souji-verify.sh",
+      "output": "REFUSED outside-sandbox, exit 1",
+      "postcondition": "tools/souji-verify.sh still present; no .ufo-quarantine directory exists in the lane repo (verified: ls .ufo-quarantine -> No such file or directory)"
+    },
+    "plan_runbook": "bash tools/souji-quarantine.impl-03.sh --plan tools/souji-verify.sh prints the 5-step runbook with substituted paths and the fail-closed clause; no filesystem effect"
+  },
+  "lane_integrity": {
+    "git_status": "only untracked round-8 seat files added (tools/impl-03.sh, tools/souji-quarantine.impl-03.sh, census/round-8/, results/ pre-existing untracked); zero tracked files modified; no commit made",
+    "head_at_run": "1cf5fa8 round-7: REJECTED as a round (2/3)"
+  },
+  "not_claimed": [
+    "No live-fleet path was staged, held, verified, or retired; the only mutations were inside the selftest's mktemp root",
+    "No LOG.md entry written (parent integrates fragments per AGENTS.md parallel-wave rule)",
+    "No ticket is hereby authorized: every live verdict this run is NOT-AUTHORIZED, consistent with round-7"
+  ]
+}

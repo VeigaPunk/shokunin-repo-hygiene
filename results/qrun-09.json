@@ -1,0 +1,214 @@
+{
+  "seat": "S09",
+  "role": "runner",
+  "round": 8,
+  "file": "results/qrun-09.json",
+  "started": "2026-10-18T18:29:40-03:00",
+  "finished": "2026-10-18T19:44:30-03:00",
+  "contract": "WAIT 360s; for each impl tools/souji-quarantine.impl-0*.sh: --selftest (exit + assertion counts); manual scenario on a mktemp fixture repo with 3 targets (clean-pushed tracked, clean-pushed untracked/ignored-stale, NOT-SAFE) with --hold 0; verify quarantine dir contents, second-check evidence, deletes for the 2 authorized, NOT-SAFE untouched, abort path on tamper between stages (pre-corrupted expected digest). Output: results/qrun-09.json.",
+  "fixture_design": {
+    "builder": "/tmp/s09-fixture.sh (bash, git porcelain allowed on mktemp fixtures only)",
+    "repo": "git init -b master + local bare remote (file path) + git push origin master (fixtures are explicitly runner-owned; no live repo touched)",
+    "targets": {
+      "tracked-clean.txt": "tracked; introduced+tip pushed; zero unpushed commits touching; clean -> souji-verify SAFE(pushed), souji-vault-verify SAFE(pushed)",
+      "notes.out": "untracked but IGNORED (*.out in a TRACKED pushed .gitignore); scratch-type; mtime forced 2 days old; zero live refs -> SAFE(stale). Ignore-clean is required: round-7 gate2 counts plain-untracked as dirty (impl-03 header documents this), so a plain-untracked target can never be AUTHORIZED",
+      "live-report.md": "tracked; update committed in c2 which is NEVER pushed; worktree copy additionally dirty -> gate1 fail (unpushed-touching=1) + gate2 fail ( M) + receipt none -> NOT-SAFE"
+    },
+    "engine_cross_check": {
+      "cmd": "souji-verify.sh on the 3 fixture targets",
+      "observed": [
+        "tracked-clean.txt  SAFE pushed intro=29b8ce7d3a10 ref=refs/remotes/origin/master ancestor=yes",
+        "notes.out          SAFE stale scratch-type=ext refs=0 mtime-age-days=2",
+        "live-report.md     NOT-SAFE none pushed=unpushed-commits-touching intro=29b8ce7d3a10; obsidian=no-ledger; stale=not-scratch-type"
+      ]
+    },
+    "builder_iterations": [
+      "v1 pushed AFTER c2 -> every target looked pushed (caught by gate1_notsafe=[] sanity line); fixed to push before c2",
+      ".gitignore initially untracked (harmless for status but weak); fixed to tracked+pushed in c1 from fixture D on",
+      "env for receipt engines: SHOKUNIN_ROOT=<fixture-remote.git> SOUJI_LEDGER=<fixture>/ledger-empty.tsv so engines never scan the live fleet or live ledger (mirrors impl-02's own selftest discipline)"
+    ]
+  },
+  "impls_tested": {
+    "01": {
+      "path": "tools/souji-quarantine.impl-01.sh",
+      "sha256_at_test": "5780ad751aa49d1bb587690154cab98ab6aa71b4def518673c2f383301c51c4f",
+      "architecture": "one-shot 5-stage pipeline: receipt re-derive -> stage (git mv tracked / mv untracked into <repo>/.ufo-quarantine/<utc-date>/) -> hold (--hold N, default 450; 0 allowed) -> second check (prong1 engine re-run on quarantine path + prong2 class-aware re-derivation with universal digest+mtime pins) -> delete only on PASS; exit 3 if any NOT-AUTHORIZED/ABORTED, exit 4 live-fleet guard",
+      "selftest": {
+        "cmd": "bash tools/souji-quarantine.impl-01.sh --selftest",
+        "exit": 0,
+        "assertions": "63 checks, 0 failed",
+        "evidence": "/tmp/s09-selftest-01.log tail: 'selftest: 63 checks, 0 failed'"
+      },
+      "scenario_A_hold0": {
+        "cmd": "bash tools/souji-quarantine.impl-01.sh --hold 0 /tmp/s09-fixb tracked-clean.txt notes.out live-report.md",
+        "exit": 3,
+        "summary_line": "SUMMARY total=3 deleted=2 aborted=0 unauthorized=1 skipped=0 stage2failed=0",
+        "tracked_pushed": "stage1 SAFE(pushed) -> stage2 git-mv -> stage3 0 -> prong1 NOT-SAFE(none) recorded prong1-tolerated class-not-path-local -> prong2 PASS pin=ok mtime=ok intro-blob=ok unpushed-touching=0 -> stage5 DELETED",
+        "stale_ignored_untracked": "stage1 SAFE(stale) -> stage2 mv -> prong1 SAFE(stale) binding -> stage5 DELETED",
+        "not_safe": "stage1 NOT-SAFE(none) pushed=unpushed-commits-touching -> RESULT NOT-AUTHORIZED; left untouched",
+        "second_check_evidence": "full QVERDICT stage4-prong1 + stage4-second lines recorded per target (pushed receipt re-derived via original-path unpushed check + quarantine-bytes==introducing-blob pin; stale re-derived path-locally on the copy)",
+        "filesystem_truth": {
+          "originals_after": "tracked-clean.txt GONE, notes.out GONE",
+          "not_safe_after": "live-report.md sha256 1c1a7f1bed306721429bb046bf6be5e56821b7a941ce50c3cfd56975b7fe4522 unchanged (pre==post)",
+          "quarantine_after": ".ufo-quarantine removed entirely (both staged copies deleted; empty date dir + dir rmdir'd as documented)",
+          "index_after": "git status: 'D  tracked-clean.txt' staged deletion (git-mv index op, never committed), ' M live-report.md' untouched"
+        }
+      },
+      "abort_unpushed_commit_during_hold": {
+        "fixture": "/tmp/s09-fixc --hold 3; at t+1.2s committed c3 touching tracked-clean.txt original path",
+        "observed": "stage4-second FAIL class=FAIL unpushed-touching=1 -> stage5 ABORTED left-in-quarantine -> RESULT ABORTED; exit 3",
+        "note": "same run: my premature tamper file at .ufo-quarantine/<date>/notes.out made stage1 refuse notes.out with NOT-AUTHORIZED quarantine-collision — correct fail-closed behavior (incidental evidence)"
+      },
+      "abort_digest_pin_during_hold": {
+        "fixture": "/tmp/s09-fixd --hold 3 single target notes.out; at t+1.2s appended 'TAMPERED-BY-S09' to the staged copy",
+        "observed": "stage4-second FAIL pin=FAIL digest-mismatch stage1=d10eea22971a now=fec8b52a307b mtime=FAIL -> stage5 ABORTED left-in-quarantine; copy still present after run with tampered sha fec8b52a...; exit 3"
+      },
+      "live_fleet_guard": {
+        "cmd": "impl-01 --hold 0 /home/vgpnk/Projects/shokunin/souji-shokunin LOG.md (no dry-run, no allow flag)",
+        "observed": "exit 4, 'GUARD refusal live-fleet-mutation-forbidden repo=...souji-shokunin fleet=/home/vgpnk/Projects/shokunin'; LOG.md size+mtime unchanged after"
+      },
+      "verdict": "PASS — selftest green; scenario A exactly per contract (2 deleted, NOT-SAFE untouched, second-check evidence emitted); both tamper aborts caught (content pin AND unpushed-touching); fail-closed collision refusal; live guard works"
+    },
+    "02": {
+      "path": "tools/souji-quarantine.impl-02.sh",
+      "architecture": "mode-based: --check (read-only gates, BOTH engines must agree) / --plan / --stage (plain mv + sidecar <staged>.souji-qrecord.json) / --verify-staged (record digest vs staged bytes, original-must-be-absent, receipt re-derivation) / --retire --operator-signoff ID [--hold-min-seconds N default 450]; mutations only under SOUJI_Q_SANDBOX resolving under TMPDIR",
+      "selftest_versions": [
+        {
+          "sha256": "d3a3c7170d62f49bfe4dd274fc3f166758d88d62b560bbe3478b3fe4f35eabfe",
+          "mtime": "2026-10-18T19:08",
+          "exit": 1,
+          "assertions": "passed=45 failed=24",
+          "failure_classes": "second-check 'no-valid-record', retire exit want=0 got=1, stale fixture mis-classed pushed, gate reason-string mismatches",
+          "disposition": "S02 updated the file in-round at 19:27; re-run below is the evidence of record"
+        },
+        {
+          "sha256": "709ff22b168d7ea4734e0c244c86fb5c70c769d31052d835848432b54491742d",
+          "mtime": "2026-10-18T19:27",
+          "exit": 0,
+          "assertions": "passed=76 failed=0",
+          "evidence": "/tmp/s09-selftest-02.log tail: 'SELFTEST seat=S02 tool=souji-quarantine.impl-02.sh passed=76 failed=0'"
+        }
+      ],
+      "manual_scenario_v1_sha_d3a3c717": {
+        "fixture": "/tmp/s09-fixe",
+        "check": [
+          "CHECK tracked-clean.txt AUTHORIZED pushed all-gates-pass(a=SAFE/pushed,b=SAFE/pushed)",
+          "CHECK notes.out AUTHORIZED stale all-gates-pass(a=SAFE/stale,b=SAFE/stale)",
+          "CHECK live-report.md NOT-AUTHORIZED none gate1-unpushed-touching(count=1)"
+        ],
+        "stage": "both STAGED rc=0; sidecar records carry original, repo, rel, receipt, engine_a/engine_b verdicts, full sha256 digest, staged_at epoch+iso, hold_min_seconds, tool id",
+        "verify_staged": [
+          "SECOND-CHECK tracked-clean.txt PASS pushed-reverified(intro=79bac77012a2,ref=refs/remotes/origin/master)",
+          "SECOND-CHECK notes.out PASS stale-reverified-on-copy(digest=d10eea22971a)"
+        ],
+        "retire": "both RETIRED rc=0 with signoff=s09-runner-S09 recorded; quarantine dir empty after; originals GONE; live-report.md sha 1c1a7f1bed306721 unchanged; git status shows worktree ' D tracked-clean.txt' (plain mv, no index churn — documented design)",
+        "verdict": "manual flow fully green even on the version whose selftest rig was red — the 24 failures were selftest-side, confirmed by the 76/76 green re-run"
+      },
+      "full_cycle_v2_sha_709ff22b": {
+        "fixture": "/tmp/s09-fixg",
+        "chain": "check x3 -> stage x2 -> corrupt tracked record digest field (396b9a75...->0000deadbeef...) -> verify-staged tracked -> retire tracked -> verify-staged notes -> retire notes",
+        "observed": [
+          "CHECK AUTHORIZED pushed / AUTHORIZED stale / NOT-AUTHORIZED gate1-unpushed-touching(count=1)",
+          "SECOND-CHECK tracked-clean.txt FAIL digest-mismatch(record=0000deadbeef,now=396b9a751be9)",
+          "RETIRE-REFUSED tracked-clean.txt second-check-failed(digest-mismatch...)",
+          "SECOND-CHECK notes.out PASS stale-reverified-on-copy(digest=d10eea22971a)",
+          "RETIRED notes.out stale signoff=s09-runner-S09"
+        ],
+        "filesystem_truth": "notes GONE + retired; tampered ticket INTACT in quarantine (tracked-clean.txt + .souji-qrecord.json left behind); live-report.md sha unchanged",
+        "abort_path": "PROVEN via pre-corrupted expected digest: second-check fails, retire refuses rc=1, artifact stays quarantined"
+      },
+      "hold_enforcement": {
+        "cmd": "--retire --operator-signoff s09-runner-S09 WITHOUT --hold-min-seconds on a 0s-old staged copy",
+        "observed": "rc=1 RETIRE-REFUSED hold-not-elapsed(age=0s,min=450s); copy intact"
+      },
+      "safety_rails": {
+        "no_sandbox": "stage with SOUJI_Q_SANDBOX unset -> rc=1 Q-REFUSED no-sandbox(SOUJI_Q_SANDBOX unset; live fleet untouchable)",
+        "not_safe_stage": "stage live-report.md inside valid sandbox -> rc=1 STAGE-REFUSED gate1-unpushed-touching(count=1); file untouched after both refusals"
+      },
+      "verdict": "PASS at sha 709ff22b (selftest 76/76 + manual cycle green + abort + hold + rails). Historical note recorded: 19:08 revision had a red selftest rig (45/24) while its core modes passed manual verification"
+    },
+    "03": {
+      "path": "tools/souji-quarantine.impl-03.sh",
+      "versions_seen": [
+        {
+          "sha256": "a708c259a12624b0b88a82f0636d945f9256c16b9d498fd870c377fc318fbc0c",
+          "mtime": "2026-10-18T18:36:12",
+          "state": "UNPARSEABLE — bash -n exit 2 'line 685: syntax error near unexpected token `git''; --selftest exit 2, 0 assertions. Root cause: line 641 selftest JSON-shape case pattern carries 7 single quotes (odd, awk-verified) which shifts quoting state file-wide",
+          "duration": "sole version 18:38-19:37; all modes unrunnable in that window"
+        },
+        {
+          "sha256": "19d424a3e25e11e0d68ea0e393b6d33be062b1005ac8d63f89a59c9263ae38d8",
+          "mtime": "2026-10-18T19:35:21",
+          "state": "parses; tested below (evidence of record)"
+        }
+      ],
+      "selftest_sha_19d424a3": {
+        "cmd": "bash tools/souji-quarantine.impl-03.sh --selftest",
+        "exit": 1,
+        "assertions": "13 PASS/ok lines, then 3 FAIL + ABORT",
+        "failures": [
+          "FAIL Q3: evidence lacks 'gate2=dirty-touching(1)' — fixture target unq.out reported 'unreachable: missing path', receiptA/B unreadable(none) (fixture assembly/order bug)",
+          "FAIL Q11 stage: REFUSED outside-sandbox on .../.scratch/old-q9.out — selftest's own stage call refused",
+          "FAIL Q12 rec=missing probe=ok -> 'ABORT: no record; cannot continue staged-path cases' — all verify-staged/retire/abort coverage skipped"
+        ],
+        "shared_root_cause_Q11_Q12": "line 424 'export SOUJI_Q_SANDBOX=\"\"' executes at file scope on EVERY invocation and wipes the caller's sandbox before mode dispatch; the selftest sets SOUJI_Q_SANDBOX=$ST_FLEET (line 554) but each child \"$SELF\" re-invocation wipes it again. Proven with bash -x: '+ local sb=' empty inside sandbox_allows despite exported value"
+      },
+      "manual_scenario_sha_19d424a3": {
+        "fixture": "/tmp/s09-fixh",
+        "check": {
+          "tracked": "QUARANTINE AUTHORIZED pushed gate1=pass(0) gate2=pass(0) gate3=pass A=SAFE(pushed) B=SAFE(pushed) + dual-engine intro/ref evidence",
+          "stale": "QUARANTINE AUTHORIZED stale gate1=pass(0) gate2=pass(0) gate3=pass A=SAFE(stale) B=SAFE(stale)",
+          "not_safe": "QUARANTINE NOT-AUTHORIZED none gate1=fail(1) gate2=fail(1) gate3=fail:no-safe-receipt A=NOT-SAFE(none) B=NOT-SAFE(none)",
+          "assessment": "--check is the best-evidenced of the three impls (per-gate lines + both engines); all 3 fixture targets correct"
+        },
+        "stage": "REFUSED outside-sandbox rc=1 for BOTH authorized targets with SOUJI_Q_SANDBOX correctly exported and covering the repo (line-424 wipe; identical to selftest Q11) — flow cannot proceed through the tool",
+        "hand_staged_probes": {
+          "note": "stage/retire are dead by the line-424 defect, so S09 hand-staged the ignored stale target (plain mv + tool-format record {original,staged,receipt,digest,staged_at} with real tree_digest) to exercise the remaining logic; labeled hand-staged, not tool-staged",
+          "verify_intact": "STAGED-VERIFIED digest=d10eea22971a 'eligible for step_4 retire' rc=0",
+          "verify_corrupted_record": "HOLD digest-mismatch record=0000dead now=d10eea22971a — abort logic correct",
+          "tracked_hold_by_design": "verify_staged_path re-runs gate1/gate2 at the ORIGINAL path and HOLDS any tracked target ('tracked paths held by design: the mv leaves a deletion in the index-less worktree') — only untracked/ignored targets can reach retire; S23-F1-style pushed re-derivation trap avoided by holding instead",
+          "retire": "REFUSED outside-sandbox rc=1 even with sandbox exported (same wipe) — delete path unexecutable; copy + record remain quarantined (fail-safe)"
+        }
+      },
+      "verdict": "FAIL (flow-unexecutable) — line 424 'export SOUJI_Q_SANDBOX=\"\"' disables --stage AND --retire for every caller including its own selftest. Fail-SAFE direction (nothing can ever be mutated), but the tool cannot perform its function. One-line fix: delete line 424. Read-only --check is exemplary; second-check digest logic proven correct via hand-staged probes"
+    },
+    "S12_out_of_glob": {
+      "path": "tools/souji-quarantine.impl-S12.sh",
+      "status": "does not match my assigned glob souji-quarantine.impl-0*.sh; present since 18:59, still mode 644 (not executable) at 19:26; left to its own seat's runner; bash -n passes"
+    }
+  },
+  "missing_impls": {
+    "glob_expected": "souji-quarantine.impl-0*.sh (assignment names 01..08 band implicitly via impl-0*)",
+    "present_at_first_write": ["01", "02", "03"],
+    "never_landed": ["04", "05", "06", "07", "08 (if dispatched)"],
+    "polls": ["18:31 (0 present)", "18:38 (1: impl-03)", "19:09 (3: +impl-01, impl-02, impl-S12)", "19:32 (3, unchanged)", "19:35 (3; impl-03 replaced in-place at 19:35:21)", "19:37 (3)", "19:43 (3, final; shas 5780ad75/709ff22b/19d424a3)"]
+  },
+  "cross_impl_notes": [
+    "impl-01 stages tracked files with git mv (index records rename, never commits); impl-02 uses plain mv (quarantine shows as worktree deletions) — different index disciplines, both documented and fixture-verified",
+    "second-check philosophies differ correctly: impl-01 re-derives pushed receipt via original-path unpushed check + quarantine-bytes==introducing-blob pin (prong1 tolerates post-move NOT-SAFE); impl-02 pins the sidecar digest and re-derives receipt from the record's intro/ref — both catch the S23 F1 trap (pushed receipt is not path-local) without re-deriving from the moved path",
+    "--hold 0 semantics: impl-01 has native --hold; impl-02/03 have no hold-at-stage, hold is enforced at --retire via --hold-min-seconds (0 allowed); both satisfy the contract's compressed-flow intent",
+    "impl-01 processes targets sequentially: an ABORTED earlier target can make later targets collision-refuse on reuse of the same fixture — rerun abort scenarios on fresh fixtures"
+  ],
+  "safety_attestation": {
+    "fixtures": "all mutations confined to /tmp/s09-fix* (mktemp-style fixture repos + local bare remotes); no live fleet or lane repo mutated by any tested tool",
+    "live_guard_probes": "impl-01 exit-4 guard probe and impl-02 Q-REFUSED probe both fired with zero filesystem effect",
+    "lane_repo_writes": "results/qrun-09.json only",
+    "forbidden_reads": ".ufo/state and .ufo/watchdog.log never opened; no secret-shaped file read (fixture names contain none)",
+    "git_on_live_repos": "none (only fixture repos; live-fleet guard probed read-only-effectively: refusal before effect)"
+  },
+  "incidents": [
+    "/tmp disk-quota-exceeded at 19:2x while building fixture D (tmpfs 13G/16G, other seats' load); resolved by deleting my completed fixtures a/b/c; evidence logs (small text) preserved in /tmp/s09-ev-01 and /tmp/s09-selftest-0*.log — ephemeral, decisive lines are embedded above"
+  ],
+  "late_polls": {
+    "impl03_refix": "S03 replaced impl-03 in-place at 19:35:21 (sha 19d424a3) fixing the line-641 parse error; re-tested immediately — see impls_tested.03",
+    "impl04_08": "never landed through final poll 19:43:38",
+    "fellow_runners": "results/ holds qrun-01/05/10/11/12/13/18/20/S02-01/S02-02/23 from other runner seats at final write"
+  },
+  "to_verify": [],
+  "matrix_summary": {
+    "impl01": "PASS — selftest 63/63; hold-0 scenario A: 2 DELETED (pushed prong2 + stale prong1) / NOT-SAFE untouched; tamper aborts proven (digest-pin + unpushed-touching); collision refused; live guard exit 4",
+    "impl02": "PASS at sha 709ff22b — selftest 76/76 (after in-round fix from red 45/24 rig at d3a3c717, whose core modes passed manual verification anyway); full cycle v2 green incl. pre-corrupted-digest abort + hold-not-elapsed + sandbox/no-sandbox refusals",
+    "impl03": "FAIL — line-424 sandbox wipe makes --stage/--retire impossible (selftest ABORTs Q12); --check excellent; verify-staged digest logic proven via hand-staged probes; one-line fix available",
+    "impl04_08": "NOT LANDED"
+  }
+}

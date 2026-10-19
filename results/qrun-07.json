@@ -1,0 +1,73 @@
+{
+  "seat": "S07",
+  "round": 8,
+  "kind": "implementor fixture-run evidence (quarantine-flow tool)",
+  "recorded_at": "2026-10-18T23:55:00-03:00",
+  "deliverable": "tools/impl-07.sh",
+  "sha256": "be90a23281ba5febc6b5431e2d11424c10dc1149d2cbe89a90012b04d8304bc0",
+  "bytes": 46451,
+  "lines": 875,
+  "scope": "ALL mutations confined to mktemp fixtures under /tmp (hard rail: owning-repo realpath must be under realpath(${TMPDIR:-/tmp}); no token override). Live fleet touched read-only only. Lane repo untouched: git status shows only untracked seat files; no .ufo-quarantine created (asserted in-selftest T32c).",
+  "tool_summary": "souji-quarantine lifecycle: plan | runbook | stage | check | delete | status + --selftest. Implements SKILL.md removal-flow steps 3-6 and the r7 authorization rule (gate1 unpushed-touching via explicit --branches --not --remotes; gate2 porcelain; gate3 receipt via installed souji-verify.sh, inline fail-closed fallback), corrected by r8 runner findings qrun-23 F1/F2: the second receipt check consumes PRE-MOVE evidence recorded at stage time (receipt class, sha256, evidence line, epoch) and never re-derives a receipt from the moved path.",
+  "gate2_semantics_note": "r7's verbatim 'porcelain empty' makes every untracked aged scratch unstaggable, which would permanently unexercise the stale receipt class against the installed receipt engine (souji-verify grants SAFE(stale) to untracked scratch). impl-07 splits gate2: tracked-dirty entries block every receipt; untracked(??) entries block unless receipt=stale. Documented in header; selftest T02/T22 prove stale staging, T05 proves tracked-dirty still blocks.",
+  "selftest": {
+    "cmd": "bash tools/impl-07.sh --selftest",
+    "rc": 0,
+    "summary_line": "SELFTEST\tpass=80\tfail=0\tfixture=/tmp/souji07-selftest.pg4zHf",
+    "runtime_s": 30,
+    "coverage": [
+      "plan: pushed/stale AUTHORIZED; no-receipt, g1, g2 tracked-dirty, untracked-non-scratch blocks; zero-remote fail-closed (explicit --branches form returns the commit where bare --not --remotes returns nothing on git 2.55); single-origin-ref D1 fallback; secrets-refusal; symlink; unreachable; repo-root refused",
+      "pushed lifecycle: stage (git mv for tracked, NO commit - HEAD sha unchanged asserted), hold refused rc=1, check PASS anchor=pre-move, delete, re-delete refused",
+      "stale lifecycle: file + directory staged (plain mv), check PASS, delete, quarantine emptied",
+      "tamper: digest-drift check FAIL, delete refused, tampered copy preserved for forensics",
+      "mid-hold: new unpushed commit touching path => new-unpushed-commits-touching + original-path-recreated refusal; other-path commits do not trip it",
+      "escape guard: forged manifest row with real ../ traversal refused (traversal-shape + realpath -P prefix + date-dir + leaf-shape, four independent walls)",
+      "live rail: stage/check/delete against the lane repo refused before any filesystem effect (outside-fixture-scope); plan/runbook read-only allowed",
+      "runbook: g1->operator push, zero-remotes->operator, untracked-scratch-age->'eligible after' wait, secrets->kagi route, all-green->parent 'gates open'",
+      "cli: usage=2 on no-args/bad-flag/missing --repo/bad --hold-seconds; --help=0; --json JSONL validated by python json.loads; cwd-independence from /",
+      "fixture hygiene: --keep honored (T49) and default cleanup verified via non-recursive child runs (T48, SOUJI07_NO_NEST guard)"
+    ]
+  },
+  "live_read_only_probes": [
+    {
+      "cmd": "bash tools/impl-07.sh plan $PWD/SKILL.md",
+      "observed": "TICKET .../souji-shokunin/SKILL.md NOT-AUTHORIZED blocked no-receipt(g3) unpushed-commits-touching(g1=2) | g1=2 g2t=0 g2u=0 g3=none repo=souji-shokunin",
+      "agrees_with": "r7: lane repo has 12 unpushed bookkeeping commits; refs/remotes empty"
+    },
+    {
+      "cmd": "bash tools/impl-07.sh plan ../lore-shokunin/.scratch && bash tools/impl-07.sh runbook ../lore-shokunin/.scratch",
+      "observed": "NOT-AUTHORIZED no-receipt(g3) untracked-blocks-receipt(g2u=26); GATE: stale blocked by 56 live reference(s): retire citations first",
+      "agrees_with": "r7 S01/S20: lore .scratch fails on live citations (LOG.md:3530) and untracked dirt"
+    },
+    {
+      "cmd": "bash tools/impl-07.sh plan ../templates/round-prompt.md && bash tools/impl-07.sh runbook ../templates/round-prompt.md",
+      "observed": "TICKET AUTHORIZED pushed ev=intro=7d02e9671f86 ref=refs/remotes/origin/master ancestor=yes; GATE none parent 'gates open: plan -> AUTHORIZED, then stage -> hold -> check -> delete within one receipt window'",
+      "significance": "first live AUTHORIZED(pushed) class found by the tool - fleet-root pushed files (the b2f2efa checkpoint class) - while stage against it would still refuse (outside /tmp) until the parent/operator chooses a run location; consistent with mint demand and r7's 'remaining gates are external'"
+    }
+  ],
+  "defects_found_and_fixed_during_development": [
+    "set -u crash on eval early-return paths (EV_g2t/g2u uninitialized) - every unreachable/secrets/repo-root plan crashed rc=1 with empty output; caught by T08/T10/T11/T35 empties",
+    "directory digests were path-dependent (inner sha256sum lines embed paths) - broke stale-dir round-trip; fixed by hashing per-file digests only (awk '{print $1}')",
+    "relative target paths misclassified as repo-root-target (rel-prefix strip vs absolute repo root) - found by the live lore probe; fixed via realpath -m canonicalization, raw path kept for symlink checks and output",
+    "r7-verbatim gate2 would permanently block untracked stale candidates (documented above, semantics split)",
+    "selftest recursion hang: T47 re-invoked --selftest from / (infinite bash recursion, killed at 240s timeout); redesigned to --help + read-only plan from /, cleanup via child runs"
+  ],
+  "sibling_calibration": "impl-08.sh (S08) selftest crashes at exit: EXIT trap references function-local WORK under set -u ('WORK: unbound variable', observed 18:4x). impl-07 keeps trap handlers on globals only and stores the pattern as a lesson.",
+  "safety_observations": {
+    "git_mutations": "fixture repos under mktemp only; no push/fetch/worktree/reset/rebase/amend verbs anywhere in source (grep-audited); fixture commits use hermetic GIT_AUTHOR/COMMITTER env",
+    "network": "none (bare local remotes; remote-tracking refs built with update-ref, never push)",
+    "lane_repo": "no writes; no .ufo-quarantine; no .ufo/state or .ufo/watchdog.log opened; no secret-shaped reads (secrets-refusal class asserted)",
+    "tmp_residue": "none after run (three orphaned fixtures from timeout-killed early runs removed by hand: souji07-selftest.8J4oQI/.POLINY/.uXtck4)"
+  },
+  "axes": [
+    "flow fidelity: full 5-step SKILL.md lifecycle executable end-to-end on fixtures with pre-move-evidence second check (qrun-23 contract items 1-5 all implemented)",
+    "fail-closed depth: four independent delete escape guards; receipt re-anchoring impossible post-move; live fleet untouchable by construction",
+    "gate-opening runbook: per-target owner+action derivation proven against live fleet surfaces (operator push / lane citations / wait-for-clock / kagi route / parent gates-open)",
+    "evidence discipline: every claim above carries a command + observed output; selftest is re-runnable and self-contained"
+  ],
+  "not_claimed": [
+    "No removal, prune, move, or quarantine was performed on any real repo; the AUTHORIZED fleet-root ticket is reported, not executed",
+    "moved-to-obsidian receipt: reported at plan level but the second check for it relies on copy identity + g1-delta + hold (vault-side ledger re-check is out of fixture scope; documented limitation in cmd_check)",
+    "metadata-prune receipts are reported but refused at stage - worktree registrations belong to the git worktree machinery (r3 precedent)"
+  ]
+}

@@ -1,0 +1,80 @@
+{
+  "seat": "S05",
+  "role": "implementor",
+  "round": 8,
+  "verb": "impl",
+  "assignment": "impl-05.sh",
+  "date_utc": "2026-10-18",
+  "deliverable": "tools/impl-05.sh",
+  "tool_sha256": "66b36902286eb48017206e29039e8318155d3dcd2cd5f6c9aa377b663a5188c7",
+  "claims": [
+    "quarantine-flow tool: plan | stage | second-check | release | restore + --selftest, implementing SKILL.md removal-flow steps 1-6 with ticket manifests",
+    "mutation guard: stage/second-check/release/restore hard-refuse (exit 3) any root outside ${TMPDIR:-/tmp}/tmp.*; plan read-only anywhere",
+    "selftest 21/21 green on mktemp fixtures (twice consecutively)"
+  ],
+  "evidence": {
+    "selftest": {
+      "command": "TMPDIR=/dev/shm/q05 tools/impl-05.sh --selftest",
+      "runs": 3,
+      "tally": "21/21 passed",
+      "exit": 0,
+      "note": "TMPDIR=/dev/shm/q05 because shared /tmp tmpfs hit 'Disk quota exceeded' under 24-seat fleet load (df: 13G/16G used, 65% inodes); tool guard is TMPDIR-aware so the fixture-only contract held",
+      "cases": {
+        "SA1": "no git push/fetch/reset/rebase/amend/checkout/branch in tool source",
+        "TS1": "plan pushed verdict: intro commit ancestor of origin/master, unpushed-touching=0",
+        "TS2": "NOT-SAFE on unpushed+dirty tracked file",
+        "TS3": "SAFE(stale): scratch type, refs=0, age 3d>=1d",
+        "TS4": "SAFE(moved-to-obsidian) via ledger row + sha256 both sides",
+        "TS5": "NOT-SAFE(secrets-refusal) on *.env",
+        "TS6": "quarantine dir excluded from live-reference sweep",
+        "TS7": "live root refused exit=3 BEFORE any write; no .ufo-quarantine created",
+        "TS8": "stage refuses NOT-SAFE target; artifact untouched",
+        "TS9": "pushed staged: git mv + ticket.json + commit 'quarantine(stage): pushed ... [evidence: ...]'",
+        "TS10": "pushed second-check immediate pass (no hold required): intro still ancestor, origin tip monotone, sha intact",
+        "TS11": "release deletes artifact from quarantine",
+        "TS12": "stale staged with 450s hold recorded",
+        "TS13": "second-check refused before hold ('450s left')",
+        "TS14": "release refused without passing second-check",
+        "TS15": "restore returns artifact byte-identical (cmp)",
+        "TS16": "second-check passes after hold elapsed (2s fixture hold)",
+        "TS17": "release after hold deletes from quarantine",
+        "TS18": "sha drift at second-check fails closed",
+        "TS19": "obsidian receipt round-trip: stage + hold + second-check pass",
+        "TS20": "plan --json works read-only on a live lane path"
+      }
+    },
+    "live_plan_readonly": {
+      "command": "tools/impl-05.sh plan --receipt internal <lane>/tools/souji-verify.impl-09.sh <fleet>/shokunin.conf.full-roster-20261015",
+      "outputs": [
+        "NOT-SAFE none: pushed-unverifiable: introducing commit not ancestor of origin/master (impl-09.sh — consistent with r7 finding: lane remote does not exist)",
+        "SAFE pushed: intro=99efc52b3a6f ancestor of origin/master, unpushed-touching=0 (shokunin.conf.full-roster-20261015 — matches SKILL.md known-surface row)"
+      ],
+      "exit": 0
+    },
+    "live_mutation_refusal": {
+      "command": "tools/impl-05.sh stage --root <lane-repo> --receipt internal <lane>/LOG.md",
+      "output": "REFUSED live-mutation: /home/vgpnk/Projects/shokunin/souji-shokunin is not under /tmp/tmp.* — quarantine mutations are fixture-only (round-8 contract)",
+      "exit": 3,
+      "verified": ".ufo-quarantine absent in lane before and after"
+    }
+  },
+  "defects_found_and_fixed_inround": [
+    "ticket JSON wrote hold_required/hold_until_epoch as quoted strings -> typed readers missed them -> 450s hold gate never engaged (false-SAFE class); caught by TS13, fixed to raw boolean/number",
+    "rg '-g' globs placed after '--' parsed as paths -> sweep errored; fail-closed refs=-1 fired correctly; globs moved before '--'",
+    "git commit -- <pathspec> dropped the staged deletion and untracked ticket; stage/release/restore now 'git add -A' the quarantine scope and commit precise pathspecs",
+    "git mv does not create intermediate destination dirs -> ENOENT for tracked subdirectory artifacts; mkdir -p added",
+    "ticket verbs wrongly required a positional path (usage spam); arg rule now plan/stage only",
+    "grep -q under pipefail SIGPIPE'd git log checks in selftest; replaced with captured-subject compare",
+    "harness: [[ ]] never glob-expands; -f glob/*/path asserts were vacuous; expanded via ls first",
+    "selftest hardened with bounded retry on transient /tmp quota exhaustion; ENV1 fails loudly if persistently blocked"
+  ],
+  "engine_integration": "auto mode prefers installed tools/souji-verify.sh (r6 verdict format VERDICT\\tpath\\tSAFE|NOT-SAFE\\treceipt\\tevidence); --receipt internal ships a spec-faithful fallback (pushed/moved-to-obsidian/stale, fail-closed symlink/secrets/unreachable). All round-8 evidence used --receipt internal because the installed engine is being concurrently rewritten by sibling seats this wave.",
+  "safety": {
+    "live_fleet_mutations": 0,
+    "git_history_writes": 0,
+    "forbidden_git_verbs": "absent from source (selftest SA1)",
+    "fixture_scope": "mktemp dirs only; trap-cleanup; own leftovers removed (/tmp/tmp.q05*, /dev/shm/q05)"
+  },
+  "status": "COMPLETE",
+  "to_verify": "cross-seat: judges may re-run 'TMPDIR=<writable> tools/impl-05.sh --selftest' (exit 0 expected); TS20 live-plan output depends on live tree state at run time"
+}

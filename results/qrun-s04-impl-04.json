@@ -1,0 +1,67 @@
+{
+  "run": "qrun-s04-impl-04",
+  "seat": "S04",
+  "round": 8,
+  "date": "2026-10-18",
+  "deliverable": "tools/impl-04.sh",
+  "tool_sha256": "43dbc5fa3cbcf30dff7d4a64b22798dabd73d1b37878aa90129936cb6a466a7d",
+  "kind": "implementor evidence run",
+  "summary": "Quarantine flow executor: ticket-bounded stage -> hold -> second-check -> release, delegating receipts to tools/souji-verify.sh. Makes r7's UNEXERCISED four-stage flow executable and provable on fixtures.",
+  "verdicts": {
+    "selftest": "37 pass / 0 fail (rc=0, zero fixture residue)",
+    "sibling_engine_regression": "tools/souji-verify.sh --selftest: 24 checks, 0 failed",
+    "live_fleet_integrity": "git status --porcelain unchanged by all runs (13 untracked round-8 in-flight entries; no .ufo-quarantine created in the lane repo); zero commits, zero moves, zero deletions on any live repo",
+    "live_dry_run_fail_closed": "dry-run stage of tools/souji-verify.sh on the live lane -> REFUSED receipt=NOT-SAFE(pushed-unverifiable pushed=unverifiable(no-default-ref) intro=9435e464a2dc) — matches r7 lemma (origin dead)"
+  },
+  "evidence_commands": [
+    {"cmd": "bash -n tools/impl-04.sh", "observed": "exit 0"},
+    {"cmd": "TMPDIR=/home/vgpnk/tmp-impl04 bash tools/impl-04.sh --selftest", "observed": "selftest: 37 pass, 0 fail; residue after exit = 0 dirs"},
+    {"cmd": "TMPDIR=/home/vgpnk/tmp-impl04 bash tools/souji-verify.sh --selftest", "observed": "selftest: 24 checks, 0 failed"},
+    {"cmd": "bash tools/impl-04.sh gates .  (live lane, read-only)", "observed": "QA gates . INFO repo-wide unpushed=13 dirty=12 | QA gates . INFO gate3-default-ref=none (origin dead or absent -> pushed unestablishable; OPEN-ACTION: operator creates/restores the remote, then pushes)"},
+    {"cmd": "bash tools/impl-04.sh --json --stale-days 1 stage tools/souji-verify.sh (live, dry-run)", "observed": "{\"op\":\"stage\",\"status\":\"REFUSED\",\"detail\":\"receipt=NOT-SAFE(pushed-unverifiable) ...\"}; no writes"},
+    {"cmd": "bash tools/impl-04.sh  (no command)", "observed": "usage error, rc=2"},
+    {"cmd": "before/after fixture-residue count across a full selftest run", "observed": "delta=0 after mk_repo subshell fix (was delta=7: R=$(mk_repo) lost the FIXTURE_ROOTS array)"}
+  ],
+  "selftest_scenarios": [
+    "S1/S1b pushed happy path: stage(git mv+quarantine commit, whole rename) -> preview -> release(deleted, release commit) -> ticket released; double release refused",
+    "S2/S2b/S2c stale: 24h default hold enforced (release refused before hold); strict profile refuses untracked target (r7 S15 rule); fixture-only floor bypass + real 1s hold -> timed release OK",
+    "S3 tamper: quarantined copy modified -> manifest-mismatch refusal",
+    "S4 resurrect: original path recreated -> refusal",
+    "S5 new unpushed commit touching original path (plumbing-built sneak commit on side branch) -> unpushed-touching-changed refusal",
+    "S7 default ref deleted -> receipt-lost refusal",
+    "S6 dirty tracked target refused at stage (gate2); nothing moved",
+    "S8 dry-run: full checks, plan printed, zero commits, zero quarantine dir",
+    "S9 live-repo guard: --execute on non-fixture repo refused live-repo-not-authorized BEFORE inspection; repo untouched (no quarantine dir, no commits)",
+    "S10 secret-shaped path (id_key.pem) refused via verify secrets-refusal; no quarantine created",
+    "S11 missing/malformed ticket refused",
+    "S12 untracked stale flow works under --gates skill (mv mode, no commit)",
+    "S13 pushed hold=0 honored (requested values clamped UP to floor elsewhere)",
+    "S14 gates: default-ref resolution + dead-origin OPEN-ACTION reporting"
+  ],
+  "defects_found_and_fixed_in_round": [
+    "git mv has no -q switch (error: unknown switch `q') — every stage had refused git-mv-failed",
+    "pathspec commit `git commit -- .ufo-quarantine` SPLITS the rename: original path stayed tracked and the unpushed-set check saw an empty set; replaced with staged-set foreign-guard + pathspec-free commit (also now refuses to sweep foreign staged changes)",
+    "authorization ordering: --execute now authorizes the repo BEFORE any inspection (unauthorized repos are never read)",
+    "R=$(mk_repo) ran in a subshell: FIXTURE_ROOTS appends were lost, leaving fixture residue (delta=7); mk_repo now sets a global + EXIT trap cleans even crash-aborted runs"
+  ],
+  "environment_incidents": [
+    "tmpfs /tmp at 80% with per-user Disk quota exceeded (13G/16G, fleet seats running concurrently) — fixture roots moved to TMPDIR=/home/vgpnk/tmp-impl04 (outside the lane repo), all cleaned to 0 residue; earlier quota-crash residue purged"
+  ],
+  "safety": {
+    "git_mutations_on_live_repos": false,
+    "fetch_push": false,
+    "removals": 0,
+    "moves": 0,
+    "network": "none",
+    "secret_content_read": false,
+    "ufo_state_or_watchdog_accessed": false,
+    "writes_outside_assigned_files": "none (mktemp fixtures + /home/vgpnk/tmp-impl04 scratch, both cleaned)",
+    "lane_files_written": ["tools/impl-04.sh", "results/qrun-s04-impl-04.json"]
+  },
+  "handoff_notes_for_parent": [
+    "impl-04.sh is UNCOMMITTED (workers do not commit; parent integrates per AGENTS.md)",
+    "live-lane gates report (read-only, reproducible): unpushed=13 dirty=12 default-ref=none -> the gate-opening runbook's first opening action is operator-owned remote restore + push; impl-04.sh gates <repo> emits exactly this diagnosis per repo",
+    "hold semantics: pushed=0s, non-pushed=86400s default with 450s floor (SKILL); the floor is bypassable only inside fixture roots (SOUJI_TEST_HOLD_FLOOR=1 + fixture realpath), so live releases always hold >=450s",
+    "--gates strict (default) implements r7 S15 authorization rule (untracked targets refused); --gates skill implements SKILL.md's literal plain-mv path for untracked artifacts; profiles documented in the tool header"
+  ]
+}

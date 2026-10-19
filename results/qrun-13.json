@@ -1,0 +1,243 @@
+{
+ "seat": "S13",
+ "round": 8,
+ "kind": "runner (quarantine-flow)",
+ "qrun": 13,
+ "date": "2026-10-18",
+ "assignment": "Round 8 quarantine-flow runner: exercise the full SKILL.md removal flow (dry-run census -> approval -> quarantine staging -> hold -> second receipt check -> delete) end-to-end on a mktemp fixture fleet using the installed tools souji-verify.sh / souji-census.sh, with negative controls (no-receipt staging, secrets, receipt-break-during-hold) and runbook corrections for the r7 execution_plan_template. Write results/qrun-13.json only.",
+ "write_authorization": "results/qrun-13.json only. All mutations confined to mktemp dirs (/tmp/s13-qrun-fleet.*) and /tmp/s13-qrun13/ evidence. Live fleet: read-only tool invocations only (selftests, which use their own mktemp). No git fetch/push/commit/branch on any live repo \u2014 fixture repos only. No .ufo/state, no .ufo/watchdog.log, no secret-shaped file content read (.env only ever passed as a PATH argument to the refusing tool; its content line 'SECRET=1' was written by this seat into the fixture and is a dummy, never read from a real file).",
+ "axes": {
+  "flow-completeness": "all 6 SKILL.md flow steps executed on fixture with observed outputs",
+  "gate-fidelity": "fail-closed paths proven: no-receipt staging blocked, secrets refused, receipt-break aborts deletion",
+  "evidence-fidelity": "every claim carries command + observed output files",
+  "safety": "zero writes outside mktemp + this results file",
+  "speed": "background 450s real hold overlapped with negatives; parallel batches"
+ },
+ "tool_baseline": {
+  "selftests": {
+   "souji-verify.sh": "exit 0, 24 checks 0 failed",
+   "souji-census.sh": "exit 0, 32 checks 0 failed",
+   "souji-vault-verify.sh": "exit 0, 35 checks 0 failed"
+  },
+  "sha256_installed": "a91049c96e5fba7c3db83df288a261717156c3834532e54d712ed0c555e350c4  /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh\n11bf9cdf8d4f75415b18e046aef0e96215b983f0d5b3ff7842301ff6ac65d381  /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-census.sh\n53f92421b254426c7e4882c1da9cfaa444bddde7ff90ee30afcd48fa229328b1  /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-vault-verify.sh",
+  "note": "census sha 11bf9cdf... matches the r6 install record in LOG.md; tools not modified by this run"
+ },
+ "fixture": {
+  "fleet_root": "/tmp/s13-qrun-fleet.odSTad",
+  "remote_git": "/tmp/s13-qrun-fleet.odSTad/remote.git (bare, local-path origin for repoA)",
+  "remote2_git": "/tmp/s13-qrun-fleet.odSTad/remote2.git (bare, local-path origin for repoA2, isolated after a shared-remote push collision)",
+  "repoA": "pushed.txt + docs/pushed-deep.txt (tracked+pushed), local-only.txt (tracked, unpushed commit), launch-new.json (fresh untracked scratch), launch-old.json + notes-draft.md (untracked scratch, mtime 2026-10-16), .env (dummy secret-shape)",
+  "repoA2": "clean-room redo of staging with path-scoped git add after the add -A contamination finding",
+  "repoB": "no-remote control (pushed-unverifiable)"
+ },
+ "flow": {
+  "step1_dry_run": {
+   "commands": [
+    "SHOKUNIN_ROOT=<fleet> bash tools/souji-census.sh --root <fleet> --include-root",
+    "cd <fleet>/repoA && for f in ... ; do bash tools/souji-verify.sh --json $f; done"
+   ],
+   "census": {
+    "file": "/tmp/s13-qrun13/step1-census.tsv",
+    "content": "repo\tworktrees\tunpushed\tdirty\tscratch_bytes\tmtime_iso\tverdict_flags\n/tmp/s13-qrun-fleet.odSTad/fleet/repoA\t1\t1\t4\t0\t2026-10-18T18:34:21-03:00\tdirty,unpushed,secret-shaped\n/tmp/s13-qrun-fleet.odSTad/fleet/repoB\t1\t1\t0\t0\t2026-10-18T18:34:21-03:00\tunpushed,no-remote\ncensus-exit=0"
+   },
+   "receipts_jsonl": {
+    "file": "/tmp/s13-qrun13/step1-receipts.jsonl",
+    "content": "{\"path\":\"pushed.txt\",\"verdict\":\"SAFE\",\"receipt\":\"pushed\",\"evidence\":\"intro=75eb0f4af90b ref=refs/remotes/origin/master ancestor=yes\"}\n{\"path\":\"docs/pushed-deep.txt\",\"verdict\":\"SAFE\",\"receipt\":\"pushed\",\"evidence\":\"intro=75eb0f4af90b ref=refs/remotes/origin/master ancestor=yes\"}\n{\"path\":\"local-only.txt\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"none\",\"evidence\":\"pushed=unpushed-commits-touching intro=f4e41c6ee445; obsidian=no-matching-ledger-row; stale=not-scratch-type\"}\n{\"path\":\"launch-new.json\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"none\",\"evidence\":\"pushed=no-introducing-commit; obsidian=no-matching-ledger-row; stale=mtime-age-days=0<=1\"}\n{\"path\":\"launch-old.json\",\"verdict\":\"SAFE\",\"receipt\":\"stale\",\"evidence\":\"scratch-type=checkpoint refs=0 mtime-age-days=2\"}\n{\"path\":\"notes-draft.md\",\"verdict\":\"SAFE\",\"receipt\":\"stale\",\"evidence\":\"scratch-type=draft refs=0 mtime-age-days=2\"}\n{\"path\":\".env\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"secrets-refusal\",\"evidence\":\"secret-shaped path component\"}"
+   },
+   "observed": "census: repoA dirty,unpushed,secret-shaped; repoB unpushed,no-remote. Receipts: 2 SAFE(pushed), 2 SAFE(stale refs=0 age=2d), local-only.txt NOT-SAFE(unpushed-commits-touching), launch-new.json NOT-SAFE(mtime-age-days=0<=1), .env NOT-SAFE(secrets-refusal). Nothing changed on disk by step 1."
+  },
+  "step2_approval_gates": {
+   "commands": [
+    "git log --branches --not --remotes --oneline -- <path>   # gate1, must be empty",
+    "git status --porcelain=v1 --untracked-files=all -- <path>   # gate2"
+   ],
+   "gates": {
+    "file": "/tmp/s13-qrun13/step2-gates.txt",
+    "content": "--- gate1 (unpushed touching) per candidate ---\ngate1 pushed.txt lines=0\ngate1 docs/pushed-deep.txt lines=0\ngate1 local-only.txt lines=1\n  f4e41c6 local-only work\ngate1 launch-old.json lines=0\ngate1 notes-draft.md lines=0\n--- gate2 (porcelain touching) per candidate ---\ngate2 pushed.txt <<>>\ngate2 docs/pushed-deep.txt <<>>\ngate2 local-only.txt <<>>\ngate2 launch-old.json <<?? launch-old.json>>\ngate2 notes-draft.md <<?? notes-draft.md>>"
+   },
+   "approval_list": {
+    "file": "/tmp/s13-qrun13/step2-approval.tsv",
+    "content": "path\treceipt\tapproved\npushed.txt\tpushed\tYES\ndocs/pushed-deep.txt\tpushed\tYES\nlaunch-old.json\tstale\tYES\nnotes-draft.md\tstale\tYES\nlocal-only.txt\tnone\tNO-gate1-unpushed\nlaunch-new.json\tnone\tNO-stale-mtime-too-young\n.env\tsecrets-refusal\tNO-secret-refusal"
+   },
+   "observed": "gate1: local-only.txt lines=1 (f4e41c6) -> blocked; all 4 SAFE candidates lines=0. gate2: tracked pushed paths empty; untracked stale paths show '??' (their natural state \u2014 see gate2 finding). Simulated operator approval = the 4 SAFE rows only."
+  },
+  "step3_stage": {
+   "commands": [
+    "mkdir -p <repo>/.ufo-quarantine/$(date -u +%F)",
+    "sha256sum (before)",
+    "git mv pushed.txt .ufo-quarantine/2026-10-18/pushed.txt ; git mv docs/pushed-deep.txt .ufo-quarantine/2026-10-18/docs__pushed-deep.txt",
+    "mv launch-old.json notes-draft.md -> quarantine (untracked: plain mv per SKILL.md)",
+    "git add -A && git commit   # CONTAMINATED \u2014 see finding F3",
+    "sha256sum (after); git log; gate1 re-run on original paths"
+   ],
+   "hashes_before": {
+    "file": "/tmp/s13-qrun13/step3-hashes-before.txt",
+    "content": "e9462dd2b26ca21b2e019412bb853cb10b0265139381241e2c909ab1e7d159dc  pushed.txt\ndeed0cca0ffa164204c897b860cf8f9b8c1ada9fa9a63c60c11c916e7efec4ad  docs/pushed-deep.txt\n4b3eeade185bebf04f3ba403045fe60dbad3030f5378cda7106e816994ae4ca9  launch-old.json\na6b3ceb4bf0116c27f15c7294bb0406fea8451099b7023597bbcc0f2164c1ae9  notes-draft.md"
+   },
+   "hashes_after": {
+    "file": "/tmp/s13-qrun13/step3-hashes-after.txt",
+    "content": "e9462dd2b26ca21b2e019412bb853cb10b0265139381241e2c909ab1e7d159dc  /tmp/s13-qrun-fleet.odSTad/fleet/repoA/.ufo-quarantine/2026-10-18/pushed.txt\ndeed0cca0ffa164204c897b860cf8f9b8c1ada9fa9a63c60c11c916e7efec4ad  /tmp/s13-qrun-fleet.odSTad/fleet/repoA/.ufo-quarantine/2026-10-18/docs__pushed-deep.txt\n4b3eeade185bebf04f3ba403045fe60dbad3030f5378cda7106e816994ae4ca9  /tmp/s13-qrun-fleet.odSTad/fleet/repoA/.ufo-quarantine/2026-10-18/launch-old.json\na6b3ceb4bf0116c27f15c7294bb0406fea8451099b7023597bbcc0f2164c1ae9  /tmp/s13-qrun-fleet.odSTad/fleet/repoA/.ufo-quarantine/2026-10-18/notes-draft.md"
+   },
+   "quarantine_ls": {
+    "file": "/tmp/s13-qrun13/step3-quarantine-ls.txt",
+    "content": "total 16\ndrwxr-xr-x 2 vgpnk vgpnk 120 Oct 18 18:35 .\ndrwxr-xr-x 3 vgpnk vgpnk  60 Oct 18 18:35 ..\n-rw-r--r-- 1 vgpnk vgpnk  10 Oct 18 18:34 docs__pushed-deep.txt\n-rw-r--r-- 1 vgpnk vgpnk  17 Oct 16 12:00 launch-old.json\n-rw-r--r-- 1 vgpnk vgpnk  12 Oct 16 12:00 notes-draft.md\n-rw-r--r-- 1 vgpnk vgpnk  12 Oct 18 18:34 pushed.txt"
+   },
+   "observed": "All 4 hashes identical across staging (mv preserves content+mtime). After the staging commit, gate1 on ORIGINAL tracked paths flips to 1 line each (the quarantine commit itself touches them) -> original-path receipts are dead by construction once staged+committed. Untracked originals stay gate1=0."
+  },
+  "step3b_scoped_staging_redo": {
+   "evidence": {
+    "file": "/tmp/s13-qrun13/step3b-scoped-staging.txt",
+    "content": "=== repoA2 (own origin remote2.git): path-scoped staging commit contents ===\nfeb73f2 quarantine: pushed.txt (SAFE/pushed) + launch-old.json (SAFE/stale); path-scoped staging; evidence results/qrun-13.json\n\n .ufo-quarantine/2026-10-18/launch-old.json          | 1 +\n pushed.txt => .ufo-quarantine/2026-10-18/pushed.txt | 0\n 2 files changed, 1 insertion(+)\n=== repoA2 leftover untracked \u2014 .env and launch-new.json and notes-draft.md NOT committed ===\n?? .env\n?? launch-new.json\n?? notes-draft.md\n=== pre-stage receipt re-run evidence retained (runbook step 0) ===\n{\"path\":\"/tmp/s13-qrun-fleet.odSTad/fleet/repoA2/.ufo-quarantine/2026-10-18/pushed.txt\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"none\",\"evidence\":\"pushed=unpushed-commits-touching intro=feb73f259736; obsidian=no-matching-ledger-row; stale=not-scratch-type\"}\n{\"path\":\"/tmp/s13-qrun-fleet.odSTad/fleet/repoA2/.ufo-quarantine/2026-10-18/launch-old.json\",\"verdict\":\"SAFE\",\"receipt\":\"stale\",\"evidence\":\"scratch-type=checkpoint refs=0 mtime-age-days=2\"}"
+   },
+   "observed": "repoA2 quarantine commit feb73f2 contains exactly the 2 staged paths; .env, launch-new.json, notes-draft.md remain untracked and out of the commit. NOTE: the two souji-verify lines in this file are quarantined-copy probes taken AFTER the commit (pushed-class copy -> NOT-SAFE(unpushed-commits-touching intro=feb73f2), stale-class copy -> SAFE(stale)), consistent with repoA's step4 negatives."
+  },
+  "step4_hold": {
+   "design": "pushed class: no hold beyond second check (SKILL.md step 6). stale class: REAL 450s wall-clock hold (>= one driver tick) in background while negatives ran; mv preserves mtime (Oct 16) so the receipt's age condition keeps reflecting true artifact age; production 24h preference noted, not simulated (no mtime falsification).",
+   "hold_log": {
+    "file": "/tmp/s13-qrun13/step4-hold.txt",
+    "content": "hold-start-epoch=1792359575\nhold-end-epoch=1792360025 elapsed=450s (>=450 required)\n4b3eeade185bebf04f3ba403045fe60dbad3030f5378cda7106e816994ae4ca9  launch-old.json\na6b3ceb4bf0116c27f15c7294bb0406fea8451099b7023597bbcc0f2164c1ae9  notes-draft.md\n4b3eeade185bebf04f3ba403045fe60dbad3030f5378cda7106e816994ae4ca9  ./launch-old.json\na6b3ceb4bf0116c27f15c7294bb0406fea8451099b7023597bbcc0f2164c1ae9  ./notes-draft.md\nhold-verification: content re-hashed after hold; compare vs step3-hashes-after.txt"
+   },
+   "negatives": {
+    "file": "/tmp/s13-qrun13/step4-negatives.txt",
+    "content": "=== negative A: receipts on QUARANTINED copies (second-check probe, pre-hold) ===\n{\"path\":\"/tmp/s13-qrun-fleet.odSTad/fleet/repoA/.ufo-quarantine/2026-10-18/pushed.txt\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"none\",\"evidence\":\"pushed=unpushed-commits-touching intro=9f976d11fdcd; obsidian=no-matching-ledger-row; stale=not-scratch-type\"}\n{\"path\":\"/tmp/s13-qrun-fleet.odSTad/fleet/repoA/.ufo-quarantine/2026-10-18/docs__pushed-deep.txt\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"none\",\"evidence\":\"pushed=unpushed-commits-touching intro=9f976d11fdcd; obsidian=no-matching-ledger-row; stale=not-scratch-type\"}\n{\"path\":\"/tmp/s13-qrun-fleet.odSTad/fleet/repoA/.ufo-quarantine/2026-10-18/launch-old.json\",\"verdict\":\"SAFE\",\"receipt\":\"stale\",\"evidence\":\"scratch-type=checkpoint refs=0 mtime-age-days=2\"}\n{\"path\":\"/tmp/s13-qrun-fleet.odSTad/fleet/repoA/.ufo-quarantine/2026-10-18/notes-draft.md\",\"verdict\":\"SAFE\",\"receipt\":\"stale\",\"evidence\":\"scratch-type=draft refs=0 mtime-age-days=2\"}\n=== negative B: blocked staging attempts ===\nblock local-only.txt: gate1 lines=1 (non-empty => runbook refusal, no mv executed)\n{\"path\":\".env\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"secrets-refusal\",\"evidence\":\"secret-shaped path component\"}\n{\"path\":\"launch-new.json\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"none\",\"evidence\":\"pushed=unpushed-commits-touching intro=9f976d11fdcd; obsidian=no-matching-ledger-row; stale=mtime-age-days=0<=1\"}\n=== negative C: receipt-break injection during hold ===\nreceipt on quarantined notes-draft.md AFTER injection:\n{\"path\":\"/tmp/s13-qrun-fleet.odSTad/fleet/repoA/.ufo-quarantine/2026-10-18/notes-draft.md\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"none\",\"evidence\":\"pushed=unpushed-commits-touching intro=9f976d11fdcd; obsidian=no-matching-ledger-row; stale=live-refs=1\"}\n=== control: repoB (no remote) pushed-unverifiable ===\n{\"path\":\"/tmp/s13-qrun-fleet.odSTad/fleet/repoB/b.txt\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"pushed-unverifiable\",\"evidence\":\"pushed=unverifiable(no-default-ref) intro=c6afa5ffaecf; obsidian=no-matching-ledger-row; stale=not-scratch-type\"}"
+   }
+  },
+  "step5_second_check": {
+   "pushed_class": {
+    "file": "/tmp/s13-qrun13/step56-pushed.txt",
+    "content": "=== step 5 (pushed class): second check = identity + no-resurrection (receipt re-derivation impossible, see negatives) ===\npushed.txt: quarantined-exists=yes original-resurrected=no\ndocs__pushed-deep.txt: quarantined-exists=yes original-resurrected=no\ndocs/pushed-deep.txt resurrected=no\n=== step 6 (pushed class): delete from quarantine \u2014 no hold beyond second check per SKILL.md ===\npost-removal quarantine ls:\ntotal 8\ndrwxr-xr-x 2 vgpnk vgpnk 80 Oct 18 18:41 .\ndrwxr-xr-x 3 vgpnk vgpnk 60 Oct 18 18:35 ..\n-rw-r--r-- 1 vgpnk vgpnk 17 Oct 16 12:00 launch-old.json\n-rw-r--r-- 1 vgpnk vgpnk 12 Oct 16 12:00 notes-draft.md\nrepoA status after removal commit:"
+   },
+   "algorithm_as_validated": [
+    "identity: sha256 of quarantined copy == pre-stage hash (step3 files)",
+    "no-resurrection: original path must not exist again",
+    "pushed class: receipt re-derivation on the quarantined copy is IMPOSSIBLE (quarantine commit makes it unpushed-commits-touching) -> the retained PRE-STAGE receipt evidence (step1/step2) is the receipt of record; do not template a post-stage pushed re-run",
+    "stale class: souji-verify --json on the quarantined copy DOES re-verify (reference sweep excludes .ufo-quarantine) -> second check is a real tool re-run, must still print SAFE(stale)"
+   ]
+  },
+  "step6_delete": {
+   "pushed_class": "git rm -q -- <quarantined pushed copies>; path-scoped commit. Observed: quarantine reduced to the 2 stale copies; repoA status clean (see step56-pushed.txt).",
+   "stale_class": {
+    "file": "/tmp/s13-qrun13/step56-stale.txt",
+    "content": "=== hold log ===\nhold-start-epoch=1792359575\nhold-end-epoch=1792360025 elapsed=450s (>=450 required)\n4b3eeade185bebf04f3ba403045fe60dbad3030f5378cda7106e816994ae4ca9  launch-old.json\na6b3ceb4bf0116c27f15c7294bb0406fea8451099b7023597bbcc0f2164c1ae9  notes-draft.md\n4b3eeade185bebf04f3ba403045fe60dbad3030f5378cda7106e816994ae4ca9  ./launch-old.json\na6b3ceb4bf0116c27f15c7294bb0406fea8451099b7023597bbcc0f2164c1ae9  ./notes-draft.md\nhold-verification: content re-hashed after hold; compare vs step3-hashes-after.txt\n=== step 5 (stale class): tool re-run on quarantined copies after real 450s hold ===\n{\"path\":\"/tmp/s13-qrun-fleet.odSTad/fleet/repoA/.ufo-quarantine/2026-10-18/launch-old.json\",\"verdict\":\"SAFE\",\"receipt\":\"stale\",\"evidence\":\"scratch-type=checkpoint refs=0 mtime-age-days=2\"}\n{\"path\":\"/tmp/s13-qrun-fleet.odSTad/fleet/repoA/.ufo-quarantine/2026-10-18/notes-draft.md\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"none\",\"evidence\":\"pushed=unpushed-commits-touching intro=9f976d11fdcd; obsidian=no-matching-ledger-row; stale=live-refs=1\"}\n=== step 6 (stale class): delete launch-old.json (receipt held); KEEP notes-draft.md (receipt broke) ===\n=== final quarantine state ===\ntotal 4\ndrwxr-xr-x 2 vgpnk vgpnk 60 Oct 18 18:48 .\ndrwxr-xr-x 3 vgpnk vgpnk 60 Oct 18 18:35 ..\n-rw-r--r-- 1 vgpnk vgpnk 12 Oct 16 12:00 notes-draft.md\n=== final repoA log ===\nd360e17 removal: launch-old.json deleted from quarantine after 450s hold + receipt re-verified SAFE(stale); notes-draft.md HELD (receipt broke: live-refs=1); r8-qrun13\n5dc39c2 removal: 2 pushed-class artifacts deleted from quarantine after second check (identity+no-resurrection); r8-qrun13\n67c82df r8-qrun13: injection \u2014 live reference to notes-draft.md added during hold\n9f976d1 quarantine: 2 SAFE(pushed) git-mv + 2 SAFE(stale) mv; receipts re-verified pre-stage; evidence results/qrun-13.json\nf4e41c6 local-only work\n75eb0f4 seed pushed artifacts\n=== final status (must be clean) ===\nstatus-lines=0"
+   },
+   "held_back": "notes-draft.md NOT deleted \u2014 receipt broke during hold (stale=live-refs=1 after injection commit); stays in quarantine, recorded as the abort case."
+  }
+ },
+ "findings": [
+  {
+   "id": "F1",
+   "severity": "runbook-material",
+   "finding": "The r7 execution_plan_template step_3 ('re-run ALL of step_0_recheck against the ORIGINAL path' after hold) is unimplementable as written: after staging+commit, the original path no longer exists, and gate1 on it shows the quarantine commit itself (observed: gate1-post pushed.txt lines=1, docs/pushed-deep.txt lines=1). A pushed receipt cannot survive its own staging commit.",
+   "evidence": [
+    "step3 (gate1-post lines)",
+    "step4-negatives.txt (quarantined pushed copy -> pushed=unpushed-commits-touching intro=9f976d1)"
+   ]
+  },
+  {
+   "id": "F2",
+   "severity": "runbook-material",
+   "finding": "Second-check algorithm must be receipt-class-split (validated): pushed = pre-stage receipt evidence (of record) + post-hold sha256 identity + no-resurrection; stale = real tool re-run on the quarantined copy (sweep excludes quarantine, so it re-verifies) + identity.",
+   "evidence": [
+    "step4-negatives.txt (stale copy SAFE, pushed copy NOT-SAFE on same probe)",
+    "step56-pushed.txt"
+   ]
+  },
+  {
+   "id": "F3",
+   "severity": "defect-found-in-run-then-remediated",
+   "finding": "This seat's own staging commit used 'git add -A' and silently committed the secret-shaped .env and the too-young launch-new.json alongside the 4 staged paths (git show --stat 9f976d1: 6 files incl. .env | 1 +). Runbook rule: quarantine staging commits must be path-scoped (git mv stages itself; plain-mv'd files added by explicit path). Remediated and proven in repoA2 (commit feb73f2: exactly 2 paths; .env/launch-new.json/notes-draft.md remain untracked).",
+   "evidence": [
+    "step3b-scoped-staging.txt"
+   ]
+  },
+  {
+   "id": "F4",
+   "severity": "calibration",
+   "finding": "--stale-days 0 turns a brand-new scratch file into SAFE(stale) (mtime-age-days=0 passes when threshold is 0). Runbook must pin --stale-days 1 or the tool default; 0 is a false-SAFE enabler.",
+   "evidence": [
+    "probe-stale-days0.txt"
+   ]
+  },
+  {
+   "id": "F5",
+   "severity": "gate-fidelity-confirmed",
+   "finding": "Receipt-break-during-hold is caught: an injection commit adding a live reference to notes-draft.md flipped the quarantined copy from SAFE(stale refs=0) to NOT-SAFE(stale=live-refs=1); its deletion was aborted and the copy held in quarantine.",
+   "evidence": [
+    "step4-negatives.txt",
+    "step56-stale.txt"
+   ]
+  },
+  {
+   "id": "F6",
+   "severity": "wording",
+   "finding": "gate2 as templated ('porcelain must print nothing') is unsatisfiable for untracked scratch candidates (their natural state is '??'), yet SKILL.md's flow explicitly supports plain mv for untracked. For untracked stale candidates gate2 must read: porcelain over the path may show ONLY '??' \u2014 never M/A (a modified tracked file is live work). Observed: gate2 launch-old.json <<?? launch-old.json>> while its stale receipt was legitimately establishable.",
+   "evidence": [
+    "step2-gates.txt"
+   ]
+  },
+  {
+   "id": "F7",
+   "severity": "control",
+   "finding": "No-remote control fail-closed: repoB/b.txt -> NOT-SAFE(pushed-unverifiable, no-default-ref). Shared-remote fixture footgun: repoA2's push to the same bare remote was rejected non-fast-forward; fixture remotes must be per-repo (isolated remote2.git used).",
+   "evidence": [
+    "step4-negatives.txt",
+    "step3b-scoped-staging.txt"
+   ]
+  }
+ ],
+ "runbook_corrections": [
+  {
+   "replaces": "r7 execution_plan_template step_3",
+   "corrected": "Second check is receipt-class-split. PUSHED: retained pre-stage receipt evidence (step_0_recheck output, of record) + post-hold sha256(quarantined copy)==pre-stage hash + original path not resurrected. Never re-run the pushed receipt post-staging \u2014 the staging commit itself destroys it (observed NOT-SAFE(unpushed-commits-touching intro=<quarantine-commit>) on quarantined pushed copies in both repoA and repoA2). STALE: bash tools/souji-verify.sh --json <quarantined copy> must still print SAFE(stale) \u2014 the sweep excludes .ufo-quarantine so this re-run is meaningful \u2014 plus the same identity check."
+  },
+  {
+   "replaces": "implicit staging commit practice",
+   "corrected": "Quarantine staging commits MUST be path-scoped: git mv stages itself; for plain-mv'd untracked files use git add -- .ufo-quarantine/<date>/<name>. Never git add -A \u2014 observed to sweep in .env (secret-shaped) and an unapproved candidate into commit 9f976d1; repoA2 commit feb73f2 proves the scoped form commits exactly the staged paths."
+  },
+  {
+   "replaces": "unspecified --stale-days",
+   "corrected": "Runbook pins --stale-days 1 (or tool default) in every stale receipt invocation; --stale-days 0 marks brand-new scratch SAFE(stale) (observed: mtime-age-days=0 file SAFE at threshold 0)."
+  },
+  {
+   "replaces": "r7 gate2 text ('porcelain must print nothing')",
+   "corrected": "gate2 for TRACKED candidates: porcelain over the path empty. For UNTRACKED stale candidates: porcelain over the path may show ONLY '??' lines \u2014 any M/A means live work, NOT-AUTHORIZED. (SKILL.md's own 'plain mv for untracked' requires this; the r7 literal text made every untracked candidate unclassifiable.)"
+  },
+  {
+   "adds": "deletion commit discipline",
+   "corrected": "Post-hold deletions from quarantine are git rm -q -- <paths> + a commit naming receipt class, hold elapsed, and second-check evidence; an abort case stays in quarantine un-deleted and is recorded (observed: notes-draft.md held, live-refs=1)."
+  }
+ ],
+ "verdicts": {
+  "flow-exercised": "YES \u2014 full 6-step flow executed on fixture with real 450s hold; 2 pushed-class artifacts staged, second-checked, deleted; 1 stale-class artifact staged, held 450s, re-verified, deleted; 1 stale-class artifact aborted at second check (receipt broke) and held.",
+  "fail-closed": "PROVEN \u2014 no-receipt staging blocked (gate1), secrets-refusal held, mtime-too-young held, no-remote pushed-unverifiable, receipt-break abort.",
+  "gate_opening": "Round 8 can open the operator gate with a corrected runbook: F1/F2 second-check redesign, F3 path-scoped staging rule, F4 stale-days pin, F6 gate2 wording. The r7 template's step_0_recheck remains valid as the PRE-STAGE gate; its step_3 second-check as written does not survive contact with an actual staging commit.",
+  "axes": {
+   "flow-completeness": "improved (first end-to-end exercise; r7 was 0 tickets/fail-closed only)",
+   "gate-fidelity": "improved (break-injection caught by tooling)",
+   "evidence-fidelity": "improved (every step has command+output files)",
+   "safety": "unharmed (zero live mutation)",
+   "speed": "unharmed (hold overlapped with negatives)"
+  }
+ },
+ "final_state": {
+  "repoA_quarantine": "notes-draft.md only (aborted abort-case copy)",
+  "repoA_removals": "pushed.txt, docs__pushed-deep.txt (pushed class), launch-old.json (stale class) deleted from quarantine after second check",
+  "fixture_retained_for_parent_audit": "/tmp/s13-qrun-fleet.odSTad",
+  "evidence_dir": "/tmp/s13-qrun13"
+ },
+ "safety": {
+  "live_repos_touched": "none \u2014 all mutations under /tmp/s13-qrun-fleet.odSTad and remote.git/remote2.git inside it",
+  "git_forbidden_ops_on_live": "none (fixtures only; no fetch anywhere \u2014 remotes are local paths)",
+  "secret_files": "no real secret-shaped file opened; .env in fixture is seat-written dummy content used only as a refusal probe",
+  "census_selftest_mktemp": "tools' own selftests confined to their mktemp dirs (observed paths in selftest tails)"
+ },
+ "not_claimed": [
+  "No live-fleet artifact was classified for removal this run; the flow was exercised on fixtures only",
+  "The 24h stale-hold preference was not simulated (no mtime falsification); the real hold measured is 450s",
+  "moved-to-obsidian receipt not exercised (no ledger row in scope of this qrun; vault tool selftest green)"
+ ],
+ "to_verify": [
+  "Parent: adopt F1/F2/F3/F4/F6 into the round-8 runbook fragment; repoA quarantine retains the abort-case copy /tmp/s13-qrun-fleet.odSTad/fleet/repoA/.ufo-quarantine/2026-10-18/notes-draft.md for inspection.",
+  "v09 mtime math: earliest real-world stale eligibility remains as computed by r7 seats (2026-10-19 earliest); this run adds no live candidates."
+ ]
+}

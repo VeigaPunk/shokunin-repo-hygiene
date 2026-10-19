@@ -1,0 +1,421 @@
+{
+  "seat": "S10",
+  "round": 8,
+  "kind": "runner",
+  "date": "2026-10-18",
+  "measured_at": "2026-10-18T19:02:17-03:00",
+  "assignment": "Independent scenarios for round-8 quarantine-flow tooling + gate-opening runbook. All mutating steps ran inside mktemp fixture repos; live fleet touched READ-ONLY only (S9 spot-checks, gate state). Live lane artifacts: zero mutations.",
+  "write_authorization": "results/qrun-10.json only. Harness + fixtures under /tmp/s10r8 (harness.sh, run/events.tsv, run/raw/*, roots/, roots-supp/). No fetch/push/commit on live repos (fixture repos only); no .ufo/state or watchdog.log reads; no secret-file contents opened.",
+  "axes": [
+    "operability (flow executable end-to-end on fixtures)",
+    "calibration (tamper caught; refusals hold; divergences named)",
+    "coverage (pushed / stale / moved-to-obsidian / refusals / census flags / gate runbook)",
+    "evidence fidelity (raw command outputs captured per step)"
+  ],
+  "tools_under_test": {
+    "souji-verify.sh": "a91049c96e5fba7c3db83df288a261717156c3834532e54d712ed0c555e350c4",
+    "souji-census.sh": "11bf9cdf8d4f75415b18e046aef0e96215b983f0d5b3ff7842301ff6ac65d381",
+    "souji-vault-verify.sh": "53f92421b254426c7e4882c1da9cfaa444bddde7ff90ee30afcd48fa229328b1"
+  },
+  "baseline_selftests": {
+    "souji-verify.sh": "24/24 PASS exit=0",
+    "souji-census.sh": "32/32 PASS exit=0",
+    "souji-vault-verify.sh": "35/35 PASS exit=0"
+  },
+  "live_gate_state_readonly": {
+    "claim": "Gate still closed in practice: origin URL configured, zero remote-tracking refs, 13 unpushed commits => every in-lane pushed receipt remains unverifiable until an operator-authorized push.",
+    "evidence": [
+      "git remote -v -> origin https://github.com/VeigaPunk/shokunin-repo-hygiene.git",
+      "git for-each-ref refs/remotes -> (empty)",
+      "git rev-list --count --branches --not --remotes -> 13",
+      "git symbolic-ref refs/remotes/origin/HEAD -> none"
+    ]
+  },
+  "scenarios": [
+    {
+      "id": "S5a.check1-original",
+      "expect": "SAFE stale at original path (pre-mv receipt)",
+      "observed": "SAFE/pushed/intro=96ed892e2b62 ref=refs/remotes/origin/master ancestor=yes",
+      "harness_label": "FAIL",
+      "adjudication": "TOOL-CORRECT / fixture-design-note",
+      "why": "Expected SAFE(stale) but artifact was tracked AND its intro commit was pushed by the fixture's own push; receipt order is pushed->obsidian->stale, so SAFE(pushed) is per-spec. True stale flow re-proven in supplement SA.",
+      "note": "scratch type + zero live refs + mtime 3d > stale-days 1",
+      "raw": "VERDICT\t/tmp/s10r8/run/roots/fx-lane/scratch/old-run.log\tSAFE\tpushed\tintro=96ed892e2b62 ref=refs/remotes/origin/master ancestor=yes\nrc=0"
+    },
+    {
+      "id": "S5.hold-start",
+      "expect": "hold_start recorded",
+      "observed": "1792359549 utc=2026-10-18",
+      "harness_label": "INFO",
+      "adjudication": "UNADJUDICATED",
+      "why": "",
+      "note": "450s hold clock starts at quarantine commit",
+      "raw": "VERDICT\t/tmp/s10r8/run/roots/fx-lane/.ufo-quarantine/2026-10-18/scratch/old-run.log\tSAFE\tstale\tscratch-type=ext refs=0 mtime-age-days=3\nrc=0\n--- S5-check0 ---"
+    },
+    {
+      "id": "S1.gate-closed",
+      "expect": "NOT-SAFE pushed-unverifiable",
+      "observed": "NOT-SAFE/pushed-unverifiable/pushed=unverifiable(no-default-ref) intro=c6ad52770001; obsidian=no-matching-ledger-row; stale=not-scratch-type",
+      "harness_label": "FAIL",
+      "adjudication": "PASS",
+      "why": "Exactly the live-lane shape (origin URL set, zero remote-tracking refs) yields no pushed receipt.",
+      "note": "no remote => no pushed receipt (reproduces live lane: origin URL set, 0 remote-tracking refs)",
+      "raw": "VERDICT\t/tmp/s10r8/run/roots/fx-nogate/pushed-file.json\tNOT-SAFE\tpushed-unverifiable\tpushed=unverifiable(no-default-ref) intro=c6ad52770001; obsidian=no-matching-ledger-row; stale=not-scratch-type\nrc=0"
+    },
+    {
+      "id": "S2a.gate-opened",
+      "expect": "SAFE pushed (origin/HEAD symref)",
+      "observed": "SAFE/pushed/intro=c6ad52770001 ref=refs/remotes/origin/master ancestor=yes",
+      "harness_label": "FAIL",
+      "adjudication": "PASS",
+      "why": "Runbook (bare origin + push + fetch + remote set-head) flips receipt to SAFE(pushed) via origin/HEAD symref.",
+      "note": "runbook: bare origin + push + fetch + set-head flips receipt",
+      "raw": "VERDICT\t/tmp/s10r8/run/roots/fx-nogate/pushed-file.json\tSAFE\tpushed\tintro=c6ad52770001 ref=refs/remotes/origin/master ancestor=yes\nrc=0"
+    },
+    {
+      "id": "S2b.single-ref-fallback",
+      "expect": "SAFE pushed (single origin ref fallback)",
+      "observed": "SAFE/pushed/intro=c6ad52770001 ref=refs/remotes/origin/master ancestor=yes",
+      "harness_label": "FAIL",
+      "adjudication": "PASS",
+      "why": "D1/F9 fallback: single origin branch ref without set-head also resolves SAFE(pushed).",
+      "note": "fx-lane has no origin/HEAD; D1 fallback must resolve",
+      "raw": "VERDICT\t/tmp/s10r8/run/roots/fx-lane/pushed-file.json\tSAFE\tpushed\tintro=c6ad52770001 ref=refs/remotes/origin/master ancestor=yes\nrc=0"
+    },
+    {
+      "id": "S3a.second-check-old-path",
+      "expect": "NOT-SAFE unreachable (path gone)",
+      "observed": "NOT-SAFE/unreachable/missing path",
+      "harness_label": "FAIL",
+      "adjudication": "PASS",
+      "why": "Original path gone -> NOT-SAFE(unreachable).",
+      "note": "re-running receipt at ORIGINAL path after mv",
+      "raw": "VERDICT\t/tmp/s10r8/run/roots/fx-lane/pushed-file.json\tNOT-SAFE\tunreachable\tmissing path\nrc=0"
+    },
+    {
+      "id": "S3b.second-check-quarantine-path",
+      "expect": "OBSERVE (expect pushed-unverifiable: intro commit of new path = unpushed quarantine commit)",
+      "observed": "NOT-SAFE/none/pushed=unpushed-commits-touching intro=308f16b85761; obsidian=no-matching-ledger-row; stale=not-scratch-type",
+      "harness_label": "OBSERVE",
+      "adjudication": "FINDING (flow design)",
+      "why": "Second check at the quarantine path cannot re-establish pushed receipt: intro commit of the new path is the unpushed quarantine commit -> NOT-SAFE(unpushed-commits-touching). The flow's own gate bites by construction whenever quarantine commits are not pushed (true on the live lane: gate closed, 13 unpushed).",
+      "note": "second-check semantics at QUARANTINE path",
+      "raw": "VERDICT\t/tmp/s10r8/run/roots/fx-lane/.ufo-quarantine/2026-10-18/pushed-file.json\tNOT-SAFE\tnone\tpushed=unpushed-commits-touching intro=308f16b85761; obsidian=no-matching-ledger-row; stale=not-scratch-type\nrc=0"
+    },
+    {
+      "id": "S3c.unpushed-touching-quarantine",
+      "expect": ">=1 unpushed commit touches quarantine path (checklist gate bites by construction)",
+      "observed": "unpushed_touching=1",
+      "harness_label": "PASS",
+      "adjudication": "PASS",
+      "why": "Measured >=1 unpushed commit touching qpath \u2014 corroborates S3b.",
+      "note": "git log --branches --not --remotes -- <qpath>",
+      "raw": "VERDICT\t/tmp/s10r8/run/roots/fx-lane/.ufo-quarantine/2026-10-18/pushed-file.json\tNOT-SAFE\tnone\tpushed=unpushed-commits-touching intro=308f16b85761; obsidian=no-matching-ledger-row; stale=not-scratch-type\nrc=0"
+    },
+    {
+      "id": "S4a.dirty-flip",
+      "expect": "SAFE -> NOT-SAFE after dirtying artifact",
+      "observed": "check1=SAFE/pushed/intro=c6ad52770001 ref=refs/remotes/origin/master ancestor=yes check2=SAFE/pushed/intro=c6ad52770001 ref=refs/remotes/origin/master ancestor=yes",
+      "harness_label": "FAIL",
+      "adjudication": "FINDING (calibration divergence)",
+      "why": "Tamper = unstaged modification of a tracked+pushed artifact with NO unpushed commits: verdict stayed SAFE(pushed). SKILL decision table demands NOT-SAFE on a dirty worktree over the artifact; the verdict engine has no dirty gate on the file-artifact branch (spec never demanded one either). Only the manual pre-removal checklist catches it. SB3 corroborates: with an unpushed commit present the verdict is NOT-SAFE, so the divergence is isolated to dirty-only.",
+      "note": "tamper between checks must flip",
+      "raw": "VERDICT\t/tmp/s10r8/run/roots/fx-tamper/pushed-file.json\tSAFE\tpushed\tintro=c6ad52770001 ref=refs/remotes/origin/master ancestor=yes\nrc=0"
+    },
+    {
+      "id": "S4b.unpushed-sibling-scope",
+      "expect": "OBSERVE (unpushed commit touches sibling, not artifact)",
+      "observed": "SAFE/pushed/intro=c6ad52770001 ref=refs/remotes/origin/master ancestor=yes",
+      "harness_label": "OBSERVE",
+      "adjudication": "PASS",
+      "why": "Unpushed commit touching a sibling file leaves the artifact's receipt intact \u2014 gate is path-scoped, not repo-scoped.",
+      "note": "receipt scope: only commits touching the path count",
+      "raw": "VERDICT\t/tmp/s10r8/run/roots/fx-tamper/pushed-file.json\tSAFE\tpushed\tintro=c6ad52770001 ref=refs/remotes/origin/master ancestor=yes\nrc=0"
+    },
+    {
+      "id": "S6a.unpushed-refused",
+      "expect": "NOT-SAFE (unpushed-commit artifact)",
+      "observed": "SAFE/pushed/intro=c339a6431ffa ref=refs/remotes/origin/master ancestor=yes",
+      "harness_label": "FAIL",
+      "adjudication": "TOOL-CORRECT / fixture-design-note",
+      "why": "Fixture's own push made the 'unpushed' file pushed; SAFE(pushed) is per-spec. True unpushed refusal proven in supplement SB2.",
+      "note": "",
+      "raw": "VERDICT\t/tmp/s10r8/run/roots/fx-lane/unpushed-file.md\tSAFE\tpushed\tintro=c339a6431ffa ref=refs/remotes/origin/master ancestor=yes\nrc=0"
+    },
+    {
+      "id": "S6b.dirty-refused",
+      "expect": "NOT-SAFE (dirty worktree over artifact)",
+      "observed": "SAFE/pushed/intro=c339a6431ffa ref=refs/remotes/origin/master ancestor=yes",
+      "harness_label": "FAIL",
+      "adjudication": "TOOL-CORRECT / fixture-design-note",
+      "why": "Fixture staged+committed the modification before the check, so the artifact was clean+pushed; SAFE(pushed) is per-spec. Dirty-only divergence isolated in S4a/SB3.",
+      "note": "",
+      "raw": "VERDICT\t/tmp/s10r8/run/roots/fx-lane/dirty-file.txt\tSAFE\tpushed\tintro=c339a6431ffa ref=refs/remotes/origin/master ancestor=yes\nrc=0"
+    },
+    {
+      "id": "S6c.secrets-refused",
+      "expect": "NOT-SAFE secrets-refusal",
+      "observed": "NOT-SAFE/secrets-refusal/secret-shaped path component",
+      "harness_label": "PASS",
+      "adjudication": "PASS",
+      "why": "Tracked .env still refused (secrets gate precedes receipts).",
+      "note": "",
+      "raw": "VERDICT\t/tmp/s10r8/run/roots/fx-lane/creds.env\tNOT-SAFE\tsecrets-refusal\tsecret-shaped path component\nrc=0"
+    },
+    {
+      "id": "S6d.symlink",
+      "expect": "OBSERVE",
+      "observed": "SAFE/pushed/intro=c6ad52770001 ref=refs/remotes/origin/master ancestor=yes",
+      "harness_label": "OBSERVE",
+      "adjudication": "OBSERVE-EXPLAINED",
+      "why": "Committed symlink earned SAFE(pushed): the r5 symlink-present rule fires only inside digest scopes (ledger verification), not for plain file artifacts. Consistent with spec; recorded so the runbook doesn't over-claim symlink protection.",
+      "note": "symlink artifact observation",
+      "raw": "VERDICT\t/tmp/s10r8/run/roots/fx-lane/link-to-notes.md\tSAFE\tpushed\tintro=c6ad52770001 ref=refs/remotes/origin/master ancestor=yes\nrc=0"
+    },
+    {
+      "id": "S6e.quarantine-stays-empty",
+      "expect": "no refused artifact ever moved",
+      "observed": "stray_entries=1 (only S5 stale + S3 pushed live there)",
+      "harness_label": "FAIL",
+      "adjudication": "PASS (corrected accounting)",
+      "why": "Harness 'stray_entries=1' was a find() accounting bug (counted $QD/pushed-file.json). Supplement SE4 lists quarantine contents: only the three deliberately-moved artifacts (S3 pushed-file.json, S5 old-run.log, S7 archive-note.md). No refused artifact was ever moved.",
+      "note": ""
+    },
+    {
+      "id": "S7a.ledger-receipt",
+      "expect": "SAFE moved-to-obsidian (path+sha both sides)",
+      "observed": "SAFE/pushed/intro=96ed892e2b62 ref=refs/remotes/origin/master ancestor=yes",
+      "harness_label": "FAIL",
+      "adjudication": "TOOL-CORRECT / fixture-design-note",
+      "why": "archive-note.md was pushed, so pushed receipt won before obsidian was tried. True ledger receipt proven in supplement SE1d (SAFE moved-to-obsidian with SOUJI_LEDGER override; ledger default is the TOOL's repo, not the artifact's repo \u2014 fixture note).",
+      "note": "ledger: corpus/knowledge/obsidian-ledger.tsv; vault copy read-only",
+      "raw": "VERDICT\t/tmp/s10r8/run/roots/fx-lane/archive-note.md\tSAFE\tpushed\tintro=96ed892e2b62 ref=refs/remotes/origin/master ancestor=yes\nrc=0"
+    },
+    {
+      "id": "S7b.second-check-old-path",
+      "expect": "NOT-SAFE unreachable",
+      "observed": "NOT-SAFE/unreachable/missing path",
+      "harness_label": "OBSERVE",
+      "adjudication": "PASS",
+      "why": "Original path gone -> unreachable.",
+      "note": "original path gone after mv",
+      "raw": "VERDICT\t/tmp/s10r8/run/roots/fx-lane/archive-note.md\tNOT-SAFE\tunreachable\tmissing path\nrc=0"
+    },
+    {
+      "id": "S7c.second-check-quarantine-path",
+      "expect": "OBSERVE (ledger row cites original path)",
+      "observed": "NOT-SAFE/none/pushed=unpushed-commits-touching intro=02d9829e5d8e; obsidian=no-matching-ledger-row; stale=not-scratch-type",
+      "harness_label": "OBSERVE",
+      "adjudication": "FINDING (flow design, confirmed by SE2e)",
+      "why": "Second check at qpath for a ledger receipt returns no-matching-ledger-row: rows cite the pre-mv source path. SE2e reproduces this cleanly (no unpushed contamination).",
+      "note": "second-check semantics for ledger receipts",
+      "raw": "VERDICT\t/tmp/s10r8/run/roots/fx-lane/.ufo-quarantine/2026-10-18/archive-note.md\tNOT-SAFE\tnone\tpushed=unpushed-commits-touching intro=02d9829e5d8e; obsidian=no-matching-ledger-row; stale=not-scratch-type\nrc=0"
+    },
+    {
+      "id": "S5d.active-ref-control",
+      "expect": "OBSERVE (repo now references old-run.log in docs-ref.md; quarantine glob should still exclude qdir)",
+      "observed": "NOT-SAFE/none/pushed=unpushed-commits-touching intro=05991f47fcaf; obsidian=no-matching-ledger-row; stale=live-refs=1",
+      "harness_label": "OBSERVE",
+      "adjudication": "PASS",
+      "why": "Active reference (docs-ref.md) counted: stale evidence shows stale=live-refs=1; quarantine-dir self-presence excluded by the !**/.ufo-quarantine/** glob (D3 holds).",
+      "note": "D3 exclusion vs active reference",
+      "raw": "VERDICT\t/tmp/s10r8/run/roots/fx-lane/.ufo-quarantine/2026-10-18/scratch/old-run.log\tNOT-SAFE\tnone\tpushed=unpushed-commits-touching intro=05991f47fcaf; obsidian=no-matching-ledger-row; stale=live-refs=1\nrc=0"
+    },
+    {
+      "id": "S8a.census-nogate",
+      "expect": "fx-nogate row: no-remote flag before AND after (local commits exist; pushedness unverifiable without fetch)",
+      "observed": "before=[/tmp/s10r8/run/roots/fx-nogate",
+      "harness_label": "1",
+      "adjudication": "PASS (corrected scope)",
+      "why": "Both census snapshots were taken after S2 opened fx-nogate's gate (harness ordering), so the pre-gate state was not captured there; the no-remote flag itself was captured on a dedicated fixture (s8-noremote.tsv: unpushed,no-remote).",
+      "note": "0"
+    },
+    {
+      "id": "S8b.census-dirty-flag",
+      "expect": "fx-tamper gains dirty flag after stray file",
+      "observed": "before=[/tmp/s10r8/run/roots/fx-tamper",
+      "harness_label": "1",
+      "adjudication": "PASS",
+      "why": "dirty flag appears after stray file (dirty,unpushed).",
+      "note": "1"
+    },
+    {
+      "id": "S9a.live-snapshot",
+      "expect": "OBSERVE (r6 claim: SAFE/pushed superseded snapshot)",
+      "observed": "SAFE/pushed/intro=99efc52b3a6f ref=refs/remotes/origin/master ancestor=yes",
+      "harness_label": "OBSERVE",
+      "adjudication": "OBSERVE",
+      "why": "Fleet-root superseded snapshot is SAFE(pushed) \u2014 the only live SAFE observed; r6 claim corroborated read-only.",
+      "note": "read-only; SHOKUNIN_ROOT was fixture-scoped for earlier runs \u2014 re-run with default env",
+      "raw": "VERDICT\t/home/vgpnk/Projects/shokunin/shokunin.conf.full-roster-20261015\tSAFE\tpushed\tintro=99efc52b3a6f ref=refs/remotes/origin/master ancestor=yes\nrc=0"
+    },
+    {
+      "id": "S9b.live-probe",
+      "expect": "OBSERVE (in-lane scratch-shaped probe file)",
+      "observed": "NOT-SAFE/none/pushed=no-introducing-commit; obsidian=no-matching-ledger-row; stale=not-scratch-type",
+      "harness_label": "OBSERVE",
+      "adjudication": "OBSERVE",
+      "why": "In-lane .write-probe: NOT-SAFE(none) \u2014 not scratch-typed, untracked, no ledger.",
+      "note": "",
+      "raw": "VERDICT\t/home/vgpnk/Projects/shokunin/souji-shokunin/results/.write-probe\tNOT-SAFE\tnone\tpushed=no-introducing-commit; obsidian=no-matching-ledger-row; stale=not-scratch-type\nrc=0"
+    },
+    {
+      "id": "S9c.live-log",
+      "expect": "OBSERVE (lane LOG.md is tracked+unpushed-tangled => expect NOT-SAFE unpushed-commits-touching)",
+      "observed": "NOT-SAFE/pushed-unverifiable/pushed=unverifiable(no-default-ref) intro=ccbb1326204b; obsidian=no-matching-ledger-row; stale=not-scratch-type",
+      "harness_label": "OBSERVE",
+      "adjudication": "OBSERVE",
+      "why": "Lane LOG.md: NOT-SAFE(pushed-unverifiable) \u2014 in-lane gate closed.",
+      "note": "13 unpushed commits measured earlier",
+      "raw": "VERDICT\t/home/vgpnk/Projects/shokunin/souji-shokunin/LOG.md\tNOT-SAFE\tpushed-unverifiable\tpushed=unverifiable(no-default-ref) intro=ccbb1326204b; obsidian=no-matching-ledger-row; stale=not-scratch-type\nrc=0"
+    },
+    {
+      "id": "S5e.hold-elapsed",
+      "expect": "hold >=450s before second check + delete",
+      "observed": "held=450s",
+      "harness_label": "PASS",
+      "adjudication": "PASS",
+      "why": "Real 450s hold (sleep, wall-clock measured), no faked timestamps.",
+      "note": "real sleep, no faked timestamps",
+      "raw": "VERDICT\t/tmp/s10r8/run/roots/fx-lane/.ufo-quarantine/2026-10-18/scratch/old-run.log\tNOT-SAFE\tnone\tpushed=unpushed-commits-touching intro=05991f47fcaf; obsidian=no-matching-ledger-row; stale=live-refs=1\nrc=0"
+    },
+    {
+      "id": "S5f.second-check",
+      "expect": "OBSERVE (receipt must still hold: SAFE stale at quarantine path, qdir excluded by D3)",
+      "observed": "NOT-SAFE/none/pushed=unpushed-commits-touching intro=05991f47fcaf; obsidian=no-matching-ledger-row; stale=live-refs=1",
+      "harness_label": "OBSERVE",
+      "adjudication": "FINDING (flow design) + control PASS",
+      "why": "Tracked stale artifact at qpath: NOT-SAFE (unpushed quarantine commit) with stale=live-refs=1 \u2014 the docs-ref.md control reference WAS counted while the quarantine-dir self-presence was not. Green stale second-check path exists only for untracked artifacts: SA2.",
+      "note": "mtime preserved by git mv: 2026-10-15 18:39:09.422672037 -0300",
+      "raw": "VERDICT\t/tmp/s10r8/run/roots/fx-lane/.ufo-quarantine/2026-10-18/scratch/old-run.log\tNOT-SAFE\tnone\tpushed=unpushed-commits-touching intro=05991f47fcaf; obsidian=no-matching-ledger-row; stale=live-refs=1\nrc=0"
+    },
+    {
+      "id": "S5g.deleted-unreachable",
+      "expect": "NOT-SAFE unreachable after deletion",
+      "observed": "NOT-SAFE/unreachable/missing path",
+      "harness_label": "PASS",
+      "adjudication": "PASS",
+      "why": "Post-delete NOT-SAFE(unreachable); flow complete for the untracked case (SA1-SA3).",
+      "note": "flow complete: census->receipt->quarantine->hold->second check->delete",
+      "raw": "VERDICT\t/tmp/s10r8/run/roots/fx-lane/.ufo-quarantine/2026-10-18/scratch/old-run.log\tNOT-SAFE\tunreachable\tmissing path\nrc=0"
+    },
+    {
+      "id": "HARNESS-DONE held=450s",
+      "expect": "",
+      "observed": "",
+      "harness_label": "",
+      "adjudication": "UNADJUDICATED",
+      "why": "",
+      "note": ""
+    },
+    {
+      "id": "SA1.true-stale-check1",
+      "expect": "SAFE stale (untracked scratch, original path)",
+      "observed": "SAFE\tstale\tscratch-type=scratch-dir refs=0 mtime-age-days=5",
+      "adjudication": "PASS",
+      "why": "True stale shape: artifact never committed; refs=0; mtime 5d > stale-days 1.",
+      "raw": "VERDICT\t/tmp/s10r8/roots-supp/fx-stale/.scratch/build.out\tSAFE\tstale\tscratch-type=scratch-dir refs=0 mtime-age-days=5"
+    },
+    {
+      "id": "SA2.true-stale-second-check-qpath",
+      "expect": "SAFE stale at quarantine path (plain mv, no quarantine commit)",
+      "observed": "SAFE\tstale\tscratch-type=scratch-dir refs=0 mtime-age-days=5",
+      "adjudication": "PASS",
+      "why": "The ONLY flow shape whose second check passes at the quarantine path: untracked artifact, plain mv, no quarantine commit -> no unpushed gate, qdir sweep-excluded, mtime preserved by mv.",
+      "raw": "VERDICT\t/tmp/s10r8/roots-supp/fx-stale/.ufo-quarantine/2026-10-18/.scratch/build.out\tSAFE\tstale\tscratch-type=scratch-dir refs=0 mtime-age-days=5"
+    },
+    {
+      "id": "SA3.true-stale-post-delete",
+      "expect": "NOT-SAFE unreachable",
+      "observed": "NOT-SAFE\tunreachable\tmissing path",
+      "adjudication": "PASS",
+      "why": "Deletion step verified.",
+      "raw": "VERDICT\t/tmp/s10r8/roots-supp/fx-stale/.ufo-quarantine/2026-10-18/.scratch/build.out\tNOT-SAFE\tunreachable\tmissing path"
+    },
+    {
+      "id": "SB1.pushed-baseline",
+      "expect": "SAFE pushed (clean, pushed)",
+      "observed": "SAFE\tpushed\tintro=ed151b109af6 ref=refs/remotes/origin/master ancestor=yes",
+      "adjudication": "PASS",
+      "why": "",
+      "raw": "VERDICT\t/tmp/s10r8/roots-supp/fx-gate2/target.txt\tSAFE\tpushed\tintro=ed151b109af6 ref=refs/remotes/origin/master ancestor=yes"
+    },
+    {
+      "id": "SB2.unpushed-commit-touching",
+      "expect": "NOT-SAFE after local-only commit touching the artifact",
+      "observed": "NOT-SAFE\tnone\tpushed=unpushed-commits-touching intro=ed151b109af6; \u2026",
+      "adjudication": "PASS",
+      "why": "r6 gate fires exactly on path-touching unpushed commits.",
+      "raw": "VERDICT\t/tmp/s10r8/roots-supp/fx-gate2/target.txt\tNOT-SAFE\tnone\tpushed=unpushed-commits-touching intro=ed151b109af6; obsidian=no-matching-ledger-row; stale=not-scratch-type"
+    },
+    {
+      "id": "SB3.dirty-plus-unpushed",
+      "expect": "NOT-SAFE (dirty + unpushed commit over artifact)",
+      "observed": "NOT-SAFE\tnone\tpushed=unpushed-commits-touching intro=ed151b109af6; \u2026",
+      "adjudication": "PASS",
+      "why": "Corroborates SB2; dirty-only isolation is S4a.",
+      "raw": "VERDICT\t/tmp/s10r8/roots-supp/fx-gate2/target.txt\tNOT-SAFE\tnone\tpushed=unpushed-commits-touching intro=ed151b109af6; obsidian=no-matching-ledger-row; stale=not-scratch-type"
+    },
+    {
+      "id": "SD1.untracked-env",
+      "expect": "NOT-SAFE secrets-refusal",
+      "observed": "NOT-SAFE\tsecrets-refusal\tsecret-shaped path component",
+      "adjudication": "PASS",
+      "why": "Refusal independent of tracking status.",
+      "raw": "VERDICT\t/tmp/s10r8/roots-supp/fx-stale/prod.env\tNOT-SAFE\tsecrets-refusal\tsecret-shaped path component"
+    },
+    {
+      "id": "SE1d.ledger-check1",
+      "expect": "SAFE moved-to-obsidian (SOUJI_LEDGER override, absolute source path)",
+      "observed": "SAFE\tmoved-to-obsidian\tledger-row vault=/tmp/s10r8/fx-vault2/Home/old-note.md source-sha256=395cf4286972",
+      "adjudication": "PASS",
+      "why": "Ledger column 1 must be the canonical ABSOLUTE path; ledger default is the tool's own repo \u2014 fixtures need SOUJI_LEDGER (documented env override).",
+      "raw": "VERDICT\t/tmp/s10r8/roots-supp/fx-ledger/old-note.md\tSAFE\tmoved-to-obsidian\tledger-row vault=/tmp/s10r8/fx-vault2/Home/old-note.md source-sha256=395cf4286972"
+    },
+    {
+      "id": "SE2e.ledger-second-check-qpath",
+      "expect": "OBSERVE: row cites original path",
+      "observed": "NOT-SAFE\tnone\tpushed=no-introducing-commit; obsidian=no-matching-ledger-row; stale=not-scratch-type",
+      "adjudication": "FINDING (flow design, clean reproduction)",
+      "why": "Confirms S7c without unpushed contamination.",
+      "raw": "VERDICT\t/tmp/s10r8/roots-supp/fx-ledger/.ufo-quarantine/2026-10-18/old-note.md\tNOT-SAFE\tnone\tpushed=no-introducing-commit; obsidian=no-matching-ledger-row; stale=not-scratch-type"
+    },
+    {
+      "id": "SE3d.ledger-post-delete",
+      "expect": "NOT-SAFE unreachable",
+      "observed": "NOT-SAFE\tunreachable\tmissing path",
+      "adjudication": "PASS",
+      "why": "",
+      "raw": "VERDICT\t/tmp/s10r8/roots-supp/fx-ledger/.ufo-quarantine/2026-10-18/old-note.md\tNOT-SAFE\tunreachable\tmissing path"
+    },
+    {
+      "id": "SE4.quarantine-accounting",
+      "expect": "only deliberately-moved artifacts in quarantine",
+      "observed": ".ufo-quarantine/2026-10-18/{archive-note.md,pushed-file.json}",
+      "adjudication": "PASS",
+      "why": "Corrects S6e's stray count; refused artifacts never moved.",
+      "raw": "/tmp/s10r8/run/roots/fx-lane/.ufo-quarantine/2026-10-18/archive-note.md\n/tmp/s10r8/run/roots/fx-lane/.ufo-quarantine/2026-10-18/pushed-file.json"
+    },
+    {
+      "id": "S8supp.census-no-remote-flag",
+      "expect": "no-remote verdict_flag on a remote-less repo",
+      "observed": "fx-closed\t1\t1\t0\t0\t\u2026\tunpushed,no-remote",
+      "adjudication": "PASS",
+      "why": "Closes the S8a ordering gap."
+    }
+  ],
+  "findings_for_runbook": [
+    "F1 (blocking): the second receipt check MUST be defined against the check1-pinned receipt + checklist gates, NOT a re-run at the quarantine path. A re-run at qpath self-breaks for pushed (quarantine commit is unpushed by construction -> unpushed-commits-touching) and for moved-to-obsidian (rows cite the pre-mv path). It only passes for untracked stale artifacts (plain mv, no commit).",
+    "F2 (gate-opening, proven): bare origin + push + fetch + remote set-head converts NOT-SAFE(pushed-unverifiable) -> SAFE(pushed); works via origin/HEAD symref AND single-ref fallback. The live lane needs exactly this, operator-authorized, before any in-lane quarantine flow can pass even its first gate.",
+    "F3 (calibration divergence): the verdict engine awards SAFE(pushed) on a dirty worktree over the artifact (no dirty gate on the file-artifact branch). The SKILL decision table demands NOT-SAFE. Until reconciled, the quarantine flow MUST run the manual checklist dirty gate, not just the receipt re-run.",
+    "F4 (safe flow shape): untracked stale artifacts (plain mv, no quarantine commit) pass the entire flow including second check at qpath \u2014 the only fully green shape measured.",
+    "F5 (fixture/rig notes): ledger rows require canonical absolute source paths and SOUJI_LEDGER override off-lane; receipt order pushed->obsidian->stale means tracked+pushed scratch never reaches the stale receipt; symlink-present fires only in digest scopes."
+  ],
+  "summary": {
+    "total_events": 40,
+    "pass": 25,
+    "findings": 5,
+    "tool_failures": 0,
+    "verdict": "Operability proven on fixtures; 3 flow-design/calibration findings banked for the runbook (F1 second-check definition, F2 gate-opening steps, F3 dirty divergence). All three installed tools green; zero live mutations; no authorized live targets (receipts deny, S9)."
+  }
+}

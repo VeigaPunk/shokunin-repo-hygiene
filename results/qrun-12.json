@@ -1,0 +1,87 @@
+{
+  "seat": "S12",
+  "role": "runner",
+  "round": 8,
+  "round_theme": "quarantine-flow tooling + gate-opening runbook",
+  "date": "2026-10-18",
+  "deliverable": "results/qrun-12.json",
+  "tool_built": {
+    "path": "tools/souji-quarantine.impl-S12.sh",
+    "sha256": "06e2530794ee84e29fa15fbdde30f587270e5ec6783290ff512c40142f52d850",
+    "language": "bash (bash + coreutils + git + rg only, matching lane spec)",
+    "state_machine": "receipt(engine) -> stage(copy+digest-verify+unlink, manifest.tsv) -> hold(default 86400s) -> second receipt check -> release(RELEASES.log + rm) | restore",
+    "receipt_engine": {
+      "path": "tools/souji-verify.sh",
+      "sha256": "a91049c96e5fba7c3db83df288a261717156c3834532e54d712ed0c555e350c4"
+    },
+    "safety_design": [
+      "Every mutating subcommand requires quarantine root AND stage/restore target inside SOUJI_QUARANTINE_ALLOW (colon-separated); else rc=3 LIVE-TREE-LOCKED before the target is even read.",
+      "--dry-run works on any path (incl. live fleet) and writes nothing.",
+      "stage gates on engine verdict: SAFE + receipt in {pushed, moved-to-obsidian, stale}; rc=4 refusal otherwise, carrying engine evidence.",
+      "Original is unlinked only AFTER the quarantine copy re-hashes to the staged digest.",
+      "Secret-shaped paths refused before any read (rc=4 secrets-refusal).",
+      "Symlink in staged scope fails closed (symlink-present).",
+      "release re-runs the second receipt check itself; it never trusts prior state.",
+      "No git fetch/push/commit/branch/checkout/reset/rebase anywhere; vault read-only; .ufo/state, .ufo/watchdog.log, ~/.config untouched."
+    ]
+  },
+  "selftest": {
+    "command": "bash tools/souji-quarantine.impl-S12.sh --selftest",
+    "final_result": "26 checks, 0 failed (rc=0)",
+    "fixture_policy": "mktemp -d /tmp/souji-quarantine-selftest.XXXXXX; allow-lists only that dir; trap rm -rf",
+    "first_run_honesty_note": "First selftest run: 26 checks, 20 failed. Root causes found and fixed before any evidence was recorded as final: (1) inverted receipt gate — 'if [ verdict != SAFE ] || case receipt in <ok>) ;;' makes a matched (valid) receipt evaluate truthy and refuse every SAFE target; reproduced standalone with bash -c and rewritten as sequential case guards. (2) ck() grepped the whole captured output including the tool's own --help text, producing false PASSes (help contains the event-line vocabulary); fixed to match the first event line only. (3) trap 'rm -rf \"$T\"' referenced a function-local var under set -u at EXIT; fixed with a global. (4) one selftest assertion grepped 'RELEASES' in a log whose lines start 'RELEASED'."
+  },
+  "runner_matrix": {
+    "driver": "/tmp/s12-driver.sh (outside repo; transcript /tmp/s12-qrun-transcript.log)",
+    "fixture": "/tmp/s12-qrun.vt4KHe (removed after run)",
+    "fixture_repo": "qx-shokunin: git repo, refs/remotes/origin/master + origin/HEAD set via plumbing, ledger+vault fixture, stale scratch with/without live refs, dirty untracked, secret-shaped file",
+    "begin": "2026-10-18T22:26:48Z",
+    "end": "2026-10-18T22:26:48Z",
+    "scenarios": [
+      {"id": "SC1", "flow": "pushed end-to-end", "observed": "stage rc=0 STAGED receipt=pushed; status state=staged; check rc=0 PASS reason=pushed-intro=a931abaf42bb still-on-origin; release rc=0 RELEASED; RELEASES.log row with entry/target/receipt/sha256/evidence; origin-absent=YES", "verdict": "PASS"},
+      {"id": "SC2", "flow": "stale end-to-end", "observed": "stage rc=0 receipt=stale; check rc=0 PASS reason=stale-refs=0; release rc=0; origin-absent=YES", "verdict": "PASS"},
+      {"id": "SC3", "flow": "moved-to-obsidian end-to-end", "observed": "stage rc=0 receipt=moved-to-obsidian; check rc=0 PASS reason=vault-hash-ok; release rc=0", "verdict": "PASS"},
+      {"id": "GD1", "flow": "no receipt (dirty/untracked)", "observed": "rc=4 STAGE-REFUSED evidence='pushed=no-introducing-commit; obsidian=no-matching-ledger-row; stale=not-scratch-type'; origin-intact=YES", "verdict": "PASS"},
+      {"id": "GD2", "flow": "live-referenced stale", "observed": "rc=4 STAGE-REFUSED evidence='stale=live-refs=1'; origin-intact=YES", "verdict": "PASS"},
+      {"id": "GD3", "flow": "secret-shaped path", "observed": "rc=4 STAGE-REFUSED reason=secrets-refusal before any read", "verdict": "PASS"},
+      {"id": "GD4", "flow": "no allow-list", "observed": "rc=3 LIVE-TREE-LOCKED fired before target read; file still present=YES", "verdict": "PASS"},
+      {"id": "GH1", "flow": "hold not expired", "observed": "check rc=0 HOLD (hold-until=1792366008 now=1792362408); release rc=5 RELEASE-REFUSED; payload intact=YES", "verdict": "PASS"},
+      {"id": "GR1", "flow": "restore", "observed": "rc=0 RESTORED; sha256 restored == original (ba8b22dd...c0f7)", "verdict": "PASS"},
+      {"id": "GX1", "flow": "origin recreated during hold", "observed": "release rc=5, check FAIL reason=origin-recreated; entry preserved=YES; restore also refused rc=5 reason=origin-exists (fail-safe pair: no release, no overwrite; operator resolves)", "verdict": "PASS"}
+    ],
+    "live_fleet_probes": {
+      "mode": "--dry-run only (dry-run bypasses lock by design, writes nothing)",
+      "targets": [
+        {"path": "souji-shokunin/results/.write-probe", "observed": "rc=4 STAGE-REFUSED evidence='stale=not-scratch-type' (dotfile, no scratch family, no ledger, no introducing commit); present-after=YES"},
+        {"path": "kotodama-shokunin/.scratch", "observed": "rc=4 STAGE-REFUSED evidence='stale=mtime-age-days=0<=1'; present-after=YES"}
+      ],
+      "consistency_with_round7": "agrees with r7: receipts deny every live candidate; the quarantine gate adds staging+hold+second-check on top and still refuses"
+    },
+    "mutation_proof": {
+      "method": "git -C souji-shokunin status --porcelain | sha256sum, and stat of the probed live file, captured before and after the live dry-runs",
+      "before": {"porcelain_sha256": "5bda2a1a2b3737005e7893051adc502158faf27b95b099811bc0b71580f1035a", "probe_stat": "1792353593 11 bytes"},
+      "after": {"porcelain_sha256": "5bda2a1a2b3737005e7893051adc502158faf27b95b099811bc0b71580f1035a", "probe_stat": "1792353593 11 bytes"},
+      "result": "IDENTICAL — zero live-tree mutation"
+    }
+  },
+  "tool_defects_found_by_running_and_fixed": [
+    {"id": "D-a", "where": "stage receipt gate", "what": "case-inside-if composition inverted the refusal condition (valid receipts were refused); reproduced standalone, rewritten as sequential case guards"},
+    {"id": "D-b", "where": "RELEASES.log", "what": "target column held the entry id and the canonical path was lost when the entry dir was removed on release; now writes entry=, target=, receipt=, sha256=, evidence="},
+    {"id": "D-c", "where": "stage lock ordering", "what": "allow-list lock ran after the engine read the target; moved before any read for non-dry-run stage (GD4 originally hit 'unreachable' instead of LIVE-TREE-LOCKED because SC1 had already released the probe file — driver flaw, also fixed)"}
+  ],
+  "deviations_from_engine_spec": [
+    {"id": "V-a", "note": "second receipt check re-derives receipt evidence with the same primitives as the engine (rg fixed-string sweep with the engine's D3 exclusions for stale; branch -r --contains for pushed; ledger row + vault re-hash for moved-to-obsidian) instead of re-invoking souji-verify.sh, because the staged origin path no longer exists for the engine to evaluate. Stage always uses the engine verdict as the receipt of record."},
+    {"id": "V-b", "note": "restore when origin was recreated refuses (origin-exists) instead of overwriting; entry is preserved. Fail-safe: neither release nor restore proceeds; operator resolves. Not covered by prior art in the lane."}
+  ],
+  "claims": {
+    "C1_quarantine_flow_exercised": "MET on fixtures: all three receipts (pushed, moved-to-obsidian, stale) driven through stage -> hold -> second receipt check -> release, plus restore path; selftest 26/26, runner matrix 10/10 PASS",
+    "C2_no_live_mutation": "MET: mutation-proof hashes identical; live fleet only touched via --dry-run (both probes refused by the receipt gate)",
+    "C3_gate_opening": "PARTIAL/to-verify-by-operator: the tool is ready for the 96 operator-approval rows and future pushed lanes, but no live flow was executed — correctly so; r7's boundary (operator sign-off, lane pushes, remote creation) still stands"
+  },
+  "runbook_seed": "gate-opening runbook for an authorized target T: (1) bash tools/souji-quarantine.impl-S12.sh --dry-run stage T  # read-only verdict; (2) SOUJI_QUARANTINE_ALLOW=<fixture-or-approved-root> ... --hold-seconds 86400 stage T; (3) status; (4) after hold: check <entry>; (5) release <entry> (re-checks internally, appends RELEASES.log); abort path: restore <entry>. Live fleet stays locked unless the operator allow-lists a root.",
+  "files_written": [
+    "tools/souji-quarantine.impl-S12.sh",
+    "results/qrun-12.json",
+    "census/round-8/S12-qrun-12.md"
+  ]
+}

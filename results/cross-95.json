@@ -1,0 +1,207 @@
+{
+  "seat": "S95",
+  "round": 6,
+  "role": "cross-audit",
+  "output": "results/cross-95.json",
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "lane_head": "ce58c2b457c8ffb7886b36a509bf957f90d1f296",
+  "wait": {
+    "required_seconds": 720,
+    "completed_local": "2026-10-18T16:04:52-03:00",
+    "command": "sleep 720 && date -Is",
+    "observed": "WAIT_DONE 2026-10-18T16:04:52-03:00"
+  },
+  "measured_at": "2026-10-18T17:45:36-03:00",
+  "axes": ["independence", "evidence", "fidelity"],
+  "sample": {
+    "method": "python3 random.Random(95).sample on the full assigned ranges, not on whatever fragments had landed. Drift range 1..14, census range 49..64, k=3. This is the draw sibling S97 excluded.",
+    "drift_seats": [13, 9, 14],
+    "census_seats": [53, 56, 49],
+    "discarded_earlier_draw": "A first Random(95).sample over only already-landed filenames picked seat-12/13/03. Discarded. The range draw is the one that does not collide with S96/S97."
+  },
+  "summary": {
+    "S09": "CONFIRM drift verdict. LOG counting citations do not reproduce. Replacement kotodama sizes are themselves already stale.",
+    "S13": "CONFIRM 0 broken pointers, the logs_tier claim-mismatch, and the d312263a pin. FLAG one time-superseded clause: 05a72899 is no longer game-dev-2d HEAD.",
+    "S14": "CONFIRM phantom_count=0 and the SCORECARD-internal drift (Planned not closed, saturation scores, capability hashes, relative counting-command footgun).",
+    "census": "FLAG: no official crun/seat fragment for S49, S53, or S56 at 17:45. Three scratch numbers re-derived: lore row CONFIRMS exactly; kake and audio CONFIRMS under the all-branches / remote -v reading."
+  },
+  "drift_audits": [
+    {
+      "id": "D-S09",
+      "seat": "S09",
+      "sibling_path": "census/round-6/seat-09.json",
+      "sibling_status": "CONFIRM",
+      "assigned_claim": "Verify each LOG.md counting-command still reproduces. Run the commands cited in SCORECARD axes rows and LOG entries. List stale ones.",
+      "sibling_verdict": "DRIFT. SCORECARD axes counting commands still reproduce from the fleet root (lore worktree lines 1, game-dev-2d worktree lines 4, vault selftest exit 0). Eight LOG citations do not reproduce as current facts. drift_to_zero is false.",
+      "independent_verdict": "CONFIRM the drift verdict and the re-checked counts. Axes commands reproduce from the fleet root. The cited LOG numbers do not. Kotodama replacement measurements in seat-09.json (19G / 18699253922, unpushed 47, dirty 31) do not freeze; at 17:39 the tree was 39G / 39173523280, unpushed 51, porcelain lines 28. That does not rescue the LOG citations.",
+      "not_re_run": "bash tools/souji-vault-verify.sh --selftest was not re-run here. S09's exit-0 claim is to-verify.",
+      "checks": [
+        {
+          "claim": "Live shokunin.conf is 4432 bytes, snapshot is 3859, cmp differs; the cited 4092 is the pre-mint blob, not HEAD",
+          "command": "wc -c shokunin.conf shokunin.conf.full-roster-20261015; cmp shokunin.conf shokunin.conf.full-roster-20261015; echo cmp_exit=$?; git cat-file -s HEAD:shokunin.conf; git cat-file -s '7bf2b1a^:shokunin.conf'",
+          "cwd": "/home/vgpnk/Projects/shokunin",
+          "observed": "4432 shokunin.conf; 3859 shokunin.conf.full-roster-20261015; cmp_exit=1 (stderr: EOF on snapshot after byte 3859); HEAD blob 4432; 7bf2b1a^ blob 4092. 7bf2b1a resolves to 7bf2b1ab7d7c86e9d9d7ac75a7b4bda5d49334df."
+        },
+        {
+          "claim": "b2f2efa contains 16 launch-*.json, not the cited 15",
+          "command": "git show --name-only --format='' b2f2efa | sed '/^$/d' | grep -c 'launch-.*\\.json$'",
+          "cwd": "/home/vgpnk/Projects/shokunin",
+          "observed": "16. Names: launch-chousa, kagi, kaidoku, kake, kama, kasegi, kengaku, kotoba, kumitate, lore, mado, mori, revenger, tabi, tameshi, tsukuroi, all under .ufo/interactive-l1-20261015T050057Z/."
+        },
+        {
+          "claim": "Installed tools/souji-verify.sh is not the cited 7efda63b hash; impl-12 still is",
+          "command": "sha256sum tools/souji-verify.sh tools/souji-verify.impl-12.sh; cmp -s tools/souji-verify.sh tools/souji-verify.impl-12.sh; echo verify_cmp=$?",
+          "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+          "observed": "53239fdfe5bcaaaf448e8525845ab962dd7ab6a4e7f75c0f4f051614f1c99200 tools/souji-verify.sh; 7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820 tools/souji-verify.impl-12.sh; verify_cmp=1."
+        },
+        {
+          "claim": "SCORECARD axes worktree counts still reproduce from the fleet root: lore 1, game-dev-2d 4",
+          "command": "git -C lore-shokunin worktree list | wc -l; git -C game-dev-2d-shokunin worktree list | wc -l",
+          "cwd": "/home/vgpnk/Projects/shokunin",
+          "observed": "lore_from_fleet=1; gd2d_from_fleet=4. Same with absolute -C paths."
+        },
+        {
+          "claim": "Kotodama scratch is not 553M and not 1.9G; unpushed is not 42; dirty is not 14-15",
+          "command": "du -sh .scratch; du -sb .scratch; git log --branches --not --remotes --oneline | wc -l; git status --porcelain | wc -l; git rev-parse --short HEAD",
+          "cwd": "/home/vgpnk/Projects/shokunin/kotodama-shokunin",
+          "observed": "At 2026-10-18T17:39:35-03:00: du -sh 39G; du -sb 39173523280; unpushed 51; porcelain lines 28; HEAD 69cecbc (main). S09 observed 19G / 18699253922 / unpushed 47 / 31 porcelain lines at 16:09. Both observations contradict 553M, 1.9G, 42, and 14-15. The replacement numbers moved. Live lane; contents not read."
+        },
+        {
+          "claim": "census/round-1/census.tsv is 246 data rows",
+          "command": "wc -l census/round-1/census.tsv",
+          "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+          "observed": "247 physical lines; data 246; header seat, path, size_bytes, mtime, receipt, verdict, orig_verdict, corrected_by, note."
+        }
+      ]
+    },
+    {
+      "id": "D-S13",
+      "seat": "S13",
+      "sibling_path": "census/round-6/seat-13.json",
+      "sibling_sha256": "208d865abe6af82c7641decf963fefd3588f317c9c8cc01658f31bb8ab019dcb",
+      "sibling_status": "CONFIRM-WITH-FLAG",
+      "assigned_claim": "Cross-check every evidence pointer in the last 3 reports (r3-r5) still resolves (paths exist / commits in repo).",
+      "sibling_verdict": "RESOLVED — 0 broken pointers. 05a72899 and ce58c2b4 are those HEADs. logs_tier.txt absent from worktree and HEAD, present in origin/master. d312263a matches 48a64d8 and impl-20, not HEAD.",
+      "independent_verdict": "CONFIRM broken_pointers=0, 5/5 commits resolve and are ancestors of the owning repo HEAD, 30/30 existence probes pass, both claimed-absent paths are absent, logs_tier split holds, sha pin holds. FLAG the clause '05a72899 is game-dev-2d HEAD': at 17:42 HEAD is 1392ca21, committed 2026-10-18 17:38:17, after seat-13.json mtime 16:50. 05a72899 remains an ancestor. This is time-supersession, not a broken pointer.",
+      "checks": [
+        {
+          "claim": "Five commit tokens resolve and are ancestors of the owning HEAD",
+          "command": "git rev-parse --verify '<tok>^{commit}'; git merge-base --is-ancestor <tok> HEAD",
+          "observed": "36746332cab0617c1ef23a63fee727c8869bd25e ancestor_rc=0 in souji-shokunin. 48a64d8763fcf77dd53211e6c5fc717bc95eefed ancestor_rc=0 in souji-shokunin. ce58c2b457c8ffb7886b36a509bf957f90d1f296 ancestor_rc=0 and is souji HEAD. a1b44b152a1c65313c09e6e6a7bd90d026eb93a8 ancestor_rc=0 in the fleet repo. 05a7289961bafad79b041309d74913dff577ef1c ancestor_rc=0 in game-dev-2d-shokunin."
+        },
+        {
+          "claim": "05a72899 is still game-dev-2d HEAD",
+          "result": "FLAG",
+          "command": "git -C game-dev-2d-shokunin log -3 --format='%H %ci %s'",
+          "observed": "HEAD 1392ca21276e8beb007c5b96fa24758d166e6bc9 2026-10-18 17:38:17 -0300 round-101 record. Parent ac4eb8d41645cd0ca2eccea6e494dfa68e860fa5 same timestamp. 05a7289961bafad79b041309d74913dff577ef1c is the commit before those two (2026-10-18 11:28:50). Pointer resolves. 'is HEAD' does not reproduce after 17:38."
+        },
+        {
+          "claim": "logs_tier.txt is absent from the worktree and HEAD, present in refs/remotes/origin/master, deleted by a1b44b1",
+          "command": "test -e /home/vgpnk/Projects/shokunin/logs_tier.txt; echo wt_rc=$?; git cat-file -e refs/remotes/origin/master:logs_tier.txt; echo om_rc=$?; git cat-file -e HEAD:logs_tier.txt; echo head_rc=$?; git show --name-status --format='' a1b44b1 | grep logs_tier",
+          "cwd": "/home/vgpnk/Projects/shokunin",
+          "observed": "wt_rc=1; om_rc=0; head_rc=128 (fatal: path does not exist in HEAD); name-status line 'D logs_tier.txt'. No fetch was run. CONFIRM S13's claim-mismatch."
+        },
+        {
+          "claim": "d312263a matches 48a64d8:tools/souji-vault-verify.sh and impl-20, not the installed HEAD tool, and is not a commit",
+          "command": "git show 48a64d8:tools/souji-vault-verify.sh | sha256sum; sha256sum tools/souji-vault-verify.impl-20.sh tools/souji-vault-verify.sh; git rev-parse --verify 'd312263a^{commit}'",
+          "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+          "observed": "48a64d8 blob and impl-20 both d312263ac8ebc9e23555402dc5ae63167f78dcd01ddccc5ddcfa7623b85879e0. Installed tools/souji-vault-verify.sh is 00d59b1b36d87db37518b5ef9fb98cd472888a075ed7b97bd5b8ff93bd559455. rev-parse d312263a^{commit} rc=128. Lane HEAD remains ce58c2b4."
+        },
+        {
+          "claim": "30 explicit present paths exist; 2 claimed-absent paths are absent",
+          "command": "existence probes on seat-13.json explicit_present_paths tokens (test -e or git rev-parse --verify; no content reads). test -e /tmp/r87-B1; ls tools/*impl-19*",
+          "observed": "29 literal tokens exist. tests/results/v*.json is a glob, not a literal path: 67 matches (v1-selftest.json through vrun-40.json). /tmp/r87-B1 rc=1. tools/*impl-19* No such file. Fleet report blobs r3/r4/r5 cat-file -e HEAD rc=0. $XDG_RUNTIME_DIR/.obsidian-cli.sock exists; contents not read. Home.md existence only."
+        }
+      ]
+    },
+    {
+      "id": "D-S14",
+      "seat": "S14",
+      "sibling_path": "census/round-6/seat-14.json",
+      "sibling_status": "CONFIRM",
+      "assigned_claim": "Audit ## Planned only (C1). Zero phantom plans in the r3-r5 window.",
+      "sibling_verdict": "NO-PHANTOM. phantom_count=0. SCORECARD still drifted: Planned not closed after r5, saturation scores contradict the axes table, capability hashes predate the r5 patch, calibration '0 unresolved' overstates the r5 judge record.",
+      "independent_verdict": "CONFIRM phantom_count=0 for the Planned bullets that exist at 36746332, 48a64d8, and HEAD. CONFIRM D1, D2, D3, D4, D7's count-drop, and the open carries. D5's claim that live verifier defects remain was not re-probed; to-verify. The text '0 unresolved' is still in the calibration cell.",
+      "checks": [
+        {
+          "claim": "No Planned bullet from r3 or r4 vanished without an amendment or a still-open carry",
+          "command": "git show 36746332:SCORECARD.md; git show 48a64d8:SCORECARD.md; git show HEAD:SCORECARD.md  (## Planned sections)",
+          "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+          "observed": "36746332 Planned names r4 Obsidian-CLI, the devin routing sentence, r5 audit, and three carries (96-row sign-off, 3 gd2d pins, /tmp residue ~2,100 r2 dirs). 48a64d8 and HEAD replace the r4 bullet with an AMENDED/withdrawn note and keep the r5 bullet plus the three carries, dropping only the '~2,100' figure. ## Retired remains None. r5 is still written as future work. git diff --stat 48a64d8 ce58c2b -- SCORECARD.md is 1 insertion, 1 deletion, and that hunk is only the calibration axis cell (6 to 7)."
+        },
+        {
+          "claim": "Saturation paragraph contradicts the axes table",
+          "command": "rg -n 'operability 7|calibration 6|calibration \\| 7|operability \\| 8' SCORECARD.md",
+          "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+          "observed": "Axes table: calibration 7, operability 8. Saturation paragraph line 45: 'operability 7, calibration 6'. CONFIRM."
+        },
+        {
+          "claim": "Capability hashes are the pre-r5 blobs",
+          "command": "rg -n '7efda63|d312263a' SCORECARD.md; sha256sum tools/souji-verify.sh tools/souji-vault-verify.sh",
+          "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+          "observed": "SCORECARD still cites 7efda63bd760… and d312263a…. Installed files are 53239fdfe5bcaaaf… and 00d59b1b36d87db3…. CONFIRM."
+        },
+        {
+          "claim": "The coverage counting command prints 0 from the lane repo because lore-shokunin is not a relative path there",
+          "command": "git -C lore-shokunin worktree list | wc -l; echo pipe_rc=${PIPESTATUS[0]}; git -C game-dev-2d-shokunin worktree list | wc -l",
+          "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+          "observed": "0 and pipe_rc=128 for both. stderr: fatal: cannot change to 'lore-shokunin': No such file or directory (same for game-dev-2d-shokunin). From the fleet root the same commands print 1 and 4. CONFIRM D4."
+        },
+        {
+          "claim": "The 96-row list and the 3 gd2d pins are still open carries, not vanished plans",
+          "command": "rg -n -i 'sign-off' LOG.md; python3 csv.DictReader count of census/round-3/operator-approval-list.tsv; git -C game-dev-2d-shokunin worktree list; git log --oneline wt-r98 wt-r99 wt-r100 --not --remotes | wc -l per branch",
+          "observed": "LOG.md:147 is the only sign-off hit: 'awaits operator sign-off; no file deletions this round.' Approval TSV data rows 96. Worktrees: main 1392ca21, wt-r100 locked, wt-r98 locked, wt-r99 locked. Each named branch has 1 commit --not --remotes. CONFIRM."
+        }
+      ]
+    }
+  ],
+  "census_audits": [
+    {
+      "id": "C-publication",
+      "seats": ["S49", "S53", "S56"],
+      "result": "FLAG",
+      "claim": "Official census numbers exist to cross-audit",
+      "command": "ls census/round-6/seat-49.json census/round-6/seat-53.json census/round-6/seat-56.json census/round-6/crun-49.json census/round-6/crun-53.json census/round-6/crun-56.json and the same names under results/",
+      "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+      "observed": "All six paths absent at 2026-10-18T17:45:36-03:00. tools/souji-census.sh also absent (ls: cannot access). Scratch only: /tmp/s49-hand-33.tsv (15:58), /tmp/s53-crun/fleet-33.tsv (16:48), /tmp/s56-runner/fleet-36.tsv (16:57). These are not official fragments. Numbers below are cross-checks of that scratch, not of a published seat JSON."
+    },
+    {
+      "id": "C-S56-lore",
+      "seat": "S56",
+      "source": "/tmp/s56-runner/fleet-36.tsv lore-shokunin row",
+      "sibling_status": "CONFIRM",
+      "claimed": "worktrees=1 unpushed=3 dirty=1 scratch_bytes=218489",
+      "command": "git worktree list | wc -l; git rev-list --count HEAD --not --remotes; git status --porcelain | wc -l; du -sb .scratch",
+      "cwd": "/home/vgpnk/Projects/shokunin/lore-shokunin",
+      "observed": "At 2026-10-18T17:39:34-03:00: wt=1; unpushed=3; dirty=1; scratch=218489. Exact match."
+    },
+    {
+      "id": "C-S49-kake",
+      "seat": "S49",
+      "source": "/tmp/s49-hand-33.tsv kake-shokunin row; also S56 fleet-36.tsv",
+      "sibling_status": "CONFIRM",
+      "claimed": "worktrees=1 unpushed=0 dirty=0 scratch_bytes=0 head=cb807bc nremotes=2",
+      "command": "git worktree list | wc -l; git rev-list --count HEAD --not --remotes; git status --porcelain | wc -l; git rev-parse --short HEAD; du -sb .scratch or echo 0; git remote; git remote -v | wc -l; git branch -r | wc -l",
+      "cwd": "/home/vgpnk/Projects/shokunin/kake-shokunin",
+      "observed": "wt=1; unpushed=0; dirty=0; head=cb807bc; scratch=0. git remote names=1 (origin). git remote -v lines=2. git branch -r count=2. branch -vv: master cb807bc [origin/master]. nremotes=2 confirms if it means remote -v lines or remote-tracking refs. It does not confirm a second remote name. Not flagged: 2 is a real count under those readings."
+    },
+    {
+      "id": "C-S53-audio-unpushed",
+      "seat": "S53",
+      "also_in": "S56 fleet-33.tsv and fleet-36.tsv",
+      "source": "/tmp/s53-crun/fleet-33.tsv audio-shokunin unpushed=24, worktrees=1, dirty=0",
+      "sibling_status": "CONFIRM",
+      "claimed": "audio-shokunin worktrees=1 dirty=0 unpushed=24",
+      "command": "git worktree list | wc -l; git status --porcelain | wc -l; git log --branches --not --remotes --oneline | wc -l; git rev-list --count HEAD --not --remotes; git branch -vv",
+      "cwd": "/home/vgpnk/Projects/shokunin/audio-shokunin",
+      "observed": "wt=1; dirty=0; scratch=0; HEAD defbe128. git log --branches --not --remotes --oneline | wc -l = 24. git rev-list --count HEAD --not --remotes = 2 (main ahead 2 of origin/main). The scratch number 24 matches the all-branches reading, not the HEAD-only reading. CONFIRM under the all-branches reading. Do not treat 2 as a contradiction of their TSV."
+    }
+  ],
+  "uncertainty": [
+    "S49/S53/S56 never published the assigned fragment. Scratch TSVs can be intermediate. Confirmations above are of those files' numbers, not of a closed seat verdict.",
+    "Kotodama .scratch and unpushed/dirty counts moved during this audit. A later reader will not reproduce 39173523280 either.",
+    "game-dev-2d HEAD moved at 17:38:17, during this cross-audit, from 05a72899 to 1392ca21. Worktree count stayed 4.",
+    "Vault selftest exit 0 and S14 D5's remaining-defect claim were not re-run. Marked to-verify.",
+    "No git fetch, push, commit, branch, prune, or delete. No secret-shaped file was read. .ufo/state and .ufo/watchdog.log were not opened. Live obsidian ledger content was not read."
+  ]
+}

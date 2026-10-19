@@ -1,0 +1,72 @@
+{
+  "qrun": "qrun-01",
+  "seat": "S06",
+  "round": 8,
+  "generated_at": "2026-10-18T19:39:06-03:00",
+  "artifact": "results/qrun-01.json",
+  "subject": "tools/impl-06.sh (souji-quarantine.impl-06) \u2014 quarantine-flow runner + gate-opening runbook",
+  "sha256_impl06": "78db85722677a118bdb0fb9efbc1dcd9858ea1a561f21d7d8ab3fdaadf9d3e68",
+  "mode": "mutating scenarios only under mktemp fixture roots (TMPDIR=/var/tmp/sq06-ws, repo roots carry a tmp.* component); live lane touched read-only only; no fetch/push/commit/branch anywhere",
+  "selftest": {
+    "runs": [
+      {
+        "cmd": "TMPDIR=/var/tmp/sq06-ws bash tools/impl-06.sh --selftest",
+        "exit": 0,
+        "summary": "SUMMARY selftest pass=40 fail=0"
+      },
+      {
+        "cmd": "TMPDIR=/var/tmp/sq06-ws bash tools/impl-06.sh --selftest (stability re-run)",
+        "exit": 0,
+        "summary": "SUMMARY selftest pass=40 fail=0"
+      }
+    ],
+    "assertion_count": 40,
+    "fixture_construction": "git plumbing only: init/add/write-tree/commit-tree/update-ref/symbolic-ref; three commits (C1 old-pushed-scratch.log; C2 base/dirty/release + refs/remotes/origin/master=C2 + origin/HEAD symref; C3 local-only.txt beyond origin); worktree-dirty dirty.txt; untracked fresh-untracked.log + secret.env; mtimes backdated 3d via touch -d"
+  },
+  "dependency_selftests": [
+    {
+      "cmd": "bash tools/souji-verify.sh --selftest",
+      "exit": 0,
+      "summary": "selftest: 24 checks, 0 failed"
+    },
+    {
+      "cmd": "bash tools/souji-vault-verify.sh --selftest",
+      "exit": 0,
+      "summary": "selftest: 35 checks, 0 failed"
+    }
+  ],
+  "fixture_matrix_observed": {
+    "ticket_authorized_happy": "old-pushed-scratch.log: gate1 PASS(unpushed-touching=0), gate2 PASS(dirty-touching=0), toolA SAFE/pushed, toolB SAFE/pushed VERIFIED(pushed), pair file agreeing -> AUTHORIZED (exit 0)",
+    "refused_gate1": "local-only.txt (introducing commit C3 beyond origin tip) -> NOT-AUTHORIZED gate1-fail (exit 0)",
+    "refused_gate2_dirty": "dirty.txt (uncommitted worktree change) -> NOT-AUTHORIZED gate2-fail (exit 3 on --execute)",
+    "refused_gate2_untracked_stale_lore_shape": "fresh-untracked.log: receipt tools emit SAFE(stale)-class verdicts but gate2 (?? porcelain) dominates -> NOT-AUTHORIZED gate2-fail; gates bind tighter than tools",
+    "refused_secrets": "secret.env -> NOT-AUTHORIZED secrets-refusal before any read (exit 4 on --execute)",
+    "refused_pair_missing": "AUTHORIZED tool pair without --pair-file -> NOT-AUTHORIZED pair-missing; --execute exit 3",
+    "refused_pair_mismatch": "pair file author SAFE/pushed vs blind NOT-SAFE -> NOT-AUTHORIZED pair-mismatch",
+    "safety_non_fixture_execute": "repo root without tmp.* component -> exit 4, no .ufo-quarantine created",
+    "safety_live_lane_execute": "stage --execute on live lane file -> exit 4, LANE-STATUS-UNCHANGED (diff empty), no .ufo-quarantine in lane",
+    "flow_happy_path": "stage --execute: entry moved to .ufo-quarantine/<date>/old-pushed-scratch.log + sidecar manifest (sha256 recorded, receipt=pushed); second-check --execute: re-hash match + original absent + gate1 still empty -> <entry>.second-check-pass stamped, manifest appended secondcheck=PASS; delete --execute: entry removed, manifest deleted=true",
+    "flow_tamper": "staged bytes modified after stage -> second-check --execute exit 3 (sha-mismatch), no stamp",
+    "flow_double_and_stampless": "second-check --execute twice -> exit 3; delete --execute without stamp -> exit 3; delete --execute after deletion -> exit 3",
+    "entry_isolation": "with three entries sharing one date dir, per-entry sidecar manifest + stamp keep flows independent (base.txt tampered stays blocked while release.txt completes second-check+delete)",
+    "dry_run_default": "stage/second-check/delete without --execute print PLAN lines and mutate nothing (no .ufo-quarantine dir created)"
+  },
+  "live_surface_readonly": {
+    "target": "tools/impl-06.sh itself (untracked in lane)",
+    "ticket": "TICKET\t/home/vgpnk/Projects/shokunin/souji-shokunin/tools/impl-06.sh\tNOT-AUTHORIZED\tgate2-fail(dirty-touching=1)\nGATES\tPASS (unpushed-touching=0)\tFAIL (dirty-touching=1)\nTOOLS\tA=NOT-SAFE/none\tB=NOT-SAFE/none\tB-verified=no\tpair=missing",
+    "runbook": "RUNBOOK\t/home/vgpnk/Projects/shokunin/souji-shokunin/tools/impl-06.sh\n  gate1 PASS (unpushed-touching=0)\n  gate2 FAIL (dirty-touching=1)\n  gate3 toolA=NOT-SAFE/none toolB=NOT-SAFE verified-receipt=no pair=missing\n  ticket NOT-AUTHORIZED (gate2-fail(dirty-touching=1))\n  open-gate:\n  - gate2: operator commits or cleans the dirty/untracked paths touching the target (tool never does this)",
+    "stage_execute": {
+      "exit": 4,
+      "output": "impl-06: SAFETY-REFUSAL: --execute refused: repo root /home/vgpnk/Projects/shokunin/souji-shokunin has no tmp.* fixture component; this tool mutates mktemp fixture repos only"
+    },
+    "pollution_check": {
+      "status_diff": "empty (LANE-STATUS-UNCHANGED)",
+      "quarantine_dir": "absent (NO-QUARANTINE-DIR-IN-LANE)"
+    }
+  },
+  "verdicts": {
+    "quarantine_flow_tooling": "MET on fixtures \u2014 full ticket->stage->hold->second-check->delete cycle executes fail-closed with per-entry receipts; 40/40 selftest, exit 0, byte-stable across runs",
+    "gate_opening_runbook": "MET \u2014 runbook subcommand reports per-gate PASS/FAIL plus the operator-owned opening action per blocked gate; read-only on live trees",
+    "live_removals": "ZERO by design \u2014 the tool cannot mutate any repo outside a tmp.* fixture root; live lane verified untouched"
+  }
+}

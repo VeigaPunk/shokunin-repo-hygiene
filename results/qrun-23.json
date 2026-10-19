@@ -1,0 +1,66 @@
+{
+  "seat": "S23",
+  "round": 8,
+  "kind": "final-judge fixture runner scenario (quarantine-flow exercise)",
+  "recorded_at": "2026-10-18T18:38:00-03:00",
+  "scope": "ALL mutations confined to mktemp fixture repos; live fleet and lane repo untouched except this qrun file",
+  "fixture_root": "/tmp/s23-qrun.Zrlqun (preserved for parent re-audit; remote.git = local bare origin)",
+  "baseline_selftests": [
+    {"tool": "tools/souji-verify.sh", "cmd": "tools/souji-verify.sh --selftest", "out_tail": "selftest: 24 checks, 0 failed", "rc": 0},
+    {"tool": "tools/souji-census.sh", "cmd": "tools/souji-census.sh --selftest", "out_tail": "selftest: 32 checks, 0 failed", "rc": 0},
+    {"tool": "tools/souji-vault-verify.sh", "cmd": "tools/souji-vault-verify.sh --selftest", "out_tail": "selftest: 35 checks, 0 failed", "rc": 0}
+  ],
+  "fixture_setup": {
+    "repo": "work/ (git init -b master) + bare remote.git; git remote add origin; push -u origin master",
+    "targets": {
+      "A_artifact-pushed.txt": "committed, pushed to origin (refs/remotes/origin/master created by push, verified via for-each-ref)",
+      "B_launch-stale.json": "untracked scratch (launch-*.json), mtime forced 2026-10-14 (4 days), zero fleet refs",
+      "C_fresh-note.txt": "untracked, non-scratch control",
+      "D_dirty-live.txt": "tracked, latest commit intentionally unpushed (unpushed=1 by --branches --not --remotes)"
+    },
+    "ledger": "fixture-local header-only TSV via SOUJI_LEDGER override; SHOKUNIN_ROOT overridden to fixture root"
+  },
+  "phase1_pre_stage_verify": {
+    "cmd": "SHOKUNIN_ROOT=$T SOUJI_LEDGER=$T/ledger.tsv tools/souji-verify.sh <A> <B> <C> <D>",
+    "observed": [
+      "A SAFE pushed intro=acd5519b8356 ref=refs/remotes/origin/master ancestor=yes",
+      "B SAFE stale scratch-type=checkpoint refs=0 mtime-age-days=4",
+      "C NOT-SAFE none (no-introducing-commit; no-ledger-row; not-scratch-type)",
+      "D NOT-SAFE none (pushed=unpushed-commits-touching intro=6914667f84f4)"
+    ],
+    "rc": 0,
+    "verdict_layer_call": "CORRECT 4/4"
+  },
+  "phase2_stage": {
+    "cmds": ["mkdir -p .ufo-quarantine/$(date -u +%Y-%m-%d)", "git mv artifact-pushed.txt -> quarantine (gitmv_rc=0)", "mv launch-stale.json -> quarantine (mv_rc=0)"],
+    "observed_git_status": "R artifact-pushed.txt -> .ufo-quarantine/2026-10-18/artifact-pushed.txt ; ?? .ufo-quarantine/2026-10-18/launch-stale.json"
+  },
+  "phase3_second_receipt_check": {
+    "cmd": "souji-verify.sh on original path + both moved paths",
+    "observed": [
+      "original artifact-pushed.txt -> NOT-SAFE unreachable missing path",
+      "quarantine artifact-pushed.txt -> NOT-SAFE none (pushed=no-introducing-commit)",
+      "quarantine launch-stale.json -> SAFE stale refs=0 mtime-age-days=4 (mtime preserved by mv)"
+    ],
+    "finding_F1": "SECOND-CHECK GAP for pushed receipts: SKILL.md flow step 5 ('re-run the receipt command; receipt must still hold') is UNSATISFIABLE with the installed tool once the artifact is staged — the moved path has no introducing commit and the original path is gone. The pushed receipt cannot be re-derived post-move."
+  },
+  "phase4_hold_and_identity": {
+    "note": "hold fixture-compressed (2s; real flow requires >=450s / 24h non-pushed)",
+    "identity_check": "sha256 recorded pre-stage; quarantine copies must equal them at delete time (F1 makes the pre-stage sha the only usable second-check anchor for pushed receipts)"
+  },
+  "phase5_delete_and_commit": {"rm_rc": 0, "quarantine_dir_after": "empty", "fixture_commit_rc": 0},
+  "restore_probe": {
+    "procedure": "checkout quarantine copy back to original path (post-quarantine-commit), re-run souji-verify.sh",
+    "observed": "SAFE did NOT re-hold: NOT-SAFE none pushed=unpushed-commits-touching intro=acd5519b8356 — the unpushed fixture quarantine commits now touch the original path",
+    "finding_F2": "A COMMITTED-THEN-RESTORED quarantine permanently poisons the pushed receipt until the quarantine commits are pushed. Same tangle class r7 recorded for souji's own bookkeeping commits. Corollary: the quarantine flow must run to completion within one receipt window; the second check must consume PRE-MOVE receipt evidence, never a post-move re-derivation."
+  },
+  "finding_F3": "Stale receipts DO re-verify inside .ufo-quarantine/ (tool's sweep excludes '!**/.ufo-quarantine/**'; mv preserves mtime) — second-check works for stale-only sets with today's tool.",
+  "tooling_contract_for_round8": [
+    "1. stage command: creates <repo>/.ufo-quarantine/<utc-date>/, git mv for tracked / mv for untracked, refuses targets whose receipt is not SAFE at stage time (re-run pre-move)",
+    "2. second-check mode: consumes PRE-MOVE receipt evidence (path, receipt class, sha256, evidence line) + asserts quarantine-copy sha256 identity + refs sweep still zero/unchanged + hold elapsed; must NOT re-derive from the moved path",
+    "3. delete command: gated on second-check PASS; refuses otherwise",
+    "4. fail-closed: any drift (sha mismatch, new reference, hold short) -> abort with artifact left in quarantine",
+    "5. no git fetch/push; no mutation outside the owning fixture repo; work only after operator authorization in live use"
+  ],
+  "gate_artifact_checked": {"path": "census/round-3/operator-approval-list.tsv", "rows": "96+header", "status": "awaiting operator sign-off (LOG r3/r5/r6, dissent-24 r7)"}
+}

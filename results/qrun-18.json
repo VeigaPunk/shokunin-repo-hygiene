@@ -1,0 +1,114 @@
+{
+  "fragment": "results/qrun-18.json",
+  "seat": "S18",
+  "round": 8,
+  "generated_at": "2026-10-18T18:59:41-03:00",
+  "deliverable": "census/round-8/gate-runbook-18.md",
+  "mode": "read-only over live fleet (no fetch/push/commit/branch/prune/mv/rm outside mktemp); tools exercised via --selftest and fixture runs only; no secret-shaped reads; .ufo/state and .ufo/watchdog.log not opened",
+  "tool_selftests": {
+    "souji-verify.sh": "selftest: 24 checks, 0 failed (exit 0)",
+    "souji-census.sh": "selftest: 32 checks, 0 failed (exit 0)"
+  },
+  "live_gate_state": {
+    "observed_window": "2026-10-18T18:53-18:59-03:00",
+    "fleet_root_origin": {
+      "command": "git ls-remote origin HEAD (fleet root)",
+      "output": "35b17a60bd91ac8710c61ec731da969d7a52ede2\tHEAD",
+      "verdict": "LIVE"
+    },
+    "souji_lane_origin": {
+      "command": "GIT_TERMINAL_PROMPT=0 git ls-remote origin HEAD (souji-shokunin)",
+      "output": "remote: Repository not found.\nfatal: repository 'https://github.com/VeigaPunk/shokunin-repo-hygiene.git/' not found",
+      "remote_tracking_refs": 0,
+      "unpushed_commits": 13,
+      "verdict": "DEAD — G2 CLOSED"
+    },
+    "operator_approval_list": {
+      "path": "census/round-3/operator-approval-list.tsv",
+      "lines_total": 97,
+      "rows": 96,
+      "sample_size": 6,
+      "sample_positions": [1, 20, 40, 60, 80, 96],
+      "sample_results": "6/6 SAFE pushed intro=b2f2efae7549 ref=refs/remotes/origin/master ancestor=yes",
+      "verdict": "G1 OPEN pending operator signature"
+    },
+    "fleet_root_unpushed": 26,
+    "fleet_census_snapshot": {
+      "command": "tools/souji-census.sh (default fleet root)",
+      "time": "2026-10-18T18:56-03:00",
+      "notable_rows": {
+        "kotodama-shokunin": "worktrees=1 unpushed=55 dirty=31 scratch_bytes=41698011786 flags=dirty,unpushed,scratch,secret-shaped",
+        "game-dev-2d-shokunin": "worktrees=9 unpushed=10 dirty=3 flags=dirty,unpushed,wt-absent,wt-dirty",
+        "game-dev-3d-shokunin": "worktrees=1 unpushed=10 dirty=42 flags=dirty,unpushed,secret-shaped",
+        "audio-shokunin": "worktrees=1 unpushed=24",
+        "kaidoku-shokunin": "worktrees=1 unpushed=20 dirty=1",
+        "lore-shokunin": "worktrees=1 unpushed=3 dirty=1 scratch_bytes=218489",
+        "souji-shokunin": "worktrees=1 unpushed=13 dirty=10 flags=dirty,unpushed,no-remote,secret-shaped"
+      },
+      "verdict": "G5 CLOSED for all candidate lanes"
+    }
+  },
+  "fixture_exercise": {
+    "fixture_root": "/tmp/qrun18-fleet.737tRI",
+    "built": "mktemp -d; bare origin.git + fleet repo; pushed history; candidates A=reports/old-run.json (tracked,pushed) B=notes/local.txt (tracked,unpushed) C=.scratch/junk.log (untracked,mtime 3d)",
+    "transcript_kept": false,
+    "transcript_note": "full transcript captured at run time to /tmp/qrun18-transcript.txt; decisive lines inlined here and in the runbook; fixture and transcript removed after evidence capture",
+    "baseline_receipts": [
+      "VERDICT reports/old-run.json SAFE pushed intro=11fe2b529d90 ref=refs/remotes/origin/master ancestor=yes",
+      "VERDICT notes/local.txt NOT-SAFE none pushed=unpushed-commits-touching intro=af4c7f1b8adf; obsidian=no-matching-ledger-row; stale=not-scratch-type",
+      "VERDICT .scratch/junk.log SAFE stale scratch-type=scratch-dir refs=0 mtime-age-days=3"
+    ],
+    "gate_results": {
+      "A": "gate1=0 lines, gate2=0 lines, gate3=SAFE(pushed) -> authorized in fixture",
+      "B": "gate1=1 line -> FAIL-CLOSED, never staged",
+      "C": "gate1=0 (vacuous), gate2='?? .scratch/junk.log' -> unpassable under r7 rule (see gate2_finding)"
+    },
+    "staging": {
+      "tracked": "git mv reports/old-run.json .ufo-quarantine/2026-10-18/reports__old-run.json; porcelain showed 'R' staged rename",
+      "untracked": "mv .scratch/junk.log .ufo-quarantine/2026-10-18/scratch__junk.log",
+      "integrity": "sha256(A)=7ae43323d4a85299541dced1301d54953efcb36796e974599ced2f7d55436f7e identical pre-move and in quarantine",
+      "commit": "fixture commit 024899d 'quarantine: reports/old-run.json receipt=pushed intro=11fe2b5 evidence=souji-verify SAFE(pushed)', pushed to fixture origin"
+    },
+    "second_check": {
+      "tool_on_vacated_original": "NOT-SAFE unreachable missing path (both A and C) — expected",
+      "tool_on_quarantined_copy_A": "SAFE pushed intro=024899d6d45a ref=refs/remotes/origin/master ancestor=yes",
+      "tool_on_quarantined_copy_C": "SAFE stale scratch-type=ext refs=0 mtime-age-days=3",
+      "subtlety": "tool-on-copy SAFE(pushed) cites the QUARANTINE commit (024899d) as intro — proves the copy is pushed, NOT that the original receipt holds; second_check_direct is the sufficient form",
+      "second_check_direct": {
+        "intro_original_A": "11fe2b529d906c07c510ad9284cb424316d1378d",
+        "merge_base_is_ancestor_of": "refs/remotes/origin/master -> yes",
+        "unpushed_touching_lines": 0,
+        "copy_sha256_equals_pre_move": true
+      }
+    },
+    "delete": {
+      "commands": "git rm .ufo-quarantine/2026-10-18/reports__old-run.json; rm .ufo-quarantine/2026-10-18/scratch__junk.log; commit; push to fixture origin",
+      "post_state": "quarantine dir empty (0 entries); B survived; .scratch/junk.log gone; final non-quarantine porcelain empty; souji-census.sh --root <fixture> -> fleet row verdict=clean unpushed=0 dirty=0"
+    },
+    "exit_code": 0
+  },
+  "findings": [
+    {
+      "id": "F1-second-check-semantics",
+      "claim": "Re-running souji-verify.sh on the quarantined copy yields SAFE(pushed) whose intro commit is the quarantine commit itself; it is necessary-but-not-sufficient evidence. The sufficient second check re-derives the ORIGINAL intro commit's ancestry (git merge-base --is-ancestor) plus unpushed-touching emptiness plus copy sha equality — all path-free, proven in fixture Section 6.",
+      "status": "proven-on-fixture; codified in runbook §3"
+    },
+    {
+      "id": "F2-gate2-untracked-incoherence",
+      "claim": "The r7 authorization rule requires gate2 (status --porcelain --untracked-files=all -- <path>) empty; an untracked artifact's own '?? <path>' line makes gate2 permanently unpassable, while the installed tool emits SAFE(stale) for the same file (fixture C; lore .scratch in r7). Under the rule as written, no untracked stale candidate can ever be authorized — a standing tool/rule contradiction.",
+      "proposal": "refine gate2 to 'no porcelain line touching <path> other than the artifact's own ?? <path> entry', or per-ticket explicit operator waiver (mechanism already recognized by dissent-24). Not self-applied; until adopted untracked stale candidates stay NOT-AUTHORIZED.",
+      "status": "proposed in runbook §2 for parent/judge adjudication"
+    }
+  ],
+  "not_claimed": [
+    "No live removal, staging dir, mv/rm, commit, push, fetch, or remote creation anywhere in the live fleet",
+    "No operator signature assumed or fabricated; G1 remains pending",
+    "gate2 refinement NOT applied to any live rule; recorded as proposal only",
+    "Fixture fleet and transcript removed from /tmp after evidence capture",
+    "Fixture commit/push occurred ONLY inside /tmp/qrun18-fleet.737tRI (mktemp), which is sanctioned by the round rules"
+  ],
+  "write_surface_used": [
+    "census/round-8/gate-runbook-18.md",
+    "results/qrun-18.json"
+  ]
+}

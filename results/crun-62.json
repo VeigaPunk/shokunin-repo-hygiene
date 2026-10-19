@@ -1,0 +1,259 @@
+{
+  "seat": "S62",
+  "role": "runner",
+  "fragment": "results/crun-62.json",
+  "round": 6,
+  "claim": "O1",
+  "date": "2026-10-18",
+  "fleet_root": "/home/vgpnk/Projects/shokunin",
+  "verdict": "O1-NOT-CLOSED",
+  "summary": "Ran every landed tools/souji-census.impl-*.sh (33..48) from a frozen copy. 9/16 landed. Selftest exit 0 only for executed snapshots of impl-33 (30/30) and impl-44 (32/32). Live 7-column censuses cover 21/21 child git repos. Round-1 census.tsv is a different schema (CRLF artifact table); no tool treated it as identical. Live fleet moved during the run (kotodama .scratch 17.04→35.44 GiB, unpushed 49→51), so a second live census cannot be byte-identical. Seven impls never appeared.",
+  "axes": {
+    "operability": "partial: two selftest-green census impls exist and produce a full child-repo table; the fleet is not repeatable while other seats write; 7/16 impls absent",
+    "calibration": "stable columns (worktrees, unpushed, scratch-absent) match hand commands on the 5 seeded repos; dirty splits by --untracked-files=all vs default porcelain, both matching the matching hand command; impl-39 UTC mtime is +1s; impl-48 prunes all of .ufo; impl-46 calls a UTF-8 CRLF TSV 'not text'",
+    "coverage": "9/16 expected impls executed; 21/21 immediate child git repos present in every 7-column live TSV; missing 35,37,38,41,42,43,47 at 2026-10-18T17:42:21-03:00"
+  },
+  "method": {
+    "why_snapshot": "Source files were rewritten while this seat ran. First direct invocation of tools/souji-census.impl-33.sh (sha256 f4ab74df541ca93c0dececef6e2fbf003e9e900041c02bf17d025afbdb771bc0, then the file grew) printed a 21-row TSV and exited 2 with stderr: tools/souji-census.impl-33.sh: line 761: syntax error near unexpected token '('. Scored runs are `cp -L` snapshots, not the moving source.",
+    "snapshot_dir": "/tmp/s62-crun/snap",
+    "impl46_snapshot": "/dev/shm/s62-impl-46.sh",
+    "selftest_cmd": "<snapshot> --selftest",
+    "live_cmd": "<snapshot> --root /home/vgpnk/Projects/shokunin",
+    "compare_cmd": "<snapshot> --root /home/vgpnk/Projects/shokunin --compare /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-1/census.tsv",
+    "hand_seed": "python3 random.Random(62).sample(sorted *-shokunin child dirs, 5) → tabi-shokunin, kaidoku-shokunin, game-dev-2d-shokunin, kama-shokunin, mado-shokunin",
+    "child_repos_cmd": "find /home/vgpnk/Projects/shokunin -mindepth 1 -maxdepth 1 -type d ! -name '.*' -exec test -e '{}/.git' \\; -print | sort",
+    "child_repos_observed": 21
+  },
+  "impls_missing_at_17:42:21-03:00": [35, 37, 38, 41, 42, 43, 47],
+  "impls": [
+    {
+      "id": 33,
+      "executed_sha256": "7fb390add4669e30830edc8857cfd50cc3f32a12ec48d2209b35336aee304f42",
+      "source_sha256_at_17:42": "not re-hashed; source mtime 2026-10-18 17:42 size 29007 (was 26739 at snapshot)",
+      "contract": "S33 7-column TSV; dirty is status --porcelain with untracked included (--untracked-files=all in the executed body); secret-shaped names flagged not opened",
+      "selftest_exit": 0,
+      "selftest_tail": "selftest: 30 checks, 0 failed",
+      "live_exit": "unrecorded",
+      "live_exit_note": "Wrapper echo of $? failed: /bin/bash: line 33: echo: write error: Disk quota exceeded. stderr file is 0 bytes. stdout is a complete header+21 TSV (2068 bytes, mtime 2026-10-18 17:11). Do not treat the empty exit file as exit 0.",
+      "live_secs": "about 12 min (batch ALL_LIVE_DONE 2026-10-18T17:11:50-03:00; this impl was the long pole because newest-mtime is a bash per-file loop)",
+      "live_nrows": 21,
+      "includes_fleet_root": false,
+      "compare_r1_exit": 2,
+      "compare_r1_err": "souji-census: compare file header mismatch (want 7 census columns)",
+      "compare_r1_note": "usage text also dumped to stdout because usage_err calls usage. Header rejected before a re-walk.",
+      "handcheck": "worktrees/unpushed/scratch match the 5 picks. dirty matches `status --porcelain --untracked-files=all` (gd2d 291, kama 2, tabi 0, mado 0). kaidoku dirty 44 vs an earlier hand 25: the tree was moving. flags secret-shaped on kotodama and souji."
+    },
+    {
+      "id": 34,
+      "executed_sha256": "52b0c34d350b67269ed45237a092f90fad47d40d3f197b52fb13eec1cd9efd23",
+      "source_note": "source still moving at 17:38 (40365 bytes). Not the S33 column contract.",
+      "contract": "surface classifier: CENSUS<TAB>kind<TAB>path... SAFE|NOT-SAFE. No --compare.",
+      "selftest_exit": 1,
+      "selftest_fails": [
+        "FAIL G2: evidence 'secret-shaped path component; not read' lacks 'not hashed'",
+        "FAIL G4: got NOT-SAFE(none) want NOT-SAFE(symlink-present)",
+        "FAIL H2 exit=0 want=2"
+      ],
+      "selftest_tail": "selftest: 30 checks, 3 failed",
+      "live_exit": 0,
+      "live_secs": 3,
+      "live_nrows": 30,
+      "live_kind": "all lines start with CENSUS",
+      "compare_r1_exit": 2,
+      "compare_r1_err": "souji-census: unknown flag: --compare"
+    },
+    {
+      "id": 36,
+      "executed_sha256": "e9a3d67c647c5db046245ae5952c3b67b7667ddaf5ab9bdc6fc4f56802a04879",
+      "selftest_exit": 1,
+      "selftest_fails": [
+        "FAIL clean flags [dirty]",
+        "FAIL clean dirty tool=1 ro=1 plain=1",
+        "FAIL positional root differs",
+        "FAIL uses untracked-files=all"
+      ],
+      "selftest_tail": "selftest: 45 checks, 4 failed",
+      "selftest_err": "warning: Empty last update token.",
+      "live_exit": 0,
+      "live_secs": 9,
+      "live_nrows": 21,
+      "compare_r1_exit": 2,
+      "compare_r1_err": "souji-census: incomparable: previous TSV header is not a fleet census",
+      "handcheck": "dirty matches default porcelain (gd2d 17, kaidoku 1, kama 1), not --untracked-files=all. mtime on tabi/mado/kama matches hand local ISO. secret-shaped flagged on kotodama and souji."
+    },
+    {
+      "id": 39,
+      "executed_sha256": "5dc14e684a14fcab94d95175260d750cc5893ee885901c2c7e0fd32229c65cd0",
+      "source_note": "source grew to 20923 bytes at 17:30 after this run",
+      "selftest_exit": 1,
+      "selftest_fails": ["selftest: FAIL S6b script contains a content-read command"],
+      "selftest_tail": "selftest: 16 checks, 1 failed",
+      "live_exit": 0,
+      "live_secs": 5,
+      "live_nrows": 22,
+      "includes_fleet_root": true,
+      "compare_r1_exit": 1,
+      "compare_r1_err": "souji-census: compare schema mismatch (not a souji-census TSV)",
+      "handcheck": "numeric dirty/unpushed/worktrees/scratch match impl-36 on the 5 picks. mtime is UTC and systematically +1 second vs `date -d @stat-%Y --iso-8601=seconds` (tabi hand 2026-10-17T00:28:35-03:00 = 03:28:35Z; tool 03:28:36Z). Does not flag secret-shaped on kotodama (75 secret-named files, names only)."
+    },
+    {
+      "id": 40,
+      "path": "tools/souji-census.impl-40.sh -> tools/impl-40.sh",
+      "executed_sha256": "04a9be2dfb4b631133ce2e0d67320127f5331dab791b9639081f2d98c0385418",
+      "source_sha256_later": "9ab7beb6f7c0ead0ce08acdf004da41a9a15205e1e5c95a546716f179ea7d81b",
+      "selftest_exit": 1,
+      "selftest_fails": [
+        "FAIL cleanrepo dirty=1",
+        "FAIL cleanrepo flags=dirty",
+        "FAIL secretrepo missing status-unverifiable (secret-shaped)"
+      ],
+      "selftest_err_tail": "SELFTEST pass=56 fail=3; line 1: tmp: unbound variable",
+      "live_exit": 0,
+      "live_secs": 10,
+      "live_nrows": 21,
+      "compare_r1_exit": 4,
+      "compare_r1_err": "impl-40: compare schema mismatch (not a repo census; round-1 artifact tables are incomparable)",
+      "handcheck": "5 picks match default-porcelain dirty and local mtime. souji dirty='-' flags include status-unverifiable (refuses to count when a non-ignored secret-shaped path is in status). That is a refusal, not a measured 0."
+    },
+    {
+      "id": 44,
+      "executed_sha256": "566f02c6c7dbb8d46c3775a294f414e152df623ac26d875361c3466a20b1d567",
+      "source_note": "source 30063 bytes at 17:37, after this run. Earlier pre-snapshot bytes failed T14/T15; the executed snapshot does not.",
+      "selftest_exit": 0,
+      "selftest_tail": "selftest: 32 checks, 0 failed",
+      "live_exit": 0,
+      "live_secs": 5,
+      "live_nrows": 22,
+      "includes_fleet_root": true,
+      "compare_r1_exit": 0,
+      "compare_r1_out": "COMPARE\tschema\tincomparable\tmissing=repo,worktrees,unpushed,dirty,scratch_bytes,mtime_iso,verdict_flags",
+      "compare_r1_note": "exit 0 is an explicit incomparable row, not a claim that round-1 matches",
+      "handcheck": "5 picks match default porcelain and local mtime. Does not flag secret-shaped on kotodama. souji scratch-empty (du 0) matches hand du 0."
+    },
+    {
+      "id": 45,
+      "executed_sha256": "b3ee81b14160f895c126c83809dfc4f4529524adf2049a3d0870a9a7532b64b5",
+      "selftest_exit": 1,
+      "selftest_err": "selftest FAIL scratch bytes not above payload: 4",
+      "live_exit": 0,
+      "live_secs": 4,
+      "live_nrows": 22,
+      "includes_fleet_root": true,
+      "compare_r1_exit": 0,
+      "compare_r1_err": "souji-census.impl-45: compare file is not a census-v1 TSV (header-mismatch)",
+      "compare_r1_out": "incomparable\t-\tschema\theader-mismatch\tcensus-v1",
+      "handcheck": "dirty matches --untracked-files=all (gd2d 291, kama 2, lore 26, kotodama 136). mado flags 'ok' not 'clean'. No secret-shaped flag on kotodama."
+    },
+    {
+      "id": 46,
+      "executed_sha256": "72960345e73f81ed2edf6606ca6119a9003486d43db91990a1c06364a0f7578f",
+      "source_note": "landed after the first batch; run from /dev/shm copy. Source grew to 33921 bytes at 17:39 after this run.",
+      "selftest_exit": 1,
+      "selftest_fail_count": 9,
+      "selftest_fails_sample": [
+        "FAIL no worktree prune",
+        "FAIL clean dirty expected 0 got 3",
+        "FAIL clean mtime ignores .git and watchdog expected 2024-07-02T01:02:03-03:00 got 2030-01-01T00:00:00-03:00",
+        "FAIL compare identical exit expected 0 got 2",
+        "souji-census.impl-46: compare file is not text",
+        "line 541: WORKDIR: unbound variable"
+      ],
+      "live_exit": 0,
+      "live_secs": 4,
+      "live_nrows": 22,
+      "includes_fleet_root": true,
+      "compare_r1_exit": 2,
+      "compare_r1_err": "souji-census.impl-46: compare file is not text",
+      "compare_r1_note": "file(1) on census/round-1/census.tsv: Unicode text, UTF-8 text, with very long lines (425), with CRLF line terminators. The 'not text' claim is false. The same string appears in the selftest, so the checker also rejects its own fixture."
+    },
+    {
+      "id": 48,
+      "executed_sha256": "5700b18e829f5fb8a3404c51b91244fecb2964afcf9a42f58431c23270c224b8",
+      "source_note": "first seen mode 644; executed snapshot was chmod +x only on the copy. Source later 755, sha256 b9a0c666be393c73924ca81b483753c7b212067bbdb9add7e0ad4e23dd821d1a at 17:19.",
+      "selftest_exit": 1,
+      "selftest_tail": "selftest: 31/32",
+      "selftest_err": "line 202: printf: -\\: invalid option; FAIL census-stderr-empty",
+      "live_exit": 0,
+      "live_secs": 3,
+      "live_nrows": 22,
+      "includes_fleet_root": true,
+      "compare_r1_exit": 0,
+      "compare_r1_out": "schema delta=incomparable (round-1 header vs 7-column header)",
+      "handcheck": "worktrees/unpushed/default-porcelain dirty match the 5 picks. Header says the walk prunes all of .ufo, not only .ufo/state. kama newest hand file is .ufo/round-10/plan.json at 2026-10-18T15:43:45-03:00 (18:43:45Z); tool mtime is 2026-10-18T18:42:47Z. tabi/mado UTC conversion matches (no +1s)."
+    }
+  ],
+  "handcheck": {
+    "seed": 62,
+    "picks": ["tabi-shokunin", "kaidoku-shokunin", "game-dev-2d-shokunin", "kama-shokunin", "mado-shokunin"],
+    "commands": [
+      "git -C REPO worktree list | wc -l",
+      "git -C REPO rev-list --count --branches --not --remotes",
+      "git -C REPO log --branches --not --remotes --oneline | wc -l",
+      "git -C REPO status --porcelain | grep -c .",
+      "git -C REPO status --porcelain --untracked-files=all | grep -c .",
+      "du -sb -P REPO/.scratch  (ABSENT if no directory)"
+    ],
+    "stable_agreement": {
+      "worktrees": {"tabi": 1, "kaidoku": 1, "game-dev-2d": 4, "kama": 1, "mado": 1},
+      "unpushed_rev_list_not_remotes": {"tabi": 1, "kaidoku": 13, "game-dev-2d": 6, "kama": 4, "mado": 0},
+      "scratch": "ABSENT or du 0 for all five",
+      "note": "kaidoku unpushed was 9 at the 15:55 hand check and 13 at the ~16:55 recheck. Every scored tool that ran after 16:55 says 13. The 9 is stale, not a tool miss."
+    },
+    "dirty_split": {
+      "default_porcelain_hand": {"tabi": 0, "kaidoku": 1, "game-dev-2d": 17, "kama": 1, "mado": 0},
+      "untracked_all_hand": {"tabi": 0, "kaidoku": "25 then higher (live)", "game-dev-2d": 291, "kama": 2, "mado": 0},
+      "tools_matching_default": [36, 39, 40, 44, 48],
+      "tools_matching_untracked_all": [33, 45],
+      "impl46": "later window: gd2d dirty 10, kaidoku 2, kama 1 — live drift, not scored against the earlier hand"
+    },
+    "mtime_stable": {
+      "tabi": "2026-10-17T00:28:35-03:00 path=.gitignore",
+      "mado": "2026-10-17T00:29:06-03:00 path=.gitignore",
+      "kama": "2026-10-18T15:43:45-03:00 path=.ufo/round-10/plan.json",
+      "matched_by": [33, 36, 40, 44, 45],
+      "impl39": "+1 second in UTC",
+      "impl48": "misses kama file because it prunes all of .ufo"
+    }
+  },
+  "round1_compare": {
+    "baseline_file": "census/round-1/census.tsv",
+    "file_1": "Unicode text, UTF-8 text, with very long lines (425), with CRLF line terminators",
+    "header": "seat, path, size_bytes, mtime, receipt, verdict, orig_verdict, corrected_by, note",
+    "schema": "incomparable to the 7-column repo census. No scored tool emitted a header-only 'identical' diff.",
+    "exits": {"33": 2, "34": 2, "36": 2, "39": 1, "40": 4, "44": 0, "45": 0, "46": 2, "48": 0},
+    "exit0_means": "44/45/48 print an explicit incomparable/schema row and exit 0. 46's exit 2 is a false 'not text'.",
+    "manual_comparable": {
+      "source": "census/round-1/census-summary.json",
+      "lore_worktrees": "r1 20 (19 prunable) → r3 pruned to 1 → this run `git -C lore-shokunin worktree list | wc -l` = 1",
+      "gd2d_worktrees": "r1 6 → r3 pruned to 4 → this run = 4",
+      "gd2d_unpushed": "r1 summary: 3 named branches × 1 unpushed commit. This run rev-list --branches --not --remotes = 6. Changed, confirmed by hand, not a tool bug.",
+      "kotodama_unpushed": "r1 summary 37; r5 report 47; this seat hand 49 (~16:55) then impl-46 51 (17:31)",
+      "kotodama_dirty": "r1 summary 17 paths; r5 report 28; this seat default porcelain 28 at ~16:55, --untracked-files=all 136",
+      "kotodama_scratch_bytes": {
+        "torn_impl33_midrun": 18292985803,
+        "hand_du_sb": 27589080516,
+        "fast_tools_cluster": 27589080713,
+        "impl33_snapshot_tsv": 27643387806,
+        "impl46_17:31": 38049512047,
+        "gib": "17.04 → 25.69 → 25.74 → 35.44"
+      }
+    }
+  },
+  "secret_shaped_names_only": {
+    "command": "os.walk name match, contents not opened",
+    "kotodama-shokunin": 75,
+    "kagi-shokunin": 1,
+    "souji-shokunin": 4,
+    "kumitate-shokunin": 1,
+    "mori-shokunin": 1,
+    "flagged_by": [33, 36, 40],
+    "not_flagged_on_kotodama_row": [39, 44, 45, 48, 46]
+  },
+  "souji_no_remote": {
+    "command": "git -C souji-shokunin for-each-ref refs/remotes | grep -c .",
+    "observed": 0,
+    "unpushed_local": 11,
+    "note": "no-remote flag on souji is correct. impl-33 does not also set unpushed; impl-36/44/45/46/48 set both."
+  },
+  "do_not_install_from_this_seat": "Parent judges pick. Signal only: executed impl-33 is the only S33-contract snapshot that both selftested 0 and flags secret-shaped names. impl-44 selftested 0 but omits that flag and uses collapsed untracked counts. Neither was re-run after the authors rewrote the source (still moving at 17:42)."
+}

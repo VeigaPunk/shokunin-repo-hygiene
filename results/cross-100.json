@@ -1,0 +1,186 @@
+{
+  "seat": "S100",
+  "round": 6,
+  "role": "cross-audit",
+  "fragment": "results/cross-100.json",
+  "contract": "Same role as S95: after the 720s wait, re-derive 3 random drift-audit claims from S01-S14 and 3 census numbers from S49-S64. Confirm or flag. This seat's file is results/cross-100.json.",
+  "axes": ["independence", "contradiction detection", "evidence fidelity", "non-harm"],
+  "written_at": "2026-10-18T17:27:04-03:00",
+  "dispatch_observed": "2026-10-18T15:51:02.530-03:00",
+  "sample": {
+    "command": "shuf -e S01 S02 S03 S04 S05 S06 S07 S08 S09 S10 S11 S12 S13 S14 -n 3; shuf -e S49 S50 S51 S52 S53 S54 S55 S56 S57 S58 S59 S60 S61 S62 S63 S64 -n 3",
+    "drawn_at": "2026-10-18T16:07:46-03:00",
+    "drift_seats": ["S04", "S06", "S01"],
+    "census_seats": ["S61", "S64", "S59"]
+  },
+  "verdict": "AGREE on 3/3 re-derived drift claims. 0 contradictions with those claims. Official census fragments for the sampled runners were absent, so 0/3 runner numbers could be confirmed from a published crun file.",
+  "agreement_counts": {
+    "drift_claims_rederived": 3,
+    "drift_agree": 3,
+    "drift_disagree": 0,
+    "drift_seats_missing": 1,
+    "census_official_fragments_present": 0,
+    "census_official_fragments_expected": 3,
+    "census_numbers_confirmed_from_published_crun": 0
+  },
+  "drift_audits": [
+    {
+      "source_seat": "S01",
+      "source_file": "census/round-6/seat-01.json",
+      "claim_id": "M3",
+      "claim": "SKILL.md:16 command cell (git fetch -q && git merge-base --is-ancestor <commit> origin/main && echo PUSHED) misstates the installed tool. origin/main does not exist. The tool never fetches. A live pushed file verifies against refs/remotes/origin/master.",
+      "independent_verdict": "AGREE",
+      "evidence": [
+        {
+          "command": "grep -nE '^[^#]*git +(-C +[^ ]+ +)?fetch( |$)' tools/souji-verify.sh tools/souji-vault-verify.sh || echo no-fetch-lines",
+          "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+          "observed_output": "no-fetch-lines"
+        },
+        {
+          "command": "git -C /home/vgpnk/Projects/shokunin symbolic-ref --short refs/remotes/origin/HEAD; git -C /home/vgpnk/Projects/shokunin show-ref --verify --quiet refs/remotes/origin/main; echo fleet-origin-main-exit=$?",
+          "observed_output": "origin/master\nfleet-origin-main-exit=1"
+        },
+        {
+          "command": "intro=$(git -C /home/vgpnk/Projects/shokunin/souji-shokunin log --diff-filter=A --format=%H -1 -- tools/souji-verify.sh); echo intro=$intro; git -C /home/vgpnk/Projects/shokunin/souji-shokunin merge-base --is-ancestor \"$intro\" origin/main; echo origin-main-exit=$?",
+          "observed_output": "intro=9435e464a2dc8c421f0d97b0ce178463748ce38d\nfatal: Not a valid object name origin/main\norigin-main-exit=128"
+        },
+        {
+          "command": "tools/souji-verify.sh --json /home/vgpnk/Projects/shokunin/.ufo/interactive-l1-20261015T050057Z/launch-tsukuroi.json; tools/souji-verify.sh --json /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh",
+          "observed_output": "{\"path\":\"/home/vgpnk/Projects/shokunin/.ufo/interactive-l1-20261015T050057Z/launch-tsukuroi.json\",\"verdict\":\"SAFE\",\"receipt\":\"pushed\",\"evidence\":\"intro=b2f2efae7549 ref=refs/remotes/origin/master ancestor=yes\"}\n{\"path\":\"/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"pushed-unverifiable\",\"evidence\":\"pushed=unverifiable(no-default-ref) intro=9435e464a2dc; obsidian=no-matching-ledger-row; stale=not-scratch-type\"}"
+        },
+        {
+          "command": "sha256sum tools/souji-verify.sh tools/souji-vault-verify.sh",
+          "observed_output": "53239fdfe5bcaaaf448e8525845ab962dd7ab6a4e7f75c0f4f051614f1c99200  tools/souji-verify.sh\n00d59b1b36d87db37518b5ef9fb98cd472888a075ed7b97bd5b8ff93bd559455  tools/souji-vault-verify.sh",
+          "note": "Matches S01 installed_tools pins."
+        }
+      ]
+    },
+    {
+      "source_seat": "S04",
+      "source_file": "census/round-6/seat-04.json",
+      "claim_id": "Superseded-snapshot drift",
+      "claim": "Citation 3859 vs 4092 is not the live pair. Worktree/HEAD shokunin.conf is 4432, origin/master is 4092, snapshot is 3859. cmp differs. Snapshot has 0 unique lines against both. Both paths are SAFE(pushed) on the introducing commit only.",
+      "independent_verdict": "AGREE",
+      "evidence": [
+        {
+          "command": "stat -c '%n %s %y' /home/vgpnk/Projects/shokunin/shokunin.conf /home/vgpnk/Projects/shokunin/shokunin.conf.full-roster-20261015; echo -n origin_master_conf_bytes=; git -C /home/vgpnk/Projects/shokunin cat-file -s refs/remotes/origin/master:shokunin.conf; echo -n HEAD_conf_bytes=; git -C /home/vgpnk/Projects/shokunin cat-file -s HEAD:shokunin.conf; echo -n snapshot_blob_bytes=; git -C /home/vgpnk/Projects/shokunin cat-file -s refs/remotes/origin/master:shokunin.conf.full-roster-20261015; cmp -s /home/vgpnk/Projects/shokunin/shokunin.conf /home/vgpnk/Projects/shokunin/shokunin.conf.full-roster-20261015; echo cmp_live_vs_snapshot_exit=$?",
+          "observed_at": "2026-10-18T17:12:36-03:00",
+          "observed_output": "/home/vgpnk/Projects/shokunin/shokunin.conf 4432 2026-10-18 11:54:47.589669861 -0300\n/home/vgpnk/Projects/shokunin/shokunin.conf.full-roster-20261015 3859 2026-10-15 01:50:47.874159787 -0300\norigin_master_conf_bytes=4092\nHEAD_conf_bytes=4432\nsnapshot_blob_bytes=3859\ncmp_live_vs_snapshot_exit=1"
+        },
+        {
+          "command": "comm -23 <(sort snapshot) <(sort worktree) | wc -l; comm -23 <(sort snapshot) <(git show refs/remotes/origin/master:shokunin.conf | sort) | wc -l",
+          "observed_output": "unique_snapshot_lines_vs_worktree=0\nunique_snapshot_lines_vs_origin_master=0"
+        },
+        {
+          "command": "tools/souji-verify.sh --json /home/vgpnk/Projects/shokunin/shokunin.conf.full-roster-20261015 /home/vgpnk/Projects/shokunin/shokunin.conf",
+          "observed_output": "{\"path\":\"/home/vgpnk/Projects/shokunin/shokunin.conf.full-roster-20261015\",\"verdict\":\"SAFE\",\"receipt\":\"pushed\",\"evidence\":\"intro=99efc52b3a6f ref=refs/remotes/origin/master ancestor=yes\"}\n{\"path\":\"/home/vgpnk/Projects/shokunin/shokunin.conf\",\"verdict\":\"SAFE\",\"receipt\":\"pushed\",\"evidence\":\"intro=e0b4d9b35ab4 ref=refs/remotes/origin/master ancestor=yes\"}"
+        }
+      ]
+    },
+    {
+      "source_seat": "S04",
+      "source_file": "census/round-6/seat-04.json",
+      "claim_id": "Worktree-with-unique-commits",
+      "claim": "The pattern is not reproducible as written. prunable_total=0. r3 did not resolve the gd2d named-branch tips: wt-r98/99/100 are locked, dir absent, --not --all = 0, --not --remotes = 1, tool NOT-SAFE(unpushed-branch). An unqualified 'resolved r3' note would be false.",
+      "independent_verdict": "AGREE",
+      "evidence": [
+        {
+          "command": "for repo in $SHOKUNIN_ROOT $SHOKUNIN_ROOT/*-shokunin; do git -C \"$repo\" worktree list --porcelain | grep -c '^prunable'; done (sum)",
+          "observed_at": "2026-10-18T17:12:36-03:00",
+          "observed_output": "prunable_total=0"
+        },
+        {
+          "command": "git -C /home/vgpnk/Projects/shokunin/lore-shokunin worktree list; git -C /home/vgpnk/Projects/shokunin/lore-shokunin worktree list --porcelain | awk '/^worktree |^prunable/'",
+          "observed_output": "/home/vgpnk/Projects/shokunin/lore-shokunin 6cec83a [main]\nworktree /home/vgpnk/Projects/shokunin/lore-shokunin"
+        },
+        {
+          "command": "git -C /home/vgpnk/Projects/shokunin/game-dev-2d-shokunin worktree list; for b in wt-r98 wt-r99 wt-r100; do git -C game-dev-2d-shokunin log --oneline \"$b\" --not --remotes | wc -l; git -C game-dev-2d-shokunin log --oneline \"$b\" --not --all | wc -l; done",
+          "observed_output": "main 05a72899; wt-r100 2d562282 locked; wt-r98 68bee6e7 locked; wt-r99 fe1a996e locked\nwt-r98 remotes=1 not_all=0\nwt-r99 remotes=1 not_all=0\nwt-r100 remotes=1 not_all=0"
+        },
+        {
+          "command": "tools/souji-verify.sh --json /home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r98",
+          "observed_output": "{\"path\":\"/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r98\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"unpushed-branch\",\"evidence\":\"branch=wt-r98 unpushed=1 dir=absent owner=game-dev-2d-shokunin\"}"
+        }
+      ]
+    }
+  ],
+  "supporting_rederivations": [
+    {
+      "source": "S01 M15 and M16",
+      "independent_verdict": "AGREE",
+      "note": "Live conf 4432 not 4092; snapshot 3859; cmp exit 1. lore-shokunin worktree list is one main line, no prunable line. Same commands as the S04 audits above."
+    },
+    {
+      "source": "S01 P1/P2/P7 on leftover fixture /tmp/souji-s01-r6.HYq41E",
+      "independent_verdict": "AGREE",
+      "observed_at": "2026-10-18T16:40:38-03:00",
+      "observed_output": "keep.txt SAFE pushed intro=a51d244b1ed8 ref=refs/remotes/origin/master. norefs tracked.txt NOT-SAFE pushed-unverifiable intro=23b20f653192. unique-s01-r6-artifact.tmp NOT-SAFE none stale=not-scratch-type."
+    },
+    {
+      "source": "S01 selftest 24/24",
+      "independent_verdict": "NOT-RERUN",
+      "observed_output": "tools/souji-verify.sh --selftest at 16:40 exited 128: copy-fd Disk quota exceeded writing /tmp/souji-verify-selftest.bDDGYb. This does not falsify S01's earlier PASS. /tmp later showed 3.2G free on the tmpfs; the failure was a quota, not a logic result."
+    },
+    {
+      "source": "S04 checkpoint-blob and kotodama citation",
+      "independent_verdict": "AGREE on structure; exact kotodama counts are time-varying",
+      "observed_at": "2026-10-18T17:12:36-03:00 and 17:14:53-03:00",
+      "observed_output": "b2f2efae7549 ancestor of origin/master and of HEAD (both exit 0). name_only=109 present_at_HEAD=94 missing_at_HEAD=15. Missing paths match S04 exactly, including logs_tier.txt. tools/souji-verify.sh logs_tier.txt -> NOT-SAFE unreachable missing path. launch-tsukuroi.json SAFE pushed intro=b2f2efae7549. a1b44b152a1c is an ancestor of HEAD (exit 0) and not of refs/remotes/origin/master (exit 1). kotodama worktrees=1 prunable_lines=0. At 17:12 tool NOT-SAFE unpushed=51 dirty=5. At 17:14 unpushed subject count=51, round-17..22 subject lines=13, du -sh .scratch=29G. S04's 16:09 figures (47/31/19G) and S01's 16:03 figures (47/29/19G) are not the current snapshot. 553M remains false. S04 already labeled the counts as not stable."
+    }
+  ],
+  "missing_drift_seat": {
+    "seat": "S06",
+    "expected": "census/round-6/seat-06.json",
+    "status": "ABSENT at 2026-10-18T17:14:53-03:00",
+    "independent_verdict": "NOT-AUDITED — no fragment to re-derive. Known-surfaces facts overlapping that assignment were checked only as part of the S01/S04 claims above."
+  },
+  "census_audits": [
+    {
+      "seats": ["S59", "S61", "S64"],
+      "expected_files": ["results/crun-59.json", "results/crun-61.json", "results/crun-64.json", "census/round-6/crun-59.json", "census/round-6/crun-61.json", "census/round-6/crun-64.json"],
+      "status": "ABSENT at 2026-10-18T17:14:53-03:00. The only published crun file then was census/round-6/crun-55.json, which was not in this sample and was not used.",
+      "independent_verdict": "NO-PUBLISHED-NUMBER. 0/3 sampled runner numbers confirmed or contradicted, because the assigned fragments were not there.",
+      "scratch_not_a_fragment": [
+        "/tmp/souji-s64-census/c33-r1.tsv at 16:30 was a header row only (repo, worktrees, unpushed, dirty, scratch_bytes, mtime_iso, verdict_flags) and no data row. Not treated as a census claim.",
+        "/tmp/s61-crun/handcheck.txt (mtime 16:19) is unpublished scratch, not crun-61.json. Compared anyway so a later publisher can match it. Not counted in agreement_counts."
+      ]
+    },
+    {
+      "source": "S61 scratch handcheck.txt, not a published fragment",
+      "repo": "mori-shokunin",
+      "claimed_at_16:19": {"worktrees": 1, "unpushed": 0, "dirty": 0, "scratch_bytes": 0},
+      "independent_verdict": "AGREE with the scratch note; official fragment still absent",
+      "observed_at": "2026-10-18T17:12:36-03:00",
+      "command": "git worktree list | wc -l; git for-each-ref refs/remotes | wc -l; git rev-list --count --branches --not --remotes; git status --porcelain | wc -l; test .scratch",
+      "observed_output": "worktrees=1 remote_refs=2 unpushed=0 dirty=0 scratch_bytes=0 absent"
+    },
+    {
+      "source": "S61 scratch handcheck.txt, not a published fragment",
+      "repo": "kake-shokunin",
+      "claimed_at_16:19": {"worktrees": 1, "unpushed": 0, "dirty": 0, "scratch_bytes": 0},
+      "independent_verdict": "AGREE with the scratch note; official fragment still absent",
+      "observed_at": "2026-10-18T17:12:36-03:00",
+      "observed_output": "worktrees=1 remote_refs=2 unpushed=0 dirty=0 scratch_bytes=0 absent"
+    },
+    {
+      "source": "S61 scratch handcheck.txt, not a published fragment",
+      "repo": "kaidoku-shokunin",
+      "claimed_at_16:19": {"worktrees": 1, "unpushed": 10, "dirty": 29, "scratch_bytes": 0},
+      "independent_verdict": "AGREE on unpushed after reconstructing the 16:19 cut. Dirty 29 was not reconstructed. Official fragment still absent.",
+      "observed_at": "2026-10-18T17:12:36-03:00 and 17:14:53-03:00",
+      "observed_output": "worktrees=1 remote_refs=2 unpushed=13 dirty=2 scratch_bytes=0 absent. git log --branches --not --remotes shows 13 commits; the 3 newest are 16:47:21, 16:47:42, and 16:49:16, all after the 16:19 handcheck. 13-3=10, which matches the scratch unpushed count. dirty=29 at 16:19 was not re-derived; current dirty=2. Do not treat the dirty drop as a proven error in the scratch note.",
+      "kaidoku_commits_after_16:19": [
+        "0e8c96b 2026-10-18 16:49:16 -0300",
+        "fc8e53c 2026-10-18 16:47:42 -0300",
+        "265e1aa 2026-10-18 16:47:21 -0300"
+      ]
+    }
+  ],
+  "defects_found": [],
+  "flags": [
+    "C1 drift is not zero. The three re-derived claims all confirm SKILL.md misstates installed behavior or current fleet state. This seat did not edit SKILL.md.",
+    "O1 cannot be scored from this sample. S59, S61, and S64 had not published crun fragments by 17:14:53.",
+    "Kotodama .scratch is live. 553M is false (29G at 17:14:53). Counts move between observations. No scratch file contents were read."
+  ],
+  "safety": "Read-only except this fragment. No git fetch/push/commit/branch/prune/remove. No deletes. Live obsidian ledger not written; only the header row was counted (rows=1). No secret-shaped file opened. .ufo/state and .ufo/watchdog.log not touched. Lane HEAD at write time ce58c2b. Fleet HEAD moved during the audit (f4e1e9b at 16:30, cdd444d at 17:14); b2f2efa remained an ancestor of both."
+}

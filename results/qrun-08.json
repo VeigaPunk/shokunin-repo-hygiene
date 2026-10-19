@@ -1,0 +1,74 @@
+{
+  "seat": "S08",
+  "round": 8,
+  "file": "results/qrun-08.json",
+  "generated_at_utc": "2026-10-18T22:47:00Z",
+  "subject": {
+    "tool": "tools/impl-08.sh",
+    "sha256": "fc1ff29c89c76f2967abbdbe4aae9e00dd320725b2950a0696fb1e915b5903ab",
+    "lines": 676,
+    "syntax": "bash -n exit 0",
+    "dependencies": "bash + coreutils + git + rg only"
+  },
+  "selftest": {
+    "verdict": "44/44 PASS, exit 0",
+    "runs": [
+      {"sha_state": "c314e6e6e6... (pre refusal-guard fix)", "result": "pass=44 fail=0", "note": "two consecutive green runs"},
+      {"sha_state": "fc1ff29c... (final)", "result": "pass=44 fail=0", "note": "post-fix re-verification"},
+      {"sha_state": "fc1ff29c... (final, freeze capture)", "result": "pass=44 fail=0", "evidence": "results/qrun-08-selftest.tsv (full 45-line TSV incl. SELFTEST summary)"}
+    ],
+    "cases_covered": [
+      "T1 plan pushed receipt AUTHORIZED (souji-verify.sh integration)",
+      "T2 plan committed-scratch AUTHORIZED (installed behavior: pushed verifies before stale)",
+      "T3 gate1 unpushed-commits-touching -> NOT-AUTHORIZED",
+      "T4 gate2 untracked dirty-touching -> NOT-AUTHORIZED (r7 authorization_rule)",
+      "T5 full pushed lifecycle: STAGED -> hold-not-elapsed refusal -> check PASS after hold -> DELETED -> re-delete refused (status=deleted)",
+      "T6 staged-scratch lifecycle end-to-end",
+      "T7 tamper: digest-drift check FAIL, delete refused, tampered copy preserved for forensics",
+      "T8 new unpushed commit mid-hold touching path -> new-unpushed-commits-touching FAIL",
+      "T9 secrets-refusal / symlink-present (digest scope) / unreachable",
+      "T10 live-lane stage refused at gates (g1=10) with zero lane writes; live delete with mismatched operator token -> operator-token-mismatch; lane still untouched",
+      "T11 crafted manifest rows: date='..' -> date-dir-guard; traversal qpath cannot resolve outside the date dir; root sentinel file survives both",
+      "T12 runbook: push action (operator) for g1; age-eligibility action for stale; 'gates open' for fully-pushed candidate",
+      "T13 inline fallback (souji-verify.sh absent) authorizes pushed via own default_ref",
+      "T14 --json JSONL shape (record + f1..f4)"
+    ],
+    "environment_note": "one mid-session run failed 26 cases with 'Disk quota exceeded' on the shared /tmp tmpfs (13G/16G used fleet-wide; git init could not copy hook templates) — environmental, not code: after cleaning this seat's own /tmp fixture leftovers the same sha passed 44/44. Recorded for the parent because the tmpfs is a shared round-8 hazard."
+  },
+  "live_readonly_probes": {
+    "mode": "read-only: git log/status/for-each-ref/rev-parse, rg, stat; souji-verify.sh read-only",
+    "sha_exact": "all rows below re-run at the final sha fc1ff29c (plan rc=0)",
+    "plan_rows": [
+      {"path": "souji-shokunin/LOG.md", "verdict": "NOT-AUTHORIZED", "block": "unpushed-commits-touching(g1=10) no-receipt(g3)"},
+      {"path": "souji-shokunin/tools/souji-verify.sh", "verdict": "NOT-AUTHORIZED", "block": "unpushed-commits-touching(g1=3) no-receipt(g3)"},
+      {"path": "souji-shokunin/census/round-7/quarantine-plan.json", "verdict": "NOT-AUTHORIZED", "block": "unpushed-commits-touching(g1=1) no-receipt(g3)"},
+      {"path": "lore-shokunin/.scratch", "verdict": "NOT-AUTHORIZED", "block": "dirty-touching(g2=26) no-receipt(g3)"},
+      {"path": "shokunin.conf.full-roster-20261015 (fleet root)", "verdict": "AUTHORIZED", "receipt": "pushed", "gates": "g1=0 g2=0"}
+    ],
+    "r7_consistency": "every r7-denied candidate remains denied on the same gate numbers (r7: tools gate1 FAIL on 4 unpushed commits; lore .scratch gate2 FAIL + mtime; fleet-root snapshot SAFE/pushed) — zero false-AUTHORIZED",
+    "runbook_rows": [
+      {"path": "souji-shokunin/LOG.md + tools/souji-verify.sh + census/round-7/quarantine-plan.json", "blocked": "g1 g3", "owner": "operator", "action": "push souji-shokunin (N unpushed commit(s) touch this path); no remote-tracking refs exist locally (pushed unverifiable): restore/push origin, then re-run plan"},
+      {"path": "lore-shokunin/.scratch", "blocked": "g2 ref age g3", "owner": "lane-owner", "action": "commit or revert touching changes; stale blocked by 56 live reference(s): retire citations; stale blocked by age: eligible after 2026-10-19T03:03:50Z (matches r7 S09 mtime math)"},
+      {"path": "shokunin.conf.full-roster-20261015", "blocked": "none", "action": "gates open; authorize via plan, then stage->hold->check->delete"}
+    ],
+    "stage_refusal_on_authorized_candidate": {
+      "command": "bash tools/impl-08.sh stage $SHOKUNIN_ROOT/shokunin.conf.full-roster-20261015  (no SOUJI_OPERATOR_TOKEN)",
+      "output": "REFUSED ... live-operator-token-required (repo /home/vgpnk/Projects/shokunin outside /tmp; set SOUJI_OPERATOR_TOKEN + --operator-token)",
+      "exit": 1,
+      "aftermath": "target still present in place; ls -d on fleet-root and lane .ufo-quarantine both absent — zero filesystem effect"
+    },
+    "lane_cleanliness": "git status --porcelain over the lane shows only untracked seat writes (tools/impl-08.sh, results/, census/round-8/) plus peers' concurrent round-8 writes; no .ufo-quarantine anywhere; no tracked file modified"
+  },
+  "conclusions": {
+    "operability": "the r7 pre-staged execution template is now a working, self-tested tool; hold window and second receipt check enforced by code, not prose",
+    "safety": "fail-closed everywhere; the live fleet cannot be mutated by this tool this round even for its one AUTHORIZED candidate (operator token required, and that candidate's staging is the operator's decision, not souji's)",
+    "calibration": "live verdicts reproduce round-7 exactly; the runbook derives the same gate-opening scoreboard as gate-runbook-17/18 (operator sign-off, origin restore/push, lane pushes)",
+    "tickets_this_round": 0,
+    "no_candidate_manufactured": true
+  },
+  "not_claimed": [
+    "No live mutation of any kind; no fetch/push/commit/branch on live repos",
+    "Peers' impls (01-06, S12) not benchmarked or modified; CLI divergence documented in census/round-8/seat-08.json for parent adjudication",
+    "The shared /tmp tmpfs quota pressure is reported, not fixed (other seats' scratch — out of my write scope)"
+  ]
+}

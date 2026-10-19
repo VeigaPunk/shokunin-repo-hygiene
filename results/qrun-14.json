@@ -1,0 +1,131 @@
+{
+  "seat": "S14",
+  "role": "runner",
+  "round": 8,
+  "round_theme": "quarantine-flow tooling + gate-opening runbook",
+  "date": "2026-10-18",
+  "deliverable": "results/qrun-14.json",
+  "assignment": "Differential runner: drive the SAME scenario matrix (gate matrix, pushed/stale end-to-end, mid-hold receipt-break injection, origin-path recreation, lock/signoff guards) through all four competing round-8 quarantine tools — impl-01, impl-02, impl-03, impl-S12 — on identical mktemp fixture fleets, plus live read-only probes and a live mutation proof. Output feeds the parent's souji-quarantine.sh tool-selection verdict and the gate-opening runbook.",
+  "write_authorization": "results/qrun-14.json + census/round-8/S14-qrun-14.md only. All tool mutations confined to fixture fleets under /tmp/s14-qrun-fleets.BHD5Y4 (wave 1) and /home/vgpnk/.cache/s14-qrun/fleets2.e5nLzo + fleets3.6C3mZE (waves 2-3). Live fleet touched only via read-only/dry-run invocations. No git fetch/push on live repos (fixture pushes only, to fixture bare remotes). No .ufo/state, no .ufo/watchdog.log. Fixture .env is seat-written dummy content ('DUMMY=not-a-real-secret'), used only as a refusal probe, never read back.",
+  "tool_baseline": {
+    "sha256": {
+      "impl-01": "5780ad751aa49d1bb587690154cab98ab6aa71b4def518673c2f383301c51c4f",
+      "impl-02": "709ff22b168d7ea4734e0c244c86fb5c70c769d31052d835848432b54491742d",
+      "impl-03": "1bb1615f15ebabb68a0e984b685670ae3ae45be608c60233d04e74bc1412c59f",
+      "impl-S12": "06e2530794ee84e29fa15fbdde30f587270e5ec6783290ff512c40142f52d850",
+      "souji-verify.sh": "a91049c96e5fba7c3db83df288a261717156c3834532e54d712ed0c555e350c4",
+      "souji-vault-verify.sh": "53f92421b254426c7e4882c1da9cfaa444bddde7ff90ee30afcd48fa229328b1"
+    },
+    "selftests": {
+      "impl-01": "rc=0, 63 checks 0 failed (evidence/selftest-01.log)",
+      "impl-02": "rc=0, 76 passed 0 failed (evidence/selftest-02.log)",
+      "impl-03": "rc=1 — RED: 9 FAIL lines + ABORT (evidence/selftest-03.log; details finding F-03selftest)",
+      "impl-S12": "rc=0, 26 checks 0 failed (evidence/selftest-S12.log)"
+    },
+    "engines_untouched": "engine shas match the r6/r7 install records; tools/ not modified by this run"
+  },
+  "fixture": {
+    "layout_per_impl_fleet": "remoteA.git (bare origin) + fleet/repoA (git) + fleet/repoB (git, NO remote); wave-2/3 fleets add a pushed .gitignore (scratch-*.md, launch-*.json) committed AND pushed so ignored scratch is porcelain-invisible",
+    "repoA_classes": "pushed.txt + docs/pushed-deep.txt (tracked+pushed); scratch-tracked-draft.md (tracked+pushed, draft name — engines classify it PUSHED, receipt priority, not stale); local-only.txt (tracked, unpushed commit); dirty-tracked.txt (tracked, uncommitted edit); scratch-draft.md (untracked stale draft, mtime -3d); launch-hold.json (untracked stale checkpoint, mtime -3d); launch-new.json (untracked fresh); .env (dummy secret)",
+    "engine_ground_truth": "pushed/deep = SAFE(pushed); both stale scratch = SAFE(stale age3); dirty-tracked = SAFE(pushed) (engine pins commits, not worktree — no gate2 in engine); local-only = NOT-SAFE(unpushed-commits-touching); launch-new = NOT-SAFE(mtime-age-days=0<=1); .env = NOT-SAFE(secrets-refusal); repoB/b.txt = NOT-SAFE(pushed-unverifiable). Full lines: evidence/matrix.tsv rows engine/baseline:*"
+  },
+  "matrix_results": {
+    "legend": "M=purpose flow must succeed; N=negative control must refuse and preserve state; D=divergence probe; L=lock/guard",
+    "impl-01_single_shot": {
+      "M1_pushed_e2e": "rc=0 DELETED (orig gone, qcopy gone) — log 01-M1:pushed-e2e.log",
+      "M2_tracked_stale_e2e": "rc=0 DELETED (classifies pushed; engine priority)",
+      "M3_untracked_stale_e2e": "rc=0 DELETED",
+      "N1_break_midhold": "rc=3 ABORTED — stage4-second FAIL after live-ref injection at t+2s of a 6s hold; qcopy RETAINED (state.tsv 01 N1 qcopy-exists=yes)",
+      "N2_origin_recreate": "DIVERGENCE — rc=0 DELETED despite original file recreated mid-hold: stage4-second PASS 'pin=ok mtime=ok intro-blob=ok' has no resurrection pin (log 01-N2:recreate-midhold.log); resurrected twin left as untracked/modified at origin path",
+      "gate2_dirty": "DRY-RUN-BLOCKED rc=3 'r7-gate2 porcelain= M dirty-tracked.txt' — proper dirty preflight (log 01-dry:dirty-tracked.txt.log)",
+      "negatives": "local-only rc3, launch-new rc3, .env rc3 secrets, repoB rc3 pushed-unverifiable — all DRY-RUN-BLOCKED/NOT-AUTHORIZED",
+      "L1_note": "impl-01 has NO allow-list lock by design; its rm scope is quarantine-path-only by construction. My L1 line for 01 exercised the engine refusal, not a lock — recorded honestly as not-a-lock-test"
+    },
+    "impl-02_ticket_runner": {
+      "dry_untracked_stale_no_gitignore": "NOT-AUTHORIZED gate2-dirty-touching(lines=1) — porcelain '??' refuses the SKILL.md plain-mv class (wave-1 log 02-dry:scratch-draft.md.log)",
+      "dry_ignored_stale": "AUTHORIZED(stale) with pushed .gitignore — ignored files invisible to porcelain are its ONLY untracked stale shape",
+      "M3_ignored_stale_e2e_02c": "STAGED -> SECOND-CHECK PASS stale-reverified-on-copy -> RETIRED (logs 02c-M3:*.log)",
+      "M1_pushed": "STAGED -> verify PASS pushed-reverified; retire with ORIGINAL path rc=1 no-valid-record (driver defect: retire requires the STAGED path — corrected in 02c/03b)",
+      "N1_break_midhold_02c": "verify FAIL 'stale-not-reverified(a=NOT-SAFE/none,b=NOT-SAFE/none)' after live-ref injection -> RETIRE-REFUSED second-check-failed; qcopy retained",
+      "N2_origin_recreate_02c": "verify FAIL 'gate2-regressed([ M docs/pushed-deep.txt])' -> RETIRE-REFUSED — resurrection caught as a gate2 M-line",
+      "L1_no_signoff": "rc=2 '--retire requires --operator-signoff ID'",
+      "D_tmpdir_siting": "DIVERGENCE — every mutating op refuses outside tmpdir: 'Q-REFUSED ... sandbox-not-under-tmpdir(<sandbox>)' (impl-02.sh:491-494). Proven blocking on /home fleets (02b); TMPDIR=<fleet> workaround proven in 02c. Fleet-ops hazard: /tmp hit a per-user quota outage during this round (13G/16G used) — impl-02 was unusable there until TMPDIR was pointed at the fixture",
+      "cosmetic": "refusal line prints a mangled path when tmpdir check fails ('Q-REFUSED /home/vgpnk/Projects/shokunin/sandbox-not-under-tmpdir(...)') — log 02b-M3:retire.log"
+    },
+    "impl-03_ticket_runner": {
+      "F-03selftest": "BLOCKER — --selftest rc=1, 9 FAIL + ABORT against the INSTALLED engines (which were hardened at 17:55; impl-03 mtime 17:44): Q1/Q1b/Q2/Q3b/Q4 gate3 'no-safe-receipt' where pass expected; Q3 verdict AUTHORIZED where test demands NOT-AUTHORIZED; Q5 receipt-mismatch want=pass; Q11 stage REFUSED outside-sandbox; Q12 record missing -> 'ABORT: no record; cannot continue staged-path cases' (evidence/selftest-03.log). Either its fixture env drifted vs installed engines or its assertions invert — either way it cannot be certified as-is",
+      "dry_gates": "untracked stale NOT-AUTHORIZED gate2 fail (no gitignore); AUTHORIZED(stale) with pushed .gitignore",
+      "M3_ignored_stale_e2e_03b": "STAGED -> STAGED-VERIFIED -> RETIRED — full untracked-stale flow works (logs 03b-M3:*.log)",
+      "M1_pushed_03b": "STAGED -> verify 'HOLD gates-dirty-after-stage gate1=0 gate2=1' (its own plain-mv staging reads as a gate2 regression -> verify-staged can never PASS for tracked class) -> retire RETIRED anyway. DIVERGENCE: verify and retire disagree on identical state; retire lacks the gate re-check verify performs",
+      "N2_origin_recreate_03b": "verify HOLD original-present; retire REFUSED original-reappeared — fail-closed, qcopy retained",
+      "L1_no_signoff": "rc=1 REFUSED signoff-required",
+      "hold_enforcement": "NONE — no hold-min flag; stage->retire can be instantaneous (observed seconds apart in 03b). Divergence vs AGENTS.md 'hold period' and vs impl-02's hold-min-seconds 450 default",
+      "wave1_anomaly_unresolved": "in wave 1 (fleet under /tmp, SOUJI_Q_SANDBOX=$F) all five --stage calls refused outside-sandbox; in waves 2-3 (identical env vars and flags, fleet under /home) stage/verify/retire all pass. Not reproduced; root cause unresolved; flagged to impl author (S03). Wave-2/3 results supersede"
+    },
+    "impl-S12_state_machine": {
+      "DG2_dirty_staging_GAP": "MATERIAL — stage of dirty-tracked.txt returned rc=0 'STAGED ... receipt=pushed': its gate is engine-verdict-only, and the engine has no gate2, so impl-S12 quarantines UNCOMMITTED work under a pushed receipt; release would permanently delete uncommitted edits. abort via restore works (RESTORED). impl-01 preflight, impl-02 gate2, impl-03 gate2 all refuse the same input (log S12b-DG2:dirty-stage.log)",
+      "M1_pushed_e2e_S12c": "STAGED -> check PASS 'pushed-intro=... still-on-origin' -> RELEASED",
+      "M3_stale_e2e_S12c": "STAGED -> check PASS 'stale-refs=0' -> RELEASED",
+      "N1_break_midhold_S12c": "check FAIL live-refs=1 (rc=5) after live-ref injection -> RELEASE-REFUSED -> RESTORED (abort path proven)",
+      "N2_origin_recreate_S12c": "check FAIL origin-recreated -> RELEASE-REFUSED — the ONLY impl with an explicit origin-resurrection pin",
+      "L1_no_allow": "rc=3 LIVE-TREE-LOCKED even with --root inside the fleet — allow-list lock fires correctly",
+      "no_signoff": "ZERO 'signoff' references in impl-S12.sh — release is gated by hold + receipt recheck only; no operator-signoff vocabulary (divergence vs AGENTS.md second-receipt-check + impl-02/03 signoff)",
+      "timing_note": "wave-2 2s holds produced HOLD-by-~2s (check ran before hold_until) — driver timing, not a tool defect; S12c 3s hold + 5s sleep passes cleanly"
+    }
+  },
+  "live_probes": {
+    "mode": "read-only/dry-run only, through all four impls + both engines, on two live paths",
+    "kotodama-shokunin/.scratch": "engine NOT-SAFE(stale=mtime-age-days=0<=1); impl-01 DRY-RUN-BLOCKED; impl-02/03 NOT-AUTHORIZED gate3 no-safe-receipt; impl-S12 STAGE-REFUSED — all four refuse (evidence/live-probes.txt)",
+    "souji-shokunin/results/.write-probe": "engine NOT-SAFE(stale=not-scratch-type); impl-01 DRY-RUN-BLOCKED; impl-02/03 NOT-AUTHORIZED (gate2 ?? + gate3); impl-S12 STAGE-REFUSED",
+    "consistency": "agrees with r7 ('receipts deny everything') and with S12's qrun-12 live probes"
+  },
+  "mutation_proof": {
+    "method": "git -C souji-shokunin status --porcelain | sha256sum + stat of both probed live paths, before (19:38) and after (19:57) every probe",
+    "probes_untouched": "results/.write-probe stat identical before/after (1792353593 11 bytes)",
+    "honest_delta": "porcelain sha moved 5bda2a1a->dfb1a81d and kotodama/.scratch grew 10390->10518 bytes DURING the window — FOREIGN writes by sibling seats, not this run: census/round-8 gained final-24.json/dissent-24.md/seat-08.json and kotodama/.scratch gained r31-check-2.json etc. with 20:0x mtimes (evidence/porcelain-after.txt, ls listings in final message context). Zero s14/qrun-14 fingerprints in porcelain (grep count 0). This seat wrote nothing in any repo before its two authorized deliverables"
+  },
+  "findings": [
+    {"id": "F1", "severity": "selection-blocker", "finding": "impl-03 selftest is RED against installed engines (9 FAIL + ABORT, rc=1); certifiable-as-is = NO."},
+    {"id": "F2", "severity": "material-gap", "finding": "impl-S12 stages dirty tracked files (engine-only gate): uncommitted work would be quarantined and releasable to deletion under a pushed receipt. Needs a gate2/dirty pre-flight (impl-01's porcelain preflight or 02/03's gate2)."},
+    {"id": "F3", "severity": "material-gap", "finding": "impl-01 has no origin-resurrection pin: with the original path recreated mid-hold its second check passes (pin=ok mtime=ok intro-blob=ok) and it deletes the quarantine copy anyway. 02/03/S12 all catch resurrection (gate2-regressed / original-reappeared / origin-recreated)."},
+    {"id": "F4", "severity": "divergence", "finding": "impl-03's two second-check surfaces disagree: verify-staged HOLDs tracked-class staging forever (reads its own plain-mv deletion as gate2 regression) while retire ignores that check and RETIREs. Also no hold-duration enforcement at all."},
+    {"id": "F5", "severity": "fleet-ops", "finding": "impl-02 refuses every mutating op outside tmpdir (sandbox-not-under-tmpdir, impl-02.sh:491-494); proven blocking on /home, and /tmp suffered a per-user quota outage during this same round (13G/16G, sibling seats) that made /tmp fixture work impossible mid-run. A tmpdir-sited quarantine tool is fragile exactly when /tmp is stressed; TMPDIR=<fixture> is a proven workaround."},
+    {"id": "F6", "severity": "runbook-material", "finding": "untracked stale candidates are unclassifiable for impl-02/03 unless IGNORED (porcelain '??' trips gate2): a pushed .gitignore covering the scratch family is the enabling precondition. qrun-13's F6 gate2-wording fix is necessary but not sufficient at tool level — the runbook must state the ignored-file precondition for the plain-mv flow."},
+    {"id": "F7", "severity": "divergence", "finding": "Engines classify a TRACKED file with a draft/checkpoint name as PUSHED (receipt priority), not stale — 'tracked stale' scenarios exercise the pushed second-check path, and mid-hold live-ref injection cannot break a pushed receipt. True stale-class tickets require untracked (see F6) or .scratch-dir components."},
+    {"id": "F8", "severity": "control-confirmed", "finding": "Mid-hold receipt-break is caught by 3 of 4 impls (01 ABORT+retain, 02 verify-FAIL+refuse, S12 check-FAIL rc5+refuse+restore); origin-recreation by 3 of 4 (02, 03, S12 — each with a distinct reason class); secrets/too-young/unpushed/no-remote refused by all four."},
+    {"id": "F9", "severity": "control-confirmed", "finding": "impl-S12's LIVE-TREE-LOCKED allow-list lock fires even when --root is inside the fixture and only the allow env is missing; S12 is the only impl with an explicit lock, 02's analog is the signoff+tmpdir pair, 03's is signoff+sandbox, 01 has none (quarantine-path-only rm by construction)."}
+  ],
+  "selection_guidance_for_parent": "No impl is certifiable as-is. Closest to installable: impl-S12 (only one with hold clock + restore abort + origin-recreation pin + lock) IF it gains a dirty/gate2 pre-flight (F2) and ideally an operator-signoff gate; impl-02 has the best gate hygiene + signoff + hold-min but its tmpdir siting guard must be removed or made configurable (F5); impl-03 is blocked on its red selftest (F1) and verify/retire asymmetry (F4); impl-01 is a solid single-shot but lacks resurrection pin, lock, and signoff vocabulary (F3). A merged winner: S12 skeleton + 02's gate2/signoff/hold-min + S12's origin pin.",
+  "verdicts": {
+    "matrix-complete": "YES — 4 impls x (8 dry gates + pushed/stale e2e + break-injection + origin-recreate + lock/signoff) executed with per-invocation logs",
+    "fail-closed": "PROVEN for all four impls on: secrets, too-young, unpushed-touching, no-remote, live-ref-break (3/4 reachable), origin-recreate (3/4), signoff (02/03), lock (S12), dirty-preflight (01/02/03; S12 FAILS this one — F2)",
+    "axes": {
+      "flow-completeness": "improved — first cross-impl differential matrix of the round; every impl now has a characterized positive AND negative profile",
+      "gate-fidelity": "improved — three independent resurrection catches documented; the one gap (S12 dirty-staging, 01 no-resurrection-pin) is now evidence-backed",
+      "evidence-fidelity": "improved — ~110 invocations, each with rc + full-output log under evidence/logs/",
+      "safety": "unharmed — zero writes to any live repo by this seat (foreign sibling writes documented, not caused); all mutations in fixture fleets",
+      "speed": "unharmed — waves ran in 37s/11s/26s; /tmp quota outage routed around within one wave"
+    }
+  },
+  "final_state": {
+    "fixtures_retained_for_parent_audit": "/tmp/s14-qrun-fleets.BHD5Y4 (wave 1; /tmp quota-permitting), /home/vgpnk/.cache/s14-qrun/fleets2.e5nLzo, /home/vgpnk/.cache/s14-qrun/fleets3.6C3mZE (03b retains N2 abort copy in .ufo-quarantine; S12b/S12c N1/N2 abort copies restored or retained as logged)",
+    "evidence_dir": "/home/vgpnk/.cache/s14-qrun/evidence (matrix.tsv, matrix2.tsv, matrix3.tsv, state*.tsv, live-probes.txt, selftest-*.log, logs/ with ~110 invocation transcripts)",
+    "drivers": "/tmp/s14-diff.sh (wave 1), /home/vgpnk/.cache/s14-qrun/diff2.sh, diff3.sh — outside the lane repo"
+  },
+  "safety": {
+    "live_repos_touched": "none by this seat — probe invocations only; porcelain/stat deltas during the window are sibling-seat writes (r31-check-2.json, final-24.json, dissent-24.md, seat-08.json) with zero s14 fingerprints",
+    "git_forbidden_ops_on_live": "none (pushes only to fixture bare remotes; no fetch anywhere)",
+    "secret_files": "fixture .env is seat-written dummy content used only as a refusal probe; never read back; no real secret-shaped file opened",
+    "tmp_quota_incident": "/tmp tmpfs hit a per-user quota wall mid-round (writes of ~11KB failing at 80% full, 13G used mostly by sibling seats); wave 2+ relocated to /home/vgpnk/.cache/s14-qrun — no data lost, wave-1 evidence preserved"
+  },
+  "not_claimed": [
+    "moved-to-obsidian receipt not re-exercised in the differential matrix (no ledger/vault fixture in these fleets); covered by impl selftests (01: moved-to-obsidian rows; S12: SC3 in qrun-12) — not_claimed here",
+    "wave-1 impl-03 outside-sandbox anomaly root cause unresolved (not reproduced in waves 2-3)",
+    "no live-fleet artifact classified for removal; the live gate stays blocked on operator sign-off / lane pushes / remote creation (r7 boundary unchanged)"
+  ],
+  "to_verify": [
+    "Parent: adopt F1-F6 into the tool-selection verdict and runbook fragment; F2 (S12 dirty pre-flight) is the highest-priority fix for any S12-based install",
+    "S03: re-run impl-03 --selftest against current tools/ engines and reconcile (F1); investigate wave-1 outside-sandbox anomaly",
+    "S02: decide tmpdir siting guard fate (F5) and fix the mangled Q-REFUSED path print"
+  ]
+}

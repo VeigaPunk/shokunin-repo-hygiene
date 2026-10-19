@@ -1,0 +1,59 @@
+{
+  "seat": "S02",
+  "role": "implementor",
+  "fragment": "results/qrun-S02-01.json",
+  "round": 8,
+  "date": "2026-10-18",
+  "tool": "tools/souji-quarantine.impl-02.sh",
+  "tool_sha256": "709ff22b168d7ea4734e0c244c86fb5c70c769d31052d835848432b54491742d",
+  "engines": {
+    "A_receipt_engine": "tools/souji-verify.sh",
+    "A_sha256": "a91049c96e5fba7c3db83df288a261717156c3834532e54d712ed0c555e350c4",
+    "B_ledger_engine": "tools/souji-vault-verify.sh",
+    "B_sha256": "53f92421b254426c7e4882c1da9cfaa444bddde7ff90ee30afcd48fa229328b1",
+    "invocation": "gate3 runs BOTH engines with --json on the target and requires verdict SAFE with the SAME receipt in {pushed, moved-to-obsidian, stale, metadata-prune}, equal to --expect-receipt when given"
+  },
+  "claim": "Q1 operability: the r7 quarantine execution_plan_template (census/round-7/quarantine-plan.json) is one runnable, self-tested tool",
+  "verdict": "Q1-MET",
+  "selftest": {
+    "cmd": "TMPDIR=/dev/shm bash tools/souji-quarantine.impl-02.sh --selftest",
+    "runs": [
+      {"exit": 0, "passed": 76, "failed": 0},
+      {"exit": 0, "passed": 76, "failed": 0, "note": "stability rerun"},
+      {"exit": 0, "passed": 76, "failed": 0, "note": "stability rerun"}
+    ],
+    "fixtures": "everything under mktemp -d (last run /dev/shm/tmp.91yU7oBKZF-shaped); SHOKUNIN_ROOT and SOUJI_LEDGER pinned into the fixture root so the engines never scan the live fleet or live ledger",
+    "scenario_map": {
+      "T1": "pushed happy path end-to-end: gates -> stage -> record sidecar -> second check (pushed re-derived from recorded intro commit) -> retire with signoff (hold waived for pushed per SKILL.md); copy+record removed, nothing else",
+      "T2": "gate1: local-only commit touching the file -> NOT-AUTHORIZED, stage REFUSED exit 1",
+      "T3": "gate2: dirty tracked and untracked variants -> NOT-AUTHORIZED",
+      "T5": "zero-remote repo: explicit `log --branches --not --remotes` form fails CLOSED (count=1) — r6 pitfall proof; bare form on git 2.55.0 observed returning 0 lines (info line in output, not asserted)",
+      "T6": "secret-shaped path (app.env): refused before any read, check + stage",
+      "T7": "no SOUJI_Q_SANDBOX: stage REFUSED before any effect, no .ufo-quarantine created; --stage --dry-run needs no sandbox and creates nothing",
+      "T8": "target outside sandbox: REFUSED outside-sandbox",
+      "T9": "stale happy path (pushed .gitignore pattern + ignored stale file — the shape that truly classifies stale): mtime preserved by mv, copy-side re-verified by BOTH engines (their sweeps exclude **/.ufo-quarantine/**), hold-not-elapsed refusal, then retire at --hold-min-seconds 0",
+      "T10": "tampered staged copy: second check FAIL digest-mismatch, retire REFUSED, tampered copy kept for the operator",
+      "T12": "missing target: NOT-AUTHORIZED unreachable, exit 0 (verdict is data)",
+      "T13": "--plan: full 5-step runbook, creates nothing",
+      "T14": "usage: no mode / two modes / retire without signoff all exit 2",
+      "T15": "metadata-prune: worktree registration with absent dir + unique=0 classifies AUTHORIZED but --stage REFUSES stage-unsupported-receipt (retire via worktree tooling, not mv)",
+      "T16": "moved-to-obsidian full lifecycle: ledger row + matching hashes both sides, source ignored+clean, stage records vault sha, second check re-hashes vault read-only, retire leaves vault untouched",
+      "T17": "stale candidate with a live reference: gate3 refuses (engines agree NOT-SAFE)",
+      "T18": "nested stale path: --stage REFUSES nested-stale-unre-verifiable (flattening dir/name -> dir__name breaks the engines' anchored launch-*/​*-draft.* patterns so the mandatory copy-side re-check could never pass)",
+      "T19": "nested pushed file stages fine to lib__mod.txt and re-verifies"
+    }
+  },
+  "environment_notes": [
+    "First full run hit 'Disk quota exceeded' on /tmp mid-battery (tmpfs 16G at 80%, 24-seat fleet round in flight); rerun with TMPDIR=/dev/shm — the tool's sandbox check validates against ${TMPDIR:-/tmp} by design, so this is a supported configuration, not a bypass",
+    "crun-62 precedent respected: exit codes taken from direct pipeline PIPESTATUS, not from wrapped echo files"
+  ],
+  "gates_implemented": {
+    "gate1": "git -C <repo> log --branches --not --remotes --oneline -- <path> must print nothing (explicit form only; r6 pitfall)",
+    "gate2": "git -C <repo> status --porcelain=v1 --untracked-files=all -- <path> must print nothing",
+    "gate3": "both receipt engines SAFE with the SAME receipt class (dual-engine agreement), --expect-receipt pin supported"
+  },
+  "exit_code_contract": "check/plan/verify-staged always 0; stage/retire 0 performed 1 REFUSED 2 usage; selftest 0/1; help 0",
+  "to_verify": [
+    "The 450s production hold and 24h preference for non-pushed receipts are enforced (--hold-min-seconds, default 450, waived only for pushed); the PREFER-24h half is policy prose surfaced in --plan output, not enforced — parent may want a --hold-preferred flag at integration"
+  ]
+}
