@@ -449,3 +449,43 @@ already user-staged by definition — manifest captured to the same
 quarantine dir, emptied to 0. Both operator-owned surfaces removed under
 explicit operator directive; no receipts class applies (never fleet
 artifacts).
+
+## 2026-10-19 — round 12 (kaika campaign; steered r12, goal cancelled after r11)
+
+Amendment to the r11 carry: the operator cancelled the 12-round goal after
+r11 and the kaika orchestrator steered souji to r12 under the current
+directive (grow the corpus, curate sources, learn from mistakes). The r11
+carry — no-relay re-certification — is NOT this round's work; it is
+Planned r13 and certification stays OFF (SCORECARD correction note).
+
+Claims (evidence `census/round-12/`, gate record `corpus/lessons/round-12.md`):
+- C1 calibration (lowest axis): an independent seat mined 52 own-mistake
+  classes at dcc8b9e (`census/round-12/mistakes.md`; 28/52 had a rule that
+  could catch a recurrence). New `corpus/QUALITY.md` (Q1–Q15, each citing
+  its lesson); lesson `## Mistakes` maps 51/53 (M53 added; M27/M39 external).
+  Mapped-criteria coverage, not demonstrated catches.
+- C2 coverage + capability: `corpus/SOURCES.md` (33 rows opened 2026-10-19,
+  A=29 B=3 C=1, 2 rejected with flips; contract census clean) and 5
+  knowledge entries on new frontier rows F1, F3, F4 (README coverage map +
+  `## Frontier`; PROVINCE Core/Frontier/Adjacent appended). ART candidate
+  C3 (size census) rejected/deferred.
+- C3 operability: gate `tests/fixtures/r12-maintenance-guard.sh` — on host
+  git 2.55.0 a plain `git commit` prunes an expired, unlocked worktree
+  registration (2→1, sync and default-detached); `-c maintenance.auto=false`,
+  `worktree lock`, a fresh index keep it (2→2); the pruned detached HEAD's
+  commit is unreferenced but present until gc prune expiry. Registered in
+  SKILL.md; Pre-quarantine checklist gains right-repo, guarded-commit and
+  pin rows; new error pattern "Git deletes without a receipt".
+Re-verification (freshness): reviewer re-opened the git v2.55.0 sources and
+reproduced the prune independently (`census/round-12/reviewer-preflight.md`);
+post-integration reviewer + critic re-derived the Gate and every counting
+command (`census/round-12/postreview.md`); their defects were fixed before
+commit (dispositions in the lesson `## Gate`).
+Incident: an L2's silent `cd` failure ran a fixture in the fleet-root main
+checkout (4 throwaway commits c095ea1..b21278d on master, ~10 stray files);
+reported to the orchestrator, who owns the repair; lesson `## Incident`, M53.
+Provider exhaustion: three executor seats (SOURCES, K1/K2, K3–K5) died on a
+provider rate limit (resource_exhausted) before writing; re-dispatched as
+fresh seats (R12SourcesExec2, R12ExecGit2, R12ExecFs2).
+Commit is local only: the standing operator rule "No push" overrides
+MISSION.md's commit-then-push (PROTOCOL.md operator-gated hold).

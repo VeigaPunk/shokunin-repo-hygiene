@@ -43,3 +43,27 @@ removal of stale, duplicate, and already-preserved artifacts.
   souji removes files and never touches the OS.
 - kagi-shokunin owns credential hygiene evidence; souji routes any
   credential-shaped finding to kagi.
+
+## Core / Frontier / Adjacent (r12, LEARNING.md shape — appended, sections above stand)
+
+- **Core** — the surfaces under `## Owns` and `## Work surfaces` above.
+- **Frontier** (being explored; each row moves to Core only with an admitted
+  `corpus/knowledge/` entry and a SKILL rule; index in `corpus/README.md`):
+  - F1 git-native housekeeping vs receipts — git's own deleters
+    (`maintenance --auto` worktree-prune, gc/reflog grace periods) acting on
+    surfaces souji gates.
+  - F2 repository size census (`git repo structure`, `count-objects`) —
+    unexplored; no entry yet.
+  - F3 duplicate verdicts — byte-identical copies; a `duplicate` receipt
+    class would be a taxonomy change (operator decision).
+  - F4 restorable quarantine and file-system semantics — trash layout,
+    same-device rename vs copy+remove.
+- **Adjacent** (report, don't absorb) — the `## Adjacency` rows above, plus:
+  - kumitate-shokunin locks live task worktrees during dispatch; souji prunes
+    only dead, unlocked registrations and never removes a lock it did not set.
+  - chousa-shokunin owns the research method and source hierarchy; souji's
+    `corpus/SOURCES.md` applies it and does not restate it.
+  - Credential-bearing history (git-filter-repo `--sensitive-data-removal`)
+    routes to kagi-shokunin and the operator; souji never rewrites history.
+  Sweep r12: no sibling claims F1/F3/F4 ground
+  (`census/round-12/connector.md` §1, 0 hits per frontier).

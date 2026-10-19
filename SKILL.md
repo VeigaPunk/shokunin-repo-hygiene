@@ -41,7 +41,7 @@ verifies (pushed before obsidian).
 
 1. Dry-run census: classify every candidate, print the table, change nothing.
 2. Operator approves the removal list.
-3. `git mv` (or plain `mv` for untracked) into `<repo>/.ufo-quarantine/<utc-date>/...` — quarantine is a normal commit in the owning repo.
+3. `git mv` (or plain `mv` for untracked) into `<repo>/.ufo-quarantine/<utc-date>/...` — quarantine is a normal commit in the owning repo, made with the guarded form in the Pre-quarantine checklist.
 4. Hold period (≥ one driver tick, 450s minimum; prefer 24h for anything not `pushed`).
 5. Second check: re-run the receipt command; receipt must still hold.
 6. Delete from quarantine. `pushed` artifacts need no hold beyond the second check.
@@ -74,6 +74,13 @@ verifies (pushed before obsidian).
   if pushed, they qualify for `pushed` receipts individually.
 - **Worktree-with-unique-commits**: `git worktree list` + `git log <wt-sha> --oneline | head` —
   a prunable worktree whose tip has commits not on any branch is NOT-SAFE.
+- **Git deletes without a receipt** (git ≥2.54, r12): a plain `git commit`
+  spawns `git maintenance run --auto`, whose default geometric strategy runs
+  `worktree prune --expire 3.months.ago` — an unlocked registration whose
+  directory is gone and whose `worktrees/<id>/index` is older than 3 months
+  vanishes, orphaning a detached HEAD's commits until `gc.pruneExpire`.
+  Gate `tests/fixtures/r12-maintenance-guard.sh`; facts in
+  `corpus/knowledge/git-auto-maintenance-prunes-worktrees.md`.
 
 ## Checklists
 
@@ -88,6 +95,17 @@ Pre-quarantine commit:
 - [ ] Quarantine path is inside the owning repo (`.ufo-quarantine/<date>/`)
 - [ ] Commit message names the receipt class and the evidence pointer
 - [ ] Lane identity: `souji-shokunin <souji@shokunin.local>`
+- [ ] Right repo: `git -C <repo> rev-parse --show-toplevel` prints the owning repo (never trust `cd`)
+- [ ] Commit guarded and scoped: `git -C <repo> -c maintenance.auto=false commit -- <approved paths>` — never `git add -A` / `.`
+- [ ] Pinned registrations stay pinned: `git -C <repo> worktree list --porcelain | awk '/^locked/{n++} END{print n+0}'` equals the pin count; pin new ones with `git -C <repo> worktree lock --reason "<why>" <worktree-path>`
+
+Gate registry (PROTOCOL §Gate standard; exit 0 clean · 1 failed · 2 could-not-evaluate; any other code could-not-evaluate):
+
+| name | kind | entry / self-test | pinned values | write scope | owner |
+|---|---|---|---|---|---|
+| r12-maintenance-guard | gate | `bash tests/fixtures/r12-maintenance-guard.sh [--selftest]` (finding ids `SOUJI-R12-MAINT-<case>`) | expected per-case counts in the script header; observed run `tests/results/r12-maintenance-guard.txt` | `mktemp -d /var/tmp/souji-r12-maintenance.*` only | souji |
+
+Sources for this skill: `corpus/SOURCES.md`; admission bar: `corpus/QUALITY.md`.
 
 ## Known surfaces (fleet, refreshed r6)
 

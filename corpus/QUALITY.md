@@ -1,0 +1,39 @@
+# QUALITY — souji's admission bar
+
+What a souji artifact must clear before it is admitted: a `corpus/knowledge/`
+entry, a `corpus/SOURCES.md` row, or a round's evidence and bookkeeping.
+Created r12 (2026-10-19). Source tiers and row shape live in
+`corpus/SOURCES.md` (contract v1) and are not repeated here; the research
+method is chousa's. The fleet floor (`CORPUS.md` rules: a count carries its
+command, a negative its sweep, a quote its location, an index row is a claim)
+applies to everything below.
+
+Rules of this file: every criterion cites the lesson that produced it
+(`LEARNING.md`); a criterion is superseded by a new row that names the row it
+replaces, never rewritten. Lesson pointers of the form `round-12 M<nn>` resolve
+to the row with that id in `corpus/lessons/round-12.md` `## Mistakes`.
+
+## Criteria
+
+Q1–Q4 are the seed bar (r12 prerequisite, from the W1 ART dossier §7, each
+grounded in an older lesson). Q5–Q14 were mined from souji's own mistakes in
+r12 (`corpus/lessons/round-12.md` `## Mistakes`). Q15 extends Q4 for one entry's
+need (K5); it is the bar most open to a non-author challenge.
+
+| id | criterion | applies-to | test | lesson |
+|---|---|---|---|---|
+| Q1 | A claim about tool behaviour names the version it was verified on and the host version it was re-run on. | knowledge | the entry's `verified-at:` names a version; its `recheck:` runs on the host version | corpus/lessons/round-9.md:14 (linked-worktree HEADs wrong on git 2.55); round-6.md:20 (bare `--not --remotes` empty on 2.55) |
+| Q2 | Where docs are silent or disagree with behaviour, cite source code at a tag or a fixture run; installed behaviour outranks prose. | knowledge, SKILL | the entry cites `<file>@<tag>:<line>` or a committed fixture | corpus/lessons/round-5.md:38 (SKILL receipt prose drifted from the installed tools) |
+| Q3 | An entry about a deletion mechanism cites at least one documented failure case of that mechanism. | knowledge | the body names a failure case with its location | corpus/lessons/round-5.md:9 (symlink false-SAFE: `find -type f` omitted symlinks) |
+| Q4 | A recheck or fixture is self-contained, runs only under `/var/tmp` (never `/tmp`, never a live fleet path), and cleans up after itself. | knowledge, tests | the scratch root is hard-coded under `/var/tmp` — `grep -c 'TMPDIR:-/tmp' <fixture>` → 0 and `grep -c '/var/tmp' <fixture>` ≥ 1 — and a trap removes it | corpus/lessons/round-8.md:24 (/tmp DISK QUOTA corrupted fixture runs); round-4.md:21 (seat fixtures rotted, exit 127); round-3.md:27 (/tmp residue ~2,100 dirs; runners defaulted `${TMPDIR:-/tmp}`, tests/runner-23.sh:38) |
+| Q5 | A verdict table the lane publishes is re-derived by an independent blind seat before admission; a disagreement is adjudicated with its cause named, never by majority; a critical role has a second seat. | round evidence | the round's `## Gate` names the re-deriving seat and records agree/disagree with cause; the round report names, per critical role (executor, scribe), the seat that re-ran it when the first seat failed | LOG.md:58 (blind seats S54–61 disagreement traced to D1); corpus/lessons/round-7.md:19 (S02 caught the parent's column misread); round-6.md:8 (32/128 seat failures gutted shards) |
+| Q6 | A certification or tool verdict names the sha256 of the bytes it measured, and that digest equals the installed file; each certifier writes its own fragment (no shared writable relay); the candidate-selection rule exercises the class under test. | round evidence, tools | `sha256sum tools/<tool>.sh` equals the digest in the verdict fragment; one author per fragment | corpus/lessons/round-11.md:14 (cert-16.json shared relay overwritten); round-11.md:16 (selection rule picked a candidate that fails the class) |
+| Q7 | Every lane or hygiene commit: (a) runs `git -C <repo> rev-parse --show-toplevel` and confirms the intended repo first; (b) stages only named paths (`commit -- <paths>`), never `add -A` or `.`; (c) runs with `-c maintenance.auto=false` so git's own pruning cannot ride along. | commits | the commit command recorded in LOG names its pathspec and the `-c` guard; `git show --stat --format= <hash>` lists only approved paths | LOG.md:381 (`git add -A` swept live outputs into e20f4fa); round-12 M51 (auto-maintenance prunes worktree metadata on commit); round-12 M53 (silent `cd` failure committed in the fleet root) |
+| Q8 | Per-target staging and digest steps are bounded (`timeout`) and read regular files only (`test -f` and not `-L`); a hang or a special file aborts fail-closed with diagnostics. | tools | the per-target `mv`/digest call itself is wrapped (`grep -nE 'timeout [0-9]+[smh]? .*(mv\|sha256sum)' <tool>` ≥ 1) and a selftest case with a stalled target or a FIFO exits fail-closed | LOG.md:373 (quarantine staging hung to the 20-min driver timeout); LOG.md:403 (judge fixtures stuck ~9 h on `sha256sum` of a FIFO) |
+| Q9 | Removal and verification shell passes `shellcheck -S warning` (SC2115/SC2114 are warnings); `-S error` is never the gate. | tools, tests | `shellcheck -S warning <script>; echo $?` → 0 for new scripts | census/round-10/S02-cluster-A.md:19 (gates recorded as `shellcheck -x -S error`); round-12 M50 |
+| Q10 | At the closing commit the bookkeeping matches the repo: SCORECARD prose equals its table numbers, `## Planned` names the next round, the certification note states the current state, and round evidence sits under `census/round-<N>/` or the README says where. | SCORECARD, README | `awk '/^## Planned/,/^## Saturation/' SCORECARD.md \| grep -c 'r<N+1>'` ≥ 1; the certification note names round ≥ the last LOG round; every number in SCORECARD prose appears in its table row | corpus/lessons/round-9.md:16 (SCORECARD numeric contradictions); round-12 M52 (Planned stuck at r5); round-12 M25 (r2 evidence outside `census/`) |
+| Q11 | Checkers test behaviour, not marker spellings; fixtures and shards share one machine-readable schema the runner checks; approval-list contracts re-check existence and tolerate already-removed rows. | tests, approval lists | the runner rejects a schema-variant shard; an already-removed row yields a recorded skip, not a crash | corpus/lessons/round-2.md:19 (checker over-strictness); round-2.md:12 and round-3.md:25 (fixture/shard schema chaos); round-3.md:22 (15 approval targets already removed) |
+| Q12 | A prune or removal records the residue it leaves: unreachable objects and orphaned commits (e.g. a pruned detached worktree HEAD) before and after, and states they stay recoverable only until `gc.pruneExpire`. | removal receipts | `git fsck --unreachable --no-reflogs \| wc -l` before and after, in the receipt | corpus/lessons/round-3.md:29 (prune left 8 unreachable blobs); round-12 M51 |
+| Q13 | Probes and tool diagnostics write only under `census/round-<N>/` or a mktemp dir; nothing new lands at a repo root or in another repo's cwd. | round evidence | `git show --stat --format= <hash>` shows no new root-level file outside the lane contract | round-12 M45 (`err4.*` and probe files committed at the lane root in 1ccf11b); round-12 M53 |
+| Q14 | Operator-tooling runtime (`.tower/**`, driver and comms logs, `.ufo/state/`) is report-only, whatever an engine verdict says. | removal lists | no approval row path matches `^\.tower/\|\.ufo/state/\|watchdog\.log` | LOG.md:421 (`.tower/comms/log/activity.log` refused by zone) |
+| Q15 | A cross-device claim may add one mktemp dir under `/dev/shm` as its second device, created and removed by the same fixture; it extends Q4 and does not relax it for anything else. | knowledge, tests | the fixture's only non-`/var/tmp` path is a `mktemp -d /dev/shm/...` dir removed by its trap | corpus/lessons/round-12.md `## Gate` (K5 row: written when K5 needed a second device; flagged for the non-author spot-check) |
