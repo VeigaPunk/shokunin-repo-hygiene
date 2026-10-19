@@ -435,3 +435,17 @@ commits). The quarantine tool's per-target staging loop can hang; the
 manual protocol (engine stage-gate → git mv → hash-vs-origin second check)
 is an equivalent-or-stronger receipt path and is now exercised end-to-end
 on live targets. Evidence: `census/operator-sweep-20261018/`.
+
+## 2026-10-19 — operator decisions on report-only items (huggingface, Trash)
+
+Operator directed deletion of two report-only surfaces from the
+2026-10-19 sweep. (1) `~/.cache/huggingface` (11G, 3 models: bge-m3 4.3G,
+Unlimited-OCR 6.3G, multilingual-e5-small 471M): 0 open handles (the running
+python shims are provider lanes, not ML consumers); staged to
+`/home/vgpnk/.souji-quarantine/hf-20261019/` with model manifest, 450s
+hold, lsof second check, deleted. Re-downloadable from the hub on demand.
+(2) `~/.local/share/Trash` (694M, 3 top-level entries): 0 handles;
+already user-staged by definition — manifest captured to the same
+quarantine dir, emptied to 0. Both operator-owned surfaces removed under
+explicit operator directive; no receipts class applies (never fleet
+artifacts).
