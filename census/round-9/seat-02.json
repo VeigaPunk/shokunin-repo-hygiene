@@ -1,0 +1,172 @@
+{
+  "seat": "S02",
+  "round": 9,
+  "role": "red-team",
+  "assignment": "SIGNAL/FAILURE injection: SIGKILL during staging/hold/recheck/deletion boundaries; original-or-quarantine byte preservation; lock/restart behavior",
+  "fragment": "census/round-9/seat-02.json",
+  "date": "2026-10-18",
+  "axes": [
+    "byte preservation after interruption",
+    "fail-closed restart",
+    "lock behavior and recoverability",
+    "fresh reproducibility"
+  ],
+  "verdict": "PASS within the tested process-crash model; 156/156 cases over two fresh fixture runs; no confirmed safety defect or claim contradiction",
+  "confirmed_defect_count": 0,
+  "confirmed_defects": [],
+  "contradiction_count": 0,
+  "contradictions": [],
+  "false_safe_count": 0,
+  "false_delete_count": 0,
+  "both_original_and_quarantine_missing_after_interruption_count": 0,
+  "counting_scope": "Safety/contradiction counts cover this signal/lock assignment only, not all receipt-engine or fleet claims. Completed, authorized deletes after manual restoration or on untouched batch targets are not interruption-loss events.",
+  "tools_measured": {
+    "tools/souji-quarantine.sh": {
+      "sha256": "5780ad751aa49d1bb587690154cab98ab6aa71b4def518673c2f383301c51c4f",
+      "role": "unmodified installed tool under test"
+    },
+    "tools/souji-verify.sh": {
+      "sha256": "a91049c96e5fba7c3db83df288a261717156c3834532e54d712ed0c555e350c4",
+      "role": "real receipt engine, not a fabricated verdict shim"
+    },
+    "tools/souji-vault-verify.sh": {
+      "sha256": "53f92421b254426c7e4882c1da9cfaa444bddde7ff90ee30afcd48fa229328b1",
+      "role": "fingerprinted for audit context; not substituted as the quarantine engine"
+    },
+    "stability": "All three fingerprints were identical before/after both scored runs and at the final syntax check. bash -n tools/souji-quarantine.sh returned 0."
+  },
+  "fixture_discipline": {
+    "roots": [
+      "/var/tmp/souji-r9-s02.Rwe5yw",
+      "/var/tmp/souji-r9-s02-replay.0SR1zW",
+      "/var/tmp/souji-r9-s02-confirm.Jyuocg"
+    ],
+    "creation": "Each root created with mktemp -d -p /var/tmp; all repositories, vault copies, ledgers, traces, gates, logs, and tool TMPDIR files are beneath those roots.",
+    "isolation": "Every invocation passes fixture SHOKUNIN_ROOT/SOUJI_Q_SHOKUNIN_ROOT and fixture SOUJI_LEDGER/SOUJI_Q_LEDGER. SOUJI_QUARANTINE_ALLOW_LIVE is removed. GIT_DIR/GIT_WORK_TREE/GIT_INDEX_FILE/GIT_NAMESPACE are removed. No live mutation invocation or remote call was made.",
+    "fixture_git": "init, add, write-tree, commit-tree with fixture identity, update-ref, symbolic-ref; fake origin/main tracking ref, no network and no fetch/push/commit/branch command on live repositories.",
+    "forbidden_surfaces": "No secret-shaped file contents read; .ufo/state, .ufo/watchdog.log, user configuration and desktop applications untouched.",
+    "repo_writes": ["census/round-9/seat-02.json"],
+    "fixture_writes": "Runner, case repositories, receipt fixtures, traces, logs and raw JSON evidence only under the three declared /var/tmp roots. Preserved for parent re-audit; no tool source changes."
+  },
+  "scored_runs": [
+    {
+      "root": "/var/tmp/souji-r9-s02-replay.0SR1zW",
+      "command": "python3 /var/tmp/souji-r9-s02-replay.0SR1zW/signal_audit.py",
+      "started_at_utc": "2026-10-18T23:52:28.461256+00:00",
+      "finished_at_utc": "2026-10-18T23:52:33.380857+00:00",
+      "returncode": 0,
+      "cases": 78,
+      "passed": 78,
+      "failed": 0,
+      "raw_evidence": "/var/tmp/souji-r9-s02-replay.0SR1zW/signal-results.json",
+      "raw_evidence_sha256": "2a34928e1c17b95a679970a94fa3ae188141f80d84ec238dfdc134b463cdb00f"
+    },
+    {
+      "root": "/var/tmp/souji-r9-s02-confirm.Jyuocg",
+      "command": "python3 /var/tmp/souji-r9-s02-confirm.Jyuocg/signal_audit.py",
+      "started_at_utc": "2026-10-18T23:52:54.171724+00:00",
+      "finished_at_utc": "2026-10-18T23:52:59.082601+00:00",
+      "returncode": 0,
+      "cases": 78,
+      "passed": 78,
+      "failed": 0,
+      "raw_evidence": "/var/tmp/souji-r9-s02-confirm.Jyuocg/signal-results.json",
+      "raw_evidence_sha256": "98d199a6ef71dc404a1d62785628401bb035dba6aca95cae67a48764f47eb68f"
+    }
+  ],
+  "harness": {
+    "path": "/var/tmp/souji-r9-s02-replay.0SR1zW/signal_audit.py",
+    "sha256": "38e7ff23657b44b20fd1b739e3bd4ba0301742acea2750486dccce909fd8e733",
+    "parallelism": "ThreadPoolExecutor(max_workers=8), one independent repository per case",
+    "signals": "os.kill(tool_pid, signal.SIGKILL), equivalent to kill -9. The tool is killed before fixture child-process cleanup. Original/quarantine inventory is captured 25ms after killing the tool and before process-group cleanup, then after cleanup and both restart attempts.",
+    "native_move_barrier": "strace -ff -e trace=rename,renameat,renameat2 -e inject=rename:delay_exit=30s -e inject=renameat:delay_exit=30s -e inject=renameat2:delay_exit=30s /bin/bash tools/souji-quarantine.sh --hold 0 FIXTURE TARGET; wait for actual quarantine object to appear and original to disappear, kill traced tool child, then its fixture process group. Syscall result is not faked; the real rename completed before observation.",
+    "other_barriers": "Post-stage2 uses the tool's fixture-only SOUJI_Q_TEST_HOOK. Second-check uses a delegating SOUJI_VERIFY_BIN that waits only for a quarantine-path invocation. Pre-delete uses a PATH rm wrapper that waits before the real quarantine rm. No wrapper manufactures SAFE or alters payload bytes.",
+    "inventory": "SHA-256 of file contents; for directories, sorted relative-path -> SHA-256 map of every regular payload file. A present pathname with wrong bytes does not pass.",
+    "fresh_replay_command": "fresh=$(mktemp -d -p /var/tmp souji-r9-s02-fresh.XXXXXX) && cp /var/tmp/souji-r9-s02-replay.0SR1zW/signal_audit.py \"$fresh/signal_audit.py\" && python3 \"$fresh/signal_audit.py\"",
+    "source_validation": "Python ast.parse succeeded for both scored runner copies; runner hashes match. Raw result documents parse as JSON, contain 78 all-green cases each, and carry identical before/after tool fingerprints."
+  },
+  "matrix_per_run": {
+    "shapes": ["pushed-file", "pushed-dir", "obsidian-file", "obsidian-dir", "stale-file", "stale-dir"],
+    "groups": [
+      {"scenario": "SIGKILL early/mid/late hold", "count": 36, "construction": "6 shapes x offsets 0, 0.6, 1.6 seconds into a 2-second hold x 2 repetitions", "result": "all quarantine payloads intact; no stage4/5 execution before kill"},
+      {"scenario": "SIGKILL immediately after staging", "count": 6, "construction": "all 6 shapes, paused in fixture-only post-stage2 hook", "result": "quarantine payloads intact"},
+      {"scenario": "SIGKILL at second-check entry", "count": 6, "construction": "all 6 shapes, --hold 0, real engine delegation paused before copy-side call", "result": "quarantine payloads intact; no delete"},
+      {"scenario": "SIGKILL after second-check PASS but before rm", "count": 6, "construction": "all 6 shapes, --hold 0, paused before native rm", "result": "PASS evidence present; quarantine payloads still intact after kill"},
+      {"scenario": "SIGKILL while real move is in flight after rename", "count": 8, "construction": "pushed/stale x file/dir x 2 repetitions; strace exit-delay barrier", "result": "all copies intact; 4 tracked cases retain real .git/index.lock"},
+      {"scenario": "SIGKILL hold sleep child only", "count": 6, "construction": "all 6 shapes; parent itself receives no signal", "result": "parent exits 137 via set -e; no stage4/5; quarantine intact; restart refuses"},
+      {"scenario": "second invocation while first is holding, then kill first", "count": 3, "construction": "pushed/obsidian/stale file", "result": "second invocation rc=3; no duplicate deletion; first quarantine copy intact"},
+      {"scenario": "two-target batch killed during first target's hold", "count": 3, "construction": "pushed/obsidian/stale file", "result": "first retained in quarantine; second untouched at kill; restart refuses missing first and independently deletes authorized second, final rc=3"},
+      {"scenario": "recreate original after SIGKILL, then restart", "count": 3, "construction": "pushed/obsidian/stale file; original bytes restored while quarantine destination remains occupied", "result": "rc=3 quarantine-collision; both byte-identical copies retained"},
+      {"scenario": "preexisting .git/index.lock", "count": 1, "construction": "tracked pushed file with fixture-owned stale lock", "result": "rc=3 STAGE2-FAILED git-mv-failed, original intact; retry works after fixture-only manual unlock"}
+    ],
+    "total": 78
+  },
+  "combined_counts": {
+    "runs": 2,
+    "cases": 156,
+    "passed": 156,
+    "failed": 0,
+    "tool_sigkill_cases": 142,
+    "sleep_child_sigkill_cases": 12,
+    "preexisting_lock_cases": 2,
+    "dedicated_original_path_restarts_refused": 124,
+    "dedicated_quarantine_path_restarts_refused": 124,
+    "duplicate_invocations_during_hold_refused": 6,
+    "real_git_mv_crashes_with_stale_index_lock": 8,
+    "other_tracked_target_attempts_refused_under_real_stale_lock": 8,
+    "manual_restore_then_recheck_and_delete_passed": 20,
+    "manual_preexisting_lock_cleanup_then_retry_passed": 2,
+    "collision_refusals_with_both_copies_preserved": 6
+  },
+  "fresh_hypothesis_results": [
+    {"hypothesis": "SIGKILL during hold/staging/recheck loses original and quarantine copy", "verdict": "NOT-REPRODUCED", "evidence": "142 tool-kill cases and 12 sleep-child-kill cases across fresh scored runs; all interrupted payloads preserved"},
+    {"hypothesis": "restart silently resumes and deletes an interrupted quarantine object", "verdict": "NOT-REPRODUCED", "evidence": "124 original-path retries and 124 quarantine-path retries return 3 with no DELETED result; stale copy paths get forbidden-prefix after a valid stale receipt"},
+    {"hypothesis": "stale git index lock permits destructive staging or corrupts another tracked target", "verdict": "NOT-REPRODUCED", "evidence": "8 real crash-created locks + 2 preexisting-lock cases fail closed; payloads intact; fixture manual recovery works"},
+    {"hypothesis": "killing the hold sleep child skips the hold and reaches deletion", "verdict": "NOT-REPRODUCED", "evidence": "12/12 cases exit 137 before stage4; all copies retained"}
+  ],
+  "operational_observations_not_safety_defects": [
+    {
+      "observation": "No automatic crash resume/rollback is provided",
+      "evidence": "A staged original is absent; restart at the original returns NOT-AUTHORIZED unreachable. Restart at a stale quarantine path returns NOT-AUTHORIZED forbidden-prefix. Safe refusals are not defects.",
+      "source": ["tools/souji-quarantine.sh:370", "tools/souji-quarantine.sh:411", "tools/souji-quarantine.sh:426"]
+    },
+    {
+      "observation": "Real git-mv interruption can leave index/worktree disagreement plus .git/index.lock",
+      "evidence": "Native-move case kill-pushed-file-native-move-0-0: original absent, quarantine SHA unchanged, index still lists original, real index.lock retained. Attempt on the second clean tracked target returns STAGE2-FAILED git-mv-failed, not DELETED.",
+      "recovery_verified_on_fixtures_only": "After all fixture writer processes are dead, remove fixture stale lock, move retained copy back without changing bytes, inspect index/worktree state, and re-run full flow. Normal completed git-mv staging is restored with git mv instead. Twenty manual restoration flows and two unlock-only retries passed.",
+      "source": ["tools/souji-quarantine.sh:485", "tools/souji-quarantine.sh:486"]
+    },
+    {
+      "observation": "Batch operation is per-target, not all-or-nothing",
+      "evidence": "After first-target interruption, retry of two targets refuses first, safely processes second using a fresh receipt and second check, and returns 3 overall. First quarantine copy remains intact. This is not unsafe resume.",
+      "source": ["tools/souji-quarantine.sh:613", "tools/souji-quarantine.sh:618"]
+    },
+    {
+      "observation": "SIGKILL does not run EXIT cleanup; children can outlive the shell briefly",
+      "evidence": "The audit records retained bytes after killing only the tool, then kills its fixture process group to avoid orphan sleeps/gates. The tool's EXIT trap removes only ERRTMP, never the quarantined payload. Killing a hold child alone produces abnormal rc=137.",
+      "source": ["tools/souji-quarantine.sh:513", "tools/souji-quarantine.sh:922"]
+    }
+  ],
+  "rubric_verdicts": {
+    "byte_preservation": "PASS: zero loss in 154 signal cases; no existence-only passes, bytes compared",
+    "restart_fail_closed": "PASS: 248 dedicated retries refused, interrupted copy preserved",
+    "lock_fail_closed": "PASS: 8 real crash locks and 2 preexisting locks refused mutation safely",
+    "recovery_operability": "MANUAL-ONLY, VERIFIED: 20 restoration flows + 2 unlock-only retries pass; do not describe this as automatic resume",
+    "calibration": "SUPPORTED WITHIN ASSIGNMENT: zero confirmed false SAFE/DELETE or contradictions; conservative refusals were not mislabeled as defects",
+    "coverage": "BOUNDED: 3 receipt classes x file/directory plus move, hold, recheck, pre-delete, duplicate, collision, batch and child-failure boundaries; two fresh all-green runs",
+    "numeric_axis_scores": "NOT ASSIGNED: no reproducible 0-10 score mapping supplied to this seat"
+  },
+  "harness_correction": {
+    "unscored_root": "/var/tmp/souji-r9-s02.Rwe5yw",
+    "initial_attempt": "57/69 completed checks passed; 12 recheck/pre-delete probes timed out before their barrier because the harness requested a 20-second hold but allowed only 15 seconds to reach the later-stage gate.",
+    "classification": "HARNESS ERROR, not a tool defect or fail-open. Later-stage probes were corrected to --hold 0 and executed in two entirely fresh fixture roots. The scored hold probes use a 2-second hold with early/mid/late kill offsets. Only the two 78/78 green runs count above."
+  },
+  "limits": [
+    "Process SIGKILL/failing-child model on newly created same-filesystem fixtures, not power loss, storage-device failure, filesystem corruption, cross-device copies or durability/fsync proof.",
+    "Boundary barriers cover specific observed states; this is not an exhaustive proof over every possible instruction interleaving.",
+    "Successful authorized deletion intentionally removes both worktree and quarantine copies; the no-loss invariant is evaluated on interrupted, not-yet-deleted objects and before any later authorized manual recovery deletion.",
+    "Signal/lock audit only: no general receipt-engine correctness, secret filtering, path-race or live-fleet score claim is made.",
+    "Raw harness/evidence remain under the declared /var/tmp roots for immediate parent audit; only this JSON fragment is a repository deliverable."
+  ],
+  "follow_up": "No tool fix requested by this seat. Parent may document fixture-proven manual crash recovery and stale-index-lock handling; any automatic resume feature would require a separate design and safety review."
+}

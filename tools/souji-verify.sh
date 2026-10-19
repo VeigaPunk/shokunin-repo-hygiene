@@ -59,6 +59,7 @@
 #   D-c  Scratch-type gains no patterns beyond the spec's four families; the
 #        secret-shape list gains `.env.*`/`.envrc` (only ever more refusals).
 set -euo pipefail
+export LC_ALL=C GIT_OPTIONAL_LOCKS=0
 
 unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_NAMESPACE 2>/dev/null || true
 
@@ -244,8 +245,11 @@ try_pushed() { # $1 target, $2 repo; SAFE(pushed) or fail-with-note
 }
 
 try_obsidian() { # $1 target (canonical), $2 isdir(0/1)
-  local target=$1 isdir=$2 row sp ss vp vs
+  local target=$1 isdir=$2 row sp ss vp vs ledger_pin
   [ -f "$LEDGER" ] || { NOTES+=("obsidian=no-ledger"); return 1; }
+  if ! ledger_pin=$(file_sha "$LEDGER") || [ -z "$ledger_pin" ]; then
+    NOTES+=("obsidian=ledger-unverifiable"); return 1
+  fi
   while IFS= read -r row; do
     [ -n "$row" ] || continue
     IFS=$'\t' read -r sp ss vp vs _rest <<< "$row"
@@ -262,6 +266,9 @@ try_obsidian() { # $1 target (canonical), $2 isdir(0/1)
         if [ "$_drc" = 2 ]; then NOTES+=("obsidian=symlink-present scope=vault"); continue; fi
         if [ "$_ds" != "$vs" ]; then NOTES+=("obsidian=vault-digest-mismatch"); continue; fi
       fi
+      if [ "$(file_sha "$LEDGER" || true)" != "$ledger_pin" ]; then
+        NOTES+=("obsidian=ledger-changed"); return 1
+      fi
       R_VERDICT=SAFE; R_RECEIPT=moved-to-obsidian
       R_EVIDENCE="ledger=source+vault-digest vault=$vp"
       return 0
@@ -275,6 +282,9 @@ try_obsidian() { # $1 target (canonical), $2 isdir(0/1)
     [ -n "$vs" ] || continue
     if [ "$(file_sha "$vp")" != "$vs" ]; then
       NOTES+=("obsidian=vault-sha-mismatch"); continue
+    fi
+    if [ "$(file_sha "$LEDGER" || true)" != "$ledger_pin" ]; then
+      NOTES+=("obsidian=ledger-changed"); return 1
     fi
     R_VERDICT=SAFE; R_RECEIPT=moved-to-obsidian
     R_EVIDENCE="ledger-row vault=$vp source-sha256=${ss:0:12}"
@@ -325,7 +335,11 @@ evaluate_worktree() { # $1 target, $2 meta="owner<TAB>head<TAB>branch"
   IFS=$'\t' read -r owner head branch <<< "$meta"
   if [ -d "$target" ]; then present=present; else present=absent; fi
   if [ -n "$branch" ]; then
-    unp=$(git -C "$owner" log --oneline "$branch" --not --remotes 2>/dev/null | wc -l || true)
+    if ! unp=$(git -C "$owner" log --oneline "$branch" --not --remotes 2>/dev/null | wc -l); then
+      R_VERDICT=NOT-SAFE; R_RECEIPT=git-unverifiable
+      R_EVIDENCE="worktree commit query failed"
+      return 0
+    fi
     unp=${unp// /}
     if [ "${unp:-0}" -gt 0 ]; then
       R_VERDICT=NOT-SAFE; R_RECEIPT=unpushed-branch
@@ -334,7 +348,11 @@ evaluate_worktree() { # $1 target, $2 meta="owner<TAB>head<TAB>branch"
     fi
   fi
   if [ "$present" = absent ]; then
-    uniq=$(git -C "$owner" log --oneline "$head" --not --all 2>/dev/null | wc -l || true)
+    if ! uniq=$(git -C "$owner" log --oneline "$head" --not --all 2>/dev/null | wc -l); then
+      R_VERDICT=NOT-SAFE; R_RECEIPT=git-unverifiable
+      R_EVIDENCE="worktree commit query failed"
+      return 0
+    fi
     uniq=${uniq// /}
     if [ "${uniq:-1}" = 0 ]; then
       R_VERDICT=SAFE; R_RECEIPT=metadata-prune
@@ -393,6 +411,14 @@ evaluate_path() {
     R_RECEIPT=secrets-refusal
     R_EVIDENCE="secret-shaped path component"
     return 0
+  fi
+  if [ -d "$target" ]; then
+    local nested_git
+    if ! nested_git=$(cd -- "$target" && find . -path './.git' -prune -o \( -name .git -o -name .ufo \) -print -quit 2>/dev/null) || [ -n "$nested_git" ]; then
+      R_RECEIPT=nested-repo-or-unverifiable
+      R_EVIDENCE="directory contains nested Git/protected metadata or scope scan failed"
+      return 0
+    fi
   fi
   if [ -d "$target" ] && [ -d "$target/.git" ]; then
     evaluate_repo_root "$target"; return 0
@@ -696,6 +722,18 @@ run_selftest() {
   set -e
 
   st_audit_source
+
+  local r9_out r9_rc=0
+  r9_out=$(bash "$SCRIPT_DIR/souji-round9-selftest.sh" verify "$SELF") || r9_rc=$?
+  printf '%s\n' "$r9_out"
+  if [[ "${r9_out##*$'\n'}" =~ ^ROUND9$'\t'([0-9]+)$'\t'([0-9]+)$ ]]; then
+    ST_PASS=$((ST_PASS + BASH_REMATCH[1])); ST_FAIL=$((ST_FAIL + BASH_REMATCH[2]))
+    if [ "$r9_rc" -ne 0 ] && [ "${BASH_REMATCH[2]}" = 0 ]; then
+      ST_FAIL=$((ST_FAIL + 1)); st_note "FAIL R9 runner exit=$r9_rc"
+    fi
+  else
+    ST_FAIL=$((ST_FAIL + 1)); st_note "FAIL R9 runner missing summary exit=$r9_rc"
+  fi
 
   st_note "selftest: $((ST_PASS + ST_FAIL)) checks, $ST_FAIL failed"
   if [ "$ST_FAIL" -gt 0 ]; then exit 1; fi

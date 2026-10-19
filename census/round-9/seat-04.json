@@ -1,0 +1,171 @@
+{
+  "seat": "S04",
+  "round": 9,
+  "role": "red-team: --list input malformation",
+  "fragment": "census/round-9/seat-04.json",
+  "generated_at": "2026-10-18T20:53:00-03:00",
+  "measured_commit": "14916c075c7de4b905d92c472e6312026d12d44a",
+  "axes": [
+    "fail-closed parsing",
+    "receipt and path byte fidelity",
+    "batch integrity",
+    "large-list completion and repository isolation"
+  ],
+  "subjects_sha256": {
+    "tools/souji-quarantine.sh": "5780ad751aa49d1bb587690154cab98ab6aa71b4def518673c2f383301c51c4f",
+    "tools/souji-verify.sh": "a91049c96e5fba7c3db83df288a261717156c3834532e54d712ed0c555e350c4",
+    "tools/souji-vault-verify.sh": "53f92421b254426c7e4882c1da9cfaa444bddde7ff90ee30afcd48fa229328b1",
+    "tools/souji-census.sh": "11bf9cdf8d4f75415b18e046aef0e96215b983f0d5b3ff7842301ff6ac65d381"
+  },
+  "scope": {
+    "primary_target": "tools/souji-quarantine.sh --list",
+    "receipt_engine": "tools/souji-verify.sh",
+    "other_tools": "Read for interface context only; vault/census have no --list interface and were not subjected to this input battery.",
+    "live_fleet_mutations": 0,
+    "tracked_files_written": ["census/round-9/seat-04.json"],
+    "fixture_policy": "All fixture repos, copied subjects, scripts and logs are under mktemp -d -p /var/tmp roots; TMPDIR=/var/tmp for tool-created temporary files. No git fetch/push/commit/branch, no secret-shaped file reads, and no .ufo/state or .ufo/watchdog.log access.",
+    "fixture_git_operations": ["init --template= --initial-branch=main", "add", "write-tree", "commit-tree", "update-ref", "symbolic-ref"],
+    "receipt_ground_truth": "Fixture target bytes are introduced at a plumbing-created commit, local main and refs/remotes/origin/main point to that commit, origin/HEAD resolves main, and there are zero unpushed touching commits. No network operation establishes these simulated pushed receipts.",
+    "snapshots": "/var/tmp/souji-r9-s04.cccFVB/subjects/lane/tools",
+    "snapshot_and_installed_hashes_equal_before_and_after": true
+  },
+  "counts": {
+    "confirmed_defect_root_causes": 1,
+    "confirmed_contract_contradictions": 2,
+    "false_delete_authorization_scenarios": 2,
+    "false_safe_receipt_derivations": 0,
+    "confirmed_irrecoverable_data_loss": 0,
+    "batch_atomicity_observations_not_counted_as_defects": 1,
+    "serialization_ambiguities_not_counted_as_defects": 1,
+    "assigned_input_families_exercised": 8,
+    "assigned_input_families_total": 8,
+    "primary_quarantine_invocations": 23,
+    "fresh_replay_cases_per_run": 5,
+    "fresh_replay_runs": 3,
+    "total_quarantine_invocations": 38
+  },
+  "confirmed_defects": [
+    {
+      "id": "S04-F1",
+      "status": "CONFIRMED",
+      "title": "NUL bytes in --list are silently erased, authorizing a different path or receipt",
+      "locations": ["tools/souji-quarantine.sh:593", "tools/souji-quarantine.sh:600", "tools/souji-quarantine.sh:607", "tools/souji-quarantine.sh:382"],
+      "root_cause": "Bash read -r ignores NUL bytes. The row is validated and used only after this lossy read, so byte-invalid paths and nonmatching receipt pins become valid authorized rows without a refusal.",
+      "contradictions": [
+        {
+          "id": "S04-C1",
+          "contract": "Fail closed on an unrepresentable path; do not delete a different pathname.",
+          "input_bytes_python": "b'victim\\x00.txt\\tpushed\\n'",
+          "input_hex": "76696374696d002e747874097075736865640a",
+          "observed": "rc=0; RESULT .../victim.txt DELETED pushed; victim.txt absent; no quarantine copy remains.",
+          "why_false_authorization": "A Linux pathname cannot contain NUL. The listed invalid path is silently changed to an existing, different path instead of being rejected."
+        },
+        {
+          "id": "S04-C2",
+          "contract": "The --list receipt is an authorization pin and must match EXACTLY (tool header lines 17-22).",
+          "input_bytes_python": "b'victim.txt\\tpush\\x00ed\\n'",
+          "input_hex": "76696374696d2e74787409707573680065640a",
+          "observed": "rc=0; RESULT .../victim.txt DELETED pushed; victim.txt absent; no quarantine copy remains.",
+          "why_false_authorization": "push<NUL>ed is not the receipt pushed, but the embedded NUL is erased before the exact-match gate. Control pin pushxed is correctly NOT-AUTHORIZED(receipt-mismatch), rc=3, file retained."
+        }
+      ],
+      "limits": "The resulting real target has a genuine fixture pushed receipt. This is an input-authorization/identity defect, not a fabricated pushed receipt or a demonstrated loss of unpreserved content. The two contradictions share one NUL-erasure root cause and are not double-counted as two defects.",
+      "fresh_installed_results": "/var/tmp/souji-r9-s04-fresh.00DbE8/results.json",
+      "fresh_snapshot_results": "/var/tmp/souji-r9-s04-fresh.yffdLl/results.json",
+      "recommended_fix_for_implementor": "Reject NUL/binary list input before any Bash line read can erase bytes, and complete structural list validation before invoking flow_one. Add both invalid-path and nonmatching-pin byte cases as regression tests. No tool edits made by S04."
+    }
+  ],
+  "observations_not_counted_as_defects": [
+    {
+      "id": "S04-O1",
+      "title": "Structural usage error can follow completed deletions",
+      "status": "CONFIRMED-BEHAVIOR, NOT COUNTED AS FALSE DELETE",
+      "locations": ["tools/souji-quarantine.sh:593", "tools/souji-quarantine.sh:602", "tools/souji-quarantine.sh:605", "tools/souji-quarantine.sh:607"],
+      "inputs_python": [
+        "b'victim.txt\\tpushed\\nmalformed-row\\n'",
+        "b'victim.txt\\tpushed\\nbad\\trow\\thas\\tfive\\tcolumns\\n'"
+      ],
+      "observed": "Both fresh installed-tool invocations delete victim.txt, remove the quarantine copy, then exit 2 with the malformed-row error. No SUMMARY record is emitted. A valid prefix followed by a raw tab-path row behaves the same way.",
+      "adjudication": "The prefix row itself has an exact pushed authorization, and the documented stages are per target; there is no explicit all-or-nothing batch guarantee. Therefore this is not counted as a strict false SAFE/DELETE defect. It does falsify any proposed rubric claiming exit 2 implies no mutation, and warrants eager whole-list syntax validation before mutation.",
+      "evidence": [
+        "/var/tmp/souji-r9-s04.cccFVB/cases/prefix-one-col-real/stdout.log",
+        "/var/tmp/souji-r9-s04.cccFVB/cases/prefix-five-col-real/stdout.log",
+        "/var/tmp/souji-r9-s04.cccFVB/cases/prefix-tab-path-real/stdout.log",
+        "/var/tmp/souji-r9-s04-fresh.00DbE8/results.json"
+      ]
+    },
+    {
+      "id": "S04-O2",
+      "title": "Raw TSV cannot unambiguously encode arbitrary Unix filenames",
+      "status": "CONFIRMED-AMBIGUITY, NOT COUNTED AS TOOL DEFECT",
+      "filesystem_fact": "Both tab and newline are legal in Unix filenames; NUL is not. A two-column, line-oriented unquoted TSV cannot represent these filenames losslessly.",
+      "isolated_behavior": "A tab-only path serializes as three columns and exits 2; a newline-only path yields a one-column first physical row and exits 2. The real weird-named files remain present.",
+      "combined_behavior": "The existing relative path keep/good.txt<TAB>pushed<NEWLINE>keep/other.txt, naively serialized with a pushed pin, becomes two valid physical TSV records. Both independently pushed target paths are deleted (rc=0), while the intended weird-named file remains. Input bytes are indistinguishable from an intentionally authorized two-row TSV.",
+      "adjudication": "Do not call the combined case a standalone engine authorization bypass: both physical records have genuine exact receipts under the documented format. List producers must reject delimiter-bearing names, or a different framed/escaped input format must be specified.",
+      "evidence": "/var/tmp/souji-r9-s04.cccFVB/cases/control-name-serialization-real/result.json"
+    }
+  ],
+  "primary_cases": [
+    {"id": "control-real", "rc": 0, "deleted": 1, "verdict": "PASS: independently preserved target completes full flow"},
+    {"id": "control-dry", "rc": 0, "deleted": 0, "verdict": "PASS: DRY-RUN-PASS, target retained"},
+    {"id": "one-col-real", "rc": 2, "deleted": 0, "verdict": "PASS: usage refusal"},
+    {"id": "one-col-dry", "rc": 2, "deleted": 0, "verdict": "PASS: usage refusal"},
+    {"id": "five-col-real", "rc": 2, "deleted": 0, "verdict": "PASS: usage refusal"},
+    {"id": "five-col-dry", "rc": 2, "deleted": 0, "verdict": "PASS: usage refusal"},
+    {"id": "crlf-real", "rc": 0, "deleted": 1, "verdict": "PASS: header and target CRLF normalized; exact pushed receipt"},
+    {"id": "crlf-dry", "rc": 0, "deleted": 0, "verdict": "PASS: CRLF dry run; target retained"},
+    {"id": "bom-header-real", "rc": 3, "deleted": 1, "results": 2, "verdict": "NO FALSE AUTHORIZATION: BOM-prefixed header is an unreachable target; subsequent ordinary valid row is processed normally"},
+    {"id": "bom-header-dry", "rc": 3, "deleted": 0, "results": 2, "verdict": "NO FALSE AUTHORIZATION: unsupported BOM header blocked; valid following row predicted independently"},
+    {"id": "bom-row-real", "rc": 3, "deleted": 0, "verdict": "PASS: BOM-prefixed data path unreachable, no target-name stripping"},
+    {"id": "tab-path-real", "rc": 2, "deleted": 0, "weird_file_retained": true, "verdict": "PASS: unrepresentable TSV row refused"},
+    {"id": "newline-path-real", "rc": 2, "deleted": 0, "weird_file_retained": true, "verdict": "PASS: one-column physical row refused"},
+    {"id": "duplicate-real", "rc": 3, "deleted": 1, "results": 2, "verdict": "PASS SAFETY: first exact authorized row deletes once; second is NOT-AUTHORIZED(unreachable)"},
+    {"id": "duplicate-dry", "rc": 0, "deleted": 0, "results": 2, "verdict": "PASS SAFETY, prediction caveat: both rows DRY-RUN-PASS because no move is simulated"},
+    {"id": "different-repo-real", "rc": 3, "deleted": 0, "foreign_target_retained": true, "verdict": "PASS: stage1 truthful SAFE(pushed) followed by NOT-AUTHORIZED(outside-repo)"},
+    {"id": "different-repo-dry", "rc": 3, "deleted": 0, "foreign_target_retained": true, "verdict": "PASS: DRY-RUN-BLOCKED(outside-repo)"},
+    {"id": "prefix-one-col-real", "rc": 2, "deleted": 1, "verdict": "S04-O1: authorized prefix completes before malformed-row usage error"},
+    {"id": "prefix-five-col-real", "rc": 2, "deleted": 1, "verdict": "S04-O1: authorized prefix completes before malformed-row usage error"},
+    {"id": "prefix-tab-path-real", "rc": 2, "deleted": 1, "weird_file_retained": true, "verdict": "S04-O1: authorized prefix completes before delimiter-path usage error"},
+    {"id": "control-name-serialization-real", "rc": 0, "deleted": 2, "weird_file_retained": true, "verdict": "S04-O2: ambiguous serialization, not a standalone parser-contract violation"},
+    {"id": "empty-path-real", "rc": 3, "deleted": 0, "verdict": "PASS SAFETY: repo-root evaluation NOT-SAFE; no staging"},
+    {"id": "large-10k-dry", "rc": 3, "deleted": 0, "results": 10000, "elapsed_seconds": 80.649, "timed_out": false, "verdict": "PASS: all 10000 distinct unreachable rows processed, all blocked; original files retained; no quarantine directory"}
+  ],
+  "large_list": {
+    "rows_excluding_header": 10000,
+    "input_bytes": 300013,
+    "input_sha256": "775130060bda8b4b256d431aac9f1a6c15360340e819665c2031e7766c008c5d",
+    "summary": "SUMMARY\ttotal=10000\tdeleted=0\taborted=0\tunauthorized=0\tskipped=0\tstage2failed=0\tdryrun-pass=0\tdryrun-blocked=10000",
+    "limitation": "This measures complete processing of valid two-column unreachable targets, not throughput of 10000 successful deletion flows or a universal resource bound."
+  },
+  "rubric_verdicts": {
+    "fail_closed_malformed_bytes": "FAIL: S04-F1",
+    "exact_receipt_pin_fidelity": "FAIL: S04-C2",
+    "ordinary_column_count_refusal": "PASS on first-row malformed cases; do not infer atomic validation from exit 2",
+    "foreign_repository_mutation_isolation": "PASS: 0 foreign-repo deletions in real and dry-run cases",
+    "crlf_normalization": "PASS",
+    "unsupported_bom_is_not_a_defect": "PASS: refusals only for BOM-bearing records; no byte-stripped alias authorization",
+    "duplicate_deletion_safety": "PASS: one deletion maximum; dry-run prediction does not simulate prior row removal",
+    "delimiter_filename_coverage": "REFUSED/FORMAT-LIMITATION, NOT A DEFECT by itself",
+    "large_list_completion": "PASS: 10000/10000 rows processed without timeout",
+    "overall": "FAIL malformation-safety conformance on the measured quarantine hash; no numeric score invented"
+  },
+  "reproduction": {
+    "existing_replay_command": "python3 /var/tmp/souji-r9-s04.cccFVB/fresh-reproduce.py /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-quarantine.sh",
+    "fresh_command": "python3 - <<'PY'\nimport os, subprocess\nfrom pathlib import Path\nq = Path('/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-quarantine.sh')\nv = q.parent / 'souji-verify.sh'\nroot = Path(subprocess.check_output(['mktemp', '-d', '-p', '/var/tmp', 'souji-r9-s04-report-repro.XXXXXX'], text=True).strip())\nenv = dict(os.environ, TMPDIR='/var/tmp', GIT_CONFIG_GLOBAL='/dev/null', GIT_CONFIG_SYSTEM='/dev/null', GIT_OPTIONAL_LOCKS='0', GIT_AUTHOR_NAME='S04', GIT_AUTHOR_EMAIL='s04@example.invalid', GIT_COMMITTER_NAME='S04', GIT_COMMITTER_EMAIL='s04@example.invalid', LC_ALL='C')\nfor key in ['GIT_DIR', 'GIT_WORK_TREE', 'GIT_INDEX_FILE', 'GIT_NAMESPACE', 'GIT_CONFIG_COUNT', 'SOUJI_QUARANTINE_ALLOW_LIVE', 'SOUJI_Q_TEST_HOOK', 'SOUJI_Q_SELFTEST_ACTIVE']:\n    env.pop(key, None)\ncases = [('nul-path', b'victim\\x00.txt\\tpushed\\n', 0, False), ('nul-pin', b'victim.txt\\tpush\\x00ed\\n', 0, False), ('wrong-pin', b'victim.txt\\tpushxed\\n', 3, True), ('partial-one-col', b'victim.txt\\tpushed\\nmalformed-row\\n', 2, False), ('partial-five-col', b'victim.txt\\tpushed\\nbad\\trow\\thas\\tfive\\tcolumns\\n', 2, False)]\nfor name, body, expected_rc, expected_present in cases:\n    base = root / name\n    repo = base / 'fleet/a-shokunin'\n    subprocess.run(['git', 'init', '-q', '--template=', '--initial-branch=main', str(repo)], env=env, check=True)\n    target = repo / 'victim.txt'\n    target.write_text('preserved fixture bytes\\n')\n    def git(*args, data=None):\n        return subprocess.run(['git', '-C', str(repo), *args], input=data, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env, check=True).stdout.decode().strip()\n    git('add', 'victim.txt')\n    tree = git('write-tree')\n    commit = git('commit-tree', tree, data=b'preserved\\n')\n    git('update-ref', 'refs/heads/main', commit)\n    git('update-ref', 'refs/remotes/origin/main', commit)\n    git('symbolic-ref', 'refs/remotes/origin/HEAD', 'refs/remotes/origin/main')\n    listing = base / 'input.tsv'\n    listing.write_bytes(body)\n    ledger = base / 'ledger.tsv'\n    ledger.write_text('source_path\\tsource_sha256\\tvault_path\\tvault_sha256\\n')\n    child_env = dict(env, SOUJI_VERIFY_BIN=str(v), SOUJI_Q_LEDGER=str(ledger), SOUJI_Q_SHOKUNIN_ROOT=str(base / 'fleet'))\n    p = subprocess.run(['bash', str(q), '--hold', '0', '--list', str(listing), str(repo)], env=child_env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30)\n    (base / 'stdout.log').write_bytes(p.stdout)\n    (base / 'stderr.log').write_bytes(p.stderr)\n    print(name, 'input_hex=' + body.hex(), 'rc=' + str(p.returncode), 'target_present=' + str(target.exists()))\n    assert p.returncode == expected_rc and target.exists() == expected_present, name\nprint('fresh_fixture_root=' + str(root))\nPY",
+    "expected": "nul-path/nul-pin: rc 0, victim absent; wrong-pin: rc 3, victim retained; malformed suffix cases: rc 2, victim absent. Each case creates a fresh isolated repository; this sequence does not reuse an already-deleted target."
+  },
+  "evidence": {
+    "primary_battery": "/var/tmp/souji-r9-s04.cccFVB/results-short.json",
+    "large_battery": "/var/tmp/souji-r9-s04.cccFVB/results-large.json",
+    "fresh_snapshot_battery": "/var/tmp/souji-r9-s04-fresh.yffdLl/results.json",
+    "fresh_installed_battery": "/var/tmp/souji-r9-s04-fresh.00DbE8/results.json",
+    "per_case_logs": "/var/tmp/souji-r9-s04.cccFVB/cases/<primary-case-id>/{stdout.log,stderr.log,result.json}",
+    "syntax_check": "bash -n tools/souji-quarantine.sh tools/souji-verify.sh tools/souji-vault-verify.sh tools/souji-census.sh => rc=0",
+    "deliverable_validation": "JSON parse, unique primary case ids, counts, observed primary/fresh outputs, and embedded fresh-command replay checked against this fragment"
+  },
+  "left_undone": [
+    "No tool patch: S04 is evidence-only; route NUL-byte prevalidation and optional whole-list preflight to the assigned implementor.",
+    "No new numeric scorecard score: this fragment provides reproducible property verdicts and contradiction counts only.",
+    "No live cleanup or mutation; fixture roots retained under /var/tmp as evidence."
+  ]
+}

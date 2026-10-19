@@ -294,3 +294,29 @@ quota is now host-critical. Operability +1 capability row.
 Round 10 (the remaining deepseek-v4.1-flash round of the schedule) uses
 the **hyper provider** (`hyper/deepseek-v4.1-flash`) instead of devin, per
 operator request. All other routing stands.
+
+## 2026-10-18 — round 9 REJECTED (O1 NOT-MET); tools patched but uncertified
+
+**Dispatch.** 24 seats on openai-codex/gpt-6.1-sol-max; 23/24. Red-team +
+differential + rubric.
+
+**Findings.** 23 deduplicated defect classes (union across four judges):
+false receipts from environment/hostility (disappearing git, tr_TR
+locale), authorization forgery (NUL rows, tab-spliced pins, ledger
+revocation after capture), stale-sweep blind spots (hidden refs,
+directory metadata only), nested-repo deletion via ancestor receipts,
+second-check missing default-ref revalidation, git-2.55 linked-worktree
+HEAD skew in unique=0, non--shokunin owner names hiding registrations,
+index-write contract violation, SCORECARD numeric contradictions
+(parent's drift — corrected same-day).
+
+**State.** S17 patches applied (installed tools; selftests 40/51/91,
+census 32; S08 universe clean) but fresh replays still reproduce unsafe
+deletions: >=16 classes open. Tools are PATCHED-NOT-CERTIFIED: receipts
+advisory, deletion authorization OFF. S18 candidates banked for
+composition in r10 (not promotable alone). rubric-final.md banked;
+scores LEGACY-UNMAPPED/UNRATED. K1 differential MET (bounded); C1 rubric
+MET as prospective spec. Dissent preserved.
+
+**Ledger.** r9 = failed. Hardening closure is r10's mission
+(operator-rerouted to hyper/deepseek-v4.1-flash).

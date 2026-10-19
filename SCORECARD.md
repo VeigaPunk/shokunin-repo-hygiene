@@ -41,9 +41,16 @@ counting command and the commit it was measured against.
 
 ## Saturation / stagnation
 
-Saturation line: 8 per axis; stagnation window 3 rounds. Coverage 8,
-operability 7, calibration 6 — calibration lowest; r5 verification work
-carries the calibration flavor.
+Saturation line: 8 per axis; stagnation window 3 rounds. Scores per the
+rows above: coverage 8, operability 8, calibration 7 (this prose formerly
+said 6/7 — corrected r9 after the judges caught the drift).
+
+## Tool certification (r9)
+
+The verdict tools are PATCHED (r9 S17: 40/51/91 selftest checks) but NOT
+certified for deletion authorization: r9 red-team replays still reproduce
+unsafe deletions (>=16 open defect classes; see corpus/lessons/round-9.md).
+Receipts are advisory until the r10 hardening closes the classes.
 
 ## Retired
 

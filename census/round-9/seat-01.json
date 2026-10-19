@@ -1,0 +1,145 @@
+{
+  "seat": "S01",
+  "round": 9,
+  "role": "red-team-concurrency",
+  "fragment": "census/round-9/seat-01.json",
+  "probed_at": "2026-10-18T20:51:41-03:00",
+  "target": "tools/souji-quarantine.sh",
+  "target_sha256": "5780ad751aa49d1bb587690154cab98ab6aa71b4def518673c2f383301c51c4f",
+  "receipt_engine_sha256": "a91049c96e5fba7c3db83df288a261717156c3834532e54d712ed0c555e350c4",
+  "axes": [
+    "receipt correctness",
+    "single-owner staging",
+    "content preservation",
+    "fail-closed reporting"
+  ],
+  "verdict": "NOT-REPRODUCED: no false SAFE, false DELETED, duplicate deletion, or unexplained payload loss in the bounded concurrency battery",
+  "confirmed_defects": [],
+  "confirmed_defect_count": 0,
+  "contradiction_count": 0,
+  "tests": {
+    "fresh_fixture_repositories": 18,
+    "simultaneous_invocations_per_repository": 4,
+    "total_invocations": 72,
+    "total_target_results": 288,
+    "result_counts": {
+      "DELETED": 51,
+      "NOT-AUTHORIZED": 191,
+      "STAGE2-FAILED": 41,
+      "ABORTED": 5
+    },
+    "natural_interleavings": {
+      "trials": 9,
+      "invocations": 36,
+      "target_results": 216,
+      "cases": [
+        "Three fresh repositories: four workers each receive six overlapping stale untracked files in different orders, --hold 0",
+        "Three fresh repositories: four workers each receive six overlapping tracked pushed files in different orders, --hold 0; pushed refs constructed locally with Git plumbing",
+        "Three fresh repositories: four workers receive overlapping stale parent directories and their child files in different orders, --hold 0"
+      ],
+      "result_counts": {
+        "DELETED": 42,
+        "NOT-AUTHORIZED": 155,
+        "STAGE2-FAILED": 14,
+        "ABORTED": 5
+      },
+      "unexplained_missing_payloads": 0,
+      "duplicate_deleted_paths": 0
+    },
+    "forced_preflight_collision": {
+      "trials": 9,
+      "invocations": 36,
+      "target_results": 72,
+      "cases": [
+        "Three fresh repositories with four identical stale-file targets",
+        "Three fresh repositories with four identical stale-directory targets",
+        "Three fresh repositories with four identical tracked pushed-file targets"
+      ],
+      "method": "A fixture-only PATH wrapper waits at the real mv/git-mv call until all four workers have completed preflight, collision checks, digest and mtime pinning. It then execs /usr/bin/mv or /usr/bin/git unchanged. No receipt engine substitution, target modification, test hook, or tool-source modification is used. All workers also request an unreceipted fresh-note.txt sentinel.",
+      "hold_seconds": 1,
+      "barrier_arrivals_per_trial": 4,
+      "stage1_SAFE_per_trial": 4,
+      "successful_stage2_moves_per_trial": 1,
+      "DELETED_per_trial": 1,
+      "STAGE2-FAILED_per_trial": 3,
+      "sentinel_refusals_per_trial": 4,
+      "sentinels_preserved": "9/9",
+      "original_and_quarantine_target_absent_after_authorized_delete": "9/9",
+      "result_counts": {
+        "DELETED": 9,
+        "NOT-AUTHORIZED": 36,
+        "STAGE2-FAILED": 27
+      }
+    },
+    "log_audit": {
+      "DELETED_without_own_stage2_and_second_check_PASS": 0,
+      "duplicate_DELETED_for_same_original_path_in_a_trial": 0,
+      "missing_or_duplicate_worker_summaries": 0,
+      "summary_verdict_count_mismatches": 0,
+      "unexplained_missing_payload_digests": 0,
+      "invalid_barrier_invariants": 0,
+      "all_workers_exited": true,
+      "exit_codes": "All 72 invocations returned 3: overlapping requests encounter refusals/staging failures, or the deliberately unreceipted sentinel is refused. This is expected fail-closed behavior, not a defect."
+    }
+  },
+  "observations_not_counted_as_defects": [
+    {
+      "observation": "Parent/child overlap can create an extra nested directory in quarantine when the child creates the parent's destination between collision check and mv. The parent digest/mtime checks abort; remaining payloads stay recoverable, and independently deleted children had their own successful receipt checks.",
+      "source": "tools/souji-quarantine.sh:434-435,480-500,521-529",
+      "evidence": "/var/tmp/souji-r9-s01.7abpKl/nested-1-ytezni54/result.json:183-188",
+      "example_retained_path": ".ufo-quarantine/2026-10-18/.scratch/other/other/payload-0.out",
+      "classification": "Fail-closed refusal; no unsafe deletion, so not a defect under the round rules."
+    },
+    {
+      "observation": "Two of three natural tracked-file trials emitted index-cleanup-skipped and retained one nonexistent quarantine path in the Git index. The actual payload deletion was authorized. The implementation explicitly documents index cleanup as best-effort and emits a warning; it does not silently claim cleanup succeeded.",
+      "source": "tools/souji-quarantine.sh:67-70,539-542",
+      "evidence": [
+        "/var/tmp/souji-r9-s01.7abpKl/tracked-1-7w3yfh0x/worker-0.log:6-8",
+        "/var/tmp/souji-r9-s01.7abpKl/tracked-1-7w3yfh0x/result.json:203",
+        "/var/tmp/souji-r9-s01.7abpKl/tracked-2-n8m8tf0r/result.json"
+      ],
+      "classification": "Documented best-effort operational caveat; not a false SAFE/DELETE finding. A per-repository lock or retry could improve index tidiness if desired."
+    }
+  ],
+  "rubric_verdicts": {
+    "fixture_isolation": "PASS: all attack repositories, wrappers, logs, ledgers and harness files under the /var/tmp mktemp root; TMPDIR=/var/tmp for tool temporaries",
+    "same_target_staging_collision": "PASS (bounded): all four workers passed preflight, but only one moved/deleted the target in each of nine forced-collision trials",
+    "parent_child_overlap_preservation": "PASS (bounded safety): aborts retained otherwise-unaccounted payloads; extra nesting is observable",
+    "receipt_and_delete_consistency": "PASS (bounded): each of 51 DELETED results had its own stage2 and second-check PASS",
+    "partial_delete_or_payload_loss": "NOT-REPRODUCED",
+    "false_SAFE_or_false_DELETE": "NOT-REPRODUCED",
+    "index_cleanup": "WARN: documented best-effort cleanup can leave stale quarantine index entries under contention",
+    "universal_concurrency_safety": "NOT-CLAIMED: this is an adversarial finite fixture battery, not a proof over every possible interleaving"
+  },
+  "reproduction": {
+    "fixture_root_creation": "mktemp -d -p /var/tmp souji-r9-s01.XXXXXX",
+    "retained_fixture_root": "/var/tmp/souji-r9-s01.7abpKl",
+    "fresh_fixture_replay_commands": [
+      "python3 /var/tmp/souji-r9-s01.7abpKl/concurrency.py",
+      "python3 /var/tmp/souji-r9-s01.7abpKl/barrier.py"
+    ],
+    "replay_note": "Each command creates nine new fixture repositories before launching four workers per repository. Existing fixture logs remain available; aggregate result files are refreshed. Both commands ran successfully in the lane working directory.",
+    "harness_sha256": {
+      "concurrency.py": "427319f4fa56514a52d14ac31237f3e6b114fd0b078df2659ddf7cdd0365bd62",
+      "barrier.py": "4b6cabdc7e739dc94b29c8d00c23839fd33bb788fb624e0fe46729a6b03d2154"
+    },
+    "aggregate_evidence": [
+      "/var/tmp/souji-r9-s01.7abpKl/normal-results.json",
+      "/var/tmp/souji-r9-s01.7abpKl/barrier-results.json"
+    ],
+    "representative_forced_collision_evidence": [
+      "/var/tmp/souji-r9-s01.7abpKl/barrier-stale-1-xc8qguk7/result.json",
+      "/var/tmp/souji-r9-s01.7abpKl/barrier-directory-1-p9fksue9/result.json",
+      "/var/tmp/souji-r9-s01.7abpKl/barrier-tracked-1-f3kjs9bo/result.json"
+    ]
+  },
+  "safety": {
+    "only_lane_file_written_by_seat": "census/round-9/seat-01.json",
+    "tool_sources_changed": false,
+    "attacks_on_live_repositories": false,
+    "forbidden_live_git_mutations": false,
+    "secret_shaped_file_reads": false,
+    "operator_state_or_watchdog_access": false,
+    "background_tasks_left_running": false
+  }
+}

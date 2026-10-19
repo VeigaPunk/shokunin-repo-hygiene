@@ -1,0 +1,259 @@
+{
+  "seat": "S03",
+  "round": 9,
+  "role": "red-team: hostile execution environment",
+  "fragment": "census/round-9/seat-03.json",
+  "axes": [
+    "fail-closed authorization: no false SAFE or DELETE",
+    "receipt/evidence integrity under dependency and locale failures",
+    "fresh reproducibility and fixture-only containment"
+  ],
+  "verdict": "NOT-MET: environment hardening has two confirmed fail-open defect classes; no false DELETE reproduced",
+  "counts": {
+    "counting_rule": "Deduplicate by root cause. Each tool/environment pair is counted once, not once per repeated run. A propagated stage-1 SAFE is recorded separately from the two independent verifier endpoints. Refusals are not defects.",
+    "confirmed_defect_classes": 2,
+    "falsified_contract_invariants": 2,
+    "false_safe_tool_scenario_pairs": 5,
+    "direct_verifier_false_safe_pairs": 4,
+    "quarantine_propagated_false_safe_pairs": 1,
+    "false_delete_pairs": 0,
+    "verifier_to_verifier_disagreements_on_the_two_attacks": 0,
+    "fresh_full_matrix_runs": 2,
+    "environment_cases_per_full_run": 24,
+    "environment_executions_across_the_two_full_runs": 48,
+    "non_failing_environment_pairs_per_full_run": 19,
+    "scorecard_document_contradictions": "NOT-AUDITED: S03 is a red-team seat, not the scorecard lane"
+  },
+  "tested_tool_sha256": {
+    "tools/souji-verify.sh": "a91049c96e5fba7c3db83df288a261717156c3834532e54d712ed0c555e350c4",
+    "tools/souji-vault-verify.sh": "53f92421b254426c7e4882c1da9cfaa444bddde7ff90ee30afcd48fa229328b1",
+    "tools/souji-quarantine.sh": "5780ad751aa49d1bb587690154cab98ab6aa71b4def518673c2f383301c51c4f",
+    "tools/souji-census.sh": "11bf9cdf8d4f75415b18e046aef0e96215b983f0d5b3ff7842301ff6ac65d381"
+  },
+  "confirmed_defects": [
+    {
+      "id": "S03-D1",
+      "status": "CONFIRMED: fresh fixture reproduced in both full matrix runs",
+      "title": "Git disappearing after worktree discovery becomes proof of zero unpushed/unique commits",
+      "affected": [
+        "tools/souji-verify.sh:323-343",
+        "tools/souji-vault-verify.sh:489-508"
+      ],
+      "mechanism": "A fixture-local PATH exposes a real forwarding git wrapper during command -v and worktree discovery. The wrapper returns real git worktree list output, then unlinks itself. Subsequent git log calls exit 127. Pipelines to wc -l with || true turn their failure into 0; evaluate_worktree consequently bypasses the named-branch-unpushed refusal and emits SAFE(metadata-prune).",
+      "fresh_ground_truth": "The absent registration is on refs/heads/wt-local. /usr/bin/git rev-list --count refs/heads/wt-local --not --remotes returns 1 before and after the attack. Normal PATH returns NOT-SAFE(unpushed-branch). No fabricated git output is used.",
+      "observed": {
+        "souji-verify.sh": "exit 0; verdict=SAFE receipt=metadata-prune evidence=dir=absent unique=0",
+        "souji-vault-verify.sh": "exit 0; verdict=SAFE verified=VERIFIED(metadata-prune)",
+        "souji-quarantine.sh": "Its real child engine propagates QVERDICT stage1 SAFE metadata-prune, changes baseline DRY-RUN-BLOCKED/exit 3 to SKIPPED/exit 0. No deletion: metadata-prune is skipped before staging.",
+        "souji-census.sh": "Does not emit clean. Reports no-remote,status-unverifiable. Numeric unpushed falls to 0 but the uncertainty flag prevents treating this as a safe verdict; not counted as another safety defect."
+      },
+      "contradicted_invariant": "An absent named-branch worktree with unpushed commits must be NOT-SAFE(unpushed-branch); dependency failure is not a zero-commit receipt.",
+      "suggested_fix_not_applied": "Capture and check each git command's exit status before counting its output. On failure, refuse with an explicit unverifiable reason; initial command -v is not sufficient. Do not convert unknown counts to zero.",
+      "evidence_pointers": [
+        "/var/tmp/souji-r9-s03-run-3tbifr7d/results.json:209-335",
+        "/var/tmp/souji-r9-s03-run-5rktiuf3/results.json results.git",
+        "reproduction.python_lines below: mode=git, including the quarantine propagation"
+      ]
+    },
+    {
+      "id": "S03-D2",
+      "status": "CONFIRMED: LANG=tr_TR alone, with LC_ALL unset, reproduced in both full matrix runs",
+      "title": "Turkish lowercase conversion bypasses the case-insensitive ID_* path refusal",
+      "affected": [
+        "tools/souji-verify.sh:105-118",
+        "tools/souji-vault-verify.sh:92-104"
+      ],
+      "mechanism": "is_secret_shaped uses Bash ${comp,,} without fixing LC_CTYPE. Under a real Turkish locale, ASCII I lowercases to U+0131, so ID_SENTINEL becomes ıd_sentınel and no longer matches id_*. The target then obtains a stale receipt.",
+      "fixture_safety": "The target is an EMPTY directory named .scratch/ID_SENTINEL, aged three days. No secret-shaped regular file is created or read. No actual secrets or vault data are used.",
+      "locale_proof": "Host initially has no Turkish locale. localedef --no-archive -i tr_TR -f UTF-8 <fixture>/locale/tr_TR succeeds without privilege changes. With LOCPATH=<fixture>/locale, LANG=tr_TR and all LC_* variables removed, Bash prints LANG=tr_TR LC_ALL=unset lower=ıd_sentınel, with no locale warning.",
+      "observed": {
+        "souji-verify.sh": "LC_ALL=C baseline: NOT-SAFE(secrets-refusal). LANG=tr_TR attack: exit 0, SAFE(stale).",
+        "souji-vault-verify.sh": "LC_ALL=C baseline: NOT-VERIFIED(secrets-refusal). LANG=tr_TR attack: exit 0, SAFE / VERIFIED(stale).",
+        "souji-quarantine.sh": "Correctly refuses the same empty directory in both locales; it exports LC_ALL=C at line 121. No stage or deletion occurs.",
+        "souji-census.sh": "Ordinary fixture census is byte-identical between C and Turkish. Empty directories are not in its newest-regular-file scan, so no claim is made about census secret-name folding."
+      },
+      "contradicted_invariant": "Secret-shaped components are refused case-insensitively before receipt evaluation, independent of the user's locale.",
+      "suggested_fix_not_applied": "Use locale-independent ASCII case folding, or fix LC_ALL=C consistently as quarantine already does. Add an actual locally generated Turkish-locale regression, not a LANG assignment that silently falls back to C.",
+      "evidence_pointers": [
+        "/var/tmp/souji-r9-s03-run-3tbifr7d/results.json:511-687",
+        "/var/tmp/souji-r9-s03-run-5rktiuf3/results.json results.locale",
+        "reproduction.python_lines below: mode=locale"
+      ]
+    }
+  ],
+  "rubric_verdicts": {
+    "TMPDIR_unwritable": {
+      "verdict": "PASS: false SAFE/DELETE NOT-REPRODUCED",
+      "method": "Each fixture uses its own mode-0555 TMPDIR. A real mktemp probe fails Permission denied, proving the hostile storage condition without mounting or exhausting a filesystem.",
+      "results": "verify and vault retain NOT-SAFE(unpushed-branch); quarantine exits 1 before any move, with base.txt preserved; census --compare exits 1 without emitting a falsely empty successful diff. Denied temp dirs remain empty."
+    },
+    "PATH_git_disappears_mid_run": {
+      "verdict": "FAIL",
+      "defect": "S03-D1",
+      "direct_false_safe_pairs": 2,
+      "propagated_quarantine_false_safe_pairs": 1
+    },
+    "PATH_sha256sum_disappears_mid_run": {
+      "verdict": "PASS: false SAFE/DELETE NOT-REPRODUCED",
+      "method": "The git worktree-list shim removes only the fixture-local sha256sum symlink, after startup dependency checks.",
+      "results": "verify refuses the valid ledger pair as source-sha-mismatch; vault emits NOT-VERIFIED(source-hash-mismatch). A real quarantine stale flow stages the file, then detects empty digest pins and ABORTS/exit 3, keeping .ufo-quarantine/<date>/.scratch/aged.out. Census remains correctly clean because it does not use SHA-256 for this measurement.",
+      "limitation": "Quarantine stages before noticing an absent hash utility. This is not counted as a false DELETE: bytes remain in quarantine and the second check fails."
+    },
+    "LANG_tr_TR_case_folding": {
+      "verdict": "FAIL",
+      "defect": "S03-D2",
+      "direct_false_safe_pairs": 2
+    },
+    "CWD_deleted_mid_run": {
+      "verdict": "PASS: false SAFE/DELETE NOT-REPRODUCED",
+      "method": "Launch from an empty fixture cwd; a real forwarding git wrapper rmdir's that cwd on its first call while the parent tool continues running. Test each tool with absolute and relative addressing. Event logs and absent cwd assertions verify deletion actually happened.",
+      "results": "Absolute addressing: both verifiers correctly prove the fixture's pushed file, census is correctly clean, and quarantine completes one legitimate pushed deletion with intro-blob=ok. Relative addressing: both verifiers refuse, quarantine returns NOT-AUTHORIZED/exit 3 with the file intact, and census remains correct after early root canonicalization. All eight cases finish without hitting the 5-second timeout.",
+      "important": "The valid pushed fixture deletion is NOT a false DELETE and is excluded from the defect count."
+    },
+    "reproducibility": "PASS: two distinct 24-case full fixture builds with identical tested source hashes; durable standalone defect repro embedded below",
+    "containment": "PASS: repo under test, mutable PATH entries, locale generation, temp denial, cwd removal, quarantine movement and deletion all stay under /var/tmp",
+    "numeric_score": "NOT-ASSIGNED: no invented scorecard scale"
+  },
+  "full_matrix_evidence": {
+    "harness": "/var/tmp/souji-r9-s03.kKahKWcy/hostility.py",
+    "harness_sha256": "ff93b57bdc4ee5d7af8458af5f279bc32cee620f82f3fb9af03d0f7dc04e75e1",
+    "run_commands": [
+      "python3 /var/tmp/souji-r9-s03.kKahKWcy/hostility.py --mode all",
+      "python3 /var/tmp/souji-r9-s03.kKahKWcy/hostility.py --tool-root /home/vgpnk/Projects/shokunin/souji-shokunin --mode all"
+    ],
+    "reports": [
+      "/var/tmp/souji-r9-s03-run-3tbifr7d/results.json",
+      "/var/tmp/souji-r9-s03-run-5rktiuf3/results.json"
+    ],
+    "source_snapshot_layout": "Each run copies the four installed scripts byte-for-byte to <fixture>/engine/lane/tools, records SHA-256, and passes explicit fixture root and ledger context. Fixture repos are outside <fixture>/engine, so the copied quarantine tool's live-fleet guard is not overridden.",
+    "not_counted": "Earlier exploratory runs used LC_ALL=tr_TR.UTF-8 and only absolute CWD tests. The totals above use only the final two LANG-only/absolute+relative runs."
+  },
+  "reproduction": {
+    "purpose": "Standalone fresh reproduction of both confirmed classes and quarantine propagation. Does not require the retained /var/tmp harness or old fixtures. It creates new fixtures and a private Turkish locale on every invocation.",
+    "run_from_fragment": "python3 -c 'import json; p=\"/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-9/seat-03.json\"; d=json.load(open(p)); exec(compile(\"\\n\".join(d[\"reproduction\"][\"python_lines\"]),p+\":repro\",\"exec\"))'",
+    "source_selection": "Defaults to current installed tools. To reproduce the audited hashes after remediation, prepend S03_TOOL_ROOT=/var/tmp/souji-r9-s03-run-3tbifr7d/engine/lane. The printed source_sha256 identifies which snapshot was executed. Assertions intentionally expect the audited vulnerabilities; a repaired current source should fail those expectations.",
+    "python_lines": [
+      "import hashlib, json, os, shutil, subprocess, time",
+      "from pathlib import Path",
+      "source = Path(os.environ.get('S03_TOOL_ROOT', '/home/vgpnk/Projects/shokunin/souji-shokunin'))",
+      "root = Path(subprocess.check_output(['/usr/bin/mktemp', '-d', '-p', '/var/tmp', 'souji-r9-s03-repro.XXXXXXXX'], text=True).strip())",
+      "engine = root / 'engine' / 'lane' / 'tools'",
+      "engine.mkdir(parents=True)",
+      "names = ['souji-verify.sh', 'souji-vault-verify.sh', 'souji-quarantine.sh']",
+      "hashes = {}",
+      "for name in names:",
+      "    data = (source / 'tools' / name).read_bytes()",
+      "    (engine / name).write_bytes(data)",
+      "    hashes[name] = hashlib.sha256(data).hexdigest()",
+      "env = os.environ.copy()",
+      "for key in list(env):",
+      "    if key.startswith('LC_') or key in ['GIT_DIR', 'GIT_WORK_TREE', 'GIT_INDEX_FILE', 'GIT_NAMESPACE', 'SOUJI_QUARANTINE_ALLOW_LIVE', 'SOUJI_Q_TEST_HOOK', 'SOUJI_Q_SELFTEST_ACTIVE']:",
+      "        env.pop(key, None)",
+      "env.update({'LC_ALL':'C', 'LANG':'C', 'TMPDIR':'/var/tmp', 'HOME':str(root / 'home'), 'GIT_CONFIG_NOSYSTEM':'1', 'GIT_CONFIG_GLOBAL':'/dev/null', 'GIT_OPTIONAL_LOCKS':'0', 'GIT_AUTHOR_NAME':'S03 fixture', 'GIT_AUTHOR_EMAIL':'s03@fixture.invalid', 'GIT_COMMITTER_NAME':'S03 fixture', 'GIT_COMMITTER_EMAIL':'s03@fixture.invalid'})",
+      "(root / 'home').mkdir()",
+      "locale_dir = root / 'locale'",
+      "locale_dir.mkdir()",
+      "subprocess.run(['/usr/bin/localedef', '--no-archive', '-i', 'tr_TR', '-f', 'UTF-8', str(locale_dir / 'tr_TR')], check=True, env=env)",
+      "def put(path, text):",
+      "    path.parent.mkdir(parents=True, exist_ok=True)",
+      "    path.write_text(text)",
+      "def git(repo, *args, input=None):",
+      "    p = subprocess.run(['/usr/bin/git', '-C', str(repo), *args], env=env, text=True, input=input, capture_output=True, check=True)",
+      "    return p.stdout.strip()",
+      "def commit(repo, parent=None):",
+      "    git(repo, 'add', '-A')",
+      "    tree = git(repo, 'write-tree')",
+      "    return git(repo, 'commit-tree', tree, *(['-p', parent] if parent else []), input='S03 fixture commit\\n')",
+      "def invoke(name, repo, target, execution_env):",
+      "    args = ['--dry-run', '--hold', '0', str(repo), str(target)] if name == 'souji-quarantine.sh' else ['--json', str(target)]",
+      "    p = subprocess.run(['/bin/bash', str(engine / name), *args], env=execution_env, text=True, capture_output=True, timeout=15)",
+      "    if name == 'souji-quarantine.sh':",
+      "        fields = next(line.split('\\t') for line in p.stdout.splitlines() if line.startswith('QVERDICT\\tstage1\\t'))",
+      "        verdict, receipt = fields[3:5]",
+      "    else:",
+      "        row = json.loads(p.stdout)",
+      "        verdict, receipt = row['verdict'], row['receipt']",
+      "    return {'exit_code':p.returncode, 'verdict':verdict, 'receipt':receipt, 'stdout':p.stdout, 'stderr':p.stderr}",
+      "records = []",
+      "for name in names:",
+      "    case = root / name",
+      "    repo = case / 'fleet' / 'owner-shokunin'",
+      "    repo.mkdir(parents=True)",
+      "    subprocess.run(['/usr/bin/git', 'init', '-q', '--initial-branch=main', str(repo)], env=env, check=True)",
+      "    put(repo / 'base.txt', 'pushed fixture base\\n')",
+      "    base = commit(repo)",
+      "    git(repo, 'update-ref', 'refs/heads/main', base)",
+      "    git(repo, 'update-ref', 'refs/remotes/origin/main', base)",
+      "    git(repo, 'symbolic-ref', 'refs/remotes/origin/HEAD', 'refs/remotes/origin/main')",
+      "    put(repo / 'local.txt', 'local-only fixture work\\n')",
+      "    local = commit(repo, base)",
+      "    git(repo, 'update-ref', 'refs/heads/main', local)",
+      "    git(repo, 'update-ref', 'refs/heads/wt-local', local)",
+      "    absent = repo / 'absent-wt'",
+      "    admin = repo / '.git' / 'worktrees' / 'missing'",
+      "    put(admin / 'HEAD', 'ref: refs/heads/wt-local\\n')",
+      "    put(admin / 'commondir', '../..\\n')",
+      "    put(admin / 'gitdir', str(absent / '.git') + '\\n')",
+      "    ledger = case / 'ledger.tsv'",
+      "    put(ledger, 'source_path\\tsource_sha256\\tvault_path\\tvault_sha256\\n')",
+      "    normal = env.copy()",
+      "    normal.update({'SHOKUNIN_ROOT':str(case / 'fleet'), 'SOUJI_LEDGER':str(ledger), 'SOUJI_Q_SHOKUNIN_ROOT':str(case / 'fleet'), 'SOUJI_Q_LEDGER':str(ledger)})",
+      "    baseline = invoke(name, repo, absent, normal)",
+      "    bindir = case / 'bin'",
+      "    bindir.mkdir()",
+      "    for dependency in ['bash', 'dirname', 'basename', 'readlink', 'sed', 'grep', 'cut', 'find', 'sort', 'xargs', 'sha256sum', 'head', 'wc', 'stat', 'date', 'timeout', 'du', 'awk', 'mkdir', 'mktemp', 'rm', 'rmdir', 'mv', 'sleep', 'env', 'rg']:",
+      "        binary = shutil.which(dependency)",
+      "        assert binary, dependency",
+      "        (bindir / dependency).symlink_to(binary)",
+      "    wrapper = bindir / 'git'",
+      "    put(wrapper, '#!/bin/bash\\nif [[ \" $* \" == *\" worktree list \"* ]]; then\\n  /usr/bin/git \"$@\"; rc=$?\\n  /usr/bin/rm -- \"$0\"\\n  exit \"$rc\"\\nfi\\nexec /usr/bin/git \"$@\"\\n')",
+      "    wrapper.chmod(0o755)",
+      "    hostile = normal.copy()",
+      "    hostile['PATH'] = str(bindir)",
+      "    attack = invoke(name, repo, absent, hostile)",
+      "    assert not wrapper.exists()",
+      "    assert git(repo, 'rev-list', '--count', 'refs/heads/wt-local', '--not', '--remotes') == '1'",
+      "    assert (baseline['verdict'], baseline['receipt']) == ('NOT-SAFE', 'unpushed-branch')",
+      "    assert (attack['verdict'], attack['receipt']) == ('SAFE', 'metadata-prune')",
+      "    records.append({'mode':'git', 'tool':name, 'ground_truth_unpushed':1, 'baseline':baseline, 'attack':attack})",
+      "    target = repo / '.scratch' / 'ID_SENTINEL'",
+      "    target.mkdir(parents=True)",
+      "    old = time.time() - 3 * 86400",
+      "    os.utime(target, (old, old))",
+      "    baseline = invoke(name, repo, target, normal)",
+      "    turkish = normal.copy()",
+      "    for key in list(turkish):",
+      "        if key.startswith('LC_'): turkish.pop(key)",
+      "    turkish.update({'LANG':'tr_TR', 'LOCPATH':str(locale_dir)})",
+      "    proof = subprocess.check_output(['/bin/bash', '-c', 's=ID_SENTINEL; printf \"%s\" \"${s,,}\"'], env=turkish, text=True)",
+      "    assert proof.startswith('ıd_'), proof",
+      "    attack = invoke(name, repo, target, turkish)",
+      "    assert (baseline['verdict'], baseline['receipt']) == ('NOT-SAFE', 'secrets-refusal')",
+      "    expected = ('NOT-SAFE', 'secrets-refusal') if name == 'souji-quarantine.sh' else ('SAFE', 'stale')",
+      "    assert (attack['verdict'], attack['receipt']) == expected",
+      "    assert list(target.iterdir()) == []",
+      "    records.append({'mode':'locale', 'tool':name, 'case_fold':proof, 'baseline':baseline, 'attack':attack})",
+      "print(json.dumps({'fixture_root':str(root), 'source_sha256':hashes, 'records':records, 'confirmed_classes':2, 'false_safe_pairs_including_propagation':5, 'false_deletes':0}, indent=2, ensure_ascii=False))"
+    ]
+  },
+  "verification": {
+    "json_schema_counts_and_embedded_python_syntax": "PASS: json.loads, count assertions and ast.parse of reproduction.python_lines all succeeded",
+    "matrix_contract_and_state_assertions": "PASS: both final 24-case reports validated against source SHA-256, expected verdicts, actual removed PATH shims, active Turkish folding, missing cwd, denied temp storage, intact refused targets and retained quarantine payload bytes",
+    "snapshot_bash_syntax": "PASS: bash -n on all four tested tool snapshots, exit 0",
+    "embedded_fresh_replay": {
+      "command": "reproduction.run_from_fragment",
+      "exit_code": 0,
+      "fixture_root": "/var/tmp/souji-r9-s03-repro.NMUsUBz0",
+      "source_hashes_match_audited_tools": true,
+      "asserted_result": "2 confirmed classes; 5 false-SAFE pairs including propagation; quarantine correctly refuses the Turkish directory; no false DELETE",
+      "important": "This replay used an absent worktree inside its owning fixture repo, so the quarantine propagation also reproduces without relying on an outside-repo path."
+    }
+  },
+  "scope_and_limits": {
+    "repo_files_written": ["census/round-9/seat-03.json"],
+    "fixture_files": "Harness, frozen tool copies, result logs, real plumbing-built git repos, PATH shims, empty locale-refusal sentinel dirs and private compiled locales only under /var/tmp/souji-r9-s03*",
+    "no_live_actions": "No live repo engine scan, quarantine, deletion, fetch, push, commit, branch or history modification. Installed tools were read/copied, not edited. No .ufo/state or .ufo/watchdog.log surface was created, opened or changed. No secret-shaped regular file was created or read. No GUI invocation, package installation, mount or privilege change.",
+    "repairs": "None: S03 writes evidence only; implementation changes belong to S17/S18.",
+    "follow_up": "Re-run the embedded fresh command against remediated tools, preserving separate fail-closed verdicts for execution failure. Check SHA-256 against the audited snapshot before calling an old observation a current defect."
+  }
+}

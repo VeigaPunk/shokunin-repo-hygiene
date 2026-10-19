@@ -1,0 +1,201 @@
+{
+  "seat": "S24",
+  "round": 9,
+  "kind": "final-judge",
+  "status": "FINAL SNAPSHOT JUDGMENT: baseline catalog and final S17/S18 replays complete; operational safety BLOCKED, no live authorization",
+  "measured_lane_head": "14916c075c7de4b905d92c472e6312026d12d44a",
+  "axes": ["calibration", "coverage", "operability"],
+  "snapshot": {
+    "measured_at": "2026-10-18T20:50:16-03:00",
+    "fixture_root": "/var/tmp/souji-r9-s24.ZRQLD3",
+    "frozen_tools_sha256": {
+      "souji-census.sh": "11bf9cdf8d4f75415b18e046aef0e96215b983f0d5b3ff7842301ff6ac65d381",
+      "souji-quarantine.sh": "5780ad751aa49d1bb587690154cab98ab6aa71b4def518673c2f383301c51c4f",
+      "souji-vault-verify.sh": "53f92421b254426c7e4882c1da9cfaa444bddde7ff90ee30afcd48fa229328b1",
+      "souji-verify.sh": "a91049c96e5fba7c3db83df288a261717156c3834532e54d712ed0c555e350c4"
+    }
+  },
+  "baseline_selftests": {
+    "verify": {"checks": 24, "failed": 0, "exit": 0},
+    "vault": {"checks": 35, "failed": 0, "exit": 0},
+    "quarantine": {"checks": 63, "failed": 0, "exit": 0},
+    "census": {"checks": 32, "failed": 0, "exit": 0},
+    "total": 154,
+    "interpretation": "Green selftests are baseline conformance, not proof of fail-closed safety. Copies of all tools ran in a fixture lane; even quarantine selftest live-guard probes targeted that fixture, not the live fleet."
+  },
+  "s24_confirmed_defects": [
+    {
+      "id": "S24-D1",
+      "class": "pushed-directory receipt lacks descendant closure",
+      "severity": "false-DELETE",
+      "tools": ["souji-verify.sh", "souji-quarantine.sh"],
+      "observed": "bundle/kept.txt is pushed, bundle/never-pushed.bin is ignored and absent from all commits. Directory receives SAFE(pushed), porcelain over bundle is empty, quarantine records intro-blob=dir-pin-only and DELETED rc=0; ignored payload vanishes with no preservation receipt.",
+      "reproduction": "python3 /var/tmp/souji-r9-s24.ZRQLD3/judge-battery.py; case D1_directory_ignored_payload (fresh mktemp fixture each execution)",
+      "fixture": "/var/tmp/s24-directory-ignored-5nnwvw1a",
+      "source_locations": ["tools/souji-verify.sh:218", "tools/souji-quarantine.sh:291", "tools/souji-quarantine.sh:442"]
+    },
+    {
+      "id": "S24-D2",
+      "class": "pushed verdict ignores uncommitted replacement",
+      "severity": "false-SAFE; quarantine guard holds",
+      "tools": ["souji-verify.sh", "souji-vault-verify.sh"],
+      "observed": "A pushed file replaced by uncommitted unique bytes is SAFE(pushed) in both engines. Quarantine returns NOT-AUTHORIZED dirty-tracked rc=3 and preserves the replacement; that refusal is not a defect.",
+      "reproduction": "python3 /var/tmp/souji-r9-s24.ZRQLD3/judge-battery.py; case D2_dirty_pushed_file_verdict",
+      "fixture": "/var/tmp/s24-dirty-pushed-9gj9xpma",
+      "source_locations": ["tools/souji-verify.sh:218", "tools/souji-vault-verify.sh:390"]
+    },
+    {
+      "id": "S24-D3",
+      "class": "unpushed-path veto bypassed by stale fallback",
+      "severity": "false-DELETE",
+      "tools": ["souji-verify.sh", "souji-vault-verify.sh", "souji-quarantine.sh"],
+      "observed": "Tracked .scratch/old.out has a pushed initial commit and a later local-only modification. Backdated mtime and refs=0 cause both engines to emit SAFE(stale) despite a fresh git log proving one unpushed commit touching the artifact. Quarantine re-verifies only the staged path, then DELETED rc=0.",
+      "reproduction": "python3 /var/tmp/souji-r9-s24.ZRQLD3/judge-battery.py; case D3_unpushed_stale_fallback",
+      "fixture": "/var/tmp/s24-unpushed-stale-lga3x5rd",
+      "source_locations": ["tools/souji-verify.sh:365", "tools/souji-vault-verify.sh:531", "tools/souji-quarantine.sh:322"]
+    }
+  ],
+  "s24_unconfirmed_or_not_defects": [
+    {
+      "id": "S24-N1",
+      "class": "source/vault content hashes differ but each matches its ledger column",
+      "verdict": "NOT-A-DEFECT under the current four-column receipt contract; transformed exports are not specified as byte-identical. Do not count this as a false SAFE merely because source_sha256 != vault_sha256.",
+      "reproduction": "judge-battery.py case D4_ledger_nonidentical_bytes"
+    },
+    {
+      "id": "S24-N2",
+      "class": "visible untracked child in pushed directory",
+      "verdict": "Quarantine correctly refuses dirty-tracked rc=3 and preserves the child. This is a control, not an additional false DELETE."
+    }
+  ],
+  "additional_s24_confirmed_defects": [
+    {"id": "S24-D5", "class": "quarantine destination symlink escapes physical containment", "severity": "unsafe-DELETE containment class", "observed": "An existing .ufo-quarantine symlink to a fixture directory outside the owning repo is followed by mkdir, git-mv and rm. The complete flow returns DELETED rc=0, deleting through the outside-repo physical path.", "reproduction": "python3 /var/tmp/souji-r9-s24.ZRQLD3/containment-battery.py; case D5_quarantine_root_symlink_escape", "fixture": "/var/tmp/s24-qroot-symlink-qh525znz"},
+    {"id": "S24-D6", "class": "self-referential ledger receipt in ordinary verifier", "severity": "false-SAFE; quarantine abort retains bytes", "observed": "A source==vault row causes souji-verify SAFE(moved-to-obsidian), while vault correctly refuses source-equals-vault. Quarantine aborts after staging and keeps the only copy; no false DELETE in this variant.", "reproduction": "python3 /var/tmp/souji-r9-s24.ZRQLD3/differential-battery.py; case D6_self_referential_ledger", "fixture": "/var/tmp/s24-self-ledger-6_zxnt9z"},
+    {"id": "S24-D7", "class": "hidden live reference omitted by stale sweep", "severity": "false-DELETE", "observed": "A live .usage.md references old.out. Both engines omit hidden files, claim refs=0 and SAFE(stale); quarantine DELETED rc=0 despite the active reference.", "reproduction": "python3 /var/tmp/souji-r9-s24.ZRQLD3/differential-battery.py; case D7_hidden_live_reference_omitted", "fixture": "/var/tmp/s24-hidden-live-reference-il06b1hk"}
+  ],
+  "confirmed_defect_counts_s24_only": {"root_causes": 6, "unsafe_delete_classes": 4, "false_safe_only_classes": 2, "scope": "Early independent S24 battery only; peer replays below expand the union and must not be added blindly"},
+  "peer_replay_status": {
+    "S03": "Exact fresh embedded reproducer passed: dependency-error-as-zero and Turkish locale refusal bypass confirmed on frozen baseline bytes",
+    "S04": "Exact fresh embedded five-case reproducer passed: NUL path and NUL receipt both delete; wrong pin refuses; valid-prefix/malformed-suffix partial execution is not an atomicity defect",
+    "S05": "Both exact four-second hold replays passed: origin rollback and origin deletion still authorize DELETE; one root cause, not two",
+    "S06": "Exact fresh embedded reproducer passed: stale and pushed ancestors delete dirty/unpushed nested repositories; both verifiers rewrite fixture indexes, confirmed by hash change plus strace",
+    "S07": "Exact fresh embedded parallel reproducer passed: 8 in-flight SAFE after atomic ledger revocation, 8 fresh NOT-SAFE, 4 actual DELETE after revocation; one generation-consistency root cause",
+    "S09": "Full generator replayed on fresh fixtures: 40 artifacts / 120 calls, 8 three-surface outcome differences, 3 reason-only differences, no snapshot writes. Supplemental tab-spliced target was actually DELETED rc=0 although both JSON receipt engines refused it. Missing-directory-vault-digest false SAFE also confirmed.",
+    "S10": "Full 40-case fresh replay exactly matches source outcome vector: 7 engine verdict differences (5 unsafe directional, 2 conservative), 13 unsafe deletes, 0 harness errors. No-final-newline/relative-path refusal differences are not safety defects.",
+    "S11": "Exact self-contained registration/root proof replay passed on frozen baseline: unique detached commit lost after acting on metadata-prune and fixture prune/GC; dirty linked worktree actually DELETED; ambiguity/tab-owner/gitfile-root false SAFE reproduced. Counted in J09/J19-J23; locked registration is separate policy mismatch.",
+    "S12": "Read evolving triage; agree on precedence/refusal controls; preserve dirty-file receipt-only disagreement in dissent",
+    "S23": "Read provisional independent final; converges on shared reproduced classes, unknown score policy and safety veto"
+  },
+  "adjudicated_baseline_register": [
+    {"id":"J01","class":"pushed verdict ignores current dirty bytes","category":"false-SAFE-only","aliases":["S24-D2","S23-D1","S22-D01"],"fresh_evidence":"judge-battery.json:D2_dirty_pushed_file_verdict"},
+    {"id":"J02","class":"stale sweep omits hidden live references","category":"unsafe-DELETE","aliases":["S24-D7","S10-D02","S23-D4","S22-D02"],"fresh_evidence":"differential-battery.json:D7_hidden_live_reference_omitted; S10 replay 129,130"},
+    {"id":"J03","class":"stale directory receipt lacks descendant eligibility closure","category":"unsafe-DELETE","aliases":["S10-D03","S06-D1 stale variant","S23-D5","S22-D03"],"fresh_evidence":"S10 replay 121,122,127; S06 embedded nested-stale replay"},
+    {"id":"J04","class":"pushed directory receipt lacks full current-content preservation closure","category":"unsafe-DELETE","aliases":["S24-D1","S10-D04","S06-D1 pushed variant","S22-D04"],"fresh_evidence":"judge-battery.json:D1_directory_ignored_payload; S10 replay 131-134; S06 nested-pushed"},
+    {"id":"J05","class":"ledger preservation copy does not independently survive source removal","category":"unsafe-DELETE","aliases":["S24-D6","S10-D06","S10-D07","S11-F06","S22-D05","S18 vault-replaced-with-quarantine-alias"],"fresh_evidence":"differential-battery.json:D6_self_referential_ledger; S10 replay 101-106; oracle-battery.json:vault_ancestor_only_copy_no_helper_spare; S11 R04,R06; s18-baseline.json:vault-replaced-with-quarantine-alias actually DELETED sole staged copy","dedup":"Self, descendant, ancestor and act-time quarantine aliases are one independence invariant. Static variants abort safely; the dynamic vault-to-quarantine alias is destructive. No new root added for the later manifestation."},
+    {"id":"J06","class":"directory ledger accepts missing mandatory vault digest","category":"false-SAFE-only","aliases":["S09-26","S22-D06"],"fresh_evidence":"s09-reproduction.json:S09-26; s09-missing-digest-actual.json shows correct actual ABORTED and retained bytes"},
+    {"id":"J07","class":"symlinked quarantine destination escapes physical owning-repo containment","category":"unsafe-DELETE","aliases":["S24-D5","S23-D9","S22-D07"],"fresh_evidence":"containment-battery.json:D5_quarantine_root_symlink_escape","qualification":"Containment violation; not loss of an unrelated external sentinel"},
+    {"id":"J08","class":"unpushed-path veto falls through to stale receipt","category":"unsafe-DELETE","aliases":["S24-D3","S10-D01","S22-D08"],"fresh_evidence":"judge-battery.json:D3_unpushed_stale_fallback; S10 replay 123-125"},
+    {"id":"J09","class":"failed Git queries become zero-count metadata-prune receipts","category":"false-SAFE-only","aliases":["S03-D1","S11-F02","S22-D09"],"fresh_evidence":"s03-reproduction.json:git mode; s11-reproduction.log:W10-W13","dedup":"Missing binary, missing object/ref and malformed HEAD are manifestations of lost status, not separate zero-count causes"},
+    {"id":"J10","class":"pushed second check loses current default-origin ancestry predicate","category":"unsafe-DELETE","aliases":["S05-D1","S23-D8","S22-D10"],"fresh_evidence":"s05-rollback.json and s05-missing.json","qualification":"Receipt-authority violation; backup fixture ref still retains blob"},
+    {"id":"J11","class":"locale-dependent case folding bypasses protected-name refusal","category":"false-SAFE-only","aliases":["S03-D2","S22-D11"],"fresh_evidence":"s03-reproduction.json:locale mode with genuinely compiled tr_TR locale"},
+    {"id":"J12","class":"branch-only unpushed queries omit current detached HEAD","category":"unsafe-DELETE","aliases":["S10-D05","S23-D6","S22-D12"],"fresh_evidence":"S10 replay 135,136","qualification":"Directory deletion interacts with J04; case 135 is one deletion occurrence, not two"},
+    {"id":"J13","class":"read-only receipt inspection rewrites owning repository index","category":"read-only-contract","aliases":["S06-D2","S22-C01"],"fresh_evidence":"s06-reproduction.json:readonly-souji-verify.sh and readonly-souji-vault-verify.sh; before/after hash and strace rename"},
+    {"id":"J14","class":"empty prior census accepted as header-valid unchanged baseline","category":"input-validation-contract","aliases":["S22-C02"],"fresh_evidence":"empty-census-compare.json:empty previous file plus empty current root returns header-only diff and exit 0"},
+    {"id":"J15","class":"unavailable reference-search scope is treated as zero references","category":"false-SAFE-only","aliases":["S23-D7"],"fresh_evidence":"oracle-battery.json:missing_reference_scope_is_not_zero"},
+    {"id":"J16","class":"NUL-erased list bytes alter authorized target or exact receipt pin","category":"unsafe-DELETE","aliases":["S04-F1"],"fresh_evidence":"s04-reproduction.log:nul-path and nul-pin both DELETED; wrong-pin refuses","dedup":"Two contract-violation scenarios, one input-decoding root cause"},
+    {"id":"J17","class":"raw tab-bearing engine path echo is parsed as SAFE/stale authority","category":"unsafe-DELETE","aliases":["S09-40"],"fresh_evidence":"s09-reproduction.json:supplemental_tab_delete_confirmation; both JSON engines NOT-SAFE but wrapper DELETED rc=0","qualification":"No genuine receipt; distinct from J16 list-file NUL decoding"},
+    {"id":"J18","class":"atomic ledger revocation ignored after row capture","category":"unsafe-DELETE","aliases":["R9-S07-C01"],"fresh_evidence":"s07-reproduction.log -> /var/tmp/souji-r9-s07-run.GmNp26/results.json:8 inflight SAFE,8 fresh NOT-SAFE,4 DELETE after revocation","qualification":"Independent vault copies survive; current receipt-authority failure, not unrecoverable bytes"},
+    {"id":"J19","class":"worktree uniqueness excludes candidate through its own linked-worktree HEAD","category":"unsafe-metadata-prune-recommendation","aliases":["S11-F01"],"fresh_evidence":"s11-reproduction.log:W04 refs-only unique=1, --all unique=0, --single-worktree unique=1, native fixture prune+GC loses private commit","qualification":"Quarantine itself SKIPPED; loss follows acting on false metadata-prune receipt and fixture-only GC"},
+    {"id":"J20","class":"last-writer registration map masks an unpushed owner/registration","category":"false-SAFE-only","aliases":["S11-F03"],"fresh_evidence":"s11-reproduction.log:W16,W17; removing shadow registration reveals NOT-SAFE(unpushed-branch)"},
+    {"id":"J21","class":"tab-delimited internal registration metadata corrupts owner identity","category":"false-SAFE-only","aliases":["S11-F04"],"fresh_evidence":"s11-reproduction.log:W19 tab owner SAFE; rename-only normal owner NOT-SAFE","qualification":"Distinct framing boundary from engine-output J17; downstream query errors also interact with J09"},
+    {"id":"J22","class":"naming-filtered owner discovery lets linked worktree root fall through to stale","category":"unsafe-DELETE","aliases":["S11-F05"],"fresh_evidence":"s11-reproduction.log:W20 dirty linked worktree, private unpushed branch, DELETED rc=0"},
+    {"id":"J23","class":"main gitfile repository root misclassified as ordinary pushed artifact","category":"false-SAFE-only","aliases":["S11-F07"],"fresh_evidence":"s11-reproduction.log:R05 --separate-git-dir root SAFE(pushed); quarantine correctly refuses preflight"}
+  ],
+  "adjudicated_baseline_counts": {"scope":"Fresh S24 executions only; grouped register J01-J23, not a sum of seats or exhaustive domain proof","confirmed_runtime_root_classes":23,"unsafe_delete_classes_including_containment_and_authority":12,"false_safe_only_classes":8,"unsafe_metadata_prune_recommendation_classes":1,"additional_contract_classes":2,"repeated_reports_or_deletion_occurrences_do_not_multiply_roots":true,"lock_policy_mismatch_classes_excluded_from_strict_runtime_count":1,"J05_reclassification":"Act-time vault-to-quarantine alias actually deletes the sole staged copy; same independence root, not a new bug"},
+  "installed_final_snapshot": {
+    "last_live_identity_recheck":"2026-10-18T21:13:57-03:00",
+    "fixture_lane":"/var/tmp/souji-r9-s24.ZRQLD3/installed-final/lane",
+    "sha256": {
+      "tools/souji-verify.sh":"4baa8d955c531fcc73edc6b62021cb9531a31e1baed8aa853ba957b204d1cfc1",
+      "tools/souji-vault-verify.sh":"ea43bb0f9b9fe96cc26451df1a41d2df97d2d044852f122c987c209b6ec7b7a7",
+      "tools/souji-quarantine.sh":"f6f8516c15ab654f7e5f2dc2a7840eef0b53b9f9433e2ff70a64490b35fde68f",
+      "tools/souji-census.sh":"11bf9cdf8d4f75415b18e046aef0e96215b983f0d5b3ff7842301ff6ac65d381",
+      "tools/souji-round9-selftest.sh":"dd7c636ebe39e70c489516500440a311167b5280d18c3a5e9db1399d2f62e5c2"
+    },
+    "source_hashes_match_frozen_tested_bytes":true,
+    "standard_selftests":{"verify":{"checks":40,"failed":0,"exit":0},"vault":{"checks":51,"failed":0,"exit":0},"quarantine":{"checks":91,"failed":0,"exit":0},"census":{"checks":32,"failed":0,"exit":0},"total":214},
+    "selftest_scope_qualification":"Copied fixture lanes prevent all live guard probes. Inherited suites create synthetic secret/protected-name sentinels in their fixtures; green results are regression observations, not strict no-protected-name-access harness certification.",
+    "fresh_s10_replay":{"cases":40,"harness_errors":0,"engine_verdict_differences":7,"unsafe_directional":5,"benign_conservative":2,"unsafe_safe_cases":24,"unsafe_delete_cases":13,"actual_results":{"ABORTED":10,"DELETED":17,"NO-RESULT":1,"NOT-AUTHORIZED":12},"raw":"/var/tmp/souji-s10-corpus-n13dlaaz/results.json"},
+    "fresh_s09_replay":{"artifacts":40,"calls":120,"three_surface_outcome_differences":8,"reason_only_differences":3,"snapshot_mutations":0,"tab_spliced_no_receipt_target_actually_deleted":true,"raw":"/var/tmp/souji-r9-s24.ZRQLD3/logs/s09-installed-final.json"},
+    "s18_battery_on_installed":{"checks":37,"passed":12,"unsafe_endpoint_or_delete_outcomes":25,"compatibility_failures":0},
+    "fresh_s11_proof":{"exit":0,"unique_detached_commit_lost_after_false_metadata_prune_and_fixture_GC":true,"dirty_unpushed_linked_worktree_actually_deleted":true,"quarantine_does_not_itself_prune_or_gc":true,"raw":"/var/tmp/souji-r9-s24.ZRQLD3/logs/s11-installed-final.log"},
+    "demonstrated_repairs":{"J09":"checked Git failures refuse; final expanded regression and S11 invalid-object/ref cases","J10":"both real four-second origin-revocation variants ABORT rc=3 and retain staged bytes","J11":"real Turkish locale refusal preserved in final regression checks","J13":"optional-lock suppression preserves index in final regression checks","J16":"NUL path/pin/prefix are rejected before moves in expanded regression checks","J18":"scheduled atomic ledger replacement now yields 8 in-flight NOT-SAFE and 4 ABORTED with staged copies retained"},
+    "partial_or_variant_only_repairs":{"J03_J04":"nested repository variants now refuse; fresh-child, ignored-child and other directory-closure failures remain","J21":"tab-owner W19 now refuses through checked query errors; lossless metadata representation not established"},
+    "confirmed_open_root_ids":["J01","J02","J03","J04","J05","J06","J07","J08","J12","J14","J15","J17","J19","J20","J22","J23"],
+    "confirmed_open_counts_lower_bound":{"root_classes":16,"unsafe_delete_classes":9,"false_safe_only_classes":5,"unsafe_metadata_prune_recommendation_classes":1,"additional_contract_classes":1},
+    "closure_limit":"All labels apply to demonstrated variants at these hashes. Fingerprint repair does not prove ABA or arbitrary final-check-to-delete atomicity; unknown variants are not silently cleared."
+  },
+  "candidate_s18_judgment": {
+    "status":"USEFUL BOUNDED IMPROVEMENT; UNINSTALLED; NOT PROMOTABLE AS-IS",
+    "fixture_lane":"/var/tmp/souji-r9-s24.ZRQLD3/candidate-s18/lane",
+    "sha256":{"guard":"3b06a946d73142a011685f715d14bebde73ba24b1334a4e9b8c2b47a2ce890f5","verify":"bab5942543de8bbde7b514097163f094de44066e1c65eea58ec68944afe0c354","vault":"f135f5ad77384569956ea35d032b9afbb0663532e183869bd395eecd596db08d","quarantine":"45335ff5ca662d139f16cc1c04e0c652e56612e2e80986fc6091991e97c586ab"},
+    "packaging":"Guard plus all suffixed wrappers frozen together. Identical-byte canonical adapter copies and the required suffixed child verifier are present; no missing-helper run is counted as a product pass.",
+    "own_battery_replayed":{"baseline_passed":9,"candidate_passed":37,"checks":37,"baseline_unsafe_outcomes":28,"candidate_unsafe_outcomes":0,"compatibility_failures":0,"inherited_checks_passed":122},
+    "broader_s10_replay":{"cases":40,"harness_errors":0,"engine_verdict_differences":0,"receipt_reason_differences":1,"unsafe_safe_cases":3,"unsafe_delete_cases":2,"unsafe_delete_case_ids":["S10-133","S10-134"],"raw":"/var/tmp/souji-s10-corpus-t7uzl4jf/results.json"},
+    "additional_confirmed_open_roots":["J01 current-byte checks still trust concealment flags","J04 assume-unchanged/skip-worktree directory contents are actually deleted","J16 both NUL list variants still actually delete","J18 8 in-flight SAFE and 4 DELETE after scheduled ledger revocation","J20 W16/W17 ambiguous registrations still false SAFE","J23 main gitfile root still false SAFE"],
+    "correct_controls":"W19 tab-owner and W20 dirty linked-worktree inputs now refuse; all six advertised positive directory checks and 122 inherited checks pass.",
+    "integration_warning":"Do not copy S18 wrappers or late-load its overrides wholesale over S17: that would lose verified NUL-list and ledger-generation protections. Compose repairs, fix direct current-byte and registration predicates, then replay both manifests and real positive flows on final wrapper/engine/helper bytes."
+  },
+  "round_contradictions": {
+    "numeric_contradiction_fields":2,"numeric_contradiction_classes":1,
+    "details":"calibration table 7 vs summary 6; operability table 8 vs summary 7",
+    "capability_row_omissions_not_extra_contradictions":2,
+    "installed_final_s10_corpus":{"artifacts":40,"engine_verdict_mismatches":7,"unsafe_directional":5,"benign_conservative":2},
+    "installed_final_s09_corpus":{"artifacts":40,"tool_calls":120,"three_surface_outcome_mismatches":8,"unsafe_authority_differences":5,"expected_layered_refusals":3,"reason_only_differences":3},
+    "s11_full_corpus_attributed_to_S11_not_relabeled_as_s24_full_corpus":{"registration_states":20,"root_states":6,"A_B_mismatching_states":2},
+    "non_additivity":"Different universes and compared surfaces; never add these as one global numerator. Shared wrong agreement and wrapper delegation are not independent correctness evidence."
+  },
+  "rubric_verdicts": {
+    "S14":"SOUND prospective basis; exact 23-case smoke replay passed",
+    "S15":"SOUND prospective basis; exact scorer passed seven independent positive/negative schema/arithmetic checks",
+    "S16":"SOUND prospective basis; exact 11 selfchecks replayed successfully",
+    "S13_original":"Mechanically reproducible; six fixture-commit behavior checks pass. Revise axis semantics and unknown publication treatment before adopting as AXES-equivalent scores.",
+    "S19_merged_final":{"path":"census/round-9/rubric-final.md","sha256":"36f3322a7f31b76e12add5c64d94d3d103f78ea93e6c1eeff8567479ffb9b18f","official_selection":"S19 selects S13; S21 concurs","s24_exact_evaluator_checks_passed":6,"technical_verdict":"Reproducible arithmetic/provenance specification; prospective deliverable exists, no actual lane grades measured","s24_dissent":"Prefer its committed-evidence interface combined with S15/S14 separate safety veto and unknown/bounds policy. Zeroing otherwise honest calibration on a disclosed tool defect conflates axes; exploration credit is not governed safe coverage. S19's explicit exploration/structural-MEASURED caveats reduce overclaim but do not change that metric choice."},
+    "recommended":"S15/S14 score semantics, or revise the merged S13 interface accordingly; parent may choose the explicit alternative with this dissent retained",
+    "axis_scores":{"calibration":null,"operability":null,"coverage":null},
+    "publication_status":"UNRATED; historical 8/7/8 LEGACY-UNMAPPED. No complete committed current-target assessment or new numeric promotion exists.",
+    "count_ruling":"One stale-summary class/two numeric fields are the same facts, not contradictory rubric observations.",
+    "evidence":["/var/tmp/souji-r9-s24.ZRQLD3/logs/rubric-check.json","/var/tmp/souji-r9-s24.ZRQLD3/logs/s13-scorer-test.json","/var/tmp/souji-r9-s24.ZRQLD3/logs/merged-scorer-test.json"]
+  },
+  "cojudge_reconciliation": {
+    "S08":"Seven baseline peer proposals freshly confirmed; final S17 repairs their demonstrated schedules. This does not cover all S09/S10/S11 defects.",
+    "S20":"Limited S09-corpus candidate PASS is accurate, not a universal S18 certificate; broader fresh S24/S21 attacks still fail. Its installed intermediate hashes are not this final snapshot.",
+    "S21":"Converges on O1 NOT-MET and bounded K1/C1 gains. S24 additionally judges the later stable S17 hashes and wider registry; S21's earlier measurement counts must not be summed with these.",
+    "S22":"Same scorecard and major safety/metric rulings; narrower earlier fourteen-class union is a different scope, not contradictory data. S24 groups overlapping preservation variants as one independence root.",
+    "S23":"Independent early findings converge on shared classes. Dirty-file SAFE is counted as an engine removal-verdict defect; the correct quarantine refusal is not a defect.",
+    "dissent_record":"census/round-9/dissent-24.md"
+  },
+  "per_claim_verdicts": {
+    "O1_adversarial_hardening":"NOT-MET for clean fail-closed safety: useful bounded S17 repairs verified, but final installed bytes and the S18 candidate still authorize unsafe actual operations",
+    "K1_differential_audit":"MET as a bounded reproducible audit with separated unsafe/shared-wrong/conservative cases; not a zero-contradiction or universal-coverage claim",
+    "C1_scorecard_rubric":"MET as a prospective reproducible specification; S24 metric-semantics dissent retained, no current numeric score awarded"
+  },
+  "round_verdict":"DO NOT ADMIT AS CLEAN: O1 NOT-MET. K1/C1 gains cannot cancel final-byte unsafe authorization. No live removal authorized.",
+  "authorized_removals":[],
+  "fresh_replay_inputs": {
+    "S03":"seat-03.json reproduction.python_lines",
+    "S04":"seat-04.json reproduction.fresh_command",
+    "S05":"seat-05.json fresh_reproduction.script_lines, rollback and missing modes",
+    "S06":"seat-06.json defect_reproducer_python3",
+    "S07":"seat-07.json reproducer.python_lines; final repaired replay changes only expected SAFE/DELETED to NOT-SAFE/ABORTED and asserts four retained copies",
+    "S09":"python3 -B census/round-9/seat-09-generator.py --output /var/tmp/NEW-S24-REPORT.json --workers 8 --confirm-tab-delete",
+    "S10":"seat-10.json reproduction.python with --workers 8 --tools /PATH/TO/COMPLETE/PINNED/TOOLS",
+    "S11":"seat-11.json self_contained_reproduction.script_lines with complete pinned tools directory argument; vulnerable-behavior proof, not a green fixed suite",
+    "S18":"python3 tools/souji-round9-s18-test.py --tool-dir /PATH/TO/COMPLETE/TOOLS --suffix SUFFIX --observe",
+    "supplemental":"dissent-24.md standalone probes; temporary transcripts are supporting evidence, not the only replay recipe"
+  },
+  "evidence_root":"/var/tmp/souji-r9-s24.ZRQLD3/logs",
+  "writes":["census/round-9/final-24.json","census/round-9/dissent-24.md","fixture scripts, copied snapshots and outputs under /var/tmp only"],
+  "safety":"No live attack targets or live Git mutations; no live secret payload, .ufo/state or .ufo/watchdog.log opened. All destructive proofs use newly built /var/tmp repos. Inherited selftest sentinel caveat is disclosed, not used as protected-boundary proof. No background task remains required.",
+  "remaining":"Parent must integrate and re-verify remaining safety predicates, retain the rubric dissent, correct scorecard summary/inventory, and obtain real external approvals before any live action. Later hashes are outside this snapshot judgment."
+}

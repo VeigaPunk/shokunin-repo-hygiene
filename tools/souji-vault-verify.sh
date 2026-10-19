@@ -41,6 +41,7 @@
 # Env overrides: SOUJI_LEDGER, SOUJI_VAULT (hint), SOUJI_CLI_BIN,
 # SOUJI_CLI_TIMEOUT, SHOKUNIN_ROOT, SOUJI_SELFTEST_ACTIVE.
 set -euo pipefail
+export LC_ALL=C GIT_OPTIONAL_LOCKS=0
 
 unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_NAMESPACE 2>/dev/null || true
 
@@ -69,6 +70,7 @@ FAIL_REASON=none
 
 declare -A WT_MAP=()
 LEDGER_ROWS=()
+LEDGER_PIN=""
 
 usage() {
   sed -n '2,52p' "$SELF" | sed 's/^# \{0,1\}//'
@@ -132,7 +134,9 @@ is_hex64() {
 load_ledger() {
   local line first=1
   LEDGER_ROWS=()
+  LEDGER_PIN=""
   [ -f "$LEDGER" ] || return 0
+  LEDGER_PIN=$(file_sha "$LEDGER") || { LEDGER_PIN=""; return 0; }
   while IFS= read -r line || [ -n "$line" ]; do
     if [ "$first" = 1 ]; then
       first=0
@@ -291,6 +295,9 @@ try_ledger() { # $1 target (canonical), $2 isdir 0/1, $3 raw arg
         NOTES+=("obsidian=vault-sha-mismatch vault-sha-mismatch vault-hash-mismatch vault=$vp ledger-sha=${vs:0:12} actual=${lv:0:12}")
         reason="${reason:-vault-hash-mismatch}"; continue
       fi
+      if [ -z "$LEDGER_PIN" ] || [ "$(file_sha "$LEDGER" || true)" != "$LEDGER_PIN" ]; then
+        NOTES+=("ledger-changed"); reason="${reason:-ledger-changed}"; continue
+      fi
       R_VERDICT=SAFE; R_RECEIPT=moved-to-obsidian; R_REASON=moved-to-obsidian
       R_EVIDENCE="ledger-row ledger=$(real_path "$LEDGER") vault=$vp source-digest=${ss:0:12} vault-digest=${lv:0:12} cli=$(cli_label)"
       return 0
@@ -347,6 +354,9 @@ try_ledger() { # $1 target (canonical), $2 isdir 0/1, $3 raw arg
         NOTES+=("vault-changed-during-check before=${lv:0:12} after=${lv2:0:12}")
         reason="${reason:-vault-hash-mismatch}"; continue
       fi
+    fi
+    if [ -z "$LEDGER_PIN" ] || [ "$(file_sha "$LEDGER" || true)" != "$LEDGER_PIN" ]; then
+      NOTES+=("ledger-changed"); reason="${reason:-ledger-changed}"; continue
     fi
     R_VERDICT=SAFE; R_RECEIPT=moved-to-obsidian; R_REASON=moved-to-obsidian
     R_EVIDENCE="ledger-row ledger=$(real_path "$LEDGER") vault=$vp source-sha256=${ss:0:12} $cli_note"
@@ -491,7 +501,11 @@ evaluate_worktree() {
   IFS=$'\t' read -r owner head branch <<< "$meta"
   if [ -d "$target" ]; then present=present; else present=absent; fi
   if [ -n "$branch" ]; then
-    unp=$(git -C "$owner" log --oneline "$branch" --not --remotes 2>/dev/null | wc -l || true)
+    if ! unp=$(git -C "$owner" log --oneline "$branch" --not --remotes 2>/dev/null | wc -l); then
+      R_VERDICT=NOT-SAFE; R_RECEIPT=git-unverifiable; R_REASON=git-unverifiable
+      R_EVIDENCE="worktree commit query failed"
+      return 0
+    fi
     unp=${unp// /}
     if [ "${unp:-0}" -gt 0 ]; then
       R_VERDICT=NOT-SAFE; R_RECEIPT=unpushed-branch; R_REASON=unpushed-branch
@@ -500,7 +514,11 @@ evaluate_worktree() {
     fi
   fi
   if [ "$present" = absent ]; then
-    uniq=$(git -C "$owner" log --oneline "$head" --not --all 2>/dev/null | wc -l || true)
+    if ! uniq=$(git -C "$owner" log --oneline "$head" --not --all 2>/dev/null | wc -l); then
+      R_VERDICT=NOT-SAFE; R_RECEIPT=git-unverifiable; R_REASON=git-unverifiable
+      R_EVIDENCE="worktree commit query failed"
+      return 0
+    fi
     uniq=${uniq// /}
     if [ "${uniq:-1}" = 0 ]; then
       R_VERDICT=SAFE; R_RECEIPT=metadata-prune; R_REASON=metadata-prune
@@ -563,6 +581,14 @@ evaluate_path() {
     R_REASON=secrets-refusal; R_RECEIPT=secrets-refusal
     R_EVIDENCE="secret-shaped path component basename=$(basename -- "$target")"
     return 0
+  fi
+  if [ -d "$target" ]; then
+    local nested_git
+    if ! nested_git=$(cd -- "$target" && find . -path './.git' -prune -o \( -name .git -o -name .ufo \) -print -quit 2>/dev/null) || [ -n "$nested_git" ]; then
+      R_RECEIPT=nested-repo-or-unverifiable; R_REASON=nested-repo-or-unverifiable
+      R_EVIDENCE="directory contains nested Git/protected metadata or scope scan failed"
+      return 0
+    fi
   fi
   if [ -d "$target" ] && [ -d "$target/.git" ]; then
     evaluate_repo_root "$target"; return 0
@@ -1002,6 +1028,18 @@ EOF
   st_status H5 2 -- --stale-days abc "$R/keep/f1.txt"
 
   st_audit_source
+
+  local r9_out r9_rc=0
+  r9_out=$(bash "$SCRIPT_DIR/souji-round9-selftest.sh" vault "$SELF") || r9_rc=$?
+  printf '%s\n' "$r9_out"
+  if [[ "${r9_out##*$'\n'}" =~ ^ROUND9$'\t'([0-9]+)$'\t'([0-9]+)$ ]]; then
+    ST_PASS=$((ST_PASS + BASH_REMATCH[1])); ST_FAIL=$((ST_FAIL + BASH_REMATCH[2]))
+    if [ "$r9_rc" -ne 0 ] && [ "${BASH_REMATCH[2]}" = 0 ]; then
+      ST_FAIL=$((ST_FAIL + 1)); st_note "FAIL R9 runner exit=$r9_rc"
+    fi
+  else
+    ST_FAIL=$((ST_FAIL + 1)); st_note "FAIL R9 runner missing summary exit=$r9_rc"
+  fi
 
   st_note "selftest: $((ST_PASS + ST_FAIL)) checks, $ST_FAIL failed"
   if [ "$ST_FAIL" -gt 0 ]; then exit 1; fi

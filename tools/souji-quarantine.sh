@@ -54,13 +54,14 @@
 #              expected and recorded as `prong1-tolerated
 #              class-not-path-local`, and prong2 carries the re-derivation.
 #      prong2  class-aware re-derivation against the original context:
-#              pushed           - no unpushed commit touches the original
-#                                 rel path AND the quarantine bytes hash to
-#                                 the introducing commit's blob.
-#              moved-to-obsidian- ledger row still resolves; quarantine bytes
-#                                 hash to source_sha256 AND the vault copy
-#                                 still hashes to vault_sha256 (dirs: manifest
-#                                 digests, symlink-present fails closed).
+#              pushed           - current default-origin ancestry holds, no
+#                                 unpushed commit touches the original rel
+#                                 path, and quarantine bytes match the intro blob.
+#              moved-to-obsidian- ledger row still resolves without ledger
+#                                 drift during rechecking; quarantine bytes hash
+#                                 to source_sha256 AND the vault copy still
+#                                 hashes to vault_sha256 (dirs: manifest digests,
+#                                 symlink-present fails closed).
 #      Universal pins for every class: quarantine content digest == stage-1
 #      content digest, and mtime unchanged. Any pin/prong failure -> the
 #      second check FAILS.
@@ -247,12 +248,32 @@ ledger_row_for() { # $1 canon source path -> "ss<TAB>vp<TAB>vs" or empty
   return 0
 }
 
+q_default_ref() {
+  local repo=$1 ref refs only="" line
+  ref=$(git -C "$repo" symbolic-ref --quiet refs/remotes/origin/HEAD 2>/dev/null) || ref=""
+  case "$ref" in
+    refs/remotes/origin/*)
+      if git -C "$repo" show-ref --verify --quiet "$ref" 2>/dev/null; then
+        printf '%s\n' "$ref"; return 0
+      fi ;;
+  esac
+  refs=$(git -C "$repo" for-each-ref --format='%(refname)' refs/remotes/origin 2>/dev/null) || return 1
+  while IFS= read -r line; do
+    [ -n "$line" ] || continue
+    [ "$line" = refs/remotes/origin/HEAD ] && continue
+    [ -z "$only" ] || return 1
+    only=$line
+  done <<< "$refs"
+  [ -n "$only" ] || return 1
+  printf '%s\n' "$only"
+}
+
 # second_check: prong1 + prong2 + pins for one staged target.
 # In:  CT QPATH REL CLASS PIN_SHA PIN_MTIME METHOD (globals set by caller)
 # Out: SC_PASS=1|0, SC_EV (evidence string)
 second_check() {
   SC_PASS=0
-  local ev="" ok=1 note=""
+  local ev="" ok=1
   local now_sha now_mtime
   now_sha=$(content_digest "$QPATH"); local dig_rc=$?
   now_mtime=$(stat -c %Y -- "$QPATH" 2>/dev/null || true)
@@ -273,7 +294,7 @@ second_check() {
     ev="$ev mtime=FAIL stage1=$PIN_MTIME now=${now_mtime:-none}"
   fi
 
-  local intro="" blob_sha="" unpushed_n="" row ss vp vs vault_sha vault_rc=0
+  local intro="" blob_sha="" unpushed_n="" row ss vp vs vault_sha vault_rc=0 ledger_pin=""
   case "$CLASS" in
     pushed)
       intro=$(git -C "$CREPO" log --diff-filter=A --format=%H -1 -- "$REL" 2>/dev/null | head -1 || true)
@@ -281,8 +302,17 @@ second_check() {
         ok=0; ev="$ev class=FAIL no-introducing-commit"
       else
         ev="$ev intro=${intro:0:12}"
-        unpushed_n=$(git -C "$CREPO" log --branches --not --remotes --oneline -- "$REL" 2>/dev/null | grep -c . || true)
-        unpushed_n=${unpushed_n// /}
+        local current_ref
+        if current_ref=$(q_default_ref "$CREPO") && git -C "$CREPO" merge-base --is-ancestor "$intro" "$current_ref" 2>/dev/null; then
+          ev="$ev default-ref=ok"
+        else
+          ok=0; ev="$ev class=FAIL default-ref-unverifiable-or-not-ancestor"
+        fi
+        if unpushed_n=$(git -C "$CREPO" log --branches --not --remotes --oneline -- "$REL" 2>/dev/null | wc -l); then
+          unpushed_n=${unpushed_n// /}
+        else
+          unpushed_n=unverifiable
+        fi
         if [ "${unpushed_n:-1}" = 0 ]; then
           ev="$ev unpushed-touching=0"
         else
@@ -301,6 +331,7 @@ second_check() {
       fi
       ;;
     moved-to-obsidian)
+      ledger_pin=$(file_sha "$SV_LEDGER")
       row=$(ledger_row_for "$CT")
       if [ -z "$row" ]; then
         ok=0; ev="$ev class=FAIL ledger-row-gone"
@@ -327,6 +358,12 @@ second_check() {
       ok=0; ev="$ev class=FAIL unknown-receipt-$CLASS"
       ;;
   esac
+
+  if [ "$CLASS" = moved-to-obsidian ]; then
+    if [ -z "$ledger_pin" ] || [ "$(file_sha "$SV_LEDGER")" != "$ledger_pin" ]; then
+      ok=0; ev="$ev class=FAIL ledger-changed"
+    fi
+  fi
 
   # prong1 verdict was stored by the caller in P1_VERDICT/P1_RECEIPT/P1_EV.
   if [ "$CLASS" = stale ]; then
@@ -589,6 +626,10 @@ run_mode() {
   fi
 
   if [ -n "$LIST_FILE" ]; then
+    local nul_prefix
+    if IFS= read -r -d '' nul_prefix <"$LIST_FILE"; then
+      usage_err "list contains a NUL byte"
+    fi
     local line n=0 path rcpt header_skipped=0
     while IFS= read -r line || [ -n "$line" ]; do
       line=${line%$'\r'}
@@ -814,7 +855,7 @@ run_selftest() {
     "$(printf '%s' "$out" | grep -aqF "$(printf 'QVERDICT\tstage4-second\t%s\tPASS' "$R/keep/pushed.txt")" && echo 1 || echo 0)" \
     "second-check PASS"
   st_check "P1 prong1 recorded" \
-    "$(printf '%s' "$out" | grep -aqF "$(printf 'QVERDICT\tstage4-prong1' "$R/keep/pushed.txt")" && echo 1 || echo 0)" \
+    "$(printf '%s' "$out" | grep -aqF "$(printf 'QVERDICT\tstage4-prong1')" && echo 1 || echo 0)" \
     "prong1 line"
   st_check "P1 original gone" "$([ ! -e "$R/keep/pushed.txt" ] && echo 1 || echo 0)" "absent"
   st_check "P1 quarantine empty" "$([ ! -e "$R/.ufo-quarantine" ] && echo 1 || echo 0)" "rmdir'd"
@@ -911,6 +952,18 @@ run_selftest() {
     "$([ "$live_log_sha_before" = "$live_log_sha_after" ] && echo 1 || echo 0)" "sha same"
   st_check "H3 no live .ufo-quarantine" \
     "$([ "$live_q_before" = no ] && [ "$live_q_after" = no ] && echo 1 || echo 0)" "absent before+after"
+
+  local r9_out r9_rc=0
+  r9_out=$(bash "$SCRIPT_DIR/souji-round9-selftest.sh" quarantine "$SELF") || r9_rc=$?
+  printf '%s\n' "$r9_out"
+  if [[ "${r9_out##*$'\n'}" =~ ^ROUND9$'\t'([0-9]+)$'\t'([0-9]+)$ ]]; then
+    ST_PASS=$((ST_PASS + BASH_REMATCH[1])); ST_FAIL=$((ST_FAIL + BASH_REMATCH[2]))
+    if [ "$r9_rc" -ne 0 ] && [ "${BASH_REMATCH[2]}" = 0 ]; then
+      ST_FAIL=$((ST_FAIL + 1)); st_note "FAIL R9 runner exit=$r9_rc"
+    fi
+  else
+    ST_FAIL=$((ST_FAIL + 1)); st_note "FAIL R9 runner missing summary exit=$r9_rc"
+  fi
 
   st_note "selftest: $((ST_PASS + ST_FAIL)) checks, $ST_FAIL failed"
   [ "$ST_FAIL" -eq 0 ]

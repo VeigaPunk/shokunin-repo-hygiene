@@ -1,0 +1,261 @@
+{
+  "schema_version": 1,
+  "round": 9,
+  "seat": "S06",
+  "role": "red-team: read-only, permissions, nested .git, cross-filesystem behavior",
+  "fragment": "census/round-9/seat-06.json",
+  "measured_at": "2026-10-18T20:51:19-03:00",
+  "axes": [
+    "fail-closed authorization over the entire deletion scope",
+    "quarantine and payload preservation under permission changes",
+    "read-only verifier behavior",
+    "fresh reproducibility and honest cross-filesystem coverage"
+  ],
+  "overall_verdict": "FAIL: two confirmed defect classes; permission failures fail closed. Native cross-filesystem scenario NOT-REPRODUCED, with two explicitly fault-injected EXDEV controls passing.",
+  "tool_sha256": {
+    "tools/souji-verify.sh": "a91049c96e5fba7c3db83df288a261717156c3834532e54d712ed0c555e350c4",
+    "tools/souji-vault-verify.sh": "53f92421b254426c7e4882c1da9cfaa444bddde7ff90ee30afcd48fa229328b1",
+    "tools/souji-quarantine.sh": "5780ad751aa49d1bb587690154cab98ab6aa71b4def518673c2f383301c51c4f",
+    "tools/souji-census.sh": "11bf9cdf8d4f75415b18e046aef0e96215b983f0d5b3ff7842301ff6ac65d381"
+  },
+  "counts": {
+    "unique_probe_cases": 10,
+    "independent_full_runs": 2,
+    "full_harness_case_executions": 20,
+    "delivered_reproducer_case_executions": 4,
+    "total_case_executions": 24,
+    "unique_confirmed_defect_classes": 2,
+    "unique_failing_cases": 4,
+    "unique_passing_cases": 6,
+    "false_safe_scenario_tool_pairs_per_run": 4,
+    "false_delete_fixture_scenarios_per_run": 2,
+    "read_only_index_write_cases_per_run": 2,
+    "engine_vs_engine_verdict_disagreements": 0,
+    "ancestor_vs_nested_repo_contradictions_per_run": 4,
+    "native_cross_filesystem_scenarios_not_reproduced": 1
+  },
+  "counting_definition": "Counts are unique scenarios/tool pairs per full run, not inflated by repetition. The two nested-directory scenarios each have two engines certifying the ancestor SAFE while refusing its nested repository, giving four ancestor/descendant contradictions. Both engines share the bug, so pairwise engine disagreement is zero. Two full runs reproduced every outcome; each run deleted two vulnerable fixture targets and observed two verifier index writes. The four-case embedded reproducer was additionally executed directly from this delivered JSON on fresh fixtures and confirmed the same defects (24 total case executions).",
+  "evidence": {
+    "initial_results": "/var/tmp/souji-r9-s06.q8Xqje/results.json",
+    "independent_confirmation_results": "/var/tmp/souji-r9-s06-confirm.gESwSN/results.json",
+    "delivered_reproducer_results": "/var/tmp/souji-r9-s06.q8Xqje/deliverable-reproducer-results.json",
+    "delivered_reproducer_fixture_root": "/var/tmp/souji-r9-s06-self-contained.5u50az17",
+    "delivered_reproducer_exit": 0,
+    "full_harness": "/var/tmp/souji-r9-s06.q8Xqje/probe.py",
+    "full_harness_sha256": "4e5d9b3ffa1c7c7bf4677f51f63405b879dd7aa069d3f63edcb5b5f08a877c9e",
+    "fresh_full_harness_command": "r=$(mktemp -d -p /var/tmp souji-r9-s06-repeat.XXXXXX) && cp /var/tmp/souji-r9-s06.q8Xqje/probe.py \"$r/probe.py\" && python3 \"$r/probe.py\" > \"$r/results.json\" && python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); print(json.dumps(d,indent=2))' \"$r/results.json\"",
+    "self_contained_defect_reproducer_command": "python3 -c 'import json; d=json.load(open(\"census/round-9/seat-06.json\")); exec(\"\\n\".join(d[\"defect_reproducer_python3\"]))'",
+    "confirmation_assertions": "Independent full run asserted both index writes, census index unchanged, both nested-repo deletions, four ancestor/descendant contradictions, four error-path payload-preservation outcomes, and a successful injected EXDEV trace. All assertions passed. The delivered JSON parsed, its embedded Python compiled, and executing the embedded reproducer freshly confirmed both defect classes with exit 0. Product vulnerability assertions are confirmations of defects, not product safety passes."
+  },
+  "defects": [
+    {
+      "id": "S06-D1",
+      "status": "CONFIRMED",
+      "severity": "HIGH",
+      "title": "Directory receipts authorize deletion of a nested dirty, unpushed Git repository",
+      "affected_tools": ["tools/souji-verify.sh", "tools/souji-vault-verify.sh", "tools/souji-quarantine.sh"],
+      "contract": "PROVINCE.md:28-36 refuses artifacts whose owning lane has dirty/unpushed work touching them and live uncommitted work products. A receipt for an ancestor must not erase a descendant that the same engine refuses as unpushed and dirty.",
+      "source_locations": [
+        "tools/souji-verify.sh:365-371",
+        "tools/souji-verify.sh:385-406",
+        "tools/souji-vault-verify.sh:531-540",
+        "tools/souji-vault-verify.sh:554-584",
+        "tools/souji-quarantine.sh:439-456",
+        "tools/souji-quarantine.sh:291-300",
+        "tools/souji-quarantine.sh:532-553"
+      ],
+      "expected": "NOT-SAFE/NOT-AUTHORIZED for a directory containing a dirty, unpushed nested repository, unless that entire nested scope has independent preservation authority. No removal of its .git, local commits, or uncommitted files.",
+      "observed_scenarios": [
+        {
+          "case": "nested-repo-in-stale-directory",
+          "fixture": "/var/tmp/souji-r9-s06.q8Xqje/nested-repo-in-stale-directory/fleet/fixture-shokunin",
+          "construction": "Empty outer Git repository; target=.scratch/aging-bundle; target/inner is a real Git repository with one commit, zero remote refs, and an untracked uncommitted.txt. Only the ancestor directory mtime is backdated three days. Ledger has a header and no rows.",
+          "inner_ground_truth": {"unpushed": 1, "dirty": 1, "status": "?? uncommitted.txt"},
+          "outer_status_before": "?? .scratch/aging-bundle/",
+          "souji_verify_ancestor": "SAFE(stale): scratch-type=scratch-dir refs=0 mtime-age-days=3",
+          "souji_verify_inner": "NOT-SAFE(unpushed): unpushed=1 dirty=1",
+          "souji_vault_verify_ancestor": "SAFE(stale), VERIFIED(stale)",
+          "souji_vault_verify_inner": "NOT-SAFE(unpushed), NOT-VERIFIED(unpushed): unpushed=1 dirty=1",
+          "quarantine": {"exit": 0, "stage2_method": "mv", "stage4": "PASS pin=ok mtime=ok class=stale-via-prong1 prong1=SAFE(stale) binding", "result": "DELETED(stale)"},
+          "state_after": {"source_exists": false, "quarantine_exists": false, "nested_dot_git_exists": false}
+        },
+        {
+          "case": "nested-ignored-repo-in-pushed-directory",
+          "fixture": "/var/tmp/souji-r9-s06.q8Xqje/nested-ignored-repo-in-pushed-directory/fleet/fixture-shokunin",
+          "construction": "Outer bundle/public.txt and .gitignore are committed with matching local origin/main remote-tracking ref (fixture only). .gitignore excludes /bundle/inner/. An unpushed, dirty real Git repository is created in that ignored directory. Ledger has no receipt rows.",
+          "inner_ground_truth": {"unpushed": 1, "dirty": 1, "status": "?? uncommitted.txt"},
+          "outer_status_before": "",
+          "souji_verify_ancestor": "SAFE(pushed): ref=refs/remotes/origin/main ancestor=yes",
+          "souji_verify_inner": "NOT-SAFE(unpushed): unpushed=1 dirty=1",
+          "souji_vault_verify_ancestor": "SAFE(pushed), VERIFIED(pushed)",
+          "souji_vault_verify_inner": "NOT-SAFE(unpushed), NOT-VERIFIED(unpushed): unpushed=1 dirty=1",
+          "quarantine": {"exit": 0, "stage2_method": "git-mv", "stage4": "PASS pin=ok mtime=ok unpushed-touching=0 intro-blob=dir-pin-only prong1=NOT-SAFE(none) prong1-tolerated class-not-path-local", "result": "DELETED(pushed)"},
+          "state_after": {"source_exists": false, "quarantine_exists": false, "nested_dot_git_exists": false}
+        }
+      ],
+      "cause": "Receipt evaluation classifies only the requested ancestor, not descendant repository boundaries. Quarantine hashes and moves the entire directory but checks Git state only against the outer path; ignored nested work is invisible to its dirty check. The pushed-directory second check explicitly uses dir-pin-only, proving only that bytes survived staging, not that they were preserved elsewhere. Stale directory evaluation similarly bypasses nested repository state.",
+      "suggested_fail_closed_fix": "Reject directory scopes containing any nested .git directory or gitfile unless the whole scope is separately authorized. A pushed directory receipt must not cover ignored/untracked descendant material merely because a tracked child has a pushed introducing commit. Bind preservation to all bytes that will be deleted, not only staging integrity."
+    },
+    {
+      "id": "S06-D2",
+      "status": "CONFIRMED",
+      "severity": "MEDIUM",
+      "title": "Read-only receipt engines refresh and rewrite the target repository index",
+      "affected_tools": ["tools/souji-verify.sh", "tools/souji-vault-verify.sh"],
+      "source_locations": ["tools/souji-verify.sh:308-313", "tools/souji-verify.sh:348", "tools/souji-vault-verify.sh:474-479", "tools/souji-vault-verify.sh:514"],
+      "contract": "tools/souji-verify.spec.md:3-4 and both tools' safety headers require read-only inspection. This is a write-contract defect, not a false-SAFE or false-DELETE allegation.",
+      "construction": "Fresh fixture repository with one tracked file and a matching remote-tracking ref. Shift the file's mtime by seven seconds without changing its bytes, making index stat data stale. Unset caller GIT_OPTIONAL_LOCKS. Hash .git/index before and after each tool's repo-root evaluation; strace openat and rename system calls.",
+      "expected": "Both tools may return NOT-SAFE, but no .git/index.lock write or index replacement occurs and the index digest stays identical.",
+      "observed": [
+        {
+          "tool": "souji-verify.sh",
+          "exit": 0,
+          "verdict": "NOT-SAFE(none): unpushed=0 dirty=0",
+          "index_sha256_before": "2e87bfea0a3fc8a130f805e960d6cdf5c8e9fd8f5b7aad9fcd8ddb789022e486",
+          "index_sha256_after": "e72d2e4670386897d4e2a0d496e22e5e2e356a358ca8a818d328b08d1b42e644",
+          "strace": ["openat(.../.git/index.lock, O_RDWR|O_CREAT|O_EXCL|O_CLOEXEC, 0666) = 3", "rename(.../.git/index.lock, .../.git/index) = 0"]
+        },
+        {
+          "tool": "souji-vault-verify.sh --fallback",
+          "exit": 0,
+          "verdict": "NOT-SAFE(none): unpushed=0 dirty=0; NOT-VERIFIED(none)",
+          "index_sha256_before": "a4ec5b0811ae013e5ad1b00e3e5e9de48ef9b701719b237f0e51e34a6c24af83",
+          "index_sha256_after": "07d1badac6dac2f999d12b47b39ba49319e24423e25cfe06f3837a9777a7d191",
+          "strace": ["openat(.../.git/index.lock, O_RDWR|O_CREAT|O_EXCL|O_CLOEXEC, 0666) = 3", "rename(.../.git/index.lock, .../.git/index) = 0"]
+        }
+      ],
+      "control": "Identical census fixture: tools/souji-census.sh --root <fleet> returned clean and index digest stayed 4971801325dfbe996d70ad8b63ac4fed846628e92aec0afdbc8a75640f845b8f. Census exports GIT_OPTIONAL_LOCKS=0 at line 73.",
+      "suggested_fix": "Set/export GIT_OPTIONAL_LOCKS=0 for both receipt engines, or use --no-optional-locks for every inspection Git call, including repo-root and worktree git status."
+    }
+  ],
+  "permission_probes": [
+    {
+      "case": "destination-locked-after-stage1",
+      "verdict": "PASS: fail-closed refusal, not a defect",
+      "transition": "A fixture SOUJI_VERIFY_BIN wrapper calls the genuine souji-verify engine, then chmod 500 on the precreated quarantine date directory before returning that engine's actual SAFE(stale) output. No receipt is forged.",
+      "observed": "exit 3, RESULT STAGE2-FAILED mv-failed, SUMMARY deleted=0 stage2failed=1",
+      "source_retained": true,
+      "payload_sha256_unchanged": true
+    },
+    {
+      "case": "destination-locked-after-stage2",
+      "verdict": "PASS: fail-closed failure, not a defect",
+      "transition": "Fixture-only SOUJI_Q_SELFTEST_ACTIVE=1 hook chmod 500 on the staged file's parent immediately after staging.",
+      "observed": "stage4 PASS; stage5 ABORTED rm-failed; exit 3; SUMMARY deleted=0 aborted=1",
+      "quarantined_copy_retained": true,
+      "payload_sha256_unchanged": true
+    },
+    {
+      "case": "file-unreadable-after-stage2",
+      "verdict": "PASS: second-check pin catches unreadable content",
+      "transition": "Fixture-only post-stage hook chmod 000 on the staged file, running as uid 1000, not root.",
+      "observed": "prong1 remains SAFE(stale), but second-check FAIL pin=FAIL digest-mismatch now=; ABORTED; exit 3; deleted=0",
+      "quarantined_copy_retained": true,
+      "unreadable_at_exit": true,
+      "payload_sha256_unchanged_after_mode_restoration": true,
+      "classification_note": "The prong1 stale receipt does not hash the file; the independent content pin does, and prevents deletion. Do not miscount this correct refusal as a vulnerability."
+    }
+  ],
+  "cross_filesystem": {
+    "device_ids": {"/var/tmp": 31, "/tmp": 56},
+    "native_var_tmp_to_tmp": "NOT-REPRODUCED",
+    "native_reason": "The mounts differ, but the universal rule requires all fixtures under /var/tmp and /tmp has a quota issue. No fixture, quarantine destination, or write was created in /tmp. No mount/superuser operation was attempted. Native cross-filesystem success/failure is not claimed.",
+    "exdev_fault_injection_command_prefix": "strace -f -e trace=rename,renameat,renameat2,unlink,unlinkat -e inject=renameat2:error=EXDEV:when=1 -o <fixture>/trace.log bash tools/souji-quarantine.sh --hold 0 <fixture-repo> <fixture-target>",
+    "observed_trace": "renameat2(..., RENAME_NOREPLACE) = -1 EXDEV (Invalid cross-device link) (INJECTED)",
+    "controls": [
+      {
+        "case": "crossfs-exdev-success",
+        "verdict": "PASS for the injected fallback only",
+        "observed": "Genuine GNU mv copy/unlink fallback ran after injected EXDEV. Byte/mtime pin passed; valid stale fixture was deleted; exit 0."
+      },
+      {
+        "case": "crossfs-exdev-unreadable",
+        "verdict": "PASS: actual copy failure is fail closed",
+        "transition": "chmod 000 on the source fixture before invoking the EXDEV-injected move.",
+        "observed": "exit 3, STAGE2-FAILED mv-failed: cannot open source for reading: Permission denied; deleted=0; original source remains; no quarantine target remains; source hash matches after restoring mode."
+      }
+    ],
+    "scope_warning": "Injected EXDEV executes GNU mv's fallback but is not a native device-crossing reproduction and does not cover mount-specific metadata, quotas, or durability."
+  },
+  "rubric_verdicts": {
+    "authorization_closure": {"verdict": "FAIL", "proof": "Two real fixture deletions of dirty/unpushed nested repositories; four false-SAFE ancestor/tool combinations."},
+    "read_only_inspection": {"verdict": "FAIL", "proof": "Two verifier index replacements confirmed by hash changes plus strace; census control unchanged."},
+    "permission_failure_preserves_payload": {"verdict": "PASS", "proof": "Three required permission transitions and one injected EXDEV unreadable-copy case all preserve original or quarantined payload with deleted=0."},
+    "differential_agreement": {"verdict": "PASS-AGREEMENT-ONLY", "proof": "Zero pairwise receipt-engine disagreements on four ancestor/inner comparisons; shared wrong behavior means agreement is not calibration evidence."},
+    "native_cross_filesystem_coverage": {"verdict": "NOT-REPRODUCED", "proof": "Device topology measured but no /tmp fixture write permitted; injected fallback tests are separately labeled."},
+    "fresh_reproducibility": {"verdict": "PASS", "proof": "Two independent fresh ten-case fixture runs, identical tool hashes, asserted outcomes, retained full harness and raw outputs; self-contained defect reproducer embedded below."},
+    "numeric_score": null,
+    "numeric_score_reason": "No supplied reproducible mapping from these observations to 0-10 scores; do not mint an aggregate score or treat shared engine agreement as correctness."
+  },
+  "safety": {
+    "uid": 1000,
+    "live_repository_mutations": 0,
+    "live_git_fetch_push_commit_branch_calls": 0,
+    "live_ufo_state_or_watchdog_accesses": 0,
+    "secret_shaped_files_read": 0,
+    "gui_or_obsidian_cli_launches": 0,
+    "fixtures": "Only /var/tmp mktemp directories. Git init/add/write-tree/commit-tree/update-ref/symbolic-ref used only on fixtures. Permission modes restored after outcome capture; evidence fixtures retained.",
+    "repository_files_written": ["census/round-9/seat-06.json"],
+    "production_tools_modified": false
+  },
+  "defect_reproducer_python3": [
+    "import hashlib, json, os, pathlib, subprocess, tempfile, time",
+    "P = pathlib.Path",
+    "T = P('/home/vgpnk/Projects/shokunin/souji-shokunin/tools')",
+    "B = P(tempfile.mkdtemp(prefix='souji-r9-s06-self-contained.', dir='/var/tmp'))",
+    "E = os.environ.copy()",
+    "for k in ('GIT_DIR','GIT_WORK_TREE','GIT_INDEX_FILE','GIT_NAMESPACE','GIT_OPTIONAL_LOCKS','SOUJI_VERIFY_BIN','SOUJI_Q_TEST_HOOK','SOUJI_Q_SELFTEST_ACTIVE','SOUJI_QUARANTINE_ALLOW_LIVE'): E.pop(k, None)",
+    "E.update(TMPDIR=str(B), GIT_CONFIG_GLOBAL='/dev/null', GIT_CONFIG_SYSTEM='/dev/null', GIT_TERMINAL_PROMPT='0', GIT_AUTHOR_NAME='S06 Fixture', GIT_AUTHOR_EMAIL='s06@example.invalid', GIT_COMMITTER_NAME='S06 Fixture', GIT_COMMITTER_EMAIL='s06@example.invalid')",
+    "def run(*args, env=None):",
+    "    e = E.copy(); e.update({k:str(v) for k,v in (env or {}).items()})",
+    "    r = subprocess.run([str(a) for a in args], env=e, cwd=B, text=True, capture_output=True, timeout=30)",
+    "    return {'rc':r.returncode, 'stdout':r.stdout, 'stderr':r.stderr}",
+    "def ok(*args):",
+    "    r = run(*args); assert r['rc'] == 0, r; return r['stdout'].strip()",
+    "def sha(p): return hashlib.sha256(p.read_bytes()).hexdigest()",
+    "def init(p): ok('git','init','-q','--initial-branch=main',p)",
+    "def commit(p, pushed=False):",
+    "    ok('git','-C',p,'add','-A')",
+    "    tree = ok('git','-C',p,'write-tree'); c = ok('git','-C',p,'commit-tree',tree,'-m','fixture')",
+    "    ok('git','-C',p,'update-ref','refs/heads/main',c)",
+    "    if pushed:",
+    "        ok('git','-C',p,'update-ref','refs/remotes/origin/main',c)",
+    "        ok('git','-C',p,'symbolic-ref','refs/remotes/origin/HEAD','refs/remotes/origin/main')",
+    "    return c",
+    "def fixture(name):",
+    "    d=B/name; d.mkdir(); r=d/'fixture-shokunin'; init(r); ledger=d/'ledger.tsv'",
+    "    ledger.write_text('source_path\\tsource_sha256\\tvault_path\\tvault_sha256\\texported_at\\tnote\\n')",
+    "    env={'SHOKUNIN_ROOT':d,'SOUJI_LEDGER':ledger,'SOUJI_Q_SHOKUNIN_ROOT':d,'SOUJI_Q_LEDGER':ledger}",
+    "    return d,r,env",
+    "records=[]",
+    "for mode in ('stale','pushed'):",
+    "    d,r,env=fixture('nested-'+mode)",
+    "    target=r/('.scratch/aging-bundle' if mode=='stale' else 'bundle'); target.mkdir(parents=True)",
+    "    if mode=='pushed':",
+    "        (target/'public.txt').write_text('outer preserved material\\n'); (r/'.gitignore').write_text('/bundle/inner/\\n'); commit(r,True)",
+    "    inner=target/'inner'; init(inner); (inner/'local-work.txt').write_text('unpushed work\\n'); commit(inner)",
+    "    (inner/'uncommitted.txt').write_text('uncommitted work\\n'); old=time.time()-3*86400; os.utime(target,(old,old))",
+    "    state={'unpushed':ok('git','-C',inner,'rev-list','--count','--branches','--not','--remotes'),'dirty':ok('git','-C',inner,'--no-optional-locks','status','--porcelain')}",
+    "    assert state['unpushed']=='1' and state['dirty'], state",
+    "    verdicts={}",
+    "    for tool in ('souji-verify.sh','souji-vault-verify.sh'):",
+    "        args=['bash',T/tool]+(['--fallback'] if 'vault' in tool else [])",
+    "        ancestor=run(*args,target,env=env); child=run(*args,inner,env=env)",
+    "        assert ancestor['rc']==0 and '\\tSAFE\\t' in ancestor['stdout'], ancestor",
+    "        assert child['rc']==0 and '\\tNOT-SAFE\\t' in child['stdout'] and 'unpushed=1 dirty=1' in child['stdout'], child",
+    "        verdicts[tool]={'ancestor':ancestor,'nested_repo':child}",
+    "    q=run('bash',T/'souji-quarantine.sh','--hold','0',r,target,env=env)",
+    "    qp=r/'.ufo-quarantine'/time.strftime('%Y-%m-%d',time.gmtime())/target.relative_to(r)",
+    "    assert q['rc']==0 and '\\tDELETED\\t' in q['stdout'] and not target.exists() and not qp.exists(), q",
+    "    records.append({'case':'nested-'+mode,'inner_state':state,'verdicts':verdicts,'quarantine':q,'nested_repo_deleted':not inner.exists()})",
+    "for tool in ('souji-verify.sh','souji-vault-verify.sh'):",
+    "    d,r,env=fixture('readonly-'+tool); p=r/'tracked.txt'; p.write_text('unchanged bytes\\n'); commit(r,True)",
+    "    s=p.stat(); os.utime(p,ns=(s.st_atime_ns,s.st_mtime_ns+7000000000)); idx=r/'.git/index'; before=sha(idx)",
+    "    trace=d/'trace.log'; args=['strace','-f','-e','trace=openat,rename,renameat,renameat2','-o',trace,'bash',T/tool]+(['--fallback'] if 'vault' in tool else [])",
+    "    result=run(*args,r,env=env); after=sha(idx)",
+    "    lines=[x for x in trace.read_text().splitlines() if 'index.lock' in x]",
+    "    assert result['rc']==0 and before!=after and any('rename(' in x for x in lines), {'result':result,'before':before,'after':after,'trace':lines}",
+    "    records.append({'case':'readonly-'+tool,'result':result,'index_before':before,'index_after':after,'index_write_trace':lines})",
+    "print(json.dumps({'fixture_root':str(B),'confirmed_defect_classes':2,'false_safe_pairs':4,'false_deletes':2,'index_writes':2,'records':records},indent=2))"
+  ]
+}
