@@ -1,0 +1,310 @@
+{
+  "schema_version": 1,
+  "seat": "S27",
+  "round": 11,
+  "role": "final-judge (aggregator)",
+  "label": "s27-final",
+  "generated_at": "2026-10-18T23:48:46-0300",
+  "assignment": "SEAT S27 — final judge. Wait 1500s; aggregate: census fix verified, certification verdict (all certifiers), rubric scores (6 appliers — consensus?), fleet deltas. Per-claim verdicts + admission. Deliverable: census/round-11/final-27.json (this file only).",
+  "wait": {
+    "required_seconds": 1500,
+    "started_at": "2026-10-18T23:15:44-0300",
+    "ended_at": "2026-10-18T23:48:46-0300",
+    "measured_seconds": 1982,
+    "met": true,
+    "note": "Waited past 1500s while polling census/round-11/ for stragglers; output stabilized at 26 files from ~23:26 onward."
+  },
+  "frozen_bytes": {
+    "method": "tools/souji-{verify,vault-verify,quarantine,census}.sh copied to /var/tmp/s27-freeze BEFORE any invocation; every repro, selftest and certifier run executed against those copies or hash-verified candidate copies; fixtures under mktemp -d -p /var/tmp only (host /tmp quota); live fleet/lane never mutated; lane writes limited to census/round-11/final-27.json",
+    "frozen_at": "2026-10-18T23:15:44-0300",
+    "sha256": {
+      "tools/souji-verify.sh": "9adb17645a5f452ae2cc28673642ad256f9aee92109939531f3c34a0972812cd",
+      "tools/souji-vault-verify.sh": "f9e778ca478c7aa8b33234ee793030df631c1b9fcebc942b1ff41d0008ed9c5b",
+      "tools/souji-quarantine.sh": "141c0fdc4eaf9d0a3d628b381cc5386f6d4be71565ddfb98aa10f6eb3c9573c9",
+      "tools/souji-census.sh (at freeze, r10-merge bytes)": "11bf9cdf8d4f75415b18e046aef0e96215b983f0d5b3ff7842301ff6ac65d381"
+    },
+    "frozen_equals_HEAD_blobs": true,
+    "frozen_equals_cert16_lane_hashes": true,
+    "lane_head": "ad8b6703b3fd18f99853e3cb7bd3b2534cec1548"
+  },
+  "concurrent_drift_observed": {
+    "what": "tools/souji-census.sh was rewritten in the lane worktree mid-round (mtime 23:17:23, sha 462dabd281e417c80266ba4d3ffd2cd8ebca0aa84147e1c45c9832ee638b52ca, +33/-10 vs HEAD, uncommitted) after my freeze of 11bf9cdf; census/round-10/cert-16.json was overwritten in place repeatedly by concurrent certifier passes (S30 recorded 7 shas). Both drifts are recorded by cert-14.json, seat-23.json, seat-25.json, final-28/29/31/32.json.",
+    "state_of_new_census_bytes": "J14/V07/0-byte prior now exit 2 (class closed on those cases), but the bytes FAIL their own extended selftest 2/36 (blank-before-header exit 3 want 2; blank-after-header exit 3 want 0) — reproduced 3x by me, plus S12/S14/S15/S28/S29/S30.",
+    "ruling": "UNAUTHORIZED mid-round mutation of the round's frozen shared baseline + selftest-red bytes must not be installed; the overwritten r10 certifier receipt must be restored from git (committed s16-CERT-FINAL2 content 6293283e survives at HEAD). Process defects, not safety defects: no unsafe outcome was introduced by either."
+  },
+  "census_fix_verified": {
+    "r10_defect_class": "souji-census --compare accepts an empty/near-empty prior census as a valid unchanged baseline (fail-open measurement contract). cert-16 (committed r10 record): 3 unsafe outcomes, all one class — final22/empty-census-compare, s16-fresh/J14, s16-fresh/V07. No false SAFE, no unauthorized DELETE, no data loss; originals preserved in every case.",
+    "my_fresh_repros_on_frozen_r10_bytes": [
+      {"case": "J14 (empty root + 0-byte prior)", "rc": 0, "verdict": "UNSAFE-CONTRACT — reproduces cert-16"},
+      {"case": "V07 (empty root + header-only prior)", "rc": 0, "verdict": "UNSAFE-CONTRACT — reproduces cert-16"},
+      {"case": "V07b (empty root + newline-only prior)", "rc": 3, "verdict": "UNSAFE-CONTRACT — fabricated ABSENT→PRESENT delta"},
+      {"case": "J14b (populated root + empty prior)", "rc": 3, "verdict": "fabricated added rows for a garbage baseline"},
+      {"case": "r9 final-22.json durable recipe (verbatim, TOOLS redirected)", "census_rc": 0, "verdict": "UNSAFE-CONTRACT — reproduces cert-16"},
+      {"case": "bad-header control", "rc": 2, "verdict": "correct refusal"},
+      {"case": "identical compare (fresh prior)", "rc": 0, "verdict": "correct positive control"},
+      {"case": "mutated fleet compare", "rc": 3, "verdict": "correct positive control"}
+    ],
+    "root_cause": "load_census(): the blank-line skip ran before the line-1 header check, and a 0-byte file never entered the loop, so the header check never fired; an empty baseline parsed as an empty map and emit_compare returned header-only/no-diff (rc 0) or fabricated ABSENT→PRESENT rows (rc 3).",
+    "fix_candidates_adjudicated": {
+      "cand-census-08.sh (7eb1b8d93d0b50c8a004aff50ed3d5ac3ddfa365ec596124f9ce6a65a221ba70, S08)": {
+        "verdict": "MET — PROMOTION CHOICE",
+        "my_repros": "J14 rc=2, V07 rc=2, J14b rc=2, blank-before-header rc=2, header-only-vs-empty-fleet rc=0, header-only-vs-populated rc=3 added rows, r9 recipe census rc=2 refusal",
+        "selftest": "35 checks, 0 failed (exit 0), reproduced twice",
+        "diff_scope": "load_census() only: header check moved before blank-line skip + 0-byte post-loop guard + 3 new selftest checks (32→35)",
+        "certifier_runs_on_these_bytes": "CERTIFIED 5x independent: S08's own (S08-cert-run.json), S28's rerun, S29's adoption, S31's rerun, and MY OWN run (s27-verify, /var/tmp/s27-j/s27-cert.json: 0 unsafe, 0 test failures, 0 errors, 124 conservative refusals, selftests 40/51/91/35, S15 merged 88/0, J14/V07 flipped to rc=2 refusals)"
+      },
+      "cand-census-02.sh (6a000c59fe7486fbde7e5f68663c61cf60404cadb4185e84205b56fe4648c026, S02/S30 lineage)": {
+        "verdict": "MET-AS-CANDIDATE — viable alternate",
+        "certifier_runs": "CERTIFIED 2x (S02 s02-cert-full, S30's own re-run); selftest 36/0; header line-1-exact semantics"
+      },
+      "cand-census-03.sh (60aef4c07aa75099ff577e8f544e33ceb4914b278c81b8e5f2785e3f582be7fc, S03/S11 final)": {
+        "verdict": "MET-AS-CANDIDATE — viable alternate",
+        "certifier_runs": "CERTIFIED 2x (S16's rewritten cert-16 run C, S09 run-C); selftest 36/0; explicit line-1 header read; my repros: J14=2, blank-before=2, blank-after=3, all controls correct"
+      },
+      "cand-census-01.sh (9525333ce7ececbb367a6f49f6a92a76136bbb0cb53de8c960649a18c66d8740, S01)": {
+        "verdict": "PARTIAL — closes the class (J14/V07/J14b rc=2, selftest 42/0, adds a column-count gate closing S21-H1/H2) but blank-before-header still rc=3 (latent hole class)"
+      },
+      "cand-census-04.sh (embedded f3542341800a4d204209081ec9ddfcb36ddad07788713ca04e76d0799a83375a, S04)": {
+        "verdict": "PARTIAL — closes J14/V07 with rc=4 diagnostics (my repros) but leaves populated-root-vs-empty-prior reporting fabricated added rows (J14b rc=3); no selftest additions. Fallback."
+      },
+      "cand-census-06.sh (9a879ed33238b37405d829ec1ef36e5af3e2f0398c265fb0a8432d5ae3181828)": {
+        "verdict": "REJECTED — selftest-clean (32/0) but accepts blank-before-header rc=0, the same latent hole class as the r10 bytes"
+      },
+      "souji-census.impl-46.sh (c33e069cc5d3884a1ea964fb02eb3b694a9cab137311602bc0b666d0c4d5408d, S11)": {
+        "verdict": "FAILED — class NOT closed (J14/V07 rc=0; cert-09 run-A 3 unsafe; cert-11 NOT-CERTIFIED correct); its 67-check selftest does not exercise the class"
+      },
+      "souji-census.impl-39.sh (ad1b0d50e53a2d8c14658fd8cdb00ad2c45982484a8b71321f7714f76e1b3939)": {
+        "verdict": "MET-AS-CANDIDATE with residual — S13 run2 CERTIFIED, but duplicate-repo prior silently last-wins (weaker than rc=2)"
+      },
+      "cand-census-07.sh (f55460023ba0961ac92192c75f49c21178818d1b95b4d054776ff1cdfba25d31, S07)": {
+        "verdict": "NOT-A-CENSUS-REPLACEMENT — 19-check verification battery; S13/S29 found its fixed bytes (3f9f85f0) close the class with one edge differing"
+      },
+      "mid-round rewrite (462dabd281e417c80266ba4d3ffd2cd8ebca0aa84147e1c45c9832ee638b52ca, == cand-census-01-early)": {
+        "verdict": "REJECTED-AS-INSTALLED-BYTES — closes the class but selftest-red 2/36 and installed without a candidate+certifier cycle. Withdraw, or fix the two selftest expectations and re-enter through the candidate path."
+      },
+      "r10 census candidates d1/e1/g1": {
+        "verdict": "NOT CLOSED — all three carry the identical load_census defect (my repros: empty/header-only prior rc=3 fabricated rows); r10's merge was correct to exclude census candidates"
+      }
+    },
+    "new_holes_in_the_same_family_found_this_round": [
+      {"id": "S21-H1", "class": "truncated prior rows (<7 fields) accepted → fabricated diffs", "affects": "11bf9cdf"},
+      {"id": "S21-H2", "class": "extra fields (>7) absorbed → bogus verdict_flags row", "affects": "11bf9cdf"},
+      {"id": "S21-H3", "class": "negative numeric fields accepted → fabricated diff", "affects": "11bf9cdf"},
+      {"id": "S21-H4", "class": "appended garbage merges into last row", "affects": "11bf9cdf"},
+      {"id": "S21-H5", "class": "blank-lead prior bypasses header check, real header parsed as data row (phantom row; silent row loss)", "affects": "11bf9cdf"},
+      {"id": "S24-R1", "class": "NUL-blind compare: NUL byte spliced into repo name/field forges an all-clear rc=0 (bash read truncates at NUL)", "affects": "11bf9cdf, 462dabd2, 60aef4c0, 7eb1b8d9 — ALL FOUR census generations"},
+      {"id": "S24-R2", "class": "short-row mis-parse: 2-field row parses as forged zeros, rc=3 wrong diff instead of rc=2 refusal", "affects": "11bf9cdf, 462dabd2, 60aef4c0, 7eb1b8d9 — ALL FOUR census generations"}
+    ],
+    "hole_disposition": "Per the r9 dedup rule this is 1 root-cause family (compare-input validation) with 9 measured manifestations, not 9 classes. S21-H1..H5 are closed by the certified lineages' line-1-exact header contract where measured (S01's column gate closes H1/H2); S24-R1/R2 remain OPEN on every census generation including all three certified candidates — they must be fixed in the next candidate cycle (NUL rejection pre-parse + per-row field-count validation)."
+  },
+  "certification_verdict_all_certifiers": {
+    "certifier_runs_on_frozen_r10_merge_bytes": [
+      {"seat": "S16 (cert-16.json committed)", "unsafe_outcomes": 3, "verdict": "NOT-CERTIFIED", "refusals": 121, "selftests": "40/51/91/32"},
+      {"seat": "S09 (cert-09.json run-A)", "unsafe_outcomes": 3, "verdict": "NO"},
+      {"seat": "S10 (cert-10.json)", "unsafe_outcomes": 3, "verdict": "NOT-CERTIFIED"},
+      {"seat": "S11 (cert-11.json)", "unsafe_outcomes": 3, "verdict": "NOT-CERTIFIED"},
+      {"seat": "S12 (cert-12.json, installed 462dabd2)", "unsafe_outcomes": 0, "test_failures": 1, "verdict": "NOT-CERTIFIED (selftest-red)"},
+      {"seat": "S13 (cert-13.json run1)", "unsafe_outcomes": 3, "verdict": "NOT-CERTIFIED", "register": "byte-identical to cert-16"},
+      {"seat": "S14 (cert-14.json)", "unsafe_outcomes": 3, "verdict": "NOT-CERTIFIED", "fresh_repros": "independent, incl. blank-before-header variant"},
+      {"seat": "S15 (cert-15.json run_A)", "unsafe_outcomes": 3, "verdict": "NOT-CERTIFIED (run_B on 462dabd2: 0 unsafe but selftest-red)"},
+      {"seat": "S30 (final-30.json own re-run)", "unsafe_outcomes": 3, "verdict": "NOT-CERTIFIED", "agreement": "EXACT with cert-16"}
+    ],
+    "certifier_runs_on_certified_candidates": [
+      {"census": "cand-census-08 7eb1b8d9", "runs": "5x CERTIFIED (S08, S28, S29-adjudicated, S31, S27-me): 0 unsafe, 0 test failures, 0 errors, 124 refusals, selftests 40/51/91/35, S15 merged 88/0"},
+      {"census": "cand-census-02 6a000c59", "runs": "2x CERTIFIED (S02, S30): 0 unsafe, 0 test failures, selftest 36/0"},
+      {"census": "cand-census-03 60aef4c0", "runs": "2x CERTIFIED (S16 run-C, S09 run-C): 0 unsafe, 0 test failures, selftest 36/0"},
+      {"census": "impl-39 ad1b0d50", "runs": "1x CERTIFIED (S13 run2) with dup-row residual"}
+    ],
+    "certification_rule": "0 unsafe outcomes, 0 harness errors, all built-in selftests exit 0, S15 merged selftest 88/0 (cert-16 counting rules)",
+    "installed_bytes_at_judgment_time": "NOT-CERTIFIED — worktree census 462dabd2 is selftest-red (36 checks, 2 failed); committed census 11bf9cdf has the class open (3 unsafe). Either way the installed state fails the rule.",
+    "verify_vault_quarantine": "HOLD-CERTIFIED-STATE — on frozen bytes: selftests 40/51/91 green, S23 standalone replay 0 unsafe, final22 battery closed, full certifier corpus 0 unsafe outside the census class, 121-124 conservative refusals, all 23 r9 J-register classes refusing. No open defect on these three tools this round; their certification rides on the census install flip.",
+    "process_incidents": [
+      {"id": "S31-incident", "class": "certifier recorded cand-census-08's selftest tail while certifying 462dabd2 — evidence-integrity defect", "ruling": "UPHELD by S30/S32; corrected by later honest passes"},
+      {"id": "cert-16-relay", "class": "census/round-10/cert-16.json overwritten ≥3x by concurrent certifier passes; latest state claims CERTIFIED for 60aef4c0 while installed census is 462dabd2", "ruling": "PROCESS DEFECT — restore committed bytes (6293283e) from git before closure; r11 certifier passes belong in round-11 files (cert-09/11/12/13/14/15 correctly did this)"},
+      {"id": "S32-disclosure", "class": "S32's own unmodified harness run overwrote cert-16.json once (auto-restored byte-identical to HEAD)", "ruling": "disclosed; supports the structural rule"}
+    ],
+    "s32_certification_ruling_observed": "S16's rewritten cert-16.json (s16-CERT-R11): installed 462dabd2 = 0 unsafe but census selftest 36/2 → NOT-CERTIFIED on installed bytes; CERTIFIED alternative = cand-census-03 (60aef4c0)"
+  },
+  "rubric_scores": {
+    "rubric": "souji-r9-v1 / R9-SCORE-v1 (census/round-9/rubric-final.md, sha 36f3322a7f31b76e12add5c64d94d3d103f78ea93e6c1eeff8567479ffb9b18f, committed at HEAD)",
+    "appliers": ["S17 (rubric-score-17.json)", "S18 (rubric-score-18.json)", "S19 (rubric-score-19.json)", "S20 (rubric-score-20.json)", "S21 (results/rubric-score-21.json)", "S22 (rubric-score-22.json)"],
+    "consensus": "6/6 AGREE",
+    "canonical_pipeline": "git show E:census/round-9/rubric-final.md | python3 -c '<extract rubric-scorer-v1>' E with E=ad8b6703b3fd18f99853e3cb7bd3b2534cec1548 — exit 0 (the r9 blocker, uncommitted rubric-final.md, is gone)",
+    "mechanical_result": {"status": "PROVISIONAL", "scores": {"calibration": 0, "operability": 0, "coverage": 0}, "raw_points": {"calibration": "0", "operability": "0", "coverage": "0"}, "safety_override": false, "unsafe_strata": [], "unreconciled_replay_strata": [], "unprovided_strata_count": 30},
+    "publication_verdict": "UNRATED — all six appliers agree: PROVISIONAL 0/0/0 is lower-bound evidence accounting from the empty seat-13.json scaffold (cells={}, closed=false), NOT a capability score; no seat built the committed 30-strata assessment with primary+replay cells this round; inventing one would violate the rubric's own evidence interface",
+    "safety_override_question": {
+      "trigger": "COMPLETED fresh reproduction of false_safe / false_delete / protected_read / outside_scope_write on the pinned bytes",
+      "ruling": "NOT TRIGGERED by the r10/r11 census-contract evidence — all 3 unsafe outcomes are kind=contract-violation with originals preserved, deletes=[], no false SAFE, no false DELETE (S21's ruling; S30 concurs on candidate bytes). NOTE: my own S26-D1 confirmation below IS a fresh false-SAFE + unauthorized-DELETE repro on the r10-merge bytes — on THOSE bytes the override question must be answered YES; it does not transfer to the certified candidate bytes, which were not measured on the dir-laundering shape."
+    },
+    "scorecard_state": {
+      "numeric_contradictions_at_HEAD": 0,
+      "legacy_rows": "coverage 8 / calibration 7 / operability 8 remain LEGACY-UNMAPPED (measured-commit cells 'r3/r5/r4 report', not resolvable commits)",
+      "stale_content": "SCORECARD.md:48-52 still describes the r9-era certification state (PATCHED/NOT certified/>=16 open classes) — stale relative to r10 (1 class) and r11; parent should refresh after the flip without inventing grades",
+      "r9_contradictions_corrected": "commit 455b1de fixed the saturation prose (calibration 7v6, operability 8v7); S18/S19 re-derived case-insensitively at HEAD: table and summary agree on all three axes",
+      "scorer_battery": "S18: 53/53 checks on the embedded scorer (sha ca78958b5afb2893bef787252f506fa75ee69dad0ba31c6a9222575185efbf44) — rubric VALID-AND-REPRODUCIBLE",
+      "open_metric_disputes": "dissent-24's calibration-override semantics dispute remains unresolved; coverage-as-exploration vs coverage-as-governed-surface remains open — parent must resolve before any closed assessment"
+    }
+  },
+  "fleet_deltas": {
+    "source": "census/round-11/seat-23.json (S23 fleet census audit) + seat-25.json (S25 lane durability) + seat-26.json (S26 tool-level push durability)",
+    "s23_fleet_census": {
+      "verdict": "PASS-SAFE — adopted",
+      "facts": "two fleet census runs on frozen r10-merge bytes byte-identical (exit 0, empty stderr); roster 21 repos unchanged vs round-7 (zero added/removed); 5 repos changed, 16 unchanged; every delta independently corroborated as real fleet activity",
+      "per_repo": [
+        {"repo": "game-dev-3d-shokunin", "class": "real-push-resolution", "evidence": "origin/main reflog 'update by push' 22:24:52; unpushed 8→0; dirty 5→0"},
+        {"repo": "game-dev-2d-shokunin", "class": "real-activity-plus-worktree-removal", "evidence": "rebase onto origin 22:21:40; unpushed 8→3 (the 3 wt branch tips); all 3 non-main worktree dirs deleted from disk while registrations remain (worktrees 5→4, wt-absent persists); dirty 8→25 = live Godot round-104 runs"},
+        {"repo": "kaidoku-shokunin", "class": "real-push-resolution", "evidence": "origin/main reflog 'update by push' 23:01:11; unpushed 16→1"},
+        {"repo": "kotodama-shokunin", "class": "real-push-resolution-plus-scratch-growth", "evidence": "origin/main reflog 'update by push' 22:06:30; unpushed 53→0; dirty 4→0; scratch_bytes 41.04GB→42.73GB (+1.69GB real growth); secret-shaped persists name-based only"},
+        {"repo": "souji-shokunin", "class": "real-push-plus-round11-wave-activity", "evidence": "origin/master reflog 'update by push' 23:12:35/23:13:37 (r7's 404 resolved); unpushed 12→0; dirty 2→7 and scratch 0→38 from the live round-11 wave itself"}
+      ],
+      "kind_stability": "kotodama and gd2d unchanged in kind; audio-shokunin unpushed stays 24 (no silent improvement)",
+      "tool_defects_found_on_live_state": 0
+    },
+    "s25_lane_durability": {
+      "verdict": "MET except V5 PARTIAL — adopted",
+      "facts": "lane clean at probe time; HEAD ad8b670 pushed to origin (ls-remote == HEAD; r7's 404 state resolved); reports 1..10 + mint present; 463/463 census files tracked",
+      "V5": "fleet r10 report commit 7aea421 is committed at fleet HEAD but UNPUSHED (1 ahead of fleet origin/master d6ac1b6) — parent/operator move; r11 closure must include that push"
+    },
+    "s26_tool_level_push_durability": {
+      "verdict": "1 CRITICAL DEFECT (S26-D1) — independently confirmed by me (see defects); adopted",
+      "confirmed_safe_behaviors": "pushed-receipt refusals fail closed (dirty/untracked/unpushed-touching/no-default-ref/broken-HEAD all NOT-SAFE); hold-window durability holds for every class (content tamper, mtime drift, prong1 flip, unpushed-appearing, origin-ref-deleted, vault tamper, ledger row-gone/value-mutation → all ABORTED with recoverable staged bytes); clean flows DELETED with full second-check evidence; G2 stale-dir rule holds"
+    }
+  },
+  "defects": [
+    {
+      "id": "S27-D1",
+      "class": "census-contract (empty/near-empty --compare baseline accepted, exit 0 / fabricated delta rows)",
+      "status_on_frozen_r10_bytes": "OPEN (3 unsafe outcomes, reproduced fresh by me in 6 repro forms and by 8 peer certifier/judge runs)",
+      "status_with_certified_candidates": "CLOSED (cand-08 certified 5x incl. my own run; cand-02 2x; cand-03 2x)",
+      "fix": "tools/cand-census-08.sh 7eb1b8d9 (promotion choice) or cand-census-02/03"
+    },
+    {
+      "id": "S27-D2",
+      "class": "pushed-DIRECTORY laundering: false-SAFE + unauthorized-DELETE (S26-D1, CRITICAL)",
+      "detail": "A pushed directory whose tracked contents were rewritten in a later commit, with refs/remotes/origin/* moved to the rewrite, earns SAFE(pushed) at stage 1 (snapshot=equal compares worktree vs CURRENT origin ref — both sides laundered) and the quarantine flow DELETES it end-to-end: the stage-4 second check emits intro-blob=dir-pin-only (no content anchor for directories) and PASSes. For FILES the same laundering is caught at stage 4 (intro-blob-mismatch → ABORTED, staged copy preserved), but verify's stage-1 SAFE alone is still a false authorization.",
+      "my_fresh_repro": "/var/tmp/s26check/fleet3/repo-k-shokunin (dir: DELETED rc=0, laundered bytes removed from worktree; staged copies recoverable via git index) and /var/tmp/s26check/fleet2/repo-j-shokunin (file: ABORTED rc=3, intro-blob-mismatch, staged copy retained) — both on frozen r10-merge bytes, 23:35-23:36",
+      "generations_affected": "r10-merge bytes (9adb1764/f9e778ca/141c0fdc) — measured by me; the certified census candidates do not change verify/quarantine bytes, so the class stands on the whole r11 candidate set until patched",
+      "required_fix_direction": "Pin directory content to the introducing commit: stage-1 compare worktree dir manifest against git show <intro>:<dirpath> tree digest (or default-ref tree entry); stage-4 for dirs re-derive the intro commit's tree digest instead of intro-blob=dir-pin-only; add the intro-blob check to verify's try_pushed for files (S26-D2)",
+      "status": "OPEN — NEW unsafe-DELETE class; not covered by the r10 certifier battery (its 15 corpora lack the dir-laundering shape); must gate r11 certification"
+    },
+    {
+      "id": "S27-D3",
+      "class": "mid-round unauthorized mutation of frozen shared artifacts (S28-D2/S29-D2/S31-D2)",
+      "detail": "tools/souji-census.sh rewritten uncommitted (462dabd2) after the round froze 11bf9cdf; census/round-10/cert-16.json overwritten ≥3x",
+      "status": "OPEN — withdraw/restore; process rule needed: certifier passes write round-scoped files"
+    },
+    {
+      "id": "S27-D4",
+      "class": "census compare-input validation holes beyond the empty-prior case (S21-H1..H5, S24-R1/R2)",
+      "status": "S21-H1..H5 closed by certified lineages where measured; S24-R1 (NUL-blind) and S24-R2 (short-row) OPEN on ALL census generations including the three certified candidates — next candidate cycle must close them (NUL rejection pre-parse + per-row field-count validation)"
+    },
+    {
+      "id": "S27-D5",
+      "class": "S11 impl-46 candidate does not close the assigned class (S28-D3/S29-D3/S31-D4)",
+      "status": "OPEN as candidate defect; cert-11.json NOT-CERTIFIED correct; no install impact"
+    },
+    {
+      "id": "S27-D6",
+      "class": "quarantine deployment gap (S26-D3, LOW) + ledger-pin captured post-hold (S26-D4, LOW)",
+      "status": "OPEN, low severity; no unsafe outcome (D4's target-row re-validation still aborts correctly)"
+    },
+    {
+      "id": "S27-D7",
+      "class": "certifier-process incident (S31 selftest-tail mismatch)",
+      "status": "UPHELD by S30/S32; corrected by later honest passes"
+    }
+  ],
+  "per_claim_verdicts": {
+    "O1_census_contract_fix": "MET-AS-CANDIDATE / NOT-MET-AS-STANDING — the defect class is reproduced fresh on the frozen r10-merge bytes (3 unsafe outcomes, one root cause); the fix is built, minimal, selftest-clean, and certified 5x independently (cand-08) plus 2x each for cand-02/cand-03; the certified bytes are NOT installed (worktree holds selftest-red 462dabd2; HEAD holds class-open 11bf9cdf). One install step remains.",
+    "O2_toolchain_re_certification": "CONDITIONAL-FLIP — the cert rule (0 unsafe, 0 harness errors, all built-in selftests exit 0, S15 merged 88/0) is met ONLY with a certified census candidate mapped in (proven 9 times across three lineages). On installed bytes as they stand the toolchain remains NOT-CERTIFIED. Certification flips when the parent installs cand-08 (7eb1b8d9) byte-exactly as tools/souji-census.sh, the installed-path selftest reads 35/0, and the certifier re-run on the installed path is green. NOTE: my S27-D2 dir-laundering confirmation is a NEW open class on the verify/quarantine bytes themselves — under the rubric's non-compensable-veto rule it must be fixed (or explicitly scoped out by the parent) before any certification claim extends to live-adjacent use.",
+    "O3_rubric_scoring": "NOT-MET (as expected) — 6/6 appliers agree: canonical pipeline resolves at HEAD (exit 0), mechanical PROVISIONAL 0/0/0 from the empty seat-13 scaffold, publication UNRATED, legacy rows LEGACY-UNMAPPED, 0 numeric contradictions at HEAD, SCORECARD.md:48-52 stale. The rubric WORK is sound (S18's 53/53 scorer battery); no committed 30-strata assessment exists and inventing one would violate the rubric's own evidence interface.",
+    "K1_fleet_delta": "MET — S23's census audit PASS-SAFE (byte-identical double run, roster stable, all deltas corroborated real); S25 lane durability MET except the fleet-commit push; S26 tool-level audit found the critical dir-laundering class (real defect, real repro).",
+    "C1_calibration_evidence": "POSITIVE-BUT-UNSCORED — r10's >=16 open classes collapsed to 1 census-contract class; r11 closes it in three certified lineages; 121-124 conservative refusals; 0 harness errors. Publishing a number would misrepresent (dissent-24's override-semantics dispute unresolved; no committed assessment)."
+  },
+  "admission": {
+    "round_verdict": "DO NOT ADMIT AS CLEAN YET",
+    "reasoning": "The round's work is sound and convergent — the census fix is built and multiply certified, the certifier/rubric/audit evidence is consistent across 6 certifiers, 6 rubric appliers, 4 final judges and 3 audits, and every verdict I re-measured reproduced. But (1) the certified census bytes are not installed (installed state is either class-open or selftest-red), (2) my own fresh repro confirms a NEW critical false-SAFE + unauthorized-DELETE class (S27-D2 dir laundering) on the verify/quarantine bytes that no battery gated this round, and (3) two process defects (mid-round frozen-baseline mutation, cert-16 relay) remain unrestored. Admission requires the preconditions below; no live removal is authorized by anything in this round.",
+    "certification_flip_preconditions": [
+      "1. Restore census/round-10/cert-16.json from HEAD (git checkout HEAD -- census/round-10/cert-16.json) so the r10 receipt is intact.",
+      "2. Install tools/cand-census-08.sh (7eb1b8d93d0b50c8a004aff50ed3d5ac3ddfa365ec596124f9ce6a65a221ba70) as tools/souji-census.sh byte-exactly, replacing the uncommitted 462dabd2 worktree rewrite (do NOT install selftest-red bytes). cand-census-02 (6a000c59) or cand-census-03 (60aef4c0) are certified alternates; pin the blank-line semantics (line-1-exact vs first-non-blank) in the census doc in the same commit.",
+      "3. bash tools/souji-census.sh --selftest must print 'selftest: 35 checks, 0 failed', exit 0, on the installed path.",
+      "4. Re-run the certifier on the installed bytes: python3 tools/cand-s16-cert.py --out census/round-11/<file> must report certification_ready=true, 0 unsafe, 0 test failures.",
+      "5. Adjudicate S27-D2 (dir laundering): fresh repro is /var/tmp/s26check (mine) and /var/tmp/s26-push (S26's); fix direction is the intro-tree-digest pin at stages 1 and 4 plus verify's intro-blob check for files. Until fixed, keep deletion authorization OFF and record the class as open in SCORECARD — do not let the census flip be cited as whole-toolchain clearance.",
+      "6. Commit the installed bytes + round-11 fragments; push fleet commit 7aea421 (S25 V5).",
+      "7. Refresh SCORECARD.md:48-52 (stale r9-era certification paragraph); keep the three legacy rows LEGACY-UNMAPPED until a committed 30-strata assessment replaces them; resolve dissent-24's calibration-override dispute before running any closed assessment."
+    ]
+  },
+  "false_safe": 1,
+  "unauthorized_deletes": 1,
+  "unsafe_outcomes_on_frozen_bytes": 3,
+  "unsafe_outcomes_on_installed_bytes_at_judgment_time": "3 on HEAD census bytes (11bf9cdf, class-open); the uncommitted worktree census (462dabd2) closes that class but is selftest-red — and the S27-D2 dir-laundering class stands on the verify/quarantine bytes regardless of census generation",
+  "mutations_made": "census/round-11/final-27.json only; scratch under /var/tmp/s27-j, /var/tmp/s27-freeze, /var/tmp/s27-r9recipe.uVEptk, /var/tmp/s26check (throwaway fixtures; the two quarantine-flow repros ran with SOUJI_QUARANTINE_ALLOW_LIVE=1 inside throwaway /var/tmp fixture repos only); no live fleet/lane/tool mutation; no git mutations in any live repo",
+  "my_certifier_run": {
+    "command": "python3 tools/cand-s16-cert.py --map census=/var/tmp/s27-freeze/cand-census-08-frozen.sh --label s27-verify --out /var/tmp/s27-j/s27-cert.json",
+    "seconds": 27.0,
+    "result": {"certification_ready": true, "certification_verdict": "CERTIFIED", "unsafe_outcomes": 0, "test_failure_count": 0, "errors": 0, "conservative_refusals": 124, "selftests": "verify 40/0, vault 51/0, quarantine 91/0, census 35/0, S15 merged 88/0", "J14": "q.rc=2 CENSUS-EMPTY-COMPARE refusal", "V07": "q.rc=2 CENSUS-NEAR-EMPTY-COMPARE refusal", "final22": "11 cases, 0 unsafe", "final23": "12 records, 0 unsafe", "s10": "40 cases, 0 unsafe, 0 harness errors", "s09": "40 artifacts, false_safe=0"}
+  },
+  "to_verify": [
+    "Post-install certifier re-run on the installed 7eb1b8d9 census bytes (precondition 4) — the parent must run it after install; all existing CERTIFIED runs used the candidate via --map, equivalent bytes but not the installed path.",
+    "S27-D2 dir-laundering fix cycle: new verify/quarantine candidate + certifier battery extended with the dir-laundering shape (S26's /var/tmp/s26-push logs + my /var/tmp/s26check repro).",
+    "S24-R1/R2 census holes (NUL-blind, short-row) on the installed candidate bytes — next census candidate cycle.",
+    "The blank-after-header semantics question (accept-with-skip vs refuse) is a spec choice, not a safety defect: S08/S03 accept (documented), S04 refuses (rc=4). The parent should pin one semantics in the census doc when installing."
+  ],
+  "not_claimed": [
+    "No numeric axis scores published; UNRATED stands for all three axes",
+    "No live removal authorized anywhere; operator approval, receipts, quarantine, hold and act-time re-verification remain external gates",
+    "Certification of the candidate set is a certifier-rule pass over 15 corpora, not exhaustive attack coverage",
+    "The S26-D1/S27-D2 laundering repro used fake remote refs (the tool's documented fixture pattern); a real-push-only threat model would narrow it, but the tool's own pushedness oracle is the local refs/remotes/* namespace, so the class stands under the tool's contract"
+  ],
+  "convergence_with_peer_final_judges": {
+    "S28 (final-28.json)": "CONCUR on every re-measured point: cand-08 promotion, impl-46 failure, 462dabd2 rejection, UNRATED rubric, conditional flip",
+    "S29 (final-29.json)": "CONCUR: same class status, same candidate ranking, same preconditions",
+    "S30 (final-30.json)": "CONCUR: conditional certification on c02/c03; my matrix adds c08 as the third certified lineage (and the two-judge consensus promotion); S30's S31-incident ruling adopted",
+    "S31 (final-31.json)": "CONCUR after correction: same preconditions; its own earlier CERTIFIED-for-462dabd2 pass was overruled by S30 and corrected",
+    "S32 (final-32.json + dissent-32.md)": "CONCUR: same verdicts; dissent's asks adopted here (pin blank-line semantics, cert-16 relay as a named process rule, blank-lead-populated battery probe, check-relevance over check-count in selection rules)"
+  },
+  "aggregated_seat_coverage": {
+    "certifiers": ["S09 cert-09.json", "S10 cert-10.json", "S11 cert-11.json", "S12 cert-12.json", "S13 cert-13.json", "S14 cert-14.json", "S15 cert-15.json", "S16 cert-16.json (r11 pass) + S08-cert-run.json"],
+    "rubric_appliers": ["S17 rubric-score-17.json", "S18 rubric-score-18.json", "S19 rubric-score-19.json", "S20 rubric-score-20.json", "S21 results/rubric-score-21.json", "S22 rubric-score-22.json"],
+    "final_judges": ["S28 final-28.json", "S29 final-29.json", "S30 final-30.json", "S31 final-31.json", "S32 final-32.json + dissent-32.md"],
+    "audits": ["S23 seat-23.json (fleet census)", "S24 seat-24.json (fleet audit + census adjudication)", "S25 seat-25.json (lane durability)", "S26 seat-26.json (tool-level push durability)"],
+    "implementors": ["S01 seat-01.json", "S04 cand-census-04.sh", "S07 cand-census-07.sh", "S08 seat-08.json + S08-fragment.md", "S11 impl-46 (via cert-09/11)"]
+  },
+  "evidence_file_sha256": {
+    "census/round-11/cert-09.json": "bdc1ad945e010b13d738dd568427825dedb03b11bfd37eef3d849feeaa1d486a",
+    "census/round-11/cert-11.json": "6f2879090b100e10723020f7cdd5a41bd484404557d03639595460714cdf2486",
+    "census/round-11/cert-12.json": "9e355c19b8182d9efff62538b0e3d76b75fc317962e0d9e5295e9a5d7e251c56",
+    "census/round-11/cert-13.json": "37598ff8138824fc83a205e57f937e41bd4c6edc91d2ed708e3a9904b58c1c66",
+    "census/round-11/cert-14.json": "bf7e61c9fbb42297e46a9e9191f29c2f9f0b94035dd5081495f06774b25eaafc",
+    "census/round-11/cert-15.json": "8924aa9fac70d3952b19af4084dd2b48e102cf938b641aeef32ffdfc713439a8",
+    "census/round-11/cert-16.json": "718409192fd82f7a9fff70965d24d4161713792bb7afd04e04de55cc595598fc",
+    "census/round-11/final-28.json": "48bda596e0e90962d7a6cc00c4d74f0a382ef262e4e08772a4861d7232f128d6",
+    "census/round-11/final-29.json": "eb91a05f079af3f060297a0eb13a0b7b1c12b2df411649f8286af8470de8d93e",
+    "census/round-11/final-31.json": "3c483db54162bf2b828add64a9c70c754f1d2b9de3aa896cac761adbf593c309",
+    "census/round-11/final-32.json": "1faa4330d24f4e22fe5fc5e0ab094c3df18f171c809b5ba75515d279c3ed21f2",
+    "census/round-11/rubric-score-17.json": "50b285db73bfc5716a49b286a91349f0abbe43d3106762b684c7d007b8d68bc8",
+    "census/round-11/rubric-score-18.json": "a279bbe23f97c4fd9d5284d49ca077fea9b469e38604820c890a861734ef03f5",
+    "census/round-11/rubric-score-19.json": "cb2ae8475e20373bfafb520c45b3cb25033dad9f4d494f22ca63084b04d530ce",
+    "census/round-11/rubric-score-20.json": "64029ba51c3e9fe923989affc89920e5356ab06669b8c18b51a619dd4d7a5527",
+    "census/round-11/rubric-score-22.json": "c97f0d39d7705462f4ad3d7f28e7e8d6e9287fda76ac307b06572fb3a79b4cd1",
+    "results/rubric-score-21.json": "3d0b4e3ba9479fa62d3d66f0975cfcb7a56140fa176bf6df0c441b489000ee0c",
+    "census/round-11/seat-01.json": "5f04d3690ba55c21014ded3aaf1a2915a288ac4e7506725a80fedcf7dd6c502a",
+    "census/round-11/seat-08.json": "4b7d404779316a15d19704c4e2edb511378b539fd1612efa8d46724762c93cc3",
+    "census/round-11/seat-23.json": "81d1b618503943537abac3ddf36bb715f1ada863fae4477822b39a7162b90ab5",
+    "census/round-11/seat-24.json": "aa423f269d3f67d30d965317bd7df1b5488312ba54931ee8184f7cb6e2881a41",
+    "census/round-11/seat-25.json": "54f4aa78dfa5d6dcb74106aa9d32b870b5f9ebd4fa36ec9aa0950b86c01df8d8",
+    "census/round-11/seat-26.json": "6b05c89e69887386f6899516abd3c973fb2d8be44bf653e9b03c271d8c15243b",
+    "census/round-11/dissent-32.md": "8ff58c0c779758b61db6b9b66b0434c82d5740b3840af0fe169070dfd356c351",
+    "census/round-11/S08-fragment.md": "adaabbfd5690a3bb8a354b8e0d1fdcc55bdd630a78a52498c8d5439f31987f80",
+    "census/round-11/S08-cert-run.json": "4a5849eaebe1c21607365fdcd9b42d00f3bb0fcb4bb1de4fe3ff27488fad4a6f",
+    "census/round-11/cand-census-04.sh": "33e46cc74454321dc6b41b2a874355b1ab09b2689e11add65f0ca8f81a348920",
+    "tools/cand-census-08.sh": "7eb1b8d93d0b50c8a004aff50ed3d5ac3ddfa365ec596124f9ce6a65a221ba70",
+    "tools/cand-census-02.sh": "6a000c59fe7486fbde7e5f68663c61cf60404cadb4185e84205b56fe4648c026",
+    "tools/cand-census-03.sh": "60aef4c07aa75099ff577e8f544e33ceb4914b278c81b8e5f2785e3f582be7fc",
+    "tools/souji-verify.sh": "9adb17645a5f452ae2cc28673642ad256f9aee92109939531f3c34a0972812cd",
+    "tools/souji-vault-verify.sh": "f9e778ca478c7aa8b33234ee793030df631c1b9fcebc942b1ff41d0008ed9c5b",
+    "tools/souji-quarantine.sh": "141c0fdc4eaf9d0a3d628b381cc5386f6d4be71565ddfb98aa10f6eb3c9573c9",
+    "tools/souji-census.sh (worktree at judgment time)": "462dabd281e417c80266ba4d3ffd2cd8ebca0aa84147e1c45c9832ee638b52ca"
+  },
+  "notes": "Judged bytes, not prose: every verdict above rests on a command I ran against hash-frozen copies or on a peer file I read and cross-checked. The round's three missions resolve as: (1) census-contract fix — built, minimal, certified 9x across three lineages, NOT installed; (2) toolchain re-certification — conditional flip with explicit small preconditions, plus one NEW open unsafe-DELETE class (S27-D2) that must gate any clearance claim; (3) rubric scoring — pipeline now reproducible at HEAD, scores UNRATED 6/6. The two process defects (mid-round worktree rewrite, cert-16 relay) are contained and restorable. No live removal is authorized by anything in this file."
+}

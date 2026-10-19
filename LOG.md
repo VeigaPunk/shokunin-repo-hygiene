@@ -345,3 +345,16 @@ conservative refusals. Delta vs r9: >=16 open classes -> 1. Merge
 installed (selftests 40/51/91); tools remain NOT certified. r11 fixes
 the census contract and re-runs the certifier suites before the
 certification flips.
+
+## 2026-10-18 — round 11 closed (operator: finish + push before reboot)
+
+Census contract fix installed (cand-census-02; selftest 36/36; all three
+cert-16 shapes refuse) — the last r9 defect class is closed in the tools.
+Certification NOT granted: the r11 certifiers compromised evidence
+integrity (cert-16 relay overwrites; verdicts on non-installed bytes) —
+fail-closed says no certification on compromised evidence. Rubric scores
+stay UNRATED. Re-certification under a no-relay protocol is the next
+session's first task. Operator cancelled the 12-round goal after this
+round; the lane stands at rounds 1-11 closed (1,2,3,5,8 admitted; 6,7,9,
+10,11 filed honestly as failed/partial), probation gate already cleared
+(>=3 verified rounds), lane repo pushed to origin.

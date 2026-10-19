@@ -1,0 +1,111 @@
+{
+  "seat": "S26",
+  "round": 11,
+  "role": "push-durability-audit",
+  "label": "s26-push-durability",
+  "generated_at": "2026-10-18T23:26:00-0300",
+  "assignment": "Push/durability audit of the r10-merge tool bytes: pushed-receipt gates, second-check re-derivation, hold-window durability. Independent of S25 (whose audit is git/file-level lane durability, not tool-level).",
+  "frozen_tool_sha256": {
+    "tools/souji-verify.sh": "9adb17645a5f452ae2cc28673642ad256f9aee92109939531f3c34a0972812cd",
+    "tools/souji-vault-verify.sh": "f9e778ca478c7aa8b33234ee793030df631c1b9fcebc942b1ff41d0008ed9c5b",
+    "tools/souji-quarantine.sh": "141c0fdc4eaf9d0a3d628b381cc5386f6d4be71565ddfb98aa10f6eb3c9573c9",
+    "tools/souji-census.sh": "462dabd281e417c80266ba4d3ffd2cd8ebca0aa84147e1c45c9832ee638b52ca"
+  },
+  "freeze_note": "Bytes copied to /var/tmp/s26-S26/ and re-hashed identical BEFORE any tool invocation; every probe ran against the frozen copies only. NOTE: the working-tree souji-census.sh (462dabd2...) is the r10 census-fix bytes and differs from cert-16's certified 11bf9cdf... (the r10 fix landed after that certification); verify/vault/quarantine are byte-identical to cert-16's lane hashes. All probes ran in fixture repos under /var/tmp (host /tmp quota respected); no live fleet/lane mutation; every quarantine mutation ran with SOUJI_QUARANTINE_ALLOW_LIVE=1 inside throwaway /var/tmp fixture repos.",
+  "unsafe_outcomes": 1,
+  "false_safe": 1,
+  "unauthorized_deletes": 1,
+  "defects": [
+    {
+      "id": "S26-D1",
+      "severity": "CRITICAL",
+      "kind": "false-SAFE + unauthorized-delete (pushed-directory laundering)",
+      "tool": "souji-verify.sh (stage 1) + souji-quarantine.sh (stage 4 second check)",
+      "claim": "A pushed DIRECTORY whose tracked contents were rewritten in a later commit, with refs/remotes/origin/* moved to the rewrite, earns SAFE(pushed) at stage 1 and the quarantine flow DELETES it end-to-end (rc=0). The pushed receipt's content anchor is `s18_snapshot_equal` (worktree vs CURRENT origin ref) — both sides are the laundered tip, so the rewrite is invisible. The unpushed-touching gate is defeated because the remote ref was moved to include the local commit. For FILES the stage-4 second check catches this (`intro-blob-mismatch` -> ABORTED, bytes preserved); for DIRECTORIES the second check emits `intro-blob=dir-pin-only` (souji-quarantine.sh:335) and has NO content anchor at all, so the flow completes the deletion.",
+      "repro": "fleet3/repo-k-shokunin under /var/tmp/s26-push: init repo, commit keep/dirpushed/{a.txt,b.txt} ('original a'/'original b'), create fake remote refs (update-ref refs/remotes/origin/master HEAD + symbolic-ref origin/HEAD) -> verify SAFE(pushed). Then rewrite a.txt to 'laundered a', commit, MOVE both origin refs to the new tip -> verify still SAFE(pushed) 'snapshot=equal clean=yes'. Then quarantine --hold 0 -> stage4-second PASS 'intro-blob=dir-pin-only' -> RESULT DELETED, SUMMARY deleted=1, rc=0. Logs: /var/tmp/s26-push/dir-launder-stage1.log, /var/tmp/s26-push/dir-launder-flow.log (fleet2 rerun) and the fresh fleet3 run in the transcript.",
+      "threat_model_note": "The tool's own pushedness oracle is the local refs/remotes/* namespace (fake remote refs are the documented fixture pattern used by the tool's selftest P1/D1 cases). Any writer who can move a remote ref (no real push needed) can launder directory content past every gate. The same writer CANNOT launder a single FILE past the full quarantine flow (stage-4 intro-blob check), but CAN pass verify alone (stage 1 has no intro-blob check), so verify-as-authorizer is also false-SAFE for files.",
+      "required_fix_direction": "Pin directory content to the introducing commit: at stage 1, compare the worktree dir manifest against `git show <intro>:<dirpath>` tree digest (or the default-ref's tree entry for the path), not just worktree-vs-current-ref; at stage 4 for dirs, re-derive the intro commit's tree digest for REL and compare against the staged dir digest (replace `intro-blob=dir-pin-only` with a real tree-digest check)."
+    },
+    {
+      "id": "S26-D2",
+      "severity": "MODERATE",
+      "kind": "false-SAFE contained by flow (pushed-FILE laundering at stage 1)",
+      "tool": "souji-verify.sh",
+      "claim": "Same laundering shape as S26-D1 for a single FILE: rewrite the file in a commit, move refs/remotes/origin/* to the rewrite, verify returns SAFE(pushed) on the rewritten bytes (evidence 'snapshot=equal clean=yes'; intro ancestry holds because the original intro commit is an ancestor of the rewrite). The quarantine flow's stage-4 `intro-blob` check catches it (intro-blob-mismatch -> ABORTED, staged copy preserved, rc=3), so the flow does not delete — but verify's stage-1 SAFE alone is a false authorization, and any consumer of verify without the quarantine second check is exposed.",
+      "repro": "fleet2/repo-j-shokunin under /var/tmp/s26-push: baseline SAFE(pushed) on c1 'original payload'; rewrite keep/pushed.txt to 'laundered payload', commit, move origin refs to the rewrite -> SAFE(pushed). Quarantine --hold 0 -> stage4-second FAIL 'intro-blob-mismatch blob=b3090ea8c586' -> ABORTED, staged copy left in quarantine. Logs: /var/tmp/s26-push/file-launder-flow.log.",
+      "required_fix_direction": "Add the intro-blob check to verify's try_pushed (compare worktree blob to `git show <intro>:<path>` for files; tree digest for dirs), not only in quarantine's second check."
+    },
+    {
+      "id": "S26-D3",
+      "severity": "LOW",
+      "kind": "durability/deployment gap (VERIFY_BIN resolution)",
+      "tool": "souji-quarantine.sh",
+      "claim": "When the quarantine tool is invoked from a copy outside a repo layout (frozen bytes in a bare dir), REPO_ROOT resolves to the parent of the copy's dir and VERIFY_BIN defaults to <REPO_ROOT>/tools/souji-verify.sh which does not exist -> exit 1 'receipt engine missing: /var/tmp/tools/souji-verify.sh'. In the lane layout the sibling-preference branch (souji-quarantine.sh:134, prefers cand-merge-verify.sh when present) masks this. No unsafe outcome; a deployment/durability defect only (the tool cannot run from a relocated copy without SOUJI_VERIFY_BIN).",
+      "repro": "SOUJI_QUARANTINE_ALLOW_LIVE=1 bash /var/tmp/s26-S26/souji-quarantine.sh --hold 0 <fixture-repo> keep/pushed.txt -> 'souji-quarantine: receipt engine missing: /var/tmp/tools/souji-verify.sh', exit 1.",
+      "required_fix_direction": "Fall back to resolving the engine relative to the fixture repo, or fail with a clearer message pointing at SOUJI_VERIFY_BIN; also reconsider the cand-merge sibling preference for certified bytes."
+    },
+    {
+      "id": "S26-D4",
+      "severity": "LOW",
+      "kind": "evidence-quality (ledger-changed gate pin captured post-hold)",
+      "tool": "souji-quarantine.sh",
+      "claim": "In s18_second_check's moved-to-obsidian prong, `ledger_pin` is captured AFTER the hold window (souji-quarantine.sh:340), so the ledger-changed gate compares the post-hold ledger against itself — appending an unrelated row during hold is invisible in the PASS evidence (measured: ledger sha 3b061838 -> 09540731 during hold, second check PASS). The target's OWN row is still re-read via ledger_row_for and re-validated (row-gone and row-value-mutation cases both ABORT correctly, measured), so no unsafe outcome — but the 'ledger-changed' gate as implemented cannot detect any drift, and the r9-s18 design intent (pin captured at stage 1) is not met.",
+      "repro": "fixture ledger2.tsv + SOUJI_Q_TEST_HOOK appending a row during hold -> second check PASS with no ledger-pin evidence; row-deletion hook -> class=FAIL ledger-row-gone (correct); row-value mutation hook -> class=FAIL source-sha-mismatch (correct).",
+      "required_fix_direction": "Capture the ledger pin at stage 1 (alongside PIN_SHA/PIN_MTIME) and compare against it in the second check."
+    }
+  ],
+  "confirmed_safe_behaviors": [
+    {
+      "id": "S26-OK1",
+      "claim": "Pushed-receipt refusals fail closed: dirty worktree -> NOT-SAFE(pushed=dirty-or-untracked-content); untracked file -> NOT-SAFE; unpushed commit touching the path -> NOT-SAFE(pushed=unpushed-commits-touching); no default ref (refs deleted) -> NOT-SAFE(pushed-unverifiable); broken HEAD -> NOT-SAFE. All measured on frozen bytes.",
+      "evidence": "transcript probes on /var/tmp/s26-push/fleet{,2}/repo-{h,i,j}-shokunin"
+    },
+    {
+      "id": "S26-OK2",
+      "claim": "Hold-window durability holds for every class: content tamper during hold -> pin=FAIL digest-mismatch -> ABORTED with staged copy left in quarantine (recoverable); mtime drift both directions on stale -> mtime=FAIL -> ABORTED; stale prong1 flip (copy re-dated young) -> prong1 NOT-SAFE -> ABORTED; unpushed commit appearing during hold -> unpushed-touching=1 + intro-blob-mismatch -> ABORTED; origin ref deleted during hold -> default-ref-unverifiable + unpushed-touching=1 -> ABORTED (exit 3); vault copy tamper during hold -> vault-sha-mismatch -> ABORTED; ledger row-gone -> ABORTED; row-value mutation -> ABORTED.",
+      "evidence": "transcript probes with SOUJI_Q_TEST_HOOK hooks under /var/tmp/s26-push; all ABORT cases left recoverable staged bytes in .ufo-quarantine and returned rc=3"
+    },
+    {
+      "id": "S26-OK3",
+      "claim": "Clean flows behave as documented: pushed file -> DELETED with full second-check evidence; pushed directory (unlaundered) -> DELETED; stale file -> DELETED with prong1=SAFE(stale) binding; moved-to-obsidian -> DELETED with source-sha/vault-sha=ok. Worktree file rm'd during hold -> DELETED (correct: the staged copy is the durable artifact; index shows staged-deletion).",
+      "evidence": "transcript probes; /var/tmp/s26-push/rm-probe6.log"
+    },
+    {
+      "id": "S26-OK4",
+      "claim": "Stale-receipt G2 rule holds for directories: a fresh descendant inside an aged .scratch container -> NOT-SAFE(stale=mtime-or-descendant-too-young) (descendants checked by mtime AND ctime). Single-file stale targets check mtime only (root ctime unchecked) — a utime-backdated fresh file earns SAFE(stale). This matches S15's disclosed trade-off in r10 (fixture-vs-rule collision), recorded as a known limitation, not a new defect.",
+      "evidence": "transcript probes on .scratch/old.out (SAFE, disclosed) vs .scratch dir with fresh descendant (NOT-SAFE)"
+    },
+    {
+      "id": "S26-OK5",
+      "claim": "Second-check ref re-derivation is fresh (not pinned to stage-1's ref): origin ref moved to an ancestor with the same blob during hold -> PASS is legitimate (default-ref=ok re-resolved).",
+      "evidence": "transcript probe with refmove-hook.sh"
+    }
+  ],
+  "census_findings": [
+    {
+      "id": "S26-C1",
+      "claim": "The r10 census-fix bytes in the working tree (462dabd2...) still fail the r10 cert-16 contract in two measured ways on fresh repros: (a) a baseline whose first non-blank line is blank exits 3 with a spurious 'repo ABSENT->PRESENT added' row for every fleet repo instead of exit 2 (cert-16 J14/V07 class: near-empty census must not look like a diff); (b) a header-only baseline (valid header, zero data rows) vs a NON-empty fleet exits 3 fabricating 'added' rows for every fleet repo — the truncated-baseline shape. Empty file and missing header correctly exit 2. The truly unsafe shape (silent rc=0 on corrupt baseline) is NOT present in these bytes.",
+      "evidence": "/var/tmp/s26-census-repro: fleets 1-7, hdr-only.tsv / blank-before*.tsv repros, rc outputs in transcript"
+    },
+    {
+      "id": "S26-C2",
+      "claim": "S08's candidate cand-census-08.sh (7eb1b8d9...) fixes blank-before-header (exit 2) and 0-byte baselines (exit 2), and its selftest passes 35/0. Residuals measured by this seat: (a) header-only baseline vs non-empty fleet still exits 3 with fabricated 'added' rows (S08's selftest only tests hdr-only vs an EMPTY fleet, where exit 0 is legitimate); (b) S08 dropped the r10 bytes' blank-after-header selftest (r10 bytes asserted exit 0 for header+trailing-blank; candidate exits 3 for that input) — a selftest-coverage regression, though the exit-3 behavior is not silent-clean. Neither residual is the r10 unsafe shape (silent rc=0).",
+      "evidence": "cand-census-08.sh run against /var/tmp/s26-census-repro repros; selftest 35 checks 0 failed; blank-mid.tsv (header+blank+row) exits 0 clean"
+    }
+  ],
+  "selftests_on_frozen_bytes": {
+    "verify": "40 checks, 0 failed (after copying souji-round9-selftest.sh next to the frozen copy; the R9 runner is a separate file by design)",
+    "vault": "51 checks, 0 failed",
+    "quarantine": "91 checks, 0 failed — ONLY when run from the lane tools/ dir (bytes identical to frozen copies); from a bare dir the selftest's G1 guard and engine-sibling assumptions break (65 fails), which is the S26-D3 deployment gap, not a tool defect",
+    "census": "36 checks, 2 failed (blank-before-header exit 3 want 2; blank-after-header exit 3 want 0) — consistent with S26-C1"
+  },
+  "mutations_made": [
+    "census/round-11/seat-26.json (this file) — the only lane write",
+    "fixture repos under /var/tmp/s26-push and /var/tmp/s26-census-repro (throwaway, restored to clean state where the flow mutated them)"
+  ],
+  "to_verify": [
+    "Whether the r10 census-fix bytes (462dabd2...) were ever certified: cert-16 certified 11bf9cdf...; the 462dabd2 bytes carry the r10 fix but fail two of its own selftest assertions (S26-C1) — parent should decide which census bytes enter r11 certification (S08's candidate vs the working-tree bytes), and require the hdr-only-vs-nonempty-fleet case in the selftest either way."
+  ],
+  "cross_seat_conflict": "None with S25 (different audit surface: lane-repo git durability vs tool-level push/durability). S08's census-fix assessment agrees with mine on the fixed classes; my S26-C2 residuals are additional evidence for the parent's census-fix choice.",
+  "notes": "All 32-seat round-11 rules honored: fixtures under /var/tmp only, frozen bytes first, no live fleet/lane mutation outside this file, refusals treated as correct, every defect claim has a fresh repro with logs under /var/tmp/s26-push/."
+}

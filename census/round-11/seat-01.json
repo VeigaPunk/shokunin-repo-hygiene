@@ -1,0 +1,44 @@
+[
+ {
+  "tool": "cand-census-01.sh",
+  "label": "S01 candidate (this seat) — census --compare contract fix",
+  "base": "installed tools/souji-census.sh at patch time",
+  "base_sha256": "462dabd281e417c80266ba4d3ffd2cd8ebca0aa84147e1c45c9832ee638b52ca",
+  "candidate_sha256": "9525333ce7ececbb367a6f49f6a92a76136bbb0cb53de8c960649a18c66d8740",
+  "present": true,
+  "selftest_total": 42,
+  "selftest_failed": 0,
+  "selftest_tmpdir": "/var/tmp",
+  "cert16_shapes": {
+   "final22_empty-census-compare": {"prior": "0-byte TSV", "rc": 2, "refused": true},
+   "s16-fresh_J14": {"prior": "0-byte TSV", "rc": 2, "refused": true},
+   "s16-fresh_V07": {"prior": "\\n", "rc": 2, "refused": true}
+  },
+  "contract_kept": {
+   "header_only_vs_empty_fleet": {"rc": 0, "diff": "header-only"},
+   "header_only_vs_real_fleet": {"rc": 3, "rows": "added"},
+   "malformed_short_row": {"rc": 2},
+   "duplicate_repo_row": {"rc": 2},
+   "wrong_header": {"rc": 2},
+   "missing_file": {"rc": 2},
+   "crlf_blank_only": {"rc": 2},
+   "self_compare_identical": {"rc": 0}
+  },
+  "new_selftest_regressions": 8,
+  "notes": [
+   "load_census: header must be the first non-blank line, exact 7-column match; empty/blank-only/CRLF-blank priors exit 2 with a message naming the defect (no header seen = malformed baseline, checked after the loop so 0-byte files are caught even though the loop body never runs).",
+   "New column-count gate: every data row must have exactly 6 tabs (7 fields); short/over-long rows exit 2 instead of parsing garbage into a diff.",
+   "Header-only prior stays a valid empty-fleet baseline (exit 0 vs empty fleet; exit 3 with added-rows vs real fleet) — matches r10 cluster-E candidate and sibling r11 census candidates (03/06/07/08); the cert-16 judge only requires nonzero exit on the three broken shapes.",
+   "Reconciled 2 stale merged-base selftest expectations (blank-before-header now exit 3 with a real diff; blank-after-header now blanks-skipped: exit 0 vs empty fleet, exit 3 vs real fleet) — the installed base's first-non-blank header logic and its line-1-strict selftest expectations contradicted each other.",
+   "Verified from outside the lane dir (copied bytes, /var/tmp fixture) so the selftest does not depend on cwd."
+  ]
+ },
+ {
+  "tool": "souji-census.sh",
+  "label": "installed bytes at S01 finish (composer re-installed mid-session)",
+  "present": true,
+  "sha256": "462dabd281e417c80266ba4d3ffd2cd8ebca0aa84147e1c45c9832ee638b52ca",
+  "empty_prior_rc": 2,
+  "note": "The r10 certifier lane bytes (11bf9cdf8d4f75415b18e046aef0e96215b983f0d5b3ff7842301ff6ac65d381, sha frozen first) accepted a 0-byte prior with rc=0; the currently installed merged bytes already refuse it with rc=2 but lack the dedicated header-only/short-row/duplicate-row selftest regressions this candidate adds."
+ }
+]

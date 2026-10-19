@@ -1,0 +1,144 @@
+{
+ "schema_version": 1,
+ "seat": "S24",
+ "round": 11,
+ "kind": "fleet-audit",
+ "role": "fleet audit — live-fleet census sweep + census-contract adjudication on frozen bytes",
+ "fragment": "census/round-11/seat-24.json",
+ "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+ "lane_head": "ad8b6703b3fd18f99853e3cb7bd3b2534cec1548",
+ "generated_at": "2026-10-18T23:26:35-0300",
+ "git_version": "2.55.0",
+ "host_note": "fixtures under mktemp -p /var/tmp only (host /tmp carries a DISK QUOTA); live fleet and lane repo never mutated; every destructive call ran inside a fixture repo; no secret-shaped file content was read (name-only evidence)",
+ "concurrency_note": "the lane working tree changed DURING this audit: tools/souji-census.sh was rewritten uncommitted at 23:17:23 (11bf9cdf -> 462dabd2, r11 census-fix seat landing mid-round). Both generations were frozen and measured; findings are labeled per generation.",
+ "frozen_bytes": {
+  "freeze_dir": "/var/tmp/s24-frozen3-2PDME6/souji-shokunin/tools (lane-shaped, nested under a fake lane root; .git initialized so the quarantine live-fleet guard geometry matches the installed lane)",
+  "freeze_dir_flat_rejected": "/var/tmp/s24-frozen-Bgc9kh (flat layout breaks souji-quarantine's REPO_ROOT inference: engine path and live-fleet guard both misresolve; 65/91 selftest FAILs were a harness artifact of that layout, not tool defects)",
+  "generation_A_r10_merge": {
+   "souji-verify.sh": "9adb17645a5f452ae2cc28673642ad256f9aee92109939531f3c34a0972812cd",
+   "souji-vault-verify.sh": "f9e778ca478c7aa8b33234ee793030df631c1b9fcebc942b1ff41d0008ed9c5b",
+   "souji-quarantine.sh": "141c0fdc4eaf9d0a3d628b381cc5386f6d4be71565ddfb98aa10f6eb3c9573c9",
+   "souji-census.sh": "11bf9cdf8d4f75415b18e046aef0e96215b983f0d5b3ff7842301ff6ac65d381",
+   "souji-round9-selftest.sh": "dd7c636ebe39e70c489516500440a311167b5280d18c3a5e9db1399d2f62e5c2"
+  },
+  "generation_B_installed_r11": {
+   "souji-census.sh": "462dabd281e417c80266ba4d3ffd2cd8ebca0aa84147e1c45c9832ee638b52ca",
+   "others": "identical to generation A (re-verified 23:26)"
+  },
+  "candidates_measured": {
+   "tools/cand-census-03.sh": "60aef4c07aa75099ff577e8f544e33ceb4914b278c81b8e5f2785e3f582be7fc",
+   "tools/cand-census-08.sh": "7eb1b8d93d0b50c8a004aff50ed3d5ac3ddfa365ec596124f9ce6a65a221ba70"
+  },
+  "committed_head_bytes": "tools/souji-{verify,vault-verify,quarantine,census}.sh blobs at ad8b670 are the GENERATION A bytes (git ls-tree verified); generation B census exists only as an uncommitted working-tree mutation"
+ },
+ "selftests_on_frozen_bytes": {
+  "generation_A": {"verify": "40/0", "vault": "51/0", "quarantine": "91/0", "census": "32/0"},
+  "generation_B_installed": {"verify": "40/0", "vault": "51/0", "quarantine": "91/0", "census": "36 checks, 2 FAILED (blank-before-header rc=3 want 2; blank-after-header spurious diff row rc=3 want 0) — deterministic across 3 runs"},
+  "cand_census_03": {"census": "36/0"},
+  "cand_census_08": {"census": "35/0"},
+  "harness_artifact_note": "the first quarantine run (65/91 FAIL) was caused by my flat freeze layout, not the tool; with lane-shaped nesting + fixture .git it is 91/0 green. Recorded so no one repeats the artifact."
+ },
+ "r10_residual_class_verdict": {
+  "class": "souji-census --compare accepts empty/near-empty prior census (census-contract; r10 cert-16.json 3 unsafe outcomes, all this class)",
+  "generation_A_r10_merge_11bf9cdf": "OPEN — fresh-reproduced: 0-byte prior rc=0, newline-only prior rc=0, header-only prior rc=0 (empty fleet); non-empty fleet vs 0-byte prior reports 'no diff' rc=0 (whole fleet hidden). Root cause: load_census header check gated on n=1 inside the read loop — a blank first line skips it and an empty file never reaches it (tools/souji-census.sh:349-352 at 11bf9cdf).",
+  "generation_B_installed_462dabd2": "CLASS CLOSED — 0-byte and newline-only priors now exit 2; blank-before-header parses header as row (rc 3, not 2); header+trailing-blank emits a spurious diff row (rc 3). The two rc-3 cases are exactly the 2 failing selftest checks: the new selftest and the new load_census disagree with each other — one of the two must change before install.",
+  "cand_census_03_60aef4c0": "CLASS CLOSED, selftest-clean — first line must be the exact header (validated even for 0-byte files); blank-before-header rc=2; header+trailing-blank rc=3 with a spurious-row diff (documented semantics: blank lines after a valid header are skipped, so a trailing blank row is parsed as an empty-repo row — see residual S24-R2).",
+  "cand_census_08_7eb1b8d9": "CLASS CLOSED, selftest-clean — same header-on-line-1 contract; 35-check selftest 0 failed.",
+  "fixtures": "/var/tmp/s24-j14-cRWMwP, /var/tmp/s24-j14b-omKaGQ, /var/tmp/s24-genb-mMUa8G, /var/tmp/s24-genb2-YRpKF7"
+ },
+ "s24_new_findings": [
+  {
+   "id": "S24-R1",
+   "class": "census --compare is NUL-blind: a NUL-forged baseline forges an all-clear",
+   "severity": "contract-violation (false no-diff; no deletion path involved)",
+   "generations_affected": ["11bf9cdf", "462dabd2", "60aef4c0", "7eb1b8d9"],
+   "observed": "A prior census with a NUL byte spliced into a repo name (alpha-sh\\0okunin) or into a numeric field value (dirty=0\\0) compares as 'no diff' rc=0 against a fleet whose real key/field differs. Control: the same baseline with the NUL removed reports the real diff rc=3. A NUL suffix after the repo name splits one repo into two keys ('...alpha-shokunin' ADDED + '...alpha-shokuninx' REMOVED) — still rc=0, still a forged diff shape.",
+   "root_cause": "bash `read`/`${var%%\\t*}`/parameter expansion silently truncate at NUL, so load_census's exact-header comparison and the repo-key/field splitting never see the forged suffix; NUL bytes pass the existing header equality check byte-truncated.",
+   "reproduction": "fixture /var/tmp/s24-nul2-HeEcER: gen1 census -> splice NUL -> compare rc=0 (bug); NUL removed -> rc=3 (control). One-liner: python3 -c 'data=open(p,\"rb\").read(); open(q,\"wb\").write(data.replace(b\"alpha-shokunin\", b\"alpha-sh\\\\x00okunin\",1))' then souji-census.sh --root FLEET --compare q",
+   "uniqueness": "no r11 fragment covers NUL in the compare baseline (cert-09/11/12/13/14/15/16, final-28/29/31, seat-08/23/25 checked; their only NUL mentions are the unrelated quarantine --list NUL-pin class J16)",
+   "fix_direction": "reject any prior file containing a NUL byte (grep -q $'\\0' or LC_ALL=C grep -c $'\\x00') before parsing, exit 2; mirrors the quarantine --list NUL rejection already shipped"
+  },
+  {
+   "id": "S24-R2",
+   "class": "census --compare silently mis-parses short rows (fewer than 6 data fields)",
+   "severity": "contract-violation (forged field values; never refuses)",
+   "generations_affected": ["11bf9cdf", "462dabd2", "60aef4c0", "7eb1b8d9"],
+   "observed": "A data row with only 2 fields ('<repo>\\t0\\t0') under a valid header parses as worktrees=0, unpushed=0, dirty=0, scratch_bytes=0, mtime_iso=0, verdict_flags=0 — field_at() returns the last present field for every missing index, so fields 3-6 all read '0'. The compare then reports the real fleet state as a diff against forged zeros (rc=3, wrong diff) instead of refusing the malformed baseline (rc=2). A row with an empty repo name IS refused (rc=2) — the asymmetry shows short-row validation was simply never written.",
+   "reproduction": "fixture /var/tmp/s24-genb-mMUa8G/short-row2gA.tsv vs /var/tmp/s24-genb2-YRpKF7/fleet on all four generations: rc=3 with forged-field diff rows",
+   "uniqueness": "no r11 fragment covers short-row mis-parse",
+   "fix_direction": "validate field count per row in load_census (require exactly 6 tab-separated data fields after the repo key; else usage_err exit 2)"
+  }
+ ],
+ "certifier_run_s24": {
+  "harness": "tools/cand-s16-cert.py (frozen r10 bytes, sha256 4130502cc41f9297e98404833dfa697d63d82dfe817c89c15862627ac7a32733 — byte-identical to cert-16.json's harness_frozen_at)",
+  "invocation": "python3 tools/cand-s16-cert.py --map verify/vault/quarantine/census=<frozen generation B bytes> --label s24-S24-audit --out /var/tmp/s24-cert.json",
+  "census_bytes_measured": "462dabd281e417c80266ba4d3ffd2cd8ebca0aa84147e1c45c9832ee638b52ca",
+  "unsafe_outcomes": 0,
+  "harness_errors": 0,
+  "test_failures": 1,
+  "test_failure_detail": "selftest corpus: census 36 checks, 2 failed (the two blank-line checks described above) — this alone blocks certification under the harness rule",
+  "conservative_refusals": 124,
+  "corpora_run": ["s10", "s09", "s22", "s21", "s23", "s24", "s11", "s05", "s07", "s12", "s15", "final22", "final23", "selftest", "s16-fresh"],
+  "report": "/var/tmp/s24-cert.json",
+  "verdict": "0 unsafe outcomes on the installed r11 bytes; certification blocked ONLY by the census selftest gate"
+ },
+ "cross_certifier_corroboration": {
+  "cert-11_S11": "CERTIFIED on candidate set with census=60aef4c0 (0 unsafe, all selftests green)",
+  "cert-12_S12": "0 unsafe, NOT-CERTIFIED solely on the 462dabd2 census selftest gate (2/36)",
+  "cert-13_S13": "r10 residual CONFIRMED OPEN on 11bf9cdf; CLOSED-BY-CANDIDATE cand-census-08 (7eb1b8d9) = promotion choice; CONDITIONAL CERTIFIED as candidate set {9adb1764, f9e778ca, 141c0fdc, 7eb1b8d9}; REJECTS the in-place 462dabd2 rewrite as an unauthorized mid-round mutation of the frozen baseline (S13-D2, selftest-red)",
+  "cert-14_S14": "3 unsafe reproduced on PRE-PATCH bytes (run A); documents the concurrent drift",
+  "cert-15_S15": "class CLOSED on patched bytes (462dabd2, 60aef4c0, 7eb1b8d9), OPEN on 11bf9cdf; NOT-CERTIFIED on the selftest gate",
+  "cert-16_S16_r11": "NOT-CERTIFIED on installed bytes (0 unsafe, 1 selftest-failure gate); CERTIFIED alternative exists (60aef4c0); r10 defect reproduced (run A prefix, 3 unsafe) and fixed on installed bytes",
+  "final-28_S28": "cand-census-08 (7eb1b8d9) is the only candidate that closes the class AND is selftest-clean — CERTIFIED as candidate, ready for parent install",
+  "s24_position": "CONCUR with the S13/S28 promotion choice (7eb1b8d9). My independent additions: S24-R1 (NUL-blind compare) and S24-R2 (short-row mis-parse) are OPEN on ALL generations including 7eb1b8d9 — installing 7eb1b8d9 closes the r10 class but NOT these two; both should enter the next fix batch (or be folded into the install candidate) before the certification flip is treated as complete."
+ },
+ "installed_vs_certified_gap": {
+  "installed_census_bytes": "462dabd281e417c80266ba4d3ffd2cd8ebca0aa84147e1c45c9832ee638b52ca (uncommitted working-tree mutation, landed 23:17:23 mid-round)",
+  "certified_census_bytes": "60aef4c0 (S11, S16-r11) and 7eb1b8d9 (S13, S28) — both selftest-clean, both close the r10 class",
+  "status": "the toolchain is NOT-CERTIFIED on installed bytes; certification flips only when the parent installs a selftest-clean generation as tools/souji-census.sh and a certifier re-run on the installed path is green",
+  "provenance_warning": "the installed 462dabd2 bytes are an unauthorized mid-round rewrite of the frozen r10 baseline (S13-D2): withdraw, or complete (fix the 2 selftest mismatches) and re-certify — do not treat the working-tree mutation as certified"
+ },
+ "fleet_census": {
+  "command": "bash <frozen> souji-census.sh --root /home/vgpnk/Projects/shokunin --include-root (generation B bytes, 23:20)",
+  "tsv": "/var/tmp/s24-fleet-census.tsv (23 lines = header + 22 repos)",
+  "rows_summary": {
+   "total_repos": 22,
+   "clean": 13,
+   "unpushed": ["root(1: ad8b670's child 7aea421 r10-closure, master tip, origin exists)", "audio-shokunin(24)", "game-dev-2d-shokunin(3: wt-r98/r99/r100 branches)", "kama-shokunin(4)", "kotoba-shokunin(1)", "tabi-shokunin(1)"],
+   "dirty": ["root(10: all ?? .scratch/*.out)", "game-dev-2d-shokunin(25: 16??/7D/2M)", "kama-shokunin(1: ?? .ufo/round-10/)", "kaidoku-shokunin(1: M .ufo/waves/arc2-loop1-round10/C3.md)", "lore-shokunin(1: ?? .scratch/)"],
+   "no-remote": 0,
+   "wt-absent": "game-dev-2d-shokunin: 3 locked registrations (wt-r98/r99/r100, lock reason 'souji r5: pinned until game-dev-2d pushes wt branches or operator dispositions') whose directories are MISSING — census flag correct; prune remains blocked by the pins (correct per r5 lock-preserve)",
+   "scratch": ["kotodama-shokunin: 42728668221 bytes (42.7 GB; top: r28-x58 9.4G, x58 7.8G, x37 3.4G, r58 1.9G, x64 1.4G)", "lore-shokunin: 218489", "root: 9534", "souji-shokunin: 38 (s29-freeze-dir.txt, another seat's scratch)"],
+   "secret_shaped_flags_verified": {
+    "method": "name-only path matching, no content reads",
+    "root": ".ufo/waves/shokunin-train-*/xsentinel-scratch/secrets*.txt (4 files) + lane corpus/lessons files below",
+    "souji-shokunin": "tests/fixtures/case-F10/{creds.pem,app.env} — selftest fixtures, expected",
+    "kotodama-shokunin": ".scratch/**/outside-secret.txt — selftest fixture probes, expected",
+    "kagi-shokunin": "corpus/knowledge/credential-isolation.md (documentation, name-match only)",
+    "kumitate-shokunin": "corpus/knowledge/kimi-binary-secrets.md (documentation)",
+    "mori-shokunin": "corpus/lessons/2026-10-15-run-secret-timing-and-content-freshness-limits.md (documentation)",
+    "verdict": "all secret-shaped flags trace to fixture/doc filenames; no live secret surface indicated"
+   },
+   "mtime_spot_check": "census mtime_iso for root/kotodama/souji rows re-derived independently with a find|awk max over non-secret files — matches (23:20:00/23:20:01 vs re-derived 23:25 values reflect ongoing concurrent writes, not drift)"
+  },
+  "non_repo_children": ["bash: /home/... (stray empty dir tree, 10 KB, created 14:01 — looks like a botched shell redirect from an earlier round; no .git, correctly NOT a census row; souji-scope removal candidate for the operator)", ".devin/.omp/.tower/.ufo/.scratch/reports/research/templates (no .git, correctly not rows)"],
+  "operator_sweep_artifact": "census/operator-sweep-20261018/ appeared in the lane during this audit (another seat's output; not mine)"
+ },
+ "axes": ["calibration", "coverage", "operability"],
+ "rubric_position": "UNRATED per souji-r9-v1 publication rules — this fragment is audit evidence, not a 30-strata assessment; concur with rubric-score-18/19/20 and final-28 that legacy rows stay LEGACY-UNMAPPED",
+ "verdicts": {
+  "r10_residual_class": "OPEN on r10-merge bytes (fresh repro); CLOSED on installed r11 bytes and on both selftest-clean candidates",
+  "installed_r11_bytes_462dabd2": "0 unsafe outcomes on the full certifier battery, but selftest-red 2/36 and an unauthorized mid-round rewrite — NOT-CERTIFIED; withdraw or complete + re-certify",
+  "promotion_choice": "CONCUR: install cand-census-08 (7eb1b8d9) as tools/souji-census.sh, then re-run the certifier on the installed path",
+  "new_residuals": "S24-R1 NUL-blind compare (all generations) and S24-R2 short-row mis-parse (all generations) — fresh-reproduced, unique to this seat, OPEN after the r11 fix",
+  "fleet_state": "22 repos; 13 clean; 6 with unpushed commits; 5 dirty; 3 absent locked worktree registrations (pinned, correct); 42.7 GB kotodama .scratch is the dominant hygiene surface; no live secret surface; root stray 'bash: /home/...' dir is a removal candidate for the operator",
+  "live_removal_authorized": false
+ },
+ "writes": ["census/round-11/seat-24.json"],
+ "reproduction": {
+  "frozen_bytes": "/var/tmp/s24-frozen3-2PDME6/souji-shokunin/tools (generation B census) and /var/tmp/s24-frozen-Bgc9kh (generation A census)",
+  "certifier": "python3 tools/cand-s16-cert.py --map verify=$FZ/souji-verify.sh,vault=$FZ/souji-vault-verify.sh,quarantine=$FZ/souji-quarantine.sh,census=$FZ/souji-census.sh --label s24-S24-audit --out /var/tmp/s24-cert.json",
+  "nul_probe": "see S24-R1.reproduction",
+  "fleet_census_tsv": "/var/tmp/s24-fleet-census.tsv"
+ }
+}

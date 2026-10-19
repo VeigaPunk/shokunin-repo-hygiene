@@ -1,0 +1,150 @@
+{
+  "seat": "S25",
+  "round": 11,
+  "role": "push-durability-audit",
+  "label": "s25-push-durability",
+  "probed_at": "2026-10-18T23:17:11-0300",
+  "assignment": "Verify: lane repo clean tree; HEAD pushed to origin (git ls-remote == HEAD); all round reports present 1..10 + mint; MANIFEST entries match reports.",
+  "target": "lane repo /home/vgpnk/Projects/shokunin/souji-shokunin + fleet MANIFEST.json + fleet .ufo/reports/round-N/souji.md",
+  "frozen_tool_sha256": {
+    "tools/souji-verify.sh": "9adb17645a5f452ae2cc28673642ad256f9aee92109939531f3c34a0972812cd",
+    "tools/souji-vault-verify.sh": "f9e778ca478c7aa8b33234ee793030df631c1b9fcebc942b1ff41d0008ed9c5b",
+    "tools/souji-quarantine.sh": "141c0fdc4eaf9d0a3d628b381cc5386f6d4be71565ddfb98aa10f6eb3c9573c9",
+    "tools/souji-census.sh": "11bf9cdf8d4f75415b18e046aef0e96215b983f0d5b3ff7842301ff6ac65d381"
+  },
+  "freeze_note": "Bytes copied to /var/tmp/s25-freeze-BRJxQ1 (read-only, sha256 re-verified identical to repo working tree) BEFORE any tool invocation; no tool was executed by this seat (push/durability audit is git/file-level), so frozen bytes are recorded as the audited state. Census tool sha 11bf9cdf matches the r10 cert-16 lane_tool_sha256 and the r6-installed impl-33 sha.",
+  "claims": [
+    {
+      "id": "V1",
+      "claim": "Lane repo tree is clean (no uncommitted tracked changes).",
+      "verdict": "MET",
+      "evidence": {
+        "cmds": [
+          "git -C souji-shokunin status --porcelain=v1",
+          "git -C souji-shokunin status --ignored --porcelain | grep -c '^!!'",
+          "git -C souji-shokunin stash list | wc -l",
+          "git -C souji-shokunin worktree list",
+          "git -C souji-shokunin ls-files census/ | wc -l; find census -type f | wc -l"
+        ],
+        "out": [
+          "porcelain empty (0 dirty, 0 untracked tracked-tree changes)",
+          "10 ignored files (all .scratch/*.out scratch outputs; .gitignore covers them; durability unaffected)",
+          "0 stashes",
+          "single worktree: /home/vgpnk/Projects/shokunin/souji-shokunin ad8b670 [master]",
+          "463 == 463 (every census file is git-tracked; nothing round-relevant untracked)"
+        ]
+      }
+    },
+    {
+      "id": "V2",
+      "claim": "Lane HEAD is pushed to origin: git ls-remote == HEAD.",
+      "verdict": "MET",
+      "evidence": {
+        "cmds": [
+          "git rev-parse HEAD",
+          "git ls-remote origin",
+          "git fetch origin; git rev-list --left-right --count origin/master...HEAD",
+          "git log --branches --not --remotes --oneline | wc -l"
+        ],
+        "out": [
+          "HEAD ad8b6703b3fd18f99853e3cb7bd3b2534cec1548 (master)",
+          "ls-remote HEAD = ad8b6703b3fd18f99853e3cb7bd3b2534cec1548; refs/heads/master = same sha",
+          "0  0 (not ahead, not behind)",
+          "0 unpushed commits on any local branch",
+          "remote: https://github.com/VeigaPunk/shokunin-repo-hygiene.git (live as of r8; the r7 404 state is resolved)"
+        ]
+      }
+    },
+    {
+      "id": "V3",
+      "claim": "All round reports present 1..10 + mint.",
+      "verdict": "MET",
+      "evidence": {
+        "cmds": [
+          "for n in 1..10: test -f /home/vgpnk/Projects/shokunin/.ufo/reports/round-$n/souji.md",
+          "ls /home/vgpnk/Projects/shokunin/.ufo/scopes/souji-mint-20261018/",
+          "ls souji-shokunin/corpus/lessons/"
+        ],
+        "out": [
+          "round-1..10 souji.md all present (3971/3671/3609/3616/3961/4285/3190/3256/3746/2307 B, mtimes 12:40..23:11 -0300)",
+          "round-0 = mint: no round-0 report dir exists and none is contracted — MANIFEST round-0 (minted:[souji]) points at .ufo/scopes/souji-mint-20261018/{mint-roster-scan.json,obsidian-cli-probe.md,operator-demand.md}, all present",
+          "mint evidence files present in scope dir",
+          "corpus/lessons/round-1..10.md all present (round-2 = tool-gate lesson; no census/round-2 dir exists — r2 was the tool tournament, its round record is lessons + fleet report, consistent with all MANIFEST/LOG references)"
+        ]
+      }
+    },
+    {
+      "id": "V4",
+      "claim": "MANIFEST.json entries match reports (every souji rounds[] entry's report path resolves; every cited work commit resolves in lane history; lane status strings consistent with LOG.md/SCORECARD).",
+      "verdict": "MET",
+      "evidence": {
+        "cmds": [
+          "python3: iterate fleet MANIFEST.json rounds[] for lanes.souji / minted==[souji]",
+          "for each cited commit: git -C souji-shokunin cat-file -t <sha>",
+          "for each report: git -C fleet log -1 -- <report>; git merge-base --is-ancestor <report-commit> refs/remotes/origin/master"
+        ],
+        "out": [
+          "MANIFEST souji entries: round 0 (minted) + rounds 1..10 (lanes.souji ok/failed) — 11 entries, no gaps",
+          "report paths in notes: .ufo/reports/round-1..10/souji.md — all resolve on disk",
+          "work commits all resolve: r1 652b6f8+ab7f2f7, r2 9435e46+97f22c9+187ebb2, r3 36746332, r4 48a64d8, r5 ce58c2b4, r6 b5db5cf, r7 1cf5fa8, r8 6d749f17, r9 455b1de2, r10 e879ba0 (all commit objects present in lane history)",
+          "status strings consistent: r1,2,3,4,5,8 = ok; r6,7,9,10 = failed — matches LOG.md round headers (lines 34..332) and SCORECARD.md history; r6/r7/r9/r10 rejections preserved, not overwritten",
+          "roster: 13 rows, souji correctly ABSENT (probation rule: roster row withheld pending >=3 verified rounds + operator; MINT.md:55 documents this — not a durability defect)"
+        ]
+      }
+    },
+    {
+      "id": "V5",
+      "claim": "Round-report durability in the FLEET repo (each report's introducing commit is pushed to the fleet origin).",
+      "verdict": "PARTIAL",
+      "evidence": {
+        "cmds": [
+          "for n in 1..10: c=$(git log --format=%H -1 -- .ufo/reports/round-$n/souji.md); git merge-base --is-ancestor $c refs/remotes/origin/master"
+        ],
+        "out": [
+          "round-1..9 report commits ea3f092/025dc63/e6e5061/3e1f1a1/adc3d33/c013f20/6eaaab4/5918d99/8370ccc: ALL PUSHED (ancestors of fleet origin/master d6ac1b6)",
+          "round-10 report commit 7aea421 (adds .ufo/reports/round-10/souji.md + MANIFEST.json r10 entry): UNPUSHED — fleet HEAD 7aea421 is 1 commit ahead of fleet origin/master d6ac1b6",
+          "mint scope files 7bf2b1a/3e1f1a1: PUSHED"
+        ],
+        "note": "7aea421 is the parent's just-created r11 setup commit (r10 closure + MANIFEST entry), created 2026-10-18 ~23:11, minutes before this audit. This is the fleet repo's normal end-of-round unpushed state, not data loss: the bytes are committed at fleet HEAD, the working tree is clean apart from pre-existing .scratch/*.out scratch outputs, and pushing is the parent's/operator's move (lane AGENTS.md forbids this seat from touching fleet state; 'never touch an artifact whose owning lane has dirty or unpushed work'). Recorded so r11 closure includes the push."
+      }
+    },
+    {
+      "id": "V6",
+      "claim": "Rubric and certifier artifacts are durable and hash-consistent (rubric-final.md banked at the documented sha; cert-16.json matches the briefing: 3 unsafe, all census-empty-compare class; frozen tool bytes match cert-16 lane_tool_sha256).",
+      "verdict": "MET",
+      "evidence": {
+        "cmds": [
+          "sha256sum census/round-9/rubric-final.md census/round-10/cert-16.json LOG.md SCORECARD.md MINT.md",
+          "python3: extract cert-16 certification_verdict / unsafe_outcomes / unsafe_by_kind / unsafe_register",
+          "cmp frozen bytes vs repo bytes (sha256sum, /var/tmp/s25-freeze-BRJxQ1)"
+        ],
+        "out": [
+          "rubric-final.md sha256 36f3322a7f31b76e12add5c64d94d3d103f78ea93e6c1eeff8567479ffb9b18f (368 lines; souji-r9-v1 merged spec: 10 strata/axis x 2 checks, exact-fraction scoring, E0/E1/E2 evidence credit, safety override, publication safeguards, 30-strata mandatory table C01..K10)",
+          "cert-16.json sha256 8fbdbd60cabc2d76e88072137a575e2479fa16cb201d73a2f72b2e002f015427 — certification_verdict 'NOT-CERTIFIED: empty-census-compare (contract-violation)'; unsafe_outcomes=3, unsafe_by_kind {contract-violation: 3}, unsafe_by_corpus {final22:1, s16-fresh:2}; all 3 register entries preserve originals (preserved:true, staged:[], deletes:[]) — matches briefing exactly",
+          "cert-16 rule: '0 unsafe outcomes, 0 harness errors, all S15 merged-selftest checks pass, all built-in selftests exit 0' — r11's fix must close the census-empty-compare class and re-run the 15 corpora",
+          "frozen tool shas == repo bytes == cert-16 lane_tool_sha256 (verify 9adb1764, vault f9e778ca, quarantine 141c0fdc, census 11bf9cdf)"
+        ]
+      }
+    }
+  ],
+  "verdicts": {
+    "lane-clean": "MET",
+    "lane-head-pushed": "MET",
+    "reports-1-10-plus-mint-present": "MET",
+    "manifest-matches-reports": "MET",
+    "fleet-report-push-durability": "PARTIAL (round-10 closure commit 7aea421 unpushed at fleet HEAD; rounds 1-9 + mint all pushed; parent's r11 setup commit, push pending, no data loss)"
+  },
+  "unsafe_outcomes": 0,
+  "false_safe": 0,
+  "unauthorized_deletes": 0,
+  "mutations_made": "none — read-only audit; only files written: census/round-11/seat-25.json (assigned); fixture-freeze copies under /var/tmp/s25-freeze-BRJxQ1 (host quota respected: /var/tmp, not /tmp)",
+  "defects": [],
+  "to_verify": [],
+  "notes": "Lane durability is fully green: clean tree, HEAD==origin/master byte-identical via ls-remote, 0 stashes, single worktree, 463/463 census files tracked, all 10 lessons + 10 fleet reports + 3 mint-scope files present, MANIFEST 11 souji entries all resolving (report paths + work commits + status strings consistent with LOG/SCORECARD including preserved rejections). The single PARTIAL is cross-repo: the fleet repo's r10-closure commit 7aea421 (round-10/souji.md + MANIFEST r10 entry) is 1 commit ahead of fleet origin/master d6ac1b6 — committed bytes, clean tree, no loss; flag for the parent to push at r11 closure. No census tool was executed against live state by this seat (assignment is git/file-level); frozen bytes recorded for downstream seats.",
+  "post_audit_addendum": {
+    "observed_at": "2026-10-18T23:17:32-0300",
+    "finding": "Parent r11 work landed in the lane DURING this audit (after the V1-V6 measurements at 23:15-23:17): census/round-11/cert-11.json created; tools/souji-census.sh modified 11bf9cdf -> 462dabd281e417c80266ba4d3ffd2cd8ebca0aa84147e1c45c9832ee638b52ca; new untracked candidates tools/cand-census-0{3,6,7,8}.sh; census/round-10/cert-16.json re-run, sha 8fbdbd60 -> 5551e4755a2a2a66caefb818781d5a391dcbe5f15015bd7482b48a73dd1ab60b.",
+    "cert16_rerun_content": "Same 3 unsafe outcomes (unsafe_outcomes=3), all contract-violation; certification_verdict now names the cases explicitly: 'NOT-CERTIFIED: J14 (contract-violation); V07 (contract-violation); empty-census-compare (contract-violation)'. The census-empty-compare class is still OPEN on the new census bytes — r11's fix has not closed it yet as of this observation.",
+    "impact_on_verdicts": "V1 (clean tree) was MET at probe time 23:15 and is now superseded by the parent's in-flight round work (expected during a round; the committed baseline ad8b670 remains clean and pushed). V2-V5 unaffected (git/file-level, measured against committed state). V6's recorded shas are the r10-merge baseline (census 11bf9cdf, cert-16 8fbdbd60) — the frozen copies in /var/tmp/s25-freeze-BRJxQ1 preserve exactly those bytes; downstream seats comparing against 'the r10 certifier bytes' must use the frozen copies or the new 5551e475/462dabd2 shas, not the stale 8fbdbd60/11bf9cdf pair."
+  }
+}

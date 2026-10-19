@@ -355,23 +355,26 @@ emit_census() {
 # --- compare ---------------------------------------------------------------
 
 # Load a census TSV into parallel arrays keyed by repo. Caller supplies the
-# namerefs. Malformed input is a hard error (exit 2) — a compare against a
-# corrupt previous census must not look like "no diff".
+# namerefs. The header must be the FIRST line of the file and match exactly:
+# an empty, blank-led or malformed baseline is a hard error (exit 2) — a
+# corrupt previous census must never look like "no diff". Blank lines AFTER
+# the header are skipped.
 load_census() { # $1 file, $2 assoc-nameref of "repo -> rest-of-row"
   local file=$1
   local -n _map=$2
   [ -f "$file" ] || usage_err "compare file not found: $file"
-  local line n=0 repo rest
+  local line n=0 repo rest saw_header=0
   while IFS= read -r line || [ -n "$line" ]; do
     n=$((n + 1))
     line=${line%$'\r'}
-    [ -n "$line" ] || continue
-    if [ "$n" = 1 ]; then
+    if [ "$saw_header" = 0 ]; then
       if [ "$line" != "$HEADER" ]; then
         usage_err "compare file header mismatch (want 7 census columns)"
       fi
+      saw_header=1
       continue
     fi
+    [ -n "$line" ] || continue
     repo=${line%%$'\t'*}
     rest=${line#*$'\t'}
     [ -n "$repo" ] || usage_err "compare file: empty repo on line $n"
@@ -380,6 +383,7 @@ load_census() { # $1 file, $2 assoc-nameref of "repo -> rest-of-row"
     fi
     _map["$repo"]=$rest
   done < "$file"
+  [ "$saw_header" = 1 ] || usage_err "compare file header mismatch (want 7 census columns)"
 }
 
 field_at() { # $1 rest-of-row (6 fields), $2 1-based index among those 6
@@ -713,6 +717,22 @@ run_selftest() {
     st_bad "compare identical: exit=$cmp_st out=$(printf '%s' "$cmp_out" | head -5)"
   fi
 
+  # blank lines AFTER a valid header are skipped, not an error: a real
+  # prior census with trailing blank lines must still compare clean.
+  # (Placed before the mutation block: out1 is still the identical baseline.)
+  cat "$out1" > "$ST_TMP/blank-after-header.tsv"
+  printf '\n\n' >> "$ST_TMP/blank-after-header.tsv"
+  set +e
+  cmp_out=$(env -u GIT_DIR SOUJI_CENSUS_SELFTEST_ACTIVE=1 \
+    "$SELF" --root "$fleet" --compare "$ST_TMP/blank-after-header.tsv" 2>&1)
+  cmp_st=$?
+  set -e
+  if [ "$cmp_st" = 0 ] && [ "$cmp_out" = "$DIFF_HEADER" ]; then
+    st_ok "blank-after-header compares clean (exit 0, header only)"
+  else
+    st_bad "blank-after-header: exit=$cmp_st out=$(printf '%s' "$cmp_out" | head -5)"
+  fi
+
   # mutate scratch size and dirty set, compare must report both
   printf 'more-scratch\n' >> "$RD/.scratch/note.txt"
   rm -f -- "$RD/untracked.txt"
@@ -733,16 +753,20 @@ run_selftest() {
     *) st_bad "compare missing dirty row" ;;
   esac
 
-  # bad header must exit 2, not look like an empty diff
+  # malformed baselines must exit 2, never look like an empty diff
   printf 'nope\n' > "$ST_TMP/bad.tsv"
-  set +e
-  env -u GIT_DIR SOUJI_CENSUS_SELFTEST_ACTIVE=1 \
-    "$SELF" --root "$fleet" --compare "$ST_TMP/bad.tsv" >/dev/null 2>&1
-  cmp_st=$?
-  set -e
-  if [ "$cmp_st" = 2 ]; then st_ok "bad compare header exits 2"
-  else st_bad "bad compare header exit=$cmp_st want 2"; fi
-
+  : > "$ST_TMP/empty.tsv"
+  printf '\n' > "$ST_TMP/blank-lead.tsv"
+  printf '\n%s\n' "$HEADER" > "$ST_TMP/blank-before-header.tsv"
+  for f in bad empty blank-lead blank-before-header; do
+    set +e
+    env -u GIT_DIR SOUJI_CENSUS_SELFTEST_ACTIVE=1 \
+      "$SELF" --root "$fleet" --compare "$ST_TMP/$f.tsv" >/dev/null 2>&1
+    cmp_st=$?
+    set -e
+    if [ "$cmp_st" = 2 ]; then st_ok "$f compare baseline exits 2"
+    else st_bad "$f compare baseline exit=$cmp_st want 2"; fi
+  done
   # unknown flag exits 2
   set +e
   env -u GIT_DIR SOUJI_CENSUS_SELFTEST_ACTIVE=1 "$SELF" --nope >/dev/null 2>&1

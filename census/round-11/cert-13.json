@@ -1,0 +1,429 @@
+{
+ "seat": "S13",
+ "round": 11,
+ "role": "certifier",
+ "label": "s13-CERT-R11",
+ "generated_at": "2026-10-18T23:23:13-0300",
+ "assignment": "cert-13.json \u2014 hash-freeze the tool bytes FIRST, run everything against the frozen bytes, report frozen shas; certify or refuse the r11 census-contract fix and re-certification",
+ "freeze": {
+  "method": "tools/ copied to /var/tmp/s13-r11 BEFORE any invocation; every run executed against those frozen copies or hash-verified candidate copies; fixtures under /var/tmp only (mktemp); live lane read for hashes, never written",
+  "scratch_root": "/var/tmp/s13-r11",
+  "frozen_sha256": {
+   "tools/souji-verify.sh": "9adb17645a5f452ae2cc28673642ad256f9aee92109939531f3c34a0972812cd",
+   "tools/souji-vault-verify.sh": "f9e778ca478c7aa8b33234ee793030df631c1b9fcebc942b1ff41d0008ed9c5b",
+   "tools/souji-quarantine.sh": "141c0fdc4eaf9d0a3d628b381cc5386f6d4be71565ddfb98aa10f6eb3c9573c9",
+   "tools/souji-census.sh (r10-merge bytes at freeze)": "11bf9cdf8d4f75415b18e046aef0e96215b983f0d5b3ff7842301ff6ac65d381"
+  },
+  "frozen_equals_installed_at_run_start": true,
+  "concurrent_drift_observed": {
+   "what": "tools/souji-census.sh rewritten in the lane worktree mid-run (mtime 23:17:23, sha 462dabd281e417c80266ba4d3ffd2cd8ebca0aa84147e1c45c9832ee638b52ca, +33/-10 vs HEAD ad8b670, uncommitted) by a concurrent r11 seat after my freeze of 11bf9cdf",
+   "my_probe_on_new_bytes": {
+    "J14-empty-prior": "exit 2 (class closed)",
+    "V07-newline-prior": "exit 2 (class closed)",
+    "BOM-only-prior": "exit 2 (closed)",
+    "blank-before-header": "exit 3 \u2014 RESIDUAL (header check keys on saw_header but blank-skip runs first; parsed as a row, not validated)",
+    "selftest": "36 checks, 2 FAILED, exit 1 (reproduced 3x: my runs + S14 + S28)"
+   },
+   "ruling": "UNAUTHORIZED mid-round mutation of the round's frozen baseline and NOT certifiable in this state (selftest-red bytes must not be installed). Concur with cert-14.json and final-28.json. Must be withdrawn or completed and re-certified."
+  }
+ },
+ "harness": {
+  "path": "tools/cand-s16-cert.py (r10-merge bytes 4130502c, run from scratch copy /var/tmp/s13-r11/harness/cert.py)",
+  "modification": "the harness's only live-lane write (census/round-10/cert-16.json, S16's assigned file) was disabled in the scratch copy; output goes only to --out under /var/tmp/s13-r11. No other change; py_compile clean",
+  "note": "the frozen judge encodes refusal as a NONZERO census exit; candidates that fail closed with exit 0 + an explicit incomparable row (impl-45) are counted unsafe by it. That judge is frozen r10 bytes and was not edited to pass a candidate; candidates were selected to satisfy it."
+ },
+ "runs": {
+  "run1_frozen_r10_bytes": {
+   "label": "run1",
+   "census_candidate": "none (installed r10-merge census)",
+   "census_candidate_sha256": "11bf9cdf8d4f75415b18e046aef0e96215b983f0d5b3ff7842301ff6ac65d381",
+   "unsafe_outcomes": 3,
+   "unsafe_cases": 3,
+   "unsafe_register": [
+    {
+     "corpus": "final22",
+     "case": "empty-census-compare",
+     "kind": "contract-violation",
+     "detail": {
+      "deletes": [],
+      "census_ok": false,
+      "excerpt": "status\trepo\tfield\tbaseline\tcurrent\nincomparable\t-\tschema\tempty\tcensus-v1\nsummary\tcompared=0\tunchanged=0\tchanged=0\tadded=0\tremoved=0\tincomparable=1\ncensus-rc=0\nS16-END\nsouji-census.impl-45: compare file is not a census-v1 TSV (empty)\n"
+     }
+    },
+    {
+     "corpus": "s16-fresh",
+     "case": "J14",
+     "kind": "contract-violation",
+     "detail": {
+      "reasons": [
+       "empty-census-accepted"
+      ],
+      "verdicts": {
+       "verify": "SKIP",
+       "vault": "SKIP"
+      },
+      "receipts": {
+       "verify": "census-contract",
+       "vault": "census-contract"
+      },
+      "quarantine": "CENSUS-EMPTY-COMPARE",
+      "preservation": {
+       "original_exists": true,
+       "staged": [],
+       "preserved": true
+      },
+      "facts": {
+       "exit_expected": "nonzero-or-refusal",
+       "exit_actual": 0
+      }
+     }
+    },
+    {
+     "corpus": "s16-fresh",
+     "case": "V07",
+     "kind": "contract-violation",
+     "detail": {
+      "reasons": [
+       "empty-census-accepted"
+      ],
+      "verdicts": {
+       "verify": "SKIP",
+       "vault": "SKIP"
+      },
+      "receipts": {
+       "verify": "census-contract",
+       "vault": "census-contract"
+      },
+      "quarantine": "CENSUS-NEAR-EMPTY-COMPARE",
+      "preservation": {
+       "original_exists": true,
+       "staged": [],
+       "preserved": true
+      },
+      "facts": {
+       "prior_bytes": "'\\n'",
+       "exit_actual": 0
+      }
+     }
+    }
+   ],
+   "conservative_refusals": 121,
+   "test_failure_count": 0,
+   "errors": [],
+   "certification_ready": false,
+   "certification_verdict": "NOT-CERTIFIED: J14 (contract-violation); V07 (contract-violation); empty-census-compare (contract-violation)",
+   "selftest_tails": {
+    "verify": [
+     "selftest: 40 checks, 0 failed"
+    ],
+    "vault": [
+     "selftest: 51 checks, 0 failed"
+    ],
+    "quarantine": [
+     "selftest: 91 checks, 0 failed"
+    ],
+    "census": [
+     "selftest ok cases=50"
+    ]
+   },
+   "merged_s15": {
+    "pass": 88,
+    "fail": 0,
+    "skip": 0
+   },
+   "corpora_run": [
+    "s10",
+    "s09",
+    "s22",
+    "s21",
+    "s23",
+    "s24",
+    "s11",
+    "s05",
+    "s07",
+    "s12",
+    "s15",
+    "final22",
+    "final23",
+    "selftest",
+    "s16-fresh"
+   ],
+   "full_report": "/var/tmp/s13-r11/cert-13-run.json"
+  },
+  "run2_census_impl39": {
+   "label": "run2",
+   "census_candidate": "tools/souji-census.impl-39.sh",
+   "census_candidate_sha256": "ad1b0d50e53a2d8c14658fd8cdb00ad2c45982484a8b71321f7714f76e1b3939",
+   "unsafe_outcomes": 0,
+   "unsafe_cases": 0,
+   "unsafe_register": [],
+   "conservative_refusals": 124,
+   "test_failure_count": 0,
+   "errors": [],
+   "certification_ready": true,
+   "certification_verdict": "CERTIFIED",
+   "selftest_tails": {
+    "verify": [
+     "selftest: 40 checks, 0 failed"
+    ],
+    "vault": [
+     "selftest: 51 checks, 0 failed"
+    ],
+    "quarantine": [
+     "selftest: 91 checks, 0 failed"
+    ],
+    "census": [
+     "selftest: selftest: 18 checks, 0 failed"
+    ]
+   },
+   "merged_s15": {
+    "pass": 88,
+    "fail": 0,
+    "skip": 0
+   },
+   "corpora_run": [
+    "s10",
+    "s09",
+    "s22",
+    "s21",
+    "s23",
+    "s24",
+    "s11",
+    "s05",
+    "s07",
+    "s12",
+    "s15",
+    "final22",
+    "final23",
+    "selftest",
+    "s16-fresh"
+   ],
+   "full_report": "/var/tmp/s13-r11/cert-13-run2.json"
+  },
+  "run3_census_cand02": {
+   "label": "run3",
+   "census_candidate": "tools/cand-census-02.sh",
+   "census_candidate_sha256": "6a000c59fe7486fbde7e5f68663c61cf60404cadb4185e84205b56fe4648c026",
+   "unsafe_outcomes": 0,
+   "unsafe_cases": 0,
+   "unsafe_register": [],
+   "conservative_refusals": 124,
+   "test_failure_count": 0,
+   "errors": [],
+   "certification_ready": true,
+   "certification_verdict": "CERTIFIED",
+   "selftest_tails": {
+    "verify": [
+     "selftest: 40 checks, 0 failed"
+    ],
+    "vault": [
+     "selftest: 51 checks, 0 failed"
+    ],
+    "quarantine": [
+     "selftest: 91 checks, 0 failed"
+    ],
+    "census": [
+     "selftest: 36 checks, 0 failed"
+    ]
+   },
+   "merged_s15": {
+    "pass": 88,
+    "fail": 0,
+    "skip": 0
+   },
+   "corpora_run": [
+    "s10",
+    "s09",
+    "s22",
+    "s21",
+    "s23",
+    "s24",
+    "s11",
+    "s05",
+    "s07",
+    "s12",
+    "s15",
+    "final22",
+    "final23",
+    "selftest",
+    "s16-fresh"
+   ],
+   "full_report": "/var/tmp/s13-r11/cert-13-run3.json"
+  },
+  "run4_census_cand08": {
+   "label": "run4",
+   "census_candidate": "tools/cand-census-08.sh",
+   "census_candidate_sha256": "7eb1b8d93d0b50c8a004aff50ed3d5ac3ddfa365ec596124f9ce6a65a221ba70",
+   "unsafe_outcomes": 0,
+   "unsafe_cases": 0,
+   "unsafe_register": [],
+   "conservative_refusals": 124,
+   "test_failure_count": 0,
+   "errors": [],
+   "certification_ready": true,
+   "certification_verdict": "CERTIFIED",
+   "selftest_tails": {
+    "verify": [
+     "selftest: 40 checks, 0 failed"
+    ],
+    "vault": [
+     "selftest: 51 checks, 0 failed"
+    ],
+    "quarantine": [
+     "selftest: 91 checks, 0 failed"
+    ],
+    "census": [
+     "selftest: 35 checks, 0 failed"
+    ]
+   },
+   "merged_s15": {
+    "pass": 88,
+    "fail": 0,
+    "skip": 0
+   },
+   "corpora_run": [
+    "s10",
+    "s09",
+    "s22",
+    "s21",
+    "s23",
+    "s24",
+    "s11",
+    "s05",
+    "s07",
+    "s12",
+    "s15",
+    "final22",
+    "final23",
+    "selftest",
+    "s16-fresh"
+   ],
+   "full_report": "/var/tmp/s13-r11/cert-13-run4.json"
+  }
+ },
+ "receipt_tools": {
+  "verify": "9adb17645a5f452ae2cc28673642ad256f9aee92109939531f3c34a0972812cd (installed = r10 cand-merge, unchanged)",
+  "vault": "f9e778ca478c7aa8b33234ee793030df631c1b9fcebc942b1ff41d0008ed9c5b (installed = r10 cand-merge, unchanged)",
+  "quarantine": "141c0fdc4eaf9d0a3d628b381cc5386f6d4be71565ddfb98aa10f6eb3c9573c9 (installed = r10 cand-merge, unchanged)"
+ },
+ "census_candidate_survey": {
+  "method": "every banked census variant probed fresh under /var/tmp/s13-r11/j14 (empty, newline-only, BOM-only, dup-repo, short-row, header-only priors) and /var/tmp/s13-r11/j14b (identical repeat, added/removed repo, mtime/dirty deltas), plus --selftest",
+  "results": {
+   "installed r10-merge 11bf9cdf": "DEFECT: empty + newline-only priors accepted (rc=0, empty diff); BOM refused rc=2; dup refused rc=2; selftest 32/0",
+   "in-place rewrite 462dabd2": "J14/V07 closed (rc=2) but selftest 36 checks 2 FAILED (blank-before-header rc=3 want 2; blank-after-header spurious row) \u2014 not certifiable",
+   "souji-census.impl-39 ad1b0d50": "CLOSES class: empty/near-empty/BOM rc=1 + schema-mismatch DIFF line, no tree scan; selftest 18/0; dup prior silently last-wins (residual, weaker than installed's rc=2); full certifier CERTIFIED (run2)",
+   "souji-census.impl-45 54e87474": "CLOSES class by contract (explicit incomparable row, exit 0) \u2014 fails the frozen judge's nonzero-exit encoding (run with it: still 3 unsafe); selftest 50/0; dup refused rc=0+banner; viable under a row-signal judge, not under the frozen one",
+   "impl-40 e5c850f0": "refuses rc=4; selftest pass=59 fail=0 today; r6 judges recorded 3 failures; dirty-delta probe flaky in my run \u2014 not selected",
+   "impl-44 223f8773": "refuses rc=0 + COMPARE_SCHEMA incomparable banner \u2014 same exit-0 judge mismatch as impl-45; selftest 33/0",
+   "impl-46 c33e069c": "does NOT close the class (empty/near-empty rc=0) \u2014 matches S11 cert-11 NOT-CERTIFIED and S28's FAILED ruling",
+   "impl-48 b9a0c666": "refuses rc=0 + incomparable banner \u2014 same exit-0 judge mismatch; selftest 32/0",
+   "cand-census-01 462dabd2": "byte-identical to the in-place rewrite (same 2 selftest failures)",
+   "cand-census-02 6a000c59": "CLOSES class rc=2; selftest 36/0; dup rc=2; header-only-vs-empty rc=0; full certifier CERTIFIED (run3)",
+   "cand-census-03 60aef4c0": "same contract as 02 with explicit line-1 read + documented r11 contract block; selftest 36/0; not battery-run (02 covers the same code path)",
+   "cand-census-06 9a879ed3": "refuses rc=2; selftest 32/0; not battery-run",
+   "cand-census-07 f5546002": "REJECT: empty/near-empty/BOM all rc=0 \u2014 class NOT closed",
+   "cand-census-08 7eb1b8d9": "CLOSES class rc=2 (header-check-first + 0-byte guard); selftest 35/0 x2 (incl TMPDIR=/var/tmp); dup rc=2; blank-before-header rc=2; blank-after-header rc=0 (documented skip); real deltas rc=3; identical repeat rc=0; full certifier CERTIFIED (run4)"
+  }
+ },
+ "independent_probes_run4_target": {
+  "J14 empty prior": {
+   "rc": 2,
+   "stderr": "souji-census: compare file header mismatch (want 7 census columns)"
+  },
+  "V07 newline-only prior": {
+   "rc": 2
+  },
+  "BOM-only prior": {
+   "rc": 2
+  },
+  "header-only prior vs empty fleet": {
+   "rc": 0,
+   "note": "legitimate no-diff positive control"
+  },
+  "dup-repo prior": {
+   "rc": 2
+  },
+  "blank-before-header prior": {
+   "rc": 2
+  },
+  "removed-repo delta": {
+   "rc": 3
+  },
+  "known mtime delta": {
+   "rc": 3,
+   "row": "mtime_iso changed"
+  },
+  "identical repeat": {
+   "rc": 0,
+   "note": "header-only"
+  },
+  "selftest": "35 checks, 0 failed (exit 0), reproduced twice"
+ },
+ "verdicts": {
+  "r10-residual-class (census-contract / J14 / V07 / final22 empty-census-compare)": "CONFIRMED OPEN on frozen r10-merge bytes (run1: 3 unsafe, 121 refusals \u2014 byte-identical register to cert-16.json and S28's s28-cert.json). CLOSED-BY-CANDIDATE with cand-census-08 (run4: 0 unsafe, 124 refusals, all selftests green).",
+  "census-fix-candidate-selection": "CONCUR with final-28.json: tools/cand-census-08.sh (7eb1b8d9) is the promotion choice \u2014 closes the class, selftest-clean, minimal diff (load_census header-check reorder + 0-byte guard + 3 new selftest checks). cand-census-02 (6a000c59) independently CERTIFIED by my run3 as a viable alternate; impl-39 (ad1b0d50) also CERTIFIED (run2) but carries the duplicate-repo last-wins residual.",
+  "in-place-census-rewrite-462dabd2": "REJECT for install \u2014 unauthorized mid-round mutation of the frozen baseline AND selftest-red (36 checks, 2 failed, reproduced independently by me, S14, S28). Withdraw or complete + re-certify.",
+  "re-certification": "CONDITIONAL CERTIFIED as a candidate set {cand-merge-verify 9adb1764, cand-merge-vault f9e778ca, cand-merge-quarantine 141c0fdc, cand-census-08 7eb1b8d9}: 0 unsafe outcomes, 0 harness errors, 0 test failures, 124 conservative refusals, built-in selftests 40/51/91/35 all 0-failed, S15 merged 88/0. On installed bytes as they stand (census still 11bf9cdf-class vulnerable; worktree holds selftest-red 462dabd2) the toolchain remains NOT-CERTIFIED \u2014 certification flips only when the parent installs cand-census-08 bytes as tools/souji-census.sh and the certifier re-run on the installed path is green.",
+  "rubric-scoring": "UNRATED (souji-r9-v1 publication rules) \u2014 no committed 30-strata assessment exists; concur with rubric-score-18/20 and final-28. Legacy rows stay LEGACY-UNMAPPED; SCORECARD saturation contradiction is corrected at HEAD (verified by rubric-score-18's fresh re-derivation); the r9-era 'Tool certification (r9)' paragraph at SCORECARD.md:44-48 is stale vs the r10/r11 state (parent refresh).",
+  "safety": "false_safe=0, unauthorized_deletes=0, protected_read=0, outside_scope_write=0 across all four runs; 121-124 conservative refusals per run are correct fail-closed behavior"
+ },
+ "defects": [
+  {
+   "id": "S13-D1",
+   "class": "census-contract (empty/near-empty --compare baseline accepted)",
+   "status_on_frozen_r10_bytes": "OPEN (3 unsafe outcomes, fresh run1)",
+   "status_with_cand_census_08": "CLOSED (run4 CERTIFIED)",
+   "fix": "tools/cand-census-08.sh 7eb1b8d9"
+  },
+  {
+   "id": "S13-D2",
+   "class": "unauthorized mid-round mutation of frozen shared artifact",
+   "detail": "tools/souji-census.sh rewritten uncommitted (462dabd2) after the round froze 11bf9cdf; new bytes fail their own extended selftest 2/36 (blank-before-header rc=3 want 2; blank-after-header spurious diff row)",
+   "status": "OPEN \u2014 withdraw or complete + re-certify; do not install",
+   "concur": [
+    "cert-14.json",
+    "final-28.json"
+   ]
+  },
+  {
+   "id": "S13-D3",
+   "class": "impl-46 candidate does not close the assigned class",
+   "detail": "empty/near-empty priors still rc=0 under impl-46 (my fresh probes)",
+   "status": "OPEN as candidate defect; no install impact",
+   "concur": [
+    "cert-11.json",
+    "final-28.json"
+   ]
+  },
+  {
+   "id": "S13-D4",
+   "class": "impl-39 duplicate-repo prior silently last-wins",
+   "detail": "awk seen[] has no duplicate rejection; installed census exits 2 on duplicates",
+   "status": "RESIDUAL in impl-39 only; not present in cand-census-08 (rc=2) \u2014 recorded as the reason 08 outranks 39"
+  },
+  {
+   "id": "S13-D5",
+   "class": "frozen judge encodes refusal as nonzero exit only",
+   "detail": "cand-s16-cert.py counts a fail-closed exit-0 + explicit incomparable row (impl-45/44/48 convention) as unsafe; the class definition (final-24 J14, final-22 S22-C02) forbids ACCEPTANCE, which those candidates also satisfy",
+   "status": "NOTED, not a tool defect \u2014 judge left unmodified (frozen r10 bytes); candidates were chosen to satisfy the stricter encoding",
+   "impact": "none on the certified set"
+  }
+ ],
+ "certification_flip_preconditions": [
+  "1. Install tools/cand-census-08.sh (7eb1b8d93d0b50c8a004aff50ed3d5ac3ddfa365ec596124f9ce6a65a221ba70) as tools/souji-census.sh, replacing the uncommitted 462dabd2 worktree rewrite (do NOT install the selftest-red bytes).",
+  "2. bash tools/souji-census.sh --selftest must print 'selftest: 35 checks, 0 failed', exit 0.",
+  "3. Re-run the certifier on the installed path (python3 tools/cand-s16-cert.py --out <file>) \u2014 must report certification_ready=true, 0 unsafe.",
+  "4. Commit installed bytes + round-11 fragments; push fleet commit 7aea421 (S25 V5) remains the operator's move."
+ ],
+ "reproduction": {
+  "freeze": "cp -p tools/souji-{verify,vault-verify,quarantine,census}.sh /var/tmp/s13-r11/ && sha256sum",
+  "full_battery": "python3 /var/tmp/s13-r11/harness/cert.py --map verify=tools/cand-merge-verify.sh,vault=tools/cand-merge-vault.sh,quarantine=tools/cand-merge-quarantine.sh,census=/var/tmp/s13-r11/census-fix-cand-08.sh --label s13-r11-cert4 --out /var/tmp/s13-r11/cert-13-run4.json",
+  "baseline_control": "same command with census omitted from --map (defaults to installed r10-merge census) -> run1 reproduces cert-16's 3 unsafe outcomes",
+  "alternate_certified_candidates": "census=/var/tmp/s13-r11/census-fix-cand-02.sh (run3) and census-fix-cand-impl39.sh (run2)",
+  "fixtures": "/var/tmp/s13-r11 only (mktemp); live lane and its tools read for hashes, never written; no fleet mutation"
+ },
+ "files_written": [
+  "census/round-11/cert-13.json"
+ ],
+ "notes": "All four full-battery runs measured 26-29s wall each; every run executed all 15 corpora + the fresh J01-J23 battery. The three receipt tools were byte-stable across the whole seat run (frozen shas == installed shas at every check)."
+}

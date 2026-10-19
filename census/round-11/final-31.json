@@ -1,0 +1,146 @@
+{
+ "schema_version": 1,
+ "seat": "S31",
+ "round": 11,
+ "role": "final-judge",
+ "label": "s31-final",
+ "generated_at": "2026-10-18T23:26:00-0300",
+ "assignment": "Final judge — final-31.json. Certify or refuse the r11 census-contract fix, toolchain re-certification and rubric scoring.",
+ "frozen_bytes": {
+  "method": "sha256 of live tools/ recorded and copied to /var/tmp/s31-freeze-zIQBHO BEFORE any invocation; every repro, selftest and certifier run executed against the frozen copies or hash-verified lane copies; fixtures under mktemp -d -p /var/tmp only (host /tmp quota); live fleet/lane never mutated; lane writes limited to census/round-11/final-31.json",
+  "frozen_at": "2026-10-18T23:16:15-03:00",
+  "sha256": {
+   "tools/souji-verify.sh": "9adb17645a5f452ae2cc28673642ad256f9aee92109939531f3c34a0972812cd",
+   "tools/souji-vault-verify.sh": "f9e778ca478c7aa8b33234ee793030df631c1b9fcebc942b1ff41d0008ed9c5b",
+   "tools/souji-quarantine.sh": "141c0fdc4eaf9d0a3d628b381cc5386f6d4be71565ddfb98aa10f6eb3c9573c9",
+   "tools/souji-census.sh (at freeze, r10-merge bytes)": "11bf9cdf8d4f75415b18e046aef0e96215b983f0d5b3ff7842301ff6ac65d381"
+  },
+  "frozen_equals_HEAD_blobs": true,
+  "lane_head": "ad8b6703b3fd18f99853e3cb7bd3b2534cec1548"
+ },
+ "concurrent_drift_observed": {
+  "what": "tools/souji-census.sh was rewritten in the lane worktree mid-round (mtime 23:17:23, sha 462dabd281e417c80266ba4d3ffd2cd8ebca0aa84147e1c45c9832ee638b52ca, +33/-10 vs HEAD ad8b670, uncommitted) after my 23:16:15 freeze of 11bf9cdf. I re-froze the new bytes at 23:19 and ran the full case set against BOTH censuses. Identical drift is recorded by cert-14.json, seat-23.json concurrency_note, seat-25.json post_audit_addendum, final-28.json and final-29.json.",
+  "attribution": "seat-08.json cross_seat_conflict attributes the rewrite to S29; final-29.json (S29's own file) rules its own rewrite REJECTED-AS-INSTALLED-BYTES. Attribution consistent across seats.",
+  "second_mutation": "census/round-10/cert-16.json was overwritten in place (label s16-CERT-FINAL2 -> s16-r11-cert-c03b, generated_at 23:23:57, sha 662294df4291c16fb0fe8c9a0b6dd58b72ada9476b45113fa7c44d383952c3c1) with a cand-census-03-mapped CERTIFIED run. The committed r10 cert-16 bytes (s16-CERT-FINAL2, 3 unsafe, NOT-CERTIFIED) survive at HEAD/e879ba0 (sha 6293283e369f8a4fd8587ff6aa434de7947d4e0c42d37afea424e39a3e987f34). Overwriting a prior round's committed certifier receipt in the worktree is a second shared-artifact mutation; the r10 receipt must be restored from git before any r11 closure commit.",
+  "ruling": "Both mutations are process defects (freeze-discipline violations), not safety defects: no live fleet or lane artifact outside the assigned files was touched by them, and no unsafe outcome was introduced. The rewritten census bytes are selftest-red and must not be installed; the overwritten cert-16 must be restored from git."
+ },
+ "fresh_repros": [
+  {"case": "J14 (frozen r10 bytes 11bf9cdf)", "cmd": "mkdir empty-root; : > empty.tsv; souji-census.sh --root empty-root --compare empty.tsv", "rc": 0, "expected": "nonzero-or-refusal", "verdict": "UNSAFE-CONTRACT (reproduces cert-16)"},
+  {"case": "V07 (frozen r10 bytes)", "cmd": "printf '\\n' > near.tsv; --compare near.tsv (empty root)", "rc": 0, "expected": "nonzero-or-refusal", "verdict": "UNSAFE-CONTRACT (reproduces cert-16)"},
+  {"case": "final22 empty-census-compare recipe (frozen r10 bytes)", "cmd": "final-22.json reproduction.cases.empty-census-compare verbatim, TOOLS redirected to frozen copies", "rc": 0, "census_rc": 0, "verdict": "UNSAFE-CONTRACT (reproduces cert-16)"},
+  {"case": "bad-header control (frozen r10 bytes)", "rc": 2, "verdict": "correct refusal"},
+  {"case": "identical compare, fresh prior (frozen r10 bytes)", "rc": 0, "verdict": "correct positive control"},
+  {"case": "mutated fleet compare (frozen r10 bytes)", "rc": 3, "verdict": "correct positive control"},
+  {"case": "J14 (S08 candidate 7eb1b8d9)", "rc": 2, "banner": "souji-census: compare file header mismatch (want 7 census columns)", "verdict": "CLOSED"},
+  {"case": "V07 (S08 candidate)", "rc": 2, "verdict": "CLOSED"},
+  {"case": "empty/newline prior vs NONEMPTY fleet (S08 candidate)", "rc": "2/2", "verdict": "CLOSED (refuses; no silent no-diff)"},
+  {"case": "header-only prior vs empty fleet (S08 candidate)", "rc": 0, "verdict": "correct positive control (no over-refusal)"},
+  {"case": "identical compare (S08 candidate)", "rc": 0, "verdict": "correct"},
+  {"case": "blank-before-header (S08 candidate)", "rc": 2, "verdict": "CLOSED (strict line-1 header semantics)"},
+  {"case": "trailing blank line after valid rows (S08 candidate)", "rc": 0, "verdict": "correct (data-row blank skip preserved)"},
+  {"case": "J14/V07 (S03 candidate 60aef4c0)", "rc": "2/2", "verdict": "CLOSED (verified by the rewritten cert-16 run and S09 run-C; not independently re-run by me on the candidate file itself)"},
+  {"case": "J14/V07 (S11 impl-46 c33e069c)", "rc": "0/0", "verdict": "NOT CLOSED — agrees with cert-09 run-A (3 unsafe) and cert-11's own NOT-CERTIFIED"},
+  {"case": "J14/V07 (r10 candidates d1 8cc23a7a / e1 10b58bcc / g1 1e9419bc)", "rc": "0/0", "verdict": "NOT CLOSED (S29 repros; consistent with r10 merge excluding census candidates)"},
+  {"case": "J14/V07/blank-before (mid-round rewrite 462dabd2)", "rc": "2/2/0", "verdict": "class closed but blank-before-header residual + selftest-red 2/36 — do not install"},
+  {"case": "S23 final23 standalone replay (frozen r10 bytes, 12 scenarios C00-C11)", "result": "C00 clean control DELETED rc=0; C01-C11 all refuse (rc=3 or NOT-SAFE), originals preserved; C08 origin-rewind ABORTED with staged copy retained", "unsafe_outcomes": 0, "verdict": "all 9 S23 defect classes remain closed on r10-merge bytes; no regression"},
+  {"case": "final22 battery 10 refuse-class cases (frozen r10 bytes)", "result": "all rc=0 with zero DELETEs; readonly-index index-sha probe: index unchanged (S22-C01 index-write contract fixed)", "verdict": "closed"},
+  {"case": "S08 candidate selftest edge battery (my 9-case run)", "result": "all 9 expectations met; selftest 35 checks, 0 failed, exit 0", "verdict": "candidate self-consistent"}
+ ],
+ "selftests_on_frozen_bytes": {
+  "souji-verify.sh 9adb1764": "40 checks, 0 failed (exit 0)",
+  "souji-vault-verify.sh f9e778ca": "51 checks, 0 failed (exit 0)",
+  "souji-quarantine.sh 141c0fdc": "91 checks, 0 failed (exit 0)",
+  "souji-census.sh 11bf9cdf (frozen r10-merge)": "32 checks, 0 failed (exit 0)",
+  "souji-census.sh 462dabd2 (mid-round rewrite)": "36 checks, 2 FAILED (exit 1) — reproduced 3x (blank-before-header exit=3 want 2; blank-after-header exit=3 want 0)",
+  "cand-census-08.sh 7eb1b8d9": "35 checks, 0 failed (exit 0)",
+  "cand-census-03.sh 60aef4c0": "36 checks, 0 failed (S29)",
+  "souji-census.impl-46.sh c33e069c": "67 checks, 0 failed — does not cover the class (S09/S29)",
+  "harness_layout_note": "Selftests are layout-sensitive: verify/vault need souji-round9-selftest.sh beside them; quarantine needs REPO_ROOT to be a git repo with corpus/knowledge/. My first bare-copy runs (25/1, 36/1, 64/44) were harness-layout artifacts, not tool defects; the canonical certifier-layout lane copy reproduces 40/51/91/32 green. Recorded so later seats do not misread it."
+ },
+ "certifier_reruns": {
+  "frozen-r10-bytes": {
+   "evidence": "/var/tmp/s31-cert/CERT-S31.json (s16-fresh only) and my direct repros for the full set; peer equivalents: cert-14.json (3 unsafe, frozen), cert-09 run-A (3 unsafe, impl-46), final-28 s28-cert.json (3 unsafe)",
+   "unsafe_outcomes": 3,
+   "unsafe_cases": 3,
+   "all_kind": "contract-violation",
+   "all_cases": ["final22/empty-census-compare", "s16-fresh/J14", "s16-fresh/V07"],
+   "certification_verdict": "NOT-CERTIFIED",
+   "matches_cert16_committed": true
+  },
+  "with-s08-census-candidate": {
+   "evidence": "/var/tmp/s31-cert/CERT-S31-S08.json",
+   "label": "s31-S31-S08-VERIFY",
+   "command": "python3 tools/cand-s16-cert.py --cand-dir /var/tmp/s31-cert3 --label s31-S31-S08-VERIFY --out /var/tmp/s31-cert/CERT-S31-S08.json",
+   "unsafe_outcomes": 0,
+   "unsafe_cases": 0,
+   "test_failures": 0,
+   "harness_errors": 0,
+   "conservative_refusals": 124,
+   "selftests": "verify 40/0, vault 51/0, quarantine 91/0, census 35/0",
+   "merged_s15": "88/0/0",
+   "certification_verdict": "CERTIFIED",
+   "certification_ready": true,
+   "peer_agreement": "S08-cert-run.json (S08), final-28 s28-s08-cert.json (S28), final-29 (S29) — three independent certifier runs agree on the same candidate sha"
+  },
+  "mid-round-rewrite-462dabd2-full-corpus": {
+   "evidence": "/var/tmp/s31-cert/CERT-S31-ALL.json",
+   "label": "s31-S31-CERT-ALL",
+   "unsafe_outcomes": 0,
+   "test_failures": 1,
+   "certification_verdict": "NOT-CERTIFIED (census selftest 36 checks, 2 failed)",
+   "note": "0 unsafe outcomes on the full 15-corpus run — the rewrite closes the class on every certifier case — but its own selftest is red, so the cert rule (all selftests exit 0) fails"
+  },
+  "s07_asserts_failed_note": "s07 corpus asserts_failed=13 with rc=0 and 0 unsafe is byte-identical to the r10 certifier's own record (cert-10.json/cert-16.json both show it, test_failures=0); pre-existing harness characteristic, not an r11 regression"
+ },
+ "verdicts": {
+  "r10-residual-census-contract-class": "CONFIRMED-OPEN on the frozen r10-merge bytes (11bf9cdf): 3 unsafe outcomes, all one class (census --compare accepts empty/near-empty prior and exits 0), reproduced fresh by me in 3 repro forms and by peer certifiers S14/S09/S28/S29. No false SAFE, no unauthorized DELETE, no data loss — a fail-open contract violation: a corrupt/empty baseline reads as 'no diff'.",
+  "s08-cand-census-08": "MET — CERTIFIED as candidate by my own full certifier run (0 unsafe, 0 test failures, 0 errors, 124 refusals, selftests 40/51/91/35, S15 88/0) plus my 9-case edge battery, and by three prior independent runs (S08, S28, S29). Minimal diff: load_census() header-check reorder + 0-byte post-loop guard + 3 selftest checks (32->35). The promotion choice.",
+  "s03-cand-census-03": "MET-AS-CANDIDATE — certifier-CERTIFIED via the rewritten cert-16 run (0 unsafe, 0 tf) and S09 run-C; selftest 36/0. Equivalent class-closure; S08 additionally ships the certifier-verified full-corpus run under its exact sha and is the two-judge consensus promotion. Fallback.",
+  "s04-cand-census-04": "PARTIAL — class closed with stricter rc=4 diagnostics (S28/S29 repros); narrower contract (refuses trailing blank after valid header) and no selftest additions. Fallback.",
+  "s11-impl-46": "FAILED — class NOT closed (J14/V07 rc=0, cert-09 run-A 3 unsafe); its 67-check selftest does not cover the class. cert-11.json NOT-CERTIFIED is correct.",
+  "mid-round-rewrite-462dabd2": "REJECTED-AS-INSTALLED-BYTES — closes the class on all certifier cases (my full-corpus run: 0 unsafe) but is selftest-red (2/36: the loader accepts a leading blank before the header while the selftest asserts exit 2; and the blank-after-header selftest check compares a header-only prior against a 2-repo fleet, so exit 3 'added' is the loader's CORRECT output and the check's expectation is wrong). Internal test/impl contradiction; installed mid-round without a candidate+certifier cycle. Withdraw, or fix the two selftest expectations and re-enter through the candidate path.",
+  "cert-16-overwrite": "PROCESS-DEFECT — the r10 receipt was overwritten in the worktree with an r11 candidate-mapped run. Restore the committed bytes (git show HEAD:census/round-10/cert-16.json) before the r11 closure commit; r11 candidate-mapped certifier runs belong in census/round-11/, not in a prior round's receipt file.",
+  "verify-vault-quarantine": "HOLD-CERTIFIED-STATE — on frozen bytes: selftests 40/51/91 green, S23 standalone replay 0 unsafe, final22 battery closed, full certifier corpus 0 unsafe outside the census class, 124 conservative refusals. No open defect on these three tools this round; their certification rides on the census install flip.",
+  "re-certification": "CONDITIONAL-FLIP — the cert rule (0 unsafe, 0 harness errors, 0 test failures, all built-in selftests pass, S15 merged 88/0) is met ONLY with a certified census candidate mapped in (S08 proven 4x including mine; S03 proven 2x). On installed bytes as they stand at judgment time (worktree census 462dabd2 selftest-red; HEAD census 11bf9cdf class-open) the toolchain remains NOT-CERTIFIED. Certification flips when the parent installs 7eb1b8d9 as tools/souji-census.sh and the installed-path selftest reads 35/0.",
+  "rubric-scoring": "UNRATED — I re-ran the canonical R9-SCORE-v1 pipeline at E=ad8b670 myself (exit 0): PROVISIONAL 0/0/0, unprovided_strata = all 30, safety_override false. The r9 blocker (uncommitted rubric-final.md) is gone; rubric-final.md is committed and hash-stable (36f3322a). S18's 53/53 scorer battery and S19/S20 concurrence stand. No seat built the committed 30-strata seat-13.json assessment with primary+replay cells this round; inventing one would violate the rubric's own evidence interface. The three SCORECARD numeric rows (coverage 8 / calibration 7 / operability 8) remain LEGACY-UNMAPPED; the r9 numeric contradictions are corrected at HEAD (prose now agrees with the table); SCORECARD.md:50-52 still describes the r9-era certification state and should be refreshed by the parent after the flip.",
+  "push-durability": "ADOPTED from seat-25.json — lane clean, HEAD ad8b670 pushed; V5 PARTIAL: fleet r10 report commit 7aea421 committed at fleet HEAD but unpushed (1 ahead of fleet origin/master d6ac1b6); the parent's/operator's move.",
+  "round-11-O1": "NOT-MET-AS-STANDING / MET-AS-CANDIDATE — the unsafe class persists on installed bytes at judgment time; the fix is built, certified four times over, and one install step away. The round's work is complete; the round's outcome (certified installed toolchain) awaits the parent's install+commit+push.",
+  "round-verdict": "DO NOT ADMIT AS CLEAN YET — the census-contract class is confirmed open on the frozen baseline, the live worktree carries selftest-red census bytes, and a prior round's certifier receipt was overwritten. Unlike r9/r10, the fix is built and multiply certified with explicit, small flip preconditions. Admit the round once the parent completes the preconditions below."
+ },
+ "certification_flip_preconditions": [
+  "1. Restore census/round-10/cert-16.json from HEAD (git checkout HEAD -- census/round-10/cert-16.json) so the r10 receipt is intact.",
+  "2. Install tools/cand-census-08.sh (7eb1b8d93d0b50c8a004aff50ed3d5ac3ddfa365ec596124f9ce6a65a221ba70) as tools/souji-census.sh, replacing the uncommitted 462dabd2 worktree rewrite (do NOT install selftest-red bytes).",
+  "3. bash tools/souji-census.sh --selftest must print 'selftest: 35 checks, 0 failed', exit 0, on the installed path.",
+  "4. Re-run the certifier on installed bytes: python3 tools/cand-s16-cert.py --out <file> must report certification_ready=true, 0 unsafe, 0 test failures.",
+  "5. Commit the installed bytes + round-11 fragments; push fleet commit 7aea421 (S25 V5).",
+  "6. Refresh SCORECARD.md:50-52 (stale r9-era certification paragraph) after the flip; keep the legacy rows LEGACY-UNMAPPED until a committed 30-strata assessment replaces them."
+ ],
+ "defects": [
+  {"id": "S31-D1", "class": "census-contract (empty/near-empty --compare baseline accepted, exit 0)", "status_on_frozen_r10_bytes": "OPEN (3 unsafe outcomes, reproduced fresh, 3 repro forms)", "status_with_s08_candidate": "CLOSED (certified 4x)", "fix": "tools/cand-census-08.sh 7eb1b8d9"},
+  {"id": "S31-D2", "class": "unauthorized mid-round mutation of the frozen shared baseline + selftest-red bytes in the live worktree", "detail": "tools/souji-census.sh rewritten uncommitted (462dabd2) after the round froze 11bf9cdf; fails its own selftest 2/36", "status": "OPEN — withdraw or complete+re-certify; do not install"},
+  {"id": "S31-D3", "class": "prior-round certifier receipt overwritten in place", "detail": "census/round-10/cert-16.json replaced with an r11 candidate-mapped CERTIFIED run (662294df); committed r10 bytes (6293283e) survive at HEAD", "status": "OPEN — restore from git before closure"},
+  {"id": "S31-D4", "class": "S11 impl-46 candidate does not close the assigned class", "detail": "J14/V07 exit 0 under impl-46 (cert-09 run-A, S29 repros); selftest lacks the class", "status": "OPEN as candidate defect; no install impact"}
+ ],
+ "false_safe": 0,
+ "unauthorized_deletes": 0,
+ "unsafe_outcomes_on_frozen_bytes": 3,
+ "unsafe_outcomes_on_installed_bytes_at_judgment_time": "3 on HEAD bytes (11bf9cdf census); the uncommitted worktree census (462dabd2) closes the class but is selftest-red — either way the installed state is not certifiable",
+ "mutations_made": "census/round-11/final-31.json only; scratch under /var/tmp/s31-*; no live fleet/lane/tool mutation; no git mutations in any live repo",
+ "to_verify": [
+  "Post-install certifier re-run on the installed 7eb1b8d9 census bytes (precondition 4) — the parent must run it after install; all existing CERTIFIED runs used the candidate via --map, equivalent bytes but not the installed path.",
+  "Blank-line semantics pinning: S08/S03 accept trailing blanks after valid rows and refuse leading blanks; S04 refuses both; the 462dabd2 loader accepts leading blanks (contradicting its own selftest). The parent should pin one semantics in the census doc when installing; every variant is fail-closed on the cert-16 cases."
+ ],
+ "notes": "Judged bytes, not prose: every verdict above rests on a command I ran against hash-frozen copies, with peer files cited where they are the primary evidence. The round's three missions resolve as: (1) census-contract fix — built and certified as candidate, not yet installed; (2) toolchain re-certification — conditional flip, preconditions explicit; (3) rubric scoring — pipeline now reproducible at HEAD (I re-ran it), scores stay UNRATED per the rubric's own publication rules. The two process defects (mid-round worktree rewrite, cert-16 overwrite) are contained: neither introduced an unsafe outcome, the rewritten bytes are not committed anywhere, and the overwritten receipt is recoverable from git. No live removal is authorized by anything in this file; operator approval, receipts, quarantine, hold and act-time re-verification remain external gates.",
+ "safety": {
+  "repository_files_written": ["census/round-11/final-31.json"],
+  "fixture_and_log_writes": "/var/tmp/s31-* only",
+  "live_tools_modified_by_s31": false,
+  "live_attacks_or_removals": 0,
+  "live_git_fetch_push_commit_branch": 0,
+  "secret_shaped_contents_read": 0,
+  "driver_state_or_watchdog_accesses": 0,
+  "gui_or_operator_config_changes": 0,
+  "numeric_scores_or_live_approval_invented": false,
+  "background_tasks_required_at_handoff": 0
+ }
+}

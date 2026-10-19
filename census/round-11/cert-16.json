@@ -1,0 +1,630 @@
+{
+ "seat": "S16",
+ "round": 11,
+ "role": "certifier",
+ "label": "s16-CERT-R11",
+ "generated_at": "2026-10-18T23:25:00-0300",
+ "harness_sha256": "4130502cc41f9297e98404833dfa697d63d82dfe817c89c15862627ac7a32733",
+ "harness_frozen_at": "/var/tmp/s16-r11-cert/cand-s16-cert.py (byte-frozen before all runs; post-run hash verified identical)",
+ "freeze_dir": "/var/tmp/s16-r11-cert",
+ "freeze_shas": {
+  "cand-s16-cert.py": "4130502cc41f9297e98404833dfa697d63d82dfe817c89c15862627ac7a32733",
+  "souji-verify.sh": "9adb17645a5f452ae2cc28673642ad256f9aee92109939531f3c34a0972812cd",
+  "souji-vault-verify.sh": "f9e778ca478c7aa8b33234ee793030df631c1b9fcebc942b1ff41d0008ed9c5b",
+  "souji-quarantine.sh": "141c0fdc4eaf9d0a3d628b381cc5386f6d4be71565ddfb98aa10f6eb3c9573c9",
+  "souji-census.sh (r10 bytes, pre-fix)": "11bf9cdf8d4f75415b18e046aef0e96215b983f0d5b3ff7842301ff6ac65d381",
+  "souji-census.sh (r11 installed, mid-round v2)": "462dabd281e417c80266ba4d3ffd2cd8ebca0aa84147e1c45c9832ee638b52ca",
+  "cand-census-03.sh (r11 variant, S11-certified)": "60aef4c07aa75099ff577e8f544e33ceb4914b278c81b8e5f2785e3f582be7fc"
+ },
+ "byte_stability_note": "tools/souji-census.sh changed bytes twice during this seat (11bf9cdf -> 635af7d5 -> 462dabd2) as the r11 census fixer iterated. Every run below was executed against byte-frozen copies; the frozen shas above were re-verified after each run.",
+ "runs": {
+  "A_prefix_repro": {
+   "purpose": "fresh repro of the r10 cert-16 unsafe class against the frozen r10 bytes",
+   "census_bytes": "11bf9cdf8d4f75415b18e046aef0e96215b983f0d5b3ff7842301ff6ac65d381",
+   "report": "/var/tmp/s16-r11-cert/CERT-16-R11.json",
+   "unsafe_outcomes": 3,
+   "unsafe_cases": 3,
+   "test_failure_count": 0,
+   "conservative_refusals": 121,
+   "unsafe_register": [
+    {
+     "corpus": "final22",
+     "case": "empty-census-compare",
+     "kind": "contract-violation",
+     "detail": {
+      "deletes": [],
+      "census_ok": false,
+      "excerpt": "repo\tfield\tbefore\tafter\tchange\ncensus-rc=0\nS16-END\n"
+     }
+    },
+    {
+     "corpus": "s16-fresh",
+     "case": "J14",
+     "kind": "contract-violation",
+     "detail": {
+      "reasons": [
+       "empty-census-accepted"
+      ],
+      "verdicts": {
+       "verify": "SKIP",
+       "vault": "SKIP"
+      },
+      "receipts": {
+       "verify": "census-contract",
+       "vault": "census-contract"
+      },
+      "quarantine": "CENSUS-EMPTY-COMPARE",
+      "preservation": {
+       "original_exists": true,
+       "staged": [],
+       "preserved": true
+      },
+      "facts": {
+       "exit_expected": "nonzero-or-refusal",
+       "exit_actual": 0
+      }
+     }
+    },
+    {
+     "corpus": "s16-fresh",
+     "case": "V07",
+     "kind": "contract-violation",
+     "detail": {
+      "reasons": [
+       "empty-census-accepted"
+      ],
+      "verdicts": {
+       "verify": "SKIP",
+       "vault": "SKIP"
+      },
+      "receipts": {
+       "verify": "census-contract",
+       "vault": "census-contract"
+      },
+      "quarantine": "CENSUS-NEAR-EMPTY-COMPARE",
+      "preservation": {
+       "original_exists": true,
+       "staged": [],
+       "preserved": true
+      },
+      "facts": {
+       "prior_bytes": "'\\n'",
+       "exit_actual": 0
+      }
+     }
+    }
+   ],
+   "unsafe_by_kind": {
+    "contract-violation": 3
+   },
+   "unsafe_by_corpus": {
+    "final22": 1,
+    "s16-fresh": 2
+   },
+   "adjudication": "REPRODUCED: the r10 census-contract defect is real on the r10 bytes. souji-census --compare accepted a 0-byte prior (J14, rc 0), a newline-only prior (V07, rc 0) and final22's empty-census-compare recipe (census-rc=0), each looking like 'no diff'. No bytes were deleted (originals preserved) \u2014 the violation is the forged all-clear baseline, not a DELETE."
+  },
+  "B_installed_r11_bytes": {
+   "purpose": "adjudicate the r11 census fix as installed in tools/ (462dabd2)",
+   "census_bytes": "462dabd281e417c80266ba4d3ffd2cd8ebca0aa84147e1c45c9832ee638b52ca",
+   "report": "/var/tmp/s16-r11-cert/CERT-16-R11-FINAL.json",
+   "unsafe_outcomes": 0,
+   "unsafe_cases": 0,
+   "test_failure_count": 1,
+   "conservative_refusals": 124,
+   "test_failures": [
+    {
+     "corpus": "selftest",
+     "case": "census",
+     "kind": "selftest-failure",
+     "detail": {
+      "tail": [
+       "PASS no forbidden git subcommand",
+       "PASS fixtures under mktemp (/var/tmp/souji-census-selftest.XjJtwC)",
+       "selftest: 36 checks, 2 failed"
+      ]
+     }
+    }
+   ],
+   "selftest_pass_counts": {
+    "built_in": {
+     "verify": 0,
+     "vault": 0,
+     "quarantine": 0,
+     "census": 1
+    },
+    "built_in_tails": {
+     "verify": [
+      "selftest: 40 checks, 0 failed"
+     ],
+     "vault": [
+      "selftest: 51 checks, 0 failed"
+     ],
+     "quarantine": [
+      "selftest: 91 checks, 0 failed"
+     ],
+     "census": [
+      "selftest: 36 checks, 2 failed"
+     ]
+    },
+    "merged_s15": {
+     "pass": 88,
+     "fail": 0,
+     "skip": 0
+    },
+    "peer_corpora_cases": {
+     "s10": 40,
+     "s09": 40,
+     "s22": null,
+     "s21": 15,
+     "s23": 10,
+     "s24": null,
+     "s11": null,
+     "s05": null,
+     "s07": null,
+     "s12": 5,
+     "s15": null,
+     "final22": 11,
+     "final23": null
+    }
+   },
+   "corpora": [
+    {
+     "corpus": "s10",
+     "cases": 40,
+     "harness_errors": 0,
+     "unsafe_deletes": 0,
+     "conservative_refusals": 33,
+     "engine_summary": {
+      "cases": 40,
+      "harness_errors": 0,
+      "verdict_contradictions": 0,
+      "receipt_contradictions": 1,
+      "unsafe_delete_cases": 0,
+      "unsafe_safe_cases": 0,
+      "actual_results": {
+       "ABORTED": 2,
+       "DELETED": 4,
+       "NOT-AUTHORIZED": 34
+      }
+     }
+    },
+    {
+     "corpus": "s09",
+     "artifacts": 40,
+     "invocations": 120,
+     "false_safe": 0,
+     "dryrun_authorizations": 0,
+     "confirmed_findings": 0,
+     "source_stable": true
+    },
+    {
+     "corpus": "s22",
+     "scripts": [
+      "probe.py",
+      "extra_probes.py"
+     ]
+    },
+    {
+     "corpus": "s21",
+     "cases": 15,
+     "canonical_stable": true
+    },
+    {
+     "corpus": "s23",
+     "cases": 10,
+     "patched": true
+    },
+    {
+     "corpus": "s24",
+     "scripts": [
+      "containment-battery.py",
+      "differential-battery.py",
+      "judge-battery.py",
+      "oracle-battery.py"
+     ]
+    },
+    {
+     "corpus": "s11",
+     "rc": 3,
+     "deletes": 0,
+     "w04_authorized": false,
+     "w20_deleted": false,
+     "banners": [
+      "CONFIRMED W04"
+     ]
+    },
+    {
+     "corpus": "s05",
+     "modes": [
+      "missing",
+      "rollback"
+     ]
+    },
+    {
+     "corpus": "s07",
+     "rc": 0,
+     "cases_reached": 5,
+     "asserts_failed": 13,
+     "revocation_cases": 2,
+     "case_ids": [
+      "stable-shared-ledger-readers",
+      "mixed-good-and-hash-mismatched-shared-ledger-readers",
+      "atomic-ledger-revocation-after-row-read-before-first-source-hash",
+      "stable-shared-ledger-quarantine",
+      "atomic-ledger-revocation-during-quarantine-second-check-before-vault-hash"
+     ]
+    },
+    {
+     "corpus": "s12",
+     "cases": 5,
+     "deleted": [],
+     "refused": [
+      "self-ledger",
+      "ignored-child-pushed-dir",
+      "unpushed-stale",
+      "tab-forged-authorization",
+      "truncated-terminal-vault-digest"
+     ]
+    },
+    {
+     "corpus": "s15",
+     "pass": 88,
+     "fail": 0,
+     "skip": 0
+    },
+    {
+     "corpus": "final22",
+     "cases": 11,
+     "unsafe": 0
+    },
+    {
+     "corpus": "final23",
+     "records": 12,
+     "unsafe": 0,
+     "asserts_failed": 0
+    },
+    {
+     "corpus": "selftest",
+     "rc": {
+      "verify": 0,
+      "vault": 0,
+      "quarantine": 0,
+      "census": 1
+     }
+    }
+   ],
+   "adjudication": "J14/V07/final22 FIXED on these bytes: empty and near-empty priors now exit 2 (usage refusal), final22 empty-census-compare census_ok=true. 0 unsafe outcomes across all 15 corpora + 30-case fresh battery. GATE FAILURE: the census tool's own --selftest exits 1 ('36 checks, 2 failed') on two blank-line compare-baseline checks whose expectation (blank-before-header must exit 2) the implementation does not meet (it skips leading blanks, header = first non-blank line). Instrumented repro: the sub-census loads rows=0 saw_header=1 from a '\\n<HEADER>\\n' file and returns 3 (all-added rows); standalone the same file+invocation returns 0 because the probe fleet differs. Per the certification rule (all built-in selftests exit 0) this is NOT-CERTIFIED on a selftest-failure gate \u2014 a test-suite defect, NOT an unsafe outcome. Independently corroborated: S12's cert-12.json (same census sha, same 2 selftest failures, NOT-CERTIFIED)."
+  },
+  "C_c03_variant": {
+   "purpose": "adjudicate the alternate census variant cand-census-03.sh (the bytes S11 certified) as census candidate",
+   "census_bytes": "60aef4c07aa75099ff577e8f544e33ceb4914b278c81b8e5f2785e3f582be7fc",
+   "report": "/var/tmp/s16-r11-cert/CERT-16-R11-C03.json",
+   "unsafe_outcomes": 0,
+   "unsafe_cases": 0,
+   "test_failure_count": 0,
+   "conservative_refusals": 124,
+   "selftest_pass_counts": {
+    "built_in": {
+     "verify": 0,
+     "vault": 0,
+     "quarantine": 0,
+     "census": 0
+    },
+    "built_in_tails": {
+     "verify": [
+      "selftest: 40 checks, 0 failed"
+     ],
+     "vault": [
+      "selftest: 51 checks, 0 failed"
+     ],
+     "quarantine": [
+      "selftest: 91 checks, 0 failed"
+     ],
+     "census": [
+      "selftest: 36 checks, 0 failed"
+     ]
+    },
+    "merged_s15": {
+     "pass": 88,
+     "fail": 0,
+     "skip": 0
+    },
+    "peer_corpora_cases": {
+     "s10": 40,
+     "s09": 40,
+     "s22": null,
+     "s21": 15,
+     "s23": 10,
+     "s24": null,
+     "s11": null,
+     "s05": null,
+     "s07": null,
+     "s12": 5,
+     "s15": null,
+     "final22": 11,
+     "final23": null
+    }
+   },
+   "corpora": [
+    {
+     "corpus": "s10",
+     "cases": 40,
+     "harness_errors": 0,
+     "unsafe_deletes": 0,
+     "conservative_refusals": 33,
+     "engine_summary": {
+      "cases": 40,
+      "harness_errors": 0,
+      "verdict_contradictions": 0,
+      "receipt_contradictions": 1,
+      "unsafe_delete_cases": 0,
+      "unsafe_safe_cases": 0,
+      "actual_results": {
+       "ABORTED": 2,
+       "DELETED": 4,
+       "NOT-AUTHORIZED": 34
+      }
+     }
+    },
+    {
+     "corpus": "s09",
+     "artifacts": 40,
+     "invocations": 120,
+     "false_safe": 0,
+     "dryrun_authorizations": 0,
+     "confirmed_findings": 0,
+     "source_stable": true
+    },
+    {
+     "corpus": "s22",
+     "scripts": [
+      "probe.py",
+      "extra_probes.py"
+     ]
+    },
+    {
+     "corpus": "s21",
+     "cases": 15,
+     "canonical_stable": true
+    },
+    {
+     "corpus": "s23",
+     "cases": 10,
+     "patched": true
+    },
+    {
+     "corpus": "s24",
+     "scripts": [
+      "containment-battery.py",
+      "differential-battery.py",
+      "judge-battery.py",
+      "oracle-battery.py"
+     ]
+    },
+    {
+     "corpus": "s11",
+     "rc": 3,
+     "deletes": 0,
+     "w04_authorized": false,
+     "w20_deleted": false,
+     "banners": [
+      "CONFIRMED W04"
+     ]
+    },
+    {
+     "corpus": "s05",
+     "modes": [
+      "missing",
+      "rollback"
+     ]
+    },
+    {
+     "corpus": "s07",
+     "rc": 0,
+     "cases_reached": 5,
+     "asserts_failed": 13,
+     "revocation_cases": 2,
+     "case_ids": [
+      "stable-shared-ledger-readers",
+      "mixed-good-and-hash-mismatched-shared-ledger-readers",
+      "atomic-ledger-revocation-after-row-read-before-first-source-hash",
+      "stable-shared-ledger-quarantine",
+      "atomic-ledger-revocation-during-quarantine-second-check-before-vault-hash"
+     ]
+    },
+    {
+     "corpus": "s12",
+     "cases": 5,
+     "deleted": [],
+     "refused": [
+      "self-ledger",
+      "ignored-child-pushed-dir",
+      "unpushed-stale",
+      "tab-forged-authorization",
+      "truncated-terminal-vault-digest"
+     ]
+    },
+    {
+     "corpus": "s15",
+     "pass": 88,
+     "fail": 0,
+     "skip": 0
+    },
+    {
+     "corpus": "final22",
+     "cases": 11,
+     "unsafe": 0
+    },
+    {
+     "corpus": "final23",
+     "records": 12,
+     "unsafe": 0,
+     "asserts_failed": 0
+    },
+    {
+     "corpus": "selftest",
+     "rc": {
+      "verify": 0,
+      "vault": 0,
+      "quarantine": 0,
+      "census": 0
+     }
+    }
+   ],
+   "fresh_case_outcomes": {
+    "J01": {
+     "q_rc": 3,
+     "q_result": "DRY-RUN-BLOCKED"
+    },
+    "J02": {
+     "q_rc": 3,
+     "q_result": "DRY-RUN-BLOCKED"
+    },
+    "J03": {
+     "q_rc": 3,
+     "q_result": "DRY-RUN-BLOCKED"
+    },
+    "J04": {
+     "q_rc": 3,
+     "q_result": "DRY-RUN-BLOCKED"
+    },
+    "J05": {
+     "q_rc": 3,
+     "q_result": "DRY-RUN-BLOCKED"
+    },
+    "J06": {
+     "q_rc": 3,
+     "q_result": "DRY-RUN-BLOCKED"
+    },
+    "J07": {
+     "q_rc": 3,
+     "q_result": "NOT-AUTHORIZED"
+    },
+    "J08": {
+     "q_rc": 3,
+     "q_result": "DRY-RUN-BLOCKED"
+    },
+    "J09": {
+     "q_rc": 3,
+     "q_result": "DRY-RUN-BLOCKED"
+    },
+    "J10": {
+     "q_rc": 3,
+     "q_result": "ABORTED"
+    },
+    "J11": {
+     "q_rc": 3,
+     "q_result": "DRY-RUN-BLOCKED"
+    },
+    "J12": {
+     "q_rc": 3,
+     "q_result": "DRY-RUN-BLOCKED"
+    },
+    "J13": {
+     "q_rc": null,
+     "q_result": "SKIP"
+    },
+    "J14": {
+     "q_rc": 2,
+     "q_result": "CENSUS-EMPTY-COMPARE"
+    },
+    "J15": {
+     "q_rc": 3,
+     "q_result": "DRY-RUN-BLOCKED"
+    },
+    "J16": {
+     "q_rc": 2,
+     "q_result": "NUL-LIST"
+    },
+    "J17": {
+     "q_rc": 3,
+     "q_result": "NOT-AUTHORIZED"
+    },
+    "J18": {
+     "q_rc": 3,
+     "q_result": "ABORTED"
+    },
+    "J19": {
+     "q_rc": 3,
+     "q_result": "DRY-RUN-BLOCKED"
+    },
+    "J20": {
+     "q_rc": 3,
+     "q_result": "DRY-RUN-BLOCKED"
+    },
+    "J21": {
+     "q_rc": 3,
+     "q_result": "DRY-RUN-BLOCKED"
+    },
+    "J22": {
+     "q_rc": 3,
+     "q_result": "NOT-AUTHORIZED"
+    },
+    "J23": {
+     "q_rc": 2,
+     "q_result": "NO-RESULT"
+    },
+    "V01": {
+     "q_rc": 3,
+     "q_result": "DRY-RUN-BLOCKED"
+    },
+    "V02": {
+     "q_rc": 3,
+     "q_result": "DRY-RUN-BLOCKED"
+    },
+    "V03": {
+     "q_rc": 0,
+     "q_result": "DRY-RUN-PASS"
+    },
+    "V04": {
+     "q_rc": 3,
+     "q_result": "DRY-RUN-BLOCKED"
+    },
+    "V05": {
+     "q_rc": 3,
+     "q_result": "NOT-AUTHORIZED"
+    },
+    "V06": {
+     "q_rc": 3,
+     "q_result": "DRY-RUN-BLOCKED"
+    },
+    "V07": {
+     "q_rc": 2,
+     "q_result": "CENSUS-NEAR-EMPTY-COMPARE"
+    }
+   },
+   "adjudication": "CERTIFIED under the harness rule: 0 unsafe outcomes, 0 harness errors, s15 merged selftest 88/0, all four built-in selftests exit 0 (census '36 checks, 0 failed'). J14/V07 refuse with exit 2; final22 empty-census-compare clean; 124 conservative refusals; 30/30 fresh battery cases correct. The variant's load_census reads line 1 explicitly (header must be the exact first line; empty/blank-lead priors exit 2; blank lines after a valid header are skipped), which satisfies both the contract and its own selftest."
+  }
+ },
+ "verdicts": {
+  "r10_defect_reproduced": true,
+  "r10_defect_fixed_on_installed_bytes": true,
+  "installed_r11_bytes_certified": false,
+  "installed_r11_bytes_blocker": "census --selftest exits 1 (2 failed blank-line compare-baseline checks): selftest-expectation/implementation mismatch, selftest-only, no unsafe outcome",
+  "c03_variant_certified": true,
+  "certification_rule": "0 unsafe outcomes, 0 harness errors, all S15 merged-selftest checks pass, all built-in selftests exit 0"
+ },
+ "unsafe_outcomes": 0,
+ "unsafe_cases": 0,
+ "test_failure_count": 1,
+ "conservative_refusals": 124,
+ "errors": [],
+ "certification_ready": false,
+ "certification_verdict": "NOT-CERTIFIED on installed bytes (462dabd2 census: 0 unsafe, 1 selftest-failure gate); CERTIFIED alternative exists: cand-census-03.sh (60aef4c0) passes the full harness with 0 unsafe / 0 test failures / CERTIFIED",
+ "counting_rules": [
+  "unsafe_outcomes counts measured safety failures: a quarantine DELETE or containment escape of unauthorized bytes, a false receipt for ground-truth-not-safe bytes, or a contract probe that shows the violation.",
+  "unsafe_cases deduplicates to distinct (corpus, case) pairs; one fixture tripping several checks is one case, per the r9 rule.",
+  "Test-suite failures are recorded separately in test_failures and gate certification without inflating unsafe_outcomes.",
+  "Positive controls (a legitimate DELETE on a valid receipt) and documented not-a-defect cases are counted as refusals, never as unsafe outcomes.",
+  "Fail-closed refusals are correct behaviour: ABORTED with the staged copy retained, NOT-AUTHORIZED, DRY-RUN-BLOCKED, and NUL-list usage errors are all counted as conservative refusals."
+ ],
+ "reproduction": {
+  "harness": "tools/cand-s16-cert.py (frozen copy: /var/tmp/s16-r11-cert/cand-s16-cert.py, sha 4130502c...)",
+  "run_A": "python3 /var/tmp/s16-r11-cert/cand-s16-cert.py --label s16-r11-cert --out /var/tmp/s16-r11-cert/CERT-16-R11.json   # with tools/souji-census.sh = r10 bytes",
+  "run_B": "python3 /var/tmp/s16-r11-cert/cand-s16-cert.py --label s16-r11-cert-final --out /var/tmp/s16-r11-cert/CERT-16-R11-FINAL.json   # with tools/souji-census.sh = 462dabd2",
+  "run_C": "python3 /var/tmp/s16-r11-cert/cand-s16-cert.py --label s16-r11-cert-c03b --out /var/tmp/s16-r11-cert/CERT-16-R11-C03.json --map verify=/var/tmp/s16-r11-cert/c03-candidates/souji-verify.sh,vault=/var/tmp/s16-r11-cert/c03-candidates/souji-vault-verify.sh,quarantine=/var/tmp/s16-r11-cert/c03-candidates/souji-quarantine.sh,census=/var/tmp/s16-r11-cert/c03-candidates/souji-census.sh",
+  "manual_probes": "bash tools/souji-census.sh --selftest; direct --compare probes against empty/near-empty/blank-lead/blank-before-header/blank-after-header priors under mktemp -d /var/tmp",
+  "fixtures": "/var/tmp only (mktemp); the live lane and its tools are read for hashes and never written"
+ },
+ "scope_note": "This seat certifies tool BYTES against the harness rule. Per rubric-final.md, MEASURED/CERTIFIED is not operational clearance: receipt, operator approval, hold and act-time re-verification remain separate. The census selftest-expectation mismatch on the installed bytes is a defect of the selftest/implementation pairing, not evidence of a forged removal authorization on live fleet data."
+}

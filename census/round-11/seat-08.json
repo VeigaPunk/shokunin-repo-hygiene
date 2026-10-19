@@ -1,0 +1,126 @@
+{
+ "seat": "S08",
+ "round": 11,
+ "role": "census-fix-implementor",
+ "label": "s08-census-fix",
+ "generated_at": "2026-10-18T23:17:44-0300",
+ "assignment": "Implement the census contract fix for the 3 r10 unsafe outcomes (all census-empty-compare class) as cand-census-08.sh; re-certify against frozen bytes.",
+ "candidate": "tools/cand-census-08.sh",
+ "candidate_sha256": "7eb1b8d93d0b50c8a004aff50ed3d5ac3ddfa365ec596124f9ce6a65a221ba70",
+ "baseline_sha256": {
+  "tools/souji-census.sh": "11bf9cdf8d4f75415b18e046aef0e96215b983f0d5b3ff7842301ff6ac65d381",
+  "tools/souji-verify.sh": "9adb17645a5f452ae2cc28673642ad256f9aee92109939531f3c34a0972812cd",
+  "tools/souji-vault-verify.sh": "f9e778ca478c7aa8b33234ee793030df631c1b9fcebc942b1ff41d0008ed9c5b",
+  "tools/souji-quarantine.sh": "141c0fdc4eaf9d0a3d628b381cc5386f6d4be71565ddfb98aa10f6eb3c9573c9"
+ },
+ "freeze_note": "Candidate bytes frozen (sha256 above) before every run; all fixtures under mktemp -d -p /var/tmp (host /tmp quota respected); lane writes limited to tools/cand-census-08.sh + census/round-11/S08-fragment.md + census/round-11/S08-cert-run.json + this file.",
+ "root_cause": "load_census() skipped blank lines BEFORE the line-1 header check, and a 0-byte prior census never entered the loop at all, so an empty (0-byte) or blank-only --compare baseline parsed as an empty map and emit_compare returned rc=0 'no diff'. One defect class explains all 3 r10 unsafe outcomes: final22/empty-census-compare (0-byte prior), s16-fresh/J14 (0-byte prior), s16-fresh/V07 (newline-only prior).",
+ "fix": {
+  "file": "tools/cand-census-08.sh",
+  "base": "r10-merge bytes (tools/souji-census.sh, sha 11bf9cdf)",
+  "changes": [
+   "load_census: header check now runs before the blank-line skip \u2014 blank line 1 is a header mismatch (usage_err, exit 2)",
+   "load_census: post-loop guard \u2014 n<1 (0-byte file, loop body never ran) fires the same header-mismatch error",
+   "data-row blank-line skipping preserved (trailing blank line in a valid prior census still compares cleanly)",
+   "selftest: +3 checks (empty baseline exits 2; blank-only baseline exits 2; header-only baseline vs empty fleet still rc=0) \u2014 census selftest 32 -> 35 checks"
+  ],
+  "diff_scope": "load_census() only; no other function touched"
+ },
+ "verification": {
+  "syntax": "bash -n exit 0",
+  "built_in_selftest": "selftest: 35 checks, 0 failed (exit 0)",
+  "fresh_repros": [
+   {
+    "case": "J14",
+    "setup": "0-byte prior TSV vs empty fleet root",
+    "rc": 2,
+    "banner": "souji-census: compare file header mismatch (want 7 census columns)"
+   },
+   {
+    "case": "V07",
+    "setup": "newline-only prior TSV vs empty fleet root",
+    "rc": 2,
+    "banner": "souji-census: compare file header mismatch (want 7 census columns)"
+   },
+   {
+    "case": "final22/empty-census-compare",
+    "setup": "r9 final-22.json recipe replay with census line redirected to candidate",
+    "rc": 2,
+    "banner": "souji-census: compare file header mismatch (want 7 census columns)"
+   }
+  ],
+  "positive_controls": [
+   {
+    "case": "header-only prior vs empty fleet",
+    "rc": 0,
+    "out": "diff header only"
+   },
+   {
+    "case": "prior == own census vs live fleet",
+    "rc": 0
+   },
+   {
+    "case": "prior census vs mutated fleet",
+    "rc": 3,
+    "rows": "scratch_bytes + dirty field rows"
+   }
+  ],
+  "cert_harness": {
+   "command": "python3 tools/cand-s16-cert.py --map census=tools/cand-census-08.sh --label s08-census-fix --out /var/tmp/s08-cert-run.json",
+   "seconds": 28.5,
+   "corpora_run": 15,
+   "certification_verdict": "CERTIFIED",
+   "certification_ready": true,
+   "unsafe_outcomes": 0,
+   "errors": 0,
+   "test_failures": 0,
+   "conservative_refusals": 124,
+   "built_in_selftests": {
+    "verify": "40 checks, 0 failed",
+    "vault": "51 checks, 0 failed",
+    "quarantine": "91 checks, 0 failed",
+    "census": "35 checks, 0 failed"
+   },
+   "s15_merged_selftest": {
+    "pass": 88,
+    "fail": 0,
+    "skip": 0
+   },
+   "final22": {
+    "cases": 11,
+    "unsafe": 0
+   },
+   "s16_fresh": {
+    "J14": "q.rc=2 CENSUS-EMPTY-COMPARE (refusal)",
+    "V07": "q.rc=2 CENSUS-NEAR-EMPTY-COMPARE (refusal)"
+   },
+   "peer_corpora_unchanged": {
+    "s10": "40 cases, 0 unsafe, 0 harness errors",
+    "s09": "40 artifacts, false_safe=0",
+    "s12": "5 refused",
+    "s21": "canonical stable",
+    "s23": "patched"
+   },
+   "full_json": "census/round-11/S08-cert-run.json"
+  }
+ },
+ "verdicts": {
+  "census-empty-compare-class-closed": "MET",
+  "no-regression": "MET",
+  "no-over-refusal": "MET",
+  "certification": "CERTIFIED (0 unsafe, 0 errors, all selftests pass)"
+ },
+ "unsafe_outcomes": 0,
+ "false_safe": 0,
+ "unauthorized_deletes": 0,
+ "mutations_made": "tools/cand-census-08.sh (new candidate), census/round-11/S08-fragment.md, census/round-11/S08-cert-run.json, census/round-11/seat-08.json \u2014 nothing else; live fleet/lane tools untouched",
+ "defects": [],
+ "to_verify": [],
+ "notes": "Fix is minimal (load_census only) and fail-closed. Cross-seat S29 conflict recorded in cross_seat_conflict; parent must pick one census fix.",
+ "cross_seat_conflict": {
+  "observed": "seat S29 overwrote tools/souji-census.sh (sha 462dabd281e417c80266ba4d3ffd2cd8ebca0aa84147e1c45c9832ee638b52ca) and re-ran cert-16.json in place (label s29-S29-final) while this seat was writing evidence",
+  "their_state": "closes r10 class (J14/V07/final22 rc=2, 0 unsafe) but built-in selftest FAILS: 36 checks, 2 failed (blank-before-header exit=3 want 2; blank-after-header exit=3 want 0 \u2014 fleet rows differ from header-only baseline)",
+  "my_state": "cand-census-08.sh unaffected: sha 7eb1b8d9, selftest 35/0, harness CERTIFIED 0 unsafe",
+  "recommendation": "install exactly one census fix for r11; cand-census-08.sh is self-consistent and certified; S29 bytes need their selftest expectations corrected before they can pass the certification rule"
+ }
+}
