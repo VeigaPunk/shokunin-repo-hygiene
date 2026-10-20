@@ -201,7 +201,9 @@ The actual consumer is `census/round-13/run-verification.py`; historical JSON
 is never rewritten. Its entry requires explicit `--round N --output
 census/round-N/<new>.json` and exclusively creates that output; a default
 invocation refuses with exit 2. The isolated causal demonstration is
-`census/round-14/cache-demonstration.py` (isolated synthetic inputs only).
+`census/round-14/cache-demonstration.py`: actual `attempt_reuse` decisions
+on synthetic records only. Full migrated dispatch and positive production
+retention were not exercised; source wiring is not that observation (Q23).
 
 The metadata census must refuse roots, ancestors, comparison paths and known
 Git/worktree aliases into the credential store before enumeration or content

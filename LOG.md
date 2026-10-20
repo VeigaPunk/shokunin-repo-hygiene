@@ -722,3 +722,47 @@ is persisted in `census/round-14/end-sources.json` and copied alongside the
 starting output in the lesson: advisory W04 for S035/S036/S038 correction
 URLs, then the souji ok line. The source digest is pinned there; only
 bookkeeping is appended afterward, not registry or measured executable bytes.
+
+## 2026-10-20 — round 15: repair rejected-harmed configuration support first
+
+Motivation: `corpus/lessons/round-14-verifier-spotcheck.md`, C2 no-harm
+rejection and routed defects 1–5. That outside closure supersedes the prior
+round's author claim of net operability improvement: namespace gains
+verified, but key-only refusals harmed benign support and could suppress
+all peer rows. Disclosure and finite green namespace cases were not
+admission. The old report, LOG entries and evidence are preserved unchanged.
+
+Claims, in required order (`census/round-15/claims.json`):
+C1 operability — value/effect-aware configuration treatment preserving benign
+and mixed-fleet output while retaining namespace-test gains; C2 calibration
+(lowest legacy score 7) — independently reject unsupported no-harm evidence
+with a paired-preservation evidence checker. Each is causally separable:
+the runtime repair can be exercised without the evidence checker, and the
+checker has its own declared positive/negative records independent of C1.
+Numeric deltas are zero; 7/8/8 remain legacy-unmapped scores.
+
+Baseline `cc2168325768d5356a82c039dcdf787377c55784`. Initial state:
+sole untracked `census/operator-sweep-20261019/` is OPERATOR-authored,
+unopened, untouched and excluded from staging. No inherited lane-authored
+work. Initial source validation exited 0, advisory W04 S035/S036/S038;
+complete output and 40-row baseline histograms: `census/round-15/before.json`.
+
+Learning: `corpus/lessons/round-15.md` R15-M1–M3 and QUALITY Q22–Q24.
+SKILL now explicitly limits the r14 migrated consumer observation to actual
+`attempt_reuse` decisions on synthetic records; full migrated dispatch and
+positive production retention were not run. Historical observations retain
+their original measured revisions, including externally dependent results.
+No stale-green recaching or historical evidence overwrite is authorized.
+
+Wave 1 is 64 validated seats in one unchanged native task payload under
+`.ufo/waves/round-15/`; L1 holds the canonical planner seat because the
+validator excludes planner as a swarm role. Seats inspect source and write
+assigned artifacts only; they must not run tests or empirical probes.
+Acceptance remains L1-owned after both waves. Certification stays OFF,
+K5 HELD and r13 unexercised operation sites unproved. No deletion, promotion,
+credential handling, host package transaction or service restart is in scope.
+
+Commits confirm the owning toplevel and use named add/commit pathspecs
+with `-c maintenance.auto=false`, never `add -A` or `commit -a`.
+Tool installs/updates so far: none. These declarations are not passing
+execution evidence; the actual commands and measured revisions follow.

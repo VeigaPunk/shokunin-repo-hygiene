@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Round-14 C1 consumer demonstration: digest-bound retention, never retained green.
 
-This is the supported current-round evidence-collection consumer for
-tools/souji-evidence-cache.py. It neither imports nor wraps the historical
-runner census/round-13/run-verification.py; that runner's retention branch is
-migrated separately to consult the same gate, and its historical JSON outputs
+This is an isolated synthetic demonstration of evidence-collection decisions,
+not a production evidence consumer. It exercises the historical and migrated
+attempt_reuse decision functions separately; it does not run the full migrated
+dispatch or demonstrate positive production retention. Historical JSON outputs
 are never rewritten.
 
 The demonstration builds a synthetic observation under /var/tmp only:

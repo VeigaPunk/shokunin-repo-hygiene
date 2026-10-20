@@ -11,8 +11,8 @@ counting command and the commit it was measured against.
 | axis | score | verdict / observation | counting command | measured commit | last change |
 |---|---|---|---|---|---|
 | coverage | 8 | unchanged r14; r13 C3 improved and admitted by CloseSoujiR13 (`corpus/lessons/round-13-verifier-spotcheck.md`); numeric delta 0, legacy-unmapped. Admitted knowledge remains 5, HELD 1; no new coverage-map ground claimed | `python3 census/round-14/count-claims.py a31642d`; same command `552cae4`; `census/round-14/counts.json` | a31642d → 552cae4 | r13 |
-| calibration | 7 | improved r14 C1, author verdict pending outside closure; numeric delta 0: gate 0→1; 48/48 self-invocations, external 22/22, frozen clean; authentic baseline returns stale green, migrated caller refuses it; consumer 32/33→33/33 after real fallthrough fix; historical default refuses exit 2 | `python3 census/round-14/count-claims.py <revision>`; `python3 tools/souji-evidence-cache.py --selftest`; `python3 tests/fixtures/r14-evidence-cache.py`; `python3 census/round-14/cache-demonstration.py`; both verification JSON files | inventory a31642d → 552cae4; gate/fixture/frozen 48f8945; corrected consumer 552cae4 | r14 |
-| operability | 8 | improved r14 C2 within tested boundary; numeric delta 0: identical fixture yields baseline 2/12 PASS with 10 demonstrated contract/access failures, changed census 12/12 PASS; normal controls preserved; legacy selftest 38/38; warning ShellCheck exit 0. New unsupported-config refusals and namespace residuals explicit, not universal no-access certification | `python3 tests/fixtures/r14-census-boundary.py --tool <baseline-or-installed>`; `TMPDIR=/var/tmp bash tools/souji-census.sh --selftest`; `shellcheck -S warning tools/souji-census.sh`; `census/round-14/verification.json` | identical fixture 552cae4 on baseline tool a31642d and changed tool 552cae4 | r14 |
+| calibration | 7 | r14 outside closure: improved within declared-byte eligibility and actual attempt_reuse decisions on synthetic records only; numeric delta 0, legacy-unmapped. Full migrated dispatch and positive production retention unobserved | `python3 census/round-14/count-claims.py <revision>`; committed verification manifests and `corpus/lessons/round-14-verifier-spotcheck.md` C1 | r14 measured source 48f8945 / corrected consumer 552cae4; outside closure cc21683 | r14 |
+| operability | 8 | r14 outside closure: harmed / round rejected-harmed. Namespace tests improve, but value-blind config bans contract benign support and can abort the entire fleet. Numeric delta 0, legacy-unmapped; r15 repair is not admitted before measurements | `python3 tests/fixtures/r14-census-boundary.py --tool <path>` historical paired evidence; source-based counterexample and judgment in `corpus/lessons/round-14-verifier-spotcheck.md` C2 | r14 measured source 552cae4; outside closure cc21683 | r14 |
 
 Correction (r12 post-review, 2026-10-19): coverage C2 reads 0→4 admitted entries (+1 held,
 K5) on F1/F3/F4, SOURCES census mined=16 queued=15; calibration C1's 28/52 → 51/53 is a
@@ -42,8 +42,8 @@ independently adjudicated in `corpus/lessons/round-13-verifier-spotcheck.md`.
 | declared-evidence integrity | reject inconsistent declared artifact/evidence digests, ownership labels, missing files, false success and tampered frozen inputs; not complete certification | `python3 tools/souji-cert-evidence.py --selftest` → 36/36; external fixture 5/5; frozen input pins and actual historical replays in `census/round-13/verification.json` | r13 |
 | bounded quarantine operations | bounded move/digest/inspection with explicit refusal/abort and residue diagnostics; stable special-file refusals; no new deletion authority | `bash tests/fixtures/r13-quarantine-bounds.sh` → 5/5; same corrected fixture baseline red, `census/round-13/verification.json` | r13 |
 | repository structure census | emit versioned refs-rooted object metrics on the bounded complete-repository surface; reject marked partial/promisor repos; report common-store identity | `bash tests/fixtures/r13-repo-structure.sh --selftest --probe tools/souji-repo-structure.sh` → 5/5; `corpus/knowledge/git-repo-structure-readonly.md` (S035/S036/S037) | r13 |
-| declared-dependency cache eligibility | refuse stale/legacy/malformed prior results and preserve the original declared revision; actual migrated caller honors nonzero decisions; no historical execution proof | `python3 tools/souji-evidence-cache.py --selftest` 48/48; external 22/22; consumer 33/33 at 552cae4; `census/round-14/verification*.json`; S039 | r14 |
-| protected-namespace census | refuse the tested root/compare/Git/worktree aliases before forbidden access, using synthetic-store strace/spies; supported ordinary census controls remain usable | `python3 tests/fixtures/r14-census-boundary.py --tool <path>` 2/12 baseline→12/12 installed; legacy 38/38; `census/round-14/verification.json`; S040 | r14 |
+| declared-dependency cache eligibility | refuse stale/legacy/malformed declared records and preserve original revision; actual attempt_reuse decision honors refusal on synthetic records only; no historical execution proof, full dispatch or positive production retention | `census/round-14/verification*.json`; S039; bounded outside verification `corpus/lessons/round-14-verifier-spotcheck.md` C1 | r14 |
+| protected-namespace census (net admission rejected r14) | verified namespace gains within 12 cases, not unchanged config support; value-blind benign-config harm blocks net no-trade admission until repaired | historical `census/round-14/verification.json`; S040; `corpus/lessons/round-14-verifier-spotcheck.md` C2 | r14 bounded demonstration; not net-admitted |
 
 ## Planned
 
@@ -94,12 +94,12 @@ installed tools without rewriting those bytes. The r13 integrity gate
 checks declared evidence only. It cannot prove author identity, command
 execution, or full defect-class coverage. Deletion authorization stays OFF.
 
-Current r14 state: certification remains OFF. Eligibility and protected-path
-fixtures are bounded improvements, not comprehensive class-suite
-re-certification or deletion authority. Cross-device/K5 and the unexercised
-r13 operation sites remain HELD/unproved. No source-row count is treated as
-knowledge growth; source rows 37→40 are separately reproduced in
-`census/round-14/counts.json`.
+Round-14 outside disposition: **rejected-harmed**, not a net operability
+improvement (`corpus/lessons/round-14-verifier-spotcheck.md`). Namespace gains
+and bounded C1 eligibility verify, but benign-config support contracted.
+The r15 first claim repairs that routed harm; passing namespace cases alone
+cannot discharge it. Certification remains OFF, K5 HELD, and unexercised
+r13 operation sites unproved. Source-row growth is not knowledge growth.
 
 ## Retired
 
