@@ -667,3 +667,48 @@ runner bytes as those old observations. The closing verifier records the
 historical evidence digest before/after and checks the default refusal
 without executing the r13 matrix. Its actual decision function is exercised
 on isolated synthetic records by `census/round-14/cache-demonstration.py`.
+
+## 2026-10-20 — round 14 measured closure evidence
+
+Source `48f8945780adeb259cff0ef7dd9b7efbf1544ec7`; corrected source
+`552cae4204b3ab818419ad8adbfef3a4da29a3e0`. Commit scope:
+`census/round-14/commit-scope.json`; each commit confirms owning toplevel,
+uses identical named add/commit paths and `-c maintenance.auto=false`.
+
+Actual `python3 -B census/round-14/run-verification.py` first pass exited 1,
+preserved in `census/round-14/verification-attempt-1.json`: real caller
+fallthrough retained a stale result despite gate exit 1; alternate fixture
+setup could not create its ref; warning-level ShellCheck caught SC2100.
+Those are not green observations. The fix returns no retained source on a
+nonzero gate decision, repairs only the synthetic alternate setup and quotes
+the constant; the expected findings were not weakened.
+
+`python3 -B census/round-14/run-targeted.py` at 552cae4 exited 0:
+C1 actual consumer 33/33 checks, historical runner default exit 2, C2 identical
+fixture baseline total=12/failed=10 (exit 1) versus installed failed=0
+(exit 0), legacy census 38 checks/zero failures, warning ShellCheck exit 0.
+Earlier unchanged gate/fixture/frozen observations remain only at 48f8945:
+48/48, 22/22 and reusable with two pinned inputs. Both runs record unchanged
+canonical artifacts and unchanged historical r13 JSON. The real store and
+live fleet census were never exercised.
+
+Counting commands `python3 census/round-14/count-claims.py a31642d` and the
+same on 552cae4: gate/fixtures 0→1; sources 37→40, A/B/C
+33/3/1→36/3/1, mined/queued/rejected 20/15/2→23/15/2; admitted knowledge
+5→5, HELD 1→1 (`counts.json`). Two demonstrated capabilities enter SCORECARD;
+scores stay calibration 7 / operability 8 / coverage 8, delta 0.
+Author axis verdicts: C1 improved, C2 improved on the stated cases; unworked
+axes unchanged. Trends: expansion improved by repertoire acquisition,
+quality unchanged under the admitted-entry recheck bar, discernment improved
+by grounded capture of prior outside findings. Outside closure remains
+required; no SHONEN `[x]` is self-written.
+
+C2 deliberately refuses listed indirect Git configurations; it is not
+universal config preservation or a race-free filesystem sandbox. Limits,
+the admission/rejection sample and process deviations are in the round-14
+lesson. Three seats performed prohibited mid-flight synthetic empirical
+probes; their observations are preserved but not used as acceptance. No real
+store, operator sweep, GUI, removal, sibling repo or host service was touched.
+Tool installs/updates: none. The later host package-safety amendment was
+relayed to the remaining live seats. Open souji L0 questions: none (bounded
+`^souji \\|` queue sweep, no matches). No other mission of this lane is open.

@@ -10,17 +10,18 @@ counting command and the commit it was measured against.
 
 | axis | score | verdict / observation | counting command | measured commit | last change |
 |---|---|---|---|---|---|
-| coverage | 8 | improved (r13 C3, self-verdict pending outside closure; numeric delta 0, legacy-unmapped): admitted entries 4→5, F2 entry 0→1; sources 33→37; bounded structure fixture 5/5 PASS including partial/promisor refusal | `python3 census/round-13/count-claims.py 31984f4`; same command `6f8ee0f` (`counts.json`); `bash tests/fixtures/r13-repo-structure.sh --selftest --probe tools/souji-repo-structure.sh` (`verification.json`) | 31984f4 → 6f8ee0f counts; 6ed10a7 structure run | r13 |
-| calibration | 7 | improved (r13 C1, self-verdict pending outside closure; numeric delta 0): declared-evidence validator absent→present, 36/36 discriminating self-invocations, external fixture 5/5; actual historical wrong-byte and candidate claims rejected with exact findings, exit 2; labels/coverage/execution remain unproved and certification OFF | `python3 census/round-13/count-claims.py 31984f4`; same command `6f8ee0f`; `python3 tools/souji-cert-evidence.py --selftest`; two manifest commands in `verification.json`, keys historical-replay-* | 31984f4 → 6f8ee0f; historical replays 6ed10a7 | r13 |
-| operability | 8 | improved (r13 C2, self-verdict pending outside closure; numeric delta 0): identical corrected bounds fixture on baseline has 1/5 PASS, 4 failures including 2 hangs; changed tool 5/5 PASS, no hangs; four built-in suites 40/51/91/36 checks pass; warning-level ShellCheck exit 0 | `bash tests/fixtures/r13-quarantine-bounds.sh --tool <baseline-or-installed-path>`; baseline extraction and exact commands/output in `census/round-13/verification.json`; `python3 census/round-13/run-verification.py --retry-failed` | 6f8ee0f fixture on baseline 31984f4 and changed tool 6f8ee0f | r13 |
+| coverage | 8 | unchanged r14; r13 C3 improved and admitted by CloseSoujiR13 (`corpus/lessons/round-13-verifier-spotcheck.md`); numeric delta 0, legacy-unmapped. Admitted knowledge remains 5, HELD 1; no new coverage-map ground claimed | `python3 census/round-14/count-claims.py a31642d`; same command `552cae4`; `census/round-14/counts.json` | a31642d → 552cae4 | r13 |
+| calibration | 7 | improved r14 C1, author verdict pending outside closure; numeric delta 0: gate 0→1; 48/48 self-invocations, external 22/22, frozen clean; authentic baseline returns stale green, migrated caller refuses it; consumer 32/33→33/33 after real fallthrough fix; historical default refuses exit 2 | `python3 census/round-14/count-claims.py <revision>`; `python3 tools/souji-evidence-cache.py --selftest`; `python3 tests/fixtures/r14-evidence-cache.py`; `python3 census/round-14/cache-demonstration.py`; both verification JSON files | inventory a31642d → 552cae4; gate/fixture/frozen 48f8945; corrected consumer 552cae4 | r14 |
+| operability | 8 | improved r14 C2 within tested boundary; numeric delta 0: identical fixture yields baseline 2/12 PASS with 10 demonstrated contract/access failures, changed census 12/12 PASS; normal controls preserved; legacy selftest 38/38; warning ShellCheck exit 0. New unsupported-config refusals and namespace residuals explicit, not universal no-access certification | `python3 tests/fixtures/r14-census-boundary.py --tool <baseline-or-installed>`; `TMPDIR=/var/tmp bash tools/souji-census.sh --selftest`; `shellcheck -S warning tools/souji-census.sh`; `census/round-14/verification.json` | identical fixture 552cae4 on baseline tool a31642d and changed tool 552cae4 | r14 |
 
 Correction (r12 post-review, 2026-10-19): coverage C2 reads 0→4 admitted entries (+1 held,
 K5) on F1/F3/F4, SOURCES census mined=16 queued=15; calibration C1's 28/52 → 51/53 is a
 rule-coverage count, not calibration proof. Details: `corpus/lessons/round-12.md`
 `## Post-review fixes`.
 
-Round-14 provenance clarification: the historical r13 counting/retry command
-above is reproduced at its named measured revision `6f8ee0f`, not against
+Round-14 provenance clarification: the historical r13
+`python3 census/round-13/run-verification.py --retry-failed` command is
+reproduced at its named measured revision `6f8ee0f`, not against
 the current migrated runner. The installed runner now requires explicit
 `--round N --output census/round-N/<new>.json`, refuses its default invocation,
 and never overwrites existing historical evidence. Its actual C1 reuse
@@ -41,6 +42,8 @@ independently adjudicated in `corpus/lessons/round-13-verifier-spotcheck.md`.
 | declared-evidence integrity | reject inconsistent declared artifact/evidence digests, ownership labels, missing files, false success and tampered frozen inputs; not complete certification | `python3 tools/souji-cert-evidence.py --selftest` → 36/36; external fixture 5/5; frozen input pins and actual historical replays in `census/round-13/verification.json` | r13 |
 | bounded quarantine operations | bounded move/digest/inspection with explicit refusal/abort and residue diagnostics; stable special-file refusals; no new deletion authority | `bash tests/fixtures/r13-quarantine-bounds.sh` → 5/5; same corrected fixture baseline red, `census/round-13/verification.json` | r13 |
 | repository structure census | emit versioned refs-rooted object metrics on the bounded complete-repository surface; reject marked partial/promisor repos; report common-store identity | `bash tests/fixtures/r13-repo-structure.sh --selftest --probe tools/souji-repo-structure.sh` → 5/5; `corpus/knowledge/git-repo-structure-readonly.md` (S035/S036/S037) | r13 |
+| declared-dependency cache eligibility | refuse stale/legacy/malformed prior results and preserve the original declared revision; actual migrated caller honors nonzero decisions; no historical execution proof | `python3 tools/souji-evidence-cache.py --selftest` 48/48; external 22/22; consumer 33/33 at 552cae4; `census/round-14/verification*.json`; S039 | r14 |
+| protected-namespace census | refuse the tested root/compare/Git/worktree aliases before forbidden access, using synthetic-store strace/spies; supported ordinary census controls remain usable | `python3 tests/fixtures/r14-census-boundary.py --tool <path>` 2/12 baseline→12/12 installed; legacy 38/38; `census/round-14/verification.json`; S040 | r14 |
 
 ## Planned
 
@@ -90,6 +93,13 @@ the appended r13 lesson and LOG explicitly supersede its authority for
 installed tools without rewriting those bytes. The r13 integrity gate
 checks declared evidence only. It cannot prove author identity, command
 execution, or full defect-class coverage. Deletion authorization stays OFF.
+
+Current r14 state: certification remains OFF. Eligibility and protected-path
+fixtures are bounded improvements, not comprehensive class-suite
+re-certification or deletion authority. Cross-device/K5 and the unexercised
+r13 operation sites remain HELD/unproved. No source-row count is treated as
+knowledge growth; source rows 37→40 are separately reproduced in
+`census/round-14/counts.json`.
 
 ## Retired
 

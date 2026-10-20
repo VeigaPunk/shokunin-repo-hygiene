@@ -195,9 +195,12 @@ revision: no fallback to a file-level revision or current HEAD.
 
 This does not discover omitted/transitive dependencies, bind external binary
 versions or environment, authenticate authors, prove historical execution,
-or certify deletion safety. External mutable checks must run afresh.
-The actual consumer is `census/round-13/run-verification.py`; its historical
-JSON evidence is not rewritten. The isolated causal demonstration is
+or certify deletion safety. Checks with known external mutable data inputs
+run afresh; external runtime variation remains outside declared-file proof.
+The actual consumer is `census/round-13/run-verification.py`; historical JSON
+is never rewritten. Its entry requires explicit `--round N --output
+census/round-N/<new>.json` and exclusively creates that output; a default
+invocation refuses with exit 2. The isolated causal demonstration is
 `census/round-14/cache-demonstration.py` (isolated synthetic inputs only).
 
 The metadata census must refuse roots, ancestors, comparison paths and known
@@ -208,3 +211,8 @@ the protected tree, not permission to follow its target. Protected-namespace
 checks are not a general sandbox against hostile hardlinks, bind mounts or
 concurrent replacement. Source S040 explains filesystem-aware resolution;
 QUALITY Q20/Q21 and `corpus/lessons/round-14.md` bind these limits.
+Repositories with local includes, filters, hooks/attributes/excludes,
+alternateRefsCommand, promisor/partial-clone or worktreeConfig settings may
+refuse as unsupported rather than emit a misleading clean census. The
+complete refusal set is in the tool's boundary header; the measured ordinary,
+linked-worktree and comparison controls do not prove every Git configuration.

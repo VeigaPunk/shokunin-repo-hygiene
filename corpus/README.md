@@ -125,3 +125,22 @@ its old counting commands at their cited measured revision, not by assuming
 the current migrated runner contains the same bytes. Neither old retained
 observations nor current gate declarations are silently relabelled as a
 new execution. Initial operator sweep remains unread and unstaged.
+
+### Round 14 measured outcomes
+
+`../census/round-14/verification-attempt-1.json` preserves the failed first
+integration at 48f8945; `../census/round-14/verification.json` records targeted
+corrections at 552cae4. Exact commands are in each result. Unchanged earlier
+passes are not relabelled: cache selftest 48/48, external fixture 22/22,
+two-pin frozen snapshot clean. Corrected consumer 33/33; same boundary
+fixture baseline 2/12→installed 12/12; legacy census 38/38; warning-level
+ShellCheck clean. The actual source-anchor probe rejects S034 and accepts
+S038 without editing the old row.
+
+Inventory `python3 census/round-14/count-claims.py a31642d` versus the same
+command on 552cae4 (`../census/round-14/counts.json`): admitted knowledge
+5→5, HELD 1→1, source rows 37→40. New eligibility/protected-census
+capabilities are demonstrated repertoire, not three rows counted as new
+knowledge. The census's newly refused indirect configurations and filesystem
+alias/race limits are explicit in SKILL and the lesson; no universal no-harm
+or deletion-certification claim is inferred.

@@ -63,3 +63,73 @@ exit 0. Canonical artifacts and historical r13 JSON were unchanged during
 the run. These remain observations at 48f8945, never relabelled as later
 executions. The targeted runner repeats only failed checks plus green checks
 whose subject bytes changed.
+
+## Final measured gate decisions
+
+Source snapshot `48f8945780adeb259cff0ef7dd9b7efbf1544ec7`;
+correction snapshot `552cae4204b3ab818419ad8adbfef3a4da29a3e0`.
+`python3 -B census/round-14/run-targeted.py` exited 0. It did not rerun
+unchanged passing gate/fixture/frozen/source-anchor checks or relabel their
+old revision. `verification-attempt-1.json` and `verification.json` together
+are the complete measured record.
+
+| candidate | final decision | measured evidence and limit |
+|---|---|---|
+| C1 declared-dependency eligibility plus migrated consumer | ADMIT within declared-byte scope | gate `--selftest` 48/48; external fixture 22/22; two-pin frozen input clean at 48f8945; corrected consumer 33/33 at 552cae4. Authentic baseline retains the stale green without invoking the producer; new policy invokes the harmless producer again, and actual migrated stale decision returns no retained source. |
+| C2 credential-namespace census fence | ADMIT within the tested namespace cases | identical corrected `python3 tests/fixtures/r14-census-boundary.py --tool <path>` at 552cae4: baseline `total=12 failed=10`, exit 1; installed `total=12 failed=0`, exit 0. Baseline failures carry contract and forbidden-access evidence, not just missing marker strings. Safe ordinary/scratch controls pass both. |
+| S038 source locator correction | ADMIT correction, no historical rewrite | same `python3 census/round-14/check-timeout-anchor.py <row>` command: S034 `anchor=mismatch`, exit 1; S038 `anchor=match`, exit 0, at 48f8945. |
+| Historical execution proof / authenticated authors / complete dependencies | REJECT | digest eligibility checks declarations; omitted dependencies, external runtimes/environment and fabricated provenance remain outside its proof. |
+| Universal race-free no-credential-access or deletion certification | REJECT | finite synthetic fixtures, namespace and filesystem-alias limitations; certification stays OFF. |
+| K5 re-admission / Q15 revival | REJECT / retain HELD | no admitted cross-device fixture or lesson-grounded exception; Q4/Q16 remain unchanged. |
+
+C2 preservation observations at 552cae4: the actual legacy census
+`--selftest` has 38 checks / zero failures, including linked worktree
+dirty/absent flags, identical comparison exit 0 and changed comparison exit
+3. `shellcheck -S warning tools/souji-census.sh` exits 0. Both canonical
+tool/fixture maps and historical r13 JSON remain unchanged during each run.
+No live census or real credential-store probe occurred.
+
+Explicit C2 restrictions: repositories with include/includeIf, local filters,
+hooksPath, attributes/excludes configuration, alternateRefsCommand, promisor/
+partial clone or worktreeConfig refuse as unsupported. This is not a claim
+of unchanged support for every Git configuration. Hardlinked object files,
+work-tree content symlinks, bind/mount replacement and symlink-relocated
+stores are not universally authenticated by the namespace fence. The
+observed no-harm claim is bounded to the preserved ordinary/linked/comparison
+controls; these restrictions are exposed to the independent closure, not
+silently described as universal operability.
+
+Inventory commands `python3 census/round-14/count-claims.py a31642d` and
+the same command on `552cae4` (full output `counts.json`): gate/fixtures
+0→1, sources 37→40, A/B/C 33/3/1→36/3/1, mined/queued/rejected
+20/15/2→23/15/2, admitted knowledge 5→5 and HELD 1→1. Added tiers:
+three A, no B/C. No original source row has an in-place status/recheck/used-by
+change. Two demonstrated capabilities enter SCORECARD; source-row growth
+alone is not knowledge growth.
+
+Author verdicts: calibration improved, operability improved within declared
+cases, coverage/depth/freshness/adjacency unchanged; numeric delta 0 throughout.
+Expansion improved by demonstrated repertoire acquisition, quality unchanged
+under the existing-admitted-knowledge recheck bar, discernment improved because
+the prior outside retention/citation findings become grounded Q20/Q21 and
+discriminating evidence. Fresh outside admit/reject sampling remains the
+non-author closure duty; no lane-dispatched seat is counted as outside.
+
+### Process deviations and advisory disagreements
+
+SafetyCredential and BoundaryAttack ran synthetic bash/git/strace probes
+mid-flight, and SafetyCache ran a synthetic kernel symlink-open probe,
+despite the wave prohibition. Their reports preserve the observations and
+explicit process-deviation notes; L1 did not rerun those probes to confirm
+them or use them as acceptance. The final committed fixtures are separate
+L1 acceptance. All three report no real store or operator-sweep access.
+Other syntax/source inspections are not runtime acceptance.
+
+Early reviewer reports that files were absent describe concurrent design
+review, not dead authors. Proposed counts of 17 cases were unexercised
+design suggestions; actual final counts above supersede them. Connector
+claims of statistical independence or 100% legacy preservation are not
+admitted: causal separability and bounded measured controls do not prove
+either assertion. VerdictAttack's output-overwrite concern was fixed by
+explicit round/output plus exclusive creation, and its root-binding concern
+was fixed before the measured run. No tool was installed or upgraded.
