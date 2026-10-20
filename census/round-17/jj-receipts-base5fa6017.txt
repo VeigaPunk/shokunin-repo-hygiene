@@ -1,0 +1,51 @@
+TOOL-DIR	/var/tmp/souji-r17-L1/base
+GIT	git version 2.56.0
+JJ	/home/vgpnk/.local/bin/jj	jj 0.45.1-7c41cdeb16b6b321c64e789a966b6adf723816a5
+TOOL	/var/tmp/souji-r17-L1/base/souji-verify.sh	sha256=9adb17645a5f452ae2cc28673642ad256f9aee92109939531f3c34a0972812cd
+TOOL	/var/tmp/souji-r17-L1/base/souji-vault-verify.sh	sha256=f9e778ca478c7aa8b33234ee793030df631c1b9fcebc942b1ff41d0008ed9c5b
+TOOL	/var/tmp/souji-r17-L1/base/souji-quarantine.sh	sha256=df4075112c36bae804b98766c4eb66b0e5b2b80b76d7333475ede27b06b168c4
+SCENARIO	seed	tip=c7fdeaceb150	meta_v1=626799f0	meta_v2=8c1384d8
+SCENARIO	plain	unref=f8706eb970c0	wts=absent
+CASE	J6-verify	SKIP	no --baseline-dir with souji-verify.sh
+CASE	J6-vault	SKIP	baseline/selected souji-vault-verify.sh missing
+CASE	J8-verify	PASS	targets=f.txt,wt-plain identical=yes
+CASE	J8-vault	PASS	targets=f.txt,wt-plain identical=yes
+CASE	J7	PASS	exit=0 verdict=SAFE receipt=metadata-prune evidence=dir=absent unique=0 head=11ae05b85904 owner=plainrepo durable-refs-only=yes
+SCENARIO	keeprepo	keep_head=77e130b9	keep_novel=14aa5f30	keep_meta=a1563b0b	keep_del=872ce1b4	wts=absent
+CASE	J1	FAIL	exit=0 verdict=SAFE receipt=metadata-prune evidence=dir=absent unique=0 head=77e130b905a3 owner=keeprepo durable-refs-only=yes expected=NOT-SAFE,never-SAFE(metadata-prune)
+CASE	J1-vault	FAIL	exit=0 verdict=SAFE receipt=metadata-prune r4=VERIFIED(metadata-prune) expected=NOT-SAFE,never-VERIFIED(metadata-prune)
+CASE	J2	PASS	exit=0 verdict=SAFE receipt=metadata-prune evidence=dir=absent unique=0 head=77e130b905a3 owner=keeprepo durable-refs-only=yes
+CASE	J2-vault	PASS	exit=0 verdict=SAFE receipt=metadata-prune r4=VERIFIED(metadata-prune)
+CASE	J3	FAIL	exit=0 verdict=SAFE receipt=pushed evidence=intro=610485c96276 ref=refs/remotes/origin/main ancestor=yes snapshot=equal clean=yes expected=NOT-SAFE (keep-only commit carries novel content)
+CASE	J3-vault	FAIL	exit=0 verdict=SAFE receipt=pushed r4=VERIFIED(pushed) expected=NOT-SAFE
+CASE	J3-quarantine	FAIL	exit=0 result=DRY-RUN-PASS receipt=pushed evidence=stage1=intro=610485c96276 ref=refs/remotes/origin/main ancestor=yes snapshot=equal clean=yes expected=DRY-RUN-BLOCKED|NOT-AUTHORIZED
+CASE	J4	PASS	exit=0 verdict=SAFE receipt=pushed evidence=intro=610485c96276 ref=refs/remotes/origin/main ancestor=yes snapshot=equal clean=yes
+CASE	J4-vault	PASS	exit=0 verdict=SAFE receipt=pushed r4=VERIFIED(pushed)
+CASE	J4-quarantine	PASS	exit=0 result=DRY-RUN-PASS receipt=pushed evidence=stage1=intro=610485c96276 ref=refs/remotes/origin/main ancestor=yes snapshot=equal clean=yes
+CASE	J5	PASS	exit=0 verdict=SAFE receipt=pushed evidence=intro=610485c96276 ref=refs/remotes/origin/main ancestor=yes snapshot=equal clean=yes
+CASE	J5-vault	PASS	exit=0 verdict=SAFE receipt=pushed r4=VERIFIED(pushed)
+CASE	J5-quarantine	PASS	exit=0 result=DRY-RUN-PASS receipt=pushed evidence=stage1=intro=610485c96276 ref=refs/remotes/origin/main ancestor=yes snapshot=equal clean=yes
+CASE	J9-file	FAIL	jj=jj keep=68d1d11a verdict=SAFE receipt=pushed expected=NOT-SAFE
+CASE	J9-worktree	FAIL	jj=jj keep=68d1d11a verdict=SAFE receipt=metadata-prune evidence=dir=absent unique=0 head=68d1d11a84f4 owner=jjrepo durable-refs-only=yes expected=NOT-SAFE,never-SAFE(metadata-prune)
+SCENARIO	keeprepo-dirs	keep_dirid=3a7a3909	keep_dirswap=5fd3a2ca
+CASE	J10-verify	PASS	exit=0 verdict=SAFE receipt=pushed evidence=intro=610485c96276 ref=refs/remotes/origin/main ancestor=yes snapshot=equal clean=yes
+CASE	J10-vault	PASS	exit=0 verdict=SAFE receipt=pushed r4=VERIFIED(pushed) evidence=intro=610485c96276 ref=refs/remotes/origin/main ancestor=yes snapshot=equal clean=yes cli=unavailable
+CASE	J10-quarantine	PASS	exit=0 result=DRY-RUN-PASS receipt=pushed evidence=stage1=intro=610485c96276 ref=refs/remotes/origin/main ancestor=yes snapshot=equal clean=yes
+SCENARIO	keeprepo-dirnovel	keep=10a43d1f
+CASE	J11-verify	FAIL	exit=0 verdict=SAFE receipt=pushed evidence=intro=610485c96276 ref=refs/remotes/origin/main ancestor=yes snapshot=equal clean=yes expected=NOT-SAFE
+CASE	J11-vault	FAIL	exit=0 verdict=SAFE receipt=pushed r4=VERIFIED(pushed) evidence=intro=610485c96276 ref=refs/remotes/origin/main ancestor=yes snapshot=equal clean=yes cli=unavailable expected=NOT-SAFE
+CASE	J11-quarantine	FAIL	exit=0 result=DRY-RUN-PASS receipt=pushed evidence=stage1=intro=610485c96276 ref=refs/remotes/origin/main ancestor=yes snapshot=equal clean=yes expected=DRY-RUN-BLOCKED|NOT-AUTHORIZED
+SCENARIO	brokenrepo	keep_missing=ffffffff
+CASE	J12-verify	FAIL	exit=0 verdict=SAFE receipt=pushed evidence=intro=610485c96276 ref=refs/remotes/origin/main ancestor=yes snapshot=equal clean=yes expected=NOT-SAFE
+CASE	J12-vault	FAIL	exit=0 verdict=SAFE receipt=pushed r4=VERIFIED(pushed) evidence=intro=610485c96276 ref=refs/remotes/origin/main ancestor=yes snapshot=equal clean=yes cli=unavailable expected=NOT-SAFE
+CASE	J12-quarantine	FAIL	exit=0 result=DRY-RUN-PASS receipt=pushed evidence=stage1=intro=610485c96276 ref=refs/remotes/origin/main ancestor=yes snapshot=equal clean=yes expected=DRY-RUN-BLOCKED|NOT-AUTHORIZED
+SCENARIO	noncommitrepo	tree=055df04f	blob=626799f0
+CASE	J13-verify	PASS	exit=0 verdict=SAFE receipt=pushed evidence=intro=610485c96276 ref=refs/remotes/origin/main ancestor=yes snapshot=equal clean=yes
+CASE	J13-vault	PASS	exit=0 verdict=SAFE receipt=pushed r4=VERIFIED(pushed) evidence=intro=610485c96276 ref=refs/remotes/origin/main ancestor=yes snapshot=equal clean=yes cli=unavailable
+SCENARIO	bigrepo	known=3600	keep=9b11559b	blob=81fa0ec9
+CASE	J14-verify	PASS	exit=0 verdict=SAFE receipt=pushed evidence=intro=9b6e6a706957 ref=refs/remotes/origin/main ancestor=yes snapshot=equal clean=yes
+CASE	J14-vault	PASS	exit=0 verdict=SAFE receipt=pushed r4=VERIFIED(pushed) evidence=intro=9b6e6a706957 ref=refs/remotes/origin/main ancestor=yes snapshot=equal clean=yes cli=unavailable
+SCENARIO	keeprepo-side	fork=86cf42b6	keep=4f9fbf76	blob=e2b16378
+CASE	J15-verify	PASS	exit=0 verdict=SAFE receipt=pushed evidence=intro=610485c96276 ref=refs/remotes/origin/main ancestor=yes snapshot=equal clean=yes
+CASE	J15-vault	PASS	exit=0 verdict=SAFE receipt=pushed r4=VERIFIED(pushed) evidence=intro=610485c96276 ref=refs/remotes/origin/main ancestor=yes snapshot=equal clean=yes cli=unavailable
+SUMMARY	total=33	failed=13	skipped=2

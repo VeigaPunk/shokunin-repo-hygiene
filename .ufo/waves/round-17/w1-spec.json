@@ -1,0 +1,634 @@
+{
+ "wave": "souji-r17-w1",
+ "context": "# Goal\nSouji round 17 only, WAVE 1 — BUILD (+ first falsifiers). Lane absolute root /home/vgpnk/Projects/shokunin/souji-shokunin (jj-colocated; branch master; base 5fa6017ddcae9f6bd4412df44765f6360cb16294). Round 16 was admitted (read /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/lessons/round-16-verifier-spotcheck.md, routed defects D1–D7). Declared claims:\nC1 operability — tools/souji-census.sh: (D1) repo-local/included/config.worktree `status.showUntrackedFiles=no` must not yield a false clean row: count_dirty (≈:1035-1041) passes explicit `--untracked-files=normal` (keeps the one-line directory collapse); (D2) a hardlinked or non-regular `$GIT_DIR/info/attributes` (guard_git_files ≈:519-535, called at :790/:831/:849/:873/:891 with `|| exit 2`) degrades to a per-repository `error` row with exit 0, a stderr diagnostic `git-metadata-unsupported <reason> <path>`, no git call that could read that file, and neighbours unaffected — every other guard_git_files entry (config, HEAD, index, packed-refs, commondir, info/exclude, alternates) and every protected-namespace refusal keeps whole-run exit 2. Counting command: `python3 /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-17/run-matrix.py --changed <rev|WORKTREE> --output <new.json>` over the new fixture tests/fixtures/r17-census-hygiene.py plus the r15-config, r14-namespace fixtures and `--selftest`; arms pre-harm a31642d, r14-harm cc21683, r16 5fa6017 (census bytes 64a60fd0…), changed.\nC2 calibration (lowest axis, 7) — tools/souji-seat-audit.py precision and reproducibility (D4): its 3 wave-2 `V-WRITE-SCOPE` majors at r16 are false positives (one: `target.lstrip(\"./\")` strips `.ufo`'s dot, :76-82; two: prose split by the first-comma `write_target`, :68-73); the audited transcripts live only in /var/tmp/souji-r16/transcripts (w1 70 + w2 77 files, uncommitted, undigested). Counting command: `python3 /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-seat-audit.py --spec … --transcripts … --json …` on the r16 w1/w2 transcripts: majors w2 3→0 with the real w1 major (SrcGitNoLazyFetch attempted edit) preserved; selftest grows with the FP shapes; transcripts committed with a sha256 manifest.\nC3 coverage — jj-colocated repositories become a governed edge class (operator 2026-10-20: lanes use jj, colocated). Evidence: /home/vgpnk/Projects/shokunin/.ufo/waves/hyaku/jj-w1/reports/JjAuditSouji.md (F1–F8) and JjTrialSouji.md. (a) durable roots for receipts are refs/heads, refs/tags, refs/remotes only — never refs/jj/*, refs/stash or HEAD: every `--not --all` and every all-refs `for-each-ref` roots list in tools/souji-verify.sh (:351, :809-813), tools/souji-vault-verify.sh (:517, :997-1001), tools/souji-quarantine.sh (:1069-1073) uses them, so an absent worktree head held only by refs/jj/keep is NOT-SAFE, never SAFE(metadata-prune); (b) unpushed-touching checks (`log [HEAD] --branches --not --remotes -- target`, verify :234/:321/:671/:952, vault :412/:487/:859/:1140, quarantine :299/:931/:1251) also include `--glob=refs/jj/keep/*` heads, so a commit only jj holds that touches the target refuses (conservative: hidden rewritten predecessors that touched the target also refuse — disclose); plain repos (no refs/jj) must behave byte-identically; (c) a knowledge entry corpus/knowledge/jj-colocation-receipts.md sourced on jj documentation rows opened this round; (d) SKILL.md/PROVINCE.md jj recipes (helper-only commits naming BOTH paths of a quarantine move — fleet helper /home/vgpnk/Projects/shokunin/scripts/hyaku/jj-lane.sh v2 lands deletions/renames when both paths are named and refuses phantom deletions; detached HEAD; no `@{u}`); (e) the empty untracked fixture stub /home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vadv54-run/p/p6repo/.git makes jj see phantom deletions of two tracked files. The census `unpushed` column stays branch-based (keep refs include hidden predecessors: 6 keep-only commits in this lane, 4 with phantom deletions) — disclosed, not changed.\nRouted non-claim fixes: D3 LOG corrections (28→29 uncarried; pre-harm also fails 03 and 18), D5 carry format, D6 gate evidence pinning (exact id sets in selftest, committed --json replays, regenerate.py literal verdict), D7 wording.\n# Contract\nEvery `Report:` trailer path is relative to /home/vgpnk/Projects/shokunin/souji-shokunin — write it at /home/vgpnk/Projects/shokunin/souji-shokunin/<that path>. Use ABSOLUTE paths; your tools start at the fleet root /home/vgpnk/Projects/shokunin, so a relative path lands in the WRONG repo. All seats are leaves: no delegation (an executor may spawn at most one read-only labrat probe), no commits, never run `jj` (any subcommand) or any git write (add/commit/stash/checkout/switch/reset/rebase/pull/push/mv/rm/update-index) in the lane or any fleet repo; you write ONLY your report plus, for executors, the exact files named after `OWN ONLY`. Seats never write the fleet repo, MANIFEST.json, .ufo/state, another lane, or census/operator-sweep-20261019/ (operator-owned; never open it). Never message `agent://all`.\nPROBE RULE (audited by L1 from your transcript with tools/souji-seat-audit.py; violations void your evidence and are reported): allowed for every seat — read/grep/glob on EXACT named files (never a recursive search over the lane root, the fleet root, or a whole directory tree), read-only `git -C <repo> show|log|diff|cat-file|ls-tree|ls-files|rev-parse|rev-list|for-each-ref|merge-base|config --file <f> --list` on named repos/paths, sha256sum, stat, bash -n, shellcheck, python3 -m py_compile, web reading for source items. Only items marked `ALLOWED-EXEC:` may run exactly what is named there, writing only under /var/tmp/souji-r17-<SeatName>/ (delete it afterwards unless told to keep it). FORBIDDEN for all: running tools/souji-census.sh, souji-verify.sh, souji-vault-verify.sh or souji-quarantine.sh (or copies) against any real (non-/var/tmp) directory; any network write; reading credentials or secret file contents (cite paths/modes only).\nTooling authorization (operator 2026-10-19): you may install or upgrade tools that help the task — read /home/vgpnk/.omp/agent/RULES.md first; record tool/version/channel/reason in your report. pacman guard: ALL pacman transactions are PAUSED host-wide — no pacman install/update/remove/downgrade, no -Sy/-Syu/-U/-R, no host-service restart; use uv tool/npx/an official binary in ~/.local/bin, or report the need.\nReport shape: first line `STATUS: <DONE|PARTIAL|FAIL|BLOCKED> — <one line>` only if it is a real status; findings with file:line evidence, the exact commands you ran with their outputs, a verdict (holds/fails/partial) and the smallest fix. Findings are advisory; L1 integrates. Never fabricate output; an unrun check has not passed.",
+ "reportDir": ".ufo/waves/round-17/w1",
+ "maxLanes": 100,
+ "items": [
+  {
+   "name": "CensusD1D2",
+   "role": "executor",
+   "axes": [
+    "operability"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nOWN ONLY /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-census.sh. Implement C1 exactly as the context states. D1: every `git status` the census uses to decide dirty/clean (count_dirty ≈:1035-1041 and any worktree-dirty status call you find) passes `--untracked-files=normal` so repo-local, included, or config.worktree `status.showUntrackedFiles=no|all` cannot change dirty/clean or the one-line directory collapse. D2: change guard_git_files (≈:519-535) so ONLY `info/attributes` hardlinked (nlink>1) or non-regular (FIFO/socket/device; a symlink resolving to one) makes that repository a per-repo `error` row (exit 0) with stderr `git-metadata-unsupported <reason> <path>`, and NO git call is made for that repo afterwards (git status would open the FIFO); every other entry keeps `protected_fail` + whole-run exit 2. Read the closure's D2 note and the patch idea in /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-16/w2/RevCensusScanFinal.md (S5) first. Update the header comment block (lines ≈40-140) to document both changes in one `Round-17` paragraph. Keep `--selftest` passing; add selftest checks for D1 and D2 if the selftest structure allows. ALLOWED-EXEC: `bash -n`, `shellcheck -S warning`, `bash /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-census.sh --selftest` (cwd /var/tmp/souji-r17-CensusD1D2/, it builds its own temp repos), and the census on synthetic repos you create under /var/tmp/souji-r17-CensusD1D2/. Report a unified diff summary, selftest before/after counts, and the exact stderr/row shape you emit."
+  },
+  {
+   "name": "FixtureR17Census",
+   "role": "executor",
+   "axes": [
+    "operability"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nOWN ONLY /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r17-census-hygiene.py (new, executable, python3 stdlib). Model it on /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r15-census-config.py (CLI `--census <path>`, CASE lines `CASE\\t<ID>\\t<PASS|FAIL>\\t<detail>` and a final `SUMMARY\\ttotal=N\\tfailed=M`, builds every repo under a private tempdir, isolates HOME/XDG/GIT_CONFIG_* so host config never leaks). Cases (IDs R17-01..): D1 — local `status.showUntrackedFiles=no` + one untracked file → row dirty; same via `include.path` to a benign file inside the repo's .git; same via `extensions.worktreeConfig=true` + config.worktree; `=all` with an untracked dir of 3 files → dirty with the SAME count as `normal` would give (one collapsed line); controls: key=no with no untracked file → clean; key=no with only an ignored file → clean. D2 — fleet of three repos a/b/c where b's info/attributes is hardlinked → exit 0, b is an `error` row, a and c rows exactly as without b; b's info/attributes a FIFO → same, and the run finishes within a timeout (never blocks; wrap in timeout 60 and treat a timeout as FAIL); symlink info/attributes → FIFO → same; control: hardlinked `config` still exits 2 whole-run (r14 guard kept); control: plain regular info/attributes → normal rows. Each case states its expected class (preserve|repair|refuse) in the detail. ALLOWED-EXEC: run your fixture against census bytes extracted with `git -C /home/vgpnk/Projects/shokunin/souji-shokunin show <rev>:tools/souji-census.sh > /var/tmp/souji-r17-FixtureR17Census/<rev>.sh` for revs a31642d, cc21683, 5fa6017, and against the WORKTREE file /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-census.sh (it is being edited concurrently by seat CensusD1D2; report the worktree sha256 you ran). Expected: 5fa6017 fails every D1 and D2 repair case; report each arm's CASE table verbatim."
+  },
+  {
+   "name": "MatrixR17",
+   "role": "executor",
+   "axes": [
+    "operability"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nOWN ONLY /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-17/run-matrix.py (new). Generalize /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-16/run-matrix.py (read it and /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-16/w2/RevMatrixRunnerFinal.md) for round 17: arms pre-harm a31642d, r14-harm cc21683, r16 5fa6017, changed `<rev|WORKTREE>`; every arm runs the SAME current fixtures tests/fixtures/r17-census-hygiene.py (new, written concurrently by seat FixtureR17Census), tests/fixtures/r15-census-config.py, tests/fixtures/r14-census-boundary.py (check the r16 runner for the exact namespace fixture it used) plus its own `--selftest`, `bash -n`, `shellcheck -S warning`. Fix the r16 runner's open findings: a fixture rc must agree with its SUMMARY (a post-SUMMARY crash is invalid, not PASS), `fixtures_dirty` gates the record (refuse unless --allow-dirty-fixtures, recorded), the fixture id-set comparison row is computed, every record stores fixture sha256s and census sha256 per arm, refuses to overwrite output, removes scratch. Output schema documented in the docstring. ALLOWED-EXEC: `python3 -m py_compile`, and `python3 /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-17/run-matrix.py --changed 5fa6017 --output /var/tmp/souji-r17-MatrixR17/m.json` (cwd /home/vgpnk/Projects/shokunin/souji-shokunin) once the new fixture exists (if it does not yet exist, test with a stub fixture you create under /var/tmp/souji-r17-MatrixR17/ via a `--fixture-dir` override you add). Report the arm/totals table."
+  },
+  {
+   "name": "VerifyJjRoots",
+   "role": "executor",
+   "axes": [
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nOWN ONLY /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh. Implement C3 (a)+(b) from the context in this file only: durable roots = `--branches --tags --remotes` / `for-each-ref refs/heads refs/tags refs/remotes` (never --all, never refs/jj/*, refs/stash, HEAD) at :351 and :809-813; unpushed-touching checks at :234, :321, :671, :952 add `--glob=refs/jj/keep/*` (keep `HEAD` where it already is). A repo without refs/jj must produce byte-identical verdicts/evidence; note the jj-specific branch in NOTES (e.g. `jj-keep-unpushed`) only when refs/jj/keep contributed. Update the file's header round-notes with one `r17` paragraph. Keep `--selftest` (if any) passing; add checks for both shapes. ALLOWED-EXEC: bash -n, shellcheck -S warning, the tool's own selftest, and the tool against synthetic repos you build under /var/tmp/souji-r17-VerifyJjRoots/ (you may use `~/.local/bin/jj` ONLY inside /var/tmp/souji-r17-VerifyJjRoots/ with `JJ_CONFIG=/var/tmp/souji-r17-VerifyJjRoots/jjconfig.toml`, never on a real repo, never push to a real remote). Report diff summary, selftest counts, and before/after verdicts on one jj sandbox where an absent worktree head is held only by refs/jj/keep."
+  },
+  {
+   "name": "VaultJjRoots",
+   "role": "executor",
+   "axes": [
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nOWN ONLY /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-vault-verify.sh. Implement C3 (a)+(b) from the context in this file only: roots at :517 and :997-1001; unpushed-touching checks at :412, :487, :859, :1140 (same contract and NOTES token `jj-keep-unpushed` as seat VerifyJjRoots uses for souji-verify.sh — keep the two files' wording identical; read /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh's matching functions to mirror structure). Plain repos byte-identical. Header round-notes `r17` paragraph. ALLOWED-EXEC: bash -n, shellcheck -S warning, the tool's own selftest, the tool against synthetic repos under /var/tmp/souji-r17-VaultJjRoots/ (jj only there with JJ_CONFIG pointing inside it; never on a real repo or remote). Report diff summary, selftest counts, before/after verdict on a keep-only-head sandbox."
+  },
+  {
+   "name": "QuarantineJjRoots",
+   "role": "executor",
+   "axes": [
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nOWN ONLY /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-quarantine.sh. Implement C3 (a)+(b) in this file: roots at :1069-1073; unpushed-touching checks at :299, :931, :1251 (NOTES token `jj-keep-unpushed`, identical wording to souji-verify.sh). Also address JjAuditSouji F1/F4 for this tool (/home/vgpnk/Projects/shokunin/.ufo/waves/hyaku/jj-w1/reports/JjAuditSouji.md): when the owning repo is jj-colocated (a `.jj` directory beside `.git`), the tool's final instructions/emit lines must tell the operator to commit through the lane helper naming BOTH the source and the quarantine path (`jj-lane.sh commit <repo> --as <id> -m … -- <rel> <qpath>`), never `git add`/`git commit`; `git rm --cached` failure stays non-fatal but its emitted reason must say jj owns the index. Do not change stage semantics for plain repos. ALLOWED-EXEC: bash -n, shellcheck -S warning, the tool's selftest, and the tool on synthetic repos under /var/tmp/souji-r17-QuarantineJjRoots/ (jj only there, JJ_CONFIG inside it). Report diff summary and selftest counts."
+  },
+  {
+   "name": "FixtureJjReceipts",
+   "role": "executor",
+   "axes": [
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nOWN ONLY /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r17-jj-receipts.sh (new, executable bash). A fixture that, entirely under a private `mktemp -d` (default under /var/tmp), builds with real `~/.local/bin/jj` 0.45.1 (env JJ_CONFIG pointing at a temp toml with user.name/email; never the user's config) a bare sandbox origin + a jj-colocated clone, and asserts verdicts of tools/souji-verify.sh, tools/souji-vault-verify.sh (if its CLI admits the shape) and tools/souji-quarantine.sh (dry-run/verdict mode only) given via `--tool-dir <dir>`: J1 absent linked worktree registration whose head commit is held only by refs/jj/keep → NOT-SAFE (never SAFE metadata-prune); J2 a pushed file later modified by an unbookmarked jj commit (jj commit without bookmark move) → NOT-SAFE; J3 control: same repo after the jj commit is bookmarked and pushed → SAFE(pushed) unchanged; J4 control: plain (non-jj) clone shapes of J1/J2 give exactly the verdicts the base tools give; J5 phantom deletion: an empty nested `.git` dir makes `jj diff --summary` report D for tracked existing files (document the observation; assertion is informational). Output CASE/SUMMARY lines like tests/fixtures/r15-census-config.py. Read the tools' CLIs first (exact files only). ALLOWED-EXEC: run the fixture with `--tool-dir` pointing at tools extracted by `git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 5fa6017:tools/<f>` into /var/tmp/souji-r17-FixtureJjReceipts/base/ and at /home/vgpnk/Projects/shokunin/souji-shokunin/tools (worktree, edited concurrently by seats VerifyJjRoots/VaultJjRoots/QuarantineJjRoots; record sha256 of each tool you ran). Expected: base fails J1 and J2; report both arms' CASE tables verbatim."
+  },
+  {
+   "name": "SeatAuditPrecision",
+   "role": "executor",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nOWN ONLY /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-seat-audit.py. Fix D4 (closure /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/lessons/round-16-verifier-spotcheck.md item 4): replace `target.lstrip(\"./\")` (:76-82) by an exact `./` prefix removal (str.removeprefix) so `.ufo/...` keeps its dot; make `write_target` (:68-73) parse the rendered write/edit argument shape exactly (read real rendered calls in /var/tmp/souji-r16/transcripts/w2/ConnReadmeIndex.txt and RerunGateReplayR14.txt and the w1 major in /var/tmp/souji-r16/transcripts/w1/SrcGitNoLazyFetch.txt) instead of splitting prose at the first comma; when a target cannot be parsed, classify `V-WRITE-UNPARSED` (minor) not a scope major. Add a probe class for `find`, `strace`, `realpath`, `readlink` over the lane/fleet roots (minor `V-PROBE`) as routed in round-16.md R16-M5. Extend `--selftest` with: the three r16 w2 false-positive shapes (must yield 0 majors), the w1 real major (must stay major), and cases for the 7 survivors in /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-16/w2/MutateSeatAudit.md. ALLOWED-EXEC: `python3 /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-seat-audit.py --selftest`; and `python3 /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-seat-audit.py --spec /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-16/w2-spec.json --transcripts /var/tmp/souji-r16/transcripts/w2 --lane /home/vgpnk/Projects/shokunin/souji-shokunin --json /var/tmp/souji-r17-SeatAuditPrecision/w2.json` (and the w1 analogue) — report summary totals before (committed census/round-16/seat-audit-w{1,2}.json) vs after, and every row whose classification changed."
+  },
+  {
+   "name": "TranscriptBundle",
+   "role": "executor",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nOWN ONLY /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-16/transcripts/ (new directory) and /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-17/transcript-manifest.py (new). Copy /var/tmp/souji-r16/transcripts/w1 and w2 byte-exact into /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-16/transcripts/w1 and w2 (cp -p; verify every file with cmp). Write census/round-17/transcript-manifest.py: `--write <dir>` produces <dir>/MANIFEST.sha256 (sorted `sha256  relpath` lines, LC_ALL=C order) and `--check <dir>` re-verifies (exit 0 ok, 1 mismatch/missing/extra, 2 usage). Produce MANIFEST.sha256 for census/round-16/transcripts. Do NOT redact or alter bytes; if any file contains a credential-shaped string (token=, ghp_, sk-, Bearer, BEGIN PRIVATE KEY), list path:line and the pattern name (never the value) in your report and STOP before copying that file. ALLOWED-EXEC: cp, cmp, sha256sum, python3 on your script. Report file counts, total bytes, manifest sha256, check exit code."
+  },
+  {
+   "name": "GateExactIds",
+   "role": "executor",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nOWN ONLY /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-landing-gate.py. Fix D6 (closure item 6) and the r16 wave-2 opens in /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/lessons/round-16.md lines 75-80: (1) `--selftest` asserts the EXACT finding id set per case (an over-firing gate must fail the selftest); (2) add cases for fenced and table STATUS lines actually inside a fence/table, a clean LG-FROZEN-MEASURED check, and bold-only resolved carry (RerunGateSelftest.md:182); (3) SUMMARY reports per-branch execution counts (measured-pin branch runs, STATUS lines scanned, carry heading found) (RerunGateReplayR14.md:176); (4) exit-2 totality: a failed git read is exit 2, not a finding; a falsy `files` value is exit 2 (RevGateSnapshot.md S1/S2); revision lookups pass explicit `--git-dir`/`-C` with GIT_DIR/GIT_WORK_TREE unset (S3). Keep the CLI and JSON keys backward compatible. ALLOWED-EXEC: `python3 /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-landing-gate.py --selftest`; `python3 /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r16-landing-gate.py` (read it for its gate-path argument); and the gate `--root /home/vgpnk/Projects/shokunin/souji-shokunin --rev <r> --round <n> --json` for (b410186,15) (a31642d,13) (cc21683,14) (6ff91f5,16) (79bbe7a,16) writing only under /var/tmp/souji-r17-GateExactIds/. Report selftest before/after counts and the five replay finding sets."
+  },
+  {
+   "name": "GateReplayFrozen",
+   "role": "executor",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nOWN ONLY /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-17/gate-replays.py (new) and /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-17/gate-replays-expected.json (new). D6: the r16 gate replay verdicts exist only in prose/seat transcripts. Write a runner that extracts the gate from a named revision (`--gate-rev`, default WORKTREE) and runs it with `--json` on the pinned replays (b410186 round 15 → 5 findings with ids LG-PARSE-REG, LG-FROZEN-PIN, 2× LG-FROZEN-MEASURED, LG-SEAT-UNCARRIED; a31642d 13 → 0; cc21683 14 → 0; 6ff91f5 16 → 0; 79bbe7a 16 → 29 LG-SEAT-UNCARRIED), compares exact (id, path) multisets with gate-replays-expected.json, and writes an output record (`--output`, refuse overwrite) with gate sha256, rev, exit codes, findings. Derive the expected file by running the COMMITTED gate `git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 5fa6017:tools/souji-landing-gate.py` (the worktree gate is edited concurrently by seat GateExactIds); if an observed set disagrees with the prose numbers above, record the observation and say so — never fit expected to prose. ALLOWED-EXEC: python3 on your runner and on the extracted gate, writing only under /var/tmp/souji-r17-GateReplayFrozen/. Report the table of rev/round/exit/finding counts."
+  },
+  {
+   "name": "Vadv54StubFix",
+   "role": "executor",
+   "axes": [
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nOWN ONLY /home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vadv54-harness.sh. JjTrialSouji hazard 1 (/home/vgpnk/Projects/shokunin/.ufo/waves/hyaku/jj-w1/reports/JjTrialSouji.md): the harness creates an EMPTY `p6repo/.git` stub (:176) inside the committed run tree /home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vadv54-run; jj then treats p6repo as a nested repo and reports tracked p6repo/one.txt and p6repo/inner/keep.txt as deleted. Change the harness so the stub exists only while its case runs (create it, run the case, then `rmdir` it — refuse to remove anything non-empty) or build the run tree under a mktemp root; keep every case's verdicts identical. Do NOT run the harness in the lane. ALLOWED-EXEC: bash -n, shellcheck -S warning, and the harness against a byte copy of the lane's tests/vault/ tree under /var/tmp/souji-r17-Vadv54StubFix/ (cp -a of /home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vadv54-harness.sh and whatever it needs; set its run dir there) — compare its verdict output before/after your edit. Report diff and both outputs."
+  },
+  {
+   "name": "RegenerateVerdict",
+   "role": "executor",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nOWN ONLY /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r15-preservation-frozen/regenerate.py. D6 third bullet / R16-M2: `regenerate.py:130` writes `\"verdict\": \"clean\"` as a literal. Make it compute the verdict by running the checker's own frozen evaluation (tools/souji-preservation-evidence.py `--frozen` semantics; read both files) and refuse to write a record whose computed verdict is not `clean` unless `--allow-nonclean` is given (recorded). Do NOT rewrite /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r15-preservation-frozen/expected.json in the lane. ALLOWED-EXEC: python3 -m py_compile; run regenerate.py in a byte copy of the needed files under /var/tmp/souji-r17-RegenerateVerdict/ to show it still produces a record byte-identical to the committed expected.json except fields you document. Report diff and comparison."
+  },
+  {
+   "name": "SrcJjGitCompat",
+   "role": "scout",
+   "axes": [
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nSource opening for corpus/SOURCES.md (contract: /home/vgpnk/Projects/shokunin/CORPUS.md section `SOURCES.md — where a shokunin learns` — read that section and /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/SOURCES.md's header and two existing rows for the column shape). Open https://jj-vcs.github.io/jj/latest/git-compatibility/ on the web now (record the access date 2026-10-20 and the version/\"last updated\" line the page serves). Question: colocated workspaces: how git HEAD, branches/bookmarks and the git index relate to jj; detached HEAD after jj operations; whether jj resets the index. Deliver: (1) a ≤25-word VERBATIM located quote (with its section anchor) that answers it, or `not stated` if the page does not say it — never paraphrase as a quote; (2) a drafted SOURCES row in the registry's exact column order (id `S0??` — L1 numbers it), with tier, status (mined if it grounds a lane change this round, otherwise queued or rejected with reason), recheck, scope, teaches; (3) any statement on the page that CONTRADICTS the context's claim text (quote it). Read no lane file other than the ones named."
+  },
+  {
+   "name": "SrcJjWorkingCopy",
+   "role": "scout",
+   "axes": [
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nSource opening for corpus/SOURCES.md (contract: /home/vgpnk/Projects/shokunin/CORPUS.md section `SOURCES.md — where a shokunin learns` — read that section and /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/SOURCES.md's header and two existing rows for the column shape). Open https://jj-vcs.github.io/jj/latest/working-copy/ on the web now (record the access date 2026-10-20 and the version/\"last updated\" line the page serves). Question: working-copy snapshotting, auto-track, untracked/ignored files, and how nested repositories or .git directories are treated. Deliver: (1) a ≤25-word VERBATIM located quote (with its section anchor) that answers it, or `not stated` if the page does not say it — never paraphrase as a quote; (2) a drafted SOURCES row in the registry's exact column order (id `S0??` — L1 numbers it), with tier, status (mined if it grounds a lane change this round, otherwise queued or rejected with reason), recheck, scope, teaches; (3) any statement on the page that CONTRADICTS the context's claim text (quote it). Read no lane file other than the ones named."
+  },
+  {
+   "name": "SrcJjConfigSnapshot",
+   "role": "scout",
+   "axes": [
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nSource opening for corpus/SOURCES.md (contract: /home/vgpnk/Projects/shokunin/CORPUS.md section `SOURCES.md — where a shokunin learns` — read that section and /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/SOURCES.md's header and two existing rows for the column shape). Open https://jj-vcs.github.io/jj/latest/config/ on the web now (record the access date 2026-10-20 and the version/\"last updated\" line the page serves). Question: `snapshot.auto-track` and `snapshot.max-new-file-size` exact semantics and defaults. Deliver: (1) a ≤25-word VERBATIM located quote (with its section anchor) that answers it, or `not stated` if the page does not say it — never paraphrase as a quote; (2) a drafted SOURCES row in the registry's exact column order (id `S0??` — L1 numbers it), with tier, status (mined if it grounds a lane change this round, otherwise queued or rejected with reason), recheck, scope, teaches; (3) any statement on the page that CONTRADICTS the context's claim text (quote it). Read no lane file other than the ones named."
+  },
+  {
+   "name": "SrcJjKeepRefs",
+   "role": "scout",
+   "axes": [
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nSource opening for corpus/SOURCES.md (contract: /home/vgpnk/Projects/shokunin/CORPUS.md section `SOURCES.md — where a shokunin learns` — read that section and /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/SOURCES.md's header and two existing rows for the column shape). Open https://jj-vcs.github.io/jj/latest/git-compatibility/ and the jj CHANGELOG https://github.com/jj-vcs/jj/blob/main/CHANGELOG.md on the web now (record the access date 2026-10-20 and the version/\"last updated\" line the page serves). Question: the `refs/jj/keep/*` refs: why jj writes them, whether they hold hidden/abandoned commits, and what removes them (`jj util gc`?). Deliver: (1) a ≤25-word VERBATIM located quote (with its section anchor) that answers it, or `not stated` if the page does not say it — never paraphrase as a quote; (2) a drafted SOURCES row in the registry's exact column order (id `S0??` — L1 numbers it), with tier, status (mined if it grounds a lane change this round, otherwise queued or rejected with reason), recheck, scope, teaches; (3) any statement on the page that CONTRADICTS the context's claim text (quote it). Read no lane file other than the ones named."
+  },
+  {
+   "name": "SrcJjBookmarks",
+   "role": "scout",
+   "axes": [
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nSource opening for corpus/SOURCES.md (contract: /home/vgpnk/Projects/shokunin/CORPUS.md section `SOURCES.md — where a shokunin learns` — read that section and /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/SOURCES.md's header and two existing rows for the column shape). Open https://jj-vcs.github.io/jj/latest/bookmarks/ on the web now (record the access date 2026-10-20 and the version/\"last updated\" line the page serves). Question: bookmarks vs git branches in a colocated repo; when a git branch moves; tracking remote bookmarks. Deliver: (1) a ≤25-word VERBATIM located quote (with its section anchor) that answers it, or `not stated` if the page does not say it — never paraphrase as a quote; (2) a drafted SOURCES row in the registry's exact column order (id `S0??` — L1 numbers it), with tier, status (mined if it grounds a lane change this round, otherwise queued or rejected with reason), recheck, scope, teaches; (3) any statement on the page that CONTRADICTS the context's claim text (quote it). Read no lane file other than the ones named."
+  },
+  {
+   "name": "SrcJjNestedRepo",
+   "role": "scout",
+   "axes": [
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nSource opening for corpus/SOURCES.md (contract: /home/vgpnk/Projects/shokunin/CORPUS.md section `SOURCES.md — where a shokunin learns` — read that section and /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/SOURCES.md's header and two existing rows for the column shape). Open jj documentation or the jj GitHub issue tracker (https://github.com/jj-vcs/jj/issues) — search the web, not the disk on the web now (record the access date 2026-10-20 and the version/\"last updated\" line the page serves). Question: how jj snapshots a directory that contains a `.git` subdirectory (nested repository) — does it skip the directory and therefore report tracked files under it as deleted?. Deliver: (1) a ≤25-word VERBATIM located quote (with its section anchor) that answers it, or `not stated` if the page does not say it — never paraphrase as a quote; (2) a drafted SOURCES row in the registry's exact column order (id `S0??` — L1 numbers it), with tier, status (mined if it grounds a lane change this round, otherwise queued or rejected with reason), recheck, scope, teaches; (3) any statement on the page that CONTRADICTS the context's claim text (quote it). Read no lane file other than the ones named."
+  },
+  {
+   "name": "SrcGitShowUntracked",
+   "role": "scout",
+   "axes": [
+    "operability"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nSource opening for corpus/SOURCES.md (contract: /home/vgpnk/Projects/shokunin/CORPUS.md section `SOURCES.md — where a shokunin learns` — read that section and /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/SOURCES.md's header and two existing rows for the column shape). Open https://git-scm.com/docs/git-config (status.showUntrackedFiles) and https://git-scm.com/docs/git-status (-u/--untracked-files) on the web now (record the access date 2026-10-20 and the version/\"last updated\" line the page serves). Question: that repo-local `status.showUntrackedFiles=no` hides untracked files from `git status` and that an explicit `--untracked-files=normal` overrides the config. Deliver: (1) a ≤25-word VERBATIM located quote (with its section anchor) that answers it, or `not stated` if the page does not say it — never paraphrase as a quote; (2) a drafted SOURCES row in the registry's exact column order (id `S0??` — L1 numbers it), with tier, status (mined if it grounds a lane change this round, otherwise queued or rejected with reason), recheck, scope, teaches; (3) any statement on the page that CONTRADICTS the context's claim text (quote it). Read no lane file other than the ones named."
+  },
+  {
+   "name": "SrcGitWorktreeConfig",
+   "role": "scout",
+   "axes": [
+    "operability"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nSource opening for corpus/SOURCES.md (contract: /home/vgpnk/Projects/shokunin/CORPUS.md section `SOURCES.md — where a shokunin learns` — read that section and /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/SOURCES.md's header and two existing rows for the column shape). Open https://git-scm.com/docs/git-worktree (CONFIGURATION FILE) and https://git-scm.com/docs/git-config (includes) on the web now (record the access date 2026-10-20 and the version/\"last updated\" line the page serves). Question: that `extensions.worktreeConfig` makes `$GIT_DIR/config.worktree` part of the config and that `include.path` pulls keys from another file — the D1 arrival variants. Deliver: (1) a ≤25-word VERBATIM located quote (with its section anchor) that answers it, or `not stated` if the page does not say it — never paraphrase as a quote; (2) a drafted SOURCES row in the registry's exact column order (id `S0??` — L1 numbers it), with tier, status (mined if it grounds a lane change this round, otherwise queued or rejected with reason), recheck, scope, teaches; (3) any statement on the page that CONTRADICTS the context's claim text (quote it). Read no lane file other than the ones named."
+  },
+  {
+   "name": "SrcGitRepoLayoutAttrs",
+   "role": "scout",
+   "axes": [
+    "operability"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nSource opening for corpus/SOURCES.md (contract: /home/vgpnk/Projects/shokunin/CORPUS.md section `SOURCES.md — where a shokunin learns` — read that section and /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/SOURCES.md's header and two existing rows for the column shape). Open https://git-scm.com/docs/gitrepository-layout and https://git-scm.com/docs/gitattributes on the web now (record the access date 2026-10-20 and the version/\"last updated\" line the page serves). Question: that `$GIT_DIR/info/attributes` is read by git for attribute lookup (so any status/check-attr call may open it). Deliver: (1) a ≤25-word VERBATIM located quote (with its section anchor) that answers it, or `not stated` if the page does not say it — never paraphrase as a quote; (2) a drafted SOURCES row in the registry's exact column order (id `S0??` — L1 numbers it), with tier, status (mined if it grounds a lane change this round, otherwise queued or rejected with reason), recheck, scope, teaches; (3) any statement on the page that CONTRADICTS the context's claim text (quote it). Read no lane file other than the ones named."
+  },
+  {
+   "name": "SrcGitRevAll",
+   "role": "scout",
+   "axes": [
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nSource opening for corpus/SOURCES.md (contract: /home/vgpnk/Projects/shokunin/CORPUS.md section `SOURCES.md — where a shokunin learns` — read that section and /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/SOURCES.md's header and two existing rows for the column shape). Open https://git-scm.com/docs/git-rev-list and https://git-scm.com/docs/gitrevisions on the web now (record the access date 2026-10-20 and the version/\"last updated\" line the page serves). Question: that `--all` means all refs in refs/ plus HEAD (so it includes refs/jj/*), and the exact semantics of `--branches`, `--tags`, `--remotes`, `--glob`, `--exclude`. Deliver: (1) a ≤25-word VERBATIM located quote (with its section anchor) that answers it, or `not stated` if the page does not say it — never paraphrase as a quote; (2) a drafted SOURCES row in the registry's exact column order (id `S0??` — L1 numbers it), with tier, status (mined if it grounds a lane change this round, otherwise queued or rejected with reason), recheck, scope, teaches; (3) any statement on the page that CONTRADICTS the context's claim text (quote it). Read no lane file other than the ones named."
+  },
+  {
+   "name": "SrcPyLstrip",
+   "role": "scout",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nSource opening for corpus/SOURCES.md (contract: /home/vgpnk/Projects/shokunin/CORPUS.md section `SOURCES.md — where a shokunin learns` — read that section and /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/SOURCES.md's header and two existing rows for the column shape). Open https://docs.python.org/3/library/stdtypes.html#str.lstrip and #str.removeprefix on the web now (record the access date 2026-10-20 and the version/\"last updated\" line the page serves). Question: that `str.lstrip(chars)` strips any combination of the given characters, not a prefix — the r16 seat-audit `.ufo` bug class (C2 sourced claim). Deliver: (1) a ≤25-word VERBATIM located quote (with its section anchor) that answers it, or `not stated` if the page does not say it — never paraphrase as a quote; (2) a drafted SOURCES row in the registry's exact column order (id `S0??` — L1 numbers it), with tier, status (mined if it grounds a lane change this round, otherwise queued or rejected with reason), recheck, scope, teaches; (3) any statement on the page that CONTRADICTS the context's claim text (quote it). Read no lane file other than the ones named."
+  },
+  {
+   "name": "SrcFifo7",
+   "role": "scout",
+   "axes": [
+    "operability"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nSource opening for corpus/SOURCES.md (contract: /home/vgpnk/Projects/shokunin/CORPUS.md section `SOURCES.md — where a shokunin learns` — read that section and /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/SOURCES.md's header and two existing rows for the column shape). Open https://man7.org/linux/man-pages/man7/fifo.7.html and https://man7.org/linux/man-pages/man2/open.2.html on the web now (record the access date 2026-10-20 and the version/\"last updated\" line the page serves). Question: that opening a FIFO for reading blocks until a writer opens it — why a non-regular info/attributes must never be read (D2). Deliver: (1) a ≤25-word VERBATIM located quote (with its section anchor) that answers it, or `not stated` if the page does not say it — never paraphrase as a quote; (2) a drafted SOURCES row in the registry's exact column order (id `S0??` — L1 numbers it), with tier, status (mined if it grounds a lane change this round, otherwise queued or rejected with reason), recheck, scope, teaches; (3) any statement on the page that CONTRADICTS the context's claim text (quote it). Read no lane file other than the ones named."
+  },
+  {
+   "name": "SrcGitGcReachability",
+   "role": "scout",
+   "axes": [
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nSource opening for corpus/SOURCES.md (contract: /home/vgpnk/Projects/shokunin/CORPUS.md section `SOURCES.md — where a shokunin learns` — read that section and /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/SOURCES.md's header and two existing rows for the column shape). Open https://git-scm.com/docs/git-gc on the web now (record the access date 2026-10-20 and the version/\"last updated\" line the page serves). Question: that objects reachable from any ref (including refs/jj/keep/*) survive gc, and what happens once the ref is deleted — why refs/jj/keep is not a durable receipt root. Deliver: (1) a ≤25-word VERBATIM located quote (with its section anchor) that answers it, or `not stated` if the page does not say it — never paraphrase as a quote; (2) a drafted SOURCES row in the registry's exact column order (id `S0??` — L1 numbers it), with tier, status (mined if it grounds a lane change this round, otherwise queued or rejected with reason), recheck, scope, teaches; (3) any statement on the page that CONTRADICTS the context's claim text (quote it). Read no lane file other than the ones named."
+  },
+  {
+   "name": "ScoutStatusCallSites",
+   "role": "scout",
+   "axes": [
+    "operability"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nStatic recon at 5fa6017 (use `git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 5fa6017:<path>`): list EVERY `git ... status` invocation in tools/souji-census.sh, tools/souji-verify.sh, tools/souji-vault-verify.sh, tools/souji-quarantine.sh with file:line, whether it passes an untracked-files mode, whether its result decides a clean/dirty/SAFE verdict, and whether repo-local `status.showUntrackedFiles=no` can therefore produce a false clean/SAFE. Mark which are in C1 scope (census) and which are D1-class gaps elsewhere (route list). No execution."
+  },
+  {
+   "name": "ScoutAttrGuardFlow",
+   "role": "scout",
+   "axes": [
+    "operability"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nStatic recon at 5fa6017: trace in tools/souji-census.sh how guard_git_files (≈:519) is reached from each caller (:790, :831, :849, :873, :891), what protected_fail (:200) does, how a per-repo `error` row is emitted for config-unsupported cases (find the r16 `config-unsupported` path), and which later git calls for the same repo would read `$GIT_DIR/info/attributes` (status, check-attr, ls-files with attributes). Deliver the exact minimal control-flow change that turns ONLY info/attributes hardlink/non-regular into a per-repo error row with no further git call, plus the list of callers where the repo identity needed for the row is (not) available. No execution."
+  },
+  {
+   "name": "ScoutFleetUntrackedCfg",
+   "role": "scout",
+   "axes": [
+    "operability"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nLive exposure for D1 (read-only). For each directory matching /home/vgpnk/Projects/shokunin/*-shokunin and the fleet root itself, read ONLY these files if present: <repo>/.git/config, <repo>/.git/config.worktree, and any include.path target named inside them (resolve but do not follow outside the fleet); use `git config --file <f> --list` (no --includes on other files). Report per repo: status.showUntrackedFiles value and where it comes from, extensions.worktreeConfig, include paths. List lanes by `ls -d /home/vgpnk/Projects/shokunin/*-shokunin` (a glob, not a recursive walk). No other reads."
+  },
+  {
+   "name": "ScoutFleetInfoAttrs",
+   "role": "scout",
+   "axes": [
+    "operability"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nLive exposure for D2 (read-only, stat only — never open the file). For /home/vgpnk/Projects/shokunin and each /home/vgpnk/Projects/shokunin/*-shokunin: `stat -c '%F %h %s' <gitdir>/info/attributes` (gitdir = <repo>/.git; also each linked worktree gitdir listed by `git -C <repo> worktree list --porcelain`, and their commondir). Report which exist, file type, link count. Expected count of repos that would be degraded by C1 D2 (nlink>1 or non-regular)."
+  },
+  {
+   "name": "ScoutFleetJjKeep",
+   "role": "scout",
+   "axes": [
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nLive exposure for C3 (read-only git only; NEVER run jj). For the fleet root and each /home/vgpnk/Projects/shokunin/*-shokunin: is there a `.jj` dir (test -d); `git -C <r> for-each-ref --count=100000 refs/jj | wc -l`; `git -C <r> rev-list --count --glob='refs/jj/keep/*' --not --branches --remotes --tags`; linked worktree registrations (`git -C <r> worktree list --porcelain`) whose `HEAD` commit is reachable from refs/jj/keep but not from branches/tags/remotes (`git -C <r> merge-base --is-ancestor` / `rev-list --count <head> --not --branches --tags --remotes`) — those are F3 live-exposure cases where current tools say SAFE(metadata-prune) but the head is not durable. Table per repo."
+  },
+  {
+   "name": "ScoutKeepOnlySouji",
+   "role": "scout",
+   "axes": [
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nRead-only git (never jj) on /home/vgpnk/Projects/shokunin/souji-shokunin: list every commit reachable from refs/jj/* but not from branches/remotes/tags (`git -C /home/vgpnk/Projects/shokunin/souji-shokunin rev-list --glob='refs/jj/*' --not --branches --remotes --tags`), and for each: `git show --stat --format='%H %an %ad %s'`, whether it deletes tests/vault/vadv54-run/p/p6repo/* (phantom deletion), and the closest master commit with the same patch (patch-id via `git patch-id --stable`). Purpose: evidence for the knowledge entry that keep refs hold hidden rewritten predecessors and phantom-deletion working-copy commits."
+  },
+  {
+   "name": "ScoutHelperV2Contract",
+   "role": "scout",
+   "axes": [
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nRead /home/vgpnk/Projects/shokunin/scripts/hyaku/jj-lane.sh (whole file) and deliver the exact v2 contract that lane docs must cite: how a deletion/rename is admitted (≈:523-551), the phantom-deletion refusal (≈:618-656), what happens to a `git mv`-staged rename when only the destination is named, what `warn: skipping missing path` now means, the `landed`/`rewritten` output lines, exit codes, and the `.ufo` path rules (can `.ufo/waves/round-17/...` be committed? quote the case arms). Cite line numbers. No execution."
+  },
+  {
+   "name": "ScoutSkillGitRecipes",
+   "role": "scout",
+   "axes": [
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nStatic: in EXACT files /home/vgpnk/Projects/shokunin/souji-shokunin/SKILL.md, /home/vgpnk/Projects/shokunin/souji-shokunin/PROVINCE.md, /home/vgpnk/Projects/shokunin/souji-shokunin/AGENTS.md, /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/QUALITY.md, /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/README.md and each file in /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/knowledge/*.md (glob that one directory only), list every instruction that tells an agent to run a git write (add/commit/mv/rm/push/stash/reset/checkout), resolve `@{u}`, use `branch --show-current`/`--abbrev-ref HEAD`, or pin `HEAD` as a measured commit. For each: file:line, quote, and the jj-colocation-correct replacement (lane helper /home/vgpnk/Projects/shokunin/scripts/hyaku/jj-lane.sh commit … naming every path incl. both sides of a move; `git rev-parse <branch>`; `jj-lane.sh state`). Distinguish recipes for the souji lane itself vs recipes for OTHER repos souji cleans (those may be plain git repos)."
+  },
+  {
+   "name": "ScoutHeadPinConsumers",
+   "role": "scout",
+   "axes": [
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nStatic: JjAuditSouji F5 says /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-13/run-verification.py:384 and /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/cache-demonstration.py:166 pin `HEAD` as measured_commit. Read both files (exact) plus /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-16/run-matrix.py and /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-landing-gate.py: list every place that records HEAD/`rev-parse HEAD` as a measured revision. For each, say whether it is historical frozen evidence (leave, document) or a live consumer that must resolve the branch tip (`git rev-parse refs/heads/master`) under jj's detached HEAD. No execution."
+  },
+  {
+   "name": "ScoutGateUncarriedCount",
+   "role": "scout",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nD3 recount, static where possible. The closure says 30 markers / 29 uncarried at 79bbe7a, while /home/vgpnk/Projects/shokunin/souji-shokunin/LOG.md:902 says \"28\". Read LOG.md lines 850-906 (exact range) and /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/lessons/round-16.md:56-86; count the wave-2 lines carried there (exact count) and compare with the gate's committed output if any exists under /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-16/ (list that directory non-recursively). Report the true number with evidence, and quote LOG.md:858-859 and :902 exactly with the corrected wording for an append-only correction entry."
+  },
+  {
+   "name": "RevD1Static",
+   "role": "reviewer",
+   "axes": [
+    "operability"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nFalsify C1-D1 before implementation, statically: at 5fa6017 show (git show) that count_dirty passes no untracked mode; confirm from git's documentation or source (web: https://github.com/git/git builtin/commit.c / wt-status.c for `status.showuntrackedfiles` handling) that a command-line `--untracked-files=normal` overrides any config source (local, include, config.worktree). Check whether `normal` vs config `all` changes the census DIRTY COUNT (not just the boolean) and where the count is printed (row column, summary). Verdict and risk list."
+  },
+  {
+   "name": "RevD2Static",
+   "role": "reviewer",
+   "axes": [
+    "operability"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nFalsify C1-D2 before implementation, statically at 5fa6017: list every path by which `info/attributes` (hardlink/FIFO/symlink→FIFO) can be opened by the census BEFORE guard_git_files runs, and every path AFTER a per-repo degrade where a git call might still read it (worktrees sharing commondir!). In particular: a linked worktree whose commondir's info/attributes is the bad file — is it the same repo row or several? State what the degrade must cover."
+  },
+  {
+   "name": "RevD4FalsePositives",
+   "role": "reviewer",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nConfirm or refute the closure's D4 claim: read /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-16/seat-audit-w2.json (the 3 majors) and the exact transcript lines it cites in /var/tmp/souji-r16/transcripts/w2/ (ConnReadmeIndex.txt, RerunGateReplayR14.txt) and the w1 major in census/round-16/seat-audit-w1.json + /var/tmp/souji-r16/transcripts/w1/SrcGitNoLazyFetch.txt. For each major: the rendered call text, why the auditor flagged it (tools/souji-seat-audit.py:68-82), and whether it is a true violation. Also sample 10 of the 42 w2 minors and report precision. Quote the r16 report/lesson phrase \"all failed edit calls, no bytes written\" source (search /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/lessons/round-16.md and /home/vgpnk/Projects/shokunin/souji-shokunin/LOG.md only)."
+  },
+  {
+   "name": "RevKeepRefsSemantics",
+   "role": "reviewer",
+   "axes": [
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nFalsify C3(a)/(b) design statically: read /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh at the sites named in the context (git show 5fa6017:tools/souji-verify.sh). Argue whether `--branches --tags --remotes` as roots can ever make a previously NOT-SAFE verdict SAFE on a plain repo (it must not), whether dropping HEAD from roots changes any plain-repo verdict (HEAD on a branch is already covered; detached HEAD in plain repos?), and whether adding `--glob=refs/jj/keep/*` to the unpushed checks could raise a git error on repos with no such refs (git with an unmatched --glob is fine? verify in docs). Deliver a list of shapes the fixture must cover."
+  },
+  {
+   "name": "RevHelperQuarantine",
+   "role": "reviewer",
+   "axes": [
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nReview the interplay of /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-quarantine.sh (git mv at ≈:518, git rm --cached at ≈:566, at 5fa6017) with /home/vgpnk/Projects/shokunin/scripts/hyaku/jj-lane.sh v2 (≈:523-656) when a quarantine move in a jj-colocated repo is committed through the helper: does naming both <rel> and <qpath> commit the deletion and the addition? What if the tool's stage-5 `git rm --cached` ran (qpath unstaged) before the helper — is qpath still committed (jj tracks via `jj file track`)? What does the operator need to be told? Static reading only; cite lines."
+  },
+  {
+   "name": "RevD5Carry",
+   "role": "reviewer",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nVerify closure D5 items against /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/lessons/round-16.md: line 54 `resolved:` without `@<hex>`; ReopenS048.md:102 and ScoutOptionalPrefix.md:238 quotes stopping at a wrap without ellipsis (open the seat reports under /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-16/w2/ by exact name and compare); round-15 lines :91 and :93 joined/paraphrased; RevGateSpec.md:226 uncarried non-vocabulary defect line (open /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-16/w1/RevGateSpec.md or w2 — check both exact paths). For each, draft the exact corrected carry line for the round-17 lesson's corrections section (the r16 lesson is historical and is not rewritten)."
+  },
+  {
+   "name": "RevD7Wording",
+   "role": "reviewer",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nD7: the r16 fleet report /home/vgpnk/Projects/shokunin/.ufo/reports/round-16/souji.md says \"`gate-landing.json` (gate at `6ff91f5`)\". Verify from `git -C /home/vgpnk/Projects/shokunin/souji-shokunin log --format=%H -- census/round-16/gate-landing.json` and the file's `resolved_rev` which commit carries the file and which revision it measured. Draft the corrected sentence for the r17 lesson. Also re-check every other `(... at <hex>)` phrase in that report's Before→after section the same way and list mismatches."
+  },
+  {
+   "name": "RevOperatorSweepFp",
+   "role": "reviewer",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nConformance: the operator-owned untracked /home/vgpnk/Projects/shokunin/souji-shokunin/census/operator-sweep-20261019/ must be unchanged and never opened. ALLOWED-EXEC: exactly the one `find /home/vgpnk/Projects/shokunin/souji-shokunin/census/operator-sweep-20261019 -printf …` pipeline below (metadata only). Compute its metadata fingerprint WITHOUT reading file contents: `find /home/vgpnk/Projects/shokunin/souji-shokunin/census/operator-sweep-20261019 -printf '%P\\t%s\\t%T@\\t%m\\n' | LC_ALL=C sort | sha256sum` and the entry count . The r16 closure recorded fingerprint prefix f6a84466 with 155 entries — find in /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/lessons/round-16-verifier-spotcheck.md or round-13/15 spotchecks the exact fingerprint command they used and replicate it exactly. Report match/mismatch."
+  },
+  {
+   "name": "RevL0Status",
+   "role": "reviewer",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nRead /home/vgpnk/Projects/shokunin/.ufo/l0-questions.md (exact file): list every `souji |` line, whether an operator answer exists, and whether C1-D2 (info/attributes → per-repo degrade) or C3 change anything an open question asks the operator to decide. Advise whether a new L0 question is needed for (i) the untracked operator-sweep dir, (ii) running `jj util gc` on lanes (refs/jj/keep growth), (iii) anything else."
+  },
+  {
+   "name": "RevSeatAuditW1Recall",
+   "role": "reviewer",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nGuard C2 against recall loss: from /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-16/seat-audit-w1.json and -w2.json list every major/minor row; for each say whether the D4 precision fix (exact `./` prefix removal; exact write-target parsing; unparsed→minor) could drop a TRUE violation. Use the rendered transcript lines in /var/tmp/souji-r16/transcripts/ (exact files named in the rows). Deliver a must-keep list for the selftest."
+  },
+  {
+   "name": "RevVerifySelftests",
+   "role": "reviewer",
+   "axes": [
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nInventory the existing selftests/fixtures that exercise the code C3 will change: tools/souji-verify.sh, tools/souji-vault-verify.sh, tools/souji-quarantine.sh (`--selftest` entry points; read heads/CLI sections only) and the SKILL.md gate registry rows (/home/vgpnk/Projects/shokunin/souji-shokunin/SKILL.md ≈:140-175). Give the exact command list and the expected counts at 5fa6017 as recorded in committed evidence (cite file:line), so L1 can re-run them before/after. No execution."
+  },
+  {
+   "name": "RevQualityCriteriaFit",
+   "role": "reviewer",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nRead /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/QUALITY.md (Q1–Q26) and the closure's routed D1–D7. For each D-item, say which existing criterion should have caught it (or none), and propose the minimal new criterion text (Q27+) for the ones none caught, each pointing at a lesson row id `R17-M<n>` (L1 assigns). Max 3 new criteria; prefer amending."
+  },
+  {
+   "name": "RevPhantomStubScope",
+   "role": "reviewer",
+   "axes": [
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nStatic: is /home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vadv54-run/p/p6repo/.git the ONLY nested `.git` inside tracked trees of /home/vgpnk/Projects/shokunin/souji-shokunin? Use `git -C /home/vgpnk/Projects/shokunin/souji-shokunin ls-files` to list tracked directories and test `-e <dir>/.git` for each tracked directory (a loop over ls-files output, no recursive find). Also check tests/vault/vadv-49/fixture/*/.git (ignored per JjTrialSouji) — are they under ignored paths (git check-ignore)? Report which nested .git dirs can make jj report phantom deletions of TRACKED files."
+  },
+  {
+   "name": "ConnSiblingJj",
+   "role": "connector",
+   "axes": [
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nSibling-overlap scan for C3: read the other lanes' jj audit/trial reports in /home/vgpnk/Projects/shokunin/.ufo/waves/hyaku/jj-w1/reports/ (list the directory non-recursively, read JjAudit*/JjTrial* for other lanes). Which jj hazards are fleet-wide (owned by the helper/orchestrator, e.g. helper v2 fixes) vs souji-owned (receipt tools, census, hygiene docs) vs another lane's (tsukuroi host tooling, kura history)? Deliver an adjacency table for the report's cross-domain line."
+  },
+  {
+   "name": "ConnOpenResiduals",
+   "role": "connector",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nMap every `open (r17…)` disposition in /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/lessons/round-16.md:41-109 to a round-17 disposition: fixed by which wave-1 item in the context (name it), routed to r18 (why), or why-not. Deliver a table L1 can paste into the r17 lesson's carry section."
+  },
+  {
+   "name": "ConnClaimSeparability",
+   "role": "connector",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nCheck causal separability of C1 (census), C2 (seat audit + transcripts), C3 (verify/vault/quarantine jj roots + knowledge + docs + stub) as stated in the context: can each be verified with the other two reverted? Shared files? Shared fixtures? Shared counting commands? Flag any coupling and the minimal decoupling."
+  },
+  {
+   "name": "ConnFrontierRows",
+   "role": "connector",
+   "axes": [
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nRead /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/README.md `## Frontier` and /home/vgpnk/Projects/shokunin/souji-shokunin/PROVINCE.md: which frontier row does the jj-colocation knowledge entry advance (or is it new ground that needs a new PROVINCE surface line)? Draft the PROVINCE.md surface bullet (jj-colocated lane repos: `.jj/`, refs/jj/keep, detached HEAD, helper-only commits) and the README frontier/coverage-map row changes, citing current line numbers."
+  },
+  {
+   "name": "ConnQualityLessonLink",
+   "role": "connector",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nLink the round's mistakes to criteria: candidate R17 mistakes are (1) r16 published \"all failed edit calls, no bytes written\" for 3 audit majors without re-reading them (D4), (2) LOG said 28 where the count is 29 (D3), (3) helper-era phantom deletions captured in this lane's refs/jj/keep (C3), (4) the empty fixture `.git` stub committed as part of a run tree since r? (find the commit that added tests/vault/vadv54-run via `git -C /home/vgpnk/Projects/shokunin/souji-shokunin log --diff-filter=A --format='%h %ad %s' -- tests/vault/vadv54-run/p/p6repo/one.txt`). For each: class · evidence pointer · captured-by · fix and how the fix is shown able to fail. Draft table rows."
+  },
+  {
+   "name": "ConnHelperDocs",
+   "role": "connector",
+   "axes": [
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nCross-link the fleet helper contract (/home/vgpnk/Projects/shokunin/scripts/hyaku/jj-lane.sh header ≈:1-30 and usage) with /home/vgpnk/Projects/shokunin/souji-shokunin/SKILL.md commit/pre-quarantine rules (≈:50-130) and /home/vgpnk/Projects/shokunin/souji-shokunin/AGENTS.md: list contradictions and draft the replacement text blocks (short). Note that souji cleans OTHER repos which may be plain git: the recipe must branch on `test -d <repo>/.jj`."
+  },
+  {
+   "name": "ConnCensusJjColumns",
+   "role": "connector",
+   "axes": [
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nAssess the context's decision to leave the census `unpushed` column branch-based in jj repos: read tools/souji-census.sh ≈:900-935 at 5fa6017 (git show) and the keep-ref facts in the context. Is the 'disclose, not change' choice right? Would a separate informational column (keep-only commit count) harm live-fleet preservation (rows change for every jj lane)? Deliver a recommendation with reasons; it is advisory."
+  },
+  {
+   "name": "ConnGateRegistryRows",
+   "role": "connector",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nRead the SKILL.md gate registry (/home/vgpnk/Projects/shokunin/souji-shokunin/SKILL.md ≈:140-175): draft the registry row changes/additions this round needs — census (r17 semantics), seat audit (precision), landing gate (exact ids), new fixtures tests/fixtures/r17-census-hygiene.py and tests/fixtures/r17-jj-receipts.sh, census/round-17/run-matrix.py, census/round-17/gate-replays.py, census/round-17/transcript-manifest.py — each with entry, verdict map, selftest, write scope, owner, in the registry's exact column format."
+  },
+  {
+   "name": "CriticC1Harm",
+   "role": "critic",
+   "axes": [
+    "operability"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nAttack C1 before it lands: enumerate every way `--untracked-files=normal` and the info/attributes per-repo degrade could HARM operability or safety vs r16 5fa6017 and vs pre-harm a31642d (dirty counts change for showUntrackedFiles=all repos; a degraded repo hides real dirt; a FIFO in a linked worktree's commondir; a hardlinked info/attributes that is the attack vector the r16 guard existed for — read why via `git -C /home/vgpnk/Projects/shokunin/souji-shokunin log -S'info/attributes' --format='%h %s' -- tools/souji-census.sh` and the commit's lesson). Deliver the falsification cases the fixture MUST include, and the no-harm ledger L1 must report."
+  },
+  {
+   "name": "CriticC2Overclaim",
+   "role": "critic",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nAttack C2: is \"majors 3→0\" a precision gain or a recall loss in disguise? Could the fix be tuned to the three known rows (overfit)? Demand held-out evidence: which r16 rows and which synthetic shapes not derived from those three must be in the selftest; what metric honestly states precision (rows re-adjudicated by a non-author). Also attack reproducibility: does committing transcripts make the audit reproducible if the spec, auditor bytes and transcript bytes are not all pinned in one record?"
+  },
+  {
+   "name": "CriticC3Coverage",
+   "role": "critic",
+   "axes": [
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nAttack C3 as a COVERAGE claim: is \"jj-colocated repositories as a governed edge class\" a real new surface or relabelled operability work? What counting command shows coverage moved (admitted knowledge 5→6 via `python3 /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/count-claims.py <rev>`; PROVINCE surface lines; fixture shapes)? What would make the knowledge entry inadmissible under /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/QUALITY.md? List the overreach risks (claiming jj semantics from one sandbox; keep-ref semantics without a source)."
+  },
+  {
+   "name": "CriticHonestyWhyNot",
+   "role": "critic",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nAttack every 'why not' in the context: census `unpushed` left branch-based; HEADPIN consumers left historical; no `.gitignore` for operator-sweep; the empty stub handling. For each, is the reason measured or asserted? What evidence would L1 need to state it honestly in the report?"
+  },
+  {
+   "name": "CriticSeparabilityNoHarm",
+   "role": "critic",
+   "axes": [
+    "calibration",
+    "operability",
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nRound-level critic: given C1/C2/C3 and routed fixes D3/D5/D6/D7 in the context, list every axis that could be HARMED by this round's landing (depth, freshness, adjacency included) and the exact check that would show no harm (command + expected). Include live-fleet preservation for the census, verify-tool verdict preservation on plain repos, gate/selftest counts not regressing."
+  },
+  {
+   "name": "SentinelTranscripts",
+   "role": "sentinel",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nBefore C2 commits r16 transcripts into the lane: scan /var/tmp/souji-r16/transcripts/w1 and w2 (147 files; read each file — this directory is explicitly allowed for a full read) for credential-shaped content (tokens, API keys, Bearer headers, private keys, passwords, cookies, OAuth codes, `ghp_`/`gho_`/`github_pat_`/`sk-`/`xoxb-` prefixes, AWS keys, .env values). Report ONLY path:line and the pattern class — never the value. Also flag absolute paths into ~/.ssh, ~/.config secrets, or vault refs. Verdict: safe to commit / not (which files)."
+  },
+  {
+   "name": "SentinelFifoHostile",
+   "role": "sentinel",
+   "axes": [
+    "operability"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nHostile-content review of C1-D2 design and the current census at 5fa6017 (static): an attacker-controlled repo in the fleet with info/attributes as FIFO, symlink→FIFO, symlink→/dev/zero, hardlink to a file outside the repo, a directory, or a dangling symlink; also info/attributes under a linked worktree's commondir and under `$GIT_COMMON_DIR` via `commondir` file pointing elsewhere. For each shape: what must the census do (degrade row / whole-run refuse) and what must it never do (open, follow, hang). Deliver test shapes for the fixture."
+  },
+  {
+   "name": "SentinelJjFixture",
+   "role": "sentinel",
+   "axes": [
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nSafety review of the planned tests/fixtures/r17-jj-receipts.sh (being written by seat FixtureJjReceipts; read /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r17-jj-receipts.sh once it exists — retry a few times while you review the rest; if absent, review the design in the context): it must never run jj or git against a real repo, never push to a non-temp remote, must isolate JJ_CONFIG/HOME/GIT_CONFIG_GLOBAL, must clean up, must not read the user's jj config. Report concrete violations with lines."
+  },
+  {
+   "name": "RevengeAttrGuardIntent",
+   "role": "revenger",
+   "axes": [
+    "operability"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nReconstruct WHY round 15/16 added `info/attributes` to guard_git_files with whole-run exit 2: `git -C /home/vgpnk/Projects/shokunin/souji-shokunin log -S'info/attributes' --format='%h %ad %s' -- tools/souji-census.sh`, read those commits' diffs and the seat reports/lesson lines they cite (exact files). Was whole-run refusal intended or an artifact of reusing protected_fail? Did any reviewer argue for per-repo degrade? Deliver intent + whether D2's per-repo degrade preserves the original safety goal."
+  },
+  {
+   "name": "RevengeAuditFpRoot",
+   "role": "revenger",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nReconstruct the r16 seat-audit false positives end to end: the rendered call formats in transcripts exported through history:// (look at 5 rendered write/edit calls in /var/tmp/souji-r16/transcripts/w2/*.txt — name the files you open), the regexes EDIT_TARGET_RE/CALL_RE in /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-seat-audit.py, and how the L1 published disposition (\"all failed edit calls, no bytes written\") was derived. Deliver the precise parsing grammar the auditor should implement."
+  },
+  {
+   "name": "RevengeCountDirtyHistory",
+   "role": "revenger",
+   "axes": [
+    "operability"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nReconstruct the dirty/clean contract across revisions: count_dirty or its equivalent at a31642d (:131), cc21683 (:712), 5fa6017 (:1037) via git show; when the one-line directory collapse was chosen and why; whether any lesson or QUALITY criterion states the dirty count semantics. Deliver whether `--untracked-files=normal` exactly preserves the intended contract on repos without the config key."
+  },
+  {
+   "name": "RevengeStubOrigin",
+   "role": "revenger",
+   "axes": [
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nReconstruct the tests/vault/vadv54-run tree: which round/commit added it (`git -C /home/vgpnk/Projects/shokunin/souji-shokunin log --diff-filter=A --format='%h %ad %s' -- tests/vault/vadv54-run`), why p6repo has an empty .git (harness :176 case semantics `vault-nested-in-source`), whether any verdict in the committed run output depends on the stub existing at rest (vs only during the run). Deliver whether quarantining the at-rest stub (moving the empty dir out of the tree) changes any committed evidence."
+  },
+  {
+   "name": "SimplifyJjRoots",
+   "role": "simplifier",
+   "axes": [
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nAdvisory: the three receipt tools duplicate the same roots/unpushed logic (souji-verify.sh :351/:809-813, souji-vault-verify.sh :517/:997-1001, souji-quarantine.sh :1069-1073 at 5fa6017). Propose the smallest shared spelling (e.g. one `DURABLE_REFS=(--branches --tags --remotes)` array and one `UNPUSHED_HEADS=(--branches --glob=refs/jj/keep/*)` per file) that keeps the files independent (no new sourced library) and minimizes diff. Deliver exact replacement snippets."
+  },
+  {
+   "name": "SimplifySkillCommit",
+   "role": "simplifier",
+   "axes": [
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nAdvisory: /home/vgpnk/Projects/shokunin/souji-shokunin/SKILL.md has commit recipes in several places (≈:50-130; Pre-quarantine checklist ≈:115-130). Propose one consolidated `Committing under jj colocation` block (≤12 lines) that replaces them for the souji lane's own repo and a two-branch rule for repos souji cleans (`.jj` present → owner's helper; plain → guarded git). Deliver exact before/after text."
+  },
+  {
+   "name": "ScribeKnowledgeJj",
+   "role": "scribe",
+   "axes": [
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nOWN ONLY /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/knowledge/jj-colocation-receipts.md (new). Read 2 existing entries in /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/knowledge/ (git-grace-periods-and-expire-to.md, git-auto-maintenance-prunes-worktrees.md) for shape (headings incl. `## Admission status`), and /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/QUALITY.md. Write the entry: what changes for receipt-gated hygiene in a jj-colocated repo — detached HEAD (`@-`), git index reset by jj mutations, `refs/jj/keep/*` holds hidden/abandoned and working-copy commits (not durable roots; `--all` includes them), unbookmarked commits invisible to `--branches --not --remotes`, nested `.git` → phantom deletions, auto-track none, helper-only commits naming both paths. Ground each claim on a web source you open now (jj docs: https://jj-vcs.github.io/jj/latest/git-compatibility/ , working-copy/, config/, bookmarks/; git-rev-list) with a ≤25-word verbatim quote and URL, plus the lane's own observations (cite /home/vgpnk/Projects/shokunin/.ufo/waves/hyaku/jj-w1/reports/JjAuditSouji.md F2/F3 and JjTrialSouji.md hazard 1 by line). Mark each claim `sourced` or `observed (jj 0.45.1, git 2.56.0)`. Use `S0??` placeholders ONLY in a final `## Source rows to number` list — L1 numbers them. Admission status: `candidate — pending round-17 gate`."
+  },
+  {
+   "name": "ScribeLessonMistakes",
+   "role": "scribe",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nDraft (in your report only) the `## Mistakes` table for /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/lessons/round-17.md in the exact column shape of /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/lessons/round-16.md:5-14 (id · class · evidence pointer · captured-by · fix). Rows: R17-M1 seat-audit false-positive majors published as \"all failed edit calls, no bytes written\" (closure D4, census/round-16/seat-audit-w2.json); R17-M2 LOG.md:902 \"28\" vs 29 and LOG.md:858-859 overstating pre-harm (closure D3); R17-M3 the empty fixture `.git` stub makes jj see phantom deletions — this lane's refs/jj/keep already hold such commits (JjTrialSouji.md hazard 1). Every fix names how it is shown able to fail (a selftest case, a fixture case, the helper refusal). Read the closure /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/lessons/round-16-verifier-spotcheck.md first."
+  },
+  {
+   "name": "ScribeLogCorrections",
+   "role": "scribe",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nDraft (report only) two append-only LOG correction entries for /home/vgpnk/Projects/shokunin/souji-shokunin/LOG.md in the style of its existing correction entries (read /home/vgpnk/Projects/shokunin/souji-shokunin/LOG.md:810-906 exact range): (1) `LOG.md:902` \"28\" → 29 uncarried wave-2 STATUS lines at 79bbe7a (30 markers; closure re-derivation); (2) `LOG.md:858-859` \"pre-harm fails only refusal/safety cases\" → pre-harm a31642d also fails R15CFG-03 (degrade) and R15CFG-18 (preserve), as round-16.md:20 states. Name the closure as the finder. Do not edit LOG.md."
+  },
+  {
+   "name": "ScribeSkillJj",
+   "role": "scribe",
+   "axes": [
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nDraft (report only) the SKILL.md edits for jj colocation in /home/vgpnk/Projects/shokunin/souji-shokunin/SKILL.md: replace the Pre-quarantine checklist `git -C <repo> add -- … && git … commit -- …` line (≈:123) and the quarantine step (≈:58) with a two-branch rule (repo has `.jj` → commit via its owner's lane helper naming BOTH <rel> and <qpath>; plain repo → the existing guarded git form), add Error-pattern bullets: `--all`/for-each-ref roots include refs/jj/keep; `--branches --not --remotes` misses unbookmarked jj commits; nested empty `.git` → phantom deletions; detached HEAD — read the branch tip with `git rev-parse refs/heads/<b>`, never `@{u}`; never `cp -a` a `.jj` repo for a seat worktree. Exact before/after text blocks with line numbers."
+  },
+  {
+   "name": "ScribeQualityDraft",
+   "role": "scribe",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nDraft (report only) at most two new QUALITY criteria rows for /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/QUALITY.md in its exact table format (read Q20–Q26): Q27 — an audit finding is re-read at its rendered source before its disposition is published, and an auditor's parse failure is its own class, never a scope violation (cite R17-M1); Q28 — receipt roots are durable refs only (refs/heads, refs/tags, refs/remotes); refs/jj/*, refs/stash and HEAD never prove durability, and jj-held unpushed commits refuse (cite R17-M3 / knowledge entry jj-colocation-receipts.md). Each with how the criterion is mechanically checked."
+  },
+  {
+   "name": "ScribeD6Narrative",
+   "role": "scribe",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nDraft (report only) the round-17 lesson paragraph that discharges closure D6 and D7: what was prose-only at r16 (b410186→5, a31642d/cc21683→0, 18/18, 15/15, 79bbe7a→29, checker 24/47), what is now committed (census/round-17/gate-replays.py + expected json + output record; exact-id selftest; regenerate.py computed verdict), and the D7 wording correction (\"gate-landing.json lands at c46eabf and records a run over 6ff91f5 blobs\"). Use `<to be measured>` nowhere; write only what is already true at 5fa6017 plus the planned artifacts named as planned."
+  },
+  {
+   "name": "ScribeSourcesRows",
+   "role": "scribe",
+   "axes": [
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n\nRead /home/vgpnk/Projects/shokunin/CORPUS.md section `SOURCES.md — where a shokunin learns` and /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/SOURCES.md (whole). Deliver (report only): the exact registry column order and allowed values for tier/status/recheck; the next free id (after S050); the rules for duplicate URLs across scopes (W04) and for rejected rows; and the lesson `## Gate` recording requirements, as a checklist L1 will follow when adding rows S051+. Also run nothing; quote the CORPUS.md lines."
+  }
+ ]
+}
