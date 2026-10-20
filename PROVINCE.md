@@ -28,6 +28,13 @@ removal of stale, duplicate, and already-preserved artifacts.
   as garbage-collection grace refs — never durable receipt roots.
   Re-resolve per round; a repo without `.jj`/`refs/jj` is a plain git repo
   and every receipt path is unchanged.
+- Process residue (r18, observed surface, F5): processes of the current uid
+  whose cwd is deleted or whose argv/fd names a `/var/tmp`, `/tmp` or
+  `/dev/shm` scratch path whose top-level directory is gone — typically a
+  fixture's census or git left blocked on a FIFO after its tempdir was
+  removed. Listed read-only by `tools/souji-proc-census.sh` (gate
+  `tests/fixtures/r18-proc-census.sh`); a row is a nomination, never a
+  removal receipt.
 
 ## Refuses
 
@@ -40,11 +47,16 @@ removal of stale, duplicate, and already-preserved artifacts.
 - Any artifact whose owning lane has dirty or unpushed work touching it.
 - Publishing, vault approval, remote creation — operator-owned.
 - Live lane work products (current-round drafts, uncommitted reports).
+- Signalling any process except the process group the census itself
+  forked for one repository (the r18 repo-timeout watchdog). Killing a
+  listed residue process is operator-approved and re-verifies its
+  (pid, starttime, boot_id) identity at act time (QUALITY Q32).
 
 ## Adjacency
 
-- mori-shokunin observes fleet health and reports; souji acts on artifacts
-  and never on processes. Complementary.
+- mori-shokunin observes fleet and host health (liveness, kill/OOM,
+  runway) and reports; souji lists only its own uid's scratch residue and
+  routes liveness or resource findings to mori. Complementary.
 - tsukuroi-shokunin repairs host operability and never removes packages;
   souji removes files and never touches the OS.
 - kagi-shokunin owns credential hygiene evidence; souji routes any
@@ -65,6 +77,9 @@ removal of stale, duplicate, and already-preserved artifacts.
     class would be a taxonomy change (operator decision).
   - F4 restorable quarantine and file-system semantics — trash layout,
     same-device rename vs copy+remove.
+  - F5 process residue (r18) — own-uid scratch residue is listed (tool +
+    gate, no knowledge entry yet, so it stays frontier); reaping, other
+    uids and host-wide liveness (mori) are outside it.
 - **Adjacent** (report, don't absorb) — the `## Adjacency` rows above, plus:
   - kumitate-shokunin locks live task worktrees during dispatch; souji prunes
     only dead, unlocked registrations and never removes a lock it did not set.

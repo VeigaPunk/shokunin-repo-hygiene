@@ -232,3 +232,18 @@ keep ref is NOT-SAFE, never `SAFE(metadata-prune)`.
   refuse an artifact no branch carries.
 - F2 — unchanged (:47); a colocated/plain byte-comparison is a
   precondition for any `git repo structure` baseline.
+
+## Round 18 — bounded fleet readers, evidence pointers, process residue (F5 opened)
+
+| ground | status | entries / runnable evidence |
+|---|---|---|
+| Bounded census reads (Core census surface; not F2) | Core tool change, outside admission pending: every repository runs in its own process group under `--repo-timeout`; a post-guard FIFO swap or a static work-tree FIFO is an `error` row instead of a hung fleet run. No knowledge entry — sources S064–S066, S070 cited in the lesson | `../tests/fixtures/r18-census-bounded.py`; `../census/round-18/c1-matrix-worktree.json`; `lessons/round-18.md` |
+| Evidence-pointer integrity (calibration of authority files) | gate change, outside admission pending: `LG-DANGLING-PTR` at round ≥ 18; exemptions committed with reasons | `../tools/souji-landing-gate.py`; `../tests/fixtures/r18-landing-pointers.py`; `../corpus/pointer-exemptions.tsv`; `../census/round-18/gate-pointers-before-b576341.json` |
+| F5 process residue | frontier (tool + gate, no knowledge entry): own-uid residue listed, never signalled | `../tools/souji-proc-census.sh`; `../tests/fixtures/r18-proc-census.sh`; `../census/round-18/leak-count.py`; `../census/round-18/proc-census-live-1721.tsv` |
+
+### Frontier (r18)
+
+- F5 — next: a knowledge entry (sources S067–S069 opened) and an
+  operator-approved reap protocol bound to (pid, starttime, boot_id); the
+  58 souji fixture orphans listed at round start await that ruling.
+- F1, F2, F3, F4 — unchanged.
