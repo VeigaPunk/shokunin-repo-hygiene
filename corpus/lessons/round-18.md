@@ -42,6 +42,8 @@ Registry changes (old → new): S064–S071 absent → opened 2026-10-20, rechec
 
 Source census `scripts/sources-census.sh validate --root /home/vgpnk/Projects/shokunin souji`: start exit 0 (W04 S035, S036, S038, S049, S057, S058, S059, S063; `souji ok`; SOURCES sha256 `25c91f68…`); end recorded in the report.
 
+Pinned r17 replays with the changed gate: `python3 census/round-17/gate-replays.py --output <f>` → exit 0, all five replays `match: True` (r15-landing 1/5, r13-admitted 0/0, r14-landing 0/0, r16-landing 0/0, r16-precarry 1/29; record `census/round-18/gate-replays-r18.json`; `expected_sha_match` false by design). The round-18 checks are gated on `--round` ≥ 18, so historical verdicts are byte-stable.
+
 ## Seat-reported failures
 
 Round 18 wave 1 (gate-channel STATUS lines with a failure word, quoted from the first line; disposition on the same line):
