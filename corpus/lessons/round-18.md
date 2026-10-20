@@ -66,13 +66,15 @@ S064's quote is sound; location precision: function starts at attr.c:693, flags 
 
 Registry changes (old → new): S064–S071 absent → opened 2026-10-20, recheck on-release, status mined, used-by this lesson. Rechecked, not changed: S038 (coreutils timeout manual) re-opened by `SrcCoreutilsTimeout` through Wayback — its quote holds, but its installed-info anchor lines drifted with the coreutils 9.11-2 → 9.12-2 upgrade on 2026-10-20 (routed r19: anchor rows to a digest, not a line number). Sourced claims: C1 rests on S064 (why a type guard cannot bound git's open), S065/S066 (the group the watchdog signals), S067/S068 (session-wide fixture kill), S070 (the no-reader check); C2 on S071; C3 on S068, S069.
 
-Source census `scripts/sources-census.sh validate --root /home/vgpnk/Projects/shokunin souji`: start exit 0 (W04 S035, S036, S038, S049, S057, S058, S059, S063; `souji ok`; SOURCES sha256 `25c91f68…`); end recorded in the report.
+Source census `scripts/sources-census.sh validate --root /home/vgpnk/Projects/shokunin souji`: start exit 0 (8 W04s, `souji ok`, SOURCES sha256 `25c91f68…`); end exit 0 (14 W04s, `souji ok`, sha256 `74c5e01e…`). Counts 63→78 rows, tiers A 59→74/B3/C1, mined 44→59/queued15/rejected4, malformed0 both; no existing mutable cell changed (`census/round-18/source-counts.json`, `census/round-18/source-census-final.json`). W04s are disclosed shared-URL/different-scope warnings, not errors.
 
 Pinned r17 replays with the changed gate: `python3 census/round-17/gate-replays.py --output <f>` → exit 0, all five replays `match: True` (r15-landing 1/5, r13-admitted 0/0, r14-landing 0/0, r16-landing 0/0, r16-precarry 1/29; record `census/round-18/gate-replays-r18.json`; `gate_sha256_match` false by design). These are semantic exit/finding-multiset matches, not byte-identical JSON or proof that every historical code path is unchanged.
 
+Final authority-tree gate: `python3 tools/souji-landing-gate.py --root <lane> --rev 74f9adb489fcf1393bbd479425acf5545ded9908 --base b576341 --round 18 --fleet-root /home/vgpnk/Projects/shokunin --json <new>` → exit 0, findings 0, registry scripts 33, changed scripts 13, pins 13, measured checks 3, failure markers 10, reports 175. Record `census/round-18/gate-pointers-after-final.json` binds that measured revision. Together with the final-grammar baseline record, this is 11→0, including seven actual citation repairs and four exact, reasoned exceptions; not an assertion from prose alone.
+
 ## Seat-reported failures
 
-Round 18 wave 1 (gate-channel STATUS lines with a failure word, quoted from the first line; disposition on the same line):
+Round 18 both waves and same-identity follow-ups (gate-channel STATUS lines with a failure word, quoted exactly; disposition on the same line):
 
 - `.ufo/waves/round-18/w1/ScribeLessonDraft.md:1` "STATUS: PARTIAL — lesson skeleton drafted in the round-17 section shape with every measured number left as `TBD-L1`; the lesson file itself was not written (contract: this seat writes only its report; L1 lands `corpus/lessons/round-18.md`)." — resolved@42d9ff3 (L1 wrote this lesson from measured records).
 - `.ufo/waves/round-18/w1/SentinelProcCensus.md:1` "STATUS: PARTIAL — the process-census implementation is absent, so runtime guards cannot be verified; this report records the concrete security acceptance checks." — resolved@4800fd7 (landed implementation reviewed in wave 2, findings fixed; L1 proc selftest and 19-case fixture pass).
