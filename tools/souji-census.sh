@@ -154,7 +154,7 @@ cleanup_census_tmp() {
 
 # --- protected-path boundary (round 14, C2) --------------------------------
 
-PROTECTED_FINDING=path-protected
+PROTECTED_FINDING='path-protected'
 PROTECTED_HOME_ROOTS=()
 
 protected_fail() { # $1 reason, $2 label, $3 path

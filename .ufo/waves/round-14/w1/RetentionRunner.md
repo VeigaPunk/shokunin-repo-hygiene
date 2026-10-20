@@ -8,7 +8,7 @@ Axes: calibration (primary), operability. Wave: `souji-r14-w1`.
 | path | state | sha256 at write time |
 |---|---|---|
 | `census/round-14/cache-demonstration.py` | new, executable | `fc6f69a00a0bb4702e650936691aa0e347bb1fa9a809e3552d8f9371fba29d8a` |
-| `census/round-13/run-verification.py` | migrated (retention + explicit-output CLI) | `624ebaef8715babb86e7cec8e24a180c628712bdf0e6873d3fe53df3232a8d04` |
+| `census/round-13/run-verification.py` | migrated (retention + explicit-output CLI) | `01fc18dd1e849f8268c07f057c947b82236d54abff47f5d9c5984591fba2a9db` |
 | `.ufo/waves/round-14/w1/RetentionRunner.md` | this report | — |
 
 No commit, no push, no production data change, no historical JSON rewrite, no tool install/upgrade.
@@ -19,11 +19,12 @@ Exercised by this seat, read-only:
 
 - `git show a31642d:census/round-13/run-verification.py` → sha256 `4a304b1d4b9e2daeb455d77dcadad9601b568f04ae0ff3447965f83cabf0e81e`, byte-identical to the pre-migration working file; that object is what the demonstration compiles.
 - `census/round-13/verification.json` read: exactly 4 results carry `retained_from` (`evidence-frozen`, `structure-selftest`, `historical-replay-wrong-bytes`, `historical-replay-candidate`), all `matched=true`, all per-result `measured_commit=6ed10a7c…`, none carrying `dependencies`.
+- `census/round-14/verification.json` (written by L1 at `48f8945`) parsed narrowly: result `cache-consumer-red-green` exit 1 vs expected 0, `failed_checks=["migrated_caller_refuses_stale"]`, observed stale `{gate_exit:1, findings:["dependency-digest-mismatch"], retained:true, reusable:false}`. This is L1-observed runtime evidence, not this seat's.
 - `tools/souji-evidence-cache.py` read (not executed): CLI accepts a regular JSON path for `--record`; exits 0/1/2; emits `finding <id>: …`; ids used: `dependency-digest-mismatch` (level 1) and `dependencies-legacy` (level 2); success line `souji-evidence-cache: reusable`; echoes `measured_commit: <record value>`. The gate was still being edited by CacheGate during this wave (observed digests `e33be2ad…` → `4408474f…` → `dc60c14b…` → `b4b50d00…` → `f8f541f7…`), so the demonstration records the digest it actually invokes instead of pinning a constant; it is untracked at baseline `a31642d`.
 - `ast.parse` syntax-only check of both edited files (both parsed).
 - Peer coordination: CacheGate confirmed `--record` as a regular JSON file path and the exact success/failure output shape.
 
-Not exercised here (deliberately, L1 owns post-integration gates): neither edited file was run; the gate was never invoked; no fixture/test/selftest/build/lint/shellcheck ran; the historical suite was not re-executed. All claims below about runtime behaviour are code-inspection predictions with named expected values, not observed results.
+Not exercised by this seat (L1 owns post-integration gates): neither edited file was run here; the gate was never invoked by this seat; no fixture/test/selftest/build/lint/shellcheck ran. L1's committed run at `48f8945` is the first runtime evidence and is reported above with its exact failure and the resulting fix.
 
 ## `census/round-14/cache-demonstration.py` (the supported current-round consumer)
 
@@ -43,7 +44,13 @@ Sequence and expected values:
 
 Authentic red-before: `git show a31642d:census/round-13/run-verification.py` → `ast.parse` → the single top-level `run()` FunctionDef is compiled and executed with `PREVIOUS`, `PREVIOUS_RESULTS`, `RETRY_NAMES`, `CURRENT_REV`, `ROOT`, `ENV` supplied; `subprocess` is replaced by a raising tripwire; the command is a harmless marker producer. On the same stale matched-green record the baseline branch returns a retained dict (`retained_from` set, `measured_commit` preserved, no `exit_code`, marker absent) while the declared dependency digest no longer matches — the stale-green retention defect, reproduced from committed bytes, not emulated.
 
-Migrated-caller exercise: the migrated `census/round-13/run-verification.py` is imported read-only with `sys.argv` reset to the module path (module import defines code only; no flags parsed, no output write) and its actual `attempt_reuse(name, prior)` is called directly. Because the record's synthetic dependencies live under the isolated fixture, the demo rebinds the module's `ROOT` to that fixture for these calls (recorded as `root_rebound_to_fixture`); `GATE` stays the absolute installed gate path, and the gate label is a module constant decoupled from `ROOT` so rebinding cannot corrupt it. Results: unchanged record → reusable/retained; stale record → refused with exit 1 and `dependency-digest-mismatch`; legacy → `prior-dependencies-legacy`; missing per-result revision → `prior-measured-commit-missing`; unstable capture → `prior-dependencies-unstable`; `sources-contract` → `external-mutable-command`.
+Migrated-caller exercise: the migrated `census/round-13/run-verification.py` is imported read-only with `sys.argv` reset to the module path (module import defines code only; no flags parsed, no output write) and its actual `attempt_reuse(name, prior)` is called directly. Because the record's synthetic dependencies live under the isolated fixture, the demo rebinds the module's `ROOT` to that fixture for these calls (recorded as `root_rebound_to_fixture`); `GATE` stays the absolute installed gate path, and the gate label is a module constant decoupled from `ROOT` so rebinding cannot corrupt it. Results: unchanged record → reusable/retained; stale record → refused (no retained source) with exit 1 and `dependency-digest-mismatch`; legacy → `prior-dependencies-legacy`; missing per-result revision → `prior-measured-commit-missing`; unstable capture → `prior-dependencies-unstable`; `sources-contract` → `external-mutable-command`.
+
+## Measured failure at 48f8945 and fix
+
+L1's single run of the committed demo (result `cache-consumer-red-green` in `census/round-14/verification.json`) passed 32/33 checks. The sole failure was `migrated_caller_refuses_stale`, observed `{"gate_exit": 1, "findings": ["dependency-digest-mismatch"], "retained": true, "reusable": false}`.
+
+Root cause was in `attempt_reuse`, not the fixture: after `gate_reuse` returned exit 1, the function fell through to `return prior, decision` unconditionally, so the migrated caller still exposed the prior result as retained. `run()` checks `retained_source is not None`, so a stale gate result would have been reused — the exact defect this migration exists to remove. Fix (code only): exit 1/2 now returns `None, decision` with `reason="gate-refused"`; the retained source is returned only on exit 0. The demo fixture and its assertion are unchanged (`census/round-14/cache-demonstration.py` stays at `fc6f69a0…`). Expected after rerun: `migrated_caller.stale = {"retained": false, "gate_exit": 1, "findings": ["dependency-digest-mismatch"], "reusable": false}`, `failed_checks: []`, status `ok`.
 
 Unsafe-policy control (hypothetical, labelled): retaining whenever `matched is true` would keep the stale green and the legacy green, 1 producer execution instead of the new policy's 3.
 
@@ -72,13 +79,16 @@ python3 -c 'import json; print(json.load(open("/var/tmp/r14-cache-demo.json"))["
 python3 census/round-14/cache-demonstration.py --gate /var/tmp/absent-r14-gate.py
 #   red-before discriminator: expect exit 2, status "blocked", reason "gate-missing".
 python3 census/round-14/cache-demonstration.py --keep   # optional; JSON names the kept /var/tmp tree.
+# Targeted re-check after the fix (the demo has no selective flag; assert the one entry):
+python3 -c 'import json; d=json.load(open("/var/tmp/r14-cache-demo.json")); print(d["status"], d["failed_checks"], json.dumps(d["migrated_caller"]["stale"], sort_keys=True))'
+#   expect: ok [] {"findings": ["dependency-digest-mismatch"], "gate_exit": 1, "reason": "gate-refused", "retained": false, "reusable": false}
 ```
 
 Do **not** run `census/round-13/run-verification.py` for this wave. Its main path now refuses without `--round N --output census/round-N/<new>.json` (exit 2 before any check) and never overwrites an existing file; if a later round deliberately re-executes it, the command is `python3 census/round-13/run-verification.py --round <N> --output census/round-<N>/verification.json [--retry-failed --previous census/round-13/verification.json]`. Historical commands remain tied to their own measured revisions. The narrow synthetic demonstration above is the intended measurement; main's r14 runner performs no retention.
 
 ## Risks, limitations, blockers
 
-- Expected runtime values are unobserved until L1 runs; gate digest may legitimately change if CacheGate edits again before commit — the demonstration records the digest it actually used rather than a constant.
+- L1's committed run at `48f8945` exercised 32/33 checks green and exposed one real defect in `attempt_reuse` (stale gate result still returned as retained); the code is fixed, but the post-fix assertion has not been observed. Gate digest may legitimately change if CacheGate edits again before commit — the demonstration records the digest it actually used rather than a constant.
 - The producer is real but synthetic; `harness_revision`/`measured_commit_scope` prevent reading lane HEAD as provenance for the /var/tmp bytes. No historical execution is proven or re-executed.
 - The migrated `attempt_reuse` decision is exercised directly; `run()`'s re-execution branch and the full suite remain code-inspected only. Dependency capture is conservative, not complete (runtime tools/env excluded; external-mutable commands exempted).
 - Demonstration assumes the gate's documented output lines and finding ids; any drift fails checks red rather than being masked.

@@ -8,8 +8,8 @@ No shared bookkeeping, no commits, no live census, no real credential path.
 
 | file | lines | sha256 |
 |---|---:|---|
-| `tools/souji-census.sh` | 1539 | `fd234148f0c44bcd1edc6857388e08354eba0bc98a59b78e480adf5ab2c3028c` |
-| `tests/fixtures/r14-census-boundary.py` | 732 | `568ae4d840781efe97ac38df904d98d2f35221758e78c7108840d5626d8ab31d` |
+| `tools/souji-census.sh` | 1539 | `fcff8b057b3e7dc57d0fe6a5ed4c7ccb2c89c3ea4bd3c0eb3a93e26ea869aee9` |
+| `tests/fixtures/r14-census-boundary.py` | 735 | `e6a984b1daf1f79a6ad613e451cae48c2807fd71639de4c8d92857b9a11d14b2` |
 
 Pins are from `sha256sum` after the final edit. Earlier intermediate pins
 (`baf98373…`, `2cf44ee9…`, `ec79adbc…`, `034a518e…`, `a118225b…`,
@@ -129,7 +129,9 @@ Synthetic `/var/tmp/r14-census-boundary.*`, synthetic HOME, real repo inside
 the synthetic store, canary content, store root mode 000 (sessions also 000)
 with the `HOME/.omp` parent left traversable (0755). No real `~/.omp` path is
 constructed or read. The fixture refuses to run as root so mode 000 remains
-meaningful.
+meaningful. The alternates case writes the alternate chain and the ref file
+directly (no `git update-ref` object validation), and points the second hop
+at the store's `objects` directory, so setup never reads the 000 store.
 
 | id | case | baseline (a31642d copy) | installed expectation |
 |---|---|---|---|

@@ -9,6 +9,7 @@ Declared claims: C1 calibration (lowest non-retired axis), digest-bound eligibil
 | R14-M1 | stale-green evidence retention can retain an old success after the measured tool changes | round-13-verifier-spotcheck.md, Routed findings item 3; census/round-13/run-verification.py retention branch | Q6/Q18 bound individual evidence, not retention eligibility | New digest-bound eligibility gate and current-round consumer preserve the original measured revision and refuse stale/legacy inputs; discriminating observations are recorded in census/round-14/verification.json, not inferred from source. |
 | R14-M2 | citation-location drift: correct quote assigned incorrect installed-manual line numbers | round-13-verifier-spotcheck.md, Routed findings item 1; SOURCES S034; round-13.md Opened sources S034 | CORPUS quote names its location | S038 supersedes immutable S034; the named erratum below corrects the prior lesson without rewriting it. |
 | R14-M3 | arbitrary census input can point at the credential store or an ancestor and reach metadata/content readers | baseline tools/souji-census.sh main/emit_census/emit_compare; round-14 boundary fixture baseline observation in verification.json | Never credentials boundary existed but arbitrary --root/--compare lacked a pre-access enforcement rule | Pre-access lexical/component boundary checks plus isolated synthetic-HOME command-spy cases; real credential store is never probed. |
+| R14-M4 | integration fallthrough returned a retained source despite a correctly red eligibility decision | verification-attempt-1.json, cache-consumer-red-green at 48f8945: migrated stale has exit 1 / dependency-digest-mismatch but retained=true; 32 other assertions true | Q20's real-consumer stale case caught it; gate-only green did not prove caller enforcement | Return no retained source whenever eligibility is nonzero; do not weaken the fixture. Corrected exact-command observation is recorded separately. |
 
 A criterion is not a demonstrated fix by itself. The final measured decisions below bind any admission to committed red/discriminating evidence.
 
@@ -35,3 +36,30 @@ R13 C2 proved five named cases, not cross-device refusal, stalled tracked git mv
 ### Scope and dispatch
 
 One campaign-policy-validated 32-seat leaf wave, taskCall unchanged, under `.ufo/waves/round-14/`; L1 holds canonical planner seat because the validator excludes planner as a swarm role. Baseline sole untracked path `census/operator-sweep-20261019/` is OPERATOR-authored and excluded from all reads/staging. No inherited lane-authored work. Never probe the real credential store, never launch separate omp processes. No live deletion, quarantine, sibling write, history rewrite, or runtime mutation.
+
+## First integrated measurement and corrections
+
+At committed source `48f8945780adeb259cff0ef7dd9b7efbf1544ec7`,
+`python3 -B census/round-14/run-verification.py` exited 1. Complete
+observations are preserved in `census/round-14/verification-attempt-1.json`.
+The following are not described as green:
+
+- The consumer demonstration had one failed assertion,
+  `migrated_caller_refuses_stale`: the gate correctly returned exit 1 and
+  `dependency-digest-mismatch`, but `attempt_reuse` still returned the prior
+  source. R14-M4 fixes the return value, not the expected finding.
+- Both census paired runs were could-not-evaluate, exit 2, because fixture
+  setup tried to update an alternate-backed ref before its commit object was
+  available. This is not baseline-red proof or a census safety verdict.
+- Warning-level ShellCheck failed on the unquoted hyphenated literal
+  `PROTECTED_FINDING=path-protected` (SC2100). Quote the constant; do not
+  suppress the warning or lower severity.
+
+Actual passing first observations: cache selftest 48/48; external fixture
+22/22; frozen snapshot reusable with two pins; historical runner default
+refusal exit 2; census embedded selftest 38 checks / zero failures; exact
+source-anchor probe S034 exits 1 and S038 exits 0; required source census
+exit 0. Canonical artifacts and historical r13 JSON were unchanged during
+the run. These remain observations at 48f8945, never relabelled as later
+executions. The targeted runner repeats only failed checks plus green checks
+whose subject bytes changed.

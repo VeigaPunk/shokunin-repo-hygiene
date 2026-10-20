@@ -268,7 +268,7 @@ def build_world() -> None:
 
     SAFE_ALT = SCRATCH / "safe-alt"
     (SAFE_ALT / "info").mkdir(parents=True)
-    (SAFE_ALT / "info" / "alternates").write_text(f"{GD}\n", encoding="utf-8")
+    (SAFE_ALT / "info" / "alternates").write_text(f"{GD / 'objects'}\n", encoding="utf-8")
     alt_src = SCRATCH / "alt-src"
     init_repo(alt_src)
     for entry in (alt_src / ".git" / "objects").iterdir():
@@ -287,7 +287,10 @@ def build_world() -> None:
     (ALT_REPO / ".git" / "objects" / "info" / "alternates").write_text(
         f"{SAFE_ALT}\n", encoding="utf-8"
     )
-    git(ALT_REPO, "update-ref", "refs/heads/master", alt_head)
+    (ALT_REPO / ".git" / "refs" / "heads").mkdir(parents=True, exist_ok=True)
+    (ALT_REPO / ".git" / "refs" / "heads" / "master").write_text(
+        alt_head + "\n", encoding="utf-8"
+    )
 
     SYMLINK_FLEET = SCRATCH / "symlink-fleet"
     SYMLINK_FLEET.mkdir()

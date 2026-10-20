@@ -190,6 +190,10 @@ def attempt_reuse(name, prior):
         return None, {"reused": False, "reason": "prior-dependencies-legacy"}
     decision = gate_reuse(prior)
     decision["reused"] = decision["reusable"]
+    if not decision["reusable"]:
+        # Exit 1/2 never yields a retained source, regardless of the record.
+        decision["reason"] = "gate-refused"
+        return None, decision
     return prior, decision
 
 
