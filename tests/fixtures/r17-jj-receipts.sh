@@ -96,7 +96,7 @@ CASE_IDS=(
   J10-verify J10-vault J10-quarantine
   J11-verify J11-vault J11-quarantine
   J12-verify J12-vault J12-quarantine
-  J13-verify J13-vault
+  J13-verify J13-vault J13 J13-own
   J14-verify J14-vault
   J15-verify J15-vault
 )
@@ -280,6 +280,68 @@ q_run() { # repo target
 q_result() { # -> status|receipt|evidence
   printf '%s\n' "$Q_OUT" | awk -F'\t' '$1=="RESULT"{printf "%s|%s|%s", $3, $4, $5; exit}'
 }
+RECIPE_JJ_MODE=emulated
+case "$JJ_VERSION" in
+  "jj 0.45.1"*) RECIPE_JJ_MODE=jj-0.45.1 ;;
+esac
+recipe_emulator_setup() {
+  mkdir -p "$T/jj-emulated-bin" || return 1
+  cat > "$T/jj-emulated-bin/jj" <<'EOF'
+#!/usr/bin/env bash
+set -uo pipefail
+[ "$#" -eq 4 ] &&
+  [ "$1" = --ignore-working-copy ] &&
+  [ "$2" = config ] && [ "$3" = get ] && [ "$4" = user.name ] || exit 2
+awk -F '"' '/^user\.name[[:space:]]*=/ { print $2; found=1; exit }
+  END { if (!found) exit 1 }' "$PWD/.jj/repo/config.toml"
+EOF
+  chmod +x "$T/jj-emulated-bin/jj" || return 1
+}
+recipe_build_repo() { # repo lane id -> colocated repo with lane user.name
+  local repo=$1 lane_id=$2
+  if [ "$RECIPE_JJ_MODE" = jj-0.45.1 ]; then
+    "$JJ_BIN" git clone --colocate "$SRC/origin.git" "$repo" \
+      >/dev/null 2>"$T/err/recipe-jj-clone.err" || return 1
+    "$JJ_BIN" -R "$repo" config set --repo user.name "$lane_id-shokunin" \
+      >/dev/null 2>"$T/err/recipe-jj-config.err" || return 1
+  else
+    g clone -q "$SRC/origin.git" "$repo" >/dev/null 2>&1 || return 1
+    g -C "$repo" checkout -q main >/dev/null 2>&1 || return 1
+    mkdir -p "$repo/.jj/repo" || return 1
+    printf 'user.name = "%s-shokunin"\n' "$lane_id" > "$repo/.jj/repo/config.toml" || return 1
+  fi
+  # jj-lane.sh init mirrors the lane id into git config (lane.id, :440);
+  # the quarantine recipe reads that binding, never jj itself.
+  g -C "$repo" config lane.id "$lane_id" || return 1
+  [ -d "$repo/.jj" ] && [ -e "$repo/.git" ] &&
+    [ -z "$(g -C "$repo" --no-optional-locks status --porcelain 2>/dev/null)" ]
+}
+recipe_q_run() { # repo target; route the identity query to real jj or the scoped emulator
+  if [ "$RECIPE_JJ_MODE" = jj-0.45.1 ]; then
+    PATH="$(dirname -- "$JJ_BIN"):$PATH" q_run "$1" "$2"
+  else
+    PATH="$T/jj-emulated-bin:$PATH" q_run "$1" "$2"
+  fi
+}
+recipe_expect() { # case id repo lane-id forbidden-lane-id
+  local id=$1 repo=$2 lane_id=$3 forbidden_id=$4 f st qrec qev detail recipe count
+  recipe_q_run "$repo" "$repo/f.txt"
+  f=$(q_result); IFS='|' read -r st qrec qev <<< "$f"
+  recipe=$(printf '%s\n' "$Q_OUT" |
+    awk -F '\t' '$1=="CMD" && index($3, "jj-lane.sh commit ")==1 { print $3; exit }')
+  count=$(printf '%s\n' "$Q_OUT" |
+    awk -F '\t' '$1=="CMD" && index($3, "jj-lane.sh commit ")==1 { n++ }
+      END { print n+0 }')
+  detail="mode=$RECIPE_JJ_MODE exit=$Q_RC result=${st:-none} recipe=${recipe:-none}"
+  if [ "$Q_RC" != 0 ] || [ "$st" != DRY-RUN-PASS ] || [ "$count" != 1 ] ||
+     [[ "$recipe" != *" --as $lane_id "* ]] ||
+     [[ "$recipe" == *" --as $forbidden_id "* ]]; then
+    fail_case "$id" "$detail expected=one recipe with --as $lane_id and no --as $forbidden_id"
+  else
+    record_case "$id" PASS "$detail"
+  fi
+}
+
 
 # ---------------------------------------------------------------- utilities --
 idx_tree_with() { # repo base_tree rel content -> tree sha (private index)
@@ -686,6 +748,34 @@ case_j13() {
   v_expect J13-verify "$BREPO2/f_noncommit.txt" SAFE pushed 'snapshot=equal'
   l_expect J13-vault "$BREPO2/f_noncommit.txt" SAFE pushed 'VERIFIED(pushed)' 'snapshot=equal'
 }
+# J13/J13-own: the runbook uses the recorded jj owner, not souji for every lane.
+# Real jj 0.45.1 is used when available; otherwise the constrained jj shim reads
+# the same repo-local user.name TOML key from the git-emulated .jj directory.
+case_j13_recipe() {
+  if [ ! -f "$QUARANTINE_BIN" ]; then
+    skip_case J13 "souji-quarantine.sh not present in tool dir"
+    skip_case J13-own "souji-quarantine.sh not present in tool dir"
+    return
+  fi
+  if [ "$RECIPE_JJ_MODE" = emulated ] && ! recipe_emulator_setup; then
+    skip_case J13 "cannot express jj user.name in the git-emulated .jj repo"
+    skip_case J13-own "cannot express jj user.name in the git-emulated .jj repo"
+    return
+  fi
+  local KAMA_REPO="$T/fleet/kama-shokunin"
+  local SOUJI_REPO="$T/fleet/souji-shokunin"
+  if recipe_build_repo "$KAMA_REPO" kama; then
+    recipe_expect J13 "$KAMA_REPO" kama souji
+  else
+    fail_case J13 "cannot create jj-colocated kama-shokunin fixture"
+  fi
+  if recipe_build_repo "$SOUJI_REPO" souji; then
+    recipe_expect J13-own "$SOUJI_REPO" souji kama
+  else
+    fail_case J13-own "cannot create jj-colocated souji-shokunin fixture"
+  fi
+}
+
 
 # J14: 1200-commit remote history on the path (>64 KiB of known objects)
 # and a keep-only predecessor carrying one pushed blob. A per-candidate
@@ -1060,6 +1150,7 @@ build_broken_repo
 case_j12
 build_noncommit_repo
 case_j13
+case_j13_recipe
 build_big_repo
 case_j14
 build_side_remote

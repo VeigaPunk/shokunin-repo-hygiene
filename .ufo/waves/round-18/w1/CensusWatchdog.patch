@@ -1,0 +1,787 @@
+diff --git c/tools/souji-census.sh w/tools/souji-census.sh
+index 4b90562..03b7635 100755
+--- c/tools/souji-census.sh
++++ w/tools/souji-census.sh
+@@ -6,15 +6,15 @@
+ # --untracked-files=normal on the dirty count and degrades a hardlinked or
+ # non-regular info/attributes to a per-repo error row.
+ #
+-# One bash tool; bash + coreutils + git only. Never fetches, never writes
+-# outside /var/tmp temporary output. The mtime walk never opens file
+-# contents, but `git status` may read or hash tracked content (this is not a
+-# data-loss-prevention classifier), and .ufo/state or .ufo/watchdog.log are
+-# never traversed by the mtime walk.
++# One bash tool; Bash, coreutils, git, util-linux `setsid`, and Linux /proc.
++# Never fetches; writes only temporary census output under /var/tmp.
++# The mtime walk never opens file contents, but `git status` may read or hash
++# tracked content (this is not a data-loss-prevention classifier), and
++# .ufo/state or .ufo/watchdog.log are never traversed by the mtime walk.
+ #
+ # CLI
+ #   tools/souji-census.sh [--root DIR] [--compare PREV.tsv]
+-#                         [--include-root] [--selftest]
++#                         [--repo-timeout N] [--include-root] [--selftest]
+ #
+ # Default scan: every immediate child of $SHOKUNIN_ROOT (or --root) whose
+ # .git is a directory (a main repo, not a linked work tree or submodule
+@@ -59,6 +59,10 @@
+ #                     is missing (metadata only; not a separate row).
+ #                   wt-dirty: a non-main worktree directory is present and its
+ #                     own `git status --porcelain` is non-empty.
++
++# --repo-timeout N
++#   Maximum integer seconds per repository (1..86400; default 600).
++#   Overrides SOUJI_CENSUS_REPO_TIMEOUT; invalid values exit 2.
+ #
+ # --compare PREV.tsv
+ #   Reads a previous census (header required, same columns). Emits a diff
+@@ -70,9 +74,10 @@
+ #   mixed into the diff.
+ #
+ # --selftest
+-#   Builds a fixture fleet under /var/tmp, runs the census twice (byte-
+-#   identical), mutates one fixture, checks --compare and the protected
+-#   boundary. Removes the fixture tree on exit. Exit 0 on pass, 1 on fail.
++#   Builds fixture fleets under /var/tmp, runs the census twice (byte-
++#   identical), mutates one fixture, checks --compare, protected refusals,
++#   and per-repository watchdog behavior. Removes fixtures on exit. Exit 0
++#   on pass, 1 on fail.
+ #
+ # Protected boundary (round 14, C2)
+ #   --root and --compare are resolved one component at a time before any
+@@ -149,20 +154,30 @@
+ #   files and arbitrary hardlinks into a store are not detectable without
+ #   stat'ing the store; the guard and the later access are not one atomic
+ #   operation.
++#   Candidate metadata guards and census runs each use a private process group.
++#   If one exceeds the bound, its group receives TERM, then KILL two seconds
++#   later; a timed-out repository gets the row
++#   `<repo>\t0\t0\t0\t0\t\terror` and stderr
++#   `souji-census: repo-timeout <N>s <repo>`. Other repositories continue.
++#   After KILL, reaping is bounded to three seconds; a survivor is reported
++#   as `souji-census: repo-timeout-unreaped <repo>`.
+ #
+ # Exit codes
+ #   0 census emitted (rows may carry `error`/status-unverifiable for
+-#     degraded repositories) / header-only diff; 1 selftest or setup failure;
+-#   2 usage, malformed baseline, or protected-path refusal; 3 compare drift.
++#     degraded or timed-out repositories) / header-only diff; 1 selftest or
++#     setup/census failure; 2 usage, malformed baseline, protected-path
++#     refusal; 3 compare drift.
+ #
+ # Env
+-#   SHOKUNIN_ROOT   default root when --root is omitted
+-#                   (default: parent of this repo)
++#   SHOKUNIN_ROOT                 default root when --root is omitted
++#                                 (default: parent of this repo)
++#   SOUJI_CENSUS_REPO_TIMEOUT     integer seconds per repository, 1..86400
++#                                 (default: 600)
+ set -euo pipefail
+ 
+ # Imported BASH_FUNC_* definitions could shadow the externally-resolved
+ # commands this tool relies on. Remove functions for those names.
+-unset -f git find du stat awk grep sort head cut date readlink 2>/dev/null || true
++unset -f bash cat git kill find du stat awk grep sort head cut date readlink sleep mktemp setsid mkdir rm 2>/dev/null || true
+ 
+ # Clear every inherited GIT_* variable. GIT_DIR/GIT_COMMON_DIR/
+ # GIT_OBJECT_DIRECTORY/GIT_ALTERNATE_OBJECT_DIRECTORIES and GIT_CONFIG_*
+@@ -198,8 +213,14 @@ COMPARE_SET=0
+ INCLUDE_ROOT=0
+ SELFTEST=0
+ REPOS=()
++GUARD_CANDIDATES=()
++GUARD_KINDS=()
+ ROOT_RAW_IS_SYMLINK=0
+ CENSUS_TMP=""
++REPO_TIMEOUT="${SOUJI_CENSUS_REPO_TIMEOUT-600}"
++REPO_TIMED_OUT=0
++REPO_UNREAPED=0
++PROC_STATE=""
+ 
+ usage() {
+   awk 'NR > 1 { if ($0 !~ /^#/) exit; sub(/^# ?/, ""); print }' "$SELF"
+@@ -210,7 +231,29 @@ usage_err() { printf 'souji-census: %s\n' "$1" >&2; usage 2 >&2; }
+ 
+ cleanup_census_tmp() {
+   if [ -n "${CENSUS_TMP:-}" ]; then
+-    rm -f -- "$CENSUS_TMP"
++    rm -rf -- "$CENSUS_TMP"
++  fi
++}
++
++prepare_census_tmp() {
++  if [ -z "${CENSUS_TMP:-}" ]; then
++    CENSUS_TMP=$(mktemp -d /var/tmp/souji-census-now.XXXXXX)
++    trap cleanup_census_tmp EXIT
++  fi
++}
++
++validate_repo_timeout() {
++  case "$REPO_TIMEOUT" in
++    ''|*[!0-9]*) usage_err "invalid repo timeout (expected integer 1..86400)" ;;
++  esac
++  while [ "${#REPO_TIMEOUT}" -gt 1 ] && [ "${REPO_TIMEOUT:0:1}" = 0 ]; do
++    REPO_TIMEOUT=${REPO_TIMEOUT:1}
++  done
++  if [ "${#REPO_TIMEOUT}" -gt 5 ]; then
++    usage_err "invalid repo timeout (expected integer 1..86400)"
++  fi
++  if [ "$REPO_TIMEOUT" -lt 1 ] || [ "$REPO_TIMEOUT" -gt 86400 ]; then
++    usage_err "invalid repo timeout (expected integer 1..86400)"
+   fi
+ }
+ 
+@@ -1342,72 +1385,336 @@ census_one() { # $1 repo-dir
+ 
+ list_repos() { # $1 resolved root; fills REPOS, basename-sorted
+   local root=$1
+-  local d g base reason
++  local d g base last
+   REPOS=()
++  GUARD_CANDIDATES=()
++  GUARD_KINDS=()
+   if [ "$INCLUDE_ROOT" = 1 ] && [ "$ROOT_RAW_IS_SYMLINK" = 0 ] && [ -d "$root" ]; then
+     g="$root/.git"
+     if [ -L "$g" ]; then
+-      guard_target git-metadata "$g" >/dev/null
++      GUARD_CANDIDATES+=("$root")
++      GUARD_KINDS+=(symlink)
+     elif [ -f "$g" ]; then
+-      guard_git_surface "$root" || true
++      GUARD_CANDIDATES+=("$root")
++      GUARD_KINDS+=(repo)
+       REPOS+=("$root")
+     elif [ -d "$g" ]; then
+-      guard_git_surface "$root" || true
++      GUARD_CANDIDATES+=("$root")
++      GUARD_KINDS+=(repo)
+       REPOS+=("$root")
+     fi
+   fi
+   shopt -s nullglob
+   for d in "$root"/*; do
+     base=${d##*/}
+-    # skip dot-dirs (operator config, .ufo, .scratch) and unrepresentable names
+     case "$base" in
+       .*) continue ;;
+     esac
+     case "$base" in
+       *$'\n'*|*$'\t'*|*$'\r'*) continue ;;
+     esac
+-    if reason=$(protected_reason_input "$d"); then
+-      protected_fail "$reason" candidate "$d"
+-    fi
+-    # A symlink child is never a repo root and is never followed.
+-    if [ -L "$d" ]; then continue; fi
+-    [ -d "$d" ] || continue
++    GUARD_CANDIDATES+=("$d")
++    GUARD_KINDS+=(path)
++    if [ -L "$d" ] || [ ! -d "$d" ]; then continue; fi
+     g="$d/.git"
++    last=$((${#GUARD_KINDS[@]} - 1))
+     if [ -L "$g" ]; then
+-      guard_target git-metadata "$g" >/dev/null
++      GUARD_KINDS[last]=symlink
+       continue
+     fi
+     if [ -f "$g" ]; then
+-      guard_git_pointer "$d" "$g"
++      GUARD_KINDS[last]=gitfile
+       continue
+     fi
+     if [ -d "$g" ]; then
+-      guard_git_surface "$d" || true
++      GUARD_KINDS[last]=repo
+       REPOS+=("$d")
+     fi
+   done
+   shopt -u nullglob
+-  if [ "${#REPOS[@]}" -eq 0 ]; then return 0; fi
+-  mapfile -t REPOS < <(printf '%s\n' "${REPOS[@]}" | LC_ALL=C sort)
++  if [ "${#REPOS[@]}" -gt 0 ]; then
++    mapfile -t REPOS < <(printf '%s\n' "${REPOS[@]}" | LC_ALL=C sort)
++  fi
++}
++
++guard_repo_candidate() { # $1 candidate path, $2 parent-classified kind
++  local repo=$1 kind=$2 rc reason
++  if reason=$(protected_reason_input "$repo"); then
++    protected_fail "$reason" candidate "$repo"
++  fi
++  case "$kind" in
++    repo)
++      if guard_git_surface "$repo"; then return 0; else rc=$?; fi
++      [ "$rc" = 1 ] && return 0
++      return "$rc"
++      ;;
++    gitfile) guard_git_pointer "$repo" "$repo/.git" ;;
++    symlink) guard_target git-metadata "$repo/.git" >/dev/null ;;
++    path) return 0 ;;
++    *) return 1 ;;
++  esac
++}
++
++
++proc_state() { # $1 PID; sets PROC_STATE, returning 1 when absent
++  local stat_line
++  PROC_STATE=""
++  if IFS= read -r stat_line 2>/dev/null < "/proc/$1/stat"; then
++    stat_line=${stat_line##*) }
++    PROC_STATE=${stat_line%% *}
++    return 0
++  fi
++  return 1
++}
++
++run_repo_with_watchdog() { # repo, stdout file, stderr file, command and arguments
++  local repo=$1 row_file=$2 stderr_file=$3 worker watchdog rc state_path
++  local dead=0 waited=0 ticks=0
++  shift 3
++  state_path=$(mktemp "$CENSUS_TMP/watchdog.XXXXXX")
++  rm -f -- "$state_path"
++  REPO_TIMED_OUT=0
++  REPO_UNREAPED=0
++  set -m
++  "$@" > "$row_file" 2> "$stderr_file" &
++  worker=$!
++  set +m
++  setsid bash -c '
++    pgid=$1
++    limit=$2
++    state_path=$3
++    elapsed=0
++    while [ "$elapsed" -lt "$limit" ]; do
++      kill -0 -- "-$pgid" 2>/dev/null || exit 0
++      sleep 1
++      elapsed=$((elapsed + 1))
++    done
++    kill -0 -- "-$pgid" 2>/dev/null || exit 0
++    if mkdir -- "$state_path" 2>/dev/null; then
++      : > "$state_path/timed_out"
++      kill -TERM -- "-$pgid" 2>/dev/null || true
++      sleep 2
++      kill -KILL -- "-$pgid" 2>/dev/null || true
++      : > "$state_path/killed"
++    fi
++  ' souji-census-watchdog "$worker" "$REPO_TIMEOUT" "$state_path" \
++    >/dev/null 2>&1 &
++  watchdog=$!
++
++  while [ "$dead" = 0 ]; do
++    if proc_state "$worker"; then
++      case "$PROC_STATE" in Z|X) dead=1 ;; esac
++    else
++      dead=1
++    fi
++    if [ "$dead" = 0 ] && [ -f "$state_path/killed" ]; then
++      ticks=$((ticks + 1))
++      if [ "$ticks" -ge 30 ]; then
++        REPO_UNREAPED=1
++        break
++      fi
++    fi
++    [ "$dead" = 1 ] || [ "$REPO_UNREAPED" = 1 ] || sleep 0.1
++  done
++  if [ "$dead" = 1 ]; then
++    if wait "$worker"; then rc=0; else rc=$?; fi
++    waited=1
++  else
++    rc=124
++  fi
++
++  if mkdir -- "$state_path" 2>/dev/null; then
++    kill -TERM -- "-$watchdog" 2>/dev/null || true
++    wait "$watchdog" 2>/dev/null || true
++    cat -- "$stderr_file" >&2
++    rm -rf -- "$state_path"
++    return "$rc"
++  fi
++
++  ticks=0
++  while [ ! -f "$state_path/timed_out" ] && [ "$ticks" -lt 30 ]; do
++    sleep 0.1
++    ticks=$((ticks + 1))
++  done
++  if [ -f "$state_path/timed_out" ]; then
++    REPO_TIMED_OUT=1
++    ticks=0
++    while [ ! -f "$state_path/killed" ] && [ "$ticks" -lt 30 ]; do
++      sleep 0.1
++      ticks=$((ticks + 1))
++    done
++    if [ ! -f "$state_path/killed" ]; then
++      kill -KILL -- "-$worker" 2>/dev/null || true
++      REPO_UNREAPED=1
++    fi
++    if [ "$dead" = 0 ] && [ "$REPO_UNREAPED" = 0 ]; then
++      ticks=0
++      while [ "$ticks" -lt 30 ]; do
++        if proc_state "$worker"; then
++          case "$PROC_STATE" in Z|X) dead=1; break ;; esac
++        else
++          dead=1
++          break
++        fi
++        sleep 0.1
++        ticks=$((ticks + 1))
++      done
++      if [ "$dead" = 1 ]; then
++        if wait "$worker"; then rc=0; else rc=$?; fi
++        waited=1
++      else
++        REPO_UNREAPED=1
++      fi
++    fi
++    if [ "$dead" = 1 ] && [ "$REPO_UNREAPED" = 0 ]; then
++      ticks=0
++      while kill -0 -- "-$worker" 2>/dev/null && [ "$ticks" -lt 30 ]; do
++        sleep 0.1
++        ticks=$((ticks + 1))
++      done
++      if kill -0 -- "-$worker" 2>/dev/null; then REPO_UNREAPED=1; fi
++    fi
++  else
++    kill -TERM -- "-$worker" 2>/dev/null || true
++    sleep 2
++    kill -KILL -- "-$worker" 2>/dev/null || true
++    ticks=0
++    while [ "$dead" = 0 ] && [ "$ticks" -lt 30 ]; do
++      if proc_state "$worker"; then
++        case "$PROC_STATE" in Z|X) dead=1 ;; esac
++      else
++        dead=1
++      fi
++      [ "$dead" = 1 ] || sleep 0.1
++      ticks=$((ticks + 1))
++    done
++    if [ "$dead" = 1 ] && [ "$waited" = 0 ]; then
++      if wait "$worker"; then rc=0; else rc=$?; fi
++      waited=1
++    elif [ "$dead" = 0 ]; then
++      REPO_UNREAPED=1
++    fi
++    if [ "$dead" = 1 ]; then
++      ticks=0
++      while kill -0 -- "-$worker" 2>/dev/null && [ "$ticks" -lt 30 ]; do
++        sleep 0.1
++        ticks=$((ticks + 1))
++      done
++      if kill -0 -- "-$worker" 2>/dev/null; then REPO_UNREAPED=1; fi
++    fi
++    if [ "$rc" != 2 ]; then rc=1; fi
++  fi
++
++  wait "$watchdog" 2>/dev/null || true
++  if [ "$REPO_UNREAPED" = 1 ]; then
++    if proc_state "$worker"; then
++      case "$PROC_STATE" in
++        Z|X)
++          if [ "$waited" = 0 ]; then
++            if wait "$worker"; then rc=0; else rc=$?; fi
++            waited=1
++          fi
++          REPO_UNREAPED=0
++          dead=1
++          ;;
++      esac
++    else
++      if [ "$waited" = 0 ]; then
++        if wait "$worker"; then rc=0; else rc=$?; fi
++        waited=1
++      fi
++      REPO_UNREAPED=0
++      dead=1
++    fi
++  fi
++  if [ "$REPO_TIMED_OUT" = 1 ] && [ "$dead" = 1 ] &&
++    [ "$REPO_UNREAPED" = 0 ]; then
++    ticks=0
++    while kill -0 -- "-$worker" 2>/dev/null && [ "$ticks" -lt 30 ]; do
++      sleep 0.1
++      ticks=$((ticks + 1))
++    done
++    if kill -0 -- "-$worker" 2>/dev/null; then REPO_UNREAPED=1; fi
++  fi
++  cat -- "$stderr_file" >&2
++  if [ "$REPO_UNREAPED" = 1 ]; then
++    printf 'souji-census: repo-timeout-unreaped %s\n' \
++      "$(sanitize_field "$repo")" >&2
++  fi
++  rm -rf -- "$state_path"
++  if [ "$rc" = 2 ]; then
++    REPO_TIMED_OUT=0
++    return 2
++  fi
++  if [ "$REPO_TIMED_OUT" = 1 ]; then return 124; fi
++  return "$rc"
+ }
+ 
+ emit_census() {
+-  local root repo row rc
++  local root repo row rc row_file stderr_file kind i
++  local -A preflight_timeout=()
+   root=$(guard_path root "$ROOT") || exit 2
+   [ -d "$root" ] || { printf 'souji-census: root is not a directory: %s\n' "$root" >&2; exit 1; }
+   ROOT_RAW_IS_SYMLINK=0
+   if [ -L "$ROOT" ]; then ROOT_RAW_IS_SYMLINK=1; fi
+   list_repos "$root"
++  prepare_census_tmp
++
++  # Guard all candidate surfaces before any census Git commands run. Parent
++  # discovery classifies metadata only; guarded content reads happen below.
++  for ((i = 0; i < ${#GUARD_CANDIDATES[@]}; i++)); do
++    repo=${GUARD_CANDIDATES[i]}
++    kind=${GUARD_KINDS[i]}
++    row_file=$(mktemp "$CENSUS_TMP/guard.XXXXXX")
++    stderr_file=$(mktemp "$CENSUS_TMP/stderr.XXXXXX")
++    if run_repo_with_watchdog "$repo" "$row_file" "$stderr_file" \
++      guard_repo_candidate "$repo" "$kind"; then
++      :
++    else
++      rc=$?
++      rm -f -- "$row_file" "$stderr_file"
++      if [ "$rc" = 2 ]; then exit 2; fi
++      if [ "$REPO_TIMED_OUT" = 1 ]; then
++        printf 'souji-census: repo-timeout %ss %s\n' \
++          "$REPO_TIMEOUT" "$(sanitize_field "$repo")" >&2
++        if [ "$kind" = repo ]; then preflight_timeout["$repo"]=1; fi
++      else
++        printf 'souji-census: census failed for %s (rc=%s)\n' "$repo" "$rc" >&2
++        exit 1
++      fi
++      continue
++    fi
++    rm -f -- "$row_file" "$stderr_file"
++  done
++
+   local -a rows=()
+   for repo in "${REPOS[@]+"${REPOS[@]}"}"; do
+-    if row=$(census_one "$repo"); then
++    if [ "${preflight_timeout[$repo]+x}" = x ]; then
++      row="$(sanitize_field "$repo")"$'\t0\t0\t0\t0\t\terror'
++      rows+=("$row")
++      continue
++    fi
++    row_file=$(mktemp "$CENSUS_TMP/repo.XXXXXX")
++    stderr_file=$(mktemp "$CENSUS_TMP/stderr.XXXXXX")
++    if run_repo_with_watchdog "$repo" "$row_file" "$stderr_file" census_one "$repo"; then
++      row=$(<"$row_file")
+       rows+=("$row")
+     else
+       rc=$?
++      rm -f -- "$row_file" "$stderr_file"
+       if [ "$rc" = 2 ]; then exit 2; fi
+-      printf 'souji-census: census failed for %s (rc=%s)\n' "$repo" "$rc" >&2
+-      exit 1
++      if [ "$REPO_TIMED_OUT" = 1 ]; then
++        printf 'souji-census: repo-timeout %ss %s\n' \
++          "$REPO_TIMEOUT" "$(sanitize_field "$repo")" >&2
++        row="$(sanitize_field "$repo")"$'\t0\t0\t0\t0\t\terror'
++        rows+=("$row")
++      else
++        printf 'souji-census: census failed for %s (rc=%s)\n' "$repo" "$rc" >&2
++        exit 1
++      fi
++      continue
+     fi
++    rm -f -- "$row_file" "$stderr_file"
+   done
+   printf '%s\n' "$HEADER"
+   for row in "${rows[@]+"${rows[@]}"}"; do
+@@ -1507,11 +1814,11 @@ emit_compare() { # census of $ROOT vs $COMPARE; writes diff TSV; exit 3 if any c
+   root=$(guard_path root "$ROOT") || exit 2
+   [ -d "$root" ] || { printf 'souji-census: root is not a directory: %s\n' "$root" >&2; exit 1; }
+   load_census "$COMPARE" before
+-  CENSUS_TMP=$(mktemp /var/tmp/souji-census-now.XXXXXX)
++  CENSUS_TMP=$(mktemp -d /var/tmp/souji-census-now.XXXXXX)
+   trap cleanup_census_tmp EXIT
+-  emit_census > "$CENSUS_TMP"
+-  load_census "$CENSUS_TMP" after
+-  rm -f -- "$CENSUS_TMP"
++  emit_census > "$CENSUS_TMP/now.tsv"
++  load_census "$CENSUS_TMP/now.tsv" after
++  cleanup_census_tmp
+   CENSUS_TMP=""
+   trap - EXIT
+ 
+@@ -1615,6 +1922,8 @@ run_selftest() {
+   # Round 16: the census honors the XDG excludes/attributes default; pin it
+   # to an absent scratch path so host files cannot change selftest rows.
+   export XDG_CONFIG_HOME="$ST_TMP/no-xdg-config"
++  REPO_TIMEOUT=600
++  export SOUJI_CENSUS_REPO_TIMEOUT="$REPO_TIMEOUT"
+   local fleet="$ST_TMP/fleet"
+   mkdir -p "$fleet"
+ 
+@@ -2011,6 +2320,244 @@ run_selftest() {
+     st_ok "hardlinked config still refuses whole run (exit 2)"
+   else st_bad "hardlinked config: rc=$rc_h err=$(printf '%s' "$err_h" | head -1)"; fi
+ 
++  # Round-18 C1: replace a regular info/attributes after census guards have
++  # passed, then hang Git's status open; bounded work must preserve neighbours.
++  local real_git shim_dir fleet_timeout RT NA NB timeout_sha out_t err_t repo
++  local timeout_rc timeout_start timeout_end timeout_ms fifo_rc blocked_git_pid attempt
++  real_git=$(command -v git)
++  shim_dir="$ST_TMP/watchdog-shim"
++  mkdir -p "$shim_dir"
++  cat > "$shim_dir/git" <<'SHIM'
++#!/usr/bin/env bash
++real_git=${SOUJI_CENSUS_REAL_GIT:?}
++case "${SOUJI_CENSUS_GIT_MODE:-}" in
++  fifo)
++    if [ "${1:-}" = -C ] &&
++      [ "${2:-}" = "${SOUJI_CENSUS_STALL_REPO:-}" ]; then
++      repo=$2
++      shift 2
++      is_status=0
++      for arg in "$@"; do
++        if [ "$arg" = status ]; then is_status=1; fi
++      done
++      if [ "$is_status" = 1 ]; then
++        rm -f -- "$repo/.git/info/attributes"
++        mkfifo -- "$repo/.git/info/attributes"
++        printf '%s\n' "$$" > "$SOUJI_CENSUS_STALL_PID_FILE"
++        touch -- "$repo/watched.txt"
++      fi
++      exec "$real_git" -C "$repo" "$@"
++    fi
++    ;;
++  slow)
++    if [ "${1:-}" = -C ] &&
++      [ "${2:-}" = "${SOUJI_CENSUS_SLOW_REPO:-}" ]; then
++      printf 'call\n' >> "$SOUJI_CENSUS_GIT_CALLS"
++      sleep 2
++    fi
++    ;;
++  protected)
++    if [ "${1:-}" = -C ] &&
++      [ "${2:-}" = "${SOUJI_CENSUS_PROTECTED_REPO:-}" ] &&
++      [ "${3:-}" = config ] && [ "${4:-}" = --get ] &&
++      [ "${5:-}" = core.excludesFile ] &&
++      [ ! -e "$SOUJI_CENSUS_PROTECTED_MARKER" ]; then
++      printf '[core]\n\texcludesFile = %s\n' \
++        "$SOUJI_CENSUS_PROTECTED_FILE" >> "$2/.git/config"
++      : > "$SOUJI_CENSUS_PROTECTED_MARKER"
++    fi
++    ;;
++esac
++exec "$real_git" "$@"
++SHIM
++  chmod +x "$shim_dir/git"
++
++  fleet_timeout="$ST_TMP/fleet-timeout"
++  mkdir -p "$fleet_timeout"
++  RT="$fleet_timeout/blocked-shokunin"
++  st_init "$RT" master
++  printf 'tracked\n' > "$RT/watched.txt"
++  timeout_sha=$(st_commit "$RT" "" "timeout target")
++  git -C "$RT" update-ref refs/heads/master "$timeout_sha"
++  git -C "$RT" update-ref refs/remotes/origin/master "$timeout_sha"
++  : > "$RT/.git/info/attributes"
++  NA="$fleet_timeout/neighbour-a"
++  NB="$fleet_timeout/neighbour-b"
++  for repo in "$NA" "$NB"; do
++    st_init "$repo" master
++    printf 'neighbour\n' > "$repo/tracked.txt"
++    local neighbour_sha
++    neighbour_sha=$(st_commit "$repo" "" "neighbour")
++    git -C "$repo" update-ref refs/heads/master "$neighbour_sha"
++    git -C "$repo" update-ref refs/remotes/origin/master "$neighbour_sha"
++  done
++
++  out_t="$ST_TMP/watchdog-timeout.tsv"
++  err_t="$ST_TMP/watchdog-timeout.err"
++  timeout_start=$(date +%s%N)
++  if env -u GIT_DIR PATH="$shim_dir:$PATH" \
++    SOUJI_CENSUS_REAL_GIT="$real_git" SOUJI_CENSUS_GIT_MODE=fifo \
++    SOUJI_CENSUS_STALL_REPO="$RT" SOUJI_CENSUS_SELFTEST_ACTIVE=1 \
++    SOUJI_CENSUS_STALL_PID_FILE="$ST_TMP/stalled-git.pid" \
++    "$SELF" --root "$fleet_timeout" --repo-timeout 1 >"$out_t" 2>"$err_t"; then
++    timeout_rc=0
++  else
++    timeout_rc=$?
++  fi
++  timeout_end=$(date +%s%N)
++  timeout_ms=$(((timeout_end - timeout_start) / 1000000))
++  if [ "$timeout_rc" = 0 ]; then st_ok "watchdog FIFO race exits 0"
++  else st_bad "watchdog FIFO race exit=$timeout_rc want 0"; fi
++  if grep -Fqx -- "$RT"$'\t0\t0\t0\t0\t\terror' "$out_t"; then
++    st_ok "watchdog timeout emits the exact error placeholder row"
++  else
++    st_bad "watchdog timeout row missing or malformed"
++  fi
++  if grep -Fqx -- "souji-census: repo-timeout 1s $RT" "$err_t"; then
++    st_ok "watchdog timeout diagnostic exact"
++  else
++    st_bad "watchdog timeout diagnostic missing"
++  fi
++  for base in neighbour-a neighbour-b; do
++    local neighbour_worktrees neighbour_dirty neighbour_flags
++    neighbour_worktrees=$(st_row_field "$out_t" "$base" 2)
++    neighbour_dirty=$(st_row_field "$out_t" "$base" 4)
++    neighbour_flags=$(st_row_field "$out_t" "$base" 7)
++    if [ "$neighbour_worktrees" = 1 ] &&
++      [ "$neighbour_dirty" = 0 ] && [ "$neighbour_flags" = clean ]; then
++      st_ok "watchdog neighbour $base measured normally"
++    else
++      st_bad "watchdog neighbour $base fields=$neighbour_worktrees/$neighbour_dirty/$neighbour_flags"
++    fi
++  done
++  if [ "$timeout_ms" -lt 6000 ]; then
++    st_ok "watchdog wall time ${timeout_ms}ms (< 6000ms bound+5)"
++  else
++    st_bad "watchdog wall time ${timeout_ms}ms (want < 6000ms)"
++  fi
++  if grep -qi 'job control' "$err_t"; then
++    st_bad "watchdog emitted job-control warning"
++  else
++    st_ok "watchdog stderr has no job-control warning"
++  fi
++  if python3 -c 'import errno, os, sys
++try:
++    fd = os.open(sys.argv[1], os.O_WRONLY | os.O_NONBLOCK)
++except OSError as error:
++    sys.exit(0 if error.errno == errno.ENXIO else 1)
++os.close(fd)
++sys.exit(2)' "$RT/.git/info/attributes"; then
++    st_ok "timed-out FIFO has no reader (nonblocking open returns ENXIO)"
++  else
++    fifo_rc=$?
++    st_bad "timed-out FIFO nonblocking open did not return ENXIO (rc=$fifo_rc)"
++  fi
++  if [ -r "$ST_TMP/stalled-git.pid" ]; then
++    blocked_git_pid=$(<"$ST_TMP/stalled-git.pid")
++  else
++    blocked_git_pid=""
++  fi
++  if [ -n "$blocked_git_pid" ]; then
++    for ((attempt = 0; attempt < 20; attempt++)); do
++      [ ! -e "/proc/$blocked_git_pid" ] && break
++      sleep 0.1
++    done
++  fi
++  if [ -n "$blocked_git_pid" ] && [ ! -e "/proc/$blocked_git_pid" ]; then
++    st_ok "timed-out Git process is gone"
++  else
++    st_bad "timed-out Git process remains (pid=$blocked_git_pid)"
++  fi
++  # A two-second-per-Git-call shim must complete normally under a 30s bound.
++  local fleet_slow RS slow_sha slow_rc slow_start slow_end slow_ms slow_calls
++  fleet_slow="$ST_TMP/fleet-slow"
++  RS="$fleet_slow/slow-shokunin"
++  mkdir -p "$fleet_slow"
++  st_init "$RS" master
++  printf 'slow\n' > "$RS/tracked.txt"
++  slow_sha=$(st_commit "$RS" "" "slow path")
++  git -C "$RS" update-ref refs/heads/master "$slow_sha"
++  git -C "$RS" update-ref refs/remotes/origin/master "$slow_sha"
++  : > "$ST_TMP/slow-git-calls"
++  slow_start=$(date +%s%N)
++  if env -u GIT_DIR PATH="$shim_dir:$PATH" \
++    SOUJI_CENSUS_REAL_GIT="$real_git" SOUJI_CENSUS_GIT_MODE=slow \
++    SOUJI_CENSUS_SLOW_REPO="$RS" \
++    SOUJI_CENSUS_GIT_CALLS="$ST_TMP/slow-git-calls" \
++    SOUJI_CENSUS_SELFTEST_ACTIVE=1 \
++    "$SELF" --root "$fleet_slow" --repo-timeout 30 \
++    >"$ST_TMP/slow.tsv" 2>"$ST_TMP/slow.err"; then
++    slow_rc=0
++  else
++    slow_rc=$?
++  fi
++  slow_end=$(date +%s%N)
++  slow_ms=$(((slow_end - slow_start) / 1000000))
++  slow_calls=$(grep -c '^call$' "$ST_TMP/slow-git-calls" || true)
++  slow_calls=${slow_calls:-0}
++  v=$(st_row_field "$ST_TMP/slow.tsv" slow-shokunin 7)
++  if [ "$slow_rc" = 0 ] && [ "$v" = clean ] &&
++    [ "$slow_calls" -ge 2 ] && [ "$slow_ms" -ge 4000 ]; then
++    st_ok "two-second Git calls measured normally (${slow_calls} calls, ${slow_ms}ms)"
++  else
++    st_bad "slow-Git test rc=$slow_rc flags=$v calls=$slow_calls wall=${slow_ms}ms"
++  fi
++  if ! grep -q 'repo-timeout' "$ST_TMP/slow.err"; then
++    st_ok "slow-Git census did not time out"
++  else
++    st_bad "slow-Git census timed out unexpectedly"
++  fi
++
++  # A protected reach discovered within census_one still fails the full run.
++  local protected_fleet PR protected_sha protected_marker protected_rc
++  protected_fleet="$ST_TMP/fleet-worker-protected"
++  PR="$protected_fleet/protected-shokunin"
++  protected_marker="$ST_TMP/protected-config-mutation"
++  mkdir -p "$protected_fleet"
++  st_init "$PR" master
++  printf 'protected\n' > "$PR/tracked.txt"
++  protected_sha=$(st_commit "$PR" "" "protected path")
++  git -C "$PR" update-ref refs/heads/master "$protected_sha"
++  git -C "$PR" update-ref refs/remotes/origin/master "$protected_sha"
++  if env -u GIT_DIR HOME="$ST_TMP/home" PATH="$shim_dir:$PATH" \
++    SOUJI_CENSUS_REAL_GIT="$real_git" SOUJI_CENSUS_GIT_MODE=protected \
++    SOUJI_CENSUS_PROTECTED_REPO="$PR" \
++    SOUJI_CENSUS_PROTECTED_FILE="$ST_TMP/home/.omp/agent/protected-excludes" \
++    SOUJI_CENSUS_PROTECTED_MARKER="$protected_marker" \
++    SOUJI_CENSUS_SELFTEST_ACTIVE=1 \
++    "$SELF" --root "$protected_fleet" --repo-timeout 5 \
++    >"$ST_TMP/protected-worker.tsv" 2>"$ST_TMP/protected-worker.err"; then
++    protected_rc=0
++  else
++    protected_rc=$?
++  fi
++  if [ "$protected_rc" = 2 ] &&
++    grep -q 'path-protected' "$ST_TMP/protected-worker.err" &&
++    ! grep -q 'repo-timeout' "$ST_TMP/protected-worker.err" &&
++    [ ! -s "$ST_TMP/protected-worker.tsv" ]; then
++    st_ok "census_one protected refusal remains exit 2"
++  else
++    st_bad "protected worker refusal rc=$protected_rc stderr=$(cat "$ST_TMP/protected-worker.err")"
++  fi
++  local invalid_cli_rc invalid_env_rc
++  if "$SELF" --root "$fleet_timeout" --repo-timeout 0 \
++    >/dev/null 2>"$ST_TMP/invalid-timeout.err"; then
++    invalid_cli_rc=0
++  else
++    invalid_cli_rc=$?
++  fi
++  if env SOUJI_CENSUS_REPO_TIMEOUT=86401 "$SELF" --root "$fleet_timeout" \
++    >/dev/null 2>"$ST_TMP/invalid-env-timeout.err"; then
++    invalid_env_rc=0
++  else
++    invalid_env_rc=$?
++  fi
++  if [ "$invalid_cli_rc" = 2 ] && [ "$invalid_env_rc" = 2 ]; then
++    st_ok "invalid CLI and environment timeouts exit 2"
++  else
++    st_bad "invalid timeout exits: CLI=$invalid_cli_rc env=$invalid_env_rc"
++  fi
++
+ 
+   # source audit: no forbidden git porcelain in non-comment lines
+   local n
+@@ -2034,6 +2581,10 @@ run_selftest() {
+ while [ "$#" -gt 0 ]; do
+   case "$1" in
+     --selftest) SELFTEST=1; shift ;;
++    --repo-timeout)
++      [ "$#" -ge 2 ] || usage_err "--repo-timeout needs an integer"
++      REPO_TIMEOUT=$2; shift 2 ;;
++    --repo-timeout=*) REPO_TIMEOUT=${1#*=}; shift ;;
+     --include-root) INCLUDE_ROOT=1; shift ;;
+     --root)
+       [ "$#" -ge 2 ] || usage_err "--root needs a directory"
+@@ -2049,6 +2600,7 @@ while [ "$#" -gt 0 ]; do
+     *) usage_err "unexpected argument: $1 (repos come from --root)" ;;
+   esac
+ done
++validate_repo_timeout
+ 
+ if [ "$SELFTEST" = 1 ]; then run_selftest; fi
+ 
+@@ -2062,6 +2614,7 @@ if [ "$COMPARE_SET" = 1 ]; then guard_path compare "$COMPARE" >/dev/null; fi
+ 
+ command -v git >/dev/null 2>&1 || { printf 'souji-census: git not found\n' >&2; exit 1; }
+ command -v du >/dev/null 2>&1 || { printf 'souji-census: du not found\n' >&2; exit 1; }
++command -v setsid >/dev/null 2>&1 || { printf 'souji-census: setsid not found\n' >&2; exit 1; }
+ 
+ if [ "$COMPARE_SET" = 1 ]; then
+   emit_compare

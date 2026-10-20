@@ -1,6 +1,6 @@
 source: see `## Source rows` (S051–S063). jj claims cite the v0.45.1 tag; git claims cite the v2.56.0 tag; lane observations cite the lane report by file:line and are labelled `observed`.
-verified-at: 2026-10-20 — jj 0.45.1-7c41cdeb16b6b321c64e789a966b6adf723816a5 (`jj --version`); git 2.56.0 (`git --version`). jj and git sources read at tags v0.45.1 and v2.56.0 on 2026-10-20. In-lane fixture `tests/fixtures/r17-jj-receipts.sh` run at landed revision ddb7347 (`census/round-17/jj-receipts-ddb7347.txt`) and base 5fa6017 (`census/round-17/jj-receipts-base5fa6017.txt`).
-recheck: `jj --version; git --version`. Source: `curl -fsSL https://raw.githubusercontent.com/jj-vcs/jj/v0.45.1/lib/src/git_backend.rs | grep -n 'NO_GC_REF_NAMESPACE: &str = "refs/jj/keep/"'` (expect line 100). Behaviour, from the lane root: `bash tests/fixtures/r17-jj-receipts.sh --tool-dir tools` (expect exit 0 and `SUMMARY total=20 failed=0 skipped=0`; needs `git`, `rg`, `timeout`; J9 needs `jj` on PATH and is a SKIP, not a pass, without it). Base arm: `--tool-dir <tools/ of 5fa6017>` (expect `failed=7`). The fixture works in a `mktemp -d` under `/var/tmp` with an EXIT trap and never touches a live lane path.
+verified-at: 2026-10-20 — jj 0.45.1-7c41cdeb16b6b321c64e789a966b6adf723816a5 (`jj --version`); git 2.56.0 (`git --version`). jj and git sources read at tags v0.45.1 and v2.56.0 on 2026-10-20. In-lane fixture `tests/fixtures/r17-jj-receipts.sh` run on the landed tools (committed record `census/round-17/jj-receipts-4f48343.txt`, tool digests = 4f48343 bytes; r18 correction: this line first cited a `ddb7347` record that was never committed) and base 5fa6017 (`census/round-17/jj-receipts-base5fa6017.txt`).
+recheck: `jj --version; git --version`. Source: `curl -fsSL https://raw.githubusercontent.com/jj-vcs/jj/v0.45.1/lib/src/git_backend.rs | grep -n 'NO_GC_REF_NAMESPACE: &str = "refs/jj/keep/"'` (expect line 100). Behaviour, from the lane root: `bash tests/fixtures/r17-jj-receipts.sh --tool-dir tools` (expect exit 0 and `SUMMARY total=35 failed=0 skipped=2` — the two J6 identity cases SKIP without `--baseline-dir`; r18 correction: this line said `total=20 … skipped=0`, the wave-1 shape; needs `git`, `rg`, `timeout`; J9 needs `jj` on PATH and is a SKIP, not a pass, without it). Base arm: `--tool-dir <tools/ of 5fa6017>` (expect failed > 0; the committed base record shows 13). The fixture works in a `mktemp -d` under `/var/tmp` with an EXIT trap and never touches a live lane path.
 
 # jj colocation changes what receipt-gated hygiene can trust
 
@@ -41,7 +41,7 @@ A jj-colocated repository (`.jj/` and `.git/` at one root) is jj's default for `
 - **Observed:** after an unbookmarked `jj commit`, `git log --branches --not --remotes --oneline` and `git rev-list --count --branches --not --remotes` both returned nothing, while `git status --porcelain -uall` was empty (JjAuditSouji.md:97-102). `observed (jj 0.45.1, git 2.56.0; lane report)`
 - **Consequence.** `--branches --not --remotes` reports "no unpushed work" for a commit held only by a keep ref. The census `unpushed` column is branch-based and reads 0 here (JjTrialSouji.md:59). This is disclosed and ungoverned (§11).
 - **Rule (landed, `jj_keep_novel`).** For a pushed receipt, a keep-only commit `C` that touches the target refuses only when `C:<rel>` exists and its blob is absent from the object list of remote-reachable history for `<rel>` (`git rev-list --objects --remotes -- <rel>`; the pathspec limits the tree walk, S060 `list-objects.c@v2.56.0:106-115`). Deletions (no blob at `<rel>`) and blobs already published do not refuse. The receipt names the refusal with the token `jj-keep-novel`. Implemented as `jj_keep_novel` in `tools/souji-verify.sh`, `tools/souji-vault-verify.sh` and `tools/souji-quarantine.sh` (identical bodies), called from the live (last-defined) receipt functions only.
-- **Failure case of the old rule (base 5fa6017).** J3, a keep-only commit with novel content, returned `SAFE(pushed)` (`census/round-17/jj-receipts-base5fa6017.txt`). It returns `NOT-SAFE` at ddb7347 (`census/round-17/jj-receipts-ddb7347.txt`).
+- **Failure case of the old rule (base 5fa6017).** J3, a keep-only commit with novel content, returned `SAFE(pushed)` (`census/round-17/jj-receipts-base5fa6017.txt`). It returns `NOT-SAFE` on the landed tools (`census/round-17/jj-receipts-4f48343.txt`).
 - **Failure case of the unfiltered proposal (rejected).** Refusing on every keep-only commit that touches the path would have refused 1,877 paths on four live colocated lanes (souji, kama, tameshi, mado), of which 0 held novel keep-only content. `observed (read-only git on live lanes, 2026-10-20; lane review, not in a committed fixture)`.
 
 ## 5. The index is not a signal
@@ -84,7 +84,7 @@ A jj-colocated repository (`.jj/` and `.git/` at one root) is jj's default for `
 - **jj does not garbage-collect its own store yet.** "There's no garbage collection and repacking of Jujutsu's own data structures yet" — S051 (v0.45.1 `docs/git-compatibility.md`, GC bullet) — `sourced`
 - **git gc is untested with jj.** "It should be safe to run `git gc` in the Git repo, but it's not tested" — S051 — `sourced`
 - **What git gc does.** It removes unreachable objects, and its `--prune` date defaults to two weeks ago (S063, `git-gc.adoc@v2.56.0:18, 81-83`). jj's `util gc` runs `git gc --prune=@<keep_newer>` (`lib/src/git_backend.rs@v0.45.1:977`), so the two prune clocks are linked — S054 — `sourced`
-- **Consequence.** The auto-maintenance worktree-prune risk in `corpus/knowledge/git-auto-maintenance-prunes-worktrees.md` applies to colocated lanes without a jj-specific test. Keep `-c maintenance.auto=false` on every receipt-gated commit (`corpus/QUALITY.md` Q7). A receipt that relies on keep refs inherits both gaps.
+- **Consequence.** The auto-maintenance worktree-prune risk in `corpus/knowledge/git-auto-maintenance-prunes-worktrees.md` applies to colocated lanes without a jj-specific test. Keep `-c maintenance.auto=false` on every plain-repo receipt-gated commit (`corpus/QUALITY.md` Q7); colocated repos commit only through the owning lane's helper (Q29, r18). A receipt that relies on keep refs inherits both gaps.
 
 ## 11. What jj does not carry over to git hooks or attributes
 
@@ -123,7 +123,7 @@ A jj-colocated repository (`.jj/` and `.git/` at one root) is jj's default for `
 
 ## Failure cases (Q3)
 
-- **F-1 Base SAFE where NOT-SAFE is correct (fixture).** At 5fa6017: J1 and J1-vault, an absent-worktree head held only by `refs/jj/keep/*`, returned `SAFE(metadata-prune)` (`census/round-17/jj-receipts-base5fa6017.txt:15-16`); J3, J3-vault and J3-quarantine, a keep-only commit with novel content, returned `SAFE(pushed)` (`:19-21`); J9-file and J9-worktree, real jj 0.45.1 keep refs, returned `SAFE` (`:28-29`). Landed at ddb7347: `NOT-SAFE` for all of these (`census/round-17/jj-receipts-ddb7347.txt:18-19, 22-24, 31-32`).
+- **F-1 Base SAFE where NOT-SAFE is correct (fixture).** At 5fa6017: J1 and J1-vault, an absent-worktree head held only by `refs/jj/keep/*`, returned `SAFE(metadata-prune)` (`census/round-17/jj-receipts-base5fa6017.txt:15-16`); J3, J3-vault and J3-quarantine, a keep-only commit with novel content, returned `SAFE(pushed)` (`:19-21`); J9-file and J9-worktree, real jj 0.45.1 keep refs, returned `SAFE` (`:28-29`). Landed tools (4f48343 bytes): `NOT-SAFE` for all of these (`census/round-17/jj-receipts-4f48343.txt:18-19, 22-24, 31-32`).
 - **F-2 Over-refusal of the unfiltered keep-only rule (lane review).** See §4; rejected by the novelty test.
 - **F-3 Helper commit leaves the moved source at the old path.** JjAuditSouji.md:55-86 (F1).
 - **F-4 Phantom deletions committed through a directory pathspec.** JjTrialSouji.md:76, commit c31a345 (n=1).
@@ -145,7 +145,7 @@ A jj-colocated repository (`.jj/` and `.git/` at one root) is jj's default for `
 - **S062** — `fifo(7)` / `open(2)`. Not cited by any claim in this entry.
 - **S063** — git-gc — `Documentation/git-gc.adoc@v2.56.0` (`:18` unreachable removal; `:81-83` `--prune` default two weeks). Used in §10.
 
-Lane reports (cited inline by file and line, not S-rows): JjAuditSouji.md (`.ufo/waves/hyaku/jj-w1/reports/`), JjTrialSouji.md (same), fixture outputs `census/round-17/jj-receipts-{base5fa6017,ddb7347}.txt`.
+Lane reports (cited inline by file and line, not S-rows): JjAuditSouji.md (fleet repo `.ufo/waves/hyaku/jj-w1/reports/`), JjTrialSouji.md (same), fixture outputs `census/round-17/jj-receipts-{base5fa6017,4f48343}.txt`.
 
 ## Admission status
 

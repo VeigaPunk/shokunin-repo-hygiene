@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""souji-landing-gate.py — round-16 C2 landing-claim consistency gate.
+"""souji-landing-gate.py — round-18 landing-claim consistency gate.
 
 Mechanically re-derives the three round-15 landing defects the non-author
 closure found by hand (corpus/lessons/round-15-verifier-spotcheck.md):
@@ -13,9 +13,10 @@ closure found by hand (corpus/lessons/round-15-verifier-spotcheck.md):
      (.ufo/waves/round-15/w1/ConfigRepair.md STATUS/failure lines vs
      corpus/lessons/round-15.md).
 
-Scope: landing-claim consistency and failure-channel carry only.
-It is NOT a disclosure-enforcement or behavioral-regression suite; it never
-executes repository code (only `bash -n FILE` and Python compile()).
+Scope: landing-claim consistency, failure-channel carry, and cited-path
+integrity. It is NOT a disclosure-enforcement or behavioral-regression
+suite; it never executes repository code (only `bash -n FILE` and Python
+compile()).
 
 Byte provenance: committed bytes are read with `git -C LANE ls-tree -r -z
 --full-tree REV` and `git cat-file blob <oid>` (never `git archive`, whose
@@ -25,15 +26,20 @@ tempfile.mkdtemp(dir='/var/tmp') snapshot removed in `finally`.
 
 CLI:
   python3 tools/souji-landing-gate.py --root LANE --rev REV --round N
-      [--base REV] [--json OUT]
+      [--base REV] [--fleet-root PATH] [--json OUT]
   python3 tools/souji-landing-gate.py --selftest
 
 Exit: 0 no findings, 1 findings, 2 could-not-evaluate (usage, unknown rev,
 no SKILL.md, missing .ufo/waves/round-N/ at REV, git failure, malformed
-expected.json shape).
+expected.json or pointer-exemptions.tsv shape).
 
 Output: one TSV line per finding `ID\tpath\tdetail` (sorted), then
 `SUMMARY\tfindings=K\tchecked_reg=A\tchecked_changed=G\tchecked_pins=B\tchecked_measured=M\tchecked_markers=C\tstatus_lines=S\tcarry_heading=H\tchecked_reports=D`.
+For round 18 and later, `--json` also carries a `fleet` list for citation
+paths found only under optional `--fleet-root`; those are not findings.
+The JSON summary adds `checked_ptrs` (expanded citation candidates),
+`ptr_exempt` (exempted citation occurrences), and `ptr_fleet` (fleet-only
+citation occurrences).
 
 Per-branch execution counts (r17): `checked_reg` counts registry-cited
 script parses at REV, `checked_changed` counts scripts added/modified in
@@ -54,13 +60,15 @@ are removed and GIT_NO_LAZY_FETCH/GIT_NO_REPLACE_OBJECTS are set, so
 `--root` alone selects the repository and committed bytes are exact.
 
 Finding ids (pinned): LG-PARSE-REG, LG-MISSING-REG, LG-PARSE-CHANGED,
-LG-FROZEN-PIN, LG-FROZEN-MEASURED, LG-SEAT-UNCARRIED, LG-OPEN-ADMITTED.
+LG-FROZEN-PIN, LG-FROZEN-MEASURED, LG-SEAT-UNCARRIED, LG-OPEN-ADMITTED,
+LG-DANGLING-PTR and LG-DANGLING-PTR-EXEMPT-STALE (round 18+).
 """
 
 import argparse
 import hashlib
 import json
 import os
+import posixpath
 import re
 import shutil
 import subprocess
@@ -111,6 +119,16 @@ ROOT_PREFIXES = ("tools/", "tests/", "census/", "corpus/")
 EXPECTED_JSON_RE = re.compile(r"tests/fixtures/[^/]+-frozen/expected\.json$")
 SCRIPT_EXT_RE = re.compile(r"\.(?:sh|py)$")
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+POINTER_ROOTS = ("census/", "tests/", "tools/", "corpus/", ".ufo/waves/")
+POINTER_EXEMPTIONS_PATH = "corpus/pointer-exemptions.tsv"
+POINTER_PATH_RE = re.compile(
+    r"(?<![A-Za-z0-9_./<>*])"
+    r"(?:(?:\.\./)+)?"
+    r"(?:census|tests|tools|corpus|\.ufo/waves)/"
+    r"""[^\s`"'()\[\]]+"""
+)
+ROUND_RANGE_RE = re.compile(r"round-\{?(\d+)\.\.(\d+)\}?", re.IGNORECASE)
+ROUND_PLACEHOLDER_RE = re.compile(r"round-N", re.IGNORECASE)
 
 FINDING_IDS = (
     "LG-PARSE-REG",
@@ -120,6 +138,8 @@ FINDING_IDS = (
     "LG-FROZEN-MEASURED",
     "LG-SEAT-UNCARRIED",
     "LG-OPEN-ADMITTED",
+    "LG-DANGLING-PTR",
+    "LG-DANGLING-PTR-EXEMPT-STALE",
 )
 
 
@@ -436,11 +456,12 @@ def _pin_repo_path(frozen_dir, key):
     return "%s/%s" % (frozen_dir, key)
 
 
-def check_frozen_pins(root, tree, rev):
-    """Return (findings, n_pin_checks, n_measured_checks)."""
+def check_frozen_pins(root, tree, rev, round_no, exemptions=()):
+    """Return findings, check counts, and exemptions used for measured commits."""
     findings = []
     n_checks = 0
     n_measured = 0
+    used_exemptions = set()
     frozen_dirs = sorted(
         os.path.dirname(p)
         for p in tree
@@ -545,10 +566,9 @@ def check_frozen_pins(root, tree, rev):
             if isinstance(measured, str) and re.match(
                 r"^[0-9a-fA-F]{4,64}$", measured
             ):
-                # A dangling measured_commit contributes no checks: verify it
-                # resolves before comparing pinned digests against it. rc 1 is
-                # "does not resolve" (dangling); any other failure is a real
-                # git error → could-not-evaluate (r17 F4, same class as S1).
+                # Resolve before comparing pinned digests. A dangling value
+                # stays silent for pinned pre-r18 replays and is a finding
+                # from round 18 onward; other git failures remain exit 2.
                 verify = subprocess.run(
                     ["git", "-C", root, "rev-parse", "--verify", "--quiet",
                      measured + "^{commit}"],
@@ -567,6 +587,23 @@ def check_frozen_pins(root, tree, rev):
                 measured_ok = verify.returncode == 0
             else:
                 measured_ok = False
+            if (
+                round_no >= 18
+                and isinstance(record, dict)
+                and "measured_commit" in record
+                and not measured_ok
+            ):
+                if record_repo in exemptions:
+                    used_exemptions.add(record_repo)
+                else:
+                    findings.append(
+                        (
+                            "LG-FROZEN-MEASURED",
+                            exp_path,
+                            "measured_commit %r does not resolve to a commit"
+                            % measured,
+                        )
+                    )
             if measured_ok:
                 for key, pinned in sorted(files.items()):
                     n_measured += 1
@@ -596,7 +633,247 @@ def check_frozen_pins(root, tree, rev):
                                 ),
                             )
                         )
-    return findings, n_checks, n_measured
+    return findings, n_checks, n_measured, used_exemptions
+
+
+# ---------------------------------------------------------------------------
+# Citation pointers (LG-DANGLING-PTR; round 18+)
+# ---------------------------------------------------------------------------
+
+
+def _round_heading_number(line):
+    if not HEADING_RE.match(line):
+        return None
+    match = re.search(r"\bround(?:-|\s+)(\d+)\b", line, re.IGNORECASE)
+    return int(match.group(1)) if match else None
+
+
+def _round_log_lines(text, round_no):
+    lines = text.splitlines()
+    start = None
+    for index, line in enumerate(lines):
+        number = _round_heading_number(line)
+        if number == round_no:
+            start = index
+            break
+    if start is None:
+        return []
+    end = len(lines)
+    for index in range(start + 1, len(lines)):
+        if _round_heading_number(lines[index]) is not None:
+            end = index
+            break
+    return [(index + 1, lines[index]) for index in range(start, end)]
+
+
+def _expand_braces(path):
+    match = re.search(r"\{([^{}]*)\}", path)
+    if not match or "," not in match.group(1):
+        return [path]
+    choices = match.group(1).split(",")
+    if len(choices) < 2 or any(not choice for choice in choices):
+        return [path]
+    out = []
+    for choice in choices:
+        out.extend(_expand_braces(path[:match.start()] + choice + path[match.end():]))
+    return out
+
+
+def _expand_round_ranges(path):
+    match = ROUND_RANGE_RE.search(path)
+    if not match:
+        return [path]
+    first, last = map(int, match.groups())
+    if last < first:
+        return [path]
+    out = []
+    for number in range(first, last + 1):
+        expanded = (
+            path[:match.start()]
+            + "round-%d" % number
+            + path[match.end():]
+        )
+        out.extend(_expand_round_ranges(expanded))
+    return out
+
+
+def _trim_pointer_token(token):
+    token = token.rstrip(".,;:!?")
+    while token.endswith("}") and token.count("}") > token.count("{"):
+        token = token[:-1]
+    token = re.sub(r":\d+(?:-\d+)?$", "", token)
+    return token
+
+
+def _normalize_pointer_path(path, source):
+    if path.startswith("../"):
+        path = posixpath.normpath(
+            posixpath.join(posixpath.dirname(source), path)
+        )
+    return path
+
+
+def _pointer_paths(text, source):
+    for match in POINTER_PATH_RE.finditer(text):
+        raw = _trim_pointer_token(match.group(0))
+        if not raw or any(char in raw for char in "<>*"):
+            continue
+        if ROUND_PLACEHOLDER_RE.search(raw):
+            continue
+        # A comma outside braces separates ordinary adjacent citations; commas
+        # inside one simple brace expression remain part of that expression.
+        parts = []
+        depth = 0
+        start = 0
+        for index, char in enumerate(raw):
+            if char == "{":
+                depth += 1
+            elif char == "}" and depth:
+                depth -= 1
+            elif char == "," and depth == 0:
+                parts.append(raw[start:index])
+                start = index + 1
+        parts.append(raw[start:])
+        for part in parts:
+            if not part:
+                continue
+            normalized = _normalize_pointer_path(part, source)
+            if (
+                _safe_pointer_path(normalized)
+                and not normalized.startswith(POINTER_ROOTS)
+            ):
+                continue
+            for braced in _expand_braces(normalized):
+                yield from _expand_round_ranges(braced)
+
+
+def _safe_pointer_path(path):
+    if not path or path.startswith("/"):
+        return False
+    components = path.rstrip("/").split("/")
+    return all(component and component not in (".", "..") for component in components)
+
+
+def _path_exists_in_tree(path, tree_paths):
+    return _safe_pointer_path(path) and path.rstrip("/") in tree_paths
+
+
+def load_pointer_exemptions(root, tree):
+    oid = tree.get(POINTER_EXEMPTIONS_PATH)
+    if oid is None:
+        return set()
+    try:
+        text = blob_by_oid(root, oid).decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise EvalError("%s is not UTF-8: %s" % (POINTER_EXEMPTIONS_PATH, exc))
+    exemptions = set()
+    for line_no, line in enumerate(text.splitlines(), 1):
+        fields = line.split("\t")
+        if (
+            len(fields) != 2
+            or not fields[0]
+            or fields[0] != fields[0].strip()
+            or not fields[1].strip()
+            or not fields[0].startswith(POINTER_ROOTS)
+            or not _safe_pointer_path(fields[0])
+            or any(char in fields[0] for char in "<>*")
+            or fields[0] in exemptions
+        ):
+            raise EvalError(
+                "%s:%d malformed exemption row (expected unique path<TAB>reason)"
+                % (POINTER_EXEMPTIONS_PATH, line_no)
+            )
+        exemptions.add(fields[0])
+    return exemptions
+
+
+def check_pointers(root, tree, rev, round_no, fleet_root=None, exemptions=()):
+    """Return findings, fleet classifications, counts, and used exemptions."""
+    if fleet_root is not None and not os.path.isdir(fleet_root):
+        raise EvalError("--fleet-root %s is not a directory" % fleet_root)
+    tree_paths = set(tree)
+    for path in tree:
+        parent = os.path.dirname(path)
+        while parent:
+            tree_paths.add(parent)
+            parent = os.path.dirname(parent)
+
+    sources = {
+        path for path in (
+            "SKILL.md",
+            "SHONEN.md",
+            "SCORECARD.md",
+            "PROVINCE.md",
+            "corpus/QUALITY.md",
+            "corpus/README.md",
+            "corpus/lessons/round-%d.md" % round_no,
+            "corpus/lessons/round-%d-verifier-spotcheck.md" % round_no,
+        ) if path in tree
+    }
+    sources.update(
+        path for path in tree
+        if path.startswith("corpus/knowledge/")
+        and path.count("/") == 2
+        and path.endswith(".md")
+    )
+
+    source_lines = []
+    for source in sorted(sources):
+        text = blob_by_oid(root, tree[source]).decode("utf-8", "replace")
+        source_lines.extend(
+            (source, line_no, line)
+            for line_no, line in enumerate(text.splitlines(), 1)
+        )
+
+    if "LOG.md" in tree:
+        log_text = blob_by_oid(root, tree["LOG.md"]).decode("utf-8", "replace")
+        source_lines.extend(
+            ("LOG.md", line_no, line)
+            for line_no, line in _round_log_lines(log_text, round_no)
+        )
+
+    findings = []
+    fleet = []
+    used_exemptions = set()
+    checked_ptrs = ptr_exempt = ptr_fleet = 0
+    for source, line_no, line in source_lines:
+        for path in _pointer_paths(line, source):
+            checked_ptrs += 1
+            if _path_exists_in_tree(path, tree_paths):
+                continue
+            # A `../`-normalized citation that leaves the lane by exactly one
+            # level names the fleet root (the lane is `<fleet>/<id>-shokunin`);
+            # it is `fleet` when it resolves there, never a lane pass.
+            fleet_path = path[3:] if path.startswith("../") else path
+            if (
+                fleet_root is not None
+                and _safe_pointer_path(fleet_path)
+                and os.path.exists(os.path.join(fleet_root, fleet_path))
+            ):
+                fleet.append(
+                    {
+                        "classification": "fleet",
+                        "path": fleet_path,
+                        "source": source,
+                        "line": line_no,
+                    }
+                )
+                ptr_fleet += 1
+                continue
+            if path in exemptions:
+                used_exemptions.add(path)
+                ptr_exempt += 1
+                continue
+            findings.append(
+                (
+                    "LG-DANGLING-PTR",
+                    path,
+                    "%s:%d cites path absent at %s" % (source, line_no, rev[:12]),
+                )
+            )
+    return findings, fleet, checked_ptrs, ptr_exempt, ptr_fleet, used_exemptions
+
+
 
 
 # ---------------------------------------------------------------------------
@@ -604,7 +881,7 @@ def check_frozen_pins(root, tree, rev):
 # ---------------------------------------------------------------------------
 
 
-def evaluate(root, rev, round_no, base=None):
+def evaluate(root, rev, round_no, base=None, fleet_root=None):
     """Return dict {exit, findings, counts, error}.
 
     exit: 0 (no findings), 1 (findings), 2 (could-not-evaluate)."""
@@ -614,6 +891,10 @@ def evaluate(root, rev, round_no, base=None):
         "checked_reg": 0,
         "checked_changed": 0,
         "checked_pins": 0,
+        # r18: was missing, so every early could-not-evaluate (unknown rev,
+        # missing SKILL.md, malformed exemptions) crashed in emit() with a
+        # KeyError traceback and exit 1 instead of exit 2.
+        "checked_measured": 0,
         "checked_markers": 0,
         "checked_reports": 0,
         "status_lines": 0,
@@ -627,6 +908,9 @@ def evaluate(root, rev, round_no, base=None):
         if base is not None:
             result["resolved_base"] = resolve_commit(root, base)
         tree = list_tree(root, resolved)
+        pointer_exemptions = (
+            load_pointer_exemptions(root, tree) if round_no >= 18 else set()
+        )
 
         if "SKILL.md" not in tree:
             raise EvalError("no SKILL.md at %s" % resolved)
@@ -674,15 +958,56 @@ def evaluate(root, rev, round_no, base=None):
                     findings.append(("LG-PARSE-CHANGED", path, detail))
 
         # LG-FROZEN-PIN / LG-FROZEN-MEASURED.
-        pin_findings, n_pins, n_measured = check_frozen_pins(root, tree, resolved)
+        pin_findings, n_pins, n_measured, measured_exemptions = check_frozen_pins(
+            root, tree, resolved, round_no, pointer_exemptions
+        )
         findings.extend(pin_findings)
         result["checked_pins"] = n_pins
         result["checked_measured"] = n_measured
 
+        # Evaluate pointers before carry. A pre-wave round-18 baseline may
+        # have no reports yet; preserve that could-not-evaluate result while
+        # still returning its independent pointer findings.
+        if round_no >= 18:
+            (
+                pointer_findings,
+                fleet,
+                checked_ptrs,
+                ptr_exempt,
+                ptr_fleet,
+                pointer_exemptions_used,
+            ) = check_pointers(
+                root, tree, resolved, round_no,
+                fleet_root=fleet_root, exemptions=pointer_exemptions,
+            )
+            findings.extend(pointer_findings)
+            result["fleet"] = fleet
+            result["checked_ptrs"] = checked_ptrs
+            result["ptr_exempt"] = ptr_exempt
+            result["ptr_fleet"] = ptr_fleet
+            used_exemptions = measured_exemptions | pointer_exemptions_used
+            for path in sorted(pointer_exemptions - used_exemptions):
+                findings.append(
+                    (
+                        "LG-DANGLING-PTR-EXEMPT-STALE",
+                        path,
+                        "exemption does not suppress an unresolved pointer or "
+                        "dangling measured_commit at %s" % resolved[:12],
+                    )
+                )
+
         # LG-SEAT-UNCARRIED / LG-OPEN-ADMITTED.
-        carry_findings, n_markers, n_reports, n_status, carry_heading = check_carry(
-            root, tree, resolved, round_no
-        )
+        try:
+            carry_findings, n_markers, n_reports, n_status, carry_heading = check_carry(
+                root, tree, resolved, round_no
+            )
+        except EvalError as exc:
+            if round_no < 18:
+                raise
+            result["error"] = str(exc)
+            carry_findings = []
+            n_markers = n_reports = n_status = 0
+            carry_heading = False
         findings.extend(carry_findings)
         result["checked_markers"] = n_markers
         result["checked_reports"] = n_reports
@@ -693,7 +1018,7 @@ def evaluate(root, rev, round_no, base=None):
         result["findings"] = [
             {"id": i, "path": p, "detail": d} for i, p, d in findings
         ]
-        result["exit"] = 1 if findings else 0
+        result["exit"] = 2 if result["error"] else (1 if findings else 0)
     except EvalError as exc:
         result["error"] = str(exc)
         result["exit"] = 2
@@ -745,6 +1070,11 @@ def emit(result, json_out=None):
             "resolved_base": result.get("resolved_base"),
             "error": result["error"],
         }
+        if "checked_ptrs" in result:
+            for key in ("checked_ptrs", "ptr_exempt", "ptr_fleet"):
+                payload["summary"][key] = result[key]
+        if "fleet" in result:
+            payload["fleet"] = result["fleet"]
         try:
             with open(json_out, "x", encoding="utf-8") as fh:
                 json.dump(payload, fh, indent=2, sort_keys=True)
@@ -828,6 +1158,10 @@ def _base_files():
         "tools/uncited-bad.sh": BAD_SH,  # parses-broken but never cited
         "corpus/lessons/round-16.md": BASE_LESSON,
         ".ufo/waves/round-16/w1/SeatA.md": "# SeatA\n\nSTATUS: ok — all clean.\n",
+        "corpus/lessons/round-17.md": "# Round 17\n\nAll good.\n",
+        ".ufo/waves/round-17/w1/Seat17.md": "# Seat17\n\nSTATUS: ok — all clean.\n",
+        "corpus/lessons/round-18.md": "# Round 18\n\nAll good.\n",
+        ".ufo/waves/round-18/w1/Seat18.md": "# Seat18\n\nSTATUS: ok — all clean.\n",
     }
     return files
 
@@ -880,21 +1214,28 @@ def run_selftest():
         return repo, g, commits
 
     def check(case_name, repo, expect_exit, expect_ids=(), rev="HEAD", base=None,
-              expect_err=None, expect_n=None, expect_counts=None):
-        """Assert exit, the EXACT finding-id set (an over-firing gate fails),
-        optionally an error substring, an exact findings count, and exact
-        SUMMARY counter values."""
+              expect_err=None, expect_n=None, expect_counts=None, round_no=16,
+              fleet_root=None, expect_paths=None, expect_fleet=None):
+        """Assert the EXACT finding-id set plus any requested path detail."""
         nonlocal passed, failed
-        res = evaluate(repo, rev, 16, base=base)
+        res = evaluate(
+            repo, rev, round_no, base=base, fleet_root=fleet_root
+        )
         ids = sorted({f["id"] for f in res["findings"]})
+        finding_paths = sorted(f["path"] for f in res["findings"])
+        fleet_paths = sorted(item["path"] for item in res.get("fleet", []))
         ok = (
             res["exit"] == expect_exit
             and set(ids) == set(expect_ids)
             and (expect_err is None or expect_err in (res["error"] or ""))
             and (expect_n is None or len(res["findings"]) == expect_n)
+            and (expect_paths is None or finding_paths == sorted(expect_paths))
+            and (expect_fleet is None or fleet_paths == sorted(expect_fleet))
             and all(res.get(k) == v for k, v in (expect_counts or {}).items())
         )
-        detail = "exit=%d ids=%s err=%s" % (res["exit"], ids, res["error"])
+        detail = "exit=%d ids=%s paths=%s fleet=%s err=%s" % (
+            res["exit"], ids, finding_paths, fleet_paths, res["error"]
+        )
         if ok:
             passed += 1
             status = "pass"
@@ -904,6 +1245,256 @@ def run_selftest():
         print("CASE\t%s\t%s\t%s" % (status, case_name, detail))
 
     try:
+        # Round-18 citations are checked only in the current round section.
+        f = _base_files()
+        f["SKILL.md"] += "`census/round-18/missing.json`.\n"
+        repo, g, (rev,) = build("dangling-skill-pointer", f)
+        check(
+            "dangling-skill-pointer", repo, 1, ("LG-DANGLING-PTR",),
+            rev=rev, round_no=18, expect_n=1,
+            expect_paths=["census/round-18/missing.json"],
+        )
+        # Even without current-round reports, retain independent pointers and
+        # keep the existing fail-closed carry result.
+        f = _base_files()
+        del f[".ufo/waves/round-18/w1/Seat18.md"]
+        f["SKILL.md"] += "`census/round-18/missing.json`.\n"
+        repo, g, (rev,) = build("pointer-without-wave-reports", f)
+        check(
+            "pointer-without-wave-reports", repo, 2,
+            ("LG-DANGLING-PTR",), rev=rev, round_no=18,
+            expect_err="no .md reports under", expect_n=1,
+            expect_paths=["census/round-18/missing.json"],
+        )
+
+        # Resolve parent-relative citation paths from their source directory.
+        f = _base_files()
+        f["corpus/README.md"] = "`../census/round-18/missing.json`.\n"
+        repo, g, (rev,) = build("relative-pointer-normalization", f)
+        check(
+            "relative-pointer-normalization", repo, 1, ("LG-DANGLING-PTR",),
+            rev=rev, round_no=18, expect_n=1,
+            expect_paths=["census/round-18/missing.json"],
+        )
+
+        # A relative target that still escapes the repo is rejected.
+        f = _base_files()
+        f["corpus/README.md"] = "`../../census/round-18/missing.json`.\n"
+        repo, g, (rev,) = build("relative-pointer-escape", f)
+        check(
+            "relative-pointer-escape", repo, 1, ("LG-DANGLING-PTR",),
+            rev=rev, round_no=18, expect_n=1,
+            expect_paths=["../census/round-18/missing.json"],
+        )
+
+        # SHONEN.md and the optional round verifier spotcheck are sources too.
+        f = _base_files()
+        f["SHONEN.md"] = "`census/round-18/shonen-missing.json`.\n"
+        f["corpus/lessons/round-18-verifier-spotcheck.md"] = (
+            "`corpus/spotcheck-missing.md`.\n"
+        )
+        repo, g, (rev,) = build("extended-pointer-sources", f)
+        check(
+            "extended-pointer-sources", repo, 1, ("LG-DANGLING-PTR",),
+            rev=rev, round_no=18, expect_n=2,
+            expect_paths=[
+                "census/round-18/shonen-missing.json",
+                "corpus/spotcheck-missing.md",
+            ],
+        )
+
+        # Simple brace alternatives expand independently.
+        f = _base_files()
+        f["SKILL.md"] += "`tools/{good.sh,missing.sh}`.\n"
+        repo, g, (rev,) = build("brace-pointer-expansion", f)
+        check(
+            "brace-pointer-expansion", repo, 1, ("LG-DANGLING-PTR",),
+            rev=rev, round_no=18, expect_n=1,
+            expect_paths=["tools/missing.sh"],
+        )
+
+        # A documented :line suffix is removed before resolution.
+        f = _base_files()
+        f["SKILL.md"] += "`corpus/missing.md:42:`.\n"
+        repo, g, (rev,) = build("pointer-line-suffix", f)
+        check(
+            "pointer-line-suffix", repo, 1, ("LG-DANGLING-PTR",),
+            rev=rev, round_no=18, expect_n=1,
+            expect_paths=["corpus/missing.md"],
+        )
+
+        # Placeholder and wildcard citations are intentionally not findings.
+        f = _base_files()
+        f["SKILL.md"] += (
+            "`tools/<script>.py` `census/round-N/results.json` "
+            "`tests/fixtures/*.sh`.\n"
+        )
+        repo, g, (rev,) = build("pointer-placeholder-skip", f)
+        check("pointer-placeholder-skip", repo, 0, rev=rev, round_no=18)
+
+        # Inclusive round ranges must resolve each concrete lesson path.
+        f = _base_files()
+        f["SKILL.md"] += "`corpus/lessons/round-{16..18}.md`.\n"
+        f["SKILL.md"] += "`corpus/lessons/round-16..18.md`.\n"
+        repo, g, (rev,) = build("pointer-round-range", f)
+        check("pointer-round-range", repo, 0, rev=rev, round_no=18)
+
+        # LOG.md is scoped from the first target-round heading up to the next
+        # round heading; adjacent historical/future sections are not scanned.
+        f = _base_files()
+        f["LOG.md"] = (
+            "## Round 17\n`corpus/lessons/missing-17.md`\n\n"
+            "## Round 18\n`corpus/lessons/round-18.md`\n\n"
+            "## Round 19\n`corpus/lessons/missing-19.md`\n"
+        )
+        repo, g, (rev,) = build("pointer-log-round-section", f)
+        check("pointer-log-round-section", repo, 0, rev=rev, round_no=18)
+
+        # A committed path<TAB>reason exemption suppresses that exact path.
+        f = _base_files()
+        f["SKILL.md"] += "`corpus/intentional-runtime-state`.\n"
+        f["corpus/pointer-exemptions.tsv"] = (
+            "corpus/intentional-runtime-state\truntime-created path\n"
+        )
+        repo, g, (rev,) = build("pointer-exemption", f)
+        check(
+            "pointer-exemption", repo, 0, rev=rev, round_no=18,
+            expect_counts={"checked_ptrs": 5, "ptr_exempt": 1, "ptr_fleet": 0},
+        )
+
+        # Exemptions that are unused or resolve in the lane are stale.
+        f = _base_files()
+        f["corpus/pointer-exemptions.tsv"] = (
+            "tools/good.sh\talready resolves\n"
+            "corpus/not-cited.md\tno occurrence\n"
+        )
+        repo, g, (rev,) = build("pointer-stale-exemptions", f)
+        check(
+            "pointer-stale-exemptions", repo, 1,
+            ("LG-DANGLING-PTR-EXEMPT-STALE",), rev=rev, round_no=18,
+            expect_n=2,
+            expect_paths=["corpus/not-cited.md", "tools/good.sh"],
+        )
+
+        # Malformed exemption rows are could-not-evaluate, not clean.
+        f = _base_files()
+        f["corpus/pointer-exemptions.tsv"] = "corpus/missing.md\t\n"
+        repo, g, (rev,) = build("pointer-bad-exemption", f)
+        check(
+            "pointer-bad-exemption-exit2", repo, 2, rev=rev,
+            round_no=18, expect_err="malformed exemption row",
+        )
+
+        # r18 totality: an early could-not-evaluate through the CLI (unknown
+        # rev; malformed exemptions) must print SUMMARY and exit 2, never a
+        # traceback with exit 1 (the b576341 gate crashed in emit()).
+        for case_name, cli_rev in (
+            ("cli-unknown-rev-exit2", "0" * 40),
+            ("cli-bad-exemption-exit2", rev),
+        ):
+            proc = subprocess.run(
+                [
+                    sys.executable, os.path.abspath(__file__),
+                    "--root", repo, "--rev", cli_rev, "--round", "18",
+                ],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                env=GIT_ENV,
+            )
+            ok = (
+                proc.returncode == 2
+                and b"Traceback" not in proc.stderr
+                and b"SUMMARY\tfindings=" in proc.stdout
+            )
+            if ok:
+                passed += 1
+                print("CASE\tpass\t%s\trc=%d" % (case_name, proc.returncode))
+            else:
+                failed += 1
+                print("CASE\tFAIL\t%s\trc=%d stderr=%r"
+                      % (case_name, proc.returncode, proc.stderr[-300:]))
+
+        # Fleet-only files are reported as fleet data, not as findings.
+        f = _base_files()
+        f["SKILL.md"] += "`corpus/fleet-only.md`.\n"
+        repo, g, (rev,) = build("pointer-fleet-only", f)
+        fleet_root = os.path.join(top, "pointer-fleet-root")
+        _write_file(fleet_root, "corpus/fleet-only.md", "fleet file\n")
+        check(
+            "pointer-fleet-only", repo, 0, rev=rev, round_no=18,
+            fleet_root=fleet_root, expect_fleet=["corpus/fleet-only.md"],
+        )
+
+        fleet_json = os.path.join(top, "pointer-fleet-only.json")
+        proc = subprocess.run(
+            [
+                sys.executable, os.path.abspath(__file__),
+                "--root", repo, "--rev", rev, "--round", "18",
+                "--fleet-root", fleet_root, "--json", fleet_json,
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=GIT_ENV,
+        )
+        try:
+            with open(fleet_json, encoding="utf-8") as fh:
+                fleet_payload = json.load(fh)
+        except (OSError, ValueError):
+            fleet_payload = {}
+        expected_fleet = [{
+            "classification": "fleet",
+            "path": "corpus/fleet-only.md",
+            "source": "SKILL.md",
+            "line": 6,
+        }]
+        ok = (
+            proc.returncode == 0
+            and fleet_payload.get("findings") == []
+            and fleet_payload.get("fleet") == expected_fleet
+            and fleet_payload.get("summary", {}).get("checked_ptrs") == 5
+            and fleet_payload.get("summary", {}).get("ptr_exempt") == 0
+            and fleet_payload.get("summary", {}).get("ptr_fleet") == 1
+        )
+        if ok:
+            passed += 1
+            print("CASE\tpass\tpointer-fleet-json\trc=%d" % proc.returncode)
+        else:
+            failed += 1
+            print(
+                "CASE\tFAIL\tpointer-fleet-json\trc=%d payload=%r stderr=%r"
+                % (
+                    proc.returncode,
+                    fleet_payload,
+                    proc.stderr.decode("utf-8", "replace")[:200],
+                )
+            )
+
+        # Round 17 replays do not acquire the round-18 pointer finding.
+        f = _base_files()
+        f["SKILL.md"] += "`census/round-17/missing.json`.\n"
+        repo, g, (rev,) = build("pointer-before-round-18", f)
+        check("pointer-round-17-disabled", repo, 0, rev=rev, round_no=17)
+
+        # A dangling measured_commit is an LG-FROZEN-MEASURED finding at r18.
+        repo, g, (rev,) = build(
+            "dangling-measured-commit", _frozen_world(_base_files())
+        )
+        check(
+            "dangling-measured-commit", repo, 1,
+            ("LG-FROZEN-MEASURED",), rev=rev, round_no=18, expect_n=1,
+        )
+
+        # An exception may suppress a synthetic unresolvable frozen record.
+        f = _frozen_world(_base_files())
+        f["corpus/pointer-exemptions.tsv"] = (
+            "tests/fixtures/r9-frozen/record.json\tsynthetic measured_commit\n"
+        )
+        repo, g, (rev,) = build("measured-record-exemption", f)
+        check(
+            "measured-record-exemption", repo, 0, rev=rev, round_no=18,
+            expect_n=0,
+        )
+
         # CASE clean-pass: everything parses, pins match, STATUS benign.
         repo, g, (rev,) = build("clean-pass", _frozen_world(_base_files()))
         check("clean-pass", repo, 0, rev=rev,
@@ -1348,12 +1939,13 @@ def run_selftest():
 def main(argv=None):
     ap = argparse.ArgumentParser(
         prog="souji-landing-gate.py",
-        description="Round-16 landing-claim consistency gate (souji C2).",
+        description="Round-18 landing-claim consistency gate (souji C2).",
     )
     ap.add_argument("--root", help="lane repository path")
     ap.add_argument("--rev", help="revision whose committed bytes are checked")
     ap.add_argument("--round", type=int, dest="round_no", help="round number N")
     ap.add_argument("--base", help="optional base revision for changed-script checks")
+    ap.add_argument("--fleet-root", help="optional fleet repository for fleet-only pointer classification")
     ap.add_argument("--json", dest="json_out", help="write findings+summary JSON (refuses overwrite)")
     ap.add_argument("--selftest", action="store_true", help="run synthetic-repo selftest")
     args = ap.parse_args(argv)
@@ -1367,7 +1959,10 @@ def main(argv=None):
         print("COULD-NOT-EVALUATE\t--root %s is not a directory" % args.root, file=sys.stderr)
         return 2
     try:
-        result = evaluate(args.root, args.rev, args.round_no, base=args.base)
+        result = evaluate(
+            args.root, args.rev, args.round_no, base=args.base,
+            fleet_root=args.fleet_root,
+        )
     except Exception as exc:  # belt-and-braces: no uncaught class masquerades
         # as findings (exit 1) — a crash is could-not-evaluate (r17 F1).
         result = {

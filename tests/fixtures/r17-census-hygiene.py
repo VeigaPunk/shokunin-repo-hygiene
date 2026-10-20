@@ -146,15 +146,62 @@ def die(message: str) -> "None":
     raise SystemExit(2)
 
 
-def run_setup(command: list[str], env: dict[str, str] | None = None):
-    proc = subprocess.run(
+# Kill the launched session: bash job control can put a blocked child in a
+# different process group while retaining the same session ID.
+def kill_session(session: int) -> None:
+    try:
+        with os.scandir("/proc") as entries:
+            for entry in entries:
+                if not entry.name.isdecimal():
+                    continue
+                try:
+                    stat = Path(entry.path, "stat").read_text(encoding="utf-8")
+                    fields = stat[stat.rfind(")") + 2:].split()
+                    # After pid and comm, state/ppid/pgrp/session are fields 0–3.
+                    if int(fields[3]) == session:
+                        os.kill(int(entry.name), signal.SIGKILL)
+                except (OSError, IndexError, ValueError):
+                    continue
+    except OSError:
+        pass
+    try:
+        os.killpg(session, signal.SIGKILL)
+    except OSError:
+        pass
+
+
+# Keep the bounded subprocess lifecycle in one place. `subprocess.run` kills
+# only its direct child on timeout, not descendants holding captured pipes.
+def run_process_group(
+    command: list[str],
+    *,
+    env: dict[str, str] | None = None,
+    cwd: str | None = None,
+    timeout: int = 60,
+) -> subprocess.CompletedProcess[str]:
+    proc = subprocess.Popen(
         command,
+        cwd=cwd,
         env=env,
-        capture_output=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
         text=True,
         errors="replace",
-        timeout=60,
+        start_new_session=True,
     )
+    try:
+        out, err = proc.communicate(timeout=timeout)
+    except subprocess.TimeoutExpired as exc:
+        kill_session(proc.pid)
+        out, err = proc.communicate()
+        raise subprocess.TimeoutExpired(
+            command, timeout, output=out, stderr=err
+        ) from exc
+    return subprocess.CompletedProcess(command, proc.returncode, out, err)
+
+
+def run_setup(command: list[str], env: dict[str, str] | None = None):
+    proc = run_process_group(command, env=env)
     if proc.returncode != 0:
         die(
             f"setup command failed ({proc.returncode}): "
@@ -290,37 +337,23 @@ def run_tool(args: list[str], timeout: int = 60,
         env.update(extra_env)
     command = ["bash", str(TOOL), *args]
     try:
-        proc = subprocess.Popen(
+        proc = run_process_group(
             command,
             cwd=str(SCRATCH),
             env=env,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            errors="replace",
-            # Process-group kill: `$(...)` would orphan a git blocked in
-            # open() on a writer-less FIFO otherwise.
-            start_new_session=True,
+            timeout=timeout,
         )
     except OSError as exc:
         res = Result(127, "", f"exec failed: {exc}", [], args)
         ACTIVE_RUNS.append(res)
         return res
-    try:
-        out, err = proc.communicate(timeout=timeout)
-        rc = proc.returncode if proc.returncode is not None else -1
     except subprocess.TimeoutExpired:
-        try:
-            os.killpg(proc.pid, signal.SIGKILL)
-        except OSError:
-            pass
-        proc.communicate()
         unblock_fifos()
         res = Result(124, "", "timeout", [], args)
         ACTIVE_RUNS.append(res)
         return res
     spy = SPYLOG.read_text(encoding="utf-8", errors="replace").splitlines()
-    res = Result(rc, out, err, spy, args)
+    res = Result(proc.returncode, proc.stdout, proc.stderr, spy, args)
     ACTIVE_RUNS.append(res)
     return res
 
@@ -1096,13 +1129,13 @@ def case_28() -> list[str]:
     probe.write_text("x\n", encoding="utf-8")
     # Probe through bash so gettext resolution matches the tool's own
     # exec environment exactly (a bare stat may resolve differently).
-    kind = subprocess.run(
+    kind = run_process_group(
         ["bash", "-c", 'stat -L -c %F -- "$1"', "_", str(probe)],
         env={
             "PATH": "/usr/local/bin:/usr/bin:/bin",
             "LANGUAGE": "de", "LC_ALL": "en_US.UTF-8",
         },
-        capture_output=True, text=True, timeout=30,
+        timeout=30,
     ).stdout.strip()
     vacuous = kind.startswith("regular")
     fleet = SCRATCH / "d1-locale-de"

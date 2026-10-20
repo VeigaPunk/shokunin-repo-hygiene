@@ -1,0 +1,81 @@
+diff --git c/tools/souji-quarantine.sh w/tools/souji-quarantine.sh
+index cc29d00..be082e0 100755
+--- c/tools/souji-quarantine.sh
++++ w/tools/souji-quarantine.sh
+@@ -244,8 +244,36 @@ git_tracked() { # $1 repo $2 repo-relative path -> 0 when tracked in HEAD/index
+ q_jj_colocated() { [ -d "$1/.jj" ] && [ -e "$1/.git" ]; }
+ 
+ q_jj_commit_recipe() { # $1 repo, $2 source rel, $3 qpath rel -> operator recipe
+-  printf 'jj-lane.sh commit %s --as souji -m %s -- %s %s' \
+-    "$(printf '%q' "$1")" \
++  local repo=$1 owner_name="" owner="" top="" owner_arg
++  if command -v jj >/dev/null 2>&1; then
++    owner_name=$(jj --ignore-working-copy -R "$repo" config get user.name 2>/dev/null) || owner_name=""
++    case $owner_name in
++      ?*-shokunin) owner=${owner_name%-shokunin} ;;
++    esac
++  fi
++  case $owner in
++    ""|*[!a-z0-9-]*) owner="" ;;
++  esac
++  if [ -z "$owner" ]; then
++    top=$(git -C "$repo" rev-parse --show-toplevel 2>/dev/null) || top=""
++    top=${top%/}
++    top=${top##*/}
++    case $top in
++      ?*-shokunin) owner=${top%-shokunin} ;;
++    esac
++    case $owner in
++      ""|*[!a-z0-9-]*) owner="" ;;
++    esac
++  fi
++  if [ -n "$owner" ]; then
++    owner_arg=$(printf '%q' "$owner")
++  else
++    owner_arg='<owning-lane-id>'
++    printf 'souji-quarantine: owner unknown for repo %s; replace --as <owning-lane-id> with the owning lane id\n' \
++      "$(printf '%q' "$repo")" >&2
++  fi
++  printf 'jj-lane.sh commit %s --as %s -m %s -- %s %s' \
++    "$(printf '%q' "$repo")" "$owner_arg" \
+     "$(printf '%q' "souji-quarantine: stage $2 into quarantine")" \
+     "$(printf '%q' "$2")" "$(printf '%q' "$3")"
+ }
+@@ -1534,6 +1562,37 @@ run_selftest() {
+   st_build_fixtures
+   trap 'rm -rf -- "$ST_TMP"; rm -f -- "$ERRTMP"' EXIT
+   local R=$ST_REPO
++  local recipe_root="$ST_TMP/recipes" recipe_bin="$ST_TMP/recipe-bin"
++  local recipe_name recipe_repo recipe note note_file
++  mkdir -p "$recipe_root" "$recipe_bin"
++  for recipe_name in kama-shokunin unknown-lane souji-shokunin; do
++    recipe_repo="$recipe_root/$recipe_name"
++    git init -q --initial-branch=master "$recipe_repo"
++    mkdir -p "$recipe_repo/.jj"
++  done
++  cat > "$recipe_bin/jj" <<'EOF'
++#!/usr/bin/env bash
++exit 1
++EOF
++  chmod +x "$recipe_bin/jj"
++  note_file="$ST_TMP/recipe-note"
++  recipe_repo="$recipe_root/kama-shokunin"
++  recipe=$(PATH="$recipe_bin:$PATH" q_jj_commit_recipe "$recipe_repo" source.txt quarantine/source.txt 2>"$note_file")
++  st_check "R1 kama recipe owner" \
++    "$([[ "$recipe" == *"--as kama -m "* && ! -s "$note_file" ]] && echo 1 || echo 0)" \
++    "contains --as kama"
++  recipe_repo="$recipe_root/unknown-lane"
++  recipe=$(PATH="$recipe_bin:$PATH" q_jj_commit_recipe "$recipe_repo" source.txt quarantine/source.txt 2>"$note_file")
++  note=$(<"$note_file")
++  st_check "R1 unknown recipe owner" \
++    "$([[ "$recipe" == *"--as <owning-lane-id> -m "* && "$note" == *"owner unknown"* ]] && echo 1 || echo 0)" \
++    "placeholder plus owner-unknown note"
++  recipe_repo="$recipe_root/souji-shokunin"
++  recipe=$(PATH="$recipe_bin:$PATH" q_jj_commit_recipe "$recipe_repo" source.txt quarantine/source.txt 2>"$note_file")
++  st_check "R1 souji recipe owner" \
++    "$([[ "$recipe" == *"--as souji -m "* && ! -s "$note_file" ]] && echo 1 || echo 0)" \
++    "contains --as souji"
++
+ 
+   # live-lane sentinels: untouched before/after (H3)
+   local live_porcelain_before live_log_sha_before live_q_before

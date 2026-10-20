@@ -113,6 +113,7 @@ import hashlib
 import json
 import os
 import re
+import signal
 import shlex
 import shutil
 import subprocess
@@ -265,13 +266,58 @@ def die(message: str) -> "None":
     raise SystemExit(2)
 
 
+def kill_session(session_id: int) -> None:
+    pids = []
+    with os.scandir("/proc") as entries:
+        for entry in entries:
+            if not entry.name.isdecimal():
+                continue
+            try:
+                stat = Path(entry.path, "stat").read_text(encoding="ascii")
+            except OSError:
+                continue
+            close = stat.rfind(")")
+            if close < 0:
+                continue
+            fields = stat[close + 1 :].split()
+            if len(fields) > 3 and fields[3] == str(session_id):
+                pids.append(int(entry.name))
+    pids.sort(key=lambda pid: (pid != session_id, pid))
+    for pid in pids:
+        try:
+            os.kill(pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+    try:
+        os.killpg(session_id, signal.SIGKILL)
+    except ProcessLookupError:
+        pass
+
+
+def run_in_session(command: list[str], **kwargs):
+    """Run one child in its own session and reap all session members on timeout."""
+    capture_output = kwargs.pop("capture_output", False)
+    timeout = kwargs.pop("timeout")
+    if capture_output:
+        kwargs["stdout"] = subprocess.PIPE
+        kwargs["stderr"] = subprocess.PIPE
+    proc = subprocess.Popen(command, start_new_session=True, **kwargs)
+    try:
+        stdout, stderr = proc.communicate(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        kill_session(proc.pid)
+        proc.communicate()
+        raise
+    return subprocess.CompletedProcess(command, proc.returncode, stdout, stderr)
+
+
 def run_setup(
     command: list[str],
     *,
     cwd: Path | None = None,
     env: dict[str, str] | None = None,
 ):
-    proc = subprocess.run(
+    proc = run_in_session(
         command,
         cwd=str(cwd) if cwd else None,
         env=env,
@@ -731,7 +777,7 @@ def probe_strace() -> None:
     probe = SCRATCH / "strace-probe.log"
     env = {"PATH": "/usr/local/bin:/usr/bin:/bin", "HOME": str(HOME), "LC_ALL": "C"}
     try:
-        proc = subprocess.run(
+        proc = run_in_session(
             [
                 REAL["strace"],
                 "-f", "-qq", "-y",
@@ -778,7 +824,7 @@ def run_tool(args: list[str], extra_env: dict[str, str] | None = None) -> Result
         "--", "bash", str(TOOL), *args,
     ]
     try:
-        proc = subprocess.run(
+        proc = run_in_session(
             command,
             cwd=str(SCRATCH),
             env=env,

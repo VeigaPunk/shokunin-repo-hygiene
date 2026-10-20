@@ -1,0 +1,501 @@
+diff --git c/tools/souji-proc-census.sh w/tools/souji-proc-census.sh
+new file mode 100755
+index 0000000..979ff35
+--- /dev/null
++++ w/tools/souji-proc-census.sh
+@@ -0,0 +1,495 @@
++#!/usr/bin/env bash
++# souji-proc-census — read-only census of current-uid processes retaining
++# deleted scratch paths. It never signals a process outside its selftest.
++#
++# Output begins with a boot-id comment, then ten TSV fields: pid, ppid,
++# pgid, sid, age_s, starttime, state, wchan, reason, and redacted cmd.
++# Usage: tools/souji-proc-census.sh [--prefix DIR]... [--min-age S] [--selftest]
++set -euo pipefail
++unset -f bash basename cat cd command dirname getconf kill mkdir mkfifo mktemp \
++  printf pwd read readlink rm setsid sleep wait 2>/dev/null || true
++export LC_ALL=C
++
++readonly HEADER=$'pid\tppid\tpgid\tsid\tage_s\tstarttime\tstate\twchan\treason\tcmd'
++readonly SELF_PID=$BASHPID
++MIN_AGE=0
++SELFTEST=0
++PREFIX_SET=0
++PREFIXES=()
++
++usage() {
++  cat <<'USAGE'
++Usage: souji-proc-census.sh [--prefix DIR]... [--min-age S] [--selftest]
++  --prefix DIR  Scratch-path prefix to inspect (repeatable; defaults to
++                /var/tmp, /tmp, and /dev/shm; relative paths use the cwd)
++  --min-age S   Minimum process age in integer seconds (default: 0)
++  --selftest    Run the bounded /var/tmp residue and redaction fixture
++
++Exit status: 0 census emitted, 1 selftest/setup failure, 2 invalid usage.
++USAGE
++}
++
++usage_error() {
++  printf 'souji-proc-census: %s\n' "$1" >&2
++  usage >&2
++  exit 2
++}
++normalize_prefix() {
++  local path=$1 part
++  local -a components=()
++  [[ $path == /* ]] || path=$PWD/$path
++  IFS=/ read -r -a components <<< "$path"
++  NORMALIZED_PATH=''
++  for part in "${components[@]}"; do
++    case "$part" in
++      ''|.) continue ;;
++      ..)
++        case "$NORMALIZED_PATH" in
++          ''|/) ;;
++          *) NORMALIZED_PATH=${NORMALIZED_PATH%/*}; [[ -n $NORMALIZED_PATH ]] || NORMALIZED_PATH=/ ;;
++        esac
++        ;;
++      *)
++        if [[ $NORMALIZED_PATH == / || -z $NORMALIZED_PATH ]]; then
++          NORMALIZED_PATH=/$part
++        else
++          NORMALIZED_PATH+=/$part
++        fi
++        ;;
++    esac
++  done
++  [[ -n $NORMALIZED_PATH ]] || NORMALIZED_PATH=/
++}
++
++while (($#)); do
++  case "$1" in
++    --prefix)
++      (($# >= 2)) || usage_error '--prefix needs a directory'
++      [[ -n $2 ]] || usage_error '--prefix needs a directory'
++      normalize_prefix "$2"
++      prefix=$NORMALIZED_PATH
++      if ((PREFIX_SET == 0)); then
++        PREFIXES=()
++        PREFIX_SET=1
++      fi
++      PREFIXES+=("$prefix")
++      shift 2
++      ;;
++    --min-age)
++      (($# >= 2)) || usage_error '--min-age needs seconds'
++      [[ $2 =~ ^[0-9]{1,10}$ ]] || usage_error '--min-age must be an integer from 0 to 2147483647'
++      min_age_decimal=$((10#$2))
++      ((min_age_decimal <= 2147483647)) || usage_error '--min-age must be an integer from 0 to 2147483647'
++      MIN_AGE=$min_age_decimal
++      shift 2
++      ;;
++    --selftest)
++      SELFTEST=1
++      shift
++      ;;
++    -h|--help)
++      usage
++      exit 0
++      ;;
++    *)
++      usage_error "unknown option: $1"
++      ;;
++  esac
++done
++
++if ((PREFIX_SET == 0)); then
++  PREFIXES=(/var/tmp /tmp /dev/shm)
++fi
++
++# A snapshot of stat identity fields for each process lets the scanner omit
++# itself and its descendants without spawning per-process helper commands.
++declare -A PARENT_BY_PID=()
++declare -A STAT_BY_PID=()
++
++parse_proc_stat() {
++  local proc_path=$1 stat_line stat_tail
++  local -a fields=()
++
++  IFS= read -r stat_line < "$proc_path/stat" 2>/dev/null || return 1
++  # comm is parenthesized and may contain spaces or ')'; use the last ') '.
++  stat_tail=${stat_line##*) }
++  [[ $stat_tail != "$stat_line" ]] || return 1
++  read -r -a fields <<< "$stat_tail"
++  ((${#fields[@]} >= 20)) || return 1
++  [[ ${fields[1]} =~ ^[0-9]+$ && ${fields[2]} =~ ^[0-9]+$ &&
++     ${fields[3]} =~ ^[0-9]+$ && ${fields[19]} =~ ^[0-9]+$ ]] || return 1
++
++  PROC_STATE=${fields[0]}
++  PROC_PPID=${fields[1]}
++  PROC_PGID=${fields[2]}
++  PROC_SID=${fields[3]}
++  PROC_STARTTICKS=${fields[19]}
++}
++
++is_self_tree() {
++  local cursor=$1 parent hops=0
++  while [[ $cursor =~ ^[0-9]+$ ]] && ((hops < 512)); do
++    [[ $cursor == "$SELF_PID" ]] && return 0
++    parent=${PARENT_BY_PID[$cursor]:-}
++    [[ -n $parent && $parent != "$cursor" ]] || break
++    cursor=$parent
++    hops=$((hops + 1))
++  done
++  return 1
++}
++
++process_uid() {
++  local proc_path=$1 line
++  PROC_UID=''
++  while IFS= read -r line; do
++    if [[ $line == Uid:* ]]; then
++      read -r _ PROC_UID _ <<< "$line"
++      [[ $PROC_UID =~ ^[0-9]+$ ]] && return 0
++      return 1
++    fi
++  done < "$proc_path/status" 2>/dev/null
++  return 1
++}
++
++path_under_prefix() {
++  local path=$1 prefix=$2
++  if [[ $prefix == / ]]; then
++    [[ $path == /* ]]
++  else
++    [[ $path == "$prefix" || ${path#"$prefix"/} != "$path" ]]
++  fi
++}
++top_level_scratch_gone() {
++  local path=$1 prefix=$2 remainder top
++  [[ $path != "$prefix" ]] || return 1
++  path_under_prefix "$path" "$prefix" || return 1
++  if [[ $prefix == / ]]; then
++    remainder=${path#/}
++  else
++    remainder=${path#"$prefix"/}
++  fi
++  [[ -n $remainder ]] || return 1
++  top=${remainder%%/*}
++  [[ -n $top ]] || return 1
++  if [[ $prefix == / ]]; then
++    TOP_LEVEL_PATH=/$top
++  else
++    TOP_LEVEL_PATH=$prefix/$top
++  fi
++  [[ ! -e $TOP_LEVEL_PATH ]]
++}
++
++sanitize_field() {
++  SAFE_FIELD=${1//[$'\001'-$'\037'$'\177']/ }
++}
++
++redact_command() {
++  local value=$1 replacement
++  value=${value//[$'\001'-$'\037'$'\177']/ }
++
++  while [[ $value =~ (--token=)[^[:space:]]+ ]]; do
++    replacement=${BASH_REMATCH[1]}' [REDACTED]'
++    value=${value/"${BASH_REMATCH[0]}"/"$replacement"}
++  done
++  while [[ $value =~ (ghp_)[[:alnum:]]+ ]]; do
++    replacement=${BASH_REMATCH[1]}'[REDACTED]'
++    value=${value/"${BASH_REMATCH[0]}"/"$replacement"}
++  done
++  while [[ $value =~ (sk-)[[:alnum:]_.-]+ ]]; do
++    replacement=${BASH_REMATCH[1]}'[REDACTED]'
++    value=${value/"${BASH_REMATCH[0]}"/"$replacement"}
++  done
++  while [[ $value =~ ([Pp][Aa][Ss][Ss][Ww][Oo][Rr][Dd]=)[^[:space:]]+ ]]; do
++    replacement=${BASH_REMATCH[1]}' [REDACTED]'
++    value=${value/"${BASH_REMATCH[0]}"/"$replacement"}
++  done
++  while [[ $value =~ ([[:alpha:]][[:alnum:].+-]*://)[^/@[:space:]]*@ ]]; do
++    replacement=${BASH_REMATCH[1]}'[REDACTED] @'
++    value=${value/"${BASH_REMATCH[0]}"/"$replacement"}
++  done
++  # Bash substring slicing is byte-based because LC_ALL=C is fixed above.
++  REDACTED_CMD=${value:0:160}
++}
++
++read_process_argv() {
++  local proc_path=$1 arg='' prefix candidate redact_next=0
++  CMD_RAW=''
++  PROC_GONE_PATH=''
++  while IFS= read -r -d '' arg || [[ -n $arg ]]; do
++    candidate=''
++    case "$arg" in
++      /*) candidate=$arg ;;
++      --*=/*) candidate=${arg#*=} ;;
++    esac
++    if [[ -z $PROC_GONE_PATH && $candidate == /* && ! -e $candidate ]]; then
++      for prefix in "${PREFIXES[@]}"; do
++        if top_level_scratch_gone "$candidate" "$prefix"; then
++          PROC_GONE_PATH=$candidate
++          break
++        fi
++      done
++    fi
++
++    if ((redact_next)); then
++      arg='[REDACTED]'
++      redact_next=0
++    elif [[ $arg == --token ]]; then
++      redact_next=1
++    fi
++    CMD_RAW+="${CMD_RAW:+ }$arg"
++  done < "$proc_path/cmdline" 2>/dev/null || true
++}
++find_deleted_fd_path() {
++  local proc_path=$1 fd_path fd_link target prefix
++  PROC_FD_GONE_PATH=''
++  for fd_path in "$proc_path"/fd/*; do
++    [[ -L $fd_path ]] || continue
++    fd_link=$(readlink -- "$fd_path" 2>/dev/null) || continue
++    [[ $fd_link == *' (deleted)' ]] || continue
++    target=${fd_link%' (deleted)'}
++    [[ $target == /* ]] || continue
++    for prefix in "${PREFIXES[@]}"; do
++      if top_level_scratch_gone "$target" "$prefix"; then
++        PROC_FD_GONE_PATH=$target
++        return 0
++      fi
++    done
++  done
++  return 1
++}
++
++read_boot_time() {
++  local key value
++  BOOT_TIME=''
++  while read -r key value; do
++    if [[ $key == btime && $value =~ ^[0-9]+$ ]]; then
++      BOOT_TIME=$value
++      return 0
++    fi
++  done < /proc/stat
++  return 1
++}
++read_boot_id() {
++  IFS= read -r BOOT_ID < /proc/sys/kernel/random/boot_id || return 1
++  [[ -n $BOOT_ID ]] || return 1
++  sanitize_field "$BOOT_ID"
++  BOOT_ID=$SAFE_FIELD
++}
++
++census() {
++  local proc_path pid now_epoch clock_ticks age reason cwd wchan snapshot_start
++  read_boot_id || {
++    printf 'souji-proc-census: unable to read boot_id from /proc/sys/kernel/random/boot_id\n' >&2
++    return 1
++  }
++
++  read_boot_time || {
++    printf 'souji-proc-census: unable to read btime from /proc/stat\n' >&2
++    return 1
++  }
++  clock_ticks=$(getconf CLK_TCK 2>/dev/null) || {
++    printf 'souji-proc-census: unable to determine CLK_TCK\n' >&2
++    return 1
++  }
++  [[ $clock_ticks =~ ^[1-9][0-9]*$ ]] || {
++    printf 'souji-proc-census: invalid CLK_TCK\n' >&2
++    return 1
++  }
++  printf -v now_epoch '%(%s)T' -1
++
++  for proc_path in /proc/[0-9]*; do
++    [[ -d $proc_path ]] || continue
++    pid=${proc_path##*/}
++    parse_proc_stat "$proc_path" || continue
++    PARENT_BY_PID[$pid]=$PROC_PPID
++    STAT_BY_PID[$pid]="$PROC_STATE $PROC_PPID $PROC_PGID $PROC_SID $PROC_STARTTICKS"
++  done
++
++  printf '# boot_id %s\n' "$BOOT_ID"
++  printf '%s\n' "$HEADER"
++  for proc_path in /proc/[0-9]*; do
++    [[ -d $proc_path ]] || continue
++    pid=${proc_path##*/}
++    [[ -n ${STAT_BY_PID[$pid]:-} ]] || continue
++    snapshot_start=${STAT_BY_PID[$pid]##* }
++    parse_proc_stat "$proc_path" || continue
++    [[ $PROC_STARTTICKS == "$snapshot_start" ]] || continue
++    PARENT_BY_PID[$pid]=$PROC_PPID
++    is_self_tree "$pid" && continue
++    process_uid "$proc_path" || continue
++    [[ $PROC_UID == "$UID" ]] || continue
++    age=$((now_epoch - BOOT_TIME - PROC_STARTTICKS / clock_ticks))
++    ((age >= 0)) || age=0
++    ((age >= MIN_AGE)) || continue
++
++    reason=''
++    cwd=$(readlink -- "$proc_path/cwd" 2>/dev/null) || cwd=''
++    [[ $cwd == *' (deleted)' ]] && reason='cwd-deleted'
++    read_process_argv "$proc_path"
++    if [[ -z $reason && -n $PROC_GONE_PATH ]]; then
++      sanitize_field "$PROC_GONE_PATH"
++      reason="argv-path-gone:$SAFE_FIELD"
++    fi
++    if [[ -z $reason ]]; then
++      find_deleted_fd_path "$proc_path" || true
++      if [[ -n $PROC_FD_GONE_PATH ]]; then
++        sanitize_field "$PROC_FD_GONE_PATH"
++        reason="fd-path-gone:$SAFE_FIELD"
++      fi
++    fi
++    [[ -n $reason ]] || continue
++
++    wchan=''
++    IFS= read -r wchan < "$proc_path/wchan" 2>/dev/null || true
++    [[ -n $wchan ]] || wchan='-'
++    sanitize_field "$wchan"
++    wchan=$SAFE_FIELD
++    redact_command "$CMD_RAW"
++    row_cmd=$REDACTED_CMD
++    [[ -n $row_cmd ]] || row_cmd='-'
++    sanitize_field "$reason"
++    safe_reason=$SAFE_FIELD
++
++    printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
++      "$pid" "$PROC_PPID" "$PROC_PGID" "$PROC_SID" "$age" \
++      "$PROC_STARTTICKS" "$PROC_STATE" "$wchan" "$safe_reason" "$row_cmd"
++  done
++}
++
++SELFTEST_TMP=''
++SELFTEST_CONTROL_TMP=''
++SELFTEST_OUT=''
++SELFTEST_PIDS=()
++cleanup_selftest() {
++  local pid
++  for pid in "${SELFTEST_PIDS[@]}"; do
++    [[ $pid =~ ^[0-9]+$ ]] || continue
++    # Every fixture worker was started by setsid as its own session/group.
++    kill -KILL -- "-$pid" 2>/dev/null || true
++  done
++  for pid in "${SELFTEST_PIDS[@]}"; do
++    [[ $pid =~ ^[0-9]+$ ]] || continue
++    wait "$pid" 2>/dev/null || true
++  done
++  if [[ $SELFTEST_TMP == /var/tmp/souji-proc-st.* ]]; then
++    rm -rf -- "$SELFTEST_TMP"
++  fi
++  if [[ $SELFTEST_CONTROL_TMP == /var/tmp/souji-proc-control.* ]]; then
++    rm -rf -- "$SELFTEST_CONTROL_TMP"
++  fi
++  if [[ $SELFTEST_OUT == /var/tmp/souji-proc-out.* ]]; then
++    rm -f -- "$SELFTEST_OUT"
++  fi
++}
++
++run_selftest() {
++  local script_dir self_path gone_path fd_path argv_arg boundary_arg secret_arg pid
++  local reader_pid sleeper_pid argv_pid control_pid fd_pid
++  local boot_line header row_pid row_wchan row_reason row_cmd
++  local reader_found=0 sleeper_found=0 argv_found=0 fd_found=0
++  local reader_wchan_found=0 control_found=0 secret_ok=0
++
++  command -v setsid >/dev/null 2>&1 || {
++    printf 'souji-proc-census: selftest requires setsid\n' >&2
++    exit 1
++  }
++  script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
++  self_path=$script_dir/$(basename -- "${BASH_SOURCE[0]}")
++  SELFTEST_TMP=$(mktemp -d /var/tmp/souji-proc-st.XXXXXX) || {
++    printf 'souji-proc-census: selftest could not create /var/tmp fixture\n' >&2
++    exit 1
++  }
++  trap cleanup_selftest EXIT
++  trap 'exit 1' HUP INT TERM
++  SELFTEST_CONTROL_TMP=$(mktemp -d /var/tmp/souji-proc-control.XXXXXX) || {
++    printf 'souji-proc-census: selftest could not create control directory\n' >&2
++    exit 1
++  }
++  SELFTEST_OUT=$(mktemp /var/tmp/souji-proc-out.XXXXXX) || {
++    printf 'souji-proc-census: selftest could not create output file\n' >&2
++    exit 1
++  }
++
++  mkdir -p -- "$SELFTEST_TMP/d"
++  mkfifo -- "$SELFTEST_TMP/d/fifo"
++  gone_path=$SELFTEST_TMP/d/gone
++  fd_path=$SELFTEST_TMP/d/open-file
++  : > "$fd_path"
++  argv_arg=--workspace=$gone_path
++  boundary_arg=--workspace=/tmpfoo/souji-proc-boundary/gone
++  secret_arg='--token=fixture-secret ghp_FAKE sk-fakevalue password=fakepass https://user:pass@example.test/path'
++
++  setsid bash -c 'cd -- "$1" && exec cat < fifo' _ "$SELFTEST_TMP/d" >/dev/null 2>&1 &
++  reader_pid=$!
++  SELFTEST_PIDS+=("$reader_pid")
++  setsid bash -c 'cd -- "$1" && exec sleep 300' _ "$SELFTEST_TMP/d" >/dev/null 2>&1 &
++  sleeper_pid=$!
++  SELFTEST_PIDS+=("$sleeper_pid")
++  setsid bash -c 'exec bash -c "sleep 300 & wait" control "$1" "$2"' _ "$argv_arg" "$secret_arg" >/dev/null 2>&1 &
++  argv_pid=$!
++  SELFTEST_PIDS+=("$argv_pid")
++  setsid bash -c 'cd -- "$1" && exec sleep 300 < "$2"' _ "$SELFTEST_CONTROL_TMP" "$fd_path" >/dev/null 2>&1 &
++  fd_pid=$!
++  SELFTEST_PIDS+=("$fd_pid")
++  setsid bash -c 'cd -- "$1" && exec bash -c "sleep 300 & wait" control "$2"' _ "$SELFTEST_CONTROL_TMP" "$boundary_arg" >/dev/null 2>&1 &
++  control_pid=$!
++  SELFTEST_PIDS+=("$control_pid")
++
++  sleep 0.2
++  rm -rf -- "$SELFTEST_TMP"
++  for pid in "$reader_pid" "$sleeper_pid" "$argv_pid" "$fd_pid" "$control_pid"; do
++    kill -0 "$pid" 2>/dev/null || {
++      printf 'souji-proc-census: selftest worker exited before census (pid %s)\n' "$pid" >&2
++      exit 1
++    }
++  done
++
++  if ! bash "$self_path" --prefix /var/tmp --min-age 0 > "$SELFTEST_OUT"; then
++    printf 'souji-proc-census: selftest census invocation failed\n' >&2
++    exit 1
++  fi
++  {
++    IFS= read -r boot_line || boot_line=''
++    IFS= read -r header || header=''
++    if [[ $boot_line != '# boot_id '* || $header != "$HEADER" ]]; then
++      printf 'souji-proc-census: selftest boot-id or output header mismatch\n' >&2
++      exit 1
++    fi
++
++    while IFS=$'\t' read -r row_pid _ _ _ _ _ _ row_wchan row_reason row_cmd; do
++      case "$row_pid" in
++        "$reader_pid")
++          [[ $row_reason == cwd-deleted ]] && reader_found=1
++          [[ $row_wchan != - ]] && reader_wchan_found=1
++          ;;
++        "$sleeper_pid") [[ $row_reason == cwd-deleted ]] && sleeper_found=1 ;;
++        "$argv_pid")
++          [[ $row_reason == "argv-path-gone:$gone_path" ]] && argv_found=1
++          if [[ $row_cmd == *'[REDACTED]'* &&
++                $row_cmd != *fixture-secret* && $row_cmd != *ghp_FAKE* &&
++                $row_cmd != *sk-fakevalue* && $row_cmd != *fakepass* &&
++                $row_cmd != *user:pass* ]]; then
++            secret_ok=1
++          fi
++          ;;
++        "$fd_pid") [[ $row_reason == "fd-path-gone:$fd_path" ]] && fd_found=1 ;;
++        "$control_pid") control_found=1 ;;
++      esac
++    done
++  } < "$SELFTEST_OUT"
++
++  if ((reader_found == 0 || reader_wchan_found == 0 || sleeper_found == 0 ||
++       argv_found == 0 || fd_found == 0 || control_found != 0 || secret_ok == 0)); then
++    printf 'souji-proc-census: selftest failed (reader=%s reader_wchan=%s sleeper=%s argv=%s fd=%s control=%s redaction=%s)\n' \
++      "$reader_found" "$reader_wchan_found" "$sleeper_found" "$argv_found" "$fd_found" "$control_found" "$secret_ok" >&2
++    exit 1
++  fi
++  printf 'souji-proc-census: selftest PASS (deleted cwd, wchan, missing argv option path, deleted fd, control omission, secret redaction)\n'
++}
++
++if ((SELFTEST)); then
++  run_selftest
++  exit 0
++fi
++
++census
