@@ -247,3 +247,22 @@ keep ref is NOT-SAFE, never `SAFE(metadata-prune)`.
   operator-approved reap protocol bound to (pid, starttime, boot_id); the
   58 souji fixture orphans listed at round start await that ruling.
 - F1, F2, F3, F4 — unchanged.
+
+### Final round-18 evidence after falsification
+
+- Census scope is repository-content reading after enumeration, not a
+  filesystem/PID sandbox. Final B1–B12: b576341 9 failed →4800fd7 0;
+  selftest 49→69; old hygiene/config/namespace suites retain 0 failures
+  with the pinned r14 fixture restored. See
+  `../census/round-18/c1-matrix-4800fd7.json`.
+- Landing gate: selftest 61/0; pointer fixture 11/0; final grammar adds
+  quarantine metadata and exact placeholder binding. Seven invalid
+  teaches extrapolations got append-only source corrections S072–S078.
+- F5 remains frontier/observed, not Core: proc fixture 19/0; literal live
+  deleted-suffix names, missing redactions and a counter ancestor-exclusion
+  mismatch were repaired. Two final 66=66 pid-identical snapshots are in
+  `../census/round-18/proc-agreement-counterfix.json`. The older 65=65
+  snapshot is historical, not a promise of constant live counts.
+- `../census/round-18/final-verification-4800fd7.json` preserves every L1
+  acceptance command/output/exit; raw seat-audit failures and adjudications
+  are retained rather than represented as a clean transcript audit.
