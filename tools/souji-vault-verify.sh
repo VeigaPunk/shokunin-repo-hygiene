@@ -49,12 +49,13 @@
 #     SAFE(metadata-prune). refs/stash, refs/original and every other ref
 #     stay roots, so a repo with no refs/jj/ is byte-identical.
 #   * an unpushed-touching refusal also covers a keep-only commit C ONLY
-#     when C introduces novel content for the target: C:<rel> exists and is
-#     not any blob remote history holds for that path. Keep-only deletions
-#     (object absent) and metaedit/rebase predecessors (identical blob) do
-#     not refuse. The extra query runs only when refs/jj/keep/ is non-empty;
-#     its NOTES token is `jj-keep-novel` and a git failure stays
-#     history-unverifiable.
+#     when C introduces novel leaf content under the target: at least one
+#     blob `ls-tree -r C -- <rel>` reports is absent from every
+#     remote-reachable object under that path. Keep-only deletions (no
+#     leaf), metaedit/rebase predecessors (identical blob) and directory
+#     trees recombining already-pushed blobs do not refuse. The extra
+#     query runs only when refs/jj/keep/ is non-empty; its NOTES token is
+#     `jj-keep-novel` and a git failure stays history-unverifiable.
 # The repo-root unpushed count stays branch-based (`--branches --not
 # --remotes`), unchanged: keep-only commits are not counted there.
 
@@ -423,16 +424,17 @@ resolve_default_ref() {
 # "Used for preventing GC of commits we create"), so a colocated repo can
 # hold rewritten/abandoned predecessors no branch/tag/remote reaches. Keep
 # refs are never durable receipt roots. They do count as unpushed work when
-# a keep-only commit introduces content for the target that no
-# remote-reachable commit has: the blob at C:<rel> must exist and must not
-# be any blob remote history holds for that path. Deletions (object absent)
-# and metaedit/rebase predecessors (identical blob) are not new content and
+# a keep-only commit introduces leaf content under the target that no
+# remote-reachable commit has: at least one blob `ls-tree -r C -- <rel>`
+# reports is absent from every remote-reachable object under that path.
+# Deletions (no leaf), metaedit/rebase predecessors (identical blob) and
+# directory trees recombining already-pushed blobs are not new content and
 # do not refuse. Returns 0 novel, 1 nothing novel -- including every plain
 # repo, which runs no extra query -- and 2 when git itself failed, so the
 # caller keeps its existing history-unverifiable path.
 jj_keep_novel() { # $1 repo, $2 path relative to the repo root
-  local repo=$1 rel=$2 c obj known
-  [ -n "$(git -C "$repo" for-each-ref --format='%(refname)' --count=1 refs/jj/keep/ 2>/dev/null)" ] || return 1
+  local repo=$1 rel=$2 c o known objs=""
+  [ -n "$(git -C "$repo" for-each-ref --format='%(refname)' --count=1 refs/jj/keep/ 2>&1)" ] || return 1
   if ! known=$(git -C "$repo" rev-list --objects --remotes -- "$rel" 2>/dev/null | cut -d' ' -f1); then
     return 2
   fi
@@ -441,9 +443,18 @@ jj_keep_novel() { # $1 repo, $2 path relative to the repo root
   fi
   while IFS= read -r c; do
     [ -n "$c" ] || continue
-    obj=$(git -C "$repo" rev-parse -q --verify "$c:$rel" 2>/dev/null) || continue
-    printf '%s\n' "$known" | grep -Fxq -- "$obj" || return 0
+    # r17 w2: leaf blobs, not the object at C:<rel> -- a directory tree can
+    # combine only already-pushed blobs into a never-pushed tree id, so
+    # comparing C:<rel> itself over-refused directories. For a file target
+    # ls-tree -r prints the same single blob; for a deletion it prints
+    # nothing. An unreadable tree fails closed (return 2).
+    o=$(git -C "$repo" ls-tree -r --format='%(objectname)' "$c" -- "$rel" 2>/dev/null) || return 2
+    [ -n "$o" ] && objs+=$o$'\n'
   done <<< "$c"
+  [ -n "$objs" ] || return 1
+  # single fixed-string grep over the whole candidate set: no per-candidate
+  # pipeline, so no SIGPIPE can fabricate a false "novel" under pipefail.
+  grep -Fxvq -f <(printf '%s\n' "$known") <<< "${objs%$'\n'}" && return 0
   return 1
 }
 
@@ -911,7 +922,9 @@ try_pushed() {
     NOTES+=("pushed=history-unverifiable"); return 1
   fi
   local jjrc=0 jjrel=${target#"$repo"/}
-  jj_keep_novel "$repo" "$jjrel" || jjrc=$?
+  # r17 w2 F6: un-prefixed rel (target outside the repo after
+  # canonicalization) fails closed, never "not novel".
+  if [ "$jjrel" = "$target" ]; then jjrc=2; else jj_keep_novel "$repo" "$jjrel" || jjrc=$?; fi
   if [ "$jjrc" = 2 ]; then
     NOTES+=("pushed=history-unverifiable"); return 1
   fi

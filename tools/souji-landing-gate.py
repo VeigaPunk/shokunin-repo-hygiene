@@ -33,9 +33,11 @@ no SKILL.md, missing .ufo/waves/round-N/ at REV, git failure, malformed
 expected.json shape).
 
 Output: one TSV line per finding `ID\tpath\tdetail` (sorted), then
-`SUMMARY\tfindings=K\tchecked_reg=A\tchecked_pins=B\tchecked_measured=M\tchecked_markers=C\tstatus_lines=S\tcarry_heading=H\tchecked_reports=D`.
+`SUMMARY\tfindings=K\tchecked_reg=A\tchecked_changed=G\tchecked_pins=B\tchecked_measured=M\tchecked_markers=C\tstatus_lines=S\tcarry_heading=H\tchecked_reports=D`.
 
-Per-branch execution counts (r17): `checked_pins` counts frozen-pin
+Per-branch execution counts (r17): `checked_reg` counts registry-cited
+script parses at REV, `checked_changed` counts scripts added/modified in
+BASE..REV (0 unless --base is given), `checked_pins` counts frozen-pin
 comparisons at REV, `checked_measured` counts the comparisons against
 `record.measured_commit` (0 means the measured branch never ran, so the
 measured class is unevaluated in that replay), `status_lines` counts report
@@ -451,10 +453,14 @@ def check_frozen_pins(root, tree, rev):
                 blob_by_oid(root, tree[exp_path]).decode("utf-8")
             )
         except (ValueError, UnicodeDecodeError) as exc:
-            findings.append(
-                ("LG-FROZEN-PIN", exp_path, "expected.json unreadable: %s" % exc)
+            # r17 F5: unreadable/malformed expected.json is the same
+            # could-not-evaluate shape-defect class as a falsy `files` —
+            # exit 2, not a finding.
+            raise EvalError("%s: expected.json unreadable: %s" % (exp_path, exc))
+        if not isinstance(expected, dict):
+            raise EvalError(
+                "%s: expected.json is not an object: %r" % (exp_path, expected)
             )
-            continue
         files = expected.get("files")
         # r17 S2: a falsy `files` (null, [], "", 0, false, {}) cannot fold to
         # zero checks while reporting clean — a shape defect in the pin
@@ -540,13 +546,24 @@ def check_frozen_pins(root, tree, rev):
                 r"^[0-9a-fA-F]{4,64}$", measured
             ):
                 # A dangling measured_commit contributes no checks: verify it
-                # resolves before comparing pinned digests against it.
+                # resolves before comparing pinned digests against it. rc 1 is
+                # "does not resolve" (dangling); any other failure is a real
+                # git error → could-not-evaluate (r17 F4, same class as S1).
                 verify = subprocess.run(
                     ["git", "-C", root, "rev-parse", "--verify", "--quiet",
                      measured + "^{commit}"],
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                     env=GIT_ENV,
                 )
+                if verify.returncode not in (0, 1):
+                    raise EvalError(
+                        "git rev-parse %s^{commit} failed (rc=%d): %s"
+                        % (
+                            measured,
+                            verify.returncode,
+                            verify.stderr.decode("utf-8", "replace").strip()[:300],
+                        )
+                    )
                 measured_ok = verify.returncode == 0
             else:
                 measured_ok = False
@@ -595,10 +612,10 @@ def evaluate(root, rev, round_no, base=None):
         "exit": 2,
         "findings": [],
         "checked_reg": 0,
+        "checked_changed": 0,
         "checked_pins": 0,
         "checked_markers": 0,
         "checked_reports": 0,
-        "checked_measured": 0,
         "status_lines": 0,
         "carry_heading": 0,
         "error": None,
@@ -629,17 +646,29 @@ def evaluate(root, rev, round_no, base=None):
             if detail:
                 findings.append(("LG-PARSE-REG", path, detail))
 
-        # LG-PARSE-CHANGED: scripts added/modified in BASE..REV.
+        # LG-PARSE-CHANGED: scripts added/modified in BASE..REV. NUL-split
+        # (`-z`) so paths containing spaces or C-quoted non-ASCII bytes are
+        # exact; a reported path absent from the enumerated tree is
+        # could-not-evaluate, never a crash or a silent skip (r17 F1).
         if base is not None:
             changed_out = _git(
                 root,
-                ["diff", "--name-only", "--diff-filter=AM", base, resolved],
-                binary=False,
+                ["diff", "--name-only", "-z", "--diff-filter=AM", base, resolved],
             )
-            for path in sorted(set(changed_out.split())):
+            for path in sorted(
+                {
+                    p.decode("utf-8", "surrogateescape")
+                    for p in changed_out.split(b"\0")
+                    if p
+                }
+            ):
                 if not SCRIPT_EXT_RE.search(path):
                     continue
-                result["checked_reg"] += 1
+                if path not in tree:
+                    raise EvalError(
+                        "diff path %r absent from tree at %s" % (path, resolved[:12])
+                    )
+                result["checked_changed"] += 1
                 detail = parse_script(root, tree, path, snapdir)
                 if detail:
                     findings.append(("LG-PARSE-CHANGED", path, detail))
@@ -679,10 +708,11 @@ def emit(result, json_out=None):
         detail = f["detail"].replace("\t", " ").replace("\n", " ")
         print("%s\t%s\t%s" % (f["id"], f["path"], detail))
     print(
-        "SUMMARY\tfindings=%d\tchecked_reg=%d\tchecked_pins=%d\tchecked_measured=%d\tchecked_markers=%d\tstatus_lines=%d\tcarry_heading=%d\tchecked_reports=%d"
+        "SUMMARY\tfindings=%d\tchecked_reg=%d\tchecked_changed=%d\tchecked_pins=%d\tchecked_measured=%d\tchecked_markers=%d\tstatus_lines=%d\tcarry_heading=%d\tchecked_reports=%d"
         % (
             len(result["findings"]),
             result["checked_reg"],
+            result["checked_changed"],
             result["checked_pins"],
             result["checked_measured"],
             result["checked_markers"],
@@ -703,6 +733,7 @@ def emit(result, json_out=None):
             "summary": {
                 "findings": len(result["findings"]),
                 "checked_reg": result["checked_reg"],
+                "checked_changed": result["checked_changed"],
                 "checked_pins": result["checked_pins"],
                 "checked_measured": result["checked_measured"],
                 "checked_markers": result["checked_markers"],
@@ -876,8 +907,10 @@ def run_selftest():
         # CASE clean-pass: everything parses, pins match, STATUS benign.
         repo, g, (rev,) = build("clean-pass", _frozen_world(_base_files()))
         check("clean-pass", repo, 0, rev=rev,
-              expect_counts={"checked_measured": 0, "carry_heading": 0,
-                             "status_lines": 1})
+              expect_counts={"checked_reg": 4, "checked_changed": 0,
+                             "checked_pins": 3, "checked_measured": 0,
+                             "checked_markers": 0, "carry_heading": 0,
+                             "status_lines": 1, "checked_reports": 1})
 
         # CASE clean-measured: a resolvable measured_commit whose pinned
         # bytes match at both revisions emits nothing (r17 F2 — without
@@ -895,25 +928,57 @@ def run_selftest():
         _write_file(repo, "tests/fixtures/r9-frozen/expected.json", json.dumps(exp))
         rev = _commit_all(g, repo, "bind measured")
         check("clean-measured", repo, 0, rev=rev,
-              expect_counts={"checked_measured": 2})
+              expect_counts={"checked_measured": 2, "checked_pins": 3})
+
+        # CASE cli-summary-exact: emit() must serialize every counter — an
+        # in-memory assertion cannot see a mutated SUMMARY interpolation
+        # (r17 M17). Assert exact positive values on a measured run.
+        proc = subprocess.run(
+            [
+                sys.executable,
+                os.path.abspath(__file__),
+                "--root", repo, "--rev", rev, "--round", "16",
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=GIT_ENV,
+        )
+        out = proc.stdout.decode("utf-8", "replace")
+        ok = proc.returncode == 0 and (
+            "SUMMARY\tfindings=0\tchecked_reg=4\tchecked_changed=0\t"
+            "checked_pins=3\tchecked_measured=2\tchecked_markers=0\t"
+            "status_lines=1\tcarry_heading=0\tchecked_reports=1" in out
+        )
+        if ok:
+            passed += 1
+            print("CASE\tpass\tcli-summary-exact\trc=%d" % proc.returncode)
+        else:
+            failed += 1
+            print(
+                "CASE\tFAIL\tcli-summary-exact\trc=%d stdout=%r stderr=%r"
+                % (proc.returncode, out[-400:], proc.stderr.decode("utf-8", "replace")[:200])
+            )
 
         # CASE nonparsing-cited-sh.
         f = _base_files()
         f["tools/good.sh"] = BAD_SH
         repo, g, (rev,) = build("bad-cited-sh", _frozen_world(f))
-        check("nonparsing-cited-sh", repo, 1, ("LG-PARSE-REG",), rev=rev)
+        check("nonparsing-cited-sh", repo, 1, ("LG-PARSE-REG",), rev=rev,
+              expect_n=1, expect_counts={"checked_reg": 4, "checked_pins": 3})
 
         # CASE nonparsing-cited-py.
         f = _base_files()
         f["tools/good.py"] = BAD_PY
         repo, g, (rev,) = build("bad-cited-py", _frozen_world(f))
-        check("nonparsing-cited-py", repo, 1, ("LG-PARSE-REG",), rev=rev)
+        check("nonparsing-cited-py", repo, 1, ("LG-PARSE-REG",), rev=rev,
+              expect_n=1)
 
         # CASE missing-cited-path.
         f = _base_files()
         f["SKILL.md"] = f["SKILL.md"] + "| gone | `bash tools/gone.sh --x` | row |\n"
         repo, g, (rev,) = build("missing-cited", _frozen_world(f))
-        check("missing-cited-path", repo, 1, ("LG-MISSING-REG",), rev=rev)
+        check("missing-cited-path", repo, 1, ("LG-MISSING-REG",), rev=rev,
+              expect_n=1)
 
         # CASE changed-nonparsing-with-base: base parses, rev adds a broken
         # uncited script (exact ids: the cited world stays clean).
@@ -929,6 +994,29 @@ def run_selftest():
             ("LG-PARSE-CHANGED",),
             rev=commits[1],
             base=commits[0],
+            expect_n=1,
+            expect_counts={"checked_changed": 1},
+        )
+
+        # CASE changed-paths-exact: space and non-ASCII changed paths reach
+        # the parser whole — the old whitespace split turned 'space file.sh'
+        # into a crash (KeyError) and core.quotepath hid 'café.sh'
+        # (r17 F1).
+        repo, g, commits = build(
+            "changed-paths",
+            _frozen_world(_base_files()),
+            extra_commits=({
+                "tools/space file.sh": GOOD_SH,
+                "tools/café.sh": GOOD_SH,
+            },),
+        )
+        check(
+            "changed-paths-exact",
+            repo,
+            0,
+            rev=commits[1],
+            base=commits[0],
+            expect_counts={"checked_changed": 2},
         )
 
         # CASE uncited-nonparsing-passes-without-base.
@@ -1053,6 +1141,20 @@ def run_selftest():
             check(case_name, repo, 2, rev=rev,
                   expect_err="'files' is absent, falsy or not an object")
 
+        # CASES malformed expected.json shape → exit 2 (r17 F2/F5): the pin
+        # contract's top level is guarded like `files` — a valid-JSON
+        # non-object and unreadable JSON are both could-not-evaluate, never
+        # a crash (exit 1) or a finding.
+        for case_name, content, err in (
+            ("expected-nonobject-exit2", json.dumps([1, 2, 3]),
+             "expected.json is not an object"),
+            ("expected-unreadable-exit2", "{ not json",
+             "expected.json unreadable"),
+        ):
+            f = _frozen_world(_base_files())
+            f["tests/fixtures/r9-frozen/expected.json"] = content
+            repo, g, (rev,) = build(case_name, f)
+            check(case_name, repo, 2, rev=rev, expect_err=err)
         # CASE uncarried-marker: STATUS failure + phrase, lesson lacks them.
         f = _frozen_world(_base_files())
         f[".ufo/waves/round-16/w1/SeatA.md"] = (
@@ -1061,7 +1163,9 @@ def run_selftest():
         repo, g, (rev,) = build("uncarried", f)
         check("uncarried-marker", repo, 1, ("LG-SEAT-UNCARRIED",), rev=rev,
               expect_n=1,
-              expect_counts={"status_lines": 1, "carry_heading": 0})
+              expect_counts={"status_lines": 1, "carry_heading": 0,
+                             "checked_markers": 1, "checked_reports": 1,
+                             "checked_pins": 3})
 
         # CASE bold-uncarried: a bold-decorated STATUS failure is positively
         # in the failure channel (r17 F4 — without it, losing bold
@@ -1097,7 +1201,7 @@ def run_selftest():
         )
         repo, g, (rev,) = build("table", f)
         check("status-in-table", repo, 1, ("LG-SEAT-UNCARRIED",), rev=rev,
-              expect_n=1)
+              expect_n=1, expect_counts={"checked_markers": 1})
 
         # CASE carried-open: failure carried under the heading with `open`.
         f = _frozen_world(_base_files())
@@ -1134,7 +1238,7 @@ def run_selftest():
         )
         repo, g, (rev,) = build("open-admitted", f)
         check("open-admitted", repo, 1, ("LG-OPEN-ADMITTED",), rev=rev,
-              expect_n=1)
+              expect_n=1, expect_counts={"checked_markers": 1})
 
         # CASE missing-wave-dir → exit 2.
         f = _frozen_world(_base_files())
@@ -1199,6 +1303,36 @@ def run_selftest():
                 "CASE\tFAIL\tambient-git-dir\texit=%d resolved=%s err=%s"
                 % (res["exit"], res.get("resolved_rev"), res["error"])
             )
+
+        # CASE cli-ambient-git-dir (r17 M09): a gate *child process* whose
+        # GIT_DIR/GIT_WORK_TREE are poisoned at process start must still
+        # resolve --root. The in-process case above cannot see this: its
+        # poison lands after the module-level GIT_ENV snapshot is built.
+        env = dict(GIT_ENV)
+        env["GIT_DIR"] = "/nonexistent/souji-r17.git"
+        env["GIT_WORK_TREE"] = "/nonexistent/souji-r17-wt"
+        proc = subprocess.run(
+            [
+                sys.executable,
+                os.path.abspath(__file__),
+                "--root", repo, "--rev", rev, "--round", "16",
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=env,
+        )
+        ok = proc.returncode == 0 and "SUMMARY\tfindings=0" in proc.stdout.decode(
+            "utf-8", "replace"
+        )
+        if ok:
+            passed += 1
+            print("CASE\tpass\tcli-ambient-git-dir\trc=%d" % proc.returncode)
+        else:
+            failed += 1
+            print(
+                "CASE\tFAIL\tcli-ambient-git-dir\trc=%d stderr=%r"
+                % (proc.returncode, proc.stderr.decode("utf-8", "replace")[:200])
+            )
     finally:
         shutil.rmtree(top, ignore_errors=True)
 
@@ -1232,7 +1366,25 @@ def main(argv=None):
     if not os.path.isdir(args.root):
         print("COULD-NOT-EVALUATE\t--root %s is not a directory" % args.root, file=sys.stderr)
         return 2
-    result = evaluate(args.root, args.rev, args.round_no, base=args.base)
+    try:
+        result = evaluate(args.root, args.rev, args.round_no, base=args.base)
+    except Exception as exc:  # belt-and-braces: no uncaught class masquerades
+        # as findings (exit 1) — a crash is could-not-evaluate (r17 F1).
+        result = {
+            "exit": 2,
+            "findings": [],
+            "checked_reg": 0,
+            "checked_changed": 0,
+            "checked_pins": 0,
+            "checked_markers": 0,
+            "checked_reports": 0,
+            "checked_measured": 0,
+            "status_lines": 0,
+            "carry_heading": 0,
+            "resolved_rev": None,
+            "resolved_base": None,
+            "error": "internal error: %s: %s" % (type(exc).__name__, exc),
+        }
     return emit(result, json_out=args.json_out)
 
 

@@ -52,8 +52,12 @@ def main() -> int:
     ap.add_argument("--specs", required=True,
                     help="w1 spec : w2 spec, colon-separated")
     ap.add_argument("--auditor", required=True, help="tools/souji-seat-audit.py")
+    ap.add_argument("--auditor-rev", default="unbound",
+                    help="git rev of the audited auditor bytes, for binding")
     ap.add_argument("--output", required=True)
     a = ap.parse_args()
+    # Importing the auditor must not leave a lane-side bytecode cache.
+    sys.dont_write_bytecode = True
 
     lane = a.lane.rstrip("/")
     tdir = Path(a.transcripts)
@@ -75,7 +79,10 @@ def main() -> int:
         "argv": sys.argv,
         "lane": lane,
         "fleet": str(Path(lane).parent),
-        "auditor": {"path": str(auditor_path), "sha256": sha256_file(auditor_path)},
+        "auditor": {"path": str(auditor_path), "sha256": sha256_file(auditor_path),
+                    "git_rev": a.auditor_rev},
+        "tool_sha256": sha256_file(Path(__file__)),
+        "python": sys.version.split()[0],
         "transcripts_dir": str(tdir),
         "manifest": {"path": str(manifest), "sha256": sha256_file(manifest)},
         "manifest_check": {},

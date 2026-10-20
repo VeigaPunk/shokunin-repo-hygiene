@@ -101,13 +101,17 @@
 #   repo-local, included or config.worktree `status.showUntrackedFiles=no|
 #   all` cannot change the dirty/clean measure or the directory collapse.
 #   Round-17: a hardlinked or non-regular (FIFO/socket/device, or a
-#   symlink resolving to one) $GIT_DIR/info/attributes — in the repo
+#   symlink inside the gitdir resolving to one; a looping or out-of-gitdir
+#   symlink keeps the whole-run symlink refusal) $GIT_DIR/info/attributes
+#   — in the repo
 #   gitdir, a common dir, or a linked-worktree admin dir — joins the
 #   degraded set below instead of refusing the fleet: stderr `souji-census:
 #   git-metadata-unsupported <reason> <path>` for that repository only
 #   (exit 0; no git call that could read that file runs in it). A
 #   directory info/attributes stays accepted (git opens it, gets EISDIR,
-#   and treats it as empty); a dangling symlink is treated as absent. Every
+#   and treats it as empty); a dangling symlink is treated as absent; an
+#   admin-dir copy degrades the owner although git reads only the common
+#   info/ (fail-safe over-refusal). Empty files are regular. Every
 #   other guarded metadata entry —
 #   config, HEAD, index, packed-refs, commondir, info/exclude,
 #   objects/info/alternates — keeps its exit-2 whole-run refusal even when
@@ -546,12 +550,14 @@ guard_git_files() { # $1 resolved gitdir
     # One lstat-resolved type probe before anything could open the path: a
     # FIFO or device is classified here, never touched by open(2). A failed
     # stat means absent (or a dangling symlink, which git also skips).
-    if ! kind=$(stat -L -c '%F %h' -- "$path" 2>/dev/null); then continue; fi
+    # LC_ALL=C: %F is gettext-translated; GNU prints "regular empty file" for
+    # a zero-length file, which is still a regular file (r17 wave-2 F1/F2).
+    if ! kind=$(LC_ALL=C stat -L -c '%F %h' -- "$path" 2>/dev/null); then continue; fi
     nlink=${kind##* }
     kind=${kind% *}
     case "$kind" in
       directory) continue ;;
-      'regular file')
+      'regular file'|'regular empty file')
         case "$nlink" in
           ''|*[!0-9]*) protected_fail "git-metadata-unavailable" "$dir" "$path" ;;
         esac
@@ -839,7 +845,8 @@ guard_git_pointer() { # $1 repo dir, $2 .git file
 # first. Relative registration paths are resolved against the admin dir.
 guard_worktree_registrations() { # $1 resolved gitdir; rc 1 soft (all entries still guarded)
   local dir=$1 entry reg target wt admin common c soft=0
-  for entry in "$dir"/worktrees/*; do
+  # Dot-named admin dirs are registrations too (git lists them; r17 wave-2 F4).
+  for entry in "$dir"/worktrees/* "$dir"/worktrees/.[!.]* "$dir"/worktrees/..?*; do
     if [ -L "$entry" ]; then
       guard_target worktree "$entry" >/dev/null
       continue

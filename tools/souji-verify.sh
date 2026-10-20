@@ -66,12 +66,13 @@
 #        and the like stay roots and plain repositories keep byte-identical
 #        verdicts; an absent-worktree head held only by refs/jj/keep/* is
 #        unique and can never earn metadata-prune.
-#        (b) a keep-only commit refuses a pushed receipt only when the blob
-#        it introduces at the target is novel: `rev-list
+#        (b) a keep-only commit refuses a pushed receipt only when a leaf
+#        blob it introduces under the target is novel: `rev-list
 #        --glob=refs/jj/keep/* --not --branches --tags --remotes -- <rel>`
-#        names it, its `C:<rel>` object exists, and that object id is absent
-#        from every pushed blob at the path (`log --remotes`). Deletions and
-#        metaedit/rebase predecessors carrying an already-pushed blob do not
+#        names it, and the blobs `ls-tree -r C -- <rel>` reports are absent
+#        from every pushed object under the path (`rev-list --objects
+#        --remotes -- <rel>`). Deletions, metaedit/rebase predecessors and
+#        directory trees that recombine already-pushed blobs do not
 #        refuse. Both queries are gated on a refs/jj/keep/ probe, so a
 #        repository without keep refs runs nothing new, and a git failure
 #        takes the existing history-unverifiable path.
@@ -239,8 +240,8 @@ count_live_refs() { # $1 target, $2 repo (or empty -> fleet root)
 # with an already-pushed blob do not. Returns 0 novel, 1 not novel, 2 git
 # failure (caller takes its existing history-unverifiable path).
 jj_keep_novel() { # $1 repo, $2 path relative to the repo root
-  local repo=$1 rel=$2 c obj known
-  [ -n "$(git -C "$repo" for-each-ref --format='%(refname)' --count=1 refs/jj/keep/ 2>/dev/null)" ] || return 1
+  local repo=$1 rel=$2 c o known objs=""
+  [ -n "$(git -C "$repo" for-each-ref --format='%(refname)' --count=1 refs/jj/keep/ 2>&1)" ] || return 1
   if ! known=$(git -C "$repo" rev-list --objects --remotes -- "$rel" 2>/dev/null | cut -d' ' -f1); then
     return 2
   fi
@@ -249,9 +250,18 @@ jj_keep_novel() { # $1 repo, $2 path relative to the repo root
   fi
   while IFS= read -r c; do
     [ -n "$c" ] || continue
-    obj=$(git -C "$repo" rev-parse -q --verify "$c:$rel" 2>/dev/null) || continue
-    printf '%s\n' "$known" | grep -Fxq -- "$obj" || return 0
+    # r17 w2: leaf blobs, not the object at C:<rel> -- a directory tree can
+    # combine only already-pushed blobs into a never-pushed tree id, so
+    # comparing C:<rel> itself over-refused directories. For a file target
+    # ls-tree -r prints the same single blob; for a deletion it prints
+    # nothing. An unreadable tree fails closed (return 2).
+    o=$(git -C "$repo" ls-tree -r --format='%(objectname)' "$c" -- "$rel" 2>/dev/null) || return 2
+    [ -n "$o" ] && objs+=$o$'\n'
   done <<< "$c"
+  [ -n "$objs" ] || return 1
+  # single fixed-string grep over the whole candidate set: no per-candidate
+  # pipeline, so no SIGPIPE can fabricate a false "novel" under pipefail.
+  grep -Fxvq -f <(printf '%s\n' "$known") <<< "${objs%$'\n'}" && return 0
   return 1
 }
 
@@ -713,10 +723,12 @@ try_pushed() {
   if [ -n "$touching" ]; then
     NOTES+=("pushed=unpushed-commits-touching intro=${intro:0:12}"); return 1
   fi
-  # r17 (b): a keep-only commit refuses the receipt only when the blob it
-  # introduces at the target is absent from every pushed blob at the path.
+  # r17 (b): a keep-only commit refuses the receipt only when a leaf blob it
+  # introduces under the target is absent from every pushed object. An
+  # un-prefixed rel (target outside the repo after canonicalization) fails
+  # closed, never "not novel".
   rel=${target#"$repo"/}
-  jjrc=0; jj_keep_novel "$repo" "$rel" || jjrc=$?
+  if [ "$rel" = "$target" ]; then jjrc=2; else jjrc=0; jj_keep_novel "$repo" "$rel" || jjrc=$?; fi
   if [ "$jjrc" = 2 ]; then NOTES+=("pushed=history-unverifiable"); return 1; fi
   if [ "$jjrc" = 0 ]; then NOTES+=("pushed=unpushed-commits-touching intro=${intro:0:12} jj-keep-novel"); return 1; fi
   if ! git -C "$repo" merge-base --is-ancestor "$intro" "$ref" 2>/dev/null; then
@@ -1294,6 +1306,97 @@ st_build_fixtures() {
   git -C "$RJ" update-ref refs/stash "$cjst"
   st_register_worktree "$RJ" wt-stash "$ST_TMP/wt-stash" "$cjst" ""
 
+  # J6/J7 (r17 w2): directory targets compare leaf blobs, never the tree id.
+  mkdir -p "$RJ/jj/dirsw" "$RJ/jj/dirnv"
+  printf 'fbase\n' > "$RJ/jj/dirsw/f.txt"
+  printf 'gbase\n' > "$RJ/jj/dirsw/g.txt"
+  printf 'nbase\n' > "$RJ/jj/dirnv/n.txt"
+  local cjd1; cjd1=$(st_commit "$RJ" "$cjp" "jd1 dir base")
+  printf 'ftip\n' > "$RJ/jj/dirsw/f.txt"
+  printf 'gtip\n' > "$RJ/jj/dirsw/g.txt"
+  printf 'ntip\n' > "$RJ/jj/dirnv/n.txt"
+  local cjb; cjb=$(st_commit "$RJ" "$cjd1" "jb pushed dir tip")
+  git -C "$RJ" update-ref refs/heads/master "$cjb"
+  git -C "$RJ" update-ref refs/remotes/origin/master "$cjb"
+  # J6: keep-only commit recomposes {fbase, gtip} -- a tree id that was
+  # never pushed, built entirely of pushed dirsw blobs; must not refuse.
+  printf 'fbase\n' > "$RJ/jj/dirsw/f.txt"
+  local cjds; cjds=$(st_commit "$RJ" "$cjb" "jdsw keep-only recomposed dirsw")
+  git -C "$RJ" update-ref refs/jj/keep/"$cjds" "$cjds"
+  printf 'ftip\n' > "$RJ/jj/dirsw/f.txt"
+  git -C "$RJ" add -- jj/dirsw
+  # J7: keep-only commit adding a never-pushed blob under dirnv -> refuses.
+  printf 'novel dir blob\n' > "$RJ/jj/dirnv/m.txt"
+  local cjdn; cjdn=$(st_commit "$RJ" "$cjb" "jdn keep-only novel dirnv blob")
+  git -C "$RJ" update-ref refs/jj/keep/"$cjdn" "$cjdn"
+  rm -f "$RJ/jj/dirnv/m.txt"
+  git -C "$RJ" add -- jj/dirnv
+  # J8 (r17 w2): a single broken-name keep ref cannot hide the keep query:
+  # for-each-ref's stderr warning counts as "keep refs exist", then
+  # rev-list fails and the caller takes its history-unverifiable path.
+  local RB="$ST_FLEET/brokenref-shokunin"
+  st_init_repo "$RB" master
+  printf 'broken probe\n' > "$RB/f.txt"
+  local cb; cb=$(st_commit "$RB" "" "b baseline")
+  git -C "$RB" update-ref refs/heads/master "$cb"
+  git -C "$RB" update-ref refs/remotes/origin/master "$cb"
+  git -C "$RB" symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/master
+  mkdir -p "$RB/.git/refs/jj/keep"
+  printf '%s\n' "$cb" > "$RB/.git/refs/jj/keep/has space"
+  # J9 (r17 w2): a path whose remote history exceeds the pipe buffer must
+  # not let SIGPIPE fabricate a "novel" verdict for an identical-blob
+  # predecessor (the w1 pipeline died under pipefail; the current helper
+  # runs one grep over the whole candidate set, so there is no pipe to
+  # kill). 2500 rev-list commits via fast-import keep the fixture cheap.
+  local RS="$ST_FLEET/sigpipe-shokunin" SI
+  st_init_repo "$RS" master
+  git -C "$RS" config gc.auto 0
+  mkdir -p "$RS/jj"
+  {
+    cat <<'FI'
+blob
+mark :1
+data 3
+v1
+blob
+mark :2
+data 3
+v2
+FI
+    cat <<FI
+commit refs/heads/master
+mark :10
+committer Souji Test <st@example.invalid> 1700000001 +0000
+data 3
+c1
+M 100644 :1 jj/sig.txt
+
+FI
+    SI=2
+    while [ "$SI" -le 2500 ]; do
+      cat <<FI
+commit refs/heads/master
+mark :$((10 + SI - 1))
+committer Souji Test <st@example.invalid> $((1700000000 + SI)) +0000
+data $((2 + ${#SI}))
+c$SI
+from :$((10 + SI - 2))
+M 100644 :$((SI % 2 + 1)) jj/sig.txt
+
+FI
+      SI=$((SI + 1))
+    done
+  } | git -C "$RS" fast-import --quiet
+  git -C "$RS" update-ref refs/remotes/origin/master refs/heads/master
+  git -C "$RS" symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/master
+  # worktree + index at the pushed tip so the status gate stays clean
+  printf 'v1\n' > "$RS/jj/sig.txt"
+  git -C "$RS" add -- jj/sig.txt
+  local csp; csp=$(printf 'sp keep\n' | git -C "$RS" commit-tree "$(git -C "$RS" rev-parse 'refs/heads/master^{tree}')" -p 'refs/heads/master^')
+  git -C "$RS" update-ref refs/jj/keep/"$csp" "$csp"
+
+
+
   touch -d '3 days ago' "$R/.scratch/old-f7.out" "$R/.scratch/old-f8.out" "$R/.scratch/old-e8.out"
   return 0
 }
@@ -1349,6 +1452,15 @@ run_selftest() {
   st_case J3 SAFE pushed "" "$ST_FLEET/jjrepo-shokunin/jj/gone.txt"
   st_case J4 NOT-SAFE none "durable-refs-only=yes" "$ST_TMP/wt-jj"
   st_case J5 SAFE metadata-prune "unique=0" "$ST_TMP/wt-stash"
+  # r17 w2 detectors: directory targets use leaf blobs (J6 recombination of
+  # pushed blobs stays SAFE, J7 novel blob under a dir refuses); a broken
+  # keep ref name fails closed (J8); deep remote history cannot let a pipe
+  # fabricate novelty for an identical-blob predecessor (J9).
+  st_case J6 SAFE pushed "" "$ST_FLEET/jjrepo-shokunin/jj/dirsw"
+  st_case J7 NOT-SAFE none "jj-keep-novel" "$ST_FLEET/jjrepo-shokunin/jj/dirnv"
+  st_case J8 NOT-SAFE none "history-unverifiable" "$ST_FLEET/brokenref-shokunin/f.txt"
+  st_case J9 SAFE pushed "" "$ST_FLEET/sigpipe-shokunin/jj/sig.txt"
+
 
 
   st_status H2 2

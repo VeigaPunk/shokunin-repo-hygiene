@@ -118,10 +118,11 @@
 #   only by a jj keep ref is NOT-SAFE, never SAFE(metadata-prune).
 #   The unpushed-commits-touching checks additionally refuse a keep-only
 #   commit C (rev-list --glob='refs/jj/keep/*' --not --branches --tags
-#   --remotes -- <rel>) only when C:<rel> exists and its object id is absent
-#   from every remote-reachable <rel> blob: keep-only deletions and
-#   metaedit/rebase predecessors (identical blob) do not refuse, and the
-#   bare `jj-keep-novel` token marks a refusal. A repo with no
+#   --remotes -- <rel>) only when some leaf blob `ls-tree -r C -- <rel>`
+#   reports is absent from every remote-reachable object under <rel>:
+#   keep-only deletions, metaedit/rebase predecessors (identical blob) and
+#   directory trees recombining already-pushed blobs do not refuse, and
+#   the bare `jj-keep-novel` token marks a refusal. A repo with no
 #   refs/jj/keep/* runs no extra query and produces byte-identical output.
 # Q8 bounds (r13)
 #   Every per-target staging move and digest runs under a fixed GNU
@@ -967,16 +968,17 @@ s18_snapshot_equal() { # read-only tracked-content-vs-ref compare
 
 # r17: durable-receipt revsets. jj writes a refs/jj/keep/* ref for every
 # commit it creates (visible or hidden), so a keep ref is never a durable
-# receipt. It is unshipped work only when it gives <rel> an object no
-# remote-reachable commit ever had: keep-only deletions (no object at
-# <rel>), metaedit/rebase predecessors (object already reachable) and pure
-# metadata rewrites do not refuse. Plain repos (no refs/jj/keep/*) run
-# nothing new and stay byte-identical; a git failure returns 2 so the
+# receipt. It is unshipped work only when it gives <rel> a leaf blob no
+# remote-reachable object under <rel> matches: keep-only deletions (no
+# leaf), metaedit/rebase predecessors (blob already reachable), directory
+# trees recombining already-pushed blobs and pure metadata rewrites do not
+# refuse. Plain repos (no refs/jj/keep/*) run nothing new and stay
+# byte-identical; a git failure returns 2 so the
 # caller's existing history-unverifiable / FAIL path applies. $2 is
 # repo-relative (an absolute path would silently never match `C:<rel>`).
 jj_keep_novel() { # $1 repo, $2 path relative to the repo root
-  local repo=$1 rel=$2 c obj known
-  [ -n "$(git -C "$repo" for-each-ref --format='%(refname)' --count=1 refs/jj/keep/ 2>/dev/null)" ] || return 1
+  local repo=$1 rel=$2 c o known objs=""
+  [ -n "$(git -C "$repo" for-each-ref --format='%(refname)' --count=1 refs/jj/keep/ 2>&1)" ] || return 1
   if ! known=$(git -C "$repo" rev-list --objects --remotes -- "$rel" 2>/dev/null | cut -d' ' -f1); then
     return 2
   fi
@@ -985,9 +987,18 @@ jj_keep_novel() { # $1 repo, $2 path relative to the repo root
   fi
   while IFS= read -r c; do
     [ -n "$c" ] || continue
-    obj=$(git -C "$repo" rev-parse -q --verify "$c:$rel" 2>/dev/null) || continue
-    printf '%s\n' "$known" | grep -Fxq -- "$obj" || return 0
+    # r17 w2: leaf blobs, not the object at C:<rel> -- a directory tree can
+    # combine only already-pushed blobs into a never-pushed tree id, so
+    # comparing C:<rel> itself over-refused directories. For a file target
+    # ls-tree -r prints the same single blob; for a deletion it prints
+    # nothing. An unreadable tree fails closed (return 2).
+    o=$(git -C "$repo" ls-tree -r --format='%(objectname)' "$c" -- "$rel" 2>/dev/null) || return 2
+    [ -n "$o" ] && objs+=$o$'\n'
   done <<< "$c"
+  [ -n "$objs" ] || return 1
+  # single fixed-string grep over the whole candidate set: no per-candidate
+  # pipeline, so no SIGPIPE can fabricate a false "novel" under pipefail.
+  grep -Fxvq -f <(printf '%s\n' "$known") <<< "${objs%$'\n'}" && return 0
   return 1
 }
 
@@ -1012,14 +1023,6 @@ try_pushed() {
   if [ -n "$touching" ]; then
     NOTES+=("pushed=unpushed-commits-touching intro=${intro:0:12}"); return 1
   fi
-  local kn=0 jjrel
-  jjrel=${target#"$repo"/}
-  if [ "$jjrel" != "$target" ]; then jj_keep_novel "$repo" "$jjrel" || kn=$?; fi
-  case "$kn" in
-    0) NOTES+=("pushed=unpushed-commits-touching intro=${intro:0:12} jj-keep-novel"); return 1 ;;
-    1) : ;;
-    *) NOTES+=("pushed=history-unverifiable"); return 1 ;;
-  esac
   if ! git -C "$repo" merge-base --is-ancestor "$intro" "$ref" 2>/dev/null; then
     NOTES+=("pushed=not-ancestor intro=${intro:0:12} ref=$ref"); return 1
   fi

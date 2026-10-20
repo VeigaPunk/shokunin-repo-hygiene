@@ -27,6 +27,20 @@
 #       keep refs                                              -> unchanged (byte-identical)
 #   J9  real jj 0.45.1 colocated clone (optional; CASE SKIP when
 #       jj is absent) reproduces J1/J3 with genuine keep refs
+#   J10 directory target: keep-only predecessors with identical or
+#       re-arranged-but-published leaf blobs                  -> SAFE(pushed)
+#   J11 directory target: keep-only commit adds a novel leaf  -> NOT-SAFE
+#   J12 keep ref to a missing object (rev-list fails)         -> NOT-SAFE history-unverifiable
+#   J13 keep ref to a non-commit object (tree/blob)           -> unchanged (SAFE pushed)
+#   J14 >64K known objects on the path, keep carries a pushed
+#       blob (would SIGPIPE a per-candidate printf|grep -q)    -> SAFE(pushed)
+#   J15 keep blob published only on a side remote
+#       (refs/remotes/upstream/*), never on local branches    -> SAFE(pushed)
+# J10/J11 exercise the directory tree-id contraction: comparing `C:<rel>`
+# itself over-refuses when every leaf blob is already pushed; leaf blobs
+# must be compared instead. J12–J15 come from the wave-2 sentinel/mutation
+# survivor notes (failure-path, non-commit keep refs, SIGPIPE scale,
+# branches-vs-remotes discrimination).
 #
 # The fixture is git-only by default: refs/jj/keep/<sha> is synthesized with
 # `git update-ref`, and real jj is used only by J9. Verdicts are fixed
@@ -79,6 +93,12 @@ CASE_IDS=(
   J7
   J8-verify J8-vault
   J9-file J9-worktree
+  J10-verify J10-vault J10-quarantine
+  J11-verify J11-vault J11-quarantine
+  J12-verify J12-vault J12-quarantine
+  J13-verify J13-vault
+  J14-verify J14-vault
+  J15-verify J15-vault
 )
 
 die() { printf 'r17-jj-receipts: %s\n' "$*" >&2; exit 2; }
@@ -297,6 +317,9 @@ WT_UNREF="$T/wt-plain-unref"
 WT_KEEP="$T/wt-keep-only"
 WT_STASH="$T/wt-stash"
 WT_J9="$T/wt-j9"
+BREPO="$T/fleet/brokenrepo"
+BREPO2="$T/fleet/noncommitrepo"
+BIGREPO="$T/fleet/bigrepo"
 
 build_seed() {
   mkdir -p "$SRC"
@@ -305,6 +328,10 @@ build_seed() {
   g init -q "$SRC/seed" || die "seed init failed"
   local f
   for f in f.txt f_novel.txt f_meta.txt f_del.txt; do printf 'v1\n' > "$SRC/seed/$f"; done
+  for f in f_broken.txt f_noncommit.txt f_side.txt; do printf 'v1\n' > "$SRC/seed/$f"; done
+  mkdir -p "$SRC/seed/d"
+  printf 'a\n' > "$SRC/seed/d/a.txt"
+  printf 'b\n' > "$SRC/seed/d/b.txt"
   g -C "$SRC/seed" add . || die "seed add failed"
   g -C "$SRC/seed" commit -qm c1 || die "seed commit failed"
   g -C "$SRC/seed" branch -M main || die "seed branch failed"
@@ -411,7 +438,271 @@ build_keep_repo() {
     "${C_KEEP:0:8}" "${C_NOVEL:0:8}" "${C_META:0:8}" "${C_DEL:0:8}"
 }
 
+# J10: a keep-only commit whose `d` tree is byte-identical to the pushed
+# tree (never listed by the path filter -- trivially non-novel) and one
+# whose `d` tree combines only already-published blobs into a tree id that
+# was never pushed (the directory tree-id contraction).
+build_dir_keeps() {
+  local tip tree ta tb
+  tip=$(g -C "$KREPO" rev-parse main) || die "cannot resolve keep repo tip"
+  tree=$(g -C "$KREPO" rev-parse 'main^{tree}') || die "cannot resolve keep tree"
+  C_DIRID=$(mk_commit "$KREPO" "$tree" "$tip" 'keep-only identical dir tree') \
+    || die "identical dir commit failed"
+  g -C "$KREPO" update-ref "refs/jj/keep/$C_DIRID" "$C_DIRID" || die "dirid keep ref failed"
+  ta=$(g -C "$KREPO" rev-parse 'main:d/a.txt') || die "d/a blob failed"
+  tb=$(g -C "$KREPO" rev-parse 'main:d/b.txt') || die "d/b blob failed"
+  local idx="$T/idx.swap"
+  rm -f -- "$idx"
+  GIT_INDEX_FILE="$idx" g -C "$KREPO" read-tree "$tree" || die "swap read-tree failed"
+  GIT_INDEX_FILE="$idx" g -C "$KREPO" update-index --cacheinfo "100644,$tb,d/a.txt" || die "swap a failed"
+  GIT_INDEX_FILE="$idx" g -C "$KREPO" update-index --cacheinfo "100644,$ta,d/b.txt" || die "swap b failed"
+  T_DIRSWAP=$(GIT_INDEX_FILE="$idx" g -C "$KREPO" write-tree) || die "swap write-tree failed"
+  rm -f -- "$idx"
+  [ "$T_DIRSWAP" != "$tree" ] || die "swapped tree equals the pushed tree"
+  [ "$(g -C "$KREPO" rev-parse "$T_DIRSWAP:d/a.txt")" = "$tb" ] \
+    && [ "$(g -C "$KREPO" rev-parse "$T_DIRSWAP:d/b.txt")" = "$ta" ] \
+    || die "swap did not rearrange the published blobs"
+  [ -n "$(g -C "$KREPO" diff --name-only "$tip" "$T_DIRSWAP" -- d 2>/dev/null)" ] \
+    || die "swapped tree does not touch d"
+  [ -z "$(g -C "$KREPO" rev-list --objects --remotes -- d |
+            awk '{print $1}' | grep -Fx "$(g -C "$KREPO" rev-parse "$T_DIRSWAP:d")" || true)" ] \
+    || die "swapped tree id is already in remote history (setup is not discriminating)"
+  C_DIRSWAP=$(mk_commit "$KREPO" "$T_DIRSWAP" "$tip" 'keep-only rearranged dir blobs') \
+    || die "swapped dir commit failed"
+  g -C "$KREPO" update-ref "refs/jj/keep/$C_DIRSWAP" "$C_DIRSWAP" || die "dirswap keep ref failed"
+  printf 'SCENARIO\tkeeprepo-dirs\tkeep_dirid=%s\tkeep_dirswap=%s\n' \
+    "${C_DIRID:0:8}" "${C_DIRSWAP:0:8}"
+}
+
+# J12: a keep ref pointing at an object that does not exist makes the
+# keep-commit enumeration fail; the (b') contract route is rc 2 ->
+# history-unverifiable, never a SAFE.
+build_broken_repo() {
+  g clone -q "$SRC/origin.git" "$BREPO" >/dev/null 2>&1 || die "broken repo clone failed"
+  g -C "$BREPO" checkout -q main >/dev/null 2>&1 || die "broken repo checkout failed"
+  C_MISSING="ffffffffffffffffffffffffffffffffffffffff"
+  g -C "$BREPO" cat-file -e "$C_MISSING" 2>/dev/null \
+    && die "fake missing sha unexpectedly resolves"
+  mkdir -p "$BREPO/.git/refs/jj/keep"
+  printf '%s\n' "$C_MISSING" > "$BREPO/.git/refs/jj/keep/$C_MISSING"
+  [ -n "$(g -C "$BREPO" for-each-ref --format='%(refname)' refs/jj/keep/ 2>/dev/null)" ] \
+    || die "broken keep ref is not visible to for-each-ref"
+  printf 'SCENARIO\tbrokenrepo\tkeep_missing=%s\n' "${C_MISSING:0:8}"
+}
+
+# J13: keep refs pointing at non-commit objects (tree and blob). git lists
+# them in for-each-ref yet ignores them in rev-list, so they must not
+# change any verdict.
+build_noncommit_repo() {
+  g clone -q "$SRC/origin.git" "$BREPO2" >/dev/null 2>&1 || die "noncommit repo clone failed"
+  g -C "$BREPO2" checkout -q main >/dev/null 2>&1 || die "noncommit repo checkout failed"
+  O_TREE=$(g -C "$BREPO2" rev-parse 'main^{tree}') || die "tree object failed"
+  O_BLOB=$(g -C "$BREPO2" rev-parse 'main:f_noncommit.txt') || die "blob object failed"
+  [ "$(g -C "$BREPO2" cat-file -t "$O_TREE")" = tree ] || die "O_TREE is not a tree"
+  [ "$(g -C "$BREPO2" cat-file -t "$O_BLOB")" = blob ] || die "O_BLOB is not a blob"
+  mkdir -p "$BREPO2/.git/refs/jj/keep"
+  printf '%s\n' "$O_TREE" > "$BREPO2/.git/refs/jj/keep/$O_TREE"
+  printf '%s\n' "$O_BLOB" > "$BREPO2/.git/refs/jj/keep/$O_BLOB"
+  [ "$(g -C "$BREPO2" for-each-ref --format='%(refname)' --count=1 refs/jj/keep/ |
+       wc -l)" -ge 1 ] || die "non-commit keep refs are not listed"
+  printf 'SCENARIO\tnoncommitrepo\ttree=%s\tblob=%s\n' "${O_TREE:0:8}" "${O_BLOB:0:8}"
+}
+
+# J14: a path with >64 KiB of known remote objects, where the keep-only
+# predecessor carries a blob late in the listing. The wave-1 per-candidate
+# `printf | grep -q` turns a grep early-exit into a SIGPIPE false-novel at
+# this size; the fixed single-grep implementation must stay SAFE.
+build_big_repo() {
+  g init -q --bare "$SRC/big-origin.git" || die "big origin init failed"
+  g -C "$SRC/big-origin.git" symbolic-ref HEAD refs/heads/main || die "big origin HEAD failed"
+  {
+    printf 'reset refs/heads/main\n'
+    local i
+    for i in $(seq 1 1200); do
+      printf 'commit refs/heads/main\n'
+      printf 'mark :%d\n' "$i"
+      printf 'committer r17 <r17@fixture.invalid> 1700000000 +0000\n'
+      printf 'data %d\nci-%d\n' "$((${#i} + 4))" "$i"
+      [ "$i" -gt 1 ] && printf 'from :%d\n' "$((i - 1))"
+      printf 'M 100644 inline f_big.txt\n'
+      printf 'data %d\nv%d\n' "$((${#i} + 2))" "$i"
+    done
+  } | g -C "$SRC/big-origin.git" fast-import --quiet || die "big fast-import failed"
+  g -C "$SRC/big-origin.git" symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/main \
+    || die "big origin symref failed"
+  g -C "$SRC/big-origin.git" update-ref refs/remotes/origin/main refs/heads/main || true
+  g clone -q "$SRC/big-origin.git" "$BIGREPO" >/dev/null 2>&1 || die "big repo clone failed"
+  g -C "$BIGREPO" checkout -q main >/dev/null 2>&1 || die "big repo checkout failed"
+  local known_n blob_old
+  known_n=$(g -C "$BIGREPO" rev-list --objects --remotes -- f_big.txt | wc -l)
+  [ "$known_n" -ge 1000 ] || die "big repo known set too small: $known_n"
+  blob_old=$(g -C "$BIGREPO" rev-parse 'origin/main~1:f_big.txt') || die "v1199 blob failed"
+  # keep-only predecessor carrying a pushed blob (the v1199 content).
+  local tip idx
+  tip=$(g -C "$BIGREPO" rev-parse main) || die "big tip failed"
+  idx="$T/idx.big"
+  rm -f -- "$idx"
+  GIT_INDEX_FILE="$idx" g -C "$BIGREPO" read-tree 'main~1' || die "big read-tree failed"
+  C14=$(GIT_INDEX_FILE="$idx" g -C "$BIGREPO" write-tree)
+  [ -n "$C14" ] || die "big write-tree failed"
+  rm -f -- "$idx"
+  C14=$(mk_commit "$BIGREPO" "$C14" "$tip" 'keep-only recent pushed blob') || die "big keep commit failed"
+  g -C "$BIGREPO" update-ref "refs/jj/keep/$C14" "$C14" || die "big keep ref failed"
+  [ "$(g -C "$BIGREPO" rev-list --count "$C14" --not --branches --tags --remotes)" = 1 ] \
+    || die "big keep commit is not keep-only"
+  [ "$(g -C "$BIGREPO" rev-parse "$C14:f_big.txt")" = "$blob_old" ] \
+    || die "big keep commit does not carry the pushed blob"
+  [ -z "$(g -C "$BIGREPO" --no-optional-locks status --porcelain 2>/dev/null)" ] \
+    || die "big repo not clean"
+  printf 'SCENARIO\tbigrepo\tknown=%s\tkeep=%s\tblob=%s\n' \
+    "$known_n" "${C14:0:8}" "${blob_old:0:8}"
+}
+
+# J15: a blob published only through a side remote. refs/remotes/upstream/*
+# is reachable via --remotes but never via --branches.
+build_side_remote() {
+  local tree c_side tip f_side_blob tip_blob
+  tip=$(g -C "$KREPO" rev-parse main) || die "cannot resolve keep tip"
+  tree=$(idx_tree_with "$KREPO" "$tip^{tree}" "f_side.txt" "side-v2") || die "side tree failed"
+  c_side=$(mk_commit "$KREPO" "$tree" "$tip" 'side remote only') || die "side commit failed"
+  g -C "$KREPO" update-ref refs/remotes/upstream/fork "$c_side" || die "upstream/fork ref failed"
+  f_side_blob=$(g -C "$KREPO" rev-parse "$c_side:f_side.txt") || die "side blob failed"
+  [ -z "$(g -C "$KREPO" rev-list --objects --branches -- f_side.txt |
+           awk '{print $1}' | grep -Fx "$f_side_blob" || true)" ] \
+    || die "side blob is reachable from a local branch (setup flaw)"
+  [ -n "$(g -C "$KREPO" rev-list --objects --remotes -- f_side.txt |
+           awk '{print $1}' | grep -Fx "$f_side_blob" || true)" ] \
+    || die "side blob is not reachable from refs/remotes/*"
+  # The keep-only predecessor carries that same published-elsewhere blob.
+  tip_blob=$(g -C "$KREPO" rev-parse 'main:f_side.txt')
+  [ "$tip_blob" != "$f_side_blob" ] || die "side blob equals pushed v1 (setup flaw)"
+  local idx="$T/idx.side"
+  rm -f -- "$idx"
+  GIT_INDEX_FILE="$idx" g -C "$KREPO" read-tree "$tip" || die "side read-tree failed"
+  GIT_INDEX_FILE="$idx" g -C "$KREPO" update-index --cacheinfo "100644,$f_side_blob,f_side.txt" \
+    || die "side update-index failed"
+  local tkeep
+  tkeep=$(GIT_INDEX_FILE="$idx" g -C "$KREPO" write-tree) || die "side write-tree failed"
+  rm -f -- "$idx"
+  C_SIDEKEEP=$(mk_commit "$KREPO" "$tkeep" "$tip" 'keep-only side-remote blob') || die "sidekeep failed"
+  g -C "$KREPO" update-ref "refs/jj/keep/$C_SIDEKEEP" "$C_SIDEKEEP" || die "sidekeep ref failed"
+  printf 'SCENARIO\tkeeprepo-side\tfork=%s\tkeep=%s\tblob=%s\n' \
+    "${c_side:0:8}" "${C_SIDEKEEP:0:8}" "${f_side_blob:0:8}"
+}
+
 # -------------------------------------------------------------------- cases --
+# J10-J15 generic checkers: v_expect <id> <target> <verdict> <receipt-or-!re>
+# [ev-substr]; l_expect <id> <target> <verdict> <receipt> <r4-or-!r4>
+# [ev-substr]; q_expect <id> <repo> <target> <status|BLOCKED>.
+v_expect() {
+  local id=$1 target=$2 vwant=$3 rwant=$4 esub=${5:-} v r ev detail
+  vfy_run "$VERIFY_BIN" "$target"
+  local f; f=$(vfy_fields); IFS='|' read -r v r ev <<< "$f"
+  detail="exit=$V_RC verdict=${v:-none} receipt=${r:-none} evidence=${ev:-none}"
+  if [ "$V_RC" != 0 ] || [ -z "$v" ]; then fail_case "$id" "$detail"; return; fi
+  if [ "$v" != "$vwant" ]; then fail_case "$id" "$detail expected=$vwant"; return; fi
+  case "$rwant" in
+    '!') ;;
+    '!'*) [ "$r" != "${rwant#'!'}" ] || { fail_case "$id" "$detail receipt=${rwant#'!'}!"; return; } ;;
+    *) [ "$r" = "$rwant" ] || { fail_case "$id" "$detail expected-receipt=$rwant"; return; } ;;
+  esac
+  if [ -n "$esub" ] && [[ "$ev" != *"$esub"* ]]; then
+    fail_case "$id" "$detail expected-evidence~$esub"; return
+  fi
+  record_case "$id" PASS "$detail"
+}
+
+l_expect() { # id target verdict receipt r4token [ev-substr]
+  local id=$1 target=$2 vw=$3 recw=$4 r4w=$5 esub=${6:-} v r ev r4 detail f
+  if [ ! -f "$VAULT_BIN" ]; then
+    skip_case "$id" "souji-vault-verify.sh not present in tool dir"; return
+  fi
+  vlt_run "$VAULT_BIN" "$target"
+  f=$(vlt_fields); IFS='|' read -r v r ev r4 <<< "$f"
+  detail="exit=$L_RC verdict=${v:-none} receipt=${r:-none} r4=${r4:-none} evidence=${ev:-none}"
+  if [ "$L_RC" != 0 ]; then fail_case "$id" "$detail"; return; fi
+  if [ "$v" != "$vw" ]; then fail_case "$id" "$detail expected=$vw"; return; fi
+  if [ "$r" != "$recw" ]; then fail_case "$id" "$detail expected-receipt=$recw"; return; fi
+  case "$r4w" in
+    '!') ;;
+    '!'*) [ "$r4" != "${r4w#'!'}" ] || { fail_case "$id" "$detail r4=${r4w#'!'}!"; return; } ;;
+    *) [ "$r4" = "$r4w" ] || { fail_case "$id" "$detail expected-r4=$r4w"; return; } ;;
+  esac
+  if [ -n "$esub" ] && [[ "$ev" != *"$esub"* ]]; then
+    fail_case "$id" "$detail expected-evidence~$esub"; return
+  fi
+  record_case "$id" PASS "$detail"
+}
+
+q_expect() { # id repo target want-status (BLOCKED = DRY-RUN-BLOCKED|NOT-AUTHORIZED)
+  local id=$1 repo=$2 target=$3 want=$4 st qrec qev detail f
+  if [ ! -f "$QUARANTINE_BIN" ]; then
+    skip_case "$id" "souji-quarantine.sh not present in tool dir"; return
+  fi
+  q_run "$repo" "$target"
+  f=$(q_result); IFS='|' read -r st qrec qev <<< "$f"
+  detail="exit=$Q_RC result=${st:-none} receipt=${qrec:-none} evidence=${qev:-none}"
+  case "$want" in
+    BLOCKED)
+      [ "$st" = DRY-RUN-BLOCKED ] || [ "$st" = NOT-AUTHORIZED ] \
+        || { fail_case "$id" "$detail expected=DRY-RUN-BLOCKED|NOT-AUTHORIZED"; return; } ;;
+    *) [ "$st" = "$want" ] || { fail_case "$id" "$detail expected=$want"; return; } ;;
+  esac
+  record_case "$id" PASS "$detail"
+}
+
+# J10/J11: directory targets through every tool. First measure with only
+# published-content keep predecessors (identical tree + rearranged pushed
+# blobs -> SAFE), then add a keep-only commit with a novel leaf -> NOT-SAFE.
+case_dirs() {
+  v_expect J10-verify "$KREPO/d" SAFE pushed 'snapshot=equal'
+  l_expect J10-vault "$KREPO/d" SAFE pushed 'VERIFIED(pushed)' 'snapshot=equal'
+  q_expect J10-quarantine "$KREPO" "$KREPO/d" 'DRY-RUN-PASS'
+  local tree novel_tip
+  novel_tip=$(g -C "$KREPO" rev-parse main) || die "cannot resolve keep tip"
+  tree=$(idx_tree_with "$KREPO" "$novel_tip^{tree}" "d/z.txt" "novel-dir-leaf") \
+    || die "novel dir tree failed"
+  C_DIRNOVEL=$(mk_commit "$KREPO" "$tree" "$novel_tip" 'keep-only novel dir leaf') \
+    || die "novel dir commit failed"
+  g -C "$KREPO" update-ref "refs/jj/keep/$C_DIRNOVEL" "$C_DIRNOVEL" \
+    || die "novel dir keep ref failed"
+  printf 'SCENARIO\tkeeprepo-dirnovel\tkeep=%s\n' "${C_DIRNOVEL:0:8}"
+  v_expect J11-verify "$KREPO/d" NOT-SAFE '!'
+  l_expect J11-vault "$KREPO/d" NOT-SAFE none 'NOT-VERIFIED(none)'
+  q_expect J11-quarantine "$KREPO" "$KREPO/d" BLOCKED
+}
+
+# J12: a keep ref naming a missing object breaks keep enumeration; the
+# history-unverifiable refusal path must win, never a pushed receipt.
+case_j12() {
+  v_expect J12-verify "$BREPO/f_broken.txt" NOT-SAFE '!' 'unverifiable'
+  l_expect J12-vault "$BREPO/f_broken.txt" NOT-SAFE none 'NOT-VERIFIED(none)' 'unverifiable'
+  q_expect J12-quarantine "$BREPO" "$BREPO/f_broken.txt" BLOCKED
+}
+
+# J13: keep refs pointing at a tree and a blob. rev-list ignores them; the
+# pushed receipt must stand unchanged.
+case_j13() {
+  v_expect J13-verify "$BREPO2/f_noncommit.txt" SAFE pushed 'snapshot=equal'
+  l_expect J13-vault "$BREPO2/f_noncommit.txt" SAFE pushed 'VERIFIED(pushed)' 'snapshot=equal'
+}
+
+# J14: 1200-commit remote history on the path (>64 KiB of known objects)
+# and a keep-only predecessor carrying one pushed blob. A per-candidate
+# `printf | grep -q` SIGPIPEs into a false novel; SAFE is required.
+case_j14() {
+  v_expect J14-verify "$BIGREPO/f_big.txt" SAFE pushed 'snapshot=equal'
+  l_expect J14-vault "$BIGREPO/f_big.txt" SAFE pushed 'VERIFIED(pushed)' 'snapshot=equal'
+}
+
+# J15: the keep blob is published only through refs/remotes/upstream/fork,
+# never through any local branch. A --branches-only known set over-refuses;
+# --remotes keeps it SAFE.
+case_j15() {
+  v_expect J15-verify "$KREPO/f_side.txt" SAFE pushed 'snapshot=equal'
+  l_expect J15-vault "$KREPO/f_side.txt" SAFE pushed 'VERIFIED(pushed)' 'snapshot=equal'
+}
+
 case_j1_j2() {
   local f v r ev detail
   # J1: head kept by jj alone.
@@ -763,6 +1054,16 @@ build_keep_repo
 case_j1_j2
 case_file_keeps
 case_j9
+build_dir_keeps
+case_dirs
+build_broken_repo
+case_j12
+build_noncommit_repo
+case_j13
+build_big_repo
+case_j14
+build_side_remote
+case_j15
 
 printf 'SUMMARY\ttotal=%d\tfailed=%d\tskipped=%d\n' "$((PASS + FAIL))" "$FAIL" "$SKIP"
 [ "$FAIL" -eq 0 ] || exit 1

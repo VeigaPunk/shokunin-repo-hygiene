@@ -75,7 +75,7 @@ EXPECTED_IDS = (
     "R17-07", "R17-08", "R17-09", "R17-10", "R17-11", "R17-12",
     "R17-13", "R17-14", "R17-15", "R17-16", "R17-17", "R17-18",
     "R17-19", "R17-20", "R17-21", "R17-22", "R17-23", "R17-24",
-    "R17-25", "R17-26",
+    "R17-25", "R17-26", "R17-27", "R17-28", "R17-29",
 )
 
 # Pinned, non-adaptive case classes: preserve = unchanged correct
@@ -95,13 +95,13 @@ CASE_CLASSES = {
     "R17-21": "preserve", "R17-22": "preserve", "R17-23": "refuse",
     "R17-24": "repair", "R17-25": "refuse",
     "R17-26": "repair",
+    "R17-27": "preserve", "R17-28": "preserve", "R17-29": "refuse",
 }
 # R17-17 is preserve, not repair: git parses an invalid repo-config value
 # eagerly, so `git status` fails even with the pinned --untracked-files
 # flag (verified on the host: rc 128 both ways). The honest row is
 # status-unverifiable on every arm; the repair must not rescue or refuse
 # it.
-
 GIT_ENV = (
     "GIT_CONFIG_GLOBAL", "GIT_CONFIG_SYSTEM", "GIT_CONFIG_NOSYSTEM",
     "GIT_TERMINAL_PROMPT", "GIT_NO_LAZY_FETCH", "HOME", "XDG_CONFIG_HOME",
@@ -268,7 +268,8 @@ def build_world() -> None:
             make_spy(name, found)
 
 
-def run_tool(args: list[str], timeout: int = 60) -> Result:
+def run_tool(args: list[str], timeout: int = 60,
+             extra_env: dict[str, str] | None = None) -> Result:
     SPYLOG.write_text("", encoding="utf-8")
     env = {
         "PATH": f"{SPYDIR}:/usr/local/bin:/usr/bin:/bin",
@@ -285,6 +286,8 @@ def run_tool(args: list[str], timeout: int = 60) -> Result:
         # dies ENOMEM instead of exhausting the host.
         "RLIMIT_AS": "1073741824",
     }
+    if extra_env:
+        env.update(extra_env)
     command = ["bash", str(TOOL), *args]
     try:
         proc = subprocess.Popen(
@@ -1060,6 +1063,91 @@ def case_26() -> list[str]:
     problems.extend(contract_problems(res))
     return problems
 
+def case_27() -> list[str]:
+    # preserve (wave-2 SentinelCensusD2 F1): zero-length metadata files are
+    # `regular empty file` under %F — not non-regular. Empty
+    # info/attributes, info/exclude, packed-refs, config and
+    # objects/info/alternates must all stay normal rows on every arm.
+    fleet = SCRATCH / "d2-empty-files"
+    for name, rel in (
+        ("r-empty-attrs", "info/attributes"),
+        ("r-empty-exclude", "info/exclude"),
+        ("r-empty-packed-refs", "packed-refs"),
+        ("r-empty-config", "config"),
+        ("r-empty-alternates", "objects/info/alternates"),
+    ):
+        repo = init_repo(fleet / name)
+        (repo / ".git" / rel).write_text("", encoding="utf-8")
+    return positive_problems(
+        run_tool(["--root", str(fleet)]),
+        {n: CLEAN
+         for n in ("r-empty-attrs", "r-empty-exclude", "r-empty-packed-refs",
+                   "r-empty-config", "r-empty-alternates")},
+    )
+
+
+def case_28() -> list[str]:
+    # preserve (wave-2 SentinelCensusD2 F2): GNU stat %F is gettext-
+    # translated; under LANGUAGE=de a `*)` arm on 'regular file' would
+    # refuse every config. A benign fleet under LANGUAGE=de must give
+    # rc 0 with all rows clean. Vacuity: when no de catalog is installed,
+    # stat stays English and the case records that instead of judging.
+    probe = SCRATCH / "locale-probe"
+    probe.write_text("x\n", encoding="utf-8")
+    # Probe through bash so gettext resolution matches the tool's own
+    # exec environment exactly (a bare stat may resolve differently).
+    kind = subprocess.run(
+        ["bash", "-c", 'stat -L -c %F -- "$1"', "_", str(probe)],
+        env={
+            "PATH": "/usr/local/bin:/usr/bin:/bin",
+            "LANGUAGE": "de", "LC_ALL": "en_US.UTF-8",
+        },
+        capture_output=True, text=True, timeout=30,
+    ).stdout.strip()
+    vacuous = kind.startswith("regular")
+    fleet = SCRATCH / "d1-locale-de"
+    init_repo(fleet / "a")
+    init_repo(fleet / "b")
+    init_repo(fleet / "c")
+    problems = positive_problems(
+        run_tool(
+            ["--root", str(fleet)],
+            extra_env={"LANGUAGE": "de", "LC_ALL": "en_US.UTF-8"},
+        ),
+        {"a": CLEAN, "b": CLEAN, "c": CLEAN},
+    )
+    if vacuous:
+        problems.append(
+            f"note: stat %F under LANGUAGE=de is '{kind}' (no de catalog "
+            "installed); locale discrimination is vacuous on this host"
+        )
+    return problems
+
+
+def case_29() -> list[str]:
+    # refuse (wave-2 SentinelCensusD2 F4): a dot-named worktree admin dir
+    # (`.git/worktrees/.wtdot`) escapes the non-dotglob `worktrees/*` glob,
+    # so every admin guard is skipped and `git worktree list` opens a FIFO
+    # HEAD — an unbounded hang. The dot-admin glob must see it: rc 2
+    # git-metadata-nonregular, and never a timeout (60s = FAIL).
+    fleet = SCRATCH / "d2-dot-admin"
+    init_repo(fleet / "a")
+    init_repo(fleet / "c")
+    x_main = init_repo(fleet / "x-main")
+    bdir = fleet / "wtdot"
+    git(x_main, "worktree", "add", "-b", "wt-dot", str(bdir))
+    admin = x_main / ".git" / "worktrees" / "wtdot"
+    dot_admin = x_main / ".git" / "worktrees" / ".wtdot"
+    admin.rename(dot_admin)
+    (bdir / ".git").write_text(
+        f"gitdir: {dot_admin}\n", encoding="utf-8"
+    )
+    (dot_admin / "HEAD").unlink()
+    mkfifo(dot_admin / "HEAD")
+    res = run_tool(["--root", str(fleet)])
+    return refusal_problems(res)
+
+
 
 CASES = {
     "R17-01": case_01, "R17-02": case_02, "R17-03": case_03,
@@ -1070,7 +1158,8 @@ CASES = {
     "R17-16": case_16, "R17-17": case_17, "R17-18": case_18,
     "R17-19": case_19, "R17-20": case_20, "R17-21": case_21,
     "R17-22": case_22, "R17-23": case_23, "R17-24": case_24,
-    "R17-25": case_25, "R17-26": case_26,
+    "R17-25": case_25, "R17-26": case_26, "R17-27": case_27,
+    "R17-28": case_28, "R17-29": case_29,
 }
 
 
