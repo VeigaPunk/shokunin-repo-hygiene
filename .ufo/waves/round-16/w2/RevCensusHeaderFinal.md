@@ -23,7 +23,7 @@ the "Accepted" list, exit codes — against the code that implements them. Verdi
 | 60-72 | `--compare`; `--selftest` | 1339-1478, 1522-1835 | holds |
 | 74-96 | boundary inputs, git metadata, config walk | 200-560, 821-901 | **fails** — F2; **partial** — F6 |
 | 97-108 | Refused / error-row / status-skipped split | 574-600, 696-711, 1021-1031, 1174-1181 | partial by F2 |
-| 109-121 | "Accepted" set | 150-164, 666-686, 942-1018 | holds |
+| 109-121 | "Accepted" set | 150-164, 677-686, 942-1018 | holds |
 | 122-129 | env clearing, `.omp` parent, residual | 150-164, 246-313 | holds |
 | 131-138 | exit codes; `SHOKUNIN_ROOT` default | 173, 1310-1311, 1864-1882 | holds |
 
@@ -105,7 +105,8 @@ an unread file is scanned, and its flag can force the admin `config.worktree` op
 Counterexample: owner repo `R` with linked worktree `W` (`R/.git/worktrees/W/`), common `R/.git/config` without
 `[extensions]`; create `R/.git/worktrees/W/config` = `[extensions]\n\tworktreeConfig = true` and
 `R/.git/worktrees/W/config.worktree` = `[include]\n\tpath = ~/.omp/agent/x.gitconfig`. Census of `R`: the owner pass inherits the common value (`guard_worktree_registrations:792` passes it as `$2`, restored at
-`guard_git_config:727-729`), so that pass is correct — but `worktree_extra_flags:1156` re-guards `W` and hits 874 with no
+`guard_git_config:727-729`), so that pass does not open `config.worktree` (it does still scan the unread `<admin>/config`
+at `guard_git_config:723-725`) — but `worktree_extra_flags:1156` re-guards `W` and hits 874 with no
 inherited value → `scan_config_file:666-675` sets 1 → 730 opens `config.worktree` → 643 `guard_config_path` sees the
 protected include → whole run exits 2 with `path-protected: include-protected`,
 for a file git never reads. (Same for a crafted `<admin>/config` carrying `include.path` directly.)
@@ -136,6 +137,10 @@ Minimal fix — scan the admin config only when it *is* the common config (no co
 +    fi
 ```
 
+`guard_worktree_registrations:792` needs the same split: for a linked admin it must pass the inherited flag to a
+`config.worktree`-only guard instead of calling `guard_git_config` on the admin (which also scans the unread
+`<admin>/config`).
+
 ## F3 — LOW-MEDIUM — the mtime walk prunes `.ufo/state`/`.ufo/watchdog.log` only at the work-tree root
 
 Header 10-11 ("`.ufo/state` or `.ufo/watchdog.log` are never traversed by the mtime walk") and 43-45
@@ -153,7 +158,7 @@ Code `newest_mtime:1074-1078`:
 `./.ufo/state` and `./.ufo/watchdog.log` are root-relative only, while the sibling `census/operator-sweep-*` has a
 `*/` (any-depth) form. Counterexample: a repo containing `sub/.ufo/state/live.json` (mtime in the future) — find visits it,
 `-printf '%T@ %P\0'` (1078) stats it, and `mtime_iso` becomes that future time. The census's own boundary treats any
-`.ufo/state` component as protected (`protected_component_reason:329-342`), and the same list already prunes
+`.ufo/state` component as protected (`protected_component_reason:318-341`), and the same list already prunes
 `*/census/operator-sweep-*`, so the walk is narrower than the contract it documents.
 
 Verdict: **fails** (narrow, but the sentence is unconditional). Minimal fix — add the any-depth forms:
@@ -184,8 +189,8 @@ Code `worktree_extra_flags:1141-1165` sets `wt-dirty` without running status whe
 
 Counterexample: a linked worktree with a `filter.<name>.clean` bound to a tracked path → `count_dirty` prints the
 `status-skipped: filter-driver-bound` diagnostic and returns `unverifiable` (1027-1031) → `wt-dirty`, though no
-`status --porcelain` line exists because status was not run. The same row can also carry `clean` (1239 excludes
-`wt-dirty`/`status-unverifiable` at repo level only via the main work tree).
+`status --porcelain` line exists because status was not run. The same row can still carry `clean` when the main work tree
+is clean: `has_problem` (1233-1239) does not include `wt-dirty`, so `clean,wt-dirty` is an emittable verdict.
 
 Verdict: **partial** (code is fail-closed; the header is narrower than the behaviour). Smallest fix — header only:
 
@@ -201,7 +206,7 @@ Verdict: **partial** (code is fail-closed; the header is narrower than the behav
 ## F5 — LOW — the `dirty` column is a *paths-pec-excluded* status line count, not the documented plain `git status --porcelain` count
 
 Header 35-39 says `dirty` is the "`git status --porcelain` line count", with only `--ignore-submodules=all` noted.
-Code `count_dirty:1035-1041` adds four exclusions:
+Code `count_dirty:1035-1041` adds five exclusion pathspecs:
 
 ```
 1035  if ! st=$(git -C "$1" --no-optional-locks -c core.fsmonitor=false \
@@ -224,9 +229,9 @@ Smallest fix — header after 39:
 ```diff
 #                   not added into this number; see wt-dirty. Submodule
 #                   content is not inspected (--ignore-submodules=all).
-+#                   The four operator surfaces (.ufo/state, .ufo/watchdog.log,
-+#                   census/operator-sweep-* at any depth) are pathspec-excluded,
-+#                   so tracked edits there never contribute a line.
++#                   The three operator surfaces (.ufo/state, .ufo/watchdog.log,
++#                   census/operator-sweep-* at any depth) are pathspec-excluded
++#                   (five entries), so tracked edits there never contribute a line.
 ```
 
 ## F6 — LOW — "any git-metadata symlink must resolve inside its own gitdir" is not the rule for `config`, `config.worktree`, `objects/info/alternates`
@@ -324,16 +329,16 @@ directory (regular file, FIFO, …). One-word header fix: "0 if absent, a symlin
   (`count_dirty:1035-1046`) — apart from F5's exclusions.
 - `scratch_bytes` uses `du -sb -P` and never follows a symlink (`1049-1064`) — apart from F10.
 - `mtime_iso`: newest `-type f` mtime, `%T@` truncated to seconds, `date --iso-8601=seconds` (numeric offset)
-  (`1074-1115`); secret-shaped components excluded from the max and flagged (`1081-1103,1118-1121`); contents never opened.
+  (`1074-1117`); secret-shaped components excluded from the max and flagged (`1081-1103,1118-1121`); contents never opened.
 - Verdict vocabulary and order exactly as 51-52 (`census_one:1244`); `clean` only when `unpushed=0`, `dirty=0`, a remote
   tracking ref exists, and no `status-unverifiable`/`error`/`not-a-repo` (`1233-1239`); `no-remote` blocks a false `clean`.
-- `--compare`: first line must equal the 7-column header (`load_census:1339-1392`), one row per changed field
-  (`emit_compare:1443-1471`), `added`/`removed` rows with `ABSENT`/`PRESENT` (`1449-1460`), exit 0 header-only / 3 drift
-  (`1474-1478`, `emit_compare` returns 3 → shell status 3 under `set -e`), fresh census written to `/var/tmp` and removed
-  (`1424-1431`), so rows never mix into the diff.
+- `--compare`: first line must equal the 7-column header (`load_census:1339-1391`), one row per changed field
+  (`emit_compare:1459-1472`), `added`/`removed` rows with `ABSENT`/`PRESENT` (`1446-1455`), exit 0 header-only / 3 drift
+  (`1475-1476`, `emit_compare` returns 3 → shell status 3 under `set -e`), fresh census written to `/var/tmp` and removed
+  (`1424-1430`), so rows never mix into the diff.
 - `--selftest`: fixtures under `mktemp -d /var/tmp` with EXIT cleanup (`1527-1528`), two byte-identical runs
-  (`1585-1600`), mutation/compare and malformed-baseline checks (`1745-1797`), protected-boundary checks (`1766-1793`),
-  exit 0/1 (`1832-1834`); the header's description is a subset of what it checks.
+  (`1612-1622`), mutation/compare checks (`1729-1766`), malformed baselines and unknown flag (`1770-1790`),
+  protected-boundary checks (`1792-1818`), exit 0/1 (`1832-1834`); the header's description is a subset of what it checks.
 - Protected inputs: `--root`/`--compare` resolved before any census command (`1864-1865`, `guard_path:457-461`),
   `..` component refused as `ambiguous-path` (384-387), HOME ∪ passwd home plus `PI_CODING_AGENT_DIR` and
   `<home>/${PI_CONFIG_DIR:-.omp}/agent` (`build_protected_roots:257-313`), `.omp/agent` / `census/operator-sweep-*` /
@@ -355,12 +360,12 @@ directory (regular file, FIFO, …). One-word header fix: "0 if absent, a symlin
   `check-attr` names a configured driver, and the lane's matrix records `R15CFG-13` as an exact `CLEAN` row on bash 5.3.20
   (`c1-matrix-landing.json`); missing include targets are benign (git only includes when `!access_or_die(path, R_OK, 0)`,
   `config.c handle_path_include:144-190`).
-- `:(optional)` is stripped for `core.excludesFile`/`core.attributesFile`/`core.worktree` (`status_info_file:947`, `scan_config_file:651-657`)
+- `:(optional)` is stripped for `core.excludesFile`/`core.attributesFile`/`core.worktree` (`status_info_file:947`, `scan_config_file:650-657`)
   and correctly **not** stripped for `include.path` (git strips it only in `git_config_pathname` for pathname variables,
-  `config.c:1326-1341`; `handle_path_include` calls `interpolate_path` directly) — the code comment at 529-531 is right.
+  `config.c:1326-1341`; `handle_path_include` calls `interpolate_path` directly) — the code comment at 561-564 is right.
 - Global/system config disabled and every inherited `GIT_*` shell variable unset (`150-155`); `.omp` parent resolution is
   stat/readlink only, with the store name pre-seeded (`300-313`); documented hardlink residual matches the code
-  (`load_census:1356-1369`, `guard_git_files:519-535`).
+  (`load_census:1349-1358`, `guard_git_files:519-535`).
 - Exit codes 0/1/2/3 and `SHOKUNIN_ROOT` default = parent of the repo (`173`): usage/malformed baseline 2, protected 2,
   setup (missing git/du, non-directory root, census subcommand failure) 1, compare drift 3.
 
@@ -375,8 +380,8 @@ directory (regular file, FIFO, …). One-word header fix: "0 if absent, a symlin
 - `--` at 1852 silently discards trailing operands (`break`); noted with F9, not separately ranked.
 - F2's premise (repo config = `<commondir>/config`) is from git `repository.c:259-266` and `path.c:119`, not from an
   executed `git` in this review.
-- Findings F1/F2/F3/F5 were not covered by any peer report at the time of writing (`RevCensusSurfaceFinal` covers F6's code
-  half and F2's code half; `RevCensusStatusFinal`/`RevCensusScanFinal` had no report on disk yet).
+- Findings F1/F2/F3/F5 were not found in a peer report at the time of writing; `RevCensusSurfaceFinal` covers F6's code
+  half and F2's code half (`RevCensusScanFinal` covers the protected-reason set and does not duplicate these).
 
 STATUS: ok
 
@@ -416,6 +421,16 @@ cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -n -E 'getent|awk .*NR|c
 cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -n -E '^ROOT=|GIT_NO_LAZY_FETCH=|GIT_CONFIG_COUNT=|GIT_CONFIG_GLOBAL=|GIT_OPTIONAL_LOCKS=|compgen -v GIT_|export XDG_CONFIG_HOME|mktemp /var/tmp|mktemp -d /var/tmp' tools/souji-census.sh
 cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -n -E '^(emit_compare|load_census|field_at|numeric_change|run_selftest|usage|emit_census|count_unpushed|newest_mtime|worktree_extra_flags|census_one|scratch_bytes)\(\)|^while \[ "\$#"|^# --- compare|^# --- selftest|^# --- main' tools/souji-census.sh
 cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -n -E 'rev-list|for-each-ref|refs/remotes|status --porcelain|untracked|no-remote|unpushed' tools/souji-verify.sh | sed -n '1,40p'
+cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -n -E '^(guard_git_files|guard_config_file_kind|guard_config_path|expand_config_path|build_protected_roots|resolve_guarded|guard_path|protected_fail|protected_component_reason|protected_reason_input|status_info_file)\(\)' tools/souji-census.sh; echo ---ANCHORS---; grep -n -E 'local out1=|cmp -s "\$out1"|malformed baselines must exit 2|protected boundary: synthetic HOME|trusts no compare|local nlink|ABSENT\\tPRESENT|if \[ "\$changes" -gt 0 \]' tools/souji-census.sh
+cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -n '' tools/souji-census.sh | sed -n '200,212p;318,345p;381,400p;457,462p'
+cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -n '' tools/souji-census.sh | sed -n '519,540p;542,566p;587,600p'
+cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -n '' tools/souji-census.sh | sed -n '636,694p'
+cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -n '' tools/souji-census.sh | sed -n '466,500p;1418,1480p'
+cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -n '' tools/souji-census.sh | sed -n '565,580p;608,635p;1104,1126p'
+cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -n '' tools/souji-census.sh | sed -n '1344,1372p;1605,1626p;1768,1832p'; echo ---FN---; grep -n -E '^(guard_git_surface|guard_worktree_registrations|count_worktrees)\(\)' tools/souji-census.sh
+cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -n -E 'compare identical|blank-after-header|mutate scratch|compare mutation|malformed baselines|protected boundary: synthetic|fixtures under mktemp' tools/souji-census.sh
+cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -n -E 'dot-dir was included|hidden-shokunin|row count 4' tools/souji-census.sh | sed -n '1,10p'; echo ---REPORT---; cd .ufo/waves/round-16/w2 && grep -n -E 'four|adds four|three operator' RevCensusHeaderFinal.md
+cd /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-16/w2 && grep -n -E 'include-root|newest_mtime|ufo/state|wt-dirty|pathspec|coreutils|dot-dir|gitfile root' RevCensusSurfaceFinal.md RevCensusStatusFinal.md RevCensusScanFinal.md 2>/dev/null | sed -n '1,40p'
 ```
 
 Non-shell reads (tool-level, for the semantics checks only): `read` of `census/round-16/c1-matrix-landing.json`
