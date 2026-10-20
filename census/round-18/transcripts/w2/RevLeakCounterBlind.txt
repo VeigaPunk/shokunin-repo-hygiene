@@ -1,0 +1,80 @@
+# SoujiR18.RevLeakCounterBlind (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Attack the 'independent counter' claim: compare /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-18/leak-count.py and /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-proc-census.sh predicates line by line (they must agree by spec yet be independently written); find shared bugs or divergent edge cases (S5 partial-delete, `/tmpfoo`, cwd outside prefixes).
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: coverage
+
+Report: write your scoped findings to .ufo/waves/round-18/w2/RevLeakCounterBlind.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+→ read(skill://godspeed) ⇒ ok · 18 lines
+
+## assistant
+
+→ write(xd://lsp) ⇒ error · 1 line — No such tool: xd://lsp. Mounted devices: ast_edit, debug, mcp__rea_address_name, mcp__rea_address_to_file_offset, mcp__…
+
+## assistant
+
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-18/leak-count.py) ⇒ ok · 84 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-proc-census.sh) ⇒ ok · 305 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin diff --no-ext-diff b5763415cc67ecff1e8fe56c58c39a6fb106d7a3 5efb519…) ⇒ ok · 27 lines
+
+## assistant
+
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-18/leak-count.py:20-170) ⇒ ok · 160 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-proc-census.sh:300-495) ⇒ ok · 200 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-18/leak-count.py:172-240) ⇒ ok · 76 lines
+
+## assistant
+
+→ grep(S5|partial|tmpfoo|outside|cwd @ /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r18-proc-census.sh) ⇒ ok · 69 lines
+
+## assistant
+
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r18-proc-census.sh:1-20,270-355,450-490) ⇒ ok · 150 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-proc-census.sh:154-180,214-258) ⇒ ok · 74 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-18/leak-count.py:1-25,244-266) ⇒ ok · 50 lines
+
+## assistant
+
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r18-proc-census.sh:350-450) ⇒ ok · 108 lines
+
+## assistant
+
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/RevLeakCounterBlind.md) ⇒ ok · 2 lines
+
+## assistant
+
+STATUS: DONE — Findings written to `/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/RevLeakCounterBlind.md`.
+
+Verdict: exact counter parity fails for embedded argv paths and dangling top-level symlinks. Both implementations also count deleted cwd paths outside scratch prefixes; P10 partial-delete and argv/fd `/tmpfoo` cases otherwise agree. No runtime checks were run.

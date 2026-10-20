@@ -136,25 +136,15 @@ def _primary_reason_and_family(proc_path: str, argv: list[str]) -> tuple[str, st
     return None
 
 
-def _self_and_ancestor_pids() -> set[int]:
-    excluded: set[int] = set()
-    pid = os.getpid()
-    while pid > 0 and pid not in excluded:
-        excluded.add(pid)
-        try:
-            with open(f"/proc/{pid}/stat", "r", encoding="ascii", errors="replace") as stat_file:
-                stat_line = stat_file.read()
-            fields = stat_line.rsplit(")", 1)[1].split()
-            parent_pid = int(fields[1])
-        except (OSError, ValueError, IndexError):
-            break
-        pid = parent_pid
-    return excluded
 
 
 def count_processes() -> dict[str, Any]:
     uid = os.getuid()
-    excluded_pids = _self_and_ancestor_pids()
+    # The standalone counter spawns no scan children; exclude only itself.
+    # Ancestors are legitimate observations, not its own subtree. Excluding
+    # them hid Hyprland's deleted shm fd when launched through the GUI (the
+    # final two-window comparison exposed this stable disagreement).
+    excluded_pids = {os.getpid()}
     pids: list[int] = []
     reason_counts: Counter[str] = Counter()
     family_counts: Counter[str] = Counter()

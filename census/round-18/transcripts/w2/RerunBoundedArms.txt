@@ -1,0 +1,188 @@
+# SoujiR18.RerunBoundedArms (idle)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Attacks the r18-bounded 8/5 → 8/0 numbers. ALLOWED-EXEC: in your clone at 5efb519 only: `python3 tests/fixtures/r18-census-bounded.py --census <census>` for the b576341 census (`git show b5763415cc67ecff1e8fe56c58c39a6fb106d7a3:tools/souji-census.sh > /var/tmp/souji-r18w2-RerunBoundedArms/base.sh`) and for the 5efb519 census; per-case verdicts vs census/round-18/c1-matrix-worktree.json; residue after each run.
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: operability
+
+Report: write your scoped findings to .ufo/waves/round-18/w2/RerunBoundedArms.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+→ bash(mkdir -p /var/tmp/souji-r18w2-RerunBoundedArms && git clone --quiet --no-local /home/vgpnk/Projects/shokunin/souji-shok…) ⇒ ok · 2 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 5efb519f00075d958c3d1109ef6fcb24c487eb87:census/round-18/c1-ma…) ⇒ ok · 4 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 5efb519f00075d958c3d1109ef6fcb24c487eb87:tests/fixtures/r18-ce…) ⇒ ok · 4 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show b5763415cc67ecff1e8fe56c58c39a6fb106d7a3:tools/souji-census.sh…) ⇒ ok · 5 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18w2-RerunBoundedArms/record.json:1-80) ⇒ ok · 97 lines
+→ bash(python3 -c " import json r=json.load(open('/var/tmp/souji-r18w2-RerunBoundedArms/record.json')) def walk(o,p=''): if is…) ⇒ ok · 121 lines
+
+## assistant
+
+→ bash(python3 -c " import json r=json.load(open('/var/tmp/souji-r18w2-RerunBoundedArms/record.json')) print('top keys:', list…) ⇒ ok · 43 lines
+
+## assistant
+
+→ bash(python3 -c " import json r=json.load(open('/var/tmp/souji-r18w2-RerunBoundedArms/record.json')) for arm in ('changed','…) ⇒ ok · 44 lines
+→ bash(sha256sum /var/tmp/souji-r18w2-RerunBoundedArms/lane/tools/souji-census.sh /var/tmp/souji-r18w2-RerunBoundedArms/lane/t…) ⇒ ok · 6 lines
+
+## assistant
+
+Identity pins all match: `changed` census sha256 `7e6a92d4…` == landed 5efb519 census; `r17-base` `006b9823…` == my base.sh; fixture `22496166…` and runner `da61f6be…` match tip. Record expects base B1–B4+B8 FAIL(124), B5–B7 PASS; changed all PASS. Now reading the fixture's mechanics.
+→ bash(grep -n "def \|B[1-8]\b\|argparse\|add_argument\|timeout\|session\|kill\|leftover\|/var/tmp\|TemporaryDirectory\|mktemp…) ⇒ ok · 101 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18w2-RerunBoundedArms/fixture-tip.py:1-130) ⇒ ok · 139 lines
+→ read(/var/tmp/souji-r18w2-RerunBoundedArms/fixture-tip.py:600-900) ⇒ ok · 317 lines
+
+## assistant
+
+Fixture mechanics clear: unique `mkdtemp` scratch under `/var/tmp/souji-r18-FixtureR18Bounded`, private session per census run, 40s fixture deadline (rc 124 ⇒ FAIL). Now reading `main()`/output format, then launching both arms.
+→ read(/var/tmp/souji-r18w2-RerunBoundedArms/fixture-tip.py:1100-1271) ⇒ ok · 183 lines
+
+## assistant
+
+Fixture prints `CASE\t<id>\t<status>\t<detail-json>` lines — same shape as the record. Launching both arms in parallel now (each uses its own mkdtemp scratch, so no collision), then auditing the census implementation while they run.
+→ bash(cd /var/tmp/souji-r18w2-RerunBoundedArms/lane && python3 tests/fixtures/r18-census-bounded.py --census /var/tmp/souji-r…) ⇒ ok · 3 lines
+→ bash(cd /var/tmp/souji-r18w2-RerunBoundedArms/lane && python3 tests/fixtures/r18-census-bounded.py --census /var/tmp/souji-r…) ⇒ ok · 1 line
+
+## assistant
+
+Both arms are running in background. While they run, auditing the landed census's timeout implementation in my clone.
+→ bash(grep -n "repo-timeout\|REPO_TIMEOUT\|repo_timeout\|unreaped\|setpgid\|setsid\|timeout\|kill\|census_one\|list_phase\|li…) ⇒ ok · 81 lines
+
+[async-result] python3 tests/fixtures/r18-census-bounded.py --census /var/tmp/souji-r18w2-RerunBoundedArms/lane/tools/souji-census.s...
+
+## assistant
+
+→ bash(grep -E "^(TOOL|CASE|SUMMARY)" /var/tmp/souji-r18w2-RerunBoundedArms/out-changed.txt; echo '--- STDERR:'; cat /var/tmp/…) ⇒ ok · 21 lines
+
+## assistant
+
+Changed arm: 8/8 PASS, SUMMARY failed=0, TOOL sha256 matches the record exactly — reproduces the claimed `→ 8/0`. But B4's detail shows `observed_rows` with only `a,b,c` while `expected_rows` lists six `attributes/*`/`ignore/*` names, yet PASS with `problems:[]` — need to check how B4 actually compares rows.
+→ read(/var/tmp/souji-r18w2-RerunBoundedArms/fixture-tip.py:903-1010) ⇒ ok · 121 lines
+→ bash(python3 -c " import json r=json.load(open('/var/tmp/souji-r18w2-RerunBoundedArms/record.json')) for arm in ('changed','…) ⇒ ok · 11 lines
+
+## assistant
+
+B4's six-key `expected_rows` is a descriptive CaseResult label only — per-run assertions use `{"a","b","c"}` inside `census_problems`; detail mismatch is cosmetic and byte-identical between record and my rerun. Now verifying the run-matrix invocation shape and exact per-case detail equality, while the base arm continues.
+→ bash(python3 - <<'EOF' import json,re rec=json.load(open('/var/tmp/souji-r18w2-RerunBoundedArms/record.json')) raw=open('/va…) ⇒ ok · 14 lines
+→ bash(grep -n "r18-bounded\|r18_census_bounded\|bounded\|--census\|def run_suite\|sha256\|arms\|WORKTREE\|leftover" /var/tmp/…) ⇒ ok · 30 lines
+
+## assistant
+
+Changed arm fully reproduces: 8/8 PASS with byte-identical per-case details. Now auditing the landed census's watchdog/list-phase code and the runner's leftover detection while the base arm finishes.
+→ read(/var/tmp/souji-r18w2-RerunBoundedArms/lane/tools/souji-census.sh:1440-1545) ⇒ ok · 114 lines
+→ read(/var/tmp/souji-r18w2-RerunBoundedArms/lane/tools/souji-census.sh:1546-1720) ⇒ ok · 183 lines
+
+## assistant
+
+Census implementation matches every C1 mechanic claim (per-repo process group via `set -m`, setsid watchdog TERM→KILL, exact error row `<repo>\t0\t0\t0\t0\t\terror`, `repo-timeout`/`-unreaped` diags, rc 2 refusal passthrough, exit 0 otherwise). Now checking the runner's leftover-process detection and arm wiring.
+→ read(/var/tmp/souji-r18w2-RerunBoundedArms/lane/census/round-18/run-matrix.py:40-145) ⇒ ok · 115 lines
+
+## assistant
+
+Runner wiring confirmed. Checking what the changed arm wrote to stderr (it spilled to an artifact — unexpected for a clean pass).
+→ read(artifact://106648:1-60) ⇒ ok · 11 lines
+
+## assistant
+
+Changed arm is fully clean (empty stderr, RC=0). Reading B5–B8 while the base arm finishes.
+→ read(/var/tmp/souji-r18w2-RerunBoundedArms/fixture-tip.py:1014-1099) ⇒ ok · 97 lines
+
+[async-result] python3 tests/fixtures/r18-census-bounded.py --census /var/tmp/souji-r18w2-RerunBoundedArms/base.sh > /var/tmp/souji-...
+
+## assistant
+
+Base arm done (RC=1, 231.8s — consistent with five 40s fixture timeouts). Comparing per-case verdicts against the record and running residue checks.
+→ bash(python3 - <<'EOF' import json rec=json.load(open('/var/tmp/souji-r18w2-RerunBoundedArms/record.json')) arm=rec['arms'][…) ⇒ ok · 16 lines
+
+## assistant
+
+JSON parse hit an unterminated string in a base CASE detail — inspecting the raw file directly.
+→ bash(awk '{printf "%d[%d]: %.120s\n", NR, length($0), $0}' /var/tmp/souji-r18w2-RerunBoundedArms/out-base.txt; echo '--- cha…) ⇒ ok · 17 lines
+
+## assistant
+
+Base verdicts match the record's shape exactly (B1–B4+B8 FAIL, B5–B7 PASS, failed=5). Now parsing each base detail line individually to complete the byte-level comparison.
+→ bash(python3 - <<'EOF' import json rec=json.load(open('/var/tmp/souji-r18w2-RerunBoundedArms/record.json')) arm=rec['arms'][…) ⇒ error · 15 lines — Traceback (most recent call last):
+
+## assistant
+
+The parse failure is on the RECORD side: the stored base-arm `detail` strings are truncated mid-JSON (breaks at char 288). Checking the runner's detail handling and every detail length in the record.
+→ bash(python3 - <<'EOF' import json rec=json.load(open('/var/tmp/souji-r18w2-RerunBoundedArms/record.json')) for arm in ('cha…) ⇒ ok · 18 lines
+
+## assistant
+
+`run-matrix.py:219` truncates detail to `[:300]` — all five base FAIL details are exactly 300 chars, cut mid-string, so the record's per-case evidence is invalid JSON. Verdicts/counts are unaffected. Now prefix-verifying base details and running residue checks.
+→ bash(python3 - <<'EOF' import json rec=json.load(open('/var/tmp/souji-r18w2-RerunBoundedArms/record.json')) arm=rec['arms'][…) ⇒ ok · 10 lines
+→ bash(ps -eo pid,ppid,pgid,sid,stat,etimes,args | grep -E "souji-r18-FixtureR18Bounded|base\.sh --root|souji-census\.sh --roo…) ⇒ ok · 36 lines
+
+## assistant
+
+Zero residue from my runs — the live `fixture.pxotwl_8` census belongs to a foreign clone (`/var/tmp/lane`, pid 926983, started 4s ago), and the long-etimed-out `r15-census-config.*` FIFO-hung processes are other seats' base-arm leftovers (up to ~7.4h old). Now scanning the whole record for more 300-char truncation victims and confirming my sandbox is clean.
+→ bash(python3 - <<'EOF' import json rec=json.load(open('/var/tmp/souji-r18w2-RerunBoundedArms/record.json')) hits=[] for arm,…) ⇒ ok · 46 lines
+
+## assistant
+
+All evidence is in. Extracting the full base-arm details (which the record lost to truncation) for the report, then writing it.
+→ bash(python3 - <<'EOF' import json for l in open('/var/tmp/souji-r18w2-RerunBoundedArms/out-base.txt',encoding='utf-8',error…) ⇒ ok · 71 lines
+
+## assistant
+
+Full failure causes recovered — every base-arm FAIL is the baseline census hanging on the injected FIFO to the fixture's 40s deadline (rc 124), with no rows and no timeout diagnostic. Writing the report now.
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/RerunBoundedArms.md) ⇒ ok · 1 line
+
+## assistant
+
+→ bash(rm -rf /var/tmp/souji-r18w2-RerunBoundedArms && ls /var/tmp/ | grep -c "souji-r18w2-RerunBoundedArms"; echo "cleanup-rc…) ⇒ ok · 5 lines
+
+## assistant
+
+STATUS: DONE — r18-bounded 8/5 → 8/0 claim **HOLDS**; both arms rerun independently at 5efb519 with exact per-case agreement.
+
+**What I ran** (clone at 5efb519, digests pinned): `python3 tests/fixtures/r18-census-bounded.py --census <census>` against (a) landed `tools/souji-census.sh` sha256 `7e6a92d4…` — RC=0, 75s, empty stderr; (b) b576341 baseline sha256 `006b9823…` — RC=1, 232s. Identity chain verified: record's changed-arm census digest == landed tip bytes; r17-base == b576341 bytes; fixture `22496166…` and runner `da61f6be…` == tip.
+
+**Result vs record** `census/round-18/c1-matrix-worktree.json`: base B1–B4+B8 FAIL (rc 124, base census blocks forever on injected FIFOs — .gitattributes/.gitignore/config/status — until the fixture's 40s deadline; no rows, no timeout diag), B5–B7 PASS → `total=8 failed=5`; changed all PASS → `total=8 failed=0`. Changed-arm details byte-identical to record; base-arm details match the record's stored prefix (the record itself is lossy — F1). Residue after each run: zero — no processes or temp dirs from my sandbox survived.
+
+**Findings**
+- **F1 MEDIUM** (verdicts unaffected): `census/round-18/run-matrix.py:219` truncates per-case `detail` to `[:300]` — 43 case details across all four arms are invalid JSON, cut mid-string; the stored evidence for why each base case failed is lost. Fix: drop the slice or store structured problems.
+- **F2 LOW**: fixture B4's serialized `expected_rows` (six `attributes/*`/`ignore/*` labels) is never compared to rows; real checks use per-run `{a,b,c}` — no false pass, but the detail JSON is self-contradictory.
+- **F3 OBSERVATION**: ~20 orphaned `souji-census.sh --root /var/tmp/r15-census-config.*/unsafe-repos/r-inc-fifo` processes from other seats' earlier rounds, etimes up to ~7.4 h — the live face of the unbounded-hang defect C1 fixes. Not signalled (not mine).
+- **F4 NOTE**: shared fixed SEAT_TMP root is concurrency-safe only via mkdtemp; a foreign seat's fixture run coexisted with mine without interference.
+- **F5 NOTE**: record ran with `allow_dirty_fixtures: true`; r18-bounded arm is immune (its fixture+runner digests match tip exactly).
+
+C1 sub-claims cross-checked in landed source (per-repo process group + setsid watchdog TERM→KILL, 1..86400 validation, default 600, exact error row `<repo>\t0\t0\t0\t0\t\terror`, exact stderr diag + `-unreaped` variant, exit 2 refusal passthrough, exit 0 otherwise) — all match, and the passes behaviorally exercised the 8s/30s timeout, refusal, and FIFO-cleanup paths.
+
+No tool installs. Nothing signalled; only allowed execs used. Sandbox deleted. Report: /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/RerunBoundedArms.md

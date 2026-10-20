@@ -1,0 +1,181 @@
+# SoujiR18.MutWatchdog (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Attacks C1's tests. ALLOWED-EXEC: in your clone at 5efb519 only: make one mutant at a time of the clone's tools/souji-census.sh emit_census/watchdog (signal only the leader pid instead of the group; skip SIGKILL escalation; classify timeout by rc 143/137 instead of the watchdog marker; drop the rc-2-first check; leave the list phase unbounded; drop the watchdog stdio redirect) and run `TMPDIR=/var/tmp bash tools/souji-census.sh --selftest` and `python3 tests/fixtures/r18-census-bounded.py --census tools/souji-census.sh` per mutant. Table: mutant → killed by (case ids) / survived. Restore the clone between mutants.
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: operability
+
+Report: write your scoped findings to .ufo/waves/round-18/w2/MutWatchdog.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+→ read(skill://godspeed) ⇒ ok · 18 lines
+→ read(skill://shokunin) ⇒ ok · 75 lines
+→ read(/home/vgpnk/.omp/agent/RULES.md) ⇒ ok · 15 lines
+
+## assistant
+
+→ bash(git clone --quiet --no-local /home/vgpnk/Projects/shokunin/souji-shokunin /var/tmp/souji-r18w2-MutWatchdog/lane && git …) ⇒ ok · 1 line
+→ read(skill://shokunin/protocol/../SKILL.md:1-160) ⇒ ok · 75 lines
+→ read(skill://shokunin/protocol/PROTOCOL.md:1-160) ⇒ ok · 173 lines
+→ read(skill://shokunin/protocol/PROTOCOL-APPENDIX.md:1-120) ⇒ ok · 56 lines
+→ read(skill://shokunin/protocol/MISSION.md:1-120) ⇒ ok · 106 lines
+→ read(skill://shokunin/protocol/AXES.md:1-120) ⇒ ok · 84 lines
+→ read(skill://shokunin/protocol/CORPUS.md:1-120) ⇒ ok · 134 lines
+→ read(skill://shokunin/protocol/LEARNING.md:1-120) ⇒ ok · 91 lines
+
+## assistant
+
+→ grep(emit_census|watchdog|SIGKILL|kill|rc.*2|selftest|repo-timeout @ /var/tmp/souji-r18w2-MutWatchdog/lane/tools/souji-censu…) ⇒ ok · 446 lines
+→ read(/var/tmp/souji-r18w2-MutWatchdog/lane/tests/fixtures/r18-census-bounded.py:1-200) ⇒ ok · 210 lines
+→ bash(git -C /var/tmp/souji-r18w2-MutWatchdog/lane rev-parse HEAD && sha256sum /var/tmp/souji-r18w2-MutWatchdog/lane/tools/so…) ⇒ ok · 4 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18w2-MutWatchdog/lane/tools/souji-census.sh:1420-1735) ⇒ ok · 323 lines
+→ read(/var/tmp/souji-r18w2-MutWatchdog/lane/tools/souji-census.sh:2322-2577) ⇒ ok · 263 lines
+→ grep(def |B[1-8]|timeout=|SEAT_TMP|SIGKILL|killpg @ /var/tmp/souji-r18w2-MutWatchdog/lane/tests/fixtures/r18-census-bounded.…) ⇒ ok · 513 lines
+→ write(agent://SoujiR18) ⇒ ok · 1 line
+→ eval(py) ⇒ ok · 1 line
+
+## assistant
+
+→ read(/var/tmp/souji-r18w2-MutWatchdog/lane/tests/fixtures/r18-census-bounded.py:396-605,1126-1211,1232-1271) ⇒ ok · 343 lines
+→ read(/var/tmp/souji-r18w2-MutWatchdog/lane/tools/souji-census.sh:1872-1968) ⇒ ok · 104 lines
+→ bash(/usr/bin/bwrap --version) ⇒ ok · 2 lines
+
+## assistant
+
+→ bash(/usr/bin/bwrap --unshare-pid --unshare-net --die-with-parent --ro-bind / / --bind /var/tmp/souji-r18w2-MutWatchdog /var…) ⇒ error · 1 line — Background job limit reached (100). Wait for running jobs to finish or cancel one.
+→ bash(/usr/bin/bwrap --unshare-pid --unshare-net --die-with-parent --ro-bind / / --bind /var/tmp/souji-r18w2-MutWatchdog /var…) ⇒ error · 1 line — Background job limit reached (100). Wait for running jobs to finish or cancel one.
+
+## assistant
+
+→ read(xd://eval/helpers) ⇒ ok · 10 lines
+
+## assistant
+
+→ eval(py) ⇒ ok · 82 lines
+
+## assistant
+
+→ grep(REPO_TIMED_OUT=|REPO_UNREAPED= @ /var/tmp/souji-r18w2-MutWatchdog/lane/tools/souji-census.sh) ⇒ ok · 80 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18w2-MutWatchdog/lane/tools/souji-census.sh#758D] PUT 1495.=1495: + kill -TERM -- "$pg…) ⇒ ok · 8 lines
+
+## assistant
+
+→ eval(py) ⇒ ok · 87 lines
+
+## assistant
+
+→ eval(py) ⇒ ok · 13 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18w2-MutWatchdog/lane/tools/souji-census.sh#758D] CUT 1497.=1497 *** End Patch) ⇒ ok · 5 lines
+
+## assistant
+
+→ eval(py) ⇒ ok · 28 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18w2-MutWatchdog/lane/tools/souji-census.sh#758D] PUT 1539.=1539: + if [ "$rc" = 143 ]…) ⇒ ok · 6 lines
+
+## assistant
+
+→ eval(py) ⇒ ok · 28 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18w2-MutWatchdog/lane/tools/souji-census.sh#758D] CUT 1645.=1648 *** End Patch) ⇒ ok · 5 lines
+
+## assistant
+
+→ eval(py) ⇒ ok · 28 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18w2-MutWatchdog/lane/tools/souji-census.sh#758D] PUT 1670.=1671: + if guard_repo_cand…) ⇒ ok · 6 lines
+
+## assistant
+
+→ eval(py) ⇒ ok · 28 lines
+
+## user
+
+[Wait interrupted by message]
+<irc from="parent" agent="SoujiR18">
+Yes, bwrap mapping your seat dir as /var/tmp is authorized. Existing fixture's /var/tmp scratch allowance extends to its own mkdtemp roots, with cleanup of your own children only. FixtureR18Bounded-5 now fixing shared SEAT_TMP; preserve current detector bytes and report any overlap as contamination, not a kill.
+</irc>
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18w2-MutWatchdog/lane/tools/souji-census.sh#758D] PUT 1500.=1501: + ' souji-census-wat…) ⇒ ok · 6 lines
+
+## assistant
+
+→ eval(py) ⇒ ok · 28 lines
+
+## assistant
+
+→ bash(sha256sum /var/tmp/souji-r18w2-MutWatchdog/lane/tools/souji-census.sh /var/tmp/souji-r18w2-MutWatchdog/lane/tests/fixtu…) ⇒ ok · 3 lines
+→ eval(py) ⇒ ok · 18 lines
+
+## assistant
+
+→ bash(rm -rf -- /var/tmp/souji-r18w2-MutWatchdog) ⇒ ok · 1 line
+
+## assistant
+
+→ eval(py) ⇒ ok · 2 lines
+
+## assistant
+
+STATUS: DONE — Six mutants tested; **2 killed, 4 survived**.
+
+| Mutant | Killed by / survived |
+|---|---|
+| Signal leader instead of process group | **Killed:** B1, B2, B3, B4, B8; selftest wall-time and FIFO-reader checks |
+| Skip SIGKILL escalation | **Survived** |
+| Classify timeout by rc 143/137 | **Survived** |
+| Drop rc-2-first check | **Survived** |
+| Leave list phase unbounded | **Killed:** B8; selftest survived |
+| Drop watchdog stdio redirect | **Survived**; non-equivalence not demonstrated |
+
+Initial pristine and all six restored controls passed: **62 selftest checks / 0 failures; 8 fixture cases / 0 failures**. Exact source hashes matched after every restoration. The isolated clone was deleted.
+
+Report includes exact edits, commands, complete captured outputs, hashes, limitations, and smallest proposed test improvements:
+
+[MutWatchdog.md](/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/MutWatchdog.md)

@@ -1,0 +1,125 @@
+# SoujiR18.RevSkillRegistryNumbers (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Attack SKILL.md@5efb519 registry rows changed this round (souji-census, souji-landing-gate, souji-seat-audit, r18-* rows): every number and command (62 checks, 53, 66, 105, 11/0, P1–P11, B1–B8) must match a run. ALLOWED-EXEC: in your clone at 5efb519 only: run each named selftest/fixture once and compare.
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: calibration
+
+Report: write your scoped findings to .ufo/waves/round-18/w2/RevSkillRegistryNumbers.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+Axes for this falsification pass: **(A) number-fidelity** — every SKILL.md@5efb519 registry number (62, 53, 66, 105, 11/0, P1–P11, B1–B8) must match a fresh run in my clone; **(B) command-fidelity** — the commands/invocations as written in SKILL.md must actually run and produce those numbers; **(C) row-coverage** — every registry row changed this round (souji-census, souji-landing-gate, souji-seat-audit, r18-*) gets attacked, none skipped.
+
+Setting up the clone first (everything depends on it):
+→ bash(git clone --quiet --no-local /home/vgpnk/Projects/shokunin/souji-shokunin /var/tmp/souji-r18w2-RevSkillRegistryNumbers/…) ⇒ ok · 2 lines
+
+## assistant
+
+Clone at 5efb519 confirmed. Now parallel discovery — the row diff, the rows themselves, and the fixture inventory:
+→ bash(git -C /var/tmp/souji-r18w2-RevSkillRegistryNumbers/lane diff --stat b5763415cc67ecff1e8fe56c58c39a6fb106d7a3..5efb519f…) ⇒ ok · 20 lines
+→ grep(souji-census|souji-landing-gate|souji-seat-audit|r18-census-bounded|r18-proc-census|r18-landing-pointers|souji-quaranti…) ⇒ ok · 38 lines
+→ bash(ls /var/tmp/souji-r18w2-RevSkillRegistryNumbers/lane/tests/fixtures/ && echo ---- && ls /var/tmp/souji-r18w2-RevSkillRe…) ⇒ ok · 73 lines
+
+## assistant
+
+Rows identified. Extracting full row text (lines are long, need the complete command + verification cells), plus the exact selftest cells:
+→ bash(cd /var/tmp/souji-r18w2-RevSkillRegistryNumbers && python3 - <<'EOF' import re text = open('lane/SKILL.md').read().spli…) ⇒ ok · 51 lines
+→ bash(cd /var/tmp/souji-r18w2-RevSkillRegistryNumbers && sed -n '105,113p;188,200p' lane/SKILL.md | cut -c1-500) ⇒ ok · 25 lines
+
+## assistant
+
+→ read(skill://godspeed) ⇒ ok · 18 lines
+
+## assistant
+
+The selftest/fixture commands are now clear from the committed registry. Before running, checking the exact source locations of `105` and `11/0`, then I’ll run each named invocation once in parallel and compare outputs to those cells.
+→ grep(105|11/0|11 pass|11 passed|pass=53|pass=66|62 checks @ /var/tmp/souji-r18w2-RevSkillRegistryNumbers/lane/SKILL.md) ⇒ ok · 17 lines
+→ grep(SOUJI_CENSUS_REPO_TIMEOUT|r18-census-bounded.py|r18-proc-census.sh|r18-landing-pointers.py|souji-quarantine.sh --selfte…) ⇒ ok · 29 lines
+
+## assistant
+
+Running the seven named checks once in parallel from the 5efb519 clone. I’m setting `TMPDIR` to my seat’s `/var/tmp/souji-r18w2-RevSkillRegistryNumbers/` directory (rather than global `/var/tmp`) so every generated fixture stays within the authorized sandbox. The actual scripts/arguments otherwise match the registry.
+→ bash(TMPDIR=/var/tmp/souji-r18w2-RevSkillRegistryNumbers bash tools/souji-census.sh --selftest) ⇒ ok · 66 lines
+→ bash(python3 tools/souji-landing-gate.py --selftest) ⇒ ok · 58 lines
+→ bash(TMPDIR=/var/tmp/souji-r18w2-RevSkillRegistryNumbers python3 tests/fixtures/r18-landing-pointers.py --tool tools/souji-l…) ⇒ ok · 15 lines
+→ bash(python3 tools/souji-seat-audit.py --selftest) ⇒ ok · 70 lines
+→ bash(TMPDIR=/var/tmp/souji-r18w2-RevSkillRegistryNumbers bash tools/souji-quarantine.sh --selftest) ⇒ error · 113 lines — PASS R1 lane.id recipe owner (lane.id kama -> --as kama)
+→ bash(TMPDIR=/var/tmp/souji-r18w2-RevSkillRegistryNumbers python3 tests/fixtures/r18-census-bounded.py --census tools/souji-c…) ⇒ ok · 14 lines
+→ bash(TMPDIR=/var/tmp/souji-r18w2-RevSkillRegistryNumbers bash tests/fixtures/r18-proc-census.sh --tool tools/souji-proc-cens…) ⇒ ok · 16 lines
+
+## assistant
+
+The requested counts for census, gate, seat-audit, landing-pointer, B1–B8 and P1–P11 are present in the captured output. The separately requested `105` run returned `selftest: 105 checks, 36 failed` (exit 1); I’m checking the named remaining r18 selftest commands’ tempdir behavior before deciding whether they fit the allowed one-run scope.
+→ grep(TMPDIR|mktemp|/var/tmp|--selftest @ /var/tmp/souji-r18w2-RevSkillRegistryNumbers/lane/tools/souji-proc-census.sh) ⇒ ok · 64 lines
+→ grep(TMPDIR|mktemp|/var/tmp|--selftest @ /var/tmp/souji-r18w2-RevSkillRegistryNumbers/lane/census/round-18/leak-count.py) ⇒ ok · 18 lines
+→ grep(selftest|NOT-AUTHORIZED|unreachable|lane.id|live guard|TMPDIR|mktemp @ /var/tmp/souji-r18w2-RevSkillRegistryNumbers/lan…) ⇒ ok · 262 lines
+→ bash(stat /var/tmp/souji-census-selftest.c1sQqJ) ⇒ error · 4 lines — stat: cannot stat '/var/tmp/souji-census-selftest.c1sQqJ': No such file or directory (os error 2)
+
+## assistant
+
+→ grep(live.*guard|guard.*live|return 4|exit 4|LIVE_GUARD|live_fleet @ /var/tmp/souji-r18w2-RevSkillRegistryNumbers/lane/tools…) ⇒ ok · 56 lines
+
+## assistant
+
+The 105-check run’s 36 failures are now attributable to the sandbox override, not the product verdict: the script defines the clone’s parent as `LIVE_FLEET_ROOT` (`souji-quarantine.sh:167–168`), while the overridden `TMPDIR` placed the test fleet inside that root (`:1494`), so the live-mutation guard returned 4 instead of fixture expectations. The registry’s documented `TMPDIR=/var/tmp` was not used because it escapes the assigned seat directory; I will report this as an unverified exact-command outcome, not claim a code defect. Checking report-path state and final line evidence now.
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/RevSkillRegistryNumbers.md) ⇒ error · 1 line — Path '/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/RevSkillRegistryNumbers.md' not found
+→ read(/var/tmp/souji-r18w2-RevSkillRegistryNumbers/lane/tools/souji-quarantine.sh:160-170,678-690,1488-1500) ⇒ ok · 40 lines
+→ read(/var/tmp/souji-r18w2-RevSkillRegistryNumbers/lane/SKILL.md:149,150,165,168,170,173,174) ⇒ ok · 16 lines
+
+## assistant
+
+One diagnostic detail in the B4 result deserves checking before I finalize: the fixture prints six expected row labels but three observed labels while still reporting `problems=[]`. I’m inspecting only that exact fixture’s B4 assertion/reporting code (no rerun) to distinguish intentional per-repo normalization from a vacuous count.
+→ grep(B4|observed_rows|expected_rows|problems @ /var/tmp/souji-r18w2-RevSkillRegistryNumbers/lane/tests/fixtures/r18-census-b…) ⇒ ok · 354 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18w2-RevSkillRegistryNumbers/lane/tests/fixtures/r18-census-bounded.py:927-1002,1157-1186) ⇒ ok · 117 lines
+
+## assistant
+
+→ grep(SEAT_TMP|TemporaryDirectory|mkdtemp|rmtree|cleanup @ /var/tmp/souji-r18w2-RevSkillRegistryNumbers/lane/tests/fixtures/r…) ⇒ ok · 78 lines
+→ grep(TMPDIR|mktemp|/var/tmp|cleanup|rm -r @ /var/tmp/souji-r18w2-RevSkillRegistryNumbers/lane/tests/fixtures/r18-proc-census…) ⇒ ok · 69 lines
+→ bash(stat /var/tmp/souji-r18-FixtureR18Bounded) ⇒ ok · 9 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18w2-RevSkillRegistryNumbers/lane/tests/fixtures/r18-census-bounded.py:32-38,107-116,1202-1212) ⇒ ok · 36 lines
+
+## assistant
+
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/RevSkillRegistryNumbers.md) ⇒ ok · 2 lines
+
+## assistant
+
+Scoped report written to `/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/RevSkillRegistryNumbers.md`.
+
+Verdict: **PARTIAL**. The requested counts matched their captured runs except the 105-check quarantine run, which had 36 failures under the seat-local temp setting and did not reproduce the registry’s exact invocation. I also reported B4’s incomplete observed-row summary and the bounded fixture’s shared temp root.

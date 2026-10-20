@@ -1,0 +1,111 @@
+# SoujiR18.RevSeatAuditContract (idle)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Attack Q26/Q27 coverage of this round: read /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/ScoutSeatAuditR18.md and tools/souji-seat-audit.py; would the r18 wave-1 contract (clone writes, patch writes) produce false majors; what spec fields must the r19 auditor accept? Also: is MatrixR18's prefix-kill (R18-M6) detectable by the auditor (no signal class)?
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: calibration
+
+Report: write your scoped findings to .ufo/waves/round-18/w2/RevSeatAuditContract.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+→ read(skill://godspeed) ⇒ ok · 18 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/ScoutSeatAuditR18.md) ⇒ ok · 199 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-seat-audit.py) ⇒ ok · 99 lines
+
+## assistant
+
+I have the skill, scout doc, and a truncated auditor read. Axes: (A1) calibration — false majors on w1/w2 contract shapes; (A2) detection gaps — signal class absence (R18-M6); (A3) r19 spec-field requirements. Now reading the auditor in full ranges plus locating the R18-M6 record and w1/w2 contracts.
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-seat-audit.py:47-135) ⇒ ok · 101 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-seat-audit.py:133-232) ⇒ ok · 109 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-seat-audit.py:232-330) ⇒ ok · 113 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-seat-audit.py:330-530) ⇒ ok · 166 lines
+→ glob(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/*) ⇒ ok · 107 lines
+→ glob(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-18/*) ⇒ ok · 12 lines
+
+## assistant
+
+Full auditor read. Confirmed classes: `V-SURFACE`, `V-LIVE-CENSUS`, `V-WRITE-*`, `V-EXEC`, `V-RECURSIVE`, `V-PROBE` — **no signal/git-write/environ class**. Scratch derivation at `run()` is `re.search(r"souji-r\d+-", context+" "+wave)` with silent `/var/tmp/` fallback — need the actual w1/w2 spec strings to test it. Now pulling the R18-M6 record and both wave specs.
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1-spec.json:1-30) ⇒ ok · 40 lines
+→ glob(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/*) ⇒ ok · 11 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/MatrixR18.md:1-80) ⇒ ok · 57 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-18/run-matrix.py:1-70) ⇒ ok · 79 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-18/c1-matrix-worktree.json:1-40) ⇒ ok · 57 lines
+→ glob(/home/vgpnk/Projects/shokunin/souji-shokunin/corpus/*) ⇒ ok · 7 lines
+
+## assistant
+
+MatrixR18.md discloses the smoking gun: the superseded run-matrix implementation SIGKILLed four PIDs by argv-prefix match (842962/842978/842979/842981) — a probe-rule violation the seat self-reported. Now verifying: (1) whether any auditor class could see that (grep auditor for signal terms), (2) the w2 spec's wave/context strings vs the `souji-r\d+-` scratch regex, (3) Q26/Q27 definitions in corpus/QUALITY.md, (4) where w1 transcripts live.
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/corpus/QUALITY.md:1-80) ⇒ ok · 83 lines
+→ grep(souji-r\d+- @ /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2-spec.json) ⇒ ok · 5 lines
+→ grep(kill|pkill|SIGKILL|signal @ /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-seat-audit.py) ⇒ ok · 41 lines
+→ glob(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-18/transcripts/w1/*) ⇒ error · 1 line — Path not found: souji-shokunin/census/round-18/transcripts/w1
+
+## assistant
+
+Q26/Q27 located and confirmed. Critical: w2-spec.json `wave` = `"souji-r18-w2"` — the auditor's `re.search(r"souji-r\d+-", context+" "+wave)` will match `souji-r18-` and derive scratch `/var/tmp/souji-r18-<Seat>/`, but the w2 contract clone namespace is `/var/tmp/souji-r18w2-<SeatName>/` — structural false-major. And the auditor's only case-insensitive `kill` hits are the substring in `SKILL.md` — no signal class exists. Verifying remaining evidence in one batch:
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -c 'OWN ONLY' .ufo/waves/round-18/w1-spec.json && grep -o 'OWN …) ⇒ ok · 22 lines
+→ grep(seat-audit|transcript @ /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2-spec.json) ⇒ ok · 19 lines
+→ grep(transcript|seat-audit @ /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1-dispatch.json) ⇒ ok · 19 lines
+→ glob(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-18/transcripts/*) ⇒ error · 1 line — Path not found: souji-shokunin/census/round-18/transcripts
+→ glob(/home/vgpnk/Projects/shokunin/souji-shokunin/corpus/lessons/round-18*) ⇒ ok · 2 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/MatrixR18.md:80-140) ⇒ ok · 1 line
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin log --oneline -3 5efb519f00075d958c3d1109ef6fcb24c487eb87 -- tools/…) ⇒ ok · 6 lines
+
+## assistant
+
+w1-spec facts: 14 `OWN ONLY` clauses, 13 items with `deliver /home/…patch` — and the auditor's `OWN_RE` terminates at ` (` (space-paren), so it captures only the leading relative path → `owned=[]` for every w1 item. Also confirmed: auditor last touched in r17 (`4f48343`) — r18 runs the r17-calibrated auditor against an r18 contract it can't express. One last evidence pull: the canonical R18-M6 row in the round lesson.
+→ grep(R18-M6|prefix|SIGKILL|argv @ /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/lessons/round-18.md) ⇒ ok · 37 lines
+
+## assistant
+
+R18-M6 canonical row confirmed at `corpus/lessons/round-18.md:20` — detection source: "the seat's own disclosure", exactly the anti-pattern Q26 disclaims. And the lesson already carries the false-major residual (line 77) citing only the scout — my w2 structural finding goes beyond it. Pinning exact line numbers for citations, then writing the report:
+→ grep(OWN_RE = |allowed = \[report|SURFACE_RE\.search\(args\)|souji-r\\\\d|scratch_base|missing_transcripts"\]\.append|eff_ro…) ⇒ ok · 43 lines
+
+## assistant
+
+All evidence pinned. Writing the scoped report:
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/RevSeatAuditContract.md) ⇒ ok · 1 line
+
+## assistant
+
+Report written to `/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/RevSeatAuditContract.md`. STATUS: DONE.
+
+**Q26/Q27 verdict for r18: partial — fails as specified.** Findings by severity:
+
+- **MAJOR F1 — w2 structural false major.** `run()` derives scratch from `re.search(r"souji-r\d+-", context+" "+wave)` (tools/souji-seat-audit.py:283-284,:299). w2 wave name is `"souji-r18-w2"` (w2-spec.json:2) → scratch base `/var/tmp/souji-r18-`, but the w2 contract clone namespace is `/var/tmp/souji-r18w2-<SeatName>/` (w2-spec.json:5). `_under`'s exact-prefix check (:110-112) can never match → every w2 executor clone write is `V-WRITE-SCOPE` major, which under Q26's voiding rule voids compliant seats. The regex cannot express the `souji-r18w2-` namespace at all.
+- **MAJOR F2 — all 13 w1 patch deliveries are false majors (or invisible).** `OWN_RE` terminates at the first ` (` (:90) → captures only the leading relative path → `owned=[]`; `allowed=[report,*owned]` (:250) never contains the ordered `deliver /home/…/<Seat>.patch`. write/edit → major (exit 1); bash redirect → invisible. Measured: 14 `OWN ONLY` clauses, 13 `deliver /home/` items.
+- **MAJOR F3 — R18-M6 is undetectable.** No signal class exists (case-insensitive auditor grep for `kill|pkill|SIGKILL|signal` hits only `SKILL.md` selftest substrings). The kills ran inside executed `run-matrix.py` code — V-EXEC-exempt for the mutation-tester (:93,:296) — so the transcript audit yields major=0; the only catch was the seat's self-disclosure (corpus/lessons/round-18.md:20; MatrixR18.md), exactly the source Q26 disclaims ("from transcripts, not self-report").
+- **MINOR:** F4 observed variant clone dir `/var/tmp/souji-r18-MatrixR18b/` → major (MatrixR18.md); F5 `SURFACE_RE` fires on edit bodies/pattern text (:245) — r18's own C2/Q30/Q31 subject matter (`.ufo/state/`, watchdog.log, dated sweep dir) guarantees that shape; F6 missing transcripts exit 0 silently (no `census/round-18/transcripts/` at tip); F7 `rstrip("…")` (:272) is the char-set-strip idiom Q27 bans.
+
+**r19 auditor must accept per-item spec fields:** `scratch` (list; fallback removed), `writeAllow` (patch deliverables — one-line fix at :250), `execAllow` (replacing the binary ALLOWED-EXEC role flip), `censusRoots`, `signalPolicy`/`forbid` (new V-SIGNAL / V-GIT-WRITE / V-PROC-ENV / V-CRED), failing `missing_transcripts`, and SURFACE_RE target-scoping. Proved limit: kills performed inside executed code are transcript-invisible — executing seats must produce kill receipts (run-matrix.py already records session/pid/residue), or Q26 must classify the class unauditable.
+
+**Gaps:** no r18 transcripts in-lane → all firing counts are contract-derived, not from a run; renderer cut length unmeasured; LSP unavailable (code-read verification only); no installs, no exec (no ALLOWED-EXEC for this seat).

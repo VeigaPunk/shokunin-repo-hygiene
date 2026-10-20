@@ -1,0 +1,108 @@
+# SoujiR18.CriticC3Authority-5 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Attack C3: does a process census grant (or invite) kill authority — PID reuse between listing and any later kill, killing a live fixture of another agent, killing processes of a closure session? What exact rule keeps C3 list-only, and what must an operator-approved reap record (pid + starttime pair, re-check at act time)? Is 'coverage' the right axis (a new governed surface) and what is a non-gameable before→after count?
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: coverage
+
+Report: write your scoped findings to .ufo/waves/round-18/w1/CriticC3Authority.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+→ read(skill://godspeed) ⇒ ok · 18 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-18/leaked-procs-before-1631.txt) ⇒ ok · 59 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/corpus/lessons/round-17-verifier-spotcheck.md) ⇒ ok · 158 lines
+
+## assistant
+
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin) ⇒ ok · 79 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools) ⇒ ok · 127 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/PROVINCE.md) ⇒ ok · 122 lines
+
+## assistant
+
+Key evidence found: PROVINCE.md:46-47 declares "souji acts on artifacts and never on processes." Now checking round-18 artifacts, SKILL/QUALITY conventions, and how the leaked-procs list was generated.
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-18) ⇒ ok · 2 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18) ⇒ ok · 15 lines
+→ grep(proc|process|pid|kill|signal @ /home/vgpnk/Projects/shokunin/souji-shokunin/PROVINCE.md;/home/vgpnk/Projects/shokunin/s…) ⇒ ok · 47 lines
+
+## assistant
+
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/ScribeProvinceProc.md) ⇒ ok · 144 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/ScribeRowsProc.md) ⇒ ok · 80 lines
+
+## assistant
+
+Context gathered. Now grounding the attack: check the actual `/proc` state of the leaked pids (allowed by probe rule), boot_id, and whether the wave spec mentions reap/signal semantics.
+→ bash(for p in 185592 185605 289650 562276 562279; do echo "== $p"; readlink /proc/$p/cwd 2>&1; awk '{print "state="$3" ppid=…) ⇒ ok · 23 lines
+→ grep(proc-census|reap|signal|kill|starttime @ /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1-spec.json) ⇒ ok · 516 lines
+
+## assistant
+
+Strong evidence. Now checking the driver (pid 1497) and whether leaked process groups contain non-residue members — the killpg overreach test.
+→ bash(cat /proc/1497/comm; readlink /proc/1497/cwd; awk '{print "state="$3" ppid="$4" pgrp="$5" sid="$6}' /proc/1497/stat; ec…) ⇒ ok · 25 lines
+
+## assistant
+
+→ bash(uid=$(id -u); n=0; for p in /proc/[0-9]*; do pid=${p#/proc/}; [ -r "$p/stat" ] || continue; owner=$(stat -c %u "$p" 2>/…) ⇒ ok · 120 lines
+
+## assistant
+
+58/58 rows reproduced — every residue process is S-state, parented to live systemd (ppid 1497), in residue-only groups *today*. Now extracting the exact ProcCensus contract text from the spec to check whether `starttime`/identity fields are in the commissioned schema.
+→ bash(python3 - <<'EOF' import json d=json.load(open('/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1-spe…) ⇒ ok · 115 lines
+
+## assistant
+
+Schema check complete — TSV lacks raw `starttime`/`boot_id`. One quick set-diff to prove today's enumeration agrees pid-for-pid with the committed list:
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && awk '{print $1}' census/round-18/leaked-procs-before-1631.txt | sort…) ⇒ ok · 4 lines
+
+## assistant
+
+All evidence in hand. Writing the report.
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/CriticC3Authority.md) ⇒ ok · 2 lines
+
+## assistant
+
+STATUS: DONE — C3 authority critique delivered to `.ufo/waves/round-18/w1/CriticC3Authority.md`.
+
+**Verdict: partial → holds after 3 cheap fixes.** The census itself is correctly bounded (read-only, own-uid, no environ); every defect is in authority *vocabulary* and *schema*, not the observation.
+
+**Answers:**
+
+1. **Grant? No. Invite? Yes, three ways.** (a) "governed surface" claims receipt-gated-removal vocabulary (PROVINCE:3-4,17) over a surface with no action path — r13 precedent says "reports … not removal authorization." (b) The commissioned TSV (`pid ppid pgid sid age_s state wchan reason cmd`) has **no identity binder**: `age_s` is second-granularity, no raw `starttime`, no `boot_id` — pid alone piped to `kill` bets on reuse odds. (c) `pgid` invites `killpg`; today's residue groups are pure by luck, and the residue parents' ppid is **live systemd** (pid 1497) — session/ppid-chain reaping would be catastrophic.
+
+2. **List-only rule:** the tool never signals anything it didn't itself spawn; rows are nomination-only evidence. Enforceable: no kill-token in script (grep-auditable), fixture `kill -0` survival assertion on a planted process, and a Refuses bullet that must exempt C1's own watchdog groups (ScribeProvinceProc's draft "Signalling any process" would make the C1 watchdog a boundary violation — F3).
+
+3. **Reap record:** mandatory `(pid, starttime_ticks, boot_id)` triple, re-verified at act time from `/proc/<pid>/stat` field 22 + `/proc/sys/kernel/random/boot_id`; reason re-validates (cwd still deleted / argv path + parent scratch still ENOENT); state still S/D/T with blocking wchan; age > floor; list older than ~600s is re-listed not reaped; `killpg` only if fresh group membership equals the recorded set exactly; never signal sid/ppid chains.
+
+4. **Axis:** coverage is right, with "governed" → "observed" (F1). Non-gameable count: fixture recall/precision on K seeded residue + J live controls (before = detects 0 by tool absence); host reconciliation as pid-set equality vs the blind `leak-count.py` (verified feasible — my enumeration reproduced the committed 58-pid set exactly, `IDENTICAL-58`); and a self-harm bound (0 new residue rows after the fixture's red arm).
+
+**Live evidence:** all 58 residue processes are S-state, cwd-deleted, wchan ∈ {`do_wait`, `wait_for_partner`, `anon_pipe_read`}, all parented to live systemd — "parent dead" rescues nothing, so residue reason must never equal reap eligibility.

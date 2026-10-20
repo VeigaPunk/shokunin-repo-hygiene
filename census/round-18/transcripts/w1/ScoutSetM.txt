@@ -1,0 +1,227 @@
+# SoujiR18.ScoutSetM-5 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Bash 5.3 semantics for the C1 watchdog. ALLOWED-EXEC: small scripts under /var/tmp/souji-r18-ScoutSetM/, run with `bash script </dev/null` and also through python subprocess with stdin/stdout pipes and no tty, `set -euo pipefail`: (1) `set -m; f & pid=$!; set +m` — is the job its own process group (`ps -o pgid`), any stderr warning; (2) `kill -TERM -- -$pid` kills a git child blocked opening a FIFO; `wait $pid` rc (143?) and SIGKILL rc (137); (3) does an EXIT trap set in the parent run in the background subshell; (4) `$(…)` capture of the parent finishes while a watchdog `(sleep 30; …) >/dev/null 2>&1 &` is still sleeping, and after `kill $wpid` is its sleep child left behind?; (5) `set -e` interaction with `wait` returning nonzero. Report exact outputs.
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: operability
+
+Report: write your scoped findings to .ufo/waves/round-18/w1/ScoutSetM.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+I'll start by reading the skill and setting up the probe area in parallel.
+→ read(skill://godspeed) ⇒ ok · 18 lines
+→ bash(mkdir -p /var/tmp/souji-r18-ScoutSetM && bash --version | head -1 && echo "---" && ps -eo pid,ppid,pgid,stat,wchan:20,c…) ⇒ ok · 5 lines
+
+## assistant
+
+→ write(/var/tmp/souji-r18-ScoutSetM/p1_pgid.sh) ⇒ ok · 2 lines
+→ write(/var/tmp/souji-r18-ScoutSetM/p2_killpg_fifo.py) ⇒ ok · 2 lines
+→ write(/var/tmp/souji-r18-ScoutSetM/p3_exittrap.sh) ⇒ ok · 2 lines
+→ write(/var/tmp/souji-r18-ScoutSetM/p4_capture_watchdog.sh) ⇒ ok · 2 lines
+→ write(/var/tmp/souji-r18-ScoutSetM/p5_sete_wait.sh) ⇒ ok · 2 lines
+→ write(/var/tmp/souji-r18-ScoutSetM/p5b_sete_wait.sh) ⇒ ok · 2 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18-ScoutSetM && bash p1_pgid.sh </dev/null 2>&1) ⇒ ok · 12 lines
+→ bash(cd /var/tmp/souji-r18-ScoutSetM && bash p3_exittrap.sh </dev/null 2>&1) ⇒ error · 20 lines — -- A: plain background subshell ( … ) &
+→ bash(cd /var/tmp/souji-r18-ScoutSetM && bash p4_capture_watchdog.sh </dev/null 2>&1) ⇒ ok · 23 lines
+→ bash(cd /var/tmp/souji-r18-ScoutSetM && bash p5_sete_wait.sh </dev/null 2>&1; echo "SCRIPT-EXIT=$?") ⇒ ok · 5 lines
+→ bash(cd /var/tmp/souji-r18-ScoutSetM && bash p5b_sete_wait.sh </dev/null 2>&1; echo "SCRIPT-EXIT=$?") ⇒ ok · 7 lines
+→ bash(cd /var/tmp/souji-r18-ScoutSetM && timeout 60 python3 p2_killpg_fifo.py </dev/null 2>&1; echo "SCRIPT-EXIT=$?") ⇒ ok · 14 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-census.sh:1380-1430) ⇒ ok · 57 lines
+
+## assistant
+
+Key results already: probes 1, 3, 4, 5 ran; probe 5b aborted early at 5b-2 (which itself proved set -e propagation). Probe 2 revealed I killed the wrong group. Let me correct and extend.
+→ write(/var/tmp/souji-r18-ScoutSetM/p2b_killpg_child.py) ⇒ ok · 2 lines
+→ write(/var/tmp/souji-r18-ScoutSetM/p4e_watchdog_group.sh) ⇒ ok · 2 lines
+→ write(/var/tmp/souji-r18-ScoutSetM/p5c_sete_wait.sh) ⇒ ok · 2 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-census.sh:540-600) ⇒ ok · 67 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18-ScoutSetM && timeout 60 python3 p2b_killpg_child.py </dev/null 2>&1; echo "SCRIPT-EXIT=$?") ⇒ ok · 12 lines
+→ bash(cd /var/tmp/souji-r18-ScoutSetM && bash p4e_watchdog_group.sh </dev/null 2>&1) ⇒ ok · 20 lines
+→ bash(cd /var/tmp/souji-r18-ScoutSetM && bash p5c_sete_wait.sh </dev/null 2>&1) ⇒ ok · 25 lines
+
+## assistant
+
+All probes gave clean signal. Now the decisive end-to-end miniature and the remaining semantics (bash `kill -- -pgid`, job-kill stderr noise, disown).
+→ grep(error|\\t0\\t0\\t0\\t0 @ /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-census.sh) ⇒ ok · 120 lines
+→ write(/var/tmp/souji-r18-ScoutSetM/pK_killbuiltin.sh) ⇒ ok · 2 lines
+→ write(/var/tmp/souji-r18-ScoutSetM/e2e_emit_census.sh) ⇒ ok · 2 lines
+
+## assistant
+
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -n 'HEADER=' tools/souji-census.sh | head -5 && grep -n 'local …) ⇒ ok · 3 lines
+→ bash(cd /var/tmp/souji-r18-ScoutSetM && bash pK_killbuiltin.sh </dev/null 2>&1) ⇒ ok · 21 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-census.sh:1240-1270) ⇒ ok · 41 lines
+
+## assistant
+
+Header is `repo\tworktrees\tunpushed\tdirty\tscratch_bytes\tmtime_iso\tverdict_flags` — the error row needs the empty mtime column (double tab). Fixing the miniature.
+→ bash(cd /var/tmp/souji-r18-ScoutSetM && sed -n '1p' /dev/null; bash -c "grep -n 'printf .%s' e2e_emit_census.sh") ⇒ ok · 6 lines
+
+## assistant
+
+→ edit(/var/tmp/souji-r18-ScoutSetM/e2e_emit_census.sh) ⇒ ok · 8 lines
+
+## assistant
+
+→ edit(/var/tmp/souji-r18-ScoutSetM/e2e_emit_census.sh) ⇒ ok · 12 lines
+→ edit(/var/tmp/souji-r18-ScoutSetM/e2e_emit_census.sh) ⇒ ok · 10 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18-ScoutSetM && timeout 120 bash e2e_emit_census.sh </dev/null 2>&1; echo "SCRIPT-EXIT=$?") ⇒ ok · 20 lines
+
+## assistant
+
+End-to-end passes exactly to spec. Now the falsifiers: exit-2 propagation, watchdog release timing, TERM-ignoring escalation, 50-repo leak count, orphaned-group kill, and the 137 ambiguity.
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && sed -n '1,40p' tools/souji-census.sh | grep -n 'set -' ; echo "---al…) ⇒ ok · 3 lines
+→ write(/var/tmp/souji-r18-ScoutSetM/b2_falsifiers.sh) ⇒ ok · 2 lines
+
+## assistant
+
+`set -euo pipefail` at :161 — bare `wait`/`kill` would abort. Two probe bugs to fix first: `$$` in a subshell is the parent PID, and a `trap '' TERM; sleep 300` dies anyway because `sleep` doesn't ignore TERM.
+→ edit(/var/tmp/souji-r18-ScoutSetM/b2_falsifiers.sh) ⇒ ok · 7 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18-ScoutSetM && timeout 180 bash b2_falsifiers.sh </dev/null 2>&1; echo "SCRIPT-EXIT=$?") ⇒ ok · 38 lines
+
+## assistant
+
+T1/T2/T3/T5/T6/T8 all land. T7 was a dud (`( sleep 300 )` is exec-optimised so the subshell *was* the sleep). Let me redo it properly plus the exact L1 shim repro, and read the option-parsing region.
+→ write(/var/tmp/souji-r18-ScoutSetM/t7b_t9.py) ⇒ ok · 2 lines
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -n 'census_one' tools/souji-census.sh && echo "--- option parsi…) ⇒ ok · 60 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18-ScoutSetM && timeout 90 python3 t7b_t9.py </dev/null 2>&1; echo "SCRIPT-EXIT=$?") ⇒ ok · 12 lines
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && sed -n '215,300p' tools/souji-census.sh) ⇒ ok · 89 lines
+
+## assistant
+
+T7b is decisive: killed shell → sleep **reparented to init but kept pgid 535827** → `killpg(535827)` then killed it. That is the exact mechanism that saves the census when only git survives. T9 was a dud (fresh `git init` has no `info/attributes`). Redoing it, and auditing my own process hygiene.
+→ bash(cd /var/tmp/souji-r18-ScoutSetM && ps -eo pid,ppid,pgid,stat,wchan:22,cmd | grep -E 'souji-r18-ScoutSetM' | grep -v gre…) ⇒ ok · 2 lines
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && wc -l census/round-18/leaked-procs-before-1631.txt && sed -n '1,6p' …) ⇒ ok · 10 lines
+→ write(/var/tmp/souji-r18-ScoutSetM/t9b_shim.py) ⇒ ok · 2 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18-ScoutSetM && timeout 90 python3 t9b_shim.py </dev/null 2>&1; echo "SCRIPT-EXIT=$?") ⇒ ok · 13 lines
+
+## assistant
+
+T9b reproduces L1's exact TOCTOU (guard sees `regular file` → shim swaps FIFO on `status` → blocked) and the watchdog clears it in 2.00 s with no residue. Now confirming the row-emission details the executor must get right.
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -n 'sanitize_field()' -A14 tools/souji-census.sh | head -25; ec…) ⇒ ok · 19 lines
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -n 'repo-timeout\|REPO_TIMEOUT\|usage' tools/souji-census.sh | …) ⇒ ok · 22 lines
+→ write(/var/tmp/souji-r18-ScoutSetM/t10_capture_both.sh) ⇒ ok · 2 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18-ScoutSetM && bash t10_capture_both.sh </dev/null 2>&1) ⇒ ok · 4 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-census.sh:2028-2072) ⇒ ok · 46 lines
+
+## assistant
+
+T10: both-stream captures return in 1 ms with zero stray sleeps. Last checks: temp-file hygiene (the existing `EXIT` trap) and `mktemp` placement.
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -n "trap \|mktemp\|CENSUS_TMP=" tools/souji-census.sh | head -20) ⇒ ok · 10 lines
+
+## assistant
+
+Found the cleanup precedent (`trap cleanup_census_tmp EXIT` at :1511, but no trap in `emit_census`). One last falsifier — a forked child must **not** run the parent's `EXIT` cleanup, or a shared work dir is deleted mid-loop.
+→ write(/var/tmp/souji-r18-ScoutSetM/t11_workdir_trap.sh) ⇒ ok · 2 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18-ScoutSetM && bash t11_workdir_trap.sh </dev/null 2>&1; echo "SCRIPT-EXIT=$?") ⇒ ok · 8 lines
+
+## assistant
+
+T11 confirms the child does **not** run the parent's `EXIT` cleanup (work dir survives), while `exit 2` does (dir removed, rc 2 preserved). One critical scoping question remains: the leaked processes were blocked in `rev-parse --is-inside-work-tree` — I must know whether `list_repos` (outside the proposed watchdog) issues it.
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -n 'rev-parse' tools/souji-census.sh) ⇒ ok · 2 lines
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && awk 'NR>=1340 && NR<=1400' tools/souji-census.sh | grep -n 'git \|^l…) ⇒ ok · 8 lines
+
+## assistant
+
+Only one `rev-parse` site (:1280, inside `census_one`) and `list_repos` runs no git at all. Let me confirm every git call site is reachable only from `census_one`.
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -n 'git \-C\|git "\|GIT=' tools/souji-census.sh | head -40) ⇒ ok · 33 lines
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -n '^[a-z_]*()' tools/souji-census.sh | awk -F: '$1>990 && $1<1…) ⇒ ok · 14 lines
+
+## assistant
+
+All production git calls are inside `census_one` or its helpers. Final confirmation of call sites before writing up.
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && for f in count_worktrees count_unpushed count_dirty scratch_bytes ne…) ⇒ ok · 9 lines
+
+## assistant
+
+→ bash(ls -d /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1 2>/dev/null || echo MISSING; ls /home/vgpnk/P…) ⇒ ok · 7 lines
+
+## assistant
+
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/ScoutSetM.md) ⇒ ok · 1 line
+
+## assistant
+
+→ bash(ps -eo pid,ppid,stat,cmd | grep -E 'souji-r18-ScoutSetM|sleep (30|300|600)' | grep -v grep || echo "NO PROCS OF MINE"; …) ⇒ ok · 6 lines
+
+## assistant
+
+→ bash(rm -rf /var/tmp/souji-r18-ScoutSetM && ls -d /var/tmp/souji-r18-ScoutSetM 2>/dev/null || echo "REMOVED"; ps -eo stat= |…) ⇒ ok · 3 lines
+
+## assistant
+
+→ bash(ps -eo pid,ppid,stat,cmd | awk '$3 ~ /^Z/ {print}' || true) ⇒ ok · 2 lines
+
+## assistant
+
+The one zombie (`xdg-terminal-exec`, ppid 2735) is a session process, not mine.
+
+**Result — semantics settled, all measured on bash 5.3.20.**
+
+Report: `.ufo/waves/round-18/w1/ScoutSetM.md` (in the lane). Scratch `/var/tmp/souji-r18-ScoutSetM` removed; no process of mine remains; no pacman transaction, no git/jj write, no tool installs.
+
+**Verdicts on the six assigned questions**
+
+1. **`set -m` — holds.** Without it the child shares the parent's group (`pgid=399621` = parent); with it `pgid == pid` (`399685`), including inside a function. Silent on a tty-less pipe-stdout script; no `[1]+ Done` noise; the child's stdin becomes `/dev/null` (proven: `head -1` returns `rc=0` on EOF).
+2. **Group TERM frees a FIFO-blocked git — holds; pid-only provably fails.** git blocked in `open(2)` shows `wchan=wait_for_partner`; `kill -TERM -- -<pgid>` → DEAD, `wait` rc **143**; SIGKILL → **137**. Killing **only the bash parent** leaves the git child alive, reparented to 1497, still blocked — the exact 58-process leak mechanism. And the group survives its shell's death: a killed subshell's child reparents to init **keeping its pgid**, which `killpg` then still reaps.
+3. **`EXIT` trap — child never runs the parent's.** The subshell sees the definition (`trap -p`) but does not execute it; its own trap fires on exit and on TERM. A parent `EXIT` trap fires on normal exit, `exit 2` mid-loop, and external SIGTERM. So **one shared `mktemp -d` + one `rm -rf` trap is safe** (verified across 3 forked iterations, dir intact; removed on `exit 2`).
+4. **`$( … )` + watchdog — holds only with `>/dev/null 2>&1`.** Redirected: capture returns in **1 ms** with the watchdog still sleeping. Unredirected: capture blocks **30005 ms** (watchdog holds the pipe) and injects its output into the captured row. Same at the fix's exact shape: **3010 ms**, `out=[ROW\nLATE]`. The watchdog also needs its own `set -m` group, or `kill $wpid` orphans its `sleep` (ppid → 1497).
+5. **`set -e` + `wait` — fails bare.** `souji-census.sh:161` is `set -euo pipefail`; bare `wait` on a killed child aborts the script (exit 143), and even a plain `( )` returning 4 kills the outer shell. `wait … || rc=$?` and `if wait …; then/else` both work. Double-wait returns **0**, not 127.
+6. **Contract trap found: `137` is ambiguous.** A repo killed externally by SIGKILL is indistinguishable from the watchdog's escalation, so `error`-row attribution must come from a **sentinel written before the first signal**, tested after `rc=0`. With it: rc 137 and no sentinel → `census failed (rc=137)`, exit 1; sentinel → timeout row, exit 0.
+
+**End-to-end miniature passes the whole contract**: exit 0, ~2048 ms under a 2 s bound, healthy neighbours measured, timed-out repo as `<repo>\t0\t0\t0\t0\t\terror`, exactly one stderr line `souji-census: repo-timeout 2s <repo>`, zero residue; 40 repos in 392 ms with no leak; a TERM-ignoring repo escalated to SIGKILL at bound+2 s; L1's exact PATH-shim TOCTOU (guard sees `regular file`, shim swaps FIFO on `status`) cleared in 2.00 s with `procs still alive: []`.
+
+**Two source-anchored constraints the patch must not miss:** the timeout row needs `sanitize_field` (`:988-994`) or a tab in a repo path breaks the TSV, and `census_one`'s stderr must be replayed on the `rc=2`/nonzero paths (`guard_path`/`protected_fail` now `exit 2` inside the subshell) while suppressed on the timeout path. Every production git call is inside `census_one` (`:1000`–`:1280`); `list_repos` runs none, so one bound covers the whole hang surface.

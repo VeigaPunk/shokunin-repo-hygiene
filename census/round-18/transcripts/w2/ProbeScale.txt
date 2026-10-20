@@ -1,0 +1,308 @@
+# SoujiR18.ProbeScale (idle)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Attacks operability cost. ALLOWED-EXEC: in your clone at 5efb519 only: synthetic root with 200 tiny repos; wall time base b576341 census vs 5efb519 census (3 runs each, median); report per-repo overhead of the watchdog.
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: operability
+
+Report: write your scoped findings to .ufo/waves/round-18/w2/ProbeScale.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+I'll start by setting up the clone and inspecting the census tool at both revisions.
+→ bash(git clone --quiet --no-local /home/vgpnk/Projects/shokunin/souji-shokunin /var/tmp/souji-r18w2-ProbeScale/lane && git -…) ⇒ ok · 6 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 5efb519f00075d958c3d1109ef6fcb24c487eb87:tools/souji-census.sh…) ⇒ ok · 5 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeScale/lane && grep -n "setsid\|watchdog\|repo-timeout\|process group\|pgid\|kill -KILL\|ki…) ⇒ ok · 81 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeScale/lane && git log --oneline -3 && git diff --stat b5763415cc67ecff1e8fe56c58c39a6fb106…) ⇒ ok · 10 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18w2-ProbeScale/lane/tools/souji-census.sh:1440-1730) ⇒ ok · 297 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeScale/lane && sed -n '1,120p' tools/souji-census.sh) ⇒ ok · 121 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeScale/lane && grep -n "^census_one\|^prepare_census_tmp\|^list_repos" tools/souji-census.s…) ⇒ ok · 85 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeScale/lane && grep -n "REPO_TIMEOUT\|SOUJI_CENSUS_REPO_TIMEOUT" tools/souji-census.sh | he…) ⇒ ok · 20 lines
+
+## assistant
+
+→ bash(mkdir -p /var/tmp/souji-r18w2-ProbeScale/base/tools /var/tmp/souji-r18w2-ProbeScale/tmp && cd /var/tmp/souji-r18w2-Prob…) ⇒ ok · 3 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeScale/lane && sed -n '1304,1390p' tools/souji-census.sh | grep -n "count_worktrees\|newest…) ⇒ ok · 65 lines
+
+## assistant
+
+→ bash(set -e; R=/var/tmp/souji-r18w2-ProbeScale/fleet200; rm -rf "$R"; mkdir -p "$R"; export GIT_AUTHOR_NAME=t GIT_AUTHOR_EMA…) ⇒ ok · 6 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeScale && R=fleet200 && ./base/tools/souji-census.sh --root "$R" > base.tsv 2>base.err; ech…) ⇒ ok · 13 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeScale && run(){ local tag=$1; shift; local t0 t1; t0=$(date +%s%N); "$@" >/dev/null 2>/dev…) ⇒ ok · 9 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeScale && ls lane/census/round-18/live-fleet-pairs/ 2>/dev/null | head; echo ---; for f in …) ⇒ ok · 12 lines
+→ bash(set -e; R=/var/tmp/souji-r18w2-ProbeScale/fleet20; rm -rf "$R"; mkdir -p "$R"; export GIT_AUTHOR_NAME=t GIT_AUTHOR_EMAI…) ⇒ ok · 2 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeScale && strace -qq -f -c -e trace=clone,clone3,fork,vfork,execve -o strace-base.txt ./bas…) ⇒ ok · 17 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeScale && strace -qq -f -e trace=execve -o exec-new.txt ./lane/tools/souji-census.sh --root…) ⇒ ok · 16 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeScale && grep -c 'sleep 0\.1' lane/tools/souji-census.sh; grep -c 'sleep 1$\|sleep 1 ' lan…) ⇒ ok · 7 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeScale && mkdir -p mut && cp lane/tools/souji-census.sh mut/poll01.sh && sed -i 's/sleep 0\…) ⇒ ok · 3 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeScale && sed -e 's/^run_repo_with_watchdog() {/run_repo_with_watchdog_raw() {/' -e 's/^emi…) ⇒ error · 4 lines — sed: error opening input file 'mut/timed.sh': No such file or directory (os error 2)
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeScale && rm -f mut/timed.sh wd.log && cat > /var/tmp/souji-r18w2-ProbeScale/mk_timed.sed <…) ⇒ ok · 4 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeScale && rm -f wd.log && t0=$(date +%s%N); ./mut/timed.sh --root fleet20 > mut-out.tsv 2>m…) ⇒ ok · 13 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeScale && run(){ local tag=$1; shift; local t0 t1; t0=$(date +%s%N); "$@" >/dev/null 2>/dev…) ⇒ ok · 20 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeScale && rm -f wd200.log && sed -i 's|/var/tmp/souji-r18w2-ProbeScale/wd.log|/var/tmp/souj…) ⇒ error · 3 lines — (no output)
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeScale && ls -la mut/ | head; echo ---; wc -l mut/timed.sh 2>&1; grep -n 'wd' mut/timed.sh …) ⇒ ok · 18 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeScale && sed 's|souji-r18w2-ProbeScale/wd.log|souji-r18w2-ProbeScale/wd200.log|' mut/timed…) ⇒ ok · 4 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeScale && chmod +x mut/timed200.sh && rm -f wd200.log && t0=$(date +%s%N); ./mut/timed200.s…) ⇒ ok · 10 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeScale && tm(){ local tag=$1 bin=$2; local o; o=$( { TIMEFORMAT='%R %U %S'; time "$bin" --r…) ⇒ ok · 6 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeScale && cat > pgid-test.sh <<'EOF' #!/usr/bin/env bash set -m setsid bash -c 'sleep 30' j…) ⇒ ok · 11 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18w2-ProbeScale/lane/tools/souji-census.sh:2320-2450) ⇒ ok · 137 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeScale/lane && sed -n '/^prepare_census_tmp()/,/^}/p' tools/souji-census.sh; grep -n 'CENSU…) ⇒ ok · 13 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeScale/lane && git show --stat --oneline 5efb519f00075d958c3d1109ef6fcb24c487eb87 | head -2…) ⇒ ok · 19 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeScale/lane && git show 5efb519f00075d958c3d1109ef6fcb24c487eb87 -- tools/souji-census.sh |…) ⇒ ok · 3 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeScale/lane && grep -n -i "overhead\|wall\|slow\|second\|100ms\|timeout\|per repo\|per-repo…) ⇒ ok · 32 lines
+
+## assistant
+
+→ read(proc://bg_9069) ⇒ ok · 13 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeScale && grep -o 'execve("[^"]*"' exec-new.txt | sed 's|execve("||;s|"||' | xargs -n1 base…) ⇒ ok · 39 lines
+
+## assistant
+
+→ bash(ls /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/ 2>/dev/null; echo ---; ls /home/vgpnk/Projects/sho…) ⇒ ok · 55 lines
+→ read(proc://bg_9069) ⇒ ok · 17 lines
+
+## assistant
+
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -n -i "overhead\|twice\|two calls\|poll\|0\.1s\|sleep\|per repo…) ⇒ ok · 10 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeScale/lane && grep -n "sleep 0\.1\|state_path=\$(mktemp\|setsid bash -c\|kill -TERM -- \"-…) ⇒ ok · 19 lines
+
+## assistant
+
+→ read(proc://bg_9069) ⇒ ok · 21 lines
+
+## assistant
+
+→ wait({}) ⇒ ok · 47 lines
+
+## assistant
+
+→ bash(set -e; R=/var/tmp/souji-r18w2-ProbeScale/fleetmixed; rm -rf "$R"; mkdir -p "$R"; export GIT_AUTHOR_NAME=t GIT_AUTHOR_E…) ⇒ ok · 6 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeScale && tm(){ local tag=$1 bin=$2; local o; o=$( { TIMEFORMAT='%R'; time "$bin" --root fl…) ⇒ ok · 27 lines
+
+## assistant
+
+→ bash(set -e; R=/var/tmp/souji-r18w2-ProbeScale/fleetbig; rm -rf "$R"; mkdir -p "$R/repo-big"; cd "$R/repo-big"; git init -q …) ⇒ ok · 3 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeScale && tm(){ local tag=$1 bin=$2; local o; o=$( { TIMEFORMAT='%R'; time "$bin" --root fl…) ⇒ ok · 29 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeScale && ./lane/tools/souji-census.sh --root fleet200 >/dev/null 2>/dev/null & cpid=$!; ma…) ⇒ error · 3 lines — (no output)
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeScale && cat > sample-wd.sh <<'EOF' #!/usr/bin/env bash cd /var/tmp/souji-r18w2-ProbeScale…) ⇒ ok · 8 lines
+
+## assistant
+
+→ bash(ps -eo pid,ppid,pgid,sid,etimes,stat,args | grep '[s]ouji-census-watchdog'; echo "count=$(ps -eo args | grep -c '[s]ouj…) ⇒ ok · 27 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeScale && cat > sample-wd2.sh <<'EOF' #!/usr/bin/env bash cd /var/tmp/souji-r18w2-ProbeScal…) ⇒ ok · 9 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeScale && cat > sample-wd3.sh <<'EOF' #!/usr/bin/env bash cd /var/tmp/souji-r18w2-ProbeScal…) ⇒ ok · 8 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeScale && cat > sample-wd4.sh <<'EOF' #!/usr/bin/env bash cd /var/tmp/souji-r18w2-ProbeScal…) ⇒ ok · 8 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeScale && cat > mk_wdprobe.sed <<'EOF' s|^ watchdog=\$!$| watchdog=$!\n _st=$(cat /proc/$wa…) ⇒ ok · 4 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeScale && cp lane/tools/souji-census.sh mut/wdprobe.sh && chmod +x mut/wdprobe.sh && grep -…) ⇒ ok · 3 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18w2-ProbeScale/mut/wdprobe.sh:1498-1530) ⇒ ok · 39 lines
+
+## assistant
+
+→ edit(/var/tmp/souji-r18w2-ProbeScale/mut/wdprobe.sh) ⇒ ok · 10 lines
+
+## assistant
+
+→ edit(/var/tmp/souji-r18w2-ProbeScale/mut/wdprobe.sh) ⇒ ok · 9 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeScale && bash -n mut/wdprobe.sh && rm -f wdprobe.log && ./mut/wdprobe.sh --root fleet20 >/…) ⇒ ok · 13 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeScale && cp lane/tools/souji-census.sh mut/poll_hot.sh && chmod +x mut/poll_hot.sh && grep…) ⇒ ok · 10 lines
+
+## assistant
+
+→ edit(/var/tmp/souji-r18w2-ProbeScale/mut/poll_hot.sh) ⇒ ok · 6 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeScale && ./mut/poll_hot.sh --root fleet200 > hot.tsv 2>hot.err; echo "rc=$? lines=$(wc -l …) ⇒ ok · 4 lines
+
+## assistant
+
+→ wait({}) ⇒ ok · 36 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeScale && echo "base setsid count: $(git -C lane show b5763415cc67ecff1e8fe56c58c39a6fb106d…) ⇒ ok · 6 lines
+
+## assistant
+
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/ProbeScale.md) ⇒ ok · 1 line
+
+## assistant
+
+→ edit(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/ProbeScale.md) ⇒ ok · 15 lines
+
+## assistant
+
+→ edit(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/ProbeScale.md) ⇒ ok · 10 lines
+
+## assistant
+
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/ProbeScale.md:118-160) ⇒ ok · 56 lines
+
+## assistant
+
+→ edit(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/ProbeScale.md) ⇒ ok · 12 lines
+
+## assistant
+
+→ bash(rm -rf /var/tmp/souji-r18w2-ProbeScale && ls -d /var/tmp/souji-r18w2-ProbeScale 2>&1 | head -1; head -3 /home/vgpnk/Pro…) ⇒ ok · 7 lines
+
+## assistant
+
+STATUS: DONE — C1's per-repo watchdog is correct and clean, but it prices every repository at two 100 ms poll periods: +88 % wall (+19.8 s) on 200 repos, 15.4 s of it from one `sleep 0.1` line.
+
+Report written to `/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/ProbeScale.md` (191 lines). Clone and all synthetic fleets deleted; no lane or fleet file touched.
+
+## Attacked claim
+C1 operability, `tools/souji-census.sh` at 5efb519: each repository (list-phase guard + `census_one`) runs in its own process group under `--repo-timeout`. The claim bounds hangs; I measured what the bounding costs, against b576341 (0 `setsid`).
+
+## Measured (200 × 2-file repos, byte-identical TSV both arms, 3 interleaved runs, median)
+- base b576341 **22.464 s** (112 ms/repo) → tip **42.264 s** (211 ms/repo): **+19.800 s, +88 %, +99 ms/repo**.
+- Instrumented tip: **400 calls (2/repo), every one 102–104 ms**; sum 41,202 ms of a 42,102 ms run — the census is pinned to the poll at `:1517`.
+- Size-independent: 20 tiny repos +117 ms/repo (2.26×); 5 × 500-file repos +98 ms/repo; one 20,031-file repo **+101 ms** (guard call pays the full period, census call absorbs it).
+- Fork cost: execve 861 → 1,843 on 20 repos (+24.6 per guarded process, +49/repo).
+- **Hygiene is clean**: 40/40 watchdogs killed (rc 0), max 1 concurrent, 0 survivors after a 200-repo run — the host's stuck censuses are older r16/r17 fixtures.
+- Hot-path mutant (`:1517` only, `0.1`→`0.01`, all timeout sleeps untouched, identical TSV): **42.0 s → 26.6 s**, i.e. 78 % of the regression; residual +18 % is fork/exec.
+
+## Verdict
+Holds on the claim (isolation/reaping real), **fails on cost**: a fixed 2 × 100 ms floor per repo, linear in fleet size. Live 21-repo fleet projection ~+2.1 s (~+19 %, 11 s → ~13 s) — `[INFERENCE]`, live census not run per contract.
+
+## Smallest fix
+Make only the hot poll adaptive (10 ms for the first ~20 iterations, then 100 ms), `polls` added to the `:1471` local list. Cannot affect the timeout row, diagnostic, or the selftest's 6 s bound.
+
+Disclosed deviation: one early pgid reproduction used `pkill -f jsem-test-wd` on a child I had started instead of a recorded pid; it matched only my own test process. No tool installs; no `jj`; no git write.

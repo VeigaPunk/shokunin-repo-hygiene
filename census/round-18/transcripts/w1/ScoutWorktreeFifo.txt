@@ -1,0 +1,171 @@
+# SoujiR18.ScoutWorktreeFifo-5 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Is there a STATIC (no race) census hang? ALLOWED-EXEC: under /var/tmp/souji-r18-ScoutWorktreeFifo/ build a root with repos a, b, c (one tracked file each); in b put a FIFO at the work-tree `.gitignore` (case 1), then `.gitattributes` (case 2), then a nested dir's `.gitignore` (case 3), then `.git/info/exclude` replaced AFTER creation by nothing special (control); run `timeout -k 2 20 bash <base census> --root <root>` where the base census is `git -C /home/vgpnk/Projects/shokunin/souji-shokunin show b5763415cc67ecff1e8fe56c58c39a6fb106d7a3:tools/souji-census.sh > /var/tmp/souji-r18-ScoutWorktreeFifo/census.sh`, with HOME pointed at an empty /var/tmp dir; record rc, rows, stderr and leftover processes (kill only yours). This tells L1 whether the C1 bug is a race only or also a static hang.
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: operability
+
+Report: write your scoped findings to .ufo/waves/round-18/w1/ScoutWorktreeFifo.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+→ bash(L=/home/vgpnk/Projects/shokunin/souji-shokunin; W=/var/tmp/souji-r18-ScoutWorktreeFifo; rm -rf $W; mkdir -p $W/home $W/…) ⇒ ok · 4 lines
+→ bash(git --version; ulimit -n; cat /proc/sys/fs/pipe-max-size 2>/dev/null; timeout --version | head -1) ⇒ ok · 10 lines
+
+## assistant
+
+→ bash(grep -n 'guard_git_files\|census_one\|emit_census\|repo-timeout\|SOUJI_CENSUS_REPO_TIMEOUT\|--repo-timeout' /var/tmp/so…) ⇒ ok · 13 lines
+→ read(/var/tmp/souji-r18-ScoutWorktreeFifo/census.sh:520-600) ⇒ ok · 87 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-ScoutWorktreeFifo/census.sh:1255-1330) ⇒ ok · 86 lines
+→ read(/var/tmp/souji-r18-ScoutWorktreeFifo/census.sh:1390-1425) ⇒ ok · 42 lines
+→ read(/var/tmp/souji-r18-ScoutWorktreeFifo/census.sh:1330-1394) ⇒ ok · 75 lines
+
+## assistant
+
+→ bash(grep -n '^count_dirty\|^count_unpushed\|^count_worktrees\|^scratch_bytes\|^newest_mtime\|--root)\|repo-timeout\|REPO_TI…) ⇒ ok · 36 lines
+→ bash(sed -n '1900,2072p' /var/tmp/souji-r18-ScoutWorktreeFifo/census.sh) ⇒ ok · 176 lines
+
+## assistant
+
+→ bash(sed -n '995,1075p;1100,1180p' /var/tmp/souji-r18-ScoutWorktreeFifo/census.sh) ⇒ ok · 163 lines
+→ bash(head -5 /var/tmp/souji-r18-ScoutWorktreeFifo/census.sh; bash --version | head -1; ls -l /bin/bash) ⇒ ok · 10 lines
+
+## assistant
+
+→ write(/var/tmp/souji-r18-ScoutWorktreeFifo/run-arms.sh) ⇒ ok · 2 lines
+
+## assistant
+
+→ bash(bash /var/tmp/souji-r18-ScoutWorktreeFifo/run-arms.sh 2>&1) ⇒ error · 7 lines — == host ==
+
+## assistant
+
+→ edit(/var/tmp/souji-r18-ScoutWorktreeFifo/run-arms.sh) ⇒ ok · 9 lines
+
+## assistant
+
+→ bash(bash /var/tmp/souji-r18-ScoutWorktreeFifo/run-arms.sh 2>&1) ⇒ ok · 108 lines
+
+## assistant
+
+Static hang confirmed. Now narrowing the surface: tracked-file FIFO, untracked-dir FIFO, and guard sanity on gitdir files, plus guard-coverage grep.
+→ write(/var/tmp/souji-r18-ScoutWorktreeFifo/run-extra.sh) ⇒ ok · 2 lines
+→ bash(grep -n 'gitignore\|gitattributes\|worktree.*guard\|guard_git_files\|guard_git_surface' /var/tmp/souji-r18-ScoutWorktre…) ⇒ ok · 16 lines
+
+## assistant
+
+→ bash(bash /var/tmp/souji-r18-ScoutWorktreeFifo/run-extra.sh 2>&1) ⇒ ok · 73 lines
+→ bash(sed -n '840,995p' /var/tmp/souji-r18-ScoutWorktreeFifo/census.sh) ⇒ ok · 159 lines
+
+## assistant
+
+Extra probes complete: tracked-path FIFO is safe, but an untracked dir's `.gitignore` FIFO also hangs. Two final probes: XDG global ignore FIFO (should be neutered) and `set -m` stderr noise for the C1 watchdog design.
+→ bash(W=/var/tmp/souji-r18-ScoutWorktreeFifo; H2=$W/home2; rm -rf $H2 $W/arm-X-xdg; mkdir -p $H2/.config/git; cp -a $W/arm-D-…) ⇒ ok · 9 lines
+→ bash(W=/var/tmp/souji-r18-ScoutWorktreeFifo; cat >$W/jobtest.sh <<'EOF' set -m sleep 30 >"$W/jt.out" 2>"$W/jt.child.err" & p…) ⇒ ok · 11 lines
+
+## assistant
+
+→ write(/var/tmp/souji-r18-ScoutWorktreeFifo/jobtest.sh) ⇒ ok · 1 line
+
+## assistant
+
+→ bash(W=/var/tmp/souji-r18-ScoutWorktreeFifo; bash $W/jobtest.sh 2>$W/jt.parent.err; echo "script-rc=$?"; echo '-- parent std…) ⇒ ok · 8 lines
+
+## assistant
+
+Job control is clean: `set -m` yields a distinct pgid and group-TERM leaves no stderr job notice. Now pinning exact line evidence and the report directory.
+→ bash(C=/var/tmp/souji-r18-ScoutWorktreeFifo/census.sh; grep -n 'for rel in config HEAD\|^count_dirty\|status --porcelain --i…) ⇒ ok · 13 lines
+→ bash(ps -eo pid,ppid,pgid,stat,wchan:30,args | grep -E 'souji-r18-ScoutWorktreeFifo|jt\.out|sleep 30' | grep -v grep || echo…) ⇒ ok · 6 lines
+
+## assistant
+
+All evidence gathered. Writing the report now.
+→ bash(sha256sum /var/tmp/souji-r18-ScoutWorktreeFifo/census.sh; stat -c '%s bytes' /var/tmp/souji-r18-ScoutWorktreeFifo/censu…) ⇒ ok · 4 lines
+
+## assistant
+
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/ScoutWorktreeFifo.md) ⇒ ok · 1 line
+
+## assistant
+
+Verifying the report landed in the lane and preserving harness source before cleanup.
+→ bash(ls -l /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/ScoutWorktreeFifo.md; sha256sum /home/vgpnk/P…) ⇒ ok · 95 lines
+
+## assistant
+
+→ edit(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/ScoutWorktreeFifo.md) ⇒ ok · 15 lines
+
+## assistant
+
+Cleaning up the workspace and confirming final state.
+→ bash(W=/var/tmp/souji-r18-ScoutWorktreeFifo; for p in /proc/[0-9]*; do c=$(readlink "$p/cwd" 2>/dev/null) || continue; case …) ⇒ ok · 7 lines
+
+## assistant
+
+→ read(skill://godspeed) ⇒ ok · 18 lines
+
+## assistant
+
+STATUS: DONE — C1's hang is not race-only: a *static* FIFO at a work-tree `.gitignore`/`.gitattributes` hangs `souji-census.sh` deterministically with zero rows.
+
+**Answer: yes, there is a static (no-race) hang.** FIFOs created before the census starts, no shim, no swap:
+
+| static setup (repo `b`) | census rc* | rows | blocked |
+|---|---|---|---|
+| clean fleet (control) | 0 | 3 | none |
+| `b/.gitignore` = FIFO | **124** | **0** | `git status` in `wait_for_partner` |
+| `b/.gitattributes` = FIFO | **124** | **0** | same |
+| `b/sub/.gitignore` = FIFO | **124** | **0** | same |
+| `b/untracked-dir/.gitignore` = FIFO (no tracked files there) | **124** | **0** | same |
+| `a/.gitignore` = FIFO (first sorted repo) | **124** | **0** | same |
+| tracked `b/tracked.txt` = FIFO | 0 | 3 (b `dirty=1`) | none |
+| `.git/info/attributes` = FIFO | 0 | 3 (b soft `error`) | none |
+| `.git/info/exclude`, `.git/index`, `.git/config` = FIFO | 2 | 0 | none (guard refuses) |
+| XDG `$HOME/.config/git/{ignore,attributes}` = FIFO | 0 | 3 | none |
+
+\*external `timeout -k 2 20`; base census has no bound of its own (`repo-timeout` absent, script sha256 `006b9823…59e9fd`, REV b576341).
+
+**Mechanism / evidence**
+- Blocked argv is exactly `count_dirty`'s status call: `count_dirty()` `tools/souji-census.sh:1104`, `git status --porcelain …` `:1124`, called at `:1291`; rows are buffered until `emit_census` finishes (`:1394-1416`), so healthy neighbours' rows are lost.
+- `wait_for_partner` is kernel `fifo_open()`: git blocks in `open(2)`, nobody writes.
+- The guard never looks at the work tree: `guard_git_files` enumerates only gitdir names (`:548`), `guard_git_surface` (`:902-981`) walks gitdir/admin worktrees only; `grep -n gitignore tools/souji-census.sh` = no matches, `.gitattributes` likewise.
+- Pure-git attribution: `git -C <repo> status --porcelain` under `timeout 5` → rc 124 for every FIFO arm above; rc 0 for the tracked-path FIFO.
+- Containment: GNU `timeout`'s group TERM cleared every blocked tree — ps + `/proc/*/cwd` sweep found 0 survivors, so the C1 fixture's killpg leaves 0 blocked processes; `fifo_open` is interruptible, SIGKILL fallback not needed for this class.
+- `set -m` fork check (bash 5.3.20): child pgid == `$!`, group TERM → wait rc 143, **no** stderr job notice, so the watchdog won't pollute the `souji-census: repo-timeout …` stderr contract.
+
+**Verdict:** C1 premise "race only" is false; the `.git/info/attributes` race is one member of a wider static class. The mandated watchdog restores fleet operability but at default 600 s still parks a blocked process per poisoned repo. **Smallest complement:** before `count_dirty` (`:1291`), lstat-match `.gitignore`/`.gitattributes` under the repo (`find -P … -name … \( -type p -o -type l \)`, then `stat -L` to catch symlink→FIFO) and degrade that repo to the existing soft `error` row; cost is per-name stats, and it can fold into the existing `newest_mtime` walk (`:1156`) if reordered before `count_dirty`.
+
+**Remaining unknowns:** live fleet not swept for work-tree FIFOs (probe rule forbids tree-wide searches); linked-worktree static FIFO unprobed (same dir.c reader, expected identical); `core.excludesFile`/`attributesFile` → FIFO is code-read only (`status_info_file` `:1050-1054` → unverifiable). No tools installed; `/var/tmp/souji-r18-ScoutWorktreeFifo` deleted, no processes reference it.
+
+Report: `/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/ScoutWorktreeFifo.md` (harness sources in Appendices A/B).

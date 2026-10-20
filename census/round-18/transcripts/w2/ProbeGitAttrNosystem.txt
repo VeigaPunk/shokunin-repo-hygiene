@@ -1,0 +1,257 @@
+# SoujiR18.ProbeGitAttrNosystem (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Attack an open gap named by wave 1 (ScoutGitOpens: census lacks GIT_ATTR_NOSYSTEM=1). ALLOWED-EXEC: in your clone at 5efb519 only: strace one census status/check-attr call on a synthetic repo and show whether /etc/gitattributes is opened; is it a protected-namespace or FIFO risk under the r18 bound (a hang there is now bounded — confirm with a synthetic only if /etc is not writable: reason only)?
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: operability
+
+Report: write your scoped findings to .ufo/waves/round-18/w2/ProbeGitAttrNosystem.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+I'll start by setting up my clone and reading the relevant source files.
+→ bash(git clone --quiet --no-local /home/vgpnk/Projects/shokunin/souji-shokunin /var/tmp/souji-r18w2-ProbeGitAttrNosystem/lan…) ⇒ ok · 4 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 5efb519f00075d958c3d1109ef6fcb24c487eb87:tools/souji-census.sh…) ⇒ ok · 4 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeGitAttrNosystem/lane && grep -n 'GIT_ATTR\|NOSYSTEM\|GIT_CONFIG\|export GIT\|env -i\|gitat…) ⇒ ok · 11 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeGitAttrNosystem/lane && grep -n 'git ' tools/souji-census.sh | head -60) ⇒ ok · 61 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeGitAttrNosystem/lane && sed -n '100,215p' tools/souji-census.sh) ⇒ ok · 117 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeGitAttrNosystem/lane && sed -n '1055,1200p' tools/souji-census.sh) ⇒ ok · 149 lines
+
+## assistant
+
+→ bash(command -v strace; strace -V 2>/dev/null | head -1; git --version; ls -l /etc/gitattributes /usr/etc/gitattributes 2>&1…) ⇒ ok · 8 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeGitAttrNosystem/lane && grep -rn 'ATTR_NOSYSTEM\|/etc/gitattributes\|git_attr_system\|syst…) ⇒ ok · 3 lines
+
+## assistant
+
+No `GIT_ATTR_NOSYSTEM` anywhere and no `/etc/gitattributes` on this host. Building the synthetic repo and strace harness.
+→ bash(set -e B=/var/tmp/souji-r18w2-ProbeGitAttrNosystem mkdir -p "$B/synth" "$B/home" cd "$B/synth" git init -q -b main . pr…) ⇒ ok · 3 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeGitAttrNosystem/lane && sed -n '1160,1180p' tools/souji-census.sh && echo ---- && grep -n …) ⇒ ok · 51 lines
+
+## assistant
+
+→ bash(set -e B=/var/tmp/souji-r18w2-ProbeGitAttrNosystem ENVV="PATH=/usr/bin:/bin HOME=$B/home GIT_OPTIONAL_LOCKS=0 GIT_CONFI…) ⇒ ok · 9 lines
+
+## assistant
+
+`/etc/gitattributes` **is** opened by the census status call; `GIT_ATTR_NOSYSTEM=1` suppresses it. Now the check-attr path and the timeout machinery.
+→ bash(set -e B=/var/tmp/souji-r18w2-ProbeGitAttrNosystem ENVV="PATH=/usr/bin:/bin HOME=$B/home GIT_OPTIONAL_LOCKS=0 GIT_CONFI…) ⇒ ok · 6 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeGitAttrNosystem/lane && sed -n '1455,1530p' tools/souji-census.sh && echo '=====' && sed -…) ⇒ ok · 201 lines
+
+## assistant
+
+Both `status` and `check-attr` read `/etc/gitattributes`. Now testing content influence and FIFO behavior in an ephemeral mount namespace (no host `/etc` change).
+→ bash(sudo -n true && echo SUDO_OK; unshare --version | head -1; mount --version | head -1; ls -ld /etc) ⇒ ok · 5 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeGitAttrNosystem/lane && sed -n '1304,1345p' tools/souji-census.sh; echo ----; grep -n 'gua…) ⇒ ok · 77 lines
+
+## assistant
+
+sudo + unshare work. Writing the namespace test harness.
+→ write(/var/tmp/souji-r18w2-ProbeGitAttrNosystem/ns-test.sh) ⇒ ok · 2 lines
+
+## assistant
+
+→ bash(sudo unshare --mount --propagation private bash /var/tmp/souji-r18w2-ProbeGitAttrNosystem/ns-test.sh 2>&1 | tail -80) ⇒ ok · 74 lines
+
+## assistant
+
+All four behaviors confirmed. Now the silent-measurement variant (non-filter attribute flipping dirty→clean) and fixture coverage.
+→ write(/var/tmp/souji-r18w2-ProbeGitAttrNosystem/ns-test2.sh) ⇒ ok · 2 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeGitAttrNosystem/lane && grep -n 'GIT_CONFIG_NOSYSTEM\|GIT_ATTR\|env -i\|export GIT' tools/…) ⇒ ok · 17 lines
+
+## assistant
+
+→ bash(sudo unshare --mount --propagation private bash /var/tmp/souji-r18w2-ProbeGitAttrNosystem/ns-test2.sh 2>&1 | tail -25) ⇒ ok · 13 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeGitAttrNosystem/lane && sed -n '95,130p' tests/fixtures/r17-census-hygiene.py; echo '=====…) ⇒ ok · 125 lines
+
+## assistant
+
+Phase 4's eol case didn't flip (dirty either way) — validating the mechanism before claiming it.
+→ bash(set -u B=/var/tmp/souji-r18w2-ProbeGitAttrNosystem printf '*.txt text eol=crlf\n' > "$B/attrs-real" cd "$B/fleet4/repo"…) ⇒ error · 18 lines — plain:
+
+## assistant
+
+→ bash(set -u B=/var/tmp/souji-r18w2-ProbeGitAttrNosystem printf '*.txt text eol=crlf\n' > "$B/attrs-real"; chmod 644 "$B/attr…) ⇒ ok · 7 lines
+
+## assistant
+
+→ bash(set -u B=/var/tmp/souji-r18w2-ProbeGitAttrNosystem E="sudo env -i PATH=/usr/bin:/bin HOME=$B/home GIT_CONFIG_GLOBAL=/de…) ⇒ error · 4 lines — diff rc=0
+
+## assistant
+
+Now verifying the one-line candidate fix on a mutant copy (in `/var/tmp` only) against the FIFO and the filter guard.
+→ bash(set -e B=/var/tmp/souji-r18w2-ProbeGitAttrNosystem mkdir -p "$B/mutant" cp "$B/lane/tools/souji-census.sh" "$B/mutant/s…) ⇒ ok · 13 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeGitAttrNosystem/lane && grep -n 'GIT_ENV\|GIT_ATTR\|compgen -v GIT_' tests/fixtures/r17-ce…) ⇒ ok · 13 lines
+
+## assistant
+
+→ write(/var/tmp/souji-r18w2-ProbeGitAttrNosystem/ns-test3.sh) ⇒ ok · 2 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeGitAttrNosystem/lane && grep -n 'add_argument\|def main\|--census' tests/fixtures/r18-cens…) ⇒ ok · 7 lines
+
+## assistant
+
+→ bash(sudo unshare --mount --propagation private bash /var/tmp/souji-r18w2-ProbeGitAttrNosystem/ns-test3.sh 2>&1 | tail -40) ⇒ ok · 21 lines
+
+## assistant
+
+Mutant behaves exactly as expected on all three hazards. Checking the fixture harness for a non-regression run.
+→ bash(cd /var/tmp/souji-r18w2-ProbeGitAttrNosystem/lane && sed -n '1232,1275p' tests/fixtures/r18-census-bounded.py; echo '==…) ⇒ ok · 57 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeGitAttrNosystem/lane && sed -n '260,300p' tests/fixtures/r17-census-hygiene.py) ⇒ ok · 44 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeGitAttrNosystem/lane && timeout 300 python3 tests/fixtures/r18-census-bounded.py --census …) ⇒ ok · 1 line
+
+## assistant
+
+While the fixture runs, gathering precise citations and blast radius.
+→ bash(cd /var/tmp/souji-r18w2-ProbeGitAttrNosystem/lane && echo '=== B4 attributes case ==='; sed -n '920,1000p' tests/fixtur…) ⇒ ok · 85 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeGitAttrNosystem/lane && grep -rn 'check-attr\|status --porcelain' tools/*.sh tools/*.py 2>…) ⇒ ok · 24 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeGitAttrNosystem/lane && ls tools/souji-*.py tools/souji-*.sh 2>/dev/null; echo '=== shippe…) ⇒ ok · 79 lines
+→ bash(zgrep -l 'GIT_ATTR_NOSYSTEM' /usr/share/man/man1/git*.gz /usr/share/man/man5/git*.gz 2>/dev/null | head; echo ---; zcat…) ⇒ ok · 3 lines
+
+[async-result] timeout 300 python3 tests/fixtures/r18-census-bounded.py --census /var/tmp/souji-r18w2-ProbeGitAttrNosystem/mutant/so...
+
+## assistant
+
+Mutant passes B1–B8 8/0 — no regression to the r18 bound. Now quantifying fleet-wide cost with multiple repos, and finishing citations.
+→ write(/var/tmp/souji-r18w2-ProbeGitAttrNosystem/ns-test4.sh) ⇒ ok · 2 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeGitAttrNosystem/lane && echo '=== verify.sh env'; grep -n 'GIT_CONFIG_NOSYSTEM\|GIT_OPTION…) ⇒ ok · 14 lines
+
+## assistant
+
+→ bash(sudo unshare --mount --propagation private bash /var/tmp/souji-r18w2-ProbeGitAttrNosystem/ns-test4.sh 2>&1 | tail -20) ⇒ ok · 1 line
+→ bash(zgrep -n -i 'nosystem' /usr/share/man/man1/git.1.gz | head -3; echo ---; zcat /usr/share/man/man1/git.1.gz | grep -n -i…) ⇒ ok · 5 lines
+
+## assistant
+
+The phase-6 harness itself hung: I created the FIFO **before** `git add -A`, and `git add` also consults attributes. Correcting the ordering.
+→ read(proc://bg_9003) ⇒ ok · 1 line
+→ bash(ps -eo pid,pgid,stat,args | grep -E 'fleet6|ns-test4' | grep -v grep || echo "no leftovers from my harness") ⇒ ok · 6 lines
+
+## assistant
+
+→ bash(sudo kill -TERM -- -3926844 2>/dev/null; sleep 1; sudo kill -KILL -- -3926844 2>/dev/null; sleep 0.5; ps -eo pid,pgid,s…) ⇒ ok · 5 lines
+
+[async-result] sudo unshare --mount --propagation private bash /var/tmp/souji-r18w2-ProbeGitAttrNosystem/ns-test4.sh 2>&1 | tail -20
+
+## assistant
+
+→ write(/var/tmp/souji-r18w2-ProbeGitAttrNosystem/ns-test4.sh) ⇒ ok · 1 line
+
+## assistant
+
+→ bash(sudo unshare --mount --propagation private bash /var/tmp/souji-r18w2-ProbeGitAttrNosystem/ns-test4.sh 2>&1 | tail -20) ⇒ ok · 13 lines
+
+## assistant
+
+Base cost measured: 12.4 s for 3 repos at `--repo-timeout 2` (≈4.1 s/repo) vs 0.6 s fixed. Running the full selftest on the mutant copy for non-regression.
+→ bash(cd /var/tmp/souji-r18w2-ProbeGitAttrNosystem/lane && cp /var/tmp/souji-r18w2-ProbeGitAttrNosystem/mutant/souji-census.s…) ⇒ ok · 2 lines
+→ bash(B=/var/tmp/souji-r18w2-ProbeGitAttrNosystem; sed -n '50,60p' "$B/trace-status-A.txt"; echo '--- check-attr A'; sed -n '…) ⇒ ok · 26 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeGitAttrNosystem/lane && sed -n '300,345p' tests/fixtures/r17-census-hygiene.py) ⇒ ok · 47 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeGitAttrNosystem/lane && grep -n 'protected_reason_input()\|PROTECTED\|protected root\|prot…) ⇒ ok · 28 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeGitAttrNosystem/lane && grep -n 'ENV' tests/fixtures/r17-census-hygiene.py | head -20) ⇒ ok · 5 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeGitAttrNosystem/lane && sed -n '360,420p' tests/fixtures/r17-census-hygiene.py) ⇒ ok · 64 lines
+
+## assistant
+
+→ bash(B=/var/tmp/souji-r18w2-ProbeGitAttrNosystem; tail -6 "$B/selftest-mutant.out" 2>/dev/null; echo "--- lines: $(wc -l < "…) ⇒ error · 11 lines — PASS census_one protected refusal remains exit 2
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeGitAttrNosystem/lane && git show 5efb519:tools/souji-census.sh | sha256sum; sha256sum tool…) ⇒ ok · 7 lines
+→ bash(B=/var/tmp/souji-r18w2-ProbeGitAttrNosystem; echo '=== p6 base stderr ==='; cat "$B/ns/p6-base.err"; echo '=== p1 censu…) ⇒ ok · 16 lines
+
+## assistant
+
+All evidence collected. Writing the scoped report.
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/ProbeGitAttrNosystem.md) ⇒ ok · 1 line
+
+## assistant
+
+→ bash(head -3 /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/ProbeGitAttrNosystem.md; echo "---"; ps -eo…) ⇒ ok · 6 lines
+
+## assistant
+
+→ bash(grep -n 'soji-census\|soji-' /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/ProbeGitAttrNosystem.m…) ⇒ ok · 2 lines
+
+## assistant
+
+→ bash(grep -n 'fleet3 --repo-timeout\|census.sh --root' /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/P…) ⇒ ok · 2 lines
+
+## assistant
+
+Found it (the line also contained `souji-census:` later, which my filter dropped). Fixing.
+→ edit(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/ProbeGitAttrNosystem.md) ⇒ ok · 7 lines
+
+## assistant
+
+→ bash(rm -rf /var/tmp/souji-r18w2-ProbeGitAttrNosystem && ls -d /var/tmp/souji-r18w2-ProbeGitAttrNosystem 2>&1; echo "cleanup…) ⇒ ok · 235 lines
+
+## assistant
+
+Root-owned artifacts from the namespace; removing with sudo.
+→ bash(sudo rm -rf /var/tmp/souji-r18w2-ProbeGitAttrNosystem; ls -d /var/tmp/souji-r18w2-ProbeGitAttrNosystem 2>&1 || echo "wo…) ⇒ ok · 4 lines
+
+## assistant
+
+STATUS: DONE — gap confirmed, bounded, and fix verified. Report at `/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/ProbeGitAttrNosystem.md`.
+
+**Attacked gap (wave-1 ScoutGitOpens): `tools/souji-census.sh` lacks `GIT_ATTR_NOSYSTEM=1`.**
+
+Observed, on a synthetic repo under the exact census env (`:189-200`) and status argv (`:1165-1172`):
+- `openat(AT_FDCWD, "/etc/gitattributes", O_RDONLY) = -1 ENOENT` appears between the worktree file read and `core.attributesFile` (`/dev/null`), then `.gitattributes` (O_NOFOLLOW) and `.git/info/attributes`. The guard lookup `check-attr` (`:1128-1135`) opens it too. Adding `GIT_ATTR_NOSYSTEM=1` removes that open from both. `-c core.attributesFile=…` overrides only the global file; `GIT_CONFIG_NOSYSTEM` is not a substitute.
+- FIFO hazard (ephemeral private mount namespace over `/etc`; host untouched): direct status hangs (rc 124 under `timeout 4`; rc 0 with `GIT_ATTR_NOSYSTEM=1`). `--repo-timeout 2` bounds it: rc 0, row `<repo>\t0\t0\t0\t0\t\terror`, stderr `repo-timeout 2s <repo>`, 4 s/repo; 3-repo fleet 12.413 s vs 0.647 s fixed — i.e. the full bound per repo (≈602 s/repo at the default 600), so C1's bound holds but a host FIFO stalls a fleet at ~10 min/repo.
+- Operator cannot mitigate: `:187` clears every inherited `GIT_*`, including `GIT_ATTR_NOSYSTEM`; census invoked with it in the environment still timed out.
+- Fail-closed guard is symmetric: a regular `/etc` file binding `* filter=evil` to a repo-configured driver made direct status run the driver, while census emitted `status-skipped: filter-driver-bound` and never ran it (`check-attr` sees the same stack). Post-fix both sides are blind consistently (dirty measured, no driver). `/etc` symlinks are followed (no O_NOFOLLOW) — root-only defense-in-depth gap, not repo-escapable; `/etc` is not a protected root.
+- No test pins it: `r18-census-bounded.py:172,363`, `r17-census-hygiene.py:105` omit the variable; B4 covers only a work-tree `.gitattributes` FIFO.
+- Not claimed: `*.txt text eol=crlf` from `/etc` did **not** change the dirty count in my test, so no count-corruption claim.
+
+**Verdict: partial** — boundedness holds; the file-open/model gap is real.
+
+**Smallest fix (mutant verified, sha256 `eb916efc…f077f8`, one line at `:191`):** `export … GIT_TERMINAL_PROMPT=0 GIT_ATTR_NOSYSTEM=1`, plus a header note and a shim assertion (unprivileged fixtures cannot create `/etc/gitattributes`). Mutant: B1–B8 8/0, selftest 62/0, no `/etc/gitattributes` open, in-tree filter binding still caught.
+
+No tools installed; workspace and clone deleted, no processes left from my run.

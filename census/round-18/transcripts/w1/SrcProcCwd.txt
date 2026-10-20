@@ -1,0 +1,236 @@
+# SoujiR18.SrcProcCwd-5 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Source item (frontier step). Open https://man7.org/linux/man-pages/man5/proc_pid_cwd.5.html now (record the exact URL fetched, access date 2026-10-20, version/last-updated line if served) and extract the cwd symbolic link and the ' (deleted)' annotation for unlinked targets (check proc_pid_exe.5 / proc_pid_fd.5 if the wording lives there). Return one draft SOURCES.md row in the shape of /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/SOURCES.md (read its header and rows S051–S063 for the column contract) with a verbatim located quote of ≤25 words (section/anchor, `wc -w` count), what it teaches for souji r18, and what it does NOT establish. Never paraphrase inside the quote.
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: operability
+
+Report: write your scoped findings to .ufo/waves/round-18/w1/SrcProcCwd.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+I'll start by fetching the man page and reading the SOURCES.md column contract in parallel.
+→ read(https://man7.org/linux/man-pages/man5/proc_pid_cwd.5.html) ⇒ ok · 89 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/corpus/SOURCES.md:1-40) ⇒ ok · 50 lines
+→ grep(^\| *S0(5[1-9]|6[0-3]) @ /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/SOURCES.md) ⇒ ok · 19 lines
+
+## assistant
+
+proc_pid_cwd(5) lacks the `(deleted)` wording — checking the sibling pages and the exact row cells in parallel.
+→ read(https://man7.org/linux/man-pages/man5/proc_pid_exe.5.html) ⇒ ok · 105 lines
+→ read(https://man7.org/linux/man-pages/man5/proc_pid_fd.5.html) ⇒ ok · 160 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/corpus/SOURCES.md:78-79:raw) ⇒ ok · 4 lines
+
+## assistant
+
+`proc_pid_exe(5)` carries the ` (deleted)` rule; `proc_pid_cwd(5)` does not. Checking whether `proc(5)` states it for `cwd`/`fd` — grep the served HTML directly.
+→ grep(\(deleted\) @ https://man7.org/linux/man-pages/man5/proc.5.html) ⇒ ok · 1 line
+→ grep(symbolic link to the current working directory|/proc/pid/cwd @ https://man7.org/linux/man-pages/man5/proc.5.html) ⇒ ok · 1 line
+
+## assistant
+
+→ grep(deleted @ https://man7.org/linux/man-pages/man5/proc_pid_exe.5.html:raw) ⇒ ok · 5 lines
+→ read(https://man7.org/linux/man-pages/man5/proc.5.html:1-12) ⇒ ok · 17 lines
+→ bash(printf '%s\n' "If the pathname has been unlinked, the symbolic link will contain the string ' (deleted)' appended to th…) ⇒ ok · 2 lines
+
+## assistant
+
+proc(5) fetch works but grep there is unreliable — verifying absence on the small cwd page and cross-checking the kernel `d_path` implementation.
+→ grep(deleted @ https://man7.org/linux/man-pages/man5/proc_pid_cwd.5.html:raw) ⇒ ok · 1 line
+→ grep(deleted @ https://raw.githubusercontent.com/torvalds/linux/master/fs/d_path.c) ⇒ ok · 24 lines
+→ grep(\(deleted\) @ /usr/share/man/man5/proc.5.gz) ⇒ ok · 1 line
+
+## assistant
+
+Kernel `d_path()` confirms the suffix and flags it ambiguous. Pinning the kernel revision and the second quote.
+→ grep(current working directory of @ https://man7.org/linux/man-pages/man5/proc_pid_cwd.5.html:raw) ⇒ ok · 6 lines
+→ read(https://api.github.com/repos/torvalds/linux/commits?path=fs/d_path.c&per_page=1) ⇒ ok · 90 lines
+→ bash(printf '%s\n' "This is a symbolic link to the current working directory of the process." | wc -w) ⇒ ok · 2 lines
+
+## assistant
+
+→ grep(proc_cwd_link|d_path @ https://raw.githubusercontent.com/torvalds/linux/fa0d6d945e5ce96cff14b114eec7527f13d7f23a/fs/pro…) ⇒ ok · 1 line
+→ grep(deleted @ https://raw.githubusercontent.com/torvalds/linux/fa0d6d945e5ce96cff14b114eec7527f13d7f23a/fs/d_path.c) ⇒ ok · 1 line
+
+## assistant
+
+→ read(https://raw.githubusercontent.com/torvalds/linux/fa0d6d945e5ce96cff14b114eec7527f13d7f23a/fs/d_path.c:1-6) ⇒ ok · 11 lines
+→ grep(d_path|proc_cwd_link @ https://raw.githubusercontent.com/torvalds/linux/master/fs/proc/base.c) ⇒ ok · 23 lines
+
+## assistant
+
+→ read(https://raw.githubusercontent.com/torvalds/linux/master/fs/proc/base.c:1800-1832) ⇒ ok · 43 lines
+→ read(https://raw.githubusercontent.com/torvalds/linux/fa0d6d945e5ce96cff14b114eec7527f13d7f23a/fs/d_path.c:247-292) ⇒ ok · 54 lines
+
+## assistant
+
+→ grep(ambiguous|unlinked\(path->dentry\) @ https://raw.githubusercontent.com/torvalds/linux/fa0d6d945e5ce96cff14b114eec7527f1…) ⇒ ok · 11 lines
+→ grep(static (int|const char \*) (do_proc_readlink|proc_pid_get_link|proc_cwd_link) @ https://raw.githubusercontent.com/torva…) ⇒ ok · 11 lines
+→ grep(^\| S0(6[4-9]|7[0-9]|8[0-9]) @ /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/SOURCES.md) ⇒ ok · 1 line
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/corpus/SOURCES.md:80-113) ⇒ ok · 43 lines
+
+## assistant
+
+Row shape and id space confirmed (next free id S064). Pinning `fs/proc/base.c` and checking for a live deleted-cwd instance to validate the suffix on this kernel.
+→ read(https://api.github.com/repos/torvalds/linux/commits?path=fs/proc/base.c&per_page=1) ⇒ ok · 90 lines
+→ bash(ps -eo pid=,uid=,stat=,wchan=,cmd= --no-headers | awk -v u="$(id -u)" '$2==u && /var\/tmp|souji/' | cut -c1-160) ⇒ ok · 61 lines
+
+## assistant
+
+Live leaked processes confirm the host evidence. Now observing `cwd` readlinks (allowed read of `/proc/<pid>/cwd`) to check the suffix on this kernel.
+→ bash(for p in 185605 562279 562276 574989 447890; do printf '%s\t' "$p"; readlink /proc/$p/cwd 2>&1 || true; done) ⇒ ok · 6 lines
+→ bash(for p in 185605 562279 574989; do printf '%s\t' "$p"; awk '{print "state="$3, "ppid="$4, "pgrp="$5}' /proc/$p/stat 2>/d…) ⇒ ok · 6 lines
+
+## assistant
+
+Empirical confirmation: those cwd links carry the ` (deleted)` suffix on kernel 7.2.11. Verifying the readlink-succeeds / stat-follows-fails split and exact sentence offsets.
+→ bash(stat -c '%F %N' /proc/185605/cwd; stat -L -c '%F %n' /proc/185605/cwd 2>&1; printf 'readlink rc='; readlink /proc/18560…) ⇒ ok · 4 lines
+→ grep(If the pathname has been unlinked @ https://man7.org/linux/man-pages/man5/proc_pid_exe.5.html:raw) ⇒ ok · 1 line
+→ bash(test -e /var/tmp/r15-census-config.upcupkw1/unsafe-repos/r-inc-fifo && echo exists || echo gone; test -e '/var/tmp/r15-…) ⇒ ok · 5 lines
+
+## assistant
+
+`stat -L` follows the magic link to the still-live inode — a naive `-d` predicate would miss every leaked process. Verifying across pids and testing the big proc(5) page search.
+→ bash(for p in 185605 562279 562276 447890; do printf '%s cwd_readlink=[%s] statL=[%s]\n' "$p" "$(readlink /proc/$p/cwd)" "$(…) ⇒ ok · 5 lines
+→ grep(proc_pid_cwd @ https://man7.org/linux/man-pages/man5/proc.5.html) ⇒ ok · 7 lines
+→ bash(printf '%s\n' "Permission to dereference or read (readlink(2)) this symbolic link is governed by a ptrace access mode P…) ⇒ ok · 4 lines
+
+## assistant
+
+grep works on proc(5) — the no-match is because man-pages 6.19 split `proc(5)` into per-pid pages. Checking the page's tail to confirm.
+→ read(https://man7.org/linux/man-pages/man5/proc.5.html:240-340) ⇒ ok · 27 lines
+
+## assistant
+
+Confirmed: man-pages 6.19 splits `proc(5)` into `proc_pid_*` pages, which is why the wording is missing there. Final pin check on `base.c` and report-directory check.
+→ grep(LNK\("cwd"|static int do_proc_readlink @ https://raw.githubusercontent.com/torvalds/linux/e2f0d6d4569d14609644c45b029e2…) ⇒ ok · 17 lines
+→ glob(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/*.md) ⇒ ok · 17 lines
+
+## assistant
+
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/ScribeRowsProc.md) ⇒ ok · 79 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/SrcProcStat.md) ⇒ ok · 141 lines
+
+## assistant
+
+Two sibling seats already drafted `S064` for this same page — and explicitly left the `(deleted)` suffix open. My row completes exactly that gap. Checking installed man pages for a local anchor.
+→ grep(deleted @ /usr/share/man/man5/proc_pid_exe.5.gz) ⇒ ok · 1 line
+→ grep(current working directory @ /usr/share/man/man5/proc_pid_cwd.5.gz) ⇒ ok · 1 line
+→ bash(stat -c '%s %n' /usr/share/man/man5/proc_pid_cwd.5.gz /usr/share/man/man5/proc_pid_exe.5.gz) ⇒ ok · 3 lines
+
+## assistant
+
+→ read(/usr/share/man/man5/proc_pid_cwd.5.gz:1-40) ⇒ ok · 1 line
+→ read(/usr/share/man/man5/proc_pid_exe.5.gz:1-40) ⇒ ok · 1 line
+
+## assistant
+
+→ read(/usr/share/man/man5/proc_pid_exe.5.gz:proc_pid_exe.5) ⇒ ok · 65 lines
+→ read(/usr/share/man/man5/proc_pid_cwd.5.gz:proc_pid_cwd.5) ⇒ ok · 37 lines
+
+## assistant
+
+→ grep(deleted|\.TH @ /usr/share/man/man5/proc_pid_exe.5.gz:proc_pid_exe.5) ⇒ ok · 11 lines
+
+## assistant
+
+→ grep(If the pathname has been unlinked @ /usr/share/man/man5/proc_pid_exe.5.gz:proc_pid_exe.5) ⇒ ok · 5 lines
+→ grep(This is a symbolic link|\.TH @ /usr/share/man/man5/proc_pid_cwd.5.gz:proc_pid_cwd.5) ⇒ ok · 11 lines
+
+## assistant
+
+All anchors pinned. Two final verifications: the `proc_cwd_link` line at the pinned commit, and a precise count of current-uid residue processes.
+→ grep(static int proc_cwd_link @ https://raw.githubusercontent.com/torvalds/linux/e2f0d6d4569d14609644c45b029e23428069175b/fs…) ⇒ ok · 5 lines
+→ bash(ps -eo pid=,uid=,stat=,cmd= --no-headers | awk -v u="$(id -u)" '$2==u && /var\/tmp/' | wc -l) ⇒ ok · 2 lines
+
+## assistant
+
+73 current-uid processes match `/var/tmp` in argv — a superset (legit clones included), not the residue count. Computing the actual deleted-cwd residue with the readlink predicate.
+→ bash(u=$(id -u); for d in /proc/[0-9]*; do p=${d#/proc/}; [ "$(stat -c %u "$d" 2>/dev/null)" = "$u" ] || continue; t=$(readl…) ⇒ ok · 6 lines
+
+## assistant
+
+Exactly **58** — matching the stated host evidence, independently reproduced with the readlink predicate. Cleaning up my temp file and writing the report.
+→ bash(rm -f /tmp/.srcproccwd-dels && ls /tmp/.srcproccwd-dels 2>&1 | cat) ⇒ ok · 2 lines
+
+## assistant
+
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/SrcProcCwd.md) ⇒ ok · 1 line
+
+## assistant
+
+Report written. Sending the two operative facts to the residue seats whose work consumes them.
+→ write(agent://SoujiR18.LeakCounter-5) ⇒ ok · 1 line
+→ write(agent://SoujiR18.FixtureReapR14-5) ⇒ ok · 1 line
+
+## assistant
+
+**STATUS: DONE** — ` (deleted)` is absent from `proc_pid_cwd(5)`; the wording lives on `proc_pid_exe(5)` and reaches `cwd` via `d_path()`. Report: `/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/SrcProcCwd.md`.
+
+## Fetch record
+- URL: `https://man7.org/linux/man-pages/man5/proc_pid_cwd.5.html` — `read`, native `text/html`, complete page, **access 2026-10-20**.
+- Served footer: `Linux man-pages 6.19            2026-02-08                proc_pid_cwd(5)`; colophon: tarball `man-pages-6.19.tar.gz` fetched 2026-09-09, HTML rendered 2026-09-09. No separate "last updated" line.
+- **Finding:** the cwd page has **zero** occurrences of `deleted` (grep on `:raw`). `proc_pid_fd(5)` also silent (full text read). `proc(5)` is now a stub — 6.19 split it into `proc_pid_*` pages — so the wording only exists on `proc_pid_exe(5)` § DESCRIPTION (:76-78; installed roff `proc_pid_exe.5.gz:23-25`).
+
+## Draft SOURCES.md row
+```
+| S064 | proc_pid_cwd(5) — https://man7.org/linux/man-pages/man5/proc_pid_cwd.5.html; ` (deleted)` wording on proc_pid_exe(5) — https://man7.org/linux/man-pages/man5/proc_pid_exe.5.html | docs | A | `/proc/pid/cwd` as a readlink surface and the suffix the kernel appends for an unlinked target; not errno values, argv/fd surfaces, or pid-reuse safety | Linux man-pages 6.19 (2026-02-08; HTML rendered 2026-09-09), opened 2026-10-20 — proc_pid_cwd(5) § DESCRIPTION (:71-72), proc_pid_exe(5) § DESCRIPTION (:76-78); installed man-pages 6.19 roff proc_pid_cwd.5.gz :7,:13 and proc_pid_exe.5.gz :7,:23-25; kernel fs/d_path.c@fa0d6d9 :255-256,:287-289 and fs/proc/base.c@e2f0d6d :222,:1811,:1820,:3310 | readlink(/proc/pid/cwd) returns the path text and the kernel appends ` (deleted)` when the directory is unlinked (d_path applies it to any unlinked dentry and calls the result ambiguous), while following the magic link still reaches the live inode — classify by readlink text and confirm by stat of the stripped path, never by `-d` | mined | 2026-10-20 | on-release | corpus/lessons/round-18.md |
+```
+**Quote (20 words):** "If the pathname has been unlinked, the symbolic link will contain the string ' (deleted)' appended to the original pathname." (proc_pid_exe(5) :76-78). Cwd semantics quote: "This is a symbolic link to the current working directory of the process." (13 words). Kernel cross-check: `d_path.c@fa0d6d9:288-289` `prepend(&b, " (deleted)", 11)` under `d_unlinked()`, reached from `base.c@e2f0d6d:3310 LNK("cwd", proc_cwd_link)` → `:1811 do_proc_readlink` → `:1820 d_path`.
+
+## Teaches vs. does not establish
+- **Teaches:** readlink text + suffix is the predicate; `PTRACE_MODE_READ_FSCREDS` makes uid scoping coherent; main-thread-exited pids can fail readlink and need a row reason; the deleted dir stays alive via the process (residue is permanent, not transient).
+- **Does not establish:** the suffix *for cwd* (implementation chain only), errno values, `stat`/`-d` behavior, any disambiguation of the ambiguity the kernel itself names, argv, fd targets, pid-reuse races, or blockedness.
+
+## Exercised finding (operability)
+`stat -L /proc/185605/cwd` → `directory` on a deleted cwd; readlink → `…/r-inc-fifo (deleted)`. So `-d`/`stat -L`/`cd` (the page's own `cd /proc/20/cwd; pwd -P` recipe) **is a false-negative classifier**. Readlink sweep over current-uid pids reproduced **exactly 58** deleted-cwd processes (matching the lane's host evidence); broad `/var/tmp` argv filter = 73 (superset, not a residue count).
+
+## Verdict / fix
+Row and predicate **hold**; `-d` predicate **fails** (4/4 sampled pids). Smallest fix: replace `ScribeRowsProc`'s S064 with this row (it explicitly left the suffix open); note `ScribeRowsProc` S064 and `SrcProcStat` S064 already collide — L1 must resolve, next free id is S066. C3 must use readlink-suffix + stripped-path `stat`, never `-d`.
+
+No tools installed; no signalling; no commits; no writes outside the report plus one `/tmp` scratch file removed immediately.
+
+[irc] SoujiR18.LeakCounter-5 → me: Confirmed: my independent counter uses readlink(/proc/<pid>/cwd) suffix detection, observed 58 deleted-cwd PIDs, and th…
+
+## assistant
+
+Peer converged independently on the same 58 with a retained baseline — worth recording in the evidence section.
+→ edit(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/SrcProcCwd.md) ⇒ ok · 8 lines
+
+## assistant
+
+**STATUS: DONE** — corroboration recorded; deliverable unchanged in substance.
+
+- Peer `SoujiR18.LeakCounter-5` independently ran the same readlink-suffix predicate, observed the same **58** deleted-cwd PIDs, and matched its retained 58-entry baseline (it did not use `stat -L`).
+- Report updated at `/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/SrcProcCwd.md` § Host cross-check: two independent implementations plus one retained baseline agree, which no `-d`/`stat -L` implementation could do.
+- Draft row stands: `S064` (replace `ScribeRowsProc`'s S064; `SrcProcStat`'s S064 collides with theirs — next free id S066). Quote: 20 words, proc_pid_exe(5) § DESCRIPTION. Predicate: readlink text ends ` (deleted)`; confirm via `stat` on the stripped path; never `-d`.
+
+No further work outstanding; no processes started or signalled.

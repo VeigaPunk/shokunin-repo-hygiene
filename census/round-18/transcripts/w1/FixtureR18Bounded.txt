@@ -1,0 +1,1061 @@
+# SoujiR18.FixtureR18Bounded-5 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+OWN ONLY tests/fixtures/r18-census-bounded.py (new, in your clone). Work in your own clone /var/tmp/souji-r18-FixtureR18Bounded/lane (see # Contract); deliver /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/FixtureR18Bounded.patch. External gate for C1 in the style of /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r17-census-hygiene.py (read its run_tool :271-330, EXPECTED_IDS, SUMMARY `SUMMARY\ttotal=N\tfailed=M`, `--census PATH`, `--list`, `--json`). Isolated synthetic HOME and private tempdir under /var/tmp; every census run with start_new_session=True, killpg on a 40 s fixture timeout (rc 124 = FAIL, never SKIP). The census bound is passed ONLY via env SOUJI_CENSUS_REPO_TIMEOUT=8 so the same command runs on the base census (which ignores it). Cases, each with literal expected exit and per-repo rows: B1 post-guard FIFO swap of info/attributes at the repo's `status` call (PATH git shim → /usr/bin/git; also `touch` a tracked file so status compares content) → that repo `error` + `repo-timeout 8s` diag, neighbours a/c measured exactly as a no-shim control run, exit 0; B2 the same swap at `check-attr` with a bound `filter.x.clean` driver + `.gitattributes` assigning it; B3 post-guard swap of `.git/config` … only if you show the base census reads it after its guard (else record why not); B4 a work-tree `.gitignore` FIFO with no swap (record whether base hangs); B5 slow git shim (sleep 2 per call) with bound 30 → measured, not killed; B6 after every case no process of the case remains and no FIFO has a reader (O_WRONLY|O_NONBLOCK → ENXIO); B7 protected-namespace refusal still exit 2. Prove the fixture can fail: run it on the base census extracted with `git -C /home/vgpnk/Projects/shokunin/souji-shokunin show b5763415cc67ecff1e8fe56c58c39a6fb106d7a3:tools/souji-census.sh > /var/tmp/souji-r18-FixtureR18Bounded/base-census.sh` (expect B1/B2 FAIL by timeout) and report per-case results. ALLOWED-EXEC: that fixture on the base census and on /var/tmp copies; py_compile.
+
+Lane bounds: leaf member — no subagent dispatch except your single labrat.
+Judged on: operability
+
+Report: write your scoped findings to .ufo/waves/round-18/w1/FixtureR18Bounded.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+→ read(skill://godspeed) ⇒ ok · 18 lines
+
+## assistant
+
+→ bash(mkdir -p /var/tmp/souji-r18-FixtureR18Bounded && git clone --quiet --no-local /home/vgpnk/Projects/shokunin/souji-shoku…) ⇒ ok · 1 line
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r17-census-hygiene.py:1-80,220-350) ⇒ ok · 216 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-census.sh:1-180,520-620,1300-1450) ⇒ ok · 437 lines
+
+## assistant
+
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r17-census-hygiene.py:73-140,347-470,680-780,1200-1400) ⇒ ok · 409 lines
+→ grep(^(guard_git_surface|census_one|scan_repo_config|emit_census|main|parse_args)\(\)|guard_git_files|git -C .*status|check-…) ⇒ ok · 99 lines
+→ grep(EXPECTED_IDS|SUMMARY|--census|--list|--json|def main|def case|CASE\t|CASE @ /home/vgpnk/Projects/shokunin/souji-shokuni…) ⇒ ok · 270 lines
+→ bash(git -C /var/tmp/souji-r18-FixtureR18Bounded/lane rev-parse HEAD) ⇒ ok · 2 lines
+
+## assistant
+
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-census.sh:630-760,900-990,1040-1110,1255-1300) ⇒ ok · 351 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r17-census-hygiene.py:140-235,470-625,1140-1302) ⇒ ok · 431 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/FixtureR18Bounded.md) ⇒ error · 1 line — Path '/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/FixtureR18Bounded.md' not found
+
+## assistant
+
+→ grep(git -C|git config|git worktree|git rev-list|git for-each-ref|git status|git ls-files|git check-attr @ /home/vgpnk/Proje…) ⇒ ok · 82 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-census.sh:760-870,1100-1258) ⇒ ok · 274 lines
+→ bash(stat -c '%F %a %n' /var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures /var/tmp/souji-r18-FixtureR18Bounded/lane/t…) ⇒ ok · 3 lines
+
+## assistant
+
+→ write(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py) ⇒ ok · 3 lines
+
+[irc] SoujiR18.MatrixR18-5 → me: What exact private tempdir prefix will r18-census-bounded.py use? The matrix records/kills processes by argv prefix.
+
+[irc] SoujiR18.ScoutPyTimeoutLeak-5 → me: Scout evidence (report .ufo/waves/round-18/w1/ScoutPyTimeoutLeak.md): 44/58 leaked procs come from r15-census-config.py…
+
+## assistant
+
+→ write(agent://SoujiR18.MatrixR18-5) ⇒ ok · 1 line
+→ write(agent://SoujiR18.ScoutPyTimeoutLeak-5) ⇒ ok · 1 line
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show b5763415cc67ecff1e8fe56c58c39a6fb106d7a3:tools/souji-census.sh…) ⇒ ok · 2 lines
+→ bash(PYTHONPYCACHEPREFIX=/var/tmp/souji-r18-FixtureR18Bounded/pycache python3 -m py_compile /var/tmp/souji-r18-FixtureR18Bou…) ⇒ ok · 10 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:1-60,295-390,480-585) ⇒ ok · 288 lines
+
+[irc] SoujiR18.ScoutPyTimeoutLeak-5 → me: That covers the set -m escape — session-scoped pgid sweep is stronger than FIFO release. Three preconditions to assert …
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:12-24,330-370,775-840) ⇒ ok · 144 lines
+
+[irc] SoujiR18.MatrixR18-5 → me: Thanks; I will match that exact absolute prefix.
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:12-24,300-450,765-810) ⇒ ok · 234 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py#14C9] PUT <14: +import …) ⇒ ok · 25 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:12-56,303-365) ⇒ ok · 120 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:38-55,330-450,540-558,770-806) ⇒ ok · 219 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py#0F46] PUT >49: + isolat…) ⇒ ok · 101 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:340-405,420-505,505-545,825-865) ⇒ ok · 249 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:550-620) ⇒ ok · 79 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py#E2F1] CUT 346.=346 PUT …) ⇒ ok · 81 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:420-525,575-630,860-895) ⇒ ok · 221 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:390-535) ⇒ ok · 159 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py#9251] PUT 346.=383: + @…) ⇒ error · 36 lines — This edit anchors to lines 348-352, 354-381, 383 of /var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census…
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:340-392:raw,395-535:raw,580-625:raw,838-…) ⇒ ok · 63 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:395-535:raw) ⇒ ok · 143 lines
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:580-625:raw) ⇒ ok · 48 lines
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:838-860:raw) ⇒ ok · 25 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py#9251] PUT 346.=383: + @…) ⇒ error · 1 line — `PUT 346.=383:` rejected: the body ends by restating the 10 line(s) just below the range, but is too short to be the fu…
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:334-400) ⇒ ok · 87 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py#9251] PUT 395*: + def c…) ⇒ ok · 59 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:343-394) ⇒ ok · 68 lines
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:580-630) ⇒ ok · 70 lines
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:860-900) ⇒ ok · 54 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:561-602:raw,852-866:raw) ⇒ ok · 48 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:852-870) ⇒ ok · 31 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py#11BA] PUT 359.=365: + i…) ⇒ error · 1 line — `PUT 856.=857:` rejected: the body ends by restating the 4 line(s) just below the range, but is too short to be the ful…
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:343-372,580-620,848-865) ⇒ ok · 110 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py#11BA] PUT 359.=365: + i…) ⇒ ok · 10 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:586-605) ⇒ ok · 35 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:563-579:raw) ⇒ ok · 19 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py#7710] PUT 595.=599: + i…) ⇒ ok · 9 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:844-865:raw) ⇒ ok · 24 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:850-865) ⇒ ok · 27 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py#4806] CUT 856.=857 *** …) ⇒ ok · 5 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:935-1005) ⇒ ok · 90 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:348-390) ⇒ ok · 53 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:395-520) ⇒ ok · 143 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:225-280) ⇒ ok · 70 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:561-610,915-990) ⇒ ok · 138 lines
+
+## assistant
+
+→ bash(PYTHONPYCACHEPREFIX=/var/tmp/souji-r18-FixtureR18Bounded/pycache python3 -m py_compile /var/tmp/souji-r18-FixtureR18Bou…) ⇒ ok · 1 line
+→ bash(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py --list) ⇒ ok · 10 lines
+
+## assistant
+
+→ bash(python3 /var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py --census /var/tmp/souji-r18-Fixt…) ⇒ error · 17 lines — TOOL /var/tmp/souji-r18-FixtureR18Bounded/base-census.sh sha256=006b98231f8d138b3bb13595cc3f9cd9133247d2e88b4683140735c…
+
+## assistant
+
+→ grep(PATH=|export PATH|command -v git|/usr/bin/git|git -C @ /var/tmp/souji-r18-FixtureR18Bounded/base-census.sh) ⇒ ok · 224 lines
+→ read(artifact://92899:raw:1-10) ⇒ ok · 10 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:608-652) ⇒ ok · 55 lines
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:670-765) ⇒ ok · 105 lines
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:765-825) ⇒ ok · 77 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py#A6CE] PUT 669.=671: + d…) ⇒ ok · 53 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py#4215] PUT 716.=716: + s…) ⇒ ok · 37 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:700-830,910-942) ⇒ ok · 174 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py#B9AA] PUT 733.=736: + r…) ⇒ ok · 46 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:725-825) ⇒ ok · 115 lines
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:920-960) ⇒ ok · 56 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py#B701] PUT 937.=940: + {…) ⇒ ok · 15 lines
+
+## assistant
+
+→ bash(PYTHONPYCACHEPREFIX=/var/tmp/souji-r18-FixtureR18Bounded/pycache python3 -m py_compile /var/tmp/souji-r18-FixtureR18Bou…) ⇒ ok · 1 line
+→ bash(python3 /var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py --list) ⇒ ok · 10 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:895-1048) ⇒ ok · 172 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:1030-1065) ⇒ ok · 36 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:910-1002) ⇒ ok · 104 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py#42F6] PUT 910.=919: + d…) ⇒ ok · 82 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:955-1015,1038-1075) ⇒ ok · 107 lines
+
+## user
+
+[Wait interrupted by message]
+<irc from="parent" agent="SoujiR18">
+L1 steering: (1) the new census runs each repo with `set -m`, so its per-repo process groups escape os.killpg(proc.pid): fixture teardown must SIGKILL every process whose /proc/<pid>/stat session field == the census leader's sid (session-wide), then assert none remain. (2) Add case B8: a list-phase swap — a PATH `tr` or `cmp` shim (census guard_git_config :695) or a `.git` gitfile read swap, so the FIFO appears after the stat but inside list_repos (before census_one); expected after the fix: that repo `error` + repo-timeout diag, neighbours measured, exit 0. (3) B4 (static work-tree .gitignore FIFO, and .gitattributes) is confirmed to hang the base census (ScoutWorktreeFifo) — keep it as a required FAIL-on-base / PASS-on-fixed case. Same OWN ONLY file and patch path.
+</irc>
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:10-40,79-145) ⇒ ok · 106 lines
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:270-400) ⇒ ok · 142 lines
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:900-1010) ⇒ ok · 121 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:346-395) ⇒ ok · 61 lines
+→ grep(kill_session\( @ /var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py) ⇒ ok · 24 lines
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:445-515,1003-1013) ⇒ ok · 99 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py#6C40] PUT 359.=384: + d…) ⇒ ok · 22 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:25-145) ⇒ ok · 132 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py#7BB5] PUT 31.=31: +EXPE…) ⇒ ok · 49 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:210-320) ⇒ ok · 121 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py#AC04] PUT >37: +REAL_CM…) ⇒ error · 4 lines — This edit anchors to lines 99-100 of /var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py tha…
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:33-40,90-122,137-158) ⇒ ok · 76 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py#AC04] PUT >37: +REAL_CM…) ⇒ ok · 27 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:230-345) ⇒ ok · 130 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py#FC45] PUT >291: + def i…) ⇒ ok · 23 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:285-390) ⇒ ok · 121 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py#CF45] PUT <292: + PUT <…) ⇒ ok · 45 lines
+
+## assistant
+
+→ grep(def census\(|census_env\( @ /var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py) ⇒ ok · 18 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:485-515) ⇒ ok · 44 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py#603E] PUT <496: + use_c…) ⇒ ok · 18 lines
+
+## assistant
+
+→ grep(def require_trigger|def case_b7|def cases\( @ /var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bound…) ⇒ ok · 18 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:770-812) ⇒ ok · 54 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:985-1020) ⇒ ok · 50 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py#2E8C] PUT >789: + + def…) ⇒ ok · 15 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:790-808:raw) ⇒ ok · 21 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:50-68) ⇒ ok · 32 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py#7FA0] PUT <58: + @stati…) ⇒ ok · 21 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:785-810) ⇒ ok · 35 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py#1C44] CUT 794.=794 *** …) ⇒ ok · 9 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:303-342) ⇒ ok · 54 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py#8EB0] PUT 315.=315: + m…) ⇒ ok · 18 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:310-332:raw) ⇒ ok · 25 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py#E9A7] PUT 315.=315: + m…) ⇒ ok · 13 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:980-1035) ⇒ ok · 69 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py#FD6D] PUT >1013: + def …) ⇒ ok · 22 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:1045-1115,1140-1190) ⇒ ok · 147 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:1110-1145) ⇒ ok · 54 lines
+
+## assistant
+
+→ grep(def case_b4|def case_b5 @ /var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py) ⇒ ok · 12 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:926-958) ⇒ ok · 42 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:10-27) ⇒ ok · 25 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py#6D70] PUT <24: +from co…) ⇒ ok · 35 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:1120-1150) ⇒ ok · 43 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:1174-1200) ⇒ ok · 45 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py#74B3] PUT <1185: + "exp…) ⇒ ok · 8 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:480-580) ⇒ ok · 117 lines
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:1195-1215) ⇒ ok · 42 lines
+→ read(/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py:1000-1070) ⇒ ok · 85 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py#4535] PUT 541.=541: + i…) ⇒ ok · 29 lines
+
+## assistant
+
+→ bash(PYTHONPYCACHEPREFIX=/var/tmp/souji-r18-FixtureR18Bounded/pycache python3 -m py_compile /var/tmp/souji-r18-FixtureR18Bou…) ⇒ ok · 1 line
+→ bash(python3 /var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py --list) ⇒ ok · 11 lines
+
+## assistant
+
+→ bash(python3 /var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py --census /var/tmp/souji-r18-Fixt…) ⇒ error · 12 lines — TOOL /var/tmp/souji-r18-FixtureR18Bounded/base-census.sh sha256=006b98231f8d138b3bb13595cc3f9cd9133247d2e88b4683140735c…
+→ bash(python3 /var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py --census /var/tmp/souji-r18-Fixt…) ⇒ error · 13 lines — TOOL /var/tmp/souji-r18-FixtureR18Bounded/base-census.sh sha256=006b98231f8d138b3bb13595cc3f9cd9133247d2e88b4683140735c…
+
+## assistant
+
+→ bash(python3 /var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py --census /var/tmp/souji-r18-Fixt…) ⇒ error · 12 lines — TOOL /var/tmp/souji-r18-FixtureR18Bounded/base-census.sh sha256=006b98231f8d138b3bb13595cc3f9cd9133247d2e88b4683140735c…
+→ bash(python3 /var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py --census /var/tmp/souji-r18-Fixt…) ⇒ error · 13 lines — TOOL /var/tmp/souji-r18-FixtureR18Bounded/base-census.sh sha256=006b98231f8d138b3bb13595cc3f9cd9133247d2e88b4683140735c…
+
+## assistant
+
+→ bash(python3 /var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py --census /var/tmp/souji-r18-Fixt…) ⇒ error · 12 lines — TOOL /var/tmp/souji-r18-FixtureR18Bounded/base-census.sh sha256=006b98231f8d138b3bb13595cc3f9cd9133247d2e88b4683140735c…
+
+## assistant
+
+→ bash(python3 /var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py --census /var/tmp/souji-r18-Fixt…) ⇒ ok · 10 lines
+
+## assistant
+
+→ bash(python3 /var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py --census /var/tmp/souji-r18-Fixt…) ⇒ ok · 8 lines
+
+## assistant
+
+→ bash(PYTHONPYCACHEPREFIX=/var/tmp/souji-r18-FixtureR18Bounded/pycache python3 -m py_compile /var/tmp/souji-r18-FixtureR18Bou…) ⇒ ok · 1 line
+→ bash(python3 /var/tmp/souji-r18-FixtureR18Bounded/lane/tests/fixtures/r18-census-bounded.py --list) ⇒ ok · 11 lines
+
+## assistant
+
+→ grep(EXPECTED_IDS|def case_b1|def case_b2|def case_b3|def case_b4|def case_b5|def case_b6|def case_b7|def case_b8|def kill_s…) ⇒ ok · 126 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1) ⇒ ok · 102 lines
+
+## assistant
+
+→ bash(git -C /var/tmp/souji-r18-FixtureR18Bounded/lane add -N -- tests/fixtures/r18-census-bounded.py && git -C /var/tmp/souj…) ⇒ ok · 3 lines
+
+## assistant
+
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/FixtureR18Bounded.md) ⇒ ok · 2 lines
+
+## assistant
+
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/FixtureR18Bounded.md:1-160) ⇒ ok · 71 lines
+
+## assistant
+
+→ edit(*** Begin Patch [souji-shokunin/.ufo/waves/round-18/w1/FixtureR18Bounded.md#698F] PUT 46.=54: +| Exact command | Observ…) ⇒ ok · 12 lines
+
+## assistant
+
+→ bash(rm -f /var/tmp/souji-r18-FixtureR18Bounded/base-census.sh && rm -rf /var/tmp/souji-r18-FixtureR18Bounded/pycache) ⇒ ok · 1 line
+
+## assistant
+
+STATUS: DONE — Added and delivered the scoped round-18 bounded-census fixture.
+
+**Files**
+- Added `tests/fixtures/r18-census-bounded.py` in `/var/tmp/souji-r18-FixtureR18Bounded/lane`.
+- Delivered `.ufo/waves/round-18/w1/FixtureR18Bounded.patch` (SHA-256 `3ae7ec936c433c1be96248239a32225d2b89baccca641d2f4c891a9ef1266879`).
+- Wrote `.ufo/waves/round-18/w1/FixtureR18Bounded.md`.
+
+**Behavior and evidence**
+- The fixture lists B1–B8 and supports `--census`, `--list`, `--json`, and debug-only `--case`.
+- `py_compile` completed with exit 0; `--list` returned B1 through B8.
+- The extracted pinned base census SHA-256 was `006b98231f8d138b3bb13595cc3f9cd9133247d2e88b4683140735ca0759e9fd`.
+- Against that base, B1, B2, B3, B4, and B8 hit the 40-second fixture deadline and failed as required; B4 reproduced hangs for both static `.gitignore` and `.gitattributes` FIFOs. B6 passed after each case: no census-session processes remained, and FIFO probes returned ENXIO.
+- B5 passed: 13 Git shim calls, a clean row, and 26.325 seconds with a 30-second bound. B7 passed with exit 2 and `path-protected`.
+- The report records the exact commands and observed outputs, including an initial fixture wiring error that was corrected before the final per-case runs.
+
+**Risk / blocker**
+- The fixture was exercised only against the pinned base; repaired-census behavior remains unverified. B8 requires the integrated watchdog to cover the list-phase config scan before `census_one`, and emit the expected per-repository error row and timeout diagnostic.
+
+[irc] SoujiR18 → me: Follow-up clone refreshed to 5efb519 OWN ONLY tests/fixtures/r18-census-bounded.py. Add B9 TERM-ignoring git shim verif…
+
+## assistant
+
+→ bash(git -C /var/tmp/souji-r18-FixtureR18Bounded/lane rev-parse HEAD) ⇒ ok · 2 lines
+→ read(history://) ⇒ ok · 617 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/FixtureR18Bounded.md:60-75) ⇒ ok · 13 lines
+
+## assistant
+
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin rev-parse HEAD && git -C /var/tmp/souji-r18-FixtureR18Bounded/lane …) ⇒ error · 5 lines — 5efb519f00075d958c3d1109ef6fcb24c487eb87
+→ read(history://:304-498) ⇒ ok · 201 lines
+
+## assistant
+
+→ grep(CensusWatchdog-5 @ history://) ⇒ ok · 5 lines
+
+## assistant
+
+→ write(agent://SoujiR18.CensusWatchdog-5) ⇒ ok · 1 line
+
+## assistant
+
+→ bash(git clone --quiet --no-local /home/vgpnk/Projects/shokunin/souji-shokunin /var/tmp/souji-r18-FixtureR18BoundedFix/lane …) ⇒ ok · 1 line
+→ grep(SOUJI_CENSUS_REPO_TIMEOUT|repo-timeout|set -m|killpg|timeout|guard_git_files|guard_git_config|scan_config_file|function…) ⇒ ok · 299 lines
+→ grep(\$'\\n'|ambiguous-path|guard_path|--root|--compare|usage_err @ /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji…) ⇒ ok · 315 lines
+
+## assistant
+
+→ bash(git -C /var/tmp/souji-r18-FixtureR18BoundedFix/lane rev-parse HEAD && stat -c '%s %n' /var/tmp/souji-r18-FixtureR18Boun…) ⇒ ok · 3 lines
+
+[irc] SoujiR18.CensusWatchdog-5 → me: Current contract: --repo-timeout N / SOUJI_CENSUS_REPO_TIMEOUT, strict integer 1..86400, default 600. Ordinary timed-ou…
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py:1-180) ⇒ ok · 194 lines
+→ read(/var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py:290-620) ⇒ ok · 344 lines
+→ read(/var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py:760-1260) ⇒ ok · 513 lines
+
+## user
+
+[Wait interrupted by message]
+<irc from="parent" agent="SoujiR18">
+Additional actual W2 bug (w2/ProbeListPhaseSwap.md M6): linked-worktree .git gitfile swapped FIFO BEFORE guard => preflight kind=gitfile bounds read but no row (only kind=repo stored). Add B12 to assert diag AND b error row + neighbors; red at5efb519. Coordinate CensusWatchdog-5 (already notified).
+</irc>
+
+## assistant
+
+→ grep(guard_git_pointer|gitfile_admin|GUARD_CANDIDATES|GUARD_KINDS|preflight_timeout|list_repos|gitdir: @ /home/vgpnk/Project…) ⇒ ok · 131 lines
+→ write(agent://SoujiR18.CensusWatchdog-5) ⇒ ok · 1 line
+
+## assistant
+
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-census.sh:1380-1465) ⇒ ok · 95 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-census.sh:1653-1717) ⇒ ok · 74 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-census.sh:850-890,460-530) ⇒ ok · 118 lines
+
+## assistant
+
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-census.sh:350-465) ⇒ ok · 127 lines
+
+## assistant
+
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-census.sh:278-320) ⇒ ok · 52 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py#D186] PUT 32.=32: +E…) ⇒ ok · 26 lines
+
+## assistant
+
+→ grep(def case_b6|def case_b7|def cases\( @ /var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py) ⇒ ok · 18 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py:1051-1067) ⇒ ok · 33 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py#59E6] PUT 1054*: + d…) ⇒ ok · 16 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py:244-300) ⇒ ok · 70 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py#6721] PUT 250*: + de…) ⇒ ok · 41 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py:285-310:raw) ⇒ ok · 28 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py:289-309) ⇒ ok · 28 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py#9831] PUT 293.=293: …) ⇒ ok · 11 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py:338-410) ⇒ ok · 88 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py#3CB8] PUT <376: + ha…) ⇒ ok · 22 lines
+
+## assistant
+
+→ grep(def census\(|env=self.census_env @ /var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py) ⇒ ok · 12 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py:517-546) ⇒ ok · 39 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py#5B20] PUT <529: + ha…) ⇒ ok · 29 lines
+
+[irc] SoujiR18.CensusWatchdog-5 → me: Yes: a timed-out preflight candidate of kind `gitfile` must get the same sanitized `<repo>\t0\t0\t0\t0\t\terror` placeh…
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py:250-430) ⇒ ok · 190 lines
+→ read(/var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py:517-560) ⇒ ok · 56 lines
+→ read(/var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py:1048-1130) ⇒ ok · 99 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py#0619] PUT <378: + te…) ⇒ ok · 36 lines
+
+## assistant
+
+→ grep(def install_git_shim @ /var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py) ⇒ ok · 6 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py#F2BB] PUT 250*: + de…) ⇒ ok · 24 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py:291-312) ⇒ ok · 29 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py#7CED] PUT 295.=295: …) ⇒ ok · 11 lines
+
+## assistant
+
+→ grep(def census\(|def expected_row_problems @ /var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded…) ⇒ ok · 12 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py:638-666) ⇒ ok · 49 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py#4613] PUT >658: + + …) ⇒ ok · 18 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py:517-558) ⇒ ok · 63 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py#4D61] PUT <545: + in…) ⇒ ok · 20 lines
+
+## assistant
+
+→ grep(def rows_by_name|def cases\( @ /var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py) ⇒ ok · 12 lines
+
+## assistant
+
+→ grep(def case_b8|def cases\(|def case_b9|def case_b10 @ /var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-cens…) ⇒ ok · 12 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py:1280-1325) ⇒ ok · 59 lines
+
+## assistant
+
+→ grep(def case_b8|def cases\( @ /var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py) ⇒ ok · 12 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py:650-820) ⇒ ok · 187 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py#2978] CUT 748.=749 *…) ⇒ ok · 9 lines
+
+## assistant
+
+→ grep(def case_b8|def cases\( @ /var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py) ⇒ ok · 12 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py#B5D6] PUT >1318: + +…) ⇒ ok · 18 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py:1558-1590,1415-1440) ⇒ ok · 79 lines
+
+## assistant
+
+→ grep(def rows_by_name|def main\( @ /var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py) ⇒ ok · 12 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py#F25D] PUT >1574: + "…) ⇒ ok · 23 lines
+
+## assistant
+
+→ bash(PYTHONPYCACHEPREFIX=/var/tmp/souji-r18-FixtureR18BoundedFix/pycache python3 -m py_compile /var/tmp/souji-r18-FixtureR18…) ⇒ ok · 1 line
+→ bash(python3 /var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py --list) ⇒ ok · 15 lines
+
+## assistant
+
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 5efb519f00075d958c3d1109ef6fcb24c487eb87:tools/souji-census.sh…) ⇒ ok · 2 lines
+
+## assistant
+
+→ bash(python3 /var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py --census /var/tmp/souji-r18-F…) ⇒ ok · 10 lines
+
+## assistant
+
+→ bash(python3 /var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py --census /var/tmp/souji-r18-F…) ⇒ error · 12 lines — TOOL /var/tmp/souji-r18-FixtureR18BoundedFix/census-5efb.sh sha256=7e6a92d415f8f256a4e46b0776add6e3645b687abd8be6e67aca…
+
+## assistant
+
+→ bash(python3 /var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py --census /var/tmp/souji-r18-F…) ⇒ error · 12 lines — TOOL /var/tmp/souji-r18-FixtureR18BoundedFix/census-5efb.sh sha256=7e6a92d415f8f256a4e46b0776add6e3645b687abd8be6e67aca…
+
+## assistant
+
+→ bash(python3 /var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py --census /var/tmp/souji-r18-F…) ⇒ error · 12 lines — TOOL /var/tmp/souji-r18-FixtureR18BoundedFix/census-5efb.sh sha256=7e6a92d415f8f256a4e46b0776add6e3645b687abd8be6e67aca…
+
+## assistant
+
+→ bash(python3 /var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py --census /var/tmp/souji-r18-F…) ⇒ ok · 13 lines
+
+## assistant
+
+→ bash(python3 /var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py --census /var/tmp/souji-r18-F…) ⇒ ok · 10 lines
+
+## assistant
+
+→ bash(python3 /var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py --census /var/tmp/souji-r18-F…) ⇒ ok · 11 lines
+
+## assistant
+
+→ grep(def rows_by_name|def main\( @ /var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py) ⇒ ok · 12 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py:1670-1708) ⇒ ok · 57 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py:1560-1590) ⇒ ok · 47 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py#F25D] PUT >1578: + "…) ⇒ ok · 15 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py:1565-1595) ⇒ ok · 42 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py#7AA3] CUT 1583.=1586…) ⇒ ok · 7 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py:1464-1510) ⇒ ok · 57 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py#8BDF] PUT 1466.=1475…) ⇒ ok · 11 lines
+
+## assistant
+
+→ grep(delay_seconds=1|shim_delay_seconds_per_call|too close to the bound @ /var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests…) ⇒ ok · 13 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py#D6D6] PUT 1229.=1231…) ⇒ ok · 16 lines
+
+## assistant
+
+→ bash(PYTHONPYCACHEPREFIX=/var/tmp/souji-r18-FixtureR18BoundedFix/pycache python3 -m py_compile /var/tmp/souji-r18-FixtureR18…) ⇒ ok · 1 line
+→ bash(python3 /var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py --list) ⇒ ok · 15 lines
+
+## assistant
+
+→ bash(python3 /var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py --census /var/tmp/souji-r18-F…) ⇒ ok · 10 lines
+
+## assistant
+
+→ bash(python3 /var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py --census /var/tmp/souji-r18-F…) ⇒ error · 12 lines — TOOL /var/tmp/souji-r18-FixtureR18BoundedFix/census-5efb.sh sha256=7e6a92d415f8f256a4e46b0776add6e3645b687abd8be6e67aca…
+
+## assistant
+
+→ bash(PYTHONPYCACHEPREFIX=/var/tmp/souji-r18-FixtureR18BoundedFix/pycache python3 -m py_compile /var/tmp/souji-r18-FixtureR18…) ⇒ ok · 1 line
+→ bash(python3 /var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py --list) ⇒ ok · 15 lines
+
+## assistant
+
+→ bash(python3 /var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py --census /var/tmp/souji-r18-F…) ⇒ ok · 8 lines
+
+## assistant
+
+→ bash(python3 /var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py --census /var/tmp/souji-r18-F…) ⇒ ok · 7 lines
+
+## assistant
+
+→ bash(git -C /var/tmp/souji-r18-FixtureR18BoundedFix/lane add -N -- tests/fixtures/r18-census-bounded.py && git -C /var/tmp/s…) ⇒ ok · 3 lines
+
+## assistant
+
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/FixtureR18Bounded.md:1,58-75) ⇒ ok · 17 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1:1-20) ⇒ ok · 22 lines
+
+## assistant
+
+→ edit(*** Begin Patch [souji-shokunin/.ufo/waves/round-18/w1/FixtureR18Bounded.md#83C6] PUT 1.=1: +STATUS: DONE — Extended th…) ⇒ ok · 16 lines
+
+## assistant
+
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/FixtureR18Bounded.md:62-70) ⇒ ok · 20 lines
+
+## assistant
+
+→ edit(*** Begin Patch [souji-shokunin/.ufo/waves/round-18/w1/FixtureR18Bounded.md#A7EF] PUT 66.=66: +For the initial b5763415…) ⇒ ok · 6 lines
+
+## assistant
+
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/FixtureR18Bounded.md:70-138) ⇒ ok · 73 lines
+
+## assistant
+
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/FixtureR18Bounded.md:70-138) ⇒ ok · 73 lines
+→ bash(git -C /var/tmp/souji-r18-FixtureR18BoundedFix/lane rev-parse HEAD) ⇒ ok · 2 lines
+
+## assistant
+
+→ edit(*** Begin Patch [souji-shokunin/.ufo/waves/round-18/w1/FixtureR18Bounded.md#E874] PUT >72: + +```text +git -C /home/vgp…) ⇒ ok · 27 lines
+
+## assistant
+
+→ bash(PYTHONPYCACHEPREFIX=/var/tmp/souji-r18-FixtureR18BoundedFix/pycache python3 -m py_compile /var/tmp/souji-r18-FixtureR18…) ⇒ ok · 1 line
+→ bash(python3 /var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py --list) ⇒ ok · 15 lines
+
+## assistant
+
+→ write(agent://SoujiR18.CensusWatchdog-5) ⇒ ok · 1 line
+
+## assistant
+
+→ bash(git -C /var/tmp/souji-r18-FixtureR18BoundedFix/lane add -N -- tests/fixtures/r18-census-bounded.py && git -C /var/tmp/s…) ⇒ ok · 3 lines
+
+## assistant
+
+→ grep(B9|B10|B11|B12|tempfile.mkdtemp|case_b6 @ /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/FixtureR1…) ⇒ ok · 165 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/FixtureR18BoundedFix.patch:1-12) ⇒ ok · 22 lines
+
+## assistant
+
+→ grep(TERM|SIGKILL|kill -TERM|sleep 2|watchdog_pid|cleanup_census_tmp|lexical_abs\(|kind=gitfile|preflight_timeout\[|repo-tim…) ⇒ ok · 165 lines
+
+## assistant
+
+→ grep(EXPECTED_IDS|def interrupt_census|def case_b[1-9]|def case_b10|def case_b11|def case_b12|def case_b6|start_new_session=…) ⇒ ok · 146 lines
+→ grep(def lexical_abs|read -r -a parts <<<|lex=\$\(lexical_abs|\*\$'\\n'\*|GUARD_KINDS\(\)\+|GUARD_KINDS\+=\(gitfile\)|prefli…) ⇒ ok · 131 lines
+
+## assistant
+
+→ bash(git -C /var/tmp/souji-r18-FixtureR18BoundedFix/lane add -N -- tests/fixtures/r18-census-bounded.py && git -C /var/tmp/s…) ⇒ ok · 3 lines
+
+## assistant
+
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/FixtureR18Bounded.md:132-138:raw) ⇒ ok · 9 lines
+
+## assistant
+
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/FixtureR18Bounded.md:-45) ⇒ ok · 52 lines
+
+## assistant
+
+→ edit(*** Begin Patch [souji-shokunin/.ufo/waves/round-18/w1/FixtureR18Bounded.md#765B] PUT 156.=160: +- B10: smallest fix is…) ⇒ ok · 10 lines
+
+## assistant
+
+→ grep(worktree add|\.owner|worktrees/b|plain_candidate @ /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/…) ⇒ ok · 12 lines
+
+## assistant
+
+→ grep(delay_seconds=2|shim_delay_seconds_per_call @ /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/Fixtu…) ⇒ ok · 13 lines
+
+## assistant
+
+→ bash(PYTHONPYCACHEPREFIX=/var/tmp/souji-r18-FixtureR18BoundedFix/pycache python3 -m py_compile /var/tmp/souji-r18-FixtureR18…) ⇒ ok · 1 line
+→ bash(python3 /var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py --list) ⇒ ok · 15 lines
+→ bash(sha256sum /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/FixtureR18BoundedFix.patch && stat -c '%s…) ⇒ ok · 5 lines
+
+## assistant
+
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/FixtureR18Bounded.md:-22) ⇒ ok · 29 lines
+
+## assistant
+
+→ edit(*** Begin Patch [souji-shokunin/.ufo/waves/round-18/w1/FixtureR18Bounded.md#039E] PUT >160: + +Fixture source anchors: …) ⇒ ok · 8 lines
+
+## assistant
+
+→ write(agent://SoujiR18) ⇒ ok · 1 line
+
+## assistant
+
+→ bash(rm -f /var/tmp/souji-r18-FixtureR18BoundedFix/census-5efb.sh && rm -rf /var/tmp/souji-r18-FixtureR18BoundedFix/pycache) ⇒ ok · 1 line
+
+## assistant
+
+STATUS: DONE — Extended the bounded-census fixture through B12 against the refreshed 5efb519 snapshot.
+
+- Updated only `tests/fixtures/r18-census-bounded.py` in `/var/tmp/souji-r18-FixtureR18BoundedFix/lane`, preserving B1–B8 and adding B9–B12. B6 now runs a real census even when selected alone, and each invocation uses a unique `/var/tmp` scratch root.
+- Delivered `.ufo/waves/round-18/w1/FixtureR18BoundedFix.patch` (SHA-256 `95ea0fad383eb2cbc83c4293dbb5d1ce593da953a44e2f009a4d338180eb11d5`).
+- Updated `.ufo/waves/round-18/w1/FixtureR18Bounded.md` with commands, outputs, source anchors, and integration findings.
+
+**Observed on the 5efb519 census snapshot** (SHA-256 `7e6a92d415f8f256a4e46b0776add6e3645b687abd8be6e67aca520587120bcd`):
+- B1–B9 and B6 passed, including B5’s 13 Git calls at two seconds each (26.474s) and B9’s SIGTERM-to-SIGKILL interval of 2.085s.
+- B10 exposed a TERM-parent cleanup leak; its SIGKILL arm had no session processes after the bound-plus-grace window.
+- B11 showed trailing-newline `--root` resolving to the sibling (exit 0) and `--compare` producing a diff (exit 3), rather than both refusing with exit 2.
+- B12 produced the gitfile timeout diagnostic and measured neighbors but omitted the required `b` error row. Its included-root duplicate control emitted exactly one error row.
+
+Final `py_compile` exited 0; `--list` returned B1–B12. B6 passes standalone with an actual clean census. Temporary census/cache files were removed; no fixture processes remain. No tools were installed. The mounted tools expose no LSP interface.
+
+The report records the smallest production fixes for B10–B12; those census behaviors remain integration blockers for the 5efb519 snapshot.
+
+## user
+
+[Wait interrupted by message]
+<irc from="parent" agent="SoujiR18">
+Those are the expected red arms at5efb519. Please notify CensusWatchdog-5 of actual fixture path `/var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py` and clone path (direct peer message). Wait for its fixed tool ready notice, then run full B1-B12 and report. B9 may KILL at bound+2 by existing code; B10 permanentTERM leak must fail old; SIGKILL parent timer by itself may still enforce bound, keep exact assertions.
+</irc>
+
+## assistant
+
+→ write(agent://SoujiR18.CensusWatchdog-5) ⇒ ok · 1 line
+
+## assistant
+
+→ read(agent://SoujiR18.CensusWatchdog-5) ⇒ ok · 9 lines
+
+## assistant
+
+→ read(agent://SoujiR18.CensusWatchdog-5) ⇒ ok · 9 lines
+
+## assistant
+
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin rev-parse HEAD) ⇒ ok · 2 lines
+
+## assistant
+
+→ read(agent://SoujiR18.CensusWatchdog-5) ⇒ ok · 11 lines
+
+## assistant
+
+→ read(history://SoujiR18.CensusWatchdog-5:-30) ⇒ ok · 32 lines
+
+## assistant
+
+→ bash(rm -f /var/tmp/souji-r18-FixtureR18BoundedFix/census-5efb.sh && rm -rf /var/tmp/souji-r18-FixtureR18BoundedFix/pycache) ⇒ ok · 1 line
+
+## assistant
+
+→ wait({}) ⇒ error · 1 line — Nothing to wait for: no background job or service you started is running. Other agents' results and messages arrive on …
+
+## assistant
+
+→ read(history://SoujiR18.CensusWatchdog-5:-20) ⇒ ok · 22 lines
+
+## assistant
+
+→ write(agent://SoujiR18.CensusWatchdog-5) ⇒ ok · 1 line
+
+## assistant
+
+→ read(history://SoujiR18.CensusWatchdog-5:-10) ⇒ ok · 12 lines
+
+## assistant
+
+→ read(history://SoujiR18.CensusWatchdog-5:-10) ⇒ ok · 12 lines
+
+## assistant
+
+→ read(agent://SoujiR18) ⇒ ok · 7 lines
+
+## assistant
+
+
+[Showing lines 1-1059 of 1302 (50.0KB limit). Use :1060 to continue]

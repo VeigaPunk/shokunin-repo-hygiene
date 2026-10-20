@@ -1,0 +1,120 @@
+# SoujiR18.CriticRoundAdmission-5 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Attack the round as a whole against /home/vgpnk/Projects/shokunin/.ufo/prompts/souji-round-18.md §2–§2b and /home/vgpnk/Projects/shokunin/AXES.md: lowest-axis rule (calibration 7 — does C2 really work calibration?), sourced claim (which claim rests on a row opened this round), causal separability, no-harm on every axis, the mined mistake's 'fix shown able to fail', and SHONEN boxes (/home/vgpnk/Projects/shokunin/souji-shokunin/SHONEN.md). List admission blockers.
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: calibration
+
+Report: write your scoped findings to .ufo/waves/round-18/w1/CriticRoundAdmission.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+I'll start by reading the named files I need to attack the round against.
+→ read(/home/vgpnk/Projects/shokunin/.ufo/prompts/souji-round-18.md) ⇒ ok · 309 lines
+→ read(/home/vgpnk/Projects/shokunin/AXES.md) ⇒ ok · 84 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/SHONEN.md) ⇒ ok · 13 lines
+
+## assistant
+
+Reading the rest of the prompt and the key lane files in parallel.
+→ read(/home/vgpnk/Projects/shokunin/.ufo/prompts/souji-round-18.md:301-350) ⇒ ok · 58 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/SCORECARD.md) ⇒ ok · 117 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/corpus/lessons/round-17-verifier-spotcheck.md) ⇒ ok · 158 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-census.sh:1380-1420) ⇒ ok · 48 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-census.sh:540-590) ⇒ ok · 58 lines
+
+## assistant
+
+Now let me probe the attack surfaces: usage-exit semantics, SHONEN-cited path existence, the leaked-procs evidence file, QUALITY Q25, and other `census_one` call sites.
+→ bash(for f in corpus/SOURCES.md corpus/lessons/round-13.md tests/fixtures/r13-repo-structure.sh census/round-13/verification…) ⇒ ok · 12 lines
+→ bash(grep -n 'census_one' tools/souji-census.sh | head -30; echo ---; grep -n 'exit 2\|exit 64\|usage()' tools/souji-census.…) ⇒ ok · 6 lines
+→ bash(ps -eo pid,ppid,pgid,stat,wchan:30,etimes,args | grep -E 'git (status|rev-parse|check-attr)' | grep -v grep | head -40;…) ⇒ ok · 4 lines
+
+## assistant
+
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -n 'census_one' tools/souji-census.sh | head -30; echo ---; gre…) ⇒ ok · 57 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-18/leaked-procs-before-1631.txt) ⇒ ok · 59 lines
+→ bash(ps -eo pid,stat,wchan:32,etimes,args --no-headers | wc -l; ps -eo pid,stat,wchan:32,etimes,args | awk '$3 ~ /^fifo_wait…) ⇒ ok · 4 lines
+
+## assistant
+
+→ bash(cd /proc && n=0; ok=0; for p in [0-9]*/; do pid=${p%/}; c=$(readlink -n $pid/cwd 2>/dev/null) || continue; n=$((n+1)); …) ⇒ ok · 64 lines
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && sed -n '204,240p' tools/souji-census.sh && sed -n '1261,1340p' tools…) ⇒ ok · 118 lines
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -n 'Q25\|measured_commit\|--round\|--rev' tools/souji-landing-g…) ⇒ ok · 24 lines
+
+## assistant
+
+Strong signal already: 60 deleted-cwd processes live right now (58 fixture leaks + 2 foreign). Continuing probes on the remaining attack surfaces.
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && ls census/round-17/ | grep -E 'gate-replays|jj-receipts' ; echo ====…) ⇒ ok · 36 lines
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && sed -n '530,590p' tools/souji-landing-gate.py && grep -n 'round_no\|…) ⇒ ok · 72 lines
+→ bash(cd /home/vgpnk/Projects/shokunin && grep -n 'rests on\|S###\|quote\|≤25\|sourced' CORPUS.md | head -30) ⇒ ok · 8 lines
+
+## assistant
+
+Critical test needed: whether `set -m` actually enables monitor mode in a non-interactive, no-tty script — the claimed mechanism for C1.
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && sed -n '368,420p' tools/souji-landing-gate.py && sed -n '530,538p' t…) ⇒ ok · 90 lines
+→ bash(cat > /tmp/setm-test.sh <<'EOF' set -m sleep 30 & p=$! sleep 0.1 pg=$(ps -o pgid= -p $p | tr -d ' ') echo "child-pgid=$…) ⇒ ok · 7 lines
+→ bash(cd /home/vgpnk/Projects/shokunin && grep -rn 'C2\|calibration' .ufo/prompts/souji-round-17.md | head -10; sed -n '/SOUR…) ⇒ ok · 45 lines
+
+## assistant
+
+`set -m` does isolate pgids in non-interactive scripts (child pgid ≠ parent pgid) — mechanism viable. Checking whether `list_repos`/`guard_git_surface` run any blocking opens outside the per-repo bound.
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -n 'guard_git_surface\|guard_git_pointer\|gitfile_admin\|list_r…) ⇒ ok · 24 lines
+
+## assistant
+
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && sed -n '818,860p' tools/souji-census.sh && sed -n '1343,1392p' tools…) ⇒ ok · 134 lines
+
+## assistant
+
+The `list_repos` phase runs guard opens (`.git` file read, `git config --file`, `worktrees/*/gitdir` reads) before any per-repo watchdog exists. Verifying `guard_git_surface` performs those opens.
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && sed -n '902,1010p' tools/souji-census.sh | grep -n 'git \|read -r\|g…) ⇒ ok · 64 lines
+
+## assistant
+
+All key probes done. The decisive finding: C1's bound covers only `census_one` inside `emit_census`, but `list_repos` performs the same stat-then-open TOCTOU (`read < .git`, `tr < config`, `git config --file`) **before** the bounded loop — the claimed defect survives deterministically. Writing the report.
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/CriticRoundAdmission.md) ⇒ ok · 2 lines
+
+## assistant
+
+Report written to `.ufo/waves/round-18/w1/CriticRoundAdmission.md` (absolute: `/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/CriticRoundAdmission.md`).
+
+**Round-level attack result — 3 admission findings, 1 blocking:**
+
+- **B1 (blocker, C1 falsified as contracted):** the per-repo watchdog bound wraps only `census_one` in `emit_census`, but `list_repos` performs the identical stat-then-open TOCTOU earlier — `read < .git` (`gitfile_admin` :820), `tr < "$cfg"` and `git config --file` in `guard_git_config` (:696-702), `read < commondir`/`gitdir` files — all in the unbounded main shell. A PATH `stat`-shim swap of `.git/config` for a FIFO after `guard_git_files`'s `stat -L` (:555) hangs the whole census before any watchdog exists. Same signature as the defect being claimed fixed. Fix: bound covers each repo-*touch* (list-phase guards inside the same process-group child), and the shim fixture must attack the list phase too.
+- **B2 (C2 premise gap):** `SHONEN.md` — one of the two files AXES.md:15 names for calibration — is not in the scan set. Its pointers resolve today (verified), but the claim "authority files must not cite evidence that does not exist" is self-undermining with that hole.
+- **B3 (gate spec):** LG-FROZEN-MEASURED must also fire when `measured_commit` is a non-empty string but unresolvable/non-hash (`landing-gate.py:544-572` silently skips today, e.g. `"master"`).
+
+Supporting facts verified live: the 58 leaked fixture processes from `census/round-18/leaked-procs-before-1631.txt` are still blocked (independent `/proc/*/cwd` count: 60 deleted-cwd procs, 2 foreign — C3's reason column must split them); `set -m` correctly isolates child pgids non-interactively; usage-exit-2 is existing convention so `--repo-timeout` invalid → 2 is consistent; `ddb7347` gate-replay/jj-receipt pointers confirmed dangling.
+
+Watch-list covers: watchdog reaping on all exit paths, `set -m` children ignoring INT/QUIT (parent trap needed), timeout-vs-exit-2 collision semantics, option/env precedence, exemptions-file validation, `{a,b}` vs `6..11` expansion order, `--round ≥18` gating the finding (not the check), R1 recipe degradation on non-jj repos, and the sourced-claim citation carrier (script comment ≠ `used-by` evidence).
+
+Axes: judgment axis **calibration** attacked directly — C2 is a genuine calibration move but ships two self-check holes (B2, B3). C1 operability claim fails its own falsifiable wording until the bound is widened.

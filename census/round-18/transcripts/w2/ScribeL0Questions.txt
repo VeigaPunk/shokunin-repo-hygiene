@@ -1,0 +1,77 @@
+# SoujiR18.ScribeL0Questions (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Draft two L0 question lines (format `souji | round-18 | <question>`): (1) operator approval to reap the 58 souji fixture orphans listed in census/round-18/leaked-procs-before-1631.txt / proc-census-live-1721.tsv with the (pid, starttime, boot_id) re-verify protocol of QUALITY Q32; (2) whether souji may re-derive the NAMESPACE_SHA256 pin in tools/souji-preservation-evidence.py to land the r14 fixture session-kill. Keep each ≤ 80 words.
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: coverage
+
+Report: write your scoped findings to .ufo/waves/round-18/w2/ScribeL0Questions.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-18/leaked-procs-before-1631.txt) ⇒ ok · 59 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-18/proc-census-live-1721.tsv) ⇒ ok · 68 lines
+→ grep(NAMESPACE_SHA256 @ /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-preservation-evidence.py) ⇒ ok · 27 lines
+→ grep(Q32 @ /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/QUALITY.md) ⇒ ok · 5 lines
+
+## assistant
+
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && sha256sum tests/fixtures/r14-census-boundary.py && sha256sum tests/f…) ⇒ ok · 7 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/corpus/QUALITY.md:81) ⇒ ok · 11 lines
+
+## assistant
+
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && python3 -c " rows=[l.rstrip('\n').split('\t') for l in open('census/…) ⇒ ok · 6 lines
+
+## assistant
+
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/ScribeL0Questions.md) ⇒ ok · 2 lines
+
+## assistant
+
+STATUS: DONE — two L0 question lines drafted and grounded in read-only probes. No lane code was executed and no process was signalled.
+
+Report written to `/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/ScribeL0Questions.md`.
+
+souji | round-18 | Approve reaping the 58 souji fixture orphans (all cwd-deleted; pid set identical in census/round-18/leaked-procs-before-1631.txt and census/round-18/proc-census-live-1721.tsv) by re-verifying each (pid, starttime, boot_id) from the live census immediately before any signal, per QUALITY Q32, and recording each reap in LOG?
+
+souji | round-18 | May souji re-derive the NAMESPACE_SHA256 pin in tools/souji-preservation-evidence.py (currently e6a984b1…14b2, which matches tests/fixtures/r14-census-boundary.py byte-for-byte) so the r14 fixture session-kill can land, accepting that the preservation-evidence digest changes?
+
+**Grounding**
+- **Q1:** `leaked-procs-before-1631.txt` has 58 lines. The live snapshot has 65 rows; 7 are non-fixture processes (Hyprland, 1Password, portal, Chromium renderers, one `import argparse`). The other 58 are all `cwd-deleted`. A Python set comparison shows the live candidate pids equal the before-1631 pids exactly.
+- **Q1 binder:** The before-1631 file has no starttime or boot_id columns. The `boot_id` header (`3e7084f4-…`) and the starttime column come from the live tsv, so that is the source the re-verify must cite.
+- **Q2:** The r14 fixture's sha256 matches the pin at `tools/souji-preservation-evidence.py:307`. The mismatch check at `:1161` and the digest check at `:1923` both depend on that pin, so the session-kill edit fails unless the pin is re-derived in the same change.
+
+**Findings:** No defects against the claims attacked. The only wrinkle is a naming mismatch: the file is `before-1631` but the live snapshot is `1721`. The sets agree, so this is cosmetic.
+
+**Commands run:** `read` on the two census files, QUALITY.md:80-81, and a grep for NAMESPACE_SHA256; `sha256sum` on the r14 fixture; `wc -l` on the before-1631 file (58); one read-only `python3` set comparison over the census files.
+
+**Tooling:** No installs or upgrades. pacman was not touched.

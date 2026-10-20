@@ -1,0 +1,131 @@
+# SoujiR18.RevC1Premise-5 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Falsify C1's premise. ALLOWED-EXEC under /var/tmp/souji-r18-RevC1Premise/ only: extract `git -C /home/vgpnk/Projects/shokunin/souji-shokunin show b5763415cc67ecff1e8fe56c58c39a6fb106d7a3:tools/souji-census.sh`; build root/a,b,c (one tracked file each, b with a regular `.git/info/attributes`); a PATH shim `git` that, when its args contain `<root>/b` and `status`, replaces b/.git/info/attributes with a FIFO and touches b's tracked file, then execs /usr/bin/git; run `HOME=<empty dir> PATH=<shim>:/usr/bin:/bin timeout -k 2 15 bash census.sh --root root`. Record rc, rows, stderr and whether rows a/c were emitted. Also run the same without the shim (control). Is the hang real, total (all rows lost), and only post-guard? Kill your leftovers.
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: operability
+
+Report: write your scoped findings to .ufo/waves/round-18/w1/RevC1Premise.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+Godspeed axes: **operability** (primary, judged — does the census hang reproduce, total loss, post-guard only), **calibration** (does C1's cited premise hold at b576341 before anyone builds the watchdog on it), **coverage** (leak/process-group residue observed empirically).
+
+Setting up the lab: extract base census.sh, then read the relevant code before arming fixtures.
+→ bash(mkdir -p /var/tmp/souji-r18-RevC1Premise/shim /var/tmp/souji-r18-RevC1Premise/root /var/tmp/souji-r18-RevC1Premise/home…) ⇒ ok · 3 lines
+
+## assistant
+
+→ grep(guard_git_files|census_one|status|rev-parse|info/attributes|set -m|timeout|printf.*row|rows @ /var/tmp/souji-r18-RevC1P…) ⇒ ok · 358 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-RevC1Premise/census.sh:530-590,840-990,1260-1420) ⇒ ok · 376 lines
+
+## assistant
+
+The extracted script confirms the relevant order: `list_repos` guards surfaces, then `census_one` guards again before `count_dirty` reaches its `git status`; output rows are accumulated until all repos finish. I’ll run only the specified control and shim arms, with a logged swap and exact outputs.
+→ write(/var/tmp/souji-r18-RevC1Premise/setup.sh) ⇒ ok · 3 lines
+→ write(/var/tmp/souji-r18-RevC1Premise/shim/git) ⇒ ok · 3 lines
+
+## assistant
+
+→ bash(bash -n /var/tmp/souji-r18-RevC1Premise/setup.sh /var/tmp/souji-r18-RevC1Premise/shim/git && /var/tmp/souji-r18-RevC1Pr…) ⇒ ok · 8 lines
+
+## assistant
+
+→ bash(set +e; : > shim.log; start=$(date +%s); HOME=/var/tmp/souji-r18-RevC1Premise/home PATH=/var/tmp/souji-r18-RevC1Premise…) ⇒ ok · 52 lines
+
+## assistant
+
+The first arm did not match “touches”: I appended bytes, and it completed with all rows. I’m correcting that probe detail (mtime-only `touch`, preserving the tracked blob) and rerunning control plus race against a valid regular attributes rule; the previous run remains a non-equivalent result, not the final falsifier.
+→ write(/var/tmp/souji-r18-RevC1Premise/shim/git) ⇒ ok · 2 lines
+
+## assistant
+
+→ bash(printf 'original-b\n' > root/b/tracked.txt && printf 'tracked.txt text\n' > root/b/.git/info/attributes && bash -n shim…) ⇒ ok · 1 line
+
+## assistant
+
+→ write(proc://bg_7900/kill) ⇒ ok · 15 lines
+
+## assistant
+
+The reset hit the previous FIFO before recreating it, so the shell itself blocked opening that FIFO and timed out; no census arm ran. I’ve stopped the failed command and am checking my owned lab processes before replacing the FIFO path safely.
+→ bash(ps -eo pid,ppid,pgid,stat,wchan:20,args) ⇒ ok · 33 lines
+
+## assistant
+
+→ grep(souji-r18-RevC1Premise|bash -n shim/git|timeout -k 2 15|root/b @ artifact://90559) ⇒ ok · 1 line
+
+## assistant
+
+→ bash(rm -f -- root/b/.git/info/attributes && printf 'tracked.txt text\n' > root/b/.git/info/attributes && printf 'original-b…) ⇒ ok · 8 lines
+
+## assistant
+
+→ bash(set +e; : > shim.log; start=$(date +%s); HOME=/var/tmp/souji-r18-RevC1Premise/home PATH=/var/tmp/souji-r18-RevC1Premise…) ⇒ ok · 38 lines
+
+## assistant
+
+→ bash(ps -eo pid,ppid,pgid,stat,wchan:20,args) ⇒ ok · 33 lines
+
+## assistant
+
+→ grep(souji-r18-RevC1Premise @ artifact://90628) ⇒ ok · 1 line
+
+## assistant
+
+→ read(/var/tmp/souji-r18-RevC1Premise/census.sh:1103-1135,1258-1295,1380-1416) ⇒ ok · 115 lines
+
+## assistant
+
+→ read(skill://godspeed) ⇒ ok · 18 lines
+
+## assistant
+
+→ read(xd://lsp) ⇒ error · 1 line — No such tool: xd://lsp. Mounted devices: ast_edit, debug, mcp__rea_address_name, mcp__rea_address_to_file_offset, mcp__…
+
+## assistant
+
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/RevC1Premise.md) ⇒ ok · 2 lines
+
+## assistant
+
+→ bash(rm -rf -- /var/tmp/souji-r18-RevC1Premise && printf 'lab workspace removed\n') ⇒ ok · 2 lines
+
+## assistant
+
+**High — C1’s operability premise holds.** The corrected post-guard FIFO race timed out with rc 124 after 15 seconds and emitted no stdout or stderr; the control completed with rc 0 and all three rows. The specific `open(2)` wait was not traced.
+
+Report: `/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/RevC1Premise.md`
+
+The isolated lab workspace was removed.

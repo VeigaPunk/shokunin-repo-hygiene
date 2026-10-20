@@ -1,0 +1,162 @@
+# SoujiR18.CriticC2Axis (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Attack C2 as calibration (AXES calibration = self-assessment matches repo state; /home/vgpnk/Projects/shokunin/AXES.md): is 10 → 0 meaningful or inflated by deliberate non-files; did any fix delete a pointer instead of repointing it (`git -C /home/vgpnk/Projects/shokunin/souji-shokunin diff b5763415cc67ecff1e8fe56c58c39a6fb106d7a3 5efb519f00075d958c3d1109ef6fcb24c487eb87 -- SKILL.md corpus/README.md corpus/knowledge/jj-colocation-receipts.md`); is the exemptions file a finding sink.
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: calibration
+
+Report: write your scoped findings to .ufo/waves/round-18/w2/CriticC2Axis.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+→ read(skill://godspeed) ⇒ ok · 18 lines
+→ read(/home/vgpnk/Projects/shokunin/AXES.md) ⇒ ok · 84 lines
+
+## assistant
+
+Axes named: **calibration** — does the 10→0 pointer-finding reduction reflect real repo-state fixes, or self-assessment inflated by deletions/exemptions? I'll pull the gate, the exemptions file, the baseline finding record, and the named diff in parallel.
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin diff b5763415cc67ecff1e8fe56c58c39a6fb106d7a3 5efb519f00075d958c3d1…) ⇒ ok · 56 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 5efb519f00075d958c3d1109ef6fcb24c487eb87:corpus/pointer-exempt…) ⇒ ok · 99 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 5efb519f00075d958c3d1109ef6fcb24c487eb87:tools/souji-landing-g…) ⇒ ok · 23 lines
+
+## assistant
+
+I found 10 baseline issues: 9 LG-DANGLING-PTR and 1 LG-FROZEN-MEASURED, plus 3 exemption rows. Now I'll check whether the exempted paths still exist in the round-17 files, review the gate's exemption logic, and examine the diff and fixture changes.
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && echo "=== baseline census/round-17 tree ===" && git ls-tree -r --nam…) ⇒ ok · 32 lines
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && git show 5efb519f00075d958c3d1109ef6fcb24c487eb87:tools/souji-landin…) ⇒ ok · 63 lines
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && git diff b5763415cc67ecff1e8fe56c58c39a6fb106d7a3 5efb519f00075d958c…) ⇒ ok · 36 lines
+
+## assistant
+
+The diff confirms `ddb7347` → `4f48343` is a genuine repoint (the `4f48343` files exist at baseline). Now checking exemption-match semantics — the FROZEN-MEASURED finding path was `expected.json` but the exemption row says `record.json` — plus the STALE-exemption logic.
+→ read(/var/tmp/gate-tip.py:559-636) ⇒ ok · 104 lines
+→ read(/var/tmp/gate-tip.py:840-960) ⇒ ok · 138 lines
+
+## assistant
+
+Exemption-match semantics confirmed: FROZEN-MEASURED is keyed on the *record* path (`record.json`), so the `record.json` exemption row correctly suppresses the `expected.json`-labeled finding — internally consistent. Now checking where unused/stale exemptions fire and how the claim is logged.
+→ read(/var/tmp/gate-tip.py:963-1023) ⇒ ok · 70 lines
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && git show 5efb519f00075d958c3d1109ef6fcb24c487eb87:LOG.md | grep -n -…) ⇒ ok · 46 lines
+
+## assistant
+
+Stale-exemption guard exists (lines 991–999) — sink is bounded. Now checking the pointer-extraction scope (which files feed `source_lines`), whether a committed *after* record exists, and the SCORECARD r18 row wording.
+→ read(/var/tmp/gate-tip.py:640-792) ⇒ ok · 162 lines
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && git ls-tree -r --name-only 5efb519f00075d958c3d1109ef6fcb24c487eb87 …) ⇒ ok · 72 lines
+
+## assistant
+
+The SCORECARD row is honest — it splits the 10 into 7 repoints + 2 deliberate non-files + 1 placeholder, all documented. Now checking pointer-source scope (`POINTER_ROOTS`, scanned files), the fixture's coverage, and the after-record pointer in the lesson.
+→ bash(grep -n "POINTER_ROOTS\|POINTER_PATH_RE\|source_lines\|POINTER_SOURCES\|def check_pointers" /var/tmp/gate-tip.py | head…) ⇒ ok · 56 lines
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && git show 5efb519f00075d958c3d1109ef6fcb24c487eb87:tests/fixtures/r18…) ⇒ ok · 30 lines
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && git show 5efb519f00075d958c3d1109ef6fcb24c487eb87:corpus/lessons/rou…) ⇒ ok · 55 lines
+
+## assistant
+
+Checking the fixture's full case list (does it cover stale exemptions, FROZEN-MEASURED exemption, fleet reclassification?) and verifying exempted paths are still cited and absent at tip.
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && git show 5efb519f00075d958c3d1109ef6fcb24c487eb87:tests/fixtures/r18…) ⇒ ok · 12 lines
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && echo "=== operator-sweep cited at tip? ===" && git grep -n "operator…) ⇒ ok · 71 lines
+
+## assistant
+
+One more thing to pin down — the lesson cites `.ufo/waves/round-18/w1/*.md` paths, and `.ufo/waves/` is in `POINTER_ROOTS`. Whether the claimed "0" at tip is real depends on whether `.ufo` is tracked in the lane tree or resolves under `--fleet-root`.
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && echo "=== .ufo in lane tree at tip ===" && git ls-tree --name-only 5…) ⇒ ok · 27 lines
+
+## assistant
+
+`.ufo` is tracked (530 paths) — in-lane wave reports resolve in-tree. Now the strongest remaining sink tests: brace/range expansion generating unlisted exemption paths, and whether a fresh dangling path identical to an exempted path is masked (path-keyed, not citation-keyed).
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && git show 5efb519f00075d958c3d1109ef6fcb24c487eb87:tools/souji-landin…) ⇒ ok · 6 lines
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && git ls-tree -r --name-only 5efb519f00075d958c3d1109ef6fcb24c487eb87 …) ⇒ ok · 56 lines
+
+## assistant
+
+`POINTER_PATH_RE` definition is multi-line; reading it plus the LOG heading behavior to test false-positive/negative grammar edges.
+→ read(/var/tmp/gate-tip.py:118-160) ⇒ ok · 51 lines
+
+## assistant
+
+Static verification continues: checking for residual `ddb7347` path tokens and that every `.ufo/waves` path cited by scanned authority files exists in the tip tree.
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && echo "=== ddb7347 tokens in scanned files at tip ===" && git grep -n…) ⇒ ok · 15 lines
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && for f in $(git show 5efb519f00075d958c3d1109ef6fcb24c487eb87:corpus/…) ⇒ ok · 13 lines
+
+## assistant
+
+All cited wave paths resolve in-tree; remaining `ddb7347` hits are prose, not path tokens. One gap forming: the lesson says measurements ran on the `3f822e8` worktree, but the claimed after-state is "0 at the round tip" `5efb519`. Checking what changed between them and whether authority files moved after the measurement.
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && git log --oneline b5763415cc67ecff1e8fe56c58c39a6fb106d7a3..5efb519f…) ⇒ ok · 20 lines
+
+## assistant
+
+Strongest remaining counterexample: the claimed "0 at tip" may be stale — authority files changed in `42d9ff3` and `5efb519` *after* the measured `3f822e8` worktree, and no after-record is committed. I'll independently sweep pointer tokens in the tip's scanned files (pure parsing, no lane tool).
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && git ls-tree -r --name-only 5efb519f00075d958c3d1109ef6fcb24c487eb87 …) ⇒ ok · 19 lines
+
+## assistant
+
+→ bash(python3 - <<'PYEOF' import re, posixpath, os PTR_RE = re.compile(r"(?<![A-Za-z0-9_./<>*])(?:(?:\.\./)+)?(?:census|tests…) ⇒ ok · 3 lines
+
+## assistant
+
+Independent re-implementation of the sweep on the tip tree: **445 tokens, 0 dangling, 3 fleet, 3 exempt** — the claimed 0 reproduces statically. One last check: the pinned-replay record for gate regression on old rounds.
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && git show 5efb519f00075d958c3d1109ef6fcb24c487eb87:census/round-18/ga…) ⇒ ok · 107 lines
+
+## assistant
+
+Final targeted checks on the fixture: does it exercise `LG-DANGLING-PTR-EXEMPT-STALE` and the FROZEN-MEASURED exemption path at all?
+→ bash(grep -n "EXEMPT\|exempt\|FROZEN-MEASURED\|measured_commit\|fleet" /var/tmp/r18-ptr-fixture.py | head -40) ⇒ ok · 13 lines
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -rn "EXEMPT_STALE\|EXEMPT-STALE\|exempt" <(git show 5efb519f000…) ⇒ ok · 8 lines
+
+## assistant
+
+Selftest does cover stale exemptions (line 1367+). I have enough for the report. Writing it now.
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && git show 5efb519f00075d958c3d1109ef6fcb24c487eb87:tools/souji-landin…) ⇒ ok · 72 lines
+
+## assistant
+
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/CriticC2Axis.md) ⇒ ok · 2 lines
+
+## assistant
+
+STATUS: DONE — C2 calibration attack complete; report at `.ufo/waves/round-18/w2/CriticC2Axis.md`.
+
+**Verdict: claim HOLDS, with 2 calibration notes + 1 latent sink defect.**
+
+Key findings:
+
+1. **10→0 is honest, not inflated.** Decomposed the committed before-record: 7 findings were genuine repoints (`ddb7347` → `4f48343` names, targets verified in the `b576341` tree — repointed, never deleted), 3 were deliberate non-files silenced by committed, reasoned exemptions. SCORECARD:14 and the lesson disclose this exact split — no prose inflation.
+
+2. **The "0 at tip" reproduces.** No after-JSON is committed, so I re-derived it: extracted all scanned authority files at `5efb519`, applied the gate's exact pointer grammar (regex, `:`-suffix trim, braces, `round-{a..b}` ranges, `../` normalization, fleet check) against `git ls-tree` — **445 tokens → 0 dangling, 3 fleet, 3 exempt**. All 3 exemptions used; all `.ufo/waves` citations resolve in-tree.
+
+3. **Real defect (minor):** exemptions are path-keyed and cross-class (`record_repo in exemptions`, L596; `path in exemptions`, L865). The `record.json` exemption suppresses *any* future unresolvable `measured_commit` in that record forever — it can never go STALE because it stays "used". Same for the `.git` exemption masking unrelated future citations of that path. Fix: machine-check the exempted value or scope to (source, path).
+
+4. **Latent ordering defect:** fleet classification runs before the exemption check without marking the exemption used → an exemption whose citation migrates to a fleet path flips to `EXEMPT-STALE`; verdict then differs by whether `--fleet-root` was passed.
+
+5. **Evidence asymmetry:** before-run pinned to JSON, after-run rests on prose — and the measured worktree (`3f822e8`) is 3 commits before the claimed tip, during which scanned files changed. Smallest fix: commit `gate-pointers-after-*.json`.
+
+Checks that survived falsification: malformed-TSV → exit 2, STALE guard exists + selftest-covered, replays unaffected (`gate-replays-r18.json` all match), exempted paths still cited and still absent, LOG historical sections correctly out of scope (append-only).

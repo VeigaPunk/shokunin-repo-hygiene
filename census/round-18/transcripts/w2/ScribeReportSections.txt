@@ -1,0 +1,180 @@
+# SoujiR18.ScribeReportSections (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Draft (text only, in your report) the round report sections Work performed, Landed changes, Before → after measurements, Sources & frontier, Trend verdicts, SHONEN for souji round 18 from committed records only (lesson, SCORECARD, census/round-18/*, SOURCES @5efb519); mark anything unverified. Lane commits so far: 3f822e8, 42d9ff3, 2fc5f33, 5efb519.
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: calibration
+
+Report: write your scoped findings to .ufo/waves/round-18/w2/ScribeReportSections.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+I'll start by listing the committed round-18 records at the tip commit, then read the named files in parallel.
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && git ls-tree --name-only 5efb519f00075d958c3d1109ef6fcb24c487eb87 && …) ⇒ ok · 43 lines
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && git show 5efb519f00075d958c3d1109ef6fcb24c487eb87:corpus/lessons/rou…) ⇒ ok · 87 lines
+
+## assistant
+
+The lesson is the main source. Next I'll pull the committed census records, the SCORECARD and LOG round-18 rows, SOURCES S064–S071, and the SHONEN file, checking which `.ufo/waves` paths the lesson cites actually exist at the tip.
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && R=5efb519f00075d958c3d1109ef6fcb24c487eb87; for f in census/round-18…) ⇒ ok · 548 lines
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && R=5efb519f00075d958c3d1109ef6fcb24c487eb87; echo "=== SCORECARD r18"…) ⇒ ok · 42 lines
+
+## assistant
+
+The committed records are mostly consistent with the lesson. I still need to check a few numbers against the JSON itself, starting with the C1 matrix arm totals, the replay divergence counts, and whether the "0 at round tip" gate claim is recorded anywhere committed. I'll copy the records to a scratch directory under /var/tmp so I can query them.
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && R=5efb519f00075d958c3d1109ef6fcb24c487eb87; S=/var/tmp/souji-r18w2-S…) ⇒ ok · 37 lines
+
+## assistant
+
+Two things stand out. The lesson's Gate section never records the at-tip gate result, so the SCORECARD's "after: 0 at the round tip" has no committed support yet. The live-pair TSVs have 21 rows each (22 lines with the header), and the proc census has 65 rows. Next I'll pull the C1 matrix arm totals with jq, and compare the pair files by hash.
+→ read(/var/tmp/souji-r18w2-ScribeReportSections/c1-matrix-worktree.json?q={arms: (.arms | with_entries(.value |= {suites: (to…) ⇒ error · 1 line — Failed to execute JSON query: Error: cannot index "WORKTREE" with "total"
+→ bash(cd /var/tmp/souji-r18w2-ScribeReportSections && sha256sum pair1-base-b576341.tsv pair1-changed-worktree.tsv pair2-base-…) ⇒ ok · 28 lines
+
+## assistant
+
+The pair TSVs differ on one line each, so "identical" in the SCORECARD needs checking. I'll diff them and inspect the JSON structure before the next query.
+→ bash(cd /var/tmp/souji-r18w2-ScribeReportSections && diff pair1-base-b576341.tsv pair1-changed-worktree.tsv; echo ---; diff …) ⇒ error · 16 lines — 21c21
+→ read(/var/tmp/souji-r18w2-ScribeReportSections/c1-matrix-worktree.json?q={top: keys, arms: (.arms | keys), changed_keys: (.a…) ⇒ ok · 1 line
+
+## assistant
+
+The pair files match on verdict flags, but not byte-for-byte. Pair 2 has mado's dirty count moving 10→13, and both pairs have a tameshi mtime shift, so the SCORECARD's word "identical" overstates the record. Next I'll pull per-arm suite totals from the C1 matrix.
+→ read(/var/tmp/souji-r18w2-ScribeReportSections/c1-matrix-worktree.json?q={arms: (.arms | with_entries(.value |= (to_entries …) ⇒ error · 9 lines — Failed to execute JSON query: Error: expected closing parenthesis
+
+## assistant
+
+→ read(/var/tmp/souji-r18w2-ScribeReportSections/c1-matrix-worktree.json?q=.arms | map_values(to_entries | map(select(.value |…) ⇒ ok · 1 line
+
+## assistant
+
+The per-arm totals match the lesson's numbers. One thing doesn't: the changed arm shows `leftover_procs_count` 44 for r15-config and 14 for r17-hygiene, which look like the pre-existing host orphans, yet the SCORECARD says the forced-hang leftovers went to 0. I'll check the leftover pids, the selftest totals, the lint rc values, and the r18-bounded verdicts.
+→ read(/var/tmp/souji-r18w2-ScribeReportSections/c1-matrix-worktree.json?q=.arms | map_values({selftest: {total: .selftest.tot…) ⇒ ok · 1 line
+→ bash(cd /var/tmp/souji-r18w2-ScribeReportSections && cat /dev/null; R=5efb519f00075d958c3d1109ef6fcb24c487eb87; cd /home/vgp…) ⇒ ok · 66 lines
+
+## assistant
+
+The leftover pids are identical across all four arms and predate this round, so `leftover_procs_count` is a host snapshot, not a per-fixture delta. That makes the lesson's "0 leftover" wording for the fixtures unsupported by the matrix record. Next I'll check the selftest keys, the replay divergences, the LOG entry, and the fixture reap reports behind the "2 → 0" and "4 → 0" claims.
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && R=5efb519f00075d958c3d1109ef6fcb24c487eb87; S=/var/tmp/souji-r18w2-S…) ⇒ ok · 9 lines
+→ read(/var/tmp/souji-r18w2-ScribeReportSections/gate-replays-r18.json?q=.replays | map_values({match, rev, round, exit, findi…) ⇒ ok · 1 line
+→ read(/var/tmp/souji-r18w2-ScribeReportSections/c1.json?q=.arms.changed.selftest) ⇒ error · 1 line — Path '/var/tmp/souji-r18w2-ScribeReportSections/c1.json?q=.arms.changed.selftest' not found
+
+## assistant
+
+→ read(/var/tmp/souji-r18w2-ScribeReportSections/c1.json?q=.arms.changed.selftest&compact=true) ⇒ ok · 1 line
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && R=5efb519f00075d958c3d1109ef6fcb24c487eb87; git show $R:LOG.md | sed…) ⇒ ok · 1 line
+
+## assistant
+
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && R=5efb519f00075d958c3d1109ef6fcb24c487eb87; S=/var/tmp/souji-r18w2-S…) ⇒ ok · 8 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18w2-ScribeReportSections/LOG.md:949-951:raw) ⇒ ok · 3 lines
+→ read(/var/tmp/souji-r18w2-ScribeReportSections/round-18.md:1-77) ⇒ ok · 80 lines
+
+## assistant
+
+The lesson is now fully read. Before drafting, I'll verify the records against the tip: the tool hashes against the replay record, the matrix's recorded git heads, per-arm selftest counts, the proc-census states, the SOURCES hash, and the wave-1 reap reports behind the "2 → 0" and "4 → 0" claims.
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && R=5efb519f00075d958c3d1109ef6fcb24c487eb87; for f in tools/souji-lan…) ⇒ ok · 21 lines
+→ read(/var/tmp/souji-r18w2-ScribeReportSections/c1.json?q={git_head, lane_head, changed_rev, runner_sha256, fixtures_sha256, …) ⇒ ok · 1 line
+→ read(/var/tmp/souji-r18w2-ScribeReportSections/round-18.md:6:raw) ⇒ ok · 73 lines
+
+## assistant
+
+The records mostly check out, with a few real problems. The gate and census hashes match the tip, and the per-arm selftest counts match. But the SOURCES hash in the lesson doesn't match the tip, and the C1 record's git head is b576341 with a dirty fixture tree. Next I'll compare the fixture and runner hashes the record cites against the tip, look at SOURCES history, and check the R15 reap report and the jj-receipts output.
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && R=5efb519f00075d958c3d1109ef6fcb24c487eb87; echo "--- fixture shas a…) ⇒ ok · 36 lines
+
+## assistant
+
+Two more findings. The lesson's SOURCES hash (`25c91f68`) doesn't match any committed SOURCES revision I've checked, and the r14 fixture the matrix ran differs from the tip's. Next I'll find which revision produces `25c91f68`, read the R15 reap report's counts, and confirm the lesson's source-row claims.
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && for c in b5763415cc67ecff1e8fe56c58c39a6fb106d7a3 3f822e8 ; do print…) ⇒ ok · 18 lines
+→ read(/var/tmp/souji-r18w2-ScribeReportSections/FixtureReapR15.md:1-60) ⇒ ok · 70 lines
+
+## assistant
+
+The SOURCES hash `25c91f68…` is the pre-round b576341 file (and 3f822e8), not the committed registry at 5efb519, so the lesson's "souji ok" validation predates S064–S071. The R15 report's "2 → 0" also depends on the fixed-run count, which I haven't read yet, so I'll read that section and the R17 report's counts.
+→ read(/var/tmp/souji-r18w2-ScribeReportSections/FixtureReapR15.md:60-104) ⇒ ok · 49 lines
+→ read(/var/tmp/souji-r18w2-ScribeReportSections/FixtureReapR17.md:1-55) ⇒ ok · 57 lines
+
+## assistant
+
+The R15 "2 → 0" was one case on the pre-harm tool, and the R17 "4 → 0" came from a modified test copy (guard removed, job-control modeled, 10-second timeout). The SCORECARD states the R17 number without that caveat. Last, I'll check the trend and frontier context: the SCORECARD header and calibration history, SHONEN's checklist, and the QUALITY and PROVINCE rows the lesson cites.
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && R=5efb519f00075d958c3d1109ef6fcb24c487eb87; S=/var/tmp/souji-r18w2-S…) ⇒ ok · 31 lines
+
+## assistant
+
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && S=/var/tmp/souji-r18w2-ScribeReportSections; sed -n '13,15p' $S/SCOR…) ⇒ ok · 15 lines
+
+## assistant
+
+SHONEN hasn't changed since round 13, and the SCORECARD's C1 row carries the same r17-caveat-free wording. Last, I'll read the landed file lists for the four lane commits, so the Landed changes section comes from committed diffs rather than the lesson's prose.
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && for c in 3f822e8 42d9ff3 2fc5f33 5efb519; do echo "=== $c"; git show…) ⇒ ok · 91 lines
+
+## assistant
+
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && git show --stat --format='%h' 3f822e8 | grep -v '\.ufo/' | cut -c1-1…) ⇒ ok · 47 lines
+
+## assistant
+
+I have enough committed evidence to draft the report. I'll write the scoped report to the lane path, then remove my scratch copies.
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/ScribeReportSections.md) ⇒ ok · 2 lines
+
+## assistant
+
+The report is written. I'll remove my scratch copies so the cleanup claim in the report is true.
+→ bash(rm -rf /var/tmp/souji-r18w2-ScribeReportSections && ls -d /var/tmp/souji-r18w2-ScribeReportSections 2>&1 | head -1) ⇒ ok · 2 lines
+
+## assistant
+
+STATUS: DONE — drafted the five round-18 report sections from committed records at 5efb519 and found four calibration defects in the records. The report is at `.ufo/waves/round-18/w2/ScribeReportSections.md`. I changed no lane file and ran no census, gate or test.
+
+**Attacked claim.** The C1/C2/C3 claims in the lesson, SCORECARD, LOG and `census/round-18/*`, checked against each other and the committed tools.
+
+**Verdicts**
+- **C1 operability: holds on the record**, with caveats. The matrix shows r18-bounded 5 → 0 failures and the three older suites at 0 failures in the changed arm.
+- **C2 calibration: partial.** The b576341 side (10 findings, 7 stale citations) is verified. The "0 at round tip" side has no committed record.
+- **C3 coverage: holds.** The live proc census is 65 rows and the blind counter is 65; the 58 orphans are 26 `do_wait`, 26 `wait_for_partner` and 6 `anon_pipe_read`.
+
+**Findings**
+- **F1 (highest).** The lesson and SCORECARD claim "0 at round tip". The lesson's Gate section has no tip run, and no tip gate file is committed.
+- **F2.** The lesson's SOURCES hash `25c91f68…` is the pre-round file (b576341, 3f822e8). Committed SOURCES at 5efb519 is `ed82dafc…`, so the "souji ok" validation predates S064–S071.
+- **F3.** SCORECARD says the live-fleet pair is "identical". Pair 2 has mado dirty 10 → 13 and both pairs have tameshi mtime shifts. The lesson's own wording is the accurate one.
+- **F4.** `leftover_procs_count` in the matrix record is a host snapshot. The same 44 (r15) and 14 (r17) pids appear in all four arms and predate the run, so the record cannot show per-fixture cleanup.
+- **F5.** The R17 "4 → 0" came from a modified test copy (guard removed, job control modelled, 10 s timeout). SCORECARD and R18-M2 omit that caveat.
+- Smaller items: the R15 "2 → 0" is one case; the r14 matrix arm ran patched fixture bytes that are not landed (disclosed in the lesson, not in SCORECARD); some numbers (leak count 66, 11 s fleet time, quarantine 105, gate 53) have no committed record.
+
+**Verified checks** (committed records, `git show` to scratch, hashed and queried):
+- Gate sha `f8a2ebe7…` matches the replay record; r15, r17, r18 fixture and runner hashes match the record. Only the r14 fixture differs (F7).
+- Per-arm failure counts and selftest checks (36/38/49/62) match the lesson.
+- Pinned replays: 5/5 `match: True`.
+- Quarantine `jj-receipts-r18-changed.txt`: 35 total, 0 failed, 2 skipped.
+
+**Tools and cleanup.** No tools were installed or updated. Scratch copies in `/var/tmp` were removed.

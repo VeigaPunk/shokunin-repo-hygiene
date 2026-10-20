@@ -1,0 +1,95 @@
+# SoujiR18.RevengeRecipeAsSouji-5 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Reverse-engineer the `--as souji` in /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-quarantine.sh q_jj_commit_recipe: `git -C /home/vgpnk/Projects/shokunin/souji-shokunin log -L '/q_jj_commit_recipe/,+6:tools/souji-quarantine.sh' --oneline` and the r17 reports that specified it (find mentions of q_jj_commit_recipe in /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-17/w1/*.md via one grep per named file: QuarantineJjRoots.md, JjQuarantineRecipe*.md if present — list the dir first). Was a souji-only recipe intended (souji's own repo) or an oversight?
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: operability
+
+Report: write your scoped findings to .ufo/waves/round-18/w1/RevengeRecipeAsSouji.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+→ read(skill://godspeed) ⇒ ok · 18 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-17/w1/) ⇒ ok · 80 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin log -L '/q_jj_commit_recipe/,+6:tools/souji-quarantine.sh' --oneline) ⇒ ok · 13 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-quarantine.sh:225-280) ⇒ ok · 63 lines
+
+## assistant
+
+Round-17 `w1/` has `QuarantineJjRoots.md` but no `JjQuarantineRecipe*.md` — so one grep on the named file. The recipe entered at ddb7347 (r17). Now: grep the named r17 report, find the recipe's call sites in the tool, and verify the fleet helper's refusal at `scripts/hyaku/jj-lane.sh:516-517`.
+→ grep(q_jj_commit_recipe|--as souji @ /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-17/w1/QuarantineJjRoots.md) ⇒ ok · 19 lines
+→ grep(q_jj_commit_recipe @ /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-quarantine.sh) ⇒ ok · 17 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/scripts/hyaku/jj-lane.sh:495-540) ⇒ error · 1 line — Path '/home/vgpnk/Projects/shokunin/souji-shokunin/scripts/hyaku/jj-lane.sh' not found
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show ddb7347 --stat) ⇒ ok · 168 lines
+
+## assistant
+
+`QuarantineJjRoots.md:114` already declares the pin ("The recipe pins `--as souji`; a different lane identity must override it"). The fleet helper lives at the fleet root, not in the lane. Reading the full r17 spec, the helper's refusal logic, the quarantine tool's usage surface, and checking for any other commit touching the pin.
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-17/w1/QuarantineJjRoots.md) ⇒ ok · 122 lines
+→ read(/home/vgpnk/Projects/shokunin/scripts/hyaku/jj-lane.sh:495-545) ⇒ ok · 57 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-quarantine.sh:1-60) ⇒ ok · 65 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin log --oneline -S '--as souji' -- tools/souji-quarantine.sh) ⇒ ok · 2 lines
+
+## assistant
+
+The r17 spec discloses the pin as risk #3 but promises an "override" that may not exist. Verifying: (a) how `lane_id_jj` derives the id, (b) whether the tool exposes any override flag, (c) the routed R1 contract in the r17 closure, (d) whether the fleet helper's refusal predates r17 (could the r17 seat have known?).
+→ grep(lane_id_jj\(\)|lane_branch_jj\(\)|user\.name @ /home/vgpnk/Projects/shokunin/scripts/hyaku/jj-lane.sh) ⇒ ok · 54 lines
+→ grep(--as|SOUJI_Q_LANE|lane_id @ /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-quarantine.sh) ⇒ ok · 5 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/corpus/lessons/round-17-verifier-spotcheck.md) ⇒ ok · 157 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin log --oneline -L '510,520:scripts/hyaku/jj-lane.sh' 2>&1 | head -40) ⇒ ok · 36 lines
+
+## assistant
+
+The closure's R1 routing and the fleet helper's guard are now fully grounded. Last provenance step: were the helper's v2 refusal guards already on disk before the r17 seat wrote the pin (12:42:34 -0300), and did helper v1 even have `--as`?
+→ bash(git -C /home/vgpnk/Projects/shokunin show -s --format='%h %ci %s' 67a3123 14df5b9 23efcab) ⇒ ok · 4 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin show 67a3123:scripts/hyaku/jj-lane.sh | grep -n -E '\-\-as|lane_id|protocol') ⇒ ok · 7 lines
+
+## assistant
+
+Timeline resolved: the pin was authored at 12:42:34 under helper **v1** (any `--as` accepted), and the lane-id refusal arrived 23 minutes later in helper **v2** (13:05:01). The reconstruction is complete — writing the report.
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/RevengeRecipeAsSouji.md) ⇒ ok · 1 line
+
+## assistant
+
+Report landed at `/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/RevengeRecipeAsSouji.md` (10.6 KB).
+
+**Verdict: intended pin, overtaken assumption — not an authoring oversight, but its souji-only effect is accidental.**
+
+Evidence chain:
+
+1. **The pin is deliberate and disclosed.** `git log -L` and `git log -S '--as souji'` show exactly one commit, `ddb7347` (12:42:34 -0300), introduced `q_jj_commit_recipe` (`tools/souji-quarantine.sh:246-251`). The landing spec `.ufo/waves/round-17/w1/QuarantineJjRoots.md` lists the CMD with `--as souji` as delivered contract (change-table row 5, :21; CMD example :76-78) and discloses it as risk #3 (:114): "The recipe pins `--as souji`; a different lane identity must override it." Not a typo.
+2. **The promised override never existed.** The only `--as` token in the 1842-line tool is the hardcoded printf (:247); no flag, no env, no derivation. The "override" reduces to hand-editing the printed recipe — the exact plain-git fallback that re-opens the F1 half-commit hazard (:113).
+3. **Timing flipped default → restriction.** Fleet helper v1 (`67a3123`, 11:11:34) parsed `--as` with **no** lane-id guard (verified: `git show 67a3123:scripts/hyaku/jj-lane.sh` — `--as` at :172, no `lane_id`/`protocol`). Helper v2 (`14df5b9`, **13:05:01** — 23 minutes after the recipe) added the refusal now at `scripts/hyaku/jj-lane.sh:516-517` (`id = lane_id || protocol`, `lane_id_jj` = `user.name` minus `-shokunin`, :105-111). So at authoring time `--as souji` was valid from *any* jj lane repo; v2's foreign-identity guard retroactively made it fail-closed everywhere except repos init'd with id `souji`.
+4. **The lane's own authority already contradicted the pin** — the r17 closure (`corpus/lessons/round-17-verifier-spotcheck.md`, R1) quotes SKILL's "the OWNING lane's helper … `--as <owner-id>`" rule and routes the owner-id fix plus a fixture assertion. The fail-closed assessment (helper refuses, exit 1, no damage) is correct.
+
+Smallest fix (advisory, for the R1 executor): derive the owner id in `q_jj_commit_recipe` from the repo's jj repo config (`user.name = "<id>-shokunin"`, no jj invocation), emit `--as <id>`, placeholder + stderr note when unresolvable (stay fail-closed), and add the non-souji-lane fixture assertion the closure required. `--as protocol` rejected: passes the guard but misattributes lane-owned staging and still violates the owner-id rule.
+
+Bounds: exact named files only, read-only git on the two named repos, no jj, no exec, no installs. Flagged for L1: sibling r17 reports likely citing the recipe (SentinelJjFixture, RevHelperQuarantine, VaultJjRoots, VerifyJjRoots, SimplifyJjRoots — unopened) and the r17 wave-plan task text, both outside my named-file bounds.

@@ -1,0 +1,104 @@
+# SoujiR18.ScribeRowsGit-5 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Frontier prose: open https://github.com/git/git/blob/v2.56.0/attr.c (raw: https://raw.githubusercontent.com/git/git/v2.56.0/attr.c) and https://git-scm.com/docs/git-cat-file yourself; draft two SOURCES rows (shape per /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/SOURCES.md S051–S063): attr.c — how info/attributes is opened (quote the open/read line, file@tag:line); cat-file -e — exit status semantics for pointer resolution.
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: calibration
+
+Report: write your scoped findings to .ufo/waves/round-18/w1/ScribeRowsGit.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/corpus/SOURCES.md) ⇒ ok · 116 lines
+→ read(https://raw.githubusercontent.com/git/git/v2.56.0/attr.c) ⇒ ok · 302 lines
+→ read(https://git-scm.com/docs/git-cat-file) ⇒ ok · 302 lines
+
+## assistant
+
+→ grep(info/attributes|GIT_DIR|git_path\(|read_attr_from_file|attr_stack|S_ISREG|open\(|fopen|read_in_full|read_attr_from_inde…) ⇒ ok · 250 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin cat-file -e 0000000000000000000000000000000000000001; echo "rc_miss…) ⇒ ok · 9 lines
+
+## assistant
+
+→ read(artifact://89115:699-722) ⇒ ok · 34 lines
+→ read(artifact://89115:944-955) ⇒ ok · 21 lines
+
+## assistant
+
+→ read(https://raw.githubusercontent.com/git/git/v2.56.0/builtin/cat-file.c) ⇒ ok · 302 lines
+
+## assistant
+
+→ grep(case 'e':|Not a valid object name|ret = !odb_has_object|get_oid_with_context\(the_repository, obj_name @ artifact://892…) ⇒ ok · 26 lines
+
+## assistant
+
+→ grep(prepare_attr_stack\(|^void git_check_attr|^static void collect_some_attrs|^int git_check_attr|^void attr_check_reset|co…) ⇒ ok · 29 lines
+
+## assistant
+
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/ScribeRowsGit.md) ⇒ ok · 2 lines
+
+## assistant
+
+STATUS: DONE — two draft SOURCES rows (S064 attr.c, S065 cat-file -e) are written to `/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/ScribeRowsGit.md`. I did not edit `corpus/SOURCES.md`; L1 integrates.
+
+**S064 — attr.c at tag v2.56.0** (code, tier A, mined)
+- `attr.c:711` is `fd = open(path, O_RDONLY);` in `read_attr_from_file` (:699). `fstat` runs only afterwards, at `:718`.
+- `attr.c:948` calls `read_attr_from_file(git_path_info_attributes(), flags)` from `bootstrap_attr_stack` (:916).
+- The call chain is `git_check_attr:1330 → collect_some_attrs:1171 → prepare_attr_stack:1192 → bootstrap_attr_stack:979 → :948`.
+- Consequence: a FIFO at `$GIT_DIR/info/attributes` blocks inside `open(2)` before git checks the file type. This is source-level; the blocking itself is grounded by S062 and the L1 reproduction, not measured here.
+
+**S065 — git-cat-file(1) and builtin/cat-file.c at v2.56.0** (docs+code, tier A, mined)
+- Doc quote, § OPTIONS -e: "Exit with zero status if <object> exists and is a valid object." (12 words)
+- `cat-file.c:158-160`: an unresolvable name dies with `Not a valid object name`, exit 128.
+- `cat-file.c:195-198`: `case 'e': ret = !odb_has_object(..., ODB_HAS_OBJECT_RECHECK_PACKED | ODB_HAS_OBJECT_FETCH_PROMISOR);`
+
+**Probes** (read-only `git -C … cat-file -e` on the lane root):
+
+| Input | Exit | Output |
+|---|---|---|
+| `0000…0001` (well-formed, absent) | 1 | silent |
+| `HEAD` | 0 | — |
+| `b576341…^{commit}` | 0 | — |
+| `HEAD:nonexistent-path-xyz` | 128 | `fatal: path … does not exist in 'HEAD'` |
+| `deadbeef` | 128 | `fatal: Not a valid object name deadbeef` |
+
+The 1-versus-128 split is the pointer-resolution distinction the row needs. The doc's "non-zero" wording does not separate the two.
+
+**Findings for L1**
+1. Host git is now **2.56.0**, while S001–S063 say "installed 2.55.0". New probes should record the version they ran against.
+2. The `FETCH_PROMISOR` flag means a promisor repo may fetch on `cat-file -e`. Whether `GIT_NO_LAZY_FETCH=1` suppresses that is **unverified** [INFERENCE from the flag name]; no promisor probe was run.
+3. S064 gives the C1 mechanism a source anchor that S062 alone lacks: the open at `:711` precedes the type check at `:718`. The C1 fix should not assume `git check-attr` avoids the FIFO.
+
+**Installs or updates:** none. No probe touched any `info/attributes` file.
+
+[irc] SoujiR18 → me: Follow-up prose only OWN report w1/ScribeSourceCorrections.md; do not edit SOURCES. W2 reopens S064–S071 all quotes agr…

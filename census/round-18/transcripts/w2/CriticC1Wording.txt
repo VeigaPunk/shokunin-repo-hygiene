@@ -1,0 +1,102 @@
+# SoujiR18.CriticC1Wording (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Attack the claim wording 'no single repository can hang the fleet census, and no lane fixture leaves a blocked process behind': D-state children, setsid escapees, the r14 fixture left unpatched, scaling (600 s × N), and the remaining unbounded phases. Propose the exact honest wording.
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: operability
+
+Report: write your scoped findings to .ufo/waves/round-18/w2/CriticC1Wording.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-census.sh) ⇒ ok · 305 lines
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && git log --oneline -5 && git status --short | head -20) ⇒ ok · 12 lines
+
+## assistant
+
+→ grep(setsid|kill -|kill\b|unreaped|REPO_TIMEOUT|wait\b|/proc/|wchan|wipe_recs|run_group|census_one|repo-timeout @ /home/vgpn…) ⇒ ok · 309 lines
+
+## assistant
+
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-census.sh:1300-1730) ⇒ ok · 440 lines
+
+## assistant
+
+Now let me look at the fixtures — especially whether r14's reverted fixture exercises the timeout path and leaves blocked processes.
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures && ls -la r1[4578]* 2>/dev/null && wc -l r14-census-boun…) ⇒ ok · 32 lines
+→ grep(timeout|setsid|kill|SIGKILL|SIGTERM|session|pgid|blocked|stall|hang|sleep|D-state|uninterrupt @ /home/vgpnk/Projects/sh…) ⇒ ok · 39 lines
+
+## assistant
+
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures && grep -n 'start_new_session\|setsid\|killpg\|kill(-\|o…) ⇒ ok · 29 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r14-census-boundary.py:380-430) ⇒ ok · 65 lines
+
+## assistant
+
+The mechanism is clearer now. Let me check a few more things: `resolve_guarded`/`guard_path` filesystem ops, the r14 revert claim, and the matrix runner's process handling.
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && git diff --stat b576341..HEAD -- tests/fixtures/r14-census-boundary.…) ⇒ ok · 4 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-census.sh:300-380) ⇒ ok · 92 lines
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures && sed -n '270,320p' r15-census-config.py) ⇒ ok · 54 lines
+
+## assistant
+
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-census.sh:407-560) ⇒ ok · 165 lines
+→ bash(ls /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-18/ 2>/dev/null; ls /home/vgpnk/Projects/shokunin/souji-sh…) ⇒ ok · 16 lines
+
+## assistant
+
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-18 && grep -n 'timeout\|Popen\|subprocess.run\|killpg\|sta…) ⇒ ok · 33 lines
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures && grep -n 'B[1-8]\|def test\|sleep\|stall\|block\|fifo\…) ⇒ ok · 51 lines
+
+## assistant
+
+I have enough evidence. Let me verify one last unbounded-phase candidate — startup `getent`/NSS and the compare-file open — then write the report.
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-census.sh:1734-1760) ⇒ ok · 34 lines
+
+## assistant
+
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/CriticC1Wording.md) ⇒ ok · 2 lines
+
+## assistant
+
+STATUS: DONE — report written to `/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/CriticC1Wording.md`.
+
+**Claim attacked:** "no single repository can hang the fleet census, and no lane fixture leaves a blocked process behind" — verdict **partial/fails as worded**. The `run_repo_with_watchdog` mechanism itself is sound; the wording overclaims its perimeter.
+
+**Five counterexamples, all evidenced at 5efb519:**
+
+1. **Pre-watchdog phases are unbounded** — `list_repos` (`souji-census.sh:1408-1433`) stats `$d` and `$d/.git` in the main process; `resolve_guarded` lstat/readlink for `--root`/`--compare` (`emit_census:1656`, `load_census:1735`) and `id`/`getent` NSS calls (`passwd_home:308-315`) run with no watchdog. A dead NFS/FUSE mount on a repo's `.git` hangs the whole census before the bounded machinery starts — refuting "every repository runs in its own process group" as written.
+2. **D-state residue is reported, not prevented** — after TERM+KILL the tool gives up in ~3 s and emits `repo-timeout-unreaped` (1571-1603, 1633-1642); the unkillable child is reparented and left. Census continues, but a blocked process is left behind by design. Also `kill -0 -pgid` EPERM means foreign-uid members are invisible to both kill and diagnostic.
+3. **setsid/setpgid escapees defeat all group semantics** — kills and liveness are PGID-scoped (1488-1497); a descendant that leaves the group is neither killed nor detected. Plus a latent PGID-reuse race in the ~1 s `kill -0` window could TERM/KILL an unrelated recycled group.
+4. **r14 fixture is frozen with child-only timeout kill** — `r14-census-boundary.py:392-402` uses `subprocess.run(timeout=90)` which kills only strace; tracees detach and keep running. Verified byte-identical to b576341 (`sha256 e6a984b1…14b2` both ways) — pinned by preservation-evidence, so it can't get the r15/r17/r18 `killpg`+session-sweep treatment. The B1–B8 fixture covers only SIGKILL-able in-group FIFO stalls — no D-state, no escapee, no list-phase case.
+5. **Scaling** — sequential guard + census passes, each repo-bounded: worst case ≈ 2·N·(T+~10 s); no fleet-wide budget.
+
+**Smallest fix:** exact replacement wording is in the report — scope the bound to "per-repository operations after enumeration, for descendants remaining in the worker's process group," call unreaped survivors "reported residue," and disclose r14's frozen child-only kill and the missing fleet budget.

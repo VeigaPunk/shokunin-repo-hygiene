@@ -1,0 +1,91 @@
+# SoujiR18.RevProcRedaction-5 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Review C3's redaction requirement: list argv secret shapes a process census on this host could expose (tokens in `--token=`, `-H 'Authorization: …'`, URL userinfo, `ghp_`, `sk-`, `xoxb-`, `AKIA`, `password=`), the minimal regex set, and how to truncate safely; check /home/vgpnk/Projects/shokunin/souji-shokunin/SKILL.md 'Never' and kagi boundary. Read-only `ps -eo args` on the host is allowed: report only COUNTS of processes matching each shape (never the values).
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: coverage
+
+Report: write your scoped findings to .ufo/waves/round-18/w1/RevProcRedaction.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+→ read(skill://godspeed) ⇒ ok · 18 lines
+
+## assistant
+
+→ grep(Never|kagi|Kagi @ /home/vgpnk/Projects/shokunin/souji-shokunin/SKILL.md) ⇒ ok · 97 lines
+→ grep(redact|argv|command|secret|truncate|proc-census @ /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-proc-census.…) ⇒ error · 1 line — Path not found: souji-shokunin/tools/souji-proc-census.sh
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin diff b5763415cc67ecff1e8fe56c58c39a6fb106d7a3 -- tools/souji-proc-c…) ⇒ ok · 1 line
+
+## assistant
+
+→ read(xd://lsp) ⇒ error · 1 line — No such tool: xd://lsp. Mounted devices: ast_edit, debug, mcp__rea_address_name, mcp__rea_address_to_file_offset, mcp__…
+→ glob(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-proc-census*) ⇒ ok · 1 line
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin ls-files -- 'tools/souji-proc-census*' 'corpus/knowledge/*kagi*') ⇒ ok · 1 line
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/SKILL.md:63-70) ⇒ ok · 22 lines
+
+## assistant
+
+→ bash(ps -eo pid=,args= | python3 -c 'import os,re,sys pats=[("--token=",r"(?i)(?:^|\s)--token="),("-H Authorization",r"(?i)(…) ⇒ ok · 9 lines
+
+## assistant
+
+→ glob(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/RevProcRedaction.md) ⇒ error · 1 line — Path not found: souji-shokunin/.ufo/waves/round-18/w1/RevProcRedaction.md
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-proc-census.sh) ⇒ error · 1 line — Path '/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-proc-census.sh' not found
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin ls-files --stage -- tools/souji-proc-census.sh) ⇒ ok · 1 line
+
+## assistant
+
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/RevProcRedaction.md) ⇒ ok · 2 lines
+
+## assistant
+
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/RevProcRedaction.md) ⇒ ok · 73 lines
+
+## assistant
+
+→ edit(*** Begin Patch [souji-shokunin/.ufo/waves/round-18/w1/RevProcRedaction.md#34C5] PUT 19.=26: +| `--token=...` | `(?i)(-…) ⇒ ok · 21 lines
+
+## assistant
+
+→ bash(ps -eo pid=,args= | python3 -c 'import os,re,sys pats=[("--token=",r"(?i)(?:^|\s)--token="),("-H Authorization",r"(?i)(…) ⇒ ok · 9 lines
+
+## assistant
+
+→ edit(*** Begin Patch [souji-shokunin/.ufo/waves/round-18/w1/RevProcRedaction.md#39D3] PUT 42.=42: +pats=[("--token=",r"(?i)(…) ⇒ ok · 9 lines
+
+## assistant
+
+STATUS: PARTIAL — the policy and host snapshot were reviewed, but the C3 source was absent, so its redaction cannot be verified.
+
+Report: `/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/RevProcRedaction.md`
+
+`SKILL.md:63–68` places credentials and tokens within Kagi’s boundary. The read-only snapshot found zero processes matching each of the eight requested argv shapes. The report includes the minimal redaction patterns and safe truncate-after-redaction guidance; no secret values were reported.

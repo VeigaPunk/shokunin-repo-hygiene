@@ -1,0 +1,175 @@
+# SoujiR18.ProbeExternalSignal (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Attacks cleanup on interruption. ALLOWED-EXEC: in your clone at 5efb519 only: start the 5efb519 census on a synthetic root whose repo b hangs (FIFO .gitignore), send SIGTERM then separately SIGINT to the census pid you started after 2 s; afterwards list processes still in that census's session/process groups. Any orphan is a finding.
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: operability
+
+Report: write your scoped findings to .ufo/waves/round-18/w2/ProbeExternalSignal.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+→ bash(rm -rf /var/tmp/souji-r18w2-ProbeExternalSignal && mkdir -p /var/tmp/souji-r18w2-ProbeExternalSignal && git clone --qui…) ⇒ ok · 2 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 5efb519f00075d958c3d1109ef6fcb24c487eb87:tools/souji-census.sh) ⇒ ok · 1265 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeExternalSignal/lane && grep -n "setsid\|kill\|run_bounded\|REPO_TIMED_OUT\|REPO_UNREAPED\|…) ⇒ ok · 65 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeExternalSignal/lane && git log --oneline -3 && wc -l tools/souji-census.sh) ⇒ ok · 7 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeExternalSignal/lane && sed -n '1440,1670p' tools/souji-census.sh) ⇒ ok · 232 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeExternalSignal/lane && sed -n '1660,1760p' tools/souji-census.sh) ⇒ ok · 102 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeExternalSignal/lane && grep -n "TERM\|INT\|HUP\|interrupt\|orphan\|trap" tests/fixtures/r1…) ⇒ ok · 5 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeExternalSignal && rm -rf fleet && mkdir -p fleet && cd fleet && for r in repo-a repo-b; do…) ⇒ ok · 10 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeExternalSignal/lane && grep -n "census_one()" -A 60 tools/souji-census.sh | head -80) ⇒ ok · 64 lines
+
+## assistant
+
+FIFO hang confirmed (git status blocks, rc=124). Now building the interruption trials.
+→ write(/var/tmp/souji-r18w2-ProbeExternalSignal/procscan.py) ⇒ ok · 2 lines
+→ write(/var/tmp/souji-r18w2-ProbeExternalSignal/trial.sh) ⇒ ok · 2 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeExternalSignal && TIMEOUT_SECS=30 OBSERVE_LIMIT=42 timeout 150 bash trial.sh TERM term 2>&1) ⇒ ok · 73 lines
+
+## assistant
+
+SIGTERM trial: census died (rc=143) leaving the whole worker tree including `git status` blocked on the FIFO alive past the 30s timeout. Checking residue, then fixing the recorder to include the watchdog before the SIGINT trial.
+→ bash(ls -ld /var/tmp/souji-census-now.QwZyvT 2>&1; echo "---"; if [ -e /proc/1319617 ]; then echo "watchdog 1319617 ALIVE: $…) ⇒ ok · 13 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeExternalSignal && python3 - <<'EOF' import re p='procscan.py' s=open(p).read() s=s.replace…) ⇒ ok · 4 lines
+
+## assistant
+
+Residue clean; CENSUS_TMP removed by the EXIT trap (the mechanism that neutralizes the watchdog). Before the SIGINT trial I must verify the census doesn't inherit SIGINT=ignored from my harness.
+→ bash(echo "== my shell options:"; set -o | grep -E 'monitor|posix' ; echo "== self SigIgn:"; grep -E 'SigIgn|SigCgt' /proc/s…) ⇒ ok · 11 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeExternalSignal && python3 - <<'EOF' p='trial.sh' s=open(p).read() s=s.replace('''RECORDED=…) ⇒ ok · 8 lines
+
+## assistant
+
+Confirmed: async children without job control inherit SIGINT ignored (SigIgn bit 2). Fixing the driver to launch under `set -m` and capture the watchdog state path properly.
+→ write(/var/tmp/souji-r18w2-ProbeExternalSignal/trial.sh) ⇒ ok · 1 line
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeExternalSignal && TIMEOUT_SECS=30 OBSERVE_LIMIT=42 timeout 150 bash trial.sh INT int 2>&1) ⇒ ok · 170 lines
+
+## assistant
+
+SIGINT-to-pid was swallowed by bash while it waited on a foreground child (census kept running and completed). Checking its results and the watchdog-path parsing bug, then running a short TERM trial to pin the watchdog's post-interruption exit.
+→ bash(cd /var/tmp/souji-r18w2-ProbeExternalSignal && echo "rc=$(cat int.rc 2>/dev/null || echo '(none)')"; echo "--- int.out:…) ⇒ ok · 11 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeExternalSignal && python3 - <<'EOF' p='trial.sh' s=open(p).read() s=s.replace(''' WATCH_ST…) ⇒ ok · 9 lines
+
+## assistant
+
+SIGINT-to-pid was swallowed by bash (census survived, its watchdog fired normally, exit 0) — no orphan only because the census never died. Now pinning the watchdog-neutralization mechanism with a short-timeout TERM trial.
+→ bash(cd /var/tmp/souji-r18w2-ProbeExternalSignal && TIMEOUT_SECS=10 OBSERVE_LIMIT=14 timeout 120 bash trial.sh TERM term2 2>…) ⇒ ok · 67 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeExternalSignal/lane && grep -n "cleanup_census_tmp()\|trap cleanup_census_tmp EXIT\|set -m…) ⇒ ok · 54 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeExternalSignal/lane && sed -n '228,246p' tools/souji-census.sh; echo "=== 1470,1502:"; sed…) ⇒ ok · 61 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeExternalSignal/lane && grep -n "def case_b\|SIGTERM\|SIGINT\|signal\.\|kill -" tests/fixtu…) ⇒ ok · 61 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeExternalSignal/lane && sed -n '400,480p' census/round-18/run-matrix.py; echo "=== 520,600:…) ⇒ ok · 44 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeExternalSignal/lane && grep -n "start_new_session\|Popen\|kill_session\|session_id" census…) ⇒ ok · 106 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeExternalSignal/lane && sed -n '240,340p' tests/fixtures/r18-census-bounded.py) ⇒ ok · 102 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeExternalSignal/lane && sed -n '160,195p' census/round-18/run-matrix.py) ⇒ ok · 39 lines
+
+## assistant
+
+Runner uses `start_new_session=True` + `kill_session` after every run, so session-level reaping masks leaks. Verifying the SIGINT behavior is generic bash (control experiment) while reading the fixture's census helper.
+→ bash(cd /var/tmp/souji-r18w2-ProbeExternalSignal && rm -f ctrl.pid && set -m; setsid --fork bash -c 'echo $$ > /var/tmp/souj…) ⇒ ok · 8 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeExternalSignal/lane && grep -n "def census(" tests/fixtures/r18-census-bounded.py; sed -n …) ⇒ ok · 9 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeExternalSignal/lane && sed -n '480,575p' tests/fixtures/r18-census-bounded.py) ⇒ ok · 97 lines
+
+## assistant
+
+Fixture harness reaps by session after each run, and B1–B8 contain no SIGTERM/SIGINT to the census. Let me name the B cases precisely and confirm no leftover processes.
+→ bash(cd /var/tmp/souji-r18w2-ProbeExternalSignal/lane && sed -n '575,600p' tests/fixtures/r18-census-bounded.py; echo "=== c…) ⇒ ok · 142 lines
+→ bash(ps -eo pid,ppid,pgid,sid,stat,args | grep -F '/var/tmp/souji-r18w2-ProbeExternalSignal' | grep -v grep; echo "grep_rc=$…) ⇒ error · 8 lines — grep_rc=1
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeExternalSignal/lane && grep -n "leaked_before_cleanup\|def census_problems\|def case_resou…) ⇒ ok · 56 lines
+
+## assistant
+
+All evidence is in hand. Checking the report destination, then writing.
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2) ⇒ ok · 52 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeExternalSignal/lane && sed -n '1805,1826p' tools/souji-census.sh) ⇒ ok · 23 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeExternalSignal/lane && grep -n 'worker=\$!\|watchdog=\$!\|state_path=\$(mktemp\|if mkdir -…) ⇒ ok · 9 lines
+
+## assistant
+
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/ProbeExternalSignal.md) ⇒ ok · 1 line
+
+## assistant
+
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && head -3 .ufo/waves/round-18/w2/ProbeExternalSignal.md && echo "--- s…) ⇒ ok · 11 lines
+
+## assistant
+
+Report written and probe cleaned up. Final result:
+
+**STATUS: DONE** — interruption cleanup probe at 5efb519 (clone, synthetic fleet with FIFO `.gitignore` in repo b) is complete; report at `souji-shokunin/.ufo/waves/round-18/w2/ProbeExternalSignal.md`.
+
+**Finding (operability FAIL):**
+- **SIGTERM mid-hang orphans the worker tree permanently.** Census (pid X) exits 143; its only trap is `trap cleanup_census_tmp EXIT` (`tools/souji-census.sh:241`), which removes `$CENSUS_TMP` — exactly where the watchdog's `state_path` lives (`:1474-1475`). The worker runs in its own process group (`:1478-1481`), so the signal never reaches it. When the watchdog reaches the limit, its `mkdir -- "$state_path"` fails (`:1493`) because the EXIT trap already deleted the parent, so the TERM/KILL at `:1495-1499` never run and the watchdog exits silently.
+- Observed twice: `--repo-timeout 30`, SIGTERM at 4.5 s → blocked `git status` (`wchan=wait_for_partner`) plus its three bash parents still alive at t=42 s; `--repo-timeout 10`, SIGTERM at 3.5 s → watchdog gone by t=14 s, worker group still alive. Nothing else references those pids; the leak is unbounded, not the nominal 600 s.
+- **SIGINT to the census pid is inert** (bash defers it while waiting on a foreground child; `SigIgn=0x…004`, `SigCgt` includes SIGINT; a plain bash control behaves identically). No orphan there only because the census never died — it completed normally: repo-b `error` row, `repo-timeout 30s` stderr, exit 0 (C1's stated uninterrupted behavior holds).
+- **The r18 fixture cannot see this:** B1–B8 never signal the census (only cleanup `SIGKILL`s at fixture lines 458/468/546/583/591), and `run-matrix.py` reaps each census session via `start_new_session=True` + `kill_session` (169–183), masking residue.
+
+**Smallest fix:** kill the active worker group + watchdog inside `cleanup_census_tmp` before `rm -rf` (globals set after `worker=$!`/`watchdog=$!`, cleared after normal reaping), and dedent the watchdog's TERM/KILL out of the `mkdir` gate so a missing state path can never disarm reaping.
+
+Hygiene: no lane/fleet writes, all probe processes killed by recorded pid and confirmed gone, three probe tmp dirs absent, clone and scratch deleted, no tools installed.

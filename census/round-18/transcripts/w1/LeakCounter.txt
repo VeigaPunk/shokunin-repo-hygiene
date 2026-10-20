@@ -1,0 +1,254 @@
+# SoujiR18.LeakCounter-5 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+OWN ONLY census/round-18/leak-count.py (new, in your clone). Work in your own clone /var/tmp/souji-r18-LeakCounter/lane (see # Contract); deliver /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/LeakCounter.patch. An independent counting command for C3 (blind second implementation, QUALITY Q5 — do not read tools/souji-proc-census.sh or other seats' output): stdlib Python reading /proc for the current uid, counts processes whose cwd link ends in ' (deleted)' or whose argv contains an absolute path under /var/tmp, /tmp or /dev/shm whose top-level scratch directory (first component below the prefix) no longer exists; JSON output {"counted_at", "uid", "total", "by_reason", "by_prefix_family" (e.g. `r15-census-config`, `r17-census-hygiene`, other), "pids"}; never signals; `--json OUT` exclusive create. Selftest `--selftest`: spawn a setsid FIFO reader in a /var/tmp dir, delete the dir, count +1, kill it. Then run it read-only on the live host and report the JSON (expected ~58 souji fixture orphans; compare with /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-18/leaked-procs-before-1631.txt). ALLOWED-EXEC: the script --selftest and read-only live run.
+
+Lane bounds: leaf member — no subagent dispatch except your single labrat.
+Judged on: coverage
+
+Report: write your scoped findings to .ufo/waves/round-18/w1/LeakCounter.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+→ read(skill://godspeed) ⇒ ok · 18 lines
+
+## assistant
+
+→ bash(git clone --quiet --no-local /home/vgpnk/Projects/shokunin/souji-shokunin /var/tmp/souji-r18-LeakCounter/lane && git -C…) ⇒ ok · 1 line
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-18/leaked-procs-before-1631.txt) ⇒ ok · 59 lines
+
+## assistant
+
+→ write(/var/tmp/souji-r18-LeakCounter/lane/census/round-18/leak-count.py) ⇒ ok · 3 lines
+
+## assistant
+
+→ bash(python3 /var/tmp/souji-r18-LeakCounter/lane/census/round-18/leak-count.py --selftest) ⇒ ok · 7 lines
+
+## assistant
+
+→ bash(python3 /var/tmp/souji-r18-LeakCounter/lane/census/round-18/leak-count.py) ⇒ ok · 75 lines
+
+## assistant
+
+→ bash(git -C /var/tmp/souji-r18-LeakCounter/lane add -N -- census/round-18/leak-count.py && git -C /var/tmp/souji-r18-LeakCou…) ⇒ ok · 16 lines
+
+## assistant
+
+→ read(artifact://89671) ⇒ ok · 226 lines
+
+## assistant
+
+→ bash(git -C /var/tmp/souji-r18-LeakCounter/lane diff b5763415cc67ecff1e8fe56c58c39a6fb106d7a3 -- census/round-18/leak-count.…) ⇒ ok · 1 line
+
+## assistant
+
+→ read(/var/tmp/souji-r18-LeakCounter/lane/census/round-18/leak-count.py:1-220) ⇒ ok · 221 lines
+
+## assistant
+
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/LeakCounter.md) ⇒ ok · 2 lines
+
+## assistant
+
+STATUS: DONE — Added the independent proc counter; its selftest passed and its live PID set matches the retained 58-process baseline.
+
+**Axis:** coverage.
+
+**Files changed**
+- `/var/tmp/souji-r18-LeakCounter/lane/census/round-18/leak-count.py`
+- `/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/LeakCounter.patch`
+- `/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/LeakCounter.md`
+
+The counter scans current-UID processes for deleted cwd links and argv paths under `/var/tmp`, `/tmp`, and `/dev/shm`. The FIFO selftest passed: **58 → 59**, adding PID **462080**. The live run at **2026-10-20T19:55:35.102284+00:00** counted **58** processes (UID 1000); its PID set matched `census/round-18/leaked-procs-before-1631.txt:1-58`.
+
+The report contains the full live JSON, exact commands and outputs, and implementation line references. Risks: the proc scan is a point-in-time snapshot, family buckets can overlap, and `--json OUT` exclusive creation was implemented but not separately exercised. **Blockers: none.**
+
+[irc] SoujiR18.SrcProcCwd-5 → me: C3 cwd predicate evidence (.ufo/waves/round-18/w1/SrcProcCwd.md): readlink(/proc/<pid>/cwd) endswith " (deleted)" is th…
+
+## assistant
+
+→ write(agent://SoujiR18.SrcProcCwd-5) ⇒ ok · 1 line
+
+## assistant
+
+Acknowledged the corroborating cwd-predicate evidence to SrcProcCwd; no implementation change was needed.
+
+[irc] SoujiR18 → me: L1 follow-up (same file/patch, stay blind to the tool's code): add the fd class (`/proc/<pid>/fd/*` link ending ' (dele…
+
+## assistant
+
+→ write(agent://SoujiR18) ⇒ ok · 1 line
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-LeakCounter/lane/census/round-18/leak-count.py#0FE0] PUT 37.=60: +def _family_for_s…) ⇒ ok · 87 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-LeakCounter/lane/census/round-18/leak-count.py:37-220) ⇒ ok · 195 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-LeakCounter/lane/census/round-18/leak-count.py#1A6E] PUT <99: + + *** End Patch) ⇒ ok · 13 lines
+
+## assistant
+
+→ bash(python3 /var/tmp/souji-r18-LeakCounter/lane/census/round-18/leak-count.py --selftest) ⇒ ok · 7 lines
+
+## assistant
+
+→ bash(python3 /var/tmp/souji-r18-LeakCounter/lane/census/round-18/leak-count.py --json /var/tmp/souji-r18-LeakCounter/proc-js…) ⇒ ok · 4 lines
+
+## assistant
+
+→ bash(python3 /var/tmp/souji-r18-LeakCounter/lane/census/round-18/leak-count.py) ⇒ ok · 83 lines
+
+## assistant
+
+→ bash(git -C /var/tmp/souji-r18-LeakCounter/lane diff b5763415cc67ecff1e8fe56c58c39a6fb106d7a3 -- census/round-18/leak-count.…) ⇒ ok · 1 line
+
+## assistant
+
+→ read(/var/tmp/souji-r18-LeakCounter/lane/census/round-18/leak-count.py:185-262) ⇒ ok · 85 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-LeakCounter/lane/census/round-18/leak-count.py#D44E] PUT <188: + if _family_for_scr…) ⇒ ok · 9 lines
+
+## assistant
+
+→ bash(python3 /var/tmp/souji-r18-LeakCounter/lane/census/round-18/leak-count.py --selftest) ⇒ ok · 7 lines
+
+## assistant
+
+→ bash(python3 /var/tmp/souji-r18-LeakCounter/lane/census/round-18/leak-count.py) ⇒ ok · 83 lines
+
+## assistant
+
+→ bash(python3 /var/tmp/souji-r18-LeakCounter/lane/census/round-18/leak-count.py --json /var/tmp/souji-r18-LeakCounter/proc-js…) ⇒ ok · 4 lines
+
+## assistant
+
+→ bash(git -C /var/tmp/souji-r18-LeakCounter/lane diff b5763415cc67ecff1e8fe56c58c39a6fb106d7a3 -- census/round-18/leak-count.…) ⇒ ok · 1 line
+
+## assistant
+
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/LeakCounter.md) ⇒ ok · 2 lines
+
+## assistant
+
+STATUS: DONE — Added cwd/argv/fd classification with one primary reason per PID and verified exclusive JSON creation.
+
+**Axis:** coverage.
+
+Updated `census/round-18/leak-count.py` in the assigned clone and refreshed the patch and report:
+- `/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/LeakCounter.patch`
+- `/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/LeakCounter.md`
+
+The final live census counted **65** PIDs: **58 `cwd-deleted`** (matching the retained baseline), **7 `fd-path-gone`**, and **0 `argv-path-gone`**. The selftest passed (**65 → 66**, added PID `1752043`) and checks that `/tmpfoo` is not treated as `/tmp`. The exclusive-create probe returned `first_rc=0`; the second write failed with `EEXIST`, `second_rc=1`.
+
+The report includes the full live JSON and exact commands and outputs. **Blockers: none.**
+
+[irc] SoujiR18 → me: Follow-up private clone refreshed to 5efb519, OWN ONLY census/round-18/leak-count.py. W2 RevLeakCounterBlind and ProbeP…
+
+## assistant
+
+→ write(agent://SoujiR18.ProcCensus-5) ⇒ ok · 1 line
+
+## assistant
+
+→ bash(git clone --quiet --no-local /home/vgpnk/Projects/shokunin/souji-shokunin /var/tmp/souji-r18-LeakCounterFix/lane && git…) ⇒ ok · 1 line
+
+## assistant
+
+→ read(/var/tmp/souji-r18-LeakCounterFix/lane/census/round-18/leak-count.py) ⇒ ok · 84 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-LeakCounterFix/lane/census/round-18/leak-count.py:5-17,26-169) ⇒ ok · 159 lines
+→ read(/var/tmp/souji-r18-LeakCounterFix/lane/census/round-18/leak-count.py:172-266) ⇒ ok · 97 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-LeakCounterFix/lane/census/round-18/leak-count.py#B8E6] CUT 10.=10 PUT 21.=22: +DEL…) ⇒ ok · 137 lines
+
+[irc] SoujiR18.ProcCensus-5 → me: Please mirror this exact predicate: cwd is unrestricted by --prefix; classify cwd-deleted only when raw readlink ends `…
+
+## assistant
+
+→ write(agent://SoujiR18.ProcCensus-5) ⇒ ok · 1 line
+
+## assistant
+
+→ read(/var/tmp/souji-r18-LeakCounterFix/lane/census/round-18/leak-count.py:35-155) ⇒ ok · 130 lines
+
+## assistant
+
+→ edit(*** Begin Patch [/var/tmp/souji-r18-LeakCounterFix/lane/census/round-18/leak-count.py#BD0B] PUT 77.=79: + family = _fam…) ⇒ ok · 32 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18-LeakCounterFix/lane/census/round-18/leak-count.py:19-205) ⇒ ok · 197 lines
+→ read(/var/tmp/souji-r18-LeakCounterFix/lane/census/round-18/leak-count.py:206-380) ⇒ ok · 184 lines
+
+## assistant
+
+→ bash(python3 /var/tmp/souji-r18-LeakCounterFix/lane/census/round-18/leak-count.py --selftest) ⇒ ok · 7 lines
+
+## assistant
+
+→ bash(python3 /var/tmp/souji-r18-LeakCounterFix/lane/census/round-18/leak-count.py) ⇒ ok · 84 lines
+
+## assistant
+
+→ bash(git -C /var/tmp/souji-r18-LeakCounterFix/lane ls-files -- census/round-18/leak-count.py) ⇒ ok · 2 lines
+
+## assistant
+
+→ bash(git -C /var/tmp/souji-r18-LeakCounterFix/lane diff 5efb519 -- census/round-18/leak-count.py > /home/vgpnk/Projects/shok…) ⇒ ok · 1 line
+
+## assistant
+
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/LeakCounterFix.md) ⇒ ok · 2 lines
+
+## assistant
+
+STATUS: DONE — Updated the blind counter against `5efb519`; synthetic selftests passed and the live census found the baseline cwd cohort plus six fd-only processes.
+
+**Axis:** coverage.
+
+Changed only `census/round-18/leak-count.py` in the refreshed clone. The patch and report are:
+- `/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/LeakCounterFix.patch`
+- `/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/LeakCounterFix.md`
+
+The selftest passed (**69 → 70**, added PID `2400870`), including literal live cwd/fd suffixes, deleted-fd detection, exact argv forms, embedded-text rejection, dangling symlink handling, and prefix-boundary rejection. The live JSON at `2026-10-20T21:37:28.326304+00:00` reported **64** total: **58 `cwd-deleted`** matching the retained baseline and **6 `fd-path-gone`**; `argv-path-gone` was 0. The report contains the full JSON and exact commands and outputs.
+
+**Risks:** the `/proc` scan is a point-in-time snapshot and skips access races. **Blockers:** none.

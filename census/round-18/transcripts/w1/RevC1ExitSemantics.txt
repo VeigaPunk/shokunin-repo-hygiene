@@ -1,0 +1,80 @@
+# SoujiR18.RevC1ExitSemantics-5 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Review the C1 contract against /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-census.sh: census_one exits 2 via protected_fail (:222-230) from inside `$(…)`; emit_census (:1394-1416) maps rc 2 → exit 2, other → exit 1; traps (`cleanup_census_tmp`, EXIT/INT traps — find them), `set -euo pipefail`. List every way a background-job + temp-file + watchdog rewrite could change these semantics (lost rc, stderr ordering, a trap firing in the subshell deleting CENSUS_TMP, a killed job's partial row file) and the assertion that would catch each.
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: operability
+
+Report: write your scoped findings to .ufo/waves/round-18/w1/RevC1ExitSemantics.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+→ read(skill://godspeed) ⇒ ok · 18 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-census.sh:200-262) ⇒ ok · 71 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-census.sh:1380-1460) ⇒ ok · 87 lines
+→ grep(trap |cleanup_census_tmp|CENSUS_TMP|set -[meuo]|wait\b| jobs\b|disown @ /home/vgpnk/Projects/shokunin/souji-shokunin/to…) ⇒ ok · 110 lines
+
+## assistant
+
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-census.sh:1488-1524) ⇒ ok · 44 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-census.sh:1928-2020) ⇒ ok · 100 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-census.sh:1-190) ⇒ ok · 196 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin diff -- tools/souji-census.sh) ⇒ ok · 1 line
+→ read(xd://lsp) ⇒ error · 1 line — No such tool: xd://lsp. Mounted devices: ast_edit, debug, mcp__rea_address_name, mcp__rea_address_to_file_offset, mcp__…
+
+## assistant
+
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-census.sh:1240-1424) ⇒ ok · 194 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-census.sh:2020-2072) ⇒ ok · 55 lines
+→ grep((^|[[:space:]])(exit|return)[[:space:]]+[0123]|trap @ /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-census.sh) ⇒ ok · 638 lines
+→ read(/home/vgpnk/.omp/agent/RULES.md) ⇒ ok · 15 lines
+
+## assistant
+
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-census.sh:540-590) ⇒ ok · 58 lines
+
+## assistant
+
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-census.sh:986-1024) ⇒ ok · 46 lines
+
+## assistant
+
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-census.sh:1128-1208) ⇒ ok · 92 lines
+
+## assistant
+
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/RevC1ExitSemantics.md) ⇒ ok · 2 lines
+
+## assistant
+
+STATUS: DONE — Static C1 exit-semantics review written to `/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/RevC1ExitSemantics.md`.
+
+It covers worker status propagation, timeout and process-group cleanup, buffered output and partial rows, stderr ordering, inherited EXIT traps affecting `CENSUS_TMP`, `set -e`/`wait` behavior, and the timeout bounds. No source diff was present; runtime assertions remain unverified. LSP was unavailable.

@@ -1,0 +1,150 @@
+# SoujiR18.ScoutR3Counts-5 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+R3: find every place at b5763415cc67ecff1e8fe56c58c39a6fb106d7a3 (SCORECARD.md, LOG.md round-17 section, corpus/lessons/round-17.md, SKILL.md, the fleet report /home/vgpnk/Projects/shokunin/.ufo/reports/round-17/souji.md) that states a live-fleet repository count for round 17, and check each against /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-17/live-fleet.json (count rows excluding the header with jq/python). Report file:line, stated, measured.
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: calibration
+
+Report: write your scoped findings to .ufo/waves/round-18/w1/ScoutR3Counts.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+I'll start by locating the evidence sources and measuring the live-fleet JSON in parallel.
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && git show b5763415cc67ecff1e8fe56c58c39a6fb106d7a3:census/round-17/li…) ⇒ ok · 8 lines
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && for f in SCORECARD.md LOG.md corpus/lessons/round-17.md SKILL.md PRO…) ⇒ ok · 13 lines
+
+## assistant
+
+Found the SCORECARD claim. Now measuring the JSON structure and sweeping all files.
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && git show b5763415cc67ecff1e8fe56c58c39a6fb106d7a3:census/round-17/li…) ⇒ ok · 8 lines
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && for f in SCORECARD.md LOG.md corpus/lessons/round-17.md SKILL.md cor…) ⇒ ok · 19 lines
+
+## assistant
+
+Now inspecting the arm row structure to determine actual repo count.
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && python3 -c " import json d=json.load(open('/tmp/lf.json')) for arm,v…) ⇒ ok · 13 lines
+
+## assistant
+
+Rows = 22 per arm. Checking whether row[0] is a header and whether all rows are repos.
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && python3 -c " import json d=json.load(open('/tmp/lf.json')) r=d['arms…) ⇒ ok · 23 lines
+
+## assistant
+
+Confirmed: 22 rows includes the header → **21 repositories**. Now finding every statement of the count.
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && echo '=== LOG round-17 section bounds ===' && git show b5763415cc67e…) ⇒ ok · 7 lines
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && echo '=== lessons r17 line 6 full ===' && git show b5763415cc67ecff1…) ⇒ ok · 17 lines
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && echo '=== SKILL.md grep ===' && git show b5763415cc67ecff1e8fe56c58c…) ⇒ ok · 24 lines
+
+## assistant
+
+LOG says 21 but cites `live-fleet-final.json`. Getting full text and checking cited filenames exist.
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && git show b5763415cc67ecff1e8fe56c58c39a6fb106d7a3:corpus/lessons/rou…) ⇒ ok · 5 lines
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && echo '=== census/round-17 live-fleet files at base ===' && git ls-tr…) ⇒ ok · 9 lines
+→ bash(ls -la /home/vgpnk/Projects/shokunin/.ufo/reports/round-17/ 2>&1 | grep -i souji; echo '=== grep ==='; grep -n -iE 'liv…) ⇒ ok · 13 lines
+
+## assistant
+
+Extracting the tail of the lesson sentence and the report's exact lines.
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && python3 -c " l=open('/tmp/r17.md').read().split('\n')[5] i=l.find('L…) ⇒ ok · 3 lines
+→ bash(sed -n '80,82p' /home/vgpnk/Projects/shokunin/.ufo/reports/round-17/souji.md; echo '=== lines 74-84 ==='; sed -n '74,84…) ⇒ ok · 18 lines
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && echo '=== SCORECARD line 15 exact 21/22 context ===' && git show b57…) ⇒ error · 12 lines — === SCORECARD line 15 exact 21/22 context ===
+
+## assistant
+
+Verifying which LOG section line 862 belongs to, header/duplicate checks, and SKILL.md.
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && git show b5763415cc67ecff1e8fe56c58c39a6fb106d7a3:LOG.md > /tmp/log.…) ⇒ ok · 25 lines
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && python3 -c " import json d=json.load(open('/tmp/lf.json')) for arm i…) ⇒ ok · 8 lines
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && echo '=== SKILL live fleet ===' && git show b5763415cc67ecff1e8fe56c…) ⇒ ok · 8 lines
+
+## assistant
+
+Now verifying the dangling `live-fleet-final.json` and current HEAD state of the claim.
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && echo '=== base: live-fleet-final anywhere ===' && git ls-tree -r --n…) ⇒ ok · 8 lines
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && python3 -c " import json d=json.load(open('/tmp/lf.json')) body=d['a…) ⇒ ok · 7 lines
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && git show HEAD:SCORECARD.md 2>/dev/null | grep -n -o -E 'live fleet p…) ⇒ ok · 6 lines
+
+## assistant
+
+Checking the round-16 `live-fleet-final.json` (the file LOG:861 actually cites) and scanning LOG's round-17 section exhaustively.
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && git show b5763415cc67ecff1e8fe56c58c39a6fb106d7a3:census/round-16/li…) ⇒ ok · 4 lines
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && awk 'NR>=944' /tmp/log.md | grep -n -iE 'live.?fleet|repositor|rows|…) ⇒ ok · 9 lines
+
+## assistant
+
+Key discovery: round-16's `live-fleet-final.json` is headerless (21 repos); round-17 added a header. Comparing repo sets.
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && python3 -c " import json a=json.load(open('/tmp/lff.json'))['arms'][…) ⇒ ok · 8 lines
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && echo '=== exact SCORECARD:15 sentence + neighbors ===' && git show b…) ⇒ ok · 7 lines
+
+## assistant
+
+Definitive: both records cover the same 21 repositories. Final sweep for any other count phrasing, then write.
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && for f in SCORECARD.md SKILL.md PROVINCE.md corpus/QUALITY.md corpus/…) ⇒ ok · 11 lines
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && awk 'NR>=944' /tmp/log.md | grep -n -E '[0-9]+ (repo|repos|repositor…) ⇒ ok · 8 lines
+
+## assistant
+
+All statements located. Verifying working-tree identity and running the canonical counting commands.
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && echo '=== worktree vs base blob ===' && sha256sum census/round-17/li…) ⇒ ok · 10 lines
+→ bash(ls -la /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/ 2>&1 | head -20) ⇒ ok · 12 lines
+
+## assistant
+
+All evidence gathered. Writing the scoped findings report.
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/ScoutR3Counts.md) ⇒ ok · 1 line
+
+## assistant
+
+→ bash(ls -la /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/ScoutR3Counts.md && head -3 /home/vgpnk/Proj…) ⇒ ok · 5 lines
+
+## assistant
+
+STATUS: DONE — one false round-17 live-fleet repository count: `SCORECARD.md:15` says 22; measured 21.
+
+**Measured ground truth** — `census/round-17/live-fleet.json` `arms.*.rows` carries a header row at index 0 (`["repo","worktrees",…]`): `jq '.arms.changed.rows[1:] | length'` → **21**, `jq '.arms.r16.rows[1:] | length'` → **21**; 21 unique `-shokunin` basenames, arms byte-equal on the body. Corroboration without the header question: `census/round-16/live-fleet-final.json` is headerless (21 rows) and covers the **identical** repo set, so the 21→22 step is a schema change (header added), not a fleet change.
+
+**Claims found**
+
+| file:line | stated | measured | verdict |
+|---|---|---|---|
+| `SCORECARD.md:15` | "live fleet paired rows identical (**22 repos**)" | 21 | **fails, off by one** |
+| `corpus/lessons/round-17.md:6` | "**22 rows**, r16 and changed identical excluding mtime, rc 0, no stderr" | 22 raw rows / 21 repos | partial — "rows" literally true, root cause of the mislabel |
+| `.ufo/reports/round-17/souji.md:81` | "**22 rows** identical excluding mtime, rc 0" | 22 raw rows / 21 repos | partial — same wording hazard (`sha256 dc8136a0…`) |
+| `LOG.md:944–946` (round-17 section) | no count (`grep -E '[0-9]+ (repo\|repos\|repositories)'` on `NR>=944` → rc 1) | 21 | N/A |
+| `SKILL.md` | no live-fleet count (only `:157` "no real store or live fleet probe") | 21 | N/A |
+
+Adjacent and **correct**, must not be "fixed": `LOG.md:861-862` (round-16 section) states "identical on 21 repositories" for `census/round-16/live-fleet-final.json` — that file is headerless with exactly 21 rows and different arms (`r14-harm`, `changed`), so it is not a round-17 claim.
+
+**Root cause**: round 17 added a header row and prose carried `len(rows)` forward as "22 rows", which SCORECARD relabeled "(22 repos)" without re-deriving from the body.
+
+**Smallest fix**: `SCORECARD.md:15` `(22 repos)` → `(21 repos)`. Optional hardening in the two prose sites: "21 repositories (22 rows incl. header)". No other authority file (`PROVINCE.md`, `corpus/QUALITY.md`, `corpus/README.md`) states a live-fleet count.
+
+Report written to `/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/ScoutR3Counts.md`. Commands were all read-only (`git show`, `jq`, `python3 -c`, `sha256sum`, `grep` on named files); no `jj`, no git writes, no census execution against the live fleet, no signals sent, no tools installed.

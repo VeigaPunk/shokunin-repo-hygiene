@@ -1,4 +1,4 @@
-STATUS: DONE — Extended the bounded-census fixture through B12 against the refreshed 5efb519 snapshot; retained B1–B8.
+STATUS: DONE — Extended the fixture through B12 and recorded the final integrated B1–B12 run.
 
 ## Axes
 
@@ -151,7 +151,7 @@ Delivered the updated patch at `.ufo/waves/round-18/w1/FixtureR18BoundedFix.patc
 
 The mounted tools expose no LSP interface, so no LSP lookup/refactor was available. No tools were installed.
 
-## W2 integration findings
+## W2 pre-fix findings (5efb519 snapshot)
 
 - B10: smallest fix is to make the SIGTERM parent path synchronously stop and reap the active worker and watchdog before the census parent exits. The TERM arm returned -15 but retained the worker session after the parent exited; the SIGKILL arm was clean by the repo bound plus two-second grace.
 - B11: reject the raw input string before line-based normalization for both `--root` and `--compare`; otherwise a trailing newline is stripped and selects the valid sibling.
@@ -162,3 +162,11 @@ Pinned-source anchors explain these findings: `tools/souji-census.sh:278-295` no
 Fixture source anchors: B1–B12 are pinned at `tests/fixtures/r18-census-bounded.py:32`; unique per-invocation scratch roots are created at `:114-118`; every census Popen starts a session at `:572-574`; the external-signal runner is at `:663-815`; B6 executes a census at `:1256-1268`; B9–B12 are at `:1319-1564`; and raw duplicate-row checks use `raw_repo_names` at `:1675-1684`.
 
 All four new cases are retained as measured falsifiers on 5efb519; this seat changed only the fixture file.
+
+## Final integrated verification
+
+`SoujiR18.CensusWatchdog-5` ran the full fixture against the corrected tool at `/var/tmp/souji-r18-CensusWatchdog/lane-5efb/tools/souji-census.sh` (tool SHA-256 `21c19ff620ad92c26df15550f473158d887a1bba0967e9e2686cf1b5d0f21629`). The exact invocation and complete case output are retained in `CensusWatchdogFix.md:39-62`; I did not duplicate that run.
+
+Observed: **B1–B12 PASS, 12/12**, `SUMMARY total=12 failed=0`, wall time 128.43s. This includes the B10 parent TERM/KILL cleanup, B11 raw-newline refusals, and B12 gitfile timeout row/deduplication controls. No new fixture-side findings.
+
+The fixture remains at `/var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py`; its delivered patch is `.ufo/waves/round-18/w1/FixtureR18BoundedFix.patch`. No tool installation was needed.

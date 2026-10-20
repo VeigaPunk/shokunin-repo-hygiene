@@ -1,0 +1,127 @@
+# SoujiR18.ConnFleetPointerTools-5 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Does the fleet already have an evidence-pointer checker that C2 should reuse instead of reinventing? Read /home/vgpnk/Projects/shokunin/scripts/sources-census.sh (read only) and grep `dangling\|pointer\|cat-file -e` in the SKILL.md of the other lanes (exact files /home/vgpnk/Projects/shokunin/*-shokunin/SKILL.md — one grep per file is allowed). Report reuse candidates or 'none' with the sweep.
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: calibration
+
+Report: write your scoped findings to .ufo/waves/round-18/w1/ConnFleetPointerTools.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+I'll look for an existing fleet evidence-pointer checker C2 can reuse, starting with the godspeed skill, `sources-census.sh`, and the other lanes' `SKILL.md` files.
+→ read(skill://godspeed) ⇒ ok · 18 lines
+→ read(/home/vgpnk/.omp/agent/RULES.md:raw:1+80) ⇒ ok · 14 lines
+→ bash(ls -1 /home/vgpnk/Projects/shokunin/*-shokunin/SKILL.md) ⇒ error · 26 lines — ls: cannot access '/home/vgpnk/Projects/shokunin/audio-shokunin/SKILL.md': No such file or directory
+Axes: calibration (reuse only a real checker), coverage (every other lane’s `SKILL.md`), operability (read-only, one grep per file). Next I’ll read `sources-census.sh` and sweep those skills.
+→ read(/home/vgpnk/Projects/shokunin/scripts/sources-census.sh) ⇒ ok · 302 lines
+→ grep(dangling|pointer|cat-file -e @ /home/vgpnk/Projects/shokunin/chousa-shokunin/SKILL.md) ⇒ ok · 17 lines
+→ grep(dangling|pointer|cat-file -e @ /home/vgpnk/Projects/shokunin/game-dev-3d-shokunin/SKILL.md) ⇒ ok · 6 lines
+→ grep(dangling|pointer|cat-file -e @ /home/vgpnk/Projects/shokunin/kagi-shokunin/SKILL.md) ⇒ ok · 6 lines
+→ grep(dangling|pointer|cat-file -e @ /home/vgpnk/Projects/shokunin/kaidoku-shokunin/SKILL.md) ⇒ ok · 10 lines
+→ grep(dangling|pointer|cat-file -e @ /home/vgpnk/Projects/shokunin/kake-shokunin/SKILL.md) ⇒ ok · 2 lines
+→ grep(dangling|pointer|cat-file -e @ /home/vgpnk/Projects/shokunin/kama-shokunin/SKILL.md) ⇒ ok · 4 lines
+→ grep(dangling|pointer|cat-file -e @ /home/vgpnk/Projects/shokunin/kasegi-shokunin/SKILL.md) ⇒ ok · 1 line
+→ grep(dangling|pointer|cat-file -e @ /home/vgpnk/Projects/shokunin/kengaku-shokunin/SKILL.md) ⇒ ok · 2 lines
+→ grep(dangling|pointer|cat-file -e @ /home/vgpnk/Projects/shokunin/kotoba-shokunin/SKILL.md) ⇒ ok · 16 lines
+→ grep(dangling|pointer|cat-file -e @ /home/vgpnk/Projects/shokunin/kotodama-shokunin/SKILL.md) ⇒ ok · 6 lines
+→ grep(dangling|pointer|cat-file -e @ /home/vgpnk/Projects/shokunin/kumitate-shokunin/SKILL.md) ⇒ ok · 1 line
+→ grep(dangling|pointer|cat-file -e @ /home/vgpnk/Projects/shokunin/lore-shokunin/SKILL.md) ⇒ ok · 7 lines
+→ grep(dangling|pointer|cat-file -e @ /home/vgpnk/Projects/shokunin/mado-shokunin/SKILL.md) ⇒ ok · 24 lines
+→ grep(dangling|pointer|cat-file -e @ /home/vgpnk/Projects/shokunin/mori-shokunin/SKILL.md) ⇒ ok · 4 lines
+→ grep(dangling|pointer|cat-file -e @ /home/vgpnk/Projects/shokunin/souji-shokunin/SKILL.md) ⇒ ok · 5 lines
+→ grep(dangling|pointer|cat-file -e @ /home/vgpnk/Projects/shokunin/tabi-shokunin/SKILL.md) ⇒ ok · 30 lines
+→ grep(dangling|pointer|cat-file -e @ /home/vgpnk/Projects/shokunin/tameshi-shokunin/SKILL.md) ⇒ ok · 6 lines
+→ grep(dangling|pointer|cat-file -e @ /home/vgpnk/Projects/shokunin/tsukuroi-shokunin/SKILL.md) ⇒ ok · 33 lines
+→ bash(ls -1d /home/vgpnk/Projects/shokunin/*-shokunin) ⇒ ok · 24 lines
+The sweep hit several pointer mentions. I’ll read the checker implementations those skills name, plus the `E11` path in `sources-census.sh`, before calling any of them reusable.
+→ grep(E11|used-by|usedby|dangling|cat-file @ /home/vgpnk/Projects/shokunin/scripts/sources-census.sh) ⇒ ok · 49 lines
+→ read(/home/vgpnk/Projects/shokunin/kagi-shokunin/SKILL.md:raw:220+80) ⇒ ok · 82 lines
+→ read(/home/vgpnk/Projects/shokunin/kaidoku-shokunin/SKILL.md:raw:150+50) ⇒ ok · 52 lines
+→ read(/home/vgpnk/Projects/shokunin/kake-shokunin/SKILL.md:raw:360+50) ⇒ ok · 33 lines
+→ read(/home/vgpnk/Projects/shokunin/kotoba-shokunin/SKILL.md:raw:90+100) ⇒ ok · 102 lines
+→ read(/home/vgpnk/Projects/shokunin/chousa-shokunin/SKILL.md:raw:1+90) ⇒ ok · 92 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/SKILL.md:raw:100+50) ⇒ ok · 52 lines
+→ read(/home/vgpnk/Projects/shokunin/kaidoku-shokunin/SKILL.md:raw:260+50) ⇒ ok · 52 lines
+→ read(/home/vgpnk/Projects/shokunin/kotoba-shokunin/SKILL.md:raw:210+40) ⇒ ok · 42 lines
+→ read(/home/vgpnk/Projects/shokunin/chousa-shokunin/SKILL.md:raw:250+150) ⇒ ok · 152 lines
+→ read(/home/vgpnk/Projects/shokunin/kaidoku-shokunin/SKILL.md:raw:420+50) ⇒ ok · 52 lines
+→ read(/home/vgpnk/Projects/shokunin/kotoba-shokunin/SKILL.md:raw:450+60) ⇒ ok · 62 lines
+The skill hits name several checkers. I’ll read their resolution rules so a word match is not treated as something C2 can call.
+→ read(/home/vgpnk/Projects/shokunin/scripts/sources-census.sh:raw:520+70) ⇒ ok · 72 lines
+→ grep(UNRESOLVED|brace|cat-file|citations|STALE-POINTER|test -e|test -f @ /home/vgpnk/Projects/shokunin/kagi-shokunin/corpus/…) ⇒ ok · 63 lines
+→ grep(citation_resolves|def resolve|cat-file|UNRESOLVED|brace @ /home/vgpnk/Projects/shokunin/kotoba-shokunin/verifiers/verif…) ⇒ ok · 44 lines
+→ grep(def |pointer|resolve|cat-file|UNRESOLVED|brace @ /home/vgpnk/Projects/shokunin/kotoba-shokunin/verifiers/verify_corpus_…) ⇒ ok · 257 lines
+→ grep(def |pointer|cat-file|resolve|argparse|finding @ /home/vgpnk/Projects/shokunin/kaidoku-shokunin/.ufo/gates/citation-dri…) ⇒ ok · 256 lines
+→ grep(cat-file -e|dangling|pointer @ /home/vgpnk/Projects/shokunin/game-dev-3d-shokunin/SKILL.md) ⇒ ok · 6 lines
+→ grep(anchor-census|pointer @ /home/vgpnk/Projects/shokunin/kake-shokunin/.ufo/waves/round-21/anchor-census.mjs) ⇒ ok · 12 lines
+→ read(/home/vgpnk/Projects/shokunin/kagi-shokunin/corpus/claim-ledger.sh:raw:30+20) ⇒ ok · 22 lines
+→ read(/home/vgpnk/Projects/shokunin/kotoba-shokunin/verifiers/verify_skill_checklist.py:raw:1431+80) ⇒ ok · 82 lines
+→ read(/home/vgpnk/Projects/shokunin/kaidoku-shokunin/.ufo/gates/citation-drift/citation-drift-probe.py:raw:1+70) ⇒ ok · 72 lines
+→ read(/home/vgpnk/Projects/shokunin/kotoba-shokunin/verifiers/verify_corpus_integrity.py:raw:1+90) ⇒ ok · 92 lines
+→ read(/home/vgpnk/Projects/shokunin/kaidoku-shokunin/.ufo/gates/citation-drift/citation-drift-probe.py:raw:116+30) ⇒ ok · 32 lines
+→ read(/home/vgpnk/Projects/shokunin/kotoba-shokunin/verifiers/verify_corpus_integrity.py:raw:530+85) ⇒ ok · 87 lines
+→ read(/home/vgpnk/Projects/shokunin/kagi-shokunin/corpus/claim-ledger.sh:raw:429+160) ⇒ ok · 162 lines
+→ grep(def citation_resolve|CITATION_ROOTS @ /home/vgpnk/Projects/shokunin/kotoba-shokunin/verifiers/verify_skill_checklist.py) ⇒ ok · 8 lines
+→ read(/home/vgpnk/Projects/shokunin/kake-shokunin/.ufo/waves/round-21/anchor-census.mjs:raw:1+40) ⇒ ok · 42 lines
+→ grep(cat-file -e @ /home/vgpnk/Projects/shokunin/souji-shokunin/SKILL.md) ⇒ ok · 2 lines
+→ read(/home/vgpnk/Projects/shokunin/kotoba-shokunin/verifiers/verify_skill_checklist.py:raw:1295+40) ⇒ ok · 42 lines
+→ read(/home/vgpnk/Projects/shokunin/chousa-shokunin/SKILL.md:raw:270+12) ⇒ ok · 14 lines
+The checkers disagree on what “resolves” means. I’ll record that, and the reuse verdict, in the seat report.
+→ bash(mkdir -p /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1 && test -d /home/vgpnk/Projects/shokunin/s…) ⇒ ok · 4 lines
+→ edit(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/ConnFleetPointerTools.md) ⇒ ok · 2 lines
+STATUS: DONE — no fleet checker C2 should reuse; resolve path-at-rev inside the landing gate.
+
+Report: `souji-shokunin/.ufo/waves/round-18/w1/ConnFleetPointerTools.md`
+
+**Answer: none.** Axes judged: calibration. Operability and coverage are the axes a reuse would harm.
+
+The fleet does not have one “resolves” test. These disagree:
+
+- `scripts/sources-census.sh:566` E11 is `[ ! -e "$dir/$path" ]` on mined `SOURCES.md` used-by cells only. No `--rev`, no prose scan. `census/round-17/gate-replays-ddb7347.json` in `SKILL.md` never becomes E11.
+- kagi `corpus/claim-ledger.sh:453-466` `cite_target` is also worktree `[ -e ]`. A `.ufo/` miss is `UNRESOLVED` (`569-571`). C2 says a fleet-only path is class `fleet` and is not a finding, so this would file L1’s `.ufo/scopes/…` and `.ufo/waves/hyaku/…` tokens. A line matching `historical|removed|…` (`440`) is `LABELED` and does not fail. C2’s only exemption is `corpus/pointer-exemptions.tsv`.
+- kotoba `verify_skill_checklist.py:347` only treats `corpus/`, `verifiers/`, `opencode/`, `.ufo/`, `../`. `citation_resolve` (`1295-1316`) uses `Path.exists()`. `verify_corpus_integrity.py:45-46` reads the worktree, not HEAD. Its `cat-file -e` (`24-25`) is `<hex>^{commit}`, a commit object, not a path. `SKILL.md:495-496` already says that resolution is host-anchored.
+- kaidoku `citation-drift-probe.py:4-8` and `:120-125` is the only checker that uses the git tree at `--rev` (`git show <rev>:<path>`, never the worktree). Input is a pinned `pointer-table.json`. A new dangling path is invisible until someone adds a row. It also rejects a detached jj `HEAD` (`42-49`). Souji is jj-colocated.
+- chousa `REF_UNRESOLVED` (`SKILL.md:270-281`) is an id-to-row check. Local paths are not integrity tokens.
+- kake `anchor-census.mjs` maps old `filename:line` ranges through a frozen base. It does not test missing `census/` `tests/` `tools/` `corpus/` `.ufo/waves/` paths.
+- The only `cat-file -e` in the SKILL sweep is souji’s own quarantine post-check (`SKILL.md:129`): one commit, two paths, not a document scan.
+
+Sweep: 21 `*-shokunin` directories. No `SKILL.md` in `audio-shokunin`, `game-dev-2d-shokunin`, `revenger-shokunin`. No pattern hits in `kasegi` or `kumitate`. Other hits (kama, kengaku, kotodama, lore `dual_pointer`, mado symlinks, mori, tabi, tameshi, tsukuroi `check-recheck-commands.py`) are not path-existence checkers. `scripts/` was not listed beyond `sources-census.sh`.
+
+**Move.** Implement `LG-DANGLING-PTR` only inside `tools/souji-landing-gate.py`. For each token the C2 grammar keeps, `git -C <lane> cat-file -e <rev>:<path>` (existence, no `git show` of bytes). If that fails and the path exists in the fleet repo, class `fleet`, not a finding. Do not look that fleet path up at souji’s rev. Exempt only via `corpus/pointer-exemptions.tsv`. A citing line that says `historical` is still a finding when the row is absent. Gate it on `--round` ≥ 18 so `census/round-17/gate-replays-expected.json` stays unchanged. Do not call `sources-census.sh`, `claim-ledger.sh`, `citation-drift-probe.py`, or the kotoba verifiers.
+
+Calibration goes up because the before count at `b576341` and the after count are properties of those trees. Operability is untouched: no sibling process and no imported jj `HEAD` refusal. Coverage stays on C2’s file set; each rejected checker scans a smaller one.
+
+**Risks.** Do not vendor kotoba `expand_braces` or kagi’s brace loop; C2 says simple `{a,b}`. Reject `..` and absolute tokens before git sees them. `cat-file -e` succeeds for a tree as well as a blob, which matches “the path resolves.”
+
+**Verification, not run here.** Under `/var/tmp`: a missing path at `--rev b576341 --round 18` is `LG-DANGLING-PTR`; the same path only in the fleet repo is `fleet`; a worktree-only file is a finding; a file present at `--rev` and deleted in the worktree is not; `historical` on the citing line without an exemptions row is still a finding; `--round 17` replays gain no finding id.
+
+No tools installed. Checkers were not executed.

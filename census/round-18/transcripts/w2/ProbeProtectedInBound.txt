@@ -1,0 +1,156 @@
+# SoujiR18.ProbeProtectedInBound (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Attacks 'protected refusal still exit 2'. ALLOWED-EXEC: in your clone at 5efb519 only: synthetic HOME with a protected credential path (use the pattern in tests/fixtures/r14-census-boundary.py — never a real store) and a repo whose config include points at it, plus a hanging neighbour; run the 5efb519 census `--repo-timeout 3`; expect exit 2 and no partial table.
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: operability
+
+Report: write your scoped findings to .ufo/waves/round-18/w2/ProbeProtectedInBound.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+I'll start by examining the claimed code and the fixture pattern.
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 5efb519f00075d958c3d1109ef6fcb24c487eb87:tools/souji-census.sh) ⇒ ok · 1263 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 5efb519f00075d958c3d1109ef6fcb24c487eb87:tests/fixtures/r14-ce…) ⇒ ok · 738 lines
+
+## assistant
+
+→ bash(set -e rm -rf /var/tmp/souji-r18w2-ProbeProtectedInBound git clone --quiet --no-local /home/vgpnk/Projects/shokunin/sou…) ⇒ ok · 3 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 5efb519f00075d958c3d1109ef6fcb24c487eb87:tests/fixtures/r18-ce…) ⇒ ok · 20 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeProtectedInBound/lane && grep -n "run_in_group\|census_one\|emit_census\|REPO_TIMED_OUT\|R…) ⇒ ok · 43 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeProtectedInBound/lane && sed -n '640,700p;1040,1120p' tests/fixtures/r18-census-bounded.py) ⇒ ok · 145 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18w2-ProbeProtectedInBound/lane/tools/souji-census.sh:1460-1780) ⇒ ok · 327 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18w2-ProbeProtectedInBound/lane/tools/souji-census.sh:1280-1460) ⇒ ok · 191 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeProtectedInBound/lane && grep -n "protected_fail\|guard_path\|protected_reason_inside\|pro…) ⇒ ok · 47 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18w2-ProbeProtectedInBound/lane/tools/souji-census.sh:590-700) ⇒ ok · 117 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeProtectedInBound/lane && grep -n "config_bytes\|guard_git_config\|read_config\|cmp \|cat -…) ⇒ ok · 12 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18w2-ProbeProtectedInBound/lane/tools/souji-census.sh:704-1020) ⇒ ok · 323 lines
+→ bash(set -u W=/var/tmp/souji-r18w2-ProbeProtectedInBound/probe-fifo rm -rf "$W"; mkdir -p "$W"; cd "$W" git init -q --initia…) ⇒ ok · 7 lines
+
+## assistant
+
+→ bash(set -u W=/var/tmp/souji-r18w2-ProbeProtectedInBound/probe-fifo cd "$W/r" rm -f tracked.txt; printf 'hello\n' > tracked.…) ⇒ error · 7 lines — prw-r--r-- 1 vgpnk vgpnk 0 Oct 20 18:19 .gitignore
+→ bash(cd /var/tmp/souji-r18w2-ProbeProtectedInBound/lane && sed -n '1024,1130p' tools/souji-census.sh) ⇒ ok · 110 lines
+
+## assistant
+
+FIFO `.gitignore` hangs `git status` cleanly (rc 124 at 5s). Now I'll build the named fixture and probe.
+→ bash(set -eu R=/var/tmp/souji-r18w2-ProbeProtectedInBound W=$R/world rm -rf "$W"; mkdir -p "$W/home/.omp/agent" printf 'R18W…) ⇒ ok · 4 lines
+
+## assistant
+
+→ bash(set -u R=/var/tmp/souji-r18w2-ProbeProtectedInBound W=$R/world TOOL=$R/lane/tools/souji-census.sh run() { # $1 label, $…) ⇒ error · 11 lines — === c1-hang-only rc=0 wall=5236ms stdout_bytes=151
+
+## assistant
+
+The harness aborted on the expected exit 2 (errexit). Rerunning with `set +e` and per-case capture.
+→ bash(set +e R=/var/tmp/souji-r18w2-ProbeProtectedInBound W=$R/world TOOL=$R/lane/tools/souji-census.sh run() { local label=$…) ⇒ ok · 17 lines
+
+## assistant
+
+Named scenario holds (exit 2, empty stdout, ~200-300ms, refusal precedes any measurement). Now probing the store-access oracle and the timeout/refusal interaction.
+→ bash(set +e R=/var/tmp/souji-r18w2-ProbeProtectedInBound W=$R/world TOOL=$R/lane/tools/souji-census.sh TR=$W/c2.trace rm -f …) ⇒ ok · 11 lines
+→ bash(set +e df -h /var/tmp | tail -1 R=/var/tmp/souji-r18w2-ProbeProtectedInBound D=$R/config-size rm -rf "$D"; mkdir -p "$D…) ⇒ error · 18 lines — [Command timed out after 120 seconds]
+
+## assistant
+
+A stale `--repo-timeout 86400` control hung on the FIFO (my error) — cleaning up processes I started before continuing.
+→ bash(set +e ps -eo pid,ppid,pgid,sid,stat,etimes,args | grep -F "souji-r18w2-ProbeProtectedInBound" | grep -v grep) ⇒ error · 3 lines — (no output)
+
+## assistant
+
+No leftovers (the tool timeout reaped the tree). Now testing the strongest form: a repo whose guard *actually times out* before a protected-refusal repo in the same run, plus the protected-include-hidden-behind-a-slow-config boundary.
+→ bash(set +e R=/var/tmp/souji-r18w2-ProbeProtectedInBound W=$R/world export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/de…) ⇒ ok · 4 lines
+
+## assistant
+
+→ bash(set +e R=/var/tmp/souji-r18w2-ProbeProtectedInBound W=$R/world TOOL=$R/lane/tools/souji-census.sh run() { local label=$…) ⇒ error · 20 lines — === c5-slowguard-then-prot rc=2 wall=5195ms stdout_bytes=0
+
+## assistant
+
+A real guard timeout preceding the refusal still yields exit 2 with zero stdout (c5). Now the r17 soft-metadata interaction and a store-access check on c5.
+→ bash(set +e R=/var/tmp/souji-r18w2-ProbeProtectedInBound W=$R/world export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/de…) ⇒ ok · 14 lines
+
+## assistant
+
+→ bash(set +e R=/var/tmp/souji-r18w2-ProbeProtectedInBound W=$R/world export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/de…) ⇒ ok · 16 lines
+
+## assistant
+
+→ bash(set +e R=/var/tmp/souji-r18w2-ProbeProtectedInBound W=$R/world TOOL=$R/lane/tools/souji-census.sh base=(env -u GIT_DIR …) ⇒ ok · 16 lines
+
+## assistant
+
+All probes complete. Collecting exact line references for the report.
+→ bash(cd /var/tmp/souji-r18w2-ProbeProtectedInBound/lane grep -n 'printf .%s\\n. "\$HEADER"\|if \[ "\$rc" = 2 \]; then exit 2…) ⇒ ok · 91 lines
+
+## assistant
+
+All probes complete. Writing the scoped report.
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/ProbeProtectedInBound.md) ⇒ ok · 1 line
+
+## assistant
+
+→ bash(set +e ps -eo pid,ppid,pgid,stat,args | grep -F "souji-r18w2-ProbeProtectedInBound" | grep -v grep || echo NO-PROC chmo…) ⇒ ok · 6 lines
+
+## assistant
+
+STATUS: DONE — C1's "protected refusal still exit 2" holds for every detected refusal under `--repo-timeout`; only a timeout-truncated config scan degrades to exit 0 (documented, no store access).
+
+Report: `.ufo/waves/round-18/w2/ProbeProtectedInBound.md` (written at `/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/ProbeProtectedInBound.md`; 7675 B).
+
+**Attacked claim:** `tools/souji-census.sh` @ 5efb519 (sha256 `7e6a92d4…120bcd`) — a repo whose config include names the protected store must abort with exit 2 and no partial table, beside a hanging neighbour, `--repo-timeout 3`.
+
+**Evidence (synthetic HOME, `.omp/agent` mode 000 with canary; FIFO-`.gitignore` neighbour; runs only in a clone under /var/tmp):**
+- `00-hang` + `50-protected` (both orders), include via absolute, `~/`, and symlink alias: **exit 2, 0-byte stdout**, one `path-protected: include-protected` line, 157–293 ms. Same with `--repo-timeout 1` and `SOUJI_CENSUS_REPO_TIMEOUT=3`.
+- Genuine guard timeout first (`10-big`, 943 MB config, wall 5195 ms, `repo-timeout 3s`) then `90-protected`: **exit 2, 0-byte stdout** — rc 2 preserved at `tools/souji-census.sh:1645-1647`, consumed at `:1676`/`:1705`; header only at `:1719`.
+- r17 soft metadata (FIFO / hardlinked `info/attributes`) + protected include: still **exit 2**, not the `error` row.
+- `strace -f -e trace=%file`: **0** path hits under the store; canary absent from all captures; no stray processes.
+- Control `00-hang` alone: exit 0, exact `…\t0\t0\t0\t0\t\terror` row + `repo-timeout 3s`, neighbour clean, 5.39 s.
+- Boundary: protected include at the **end** of a >3 s config → guard killed before parsing it, repo skipped as `error` row, run **exit 0** with full table (265 B), still 0 store hits. Documented timeout semantics, but the "Refused (exit 2)" paragraph doesn't state it is conditional on the scan finishing within N.
+- Gap: a refusal in the second guard pass (`census_one`) is unreachable in a static fixture (identical guard runs preflight); propagation is code-read only, not executed (no shim named in ALLOWED-EXEC).
+
+**Verdict:** holds; smallest fix is one documentation clause under `--repo-timeout` for the truncated-scan case. Tool installs: none. Clone and 1.8 GB of fixtures deleted.

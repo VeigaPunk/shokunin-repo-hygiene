@@ -1,0 +1,217 @@
+# SoujiR18.ProbeCensusSelftestIsolation (idle)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Attack selftest isolation. ALLOWED-EXEC: in your clone at 5efb519 only: run `TMPDIR=/var/tmp bash tools/souji-census.sh --selftest` with SOUJI_CENSUS_REPO_TIMEOUT=1 exported and with a hostile BASH_FUNC_sleep%%=() { :; } exported; does the selftest still pass and stay isolated (no writes outside its tempdir; no residue)?
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: operability
+
+Report: write your scoped findings to .ufo/waves/round-18/w2/ProbeCensusSelftestIsolation.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+I'll start by setting up my clone and reading the relevant source in parallel.
+→ bash(mkdir -p /var/tmp/souji-r18w2-ProbeCensusSelftestIsolation && rm -rf /var/tmp/souji-r18w2-ProbeCensusSelftestIsolation/…) ⇒ ok · 4 lines
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && git show 5efb519f00075d958c3d1109ef6fcb24c487eb87:tools/souji-census…) ⇒ ok · 31 lines
+
+## assistant
+
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && git show 5efb519f00075d958c3d1109ef6fcb24c487eb87:tools/souji-census…) ⇒ ok · 102 lines
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && git show 5efb519f00075d958c3d1109ef6fcb24c487eb87:tools/souji-census…) ⇒ ok · 124 lines
+
+## assistant
+
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && git show 5efb519f00075d958c3d1109ef6fcb24c487eb87:tools/souji-census…) ⇒ ok · 272 lines
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && git show 5efb519f00075d958c3d1109ef6fcb24c487eb87:tools/souji-census…) ⇒ ok · 69 lines
+
+## assistant
+
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && git show 5efb519f00075d958c3d1109ef6fcb24c487eb87:tools/souji-census…) ⇒ ok · 162 lines
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && git show 5efb519f00075d958c3d1109ef6fcb24c487eb87:tools/souji-census…) ⇒ ok · 124 lines
+
+## assistant
+
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && git show 5efb519f00075d958c3d1109ef6fcb24c487eb87:tools/souji-census…) ⇒ ok · 182 lines
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && git show 5efb519f00075d958c3d1109ef6fcb24c487eb87:tools/souji-census…) ⇒ ok · 144 lines
+
+## assistant
+
+Now let me snapshot the host state and verify the hostile function semantics before the graded run.
+→ bash(command -v strace bwrap; echo ---; env 'BASH_FUNC_sleep%%=() { :; }' bash -c 'declare -F sleep && type -t sleep; t0=$(d…) ⇒ ok · 10 lines
+→ bash(ls -1a /var/tmp | grep -c 'souji-census' ; ls -1a /var/tmp | grep 'souji-census' || echo 'no souji-census entries'; ech…) ⇒ ok · 7 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeCensusSelftestIsolation/lane && mkdir -p /var/tmp/souji-r18w2-ProbeCensusSelftestIsolation…) ⇒ ok · 9 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeCensusSelftestIsolation/lane && ls -1a /var/tmp > /var/tmp/souji-r18w2-ProbeCensusSelftest…) ⇒ ok · 28 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeCensusSelftestIsolation/lane && set +e; TMPDIR=/var/tmp SOUJI_CENSUS_REPO_TIMEOUT=1 'BASH_…) ⇒ error · 7 lines — rc=127
+
+## assistant
+
+The hostile invocation quoting was wrong (rc=127, no run). Let me redo it with `env`, and attribute the `/var/tmp` entries properly since peers are concurrently active.
+→ bash(cd /var/tmp/souji-r18w2-ProbeCensusSelftestIsolation/lane && set +e; env -u GIT_DIR TMPDIR=/var/tmp SOUJI_CENSUS_REPO_T…) ⇒ ok · 12 lines
+
+## assistant
+
+Hostile run: 62/0 pass, rc 0, my tempdir cleaned. Now the isolation proof: trace every file-write syscall of the same command and confirm external `sleep` is still executed (proving the function was truly unset).
+→ bash(cd /var/tmp/souji-r18w2-ProbeCensusSelftestIsolation/lane && set +e; env -u GIT_DIR TMPDIR=/var/tmp SOUJI_CENSUS_REPO_T…) ⇒ ok · 9 lines
+
+## assistant
+
+→ eval(py) ⇒ ok · 52 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeCensusSelftestIsolation/out && grep -nE '[( ]"/var"[^/]' trace.txt | head -20; echo ---; g…) ⇒ ok · 32 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeCensusSelftestIsolation/out && grep -E 'openat\([^,]+, "\.git' trace.txt | head -5; echo -…) ⇒ ok · 40 lines
+
+## assistant
+
+Absolute write targets are only `/dev/*` and `/var/tmp/souji-census-*` (the `/var` hits are EEXIST probes from `mkdir -p`). To close the relative-path gap, I'll trace `chdir` and resolve every relative write to an absolute path.
+→ bash(cd /var/tmp/souji-r18w2-ProbeCensusSelftestIsolation/lane && set +e; env -u GIT_DIR TMPDIR=/var/tmp SOUJI_CENSUS_REPO_T…) ⇒ ok · 11 lines
+
+## assistant
+
+→ bash(grep 'fixtures under mktemp' /var/tmp/souji-r18w2-ProbeCensusSelftestIsolation/out/strace2.out; echo ---; stat -c '%n %…) ⇒ ok · 17 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeCensusSelftestIsolation/out && grep -nE 'rm -rf|unlinkat\(AT_FDCWD, "/var/tmp/souji-census…) ⇒ ok · 9 lines
+
+## assistant
+
+My run's dir (`ZT8hWr`) was removed by the trap (`unlinkat(.../souji-census-selftest.ZT8hWr, AT_REMOVEDIR) = 0`); the lingering `c1sQqJ` is a peer's concurrently running fixture tree. Now resolving the 317 relative write paths against per-pid `chdir` targets.
+→ eval(import re, collections p='/var/tmp/souji-r18w2-ProbeCensusSelftestIsolation/out/trace2.txt' line_re=re.compile(r'^(\d+)…) ⇒ ok · 69 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeCensusSelftestIsolation/out && awk '$1==3039407 || $1==3145203 || $1==3323659' trace2.txt …) ⇒ ok · 24 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeCensusSelftestIsolation/out && grep -cE 'openat\(AT_FDCWD, "\.[^"]*"' trace2.txt; grep -E …) ⇒ ok · 5 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeCensusSelftestIsolation/lane && set +e; env -u GIT_DIR TMPDIR=/var/tmp SOUJI_CENSUS_REPO_T…) ⇒ error · 10 lines — rc=0
+
+## assistant
+
+→ eval(import re, collections, os p='/var/tmp/souji-r18w2-ProbeCensusSelftestIsolation/out/trace3.txt' line_re=re.compile(r'^(…) ⇒ ok · 7 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeCensusSelftestIsolation/out && grep -c 'clone' trace3.txt; grep -m3 'clone' trace3.txt; ec…) ⇒ ok · 19 lines
+
+## assistant
+
+→ eval(import re, collections, os p='/var/tmp/souji-r18w2-ProbeCensusSelftestIsolation/out/trace3.txt' line_re=re.compile(r'^(…) ⇒ ok · 7 lines
+
+## assistant
+
+The regex still swallowed fd-annotated returns (`= 3</dev/null<char 1:3>>`). Fixing and re-running the resolution.
+→ eval(import re, collections, os p='/var/tmp/souji-r18w2-ProbeCensusSelftestIsolation/out/trace3.txt' line_re=re.compile(r'^(…) ⇒ ok · 10 lines
+
+## assistant
+
+All write targets resolve: inside `/var/tmp/souji-census-*` only, plus `/dev/null`, `/dev/tty`, and `/var`/`/var/tmp` EEXIST probes. Let me confirm the failed/benign nature of those and the per-run tempdir create/remove pairing.
+→ bash(cd /var/tmp/souji-r18w2-ProbeCensusSelftestIsolation/out && echo '--- /dev/tty opens by return ---'; grep '"/dev/tty"' …) ⇒ ok · 13 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeCensusSelftestIsolation/out && grep -E '^(PASS|FAIL) (slow-Git|two-second|watchdog|invalid…) ⇒ ok · 24 lines
+
+## assistant
+
+→ eval(import re, collections p='/var/tmp/souji-r18w2-ProbeCensusSelftestIsolation/out/trace3.txt' line_re=re.compile(r'^(\d+)…) ⇒ ok · 6 lines
+→ bash(ls -d /var/tmp/souji-census-* 2>/dev/null || echo 'NO /var/tmp/souji-census-* residue now'; echo ---; cd /var/tmp/souji…) ⇒ ok · 20 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeCensusSelftestIsolation/lane && grep -n "unset -f bash" tools/souji-census.sh; grep -n "RE…) ⇒ ok · 11 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeCensusSelftestIsolation/out && grep -c 'execve("/usr/bin/sleep"' trace3.txt; grep -c 'exec…) ⇒ ok · 9 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeCensusSelftestIsolation/lane && sed -n '730,745p' tools/souji-census.sh; echo '--- bounded…) ⇒ ok · 64 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeCensusSelftestIsolation/out && for f in control.out hostile.out; do p=$(grep -o '/var/tmp/…) ⇒ error · 14 lines — control.out -> /var/tmp/souji-census-selftest.JFrMHv
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeCensusSelftestIsolation/lane && grep -n 'BASH_FUNC' tools/souji-census.sh tests/fixtures/r…) ⇒ ok · 5 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeCensusSelftestIsolation/lane && grep -n 'unset -f' tools/souji-census.sh; echo '--- extern…) ⇒ ok · 14 lines
+
+## assistant
+
+→ eval(import re, collections, os p='/var/tmp/souji-r18w2-ProbeCensusSelftestIsolation/out/trace3.txt' line_re=re.compile(r'^(…) ⇒ ok · 23 lines
+
+## assistant
+
+→ bash(ps -eo pid,ppid,pgid,lstart,stat,args | grep -E 'souji-census(-watchdog)?|souji-r18w2-ProbeCensusSelftestIsolation' | g…) ⇒ ok · 38 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeCensusSelftestIsolation/out && grep -E 'two-second|watchdog wall|slow-Git census' control.…) ⇒ ok · 15 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeCensusSelftestIsolation/lane && sed -n '228,245p' tools/souji-census.sh; echo '---'; sed -…) ⇒ ok · 50 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeCensusSelftestIsolation/out && echo 'files:'; ls -l | awk '{print $5, $9}'; echo ---; grep…) ⇒ ok · 26 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeCensusSelftestIsolation/out && diff control.out hostile.out; echo "diff_rc=$?"; diff hosti…) ⇒ error · 19 lines — 23c23
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeCensusSelftestIsolation/lane && grep -n 'fixtures under mktemp\|--repo-timeout 1 \|--repo-…) ⇒ ok · 8 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeCensusSelftestIsolation/out && diff hostile.out strace3.out | head -20; echo "rc=${PIPESTA…) ⇒ ok · 20 lines
+
+## assistant
+
+All evidence is in hand. Writing the report.
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/ProbeCensusSelftestIsolation.md) ⇒ ok · 1 line
+
+## assistant
+
+→ bash(stat -c '%n %s bytes' /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/ProbeCensusSelftestIsolation.…) ⇒ ok · 5 lines
+
+## assistant
+
+→ bash(rm -rf /var/tmp/souji-r18w2-ProbeCensusSelftestIsolation && ls -d /var/tmp/souji-r18w2-ProbeCensusSelftestIsolation 2>/…) ⇒ ok · 4 lines
+
+## assistant
+
+**Verdict: HOLDS** — the hostile-environment selftest is isolated and passes unchanged.
+
+**Graded run** (`5efb519f00075d958c3d1109ef6fcb24c487eb87`, own clone):
+`env -u GIT_DIR TMPDIR=/var/tmp SOUJI_CENSUS_REPO_TIMEOUT=1 'BASH_FUNC_sleep%%=() { :; }' bash tools/souji-census.sh --selftest` → **rc 0, 62 PASS / 0 FAIL** (36.32 s), identical to the unhostiled control (62/0, 36.35 s) except timestamps, two wall-time numbers, and the random tempdir name.
+
+- Hostile `sleep` was genuinely armed (`declare -F sleep` → function, `sleep 1` → 0 ms) and is neutralized by `tools/souji-census.sh:180` `unset -f … sleep …`; the graded run traced **472** real `execve("/usr/bin/sleep")`.
+- `SOUJI_CENSUS_REPO_TIMEOUT=1` cannot bind fixtures: `:1925-1926` pins `REPO_TIMEOUT=600` and re-exports it before any fixture exists; the slow-Git check measured 18,346 ms over 9 calls and “did not time out,” and `watchdog wall time 3873 ms` passed.
+- Isolation (`strace -f -yy`, same command/env): 64,484 write-intent syscalls, 1,185 distinct targets, 0 unresolved — 2,687 write ops under `/var/tmp/souji-census-*` only, plus `/dev/null` sinks, `/dev/tty` opens all `ENXIO`, and `mkdir /var`,`/var/tmp` probes all `EEXIST`. Zero writes to the clone, `$HOME`, or `XDG`.
+- No residue: 11 temp roots created and 11 removed exactly once; every run's `ST_TMP` gone immediately; clone clean at 5efb519; no census/watchdog process left by this seat.
+
+**Adjacent LOW finding (static, not executed — outside ALLOWED-EXEC):** the `:180` unset list omits `cmp` (`:738` NUL-config guard, `:2013` repeat-identical PASS), `tr` (`:738`), and `python3` (`:2443` FIFO-reader PASS), so a hostile `BASH_FUNC_cmp`/`_python3` can forge those verdicts; no fixture covers `BASH_FUNC_*`. Smallest fix: add `cmp python3 tr` to `:180`.
+
+**Residual unknowns:** baseline 49-check count not re-measured (exec permitted at 5efb519 only); the `cmp`/`python3` forgery was not run. Host carries other seats' pre-r18 census processes parked on FIFO roots since 11:00–16:00 (not mine, not signalled). No installs.
+
+Report: `/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/ProbeCensusSelftestIsolation.md` (5703 bytes). Clone and 28 MB of traces deleted.

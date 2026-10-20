@@ -1,0 +1,162 @@
+# SoujiR18.ScoutLeakedProcs-5 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Read-only host census of process residue (C3 premise and adjacency). Using `ps -eo pid,ppid,pgid,sid,uid,etimes,stat,wchan:20,args` and /proc/<pid>/cwd links only (never environ, never signal), list every process whose argv or cwd names a /var/tmp, /tmp or /dev/shm path that no longer exists; group by top-level scratch dir family (r15-census-config.*, r17-census-hygiene.*, other lanes' prefixes …), with counts, age range, wchan, parent. Name which families belong to souji fixtures (cross-check fixture tempdir prefixes in /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/) and which belong to other lanes or tools (report them for adjacency, never act). Compare with /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-18/leaked-procs-before-1631.txt.
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: coverage
+
+Report: write your scoped findings to .ufo/waves/round-18/w1/ScoutLeakedProcs.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+I'll start with the host census and the reference file in parallel.
+→ bash(ps -eo pid,ppid,pgid,sid,uid,etimes,stat,wchan:20,args --no-headers | wc -l) ⇒ ok · 2 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-18/leaked-procs-before-1631.txt) ⇒ ok · 58 lines
+
+## assistant
+
+→ eval(py) ⇒ ok · 41 lines
+
+## assistant
+
+→ eval(import json, re, os rows=json.load(open('/var/tmp/scout_leaked_rows.json')) # top-level family classification def klass…) ⇒ ok · 75 lines
+→ bash(grep -cE '^[[:space:]]*[0-9]+ ' /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-18/leaked-procs-before-1631.t…) ⇒ ok · 30 lines
+
+## assistant
+
+→ eval(import os,re,json rows=json.load(open('/var/tmp/scout_leaked_rows.json')) btime=None for line in open('/proc/stat'): if…) ⇒ ok · 4 lines
+→ bash(date -u +%FT%TZ; stat -c '%y %n' /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-18/leaked-procs-before-1631.…) ⇒ ok · 14 lines
+
+## assistant
+
+→ eval(import json,subprocess,re,os rows=json.load(open('/var/tmp/scout_leaked_rows.json')) pids=[str(r['pid']) for r in rows]…) ⇒ ok · 93 lines
+→ bash(grep -nE 'mkdtemp|prefix=|/var/tmp|TMPDIR' /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r17-census-hygie…) ⇒ ok · 10 lines
+
+## assistant
+
+→ eval(import os,re,json,time,subprocess uid=os.getuid() def readlink(p): try: return os.readlink(p) except OSError as e: retu…) ⇒ ok · 9 lines
+→ bash(sed -n '1475,1490p;1540,1560p' /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r15-census-config.py; echo =…) ⇒ ok · 60 lines
+
+## assistant
+
+→ eval(import json,os,re from collections import Counter,defaultdict rows=json.load(open('/var/tmp/scout_leaked_rows2.json')) …) ⇒ ok · 82 lines
+
+## assistant
+
+→ eval(import os,glob,json for pid in ['422005','436924','439441','1853','1865','2514']: try: cmd=open(f'/proc/{pid}/cmdline',…) ⇒ ok · 19 lines
+
+## assistant
+
+→ eval(import json,os,re from collections import defaultdict rows=json.load(open('/var/tmp/scout_leaked_rows2.json')) # argv-o…) ⇒ ok · 29 lines
+→ bash(grep -n 'rmtree\|finally\|shutil' /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r15-census-config.py | he…) ⇒ ok · 74 lines
+
+## assistant
+
+→ bash(ps -o pid=,ppid=,pgid=,sid=,etimes=,stat=,wchan:18= -p 185592,185605,562276,574643,2650283; echo ===; cat /proc/185592/…) ⇒ ok · 12 lines
+
+## assistant
+
+→ eval(import os,json rows=json.load(open('/var/tmp/scout_leaked_rows2.json')) import subprocess pids=[str(r['pid']) for r in …) ⇒ ok · 28 lines
+→ bash(sed -n '1424,1434p;1560,1574p' /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r15-census-config.py; echo '…) ⇒ ok · 49 lines
+
+## assistant
+
+→ bash(grep -n 'def unblock_fifos' -A 30 /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r17-census-hygiene.py; ec…) ⇒ ok · 35 lines
+→ bash(grep -n 'include-root\|include_root' /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r15-census-config.py |…) ⇒ ok · 13 lines
+
+## assistant
+
+→ bash(grep -n 'FIFOS' /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r17-census-hygiene.py; echo ===; grep -n 'd…) ⇒ ok · 56 lines
+→ bash(ls -la /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-18/; echo ===; ls /home/vgpnk/Projects/shokunin/souji-…) ⇒ ok · 27 lines
+
+## assistant
+
+→ bash(sed -n '205,225p;745,775p' /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r17-census-hygiene.py) ⇒ ok · 55 lines
+→ bash(grep -n 'killpg\|kill(\|start_new_session\|setsid\|Popen(' /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/…) ⇒ ok · 7 lines
+
+## assistant
+
+→ bash(grep -n 'subprocess\.\|timeout' /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r15-census-config.py | head…) ⇒ ok · 47 lines
+
+## assistant
+
+→ bash(sed -n '726,760p;770,800p' /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r15-census-config.py) ⇒ ok · 67 lines
+
+## assistant
+
+→ eval(import os,json rows=json.load(open('/var/tmp/scout_final.json')) mine={str(r['pid']) for r in rows} extra=[] for pid in…) ⇒ ok · 7 lines
+
+## assistant
+
+→ eval(import json rows=json.load(open('/var/tmp/scout_final.json')) for r in sorted([r for r in rows if 'r17' in r['missing']…) ⇒ ok · 18 lines
+
+## assistant
+
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/ScoutLeakedProcs.md) ⇒ ok · 1 line
+→ bash(rm -f /var/tmp/scout_leaked_rows.json /var/tmp/scout_leaked_rows2.json /var/tmp/scout_final.json /var/tmp/scout_aged.js…) ⇒ ok · 3 lines
+
+## assistant
+
+Fixing two count errors and a malformed table row in the report before yielding.
+→ edit(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/ScoutLeakedProcs.md) ⇒ ok · 8 lines
+→ edit(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/ScoutLeakedProcs.md) ⇒ ok · 12 lines
+
+## assistant
+
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/ScoutLeakedProcs.md:1-45) ⇒ ok · 56 lines
+
+## assistant
+
+→ edit(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/ScoutLeakedProcs.md) ⇒ ok · 6 lines
+→ edit(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/ScoutLeakedProcs.md) ⇒ ok · 10 lines
+
+## assistant
+
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/ScoutLeakedProcs.md:64-139) ⇒ ok · 85 lines
+
+## assistant
+
+→ edit(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/ScoutLeakedProcs.md) ⇒ ok · 7 lines
+
+## assistant
+
+Report written to `/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/ScoutLeakedProcs.md` (139 lines). Scratch files removed; no process signalled; nothing run against a real directory.
+
+**Findings (read-only census, scan 2026-10-20T19:53–19:57Z):**
+
+- **58 residue processes / 24 `mkdtemp` families**, on a host of 963 procs (208 of uid 1000). All 58 state `S`, all cwd-deleted, all reparented to `systemd --user` (ppid 1497), ages **3 229–21 726 s (0.90–6.03 h)**. Split: **44** in 22 `r15-census-config.*` families, **14** in 2 `r17-census-hygiene.*` families (4 case trees). Zero residue under `/tmp` or `/dev/shm` — all `/var/tmp`.
+- Two independent predicates agree exactly: `/proc/<pid>/cwd` deleted (58) == argv naming a missing tmp path (58), set-equal. wchan: `wait_for_partner` ×26 (every git, FIFO `open(2)`), `do_wait` ×26, `anon_pipe_read` ×6.
+- **Provenance** (fixture files read in place): `tests/fixtures/r15-census-config.py:1481` (mkdtemp prefix) explains the 44 — its `run_tool` at **:773-800** uses `subprocess.run(timeout=90)` with **no `start_new_session`** and kills nothing on `TimeoutExpired`, so the strace child dies while `bash tools/souji-census.sh` + FIFO-blocked `git` survive; corroborated decisively by the leaked bash's cwd being the scratch root (`cwd=str(SCRATCH)`) and its `--root … --include-root` argv (callsites :1044/:1082/:1090). The 14 `r17-census-hygiene.py:757,769` case-tree procs run a seat-authored wrapper `<clone>/{a31642d,cc21683}.sh`; that fixture's own `run_tool` (:291-315) already does `start_new_session` + `killpg` + `unblock_fifos`, and the census tool appears nowhere in those trees, so the fixture cannot be their source.
+- **No other lane/tool contributes residue.** `mado` is live in `/tmp` (`/tmp/mado-r20-HarmWatch20-3`, paths exist) and must not be flagged; `uwsm aux app-daemon` (pid 1865) is `wait_for_partner` with no missing path; 820 root procs are outside a same-uid census.
+- **Baseline comparison:** `leaked-procs-before-1631.txt` has 58 rows; pid set diff **+0 / −0**. Its 4th column is `etimes`, not `sid` (proven: 185592 col4 7631 vs `/proc` session 184726; both sample pids give an identical 1 564 s delta → capture ≈19:30Z = 16:31 local, matching the filename).
+- Key adjacencies for C3: don't use wchan or leaderless-pgid as the predicate (27 and 5 benign matches); and a FIFO-blocked open cannot be released after unlink — `unblock_fifos` must run before `rmtree`, only `SIGKILL` remains afterwards.
+
+Verdict: C3 premise **holds**; "all from souji fixtures" holds by family prefix with the r15/one-seat refinement.

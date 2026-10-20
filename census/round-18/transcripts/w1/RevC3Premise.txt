@@ -1,0 +1,93 @@
+# SoujiR18.RevC3Premise-5 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Falsify C3's premise: that the blocked processes in /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-18/leaked-procs-before-1631.txt are orphaned souji fixture residue, not live work. For each family check (read-only ps//proc): the scratch dir is gone, the parent (systemd --user or a dead fixture), the start time vs the lane's r15–r17 fixture runs (git -C /home/vgpnk/Projects/shokunin/souji-shokunin log --format='%h %ci %s' -n 40), wchan (pipe/fifo open), and that no live fixture run uses those prefixes now. Verdict per family.
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: coverage
+
+Report: write your scoped findings to .ufo/waves/round-18/w1/RevC3Premise.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+→ read(skill://godspeed) ⇒ ok · 18 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-18/leaked-procs-before-1631.txt) ⇒ ok · 58 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin log --format='%h %ci %s' -n 40) ⇒ ok · 41 lines
+→ bash(ps -eo pid,ppid,pgid,sid,lstart,stat,wchan:32,args --sort=pid | awk 'NR==1 || /souji|\/var\/tmp|\/dev\/shm|\/tmp\//') ⇒ ok · 135 lines
+
+## assistant
+
+All 58 listed pids are still alive in my live snapshot (16:54) — hours after start. Now checking parent identity, per-pid cwd/wchan/state, scratch-dir existence, and any fresh runs:
+→ bash(awk '{print "pid=1497 comm="$2" state="$3" ppid="$4" sid="$6}' /proc/1497/stat; printf 'cmdline: '; tr '\0' ' ' < /proc…) ⇒ ok · 3 lines
+→ bash(f=/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-18/leaked-procs-before-1631.txt; awk 'NR>1{print $1}' "$f" …) ⇒ ok · 60 lines
+→ bash(for d in /var/tmp/r15-census-config.{upcupkw1,_17e3yjp,7yc1yrcp,s8n_rh15,ujpcunsx,rxdxzqi8,otdn8qgj,tf977fa2,9lkl1cdg,m…) ⇒ ok · 49 lines
+→ bash(f=/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-18/leaked-procs-before-1631.txt; a=0; g=0; for p in $(awk '…) ⇒ ok · 73 lines
+
+## assistant
+
+Parent 1497 is `systemd --user`; every checked cwd is `(deleted)`; all scratch dirs are GONE. New processes started at 16:56–16:58 matching fixture prefixes — I need their full args to classify them vs the blocked 58, plus the missed pid 185592 and session-leader liveness:
+→ bash(ps -eo pid,ppid,pgid,sid,lstart,args | awk '$1==501133||$1==504639||$1==504645||$1==504728||$1==515098||$1==515825||$1=…) ⇒ ok · 1 line
+→ bash(printf '185592 cwd=%s wchan=%s\n' "$(readlink /proc/185592/cwd 2>/dev/null)" "$(cat /proc/185592/wchan 2>/dev/null)"; e…) ⇒ ok · 31 lines
+→ bash(stat -c '%n %F' /var/tmp/souji-r16/preharm.sh /var/tmp/souji-r16-PreservationRepin /var/tmp/souji-r16-PreservationRepin…) ⇒ ok · 6 lines
+
+## assistant
+
+Sid leaders (live `ps`) are dead. But the file's 4th column disagrees with live sid (e.g. 185592: file `7631` vs live `184726`) — need kernel `/proc/<pid>/stat` pgrp/sess as ground truth, a full-column reconciliation, and a fresh scan to classify the 16:56–16:58 newcomers:
+→ bash(f=/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-18/leaked-procs-before-1631.txt; printf '%-8s %-10s %-10s %…) ⇒ ok · 59 lines
+→ bash(ps -eo pid,ppid,pgid,sid,lstart,args | awk '/souji-r1[0-9]|souji-census|r15-census-config|r17-census-hygiene|r-inc-fifo…) ⇒ ok · 65 lines
+
+## assistant
+
+The 17:00 newcomers are r18 seats (`souji-r18-FixtureReapR14/...`) on fresh `mktemp` roots — different scratch, short-lived. Final rigor checks: file row count, kernel session-leader liveness, and whether file col4 could be a recycled spawning-job pid (1910 collision):
+→ bash(f=/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-18/leaked-procs-before-1631.txt; echo "lines=$(wc -l < "$f"…) ⇒ ok · 3 lines
+→ bash(for s in 184726 288604 362699 558610 558608 598023 638541 811234 917803 1024798 1240270 1537128 2473532 2568042 2626165…) ⇒ ok · 27 lines
+→ bash(ps -eo pid,lstart,args | awk '$1==1910'; awk '{print "1910 starttime_ticks="$22}' /proc/1910/stat; getconf CLK_TCK; awk…) ⇒ ok · 7 lines
+
+## assistant
+
+All checks complete — every element of the premise verified, with two findings for L1 (artifact column-4 defect; live-r18-reap-seat overlap nuance). Writing the report:
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/RevC3Premise.md) ⇒ ok · 1 line
+
+## assistant
+
+**STATUS: DONE — premise HOLDS: all 58 blocked processes are orphaned r15/r16/r17 fixture residue, not live work.** Report: `/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/RevC3Premise.md`
+
+**Family verdicts (58/58 orphaned residue):**
+- **A (44 procs, 22 runs)** — `souji-census.sh --root /var/tmp/r15-census-config.<rand>/unsafe-repos/r-inc-fifo` + `git rev-parse` blocked in `wait_for_partner` (fifo open): sub-families r16-matrix (8 runs), r16-repin (7), r16-PreservationRepin (2), souji-r16 preharm.sh (1), r17-matrix (4) → **orphaned**.
+- **B (14 procs, 4 runs)** — r17-hygiene `d2-fifo`/`d2-symlink-fifo` `git status` via `a31642d.sh`/`cc21683.sh` → **orphaned**.
+
+**Every premise element verified:** all 24 scratch roots GONE and all 58 cwds read `… (deleted)`; every census bash's ppid = 1497 = `systemd --user`, all 24 kernel session leaders dead; starts 10:53:42–16:01:58 all inside r15→r17 wave windows (zero after r17 landing 16:12 or r18 base 16:24; youngest ≥55 min blocked vs the seconds-scale census bound); wchan = `wait_for_partner`/`do_wait`/`anon_pipe_read` matching the FIFO red-arm recipes; no process reuses the blocked mktemp suffixes.
+
+**Findings for L1:**
+- **F1 (medium)** — the artifact's col4 is **not** the kernel sid (kernel stat fields 5/6 disagree for every family; pid-reuse explanation killed: col4=1910 rows started 15:57 while pid 1910 is 1Password's zygote since 09:57). No header row; treating row 1 as a header silently drops pid 185592 (my first loop did: 57/58). Regenerate with `ps -eo pid,ppid,pgid,sid,lstart,args` + kernel-stat spot-checks and a header.
+- **F2 (low, affects C3 counting)** — the fixture recipes are **live again right now** via r18 reap seats (FixtureReapR14-5 at 17:00:50, strace-wrapped, fresh `/var/tmp/r14-census-boundary.khlcz99i`): C3's orphan-vs-independent-counter delta must match exact scratch root/pid at point-in-time, never family prefix.
+- **F3 (low)** — two harness dirs survive (`/var/tmp/souji-r16`, `/var/tmp/souji-r16-PreservationRepin`); cleanup surface, not verdict-relevant.
+
+Gaps: exact open(2) target not proven (fd/syscall outside probe rule — wchan+cmdline near-certain, marked [INFERENCE]); col4 generator semantics unexplained — fix is regeneration. No processes signalled; no tool installs (none needed).

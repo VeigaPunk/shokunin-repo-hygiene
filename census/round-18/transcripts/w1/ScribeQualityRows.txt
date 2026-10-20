@@ -1,0 +1,91 @@
+# SoujiR18.ScribeQualityRows-5 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Draft four /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/QUALITY.md rows under a `## Round 18 criteria` table (same columns): Q29 supersedes Q7 (jj-colocated repos: helper only, both paths, cat-file post-check; Q7 stays for plain repos; lesson: round-17-verifier-spotcheck R4), Q30 (no single repository may hang the census: per-repo process-group bound; fixtures kill sessions; lesson r18 C1 + leaked processes), Q31 (authority-file evidence pointers resolve at the landing revision; exemptions are committed with reasons; lesson R2 + jj-receipts-ddb7347), Q32 (process residue is listed, never signalled, argv redacted; operator approves any kill). Each with applies-to, test, lesson columns.
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: calibration
+
+Report: write your scoped findings to .ufo/waves/round-18/w1/ScribeQualityRows.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/corpus/QUALITY.md) ⇒ ok · 75 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/corpus/lessons/round-17-verifier-spotcheck.md) ⇒ ok · 158 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/corpus/knowledge/jj-colocation-receipts.md) ⇒ ok · 155 lines
+
+## assistant
+
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && for p in tools/souji-landing-gate.py tools/souji-quarantine.sh tools…) ⇒ ok · 17 lines
+
+## assistant
+
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && sed -n '240,255p' tools/souji-quarantine.sh; echo ---; ls census/rou…) ⇒ ok · 84 lines
+
+## assistant
+
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -n "add_argument" tools/souji-landing-gate.py | cut -c1-150; gr…) ⇒ ok · 29 lines
+
+## assistant
+
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/ScribeQualityRows.md) ⇒ ok · 2 lines
+
+## assistant
+
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -nc 'repo-timeout\|REPO_TIMEOUT' tools/souji-census.sh; grep -n…) ⇒ ok · 14 lines
+
+## assistant
+
+→ edit([ScribeQualityRows.md#9D36] PUT 46.=46: +| `--repo-timeout` / `SOUJI_CENSUS_REPO_TIMEOUT` in tools/souji-census.sh | ab…) ⇒ ok · 11 lines
+
+## assistant
+
+STATUS: DONE — Q29–Q32 are drafted in the report for paste into `corpus/QUALITY.md` under `## Round 18 criteria`. None of the four test columns has been run, because their builds have not landed yet.
+
+Report: `/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/ScribeQualityRows.md`
+
+I did not edit `corpus/QUALITY.md` directly. The seat contract limits a scribe to writing its report, so L1 integrates the table.
+
+**Rows**
+- **Q29** supersedes Q7 for jj-colocated repos only. Q7's text is unchanged, and it stays in force for plain repos. The lesson columns cite round-17 R4 and R1, where R1 is the hardcoded `--as souji` at `tools/souji-quarantine.sh:247`.
+- **Q30** covers the per-repo process-group bound in the census. Its lesson cites `census/round-18/leaked-procs-before-1631.txt`, which has 58 lines.
+- **Q31** covers authority-file pointers resolving at the landing revision and committed exemptions. Its lesson cites round-17 R2. It also cites the unrouted `jj-receipts-ddb7347` pointer at `corpus/knowledge/jj-colocation-receipts.md:2,44,126,148`, which names a file that does not exist. The row avoids repeating that missing path, because the gate scans `QUALITY.md` too.
+- **Q32** covers listing-only process residue with redacted argv, and operator-approved kills only.
+
+**Landing dependencies.** These tokens are absent at b576341. Each row's test fails until its build lands:
+- `tools/souji-proc-census.sh` (C3)
+- `corpus/pointer-exemptions.tsv` (C2)
+- the `--repo-timeout` / `SOUJI_CENSUS_REPO_TIMEOUT` option, which `grep -c` confirms is absent from `tools/souji-census.sh` (C1)
+- `LG-DANGLING-PTR`, which must be added to the pinned id list at `tools/souji-landing-gate.py:116–122` (C2)
+- the R1 fix at `tools/souji-quarantine.sh:247`
+
+**Checks run.** These were read-only: `test -e` on each cited path, `read` on exact line ranges, `wc -l` and `head` on the leaked-process file, `grep` on the gate's CLI and the census's timeout option, and one `ls` of a single directory. I did not run any census, verify, quarantine or proc-census script, and I did not run `jj` or any git write.
+
+**Tool installs:** none.

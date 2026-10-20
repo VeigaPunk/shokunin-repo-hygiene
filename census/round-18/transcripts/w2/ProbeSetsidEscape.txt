@@ -1,0 +1,305 @@
+# SoujiR18.ProbeSetsidEscape (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Attacks 'no residue'. ALLOWED-EXEC: in your clone at 5efb519 only: git shim that daemonizes a grandchild via `setsid sleep 300 </fifo &` style escape before blocking; run the 5efb519 census with `--repo-timeout 3`; does the escaped grandchild survive (expected known limit)? Does the census still finish? Kill only pids you recorded.
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: operability
+
+Report: write your scoped findings to .ufo/waves/round-18/w2/ProbeSetsidEscape.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+I'll start by reading the claim under attack and setting up my clone.
+→ bash(git clone --quiet --no-local /home/vgpnk/Projects/shokunin/souji-shokunin /var/tmp/souji-r18w2-ProbeSetsidEscape/lane &…) ⇒ ok · 4 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 5efb519f00075d958c3d1109ef6fcb24c487eb87:tools/souji-census.sh…) ⇒ ok · 4 lines
+
+## assistant
+
+→ bash(grep -n "repo-timeout\|repo_timeout\|setsid\|process group\|pgid\|kill\|REPO_TIMEOUT\|unreaped" /var/tmp/souji-r18w2-Pr…) ⇒ ok · 59 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18w2-ProbeSetsidEscape/lane/tools/souji-census.sh:1440-1720) ⇒ ok · 287 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18w2-ProbeSetsidEscape/lane/tools/souji-census.sh:140-245) ⇒ ok · 114 lines
+→ bash(grep -n "PATH=\|GIT=\|unset .*PATH\|command -v git\|SELF=" /var/tmp/souji-r18w2-ProbeSetsidEscape/lane/tools/souji-cens…) ⇒ ok · 14 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18w2-ProbeSetsidEscape/lane/tools/souji-census.sh:2320-2440) ⇒ ok · 127 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeSetsidEscape/lane && grep -n "setsid\|escape\|residue\|survive\|grandchild\|daemon" tests/…) ⇒ ok · 18 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeSetsidEscape/lane && grep -rn "residue" corpus/lessons/round-18.md README.md SCORECARD.md …) ⇒ ok · 20 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18w2-ProbeSetsidEscape/lane/tests/fixtures/r18-census-bounded.py:420-480) ⇒ ok · 80 lines
+→ read(/var/tmp/souji-r18w2-ProbeSetsidEscape/lane/tests/fixtures/r18-census-bounded.py:630-700) ⇒ ok · 87 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeSetsidEscape/lane && grep -n "leaked_before_cleanup\|session_after_cleanup\|start_new_sess…) ⇒ ok · 26 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18w2-ProbeSetsidEscape/lane/tests/fixtures/r18-census-bounded.py:500-610) ⇒ ok · 121 lines
+
+## assistant
+
+Now I'll build the escape probe. First, the fixture: a `git` shim that daemonizes a grandchild via `setsid` before blocking.
+→ write(/var/tmp/souji-r18w2-ProbeSetsidEscape/probe/bin/git) ⇒ ok · 2 lines
+
+## assistant
+
+→ bash(set -e P=/var/tmp/souji-r18w2-ProbeSetsidEscape/probe rm -rf "$P/fleet" "$P/state"; mkdir -p "$P/fleet" "$P/state" expo…) ⇒ error · 16 lines — Author identity unknown
+
+## assistant
+
+→ bash(set -e P=/var/tmp/souji-r18w2-ProbeSetsidEscape/probe rm -rf "$P/fleet" "$P/state"; mkdir -p "$P/fleet" "$P/state" expo…) ⇒ ok · 2 lines
+
+## assistant
+
+→ write(/var/tmp/souji-r18w2-ProbeSetsidEscape/probe/run-v1.sh) ⇒ ok · 2 lines
+
+## assistant
+
+→ bash(bash /var/tmp/souji-r18w2-ProbeSetsidEscape/probe/run-v1.sh 2>&1) ⇒ ok · 17 lines
+
+## assistant
+
+V1 confirms the escape survives while the census reports a clean timeout. Now V2: escape + **exit 0** — no timeout at all, residue accumulates per run.
+→ write(/var/tmp/souji-r18w2-ProbeSetsidEscape/probe/run-v2.sh) ⇒ ok · 2 lines
+
+## assistant
+
+→ bash(bash /var/tmp/souji-r18w2-ProbeSetsidEscape/probe/run-v2.sh 2>&1) ⇒ ok · 20 lines
+
+## assistant
+
+V2 shows the same timeout path — but with a different mechanism. Let me inspect the survivors' fds and cwd, and test whether a piped caller still sees EOF promptly.
+→ bash(for pid in 1457975 1689001 1771003; do echo "== pid $pid"; cat /proc/$pid/cmdline 2>/dev/null | tr '\0' ' '; echo; read…) ⇒ ok · 34 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeSetsidEscape/lane && python3 census/round-18/leak-count.py 2>&1 | python3 -c 'import json,…) ⇒ ok · 4 lines
+
+## assistant
+
+Survivors hold a capture **pipe** (fd 1) and the fifo, cwd/argv valid — so the leak counter doesn't count them. Let me verify that, add a same-group control, and test a piped caller.
+→ edit(/var/tmp/souji-r18w2-ProbeSetsidEscape/probe/bin/git) ⇒ ok · 10 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeSetsidEscape/lane && python3 census/round-18/leak-count.py > /var/tmp/souji-r18w2-ProbeSet…) ⇒ ok · 5 lines
+
+## assistant
+
+Three escaped survivors confirmed absent from the blind counter. Now a parameterized runner: V1/V2 rerun plus a piped caller (V3) and a **same-group control** (V4) to pin the boundary at `setsid()`.
+→ write(/var/tmp/souji-r18w2-ProbeSetsidEscape/probe/run-one.sh) ⇒ ok · 2 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeSetsidEscape/lane && grep -n 'status' tools/souji-census.sh | sed -n '1,60p') ⇒ ok · 41 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18w2-ProbeSetsidEscape/lane/tools/souji-census.sh:1160-1185) ⇒ ok · 36 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeSetsidEscape/probe && LABEL=v1block PROBE_MODE=block PROBE_ESCAPE=setsid PIPE=0 bash run-o…) ⇒ ok · 15 lines
+
+## assistant
+
+The runner recursed (`command -v git` resolved to the shim). Let me check for strays and fix the real-git resolution.
+→ bash(ls -l /var/tmp/souji-r18w2-ProbeSetsidEscape/probe/state/v1block/ 2>&1; echo '--- stray shim procs:'; for d in /proc/[0…) ⇒ error · 10 lines — total 16
+
+## assistant
+
+Two self-inflicted bugs: `command -v git` resolved to the shim (recursion), and the leader pid was written to `$P` instead of `$S`. Fixing both.
+→ bash(ls -l /usr/bin/git; cat /var/tmp/souji-r18w2-ProbeSetsidEscape/probe/leader.pid 2>/dev/null; echo "stray check:"; ps -e…) ⇒ ok · 9 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeSetsidEscape/probe && python3 - <<'PY' import re,pathlib p=pathlib.Path('run-one.sh'); s=p…) ⇒ ok · 40 lines
+
+## assistant
+
+→ bash(for d in /proc/[0-9]*; do c=$(tr '\0' ' ' < "$d/cmdline" 2>/dev/null) || continue; case "$c" in *souji-r18w2-ProbeSetsi…) ⇒ ok · 30 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeSetsidEscape/probe && for spec in "v1block block setsid 0" "v2exit exit setsid 0" "v3pipe …) ⇒ ok · 58 lines
+
+## assistant
+
+Clean matrix. Now let me pin the exact claim wording I'm falsifying (SCORECARD row + C1 record) and confirm the fixture's leak check semantics against my measurement.
+→ bash(cd /var/tmp/souji-r18w2-ProbeSetsidEscape/lane && grep -n "operability\|no residue\|residue" SCORECARD.md | head -12; e…) ⇒ ok · 21 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeSetsidEscape/lane && grep -n "session_after_cleanup\|leaked_before_cleanup\|cleanup killed…) ⇒ ok · 11 lines
+
+## assistant
+
+SCORECARD says fixtures "kill their whole session on timeout" — session-scoped, which is exactly the blind spot. Let me verify the record's per-case leak fields and measure the guard-phase variant too.
+→ bash(cd /var/tmp/souji-r18w2-ProbeSetsidEscape/lane && python3 - <<'PY' import json d=json.load(open('census/round-18/c1-mat…) ⇒ ok · 3 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeSetsidEscape/probe && python3 - <<'PY' import pathlib p=pathlib.Path('bin/git'); s=p.read_…) ⇒ ok · 4 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeSetsidEscape/lane && python3 - <<'PY' import json d=json.load(open('census/round-18/c1-mat…) ⇒ ok · 3 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeSetsidEscape/probe && PROBE_ANY=1 LABEL=v5guard PROBE_MODE=block PROBE_ESCAPE=setsid PIPE=…) ⇒ ok · 17 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeSetsidEscape/lane && python3 - <<'PY' import json d=json.load(open('census/round-18/c1-mat…) ⇒ error · 7 lines — changed rc= 0 ran= True failed= 0 total= 8 leftover_count= 0 leftover= [] session_cleanup= {'killed': [], 'session_id':…
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeSetsidEscape/lane && grep -n "leftover_procs\|session_cleanup\|def main\|prefix\|cmdline\|…) ⇒ ok · 18 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18w2-ProbeSetsidEscape/lane/census/round-18/run-matrix.py:138-175) ⇒ ok · 58 lines
+
+## assistant
+
+Now the strongest variant: escape with the daemon's stdout detached, shim returns 0 — a healthy repo, no timeout, and silent residue.
+→ read(/var/tmp/souji-r18w2-ProbeSetsidEscape/probe/bin/git) ⇒ ok · 36 lines
+
+## assistant
+
+→ edit(/var/tmp/souji-r18w2-ProbeSetsidEscape/probe/bin/git) ⇒ ok · 10 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeSetsidEscape/probe && PROBE_CHILD_OUT=/dev/null LABEL=v6quiet PROBE_MODE=exit PROBE_ESCAPE…) ⇒ ok · 13 lines
+
+## assistant
+
+v6 is the decisive case: 460 ms, both rows **clean**, empty stderr, survivor alive. Let me pin which phase v5 hit and check the row bytes, then clean up.
+→ bash(cd /var/tmp/souji-r18w2-ProbeSetsidEscape/probe && python3 - <<'PY' import pathlib p=pathlib.Path('bin/git'); s=p.read_…) ⇒ ok · 14 lines
+→ bash(printf 'v1block row bytes: '; sed -n '2,3p' /var/tmp/souji-r18w2-ProbeSetsidEscape/probe/state/v1block/out | cat -A; ec…) ⇒ ok · 7 lines
+
+## assistant
+
+→ bash(cat /var/tmp/souji-r18w2-ProbeSetsidEscape/probe/state/v5guard/calls.log; echo '--- earlier v5guard (block, no log) esc…) ⇒ ok · 12 lines
+
+## assistant
+
+Phase attribution confirmed from the call log. Let me ground the auto-gc point, kill my recorded stragglers, and check the guard's rev-parse.
+→ bash(cd /var/tmp/souji-r18w2-ProbeSetsidEscape/lane && grep -n "rev-parse --is-inside-work-tree" tools/souji-census.sh | hea…) ⇒ ok · 25 lines
+→ bash(for pid in 1457975 1689001 1771003; do if [ -d "/proc/$pid" ]; then echo "killing recorded pid $pid ($(tr '\0' ' ' < /p…) ⇒ ok · 6 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeSetsidEscape/lane && awk 'NR>=1290 && NR<=1330 {printf "%d: %s\n", NR, $0}' tools/souji-ce…) ⇒ ok · 42 lines
+
+## assistant
+
+Line 1323 is in `census_one`, not the guard — so my v5 label is wrong. Let me check what the guard actually invokes.
+→ bash(cd /var/tmp/souji-r18w2-ProbeSetsidEscape/lane && grep -n "^guard_git_surface\|^guard_git_pointer\|^guard_target\|^guar…) ⇒ ok · 7 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18w2-ProbeSetsidEscape/lane/tools/souji-census.sh:945-1060) ⇒ ok · 122 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeSetsidEscape/lane && awk 'NR>=522 && NR<=945' tools/souji-census.sh | grep -n "git " | hea…) ⇒ ok · 23 lines
+
+## assistant
+
+The guard phase does exec git (`git config --file`), just not with `-C`. Let me measure that path explicitly.
+→ write(/var/tmp/souji-r18w2-ProbeSetsidEscape/probe/bin/git) ⇒ ok · 1 line
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeSetsidEscape/probe && PROBE_GUARD=1 PROBE_LOG=/var/tmp/souji-r18w2-ProbeSetsidEscape/probe…) ⇒ ok · 18 lines
+
+## assistant
+
+Guard-carrier escape confirmed (call log: `guard:config --file …`). Let me pin exact line numbers for the report and verify no probe processes remain.
+→ bash(cd /var/tmp/souji-r18w2-ProbeSetsidEscape/lane && grep -n "set -m\|setsid bash -c\|kill -TERM -- \"-\$worker\"\|kill -K…) ⇒ ok · 20 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeSetsidEscape/lane && grep -n "def session_members\|def kill_session\|def wait_session_empt…) ⇒ ok · 14 lines
+
+## assistant
+
+→ bash(for d in /proc/[0-9]*/fd; do t=$(readlink "$d/0" 2>/dev/null) || continue; case "$t" in *souji-r18w2-ProbeSetsidEscape*…) ⇒ ok · 6 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeSetsidEscape/lane && grep -n "0\\\\t0\\\\t0\\\\t0\\\\t0\\\\t\\\\terror\|preflight_timeout\…) ⇒ ok · 15 lines
+
+## assistant
+
+→ read(/var/tmp/souji-r18w2-ProbeSetsidEscape/lane/tools/souji-census.sh:1688-1715) ⇒ ok · 34 lines
+
+## assistant
+
+All measurements and line references are pinned. Writing the report.
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/ProbeSetsidEscape.md) ⇒ ok · 1 line
+
+## assistant
+
+→ bash(rm -rf /var/tmp/souji-r18w2-ProbeSetsidEscape/lane && echo clone-deleted; ls /var/tmp/souji-r18w2-ProbeSetsidEscape/; l…) ⇒ ok · 10 lines
+
+## assistant
+
+One label drifted from the actual artifact dirs (`v5guard`, `v5guard2`). Renaming them to match the report and tightening the table row.
+→ bash(cd /var/tmp/souji-r18w2-ProbeSetsidEscape/probe/state && mv v5guard v5any && mv v5guard2 v5any-log && ls -d v*; echo '-…) ⇒ ok · 44 lines
+
+## assistant
+
+→ bash(grep -n "v5revparse\|calls.log\|iteration\|v5any\|Raw per-variant\|LABEL=v7guard" /home/vgpnk/Projects/shokunin/souji-s…) ⇒ ok · 6 lines
+
+## assistant
+
+→ edit(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/ProbeSetsidEscape.md) ⇒ ok · 8 lines
+→ edit(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/ProbeSetsidEscape.md) ⇒ ok · 19 lines
+
+## assistant
+
+→ bash(for pid in 3252016 3299863 3339011 3379843 3917698 4180030 4132400 235457 1457975 1689001 1771003; do [ -d /proc/$pid ]…) ⇒ ok · 16 lines
+
+## assistant
+
+STATUS: DONE — the `setsid` escape survives the per-repo TERM/KILL sweep and is never reported; the census still finishes bounded and exits 0.
+
+**Verdict on C1 "no residue": partial.** The timeout contract holds; the residue guarantee fails at exactly its stated scope.
+
+**Measured** (clone at `5efb519`, `--repo-timeout 3`, census as own session leader; details in `/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/ProbeSetsidEscape.md`):
+
+| variant | carrier | wall | stall row | stderr | unreaped | escaped child |
+|---|---|---|---|---|---|---|
+| v1block | `status` | 5525 ms | `0 0 0 0 ␀ error` | `repo-timeout 3s` | 0 | **alive** (own sid/pgrp, ppid 1497) |
+| v2exit | `status`, shim exit 0 | 5518 ms | error | `repo-timeout 3s` | 0 | **alive** |
+| v3pipe | caller reads stdout via pipe | 5524 ms | error | same | 0 | **alive** — no caller hang |
+| v4samegroup (control) | no `setsid` | 5526 ms | error | same | 0 | **gone** |
+| v5any | `rev-parse --is-inside-work-tree` | 5506 ms | error | same | 0 | **alive** |
+| v6quiet | `status`, exit 0, child fds detached | **460 ms** | **clean** | **(empty)** | 0 | **alive** |
+| v7guard | guard `config --file` | 5292 ms | error | same | 0 | **alive** |
+
+All runs exit 0; neighbours measured; residue accumulates one process per armed repo per run.
+
+**Why it fails:** sweep and survivor test are group-scoped only — `set -m` (1478), watchdog kills `-$worker` (1493-1497), every unreaped decision is `kill -0 -- "-$worker"` (1547-1548, 1575, 1603, 1637), diagnostic 1641. A child that calls `setsid()` leaves both group and session, so TERM/KILL and the predicate never see it.
+
+**Why the 8/0 evidence misses it:** fixture leak check is `session == census pid` (425-431, 574, 668-676; measured members 0 with a live survivor); runner counts argv-prefix matches only (143-166; survivor argv `sleep 300` ⇒ `leftover_procs_count: 0`); the C3 counter's three classes don't apply (cwd/argv/fd all valid). Secondary: a daemon holding the substitution pipe makes a git that returned 0 read as `repo-timeout` (v2exit).
+
+**No repo-config vector found** [INFERENCE]: guard region 522-945 parses files directly; fsmonitor/hooks/attr filters/alternateRefs neutralized. The defect is claim scope + test blind spot, not a live repo-config exploit.
+
+**Smallest fix:** scope the sentence at `tools/souji-census.sh:162-163`, `SCORECARD.md:15`, `corpus/lessons/round-18.md:3` to "survivor of that process group / census session"; add a B9 whose shim writes the `setsid` child pid (shape already at selftest 2346) and asserts `/proc/<pid>` is gone — red today; for real containment, run workers in a PID namespace (`unshare --user --map-root-user --pid --fork`; `unprivileged_userns_clone`=1 here).
+
+No tools installed; clone deleted; only recorded pids killed (all verified gone); no process holds the probe fifo. Remaining unknown: whether a shipped git daemonizes during `status` via a `gc.autoDetach` path (untested).

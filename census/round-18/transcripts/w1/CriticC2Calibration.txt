@@ -1,0 +1,89 @@
+# SoujiR18.CriticC2Calibration-5 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Attack C2 as a calibration claim (AXES: calibration = self-assessment entries match observed repo state): is 'authority files cite only existing evidence' calibration or freshness/depth? Is the before→after count gameable (exemptions file, narrowing scope files, deleting pointers instead of fixing them)? Propose the guard (e.g. exemptions counted and reviewed; a fixed pointer must resolve to the file the claim used). Read /home/vgpnk/Projects/shokunin/souji-shokunin/SCORECARD.md and /home/vgpnk/Projects/shokunin/AXES.md.
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: calibration
+
+Report: write your scoped findings to .ufo/waves/round-18/w1/CriticC2Calibration.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+→ read(/home/vgpnk/Projects/shokunin/AXES.md) ⇒ ok · 84 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/SCORECARD.md) ⇒ ok · 117 lines
+→ bash(wc -l /home/vgpnk/Projects/shokunin/souji-shokunin/SKILL.md /home/vgpnk/Projects/shokunin/souji-shokunin/PROVINCE.md /h…) ⇒ error · 10 lines — 253 /home/vgpnk/Projects/shokunin/souji-shokunin/SKILL.md
+
+## assistant
+
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && git ls-tree --name-only b5763415cc67ecff1e8fe56c58c39a6fb106d7a3 cen…) ⇒ ok · 11 lines
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && git ls-tree b5763415cc67ecff1e8fe56c58c39a6fb106d7a3 .ufo/ .ufo/wave…) ⇒ error · 12 lines — 040000 tree 2433ce092269521397e753492d7ae9509570eb22 .ufo/waves/round-13
+→ grep(gate-replays|jj-receipts|LG- @ /home/vgpnk/Projects/shokunin/souji-shokunin/SKILL.md;/home/vgpnk/Projects/shokunin/souj…) ⇒ ok · 101 lines
+→ grep(ddb7347|gate-replays|jj-receipts @ /home/vgpnk/Projects/shokunin/souji-shokunin/corpus) ⇒ ok · 110 lines
+
+## assistant
+
+Key evidence in hand. The two named dangling pointers never existed in any commit (`git log --all` empty). Now let me check the gate's existing `LG-FROZEN-MEASURED` code (already in `FINDING_IDS`), the LOG section scope issue, and the untracked evidence file.
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-landing-gate.py:428-580) ⇒ ok · 163 lines
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -n 'gate-replays-ddb7347\|gate-replays-4f48343\|jj-receipts-ddb…) ⇒ ok · 43 lines
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && git status --porcelain -- census/round-18/ 2>/dev/null | head; git l…) ⇒ ok · 5 lines
+→ grep(measured_commit|round-N|pointer-exempt|\.ufo/state|watchdog\.log @ /home/vgpnk/Projects/shokunin/souji-shokunin) ⇒ ok · 417 lines
+
+## assistant
+
+Strong counterexamples identified. A few final checks — SHONEN.md (the canonical calibration surface per AXES.md) sweep coverage, `.ufo/state` tracking, and the keep-ref `rev-parse` gap.
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && ls SHONEN.md PROVINCE.md 2>&1; git ls-files | grep -i shonen; git ch…) ⇒ ok · 13 lines
+
+## assistant
+
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && cat SHONEN.md; echo '=== tracked? ==='; git ls-files .ufo/state .ufo…) ⇒ ok · 16 lines
+
+## assistant
+
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && for p in tests/fixtures/r13-repo-structure.sh census/round-13/verifi…) ⇒ ok · 7 lines
+
+## assistant
+
+All counterexamples confirmed. Writing the report.
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/CriticC2Calibration.md) ⇒ ok · 2 lines
+
+## assistant
+
+STATUS: DONE — report written to `.ufo/waves/round-18/w1/CriticC2Calibration.md`.
+
+Summary of the attack on C2:
+
+**Axis classification — partial.** The two headline danglers are genuinely calibration (authored-wrong, not drifted): `git log --all` (which sees `refs/jj/*`) shows `gate-replays-ddb7347.json` and `jj-receipts-ddb7347.txt` were never committed under those names — SCORECARD/LOG/knowledge cited evidence that never existed. But the swept file set mixes self-assessment surfaces (SCORECARD, LOG, lessons) with domain surfaces (QUALITY, README), where dangling pointers are freshness/depth defects. Guard: publish the authored-wrong vs drifted and self-assessment vs domain splits; only authored-wrong self-assessment entries are the calibration delta.
+
+**Count gameable — holds.** "18 unresolved → 0" is inflated ~9×: ~2 authored-wrong findings, rest deliberate/fleet tokens. Four concrete gaming lanes documented: `pointer-exemptions.tsv` as a finding sink (needs must-match-token, must-not-resolve, closed-reason guards), pointer deletion vs fix (needs removed-vs-repointed diff vs `--base`), `fleet`-classification laundering (must list, not suppress), silent skips (`*` glob matching zero is invisible — `round-17.md`'s `jj-receipts-*.txt` is skipped today; `round-17-verifier-spotcheck.md` escapes the `round-N.md` sweep entirely; untracked `census/round-18/` evidence must resolve at measured REV, not worktree).
+
+**Verification-blindness — fails.** Two strongest counterexamples: (1) the gate's LOG scope ("round-N section only") cannot observe the repair of `LOG.md:916` — the flagship before-finding — and LOG is append-only so the dangling token persists under a correction-append repair; (2) `SHONEN.md`, the calibration surface AXES.md names first, is outside the swept set. Also: existing `LG-FROZEN-MEASURED` code uses bare `rev-parse --verify`, which resolves keep-ref-only commits — the lane's own jj rule (`jj-colocation-receipts.md:79-80`) says those aren't durably replayable; require `merge-base --is-ancestor` against durable refs.
+
+Smallest safe correction: six enumerated guards, all inside the declared contract. No harm found to C1/C3.

@@ -1,0 +1,332 @@
+# SoujiR18.ProbeListPhaseSwap (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Attacks C1 with a NEW list-phase swap (not the B8 shape). ALLOWED-EXEC: in your clone at 5efb519 only: synthetic root under /var/tmp/souji-r18w2-ProbeListPhaseSwap/ with repos a,b,c; make b a linked-worktree-style or commondir/gitfile layout and use a PATH shim to swap the file the list phase reads (gitfile `.git`, `commondir`, `worktrees/*/gitdir`, `objects/info/alternates`) for a FIFO right after the guard stat; run 5efb519 census with `SOUJI_CENSUS_REPO_TIMEOUT=5` under `timeout -k 2 40`. Record rc, rows, stderr, residue; same on b576341 for contrast.
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: operability
+
+Report: write your scoped findings to .ufo/waves/round-18/w2/ProbeListPhaseSwap.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+I'll start by reading the skill and setting up my clone, in parallel with reading the target tool source.
+→ read(skill://godspeed) ⇒ ok · 18 lines
+→ bash(mkdir -p /var/tmp/souji-r18w2-ProbeListPhaseSwap && git clone --quiet --no-local /home/vgpnk/Projects/shokunin/souji-sh…) ⇒ ok · 5 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeListPhaseSwap/lane && wc -l tools/souji-census.sh && grep -n "list-phase\|list_phase\|cens…) ⇒ ok · 82 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeListPhaseSwap/lane && ls tests/fixtures/ | grep -i r18; ls census/round-18/ 2>/dev/null) ⇒ ok · 17 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeListPhaseSwap/lane && sed -n '1300,1420p' tools/souji-census.sh) ⇒ ok · 122 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeListPhaseSwap/lane && sed -n '1440,1740p' tools/souji-census.sh) ⇒ ok · 304 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeListPhaseSwap/lane && grep -n "PATH\|command -v\|hash -r" tools/souji-census.sh | head -40…) ⇒ ok · 118 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeListPhaseSwap/lane && sed -n '1395,1445p' tools/souji-census.sh && echo ---- && grep -n "^…) ⇒ ok · 62 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeListPhaseSwap/lane && sed -n '880,1060p' tools/souji-census.sh) ⇒ ok · 182 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeListPhaseSwap/lane && sed -n '1258,1305p' tools/souji-census.sh && echo ------- && sed -n …) ⇒ ok · 210 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeListPhaseSwap/lane && sed -n '500,660p' tools/souji-census.sh) ⇒ ok · 162 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeListPhaseSwap/lane && git diff b5763415cc67ecff1e8fe56c58c39a6fb106d7a3 5efb519f00075d958c…) ⇒ ok · 14 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeListPhaseSwap/lane && sed -n '/^gitfile_admin()/,/^}/p' tools/souji-census.sh && echo ----…) ⇒ ok · 30 lines
+→ bash(set -u; T=/var/tmp/souji-r18w2-ProbeListPhaseSwap/micro; rm -rf "$T"; mkdir -p "$T"; cd "$T" git init -q r1 && git -C r…) ⇒ ok · 7 lines
+
+## assistant
+
+→ bash(set -u; T=/var/tmp/souji-r18w2-ProbeListPhaseSwap/micro; cd "$T" t(){ s=$(date +%s%N); "$@" >/dev/null 2>&1; rc=$?; e=$…) ⇒ ok · 10 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeListPhaseSwap/lane && sed -n '/^protected_fail()/,/^}/p' tools/souji-census.sh && echo ---…) ⇒ ok · 34 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeListPhaseSwap/lane && git show b5763415cc67ecff1e8fe56c58c39a6fb106d7a3:tools/souji-census…) ⇒ ok · 6 lines
+
+## assistant
+
+Structure is now clear. Building the harness: synthetic root with a/b/c, b carrying a commondir + a registered worktree, and a PATH `git` shim that plants the FIFO **after** the guard phase (trigger = first `git -C a worktree list` in the census phase).
+→ write(/var/tmp/souji-r18w2-ProbeListPhaseSwap/shim/git) ⇒ ok · 2 lines
+→ write(/var/tmp/souji-r18w2-ProbeListPhaseSwap/setup-repos.sh) ⇒ ok · 2 lines
+
+## assistant
+
+→ write(/var/tmp/souji-r18w2-ProbeListPhaseSwap/one-run.sh) ⇒ ok · 2 lines
+→ write(/var/tmp/souji-r18w2-ProbeListPhaseSwap/setup-wt.sh) ⇒ ok · 2 lines
+
+## assistant
+
+→ bash(set -e; B=/var/tmp/souji-r18w2-ProbeListPhaseSwap git clone --quiet --no-local /home/vgpnk/Projects/shokunin/souji-shok…) ⇒ ok · 13 lines
+
+## assistant
+
+→ bash(B=/var/tmp/souji-r18w2-ProbeListPhaseSwap; $B/one-run.sh tip-M0 $B/lane $B/work/dry/root $B/work/dry/wt none; echo "---…) ⇒ ok · 15 lines
+
+## assistant
+
+Found a bug in my own shim (dropped `"$@"` — that's why everything degraded). Fixing and re-running the dry baseline.
+→ edit(/var/tmp/souji-r18w2-ProbeListPhaseSwap/shim/git) ⇒ ok · 4 lines
+
+## assistant
+
+→ bash(B=/var/tmp/souji-r18w2-ProbeListPhaseSwap; $B/one-run.sh tip-M0 $B/lane $B/work/dry/root $B/work/dry/wt none; echo "---…) ⇒ ok · 15 lines
+
+## assistant
+
+Baseline is correct (3 clean rows, b has 2 worktrees). But `tmp_residue=1` in a *successful* run — checking whether the tmp dir leaks by design.
+→ bash(B=/var/tmp/souji-r18w2-ProbeListPhaseSwap; ls -la /var/tmp/souji-census-now.0AYvOs; stat -c '%y %n' /var/tmp/souji-cens…) ⇒ error · 4 lines — ls: cannot access '/var/tmp/souji-census-now.0AYvOs': No such file or directory
+
+## assistant
+
+→ bash(B=/var/tmp/souji-r18w2-ProbeListPhaseSwap; cat $B/state/tip-M0/tmp.before; echo "== after"; cat $B/state/tip-M0/tmp.aft…) ⇒ ok · 25 lines
+
+## assistant
+
+→ write(/var/tmp/souji-r18w2-ProbeListPhaseSwap/one-run.sh) ⇒ ok · 1 line
+
+## assistant
+
+→ write(/var/tmp/souji-r18w2-ProbeListPhaseSwap/driver.sh) ⇒ ok · 2 lines
+
+## assistant
+
+→ bash(B=/var/tmp/souji-r18w2-ProbeListPhaseSwap; chmod +x $B/driver.sh $B/one-run.sh; bash -n $B/one-run.sh && bash -n $B/dri…) ⇒ ok · 10 lines
+→ bash(B=/var/tmp/souji-r18w2-ProbeListPhaseSwap; sleep 1; $B/driver.sh base $B/lane-b M0 M1 M2 M3 M4 W 2>&1 | tail -30) ⇒ ok · 10 lines
+
+## assistant
+
+My harness killed itself (survivor scan matched its own argv). Fixing the filter and the erased before-set.
+→ bash(B=/var/tmp/souji-r18w2-ProbeListPhaseSwap; for l in tip-M1 tip-M2 base-M2; do echo "=== $l"; cat $B/out/$l/rc 2>/dev/nu…) ⇒ ok · 34 lines
+
+## assistant
+
+→ bash(B=/var/tmp/souji-r18w2-ProbeListPhaseSwap; ls -la $B/work/tip-M2/root/b/.git/worktrees/wt/ 2>&1 | head; echo "-- manual…) ⇒ ok · 19 lines
+
+## assistant
+
+→ bash(B=/var/tmp/souji-r18w2-ProbeListPhaseSwap; echo "== tip-M2 commondir"; ls -la $B/work/tip-M2/root/b/.git/commondir; ech…) ⇒ error · 11 lines — == tip-M2 commondir
+
+## assistant
+
+Found it: I passed the label (`M2`) as `SHIM_MODE`, so the shim planted nothing. Fixing the mode mapping and the self-kill filter.
+→ write(/var/tmp/souji-r18w2-ProbeListPhaseSwap/one-run.sh) ⇒ ok · 1 line
+
+## assistant
+
+→ bash(B=/var/tmp/souji-r18w2-ProbeListPhaseSwap; rm -rf $B/out/tip-* $B/state/tip-*; bash -n $B/one-run.sh && $B/driver.sh ti…) ⇒ ok · 9 lines
+→ bash(B=/var/tmp/souji-r18w2-ProbeListPhaseSwap; rm -rf $B/out/base-* $B/state/base-*; sleep 2; $B/driver.sh base $B/lane-b M…) ⇒ ok · 12 lines
+
+## assistant
+
+Runs now show the contrast (tip M2 7.8 s/rc 0; base M2 rc 124 at 40 s). Inspecting outputs, timelines, and the FIFO/leak state.
+→ bash(B=/var/tmp/souji-r18w2-ProbeListPhaseSwap; for l in tip-M1 tip-M2 tip-M3 tip-M4 tip-W base-M1 base-M2 base-M3 base-M4 b…) ⇒ ok · 64 lines
+→ bash(B=/var/tmp/souji-r18w2-ProbeListPhaseSwap; echo "== tip-M1 b/.git"; ls -la $B/work/tip-M1/root/b/.git/commondir; echo "…) ⇒ ok · 18 lines
+
+## assistant
+
+Strong contrast captured. Now checking `resolve_guarded` for a PATH-visible call I can use as the "right after the guard stat" trigger for a **gitfile** candidate, and attributing the baseline tmp-dir leak.
+→ bash(cd /var/tmp/souji-r18w2-ProbeListPhaseSwap/lane && sed -n '/^resolve_guarded()/,/^}/p' tools/souji-census.sh | head -80…) ⇒ ok · 98 lines
+→ bash(B=/var/tmp/souji-r18w2-ProbeListPhaseSwap; echo "== base-M2 timeline fd1 paths"; awk -F'\t' '{print $5}' $B/state/base-…) ⇒ ok · 5 lines
+
+## assistant
+
+`resolve_guarded` only shells out to `readlink` for symlinks, but glob order is sorted — so a's guard reliably runs before b's. I can now build the two remaining shapes: **M5** (kind=repo guard-phase timeout) and **M6** (gitfile candidate whose guard read blocks — expected to produce a `repo-timeout` with *no row*).
+→ write(/var/tmp/souji-r18w2-ProbeListPhaseSwap/shim/git) ⇒ ok · 1 line
+→ bash(B=/var/tmp/souji-r18w2-ProbeListPhaseSwap; python3 - <<'EOF' import re,io p='/var/tmp/souji-r18w2-ProbeListPhaseSwap/on…) ⇒ ok · 13 lines
+
+## assistant
+
+→ bash(B=/var/tmp/souji-r18w2-ProbeListPhaseSwap; $B/driver.sh tip $B/lane M0 M5 M6 2>&1 | tail -10) ⇒ ok · 7 lines
+→ bash(B=/var/tmp/souji-r18w2-ProbeListPhaseSwap; sleep 2; $B/driver.sh base $B/lane-b M0 M5 M6 2>&1 | tail -10) ⇒ ok · 8 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeListPhaseSwap/lane && grep -n "gitfile\|worktree\|repo-timeout\|preflight\|guard" tests/fi…) ⇒ ok · 15 lines
+
+## assistant
+
+→ bash(B=/var/tmp/souji-r18w2-ProbeListPhaseSwap; for l in tip-M5 tip-M6 base-M5 base-M6; do echo "### $l rc=$(cat $B/out/$l/r…) ⇒ ok · 29 lines
+
+## assistant
+
+The guard trigger never matched. Instrumenting all `git` invocations to see the exact guard calls.
+→ bash(B=/var/tmp/souji-r18w2-ProbeListPhaseSwap; mkdir -p $B/shimlog cat > $B/shimlog/git <<'EOF' #!/usr/bin/env bash printf …) ⇒ ok · 43 lines
+
+## assistant
+
+The trigger path was doubled (`$R/a/a/...`). Also M5's guard never reads the FIFO (it skips non-regular `gitdir`), so a true guard-phase timeout needs a file the guard *opens* after stat'ing. Reading `guard_git_config` to pick it.
+→ bash(B=/var/tmp/souji-r18w2-ProbeListPhaseSwap; sed -n '/^guard_git_config()/,/^}/p' $B/lane/tools/souji-census.sh; echo ===…) ⇒ ok · 35 lines
+
+## assistant
+
+`guard_git_config` re-checks `[ -f ]`, so every guard read except **`gitfile_admin`'s unconditional `read` of `.git`** is preceded by a type check. That makes M6 the real guard-phase timeout — and the fixture grep shows no gitfile coverage. Fixing the trigger path and re-running.
+→ bash(B=/var/tmp/souji-r18w2-ProbeListPhaseSwap; python3 - <<'EOF' p='/var/tmp/souji-r18w2-ProbeListPhaseSwap/shim/git' s=ope…) ⇒ ok · 35 lines
+
+## assistant
+
+Base `list_repos` runs the gitfile pointer guard **inline in the list phase** (unwatched), while tip moves it into the watched candidate loop. Running M5/M6 on both arms now.
+→ bash(B=/var/tmp/souji-r18w2-ProbeListPhaseSwap; rm -rf $B/out/tip-M5 $B/out/tip-M6 $B/state/tip-M5 $B/state/tip-M6; $B/drive…) ⇒ ok · 5 lines
+→ bash(B=/var/tmp/souji-r18w2-ProbeListPhaseSwap; rm -rf $B/out/base-M5 $B/out/base-M6 $B/state/base-M5 $B/state/base-M6; slee…) ⇒ ok · 6 lines
+
+## assistant
+
+→ bash(B=/var/tmp/souji-r18w2-ProbeListPhaseSwap; for l in tip-M5 tip-M6 base-M5 base-M6; do echo "### $l rc=$(cat $B/out/$l/r…) ⇒ ok · 31 lines
+
+## assistant
+
+M6 confirmed the key defect: tip emits `repo-timeout 5s <b>` with **no row for b**, while base silently drops b. Now extracting process-group evidence from the timelines and checking the fixture's coverage.
+→ bash(B=/var/tmp/souji-r18w2-ProbeListPhaseSwap; for l in tip-M2 tip-M5 tip-M6 base-M5; do echo "########## $l"; awk -F'\t' '…) ⇒ ok · 65 lines
+
+## assistant
+
+The timeline confirms the mechanism. Extracting raw pgid/wchan lines and the baseline tmp-dir leak.
+→ bash(B=/var/tmp/souji-r18w2-ProbeListPhaseSwap; for spec in "tip-M2 4158377" "tip-M5 532208" "tip-M6 552164" "tip-M6 552170"…) ⇒ ok · 16 lines
+→ bash(B=/var/tmp/souji-r18w2-ProbeListPhaseSwap; for l in base-M2 base-M5 base-M6 tip-M2 tip-M6; do echo "### $l tmp dirs"; a…) ⇒ ok · 13 lines
+
+## assistant
+
+Timeline evidence is clean: tip gives each repo/guard worker its own pgid and the blocked `git` sits inside it (killed at ~5 s); baseline keeps one group and the blocked `git` lives 39 s until the outer kill. Now pinning exact line numbers and checking the fixture's coverage gap.
+→ bash(cd /var/tmp/souji-r18w2-ProbeListPhaseSwap/lane && grep -n "" tools/souji-census.sh | sed -n '1424,1442p;1682,1714p') ⇒ ok · 55 lines
+→ bash(B=/var/tmp/souji-r18w2-ProbeListPhaseSwap; echo "== stderr line counts"; for l in tip-M2 tip-M5 tip-M6 tip-M1; do print…) ⇒ ok · 46 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeListPhaseSwap/lane && grep -n "" tools/souji-census.sh | sed -n '1660,1690p'; echo "== bas…) ⇒ ok · 38 lines
+→ bash(B=/var/tmp/souji-r18w2-ProbeListPhaseSwap; sed -n '920,1000p' $B/lane/tests/fixtures/r18-census-bounded.py) ⇒ ok · 84 lines
+
+## assistant
+
+→ bash(B=/var/tmp/souji-r18w2-ProbeListPhaseSwap; echo "== /var/tmp census paths"; ls -lad /var/tmp/souji-census-now.* 2>/dev/…) ⇒ ok · 52 lines
+→ bash(B=/var/tmp/souji-r18w2-ProbeListPhaseSwap; echo "== tip W vs base W (worktree rows)"; grep -c . $B/out/tip-W/out.tsv $B…) ⇒ ok · 19 lines
+
+## assistant
+
+Completing the assignment's file list: adding the `objects/info/alternates` shape (both cross-phase and in-census-after-guard) to test whether the watchdog covers a mid-command stall.
+→ bash(B=/var/tmp/souji-r18w2-ProbeListPhaseSwap; python3 - <<'EOF' import re p='/var/tmp/souji-r18w2-ProbeListPhaseSwap/setup…) ⇒ ok · 4 lines
+
+## assistant
+
+→ bash(B=/var/tmp/souji-r18w2-ProbeListPhaseSwap; $B/driver.sh tip $B/lane M0 M7 M8 2>&1 | tail -8) ⇒ ok · 6 lines
+→ bash(B=/var/tmp/souji-r18w2-ProbeListPhaseSwap; sleep 2; $B/driver.sh base $B/lane-b M0 M7 M8 2>&1 | tail -8) ⇒ ok · 8 lines
+
+## assistant
+
+→ bash(B=/var/tmp/souji-r18w2-ProbeListPhaseSwap; for l in tip-M7 tip-M8 base-M7 base-M8; do echo "### $l rc=$(cat $B/out/$l/r…) ⇒ ok · 27 lines
+
+## assistant
+
+→ bash(B=/var/tmp/souji-r18w2-ProbeListPhaseSwap; for l in tip-M8 base-M8; do echo "## $l"; cut -f2,4,6 $B/state/$l/timeline.r…) ⇒ ok · 5 lines
+
+## assistant
+
+Evidence matrix is complete. Pinning exact line numbers for the report.
+→ bash(B=/var/tmp/souji-r18w2-ProbeListPhaseSwap; grep -n "^gitfile_admin\|^guard_git_pointer\|^guard_git_surface\|^guard_git_…) ⇒ ok · 17 lines
+→ bash(B=/var/tmp/souji-r18w2-ProbeListPhaseSwap; echo "== all run summaries"; printf '%-10s %-4s %-7s %-5s %-5s %-5s %s\n' la…) ⇒ ok · 25 lines
+
+## assistant
+
+All evidence is in hand. Writing the scoped report.
+→ bash(mkdir -p /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2 && ls -d /home/vgpnk/Projects/shokunin/sou…) ⇒ ok · 2 lines
+
+## assistant
+
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/ProbeListPhaseSwap.md) ⇒ ok · 1 line
+
+## assistant
+
+Verifying the citations I put in the report are exact.
+→ bash(B=/var/tmp/souji-r18w2-ProbeListPhaseSwap/lane/tools/souji-census.sh; for f in gitfile_admin guard_git_files guard_git_…) ⇒ ok · 35 lines
+
+## assistant
+
+→ bash(B=/var/tmp/souji-r18w2-ProbeListPhaseSwap/lane/tools/souji-census.sh; grep -n 'if \[ -L "\$g" \]\|if \[ -d "\$g" \]\|if…) ⇒ ok · 32 lines
+
+## assistant
+
+→ bash(B=/var/tmp/souji-r18w2-ProbeListPhaseSwap/lane/tools/souji-census.sh; grep -n '"\$reg"\|"\$alt"' $B | head -8; sed -n '…) ⇒ ok · 24 lines
+
+## assistant
+
+→ bash(R=/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/ProbeListPhaseSwap.md; python3 - <<'EOF' p='/home…) ⇒ error · 6 lines — Traceback (most recent call last):
+
+## assistant
+
+→ bash(R=/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/ProbeListPhaseSwap.md; grep -n "585\|589-640\|861…) ⇒ ok · 6 lines
+
+## assistant
+
+→ bash(python3 - <<'EOF' p='/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/ProbeListPhaseSwap.md' s=open(…) ⇒ ok · 8 lines
+
+## assistant
+
+→ bash(R=/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/ProbeListPhaseSwap.md; sed -n '38p' $R | fold -w …) ⇒ error · 5 lines — 7:rd-phase timeout: every other guarded read re-checks `-f` first (`commondir` `:1000`, `worktrees/*/gitdir` `:905`, `c…
+
+## assistant
+
+→ bash(R=/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/ProbeListPhaseSwap.md; python3 - <<'EOF' p='/home…) ⇒ ok · 6 lines
+
+## assistant
+
+→ bash(R=/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/ProbeListPhaseSwap.md; python3 - <<'EOF' p='/home…) ⇒ ok · 21 lines
+
+## assistant
+
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/ProbeListPhaseSwap.md) ⇒ ok · 62 lines
+
+## assistant
+
+Report reads correctly. Two small edits: grammar, and making explicit that F1's stall is bounded (reporting defect, not a hang).
+→ bash(R=/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/ProbeListPhaseSwap.md; python3 - <<'EOF' p='/home…) ⇒ ok · 5 lines
+
+## assistant
+
+→ bash(R=/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/ProbeListPhaseSwap.md; grep -o "contradict each o…) ⇒ ok · 7 lines
+
+## assistant
+
+Report written to `.ufo/waves/round-18/w2/ProbeListPhaseSwap.md` (absolute path, lane untouched otherwise).
+
+**Verdict on C1: PARTIAL — the census_one watchdog holds exactly; the row clause fails for the one FIFO-reachable list-phase guard timeout.**
+
+Evidence (tip `5efb519`, base `b576341`, `SOUJI_CENSUS_REPO_TIMEOUT=5`, `timeout -k 2 40`, synthetic `a,b,c` with `b` worktree/commondir layout, PATH `git` shim planting the FIFO after the guard):
+
+- **Holds (census_one):** `worktrees/*/gitdir` and `objects/info/alternates` FIFOs planted after all guards → tip: 7.83 s / 7.84 s / 7.95 s, exit 0, exact row `<repo>\t0\t0\t0\t0\t\terror`, exact one-line `repo-timeout 5s <repo>`, neighbours measured, blocked `git` inside the worker's own pgid and reaped, no survivors, no attributed tmp residue. Same shapes at base: **rc 124 at 40 s, zero rows, zero stderr**, single whole-run pgid, blocked `git` alive at `etimes=39`.
+- **Fails (list-phase guard, new shape M6):** linked-worktree `b`, `.git`→FIFO before its guard. `list_repos` classifies it `gitfile` and never adds it to `REPOS` (`:1425-1428`); `gitfile_admin`'s unconditional `read` (`:863`) blocks; watchdog bounds it at 7.5 s and prints `repo-timeout 5s <b>`, but the row is recorded only for `kind=repo` (`:1680`) — **no row for `b`**, exit 0. Base is silent (363 ms, `b` vanishes). Fixture B1–B8 has no gitfile/linked/pointer case.
+- **Fails (post-guard metadata):** `commondir`/`alternates` FIFO → `path-protected: git-metadata-nonregular`, **exit 2 with empty stdout** (both commits, pre-existing), contradicting the "others measured" promise; exit-code doc (`:165-169`) doesn't list guard refusals.
+- `.git` itself swapped to a FIFO is not type-checked by `guard_git_surface` (falls through `:950/:954/:985`) — bounded fast `error` row via Git's own refusal (773 ms / 360 ms).
+
+Smallest fix: drop the `kind = repo` filter at `:1680` and append the placeholder row for each timed-out preflight key not in `REPOS`; add a B9 fixture for the gitfile guard. No tool installs; both clones deleted.

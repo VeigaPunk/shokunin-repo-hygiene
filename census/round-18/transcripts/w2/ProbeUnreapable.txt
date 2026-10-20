@@ -1,0 +1,262 @@
+# SoujiR18.ProbeUnreapable (idle)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Attacks the `repo-timeout-unreaped` path. ALLOWED-EXEC: in your clone at 5efb519 only: try to make a repository's child survive SIGKILL or keep the group alive (a setsid'd grandchild from the shim holding the FIFO; a stopped process SIGSTOP'd by the shim; vfork patterns). Record what the census prints and whether residue remains; if D-state cannot be induced, say so.
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: operability
+
+Report: write your scoped findings to .ufo/waves/round-18/w2/ProbeUnreapable.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+I'll start by cloning the lane and reading the census tool to understand the timeout/reap mechanism.
+→ bash(git clone --quiet --no-local /home/vgpnk/Projects/shokunin/souji-shokunin /var/tmp/souji-r18w2-ProbeUnreapable/lane && …) ⇒ ok · 4 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 5efb519f00075d958c3d1109ef6fcb24c487eb87:tools/souji-census.sh…) ⇒ ok · 5 lines
+
+## assistant
+
+→ bash(grep -n -E 'repo-timeout|unreaped|setsid|killpg|SIGKILL|pgid|process group|wait |reap' /var/tmp/souji-r18w2-ProbeUnreap…) ⇒ ok · 37 lines
+→ bash(grep -n -E 'B[0-9]|unreap|setsid|SIGSTOP|vfork' /var/tmp/souji-r18w2-ProbeUnreapable/lane/tests/fixtures/r18-census-bou…) ⇒ ok · 41 lines
+
+## assistant
+
+→ bash(sed -n '1440,1730p' /var/tmp/souji-r18w2-ProbeUnreapable/lane/tools/souji-census.sh) ⇒ ok · 292 lines
+
+## assistant
+
+→ bash(grep -n -E '^list_repos|^census_one|run_repo_with_watchdog|prepare_census_tmp|^main|exit ' /var/tmp/souji-r18w2-ProbeUn…) ⇒ ok · 81 lines
+→ bash(sed -n '1,120p' /var/tmp/souji-r18w2-ProbeUnreapable/lane/tests/fixtures/r18-census-bounded.py) ⇒ ok · 123 lines
+→ bash(ls -l /dev/fuse 2>&1; command -v fusermount3 fusermount 2>&1; ls /usr/lib/modules/$(uname -r)/kernel/fs/fuse 2>&1 | hea…) ⇒ ok · 8 lines
+
+## assistant
+
+→ bash(sed -n '120,430p' /var/tmp/souji-r18w2-ProbeUnreapable/lane/tests/fixtures/r18-census-bounded.py) ⇒ ok · 312 lines
+
+## assistant
+
+→ bash(sed -n '430,820p' /var/tmp/souji-r18w2-ProbeUnreapable/lane/tests/fixtures/r18-census-bounded.py) ⇒ ok · 392 lines
+
+## assistant
+
+→ bash(command -v gcc cc sshfs bindfs fuse-overlayfs archivemount fuse-zip 2>&1; ls /usr/lib/libfuse3.so* /usr/lib/libfuse.so*…) ⇒ ok · 11 lines
+→ bash(sed -n '810,1100p' /var/tmp/souji-r18w2-ProbeUnreapable/lane/tests/fixtures/r18-census-bounded.py) ⇒ ok · 294 lines
+→ bash(sed -n '1386,1440p' /var/tmp/souji-r18w2-ProbeUnreapable/lane/tools/souji-census.sh) ⇒ ok · 58 lines
+→ bash(sed -n '2380,2560p' /var/tmp/souji-r18w2-ProbeUnreapable/lane/tools/souji-census.sh) ⇒ ok · 184 lines
+
+## assistant
+
+Now I'll build the probes. FUSE (gcc + libfuse3 present) gives a real shot at inducing D-state, which is the only way the `repo-timeout-unreaped` branch can trigger.
+→ write(/var/tmp/souji-r18w2-ProbeUnreapable/probe/fuseblock.c) ⇒ ok · 1 line
+→ write(/var/tmp/souji-r18w2-ProbeUnreapable/probe/vforkblock.c) ⇒ ok · 1 line
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeUnreapable/probe && gcc -O1 -Wall -o vforkblock vforkblock.c && gcc -O1 -Wall -D_FILE_OFFS…) ⇒ ok · 7 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeUnreapable/probe && cat > fuse_test.py <<'EOF' import os, signal, subprocess, sys, time fr…) ⇒ ok · 9 lines
+
+## assistant
+
+FUSE gives real D-state but SIGKILL **does** reap it here (killable wait). That's a key negative result. Now the main harness: setsid escapes, stopped children, vfork, and a zombie-in-group case that should reach the `repo-timeout-unreaped` branch.
+→ write(/var/tmp/souji-r18w2-ProbeUnreapable/probe/census_unreap_probe.py) ⇒ ok · 2 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeUnreapable/probe && timeout 180 python3 census_unreap_probe.py control setsid 2>&1 | tail …) ⇒ ok · 18 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeUnreapable/probe && python3 - <<'EOF' import re p = "census_unreap_probe.py" s = open(p).r…) ⇒ ok · 3 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeUnreapable/probe && rm -rf /var/tmp/souji-r18w2-ProbeUnreapable/work/case-control && timeo…) ⇒ ok · 25 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeUnreapable/probe && python3 - <<'EOF' p = "census_unreap_probe.py" s = open(p).read() s = …) ⇒ ok · 57 lines
+
+## assistant
+
+→ bash(cat /var/tmp/souji-r18w2-ProbeUnreapable/work/case-setsid/pids/* 2>&1; echo ---; ps -eo pid,ppid,pgid,sid,stat,comm,arg…) ⇒ error · 7 lines — 3049697
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeUnreapable/probe && python3 - <<'EOF' p = "census_unreap_probe.py" s = open(p).read() s = …) ⇒ ok · 9 lines
+
+## assistant
+
+→ bash(sed -n '300,385p' /var/tmp/souji-r18w2-ProbeUnreapable/probe/census_unreap_probe.py) ⇒ ok · 87 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeUnreapable/probe && timeout 400 python3 census_unreap_probe.py 2>&1 | grep -vE '^SHIMLOG' …) ⇒ ok · 163 lines
+
+## assistant
+
+The `repo-timeout-unreaped` branch reproduced (zombie case). But I spotted a bug in my own harness: the `triggered` marker file got parsed as a pid (pid 1) — must fix that immediately, then read all results.
+→ bash(cd /var/tmp/souji-r18w2-ProbeUnreapable/probe && python3 - <<'EOF' p = "census_unreap_probe.py" s = open(p).read() s = …) ⇒ ok · 12 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeUnreapable/work && python3 - <<'EOF' import json, glob for f in sorted(glob.glob("result-c…) ⇒ ok · 75 lines
+
+## assistant
+
+Two harness bugs to fix: `read()` on an `O_NONBLOCK` FIFO with no writer returns EOF instantly (so nothing was held), and I need mid-run state sampling to prove T/D/S states at the kill moment.
+→ bash(cd /var/tmp/souji-r18w2-ProbeUnreapable/probe && python3 - <<'EOF' p = "census_unreap_probe.py" s = open(p).read() # 1)…) ⇒ ok · 8 lines
+
+## assistant
+
+→ bash(ps -eo pid,ppid,pgid,sid,stat,comm,args | grep -F '/var/tmp/souji-r18w2-ProbeUnreapable/work/' | grep -v grep) ⇒ error · 3 lines — (no output)
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeUnreapable/probe && timeout 400 python3 census_unreap_probe.py > run2.log 2>&1; echo "exit…) ⇒ ok · 11 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeUnreapable/work && python3 - <<'EOF' import json, glob for f in sorted(glob.glob("result-c…) ⇒ ok · 91 lines
+
+## assistant
+
+Now I have the core results. One more escape shape is worth testing: a child that joins the census's *own* process group (polluting the caller's group) — same class, different destination.
+→ bash(cd /var/tmp/souji-r18w2-ProbeUnreapable/probe && python3 - <<'EOF' p = "census_unreap_probe.py" s = open(p).read() s = …) ⇒ ok · 48 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeUnreapable/work && python3 -c " import json d=json.load(open('result-case-pgroup.json')) p…) ⇒ ok · 9 lines
+
+## assistant
+
+→ bash(ps -eo pid,ppid,pgid,sid,stat,comm,args | grep -F 'vforkblock' | grep -v grep; echo "---"; ps -eo pid,ppid,pgid,sid,sta…) ⇒ error · 5 lines — 4160621 1497 4160621 4160621 Ss vforkblock /var/tmp/souji-r18w2-ProbeUnreapable/probe/vforkblock 3 escape
+
+## assistant
+
+Found it: the vfork-escaped child (pid 4160621, its own session, reparented to systemd) is still alive — live proof of residue a session-scoped check would miss. Killing it now (identity verified by cmdline).
+→ bash(cmd=$(tr '\0' ' ' < /proc/4160621/cmdline 2>/dev/null); echo "cmd=[$cmd]"; case "$cmd" in *souji-r18w2-ProbeUnreapable*…) ⇒ ok · 4 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeUnreapable/probe && python3 - <<'EOF' p = "census_unreap_probe.py" s = open(p).read() s = …) ⇒ ok · 12 lines
+→ bash(cd /var/tmp/souji-r18w2-ProbeUnreapable/lane && grep -n "def session_members\|session\"\] == session_id\|leaked_before_…) ⇒ ok · 19 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeUnreapable/work && python3 -c " import json d=json.load(open('result-case-pgroup.json')) p…) ⇒ ok · 9 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeUnreapable/lane && sed -n '150,170p' tools/souji-census.sh; echo "=== CLI ==="; sed -n '25…) ⇒ ok · 60 lines
+→ bash(ps -eo pid,ppid,pgid,sid,stat,comm,args | grep -F 'souji-r18w2-ProbeUnreapable' | grep -v grep; echo "ps_rc=$?"; ls /va…) ⇒ ok · 3 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeUnreapable/lane && grep -n -A14 '^validate_repo_timeout' tools/souji-census.sh; grep -n '^…) ⇒ ok · 41 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeUnreapable/lane && grep -n 'unreap' tools/souji-census.sh; echo "=== fixture unreap/setsid…) ⇒ ok · 5 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18) ⇒ ok · 37 lines
+
+## assistant
+
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/ProbeSetsidEscape.md) ⇒ ok · 158 lines
+
+## assistant
+
+Peer's setsid report covers the escape class well. My value-add is the *reap path itself* (never exercised before) plus the killability matrix. Let me capture exact row bytes and then write my report.
+→ bash(cd /var/tmp/souji-r18w2-ProbeUnreapable/work && python3 - <<'EOF' import json for label in ("case-control","case-setsid…) ⇒ ok · 19 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeUnreapable/lane && sed -n '1470,1500p;1520,1545p;1630,1672p' tools/souji-census.sh | cat -…) ⇒ ok · 94 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeUnreapable/lane && grep -n 'state_path/killed" \]\|kill -KILL -- "-\$worker"\|if \[ "\$dea…) ⇒ ok · 12 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeUnreapable/lane && sed -n '421,432p;570,576p;664,676p' tests/fixtures/r18-census-bounded.p…) ⇒ ok · 33 lines
+
+## assistant
+
+All evidence is in. Writing the report.
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/ProbeUnreapable.md) ⇒ ok · 1 line
+
+## assistant
+
+Let me verify two line citations I asserted and fix a typo before yielding.
+→ bash(cd /var/tmp/souji-r18w2-ProbeUnreapable/lane && grep -n 'def require_timeout_diag\|watchdog FIFO race exits 0\|watchdog…) ⇒ ok · 5 lines
+
+## assistant
+
+→ edit(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/ProbeUnreapable.md) ⇒ ok · 8 lines
+→ edit(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/ProbeUnreapable.md) ⇒ ok · 10 lines
+→ edit(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/ProbeUnreapable.md) ⇒ ok · 10 lines
+
+## assistant
+
+Two precision fixes: mark the unrun mutant inference, and correct which escapee the session scan saw.
+→ edit(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/ProbeUnreapable.md) ⇒ ok · 10 lines
+→ edit(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/ProbeUnreapable.md) ⇒ ok · 10 lines
+
+## assistant
+
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/ProbeUnreapable.md) ⇒ ok · 177 lines
+
+## assistant
+
+→ bash(cd /var/tmp/souji-r18w2-ProbeUnreapable/lane && grep -n 'REPO_UNREAPED=0' tools/souji-census.sh; echo ---; sed -n '1560…) ⇒ ok · 25 lines
+
+## assistant
+
+→ edit(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/ProbeUnreapable.md) ⇒ ok · 9 lines
+→ edit(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/ProbeUnreapable.md) ⇒ ok · 9 lines
+→ edit(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/ProbeUnreapable.md) ⇒ ok · 7 lines
+
+## assistant
+
+→ bash(ps -eo pid,ppid,pgid,sid,stat,comm,args | grep -F 'souji-r18w2-ProbeUnreapable' | grep -v grep; echo "procs_rc=$?"; mou…) ⇒ ok · 5 lines
+
+## assistant
+
+Done. Report at `/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w2/ProbeUnreapable.md` (13.1 KB); clone deleted, zero probe residue, no mounts.
+
+**Attacked:** C1's `repo-timeout-unreaped` clause (`tools/souji-census.sh:157-163`), at `5efb519` in a clone, with a `git`-shim hang on one repo's `status` call (`--repo-timeout 2`) and 100 ms `/proc` sampling.
+
+**Results (9 shapes):**
+- **Reached the alarm** only with a zombie parked inside the worker's group (parent left the group, stayed in the session, never `wait()`s): stderr carried `repo-timeout-unreaped …/b` **plus** `repo-timeout 2s …/b`, row `…/b\t0\t0\t0\t0\t\terror`, neighbours measured, rc 0, wall **11.02 s** vs 4.99 s normally (two 3 s probes, 1569-1576 then 1630-1638 after clears at 1617/1626). The clause holds literally.
+- **No test covers it:** `unreap` appears only at 163 and 1641; the r18 fixture and selftest have zero occurrences (and zero `setsid`), so the claimed 8/0 / 49→62 numbers cannot speak for it.
+- **SIGKILL survival:** `SIGSTOP`ped (`T`) and TERM-ignoring children are reaped; `vfork()` parent `D` (wchan `kernel_clone`) is reaped; a FUSE read `D` (wchan `folio_wait_bit_common`) is reaped within ~1.5 s. So D-state is inducible but **killable** here — no unprivileged uninterruptible wait exists; the alarm is zombie-only.
+- **Escapes are silent:** `setsid`, double-fork-`setsid`, `setpgid` into the census's own group (in real use the caller's), and `vfork`+`setsid` all left a live FIFO reader after exit with only `repo-timeout` and rc 0. The fixture's `session_members` scan (425-430/573-574/668-671) returned **0** for the session-escaping ones; one `vfork`+`setsid` child (pid 4160621) outlived both the census and my session-scoped cleanup and was found only by a `cmdline` scan.
+
+**Verdict:** partial — narrow clause holds; test coverage absent; escape class silent (agrees with `ProbeSetsidEscape`, adding the `pgroup` destination and `vfork` hybrid). Smallest fix: a `B9` zombie-case regression, scope the "survivor" and "three seconds" sentences, and contain per-repo runs in a PID namespace rather than sweeping groups.

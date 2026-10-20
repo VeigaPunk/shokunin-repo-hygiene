@@ -1,0 +1,121 @@
+# SoujiR18.RevengeDdb7347Pointers-5 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Reverse-engineer how census/round-17/gate-replays-ddb7347.json and census/round-17/jj-receipts-ddb7347.txt came to be cited but never committed: `git -C /home/vgpnk/Projects/shokunin/souji-shokunin log --all -S 'ddb7347.json' --oneline`, `-S 'jj-receipts-ddb7347'`, and the r17 wave reports that produced them (`.ufo/waves/round-17/w1/FixtureJjReceipts.md`, `RevReplayBinding.md` under /home/vgpnk/Projects/shokunin/souji-shokunin). What was renamed to what and at which commit? The answer tells the fix (re-point vs commit).
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: calibration
+
+Report: write your scoped findings to .ufo/waves/round-18/w1/RevengeDdb7347Pointers.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+→ read(skill://godspeed) ⇒ ok · 18 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin log --all -S 'ddb7347.json' --oneline --date-order) ⇒ ok · 16 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin log --all -S 'jj-receipts-ddb7347' --oneline --date-order) ⇒ ok · 15 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-17/w1/FixtureJjReceipts.md) ⇒ ok · 259 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-17/w1/RevReplayBinding.md) ⇒ error · 1 line — Path '/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-17/w1/RevReplayBinding.md' not found
+
+## assistant
+
+Skill read; axes named: **calibration** (primary — dangling pointers), plus **coverage** of provenance evidence for the fix decision. The `-S` sweeps show both strings moving through ~10 commits, with `b576341`, `9411e47`, `0e78075` touching only `ddb7347.json`, and `95519a7` being the r17 wave-reports landing. `RevReplayBinding.md` isn't in w1 — locating it, and mapping each commit's file-level changes.
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin log --all -S'ddb7347.json' --name-only --format='=== %h %ad %s' --d…) ⇒ ok · 82 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin log --all -S'jj-receipts-ddb7347' --name-only --format='=== %h %ad …) ⇒ ok · 52 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin ls-tree b5763415cc67ecff1e8fe56c58c39a6fb106d7a3 census/round-17/) ⇒ ok · 17 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin ls-tree 95519a7 census/round-17/) ⇒ ok · 16 lines
+→ glob(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-17/w2/*.md) ⇒ ok · 45 lines
+
+## assistant
+
+Committed evidence at `b576341` uses **`4f48343`** suffixes (`gate-replays-4f48343.json`, `jj-receipts-4f48343.txt`) — while authority files cite `ddb7347`. So the rename hypothesis firms up: rev-suffixed evidence got re-suffixed when the landed rev changed, but citations didn't. Now pinning the rename commit, what `ddb7347` was, and the exact citation lines.
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-17/w2/RevReplayBinding.md) ⇒ ok · 66 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/corpus/knowledge/jj-colocation-receipts.md:1-160) ⇒ ok · 154 lines
+→ grep(ddb7347 @ /home/vgpnk/Projects/shokunin/souji-shokunin/SKILL.md) ⇒ ok · 10 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin grep -n 'ddb7347' 95519a7 -- .ufo/waves/round-17/) ⇒ ok · 131 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin log --all --oneline --diff-filter=A -- census/round-17/) ⇒ ok · 14 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin rev-parse --verify -q 'ddb7347^{commit}' && git -C /home/vgpnk/Proj…) ⇒ ok · 9 lines
+
+## assistant
+
+The picture is nearly complete. `ddb7347` = r17 wave-1 landed rev (14:22), `4f48343` = r17 wave-2 landed rev (15:57). Wave-2 report `ScribeReportSections.md:8` proves the `*-ddb7347.*` evidence files were **untracked** at both ddb7347 and d7e648d, and the committed tree at `b576341` carries `*-4f48343.*` names instead. Now pinning the exact rename commit, the master lineage, and whether the committed `-4f48343` files are re-measurements or renamed stale outputs — that decides re-point vs commit.
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin log --oneline --first-parent -16 b5763415cc67ecff1e8fe56c58c39a6fb1…) ⇒ ok · 17 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin log --all --name-status --format='=== %h %ad %s' --date=format:'%H:…) ⇒ ok · 75 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin log --all --oneline -- 'census/round-17/gate-replays-ddb7347.json' …) ⇒ ok · 3 lines
+→ glob(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-17/*) ⇒ ok · 15 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-17/jj-receipts-4f48343.txt:1-40) ⇒ ok · 45 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-17/gate-replays-4f48343.json:1-30) ⇒ ok · 42 lines
+
+## assistant
+
+Root cause confirmed: the `*-ddb7347.*` evidence files were **never tracked in any commit** (log over those exact paths → empty) — they were L1's untracked wave-1 measurement outputs. At `95519a7` (15:57:26) the evidence was committed **re-suffixed `4f48343`**, and the content proves re-measurement, not rename (`jj-receipts-4f48343.txt` is the wave-2 35-case run with wave-2 tool sha256s; `gate-replays-4f48343.json` has `lane_head`/`gate_rev_arg` = 4f48343). The worktree no longer holds any `ddb7347`-named file. Remaining: post-`b576341` state (commits `0e78075`/`9411e47`/`67c0f4d` touch the citing files), ref topology, and the citation-site inventory for the fix list.
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin for-each-ref --format='%(refname:short) %(objectname:short) %(creat…) ⇒ ok · 43 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 0e78075 --format='COMMIT %h %s' --stat -- corpus/lessons/round…) ⇒ ok · 20 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 9411e47 --format='COMMIT %h %s' --stat -- corpus/lessons/round…) ⇒ ok · 20 lines
+→ grep(ddb7347 @ /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/lessons/round-17-verifier-spotcheck.md) ⇒ ok · 17 lines
+→ grep(4f48343 @ /home/vgpnk/Projects/shokunin/souji-shokunin/SKILL.md) ⇒ ok · 1 line
+→ grep(jj-receipts|ddb7347 @ /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/README.md) ⇒ ok · 5 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-17/jj-receipts-base5fa6017.txt:25-70) ⇒ ok · 28 lines
+
+## assistant
+
+Ref topology resolves the last ambiguity: `master`/`origin/master` = `b576341` only; `0e78075`/`9411e47`/`67c0f4d` are **jj keep-ref-held rewrites, not on master** (jj-side duplicates of the same landing — 0e78075/9411e47 both add the identical 157-line lesson). And the committed `jj-receipts-base5fa6017.txt` is the **wave-2 35-case base arm** (`total=33 failed=13 skipped=2`), proving both arms were re-measured at 4f48343. Final inventory: exact LOG.md and knowledge-entry citation lines, then the report.
+→ grep(ddb7347 @ /home/vgpnk/Projects/shokunin/souji-shokunin/LOG.md) ⇒ ok · 10 lines
+→ grep(jj-receipts-ddb7347 @ /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/knowledge/jj-colocation-receipts.md) ⇒ ok · 19 lines
+
+## assistant
+
+`LOG.md:916` and knowledge lines `:2/:44/:126` confirmed, plus a bonus stale number: knowledge `:3` still expects the wave-1 `SUMMARY total=20` shape. Verifying exact row line numbers in the committed records (so the re-point line-number claim is measured, not counted), then writing the report.
+→ grep(^(CASE (J1|J3|J9)|SUMMARY) @ /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-17/jj-receipts-4f48343.txt) ⇒ ok · 2 lines
+→ grep(^(CASE (J1|J3|J9|J6)|SUMMARY) @ /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-17/jj-receipts-base5fa6017.txt) ⇒ ok · 2 lines
+
+## assistant
+
+`SUMMARY` pinned: changed record `:54` (`total=35 failed=0`), base `:51` (`total=33 failed=13 skipped=2`). One precise tab-aware grep for the J1/J3/J9 row numbers in both records:
+→ grep(^CASE\t(J1|J1-vault|J3|J3-vault|J3-quarantine|J9-file|J9-worktree)\t @ /home/vgpnk/Projects/shokunin/souji-shokunin/cen…) ⇒ ok · 18 lines
+→ grep(^CASE\t(J1|J1-vault|J3|J3-vault|J3-quarantine|J9-file|J9-worktree|J6-verify)\t @ /home/vgpnk/Projects/shokunin/souji-sh…) ⇒ ok · 24 lines
+
+## assistant
+
+Both line-cite worries dissolve — measured: the knowledge entry's changed-arm cites (`:18-19, 22-24, 31-32`) and base cites (`:15-16, 19-21, 28-29`) land **exactly** on the corresponding rows of the committed `-4f48343`/`base5fa6017` records. The re-point is line-preserving. Writing the report.
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/RevengeDdb7347Pointers.md) ⇒ ok · 1 line
+
+## assistant
+
+STATUS: DONE — report at `.ufo/waves/round-18/w1/RevengeDdb7347Pointers.md` (9.6 KB). Answer to the question:
+
+**Nothing was renamed in git — the `ddb7347` files never existed in any commit.** `git log --all -- census/round-17/{gate-replays-ddb7347.json,jj-receipts-ddb7347.txt,seat-audit-r16-replay-ddb7347.json}` is empty across all refs. They were L1's **untracked measurement outputs at the wave-1 landed rev `ddb7347`** (12:42:34). After wave-2 landed as `4f48343`, L1 **re-measured both arms at `4f48343`** and committed fresh records under new names at **`95519a7`** (15:57:26, "landed-rev evidence (matrix, replays, jj fixture, live fleet)"):
+
+- `gate-replays-ddb7347.json` → `gate-replays-4f48343.json` (header pins `gate_rev_arg`/`lane_head` = 4f48343, gate sha `f619518a…`)
+- `jj-receipts-ddb7347.txt` → `jj-receipts-4f48343.txt` (wave-2 35-case run, `SUMMARY total=35 failed=0` at `:54`, wave-2 tool digests — not the wave-1 20-case run its name refers to)
+- base-arm records kept `base5fa6017` names (base rev never changed — hence only changed-arm citations dangle)
+
+The authority texts citing the old names were committed **later** at `d98065d` (16:12), drafted against the untracked wave-1 outputs with "(L1)" pending markers; w2 `ScribeReportSections.md:8,79` had measured all six artifacts ABSENT from the tree and flagged "commit them or cite as worktree-only" — the commit switched names without re-pointing citations.
+
+**Fix: re-point, not commit.** The old bytes exist nowhere (worktree glob: no `*ddb7347*` remains); the committed records already carry the evidential role, and — measured — **every line citation survives unchanged**: knowledge F-1's changed cites `:18-19, 22-24, 31-32` and base cites `:15-16, 19-21, 28-29` land exactly on J1/J3/J9 rows in the committed `jj-receipts-4f48343.txt`/`jj-receipts-base5fa6017.txt`. Re-point map: `SKILL.md:163,165` + `LOG.md:916` → `gate-replays-4f48343.json` (as closure R2 at `round-17-verifier-spotcheck.md:150` already prescribes); `corpus/knowledge/jj-colocation-receipts.md:2,:44,:126,:148` + `corpus/README.md:216` → `jj-receipts-4f48343.txt` with the "at ddb7347" label corrected to the rev actually recorded. Advisory residuals (same root cause): knowledge `:3` still expects the wave-1 `total=20` summary shape (now `total=35`); `gate-replays-expected.json` still pins the `5fa6017` gate sha so re-run records show `gate_sha256_match: false` (already in r17 lesson residuals). All work read-only; no installs; no `jj` execution; only the report written.

@@ -1,0 +1,79 @@
+# SoujiR18.SentinelProcCensus-5 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Security review of C3 souji-proc-census.sh (contract in # Goal and the ProcCensus item): /proc races (pid exits mid-read), other users' processes, reading argv of processes whose argv contains secrets (redaction set), symlink tricks in cwd names (newline/tab in paths breaking TSV), never reading environ, never signalling, output landing only on stdout. Give concrete guards and test inputs.
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: coverage
+
+Report: write your scoped findings to .ufo/waves/round-18/w1/SentinelProcCensus.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+→ read(skill://godspeed) ⇒ ok · 18 lines
+
+## assistant
+
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-proc-census.sh) ⇒ error · 1 line — Path '/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-proc-census.sh' not found
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/PROVINCE.md) ⇒ ok · 122 lines
+
+## assistant
+
+→ glob(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-proc-census.sh) ⇒ error · 1 line — Path not found: souji-shokunin/tools/souji-proc-census.sh
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin ls-tree -r --name-only b5763415cc67ecff1e8fe56c58c39a6fb106d7a3 -- …) ⇒ ok · 891 lines
+
+## assistant
+
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/) ⇒ ok · 127 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/) ⇒ ok · 9 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-18/) ⇒ ok · 2 lines
+
+## assistant
+
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/ScribeRowsProc.md) ⇒ ok · 80 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/ScribeProvinceProc.md) ⇒ ok · 144 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-proc-census.sh) ⇒ error · 1 line — Path '/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-proc-census.sh' not found
+
+## assistant
+
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin ls-tree -r --name-only b5763415cc67ecff1e8fe56c58c39a6fb106d7a3 -- …) ⇒ ok · 1 line
+→ bash(stat /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-proc-census.sh) ⇒ error · 6 lines — stat: cannot stat '/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-proc-census.sh': No such file or directory …
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/ScribeRowsProc.md:51-56) ⇒ ok · 17 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/ScribeProvinceProc.md:30-51) ⇒ ok · 33 lines
+
+## assistant
+
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/SentinelProcCensus.md) ⇒ ok · 2 lines
+
+## assistant
+
+STATUS: PARTIAL — the implementation is absent, so I could not verify its runtime guards.
+
+I wrote the scoped review to `/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/SentinelProcCensus.md`. It records the missing-source evidence, concrete risks and guards for PID races, UID checks, argv redaction, path/TSV handling, `/proc/environ`, signaling and output boundaries, plus specific fixture inputs. No implementation or fixture was run.

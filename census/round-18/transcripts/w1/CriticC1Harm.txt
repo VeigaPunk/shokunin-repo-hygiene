@@ -1,0 +1,109 @@
+# SoujiR18.CriticC1Harm-5 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Attack C1's no-harm: against the base census /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-census.sh@b5763415cc67ecff1e8fe56c58c39a6fb106d7a3, which repository classes could the watchdog newly turn into `error` or otherwise change (slow but finite repos near the bound, `set -m` side effects on other pipelines, SIGTERM reaching the parent, partial row files, stderr reordering that a fixture compares, CENSUS_TMP cleanup)? For each, the test that would expose it and whether the r17 suites (r17-hygiene 29, r15-config 20, r14 namespace 12, selftest 49) already cover it.
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: operability
+
+Report: write your scoped findings to .ufo/waves/round-18/w1/CriticC1Harm.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+→ bash(wc -l /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-census.sh && grep -n 'emit_census\|census_one\|CENSUS_TM…) ⇒ ok · 20 lines
+
+## assistant
+
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-census.sh:180-240) ⇒ ok · 70 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-census.sh:530-650) ⇒ ok · 128 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-census.sh:1261-1440) ⇒ ok · 187 lines
+
+## assistant
+
+Now let me look at the harness/fixture side and the emit path around line 1500-1620, plus find the suite definitions.
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-census.sh:1490-1625) ⇒ ok · 143 lines
+→ bash(grep -rn 'r17-hygiene\|r15-config\|souji-census' /home/vgpnk/Projects/shokunin/souji-shokunin/tests/ 2>/dev/null | head…) ⇒ ok · 43 lines
+
+## assistant
+
+→ bash(ls /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/ | head -40; echo ---; grep -n 'stderr\|exit\|assert\|ex…) ⇒ ok · 63 lines
+
+## assistant
+
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r17-census-hygiene.py:280-570) ⇒ ok · 306 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r15-census-config.py:60-100,220-260,380-460) ⇒ ok · 166 lines
+
+## assistant
+
+The oracles are clear. Now I need to check which repo-controlled files the **parent** opens during `list_repos` (the watchdog only covers `census_one`), plus how selftest invokes the census path.
+→ bash(grep -n 'guard_git_pointer\|resolve_guarded()\|resolve_guarded \|read -r\|< "\$\|cat \|mapfile\|readlink\|commondir' /h…) ⇒ ok · 51 lines
+
+## assistant
+
+Now checking `guard_git_pointer`/`guard_git_surface` open sites in the parent, and how selftest invokes the census.
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-census.sh:500-528,815-975) ⇒ ok · 192 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-census.sh:1690-1760,2050-2072) ⇒ ok · 96 lines
+
+## assistant
+
+I have the full picture now. Let me verify a few remaining details: the arg-parse region for the new flag's shape, and the suite counts/IDs.
+→ bash(grep -n 'EXPECTED_IDS\|usage\|R17HYG' /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r17-census-hygiene.py…) ⇒ ok · 39 lines
+→ bash(grep -n 'RLIMIT_AS\|timeout\|killpg\|start_new_session\|communicate' /home/vgpnk/Projects/shokunin/souji-shokunin/tests…) ⇒ ok · 192 lines
+
+## assistant
+
+Relevant peer findings already exist. Let me read the closest ones and the r17 case list.
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/ScoutSetM.md) ⇒ ok · 310 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/ScoutWorktreeFifo.md) ⇒ ok · 306 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r17-census-hygiene.py:73-120) ⇒ ok · 57 lines
+
+## assistant
+
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/ScoutSetM.md:301-375) ⇒ ok · 84 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/RevC1ExitSemantics.md:1-80) ⇒ ok · 90 lines
+
+## assistant
+
+I have complete evidence: the base source, all four suite oracles, and peer measurements (ScoutSetM, ScoutWorktreeFifo, RevC1ExitSemantics). Writing the scoped findings now.
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-18/w1/CriticC1Harm.md) ⇒ ok · 2 lines
+
+## assistant
+
+STATUS: DONE — report at `.ufo/waves/round-18/w1/CriticC1Harm.md` (13 classes checked, all four suite oracles consulted, no exec beyond read/grep probes, no installs).
+
+**Verdict: partial** — the pinned mechanism survives (peers measured the group-kill freeing `fifo_open`, and the sentinel-ordering fixes ambiguity), but C1's no-harm breaks in two contract-level places:
+
+- **GAP 1 (operability/coverage):** `list_repos` runs the *entire* opening guard surface in the unwatched parent — `gitfile_admin` `< "$file"` (:820), worktree-registration `gitdir` reads (:857), `commondir` reads (:880, :923, :965), alternates `:515`, and `guard_git_config`'s `tr|cmp` + `git config --file` (:695, :701). Every site is a `[ -f ]`-then-`read` TOCTOU identical to the L1 mechanism — a swap between the test and the open hangs the **parent** with zero children. ScoutSetM's "list_repos runs no git / only stats" is wrong for these sites. Smallest fix: drop the parent guard pass (it duplicates `census_one`'s :1264 anyway); classify by stat only, let the watched child open.
+- **GAP 2 (calibration):** two unspecified precedences — (a) `wait` 137 is also an OOM-killed `git` (r15's own `RLIMIT_AS=1073741824` can produce it); timeout must key on the watchdog's sentinel, never the rc; (b) a child killed mid-`protected_fail` yields `path-protected:` on stderr **plus** an `error` row + exit 0 unless staged stderr is scanned for the finding before emitting the timeout verdict.
+- **Priced tradeoff:** slow-but-finite repos → `error` is inherent to any bound; must be documented in `usage()` (the comment block it prints), and "no repo can hang the census" only holds at the caller's horizon with `--repo-timeout` set.
+
+**Fixable harms** (each with exposing test): orphaned child holding caller pipes / external TERM now missing `set -m` workers; torn private row files; stderr tearing + ordering; `set -m` leak past the fork; fixture `killpg` blind spot for the new pgids; D-state unkillable children [INFERENCE]; env-validation-before-work; per-repo temp residue; `sanitize_field` on the stderr repo name.
+
+**Coverage:** r17-29 / r15-20 / r14-12 / selftest-49 cover **none** of the above — no timing dimension, no external-signal arm, no parent-side-open arm, no rc-137 disambiguation; the two new fixture arms needed (parent-side swap; rlimit-kill) are named in the report.
