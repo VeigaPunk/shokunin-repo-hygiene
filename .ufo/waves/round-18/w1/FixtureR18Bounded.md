@@ -1,4 +1,4 @@
-STATUS: DONE — Added the round-18 bounded-census falsifier and exercised all cases against the pinned base census.
+STATUS: DONE — Extended the bounded-census fixture through B12 against the refreshed 5efb519 snapshot; retained B1–B8.
 
 ## Axes
 
@@ -63,6 +63,102 @@ An initial full-suite attempt exposed a fixture wiring defect: B1–B3 had not i
 
 The pinned base fails B1–B4 and B8 by the outer 40-second timeout, as expected. B5 and B7 preserve their required behaviors, and B6 confirms cleanup after each tested case. The fixture checks the planned repaired contract: a timed-out repository emits its exact zero-valued `error` row, `repo-timeout 8s <repo>` diagnostic, and leaves neighbors equal to their no-shim control.
 
-Smallest integration requirement: the watchdog boundary must also cover the B8 list-phase config scan (and produce that repo's error row/diagnostic), not only work performed by `census_one`; B8 swaps config during `guard_git_config` before census row measurement begins. [INFERENCE] The repaired census behavior is not verified here because this seat ran only the pinned base revision; L1 should run this fixture against the integrated census after landing.
+For the initial b5763415 phase, the smallest integration requirement was to cover B8's list-phase config scan, not only `census_one`. [Historical] That positive behavior was not tested against the b5763415 revision; the refreshed 5efb519 results below now exercise the integrated snapshot.
 
 No tools were installed or updated.
+
+## Refreshed W2 coverage (5efb519)
+
+The updated clone is `/var/tmp/souji-r18-FixtureR18BoundedFix/lane` at `5efb519f00075d958c3d1109ef6fcb24c487eb87`. The extracted census SHA-256 is `7e6a92d415f8f256a4e46b0776add6e3645b687abd8be6e67aca520587120bcd`. The fixture now creates a unique private scratch root per invocation with `tempfile.mkdtemp(prefix="souji-r18-FixtureR18Bounded.", dir="/var/tmp")`; B6 runs a real census before residue assertions, including when selected alone.
+
+```text
+git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 5efb519f00075d958c3d1109ef6fcb24c487eb87:tools/souji-census.sh > /var/tmp/souji-r18-FixtureR18BoundedFix/census-5efb.sh && sha256sum /var/tmp/souji-r18-FixtureR18BoundedFix/census-5efb.sh
+7e6a92d415f8f256a4e46b0776add6e3645b687abd8be6e67aca520587120bcd  /var/tmp/souji-r18-FixtureR18BoundedFix/census-5efb.sh
+```
+
+Added:
+
+- B9: a Git shim blocks in `status` and handles SIGTERM without exiting. The 5efb519 census returned the exact `target` error row in 10.223s; the shim received SIGTERM and was killed 2.085s later. B6 passed.
+- B10: sends SIGTERM and SIGKILL to the census supervisor PID only while the Git shim is blocked. Python observed SIGTERM returncode `-15` (shell status 143); the supervisor exited but left the worker/watchdog session alive. The fixture detected the stalled Git PID, then reaped the session. The SIGKILL arm returned `-9` and had no session processes after the 8s bound plus 2.5s observation window. B10 correctly fails on 5efb519; B6 passed after cleanup.
+- B11: passes root and compare paths with a trailing newline whose newline-stripped prefixes are valid siblings. On 5efb519 the root arm returned 0 and measured the sibling; the compare arm returned 3 and emitted a diff instead of exit 2. B11 correctly fails.
+- B12: creates a registered linked-worktree `.git` gitfile at `b` (owner hidden from the top-level scan), then swaps it to a FIFO after `list_repos` classifies the candidate but before its guard. It checks the timeout diagnostic, required `b` error row, and measured `a`/`c` neighbors. The 5efb519 snapshot emitted the diagnostic and measured `a`/`c`, but omitted `b` because preflight timeout row mapping covered only kind `repo`. A second B12 arm checks that an included root already in REPOS gets exactly one error row; it passed on 5efb519. A plain-path candidate is included and must remain absent from census rows.
+
+Exact commands and observed results on the extracted 5efb519 census:
+
+```text
+python3 /var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py --census /var/tmp/souji-r18-FixtureR18BoundedFix/census-5efb.sh --case B1 --case B2 --case B3 --case B8 --case B6 --json
+CASE B1 PASS; CASE B2 PASS; CASE B3 PASS; CASE B8 PASS; CASE B6 PASS
+SUMMARY total=5 failed=0
+
+python3 /var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py --census /var/tmp/souji-r18-FixtureR18BoundedFix/census-5efb.sh --case B4 --case B6 --json
+CASE B4 PASS; CASE B6 PASS
+SUMMARY total=2 failed=0
+
+python3 /var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py --census /var/tmp/souji-r18-FixtureR18BoundedFix/census-5efb.sh --case B5 --case B6 --json
+CASE B5 PASS; CASE B6 PASS; 13 Git calls at 2s each; elapsed=26.474s (<30s)
+SUMMARY total=2 failed=0
+
+python3 /var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py --census /var/tmp/souji-r18-FixtureR18BoundedFix/census-5efb.sh --case B7 --case B6 --json
+CASE B7 PASS (exit 2, path-protected); CASE B6 PASS
+SUMMARY total=2 failed=0
+
+python3 /var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py --census /var/tmp/souji-r18-FixtureR18BoundedFix/census-5efb.sh --case B9 --case B6 --json
+CASE B9 PASS; CASE B6 PASS; elapsed=10.223s; SIGTERM-to-SIGKILL=2.085s
+SUMMARY total=2 failed=0
+
+python3 /var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py --census /var/tmp/souji-r18-FixtureR18BoundedFix/census-5efb.sh --case B10 --case B6 --json
+CASE B10 FAIL (TERM arm leaves worker/watchdog after parent exit; KILL arm clear after bound+2s); CASE B6 PASS
+SUMMARY total=2 failed=1
+
+python3 /var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py --census /var/tmp/souji-r18-FixtureR18BoundedFix/census-5efb.sh --case B11 --case B6 --json
+CASE B11 FAIL (root arm exit 0; compare arm exit 3, both expected 2); CASE B6 PASS
+SUMMARY total=2 failed=1
+
+python3 /var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py --census /var/tmp/souji-r18-FixtureR18BoundedFix/census-5efb.sh --case B12 --case B6 --json
+CASE B12 FAIL (gitfile preflight emitted rows a,c, omitted required b error row; included-root arm emitted exactly one error row); CASE B6 PASS
+SUMMARY total=2 failed=1
+
+python3 /var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py --census /var/tmp/souji-r18-FixtureR18BoundedFix/census-5efb.sh --case B6 --json
+CASE B6 PASS; one real clean census row; SUMMARY total=1 failed=0
+```
+
+Final fixture syntax check:
+
+```text
+PYTHONPYCACHEPREFIX=/var/tmp/souji-r18-FixtureR18BoundedFix/pycache python3 -m py_compile /var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py
+```
+
+Observed: exit 0, no output. `--list` returned B1–B12.
+The exact listing command was:
+
+```text
+python3 /var/tmp/souji-r18-FixtureR18BoundedFix/lane/tests/fixtures/r18-census-bounded.py --list
+B1
+B2
+B3
+B4
+B5
+B6
+B7
+B8
+B9
+B10
+B11
+B12
+```
+
+Delivered the updated patch at `.ufo/waves/round-18/w1/FixtureR18BoundedFix.patch` (SHA-256 `95ea0fad383eb2cbc83c4293dbb5d1ce593da953a44e2f009a4d338180eb11d5`, 26,260 bytes), diffed against 5efb519.
+
+The mounted tools expose no LSP interface, so no LSP lookup/refactor was available. No tools were installed.
+
+## W2 integration findings
+
+- B10: smallest fix is to make the SIGTERM parent path synchronously stop and reap the active worker and watchdog before the census parent exits. The TERM arm returned -15 but retained the worker session after the parent exited; the SIGKILL arm was clean by the repo bound plus two-second grace.
+- B11: reject the raw input string before line-based normalization for both `--root` and `--compare`; otherwise a trailing newline is stripped and selects the valid sibling.
+- B12: map a timed-out `gitfile` preflight candidate to its sanitized error row and timeout diagnostic, while avoiding duplicates for paths already in REPOS and keeping `path`/plain candidates diagnostic-only.
+
+Pinned-source anchors explain these findings: `tools/souji-census.sh:278-295` normalizes with a line-oriented `read`, while `:453-461` checks newline only after normalization; `:1425-1427` classifies `.git` file candidates as `gitfile`; `:1677-1680` records a preflight error row only for `kind=repo`; `:1691-1695` emits rows from REPOS. The included-root no-duplicate control covers `:1397-1404`. For B10, `:1477-1503` starts worker/watchdog groups and `:1495-1498` sends TERM then KILL after two seconds; the observed parent-TERM leak is consistent with parent EXIT cleanup at `:232-242` only removing the temporary directory. [INFERENCE] Adding explicit parent-signal lifecycle cleanup is the narrowest repair consistent with the captured B10 behavior.
+
+Fixture source anchors: B1–B12 are pinned at `tests/fixtures/r18-census-bounded.py:32`; unique per-invocation scratch roots are created at `:114-118`; every census Popen starts a session at `:572-574`; the external-signal runner is at `:663-815`; B6 executes a census at `:1256-1268`; B9–B12 are at `:1319-1564`; and raw duplicate-row checks use `raw_repo_names` at `:1675-1684`.
+
+All four new cases are retained as measured falsifiers on 5efb519; this seat changed only the fixture file.

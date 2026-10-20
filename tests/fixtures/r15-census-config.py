@@ -273,7 +273,7 @@ def kill_session(session_id: int) -> None:
             if not entry.name.isdecimal():
                 continue
             try:
-                stat = Path(entry.path, "stat").read_text(encoding="ascii")
+                stat = Path(entry.path, "stat").read_text(encoding="ascii", errors="replace")
             except OSError:
                 continue
             close = stat.rfind(")")

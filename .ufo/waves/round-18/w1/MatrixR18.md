@@ -55,3 +55,17 @@ No tools were installed. LSP was unavailable in the mounted tool inventory.
 ## Probe-rule violation disclosure
 
 A superseded first implementation selected cleanup targets by before/after PID difference plus an r14 argv-prefix match. This was a **probe-rule violation**: I sent SIGKILL to four processes I had not started: PIDs `842962`, `842978`, `842979`, and `842981`. PID `842976` matched but had already exited. I took no external remediation action. The final implementation never kills by argv prefix: it signals only same-uid processes whose `/proc/<pid>/stat` session field 6 equals the suite leader PID, then measures prefix matches as residue. The session-only cleanup exercise recorded the intended kill and zero residue.
+
+## W2 RerunBoundedArms fix (base `5efb519`)
+
+Delivered `.ufo/waves/round-18/w1/MatrixR18Fix.patch`, generated from the private clone at `5efb519`. The changed runner SHA-256 is `c9de240a4f5591e4e82c3feb5eff7f4407705973e6d68faa7b1444759b05fc35`.
+
+Changes in `census/round-18/run-matrix.py`: `suite` retains the complete `CASE` detail rather than truncating at 300 characters (`:229-234`); the changed revision is resolved once into `changed_rev`, placed into the changed arm, and reused directly for extraction (`:313-317`, `:351-361`); prefix observations now snapshot `(pid,start_time)` before each suite, record those preexisting matches separately, and count only identities absent from that snapshot after session cleanup (`:143-173`, `:212-255`, selftest `:392-412`). Session-field-6 cleanup remains unchanged and no prefix match is signaled.
+
+Validation:
+
+`PYTHONPYCACHEPREFIX=/var/tmp/souji-r18-MatrixR18Fix/pycache python3 -m py_compile /var/tmp/souji-r18-MatrixR18Fix/lane/census/round-18/run-matrix.py` — exit **0**, no output.
+
+`python3 /var/tmp/souji-r18-MatrixR18Fix/lane/census/round-18/run-matrix.py --changed 5efb519 --output /var/tmp/souji-r18-MatrixR18Fix/missing.json --fixture-dir /var/tmp/souji-r18-MatrixR18Fix/stubs-missing` — exited **2** as expected for the absent r18 stub; `invalid_suites` listed the four `:r18-bounded` arms. `changed_rev` and changed-arm `rev` both recorded the exact full hash `5efb519f00075d958c3d1109ef6fcb24c487eb87`.
+
+`python3 /var/tmp/souji-r18-MatrixR18Fix/lane/census/round-18/run-matrix.py --changed 5efb519 --output /var/tmp/souji-r18-MatrixR18Fix/present.json --fixture-dir /var/tmp/souji-r18-MatrixR18Fix/stubs-present` — exited **0**, all stub suites valid and `invalid_suites=[]`. The stub CASE detail JSON length was **435** characters. Its record separately reported preexisting r17/r15 matches `14`/`44` and newly appearing counts `0`/`0`, respectively. The four arm selftests reported `36/0`, `38/0`, `49/0`, `62/0`. No full fixture matrix was run; L1 owns that gate.

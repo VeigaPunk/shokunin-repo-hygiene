@@ -251,7 +251,7 @@ q_jj_colocated() { [ -d "$1/.jj" ] && [ -e "$1/.git" ]; }
 # default.
 q_jj_commit_recipe() { # $1 repo, $2 source rel, $3 qpath rel -> operator recipe
   local repo=$1 owner="" top="" owner_arg
-  owner=$(git -C "$repo" config --get lane.id 2>/dev/null) || owner=""
+  owner=$(git -C "$repo" config --local --get lane.id 2>/dev/null) || owner=""
   case $owner in
     ""|*[!a-z0-9-]*) owner="" ;;
   esac
@@ -1563,40 +1563,70 @@ run_selftest() {
   st_build_fixtures
   trap 'rm -rf -- "$ST_TMP"; rm -f -- "$ERRTMP"' EXIT
   local R=$ST_REPO
-  # R1 (r18): recipe owner = git config lane.id, else <id>-shokunin basename,
-  # else placeholder + note. `lane-x` carries lane.id kama under a foreign
-  # basename; kama-shokunin and souji-shokunin use the basename fallback.
+  # R1 (r18): recipe owner = local git config lane.id, else <id>-shokunin
+  # basename, else placeholder + note. Global lane.id must never bind a repo.
   local recipe_root="$ST_TMP/recipes"
+  local empty_global="$ST_TMP/empty-global-config"
+  local conflict_global="$ST_TMP/conflict-global-config"
   local recipe_name recipe_repo recipe note note_file
+  : > "$empty_global"
+  : > "$conflict_global"
+  git config --file "$conflict_global" lane.id foreign-lane
   mkdir -p "$recipe_root"
   for recipe_name in lane-x kama-shokunin unknown-lane souji-shokunin; do
     recipe_repo="$recipe_root/$recipe_name"
     git init -q --initial-branch=master "$recipe_repo"
     mkdir -p "$recipe_repo/.jj"
   done
-  git -C "$recipe_root/lane-x" config lane.id kama
+  git -C "$recipe_root/lane-x" config --local lane.id kama
   note_file="$ST_TMP/recipe-note"
   recipe_repo="$recipe_root/lane-x"
-  recipe=$(q_jj_commit_recipe "$recipe_repo" source.txt quarantine/source.txt 2>"$note_file")
+  recipe=$(GIT_CONFIG_GLOBAL="$empty_global" GIT_CONFIG_NOSYSTEM=1 \
+    q_jj_commit_recipe "$recipe_repo" source.txt quarantine/source.txt 2>"$note_file")
   st_check "R1 lane.id recipe owner" \
     "$([[ "$recipe" == *"--as kama -m "* && ! -s "$note_file" ]] && echo 1 || echo 0)" \
-    "lane.id kama -> --as kama"
+    "local lane.id kama -> --as kama"
   recipe_repo="$recipe_root/kama-shokunin"
-  recipe=$(q_jj_commit_recipe "$recipe_repo" source.txt quarantine/source.txt 2>"$note_file")
+  recipe=$(GIT_CONFIG_GLOBAL="$empty_global" GIT_CONFIG_NOSYSTEM=1 \
+    q_jj_commit_recipe "$recipe_repo" source.txt quarantine/source.txt 2>"$note_file")
   st_check "R1 kama recipe owner" \
     "$([[ "$recipe" == *"--as kama -m "* && ! -s "$note_file" ]] && echo 1 || echo 0)" \
     "contains --as kama"
   recipe_repo="$recipe_root/unknown-lane"
-  recipe=$(q_jj_commit_recipe "$recipe_repo" source.txt quarantine/source.txt 2>"$note_file")
+  recipe=$(GIT_CONFIG_GLOBAL="$empty_global" GIT_CONFIG_NOSYSTEM=1 \
+    q_jj_commit_recipe "$recipe_repo" source.txt quarantine/source.txt 2>"$note_file")
   note=$(<"$note_file")
   st_check "R1 unknown recipe owner" \
     "$([[ "$recipe" == *"--as <owning-lane-id> -m "* && "$note" == *"owner unknown"* ]] && echo 1 || echo 0)" \
     "placeholder plus owner-unknown note"
   recipe_repo="$recipe_root/souji-shokunin"
-  recipe=$(q_jj_commit_recipe "$recipe_repo" source.txt quarantine/source.txt 2>"$note_file")
+  recipe=$(GIT_CONFIG_GLOBAL="$empty_global" GIT_CONFIG_NOSYSTEM=1 \
+    q_jj_commit_recipe "$recipe_repo" source.txt quarantine/source.txt 2>"$note_file")
   st_check "R1 souji recipe owner" \
     "$([[ "$recipe" == *"--as souji -m "* && ! -s "$note_file" ]] && echo 1 || echo 0)" \
     "contains --as souji"
+
+  recipe=$(GIT_CONFIG_GLOBAL="$conflict_global" GIT_CONFIG_NOSYSTEM=1 \
+    q_jj_commit_recipe "$recipe_root/kama-shokunin" source.txt quarantine/source.txt 2>"$note_file")
+  st_check "R1 ignores global lane.id" \
+    "$([[ "$recipe" == *"--as kama -m "* && ! -s "$note_file" ]] && echo 1 || echo 0)" \
+    "no local lane.id -> basename, not foreign global"
+
+  git -C "$recipe_root/kama-shokunin" config --local lane.id 'invalid/id'
+  recipe=$(GIT_CONFIG_GLOBAL="$conflict_global" GIT_CONFIG_NOSYSTEM=1 \
+    q_jj_commit_recipe "$recipe_root/kama-shokunin" source.txt quarantine/source.txt 2>"$note_file")
+  st_check "R1 invalid local id falls back to basename" \
+    "$([[ "$recipe" == *"--as kama -m "* && ! -s "$note_file" ]] && echo 1 || echo 0)" \
+    "invalid local lane.id -> kama, not foreign global"
+
+  git -C "$recipe_root/unknown-lane" config --local lane.id 'invalid/id'
+  recipe=$(GIT_CONFIG_GLOBAL="$conflict_global" GIT_CONFIG_NOSYSTEM=1 \
+    q_jj_commit_recipe "$recipe_root/unknown-lane" source.txt quarantine/source.txt 2>"$note_file")
+  note=$(<"$note_file")
+  st_check "R1 invalid local id remains unknown" \
+    "$([[ "$recipe" == *"--as <owning-lane-id> -m "* && "$note" == *"owner unknown"* ]] && echo 1 || echo 0)" \
+    "invalid local lane.id -> placeholder, not foreign global"
+
 
   # live-lane sentinels: untouched before/after (H3)
   local live_porcelain_before live_log_sha_before live_q_before

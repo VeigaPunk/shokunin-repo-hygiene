@@ -1,0 +1,923 @@
+diff --git c/tools/souji-census.sh w/tools/souji-census.sh
+index 03b7635..5aa8101 100755
+--- c/tools/souji-census.sh
++++ w/tools/souji-census.sh
+@@ -6,8 +6,8 @@
+ # --untracked-files=normal on the dirty count and degrades a hardlinked or
+ # non-regular info/attributes to a per-repo error row.
+ #
+-# One bash tool; Bash, coreutils, git, util-linux `setsid`, and Linux /proc.
+-# Never fetches; writes only temporary census output under /var/tmp.
++# One bash tool; Bash, coreutils, git, util-linux `setsid`, Python 3 (--selftest),
++# and Linux /proc. Never fetches; writes only temporary census output under /var/tmp.
+ # The mtime walk never opens file contents, but `git status` may read or hash
+ # tracked content (this is not a data-loss-prevention classifier), and
+ # .ufo/state or .ufo/watchdog.log are never traversed by the mtime walk.
+@@ -21,6 +21,9 @@
+ # gitfile). Linked work trees are counted on their owner via `worktree list`,
+ # not emitted as their own row. --include-root also emits a row for the root
+ # itself when it is a main repo.
++
++#   Immediate child basenames containing TAB, LF or CR are skipped with
++#   stderr `souji-census: skipped-ambiguous-name <sanitized-path>`.
+ #
+ # Census TSV (header + one row per repo, LC_ALL=C path sort):
+ #   repo  worktrees  unpushed  dirty  scratch_bytes  mtime_iso  verdict_flags
+@@ -146,14 +149,14 @@
+ #   `rev-list --alternate-refs`, none of which the census runs), unbound
+ #   filter drivers, missing include targets. A refused path that is itself
+ #   inside a protected root is printed as `<protected>`.
+-#   Global/system git config and every inherited GIT_* variable are
+-#   cleared. Startup resolves each home's .omp parent (not the agent store)
+-#   to seed a relocated-store root; this is a stat/readlink of the store
+-#   parent, never store content. Residual: hardlinked aliases are refused
+-#   for --compare (nlink > 1) and fixed git metadata, but hardlinked object
+-#   files and arbitrary hardlinks into a store are not detectable without
+-#   stat'ing the store; the guard and the later access are not one atomic
+-#   operation.
++#   Global/system git config and every inherited GIT_* variable are cleared;
++#   GIT_ATTR_NOSYSTEM=1 disables the system attributes file. Startup resolves
++#   each home's .omp parent (not the agent store) for relocated-store safety.
++#   This is a stat/readlink of the store parent, never store content. Residual:
++#   hardlinked aliases are refused for --compare (nlink > 1) and fixed git
++#   metadata, but hardlinked object files and arbitrary hardlinks into a store
++#   are not detectable without stat'ing the store; the guard and access are
++#   not one atomic operation.
+ #   Candidate metadata guards and census runs each use a private process group.
+ #   If one exceeds the bound, its group receives TERM, then KILL two seconds
+ #   later; a timed-out repository gets the row
+@@ -161,6 +164,10 @@
+ #   `souji-census: repo-timeout <N>s <repo>`. Other repositories continue.
+ #   After KILL, reaping is bounded to three seconds; a survivor is reported
+ #   as `souji-census: repo-timeout-unreaped <repo>`.
++
++#   Parent HUP/TERM cleanup stops the active worker and watchdog before
++#   deleting temporary state. A parent SIGKILL cannot trap; the detached
++#   watchdog remains armed to reap the worker and then remove its temp tree.
+ #
+ # Exit codes
+ #   0 census emitted (rows may carry `error`/status-unverifiable for
+@@ -177,7 +184,7 @@ set -euo pipefail
+ 
+ # Imported BASH_FUNC_* definitions could shadow the externally-resolved
+ # commands this tool relies on. Remove functions for those names.
+-unset -f bash cat git kill find du stat awk grep sort head cut date readlink sleep mktemp setsid mkdir rm 2>/dev/null || true
++unset -f bash cat git kill find du stat awk grep sort head cut date readlink sleep mktemp setsid mkdir rm cmp tr python3 2>/dev/null || true
+ 
+ # Clear every inherited GIT_* variable. GIT_DIR/GIT_COMMON_DIR/
+ # GIT_OBJECT_DIRECTORY/GIT_ALTERNATE_OBJECT_DIRECTORIES and GIT_CONFIG_*
+@@ -188,7 +195,7 @@ while IFS= read -r _souji_gitvar; do unset "$_souji_gitvar"; done < <(compgen -v
+ unset _souji_gitvar
+ export GIT_OPTIONAL_LOCKS=0
+ export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null
+-export GIT_CONFIG_NOSYSTEM=1 GIT_TERMINAL_PROMPT=0
++export GIT_CONFIG_NOSYSTEM=1 GIT_TERMINAL_PROMPT=0 GIT_ATTR_NOSYSTEM=1
+ # Round 16: no census git call may lazily fetch a missing object
+ # (GIT_NO_LAZY_FETCH, git >= 2.45), so remote.*.promisor and
+ # extensions.partialClone markers stay inert. Every census git call (not
+@@ -221,6 +228,9 @@ REPO_TIMEOUT="${SOUJI_CENSUS_REPO_TIMEOUT-600}"
+ REPO_TIMED_OUT=0
+ REPO_UNREAPED=0
+ PROC_STATE=""
++CURRENT_WORKER_PGID=""
++CURRENT_WATCHDOG_PID=""
++CURRENT_REPO=""
+ 
+ usage() {
+   awk 'NR > 1 { if ($0 !~ /^#/) exit; sub(/^# ?/, ""); print }' "$SELF"
+@@ -229,12 +239,70 @@ usage() {
+ 
+ usage_err() { printf 'souji-census: %s\n' "$1" >&2; usage 2 >&2; }
+ 
++stop_active_census() {
++  local worker=${CURRENT_WORKER_PGID:-} watchdog=${CURRENT_WATCHDOG_PID:-}
++  local ticks=0 dead=0
++  if [ -n "$worker" ]; then
++    kill -TERM -- "-$worker" 2>/dev/null || true
++    sleep 0.1
++    kill -KILL -- "-$worker" 2>/dev/null || true
++  fi
++  if [ -n "$watchdog" ]; then
++    kill -KILL -- "-$watchdog" 2>/dev/null || true
++    wait "$watchdog" 2>/dev/null || true
++  fi
++  if [ -n "$worker" ]; then
++    while [ "$ticks" -lt 30 ]; do
++      if proc_state "$worker"; then
++        case "$PROC_STATE" in
++          Z|X)
++            wait "$worker" 2>/dev/null || true
++            dead=1
++            break
++            ;;
++        esac
++      else
++        wait "$worker" 2>/dev/null || true
++        dead=1
++        break
++      fi
++      sleep 0.1
++      ticks=$((ticks + 1))
++    done
++    if [ "$dead" = 0 ]; then
++      printf 'souji-census: repo-timeout-unreaped %s\n' \
++        "$(sanitize_field "${CURRENT_REPO:-}")" >&2
++    fi
++  fi
++  CURRENT_WORKER_PGID=""
++  CURRENT_WATCHDOG_PID=""
++  CURRENT_REPO=""
++}
++
+ cleanup_census_tmp() {
++  stop_active_census
+   if [ -n "${CENSUS_TMP:-}" ]; then
+     rm -rf -- "$CENSUS_TMP"
+   fi
+ }
+ 
++handle_census_signal() {
++  local signal=$1 status=128
++  case "$signal" in HUP) status=129 ;; INT) status=130 ;; TERM) status=143 ;; esac
++  trap - HUP INT TERM
++  stop_active_census
++  if [ -n "${CENSUS_TMP:-}" ]; then
++    rm -rf -- "$CENSUS_TMP"
++    CENSUS_TMP=""
++  fi
++  kill -s "$signal" "$BASHPID" 2>/dev/null || exit "$status"
++  exit "$status"
++}
++
++trap 'handle_census_signal HUP' HUP
++trap 'handle_census_signal INT' INT
++trap 'handle_census_signal TERM' TERM
++
+ prepare_census_tmp() {
+   if [ -z "${CENSUS_TMP:-}" ]; then
+     CENSUS_TMP=$(mktemp -d /var/tmp/souji-census-now.XXXXXX)
+@@ -446,6 +514,9 @@ protected_reason_input() { # $1 normalized absolute path
+ resolve_guarded() { # $1 raw, $2 allow-dotdot(0|1), $3 final-input-check(0|1)
+   local raw=$1 allow=${2:-0} final=${3:-1}
+   local lex rest comp candidate target reason hops=0 acc=""
++  case "$raw" in
++    *$'\n'*|*$'\t'*|*$'\r'*) protected_fail "ambiguous-path" input "$raw" ;;
++  esac
+   if [ "$allow" != 1 ]; then
+     case "/$raw/" in
+       *"/../"*) protected_fail "ambiguous-path" input "$raw" ;;
+@@ -1411,7 +1482,10 @@ list_repos() { # $1 resolved root; fills REPOS, basename-sorted
+       .*) continue ;;
+     esac
+     case "$base" in
+-      *$'\n'*|*$'\t'*|*$'\r'*) continue ;;
++      *$'\n'*|*$'\t'*|*$'\r'*)
++        printf 'souji-census: skipped-ambiguous-name %s\n' \
++          "$(sanitize_field "$d")" >&2
++        continue ;;
+     esac
+     GUARD_CANDIDATES+=("$d")
+     GUARD_KINDS+=(path)
+@@ -1468,21 +1542,24 @@ proc_state() { # $1 PID; sets PROC_STATE, returning 1 when absent
+ }
+ 
+ run_repo_with_watchdog() { # repo, stdout file, stderr file, command and arguments
+-  local repo=$1 row_file=$2 stderr_file=$3 worker watchdog rc state_path
+-  local dead=0 waited=0 ticks=0
++  local repo=$1 row_file=$2 stderr_file=$3 worker watchdog rc state_path parent_pid
++  local dead=0 waited=0 ticks=0 timeout_ticks=0 elapsed_ticks=0 poll_count=0
+   shift 3
+-  state_path=$(mktemp "$CENSUS_TMP/watchdog.XXXXXX")
+-  rm -f -- "$state_path"
++  if ! state_path=$(mktemp -d "$CENSUS_TMP/watchdog.XXXXXX"); then return 1; fi
+   REPO_TIMED_OUT=0
+   REPO_UNREAPED=0
++  CURRENT_REPO=$repo
+   set -m
+   "$@" > "$row_file" 2> "$stderr_file" &
+-  worker=$!
++  worker=$! CURRENT_WORKER_PGID=$!
+   set +m
++  parent_pid=$BASHPID
+   setsid bash -c '
+     pgid=$1
+     limit=$2
+     state_path=$3
++    parent_pid=$4
++    tmpdir=$5
+     elapsed=0
+     while [ "$elapsed" -lt "$limit" ]; do
+       kill -0 -- "-$pgid" 2>/dev/null || exit 0
+@@ -1490,16 +1567,22 @@ run_repo_with_watchdog() { # repo, stdout file, stderr file, command and argumen
+       elapsed=$((elapsed + 1))
+     done
+     kill -0 -- "-$pgid" 2>/dev/null || exit 0
+-    if mkdir -- "$state_path" 2>/dev/null; then
+-      : > "$state_path/timed_out"
+-      kill -TERM -- "-$pgid" 2>/dev/null || true
+-      sleep 2
+-      kill -KILL -- "-$pgid" 2>/dev/null || true
+-      : > "$state_path/killed"
++    : > "$state_path/timed_out" 2>/dev/null || true
++    kill -TERM -- "-$pgid" 2>/dev/null || true
++    sleep 2
++    kill -KILL -- "-$pgid" 2>/dev/null || true
++    : > "$state_path/killed" 2>/dev/null || true
++    parent_state=""
++    if IFS= read -r parent_stat 2>/dev/null < "/proc/$parent_pid/stat"; then
++      parent_stat=${parent_stat##*) }
++      parent_state=${parent_stat%% *}
+     fi
++    case "$parent_state" in
++      ""|Z|X) rm -rf -- "$tmpdir" ;;
++    esac
+   ' souji-census-watchdog "$worker" "$REPO_TIMEOUT" "$state_path" \
+-    >/dev/null 2>&1 &
+-  watchdog=$!
++    "$parent_pid" "$CENSUS_TMP" >/dev/null 2>&1 &
++  watchdog=$! CURRENT_WATCHDOG_PID=$!
+ 
+   while [ "$dead" = 0 ]; do
+     if proc_state "$worker"; then
+@@ -1507,128 +1590,98 @@ run_repo_with_watchdog() { # repo, stdout file, stderr file, command and argumen
+     else
+       dead=1
+     fi
+-    if [ "$dead" = 0 ] && [ -f "$state_path/killed" ]; then
+-      ticks=$((ticks + 1))
+-      if [ "$ticks" -ge 30 ]; then
+-        REPO_UNREAPED=1
+-        break
++    elapsed_ticks=$((elapsed_ticks + 1))
++    if [ -f "$state_path/timed_out" ]; then
++      REPO_TIMED_OUT=1
++      if [ -f "$state_path/killed" ]; then
++        ticks=$((ticks + 1))
++        if [ "$ticks" -ge 30 ]; then REPO_UNREAPED=1; break; fi
++      else
++        timeout_ticks=$((timeout_ticks + 1))
++        if [ "$timeout_ticks" -ge 50 ]; then REPO_UNREAPED=1; break; fi
+       fi
++    elif [ "$elapsed_ticks" -ge $((REPO_TIMEOUT * 10 + 50)) ]; then
++      REPO_UNREAPED=1
++      break
++    fi
++    if [ "$dead" = 0 ] && [ "$REPO_UNREAPED" = 0 ]; then
++      poll_count=$((poll_count + 1))
++      if [ "$poll_count" -le 20 ]; then sleep 0.01; else sleep 0.1; fi
+     fi
+-    [ "$dead" = 1 ] || [ "$REPO_UNREAPED" = 1 ] || sleep 0.1
+   done
+   if [ "$dead" = 1 ]; then
+     if wait "$worker"; then rc=0; else rc=$?; fi
+     waited=1
++    CURRENT_WORKER_PGID=""
+   else
+     rc=124
+   fi
+ 
+-  if mkdir -- "$state_path" 2>/dev/null; then
+-    kill -TERM -- "-$watchdog" 2>/dev/null || true
++  if [ "$REPO_TIMED_OUT" = 0 ]; then
++    if [ "$REPO_UNREAPED" = 1 ]; then
++      kill -TERM -- "-$worker" 2>/dev/null || true
++      sleep 0.1
++      kill -KILL -- "-$worker" 2>/dev/null || true
++      ticks=0
++      while [ "$dead" = 0 ] && [ "$ticks" -lt 30 ]; do
++        if proc_state "$worker"; then
++          case "$PROC_STATE" in Z|X) dead=1 ;; esac
++        else
++          dead=1
++        fi
++        [ "$dead" = 1 ] || sleep 0.1
++        ticks=$((ticks + 1))
++      done
++      if [ "$dead" = 1 ] && [ "$waited" = 0 ]; then
++        if wait "$worker"; then rc=0; else rc=$?; fi
++        waited=1
++        CURRENT_WORKER_PGID=""
++      fi
++    fi
++    kill -KILL -- "-$watchdog" 2>/dev/null || true
+     wait "$watchdog" 2>/dev/null || true
++    CURRENT_WATCHDOG_PID=""
+     cat -- "$stderr_file" >&2
++    if [ "$REPO_UNREAPED" = 1 ]; then
++      printf 'souji-census: repo-timeout-unreaped %s\n' \
++        "$(sanitize_field "$repo")" >&2
++    fi
+     rm -rf -- "$state_path"
++    CURRENT_REPO=""
++    if [ "$REPO_UNREAPED" = 1 ] && [ "$rc" != 2 ]; then return 1; fi
+     return "$rc"
+   fi
+ 
+   ticks=0
+-  while [ ! -f "$state_path/timed_out" ] && [ "$ticks" -lt 30 ]; do
++  while [ ! -f "$state_path/killed" ] && [ "$ticks" -lt 30 ]; do
+     sleep 0.1
+     ticks=$((ticks + 1))
+   done
+-  if [ -f "$state_path/timed_out" ]; then
+-    REPO_TIMED_OUT=1
++  if [ ! -f "$state_path/killed" ]; then
++    kill -KILL -- "-$worker" 2>/dev/null || true
++    REPO_UNREAPED=1
++  fi
++  if [ "$dead" = 0 ] && [ "$REPO_UNREAPED" = 0 ]; then
+     ticks=0
+-    while [ ! -f "$state_path/killed" ] && [ "$ticks" -lt 30 ]; do
++    while [ "$ticks" -lt 30 ]; do
++      if proc_state "$worker"; then
++        case "$PROC_STATE" in Z|X) dead=1; break ;; esac
++      else
++        dead=1
++        break
++      fi
+       sleep 0.1
+       ticks=$((ticks + 1))
+     done
+-    if [ ! -f "$state_path/killed" ]; then
+-      kill -KILL -- "-$worker" 2>/dev/null || true
+-      REPO_UNREAPED=1
+-    fi
+-    if [ "$dead" = 0 ] && [ "$REPO_UNREAPED" = 0 ]; then
+-      ticks=0
+-      while [ "$ticks" -lt 30 ]; do
+-        if proc_state "$worker"; then
+-          case "$PROC_STATE" in Z|X) dead=1; break ;; esac
+-        else
+-          dead=1
+-          break
+-        fi
+-        sleep 0.1
+-        ticks=$((ticks + 1))
+-      done
+-      if [ "$dead" = 1 ]; then
+-        if wait "$worker"; then rc=0; else rc=$?; fi
+-        waited=1
+-      else
+-        REPO_UNREAPED=1
+-      fi
+-    fi
+-    if [ "$dead" = 1 ] && [ "$REPO_UNREAPED" = 0 ]; then
+-      ticks=0
+-      while kill -0 -- "-$worker" 2>/dev/null && [ "$ticks" -lt 30 ]; do
+-        sleep 0.1
+-        ticks=$((ticks + 1))
+-      done
+-      if kill -0 -- "-$worker" 2>/dev/null; then REPO_UNREAPED=1; fi
+-    fi
+-  else
+-    kill -TERM -- "-$worker" 2>/dev/null || true
+-    sleep 2
+-    kill -KILL -- "-$worker" 2>/dev/null || true
+-    ticks=0
+-    while [ "$dead" = 0 ] && [ "$ticks" -lt 30 ]; do
+-      if proc_state "$worker"; then
+-        case "$PROC_STATE" in Z|X) dead=1 ;; esac
+-      else
+-        dead=1
+-      fi
+-      [ "$dead" = 1 ] || sleep 0.1
+-      ticks=$((ticks + 1))
+-    done
+-    if [ "$dead" = 1 ] && [ "$waited" = 0 ]; then
++    if [ "$dead" = 1 ]; then
+       if wait "$worker"; then rc=0; else rc=$?; fi
+       waited=1
+-    elif [ "$dead" = 0 ]; then
++      CURRENT_WORKER_PGID=""
++    else
+       REPO_UNREAPED=1
+     fi
+-    if [ "$dead" = 1 ]; then
+-      ticks=0
+-      while kill -0 -- "-$worker" 2>/dev/null && [ "$ticks" -lt 30 ]; do
+-        sleep 0.1
+-        ticks=$((ticks + 1))
+-      done
+-      if kill -0 -- "-$worker" 2>/dev/null; then REPO_UNREAPED=1; fi
+-    fi
+-    if [ "$rc" != 2 ]; then rc=1; fi
+   fi
+-
+-  wait "$watchdog" 2>/dev/null || true
+-  if [ "$REPO_UNREAPED" = 1 ]; then
+-    if proc_state "$worker"; then
+-      case "$PROC_STATE" in
+-        Z|X)
+-          if [ "$waited" = 0 ]; then
+-            if wait "$worker"; then rc=0; else rc=$?; fi
+-            waited=1
+-          fi
+-          REPO_UNREAPED=0
+-          dead=1
+-          ;;
+-      esac
+-    else
+-      if [ "$waited" = 0 ]; then
+-        if wait "$worker"; then rc=0; else rc=$?; fi
+-        waited=1
+-      fi
+-      REPO_UNREAPED=0
+-      dead=1
+-    fi
+-  fi
+-  if [ "$REPO_TIMED_OUT" = 1 ] && [ "$dead" = 1 ] &&
+-    [ "$REPO_UNREAPED" = 0 ]; then
++  if [ "$dead" = 1 ] && [ "$REPO_UNREAPED" = 0 ]; then
+     ticks=0
+     while kill -0 -- "-$worker" 2>/dev/null && [ "$ticks" -lt 30 ]; do
+       sleep 0.1
+@@ -1636,18 +1689,20 @@ run_repo_with_watchdog() { # repo, stdout file, stderr file, command and argumen
+     done
+     if kill -0 -- "-$worker" 2>/dev/null; then REPO_UNREAPED=1; fi
+   fi
++  wait "$watchdog" 2>/dev/null || true
++  CURRENT_WATCHDOG_PID=""
+   cat -- "$stderr_file" >&2
+   if [ "$REPO_UNREAPED" = 1 ]; then
+     printf 'souji-census: repo-timeout-unreaped %s\n' \
+       "$(sanitize_field "$repo")" >&2
+   fi
+   rm -rf -- "$state_path"
++  CURRENT_REPO=""
+   if [ "$rc" = 2 ]; then
+     REPO_TIMED_OUT=0
+     return 2
+   fi
+-  if [ "$REPO_TIMED_OUT" = 1 ]; then return 124; fi
+-  return "$rc"
++  return 124
+ }
+ 
+ emit_census() {
+@@ -1677,7 +1732,10 @@ emit_census() {
+       if [ "$REPO_TIMED_OUT" = 1 ]; then
+         printf 'souji-census: repo-timeout %ss %s\n' \
+           "$REPO_TIMEOUT" "$(sanitize_field "$repo")" >&2
+-        if [ "$kind" = repo ]; then preflight_timeout["$repo"]=1; fi
++        if [ "$kind" = repo ] || [ "$kind" = gitfile ]; then
++          preflight_timeout["$repo"]=1
++          if [ "$kind" = gitfile ]; then REPOS+=("$repo"); fi
++        fi
+       else
+         printf 'souji-census: census failed for %s (rc=%s)\n' "$repo" "$rc" >&2
+         exit 1
+@@ -1686,6 +1744,9 @@ emit_census() {
+     fi
+     rm -f -- "$row_file" "$stderr_file"
+   done
++  if [ "${#REPOS[@]}" -gt 0 ]; then
++    mapfile -t REPOS < <(printf '%s\n' "${REPOS[@]}" | LC_ALL=C sort -u)
++  fi
+ 
+   local -a rows=()
+   for repo in "${REPOS[@]+"${REPOS[@]}"}"; do
+@@ -1912,6 +1973,33 @@ st_row_field() { # $1 tsv $2 repo-basename $3 1-based column (1=repo)
+   done
+ }
+ 
++st_proc_pgid() { # $1 PID; prints its observed process-group id
++  local stat_line stat_tail pgid
++  IFS= read -r stat_line 2>/dev/null < "/proc/$1/stat" || return 1
++  stat_tail=${stat_line##*) }
++  read -r _ _ pgid _ <<< "$stat_tail"
++  printf '%s' "$pgid"
++}
++
++
++st_worker_tmpdir() { # worker PGID -> CENSUS_TMP via its private stdout file
++  local path
++  path=$(readlink -- "/proc/$1/fd/1" 2>/dev/null) || return 1
++  case "$path" in
++    /var/tmp/souji-census-now.*/*) printf '%s' "${path%/*}" ;;
++    *) return 1 ;;
++  esac
++}
++
++st_pid_gone() { # $1 PID, $2 tenths-of-a-second bound
++  local pid=$1 limit=$2 tick
++  for ((tick = 0; tick < limit; tick++)); do
++    [ ! -e "/proc/$pid" ] && return 0
++    sleep 0.1
++  done
++  [ ! -e "/proc/$pid" ]
++}
++
+ run_selftest() {
+   if [ "${SOUJI_CENSUS_SELFTEST_ACTIVE:-0}" = 1 ]; then
+     printf 'souji-census: refusing nested --selftest\n' >&2
+@@ -2330,6 +2418,9 @@ run_selftest() {
+   cat > "$shim_dir/git" <<'SHIM'
+ #!/usr/bin/env bash
+ real_git=${SOUJI_CENSUS_REAL_GIT:?}
++if [ -n "${SOUJI_CENSUS_GIT_ATTR_LOG:-}" ]; then
++  printf '%s\n' "${GIT_ATTR_NOSYSTEM-unset}" >> "$SOUJI_CENSUS_GIT_ATTR_LOG"
++fi
+ case "${SOUJI_CENSUS_GIT_MODE:-}" in
+   fifo)
+     if [ "${1:-}" = -C ] &&
+@@ -2356,6 +2447,18 @@ case "${SOUJI_CENSUS_GIT_MODE:-}" in
+       sleep 2
+     fi
+     ;;
++  killworker)
++    if [ "${1:-}" = -C ] &&
++      [ "${2:-}" = "${SOUJI_CENSUS_KILL_REPO:-}" ] &&
++      [ "${3:-}" = rev-parse ]; then
++      if IFS= read -r stat_line 2>/dev/null < "/proc/$$/stat"; then
++        stat_line=${stat_line##*) }
++        read -r _state _parent pgid _rest <<< "$stat_line"
++        printf '%s\n' "$$" > "$SOUJI_CENSUS_KILL_PID_FILE"
++        kill -KILL -- "-$pgid" 2>/dev/null || true
++      fi
++    fi
++    ;;
+   protected)
+     if [ "${1:-}" = -C ] &&
+       [ "${2:-}" = "${SOUJI_CENSUS_PROTECTED_REPO:-}" ] &&
+@@ -2396,7 +2499,8 @@ SHIM
+   err_t="$ST_TMP/watchdog-timeout.err"
+   timeout_start=$(date +%s%N)
+   if env -u GIT_DIR PATH="$shim_dir:$PATH" \
+-    SOUJI_CENSUS_REAL_GIT="$real_git" SOUJI_CENSUS_GIT_MODE=fifo \
++    SOUJI_CENSUS_REAL_GIT="$real_git" \
++    SOUJI_CENSUS_GIT_MODE=fifo \
+     SOUJI_CENSUS_STALL_REPO="$RT" SOUJI_CENSUS_SELFTEST_ACTIVE=1 \
+     SOUJI_CENSUS_STALL_PID_FILE="$ST_TMP/stalled-git.pid" \
+     "$SELF" --root "$fleet_timeout" --repo-timeout 1 >"$out_t" 2>"$err_t"; then
+@@ -2469,7 +2573,7 @@ sys.exit(2)' "$RT/.git/info/attributes"; then
+     st_bad "timed-out Git process remains (pid=$blocked_git_pid)"
+   fi
+   # A two-second-per-Git-call shim must complete normally under a 30s bound.
+-  local fleet_slow RS slow_sha slow_rc slow_start slow_end slow_ms slow_calls
++  local fleet_slow RS slow_sha slow_rc slow_start slow_end slow_ms slow_calls attr_logged attr_bad
+   fleet_slow="$ST_TMP/fleet-slow"
+   RS="$fleet_slow/slow-shokunin"
+   mkdir -p "$fleet_slow"
+@@ -2479,11 +2583,14 @@ sys.exit(2)' "$RT/.git/info/attributes"; then
+   git -C "$RS" update-ref refs/heads/master "$slow_sha"
+   git -C "$RS" update-ref refs/remotes/origin/master "$slow_sha"
+   : > "$ST_TMP/slow-git-calls"
++  : > "$ST_TMP/git-attr-nosystem.log"
+   slow_start=$(date +%s%N)
+   if env -u GIT_DIR PATH="$shim_dir:$PATH" \
+-    SOUJI_CENSUS_REAL_GIT="$real_git" SOUJI_CENSUS_GIT_MODE=slow \
++    SOUJI_CENSUS_REAL_GIT="$real_git" \
++    SOUJI_CENSUS_GIT_MODE=slow \
+     SOUJI_CENSUS_SLOW_REPO="$RS" \
+     SOUJI_CENSUS_GIT_CALLS="$ST_TMP/slow-git-calls" \
++    SOUJI_CENSUS_GIT_ATTR_LOG="$ST_TMP/git-attr-nosystem.log" \
+     SOUJI_CENSUS_SELFTEST_ACTIVE=1 \
+     "$SELF" --root "$fleet_slow" --repo-timeout 30 \
+     >"$ST_TMP/slow.tsv" 2>"$ST_TMP/slow.err"; then
+@@ -2507,6 +2614,45 @@ sys.exit(2)' "$RT/.git/info/attributes"; then
+   else
+     st_bad "slow-Git census timed out unexpectedly"
+   fi
++  attr_logged=$(grep -c '^1$' "$ST_TMP/git-attr-nosystem.log" || true)
++  attr_bad=$(grep -vc '^1$' "$ST_TMP/git-attr-nosystem.log" || true)
++  if [ "${attr_logged:-0}" -gt 0 ] && [ "${attr_bad:-0}" = 0 ]; then
++    st_ok "GIT_ATTR_NOSYSTEM=1 reaches every shimmed Git call"
++  else
++    st_bad "GIT_ATTR_NOSYSTEM calls=${attr_logged:-0}, unexpected=${attr_bad:-0}"
++  fi
++  # A worker group killed outside its watchdog must not be mislabelled timeout.
++  local killworker_rc killworker_pid
++  if env -u GIT_DIR PATH="$shim_dir:$PATH" \
++    SOUJI_CENSUS_REAL_GIT="$real_git" \
++    SOUJI_CENSUS_GIT_MODE=killworker SOUJI_CENSUS_KILL_REPO="$RS" \
++    SOUJI_CENSUS_KILL_PID_FILE="$ST_TMP/killed-worker.pid" \
++    SOUJI_CENSUS_SELFTEST_ACTIVE=1 \
++    "$SELF" --root "$fleet_slow" --repo-timeout 30 \
++    >"$ST_TMP/killed-worker.tsv" 2>"$ST_TMP/killed-worker.err"; then
++    killworker_rc=0
++  else
++    killworker_rc=$?
++  fi
++  if [ -r "$ST_TMP/killed-worker.pid" ]; then
++    killworker_pid=$(<"$ST_TMP/killed-worker.pid")
++  else
++    killworker_pid=""
++  fi
++  if [ -n "$killworker_pid" ]; then
++    for ((attempt = 0; attempt < 20; attempt++)); do
++      [ ! -e "/proc/$killworker_pid" ] && break
++      sleep 0.1
++    done
++  fi
++  if [ "$killworker_rc" = 1 ] && [ ! -s "$ST_TMP/killed-worker.tsv" ] &&
++    grep -q "census failed for $RS (rc=137)" "$ST_TMP/killed-worker.err" &&
++    ! grep -q 'repo-timeout' "$ST_TMP/killed-worker.err" &&
++    [ -n "$killworker_pid" ] && [ ! -e "/proc/$killworker_pid" ]; then
++    st_ok "unmarked worker SIGKILL remains census failure, not timeout"
++  else
++    st_bad "unmarked worker kill rc=$killworker_rc stderr=$(cat "$ST_TMP/killed-worker.err")"
++  fi
+ 
+   # A protected reach discovered within census_one still fails the full run.
+   local protected_fleet PR protected_sha protected_marker protected_rc
+@@ -2520,7 +2666,8 @@ sys.exit(2)' "$RT/.git/info/attributes"; then
+   git -C "$PR" update-ref refs/heads/master "$protected_sha"
+   git -C "$PR" update-ref refs/remotes/origin/master "$protected_sha"
+   if env -u GIT_DIR HOME="$ST_TMP/home" PATH="$shim_dir:$PATH" \
+-    SOUJI_CENSUS_REAL_GIT="$real_git" SOUJI_CENSUS_GIT_MODE=protected \
++    SOUJI_CENSUS_REAL_GIT="$real_git" \
++    SOUJI_CENSUS_GIT_MODE=protected \
+     SOUJI_CENSUS_PROTECTED_REPO="$PR" \
+     SOUJI_CENSUS_PROTECTED_FILE="$ST_TMP/home/.omp/agent/protected-excludes" \
+     SOUJI_CENSUS_PROTECTED_MARKER="$protected_marker" \
+@@ -2557,7 +2704,290 @@ sys.exit(2)' "$RT/.git/info/attributes"; then
+   else
+     st_bad "invalid timeout exits: CLI=$invalid_cli_rc env=$invalid_env_rc"
+   fi
++  local odd_fleet odd_tab odd_lf odd_cr odd_path odd_rc odd_rows odd_ok
++  local raw_prefix raw_root raw_root_rc raw_compare raw_compare_rc
++  local -a odd_repos=()
++  odd_fleet="$ST_TMP/fleet-odd-names"
++  odd_tab="$odd_fleet/odd"$'\t'"tab"
++  odd_lf="$odd_fleet/odd"$'\n'"line"
++  odd_cr="$odd_fleet/odd"$'\r'"cr"
++  mkdir -p "$odd_fleet"
++  for odd_path in "$odd_tab" "$odd_lf" "$odd_cr"; do
++    st_init "$odd_path" master
++    odd_repos+=("$odd_path")
++  done
++  if "$SELF" --root "$odd_fleet" >"$ST_TMP/odd-names.tsv" 2>"$ST_TMP/odd-names.err"; then
++    odd_rc=0
++  else
++    odd_rc=$?
++  fi
++  odd_ok=1
++  for odd_path in "${odd_repos[@]}"; do
++    v=$(sanitize_field "$odd_path")
++    if ! grep -Fqx -- "souji-census: skipped-ambiguous-name $v" "$ST_TMP/odd-names.err"; then
++      odd_ok=0
++    fi
++  done
++  odd_rows=$(grep -c $'\t' "$ST_TMP/odd-names.tsv" || true)
++  if [ "$odd_rc" = 0 ] && [ "$odd_ok" = 1 ] && [ "$odd_rows" = 1 ]; then
++    st_ok "TAB/LF/CR repo basenames are skipped with sanitized diagnostics"
++  else
++    st_bad "odd-name census rc=$odd_rc diagnostic-check=$odd_ok TSV-lines=$odd_rows"
++  fi
+ 
++  local raw_root_out="$ST_TMP/raw-root.tsv" raw_root_err="$ST_TMP/raw-root.err"
++  local raw_compare_out="$ST_TMP/raw-compare.tsv" raw_compare_err="$ST_TMP/raw-compare.err"
++  raw_prefix="$ST_TMP/raw-root-prefix"
++  mkdir -p "$raw_prefix"
++  raw_root="$raw_prefix"$'\n'"suffix"
++  if "$SELF" --root "$raw_root" >"$raw_root_out" 2>"$raw_root_err"; then
++    raw_root_rc=0
++  else
++    raw_root_rc=$?
++  fi
++  printf '%s\n' "$HEADER" > "$ST_TMP/raw-baseline.tsv"
++  raw_compare="$ST_TMP/raw-baseline.tsv"$'\n'"suffix"
++  if "$SELF" --root "$fleet_slow" --compare "$raw_compare" \
++    >"$raw_compare_out" 2>"$raw_compare_err"; then
++    raw_compare_rc=0
++  else
++    raw_compare_rc=$?
++  fi
++  if [ "$raw_root_rc" = 2 ] && [ "$raw_compare_rc" = 2 ] &&
++    grep -q 'ambiguous-path' "$raw_root_err" &&
++
++    grep -q 'ambiguous-path' "$raw_compare_err" &&
++    [ ! -s "$raw_root_out" ] && [ ! -s "$raw_compare_out" ]; then
++    st_ok "raw LF --root/--compare inputs are rejected before lexical_abs"
++  else
++    st_bad "raw LF path refusal exits: root=$raw_root_rc compare=$raw_compare_rc"
++  fi
++
++
++  # Python's Popen restores default signal dispositions and makes the census
++  # child a fresh session, matching an external supervisor.
++  local signal_launcher
++  signal_launcher="$ST_TMP/launch-census.py"
++  cat > "$signal_launcher" <<'LAUNCH_CENSUS'
++#!/usr/bin/env python3
++import os
++import subprocess
++import sys
++import time
++
++tool, root, timeout, stdout_path, stderr_path, git_pid_path, census_pid_path, watchdog_pid_path, rc_path = sys.argv[1:]
++
++def save(path, value):
++    with open(path, "w", encoding="ascii") as stream:
++        stream.write(f"{value}\n")
++
++with open(stdout_path, "wb") as stdout, open(stderr_path, "wb") as stderr:
++    child = subprocess.Popen(
++        ["bash", tool, "--root", root, "--repo-timeout", timeout],
++        stdout=stdout, stderr=stderr, start_new_session=True,
++    )
++    save(census_pid_path, child.pid)
++    deadline = time.monotonic() + 10
++    while time.monotonic() < deadline and child.poll() is None:
++        try:
++            with open(git_pid_path, encoding="ascii") as stream:
++                git_pid = int(stream.read().strip())
++            with open(f"/proc/{git_pid}/stat", encoding="ascii") as stream:
++                stat = stream.read()
++            worker_pgid = stat.rsplit(")", 1)[1].split()[2]
++            with open(f"/proc/{child.pid}/task/{child.pid}/children") as stream:
++                children = stream.read().split()
++        except (OSError, ValueError, IndexError):
++            time.sleep(0.02)
++            continue
++        for candidate in children:
++            try:
++                with open(f"/proc/{candidate}/cmdline", "rb") as stream:
++                    args = stream.read().split(b"\0")
++            except OSError:
++                continue
++            if any(
++                arg == b"souji-census-watchdog"
++                and index + 1 < len(args)
++                and args[index + 1].decode("ascii", "ignore") == worker_pgid
++                for index, arg in enumerate(args)
++            ):
++                save(watchdog_pid_path, candidate)
++                break
++        if os.path.exists(watchdog_pid_path):
++            break
++        time.sleep(0.02)
++    result = child.wait()
++save(rc_path, result)
++LAUNCH_CENSUS
++  chmod 700 "$signal_launcher"
++
++  local term_git_pidfile term_census_pidfile term_watchdog_pidfile
++  local term_rcfile term_launcher_pid term_census_pid term_git_pid
++  local term_worker_pgid term_watchdog_pid term_tmp_dir term_rc term_launcher_rc
++  local term_ticks kill_git_pidfile kill_census_pidfile kill_watchdog_pidfile
++  local kill_rcfile kill_launcher_pid kill_census_pid kill_git_pid
++  local kill_worker_pgid kill_watchdog_pid kill_tmp_dir kill_rc kill_launcher_rc
++  local kill_ticks
++  interrupt_fleet="$ST_TMP/fleet-interruption"
++  RI="$interrupt_fleet/interrupt-shokunin"
++  mkdir -p "$interrupt_fleet"
++  st_init "$RI" master
++  printf 'interrupt\n' > "$RI/tracked.txt"
++  interrupt_sha=$(st_commit "$RI" "" "interrupt target")
++  git -C "$RI" update-ref refs/heads/master "$interrupt_sha"
++  git -C "$RI" update-ref refs/remotes/origin/master "$interrupt_sha"
++  : > "$RI/.git/info/attributes"
++
++  # TERM to the census PID must clean the worker, watchdog and its private tmp.
++  term_git_pidfile="$ST_TMP/term-git.pid"
++  term_census_pidfile="$ST_TMP/term-census.pid"
++  term_watchdog_pidfile="$ST_TMP/term-watchdog.pid"
++  term_rcfile="$ST_TMP/term-parent.rc"
++  env -u GIT_DIR PATH="$shim_dir:$PATH" \
++    SOUJI_CENSUS_REAL_GIT="$real_git" \
++    SOUJI_CENSUS_GIT_MODE=fifo SOUJI_CENSUS_STALL_REPO="$RI" \
++    SOUJI_CENSUS_STALL_PID_FILE="$term_git_pidfile" \
++    SOUJI_CENSUS_SELFTEST_ACTIVE=1 \
++    python3 "$signal_launcher" "$SELF" "$interrupt_fleet" 30 \
++    "$ST_TMP/term-parent.tsv" "$ST_TMP/term-parent.err" \
++    "$term_git_pidfile" "$term_census_pidfile" "$term_watchdog_pidfile" \
++    "$term_rcfile" >/dev/null 2>&1 &
++  term_launcher_pid=$!
++  term_ticks=0
++  while { [ ! -s "$term_census_pidfile" ] || [ ! -s "$term_git_pidfile" ] ||
++    [ ! -s "$term_watchdog_pidfile" ]; } && [ "$term_ticks" -lt 60 ]; do
++    sleep 0.1
++    term_ticks=$((term_ticks + 1))
++  done
++  if [ -r "$term_census_pidfile" ]; then term_census_pid=$(<"$term_census_pidfile"); else term_census_pid=""; fi
++  if [ -r "$term_git_pidfile" ]; then term_git_pid=$(<"$term_git_pidfile"); else term_git_pid=""; fi
++  if [ -r "$term_watchdog_pidfile" ]; then term_watchdog_pid=$(<"$term_watchdog_pidfile"); else term_watchdog_pid=""; fi
++  if [ -n "$term_git_pid" ]; then
++    term_worker_pgid=$(st_proc_pgid "$term_git_pid" || true)
++    term_tmp_dir=$(st_worker_tmpdir "$term_worker_pgid" || true)
++  else
++    term_worker_pgid=""
++    term_tmp_dir=""
++  fi
++  if [ -n "$term_census_pid" ]; then
++    kill -TERM "$term_census_pid" 2>/dev/null || true
++  fi
++  if wait "$term_launcher_pid"; then term_launcher_rc=0; else term_launcher_rc=$?; fi
++  if [ -r "$term_rcfile" ]; then term_rc=$(<"$term_rcfile"); else term_rc=-1; fi
++  for ((term_ticks = 0; term_ticks < 40; term_ticks++)); do
++    if [ -n "$term_git_pid" ] && [ ! -e "/proc/$term_git_pid" ] &&
++      [ -n "$term_watchdog_pid" ] && [ ! -e "/proc/$term_watchdog_pid" ] &&
++      [ -n "$term_tmp_dir" ] && [ ! -e "$term_tmp_dir" ]; then
++      break
++    fi
++    sleep 0.1
++  done
++  if [ "$term_rc" = -15 ] && [ "$term_launcher_rc" = 0 ] &&
++    [ -n "$term_git_pid" ] && [ ! -e "/proc/$term_git_pid" ] &&
++    [ -n "$term_watchdog_pid" ] && [ ! -e "/proc/$term_watchdog_pid" ] &&
++    [ -n "$term_tmp_dir" ] && [ ! -e "$term_tmp_dir" ] &&
++    [ ! -s "$ST_TMP/term-parent.tsv" ]; then
++    st_ok "parent SIGTERM stops worker and timer before temp cleanup"
++  else
++    st_bad "parent SIGTERM cleanup rc=$term_rc launcher=$term_launcher_rc census=$term_census_pid git=$term_git_pid watchdog=$term_watchdog_pid tmp=$term_tmp_dir"
++  fi
++  if [ -n "$term_worker_pgid" ] && kill -0 -- "-$term_worker_pgid" 2>/dev/null; then
++    kill -KILL -- "-$term_worker_pgid" 2>/dev/null || true
++  fi
++  if [ -n "$term_watchdog_pid" ] && [ -e "/proc/$term_watchdog_pid" ]; then
++    kill -KILL -- "-$term_watchdog_pid" 2>/dev/null || true
++  fi
++  if [ -n "$term_census_pid" ] && [ -e "/proc/$term_census_pid" ]; then
++    kill -KILL "$term_census_pid" 2>/dev/null || true
++  fi
++  if [ -e "/proc/$term_launcher_pid" ]; then kill -KILL "$term_launcher_pid" 2>/dev/null || true; fi
++  case "$term_tmp_dir" in /var/tmp/souji-census-now.*) rm -rf -- "$term_tmp_dir" ;; esac
++
++  # SIGKILL cannot run a trap; the detached timer must still reap the group.
++  rm -f -- "$RI/.git/info/attributes" "$ST_TMP/kill-git.pid"
++  : > "$RI/.git/info/attributes"
++  kill_git_pidfile="$ST_TMP/kill-git.pid"
++  kill_census_pidfile="$ST_TMP/kill-census.pid"
++  kill_watchdog_pidfile="$ST_TMP/kill-watchdog.pid"
++  kill_rcfile="$ST_TMP/kill-parent.rc"
++  env -u GIT_DIR PATH="$shim_dir:$PATH" \
++    SOUJI_CENSUS_REAL_GIT="$real_git" \
++    SOUJI_CENSUS_GIT_MODE=fifo SOUJI_CENSUS_STALL_REPO="$RI" \
++    SOUJI_CENSUS_STALL_PID_FILE="$kill_git_pidfile" \
++    SOUJI_CENSUS_SELFTEST_ACTIVE=1 \
++    python3 "$signal_launcher" "$SELF" "$interrupt_fleet" 2 \
++    "$ST_TMP/kill-parent.tsv" "$ST_TMP/kill-parent.err" \
++    "$kill_git_pidfile" "$kill_census_pidfile" "$kill_watchdog_pidfile" \
++    "$kill_rcfile" >/dev/null 2>&1 &
++  kill_launcher_pid=$!
++  kill_ticks=0
++  while { [ ! -s "$kill_census_pidfile" ] || [ ! -s "$kill_git_pidfile" ] ||
++    [ ! -s "$kill_watchdog_pidfile" ]; } && [ "$kill_ticks" -lt 60 ]; do
++    sleep 0.1
++    kill_ticks=$((kill_ticks + 1))
++  done
++  if [ -r "$kill_census_pidfile" ]; then kill_census_pid=$(<"$kill_census_pidfile"); else kill_census_pid=""; fi
++  if [ -r "$kill_git_pidfile" ]; then kill_git_pid=$(<"$kill_git_pidfile"); else kill_git_pid=""; fi
++  if [ -r "$kill_watchdog_pidfile" ]; then kill_watchdog_pid=$(<"$kill_watchdog_pidfile"); else kill_watchdog_pid=""; fi
++  if [ -n "$kill_git_pid" ]; then
++    kill_worker_pgid=$(st_proc_pgid "$kill_git_pid" || true)
++    kill_tmp_dir=$(st_worker_tmpdir "$kill_worker_pgid" || true)
++  else
++    kill_worker_pgid=""
++    kill_tmp_dir=""
++  fi
++  if [ -n "$kill_census_pid" ]; then kill -KILL "$kill_census_pid" 2>/dev/null || true; fi
++  if wait "$kill_launcher_pid"; then kill_launcher_rc=0; else kill_launcher_rc=$?; fi
++  if [ -r "$kill_rcfile" ]; then kill_rc=$(<"$kill_rcfile"); else kill_rc=-1; fi
++  for ((kill_ticks = 0; kill_ticks < 100; kill_ticks++)); do
++    if [ -n "$kill_git_pid" ] && [ ! -e "/proc/$kill_git_pid" ] &&
++      [ -n "$kill_watchdog_pid" ] && [ ! -e "/proc/$kill_watchdog_pid" ] &&
++      [ -n "$kill_tmp_dir" ] && [ ! -e "$kill_tmp_dir" ]; then
++      break
++    fi
++    sleep 0.1
++  done
++  if [ "$kill_rc" = -9 ] && [ "$kill_launcher_rc" = 0 ] &&
++    [ -n "$kill_git_pid" ] && [ ! -e "/proc/$kill_git_pid" ] &&
++    [ -n "$kill_watchdog_pid" ] && [ ! -e "/proc/$kill_watchdog_pid" ] &&
++    [ -n "$kill_tmp_dir" ] && [ ! -e "$kill_tmp_dir" ]; then
++    st_ok "parent SIGKILL leaves timer to reap worker and temp state"
++  else
++    st_bad "parent SIGKILL cleanup rc=$kill_rc launcher=$kill_launcher_rc census=$kill_census_pid git=$kill_git_pid watchdog=$kill_watchdog_pid tmp=$kill_tmp_dir"
++  fi
++  if [ -n "$kill_worker_pgid" ] && kill -0 -- "-$kill_worker_pgid" 2>/dev/null; then
++    kill -KILL -- "-$kill_worker_pgid" 2>/dev/null || true
++  fi
++  if [ -n "$kill_watchdog_pid" ] && [ -e "/proc/$kill_watchdog_pid" ]; then
++    kill -KILL -- "-$kill_watchdog_pid" 2>/dev/null || true
++  fi
++  if [ -n "$kill_census_pid" ] && [ -e "/proc/$kill_census_pid" ]; then
++    kill -KILL "$kill_census_pid" 2>/dev/null || true
++  fi
++  if [ -e "/proc/$kill_launcher_pid" ]; then kill -KILL "$kill_launcher_pid" 2>/dev/null || true; fi
++  case "$kill_tmp_dir" in /var/tmp/souji-census-now.*) rm -rf -- "$kill_tmp_dir" ;; esac
++
++
++  # An inherited SIG_IGN TERM must not hold a normally-cancelled timer open.
++  local ignored_rc ignored_start ignored_end ignored_ms ignored_flags
++  ignored_start=$(date +%s%N)
++  if bash -c 'trap "" TERM; exec "$1" --root "$2" --repo-timeout 30' \
++    souji-census-selftest "$SELF" "$fleet_slow" \
++    >"$ST_TMP/ignored-term.tsv" 2>"$ST_TMP/ignored-term.err"; then
++    ignored_rc=0
++  else
++    ignored_rc=$?
++  fi
++  ignored_end=$(date +%s%N)
++  ignored_ms=$(((ignored_end - ignored_start) / 1000000))
++  ignored_flags=$(st_row_field "$ST_TMP/ignored-term.tsv" slow-shokunin 7)
++  if [ "$ignored_rc" = 0 ] && [ "$ignored_flags" = clean ] &&
++    [ "$ignored_ms" -lt 1500 ] && ! grep -q 'repo-timeout' "$ST_TMP/ignored-term.err"; then
++    st_ok "SIGTERM-ignored caller cancels watchdogs (${ignored_ms}ms)"
++  else
++    st_bad "SIGTERM-ignored run rc=$ignored_rc flags=$ignored_flags wall=${ignored_ms}ms"
++  fi
+ 
+   # source audit: no forbidden git porcelain in non-comment lines
+   local n

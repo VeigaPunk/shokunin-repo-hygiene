@@ -7,7 +7,6 @@ import argparse
 import datetime as dt
 import json
 import os
-import re
 import shutil
 import signal
 import subprocess
@@ -18,8 +17,7 @@ from collections import Counter
 from typing import Any
 
 SCRATCH_PREFIXES = ("/var/tmp", "/dev/shm", "/tmp")
-PATH_RE = re.compile(r"/(?:var/tmp|dev/shm|tmp)(?:/[^\s\"'`<>|;&]*)?")
-TRAILING_PATH_PUNCTUATION = ".,:;)]}"
+DELETED_SUFFIX = " (deleted)"
 KNOWN_FAMILIES = ("r15-census-config", "r17-census-hygiene")
 
 
@@ -36,32 +34,50 @@ def _uid_from_status(proc_path: str) -> int | None:
 
 def _family_for_scratch_path(path: str, *, require_missing: bool) -> str | None:
     for prefix in SCRATCH_PREFIXES:
-        # Require a component boundary: /tmp/ is in scope, /tmpfoo/ is not.
         if not path.startswith(prefix + "/"):
             continue
         relative = path[len(prefix) + 1 :]
         top_level = relative.split("/", 1)[0]
         if not top_level or top_level in (".", ".."):
             return None
-        if require_missing and os.path.lexists(os.path.join(prefix, top_level)):
+        if require_missing and os.path.exists(os.path.join(prefix, top_level)):
             return None
         family = top_level.split(".", 1)[0]
         return family if family in KNOWN_FAMILIES else "other"
     return None
 
 
+def _proc_link_is_deleted(proc_link: str, target: str) -> bool:
+    if not target.endswith(DELETED_SUFFIX):
+        return False
+    try:
+        link_stat = os.stat(proc_link)
+    except OSError:
+        return False
+    try:
+        target_stat = os.stat(target)
+    except FileNotFoundError:
+        return True
+    except OSError:
+        return False
+    return (link_stat.st_dev, link_stat.st_ino) != (target_stat.st_dev, target_stat.st_ino)
+
+
 def _argv_missing_scratch_family(argv: list[str]) -> str | None:
     for argument in argv:
-        for match in PATH_RE.finditer(argument):
-            start = match.start()
-            if start and argument[start - 1] == "/":
+        candidate: str | None = None
+        if os.path.isabs(argument):
+            candidate = argument
+        elif argument.startswith("--") and "=" in argument:
+            option, candidate = argument.split("=", 1)
+            if len(option) <= 2 or not os.path.isabs(candidate):
                 continue
-            candidate = match.group(0)
-            while candidate and candidate[-1] in TRAILING_PATH_PUNCTUATION:
-                candidate = candidate[:-1]
-            family = _family_for_scratch_path(candidate, require_missing=True)
-            if family is not None:
-                return family
+        if candidate is None:
+            continue
+        family = _family_for_scratch_path(candidate, require_missing=True)
+        if family is None or os.path.exists(candidate):
+            continue
+        return family
     return None
 
 
@@ -73,16 +89,16 @@ def _fd_missing_scratch_family(proc_path: str) -> str | None:
     except OSError:
         return None
 
-    deleted_suffix = " (deleted)"
     for fd_name in fd_names:
+        fd_link = os.path.join(fd_dir, fd_name)
         try:
-            target = os.readlink(os.path.join(fd_dir, fd_name))
+            target = os.readlink(fd_link)
         except OSError:
             continue
-        if not target.endswith(deleted_suffix):
+        if not _proc_link_is_deleted(fd_link, target):
             continue
         family = _family_for_scratch_path(
-            target[: -len(deleted_suffix)], require_missing=True
+            target[: -len(DELETED_SUFFIX)], require_missing=True
         )
         if family is not None:
             return family
@@ -99,14 +115,14 @@ def _argv_for_pid(proc_path: str) -> list[str]:
 
 
 def _primary_reason_and_family(proc_path: str, argv: list[str]) -> tuple[str, str] | None:
-    deleted_suffix = " (deleted)"
+    cwd_link = os.path.join(proc_path, "cwd")
     try:
-        cwd = os.readlink(os.path.join(proc_path, "cwd"))
+        cwd = os.readlink(cwd_link)
     except OSError:
         cwd = ""
-    if cwd.endswith(deleted_suffix):
+    if _proc_link_is_deleted(cwd_link, cwd):
         family = _family_for_scratch_path(
-            cwd[: -len(deleted_suffix)], require_missing=False
+            cwd[: -len(DELETED_SUFFIX)], require_missing=False
         )
         return "cwd-deleted", family or "other"
 
@@ -120,8 +136,25 @@ def _primary_reason_and_family(proc_path: str, argv: list[str]) -> tuple[str, st
     return None
 
 
+def _self_and_ancestor_pids() -> set[int]:
+    excluded: set[int] = set()
+    pid = os.getpid()
+    while pid > 0 and pid not in excluded:
+        excluded.add(pid)
+        try:
+            with open(f"/proc/{pid}/stat", "r", encoding="ascii", errors="replace") as stat_file:
+                stat_line = stat_file.read()
+            fields = stat_line.rsplit(")", 1)[1].split()
+            parent_pid = int(fields[1])
+        except (OSError, ValueError, IndexError):
+            break
+        pid = parent_pid
+    return excluded
+
+
 def count_processes() -> dict[str, Any]:
     uid = os.getuid()
+    excluded_pids = _self_and_ancestor_pids()
     pids: list[int] = []
     reason_counts: Counter[str] = Counter()
     family_counts: Counter[str] = Counter()
@@ -140,7 +173,7 @@ def count_processes() -> dict[str, Any]:
                 pid = int(entry.name)
             except ValueError:
                 continue
-            if _uid_from_status(proc_path) != uid:
+            if pid in excluded_pids or _uid_from_status(proc_path) != uid:
                 continue
 
             result = _primary_reason_and_family(proc_path, _argv_for_pid(proc_path))
@@ -169,6 +202,120 @@ def count_processes() -> dict[str, Any]:
     }
 
 
+def _stop_test_process(process: subprocess.Popen[bytes]) -> None:
+    try:
+        os.killpg(process.pid, signal.SIGKILL)
+    except ProcessLookupError:
+        pass
+    try:
+        process.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        process.wait(timeout=5)
+
+
+def _selftest_edge_cases() -> None:
+    dangling_root = tempfile.mkdtemp(prefix="souji-proc-census-dangling-", dir="/var/tmp")
+    shutil.rmtree(dangling_root)
+    os.symlink(os.path.join(dangling_root, "target"), dangling_root)
+    candidate = os.path.join(dangling_root, "payload")
+    try:
+        if os.path.exists(dangling_root):
+            raise RuntimeError("dangling-symlink top-level unexpectedly exists")
+        if _family_for_scratch_path(candidate, require_missing=True) != "other":
+            raise RuntimeError("dangling-symlink top-level was not treated as missing")
+        if _argv_missing_scratch_family([candidate]) != "other":
+            raise RuntimeError("full absolute argv path was not recognized")
+        if _argv_missing_scratch_family([f"--input={candidate}"]) != "other":
+            raise RuntimeError("--option=/absolute argv path was not recognized")
+        if _argv_missing_scratch_family([f"embedded text {candidate}"]) is not None:
+            raise RuntimeError("embedded argv path substring was incorrectly recognized")
+        if _family_for_scratch_path(candidate.replace("/var/tmp/", "/tmpfoo/", 1), require_missing=True) is not None:
+            raise RuntimeError("component-boundary check matched /tmpfoo as /tmp")
+    finally:
+        os.unlink(dangling_root)
+
+    literal_cwd_root = tempfile.mkdtemp(prefix="souji-proc-census-literal-cwd-", dir="/var/tmp")
+    literal_cwd = os.path.join(literal_cwd_root, "literal (deleted)")
+    os.mkdir(literal_cwd)
+    cwd_process: subprocess.Popen[bytes] | None = None
+    try:
+        cwd_process = subprocess.Popen(
+            ["sleep", "30"],
+            cwd=literal_cwd,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True,
+        )
+        proc_path = f"/proc/{cwd_process.pid}"
+        cwd_link = os.path.join(proc_path, "cwd")
+        target = os.readlink(cwd_link)
+        if not target.endswith(DELETED_SUFFIX) or _proc_link_is_deleted(cwd_link, target):
+            raise RuntimeError("live literal cwd suffix was misclassified as deleted")
+        if _primary_reason_and_family(proc_path, _argv_for_pid(proc_path)) is not None:
+            raise RuntimeError("live literal cwd suffix produced a residue classification")
+    finally:
+        if cwd_process is not None:
+            _stop_test_process(cwd_process)
+        shutil.rmtree(literal_cwd_root, ignore_errors=True)
+
+    literal_fd_root = tempfile.mkdtemp(prefix="souji-proc-census-literal-fd-", dir="/var/tmp")
+    literal_fd_path = os.path.join(literal_fd_root, "literal (deleted)")
+    literal_fd = os.open(literal_fd_path, os.O_CREAT | os.O_RDWR, 0o600)
+    literal_fd_process: subprocess.Popen[bytes] | None = None
+    try:
+        literal_fd_process = subprocess.Popen(
+            ["sleep", "30"],
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True,
+            pass_fds=(literal_fd,),
+        )
+        fd_link = f"/proc/{literal_fd_process.pid}/fd/{literal_fd}"
+        target = os.readlink(fd_link)
+        if not target.endswith(DELETED_SUFFIX) or _proc_link_is_deleted(fd_link, target):
+            raise RuntimeError("live literal fd suffix was misclassified as deleted")
+        if _primary_reason_and_family(
+            f"/proc/{literal_fd_process.pid}", _argv_for_pid(f"/proc/{literal_fd_process.pid}")
+        ) is not None:
+            raise RuntimeError("live literal fd suffix produced a residue classification")
+    finally:
+        os.close(literal_fd)
+        if literal_fd_process is not None:
+            _stop_test_process(literal_fd_process)
+        shutil.rmtree(literal_fd_root, ignore_errors=True)
+
+    deleted_fd_root = tempfile.mkdtemp(prefix="souji-proc-census-deleted-fd-", dir="/var/tmp")
+    deleted_fd_path = os.path.join(deleted_fd_root, "held-file")
+    deleted_fd = os.open(deleted_fd_path, os.O_CREAT | os.O_RDWR, 0o600)
+    deleted_fd_process: subprocess.Popen[bytes] | None = None
+    try:
+        deleted_fd_process = subprocess.Popen(
+            ["sleep", "30"],
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True,
+            pass_fds=(deleted_fd,),
+        )
+        os.close(deleted_fd)
+        deleted_fd = -1
+        shutil.rmtree(deleted_fd_root)
+        result = _primary_reason_and_family(
+            f"/proc/{deleted_fd_process.pid}", _argv_for_pid(f"/proc/{deleted_fd_process.pid}")
+        )
+        if result != ("fd-path-gone", "other"):
+            raise RuntimeError(f"deleted fd was not classified correctly: {result!r}")
+    finally:
+        if deleted_fd >= 0:
+            os.close(deleted_fd)
+        if deleted_fd_process is not None:
+            _stop_test_process(deleted_fd_process)
+        shutil.rmtree(deleted_fd_root, ignore_errors=True)
+
+
 def _wait_for_fifo_open(pid: int, timeout: float = 5.0) -> bool:
     deadline = time.monotonic() + timeout
     wchan_path = f"/proc/{pid}/wchan"
@@ -185,14 +332,13 @@ def _wait_for_fifo_open(pid: int, timeout: float = 5.0) -> bool:
 
 
 def run_selftest() -> dict[str, Any]:
-    if _family_for_scratch_path("/tmpfoo/missing", require_missing=True) is not None:
-        raise RuntimeError("component-boundary check matched /tmpfoo as /tmp")
+    _selftest_edge_cases()
     before = count_processes()
     test_dir = tempfile.mkdtemp(prefix="souji-proc-census-selftest-", dir="/var/tmp")
     fifo_path = os.path.join(test_dir, "blocked-reader")
-    os.mkfifo(fifo_path)
     process: subprocess.Popen[bytes] | None = None
     try:
+        os.mkfifo(fifo_path)
         process = subprocess.Popen(
             ["cat", fifo_path],
             stdin=subprocess.DEVNULL,
@@ -224,16 +370,7 @@ def run_selftest() -> dict[str, Any]:
         if test_dir:
             shutil.rmtree(test_dir, ignore_errors=True)
         if process is not None:
-            try:
-                os.killpg(process.pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
-            try:
-                process.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                # The process group kill is authoritative; this is only a bounded reap.
-                process.kill()
-                process.wait(timeout=5)
+            _stop_test_process(process)
 
 
 def _write_json_exclusive(path: str, payload: dict[str, Any]) -> None:

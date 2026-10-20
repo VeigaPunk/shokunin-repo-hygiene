@@ -29,10 +29,13 @@ HEADER = (
     "repo\tworktrees\tunpushed\tdirty\tscratch_bytes\tmtime_iso\t"
     "verdict_flags"
 )
-EXPECTED_IDS = ("B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8")
+EXPECTED_IDS = (
+    "B1", "B2", "B3", "B4", "B5", "B6",
+    "B7", "B8", "B9", "B10", "B11", "B12",
+)
 FIXTURE_TIMEOUT = 40
 DEFAULT_REPO_TIMEOUT = 8
-SEAT_TMP = Path("/var/tmp/souji-r18-FixtureR18Bounded")
+SEAT_TMP = Path("/var/tmp")
 SYSTEM_PATH = "/usr/local/bin:/usr/bin:/bin"
 REAL_GIT = "/usr/bin/git"
 REAL_BASH = "/usr/bin/bash"
@@ -108,8 +111,11 @@ class Fixture:
             or not Path(REAL_CMP).is_file()
         ):
             die("required system Git, Bash, or cmp executable is missing")
-        SEAT_TMP.mkdir(parents=True, exist_ok=True)
-        self.scratch = Path(tempfile.mkdtemp(prefix="fixture.", dir=SEAT_TMP))
+        self.scratch = Path(
+            tempfile.mkdtemp(
+                prefix="souji-r18-FixtureR18Bounded.", dir=SEAT_TMP
+            )
+        )
         self.home = self.scratch / "home"
         self.home.mkdir()
         self.agent = self.home / ".omp" / "agent"
@@ -245,6 +251,7 @@ class Fixture:
         code = '''#!/usr/bin/python3
 import json
 import os
+import signal
 import sys
 import time
 from pathlib import Path
@@ -253,8 +260,14 @@ args = sys.argv[1:]
 real = os.environ["R18_REAL_GIT"]
 trigger = os.environ.get("R18_TRIGGER", "")
 target_repo = os.path.realpath(os.environ.get("R18_TARGET_REPO", ""))
-fifo_path = Path(os.environ.get("R18_FIFO_PATH", "/nonexistent"))
+fifo_raw = os.environ.get("R18_FIFO_PATH", "")
+fifo_path = Path(fifo_raw) if fifo_raw else None
 marker = Path(os.environ.get("R18_TRIGGER_MARKER", "/nonexistent"))
+hang_mode = os.environ.get("R18_HANG_MODE", "")
+hang_pid_raw = os.environ.get("R18_HANG_PID_FILE", "")
+hang_pid_file = Path(hang_pid_raw) if hang_pid_raw else None
+term_file_raw = os.environ.get("R18_TERM_FILE", "")
+term_file = Path(term_file_raw) if term_file_raw else None
 log = Path(os.environ["R18_SHIM_LOG"])
 delay = float(os.environ.get("R18_DELAY_SECONDS", "0"))
 command = next((arg for arg in args if arg in {"status", "check-attr"}), "")
@@ -265,10 +278,20 @@ for index, arg in enumerate(args[:-1]):
         break
 triggered = False
 trigger_error = ""
+hang_started = None
 if trigger and command == trigger and repo == target_repo and not marker.exists():
     try:
-        fifo_path.unlink(missing_ok=True)
-        os.mkfifo(fifo_path)
+        if fifo_path is not None:
+            fifo_path.unlink(missing_ok=True)
+            os.mkfifo(fifo_path)
+        if hang_mode:
+            if hang_pid_file is None:
+                raise OSError("hang pid file was not provided")
+            hang_started = time.monotonic()
+            hang_pid_file.write_text(
+                json.dumps({"pid": os.getpid(), "started": hang_started}),
+                encoding="utf-8",
+            )
         marker.write_text("triggered\\n", encoding="utf-8")
         triggered = True
     except OSError as exc:
@@ -280,9 +303,23 @@ record = {
     "triggered": triggered,
     "trigger_error": trigger_error,
     "delayed": delay > 0,
+    "hang_mode": hang_mode,
 }
 with log.open("a", encoding="utf-8") as stream:
     stream.write(json.dumps(record, sort_keys=True) + "\\n")
+if triggered and hang_mode:
+    if hang_mode == "ignore-term":
+        def record_term(_signum, _frame):
+            if term_file is not None:
+                try:
+                    term_file.write_text(str(time.monotonic()), encoding="ascii")
+                except OSError:
+                    pass
+        signal.signal(signal.SIGTERM, record_term)
+    else:
+        signal.signal(signal.SIGTERM, signal.SIG_DFL)
+    while True:
+        signal.pause()
 if delay:
     time.sleep(delay)
 os.execv(real, [real, *args])
@@ -346,6 +383,9 @@ with log.open("a", encoding="utf-8") as stream:
         fifo_path: Path | None = None,
         delay_seconds: int = 0,
         use_cmp_shim: bool = False,
+        hang_mode: str = "",
+        hang_pid_file: Path | None = None,
+        term_file: Path | None = None,
     ) -> dict[str, str]:
         path_dirs = []
         if use_shim:
@@ -376,6 +416,9 @@ with log.open("a", encoding="utf-8") as stream:
                     "R18_FIFO_PATH": str(fifo_path or ""),
                     "R18_TRIGGER_MARKER": str(self.root / "shim-triggered"),
                     "R18_DELAY_SECONDS": str(delay_seconds),
+                    "R18_HANG_MODE": hang_mode,
+                    "R18_HANG_PID_FILE": str(hang_pid_file or ""),
+                    "R18_TERM_FILE": str(term_file or ""),
                 }
             )
         if use_cmp_shim:
@@ -495,8 +538,19 @@ with log.open("a", encoding="utf-8") as stream:
         fifo_path: Path | None = None,
         delay_seconds: int = 0,
         use_cmp_shim: bool = False,
+        hang_mode: str = "",
+        hang_pid_file: Path | None = None,
+        term_file: Path | None = None,
+        compare_path: Path | None = None,
+        include_root: bool = False,
     ) -> CensusRun:
-        argv = [REAL_BASH, str(self.tool), "--root", str(root)]
+        argv = [REAL_BASH, str(self.tool)]
+        if compare_path is None:
+            argv.extend(["--root", str(root)])
+        else:
+            argv.extend(["--root", str(root), "--compare", str(compare_path)])
+        if include_root:
+            argv.append("--include-root")
         proc = subprocess.Popen(
             argv,
             cwd=str(self.root),
@@ -508,6 +562,9 @@ with log.open("a", encoding="utf-8") as stream:
                 fifo_path=fifo_path,
                 delay_seconds=delay_seconds,
                 use_cmp_shim=use_cmp_shim,
+                hang_mode=hang_mode,
+                hang_pid_file=hang_pid_file,
+                term_file=term_file,
             ),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -602,6 +659,158 @@ with log.open("a", encoding="utf-8") as stream:
         )
         self.runs.append(run)
         return run
+
+    def interrupt_census(
+        self,
+        label: str,
+        root: Path,
+        target_repo: Path,
+        *,
+        signal_number: int,
+        repo_timeout: int = DEFAULT_REPO_TIMEOUT,
+    ) -> tuple[CensusRun, list[str], dict]:
+        marker = self.root / f"{label}-git.json"
+        term_file = self.root / f"{label}-term.txt"
+        marker.unlink(missing_ok=True)
+        term_file.unlink(missing_ok=True)
+        argv = [REAL_BASH, str(self.tool), "--root", str(root)]
+        proc = subprocess.Popen(
+            argv,
+            cwd=str(self.root),
+            env=self.census_env(
+                repo_timeout,
+                use_shim=True,
+                trigger="status",
+                target_repo=target_repo,
+                hang_mode="default-term",
+                hang_pid_file=marker,
+                term_file=term_file,
+            ),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            errors="replace",
+            start_new_session=True,
+        )
+        started = time.monotonic()
+        problems: list[str] = []
+        try:
+            isolated = (
+                os.getsid(proc.pid) == proc.pid and os.getpgid(proc.pid) == proc.pid
+            )
+        except ProcessLookupError:
+            isolated = True
+
+        marker_deadline = started + 15.0
+        while not marker.exists() and proc.poll() is None and time.monotonic() < marker_deadline:
+            time.sleep(0.02)
+        marker_record = {}
+        if marker.exists():
+            try:
+                marker_record = json.loads(marker.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError) as exc:
+                problems.append(f"invalid Git hang marker: {exc}")
+        else:
+            problems.append("Git hang shim did not reach the selected status call")
+
+        signal_sent = time.monotonic()
+        try:
+            os.kill(proc.pid, signal_number)
+        except ProcessLookupError:
+            problems.append(f"census parent exited before signal {signal.Signals(signal_number).name}")
+        try:
+            proc.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            problems.append("census parent did not exit after external signal")
+            proc.kill()
+            proc.wait(timeout=5)
+
+        if signal_number == signal.SIGTERM:
+            # TERM must synchronously reap the worker and timer before the
+            # parent exits; allow only a short scheduling grace.
+            deadline = time.monotonic() + 0.75
+        else:
+            # SIGKILL cannot run cleanup. The detached watchdog must still
+            # expire at the repo bound and kill after its two-second grace.
+            worker_started = float(marker_record.get("started", signal_sent))
+            deadline = max(
+                signal_sent,
+                worker_started + repo_timeout + 2.5,
+            )
+        while time.monotonic() < deadline:
+            time.sleep(min(0.05, max(0.0, deadline - time.monotonic())))
+        leftovers = self.session_members(proc.pid)
+        expected_returncode = -signal_number
+        if proc.returncode != expected_returncode:
+            problems.append(
+                f"parent returncode={proc.returncode} expected {expected_returncode}"
+            )
+        if leftovers:
+            problems.append(
+                f"session still contains worker/watchdog after signal window: {leftovers}"
+            )
+
+        worker_pid = marker_record.get("pid")
+        snapshot = self.process_snapshot()
+        if worker_pid is not None:
+            worker = snapshot.get(int(worker_pid))
+            if worker is not None and worker.get("session") == proc.pid:
+                problems.append(f"stalled Git PID {worker_pid} survived signal window")
+
+        if leftovers and isolated:
+            root_group_present = any(member["pgid"] == proc.pid for member in leftovers)
+            if root_group_present:
+                try:
+                    os.killpg(proc.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+            self.kill_session(
+                proc.pid, leftovers, root_group_killed=root_group_present
+            )
+        after = self.wait_session_empty(proc.pid)
+        if after:
+            problems.append(f"session remains after fixture cleanup: {after}")
+        try:
+            stdout, stderr = proc.communicate(timeout=3)
+        except subprocess.TimeoutExpired as exc:
+            problems.append("census pipes stayed open after session cleanup")
+            stdout = exc.output or ""
+            stderr = exc.stderr or ""
+            if isinstance(stdout, bytes):
+                stdout = stdout.decode("utf-8", "replace")
+            if isinstance(stderr, bytes):
+                stderr = stderr.decode("utf-8", "replace")
+            if proc.stdout:
+                proc.stdout.close()
+            if proc.stderr:
+                proc.stderr.close()
+        elapsed = time.monotonic() - started
+        run = CensusRun(
+            label=label,
+            argv=argv,
+            rc=proc.returncode if proc.returncode is not None else -1,
+            stdout=stdout,
+            stderr=stderr,
+            elapsed=elapsed,
+            session_id=proc.pid,
+            fixture_timed_out=False,
+            isolated_session=isolated,
+            leaked_before_cleanup=leftovers,
+            session_after_cleanup=after,
+        )
+        self.runs.append(run)
+        return run, problems, {
+            "signal": signal.Signals(signal_number).name,
+            "parent_returncode": run.rc,
+            "marker": marker_record,
+            "term_file": str(term_file) if term_file.exists() else None,
+            "signal_to_parent_seconds": round(signal_sent - started, 3),
+            "elapsed_seconds": round(elapsed, 3),
+            "session_after_window": leftovers,
+            "session_after_cleanup": after,
+            "stdout": stdout,
+            "stderr": stderr.splitlines(),
+        }
 
     @staticmethod
     def expected_row_problems(
@@ -1017,9 +1226,8 @@ with log.open("a", encoding="utf-8") as stream:
             fleet,
             repo_timeout=30,
             use_shim=True,
-            # 1 s per call (~13 calls, ~13 s) leaves margin under the 30 s bound;
-            # 2 s per call measured 26.3 s on base — too close to the bound.
-            delay_seconds=1,
+            # Match B5's measured two-second delay on every Git invocation.
+            delay_seconds=2,
         )
         expected_rows = {"slow": "clean"}
         problems.extend(self.census_problems(measured, 0, expected_rows))
@@ -1038,7 +1246,7 @@ with log.open("a", encoding="utf-8") as stream:
             "B5", 0, expected_rows, problems, [measured],
             {
                 "repo_timeout_seconds": 30,
-                "shim_delay_seconds_per_call": 1,
+                "shim_delay_seconds_per_call": 2,
                 "git_calls": len(records),
                 "elapsed_seconds": round(measured.elapsed, 3),
                 "rows": measured.rows(),
@@ -1046,9 +1254,13 @@ with log.open("a", encoding="utf-8") as stream:
         )
 
     def case_b6(self) -> CaseResult:
-        problems = self.resource_problems()
+        fleet, _ = self.fleet("b6-residue-check", ("residue",))
+        run = self.census("B6-residue-census", fleet)
+        expected_rows = {"residue": "clean"}
+        problems = self.census_problems(run, 0, expected_rows)
+        problems.extend(self.resource_problems())
         return CaseResult(
-            "B6", 0, {}, problems, [],
+            "B6", 0, expected_rows, problems, [run],
             {
                 "census_runs_checked": len(self.runs),
                 "fifo_paths_checked": [str(path) for path in self.fifos],
@@ -1103,6 +1315,252 @@ with log.open("a", encoding="utf-8") as stream:
             },
         )
 
+
+    def case_b9(self) -> CaseResult:
+        fleet, repos = self.fleet("b9-term-ignoring-git", ("target",))
+        repo = repos["target"]
+        self.touch_tracked(repo)
+        self.install_git_shim()
+        self.write_shim_options()
+        hang_marker = self.root / "b9-git.json"
+        term_file = self.root / "b9-term.txt"
+        started = time.monotonic()
+        measured = self.census(
+            "B9",
+            fleet,
+            repo_timeout=DEFAULT_REPO_TIMEOUT,
+            use_shim=True,
+            trigger="status",
+            target_repo=repo,
+            hang_mode="ignore-term",
+            hang_pid_file=hang_marker,
+            term_file=term_file,
+        )
+        finished = time.monotonic()
+        expected_rows = {"target": "error"}
+        problems = self.census_problems(measured, 0, expected_rows)
+        problems.extend(self.require_trigger("status", repo))
+        marker_record = {}
+        try:
+            marker_record = json.loads(hang_marker.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            problems.append(f"Git hang marker missing or invalid: {exc}")
+        term_to_kill_seconds = None
+        if term_file.exists():
+            try:
+                term_at = float(term_file.read_text(encoding="ascii"))
+                term_to_kill_seconds = finished - term_at
+                if not 1.5 <= term_to_kill_seconds <= 4.0:
+                    problems.append(
+                        f"SIGTERM-to-SIGKILL grace={term_to_kill_seconds:.3f}s "
+                        "expected about 2s"
+                    )
+            except (OSError, ValueError) as exc:
+                problems.append(f"cannot read SIGTERM receipt: {exc}")
+        else:
+            problems.append("TERM-ignoring Git shim did not record SIGTERM")
+        hang_started = marker_record.get("started")
+        if hang_started is not None and term_file.exists():
+            try:
+                term_at = float(term_file.read_text(encoding="ascii"))
+                to_term = term_at - float(hang_started)
+                if not DEFAULT_REPO_TIMEOUT - 2 <= to_term <= DEFAULT_REPO_TIMEOUT + 3:
+                    problems.append(
+                        f"repo timeout before TERM={to_term:.3f}s "
+                        f"expected near {DEFAULT_REPO_TIMEOUT}s"
+                    )
+            except (OSError, ValueError):
+                pass
+        worker_pid = marker_record.get("pid")
+        snapshot = self.process_snapshot()
+        if worker_pid is not None:
+            worker = snapshot.get(int(worker_pid))
+            if worker is not None and worker.get("session") == measured.session_id:
+                problems.append(f"TERM-ignoring Git PID {worker_pid} survived watchdog")
+        if finished - started >= FIXTURE_TIMEOUT:
+            problems.append("TERM-ignoring repo reached the outer fixture deadline")
+        problems.extend(self.case_resources("B9"))
+        return CaseResult(
+            "B9", 0, expected_rows, problems, [measured],
+            {
+                "repo_timeout_seconds": DEFAULT_REPO_TIMEOUT,
+                "expected_term_grace_seconds": 2,
+                "git_hang": marker_record,
+                "term_to_kill_seconds": term_to_kill_seconds,
+                "elapsed_seconds": round(finished - started, 3),
+                "rows": measured.rows(),
+            },
+        )
+
+    def case_b10(self) -> CaseResult:
+        self.install_git_shim()
+        problems: list[str] = []
+        runs: list[CensusRun] = []
+        observations: dict[str, dict] = {}
+        for mode, signal_number in (
+            ("TERM", signal.SIGTERM),
+            ("KILL", signal.SIGKILL),
+        ):
+            fleet, repos = self.fleet(f"b10-parent-{mode.lower()}", ("target",))
+            repo = repos["target"]
+            self.touch_tracked(repo)
+            self.write_shim_options()
+            run, run_problems, notes = self.interrupt_census(
+                f"B10-{mode}",
+                fleet,
+                repo,
+                signal_number=signal_number,
+            )
+            problems.extend(run_problems)
+            problems.extend(self.require_trigger("status", repo))
+            if run.stdout.strip():
+                problems.append(f"B10-{mode}: interrupted parent emitted a partial TSV")
+            if run.rc != -signal_number:
+                problems.append(
+                    f"B10-{mode}: parent exit={run.rc}, expected {-signal_number}"
+                )
+            problems.extend(self.case_resources(f"B10-{mode}"))
+            runs.append(run)
+            observations[mode.lower()] = notes
+        return CaseResult(
+            "B10", None, {}, problems, runs,
+            {
+                "repo_timeout_seconds": DEFAULT_REPO_TIMEOUT,
+                "parent_signals": ["SIGTERM", "SIGKILL"],
+                "observations": observations,
+            },
+        )
+
+    def case_b11(self) -> CaseResult:
+        problems: list[str] = []
+        sibling_root, _ = self.fleet("b11-root-prefix", ("sibling",))
+        raw_root = Path(str(sibling_root) + "\n")
+        root_run = self.census("B11-root-newline", raw_root)
+        problems.extend(self.census_problems(root_run, 2, {}))
+
+        compare_root, _ = self.fleet("b11-compare-current", ("compare-target",))
+        compare_prefix = self.root / "b11-compare-prefix.tsv"
+        compare_prefix.write_text(HEADER + "\n", encoding="utf-8")
+        raw_compare = Path(str(compare_prefix) + "\n")
+        compare_run = self.census(
+            "B11-compare-newline",
+            compare_root,
+            compare_path=raw_compare,
+        )
+        problems.extend(self.census_problems(compare_run, 2, {}))
+        problems.extend(self.case_resources("B11"))
+        return CaseResult(
+            "B11", 2, {}, problems, [root_run, compare_run],
+            {
+                "root_input_with_trailing_newline": str(raw_root),
+                "root_sibling_that_must_not_be_selected": str(sibling_root),
+                "compare_input_with_trailing_newline": str(raw_compare),
+                "compare_sibling_that_must_not_be_selected": str(compare_prefix),
+                "sibling_baseline": HEADER,
+            },
+        )
+
+    def case_b12(self) -> CaseResult:
+        problems: list[str] = []
+        fleet = self.root / "b12-linked-gitfile"
+        fleet.mkdir()
+        repo_a = self.init_repo(fleet / "a")
+        repo_c = self.init_repo(fleet / "c")
+        # The owner is deliberately hidden from the top-level census, while
+        # b remains a real registered worktree with a regular .git gitfile.
+        owner = self.init_repo(fleet / ".owner" / "repo-owner")
+        linked_b = fleet / "b"
+        self.git(owner, "worktree", "add", "--detach", str(linked_b))
+        gitfile = linked_b / ".git"
+        (fleet / "plain").mkdir()
+
+        control = self.census("B12-gitfile-control", fleet)
+        control_rows = {"a": "clean", "c": "clean"}
+        problems.extend(self.check_control(control, control_rows))
+        self.install_cmp_shim()
+        self.write_cmp_options()
+        injected = self.census(
+            "B12-gitfile",
+            fleet,
+            use_cmp_shim=True,
+            trigger="config-read",
+            target_repo=repo_a,
+            fifo_path=gitfile,
+        )
+        self.add_fifo(gitfile)
+        gitfile_rows = {"a": "clean", "b": "error", "c": "clean"}
+        problems.extend(self.census_problems(injected, 0, gitfile_rows))
+        problems.extend(self.assert_neighbors_equal(control, injected))
+        problems.extend(self.require_cmp_trigger("config-read", repo_a))
+        problems.extend(self.require_timeout_diag(injected, linked_b, DEFAULT_REPO_TIMEOUT))
+        actual_gitfile_names = raw_repo_names(injected.stdout)
+        if len(actual_gitfile_names) != len(set(actual_gitfile_names)):
+            problems.append(f"gitfile preflight emitted duplicate rows: {actual_gitfile_names}")
+        if set(actual_gitfile_names) != set(gitfile_rows):
+            problems.append(
+                f"gitfile preflight rows={actual_gitfile_names}, expected exactly "
+                f"{sorted(gitfile_rows)}"
+            )
+        gitfile_events = CensusRun.trigger_log(self.cmp_log_path)
+
+        included_root = self.init_repo(self.root / "b12-include-root")
+        control_included = self.census(
+            "B12-include-control", included_root, include_root=True
+        )
+        included_name = included_root.name
+        problems.extend(
+            self.check_control(control_included, {included_name: "clean"})
+        )
+        config_fifo = included_root / ".git" / "config"
+        self.install_cmp_shim()
+        self.write_cmp_options()
+        injected_included = self.census(
+            "B12-include-root",
+            included_root,
+            include_root=True,
+            use_cmp_shim=True,
+            trigger="config-read",
+            target_repo=included_root,
+            fifo_path=config_fifo,
+        )
+        self.add_fifo(config_fifo)
+        included_rows = {included_name: "error"}
+        problems.extend(self.census_problems(injected_included, 0, included_rows))
+        problems.extend(
+            self.require_cmp_trigger("config-read", included_root)
+        )
+        problems.extend(
+            self.require_timeout_diag(
+                injected_included, included_root, DEFAULT_REPO_TIMEOUT
+            )
+        )
+        actual_included_names = raw_repo_names(injected_included.stdout)
+        if actual_included_names != [included_name]:
+            problems.append(
+                "included repo timeout must produce exactly one row, got "
+                f"{actual_included_names}"
+            )
+        problems.extend(self.case_resources("B12"))
+        expected_rows = {
+            "gitfile/a": "clean",
+            "gitfile/b": "error",
+            "gitfile/c": "clean",
+            f"include-root/{included_name}": "error",
+        }
+        return CaseResult(
+            "B12", 0, expected_rows, problems,
+            [control, injected, control_included, injected_included],
+            {
+                "gitfile": str(gitfile),
+                "gitfile_fleet_control_rows": control.rows(),
+                "gitfile_timeout_rows": injected.rows(),
+                "gitfile_cmp_events": gitfile_events,
+                "plain_candidate": str(fleet / "plain"),
+                "included_root": str(included_root),
+                "included_root_timeout_rows": injected_included.rows(),
+                "included_root_cmp_events": CensusRun.trigger_log(self.cmp_log_path),
+            },
+        )
     def cases(self, selected: tuple[str, ...]) -> list[CaseResult]:
         case_functions = {
             "B1": self.case_b1,
@@ -1113,6 +1571,10 @@ with log.open("a", encoding="utf-8") as stream:
             "B6": self.case_b6,
             "B7": self.case_b7,
             "B8": self.case_b8,
+            "B9": self.case_b9,
+            "B10": self.case_b10,
+            "B11": self.case_b11,
+            "B12": self.case_b12,
         }
         return [case_functions[case_id]() for case_id in selected]
 
@@ -1209,6 +1671,16 @@ with log.open("a", encoding="utf-8") as stream:
         if self.scratch is not None and self.scratch.exists():
             shutil.rmtree(self.scratch)
 
+
+def raw_repo_names(stdout: str) -> list[str]:
+    lines = stdout.splitlines()
+    if not lines or lines[0] != HEADER:
+        return []
+    names = []
+    for line in lines[1:]:
+        if line:
+            names.append(Path(line.split("\t", 1)[0]).name)
+    return names
 
 def rows_by_name(stdout: str) -> dict[str, list[str]]:
     rows: dict[str, list[str]] = {}

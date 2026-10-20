@@ -6,13 +6,19 @@
 #   P2 live-cwd process with a deleted /var/tmp argv path -> argv-path-gone
 #   P3 live control -> absent
 #   P4 --prefix selects P2 and excludes P6
-#   P5 --min-age excludes fresh P1/P2/P6/P9
-#   P6 secret-shaped argv is redacted in cmd
-#   P7 the census does not signal any fixture process
+#   P5 --min-age excludes fresh residue workers
+#   P6 secret-shaped password argv is redacted
+#   P7 strace observes no kill/tkill/tgkill/pidfd_send_signal syscall
 #   P8 invalid usage exits 2
-#   P9 live-cwd process with clean argv and stdout on a deleted fd path
+#   P9 clean-argv worker with stdout on a deleted fd path
 #   P10 deleted /var/tmp/<top>/sub while <top> lives -> absent
 #   P11 starttime equals /proc/<pid>/stat field 22
+#   P12 live cwd literally ending in ` (deleted)` -> absent
+#   P13 live fd literally ending in ` (deleted)` -> absent
+#   P14/P15/P16 fake Bearer/AWS/Slack secrets are redacted
+#   P17 similarly prefixed sibling root does not match --prefix
+#   P18 cwd > argv > fd precedence
+#   P19 argv > fd precedence
 #
 # Census output is a `# boot_id <id>` comment, then the 10-column TSV header;
 # the fixture maps rows by the header names.
@@ -95,7 +101,12 @@ TOOL_TIMEOUT = 12
 FRESH_LIMIT = 60
 FIFO_WCHAN = re.compile(r"(?:fifo|pipe|partner|wait)", re.IGNORECASE)
 REDACTION = re.compile(r"(?:redact(?:ed|ion)?|\*{3,})", re.IGNORECASE)
+SIGNAL_SYSCALL = re.compile(r"\b(?:kill|tkill|tgkill|pidfd_send_signal)\s*\(")
 CANARY = "R18_SYNTHETIC_PASSWORD_CANARY_NOT_A_CREDENTIAL"
+BEARER_CANARY = "R18_FAKE_BEARER_NOT_A_CREDENTIAL"
+AWS_CANARY = "AKIA0000000000000000"
+SLACK_CANARY = "xoxb-r18-fake-not-a-token"
+STRACE_BIN = shutil.which("strace")
 CHILDREN = []
 EXTRA_DIRS = []
 FAILURES = 0
@@ -153,6 +164,52 @@ def make_deleted_path(root, name):
     path.unlink()
     return str(path)
 
+def make_gone_root(label, name):
+    root = Path(tempfile.mkdtemp(prefix="souji-r18-proc-argv-{}.".format(label), dir="/var/tmp"))
+    EXTRA_DIRS.append(root)
+    return root, make_deleted_path(root / "sub", name)
+
+
+def spawn_deleted_stdout(argv, cwd, label):
+    root = Path(tempfile.mkdtemp(prefix="souji-r18-proc-fd-{}.".format(label), dir="/var/tmp"))
+    EXTRA_DIRS.append(root)
+    path = root / "stdout"
+    path.touch()
+    with path.open("wb") as stream:
+        proc = spawn_worker(argv, cwd, stdout=stream)
+    path.unlink()
+    root.rmdir()
+    try:
+        link = os.readlink("/proc/{}/fd/1".format(proc.pid))
+    except OSError as exc:
+        raise SetupError("could not verify deleted stdout fd: {}".format(exc))
+    if not link.endswith(" (deleted)"):
+        raise SetupError("stdout fd target was not deleted")
+    return proc, str(path)
+
+
+def inode_matches(left, right):
+    try:
+        left_stat = os.stat(left)
+        right_stat = os.stat(right)
+    except OSError:
+        return False
+    return left_stat.st_dev == right_stat.st_dev and left_stat.st_ino == right_stat.st_ino
+
+def signal_syscalls(trace_path):
+    try:
+        lines = trace_path.read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError:
+        return None
+    return [line for line in lines if SIGNAL_SYSCALL.search(line)]
+
+
+def result_context(result, parse_error):
+    stderr = result["err"].strip().replace("\n", "\\n")[:160]
+    return "rc={} timed_out={} table={} stderr={!r}".format(
+        result["rc"], result["timed_out"], parse_error, stderr
+    )
+
 
 def command_for(tool, args):
     if os.access(tool, os.X_OK):
@@ -160,10 +217,22 @@ def command_for(tool, args):
     return ["bash", tool] + list(args)
 
 
-def run_tool(tool, args):
+def run_tool(tool, args, trace_path=None):
+    command = command_for(tool, args)
+    if trace_path is not None:
+        command = [
+            STRACE_BIN,
+            "-f",
+            "-qq",
+            "-e",
+            "trace=kill,tkill,tgkill,pidfd_send_signal",
+            "-o",
+            str(trace_path),
+            "--",
+        ] + command
     try:
         proc = subprocess.Popen(
-            command_for(tool, args),
+            command,
             stdin=subprocess.DEVNULL,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -233,6 +302,18 @@ def complete_record(row):
         return False
     return all(row[key] for key in ("state", "wchan", "reason", "cmd"))
 
+
+def redacted_argv_row(row, path, secret):
+    if row is None:
+        return False
+    command = row["cmd"]
+    return (
+        complete_record(row)
+        and row["reason"] == "argv-path-gone:" + path
+        and secret not in command
+        and bool(REDACTION.search(command))
+    )
+
 def base_ok(result, rows):
     return result["rc"] == 0 and rows is not None and not result["timed_out"]
 
@@ -285,10 +366,12 @@ def run():
         raise SetupError("could not read kernel boot_id: {}".format(exc))
     if not boot_id:
         raise SetupError("kernel boot_id is empty")
+    if STRACE_BIN is None:
+        raise SetupError("strace not found; P7 requires syscall tracing")
 
     live = scratch / "live"
-    p1_cwd = scratch / "deleted-cwd"
     live.mkdir()
+    p1_cwd = scratch / "deleted-cwd"
     p1_cwd.mkdir()
     os.mkfifo(p1_cwd / "reader")
 
@@ -303,17 +386,12 @@ def run():
     if not p1_cwd_link.endswith(" (deleted)"):
         raise SetupError("FIFO worker cwd was not deleted")
 
-    p2_prefix = Path(tempfile.mkdtemp(prefix="souji-r18-proc-argv-p2.", dir="/var/tmp"))
-    EXTRA_DIRS.append(p2_prefix)
-    p2_path = make_deleted_path(p2_prefix / "sub", "gone-argv-p2")
-
-    p6_prefix = Path(tempfile.mkdtemp(prefix="souji-r18-proc-argv-p6.", dir="/var/tmp"))
-    EXTRA_DIRS.append(p6_prefix)
-    p6_path = make_deleted_path(p6_prefix / "sub", "gone-argv-p6")
-
     sleeper_code = "import time; time.sleep(300)"
+    p2_prefix, p2_path = make_gone_root("argv-p2", "gone-argv-p2")
     p2 = spawn_worker([sys.executable, "-c", sleeper_code, p2_path], live)
     p3 = spawn_worker([sys.executable, "-c", sleeper_code], live)
+
+    p6_prefix, p6_path = make_gone_root("argv-p6", "gone-argv-p6")
     p6 = spawn_worker(
         [sys.executable, "-c", sleeper_code, "--workspace=" + p6_path, "--password=" + CANARY],
         live,
@@ -327,28 +405,99 @@ def run():
     p10 = spawn_worker([sys.executable, "-c", sleeper_code, p10_path], live)
     shutil.rmtree(boundary_sub)
 
-    fd_top = Path(tempfile.mkdtemp(prefix="souji-r18-proc-fd.", dir="/var/tmp"))
-    EXTRA_DIRS.append(fd_top)
-    fd_path = fd_top / "stdout"
-    fd_path.touch()
-    with fd_path.open("wb") as fd_stream:
-        p9 = spawn_worker([sys.executable, "-c", sleeper_code], live, stdout=fd_stream)
-    fd_path.unlink()
-    fd_top.rmdir()
-    try:
-        fd_link = os.readlink("/proc/{}/fd/1".format(p9.pid))
-    except OSError as exc:
-        raise SetupError("could not verify deleted stdout fd: {}".format(exc))
-    if not fd_link.endswith(" (deleted)"):
-        raise SetupError("stdout fd target was not deleted")
+    p9, fd_path = spawn_deleted_stdout(
+        [sys.executable, "-c", sleeper_code], live, "p9"
+    )
 
-    for proc in (p2, p3, p6, p9, p10):
+    p12_path = scratch / "literal-cwd" / "x (deleted)"
+    p12_path.mkdir(parents=True)
+    p12 = spawn_worker([sys.executable, "-c", sleeper_code], p12_path)
+    try:
+        p12_cwd_link = os.readlink("/proc/{}/cwd".format(p12.pid))
+    except OSError as exc:
+        raise SetupError("could not verify live literal cwd: {}".format(exc))
+    if p12_cwd_link != str(p12_path) or not inode_matches(
+        "/proc/{}/cwd".format(p12.pid), p12_path
+    ):
+        raise SetupError("literal cwd suffix was not a live inode match")
+
+    p13_dir = scratch / "fd-literal" / "top"
+    p13_dir.mkdir(parents=True)
+    p13_path = p13_dir / "x (deleted)"
+    p13_path.touch()
+    with p13_path.open("wb") as p13_stream:
+        p13 = spawn_worker([sys.executable, "-c", sleeper_code], live, stdout=p13_stream)
+    if not inode_matches("/proc/{}/fd/1".format(p13.pid), p13_path):
+        raise SetupError("literal fd suffix was not a live inode match")
+
+    bearer_prefix, bearer_path = make_gone_root("redact-bearer", "gone-bearer")
+    p14 = spawn_worker(
+        [
+            sys.executable, "-c", sleeper_code, "-H", "Authorization:", "Bearer",
+            BEARER_CANARY, "--workspace=" + bearer_path,
+        ],
+        live,
+    )
+    shutil.rmtree(bearer_prefix)
+
+    aws_prefix, aws_path = make_gone_root("redact-aws", "gone-aws")
+    p15 = spawn_worker(
+        [sys.executable, "-c", sleeper_code, AWS_CANARY, "--workspace=" + aws_path],
+        live,
+    )
+    shutil.rmtree(aws_prefix)
+
+    slack_prefix, slack_path = make_gone_root("redact-slack", "gone-slack")
+    p16 = spawn_worker(
+        [sys.executable, "-c", sleeper_code, SLACK_CANARY, "--workspace=" + slack_path],
+        live,
+    )
+    shutil.rmtree(slack_prefix)
+
+    prefix_root = scratch / "prefix-boundary"
+    prefix_root.mkdir()
+    sibling_root = Path(str(prefix_root) + "-sibling")
+    p17_path = make_deleted_path(sibling_root / "sub", "gone-sibling")
+    p17 = spawn_worker(
+        [sys.executable, "-c", sleeper_code, "--workspace=" + p17_path], live
+    )
+    shutil.rmtree(sibling_root)
+
+    mixed_cwd = scratch / "mixed-precedence-cwd"
+    mixed_cwd.mkdir()
+    p18_prefix, p18_path = make_gone_root("precedence-all", "gone-precedence-all")
+    p18, p18_fd_path = spawn_deleted_stdout(
+        [sys.executable, "-c", sleeper_code, "--workspace=" + p18_path],
+        mixed_cwd,
+        "precedence-all",
+    )
+    shutil.rmtree(mixed_cwd)
+    try:
+        p18_cwd_link = os.readlink("/proc/{}/cwd".format(p18.pid))
+    except OSError as exc:
+        raise SetupError("could not verify mixed-precedence deleted cwd: {}".format(exc))
+    if not p18_cwd_link.endswith(" (deleted)"):
+        raise SetupError("mixed-precedence cwd was not deleted")
+    shutil.rmtree(p18_prefix)
+
+    p19_prefix, p19_path = make_gone_root("precedence-argv", "gone-precedence-argv")
+    p19, p19_fd_path = spawn_deleted_stdout(
+        [sys.executable, "-c", sleeper_code, "--workspace=" + p19_path],
+        live,
+        "precedence-argv",
+    )
+    shutil.rmtree(p19_prefix)
+
+    fixture_workers = (
+        p1, p2, p3, p6, p9, p10, p12, p13, p14, p15, p16, p17, p18, p19,
+    )
+    for proc in fixture_workers:
         if proc.poll() is not None:
-            raise SetupError("sleeping worker exited during setup")
+            raise SetupError("fixture worker exited during setup")
     if not os.path.isdir("/proc/{}/cwd".format(p2.pid)):
         raise SetupError("argv worker proc entry disappeared")
-    if not os.path.isdir(live) or not scratch.is_dir():
-        raise SetupError("live control cwd or boundary top disappeared")
+    if not os.path.isdir(live) or not scratch.is_dir() or not prefix_root.is_dir():
+        raise SetupError("live control or prefix boundary directory disappeared")
 
     default = run_tool(tool, [])
     rows, table_error = parse_table(default["out"], boot_id)
@@ -412,46 +561,61 @@ def run():
         prefix_ok,
         "prefix retained P2 and excluded P6"
         if prefix_ok
-        else "--prefix did not select P2/exclude P6 ({})".format(prefix_error),
+        else "--prefix did not select P2/exclude P6 ({})".format(
+            result_context(prefix, prefix_error)
+        ),
     )
 
     aged = run_tool(tool, ["--min-age", str(FRESH_LIMIT)])
     aged_rows, aged_error = parse_table(aged["out"], boot_id)
+    fresh_pids = (
+        p1.pid, p2.pid, p6.pid, p9.pid, p14.pid, p15.pid, p16.pid, p17.pid,
+        p18.pid, p19.pid,
+    )
     aged_ok = (
         aged["rc"] == 0
         and not aged["timed_out"]
         and aged_rows is not None
-        and p1.pid not in aged_rows
-        and p2.pid not in aged_rows
-        and p6.pid not in aged_rows
-        and p9.pid not in aged_rows
+        and all(pid not in aged_rows for pid in fresh_pids)
     )
     emit(
         "P5",
         aged_ok,
-        "fresh P1/P2/P6/P9 excluded"
+        "fresh residue workers excluded"
         if aged_ok
         else "--min-age retained a fresh worker ({})".format(aged_error),
     )
 
     p6_row = rows.get(p6.pid) if rows is not None else None
-    p6_cmd = p6_row["cmd"] if p6_row else ""
-    p6_ok = (
-        usable
-        and complete_record(p6_row)
-        and p6_row["reason"] == "argv-path-gone:" + p6_path
-        and bool(p6_cmd)
-        and CANARY not in p6_cmd
-        and bool(REDACTION.search(p6_cmd))
-    )
+    p6_ok = usable and redacted_argv_row(p6_row, p6_path, CANARY)
     emit(
         "P6",
         p6_ok,
-        "secret-shaped argv redacted" if p6_ok else "missing P6 row or secret not redacted",
+        "password argv redacted" if p6_ok else "missing P6 row or secret not redacted",
     )
 
-    alive = all(proc_alive(proc) for proc in (p1, p2, p3, p6, p9, p10))
-    emit("P7", alive, "all fixture workers remain alive" if alive else "census signaled a fixture worker")
+    signal_trace_path = scratch / "signal-syscalls.trace"
+    signal_trace_path.touch()
+    traced = run_tool(tool, [], trace_path=signal_trace_path)
+    traced_rows, traced_error = parse_table(traced["out"], boot_id)
+    observed_signals = signal_syscalls(signal_trace_path)
+    workers_alive = all(proc_alive(proc) for proc in fixture_workers)
+    p7_ok = (
+        base_ok(traced, traced_rows)
+        and observed_signals == []
+        and workers_alive
+    )
+    if observed_signals is None:
+        p7_detail = "strace output unreadable"
+    elif observed_signals:
+        p7_detail = "strace observed signal syscall: {}".format(observed_signals[0])
+    elif not workers_alive:
+        p7_detail = "fixture worker exited during traced census"
+    elif not base_ok(traced, traced_rows):
+        p7_detail = "traced census failed ({})".format(result_context(traced, traced_error))
+    else:
+        p7_detail = "strace observed no signal syscalls; fixture workers alive"
+    emit("P7", p7_ok, p7_detail)
 
     bad = run_tool(tool, ["--r18-invalid-option"])
     p8_ok = bad["rc"] == 2 and not bad["timed_out"]
@@ -489,7 +653,103 @@ def run():
         else "starttime mismatch reported={!r} stat={!r}".format(reported_starttime, expected_starttime),
     )
 
-    print("SUMMARY\ttotal=11\tfailed={}".format(FAILURES))
+
+    p12_ok = (
+        usable
+        and p12.pid not in rows
+        and inode_matches("/proc/{}/cwd".format(p12.pid), p12_path)
+    )
+    emit("P12", p12_ok, "live literal cwd suffix omitted" if p12_ok else "live literal cwd suffix listed")
+
+    p13_result = run_tool(tool, ["--prefix", str(p13_dir)])
+    p13_rows, p13_error = parse_table(p13_result["out"], boot_id)
+    p13_ok = (
+        p13_result["rc"] == 0
+        and not p13_result["timed_out"]
+        and p13_rows is not None
+        and p13.pid not in p13_rows
+        and inode_matches("/proc/{}/fd/1".format(p13.pid), p13_path)
+    )
+    emit(
+        "P13",
+        p13_ok,
+        "live literal fd suffix omitted"
+        if p13_ok
+        else "literal fd listed or custom-prefix census failed ({})".format(
+            result_context(p13_result, p13_error)
+        ),
+    )
+
+    p14_row = rows.get(p14.pid) if rows is not None else None
+    p14_ok = usable and redacted_argv_row(p14_row, bearer_path, BEARER_CANARY)
+    emit("P14", p14_ok, "Authorization Bearer argv redacted" if p14_ok else "Bearer value not redacted")
+
+    p15_row = rows.get(p15.pid) if rows is not None else None
+    p15_ok = usable and redacted_argv_row(p15_row, aws_path, AWS_CANARY)
+    emit("P15", p15_ok, "AWS-shaped argv redacted" if p15_ok else "AWS-shaped value not redacted")
+
+    p16_row = rows.get(p16.pid) if rows is not None else None
+    p16_ok = usable and redacted_argv_row(p16_row, slack_path, SLACK_CANARY)
+    emit("P16", p16_ok, "Slack-shaped argv redacted" if p16_ok else "Slack-shaped value not redacted")
+
+    sibling = run_tool(tool, ["--prefix", str(prefix_root)])
+    sibling_rows, sibling_error = parse_table(sibling["out"], boot_id)
+    p17_ok = (
+        sibling["rc"] == 0
+        and not sibling["timed_out"]
+        and sibling_rows is not None
+        and p17.pid not in sibling_rows
+        and not Path(p17_path).exists()
+        and prefix_root.is_dir()
+    )
+    emit(
+        "P17",
+        p17_ok,
+        "similarly prefixed sibling excluded"
+        if p17_ok
+        else "sibling prefix matched ({})".format(result_context(sibling, sibling_error)),
+    )
+
+    p18_row = rows.get(p18.pid) if rows is not None else None
+    p18_ok = (
+        usable
+        and complete_record(p18_row)
+        and p18_row["reason"] == "cwd-deleted"
+        and p18_cwd_link.endswith(" (deleted)")
+        and not Path(p18_path).exists()
+        and not Path(p18_fd_path).exists()
+    )
+    p18_detail = (
+        "cwd wins over argv and fd"
+        if p18_ok
+        else "wanted=cwd-deleted got={!r} argv_gone={} fd_gone={} cwd_deleted={}".format(
+            p18_row["reason"] if p18_row else None,
+            not Path(p18_path).exists(),
+            not Path(p18_fd_path).exists(),
+            p18_cwd_link.endswith(" (deleted)"),
+        )
+    )
+    emit("P18", p18_ok, p18_detail)
+
+    p19_row = rows.get(p19.pid) if rows is not None else None
+    p19_ok = (
+        usable
+        and complete_record(p19_row)
+        and p19_row["reason"] == "argv-path-gone:" + p19_path
+        and not Path(p19_fd_path).exists()
+        and os.path.isdir("/proc/{}/cwd".format(p19.pid))
+    )
+    p19_detail = (
+        "argv wins over fd"
+        if p19_ok
+        else "wanted=argv-path-gone got={!r} fd_gone={} cwd_live={}".format(
+            p19_row["reason"] if p19_row else None,
+            not Path(p19_fd_path).exists(),
+            os.path.isdir("/proc/{}/cwd".format(p19.pid)),
+        )
+    )
+    emit("P19", p19_ok, p19_detail)
+    print("SUMMARY\ttotal=19\tfailed={}".format(FAILURES))
     return 1 if FAILURES else 0
 
 

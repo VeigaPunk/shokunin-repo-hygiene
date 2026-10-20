@@ -1,0 +1,131 @@
+diff --git c/census/round-18/run-matrix.py w/census/round-18/run-matrix.py
+index 93b0bb6..477f794 100755
+--- c/census/round-18/run-matrix.py
++++ w/census/round-18/run-matrix.py
+@@ -140,26 +140,37 @@ def kill_session(session_id: int) -> list[dict]:
+     return killed
+ 
+ 
+-def leftover_processes(prefix: str) -> list[int]:
+-    """Count same-uid argv matches after session cleanup; never signal them."""
++def leftover_processes(prefix: str) -> list[dict]:
++    """Snapshot argv-prefix matches as (PID, start-time) identities."""
+     needle = prefix.encode()
+     try:
+         entries = list(os.scandir("/proc"))
+     except OSError:
+         return []
+-    pids = []
++    processes = []
+     for entry in entries:
+         if not entry.name.isdecimal():
+             continue
++        pid = int(entry.name)
+         try:
+             if entry.stat().st_uid != os.getuid():
+                 continue
++            info_before = process_info(pid)
++            if not info_before:
++                continue
+             argv = Path(entry.path, "cmdline").read_bytes()
++            info_after = process_info(pid)
+         except OSError:
+             continue
+-        if needle in argv:
+-            pids.append(int(entry.name))
+-    return sorted(pids)
++        if needle in argv and info_after == info_before:
++            processes.append({"pid": pid, "start_time": info_after[1]})
++    return sorted(processes, key=lambda process: process["pid"])
++
++
++def new_processes(before: list[dict], after: list[dict]) -> list[dict]:
++    prior = {(process["pid"], process["start_time"]) for process in before}
++    return [process for process in after
++            if (process["pid"], process["start_time"]) not in prior]
+ 
+ 
+ def run(cmd: list[str], timeout: int = 900
+@@ -198,25 +209,28 @@ def run(cmd: list[str], timeout: int = 900
+ 
+ def suite(fixture: Path, tool: Path, selector: str,
+           temp_prefix: str) -> dict:
++    preexisting = leftover_processes(temp_prefix)
+     if not fixture.is_file():
+         return {
+             "rc": None, "total": None, "failed": None, "cases": {},
+             "valid": False, "ran": False,
+             "stderr_tail": [f"missing fixture: {fixture}"],
+             "session_cleanup": {"session_id": None, "killed": []},
++            "preexisting_leftover_procs": preexisting,
++            "preexisting_leftover_procs_count": len(preexisting),
+             "leftover_procs": [], "leftover_procs_count": 0,
+         }
+ 
+     rc, stdout, stderr, started, timed_out, session = run(
+         [sys.executable, str(fixture), selector, str(tool)])
+-    leftovers = leftover_processes(temp_prefix)
++    leftovers = new_processes(preexisting, leftover_processes(temp_prefix))
+     cases: dict[str, dict] = {}
+     total = failed = None
+     for line in stdout.splitlines():
+         match = CASE_RE.match(line)
+         if match:
+             cases[match.group(1)] = {
+-                "verdict": match.group(2), "detail": match.group(3)[:300],
++                "verdict": match.group(2), "detail": match.group(3),
+             }
+         match = SUMMARY_RE.match(line)
+         if match:
+@@ -235,6 +249,8 @@ def suite(fixture: Path, tool: Path, selector: str,
+         "valid": valid, "ran": started and not timed_out,
+         "stderr_tail": stderr.strip().splitlines()[-3:],
+         "session_cleanup": session,
++        "preexisting_leftover_procs": preexisting,
++        "preexisting_leftover_procs_count": len(preexisting),
+         "leftover_procs": leftovers,
+         "leftover_procs_count": len(leftovers),
+     }
+@@ -332,7 +348,7 @@ def main() -> int:
+               file=sys.stderr)
+         return 1
+     try:
+-        arms = list(ARMS) + [("changed", args.changed)]
++        arms = list(ARMS) + [("changed", changed_rev)]
+         for arm_name, revision in arms:
+             tool = scratch / arm_name / "tools" / "souji-census.sh"
+             tool.parent.mkdir(parents=True)
+@@ -340,8 +356,9 @@ def main() -> int:
+                 shutil.copyfile(LANE / "tools/souji-census.sh", tool)
+                 full_revision = "WORKTREE"
+             else:
+-                resolved = git("rev-parse", "--verify", "--end-of-options",
+-                               f"{revision}^{{commit}}").strip()
++                resolved = (revision if arm_name == "changed" else
++                            git("rev-parse", "--verify", "--end-of-options",
++                                f"{revision}^{{commit}}").strip())
+                 tool.write_bytes(subprocess.run(
+                     ["git", "-C", str(LANE), "show",
+                      f"{resolved}:tools/souji-census.sh"],
+@@ -372,9 +389,11 @@ def main() -> int:
+                 "ran": started and not timed_out,
+             }
+ 
++            selftest_preexisting = leftover_processes(SELFTEST_PREFIX)
+             rc, selftest_out, selftest_err, started, timed_out, session = run(
+                 ["bash", str(tool), "--selftest"], timeout=600)
+-            selftest_leftovers = leftover_processes(SELFTEST_PREFIX)
++            selftest_leftovers = new_processes(
++                selftest_preexisting, leftover_processes(SELFTEST_PREFIX))
+             selftest_match = None
+             for line in selftest_out.splitlines() + selftest_err.splitlines():
+                 selftest_match = SELFTEST_RE.match(line) or selftest_match
+@@ -387,6 +406,8 @@ def main() -> int:
+                 "ran": started and not timed_out and selftest_found,
+                 "stderr_tail": selftest_err.strip().splitlines()[-3:],
+                 "session_cleanup": session,
++                "preexisting_leftover_procs": selftest_preexisting,
++                "preexisting_leftover_procs_count": len(selftest_preexisting),
+                 "leftover_procs": selftest_leftovers,
+                 "leftover_procs_count": len(selftest_leftovers),
+             }

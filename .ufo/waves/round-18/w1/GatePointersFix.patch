@@ -1,0 +1,527 @@
+diff --git c/tools/souji-landing-gate.py w/tools/souji-landing-gate.py
+index fd976ec..662ae93 100755
+--- c/tools/souji-landing-gate.py
++++ w/tools/souji-landing-gate.py
+@@ -38,8 +38,8 @@ Output: one TSV line per finding `ID\tpath\tdetail` (sorted), then
+ For round 18 and later, `--json` also carries a `fleet` list for citation
+ paths found only under optional `--fleet-root`; those are not findings.
+ The JSON summary adds `checked_ptrs` (expanded citation candidates),
+-`ptr_exempt` (exempted citation occurrences), and `ptr_fleet` (fleet-only
+-citation occurrences).
++`ptr_exempt` (unique used rows for citations or exact-placeholder records),
++and `ptr_fleet` (fleet-only citation occurrences).
+ 
+ Per-branch execution counts (r17): `checked_reg` counts registry-cited
+ script parses at REV, `checked_changed` counts scripts added/modified in
+@@ -119,16 +119,21 @@ ROOT_PREFIXES = ("tools/", "tests/", "census/", "corpus/")
+ EXPECTED_JSON_RE = re.compile(r"tests/fixtures/[^/]+-frozen/expected\.json$")
+ SCRIPT_EXT_RE = re.compile(r"\.(?:sh|py)$")
+ SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+-POINTER_ROOTS = ("census/", "tests/", "tools/", "corpus/", ".ufo/waves/")
++POINTER_ROOTS = (
++    "census/", "tests/", "tools/", "corpus/", ".ufo/waves/",
++    ".ufo/quarantine/",
++)
+ POINTER_EXEMPTIONS_PATH = "corpus/pointer-exemptions.tsv"
+ POINTER_PATH_RE = re.compile(
+     r"(?<![A-Za-z0-9_./<>*])"
+-    r"(?:(?:\.\./)+)?"
+-    r"(?:census|tests|tools|corpus|\.ufo/waves)/"
++    r"(?:(?:\.\./)+|\./)?"
++    r"(?:census|tests|tools|corpus|\.ufo/waves|\.ufo/quarantine)/"
+     r"""[^\s`"'()\[\]]+"""
+ )
+ ROUND_RANGE_RE = re.compile(r"round-\{?(\d+)\.\.(\d+)\}?", re.IGNORECASE)
+ ROUND_PLACEHOLDER_RE = re.compile(r"round-N", re.IGNORECASE)
++# The only measured-commit exemption is bound to the known synthetic r14 value.
++MEASURED_COMMIT_PLACEHOLDER = "0123456789abcdef0123456789abcdef01234567"
+ 
+ FINDING_IDS = (
+     "LG-PARSE-REG",
+@@ -593,7 +598,10 @@ def check_frozen_pins(root, tree, rev, round_no, exemptions=()):
+                 and "measured_commit" in record
+                 and not measured_ok
+             ):
+-                if record_repo in exemptions:
++                if (
++                    record_repo in exemptions
++                    and measured == MEASURED_COMMIT_PLACEHOLDER
++                ):
+                     used_exemptions.add(record_repo)
+                 else:
+                     findings.append(
+@@ -642,28 +650,25 @@ def check_frozen_pins(root, tree, rev, round_no, exemptions=()):
+ 
+ 
+ def _round_heading_number(line):
+-    if not HEADING_RE.match(line):
++    if not re.match(r"^##\s", line):
+         return None
+     match = re.search(r"\bround(?:-|\s+)(\d+)\b", line, re.IGNORECASE)
+     return int(match.group(1)) if match else None
+ 
+ 
+ def _round_log_lines(text, round_no):
+-    lines = text.splitlines()
+-    start = None
+-    for index, line in enumerate(lines):
++    """Collect all H2 sections numbered round_no, through same-round entries."""
++    selected = []
++    in_round = False
++    for line_no, line in enumerate(text.splitlines(), 1):
+         number = _round_heading_number(line)
+         if number == round_no:
+-            start = index
+-            break
+-    if start is None:
+-        return []
+-    end = len(lines)
+-    for index in range(start + 1, len(lines)):
+-        if _round_heading_number(lines[index]) is not None:
+-            end = index
+-            break
+-    return [(index + 1, lines[index]) for index in range(start, end)]
++            in_round = True
++        elif number is not None:
++            in_round = False
++        if in_round:
++            selected.append((line_no, line))
++    return selected
+ 
+ 
+ def _expand_braces(path):
+@@ -699,44 +704,59 @@ def _expand_round_ranges(path):
+ 
+ def _trim_pointer_token(token):
+     token = token.rstrip(".,;:!?")
+-    while token.endswith("}") and token.count("}") > token.count("{"):
+-        token = token[:-1]
+-    # `path:12`, `path:12-14` and comma lists `path:2,3,44` / `path:73,74-78`
+-    # are line references, not part of the path (r18 wave-1 RevC2Grammar).
+     token = re.sub(r":\d+(?:-\d+)?(?:,\d+(?:-\d+)?)*$", "", token)
+     return token
+ 
+ 
+ def _normalize_pointer_path(path, source):
+-    if path.startswith("../"):
+-        path = posixpath.normpath(
++    if path.startswith(("../", "./")):
++        return posixpath.normpath(
+             posixpath.join(posixpath.dirname(source), path)
+         )
++    if any(component in (".", "..") for component in path.split("/")):
++        return posixpath.normpath(path)
+     return path
+ 
+ 
++def _balanced_braces(token):
++    depth = 0
++    for char in token:
++        if char == "{":
++            depth += 1
++        elif char == "}":
++            depth -= 1
++            if depth < 0:
++                return False
++    return depth == 0
++
++
+ def _pointer_paths(text, source):
+     for match in POINTER_PATH_RE.finditer(text):
+-        raw = _trim_pointer_token(match.group(0))
+-        if not raw or any(char in raw for char in "<>*"):
++        raw = match.group(0)
++        if (
++            not raw
++            or "…" in raw
++            or any(char in raw for char in "<>*")
++            or ROUND_PLACEHOLDER_RE.search(raw)
++            or not _balanced_braces(raw)
++        ):
+             continue
+-        if ROUND_PLACEHOLDER_RE.search(raw):
+-            continue
+-        # A comma outside braces separates ordinary adjacent citations; commas
+-        # inside one simple brace expression remain part of that expression.
++        # A comma outside braces separates citations; each member must lose
++        # its own :line suffix before path resolution.
+         parts = []
+         depth = 0
+         start = 0
+         for index, char in enumerate(raw):
+             if char == "{":
+                 depth += 1
+-            elif char == "}" and depth:
++            elif char == "}":
+                 depth -= 1
+             elif char == "," and depth == 0:
+                 parts.append(raw[start:index])
+                 start = index + 1
+         parts.append(raw[start:])
+         for part in parts:
++            part = _trim_pointer_token(part)
+             if not part:
+                 continue
+             normalized = _normalize_pointer_path(part, source)
+@@ -746,7 +766,10 @@ def _pointer_paths(text, source):
+             ):
+                 continue
+             for braced in _expand_braces(normalized):
+-                yield from _expand_round_ranges(braced)
++                for expanded in _expand_round_ranges(braced):
++                    expanded = _trim_pointer_token(expanded)
++                    if expanded:
++                        yield expanded
+ 
+ 
+ def _safe_pointer_path(path):
+@@ -837,18 +860,25 @@ def check_pointers(root, tree, rev, round_no, fleet_root=None, exemptions=()):
+     findings = []
+     fleet = []
+     used_exemptions = set()
+-    checked_ptrs = ptr_exempt = ptr_fleet = 0
++    checked_ptrs = ptr_fleet = 0
+     for source, line_no, line in source_lines:
+         for path in _pointer_paths(line, source):
+             checked_ptrs += 1
+             if _path_exists_in_tree(path, tree_paths):
+                 continue
+-            # A `../`-normalized citation that leaves the lane by exactly one
+-            # level names the fleet root (the lane is `<fleet>/<id>-shokunin`);
+-            # it is `fleet` when it resolves there, never a lane pass.
+-            fleet_path = path[3:] if path.startswith("../") else path
++            if path in exemptions:
++                used_exemptions.add(path)
++                continue
++            # Only an explicit one-level escape or the known hyaku report
++            # prefix may resolve under the separately supplied fleet root.
++            fleet_path = None
++            if path.startswith("../") and not path.startswith("../../"):
++                fleet_path = path[3:]
++            elif path.startswith(".ufo/waves/hyaku/"):
++                fleet_path = path
+             if (
+-                fleet_root is not None
++                fleet_path is not None
++                and fleet_root is not None
+                 and _safe_pointer_path(fleet_path)
+                 and os.path.exists(os.path.join(fleet_root, fleet_path))
+             ):
+@@ -862,10 +892,6 @@ def check_pointers(root, tree, rev, round_no, fleet_root=None, exemptions=()):
+                 )
+                 ptr_fleet += 1
+                 continue
+-            if path in exemptions:
+-                used_exemptions.add(path)
+-                ptr_exempt += 1
+-                continue
+             findings.append(
+                 (
+                     "LG-DANGLING-PTR",
+@@ -873,7 +899,7 @@ def check_pointers(root, tree, rev, round_no, fleet_root=None, exemptions=()):
+                     "%s:%d cites path absent at %s" % (source, line_no, rev[:12]),
+                 )
+             )
+-    return findings, fleet, checked_ptrs, ptr_exempt, ptr_fleet, used_exemptions
++    return findings, fleet, checked_ptrs, ptr_fleet, used_exemptions
+ 
+ 
+ 
+@@ -975,7 +1001,6 @@ def evaluate(root, rev, round_no, base=None, fleet_root=None):
+                 pointer_findings,
+                 fleet,
+                 checked_ptrs,
+-                ptr_exempt,
+                 ptr_fleet,
+                 pointer_exemptions_used,
+             ) = check_pointers(
+@@ -985,9 +1010,9 @@ def evaluate(root, rev, round_no, base=None, fleet_root=None):
+             findings.extend(pointer_findings)
+             result["fleet"] = fleet
+             result["checked_ptrs"] = checked_ptrs
+-            result["ptr_exempt"] = ptr_exempt
+             result["ptr_fleet"] = ptr_fleet
+             used_exemptions = measured_exemptions | pointer_exemptions_used
++            result["ptr_exempt"] = len(used_exemptions)
+             for path in sorted(pointer_exemptions - used_exemptions):
+                 findings.append(
+                     (
+@@ -1198,6 +1223,28 @@ def _frozen_world(files):
+     return files
+ 
+ 
++def _r14_measured_world(files, measured):
++    """Add one frozen r14-shaped record with a caller-selected commit value."""
++    frozen_dir = "tests/fixtures/r14-cache-frozen"
++    data_path = "%s/dependency.txt" % frozen_dir
++    record_path = "%s/record.json" % frozen_dir
++    expected_path = "%s/expected.json" % frozen_dir
++    data = "synthetic dependency\n"
++    record = json.dumps({"measured_commit": measured}, indent=2)
++    files[data_path] = data
++    files[record_path] = record
++    files[expected_path] = json.dumps(
++        {
++            "files": {"dependency.txt": sha256(data.encode())},
++            "record": "record.json",
++            "record_sha256": sha256(record.encode()),
++            "verdict": "clean",
++        },
++        indent=2,
++    )
++    return files
++
++
+ def run_selftest():
+     top = tempfile.mkdtemp(prefix="souji-landing-gate-selftest-", dir="/var/tmp")
+     passed = failed = 0
+@@ -1315,7 +1362,7 @@ def run_selftest():
+             expect_paths=["tools/missing.sh"],
+         )
+ 
+-        # A documented :line suffix is removed before resolution.
++        # A :line suffix is removed before resolution.
+         f = _base_files()
+         f["SKILL.md"] += "`corpus/missing.md:42:`.\n"
+         repo, g, (rev,) = build("pointer-line-suffix", f)
+@@ -1325,11 +1372,33 @@ def run_selftest():
+             expect_paths=["corpus/missing.md"],
+         )
+ 
++        # Comma-separated citations trim each member's own line suffix.
++        f = _base_files()
++        f["SKILL.md"] += "`tools/good.sh:12,tools/good.py:20`.\n"
++        repo, g, (rev,) = build("pointer-comma-line-suffix", f)
++        check("pointer-comma-line-suffix", repo, 0, rev=rev, round_no=18)
++
++        # Brace members have their line suffixes trimmed after expansion.
++        f = _base_files()
++        f["SKILL.md"] += "`tools/{good.sh:12,good.py:20}`.\n"
++        repo, g, (rev,) = build("pointer-brace-line-suffix", f)
++        check("pointer-brace-line-suffix", repo, 0, rev=rev, round_no=18)
++
++        # Interior dot segments and a source-relative ./ prefix normalize.
++        f = _base_files()
++        f["SKILL.md"] += "`corpus/../tools/good.sh` `./tools/good.py`.\n"
++        repo, g, (rev,) = build("pointer-interior-dot-segments", f)
++        check(
++            "pointer-interior-dot-segments", repo, 0,
++            rev=rev, round_no=18,
++        )
++
+         # Placeholder and wildcard citations are intentionally not findings.
+         f = _base_files()
+         f["SKILL.md"] += (
+             "`tools/<script>.py` `census/round-N/results.json` "
+-            "`tests/fixtures/*.sh`.\n"
++            "`tests/fixtures/*.sh` `census/round-18/live-pairs/…` "
++            "`census/round-18/{seat-01..64.json, approvals-*.tsv,`.\n"
+         )
+         repo, g, (rev,) = build("pointer-placeholder-skip", f)
+         check("pointer-placeholder-skip", repo, 0, rev=rev, round_no=18)
+@@ -1341,29 +1410,61 @@ def run_selftest():
+         repo, g, (rev,) = build("pointer-round-range", f)
+         check("pointer-round-range", repo, 0, rev=rev, round_no=18)
+ 
+-        # LOG.md is scoped from the first target-round heading up to the next
+-        # round heading; adjacent historical/future sections are not scanned.
++        # All same-round H2 sections are scanned through later corrections;
++        # H3 headings do not end the union and the next-round H2 does.
+         f = _base_files()
+         f["LOG.md"] = (
+             "## Round 17\n`corpus/lessons/missing-17.md`\n\n"
+             "## Round 18\n`corpus/lessons/round-18.md`\n\n"
++            "### correction notes\n`corpus/lessons/round-18.md`\n\n"
++            "## Round 18 correction\n"
++            "`census/round-18/log-correction-missing.json`\n\n"
+             "## Round 19\n`corpus/lessons/missing-19.md`\n"
+         )
+         repo, g, (rev,) = build("pointer-log-round-section", f)
+-        check("pointer-log-round-section", repo, 0, rev=rev, round_no=18)
++        check(
++            "pointer-log-round-section", repo, 1, ("LG-DANGLING-PTR",),
++            rev=rev, round_no=18, expect_n=1,
++            expect_paths=["census/round-18/log-correction-missing.json"],
++        )
+ 
+         # A committed path<TAB>reason exemption suppresses that exact path.
+         f = _base_files()
+-        f["SKILL.md"] += "`corpus/intentional-runtime-state`.\n"
++        f["SKILL.md"] += (
++            "`corpus/intentional-runtime-state` "
++            "`corpus/intentional-runtime-state`.\n"
++        )
+         f["corpus/pointer-exemptions.tsv"] = (
+             "corpus/intentional-runtime-state\truntime-created path\n"
+         )
+         repo, g, (rev,) = build("pointer-exemption", f)
+         check(
+             "pointer-exemption", repo, 0, rev=rev, round_no=18,
++            expect_counts={"checked_ptrs": 6, "ptr_exempt": 1, "ptr_fleet": 0},
++        )
++
++        # The new quarantined path root is scanned and can be reason-exempted.
++        f = _base_files()
++        f["SKILL.md"] += "Stub: `.ufo/quarantine/round-18/empty-stub`.\n"
++        f["corpus/pointer-exemptions.tsv"] = (
++            ".ufo/quarantine/round-18/empty-stub\tdeliberately empty stub\n"
++        )
++        repo, g, (rev,) = build("quarantine-path-exemption", f)
++        check(
++            "quarantine-path-exemption", repo, 0, rev=rev, round_no=18,
+             expect_counts={"checked_ptrs": 5, "ptr_exempt": 1, "ptr_fleet": 0},
+         )
+ 
++        # Without an exemption the same absent quarantine path is a finding.
++        f = _base_files()
++        f["SKILL.md"] += "Stub: `.ufo/quarantine/round-18/absent-stub`.\n"
++        repo, g, (rev,) = build("quarantine-path-absent", f)
++        check(
++            "quarantine-path-absent", repo, 1, ("LG-DANGLING-PTR",),
++            rev=rev, round_no=18, expect_n=1,
++            expect_paths=[".ufo/quarantine/round-18/absent-stub"],
++        )
++
+         # Exemptions that are unused or resolve in the lane are stale.
+         f = _base_files()
+         f["corpus/pointer-exemptions.tsv"] = (
+@@ -1418,13 +1519,23 @@ def run_selftest():
+ 
+         # Fleet-only files are reported as fleet data, not as findings.
+         f = _base_files()
+-        f["SKILL.md"] += "`corpus/fleet-only.md`.\n"
++        f["corpus/README.md"] = (
++            "Fleet report `../../.ufo/waves/hyaku/fleet-only.md`.\n"
++        )
++        f["corpus/knowledge/fleet.md"] = (
++            "Fleet report `.ufo/waves/hyaku/fleet-direct.md`.\n"
++        )
+         repo, g, (rev,) = build("pointer-fleet-only", f)
+         fleet_root = os.path.join(top, "pointer-fleet-root")
+-        _write_file(fleet_root, "corpus/fleet-only.md", "fleet file\n")
++        _write_file(fleet_root, ".ufo/waves/hyaku/fleet-only.md", "relative\n")
++        _write_file(fleet_root, ".ufo/waves/hyaku/fleet-direct.md", "direct\n")
+         check(
+             "pointer-fleet-only", repo, 0, rev=rev, round_no=18,
+-            fleet_root=fleet_root, expect_fleet=["corpus/fleet-only.md"],
++            fleet_root=fleet_root,
++            expect_fleet=[
++                ".ufo/waves/hyaku/fleet-direct.md",
++                ".ufo/waves/hyaku/fleet-only.md",
++            ],
+         )
+ 
+         fleet_json = os.path.join(top, "pointer-fleet-only.json")
+@@ -1443,19 +1554,27 @@ def run_selftest():
+                 fleet_payload = json.load(fh)
+         except (OSError, ValueError):
+             fleet_payload = {}
+-        expected_fleet = [{
+-            "classification": "fleet",
+-            "path": "corpus/fleet-only.md",
+-            "source": "SKILL.md",
+-            "line": 6,
+-        }]
++        expected_fleet = [
++            {
++                "classification": "fleet",
++                "path": ".ufo/waves/hyaku/fleet-only.md",
++                "source": "corpus/README.md",
++                "line": 1,
++            },
++            {
++                "classification": "fleet",
++                "path": ".ufo/waves/hyaku/fleet-direct.md",
++                "source": "corpus/knowledge/fleet.md",
++                "line": 1,
++            },
++        ]
+         ok = (
+             proc.returncode == 0
+             and fleet_payload.get("findings") == []
+             and fleet_payload.get("fleet") == expected_fleet
+-            and fleet_payload.get("summary", {}).get("checked_ptrs") == 5
++            and fleet_payload.get("summary", {}).get("checked_ptrs") == 6
+             and fleet_payload.get("summary", {}).get("ptr_exempt") == 0
+-            and fleet_payload.get("summary", {}).get("ptr_fleet") == 1
++            and fleet_payload.get("summary", {}).get("ptr_fleet") == 2
+         )
+         if ok:
+             passed += 1
+@@ -1471,6 +1590,32 @@ def run_selftest():
+                 )
+             )
+ 
++        # A committed lane object takes precedence over a same-path fleet
++        # object, and does not increment the fleet classification counter.
++        f = _base_files()
++        f["SKILL.md"] += "`corpus/shared.md`.\n"
++        f["corpus/shared.md"] = "lane file\n"
++        repo, g, (rev,) = build("pointer-lane-fleet-collision", f)
++        collision_fleet = os.path.join(top, "pointer-collision-fleet")
++        _write_file(collision_fleet, "corpus/shared.md", "fleet file\n")
++        check(
++            "pointer-lane-fleet-collision", repo, 0, rev=rev, round_no=18,
++            fleet_root=collision_fleet, expect_fleet=[],
++            expect_counts={"checked_ptrs": 5, "ptr_fleet": 0},
++        )
++
++        # Exact exemption membership must not match a longer shared prefix.
++        f = _base_files()
++        f["SKILL.md"] += "`corpus/runtime` `corpus/runtime-extra`.\n"
++        f["corpus/pointer-exemptions.tsv"] = "corpus/runtime\texact path\n"
++        repo, g, (rev,) = build("pointer-exemption-prefix", f)
++        check(
++            "pointer-exemption-prefix", repo, 1, ("LG-DANGLING-PTR",),
++            rev=rev, round_no=18, expect_n=1,
++            expect_paths=["corpus/runtime-extra"],
++            expect_counts={"checked_ptrs": 6, "ptr_exempt": 1},
++        )
++
+         # Round 17 replays do not acquire the round-18 pointer finding.
+         f = _base_files()
+         f["SKILL.md"] += "`census/round-17/missing.json`.\n"
+@@ -1486,15 +1631,36 @@ def run_selftest():
+             ("LG-FROZEN-MEASURED",), rev=rev, round_no=18, expect_n=1,
+         )
+ 
+-        # An exception may suppress a synthetic unresolvable frozen record.
+-        f = _frozen_world(_base_files())
+-        f["corpus/pointer-exemptions.tsv"] = (
+-            "tests/fixtures/r9-frozen/record.json\tsynthetic measured_commit\n"
++        # Only the exact historical synthetic placeholder is exemptible.
++        record_path = "tests/fixtures/r14-cache-frozen/record.json"
++        f = _r14_measured_world(
++            _base_files(), MEASURED_COMMIT_PLACEHOLDER
+         )
+-        repo, g, (rev,) = build("measured-record-exemption", f)
++        f["corpus/pointer-exemptions.tsv"] = (
++            "%s\tr14 synthetic placeholder\n" % record_path
++        )
++        repo, g, (rev,) = build("measured-record-placeholder-exemption", f)
+         check(
+-            "measured-record-exemption", repo, 0, rev=rev, round_no=18,
+-            expect_n=0,
++            "measured-record-placeholder-exemption", repo, 0,
++            rev=rev, round_no=18, expect_n=0,
++            expect_counts={"ptr_exempt": 1},
++        )
++
++        # A different dangling value at the same record path remains a
++        # measured finding and makes the placeholder-only exemption stale.
++        f = _r14_measured_world(_base_files(), "0" * 40)
++        f["corpus/pointer-exemptions.tsv"] = (
++            "%s\tr14 synthetic placeholder\n" % record_path
++        )
++        repo, g, (rev,) = build("measured-record-wrong-value", f)
++        check(
++            "measured-record-wrong-value", repo, 1,
++            ("LG-DANGLING-PTR-EXEMPT-STALE", "LG-FROZEN-MEASURED"),
++            rev=rev, round_no=18, expect_n=2,
++            expect_paths=[
++                "tests/fixtures/r14-cache-frozen/expected.json",
++                record_path,
++            ],
+         )
+ 
+         # CASE clean-pass: everything parses, pins match, STATUS benign.

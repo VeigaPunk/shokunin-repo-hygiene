@@ -1,0 +1,26 @@
+STATUS: DONE — Static review of `tools/souji-proc-census.sh` at `5efb519f00075d958c3d1109ef6fcb24c487eb87` completed; found prefix-scope and age-boundary defects.
+
+## Attacked claim
+
+C3 — list-only residue census (`tools/souji-proc-census.sh`), especially prefix filtering, age/starttime reporting, and `/proc` parsing.
+
+## Findings (by severity)
+
+- **P2 — `--prefix` is not applied to deleted working directories.** `tools/souji-proc-census.sh:23-24` documents `--prefix DIR` as the scratch-path prefix to inspect. The argv and FD detectors check `PREFIXES` (`:224-230`, `:251-257`), but the cwd branch sets `cwd-deleted` solely from the ` (deleted)` suffix (`:326-328`), without checking any selected prefix. Thus a same-UID process with a deleted cwd outside a caller's explicit prefix is still reported. The fixture exercises prefix selection for argv paths (P4, `tests/fixtures/r18-proc-census.sh:8`) but does not cover deleted cwd outside the prefix. **Smallest fix:** strip the procfs ` (deleted)` marker and require the cwd path to match one of `PREFIXES` before assigning `cwd-deleted`, while retaining cwd-first reason precedence.
+
+- **P3 — `--min-age` can admit processes younger than its threshold.** `tools/souji-proc-census.sh:286-298` reads integer-second `btime` and integer-second `now_epoch`; `:321-323` then subtracts integer `starttime / CLK_TCK`. These independent truncations do not compute a conservative floor of elapsed process age: the reported age can be nearly two seconds high. A process younger than `--min-age N` can therefore pass the filter near the boundary. **Smallest fix:** derive age from a monotonic uptime value and start ticks, keeping the result rounded down (or otherwise ensure the threshold cannot admit a younger process).
+
+- **P3 — a legal newline in `comm` makes the stat parser silently drop that process.** `tools/souji-proc-census.sh:113` reads `/proc/<pid>/stat` into a single line. Linux permits process names set with `PR_SET_NAME` up to 15 bytes plus NUL, and the [Linux man-pages PR_SET_NAME documentation](https://man7.org/linux/man-pages/man2/PR_SET_NAME.2const.html) imposes no newline restriction. Such a newline inside `comm` terminates this `read` before the real closing `)`, so `parse_proc_stat` rejects the entry at `:115-120`; both census passes can silently omit it. The greedy last-`) ` handling at `:114-120` correctly handles ordinary names containing spaces and `)` but not this case. **Smallest fix:** read the complete stat content while preserving embedded newlines, then parse from its final `) ` delimiter; add a parser case for newline-bearing `comm` if the fixture can construct it.
+
+## Checks and evidence
+
+- Read-only pinned source command: `git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 5efb519f00075d958c3d1109ef6fcb24c487eb87:tools/souji-proc-census.sh`. Relevant observed code: `stat_line` is read with `IFS= read -r` (`:113`); fields after the final `) ` are indexed so `fields[19]` is stat field 22 (`:115-126`); age is computed as described above (`:321-323`); TSV control characters are sanitized for boot ID, wchan, reason, and command (`:182-184`, `:188`, `:275-276`, `:345-351`).
+- Read-only fixture command: `git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 5efb519f00075d958c3d1109ef6fcb24c487eb87:tests/fixtures/r18-proc-census.sh`. Its P4/P10/P11 cases cover argv prefix selection, the top-level-dir boundary, and starttime field 22 (`:8`, `:14-15`, with assertions at `:401-416`, `:471-472`, `:474-489` in the fixture); P5 tests fresh-worker exclusion at `:418-435`, but not the threshold boundary that exposes the rounding issue. The fixture does not cover deleted cwd outside the prefix.
+- `read xd://lsp` returned `No such tool: xd://lsp`; the mounted-device list contains no LSP device. No references/definition/diagnostics checks were available. No grep was used as semantic proof.
+- No census, fixture, selftest, or other lane code was executed; this was a static review as assigned. No tools were installed.
+
+## Residual risk and verification gaps
+
+The parser's final-`) ` extraction and field indices are correct for the usual one-line `/proc/<pid>/stat` format, including spaces and `)` in `comm`; `starttime` is field 22, as the fixture asserts. `top_level_scratch_gone` uses a path-component boundary and the argv/FD branches apply it consistently; P10 checks the intended nested-deletion exclusion. FD scanning is bounded by the number of open descriptors on eligible processes and uses `readlink` per descriptor without spawning a helper per FD; no runtime cost measurement was performed. Vanishing `/proc` entries generally fail closed via `continue`/suppressed read errors (`:303-320`, `:326-344`, `:245-258`), but collection is not atomic: a PID can exit after the second stat identity check at `:315-316`, leaving a partial or stale row if a reason was already observed. No dynamic verification was authorized or performed.
+
+**Verdict: C3 does not fully hold** for explicit prefix scope and exact minimum-age threshold behavior; remaining noted handling is consistent with a best-effort read-only census.
