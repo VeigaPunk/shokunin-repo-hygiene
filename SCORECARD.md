@@ -19,6 +19,15 @@ K5) on F1/F3/F4, SOURCES census mined=16 queued=15; calibration C1's 28/52 → 5
 rule-coverage count, not calibration proof. Details: `corpus/lessons/round-12.md`
 `## Post-review fixes`.
 
+Round-14 provenance clarification: the historical r13 counting/retry command
+above is reproduced at its named measured revision `6f8ee0f`, not against
+the current migrated runner. The installed runner now requires explicit
+`--round N --output census/round-N/<new>.json`, refuses its default invocation,
+and never overwrites existing historical evidence. Its actual C1 reuse
+decisions are exercised by `census/round-14/cache-demonstration.py`; no
+historical JSON is rewritten. R13's original bounded results remain as
+independently adjudicated in `corpus/lessons/round-13-verifier-spotcheck.md`.
+
 ## Capabilities
 
 | name | what it can now do | evidence pointer | first-working round |
@@ -51,13 +60,15 @@ rule-coverage count, not calibration proof. Details: `corpus/lessons/round-12.md
 - **r6–r11 (appended r12):** this section was not updated for rounds 6–11
   (STATE dossier §5.4; lesson row M52). Their claims and verdicts are in
   LOG.md and `corpus/lessons/round-{6..11}.md`.
-- **r14 (planned r13):** comprehensive class-suite re-certification under
-  Q6/Q18 remains separate from declared-fragment integrity and from the
-  built-in smoke suites; certification stays OFF. Revisit the kotodama
-  `.scratch` age/receipt census only as a read-only, metadata-bounded sweep
-  with no content inspection or automatic removal. F2 wider size attribution,
-  unreachable-object accounting and linked common-store aggregation remain
-  frontier. Cross-device quarantine/K5 remains HELD under Q4/Q16.
+- **r15 (planned r14):** calibration remains the lowest legacy-unmapped axis:
+  extend independently digest-bound class evidence only after r14's outside
+  admit/reject sample. Operability: separately exercise an unproved quarantine
+  bound/residue site with isolated red/green evidence, or retain its explicit
+  unproved label. Comprehensive Q6/Q18 class-suite certification stays OFF;
+  do not mistake the local eligibility gate for certification. Wider F2
+  size attribution and unreachable-object accounting remain frontier.
+  Cross-device quarantine/K5 remains HELD under Q4/Q16. No content inspection
+  or automatic removal is authorized.
 
 ## Saturation / stagnation
 

@@ -78,3 +78,16 @@ objects, not recoverable disk space and not removal authorization. F2 as a
 whole stays frontier. Evidence-integrity checking is limited to souji's own
 receipt/certification fragments; it does not become fleet orchestration or
 an independent promotion authority.
+
+## Round 14 boundary clarification
+
+The census must refuse credential-store roots, ancestor roots and known
+aliases before enumeration; this is a refusal fence, not credential hygiene
+or a secret-content scanner. Kagi retains credential operations. Local
+declared-dependency eligibility checks serve souji's own evidence fragments
+and do not infer historical command execution or acquire kumitate's fleet
+orchestration authority. Known namespace checks are not a universal defense
+against hostile bind mounts, hardlinks or concurrent filesystem replacement.
+R13's unexercised quarantine sites remain unproved; deletion certification
+stays OFF and K5 stays HELD. Source and routing rationale:
+`corpus/lessons/round-14.md`; `.ufo/waves/round-14/w1/SiblingOverlap.md`.

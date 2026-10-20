@@ -128,13 +128,16 @@ for the legacy selftests; their historical fallback is not Q4-conformant.
 |---|---|---|---|---|---|---|---|
 | souji-verify | probe | `bash tools/souji-verify.sh <path>...` | 0 clean, SAFE/NOT-SAFE data; 1 failed selftest or could-not-evaluate setup (legacy debt); 2 could-not-evaluate usage | `TMPDIR=/var/tmp bash tools/souji-verify.sh --selftest` | none; no pinned complete id set | read-only targets; isolated selftest under TMPDIR | souji |
 | souji-vault-verify | probe | `bash tools/souji-vault-verify.sh --fallback <path>...` | 0 clean, VERIFIED/NOT-VERIFIED data; 1 failed selftest or could-not-evaluate setup (legacy debt); 2 could-not-evaluate usage | `TMPDIR=/var/tmp SOUJI_CLI_BIN=/bin/false bash tools/souji-vault-verify.sh --selftest` | none; no pinned complete id set | read-only source/vault; isolated selftest under TMPDIR | souji |
-| souji-census | probe | `bash tools/souji-census.sh --root DIR [--compare PREV.tsv]` | 0 clean; 3 failed differential comparison; 1 failed selftest or could-not-evaluate setup (legacy debt); 2 could-not-evaluate usage/malformed baseline | `TMPDIR=/var/tmp bash tools/souji-census.sh --selftest` | caller comparison is unpinned; no pinned complete selftest id set | read-only census; isolated selftest under TMPDIR | souji |
+| souji-census | probe | `bash tools/souji-census.sh --root DIR [--compare PREV.tsv]` | 0 clean; 3 failed differential comparison; 1 failed selftest or could-not-evaluate setup (legacy debt); 2 could-not-evaluate usage/malformed baseline/protected or unsupported Git path (`path-protected`) | `TMPDIR=/var/tmp bash tools/souji-census.sh --selftest` | caller comparison is unpinned; no pinned complete legacy selftest id set | read-only census; compare capture and isolated selftest under `/var/tmp` | souji |
 | souji-quarantine | probe | `bash tools/souji-quarantine.sh --dry-run <repo> <target>...` | 0 clean target outcome; 3 failed/refused/aborted; 4 could-not-evaluate live guard; 1 failed selftest or could-not-evaluate setup (legacy debt); 2 could-not-evaluate usage | `TMPDIR=/var/tmp bash tools/souji-quarantine.sh --selftest` | no complete safety-suite baseline; receipts advisory, certification OFF | dry-run read-only; explicitly authorized action moves targets within owning repo; selftest under TMPDIR | souji |
 | r12-maintenance-guard | gate | `bash tests/fixtures/r12-maintenance-guard.sh` | 0 clean; 1 failed; 2 could-not-evaluate | `bash tests/fixtures/r12-maintenance-guard.sh --selftest` | expected counts and SELFTEST_EXPECTED_IDS in fixture; `tests/results/r12-maintenance-guard.txt` | isolated `/var/tmp/souji-r12-maintenance.*` | souji |
 | souji-cert-evidence | gate | `python3 tools/souji-cert-evidence.py --root PATH --manifest PATH` or `--frozen DIR` | 0 clean declared consistency; 1 failed honest fragment; 2 could-not-evaluate malformed/inconsistent/tampered input | `python3 tools/souji-cert-evidence.py --selftest`; `python3 tests/fixtures/r13-cert-evidence.py` | embedded expected exit/finding ids; `tests/fixtures/r13-cert-frozen/expected.json` pins every input | inputs read-only; selftests isolated `/var/tmp`; never executes recorded commands | souji |
 | souji-repo-structure | probe | `bash tools/souji-repo-structure.sh --repo PATH` | 0 clean metadata emitted; 2 could-not-evaluate usage/repo/promisor; 3 could-not-evaluate unsupported Git; 4 could-not-evaluate config/stderr/command/output | corresponding gate below | no live-data expected baseline | repository reads; capture-only `/var/tmp` directory removed on exit | souji |
 | r13-repo-structure | gate | `bash tests/fixtures/r13-repo-structure.sh --selftest --probe tools/souji-repo-structure.sh` | 0 clean; 1 failed; 2 could-not-evaluate | same `--selftest --probe` command | fixture SELFTEST_EXPECTED_IDS and case expectations; recorded run `census/round-13/verification.json` | isolated `/var/tmp/souji-r13-repo-structure.*` | souji |
 | r13-quarantine-bounds | gate | `bash tests/fixtures/r13-quarantine-bounds.sh [--tool PATH]` | 0 clean; 1 failed case or id set; 2 could-not-evaluate usage/environment | same command, isolated positive/negative controls; baseline red arm uses `--tool` | fixture EXPECTED_IDS and per-case exit/finding/retention assertions; `census/round-13/verification.json` | isolated `/var/tmp/r13-qbounds.*` only | souji |
+| souji-evidence-cache | gate | `python3 tools/souji-evidence-cache.py --root DIR --record PATH [--require REL...]` or `--frozen DIR` | 0 clean/reusable declared dependencies; 1 failed/stale/missing dependency or matched false; 2 could-not-evaluate malformed/legacy/protected/tampered input | `python3 tools/souji-evidence-cache.py --selftest`; external fixture below | literal embedded expected ids; `tests/fixtures/r14-cache-frozen/expected.json` input pins | inputs read-only; isolated selftest `/var/tmp`; never executes a recorded command | souji |
+| r14-evidence-cache | gate | `python3 tests/fixtures/r14-evidence-cache.py [--tool PATH]` | 0 clean; 1 failed assertion; 2 could-not-evaluate missing prerequisite | same default self-invocation fixture; isolated positive/negative CLI calls | literal expected exits/finding ids in fixture; `tests/fixtures/r14-cache-frozen/expected.json` | isolated `/var/tmp/souji-r14-cache-fixture.*`; reads selected gate and committed snapshot | souji |
+| r14-census-boundary | gate | `python3 tests/fixtures/r14-census-boundary.py --tool PATH` | 0 clean; 1 failed case/id-set; 2 could-not-evaluate missing prerequisite/trace/usage | same default self-invocation fixture, synthetic HOME with spy and strace access checks; `--tool` selects paired baseline | fixture EXPECTED_IDS and literal expected exits/finding/access assertions | isolated `/var/tmp/r14-census-boundary.*`; never a real credential-store probe | souji |
 
 Sources for this skill: `corpus/SOURCES.md`; admission bar: `corpus/QUALITY.md`.
 
@@ -175,3 +178,33 @@ Checklist: no maintenance/fetch/rewrite; machine-friendly format; record
 Git version; preserve actual output; never equate reachable-object disk size
 with reclaimable filesystem space. Full scope and failure case:
 `corpus/knowledge/git-repo-structure-readonly.md` (S035/S036/S037).
+
+## Retained evidence and protected census paths (round 14)
+
+Before reusing a previous green result, run
+`python3 tools/souji-evidence-cache.py --root <lane> --record <record.json>`.
+The record declares `name`, boolean `matched`, its own `measured_commit`,
+and nonempty `dependencies` mapping contained relative paths to SHA-256.
+Capture those digests with the original observation and require identical
+before/after bytes; do not manufacture current digests when retaining an old
+result. Exit 0 means only declared-byte eligibility. Exit 1 means stale or
+failed, and exit 2 means malformed/legacy/refused input; neither reuses green.
+An optional repeated `--require <relative-path>` prevents a known minimum
+dependency set from silently disappearing. Preserve the original declared
+revision: no fallback to a file-level revision or current HEAD.
+
+This does not discover omitted/transitive dependencies, bind external binary
+versions or environment, authenticate authors, prove historical execution,
+or certify deletion safety. External mutable checks must run afresh.
+The actual consumer is `census/round-13/run-verification.py`; its historical
+JSON evidence is not rewritten. The isolated causal demonstration is
+`census/round-14/cache-demonstration.py` (isolated synthetic inputs only).
+
+The metadata census must refuse roots, ancestors, comparison paths and known
+Git/worktree aliases into the credential store before enumeration or content
+readers. Do not test this on a real store: use only the isolated fixture
+`tests/fixtures/r14-census-boundary.py`. Symlink discovery is metadata outside
+the protected tree, not permission to follow its target. Protected-namespace
+checks are not a general sandbox against hostile hardlinks, bind mounts or
+concurrent replacement. Source S040 explains filesystem-aware resolution;
+QUALITY Q20/Q21 and `corpus/lessons/round-14.md` bind these limits.

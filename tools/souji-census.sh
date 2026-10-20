@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
 # souji-census — repeatable read-only fleet census (round 6, seat S33).
+# Round-14 C2 adds a pre-access protected-path boundary.
 #
 # One bash tool; bash + coreutils + git only. Never fetches, never writes
-# outside a --selftest mktemp, never reads secret-shaped files, never
-# touches .ufo/state or .ufo/watchdog.log.
+# outside /var/tmp temporary output. The mtime walk never opens file
+# contents, but `git status` may read or hash tracked content (this is not a
+# data-loss-prevention classifier), and .ufo/state or .ufo/watchdog.log are
+# never traversed by the mtime walk.
 #
 # CLI
-#   tools/souji-census.impl-33.sh [--root DIR] [--compare PREV.tsv]
-#                                 [--include-root] [--selftest]
+#   tools/souji-census.sh [--root DIR] [--compare PREV.tsv]
+#                         [--include-root] [--selftest]
 #
 # Default scan: every immediate child of $SHOKUNIN_ROOT (or --root) whose
 # .git is a directory (a main repo, not a linked work tree or submodule
@@ -30,14 +33,17 @@
 #   dirty           `git status --porcelain` line count on the main work tree
 #                   only (default untracked mode: a wholly untracked directory
 #                   is one line, matching souji-verify). Other work trees are
-#                   not added into this number; see wt-dirty.
+#                   not added into this number; see wt-dirty. Submodule
+#                   content is not inspected (--ignore-submodules=all).
 #   scratch_bytes   apparent byte size of <repo>/.scratch (`du -sb -P`; 0 if
 #                   absent or a symlink). Does not follow symlinks.
 #   mtime_iso       newest regular-file mtime under the main work tree,
 #                   ISO-8601 with numeric offset, second resolution. .git,
 #                   .ufo/state, and .ufo/watchdog.log are pruned and never
-#                   stat'd. Secret-shaped names are flagged and excluded from
-#                   the max. File contents are never opened.
+#                   stat'd. census/operator-sweep-* is pruned the same way.
+#                   Secret-shaped names are flagged and excluded from
+#                   the max by this walk. The walk never opens contents;
+#                   `git status` still may read/hash tracked files.
 #   verdict_flags   comma-joined, stable order, subset of:
 #                     clean | dirty | unpushed | no-remote | scratch |
 #                     secret-shaped | wt-absent | wt-dirty |
@@ -59,18 +65,62 @@
 #   mixed into the diff.
 #
 # --selftest
-#   Builds a fixture fleet under mktemp -d, runs the census twice (byte-
-#   identical), mutates one fixture, and checks --compare. Removes the
-#   fixture tree on exit. Exit 0 on pass, 1 on fail.
+#   Builds a fixture fleet under /var/tmp, runs the census twice (byte-
+#   identical), mutates one fixture, checks --compare and the protected
+#   boundary. Removes the fixture tree on exit. Exit 0 on pass, 1 on fail.
+#
+# Protected boundary (round 14, C2)
+#   --root and --compare are resolved one component at a time before any
+#   git, find, du or file read. A path that reaches, equals, or is an
+#   ancestor of ~/.omp/agent (HOME union the passwd home, plus
+#   PI_CODING_AGENT_DIR and <home>/${PI_CONFIG_DIR:-.omp}/agent), or that
+#   contains a census/operator-sweep-* or .ufo/state|.ufo/watchdog.log
+#   component, is refused with the stable finding `path-protected` on
+#   stderr and exit 2. An input containing a `..` component is refused as
+#   ambiguous: a lexical parent and a symlink-resolved parent can differ.
+#   Symlink repo roots and child symlinks are skipped; a .git symlink is
+#   not followed as a row; gitfile gitdir targets, commondir and
+#   objects/info/alternates are boundary-checked before git runs, and any
+#   git-metadata symlink must resolve inside its own gitdir. Repositories
+#   whose local config declares include/includeIf, filter.*.clean|smudge|
+#   process, core.hooksPath, core.attributesFile, core.excludesFile,
+#   core.alternateRefsCommand, remote.*.promisor, extensions.partialClone or
+#   extensions.worktreeConfig are refused as unsupported (operability
+#   boundary, not full normal-config support). core.worktree is
+#   boundary-checked rather than refused; core.fsmonitor is overridden
+#   with -c core.fsmonitor=false on status.
+#   Global/system git config and every inherited GIT_* variable are
+#   cleared. Startup resolves each home's .omp parent (not the agent store)
+#   to seed a relocated-store root; this is a stat/readlink of the store
+#   parent, never store content. Residual: hardlinked aliases are refused
+#   for --compare (nlink > 1) and fixed git metadata, but hardlinked object
+#   files and arbitrary hardlinks into a store are not detectable without
+#   stat'ing the store; the guard and the later access are not one atomic
+#   operation.
+#
+# Exit codes
+#   0 census emitted / header-only diff; 1 selftest or setup failure;
+#   2 usage, malformed baseline, or protected-path refusal; 3 compare drift.
 #
 # Env
 #   SHOKUNIN_ROOT   default root when --root is omitted
 #                   (default: parent of this repo)
 set -euo pipefail
 
-unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_NAMESPACE 2>/dev/null || true
-# status/diff must not refresh the index (that write is an optional lock).
+# Imported BASH_FUNC_* definitions could shadow the externally-resolved
+# commands this tool relies on. Remove functions for those names.
+unset -f git find du stat awk grep sort head cut date readlink 2>/dev/null || true
+
+# Clear every inherited GIT_* variable. GIT_DIR/GIT_COMMON_DIR/
+# GIT_OBJECT_DIRECTORY/GIT_ALTERNATE_OBJECT_DIRECTORIES and GIT_CONFIG_*
+# can redirect reads or command execution into a credential store. Global
+# and system config are disabled; repository-local config inside a guarded
+# repo is still inspected and, if unsupported, refused.
+while IFS= read -r _souji_gitvar; do unset "$_souji_gitvar"; done < <(compgen -v GIT_ || true)
+unset _souji_gitvar
 export GIT_OPTIONAL_LOCKS=0
+export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null
+export GIT_CONFIG_NOSYSTEM=1 GIT_TERMINAL_PROMPT=0
 
 SCRIPT_PATH="${BASH_SOURCE[0]}"
 SCRIPT_DIR="$(cd -- "$(dirname -- "$SCRIPT_PATH")" && pwd -P)"
@@ -82,17 +132,546 @@ DIFF_HEADER=$'repo\tfield\tbefore\tafter\tchange'
 
 ROOT="${SHOKUNIN_ROOT:-$(dirname -- "$REPO_ROOT")}"
 COMPARE=""
+COMPARE_SET=0
 INCLUDE_ROOT=0
 SELFTEST=0
+REPOS=()
+ROOT_RAW_IS_SYMLINK=0
+CENSUS_TMP=""
 
 usage() {
-  sed -n '2,68p' "$SELF" | sed 's/^# \{0,1\}//'
+  awk 'NR > 1 { if ($0 !~ /^#/) exit; sub(/^# ?/, ""); print }' "$SELF"
   exit "${1:-0}"
 }
 
-usage_err() { printf 'souji-census: %s\n' "$1" >&2; usage 2; }
+usage_err() { printf 'souji-census: %s\n' "$1" >&2; usage 2 >&2; }
 
-canon_path() { readlink -m -- "$1" 2>/dev/null || printf '%s' "$1"; }
+cleanup_census_tmp() {
+  if [ -n "${CENSUS_TMP:-}" ]; then
+    rm -f -- "$CENSUS_TMP"
+  fi
+}
+
+# --- protected-path boundary (round 14, C2) --------------------------------
+
+PROTECTED_FINDING=path-protected
+PROTECTED_HOME_ROOTS=()
+
+protected_fail() { # $1 reason, $2 label, $3 path
+  printf 'souji-census: %s: %s (%s: %s)\n' \
+    "$PROTECTED_FINDING" "$1" "$2" "$3" >&2
+  exit 2
+}
+
+# Textual absolute normalization: no filesystem access. Callers that accept
+# user input still refuse a `..` component (see resolve_guarded) because a
+# lexical parent and a link-resolved parent can differ.
+lexical_abs() {
+  local p=${1:-} out="" part
+  local -a parts=()
+  case "$p" in
+    /*) ;;
+    *) p="$PWD/$p" ;;
+  esac
+  local IFS=/
+  read -r -a parts <<< "$p"
+  for part in "${parts[@]}"; do
+    case "$part" in
+      ''|.) continue ;;
+      ..) if [ -n "$out" ]; then out=${out%/*}; fi ;;
+      *) out="$out/$part" ;;
+    esac
+  done
+  if [ -z "$out" ]; then printf '/'; else printf '%s' "$out"; fi
+}
+
+path_under() { # $1 path, $2 prefix; both normalized absolute
+  [ "$2" = / ] && return 0
+  [ "$1" = "$2" ] && return 0
+  case "$1" in "$2"/*) return 0 ;; esac
+  return 1
+}
+
+path_overlaps() { # equality, descendant, or ancestor
+  path_under "$1" "$2" || path_under "$2" "$1"
+}
+
+passwd_home() {
+  local uid home
+  uid=$(id -u 2>/dev/null) || return 0
+  command -v getent >/dev/null 2>&1 || return 0
+  home=$(getent passwd "$uid" 2>/dev/null | awk -F: 'NR == 1 { print $6 }')
+  if [ -n "$home" ]; then printf '%s\n' "$home"; fi
+  return 0
+}
+
+# Protected roots: the agent credential store under HOME and under the
+# passwd-derived home (a poisoned HOME may only add roots), plus explicit
+# agent-store relocation variables. Roots are text-only: no readlink/stat is
+# performed before the actual store name is guarded. The .omp/agent
+# component pair covers canonical paths reached through a symlinked home.
+build_protected_roots() {
+  local home lex can pi omp
+  local -a homes=()
+  if [ -n "${HOME:-}" ]; then homes+=("$HOME"); fi
+  home=$(passwd_home)
+  if [ -n "$home" ]; then homes+=("$home"); fi
+  for home in "${homes[@]+"${homes[@]}"}"; do
+    lex=$(lexical_abs "$home")
+    PROTECTED_HOME_ROOTS+=("$lex/.omp/agent")
+    pi=${PI_CONFIG_DIR:-}
+    if [ -n "$pi" ]; then
+      case "$pi" in
+        /*) PROTECTED_HOME_ROOTS+=("$pi/agent") ;;
+        *) PROTECTED_HOME_ROOTS+=("$lex/$pi/agent") ;;
+      esac
+    fi
+  done
+  pi=${PI_CODING_AGENT_DIR:-}
+  if [ -n "$pi" ]; then
+    case "$pi" in
+      /*) PROTECTED_HOME_ROOTS+=("$(lexical_abs "$pi")") ;;
+      *) for home in "${homes[@]+"${homes[@]}"}"; do
+           PROTECTED_HOME_ROOTS+=("$(lexical_abs "$home/$pi")")
+         done ;;
+    esac
+  fi
+  # With the actual store names seeded, resolve each home only if its
+  # lexical form does not itself reach the store. The walker refuses before
+  # any readlink below the store; failures simply skip the canonical root.
+  for home in "${homes[@]+"${homes[@]}"}"; do
+    lex=$(lexical_abs "$home")
+    if protected_component_reason "$lex" >/dev/null; then continue; fi
+    if can=$(resolve_guarded "$home" 0 0 2>/dev/null); then
+      if [ -n "$can" ] && [ "$can" != "$lex" ]; then
+        PROTECTED_HOME_ROOTS+=("$can/.omp/agent")
+        pi=${PI_CONFIG_DIR:-}
+        if [ -n "$pi" ]; then
+          case "$pi" in
+            /*) ;;
+            *) PROTECTED_HOME_ROOTS+=("$can/$pi/agent") ;;
+          esac
+        fi
+      fi
+    fi
+    # A relocated ~/.omp (a symlink to another directory) needs its agent
+    # child protected too. Resolve only the parent; a symlinked
+    # ~/.omp/agent itself is left as a documented residual.
+    if omp=$(resolve_guarded "$lex/.omp" 0 0 2>/dev/null); then
+      if [ -n "$omp" ]; then
+        case "$omp" in
+          */agent) PROTECTED_HOME_ROOTS+=("$omp") ;;
+          *) PROTECTED_HOME_ROOTS+=("$omp/agent") ;;
+        esac
+      fi
+    fi
+  done
+  return 0
+}
+
+# Operator surfaces and the agent store, matched by path component. The
+# boundary is a refusal list, not a general secret-class classifier.
+protected_component_reason() { # $1 normalized absolute path
+  local path=$1 rest c lc nxt
+  local -a comps=()
+  local i
+  rest=${path#/}
+  local IFS=/
+  read -r -a comps <<< "$rest"
+  for ((i = 0; i < ${#comps[@]}; i++)); do
+    c=${comps[i]}
+    lc=${c,,}
+    nxt=${comps[i + 1]:-}
+    nxt=${nxt,,}
+    if [ "$lc" = .omp ] && [ "$nxt" = agent ]; then
+      printf 'credential-store'; return 0
+    fi
+    if [ "$lc" = census ] && [[ $nxt == operator-sweep-* ]]; then
+      printf 'operator-sweep'; return 0
+    fi
+    if [ "$lc" = .ufo ] && { [ "$nxt" = state ] || [ "$nxt" = watchdog.log ]; }; then
+      printf 'operator-runtime'; return 0
+    fi
+  done
+  return 1
+}
+
+# Component pairs plus roots that equal or contain the path. Used while
+# walking a path, where intermediate prefixes are naturally ancestors of a
+# protected root and must not be refused.
+protected_reason_inside() { # $1 normalized absolute path
+  local path=$1 reason root
+  path=$(lexical_abs "$path")
+  if reason=$(protected_component_reason "$path"); then
+    printf '%s' "$reason"; return 0
+  fi
+  for root in "${PROTECTED_HOME_ROOTS[@]+"${PROTECTED_HOME_ROOTS[@]}"}"; do
+    [ -n "$root" ] || continue
+    if path_under "$path" "$root"; then
+      printf 'credential-store'; return 0
+    fi
+  done
+  return 1
+}
+
+# Final input predicate: equality, descendant, or ancestor (including /).
+protected_reason_input() { # $1 normalized absolute path
+  local path=$1 reason root
+  path=$(lexical_abs "$path")
+  if reason=$(protected_component_reason "$path"); then
+    printf '%s' "$reason"; return 0
+  fi
+  for root in "${PROTECTED_HOME_ROOTS[@]+"${PROTECTED_HOME_ROOTS[@]}"}"; do
+    [ -n "$root" ] || continue
+    if path_overlaps "$path" "$root"; then
+      printf 'credential-store'; return 0
+    fi
+  done
+  return 1
+}
+
+# Resolve one input path component by component. Each symlink is read one
+# hop and folded back into the walk, so a link whose target reaches the
+# store is refused before any stat/open below the store. readlink -m is not
+# used here: it would resolve suffixes inside a protected tree.
+resolve_guarded() { # $1 raw, $2 allow-dotdot(0|1), $3 final-input-check(0|1)
+  local raw=$1 allow=${2:-0} final=${3:-1}
+  local lex rest comp candidate target reason hops=0 acc=""
+  if [ "$allow" != 1 ]; then
+    case "/$raw/" in
+      *"/../"*) protected_fail "ambiguous-path" input "$raw" ;;
+    esac
+    lex=$(lexical_abs "$raw")
+  else
+    case "$raw" in
+      /*) lex=$raw ;;
+      *) lex="$PWD/$raw" ;;
+    esac
+  fi
+  case "$lex" in
+    *$'\n'*|*$'\t'*|*$'\r'*) protected_fail "ambiguous-path" input "$raw" ;;
+  esac
+  # Ancestors (and direct/descendant inputs) are refused before the first
+  # stat or symlink hop. The final predicate below still re-checks the
+  # resolved result for alias-shaped inputs.
+  if [ "$final" = 1 ]; then
+    if reason=$(protected_reason_input "$lex"); then
+      protected_fail "$reason" input "$lex"
+    fi
+  fi
+  rest=${lex#/}
+  while [ -n "$rest" ]; do
+    comp=${rest%%/*}
+    if [ "$comp" = "$rest" ]; then rest=""; else rest=${rest#*/}; fi
+    [ -n "$comp" ] || continue
+    case "$comp" in
+      .) continue ;;
+      ..)
+        if [ -z "$acc" ] || [ "$acc" = / ]; then acc=""; else acc=${acc%/*}; fi
+        if reason=$(protected_reason_inside "${acc:-/}"); then
+          protected_fail "$reason" path "${acc:-/}"
+        fi
+        continue ;;
+    esac
+    candidate="$acc/$comp"
+    if reason=$(protected_reason_inside "$candidate"); then
+      protected_fail "$reason" path "$candidate"
+    fi
+    # Refuse before lstat when the remaining lexical suffix already reaches
+    # a protected root (for example .omp before agent, or a custom root).
+    if reason=$(protected_reason_inside "$(lexical_abs "$candidate${rest:+/$rest}")"); then
+      protected_fail "$reason" path "$(lexical_abs "$candidate${rest:+/$rest}")"
+    fi
+    if [ -L "$candidate" ]; then
+      target=$(readlink -- "$candidate" 2>/dev/null) || target=""
+      if [ -z "$target" ]; then
+        protected_fail "unresolved-path" path "$candidate"
+      fi
+      case "$target" in
+        *$'\n'*|*$'\t'*|*$'\r'*)
+          protected_fail "ambiguous-path" path "$candidate" ;;
+        /*) acc="" ;;
+        *) ;;
+      esac
+      hops=$((hops + 1))
+      if [ "$hops" -gt 40 ]; then
+        protected_fail "symlink-loop" path "$raw"
+      fi
+      rest="$target${rest:+/$rest}"
+      continue
+    fi
+    acc="$candidate"
+  done
+  if [ "$final" = 1 ]; then
+    if reason=$(protected_reason_input "${acc:-/}"); then
+      protected_fail "$reason" path "${acc:-/}"
+    fi
+  fi
+  printf '%s' "${acc:-/}"
+}
+
+guard_path() { # $1 label, $2 raw path; prints the resolved path
+  local resolved
+  resolved=$(resolve_guarded "$2" 0 1) || exit 2
+  printf '%s' "$resolved"
+}
+
+# Internal git targets (gitfile, commondir, alternates, worktree paths) may
+# legitimately contain `..`; resolve them physically, still refusing a
+# protected prefix.
+guard_target() { # $1 label, $2 raw path; prints the resolved path
+  local resolved
+  resolved=$(resolve_guarded "$2" 1 1) || exit 2
+  printf '%s' "$resolved"
+}
+
+guard_alternates_file() { # $1 objects dir, $2 depth
+  local objdir=$1 depth=${2:-0} alt line target resolved
+  if [ "$depth" -gt 5 ]; then
+    protected_fail "git-alternates-depth" "$objdir" "$objdir"
+  fi
+  alt="$objdir/info/alternates"
+  if [ -L "$alt" ]; then
+    guard_target alternates "$alt" >/dev/null
+    protected_fail "git-alternates-unparsed" "$objdir" "$alt"
+  fi
+  [ -f "$alt" ] || return 0
+  while IFS= read -r line || [ -n "$line" ]; do
+    [ -n "$line" ] || continue
+    case "$line" in
+      \#*) continue ;;
+      \"*) protected_fail "git-alternates-unparsed" "$objdir" "$alt" ;;
+      /*) target=$line ;;
+      *) target="$objdir/$line" ;;
+    esac
+    resolved=$(guard_target alternates "$target") || exit 2
+    guard_alternates_file "$resolved" $((depth + 1))
+  done < "$alt"
+}
+
+guard_alternates() { # $1 resolved gitdir
+  guard_alternates_file "$1/objects" 0
+}
+
+guard_git_links() { # $1 resolved gitdir; symlinks may not leave the gitdir
+  local dir=$1 link resolved bad
+  if ! bad=$(find -P "$dir" -type d ! -readable -print -quit 2>/dev/null); then
+    protected_fail "git-metadata-unreadable" "$dir" "$dir"
+  fi
+  if [ -n "$bad" ]; then
+    protected_fail "git-metadata-unreadable" "$dir" "$bad"
+  fi
+  while IFS= read -r -d '' link; do
+    resolved=$(guard_target git-metadata "$link") || exit 2
+    case "$resolved" in
+      "$dir"/*) ;;
+      *) protected_fail "git-metadata-symlink" "$dir" "$link" ;;
+    esac
+  done < <(find -P "$dir" -type l -print0 2>/dev/null || true)
+}
+
+# Fixed git metadata that git reads directly must be regular or a directory;
+# a FIFO/device/socket is refused rather than opened or waited on.
+guard_git_files() { # $1 resolved gitdir
+  local dir=$1 rel path nlink
+  for rel in config HEAD index packed-refs commondir info/exclude objects/info/alternates; do
+    path="$dir/$rel"
+    if [ -f "$path" ]; then
+      nlink=$(stat -L -c %h -- "$path" 2>/dev/null || true)
+      case "$nlink" in
+        ''|*[!0-9]*) protected_fail "git-metadata-unavailable" "$dir" "$path" ;;
+      esac
+      if [ "$nlink" -gt 1 ]; then
+        protected_fail "git-metadata-hardlink" "$dir" "$path"
+      fi
+    elif [ -e "$path" ] && [ ! -d "$path" ]; then
+      protected_fail "git-metadata-nonregular" "$dir" "$path"
+    fi
+  done
+}
+
+guard_git_config() { # $1 resolved gitdir; refused local configs are unsupported
+  local dir=$1 cfg keys wt
+  cfg="$dir/config"
+  if [ -L "$cfg" ]; then
+    protected_fail "git-metadata-symlink" "$dir" "$cfg"
+  fi
+  [ -f "$cfg" ] || return 0
+  if ! keys=$(git config --file "$cfg" --no-includes --name-only --list 2>/dev/null); then
+    protected_fail "git-config-unparsed" "$dir" "$cfg"
+  fi
+  keys=${keys,,}
+  case "$keys" in
+    *include.*|*includeif.*|*filter.*.clean*|*filter.*.smudge*|*filter.*.process*|*core.hookspath*|*core.attributesfile*|*core.excludesfile*|*core.alternaterefscommand*|*remote.*.promisor*|*extensions.partialclone*|*extensions.worktreeconfig*)
+      protected_fail "git-config-unsupported" "$dir" "$cfg" ;;
+  esac
+  # core.worktree may legitimately point at a linked worktree; it is
+  # boundary-checked rather than refused. core.fsmonitor is overridden with
+  # -c core.fsmonitor=false on every status call.
+  wt=$(git config --file "$cfg" --no-includes --get core.worktree 2>/dev/null || true)
+  if [ -n "$wt" ]; then
+    case "$wt" in
+      "~"*) protected_fail "git-config-unsupported" "$dir" "$cfg" ;;
+    esac
+    case "$wt" in
+      /*) ;;
+      *) wt="$dir/$wt" ;;
+    esac
+    guard_target core-worktree "$wt" >/dev/null
+  fi
+}
+
+# Resolve one `gitdir:` pointer to its admin directory. Prints nothing when
+# the file is not a pointer. Relative targets are relative to the owning
+# worktree directory.
+gitfile_admin() { # $1 .git file, $2 owner dir
+  local file=$1 base=$2 line target
+  IFS= read -r line < "$file" || return 0
+  case "$line" in
+    gitdir:*) target=${line#gitdir:} ;;
+    *) return 0 ;;
+  esac
+  target=${target#"${target%%[![:space:]]*}"}
+  [ -n "$target" ] || return 0
+  case "$target" in
+    /*) ;;
+    *) target="$base/$target" ;;
+  esac
+  guard_target gitdir "$target" || exit 2
+}
+
+# A .git file is a linked worktree/submodule pointer, not a row. Only its
+# target is checked; the child's config is not consulted because no git
+# command is run on it.
+guard_git_pointer() { # $1 repo dir, $2 .git file
+  local admin
+  admin=$(gitfile_admin "$2" "$1") || exit 2
+  [ -n "$admin" ] || return 0
+}
+
+# Registered worktree paths are guarded from the admin gitdir files before
+# `git worktree list` runs, so that command cannot stat a protected path
+# first. Relative registration paths are resolved against the admin dir.
+guard_worktree_registrations() { # $1 resolved gitdir
+  local dir=$1 entry reg target wt admin common c
+  for entry in "$dir"/worktrees/*; do
+    if [ -L "$entry" ]; then
+      guard_target worktree "$entry" >/dev/null
+      continue
+    fi
+    [ -d "$entry" ] || continue
+    reg="$entry/gitdir"
+    [ -f "$reg" ] || continue
+    IFS= read -r target < "$reg" || target=""
+    [ -n "$target" ] || continue
+    case "$target" in
+      /*) ;;
+      *) target="$dir/$target" ;;
+    esac
+    guard_target worktree "$target" >/dev/null
+    case "$target" in
+      */.git)
+        wt=${target%/.git}
+        guard_target worktree "$wt" >/dev/null
+        if [ -f "$target" ]; then
+          admin=$(gitfile_admin "$target" "$wt") || exit 2
+          if [ -n "$admin" ]; then
+            guard_git_files "$admin" || exit 2
+            guard_git_links "$admin" || exit 2
+            guard_git_config "$admin" || exit 2
+            common="$admin/commondir"
+            if [ -L "$common" ]; then
+              guard_target git-common-dir "$common" >/dev/null
+            elif [ -f "$common" ]; then
+              IFS= read -r c < "$common" || c=""
+              c=${c#"${c%%[![:space:]]*}"}
+              if [ -n "$c" ]; then
+                case "$c" in
+                  /*) ;;
+                  *) c="$admin/$c" ;;
+                esac
+                guard_target git-common-dir "$c" >/dev/null
+              fi
+            fi
+          fi
+        fi
+        ;;
+    esac
+  done
+}
+
+guard_git_surface() { # $1 repo dir; exits 2 on a protected/unsupported git surface
+  local repo=$1 g="$1/.git" target common dir
+  if [ -L "$g" ]; then
+    guard_target git-metadata "$g" >/dev/null
+    return 0
+  fi
+  if [ -d "$g" ]; then
+    dir=$(guard_target gitdir "$g") || exit 2
+    guard_git_links "$dir" || exit 2
+    guard_git_files "$dir" || exit 2
+    guard_git_config "$dir" || exit 2
+    common="$dir/commondir"
+    if [ -L "$common" ]; then
+      guard_target git-common-dir "$common" >/dev/null
+    elif [ -f "$common" ]; then
+      IFS= read -r target < "$common" || target=""
+      target=${target#"${target%%[![:space:]]*}"}
+      if [ -n "$target" ]; then
+        case "$target" in
+          /*) ;;
+          *) target="$dir/$target" ;;
+        esac
+        dir=$(guard_target git-common-dir "$target") || exit 2
+        guard_git_links "$dir" || exit 2
+        guard_git_files "$dir" || exit 2
+        guard_git_config "$dir" || exit 2
+      fi
+    fi
+    guard_alternates "$dir" || exit 2
+    guard_worktree_registrations "$dir" || exit 2
+    return 0
+  fi
+  if [ -f "$g" ]; then
+    IFS= read -r target < "$g" || target=""
+    case "$target" in
+      gitdir:*) target=${target#gitdir:} ;;
+      *) return 0 ;;
+    esac
+    target=${target#"${target%%[![:space:]]*}"}
+    [ -n "$target" ] || protected_fail "unresolved-path" "$repo" "$g"
+    case "$target" in
+      /*) ;;
+      *) target="$repo/$target" ;;
+    esac
+    dir=$(guard_target gitdir "$target") || exit 2
+    guard_git_links "$dir" || exit 2
+    guard_git_files "$dir" || exit 2
+    guard_git_config "$dir" || exit 2
+    common="$dir/commondir"
+    if [ -L "$common" ]; then
+      guard_target git-common-dir "$common" >/dev/null
+    elif [ -f "$common" ]; then
+      IFS= read -r target < "$common" || target=""
+      target=${target#"${target%%[![:space:]]*}"}
+      if [ -n "$target" ]; then
+        case "$target" in
+          /*) ;;
+          *) target="$dir/$target" ;;
+        esac
+        dir=$(guard_target git-common-dir "$target") || exit 2
+        guard_git_links "$dir" || exit 2
+        guard_git_files "$dir" || exit 2
+        guard_git_config "$dir" || exit 2
+      fi
+    fi
+    guard_alternates "$dir" || exit 2
+    guard_worktree_registrations "$dir" || exit 2
+  fi
+  return 0
+}
+
+build_protected_roots
 
 sanitize_field() {
   local s=$1
@@ -128,8 +707,13 @@ count_dirty() { # $1 repo; prints "count" or "unverifiable"
   local st
   # Pathspec-exclude the off-limits driver surfaces so status does not walk
   # them. A wholly untracked directory elsewhere still collapses to one line.
-  if ! st=$(git -C "$1" --no-optional-locks status --porcelain -- . \
-      ':(exclude).ufo/state' ':(exclude).ufo/watchdog.log' 2>/dev/null); then
+  if ! st=$(git -C "$1" --no-optional-locks -c core.fsmonitor=false \
+      -c core.hooksPath=/dev/null -c core.excludesFile=/dev/null \
+      -c core.attributesFile=/dev/null status --porcelain --ignore-submodules=all -- . \
+      ':(exclude).ufo/state' ':(exclude).ufo/watchdog.log' \
+      ':(exclude,glob)census/operator-sweep-*' \
+      ':(exclude,glob)census/operator-sweep-*/**' \
+      ':(exclude,glob)**/census/operator-sweep-*' 2>/dev/null); then
     printf 'unverifiable'
     return 0
   fi
@@ -139,8 +723,8 @@ count_dirty() { # $1 repo; prints "count" or "unverifiable"
 
 scratch_bytes() { # $1 repo
   local d="$1/.scratch"
-  if [ ! -e "$d" ] && [ ! -L "$d" ]; then printf '0'; return 0; fi
   if [ -L "$d" ]; then printf '0'; return 0; fi
+  if [ ! -e "$d" ]; then printf '0'; return 0; fi
   if [ ! -d "$d" ]; then printf '0'; return 0; fi
   # du -sb sums apparent size; -P does not follow symlinks inside .scratch.
   local line bytes
@@ -162,8 +746,10 @@ newest_mtime() {
   # not abort the census. awk still emits a row.
   set +e
   set +o pipefail
-  raw=$(cd -- "$repo" && find . \
-      \( -name .git -o -path './.ufo/state' -o -path './.ufo/watchdog.log' \) -prune \
+  raw=$(cd -- "$repo" && find -P . \
+      \( -name .git -o -path './.ufo/state' -o -path './.ufo/watchdog.log' \
+         -o -path './census/operator-sweep-*' \
+         -o -path '*/census/operator-sweep-*' \) -prune \
       -o -type f -printf '%T@ %P\0' 2>/dev/null \
       | awk '
         BEGIN { RS="\0"; max=0; sec=0 }
@@ -215,20 +801,35 @@ newest_mtime() {
 # separated by spaces. Does not status a missing directory.
 worktree_extra_flags() {
   local repo=$1 line path crepo cpath saw_absent=0 saw_dirty=0 d
-  crepo=$(canon_path "$repo")
+  crepo=$repo
   while IFS= read -r line || [ -n "$line" ]; do
     case "$line" in
       'worktree '*) path=${line#worktree } ;;
       *) continue ;;
     esac
     [ -n "$path" ] || continue
-    cpath=$(canon_path "$path")
+    case "$path" in
+      *$'\n'*|*$'\t'*|*$'\r'*) protected_fail "ambiguous-path" "$repo" "$path" ;;
+    esac
+    cpath=$(guard_target worktree "$path") || exit 2
     [ "$cpath" = "$crepo" ] && continue
-    if [ ! -d "$path" ]; then
+    if [ ! -e "$cpath" ]; then
       saw_absent=1
       continue
     fi
-    d=$(count_dirty "$path")
+    if [ -L "$cpath/.git" ]; then
+      guard_target git-metadata "$cpath/.git" >/dev/null
+      saw_dirty=1
+      continue
+    fi
+    if [ ! -e "$cpath/.git" ]; then
+      # Never let git discover an ancestor repository from a broken
+      # worktree registration.
+      saw_dirty=1
+      continue
+    fi
+    guard_git_surface "$cpath"
+    d=$(count_dirty "$cpath")
     if [ "$d" = unverifiable ] || [ "${d:-0}" -gt 0 ]; then
       saw_dirty=1
     fi
@@ -242,7 +843,12 @@ worktree_extra_flags() {
 # Emit one TSV row (no newline issues; fields already sanitized).
 census_one() { # $1 repo-dir
   local repo
-  repo=$(canon_path "$1")
+  repo=$(guard_path repo "$1") || exit 2
+  guard_git_surface "$repo"
+  if [ -L "$repo/.git" ]; then
+    printf '%s\t0\t0\t0\t0\t\tnot-a-repo\n' "$(sanitize_field "$repo")"
+    return 0
+  fi
   if [ ! -e "$repo/.git" ] && [ ! -d "$repo/.git" ]; then
     # Linked work trees have a .git file; bare dirs are not repos.
     if [ ! -e "$repo/.git" ]; then
@@ -263,7 +869,7 @@ census_one() { # $1 repo-dir
   remote_flag=${unp_line#*$'\t'}
   dirty=$(count_dirty "$repo")
   scratch=$(scratch_bytes "$repo")
-  wt_extra=$(worktree_extra_flags "$repo")
+  wt_extra=$(worktree_extra_flags "$repo") || exit 2
   mt_line=$(newest_mtime "$repo")
   iso=${mt_line%%$'\t'*}
   secret_flag=${mt_line#*$'\t'}
@@ -313,43 +919,79 @@ census_one() { # $1 repo-dir
     "$(sanitize_field "$iso")" "$(sanitize_field "$ordered")"
 }
 
-list_repos() { # prints repo dirs, one per line, basename-sorted
+list_repos() { # $1 resolved root; fills REPOS, basename-sorted
   local root=$1
-  local -a found=()
-  local d base
-  if [ "$INCLUDE_ROOT" = 1 ] && [ -d "$root" ] && [ -e "$root/.git" ]; then
-    found+=("$root")
+  local d g base reason
+  REPOS=()
+  if [ "$INCLUDE_ROOT" = 1 ] && [ "$ROOT_RAW_IS_SYMLINK" = 0 ] && [ -d "$root" ]; then
+    g="$root/.git"
+    if [ -L "$g" ]; then
+      guard_target git-metadata "$g" >/dev/null
+    elif [ -f "$g" ]; then
+      guard_git_surface "$root"
+      REPOS+=("$root")
+    elif [ -d "$g" ]; then
+      guard_git_surface "$root"
+      REPOS+=("$root")
+    fi
   fi
   shopt -s nullglob
-  for d in "$root"/*/; do
-    [ -d "$d" ] || continue
-    # skip the root's own .git and dot-dirs (operator config, .ufo, .scratch)
-    base=$(basename -- "$d")
+  for d in "$root"/*; do
+    base=${d##*/}
+    # skip dot-dirs (operator config, .ufo, .scratch) and unrepresentable names
     case "$base" in
       .*) continue ;;
     esac
-    # .git file => linked work tree or submodule gitfile. Those are not
-    # independent fleet repos; the owner's worktree list already counts them.
-    if [ -d "${d%/}/.git" ]; then
-      found+=("${d%/}")
+    case "$base" in
+      *$'\n'*|*$'\t'*|*$'\r'*) continue ;;
+    esac
+    if reason=$(protected_reason_input "$d"); then
+      protected_fail "$reason" candidate "$d"
+    fi
+    # A symlink child is never a repo root and is never followed.
+    if [ -L "$d" ]; then continue; fi
+    [ -d "$d" ] || continue
+    g="$d/.git"
+    if [ -L "$g" ]; then
+      guard_target git-metadata "$g" >/dev/null
+      continue
+    fi
+    if [ -f "$g" ]; then
+      guard_git_pointer "$d" "$g"
+      continue
+    fi
+    if [ -d "$g" ]; then
+      guard_git_surface "$d"
+      REPOS+=("$d")
     fi
   done
   shopt -u nullglob
-  if [ "${#found[@]}" -eq 0 ]; then return 0; fi
-  local p
-  for p in "${found[@]}"; do printf '%s\n' "$p"; done | LC_ALL=C sort
+  if [ "${#REPOS[@]}" -eq 0 ]; then return 0; fi
+  mapfile -t REPOS < <(printf '%s\n' "${REPOS[@]}" | LC_ALL=C sort)
 }
 
 emit_census() {
-  local root
-  root=$(canon_path "$ROOT")
+  local root repo row rc
+  root=$(guard_path root "$ROOT") || exit 2
   [ -d "$root" ] || { printf 'souji-census: root is not a directory: %s\n' "$root" >&2; exit 1; }
+  ROOT_RAW_IS_SYMLINK=0
+  if [ -L "$ROOT" ]; then ROOT_RAW_IS_SYMLINK=1; fi
+  list_repos "$root"
+  local -a rows=()
+  for repo in "${REPOS[@]+"${REPOS[@]}"}"; do
+    if row=$(census_one "$repo"); then
+      rows+=("$row")
+    else
+      rc=$?
+      if [ "$rc" = 2 ]; then exit 2; fi
+      printf 'souji-census: census failed for %s (rc=%s)\n' "$repo" "$rc" >&2
+      exit 1
+    fi
+  done
   printf '%s\n' "$HEADER"
-  local repo
-  while IFS= read -r repo; do
-    [ -n "$repo" ] || continue
-    census_one "$repo"
-  done < <(list_repos "$root")
+  for row in "${rows[@]+"${rows[@]}"}"; do
+    printf '%s\n' "$row"
+  done
 }
 
 # --- compare ---------------------------------------------------------------
@@ -362,8 +1004,24 @@ emit_census() {
 load_census() { # $1 file, $2 assoc-nameref of "repo -> rest-of-row"
   local file=$1
   local -n _map=$2
+  file=$(guard_path compare "$file") || exit 2
+  case "$file" in
+    /proc/*|/dev/fd/*|/dev/stdin|/dev/stdout|/dev/stderr)
+      protected_fail "special-path" compare "$file" ;;
+  esac
   [ -f "$file" ] || usage_err "compare file not found: $file"
-  local line n=0 repo rest saw_header=0
+  [ -r "$file" ] || usage_err "compare file unreadable: $file"
+  local nlink
+  nlink=$(stat -c %h -- "$file" 2>/dev/null || true)
+  case "$nlink" in
+    ''|*[!0-9]*) usage_err "compare file metadata unavailable: $file" ;;
+  esac
+  if [ "$nlink" -gt 1 ]; then
+    printf 'souji-census: %s: hardlinked-compare (%s)\n' \
+      "$PROTECTED_FINDING" "$file" >&2
+    exit 2
+  fi
+  local line n=0 repo rest saw_header=0 stripped tabs i v
   while IFS= read -r line || [ -n "$line" ]; do
     n=$((n + 1))
     line=${line%$'\r'}
@@ -375,9 +1033,20 @@ load_census() { # $1 file, $2 assoc-nameref of "repo -> rest-of-row"
       continue
     fi
     [ -n "$line" ] || continue
+    stripped=${line//$'\t'/}
+    tabs=$(( ${#line} - ${#stripped} ))
+    if [ "$tabs" -ne 6 ]; then
+      usage_err "compare file: line $n has $((tabs + 1)) columns (want 7)"
+    fi
     repo=${line%%$'\t'*}
     rest=${line#*$'\t'}
     [ -n "$repo" ] || usage_err "compare file: empty repo on line $n"
+    for i in 1 2 3 4; do
+      v=$(field_at "$rest" "$i")
+      case "$v" in
+        ''|*[!0-9]*) usage_err "compare file: column $((i + 1)) is not numeric on line $n" ;;
+      esac
+    done
     if [ -n "${_map[$repo]+x}" ]; then
       usage_err "compare file: duplicate repo $repo"
     fi
@@ -413,12 +1082,17 @@ numeric_change() { # $1 before $2 after -> +N / -N / 0
 
 emit_compare() { # census of $ROOT vs $COMPARE; writes diff TSV; exit 3 if any change
   local -A before=() after=()
+  local root
+  root=$(guard_path root "$ROOT") || exit 2
+  [ -d "$root" ] || { printf 'souji-census: root is not a directory: %s\n' "$root" >&2; exit 1; }
   load_census "$COMPARE" before
-  local tmp
-  tmp=$(mktemp "${TMPDIR:-/tmp}/souji-census-now.XXXXXX")
-  emit_census > "$tmp"
-  load_census "$tmp" after
-  rm -f -- "$tmp"
+  CENSUS_TMP=$(mktemp /var/tmp/souji-census-now.XXXXXX)
+  trap cleanup_census_tmp EXIT
+  emit_census > "$CENSUS_TMP"
+  load_census "$CENSUS_TMP" after
+  rm -f -- "$CENSUS_TMP"
+  CENSUS_TMP=""
+  trap - EXIT
 
   printf '%s\n' "$DIFF_HEADER"
   local changes=0 repo rest_b rest_a
@@ -483,9 +1157,11 @@ st_commit() { # $1 repo, $2 parent-or-empty, $3 msg -> sha
   git -C "$repo" add -A >/dev/null
   tr=$(git -C "$repo" write-tree)
   if [ -n "$parent" ]; then
-    sha=$(printf '%s\n' "$msg" | git -C "$repo" commit-tree "$tr" -p "$parent")
+    sha=$(printf '%s\n' "$msg" | git -c user.name=souji-census \
+      -c user.email=souji@example.invalid -C "$repo" commit-tree "$tr" -p "$parent")
   else
-    sha=$(printf '%s\n' "$msg" | git -C "$repo" commit-tree "$tr")
+    sha=$(printf '%s\n' "$msg" | git -c user.name=souji-census \
+      -c user.email=souji@example.invalid -C "$repo" commit-tree "$tr")
   fi
   printf '%s' "$sha"
 }
@@ -513,7 +1189,7 @@ run_selftest() {
     printf 'souji-census: refusing nested --selftest\n' >&2
     exit 1
   fi
-  ST_TMP=$(mktemp -d "${TMPDIR:-/tmp}/souji-census-selftest.XXXXXX")
+  ST_TMP=$(mktemp -d /var/tmp/souji-census-selftest.XXXXXX)
   trap 'rm -rf -- "$ST_TMP"' EXIT
   local fleet="$ST_TMP/fleet"
   mkdir -p "$fleet"
@@ -775,6 +1451,34 @@ run_selftest() {
   if [ "$cmp_st" = 2 ]; then st_ok "unknown flag exits 2"
   else st_bad "unknown flag exit=$cmp_st want 2"; fi
 
+  # protected boundary: synthetic HOME, never the real store.
+  mkdir -p "$ST_TMP/home/.omp/agent"
+  printf 'boundary-canary\n' > "$ST_TMP/home/.omp/agent/config.yml"
+  ln -s "$ST_TMP/home/.omp/agent/config.yml" "$ST_TMP/protected-compare.tsv"
+  local prot_rc prot_err
+  set +e
+  prot_err=$(env -u GIT_DIR HOME="$ST_TMP/home" TMPDIR=/var/tmp \
+    SOUJI_CENSUS_SELFTEST_ACTIVE=1 \
+    "$SELF" --root "$ST_TMP/home/.omp/agent" 2>&1 >/dev/null)
+  prot_rc=$?
+  set -e
+  if [ "$prot_rc" = 2 ] && printf '%s' "$prot_err" | grep -q 'path-protected'; then
+    st_ok "protected root refused before access (exit 2, path-protected)"
+  else
+    st_bad "protected root: rc=$prot_rc err=$(printf '%s' "$prot_err" | head -1)"
+  fi
+  set +e
+  prot_err=$(env -u GIT_DIR HOME="$ST_TMP/home" TMPDIR=/var/tmp \
+    SOUJI_CENSUS_SELFTEST_ACTIVE=1 \
+    "$SELF" --root "$fleet" --compare "$ST_TMP/protected-compare.tsv" 2>&1 >/dev/null)
+  prot_rc=$?
+  set -e
+  if [ "$prot_rc" = 2 ] && printf '%s' "$prot_err" | grep -q 'path-protected'; then
+    st_ok "protected compare alias refused (exit 2, path-protected)"
+  else
+    st_bad "protected compare: rc=$prot_rc err=$(printf '%s' "$prot_err" | head -1)"
+  fi
+
   # source audit: no forbidden git porcelain in non-comment lines
   local n
   n=$(grep -cE '^[^#]*git +(-C +[^ ]+ +)?(fetch|push|commit|branch|checkout|reset|rebase|prune)( |$)' "$SELF" || true)
@@ -804,8 +1508,8 @@ while [ "$#" -gt 0 ]; do
     --root=*) ROOT=${1#*=}; shift ;;
     --compare)
       [ "$#" -ge 2 ] || usage_err "--compare needs a TSV path"
-      COMPARE=$2; shift 2 ;;
-    --compare=*) COMPARE=${1#*=}; shift ;;
+      COMPARE=$2; COMPARE_SET=1; shift 2 ;;
+    --compare=*) COMPARE=${1#*=}; COMPARE_SET=1; shift ;;
     -h|--help) usage 0 ;;
     --) shift; break ;;
     -*) usage_err "unknown flag: $1" ;;
@@ -815,10 +1519,18 @@ done
 
 if [ "$SELFTEST" = 1 ]; then run_selftest; fi
 
+[ -n "$ROOT" ] || usage_err "--root needs a directory"
+if [ "$COMPARE_SET" = 1 ] && [ -z "$COMPARE" ]; then
+  usage_err "--compare needs a TSV path"
+fi
+# Boundary refusal precedes command lookup and every git/find/du/read path.
+guard_path root "$ROOT" >/dev/null
+if [ "$COMPARE_SET" = 1 ]; then guard_path compare "$COMPARE" >/dev/null; fi
+
 command -v git >/dev/null 2>&1 || { printf 'souji-census: git not found\n' >&2; exit 1; }
 command -v du >/dev/null 2>&1 || { printf 'souji-census: du not found\n' >&2; exit 1; }
 
-if [ -n "$COMPARE" ]; then
+if [ "$COMPARE_SET" = 1 ]; then
   emit_compare
   exit $?
 fi

@@ -1,0 +1,950 @@
+{
+  "schema": "souji-round-verification-plan-v1",
+  "round": 14,
+  "wave": "souji-r14-w1",
+  "author_seat": "SoujiR14.FinalEvidencePlan",
+  "purpose": "Machine-readable final commands for L1 to run once after the round-14 artifacts are committed. This plan was written by code inspection only; its author executed none of the commands, no build, no test, no linter, no formatter and no smoke run.",
+  "certification": "OFF",
+  "scope": "Round-14 C1 digest-bound evidence-cache eligibility and C2 census credential-boundary refusal, plus the retained legacy census selftest, ShellCheck warning gate and the corpus/SOURCES.md census. This is not comprehensive recertification and it grants no deletion authority.",
+  "axes": [
+    {
+      "name": "calibration",
+      "claim": "Every C1 eligibility claim is tied to the installed bytes and to named finding ids derived from the landed code, not from prose. A stale or legacy retained green is never reused; each record keeps its own measured_commit.",
+      "nonclaims": [
+        "A reusable verdict is digest eligibility over the declared dependencies only.",
+        "It is not proof that the recorded command executed, or that it executed at the declared revision.",
+        "It does not cover undeclared or transitive dependencies."
+      ]
+    },
+    {
+      "name": "operability",
+      "claim": "The census refuses a root or compare path that overlaps the credential-store boundary before any git/find/du/content access, and the legacy census interface still works.",
+      "nonclaims": [
+        "The boundary fixture covers only the enumerated synthetic cases.",
+        "It is not a universal filesystem-alias proof and does not certify the census.",
+        "It never reads the real credential store."
+      ]
+    }
+  ],
+  "baseline": {
+    "commit": "a31642d14006830ec62edf40b0354c3699728c4a",
+    "why": "Last committed round-13 spot-check revision; the C2 baseline census blob and the SOURCES.md before-count are read from this commit.",
+    "sources_rows": 37,
+    "sources_tiers": {
+      "A": 33,
+      "B": 3,
+      "C": 1
+    },
+    "sources_status": {
+      "mined": 20,
+      "queued": 15,
+      "rejected": 2
+    },
+    "census_sha256": "6a000c59fe7486fbde7e5f68663c61cf60404cadb4185e84205b56fe4648c026",
+    "census_sha256_source": "sha256sum of both the working tree file and the a31642d blob at plan-writing time; the two were equal",
+    "note": "The working tree is expected to differ from this baseline after the round-14 commit. baseline.commit names the blob used for the red arm; measured_commit must name the commit that contains the bytes actually measured."
+  },
+  "environment": {
+    "cwd": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+    "required": {
+      "TMPDIR": "/var/tmp",
+      "LC_ALL": "C",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "PATH": "/usr/local/bin:/usr/bin:/bin",
+      "GIT_CONFIG_NOSYSTEM": "1",
+      "GIT_CONFIG_GLOBAL": "/dev/null",
+      "GIT_OPTIONAL_LOCKS": "0",
+      "GIT_TERMINAL_PROMPT": "0"
+    },
+    "unset": [
+      "GIT_DIR",
+      "GIT_WORK_TREE",
+      "GIT_INDEX_FILE",
+      "GIT_NAMESPACE",
+      "GIT_COMMON_DIR",
+      "GIT_OBJECT_DIRECTORY",
+      "GIT_ALTERNATE_OBJECT_DIRECTORIES"
+    ],
+    "synthetic_home": "The suite exports HOME=<scratch>/home, created under the same /var/tmp scratch root. No command in this plan may inherit or read the operator HOME.",
+    "versions_observed_while_writing": {
+      "python3": "3.14.7",
+      "bash": "5.3.15",
+      "shellcheck": "0.11.0",
+      "git": "2.55.0",
+      "timeout_coreutils": "9.11"
+    },
+    "versions_note": "These are host observations, not installs. shellcheck is re-checked by C-R14V-06; an absent shellcheck is could-not-evaluate, never a pass."
+  },
+  "outcome_taxonomy": {
+    "pass": "The command ran to completion, exited with the declared pass exit, and every declared stdout literal/assertion matched.",
+    "expected_red": "A command whose purpose is to prove the fixture discriminates the pre-r14 baseline. The fixture process must exit 1 with the named baseline cases failing for the access-before-refusal reason. This is a pass of the verification and a red of the baseline tool; it must not be reported as a green tool result.",
+    "fail": "The command ran and contradicted the contract: wrong exit code, a missing or extra finding id, a failed literal assertion, a timeout (124/137), or an unexpected traceback.",
+    "could_not_evaluate": "The command could not reach a verdict: an artifact is absent, non-regular, symlinked or has an unpinned digest; a prerequisite (python3, shellcheck, /var/tmp) is unavailable; a fixture exits 2 for setup/environment; or the fixture executes zero cases. Record as NOT-RUN/blocked with the blocked claim; never count it as pass.",
+    "distinction": "Fixture exit 1 on the installed arm is fail. Fixture exit 2 is could-not-evaluate. Fixture exit 1 on the baseline arm is expected_red. A baseline arm that exits 2, 126, 127 or cannot find the baseline file is could-not-evaluate, not red."
+  },
+  "policy": {
+    "no_retained_green": "Do not use census/round-13/run-verification.py --retry-failed or copy any prior green. The round-13 retainer reuses a prior result without comparing measurement-time dependency digests; reusing it here would make the round-14 evidence stale by construction. Re-run every check at the final commit.",
+    "measured_commit": "Measure at one commit with a clean target pathspec. Capture git rev-parse HEAD before the suite and re-check it after; a changed HEAD or dirty target pathspec makes every measured_commit claim could-not-evaluate.",
+    "no_live_mutation": "Read-only checks only. No --keep on the demonstration, no real credential-store path, no operator-sweep directory access, no quarantine action.",
+    "forbidden": [
+      "--retry-failed",
+      "retained green results",
+      "--root pointing at or above a credential store",
+      "reading, listing, hashing or copying ~/.omp/agent content",
+      "reading or writing census/operator-sweep-20261019/ or census/operator-sweep-20261018/",
+      "launching any GUI application"
+    ]
+  },
+  "harness": {
+    "description": "Run once in a single shell. Every command below assumes these exports and the $SCRATCH trap.",
+    "shell": "set -u; R=/home/vgpnk/Projects/shokunin/souji-shokunin; BASE=a31642d14006830ec62edf40b0354c3699728c4a; SCRATCH=$(/usr/bin/mktemp -d /var/tmp/souji-r14-verify.XXXXXX) || exit 2; trap '/usr/bin/rm -rf -- \"$SCRATCH\"' EXIT; mkdir -p \"$SCRATCH/home\"; MEASURED_COMMIT=$(/usr/bin/git -C \"$R\" rev-parse --verify HEAD) || exit 2; export MEASURED_COMMIT; export TMPDIR=/var/tmp LC_ALL=C PYTHONDONTWRITEBYTECODE=1 HOME=\"$SCRATCH/home\" PATH=/usr/local/bin:/usr/bin:/bin GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_OPTIONAL_LOCKS=0 GIT_TERMINAL_PROMPT=0; unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_NAMESPACE GIT_COMMON_DIR GIT_OBJECT_DIRECTORY GIT_ALTERNATE_OBJECT_DIRECTORIES",
+    "relative_path_policy": "Commands are shown with absolute executables and either absolute artifact paths or the exported $R/$SCRATCH variables; no command uses a bare relative executable or a repo-relative artifact selector."
+  },
+  "checks": [
+    {
+      "id": "C-R14V-00",
+      "category": "preflight",
+      "claim": "The measured commit names the bytes under test, the target pathspec is clean, and every artifact is a contained regular non-symlink file.",
+      "commands": [
+        {
+          "shell": "/usr/bin/git -C \"$R\" rev-parse --show-toplevel",
+          "expect": {
+            "exit": 0,
+            "stdout_exact": "/home/vgpnk/Projects/shokunin/souji-shokunin"
+          }
+        },
+        {
+          "shell": "MEASURED_COMMIT=$(/usr/bin/git -C \"$R\" rev-parse --verify HEAD); printf '%s\\n' \"$MEASURED_COMMIT\"; case \"$MEASURED_COMMIT\" in (*[!0-9a-f]*|'') exit 2;; esac; test \"${#MEASURED_COMMIT}\" = 40",
+          "expect": {
+            "exit": 0,
+            "stdout_regex": "^[0-9a-f]{40}$"
+          }
+        },
+        {
+          "shell": "test -z \"$(/usr/bin/git -C \"$R\" status --porcelain -- tools tests census/round-14)\"",
+          "expect": {
+            "exit": 0,
+            "why": "A dirty tools/tests/census-round-14 tree means the measured commit would not name the bytes measured. Failure is could-not-evaluate until the artifacts are committed."
+          }
+        },
+        {
+          "shell": "for f in tools/souji-evidence-cache.py tools/souji-census.sh tests/fixtures/r14-evidence-cache.py tests/fixtures/r14-census-boundary.py tests/fixtures/r14-cache-frozen/record.json tests/fixtures/r14-cache-frozen/expected.json tests/fixtures/r14-cache-frozen/dependency.txt census/round-14/cache-demonstration.py; do test -f \"$R/$f\" && test ! -L \"$R/$f\" || { printf 'NOT-REGULAR %s\\n' \"$f\"; exit 2; }; done",
+          "expect": {
+            "exit": 0,
+            "stdout_absent": "NOT-REGULAR"
+          }
+        },
+        {
+          "shell": "/usr/bin/sha256sum \"$R/tools/souji-evidence-cache.py\" \"$R/tools/souji-census.sh\" \"$R/tests/fixtures/r14-evidence-cache.py\" \"$R/tests/fixtures/r14-census-boundary.py\" \"$R/tests/fixtures/r14-cache-frozen/record.json\" \"$R/tests/fixtures/r14-cache-frozen/expected.json\" \"$R/tests/fixtures/r14-cache-frozen/dependency.txt\" \"$R/census/round-14/cache-demonstration.py\" > \"$SCRATCH/artifacts.before.sha256\"",
+          "expect": {
+            "exit": 0,
+            "why": "Store the digest map; re-derive after the suite and require byte equality. The plan's case literals are valid only for the digests recorded in expected_artifacts."
+          }
+        },
+        {
+          "shell": "for f in tools/souji-evidence-cache.py tools/souji-census.sh tests/fixtures/r14-evidence-cache.py tests/fixtures/r14-census-boundary.py tests/fixtures/r14-cache-frozen/record.json tests/fixtures/r14-cache-frozen/expected.json tests/fixtures/r14-cache-frozen/dependency.txt census/round-14/cache-demonstration.py; do /usr/bin/git -C \"$R\" cat-file -e \"$MEASURED_COMMIT:$f\" || { printf 'NOT-COMMITTED %s\\n' \"$f\"; exit 2; }; test \"$(/usr/bin/git -C \"$R\" show \"$MEASURED_COMMIT:$f\" | /usr/bin/sha256sum | /usr/bin/cut -d' ' -f1)\" = \"$(/usr/bin/sha256sum \"$R/$f\" | /usr/bin/cut -d' ' -f1)\" || { printf 'COMMIT-BYTES-DIFFER %s\\n' \"$f\"; exit 1; }; done",
+          "expect": {
+            "exit": 0,
+            "stdout_absent": [
+              "NOT-COMMITTED",
+              "COMMIT-BYTES-DIFFER"
+            ],
+            "why": "VerdictAttack requirement: the round-14 bytes must be committed before the measuring run, and git show <measured_commit>:<path> must hash to the same digest as the installed file. An uncommitted tree is could-not-evaluate."
+          }
+        }
+      ],
+      "failure_class": "could-not-evaluate on any non-zero exit; no claim may be recorded from a dirty or unpinned tree."
+    },
+    {
+      "id": "C-R14V-01",
+      "category": "isolation-static",
+      "claim": "Both new fixtures hard-code /var/tmp and do not fall back to TMPDIR=/tmp or /dev/shm; the C1 gate and demo also use /var/tmp.",
+      "commands": [
+        {
+          "shell": "test 0 -eq \"$(/usr/bin/grep -c 'TMPDIR:-/tmp' \"$R/tests/fixtures/r14-evidence-cache.py\" \"$R/tests/fixtures/r14-census-boundary.py\" | /usr/bin/awk -F: '{s+=$2} END {print s+0}')\"",
+          "expect": {
+            "exit": 0,
+            "why": "Q4: no /tmp fallback in either fixture."
+          }
+        },
+        {
+          "shell": "for f in \"$R/tests/fixtures/r14-evidence-cache.py\" \"$R/tests/fixtures/r14-census-boundary.py\"; do test \"$(/usr/bin/grep -c '/var/tmp' \"$f\")\" -ge 1 || exit 1; done",
+          "expect": {
+            "exit": 0
+          }
+        },
+        {
+          "shell": "test 0 -eq \"$(/usr/bin/grep -cE 'mktemp[^\\n]*/dev/shm|dir=\"/dev/shm\"|TMPDIR=/dev/shm' \"$R/tests/fixtures/r14-evidence-cache.py\" \"$R/tests/fixtures/r14-census-boundary.py\" \"$R/tools/souji-evidence-cache.py\" \"$R/census/round-14/cache-demonstration.py\" | /usr/bin/awk -F: '{s+=$2} END {print s+0}')\"",
+          "expect": {
+            "exit": 0,
+            "why": "Q16 withdrew Q15. This matches actual /dev/shm use, not docstring sentences that say the fixtures do not use it."
+          }
+        }
+      ],
+      "failure_class": "fail: a Q4/Q16 isolation violation is a defect in the landed artifact, not an environment problem."
+    },
+    {
+      "id": "C-R14V-02",
+      "category": "new-selftest",
+      "claim": "The C1 gate's own --selftest passes all 48 landed cases with their exact finding-id sets and exit codes, in isolated /var/tmp roots.",
+      "commands": [
+        {
+          "shell": "/usr/bin/timeout --kill-after=10 180 /usr/bin/python3 -B \"$R/tools/souji-evidence-cache.py\" --selftest > \"$SCRATCH/cache-selftest.out\" 2>&1; rc=$?; /usr/bin/tail -1 \"$SCRATCH/cache-selftest.out\"; exit $rc",
+          "expect": {
+            "exit": 0,
+            "stdout_last_line_regex": "^selftest: ([0-9]+)/\\1 passed$",
+            "stdout_absent": [
+              "FAIL ",
+              "selftest-unavailable",
+              "Traceback"
+            ],
+            "minimum_cases": 48
+          }
+        },
+        {
+          "shell": "/usr/bin/python3 - \"$SCRATCH/cache-selftest.out\" \"$R/tools/souji-evidence-cache.py\" <<'PY'\nimport re, sys\nlines = open(sys.argv[1], encoding=\"utf-8\").read().splitlines()\nm = re.fullmatch(r\"selftest: (\\d+)/(\\d+) passed\", lines[-1])\nassert m, lines[-1]\nassert m.group(1) == m.group(2)\nprinted = int(m.group(2))\nappends = open(sys.argv[2], encoding=\"utf-8\").read().count(\"cases.append\")\nassert printed == appends, (printed, appends)\nassert printed >= 48, printed\nassert not [line for line in lines if line.startswith(\"FAIL \")]\nprint(\"cache-selftest case-count assertions: ok\")\nPY",
+          "expect": {
+            "exit": 0,
+            "stdout_exact": "cache-selftest case-count assertions: ok",
+            "why": "Non-vacuity and no silent case loss: the printed denominator must equal the number of landed cases.append sites and be at least the 48 observed while writing the plan."
+          }
+        },
+        {
+          "shell": "test \"$(/usr/bin/find /var/tmp -maxdepth 1 -name 'souji-r14-cache-selftest.*' -printf '.' | /usr/bin/wc -c)\" = 0",
+          "expect": {
+            "exit": 0,
+            "why": "The selftest's finally block must remove its /var/tmp root."
+          }
+        }
+      ],
+      "expected_case_ids_from_code": [
+        {
+          "case": "positive",
+          "exit": 0,
+          "finding_ids": []
+        },
+        {
+          "case": "unrelated-change",
+          "exit": 0,
+          "finding_ids": []
+        },
+        {
+          "case": "changed-dependency",
+          "exit": 1,
+          "finding_ids": [
+            "dependency-digest-mismatch"
+          ]
+        },
+        {
+          "case": "missing-dependency",
+          "exit": 1,
+          "finding_ids": [
+            "dependency-missing"
+          ]
+        },
+        {
+          "case": "symlink-dependency",
+          "exit": 2,
+          "finding_ids": [
+            "path-symlink"
+          ]
+        },
+        {
+          "case": "symlink-ancestor",
+          "exit": 2,
+          "finding_ids": [
+            "path-symlink"
+          ]
+        },
+        {
+          "case": "malformed-hash",
+          "exit": 2,
+          "finding_ids": [
+            "dependency-digest-invalid"
+          ]
+        },
+        {
+          "case": "escape",
+          "exit": 2,
+          "finding_ids": [
+            "path-escape"
+          ]
+        },
+        {
+          "case": "absolute-path",
+          "exit": 2,
+          "finding_ids": [
+            "path-absolute"
+          ]
+        },
+        {
+          "case": "failed",
+          "exit": 1,
+          "finding_ids": [
+            "matched-false"
+          ]
+        },
+        {
+          "case": "legacy",
+          "exit": 2,
+          "finding_ids": [
+            "dependencies-legacy"
+          ]
+        },
+        {
+          "case": "empty-deps",
+          "exit": 2,
+          "finding_ids": [
+            "dependencies-empty"
+          ]
+        },
+        {
+          "case": "bool-int",
+          "exit": 2,
+          "finding_ids": [
+            "matched-false-type"
+          ]
+        },
+        {
+          "case": "duplicate-key",
+          "exit": 2,
+          "finding_ids": [
+            "record-malformed"
+          ]
+        },
+        {
+          "case": "measured-commit",
+          "exit": 2,
+          "finding_ids": [
+            "measured_commit-invalid"
+          ]
+        },
+        {
+          "case": "not-regular",
+          "exit": 2,
+          "finding_ids": [
+            "dependency-not-regular"
+          ]
+        },
+        {
+          "case": "hardlink",
+          "exit": 2,
+          "finding_ids": [
+            "path-hardlink"
+          ]
+        },
+        {
+          "case": "protected",
+          "exit": 2,
+          "finding_ids": [
+            "path-protected"
+          ]
+        },
+        {
+          "case": "record-protected",
+          "exit": 2,
+          "finding_ids": [
+            "record-protected"
+          ]
+        },
+        {
+          "case": "root-protected",
+          "exit": 2,
+          "finding_ids": [
+            "root-protected"
+          ]
+        },
+        {
+          "case": "root-symlink",
+          "exit": 2,
+          "finding_ids": [
+            "root-symlink"
+          ]
+        },
+        {
+          "case": "root-symlink-trailing-slash",
+          "exit": 2,
+          "finding_ids": [
+            "root-symlink"
+          ]
+        },
+        {
+          "case": "home-root-protected",
+          "exit": 2,
+          "finding_ids": [
+            "root-protected"
+          ]
+        },
+        {
+          "case": "home-alias-root-protected",
+          "exit": 2,
+          "finding_ids": [
+            "root-protected"
+          ]
+        },
+        {
+          "case": "home-alias-record-protected",
+          "exit": 2,
+          "finding_ids": [
+            "record-protected"
+          ]
+        },
+        {
+          "case": "noncanonical-key",
+          "exit": 2,
+          "finding_ids": [
+            "key-noncanonical"
+          ]
+        },
+        {
+          "case": "invalid-encoding",
+          "exit": 2,
+          "finding_ids": [
+            "key-invalid-encoding"
+          ]
+        },
+        {
+          "case": "false-pass",
+          "exit": 2,
+          "finding_ids": [
+            "verdict-false-pass"
+          ]
+        },
+        {
+          "case": "expected-exit-mismatch",
+          "exit": 2,
+          "finding_ids": [
+            "verdict-false-pass"
+          ]
+        },
+        {
+          "case": "false-fail",
+          "exit": 2,
+          "finding_ids": [
+            "verdict-false-fail"
+          ]
+        },
+        {
+          "case": "too-large",
+          "exit": 2,
+          "finding_ids": [
+            "dependency-too-large"
+          ]
+        },
+        {
+          "case": "require-declared",
+          "exit": 0,
+          "finding_ids": []
+        },
+        {
+          "case": "require-undeclared",
+          "exit": 2,
+          "finding_ids": [
+            "dependency-undeclared"
+          ]
+        },
+        {
+          "case": "dependencies-invalid",
+          "exit": 2,
+          "finding_ids": [
+            "dependencies-invalid"
+          ]
+        },
+        {
+          "case": "require-invalid",
+          "exit": 2,
+          "finding_ids": [
+            "require-invalid"
+          ]
+        },
+        {
+          "case": "root-not-directory",
+          "exit": 2,
+          "finding_ids": [
+            "root-not-directory"
+          ]
+        },
+        {
+          "case": "record-unreadable",
+          "exit": 2,
+          "finding_ids": [
+            "record-unreadable"
+          ]
+        },
+        {
+          "case": "path-invalid",
+          "exit": 2,
+          "finding_ids": [
+            "path-invalid"
+          ]
+        },
+        {
+          "case": "path-not-directory",
+          "exit": 2,
+          "finding_ids": [
+            "path-not-directory"
+          ]
+        },
+        {
+          "case": "frozen-unreadable",
+          "exit": 2,
+          "finding_ids": [
+            "frozen-unreadable"
+          ]
+        },
+        {
+          "case": "frozen-malformed",
+          "exit": 2,
+          "finding_ids": [
+            "frozen-malformed"
+          ]
+        },
+        {
+          "case": "frozen-schema",
+          "exit": 2,
+          "finding_ids": [
+            "frozen-schema"
+          ]
+        },
+        {
+          "case": "per-result-commit",
+          "exit": 0,
+          "finding_ids": []
+        },
+        {
+          "case": "record-path",
+          "exit": 0,
+          "finding_ids": []
+        },
+        {
+          "case": "frozen-clean",
+          "exit": 0,
+          "finding_ids": []
+        },
+        {
+          "case": "frozen-tampered",
+          "exit": 2,
+          "finding_ids": [
+            "snapshot_tampered"
+          ]
+        },
+        {
+          "case": "frozen-incomplete",
+          "exit": 2,
+          "finding_ids": [
+            "frozen-incomplete"
+          ]
+        },
+        {
+          "case": "frozen-verdict-mismatch",
+          "exit": 2,
+          "finding_ids": [
+            "snapshot-verdict-mismatch"
+          ]
+        }
+      ],
+      "literal_provenance": {
+        "artifact": "tools/souji-evidence-cache.py",
+        "sha256_when_plan_written": "dd279ba95eebd13a6674f79983cec286fd856aa6d7e0719bf551ae0fc08939d6",
+        "derivation": "All 48 cases.append sites and their want_code/want_ids were read at sha256 dd279ba9; final line format at line 1799. The command asserts the printed denominator equals the landed cases.append count and is at least 48.",
+        "drift_rule": "If the installed sha256 differs, re-read the case table and re-derive this mapping before running. A changed digest with an unre-derived literal is could-not-evaluate, not a pass."
+      },
+      "failure_class": "Exit 1, a missing/extra id in the snapshot, or a case-count mismatch = fail. Exit 2 with selftest-unavailable = could-not-evaluate. A changed digest without re-derivation makes the snapshot mapping could-not-evaluate, not a pass.",
+      "expected_case_ids_from_code_note": "The mapping below is the 48-case table inspected at sha256 dd279ba9. If the installed digest differs, re-derive it; the case-count command is still a valid non-vacuity check, but this mapping is not evidence for a changed table."
+    },
+    {
+      "id": "C-R14V-03",
+      "category": "new-selftest",
+      "claim": "The committed C1 frozen snapshot is reusable on its pinned bytes and refused when a pinned dependency is tampered.",
+      "commands": [
+        {
+          "shell": "/usr/bin/timeout --kill-after=10 120 /usr/bin/python3 -B \"$R/tools/souji-evidence-cache.py\" --frozen \"$R/tests/fixtures/r14-cache-frozen\" > \"$SCRATCH/frozen-clean.out\" 2>&1; rc=$?; /usr/bin/cat \"$SCRATCH/frozen-clean.out\"; exit $rc",
+          "expect": {
+            "exit": 0,
+            "stdout_lines": [
+              "souji-evidence-cache: reusable",
+              "record_name: r14-cache-frozen",
+              "measured_commit: 0123456789abcdef0123456789abcdef01234567",
+              "dependencies: 1",
+              "frozen_files: 2"
+            ]
+          }
+        },
+        {
+          "shell": "/usr/bin/cp -a \"$R/tests/fixtures/r14-cache-frozen\" \"$SCRATCH/frozen-tamper\"; /usr/bin/printf 'tampered\\n' >> \"$SCRATCH/frozen-tamper/dependency.txt\"; /usr/bin/timeout --kill-after=10 120 /usr/bin/python3 -B \"$R/tools/souji-evidence-cache.py\" --frozen \"$SCRATCH/frozen-tamper\" > \"$SCRATCH/frozen-tamper.out\" 2>&1; rc=$?; /usr/bin/cat \"$SCRATCH/frozen-tamper.out\"; test $rc = 2 || exit 1; /usr/bin/grep -q '^finding snapshot_tampered:' || exit 1 \"$SCRATCH/frozen-tamper.out\"; /usr/bin/grep -q '^souji-evidence-cache: could-not-evaluate$' || exit 1 \"$SCRATCH/frozen-tamper.out\"",
+          "expect": {
+            "exit": 0,
+            "why": "The wrapper exits 0 only when the tampered run itself exited 2 with the named finding. The tampered copy is under $SCRATCH only; the committed fixture is unmodified."
+          }
+        },
+        {
+          "shell": "test -z \"$(/usr/bin/git -C \"$R\" status --porcelain -- tests/fixtures/r14-cache-frozen)\"",
+          "expect": {
+            "exit": 0
+          }
+        }
+      ],
+      "literal_provenance": {
+        "artifacts": [
+          "tests/fixtures/r14-cache-frozen/expected.json",
+          "tests/fixtures/r14-cache-frozen/record.json"
+        ],
+        "expected_json": {
+          "record": "record.json",
+          "verdict": "reusable",
+          "files": {
+            "dependency.txt": "875598b6f830e010b5fc1c6db42528ef127423623e1af60d276be6527623366a",
+            "record.json": "67221a338ef4ada7505d26a41cc634fcbabb1e6b64e8ef47138e7b766871df41"
+          }
+        },
+        "derivation": "expected.json and record.json read directly; expected output lines are the --emit format at tool lines 751-764 and the frozen path at 673-746.",
+        "drift_rule": "If expected.json changes, re-read it; do not reuse these literals."
+      },
+      "failure_class": "Clean mismatch or missing id = fail. Absent frozen fixture = could-not-evaluate."
+    },
+    {
+      "id": "C-R14V-04",
+      "category": "cache-demo",
+      "claim": "The current-round consumer reuses a record only on gate exit 0, re-executes a producer on gate exit 1/2, preserves each result's measured_commit, and records the installed gate digest before and after.",
+      "commands": [
+        {
+          "shell": "/usr/bin/timeout --kill-after=10 300 /usr/bin/python3 -B \"$R/census/round-14/cache-demonstration.py\" --gate \"$R/tools/souji-evidence-cache.py\" > \"$SCRATCH/cache-demo.json\" 2> \"$SCRATCH/cache-demo.err\"; rc=$?; /usr/bin/test $rc = 0 || exit 1; /usr/bin/test ! -s \"$SCRATCH/cache-demo.err\"",
+          "expect": {
+            "exit": 0,
+            "why": "The demonstration itself exits 0 only when status=ok and all checks pass."
+          }
+        },
+        {
+          "shell": "/usr/bin/python3 - \"$SCRATCH/cache-demo.json\" \"$(/usr/bin/sha256sum \"$R/tools/souji-evidence-cache.py\" | /usr/bin/cut -d' ' -f1)\" <<'PY'\nimport json, sys\ndoc = json.load(open(sys.argv[1], encoding=\"utf-8\"))\ngate_digest = sys.argv[2]\nassert doc[\"schema\"] == \"souji-r14-cache-demonstration-v1\"\nassert doc[\"demonstration\"] == \"digest-bound-retention\"\nassert doc[\"status\"] == \"ok\", doc.get(\"failed_checks\")\nassert doc[\"failed_checks\"] == [], doc[\"failed_checks\"]\nassert doc[\"advisories\"] == [], doc[\"advisories\"]\nassert doc[\"producer_executions_new_policy\"] == 3\nassert doc[\"producer_executions_old_policy\"] == 1\nassert all(doc[\"checks\"].values()), [k for k, v in doc[\"checks\"].items() if not v]\nassert doc[\"gate\"][\"sha256\"] == gate_digest\nassert doc[\"gate\"][\"sha256\"] == doc[\"gate_sha256_after\"]\nassert doc[\"gate\"][\"regular\"] is True and doc[\"gate\"][\"symlink\"] is False\nassert doc[\"record\"][\"unchanged\"] is True\nassert doc[\"dependency_mutation\"][\"before\"][\"sha256\"] != doc[\"dependency_mutation\"][\"after\"][\"sha256\"]\nassert doc[\"dependency_mutation\"][\"alpha_unchanged\"] is True\nassert doc[\"dependency_mutation\"][\"record_unchanged\"] is True\nassert doc[\"dependency_mutation\"][\"gate_unchanged\"] is True\nassert doc[\"isolation\"][\"under_var_tmp\"] is True\nassert doc[\"isolation\"][\"cleaned\"] is True\nassert doc[\"isolation\"][\"residue\"] == []\nassert doc[\"deletion_certification\"] == \"OFF\"\nassert doc[\"measured_commit\"] == __import__(\"os\").environ.get(\"MEASURED_COMMIT\", doc[\"measured_commit\"])\nby_phase = {case[\"phase\"]: case for case in doc[\"cases\"]}\nassert by_phase[\"unchanged\"][\"gate_exit\"] == 0\nassert by_phase[\"unchanged\"][\"retained\"] is True\nassert by_phase[\"unchanged\"][\"result\"][\"result_origin\"] == \"retained-from-record\"\nassert by_phase[\"unchanged\"][\"executions_after\"] == 1\nassert by_phase[\"dependency-modified\"][\"gate_exit\"] == 1\nassert by_phase[\"dependency-modified\"][\"reusable\"] is False\nassert by_phase[\"dependency-modified\"][\"executions_after\"] == 2\nassert \"dependency-digest-mismatch\" in by_phase[\"dependency-modified\"][\"gate\"][\"findings\"]\nassert by_phase[\"legacy-no-dependencies\"][\"gate_exit\"] == 2\nassert by_phase[\"legacy-no-dependencies\"][\"reusable\"] is False\nassert by_phase[\"legacy-no-dependencies\"][\"executions_after\"] == 3\nassert \"dependencies-legacy\" in by_phase[\"legacy-no-dependencies\"][\"gate\"][\"findings\"]\nassert len({by_phase[phase][\"gate\"][\"measured_commit\"] for phase in (\"unchanged\", \"dependency-modified\", \"legacy-no-dependencies\")}) == 1\nprint(\"cache-demo assertions: ok\")\nPY",
+          "expect": {
+            "exit": 0,
+            "stdout_exact": "cache-demo assertions: ok"
+          }
+        }
+      ],
+      "literal_provenance": {
+        "artifact": "census/round-14/cache-demonstration.py",
+        "sha256_when_plan_written": "fc6f69a00a0bb4702e650936691aa0e347bb1fa9a809e3552d8f9371fba29d8a",
+        "derivation": "The schema, status/check keys, case phase names and exit map were read from the landed demo at sha256 fc6f69a0. The run also records its own gate digest; the assertion compares it to the installed gate.",
+        "caveat": "The demo captures finding ids from gate output rather than hardcoding them; the assertion requires their presence but does not substitute a new named-id contract."
+      },
+      "failure_class": "Non-zero demo exit or any assertion failure = fail. Blocked payload (exit 2: gate missing, measured-commit-unavailable, isolation-unavailable) = could-not-evaluate."
+    },
+    {
+      "id": "C-R14V-05",
+      "category": "legacy-selftest",
+      "claim": "The legacy census selftest still passes on the landed C2 tool, under an explicit /var/tmp TMPDIR, with no legacy check lost and the two new boundary checks present.",
+      "commands": [
+        {
+          "shell": "/usr/bin/timeout --kill-after=10 180 /usr/bin/env TMPDIR=/var/tmp /usr/bin/bash \"$R/tools/souji-census.sh\" --selftest > \"$SCRATCH/census-selftest.out\" 2>&1; rc=$?; /usr/bin/tail -1 \"$SCRATCH/census-selftest.out\"; exit $rc",
+          "expect": {
+            "exit": 0,
+            "stdout_last_line_regex": "^selftest: [0-9]+ checks, 0 failed$",
+            "stdout_absent": [
+              "fixtures not under mktemp",
+              "/tmp/souji-census-selftest",
+              "FAIL "
+            ],
+            "stdout_lines_present": [
+              "PASS protected root refused before access (exit 2, path-protected)",
+              "PASS protected compare alias refused (exit 2, path-protected)"
+            ],
+            "minimum_checks": 66
+          }
+        },
+        {
+          "shell": "/usr/bin/python3 - \"$SCRATCH/census-selftest.out\" <<'PY'\nimport re, sys\nlines = open(sys.argv[1], encoding=\"utf-8\").read().splitlines()\nm = re.fullmatch(r\"selftest: (\\d+) checks, 0 failed\", lines[-1])\nassert m, lines[-1]\ncount = int(m.group(1))\nassert count >= 66, count\nassert \"PASS protected root refused before access (exit 2, path-protected)\" in lines\nassert \"PASS protected compare alias refused (exit 2, path-protected)\" in lines\nassert not [line for line in lines if line.startswith(\"FAIL \")]\nprint(\"census-selftest assertions: ok\")\nPY",
+          "expect": {
+            "exit": 0,
+            "stdout_exact": "census-selftest assertions: ok",
+            "why": "No legacy check was lost (floor 66 at plan time) and both new boundary assertions ran."
+          }
+        },
+        {
+          "shell": "/usr/bin/grep -qE 'fixtures under mktemp \\(/var/tmp/souji-census-selftest\\.[A-Za-z0-9]+\\)' \"$SCRATCH/census-selftest.out\"",
+          "expect": {
+            "exit": 0,
+            "why": "Q4: the printed fixture base must be under /var/tmp, not /tmp."
+          }
+        },
+        {
+          "shell": "test \"$(/usr/bin/find /var/tmp -maxdepth 1 -name 'souji-census-selftest.*' -printf '.' | /usr/bin/wc -c)\" = 0",
+          "expect": {
+            "exit": 0,
+            "why": "The EXIT trap must remove the selftest root."
+          }
+        }
+      ],
+      "literal_provenance": {
+        "artifact": "tools/souji-census.sh",
+        "derivation": "The landed C2 selftest has 63 st_ok/st_bad call sites in run_selftest; one site runs once per member of the four-file malformed-baseline loop, so the printed total is 66. Two of the sites are the new boundary assertions quoted above. The baseline had 59 sites, so no legacy site was removed.",
+        "drift_rule": "If C2 changes the selftest after this plan, re-count the call sites and re-derive the loop multiplicities; do not reuse 66 for different bytes."
+      },
+      "failure_class": "Any failed check, fewer than 66 checks, or a /tmp base = fail. Missing census tool or /var/tmp unavailable = could-not-evaluate."
+    },
+    {
+      "id": "C-R14V-06",
+      "category": "warning-shellcheck",
+      "claim": "The edited census passes ShellCheck at warning severity, so SC2114/SC2115 cannot hide behind -S error.",
+      "commands": [
+        {
+          "shell": "/usr/bin/shellcheck --version | /usr/bin/sed -n '2p'",
+          "expect": {
+            "exit": 0,
+            "stdout_exact": "version: 0.11.0"
+          }
+        },
+        {
+          "shell": "/usr/bin/shellcheck -S warning \"$R/tools/souji-census.sh\" > \"$SCRATCH/shellcheck.out\" 2>&1; rc=$?; /usr/bin/cat \"$SCRATCH/shellcheck.out\"; exit $rc",
+          "expect": {
+            "exit": 0,
+            "stdout_empty": true,
+            "stderr_empty": true
+          }
+        }
+      ],
+      "failure_class": "Any SC code at warning severity = fail. ShellCheck is present on this host (0.11.0, observed); if it is absent, record could-not-evaluate. Any install must first run pacman -Sp --print-format '%n %v' for the named package and proceed only when every listed package is not installed (pacman -Q name fails); prefer an existing binary or uv/official channel. Never -Sy/-Syu/-U/-R, never downgrade, never restart services. Record tool/version/channel/reason."
+    },
+    {
+      "id": "C-R14V-07",
+      "category": "sources-census",
+      "claim": "The source registry lands S038 (S034 locator correction) plus the round-14 implementation/design rows append-only, and the canonical fleet census remains warning-only with the expected row and histogram state.",
+      "commands": [
+        {
+          "shell": "/usr/bin/timeout --kill-after=10 300 /home/vgpnk/Projects/shokunin/scripts/sources-census.sh validate --root /home/vgpnk/Projects/shokunin souji > \"$SCRATCH/sources-validate.out\" 2>&1; rc=$?; /usr/bin/cat \"$SCRATCH/sources-validate.out\"; exit $rc",
+          "expect": {
+            "exit": 0,
+            "stdout_final_line_exact": "souji\tok\t/home/vgpnk/Projects/shokunin/souji-shokunin/corpus/SOURCES.md",
+            "stdout_absent_regex": "^souji\\tE[0-9]{2}\\t",
+            "warnings": "W-codes are advisory and do not change exit; record every W line. Baseline had W04 for S035/S036; S038 may add a W04 because it shares the gnu.org timeout URL with S034 across scopes."
+          }
+        },
+        {
+          "shell": "test \"$(/usr/bin/grep -cE '^\\|[[:space:]]*S[0-9]{3,}[[:space:]]*\\|' \"$R/corpus/SOURCES.md\")\" = 40",
+          "expect": {
+            "exit": 0,
+            "why": "37 baseline rows plus S038, S039 and S040 observed at plan time. Any additional source row requires re-deriving this count rather than hiding a deletion."
+          }
+        },
+        {
+          "shell": "for id in S038 S039 S040; do test \"$(/usr/bin/grep -cE \"^\\\\|[[:space:]]*${id}[[:space:]]*\\\\|\" \"$R/corpus/SOURCES.md\")\" = 1 || exit 1; done",
+          "expect": {
+            "exit": 0,
+            "why": "Each new row appears exactly once; duplicate ids are an E03 census error."
+          }
+        },
+        {
+          "shell": "/usr/bin/python3 - \"$R/corpus/SOURCES.md\" <<'PY'\nimport collections, re, sys\nrows = []\nfor line in open(sys.argv[1], encoding=\"utf-8\"):\n    cells = [cell.strip() for cell in line.split(\"|\")]\n    if len(cells) == 13 and re.fullmatch(r\"S[0-9]{3,}\", cells[1]):\n        rows.append(cells)\nassert len(rows) == 40, len(rows)\ntiers = collections.Counter(row[4] for row in rows)\nstatus = collections.Counter(row[8] for row in rows)\nassert tiers == {\"A\": 36, \"B\": 3, \"C\": 1}, tiers\nassert status == {\"mined\": 23, \"queued\": 15, \"rejected\": 2}, status\nfor sid in (\"S038\", \"S039\", \"S040\"):\n    row = next(row for row in rows if row[1] == sid)\n    assert row[4] == \"A\", (sid, row[4])\n    assert row[8] == \"mined\", (sid, row[8])\n    assert row[9] == \"2026-10-20\", (sid, row[9])\nassert sum(1 for row in rows if row[1] == \"S034\") == 1\nprint(\"sources histogram: ok\")\nPY",
+          "expect": {
+            "exit": 0,
+            "stdout_exact": "sources histogram: ok"
+          }
+        },
+        {
+          "shell": "/usr/bin/git -C \"$R\" diff --numstat \"$BASE\" -- corpus/SOURCES.md > \"$SCRATCH/sources-diff.numstat\"; /usr/bin/awk '{ if ($2 != 0) exit 1; if ($1 < 3) exit 1 }' \"$SCRATCH/sources-diff.numstat\"",
+          "expect": {
+            "exit": 0,
+            "why": "Zero deleted lines preserves every historical cell; at least three inserted lines for S038/S039/S040. The earlier 1/0 expectation assumed S038 alone and is superseded by the landed registry state."
+          }
+        },
+        {
+          "shell": "s039=$(/usr/bin/grep -E '^\\|[[:space:]]*S039[[:space:]]*\\|' \"$R/corpus/SOURCES.md\"); /usr/bin/printf '%s\\n' \"$s039\" | /usr/bin/grep -q \"sha256 $(/usr/bin/sha256sum \"$R/tools/souji-evidence-cache.py\" | /usr/bin/cut -d' ' -f1)\"",
+          "expect": {
+            "exit": 0,
+            "why": "S039 cites the installed C1 gate digest; a mismatch means the row no longer names the measured bytes (Q6/Q17). Re-derive or correct the row, never edit the digest to match a stale row."
+          }
+        },
+        {
+          "shell": "/usr/bin/gzip -dc /usr/share/info/coreutils.info.gz | /usr/bin/sed -n '15319,15320p' | /usr/bin/grep -q \"killed by also sending a 'KILL' signal\" && /usr/bin/gzip -dc /usr/share/info/coreutils.info.gz | /usr/bin/sed -n '15363,15365p' | /usr/bin/grep -q '124 if COMMAND times out'",
+          "expect": {
+            "exit": 0,
+            "why": "The S038 anchor is re-read at the vendor lines, so the correction cites observed text, not another summary."
+          }
+        }
+      ],
+      "literal_provenance": {
+        "artifact": "corpus/SOURCES.md plus .ufo/waves/round-14/w1/SourceLedger.md",
+        "observed_state": "At plan time the registry has 40 rows: A=36, B=3, C=1; mined=23, queued=15, rejected=2. S038, S039 and S040 are the three new rows; S039 cites the C1 gate sha256 dd279ba9. Baseline a31642d had 37 rows (A=33, B=3, C=1; mined=20, queued=15, rejected=2).",
+        "derivation": "Counts and rows were read from the working-tree corpus/SOURCES.md; E/W codes and exit map read from /home/vgpnk/Projects/shokunin/scripts/sources-census.sh.",
+        "s039_s040_note": "The wave context said S039 was available only after an L1 run; the registry nevertheless contains S038-S040 at plan time. This plan verifies the observed rows and does not pre-authorize any further row. A later S041 changes the counts and must be re-derived."
+      },
+      "failure_class": "Exit 1 or an E-code = fail. A missing script or registry = could-not-evaluate. The two W04 lines are advisory and do not change exit."
+    },
+    {
+      "id": "C-R14V-08",
+      "category": "new-selftest",
+      "claim": "The external C1 fixture exercises the installed gate through its documented CLI and reports every landed named check; an absent --tool is a distinct prerequisite refusal rather than a passing run.",
+      "commands": [
+        {
+          "shell": "/usr/bin/timeout --kill-after=10 300 /usr/bin/python3 -B \"$R/tests/fixtures/r14-evidence-cache.py\" --tool \"$R/tools/souji-evidence-cache.py\" --frozen-dir \"$R/tests/fixtures/r14-cache-frozen\" > \"$SCRATCH/cache-fixture.out\" 2>&1; rc=$?; /usr/bin/cat \"$SCRATCH/cache-fixture.out\"; exit $rc",
+          "expect": {
+            "exit": 0,
+            "stdout_absent": [
+              "FAIL ",
+              "Traceback",
+              "tool missing"
+            ],
+            "stdout_last_line_regex": "^fixture: ([0-9]+)/\\1 checks passed$",
+            "minimum_cases": 22
+          }
+        },
+        {
+          "shell": "/usr/bin/python3 - \"$SCRATCH/cache-fixture.out\" \"$R/tests/fixtures/r14-evidence-cache.py\" <<'PY'\nimport re, sys\nlines = open(sys.argv[1], encoding=\"utf-8\").read().splitlines()\nm = re.fullmatch(r\"fixture: (\\d+)/(\\d+) checks passed\", lines[-1])\nassert m, lines[-1]\nassert m.group(1) == m.group(2)\nprinted = int(m.group(2))\ncalls = open(sys.argv[2], encoding=\"utf-8\").read().count(\"check(results\")\nassert printed == calls - 1, (printed, calls - 1)\nassert printed >= 22, printed\nassert not [line for line in lines if line.startswith(\"FAIL \")]\nprint(\"cache-fixture case-count assertions: ok\")\nPY",
+          "expect": {
+            "exit": 0,
+            "stdout_exact": "cache-fixture case-count assertions: ok",
+            "why": "The printed denominator must equal the landed check(results,...) call sites minus the function definition, and be at least the 22 observed while writing the plan."
+          }
+        },
+        {
+          "shell": "for name in selftest external-clean changed-dependency unchanged-unrelated-change missing-dependency symlink-dependency malformed-hash path-escape matched-false legacy-no-dependencies empty-dependencies duplicate-json-keys nonregular-dependency malformed-measured-commit nonboolean-matched require-undeclared protected-root protected-record frozen-clean frozen-tampered frozen-verdict-mismatch per-result-commit; do /usr/bin/grep -qx \"ok $name\" \"$SCRATCH/cache-fixture.out\" || exit 1; done",
+          "expect": {
+            "exit": 0,
+            "why": "Exact name set: a missing or renamed check is a fail, not a silent skip."
+          }
+        },
+        {
+          "shell": "/usr/bin/timeout --kill-after=10 120 /usr/bin/python3 -B \"$R/tests/fixtures/r14-evidence-cache.py\" --tool \"$SCRATCH/absent-cache.py\" > \"$SCRATCH/cache-fixture-missing.out\" 2>&1; rc=$?; /usr/bin/cat \"$SCRATCH/cache-fixture-missing.out\"; /usr/bin/test $rc = 2 || exit 1; /usr/bin/grep -q '^fixture: tool missing: ' \"$SCRATCH/cache-fixture-missing.out\"",
+          "expect": {
+            "exit": 0,
+            "fixture_exit_seen": 2,
+            "classification": "prerequisite-refusal",
+            "why": "The fixture must refuse an absent tool with exit 2 and a distinct diagnostic. This is not a gate verdict and must never be reported as a passing C1 arm."
+          }
+        },
+        {
+          "shell": "test \"$(/usr/bin/find /var/tmp -maxdepth 1 -name 'souji-r14-cache-fixture.*' -printf '.' | /usr/bin/wc -c)\" = 0",
+          "expect": {
+            "exit": 0,
+            "why": "The fixture's finally block must remove its scratch tree, including the synthetic HOME."
+          }
+        }
+      ],
+      "literal_provenance": {
+        "artifact": "tests/fixtures/r14-evidence-cache.py",
+        "sha256_when_plan_written": "95b371ab667a61aebb673b003dda87ed2ade40d286706fa2bdf5785522b6d26a",
+        "derivation": "The 22 check(results, ...) call sites and final line at line 363 were read at sha256 778ea3c6; the fixture was edited again to 95b371ab by hand-off. The command asserts the printed count equals the landed call-site count minus the definition and is at least 22.",
+        "note": "Do not copy the GateRegistry draft expectation that an absent --tool exits 1 with all cases FAIL. The landed fixture returns 2 with 'fixture: tool missing:'; the draft was a design target written before the code existed."
+      },
+      "failure_class": "Installed arm exit 1, any FAIL line, a missing/renamed ok name, or a case count below 22 = fail. Installed arm exit 2 = could-not-evaluate. Missing-tool arm exit other than 2 or no diagnostic = fail of the fixture contract."
+    },
+    {
+      "id": "C-R14V-09",
+      "category": "boundary-red-green",
+      "claim": "The C2 fixture passes all 9 cases on the installed census, and fails the pre-r14 baseline on the boundary cases for observed access-before-refusal reasons while its two positive controls still pass.",
+      "commands": [
+        {
+          "shell": "set -e; /usr/bin/git -C \"$R\" show \"$BASE:tools/souji-census.sh\" > \"$SCRATCH/souji-census.baseline.sh\"; /usr/bin/chmod 700 \"$SCRATCH/souji-census.baseline.sh\"; test -f \"$SCRATCH/souji-census.baseline.sh\"; test ! -L \"$SCRATCH/souji-census.baseline.sh\"; test \"$(/usr/bin/sha256sum \"$SCRATCH/souji-census.baseline.sh\" | /usr/bin/cut -d' ' -f1)\" = 6a000c59fe7486fbde7e5f68663c61cf60404cadb4185e84205b56fe4648c026",
+          "expect": {
+            "exit": 0,
+            "why": "The red arm must use the committed a31642d census blob, not a hand-edited or missing file. The digest is the baseline census digest recorded in this plan."
+          }
+        },
+        {
+          "shell": "/usr/bin/timeout --kill-after=15 900 /usr/bin/python3 -B \"$R/tests/fixtures/r14-census-boundary.py\" --tool \"$R/tools/souji-census.sh\" > \"$SCRATCH/census-boundary-green.out\" 2> \"$SCRATCH/census-boundary-green.err\"; rc=$?; /usr/bin/cat \"$SCRATCH/census-boundary-green.out\"; /usr/bin/cat \"$SCRATCH/census-boundary-green.err\" >&2; exit $rc",
+          "expect": {
+            "exit": 0,
+            "stdout_first_line_regex": "^TOOL\\t/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-census\\.sh\\tsha256=[0-9a-f]{64}$",
+            "case_pass_count": 9,
+            "stdout_last_line_exact": "SUMMARY\ttotal=9\tfailed=0",
+            "stdout_absent": [
+              "FAIL",
+              "R14C2-CANARY-6b1f9d2e-do-not-emit"
+            ],
+            "stderr_empty": true
+          }
+        },
+        {
+          "shell": "test \"$(/usr/bin/grep -c $'^CASE\\tR14C2-0[1-9]\\tPASS\\tok$' \"$SCRATCH/census-boundary-green.out\")\" = 9",
+          "expect": {
+            "exit": 0,
+            "why": "Every one of the nine named cases must PASS; the SUMMARY line alone could be forged by a zero-case run."
+          }
+        },
+        {
+          "shell": "test \"$(/usr/bin/sed -n '1s/.*sha256=//p' \"$SCRATCH/census-boundary-green.out\")\" = \"$(/usr/bin/sha256sum \"$R/tools/souji-census.sh\" | /usr/bin/cut -d' ' -f1)\"",
+          "expect": {
+            "exit": 0,
+            "why": "Q6/Q18: the fixture's TOOL line names the digest of the bytes it actually ran."
+          }
+        },
+        {
+          "shell": "/usr/bin/timeout --kill-after=15 900 /usr/bin/python3 -B \"$R/tests/fixtures/r14-census-boundary.py\" --tool \"$SCRATCH/souji-census.baseline.sh\" > \"$SCRATCH/census-boundary-red.out\" 2>&1; rc=$?; /usr/bin/cat \"$SCRATCH/census-boundary-red.out\"; /usr/bin/test $rc = 1 || exit 1; /usr/bin/grep -q $'^TOOL\\t'\"$SCRATCH/souji-census.baseline.sh\"$'\\tsha256=6a000c59fe7486fbde7e5f68663c61cf60404cadb4185e84205b56fe4648c026$' \"$SCRATCH/census-boundary-red.out\" || exit 1; /usr/bin/grep -q $'^CASE\\tR14C2-07\\tPASS\\tok$' \"$SCRATCH/census-boundary-red.out\" || exit 1; /usr/bin/grep -q $'^CASE\\tR14C2-08\\tPASS\\tok$' \"$SCRATCH/census-boundary-red.out\" || exit 1; for cid in 01 02 03 04 05 06 09; do /usr/bin/grep -qE $'^CASE\\tR14C2-'\"$cid\"$'\\tFAIL\\t' \"$SCRATCH/census-boundary-red.out\" || exit 1; done; /usr/bin/grep -q $'^SUMMARY\\ttotal=9\\tfailed=7$' \"$SCRATCH/census-boundary-red.out\" || exit 1; /usr/bin/grep -qE 'strace store access|forbidden tool invoked|exit=[0-9]+ want 2' \"$SCRATCH/census-boundary-red.out\" || exit 1; ! /usr/bin/grep -q 'tool not readable' \"$SCRATCH/census-boundary-red.out\"",
+          "expect": {
+            "exit": 0,
+            "fixture_exit_seen": 1,
+            "classification": "expected-red",
+            "why": "The baseline must fail the refusal cases for observed access or wrong exit, not for a missing file. The two positive controls (normal fleet, scratch symlink) must pass on baseline so the red is not a blanket failure."
+          }
+        },
+        {
+          "shell": "test \"$(/usr/bin/find /var/tmp -maxdepth 1 -name 'r14-census-boundary.*' -printf '.' | /usr/bin/wc -c)\" = 0",
+          "expect": {
+            "exit": 0,
+            "why": "The fixture's finally block must remove its synthetic HOME and spies."
+          }
+        }
+      ],
+      "literal_provenance": {
+        "artifact": "tests/fixtures/r14-census-boundary.py",
+        "sha256_when_plan_written": "bdcbfbc01e1d1063f2cfdaefb431ebaa3df720c79419ea69bbe63d03a5d18634",
+        "expected_ids": [
+          "R14C2-01",
+          "R14C2-02",
+          "R14C2-03",
+          "R14C2-04",
+          "R14C2-05",
+          "R14C2-06",
+          "R14C2-07",
+          "R14C2-08",
+          "R14C2-09"
+        ],
+        "case_meanings_from_code": {
+          "R14C2-01": "--root equals the synthetic store root",
+          "R14C2-02": "--root is a descendant of the store",
+          "R14C2-03": "--root is the synthetic HOME (ancestor of the store)",
+          "R14C2-04": "--root is a /var/tmp symlink resolving into the store",
+          "R14C2-05": "--compare is the store records file, direct and via a symlink",
+          "R14C2-06": "gitfile, .git symlink and commondir aliases into the store",
+          "R14C2-07": "positive control: safe fleet, clean row",
+          "R14C2-08": "positive control: repo .scratch symlink into the store, scratch_bytes=0",
+          "R14C2-09": "positive control: inherited GIT_* redirects must not reach the store"
+        },
+        "red_expectation_basis": "Baseline census at a31642d has no protected predicate and unsets only GIT_DIR/GIT_WORK_TREE/GIT_INDEX_FILE/GIT_NAMESPACE. It therefore runs list_repos/census_one through the store on 01-04 and 06, reads the store compare file on 05, and leaves GIT_COMMON_DIR/GIT_OBJECT_DIRECTORY/alternates in place on 09. Cases 07-08 exercise paths the baseline already handles. If the observed red set differs, record the difference as a fixture coverage finding; do not rewrite the baseline expectation to match the run.",
+        "note": "The GateRegistry draft named R14C2-01, -05 and -08 as the red cases; that draft predates the landed fixture and its numbering does not match. This plan uses the landed case table.",
+        "derivation": "The 9 case ids, case functions, red/green expectations and TOOL/SUMMARY line formats were read from the landed fixture; the last working-tree bytes observed while finalizing were sha256 bdcbfbc0 (CensusBoundary.md pinned d712ac79 before its final edits). The installed census digest is read at run time and compared to the fixture's TOOL line; no digest in this check is trusted from prose.",
+        "report_confirmation": "CensusBoundary.md states the installed arm: exit 0, all nine PASS; baseline arm: exit 1, total=9 failed=7, R14C2-01..06 and R14C2-09 FAIL, R14C2-07/08 PASS. These are pre-run targets, not exercised results."
+      },
+      "failure_class": "Installed arm exit 1/FAIL/canary/stderr = fail; installed exit 2 = could-not-evaluate. Baseline arm exit 0 or 2, a missing red case, a failed positive control, or a missing access/wrong-exit detail = fail (the fixture did not discriminate)."
+    }
+  ],
+  "sequence": [
+    "C-R14V-00 preflight: clean target pathspec, captured MEASURED_COMMIT, artifact digests.",
+    "C-R14V-01 isolation-static.",
+    "C-R14V-02 C1 gate selftest.",
+    "C-R14V-03 C1 frozen clean + tampered.",
+    "C-R14V-08 C1 external fixture installed arm and missing-tool refusal.",
+    "C-R14V-09 C2 boundary fixture installed green, then baseline red.",
+    "C-R14V-04 cache demonstration.",
+    "C-R14V-05 legacy census selftest.",
+    "C-R14V-06 ShellCheck warning.",
+    "C-R14V-07 sources census and S038 locator.",
+    "Recompute the C-R14V-00 digest map and HEAD; any change is could-not-evaluate, not pass."
+  ],
+  "postamble": {
+    "shell": "set -e; /usr/bin/sha256sum \"$R/tools/souji-evidence-cache.py\" \"$R/tools/souji-census.sh\" \"$R/tests/fixtures/r14-evidence-cache.py\" \"$R/tests/fixtures/r14-census-boundary.py\" \"$R/tests/fixtures/r14-cache-frozen/record.json\" \"$R/tests/fixtures/r14-cache-frozen/expected.json\" \"$R/tests/fixtures/r14-cache-frozen/dependency.txt\" \"$R/census/round-14/cache-demonstration.py\" > \"$SCRATCH/artifacts.after.sha256\"; /usr/bin/cmp -s \"$SCRATCH/artifacts.before.sha256\" \"$SCRATCH/artifacts.after.sha256\"; /usr/bin/git -C \"$R\" rev-parse --verify HEAD | /usr/bin/grep -qx \"$MEASURED_COMMIT\"; test -z \"$(/usr/bin/git -C \"$R\" status --porcelain -- tools tests census/round-14)\"; for f in tools/souji-evidence-cache.py tools/souji-census.sh tests/fixtures/r14-evidence-cache.py tests/fixtures/r14-census-boundary.py census/round-14/cache-demonstration.py; do /usr/bin/git -C \"$R\" cat-file -e \"$MEASURED_COMMIT:$f\" || exit 2; /usr/bin/test \"$(/usr/bin/git -C \"$R\" show \"$MEASURED_COMMIT:$f\" | /usr/bin/sha256sum | /usr/bin/cut -d' ' -f1)\" = \"$(/usr/bin/sha256sum \"$R/$f\" | /usr/bin/cut -d' ' -f1)\" || exit 1; done",
+    "expect": {
+      "exit": 0,
+      "why": "Q6/Q18: the bytes measured are the bytes the verdict names, and the measured commit did not move during the run."
+    }
+  },
+  "evidence_record": {
+    "caller_must_record": [
+      "MEASURED_COMMIT and the before/after digest map",
+      "the exact command, exit status, wall time and captured stdout/stderr for every check",
+      "the exact finding ids observed, not a prose paraphrase",
+      "pass/expected_red/fail/could-not-evaluate per check, with the blocked claim named for any could-not-evaluate",
+      "the declared limits: eligibility is not execution proof; boundary refusal is not deletion certification; certification is OFF"
+    ]
+  }
+}

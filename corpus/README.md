@@ -100,3 +100,28 @@ Exact commands, outputs, installed digests and per-check revisions:
 separately, not erased. Q19 replaces Q8's marker-count test with behavior
 and independent expected finding ids.
 
+
+## Round 14 evidence-integrity and refusal boundaries
+
+This round works calibration and operability, not a new coverage-map ground.
+No new knowledge entry is pre-admitted from source-row counts. K5 remains
+HELD; F2's wider size attribution and the unexercised quarantine sites remain
+frontier. Deletion certification stays OFF.
+
+- `../tools/souji-evidence-cache.py` — declared-dependency eligibility,
+  not proof of historical execution, authenticated authorship or complete
+  dependency/environment capture. QUALITY Q20 and round-14 R14-M1.
+- `../census/round-14/cache-demonstration.py` — synthetic harmless producer,
+  authentic historical matched-only red control, migrated consumer decisions.
+- `lessons/round-14.md` — named S034 source-location erratum, opened S038/S040,
+  prior routed limitations and explicit admit/reject boundaries.
+- Evidence and actual per-result revisions land in `../census/round-14/`;
+  wave specification, unchanged dispatch, assigned registry and advisory
+  reports are in `../.ufo/waves/round-14/`. A seat report is not a runtime
+  observation unless it explicitly records one.
+
+Historical `../census/round-13/verification.json` stays unchanged. Reproduce
+its old counting commands at their cited measured revision, not by assuming
+the current migrated runner contains the same bytes. Neither old retained
+observations nor current gate declarations are silently relabelled as a
+new execution. Initial operator sweep remains unread and unstaged.

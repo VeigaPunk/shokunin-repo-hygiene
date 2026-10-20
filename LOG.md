@@ -614,3 +614,56 @@ S005/S006; immutable historical cells were not rewritten. Start output
 was the single ok line, exit 0 (`before.json`). No source-census warning
 is hidden or mistaken for a failed required exit condition.
 
+
+## 2026-10-20 — round 14: digest-bound retention and credential-store census fence
+
+Motivation: `corpus/lessons/round-13-verifier-spotcheck.md`, Routed findings
+items 1–3. S034's quote was correct but its installed-vendor line anchors
+were wrong; C2's five-case evidence did not establish all implementation
+sites; retained-green selection compared no dependency digests.
+
+Declared C1 calibration (lowest axis 7): independently runnable declared-
+dependency eligibility gate, an actual retained-result consumer migration,
+and an authentic baseline matched-only retention red control. C2
+operability: protect the credential namespace before root/compare/Git-store/
+worktree enumeration; all behavioural evidence uses synthetic HOME under
+`/var/tmp`, never the real credential store. Declaration/counting commands:
+`census/round-14/claims.json`; start revision/census:
+`census/round-14/before.json`, baseline
+`a31642d14006830ec62edf40b0354c3699728c4a`.
+
+Correction S038 supersedes S034's immutable source anchor; named erratum
+and exact newly opened quote are in `corpus/lessons/round-14.md`. S040
+grounds pure computation versus filesystem-aware path resolution for C2.
+QUALITY Q20/Q21 cite R14-M1/R14-M3 rather than inventing a numeric score
+rubric. Scores stay calibration 7 / operability 8 / coverage 8, delta 0.
+
+This round does not grant comprehensive class-suite certification, deletion
+authority, universal race-free sandboxing, complete dependency inference,
+or proof that a historical command ran. R13's unexercised bound sites stay
+explicitly unproved, K5 stays HELD and certification OFF. No live cleanup
+or credential content is inspected. Own wave evidence is
+`.ufo/waves/round-14/`, one validated 32-seat unchanged taskCall; L1 planner
+mapping retained. Initial sole untracked operator sweep remains unmodified,
+unread and excluded from all named commit pathspecs. There was no inherited
+lane-authored debt.
+
+All round commits use confirmed owning toplevel, explicit named paths and
+`git -c maintenance.auto=false commit -- <same named paths>` under
+`souji-shokunin <souji@shokunin.local>`. Executed verification and its
+per-result revision are recorded separately in the closing entry; intent
+above is not described as exercised success.
+
+### Round 14 historical-runner provenance correction
+
+The C1 integration deliberately migrates the executable retention caller at
+`census/round-13/run-verification.py`, not its historical output JSON.
+VerdictAttack caught that its original hard-coded output could overwrite
+filed r13 evidence. The migrated entry now requires explicit round/output,
+refuses default invocation before work, and exclusively creates a new
+`census/round-N/` output. Reproduce the historical `--retry-failed` command
+at its original measured commit `6f8ee0f`, never by relabelling current
+runner bytes as those old observations. The closing verifier records the
+historical evidence digest before/after and checks the default refusal
+without executing the r13 matrix. Its actual decision function is exercised
+on isolated synthetic records by `census/round-14/cache-demonstration.py`.
