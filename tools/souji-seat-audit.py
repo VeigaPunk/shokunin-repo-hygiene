@@ -130,7 +130,11 @@ def run(spec_path: Path, tdir: Path, lane: str) -> dict:
             result["missing_transcripts"].append(name)
             continue
         report = f"{lane}/{report_dir}/{name}.md"
-        calls, found = audit_seat(f.read_text(encoding="utf-8", errors="replace"), role,
+        # An item may grant its seat the named test command explicitly
+        # (`ALLOWED-EXEC:` in the item prompt); it is then audited as an
+        # executing seat, still bound by every other class.
+        eff_role = "executor" if "ALLOWED-EXEC:" in item.get("prompt", "") else role
+        calls, found = audit_seat(f.read_text(encoding="utf-8", errors="replace"), eff_role,
                                   report, owned_paths(item.get("prompt", "")), lane, fleet)
         result["seats"][name] = {"role": role, "calls": calls, "violations": found}
     viol = [v for s in result["seats"].values() for v in s["violations"]]

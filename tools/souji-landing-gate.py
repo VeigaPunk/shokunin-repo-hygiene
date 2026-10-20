@@ -59,15 +59,15 @@ CITED_PATH_RE = re.compile(
     r"(?:tools|tests/fixtures|census/round-\d+)/[A-Za-z0-9_.-]+\.(?:sh|py)"
 )
 
-# A seat report's failure channel (L1 precision revision, round 16): a line
-# whose stripped text starts with a STATUS prefix (optional heading/bold
-# decoration) and whose first value word is in the pinned failure
-# vocabulary the wave contract requires seats to use for a known failure —
-# plus strong phrase markers (outside fenced blocks and table rows). The
-# first draft's "anything not benign" rule and its generic markers
-# (`snapshot_tampered`, `syntax error`, `parse error`) flagged 10 benign
-# lines on each of the admitted round-13 and round-14 replays (design-only
-# status lines, exit-code tables), so they are not used.
+# A seat report's failure channel (L1 revisions, round 16): a line whose
+# stripped text starts with a STATUS prefix (optional heading/bold
+# decoration), outside fenced blocks and table rows, whose first value word
+# is in the pinned failure vocabulary the wave contract requires seats to use
+# for a known failure. Two earlier drafts were measured and dropped: "any
+# non-benign first word" plus generic markers (`snapshot_tampered`, `syntax
+# error`) flagged 10 benign lines on each admitted round-13/14 replay, and
+# free-text phrase markers (`does not parse`, `do not ship`) matched 42 lines
+# at the round-16 landing, all quotations of the round-15 failure.
 STATUS_PREFIX_RE = re.compile(r"^[#*\s]*STATUS[*]*\s*[:—]\s*(.*)$", re.IGNORECASE)
 FAILURE_STATUS_WORDS = frozenset(
     {
@@ -75,14 +75,6 @@ FAILURE_STATUS_WORDS = frozenset(
         "blocked", "broken", "partial", "harmed", "red", "unrun", "error",
         "regression", "known",
     }
-)
-PHRASE_MARKER_RE = re.compile(
-    r"do not ship"
-    r"|does not parse|doesn't parse|fails to parse"
-    r"|syntax error near unexpected token"
-    r"|\b(?:SyntaxError|IndentationError|TabError):"
-    r"|currently fails?\b",
-    re.IGNORECASE,
 )
 
 # Carry target in corpus/lessons/round-N.md.
@@ -263,17 +255,19 @@ def status_value(line):
 
 
 def is_failure_line(line, in_fence, in_table):
-    """Failure-channel membership per pinned spec."""
-    value = status_value(line)
-    if value is not None:
-        first = re.match(r"[*:—\s]*(\S+)", value)
-        word = first.group(1).strip("*:—").lower() if first else ""
-        if word in FAILURE_STATUS_WORDS:
-            return True
-        # A benign STATUS line can still carry a phrase marker below.
+    """Failure-channel membership (L1 revision 2, round 16): only a STATUS
+    line outside fenced blocks and table rows whose first value word is in
+    the contract failure vocabulary. Free-text phrase markers are not used:
+    at the round-16 landing they matched 42 lines, every one a quotation of
+    the round-15 failure, none an undisclosed round-16 failure."""
     if in_fence or in_table:
         return False
-    return bool(PHRASE_MARKER_RE.search(line))
+    value = status_value(line)
+    if value is None:
+        return False
+    first = re.match(r"[*:—\s]*(\S+)", value)
+    word = first.group(1).strip("*:—").lower() if first else ""
+    return word in FAILURE_STATUS_WORDS
 
 
 def seat_failure_lines(report_text):

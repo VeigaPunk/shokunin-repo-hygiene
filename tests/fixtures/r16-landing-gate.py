@@ -380,7 +380,11 @@ def main():
              need=[("LG-SEAT-UNCARRIED", ("SeatA",))],
              absent=[("LG-SEAT-UNCARRIED", ("SeatB",))])
 
-        # --- Case 9: reworded/decorated STATUS and phrase markers ------------
+        # --- Case 9: reworded/decorated STATUS lines; prose outside the ------
+        # STATUS channel is not a marker (L1 revision 2: free-text phrases
+        # matched 42 quotation lines at the r16 landing). A known failure
+        # stated only in prose is a contract breach for the seat audit, not
+        # a gate finding.
         r = Repo(scratch, "reword")
         r.write("SKILL.md", SKILL_TMPL.format(cited="tools/ok.sh"))
         r.write("tools/ok.sh", "#!/bin/sh\necho ok\n")
@@ -390,10 +394,12 @@ def main():
             "SeatC.md": "# c\n\nThe file in tree doesn't parse.\n",
             "SeatD.md": "# d\n\nnote: do not ship this\n",
             "SeatE.md": "# e\n\nSTATUS — INCOMPLETE — colonless form\n",
-            "SeatF.md": ("# f\n\n```\nSTATUS: ok inside fence\n"
+            "SeatF.md": ("# f\n\n```\nSTATUS: FAIL inside fence\n"
                          "does not parse inside fence\n```\n\n"
                          "| code | cause |\n|---|---|\n"
-                         "| 2 | syntax error, missing file |\n"),
+                         "| 2 | STATUS: FAIL in a table |\n"),
+            "SeatG.md": "# g\n\n## STATUS: PARTIAL — doesn't parse yet\n",
+            "SeatH.md": "# h\n\n> STATUS: FAIL — quoted from another seat\n",
         })
         r.lesson([])
         rev = r.commit("rewordings")
@@ -401,10 +407,12 @@ def main():
              gate.run(r.path, rev, ROUND), 1,
              need=[("LG-SEAT-UNCARRIED", ("SeatA",)),
                    ("LG-SEAT-UNCARRIED", ("SeatB",)),
-                   ("LG-SEAT-UNCARRIED", ("SeatC",)),
-                   ("LG-SEAT-UNCARRIED", ("SeatD",)),
-                   ("LG-SEAT-UNCARRIED", ("SeatE",))],
-             absent=[("LG-SEAT-UNCARRIED", ("SeatF",))])
+                   ("LG-SEAT-UNCARRIED", ("SeatE",)),
+                   ("LG-SEAT-UNCARRIED", ("SeatG",))],
+             absent=[("LG-SEAT-UNCARRIED", ("SeatC",)),
+                     ("LG-SEAT-UNCARRIED", ("SeatD",)),
+                     ("LG-SEAT-UNCARRIED", ("SeatF",)),
+                     ("LG-SEAT-UNCARRIED", ("SeatH",))])
 
         # --- Case 10: marker carried only inside an HTML comment -------------
         r = Repo(scratch, "htmlcomment")
