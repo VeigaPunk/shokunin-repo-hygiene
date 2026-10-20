@@ -193,7 +193,7 @@ is_secret_shaped() { # any component in the r2 refusal list
   for comp in $1; do
     lc=${comp,,}
     case "$lc" in
-      *.env|.env|.env.*|.envrc|*credential*|*secret*|id_*|*.pem)
+      *.env|.env.*|.envrc|*credential*|*secret*|id_*|*.pem)
         set +f; return 0 ;;
     esac
   done
@@ -257,7 +257,7 @@ q_default_ref() {
 }
 
 # second_check: prong1 + prong2 + pins for one staged target.
-# In:  CT QPATH REL CLASS PIN_SHA PIN_MTIME METHOD (globals set by caller)
+# In:  CT QPATH REL CLASS PIN_SHA PIN_MTIME (globals set by caller)
 # Out: SC_PASS=1|0, SC_EV (evidence string)
 s18_second_check() {
   SC_PASS=0
@@ -436,8 +436,6 @@ s18_flow_one() {
     .ufo-quarantine|.ufo-quarantine/*|.git|.git/*)
       block_one "$raw" forbidden-prefix "$rel"
       return 0 ;;
-    ''|.*/*|./*)
-      : ;;
   esac
   case "$rel" in
     */..*|*../*)
@@ -489,7 +487,7 @@ s18_flow_one() {
   pin_mtime=$(stat -c %Y -- "$ct" 2>/dev/null || true)
 
   CT=$ct CREPO=$crepo REL=$rel QPATH=$qpath CLASS=$class ISDIR=$isdir
-  PIN_SHA=$pin_sha PIN_MTIME=$pin_mtime METHOD=$method
+  PIN_SHA=$pin_sha PIN_MTIME=$pin_mtime
 
   if [ "$DRYRUN" = 1 ]; then
     emit CMD "$raw" "mkdir -p -- $(printf '%q' "$qdir/$(dirname -- "$rel")")"
@@ -569,7 +567,8 @@ s18_flow_one() {
       emit QSTAGE stage5-index "$raw" index-cleanup-skipped "$qpath"
   fi
   # prune now-empty parents of the staged copy up to (not including) qdir
-  local rmp="$(dirname -- "$qpath")"
+  local rmp
+  rmp=$(dirname -- "$qpath")
   while [ "$rmp" != "$qdir" ] && [ "$rmp" != "$crepo" ] && [ "$rmp" != "/" ]; do
     rmdir --ignore-fail-on-non-empty "$rmp" 2>/dev/null || break
     rmp=$(dirname -- "$rmp")
@@ -616,8 +615,7 @@ run_mode() {
   fi
 
   if [ -n "$LIST_FILE" ]; then
-    local nul_prefix
-    if IFS= read -r -d '' nul_prefix <"$LIST_FILE"; then
+    if IFS= read -r -d '' <"$LIST_FILE"; then
       usage_err "list contains a NUL byte"
     fi
     local line n=0 path rcpt header_skipped=0
@@ -886,7 +884,7 @@ try_ledger() {
       LEDGER_ROWS+=("$row")
     else
       rejected=1
-      if [ "$S18_VP" = "$target" ]; then reason=source-equals-vault; fi
+      if [ "$S18_VP" = "$target" ]; then reason="source-equals-vault"; fi
     fi
   done
   if [ "${#LEDGER_ROWS[@]}" -gt 0 ]; then
@@ -928,7 +926,6 @@ try_pushed() {
     NOTES+=("pushed=no-introducing-commit"); return 1
   fi
   if ! ref=$(resolve_default_ref "$repo"); then
-    FAIL_REASON=pushed-unverifiable
     NOTES+=("pushed=unverifiable(no-default-ref) intro=${intro:0:12}"); return 1
   fi
   if ! touching=$(git -C "$repo" log --format=%H HEAD --branches --not --remotes -- "$target" 2>/dev/null); then
@@ -943,7 +940,7 @@ try_pushed() {
   if ! s18_snapshot_equal "$repo" "$ref" "$target"; then
     NOTES+=("pushed=default-snapshot-mismatch"); return 1
   fi
-  R_VERDICT=SAFE; R_RECEIPT=pushed; R_REASON=pushed
+  R_VERDICT=SAFE; R_RECEIPT=pushed
   R_EVIDENCE="intro=${intro:0:12} ref=$ref ancestor=yes snapshot=equal clean=yes"
   return 0
 }
@@ -1044,7 +1041,7 @@ try_stale() {
   fi
   s18_scope_unreferenced "$target" "$repo" "$target" || return 1
   mtime=$(stat -c %Y -- "$target") || return 1
-  R_VERDICT=SAFE; R_RECEIPT=stale; R_REASON=stale
+  R_VERDICT=SAFE; R_RECEIPT=stale
   R_EVIDENCE="scratch-type=$kind refs=0 mtime-age-days=$(((now - mtime) / 86400)) descendants=old-and-unreferenced"
   return 0
 }
@@ -1053,18 +1050,18 @@ s18_evaluate_worktree_one() {
   local target=$1 meta=$2 owner head branch unp uniq dirty refs status
   local -a roots=()
   IFS=$'\t' read -r owner head branch <<< "$meta"
-  R_VERDICT=NOT-SAFE; R_RECEIPT=none; R_REASON=none
+  R_VERDICT=NOT-SAFE; R_RECEIPT=none
   if ! git -C "$owner" cat-file -e "$head^{commit}" 2>/dev/null; then
-    R_RECEIPT=history-unverifiable; R_REASON=history-unverifiable
+    R_RECEIPT=history-unverifiable
     R_EVIDENCE="worktree-head-unverifiable head=$head"; return
   fi
   if [ -n "$branch" ]; then
     if ! unp=$(git -C "$owner" rev-list --count "$branch" --not --remotes 2>/dev/null); then
-      R_RECEIPT=history-unverifiable; R_REASON=history-unverifiable
+      R_RECEIPT=history-unverifiable
       R_EVIDENCE="worktree-branch-unverifiable branch=$branch"; return
     fi
     if [ "$unp" != 0 ]; then
-      R_RECEIPT=unpushed-branch; R_REASON=unpushed-branch
+      R_RECEIPT=unpushed-branch
       R_EVIDENCE="branch=${branch#refs/heads/} unpushed=$unp dir=$([ -d "$target" ] && printf present || printf absent) owner=$(basename -- "$owner")"; return
     fi
   fi
@@ -1076,28 +1073,28 @@ s18_evaluate_worktree_one() {
     if ! uniq=$(git -C "$owner" rev-list --count "$head" --not "${roots[@]}" -- 2>/dev/null); then
       R_EVIDENCE="worktree-ancestry-unverifiable"; return
     fi
-    if [ "$uniq" = 0 ]; then R_VERDICT=SAFE; R_RECEIPT=metadata-prune; R_REASON=metadata-prune; fi
+    if [ "$uniq" = 0 ]; then R_VERDICT=SAFE; R_RECEIPT=metadata-prune; fi
     R_EVIDENCE="dir=absent unique=$uniq head=${head:0:12} owner=$(basename -- "$owner") durable-refs-only=yes"
     return
   fi
   if ! status=$(git -C "$target" --no-optional-locks status --porcelain 2>/dev/null); then
-    R_RECEIPT=dirty; R_REASON=dirty; R_EVIDENCE="dir=present status-unverifiable"; return
+    R_RECEIPT=dirty; R_EVIDENCE="dir=present status-unverifiable"; return
   fi
   dirty=0
   [ -z "$status" ] || dirty=$(printf '%s\n' "$status" | wc -l)
-  if [ "$dirty" != 0 ]; then R_RECEIPT=dirty; R_REASON=dirty; fi
+  if [ "$dirty" != 0 ]; then R_RECEIPT=dirty; fi
   R_EVIDENCE="dir=present dirty=$dirty owner=$(basename -- "$owner")"
 }
 
 evaluate_path() {
   local raw=$1 target
   if ! s18_path_ok "$raw"; then
-    R_VERDICT=NOT-SAFE; R_RECEIPT=secrets-refusal; R_REASON=secrets-refusal
+    R_VERDICT=NOT-SAFE; R_RECEIPT=secrets-refusal
     R_EVIDENCE="secret-shaped-or-protected-symlink-or-control-path-refused"; return 0
   fi
   target=$(canon_path "$raw")
   if [ -d "$target" ] && ! s18_scope_ok "$target"; then
-    R_VERDICT=NOT-SAFE; R_RECEIPT=secrets-refusal; R_REASON=secrets-refusal
+    R_VERDICT=NOT-SAFE; R_RECEIPT=secrets-refusal
     R_EVIDENCE="protected-or-unsupported-descendant-refused"; return 0
   fi
   # r10 cluster F (F2): a repository root whose `.git` is a FILE is a repo root,

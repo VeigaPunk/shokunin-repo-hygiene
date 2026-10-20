@@ -24,6 +24,17 @@ for key in list(ENV):
         "GIT_CONFIG_NOSYSTEM", "GIT_CONFIG_GLOBAL", "GIT_TERMINAL_PROMPT"
     }:
         ENV.pop(key)
+ENV.update(GIT_AUTHOR_NAME="souji-r13-fixture",
+           GIT_AUTHOR_EMAIL="fixture@example.invalid",
+           GIT_COMMITTER_NAME="souji-r13-fixture",
+           GIT_COMMITTER_EMAIL="fixture@example.invalid")
+PREVIOUS = json.loads(OUTPUT.read_text()) if "--retry-failed" in sys.argv else None
+PREVIOUS_RESULTS = {item["name"]: item for item in PREVIOUS["results"]} if PREVIOUS else {}
+RETRY_NAMES = {name for name, item in PREVIOUS_RESULTS.items() if not item["matched"]}
+if "quarantine-bounds" in RETRY_NAMES:
+    # The fixture itself changed: repeat the paired baseline with identical new bytes.
+    RETRY_NAMES.add("quarantine-red-before")
+CURRENT_REV = ""
 
 
 def digest(path):
@@ -35,6 +46,12 @@ def git(*args):
 
 
 def run(name, command, expected=0, seconds=120):
+    if PREVIOUS and name not in RETRY_NAMES:
+        retained = dict(PREVIOUS_RESULTS[name])
+        retained["measured_commit"] = retained.get("measured_commit", PREVIOUS["measured_commit"])
+        retained["retained_from"] = "census/round-13/verification-attempt-1.json"
+        print(f"{name}: retaining prior exercised result at {retained['measured_commit']}", flush=True)
+        return retained
     start = time.monotonic()
     process = subprocess.Popen(command, cwd=ROOT, env=ENV, text=True,
                                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
@@ -54,12 +71,15 @@ def run(name, command, expected=0, seconds=120):
     item = dict(name=name, command=command, exit_code=code, expected_exit=expected,
                 matched=code == expected, stdout=stdout, stderr=stderr,
                 seconds=round(time.monotonic() - start, 3))
+    item["measured_commit"] = CURRENT_REV
     print(f"{name}: exit={code} expected={expected} matched={item['matched']}", flush=True)
     return item
 
 
 def main():
     revision = git("rev-parse", "HEAD")
+    global CURRENT_REV
+    CURRENT_REV = revision
     artifacts = [ROOT / "tools" / name for name in (
         "souji-verify.sh", "souji-vault-verify.sh", "souji-quarantine.sh",
         "souji-census.sh", "souji-cert-evidence.py", "souji-repo-structure.sh")]
@@ -108,6 +128,7 @@ def main():
                   recorded_at=datetime.datetime.now(datetime.timezone.utc).isoformat(),
                   installed_sha256=after, artifacts_unchanged_during_run=before == after,
                   results=results, sources=census, admitted_entries=admitted,
+                  prior_attempt="census/round-13/verification-attempt-1.json" if PREVIOUS else None,
                   deletion_certification="OFF", scope="Declared integrity and bounded fixtures; no complete class-suite certification")
     OUTPUT.write_text(json.dumps(record, indent=2) + "\n")
     return 0 if before == after and all(item["matched"] for item in results) else 1

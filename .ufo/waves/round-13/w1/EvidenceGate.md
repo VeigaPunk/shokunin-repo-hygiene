@@ -20,7 +20,7 @@ artifact validates declared-fragment consistency and integrity, never tool safet
 | `tests/fixtures/r13-cert-frozen/evidence/beta.txt` | evidence for beta |
 
 Authored-byte digests (read-only `sha256sum`, observed 2026-10-20):
-`tools/souji-cert-evidence.py` = `a029aaa0a604fb53dfcba650f95b3626d543890bd1d96110d2340cd30144ece1`;
+`tools/souji-cert-evidence.py` = `943d664c5df4e795c23821892a1691847772e95ef36752d532f5cbeff0e544d4`;
 `tests/fixtures/r13-cert-evidence.py` = `3a3535da8b46ccc177b459609b6dfcca4e46362d1fe0c56dd727ecbe70891b7c`.
 
 ## Contract as implemented

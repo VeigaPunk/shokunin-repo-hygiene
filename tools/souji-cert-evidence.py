@@ -1018,7 +1018,7 @@ def _invoke(tool, *, root=None, manifest=None, frozen=None):
 def _finding_ids(stdout):
     return [
         match.group(1)
-        for match in re.finditer(r"(?m)^finding ([a-z0-9-]+): ", stdout)
+        for match in re.finditer(r"(?m)^finding ([a-z0-9_-]+): ", stdout)
     ]
 
 

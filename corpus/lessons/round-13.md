@@ -100,3 +100,41 @@ inside its later helper definitions, but can exit without a per-target
 diagnostic. C2 claims explicit operation bounds and diagnostic fail-closed
 behavior, not proof that it would cure every historical timeout or that all
 FIFO refusal is newly acquired.
+
+## First integrated verification and corrections
+
+The first run at source commit `6ed10a7cd6c7b26f8068dd6e02497e860f9c4317`
+is preserved verbatim in `census/round-13/verification-attempt-1.json`.
+It is not reported as green:
+
+- Evidence gate: 35/36; the actual tamper finding/exit were correct, but the
+  embedded finding-id regex excluded `_` and missed `snapshot_tampered`.
+  The correction accepts underscore ids without changing expected findings.
+- External gate fixture: 4/5, solely because it invokes that embedded selftest.
+- Structure probe fixture: 5/5 PASS, including detector controls, persistent
+  manifest equality, exact metrics, invalid-repo and partial/promisor refusal.
+- Baseline bounds fixture: one PASS, four failures including two outer-bound
+  hangs. Changed tool: four PASS, one failure; a broad SHA shim intercepted
+  the receipt engine rather than isolating the intended pin digest. The
+  fixture must be corrected and the baseline/fixed pair rerun on identical
+  corrected fixture bytes; a wrong-reason failure is not a demonstrated fix.
+- Legacy selftests: fixture commits lacked author identity because the main
+  runner deliberately disabled global Git config. The runner now supplies
+  synthetic author/committer environment values, without writing host config.
+- Warning-level ShellCheck found redundant patterns, unused assignments,
+  an unquoted string and a masked local assignment in the changed tool.
+  These are corrected, not suppressed; warning severity is not weakened.
+
+Passing checks are retained with their own measured commit; only failed
+checks are retried after corrections, plus the paired baseline because its
+fixture changes. `verification.json` records the final per-check revisions.
+Historical wrong-byte and candidate substitutions already rejected with
+the exact expected findings and exit 2. Source census already exited 0:
+37 rows, A=33/B=3/C=1, mined=20/queued=15/rejected=2.
+
+Integration rejected extra stage-5 deletion timeouts from the implementation
+seat: killing a deletion can leave partial residue, so “copy kept” would
+be false. Q8 is limited to staging/digest/inspection bounds; deletion remains
+behind the existing successful second-check gate. A failed deletion now
+honestly names potentially partial residue rather than promising preservation.
+

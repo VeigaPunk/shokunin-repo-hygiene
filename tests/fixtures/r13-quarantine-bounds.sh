@@ -23,6 +23,10 @@
 # preserving GNU timeout semantics. The shim only matches the tool's
 # documented `timeout --kill-after=N DURATION COMMAND` shape; a tool that
 # never calls timeout (the baseline) hangs and is reported HANG, not PASS.
+# The mv/sha256sum shims are gated on an exact last argument (staging
+# destination / stage-1 target), so they delay only the tool's bounded call,
+# never the receipt engine's own unconditional ledger digest — otherwise the
+# case would observe engine-error instead of the digest-timeout under test.
 #
 # CLI
 #   tests/fixtures/r13-quarantine-bounds.sh [--tool PATH] [--verify PATH]
@@ -152,10 +156,17 @@ mk_timeout_shim() { # $1 dir $2 real timeout path
   chmod 0755 "$1/timeout"
 }
 
-mk_sleep_shim() { # $1 dir $2 name $3 real path $4 seconds
+mk_sleep_shim() { # $1 dir $2 name $3 real path $4 seconds [$5 last-arg gate]
+  local gate=${5:-}
   {
     printf '#!/usr/bin/env bash\n'
-    printf 'sleep %s\n' "$4"
+    printf 'last=""\n'
+    printf 'for last in "$@"; do :; done\n'
+    if [ -n "$gate" ]; then
+      printf 'if [ "$last" = %q ]; then sleep %s; fi\n' "$gate" "$4"
+    else
+      printf 'sleep %s\n' "$4"
+    fi
     printf 'exec %q "$@"\n' "$3"
   } > "$1/$2"
   chmod 0755 "$1/$2"
@@ -213,9 +224,9 @@ case_04() {
   begin_case
   mkdir -p "$REPO/.scratch" "$shims"
   new_aged_file "$t" 'r13 bounds delayed mv payload 04'
-  mk_timeout_shim "$shims" "$REAL_TIMEOUT"
-  mk_sleep_shim "$shims" mv "$REAL_MV" 30
   qp="$REPO/.ufo-quarantine/$TODAY/.scratch/aged04.dat"
+  mk_timeout_shim "$shims" "$REAL_TIMEOUT"
+  mk_sleep_shim "$shims" mv "$REAL_MV" 30 "$qp"
   run_tool "$shims" "$REPO" "$t"
   expect "$([ "$RUN_RC" = 3 ] && echo 1 || echo 0)" "rc=$RUN_RC want=3"
   expect "$(has_token "$(printf 'RESULT\t%s\tSTAGE2-FAILED\tmv-timeout' "$t")" && echo 1 || echo 0)" "missing STAGE2-FAILED mv-timeout"
@@ -231,9 +242,13 @@ case_05() {
   begin_case
   mkdir -p "$REPO/.scratch" "$shims"
   new_aged_file "$t" 'r13 bounds delayed sha256sum payload 05'
-  mk_timeout_shim "$shims" "$REAL_TIMEOUT"
-  mk_sleep_shim "$shims" sha256sum "$REAL_SHA" 30
   qp="$REPO/.ufo-quarantine/$TODAY/.scratch/aged05.dat"
+  mk_timeout_shim "$shims" "$REAL_TIMEOUT"
+  # Gate on the target path: the tool's file_sha calls `sha256sum -- <target>`,
+  # while the receipt engine's unconditional ledger digest (souji-verify.sh
+  # try_obsidian) hashes the ledger. Only the tool's stage-1 digest sleeps;
+  # delaying the engine would turn this into engine-error, not digest-timeout.
+  mk_sleep_shim "$shims" sha256sum "$REAL_SHA" 30 "$t"
   run_tool "$shims" "$REPO" "$t"
   expect "$([ "$RUN_RC" = 3 ] && echo 1 || echo 0)" "rc=$RUN_RC want=3"
   expect "$(has_token "$(printf 'RESULT\t%s\tNOT-AUTHORIZED\tdigest-timeout' "$t")" && echo 1 || echo 0)" "missing NOT-AUTHORIZED digest-timeout"
