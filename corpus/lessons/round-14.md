@@ -133,3 +133,31 @@ admitted: causal separability and bounded measured controls do not prove
 either assertion. VerdictAttack's output-overwrite concern was fixed by
 explicit round/output plus exclusive creation, and its root-binding concern
 was fixed before the measured run. No tool was installed or upgraded.
+
+## Required source census before and after
+
+Command, both times:
+`/home/vgpnk/Projects/shokunin/scripts/sources-census.sh validate --root /home/vgpnk/Projects/shokunin souji`.
+Start at a31642d, exit 0 (`census/round-14/before.json`):
+
+```text
+souji	W04	S035 duplicate url git-scm.com/docs/git-repo across scopes
+souji	W04	S036 duplicate url git-scm.com/docs/git across scopes
+souji	ok	/home/vgpnk/Projects/shokunin/souji-shokunin/corpus/SOURCES.md
+```
+
+End at `42d0b7b177b05889589009d94314cb3d7231ac25`, exit 0
+(`census/round-14/end-sources.json`, source bytes SHA-256
+`312a028ab7077fa04445d22d605c822ac187477561017da4da5edc7a2d49ba8d`):
+
+```text
+souji	W04	S035 duplicate url git-scm.com/docs/git-repo across scopes
+souji	W04	S036 duplicate url git-scm.com/docs/git across scopes
+souji	W04	S038 duplicate url www.gnu.org/software/coreutils/manual/html_node/timeout-invocation.html across scopes
+souji	ok	/home/vgpnk/Projects/shokunin/souji-shokunin/corpus/SOURCES.md
+```
+
+W04 is advisory for retained append-only correction rows, not a failed
+required exit condition; no stdout notice is hidden. No frontier
+coverage-map ground advanced this round; repertoire acquisition, sourced
+local calibration and credential-boundary operability are the measured moves.

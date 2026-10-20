@@ -712,3 +712,13 @@ store, operator sweep, GUI, removal, sibling repo or host service was touched.
 Tool installs/updates: none. The later host package-safety amendment was
 relayed to the remaining live seats. Open souji L0 questions: none (bounded
 `^souji \\|` queue sweep, no matches). No other mission of this lane is open.
+
+### Round 14 ending contract census
+
+Required command
+`/home/vgpnk/Projects/shokunin/scripts/sources-census.sh validate --root /home/vgpnk/Projects/shokunin souji`
+at `42d0b7b177b05889589009d94314cb3d7231ac25` exited 0. Complete stdout
+is persisted in `census/round-14/end-sources.json` and copied alongside the
+starting output in the lesson: advisory W04 for S035/S036/S038 correction
+URLs, then the souji ok line. The source digest is pinned there; only
+bookkeeping is appended afterward, not registry or measured executable bytes.
