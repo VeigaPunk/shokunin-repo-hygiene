@@ -904,3 +904,43 @@ STATUS lines; they are carried in `corpus/lessons/round-16.md`. S044 and
 S045 teaches cells were corrected after reopen reviews, and three
 knowledge entries verified on Git 2.55.0 carry a freshness note (host
 2.56.0). Open defects are routed to round 17 in the lesson Residuals.
+
+## 2026-10-20 — round 16 correction: the uncarried wave-2 count is 29, not 28
+
+Correction to "The landing gate flagged 28 uncarried wave-2 STATUS lines; they
+are carried in `corpus/lessons/round-16.md`" (LOG.md:902-903 above; the figure
+itself is the "28" on :902; the wave-2 entry stands as written). Found by the
+round-16 non-author closure (`corpus/lessons/round-16-verifier-spotcheck.md:66`,
+routed defect D3, item 3) and re-measured by the round-17 landing-gate replay
+at rev `79bbe7a` (`round-16: final wave-2 seat reports`): 30 gate markers, 29
+uncarried (`census/round-17/gate-replays-ddb7347.json`, replay `r16-precarry`,
+exit 1, `checked_markers` 30). The thirtieth marker — `.ufo/waves/round-16/w1/
+ConnLogConvention.md:385`, the only wave-1 failure-vocabulary STATUS line
+outside a fence — was already carried in the lesson's wave-1 list. The carry
+list `corpus/lessons/round-16.md:58-86` holds 29 wave-2 bullets, one per
+uncarried line. The marker count matches `census/round-16/gate-landing.json`
+(`checked_markers` 30, `findings` 0, `resolved_rev` `6ff91f5`; the file lands
+at `c46eabf`). The figure 28 is withdrawn. The lesson's own prose
+(`corpus/lessons/round-16.md:21`) repeats the 28 figure; its carry list is the
+correct 29.
+
+## 2026-10-20 — round 16 correction: pre-harm fails R15CFG-03 and R15CFG-18, not only refusal/safety cases
+
+Correction to "pre-harm fails only refusal/safety cases" (LOG.md:858-859, the
+round-16 C1 entry above; the wave-2 corrections at LOG.md:891-893 already
+state the right list). Found by the round-16 non-author closure
+(`corpus/lessons/round-16-verifier-spotcheck.md:136`, routed defect D3, item
+3). The pre-harm arm `a31642d` fails eight r15-config cases: 02, 03, 08, 11,
+14, 17, 18, 19 (`census/round-16/c1-matrix-final.json`,
+`.arms["pre-harm"]["r15-config"]`: failed 8 of 20). R15CFG-03 is the
+per-repository degrade class (expected `config-unsupported` findings missing
+from stderr; `r-inc-fifo` hangs, exit=124 want 0) and R15CFG-18 is
+benign-config preservation (`a-benign`, `m-safe-config`, `z-benign`:
+`verdict_flags=error want clean`); neither is refusal/safety. This matches
+`corpus/lessons/round-16.md:20`. The closure's own C1 table row "Pre-harm
+fails 03 only" (`round-16-verifier-spotcheck.md:44`) is a slip contradicted by
+its matrix row above and by the matrix record; the matrix is the record.
+
+## 2026-10-20 — round 17 (souji L1, hyaku phase 2): census hygiene, reproducible seat audit, jj-colocated receipts
+
+Claims: C1 operability — census D1 `--untracked-files=normal` and D2 per-repo degrade of a hardlinked/non-regular `info/attributes` (closure D1/D2); C2 calibration — seat-audit precision (`V-WRITE-RELATIVE`, status-aware `V-WRITE-UNPARSED`, exact-prefix paths, severity-exact selftest) and the r16 transcripts committed with a manifest and a bound replay (D4); C3 coverage — jj-colocated repositories governed: receipt roots exclude `refs/jj/*`, novel keep-only content refuses, knowledge entry `corpus/knowledge/jj-colocation-receipts.md`, SKILL/PROVINCE/README rules, S051–S063. Code landed `ddb7347`, frozen record `d7e648d`, wave-2 fixes `4f48343` (empty/locale stat regression, dot-admin registrations, both soft diagnostics, SIGPIPE-safe leaf-blob novelty, gate exit-2 totality and mutant killers). Routed fixes: D3 corrections above, D5/D7 in the lesson, D6 gate replays committed (`census/round-17/gate-replays-4f48343.json`: 5/0/0/0/29). The empty fixture stub `tests/vault/vadv54-run/p/p6repo/.git` moved to `.ufo/quarantine/round-17/…` (inode 30073199, empty) and the two phantom-deleted files re-tracked through the helper. Waves: 78 + 71 seats; 28 wave-2 reviewers dead on provider 429s, residual checks run by L1. Measurements, mistakes R17-M1..M6 and residuals: `corpus/lessons/round-17.md`. Author verdicts only; the non-author closure decides.

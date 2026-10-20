@@ -28,7 +28,7 @@ when the file exists, not before.
 
 ### Admission and sources
 
-- `QUALITY.md` — the admission bar (Q1–Q15 at r12; Q1–Q26 since r16, see the Round 16 section), each criterion citing its lesson.
+- `QUALITY.md` — the admission bar (Q1–Q15 at r12; Q1–Q26 since r16; Q1–Q28 since r17, see the Round 16 and Round 17 sections), each criterion citing its lesson.
 - `SOURCES.md` — where souji learns (contract v1): 33 rows — `grep -cE '^\|[[:space:]]*S[0-9]{3,}[[:space:]]*\|' corpus/SOURCES.md` 2026-10-19 (full census: `bash census/round-12/sources-census.sh`) — plus `## Paths`, `## Search log`.
 
 ### Coverage map
@@ -201,3 +201,34 @@ wave specifications, dispatch and seat reports under
 claims, Q26 transcript-audited probe rule). SOURCES gains S043–S050 (six
 mined, two rejected). No frontier row advances and no knowledge entry is
 added: admitted knowledge stays five, K5 HELD, certification OFF.
+
+## Round 17 — jj-colocated lane repos (bounded receipt-root rule Core; F1 stays frontier)
+
+Supersedes the r12 F1 row (:39) and the F1 next-step (:46) for the
+jj-colocated subset only; both stand unchanged for plain repos. Landing
+condition (index rule at :3-4): this section and its Core marking land
+only in the same commit as `knowledge/jj-colocation-receipts.md` and the
+SKILL jj rule; otherwise ship the variant-B row below and F1-jj stays
+frontier.
+
+| ground | status | entries / runnable evidence |
+|---|---|---|
+| F1-jj jj-colocated lane repos (edge class of F1) | Core (candidate, admission pending closure): bounded receipt-root rule — durable roots exclude exactly `refs/jj/*`; keep-only novel-content refusal; plain repos byte-identical. F1 itself stays frontier; keep-ref expiry unmeasured | `knowledge/jj-colocation-receipts.md`; `../tests/fixtures/r17-jj-receipts.sh`; `../census/round-17/jj-receipts-base5fa6017.txt`, `../census/round-17/jj-receipts-ddb7347.txt` (changed arm 0 failed) |
+| F2 caveat, disclosed only: colocated repos inflate structure counts versus a plain clone (`references.others.count` 15 from `refs/jj/keep/*`; `objects.commits.count` 55 vs 44, sandbox) — no F2 capability claimed | observed, not claimed | `../../.ufo/waves/hyaku/jj-w1/reports/JjTrialSouji.md` step 5; `../../.ufo/waves/hyaku/jj-w1/reports/JjAuditSouji.md` F3 |
+
+Disclosure carried with the row, not in a footnote: the census `unpushed`
+column is branch-based and reads 0 while this lane holds keep-only commits
+(structural pair, measured at d7e648d: `git rev-list --count --branches
+--not --remotes` → 0; `git for-each-ref refs/jj/keep` refs that are not
+ancestors of `master` → 13 of 17). An absent-worktree head held only by a
+keep ref is NOT-SAFE, never `SAFE(metadata-prune)`.
+
+### Frontier (r17)
+
+- F1 — plain repos: unchanged (:46). jj-colocated residue: a keep-ref
+  expiry measurement (no jj doc read states when jj drops
+  `refs/jj/keep/*`; entry Limits) — unrun. The conservative-refusal cost
+  stays disclosed, not narrowed: a rewritten predecessor jj hides can
+  refuse an artifact no branch carries.
+- F2 — unchanged (:47); a colocated/plain byte-comparison is a
+  precondition for any `git repo structure` baseline.

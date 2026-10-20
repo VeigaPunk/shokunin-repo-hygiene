@@ -22,6 +22,12 @@ removal of stale, duplicate, and already-preserved artifacts.
 - `$SHOKUNIN_ROOT/<lane>-shokunin/` for every rostered + probation lane
 - GitHub remotes (`origin`) of the fleet and lane repos — read-only, for
   `pushed` receipt checks only
+- jj-colocated lane repos (`<lane>-shokunin/.jj` beside `.git` — seven
+  colocated lanes at r17, `.ufo/waves/round-17/w1/ScoutFleetJjKeep.md`): HEAD is normally detached, the
+  git index is not a signal, and `refs/jj/keep/*` pins jj-created commits
+  as garbage-collection grace refs — never durable receipt roots.
+  Re-resolve per round; a repo without `.jj`/`refs/jj` is a plain git repo
+  and every receipt path is unchanged.
 
 ## Refuses
 
@@ -91,3 +97,25 @@ against hostile bind mounts, hardlinks or concurrent filesystem replacement.
 R13's unexercised quarantine sites remain unproved; deletion certification
 stays OFF and K5 stays HELD. Source and routing rationale:
 `corpus/lessons/round-14.md`; `.ufo/waves/round-14/w1/SiblingOverlap.md`.
+
+## Round 17 boundary refinement (jj-colocated lanes)
+
+Core now includes (candidate; admission pending the non-author closure) the bounded jj receipt-root rule (entry
+`corpus/knowledge/jj-colocation-receipts.md`, the matching SKILL rule,
+fixture `tests/fixtures/r17-jj-receipts.sh`): in a colocated repo the
+durable receipt roots are every ref except `refs/jj/*`
+(`for-each-ref --exclude='refs/jj/'`) — `refs/stash`, `refs/original` and
+every other ref keep their pre-r17 root status, so a repository without
+`refs/jj` produces byte-identical output. `refs/jj/keep/*` is jj's
+garbage-collection grace ref, never a receipt of record: an
+absent-worktree head held only by keep refs is NOT-SAFE, never
+`SAFE(metadata-prune)`. The unpushed-touching refusal additionally refuses
+a keep-only commit only when it introduces novel content at the target
+(`C:<path>` exists and no remote-reachable blob at the path matches);
+keep-only deletions and identical-content predecessors do not refuse, and
+a git failure keeps the existing history-unverifiable path. The census
+`unpushed` column stays branch-based and reads 0 while this lane holds
+keep-only commits — disclosed, not widened. This is not a jj capability:
+souji's tools never invoke `jj`, commits stay operator/helper-owned, and
+`## Refuses` is unchanged. F1 as a whole stays frontier; how long jj keeps
+a `refs/jj/keep/*` ref remains unmeasured.
