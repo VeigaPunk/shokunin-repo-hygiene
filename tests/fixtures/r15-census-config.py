@@ -1512,9 +1512,13 @@ def main(argv: list[str]) -> int:
             last = ACTIVE_RUNS[-1] if ACTIVE_RUNS else None
             obs_exit = last.rc if last else -1
             obs_finding = last.finding if last else "none"
-            detail = (
-                "; ".join(problems) if problems else "ok"
-            ) + f"\tobserved_exit={obs_exit}\tobserved_finding={obs_finding}"
+            # r16: cap the human-readable part so a CASE detail stays within
+            # the preservation checker's 512-character reason bound; the
+            # --json record keeps the full problem list.
+            summary = "; ".join(problems) if problems else "ok"
+            if len(summary) > 400:
+                summary = summary[:397] + "..."
+            detail = summary + f"\tobserved_exit={obs_exit}\tobserved_finding={obs_finding}"
             print(f"CASE\t{cid}\t{status}\t{detail}")
             if problems:
                 failed += 1

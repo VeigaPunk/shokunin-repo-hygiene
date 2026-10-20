@@ -307,56 +307,60 @@ NAMESPACE_FIXTURE_PATH = "tests/fixtures/r14-census-boundary.py"
 NAMESPACE_SHA256 = "e6a984b1daf1f79a6ad613e451cae48c2807fd71639de4c8d92857b9a11d14b2"
 INSTALLED_TOOL_PATH = "tools/souji-census.sh"
 
-# Independent literal case universe for the r15 config fixture, agreed with
-# the fixture author (SoujiR15.ConfigFixture) before freeze. The checker
-# never derives these from fixture --list/EXPECTED_IDS/CASES/SUMMARY output.
+# Independent literal case universe for the r15 config fixture as revised in
+# round 16 (tests/fixtures/r15-census-config.py at 0a70bef). Round-16 L1
+# re-pin (routed R4): the r15 table predated the fixture's first execution;
+# these classes are the per-arm statuses observed in
+# census/round-16/c1-matrix-final.json and are pinned here as literals. The
+# checker never derives them from fixture --list/EXPECTED_IDS/CASES/SUMMARY.
 #
-# Four classes:
-#   benign   FAIL on the harm baseline fcff8b05 (value-blind r14 refusals),
-#            PASS on preharm a31642d and on the repaired tool
-#   refusal  PASS on harm + changed, FAIL on preharm (guard absent)
-#   safety   exec/lazy-fetch sentinels (R15CFG-08) FAIL on both baselines,
-#            PASS on changed
-#   preserve PASS on harm + changed (pre-r15 retained behavior); preharm
-#            expectations are pinned per id below
+# Four classes (preharm a31642d, harm cc21683; changed is always PASS):
+#   benign   preharm PASS, harm FAIL (value-blind r14 refusals restored)
+#   refusal  preharm FAIL, harm PASS (namespace guard r14 already had)
+#   safety   FAIL on both baselines (guards, degrade rows and oracles neither
+#            baseline met)
+#   preserve PASS on both baselines
 CONFIG_BENIGN_IDS = (
     "R15CFG-01",  # include/includeIf safe targets
-    "R15CFG-04",  # hooksPath neutralized; attributesFile/excludesFile honored
+    "R15CFG-04",  # hooks/fsmonitor inert; excludes/attributes (and XDG) honored
     "R15CFG-06",  # remote.*.promisor all spellings on a complete repo
+    "R15CFG-07",  # invalid promisor booleans: git's own status-unverifiable row
     "R15CFG-09",  # extensions.partialClone false/empty/origin (remote names)
     "R15CFG-10",  # worktreeConfig false + true with benign config.worktree
-    "R15CFG-12",  # alternateRefsCommand empty value
+    "R15CFG-12",  # alternateRefsCommand, any value
     "R15CFG-13",  # unbound filter.* drivers never executed
     "R15CFG-15",  # key-parse false positives stay benign
     "R15CFG-16",  # mixed fleet benign rows unchanged
+    "R15CFG-20",  # --compare on the mixed fleet
 )
 CONFIG_REFUSAL_IDS = (
     "R15CFG-02",  # include/includeIf targets into the store
-    "R15CFG-03",  # include cycle / ~user / FIFO / NUL config
-    "R15CFG-07",  # invalid promisor booleans (maybe, banana)
-    "R15CFG-11",  # worktreeConfig=true with hostile config.worktree
-    "R15CFG-14",  # attribute-bound filter.clean/process; non-empty
-                  # alternateRefsCommand
+    "R15CFG-11",  # hostile config.worktree; attributes/excludes into the store
     "R15CFG-17",  # mixed fleet containing one unsafe repo
-    "R15CFG-19",  # --root store / --root ancestor refusals
 )
-# Sentry fleet: hooks/fsmonitor exec sentinels and GIT_NO_LAZY_FETCH must
-# never fire; the r14 build did not cover this family, so it fails harm too.
-CONFIG_SAFETY_IDS = ("R15CFG-08",)
+CONFIG_SAFETY_IDS = (
+    "R15CFG-03",  # could-not-evaluate config: per-repo error row (degrade)
+    "R15CFG-08",  # hooks/fsmonitor sentinels and GIT_NO_LAZY_FETCH pin
+    "R15CFG-14",  # bound filter: status skipped, driver never runs
+    "R15CFG-18",  # poisoned HOME/.gitconfig + GIT_* env on the mixed fleet
+    "R15CFG-19",  # --root store / ancestor refusal without echoing the store
+)
 # Preserve ids and their pinned preharm (a31642d) statuses; harm and
-# changed are both "pass" for every preserve id. Confirmed by the fixture
-# author: a31642d does not clear inherited GIT_* env (18) and lacks the
-# strict malformed-compare guard (20); dirty fidelity (05) predates both.
+# changed are both "pass" for every preserve id.
 CONFIG_PRESERVE_PREHARM = {
     "R15CFG-05": "pass",  # dirty fidelity predates the overrides
-    "R15CFG-18": "fail",  # a31642d does not clear inherited GIT_* env
-    "R15CFG-20": "fail",  # a31642d lacks the strict malformed-compare guard
 }
 CONFIG_PRESERVE_IDS = tuple(sorted(CONFIG_PRESERVE_PREHARM))
 CONFIG_IDS = frozenset(CONFIG_BENIGN_IDS) | frozenset(CONFIG_REFUSAL_IDS) \
     | frozenset(CONFIG_SAFETY_IDS) | frozenset(CONFIG_PRESERVE_IDS)
 # The exact set that must FAIL on the harm baseline (benign + safety).
 CONFIG_HARM_FAILS = frozenset(CONFIG_BENIGN_IDS) | frozenset(CONFIG_SAFETY_IDS)
+# Changed-arm PASS rows that must carry a concrete finding token (a
+# path-protected refusal, a config-unsupported degrade or a status-skipped
+# diagnostic); every other PASS must carry observed_finding=none.
+CONFIG_TOKEN_IDS = (
+    "R15CFG-02", "R15CFG-03", "R15CFG-11", "R15CFG-14", "R15CFG-17", "R15CFG-19",
+)
 NAMESPACE_IDS = (
     "R14C2-01", "R14C2-02", "R14C2-03", "R14C2-04", "R14C2-05", "R14C2-06",
     "R14C2-07", "R14C2-08", "R14C2-09", "R14C2-10", "R14C2-11", "R14C2-12",
@@ -913,7 +917,10 @@ def _resolve_root(value):
 
 TOOL_LINE_RE = re.compile(r"TOOL\t(\S+)\tsha256=([0-9a-f]{64})\Z")
 TOOL_KIND_RE = re.compile(r"TOOL-KIND\t([^\t]+)\Z")
-CASE_LINE_RE = re.compile(r"CASE\t([^\t]+)\t(PASS|FAIL)\t([^\t]*)\Z")
+# The real fixture's detail carries TAB-separated observed_exit/
+# observed_finding fields (round-16 fix: the r15 `[^\t]*` made every real
+# CASE line unparseable and contradicted the `\tobserved_finding=` token rule).
+CASE_LINE_RE = re.compile(r"CASE\t([^\t]+)\t(PASS|FAIL)\t(.*)\Z")
 SUMMARY_LINE_RE = re.compile(r"SUMMARY\ttotal=([0-9]+)\tfailed=([0-9]+)\Z")
 RECORD_PREFIXES = ("TOOL\t", "TOOL-KIND\t", "CASE\t", "SUMMARY\t")
 
@@ -1375,8 +1382,12 @@ def _eval_arm(arm, run, findings):
                 {cid: row[0] for cid, row in declared_set.items()}
                 == {cid: row[0] for cid, row in parsed_set.items()}
             )
+            # A declared detail is the printable rendering of the transcript
+            # detail: the real fixture separates fields with TABs, which a
+            # record stores as single spaces (round-16 R4 alignment).
             details_equal = all(
-                not detail or parsed_set.get(cid, (None, None))[1] == detail
+                not detail
+                or (parsed_set.get(cid, (None, None))[1] or "").replace("\t", " ") == detail
                 for cid, (_, detail) in declared_set.items()
             )
             if not statuses_equal or not details_equal:
@@ -1481,7 +1492,7 @@ def _eval_arm(arm, run, findings):
             continue
         token = re.search(r"\tobserved_finding=([^\t]+)", detail)
         finding_tok = token.group(1) if token else None
-        refusal_ids = CONFIG_REFUSAL_IDS
+        refusal_ids = CONFIG_TOKEN_IDS
         if cid in refusal_ids:
             if finding_tok is None or finding_tok == "none":
                 _add(findings, "case-finding-mismatch",
@@ -1802,13 +1813,14 @@ def _sha_text(text):
 
 
 def _default_detail(cid, status):
-    """Fixture-shaped detail text for a case row."""
+    """Fixture-shaped detail text for a case row: the real r15 fixture emits
+    TAB-separated detail fields (`ok<TAB>observed_exit=0<TAB>observed_finding=none`)."""
     if status == "FAIL":
-        return "contract difference observed_exit=2 observed_finding=path-protected"
-    if cid in CONFIG_REFUSAL_IDS or cid in NAMESPACE_IDS:
+        return "contract difference\tobserved_exit=2\tobserved_finding=path-protected"
+    if cid in CONFIG_TOKEN_IDS or cid in NAMESPACE_IDS:
         # A refusal PASS must record the concrete finding token it produced.
-        return "guard held observed_exit=2 observed_finding=path-protected"
-    return "ok observed_exit=0 observed_finding=none"
+        return "guard held\tobserved_exit=2\tobserved_finding=path-protected"
+    return "ok\tobserved_exit=0\tobserved_finding=none"
 
 
 def _transcript(tool_path, tool_sha, rows, detail_map=None):
@@ -1833,7 +1845,8 @@ def _arm(tool_commit, tool_sha, statuses, *, tool_path="/var/tmp/tool.sh",
     cases = []
     for cid, status in rows:
         detail = (detail_map or {}).get(cid, _default_detail(cid, status))
-        cases.append({"id": cid, "status": status.lower(), "detail": detail})
+        cases.append({"id": cid, "status": status.lower(),
+                      "detail": detail.replace("\t", " ")})
     failed = sum(1 for _, status in rows if status == "FAIL")
     stdout = _transcript(tool_path, tool_sha, rows, detail_map)
     arm = {
@@ -2121,7 +2134,9 @@ def _selftest():
         cases.append((
             "duplicate-id",
             ["--root", str(root), "--record", json.dumps(record)],
-            2, ["case-duplicate", "case-finding-mismatch", "run-inconsistent",
+            # r16: with TAB details parseable, the first (token-bearing) row
+            # wins and the duplicate shows as declared/parsed disagreement.
+            2, ["case-duplicate", "run-inconsistent", "run-inconsistent",
                 "summary-mismatch"],
             ["souji-preservation-evidence: could-not-evaluate"],
         ))
@@ -2518,14 +2533,14 @@ def _selftest():
         root = _selftest_root(base, "finding-mismatch", lane)
         record = _record(root, changed_sha)
         detail_map = {cid: "ok observed_exit=0 observed_finding=none"
-                      for cid in sorted(CONFIG_REFUSAL_IDS)}
+                      for cid in sorted(CONFIG_TOKEN_IDS)}
         record["runs"]["changed"] = _arm(
             SELFTEST_COMMIT, changed_sha, _good_statuses("changed"),
             tool_path=str(root / INSTALLED_TOOL_PATH), detail_map=detail_map)
         cases.append((
             "finding-mismatch",
             ["--root", str(root), "--record", json.dumps(record)],
-            1, ["case-finding-mismatch"] * len(CONFIG_REFUSAL_IDS),
+            1, ["case-finding-mismatch"] * len(CONFIG_TOKEN_IDS),
             ["souji-preservation-evidence: failed"],
         ))
 

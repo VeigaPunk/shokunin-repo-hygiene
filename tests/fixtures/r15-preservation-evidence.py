@@ -44,15 +44,20 @@ ENV = {
 
 # Pinned literal universe — duplicated here on purpose: the harness never
 # derives ids from the checker or the fixture under test.
-BENIGN = ["R15CFG-01", "R15CFG-04", "R15CFG-06", "R15CFG-09", "R15CFG-10",
-          "R15CFG-12", "R15CFG-13", "R15CFG-15", "R15CFG-16"]
-REFUSAL = ["R15CFG-02", "R15CFG-03", "R15CFG-07", "R15CFG-11", "R15CFG-14",
-           "R15CFG-17", "R15CFG-19"]
-SAFETY = ["R15CFG-08"]
-PRESERVE = ["R15CFG-05", "R15CFG-18", "R15CFG-20"]
+# Round-16 literals (observed per-arm statuses of the r16-revised config
+# fixture, census/round-16/c1-matrix-final.json): independent of the checker.
+BENIGN = ["R15CFG-01", "R15CFG-04", "R15CFG-06", "R15CFG-07", "R15CFG-09",
+          "R15CFG-10", "R15CFG-12", "R15CFG-13", "R15CFG-15", "R15CFG-16",
+          "R15CFG-20"]
+REFUSAL = ["R15CFG-02", "R15CFG-11", "R15CFG-17"]
+SAFETY = ["R15CFG-03", "R15CFG-08", "R15CFG-14", "R15CFG-18", "R15CFG-19"]
+PRESERVE = ["R15CFG-05"]
+# Changed-arm PASS rows carrying a concrete finding token.
+TOKEN = ["R15CFG-02", "R15CFG-03", "R15CFG-11", "R15CFG-14", "R15CFG-17",
+         "R15CFG-19"]
 NS = ["R14C2-%02d" % i for i in range(1, 13)]
 IDS = sorted(BENIGN + REFUSAL + SAFETY + PRESERVE)
-PREHARM_FAILS = set(REFUSAL) | set(SAFETY) | {"R15CFG-18", "R15CFG-20"}
+PREHARM_FAILS = set(REFUSAL) | set(SAFETY)
 HARM_FAILS = set(BENIGN) | set(SAFETY)
 
 PREHARM_COMMIT = "a31642d14006830ec62edf40b0354c3699728c4a"
@@ -97,11 +102,12 @@ def check(results, name, proc, want_rc, needles):
 
 
 def detail(cid, status):
+    # The real fixture separates detail fields with TABs.
     if status == "FAIL":
-        return "contract difference observed_exit=2 observed_finding=path-protected"
-    if cid in REFUSAL or cid in NS:
-        return "guard held observed_exit=2 observed_finding=path-protected"
-    return "ok observed_exit=0 observed_finding=none"
+        return "contract difference\tobserved_exit=2\tobserved_finding=path-protected"
+    if cid in TOKEN or cid in NS:
+        return "guard held\tobserved_exit=2\tobserved_finding=path-protected"
+    return "ok\tobserved_exit=0\tobserved_finding=none"
 
 
 def arm(commit, tool_sha, statuses, tool_path):
@@ -124,7 +130,8 @@ def arm(commit, tool_sha, statuses, tool_path):
         "stdout_truncated": False,
         "stderr": "",
         "cases": [{"id": cid, "status": status.lower(),
-                   "detail": detail(cid, status)} for cid, status in rows],
+                   "detail": detail(cid, status).replace("\t", " ")}
+                  for cid, status in rows],
         "summary": {"total": len(rows), "failed": failed},
     }
 
