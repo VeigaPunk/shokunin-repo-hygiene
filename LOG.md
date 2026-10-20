@@ -601,3 +601,16 @@ disagreement becomes Q17 and an executable missing-evidence rejection.
 Fresh independent admit/reject sampling remains the outside closure duty;
 all SHONEN marks remain author `[~]`. No tools were installed or upgraded.
 
+
+## 2026-10-20 — round 13 ending source census
+
+After the final provenance-introduction correction, the required ending
+census ran against `23014d40e48e52031939f124ce0ed215ca932c6f`, with exact
+source bytes pinned in `census/round-13/end-sources.json`. Exit 0:
+W04 for S035's duplicate git-repo URL and W04 for S036's duplicate git URL,
+then `souji ok /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/SOURCES.md`.
+These advisory duplicates are deliberate correction rows superseding
+S005/S006; immutable historical cells were not rewritten. Start output
+was the single ok line, exit 0 (`before.json`). No source-census warning
+is hidden or mistaken for a failed required exit condition.
+

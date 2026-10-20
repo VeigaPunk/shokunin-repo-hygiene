@@ -181,3 +181,15 @@ committed fixture resolution). All three claimed axes improve on their
 bounded measurements; other axes are unchanged. These are author verdicts,
 not an invented outside spot-check or promotion.
 
+
+### Ending census output correction
+
+The ending census was executed again after the source introduction received
+its provenance correction, at `23014d40e48e52031939f124ce0ed215ca932c6f`.
+The earlier final-gate paragraph quoted only the ok line and omitted
+advisory stdout. Complete observed ending stdout is in
+`census/round-13/end-sources.json`: W04 for S035 duplicate git-repo URL,
+W04 for S036 duplicate git URL, then the ok line; exit 0. These same-URL
+rows are deliberate append-only corrections superseding S005/S006, not
+unopened duplicates. The starting census had no W04 lines, exit 0.
+
