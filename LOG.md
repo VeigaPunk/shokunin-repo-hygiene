@@ -766,3 +766,50 @@ Commits confirm the owning toplevel and use named add/commit pathspecs
 with `-c maintenance.auto=false`, never `add -A` or `commit -a`.
 Tool installs/updates so far: none. These declarations are not passing
 execution evidence; the actual commands and measured revisions follow.
+
+## 2026-10-20 — round 15 operator-stopped landing; claims unprovable
+
+Source/learning declaration commit `fc3a8d49b52de26bef74418da96611aae34b958d`
+was pushed. Operator wrap-up then forbade new workers; planned wave 2 was
+skipped (`.ufo/waves/round-15/w2-skipped.json`). Final Main steer ordered
+immediate commit/push/report for reboot, with unfinished checks explicit.
+Remaining ConfigRepair was cancelled before commit to stop concurrent edits.
+
+Landed source candidates: `tools/souji-census.sh` value/effect-aware config
+handling; `tests/fixtures/r15-census-config.py` (20 fixed case IDs);
+`tools/souji-preservation-evidence.py`, external fixture and pre-integration
+frozen declarations; `census/round-15/run-verification.py` and committed-byte
+counter. Static interface corrections are named in the round-15 lesson.
+None is a passing behavioral observation. C1 and C2 are **unprovable and
+not admitted**: red-before/green-after, namespace retention, legacy
+selftest, warning ShellCheck, checker selftest/external/frozen/actual-record
+acceptance are all UNRUN. Frozen pins are not refreshed to final source.
+R14's rejected-harmed config-support debt stays OPEN. No new capability row.
+
+Actual ending source validation exited 0, same advisory W04 S035/S036/S038
+and ok output as start (`census/round-15/end-sources.json`). Source inventory
+40→42, A/B/C 36/3/1→38/3/1, mined/queued/rejected 23/15/2→25/15/2:
+exact parser and source digest are in that artifact and the lesson. Two
+new primary rows S041/S042, no old cell edits; no knowledge expansion claim.
+
+Prescribed fleet misroot sweep exited 0 and showed only other-round paths
+`.ufo/waves/round-16/build/` and `.ufo/waves/round-21/`, left untouched.
+Read-only whole-lane seat queries violated this lane's stricter wave rule,
+not the operator's edit/move/commit/delete prohibition (Main's explicit
+calibration). Seat/class disclosures persist in their reports; no
+sweep-derived content supports a claim. SourcesDraft/GitSourceStatus
+misroot corrections and LinkedPreserve's prohibited tiny empirical probe
+are disclosed, not counted as acceptance.
+
+Actual dispatched round total: 64 seats — executor 4, scribe 7, scout 9,
+connector 5, reviewer 23, critic 9, sentinel 4, simplifier 1, revenger 1,
+mutation-tester 1. L1 holds planner; no additional wave was dispatched.
+Axes: C1 operability unprovable (prior harm unresolved), C2 calibration
+unprovable; other axes unchanged; numeric deltas zero. Trends expansion/
+quality unchanged, discernment improved only through grounded outside-
+disagreement learning and corrected self-assessment. Certification OFF,
+K5 HELD; no promotion, removal, host-service change or tool installation.
+
+Closing commit uses confirmed owning toplevel, named paths only and
+`git -c maintenance.auto=false commit -- <same named paths>` under
+souji identity, followed by push; report lands only after that pushed HEAD.

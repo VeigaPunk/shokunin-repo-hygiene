@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # souji-census — repeatable read-only fleet census (round 6, seat S33).
-# Round-14 C2 adds a pre-access protected-path boundary.
+# Round-14 C2 added a pre-access protected-path boundary; round-15 C1 made
+# the repo-local config guard value/effect-aware instead of key-name-blind.
 #
 # One bash tool; bash + coreutils + git only. Never fetches, never writes
 # outside /var/tmp temporary output. The mtime walk never opens file
@@ -81,22 +82,48 @@
 #   Symlink repo roots and child symlinks are skipped; a .git symlink is
 #   not followed as a row; gitfile gitdir targets, commondir and
 #   objects/info/alternates are boundary-checked before git runs, and any
-#   git-metadata symlink must resolve inside its own gitdir. Repositories
-#   whose local config declares include/includeIf, filter.*.clean|smudge|
-#   process, core.hooksPath, core.attributesFile, core.excludesFile,
-#   core.alternateRefsCommand, remote.*.promisor, extensions.partialClone or
-#   extensions.worktreeConfig are refused as unsupported (operability
-#   boundary, not full normal-config support). core.worktree is
-#   boundary-checked rather than refused; core.fsmonitor is overridden
-#   with -c core.fsmonitor=false on status.
-#   Global/system git config and every inherited GIT_* variable are
-#   cleared. Startup resolves each home's .omp parent (not the agent store)
-#   to seed a relocated-store root; this is a stat/readlink of the store
-#   parent, never store content. Residual: hardlinked aliases are refused
-#   for --compare (nlink > 1) and fixed git metadata, but hardlinked object
-#   files and arbitrary hardlinks into a store are not detectable without
-#   stat'ing the store; the guard and the later access are not one atomic
-#   operation.
+#   git-metadata symlink must resolve inside its own gitdir. GIT_NO_LAZY_FETCH
+#   is exported so a promisor/partial-clone repo can never fetch: missing
+#   objects surface as error/status-unverifiable rows, never network or
+#   pack writes (promisor markers are therefore admitted, not refused).
+#
+#   Repo-local config is read value-aware, not by key name. The guard walks
+#   every file git can load — the common config, $GIT_DIR/config.worktree
+#   when extensions.worktreeConfig parses true (a false/absent value leaves
+#   config.worktree untouched and inert), and every include/includeIf target
+#   whose condition can apply to a worktree the census status-checks.
+#   Include paths are boundary-checked BEFORE any read; relative values
+#   anchor to the logical directory of the containing file; ~/, ~user and
+#   %(...) forms that cannot be modelled are unsupported for that repo.
+#   includeIf conditions: hasconfig: is always applicable (git opens those
+#   targets during its URL pre-pass); gitdir:/gitdir/i: are matched against
+#   both the spelled and resolved gitdir with a conservative superset glob
+#   (any pattern the guard cannot evaluate counts as applicable); onbranch:
+#   is read from the worktree's own HEAD (unknown/detached-unreadable HEAD
+#   counts as applicable); unknown keywords are inert on git 2.55 except
+#   worktree[/i], which is treated as applicable for forward compatibility.
+#   A provably disabled includeIf target is never opened or checked.
+#   Config conditions that leave a repo unusable (unparsed file, include
+#   cycle or depth over git's 10, scan budget exceeded, unsupported value
+#   forms) mark only that repo's row `error`; safe fleets keep every row.
+#   Whole-run exit 2 is reserved for protected-path reaches, ambiguous
+#   targets, non-regular include targets, hardlinked config files, and git
+#   metadata that fails the integrity checks.
+#   Effect-aware key handling: core.hooksPath, core.fsmonitor and
+#   core.alternateRefsCommand are inert for every census git invocation
+#   (no hooks/consumer exists; status additionally forces
+#   -c core.hooksPath=/dev/null and -c core.fsmonitor=false) and are not
+#   refused. core.excludesFile/core.attributesFile values are HONORED to
+#   preserve dirty semantics: the effective value is boundary-resolved and
+#   passed to status via -c (the operator XDG default is honored when it
+#   resolves safely; otherwise /dev/null). A value resolving into the
+#   protected boundary refuses the run. filter.<D>.clean|smudge|process are
+#   inert when empty or unselected; a non-empty driver selected by that
+#   worktree's attributes (ls-files | check-attr, case-sensitive driver
+#   match) makes the row `error` — a selected driver is never neutralized
+#   into a false-clean. core.worktree is boundary-checked per worktree
+#   context across the whole include closure. Include scans are walked by
+#   this tool, never delegated to git.
 #
 # Exit codes
 #   0 census emitted / header-only diff; 1 selftest or setup failure;
@@ -109,7 +136,7 @@ set -euo pipefail
 
 # Imported BASH_FUNC_* definitions could shadow the externally-resolved
 # commands this tool relies on. Remove functions for those names.
-unset -f git find du stat awk grep sort head cut date readlink 2>/dev/null || true
+unset -f git find du stat awk grep sort head cut date readlink tr wc cat dirname 2>/dev/null || true
 
 # Clear every inherited GIT_* variable. GIT_DIR/GIT_COMMON_DIR/
 # GIT_OBJECT_DIRECTORY/GIT_ALTERNATE_OBJECT_DIRECTORIES and GIT_CONFIG_*
@@ -121,6 +148,21 @@ unset _souji_gitvar
 export GIT_OPTIONAL_LOCKS=0
 export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null
 export GIT_CONFIG_NOSYSTEM=1 GIT_TERMINAL_PROMPT=0
+export GIT_NO_LAZY_FETCH=1
+
+# Config-scan state. CFG_DRIVERS holds every non-empty
+# filter.<driver>.{clean,smudge,process} command's driver name seen in the
+# scanned closure (driver names are case-sensitive). CFG_SOFT_REASON marks
+# a repository unusable for config reasons (git dies there too); it maps to
+# a per-repo error row, never a whole-run refusal.
+CFG_DRIVERS=()
+CFG_SOFT_REASON=""
+
+soft_fail() { # $1 reason; per-repo, mirrors git's own failure
+  printf 'souji-census: %s\n' "$1" >&2
+  CFG_SOFT_REASON=$1
+  return 1
+}
 
 SCRIPT_PATH="${BASH_SOURCE[0]}"
 SCRIPT_DIR="$(cd -- "$(dirname -- "$SCRIPT_PATH")" && pwd -P)"
@@ -428,25 +470,28 @@ guard_target() { # $1 label, $2 raw path; prints the resolved path
 guard_alternates_file() { # $1 objects dir, $2 depth
   local objdir=$1 depth=${2:-0} alt line target resolved
   if [ "$depth" -gt 5 ]; then
-    protected_fail "git-alternates-depth" "$objdir" "$objdir"
+    # git ignores alternates deeper than 5; a deeper chain leaves the repo
+    # incomplete for git too, so the row degrades instead of aborting.
+    soft_fail "git-alternates-depth: $objdir"
+    return 1
   fi
   alt="$objdir/info/alternates"
   if [ -L "$alt" ]; then
-    guard_target alternates "$alt" >/dev/null
-    protected_fail "git-alternates-unparsed" "$objdir" "$alt"
+    alt=$(guard_target alternates "$alt") || { trc=$?; [ "$trc" = 2 ] && exit 2; return 1; }
   fi
   [ -f "$alt" ] || return 0
   while IFS= read -r line || [ -n "$line" ]; do
     [ -n "$line" ] || continue
     case "$line" in
       \#*) continue ;;
-      \"*) protected_fail "git-alternates-unparsed" "$objdir" "$alt" ;;
+      \"*) soft_fail "git-alternates-unparsed: $alt"; return 1 ;;
       /*) target=$line ;;
       *) target="$objdir/$line" ;;
     esac
     resolved=$(guard_target alternates "$target") || exit 2
-    guard_alternates_file "$resolved" $((depth + 1))
+    guard_alternates_file "$resolved" $((depth + 1)) || return 1
   done < "$alt"
+  return 0
 }
 
 guard_alternates() { # $1 resolved gitdir
@@ -474,7 +519,9 @@ guard_git_links() { # $1 resolved gitdir; symlinks may not leave the gitdir
 # a FIFO/device/socket is refused rather than opened or waited on.
 guard_git_files() { # $1 resolved gitdir
   local dir=$1 rel path nlink
-  for rel in config HEAD index packed-refs commondir info/exclude objects/info/alternates; do
+  for rel in config HEAD index packed-refs commondir \
+      info/exclude info/attributes info/sparse-checkout \
+      objects/info/alternates; do
     path="$dir/$rel"
     if [ -f "$path" ]; then
       nlink=$(stat -L -c %h -- "$path" 2>/dev/null || true)
@@ -490,43 +537,282 @@ guard_git_files() { # $1 resolved gitdir
   done
 }
 
-guard_git_config() { # $1 resolved gitdir; refused local configs are unsupported
-  local dir=$1 cfg keys wt
-  cfg="$dir/config"
+# Read a one-line git metadata pointer the way git does: the whole file is
+# consumed and only trailing CR/LF are trimmed, so an interior LF survives a
+# first-line read and would validate a different path than git uses.
+read_meta_file() { # $1 file; prints content, rc 3 when absent/empty
+  local f=$1 v=""
+  [ -f "$f" ] || return 3
+  if IFS= read -r -d '' v < "$f"; then
+    protected_fail "git-metadata-nul" "$f" "$f"
+  fi
+  v=${v%$'\r'}
+  while [ "${v%$'\n'}" != "$v" ]; do v=${v%$'\n'}; v=${v%$'\r'}; done
+  case "$v" in
+    *$'\n'*|*$'\r'*) protected_fail "ambiguous-path" "$f" "$f" ;;
+  esac
+  [ -n "$v" ] || return 3
+  printf '%s' "$v"
+}
+
+# Conservative superset of wildmatch(WM_PATHNAME): bash * and ? also match
+# '/', and the collapsed '/**/' form is tested so a zero-directory '**'
+# cannot evade the check. Callers treat a match or an unevaluable pattern
+# as applicable, so an under-approximation only ever over-checks.
+_wm_match() { # $1 subject $2 pattern $3 icase(0|1)
+  local subj=$1 pat=$2 ic=$3 save collapsed r=1
+  save=$(shopt -p globstar nocasematch 2>/dev/null)
+  shopt -s globstar
+  [ "$ic" = 1 ] && shopt -s nocasematch
+  collapsed=${pat//\/\*\*\//\/}
+  case "$subj" in
+    $pat) r=0 ;;
+    *) if [ "$collapsed" != "$pat" ]; then
+         case "$subj" in $collapsed) r=0 ;; esac
+       fi ;;
+  esac
+  eval "$save"
+  return $r
+}
+
+# Print "resolved<TAB>spelled" for a common dir reached through a commondir
+# pointer (regular file or symlink to one). A symlink whose target is not a
+# commondir file is malformed metadata.
+handle_commondir() { # $1 owner gitdir (resolved)
+  local dir=$1 cf="$1/commondir" target resolved spelled
+  if [ -L "$cf" ]; then
+    cf=$(guard_target git-common-dir "$cf")
+    [ -f "$cf" ] || { soft_fail "git-commondir-symlink: $cf"; return 1; }
+  elif [ ! -f "$cf" ]; then
+    return 0
+  fi
+  target=$(read_meta "$cf")
+  [ -n "$target" ] || return 0
+  spelled=$target
+  case "$target" in
+    /*) ;;
+    *) spelled=$(lexical_abs "$dir/$target") ;;
+  esac
+  resolved=$(guard_target git-common-dir "$spelled") || exit 2
+  guard_git_links "$resolved" || exit 2
+  guard_git_files "$resolved" || exit 2
+  printf '%s\t%s' "$resolved" "$spelled"
+}
+
+# --- repo-local config scan (round 15, value/effect-aware) ---------------
+#
+# Every file git can load for the worktrees the census status-checks is
+# walked here: the common config, $GIT_DIR/config.worktree when
+# extensions.worktreeConfig parses true in the common config, and the
+# closure of include/includeIf targets. Relative include paths anchor to
+# the logical (spelled) directory of the containing file, matching git's
+# kvi->filename rule. Only provably-disabled includeIf conditions are
+# skipped — anything unevaluable counts as applicable. hasconfig: targets
+# are always applicable (git opens them during its remote-URL pre-pass).
+# A config problem marks only this repo (CFG_SOFT_REASON -> error row);
+# protected-path reaches and metadata integrity violations still exit 2.
+
+GITDIR_RES="" GITDIR_LEX="" HEAD_CONTENT="" CFG_FILE_SPELLED=""
+_cfg_icase=0
+
+# Evaluates one includeIf condition for one worktree context.
+# $1 condition, $2 context gitdir resolved, $3 context gitdir spelled,
+# $4 context HEAD content. rc 0 possibly-true, 1 provably-false.
+_cfg_condition_applies() {
+  local cond=$1 gdres=$2 gdlex=$3 head=$4 pat
+  case "$cond" in
+    gitdir:*|gitdir/i:*)
+      pat=${cond#gitdir/i:}; pat=${pat#gitdir:}
+      case "$cond" in gitdir/i:*) _cfg_icase=1 ;; *) _cfg_icase=0 ;; esac
+      case "$pat" in
+        "~/"*) [ -n "${HOME:-}" ] || return 0; pat="$HOME/${pat#\~/}" ;;
+        ./*) pat="$(dirname -- "$CFG_FILE_SPELLED")/${pat#./}" ;;
+        /*) ;;
+        *"/../"*|"/../"*|"../"*|"*/.."|*"/.."*|*".."*) return 0 ;;  # literal ../ per git; cannot model
+        *) pat="**/$pat" ;;
+      esac
+      case "$pat" in */) pat="$pat**" ;; esac
+      _wm_match "$gdres" "$pat" "$_cfg_icase" && return 0
+      if [ "$gdlex" != "$gdres" ] && _wm_match "$gdlex" "$pat" "$_cfg_icase"; then
+        return 0
+      fi
+      return 1 ;;
+    onbranch:*)
+      case "$head" in
+        "ref: refs/heads/"*)
+          pat=${cond#onbranch:}
+          _wm_match "${head#ref: refs/heads/}" "$pat" 0 && return 0
+          _wm_match "${head#ref: refs/heads/}" "**/$pat" 0 && return 0
+          return 1 ;;
+        *) return 0 ;;   # detached/unreadable HEAD: cannot prove false
+      esac ;;
+    hasconfig:*) return 0 ;;  # populate pass opens every such target
+    worktree:*|worktree/i:*) return 0 ;;  # defined on git >= 2.56
+    *) return 1 ;;           # unknown keywords are inert on git 2.55.0
+  esac
+}
+
+# Boundary-check and scan one include target before it is read.
+# $1 raw value, $2 containing file spelled path, $3 depth, $4 visited ref
+_cfg_include() {
+  local v=$1 cfile=$2 depth=$3 resolved spelled nlink
+  local -n _vis=$4
+  local cdir; cdir=$(dirname -- "$cfile")
+  case "$v" in
+    "") soft_fail "git-config-unsupported: empty include.path"; return 1 ;;
+    "~/"*)
+      [ -n "${HOME:-}" ] || { soft_fail "git-config-unsupported: ~ include without HOME"; return 1; }
+      spelled="$HOME/${v#\~/}" ;;
+    "~"* | *%*)
+      soft_fail "git-config-unsupported: include expansion $v"; return 1 ;;
+    /*) spelled=$v ;;
+    *)  spelled="$cdir/$v" ;;
+  esac
+  resolved=$(guard_target include "$spelled") || exit 2
+  # Missing and directory targets are inert to git (skipped / read empty);
+  # they are never opened here, but the boundary check above already ran.
+  [ -d "$resolved" ] && return 0
+  [ -e "$resolved" ] || return 0
+  [ -f "$resolved" ] || protected_fail "git-include-nonregular" "$cfile" "$resolved"
+  nlink=$(stat -c %h -- "$resolved" 2>/dev/null || true)
+  case "$nlink" in
+    ''|*[!0-9]*) protected_fail "git-metadata-unavailable" "$resolved" "$resolved" ;;
+  esac
+  [ "$nlink" -le 1 ] || protected_fail "git-metadata-hardlink" "$resolved" "$resolved"
+  if [ -n "${_vis[$resolved]+x}" ]; then
+    soft_fail "git-include-cycle: $resolved"
+    return 1
+  fi
+  if [ "$depth" -ge 10 ]; then
+    # git still access()es the level-11 target (boundary-checked above)
+    # then dies, so the repo is unusable for git too.
+    soft_fail "git-include-depth: $resolved"
+    return 1
+  fi
+  _vis["$resolved"]=1
+  CFG_FILE_SPELLED=$spelled
+  scan_config_file "$resolved" "$spelled" "$GITDIR_RES" "$GITDIR_LEX" \
+    "$HEAD_CONTENT" $((depth + 1)) "$4"
+}
+
+# Scan one config file without following includes, then recurse into every
+# applicable include target. $1 resolved, $2 spelled, $3 context gitdir
+# resolved, $4 context gitdir spelled, $5 context HEAD, $6 depth, $7 ref.
+scan_config_file() {
+  local cfg=$1 spelled=$2 gdres=$3 gdlex=$4 head=$5 depth=$6
+  local -n _vis=$7
+  local rec k v sec sub var nul wtp
+  CFG_FILE_SPELLED=$spelled
   if [ -L "$cfg" ]; then
-    protected_fail "git-metadata-symlink" "$dir" "$cfg"
+    protected_fail "git-metadata-symlink" "$cfg" "$cfg"
   fi
   [ -f "$cfg" ] || return 0
-  if ! keys=$(git config --file "$cfg" --no-includes --name-only --list 2>/dev/null); then
-    protected_fail "git-config-unparsed" "$dir" "$cfg"
+  nul=$(LC_ALL=C tr -cd '\000' < "$cfg" | wc -c)
+  if [ "$nul" != 0 ]; then
+    protected_fail "git-config-nul" "$cfg" "$cfg"
   fi
-  keys=${keys,,}
-  case "$keys" in
-    *include.*|*includeif.*|*filter.*.clean*|*filter.*.smudge*|*filter.*.process*|*core.hookspath*|*core.attributesfile*|*core.excludesfile*|*core.alternaterefscommand*|*remote.*.promisor*|*extensions.partialclone*|*extensions.worktreeconfig*)
-      protected_fail "git-config-unsupported" "$dir" "$cfg" ;;
+  if ! git config --file "$cfg" --no-includes --list -z >/dev/null 2>&1; then
+    soft_fail "git-config-unparsed: $cfg"
+    return 1
+  fi
+  local -a pending_inc=()
+  local saw_remote_url=0
+  while IFS= read -r -d '' rec || [ -n "$rec" ]; do
+    case "$rec" in
+      *$'\n'*) k=${rec%%$'\n'*}; v=${rec#*$'\n'} ;;
+      *) k=$rec; v= ;;
+    esac
+    sec=${k%%.*}; var=${k##*.}
+    if [ "$k" != "$sec" ] && [ "$k" != "$var" ]; then
+      sub=${k#*.}; sub=${sub%.*}
+    else sub=; fi
+    sec=${sec,,}; var=${var,,}
+    case "$sec:$var" in
+      include:path)
+        pending_inc+=("inc"$'\x01'"$v") ;;
+      includeif:path)
+        pending_inc+=("if"$'\x01'"$sub"$'\x01'"$v") ;;
+      remote:url)
+        saw_remote_url=1 ;;
+      filter:clean|filter:smudge|filter:process)
+        if [ "$rec" = "$k" ]; then
+          soft_fail "git-config-unparsed: valueless filter.$sub.$var in $cfg"
+          return 1
+        fi
+        if [ -n "$v" ]; then CFG_DRIVERS+=("$sub"); fi ;;
+      core:worktree)
+        # Boundary-checked (never key-refused). git reads the setup value
+        # without includes; checking every occurrence stays conservative.
+        if [ "$rec" != "$k" ] && [ -n "$v" ]; then
+          case "$v" in "~"*)
+            soft_fail "git-config-unsupported: core.worktree ~ expansion"
+            return 1 ;;
+          esac
+          wtp=$v
+          case "$wtp" in /*) ;; *) wtp="$gdres/$wtp" ;; esac
+          guard_target core-worktree "$wtp" >/dev/null
+        fi ;;
+    esac
+  done < <(git config --file "$cfg" --no-includes --list -z 2>/dev/null || true)
+  local item kind cond target
+  for item in ${pending_inc[@]+"${pending_inc[@]}"}; do
+    kind=${item%%$'\x01'*}; item=${item#*$'\x01'}
+    if [ "$kind" = inc ]; then
+      _cfg_include "$item" "$spelled" "$depth" "$7" || return 1
+      continue
+    fi
+    cond=${item%%$'\x01'*}; target=${item#*$'\x01'}
+    if _cfg_condition_applies "$cond" "$gdres" "$gdlex" "$head"; then
+      _cfg_include "$target" "$spelled" "$depth" "$7" || return 1
+      if [ "${cond%%:*}" = hasconfig ] && [ "$saw_remote_url" = 1 ]; then
+        soft_fail "git-config-unsupported: remote.*.url in hasconfig include $cfg"
+        return 1
+      fi
+    fi
+  done
+  return 0
+}
+
+# Scan $GIT_DIR/config.worktree under an active worktreeConfig extension.
+# $1 resolved gitdir, $2 spelled gitdir, $3 context HEAD
+scan_worktree_cfg() {
+  local gd=$1 gdlex=$2 head=$3 wt="$1/config.worktree" resolved nlink
+  if [ -L "$wt" ]; then
+    resolved=$(guard_target git-metadata "$wt") || exit 2
+  else
+    resolved=$wt
+  fi
+  if [ -e "$resolved" ] && [ ! -f "$resolved" ]; then
+    soft_fail "git-config-unparsed: non-regular config.worktree $resolved"
+    return 1
+  fi
+  [ -f "$resolved" ] || return 0
+  nlink=$(stat -c %h -- "$resolved" 2>/dev/null || true)
+  case "$nlink" in
+    ''|*[!0-9]*) protected_fail "git-metadata-unavailable" "$resolved" "$resolved" ;;
   esac
-  # core.worktree may legitimately point at a linked worktree; it is
-  # boundary-checked rather than refused. core.fsmonitor is overridden with
-  # -c core.fsmonitor=false on every status call.
-  wt=$(git config --file "$cfg" --no-includes --get core.worktree 2>/dev/null || true)
-  if [ -n "$wt" ]; then
-    case "$wt" in
-      "~"*) protected_fail "git-config-unsupported" "$dir" "$cfg" ;;
-    esac
-    case "$wt" in
-      /*) ;;
-      *) wt="$dir/$wt" ;;
-    esac
-    guard_target core-worktree "$wt" >/dev/null
-  fi
+  [ "$nlink" -le 1 ] || protected_fail "git-metadata-hardlink" "$resolved" "$resolved"
+  local -A vis2=(["$resolved"]=1)
+  GITDIR_RES=$gd GITDIR_LEX=$gdlex HEAD_CONTENT=$head CFG_FILE_SPELLED=$wt
+  scan_config_file "$resolved" "$wt" "$gd" "$gdlex" "$head" 0 vis2
+}
+
+# Same read, but a protected-path refusal (exit 2 inside the substitution)
+# is re-raised in the current shell instead of degrading to empty.
+read_meta() { # $1 file -> content or empty
+  local out rc=0
+  out=$(read_meta_file "$1") || rc=$?
+  case "$rc" in 2) exit 2 ;; esac
+  printf '%s' "$out"
 }
 
 # Resolve one `gitdir:` pointer to its admin directory. Prints nothing when
 # the file is not a pointer. Relative targets are relative to the owning
-# worktree directory.
+# worktree directory. The whole file is read, matching git.
 gitfile_admin() { # $1 .git file, $2 owner dir
   local file=$1 base=$2 line target
-  IFS= read -r line < "$file" || return 0
+  line=$(read_meta "$file")
+  [ -n "$line" ] || return 0
   case "$line" in
     gitdir:*) target=${line#gitdir:} ;;
     *) return 0 ;;
@@ -549,12 +835,46 @@ guard_git_pointer() { # $1 repo dir, $2 .git file
   [ -n "$admin" ] || return 0
 }
 
-# Registered worktree paths are guarded from the admin gitdir files before
-# `git worktree list` runs, so that command cannot stat a protected path
-# first. Relative registration paths are resolved against the admin dir.
-guard_worktree_registrations() { # $1 resolved gitdir
-  local dir=$1 entry reg target wt admin common c
-  for entry in "$dir"/worktrees/*; do
+# Scan the common config and, when extensions.worktreeConfig parses true,
+# each worktree's config.worktree. $1 resolved common dir, $2 spelled
+# common dir, $3 resolved main gitdir, $4 spelled main gitdir, $5 repo dir.
+# Registered worktree admin dirs are guarded from their own metadata before
+# `git worktree list` runs, so that command cannot stat a protected path.
+scan_common_config() {
+  local common=$1 common_lex=$2 maingd=$3 maingd_lex=$4 repo=$5
+  local entry reg target wt admin head ext common_wt vis_a trc
+  local -A vis=()
+  head=$(read_meta "$maingd/HEAD")
+  vis["$common/config"]=1
+  GITDIR_RES=$maingd GITDIR_LEX=$maingd_lex HEAD_CONTENT=$head
+  CFG_FILE_SPELLED="$common_lex/config"
+  scan_config_file "$common/config" "$common_lex/config" \
+    "$maingd" "$maingd_lex" "$head" 0 vis || return 1
+
+  # The main worktree's config.worktree lives under the main gitdir, which
+  # may differ from the common dir (commondir indirection). Metadata
+  # (nlink/nonregular) is checked unconditionally because `worktree list`
+  # stats it for the bare check even with the extension off; content is
+  # scanned only when the extension parses true.
+  common_wt="$maingd/config.worktree"
+  if [ -e "$common_wt" ] || [ -L "$common_wt" ]; then
+    if [ "$ext" = true ]; then
+      scan_worktree_cfg "$maingd" "$maingd_lex" "$head" || return 1
+    else
+      local nlink
+      nlink=$(stat -c %h -- "$common_wt" 2>/dev/null || true)
+      case "$nlink" in
+        ''|*[!0-9]*) protected_fail "git-metadata-unavailable" \
+          "$maingd" "$common_wt" ;;
+      esac
+      [ "$nlink" -le 1 ] || protected_fail "git-metadata-hardlink" \
+        "$maingd" "$common_wt"
+      [ -f "$common_wt" ] || [ -L "$common_wt" ] \
+        || protected_fail "git-metadata-nonregular" "$maingd" "$common_wt"
+    fi
+  fi
+
+  for entry in "$common"/worktrees/*; do
     if [ -L "$entry" ]; then
       guard_target worktree "$entry" >/dev/null
       continue
@@ -562,111 +882,96 @@ guard_worktree_registrations() { # $1 resolved gitdir
     [ -d "$entry" ] || continue
     reg="$entry/gitdir"
     [ -f "$reg" ] || continue
-    IFS= read -r target < "$reg" || target=""
-    [ -n "$target" ] || continue
+    target=$(read_meta "$reg") || { trc=$?; [ "$trc" = 2 ] && exit 2; continue; }
     case "$target" in
       /*) ;;
-      *) target="$dir/$target" ;;
+      *) target="$entry/$target" ;;
     esac
-    guard_target worktree "$target" >/dev/null
+    local cwt
+    cwt=$(guard_target worktree "$target") || { trc=$?; [ "$trc" = 2 ] && exit 2; exit 2; }
     case "$target" in
       */.git)
         wt=${target%/.git}
         guard_target worktree "$wt" >/dev/null
-        if [ -f "$target" ]; then
-          admin=$(gitfile_admin "$target" "$wt") || exit 2
-          if [ -n "$admin" ]; then
-            guard_git_files "$admin" || exit 2
-            guard_git_links "$admin" || exit 2
-            guard_git_config "$admin" || exit 2
-            common="$admin/commondir"
-            if [ -L "$common" ]; then
-              guard_target git-common-dir "$common" >/dev/null
-            elif [ -f "$common" ]; then
-              IFS= read -r c < "$common" || c=""
-              c=${c#"${c%%[![:space:]]*}"}
-              if [ -n "$c" ]; then
-                case "$c" in
-                  /*) ;;
-                  *) c="$admin/$c" ;;
-                esac
-                guard_target git-common-dir "$c" >/dev/null
-              fi
-            fi
-          fi
-        fi
         ;;
+      *) wt="" ;;
     esac
+    admin=""
+    if [ -n "$wt" ] && [ -f "$target" ]; then
+      admin=$(gitfile_admin "$target" "$wt") || { trc=$?; exit "$trc"; }
+    elif [ -n "$wt" ] && [ -d "$target" ]; then
+      admin=""
+    fi
+    # Missing admin dir or missing worktree: nothing is run there.
+    [ -n "$admin" ] || admin=$entry
+    guard_git_links "$admin" || exit 2
+    guard_git_files "$admin" || exit 2
+    # Scan this worktree's context: the common config is read for every
+    # worktree, and its includeIf conditions bind to that worktree's own
+    # gitdir and HEAD, not the main worktree's.
+    head=$(read_meta "$admin/HEAD")
+    local admin_lex=$entry
+    local -A visw=()
+    visw["$common/config"]=1
+    GITDIR_RES=$admin GITDIR_LEX=$admin_lex HEAD_CONTENT=$head
+    scan_config_file "$common/config" "$common_lex/config" \
+      "$admin" "$admin_lex" "$head" 0 visw || return 1
+    if [ "$ext" = true ]; then
+      scan_worktree_cfg "$admin" "$admin_lex" "$head" || return 1
+    fi
+    local c
+    c=$(handle_commondir "$admin") || { trc=$?; [ "$trc" = 2 ] && exit 2; return 1; }
+    if [ -n "$c" ]; then
+      # A linked admin's own commondir re-points the common dir; scan its
+      # config under this worktree's context too.
+      local c2=${c%%$'\t'*}
+      if [ "$c2" != "$common" ]; then
+        local -A visw2=()
+        visw2["$c2/config"]=1
+        scan_config_file "$c2/config" "$c2/config" \
+          "$admin" "$admin_lex" "$head" 0 visw2 || return 1
+      fi
+    fi
   done
+  return 0
 }
 
-guard_git_surface() { # $1 repo dir; exits 2 on a protected/unsupported git surface
-  local repo=$1 g="$1/.git" target common dir
+guard_git_surface() { # $1 repo dir; exits 2 on a protected git surface,
+  # returns 1 (CFG_SOFT_REASON set) when config leaves the repo unusable
+  local repo=$1 g="$1/.git" target dir spelled common res c
   if [ -L "$g" ]; then
     guard_target git-metadata "$g" >/dev/null
     return 0
   fi
-  if [ -d "$g" ]; then
-    dir=$(guard_target gitdir "$g") || exit 2
+  if [ -d "$g" ] || [ -f "$g" ]; then
+    if [ -d "$g" ]; then
+      spelled="$repo/.git"
+    else
+      target=$(read_meta "$g")
+      case "$target" in
+        gitdir:*) target=${target#gitdir:} ;;
+        *) return 0 ;;
+      esac
+      target=${target#"${target%%[![:space:]]*}"}
+      if [ -z "$target" ]; then soft_fail "gitdir-empty: $g"; return 1; fi
+      case "$target" in
+        /*) spelled=$target ;;
+        *) spelled=$(lexical_abs "$repo/$target") ;;
+      esac
+    fi
+    dir=$(guard_target gitdir "$spelled") || exit 2
     guard_git_links "$dir" || exit 2
     guard_git_files "$dir" || exit 2
-    guard_git_config "$dir" || exit 2
-    common="$dir/commondir"
-    if [ -L "$common" ]; then
-      guard_target git-common-dir "$common" >/dev/null
-    elif [ -f "$common" ]; then
-      IFS= read -r target < "$common" || target=""
-      target=${target#"${target%%[![:space:]]*}"}
-      if [ -n "$target" ]; then
-        case "$target" in
-          /*) ;;
-          *) target="$dir/$target" ;;
-        esac
-        dir=$(guard_target git-common-dir "$target") || exit 2
-        guard_git_links "$dir" || exit 2
-        guard_git_files "$dir" || exit 2
-        guard_git_config "$dir" || exit 2
-      fi
+    common=$dir
+    CFG_DRIVERS=()
+    local clex=$spelled
+    c=$(handle_commondir "$dir") || { trc=$?; [ "$trc" = 2 ] && exit 2; return 1; }
+    if [ -n "$c" ]; then
+      common=${c%%$'\t'*}
+      clex=${c#*$'\t'}
     fi
-    guard_alternates "$dir" || exit 2
-    guard_worktree_registrations "$dir" || exit 2
-    return 0
-  fi
-  if [ -f "$g" ]; then
-    IFS= read -r target < "$g" || target=""
-    case "$target" in
-      gitdir:*) target=${target#gitdir:} ;;
-      *) return 0 ;;
-    esac
-    target=${target#"${target%%[![:space:]]*}"}
-    [ -n "$target" ] || protected_fail "unresolved-path" "$repo" "$g"
-    case "$target" in
-      /*) ;;
-      *) target="$repo/$target" ;;
-    esac
-    dir=$(guard_target gitdir "$target") || exit 2
-    guard_git_links "$dir" || exit 2
-    guard_git_files "$dir" || exit 2
-    guard_git_config "$dir" || exit 2
-    common="$dir/commondir"
-    if [ -L "$common" ]; then
-      guard_target git-common-dir "$common" >/dev/null
-    elif [ -f "$common" ]; then
-      IFS= read -r target < "$common" || target=""
-      target=${target#"${target%%[![:space:]]*}"}
-      if [ -n "$target" ]; then
-        case "$target" in
-          /*) ;;
-          *) target="$dir/$target" ;;
-        esac
-        dir=$(guard_target git-common-dir "$target") || exit 2
-        guard_git_links "$dir" || exit 2
-        guard_git_files "$dir" || exit 2
-        guard_git_config "$dir" || exit 2
-      fi
-    fi
-    guard_alternates "$dir" || exit 2
-    guard_worktree_registrations "$dir" || exit 2
+    guard_alternates "$common" || return 1
+    scan_common_config "$common" "$clex" "$dir" "$spelled" "$repo" || return 1
   fi
   return 0
 }
@@ -683,33 +988,119 @@ sanitize_field() {
 
 # --- measurements (read-only) ----------------------------------------------
 
-count_worktrees() { # $1 repo
+count_worktrees() { # $1 repo; prints count, or ERR on command failure
   local n
-  n=$(git -C "$1" worktree list 2>/dev/null | grep -c . || true)
+  n=$(git -C "$1" worktree list 2>/dev/null) || { printf 'ERR'; return 0; }
+  n=$(printf '%s\n' "$n" | grep -c . || true)
   printf '%s' "${n// /}"
 }
 
-count_unpushed() { # $1 repo; prints "count<TAB>no-remote|has-remote"
+count_unpushed() { # $1 repo; prints "count<TAB>no-remote|has-remote" or ERR
   local repo=$1 nremotes n
-  nremotes=$(git -C "$repo" for-each-ref --format='%(refname)' refs/remotes 2>/dev/null \
-    | grep -c . || true)
+  nremotes=$(git -C "$repo" for-each-ref --format='%(refname)' \
+    refs/remotes 2>/dev/null) || { printf 'ERR'; return 0; }
+  nremotes=$(printf '%s\n' "$nremotes" | grep -c . || true)
   nremotes=${nremotes// /}
   if [ "${nremotes:-0}" = 0 ]; then
-    n=$(git -C "$repo" rev-list --count --branches 2>/dev/null || printf '0')
+    n=$(git -C "$repo" rev-list --count --branches 2>/dev/null) || \
+      { printf 'ERR'; return 0; }
     printf '%s\tno-remote' "${n// /}"
     return 0
   fi
-  n=$(git -C "$repo" rev-list --count --branches --not --remotes 2>/dev/null || printf '0')
+  n=$(git -C "$repo" rev-list --count --branches --not --remotes 2>/dev/null) \
+    || { printf 'ERR'; return 0; }
   printf '%s\thas-remote' "${n// /}"
 }
 
-count_dirty() { # $1 repo; prints "count" or "unverifiable"
+# Resolve one path-valued config key's effective value for `git -C <wt>`.
+# Prints ABSENT, INERT:<v> (inert or unexpandable form), or the boundary-
+# resolved path. The local value is honored (dirty-fidelity); a value that
+# resolves inside the protected boundary still refuses the whole run.
+_honored_cfg_path() { # $1 key, $2 worktree
+  local v="" resolved rc=0
+  v=$(git -C "$2" config --no-optional-locks -z --get "$1" 2>/dev/null) || rc=$?
+  v=${v%$'\n'}
+  if [ "$rc" -ne 0 ]; then
+    # rc 1: absent. Other failures mirror git's own config failure; the
+    # status call below degrades to unverifiable either way.
+    [ "$rc" -eq 1 ] && printf 'ABSENT' || printf 'INERT:x'
+    return 0
+  fi
+  case "$v" in
+    ""|"~"* | *%* | *$'\n'* | *$'\r'*) printf 'INERT:%s' "$v"; return 0 ;;
+    /*) resolved=$v ;;
+    *) resolved="$2/$v" ;;
+  esac
+  resolved=$(guard_target "cfg-$1" "$resolved") || exit 2
+  printf '%s' "$resolved"
+}
+
+# Build the -c overrides every status/check-attr/ls-files call uses.
+# hooksPath and fsmonitor stay hard-neutralized (no census command runs
+# hooks and fsmonitor is only a cache). excludesFile/attributesFile honor
+# the safe local or operator-default path so dirty counts match
+# pre-round-14; an inert or protected default falls back to /dev/null.
+status_path_overrides() { # $1 worktree
+  STATUS_C=(-c core.fsmonitor=false -c core.hooksPath=/dev/null)
+  local k cand resolved v
+  for k in core.excludesFile core.attributesFile; do
+    v=$(_honored_cfg_path "$k" "$1")
+    case "$v" in
+      ABSENT)
+        v=/dev/null
+        # No explicit value: honor the operator XDG/default file only when
+        # its lexical form is outside the protected boundary (checked
+        # BEFORE any stat), it resolves cleanly, and is a regular file.
+        cand=""
+        case "$k" in
+          core.excludesFile) cand="${XDG_CONFIG_HOME:-${HOME:-}/.config}/git/ignore" ;;
+          core.attributesFile) cand="${XDG_CONFIG_HOME:-${HOME:-}/.config}/git/attributes" ;;
+        esac
+        case "$cand" in
+          /*|./*) ;;
+          *) cand="" ;;
+        esac
+        if [ -n "$cand" ]; then
+          if ! protected_reason_input "$(lexical_abs "$cand")" >/dev/null 2>&1; then
+            resolved=$(resolve_guarded "$cand" 0 0 2>/dev/null || true)
+            [ -n "$resolved" ] && [ -f "$resolved" ] && v=$resolved
+          fi
+        fi ;;
+      INERT:*) v=/dev/null ;;
+    esac
+    STATUS_C+=(-c "$k=$v")
+  done
+}
+
+count_dirty() { # $1 repo; prints "count", "unverifiable" or "unsupported"
   local st
+  status_path_overrides "$1"
+  # A non-empty filter driver selected by a tracked path's attributes can
+  # execute during status; refuse that worktree instead of running it.
+  # check-attr only reports attribute values; it runs no driver. NUL-
+  # delimited records stream through awk (command substitution would drop
+  # the NUL bytes). Driver names compare case-sensitively.
+  if [ "${#CFG_DRIVERS[@]}" -gt 0 ]; then
+    local bound dsep
+    dsep=$(printf '\x01%s' ${CFG_DRIVERS[@]+"${CFG_DRIVERS[@]}"})
+    if ! bound=$(git -C "$1" "${STATUS_C[@]}" ls-files -z -- . \
+        ':(exclude).ufo/state' ':(exclude).ufo/watchdog.log' \
+        ':(exclude,glob)census/operator-sweep-*' \
+        ':(exclude,glob)census/operator-sweep-*/**' \
+        ':(exclude,glob)**/census/operator-sweep-*' 2>/dev/null \
+        | git -C "$1" "${STATUS_C[@]}" check-attr -z --stdin filter 2>/dev/null \
+        | awk -v RS='\0' -v drvs="$dsep" '
+            BEGIN { n = split(drvs, D, sprintf("%c",1)); b = 0 }
+            NR % 3 == 0 { for (i = 1; i <= n; i++) if ($0 == D[i]) b = 1 }
+            END { printf "%d", b }' 2>/dev/null); then
+      printf 'checkattr-fail'; return 0
+    fi
+    if [ "$bound" = 1 ]; then printf 'unsupported'; return 0; fi
+  fi
   # Pathspec-exclude the off-limits driver surfaces so status does not walk
   # them. A wholly untracked directory elsewhere still collapses to one line.
-  if ! st=$(git -C "$1" --no-optional-locks -c core.fsmonitor=false \
-      -c core.hooksPath=/dev/null -c core.excludesFile=/dev/null \
-      -c core.attributesFile=/dev/null status --porcelain --ignore-submodules=all -- . \
+  if ! st=$(git -C "$1" --no-optional-locks "${STATUS_C[@]}" \
+      status --porcelain --ignore-submodules=all -- . \
       ':(exclude).ufo/state' ':(exclude).ufo/watchdog.log' \
       ':(exclude,glob)census/operator-sweep-*' \
       ':(exclude,glob)census/operator-sweep-*/**' \
@@ -828,11 +1219,15 @@ worktree_extra_flags() {
       saw_dirty=1
       continue
     fi
-    guard_git_surface "$cpath"
-    d=$(count_dirty "$cpath")
-    if [ "$d" = unverifiable ] || [ "${d:-0}" -gt 0 ]; then
+    if ! guard_git_surface "$cpath"; then
       saw_dirty=1
+      continue
     fi
+    d=$(count_dirty "$cpath")
+    case "$d" in
+      *[0-9]*) [ "$d" -gt 0 ] && saw_dirty=1 ;;
+      *) saw_dirty=1 ;;
+    esac
   done < <(git -C "$repo" worktree list --porcelain 2>/dev/null || true)
   local out=""
   [ "$saw_absent" = 1 ] && out="wt-absent"
@@ -844,7 +1239,10 @@ worktree_extra_flags() {
 census_one() { # $1 repo-dir
   local repo
   repo=$(guard_path repo "$1") || exit 2
-  guard_git_surface "$repo"
+  if ! guard_git_surface "$repo"; then
+    printf '%s\t0\t0\t0\t0\t\terror\n' "$(sanitize_field "$repo")"
+    return 0
+  fi
   if [ -L "$repo/.git" ]; then
     printf '%s\t0\t0\t0\t0\t\tnot-a-repo\n' "$(sanitize_field "$repo")"
     return 0
@@ -886,12 +1284,12 @@ census_one() { # $1 repo-dir
   case "$wt_extra" in
     *wt-dirty*) flags+=(wt-dirty) ;;
   esac
-  if [ "$dirty" = unverifiable ]; then
-    dirty=0
-    flags+=(status-unverifiable)
-  elif [ "${dirty:-0}" -gt 0 ]; then
-    flags+=(dirty)
-  fi
+  case "$dirty" in
+    unverifiable) dirty=0; flags+=(status-unverifiable) ;;
+    unsupported|checkattr-fail) dirty=0; flags+=(error) ;;
+    *[0-9]*) [ "$dirty" -gt 0 ] && flags+=(dirty) ;;
+    *) dirty=0; flags+=(error) ;;
+  esac
   if [ "${scratch:-0}" -gt 0 ]; then flags+=(scratch); fi
   if [ "$secret_flag" = secret-shaped ]; then flags+=(secret-shaped); fi
 
@@ -928,13 +1326,12 @@ list_repos() { # $1 resolved root; fills REPOS, basename-sorted
     if [ -L "$g" ]; then
       guard_target git-metadata "$g" >/dev/null
     elif [ -f "$g" ]; then
-      guard_git_surface "$root"
+      guard_git_surface "$root" || true
       REPOS+=("$root")
     elif [ -d "$g" ]; then
-      guard_git_surface "$root"
+      guard_git_surface "$root" || true
       REPOS+=("$root")
     fi
-  fi
   shopt -s nullglob
   for d in "$root"/*; do
     base=${d##*/}
@@ -961,7 +1358,7 @@ list_repos() { # $1 resolved root; fills REPOS, basename-sorted
       continue
     fi
     if [ -d "$g" ]; then
-      guard_git_surface "$d"
+      guard_git_surface "$d" || true
       REPOS+=("$d")
     fi
   done
@@ -1271,6 +1668,46 @@ run_selftest() {
   git -C "$RC" update-ref refs/remotes/origin/master "$c2"
   touch -d 'tomorrow' "$RC/.ufo/watchdog.log" "$RC/.ufo/state/live.json"
 
+  # cfgok-shokunin: benign local config that round-14 refused on key
+  # presence. Every entry must survive as a clean row:
+  #   core.hooksPath (neutralized per-command),
+  #   core.excludesFile honored (covers untracked skip.log),
+  #   remote.origin.promisor=false (boolean-false is inert),
+  #   extensions.worktreeConfig=false (inert; stray config.worktree not
+  #     opened),
+  #   include.path to a safe in-gitdir file, includeIf with a provably
+  #     false gitdir: condition whose target does not exist.
+  local RK="$fleet/cfgok-shokunin"
+  st_init "$RK" master
+  printf 'ok\n' > "$RK/ok.txt"
+  local k1
+  k1=$(st_commit "$RK" "" "k1")
+  git -C "$RK" update-ref refs/heads/master "$k1"
+  git -C "$RK" update-ref refs/remotes/origin/master "$k1"
+  printf 'skip.log\n' > "$RK/.scratch-ignores"
+  printf 'payload\n' > "$RK/skip.log"
+  printf 'user.name=census-ok\n' > "$RK/.git/inc.cfg"
+  printf 'core.bare = false\n' > "$RK/.git/config.worktree"
+  git -C "$RK" config core.hooksPath .githooks
+  git -C "$RK" config core.excludesFile .scratch-ignores
+  git -C "$RK" config remote.origin.promisor false
+  git -C "$RK" config extensions.worktreeConfig false
+  git -C "$RK" config include.path inc.cfg
+  git -C "$RK" config 'includeIf.gitdir:/nonexistent/**.path' missing.inc
+
+  # cfgbad-shokunin: a non-empty filter driver selected by .gitattributes.
+  # status could execute it, so this row degrades to error while the fleet
+  # still reports.
+  local RB="$fleet/cfgbad-shokunin"
+  st_init "$RB" master
+  printf 'x\n' > "$RB/x.txt"
+  local b1
+  b1=$(st_commit "$RB" "" "b1")
+  git -C "$RB" update-ref refs/heads/master "$b1"
+  git -C "$RB" update-ref refs/remotes/origin/master "$b1"
+  printf '* filter=x\n' > "$RB/.gitattributes"
+  git -C "$RB" config filter.x.clean 'cat'
+
   local out1="$ST_TMP/c1.tsv" out2="$ST_TMP/c2.tsv"
   env -u GIT_DIR SOUJI_CENSUS_SELFTEST_ACTIVE=1 \
     "$SELF" --root "$fleet" > "$out1"
@@ -1290,17 +1727,36 @@ run_selftest() {
 
   local nrows
   nrows=$(grep -c $'\t' "$out1" || true)
-  # header + 4 main repos. plain-dir, dot-dir, and the linked work tree
+  # header + 6 main repos. plain-dir, dot-dir, and the linked work tree
   # (.git file) are not rows.
   local data_rows
   data_rows=$((nrows - 1))
-  if [ "$data_rows" = 4 ]; then st_ok "row count 4 (main repos only)"
-  else st_bad "row count $data_rows want 4"; cat "$out1"; fi
+  if [ "$data_rows" = 6 ]; then st_ok "row count 6 (main repos only)"
+  else st_bad "row count $data_rows want 6"; cat "$out1"; fi
 
   if grep -q 'plain-dir' "$out1"; then st_bad "plain-dir was included"; else st_ok "plain-dir skipped"; fi
   if grep -q 'hidden-shokunin' "$out1"; then st_bad "dot-dir was included"; else st_ok "dot-dir skipped"; fi
   if grep -q 'unpushed-shokunin-wt' "$out1"; then st_bad "linked worktree emitted as its own row"
   else st_ok "linked worktree not a separate row"; fi
+
+  # cfgok: benign config must produce a clean row (dirty=0 via the honored
+  # local excludes file; hooksPath/promisor=false/worktreeConfig=false
+  # inert; include targets safe or provably disabled).
+  v=$(st_row_field "$out1" cfgok-shokunin 7)
+  case "$v" in
+    clean) st_ok "cfgok verdict=clean ($v)" ;;
+    *) st_bad "cfgok verdict='$v' want clean" ;;
+  esac
+  v=$(st_row_field "$out1" cfgok-shokunin 4)
+  if [ "$v" = 0 ]; then st_ok "cfgok dirty=0 (local excludesFile honored)"
+  else st_bad "cfgok dirty=$v want 0"; fi
+  # cfgbad: a selected non-empty filter driver degrades this repo to an
+  # error row; the fleet still reports.
+  v=$(st_row_field "$out1" cfgbad-shokunin 7)
+  case "$v" in
+    *error*) st_ok "cfgbad verdict=error ($v)" ;;
+    *) st_bad "cfgbad verdict='$v' want error" ;;
+  esac
 
   local v kept_iso
   kept_iso=$(date -d "@$(stat -c %Y -- "$RC/kept.txt")" --iso-8601=seconds)
@@ -1481,7 +1937,7 @@ run_selftest() {
 
   # source audit: no forbidden git porcelain in non-comment lines
   local n
-  n=$(grep -cE '^[^#]*git +(-C +[^ ]+ +)?(fetch|push|commit|branch|checkout|reset|rebase|prune)( |$)' "$SELF" || true)
+  n=$(grep -cE '^[^#]*git +(-C +[^ ]+ +)?(fetch|push|commit|branch|checkout|reset|rebase|prune|fetch-pack|receive-pack|upload-pack|--alternate-refs)( |$)' "$SELF" || true)
   n=${n// /}
   if [ "${n:-1}" = 0 ]; then st_ok "no forbidden git subcommand"
   else st_bad "$n forbidden git invocation(s)"; fi

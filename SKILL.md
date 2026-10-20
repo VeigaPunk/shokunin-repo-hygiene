@@ -15,6 +15,13 @@ state `SCORECARD.md`, Tool certification). Receipt verdicts remain advisory.
 it cannot authenticate author labels, prove a command ran, establish full
 class coverage, or grant deletion authority (QUALITY Q6/Q18).
 
+**Round-15 candidates are NOT behaviorally verified.** The census config
+repair, preservation checker and r15 fixtures were stopped at operator
+wrap-up before acceptance. Their registry rows describe interfaces, not
+passing demonstrations. Do not treat the new census as an admitted repair
+or use its output for operational decisions until the recorded checks run.
+R14's rejected-harmed configuration-support debt remains open.
+
 ## Receipt taxonomy — every removal needs exactly one
 
 The machine form of this table is `tools/souji-verify.sh` (installed
@@ -138,6 +145,9 @@ for the legacy selftests; their historical fallback is not Q4-conformant.
 | souji-evidence-cache | gate | `python3 tools/souji-evidence-cache.py --root DIR --record PATH [--require REL...]` or `--frozen DIR` | 0 clean/reusable declared dependencies; 1 failed/stale/missing dependency or matched false; 2 could-not-evaluate malformed/legacy/protected/tampered input | `python3 tools/souji-evidence-cache.py --selftest`; external fixture below | literal embedded expected ids; `tests/fixtures/r14-cache-frozen/expected.json` input pins | inputs read-only; isolated selftest `/var/tmp`; never executes a recorded command | souji |
 | r14-evidence-cache | gate | `python3 tests/fixtures/r14-evidence-cache.py [--tool PATH]` | 0 clean; 1 failed assertion; 2 could-not-evaluate missing prerequisite | same default self-invocation fixture; isolated positive/negative CLI calls | literal expected exits/finding ids in fixture; `tests/fixtures/r14-cache-frozen/expected.json` | isolated `/var/tmp/souji-r14-cache-fixture.*`; reads selected gate and committed snapshot | souji |
 | r14-census-boundary | gate | `python3 tests/fixtures/r14-census-boundary.py --tool PATH` | 0 clean; 1 failed case/id-set; 2 could-not-evaluate missing prerequisite/trace/usage | same default self-invocation fixture, synthetic HOME with spy and strace access checks; `--tool` selects paired baseline | fixture EXPECTED_IDS and literal expected exits/finding/access assertions | isolated `/var/tmp/r14-census-boundary.*`; never a real credential-store probe | souji |
+| r15-census-config | gate | `python3 tests/fixtures/r15-census-config.py --tool PATH` | 0 clean; 1 failed case/id-set; 2 could-not-evaluate prerequisite/trace/usage | same full default invocation over isolated synthetic HOME; selected tool supplies pre-harm, harmed or changed arm | fixture literal EXPECTED_IDS and per-case fixed exits/findings/row expectations | isolated `/var/tmp`; no real store or live fleet probe | souji |
+| souji-preservation-evidence | gate | `python3 tools/souji-preservation-evidence.py --root DIR --record FILE` or `--frozen DIR` | 0 clean declared consistency; 1 failed honest evidence; 2 could-not-evaluate malformed/tampered/unavailable input | `python3 tools/souji-preservation-evidence.py --selftest`; external fixture below | checker literal case universe and baseline digests; `tests/fixtures/r15-preservation-frozen/expected.json` pins every snapshot input | records read-only; self-invocations isolated `/var/tmp`; never runs recorded commands | souji |
+| r15-preservation-evidence | gate | `python3 tests/fixtures/r15-preservation-evidence.py` | 0 clean; 1 failed expected exit/finding; 2 could-not-evaluate missing prerequisite | same default self-invocation fixture | fixture literal positive/negative expectations and `tests/fixtures/r15-preservation-frozen/` | isolated `/var/tmp`; inputs read-only | souji |
 
 Sources for this skill: `corpus/SOURCES.md`; admission bar: `corpus/QUALITY.md`.
 
@@ -213,8 +223,9 @@ the protected tree, not permission to follow its target. Protected-namespace
 checks are not a general sandbox against hostile hardlinks, bind mounts or
 concurrent replacement. Source S040 explains filesystem-aware resolution;
 QUALITY Q20/Q21 and `corpus/lessons/round-14.md` bind these limits.
-Repositories with local includes, filters, hooks/attributes/excludes,
-alternateRefsCommand, promisor/partial-clone or worktreeConfig settings may
-refuse as unsupported rather than emit a misleading clean census. The
-complete refusal set is in the tool's boundary header; the measured ordinary,
-linked-worktree and comparison controls do not prove every Git configuration.
+R14's blanket local-configuration refusal was rejected as harmed by the
+outside closure. R15 lands an unverified value/effect-aware candidate:
+intended behavior and remaining unsupported forms are in the current tool
+header, not demonstrated guarantees. No r15 benign/mixed-fleet preservation,
+namespace retention, ShellCheck or selftest pass is claimed. Exact unrun
+acceptance and frozen re-pin requirements: `corpus/lessons/round-15.md`.

@@ -11,8 +11,8 @@ counting command and the commit it was measured against.
 | axis | score | verdict / observation | counting command | measured commit | last change |
 |---|---|---|---|---|---|
 | coverage | 8 | unchanged r14; r13 C3 improved and admitted by CloseSoujiR13 (`corpus/lessons/round-13-verifier-spotcheck.md`); numeric delta 0, legacy-unmapped. Admitted knowledge remains 5, HELD 1; no new coverage-map ground claimed | `python3 census/round-14/count-claims.py a31642d`; same command `552cae4`; `census/round-14/counts.json` | a31642d → 552cae4 | r13 |
-| calibration | 7 | r14 outside closure: improved within declared-byte eligibility and actual attempt_reuse decisions on synthetic records only; numeric delta 0, legacy-unmapped. Full migrated dispatch and positive production retention unobserved | `python3 census/round-14/count-claims.py <revision>`; committed verification manifests and `corpus/lessons/round-14-verifier-spotcheck.md` C1 | r14 measured source 48f8945 / corrected consumer 552cae4; outside closure cc21683 | r14 |
-| operability | 8 | r14 outside closure: harmed / round rejected-harmed. Namespace tests improve, but value-blind config bans contract benign support and can abort the entire fleet. Numeric delta 0, legacy-unmapped; r15 repair is not admitted before measurements | `python3 tests/fixtures/r14-census-boundary.py --tool <path>` historical paired evidence; source-based counterexample and judgment in `corpus/lessons/round-14-verifier-spotcheck.md` C2 | r14 measured source 552cae4; outside closure cc21683 | r14 |
+| calibration | 7 | r15 C2 unprovable: preservation checker, self-invocation fixture and frozen declarations landed, but no acceptance was run before operator wrap-up. No new capability admitted; numeric delta 0, legacy-unmapped. R14 C1 remains outside-verified only within synthetic attempt_reuse / declared-byte scope | UNRUN: `python3 tools/souji-preservation-evidence.py --selftest`; external/frozen/actual-record checks; `corpus/lessons/round-15.md` | no r15 behavioral measurement; r14 source 48f8945 / corrected consumer 552cae4 and closure cc21683 retained | r15 |
+| operability | 8 | r15 C1 unprovable: value/effect-aware candidate repair and paired fixture landed without red-before/green-after execution. R14 rejected-harmed debt remains OPEN; neither namespace retention nor benign/mixed-fleet restoration is claimed passed. Numeric delta 0, legacy-unmapped | UNRUN: `python3 tests/fixtures/r15-census-config.py --tool <pre-harm-or-harmed-or-changed>`; unchanged namespace fixture and legacy suite; `corpus/lessons/round-15.md` | no r15 behavioral measurement; r14 harm source 552cae4 / outside closure cc21683 retained | r15 |
 
 Correction (r12 post-review, 2026-10-19): coverage C2 reads 0→4 admitted entries (+1 held,
 K5) on F1/F3/F4, SOURCES census mined=16 queued=15; calibration C1's 28/52 → 51/53 is a
@@ -63,15 +63,14 @@ independently adjudicated in `corpus/lessons/round-13-verifier-spotcheck.md`.
 - **r6–r11 (appended r12):** this section was not updated for rounds 6–11
   (STATE dossier §5.4; lesson row M52). Their claims and verdicts are in
   LOG.md and `corpus/lessons/round-{6..11}.md`.
-- **r15 (planned r14):** calibration remains the lowest legacy-unmapped axis:
-  extend independently digest-bound class evidence only after r14's outside
-  admit/reject sample. Operability: separately exercise an unproved quarantine
-  bound/residue site with isolated red/green evidence, or retain its explicit
-  unproved label. Comprehensive Q6/Q18 class-suite certification stays OFF;
-  do not mistake the local eligibility gate for certification. Wider F2
-  size attribution and unreachable-object accounting remain frontier.
-  Cross-device quarantine/K5 remains HELD under Q4/Q16. No content inspection
-  or automatic removal is authorized.
+- **r16 (planned r15, not started):** first resolve the unverified r15 C1
+  value/effect-aware config repair and its precise remaining benign-value
+  limitations; run discriminating pre-harm/harmed/changed controls and retain
+  all namespace gains before admission. Independently exercise C2 selftest,
+  external fixture, refreshed frozen pins and a real captured record. The
+  r15 operator wrap-up cancelled planned wave 2 and final acceptance; no
+  unrun check passed. Certification stays OFF, K5 HELD; wider F2 and
+  unexercised quarantine sites remain frontier. No new round is started here.
 
 ## Saturation / stagnation
 
@@ -97,9 +96,10 @@ execution, or full defect-class coverage. Deletion authorization stays OFF.
 Round-14 outside disposition: **rejected-harmed**, not a net operability
 improvement (`corpus/lessons/round-14-verifier-spotcheck.md`). Namespace gains
 and bounded C1 eligibility verify, but benign-config support contracted.
-The r15 first claim repairs that routed harm; passing namespace cases alone
-cannot discharge it. Certification remains OFF, K5 HELD, and unexercised
-r13 operation sites unproved. Source-row growth is not knowledge growth.
+The r15 first claim attempts that routed repair, but operator wrap-up
+stopped integration before acceptance. R14 harm is not discharged by source
+changes alone. Certification stays OFF, K5 HELD, and unexercised r13 sites
+unproved. Source-row growth is not knowledge growth.
 
 ## Retired
 

@@ -144,3 +144,44 @@ capabilities are demonstrated repertoire, not three rows counted as new
 knowledge. The census's newly refused indirect configurations and filesystem
 alias/race limits are explicit in SKILL and the lesson; no universal no-harm
 or deletion-certification claim is inferred.
+
+## Round 15 — outside harm repair and preservation evidence
+
+The non-author round-14 closure rejected net operability admission as
+**rejected-harmed** (`lessons/round-14-verifier-spotcheck.md`): verified
+namespace gains did not cancel value-blind benign configuration refusals.
+The round-14 authored descriptions above remain historical, not the current
+admission verdict. `lessons/round-15.md` and QUALITY Q22–Q24 turn that
+disagreement and the routed wording/process defects into explicit criteria.
+
+C1 repairs value/effect-aware local configuration support; C2 checks
+declared paired-preservation evidence independently. Final measured commands,
+subject revisions and outcomes belong under `../census/round-15/`, with the
+64-seat build and 32-seat falsification specifications/dispatch/seat reports
+under `../.ufo/waves/round-15/`. Source-only seat reviews are not runtime
+acceptance and lane-dispatched seats are not outside verifiers.
+
+The r14 consumer observation remains actual `attempt_reuse` decisions on
+synthetic records only. Neither full migrated dispatch nor positive
+production retention was demonstrated. Historical JSON and original
+observation revisions are preserved; code wiring is not a fresh execution.
+The demonstration docstring is corrected without changing its behavior.
+
+No new knowledge-map ground is claimed by these source or fixture additions.
+Admitted knowledge stays five and K5 remains the sole HELD entry; F2's wider
+size attribution and the unexercised quarantine sites remain frontier.
+Certification stays OFF. The operator sweep is never staged, moved or
+deleted; read-only seat query deviations against the stricter wave contract
+are disclosed in the lesson and their author-owned reports, not used as
+evidence for any claim.
+
+### Round 15 final operator stop
+
+Only the 64-seat build wave dispatched. The operator cancelled planned
+wave 2 and ordered immediate landing for reboot before runtime acceptance.
+C1/C2 are **unprovable, not admitted**; the candidate census must not be
+treated as verified. All r15 runtime checks are UNRUN and the frozen
+record retains pre-integration pins. Source validation alone exited 0;
+`../census/round-15/end-sources.json` records the 42-row inventory. R14
+configuration-support harm remains open. Details and exact unrun commands:
+`lessons/round-15.md` Final disposition; no new capability is admitted.
