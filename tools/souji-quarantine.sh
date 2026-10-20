@@ -105,9 +105,28 @@
 #   * .ufo/state and .ufo/watchdog.log are never read; no secret-shaped file
 #     is read.
 #
+# Q8 bounds (r13)
+#   Every per-target staging move and digest runs under a fixed GNU
+#   `timeout --kill-after=10` bound: file digest 120s, directory digest 300s,
+#   staging mv/git-mv 60s, receipt engine 120s, special-file scan 60s.
+#   Hitting a bound is fail-closed: stage 1 -> NOT-AUTHORIZED
+#   (digest-timeout / engine-error), stage 2 -> STAGE2-FAILED
+#   (mv-timeout / git-mv-timeout) with the original and any partial
+#   quarantine residue reported and never auto-undone; stage 4 -> ABORTED
+#   (pin=FAIL digest-timeout). A staging/pin timeout never advances to
+#   deletion. A timed-out git mv may leave <repo>/.git/index.lock: reported,
+#   NEVER removed here. Stage-5 deletion is not newly time-bounded by Q8.
+#   Digest targets must be regular files or directories whose whole subtree
+#   is regular files + directories. Symlink/FIFO/socket/device targets and
+#   descendants are refused before any read (stage-1 pre-flight), and
+#   staging requires target and quarantine on one device (`stat -c %d`):
+#   a cross-device mv would copy-then-unlink, so a bound hit could leave the
+#   LIVE source half-removed. Cross-device staging is NOT-AUTHORIZED.
+#
 # Env
-#   SOUJI_VERIFY_BIN            receipt engine (default <repo of this
-#                               tool>/tools/souji-verify.sh)
+#   SOUJI_VERIFY_BIN            receipt-engine override for fixtures (default:
+#                               this tool's repo tools/souji-verify.sh; there
+#                               is no sibling-candidate fallback — QUALITY Q6)
 #   SOUJI_Q_SHOKUNIN_ROOT       fleet root handed to the engine (default:
 #                               parent dir of <repo>)
 #   SOUJI_Q_LEDGER              ledger handed to the engine (default: this
@@ -129,13 +148,14 @@ SELF="$SCRIPT_DIR/$(basename -- "$SCRIPT_PATH")"
 REPO_ROOT="$(cd -- "$SCRIPT_DIR/.." && pwd -P)"
 LIVE_FLEET_ROOT="$(dirname -- "$REPO_ROOT")"
 
-# Composed pair: default to the merged sibling engine when it sits next to
-# this candidate, else fall back to the installed receipt engine.
-if [ -z "${SOUJI_VERIFY_BIN:-}" ] && [ -f "$SCRIPT_DIR/cand-merge-verify.sh" ]; then
-  VERIFY_BIN="$SCRIPT_DIR/cand-merge-verify.sh"
-else
-  VERIFY_BIN="${SOUJI_VERIFY_BIN:-$REPO_ROOT/tools/souji-verify.sh}"
-fi
+# Q6 (r13): the receipt engine is ALWAYS the installed tree's
+# tools/souji-verify.sh unless the operator pins SOUJI_VERIFY_BIN (fixtures
+# do). The r10-era automatic cand-merge-verify.sh fallback is removed: it
+# silently selected sibling candidate bytes that are not the installed
+# engine, so a no-relay verdict measured a relay candidate instead of the
+# bytes it certified (round-11 relay defect; QUALITY Q6). Selection must
+# never depend on which candidate happens to sit next to this tool.
+VERIFY_BIN="${SOUJI_VERIFY_BIN:-$REPO_ROOT/tools/souji-verify.sh}"
 LEDGER_DEFAULT="$REPO_ROOT/corpus/knowledge/obsidian-ledger.tsv"
 
 HOLD=450
@@ -155,7 +175,7 @@ N_DRYPASS=0 N_DRYBLOCK=0
 V_RAW="" V_VERDICT=ERROR V_RECEIPT=engine-error V_EV=not-run
 ERRTMP=""
 
-usage() { sed -n '2,119p' "$SELF" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
+usage() { sed -n '2,139p' "$SELF" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
 usage_err() { printf 'souji-quarantine: %s\n' "$1" >&2; usage 2; }
 
 canon_path() { readlink -m -- "$1" 2>/dev/null || printf '%s' "$1"; }
@@ -181,23 +201,6 @@ is_secret_shaped() { # any component in the r2 refusal list
   return 1
 }
 
-file_sha() { sha256sum -- "$1" 2>/dev/null | cut -d' ' -f1 || true; }
-
-dir_digest() { # manifest digest; ANY symlink in scope fails closed (rc 2)
-  local d=$1
-  if ( cd -- "$d" 2>/dev/null && find . -path './.git' -prune -o -type l -print -quit 2>/dev/null | grep -q . ); then
-    return 2
-  fi
-  ( cd -- "$d" 2>/dev/null && find . -path './.git' -prune -o -type f -print0 \
-      | LC_ALL=C sort -z | xargs -0 -r sha256sum 2>/dev/null | sha256sum | cut -d' ' -f1 ) 2>/dev/null
-  return 0
-}
-
-content_digest() { # $1 path -> digest on stdout; rc 2 when symlink in scope
-  if [ -L "$1" ]; then return 2; fi
-  if [ -d "$1" ]; then dir_digest "$1"; else file_sha "$1"; fi
-}
-
 emit() { # any number of fields, TAB-joined, sanitized
   local out="" f
   for f in "$@"; do
@@ -205,27 +208,6 @@ emit() { # any number of fields, TAB-joined, sanitized
     if [ -z "$out" ]; then out=$f; else out="$out"$'\t'"$f"; fi
   done
   printf '%s\n' "$out"
-}
-
-# ------------------------------------------------------- receipt engine ----
-
-run_verify() { # $1 target -> V_VERDICT/V_RECEIPT/V_EV (V_RAW kept whole)
-  local t=$1 rc=0
-  V_RAW=$(SHOKUNIN_ROOT="$SV_ROOT" SOUJI_LEDGER="$SV_LEDGER" \
-    bash "$VERIFY_BIN" --stale-days "$STALE_DAYS" -- "$t" 2>"$ERRTMP") || rc=$?
-  if [ "$rc" -ne 0 ] || [[ "$V_RAW" != VERDICT$'\t'* ]]; then
-    V_VERDICT=ERROR
-    V_RECEIPT=engine-error
-    V_EV="receipt-engine-rc=$rc stderr=$(sanitize_field "$(head -c 200 "$ERRTMP" 2>/dev/null || true)")"
-    return 0
-  fi
-  local rest
-  rest=${V_RAW#*$'\t'}
-  rest=${rest#*$'\t'}                 # drop echoed path
-  V_VERDICT=${rest%%$'\t'*}; rest=${rest#*$'\t'}
-  V_RECEIPT=${rest%%$'\t'*}; rest=${rest#*$'\t'}
-  V_EV=$rest
-  return 0
 }
 
 # ------------------------------------------------------ stage machinery ----
@@ -280,18 +262,18 @@ q_default_ref() {
 s18_second_check() {
   SC_PASS=0
   local ev="" ok=1
-  local now_sha now_mtime
-  now_sha=$(content_digest "$QPATH"); local dig_rc=$?
+  local now_sha="" now_mtime dig_rc=0
+  now_sha=$(content_digest "$QPATH") || dig_rc=$?
   now_mtime=$(stat -c %Y -- "$QPATH" 2>/dev/null || true)
-  if [ "$dig_rc" -ne 2 ] && [ -n "$now_sha" ] && [ "$now_sha" = "$PIN_SHA" ]; then
+  if [ "$dig_rc" -eq 0 ] && [ -n "$now_sha" ] && [ "$now_sha" = "$PIN_SHA" ]; then
     ev="pin=ok"
   else
     ok=0
-    if [ "$dig_rc" -eq 2 ]; then
-      ev="pin=FAIL symlink-present-in-quarantine"
-    else
-      ev="pin=FAIL digest-mismatch stage1=${PIN_SHA:0:12} now=${now_sha:0:12}"
-    fi
+    case "$dig_rc" in
+      2) ev="pin=FAIL symlink-present-in-quarantine" ;;
+      124|137) ev="pin=FAIL digest-timeout rc=$dig_rc" ;;
+      *) ev="pin=FAIL digest-mismatch stage1=${PIN_SHA:0:12} now=${now_sha:0:12}" ;;
+    esac
   fi
   if [ -n "$now_mtime" ] && [ "$now_mtime" = "$PIN_MTIME" ]; then
     ev="$ev mtime=ok"
@@ -325,7 +307,7 @@ s18_second_check() {
           ok=0; ev="$ev class=FAIL unpushed-touching=$unpushed_n"
         fi
         if [ "$ISDIR" = 0 ]; then
-          blob_sha=$(git -C "$CREPO" cat-file blob "$intro:$REL" 2>/dev/null | sha256sum | cut -d' ' -f1 || true)
+          blob_sha=$(git -C "$CREPO" cat-file blob "$intro:$REL" 2>/dev/null | timeout --kill-after=10 120 sha256sum | cut -d' ' -f1 || true)
           if [ -n "$blob_sha" ] && [ "$blob_sha" = "$PIN_SHA" ]; then
             ev="$ev intro-blob=ok"
           else
@@ -337,7 +319,7 @@ s18_second_check() {
       fi
       ;;
     moved-to-obsidian)
-      ledger_pin=$(file_sha "$SV_LEDGER")
+      ledger_pin=$(file_sha "$SV_LEDGER") || ledger_pin=""
       row=$(ledger_row_for "$CT")
       if [ -z "$row" ]; then
         ok=0; ev="$ev class=FAIL ledger-row-gone"
@@ -345,11 +327,11 @@ s18_second_check() {
         ss=${row%%$'\t'*}; local rest=${row#*$'\t'}
         vp=${rest%%$'\t'*}; vs=${rest#*$'\t'}
         if [ "$ISDIR" = 0 ]; then
-          vault_sha=$(file_sha "$vp")
+          vault_sha=$(file_sha "$vp") || vault_sha=""
           if [ -n "$ss" ] && [ "$now_sha" = "$ss" ]; then ev="$ev source-sha=ok"; else ok=0; ev="$ev class=FAIL source-sha-mismatch"; fi
           if [ -n "$vs" ] && [ "$vault_sha" = "$vs" ]; then ev="$ev vault-sha=ok"; else ok=0; ev="$ev class=FAIL vault-sha-mismatch vault=${vp:-none}"; fi
         else
-          vault_sha=$(dir_digest "$vp"); vault_rc=$?
+          vault_sha=$(dir_digest "$vp") || vault_rc=$?
           if [ "$vault_rc" -eq 2 ]; then vault_sha=""; fi
           if [ -n "$ss" ] && [ "$now_sha" = "$ss" ]; then ev="$ev source-digest=ok"; else ok=0; ev="$ev class=FAIL source-digest-mismatch"; fi
           if [ -n "$vs" ] && [ "$vault_sha" = "$vs" ]; then ev="$ev vault-digest=ok"; else ok=0; ev="$ev class=FAIL vault-digest-mismatch vault=${vp:-none}"; fi
@@ -494,8 +476,16 @@ s18_flow_one() {
     fi
   fi
 
-  local pin_sha pin_mtime
-  pin_sha=$(content_digest "$ct")
+  local pin_sha="" pin_mtime pin_rc=0
+  pin_sha=$(content_digest "$ct") || pin_rc=$?
+  if [ "$pin_rc" -ne 0 ] || [ -z "$pin_sha" ]; then
+    case "$pin_rc" in
+      2) block_one "$raw" special-file-refused "stage1-pin $(q_special_detail "$ct")" ;;
+      124|137) block_one "$raw" digest-timeout "stage1-pin rc=$pin_rc bound=120s-file/300s-dir" ;;
+      *) block_one "$raw" digest-failed "stage1-pin rc=$pin_rc" ;;
+    esac
+    return 0
+  fi
   pin_mtime=$(stat -c %Y -- "$ct" 2>/dev/null || true)
 
   CT=$ct CREPO=$crepo REL=$rel QPATH=$qpath CLASS=$class ISDIR=$isdir
@@ -504,9 +494,9 @@ s18_flow_one() {
   if [ "$DRYRUN" = 1 ]; then
     emit CMD "$raw" "mkdir -p -- $(printf '%q' "$qdir/$(dirname -- "$rel")")"
     if [ "$tracked" = 1 ]; then
-      emit CMD "$raw" "git -C $(printf '%q' "$crepo") mv -- $(printf '%q' "$rel") $(printf '%q' "$qpath")"
+      emit CMD "$raw" "timeout --kill-after=10 60 git -C $(printf '%q' "$crepo") mv -- $(printf '%q' "$rel") $(printf '%q' "$qpath")"
     else
-      emit CMD "$raw" "mv -- $(printf '%q' "$ct") $(printf '%q' "$qpath")"
+      emit CMD "$raw" "timeout --kill-after=10 60 mv --no-copy -T -- $(printf '%q' "$ct") $(printf '%q' "$qpath")"
     fi
     emit CMD "$raw" "sleep $HOLD   # hold window"
     emit CMD "$raw" "receipt engine second check on $(printf '%q' "$qpath") (context repo=$crepo)"
@@ -519,26 +509,21 @@ s18_flow_one() {
     return 0
   fi
 
-  # ---- stage 2: stage into quarantine -------------------------------------
+  # ---- stage 2: stage into quarantine (bounded) ---------------------------
   if ! mkdir -p -- "$qdir/$(dirname -- "$rel")" 2>/dev/null; then
     emit RESULT "$raw" STAGE2-FAILED mkdir-failed "qdir=$qdir"
     N_S2FAIL=$((N_S2FAIL + 1)); RC=3
     return 0
   fi
+  local mv_rc=0
   if [ "$tracked" = 1 ]; then
-    if ! git -C "$crepo" mv -- "$rel" "$qpath" 2>"$ERRTMP"; then
-      emit RESULT "$raw" STAGE2-FAILED git-mv-failed \
-        "$(sanitize_field "$(head -c 200 "$ERRTMP" || true)")"
-      N_S2FAIL=$((N_S2FAIL + 1)); RC=3
-      return 0
-    fi
+    timeout --kill-after=10 60 git -C "$crepo" mv -- "$rel" "$qpath" 2>"$ERRTMP" || mv_rc=$?
   else
-    if ! mv -- "$ct" "$qpath" 2>"$ERRTMP"; then
-      emit RESULT "$raw" STAGE2-FAILED mv-failed \
-        "$(sanitize_field "$(head -c 200 "$ERRTMP" || true)")"
-      N_S2FAIL=$((N_S2FAIL + 1)); RC=3
-      return 0
-    fi
+    timeout --kill-after=10 60 mv --no-copy -T -- "$ct" "$qpath" 2>"$ERRTMP" || mv_rc=$?
+  fi
+  if [ "$mv_rc" -ne 0 ]; then
+    q_stage2_fail "$raw" "$method" "$mv_rc" "$ct" "$qpath" "$crepo"
+    return 0
   fi
   emit QSTAGE stage2 "$raw" "$method" "$qpath"
 
@@ -572,17 +557,16 @@ s18_flow_one() {
     return 0
   fi
 
-  # ---- stage 5: delete from quarantine ------------------------------------
+  # ---- stage 5: delete only after the successful second check -------------
   if ! rm -rf -- "$qpath" 2>/dev/null; then
-    emit QSTAGE stage5 "$raw" ABORTED "rm-failed qpath=$qpath"
-    emit RESULT "$raw" ABORTED "$class" "rm-failed $SC_EV"
+    emit QSTAGE stage5 "$raw" ABORTED "rm-failed residue-may-be-partial qpath=$qpath"
+    emit RESULT "$raw" ABORTED "$class" "rm-failed residue-may-be-partial $SC_EV"
     N_ABORTED=$((N_ABORTED + 1)); RC=3
     return 0
   fi
   if [ "$tracked" = 1 ]; then
-    if ! git -C "$crepo" rm --cached --quiet -- "$qpath" 2>/dev/null; then
+    git -C "$crepo" rm --cached --quiet -- "$qpath" 2>/dev/null || \
       emit QSTAGE stage5-index "$raw" index-cleanup-skipped "$qpath"
-    fi
   fi
   # prune now-empty parents of the staged copy up to (not including) qdir
   local rmp="$(dirname -- "$qpath")"
@@ -719,18 +703,106 @@ s18_scope_ok() {
 
 is_hex64() { [[ "$1" =~ ^[0-9a-f]{64}$ ]]; }
 
+# Q8 (r13): digests read regular files only and every read is bounded.
+# file_sha propagates the bound status (124/137) so callers can report a
+# timeout instead of a mismatch; 1 is unreadable, 2 is non-regular/symlink.
 file_sha() {
-  s18_path_ok "$1" && [ -f "$1" ] || return 1
-  sha256sum -- "$1" 2>/dev/null | cut -d' ' -f1
+  local out="" rc=0
+  s18_path_ok "$1" && [ -f "$1" ] && [ ! -L "$1" ] || return 1
+  out=$(timeout --kill-after=10 120 sha256sum -- "$1" 2>/dev/null) || { rc=$?; return "$rc"; }
+  printf '%s' "${out%% *}"
 }
 
+# A directory digest hashes a whole subtree. One outer bound covers
+# find/sort/xargs/sha256sum together, and GNU timeout signals the process
+# group, so no grandchild survives the window (M44: orphaned sha256sum).
 dir_digest() {
   local d=$1
   s18_path_ok "$d" && [ -d "$d" ] && s18_scope_ok "$d" || return 2
-  ( set -o pipefail
-    cd -- "$d" && find . -path './.git' -prune -o -type f -print0 \
-      | LC_ALL=C sort -z | xargs -0 -r sha256sum | sha256sum | cut -d' ' -f1
-  ) 2>/dev/null
+  timeout --kill-after=10 300 bash -c '
+    set -o pipefail
+    cd -- "$1" || exit 3
+    find . -path ./.git -prune -o -type f -print0 \
+      | LC_ALL=C sort -z | xargs -0 -r sha256sum | sha256sum | cut -d" " -f1
+  ' _ "$d" 2>/dev/null
+}
+
+content_digest() { # $1 path -> digest on stdout
+  # rc: 0 ok · 1 unreadable · 2 symlink/special (incl. descendants) ·
+  #     124/137 bounded timeout · 3 dir unreadable
+  local out="" rc=0
+  if [ -L "$1" ]; then return 2; fi
+  if [ -d "$1" ]; then
+    out=$(dir_digest "$1") || { rc=$?; return "$rc"; }
+    [ -n "$out" ] && printf '%s' "$out"
+    return 0
+  fi
+  [ -f "$1" ] || return 2
+  out=$(file_sha "$1") || { rc=$?; return "$rc"; }
+  printf '%s' "$out"
+}
+
+q_special_type() { # $1 existing path -> type on stdout; rc 0 regular|directory
+  local t
+  if [ -L "$1" ]; then printf 'symlink'; return 1; fi
+  t=$(stat -c %F -- "$1" 2>/dev/null) || { printf 'unstatable'; return 1; }
+  case "$t" in
+    'regular file'|'regular empty file'|directory) printf '%s' "$t"; return 0 ;;
+  esac
+  printf '%s' "${t// /-}"
+  return 1
+}
+
+# Q8: a directory whose subtree holds a symlink, FIFO, socket or device is
+# unstageable — the manifest digest cannot cover it (find -type f skips it)
+# and a read could block. First offender on stdout; rc 2 = scan bound hit.
+q_first_special() { # $1 dir -> offender path (maybe empty)
+  local out="" rc=0
+  out=$(timeout --kill-after=10 60 find "$1" -path "$1/.git" -prune -o \
+    \( -type l -o -type p -o -type s -o -type b -o -type c \) -print -quit 2>/dev/null) || rc=$?
+  if [ "$rc" -eq 124 ] || [ "$rc" -eq 137 ]; then
+    printf 'scan-timeout'
+    return 2
+  fi
+  if [ -n "$out" ]; then printf '%s' "$out"; return 1; fi
+  if [ "$rc" -ne 0 ]; then printf 'scan-failed rc=%s' "$rc"; return 3; fi
+  return 0
+}
+
+q_special_detail() { # $1 path -> short token naming why the digest refused it
+  local t="" out=""
+  t=$(q_special_type "$1" 2>/dev/null || true)
+  case "$t" in
+    directory)
+      out=$(q_first_special "$1" 2>/dev/null || true)
+      printf 'descendant=%s' "${out:-unknown}" ;;
+    '') printf 'unstatable' ;;
+    *) printf 'type=%s' "$t" ;;
+  esac
+}
+
+# Stage-2 failure: report the bound status, the original's presence and any
+# partial quarantine residue. Nothing is moved back and nothing is deleted.
+q_stage2_fail() { # $1 raw $2 method $3 rc $4 source $5 qpath $6 repo
+  local raw=$1 method=$2 rc=$3 ct=$4 qpath=$5 crepo=$6
+  local residue=none source=absent reason ev
+  if [ -e "$qpath" ] || [ -L "$qpath" ]; then residue=$qpath; fi
+  if [ -e "$ct" ] || [ -L "$ct" ]; then source=present; fi
+  if [ "$rc" -eq 124 ] || [ "$rc" -eq 137 ]; then
+    reason="$method-timeout"
+  else
+    reason="$method-failed"
+  fi
+  ev="rc=$rc source=$source residue=$residue"
+  if [ "$method" = git-mv ] \
+    && { [ -e "$crepo/.git/index.lock" ] || [ -L "$crepo/.git/index.lock" ]; }; then
+    ev="$ev index-lock=present-never-removed"
+  fi
+  ev="$ev stderr=$(sanitize_field "$(head -c 200 "$ERRTMP" 2>/dev/null || true)")"
+  emit QSTAGE stage2-failed "$raw" "$reason" "$ev"
+  emit RESULT "$raw" STAGE2-FAILED "$reason" "$ev"
+  N_S2FAIL=$((N_S2FAIL + 1)); RC=3
+  return 0
 }
 
 s18_row_parse() {
@@ -1065,7 +1137,11 @@ if [ "$S18_KIND" = quarantine ]; then
       V_EV=unsafe-input-path; return 0
     fi
     V_RAW=$(SHOKUNIN_ROOT="$SV_ROOT" SOUJI_LEDGER="$SV_LEDGER" \
-      bash "$VERIFY_BIN" --stale-days "$STALE_DAYS" -- "$t" 2>"$ERRTMP") || rc=$?
+      timeout --kill-after=10 120 bash "$VERIFY_BIN" --stale-days "$STALE_DAYS" -- "$t" 2>"$ERRTMP") || rc=$?
+    if [ "$rc" -eq 124 ] || [ "$rc" -eq 137 ]; then
+      V_EV="receipt-engine-timeout rc=$rc bound=120s"
+      return 0
+    fi
     prefix=$'VERDICT\t'"$t"$'\t'
     if [ "$rc" != 0 ] || [[ "$V_RAW" = *$'\n'* || "$V_RAW" != "$prefix"* ]]; then return 0; fi
     rest=${V_RAW#"$prefix"}
@@ -1109,6 +1185,41 @@ if [ "$S18_KIND" = quarantine ]; then
     qpath="$Q_CREPO/.ufo-quarantine/$(date -u +%F)/$rel"
     if ! s18_q_storage_ok "$qpath"; then
       N_TOTAL=$((N_TOTAL + 1)); block_one "$raw" quarantine-containment "symlink-or-noncanonical-quarantine-path"; return 0
+    fi
+    # Q8 pre-flight: digestable targets are regular files or directories
+    # whose whole subtree is regular files + directories. Special files are
+    # refused before any read or move, so a FIFO/device can neither block a
+    # digest nor be staged. Missing paths still fall through to the engine
+    # (metadata-prune/unreachable), and symlinks keep their own refusal.
+    if [ -e "$raw" ] && [ ! -L "$raw" ]; then
+      local spd="" sprc=0 ct_dev="" repo_dev=""
+      if ! q_special_type "$raw" >/dev/null 2>&1; then
+        N_TOTAL=$((N_TOTAL + 1))
+        block_one "$raw" special-file-refused "$(q_special_detail "$raw")"
+        return 0
+      fi
+      if [ -d "$raw" ]; then
+        spd=$(q_first_special "$raw") || sprc=$?
+        if [ "$sprc" -ne 0 ]; then
+          N_TOTAL=$((N_TOTAL + 1))
+          case "$sprc" in
+            2) block_one "$raw" special-scan-timeout "bound=60s $spd" ;;
+            3) block_one "$raw" special-scan-failed "$spd" ;;
+            *) block_one "$raw" special-descendant "offender=$spd" ;;
+          esac
+          return 0
+        fi
+      fi
+      # A cross-device mv would copy-then-unlink; if the bound fired during
+      # the unlink the LIVE source could be left half-removed. Refuse.
+      ct_dev=$(stat -c %d -- "$(dirname -- "$raw")" 2>/dev/null || true)
+      repo_dev=$(stat -c %d -- "$Q_CREPO" 2>/dev/null || true)
+      if [ -z "$ct_dev" ] || [ -z "$repo_dev" ] || [ "$ct_dev" != "$repo_dev" ]; then
+        N_TOTAL=$((N_TOTAL + 1))
+        block_one "$raw" cross-device-staging \
+          "target-dev=${ct_dev:-unknown} repo-dev=${repo_dev:-unknown}"
+        return 0
+      fi
     fi
     if git_tracked "$Q_CREPO" "$rel"; then
       status=$(git_dirty_tracked "$Q_CREPO" "$rel")

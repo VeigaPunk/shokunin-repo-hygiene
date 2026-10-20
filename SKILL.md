@@ -9,6 +9,12 @@ defaults to a dry run. A false `SAFE` verdict — deleting something
 unrecoverable or live — is this lane's worst failure; when uncertain, the
 verdict is `NOT-SAFE` and the artifact stays.
 
+**Deletion certification is OFF** (r11 evidence-integrity failure; current
+state `SCORECARD.md`, Tool certification). Receipt verdicts remain advisory.
+`tools/souji-cert-evidence.py` checks declared evidence consistency only:
+it cannot authenticate author labels, prove a command ran, establish full
+class coverage, or grant deletion authority (QUALITY Q6/Q18).
+
 ## Receipt taxonomy — every removal needs exactly one
 
 The machine form of this table is `tools/souji-verify.sh` (installed
@@ -81,6 +87,16 @@ verifies (pushed before obsidian).
   vanishes, orphaning a detached HEAD's commits until `gc.pruneExpire`.
   Gate `tests/fixtures/r12-maintenance-guard.sh`; facts in
   `corpus/knowledge/git-auto-maintenance-prunes-worktrees.md`.
+- **Unbounded staging or digest** (r13, round-12 M43/M44): a stalled move
+  or a FIFO digest can outlive the round. Reject special files and special
+  descendants, bound move/digest operations, and preserve quarantine residue
+  after any timeout; never proceed to deletion. Recheck:
+  `bash tests/fixtures/r13-quarantine-bounds.sh`.
+- **Phantom fixture / wrong-byte verdict** (r13, round-12 K5 and r11 relay):
+  a prose path is not evidence and a digest of a candidate is not the installed
+  digest. Gate declared fragments with `python3 tools/souji-cert-evidence.py`;
+  negative controls and frozen input pins are in its `--selftest` and
+  `tests/fixtures/r13-cert-frozen/`. This is not a replacement safety suite.
 
 ## Checklists
 
@@ -96,14 +112,29 @@ Pre-quarantine commit:
 - [ ] Commit message names the receipt class and the evidence pointer
 - [ ] Lane identity: `souji-shokunin <souji@shokunin.local>`
 - [ ] Right repo: `git -C <repo> rev-parse --show-toplevel` prints the owning repo (never trust `cd`)
-- [ ] Commit guarded and scoped: `git -C <repo> -c maintenance.auto=false commit -- <approved paths>` — never `git add -A` / `.`
+- [ ] Commit guarded and scoped: `git -C <repo> add -- <approved paths>` then `git -C <repo> -c maintenance.auto=false commit -- <same approved paths>` — never `git add -A` / `.`
 - [ ] Pinned registrations stay pinned: `git -C <repo> worktree list --porcelain | awk '/^locked/{n++} END{print n+0}'` equals the pin count; pin new ones with `git -C <repo> worktree lock --reason "<why>" <worktree-path>`
 
-Gate registry (PROTOCOL §Gate standard; exit 0 clean · 1 failed · 2 could-not-evaluate; any other code could-not-evaluate):
+## Gate registry
 
-| name | kind | entry / self-test | pinned values | write scope | owner |
-|---|---|---|---|---|---|
-| r12-maintenance-guard | gate | `bash tests/fixtures/r12-maintenance-guard.sh [--selftest]` (finding ids `SOUJI-R12-MAINT-<case>`) | expected per-case counts in the script header; observed run `tests/results/r12-maintenance-guard.txt` | `mktemp -d /var/tmp/souji-r12-maintenance.*` only | souji |
+Gate map: 0 clean · 1 failed · 2 could-not-evaluate. Other codes are
+explicit below. The four legacy receipt/action tools are **probes**, not
+Gate-standard certifications: their live verdicts are data, expected baselines
+are not pinned, and code 1 also carries setup failures. Embedded selftests
+alone do not repair those interface debts. Always use `TMPDIR=/var/tmp`
+for the legacy selftests; their historical fallback is not Q4-conformant.
+
+| name | kind | entry command | verdict map (code → class) | self-test command | pinned-value path | write scope | owner |
+|---|---|---|---|---|---|---|---|
+| souji-verify | probe | `bash tools/souji-verify.sh <path>...` | 0 clean, SAFE/NOT-SAFE data; 1 failed selftest or could-not-evaluate setup (legacy debt); 2 could-not-evaluate usage | `TMPDIR=/var/tmp bash tools/souji-verify.sh --selftest` | none; no pinned complete id set | read-only targets; isolated selftest under TMPDIR | souji |
+| souji-vault-verify | probe | `bash tools/souji-vault-verify.sh --fallback <path>...` | 0 clean, VERIFIED/NOT-VERIFIED data; 1 failed selftest or could-not-evaluate setup (legacy debt); 2 could-not-evaluate usage | `TMPDIR=/var/tmp SOUJI_CLI_BIN=/bin/false bash tools/souji-vault-verify.sh --selftest` | none; no pinned complete id set | read-only source/vault; isolated selftest under TMPDIR | souji |
+| souji-census | probe | `bash tools/souji-census.sh --root DIR [--compare PREV.tsv]` | 0 clean; 3 failed differential comparison; 1 failed selftest or could-not-evaluate setup (legacy debt); 2 could-not-evaluate usage/malformed baseline | `TMPDIR=/var/tmp bash tools/souji-census.sh --selftest` | caller comparison is unpinned; no pinned complete selftest id set | read-only census; isolated selftest under TMPDIR | souji |
+| souji-quarantine | probe | `bash tools/souji-quarantine.sh --dry-run <repo> <target>...` | 0 clean target outcome; 3 failed/refused/aborted; 4 could-not-evaluate live guard; 1 failed selftest or could-not-evaluate setup (legacy debt); 2 could-not-evaluate usage | `TMPDIR=/var/tmp bash tools/souji-quarantine.sh --selftest` | no complete safety-suite baseline; receipts advisory, certification OFF | dry-run read-only; explicitly authorized action moves targets within owning repo; selftest under TMPDIR | souji |
+| r12-maintenance-guard | gate | `bash tests/fixtures/r12-maintenance-guard.sh` | 0 clean; 1 failed; 2 could-not-evaluate | `bash tests/fixtures/r12-maintenance-guard.sh --selftest` | expected counts and SELFTEST_EXPECTED_IDS in fixture; `tests/results/r12-maintenance-guard.txt` | isolated `/var/tmp/souji-r12-maintenance.*` | souji |
+| souji-cert-evidence | gate | `python3 tools/souji-cert-evidence.py --root PATH --manifest PATH` or `--frozen DIR` | 0 clean declared consistency; 1 failed honest fragment; 2 could-not-evaluate malformed/inconsistent/tampered input | `python3 tools/souji-cert-evidence.py --selftest`; `python3 tests/fixtures/r13-cert-evidence.py` | embedded expected exit/finding ids; `tests/fixtures/r13-cert-frozen/expected.json` pins every input | inputs read-only; selftests isolated `/var/tmp`; never executes recorded commands | souji |
+| souji-repo-structure | probe | `bash tools/souji-repo-structure.sh --repo PATH` | 0 clean metadata emitted; 2 could-not-evaluate usage/repo/promisor; 3 could-not-evaluate unsupported Git; 4 could-not-evaluate config/stderr/command/output | corresponding gate below | no live-data expected baseline | repository reads; capture-only `/var/tmp` directory removed on exit | souji |
+| r13-repo-structure | gate | `bash tests/fixtures/r13-repo-structure.sh --selftest --probe tools/souji-repo-structure.sh` | 0 clean; 1 failed; 2 could-not-evaluate | same `--selftest --probe` command | fixture SELFTEST_EXPECTED_IDS and case expectations; recorded run `census/round-13/verification.json` | isolated `/var/tmp/souji-r13-repo-structure.*` | souji |
+| r13-quarantine-bounds | gate | `bash tests/fixtures/r13-quarantine-bounds.sh [--tool PATH]` | 0 clean; 1 failed case or id set; 2 could-not-evaluate usage/environment | same command, isolated positive/negative controls; baseline red arm uses `--tool` | fixture EXPECTED_IDS and per-case exit/finding/retention assertions; `census/round-13/verification.json` | isolated `/var/tmp/r13-qbounds.*` only | souji |
 
 Sources for this skill: `corpus/SOURCES.md`; admission bar: `corpus/QUALITY.md`.
 
@@ -122,3 +153,25 @@ Sources for this skill: `corpus/SOURCES.md`; admission bar: `corpus/QUALITY.md`.
   handoff note at `census/round-6/kotodama-scratch-handoff.md`.
 - Repeatable fleet census: `tools/souji-census.sh --root $SHOKUNIN_ROOT`
   (r6; per-repo worktrees/unpushed/dirty/scratch/mtime/flags).
+
+## Repository structure census (F2, bounded r13 capability)
+
+Run `bash tools/souji-repo-structure.sh --repo <absolute-repo>` for a
+versioned `git repo structure --format=lines` census. Source S035 says the
+default table is not intended for machine parsing. S036 suppresses optional
+locks, not every possible write; the probe also suppresses lazy fetch,
+refuses partial/promisor repositories and reports the common Git directory.
+The isolated fixture measures persistent state on this host
+(`bash tests/fixtures/r13-repo-structure.sh --selftest`); S037 explains why
+raw zero exit does not prove complete accounting.
+
+| Need / observation | Action |
+|---|---|
+| Reachable-object statistics | Use the probe; retain its version, command and output. |
+| Unavailable command or invalid repository | Record could-not-evaluate, never zero bytes. |
+| Recoverable disk space or a deletion decision | Structure output is insufficient; apply the per-artifact receipt workflow. |
+
+Checklist: no maintenance/fetch/rewrite; machine-friendly format; record
+Git version; preserve actual output; never equate reachable-object disk size
+with reclaimable filesystem space. Full scope and failure case:
+`corpus/knowledge/git-repo-structure-readonly.md` (S035/S036/S037).

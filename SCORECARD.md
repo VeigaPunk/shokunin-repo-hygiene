@@ -24,10 +24,10 @@ rule-coverage count, not calibration proof. Details: `corpus/lessons/round-12.md
 | name | what it can now do | evidence pointer | first-working round |
 |---|---|---|---|
 | fleet census (receipt taxonomy) | classify every fleet artifact into pushed / moved-to-obsidian / stale / none with per-row command evidence, at 64-seat parallelism, dry-run | `census/round-1/census-summary.json`, `census/round-1/census.tsv` (246 rows) | r1 |
-| souji-verify | per-artifact SAFE/NOT-SAFE verdict from receipts, D1–D3 fixed, --selftest over F1–F10 fixtures, read-only, secrets-refusal | `tools/souji-verify.sh` (sha256 7efda63bd760…), `tests/results/INSTALL.json`, `tests/results/parent-harness-live.json` | r2 |
+| souji-verify | per-artifact SAFE/NOT-SAFE verdict from receipts, read-only, secrets-refusal; advisory while certification is OFF | `tools/souji-verify.sh`, current installed digest in `census/round-13/verification.json`; historical evidence `tests/results/INSTALL.json`, `tests/results/parent-harness-live.json` | r2 |
 | worktree metadata prune | selective prune with lock-preserve of pinned registrations; receipts re-verified at act time | `census/round-3/seat-61.json` (plan), `census/round-3/seat-62.json` (lore assertions), LOG r3 | r3 |
-| ledger-verify (moved-to-obsidian receipt) | verify a ledger row's source + vault sha256 pairs read-only; refuses self-referential rows; --ledger override; obsidian-CLI probe path reserved (no usable CLI entry point on this host — banked for operator) | `tools/souji-vault-verify.sh` (sha256 d312263a…), `tests/results/parent-vault-battery.json`, LOG r4 | r4 |
-| sources registry | curate where souji learns: 33 opened, tiered rows (2 rejected with flips), study paths, search log; contract v1 census runs clean | `corpus/SOURCES.md`, `bash census/round-12/sources-census.sh` → 33 / 0 / A=29 B=3 C=1 / mined=18 queued=13 rejected=2, last three checks silent | r12 |
+| ledger-verify (moved-to-obsidian receipt) | verify a ledger row's source + vault sha256 pairs read-only; refuses self-referential rows; --ledger override; Obsidian integration remains operator-waived | `tools/souji-vault-verify.sh`, current installed digest in `census/round-13/verification.json`; historical evidence `tests/results/parent-vault-battery.json`, LOG r4 | r4 |
+| sources registry | curate opened, scoped sources and retained rejections; counts re-derived at r13, not copied from stale r12 output | `corpus/SOURCES.md`; `census/round-13/verification.json` source census and histograms; baseline 33 rows, mined=16 queued=15 rejected=2 at 31984f4 | r12 |
 | maintenance-guard gate | prove on the host git that a plain commit can prune expired unlocked worktree metadata and that `-c maintenance.auto=false`, `worktree lock` and a fresh index prevent it | `bash tests/fixtures/r12-maintenance-guard.sh --selftest` → 6/6 PASS, exit 0; `tests/results/r12-maintenance-guard.txt` | r12 |
 
 ## Planned
@@ -48,13 +48,13 @@ rule-coverage count, not calibration proof. Details: `corpus/lessons/round-12.md
 - **r6–r11 (appended r12):** this section was not updated for rounds 6–11
   (STATE dossier §5.4; lesson row M52). Their claims and verdicts are in
   LOG.md and `corpus/lessons/round-{6..11}.md`.
-- **r13 (planned r12):** (1) the r11 carry — re-run the certifier suites
-  under a no-relay protocol (QUALITY Q6) before certification can flip;
-  (2) operability: bounded per-target staging in
-  `tools/souji-quarantine.sh` (QUALITY Q8, M43); (3) gate-registry rows in
-  SKILL.md for the four installed tools; (4) F2 frontier: the /var/tmp
-  write-safety fixture for `git repo structure`; (5) the kotodama
-  `.scratch` re-sweep once the tree ages past 24 h (M47).
+- **r14 (planned r13):** comprehensive class-suite re-certification under
+  Q6/Q18 remains separate from declared-fragment integrity and from the
+  built-in smoke suites; certification stays OFF. Revisit the kotodama
+  `.scratch` age/receipt census only as a read-only, metadata-bounded sweep
+  with no content inspection or automatic removal. F2 wider size attribution,
+  unreachable-object accounting and linked common-store aggregation remain
+  frontier. Cross-device quarantine/K5 remains HELD under Q4/Q16.
 
 ## Saturation / stagnation
 
@@ -69,12 +69,13 @@ certified for deletion authorization: r9 red-team replays still reproduce
 unsafe deletions (>=16 open defect classes; see corpus/lessons/round-9.md).
 Receipts are advisory until the r10 hardening closes the classes.
 
-Correction (r12): the note above is stale. r10 and r11 ran; r11 closed the
-last r9 class in the tools (census selftest 36/36) but certification was
-NOT granted — the certifier evidence was compromised (shared relay,
-verdicts on non-installed bytes; `corpus/lessons/round-11.md:13-17`).
-Deletion authorization stays OFF; receipts stay advisory until a no-relay
-re-certification passes (Planned r13).
+Correction (r13): r10 and r11 ran; r11's certification evidence was
+compromised (shared relay, verdicts on non-installed bytes). The historical
+`census/round-10/cert-16.json` still carries a candidate CERTIFIED claim;
+the appended r13 lesson and LOG explicitly supersede its authority for
+installed tools without rewriting those bytes. The r13 integrity gate
+checks declared evidence only. It cannot prove author identity, command
+execution, or full defect-class coverage. Deletion authorization stays OFF.
 
 ## Retired
 

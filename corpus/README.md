@@ -60,3 +60,24 @@ when the file exists, not before.
   fixture; its `/dev/shm` device relied on QUALITY Q15, withdrawn by Q16). F4 still holds an
   admitted entry (`knowledge/trash-spec-restorable-quarantine.md`).
 - `QUALITY.md` now runs Q1–Q16 (Q16 withdraws Q15).
+
+## Round 13 current coverage (supersedes the r12 F2 row)
+
+| ground | status | entries / runnable evidence |
+|---|---|---|
+| F2 repository size census | bounded structure-census capability acquired; wider size attribution remains frontier | `knowledge/git-repo-structure-readonly.md` (S035/S036/S037); `../tools/souji-repo-structure.sh`; `../tests/fixtures/r13-repo-structure.sh`; `../census/round-13/verification.json` |
+| Certification evidence integrity | declared-fragment consistency only; deletion certification OFF | `../tools/souji-cert-evidence.py`; `../tests/fixtures/r13-cert-frozen/`; round-13 lesson Gate and Mistakes |
+| Quarantine operation bounds | per-target move/digest bound, special-file refusal; not comprehensive certification | `../tests/fixtures/r13-quarantine-bounds.sh`; same-command red-before/after results in `../census/round-13/verification.json` |
+
+Admission bar now includes Q17/Q18, grounded in the prior non-author
+missing-fixture finding and r11 wrong-byte/shared-relay failure. K5 stays
+HELD; QUALITY Q16 continues to withdraw Q15. A declared author label is
+not authenticated independence and an evidence-integrity PASS is not a
+safety certificate. No source-row or fixture-count increase is treated as
+knowledge expansion without the sourced F2 entry.
+
+Evidence for this round is under `census/round-13/`, with validated wave
+specification/registry and author-owned reports under `.ufo/waves/round-13/`.
+The untracked `census/operator-sweep-20261019/` remains operator-owned and
+is excluded from round staging.
+

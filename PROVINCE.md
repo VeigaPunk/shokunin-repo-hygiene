@@ -53,7 +53,8 @@ removal of stale, duplicate, and already-preserved artifacts.
     (`maintenance --auto` worktree-prune, gc/reflog grace periods) acting on
     surfaces souji gates.
   - F2 repository size census (`git repo structure`, `count-objects`) —
-    unexplored; no entry yet.
+    bounded structure probe and isolated write-safety fixture acquired r13;
+    whole-workspace size attribution and unreachable-object census remain frontier.
   - F3 duplicate verdicts — byte-identical copies; a `duplicate` receipt
     class would be a taxonomy change (operator decision).
   - F4 restorable quarantine and file-system semantics — trash layout,
@@ -67,3 +68,13 @@ removal of stale, duplicate, and already-preserved artifacts.
     routes to kagi-shokunin and the operator; souji never rewrites history.
   Sweep r12: no sibling claims F1/F3/F4 ground
   (`census/round-12/connector.md` §1, 0 hits per frontier).
+
+## Round 13 boundary refinement
+
+Core now includes the bounded read-only `git repo structure --format=lines`
+probe (`tools/souji-repo-structure.sh`, sourced entry
+`corpus/knowledge/git-repo-structure-readonly.md`). This reports reachable
+objects, not recoverable disk space and not removal authorization. F2 as a
+whole stays frontier. Evidence-integrity checking is limited to souji's own
+receipt/certification fragments; it does not become fleet orchestration or
+an independent promotion authority.

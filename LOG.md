@@ -510,3 +510,51 @@ K5 moved admitted→HELD (its Gate claimed a committed fixture that did not exis
 as a rule-coverage count. After: C2 admitted entries 4 (+1 held), SOURCES mined=16 queued=15,
 `TZ=UTC bash .tower/worktrees/kaika/fleet-census/scripts/sources-census.sh validate <worktree>`
 → `souji-shokunin ok`, exit 0. No new claims.
+
+## 2026-10-20 — round 13: bounded operations, declared-evidence integrity, F2 census
+
+Motivating evidence: non-author `corpus/lessons/round-12-verifier-spotcheck.md`
+kept K5 HELD for its nonexistent committed fixture and left quarantine timeout
+and certification debts open. Earlier r11 relay/byte failures are
+`corpus/lessons/round-11.md:12-20`; explicit r13 claims and baseline are
+`census/round-13/claims.json` and `before.json`, measured at
+31984f473ce4bdab61a99b16cca194b28108cb81.
+
+- C1 calibration (lowest axis 7, numeric delta 0, legacy-unmapped): declared
+  evidence consistency gate, missing-evidence criterion Q17 and integrity-versus-
+  safety criterion Q18. It does not authenticate author labels, prove execution,
+  or establish complete class coverage. Historical relay
+  `census/round-10/cert-16.json:2618-2620` says CERTIFIED for candidate census
+  `60aef4c0…`; this entry explicitly supersedes that claim as authority for
+  installed tools. Historical bytes remain unchanged. Certification is OFF.
+- C2 operability: bounded quarantine move/digest operations, explicit
+  special-file/digest failures and diagnostics. The stable FIFO baseline already
+  had a type guard in its effective later helper; the new claim is not that all
+  FIFO protection was absent. The old timeout's exact cause is unproved
+  (serial holds are another explanation). The red-before regression must name
+  an actual missing operation bound, not a missing engine or live guard.
+- C3 coverage: bounded F2 `git repo structure` probe and sourced knowledge
+  entry. AttackCoverage observed lazy fetching and incomplete metrics on partial
+  clones even with optional locks disabled; the probe suppresses lazy fetch,
+  refuses partial/promisor repositories, and reports common-store scope.
+  Corrective sources S035/S036 supersede overbroad S005/S006 wording;
+  S037 pins the refs-rooted implementation and skipped-read/zero-exit hazard.
+  S034 grounds timeout semantics using installed primary vendor documentation
+  because the web fetch timed out.
+
+Rechecks, exact outputs and the revision measured are recorded in
+`census/round-13/verification.json`; claim verdicts and individual gate decisions
+are in `corpus/lessons/round-13.md`. Domain instructions/registry live in
+SKILL.md; the coverage map and PROVINCE keep wider F2 ground frontier.
+One validated 32-seat leaf wave is persisted under `.ufo/waves/round-13/`
+(L1 planner, 7 executor, 4 scout, 2 connector, 8 reviewer, 4 critic,
+2 sentinel, 2 revenger, 3 scribe). ReviewSHONEN's seed extraction mistake
+was adjudicated from the indented canonical block and its report erratum;
+all four marks stay author `[~]`.
+
+No live removal or sibling/operator-runtime mutation was performed.
+`census/operator-sweep-20261019/` is OPERATOR-authored and remains untracked,
+untouched and excluded from pathspecs. There were no initial lane-authored
+leftovers. Receipt certification and comprehensive class-suite re-certification
+remain distinct from this round's bounded integrity capability.
+
