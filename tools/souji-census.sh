@@ -2,7 +2,9 @@
 # souji-census — repeatable read-only fleet census (round 6, seat S33).
 # Round-14 C2 adds a pre-access protected-path boundary. Round-16 C1 makes
 # the repository-config guard value/effect-aware (repairs r14's value-blind
-# whole-run refusals of benign configuration).
+# whole-run refusals of benign configuration). Round-17 C1 pins
+# --untracked-files=normal on the dirty count and degrades a hardlinked or
+# non-regular info/attributes to a per-repo error row.
 #
 # One bash tool; bash + coreutils + git only. Never fetches, never writes
 # outside /var/tmp temporary output. The mtime walk never opens file
@@ -33,9 +35,10 @@
 #                   souji-verify). The number is still reported, and unpushed
 #                   is also set when that count is > 0.
 #   dirty           `git status --porcelain` line count on the main work tree
-#                   only (default untracked mode: a wholly untracked directory
-#                   is one line, matching souji-verify). Other work trees are
-#                   not added into this number; see wt-dirty. Submodule
+#                   only (explicit --untracked-files=normal: a wholly
+#                   untracked directory is one line, matching souji-verify).
+#                   Other work trees are not added into this number; see
+#                   wt-dirty. Submodule
 #                   content is not inspected (--ignore-submodules=all).
 #   scratch_bytes   apparent byte size of <repo>/.scratch (`du -sb -P`; 0 if
 #                   absent or a symlink). Does not follow symlinks.
@@ -94,6 +97,21 @@
 #   config-named path (include target, core.excludesFile,
 #   core.attributesFile, core.worktree) overlapping a protected root; a soft
 #   finding never stops the scan, so a later protected reach still refuses.
+#   Round-17: dirty counts pass an explicit --untracked-files=normal, so a
+#   repo-local, included or config.worktree `status.showUntrackedFiles=no|
+#   all` cannot change the dirty/clean measure or the directory collapse.
+#   Round-17: a hardlinked or non-regular (FIFO/socket/device, or a
+#   symlink resolving to one) $GIT_DIR/info/attributes — in the repo
+#   gitdir, a common dir, or a linked-worktree admin dir — joins the
+#   degraded set below instead of refusing the fleet: stderr `souji-census:
+#   git-metadata-unsupported <reason> <path>` for that repository only
+#   (exit 0; no git call that could read that file runs in it). A
+#   directory info/attributes stays accepted (git opens it, gets EISDIR,
+#   and treats it as empty); a dangling symlink is treated as absent. Every
+#   other guarded metadata entry —
+#   config, HEAD, index, packed-refs, commondir, info/exclude,
+#   objects/info/alternates — keeps its exit-2 whole-run refusal even when
+#   info/attributes of the same gitdir is already soft.
 #   Degraded to one `error` row for that repository only (exit 0; no git
 #   command runs in it; stderr `souji-census: config-unsupported: <reason>
 #   (<repo>)`; its numeric fields are placeholders, not measurements): a
@@ -516,22 +534,48 @@ guard_git_links() { # $1 resolved gitdir; symlinks may not leave the gitdir
 
 # Fixed git metadata that git reads directly must be regular or a directory;
 # a FIFO/device/socket is refused rather than opened or waited on.
+# info/attributes is the sole exception (round 17, D2): a hardlink or a
+# non-regular (FIFO/socket/device, or a symlink resolving to one) degrades
+# that repository to an `error` row instead of aborting the fleet. The
+# finding is recorded and the loop still finishes, so a hardlinked or
+# non-regular alternates after it keeps its exit-2 refusal.
 guard_git_files() { # $1 resolved gitdir
-  local dir=$1 rel path nlink
+  local dir=$1 rel path kind nlink soft=0
   for rel in config HEAD index packed-refs commondir info/exclude info/attributes objects/info/alternates; do
     path="$dir/$rel"
-    if [ -f "$path" ]; then
-      nlink=$(stat -L -c %h -- "$path" 2>/dev/null || true)
-      case "$nlink" in
-        ''|*[!0-9]*) protected_fail "git-metadata-unavailable" "$dir" "$path" ;;
-      esac
-      if [ "$nlink" -gt 1 ]; then
-        protected_fail "git-metadata-hardlink" "$dir" "$path"
-      fi
-    elif [ -e "$path" ] && [ ! -d "$path" ]; then
-      protected_fail "git-metadata-nonregular" "$dir" "$path"
-    fi
+    # One lstat-resolved type probe before anything could open the path: a
+    # FIFO or device is classified here, never touched by open(2). A failed
+    # stat means absent (or a dangling symlink, which git also skips).
+    if ! kind=$(stat -L -c '%F %h' -- "$path" 2>/dev/null); then continue; fi
+    nlink=${kind##* }
+    kind=${kind% *}
+    case "$kind" in
+      directory) continue ;;
+      'regular file')
+        case "$nlink" in
+          ''|*[!0-9]*) protected_fail "git-metadata-unavailable" "$dir" "$path" ;;
+        esac
+        if [ "$nlink" -gt 1 ]; then
+          if [ "$rel" = "info/attributes" ]; then
+            meta_soft "git-metadata-hardlink" "$path"
+            soft=1
+            continue
+          fi
+          protected_fail "git-metadata-hardlink" "$dir" "$path"
+        fi
+        ;;
+      *)
+        if [ "$rel" = "info/attributes" ]; then
+          meta_soft "git-metadata-nonregular" "$path"
+          soft=1
+          continue
+        fi
+        protected_fail "git-metadata-nonregular" "$dir" "$path"
+        ;;
+    esac
   done
+  [ "$soft" = 0 ] || return 1
+  return 0
 }
 
 # A config-named path is checked lexically, then walked one component at a
@@ -581,6 +625,36 @@ CFG_SOFT_REASON=""
 cfg_soft() { # $1 reason; always returns 1
   [ -n "$CFG_SOFT_REASON" ] || CFG_SOFT_REASON=$1
   return 1
+}
+
+# Guarded-gitmetadata soft finding (round 17, D2): a hardlinked or
+# non-regular $GIT_DIR/info/attributes cannot be opened by git safely (a
+# FIFO would block status forever; a hardlink can alias into a store), so
+# its repository degrades to an `error` row instead of aborting the run.
+# META_SOFT_* keep the first finding; the finding is stored, not printed,
+# so a repeated guard pass (list_repos, then census_one) reports once and
+# a first-wins config reason cannot mask it. The scan itself continues —
+# no git call that could read that file runs afterwards, so protected
+# reaches elsewhere in the repo still refuse the whole run.
+META_SOFT_REASON=""
+META_SOFT_PATH=""
+meta_soft() { # $1 reason, $2 path; always returns 1
+  if [ -z "$META_SOFT_REASON" ]; then
+    META_SOFT_REASON=$1
+    META_SOFT_PATH=$2
+  fi
+  return 1
+}
+emit_soft_diag() { # $1 repo label; prints every stored soft finding (stderr)
+  if [ -n "$META_SOFT_REASON" ]; then
+    printf 'souji-census: git-metadata-unsupported %s %s\n' \
+      "$META_SOFT_REASON" "$(sanitize_field "$META_SOFT_PATH")" >&2
+  fi
+  if [ -n "${CFG_SOFT_REASON:-}" ] || [ -z "$META_SOFT_REASON" ]; then
+    printf 'souji-census: config-unsupported: %s (%s)\n' \
+      "${CFG_SOFT_REASON:-git-config-unsupported}" \
+      "$(sanitize_field "$1")" >&2
+  fi
 }
 
 # Regular, single-link config file, else a soft refusal (never opened).
@@ -787,7 +861,7 @@ guard_worktree_registrations() { # $1 resolved gitdir; rc 1 soft (all entries st
         if [ -f "$target" ]; then
           admin=$(gitfile_admin "$target" "$wt") || exit 2
           if [ -n "$admin" ]; then
-            guard_git_files "$admin" || exit 2
+            guard_git_files "$admin" || soft=1
             guard_git_links "$admin" || exit 2
             guard_git_config "$admin" "$CFG_WT_ENABLED" || soft=1
             common="$admin/commondir"
@@ -816,11 +890,13 @@ guard_worktree_registrations() { # $1 resolved gitdir; rc 1 soft (all entries st
 }
 
 # Exits 2 on a protected git surface. Returns 1 (soft) when some config
-# cannot be evaluated; every remaining guard still runs first, so a later
-# protected reach still refuses the whole run.
+# or metadata cannot be evaluated; every remaining guard still runs
+# first, so a later protected reach still refuses the whole run.
 guard_git_surface() { # $1 repo dir
   local repo=$1 g="$1/.git" target common dir first soft=0
   CFG_SOFT_REASON=""
+  META_SOFT_REASON=""
+  META_SOFT_PATH=""
   if [ -L "$g" ]; then
     guard_target git-metadata "$g" >/dev/null
     return 0
@@ -828,7 +904,7 @@ guard_git_surface() { # $1 repo dir
   if [ -d "$g" ]; then
     dir=$(guard_target gitdir "$g") || exit 2
     guard_git_links "$dir" || exit 2
-    guard_git_files "$dir" || exit 2
+    guard_git_files "$dir" || soft=1
     guard_git_config "$dir" || soft=1
     first=$dir
     common="$dir/commondir"
@@ -846,7 +922,7 @@ guard_git_surface() { # $1 repo dir
         esac
         dir=$(guard_target git-common-dir "$target") || exit 2
         guard_git_links "$dir" || exit 2
-        guard_git_files "$dir" || exit 2
+        guard_git_files "$dir" || soft=1
         guard_git_config "$dir" || soft=1
         guard_wt_config "$first" || soft=1
       fi
@@ -870,7 +946,7 @@ guard_git_surface() { # $1 repo dir
     esac
     dir=$(guard_target gitdir "$target") || exit 2
     guard_git_links "$dir" || exit 2
-    guard_git_files "$dir" || exit 2
+    guard_git_files "$dir" || soft=1
     guard_git_config "$dir" || soft=1
     first=$dir
     common="$dir/commondir"
@@ -888,7 +964,7 @@ guard_git_surface() { # $1 repo dir
         esac
         dir=$(guard_target git-common-dir "$target") || exit 2
         guard_git_links "$dir" || exit 2
-        guard_git_files "$dir" || exit 2
+        guard_git_files "$dir" || soft=1
         guard_git_config "$dir" || soft=1
         guard_wt_config "$first" || soft=1
       fi
@@ -1030,11 +1106,16 @@ count_dirty() { # $1 repo; exit 2 on a protected reach
     printf 'unverifiable'
     return 0
   fi
+  # Explicit untracked mode (round 17, D1): a repo-local, included or
+  # config.worktree `status.showUntrackedFiles=no|all` must not falsify the
+  # count — the flag overrides every config scope and keeps the one-line
+  # collapse of a wholly untracked directory.
   # Pathspec-exclude the off-limits driver surfaces so status does not walk
-  # them. A wholly untracked directory elsewhere still collapses to one line.
+  # them.
   if ! st=$(git -C "$1" --no-optional-locks -c core.fsmonitor=false \
       -c core.hooksPath=/dev/null -c core.excludesFile="$ex" \
-      -c core.attributesFile="$at" status --porcelain --ignore-submodules=all -- . \
+      -c core.attributesFile="$at" status --porcelain --ignore-submodules=all \
+      --untracked-files=normal -- . \
       ':(exclude).ufo/state' ':(exclude).ufo/watchdog.log' \
       ':(exclude,glob)census/operator-sweep-*' \
       ':(exclude,glob)census/operator-sweep-*/**' \
@@ -1154,8 +1235,7 @@ worktree_extra_flags() {
       continue
     fi
     if ! guard_git_surface "$cpath"; then
-      printf 'souji-census: config-unsupported: %s (%s)\n' \
-        "${CFG_SOFT_REASON:-git-config-unsupported}" "$(sanitize_field "$cpath")" >&2
+      emit_soft_diag "$cpath"
       saw_dirty=1
       continue
     fi
@@ -1175,8 +1255,7 @@ census_one() { # $1 repo-dir
   local repo
   repo=$(guard_path repo "$1") || exit 2
   if ! guard_git_surface "$repo"; then
-    printf 'souji-census: config-unsupported: %s (%s)\n' \
-      "${CFG_SOFT_REASON:-git-config-unsupported}" "$(sanitize_field "$repo")" >&2
+    emit_soft_diag "$repo"
     printf '%s\t0\t0\t0\t0\t\terror\n' "$(sanitize_field "$repo")"
     return 0
   fi
@@ -1816,6 +1895,115 @@ run_selftest() {
   else
     st_bad "protected compare: rc=$prot_rc err=$(printf '%s' "$prot_err" | head -1)"
   fi
+
+  # Round-17 D1/D2 hygiene fleet: repo-local status.showUntrackedFiles=no
+  # must not falsify dirty; a hardlinked and a FIFO info/attributes each
+  # degrade their own repo to an `error` row (exit 0, one stderr finding)
+  # while a neighbour repo still measures and a hardlinked config still
+  # refuses the whole run.
+  local fleet2="$ST_TMP/fleet-hygiene"
+  mkdir -p "$fleet2"
+  local RU2="$fleet2/untrackedcfg-shokunin"
+  st_init "$RU2" master
+  printf 'base\n' > "$RU2/base.txt"
+  local u2
+  u2=$(st_commit "$RU2" "" "u2 base")
+  git -C "$RU2" update-ref refs/heads/master "$u2"
+  git -C "$RU2" update-ref refs/remotes/origin/master "$u2"
+  printf 'dirt\n' > "$RU2/untracked.txt"
+  mkdir -p "$RU2/newdir"
+  printf 'a\n' > "$RU2/newdir/a.txt"
+  printf 'b\n' > "$RU2/newdir/b.txt"
+  printf '[status]\n\tshowUntrackedFiles = no\n' >> "$RU2/.git/config"
+
+  local RA="$fleet2/attrslink-shokunin"
+  st_init "$RA" master
+  printf 'base\n' > "$RA/base.txt"
+  local a1
+  a1=$(st_commit "$RA" "" "a1 base")
+  git -C "$RA" update-ref refs/heads/master "$a1"
+  git -C "$RA" update-ref refs/remotes/origin/master "$a1"
+  printf '*.bin filter=x\n' > "$RA/.git/info/attrs-source"
+  ln "$RA/.git/info/attrs-source" "$RA/.git/info/attributes"
+
+  local RF="$fleet2/attrsfifo-shokunin"
+  st_init "$RF" master
+  printf 'base\n' > "$RF/base.txt"
+  local f1
+  f1=$(st_commit "$RF" "" "f1 base")
+  git -C "$RF" update-ref refs/heads/master "$f1"
+  git -C "$RF" update-ref refs/remotes/origin/master "$f1"
+  mkfifo "$RF/.git/info/attributes"
+
+  local RB="$fleet2/benign-shokunin"
+  st_init "$RB" master
+  printf 'base\n' > "$RB/base.txt"
+  local b1
+  b1=$(st_commit "$RB" "" "b1 base")
+  git -C "$RB" update-ref refs/heads/master "$b1"
+  git -C "$RB" update-ref refs/remotes/origin/master "$b1"
+
+  local out_h err_h rc_h nhyg
+  set +e
+  err_h=$(env -u GIT_DIR SOUJI_CENSUS_SELFTEST_ACTIVE=1 \
+    "$SELF" --root "$fleet2" 2>&1 >"$ST_TMP/hygiene.tsv")
+  rc_h=$?
+  set -e
+  out_h="$ST_TMP/hygiene.tsv"
+
+  if [ "$rc_h" = 0 ]; then st_ok "hygiene fleet: exit 0 (per-repo degrade)"
+  else st_bad "hygiene fleet: exit=$rc_h want 0"; fi
+
+  v=$(st_row_field "$out_h" untrackedcfg-shokunin 4)
+  # untracked.txt (1) + collapsed newdir/ (1) = 2 despite config "no"
+  if [ "$v" = 2 ]; then st_ok "showUntrackedFiles=no: dirty=2 (no false clean)"
+  else st_bad "showUntrackedFiles=no: dirty=$v want 2"; fi
+  v=$(st_row_field "$out_h" untrackedcfg-shokunin 7)
+  case "$v" in
+    *dirty*) st_ok "showUntrackedFiles=no: dirty flag present ($v)" ;;
+    *) st_bad "showUntrackedFiles=no: flags='$v'" ;;
+  esac
+
+  v=$(st_row_field "$out_h" attrslink-shokunin 7)
+  if [ "$v" = "error" ]; then st_ok "hardlinked info/attributes: error row"
+  else st_bad "hardlinked info/attributes: flags='$v' want error"; fi
+  v=$(st_row_field "$out_h" attrslink-shokunin 4)
+  if [ "$v" = 0 ]; then st_ok "hardlinked info/attributes: dirty placeholder 0"
+  else st_bad "hardlinked info/attributes: dirty=$v want 0"; fi
+  case "$err_h" in
+    *"git-metadata-unsupported git-metadata-hardlink "*/info/attributes*)
+      st_ok "hardlinked info/attributes: stderr finding + path" ;;
+    *) st_bad "hardlinked info/attributes: err=$(printf '%s' "$err_h" | head -2)" ;;
+  esac
+  nhyg=$(printf '%s\n' "$err_h" | grep -c 'git-metadata-unsupported' || true)
+  if [ "${nhyg:-0}" = 2 ]; then st_ok "git-metadata-unsupported printed once per repo (2)"
+  else st_bad "git-metadata-unsupported lines=$nhyg want 2"; fi
+
+  v=$(st_row_field "$out_h" attrsfifo-shokunin 7)
+  if [ "$v" = "error" ]; then st_ok "FIFO info/attributes: error row (no hang)"
+  else st_bad "FIFO info/attributes: flags='$v' want error"; fi
+  case "$err_h" in
+    *"git-metadata-unsupported git-metadata-nonregular "*/info/attributes*)
+      st_ok "FIFO info/attributes: stderr finding + path" ;;
+    *) st_bad "FIFO info/attributes: err=$(printf '%s' "$err_h" | head -2)" ;;
+  esac
+
+  v=$(st_row_field "$out_h" benign-shokunin 7)
+  if [ "$v" = "clean" ]; then st_ok "hygiene neighbour unaffected (clean)"
+  else st_bad "hygiene neighbour: flags='$v' want clean"; fi
+
+  # control: a hardlinked config in the same fleet keeps exit 2
+  ln "$RB/.git/config" "$RB/.git/config-hardlink" 2>/dev/null || true
+  set +e
+  err_h=$(env -u GIT_DIR SOUJI_CENSUS_SELFTEST_ACTIVE=1 \
+    "$SELF" --root "$fleet2" 2>&1 >/dev/null)
+  rc_h=$?
+  set -e
+  rm -f -- "$RB/.git/config-hardlink"
+  if [ "$rc_h" = 2 ] && printf '%s' "$err_h" | grep -q 'path-protected: git-metadata-hardlink'; then
+    st_ok "hardlinked config still refuses whole run (exit 2)"
+  else st_bad "hardlinked config: rc=$rc_h err=$(printf '%s' "$err_h" | head -1)"; fi
+
 
   # source audit: no forbidden git porcelain in non-comment lines
   local n

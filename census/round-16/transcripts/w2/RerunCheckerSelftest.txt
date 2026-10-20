@@ -1,0 +1,276 @@
+[~/.omp/agent/sessions/-Projects-shokunin/2026-10-20T12-57-31-587Z_01a15963-70c3-7390-a1b4-7911b9506d07/SoujiR16/SoujiR16.RerunCheckerSelftest-4.jsonl#2F89]
+1:# SoujiR16.RerunCheckerSelftest-4 (parked)
+2:
+3:## user
+4:
+5:Complete assignment thoroughly:
+6:
+7:/skill:godspeed
+8:You are a Godspeed-enabled subagent.
+9:
+10:1. **Name the axes.**
+11:2. **Iterate cheap, in parallel.**
+12:3. **Keep moves that improve any axis and harm none.**
+13:4. **Don't aim — let the frontier walk itself.**
+14:
+15:## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+16:ALLOWED-EXEC: `python3 /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-preservation-evidence.py --selftest`. Attack R4: confirm 47/47 and check that the r16 changes (CASE regex, detail rendering, class tables, CONFIG_TOKEN_IDS) did not delete a negative control (compare `git -C /home/vgpnk/Projects/shokunin/souji-shokunin diff b410186 HEAD -- tools/souji-preservation-evidence.py`).
+17:
+18:Lane bounds: leaf member — no subagent dispatch.
+19:Judged on: calibration
+20:
+21:Report: write your scoped findings to .ufo/waves/round-16/w2/RerunCheckerSelftest.md
+22:
+23:# Tooling directive — operator, 2026-10-19 (always on, every agent)
+24:
+25:Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+26:helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+27:`sudo` is available.
+28:
+29:- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+30:  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+31:  only; never pipe an unverified remote script into a shell.
+32:- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+33:  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+34:  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+35:  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+36:- Record every install or update — tool, version, channel, reason — in your report or handoff.
+37:
+38:## assistant
+39:
+40:I'll start by reading the assigned files and running the allowed selftest concurrently.
+41:→ bash(python3 /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-preservation-evidence.py --selftest; echo "EXIT=$?") ⇒ ok · 5 lines
+42:→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin diff b410186 HEAD --stat -- tools/souji-preservation-evidence.py te…) ⇒ ok · 10 lines
+43:
+44:## assistant
+45:
+46:→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin diff b410186 HEAD -- tools/souji-preservation-evidence.py) ⇒ ok · 54 lines
+47:→ bash(sha256sum /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-preservation-evidence.py; wc -l /home/vgpnk/Projects…) ⇒ ok · 5 lines
+48:
+49:## assistant
+50:
+51:→ read(artifact://32065:raw:1-400) ⇒ ok · 185 lines
+52:
+53:## assistant
+54:
+55:Selftest confirms 47/47. Now let me map how each config class constant is used and what the parse path accepts.
+56:→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -n "CONFIG_\(BENIGN\|REFUSAL\|SAFETY\|PRESERVE\|HARM_FAILS\|TOK…) ⇒ ok · 32 lines
+57:→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -n "CASE_LINE_RE\|def _parse_transcript\|RECORD_PREFIXES\|unpar…) ⇒ ok · 25 lines
+58:
+59:## assistant
+60:
+61:Two `CASE_LINE_RE` definitions exist (line 289 and 923) — need to know which scope each lives in.
+62:→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-preservation-evidence.py:270-300) ⇒ ok · 37 lines
+63:→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-preservation-evidence.py:915-1000) ⇒ ok · 95 lines
+64:
+65:## assistant
+66:
+67:→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-preservation-evidence.py:225-295) ⇒ ok · 79 lines
+68:→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && python3 -m py_compile tools/souji-preservation-evidence.py && echo C…) ⇒ ok · 11 lines
+69:
+70:## assistant
+71:
+72:→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -n -A1 'cases\.append(($' tools/souji-preservation-evidence.py …) ⇒ ok · 4 lines
+73:→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -n 'cases.append(("' tools/souji-preservation-evidence.py | wc …) ⇒ error · 7 lines — 0
+74:
+75:## assistant
+76:
+77:→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && sed -n '1960,1990p' tools/souji-preservation-evidence.py) ⇒ ok · 32 lines
+78:→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -n 'cases.append\|CASES\b\|SELFTEST_CASES' tools/souji-preserva…) ⇒ ok · 55 lines
+79:
+80:## assistant
+81:
+82:→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && echo "HEAD: $(grep -c 'cases\.append(($' tools/souji-preservation-ev…) ⇒ ok · 28 lines
+83:→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && ls -la census/round-16/ 2>/dev/null | head -30; echo ---; ls tests/f…) ⇒ ok · 18 lines
+84:
+85:## assistant
+86:
+87:→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -n 'run-inconsistent\|case-duplicate\|case-finding-mismatch\|kn…) ⇒ ok · 32 lines
+88:→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-preservation-evidence.py:2110-2165) ⇒ ok · 64 lines
+89:
+90:## assistant
+91:
+92:→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-preservation-evidence.py:1325-1530) ⇒ ok · 215 lines
+93:
+94:## assistant
+95:
+96:→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && sed -n '/# duplicate CASE row in the transcript/,/structured-disagre…) ⇒ ok · 17 lines
+97:→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -n '\bdetail\b' tools/souji-preservation-evidence.py | sed -n '…) ⇒ ok · 3 lines
+98:
+99:## assistant
+100:
+101:→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-16/c1-matrix-final.json:1-60) ⇒ ok · 72 lines
+102:→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-preservation-evidence.py:1296-1325) ⇒ ok · 43 lines
+103:
+104:## assistant
+105:
+106:→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-16/c1-matrix-final.json?q=keys) ⇒ ok · 13 lines
+107:→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-16/c1-matrix-final.json?q=.arms.changed|keys) ⇒ ok · 9 lines
+108:
+109:## assistant
+110:
+111:→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-16/c1-matrix-final.json?q=.arms.changed["r15-config"].cases|t…) ⇒ ok · 102 lines
+112:→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-16/c1-matrix-final.json?q=.arms|keys,.lane_head,.fixtures_dir…) ⇒ ok · 8 lines
+113:
+114:## assistant
+115:
+116:CONFIG_TOKEN_IDS exactly matches the token-bearing changed rows. Now cross-check the baseline arms against the class tables.
+117:→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-16/c1-matrix-final.json?q=.arms["pre-harm"]["r15-config"].cas…) ⇒ ok · 82 lines
+118:→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-16/c1-matrix-final.json?q=.arms["r14-harm"]["r15-config"].cas…) ⇒ ok · 82 lines
+119:
+120:## assistant
+121:
+122:Both baseline arms match the class tables exactly. Now the frozen record and its regenerator.
+123:→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r15-preservation-frozen/regenerate.py) ⇒ ok · 67 lines
+124:→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -c $'\t' tests/fixtures/r15-preservation-frozen/record.json; gr…) ⇒ ok · 19 lines
+125:
+126:## assistant
+127:
+128:→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r15-preservation-frozen/regenerate.py:48-140) ⇒ ok · 95 lines
+129:→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && cat tests/fixtures/r15-preservation-frozen/expected.json; echo ---; …) ⇒ ok · 15 lines
+130:
+131:## assistant
+132:
+133:→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-preservation-evidence.py:2545-2600) ⇒ ok · 74 lines
+134:→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -n 'observed_finding\|R15CFG-0[0-9]\|R15CFG-1[0-9]' tests/fixtu…) ⇒ ok · 55 lines
+135:
+136:## assistant
+137:
+138:→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -n '\bREFUSAL\b\|\bBENIGN\b\|\bNS_IDS\b' tools/souji-preservati…) ⇒ ok · 5 lines
+139:→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r15-census-config.py:95-185) ⇒ ok · 101 lines
+140:
+141:## assistant
+142:
+143:→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-16/c1-matrix-final.json?q=.arms["r15-baseline"]|map_values(if…) ⇒ ok · 42 lines
+144:→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r15-preservation-frozen/record.json?q=.runs.changed.cases|m…) ⇒ ok · 32 lines
+145:
+146:## assistant
+147:
+148:→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -n 'frozen' tools/souji-preservation-evidence.py | sed -n '1,60…) ⇒ ok · 63 lines
+149:→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -n '\["detail"\]\|detail.*=.*record\|detail_map' tools/souji-pr…) ⇒ ok · 10 lines
+150:
+151:## assistant
+152:
+153:→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-preservation-evidence.py:2478-2545) ⇒ ok · 74 lines
+154:→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-preservation-evidence.py:1694-1770) ⇒ ok · 95 lines
+155:
+156:## assistant
+157:
+158:→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r15-preservation-frozen/record.json?q=def benign: ["R15CFG-…) ⇒ ok · 9 lines
+159:→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r15-preservation-frozen/record.json?q=.namespace_controls|{…) ⇒ ok · 28 lines
+160:
+161:## assistant
+162:
+163:→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r15-preservation-frozen/record.json?q=[.runs.changed.cases[…) ⇒ ok · 8 lines
+164:→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-16/c1-matrix-final.json?q=def benign: ["R15CFG-01","R15CFG-04…) ⇒ ok · 1 line
+165:
+166:## assistant
+167:
+168:→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-16/c1-matrix-landing.json?q=def benign: ["R15CFG-01","R15CFG-…) ⇒ ok · 8 lines
+169:→ read(artifact://32065:raw:400-430) ⇒ ok · 1 line
+170:
+171:## assistant
+172:
+173:→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r15-preservation-frozen/record.json?q={arms:(.runs|map_valu…) ⇒ ok · 31 lines
+174:→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r15-preservation-frozen/record.json?q={preharm_pass:[.runs.…) ⇒ ok · 70 lines
+175:
+176:## assistant
+177:
+178:→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -A1 'cases\.append(($' tools/souji-preservation-evidence.py | g…) ⇒ ok · 13 lines
+179:→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-preservation-evidence.py:96-145) ⇒ ok · 56 lines
+180:
+181:## assistant
+182:
+183:Found a stale header oracle. Let me pin down its scope and the frozen replay's documentation.
+184:→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -n 'refusal\|benign\|preserve\|safety' tools/souji-preservation…) ⇒ ok · 29 lines
+185:→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && cat tests/fixtures/r15-preservation-frozen/README.md) ⇒ ok · 24 lines
+186:
+187:## assistant
+188:
+189:→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-preservation-evidence.py:1-60) ⇒ ok · 68 lines
+190:→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures) ⇒ ok · 67 lines
+191:
+192:## assistant
+193:
+194:→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r15-preservation-evidence.py) ⇒ ok · 107 lines
+195:
+196:## assistant
+197:
+198:→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r15-preservation-evidence.py:140-330) ⇒ ok · 173 lines
+199:
+200:## assistant
+201:
+202:→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -n 'HARM_CASES\|CASE_CLASSES' tests/fixtures/r15-census-config.…) ⇒ ok · 6 lines
+203:→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r15-preservation-evidence.py:95-140) ⇒ ok · 54 lines
+204:
+205:## assistant
+206:
+207:→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -n 'harm_cases\|case_classes\|"class"\|\[.class.\]' census/roun…) ⇒ error · 3 lines — (no output)
+208:→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-16/c1-matrix-final.json?q=.arms["r14-harm"]["r15-config"].cas…) ⇒ ok · 18 lines
+209:
+210:## assistant
+211:
+212:→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -n -A10 'def _good_statuses\|def _bad_statuses' tools/souji-pre…) ⇒ ok · 18 lines
+213:→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-preservation-evidence.py:106-122) ⇒ ok · 23 lines
+214:
+215:## assistant
+216:
+217:→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -n 'replace("\\\\t"\|replace("\\t"\|must equal the parsed CASE …) ⇒ ok · 4 lines
+218:→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -n -B2 -A6 'must equal the parsed CASE multiset exactly' tools/…) ⇒ ok · 7 lines
+219:
+220:## assistant
+221:
+222:→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-preservation-evidence.py:86-100) ⇒ ok · 21 lines
+223:→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && echo "b410186 record tabs: $(git show b410186:tests/fixtures/r15-pre…) ⇒ ok · 4 lines
+224:
+225:## assistant
+226:
+227:→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && sha256sum tools/souji-preservation-evidence.py; git diff a6ec7810 16…) ⇒ ok · 6 lines
+228:
+229:## assistant
+230:
+231:The lane advanced to 163158a mid-review, but the checker and frozen fixture bytes are unchanged (`git diff a6ec781 163158a` for those paths is empty; checker still sha256 5942f6…). Cleaning scratch files and checking the report directory.
+232:→ bash(rm -f /tmp/h.txt /tmp/b.txt /tmp/bn.txt /tmp/hn.txt; ls -la /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/rou…) ⇒ ok · 23 lines
+233:→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && git diff a6ec781 163158a --stat -- census/round-16/ .ufo/waves/round…) ⇒ ok · 3 lines
+234:
+235:## assistant
+236:
+237:→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -n 'snapshot_tampered\|pre-integration\|authored before' tests/…) ⇒ ok · 9 lines
+238:
+239:## assistant
+240:
+241:→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -n -A6 'REASON_TOKENS' tools/souji-preservation-evidence.py | h…) ⇒ ok · 16 lines
+242:
+243:## assistant
+244:
+245:→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r15-preservation-frozen/record.json?q=[.runs.baseline.cases…) ⇒ ok · 98 lines
+246:→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r15-census-config.py:1495-1530) ⇒ ok · 45 lines
+247:
+248:## assistant
+249:
+250:→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r15-preservation-frozen/record.json?q={arms:(.runs|map_valu…) ⇒ ok · 25 lines
+251:→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && grep -n 'def _check_bindings' -A40 tools/souji-preservation-evidence…) ⇒ ok · 17 lines
+252:
+253:## assistant
+254:
+255:All evidence is in hand. Writing the report.
+256:→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-16/w2/RerunCheckerSelftest.md) ⇒ ok · 1 line
+257:
+258:## assistant
+259:
+260:Report written to `/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-16/w2/RerunCheckerSelftest.md`.
+261:
+262:**Assigned claim: HOLDS.** `--selftest` → `selftest: 47/47 passed`, exit 0, 1.87 s (checker sha256 `5942f689…`; unchanged at lane HEAD `163158a` vs assignment `a6ec781`). No negative control was deleted: 47 case names identical `b410186`↔HEAD, full diff 185 lines/6 hunks, no case removed; `case-finding-mismatch` keeps its dedicated control and widens 3→6 ids; the old `duplicate-id` token expectation was unreachable under `setdefault` first-wins (1374–1382) and is replaced with the true set. The 20-id harm oracle got stricter (10→16 ids).
+263:
+264:**Calibration fully cross-checked (zero mismatches):** HEAD class tables and `CONFIG_TOKEN_IDS` match both `c1-matrix-final.json` and `c1-matrix-landing.json` across changed/pre-harm/r14-harm, and the committed frozen record (60 statuses + 12 namespace rows); the changed-arm token set is exactly `02,03,11,14,17,19`. `expected.json` pins equal live bytes; baseline FAIL details all carry `observed_exit=` and are <512 chars, so a clean `--frozen` is coherent (not run — outside ALLOWED-EXEC).
+265:
+266:**Findings (advisory):**
+267:1. **MODERATE** — `tools/souji-preservation-evidence.py:113-116` (+119-120) still publishes the pre-r16 oracle table; it says `03,07,14,19,20` pass the harm baseline and `20` fails preharm, contradicting the code at 323-357 and the matrix. Fix: rewrite those lines to the r16 tables and name `CONFIG_TOKEN_IDS`.
+268:2. **MINOR** — `:95-97` says declared detail must equal the parsed CASE multiset "exactly", but `:1390` normalizes only the parsed side; a record byte-identical to the transcript (TABs) is rejected `run-inconsistent`. Fix: normalize both sides or document the space rendering.
+269:3. **MINOR (latent)** — `tests/fixtures/r15-census-config.py:161-165` `HARM_CASES` omits `R15CFG-19` and `CASE_CLASSES:175` calls it `refusal`, while r14-harm fails 19 (store echoed, exit 2); unused by `run-matrix.py`, emitted in `--json` only.
+270:4. **MINOR** — `tests/fixtures/r15-preservation-frozen/README.md:7-10` still says the pins are pre-integration and yield `snapshot_tampered`; HEAD pins the live bytes (r16 regenerated at `c6207bd` without updating the README).
+271:5. **NIT** — `:2136-2138` blames a "declared/parsed disagreement" for `duplicate-id`; the two `run-inconsistent` actually come from `stdout_sha256`/`stdout_bytes_total`.
+272:
+273:**Gaps:** `--frozen` and the 8-check external fixture were not run (not permitted); no selftest mutates only a declared detail, so `details_equal`'s mismatch branch has no negative control; token identity, not just presence, is unverifiable by design. Four `/tmp` scratch text files were created during name extraction and removed (no lane file touched besides the report). No tool installs or updates were needed.
+274:
+275:STATUS: ok

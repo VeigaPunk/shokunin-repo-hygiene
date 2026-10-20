@@ -173,7 +173,7 @@ printf 'vadv54 offvault-copy payload\n' > "$P/p5.md"
 mkdir -p "$P/p1dir"
 printf 'alpha\n' > "$P/p1dir/a.txt"
 printf 'beta\n' > "$P/p1dir/b.txt"
-mkdir -p "$P/p6repo/.git" "$P/p6repo/inner"
+mkdir -p "$P/p6repo/inner"
 printf 'p6 payload one\n' > "$P/p6repo/one.txt"
 printf 'p6 payload inner\n' > "$P/p6repo/inner/keep.txt"
 ln -s "$P/p2.md" "$P/alias-link.md"
@@ -270,8 +270,16 @@ else
   record P5 p PASS "SAFE tolerated for a distinct copy — but 'vault' semantics unchecked" "$RC" "$OUT" "refused"
 fi
 
-# P6 vault copy nested inside the source directory.
+# P6 vault copy nested inside the source directory. The p6repo/.git stub makes
+# the fixture classify as a repo-root; it must exist only while this case runs
+# because a leftover stub under tests/vault/vadv54-run makes jj treat p6repo as
+# a nested repo and report its tracked files as deleted (JjTrialSouji hazard 1).
+mkdir -- "$P/p6repo/.git"
+# Fail-closed cleanup for interrupted runs: rmdir refuses a non-empty stub.
+trap 'rmdir -- "$P/p6repo/.git" 2>/dev/null || true' EXIT
 run_tool "$LED_P" "$P/p6repo"
+rmdir -- "$P/p6repo/.git" || printf 'vadv54-harness: refusing to remove non-empty stub %s\n' "$P/p6repo/.git" >&2
+trap - EXIT
 v=$(norm_v)
 if [ "$v" = SAFE ]; then
   record P6 p FAIL "NOT-SAFE — the receipt's vault copy lives inside the source directory being evaluated" "$RC" "$OUT" "false-SAFE: removing the repo destroys its own vault copy" '"severity":"critical"'

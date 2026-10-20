@@ -16,7 +16,20 @@ private /var/tmp directory (removed afterwards). The fixtures run from the
 lane checkout and must equal their bytes at <REV>; the installed tool must too.
 
 Usage: python3 tests/fixtures/r15-preservation-frozen/regenerate.py --rev <REV>
+       [--allow-nonclean]
 Writes record.json and expected.json in this directory.
+
+The verdict in expected.json is not a literal: the script runs
+tools/souji-preservation-evidence.py's own evaluation against the generated
+record (--root <lane> --record <text>, the same entry point --frozen uses)
+and writes the observed verdict. A non-clean verdict refuses the write
+(exit 3, nothing written) unless --allow-nonclean is given, in which case
+the computed verdict is recorded verbatim and the override is announced on
+stderr. After writing, the script re-runs the checker in --frozen mode over
+this directory and requires its exit status to equal the recorded verdict.
+
+Exit codes: 0 wrote a consistent record; 2 usage/binding/tool failure;
+3 computed verdict was not clean and --allow-nonclean was absent.
 """
 from __future__ import annotations
 
@@ -35,6 +48,11 @@ LANE = HERE.parents[2]
 TOOL = "tools/souji-census.sh"
 CONFIG_FIXTURE = "tests/fixtures/r15-census-config.py"
 NS_FIXTURE = "tests/fixtures/r14-census-boundary.py"
+CHECKER = "tools/souji-preservation-evidence.py"
+# Mirrors STATUS_BY_CODE in tools/souji-preservation-evidence.py; the checker's
+# exit code is its stable contract, so the verdict is mapped from it rather
+# than parsed out of the human-readable first line.
+VERDICT_BY_STATUS = {0: "clean", 1: "failed", 2: "could-not-evaluate"}
 ARMS = (("baseline_preharm", "a31642d"), ("baseline", "cc21683"))
 CASE_RE = re.compile(r"CASE\t([^\t]+)\t(PASS|FAIL)\t(.*)\Z")
 SUMMARY_RE = re.compile(r"SUMMARY\ttotal=([0-9]+)\tfailed=([0-9]+)\Z")
@@ -81,11 +99,35 @@ def run_arm(fixture: str, tool: Path, commit: str) -> dict:
         "summary": summary,
     }
 
+def run_checker(*args: str) -> subprocess.CompletedProcess:
+    return subprocess.run(
+        [sys.executable, str(LANE / CHECKER), *args],
+        capture_output=True, text=True, errors="replace")
+
+
+def evaluate_record(record_text: str):
+    """Return the checker's (verdict, output) for the generated record.
+
+    Uses the same evaluation `--frozen` performs on the pinned record:
+    `--root <lane> --record <text>`."""
+    proc = run_checker("--root", str(LANE), "--record", record_text)
+    verdict = VERDICT_BY_STATUS.get(proc.returncode)
+    if verdict is None:
+        raise SystemExit(
+            f"regenerate: checker exited {proc.returncode} (not a verdict): "
+            f"{proc.stderr.strip() or proc.stdout.strip()}")
+    return verdict, proc.stdout
+
 
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--rev", required=True)
-    rev = git("rev-parse", ap.parse_args().rev).strip()
+    ap.add_argument("--allow-nonclean", action="store_true",
+                    help="write the record even when the checker's own "
+                         "verdict is not clean (the computed verdict is "
+                         "recorded, never 'clean')")
+    args = ap.parse_args()
+    rev = git("rev-parse", args.rev).strip()
     for rel in (TOOL, CONFIG_FIXTURE, NS_FIXTURE):
         committed = subprocess.run(["git", "-C", str(LANE), "show", f"{rev}:{rel}"],
                                    check=True, capture_output=True).stdout
@@ -121,19 +163,38 @@ def main() -> int:
         "namespace_controls": namespace,
     }
     record_text = json.dumps(record, indent=2, sort_keys=True) + "\n"
+    verdict, checker_out = evaluate_record(record_text)
+    if verdict != "clean" and not args.allow_nonclean:
+        print(f"regenerate: checker verdict is {verdict!r}, not 'clean'; "
+              "refusing to write record.json/expected.json "
+              "(rerun with --allow-nonclean to record it)",
+              file=sys.stderr)
+        sys.stderr.write(checker_out)
+        return 3
     (HERE / "record.json").write_text(record_text, encoding="utf-8")
     expected = {
         "files": {rel: sha_bytes((LANE / rel).read_bytes())
                   for rel in (NS_FIXTURE, CONFIG_FIXTURE, TOOL)},
         "record": "record.json",
         "record_sha256": sha_bytes(record_text.encode("utf-8")),
-        "verdict": "clean",
+        "verdict": verdict,
     }
     (HERE / "expected.json").write_text(json.dumps(expected, indent=2, sort_keys=True) + "\n",
                                         encoding="utf-8")
+    frozen = run_checker("--frozen", str(HERE), "--root", str(LANE))
+    if VERDICT_BY_STATUS.get(frozen.returncode) != verdict:
+        print(f"regenerate: frozen re-check exited {frozen.returncode}, "
+              f"expected a {verdict!r} verdict; files left written:",
+              file=sys.stderr)
+        sys.stderr.write(frozen.stdout)
+        return 2
+    if verdict != "clean":
+        print(f"regenerate: --allow-nonclean accepted verdict={verdict!r}",
+              file=sys.stderr)
     print(f"regenerated at {rev[:12]}: " + ", ".join(
         f"{arm}={r['summary']['failed']}/{r['summary']['total']} fail" for arm, r in runs.items())
-        + f", namespace={namespace['summary']['failed']}/{namespace['summary']['total']} fail")
+        + f", namespace={namespace['summary']['failed']}/{namespace['summary']['total']} fail"
+        + f", verdict={verdict}")
     return 0
 
 

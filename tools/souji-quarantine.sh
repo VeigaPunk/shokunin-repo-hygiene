@@ -42,7 +42,11 @@
 #   2  Stage: mkdir -p <repo>/.ufo-quarantine/<utc-date>/ and move the target
 #      there preserving its repo-relative path. Tracked files: `git mv`
 #      (index records the rename; this tool never commits). Untracked: plain
-#      `mv`.
+#      `mv`. In a jj-colocated repo (.jj beside .git) the move is a worktree
+#      rename only -- jj owns the index -- and the tool prints the
+#      `jj-lane.sh commit ... -- <rel> <qpath>` recipe (CMD line) that commits
+#      BOTH sides of the rename atomically; a git add/commit recipe must
+#      never be used there (JjAuditSouji F1/F4).
 #   3  Hold window (--hold seconds, default 450).
 #   4  SECOND receipt re-derivation from quarantine, two prongs:
 #      prong1  souji-verify is re-run against the quarantine path with the
@@ -105,6 +109,20 @@
 #   * .ufo/state and .ufo/watchdog.log are never read; no secret-shaped file
 #     is read.
 #
+# r17 note (jj-colocated repos): jj writes a refs/jj/keep/* ref for every
+#   commit it creates, visible or hidden (jj 0.45.1 git_backend.rs), so a
+#   keep ref is a garbage-collection grace ref, never a durable receipt.
+#   The absent-worktree roots list is therefore EVERY ref except refs/jj/*
+#   (`for-each-ref --exclude='refs/jj/'`): refs/stash, refs/original and
+#   other non-branch refs stay roots, while an absent worktree head held
+#   only by a jj keep ref is NOT-SAFE, never SAFE(metadata-prune).
+#   The unpushed-commits-touching checks additionally refuse a keep-only
+#   commit C (rev-list --glob='refs/jj/keep/*' --not --branches --tags
+#   --remotes -- <rel>) only when C:<rel> exists and its object id is absent
+#   from every remote-reachable <rel> blob: keep-only deletions and
+#   metaedit/rebase predecessors (identical blob) do not refuse, and the
+#   bare `jj-keep-novel` token marks a refusal. A repo with no
+#   refs/jj/keep/* runs no extra query and produces byte-identical output.
 # Q8 bounds (r13)
 #   Every per-target staging move and digest runs under a fixed GNU
 #   `timeout --kill-after=10` bound: file digest 120s, directory digest 300s,
@@ -216,6 +234,21 @@ git_tracked() { # $1 repo $2 repo-relative path -> 0 when tracked in HEAD/index
   git -C "$1" ls-files --error-unmatch -- "$2" >/dev/null 2>&1
 }
 
+# r17: jj-colocated lanes keep a .jj directory beside .git. Under colocation
+# jj owns the index: `git mv`'s staged rename and `git rm --cached`'s index
+# cleanup are advisory at best (JjAuditSouji F4), and a lane commit of the
+# move must go through the fleet helper naming BOTH the source and the
+# quarantine path so the rename lands atomically (F1: naming only the
+# destination leaves the source deletion uncommitted).
+q_jj_colocated() { [ -d "$1/.jj" ] && [ -e "$1/.git" ]; }
+
+q_jj_commit_recipe() { # $1 repo, $2 source rel, $3 qpath rel -> operator recipe
+  printf 'jj-lane.sh commit %s --as souji -m %s -- %s %s' \
+    "$(printf '%q' "$1")" \
+    "$(printf '%q' "souji-quarantine: stage $2 into quarantine")" \
+    "$(printf '%q' "$2")" "$(printf '%q' "$3")"
+}
+
 git_dirty_tracked() { # $1 repo $2 rel -> porcelain output (may be empty)
   git -C "$1" --no-optional-locks status --porcelain -- "$2" 2>/dev/null || true
 }
@@ -301,10 +334,16 @@ s18_second_check() {
         else
           unpushed_n=unverifiable
         fi
-        if [ "${unpushed_n:-1}" = 0 ]; then
-          ev="$ev unpushed-touching=0"
-        else
+        if [ "${unpushed_n:-1}" != 0 ]; then
           ok=0; ev="$ev class=FAIL unpushed-touching=$unpushed_n"
+        else
+          local kn=0
+          jj_keep_novel "$CREPO" "$REL" || kn=$?
+          case "$kn" in
+            0) ok=0; ev="$ev class=FAIL unpushed-touching=0 jj-keep-novel" ;;
+            1) ev="$ev unpushed-touching=0" ;;
+            *) ok=0; ev="$ev class=FAIL unpushed-touching=unverifiable" ;;
+          esac
         fi
         if [ "$ISDIR" = 0 ]; then
           blob_sha=$(git -C "$CREPO" cat-file blob "$intro:$REL" 2>/dev/null | timeout --kill-after=10 120 sha256sum | cut -d' ' -f1 || true)
@@ -490,18 +529,24 @@ s18_flow_one() {
   PIN_SHA=$pin_sha PIN_MTIME=$pin_mtime
 
   if [ "$DRYRUN" = 1 ]; then
+    local jjcol=0
+    q_jj_colocated "$crepo" && jjcol=1
     emit CMD "$raw" "mkdir -p -- $(printf '%q' "$qdir/$(dirname -- "$rel")")"
-    if [ "$tracked" = 1 ]; then
+    if [ "$tracked" = 1 ] && [ "$jjcol" = 0 ]; then
       emit CMD "$raw" "timeout --kill-after=10 60 git -C $(printf '%q' "$crepo") mv -- $(printf '%q' "$rel") $(printf '%q' "$qpath")"
     else
+      # jj owns the index under colocation; the move is a worktree rename only
       emit CMD "$raw" "timeout --kill-after=10 60 mv --no-copy -T -- $(printf '%q' "$ct") $(printf '%q' "$qpath")"
     fi
     emit CMD "$raw" "sleep $HOLD   # hold window"
     emit CMD "$raw" "receipt engine second check on $(printf '%q' "$qpath") (context repo=$crepo)"
-    if [ "$tracked" = 1 ]; then
+    if [ "$tracked" = 1 ] && [ "$jjcol" = 0 ]; then
       emit CMD "$raw" "git -C $(printf '%q' "$crepo") rm --cached --quiet -- $(printf '%q' "$qpath")   # after rm"
     fi
     emit CMD "$raw" "rm -rf -- $(printf '%q' "$qpath")"
+    if [ "$tracked" = 1 ] && [ "$jjcol" = 1 ]; then
+      emit CMD "$raw" "$(q_jj_commit_recipe "$crepo" "$rel" "${qpath#"$crepo"/}")   # jj owns the index; commit the move through the lane helper naming BOTH the source and the quarantine path -- never a git index/commit recipe"
+    fi
     emit RESULT "$raw" DRY-RUN-PASS "$class" "stage1=$stage1_ev"
     N_DRYPASS=$((N_DRYPASS + 1))
     return 0
@@ -524,7 +569,9 @@ s18_flow_one() {
     return 0
   fi
   emit QSTAGE stage2 "$raw" "$method" "$qpath"
-
+  if [ "$tracked" = 1 ] && q_jj_colocated "$crepo"; then
+    emit CMD "$raw" "$(q_jj_commit_recipe "$crepo" "$rel" "${qpath#"$crepo"/}")   # jj owns the index; commit the move through the lane helper naming BOTH the source and the quarantine path -- never a git index/commit recipe"
+  fi
   # test-only hook (fixtures): simulate tampering between stage 2 and 4
   if [ -n "${SOUJI_Q_TEST_HOOK:-}" ] && [ "${SOUJI_Q_SELFTEST_ACTIVE:-}" = "1" ]; then
     if ! bash "$SOUJI_Q_TEST_HOOK" "$qpath" 2>"$ERRTMP"; then
@@ -564,7 +611,11 @@ s18_flow_one() {
   fi
   if [ "$tracked" = 1 ]; then
     git -C "$crepo" rm --cached --quiet -- "$qpath" 2>/dev/null || \
-      emit QSTAGE stage5-index "$raw" index-cleanup-skipped "$qpath"
+      if q_jj_colocated "$crepo"; then
+        emit QSTAGE stage5-index "$raw" index-cleanup-skipped "$qpath jj-owns-index"
+      else
+        emit QSTAGE stage5-index "$raw" index-cleanup-skipped "$qpath"
+      fi
   fi
   # prune now-empty parents of the staged copy up to (not including) qdir
   local rmp
@@ -654,6 +705,7 @@ run_mode() {
 
 ST_TMP="" ST_FLEET="" ST_REPO="" ST_LEDGER=""
 ST_PASS=0 ST_FAIL=0
+ST_C2=""
 
 # cand-merge-quarantine.sh -- round-10 S15 composed candidate.
 # S17 quarantine flow (NUL list gate, default-ref recheck, ledger pin,
@@ -913,6 +965,32 @@ s18_snapshot_equal() { # read-only tracked-content-vs-ref compare
   return "$rc"
 }
 
+# r17: durable-receipt revsets. jj writes a refs/jj/keep/* ref for every
+# commit it creates (visible or hidden), so a keep ref is never a durable
+# receipt. It is unshipped work only when it gives <rel> an object no
+# remote-reachable commit ever had: keep-only deletions (no object at
+# <rel>), metaedit/rebase predecessors (object already reachable) and pure
+# metadata rewrites do not refuse. Plain repos (no refs/jj/keep/*) run
+# nothing new and stay byte-identical; a git failure returns 2 so the
+# caller's existing history-unverifiable / FAIL path applies. $2 is
+# repo-relative (an absolute path would silently never match `C:<rel>`).
+jj_keep_novel() { # $1 repo, $2 path relative to the repo root
+  local repo=$1 rel=$2 c obj known
+  [ -n "$(git -C "$repo" for-each-ref --format='%(refname)' --count=1 refs/jj/keep/ 2>/dev/null)" ] || return 1
+  if ! known=$(git -C "$repo" rev-list --objects --remotes -- "$rel" 2>/dev/null | cut -d' ' -f1); then
+    return 2
+  fi
+  if ! c=$(git -C "$repo" rev-list "--glob=refs/jj/keep/*" --not --branches --tags --remotes -- "$rel" 2>/dev/null); then
+    return 2
+  fi
+  while IFS= read -r c; do
+    [ -n "$c" ] || continue
+    obj=$(git -C "$repo" rev-parse -q --verify "$c:$rel" 2>/dev/null) || continue
+    printf '%s\n' "$known" | grep -Fxq -- "$obj" || return 0
+  done <<< "$c"
+  return 1
+}
+
 try_pushed() {
   local target=$1 repo=$2 intro ref status touching
   [ -n "$repo" ] || { NOTES+=("pushed=no-repo"); return 1; }
@@ -934,6 +1012,14 @@ try_pushed() {
   if [ -n "$touching" ]; then
     NOTES+=("pushed=unpushed-commits-touching intro=${intro:0:12}"); return 1
   fi
+  local kn=0 jjrel
+  jjrel=${target#"$repo"/}
+  if [ "$jjrel" != "$target" ]; then jj_keep_novel "$repo" "$jjrel" || kn=$?; fi
+  case "$kn" in
+    0) NOTES+=("pushed=unpushed-commits-touching intro=${intro:0:12} jj-keep-novel"); return 1 ;;
+    1) : ;;
+    *) NOTES+=("pushed=history-unverifiable"); return 1 ;;
+  esac
   if ! git -C "$repo" merge-base --is-ancestor "$intro" "$ref" 2>/dev/null; then
     NOTES+=("pushed=not-ancestor intro=${intro:0:12} ref=$ref"); return 1
   fi
@@ -1066,7 +1152,7 @@ s18_evaluate_worktree_one() {
     fi
   fi
   if [ ! -d "$target" ]; then
-    if ! refs=$(git -C "$owner" for-each-ref --format='%(objectname)' 2>/dev/null); then
+    if ! refs=$(git -C "$owner" for-each-ref --exclude='refs/jj/' --format='%(objectname)' 2>/dev/null); then
       R_EVIDENCE="durable-refs-unverifiable"; return
     fi
     if [ -n "$refs" ]; then mapfile -t roots <<< "$refs"; fi
@@ -1250,6 +1336,10 @@ if [ "$S18_KIND" = quarantine ]; then
       fi
       if ! touching=$(git -C "$CREPO" log --format=%H HEAD --branches --not --remotes -- "$REL" 2>/dev/null) || [ -n "$touching" ]; then
         SC_PASS=0; SC_EV="$SC_EV head-history=FAIL"
+      else
+        local kn=0
+        jj_keep_novel "$CREPO" "$REL" || kn=$?
+        if [ "$kn" -ne 1 ]; then SC_PASS=0; SC_EV="$SC_EV head-history=FAIL"; fi
       fi
     fi
     return 0
@@ -1340,6 +1430,23 @@ st_commit() { # $1 repo, $2 parent(sha|""), $3 message -> sha (plumbing only)
   printf '%s' "$sha"
 }
 
+st_keep_commit() { # $1 repo, $2 parent, $3 path, $4 content("" = delete) -> sha
+  local repo=$1 parent=$2 path=$3 content=$4 ti tree b sha
+  ti=$(mktemp -p "$ST_TMP") || return 1
+  rm -f -- "$ti"
+  GIT_INDEX_FILE="$ti" git -C "$repo" read-tree "$parent" || { rm -f -- "$ti"; return 1; }
+  if [ -n "$content" ]; then
+    b=$(printf '%s' "$content" | git -C "$repo" hash-object -w --stdin) || { rm -f -- "$ti"; return 1; }
+    GIT_INDEX_FILE="$ti" git -C "$repo" update-index --add --cacheinfo 100644,"$b","$path" || { rm -f -- "$ti"; return 1; }
+  else
+    GIT_INDEX_FILE="$ti" git -C "$repo" update-index --force-remove -- "$path" || { rm -f -- "$ti"; return 1; }
+  fi
+  tree=$(GIT_INDEX_FILE="$ti" git -C "$repo" write-tree) || { rm -f -- "$ti"; return 1; }
+  sha=$(printf '%s\n' "keep-only fixture" | git -C "$repo" commit-tree "$tree" -p "$parent") || { rm -f -- "$ti"; return 1; }
+  rm -f -- "$ti"
+  printf '%s' "$sha"
+}
+
 st_flow() { # $1 id, $2 want-rc, rest = tool args; sets ST_OUT ST_RC
   local id=$1 want=$2; shift 2
   local rc=0
@@ -1367,14 +1474,20 @@ st_build_fixtures() {
   printf 'pushed payload 2\n' > "$R/keep/pushed2.txt"
   printf 'dry-run payload\n' > "$R/keep/dry-pushed.txt"
   printf 'dirty base\n' > "$R/keep/dirty.txt"
+  printf 'novel v1\n' > "$R/keep/novel.txt"
   local c1; c1=$(st_commit "$R" "" "c1 tracked base")
+  # p2: pushed revision moving keep/novel.txt to v2. The pushed blob set for
+  # keep/novel.txt is {v1, v2}, which the jj keep-novelty checks consult.
+  printf 'novel v2\n' > "$R/keep/novel.txt"
+  local p2; p2=$(st_commit "$R" "$c1" "p2 pushed novel v2")
   # fake remote refs -> pushed receipts are establishable
-  git -C "$R" update-ref refs/remotes/origin/master "$c1"
+  git -C "$R" update-ref refs/remotes/origin/master "$p2"
   git -C "$R" symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/master
-  git -C "$R" update-ref refs/heads/master "$c1"
+  git -C "$R" update-ref refs/heads/master "$p2"
   # c2: local-only commit touching local/unpushed.txt (NOT-SAFE candidate)
   printf 'local-only payload\n' > "$R/local/unpushed.txt"
-  local c2; c2=$(st_commit "$R" "$c1" "c2 local-only work")
+  local c2; c2=$(st_commit "$R" "$p2" "c2 local-only work")
+  ST_C2=$c2
   git -C "$R" update-ref refs/heads/master "$c2"
   # dirty tracked file: committed at c1, modified in the worktree (gate2 FAIL)
   printf 'dirty base + uncommitted edit\n' > "$R/keep/dirty.txt"
@@ -1571,6 +1684,55 @@ run_selftest() {
   st_check "A1 kept in quarantine" \
     "$([ -f "$R/.ufo-quarantine/$(date -u +%F)/keep/obs2.txt" ] && echo 1 || echo 0)" "file stays staged"
   st_check "A1 vault untouched" "$([ -f "$ST_TMP/vault/obs2.txt" ] && echo 1 || echo 0)" "vault present"
+
+  # ---- JJ*: durable roots + keep-only blob novelty (git-only emulation) ---
+  local K_del K_same K_novel qrc=0 abs_wt="$ST_TMP/absent-wt"
+  K_del=$(st_keep_commit "$R" "$ST_C2" keep/novel.txt "")
+  K_same=$(st_keep_commit "$R" "$ST_C2" keep/novel.txt $'novel v1\n')
+  K_novel=$(st_keep_commit "$R" "$ST_C2" keep/novel.txt $'novel unshipped\n')
+  st_check "JJ0 plain repo runs nothing new" \
+    "$([ -z "$(git -C "$R" for-each-ref --format='%(refname)' --count=1 'refs/jj/keep/*')" ] && echo 1 || echo 0)" \
+    "no refs/jj/keep/*"
+  jj_keep_novel "$R" keep/novel.txt || qrc=$?
+  st_check "JJ1 no keep refs -> no novelty" "$([ "$qrc" = 1 ] && echo 1 || echo 0)" "rc=$qrc"
+
+  git -C "$R" update-ref "refs/jj/keep/$K_del" "$K_del"
+  qrc=0; jj_keep_novel "$R" keep/novel.txt || qrc=$?
+  st_check "JJ2 keep-only deletion -> no novelty" "$([ "$qrc" = 1 ] && echo 1 || echo 0)" "rc=$qrc"
+
+  git -C "$R" update-ref "refs/jj/keep/$K_same" "$K_same"
+  qrc=0; jj_keep_novel "$R" keep/novel.txt || qrc=$?
+  st_check "JJ3 identical-content predecessor -> no novelty" \
+    "$([ "$qrc" = 1 ] && echo 1 || echo 0)" "rc=$qrc"
+
+  git -C "$R" update-ref "refs/jj/keep/$K_novel" "$K_novel"
+  qrc=0; jj_keep_novel "$R" keep/novel.txt || qrc=$?
+  st_check "JJ4 novel keep-only blob -> novelty" "$([ "$qrc" = 0 ] && echo 1 || echo 0)" "rc=$qrc"
+
+  st_flow "JJ5 novel keep-only flow" 3 "$R" keep/novel.txt
+  out=$ST_OUT
+  st_check "JJ5 refused, never DELETED" \
+    "$(printf '%s' "$out" | grep -aqE "$(printf 'RESULT\t%s\t(NOT-AUTHORIZED|ABORTED)' "$R/keep/novel.txt")" && echo 1 || echo 0)" \
+    "NOT-AUTHORIZED|ABORTED"
+  st_check "JJ5 jj-keep-novel token" \
+    "$(printf '%s' "$out" | grep -aqF 'jj-keep-novel' && echo 1 || echo 0)" "token present"
+
+  # roots: every ref except refs/jj/* is durable
+  git -C "$R" for-each-ref --format='%(refname)' 'refs/jj/keep/*' | while IFS= read -r kref; do
+    git -C "$R" update-ref -d "$kref"
+  done
+  git -C "$R" update-ref refs/stash "$K_novel"
+  s18_evaluate_worktree_one "$abs_wt" "$R"$'\t'"$K_novel"$'\t'
+  st_check "JJ6 head only in refs/stash -> SAFE(metadata-prune)" \
+    "$([ "$R_VERDICT" = SAFE ] && [ "$R_RECEIPT" = metadata-prune ] && echo 1 || echo 0)" \
+    "verdict=$R_VERDICT receipt=$R_RECEIPT"
+  git -C "$R" update-ref -d refs/stash
+  git -C "$R" update-ref "refs/jj/keep/$K_novel" "$K_novel"
+  s18_evaluate_worktree_one "$abs_wt" "$R"$'\t'"$K_novel"$'\t'
+  st_check "JJ7 head only in refs/jj/keep -> NOT-SAFE" \
+    "$([ "$R_VERDICT" = NOT-SAFE ] && [ "$R_RECEIPT" != metadata-prune ] && echo 1 || echo 0)" \
+    "verdict=$R_VERDICT receipt=$R_RECEIPT"
+  git -C "$R" update-ref -d "refs/jj/keep/$K_novel"
 
   # ---- usage ---------------------------------------------------------------
   local rc=0

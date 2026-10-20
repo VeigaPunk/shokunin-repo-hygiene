@@ -1,0 +1,135 @@
+[~/.omp/agent/sessions/-Projects-shokunin/2026-10-20T12-57-31-587Z_01a15963-70c3-7390-a1b4-7911b9506d07/SoujiR16/SoujiR16.SentinelGateSafety-4.jsonl#4AE0]
+1:# SoujiR16.SentinelGateSafety-4 (parked)
+2:
+3:## user
+4:
+5:Complete assignment thoroughly:
+6:
+7:/skill:godspeed
+8:You are a Godspeed-enabled subagent.
+9:
+10:1. **Name the axes.**
+11:2. **Iterate cheap, in parallel.**
+12:3. **Keep moves that improve any axis and harm none.**
+13:4. **Don't aim — let the frontier walk itself.**
+14:
+15:## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+16:Security review of tools/souji-landing-gate.py at HEAD: it reads blobs of arbitrary revisions and runs `bash -n` and Python compile() on them. Could a hostile committed file make the gate execute code, write outside /var/tmp, follow a symlink out of its snapshot, or exhaust resources (huge blob, deep recursion)? Source only.
+17:
+18:Lane bounds: leaf member — no subagent dispatch.
+19:Judged on: calibration
+20:
+21:Report: write your scoped findings to .ufo/waves/round-16/w2/SentinelGateSafety.md
+22:
+23:# Tooling directive — operator, 2026-10-19 (always on, every agent)
+24:
+25:Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+26:helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+27:`sudo` is available.
+28:
+29:- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+30:  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+31:  only; never pipe an unverified remote script into a shell.
+32:- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+33:  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+34:  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+35:  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+36:- Record every install or update — tool, version, channel, reason — in your report or handoff.
+37:
+38:## assistant
+39:
+40:→ read(skill://godspeed) ⇒ ok · 18 lines
+41:→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show HEAD:tools/souji-landing-gate.py) ⇒ ok · 1006 lines
+42:
+43:## assistant
+44:
+45:→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin rev-parse HEAD && git -C /home/vgpnk/Projects/shokunin/souji-shokun…) ⇒ ok · 6 lines
+46:→ grep(subprocess\.run|json\.loads|compile\(|open\(|makedirs|mkdtemp|rmtree|\.split\(\)|diff-filter|except |\.get\(|startswith…) ⇒ ok · 259 lines
+47:
+48:## assistant
+49:
+50:→ read(https://git-scm.com/docs/git-config#Documentation/git-config.txt-corequotePath) ⇒ ok · 302 lines
+51:→ read(https://git-scm.com/docs/diff-config) ⇒ ok · 302 lines
+52:
+53:## assistant
+54:
+55:→ grep(diff\.renames|quotePath @ artifact://33438) ⇒ ok · 5 lines
+56:→ grep(core\.quotePath @ artifact://33437) ⇒ ok · 5 lines
+57:
+58:## assistant
+59:
+60:→ read(artifact://33438:316-326) ⇒ ok · 17 lines
+61:→ read(artifact://33437:2670-2690) ⇒ ok · 29 lines
+62:
+63:## assistant
+64:
+65:→ bash(echo skip) ⇒ ok · 2 lines
+66:→ read(https://git-scm.com/docs/git-cat-file) ⇒ ok · 302 lines
+67:
+68:## assistant
+69:
+70:→ grep((?i)symlink|quotepath|rename|recursion|unicode|non-ascii|huge|nested|\-z\b|ln -s|120000 @ /home/vgpnk/Projects/shokunin…) ⇒ ok · 1 line
+71:
+72:## assistant
+73:
+74:→ grep(GIT_NO_LAZY_FETCH|GIT_CONFIG_COUNT|core\.fsmonitor|core\.hooksPath @ /home/vgpnk/Projects/shokunin/souji-shokunin/tools…) ⇒ ok · 45 lines
+75:
+76:## assistant
+77:
+78:→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-landing-gate.py:182-190,418-422,531-562) ⇒ ok · 52 lines
+79:
+80:## assistant
+81:
+82:→ grep(record_bytes = blob_by_oid|elif sha256\(blob\) != pinned|sha256\(blob\)\[:16\]|def parse_script|def evaluate|def check_…) ⇒ ok · 42 lines
+83:
+84:## assistant
+85:
+86:→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-16/w2/SentinelGateSafety.md) ⇒ ok · 2 lines
+87:
+88:## assistant
+89:
+90:I reviewed the source only: I did not run the gate, its selftest or its fixture, so everything below comes from reading the code and the git docs. A hostile committed file cannot make the gate run code, write outside /var/tmp, or follow a symlink out of its snapshot. It can exhaust memory, disk and CPU, crash the gate with an exit code that means "findings" (should be 2, could-not-evaluate), and slip broken scripts past two of its parse checks. The gate file is the same at lane HEAD `163158a` as at `a6ec781`, where it last changed.
+91:
+92:| Question | Verdict |
+93:|---|---|
+94:| Run code | **Holds.** Committed bytes only reach `bash -n` (L201), `compile()` (L216) and `json`/`hashlib`/`re`. `git cat-file blob` is called without `--textconv`/`--filters`, so committed attributes can't attach drivers. `measured_commit` must be hex before it reaches `rev-parse` (L464). |
+95:| Write outside /var/tmp | **Holds.** The only writes go under `mkdtemp(dir=/var/tmp)`, after `_safe_relpath` rejects absolute and `..` paths (L182-200). Pin keys are only looked up in memory. `--json` opens with exclusive create, so a planted symlink is refused. |
+96:| Follow a symlink out | **Holds.** The gate never creates symlinks, and `cat-file` without `--follow-symlinks` returns the link text, not the target. |
+97:| Exhaust resources | **Fails** — see F1 to F3. Deep nesting in `compile()` or `bash -n` fails closed. |
+98:
+99:**Findings:**
+100:- **F1, medium:** blob reads have no size cap and no subprocess timeout (L116-158, L199-201).
+101:  - A small compressed blob that inflates to gigabytes can OOM the gate or fill /var/tmp.
+102:  - If the gate is OOM-killed, the cleanup in `finally` doesn't run, so the hostile bytes stay in /var/tmp.
+103:  - **Fix:** check the size first (`cat-file -s` or `ls-tree -l`), treat oversize as could-not-evaluate (exit 2), and add `timeout=` to every call.
+104:- **F2, medium-low:** two parts of the carry check can be driven into near-endless CPU time.
+105:  - Each lesson line is re-normalised for every report needle (L336-337), so the work is M×N.
+106:  - The `<!--.*?-->` regex (L85/L289) is quadratic when comments are never closed.
+107:  - **Fix:** normalise the lesson lines once, and strip comments with a linear scan.
+108:- **F3, low:** many pin keys pointing at one large blob mean one full read and hash per key. Blobs at the measured commit are hashed twice (L491/L502) and the record is read twice (L427/L458).
+109:  - **Fix:** cache digests by object id and cap the number of keys.
+110:- **F4, medium (calibration):** a cited `.sh` committed as a symlink is checked as its one-word link text, so `bash -n` passes and no `LG-PARSE-REG` is raised.
+111:  - `list_tree` throws away the file mode (L136-142), so the gate can't tell a symlink from a file.
+112:  - **Fix:** keep the mode and flag 120000/160000 entries as "not a regular file".
+113:- **F5, medium (calibration):** hostile JSON crashes the gate with an uncaught exception, which exits 1 ("findings") instead of 2. Each of these does it:
+114:  - an `expected.json` that is `[]` or a string (L391);
+115:  - a non-dict `files` (L395);
+116:  - a non-string `record` (L366);
+117:  - very deep nesting. I believe CPython raises `RecursionError` here, which the except clauses at L386/L461 don't catch, but I haven't run it.
+118:
+119:  No SUMMARY line or `--json` is produced. Neither the selftest nor `tests/fixtures/r16-landing-gate.py` covers these shapes.
+120:  - **Fix:** check the JSON shapes, add `RecursionError` to both except clauses, and optionally make `main` return 2 on any unexpected exception.
+121:- **F6, medium (calibration):** broken changed scripts can escape `LG-PARSE-CHANGED` (L557-560) three ways:
+122:  - Non-ASCII, tab, quote or backslash names come out quoted (git's default), end in `.sh"`, and are silently skipped.
+123:  - `.split()` cuts names at spaces, which lets a decoy file be parsed in place of the real one.
+124:  - Renames are on by default, so a renamed broken script shows as `R` and `--diff-filter=AM` drops it.
+125:
+126:  The diff also uses the raw `base` string rather than the commit resolved at L532.
+127:  - **Fix:** `git diff --name-only -z --no-renames --diff-filter=AMT <resolved base> <resolved rev>`, split on NUL.
+128:
+129:Lower-severity notes in the report:
+130:- `python3 tools/…` puts the worktree's `tools/` first on the import path; run the gate with `python3 -P` from a trusted checkout.
+131:- The gate's git calls don't get the census's `GIT_NO_LAZY_FETCH` / fsmonitor / hooksPath environment. This depends on local config, not committed content.
+132:- The selftest picks up the operator's global git config, such as hooks and commit signing.
+133:
+134:The report ends with `STATUS: FAIL`. The only shell commands were `git show`, `rev-parse`, `cat-file | sha256sum`, `log`, and a no-op `echo skip`; they are listed verbatim under `## Commands`. File reads were exact-file only, plus the git-scm docs. I installed nothing and wrote nothing besides the report, at `/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-16/w2/SentinelGateSafety.md`.

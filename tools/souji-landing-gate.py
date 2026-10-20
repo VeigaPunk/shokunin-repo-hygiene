@@ -29,10 +29,27 @@ CLI:
   python3 tools/souji-landing-gate.py --selftest
 
 Exit: 0 no findings, 1 findings, 2 could-not-evaluate (usage, unknown rev,
-no SKILL.md, missing .ufo/waves/round-N/ at REV, git failure).
+no SKILL.md, missing .ufo/waves/round-N/ at REV, git failure, malformed
+expected.json shape).
 
-Output: one TSV line per finding `ID\\tpath\\tdetail` (sorted), then
-`SUMMARY\\tfindings=K\\tchecked_reg=A\\tchecked_pins=B\\tchecked_markers=C\\tchecked_reports=D`.
+Output: one TSV line per finding `ID\tpath\tdetail` (sorted), then
+`SUMMARY\tfindings=K\tchecked_reg=A\tchecked_pins=B\tchecked_measured=M\tchecked_markers=C\tstatus_lines=S\tcarry_heading=H\tchecked_reports=D`.
+
+Per-branch execution counts (r17): `checked_pins` counts frozen-pin
+comparisons at REV, `checked_measured` counts the comparisons against
+`record.measured_commit` (0 means the measured branch never ran, so the
+measured class is unevaluated in that replay), `status_lines` counts report
+lines opening a STATUS channel (fenced/table lines included, so 0 means the
+failure channel had nothing to look at), `carry_heading` is 1 iff the lesson
+carries the `## Seat-reported failures` heading, and `checked_reports` is the
+number of `.md` reports under the wave prefix. A zero on any of these means
+the axis was not exercised — never that it passed.
+
+Environment: every git call runs under GIT_ENV — repository-selecting
+ambient variables (GIT_DIR, GIT_WORK_TREE, GIT_INDEX_FILE,
+GIT_OBJECT_DIRECTORY, GIT_ALTERNATE_OBJECT_DIRECTORIES, GIT_COMMON_DIR)
+are removed and GIT_NO_LAZY_FETCH/GIT_NO_REPLACE_OBJECTS are set, so
+`--root` alone selects the repository and committed bytes are exact.
 
 Finding ids (pinned): LG-PARSE-REG, LG-MISSING-REG, LG-PARSE-CHANGED,
 LG-FROZEN-PIN, LG-FROZEN-MEASURED, LG-SEAT-UNCARRIED, LG-OPEN-ADMITTED.
@@ -104,9 +121,31 @@ FINDING_IDS = (
 )
 
 
+
+
+# Repository-selecting ambient variables are stripped so --root alone
+# selects the repository (r17 S3); NO_LAZY_FETCH keeps a partial clone
+# from touching the network and NO_REPLACE_OBJECTS keeps `cat-file`
+# bytes equal to committed bytes.
+GIT_ENV = {
+    k: v
+    for k, v in os.environ.items()
+    if k
+    not in (
+        "GIT_DIR",
+        "GIT_WORK_TREE",
+        "GIT_INDEX_FILE",
+        "GIT_OBJECT_DIRECTORY",
+        "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+        "GIT_COMMON_DIR",
+    )
+}
+GIT_ENV["GIT_NO_LAZY_FETCH"] = "1"
+GIT_ENV["GIT_NO_REPLACE_OBJECTS"] = "1"
+
+
 class EvalError(Exception):
     """Could-not-evaluate (exit 2)."""
-
 
 # ---------------------------------------------------------------------------
 # Git plumbing (read-only blob access; never `git archive`)
@@ -119,6 +158,7 @@ def _git(root, args, binary=True):
         ["git", "-C", root] + args,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
+        env=GIT_ENV,
     )
     if proc.returncode != 0:
         raise EvalError(
@@ -148,15 +188,25 @@ def blob_by_oid(root, oid):
 
 
 def blob_at_path(root, rev, path):
-    """Blob bytes at REV:path, or None if absent."""
+    """Blob bytes at REV:path, or None if absent. Any git failure that is
+    not "path absent" is EvalError (exit 2), never a finding (r17 S1):
+    `rev-parse --verify --quiet` exits 1 for an unresolvable pathspec and
+    a larger code for a real repository error."""
+    spec = "%s:%s" % (rev, path)
     proc = subprocess.run(
-        ["git", "-C", root, "cat-file", "blob", "%s:%s" % (rev, path)],
+        ["git", "-C", root, "rev-parse", "--verify", "--quiet", spec],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
+        env=GIT_ENV,
     )
-    if proc.returncode != 0:
+    if proc.returncode == 1:
         return None
-    return proc.stdout
+    if proc.returncode != 0:
+        raise EvalError(
+            "git rev-parse %s failed (rc=%d): %s"
+            % (spec, proc.returncode, proc.stderr.decode("utf-8", "replace").strip()[:300])
+        )
+    return blob_by_oid(root, proc.stdout.decode("ascii").strip())
 
 
 def resolve_commit(root, rev):
@@ -221,11 +271,11 @@ def check_python(path, content):
     return None
 
 
-def parse_script(root, tree, path, snapdir, rev):
-    """Parse one script path at REV. Return detail on failure, else None."""
-    content = blob_at_path(root, rev, path)
-    if content is None:
-        return "blob unreadable at %s" % rev
+def parse_script(root, tree, path, snapdir):
+    """Parse one script path from the already-enumerated REV tree. Return
+    detail on failure, else None. Reads by oid, so a read failure is
+    EvalError, never a finding."""
+    content = blob_by_oid(root, tree[path])
     if path.endswith(".sh"):
         return check_bash(path, content, snapdir)
     return check_python(path, content)
@@ -304,8 +354,17 @@ def failures_section_lines(lesson_text):
     return out
 
 
+def status_line_count(report_text):
+    """Number of report lines carrying a STATUS channel prefix — inside or
+    outside fences/tables, failure-vocabulary or not. Reported so a round
+    whose carry axis was never exercised is visible in SUMMARY."""
+    return sum(
+        1 for line in report_text.splitlines() if status_value(line) is not None
+    )
+
+
 def check_carry(root, tree, rev, round_no):
-    """Return (findings, n_markers, n_reports)."""
+    """Return (findings, n_markers, n_reports, n_status, carry_heading)."""
     prefix = ".ufo/waves/round-%d/" % round_no
     reports = sorted(
         p for p in tree if p.startswith(prefix) and p.endswith(".md")
@@ -320,15 +379,22 @@ def check_carry(root, tree, rev, round_no):
 
     carry_lines = []
     lesson_admitted = False
+    carry_heading = False
     if lesson is not None:
         carry_lines = failures_section_lines(lesson)
+        carry_heading = any(
+            FAILURES_HEADING_RE.match(line.strip())
+            for line in lesson_lines(lesson)
+        )
         lesson_admitted = bool(ADMITTED_TRUE_RE.search(lesson))
 
     findings = []
     n_markers = 0
+    n_status = 0
     carried_open = []
     for report_path in reports:
         text = blob_by_oid(root, tree[report_path]).decode("utf-8", "replace")
+        n_status += status_line_count(text)
         for lineno, raw in seat_failure_lines(text):
             n_markers += 1
             needle = norm_line(raw)
@@ -353,7 +419,7 @@ def check_carry(root, tree, rev, round_no):
                     detail + " carried open while lesson declares admitted: true",
                 )
             )
-    return findings, n_markers, len(reports)
+    return findings, n_markers, len(reports), n_status, carry_heading
 
 
 # ---------------------------------------------------------------------------
@@ -369,9 +435,10 @@ def _pin_repo_path(frozen_dir, key):
 
 
 def check_frozen_pins(root, tree, rev):
-    """Return (findings, n_pin_checks)."""
+    """Return (findings, n_pin_checks, n_measured_checks)."""
     findings = []
     n_checks = 0
+    n_measured = 0
     frozen_dirs = sorted(
         os.path.dirname(p)
         for p in tree
@@ -388,8 +455,16 @@ def check_frozen_pins(root, tree, rev):
                 ("LG-FROZEN-PIN", exp_path, "expected.json unreadable: %s" % exc)
             )
             continue
-        files = expected.get("files") or {}
-        record = {}
+        files = expected.get("files")
+        # r17 S2: a falsy `files` (null, [], "", 0, false, {}) cannot fold to
+        # zero checks while reporting clean — a shape defect in the pin
+        # contract is could-not-evaluate, not a finding. A truthy non-object
+        # is the same could-not-evaluate class (exit 2, not a crash).
+        if not isinstance(files, dict) or not files:
+            raise EvalError(
+                "%s: 'files' is absent, falsy or not an object: %r"
+                % (exp_path, files)
+            )
         record_key = expected.get("record")
         record_repo = _pin_repo_path(frozen_dir, record_key) if record_key else None
         for key, pinned in sorted(files.items()):
@@ -470,13 +545,14 @@ def check_frozen_pins(root, tree, rev):
                     ["git", "-C", root, "rev-parse", "--verify", "--quiet",
                      measured + "^{commit}"],
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                    env=GIT_ENV,
                 )
                 measured_ok = verify.returncode == 0
             else:
                 measured_ok = False
             if measured_ok:
                 for key, pinned in sorted(files.items()):
-                    n_checks += 1
+                    n_measured += 1
                     repo_path = _pin_repo_path(frozen_dir, key)
                     blob = blob_at_path(root, measured, repo_path)
                     if blob is None:
@@ -503,7 +579,7 @@ def check_frozen_pins(root, tree, rev):
                                 ),
                             )
                         )
-    return findings, n_checks
+    return findings, n_checks, n_measured
 
 
 # ---------------------------------------------------------------------------
@@ -522,6 +598,9 @@ def evaluate(root, rev, round_no, base=None):
         "checked_pins": 0,
         "checked_markers": 0,
         "checked_reports": 0,
+        "checked_measured": 0,
+        "status_lines": 0,
+        "carry_heading": 0,
         "error": None,
     }
     snapdir = tempfile.mkdtemp(prefix="souji-landing-gate-", dir="/var/tmp")
@@ -546,7 +625,7 @@ def evaluate(root, rev, round_no, base=None):
                 )
                 continue
             result["checked_reg"] += 1
-            detail = parse_script(root, tree, path, snapdir, resolved)
+            detail = parse_script(root, tree, path, snapdir)
             if detail:
                 findings.append(("LG-PARSE-REG", path, detail))
 
@@ -561,22 +640,25 @@ def evaluate(root, rev, round_no, base=None):
                 if not SCRIPT_EXT_RE.search(path):
                     continue
                 result["checked_reg"] += 1
-                detail = parse_script(root, tree, path, snapdir, resolved)
+                detail = parse_script(root, tree, path, snapdir)
                 if detail:
                     findings.append(("LG-PARSE-CHANGED", path, detail))
 
         # LG-FROZEN-PIN / LG-FROZEN-MEASURED.
-        pin_findings, n_pins = check_frozen_pins(root, tree, resolved)
+        pin_findings, n_pins, n_measured = check_frozen_pins(root, tree, resolved)
         findings.extend(pin_findings)
         result["checked_pins"] = n_pins
+        result["checked_measured"] = n_measured
 
         # LG-SEAT-UNCARRIED / LG-OPEN-ADMITTED.
-        carry_findings, n_markers, n_reports = check_carry(
+        carry_findings, n_markers, n_reports, n_status, carry_heading = check_carry(
             root, tree, resolved, round_no
         )
         findings.extend(carry_findings)
         result["checked_markers"] = n_markers
         result["checked_reports"] = n_reports
+        result["status_lines"] = n_status
+        result["carry_heading"] = 1 if carry_heading else 0
 
         findings.sort(key=lambda f: (f[0], f[1], f[2]))
         result["findings"] = [
@@ -597,12 +679,15 @@ def emit(result, json_out=None):
         detail = f["detail"].replace("\t", " ").replace("\n", " ")
         print("%s\t%s\t%s" % (f["id"], f["path"], detail))
     print(
-        "SUMMARY\tfindings=%d\tchecked_reg=%d\tchecked_pins=%d\tchecked_markers=%d\tchecked_reports=%d"
+        "SUMMARY\tfindings=%d\tchecked_reg=%d\tchecked_pins=%d\tchecked_measured=%d\tchecked_markers=%d\tstatus_lines=%d\tcarry_heading=%d\tchecked_reports=%d"
         % (
             len(result["findings"]),
             result["checked_reg"],
             result["checked_pins"],
+            result["checked_measured"],
             result["checked_markers"],
+            result["status_lines"],
+            result["carry_heading"],
             result["checked_reports"],
         )
     )
@@ -619,7 +704,10 @@ def emit(result, json_out=None):
                 "findings": len(result["findings"]),
                 "checked_reg": result["checked_reg"],
                 "checked_pins": result["checked_pins"],
+                "checked_measured": result["checked_measured"],
                 "checked_markers": result["checked_markers"],
+                "status_lines": result["status_lines"],
+                "carry_heading": result["carry_heading"],
                 "checked_reports": result["checked_reports"],
             },
             "resolved_rev": result.get("resolved_rev"),
@@ -650,7 +738,7 @@ BASE_LESSON = "# Round 16\n\nAll good.\n"
 
 def _mkrepo(path):
     os.makedirs(path, exist_ok=True)
-    env = dict(os.environ)
+    env = dict(GIT_ENV)
     env["GIT_AUTHOR_NAME"] = env["GIT_COMMITTER_NAME"] = "selftest"
     env["GIT_AUTHOR_EMAIL"] = env["GIT_COMMITTER_EMAIL"] = "selftest@test"
     env["GIT_AUTHOR_DATE"] = env["GIT_COMMITTER_DATE"] = "2026-01-01T00:00:00Z"
@@ -713,7 +801,7 @@ def _base_files():
     return files
 
 
-def _frozen_world(files, record_extra=None):
+def _frozen_world(files):
     """Add a r9-frozen pin set whose pins match the committed bytes."""
     pin_paths = {
         "data.txt": "tests/fixtures/r9-frozen/data.txt",
@@ -723,8 +811,6 @@ def _frozen_world(files, record_extra=None):
         if repo_path not in files:
             files[repo_path] = "payload for %s\n" % repo_path
     record = {"measured_commit": "0" * 40}
-    if record_extra:
-        record.update(record_extra)
     files["tests/fixtures/r9-frozen/record.json"] = json.dumps(record, indent=2)
     files["tests/fixtures/r9-frozen/expected.json"] = json.dumps(
         {
@@ -747,7 +833,6 @@ def _frozen_world(files, record_extra=None):
 
 def run_selftest():
     top = tempfile.mkdtemp(prefix="souji-landing-gate-selftest-", dir="/var/tmp")
-    cases = []  # (name, fn)
     passed = failed = 0
 
     def build(case_name, files, extra_commits=()):
@@ -763,12 +848,21 @@ def run_selftest():
             commits.append(_commit_all(g, repo, "next"))
         return repo, g, commits
 
-    def check(case_name, repo, expect_exit, expect_ids=(), rev="HEAD", base=None, forbid_ids=()):
+    def check(case_name, repo, expect_exit, expect_ids=(), rev="HEAD", base=None,
+              expect_err=None, expect_n=None, expect_counts=None):
+        """Assert exit, the EXACT finding-id set (an over-firing gate fails),
+        optionally an error substring, an exact findings count, and exact
+        SUMMARY counter values."""
         nonlocal passed, failed
         res = evaluate(repo, rev, 16, base=base)
         ids = sorted({f["id"] for f in res["findings"]})
-        ok = res["exit"] == expect_exit and all(i in ids for i in expect_ids)
-        ok = ok and not any(i in ids for i in forbid_ids)
+        ok = (
+            res["exit"] == expect_exit
+            and set(ids) == set(expect_ids)
+            and (expect_err is None or expect_err in (res["error"] or ""))
+            and (expect_n is None or len(res["findings"]) == expect_n)
+            and all(res.get(k) == v for k, v in (expect_counts or {}).items())
+        )
         detail = "exit=%d ids=%s err=%s" % (res["exit"], ids, res["error"])
         if ok:
             passed += 1
@@ -781,54 +875,65 @@ def run_selftest():
     try:
         # CASE clean-pass: everything parses, pins match, STATUS benign.
         repo, g, (rev,) = build("clean-pass", _frozen_world(_base_files()))
-        check("clean-pass", repo, 0, rev=rev)
+        check("clean-pass", repo, 0, rev=rev,
+              expect_counts={"checked_measured": 0, "carry_heading": 0,
+                             "status_lines": 1})
+
+        # CASE clean-measured: a resolvable measured_commit whose pinned
+        # bytes match at both revisions emits nothing (r17 F2 — without
+        # this, an always-firing measured check passes green).
+        repo = os.path.join(top, "clean-measured")
+        g = _mkrepo(repo)
+        f = _frozen_world(_base_files())
+        for rel, content in f.items():
+            _write_file(repo, rel, content)
+        c1 = _commit_all(g, repo, "pinned bytes")
+        record = {"measured_commit": c1}
+        _write_file(repo, "tests/fixtures/r9-frozen/record.json", json.dumps(record))
+        exp = json.loads(f["tests/fixtures/r9-frozen/expected.json"])
+        exp["record_sha256"] = _sha(repo, "tests/fixtures/r9-frozen/record.json")
+        _write_file(repo, "tests/fixtures/r9-frozen/expected.json", json.dumps(exp))
+        rev = _commit_all(g, repo, "bind measured")
+        check("clean-measured", repo, 0, rev=rev,
+              expect_counts={"checked_measured": 2})
 
         # CASE nonparsing-cited-sh.
-        f = _frozen_world(_base_files())
+        f = _base_files()
         f["tools/good.sh"] = BAD_SH
-        repo, g, (rev,) = build("bad-cited-sh", f)
+        repo, g, (rev,) = build("bad-cited-sh", _frozen_world(f))
         check("nonparsing-cited-sh", repo, 1, ("LG-PARSE-REG",), rev=rev)
 
         # CASE nonparsing-cited-py.
-        f = _frozen_world(_base_files())
+        f = _base_files()
         f["tools/good.py"] = BAD_PY
-        repo, g, (rev,) = build("bad-cited-py", f)
+        repo, g, (rev,) = build("bad-cited-py", _frozen_world(f))
         check("nonparsing-cited-py", repo, 1, ("LG-PARSE-REG",), rev=rev)
 
         # CASE missing-cited-path.
-        f = _frozen_world(_base_files())
+        f = _base_files()
         f["SKILL.md"] = f["SKILL.md"] + "| gone | `bash tools/gone.sh --x` | row |\n"
-        repo, g, (rev,) = build("missing-cited", f)
+        repo, g, (rev,) = build("missing-cited", _frozen_world(f))
         check("missing-cited-path", repo, 1, ("LG-MISSING-REG",), rev=rev)
 
-        # CASE changed-nonparsing-with-base: base parses, rev breaks.
+        # CASE changed-nonparsing-with-base: base parses, rev adds a broken
+        # uncited script (exact ids: the cited world stays clean).
         repo, g, commits = build(
             "changed-bad",
             _frozen_world(_base_files()),
-            extra_commits=({"tools/good.sh": BAD_SH},),
+            extra_commits=({"tools/new.sh": BAD_SH},),
         )
         check(
             "changed-nonparsing-with-base",
             repo,
             1,
-            ("LG-PARSE-CHANGED", "LG-PARSE-REG"),
+            ("LG-PARSE-CHANGED",),
             rev=commits[1],
             base=commits[0],
         )
 
         # CASE uncited-nonparsing-passes-without-base.
         repo, g, (rev,) = build("uncited-bad", _frozen_world(_base_files()))
-        res = evaluate(repo, rev, 16)
-        ok = res["exit"] == 0 and not res["findings"]
-        if ok:
-            passed += 1
-            print("CASE\tpass\tuncited-nonparsing-not-flagged\texit=%d" % res["exit"])
-        else:
-            failed += 1
-            print(
-                "CASE\tFAIL\tuncited-nonparsing-not-flagged\texit=%d findings=%s"
-                % (res["exit"], res["findings"])
-            )
+        check("uncited-nonparsing-not-flagged", repo, 0, rev=rev)
 
         # CASE pin-mismatch.
         f = _frozen_world(_base_files())
@@ -836,7 +941,7 @@ def run_selftest():
         exp["files"]["tools/good.sh"] = "0" * 64
         f["tests/fixtures/r9-frozen/expected.json"] = json.dumps(exp)
         repo, g, (rev,) = build("pin-mismatch", f)
-        check("pin-mismatch", repo, 1, ("LG-FROZEN-PIN",), rev=rev)
+        check("pin-mismatch", repo, 1, ("LG-FROZEN-PIN",), rev=rev, expect_n=1)
 
         # CASE pin-missing-file: key addresses absent path.
         f = _frozen_world(_base_files())
@@ -844,7 +949,7 @@ def run_selftest():
         exp["files"]["ghost.txt"] = "0" * 64  # resolves inside frozen dir, absent
         f["tests/fixtures/r9-frozen/expected.json"] = json.dumps(exp)
         repo, g, (rev,) = build("pin-missing", f)
-        check("pin-missing-file", repo, 1, ("LG-FROZEN-PIN",), rev=rev)
+        check("pin-missing-file", repo, 1, ("LG-FROZEN-PIN",), rev=rev, expect_n=1)
 
         # CASE record-sha256-mismatch.
         f = _frozen_world(_base_files())
@@ -852,17 +957,18 @@ def run_selftest():
         exp["record_sha256"] = "0" * 64
         f["tests/fixtures/r9-frozen/expected.json"] = json.dumps(exp)
         repo, g, (rev,) = build("record-mismatch", f)
-        check("record-sha256-mismatch", repo, 1, ("LG-FROZEN-PIN",), rev=rev)
+        check("record-sha256-mismatch", repo, 1, ("LG-FROZEN-PIN",), rev=rev,
+              expect_n=1)
 
-        # CASE frozen-measured: pin disagrees with measured_commit blob.
-        f = _base_files()
-        f["tests/fixtures/r9-frozen/data.txt"] = "v2 bytes\n"
-        f["tools/good.sh"] = GOOD_SH
-        # measured_commit must be a real commit: build two-commit repo.
+        # CASE frozen-measured: the hash-mismatch branch alone — data.txt
+        # has identical bytes at both revisions; only tools/good.sh differs.
         repo = os.path.join(top, "frozen-measured")
         g = _mkrepo(repo)
         _write_file(repo, "tools/good.sh", "old-good-bytes\n")
+        _write_file(repo, "tests/fixtures/r9-frozen/data.txt", "v2 bytes\n")
         old_rev = _commit_all(g, repo, "old")
+        f = _base_files()
+        f["tests/fixtures/r9-frozen/data.txt"] = "v2 bytes\n"
         for rel, content in f.items():
             _write_file(repo, rel, content)
         record = {"measured_commit": old_rev}
@@ -878,7 +984,74 @@ def run_selftest():
         }
         _write_file(repo, "tests/fixtures/r9-frozen/expected.json", json.dumps(exp))
         rev = _commit_all(g, repo, "frozen")
-        check("frozen-measured", repo, 1, ("LG-FROZEN-MEASURED",), rev=rev)
+        check("frozen-measured", repo, 1, ("LG-FROZEN-MEASURED",), rev=rev,
+              expect_n=1, expect_counts={"checked_measured": 2})
+
+        # CASE frozen-measured-absent: the absent-at-measured branch alone —
+        # data.txt did not exist at measured_commit; good.sh is unchanged.
+        repo = os.path.join(top, "measured-absent")
+        g = _mkrepo(repo)
+        _write_file(repo, "tools/good.sh", GOOD_SH)
+        old_rev = _commit_all(g, repo, "old")
+        f = _base_files()
+        f["tests/fixtures/r9-frozen/data.txt"] = "v2 bytes\n"
+        for rel, content in f.items():
+            _write_file(repo, rel, content)
+        record = {"measured_commit": old_rev}
+        _write_file(repo, "tests/fixtures/r9-frozen/record.json", json.dumps(record))
+        exp = {
+            "files": {
+                "data.txt": _sha(repo, "tests/fixtures/r9-frozen/data.txt"),
+                "tools/good.sh": _sha(repo, "tools/good.sh"),
+            },
+            "record": "record.json",
+            "record_sha256": _sha(repo, "tests/fixtures/r9-frozen/record.json"),
+            "verdict": "clean",
+        }
+        _write_file(repo, "tests/fixtures/r9-frozen/expected.json", json.dumps(exp))
+        rev = _commit_all(g, repo, "frozen")
+        check("frozen-measured-absent", repo, 1, ("LG-FROZEN-MEASURED",), rev=rev,
+              expect_n=1)
+
+        # CASE measured-tree-path-exit2: a pin key resolving to a tree at the
+        # measured commit makes the blob read fail — could-not-evaluate
+        # (exit 2), never a finding (r17 S1).
+        repo = os.path.join(top, "tree-path")
+        g = _mkrepo(repo)
+        _write_file(repo, "tests/fixtures/r9-frozen/tools/x.txt", "x\n")
+        _write_file(repo, "tools/good.sh", GOOD_SH)
+        old_rev = _commit_all(g, repo, "old")
+        f = _base_files()
+        f["tests/fixtures/r9-frozen/tools/x.txt"] = "x\n"
+        for rel, content in f.items():
+            _write_file(repo, rel, content)
+        record = {"measured_commit": old_rev}
+        _write_file(repo, "tests/fixtures/r9-frozen/record.json", json.dumps(record))
+        exp = {
+            "files": {"tools": sha256(b"x\n")},
+            "record": "record.json",
+            "record_sha256": _sha(repo, "tests/fixtures/r9-frozen/record.json"),
+            "verdict": "clean",
+        }
+        _write_file(repo, "tests/fixtures/r9-frozen/expected.json", json.dumps(exp))
+        rev = _commit_all(g, repo, "frozen")
+        check("measured-tree-path-exit2", repo, 2, rev=rev,
+              expect_err="cat-file")
+
+        # CASES falsy/misshapen `files` → exit 2 (r17 S2): a pin set that
+        # would silently verify nothing cannot report clean.
+        for case_name, value in (
+            ("files-null-exit2", None),
+            ("files-empty-exit2", {}),
+            ("files-nonobject-exit2", "not-a-dict"),
+        ):
+            f = _frozen_world(_base_files())
+            exp = json.loads(f["tests/fixtures/r9-frozen/expected.json"])
+            exp["files"] = value
+            f["tests/fixtures/r9-frozen/expected.json"] = json.dumps(exp)
+            repo, g, (rev,) = build(case_name, f)
+            check(case_name, repo, 2, rev=rev,
+                  expect_err="'files' is absent, falsy or not an object")
 
         # CASE uncarried-marker: STATUS failure + phrase, lesson lacks them.
         f = _frozen_world(_base_files())
@@ -886,7 +1059,45 @@ def run_selftest():
             "# SeatA\n\n## STATUS: INCOMPLETE — file has an unresolved syntax error\n"
         )
         repo, g, (rev,) = build("uncarried", f)
-        check("uncarried-marker", repo, 1, ("LG-SEAT-UNCARRIED",), rev=rev)
+        check("uncarried-marker", repo, 1, ("LG-SEAT-UNCARRIED",), rev=rev,
+              expect_n=1,
+              expect_counts={"status_lines": 1, "carry_heading": 0})
+
+        # CASE bold-uncarried: a bold-decorated STATUS failure is positively
+        # in the failure channel (r17 F4 — without it, losing bold
+        # acceptance in STATUS_PREFIX_RE passes green).
+        f = _frozen_world(_base_files())
+        f[".ufo/waves/round-16/w1/SeatA.md"] = (
+            "# SeatA\n\n**STATUS:** INCOMPLETE — widget red\n"
+        )
+        repo, g, (rev,) = build("bold-uncarried", f)
+        check("bold-uncarried", repo, 1, ("LG-SEAT-UNCARRIED",), rev=rev,
+              expect_n=1)
+
+        # CASE status-in-fence: an identical failure STATUS inside a fenced
+        # block is ignored while the outside copy is flagged (r17 F1 —
+        # exercises both the fence toggle and the failure detector;
+        # expect_n=1 fails if fence tracking is deleted).
+        f = _frozen_world(_base_files())
+        f[".ufo/waves/round-16/w1/SeatA.md"] = (
+            "# SeatA\n\n```\nSTATUS: FAIL — inside a fenced block\n```\n\n"
+            "STATUS: FAIL — inside a fenced block\n"
+        )
+        repo, g, (rev,) = build("fence", f)
+        check("status-in-fence", repo, 1, ("LG-SEAT-UNCARRIED",), rev=rev,
+              expect_n=1, expect_counts={"status_lines": 2})
+
+        # CASE status-in-table: an identical failure STATUS inside a table
+        # row is ignored while the outside copy is flagged (r17 F1).
+        f = _frozen_world(_base_files())
+        f[".ufo/waves/round-16/w1/SeatA.md"] = (
+            "# SeatA\n\n| code | cause |\n|---|---|\n"
+            "| 1 | STATUS: FAIL — inside a table row |\n\n"
+            "STATUS: FAIL — inside a table row\n"
+        )
+        repo, g, (rev,) = build("table", f)
+        check("status-in-table", repo, 1, ("LG-SEAT-UNCARRIED",), rev=rev,
+              expect_n=1)
 
         # CASE carried-open: failure carried under the heading with `open`.
         f = _frozen_world(_base_files())
@@ -897,7 +1108,8 @@ def run_selftest():
             "- SeatA `.ufo/waves/round-16/w1/SeatA.md:3` %s — open\n" % marker
         )
         repo, g, (rev,) = build("carried-open", f)
-        check("carried-open", repo, 0, rev=rev)
+        check("carried-open", repo, 0, rev=rev,
+              expect_counts={"carry_heading": 1, "status_lines": 1})
 
         # CASE carried-resolved.
         f = _frozen_world(_base_files())
@@ -909,7 +1121,8 @@ def run_selftest():
             % marker
         )
         repo, g, (rev,) = build("carried-resolved", f)
-        check("carried-resolved", repo, 0, rev=rev)
+        check("carried-resolved", repo, 0, rev=rev,
+              expect_counts={"carry_heading": 1})
 
         # CASE open-admitted: carried open + admitted: true → LG-OPEN-ADMITTED.
         f = _frozen_world(_base_files())
@@ -920,50 +1133,72 @@ def run_selftest():
             "- SeatA `.ufo/waves/round-16/w1/SeatA.md:3` %s — open\n" % marker
         )
         repo, g, (rev,) = build("open-admitted", f)
-        check("open-admitted", repo, 1, ("LG-OPEN-ADMITTED",), rev=rev)
+        check("open-admitted", repo, 1, ("LG-OPEN-ADMITTED",), rev=rev,
+              expect_n=1)
 
         # CASE missing-wave-dir → exit 2.
         f = _frozen_world(_base_files())
         del f[".ufo/waves/round-16/w1/SeatA.md"]
         repo, g, (rev,) = build("no-wave-dir", f)
-        check("no-wave-dir-exit2", repo, 2, rev=rev)
+        check("no-wave-dir-exit2", repo, 2, rev=rev,
+              expect_err="no .md reports under")
 
-        # CASE fenced-and-table phrases ignored; benign STATUS words pass.
+        # CASE benign-status-words: non-vocabulary STATUS values and prose
+        # failure phrases inside a fence/table pass (channel, not phrases).
         f = _frozen_world(_base_files())
         f[".ufo/waves/round-16/w1/SeatA.md"] = (
             "# SeatA\n\nSTATUS: none\n\n```\nsyntax error inside a fenced block\n```\n"
             "| note | snapshot_tampered quoted in a table |\n"
             "STATUS — done\n"
         )
-        repo, g, (rev,) = build("fenced-table-ignored", f)
-        check("fenced-and-table-ignored", repo, 0, rev=rev)
+        repo, g, (rev,) = build("benign-status", f)
+        check("benign-status-words", repo, 0, rev=rev,
+              expect_counts={"status_lines": 2})
 
         # CASE bad-rev → exit 2.
         repo, g, (rev,) = build("badrev", _frozen_world(_base_files()))
-        res = evaluate(repo, "0" * 40, 16)
-        if res["exit"] == 2:
-            passed += 1
-            print("CASE\tpass\tbad-rev-exit2\texit=2")
-        else:
-            failed += 1
-            print("CASE\tFAIL\tbad-rev-exit2\texit=%d" % res["exit"])
+        check("bad-rev-exit2", repo, 2, rev="0" * 40,
+              expect_err="cannot resolve revision")
 
         # CASE no-skill → exit 2.
         f = _frozen_world(_base_files())
         del f["SKILL.md"]
-        repo = os.path.join(top, "no-skill")
-        g = _mkrepo(repo)
-        for rel, content in f.items():
-            _write_file(repo, rel, content)
-        g("add", "-A")
-        g("commit", "-q", "-m", "x")
-        res = evaluate(repo, "HEAD", 16)
-        if res["exit"] == 2:
+        repo, g, (rev,) = build("no-skill", f)
+        check("no-skill-exit2", repo, 2, rev="HEAD", expect_err="no SKILL.md")
+
+        # CASE ambient-git-dir (r17 S3): a poisoned GIT_DIR/GIT_WORK_TREE
+        # must not redirect revision resolution — --root still selects the
+        # repository.
+        repo, g, (rev,) = build("ambgitdir", _frozen_world(_base_files()))
+        old_dir = os.environ.get("GIT_DIR")
+        old_wt = os.environ.get("GIT_WORK_TREE")
+        os.environ["GIT_DIR"] = "/nonexistent/souji-r17.git"
+        os.environ["GIT_WORK_TREE"] = "/nonexistent/souji-r17-wt"
+        try:
+            res = evaluate(repo, rev, 16)
+        finally:
+            if old_dir is None:
+                os.environ.pop("GIT_DIR", None)
+            else:
+                os.environ["GIT_DIR"] = old_dir
+            if old_wt is None:
+                os.environ.pop("GIT_WORK_TREE", None)
+            else:
+                os.environ["GIT_WORK_TREE"] = old_wt
+        ok = (
+            res["exit"] == 0
+            and not res["findings"]
+            and res.get("resolved_rev") == rev
+        )
+        if ok:
             passed += 1
-            print("CASE\tpass\tno-skill-exit2\texit=2")
+            print("CASE\tpass\tambient-git-dir\texit=0 resolved=%s" % rev[:12])
         else:
             failed += 1
-            print("CASE\tFAIL\tno-skill-exit2\texit=%d" % res["exit"])
+            print(
+                "CASE\tFAIL\tambient-git-dir\texit=%d resolved=%s err=%s"
+                % (res["exit"], res.get("resolved_rev"), res["error"])
+            )
     finally:
         shutil.rmtree(top, ignore_errors=True)
 

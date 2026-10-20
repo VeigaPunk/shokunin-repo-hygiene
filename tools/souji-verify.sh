@@ -58,6 +58,23 @@
 #        shortcut must not swallow them.
 #   D-c  Scratch-type gains no patterns beyond the spec's four families; the
 #        secret-shape list gains `.env.*`/`.envrc` (only ever more refusals).
+#   r17  jj-colocated repositories. jj 0.45.1 writes refs/jj/keep/<sha> for
+#        every commit it creates, visible or hidden (its only refs/jj
+#        namespaces are keep/, remote-tags/ and the unborn root):
+#        (a) durable receipt roots are EVERY ref except refs/jj/*
+#        (`for-each-ref --exclude='refs/jj/'`), so refs/stash, refs/original
+#        and the like stay roots and plain repositories keep byte-identical
+#        verdicts; an absent-worktree head held only by refs/jj/keep/* is
+#        unique and can never earn metadata-prune.
+#        (b) a keep-only commit refuses a pushed receipt only when the blob
+#        it introduces at the target is novel: `rev-list
+#        --glob=refs/jj/keep/* --not --branches --tags --remotes -- <rel>`
+#        names it, its `C:<rel>` object exists, and that object id is absent
+#        from every pushed blob at the path (`log --remotes`). Deletions and
+#        metaedit/rebase predecessors carrying an already-pushed blob do not
+#        refuse. Both queries are gated on a refs/jj/keep/ probe, so a
+#        repository without keep refs runs nothing new, and a git failure
+#        takes the existing history-unverifiable path.
 set -euo pipefail
 export LC_ALL=C GIT_OPTIONAL_LOCKS=0
 
@@ -214,6 +231,28 @@ count_live_refs() { # $1 target, $2 repo (or empty -> fleet root)
   if [ "$status" -gt 1 ]; then printf 'unknown\n'; return 0; fi
   n=$(printf '%s\n' "$out" | grep -c . || true)
   printf '%s\n' "${n// /}"
+}
+
+# r17: keep refs are unpushed heads, never durable roots. A keep-only commit
+# refuses a pushed receipt only when it introduces a blob at the path that no
+# pushed (remote) commit carries; deletions and metaedit/rebase predecessors
+# with an already-pushed blob do not. Returns 0 novel, 1 not novel, 2 git
+# failure (caller takes its existing history-unverifiable path).
+jj_keep_novel() { # $1 repo, $2 path relative to the repo root
+  local repo=$1 rel=$2 c obj known
+  [ -n "$(git -C "$repo" for-each-ref --format='%(refname)' --count=1 refs/jj/keep/ 2>/dev/null)" ] || return 1
+  if ! known=$(git -C "$repo" rev-list --objects --remotes -- "$rel" 2>/dev/null | cut -d' ' -f1); then
+    return 2
+  fi
+  if ! c=$(git -C "$repo" rev-list "--glob=refs/jj/keep/*" --not --branches --tags --remotes -- "$rel" 2>/dev/null); then
+    return 2
+  fi
+  while IFS= read -r c; do
+    [ -n "$c" ] || continue
+    obj=$(git -C "$repo" rev-parse -q --verify "$c:$rel" 2>/dev/null) || continue
+    printf '%s\n' "$known" | grep -Fxq -- "$obj" || return 0
+  done <<< "$c"
+  return 1
 }
 
 try_pushed() { # $1 target, $2 repo; SAFE(pushed) or fail-with-note
@@ -653,7 +692,7 @@ s18_snapshot_equal() { # read-only tracked-content-vs-ref compare
 }
 
 try_pushed() {
-  local target=$1 repo=$2 intro ref status touching
+  local target=$1 repo=$2 intro ref status touching jjrc rel
   [ -n "$repo" ] || { NOTES+=("pushed=no-repo"); return 1; }
   if ! status=$(git -C "$repo" --no-optional-locks status --porcelain --untracked-files=all --ignored=matching -- "$target" 2>/dev/null); then
     NOTES+=("pushed=status-unverifiable"); return 1
@@ -674,6 +713,12 @@ try_pushed() {
   if [ -n "$touching" ]; then
     NOTES+=("pushed=unpushed-commits-touching intro=${intro:0:12}"); return 1
   fi
+  # r17 (b): a keep-only commit refuses the receipt only when the blob it
+  # introduces at the target is absent from every pushed blob at the path.
+  rel=${target#"$repo"/}
+  jjrc=0; jj_keep_novel "$repo" "$rel" || jjrc=$?
+  if [ "$jjrc" = 2 ]; then NOTES+=("pushed=history-unverifiable"); return 1; fi
+  if [ "$jjrc" = 0 ]; then NOTES+=("pushed=unpushed-commits-touching intro=${intro:0:12} jj-keep-novel"); return 1; fi
   if ! git -C "$repo" merge-base --is-ancestor "$intro" "$ref" 2>/dev/null; then
     NOTES+=("pushed=not-ancestor intro=${intro:0:12} ref=$ref"); return 1
   fi
@@ -806,7 +851,7 @@ s18_evaluate_worktree_one() {
     fi
   fi
   if [ ! -d "$target" ]; then
-    if ! refs=$(git -C "$owner" for-each-ref --format='%(objectname)' 2>/dev/null); then
+    if ! refs=$(git -C "$owner" for-each-ref --exclude='refs/jj/' --format='%(objectname)' 2>/dev/null); then
       R_EVIDENCE="durable-refs-unverifiable"; return
     fi
     if [ -n "$refs" ]; then mapfile -t roots <<< "$refs"; fi
@@ -937,7 +982,7 @@ if [ "$S18_KIND" = quarantine ]; then
       SC_PASS=0; SC_EV="$SC_EV engine-error=FAIL"
     fi
     if [ "$CLASS" = pushed ]; then
-      local ref object touching intro
+      local ref object touching intro krc
       if ! ref=$(resolve_default_ref "$CREPO") \
         || [ "$ref" != "${S18_PUSH_REF:-}" ] \
         || ! object=$(git -C "$CREPO" rev-parse --verify "$ref:$REL" 2>/dev/null) \
@@ -952,6 +997,8 @@ if [ "$S18_KIND" = quarantine ]; then
       if ! touching=$(git -C "$CREPO" log --format=%H HEAD --branches --not --remotes -- "$REL" 2>/dev/null) || [ -n "$touching" ]; then
         SC_PASS=0; SC_EV="$SC_EV head-history=FAIL"
       fi
+      krc=0; jj_keep_novel "$CREPO" "$REL" || krc=$?
+      if [ "$krc" != 1 ]; then SC_PASS=0; SC_EV="$SC_EV head-history=FAIL"; fi
     fi
     return 0
   }
@@ -1199,6 +1246,54 @@ st_build_fixtures() {
   local cn; cn=$(st_commit "$RN" "" "n1 tracked.txt")
   git -C "$RN" update-ref refs/heads/work "$cn"
 
+  # --- r17 jj fixtures (J1-J5): keep refs hold only unpushed heads; a
+  # keep-only commit refuses only when its blob at the target is novel ---
+  local RJ="$ST_FLEET/jjrepo-shokunin"
+  st_init_repo "$RJ" master
+  mkdir -p "$RJ/jj"
+  printf 'base n\n' > "$RJ/jj/novel.txt"
+  printf 'base s\n' > "$RJ/jj/same.txt"
+  printf 'base g\n' > "$RJ/jj/gone.txt"
+  local cj0; cj0=$(st_commit "$RJ" "" "j0 baseline")
+  # pushed tip: distinct content on every jj path
+  printf 'push n\n' > "$RJ/jj/novel.txt"
+  printf 'push s\n' > "$RJ/jj/same.txt"
+  printf 'push g\n' > "$RJ/jj/gone.txt"
+  local cjp; cjp=$(st_commit "$RJ" "$cj0" "jp pushed tip")
+  git -C "$RJ" update-ref refs/heads/master "$cjp"
+  git -C "$RJ" update-ref refs/remotes/origin/master "$cjp"
+  git -C "$RJ" symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/master
+  # a side remote ref carrying the alternate same.txt blob (already pushed)
+  printf 'alt s\n' > "$RJ/jj/same.txt"
+  local cjx; cjx=$(st_commit "$RJ" "$cj0" "jx alt same blob on a side remote")
+  git -C "$RJ" update-ref refs/remotes/origin/alt "$cjx"
+  printf 'push s\n' > "$RJ/jj/same.txt"
+  git -C "$RJ" add -- jj/same.txt
+  # J1: keep-only commit with novel content at jj/novel.txt
+  printf 'novel n\n' > "$RJ/jj/novel.txt"
+  local cjn; cjn=$(st_commit "$RJ" "$cjp" "jn keep-only novel content")
+  git -C "$RJ" update-ref refs/jj/keep/"$cjn" "$cjn"
+  printf 'push n\n' > "$RJ/jj/novel.txt"
+  git -C "$RJ" add -- jj/novel.txt
+  # J2: keep-only predecessor whose same.txt blob a pushed ref already has
+  printf 'alt s\n' > "$RJ/jj/same.txt"
+  local cjs; cjs=$(st_commit "$RJ" "$cjp" "js keep-only predecessor with pushed blob")
+  git -C "$RJ" update-ref refs/jj/keep/"$cjs" "$cjs"
+  printf 'push s\n' > "$RJ/jj/same.txt"
+  git -C "$RJ" add -- jj/same.txt
+  # J3: keep-only deletion is never novel
+  rm -f "$RJ/jj/gone.txt"
+  local cjd; cjd=$(st_commit "$RJ" "$cjp" "jd keep-only deletion")
+  git -C "$RJ" update-ref refs/jj/keep/"$cjd" "$cjd"
+  printf 'push g\n' > "$RJ/jj/gone.txt"
+  git -C "$RJ" add -- jj/gone.txt
+  # J4: absent-worktree head held only by refs/jj/keep
+  st_register_worktree "$RJ" wt-jj "$ST_TMP/wt-jj" "$cjn" ""
+  # J5: absent-worktree head held only by refs/stash (a durable root)
+  local cjst; cjst=$(git -C "$RJ" commit-tree "$(git -C "$RJ" rev-parse "$cj0^{tree}")" -p "$cj0" -m "stash-only head")
+  git -C "$RJ" update-ref refs/stash "$cjst"
+  st_register_worktree "$RJ" wt-stash "$ST_TMP/wt-stash" "$cjst" ""
+
   touch -d '3 days ago' "$R/.scratch/old-f7.out" "$R/.scratch/old-f8.out" "$R/.scratch/old-e8.out"
   return 0
 }
@@ -1247,6 +1342,14 @@ run_selftest() {
   st_case E6 SAFE moved-to-obsidian "source+vault-digest" "$ST_FLEET/preserved-repo-shokunin"
   st_case E7 NOT-SAFE pushed-unverifiable "unverifiable" "$ST_FLEET/norefs-shokunin/tracked.txt"
   st_case E8 NOT-SAFE none "live-refs=1" "$R/.scratch/old-e8.out"
+  # r17 jj-colocated shapes: keep-only commits refuse only on novel blobs;
+  # keep refs are never durable roots, refs/stash stays one.
+  st_case J1 NOT-SAFE none "jj-keep-novel" "$ST_FLEET/jjrepo-shokunin/jj/novel.txt"
+  st_case J2 SAFE pushed "" "$ST_FLEET/jjrepo-shokunin/jj/same.txt"
+  st_case J3 SAFE pushed "" "$ST_FLEET/jjrepo-shokunin/jj/gone.txt"
+  st_case J4 NOT-SAFE none "durable-refs-only=yes" "$ST_TMP/wt-jj"
+  st_case J5 SAFE metadata-prune "unique=0" "$ST_TMP/wt-stash"
+
 
   st_status H2 2
   st_status H3 2 --bogus-flag "$R/keep/f1.txt"
