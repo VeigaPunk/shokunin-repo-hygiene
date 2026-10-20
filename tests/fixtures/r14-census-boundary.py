@@ -33,7 +33,6 @@ import argparse
 import hashlib
 import os
 import shlex
-import signal
 import shutil
 import subprocess
 import sys
@@ -122,70 +121,15 @@ def die(message: str) -> "None":
     raise SystemExit(2)
 
 
-def run_isolated(
-    command: list[str],
-    *,
-    cwd: str | None = None,
-    env: dict[str, str] | None = None,
-    timeout: int,
-    errors: str | None = None,
-):
-    proc = subprocess.Popen(
-        command,
-        cwd=cwd,
-        env=env,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-        errors=errors,
-        start_new_session=True,
-    )
-    try:
-        stdout, stderr = proc.communicate(timeout=timeout)
-    except subprocess.TimeoutExpired:
-        try:
-            kill_session(proc.pid)
-        finally:
-            try:
-                os.killpg(proc.pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
-            proc.communicate()
-        raise
-    return subprocess.CompletedProcess(command, proc.returncode, stdout, stderr)
-
-
-def kill_session(session_id: int) -> None:
-    members = []
-    try:
-        with os.scandir("/proc") as entries:
-            for entry in entries:
-                if not entry.name.isdecimal():
-                    continue
-                try:
-                    # After `(comm)`, field 3 is state and field 6 is session.
-                    stat = Path(entry.path, "stat").read_bytes()
-                    fields = stat.rsplit(b")", 1)[1].split()
-                    if int(fields[3]) == session_id:
-                        members.append(int(entry.name))
-                except (OSError, IndexError, ValueError):
-                    continue
-    except OSError:
-        pass
-    for pid in sorted(members):
-        try:
-            os.kill(pid, signal.SIGKILL)
-        except OSError:
-            pass
-
-
 def run_setup(command: list[str], *, cwd: Path | None = None, env: dict[str, str] | None = None):
-    proc = run_isolated(
+    proc = subprocess.run(
         command,
         cwd=str(cwd) if cwd else None,
         env=env,
-        timeout=60,
+        capture_output=True,
+        text=True,
         errors="replace",
+        timeout=60,
     )
     if proc.returncode != 0:
         die(f"setup command failed ({proc.returncode}): {' '.join(command)}: {proc.stderr.strip()}")
@@ -383,7 +327,7 @@ def probe_strace() -> None:
         "LC_ALL": "C",
     }
     try:
-        proc = run_isolated(
+        proc = subprocess.run(
             [
                 REAL["strace"],
                 "-f",
@@ -401,6 +345,8 @@ def probe_strace() -> None:
                 str(AGENT / "config.yml"),
             ],
             env=env,
+            capture_output=True,
+            text=True,
             timeout=20,
         )
     except (OSError, subprocess.TimeoutExpired) as exc:
@@ -443,12 +389,14 @@ def run_tool(args: list[str], extra_env: dict[str, str] | None = None) -> Result
         *args,
     ]
     try:
-        proc = run_isolated(
+        proc = subprocess.run(
             command,
             cwd=str(SCRATCH),
             env=env,
-            timeout=90,
+            capture_output=True,
+            text=True,
             errors="replace",
+            timeout=90,
         )
     except subprocess.TimeoutExpired:
         return Result(124, "", "timeout", [], [], TRACELOG.exists() and TRACELOG.stat().st_size > 0)

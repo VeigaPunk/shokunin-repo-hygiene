@@ -701,7 +701,9 @@ def _trim_pointer_token(token):
     token = token.rstrip(".,;:!?")
     while token.endswith("}") and token.count("}") > token.count("{"):
         token = token[:-1]
-    token = re.sub(r":\d+(?:-\d+)?$", "", token)
+    # `path:12`, `path:12-14` and comma lists `path:2,3,44` / `path:73,74-78`
+    # are line references, not part of the path (r18 wave-1 RevC2Grammar).
+    token = re.sub(r":\d+(?:-\d+)?(?:,\d+(?:-\d+)?)*$", "", token)
     return token
 
 
