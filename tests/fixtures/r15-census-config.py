@@ -161,7 +161,7 @@ EXPECTED_IDS = (
 HARM_CASES = frozenset({
     "R15CFG-01", "R15CFG-03", "R15CFG-04", "R15CFG-06", "R15CFG-07",
     "R15CFG-08", "R15CFG-09", "R15CFG-10", "R15CFG-12", "R15CFG-13",
-    "R15CFG-14", "R15CFG-15", "R15CFG-16",
+    "R15CFG-14", "R15CFG-15", "R15CFG-16", "R15CFG-18", "R15CFG-20",
 })
 
 # Case class labels for the admission checker (pinned, non-adaptive).
@@ -354,6 +354,7 @@ def build_world() -> None:
     global FL_INC_SAFE, FL_NEUTRAL, FL_DIRTY, FL_PROM_SAFE, FL_PC_SAFE, FL_SENTRY
     global FL_WTC_OFF, FL_WTC_ON
     global FL_ALTREFS, FL_FILTER_SAFE, FL_KEYPARSE, FL_MIXED, FL_MIXED_UNSAFE
+    global FL_MIXED_DEGRADE
     global UNSAFE, RECORDS
     global SENT_HOOKS, SENT_FSM, SENT_AR, SENT_FL, SENT_FLB
 
@@ -398,6 +399,16 @@ def build_world() -> None:
     sent_script(repo / ".git" / "fm.sh", SENT_FSM)
     with (repo / ".git" / "config").open("a", encoding="utf-8") as fh:
         fh.write(f"[core]\n\tfsmonitor = {repo}/.git/fm.sh\n")
+    # r16 (SentinelCommandExec F1): an fsmonitor command plus an unbound
+    # filter key makes the census run ls-files/check-attr; the fsmonitor
+    # command must stay neutralized on those calls too.
+    repo = init_repo(FL_SENTRY / "s-fsm-filter")
+    sent_script(repo / ".git" / "fm.sh", SENT_FSM)
+    with (repo / ".git" / "config").open("a", encoding="utf-8") as fh:
+        fh.write(
+            f"[core]\n\tfsmonitor = {repo}/.git/fm.sh\n"
+            '[filter "unused"]\n\tclean = cat\n'
+        )
 
     # --- benign include fleet ----------------------------------------------
     FL_INC_SAFE = SCRATCH / "inc-safe-fleet"
@@ -429,6 +440,13 @@ def build_world() -> None:
         FL_INC_SAFE / "r-inc-tilde",
         "[include]\n\tpath = ~/fleet-tilde.gitconfig\n",
     )
+    # r16 (MutateScanConfig m6): the same benign file included twice is not
+    # a cycle.
+    repo = init_repo(
+        FL_INC_SAFE / "r-inc-twice",
+        "[include]\n\tpath = twice.gitconfig\n[include]\n\tpath = twice.gitconfig\n",
+    )
+    (repo / ".git" / "twice.gitconfig").write_text("[user]\n\tname = twice\n", encoding="utf-8")
     repo = init_repo(FL_INC_SAFE / "r-incif")
     for name in ("inc-br.gitconfig", "inc-gd.gitconfig", "inc-hc.gitconfig"):
         (repo / ".git" / name).write_text("[user]\n\tname = inc\n", encoding="utf-8")
@@ -444,6 +462,14 @@ def build_world() -> None:
     UNSAFE = SCRATCH / "unsafe-repos"
     store_cfg = str(AGENT / "secret.gitconfig")
     init_repo(UNSAFE / "r-inc-store", f"[include]\n\tpath = {store_cfg}\n")
+    # r16 (MutateScanConfig m4): `~/` must expand to HOME before guarding.
+    init_repo(UNSAFE / "r-inc-tilde-store", "[include]\n\tpath = ~/.omp/agent/secret.gitconfig\n")
+    # r16 (CriticFixtureOverfit 2): an unevaluable include before a store
+    # include must not hide the protected reach.
+    init_repo(
+        UNSAFE / "r-tilde-then-store",
+        f"[include]\n\tpath = ~root/x.gitconfig\n[include]\n\tpath = {store_cfg}\n",
+    )
     init_repo(
         UNSAFE / "r-incif-store",
         f'[includeIf "gitdir:/nonexistent/"]\n\tpath = {store_cfg}\n',
@@ -501,9 +527,12 @@ def build_world() -> None:
     git(repo, "add", "--", ".gitattributes", "f.bin")
     git(repo, "commit", "-qm", "attr")
     # r16: the bound clean driver is a sentinel; status must never run it.
+    # f.bin is modified after the commit (positive control): a status that
+    # honored the binding would have to run the driver.
     sent_script(repo / ".git" / "xclean.sh", SENT_FLB, "cat\n")
     with (repo / ".git" / "config").open("a", encoding="utf-8") as fh:
         fh.write(f'[filter "x"]\n\tclean = {repo}/.git/xclean.sh\n')
+    (repo / "f.bin").write_text("bin changed\n", encoding="utf-8")
     repo = init_repo(UNSAFE / "r-filter-process")
     (repo / ".gitattributes").write_text("*.dat filter=p\n", encoding="utf-8")
     (repo / "f.dat").write_text("d\n", encoding="utf-8")
@@ -511,6 +540,7 @@ def build_world() -> None:
     git(repo, "commit", "-qm", "attr")
     with (repo / ".git" / "config").open("a", encoding="utf-8") as fh:
         fh.write('[filter "p"]\n\tprocess = cat\n')
+    (repo / "f.dat").write_text("d changed\n", encoding="utf-8")
     repo = init_repo(UNSAFE / "r-altrefs-cmd")
     sent_script(repo / ".git" / "altrefs.sh", SENT_AR)
     with (repo / ".git" / "config").open("a", encoding="utf-8") as fh:
@@ -522,6 +552,13 @@ def build_world() -> None:
     init_repo(FL_MIXED_UNSAFE / "a-ok")
     init_repo(FL_MIXED_UNSAFE / "m-unsafe", f"[include]\n\tpath = {store_cfg}\n")
     init_repo(FL_MIXED_UNSAFE / "z-ok")
+    # r16: per-repo degrade must keep unaffected rows (mixed fleet).
+    FL_MIXED_DEGRADE = SCRATCH / "mixed-degrade-fleet"
+    init_repo(FL_MIXED_DEGRADE / "a-ok")
+    repo = init_repo(FL_MIXED_DEGRADE / "m-cycle", "[include]\n\tpath = c1.inc\n")
+    (repo / ".git" / "c1.inc").write_text("[include]\n\tpath = c2.inc\n", encoding="utf-8")
+    (repo / ".git" / "c2.inc").write_text("[include]\n\tpath = c1.inc\n", encoding="utf-8")
+    init_repo(FL_MIXED_DEGRADE / "z-ok")
 
     # --- neutralized + honored families ------------------------------------
     # hooksPath/fsmonitor: any value is inert (no hook event; -c overrides).
@@ -559,6 +596,13 @@ def build_world() -> None:
     (repo / "b.txt").write_text("untracked\n", encoding="utf-8")
     with (repo / ".git" / "config").open("a", encoding="utf-8") as fh:
         fh.write(f"[core]\n\texcludesFile = {repo}/.git/ignore-all\n")
+    # r16 (MutateDirtyFilters M02): with core.excludesFile unset, git honors
+    # $HOME/.config/git/ignore (XDG_CONFIG_HOME unset); pre-harm did too.
+    xdg = HOME / ".config" / "git"
+    xdg.mkdir(parents=True)
+    (xdg / "ignore").write_text("xdg-hidden.txt\n", encoding="utf-8")
+    repo = init_repo(FL_NEUTRAL / "r-xdg-default")
+    (repo / "xdg-hidden.txt").write_text("untracked\n", encoding="utf-8")
 
     # --- dirty fidelity -----------------------------------------------------
     FL_DIRTY = SCRATCH / "dirty-fleet"
@@ -772,7 +816,7 @@ def trace_access(trace: list[str]) -> list[str]:
     hits: list[str] = []
     seen_exec = False
     agent = str(AGENT)
-    stat_tokens = ("newfstatat(", "statx(", "lstat(", "stat(", "access(", "faccessat(")
+    stat_tokens = ("newfstatat(", "statx(", "lstat(", "stat(", "access(", "faccessat(", "faccessat2(")
     for line in trace:
         # r16 fix: match the errno result, not the AT_EACCESS flag name
         # that a successful faccessat2 (bash `[ -r ]`) carries.
@@ -1025,8 +1069,8 @@ def soft_problems(res: Result, *, label: str = "") -> list[str]:
     if len(rows) != 1:
         problems.append(f"{label}rows {sorted(rows)} want exactly one")
     for name, fields in rows.items():
-        if fields[1:5] != ["0", "0", "0", "0"] or fields[6:] != ["error"]:
-            problems.append(f"{label}{name}: row {fields[1:]} want zero counts + error")
+        if fields[1:5] != ["0", "0", "0", "0"] or fields[5:] != ["", "error"]:
+            problems.append(f"{label}{name}: row {fields[1:]} want zero counts, empty mtime + error")
     problems.extend(access_problems(res, label=label))
     problems.extend(sentinel_problems())
     return problems
@@ -1057,6 +1101,7 @@ def case_01() -> list[str]:
         "r-inc-missing": CLEAN,
         "r-inc-tilde": CLEAN,
         "r-incif": CLEAN,
+        "r-inc-twice": CLEAN,
     }
     return positive_problems(run_tool(["--root", str(FL_INC_SAFE)]), expect)
 
@@ -1070,6 +1115,8 @@ def case_02() -> list[str]:
             "r-incif-unknown",
             "r-inc-nested",
             "r-inc-symlink",
+            "r-inc-tilde-store",
+            "r-tilde-then-store",
         ],
         CONFIG_REASONS,
     )
@@ -1079,9 +1126,24 @@ def case_03() -> list[str]:
     # r16: could-not-evaluate config that reaches no protected path is a
     # per-repository `error` row (no git command runs there), not a
     # whole-run refusal that would suppress unaffected rows.
-    return soft_repo(
+    problems = soft_repo(
         ["r-inc-cycle", "r-inc-tildeuser", "r-inc-fifo", "r-cfg-nul", "r-wtc-maybe"]
     )
+    # Mixed fleet: the degraded repo keeps its own `error` row and both
+    # unaffected neighbours keep accurate rows (exit 0).
+    res = run_tool(["--root", str(FL_MIXED_DEGRADE)])
+    rows = rows_by_name(res.out)
+    if res.rc != 0:
+        problems.append(f"mixed-degrade: exit={res.rc} want 0")
+    for name in ("a-ok", "z-ok"):
+        f = rows.get(name)
+        if not f or f[1:4] + [f[6]] != list(CLEAN[:3]) + [CLEAN[3]]:
+            problems.append(f"mixed-degrade: {name} row {f} want clean")
+    m = rows.get("m-cycle")
+    if not m or m[1:5] != ["0", "0", "0", "0"] or m[6:] != ["error"]:
+        problems.append(f"mixed-degrade: m-cycle row {m} want zero counts + error")
+    problems.extend("mixed-degrade: " + p for p in access_problems(res))
+    return problems
 
 
 def case_04() -> list[str]:
@@ -1098,6 +1160,7 @@ def case_04() -> list[str]:
         "r-fsm": CLEAN,
         "r-excl-devnull": ("1", "0", "1", "dirty"),
         "r-excl-all": CLEAN,
+        "r-xdg-default": CLEAN,
     }
     return positive_problems(run_tool(["--root", str(FL_NEUTRAL)]), expect)
 
@@ -1149,7 +1212,7 @@ def case_08() -> list[str]:
     # the pcf refusal anyway — this case is safety-classified on purpose.
     problems = positive_problems(
         run_tool(["--root", str(FL_SENTRY)]),
-        {"s-hooks": CLEAN, "s-fsm": CLEAN},
+        {"s-hooks": CLEAN, "s-fsm": CLEAN, "s-fsm-filter": CLEAN},
         lazy_fetch=True,
     )
     problems.extend(sentinel_problems(EXEC_SENTINELS))

@@ -83,32 +83,42 @@
 #   Symlink repo roots and child symlinks are skipped; a .git symlink is
 #   not followed as a row; gitfile gitdir targets, commondir and
 #   objects/info/alternates are boundary-checked before git runs, and any
-#   git-metadata symlink must resolve inside its own gitdir. Repository
-#   config is scanned per key and value (round 16), recursively through
-#   include.path/includeIf.*.path targets (every target is guarded, whatever
-#   its condition) and through config.worktree when extensions.worktreeConfig
-#   is true. Refused (exit 2, whole run, `path-protected`): a config-named
-#   path (include target, core.excludesFile, core.attributesFile,
-#   core.worktree) reaching a protected root. Degraded to one `error` row
-#   for that repository only (exit 0; no git command runs in it; stderr
-#   `souji-census: config-unsupported: <reason> (<repo>)`): a `~user` or
-#   `%(prefix)` path; an include cycle or depth over 10; a non-regular or
-#   hardlinked include target or config.worktree; NUL bytes or unparsable
-#   config; an invalid extensions.worktreeConfig boolean. A
+#   git-metadata symlink must resolve inside its own gitdir (these r14
+#   git-metadata guards are unchanged by round 16 and still refuse the
+#   whole run). Repository config is scanned per key and value (round 16),
+#   recursively through include.path/includeIf.*.path targets (every
+#   target is guarded whatever its condition; relative targets resolve
+#   against the including file's spelled directory) and through
+#   config.worktree when the common config's extensions.worktreeConfig is
+#   true. Config outcomes: Refused (exit 2, whole run, `path-protected`): a
+#   config-named path (include target, core.excludesFile,
+#   core.attributesFile, core.worktree) overlapping a protected root; a soft
+#   finding never stops the scan, so a later protected reach still refuses.
+#   Degraded to one `error` row for that repository only (exit 0; no git
+#   command runs in it; stderr `souji-census: config-unsupported: <reason>
+#   (<repo>)`; its numeric fields are placeholders, not measurements): a
+#   `~user` or `%(prefix)` path; an unresolvable or ambiguous config path;
+#   an include cycle or depth over 10; a non-regular or hardlinked include
+#   target or config.worktree; NUL bytes or unparsable config; an invalid
+#   extensions.worktreeConfig boolean. Status skipped for that repository
+#   only (status-unverifiable, dirty unknown): a
 #   filter.<name>.clean|smudge|process driver that an attributes source
-#   binds to a tracked path skips status for that repository only
-#   (status-unverifiable; stderr `status-skipped`); the driver never runs.
-#   Accepted: any core.hooksPath/core.fsmonitor value (every status carries
-#   -c core.hooksPath=/dev/null -c core.fsmonitor=false), boundary-clean
-#   excludes/attributes files (honored on status, as before round 14; the
-#   XDG default is honored when present and boundary-clean), any
-#   remote.*.promisor or extensions.partialClone value (every git call
-#   carries GIT_NO_LAZY_FETCH=1; an invalid promisor boolean fails git's
-#   own status, giving status-unverifiable as before round 14), any
-#   core.alternateRefsCommand (consumed only when advertising alternate
-#   refs, which no census command does), unbound filter drivers, missing
-#   include targets. A refused path that is itself inside a protected root
-#   is printed as `<protected>`.
+#   binds to a tracked path (stderr `status-skipped`; the driver never
+#   runs, and the attribute lookup fails closed), or an effective
+#   excludes/attributes value that cannot be modelled or is non-regular.
+#   Accepted: any core.hooksPath/core.fsmonitor value (every census git
+#   call carries core.fsmonitor=false and core.hooksPath=/dev/null via
+#   GIT_CONFIG_COUNT; status also passes them with -c), boundary-clean
+#   excludes/attributes files (honored on status, as before round 14; a
+#   set-but-empty value disables the file; when unset the XDG default is
+#   honored if present and boundary-clean), any remote.*.promisor or
+#   extensions.partialClone value (GIT_NO_LAZY_FETCH=1 on every call, git
+#   >= 2.45; an invalid promisor boolean fails git's own status, giving
+#   status-unverifiable as before round 14), any core.alternateRefsCommand
+#   (consumed only by receive-pack ref advertisement, fetch negotiation and
+#   `rev-list --alternate-refs`, none of which the census runs), unbound
+#   filter drivers, missing include targets. A refused path that is itself
+#   inside a protected root is printed as `<protected>`.
 #   Global/system git config and every inherited GIT_* variable are
 #   cleared. Startup resolves each home's .omp parent (not the agent store)
 #   to seed a relocated-store root; this is a stat/readlink of the store
@@ -142,9 +152,15 @@ unset _souji_gitvar
 export GIT_OPTIONAL_LOCKS=0
 export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null
 export GIT_CONFIG_NOSYSTEM=1 GIT_TERMINAL_PROMPT=0
-# Round 16: no census git call may lazily fetch a missing object, so
-# remote.*.promisor and extensions.partialClone markers stay inert.
+# Round 16: no census git call may lazily fetch a missing object
+# (GIT_NO_LAZY_FETCH, git >= 2.45), so remote.*.promisor and
+# extensions.partialClone markers stay inert. Every census git call (not
+# only status) also runs with the fsmonitor hook and the hooks directory
+# neutralized: index readers such as ls-files would otherwise run a
+# repository's core.fsmonitor command.
 export GIT_NO_LAZY_FETCH=1
+export GIT_CONFIG_COUNT=2 GIT_CONFIG_KEY_0=core.fsmonitor GIT_CONFIG_VALUE_0=false
+export GIT_CONFIG_KEY_1=core.hooksPath GIT_CONFIG_VALUE_1=/dev/null
 
 SCRIPT_PATH="${BASH_SOURCE[0]}"
 SCRIPT_DIR="$(cd -- "$(dirname -- "$SCRIPT_PATH")" && pwd -P)"
@@ -502,7 +518,7 @@ guard_git_links() { # $1 resolved gitdir; symlinks may not leave the gitdir
 # a FIFO/device/socket is refused rather than opened or waited on.
 guard_git_files() { # $1 resolved gitdir
   local dir=$1 rel path nlink
-  for rel in config HEAD index packed-refs commondir info/exclude objects/info/alternates; do
+  for rel in config HEAD index packed-refs commondir info/exclude info/attributes objects/info/alternates; do
     path="$dir/$rel"
     if [ -f "$path" ]; then
       nlink=$(stat -L -c %h -- "$path" 2>/dev/null || true)
@@ -519,24 +535,33 @@ guard_git_files() { # $1 resolved gitdir
 }
 
 # A config-named path is checked lexically, then walked one component at a
-# time; any refusal is reported against the naming config file with the
-# given reason, so a protected target name is never echoed.
+# time. A protected reach is reported against the naming config file with
+# the given reason (exit 2), so a protected target name is never echoed. A
+# path that cannot be resolved but reaches nothing protected (ambiguous
+# characters, dangling or looping symlink) returns 3: the caller degrades.
 guard_config_path() { # $1 reason, $2 gitdir, $3 cfg, $4 absolute raw path
-  local reason=$1 dir=$2 cfg=$3 raw=$4 resolved
+  local reason=$1 dir=$2 cfg=$3 raw=$4 out
   case "$raw" in
-    *$'\n'*|*$'\t'*|*$'\r'*) protected_fail "$reason" "$dir" "$cfg" ;;
+    *$'\n'*|*$'\t'*|*$'\r'*) return 3 ;;
   esac
   if protected_reason_input "$(lexical_abs "$raw")" >/dev/null; then
     protected_fail "$reason" "$dir" "$cfg"
   fi
-  if ! resolved=$(resolve_guarded "$raw" 1 1 2>/dev/null); then
-    protected_fail "$reason" "$dir" "$cfg"
+  if out=$(resolve_guarded "$raw" 1 1 2>&1); then
+    printf '%s' "$out"
+    return 0
   fi
-  printf '%s' "$resolved"
+  case "$out" in
+    *"$PROTECTED_FINDING: credential-store "*|*"$PROTECTED_FINDING: operator-sweep "*|*"$PROTECTED_FINDING: operator-runtime "*)
+      protected_fail "$reason" "$dir" "$cfg" ;;
+  esac
+  return 3
 }
 
 # Expand a git pathname value: `~/` via HOME, relative to $2. `~user` and
-# `%(prefix)` forms are not modelled and are refused by the caller.
+# `%(prefix)` forms are not modelled: rc 1 (caller degrades). Callers strip
+# `:(optional)` themselves where git honors it (pathname keys, not
+# include.path).
 expand_config_path() { # $1 value, $2 base dir; prints path, rc 1 unsupported
   local v=$1 base=$2
   case "$v" in
@@ -551,9 +576,10 @@ expand_config_path() { # $1 value, $2 base dir; prints path, rc 1 unsupported
 # Config that cannot be evaluated but reaches no protected path is not a
 # whole-run refusal (round 16): the repository is skipped (no git command
 # runs in it) and emitted as an `error` row, so unaffected rows survive.
+# CFG_SOFT_REASON keeps the first reason; guard_git_surface resets it.
 CFG_SOFT_REASON=""
 cfg_soft() { # $1 reason; always returns 1
-  CFG_SOFT_REASON=$1
+  [ -n "$CFG_SOFT_REASON" ] || CFG_SOFT_REASON=$1
   return 1
 }
 
@@ -575,9 +601,12 @@ CFG_WT_ENABLED=0
 # Scan one config file key by key (round 16). Includes are followed in
 # place, so last-wins settings track git's own reading order. Returns 1
 # (soft, CFG_SOFT_REASON set) when the file cannot be evaluated; exits 2
-# when a config-named path reaches a protected root.
-scan_config_file() { # $1 gitdir, $2 resolved cfg, $3 depth
-  local dir=$1 cfg=$2 depth=$3 rec key val bare sec var rest sub tgt s
+# when a config-named path reaches a protected root. A soft finding does not
+# stop the scan, so a later protected reach still refuses the whole run.
+# Relative include paths resolve against the directory of the path git
+# opened (the spelled name, $4), not its symlink-resolved location.
+scan_config_file() { # $1 gitdir, $2 resolved cfg, $3 depth, $4 spelled cfg path
+  local dir=$1 cfg=$2 depth=$3 spelled=${4:-$2} rec key val bare sec var rest sub tgt raw s soft=0 rc
   local -a recs=()
   if [ "$depth" -gt 10 ]; then cfg_soft "git-include-depth"; return 1; fi
   for s in "${CFG_STACK[@]+"${CFG_STACK[@]}"}"; do
@@ -608,44 +637,57 @@ scan_config_file() { # $1 gitdir, $2 resolved cfg, $3 depth
         if [ "$sec" = includeif ] && [ -z "$sub" ]; then continue; fi
         # A bare or empty path makes git itself fail; nothing is opened.
         if [ "$bare" = 1 ] || [ -z "$val" ]; then continue; fi
-        if ! tgt=$(expand_config_path "$val" "${cfg%/*}"); then
-          cfg_soft "git-config-unsupported"; return 1
+        if ! raw=$(expand_config_path "$val" "${spelled%/*}"); then
+          cfg_soft "git-config-unsupported"; soft=1; continue
         fi
-        tgt=$(guard_config_path include-protected "$dir" "$cfg" "$tgt") || exit 2
+        tgt=$(guard_config_path include-protected "$dir" "$cfg" "$raw") || {
+          rc=$?; [ "$rc" = 3 ] || exit 2
+          cfg_soft "git-include-unresolved"; soft=1; continue; }
         if [ ! -e "$tgt" ]; then continue; fi
-        guard_config_file_kind "$tgt" || return 1
-        scan_config_file "$dir" "$tgt" $((depth + 1)) || return 1
+        if ! guard_config_file_kind "$tgt"; then soft=1; continue; fi
+        scan_config_file "$dir" "$tgt" $((depth + 1)) "$raw" || soft=1
         ;;
       core:excludesfile|core:attributesfile)
         if [ "$bare" = 1 ] || [ -z "$val" ]; then continue; fi
-        if ! tgt=$(expand_config_path "$val" "${dir%/*}"); then
-          cfg_soft "git-config-unsupported"; return 1
+        if ! tgt=$(expand_config_path "${val#:(optional)}" "${dir%/*}"); then
+          cfg_soft "git-config-unsupported"; soft=1; continue
         fi
-        guard_config_path git-config-unsupported "$dir" "$cfg" "$tgt" >/dev/null || exit 2
+        guard_config_path git-config-unsupported "$dir" "$cfg" "$tgt" >/dev/null || {
+          cfg_soft "git-config-unresolved"; soft=1; continue; }
         ;;
       core:worktree)
         if [ "$bare" = 1 ] || [ -z "$val" ]; then continue; fi
-        if ! tgt=$(expand_config_path "$val" "$dir"); then
-          cfg_soft "git-config-unsupported"; return 1
+        if ! tgt=$(expand_config_path "${val#:(optional)}" "$dir"); then
+          cfg_soft "git-config-unsupported"; soft=1; continue
         fi
-        guard_config_path core-worktree-protected "$dir" "$cfg" "$tgt" >/dev/null || exit 2
+        guard_config_path core-worktree-protected "$dir" "$cfg" "$tgt" >/dev/null || {
+          cfg_soft "git-config-unresolved"; soft=1; continue; }
         ;;
       extensions:worktreeconfig)
+        # git reads repository extensions from $GIT_DIR/config itself, not
+        # from its includes (round 16).
+        [ "$depth" = 0 ] || continue
         if [ "$bare" = 1 ]; then CFG_WT_ENABLED=1; continue; fi
-        if ! s=$(git config --file "$cfg" --no-includes --type=bool --get "$key" 2>/dev/null); then
-          cfg_soft "git-config-unparsed"; return 1
+        if ! s=$(git config --file "$cfg" --no-includes --type=bool --get-all "$key" 2>/dev/null); then
+          cfg_soft "git-config-unparsed"; soft=1; continue
         fi
+        s=${s##*$'\n'}
         if [ "$s" = true ]; then CFG_WT_ENABLED=1; else CFG_WT_ENABLED=0; fi
         ;;
-      # Inert for the census, any value: core.hooksPath/core.fsmonitor are
-      # overridden on every status; core.alternateRefsCommand is consumed only
-      # when advertising alternate refs (fetch/push), which no census command
-      # does; remote.*.promisor, remote.*.partialCloneFilter and
-      # extensions.partialClone cannot fetch under GIT_NO_LAZY_FETCH=1;
-      # filter drivers are checked for an attributes binding before status.
+      # Inert for the census, any value: core.hooksPath (status writes no
+      # index, and carries -c core.hooksPath=/dev/null) and core.fsmonitor
+      # (status carries -c core.fsmonitor=false, which alone disables the
+      # fsmonitor hook); core.alternateRefsCommand, consumed only by
+      # receive-pack ref advertisement, fetch negotiation and
+      # `rev-list --alternate-refs` (no census command is one of these);
+      # remote.*.promisor, remote.*.partialCloneFilter and
+      # extensions.partialClone: GIT_NO_LAZY_FETCH=1 (git >= 2.45) stops
+      # on-demand promisor fetches; filter drivers are checked for an
+      # attributes binding before status.
     esac
   done
   unset 'CFG_STACK[${#CFG_STACK[@]}-1]'
+  [ "$soft" = 0 ] || return 1
   return 0
 }
 
@@ -658,9 +700,13 @@ guard_wt_config() { # $1 resolved gitdir (main or linked admin)
     protected_fail "git-metadata-symlink" "$dir" "$wtc"
   fi
   [ -e "$wtc" ] || return 0
+  local inherited=$CFG_WT_ENABLED
   guard_config_file_kind "$wtc" || return 1
   CFG_STACK=()
-  scan_config_file "$dir" "$wtc" 0 || return 1
+  # git takes extensions.worktreeConfig from the common config only; a value
+  # inside config.worktree must not change which files are scanned.
+  scan_config_file "$dir" "$wtc" 0 || { CFG_WT_ENABLED=$inherited; return 1; }
+  CFG_WT_ENABLED=$inherited
   return 0
 }
 
@@ -673,11 +719,16 @@ guard_git_config() { # $1 resolved gitdir, $2 optional inherited worktreeConfig 
     protected_fail "git-metadata-symlink" "$dir" "$cfg"
   fi
   if [ -n "${2:-}" ]; then CFG_WT_ENABLED=$2; else CFG_WT_ENABLED=0; fi
+  local soft=0
   if [ -f "$cfg" ]; then
     CFG_STACK=()
-    scan_config_file "$dir" "$cfg" 0 || return 1
+    scan_config_file "$dir" "$cfg" 0 || soft=1
   fi
-  guard_wt_config "$dir" || return 1
+  # A linked admin's own config is never git's extension source: keep the
+  # inherited common-config value.
+  if [ -n "${2:-}" ]; then CFG_WT_ENABLED=$2; fi
+  guard_wt_config "$dir" || soft=1
+  [ "$soft" = 0 ] || return 1
   return 0
 }
 
@@ -712,8 +763,8 @@ guard_git_pointer() { # $1 repo dir, $2 .git file
 # Registered worktree paths are guarded from the admin gitdir files before
 # `git worktree list` runs, so that command cannot stat a protected path
 # first. Relative registration paths are resolved against the admin dir.
-guard_worktree_registrations() { # $1 resolved gitdir
-  local dir=$1 entry reg target wt admin common c
+guard_worktree_registrations() { # $1 resolved gitdir; rc 1 soft (all entries still guarded)
+  local dir=$1 entry reg target wt admin common c soft=0
   for entry in "$dir"/worktrees/*; do
     if [ -L "$entry" ]; then
       guard_target worktree "$entry" >/dev/null
@@ -738,11 +789,13 @@ guard_worktree_registrations() { # $1 resolved gitdir
           if [ -n "$admin" ]; then
             guard_git_files "$admin" || exit 2
             guard_git_links "$admin" || exit 2
-            guard_git_config "$admin" "$CFG_WT_ENABLED" || return 1
+            guard_git_config "$admin" "$CFG_WT_ENABLED" || soft=1
             common="$admin/commondir"
             if [ -L "$common" ]; then
-              guard_target git-common-dir "$common" >/dev/null
-            elif [ -f "$common" ]; then
+              # Read a symlinked commondir through its guarded target, as git does.
+              common=$(guard_target git-common-dir "$common") || exit 2
+            fi
+            if [ -f "$common" ]; then
               IFS= read -r c < "$common" || c=""
               c=${c#"${c%%[![:space:]]*}"}
               if [ -n "$c" ]; then
@@ -758,10 +811,16 @@ guard_worktree_registrations() { # $1 resolved gitdir
         ;;
     esac
   done
+  [ "$soft" = 0 ] || return 1
+  return 0
 }
 
-guard_git_surface() { # $1 repo dir; exits 2 on a protected/unsupported git surface
-  local repo=$1 g="$1/.git" target common dir first
+# Exits 2 on a protected git surface. Returns 1 (soft) when some config
+# cannot be evaluated; every remaining guard still runs first, so a later
+# protected reach still refuses the whole run.
+guard_git_surface() { # $1 repo dir
+  local repo=$1 g="$1/.git" target common dir first soft=0
+  CFG_SOFT_REASON=""
   if [ -L "$g" ]; then
     guard_target git-metadata "$g" >/dev/null
     return 0
@@ -770,12 +829,14 @@ guard_git_surface() { # $1 repo dir; exits 2 on a protected/unsupported git surf
     dir=$(guard_target gitdir "$g") || exit 2
     guard_git_links "$dir" || exit 2
     guard_git_files "$dir" || exit 2
-    guard_git_config "$dir" || return 1
+    guard_git_config "$dir" || soft=1
     first=$dir
     common="$dir/commondir"
     if [ -L "$common" ]; then
-      guard_target git-common-dir "$common" >/dev/null
-    elif [ -f "$common" ]; then
+      # Read a symlinked commondir through its guarded target, as git does.
+      common=$(guard_target git-common-dir "$common") || exit 2
+    fi
+    if [ -f "$common" ]; then
       IFS= read -r target < "$common" || target=""
       target=${target#"${target%%[![:space:]]*}"}
       if [ -n "$target" ]; then
@@ -786,12 +847,13 @@ guard_git_surface() { # $1 repo dir; exits 2 on a protected/unsupported git surf
         dir=$(guard_target git-common-dir "$target") || exit 2
         guard_git_links "$dir" || exit 2
         guard_git_files "$dir" || exit 2
-        guard_git_config "$dir" || return 1
-        guard_wt_config "$first" || return 1
+        guard_git_config "$dir" || soft=1
+        guard_wt_config "$first" || soft=1
       fi
     fi
     guard_alternates "$dir" || exit 2
-    guard_worktree_registrations "$dir" || return 1
+    guard_worktree_registrations "$dir" || soft=1
+    [ "$soft" = 0 ] || return 1
     return 0
   fi
   if [ -f "$g" ]; then
@@ -809,12 +871,14 @@ guard_git_surface() { # $1 repo dir; exits 2 on a protected/unsupported git surf
     dir=$(guard_target gitdir "$target") || exit 2
     guard_git_links "$dir" || exit 2
     guard_git_files "$dir" || exit 2
-    guard_git_config "$dir" || return 1
+    guard_git_config "$dir" || soft=1
     first=$dir
     common="$dir/commondir"
     if [ -L "$common" ]; then
-      guard_target git-common-dir "$common" >/dev/null
-    elif [ -f "$common" ]; then
+      # Read a symlinked commondir through its guarded target, as git does.
+      common=$(guard_target git-common-dir "$common") || exit 2
+    fi
+    if [ -f "$common" ]; then
       IFS= read -r target < "$common" || target=""
       target=${target#"${target%%[![:space:]]*}"}
       if [ -n "$target" ]; then
@@ -825,13 +889,14 @@ guard_git_surface() { # $1 repo dir; exits 2 on a protected/unsupported git surf
         dir=$(guard_target git-common-dir "$target") || exit 2
         guard_git_links "$dir" || exit 2
         guard_git_files "$dir" || exit 2
-        guard_git_config "$dir" || return 1
-        guard_wt_config "$first" || return 1
+        guard_git_config "$dir" || soft=1
+        guard_wt_config "$first" || soft=1
       fi
     fi
     guard_alternates "$dir" || exit 2
-    guard_worktree_registrations "$dir" || return 1
+    guard_worktree_registrations "$dir" || soft=1
   fi
+  [ "$soft" = 0 ] || return 1
   return 0
 }
 
@@ -870,16 +935,27 @@ count_unpushed() { # $1 repo; prints "count<TAB>no-remote|has-remote"
 # Effective excludes/attributes file for status (round 16): the guarded
 # value git would use, else the XDG default when present and
 # boundary-clean, else /dev/null. Rows before round 14 honored these files;
-# round 14 forced /dev/null and so changed dirty counts.
+# round 14 forced /dev/null and so changed dirty counts. A set-but-empty
+# value disables the file (git falls back to XDG only when unset); an
+# `:(optional)` value whose target is missing counts as unset. rc 3: the
+# value cannot be modelled (`~user`, `%(prefix)`); exit 2: protected reach.
 status_info_file() { # $1 worktree, $2 key, $3 XDG leaf (ignore|attributes)
-  local wt=$1 key=$2 leaf=$3 val tgt base
-  val=$(git -C "$wt" config --get "$key" 2>/dev/null || true)
-  if [ -n "$val" ]; then
-    tgt=$(expand_config_path "$val" "$wt") \
-      || protected_fail "git-config-unsupported" "$wt" "$key"
-    tgt=$(guard_config_path git-config-unsupported "$wt" "$key" "$tgt") || exit 2
-    printf '%s' "$tgt"
-    return 0
+  local wt=$1 key=$2 leaf=$3 val tgt base rc=0
+  val=$(git -C "$wt" config --get "$key" 2>/dev/null) || rc=$?
+  if [ "$rc" = 0 ] && [ -z "$val" ]; then printf '/dev/null'; return 0; fi
+  if [ "$rc" = 0 ]; then
+    tgt=$(expand_config_path "${val#:(optional)}" "$wt") || return 3
+    tgt=$(guard_config_path git-config-unsupported "$wt" "$key" "$tgt") || {
+      rc=$?; [ "$rc" = 3 ] && return 3; exit 2; }
+    case "$val" in
+      ':(optional)'*) [ -e "$tgt" ] || rc=1 ;;
+    esac
+    # A non-regular target (FIFO, device) could block status: degrade.
+    # /dev/null is git's own documented "no file" value and stays honored.
+    if [ "$rc" = 0 ] && [ "$tgt" != /dev/null ] && [ -e "$tgt" ] && [ ! -f "$tgt" ]; then
+      return 3
+    fi
+    if [ "$rc" = 0 ]; then printf '%s' "$tgt"; return 0; fi
   fi
   base=${XDG_CONFIG_HOME:-}
   if [ -z "$base" ]; then
@@ -904,14 +980,15 @@ status_info_file() { # $1 worktree, $2 key, $3 XDG leaf (ignore|attributes)
 # A filter driver command that an attributes source binds to a tracked path
 # could run during status: refuse (round 16). Unbound drivers are inert.
 # Neither ls-files nor check-attr runs a driver.
-guard_bound_filters() { # $1 worktree, $2 effective attributes file
-  local wt=$1 attrs=$2 rec name i
+guard_bound_filters() { # $1 worktree, $2 effective attributes file; rc 1 bound or unknown
+  local wt=$1 attrs=$2 rec name i pid
   local -a drivers=() recs=()
   mapfile -d '' -t recs < <(git -C "$wt" config -z --get-regexp \
     '^filter\..*\.(clean|smudge|process)$' 2>/dev/null || true)
   for rec in "${recs[@]+"${recs[@]}"}"; do
-    # An explicitly empty value (`key\n`) defines no command.
-    case "$rec" in *$'\n') continue ;; esac
+    # An explicitly empty value (`key\n`) defines no command; a value that
+    # merely ends in a newline still does.
+    case "$rec" in *$'\n'*) [ -n "${rec#*$'\n'}" ] || continue ;; esac
     name=${rec%%$'\n'*}
     name=${name#*.}
     name=${name%.*}
@@ -919,10 +996,19 @@ guard_bound_filters() { # $1 worktree, $2 effective attributes file
   done
   [ "${#drivers[@]}" -gt 0 ] || return 0
   recs=()
-  mapfile -d '' -t recs < <(git -C "$wt" -c core.attributesFile="$attrs" \
-      ls-files -z --cached 2>/dev/null \
+  # Fail closed: if the attribute lookup itself fails, treat as bound.
+  # Same pathspec exclusions as status, so check-attr never reads an
+  # attributes file inside an operator-owned surface.
+  mapfile -d '' -t recs < <(set -o pipefail; git -C "$wt" -c core.attributesFile="$attrs" \
+      ls-files -z --cached -- . ':(exclude).ufo/state' ':(exclude).ufo/watchdog.log' \
+      ':(exclude,glob)census/operator-sweep-*' \
+      ':(exclude,glob)census/operator-sweep-*/**' \
+      ':(exclude,glob)**/census/operator-sweep-*' 2>/dev/null \
     | git -C "$wt" -c core.attributesFile="$attrs" \
-      check-attr -z --stdin filter 2>/dev/null || true)
+      check-attr -z --stdin filter 2>/dev/null)
+  pid=$!
+  wait "$pid" || return 1
+  if [ $(( ${#recs[@]} % 3 )) != 0 ]; then return 1; fi
   for ((i = 2; i < ${#recs[@]}; i += 3)); do
     for name in "${drivers[@]}"; do
       if [ "${recs[i]}" = "$name" ]; then return 1; fi
@@ -933,9 +1019,11 @@ guard_bound_filters() { # $1 worktree, $2 effective attributes file
 
 # Prints "count", or "unverifiable" when status cannot run safely or fails.
 count_dirty() { # $1 repo; exit 2 on a protected reach
-  local st ex at
-  ex=$(status_info_file "$1" core.excludesFile ignore) || exit 2
-  at=$(status_info_file "$1" core.attributesFile attributes) || exit 2
+  local st ex at rc
+  ex=$(status_info_file "$1" core.excludesFile ignore) || {
+    rc=$?; [ "$rc" = 3 ] || exit 2; printf 'unverifiable'; return 0; }
+  at=$(status_info_file "$1" core.attributesFile attributes) || {
+    rc=$?; [ "$rc" = 3 ] || exit 2; printf 'unverifiable'; return 0; }
   if ! guard_bound_filters "$1" "$at"; then
     printf 'souji-census: status-skipped: filter-driver-bound (%s)\n' \
       "$(sanitize_field "$1")" >&2
@@ -1066,6 +1154,8 @@ worktree_extra_flags() {
       continue
     fi
     if ! guard_git_surface "$cpath"; then
+      printf 'souji-census: config-unsupported: %s (%s)\n' \
+        "${CFG_SOFT_REASON:-git-config-unsupported}" "$(sanitize_field "$cpath")" >&2
       saw_dirty=1
       continue
     fi
@@ -1436,6 +1526,9 @@ run_selftest() {
   fi
   ST_TMP=$(mktemp -d /var/tmp/souji-census-selftest.XXXXXX)
   trap 'rm -rf -- "$ST_TMP"' EXIT
+  # Round 16: the census honors the XDG excludes/attributes default; pin it
+  # to an absent scratch path so host files cannot change selftest rows.
+  export XDG_CONFIG_HOME="$ST_TMP/no-xdg-config"
   local fleet="$ST_TMP/fleet"
   mkdir -p "$fleet"
 
@@ -1726,7 +1819,7 @@ run_selftest() {
 
   # source audit: no forbidden git porcelain in non-comment lines
   local n
-  n=$(grep -cE '^[^#]*git +(-C +[^ ]+ +)?(fetch|push|commit|branch|checkout|reset|rebase|prune)( |$)' "$SELF" || true)
+  n=$(grep -cE '^[^#]*git +(-C +[^ ]+ +)?(fetch|push|commit|branch|checkout|reset|rebase|prune)( |$)|^[^#]*--alternate-refs' "$SELF" || true)
   n=${n// /}
   if [ "${n:-1}" = 0 ]; then st_ok "no forbidden git subcommand"
   else st_bad "$n forbidden git invocation(s)"; fi

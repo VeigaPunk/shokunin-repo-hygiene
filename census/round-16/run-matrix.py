@@ -54,7 +54,11 @@ def suite(fixture: Path, tool: Path) -> dict:
         m = SUMMARY_RE.match(line)
         if m:
             total, failed = int(m.group(1)), int(m.group(2))
-    return {"rc": rc, "total": total, "failed": failed, "cases": cases,
+    valid = (rc in (0, 1) and isinstance(total, int) and total > 0
+             and isinstance(failed, int) and 0 <= failed <= total
+             and len(cases) == total
+             and sum(c["verdict"] == "FAIL" for c in cases.values()) == failed)
+    return {"rc": rc, "total": total, "failed": failed, "cases": cases, "valid": valid,
             "stderr_tail": err.strip().splitlines()[-3:]}
 
 
@@ -81,6 +85,10 @@ def main() -> int:
         "fixtures_dirty": git("status", "--porcelain", "--",
                               *[str(v.relative_to(LANE)) for v in fixtures.values()]).strip(),
         "git_version": run(["git", "--version"])[1].strip(),
+        "bash_version": run(["bash", "--version"])[1].splitlines()[0],
+        "shellcheck_version": run(["shellcheck", "--version"])[1].strip().splitlines()[1:2],
+        "python_version": sys.version.split()[0],
+        "runner_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         "arms": {},
     }
     scratch = Path(tempfile.mkdtemp(prefix="souji-r16-matrix.", dir="/var/tmp"))
@@ -105,7 +113,7 @@ def main() -> int:
             arm["shellcheck_warning"] = {"rc": rc, "findings": len(re.findall(r"\(warning\)|\(error\)", so))}
             rc, so, se = run(["bash", str(tool), "--selftest"], timeout=600)
             m = None
-            for line in (so + se).splitlines():
+            for line in so.splitlines() + se.splitlines():
                 m = SELFTEST_RE.match(line) or m
             arm["selftest"] = {"rc": rc,
                                "checks": int(m.group(1)) if m else None,
@@ -120,8 +128,15 @@ def main() -> int:
                   f"\tr14={arm['r14-namespace']['total']}/{arm['r14-namespace']['failed']}fail")
     finally:
         shutil.rmtree(scratch, ignore_errors=True)
+    invalid = [f"{a}:{k}" for a, arm in record["arms"].items()
+               for k in ("r15-config", "r14-namespace") if not arm[k]["valid"]]
+    record["invalid_suites"] = invalid
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(record, indent=1, sort_keys=True) + "\n", encoding="utf-8")
+    with open(out, "x", encoding="utf-8") as fh:
+        fh.write(json.dumps(record, indent=1, sort_keys=True) + "\n")
+    if invalid:
+        print(f"run-matrix: could not evaluate suites: {invalid}", file=sys.stderr)
+        return 2
     return 0
 
 
