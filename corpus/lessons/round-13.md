@@ -138,3 +138,46 @@ be false. Q8 is limited to staging/digest/inspection bounds; deletion remains
 behind the existing successful second-check gate. A failed deletion now
 honestly names potentially partial residue rather than promising preservation.
 
+
+## Final measured gate decisions
+
+The corrected failed-check run at
+`6f8ee0f38a14a3cb599ee606c486a55ec64e8ae6` completed successfully.
+`census/round-13/verification.json` retains unchanged passing observations
+at `6ed10a7cd6c7b26f8068dd6e02497e860f9c4317` and names each result's
+actual revision; no retained check is described as rerun.
+
+- **C1 admitted within declared-consistency scope**: embedded selftest
+  `36/36 passed`, external black-box fixture `5/5`, frozen input run clean
+  with seven input pins, historical wrong-byte and candidate substitutions
+  reject with `artifact-digest-mismatch` / `artifact-candidate`, exit 2.
+- **C2 admitted within bounds scope**: the same corrected fixture at 6f8ee0f
+  has baseline `total=5 failed=4 hung=2`, exit 1, and changed-tool
+  `total=5 failed=0 hung=0`, exit 0. Target-specific shims avoid the receipt-
+  engine confound. Built-in verify/vault/quarantine/census suites:
+  40/51/91/36 checks, zero failures. Warning-level ShellCheck exits 0.
+- **C3/F2 entry admitted**: structure fixture `selftest=PASS ids=5/5` at
+  6ed10a7, including persistent-manifest detector controls and partial/promisor
+  refusal. Revision-bound census `count-claims.py 31984f4` versus
+  `count-claims.py 6f8ee0f` shows admitted entries 4→5 and F2 entry 0→1.
+- **Rejects retained**: deletion certification from integrity evidence,
+  K5 re-admission/Q15 revival, universal no-write and reclaimable-space
+  interpretations of structure metrics.
+
+Registry: 33→37 rows; A=29→33, B=3→3, C=1→1;
+mined=16→20, queued=15→15, rejected=2→2. Exact counting commands and
+outputs: `census/round-13/counts.json`. Start/end contract census stdout
+is `souji<TAB>ok<TAB>/home/vgpnk/Projects/shokunin/souji-shokunin/corpus/SOURCES.md`,
+exit 0 both times (`before.json`, `verification.json`, sources-contract).
+New rows by tier: four A, zero B/C. One newly admitted knowledge entry,
+not four rows, is the expansion gain.
+
+Author trend verdicts: expansion **improved** (sourced F2 entry and bounded
+capability); quality **unchanged** under the strict existing-admitted-
+knowledge recheck/supersession bar (operability improves, but no separate
+stale-entry sweep is claimed); discernment **improved** (outside K5
+disagreement becomes Q17, executable missing-evidence rejection, and
+committed fixture resolution). All three claimed axes improve on their
+bounded measurements; other axes are unchanged. These are author verdicts,
+not an invented outside spot-check or promotion.
+

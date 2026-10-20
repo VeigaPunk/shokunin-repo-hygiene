@@ -2,6 +2,8 @@
 
 Contract: `SOURCES-CONTRACT-v1` (kaika, frozen 2026-10-19). Tier definitions live there; admission stays in `corpus/QUALITY.md`. Every row below was opened on 2026-10-19 in round 12; the per-row URL, access date and grounding quote are in `census/round-12/sources-gate.md`. Ids S001–S030 keep the W1 ART dossier numbering.
 
+Round-13 provenance correction: the preceding “every row” statement describes S001–S033 only. New S034–S037 were opened on 2026-10-20; their located quotes/access records are in `corpus/lessons/round-13.md` Gate. No historical row's opening date or immutable cells were rewritten.
+
 ## Registry
 
 | id | source | kind | tier | scope | anchor | teaches | status | opened | recheck | used-by |

@@ -558,3 +558,46 @@ untouched and excluded from pathspecs. There were no initial lane-authored
 leftovers. Receipt certification and comprehensive class-suite re-certification
 remain distinct from this round's bounded integrity capability.
 
+
+## 2026-10-20 — round 13 measured closing evidence
+
+Source snapshot: `6ed10a7cd6c7b26f8068dd6e02497e860f9c4317`.
+Targeted correction snapshot:
+`6f8ee0f38a14a3cb599ee606c486a55ec64e8ae6`. Both commits use the
+lane identity, a confirmed `git -C <lane> rev-parse --show-toplevel`,
+explicit matching `git add -- <paths>` / `commit -- <paths>` pathspecs,
+and `-c maintenance.auto=false`; scope record:
+`census/round-13/commit-scope.json`.
+
+First-pass failures are preserved in
+`census/round-13/verification-attempt-1.json`, not erased. Corrections:
+finding parser accepts `_` in `snapshot_tampered` without weakening its
+expected id; the SHA-stall fixture targets the pin digest rather than the
+engine ledger read; synthetic Git identity is supplied by the isolated
+runner; warning-level ShellCheck findings are fixed without suppression.
+Only failed checks were retried, plus the baseline/fixed pair because its
+fixture changed. Unchanged passing results retain their measured revision.
+
+Observed final evidence `census/round-13/verification.json`:
+- C1: evidence selftest 36/36, external black-box fixture 5/5; frozen input
+  run clean with 7 pins; actual historical wrong-byte and candidate claims
+  reject with exact findings, exit 2. Certification remains OFF.
+- C2: same corrected bounds fixture baseline total=5/failed=4/hung=2
+  (exit 1), changed tool total=5/failed=0/hung=0 (exit 0). Embedded
+  verify/vault/quarantine/census: 40/51/91/36 checks, all zero failures;
+  `shellcheck -S warning` on all four changed shell files exits 0.
+- C3: structure probe fixture 5/5, no persistent delta on its isolated
+  synthetic normal repo, configured partial/promisor refusal exercised.
+  `python3 census/round-13/count-claims.py 31984f4` versus the same command
+  on 6f8ee0f: F2 entry 0→1, admitted entries 4→5, source rows 33→37
+  (A=29→33/B=3→3/C=1→1; mined=16→20/queued=15→15/rejected=2→2).
+  Commands and outputs: `census/round-13/counts.json`.
+
+Bounded per-axis author verdicts: calibration/operability/coverage improved;
+numeric scores unchanged (7/8/8, legacy-unmapped). Trends: expansion
+improved, quality unchanged under the strict existing-admitted-knowledge
+recheck/supersession bar, discernment improved because the outside K5
+disagreement becomes Q17 and an executable missing-evidence rejection.
+Fresh independent admit/reject sampling remains the outside closure duty;
+all SHONEN marks remain author `[~]`. No tools were installed or upgraded.
+

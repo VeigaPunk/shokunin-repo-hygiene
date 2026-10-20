@@ -81,3 +81,22 @@ specification/registry and author-owned reports under `.ufo/waves/round-13/`.
 The untracked `census/operator-sweep-20261019/` remains operator-owned and
 is excluded from round staging.
 
+
+### Round 13 admission correction and observed results
+
+The r12 coverage-map word “held” meant entries were held in the corpus, not
+the later HELD rejection status: F1's two entries, F3's duplicate-finder
+entry and F4's trash-spec entry are admitted. Only K5
+`quarantine-same-filesystem-rename.md` is HELD. With the new F2 entry,
+admitted knowledge is 4→5 (`python3 census/round-13/count-claims.py 31984f4`
+and `python3 census/round-13/count-claims.py 6f8ee0f`; `counts.json`).
+
+Actual final results: evidence selftest 36/36, external replay 5/5,
+structure fixture 5/5, corrected bounds fixture baseline 1/5 PASS with two
+hangs versus changed tool 5/5 PASS. Four embedded tool suites report
+40/51/91/36 checks with zero failures, and `shellcheck -S warning` exits 0.
+Exact commands, outputs, installed digests and per-check revisions:
+`../census/round-13/verification.json`; first-pass failures are preserved
+separately, not erased. Q19 replaces Q8's marker-count test with behavior
+and independent expected finding ids.
+
