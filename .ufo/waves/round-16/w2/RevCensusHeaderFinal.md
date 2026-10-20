@@ -14,7 +14,7 @@ the "Accepted" list, exit codes — against the code that implements them. Verdi
 
 | header lines | contract | code | verdict |
 |---|---|---|---|
-| 2-5 | r14 pre-access boundary; r16 value/effect-aware config guard | 74-129, 608-732, 821-901 | holds |
+| 2-5 | r14 pre-access boundary; r16 value/effect-aware config guard | 200-498, 542-732, 821-901 | holds |
 | 6-11 | toolchain; never fetch / write outside /var/tmp; mtime walk boundary | 150-164, 1074-1125, 1424, 1527 | **partial** — F3, F8 |
 | 14-16 | CLI surface | 1839-1855 | **partial** — F9 |
 | 17-21 | default scan roster; `--include-root` main-repo rule | 1257-1306 | **fails** — F1, F7 |
