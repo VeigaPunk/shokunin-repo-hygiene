@@ -185,3 +185,19 @@ record retains pre-integration pins. Source validation alone exited 0;
 `../census/round-15/end-sources.json` records the 42-row inventory. R14
 configuration-support harm remains open. Details and exact unrun commands:
 `lessons/round-15.md` Final disposition; no new capability is admitted.
+
+## Round 16 — repair first: parsing census, landing gate, checker executed
+
+Correction to the r15 section above: the r15 candidate census **did not
+parse** (`bash -n` rc 2 at line 1368); it was known broken, not merely
+unverified (`lessons/round-16.md` Corrections). Round 16 restored a parsing,
+value/effect-aware census (C1) and added a landing-claim gate (C2); it
+executed the r15 preservation checker for the first time (24/47 → 47/47)
+and regenerated its frozen record from real runs (R4), and audited seat
+transcripts (R5). Measurements, revisions and residual contractions are in
+`lessons/round-16.md`; round evidence sits under `../census/round-16/` and
+wave specifications, dispatch and seat reports under
+`../.ufo/waves/round-16/`. `QUALITY.md` now runs Q1–Q26 (Q25 landing
+claims, Q26 transcript-audited probe rule). SOURCES gains S043–S050 (six
+mined, two rejected). No frontier row advances and no knowledge entry is
+added: admitted knowledge stays five, K5 HELD, certification OFF.

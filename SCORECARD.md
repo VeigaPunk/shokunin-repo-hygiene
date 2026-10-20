@@ -11,8 +11,8 @@ counting command and the commit it was measured against.
 | axis | score | verdict / observation | counting command | measured commit | last change |
 |---|---|---|---|---|---|
 | coverage | 8 | unchanged r14; r13 C3 improved and admitted by CloseSoujiR13 (`corpus/lessons/round-13-verifier-spotcheck.md`); numeric delta 0, legacy-unmapped. Admitted knowledge remains 5, HELD 1; no new coverage-map ground claimed | `python3 census/round-14/count-claims.py a31642d`; same command `552cae4`; `census/round-14/counts.json` | a31642d → 552cae4 | r13 |
-| calibration | 7 | r15 C2 unprovable: preservation checker, self-invocation fixture and frozen declarations landed, but no acceptance was run before operator wrap-up. No new capability admitted; numeric delta 0, legacy-unmapped. R14 C1 remains outside-verified only within synthetic attempt_reuse / declared-byte scope | UNRUN: `python3 tools/souji-preservation-evidence.py --selftest`; external/frozen/actual-record checks; `corpus/lessons/round-15.md` | no r15 behavioral measurement; r14 source 48f8945 / corrected consumer 552cae4 and closure cc21683 retained | r15 |
-| operability | 8 | r15 C1 unprovable: value/effect-aware candidate repair and paired fixture landed without red-before/green-after execution. R14 rejected-harmed debt remains OPEN; neither namespace retention nor benign/mixed-fleet restoration is claimed passed. Numeric delta 0, legacy-unmapped | UNRUN: `python3 tests/fixtures/r15-census-config.py --tool <pre-harm-or-harmed-or-changed>`; unchanged namespace fixture and legacy suite; `corpus/lessons/round-15.md` | no r15 behavioral measurement; r14 harm source 552cae4 / outside closure cc21683 retained | r15 |
+| calibration | 7 | r16 C2 (author: improved, outside admission pending): `tools/souji-landing-gate.py` detects all three r15 closure-found landing defect classes on the historical r15 landing (5 findings) with 0 findings on the r13 and r14 landings; selftest 18/18, held-out fixture 15/15. r15 C2 checker executed for the first time and repaired (selftest 24/47 → 47/47; frozen record regenerated from real runs, `--frozen` clean at c6207bd). Numeric delta 0, legacy-unmapped | `python3 tools/souji-landing-gate.py --root . --rev b410186 --round 15` (exit 1) and `--rev a31642d --round 13` / `--rev cc21683 --round 14` (exit 0); `python3 tests/fixtures/r16-landing-gate.py`; `python3 tools/souji-preservation-evidence.py --selftest`; `corpus/lessons/round-16.md` | a6ec781 (gate); c6207bd (checker, frozen) | r16 |
+| operability | 8 | r16 C1 (author: improved, outside admission pending): census parses again and its config guard is value/effect-aware — changed 20/20 on the r16 config fixture, 12/12 namespace, 38/38 selftest, parse/ShellCheck clean; r14-harm fails all 15 HARM_CASES ids; r15 baseline does not parse. Live fleet paired rows identical (21 repos). Residual contractions vs pre-harm a31642d disclosed and routed to the operator. Correction: the r15 row's "numeric delta 0" was wrong — r15 harmed operability (b410186 does not parse). Numeric delta 0, legacy-unmapped | `python3 census/round-16/run-matrix.py --changed <rev> --output <new.json>`; `census/round-16/c1-matrix-final.json`, `c1-matrix-landing.json`, `live-fleet-final.json` | 0a70bef (census bytes 64a60fd0…; unchanged at landing) | r16 |
 
 Correction (r12 post-review, 2026-10-19): coverage C2 reads 0→4 admitted entries (+1 held,
 K5) on F1/F3/F4, SOURCES census mined=16 queued=15; calibration C1's 28/52 → 51/53 is a
@@ -43,7 +43,9 @@ independently adjudicated in `corpus/lessons/round-13-verifier-spotcheck.md`.
 | bounded quarantine operations | bounded move/digest/inspection with explicit refusal/abort and residue diagnostics; stable special-file refusals; no new deletion authority | `bash tests/fixtures/r13-quarantine-bounds.sh` → 5/5; same corrected fixture baseline red, `census/round-13/verification.json` | r13 |
 | repository structure census | emit versioned refs-rooted object metrics on the bounded complete-repository surface; reject marked partial/promisor repos; report common-store identity | `bash tests/fixtures/r13-repo-structure.sh --selftest --probe tools/souji-repo-structure.sh` → 5/5; `corpus/knowledge/git-repo-structure-readonly.md` (S035/S036/S037) | r13 |
 | declared-dependency cache eligibility | refuse stale/legacy/malformed declared records and preserve original revision; actual attempt_reuse decision honors refusal on synthetic records only; no historical execution proof, full dispatch or positive production retention | `census/round-14/verification*.json`; S039; bounded outside verification `corpus/lessons/round-14-verifier-spotcheck.md` C1 | r14 |
-| protected-namespace census (net admission rejected r14) | verified namespace gains within 12 cases, not unchanged config support; value-blind benign-config harm blocks net no-trade admission until repaired | historical `census/round-14/verification.json`; S040; `corpus/lessons/round-14-verifier-spotcheck.md` C2 | r14 bounded demonstration; not net-admitted |
+| protected-namespace census, value/effect-aware config (r16) | refuse only config-named paths overlapping a protected root (whole run, exit 2); degrade unevaluable config to one `error` row; skip status where a filter driver is bound; neutralize hooks/fsmonitor and lazy fetch on every git call; honor boundary-clean excludes/attributes; keep the r14 namespace refusals. Not a no-harm claim against pre-harm: residual contractions are listed in `corpus/lessons/round-16.md` | `census/round-16/c1-matrix-final.json`; S045–S047, S049; outside admission pending | r16 (r14 bounded demonstration, not net-admitted) |
+| landing-claim gate | flag, at a named revision, registry-cited scripts that do not parse, frozen pins or measured commits that disagree with committed bytes, and contract STATUS failure lines not carried into the round lesson; never executes repository code | `python3 tools/souji-landing-gate.py --selftest` 18/18; `python3 tests/fixtures/r16-landing-gate.py` 15/15; replays in `corpus/lessons/round-16.md` Gate; S043, S050 | r16 |
+| seat transcript audit | classify every recorded seat tool call against the wave contract (forbidden-surface paths, live census, out-of-scope writes, unauthorized execution, recursive reads); lower bound only | `python3 tools/souji-seat-audit.py --selftest` 20/20; `census/round-16/seat-audit-w1.json` | r16 |
 
 ## Planned
 
@@ -63,14 +65,15 @@ independently adjudicated in `corpus/lessons/round-13-verifier-spotcheck.md`.
 - **r6–r11 (appended r12):** this section was not updated for rounds 6–11
   (STATE dossier §5.4; lesson row M52). Their claims and verdicts are in
   LOG.md and `corpus/lessons/round-{6..11}.md`.
-- **r16 (planned r15, not started):** first resolve the unverified r15 C1
-  value/effect-aware config repair and its precise remaining benign-value
-  limitations; run discriminating pre-harm/harmed/changed controls and retain
-  all namespace gains before admission. Independently exercise C2 selftest,
-  external fixture, refreshed frozen pins and a real captured record. The
-  r15 operator wrap-up cancelled planned wave 2 and final acceptance; no
-  unrun check passed. Certification stays OFF, K5 HELD; wider F2 and
-  unexercised quarantine sites remain frontier. No new round is started here.
+- **r16 (planned r15) — done, see `corpus/lessons/round-16.md`:** census
+  repaired and measured (C1), landing gate (C2), r15 checker executed and
+  frozen record regenerated (R4), seat audit (R5).
+- **r17 (planned r16):** first act on the outside r16 closure. Then either
+  (a) operability: narrow the residual r14 contractions that need no
+  operator ruling (git-metadata symlinks resolving inside the gitdir,
+  hardlink/alternates refusals → per-repo degrade, `~user` expansion), each
+  with a pre-harm/changed pair, or (b) coverage/frontier: F2 size
+  attribution. Certification stays OFF, K5 HELD.
 
 ## Saturation / stagnation
 

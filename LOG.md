@@ -813,3 +813,72 @@ K5 HELD; no promotion, removal, host-service change or tool installation.
 Closing commit uses confirmed owning toplevel, named paths only and
 `git -c maintenance.auto=false commit -- <same named paths>` under
 souji identity, followed by push; report lands only after that pushed HEAD.
+
+## 2026-10-20 — round 16 correction: round 15 landed a census that does not parse
+
+Correction to the round-15 entries above ("Landed source candidates",
+"unverified candidate"): `b410186` committed `tools/souji-census.sh` in a
+state that **does not parse** (`bash -n` rc 2, `line 1368: syntax error near
+unexpected token '}'`; ShellCheck SC1046 at the unclosed `if` in
+`list_repos`, line 1324). The ConfigRepair seat had run `bash -n`, seen it
+fail and written "The file in tree does NOT parse. … do not ship this state
+as working" (`.ufo/waves/round-15/w1/ConfigRepair.md:7-13`); the r15 entry,
+lesson, SKILL rows and report called it unverified and listed the check as
+unrun. Operability was therefore harmed at r15 (the census parsed at
+`cc21683`), not "numeric delta 0". The r15 frozen pin `b5187351…` named
+bytes no commit holds and its record's `measured_commit` `fc3a8d4` held
+`fcff8b05…`; the r15 preservation checker, never executed, fails its own
+selftest 23/47 at its landing bytes. Historical r15 bytes are not rewritten;
+this entry, `corpus/lessons/round-16.md` (Corrections) and the round-16
+report carry the correction. Re-verification: `git show b410186:tools/
+souji-census.sh | bash -n` → rc 2 at 1368; same at `cc21683` → rc 0.
+
+## 2026-10-20 — round 16: parsing value/effect-aware census (C1), landing gate (C2), r15 checker executed (R4), seat audit (R5)
+
+C1 operability. `cbf688a` restored the census from `cc21683` bytes and made
+the config guard value/effect-aware; `0a70bef` integrated 65 wave-1 reviews:
+only a config-named path overlapping a protected root keeps the whole-run
+exit 2; could-not-evaluate config (cycle/depth, `~user`, `%(prefix)`,
+non-regular or hardlinked include, NUL/unparsable, invalid
+`extensions.worktreeConfig`, unresolvable path) degrades to one `error` row
+with no git run; a soft finding never stops the scan, so a later protected
+reach still refuses; a filter driver bound by attributes skips status for
+that repository (`status-unverifiable`, driver never runs, lookup fails
+closed); hooksPath/fsmonitor are neutralized on every git call through
+`GIT_CONFIG_COUNT`; promisor/partialClone stay inert under
+`GIT_NO_LAZY_FETCH`; alternateRefsCommand has no census consumer; excludes/
+attributes files are honored when boundary-clean, the XDG default when
+unset, `/dev/null` when set empty; nested includes resolve against the
+spelled path; symlinked `commondir` is read through its guarded target;
+`info/attributes` joins the fixed-metadata guard. The r15 config fixture was
+executed for the first time, its two oracle bugs fixed, and it gained the
+r16 classes and discriminating controls. Counting command
+`python3 census/round-16/run-matrix.py --changed <rev> --output <new.json>`
+at `0a70bef`: changed 20/20, namespace 12/12, selftest 38/38, parse and
+ShellCheck clean; r14-harm fails every HARM_CASES id; pre-harm fails only
+refusal/safety cases; r15 baseline fails `bash -n` and all cases
+(`census/round-16/c1-matrix-final.json`; landing rerun
+`c1-matrix-landing.json`). Live fleet paired runs (`live-fleet-final.json`):
+r14-harm and changed rows identical on 21 repositories.
+
+C2 calibration. `tools/souji-landing-gate.py` checks registry-cited parse,
+frozen pins and measured commits, and STATUS-channel carry; replay
+`b410186` round 15 → exit 1, 5 findings covering all three r15 defect
+classes; `a31642d` round 13 and `cc21683` round 14 → 0 findings; selftest
+18/18; held-out fixture 15/15. Two noisier channel drafts were measured and
+dropped (10 false findings per admitted replay; 42 quotation hits at this
+landing). Sources S043 (bash -n) and S050 (Python compile()).
+
+R4. The r15 checker's CASE regex rejected the real TAB-separated detail;
+fixed with its selftest builders and r16 class tables (selftest 47/47,
+external fixture 8/8). `tests/fixtures/r15-preservation-frozen/
+regenerate.py` re-ran every arm at committed bytes; `--frozen` → clean at
+`c6207bd`. R5. `tools/souji-seat-audit.py` audited wave 1: 1 major
+(attempted out-of-scope edit, failed), 19 minor recursive reads; affected
+evidence voided and re-derived (`census/round-16/seat-audit-w1.json`).
+R6 cross-domain line and R7 rejected row S044 are in the report and
+registry. Residual contractions versus pre-harm are disclosed in the lesson
+and filed as an L0 scope question. Certification OFF; K5 HELD.
+Re-verification: matrix, gate replays, checker selftest/fixture/frozen and
+audit selftest were re-run by L1 at the commits named; wave-2 reruns are in
+the report.

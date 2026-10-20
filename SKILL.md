@@ -15,12 +15,13 @@ state `SCORECARD.md`, Tool certification). Receipt verdicts remain advisory.
 it cannot authenticate author labels, prove a command ran, establish full
 class coverage, or grant deletion authority (QUALITY Q6/Q18).
 
-**Round-15 candidates are NOT behaviorally verified.** The census config
-repair, preservation checker and r15 fixtures were stopped at operator
-wrap-up before acceptance. Their registry rows describe interfaces, not
-passing demonstrations. Do not treat the new census as an admitted repair
-or use its output for operational decisions until the recorded checks run.
-R14's rejected-harmed configuration-support debt remains open.
+**Round-15 correction (r16).** The r15 census at `b410186` did not parse
+(`bash -n` rc 2, line 1368) — it was known broken, not merely unverified.
+Round 16 restored a parsing, value/effect-aware census and measured it
+(`corpus/lessons/round-16.md`): changed 20/20 config cases, 12/12 namespace,
+38/38 selftest. Outside admission is pending, and residual contractions
+versus the pre-harm census are listed there; read `error` and
+`status-unverifiable` rows as "not measured", never as clean.
 
 ## Receipt taxonomy — every removal needs exactly one
 
@@ -135,7 +136,7 @@ for the legacy selftests; their historical fallback is not Q4-conformant.
 |---|---|---|---|---|---|---|---|
 | souji-verify | probe | `bash tools/souji-verify.sh <path>...` | 0 clean, SAFE/NOT-SAFE data; 1 failed selftest or could-not-evaluate setup (legacy debt); 2 could-not-evaluate usage | `TMPDIR=/var/tmp bash tools/souji-verify.sh --selftest` | none; no pinned complete id set | read-only targets; isolated selftest under TMPDIR | souji |
 | souji-vault-verify | probe | `bash tools/souji-vault-verify.sh --fallback <path>...` | 0 clean, VERIFIED/NOT-VERIFIED data; 1 failed selftest or could-not-evaluate setup (legacy debt); 2 could-not-evaluate usage | `TMPDIR=/var/tmp SOUJI_CLI_BIN=/bin/false bash tools/souji-vault-verify.sh --selftest` | none; no pinned complete id set | read-only source/vault; isolated selftest under TMPDIR | souji |
-| souji-census | probe | `bash tools/souji-census.sh --root DIR [--compare PREV.tsv]` | 0 clean; 3 failed differential comparison; 1 failed selftest or could-not-evaluate setup (legacy debt); 2 could-not-evaluate usage/malformed baseline/protected or unsupported Git path (`path-protected`) | `TMPDIR=/var/tmp bash tools/souji-census.sh --selftest` | caller comparison is unpinned; no pinned complete legacy selftest id set | read-only census; compare capture and isolated selftest under `/var/tmp` | souji |
+| souji-census | probe | `bash tools/souji-census.sh --root DIR [--compare PREV.tsv]` | 0 census emitted (rows may carry `error`/`status-unverifiable` for degraded repositories — placeholders, not measurements) or header-only diff; 3 failed differential comparison; 1 failed selftest or could-not-evaluate setup (legacy debt); 2 could-not-evaluate usage/malformed baseline/protected-path refusal (`path-protected`, including a config-named path overlapping the store) | `TMPDIR=/var/tmp bash tools/souji-census.sh --selftest` | caller comparison is unpinned; r16 behavior pinned by the r15-census-config fixture below | read-only census; compare capture and isolated selftest under `/var/tmp` | souji |
 | souji-quarantine | probe | `bash tools/souji-quarantine.sh --dry-run <repo> <target>...` | 0 clean target outcome; 3 failed/refused/aborted; 4 could-not-evaluate live guard; 1 failed selftest or could-not-evaluate setup (legacy debt); 2 could-not-evaluate usage | `TMPDIR=/var/tmp bash tools/souji-quarantine.sh --selftest` | no complete safety-suite baseline; receipts advisory, certification OFF | dry-run read-only; explicitly authorized action moves targets within owning repo; selftest under TMPDIR | souji |
 | r12-maintenance-guard | gate | `bash tests/fixtures/r12-maintenance-guard.sh` | 0 clean; 1 failed; 2 could-not-evaluate | `bash tests/fixtures/r12-maintenance-guard.sh --selftest` | expected counts and SELFTEST_EXPECTED_IDS in fixture; `tests/results/r12-maintenance-guard.txt` | isolated `/var/tmp/souji-r12-maintenance.*` | souji |
 | souji-cert-evidence | gate | `python3 tools/souji-cert-evidence.py --root PATH --manifest PATH` or `--frozen DIR` | 0 clean declared consistency; 1 failed honest fragment; 2 could-not-evaluate malformed/inconsistent/tampered input | `python3 tools/souji-cert-evidence.py --selftest`; `python3 tests/fixtures/r13-cert-evidence.py` | embedded expected exit/finding ids; `tests/fixtures/r13-cert-frozen/expected.json` pins every input | inputs read-only; selftests isolated `/var/tmp`; never executes recorded commands | souji |
@@ -145,9 +146,12 @@ for the legacy selftests; their historical fallback is not Q4-conformant.
 | souji-evidence-cache | gate | `python3 tools/souji-evidence-cache.py --root DIR --record PATH [--require REL...]` or `--frozen DIR` | 0 clean/reusable declared dependencies; 1 failed/stale/missing dependency or matched false; 2 could-not-evaluate malformed/legacy/protected/tampered input | `python3 tools/souji-evidence-cache.py --selftest`; external fixture below | literal embedded expected ids; `tests/fixtures/r14-cache-frozen/expected.json` input pins | inputs read-only; isolated selftest `/var/tmp`; never executes a recorded command | souji |
 | r14-evidence-cache | gate | `python3 tests/fixtures/r14-evidence-cache.py [--tool PATH]` | 0 clean; 1 failed assertion; 2 could-not-evaluate missing prerequisite | same default self-invocation fixture; isolated positive/negative CLI calls | literal expected exits/finding ids in fixture; `tests/fixtures/r14-cache-frozen/expected.json` | isolated `/var/tmp/souji-r14-cache-fixture.*`; reads selected gate and committed snapshot | souji |
 | r14-census-boundary | gate | `python3 tests/fixtures/r14-census-boundary.py --tool PATH` | 0 clean; 1 failed case/id-set; 2 could-not-evaluate missing prerequisite/trace/usage | same default self-invocation fixture, synthetic HOME with spy and strace access checks; `--tool` selects paired baseline | fixture EXPECTED_IDS and literal expected exits/finding/access assertions | isolated `/var/tmp/r14-census-boundary.*`; never a real credential-store probe | souji |
-| r15-census-config | gate | `python3 tests/fixtures/r15-census-config.py --tool PATH` | 0 clean; 1 failed case/id-set; 2 could-not-evaluate prerequisite/trace/usage | same full default invocation over isolated synthetic HOME; selected tool supplies pre-harm, harmed or changed arm | fixture literal EXPECTED_IDS and per-case fixed exits/findings/row expectations | isolated `/var/tmp`; no real store or live fleet probe | souji |
-| souji-preservation-evidence | gate | `python3 tools/souji-preservation-evidence.py --root DIR --record FILE` or `--frozen DIR` | 0 clean declared consistency; 1 failed honest evidence; 2 could-not-evaluate malformed/tampered/unavailable input | `python3 tools/souji-preservation-evidence.py --selftest`; external fixture below | checker literal case universe and baseline digests; `tests/fixtures/r15-preservation-frozen/expected.json` pins every snapshot input | records read-only; self-invocations isolated `/var/tmp`; never runs recorded commands | souji |
-| r15-preservation-evidence | gate | `python3 tests/fixtures/r15-preservation-evidence.py` | 0 clean; 1 failed expected exit/finding; 2 could-not-evaluate missing prerequisite | same default self-invocation fixture | fixture literal positive/negative expectations and `tests/fixtures/r15-preservation-frozen/` | isolated `/var/tmp`; inputs read-only | souji |
+| r15-census-config | gate | `python3 tests/fixtures/r15-census-config.py --tool PATH` | 0 clean; 1 failed case/id-set; 2 could-not-evaluate prerequisite/trace/usage | same full default invocation over isolated synthetic HOME; selected tool supplies pre-harm, harmed or changed arm; first executed and revised r16 (degrade/benign/safety classes, mixed fleets, positive controls) | fixture literal EXPECTED_IDS, HARM_CASES, CASE_CLASSES and per-case exits/rows; `census/round-16/c1-matrix-final.json` | isolated `/var/tmp`; no real store or live fleet probe | souji |
+| souji-preservation-evidence | gate | `python3 tools/souji-preservation-evidence.py --root DIR --record FILE` or `--frozen DIR` | 0 clean declared consistency; 1 failed honest evidence; 2 could-not-evaluate malformed/tampered/unavailable input | `python3 tools/souji-preservation-evidence.py --selftest` (47/47 at r16; 24/47 as landed r15); external fixture below | checker literal r16 case universe and baseline digests; `tests/fixtures/r15-preservation-frozen/expected.json` pins every snapshot input; record regenerated from real runs by `regenerate.py --rev <rev>` | records read-only; self-invocations isolated `/var/tmp`; never runs recorded commands | souji |
+| r15-preservation-evidence | gate | `python3 tests/fixtures/r15-preservation-evidence.py` | 0 clean; 1 failed expected exit/finding; 2 could-not-evaluate missing prerequisite | same default self-invocation fixture (8/8 at r16) | fixture literal positive/negative expectations and `tests/fixtures/r15-preservation-frozen/` | isolated `/var/tmp`; inputs read-only | souji |
+| souji-landing-gate | gate | `python3 tools/souji-landing-gate.py --root LANE --rev REV --round N [--base REV] [--json OUT]` | 0 no findings; 1 findings (LG-PARSE-REG, LG-MISSING-REG, LG-PARSE-CHANGED, LG-FROZEN-PIN, LG-FROZEN-MEASURED, LG-SEAT-UNCARRIED, LG-OPEN-ADMITTED); 2 could-not-evaluate usage/unknown rev/no SKILL.md/missing wave dir | `python3 tools/souji-landing-gate.py --selftest` | literal finding ids, failure vocabulary and frozen-path rule in the tool; replays in `corpus/lessons/round-16.md` | reads committed blobs; private `/var/tmp` snapshot removed; runs only `bash -n` and Python `compile()` | souji |
+| r16-landing-gate | gate | `python3 tests/fixtures/r16-landing-gate.py [--tool PATH]` | 0 clean; 1 failed case; 2 could-not-evaluate prerequisite | same; includes a vacuity stub that must fail | historical r15 replay pins and held-out synthetic cases in the fixture | isolated `/var/tmp` git repos removed afterwards | souji |
+| souji-seat-audit | gate | `python3 tools/souji-seat-audit.py --spec W.json --transcripts DIR --lane LANE [--json OUT]` | 0 no major violation; 1 major violation; 2 could-not-evaluate | `python3 tools/souji-seat-audit.py --selftest` | literal violation classes in the tool; per-item `OWN ONLY` and `ALLOWED-EXEC:` from the wave spec | reads exported transcripts; writes only `--json` (refuses overwrite) | souji |
 
 Sources for this skill: `corpus/SOURCES.md`; admission bar: `corpus/QUALITY.md`.
 
@@ -165,7 +169,9 @@ Sources for this skill: `corpus/SOURCES.md`; admission bar: `corpus/QUALITY.md`.
   across r1–r6, live-written by its unpushed round-14..53 work — NOT-SAFE;
   handoff note at `census/round-6/kotodama-scratch-handoff.md`.
 - Repeatable fleet census: `tools/souji-census.sh --root $SHOKUNIN_ROOT`
-  (r6; per-repo worktrees/unpushed/dirty/scratch/mtime/flags).
+  (r6; per-repo worktrees/unpushed/dirty/scratch/mtime/flags). r15's
+  `b410186` copy did not parse; r16 restored and measured it (config
+  semantics below and in the tool header).
 
 ## Repository structure census (F2, bounded r13 capability)
 
@@ -224,8 +230,11 @@ checks are not a general sandbox against hostile hardlinks, bind mounts or
 concurrent replacement. Source S040 explains filesystem-aware resolution;
 QUALITY Q20/Q21 and `corpus/lessons/round-14.md` bind these limits.
 R14's blanket local-configuration refusal was rejected as harmed by the
-outside closure. R15 lands an unverified value/effect-aware candidate:
-intended behavior and remaining unsupported forms are in the current tool
-header, not demonstrated guarantees. No r15 benign/mixed-fleet preservation,
-namespace retention, ShellCheck or selftest pass is claimed. Exact unrun
-acceptance and frozen re-pin requirements: `corpus/lessons/round-15.md`.
+outside closure. R15 landed a candidate that did not parse. R16 restored a
+parsing census whose config guard is value/effect-aware: a config-named path
+overlapping the store still refuses the whole run; unevaluable config
+degrades one repository to an `error` row; a bound filter driver skips
+status for that repository; hooks, fsmonitor and lazy fetch are neutralized
+on every git call. Measured with the r15 config fixture, the r14 namespace
+fixture and the selftest (`census/round-16/c1-matrix-final.json`);
+residual contractions versus pre-harm: `corpus/lessons/round-16.md`.
