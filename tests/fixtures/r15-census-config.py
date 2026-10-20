@@ -10,6 +10,21 @@ run. This fixture proves the repaired tool is value/effect-aware: safe
 values keep working (green) while unsafe values and every verified
 namespace refusal still refuse.
 
+Round-16 revisions (first executed this round; supersede the bullets below
+where they conflict): only a protected-namespace reach keeps the whole-run
+exit-2 refusal shape (02, 11, 17, 19). Could-not-evaluate config that
+reaches no protected path (include cycle/depth, ~user, non-regular or
+hardlinked include target, NUL/unparsable config, invalid worktreeConfig)
+is a per-repository `error` row with exit 0 and a `config-unsupported`
+stderr diagnostic (03, class degrade). remote.*.promisor values are never
+refused (07: an invalid boolean makes git's own status fail, giving the
+pre-harm status-unverifiable row) and core.alternateRefsCommand (any value,
+12) is inert for the census and must give accurate rows. A filter driver bound by an attributes source
+makes that repository's status skipped (dirty 0, status-unverifiable) and
+the driver must never run (14, sentinel). Oracle fixes: EACCES is matched
+as an errno result, not the AT_EACCESS flag; R15CFG-05's r-ignored row is
+honestly unpushed=1 (its .gitignore commit post-dates origin/master).
+
 Semantics pinned here (SoujiR15.ConfigRepair lock, reviewer reports):
   * include.path / includeIf.*.path targets are resolved and guarded;
     outside-repo targets that resolve outside the protected boundary are
@@ -108,25 +123,28 @@ from pathlib import Path
 HEADER = "repo\tworktrees\tunpushed\tdirty\tscratch_bytes\tmtime_iso\tverdict_flags"
 FINDING = "path-protected"
 CANARY = "R15CFG-CANARY-3f7a91c4-do-not-emit"
+EACCES_RE = re.compile(r"= -1 EACCES\b")
 
 EXPECTED_IDS = (
     "R15CFG-01",  # benign: safe includes, includeIf variants, missing, ~, out-of-repo
     "R15CFG-02",  # refusal: include/includeIf targets into the store
-    "R15CFG-03",  # refusal: include cycle, ~user, FIFO, NUL config
+    "R15CFG-03",  # degrade (r16): include cycle, ~user, FIFO, NUL config, invalid
+                  # worktreeConfig — per-repo `error` row, exit 0, never opened
     "R15CFG-04",  # benign: neutralized hooks/fsmonitor; honored attrs/excludes match pre-harm rows
     "R15CFG-05",  # preserve: dirty fidelity (modified+untracked; .gitignore honored)
     "R15CFG-06",  # benign: remote.*.promisor any bool + partialCloneFilter on a
                   # complete repo — accurate rows (GIT_NO_LAZY_FETCH pin lives in 08)
-    "R15CFG-07",  # refusal: promisor invalid booleans (could-not-evaluate, fail-closed)
+    "R15CFG-07",  # benign (r16): invalid promisor booleans not refused; git's own status fails → pre-harm row
     "R15CFG-08",  # safety: execution sentries — hooks/fsmonitor sentinel scripts must
                   # not fire; GIT_NO_LAZY_FETCH=1 pinned on every observed git call
     "R15CFG-09",  # benign: extensions.partialClone false/empty/origin on a complete
                   # repo — remote-name markers are inert under NO_LAZY_FETCH
     "R15CFG-10",  # benign: worktreeConfig false + hostile stray (unopened), true + benign
-    "R15CFG-11",  # refusal: worktreeConfig true + hostile config.worktree; invalid value
-    "R15CFG-12",  # benign: alternateRefsCommand empty value
+    "R15CFG-11",  # refusal: worktreeConfig true + hostile config.worktree; attrs/excludes into store
+    "R15CFG-12",  # benign: alternateRefsCommand any value (r16: never consumed by a census command)
     "R15CFG-13",  # benign: unbound filter.* drivers never executed
-    "R15CFG-14",  # refusal: attribute-bound filter.*.clean/process; non-empty altrefs
+    "R15CFG-14",  # safety (r16): attribute-bound filter.*.clean/process — status skipped
+                  # for that repo only (status-unverifiable), driver never runs
     "R15CFG-15",  # benign: key-parse false positives
     "R15CFG-16",  # benign: mixed fleet, exact row set/order/fields
     "R15CFG-17",  # refusal: mixed fleet containing one unsafe repo (rc 2, no rows)
@@ -139,18 +157,20 @@ EXPECTED_IDS = (
 # (value-blind refusal or a missing namespace refusal). Descriptive table
 # for the independent admission checker — the fixture applies the
 # identical behavioral oracle to every tool identity, no exceptions.
+# r16 adds 03/07/14: the r14 whole-run refusal fails their r16 oracles.
 HARM_CASES = frozenset({
-    "R15CFG-01", "R15CFG-04", "R15CFG-06", "R15CFG-08", "R15CFG-09",
-    "R15CFG-10", "R15CFG-12", "R15CFG-13", "R15CFG-15", "R15CFG-16",
+    "R15CFG-01", "R15CFG-03", "R15CFG-04", "R15CFG-06", "R15CFG-07",
+    "R15CFG-08", "R15CFG-09", "R15CFG-10", "R15CFG-12", "R15CFG-13",
+    "R15CFG-14", "R15CFG-15", "R15CFG-16",
 })
 
 # Case class labels for the admission checker (pinned, non-adaptive).
 CASE_CLASSES = {
-    "R15CFG-01": "benign", "R15CFG-02": "refusal", "R15CFG-03": "refusal",
+    "R15CFG-01": "benign", "R15CFG-02": "refusal", "R15CFG-03": "degrade",
     "R15CFG-04": "benign", "R15CFG-05": "preserve", "R15CFG-06": "benign",
-    "R15CFG-07": "refusal", "R15CFG-08": "safety", "R15CFG-09": "benign",
+    "R15CFG-07": "benign", "R15CFG-08": "safety", "R15CFG-09": "benign",
     "R15CFG-10": "benign", "R15CFG-11": "refusal", "R15CFG-12": "benign",
-    "R15CFG-13": "benign", "R15CFG-14": "refusal", "R15CFG-15": "benign",
+    "R15CFG-13": "benign", "R15CFG-14": "safety", "R15CFG-15": "benign",
     "R15CFG-16": "benign", "R15CFG-17": "refusal", "R15CFG-18": "preserve",
     "R15CFG-19": "refusal", "R15CFG-20": "preserve",
 }
@@ -210,6 +230,7 @@ SENT_HOOKS: Path
 SENT_FSM: Path
 SENT_AR: Path
 SENT_FL: Path
+SENT_FLB: Path
 
 FINDING_RE = re.compile(r"souji-census:\s*([a-z0-9-]+):\s*([a-z0-9-]+)")
 
@@ -334,7 +355,7 @@ def build_world() -> None:
     global FL_WTC_OFF, FL_WTC_ON
     global FL_ALTREFS, FL_FILTER_SAFE, FL_KEYPARSE, FL_MIXED, FL_MIXED_UNSAFE
     global UNSAFE, RECORDS
-    global SENT_HOOKS, SENT_FSM, SENT_AR, SENT_FL
+    global SENT_HOOKS, SENT_FSM, SENT_AR, SENT_FL, SENT_FLB
 
     REAL = {}
     for name in (*SPY_TOOLS, "strace"):
@@ -360,6 +381,7 @@ def build_world() -> None:
     SENT_FSM = SCRATCH / "sentinel-fsmonitor"
     SENT_AR = SCRATCH / "sentinel-altrefs"
     SENT_FL = SCRATCH / "sentinel-filter"
+    SENT_FLB = SCRATCH / "sentinel-bound-filter"
 
     # --- execution-sentry fleet (safety, asserted only in R15CFG-08) -------
     # hooksPath + fsmonitor sentinels in repos whose rows stay clean; the
@@ -478,8 +500,10 @@ def build_world() -> None:
     (repo / "f.bin").write_text("bin\n", encoding="utf-8")
     git(repo, "add", "--", ".gitattributes", "f.bin")
     git(repo, "commit", "-qm", "attr")
+    # r16: the bound clean driver is a sentinel; status must never run it.
+    sent_script(repo / ".git" / "xclean.sh", SENT_FLB, "cat\n")
     with (repo / ".git" / "config").open("a", encoding="utf-8") as fh:
-        fh.write('[filter "x"]\n\tclean = cat\n')
+        fh.write(f'[filter "x"]\n\tclean = {repo}/.git/xclean.sh\n')
     repo = init_repo(UNSAFE / "r-filter-process")
     (repo / ".gitattributes").write_text("*.dat filter=p\n", encoding="utf-8")
     (repo / "f.dat").write_text("d\n", encoding="utf-8")
@@ -750,7 +774,9 @@ def trace_access(trace: list[str]) -> list[str]:
     agent = str(AGENT)
     stat_tokens = ("newfstatat(", "statx(", "lstat(", "stat(", "access(", "faccessat(")
     for line in trace:
-        if "EACCES" in line:
+        # r16 fix: match the errno result, not the AT_EACCESS flag name
+        # that a successful faccessat2 (bash `[ -r ]`) carries.
+        if EACCES_RE.search(line):
             hits.append(line)
             continue
         if "readlink(" in line:
@@ -978,6 +1004,52 @@ def unsafe_repo(names: list[str], reasons: tuple[str, ...]) -> list[str]:
     return problems
 
 
+SOFT_FINDING = "config-unsupported"
+
+
+def soft_problems(res: Result, *, label: str = "") -> list[str]:
+    """r16 degrade oracle: exit 0, one `error` row with zero counts, the
+    config-unsupported diagnostic, no store access, no sentinel."""
+    problems: list[str] = []
+    if not res.trace_ok:
+        problems.append(f"{label}strace log missing or empty")
+    if res.rc != 0:
+        problems.append(f"{label}exit={res.rc} want 0")
+    if SOFT_FINDING not in res.err:
+        problems.append(f"{label}finding {SOFT_FINDING} missing from stderr")
+    if FINDING in res.err:
+        problems.append(f"{label}unexpected {FINDING} finding")
+    rows = rows_by_name(res.out)
+    if not res.out.startswith(HEADER + "\n"):
+        problems.append(f"{label}census header missing")
+    if len(rows) != 1:
+        problems.append(f"{label}rows {sorted(rows)} want exactly one")
+    for name, fields in rows.items():
+        if fields[1:5] != ["0", "0", "0", "0"] or fields[6:] != ["error"]:
+            problems.append(f"{label}{name}: row {fields[1:]} want zero counts + error")
+    problems.extend(access_problems(res, label=label))
+    problems.extend(sentinel_problems())
+    return problems
+
+
+def soft_repo(names: list[str]) -> list[str]:
+    problems: list[str] = []
+    for name in names:
+        res = run_tool(["--root", str(UNSAFE / name), "--include-root"])
+        problems.extend(soft_problems(res, label=f"{name}: "))
+    return problems
+
+
+def single_positive(names: list[str], row: tuple[str, str, str, str]) -> list[str]:
+    problems: list[str] = []
+    for name in names:
+        res = run_tool(["--root", str(UNSAFE / name), "--include-root"])
+        problems.extend(
+            f"{name}: {p}" for p in positive_problems(res, {name: row})
+        )
+    return problems
+
+
 def case_01() -> list[str]:
     expect = {
         "r-inc-rel": CLEAN,
@@ -1004,9 +1076,11 @@ def case_02() -> list[str]:
 
 
 def case_03() -> list[str]:
-    return unsafe_repo(
-        ["r-inc-cycle", "r-inc-tildeuser", "r-inc-fifo", "r-cfg-nul"],
-        CONFIG_REASONS,
+    # r16: could-not-evaluate config that reaches no protected path is a
+    # per-repository `error` row (no git command runs there), not a
+    # whole-run refusal that would suppress unaffected rows.
+    return soft_repo(
+        ["r-inc-cycle", "r-inc-tildeuser", "r-inc-fifo", "r-cfg-nul", "r-wtc-maybe"]
     )
 
 
@@ -1031,7 +1105,10 @@ def case_04() -> list[str]:
 def case_05() -> list[str]:
     expect = {
         "r-dirty": ("1", "0", "2", "dirty"),
-        "r-ignored": CLEAN,
+        # r16 fix: the .gitignore commit post-dates refs/remotes/origin/master
+        # (init_repo), so the honest row is unpushed=1; dirty=0 is the
+        # .gitignore-honored assertion this case exists for.
+        "r-ignored": ("1", "1", "0", "unpushed"),
     }
     return positive_problems(run_tool(["--root", str(FL_DIRTY)]), expect)
 
@@ -1056,10 +1133,11 @@ def case_06() -> list[str]:
 
 
 def case_07() -> list[str]:
-    # Invalid booleans only: could-not-evaluate refuses fail-closed.
-    return unsafe_repo(
-        ["r-prom-maybe", "r-prom-maybe2"],
-        ("git-config-unsupported", "git-config-unparsed"),
+    # r16: an invalid remote.*.promisor boolean makes git's own status fail
+    # ("bad boolean config value"); the honest row is status-unverifiable,
+    # exactly the pre-harm a31642d row, and no other row is suppressed.
+    return single_positive(
+        ["r-prom-maybe", "r-prom-maybe2"], ("1", "0", "0", "status-unverifiable")
     )
 
 
@@ -1114,7 +1192,6 @@ def case_11() -> list[str]:
         [
             "r-wtc-hostile",
             "r-wtc-cwt",
-            "r-wtc-maybe",
             "r-attrs-store",
             "r-excl-store",
         ],
@@ -1123,11 +1200,18 @@ def case_11() -> list[str]:
 
 
 def case_12() -> list[str]:
+    # r16: core.alternateRefsCommand is consumed only when advertising
+    # alternate refs (fetch/push); no census command does, so every value is
+    # inert: rows must be clean and the altrefs sentinel must never fire.
     expect = {
         "r-altrefs-empty": CLEAN,
         "r-altrefs-plain": CLEAN,
     }
-    return positive_problems(run_tool(["--root", str(FL_ALTREFS)]), expect)
+    problems = positive_problems(run_tool(["--root", str(FL_ALTREFS)]), expect)
+    problems.extend(
+        single_positive(["r-altrefs-cmd", "r-altrefs-exit", "r-altrefs-bare"], CLEAN)
+    )
+    return problems
 
 
 def case_13() -> list[str]:
@@ -1139,16 +1223,19 @@ def case_13() -> list[str]:
 
 
 def case_14() -> list[str]:
-    return unsafe_repo(
-        [
-            "r-filter-clean",
-            "r-filter-process",
-            "r-altrefs-cmd",
-            "r-altrefs-exit",
-            "r-altrefs-bare",
-        ],
-        ("git-config-unsupported",),
+    # r16: a filter driver bound by an attributes source would run during
+    # status. The census skips status for that repository only (dirty=0,
+    # status-unverifiable) and never runs the driver; other fields and other
+    # rows survive. Both repos carry one unpushed attribute commit.
+    problems = single_positive(
+        ["r-filter-clean", "r-filter-process"],
+        ("1", "1", "0", "unpushed,status-unverifiable"),
     )
+    for res in ACTIVE_RUNS[-2:]:
+        if "status-skipped" not in res.err:
+            problems.append("status-skipped diagnostic missing from stderr")
+    problems.extend(sentinel_problems((("bound-filter", "SENT_FLB"),)))
+    return problems
 
 
 def case_15() -> list[str]:
