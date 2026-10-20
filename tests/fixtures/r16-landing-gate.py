@@ -18,9 +18,10 @@ LG-PARSE-CHANGED (.sh/.py added/modified in --base..--rev fails to parse),
 LG-FROZEN-PIN (tests/fixtures/*-frozen/expected.json `files` pins; keys starting
 tools/ tests/ census/ corpus/ resolve at the snapshot root ONLY, other keys
 inside the frozen dir ONLY; plus record_sha256), LG-FROZEN-MEASURED (pin bytes
-vs record.json measured_commit), LG-SEAT-UNCARRIED (STATUS: lines whose first
-word is outside the benign allowlist, plus parse/do-not-ship/snapshot_tampered
-phrase markers outside ``` fences and table rows, not carried verbatim under
+vs record.json measured_commit), LG-SEAT-UNCARRIED (STATUS lines outside ```
+fences and table rows whose first word is in the gate's failure vocabulary;
+free-text phrase markers are NOT a channel since L1 revision 2) not carried
+verbatim under
 the lesson's `## Seat-reported failures` heading on an `open`/`resolved@<hex>`
 line; HTML comments stripped), LG-OPEN-ADMITTED (open marker while the lesson
 says admitted: true). Missing .ufo/waves/round-N/ at REV -> exit 2.
@@ -501,7 +502,9 @@ def main():
         with open(stub, "w") as f:
             f.write("import sys\nsys.exit(0)\n")
         stub_proc = gate.run(LANE, REPLAY_REV, REPLAY_ROUND, tool=stub)
-        ok, detail = evaluate(stub_proc, 1,
+        # Expect exit 0 (what the stub does), so the replay rows alone decide
+        # (r16 wave-2 fix: expecting 1 made the guard pass on rc alone).
+        ok, detail = evaluate(stub_proc, 0,
                               need=[("LG-PARSE-REG", ("tools/souji-census.sh",)),
                                     ("LG-FROZEN-PIN", ("tools/souji-census.sh",
                                                        "r15-preservation-frozen")),

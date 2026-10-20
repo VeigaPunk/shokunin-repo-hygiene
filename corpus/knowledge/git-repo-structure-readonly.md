@@ -42,3 +42,5 @@ these guards still do not prove completeness for a corrupt or concurrently
 modified arbitrary repository. Detached-HEAD-only and unreachable objects
 are outside the refs-rooted census. Linked-worktree outputs describe the
 shared common store, so do not sum them as independent repositories.
+
+Freshness note (r16, 2026-10-20): the host now runs Git 2.56.0 (pacman `git 2.56.0-1`, installed 2026-10-20); this entry was verified on 2.55.0 and has not been re-verified on 2.56.0. Treat it as pending recheck (routed to r17), not as re-confirmed.

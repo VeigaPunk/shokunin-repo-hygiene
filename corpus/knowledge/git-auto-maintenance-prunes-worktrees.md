@@ -23,3 +23,5 @@ SKILL removal-flow step 3 makes quarantine a normal owning-repo commit (`SKILL.m
 
 ## Limits
 A search of the cached Git 2.55 sources found one direct `run_auto_maintenance` call each in `builtin/am.c:1942`, `fetch.c:2885`, `merge.c:509` and `rebase.c:572` at v2.55.0 (`for f in am fetch merge rebase commit; do curl -fsSL https://raw.githubusercontent.com/git/git/v2.55.0/builtin/$f.c | grep -c run_auto_maintenance; done` → 1 each, re-run 2026-10-19); these are call sites only — whether each prunes was not fixture-run, and other trigger paths are not excluded. Manual `git gc` also calls worktree-prune at `builtin/gc.c:1042-1044@v2.55.0`; this was read in code only, not separately reproduced (`reviewer-preflight.md:62-66`). Local config (`maintenance.auto`, strategy/task enablement, and the auto threshold) can alter the behavior.
+
+Freshness note (r16, 2026-10-20): the host now runs Git 2.56.0 (pacman `git 2.56.0-1`, installed 2026-10-20); this entry was verified on 2.55.0 and has not been re-verified on 2.56.0. Treat it as pending recheck (routed to r17), not as re-confirmed.
