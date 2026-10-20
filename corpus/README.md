@@ -28,7 +28,7 @@ when the file exists, not before.
 
 ### Admission and sources
 
-- `QUALITY.md` — the admission bar (Q1–Q15), each criterion citing its lesson.
+- `QUALITY.md` — the admission bar (Q1–Q15 at r12; Q1–Q26 since r16, see the Round 16 section), each criterion citing its lesson.
 - `SOURCES.md` — where souji learns (contract v1): 33 rows — `grep -cE '^\|[[:space:]]*S[0-9]{3,}[[:space:]]*\|' corpus/SOURCES.md` 2026-10-19 (full census: `bash census/round-12/sources-census.sh`) — plus `## Paths`, `## Search log`.
 
 ### Coverage map

@@ -882,3 +882,25 @@ and filed as an L0 scope question. Certification OFF; K5 HELD.
 Re-verification: matrix, gate replays, checker selftest/fixture/frozen and
 audit selftest were re-run by L1 at the commits named; wave-2 reruns are in
 the report.
+
+## 2026-10-20 — round 16 wave-2 corrections (appended; the entry above stands as written)
+
+Wave 2 (78 live seats over `163158a`) found the entry above overstated in
+five places. Corrected: `cbf688a` restored the census on the `cc21683` base
+with value/effect-aware edits, not from its bytes; `0a70bef` integrated
+fixes from wave-1 reviews, not all 65; pre-harm fails 02, 03, 08, 11, 14,
+17, 18, 19 — refusal/safety plus 03 (degrade) and 18 (preserve), not "only
+refusal/safety"; the fixture is synthetic and same-round, not held-out, and
+the r13/r14 zero-finding replays exercise only the parse and pin classes;
+the wave-1 audit reported 18 `V-RECURSIVE` + 1 `V-WRITE-UNKNOWN`, and 4 of
+its 20 rows are not violations, so read-only rows were over-voided. The
+regenerated frozen record was measured at `c6207bd` and landed at
+`7a79dc2`; its r16 class tables pin observed baselines (4 r15 predictions
+falsified). The census is not no-harm against pre-harm: benign hook or
+metadata symlinks and `info/attributes` still refuse the whole run. The
+gate fixture's vacuity case passed on exit code alone and is fixed at
+`fb23b12` (15/15 re-run). The landing gate flagged 28 uncarried wave-2
+STATUS lines; they are carried in `corpus/lessons/round-16.md`. S044 and
+S045 teaches cells were corrected after reopen reviews, and three
+knowledge entries verified on Git 2.55.0 carry a freshness note (host
+2.56.0). Open defects are routed to round 17 in the lesson Residuals.
