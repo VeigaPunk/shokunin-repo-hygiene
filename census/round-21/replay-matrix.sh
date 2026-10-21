@@ -44,7 +44,7 @@ for name, root in [('S1',work/'s1'),('S2',work/'s2.git'),('S3',Path(a.lane).reso
     result = subprocess.run(command,env=env,capture_output=True)
     after = state(root)
     record = {'scenario':name,'command':command,'returncode':result.returncode,'source_before':before,
-              'source_after':after,'source_unchanged':before==after,'stdout':result.stdout.decode(),
+              'source_after':after,'source_sample_unchanged':before==after,'stdout':result.stdout.decode(),
               'stderr':result.stderr.decode(),'output':str(output)}
     matched, count = False, 0
     if output.exists():
@@ -55,7 +55,7 @@ for name, root in [('S1',work/'s1'),('S2',work/'s2.git'),('S3',Path(a.lane).reso
         signatures.append(signature)
     record['replayed'] = result.returncode == 0 and matched and before==after
     records.append(record)
-    print(f'SCENARIO\t{name}\texit={result.returncode}\tmatched={count}/18\tsrc_unchanged={"yes" if before==after else "no"}')
+    print(f'SCENARIO\t{name}\texit={result.returncode}\tmatched={count}/18\tsrc_sample_unchanged={"yes" if before==after else "no"}')
     if result.stderr: print(result.stderr.decode().rstrip())
 replayed = sum(r['replayed'] for r in records)
 equal = len(signatures)==3 and signatures[0]==signatures[1]==signatures[2]

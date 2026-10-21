@@ -522,14 +522,16 @@ def historical_agreement_root(root: Path, temp_root: Path) -> Path:
 
 
 def source_state(source: Path) -> dict:
-    def git(*args):
+    def git(*args, allow_missing=False):
         proc = subprocess.run(["git", "-c", "core.fsmonitor=false", "-C", str(source), *args], env=CHILD_ENV,
                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if proc.returncode:
+            if allow_missing:
+                return None
             raise Refusal("source state cannot be read: " + decode_exact(proc.stderr))
         return decode_exact(proc.stdout).strip()
     bare = git("rev-parse", "--is-bare-repository") == "true"
-    return {"head": git("rev-parse", "--verify", "HEAD^{commit}"),
+    return {"head": git("rev-parse", "--verify", "HEAD^{commit}", allow_missing=True),
             "bare": bare, "status": "" if bare else git("status", "--porcelain", "--untracked-files=no")}
 
 
@@ -620,7 +622,7 @@ def main(argv=None) -> int:
             record = {
                 "schema": "souji-round21-replay-acceptance-v1",
                 "root": str(root), "source_root": str(source), "source_state_before": original_state,
-                "source_state_after": final_state, "source_unchanged": True,
+                "source_state_after": final_state, "source_sample_unchanged": True,
                 "measured_commit": args.rev, "baseline_commit": BASELINE,
                 "revision_check": {"durable_full_id": True, "clone_head_equals_revision": True,
                                    "source_head_equals_revision": original_state["head"] == args.rev,
@@ -632,7 +634,7 @@ def main(argv=None) -> int:
                 "inputs_unchanged": initial_snapshot == final_snapshot,
                 "baseline_extraction": extraction, "clone_command": clone_cmd,
                 "agreement_check_scope": "Original tool/counter bytes from their recorded revisions, verified against immutable record digests; no live census.",
-                "scope": "Committed public repository inputs only, isolated clone; source HEAD/tree not measured; no live proc, signals or private data.",
+                "scope": "Committed public repository inputs in an isolated clone; source HEAD/bare/tracked-status are samples only, not whole-source contents or cleanliness; no live process census, signals or private data.",
                 "commands": results,
             }
             write_exclusive(output, record)

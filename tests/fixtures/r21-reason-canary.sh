@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 import re
 import subprocess
+import sys
 import tempfile
 
 p = argparse.ArgumentParser(description='Synthetic reason-field canaries, no live /proc')
@@ -17,7 +18,11 @@ p.add_argument('--baseline-only', action='store_true')
 p.add_argument('--baseline-as-tool', action='store_true',
                help='apply the same oracle to exact original reason emissions')
 a = p.parse_args()
-source = Path(a.base).read_text()
+base_bytes = Path(a.base).read_bytes()
+if hashlib.sha256(base_bytes).hexdigest() != '37c3316a1fd8cdda18cbefdc7692d3d3f388e5783e8fe19085f5d932a8ceba64':
+    print('reason-canary: --base must match the exact 6ff3413 committed source', file=sys.stderr)
+    raise SystemExit(2)
+source = base_bytes.decode('utf-8')
 # Exact base function bodies, not rewritten lookalikes. Only the input root of
 # read_process_argv is synthetic: <temporary>/cmdline replaces /proc/PID/cmdline.
 names = ('path_under_prefix', 'top_level_scratch_gone', 'sanitize_field', 'read_process_argv')
