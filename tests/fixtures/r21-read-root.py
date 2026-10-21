@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Synthetic, independently specified V-READ-ROOT expectations (r21 C1)."""
 import argparse
+import hashlib
 import importlib.util
 import sys
 from pathlib import Path
@@ -21,6 +22,9 @@ def main():
     p.add_argument('--tool', required=True)
     p.add_argument('--base-tool', required=True)
     a = p.parse_args()
+    if hashlib.sha256(Path(a.base_tool).read_bytes()).hexdigest() != 'b2fa68e2e98dae9d046c11775737337fb99b0db94fb5042017e4c8a56fc83389':
+        print('read-root: --base-tool must match the exact 6ff3413 auditor', file=sys.stderr)
+        return 2
     tool, base = load(a.tool, 'changed'), load(a.base_tool, 'baseline')
     # Expectations are literal, not computed by the implementation predicate.
     cases = [

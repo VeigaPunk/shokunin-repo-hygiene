@@ -1,0 +1,35 @@
+# AttackReasonPasswordEqualsProven — C3 password-form sink
+
+## Result
+
+**Mismatch under the frozen C3 wording:** a standalone argv element of the form `password=/var/tmp/<prefix>/missing/<canary>` (and case variants such as `PaSsWoRd=...`) is not selected as a gone-path candidate. The secret matcher recognizes the `password=` text, but candidate extraction does not strip that form. The fixture does not test this assignment-form candidate: its mixed-case `PaSsWoRd=` canary is embedded inside an argv element that begins with `/`, so it exercises the absolute-path candidate branch instead.
+
+By contrast, `--password=/var/tmp/<prefix>/missing/<canary>` and its password case variants are recognized and produce the bounded redacted argv reason. The fd path cases with password markers are redacted by the path-text redactor.
+
+The classification as a contract mismatch follows the preregistration's express listing of `--token=/--password=/password=` candidate values in C3 r2. If `password=` was intended to mean only a marker embedded in an already-absolute path, rather than a standalone assignment-form argv element, that narrower reading is **[INFERENCE]** and is not directly exercised by the provenance fixture.
+
+## Evidence chain — pinned integrated tool
+
+All references in this section are to `522dcd768ca90afe166532d37d306d3df70aeea5:tools/souji-proc-census.sh`.
+
+- `read_argv_stream` sanitizes and runs `redact_secrets` on each original argv element, sets `secret=1` if the redacted value differs from the sanitized original, then selects candidates only for an element beginning with `/` or matching the `--*=/*` case (`270–279`). `password=/...` begins neither with `/` nor with `--`; its candidate remains empty. Any case variant has the same candidate-selection outcome.
+- The redaction pattern for `password=` is case-insensitive across each letter (`227–230`), but this only tags the element as secret; it does not set `candidate` or `PROC_GONE_PATH` (`267–279`). Thus that pattern cannot make the unprefixed form reach reason formatting.
+- For a fabricated prefix `/var/tmp/souji-r21-canary-X` with no corresponding top-level child, `worker\0password=/var/tmp/souji-r21-canary-X/missing/SOUJIR21FAKE\0` follows the source path above: no candidate is selected, `PROC_GONE_PATH` stays empty, and the argv reason-only branch exits 3 without output (`711–716`, `730–731`). This is a static trace only; no code was run.
+- The prefixed form `worker\0--password=/var/tmp/souji-r21-canary-X/missing/SOUJIR21FAKE\0` matches `--*=/*`; `${arg#*=}` supplies the absolute path, `top_level_scratch_gone` can select it under the declared prefix (`270–281`), and the element-level case-insensitive password pattern makes `PROC_GONE_SECRET=1` (`263–268`, `276–279`). `format_reason` substitutes `[REDACTED]` when that flag is set, applies the common redactor, and slices to 160 bytes (`250–255`). Census uses that same formatter before emission (`384–387`); argv reason-only uses it too (`711–716`, `730–731`).
+- If a gone absolute argv path itself contains `PaSsWoRd=CANARY`, candidate selection succeeds through the `/*` case; `redact_secrets` matches that marker and `format_reason` redacts the entire argv path due to the provenance flag. For fd reasons, `format_reason fd` has no provenance flag but still applies the same password pattern directly to the path text (`227–230`, `250–255`, `390–394`). These are bounded no-leak traces for the supported input forms; no runtime outcome is claimed.
+- The reason formatter applies control-byte replacement in `redact_secrets` before the byte-based 160-byte slice (`207–210`, `241–255`). Census stores the formatted reason and emits it in the reason column (`403–415`).
+
+## Fixture coverage and baseline fidelity
+
+References below are to `522dcd768ca90afe166532d37d306d3df70aeea5:tests/fixtures/r21-reason-canary.sh`.
+
+- The fixture's ordinary pattern canaries include mixed-case `PaSsWoRd=SOUJIR21FAKE45678` as the final component of `prefix + '/missing/' + value` for both argv and fd (`54–66`). In argv mode the element starts with `/`, so this tests secret redaction on an absolute path, not parsing a standalone `password=/path` assignment.
+- Its provenance cases cover `--token=...`, `--token` followed by a path, and lowercase `--password=...`, expecting exact `argv-path-gone:[REDACTED]\n` for the last three (`67–73`). It has no standalone `password=/path` case and no `--PASSWORD=` spelling. The production pattern supports all ASCII case combinations of `password`, but the fixture does not independently assert that case coverage (`227–230`).
+- The after-mode assertion checks for no surviving canary, a maximum 160-byte reason, exact expected bytes where supplied, a single newline, no tabs, and empty stderr (`99–115`). Those checks make the supplied `--password=` provenance case strict, but cannot detect the omitted standalone assignment candidate form.
+- The baseline extractor is exact for the named original functions when `--base` is the 6ff3413 source: it reads that source, locates each exact function header, and inserts the complete regex match unchanged (`20–30`). The four named functions (`path_under_prefix`, `top_level_scratch_gone`, `sanitize_field`, `read_process_argv`) exist at baseline lines `160–190` and `230–257`. In particular, the baseline `read_process_argv` is self-contained and reads `<proc_path>/cmdline`; it does not delegate to a missing `read_argv_stream` (`230–257`). The fixture substitutes only the input directory for that file, as its comment says (`21–22`, `87–92`).
+- The baseline emission snippet in the fixture is a reduced driver, not a copied full census loop (`30–45`), but it reproduces the baseline reason value: the baseline census sanitizes `PROC_GONE_PATH` and constructs `argv-path-gone:$SAFE_FIELD` or `fd-path-gone:$SAFE_FIELD` (`6ff3413:tools/souji-proc-census.sh:345–355`), then sanitizes the completed reason again before output (`367–368`). Since the fixture sanitizes the path before constructing the same prefix, the later baseline sanitization is idempotent. No redactor or length bound is introduced in that baseline driver. I find no reason-emission rewrite that changes the baseline reason bytes for these synthetic cases.
+- The fixture requires `--base` (`13–18`) and does not itself verify that the supplied file is from 6ff3413. Therefore exact-baseline provenance depends on the caller supplying the stipulated baseline file; the extraction mechanism itself does not pin or authenticate the revision.
+
+## Scope and confidence
+
+No production code or fixture was changed. No fixture, script, census, live `/proc`, or historical census snapshot was run or inspected. No tools were installed. The finding is source-only and is limited to argv candidate recognition for standalone `password=` assignment forms. Confidence is high in the control-flow trace and fixture blind spot; confidence that the frozen contract requires this standalone form is high if its literal `password=` enumeration is read as a candidate form, with the alternate narrower interpretation marked above as inference.

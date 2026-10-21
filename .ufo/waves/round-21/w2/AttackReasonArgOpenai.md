@@ -1,0 +1,21 @@
+# AttackReasonArgOpenai — argv `sk-` reason sink
+
+**Finding: bounded no-leak for the named canary; no source-level divergence found.** This is a static trace only. The lane `HEAD` and the requested attack revision both resolved to `522dcd768ca90afe166532d37d306d3df70aeea5`; no fixture or production code was executed and no live `/proc` content was read.
+
+## Fabricated canary trace
+
+The fixture's `argv-openai` case builds the nonexistent path `<prefix>/missing/sk-SOUJIR21FAKE23456`, with `<prefix>` under `/var/tmp`, and supplies argv `worker`, then that path (fixture lines 48–66). Its argv encoding is NUL-delimited (line 52). In production, `--reason-only argv` feeds that stream to the same `read_argv_stream` used by `read_process_argv` in the census (`tools/souji-proc-census.sh:257–296, 711–715`).
+
+For the path argument, `read_argv_stream` first compares the sanitized argument against `redact_secrets` output (`:263–268`). The `sk-` rule matches `sk-SOUJIR21FAKE23456` and changes the output (`:223–225`), so the argument is marked secret. The original absolute argument remains the candidate (`:270–274`); because the fixture's prefix and its `/missing` top-level child do not exist, the prefix check selects it (`:183–201, 274–281`). The parser records `PROC_GONE_SECRET=1` with the selected path (`:276–279`). `format_reason` replaces the entire path with `[REDACTED]`, applies redaction, and truncates at 160 bytes (`:250–255`). The resulting reason is therefore `argv-path-gone:[REDACTED]`, not a path containing the canary. In the census path, that same formatter supplies `reason` (`:384–388`), which is emitted as `safe_reason` in the TSV row (`:403–415`). The fixture's `--reason-only` branch also invokes that formatter and prints the reason (`:711–731`).
+
+The fixture invokes the production tool with the synthetic stdin and checks no canary substring survives, the reason is at most 160 bytes, it has the reason prefix and exactly one newline, and it contains no tab (`tests/fixtures/r21-reason-canary.sh:99–112`). These are source-level assertions, not an observed test pass. The separate command sink is also passed through `redact_command` before census output (`tools/souji-proc-census.sh:403–405`); it is not the reason-sink basis for this finding.
+
+## Baseline extraction check
+
+The fixture reads the supplied `--base` source and appends the exact regex match (`m.group()`) for `path_under_prefix`, `top_level_scratch_gone`, `sanitize_field`, and `read_process_argv`, without rewriting those bodies (`tests/fixtures/r21-reason-canary.sh:20–29`). I checked the named functions against the preregistered baseline source at `6ff3413bba9c8430c3b0bc4d2052e21d0407183f`: they begin at lines 160, 168, 188, and 230 respectively; the extracted `read_process_argv` body is the original body at `:230–257` (it selects the gone path before applying the `--token` argument handling). The baseline census itself sanitizes the selected path and constructs `reason="argv-path-gone:$SAFE_FIELD"` at `:339–350`, then sanitizes the reason before emission at `:368`. The fixture's appended baseline wrapper sanitizes the selected path and prints that same reason form (`fixture:30–44`), while substituting a temporary cmdline input for `/proc/PID/cmdline`; it is a small synthetic projection, not execution of the whole historical census.
+
+For this canary, the old extracted parser has no `sk-` provenance classification, and `sanitize_field` only replaces control bytes. Thus the wrapper's baseline reason retains the canary suffix. The fixture's `old_leaks` check tests precisely that suffix (`fixture:91–98`); this is a static expectation, not a measured `base_leak=1` result. One harness boundary: the fixture accepts an arbitrary `--base` path and does not itself verify its revision or digest. The caller must supply the 6ff baseline source for the preregistered baseline comparison to hold.
+
+## Scope and confidence
+
+High confidence for this ASCII `sk-<alphanumeric>` argv-path case: the production parser marks the selected path secret and the shared formatter replaces the whole path before either sink emits the reason. This does not establish coverage for encoded or otherwise unmatched secret syntax, or for unrelated argv context; no execution result is claimed.
