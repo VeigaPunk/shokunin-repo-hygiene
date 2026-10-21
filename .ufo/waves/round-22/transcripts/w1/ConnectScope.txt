@@ -1,0 +1,89 @@
+# SoujiR22.ConnectScope (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+
+Cross-axis overlap scan: distinguish own acceptance calibration from Tameshi fixture methodology, Kagi privacy, Mori health. Named preregistration/quality/source files only. Identify potential no-harm contractions and required positive controls.
+Write your sole report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/w1/ConnectScope.md.
+
+Lane bounds: leaf member — no subagent dispatch.
+
+Report: write your scoped findings to .ufo/waves/round-22/w1/ConnectScope.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+I'll read the six contract-named files in parallel, then write the report.
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/step-inventory.json) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/cache-demonstration.py) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-21/w2/AttackRunnerStepResults.md) ⇒ ok · 35 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/preregistration.txt) ⇒ ok · 3 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/corpus/QUALITY.md) ⇒ ok · 115 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py:raw:300-) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/step-inventory.json:raw:300-) ⇒ ok · 41 lines
+→ grep(checks\[|"checks"|def check|record_check|failed_checks|case_rows|"cases" @ /home/vgpnk/Projects/shokunin/souji-shokunin…) ⇒ ok · 8 lines
+Now reading the remaining runner tail and the cache demo's check-construction section to pin exact check names.
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py:raw:600-) ⇒ ok · 61 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/cache-demonstration.py:raw:900-) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/cache-demonstration.py:raw:860+42) ⇒ ok · 44 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/cache-demonstration.py:raw:1199-) ⇒ ok · 26 lines
+→ grep("name": "(initial-fresh|unchanged|dependency-modified|legacy-no-deps)"|cases\.append|"case": @ /home/vgpnk/Projects/sho…) ⇒ ok · 8 lines
+The demo emits exactly 33 named checks (lines 880–978). Checking the four case-row shapes for identity keys.
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/cache-demonstration.py:raw:594+30) ⇒ ok · 32 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/cache-demonstration.py:raw:653+12) ⇒ ok · 14 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/cache-demonstration.py:raw:793+12) ⇒ ok · 14 lines
+→ grep(def make_case|^\s+"(case|name|label)": @ /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/cache-demonstrati…) ⇒ ok · 48 lines
+→ edit(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/w1/ConnectScope.md) ⇒ ok · 2 lines
+STATUS: PASS. I wrote the report to `.ufo/waves/round-22/w1/ConnectScope.md`. It proposes one fix that closes all three summarizer false greens and keeps the frozen r21 step inventory byte-identical. This was a source-read review only: I ran no runner, oracle or tests, and installed nothing.
+
+**What I found:**
+- **Wrong case name for the identity check:** the cache demo emits exactly 33 named checks (`cache-demonstration.py:879-978`). Its fourth case is spelled `legacy-no-dependencies` in the code but `legacy-no-deps` in the docstring, so the identity check must use the code spelling.
+- **Crash on malformed data:** if the cache payload's `gate` or `isolation` field is not a dict, the base runner crashes with an `AttributeError`. `main` doesn't catch that error, so it writes no record. The pre-registration requires malformed producer data to be rejected without a crash.
+- **Inventory can stay byte-identical:** `inventory_projection` only copies a fixed list of keys from each step. Keeping the cache check names outside `expected_summary` means `step-inventory.json` does not change.
+
+**The proposed fix:**
+- One type-exact comparator, `json_equal`, replaces the three loose `==` comparisons: exact counters, subset counters and the cache scalar fields. It also turns a non-dict `gate`/`isolation` into a plain mismatch instead of a crash.
+- The 33 check names and 4 case phases become module constants. The runner's own bytes are digest-checked, so the names are still bound.
+- Summary steps also fail when they write anything to stderr (`... and not stderr`).
+
+The draft code is in the report.
+
+**Risks for you to act on:**
+- **Stderr rule could break real steps:** it assumes the 12 real summary steps write nothing to stderr today, and I couldn't confirm that. Before adopting it, check that every summary step's `stderr_sha256` in the base record is the empty-input hash. If one isn't, give that step its own reviewed expected stderr rather than loosening the rule.
+- **Wider than the pre-registered wording:** `json_equal` also rejects `0.0` versus `0`, not just bool versus int. Either add a float vector to the oracle or word the claim as bool/int only.
+- **Shared oracle depends on the signature:** the same oracle can drive base and changed code only if `summarize_result`'s signature stays the same. The oracle must record a `crash` outcome for base on the malformed vectors.
+- **Round-21 paths are hard-coded:** the runner's self-path, `INPUT_PATHS` and the inventory path are fixed to round 21. Edit in place or copy to a round-22 path, but update them together or the runner refuses.
+
+**Held, not part of this claim:**
+- `record_checks: 1` on `agreement-pin-check` is copied from the step definition, never measured, so an empty exit-0 run passes.
+- Duplicate JSON keys and `NaN` are accepted by the parser.
+
+Both should go to the next round.
+
+The report also maps who owns what across the neighbouring seats (calibration versus Tameshi, Kagi and Mori) and lists the required controls. Those are the 18 real steps staying green, nine paired base/changed oracle vectors and F5 bytes identical to base.

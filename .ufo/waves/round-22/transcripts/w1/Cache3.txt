@@ -1,0 +1,99 @@
+# SoujiR22.Cache3 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+
+Attack cache demonstration contract extra required-like check from named producer/runner. Derive a real witness and minimal expected policy; no invented producer values, no run. Preserve valid generated case rows and transient path variation.
+Write your sole report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/w1/Cache3.md.
+
+Lane bounds: leaf member — no subagent dispatch.
+
+Report: write your scoped findings to .ufo/waves/round-22/w1/Cache3.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+Reading the six named contract files in parallel.
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/step-inventory.json) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/cache-demonstration.py) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-21/w2/AttackRunnerStepResults.md) ⇒ ok · 35 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/preregistration.txt) ⇒ ok · 3 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/corpus/QUALITY.md) ⇒ ok · 115 lines
+Reading the remaining runner, inventory, and cache-demonstration sections that build the checks dictionary and case rows.
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py:raw:300-) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/cache-demonstration.py:raw:300+500) ⇒ ok · 502 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/step-inventory.json:raw:300-) ⇒ ok · 41 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/cache-demonstration.py:raw:800-) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py:raw:599-) ⇒ ok · 62 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/cache-demonstration.py:raw:1099-) ⇒ ok · 126 lines
+→ write(agent://SoujiR22.DraftCacheFix) ⇒ ok · 1 line
+→ write(agent://SoujiR22.DraftScalarFix) ⇒ ok · 1 line
+→ edit(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/w1/Cache3.md) ⇒ ok · 2 lines
+**STATUS: PASS.** `isolation_cleaned` must not be required as a cache check. The producer's 33 named checks are the exact identity for a green run, and they must be compared as a set, not in order. This is a source-only review: I read only the six contract-named files and ran nothing. I installed no tools.
+
+The report is at `.ufo/waves/round-22/w1/Cache3.md`.
+
+**Counterexamples found:**
+1. **`isolation_cleaned` is the extra required-like check.** The frozen inventory lists `isolation_cleaned: true` right next to `checks: 33`, so it looks like a 34th required check. But `cache-demonstration.py:880-978` emits exactly 33 names, and `isolation_cleaned` is not one of them. `main()` adds it only on the red path, when cleanup fails (`:1202-1206`), and then always as `False`. Requiring it would reject every real green run and lose a real positive control.
+2. **Source-order comparison would false-red.** The output is written with `sort_keys=True` (`:1107`), so check names arrive alphabetically.
+3. **The docstring's phase name is wrong.** It says `legacy-no-deps`, but the emitted phase is `legacy-no-dependencies` (`:795`). The real order is `initial-fresh`, `unchanged`, `dependency-modified`, `legacy-no-dependencies`.
+4. **Adding the name list to `expected_summary` would refuse the whole run.** The frozen-inventory equality check at `run-acceptance.py:600-602` would refuse all 18 steps. The names belong in module constants instead.
+5. **Malformed `gate` or `isolation` crashes the runner.** A non-dict value raises an uncaught `AttributeError` (`:455`, `:467-469`). The preregistration requires rejecting malformed data without a crash.
+6. **Floats also false-green (adjacent, for the scalar seat).** JSON `3.0` decodes to a float that equals `3`. The same applies to `0.0 == 0` in the exact counters, so the type-exact fix must reject floats as well as booleans.
+
+**Minimal policy:**
+- The set of check names must equal the literal 33-name set, and every value must be `True`.
+- Case-row phases must match the four phases above, in list order.
+- Both the name count and the phase count are cross-checked against the frozen 33 and 4.
+- `gate` and `isolation` must be dicts.
+- Paths, digests and timestamps that vary between runs are not compared.
+
+The report includes draft code and 11 literal before/after test vectors. Three of them (CD4, CD7, CD8) show the current runner accepting bad output, and two (CD9, CD10) show it crashing.
+
+I messaged `SoujiR22.DraftCacheFix` and `SoujiR22.DraftScalarFix` with the short versions. L1 should run acceptance after integration.
+
+[irc] SoujiR22.DraftScalarFix → me: Included int/float separation alongside bool/int in scalar draft via recursive `type(actual) is type(expected)`. Counte…
+
+## assistant
+
+The scalar draft now covers counters only, so the cache `producer_executions_new_policy` float hole has moved to the cache draft. I'll update my report's draft and tell the cache owner.
+→ edit(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/w1/Cache3.md) ⇒ ok · 2 lines
+→ edit(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/w1/Cache3.md) ⇒ ok · 2 lines
+→ edit(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/w1/Cache3.md) ⇒ ok · 2 lines
+→ edit(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/w1/Cache3.md) ⇒ ok · 2 lines
+→ write(agent://SoujiR22.DraftCacheFix) ⇒ ok · 1 line
+→ write(agent://SoujiR22.DraftScalarFix) ⇒ ok · 1 line
+The cache float fix is now assigned to the cache draft owner. DraftScalarFix confirmed that its type-exact fix covers counters only. That left the cache check `producer_executions_new_policy == 3` at `run-acceptance.py:465` without an owner, and it still accepts a JSON `3.0`.
+
+I updated `.ufo/waves/round-22/w1/Cache3.md` to match:
+- **Draft code:** adds a `type(payload.get("producer_executions_new_policy")) is int` guard, so a float or boolean value is rejected.
+- **Ownership:** records that this guard belongs to the cache draft, citing DraftScalarFix's message.
+- **New test vector CD12:** sets the value to `3.0`. The current runner wrongly accepts it, and the fixed runner must reject it. It joins the other vectors (CD4, CD7, CD8) that tell the current and fixed behaviour apart.
+
+I messaged DraftCacheFix with the guard and the new vector, and replied to DraftScalarFix confirming the split. Nothing was run; this is still a source-only review.

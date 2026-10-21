@@ -1,0 +1,89 @@
+# SoujiR22.Stderr12 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+
+For agreement-pin-check, analyze a distinct stderr/control combination: timeout returncode. State literal expected matched boolean and compatibility requirement; source only.
+Write your sole report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/w1/Stderr12.md.
+
+Lane bounds: leaf member — no subagent dispatch.
+
+Report: write your scoped findings to .ufo/waves/round-22/w1/Stderr12.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+Reading the named source files.
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/preregistration.txt) ⇒ ok · 3 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-21/w2/AttackRunnerStepResults.md) ⇒ ok · 35 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/step-inventory.json) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py:raw:300-) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py:raw:600-) ⇒ ok · 61 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/corpus/QUALITY.md) ⇒ ok · 115 lines
+→ web_fetch(https://docs.python.org/3/library/subprocess.html) ⇒ ok · 996 lines
+→ web_fetch(https://www.gnu.org/software/coreutils/manual/html_node/timeout-invocation.html) ⇒ error · 1 line — Error fetching URL, status code: 403 Forbidden
+→ web_fetch(https://man7.org/linux/man-pages/man1/timeout.1.html) ⇒ ok · 143 lines
+→ edit(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/w1/Stderr12.md) ⇒ ok · 2 lines
+STATUS: PASS. For agreement-pin-check, every return code a timeout can produce leads to `matched = False`, both in the current base code and in any version that adds the stderr fix. Only one timeout-related case distinguishes the two: return code 0 with something on stderr, which is `True` on base and `False` after the fix. This is from reading the source only; I didn't run anything or install any tools.
+
+**Why, from `census/round-21/run-acceptance.py`:**
+- **No timeout in the runner.** Steps run through `subprocess.run` with no `timeout=` argument (line 614), and only `OSError` is caught. A "timeout return code" can therefore only come from the child itself, from a kill signal (negative return code), or from a synthetic test vector.
+- **Missing stderr check.** The summary step's pass check is `returncode == 0 and not failures` (line 367), then summary and pass-count checks (line 417). It never looks at stderr.
+- **Stdout checks are empty for this step.** Expected summary is `""`, there is no pass pattern, and the pass count is 0. `record_checks: 1` is recorded but never enforced.
+- **Timeout messages aren't caught.** `failure_lines` only recognises `FAIL` markers, so a message like `timeout: sending signal TERM...` doesn't count as a failure.
+
+**Expected `matched` values:**
+
+| Case | Return code | stderr | Base | After fix |
+|---|---|---|---|---|
+| T1 | 124 | empty | False | False |
+| T2 | 124 | timeout message | False | False |
+| T3 | 137 | empty | False | False |
+| T4 | −15 | empty | False | False |
+| T5 | −9 | empty | False | False |
+| T6 | None (failed to launch) | "invocation failed" | False | False |
+| T7 | 0 | timeout message | True | False |
+| T8 | 0 | `"\n"` | True | False |
+| P1 | 0 | empty | True | True |
+
+T7 is what `timeout --preserve-status -v` produces when the child catches the TERM signal and exits 0. T8 checks that the fix tests for exactly empty stderr rather than stripping whitespace. P1 is the positive control.
+
+**Compatibility requirements:**
+- **Keep the strict return-code check unchanged.** T1–T6 are already `False` on base, so they don't count as evidence for the stderr fix. Only T7 and T8 do.
+- **Use exact emptiness.** The fix should be `not stderr`, the same check the counter and cache-demo branches use (lines 445 and 480).
+- **Real positive control is unverified.** In the 18-step acceptance run, agreement-pin-check passes only if `verify-agreement-pin.py` writes nothing to stderr on success. That file wasn't on my read list, so your acceptance run is the only check. If it writes anything, the fix breaks one of the 18 retained positive controls.
+- **Don't add `timeout=` in this claim.** `TimeoutExpired` is not an `OSError` and isn't in `main`'s list of caught exceptions (line 652), so a timeout would crash with a traceback instead of being rejected.
+- **Pass return codes as Python ints or `None`, not JSON booleans.** `False == 0` is true in Python, so a vector decoded from JSON `false` would count as success. Tightening the check to `type(returncode) is int` would be an extra claim beyond the three admitted defects; that's your call.
+- **Leave the inventory row alone.** Changing `expected_summary`, `kind`, `pass_*` or `record_checks` for this step breaks the frozen comparison against `step-inventory.json`.
+
+**Limitation:** the stderr fix does not detect a timeout that ends with return code 0 and no output. That looks the same as P1 and stays `True`, so it should be disclosed rather than claimed as fixed.
+
+**Sources opened:** the [Python subprocess docs](https://docs.python.org/3/library/subprocess.html) (negative return code means killed by a signal; `TimeoutExpired` inherits from `SubprocessError`) and [`timeout(1)`](https://man7.org/linux/man-pages/man1/timeout.1.html) (exit codes 124, 137 and `--preserve-status`). The gnu.org manual page returned 403. No language server was available.
+
+Report: `.ufo/waves/round-22/w1/Stderr12.md`

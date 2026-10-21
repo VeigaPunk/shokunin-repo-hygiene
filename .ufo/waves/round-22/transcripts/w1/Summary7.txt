@@ -1,0 +1,76 @@
+# SoujiR22.Summary7 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+
+Inspect literal success contract for landing-gate-selftest. Derive one valid positive stdout vector and one uniquely relevant wrong/missing summary or pass-count vector; identify stderr policy impact. Do not run.
+Write your sole report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/w1/Summary7.md.
+
+Lane bounds: leaf member — no subagent dispatch.
+
+Report: write your scoped findings to .ufo/waves/round-22/w1/Summary7.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+I'll read the named source files to find the landing-gate-selftest success contract.
+→ grep(landing-gate-selftest|landing_gate @ /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/step-inventory.json) ⇒ ok · 52 lines
+→ grep(landing|stderr|def |summary|pass @ /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py) ⇒ ok · 167 lines
+→ grep(landing|summary|stderr|scalar|type @ /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/preregistration.t…) ⇒ ok · 2 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py:raw:170+30) ⇒ ok · 32 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py:raw:326+160) ⇒ ok · 162 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/preregistration.txt) ⇒ ok · 3 lines
+→ grep(landing|stderr|SELFTEST|summary @ /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-21/w2/AttackRunnerStepR…) ⇒ ok · 14 lines
+Now the `SUMMARY_RE` definition and `CHILD_ENV`, which determine which stdout lines count as summaries.
+→ grep(SUMMARY_RE|CHILD_ENV\s*=|universal|text= @ /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.…) ⇒ ok · 15 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py:raw:268+8) ⇒ ok · 10 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py:raw:600+40) ⇒ ok · 42 lines
+→ grep(stderr|false.green|selftest @ /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/QUALITY.md) ⇒ ok · 25 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py:raw:107+12) ⇒ ok · 14 lines
+→ edit(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/w1/Summary7.md) ⇒ ok · 2 lines
+STATUS: PASS. I worked out the landing-gate-selftest success check from the source and wrote the report to `.ufo/waves/round-22/w1/Summary7.md`. Nothing was run, and the landing-gate tool's own source wasn't opened because it isn't on the allowed-files list. No tools were installed.
+
+**What counts as a pass.** The step is defined in `census/round-21/run-acceptance.py` (lines 297–298), and `step-inventory.json` (lines 100–112) has the same definition. The summarizer at lines 347–418 marks it passed only if all of these hold:
+- The return code is 0.
+- No line, in stdout or stderr, matches the failure patterns. The match is case-sensitive, so a lowercase `CASE\tfail\t` line is not caught.
+- stdout contains exactly one line starting with `SUMMARY` or `SELFTEST`, and it is exactly `SELFTEST\tpass=65\tfail=0`, with tabs.
+- stdout has no `INVENTORY\t` lines.
+- stdout has exactly 65 lines starting `CASE\tpass\t`.
+- stderr is **not** required to be empty. Only the counter step (line 445) and the cache-demo step (line 480) require that.
+
+**The three test inputs I drafted:**
+- **Valid pass:** 65 lines of `CASE\tpass\tcase-NN`, then `SELFTEST\tpass=65\tfail=0`, with return code 0 and empty stderr. This passes before and after the repair.
+- **Wrong pass count:** 65 lines of `CASE\tPASS\t…` (uppercase) plus the correct summary line. The only check that fails is the count, which sees 0 instead of 65. It's specific to this step because the neighbouring step `r18-landing-pointers` counts uppercase `CASE\tPASS\t`, and `auditor-selftest` uses a `SELFTEST` summary with `PASS\t` lines. Both the old and repaired code reject it, so it guards against regressions. The report also lists other single-check alternatives: a missing summary line, 64 pass lines, and a space-separated summary.
+- **Stderr false pass:** the valid stdout above plus a traceback on stderr. The current code still passes it, which is the round-21 HIGH defect. Adding `and not stderr` at line 417 makes it fail.
+
+**Stderr risk to the real step.** After that repair, the real `souji-landing-gate.py --selftest` run must write nothing at all to stderr. Otherwise this step, one of the 18 real steps that should still pass, turns red. I couldn't find what the tool writes to stderr in the files I was allowed to read. Before landing the repair, L1 should check that the recorded round-21 result for this step has empty stderr: `stderr_sha256 == e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`.
+
+**Extra findings, outside the three planned defects (for triage only):**
+- **Unseen lowercase failures:** 65 pass lines, one `CASE\tfail\tx` line and a correct summary are accepted today. Whether the tool really prints failures that way is a guess, since I didn't read its source.
+- **Inconsistent line splitting:** summary lines are collected with `splitlines()`, which also splits on `\r` and similar characters, while pass lines are counted only at `\n` line starts. Output joined with `\r` can make the two checks see different lines.
+- **Duplicates count:** 65 identical pass lines satisfy the count.

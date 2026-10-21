@@ -1367,3 +1367,28 @@ K5 HELD; inherited reap/NAMESPACE/exposure assessment remain operator-owned.
 No tools installed or upgraded. Lane commits use the sole jj-lane.sh helper,
 explicit pathspecs and its maintenance.auto=false guard; no direct index/jj
 mutation or upstream-domain push.
+
+### 2026-10-21 — round22 replacement L1 (SoujiR22R) continuation
+
+SoujiR22 died about27min in on a provider cyber_policy refusal; the refused
+work was not rephrased or rerouted. Operator checkpoint b912328d00d1 holds its
+SCORECARD edit; its untracked w1/w2 specs, reports, transcripts and w1 audit
+JSON are folded here as inherited, unverified evidence (re-verified below).
+W1: 64 seats, 919 audited calls, 1 major + 3 minor; Q26 voids Counter2/11/16/18
+and ReviewHistoricalScope evidence. W2: 64 seats dispatched; 38 reports landed,
+26 seats died with the parent (no report) and were not replaced. No W2 report
+names a wrong literal decision; five predicted surviving mutants.
+
+L1-regenerated C1 measurement (no seat evidence reused): same literal oracle
+base41553adb summarizer60/214 → changed214/214 (positive20/20 both; base5
+exceptions). Executed mutation probe `census/round-22/mutation-adequacy.py`
+(in-memory, no file writes): 214 oracle killed10/21 non-equivalent mutants.
+The1200-deep decoder vectors are non-discriminating on Python3.14.8. Appended
+11 `adequacy` vectors (first214 unchanged): base69/225 → changed225/225;
+mutants21/21 killed, 4 named equivalent. Receipts: census/round-22/oracle214-*,
+oracle225-*, mutation-adequacy-oracle214/225.json; dead-seat residual
+w2-dead-seat-residual.json (L1 mechanical, not independent). Q52 added.
+S104–S106 re-opened, S107 opened (RecursionError); sources106→107.
+F5/frozen inventory/pinned receipt byte-identical to base (git diff --quiet 0).
+No live /proc, credentials or private TSVs read; operator-sweep untouched.
+No tools installed or upgraded.

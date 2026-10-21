@@ -1,0 +1,76 @@
+# SoujiR22.Stderr3 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+
+For r20-audit-contract, analyze a distinct stderr/control combination: UTF8 diagnostic. State literal expected matched boolean and compatibility requirement; source only.
+Write your sole report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/w1/Stderr3.md.
+
+Lane bounds: leaf member — no subagent dispatch.
+
+Report: write your scoped findings to .ufo/waves/round-22/w1/Stderr3.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+I'll read the named source files to analyze the UTF-8 diagnostic stderr combination for r20-audit-contract.
+→ grep(r20-audit-contract|stderr|utf|UTF|diagnostic @ /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-accepta…) ⇒ ok · 56 lines
+→ grep(r20-audit-contract @ /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/step-inventory.json) ⇒ ok · 60 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/preregistration.txt) ⇒ ok · 3 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py:raw:90+400) ⇒ ok · 402 lines
+→ grep(stderr|summary|UTF|utf|r20-audit @ /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-21/w2/AttackRunnerStep…) ⇒ ok · 14 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py:raw:484+176) ⇒ ok · 176 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-21/w2/AttackRunnerStepResults.md) ⇒ ok · 35 lines
+→ grep(stderr|UTF|utf|diagnostic|false.green|positive control @ /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/QUALITY.md) ⇒ ok · 12 lines
+→ grep(stderr|print\(.*file= @ /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/cache-demonstration.py) ⇒ ok · 26 lines
+→ edit(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/w1/Stderr3.md) ⇒ ok · 2 lines
+For `r20-audit-contract`, the UTF-8 stderr diagnostic case passes in the base code when it should fail. The repaired code must mark it `matched: false`, and the matching positive control with empty stderr must stay `matched: true`. This is from reading source only; I ran nothing and installed nothing.
+
+**The two cases.** Both have return code 0 and the same stdout: 78 lines of `CASE\tPASS\tt01`..`t78`, then `SUMMARY\ttotal=78\tpass=78\tfail=0\tbase_discriminating=11`.
+
+| Case | stderr | base `matched` | repaired `matched` |
+|---|---|---|---|
+| UTF-8 diagnostic | `"erreur : vérification incomplète — 基準\n"` as UTF-8 | `True` (false green) | `False` |
+| Positive control | empty | `True` | `True` |
+
+The case IDs `t01`..`t78` are chosen so none starts with `FAIL`. Otherwise the failure-line pattern at line 333 would catch them and spoil the test.
+
+**Why the base passes it.** In `census/round-21/run-acceptance.py`, the summary check at line 417 needs return code 0, no failure lines, the expected summary line and 78 pass lines. All of those hold, and nothing in that check looks at stderr. The counter check (line 445) and the cache-demo check (line 480) do reject non-empty stderr.
+
+**Repair.** Change line 417 to `matched = matched and summary_match and pass_match and not stderr`, matching the other two checks. Because stderr is decoded with `surrogateescape`, the text is empty exactly when the bytes are empty. So this also rejects invalid UTF-8, a bare byte-order mark, and whitespace-only stderr. Whether whitespace-only stderr should fail is for you and the other seats to decide; the two cases above don't depend on it.
+
+**Compatibility requirements:**
+- **Open question:** the real `r20-audit-contract` run, and all 12 summary-type steps, must write no stderr on success. Check this when you run acceptance on base `41553adb…`: each record's `stderr_sha256` must be `e3b0c442…b855`, the hash of empty input. If any step writes harmless stderr, this repair turns a real positive control red. I couldn't check this myself because the fixture file is outside my read contract.
+- **Record fidelity:** the raw-byte `stderr_sha256` and the decoded `stderr` text must stay as they are. The output is written with `ensure_ascii=True`, so non-ASCII characters and stray surrogates are escaped and nothing crashes. That last point is my inference; I didn't open the JSON docs this round.
+- **No other changes:** the failure-line patterns, the F5 code and the 160-byte synthetic-only scope stay as they are.
+
+**Side note, outside the claim:** the summary and failure checks split lines on Unicode separators such as U+2028, but the pass count splits only on `\n`. I found no false green from this, so I've only flagged it.
+
+The report has draft cases for the synthetic test, ready to integrate. The `lsp` device wasn't available, so I traced callers by reading the file directly.
+
+Report: `.ufo/waves/round-22/w1/Stderr3.md`

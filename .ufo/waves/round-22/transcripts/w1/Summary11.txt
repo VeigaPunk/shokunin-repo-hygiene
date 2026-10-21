@@ -1,0 +1,72 @@
+# SoujiR22.Summary11 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+
+Inspect literal success contract for r19-revision-pin-fixture. Derive one valid positive stdout vector and one uniquely relevant wrong/missing summary or pass-count vector; identify stderr policy impact. Do not run.
+Write your sole report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/w1/Summary11.md.
+
+Lane bounds: leaf member — no subagent dispatch.
+
+Report: write your scoped findings to .ufo/waves/round-22/w1/Summary11.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+I'll read the named source files to extract the success contract for `r19-revision-pin-fixture`.
+→ grep(r19-revision-pin-fixture|revision.pin|revision_pin @ /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/step-…) ⇒ ok · 52 lines
+→ grep(r19-revision-pin-fixture|revision.pin|revision_pin @ /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-a…) ⇒ ok · 22 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/preregistration.txt) ⇒ ok · 3 lines
+→ grep(def |expected_summary|pass_pattern|pass_count|stderr|returncode|kind @ /home/vgpnk/Projects/shokunin/souji-shokunin/cen…) ⇒ ok · 158 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py:raw:180+305) ⇒ ok · 307 lines
+→ grep(SUMMARY_RE|CHILD_ENV = @ /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py) ⇒ ok · 15 lines
+→ grep(r19-revision-pin|rev-pin|stderr @ /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-21/w2/AttackRunnerStepR…) ⇒ ok · 28 lines
+→ bash(git --no-optional-locks -C /home/vgpnk/Projects/shokunin/souji-shokunin diff --stat 41553adb139d06511dc386bb3ce4326aebf…) ⇒ ok · 6 lines
+→ edit(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/w1/Summary11.md) ⇒ ok · 2 lines
+STATUS: PASS. I wrote the report to `.ufo/waves/round-22/w1/Summary11.md`. Every pass/fail outcome below comes from reading the source; I ran nothing except a read-only `git diff` against base `41553adb139d06511dc386bb3ce4326aebfba675`. That diff was empty, so `census/round-21/run-acceptance.py` and `census/round-21/step-inventory.json` are byte-identical to base.
+
+**The success contract** (`run-acceptance.py` lines 307–309 and 347–417) requires all of these:
+- return code 0, and no failure-marker lines (`failure_lines` scans stdout and stderr);
+- exactly one summary line in stdout, byte-equal to `SUMMARY total=13 failed=0 base_discriminating=6`, with spaces as separators;
+- no `INVENTORY\t` lines;
+- exactly 13 lines matching `^CASE\tpass\t`.
+
+The summary branch does not check stderr; the counter (line 445) and cache-demo (line 480) branches do.
+
+**Positive vector:** return code 0, empty stderr, and stdout made of 13 lines `CASE\tpass\tv01` … `v13` followed by the exact summary line. This passes on base and must still pass after the repair. Case names must not be `FAIL`, because a line like `CASE\tpass\tFAIL` counts as a failure line.
+
+**Wrong vector:** the same stdout, but the summary line is `SUMMARY total=13 failed=0`, with no `base_discriminating` field. That field is the only thing separating this step's literal from the sibling `revision-helper-selftest` step (`SUMMARY total=11 failed=0`). The pass count is still 13, so the summary check alone rejects it, on base and after the repair. The report also lists two backup variants: a tab-separated summary line, and 12 lowercase `pass` lines plus one uppercase `PASS` line.
+
+**Stderr impact:** the positive stdout plus stderr containing a traceback (text with no failure marker) passes on base, which is a false green. Adding `and not stderr` to the summary branch's final check at line 417 makes it fail. Stderr containing `CASE\tFAIL\t…` already fails on base, so it can't tell base and repair apart; the test needs non-marker stderr text.
+
+**Open items:**
+- **Biggest risk to the real positive control:** I wasn't allowed to read the real fixture `tests/fixtures/r19-rev-pin.py`. If it writes anything to stderr on a successful run, the repair turns this real step red. L1 should confirm from the acceptance run that this step's `stderr_sha256` is the empty-bytes hash `e3b0c442…b855`.
+- Outside this round's claim: `failure_lines` only recognises uppercase `FAIL`. If this fixture reports failures in lowercase (my guess from its lowercase `pass` lines; not checked), those lines are never caught. An extra `CASE\tfail` line next to 13 passes would be accepted.
+- Minor, no vector depends on it: summary lines are found with `splitlines()`, but pass lines with a regex that only treats `\n` as a line break. The two can disagree on unusual line separators.
+
+No tools were installed or updated.

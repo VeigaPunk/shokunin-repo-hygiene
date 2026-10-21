@@ -1,0 +1,75 @@
+# SoujiR22.Cache6 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+
+Attack cache demonstration contract wrong check container from named producer/runner. Derive a real witness and minimal expected policy; no invented producer values, no run. Preserve valid generated case rows and transient path variation.
+Write your sole report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/w1/Cache6.md.
+
+Lane bounds: leaf member — no subagent dispatch.
+
+Report: write your scoped findings to .ufo/waves/round-22/w1/Cache6.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+I'll read the six named files and then write the report.
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/step-inventory.json) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/cache-demonstration.py) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-21/w2/AttackRunnerStepResults.md) ⇒ ok · 35 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/preregistration.txt) ⇒ ok · 3 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/corpus/QUALITY.md) ⇒ ok · 115 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py:raw:300+360) ⇒ ok · 360 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/cache-demonstration.py:raw:300+930) ⇒ ok · 924 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/step-inventory.json:raw:300-) ⇒ ok · 41 lines
+→ edit(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/w1/Cache6.md) ⇒ ok · 2 lines
+STATUS: PASS. I wrote the report to `.ufo/waves/round-22/w1/Cache6.md`. Every finding comes from reading the six named files; nothing was executed, no git command was run, and no tools were installed. The bytes I read are the working-tree copies. Before using the witness, L1 should confirm that `census/round-14/cache-demonstration.py` and `census/round-21/run-acceptance.py` match the base `41553adb139d06511dc386bb3ce4326aebfba675`.
+
+**The real witness.** The producer has one check container: the top-level `checks` dict at `cache-demonstration.py:879-978`. It has exactly 33 named keys, all JSON booleans, and the report lists them. The valid case rows are four, with phases in order: `initial-fresh`, `unchanged`, `dependency-modified`, `legacy-no-dependencies`. Today the runner checks only the count of checks (`run-acceptance.py:462`), never their names.
+
+**Wrong-container counterexamples:**
+- **`isolation_cleaned` read from `checks`:** this key appears in `checks` only on the failed-cleanup path, as `False`. Its real source is `isolation.cleaned`. Expecting it among the check names rejects every valid run.
+- **Phases from the docstring or the execution log:** the docstring says `legacy-no-deps`, but the code emits `legacy-no-dependencies`. The execution log holds 3 entries, and the second case is labelled `unchanged-recheck` there, while there are 4 case rows. Either source rejects valid case rows.
+- **Name list placed in `expected_summary`:** `inventory_projection` copies `expected_summary` verbatim and compares it to the frozen inventory. Any change there makes every run refuse with exit 2, losing all 18 positive controls. Editing `step-inventory.json` to match would contradict its claim of exactness against the round-20 source.
+- **Containers that cannot prove identity:** `failed_checks == []`, the booleans nested under `baseline_control`, `migrated_caller` and `unsafe_policy_control`, and `matched_gate_checks` all pass 33 made-up names.
+- **Whole case rows compared to a frozen literal:** paths with a random `/var/tmp` suffix, `seconds`, `produced_at` and gate output vary between valid runs. Case 1 legitimately has `gate`, `gate_exit` and `reusable` set to null.
+
+**Two extra gaps in the same branch:**
+- **Crash on malformed data:** if the producer emits `"gate": null` or `"isolation": []`, a `.get()` call raises `AttributeError`. `main()` does not catch it, so the runner crashes with exit 1 and writes no record.
+- **Float accepted as an integer:** `producer_executions_new_policy: 3.0` passes the `== 3` comparison.
+
+**Smallest safe correction (drafted in the report):**
+- Add two module constants, `CACHE_DEMO_CHECKS` (the 33 names) and `CACHE_DEMO_PHASES` (the 4 phases), and leave `make_steps` and the frozen inventory untouched.
+- Require the check names to match exactly, with no missing or unexpected names and every value `is True`.
+- Check only the ordered phase string on each case row, so paths and timings can vary.
+- Guard the `gate` and `isolation` fields as dicts so malformed data is rejected without a crash.
+- Require `producer_executions_new_policy` to be an exact int.
+- Put the new diagnostics under a separate `check_identity` key so `matched_counts` keeps its current shape.
+
+The report also has a ten-row table of expected decisions, old versus fixed, for L1's fixture. It notes one remaining limit outside the claim: JSON with a duplicated check key keeps only the last value.

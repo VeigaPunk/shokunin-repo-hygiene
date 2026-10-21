@@ -1,0 +1,85 @@
+# SoujiR22.Stderr4 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+
+For r20-input-binding, analyze a distinct stderr/control combination: stderr with SUMMARY prefix. State literal expected matched boolean and compatibility requirement; source only.
+Write your sole report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/w1/Stderr4.md.
+
+Lane bounds: leaf member — no subagent dispatch.
+
+Report: write your scoped findings to .ufo/waves/round-22/w1/Stderr4.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+Reading the named source files for the stderr/SUMMARY-prefix analysis.
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/step-inventory.json) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/preregistration.txt) ⇒ ok · 3 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-21/w2/AttackRunnerStepResults.md) ⇒ ok · 35 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py:raw:300-) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py:raw:600-) ⇒ ok · 61 lines
+→ grep((?i)stderr|source-inferred|executed|SOURCES @ /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/QUALITY.md) ⇒ ok · 10 lines
+→ edit(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/w1/Stderr4.md) ⇒ ok · 2 lines
+STATUS: PARTIAL. For `r20-input-binding`, when stdout is fully correct and stderr carries a line starting with `SUMMARY`, the base 41553adb code returns `matched: True`. That is a false green, and the repaired code should return `matched: False`. One requirement is still open: the contract doesn't let me read `tests/fixtures/r20-input-binding.py`, so I can't tell whether the real step writes to stderr when it succeeds. I worked from source only and ran nothing.
+
+**Why the base code passes it (`census/round-21/run-acceptance.py`, `summarize_result`):**
+- The summary lines are read from stdout only (line 352), so a `SUMMARY` line on stderr is never compared against the expected summary.
+- The failure-line check does scan stderr (line 353), but it only recognises lines starting with `FAIL` or `CASE ... FAIL` (lines 330–333). A `SUMMARY` line never matches.
+- The summary branch never checks stderr (lines 367 and 417), unlike the counter and cache-demo branches (lines 445 and 480).
+- The replay matrix's per-step comparison leaves stderr out, so the three replays also look identical.
+
+**Expected `matched` values.** All vectors use correct stdout: exit code 0, 52 `CASE pass` lines, the `INVENTORY` line, one matching `SUMMARY` line, and no `BASELINE_MISMATCH` lines.
+
+| Vector | stderr | Base | Repaired |
+|---|---|---|---|
+| P0 | empty | True | True |
+| S1 | a conflicting `SUMMARY` line reporting `pass=51 fail=1` | True | **False** |
+| S2 | the stdout `SUMMARY` line repeated exactly | True | **False** |
+| S3 | `SUMMARY FAIL` (space separator) | True | **False** |
+| C1 | a `CASE FAIL` line | False | False |
+| C2 | as S1, but with stdout's `SUMMARY` line removed | False | False |
+
+**Compatibility requirements for the repair:**
+1. Reject any non-empty stderr, matching the counter and cache-demo branches. Don't match on a `SUMMARY` or `ERROR` prefix, which would leave other stderr text passing.
+2. Keep the summary lines stdout-only and leave the set of count fields unchanged. Then, as long as their stderr is empty, the records for the 18 real acceptance steps stay byte-identical to the historical results.
+3. Put the check in code rather than as a new per-step setting. The frozen step-inventory comparison only copies named fields (lines 542–543), so a new setting would not be checked against the inventory. Done in code, `step-inventory.json` needs no change.
+4. Still open: the real `r20-input-binding` step, and every other summary-type step including `agreement-pin-check`, must write nothing to stderr when they succeed. Your full 18-step run will show this. If any of them do, the repair turns a real pass red, and that should be reported rather than loosened.
+5. Stderr containing only whitespace or a newline also fails under this rule.
+6. The change stays inside `summarize_result`, so the F5 code and its 160-byte synthetic-only reason scope are untouched.
+
+**Draft repair (not applied):** replace line 417 with:
+
+```python
+        matched = matched and summary_match and pass_match and not stderr
+```
+
+I also don't know whether your round-22 runner will be a new file or an edit of the round-21 one, which decides which digest pins must move. No tools were installed.
+
+Report: .ufo/waves/round-22/w1/Stderr4.md

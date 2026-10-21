@@ -1,0 +1,82 @@
+# SoujiR22.Cache1 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+
+Attack cache demonstration contract replace required check name with bogus name from named producer/runner. Derive a real witness and minimal expected policy; no invented producer values, no run. Preserve valid generated case rows and transient path variation.
+Write your sole report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/w1/Cache1.md.
+
+Lane bounds: leaf member — no subagent dispatch.
+
+Report: write your scoped findings to .ufo/waves/round-22/w1/Cache1.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+I'll read the six named contract files, then write the attack report.
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/step-inventory.json) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/cache-demonstration.py) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-21/w2/AttackRunnerStepResults.md) ⇒ ok · 35 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/preregistration.txt) ⇒ ok · 3 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/corpus/QUALITY.md) ⇒ ok · 115 lines
+Now the cache-demo summarizer branch and the producer's check names.
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py:raw:300-) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/cache-demonstration.py:raw:300+500) ⇒ ok · 502 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/step-inventory.json:raw:300-) ⇒ ok · 41 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/cache-demonstration.py:raw:800-) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py:raw:600-) ⇒ ok · 61 lines
+Producer emits exactly 33 named checks and 4 case phases. Reading the producer's `main` for the final payload shape (isolation, harness_revision).
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/cache-demonstration.py:raw:1100-) ⇒ ok · 125 lines
+I have everything needed. The source shows the false green directly, and I found an extra crash path in the same branch. Writing the report.
+→ edit(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/w1/Cache1.md) ⇒ ok · 2 lines
+STATUS: PASS. The attack works: on base, the cache-demo summarizer gives a false green when one required check is replaced by a bogus name. This comes from reading the source only; nothing was run, as the contract requires. The report is at `.ufo/waves/round-22/w1/Cache1.md`.
+
+**The false green.** In `run-acceptance.py`, lines 462–463 check only that `checks` is a dict with 33 entries, all `true`. They never look at the names. The producer emits exactly 33 named checks when `status` is `"ok"`. The witness takes that real payload shape and renames `migrated_caller_reruns_external_mutable` to `bogus_check: true`. Every other field stays at the value the runner itself requires, so no producer value is invented, and base marks the step matched. The realistic way this happens is a committed producer regression, because the producer is bound to whatever bytes the revision holds, not to a fixed digest. The `matched_gate_checks` count would also wrongly report 33 of 33.
+
+**Related gaps in the same branch:**
+- **Case rows:** only the row count is checked, so `[{},{},{},{}]` passes.
+- **Crash (lines 467–468):** a payload with `"gate": null` or `"isolation": null` raises `AttributeError`. `main` doesn't catch that, so the runner dies with no record, which breaks the preregistered "reject malformed producer data without a crash."
+- **Float accepted:** line 465 compares with `== 3`, so `3.0` passes. This belongs to whichever seat owns the scalar-type fix.
+
+**Minimal fix (drafted in the report):**
+- Add a frozen set of the 33 check names and the ordered tuple of 4 case phases as constants in the runner.
+- Require exact name-set equality, and tie it to the inventory with `len(CACHE_DEMO_CHECKS) == expected["checks"]`.
+- Compare case rows only by their `phase` sequence. Temp paths, durations and timestamps vary per run and are never compared, so valid generated rows still pass.
+- Type-guard `gate` and `isolation` so malformed data is rejected instead of crashing.
+- Put the missing/unexpected name diagnostics in a new `gate_check_identity` field. The `matched_counts` keys and their values for valid runs stay the same, so replay-matrix comparisons are unaffected.
+
+**Rejected inferences:**
+- Deriving the expected names from the producer source is circular: a producer regression would change the oracle along with it.
+- Deriving phases from the producer's execution labels breaks valid runs. The second execution is labelled `"unchanged-recheck"`, but its case row's phase is `"unchanged"`.
+
+I left `step-inventory.json` unchanged. It claims to be derived exactly from the round-20 runner, so adding a names list there would make that claim false.
+
+**Your decision:** `combined_snapshot` hard-codes `census/round-21/run-acceptance.py`. Editing that file in place changes bytes that r21 records are bound to. Copying it to a round-22 path instead means moving three paths together: line 223, `INPUT_PATHS`, and the inventory path at line 600.
+
+The report includes a base-versus-changed decision table for the synthetic oracle fixture; run that, then the full 18-step replay. Nothing was installed.

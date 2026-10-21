@@ -1,0 +1,68 @@
+# SoujiR22.Summary8 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+
+Inspect literal success contract for r18-landing-pointers. Derive one valid positive stdout vector and one uniquely relevant wrong/missing summary or pass-count vector; identify stderr policy impact. Do not run.
+Write your sole report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/w1/Summary8.md.
+
+Lane bounds: leaf member — no subagent dispatch.
+
+Report: write your scoped findings to .ufo/waves/round-22/w1/Summary8.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+I'll read the named files, focusing on the `r18-landing-pointers` step.
+→ grep(r18-landing-pointers|landing @ /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/step-inventory.json) ⇒ ok · 73 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/preregistration.txt) ⇒ ok · 3 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py:raw:300-) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-21/w2/AttackRunnerStepResults.md) ⇒ ok · 35 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py:raw:600-) ⇒ ok · 61 lines
+→ grep(stderr|summary|false.green|literal @ /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/QUALITY.md) ⇒ ok · 6 lines
+I've read the runner's summary branch and the frozen inventory row for `r18-landing-pointers`. Writing the report now.
+→ edit(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/w1/Summary8.md) ⇒ ok · 2 lines
+STATUS: PASS. The report is at `souji-shokunin/.ufo/waves/round-22/w1/Summary8.md`. Everything in it comes from reading the source; nothing was run, and no tools were installed.
+
+**Success contract.** The `r18-landing-pointers` step is the same in `census/round-21/run-acceptance.py` (lines 299–300) and the frozen `step-inventory.json`. It passes only when all of these hold:
+- The exit code is 0.
+- Neither stdout nor stderr contains a recognized failure line.
+- stdout's summary lines are exactly `["SUMMARY\ttotal=11\tfailed=0"]`, tab-separated.
+- stdout has no `INVENTORY\t` lines.
+- stdout has exactly 11 lines matching `^CASE\tPASS\t` (uppercase).
+- stderr is never checked otherwise.
+
+**Positive vector.** 11 lines of the form `CASE\tPASS\tpNN`, then `SUMMARY\ttotal=11\tfailed=0`, with exit code 0 and empty stderr. Result: matched. The case names are placeholders, because the fixture file wasn't on my list of readable files.
+
+**Wrong vector.** Use the same stdout, but write the summary line with spaces: `SUMMARY total=11 failed=0`. It is still picked up as a summary line and the pass count is still 11, but it fails the exact comparison, so it does not match. I chose this one because a "fix" that normalizes whitespace in the summary comparison would quietly let it pass. A second option tests the pass count instead: 11 lowercase `CASE\tpass\t` lines give a count of 0, and no failure line is emitted.
+
+**Stderr impact.**
+- **Today:** the positive stdout plus a Python traceback on stderr still counts as a pass. That is the known stderr false green, and it affects this step.
+- **With the fix:** adding `and not stderr` to the summary branch, as the counter and cache branches already do, makes that case fail.
+- **Open risk:** the real r18 test stays green under the fix only if the fixture writes nothing to stderr when it succeeds. I couldn't check that, because the fixture is outside my readable files and running it was forbidden. L1's acceptance run has to show this step's `stderr` as empty, with `stderr_sha256 == e3b0c442…b855`.

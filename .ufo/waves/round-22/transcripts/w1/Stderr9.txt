@@ -1,0 +1,69 @@
+# SoujiR22.Stderr9 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+
+For r16-landing-gate, analyze a distinct stderr/control combination: surrogateescaped byte. State literal expected matched boolean and compatibility requirement; source only.
+Write your sole report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/w1/Stderr9.md.
+
+Lane bounds: leaf member — no subagent dispatch.
+
+Report: write your scoped findings to .ufo/waves/round-22/w1/Stderr9.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+I'll read the named source files to analyze the surrogateescaped-byte stderr case for r16-landing-gate.
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/preregistration.txt) ⇒ ok · 3 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-21/w2/AttackRunnerStepResults.md) ⇒ ok · 35 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py:raw:300-) ⇒ ok · 302 lines
+→ grep(r16-landing-gate @ /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/step-inventory.json) ⇒ ok · 34 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py:raw:600-) ⇒ ok · 61 lines
+→ grep((?i)stderr|surrogate|source-inferred|executed @ /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/QUALITY.md) ⇒ ok · 6 lines
+→ edit(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/w1/Stderr9.md) ⇒ ok · 2 lines
+STATUS: PASS. On base `41553adb…`, `r16-landing-gate` passes when stdout is correct but stderr holds one invalid UTF-8 byte. The repaired summarizer must return literal JSON `false` for `matched` (Python `False`, `type is bool`). This is from reading the source only; nothing was run and nothing was installed.
+
+**The case:**
+- **Inputs:** return code 0. Stdout has 15 lines matching `^CASE\t[^\t]+\tPASS\t` plus `SUMMARY\ttotal=15\tfailed=0`. Stderr is the single byte `b"\x85"`.
+- **Why this byte:** `decode_exact` turns it into `"\udc85"`, which is not whitespace and not a line separator. If it were instead read as NEL (U+0085), Python would treat it as whitespace and `strip()` would remove it. So the case also catches repairs that normalize stderr, not just ones that skip the check.
+- **Base trace:** `failure_lines` finds nothing, so line 367 sets `matched` true. The summary branch (lines 369–419) never looks at stderr, so line 481 records `matched: true`. That is a false pass. The counter branch (line 445) and cache-demonstration branch (line 480) already reject non-empty stderr; only the summary branch has the gap.
+- **Repaired result:** `matched: false`, `all_matched: false`, exit code 1 (inferred from the source).
+
+**Compatibility requirements for the repair:**
+- **Check for empty stderr on the raw bytes.** `not stderr_bytes` works, and so does the existing `surrogateescape` decode. Do not use `strip()`, `isspace()`, a "blank lines only" test, decoding with `"ignore"` or `"replace"`, or a Latin-1 reading; each one hides this byte or its NEL relative.
+- **Keep the exact record.** Keep `stderr_sha256` over the raw bytes, and keep `result["stderr"]` as the `surrogateescape` string so `b"\x85"` can be recovered exactly.
+- **Keep `ensure_ascii=True` in `write_exclusive`.** With `ensure_ascii=False` and strict UTF-8, `UnicodeEncodeError` would be caught at line 652. The whole run would then be refused and no record written.
+- **Compare booleans strictly in the test vectors.** Use `is False`, never `== 0`; otherwise the test repeats the bool/int mix-up this round is fixing.
+- **Leave the inventory alone.** Put the stderr check in the branch logic, not in a new step key, so `inventory_projection` and the frozen `step-inventory.json` stay byte-compatible.
+
+The draft fix is `matched = matched and summary_match and pass_match and not stderr_bytes`. The report also has a draft test row with expected base `True` and changed `False`.
+
+**Unresolved:** I couldn't confirm that `tests/fixtures/r16-landing-gate.py` writes no stderr when it succeeds, because that file was outside my allowed reads. L1's acceptance run after integration needs to show this step still matches. No LSP was available, so I can't offer semantic proof of definitions or callers.
+
+Report: .ufo/waves/round-22/w1/Stderr9.md

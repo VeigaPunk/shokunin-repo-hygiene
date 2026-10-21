@@ -1,0 +1,79 @@
+# SoujiR22.Summary4 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+
+Inspect literal success contract for r20-input-binding. Derive one valid positive stdout vector and one uniquely relevant wrong/missing summary or pass-count vector; identify stderr policy impact. Do not run.
+Write your sole report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/w1/Summary4.md.
+
+Lane bounds: leaf member — no subagent dispatch.
+
+Report: write your scoped findings to .ufo/waves/round-22/w1/Summary4.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+I'll read the named contract files to locate the `r20-input-binding` step and the summarizer's pass logic.
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/step-inventory.json) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/preregistration.txt) ⇒ ok · 3 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py:raw:300-) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-21/w2/AttackRunnerStepResults.md) ⇒ ok · 35 lines
+Now the remainder of `main` to see whether exceptions in `summarize_result` are caught, plus the quality doc and the cache demo for completeness.
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py:raw:600-) ⇒ ok · 61 lines
+→ grep(stderr|input-binding|false green|false-green|SUMMARY @ /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/QUALITY.md) ⇒ ok · 2 lines
+→ web_fetch(https://docs.python.org/3/library/stdtypes.html#int-max-str-digits) ⇒ ok · 2104 lines
+I have everything I need. Writing the report now.
+→ edit(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/w1/Summary4.md) ⇒ ok · 2 lines
+I've derived the success contract for the `r20-input-binding` step from source and written the report. Status is PASS, though nothing was run, and I didn't read the fixture `tests/fixtures/r20-input-binding.py` because it wasn't on the named-file list.
+
+**What the step needs to pass** (`summarize_result` in `run-acceptance.py`, lines 347–419):
+- Return code 0.
+- No uppercase failure lines, checking stdout and stderr together.
+- Exactly one `SUMMARY` line that fully matches `SUMMARY\ttotal=52\tpass=52\tfail=0\tblocked=0\tinventory=exact\tbaseline_mismatches=(\d+)`.
+- Exactly one `INVENTORY` line: `INVENTORY\texact\texpected=52 observed=52 missing=- unexpected=- duplicates=0`.
+- The reported `baseline_mismatches` number equals the count of `BASELINE_MISMATCH\t` lines. Only this step has that check.
+- Exactly 52 lines starting with `CASE\tpass\t`.
+- Stderr is never checked on its own.
+
+**Positive vector (should pass):** the `INVENTORY` line, 52 `CASE\tpass\tbinding-NN` lines, one `BASELINE_MISMATCH\tbinding-01` line, and a `SUMMARY` line with `baseline_mismatches=1`; return code 0, empty stderr. I used 1 rather than 0 so the mismatch cross-check is actually exercised. The oracle can load the step definition straight from `step-inventory.json` (row 3), since this branch never touches the real root or revision.
+
+**Negative vector (should fail):** the same output with the `BASELINE_MISMATCH` line removed. Only the mismatch cross-check fails (reported 1, found 0). The current code already rejects it, so it's a control that should stay red before and after the repair, not a demonstration of a bug.
+
+**Stderr impact:**
+- **Current false pass:** the positive output plus a Python traceback on stderr, with return code 0, is marked as matched today. It should fail after the repair.
+- **Risk of the repair:** if the fix requires empty stderr for every summary step, the real `r20-input-binding` run must write nothing to stderr. The fixture probably calls git, which could print warnings, but that's inferred, not checked. Before adopting the strict rule, check that this step's `stderr_sha256` in the real acceptance record is the empty-string hash (`e3b0c442…b855`).
+
+**Lower-priority findings, none claimed for this round:**
+- **Crash on huge counts:** a `baseline_mismatches` value longer than 4300 digits makes `int()` raise `ValueError` (Python 3.11+ default limit). That aborts the whole run with exit 2, which conflicts with the preregistered "reject malformed producer data without a crash". I'm citing this limit from memory; the docs page I fetched was cut off before that section. Wrapping the `int()` call in `try`/`except ValueError` would fix it without touching the frozen inventory.
+- **Non-ASCII digits accepted:** `\d` also matches non-ASCII digits such as `١`, and `int()` converts them, so they pass. Fixing that means changing the frozen inventory regex.
+- **Lowercase failures missed:** a lowercase `CASE\tfail\t` line isn't treated as a failure. It only matters if the producer's summary contradicts its own case lines, which the preregistration leaves out of scope.
+
+No tools were installed. The only file written is the report.
+
+Report: `.ufo/waves/round-22/w1/Summary4.md`

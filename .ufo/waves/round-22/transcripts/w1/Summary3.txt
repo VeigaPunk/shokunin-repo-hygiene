@@ -1,0 +1,76 @@
+# SoujiR22.Summary3 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+
+Inspect literal success contract for r20-audit-contract. Derive one valid positive stdout vector and one uniquely relevant wrong/missing summary or pass-count vector; identify stderr policy impact. Do not run.
+Write your sole report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/w1/Summary3.md.
+
+Lane bounds: leaf member — no subagent dispatch.
+
+Report: write your scoped findings to .ufo/waves/round-22/w1/Summary3.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+Reading the named contract files.
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/step-inventory.json) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/preregistration.txt) ⇒ ok · 3 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py:raw:300-) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-21/w2/AttackRunnerStepResults.md) ⇒ ok · 35 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/step-inventory.json:raw:300-) ⇒ ok · 41 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py:raw:600-) ⇒ ok · 61 lines
+→ grep((?i)stderr|summar|false.green|vector @ /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/QUALITY.md) ⇒ ok · 4 lines
+→ edit(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/w1/Summary3.md) ⇒ ok · 2 lines
+I've written the report for the `r20-audit-contract` step. Everything in it comes from reading the source; nothing was run.
+
+**How a summary step passes:** `summarize_result` in `census/round-21/run-acceptance.py` (lines 367–419) marks it matched only when all of these hold:
+- the exit code is 0;
+- no `FAIL` marker line appears in stdout or stderr;
+- stdout has exactly one `SUMMARY`/`SELFTEST` line, equal byte-for-byte to `SUMMARY\ttotal=78\tpass=78\tfail=0\tbase_discriminating=11`;
+- stdout has no lines starting with `INVENTORY\t`;
+- exactly 78 stdout lines match `^CASE\tPASS\t`, which is uppercase, unlike the lowercase pattern in other steps;
+- stderr may be non-empty. Only the counter and cache-demo checks require empty stderr.
+
+**Vectors** (case-name bytes are in the draft in the report; it loads this step's row from the frozen `step-inventory.json`):
+
+| Vector | stdout | stderr | Current code | After repair |
+|---|---|---|---|---|
+| Positive | 78 `CASE\tPASS\t` lines plus the exact summary line | empty | pass | pass |
+| Missing summary field | 78 pass lines plus a summary without `base_discriminating=11` | empty | fail | fail |
+| Stderr text | same as positive | `error: base tool comparison aborted` | **pass (false green)** | fail |
+
+- **Missing summary field:** this is the check specific to this step. A run that silently skipped the comparison against the baseline auditor would still print 78 passes. The current code already rejects it, so it checks the repair doesn't weaken anything rather than exposing a defect.
+- **Stderr text:** this shows the step is exposed to the "stderr accepted despite success" defect. The stderr text must not contain a `FAIL` marker line, because the current code already catches those.
+
+**Stderr policy impact:** requiring empty stderr for summary steps fixes the false green. It keeps the real `r20-audit-contract` step green only if the real fixture writes nothing to stderr. I wasn't permitted to read `tests/fixtures/r20-audit-contract.py`, so that's unconfirmed. Your acceptance run needs to confirm this step's stderr is empty, or the repair will turn one of the 18 real positive controls red.
+
+No language-server tool was available in this session, so the findings rest on direct reading of the named files. No tools were installed.
+
+Report: `.ufo/waves/round-22/w1/Summary3.md`

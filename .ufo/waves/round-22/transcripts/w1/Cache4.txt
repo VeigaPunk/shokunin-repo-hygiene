@@ -1,0 +1,67 @@
+# SoujiR22.Cache4 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+
+Attack cache demonstration contract false check value from named producer/runner. Derive a real witness and minimal expected policy; no invented producer values, no run. Preserve valid generated case rows and transient path variation.
+Write your sole report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/w1/Cache4.md.
+
+Lane bounds: leaf member — no subagent dispatch.
+
+Report: write your scoped findings to .ufo/waves/round-22/w1/Cache4.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+Reading the six named contract files in parallel.
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/cache-demonstration.py) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/step-inventory.json) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-21/w2/AttackRunnerStepResults.md) ⇒ ok · 35 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/preregistration.txt) ⇒ ok · 3 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/corpus/QUALITY.md) ⇒ ok · 115 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py:raw:300+360) ⇒ ok · 360 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/cache-demonstration.py:raw:300+930) ⇒ ok · 924 lines
+I've read all six contract files. Next I'm checking whether the producer, runner, and inventory files I read match the base commit, using read-only git object reads.
+→ bash(cd /home/vgpnk/Projects/shokunin/souji-shokunin && export GIT_OPTIONAL_LOCKS=0 && for p in census/round-14/cache-demons…) ⇒ ok · 6 lines
+The working-tree bytes match base 41553adb for all three files. Now writing the report.
+→ bash(test -d /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/w1 && echo exists; test -e /home/vgpnk/Project…) ⇒ ok · 5 lines
+→ edit(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/w1/Cache4.md) ⇒ ok · 2 lines
+→ edit(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/w1/Cache4.md) ⇒ ok · 2 lines
+I found a real check that the cache demonstration itself reports as false, using only its source and no made-up values. The fix to tie each check to its name is safe only if it compares against exactly the 33 check names written in the demonstration's source. The report is at `.ufo/waves/round-22/w1/Cache4.md`, status PASS. The only thing I ran was a read-only comparison of the three key files against base `41553adb`; they are byte-identical, so the line numbers below hold at base.
+
+- **The real false check:** running `census/round-14/cache-demonstration.py` with `--keep` always leaves the temporary directory behind (lines 1084–1090). The demonstration then adds a 34th check, `isolation_cleaned: false`, and reports `status: "red"` and exit 1 (lines 1202–1206). The current runner already rejects this, and any fix must keep rejecting it.
+- **Trap 1, rejecting every real green:** the frozen inventory's `expected_summary` has `"isolation_cleaned": true`. That value refers to `isolation.cleaned`, not to a check. If a fix adds it to the expected check names, every real green run fails, because a green run never emits that check.
+- **The round-21 example isn't reachable today:** the demonstration's check names are fixed in its source, so with the base bytes, "33 checks, all true" already implies the right 33 names. The earlier false green (33 unrelated names, all true) needs either a different `cache-demonstration.py` at the replayed `--rev` or the planned synthetic oracle. So the fix guards against the demonstration changing between revisions; the round's report shouldn't overstate the risk at base.
+- **A realistic negative vector:** take the real 33 names, drop one, and add `isolation_cleaned: true`. The base runner accepts it and the fixed runner must reject it.
+- **Trap 2, the runner refusing outright:** putting the name list inside `expected_summary` makes the runner refuse to start, because that field is compared against the frozen inventory (lines 600–602). Keep the names in a module constant, and check that its length equals the frozen count of 33 next to the existing command-count check, before any command runs.
+- **Trap 3, key order:** the demonstration prints its JSON with sorted keys (line 1107), so comparing checks in source order fails every real run. Compare them as sets.
+- **Leave case rows loose:** case rows carry temporary-directory paths, timings, timestamps and record digests that vary between runs, so keep only the existing count of 4 rows. If row contents are checked at all, the only fixed values on a green run are phase, retained, executions-after and gate exit. Those need exact type checks, since JSON `false == 0`.
+- **Separate number-type issue:** JSON `3.0` decodes to a float equal to `3`, so `producer_executions_new_policy` and the exact counter comparisons also need `type(v) is int`, not just a bool exclusion.
+
+The report includes the draft constant with all 33 names (taken from lines 880–978), the identity check, and four oracle vectors. No tools were installed.

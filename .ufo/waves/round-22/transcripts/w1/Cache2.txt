@@ -1,0 +1,80 @@
+# SoujiR22.Cache2 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+
+Attack cache demonstration contract missing required check from named producer/runner. Derive a real witness and minimal expected policy; no invented producer values, no run. Preserve valid generated case rows and transient path variation.
+Write your sole report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/w1/Cache2.md.
+
+Lane bounds: leaf member — no subagent dispatch.
+
+Report: write your scoped findings to .ufo/waves/round-22/w1/Cache2.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+Reading the named contract files.
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/step-inventory.json) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/cache-demonstration.py) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-21/w2/AttackRunnerStepResults.md) ⇒ ok · 35 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/preregistration.txt) ⇒ ok · 3 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/corpus/QUALITY.md) ⇒ ok · 115 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py:raw:300-) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/cache-demonstration.py:raw:300+500) ⇒ ok · 502 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/cache-demonstration.py:raw:800-) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py:raw:599-) ⇒ ok · 62 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/step-inventory.json:raw:300-) ⇒ ok · 41 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/cache-demonstration.py:raw:1100-) ⇒ ok · 125 lines
+Derived the 33 check names from producer lines 880–978. Now grounding the duplicate-key behavior in the public Python JSON docs.
+→ web_fetch(https://docs.python.org/3/library/json.html) ⇒ ok · 534 lines
+→ edit(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/w1/Cache2.md) ⇒ ok · 2 lines
+**STATUS: PARTIAL.** The round-21 acceptance runner accepts a cache-demo payload where a required check is missing, as long as an unrelated check set to `true` takes its place. I found this by reading source only; nothing was run, as the contract required. I've drafted a minimal fix in the report at `.ufo/waves/round-22/w1/Cache2.md`.
+
+**The required checks.** The producer, `census/round-14/cache-demonstration.py` lines 879–979, defines exactly 33 named checks. That matches the frozen count of 33 in `step-inventory.json`. A 34th key, `isolation_cleaned`, only appears with value `false` when the run goes red, so the expected set is exactly the 33 names. The four case phases, in order, are `initial-fresh`, `unchanged`, `dependency-modified` and `legacy-no-dependencies`.
+
+**Findings:**
+- **HIGH: missing check accepted.** The cache branch of `census/round-21/run-acceptance.py` (lines 456–470) only checks that there are 33 checks and that all are `true`, never which names. Example: drop `baseline_stale_green_reused` and add `"baseline_ran": true`; the step still matches and still reports 33 matched checks.
+- **HIGH: the obvious fix breaks everything.** If the name set is added to the step's `expected_summary`, the frozen-inventory comparison (lines 538–552 and 600–602) refuses every run, losing all 18 positive controls. Editing `step-inventory.json` to compensate would misstate where it came from. The names have to live in a separate constant.
+- **MEDIUM: malformed input crashes the runner.** If the payload's `gate` or `isolation` field isn't an object, an `AttributeError` is raised that `main` doesn't catch (line 652). That breaks the preregistered "reject malformed data without a crash" rule.
+- **MEDIUM: number type not checked in the cache branch.** `producer_executions_new_policy: 3.0` passes because `3.0 == 3`. The type-exact comparison the scalar fix introduces needs to cover this branch too, using one shared helper.
+- **LOW: repeated JSON keys.** Python's JSON decoder keeps only the last value for a repeated key (confirmed in the official Python docs this round). So a check listed as `false` then `true` would pass even an exact name check. Rejecting duplicates on load costs nothing, since the real producer can't emit them.
+
+**Proposed fix.** The report contains a literal 33-name set and the four-phase tuple, kept outside the step's expected summary. The changed check:
+- requires the exact name set, every value strictly `true`, and the phases in order;
+- rejects bad `gate`/`isolation`/case-row shapes instead of crashing, and rejects repeated keys on load.
+
+It reads only `phase` from each case row, so changing paths, digests and timestamps are still accepted. On a real green run the reported counts are unchanged.
+
+I considered deriving the names automatically from the producer's source and rejected it. The check would then silently follow any rename or dropped check in the producer, so it would only ever confirm itself.
+
+The report also includes ten expected pass/fail vectors comparing base and changed behavior. L1 should run these checks after integration:
+1. The synthetic result-oracle fixture against the base and changed versions, using those vectors.
+2. The full round-21 replay, expecting 18 of 18 steps to pass, which also confirms the frozen inventory still matches.
+
+No tools were installed.

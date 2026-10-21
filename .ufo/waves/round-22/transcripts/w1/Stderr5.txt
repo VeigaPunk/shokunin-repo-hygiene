@@ -1,0 +1,74 @@
+# SoujiR22.Stderr5 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+
+For r19-seat-audit-shapes, analyze a distinct stderr/control combination: FAIL marker without tab. State literal expected matched boolean and compatibility requirement; source only.
+Write your sole report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/w1/Stderr5.md.
+
+Lane bounds: leaf member — no subagent dispatch.
+
+Report: write your scoped findings to .ufo/waves/round-22/w1/Stderr5.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+Reading the named source files to analyze the "FAIL marker without tab" stderr/control case.
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/preregistration.txt) ⇒ ok · 3 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-21/w2/AttackRunnerStepResults.md) ⇒ ok · 35 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py:raw:300+360) ⇒ ok · 360 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/step-inventory.json) ⇒ ok · 302 lines
+→ grep((?i)stderr|false.green|calibration|literal|positive control @ /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/QUALI…) ⇒ ok · 10 lines
+→ edit(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/w1/Stderr5.md) ⇒ ok · 2 lines
+STATUS: PASS. At base `41553adb`, the summarizer marks `r19-seat-audit-shapes` as matched even when stderr contains a FAIL marker without a tab. After the repair, the expected `matched` is `False`. This comes from reading the source only; nothing was run.
+
+**Why base passes it (from the source):** `failure_lines` (`run-acceptance.py` lines 330–333) only recognises lines starting `FAIL\t`, `CASE\tFAIL\t`, or `CASE\t<x>\tFAIL`. So stderr like `FAIL r19 shape mismatch` (space instead of tab) or a bare `FAIL` produces no failures. The summary branch (lines 369–419) never checks stderr; only the counter and cache-demo branches require it to be empty (lines 445 and 480). With exit code 0, the exact summary line and all 17 `CASE\tpass\tchanged/` lines, `matched` comes out `True`.
+
+**Expected results (same input fed to base and to the repaired code):**
+
+| Case | stderr | Base `matched` | Repaired `matched` |
+|---|---|---|---|
+| FAIL with a space, no tab | `FAIL r19 shape mismatch\n` | `True` | `False` |
+| Bare FAIL | `FAIL\n` | `True` | `False` |
+| Positive control | empty | `True` | `True` |
+| Existing detector (FAIL with tab) | `FAIL\tr19 shape mismatch\n` | `False` | `False` |
+
+**Compatibility requirements:**
+- **Where to fix:** gate on stderr in the summary branch's `matched` (line 417: `... and not stderr`), the same way the other two branches do. Don't widen `failure_lines`. That would change the retained `failure_lines` field for these cases, which should stay `[]`. It also still wouldn't catch other error text such as `ERROR: …`.
+- **Whitespace counts:** whitespace-only stderr must also fail. Don't add a `.strip()`.
+- **Record unchanged:** only `matched` should change. `failure_lines` and `matched_counts` stay as they are, and the frozen `step-inventory.json` projection stays byte-identical.
+- **Real steps:** all 18 real acceptance steps must still match, which means each must write nothing to stderr.
+
+**Not resolved:**
+- I couldn't check whether the real r19 fixture writes anything to stderr, because `tests/fixtures/r19-seat-audit-shapes.py` isn't in the named readable files. Your acceptance run needs to confirm all 18 steps still match.
+- A FAIL line without a tab on stdout is also missed, and a stderr gate won't catch it. That's a separate case outside this seat; I'm not claiming it here.
+- No LSP device was available. My only text search was one grep of the named `corpus/QUALITY.md`, and I don't use it as semantic proof.
+- No tools were installed.
+
+The report, including the draft oracle rows, is at `.ufo/waves/round-22/w1/Stderr5.md`.

@@ -1,0 +1,75 @@
+# SoujiR22.Stderr7 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+
+For landing-gate-selftest, analyze a distinct stderr/control combination: stderr with PASS prefix. State literal expected matched boolean and compatibility requirement; source only.
+Write your sole report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/w1/Stderr7.md.
+
+Lane bounds: leaf member — no subagent dispatch.
+
+Report: write your scoped findings to .ufo/waves/round-22/w1/Stderr7.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+Reading the named source files to analyze the PASS-prefixed stderr case.
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/preregistration.txt) ⇒ ok · 3 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-21/w2/AttackRunnerStepResults.md) ⇒ ok · 35 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py:raw:300+360) ⇒ ok · 360 lines
+→ grep(landing-gate-selftest @ /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/step-inventory.json) ⇒ ok · 22 lines
+→ edit(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/w1/Stderr7.md) ⇒ ok · 2 lines
+→ edit(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/w1/Stderr7.md) ⇒ ok · 2 lines
+I've written the report to `.ufo/waves/round-22/w1/Stderr7.md`. On the base revision, `landing-gate-selftest` passes when stderr carries a `PASS`-prefixed line, which is a false green. After the repair, the expected literal value is `matched: false`. This comes from reading the source only; nothing was run.
+
+**Why the base revision passes it.** Everything here is in `summarize_result` in `run-acceptance.py`:
+- The summary line and the 65 pass lines are both counted from stdout only.
+- The failure check reads stdout and stderr together, but it only flags lines starting with `FAIL` or `CASE … FAIL`, so a `PASS` line isn't caught.
+- The summary branch never checks whether stderr is empty. The counter and cache-demo branches both do (`and not stderr`).
+
+So with return code 0 and correct stdout, the step is marked matched and `all_matched` stays true.
+
+**Expected results for the test cases** (same synthetic step, before and after the repair):
+
+| Case | Base | After repair |
+|---|---|---|
+| Correct stdout, empty stderr (positive control) | `true` | `true` |
+| Correct stdout, stderr `PASS\tlanding-gate selftest complete\n` | `true` (false green) | `false` |
+| Only 64 pass lines on stdout, the 65th on stderr | `false` | `false` |
+
+The third case checks that a stderr line can never make up for a missing stdout pass line.
+
+**Compatibility requirements:**
+- **Real runs must still pass.** This holds only if the real `souji-landing-gate.py --selftest` writes nothing to stderr. I couldn't check that, because the tool isn't in my allowed file list. The same applies to all 12 summary-type steps among the 18. During the acceptance run, check that each step's stderr hash equals the SHA-256 of empty input (`e3b0c442…b855`).
+- **No allowlist.** Any non-empty stderr must fail the step, including lines that look like passes and whitespace-only output.
+- **Counting stays on stdout.** Summary and pass lines must not start reading stderr.
+
+**Draft repair:** move the stderr check into the shared condition (`matched = returncode == 0 and not failures and not stderr_bytes`) and drop the duplicate checks in the counter and cache-demo branches. The report includes this draft and the test vectors in code blocks; neither is applied.
+
+No LSP server was available, so I located the inventory row with a plain text search of that one named file. I installed nothing.

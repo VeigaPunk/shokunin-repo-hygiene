@@ -1,0 +1,90 @@
+# SoujiR22.Cache5 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+
+Attack cache demonstration contract integer1 check value from named producer/runner. Derive a real witness and minimal expected policy; no invented producer values, no run. Preserve valid generated case rows and transient path variation.
+Write your sole report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/w1/Cache5.md.
+
+Lane bounds: leaf member — no subagent dispatch.
+
+Report: write your scoped findings to .ufo/waves/round-22/w1/Cache5.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+I'll read the named contract files and then write the critic report.
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/step-inventory.json) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/cache-demonstration.py) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-21/w2/AttackRunnerStepResults.md) ⇒ ok · 35 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/preregistration.txt) ⇒ ok · 3 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/corpus/QUALITY.md) ⇒ ok · 115 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py:raw:300-) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/cache-demonstration.py:raw:300+500) ⇒ ok · 502 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/step-inventory.json:raw:300-) ⇒ ok · 41 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/cache-demonstration.py:raw:800-) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py:raw:600-) ⇒ ok · 61 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/cache-demonstration.py:raw:1100-) ⇒ ok · 125 lines
+→ web_fetch(https://docs.python.org/3/library/json.html) ⇒ ok · 534 lines
+→ edit(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/w1/Cache5.md) ⇒ ok · 2 lines
+→ write(agent://SoujiR22.DraftCacheFix) ⇒ ok · 1 line
+STATUS: PASS (source-only; nothing was run). The base runner already rejects a cache check value of integer `1`, because the cache branch tests each value with `value is True`. The danger is the fix: the natural ways to check exact check names would accept `1` again.
+
+The report is at `.ufo/waves/round-22/w1/Cache5.md`. I briefed `SoujiR22.DraftCacheFix` on the key points.
+
+**Real witness.** The named producer (`census/round-14/cache-demonstration.py`, lines 879–979) builds exactly 33 named checks. Every one evaluates to a Python `bool` and is written out with `json.dumps`, so the producer can only emit JSON `true`/`false` and never `1` or `1.0`. Three more facts from the same file:
+- **`isolation_cleaned`** is added to the checks only on the failing path (lines 1202–1206), making 34 checks. It is not one of the 33.
+- **`producer_executions_new_policy`** is `len(executions)`, always an `int`.
+- **The four case rows** have fixed phases in order: `initial-fresh`, `unchanged`, `dependency-modified`, `legacy-no-dependencies`. Their temp paths, timestamps, timings and gate output change from run to run.
+
+**Counterexamples against `census/round-21/run-acceptance.py` and likely fixes:**
+- **Integer `1` or `1.0` as a check value:** the base rejects it. A fix that compares `checks` to `{name: True}` with dict equality accepts it, because `1 == True` in Python. The fix must keep `is True`.
+- **Wrong check names:** the base only counts checks. It accepts a bogus name swapped in for a real one (still 33), and 32 real names plus `isolation_cleaned` (also 33). A subset or superset name test would accept the 34-check set (33 plus `isolation_cleaned`), which the base rejects today. Only an exact 33-name set rejects all three.
+- **`producer_executions_new_policy: 3.0`:** the base accepts it, since `3.0 == 3`. The counter-branch type fix needs to cover this field as well.
+- **Case rows:** the base only checks there are four, so reordered or arbitrary phases pass.
+- **Malformed `gate` or `isolation`** (a string, `null` or a list): the base crashes with `AttributeError`, which `main` doesn't catch. The preregistration requires rejecting malformed producer data without a crash.
+
+**Regressions the fix must avoid:**
+- **Name list in `expected_summary`:** the runner compares `expected_summary` to the frozen inventory (`step-inventory.json`). Putting the names there makes every run refuse with exit 2, losing all 18 positive controls. Editing the frozen inventory to match would make its recorded source commit and digest false.
+- **Adding `isolation_cleaned` to the name set** makes the real passing run fail.
+- **Checking case-row fields beyond `phase`** breaks on the normal path and timestamp changes.
+
+**Smallest safe correction** (draft code is in the report):
+- Keep `is True`.
+- Define the 33 names as a runner constant, and check its length against the frozen `checks: 33`.
+- Compare the four phases exactly.
+- Compare `producer_executions_new_policy` with the same strict-type helper the counter fix adds, not a second one.
+- Check that `gate` and `isolation` are dicts before reading them.
+- Leave `expected_summary` and the frozen inventory byte-identical.
+
+The report also lists the synthetic test vectors the shared fixture should include: the reject cases above, plus a passing run with different paths and timestamps that must still pass.
+
+Duplicate JSON keys (Python keeps the last value) are a deliberate tradeoff, not a required fix. The real producer can't emit them, and the preregistration excludes malicious-producer attestation. F5 and the held items are untouched.
+
+All findings come from reading the six named files; nothing was run. The only external read was the public Python `json` documentation page. No tools were installed.

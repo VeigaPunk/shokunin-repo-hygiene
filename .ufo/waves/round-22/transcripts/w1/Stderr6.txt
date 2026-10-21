@@ -1,0 +1,86 @@
+# SoujiR22.Stderr6 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+
+For r19-carry-wrap, analyze a distinct stderr/control combination: warning text. State literal expected matched boolean and compatibility requirement; source only.
+Write your sole report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/w1/Stderr6.md.
+
+Lane bounds: leaf member — no subagent dispatch.
+
+Report: write your scoped findings to .ufo/waves/round-22/w1/Stderr6.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+I'll read the six named source files in parallel, then write the report.
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/step-inventory.json) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/preregistration.txt) ⇒ ok · 3 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-21/w2/AttackRunnerStepResults.md) ⇒ ok · 35 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py:raw:300-) ⇒ ok · 302 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/corpus/QUALITY.md) ⇒ ok · 115 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/run-acceptance.py:raw:600-) ⇒ ok · 61 lines
+→ read(/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-21/step-inventory.json:raw:300-) ⇒ ok · 41 lines
+→ edit(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-22/w1/Stderr6.md) ⇒ ok · 2 lines
+STATUS: PASS (source only). For the `r19-carry-wrap` step, a run that exits 0 with the exact expected stdout plus warning text on stderr is wrongly marked as passing by the current summarizer. After the repair it must be marked as failing. I didn't run anything: no runner, fixture, git command, or probe.
+
+**Why the current code passes it.** I traced this in `census/round-21/run-acceptance.py`:
+- **Failure detection:** `failure_lines` (lines 330–333) only recognises lines starting with `FAIL\t` or `CASE\t…FAIL`. Text like `...: DeprecationWarning: ...` doesn't match, so no failure is found.
+- **Summary steps:** the summary branch decides `matched` without ever looking at stderr (lines 367 and 417).
+- **Other step kinds:** the counter and cache-demonstration branches do check `not stderr` (lines 445 and 480), so this gap is specific to summary steps.
+
+**The test vector.**
+
+| case | exit code | stdout | stderr | `matched` today (from reading the source) | literal expected `matched` after repair |
+|---|---|---|---|---|---|
+| warning text | 0 | four `CASE\tpass\tchanged/…` lines plus `SUMMARY total=4 failed=0 base_discriminating=2` | `b"tests/fixtures/r19-carry-wrap.py:1: DeprecationWarning: synthetic warning text\n"` | `True` | **`False`** |
+| empty-stderr control | 0 | identical | `b""` | `True` | **`True`** |
+
+**Draft repair.** One line in the summary branch at line 417:
+
+```python
+        matched = matched and summary_match and pass_match and not stderr
+```
+
+**Compatibility requirements.**
+- **Same test as the other branches:** use the exact-empty `not stderr` check. Don't strip whitespace, allow-list "warning" text, or filter by prefix; any of those brings the false pass back.
+- **No warning suppression:** don't add `PYTHONWARNINGS` or `-W ignore`, or change the child environment or arguments. Argument changes would also break the frozen inventory comparison.
+- **No new step key:** keeping the rule inside the branch leaves the frozen inventory check (lines 600–602) byte-equal.
+- **Real steps must still pass:** all 18 must still match, which means every real summary step has to write nothing to stderr. I haven't seen this. The `r19-carry-wrap` fixture isn't one of my named files, so I don't know whether it passes through stderr from the landing gate it runs.
+  - L1 should check that every summary step's `stderr_sha256` in the round-21 record and the new run is `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`, the SHA-256 of empty input.
+  - Any round-21 step that had stderr output and still passed is a changed historical result. It must be disclosed, not hidden.
+- **F5 untouched:** only `summarize_result` changes; F5 code stays byte-identical to base.
+
+**Limits.**
+- I read the working-tree copy of the runner. I didn't confirm it matches base `41553ad`.
+- No LSP was available, so I traced the code by reading the one file.
+- I didn't need or read `cache-demonstration.py`.
+- No tools were installed.
+
+The full report is at `.ufo/waves/round-22/w1/Stderr6.md`.
