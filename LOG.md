@@ -1440,3 +1440,28 @@ No live processes, operator-sweep contents, credentials or private TSVs read.
 No tools installed or upgraded. Operator-owned sweep and inherited pycache
 remain excluded from pathspecs.
 
+Terminal resolution review and admission boundary (same round22):
+RevProbe258 PASS independently reproduces52 demonstrated kills/7 evidenced
+equivalents, base99/258→changed258/258,8 base exceptions,20 positives both;
+each final14 mutant compiles and dies only on its intended witness.
+RevVectors258 PASS is Q26-VOID: two forbidden grading commands wrote four
+scratch paths (/tmp/cur.json,cur.err,base.json,base.err), then deleted them.
+Scope-only transcript calls preserved in
+census/round-22/q26-final-seat-scratch-evidence.json. None of that seat's
+findings is credited; no replacement or rerun of its item.
+The final13 literal-vector independent adequacy claim is UNPROVEN, separate
+from compliant RevProbe258 reproduction and the original214 evidence.
+Strict full-adequacy admission remains unproven pending outside closure.
+
+140 dispatched identities =111 retained reports +29 reportless/dead;
+6 Q26-void reports are a disjoint subset of111, not additional deaths.
+Original W1 voids (Counter2/11/16/18 scratch, ReviewHistoricalScope relative
+write) remain void alongside RevVectors258. Six final-call cap refusals
+spawned nothing; unchanged two-reviewer payload spawned on attempt7.
+Inherited residual call had sixteen refusals before its six seats spawned.
+Counters/overlap and L1's fresh original21460→214 regrade:
+census/round-22/terminal-accounting.json. Bounded repair/evidence landed
+473e98a498dbdb7315604251ab5a19a0823e7818. Its landing gate reports0 findings,
+109 reports/13 markers; census/round-22/landing-473e98a.json.
+Second-replacement final report names the later terminal-evidence commit.
+

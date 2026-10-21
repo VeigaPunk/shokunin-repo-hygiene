@@ -23,6 +23,7 @@ The current runner source evolves in place. Historical r21 receipts, frozen inve
 | R22-M9 | operability, coordinator loss | SoujiR22 died about27min in on a provider cyber_policy refusal; its W2 (64 seats) lost26 seats with the parent, no report (`census/round-22/w2-dead-seat-residual.json`) | none | Disclosure only. Refused work was not rephrased or rerouted; dead seats were not replaced. Their26 single-vector items got an L1 mechanical residual (base/changed observation plus attributing mutant), which is not an independent review. |
 | R22-M10 | calibration, premature saturation | the225 probe's "21/21 non-equivalent killed" covered only25 author-chosen mutants; CritMutation found unlisted exact-leaf/case-row survivors, and CritAdequacy245 later found14 further diff-enumerated survivors despite38/38 listed kills | Q52's every-clause wording was violated by an incomplete mutant inventory | Q53 supersedes Q52 with a diff-enumerated inventory, explicit named equivalents and environment observations. The first20 appended vectors retire15 disagreements on45 mutants; the subsequent13 retire14 disagreements on59 mutants. Historical red receipts: mutation-adequacy-listed45-oracle225.json and mutation-adequacy-listed59-oracle245.json. Final receipt: mutation-adequacy-oracle258.json,52 killed of59 listed,7 named equivalents. This is not exhaustive mutant-space coverage. |
 | R22-M11 | calibration, environment | oracle225 base69/225 and listed21/21 kills at8192-KiB stack were presented without the condition. CritMeasure245 found a variable flip near15679–15685 KiB; adding about960KB environment changed the outcome at16384 KiB | none | Probe and stdin-grading receipts now record interpreter, soft stack bytes, probe hash and direct depth100000 decoder outcome. The two catch witnesses discriminate only when that decode raises. Stack-size sweep samples are not universal thresholds (S108); the214 headline is independent of these two vectors. |
+| R22-M12 | scope, repeated seat scratch writes | RevVectors258.md:12–15 denies scratch writes while parenthetically disclosing two transient files. Raw transcript proves two grading commands created FOUR paths: /tmp/cur.json, /tmp/cur.err, /tmp/base.json, /tmp/base.err; subsequent command deletes all four. Scope-only evidence: census/round-22/q26-final-seat-scratch-evidence.json | Q26 sole-report/no-scratch hard bounds, already explicit | Entire RevVectors258 evidence is VOID, never used for admission; deleting scratch does not repair the violation. No replacement seat. RevProbe258's independent measurements/anchor attribution remain usable. The thirteen final literal-want reviews lack an admissible final reviewer, so full Q53 adequacy admission remains unproven rather than inferred from that PASS. |
 
 ## Gate
 
@@ -232,4 +233,48 @@ and RevMutants245's1180 differential cases for each new equivalent.
 These are bounded algebraic/pinned-input justifications, not global mutation
 equivalence proofs. Historical listed45/59 receipts reflect their named
 oracle/list versions and need those versioned bytes to reproduce.
+
+### Terminal residual outcome and admission boundary
+
+Final two-reviewer call spawned only on attempt7 after six whole-payload
+cap refusals (no seats spent on refusals). RevProbe258 PASS independently
+reproduced258/258, base99/258 with8 exceptions/20 positives,52 killed and7
+equivalents; verified each of the final14 anchors compiles and is killed only
+by its intended witness. It verified hashes, decoder observation and the
+historical245 receipt's mutant decisions.
+
+RevVectors258 reported PASS and disclosed "two transient /tmp files" despite
+the sole-report/no-scratch scope. The transcript actually proves two grading
+commands created four paths (both JSON outputs and both stderr captures);
+their later deletion does not cure either prohibited write. Scope-only
+receipt: `census/round-22/q26-final-seat-scratch-evidence.json`.
+Its entire review evidence is Q26-VOID
+(R22-M12), including its broader-equivalence/mutant assertions. No result or
+count here is derived from it, and it was not replaced. The thirteen literal
+wants are L1-reviewed and directly motivated by CritAdequacy245's concrete
+counterexamples; final independent literal-want review is not admissible.
+Therefore the measured C1 headline remains demonstrated, while a claim of
+fully independently reviewed Q53 adequacy is unproven pending outside
+closure. No exhaustive adequacy or admission verdict is asserted by L1.
+
+Another disclosed reproducibility gap: the deep-dictionary witness depends
+on Python's recursion limit (observed1000), which is documented in this
+lesson but not machine-recorded in the receipt. Increasing it can make the
+recursive-base mutant survive; the probe then exits1. This is distinct from
+the C decoder's environment/stack dependence. No universal-depth or complete
+environment-capture claim follows.
+
+Round accounting:140 dispatched seats (128 inherited validated waves,
+6 inherited residual,4 first new residual,2 terminal residual).29 dead
+(DraftLesson,26 W2 attacks,ResidAdequacyA/C) and6 Q26-void reports/evidence
+(the original five plus RevVectors258). Canonical planner remains L1.
+Source census108 rows, A104/B3/C1, mined85/queued15/rejected8, validate exit0
+with duplicate-URL warnings only. Expansion unchanged; external admit/reject
+discernment spot-check remains pending and cannot be supplied by lane seats.
+
+The29 reportless/dead identities and6 Q26-void reports are disjoint:
+all6 void identities have retained reports.111 reports +29 reportless =140
+dispatched identities. Do not subtract the6 twice or count void reports as
+dead. The final13-want review remains unproven independently of the original
+214 measurements and RevProbe258's compliant reproduction.
 
