@@ -319,8 +319,9 @@ insufficient. SOURCE-only statements are narrowed by S091–S093, with selector 
 F5 stays **list/nominate only**: `bash tools/souji-proc-census.sh` emits eligible readable own-uid
 observations and never signals in census mode. Self/descendants recognized by the bounded
 parent-chain snapshot are excluded, and unreadable/racing data skipped; no universal per-process coverage is promised. Raw argv is read before output redaction;
-neither a secret-free read nor universally redacted derived output is established. Recheck only in
-the isolated fixture: `bash tests/fixtures/r18-proc-census.sh --tool tools/souji-proc-census.sh`.
+neither a secret-free read nor universally redacted derived output is established. The live
+r18 proc fixture is historical and was NOT run or newly authorized in r21; current reason
+output is rechecked only through the synthetic --reason-only entry point (below).
 The corrected source and byte boundary are appended in `knowledge/process-residue-observations.md`.
 Other-uid work is not assigned wholesale to Mori; health/liveness findings may be routed there and
 credential concerns to Kagi, with operator arbitration for contested scope.
@@ -328,3 +329,39 @@ credential concerns to Kagi, with operator arbitration for contested scope.
 The specific open requests are `souji | round-18` F5 reap and NAMESPACE_SHA256, not the broad
 round16 pointer above. Both remain HELD. A historical58-orphan observation is not a current count
 or authority to kill/delete. Certification OFF, K5 HELD, F1–F4 unchanged.
+
+## Round 21 — current reason privacy and independent-path replay
+
+R20 is independently admitted (CloseSouji20, MANIFEST rounds[402]); its closure
+is retained at `../census/round-21/r20-closure-excerpt.json`. R21 sources
+S100/S101 deepen the existing F5 entry, not a new knowledge pathname/frontier
+promotion. The two arbitrary-input output sinks cmd/reason now have shared
+secret patterns and160-byte bounds; selected secret-bearing argv provenance
+cannot be lost when extracting the reason path. Same27-case oracle:
+old6/27 (19 canary leaks) → changed27/27 (0), maximum454→160 bytes.
+
+Current proc-free recheck (extract the old base tool with read-only
+`git show 6ff3413bba9c8430c3b0bc4d2052e21d0407183f:tools/souji-proc-census.sh`
+into a new scratch file):
+`bash tests/fixtures/r21-reason-canary.sh --tool tools/souji-proc-census.sh --base <base-file>`.
+Neither this command nor --reason-only reads live /proc. It does not reverify
+the entire process scanner, historical exposure or unknown secret syntax.
+
+Current acceptance:
+`python3 census/round-21/run-acceptance.py --root <local-clone-or-bare-repository> --rev <full40> --output <new-absolute-file>`.
+It runs the fixed18 outcomes in a private no-local clone at the named
+revision; caller HEAD/path is not authority. Three-source matrix0/3→3/3,
+each18/18 at `4b826a52cb4519b413b874fc9a3d26074c8a33b6`:
+`../census/round-21/replay-integrated.txt` and `replay-out-S{1,2,3}.json`.
+The r20 runner is retained only as historical evidence; its root/HEAD
+restrictions are not a current executable example. The historical agreement
+step verifies original revision bytes against the original pin, not the
+upgraded proc tool against an old digest. Equal outcomes are not a
+bit-identical reproducible-build claim (rejected S103).
+
+Calibration: `../tests/fixtures/r21-read-root.py`32/32 (base18/32), with14
+base discriminators. The minor V-READ-ROOT class supplements V-RECURSIVE;
+truncated paths remain unknown. Claimed actual r20 transcript counts are
+bound in `../census/round-21/read-count-{before,after}.json` (0→2 new flags,
+all other class counts unchanged). Q47–Q50 mine the routed r20 mistakes;
+`lessons/round-21.md` carries exact source quotes and final dispositions.

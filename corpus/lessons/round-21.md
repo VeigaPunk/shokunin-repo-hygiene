@@ -46,3 +46,59 @@ Outside spot-check on this round's admit and reject is **pending**, not provided
 ## Seat-reported failures
 
 Only completed seat reports with genuine STATUS paragraphs are carried here after the final wave; provider-dead seats have no report and are counted in the outcome registry, not silently omitted. Final dispositions are appended below.
+
+## First-wave falsifier dispositions (before final replay)
+
+- RevPreregC2 reported: “STATUS: PARTIAL — C2 is falsifiable in principle, but its before/after measurement is not yet an independent, reproducible oracle: the scenario driver, compared result projection, and source/output boundary are not pinned sufficiently to determine one outcome from the frozen text.”
+  Fixed actual source-output defect in `ff425ab835614f38205426330b9cdb93fd267045`:
+  output must be canonical, absolute and outside SRC. New8-case boundary
+  oracle old4/8→8/8 (`replay-boundaries-before.txt`, `replay-boundaries.txt`).
+  The first C2-only receipt requested its output inside the lane source;
+  its `source_unchanged` covered HEAD/tracked status only, not all filesystem
+  writes. It is retained as an earlier measurement, NOT evidence for the
+  final outside-SRC output guarantee. Final matrix outputs are external.
+  No broad source inventory is run (it would violate the protected untracked
+  subtree boundary). Source state comparisons mean HEAD/tracked status/refs,
+  not ignored/untracked files or whole-filesystem immutability.
+  `step-inventory.json` pins the ordered18 commands and all expected fields
+  from the r20 runner at5ff7565 (source SHA2566d38a3d0590e9c44480ae19e3abaa8669d7399737397297fd1e0fde363699a10).
+  Projection normalizes only Python/root/baseline/revision; the historical
+  agreement-root substitution is explicitly documented. Relative-output,
+  source/.git and symlink-ancestor refusals were shown able to fail before
+  repair. No-result means no JSON file; stderr refusal diagnostics remain.
+- RevengeReasonOmission reported: “STATUS: PARTIAL — The source-level reconstruction below is complete, but I made one scope error: an early pinned `git grep` included `census/round-18` alongside the named source paths, and its output included committed census snapshot/TSV rows. I do not use, cite, or reproduce any of those rows. This was not a live `/proc` scan or fixture run; the search nonetheless violated the historical-snapshot prohibition.”
+  Scope violation is disclosed, not retroactively authorized. That search
+  output is excluded from all findings/evidence, never exported into this
+  round's transcripts. L1 notified Main. The report's named-code-only
+  reconstruction is advisory; C3's evidence is the synthetic canary, not
+  historical process data. This means the round is NOT process-scope-clean.
+- ScoutRunnerStepsA's r20 wrapper refusal is repaired by the r21 private
+  clone, root-derived fixtures and final matrix. Static dormant literals in
+  transitive modules are outside the direct-program literal preflight;
+  no claim of a complete transitive path-independence proof.
+- ScoutAuditExistingCases F1 is resolved by the pre-measurement historical
+  `grep(pattern in PATH)` clarification (visible absolute path); no
+  existing selftest want list changed. Its F2 is covered by32 new literal
+  synthetic cases,14 discriminating from baseline.
+- ScoutProcSelftestExpect confirms statically that all inherited ordinary
+  reason expectations stay below160 bytes (maximum91) and contain no
+  inherited secret patterns. Classification is per selected argv element,
+  not the whole cmdline, so an unrelated secret does not redact its path.
+  This is static compatibility evidence, not a run of the live-proc suite.
+- RevSourcesTail proposes tool paths in used-by. Contract v1 defines
+  used-by as knowledge/lesson paths, so those rows are not changed to tool
+  paths. The helper's citations may include S089/S092/S093/S099; historical
+  lesson wording is not silently rewritten. No source-cell changes.
+
+## Integrated measurements before second-wave attacks
+
+At final code `ff425ab835614f38205426330b9cdb93fd267045`, the three-source
+matrix replays3/3 (each18/18, identical projected signatures), source
+HEAD/status/refs unchanged; `census/round-21/replay-final.txt` and
+`final-out-S{1,2,3}.json`, `final-matrix.json`. This supersedes the earlier
+4b826a5 matrix as final code evidence without rewriting its receipts.
+The32-case read oracle and27-case reason oracle remain independent of the
+runner and each other; old class totals in the128-transcript census are
+identical, with only2 new V-READ-ROOT rows. Full independent per-call oracle
+accounting is reported after the second wave, not assumed from provider-dead
+label seats.
