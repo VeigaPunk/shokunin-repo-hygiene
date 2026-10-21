@@ -390,3 +390,82 @@ Final canonical failure paragraphs from the103-report set follow. Original marke
 
 - Misroot: AuditCase07 wrote its report at the fleet root. The required full fleet porcelain sweep found it; ownership was checked, copied byte-exact to the lane, cmp returned0, and only that fleet copy was deleted. census/round-20/status-adjudication-final.json records this. No sibling/runtime file was touched.
 - Harness: the first full18 run retained16 matches, a missing transcript world key, and a tabs/spaces auxiliary mismatch. Both are corrected without lowering expected case counts; the failed JSON remains.
+
+## Final measured disposition (no outside admission claim)
+
+Final production pin: `5ff75657427c4793fbf1f124d794f1c99359d74e`.
+The actual exclusive `census/round-20/final-acceptance-5ff7565.json`
+matched18/18; consumed input SHA maps before and after agree. Selftest118/0;
+independent C1 oracle78/0 with11 baseline over-grants; C2 oracle52/0 with
+exact inventory,8 baseline differences including7 producer-before-refusal
+witnesses,4 marked-stub clean writers and4 drift refusals. These marked stubs
+exercise real wrapper/record paths, not full historical suites or positive
+production-cache retention. Five documented full-ID historical counters match.
+The first failed16/18 record remains; the repaired b7b606b acceptance18/18
+also remains. A later actual transcript audit exposed an additional precision
+bug despite that green run: `parts[0…` became a purported file header. Its new
+unchanged-expectation oracle first recorded78 total/77 pass/1 fail; final code
+requires a token boundary before the bracket and now passes78/78. Existing
+117 selftests and77 oracle checks were retained, not replaced.
+
+The24 original final-wave STATUS paragraphs above remain verbatim carries,
+marked open for outside adjudication, not claims that all their old-pin code
+predictions still survive. Final code/oracles repair traversal grants, MV
+destinations, mixed fences, nonfinal exact OWN ONLY, sibling twins, ssh writes,
+negated clone prose, comma clipping, exact delivery suffix twins, strict refusal
+reasons, targeted-verifier syntax-invalid guards, actual baseline CLI paths,
+producer witnesses, clean writer controls and before/after input maps.
+S097 fixes the reject flip/policy/duplicate decision; S096 and the domain
+amendments withdraw the unsupported reason-field privacy claim. The raw reports,
+103-report denominator, status catalogue and named red receipts remain.
+Neither a STATUS marker nor a zero recognized-failure parser count is a pass.
+
+Actual byte-bound receipts are NOT clean compliance verdicts:
+`seat-audit-recovery-5ff7565.json` records64 traces/1364 calls/37 major/13 minor;
+`seat-audit-final-5ff7565.json` records64 traces/953 calls/3 major/0 minor.
+Recovery35 and final2 majors are clipped/unparsed edits, retained fail-closed;
+rendered evidence cannot establish their hidden payloads. OracleCallerCases146
+is a relative edit attempt that failed File not found;150 corrects it to the
+owned absolute scratch path. TruncatedTargets100 violates absolute-path
+spelling despite an ok response: its report authority is void, and L1's
+synthetic oracle independently rederives the issue. AuditCase07's successful
+relative write is the actual corrected misroot violation; its report is
+retained, not credited as independent evidence. See the explicit adjudication
+JSON and all13 minor-source call lines in audit-minor-call-context.json.
+
+Additional definite root expansions surfaced in those actual receipts:
+ConsumerReadme43/47 globbed the lane root, and OracleCallerCases52 read the lane
+root. Their affected inventory/source-authority claims are void, alongside
+ConsumerSkill47/50 and L1's original bare lane-directory read. InputCase03's
+census pathspec metadata inventory is also void. There is no metadata-only
+exception and no denial that names were exposed. L1 rederived current explicit
+README command behavior through the five actual committed counter runs and
+installed input-binding code through52 exact checks; this does not retroactively
+make any seat compliant. Other clipped grep/read minor calls have unknown
+complete paths, not proven recursive-root operations. No live/private
+process or protected file contents were inspected; no historical TSV opened.
+
+F5 reason argv/fd scratch paths remain a real privacy defect: control-byte
+replacement is not secret-shape redaction or length bounding. Old cmd-only
+canaries do not close it. Safety text is corrected, code is not claimed fixed;
+historical exposure assessment and any separate synthetic-only repair remain
+operator/Kagi-owned through the new L0 question. Existing r18 inherited-reap
+and NAMESPACE questions remain held. Six unsanitized outer-clone setups remain
+disclosed process limitations; no retroactive clean run is invented.
+
+Required frontier end census was actually exit0,28 W04 duplicate-URL warnings,
+then `souji ok`; exact stdout/stderr and commands are in source-census-final.json.
+The original inherited start retained only exit0/17 W04 summary, not byte-exact
+full output; the recovery draft94-row start actually had23 W04 warnings.
+Fresh committed counters at baseline12516f7 and inventory pinb7b606b measure
+88→99 source rows (A84→95/B3→3/C1→1; mined69→78/queued15→15/rejected4→6).
+Admitted-marked paths7→7, F2 entry1→1, evidence gate1→1. Eleven appended A
+rows are7 distinct page revisits plus4 corrections, not11 new sources or
+knowledge growth. Coverage8/calibration7/operability8 and legacy deltas0 remain.
+
+Same held souji round20/attempt1 replacement coordinator only; no other souji
+mission or round21 began. Two actual64-seat waves consumed128 seats; old64
+dead-session handles were registered0-start/0-consumed by the final operator
+ruling. Recovery25 provider-dead seats, final0;39+64 actual reports. Native
+errors and all names are retained in recovery-seat-outcomes.json; no identity
+replacements. No installs, upgrades, process reaping, promotion or certificate.
