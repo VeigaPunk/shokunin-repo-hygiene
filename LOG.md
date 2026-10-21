@@ -1324,3 +1324,12 @@ pointer exceptions no longer apply in the r21 source scope. Removed the
 five obsolete exceptions from corpus/pointer-exemptions.tsv, preserving
 the four standing exceptions and every historical revision. Recheck uses
 --fleet-root explicitly; this is lifecycle cleanup, not a finding exemption.
+
+Final corrected landing gate at e33d2959d06d246ba1f3018df43030dd195d6347
+returns0/findings0:48 registry scripts,13 changed scripts,13 pins,3 measured
+records,8 carried failure paragraphs and62 reports. Evidence:
+`census/round-21/landing-closed.json`, landing-closed.txt. Final sources census
+returns0 (source-census-closure.txt). All150 seats terminal,87 provider-dead,
+0 replacements; two ordinary residual reviews complete. Removed only current
+round exclusively created scratch clones/input files (fixture-cleanup.json),
+no inherited processes/operator artifacts; canonical evidence retained.
