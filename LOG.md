@@ -1234,3 +1234,19 @@ C2 actually passed all52 cases; the aggregator expected tabs between inventory
 fields although the fixture prints spaces. That exact interface spelling is
 corrected without changing counts or accepting a failed verdict. A new code pin
 and fresh exclusive result are required; no old output or verdict is rewritten.
+
+### Round20 real-transcript falsifier after harness acceptance
+
+The repaired b7b606b1f7a5f9b1d68e037048d5cd50ff685ccb acceptance actually
+matched18/18. Subsequent byte-bound audits of both actual64-seat transcript
+sets were NOT clean: recovery37 major/13 minor; final4 major/0 minor.
+One final-wave major was a real precision defect: the patch body `parts[0…`
+was mistaken for an unclosed path header. A fresh unchanged-expectation oracle
+row first failed on that installed auditor (78 total/77 pass/1 fail), retained
+in census/round-20/oracles-post-audit-before.json. Header fragments now require
+a token boundary before `[`, and the existing117 checks are preserved with
+one added selftest; the independent inventory gains the same one case.
+The other clipped and relative-call findings are retained, not waved green.
+A new measured pin and18-command record are required. This does not repair
+the separate F5 reason-column privacy defect, attest unobserved tool payloads,
+or retroactively neutralize the six original private-clone setups.

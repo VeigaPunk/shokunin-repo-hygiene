@@ -277,7 +277,9 @@ def write_targets(tool: str, args: str) -> list[tuple[str | None, bool, bool]]:
         # test `[ -n …` in patch content is not a header.
         last_close = a.rfind("]")
         open_tail = a.find("[", last_close + 1)
-        if open_tail >= 0 and open_tail + 1 < len(a) and a[open_tail + 1] in PATH_START_CHARS:
+        if (open_tail >= 0 and open_tail + 1 < len(a)
+                and (open_tail == 0 or a[open_tail - 1].isspace())
+                and a[open_tail + 1] in PATH_START_CHARS):
             frag = a[open_tail + 1 :].split("#", 1)[0].strip()
             if frag.endswith("…"):
                 frag = frag[:-1]
@@ -586,6 +588,7 @@ def selftest() -> int:
         ("header-markdown-link", "scribe", f"→ edit(*** Begin Patch [{rep}#AB12] PUT 1.=1: + see [docs/x](docs/x)…) ⇒ ok", [], None),
         ("header-bracket-text", "scribe", f"→ edit(*** Begin Patch [{rep}#AB12] PUT 1.=1: + OBS: [not a path]…) ⇒ ok", [], None),
         ("trunc-header-nonpath", "scribe", f"→ edit(*** Begin Patch [{rep}#AB12] PUT 1.=1: + list[…) ⇒ ok", [], None),
+        ("trunc-header-array-index", "scribe", f"→ edit(*** Begin Patch [{rep}#AB12] PUT 1.=1: + parts[0…) ⇒ ok", [], None),
         # r19 C1 (Q38): authorized sibling delivery beside the seat's own
         # report; a neighbour's stem and any unowned tools/ target stay
         # scoped; signal-shaped calls are major for every role.

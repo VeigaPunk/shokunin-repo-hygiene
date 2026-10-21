@@ -278,12 +278,12 @@ def make_steps(root: Path, baseline_tool: Path, revision: str) -> list[dict]:
         return [py, "-B", str(root / script), *args]
     steps = [
         {"name": "auditor-selftest", "argv": py_step("tools/souji-seat-audit.py", "--selftest"),
-         "expected_summary": "SELFTEST\tpass=117\tfail=0", "pass_pattern": r"^PASS\t", "pass_count": 117},
+         "expected_summary": "SELFTEST\tpass=118\tfail=0", "pass_pattern": r"^PASS\t", "pass_count": 118},
         {"name": "revision-helper-selftest", "argv": py_step("tools/souji-rev-pin.py", "--selftest"),
          "expected_summary": "SUMMARY total=11 failed=0", "pass_pattern": r"^CASE\tpass\t", "pass_count": 11},
         {"name": "r20-audit-contract", "argv": [py, "-B", str(root / "tests/fixtures/r20-audit-contract.py"), "--tool", str(auditor), "--base-tool", str(baseline_tool)],
-         "expected_summary": "SUMMARY\ttotal=77\tpass=77\tfail=0\tbase_discriminating=11",
-         "pass_pattern": r"^CASE\tPASS\t", "pass_count": 77},
+         "expected_summary": "SUMMARY\ttotal=78\tpass=78\tfail=0\tbase_discriminating=11",
+         "pass_pattern": r"^CASE\tPASS\t", "pass_count": 78},
         {"name": "r20-input-binding", "argv": [py, "-B", str(root / "tests/fixtures/r20-input-binding.py"), "--root", str(root), "--baseline", BASELINE],
          "expected_summary": {
              "regex": r"SUMMARY\ttotal=52\tpass=52\tfail=0\tblocked=0\tinventory=exact\tbaseline_mismatches=(\d+)",

@@ -63,6 +63,7 @@ REQUIRED_CASE_IDS = frozenset({
     "ssh-uri-write-scope", "scratch-comma-tail-unparsed",
     "deliver-exact-py", "deliver-exact-json", "deliver-exact-tsv", "deliver-exact-txt",
     "deliver-foreign-seat", "scratch-seat2-prefix-refusal",
+    "edit-content-array-index",
 })
 BASE_BROAD_CASE_IDS = frozenset({
     "unrequested-patch", "unrequested-py", "unrequested-json",
@@ -362,6 +363,10 @@ def build_cases(root: Path):
     add("scratch-seat2-prefix-refusal",
         "/var/tmp/souji-r20w2-Seat2/probe.txt", (WRITE_SCOPE,),
         prompt="SCRATCH: " + seat_root + "\n")
+    indexed_report = report_for("edit-content-array-index")
+    add("edit-content-array-index", indexed_report,
+        transcript_line=("→ edit(*** Begin Patch [" + indexed_report +
+                         "#AB12] PUT 1.=1: + parts[0…) ⇒ ok\n"))
     return cases
 
 
