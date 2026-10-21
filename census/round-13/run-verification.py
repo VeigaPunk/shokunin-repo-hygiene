@@ -25,6 +25,7 @@ import collections
 import datetime
 import argparse
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -82,6 +83,41 @@ def sha_or_none(path):
 
 def git(*args):
     return subprocess.check_output(["git", "-C", str(ROOT), *args], env=ENV).decode().strip()
+
+
+# r19 C2: the paths this runner executes or reads as measured subjects. A
+# record's measured_commit is stamped only after the revision is proven
+# durable (refs/heads|tags|remotes, never refs/jj) and these tracked paths
+# are proven equal to the working tree it just measured.
+MEASURED_PATHS = [
+    "tools/souji-verify.sh",
+    "tools/souji-vault-verify.sh",
+    "tools/souji-quarantine.sh",
+    "tools/souji-census.sh",
+    "tools/souji-cert-evidence.py",
+    "tools/souji-repo-structure.sh",
+    "tools/souji-evidence-cache.py",
+    "tests/fixtures/r13-cert-evidence.py",
+    "tests/fixtures/r13-repo-structure.sh",
+    "tests/fixtures/r13-quarantine-bounds.sh",
+    "tests/fixtures/r13-cert-frozen/expected.json",
+    "census/round-13/run-verification.py",
+]
+
+
+def resolve_revision():
+    """Return a durable revision or refuse with exit 2 before any record."""
+    spec = importlib.util.spec_from_file_location(
+        "souji_rev_pin", ROOT / "tools" / "souji-rev-pin.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    head = git("rev-parse", "HEAD")
+    try:
+        return module.resolve_durable(str(ROOT), head, MEASURED_PATHS)
+    except module.Refusal as exc:
+        print("run-verification: refused: %s (no record written)" % exc,
+              file=sys.stderr)
+        raise SystemExit(2)
 
 
 def dependency_map(command, name):
@@ -381,7 +417,7 @@ def main(argv=None):
 
 def execute(round_number, output, previous):
     global CURRENT_REV, PREVIOUS, PREVIOUS_RESULTS, RETRY_NAMES, PREVIOUS_SOURCE
-    revision = git("rev-parse", "HEAD")
+    revision = resolve_revision()
     CURRENT_REV = revision
     PREVIOUS = json.loads(previous.read_text()) if previous is not None else None
     PREVIOUS_RESULTS = {item["name"]: item for item in PREVIOUS["results"]} if PREVIOUS else {}

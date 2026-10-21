@@ -2,6 +2,7 @@
 """Run only r14 owned checks; never a live census or deletion certification."""
 import datetime
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -21,6 +22,36 @@ ENV.update(TMPDIR="/var/tmp", PYTHONDONTWRITEBYTECODE="1", LC_ALL="C",
 
 def git(*args):
     return subprocess.check_output(["git", "-C", str(ROOT), *args], env=ENV, text=True).strip()
+
+
+# r19 C2: measured subjects of this runner. A record stamps a revision only
+# after it is proven durable (refs/heads|tags|remotes, never refs/jj) and
+# these tracked paths equal the bytes the runner measured.
+MEASURED_PATHS = [
+    "tools/souji-evidence-cache.py",
+    "tools/souji-census.sh",
+    "tests/fixtures/r14-evidence-cache.py",
+    "tests/fixtures/r14-census-boundary.py",
+    "census/round-14/cache-demonstration.py",
+    "census/round-14/check-timeout-anchor.py",
+    "census/round-14/run-verification.py",
+    "census/round-13/run-verification.py",
+]
+
+
+def resolve_revision():
+    """Return a durable revision or refuse with exit 2 before any record."""
+    spec = importlib.util.spec_from_file_location(
+        "souji_rev_pin", ROOT / "tools" / "souji-rev-pin.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    head = git("rev-parse", "HEAD")
+    try:
+        return module.resolve_durable(str(ROOT), head, MEASURED_PATHS)
+    except module.Refusal as exc:
+        print("run-verification: refused: %s (no record written)" % exc,
+              file=sys.stderr)
+        raise SystemExit(2)
 
 def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
@@ -51,7 +82,7 @@ def main():
     target = ROOT/"census/round-14/verification.json"
     if target.exists():
         raise RuntimeError("Refuse overwriting exercised evidence; use a new attempt filename")
-    revision = git("rev-parse", "HEAD")
+    revision = resolve_revision()
     paths = ["tools/souji-evidence-cache.py", "tools/souji-census.sh",
              "tests/fixtures/r14-evidence-cache.py", "tests/fixtures/r14-census-boundary.py",
              "census/round-14/cache-demonstration.py", "census/round-13/run-verification.py"]

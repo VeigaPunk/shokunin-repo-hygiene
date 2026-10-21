@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Count exact revision-held claim surfaces, never untracked operator material."""
 import collections
+import importlib.util
 import json
 from pathlib import Path
 import subprocess
@@ -10,7 +11,24 @@ root = Path(__file__).resolve().parents[2]
 revision = sys.argv[1] if len(sys.argv) == 2 else "HEAD"
 def git(*args):
     return subprocess.check_output(["git", "-C", str(root), *args]).decode()
-commit = git("rev-parse", revision).strip()
+
+def resolve_claims_revision(value):
+    """r19 C2: the stamped revision is a durable, explicit commit id.
+
+    Every byte this counter reads comes from the revision itself, so the
+    working-tree comparison does not apply; HEAD and branch names do.
+    """
+    spec = importlib.util.spec_from_file_location(
+        "souji_rev_pin", root / "tools" / "souji-rev-pin.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    try:
+        return module.resolve_durable(str(root), value, [], tree_check=False)
+    except module.Refusal as exc:
+        print("count-claims: refused: %s" % exc, file=sys.stderr)
+        raise SystemExit(2)
+
+commit = resolve_claims_revision(revision)
 paths = set(git("ls-tree", "-r", "--name-only", commit, "--", "tools", "corpus/knowledge", "corpus/SOURCES.md").splitlines())
 admitted = []
 for path in sorted(paths):

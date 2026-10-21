@@ -13,8 +13,13 @@ Violation classes (pinned):
                         tooling directive requires), .ufo/state, .ufo/watchdog.log
   major  V-LIVE-CENSUS  a souji-census.sh invocation with --root outside /var/tmp
   major  V-WRITE-SCOPE  write/edit to a path that is neither the seat's report,
+                        a sibling delivery artifact of the same stem
+                        (`<Name>.{patch,py,json,tsv,txt}` in the report dir),
                         one of its OWNED files, nor under the seat's
                         /var/tmp/souji-r<N>-<Seat>/ scratch (normalized)
+  major  V-SIGNAL       a signal-shaped call (kill/pkill/killall at command
+                        position, or os.kill/proc.kill/send_signal): major for
+                        every role, including a fixture owner (r18 R18-M6)
   major  V-WRITE-RELATIVE  a bare (non-header) relative write/edit target that
                         does not resolve to an allowed path at the contract's
                         fleet root; attempt semantics, major on ok and error
@@ -87,6 +92,19 @@ PATH_START_CHARS = frozenset("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwx
 PATH_TOKEN_RE = re.compile(r"[A-Za-z0-9_./~+@%:-]+\Z")
 RECURSIVE_BASH_RE = re.compile(r"(?:^|[;&|'\"(]\s*)(?:find\s|rg\s|grep\s+-\w*r|ls\s+-\w*R)")
 PROBE_BASH_RE = re.compile(r"(?:^|[;&|'\"(]\s*|&&\s*)(?:find|strace|realpath|readlink)\s")
+# r19 C1 (Q38): a signal-shaped call is a major for every role, including the
+# owner of a fixture. Shell verbs count only at command position in the
+# unquoted text (a quoted `grep 'kill -TERM'` is prose); the library forms
+# count only in a python invocation, because that is how r18's MatrixR18
+# signalled foreign pids (R18-M6).
+SIGNAL_SHELL_RE = re.compile(
+    r"(?:^|[;&|'\"(]\s*|&&\s*|\|\|\s*)(?:kill|pkill|killall)\s+[-\w]"
+)
+SIGNAL_LIB_RE = re.compile(r"\b(?:os\.kill|proc\.kill|\.send_signal|send_signal)\s*\(")
+PYTHON_TOKEN_RE = re.compile(r"(?:^|[;&|(\s]|&&\s*)python[0-9.]*\b")
+# Sibling artifacts a seat may deliver beside its own report (exact names,
+# same directory, its own stem). Never a bare prefix or a neighbour's stem.
+DELIVERY_SUFFIXES = (".patch", ".py", ".json", ".tsv", ".txt")
 OWN_RE = re.compile(r"OWN ONLY ([^\n]+?)(?:\s\(|\.\s|$)")
 ABS_RE = re.compile(r"/home/[^\s,`'\"]+")
 WRITE_TOOLS = {"write", "edit", "ast_edit"}
@@ -246,8 +264,15 @@ def audit_seat(text: str, role: str, report: str, owned: list[str], lane: str,
             flag("V-SURFACE", "major")
         if tool == "bash" and LIVE_CENSUS_RE.search(args):
             flag("V-LIVE-CENSUS", "major")
+        if tool == "bash" and (
+            SIGNAL_SHELL_RE.search(_unquoted(args))
+            or (PYTHON_TOKEN_RE.search(args) and SIGNAL_LIB_RE.search(args))
+        ):
+            flag("V-SIGNAL", "major")
         if tool in WRITE_TOOLS:
+            stem = report[:-3] if report.endswith(".md") else report
             allowed = [report, *owned]
+            allowed.extend(stem + suffix for suffix in DELIVERY_SUFFIXES)
             for target, truncated, is_header in write_targets(tool, args):
                 cls = target_verdict(target, truncated, is_header, allowed,
                                      lane, fleet, scratch)
@@ -403,6 +428,16 @@ def selftest() -> int:
         ("header-markdown-link", "scribe", f"→ edit(*** Begin Patch [{rep}#AB12] PUT 1.=1: + see [docs/x](docs/x)…) ⇒ ok", [], None),
         ("header-bracket-text", "scribe", f"→ edit(*** Begin Patch [{rep}#AB12] PUT 1.=1: + OBS: [not a path]…) ⇒ ok", [], None),
         ("trunc-header-nonpath", "scribe", f"→ edit(*** Begin Patch [{rep}#AB12] PUT 1.=1: + list[…) ⇒ ok", [], None),
+        # r19 C1 (Q38): authorized sibling delivery beside the seat's own
+        # report; a neighbour's stem and any unowned tools/ target stay
+        # scoped; signal-shaped calls are major for every role.
+        ("delivery-patch", "executor", f"→ write({lane}/.ufo/waves/round-9/w1/S.patch) ⇒ ok", [], None),
+        ("delivery-py", "executor", f"→ write({lane}/.ufo/waves/round-9/w1/S.py) ⇒ ok", [], None),
+        ("delivery-neighbour", "executor", f"→ write({lane}/.ufo/waves/round-9/w1/Other.patch) ⇒ ok", [("V-WRITE-SCOPE", "major")], None),
+        ("delivery-tools-still-major", "scribe", f"→ write({lane}/tools/y.py) ⇒ ok", [("V-WRITE-SCOPE", "major")], None),
+        ("signal-kill", "executor", "→ bash(kill -TERM 1234) ⇒ ok", [("V-SIGNAL", "major")], None),
+        ("signal-os-kill", "executor", "→ bash(python3 -c 'os.kill(1234, 9)') ⇒ ok", [("V-SIGNAL", "major")], None),
+        ("signal-prose-not-flag", "scribe", "→ bash(grep -n 'kill -TERM' tools/x.py) ⇒ ok", [], None),
     ]
     passed = failed = 0
     for cid, role, line, want, scratch in cases:

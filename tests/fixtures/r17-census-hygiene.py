@@ -148,22 +148,46 @@ def die(message: str) -> "None":
 
 # Kill the launched session: bash job control can put a blocked child in a
 # different process group while retaining the same session ID.
+def process_identity(pid: int):
+    """Session ID (stat field 6) and starttime (field 22) for one pid."""
+    try:
+        stat = Path("/proc/%d/stat" % pid).read_text(encoding="utf-8")
+    except OSError:
+        return None
+    close = stat.rfind(")")
+    if close < 0:
+        return None
+    fields = stat[close + 1:].split()
+    if len(fields) <= 19:
+        return None
+    try:
+        return int(fields[3]), fields[19]
+    except ValueError:
+        return None
+
+
 def kill_session(session: int) -> None:
+    # r19 D5: (pid, starttime) is the identity binder; re-read immediately
+    # before signalling and skip a vanished or recycled pid. The window
+    # between recheck and kill is narrowed, not closed.
+    members = []
     try:
         with os.scandir("/proc") as entries:
             for entry in entries:
                 if not entry.name.isdecimal():
                     continue
-                try:
-                    stat = Path(entry.path, "stat").read_text(encoding="utf-8")
-                    fields = stat[stat.rfind(")") + 2:].split()
-                    # After pid and comm, state/ppid/pgrp/session are fields 0–3.
-                    if int(fields[3]) == session:
-                        os.kill(int(entry.name), signal.SIGKILL)
-                except (OSError, IndexError, ValueError):
-                    continue
+                info = process_identity(int(entry.name))
+                if info is not None and info[0] == session:
+                    members.append((int(entry.name), info[1]))
     except OSError:
-        pass
+        members = []
+    for pid, start_time in sorted(members):
+        if process_identity(pid) != (session, start_time):
+            continue
+        try:
+            os.kill(pid, signal.SIGKILL)
+        except OSError:
+            continue
     try:
         os.killpg(session, signal.SIGKILL)
     except OSError:

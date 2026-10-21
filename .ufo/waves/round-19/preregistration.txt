@@ -1,0 +1,87 @@
+# souji round 19 — pre-registered claims (before any wave)
+
+Lane: /home/vgpnk/Projects/shokunin/souji-shokunin. Base: `3ab2c81479f5004c8bc91946eea482caec45408f` (round-18 closure tip).
+Read before this file: `corpus/lessons/round-18-verifier-spotcheck.md` (admitted; routed D1–D5), `corpus/lessons/round-18.md` Residuals, `SCORECARD.md` `## Planned` r19 row.
+Axes: calibration **7 (lowest non-retired)**, operability 8, coverage 8. Saturation 8; the lowest-axis obligation is not waived.
+
+## C1 — calibration (lowest axis; gate truthfulness)
+
+Claim: the landing gate's carry check and the seat auditor's contract shapes tell the truth about
+wrapped STATUS paragraphs and about authorized patch delivery.
+
+Falsifiable before→after:
+- Before: `check_carry` matches only the first physical line, so all 7 wrapped round-16 STATUS
+  paragraphs pass with no ellipsis and `r16-landing` replay is 0 findings (measured at `6ff91f5`
+  by `.ufo/waves/round-18/w1/ScoutCarryWrap.md`). The auditor reports authorized patch delivery
+  under `.ufo/waves/round-<N>/w<k>/` and private `/var/tmp/souji-r<N>-<Seat>/` workdirs as
+  majors, and has no signal class (r18 closure D4; `.ufo/waves/round-18/w1/ScoutSeatAuditR18.md`).
+- After: paragraph-aware carry rule (`status_paragraph` + `carry_entries` + `carries`, ellipsis
+  required exactly at a source physical-line end), gated at `--round >= 18` so pinned replays do
+  not move; new external fixture proves the pre-fix gate false-passes an unmarked cut and the
+  changed gate flags it, while a marked cut and a complete paragraph pass; auditor allows the
+  two authorized shapes by exact predicate, still majors a tools/ write, and majors a signal call.
+- Counting commands:
+  - `python3 tests/fixtures/r19-carry-wrap.py --tool <base|installed>` (base arm extracted with
+    `git show 3ab2c81:tools/souji-landing-gate.py`; expected base failures > 0, changed 0).
+  - `python3 tools/souji-landing-gate.py --selftest` (baseline 61/0 committed at r18; changed
+    count recorded).
+  - `python3 tests/fixtures/r19-seat-audit-shapes.py --tool <base|installed>`.
+  - `python3 tools/souji-seat-audit.py --selftest` plus a re-audit of the committed r18
+    transcripts into `census/round-19/seat-audit-r18-recheck.json` (before 139+92 majors,
+    after expected lower; the 9 confirmed driver-state reads must stay majors).
+
+## C2 — operability (revision stamps bind measured bytes)
+
+Claim: the r13/r14 evidence runners refuse a revision that is not reachable from a durable ref
+(`refs/heads`, `refs/tags`, `refs/remotes`; never `refs/jj`) or whose tree does not contain the
+tracked bytes they measure, and record only a verified revision.
+
+Falsifiable before→after:
+- Before: `census/round-13/run-verification.py:384`, `census/round-14/cache-demonstration.py:166`,
+  `census/round-14/run-verification.py:54`, `census/round-14/run-targeted.py:23` accept `HEAD`
+  (detached), a keep-only commit, a branch name, or a dirty worktree, then stamp
+  `measured_commit` on a record (`.ufo/waves/round-18/w1/ScoutHeadPinned.md`).
+- After: one shared `tools/souji-rev-pin.py` helper resolves and verifies (durable-ref
+  containment + `git diff --quiet <rev> -- <measured paths>`), refusing with exit 2 and writing
+  no record; every listed site uses it; historical 40-hex replay commands still run.
+- Counting command: `python3 tests/fixtures/r19-rev-pin.py --tool-dir <base|installed>` over an
+  isolated `/var/tmp` git sandbox: durable-clean accept, keep-only refuse, dirty-tree refuse,
+  `HEAD`/branch refuse, explicit 40-hex accept. Base accepted N>0 of the refusal cases; changed 0.
+
+## C3 — coverage (F5 first admitted knowledge entry)
+
+Claim: F5 process residue gains its first admitted `corpus/knowledge/` entry, sourced from man7
+`proc` pages opened this round, with its SKILL rule and README row; list-only, no reap authority.
+
+Falsifiable before→after:
+- Before: `ls corpus/knowledge/*.md | wc -l` = 5 admitted entries; F5 has a tool and fixture but
+  no knowledge entry (`corpus/README.md` r18 section).
+- After: `corpus/knowledge/process-residue-observations.md` admitted with `source:`, `verified-at:`,
+  `recheck:` and the observed limits; count 6; README F5 row moves frontier→Core only for the
+  observation surface, and the entry states that reap authority is not granted.
+- Counting command: `ls corpus/knowledge/*.md | wc -l` and
+  `grep -c 'status: admitted' corpus/knowledge/*.md` at the measured commit, plus
+  `bash scripts/sources-census.sh validate --root /home/vgpnk/Projects/shokunin souji`.
+
+## Non-claim repairs owed (r18 closure D1–D5)
+
+D1 receipt binding, D2 counter digest pin, D3 static-baseline label, D4 signal class + audit
+shapes (part of C1), D5 `kill_session` (pid, starttime) recheck. Repairs are work items; they do
+not create extra axis claims.
+
+## Wave plan (declared before dispatch)
+
+- Wave 1: 84–96 genuine seats, one validated `task` call, build + first falsifiers.
+- Wave 2: ≥64 fresh reviewer/critic/mutation-tester/scout attacks after wave 1 returns; round
+  total ≤200. No padding, no dead-seat replacement.
+- L1 holds the frozen planner seat; the data walk rides a connector item.
+
+## Correction (appended before measurement, 2026-10-21)
+
+C3's before-count was preregistered as 5 admitted entries. The lane's own counter
+`python3 census/round-13/count-claims.py <rev>` reports **6** at both `b576341` and
+`3ab2c81`: eight files under `corpus/knowledge/`, minus the `.tsv` ledger and the
+single HELD entry (`quarantine-same-filesystem-rename.md`). The r18 prose ("admitted
+knowledge stays five") is therefore a historical counting defect, not the baseline.
+C3's measured before→after is **6 → 7**; the byte-level record is
+`census/round-19/counts.json`. No other claim changes.

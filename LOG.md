@@ -961,3 +961,70 @@ The live-fleet identity claim applies to pair 1 excluding mtime on 21 repositori
 Falsifier fixes landed 4800fd7 (parent-interruption-safe timer, adaptive polling, raw-path refusal, gitfile timeout rows, GIT_ATTR_NOSYSTEM, local-only recipe identity, proc literal-name/redaction/identity fixes, exact pointer exemptions and complete matrix provenance). L1 final acceptance at those bytes: census 69/0; bounded fixture b576341 12/9 failed →12/0, r17 hygiene 29/0, r15 config 20/0, reverted pinned r14 namespace 12/0; final matrix invalid_suites empty and no new per-suite residue. Gate selftest 61/0, pointer fixture 11/0 and r16 fixture 15/0; five historical replay semantic comparisons match; proc fixture 19/0; quarantine 108/0 and jj-receipts 37/0/0 with baseline controls; preservation 47/47, external 8/8 and regenerated frozen record clean at 4800fd7. Evidence: census/round-18/final-verification-4800fd7.json and c1-matrix-4800fd7.json. The last stable proc disagreement was a counter ancestor-exclusion mistake (PID 1659); fixed and measured at 2d4c7f8, then two 66=66 pid-identical snapshots (proc-agreement-counterfix.json), with the failed observation retained. Source registry 63→78 (15 A rows, seven of them corrections), no new knowledge entry; F5 stays observed/frontier.
 
 Complete transcript evidence landed 2d4c7f8: 170 files verified by manifest, gitleaks exit 0/no leaks. Raw auditor reports majors 139+92, not a clean pass; per-call adjudication and deviations, including MatrixR18's foreign-prefix kills and RevMisrootRisk's driver-state reads, are retained in census/round-18/seat-audit-adjudication.json. All acceptance commands were rerun by L1 on integrated bytes; prohibited-read content is unused. Initial universal C1 wording was overbroad: repository-content bounds do not contain an unresponsive filesystem during discovery, an escaped descendant or unkillable D-state process. These limits, the frozen r14 runner and inherited a31642d contractions are explicitly open, not silently certified away. Deletion certification remains OFF, K5 HELD, all SHONEN boxes remain [~] pending non-author verification.
+## 2026-10-21 — round 19 (souji L1, hyaku phase 2): wrap-aware carries, truthful audit shapes, durable revisions, F5 knowledge
+
+Claims: C1 calibration (lowest axis, 7) — paragraph-aware carry matching gated at
+`--round >= 18` plus exact auditor delivery shapes and a `V-SIGNAL` class; C2
+operability — r13/r14 runners and both count-claims consumers stamp only a durable
+40-hex revision whose tracked measured bytes equal the working tree; C3 coverage —
+F5 process residue gains its first admitted knowledge entry. Base `3ab2c81`.
+
+C1: `tools/souji-landing-gate.py` now joins a STATUS paragraph's wrapped continuation
+lines, requires an ellipsis exactly at a source physical-line end for a cut, and joins a
+wrapped lesson bullet (`WRAP_STRICT_FROM_ROUND = 18`, so the five pinned replays keep
+their expected verdicts). Selftest 61→65 (`census/round-19/c1-carry.txt`); the four-case
+external fixture `tests/fixtures/r19-carry-wrap.py` is 4/0 with a base arm that fails the
+unmarked cut and the wrapped bullet. At `3ab2c81 --round 18` the strict branch reports 0
+findings over 10 carried markers and 175 reports (`census/round-19/gate-r18-strict-fleet.json`).
+`tools/souji-seat-audit.py` allows exactly `<Name>.{patch,py,json,tsv,txt}` beside the
+seat's report and adds `V-SIGNAL` for kill/pkill/killall and Python os.kill/send_signal;
+selftest 66→73. Re-auditing the committed r18 transcripts removes 8 false delivery
+violations and adds 3 real signal calls: w1 majors 139→134, w2 92→92
+(`census/round-19/seat-audit-r18-recheck-w1.json`, `census/round-19/seat-audit-r18-recheck-w2.json`; histograms in
+`census/round-19/c1-audit.txt`). The 9 confirmed driver-state reads and every real
+signal stay major.
+
+C2: new `tools/souji-rev-pin.py` resolves a full 40-hex commit reachable from
+`refs/heads|refs/tags|refs/remotes` (never `refs/jj`), and, for working-tree runners,
+requires `git diff --quiet <rev> -- <measured paths>`; refusal exits 2 before any record.
+Wired into `census/round-13/{run-verification,count-claims}.py`,
+`census/round-14/{run-verification,run-targeted,count-claims,cache-demonstration}.py`.
+Helper selftest 11/0; fixture `tests/fixtures/r19-rev-pin.py` 13/0 with six base-arm
+discriminators (`census/round-19/c2-smoke.txt`). Default/HEAD count-claims now exit 2;
+the recorded historical commands with a hash still run. The r13 runner on the dirty lane
+refuses with "tracked measured paths differ" and writes no output. `cache-demonstration.py`
+returns blocked (exit 2) while its harness paths are dirty; the post-commit run is in the
+acceptance record.
+
+C3: `corpus/knowledge/process-residue-observations.md` (S082–S085, S075/S076 rechecked)
+documents what the kernel does and does not say, the list-only census, `(pid, starttime,
+boot_id)` identity, no-signal/no-environ/redaction rules, the r18 PID-1659 disagreement,
+and the limits (no reap authority, own uid only, no atomic snapshot). `SKILL.md` gains a
+process-residue error pattern; `corpus/README.md` moves F5's observation surface to Core;
+`corpus/QUALITY.md` gains Q36–Q38. Admitted count 6→7 (the preregistered 5 was the r18
+prose defect; `census/round-19/counts-start.json`). Source rows 78→85, all tier A, mined
+59→66; start census over base bytes exit 0 sha `74c5e01e…`, end exit 0 sha `24a411da…`.
+
+D2: `census/round-19/verify-agreement-pin.py` (selftest 5/0) emits and checks
+`census/round-19/proc-agreement-pinned.json`, pinning tool `4800fd7` and counter
+`2d4c7f8` digests plus the three r18 agreement records without editing them.
+D5: `kill_session` in the r15/r17 fixtures now re-reads `(pid, starttime)` immediately
+before SIGKILL and skips a vanished/recycled pid; residuals 20/0 and 29/0. The r15 fixture
+byte change invalidates the r15 preservation frozen pin until it is regenerated from real
+runs at the r19 code commit (`regenerate.py --rev <commit>`), which is the next commit.
+D3: the old 33 baseline stays labeled static; 61/0 is receipt-backed. D1: the gate receipt
+binding this round's measured revision lands in a later commit and is the only revision the
+report may cite for the gate.
+
+Mistakes: R19-M1 preregistered C3 count from prose instead of the counter (fixed 6→7);
+R19-M2 carry fixture resolved the lane root one level too high; R19-M3 rev-pin fixture
+expected a clean tree at an older revision; R19-M4 auditor base-vacuity threshold counted
+a preserve control as a discriminator; R19-M5 a `.md` preregistration under
+`.ufo/waves/round-19/` would have satisfied the gate's report precondition (renamed
+`preregistration.txt`). Details: `corpus/lessons/round-19.md` `## Mistakes`.
+
+Process: 90-seat wave-1 spec validated and rendered (`.ufo/waves/round-19/w1-spec.json`,
+90 spawn / 0 resume, one task call, policy v2 band 64–100); dispatch is held for the
+orchestrator's capacity confirmation, so this entry records the L1-integrated work and
+its measurements, not a wave result. The 65-seat wave-2 falsification spec is prepared
+(`.ufo/waves/round-19/w2-spec.json`). Round evidence: `census/round-19/`.

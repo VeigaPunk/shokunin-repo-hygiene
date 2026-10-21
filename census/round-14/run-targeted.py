@@ -20,7 +20,7 @@ def main():
     target = ROOT/"census/round-14/verification.json"
     if target.exists():
         raise RuntimeError("Refuse overwriting exercised evidence")
-    revision = module.git("rev-parse", "HEAD")
+    revision = module.resolve_revision()
     prior = ROOT/"census/round-14/verification-attempt-1.json"
     paths = ["tools/souji-evidence-cache.py", "tools/souji-census.sh",
              "tests/fixtures/r14-evidence-cache.py", "tests/fixtures/r14-census-boundary.py",

@@ -266,24 +266,42 @@ def die(message: str) -> "None":
     raise SystemExit(2)
 
 
+def process_identity(pid: int):
+    """Session ID (stat field 6) and starttime (field 22) for one pid."""
+    try:
+        stat = Path("/proc/%d/stat" % pid).read_text(encoding="ascii", errors="replace")
+    except OSError:
+        return None
+    close = stat.rfind(")")
+    if close < 0:
+        return None
+    fields = stat[close + 1 :].split()
+    if len(fields) <= 19:
+        return None
+    try:
+        return int(fields[3]), fields[19]
+    except ValueError:
+        return None
+
+
 def kill_session(session_id: int) -> None:
-    pids = []
+    # r19 D5/Q37-style identity: bind each member to (pid, starttime) at the
+    # scan, then re-read /proc immediately before signalling. A vanished or
+    # recycled pid is skipped, never signalled. The recheck narrows the
+    # recycle window but cannot close it.
+    members = []
     with os.scandir("/proc") as entries:
         for entry in entries:
             if not entry.name.isdecimal():
                 continue
-            try:
-                stat = Path(entry.path, "stat").read_text(encoding="ascii", errors="replace")
-            except OSError:
-                continue
-            close = stat.rfind(")")
-            if close < 0:
-                continue
-            fields = stat[close + 1 :].split()
-            if len(fields) > 3 and fields[3] == str(session_id):
-                pids.append(int(entry.name))
-    pids.sort(key=lambda pid: (pid != session_id, pid))
-    for pid in pids:
+            info = process_identity(int(entry.name))
+            if info is not None and info[0] == session_id:
+                members.append((int(entry.name), info[1]))
+    members.sort(key=lambda item: (item[0] != session_id, item[0]))
+    for pid, start_time in members:
+        info = process_identity(pid)
+        if info != (session_id, start_time):
+            continue
         try:
             os.kill(pid, signal.SIGKILL)
         except ProcessLookupError:

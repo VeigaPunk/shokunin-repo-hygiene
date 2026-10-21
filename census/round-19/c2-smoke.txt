@@ -1,0 +1,45 @@
+# r19 C2 durable-revision evidence (commands and observed output)
+# date: 2026-10-21T04:04:47Z
+
+$ python3 tools/souji-rev-pin.py --selftest
+CASE	pass	historical-tree-check-refuse
+SUMMARY total=11 failed=0
+
+$ python3 tests/fixtures/r19-rev-pin.py
+CASE	pass	durable-clean-accept	exit=0
+CASE	pass	keep-only-refuse	exit=2
+CASE	discriminates	base/keep-only-refuse	exit=0
+CASE	pass	dirty-tree-refuse	exit=2
+CASE	discriminates	base/dirty-tree-refuse	exit=0
+CASE	pass	head-refuse	exit=2
+CASE	discriminates	base/head-refuse	exit=0
+CASE	pass	branch-refuse	exit=2
+CASE	discriminates	base/branch-refuse	exit=0
+CASE	pass	short-id-refuse	exit=2
+CASE	discriminates	base/short-id-refuse	exit=0
+CASE	pass	no-paths-refuse	exit=2
+CASE	discriminates	base/no-paths-refuse	exit=0
+CASE	pass	historical-no-tree-check	exit=0
+CASE	pass	wiring/census/round-13/run-verification.py
+CASE	pass	wiring/census/round-14/run-verification.py
+CASE	pass	wiring/census/round-14/run-targeted.py
+CASE	pass	wiring/census/round-13/count-claims.py
+CASE	pass	wiring/census/round-14/count-claims.py
+SUMMARY total=13 failed=0 base_discriminating=6
+
+$ python3 census/round-13/count-claims.py   # default HEAD
+count-claims: refused: revision 'HEAD' is not a full 40-hex commit id (HEAD, branch names, abbreviated ids and symrefs are refused)
+rc=2
+
+$ python3 census/round-14/count-claims.py   # default HEAD
+count-claims: refused: revision 'HEAD' is not a full 40-hex commit id (HEAD, branch names, abbreviated ids and symrefs are refused)
+rc=2
+
+$ python3 census/round-13/count-claims.py 3ab2c81...
+{"F2_entry": 1, "admitted_entries": 6, "evidence_gate": 1, "measured_commit": "3ab2c81479f5004c8bc91946eea482caec45408f", "sources": 78, "statuses": {"mined": 59, "queued": 15, "rejected": 4}, "tiers": {"A": 74, "B": 3, "C": 1}}
+rc=0
+
+$ python3 census/round-13/run-verification.py --round 19 --output census/round-19/r13-smoke.json
+run-verification: refused: tracked measured paths differ from 3ab2c81479f5004c8bc91946eea482caec45408f (a record must not claim bytes the revision does not contain) (no record written)
+rc=2
+NO_OUTPUT

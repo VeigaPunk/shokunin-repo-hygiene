@@ -266,3 +266,23 @@ keep ref is NOT-SAFE, never `SAFE(metadata-prune)`.
 - `../census/round-18/final-verification-4800fd7.json` preserves every L1
   acceptance command/output/exit; raw seat-audit failures and adjudications
   are retained rather than represented as a clean transcript audit.
+
+## Round 19 — F5 first knowledge entry; carry, audit and revision truthfulness
+
+| ground | status | entries / runnable evidence |
+|---|---|---|
+| F5 process residue | **Core for the observation surface** (outside admission pending): first admitted `knowledge/` entry, list-only, no reap authority | `knowledge/process-residue-observations.md` (S082–S085; S075/S076 rechecked); `../tools/souji-proc-census.sh`; `../tests/fixtures/r18-proc-census.sh` |
+| Carry truncation (landing gate) | gate change, outside admission pending: paragraph-aware match, strict branch at `--round >= 18` | `../tools/souji-landing-gate.py`; `../tests/fixtures/r19-carry-wrap.py`; Q36 |
+| Durable revision stamps | helper + runner change, outside admission pending: durable-ref and tracked-tree binding, exit 2 with no record | `../tools/souji-rev-pin.py`; `../tests/fixtures/r19-rev-pin.py`; Q37 |
+| Seat-audit authorized shapes | gate change, outside admission pending: exact patch/workdir predicates and `V-SIGNAL` | `../tools/souji-seat-audit.py`; `../tests/fixtures/r19-seat-audit-shapes.py`; Q38 |
+
+### Frontier (r19)
+
+- F5 — reap protocol still awaits the operator ruling (L0 `souji | round-16`); the entry grants no reap authority and the listed fixture orphans remain unreaped.
+- F1, F2, F3, F4 — unchanged.
+
+Correction to the r18 section above: "admitted knowledge stays five" is wrong. The lane's own
+counter (`python3 census/round-13/count-claims.py b576341`) reports **6** admitted entries —
+eight files under `knowledge/` minus the `.tsv` ledger and the single HELD entry
+(`quarantine-same-filesystem-rename.md`). R19's C3 measurement is therefore **6 → 7**, not
+5 → 6; the r18 prose is a historical counting defect (R19-M1).

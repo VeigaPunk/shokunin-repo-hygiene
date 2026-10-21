@@ -109,6 +109,20 @@ FAILURES_HEADING_RE = re.compile(r"^##\s+Seat-reported failures\b", re.IGNORECAS
 HEADING_RE = re.compile(r"^#{1,6}\s")
 CARRY_TOKEN_RE = re.compile(r"(?i)\bopen\b|resolved@[0-9a-f]{7,}")
 ADMITTED_TRUE_RE = re.compile(r"(?i)admitted\s*:\s*true\b")
+
+# Carry-wrap rule (r19 C1; rule drafted at
+# .ufo/waves/round-18/w1/ScoutCarryWrap.md). A STATUS paragraph is the
+# marker line plus its wrapped continuation lines. A carry entry either
+# quotes the normalized whole paragraph or a normalized prefix that stops at
+# one of the SOURCE's physical-line ends and is followed by an ellipsis; a
+# mid-line ellipsis is never a verifiable cut point. The strict branch is
+# gated at round 18 so the five pinned historical replays keep their
+# expected verdicts; before that gate the old first-physical-line match
+# stays in force (and stays blind to wrapped cuts, disclosed).
+WRAP_STRICT_FROM_ROUND = 18
+ELLIPSIS_RE = re.compile(r"\s*[\"\u201d]?\s*(?:\u2026|\.\.\.)")
+LIST_ITEM_RE = re.compile(r"^([-*+]|\d+\.)\s+")
+THEMATIC_RE = re.compile(r"^([-*_])(?:\s*\1){2,}$")
 HTML_COMMENT_RE = re.compile(r"<!--.*?-->", re.DOTALL)
 
 # Frozen-pin path rule (pinned): an expected.json `files`/`record` key that
@@ -390,6 +404,66 @@ def status_line_count(report_text):
     )
 
 
+def _continues_paragraph(line):
+    """A wrapped STATUS paragraph continues through prose only: not a fence,
+    table row, quote, HTML block, heading, new bullet, thematic break, or a
+    new STATUS line."""
+    s = line.strip()
+    return bool(s) and not (
+        s.startswith(("```", "|", ">", "<"))
+        or HEADING_RE.match(s)
+        or LIST_ITEM_RE.match(s)
+        or THEMATIC_RE.match(s)
+        or status_value(line) is not None
+    )
+
+
+def status_paragraph(lines, idx):
+    """Marker physical line plus its wrapped continuation lines."""
+    block = [lines[idx]]
+    j = idx + 1
+    while j < len(lines) and _continues_paragraph(lines[j]):
+        block.append(lines[j])
+        j += 1
+    return block
+
+
+def carry_entries(carry_lines):
+    """Join a carry bullet's own wrapped continuation lines into one entry.
+
+    Symmetric with status_paragraph and closes the false-fail direction: a
+    correct quote whose lesson bullet wraps must still match.
+    """
+    ents = []
+    for line in carry_lines:
+        if ents and _continues_paragraph(line):
+            ents[-1] += " " + line
+        else:
+            ents.append(line)
+    return [norm_line(e) for e in ents]
+
+
+def carries(block, entry):
+    """True iff `entry` carries the marker paragraph `block`.
+
+    (a) the normalized whole paragraph occurs; or
+    (b) the normalized first k physical lines (1 <= k < len(block)) occur and
+        the very next non-space characters are an ellipsis (an optional
+        closing quote may sit between). A mid-line ellipsis never carries.
+    """
+    full = norm_line(" ".join(block))
+    if full and full in entry:
+        return True
+    for k in range(1, len(block)):
+        prefix = norm_line(" ".join(block[:k]))
+        if not prefix:
+            continue
+        for m in re.finditer(re.escape(prefix), entry):
+            if ELLIPSIS_RE.match(entry, m.end()):
+                return True
+    return False
+
+
 def check_carry(root, tree, rev, round_no):
     """Return (findings, n_markers, n_reports, n_status, carry_heading)."""
     prefix = ".ufo/waves/round-%d/" % round_no
@@ -419,20 +493,36 @@ def check_carry(root, tree, rev, round_no):
     n_markers = 0
     n_status = 0
     carried_open = []
+    wrap_strict = round_no >= WRAP_STRICT_FROM_ROUND
+    entries = carry_entries(carry_lines) if wrap_strict else []
     for report_path in reports:
         text = blob_by_oid(root, tree[report_path]).decode("utf-8", "replace")
         n_status += status_line_count(text)
+        report_lines = text.splitlines()
         for lineno, raw in seat_failure_lines(text):
             n_markers += 1
             needle = norm_line(raw)
             carried = None
-            for lline in carry_lines:
-                nl = norm_line(lline)
-                if needle and needle in nl and CARRY_TOKEN_RE.search(nl):
-                    carried = nl
-                    break
+            block = None
+            if wrap_strict:
+                block = status_paragraph(report_lines, lineno - 1)
+                for entry in entries:
+                    if CARRY_TOKEN_RE.search(entry) and carries(block, entry):
+                        carried = entry
+                        break
+            else:
+                for lline in carry_lines:
+                    nl = norm_line(lline)
+                    if needle and needle in nl and CARRY_TOKEN_RE.search(nl):
+                        carried = nl
+                        break
             detail = "line %d: %s" % (lineno, needle[:220])
             if carried is None:
+                if block is not None and len(block) > 1:
+                    detail += (
+                        "; paragraph continues at line %d "
+                        "(mark the cut with ...)" % (lineno + 1)
+                    )
                 findings.append(("LG-SEAT-UNCARRIED", report_path, detail))
             elif re.search(r"(?i)\bopen\b", carried):
                 carried_open.append((report_path, detail, carried))
@@ -1998,6 +2088,87 @@ def run_selftest():
         repo, g, (rev,) = build("open-admitted", f)
         check("open-admitted", repo, 1, ("LG-OPEN-ADMITTED",), rev=rev,
               expect_n=1, expect_counts={"checked_markers": 1})
+
+        # CASE wrap-unmarked (r19 C1): a quote that stops at the SOURCE's
+        # first physical line with no ellipsis is a silent cut, not a carry.
+        f = _base_files()
+        del f[".ufo/waves/round-18/w1/Seat18.md"]
+        f[".ufo/waves/round-18/w1/SeatWrap.md"] = (
+            "# SeatWrap\n\n"
+            "STATUS: PARTIAL — guarded repos measured and the\n"
+            "remaining arm never runs under a bound.\n"
+        )
+        f["corpus/lessons/round-18.md"] = (
+            "# Round 18\n\n## Seat-reported failures\n\n"
+            "- SeatWrap `.ufo/waves/round-18/w1/SeatWrap.md:3` "
+            "\"STATUS: PARTIAL — guarded repos measured and the\" — open\n"
+        )
+        repo, g, (rev,) = build("wrap-unmarked", f)
+        check("wrap-unmarked", repo, 1, ("LG-SEAT-UNCARRIED",), rev=rev,
+              round_no=18, expect_n=1,
+              expect_counts={"checked_markers": 1, "checked_reports": 1,
+                             "status_lines": 1, "carry_heading": 1})
+
+        # CASE wrap-marked: the cut is marked with an ellipsis exactly at the
+        # source physical-line end, so the carry is honest.
+        f = _base_files()
+        del f[".ufo/waves/round-18/w1/Seat18.md"]
+        f[".ufo/waves/round-18/w1/SeatWrap.md"] = (
+            "# SeatWrap\n\n"
+            "STATUS: PARTIAL — guarded repos measured and the\n"
+            "remaining arm never runs under a bound.\n"
+        )
+        f["corpus/lessons/round-18.md"] = (
+            "# Round 18\n\n## Seat-reported failures\n\n"
+            "- SeatWrap `.ufo/waves/round-18/w1/SeatWrap.md:3` "
+            "\"STATUS: PARTIAL — guarded repos measured and the …\" — open\n"
+        )
+        repo, g, (rev,) = build("wrap-marked", f)
+        check("wrap-marked", repo, 0, rev=rev, round_no=18, expect_n=0,
+              expect_counts={"checked_markers": 1, "checked_reports": 1,
+                             "status_lines": 1, "carry_heading": 1})
+
+        # CASE wrap-complete: the whole paragraph quoted on one line carries
+        # without an ellipsis.
+        f = _base_files()
+        del f[".ufo/waves/round-18/w1/Seat18.md"]
+        f[".ufo/waves/round-18/w1/SeatWrap.md"] = (
+            "# SeatWrap\n\n"
+            "STATUS: PARTIAL — guarded repos measured and the\n"
+            "remaining arm never runs under a bound.\n"
+        )
+        f["corpus/lessons/round-18.md"] = (
+            "# Round 18\n\n## Seat-reported failures\n\n"
+            "- SeatWrap `.ufo/waves/round-18/w1/SeatWrap.md:3` "
+            "\"STATUS: PARTIAL — guarded repos measured and the remaining "
+            "arm never runs under a bound.\" — open\n"
+        )
+        repo, g, (rev,) = build("wrap-complete", f)
+        check("wrap-complete", repo, 0, rev=rev, round_no=18, expect_n=0,
+              expect_counts={"checked_markers": 1, "checked_reports": 1,
+                             "status_lines": 1, "carry_heading": 1})
+
+        # CASE wrap-bullet-wrapped: the LESSON bullet itself wraps; joining
+        # the entry must still carry the complete paragraph (false-fail
+        # direction).
+        f = _base_files()
+        del f[".ufo/waves/round-18/w1/Seat18.md"]
+        f[".ufo/waves/round-18/w1/SeatWrap.md"] = (
+            "# SeatWrap\n\n"
+            "STATUS: PARTIAL — guarded repos measured and the\n"
+            "remaining arm never runs under a bound.\n"
+        )
+        f["corpus/lessons/round-18.md"] = (
+            "# Round 18\n\n## Seat-reported failures\n\n"
+            "- SeatWrap `.ufo/waves/round-18/w1/SeatWrap.md:3` "
+            "\"STATUS: PARTIAL — guarded repos measured and the remaining\n"
+            "arm never runs under a bound.\" — open\n"
+        )
+        repo, g, (rev,) = build("wrap-bullet-wrapped", f)
+        check("wrap-bullet-wrapped", repo, 0, rev=rev, round_no=18,
+              expect_n=0,
+              expect_counts={"checked_markers": 1, "checked_reports": 1,
+                             "status_lines": 1, "carry_heading": 1})
 
         # CASE missing-wave-dir → exit 2.
         f = _frozen_world(_base_files())

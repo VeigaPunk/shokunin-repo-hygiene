@@ -73,6 +73,18 @@ LANE = Path(__file__).resolve().parents[2]
 DEFAULT_GATE = LANE / "tools" / "souji-evidence-cache.py"
 BASELINE_COMMIT = "a31642d14006830ec62edf40b0354c3699728c4a"
 BASELINE_RUNNER = "census/round-13/run-verification.py"
+# r19 C2: tracked subjects this demonstration executes or reads as measured
+# bytes. The harness revision is stamped only when it is durable and these
+# paths equal the working tree (the synthetic dependency bytes live under
+# /var/tmp and are never claimed to be contained in the commit).
+DEMO_MEASURED_PATHS = [
+    "tools/souji-evidence-cache.py",
+    "tools/souji-census.sh",
+    "tests/fixtures/r14-evidence-cache.py",
+    "tests/fixtures/r14-census-boundary.py",
+    "census/round-14/cache-demonstration.py",
+    "census/round-13/run-verification.py",
+]
 SYNTHETIC_NAME = "synthetic-matched-green"
 NAME = "r14-cache-demonstration"
 EXPECTED_STALE_FINDINGS = ("dependency-digest-mismatch",)
@@ -174,7 +186,15 @@ def git_head():
     value = proc.stdout.strip()
     if proc.returncode != 0 or HEX40.fullmatch(value) is None:
         return None, "git rev-parse exit=%d output=%r" % (proc.returncode, value)
-    return value, None
+    spec = importlib.util.spec_from_file_location(
+        "souji_rev_pin", LANE / "tools" / "souji-rev-pin.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    try:
+        return module.resolve_durable(
+            str(LANE), value, DEMO_MEASURED_PATHS), None
+    except module.Refusal as exc:
+        return None, "durable revision refused: %s" % exc
 
 
 def stat_file(path):

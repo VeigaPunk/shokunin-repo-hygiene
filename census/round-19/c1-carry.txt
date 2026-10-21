@@ -1,0 +1,38 @@
+# r19 C1 carry evidence (commands and observed output)
+# date: 2026-10-21T04:04:58Z
+
+$ python3 tools/souji-landing-gate.py --selftest
+CASE	pass	ambient-git-dir	exit=0 resolved=e47fc4ee8f8d
+CASE	pass	cli-ambient-git-dir	rc=0
+SELFTEST	pass=65	fail=0
+
+$ python3 tests/fixtures/r19-carry-wrap.py
+CASE	pass	changed/wrap-unmarked	exit=1 ids=['LG-SEAT-UNCARRIED']
+CASE	discriminates	base/wrap-unmarked	exit=0 ids=[]
+CASE	pass	changed/wrap-marked	exit=0 ids=[]
+CASE	pass	base/wrap-marked	exit=0 ids=[]
+CASE	pass	changed/wrap-complete	exit=0 ids=[]
+CASE	pass	base/wrap-complete	exit=0 ids=[]
+CASE	pass	changed/wrap-bullet-wrapped	exit=0 ids=[]
+CASE	discriminates	base/wrap-bullet-wrapped	exit=1 ids=['LG-SEAT-UNCARRIED']
+SUMMARY total=4 failed=0 base_discriminating=2
+
+$ python3 census/round-17/gate-replays.py --output census/round-19/gate-replays-r19-confirm.json
+name	rev	round	exit	findings	match
+r15-landing	b410186	15	1	5	True
+r13-admitted	a31642d	13	0	0	True
+r14-landing	cc21683	14	0	0	True
+r16-landing	6ff91f5	16	0	0	True
+r16-precarry	79bbe7a	16	1	29	True
+gate	rev=WORKTREE	sha256=02b58f81c8dab4a7	expected_sha_match=False
+gate-replays: wrote record to census/round-19/gate-replays-r19-confirm.json
+
+$ python3 tools/souji-landing-gate.py --root . --rev 3ab2c81... --round 18 --fleet-root /home/vgpnk/Projects/shokunin --json census/round-19/gate-r18-strict-fleet-confirm.json
+SUMMARY	findings=0	checked_reg=33	checked_changed=0	checked_pins=13	checked_measured=3	checked_markers=10	status_lines=172	carry_heading=1	checked_reports=175
+rc=0
+
+# the first strict receipt census/round-19/gate-r18-strict-fleet.json was written with the same command and exited 0; this confirm record repeats it.
+
+$ python3 census/round-19/probe-carry-invariants.py
+SUMMARY paragraphs=400 boundary_cuts=562 midline_cuts=842 violations=0
+rc=0
