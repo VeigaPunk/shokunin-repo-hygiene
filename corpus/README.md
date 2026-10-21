@@ -409,3 +409,12 @@ revisions. No new knowledge path, frontier promotion, deletion authority or
 F5 scope expansion follows. F5 bytes and its synthetic-only160-byte reason
 boundary remain unchanged; inherited reap/NAMESPACE/exposure decisions stay
 operator-owned. Certification OFF, K5 HELD.
+
+## Non-author round22 judgment and forward hold
+
+`lessons/round-22-verifier-spotcheck.md` records Main's negative admission judgment:
+finite calibration receipts remain useful, but original independent/strict-adequacy
+proof is incomplete and VOID reports do not supply it. Existing report-only accounting
+is distinct from author training. Forward dispatch remains held while the inherited
+policy-stop boundary is unresolved; no refused item, dead seat or workflow is reissued.
+
