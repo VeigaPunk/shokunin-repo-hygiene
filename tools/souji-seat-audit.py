@@ -100,7 +100,9 @@ PROBE_BASH_RE = re.compile(r"(?:^|[;&|'\"(]\s*|&&\s*)(?:find|strace|realpath|rea
 SIGNAL_SHELL_RE = re.compile(
     r"(?:^|[;&|'\"(]\s*|&&\s*|\|\|\s*)(?:kill|pkill|killall)\s+[-\w]"
 )
-SIGNAL_LIB_RE = re.compile(r"\b(?:os\.kill|proc\.kill|\.send_signal|send_signal)\s*\(")
+SIGNAL_LIB_RE = re.compile(
+    r"\b(?:os\.kill|os\.killpg|killpg|proc\.kill|\.send_signal|send_signal)\s*\("
+)
 PYTHON_TOKEN_RE = re.compile(r"(?:^|[;&|(\s]|&&\s*)python[0-9.]*\b")
 # Sibling artifacts a seat may deliver beside its own report (exact names,
 # same directory, its own stem). Never a bare prefix or a neighbour's stem.
