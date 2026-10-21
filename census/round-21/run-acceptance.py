@@ -179,6 +179,32 @@ COUNTER_EXPECTATIONS = (
     ),
 )
 
+# R22 reviewed result-contract identity, separate from the frozen r20 inventory.
+# Do not derive these expectations from the producer being graded.
+CACHE_CHECK_NAMES = frozenset((
+    "initial_fresh_once", "producer_actual_subprocess_green",
+    "unchanged_gate_exit_zero", "unchanged_gate_status_reusable",
+    "changed_dependency_exact_finding", "legacy_exact_finding",
+    "unchanged_reused_without_producer", "unchanged_retained_measured_commit",
+    "changed_dependency_gate_exit_one", "changed_dependency_not_reused",
+    "changed_dependency_producer_executed", "changed_dependency_fresh_digests",
+    "legacy_gate_exit_two", "legacy_not_reused", "legacy_producer_executed",
+    "legacy_fresh_digests", "only_declared_dependency_changed",
+    "record_bytes_unchanged", "gate_digest_recorded_and_unchanged",
+    "execution_log_matches_disk", "isolation_confined",
+    "unsafe_control_would_retain_stale_green",
+    "unsafe_control_would_retain_legacy_green", "baseline_authentic_retention",
+    "baseline_stale_green_reused",
+    "new_caller_refused_same_record_and_reexecuted",
+    "historical_legacy_records_refused", "migrated_caller_reuses_unchanged",
+    "migrated_caller_refuses_stale", "migrated_caller_refuses_legacy",
+    "migrated_caller_refuses_missing_revision", "migrated_caller_refuses_unstable",
+    "migrated_caller_reruns_external_mutable",
+))
+CACHE_CASE_PHASES = (
+    "initial-fresh", "unchanged", "dependency-modified", "legacy-no-dependencies",
+)
+
 
 class Refusal(ValueError):
     """An unsafe or unbound acceptance invocation."""
@@ -344,6 +370,21 @@ def numeric_leaves(value, prefix: str = "") -> dict[str, int]:
     return found
 
 
+def json_exact(observed, expected) -> bool:
+    """Compare decoded JSON types and values, including nested scalar leaves."""
+    if type(observed) is not type(expected):
+        return False
+    if isinstance(expected, dict):
+        return (observed.keys() == expected.keys()
+                and all(json_exact(observed[key], value)
+                        for key, value in expected.items()))
+    if isinstance(expected, list):
+        return (len(observed) == len(expected)
+                and all(json_exact(item, value)
+                        for item, value in zip(observed, expected)))
+    return observed == expected
+
+
 def summarize_result(step: dict, returncode: int | None,
                      stdout_bytes: bytes, stderr_bytes: bytes,
                      revision: str, root: Path) -> dict:
@@ -382,7 +423,10 @@ def summarize_result(step: dict, returncode: int | None,
             group = expected.get("baseline_mismatch_group")
             if group is not None and summary_match:
                 baseline_match = re.fullmatch(expected["regex"], summary_lines[0])
-                reported_baseline_mismatches = int(baseline_match.group(group))
+                try:
+                    reported_baseline_mismatches = int(baseline_match.group(group))
+                except ValueError:
+                    summary_match = False
         observed_auxiliary = [
             line for line in stdout.splitlines() if line.startswith("INVENTORY\t")
         ]
@@ -414,7 +458,7 @@ def summarize_result(step: dict, returncode: int | None,
             "baseline_mismatches_reported": reported_baseline_mismatches,
             "record_checks": step.get("record_checks", 0),
         }
-        matched = matched and summary_match and pass_match
+        matched = matched and summary_match and pass_match and not stderr
         if step["name"] == "carry-invariant-probe":
             matched = matched and not any(line.startswith("VIOLATION\t") for line in stdout.splitlines())
     elif kind == "counter":
@@ -424,11 +468,12 @@ def summarize_result(step: dict, returncode: int | None,
             observed = None
         expected = step["expected_summary"]
         if step["exact_json"]:
-            json_match = observed == expected
+            json_match = json_exact(observed, expected)
             expected_fields = numeric_leaves(expected)
         else:
             json_match = (isinstance(observed, dict)
-                          and all(observed.get(key) == value for key, value in expected.items()))
+                          and all(key in observed and json_exact(observed[key], value)
+                                  for key, value in expected.items()))
             expected_fields = numeric_leaves(expected)
         observed_fields = numeric_leaves(observed) if isinstance(observed, dict) else {}
         result["observed_json"] = observed
@@ -450,21 +495,30 @@ def summarize_result(step: dict, returncode: int | None,
             payload = None
         checks = payload.get("checks") if isinstance(payload, dict) else None
         case_rows = payload.get("cases") if isinstance(payload, dict) else None
+        gate = payload.get("gate") if isinstance(payload, dict) else None
+        isolation = payload.get("isolation") if isinstance(payload, dict) else None
         expected = step["expected_summary"]
         gate_sha = sha256_bytes(read_regular(root / "tools/souji-evidence-cache.py"))
-        isolation = payload.get("isolation", {}) if isinstance(payload, dict) else {}
+        case_phases = ([row.get("phase") if isinstance(row, dict) else None
+                        for row in case_rows] if isinstance(case_rows, list) else None)
         demo_match = (
             isinstance(payload, dict)
             and payload.get("status") == expected["status"]
             and payload.get("measured_commit") == revision
             and payload.get("harness_revision") == revision
             and isinstance(case_rows, list) and len(case_rows) == expected["cases"]
+            and len(CACHE_CASE_PHASES) == expected["cases"]
+            and case_phases == list(CACHE_CASE_PHASES)
             and isinstance(checks, dict) and len(checks) == expected["checks"]
+            and len(CACHE_CHECK_NAMES) == expected["checks"]
+            and checks.keys() == CACHE_CHECK_NAMES
             and all(value is True for value in checks.values())
-            and payload.get("failed_checks") == expected["failed_checks"]
-            and payload.get("producer_executions_new_policy") == expected["producer_executions_new_policy"]
+            and json_exact(payload.get("failed_checks"), expected["failed_checks"])
+            and json_exact(payload.get("producer_executions_new_policy"),
+                           expected["producer_executions_new_policy"])
             and payload.get("inputs_unchanged_during_run") is expected["inputs_unchanged_during_run"]
-            and payload.get("gate", {}).get("sha256") == gate_sha
+            and isinstance(gate, dict) and gate.get("sha256") == gate_sha
+            and isinstance(isolation, dict)
             and isolation.get("cleaned") is expected["isolation_cleaned"]
             and isolation.get("residue") == []
         )
@@ -474,7 +528,7 @@ def summarize_result(step: dict, returncode: int | None,
             "observed_cases": len(case_rows) if isinstance(case_rows, list) else 0,
             "expected_gate_checks": expected["checks"],
             "observed_gate_checks": len(checks) if isinstance(checks, dict) else 0,
-            "matched_gate_checks": sum(value is True for value in checks.values()) if isinstance(checks, dict) else 0,
+            "matched_gate_checks": sum(checks.get(name) is True for name in CACHE_CHECK_NAMES) if isinstance(checks, dict) else 0,
             "new_policy_producer_executions": payload.get("producer_executions_new_policy") if isinstance(payload, dict) else None,
         }
         matched = matched and demo_match and not stderr
