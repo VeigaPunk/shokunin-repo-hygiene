@@ -391,9 +391,9 @@ def implicit_root_read(tool: str, args: str, lane: str, fleet: str) -> str | Non
         if not component or "…" in component:
             continue
         if tool == "read":
-            component = re.sub(r":(?:(?:raw|img)|[-\d,+hms]+)(?::(?:raw|img|[-\d,+hms]+))*$", "", component)
+            component = re.sub(r":(?:(?:raw|img|conflicts)|[-\d,+hms]+)(?::(?:raw|img|conflicts|[-\d,+hms]+))*$", "", component)
         if (component.startswith(("/", "~"))
-                or re.match(r"^[a-z][a-z0-9+.-]*://", component)):
+                or re.match(r"^[a-z][a-z0-9+.-]*://", component, re.IGNORECASE)):
             continue
         resolved = os.path.normpath(os.path.join(fleet, component))
         lane_root = os.path.normpath(lane)

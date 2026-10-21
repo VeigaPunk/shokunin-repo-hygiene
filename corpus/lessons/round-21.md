@@ -102,3 +102,37 @@ runner and each other; old class totals in the128-transcript census are
 identical, with only2 new V-READ-ROOT rows. Full independent per-call oracle
 accounting is reported after the second wave, not assumed from provider-dead
 label seats.
+
+### Additional C1 review repair and exact harm guard
+
+RevPreregC1 reported: “STATUS: PARTIAL — the frozen C1 rule has a concrete parser disagreement, and the required before-implementation review encountered an uncommitted C1 implementation in the lane working tree. The after-vs-oracle idea can falsify an incorrect implementation, but the frozen measurement and harm-guard wording does not yet pin enough detail for independent, repeatable adjudication. No implementation or test was run by this read-only reviewer.”
+
+The legacy ` in ` syntax was explicitly clarified before the first
+measurement; ` @ ` takes precedence, both split at their last occurrence.
+Error results count attempts, as frozen synthetic case attempt-error shows.
+Any cut in an extracted target component (including its selector) is unknown;
+a visible grep target after a cut pattern remains classifiable. This is a
+bounded rendered grammar, not disambiguation of arbitrary delimiter-bearing
+filenames/patterns. Baseline0 is only a compatibility observation; oracle
+equality and literal expected cases are the substantive falsifiers.
+
+The review's real additional false-positive controls were shown red before
+repair: mixed/uppercase URI schemes and `:conflicts`/`:raw:conflicts` on the
+lane-relative root. `tests/fixtures/r21-read-render-edges.py` goes0/4→4/4
+(`render-edges-before.txt`, `render-edges-after.txt`), without changing any
+of the frozen32 expectations or the118 existing selftest cases.
+
+Count-only harm comparison is strengthened to exact sorted tuples
+`(dir/file, physical_line, tool, class, severity)` for every prior class:
+274/274 identical, SHA256
+`18429d983864e7016f8b91c10821e1f71480da132046ea3c7096d8dc4f59170d`
+in both `census/round-21/read-final-before.json` and `read-final-after.json`.
+All128 direct `.txt` files in final/recovery-final are counted once;
+manifests are excluded, no recursive/spec filtering. The independent oracle
+keys are those same corpus-relative path/line/tool identities, with one row
+for every read/grep/glob call, not positive counts alone.
+
+Source quote word-count erratum (quotes/locations unchanged): S100: 8,
+S101: 11, S102: 16, S103: 11 words, not the earlier 9/12/19/12 parenthetical
+counts. Every quote remains below25. The earlier numeric parentheticals
+are superseded, not source text silently rewritten.

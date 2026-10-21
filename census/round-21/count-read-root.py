@@ -25,6 +25,7 @@ def main():
     lane = fleet + '/souji-shokunin'
     classes = collections.Counter()
     selected = set()
+    preserved = []
     inputs = {str(Path(a.tool)): hashlib.sha256(Path(a.tool).read_bytes()).hexdigest()}
     calls = files = 0
     for directory in a.transcripts:
@@ -41,7 +42,14 @@ def main():
                     key = (d.name + '/' + path.name, row['line'], row['tool'])
                     selected.add(key)
                     print('ROW\t%s\t%d\t%s\t%s' % (*key, row.get('target', '')))
+                else:
+                    preserved.append((d.name + '/' + path.name, row['line'],
+                                      row['tool'], row['class'], row['severity']))
     record = {'files': files, 'calls': calls, 'read_root': len(selected), 'classes': dict(sorted(classes.items())), 'inputs': inputs, 'rows': sorted(selected)}
+    record['prior_verdicts'] = sorted(preserved)
+    record['prior_verdicts_sha256'] = hashlib.sha256(
+        json.dumps(sorted(preserved), separators=(',', ':')).encode()).hexdigest()
+    print('PRIOR-VERDICTS\tcount=%d\tsha256=%s' % (len(preserved), record['prior_verdicts_sha256']))
     failed = False
     if a.oracle:
         oracle_bytes = Path(a.oracle).read_bytes()
