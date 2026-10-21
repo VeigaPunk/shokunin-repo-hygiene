@@ -130,3 +130,14 @@ keep-only commits — disclosed, not widened. This is not a jj capability:
 souji's tools never invoke `jj`, commits stay operator/helper-owned, and
 `## Refuses` is unchanged. F1 as a whole stays frontier; how long jj keeps
 a `refs/jj/keep/*` ref remains unmeasured.
+
+## Round 19 boundary refinement (F5 observation surface)
+
+F5 process residue now has an admitted knowledge entry
+(`corpus/knowledge/process-residue-observations.md`, S082–S088) and a matching SKILL
+rule. The *observation* surface — the own-uid cwd/argv/fd listing produced by
+`tools/souji-proc-census.sh` and gated by `tests/fixtures/r18-proc-census.sh` — is Core.
+The earlier frontier sentence saying F5 has no knowledge entry is superseded for that
+surface only. Reaping stays outside the lane: operator approval, fresh (pid, starttime,
+boot_id) verification at act time and LOG receipts are required; other uids and host-wide
+liveness remain mori's ground. F1, F2, F3 and F4 are unchanged.
