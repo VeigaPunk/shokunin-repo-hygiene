@@ -1,0 +1,126 @@
+souji — round 22, attempt 2 (hyaku session) — PREREGISTRATION
+Frozen 2026-10-25 before any measurement of this attempt.
+Base revision: 4edb25dfe262515d0da63224bbba71e02e36cba5 (lane master tip at freeze).
+Prior attempt: round 22 was judged rejected-honest-stop by the non-author
+spot-check (corpus/lessons/round-22-verifier-spotcheck.md). Its C1
+(full-adequacy of the r22 result oracle) is NOT re-claimed here and is NOT
+re-pinned, re-worded or regenerated. Its measured gains remain historical
+receipts; no void review is credited and no reviewer is manufactured.
+
+Two claims. Each is one axis with its own falsifiable before->after and its
+own counting command. They are causally separable: C1 lands with the lane's
+own self-assessment repaired; C2 lands with corpus files and registry rows.
+
+--------------------------------------------------------------------------
+C1 — axis: calibration (lowest non-retired axis; SCORECARD score 7)
+Capability acquisition: declared-evidence calibration audit.
+
+Statement: the lane's own self-assessment (SCORECARD.md) contains
+machine-checkable assertions — repo-relative path pointers, revision tokens,
+and sha256 digests — that can be re-derived from committed bytes; after this
+round the number of such assertions that do not resolve against the measured
+revision is zero over the enumerated set.
+
+Counter (one command, from the lane root):
+  python3 -B tools/souji-declared-evidence.py --root . --file SCORECARD.md \
+      --rev <REV> --format counts
+prints exactly one line:
+  assertions=<N> resolved=<R> skipped=<S> mismatches=<M>
+exit 0 iff M == 0, else 1.
+
+Frozen assertion classes (the enum, nothing else counts):
+  A. a backticked repo-relative path ending .py/.sh/.json/.tsv/.md/.txt,
+     optionally suffixed :<line>, optionally part of a glob (*) -> the path
+     (glob expanded over tracked files at --rev) must be present in the
+     repository at --rev;
+  B. a bare hex token of length 7..40 inside a table cell that also names a
+     revision context (the words commit/rev/revision/measured/at, or a
+     census/round-<N>/ path in the same cell) -> `git cat-file -e <tok>^{commit}`
+     must succeed at --rev's repository;
+  C. a 64-hex token in the same cell as exactly one backticked path -> it must
+     equal sha256 of that path's bytes at --rev.
+  skipped counts tokens excluded by these rules (so N+S enumerates every
+  candidate token the scanner saw). A token that is quoted as an example or
+  named as historical inside a cell that also names its own revision is still
+  class B/C: it must resolve, or the cell must stop presenting it as evidence.
+
+Kill rule (frozen): a control tool that prints `assertions=0 skipped=0
+mismatches=0` without reading any byte must FAIL the same selftest the real
+tool passes: selftest fixtures are (1) all-good declaration -> 0 mismatches,
+(2) nonexistent path -> >=1, (3) dangling revision -> >=1, (4) wrong digest ->
+>=1, (5) path present at a different revision only -> >=1. Reported as
+`control=FALSE-GREEN-REJECTED`. The do-nothing control (SCORECARD bytes
+unchanged at base) is measured and must score M > 0.
+
+Before: `--rev 4edb25d` on base SCORECARD.md -> M_before > 0 (to be measured;
+not guessed).
+After:  `--rev <final lane tip>` on the repaired SCORECARD.md -> M_after = 0.
+Target: M_after = 0 and the repaired assertions are truth-preserving: each
+repaired cell either names a revision that holds the path, or drops the
+evidence role of the token, or supplies the missing committed receipt.
+
+--------------------------------------------------------------------------
+C2 — axis: coverage (SCORECARD score 8)
+Assimilation (§10) of ONE theme from /home/vgpnk/Projects/shokuknow/merge/souji/:
+restorable-quarantine staging — the no-clobber rename primitive and the
+per-item origin record. 2 knowledge entries adopted, each re-grounded in-round
+with this lane's own Gate block; plus a verdict for every row of this lane's
+absent-defect register slice.
+
+Counter (one command, from the lane root):
+  python3 -B tools/souji-gate-check.py --root . --round-date 2026-10-25 \
+      --entries corpus/knowledge/quarantine-staging-no-copy-r23.md \
+                corpus/knowledge/quarantine-origin-record-fields-r24.md \
+      --snapshot-dir census/round-22/attempt2/sources \
+      --slice census/round-22/attempt2/quarantine-slice \
+      --slice-verdicts census/round-22/attempt2/slice-verdicts.tsv
+prints exactly one line:
+  entries=2 ok=<K> slice_verdicts=<V> slice_total=<T> fail=<F>
+exit 0 iff ok == entries and V == T and F == 0 and every verdict row is
+present/accepted/unverifiable/refused (one of the four frozen classes).
+
+Frozen per-entry predicate (each check must be able to fail on its own):
+  1. the file exists at the lane root and contains a `## Gate` heading;
+  2. the Gate names >=1 https URL with `opened: YYYY-MM-DD` equal to
+     --round-date;
+  3. the Gate carries >=1 located quote in double quotes of <=25 words, with
+     a locator token (§, section, line, paragraph, or DESCRIPTION);
+  4. every quoted span appears verbatim (whitespace-collapsed) in the
+     committed snapshot file the Gate names, and that snapshot lives under
+     --snapshot-dir;
+  5. every `source: S<digits>` id cited in the entry's frontmatter resolves to
+     a row in corpus/SOURCES.md;
+  6. the Gate records >=1 ADMIT and >=1 REJECT with a reason string each.
+
+Frozen slice predicate: for every id line in the committed derived slice
+(census/round-22/attempt2/quarantine-slice, produced by the frozen awk command
+in the round report) the verdicts TSV must carry one row
+`<id>\t<class>\t<evidence-pointer>` where class is one of
+present|accepted|unverifiable|refused; a missing row is a failure and is
+counted in neither V nor F — it simply cannot raise V to T.
+
+Kill rule (frozen): gate-check selftest fixtures — (1) entry whose Gate lacks
+the round date -> fail, (2) quote of 26 words -> fail, (3) quote absent from
+the named snapshot -> fail, (4) dangling source id -> fail, (5) no REJECT row
+-> fail, (6) a byte-exact copy of the staged package entry (no Gate) -> fail,
+(7) the good entry -> ok. A tool that returns ok for fixture 6 is FALSE-GREEN.
+
+Before: entries absent -> entries=2 ok=0 slice_verdicts=0/8 -> exit 1.
+After:  entries=2 ok=2 slice_verdicts=8/8 fail=0 -> exit 0.
+Target: exit 0 and registry conformance
+`/home/vgpnk/Projects/shokunin/scripts/sources-census.sh validate --root
+/home/vgpnk/Projects/shokunin souji` exit 0.
+
+Adopted-row rule: only rows the admitted entries cite are appended; rows that
+already exist in the lane registry are cited, not duplicated. Adopted ids
+continue the lane's registry from its next free id (S109), and every citation
+is re-pointed by DOCUMENT (the URL/bytes decided the id) with the
+campaign->lane map recorded in the report and the lesson Gate.
+
+--------------------------------------------------------------------------
+Round-shape commitments (frozen): one v1 wave under
+scripts/hyaku/ufo-wave-policy.json (band 32-64), seats 52; residual attack
+call of <=8 seats after landing; round total <=128. L1 holds the planner seat.
+Every seat routes through the host route table (no model parameter).
+No axis may be harmed: certification OFF, K5 HELD, operator-owned paths
+untouched, no deletion authority created, source repos read-only.
