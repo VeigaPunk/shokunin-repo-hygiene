@@ -6,7 +6,12 @@ STATUS: DONE — base auditor analysis confirms both authorized-write shapes bec
 
 At base `3ab2c81`, `run()` reads `reportDir`, `context`, `wave`, and `items`; derives `fleet` from the lane parent; and constructs `ctx` from context plus wave. It finds the first `souji-r<N>-` in that combined text, makes `scratch_base = /var/tmp/<match>`, then sets each seat scratch to `<scratch_base><item name>/`. With no match it falls back to `/var/tmp/`, which is substantially broader than a seat-private scratch root. For each item it records a missing transcript if `<name>.txt` is absent; otherwise it forms the exact report path, treats prompts containing `ALLOWED-EXEC:` as executor-role for auditing, extracts OWN ONLY paths, calls `audit_seat()`, and aggregates calls, major/minor totals, and seats with majors. The CLI calls `run()`; `run()` calls `audit_seat()`; `audit_seat()` calls `owned_paths()` and routes each parsed write target to `target_verdict()`.
 
-The OWN ONLY extraction has two regexes: `OWN_RE = re.compile(r"OWN ONLY ([^\\n]+?)(?:\\s\\(|\\.\\s|$)")` delimits the clause; `ABS_RE = re.compile(r"/home/[^\\s,`'\"]+")` recognizes only absolute `/home/` tokens in it. `owned_paths()` strips trailing `.,;:)` from those matches. A lane-relative path in OWN ONLY is therefore not an owned path. At base, `run()` builds `allowed = [report, *owned]` for write checks; it does not allow the report directory wholesale.
+The OWN ONLY extraction uses these base regular expressions. The first delimits the clause; the second recognizes only absolute `/home/` tokens. `owned_paths()` strips trailing `.,;:)` from matches. A lane-relative path in OWN ONLY is therefore not an owned path. At base, `run()` builds `allowed = [report, *owned]` for write checks; it does not allow the report directory wholesale.
+
+```python
+OWN_RE = re.compile(r"OWN ONLY ([^\n]+?)(?:\s\(|\.\s|$)")
+ABS_RE = re.compile(r"/home/[^\s,`'\"]+")
+```
 
 For `target_verdict()`, an absent target is `V-WRITE-UNPARSED`; internal URI targets are ignored except `file://`. A truncated relative target is `V-WRITE-RELATIVE`; a truncated absolute prefix inside scratch is accepted, a lexical ancestor of scratch is ambiguous, a prefix of an allowed exact path is unparsed, and other prefixes are scope violations. A complete absolute target is normalized and accepted only if it is at/below scratch or exactly equals an allowed path; otherwise it is `V-WRITE-SCOPE`. Relative hashline headers are checked against the fleet-root interpretation first, then the lane-root interpretation; only the latter being allowed yields `V-WRITE-HEADER-INFERRED`. Other relative targets are checked at fleet root and otherwise yield `V-WRITE-RELATIVE`.
 
