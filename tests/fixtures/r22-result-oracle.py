@@ -97,6 +97,7 @@ def main():
                             'exception': error, 'pass': passed})
         failures = sum(not item['pass'] for item in results)
         output = {'schema': 'souji-r22-result-oracle-receipt-v1',
+                  'finding_id': 'R22-RESULT-CONTRACT' if failures else None,
                   'runner_sha256': hashlib.sha256(args.runner.read_bytes()).hexdigest(),
                   'oracle_sha256': hashlib.sha256(ORACLE.read_bytes()).hexdigest(),
                   'source_receipt_sha256': oracle['source_receipt_sha256'],

@@ -17,7 +17,8 @@ counting command and the commit it was measured against.
 R19's rejected-harmed verdict remains in its immutable verifier lesson.
 R20 is now independently **admitted** (CloseSouji20, MANIFEST rounds[402];
 closure excerpt `census/round-21/r20-closure-excerpt.json`), superseding the
-old pending wording below. R21 is author-measured only until outside closure.
+old pending wording below. R21 is independently **admitted** (CloseSouji21,
+MANIFEST rounds[408]; `census/round-22/r21-closure-excerpt.json`).
 Original red receipts/scope violations remain historical evidence; r21
 repairs current reason output but not unmeasured historical exposure.
 Certification OFF, K5 HELD; inherited reap/NAMESPACE holds unchanged.
@@ -100,7 +101,8 @@ independently adjudicated in `corpus/lessons/round-13-verifier-spotcheck.md`.
 - **r19 (planned r18) — done, see `corpus/lessons/round-19.md`:** C1 carry/audit truthfulness, C2 durable revision stamps, C3 F5 entry; D2 and D5 repaired; D1/D3 receipts and labels. `census/round-19/final-verification-63bb887.json` is the 18-command acceptance record (all matched). Certification stays OFF, K5 HELD.
 - **r20 (planned r19):** (a) calibration: adjudicate every wave-2 attack and route any surviving carry/audit defect; (b) operability: disclose the D5 recheck's residual pid-recycle window and re-check the historical r13/r14 replay commands under the helper; (c) coverage: the operator ruling on F5 reap and the r14 NAMESPACE pin remains outstanding; F2 size attribution unchanged.
 - **r20 (planned r19) — admitted:** CloseSouji20 admitted C1/C2, coverage unchanged; MANIFEST rounds[402]. Actual audit flags, scope deviations and historical exposure remain disclosed.
-- **r21 — implemented/measured, outside closure pending:** C1 implicit-read calibration; C2 scratch-clone replay; C3 synthetic reason privacy. Exact claims/preregistration and mistakes in round21 lesson. No new deletion, reap, namespace-pin or historical-exposure authority.
+- **r21 — admitted:** CloseSouji21, MANIFEST rounds[408], independently remeasured all three bounded claims. Exact closure is in `census/round-22/r21-closure-excerpt.json`; source-scope violations remain actual debt, not erased by admission.
+- **r22 — declared calibration:** repair the three inherited OPEN acceptance-predicate gaps, measured by the same synthetic result oracle over baseline and changed code, retaining all18 real positive outputs. Preregistration `29c1f7e8df849be8ee1b2d62d2351e17ec9d21a8`. F5 bytes/160-byte scope and all operator holds unchanged.
 
 ## Saturation / stagnation
 

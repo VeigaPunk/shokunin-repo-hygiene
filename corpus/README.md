@@ -392,3 +392,20 @@ outside-source-output mutants. No live process census was run; the
 disclosed seat snapshot-search violation means this is not a scope-clean
 process round. Existing inherited r20 result-predicate limitations remain
 explicit in the lesson, outside the portability claim.
+
+## Round22 result-contract calibration
+
+The existing acceptance surface is deepened, not new frontier ground:
+`../tests/fixtures/r22-result-oracle.py` regrades the pinned public eighteen-step
+output using `../tests/fixtures/r22-result-oracle.json` and fabricated deltas.
+The current `../census/round-21/run-acceptance.py` enforces decoded scalar types,
+empty summary stderr, and independently reviewed cache-check/ordered-phase
+identity. S104/S105 ground the type distinction; S106 rejects treating decoder
+strictness as schema validation. Current result counts and their measured
+revision are recorded in `lessons/round-22.md`, never inferred from source.
+
+The original r21 outputs/frozen inventory remain immutable at their recorded
+revisions. No new knowledge path, frontier promotion, deletion authority or
+F5 scope expansion follows. F5 bytes and its synthetic-only160-byte reason
+boundary remain unchanged; inherited reap/NAMESPACE/exposure decisions stay
+operator-owned. Certification OFF, K5 HELD.

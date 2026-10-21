@@ -1333,3 +1333,37 @@ returns0 (source-census-closure.txt). All150 seats terminal,87 provider-dead,
 0 replacements; two ordinary residual reviews complete. Removed only current
 round exclusively created scratch clones/input files (fixture-cleanup.json),
 no inherited processes/operator artifacts; canonical evidence retained.
+
+## 2026-10-21 — round22 result-contract calibration
+
+One claim C1 on calibration (lowest inherited7), preregistered and pushed
+29c1f7e8df849be8ee1b2d62d2351e17ec9d21a8 against
+41553adb139d06511dc386bb3ce4326aebfba675. R21 admitted by CloseSouji21,
+MANIFEST rounds[408]; exact closure copied into
+`census/round-22/r21-closure-excerpt.json`. Its OPEN bool/int equality,
+summary stderr and cache count-not-name findings motivate this round.
+
+Implementation and independent212-vector fixture landed
+36c78ba016bbf28548c9c7191da089b91022f8e1: current r21 runner source now
+checks decoded types, zero-byte summary stderr, exact33 reviewed cache-check
+names and four ordered case phases. Covered malformed nested containers and
+oversized summary counts produce a mismatch rather than an exception. This
+is not producer-execution authentication, universal stdout validation or
+arbitrary-resource totality. Frozen inventory and historical output remain
+immutable; old implementations resolve at their named revisions.
+
+Opened S104/S105 Python JSON/bool authority; S106 strict-decoder-as-schema
+inference rejected. `corpus/lessons/round-22.md` Gate/Mistakes grounds Q51.
+No new knowledge pathname/frontier promotion or invented numeric score gain.
+The result oracle executes no subprocess or process scanner. Baseline and
+changed measurements are recorded after source-review/falsification seats.
+
+Repeated scope violation: initial L1 bare-read the lane root before loading
+Q45; exposed names/metadata are VOID, not claim evidence. Main notified.
+No operator-sweep contents deliberately opened or staged; its inherited
+untracked directory remains untouched. Do not call this a scope-clean round.
+F5 source/160-byte synthetic-only boundary stays unchanged; certification OFF,
+K5 HELD; inherited reap/NAMESPACE/exposure assessment remain operator-owned.
+No tools installed or upgraded. Lane commits use the sole jj-lane.sh helper,
+explicit pathspecs and its maintenance.auto=false guard; no direct index/jj
+mutation or upstream-domain push.
