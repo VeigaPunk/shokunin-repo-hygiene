@@ -89,3 +89,11 @@ a dated observation.
   safe to delete.
 - **Unmeasured: PID-namespace differences.** The tool reads the namespace
   it is in; nested-pid columns (`NSpid`) are not used.
+
+## Correction (appended after wave 1b, 2026-10-21)
+
+The "reads only" list above is incomplete: the census also reads `/proc/uptime` (for `age_s`),
+the `boot_id` header, and lists `/proc` to enumerate pids. It still never reads `environ`. The
+full read set is listed in `.ufo/waves/round-19/w1/ScribeProcSkillRow.md`; no tool behaviour
+changed. Also, Q32's read list omits `status`, which the tool reads; Q33 supersedes the wording
+but not that list.
