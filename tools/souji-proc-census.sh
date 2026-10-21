@@ -3,8 +3,10 @@
 # deleted scratch paths. It never signals a process outside its selftest.
 #
 # Output begins with a boot-id comment, then ten TSV fields: pid, ppid,
-# pgid, sid, age_s, starttime, state, wchan, reason, and redacted cmd.
+# pgid, sid, age_s, starttime, state, wchan, reason, and cmd. Both reason and
+# cmd have bounded secret-pattern redaction; raw reads are not secret-free.
 # Usage: tools/souji-proc-census.sh [--prefix DIR]... [--min-age S] [--selftest]
+#        tools/souji-proc-census.sh --reason-only argv|fd [--prefix DIR]...
 set -euo pipefail
 unset -f bash basename cat cd command dirname getconf kill mkdir mkfifo mktemp \
   printf pwd read readlink rm setsid sleep wait 2>/dev/null || true
@@ -14,16 +16,22 @@ readonly HEADER=$'pid\tppid\tpgid\tsid\tage_s\tstarttime\tstate\twchan\treason\t
 readonly SELF_PID=$BASHPID
 MIN_AGE=0
 SELFTEST=0
+REASON_ONLY=''
 PREFIX_SET=0
 PREFIXES=()
 
 usage() {
   cat <<'USAGE'
 Usage: souji-proc-census.sh [--prefix DIR]... [--min-age S] [--selftest]
+       souji-proc-census.sh --reason-only argv|fd [--prefix DIR]...
   --prefix DIR  Scratch-path prefix for argv/fd checks only (repeatable;
                 defaults to /var/tmp, /tmp, /dev/shm); cwd checks are not narrowed
   --min-age S   Minimum process age in integer seconds (default: 0)
   --selftest    Run the bounded /var/tmp residue and redaction fixture
+  --reason-only argv|fd
+                Format synthetic stdin only, without opening /proc: argv is
+                NUL-separated; fd is one path (one trailing newline removed).
+                Exit 3, no output, when no vanished scratch path is selected.
 
 Exit status: 0 census emitted, 1 selftest/setup failure, 2 invalid usage.
 USAGE
@@ -83,6 +91,12 @@ while (($#)); do
       MIN_AGE=$min_age_decimal
       shift 2
       ;;
+    --reason-only)
+      (($# >= 2)) || usage_error '--reason-only needs argv or fd'
+      [[ $2 == argv || $2 == fd ]] || usage_error '--reason-only needs argv or fd'
+      REASON_ONLY=$2
+      shift 2
+      ;;
     --selftest)
       SELFTEST=1
       shift
@@ -96,6 +110,7 @@ while (($#)); do
       ;;
   esac
 done
+[[ -z $REASON_ONLY || $SELFTEST == 0 ]] || usage_error '--reason-only and --selftest conflict'
 
 if ((PREFIX_SET == 0)); then
   PREFIXES=(/var/tmp /tmp /dev/shm)
@@ -189,7 +204,7 @@ sanitize_field() {
   SAFE_FIELD=${1//[$'\001'-$'\037'$'\177']/ }
 }
 
-redact_command() {
+redact_secrets() {
   local value=$1 replacement
   value=${value//[$'\001'-$'\037'$'\177']/ }
 
@@ -223,15 +238,34 @@ redact_command() {
   while [[ $value =~ xox[baprs]-[[:alnum:]_.-]+ ]]; do
     value=${value/"${BASH_REMATCH[0]}"/'[REDACTED]'}
   done
-  # Bash substring slicing is byte-based because LC_ALL=C is fixed above.
-  REDACTED_CMD=${value:0:160}
+  REDACTED_FIELD=$value
 }
 
-read_process_argv() {
-  local proc_path=$1 arg='' prefix candidate redact_next=0
+redact_command() {
+  redact_secrets "$1"
+  # Bash substring slicing is byte-based because LC_ALL=C is fixed above.
+  REDACTED_CMD=${REDACTED_FIELD:0:160}
+}
+
+format_reason() {
+  local kind=$1 path=$2 secret=${3:-0}
+  if ((secret)); then path='[REDACTED]'; fi
+  redact_secrets "$kind-path-gone:$path"
+  REDACTED_REASON=${REDACTED_FIELD:0:160}
+}
+
+# The stream parser is shared by the census and the /proc-free fixture mode.
+read_argv_stream() {
+  local arg='' prefix candidate redact_next=0 secret normalized
   CMD_RAW=''
   PROC_GONE_PATH=''
+  PROC_GONE_SECRET=0
   while IFS= read -r -d '' arg || [[ -n $arg ]]; do
+    sanitize_field "$arg"
+    normalized=$SAFE_FIELD
+    redact_secrets "$arg"
+    secret=$redact_next
+    [[ $REDACTED_FIELD == "$normalized" ]] || secret=1
     candidate=''
     case "$arg" in
       /*) candidate=$arg ;;
@@ -241,6 +275,7 @@ read_process_argv() {
       for prefix in "${PREFIXES[@]}"; do
         if top_level_scratch_gone "$candidate" "$prefix"; then
           PROC_GONE_PATH=$candidate
+          PROC_GONE_SECRET=$secret
           break
         fi
       done
@@ -253,7 +288,11 @@ read_process_argv() {
       redact_next=1
     fi
     CMD_RAW+="${CMD_RAW:+ }$arg"
-  done < "$proc_path/cmdline" 2>/dev/null || true
+  done
+}
+
+read_process_argv() {
+  read_argv_stream < "$1/cmdline" 2>/dev/null || true
 }
 find_deleted_fd_path() {
   local proc_path=$1 fd_path fd_link target prefix
@@ -344,14 +383,14 @@ census() {
     fi
     read_process_argv "$proc_path"
     if [[ -z $reason && -n $PROC_GONE_PATH ]]; then
-      sanitize_field "$PROC_GONE_PATH"
-      reason="argv-path-gone:$SAFE_FIELD"
+      format_reason argv "$PROC_GONE_PATH" "$PROC_GONE_SECRET"
+      reason=$REDACTED_REASON
     fi
     if [[ -z $reason ]]; then
       find_deleted_fd_path "$proc_path" || true
       if [[ -n $PROC_FD_GONE_PATH ]]; then
-        sanitize_field "$PROC_FD_GONE_PATH"
-        reason="fd-path-gone:$SAFE_FIELD"
+        format_reason fd "$PROC_FD_GONE_PATH"
+        reason=$REDACTED_REASON
       fi
     fi
     [[ -n $reason ]] || continue
@@ -364,8 +403,7 @@ census() {
     redact_command "$CMD_RAW"
     row_cmd=$REDACTED_CMD
     [[ -n $row_cmd ]] || row_cmd='-'
-    sanitize_field "$reason"
-    safe_reason=$SAFE_FIELD
+    safe_reason=$reason
 
     # Do not emit data read across a PID reuse or UID transition.
     process_uid "$proc_path" || continue
@@ -667,6 +705,31 @@ run_selftest() {
   fi
   printf 'souji-proc-census: selftest PASS (newline comm parser, live literal cwd/fd, age identity, all redactions, prefix boundary/scope, mixed precedence, isolated cleanup)\n'
 }
+
+# This branch performs no process enumeration, stat/status/boot-id/uptime read,
+# or signal. It exercises the exact parser and formatter used by census().
+if [[ -n $REASON_ONLY ]]; then
+  if [[ $REASON_ONLY == argv ]]; then
+    read_argv_stream
+    [[ -n $PROC_GONE_PATH ]] || exit 3
+    format_reason argv "$PROC_GONE_PATH" "$PROC_GONE_SECRET"
+  else
+    target=''
+    IFS= read -r -d '' target || true
+    target=${target%$'\n'}
+    matched=0
+    for prefix in "${PREFIXES[@]}"; do
+      if top_level_scratch_gone "$target" "$prefix"; then
+        matched=1
+        break
+      fi
+    done
+    ((matched)) || exit 3
+    format_reason fd "$target"
+  fi
+  printf '%s\n' "$REDACTED_REASON"
+  exit 0
+fi
 
 if ((SELFTEST)); then
   run_selftest
