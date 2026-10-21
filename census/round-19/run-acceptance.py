@@ -149,7 +149,7 @@ def main(argv=None):
             if m:
                 entry["selftest"] = {"pass": int(m.group(1)), "fail": int(m.group(2))}
         if name in ("carry-fixture", "rev-pin-fixture", "audit-shapes-fixture"):
-            m = re.search(r"SUMMARY\ttotal=(\d+)\tfailed=(\d+)", proc.stdout)
+            m = re.search(r"SUMMARY\s+total=(\d+)\s+failed=(\d+)", proc.stdout)
             if m:
                 entry["summary"] = {"total": int(m.group(1)),
                                     "failed": int(m.group(2))}

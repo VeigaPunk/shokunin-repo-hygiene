@@ -1043,3 +1043,9 @@ dispatch was held under the orchestrator's capacity gate; no confirmation arrive
 budget stop, so no seat ran. The L2 floor and the 64–100 wave requirement are **unmet** and are
 reported as such; the measured implementation stands on its own evidence, and the outside closure
 owns admission.
+
+Correction to the acceptance entry above: the driver's fixture-summary regex expected a tab
+after `SUMMARY` while the three r19 fixtures print a space, so the committed record
+`census/round-19/final-verification-63bb887.json` carries the fixture tallies in each entry's
+`tail` but not in a parsed `summary` field. The regex now accepts any whitespace; the record's
+tails are the observed output and no count is changed.
