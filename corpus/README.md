@@ -365,3 +365,30 @@ truncated paths remain unknown. Claimed actual r20 transcript counts are
 bound in `../census/round-21/read-count-{before,after}.json` (0→2 new flags,
 all other class counts unchanged). Q47–Q50 mine the routed r20 mistakes;
 `lessons/round-21.md` carries exact source quotes and final dispositions.
+
+### Final r21 correction and measured scope
+
+The earlier128-file census is partial, not final. Original raw-export scope
+is restored:192 `.txt` files,3539 tool calls,2372 read/grep/glob keys.
+`../census/round-21/oracle-acceptance.json` has tp3/fp0/fn0/missing0/extra0;
+the3 raw-export flags are2 distinct attempted reads. All401 prior
+per-call verdict tuples are identical. Oracle provenance is1942 direct
+independent classifications plus430 byte-identical-call transfers; seven
+post-predicate labels and one incorrectly labelled Bash call are excluded.
+
+Final code pin: `195715439a08165ed7319ee6348844fcfba60029`.
+`../census/round-21/accepted-matrix.json` records3/3 source shapes, each18/18
+under the fixed original r20 predicates. An unborn-HEAD remote-ref-only
+source also replays18/18; jj-only source remains exit2/no result
+(`remote-source-after.json`, `final-code-verification.json`). Source remote
+roots are mapped only into the private clone; source_sample_unchanged
+describes sampled fields, not whole-source integrity or cleanliness.
+
+The same final verification records32/32 read controls,4/4 renderer edges,
+27/27 reason canaries,8/8 output boundaries and3/3 source-HEAD controls.
+Baseline inputs now have exact committed-source digest guards. Four
+mutation probes kill the read-class, reason-mask, argv-provenance and
+outside-source-output mutants. No live process census was run; the
+disclosed seat snapshot-search violation means this is not a scope-clean
+process round. Existing inherited r20 result-predicate limitations remain
+explicit in the lesson, outside the portability claim.

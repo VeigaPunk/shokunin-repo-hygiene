@@ -47,6 +47,16 @@ Outside spot-check on this round's admit and reject is **pending**, not provided
 
 Only completed seat reports with genuine STATUS paragraphs are carried here after the final wave; provider-dead seats have no report and are counted in the outcome registry, not silently omitted. Final dispositions are appended below.
 
+- `.ufo/waves/round-21/w1/RevPreregC1.md:3` "STATUS: PARTIAL — the frozen C1 rule has a concrete parser disagreement, and the required before-implementation review encountered an uncommitted C1 implementation in the lane working tree. The after-vs-oracle idea can falsify an incorrect implementation, but the frozen measurement and harm-guard wording does not yet pin enough detail for independent, repeatable adjudication. No implementation or test was run by this read-only reviewer." — resolved@195715439a08165ed7319ee6348844fcfba60029 — final measured code/oracle and disposition below.
+- `.ufo/waves/round-21/w1/RevPreregC2.md:1` "STATUS: PARTIAL — C2 is falsifiable in principle, but its before/after measurement is not yet an independent, reproducible oracle: the scenario driver, compared result projection, and source/output boundary are not pinned sufficiently to determine one outcome from the frozen text." — resolved@195715439a08165ed7319ee6348844fcfba60029 — final measured code/oracle and disposition below.
+- `.ufo/waves/round-21/w1/RevengeReasonOmission.md:1` "STATUS: PARTIAL — The source-level reconstruction below is complete, but I made one scope error: an early pinned `git grep` included `census/round-18` alongside the named source paths, and its output included committed census snapshot/TSV rows. I do not use, cite, or reproduce any of those rows. This was not a live `/proc` scan or fixture run; the search nonetheless violated the historical-snapshot prohibition." — open — disclosed bounded/inherited limitation or non-reversible scope incident; see final dispositions.
+- `.ufo/waves/round-21/w1/ScoutRunnerStepsA.md:3` "STATUS: PARTIAL — The six step programs were inspected statically at `544c8358039a07e8b45e6db72312da5c8d965275`; none was executed. The committed r20 acceptance *wrapper* itself prevents a fresh-clone replay: it fixes `LANE` to `/home/vgpnk/Projects/shokunin/souji-shokunin` and rejects a different `--root` (`census/round-20/run-acceptance.py:24, 498–511`), then requires `HEAD == --rev` (`:513–519`). Thus, through this wrapper, each of steps 1–6 has a **No** verdict for a fresh clone at a detached revision: the wrapper refuses before dispatch (`:535–543`). This is distinct from whether each program, run on its own, is relocatable; those intrinsic verdicts are below." — resolved@195715439a08165ed7319ee6348844fcfba60029 — final measured code/oracle and disposition below.
+- `.ufo/waves/round-21/w2/AttackCorpus18.md:1` "STATUS: PARTIAL — The complete corpus yields 112 visible calls, but seven tail calls were recovered only after the pinned predicate had been opened: recovery/ConsumerSkill.txt lines 76 and 80, and recovery/InputR14Frozen.txt lines 81, 82, 86, 90, and 91. I labeled these seven directly from the frozen contract without using the predicate result, but the required “label every call before classifier” ordering cannot be retroactively satisfied. The other 105 rows were labeled before classifier inspection." — resolved@195715439a08165ed7319ee6348844fcfba60029 — final measured code/oracle and disposition below.
+- `.ufo/waves/round-21/w2/AttackRunnerInventoryIdentity.md:5` "STATUS: PARTIAL — the frozen 18-step projection has no static identity mismatch, but the advertised any-repository boundary has a concrete false refusal, and the replay record overstates what its source-state comparison proves. No code was executed." — resolved@195715439a08165ed7319ee6348844fcfba60029 — final measured code/oracle and disposition below.
+- `.ufo/waves/round-21/w2/AttackRunnerStepResults.md:1` "STATUS: PARTIAL — The pinned C2 runner has source-visible false-green paths in result summarization, so its `all_matched` result is weaker than the stated acceptance checks. This is a source-only advisory review; no runner, matrix, or fixture was executed." — open — disclosed bounded/inherited limitation or non-reversible scope incident; see final dispositions.
+- `.ufo/waves/round-21/residual/ResidualReplayBoundary.md:3` "STATUS: PARTIAL — one genuine false refusal existed at the measured pin and is remediated in the working tree; the remediation is source-verified here but uncommitted and unexecuted by this seat. Source-only review; no runner, matrix, fixture, git transport, or target code was executed." — resolved@195715439a08165ed7319ee6348844fcfba60029 — final measured code/oracle and disposition below.
+
+
 ## First-wave falsifier dispositions (before final replay)
 
 - RevPreregC2 reported: “STATUS: PARTIAL — C2 is falsifiable in principle, but its before/after measurement is not yet an independent, reproducible oracle: the scenario driver, compared result projection, and source/output boundary are not pinned sufficiently to determine one outcome from the frozen text.”
@@ -136,3 +146,100 @@ Source quote word-count erratum (quotes/locations unchanged): S100: 8,
 S101: 11, S102: 16, S103: 11 words, not the earlier 9/12/19/12 parenthetical
 counts. Every quote remains below25. The earlier numeric parentheticals
 are superseded, not source text silently rewritten.
+
+## Final round21 disposition and measurements
+
+Final code195715439a08165ed7319ee6348844fcfba60029; all claims author-measured,
+outside admission pending. No scalar score increase (legacy-unmapped scores).
+
+- C1: original192-file scope restored,3539 calls;2372 read/grep/glob keys,
+  oracle tp3/fp0/fn0/missing0/extra0. Three raw-export flags are two distinct
+  attempted reads, not three new seats.1942 direct independent keys plus430
+  byte-identical-call transfers;283 clipped keys remain UNSEEN. Seven labels
+  written after predicate inspection are excluded; independent votes or
+  exact-byte donors cover them. ResidualOracleKeys independently labels the
+  final14 (12 OK/2 UNSEEN) before reading code and excludes AuditCase24:80,
+  which is a Bash call containing git grep, not a grep tool call.
+  `read-root-oracle-provenance.json` records every donor/vote. All401 prior
+  per-call verdict tuples are identical (SHA256
+  4fa1fadcd8db4cd236086dcbadf23c697a7a5a1a88ee785049e4e6c7843c8273).
+  Counter role/report normalization is fixed only for preservation comparison;
+  these401 are not actual r20 permission-audit counts. Source artifacts:
+  `census/round-21/oracle-acceptance.json`, `read-full-before.json`.
+- C2: final three-source matrix3/3, each18/18 frozen r20 predicates, identical
+  selected summaries. Source HEAD can be different or null; full40/durable
+  clone checks and outside-source output guards remain. The residual reviewer
+  found a real remaining remote-ref-only refusal at54eb2d0. Original source
+  refs/remotes are now fetched only into private refs/remotes/souji-source;
+  no arbitrary requested object gets a manufactured root. Same real-source
+  fixture goes0/1→1/1 with18/18; jj-only source remains exit2/no result.
+  `accepted-matrix.json`, `remote-source-before.json`, `remote-source-after.json`,
+  `final-code-verification.json`; synthetic namespace probe retained separately.
+  The review's 'uncommitted/unexecuted' qualifier describes its own earlier
+  observation: the fix subsequently landed1957154 and was actually executed.
+- C3: final27/27 synthetic cases,0 leaks,max160; same old-emission oracle
+ 6/27,19 leaks,max454. Four mutation probes were killed: read class14
+  failures; raw reason formatter23; lost argv provenance3; source-output
+  guard2. Each seat restored its own private source byte-exact. No live
+  process scan or r18 proc fixture was run. The canary base is now pinned
+  to37c3316a1fd8cdda18cbefdc7692d3d3f388e5783e8fe19085f5d932a8ceba64.
+  The read-oracle base is pinned tob2fa68e2e98dae9d046c11775737337fb99b0db94fb5042017e4c8a56fc83389.
+  Wrong baselines refuse with2; the old read fixture already failed a
+  base==tool invocation (18 pass/14 fail), contrary to the source-only
+  review's vacuity suggestion. No fabricated false-green repair is claimed.
+
+All final own checks in final-code-verification.json: bash syntax0;
+read32/32, renderer4/4, reason27/27, output-boundary8/8, source-HEAD3/3,
+three source replays18/18 each, remote-only18/18, keep-only refusal.
+
+### Remaining bounded findings, not hidden fixes
+
+- Inherited result-predicate limitations (AttackRunnerStepResults) are
+  byte-identical to r20: bool/int equality, summary stderr acceptance and
+  count-not-name cache check matching. They are OPEN legacy robustness debt,
+  not a new result-integrity/malicious-producer claim. ResidualReplayBoundary
+  independently agrees they do not falsify the narrow portability claim.
+  Actual final receipts have empty stderr on every step and exactly the
+  original33 cache-check names. Raw outputs remain available; no warnings
+  or exceptions were suppressed to produce green.
+- Legacy ` in ` / modern ` @ ` separators are ambiguous inside arbitrary
+  literal filenames/patterns. The declared rendered grammar uses rightmost
+  separator and is a lower bound, not recovery of unobservable intent.
+  Relative whole-lane-root recursion and arbitrary Bash read/write analysis
+  remain pre-existing limitations; no older class was silently widened.
+- Bare password=/path is not an argv path candidate under the inherited
+  enumeration grammar; the r2 secret rule is conditional on a selected
+  candidate. No enumeration expansion was smuggled into the privacy fix.
+- Scope incidents remain disclosed: initial L1 ancestor-name discovery;
+  RevengeReasonOmission's forbidden snapshot search (results void, no raw
+  search output retained); and AttackCorpus18's seven late labels excluded.
+  This is not a process-scope-clean round. No operator-sweep contents were
+  opened or committed. No current/live private-value or credential probe.
+- R20 ruling overstatement is withdrawn: Main confirmed operator/Kagi
+  ownership, not an explicit approval. Historical exposure assessment,
+  inherited reap and NAMESPACE pin remain held; certification OFF, K5 HELD.
+
+### Fleet accounting and frontier
+
+Wave1:73 seats (12 executor,26 scout,12 scribe,9 reviewer,6 critic,
+3 revenger,2 sentinel,2 simplifier,1 connector):31 completed,42 provider-dead.
+Two all73 job-cap refusals preceded its unchanged successful third dispatch.
+Wave2:75 (23 scout,19 revenger,18 reviewer,6 executor,4 critic,
+4 mutation-tester,1 connector):30 completed,45 provider-dead.
+Two ordinary post-merge residual checks (critic/reviewer), not a padded
+third swarm:2 completed after one all2 cap refusal. Total150 actual seats,
+87 provider-dead,0 replacements. These residuals adjudicated the NEW merged
+oracle artifact and newer source-HEAD/remotes fix, not earlier seat retries.
+L1 holds the frozen planner seat; connector stays minimal per Main steer.
+Dead errors: Codex capacity, Haiku429, Zai429 type1302, Antigravity quota429,
+Charm402 credits and Devin weekly quota. Specs, registries and terminal
+outcomes retained under .ufo/waves/round-21. No tools installed/updated.
+
+Sources99→103: A95→99, B3/C1 unchanged; mined78→81, queued15 unchanged,
+rejected6→7; seven admitted knowledge paths unchanged. New S100–S102 mined,
+S103 rejected. Existing status/recheck/used-by changes: none. No frontier
+promotion; F5 entry deepened. Source quote count correction above stands.
+Trend assessment: expansion unchanged (no new uncovered knowledge path),
+quality improved (reason repair + reproducible replay), discernment improved
+(r20 outside disagreements became Q47–Q50 and shown-able-to-fail repairs).
+These are author assessments; independent admit/reject spot-check pending.

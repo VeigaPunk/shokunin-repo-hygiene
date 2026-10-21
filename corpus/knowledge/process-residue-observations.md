@@ -216,3 +216,13 @@ or unknown secret detection, or a complete scanner recheck. Raw argv/fd paths
 still enter memory. The r18 live-proc selftest and fixture were not run.
 No change to own-uid/racing/recognized-descendant boundaries, certification
 OFF, K5 HELD, or inherited reap/NAMESPACE holds.
+
+Final r21 recheck at `195715439a08165ed7319ee6348844fcfba60029`:
+`census/round-21/final-code-verification.json` confirms27/27 synthetic
+reason cases, leaks0, max160. The exact baseline source is pinned to
+SHA256 `37c3316a1fd8cdda18cbefdc7692d3d3f388e5783e8fe19085f5d932a8ceba64`;
+a changed baseline exits2. S100 grounds log sensitivity
+(https://cwe.mitre.org/data/definitions/532.html, Potential Mitigations);
+S101 grounds separate masking/sanitization
+(https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html,
+Data to exclude and Event collection).

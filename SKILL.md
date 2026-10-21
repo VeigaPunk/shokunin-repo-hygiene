@@ -213,11 +213,12 @@ for the legacy selftests; their historical fallback is not Q4-conformant.
 | r20-audit-contract | gate | `python3 tests/fixtures/r20-audit-contract.py [--tool PATH] [--base-tool PATH]` | 0 exact primary inventory plus literal outputs/digests/drift refusals; with baseline all eleven named over-authorizations must reproduce; 1 any mismatch/missing case/baseline witness; 2 prerequisite/usage | same default invocation over fresh synthetic worlds; baseline mode required for claim's before/after | fixture REQUIRED_CASE_IDS and BASE_BROAD_CASE_IDS, independent preregistration `.ufo/waves/round-20/preregistration.txt` | isolated /var/tmp; imports selected auditor only, never executes transcript commands; temporary source variants only | souji |
 | r20-input-binding | gate | `python3 tests/fixtures/r20-input-binding.py --baseline 12516f7dcdd5b165e5ee208d44a38d63b5bd5812` | 0 exact caller/helper/historical-counter inventory plus all seven old-producer/current-refusal pairs; 1 any behavioral/inventory mismatch; 2 prerequisite/usage | same default invocation has 36 literal cases; named baseline adds seven actual entrypoint guard pairs, with suites stopped by a producer tripwire | fixture expected_case_ids and BASELINE_PAIR_CASE_IDS, frozen oracle `.ufo/waves/round-20/preregistration.txt` | bounded source copies and isolated /var/tmp Git repos only; actual changed CLI refusals, no live census or signal suites; paired main calls do not run measurement producers | souji |
 | r21-acceptance | evidence | `python3 census/round-21/run-acceptance.py --root <local-clone-or-bare-repo> --rev <full40> --output <new-absolute-json>` | 0 fixed18 r20 predicates match; 1 retained mismatch; 2 refused revision/input/output; source HEAD may differ or be unresolved | `bash census/round-21/replay-matrix.sh --runner census/round-21/run-acceptance.py --lane <source-repo> --rev <full40> --work <new-var-tmp-dir>` | step-inventory.json freezes the original18 programs/expectations; source_sample_unchanged means sampled HEAD/bare/tracked-status only | private no-local clone at rev; output outside source; historical agreement staging; not a whole-source integrity proof | souji |
-| r21-read-root | gate | `python3 tests/fixtures/r21-read-root.py --tool tools/souji-seat-audit.py --base-tool <6ff3413-auditor-file>` | 0 all32 literal expectations and prior classes preserved; 1 mismatch | same synthetic invocation, no recorded command executed | baseline18/32 versus changed32/32;14 base discriminators | in-memory transcript parsing | souji |
+| r21-read-root | gate | `python3 tests/fixtures/r21-read-root.py --tool tools/souji-seat-audit.py --base-tool <6ff3413-auditor-file>` | 0 all32 literal expectations/prior classes; 1 mismatch; 2 usage/baseline-identity refusal | same in-memory invocation, never executes recorded commands | base SHA256 b2fa68e2e98dae9d046c11775737337fb99b0db94fb5042017e4c8a56fc83389; baseline18/32→32/32 | no production writes | souji |
 | r21-reason-canary | gate | `bash tests/fixtures/r21-reason-canary.sh --tool tools/souji-proc-census.sh --base <6ff3413-proc-file>` | 0 all27 controls; 1 mismatch; 2 usage or baseline-identity refusal | `--baseline-as-tool` same oracle fails21 old-emission cases; changed-base synthetic control exits2 | baseline SHA25637c3316a1fd8cdda18cbefdc7692d3d3f388e5783e8fe19085f5d932a8ceba64; leaks19→0, max454→160 | synthetic /var/tmp input files; --reason-only only, no live proc selftest | souji |
 | r21-read-render-edges | gate | `python3 tests/fixtures/r21-read-render-edges.py --tool tools/souji-seat-audit.py` | 0 four no-overreach controls; 1 mismatch; 2 usage | same isolated in-memory invocation | mixed/uppercase URI and conflicts selectors red0/4→4/4 | no writes | souji |
 | r21-replay-boundaries | gate | `python3 tests/fixtures/r21-replay-boundaries.py --tool census/round-21/run-acceptance.py --base-tool <8513d6ac-runner-file>` | 0 eight literal output-path expectations; 1 mismatch; 2 usage | same temp-tree invocation; old runner fails4/8 | corpus/lessons/round-21.md; census/round-21/replay-boundaries.txt | own /var/tmp synthetic paths, never invokes runner main | souji |
 | r21-source-head | gate | `python3 tests/fixtures/r21-source-head.py --tool census/round-21/run-acceptance.py --base-tool <522dcd76-runner-file>` | 0 three source-state expectations; 1 mismatch; 2 usage | same isolated bare-repository invocation; old runner fails1/3 | census/round-21/source-head-before.txt, source-head-after.txt | own /var/tmp Git fixture only | souji |
+| r21-source-refs | gate | `python3 tests/fixtures/r21-source-refs.py --runner census/round-21/run-acceptance.py --root <local-source> --rev <full40> --work <new-var-tmp-dir> [--keep-only]` | 0 expected remote-only18/18 or keep-only exit2/no-result; 1 mismatch; 2 usage | same isolated bare-source construction in each mode | census/round-21/remote-source-before.json, remote-source-after.json, final-code-verification.json | own /var/tmp Git graph only; no source writes or live proc | souji |
 
 Sources for this skill: `corpus/SOURCES.md`; admission bar: `corpus/QUALITY.md`.
 
@@ -352,10 +353,11 @@ including old-function red controls. Evidence/source bindings: S100/S101 and
 `corpus/knowledge/process-residue-observations.md`; QUALITY Q49.
 
 Raw argv/fd values are still read before printing; unknown/encoded patterns
-and historical exposure remain unproved. R21 never ran a live proc census,
-private-value probe or historical snapshot inspection. Operator/Kagi owns
-exposure assessment; inherited reap/NAMESPACE holds, certification OFF and
-K5 HELD are unchanged.
+and historical exposure remain unproved. L1 measurements used no live
+process census or private-value probe. A seat's prohibited historical-snapshot
+search is disclosed and excluded in the r21 lesson; the round is not
+process-scope-clean. Operator/Kagi owns exposure assessment; inherited
+reap/NAMESPACE holds, certification OFF and K5 HELD are unchanged.
 
 ### Round21 relative-read and replay contracts
 
@@ -370,3 +372,12 @@ The r20 runner/receipt is immutable historical evidence, not a current command.
 The r21 historical agreement step checks original artifact bytes, not an
 upgraded proc tool against an old digest (Q48). Replay outcomes are not a
 bit-identical reproducible-build claim (S103).
+
+Replay setup also imports original source `refs/remotes/*` into private
+`refs/remotes/souji-source/*`: an unborn-HEAD, remote-ref-only source can
+therefore replay its advertised durable commit. It never imports `refs/jj/*`
+or creates a durable ref merely from the requested SHA. `source_sample_unchanged`
+means sampled HEAD/bare/tracked-status equality, not all source bytes.
+The eighteen result predicates remain the frozen r20 predicates; inherited
+type/stderr/cache-check-name limitations are explicitly recorded in the
+round21 lesson, not advertised as malicious-producer attestation.

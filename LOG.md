@@ -1286,3 +1286,34 @@ operator-sweep contents remain unopened and unstaged. Provider-dead seats
 are never replaced. Final measured/falsifier results appended after they run.
 Certification OFF; K5 HELD; inherited reap/NAMESPACE and historical exposure
 assessment remain operator-owned. No tool installations/updates.
+
+### Round21 final measured corrections and outcomes
+
+Final code `195715439a08165ed7319ee6348844fcfba60029` passes the three-source
+matrix3/3, each18/18 original r20 predicates; remote-ref-only/unborn-HEAD
+source also18/18, jj-only source exit2/no result. Source root samples are
+not whole-source byte identity (`census/round-21/final-code-verification.json`,
+accepted-matrix.json, remote-source-after.json). Real before refusals and
+all interim receipts stay immutable. Source original remotes are imported
+only into private refs/remotes/souji-source/*; no keep ref is promoted.
+
+C1 restores the ORIGINAL192-file universe (the earlier128-only reduction
+was corrected):3539 calls;2372 oracle keys, tp3/fp0/fn0/missing0/extra0,
+all401 old verdict tuples identical.1942 directly independent keys plus430
+byte-identical-call transfers;7 late-labelled rows excluded and an extra
+Bash-as-grep row corrected by the ordinary residual critic. Evidence:
+census/round-21/oracle-acceptance.json and read-root-oracle-provenance.json.
+Final code also passes32/32 read cases,4 renderer cases,27 canaries,
+8 output-boundary and3 source-HEAD cases. Four mutants killed in wave2.
+
+Correction to the first r21 entry's blanket snapshot wording: L1 synthetic
+measurements used no live process/private-value probe, but
+RevengeReasonOmission violated the historical-snapshot search prohibition;
+its accidental result is void and not retained as evidence. Do not claim
+that every seat stayed within scope. The initial L1 directory-name
+discovery is also disclosed. No operator-sweep contents were opened or
+staged. Source corpus rows99→103 (A95→99, B3/C1 unchanged;
+mined78→81, queued15 unchanged, rejected6→7); knowledge paths7→7.
+S100/S101/S102 mined, S103 rejected; no existing source-cell changes.
+Certification OFF, K5 HELD, inherited reap/NAMESPACE and historical
+exposure assessment remain held. No tools installed or updated.
