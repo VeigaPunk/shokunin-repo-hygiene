@@ -246,7 +246,9 @@ The earlier broad “no operator-sweep access by L1” wording is superseded for
 metadata exposure; no operator-tree content read, copy, mutation, commit or reap is
 claimed or authorized.
 
-## Seat-reported failures
+## Archived recovery STATUS catalogue (not complete final carry)
+
+This historical26-paragraph catalogue is retained as a draft, not a completeness claim. The sole canonical Seat-reported failures section below carries the24 recognized final-wave failure paragraphs against all103 actual report files.
 
 Complete visible source STATUS paragraphs are retained below. The existing gate does not classify OPEN as a failure word, so its zero recognized-marker count is not evidence of no findings. This conservative catalogue includes inline status paragraphs; code/scope dispositions above are separate from unrun runtime acceptance. No round admission is self-declared.
 
