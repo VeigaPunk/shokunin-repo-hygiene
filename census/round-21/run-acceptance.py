@@ -569,9 +569,19 @@ def main(argv=None) -> int:
             root = temp_root / "src"
             clone_cmd = ["git", "-c", "core.hooksPath=/dev/null", "clone", "--quiet", "--no-local", "--no-checkout",
                          "-c", "core.hooksPath=/dev/null", "--", str(source), str(root)]
-            proc = subprocess.run(clone_cmd, env=CHILD_ENV, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            proc = subprocess.run(clone_cmd, cwd=temp_root, env=CHILD_ENV, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             if proc.returncode:
                 raise Refusal("clone failed: " + decode_exact(proc.stderr))
+            # Normal clone refspecs omit source refs/remotes. Preserve those
+            # original durable roots privately, without promoting refs/jj or
+            # manufacturing a ref for an arbitrary requested object.
+            source_refs_cmd = ["git", "-C", str(root), "-c", "core.hooksPath=/dev/null",
+                               "fetch", "--quiet", "--no-tags", "--", str(source),
+                               "+refs/remotes/*:refs/remotes/souji-source/*"]
+            proc = subprocess.run(source_refs_cmd, cwd=temp_root, env=CHILD_ENV,
+                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            if proc.returncode:
+                raise Refusal("source remote-ref transfer failed: " + decode_exact(proc.stderr))
             proc = subprocess.run(["git", "-C", str(root), "-c", "core.hooksPath=/dev/null", "checkout", "--quiet", "--detach", args.rev],
                                   env=CHILD_ENV, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             if proc.returncode:
@@ -633,6 +643,7 @@ def main(argv=None) -> int:
                 "input_sha256_before": initial_snapshot, "input_sha256_after": final_snapshot,
                 "inputs_unchanged": initial_snapshot == final_snapshot,
                 "baseline_extraction": extraction, "clone_command": clone_cmd,
+                "source_remote_refs_command": source_refs_cmd,
                 "agreement_check_scope": "Original tool/counter bytes from their recorded revisions, verified against immutable record digests; no live census.",
                 "scope": "Committed public repository inputs in an isolated clone; source HEAD/bare/tracked-status are samples only, not whole-source contents or cleanliness; no live process census, signals or private data.",
                 "commands": results,
