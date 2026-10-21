@@ -361,7 +361,7 @@ specific round18 reap/NAMESPACE holds, certification OFF and K5 HELD remain.
 
 ## Seat-reported failures
 
-Final canonical failure paragraphs from the103-report set follow. Original marker text remains verbatim; the final report distinguishes repaired code, stronger oracles, rejected predictions and operator-held limits. This does not declare admitted:true.
+Final canonical failure paragraphs from the103-report set follow. Original marker text remains verbatim; the final report distinguishes repaired code, stronger oracles, rejected predictions and operator-held limits. admitted: false. Outside adjudication remains pending.
 
 - ReopenHistoryReject `.ufo/waves/round-20/final/ReopenHistoryReject.md:3` — open (original source statement retained; final disposition below) — STATUS: PARTIAL — S090's rejection outcome agrees with the live page and with PROVINCE.md's refusal. The S090 registry row and the round-20 Gate entry still carry three real defects, and L1 should fix them before S090 serves as the discernment reject: (1) the row's "flip" clause cannot reverse the Souji-side decision; (2) neither the row nor the Gate cites the policy that supports the reject (S032 does); (3) S090 shares S032's URL and reject without saying so, and adds no new page fact. No invented historical reject was found.
 - FinalReadScope `.ufo/waves/round-20/final/FinalReadScope.md:3` — open (original source statement retained; final disposition below) — STATUS: PARTIAL — the ConsumerSkill report discloses its repository-root recursive `grep` but omits a preceding repository-root `glob`. Q45 makes both implicit root expansions scope violations, so the report's independent source-review conclusion is void as seat evidence and must be retained only as a named-file re-derivation below. This critic used only the specified pinned Git blobs; no actual protected subtree was accessed.
@@ -471,3 +471,16 @@ dead-session handles were registered0-start/0-consumed by the final operator
 ruling. Recovery25 provider-dead seats, final0;39+64 actual reports. Native
 errors and all names are retained in recovery-seat-outcomes.json; no identity
 replacements. No installs, upgrades, process reaping, promotion or certificate.
+
+### Landing bookkeeping failures retained
+
+The actual e41db6d landing gate returned29 findings:24 carries were hidden by
+the draft's duplicate first carry heading, plus5 deliberate non-file citation
+atoms. The old draft heading is renamed, leaving one canonical complete carry;
+five exact reasoned exemptions name only category shorthands and two verbatim
+Unicode-range locators, not missing evidence artifacts. The next9181ee2 gate
+carried all24 paragraphs and resolved every pointer but read the prose denial
+of admission as the literal positive admission token. This authorial metadata
+mistake is corrected to the explicit false field above, without altering any
+source STATUS text, expected runtime verdict or gate code. Both red receipts
+remain in census/round-20; no old result is rewritten.
