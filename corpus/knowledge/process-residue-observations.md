@@ -1,6 +1,6 @@
-source: S082, S083, S084, S085 (opened 2026-10-21); S075, S076 (rechecked 2026-10-21); own-work `tools/souji-proc-census.sh`
-verified-at: base 3ab2c81479f5004c8bc91946eea482caec45408f; man-pages 6.19 (2026-02-08); host Linux 7.2.11-arch1-1
-recheck: `bash tools/souji-proc-census.sh --selftest` and `bash tests/fixtures/r18-proc-census.sh --tool tools/souji-proc-census.sh` (fixture P1–P19, scratch only under /var/tmp)
+source: S082, S083, S084, S085; S075, S076; S100 (CWE-532), S101 (OWASP Logging); own-work `tools/souji-proc-census.sh`
+verified-at: reason-only synthetic repair 4d5bf78432de7f4afe38e6bf195fd7843bdcb7e3 (r21); historical scanner base 3ab2c81479f5004c8bc91946eea482caec45408f; man-pages 6.19 (2026-02-08)
+recheck: synthetic-only `bash tests/fixtures/r21-reason-canary.sh --tool tools/souji-proc-census.sh --base <6ff3413 tool file>`; historical live-proc fixtures require a separate authorized run and were NOT run in r21
 
 # Process residue as an observed, list-only surface (F5)
 
@@ -170,3 +170,49 @@ The raw-read and reason-output risk is operator/Kagi-owned for exposure
 assessment; a separate synthetic-only repair needs the recorded round20 L0
 ruling. No scanner code or canary fixture is changed here. Observation and
 nomination grant no reap, deletion, snapshot-purge or credential authority.
+
+## Round-21 reason output repair — synthetic only
+
+The r20 privacy finding is repaired in the current output path, not erased
+from its historical record. CloseSouji20 routed a synthetic-only reason repair;
+historical exposure remains unmeasured under operator/Kagi ownership. S100
+warns against secrets in logs; S101 separately requires sensitive-data masking
+and control-character sanitation. Neither source promises universal masking.
+
+`cmd` and the path-bearing `reason` now use one ordered eight-pattern redactor.
+Both replace control bytes and bound the whole field to 160 bytes. A selected
+argv gone-path retains its originating argument's secret classification:
+the value following `--token`, `--token=...`, `--password=...`, `password=...`
+or an argument changed by an inherited secret pattern yields
+`argv-path-gone:[REDACTED]`. Thus extracting the path does not erase the token
+marker. An ordinary short path remains byte-exact; fd path text goes through
+the same patterns and whole-field bound.
+
+Proc-free replay:
+
+```sh
+# Fabricated nonexistent path only; this mode opens no /proc files.
+printf 'worker\0--token=/var/tmp/souji-r21-example-nonexistent/file\0' |
+  bash tools/souji-proc-census.sh --reason-only argv --prefix /var/tmp
+# argv-path-gone:[REDACTED]
+```
+
+`--reason-only argv` reads NUL-separated synthetic cmdline bytes and uses the
+same stream parser and formatter as the census. `--reason-only fd` reads one
+synthetic target (one trailing newline removed). Exit 0 prints one reason;
+exit 3 prints nothing when no gone path qualifies. The branch exits before
+process enumeration, boot-id or uptime reads.
+
+Evidence: `census/round-21/reason-oracle-before.txt` versus `reason-after.txt`:
+the same27-case oracle goes6/27→27/27, fabricated leaks19→0, maximum
+reason454→160 bytes. Base function bodies are extracted exactly; only their
+input path points to a generated cmdline file, never /proc. The two
+arbitrary-input output sinks are now covered,1/2→2/2; wchan and the kernel
+identity/state fields are not asserted to be universal redaction surfaces.
+Eight inherited cmd-pattern probes are byte-identical (`cmd-compatibility.json`).
+
+This does not establish secret-free reads, historical live exposure, encoded
+or unknown secret detection, or a complete scanner recheck. Raw argv/fd paths
+still enter memory. The r18 live-proc selftest and fixture were not run.
+No change to own-uid/racing/recognized-descendant boundaries, certification
+OFF, K5 HELD, or inherited reap/NAMESPACE holds.

@@ -158,12 +158,15 @@ Process listings never authorize killing, quarantine or deletion; certification 
 K5 HELD. This round repairs evidence/consumer contracts only and acquires no cleanup,
 host-management or fleet-orchestration authority.
 
-### Round20 privacy limit
+### Round21 privacy boundary
 
-The Refuses policy is not proof that the scanner avoids all raw private values:
-it reads raw same-uid argv, and its reason column sanitizes control bytes but
-does not apply the cmd canary redactor to path text. The current source-level
-defect and unknown historical exposure are explicitly held for operator/Kagi,
-not an authorization for Souji to inspect private snapshots or live processes.
-See the `souji | round-20` F5 reason-field L0 request and the final correction in
-`corpus/knowledge/process-residue-observations.md`.
+The Refuses policy is not proof that the scanner avoids raw private values:
+it still reads raw eligible same-uid argv/fd paths. R21 repairs the reason
+output using the shared secret patterns, secret-bearing argv provenance and
+a 160-byte bound, tested only on fabricated inputs through --reason-only.
+Historical exposure, unknown/encoded secret syntax and universal output
+privacy remain unproved. Operator/Kagi retains exposure assessment; no
+private snapshot or live-process inspection is authorized by this repair.
+See S100/S101, QUALITY Q49 and the r21 section of
+`corpus/knowledge/process-residue-observations.md`. List-only, inherited reap
+and NAMESPACE holds, certification OFF and K5 HELD are unchanged.

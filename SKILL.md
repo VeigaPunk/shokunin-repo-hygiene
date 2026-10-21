@@ -209,10 +209,12 @@ for the legacy selftests; their historical fallback is not Q4-conformant.
 | r19-carry-wrap | gate | `python3 tests/fixtures/r19-carry-wrap.py [--tool PATH] [--base-rev REV]` | 0 four exact cases, both named baseline discriminators and branch counters match; 1 any mismatch or changed discriminator set; 2 prerequisite/usage | same default invocation in four isolated /var/tmp Git worlds | literal expected exit/finding IDs, required wrap-unmarked and wrap-bullet-wrapped base mismatches, exact report/marker/status/heading counters | /var/tmp only; no historical evidence overwrite | souji |
 | probe-carry-invariants | probe | `python3 census/round-19/probe-carry-invariants.py` | 0 every seeded invariant held; 1 a violation; 2 prerequisite | deterministic seeded run itself (no separate selftest; a breaking rule change fails it) | `census/round-19/carry-invariants.txt` (400 paragraphs, 562 boundary cuts, 842 midline cuts, 0 violations) | none (in-memory; no repo writes) | souji |
 | r19-seat-audit-shapes | gate | `python3 tests/fixtures/r19-seat-audit-shapes.py [--tool PATH]` | 0 all literal cases match and baseline differs on at least two; 1 failed case/vacuity; 2 prerequisite/usage | same default synthetic spec/transcript invocation; explicit DELIVER/SCRATCH controls, tools patch refusal, kill/killpg/sudo/loop/xargs/variable shapes and root=/prefix controls | expected case table in fixture; `census/round-19/c1-audit.txt` is historical, not the r20 run | /var/tmp only; recorded Bash/Python commands are inert transcript text | souji |
-| verify-agreement-pin | gate | `python3 census/round-19/verify-agreement-pin.py --root DIR --check RECORD` (or `--emit RECORD`) | 0 every pinned digest matches; 1 mismatch/missing; 2 malformed/unreadable/refuse-overwrite | `python3 census/round-19/verify-agreement-pin.py --selftest` (5/0) | `census/round-19/proc-agreement-pinned.json` (tool 4800fd7, counter 2d4c7f8) | read-only lane files; `--emit` exclusive create | souji |
+| verify-agreement-pin | historical gate | `python3 census/round-19/verify-agreement-pin.py --root <original-byte-tree> --check RECORD` (or `--emit RECORD`) | 0 every pinned digest matches; 1 mismatch/missing; 2 malformed/unreadable/refuse-overwrite | `python3 census/round-19/verify-agreement-pin.py --selftest` (5/0 historical) | r21 runner's agreement-pin-check stages original tool/counter revisions and verifies immutable digests; the upgraded current proc tool is not the r18 tool | isolated historical inputs; no live census | souji |
 | r20-audit-contract | gate | `python3 tests/fixtures/r20-audit-contract.py [--tool PATH] [--base-tool PATH]` | 0 exact primary inventory plus literal outputs/digests/drift refusals; with baseline all eleven named over-authorizations must reproduce; 1 any mismatch/missing case/baseline witness; 2 prerequisite/usage | same default invocation over fresh synthetic worlds; baseline mode required for claim's before/after | fixture REQUIRED_CASE_IDS and BASE_BROAD_CASE_IDS, independent preregistration `.ufo/waves/round-20/preregistration.txt` | isolated /var/tmp; imports selected auditor only, never executes transcript commands; temporary source variants only | souji |
 | r20-input-binding | gate | `python3 tests/fixtures/r20-input-binding.py --baseline 12516f7dcdd5b165e5ee208d44a38d63b5bd5812` | 0 exact caller/helper/historical-counter inventory plus all seven old-producer/current-refusal pairs; 1 any behavioral/inventory mismatch; 2 prerequisite/usage | same default invocation has 36 literal cases; named baseline adds seven actual entrypoint guard pairs, with suites stopped by a producer tripwire | fixture expected_case_ids and BASELINE_PAIR_CASE_IDS, frozen oracle `.ufo/waves/round-20/preregistration.txt` | bounded source copies and isolated /var/tmp Git repos only; actual changed CLI refusals, no live census or signal suites; paired main calls do not run measurement producers | souji |
-| r20-acceptance | evidence | `python3 census/round-20/run-acceptance.py --root /home/vgpnk/Projects/shokunin/souji-shokunin --rev <full40> --output census/round-20/<new>.json` | 0 eighteen commands exactly match literal expected records; 1 retained failed/mismatched result; 2 refused revision/input/output or unavailable invocation; no default output | no separate selftest; invokes the registered fixtures/selftests and actual clean cache demonstration plus five full-ID counters | INPUT_PATHS, make_steps expectations and baseline 12516f7dcdd5b165e5ee208d44a38d63b5bd5812 in the runner; actual result JSON required before a pass claim | selected owned code/fixture/corpus bytes bound before/after, baseline auditor extracted privately, exclusive output; external binaries/environment and atomic filesystem behavior not attested | souji |
+| r21-acceptance | evidence | `python3 census/round-21/run-acceptance.py --root <local-clone-or-bare-repo> --rev <full40> --output <new-absolute-json>` | 0 eighteen literal outcomes match; 1 retained mismatch; 2 refused revision/input/output; source HEAD need not match | `bash census/round-21/replay-matrix.sh --runner census/round-21/run-acceptance.py --lane <source-repo> --rev <full40> --work <new-var-tmp-dir>` | runner INPUT_PATHS and fixed 18-step expectations; historical r20 runner remains at its measured revision only | private no-local clone at rev; source repo read-only; exclusive output; historical agreement input staging | souji |
+| r21-read-root | gate | `python3 tests/fixtures/r21-read-root.py --tool tools/souji-seat-audit.py --base-tool <6ff3413-auditor-file>` | 0 all32 literal expectations and prior classes preserved; 1 mismatch | same synthetic invocation, no recorded command executed | baseline18/32 versus changed32/32;14 base discriminators | in-memory transcript parsing | souji |
+| r21-reason-canary | gate | `bash tests/fixtures/r21-reason-canary.sh --tool tools/souji-proc-census.sh --base <6ff3413-proc-file>` | 0 all27 canaries/controls; 1 mismatch | `--baseline-as-tool` applies same oracle to exact old function emissions and fails21 cases | fabricated leaks19→0, max reason454→160 | synthetic input files under /var/tmp only; --reason-only exits before /proc reads; live selftest prohibited this round | souji |
 
 Sources for this skill: `corpus/SOURCES.md`; admission bar: `corpus/QUALITY.md`.
 
@@ -329,21 +331,39 @@ recognized by the bounded parent-chain snapshot are excluded; unreadable/racing 
 guaranteed secret-free; `reason` and `cmd` have separate sanitation. See the exact source/code/
 fixture bindings and inference limits appended to
 `corpus/knowledge/process-residue-observations.md` (S082, S086–S088, S075/S076), and Q42.
-Isolated recheck: `bash tests/fixtures/r18-proc-census.sh --tool tools/souji-proc-census.sh`.
+Historical scanner recheck (NOT run or newly authorized in r21): `bash tests/fixtures/r18-proc-census.sh --tool tools/souji-proc-census.sh`. R21 rechecks only the proc-free reason mode.
 Other-uid residue is outside this tool, not wholesale ownership assigned to Mori.
 
 The specific `souji | round-18` F5 reap and NAMESPACE_SHA256 requests remain **HELD**;
 historical58-orphan observations are dated, not current counts. No listing grants killing,
 quarantine or deletion. Certification **OFF**, K5 **HELD**.
 
-### F5 privacy defect — supersedes unqualified r19 redaction wording
+### Round21 F5 privacy repair — synthetic evidence only
 
-The canary evidence applies to `cmd` only. `reason` currently receives argv/fd
-path text with control-byte sanitation, not secret-shape redaction; a sensitive
-path can remain visible. Raw argv is read before any printing-time redaction.
-Do not call this scanner secret-free or its entire table redacted. This round
-permits no live proc/private-value probe or historical snapshot inspection:
-operator/Kagi owns the exposure ruling in the `souji | round-20` L0 request.
-Only separately scoped synthetic evidence can justify a later repair. No reap,
-purge or deletion authority follows. Current correction and source bindings:
-`corpus/knowledge/process-residue-observations.md`; QUALITY Q46.
+Reason-path output now shares cmd's eight secret-pattern transformations and
+160-byte whole-field bound; a selected secret-bearing argv element keeps its
+provenance and emits `argv-path-gone:[REDACTED]`. Ordinary short path controls
+remain exact. Proc-free replay uses `--reason-only argv` (NUL stdin) or `fd`
+(one target); `tests/fixtures/r21-reason-canary.sh` applies27 literal cases,
+including old-function red controls. Evidence/source bindings: S100/S101 and
+`corpus/knowledge/process-residue-observations.md`; QUALITY Q49.
+
+Raw argv/fd values are still read before printing; unknown/encoded patterns
+and historical exposure remain unproved. R21 never ran a live proc census,
+private-value probe or historical snapshot inspection. Operator/Kagi owns
+exposure assessment; inherited reap/NAMESPACE holds, certification OFF and
+K5 HELD are unchanged.
+
+### Round21 relative-read and replay contracts
+
+Audit targets are resolved from the contract fleet cwd, not guessed from the
+lane: V-READ-ROOT (minor) flags visible outside-lane relative read/grep/glob
+targets and a complete pathless grep. Truncated targets remain unknown.
+V-RECURSIVE and all older violation classes are retained (Q47).
+
+Current acceptance uses the r21 runner, which selects the named durable
+commit in a private clone; neither the caller path nor its HEAD is authority.
+The r20 runner/receipt is immutable historical evidence, not a current command.
+The r21 historical agreement step checks original artifact bytes, not an
+upgraded proc tool against an old digest (Q48). Replay outcomes are not a
+bit-identical reproducible-build claim (S103).

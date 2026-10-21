@@ -1250,3 +1250,39 @@ The other clipped and relative-call findings are retained, not waved green.
 A new measured pin and18-command record are required. This does not repair
 the separate F5 reason-column privacy defect, attest unobserved tool payloads,
 or retroactively neutralize the six original private-clone setups.
+
+## 2026-10-21 — round21 routed privacy/replay repairs and implicit-read calibration
+
+Three frozen claims: C1 calibration (lowest7), C2 operability, C3 output-sink
+coverage. R20 outside closure admitted (CloseSouji20; MANIFEST rounds[402]);
+exact routing excerpt `census/round-21/r20-closure-excerpt.json`. Preregistration
+`544c8358039a07e8b45e6db72312da5c8d965275`, later pre-measurement clarification
+preserves old evidence and avoids duplicated recovery transcript counts.
+
+- C2 landed `8513d6ac97076f34ff94a3fc1979c13e69c2d19a`: private no-local
+  clone at full durable --rev, no source-lane-path/source-HEAD restriction;
+  r16/r18 fixtures derive their own root. Baseline matrix0/3
+  (`census/round-21/replay-before.txt`); first changed run18/18 at that
+  commit (`acceptance-c2-first.json`), with old auditor/proc tool bytes:
+  this demonstrates C2 independently of C1/C3.
+- C1 landed `f2248c026bcce5f3a919fa6ac57cd8d9ca18cffa`: new minor
+  V-READ-ROOT supplements exact-root V-RECURSIVE. Same32-case oracle
+  baseline18/32→32/32,14 discriminators (`read-fixture-before.txt`,
+  `read-fixture-after.txt`); truncated paths remain unknown.
+- C3 landed `4d5bf78432de7f4afe38e6bf195fd7843bdcb7e3`: shared cmd/reason
+  secret patterns, selected-argv provenance and160-byte whole-field reason
+  bound; proc-free --reason-only uses the production parser/formatter.
+  Same27-case oracle baseline6/27→27/27, leaks19→0, max454→160
+  (`reason-oracle-before.txt`, `reason-after.txt`), eight command probes
+  byte-identical (`cmd-compatibility.json`). No live /proc census,
+  credentials, private TSV or historical snapshot inspected.
+
+S100/S101 (CWE/OWASP) support reason-output treatment; S102 git-clone supports
+transport; S103 reproducible-build inference rejected. Quotes, mistakes
+R21-M1–M7 and Q47–Q50 are in `corpus/lessons/round-21.md` Gate/Mistakes.
+No numeric score delta or admission is self-attested. Scope deviation:
+initial L1 directory-name discovery is disclosed/void as evidence (R21-M5);
+operator-sweep contents remain unopened and unstaged. Provider-dead seats
+are never replaced. Final measured/falsifier results appended after they run.
+Certification OFF; K5 HELD; inherited reap/NAMESPACE and historical exposure
+assessment remain operator-owned. No tool installations/updates.
