@@ -130,3 +130,9 @@ digests. L1 runs it once after the round commit; a red command is reported, not 
 
 Round 19 seat failure-channel lines, appended after the waves return (each quoted verbatim
 with its disposition).
+
+## Mistakes (appended after commit 005f3d3)
+
+| id | class | evidence pointer | captured-by | fix |
+|---|---|---|---|---|
+| R19-M6 | A recursive `find . -name __pycache__ -exec rm -rf` deleted a **tracked** historical bytecode file (`census/round-10/__pycache__/S13-candidate-battery.cpython-314.pyc`, 24,049 bytes) along with generated caches. | `git status --porcelain` showed ` D census/round-10/__pycache__/…pyc` immediately after the cleanup | the pre-commit status check; no criterion forbids generated-cache cleanup, but nothing checked trackedness first | restored byte-exact from the branch (`git show <tip>:<path> > <path>`, size 24,049 matches); future cleanup lists `git ls-files` first |
