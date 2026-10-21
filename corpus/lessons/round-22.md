@@ -21,6 +21,8 @@ The current runner source evolves in place. Historical r21 receipts, frozen inve
 | R22-M7 | calibration, witness | the two1200-deep `decoder-depth` vectors were recorded as the witness for 4f83fd2's RecursionError repair, but on Python3.14.8 a1200-deep array decodes without error: base also returns False, and deleting either RecursionError catch survives all214 | none; a repair witness was never run against base before being called discriminating | Depth100000 vectors: base raises `RecursionError: Stack overflow`, changed returns False; both catch-deletions are killed. Interpreter- and stack-dependent observation (S107), not a documented threshold; the1200 rows stay as non-discriminating controls. |
 | R22-M8 | scope, seat writes (Q26) | w1 Counter2/11/16/18 wrote base-runner/probe scratch outside their sole report; ReviewHistoricalScope used a relative patch header (`census/round-22/w1-scope-dispositions.json`) | Q26 | Their evidence is VOID; every claim number here is L1-regenerated. The new probe's `--grade-stdin`/`--oracle` grade a historical runner or oracle in memory, so a reviewing seat needs no scratch file; stdin grading reproduces the file-graded214/225 receipts exactly (results, runner and oracle SHA256 equal). |
 | R22-M9 | operability, coordinator loss | SoujiR22 died about27min in on a provider cyber_policy refusal; its W2 (64 seats) lost26 seats with the parent, no report (`census/round-22/w2-dead-seat-residual.json`) | none | Disclosure only. Refused work was not rephrased or rerouted; dead seats were not replaced. Their26 single-vector items got an L1 mechanical residual (base/changed observation plus attributing mutant), which is not an independent review. |
+| R22-M10 | calibration, premature saturation | the225 probe's "21/21 non-equivalent killed" covered only25 author-chosen mutants; CritMutation found unlisted exact-leaf/case-row survivors, and CritAdequacy245 later found14 further diff-enumerated survivors despite38/38 listed kills | Q52's every-clause wording was violated by an incomplete mutant inventory | Q53 supersedes Q52 with a diff-enumerated inventory, explicit named equivalents and environment observations. The first20 appended vectors retire15 disagreements on45 mutants; the subsequent13 retire14 disagreements on59 mutants. Historical red receipts: mutation-adequacy-listed45-oracle225.json and mutation-adequacy-listed59-oracle245.json. Final receipt: mutation-adequacy-oracle258.json,52 killed of59 listed,7 named equivalents. This is not exhaustive mutant-space coverage. |
+| R22-M11 | calibration, environment | oracle225 base69/225 and listed21/21 kills at8192-KiB stack were presented without the condition. CritMeasure245 found a variable flip near15679–15685 KiB; adding about960KB environment changed the outcome at16384 KiB | none | Probe and stdin-grading receipts now record interpreter, soft stack bytes, probe hash and direct depth100000 decoder outcome. The two catch witnesses discriminate only when that decode raises. Stack-size sweep samples are not universal thresholds (S108); the214 headline is independent of these two vectors. |
 
 ## Gate
 
@@ -30,6 +32,7 @@ The current runner source evolves in place. Historical r21 receipts, frozen inve
 - S105 mined: https://docs.python.org/3/builtins/stdtypes.html, Python3.15.1, Boolean Type bool / subclass paragraph. Located quote: “many numeric contexts, False and True behave like the integers 0 and 1, respectively.” Grounds why ordinary value equality is insufficient. The immediately preceding sentence identifies bool as an int subclass.
 - S106 rejected inference: https://docs.python.org/3/library/json.html, Python3.15.1, JSONDecoder strict parameter. Located quote: “If strict is false (True is the default), then control characters will be allowed inside strings.” Reject strict=True as schema/type/check-name validation. Flip: independent expected-result comparisons. No duplicate-key/NaN policy change is smuggled into this claim.
 - S107 mined: https://docs.python.org/3/builtins/exceptions.html, Python3.15.1, Built-in Exceptions / RecursionError. Located quote: “It is raised when the interpreter detects that the maximum recursion depth (see sys.getrecursionlimit()) is exceeded.” Grounds catching RecursionError as a retained mismatch. It does not predict the C decoder threshold: locally (3.14.8) depth1200 decodes and depth100000 raises “Stack overflow”.
+- S108 mined (supersedes S107's unqualified local observation): SoujiR22-2 reopened https://docs.python.org/3/builtins/exceptions.html on2026-10-21, Python3.15.1, Built-in Exceptions / RecursionError. Located quote: “It is raised when the interpreter detects that the maximum recursion depth (see sys.getrecursionlimit()) is exceeded.” This specifies the exception, not a C JSON depth/stack threshold; measured environment-dependence is separately attributed to CritMeasure245, not to Python's documentation. Existing source status/recheck/used-by cells unchanged; rows107→108.
 
 Replacement L1 SoujiR22R re-opened S104–S106 on 2026-10-21. The quotes are unchanged. stdtypes now serves from /3/builtins/stdtypes.html and exceptions from /3/builtins/exceptions.html (the /3/library/exceptions.html path returns 301). It then opened S107. Census rows106→107, mined83→84, A102→103.
 
@@ -57,6 +60,12 @@ Failure paragraphs and concrete final dispositions are appended after the termin
 - `.ufo/waves/round-22/w1/ReviewHistoricalScope.md:1` "STATUS: PARTIAL — the exact base runner source confirms all three admitted false-greens and the recorded holds are consistent, but the historical receipt's LOW citation conflicts with the base source and its provenance cannot be resolved here; F5 byte identity is stated by the preregistration but not independently checked in this lane. The historical receipt was not modified." — open — evidence VOID under Q26 (relative patch header). F5 byte identity was independently checked by L1: `git diff --quiet 41553adb… master -- tools/souji-proc-census.sh …` exits0 at 095af0e3aa1f03d8f7bf9ce9383a14656a86eb6c. The historical receipt LOW-citation provenance remains unresolved; nothing historical was rewritten.
 - `.ufo/waves/round-22/w1/Stderr4.md:1` "STATUS: PARTIAL — I traced the case from source alone: the r20-input-binding step, exit code 0, stdout fully conforming, and stderr carrying a SUMMARY-prefixed line. On base 41553adb the source gives matched: True, which is a false green. The repaired summarizer should give matched: False. One compatibility prerequisite is still open. It needs the real producer's success-path stderr, and the contract does not let me read tests/fixtures/r20-input-binding.py. Nothing was executed." — resolved@36c78ba016bbf28548c9c7191da089b91022f8e1 — any nonempty summary stderr rejected (49 `stderr/*` vectors, killed `summary-stderr`). Its compatibility prerequisite stays open for a fresh replay: the pinned r21 receipt records empty stderr for all18 commands, but no real replay ran this round.
 - `.ufo/waves/round-22/w2/Attack57.md:3` "STATUS: PARTIAL (source-only). The expected decision False is correct, and the fixture really does feed the mutated input. On the changed code 4f83fd2, the predicate rejects this input without crashing. On the base 41553ad, the same input crashes with an AttributeError. So this vector moves base from "crash" to "False"; it never moves anything from True to False. One gap remains: none of the 214 vectors binds top-level gate.sha256. A mutant that keeps only the isinstance(gate, dict) guard and drops the digest check passes every vector. Separately, the paired positive depends on the working-tree bytes of tools/souji-evidence-cache.py, which the oracle never hashes, so I could not check that it passes. Nothing was executed. No tools were installed or updated." — resolved@095af0e3aa1f03d8f7bf9ce9383a14656a86eb6c — `adequacy/cache/gate-sha-mismatch` binds top-level gate.sha256 and kills `gate-sha`. Open: the cache-demo positive reads the live bytes of tools/souji-evidence-cache.py at grading time and no receipt hashes them (disclosed limit).
+
+- `.ufo/waves/round-22/residual/CritMeasure.md:1` "STATUS: PARTIAL" — open — accepted D1–D3; environment/decode observation and provenance/message corrections are recorded in Second replacement continuation and S108; historical receipts retained. Gate meaning is conditional observation, not universal stack prediction.
+- `.ufo/waves/round-22/residual/CritMutation.md:1` "STATUS: FAIL" — open — accepted F1; new wrong-value/non-dict-row witnesses and explicit listed-mutant inventory in oracle258/probe. Dead-seat attribution label corrected by append, never by rewriting the receipt.
+- `.ufo/waves/round-22/residual/CritAdequacy245.md:1` "STATUS: FAIL" — open — accepted N1–N4/R1–R5;13 appended residual2 witnesses kill all14 additional mutants. Its E1–E7 equivalence reasoning is retained, not credited as kills. Five runner-only wants are explicitly retained-behaviour pins.
+- `.ufo/waves/round-22/residual/CritMeasure245.md:1` "STATUS: PARTIAL" — open — accepted variable stack/environment counterexample; actual decode result recorded, no universal threshold. Depth serialization limitation remains disclosed and outside arbitrary-resource totality.
+- `.ufo/waves/round-22/residual/RevMutants245.md:1` "STATUS: PARTIAL" — open —20 assigned mutants verified; shallow numeric-leaf equivalence inference was falsified by CritAdequacy245's deep-dictionary witness, now included. Earlier45-mutant receipts remain historical, final59-mutant receipt separately bound.
 
 ### Source-review completion of malformed-shape contract
 
@@ -88,3 +97,139 @@ SoujiR22 died about27min in on a provider cyber_policy refusal. The refused work
 - W1: 64 seats; 919 audited calls; 1 major and 3 minor findings. Under Q26 the evidence of five seats is void: Counter2/11/16/18 wrote scratch outside their sole report, and ReviewHistoricalScope used a relative patch header. That leaves 59 seats usable as source-only design input.
 - W2: 64 seats, as `.ufo/waves/round-22/w2-assignments.json` records. 38 reports landed. None names a wrong literal decision. The predicted coverage gaps are resolved by the adequacy vectors. Report-level verdicts of PARTIAL or INCONCLUSIVE appear in Attack03, 25, 57, 58 and 59. Only Attack57 opens a gate-recognized STATUS failure channel; all are dispositioned above or carried below. Twenty-six seats died with the parent without a report: Attack04–06, 30–35, 37–49 and 61–64. Their vectors were mechanically checked by L1 only: changed passes 26/26, base accepts 26/26, and each has an attributing mutant (`census/round-22/w2-dead-seat-residual.json`). That is not an independent review.
 - Residual review: one ordinary call of 6 seats (3 reviewer, 3 critic) on the L1-authored vectors, probe and receipts. The job cap refused it repeatedly (`.ufo/waves/round-22/residual-dispatch-attempts.txt`). The same payload was retried, never split.
+
+## Second replacement continuation (SoujiR22-2)
+
+The host killed SoujiR22R and its seats with SIGHUP at 2026-10-21 13:10:51 -03.
+Its residual call spent six seats after sixteen cap refusals. Four reports
+survived: CritScope PASS, ResidAdequacyB PASS, CritMeasure PARTIAL and
+CritMutation FAIL. ResidAdequacyA-17 and ResidAdequacyC-17 died without reports
+and remain dead, counted, and not replaced. Their unfinished transcript work
+is not independent admission evidence.
+
+CritMutation F1 and CritMeasure D1–D3 are accepted findings, not discarded
+reviews. The original 25-mutant probe and its receipts remain historical
+evidence at 095af0e; adding mutants changes what its exit0 means. The first
+second-replacement extension appended20 vectors and20 mutants. RevVectors245
+independently confirmed all20 wants, feed reconstruction and single-cause
+rejections; current245/245 versus base88/245. Nineteen additions are
+adequacy-only; only `malformed/cache/case-rows-int` distinguishes base (True)
+from changed (False). The 45-mutant probe kills38 and preserves7 named
+equivalents at the observed 8192-KiB stack, not in every environment.
+
+CritAdequacy245 then found14 additional non-equivalent survivors in a
+diff-enumerated inventory (N1–N4, R1–R5). Its FAIL is retained. In particular,
+the iterative numeric-leaf repair had no deep-dictionary witness, and ordered
+phase equality had no swapped-order witness. R22-M10's first repair was
+insufficient for Q52, even though its narrower38/38 listed-mutant count was
+true. The subsequent witnesses and probe are recorded below after execution.
+
+### Precision and retained-behaviour pins
+
+- Five of the first20 new wants are retained-behaviour pins whose authority
+  is runner code shared by base and changed, not the frozen inventory:
+  `cache/harness-revision-wrong`, `cache/gate-both-slots-wrong`,
+  `cache/isolation-residue-null`, `summary/auditor-selftest/fail-line` and
+  `summary/carry-invariant-probe/violation-line`. The non-author critic
+  judged these conservative rejections correct; this is disclosed provenance,
+  not independent specification or execution authentication.
+- `gate-both-slots-wrong` kills payload-self-consistency substitution. It does
+  not assert that `sha256_after` is independently bound: only `gate.sha256`
+  is contractual. Six first-extension vectors are redundant for mutant
+  coverage (RevVectors245 F2), not six independent kills.
+- The cache positives require live `tools/souji-evidence-cache.py` bytes
+  sha256 `dd279ba95eebd13a6674f79983cec286fd856aa6d7e0719bf551ae0fc08939d6`.
+  The oracle does not hash this dependency; unchanged committed bytes satisfy
+  it now (ResidAdequacyB B2). This is not a hermetic-input claim.
+- CritMeasure245 disproved a universal stack-size cutoff: the default-
+  environment flip is near15679–15685 KiB and varies between runs; adding
+  about960KB environment changes the result even at16384 KiB. Stack limits
+  in the sweep are samples, not thresholds. Probe receipts now record the
+  direct `depth_100000_decode_raises` observation, interpreter, soft stack
+  bytes and probe SHA256. Only observations where the decode raises witness
+  the two catch repairs. The214 headline remains independent of these cases.
+- Deep JSON retained in `observed_json` may itself fail serialization when
+  the real runner writes results; CritMeasure245 observed `json.dump`
+  RecursionError in memory. This is fail-closed and may leave a partial
+  result file. C1 is summarizer-result calibration, not end-to-end arbitrary-
+  depth replay totality; the real replay was not run this round.
+- A summary-stderr RED after an interpreter change requires diagnosis, not
+  warning suppression. Historical replay receipts do not bind interpreter
+  version (CritScope). Empty stderr on54 pinned S1/S2/S3 records is not a
+  promise about future interpreter warnings.
+- `w2-dead-seat-residual.json`'s immutable `single_mutant_attributed:26` key
+  is misnamed: all26 have an attribution, with histogram12 single /14 double.
+  It is L1 mechanical evidence, not independent review.
+- S107 re-opened by SoujiR22-2 on2026-10-21:
+  https://docs.python.org/3/builtins/exceptions.html, RecursionError entry.
+  Located quote: “It is raised when the interpreter detects that the
+  maximum recursion depth (see sys.getrecursionlimit()) is exceeded.”
+  S108 supersedes S107's unqualified local “100000 raises” observation.
+  Existing status/recheck/used-by cells remain unchanged.
+
+### Explicit errata to inherited text
+
+The inherited R22-M6 and measured paragraph's “All21 non-equivalent mutants”
+means21 of the original25 listed, not all possible mutants; the list was
+incomplete (R22-M10). R22-M7 and S107's “100000 raises” are local observations,
+not a threshold: S108 supersedes that teaching. R22-M8 and the measured
+paragraph's “receipts exactly” is false for depth-error message bytes:
+decisions and runner/oracle digests reproduce, but stack-use text varies.
+The original baseline receipts lack runner_source, so their original file
+path/command is unrecorded; [INFERENCE] they were file-graded rather than
+created by --grade-stdin. New baseline258 receipt uses the explicitly
+documented stdin command and records its source mode.
+
+The inherited W1 “64 reported”/“59 usable” assertions were also wrong:
+the assignments contain64 seats but only63 report files. SoujiR22.DraftLesson
+has an empty terminal .md and died with “Retry budget exhausted after 5
+retries: Codex error event: Codex is at capacity, please try again later
+(code=turn_rate_limit_exceeded)”. It remains dead and was not replaced.
+Thus W1 has63 reports,5 Q26-void seats,58 usable source-only reports.
+
+### Final measured witness set (258 vectors)
+
+The13 `adequacy/residual2/*` additions implement CritAdequacy245 N1–N4/R1–R5:
+deep1200 dictionary, swapped phases, missing expected keys, empty producer
+stdout, missing SUMMARY, null case list, empty gate/missing isolation/status,
+and newline counter/cache stderr. The previous245 cases and metadata stay
+unchanged. The14 additional mutants all survived245 and are killed by258.
+The numeric-leaf recursive-base mutant is not equivalent: it raises on the
+deep dictionary; shallow differential samples missed this (RevMutants245).
+
+Python3.14.8, recursionlimit1000, soft stack8388608 bytes; direct100000-deep
+array decode raises. Same258 oracle: base99 passes/159 fails (151 false
+greens,8 exceptions), changed258 passes/0 fails; positive controls20/20 both.
+The13 add2 base discriminators: deep dictionary (exception) and phase order
+(false green). Remaining11 are retained-behaviour/malformed-input pins.
+Receipts: `census/round-22/oracle258-baseline.json`, `oracle258-changed.json`,
+`mutation-adequacy-oracle258.json`. Oracle SHA256
+`970b7362a0f0db9636e4141b12f798ca339b29fe90d23fadb4736b9634098027`.
+
+Commands, from the lane root:
+
+```sh
+python3 -B tests/fixtures/r22-result-oracle.py --runner census/round-21/run-acceptance.py
+git show 41553adb139d06511dc386bb3ce4326aebfba675:census/round-21/run-acceptance.py | python3 -B census/round-22/mutation-adequacy.py --grade-stdin
+python3 -B census/round-22/mutation-adequacy.py
+```
+
+Observed exits0/1/0 respectively. The probe kills52 of59 LISTED mutants;
+the7 others are evidenced equivalents, never credited as kills:
+
+| equivalent id | justification and boundary |
+|---|---|
+| nonexact-keyin-get | Pinned expected counter has no null leaf, so absent-key `.get(None)` cannot equal its non-null expectation under json_exact. Conditional on frozen inventory, not all possible expectations. |
+| failed-checks-to-eq | For decoded JSON and expected literal[], equality holds exactly for an empty list, as type-exact comparison does. Conditional on expected[]. |
+| names-len-constant | len(checks)==E plus checks.keys()==CACHE_CHECK_NAMES already implies len(CACHE_CHECK_NAMES)==E. |
+| phases-len-constant | len(case_rows)==E plus phase sequence equality already implies len(CACHE_CASE_PHASES)==E. |
+| baseline-guard-pass | Only frozen baseline-mismatch-group step also sets baseline_mismatch_count=True; None==count forces False even if the caught ValueError leaves summary_match unchanged. Conditional on pinned step. |
+| checks-len-drop | Named-set equality plus len(CACHE_CHECK_NAMES)==E already implies len(checks)==E. |
+| caserows-len-drop | Exact phase sequence plus len(CACHE_CASE_PHASES)==E already implies len(case_rows)==E. |
+
+Non-author evidence: CritMutation's survivor proofs, CritAdequacy245 E1–E7,
+and RevMutants245's1180 differential cases for each new equivalent.
+These are bounded algebraic/pinned-input justifications, not global mutation
+equivalence proofs. Historical listed45/59 receipts reflect their named
+oracle/list versions and need those versioned bytes to reproduce.
+

@@ -1392,3 +1392,51 @@ S104–S106 re-opened, S107 opened (RecursionError); sources106→107.
 F5/frozen inventory/pinned receipt byte-identical to base (git diff --quiet 0).
 No live /proc, credentials or private TSVs read; operator-sweep untouched.
 No tools installed or upgraded.
+
+### 2026-10-21 — round22 second replacement (SoujiR22-2): resolve residual falsifiers
+
+Inherited pushed tip81a2646d53f914a226b6faa96e69ee5d01e8d348 and
+the uncommitted residual dispatch log/four reports. Host SIGHUP killed
+SoujiR22R and residual ResidAdequacyA/C; neither was revived or replaced.
+Their unfinished output is not admission evidence. Re-verified inherited
+wave specs/receipts and accounting: W1 has63 reports, not64 (DraftLesson
+died on Codex turn_rate_limit_exceeded after5 retries); W2 has38 reports
+and26 dead. W1 audit919 calls,1 major/3 minor;5 Q26-void evidence stays void.
+The original report's “64 reported/59 usable” is corrected in the lesson.
+
+Accepted inherited residual CritMutation FAIL and CritMeasure PARTIAL:
+21/21 meant only25 author-chosen mutants, not a complete inventory;
+the depth witness depends on environment, and stdin regrading reproduces
+decisions but not variable RecursionError stack-use message bytes.
+First repair:20 appended vectors/20 mutants,245 oracle base88→changed245,
+45 listed mutants38 killed/7 equivalent. New four-seat residual (2 reviewer,
+2 critic) found14 additional unlisted survivors (CritAdequacy245 N1–N4/R1–R5).
+All original PASS/PARTIAL/FAIL reports are retained, not normalized away.
+
+Final repair appends13 further witnesses and14 mutants: exact-counter deep
+dict (numeric_leaves), swapped phase order, missing expected keys, non-JSON
+stdout, malformed cases, missing gate/isolation/status keys and blank
+counter/cache stderr. Same258-vector oracle: base99/258→changed258/258,
+8 base exceptions/151 false greens;20/20 positives preserved on both.
+59 listed mutants52 killed/7 named equivalent,0 disagreements.
+Historical red receipt listed59-oracle245.json has14 non-equivalent
+survivors; final mutation-adequacy-oracle258.json exits0. No source runner
+change after4f83fd2; this continuation repairs adequacy evidence and wording.
+Commands: `python3 -B tests/fixtures/r22-result-oracle.py --runner
+census/round-21/run-acceptance.py`; base via `git show
+41553adb139d06511dc386bb3ce4326aebfba675:census/round-21/run-acceptance.py |
+python3 -B census/round-22/mutation-adequacy.py --grade-stdin`;
+`python3 -B census/round-22/mutation-adequacy.py`.
+Receipts: census/round-22/oracle258-*.json and mutation-adequacy-oracle258.json.
+Observed Python3.14.8,8388608 soft-stack bytes,depth100000 decode raises.
+No universal stack threshold: environment size shifts it (CritMeasure245).
+Probe receipts now record decoder outcome and probe hash as well as stack.
+Q53 supersedes Q52 by new row; S108 supersedes S107 by new row after
+reopening its official RecursionError entry; sources107→108 (whole round103→108).
+Existing corpus/source/QUALITY rows and historical receipts remain intact;
+lesson append explicitly corrects their false saturation/exact-reproduction
+wording. Positive cache gate bytes remain a disclosed live dependency.
+No live processes, operator-sweep contents, credentials or private TSVs read.
+No tools installed or upgraded. Operator-owned sweep and inherited pycache
+remain excluded from pathspecs.
+
