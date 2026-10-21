@@ -27,7 +27,7 @@ import subprocess
 import sys
 import tempfile
 
-LANE = "/home/vgpnk/Projects/shokunin/souji-shokunin"
+LANE = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 DEFAULT_TOOL = os.path.join(LANE, "tools", "souji-landing-gate.py")
 REPLAY_REV = "b5763415cc67ecff1e8fe56c58c39a6fb106d7a3"
 REPLAY_ROUND = 18
