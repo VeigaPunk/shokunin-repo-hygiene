@@ -1317,3 +1317,10 @@ mined78→81, queued15 unchanged, rejected6→7); knowledge paths7→7.
 S100/S101/S102 mined, S103 rejected; no existing source-cell changes.
 Certification OFF, K5 HELD, inherited reap/NAMESPACE and historical
 exposure assessment remain held. No tools installed or updated.
+
+Final landing gate first returned8 (census/round-21/landing-final.json):
+three references needed the explicit fleet-root classifier; five r20-only
+pointer exceptions no longer apply in the r21 source scope. Removed the
+five obsolete exceptions from corpus/pointer-exemptions.tsv, preserving
+the four standing exceptions and every historical revision. Recheck uses
+--fleet-root explicitly; this is lifecycle cleanup, not a finding exemption.

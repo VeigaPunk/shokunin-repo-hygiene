@@ -243,3 +243,14 @@ Trend assessment: expansion unchanged (no new uncovered knowledge path),
 quality improved (reason repair + reproducible replay), discernment improved
 (r20 outside disagreements became Q47–Q50 and shown-able-to-fail repairs).
 These are author assessments; independent admit/reject spot-check pending.
+
+### Final landing-gate correction
+
+The first final gate at4eb2fda returned8 findings, retained in
+`census/round-21/landing-final.json`: three fleet-only pointers were checked
+without the required fleet root, and five r20-only shorthand/locator
+exemptions were stale in round21's document scope. The current exception
+table drops those five obsolete rows, not genuine findings; the four real
+standing exceptions remain. Historical r20 exceptions stay in their pinned
+revision. The corrected gate invocation explicitly supplies --fleet-root;
+no authority file, snapshot or missing fleet artifact is fabricated.
