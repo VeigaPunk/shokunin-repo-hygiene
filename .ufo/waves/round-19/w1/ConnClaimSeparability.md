@@ -1,0 +1,45 @@
+STATUS: DONE — source review finds independently runnable claim checks, but the current acceptance envelope and C3 counter create cross-claim evidence coupling. No behavioral checks were run.
+
+# Findings
+
+## Independent measurements
+
+- **C1 — calibration:** measure its two independent behaviors separately: `python3 tests/fixtures/r19-carry-wrap.py --tool tools/souji-landing-gate.py` for wrapped STATUS carry, and `python3 tests/fixtures/r19-seat-audit-shapes.py --tool tools/souji-seat-audit.py` for delivery and signal shapes. Each fixture declares synthetic base/changed arms and its own expectations; neither fixture's stated inputs include the C2 helper or C3 knowledge/doc files (`tests/fixtures/r19-carry-wrap.py:1-25`; `tests/fixtures/r19-seat-audit-shapes.py:1-21`). These can pass with C2 and C3 absent. The gate's strict behavior is explicitly round-gated (`tools/souji-landing-gate.py:113-122,496-510`); the auditor cases separately cover patch/workdir allowed, `tools/` write refused, and signal major (`tools/souji-seat-audit.py:15-22,431-438`).
+- **C2 — operability:** measure `python3 tests/fixtures/r19-rev-pin.py --tool tools/souji-rev-pin.py` alone. It exercises the revision helper in a synthetic Git sandbox and checks static wiring of the named r13/r14 runner and counter callsites (`tests/fixtures/r19-rev-pin.py:4-14,47-68`). The helper itself has an explicit resolver contract for durable reachability and, when enabled, measured-path tree equality (`tools/souji-rev-pin.py:86-147`). The fixture can pass with C1's gate/auditor changes and C3's entry absent: its wiring expectation is about the C2 consumers, not whether the new F5 content exists.
+- **C3 — coverage:** a C3-only measurement can read a fixed before/after commit tree directly with `git ls-tree`/`git show` and check (a) admitted-entry header and non-HELD status, (b) the S082–S085 source links/metadata and stated limits, (c) the F5 README row plus retained no-reap frontier, (d) the SKILL pointer/rule, and (e) admitted count 6→7. Those surfaces are visible at `corpus/knowledge/process-residue-observations.md:1-11,77-91`, `corpus/SOURCES.md:102-105`, `corpus/README.md:270-287`, and `SKILL.md:129-134`. A direct commit-tree measurement does not need C1 tools or C2's helper, so it can pass when C1/C2 are absent. This is a proposed independent measurement, not one I executed.
+
+## Couplings and contradictions
+
+1. **Direct C2→C3 counter dependency.** Both count-claims consumers load `tools/souji-rev-pin.py`; r13 then reads the committed knowledge inventory and SOURCES rows (`census/round-13/count-claims.py:15-45`; r14 does the corresponding revision resolution and reads knowledge/SOURCES at `census/round-14/count-claims.py:16-44`). The r19 revision fixture explicitly requires both counter callsites (`tests/fixtures/r19-rev-pin.py:60-68`). Thus the preregistered C3 counter command is not independent of C2: removing the C2 helper breaks that C3 measurement even if the F5 entry is present. Also, C3's SOURCES additions change fields emitted by these counters: the retained counts record shows 78→85 source rows alongside 6→7 admitted entries (`census/round-19/counts-start.json:1-20`; `census/round-19/counts-end.json:20-56`). This is output/data coupling, not a change to the revision-pin verdict.
+
+   **Contract tension to preserve explicitly:** the top-level C2 wording requires both count-claims commands to refuse a tracked tree differing from the revision. The counter code instead documents that it reads every byte from the commit and calls `resolve_durable(..., tree_check=False)` (`census/round-13/count-claims.py:15-31`; resolver semantics at `tools/souji-rev-pin.py:86-93,127-128`). Therefore it enforces full-ID/durable-ref selection, but does not compare the worktree's measured paths to that commit. Either define the counter's measured bytes as the commit tree (then the lack of a worktree comparison is intentional), or require an explicit path comparison; do not describe the current counter as proving both interpretations.
+
+2. **Shared documentation artifacts.** `SKILL.md` co-locates the C1 carry, C2 revision-pin, and C3 process-residue rules as neighboring bullets (`SKILL.md:115-134`). `corpus/README.md` co-locates C3, C1 carry/audit, and C2 revision rows in its r19 table (`corpus/README.md:270-277`). These are integration/change-surface couplings, not shared runtime logic: the bullets and rows remain distinguishable. Verify exact claim-specific sections/rows rather than treating a whole-file hash or a generic README/SKILL pass as three proofs.
+
+3. **Aggregate acceptance is C2-gated and not a C3 assertion.** `census/round-19/run-acceptance.py` combines C1 fixtures, the C2 fixture, and both claim counters in one command list (`:57-84`). Before running any command it calls the shared durable resolver on one `CHANGED` list containing C1/C2 code but not the C3 knowledge entry, SOURCES, README, or SKILL (`:39-55,91-117`). Its per-command `matched` value compares only exit status; the count rows merely preserve stdout (`:129-163`). Since the counter is allowed to exit 0 when the new entry is absent, the aggregate can report all commands matched without establishing C3's 6→7/content/doc criteria. Conversely, a C2 preflight failure blocks the C1 and C3 commands even though their semantic checks can run separately. This is an orchestration coupling and a C3 evidence gap, not proof that any individual claim failed.
+
+4. **Evidence-path discrepancy.** Preregistration correction 1 names `census/round-19/counts.json` (`.ufo/waves/round-19/preregistration.txt:81-87`), but that path is absent in the current tree; the present records are `counts-start.json` and `counts-end.json`. The latter records the 6→7 observation (`census/round-19/counts-end.json:1-56`). Keep the actual evidence pointer explicit; the missing name does not itself refute the count.
+
+## Narrowest proposed interface (one bounded move)
+
+Make the acceptance record claim-addressable instead of using one C2 preflight as the proof boundary: keep `run-acceptance.py` as a roll-up, but give each claim a standalone result with its own declared inputs and assertions. C1's result is the two external fixtures; C2's result is the helper sandbox plus wiring; C3's result is a read-only fixed-commit tree check that asserts the 6→7 count and the entry/source/README/SKILL invariants. Keep C2 durable-ref attestation as a separate provenance field/check, not a prerequisite for evaluating C1/C3 semantics. For C3's counter, the narrow interface is `count-at-commit(root, full_commit)` (content counting only) with revision-provenance policy outside that function; the C2 wrapper can still apply the durable-ref policy when required. If the contract instead requires worktree equality for counters, pass their explicit measured paths to the resolver and test that refusal separately.
+
+This improves **calibration** by making a pass identify which claim was actually measured and by preventing one claim's precondition or count-only success from standing in for another. It leaves **operability** unchanged (C2 still has its durable-ref gate) and **coverage** unchanged (C3's claim remains list-only/no-reap); the cost is more claim-scoped evidence records and an explicit resolution of the counter's tree-check interpretation.
+
+# Evidence
+
+- Round-19 declared claim boundaries and expected C1/C2/C3 measurements: `.ufo/waves/round-19/preregistration.txt:7-65,79-96`.
+- C1 independent fixtures and behavior boundaries: `tests/fixtures/r19-carry-wrap.py:1-25`; `tests/fixtures/r19-seat-audit-shapes.py:1-21`; `tools/souji-landing-gate.py:113-122,421-435,446-510`; `tools/souji-seat-audit.py:15-22,95-107,431-438`.
+- C2 resolver, callers, and independent fixture wiring: `tools/souji-rev-pin.py:86-147`; `census/round-13/run-verification.py:88-120`; `census/round-14/run-verification.py:27-53`; `census/round-14/run-targeted.py:19-23`; `census/round-14/cache-demonstration.py:189-197`; `tests/fixtures/r19-rev-pin.py:4-14,47-68`.
+- C3 content, source, and index surfaces: `census/round-13/count-claims.py:15-45`; `census/round-14/count-claims.py:16-44`; `corpus/knowledge/process-residue-observations.md:1-11,77-91`; `corpus/SOURCES.md:102-105`; `corpus/README.md:270-287`; `SKILL.md:129-134`; `census/round-19/counts-start.json:1-20`; `census/round-19/counts-end.json:1-56`.
+- Cross-claim acceptance boundary: `census/round-19/run-acceptance.py:39-55,57-84,91-117,129-163`.
+
+# Commands run
+
+- Read/search-only inspection of the listed local source, fixture, preregistration, and round-19 evidence files; read `skill://godspeed` before proceeding.
+- No test, selftest, fixture, census, build, or runtime command was executed. No external URL was opened. No tool was installed.
+
+# Contract compliance
+
+- Wrote only `.ufo/waves/round-19/w1/ConnClaimSeparability.md`.
+- No subagents, git/jj commands or mutations, signals, network access, live census, private scratch files, or reads of protected operator-owned paths.

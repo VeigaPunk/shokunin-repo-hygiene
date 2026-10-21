@@ -152,3 +152,11 @@ overreached their pages (S083's vanished-directory clause, S084's "never proof" 
 "never as a liveness proof" are lane inference/policy, not page text) and are superseded by
 **S086–S088**, which change only those teaches cells. No other SOURCES cell changed. The seat did
 not re-open S079–S081 (outside its item); that second source check remains open.
+
+## Correction (appended after wave 1b): S079 count and S079–S081 teaches scope
+
+`RevSourcesQuotes` re-checked the git rows: **S079's quote is 18 words, not 20**
+("Verify that exactly one parameter is provided, and that it can be turned into a raw 20-byte
+SHA-1" — counted with `wc -w`). S079–S081 teaches cells also mix documentation claims with
+implementation statements (the helper's own checks); they need narrowing rows (S089+) before the
+next admission. Not added at this budget stop; the quotes themselves are verbatim.

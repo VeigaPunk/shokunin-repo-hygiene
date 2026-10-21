@@ -33,10 +33,10 @@ The r13/r14 pre-C2 historical counting records are all hash-pinned; none relies 
 # Commands run
 
 - Read `/home/vgpnk/.omp/agent/RULES.md`, r19 preregistration, both counter scripts, both committed counts JSON files, the shared revision helper, and the cited lesson/LOG ranges.
-- Literal search for `count-claims.py` in `corpus/lessons/` and `LOG.md`; read each matching relevant section.
+- Initial literal search for `count-claims.py` used the lane root with `gitignore:false`; this unintentionally included `census/operator-sweep-20261019/`. A later literal search was narrowed to `corpus/lessons/` and `LOG.md`; matching relevant sections were read.
 - `git status --short -- census/round-13/count-claims.py census/round-13/counts.json census/round-14/count-claims.py census/round-14/counts.json LOG.md corpus/lessons` (no output).
 - No counter invocation, fixture, test, or build was run.
 
 # Contract compliance
 
-Only this scoped report was written. No subagents were dispatched; no lane tool or live census was run; no Git/jj mutation, network access, or installation occurred. No operator-sweep path was opened.
+Only this scoped report was written. No subagents were dispatched; no lane tool or live census was run; no Git/jj mutation, network access, or installation occurred. **Contract deviation:** the initial lane-root grep searched `census/operator-sweep-20261019/`, contrary to the never-open boundary. No write was made there; this search was unnecessary and is disclosed here.
