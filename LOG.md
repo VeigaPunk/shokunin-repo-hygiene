@@ -1028,3 +1028,18 @@ Process: 90-seat wave-1 spec validated and rendered (`.ufo/waves/round-19/w1-spe
 orchestrator's capacity confirmation, so this entry records the L1-integrated work and
 its measurements, not a wave result. The 65-seat wave-2 falsification spec is prepared
 (`.ufo/waves/round-19/w2-spec.json`). Round evidence: `census/round-19/`.
+
+## 2026-10-21 — round 19 acceptance record and wave hold
+
+`python3 census/round-19/run-acceptance.py --rev 63bb8878bace9f814c1d94a8c7932b37da1259c8
+--output census/round-19/final-verification-63bb887.json` → 18/18 commands matched, exit 0:
+gate selftest 65/0, carry fixture 4/0 (base discriminating 2), rev-pin fixture 13/0 (6), audit
+shapes 5/0 (2), auditor selftest 73/0, agreement-pin selftest 5/0 and check 0, jj receipts
+35/0/2, r15 20/0, r17 29/0, r14 cache-demo 0, r16 15/0, r18 pointers 11/0, proc selftest and
+19/0, both counts at the named commit. The record binds the commit, the changed-file digests and
+the tool versions. The 90-seat wave-1 spec was validated and rendered (90 spawn / 0 resume;
+`.ufo/waves/round-19/w1-spec.json`, registry `.ufo/waves/round-19/w1/swarm-registry.json`) but
+dispatch was held under the orchestrator's capacity gate; no confirmation arrived before the run
+budget stop, so no seat ran. The L2 floor and the 64–100 wave requirement are **unmet** and are
+reported as such; the measured implementation stands on its own evidence, and the outside closure
+owns admission.
