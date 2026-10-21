@@ -97,3 +97,57 @@ the `boot_id` header, and lists `/proc` to enumerate pids. It still never reads 
 full read set is listed in `.ufo/waves/round-19/w1/ScribeProcSkillRow.md`; no tool behaviour
 changed. Also, Q32's read list omits `status`, which the tool reads; Q33 supersedes the wording
 but not that list.
+
+## Round-20 precision correction (supersedes the broad read/enumeration wording above)
+
+source: S082, S086, S087, S088; S075/S076 for field/suffix attribution; exact own-code and fixture bindings below.
+verified-at: baseline `12516f7dcdd5b165e5ee208d44a38d63b5bd5812`; read-only SHA-256 observation on2026-10-21, not a fresh process census.
+recheck: `sha256sum tools/souji-proc-census.sh tests/fixtures/r18-proc-census.sh census/round-18/leak-count.py`; isolated behavior command remains the initial fixture command.
+
+Use S086–S088 instead of the superseded S083–S085 teaches claims. Kernel-page facts and lane
+policy remain separate: the pages describe links/sleep context/state formatting, not disappearance,
+reaping, liveness or universal redaction guarantees. The implementation observed at this revision is:
+
+| owned file | SHA-256 |
+|---|---|
+| `tools/souji-proc-census.sh` | `37c3316a1fd8cdda18cbefdc7692d3d3f388e5783e8fe19085f5d932a8ceba64` |
+| `tests/fixtures/r18-proc-census.sh` | `01995f8d79f128b07dfab50ca317c13069adcd1ed933fd9325295610d56758be` |
+| `census/round-18/leak-count.py` | `a26530199434ecddf4b36d2513730765bb0ae7487fa3c007f9c04d33244ebb3b` |
+
+The read set includes the proc directory listing, uptime, boot_id, stat, status, cmdline, cwd,
+fd directory/link names and wchan; no environ read is present in the bound implementation.
+This is static code evidence plus the historical fixture, not a claim about an exercised live scan
+this round. Enumeration is only eligible readable own-uid candidates; self/descendants can be
+excluded, unreadable or racing data skipped. The broad “one row per own-uid process” wording above
+does not promise exhaustive machine coverage.
+
+Raw cmdline/argv is read **before** printing-time redaction. The tested fake header/AWS/Slack
+shapes are not a universal private-value or output-redaction proof. `reason` has separate sanitation
+from `cmd`; a credential-shaped argv-derived path escaping that separate field remains
+**[INFERENCE]**, not an observed leak. No live private-value probe was performed or authorized.
+
+Other uids are outside this tool's surface; this does not assign all other-uid residue to Mori.
+Health/liveness/resource findings may route to Mori, host repair to Tsukuroi and credential concerns
+to Kagi; contested scope stays operator-owned. F5 reap remains held at the specific
+`souji | round-18` request. Listing/nomination never authorizes signal, quarantine or deletion;
+the historical58-orphan figure is not a current count. See `corpus/lessons/round-20.md` and Q42.
+
+### Round-20 exclusion precision (Q43)
+
+The bounded parent-chain snapshot excludes the scanner and descendants that
+`is_self_tree` recognizes (its ancestry walk is bounded to 512 hops); unreadable,
+racing, UID-transition or identity-mismatch candidates are skipped. This is the
+same eligibility boundary meant by the preceding correction's “can be excluded”,
+not exhaustive descendant discovery. Evidence: the already-bound implementation
+`tools/souji-proc-census.sh` `is_self_tree`, snapshot construction and final UID/
+starttime rechecks; no new process census was run. This correction improves the
+existing entry's precision; it creates no new knowledge path or coverage-map ground.
+
+### Round-20 fd access source mapping (S095)
+
+source: S095 — https://man7.org/linux/man-pages/man5/proc_pid_fd.5.html,
+Linux man-pages6.19 (2026-02-08), DESCRIPTION permission paragraph, reopened2026-10-21.
+The fd-link permission sentence in the original kernel-facts list is supported
+by this specific opened scope: reading or dereferencing those symlinks is
+governed by PTRACE_MODE_READ_FSCREDS. S086 still teaches entries and link
+contents; neither source grants Souji access to private values or signal authority.

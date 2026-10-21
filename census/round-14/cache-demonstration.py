@@ -84,7 +84,11 @@ DEMO_MEASURED_PATHS = [
     "tests/fixtures/r14-census-boundary.py",
     "census/round-14/cache-demonstration.py",
     "census/round-13/run-verification.py",
+    "tools/souji-rev-pin.py",
+    "census/round-13/verification.json",
 ]
+DEMO_INPUT_SHA256 = None
+DEMO_PINNED_REV = None
 SYNTHETIC_NAME = "synthetic-matched-green"
 NAME = "r14-cache-demonstration"
 EXPECTED_STALE_FINDINGS = ("dependency-digest-mismatch",)
@@ -173,6 +177,7 @@ def within(base_real, path):
 
 
 def git_head():
+    global DEMO_INPUT_SHA256, DEMO_PINNED_REV
     try:
         proc = subprocess.run(
             ["git", "-C", str(LANE), "rev-parse", "--verify", "HEAD"],
@@ -186,14 +191,26 @@ def git_head():
     value = proc.stdout.strip()
     if proc.returncode != 0 or HEX40.fullmatch(value) is None:
         return None, "git rev-parse exit=%d output=%r" % (proc.returncode, value)
-    spec = importlib.util.spec_from_file_location(
-        "souji_rev_pin", LANE / "tools" / "souji-rev-pin.py")
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    helper = LANE / "tools/souji-rev-pin.py"
     try:
-        return module.resolve_durable(
-            str(LANE), value, DEMO_MEASURED_PATHS), None
-    except module.Refusal as exc:
+        if helper.parent.is_symlink() or helper.is_symlink() or not helper.is_file():
+            raise ValueError("nonregular revision helper tools/souji-rev-pin.py")
+        committed = subprocess.check_output(
+            ["git", "-C", str(LANE), "show", value + ":tools/souji-rev-pin.py"],
+            env=GIT_ENV)
+        if helper.read_bytes() != committed:
+            raise ValueError("tools/souji-rev-pin.py differs from measured commit")
+        spec = importlib.util.spec_from_file_location("souji_rev_pin", helper)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        revision = module.resolve_durable(str(LANE), value, DEMO_MEASURED_PATHS)
+        observed = module.input_snapshot(str(LANE), revision, DEMO_MEASURED_PATHS)
+        if DEMO_INPUT_SHA256 is None:
+            DEMO_INPUT_SHA256, DEMO_PINNED_REV = observed, revision
+        elif observed != DEMO_INPUT_SHA256 or revision != DEMO_PINNED_REV:
+            raise module.Refusal("owned inputs or measured revision changed during run")
+        return revision, None
+    except (OSError, ValueError, SyntaxError, ImportError, subprocess.CalledProcessError) as exc:
         return None, "durable revision refused: %s" % exc
 
 
@@ -1126,16 +1143,9 @@ def main(argv=None):
 
     initial_commit, commit_error = git_head()
     if initial_commit is None:
-        return emit(
-            blocked_payload(
-                "measured-commit-unavailable",
-                {"error": commit_error, "lane": str(LANE)},
-                gate_state,
-                [],
-                observed_at,
-            ),
-            2,
-        )
+        print("cache-demonstration: refused: %s (no record written)" % commit_error,
+              file=sys.stderr)
+        return 2
 
     try:
         base = Path(tempfile.mkdtemp(prefix="souji-r14-cache-demo.", dir=TMP_BASE))
@@ -1197,6 +1207,15 @@ def main(argv=None):
     payload["gate"]["sha256_after"] = (
         sha256_file(gate) if gate.is_file() and not gate.is_symlink() else None
     )
+    final_commit, final_error = git_head()
+    if final_commit != initial_commit or final_error is not None:
+        print("cache-demonstration: refused measured input drift: %s (no record written)"
+              % final_error, file=sys.stderr)
+        return 2
+    payload["input_sha256"] = DEMO_INPUT_SHA256
+    payload["inputs_unchanged_during_run"] = True
+    payload["input_scope"] = ("Owned repository files only; external commands, host state, "
+                              "configuration and environment are not attested.")
     return emit(payload, code)
 
 

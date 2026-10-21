@@ -88,8 +88,8 @@ The r12 coverage-map word “held” meant entries were held in the corpus, not
 the later HELD rejection status: F1's two entries, F3's duplicate-finder
 entry and F4's trash-spec entry are admitted. Only K5
 `quarantine-same-filesystem-rename.md` is HELD. With the new F2 entry,
-admitted knowledge is 4→5 (`python3 census/round-13/count-claims.py 31984f4`
-and `python3 census/round-13/count-claims.py 6f8ee0f`; `counts.json`).
+admitted knowledge is 4→5 (`python3 census/round-13/count-claims.py 31984f473ce4bdab61a99b16cca194b28108cb81`
+and `python3 census/round-13/count-claims.py 6f8ee0f38a14a3cb599ee606c486a55ec64e8ae6`; `counts.json`).
 
 Actual final results: evidence selftest 36/36, external replay 5/5,
 structure fixture 5/5, corrected bounds fixture baseline 1/5 PASS with two
@@ -137,8 +137,8 @@ fixture baseline 2/12→installed 12/12; legacy census 38/38; warning-level
 ShellCheck clean. The actual source-anchor probe rejects S034 and accepts
 S038 without editing the old row.
 
-Inventory `python3 census/round-14/count-claims.py a31642d` versus the same
-command on 552cae4 (`../census/round-14/counts.json`): admitted knowledge
+Inventory `python3 census/round-14/count-claims.py a31642d14006830ec62edf40b0354c3699728c4a` versus the same
+command on `552cae4204b3ab818419ad8adbfef3a4da29a3e0` (`../census/round-14/counts.json`): admitted knowledge
 5→5, HELD 1→1, source rows 37→40. New eligibility/protected-census
 capabilities are demonstrated repertoire, not three rows counted as new
 knowledge. The census's newly refused indirect configurations and filesystem
@@ -282,7 +282,49 @@ keep ref is NOT-SAFE, never `SAFE(metadata-prune)`.
 - F1, F2, F3, F4 — unchanged.
 
 Correction to the r18 section above: "admitted knowledge stays five" is wrong. The lane's own
-counter (`python3 census/round-13/count-claims.py b576341`) reports **6** admitted entries —
+counter (`python3 census/round-13/count-claims.py b5763415cc67ecff1e8fe56c58c39a6fb106d7a3`) reports **6** admitted entries —
 eight files under `knowledge/` minus the `.tsv` ledger and the single HELD entry
 (`quarantine-same-filesystem-rename.md`). R19's C3 measurement is therefore **6 → 7**, not
 5 → 6; the r18 prose is a historical counting defect (R19-M1).
+
+## Round 20 — current replay contract and prior harm correction
+
+The round-19 outside decision is **rejected-harmed** (`lessons/round-19-verifier-spotcheck.md`),
+not pending or admitted. Its F5 observation entry remains useful; its blanket sibling-artifact
+grant and un-migrated short-ID commands were harms, and its measured-input guarantee was incomplete.
+The acceptance at `bbeb73bd4dad181b9b293b242dbf5749acbe3568` was 18/18 at those bytes,
+not final-tip-wide evidence. Round20's exact repair evidence belongs under `../census/round-20/`;
+no old receipt is rewritten.
+
+### Current full-ID counter commands (also migrated in executable examples above)
+
+Run from the lane root. These are current replacements, not re-executions attributed to old rounds:
+
+```sh
+python3 census/round-13/count-claims.py 31984f473ce4bdab61a99b16cca194b28108cb81
+python3 census/round-13/count-claims.py 6f8ee0f38a14a3cb599ee606c486a55ec64e8ae6
+python3 census/round-14/count-claims.py a31642d14006830ec62edf40b0354c3699728c4a
+python3 census/round-14/count-claims.py 552cae4204b3ab818419ad8adbfef3a4da29a3e0
+python3 census/round-13/count-claims.py b5763415cc67ecff1e8fe56c58c39a6fb106d7a3
+```
+
+The historical LOG, old lessons and `counts.json` command strings retain their filed bytes;
+this index is their named current replacement. README executable examples now use full IDs.
+HEAD, branches, short IDs and keep-only revisions remain refused; a historical counter reads committed bytes, not the current corpus. A measurement
+runner instead must bind all actual owned working-tree inputs; merely adding a durable stamp is
+insufficient. SOURCE-only statements are narrowed by S091–S093, with selector semantics in S089.
+
+### F5 precision and held requests (supersedes broad r19 wording)
+
+F5 stays **list/nominate only**: `bash tools/souji-proc-census.sh` emits eligible readable own-uid
+observations and never signals in census mode. Self/descendants recognized by the bounded
+parent-chain snapshot are excluded, and unreadable/racing data skipped; no universal per-process coverage is promised. Raw argv is read before output redaction;
+neither a secret-free read nor universally redacted derived output is established. Recheck only in
+the isolated fixture: `bash tests/fixtures/r18-proc-census.sh --tool tools/souji-proc-census.sh`.
+The corrected source and byte boundary are appended in `knowledge/process-residue-observations.md`.
+Other-uid work is not assigned wholesale to Mori; health/liveness findings may be routed there and
+credential concerns to Kagi, with operator arbitration for contested scope.
+
+The specific open requests are `souji | round-18` F5 reap and NAMESPACE_SHA256, not the broad
+round16 pointer above. Both remain HELD. A historical58-orphan observation is not a current count
+or authority to kill/delete. Certification OFF, K5 HELD, F1–F4 unchanged.

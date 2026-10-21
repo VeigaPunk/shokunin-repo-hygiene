@@ -141,3 +141,19 @@ The earlier frontier sentence saying F5 has no knowledge entry is superseded for
 surface only. Reaping stays outside the lane: operator approval, fresh (pid, starttime,
 boot_id) verification at act time and LOG receipts are required; other uids and host-wide
 liveness remain mori's ground. F1, F2, F3 and F4 are unchanged.
+
+## Round 20 boundary precision (supersedes broad r19 adjacency wording)
+
+The F5 observation surface remains Core, list-only, on eligible readable own-uid
+candidates; self/descendants recognized by the bounded parent-chain snapshot are excluded, and unreadable/racing entries skipped. Reading raw
+argv before output redaction is part of the actual tool boundary, not secret-free
+inspection or a universal redaction guarantee. The complete owned-code read-set and
+source/fixture bindings are appended in `corpus/knowledge/process-residue-observations.md`.
+
+Other uids are outside this tool; the r19 sentence assigning all other-uid work to Mori
+does not adjudicate its province. Health/liveness/resource findings may route to Mori,
+host repair to Tsukuroi and credential concerns to Kagi; contested scope stays with the
+operator. F5 reap and NAMESPACE_SHA256 remain HELD under the specific round18 requests.
+Process listings never authorize killing, quarantine or deletion; certification OFF,
+K5 HELD. This round repairs evidence/consumer contracts only and acquires no cleanup,
+host-management or fleet-orchestration authority.

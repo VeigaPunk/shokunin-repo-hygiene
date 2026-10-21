@@ -10,10 +10,12 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 revision = sys.argv[1] if len(sys.argv) == 2 else "HEAD"
+GIT_ENV = None
 def git(*args):
-    return subprocess.check_output(["git", "-C", str(ROOT), *args], text=True)
+    return subprocess.check_output(["git", "-C", str(ROOT), *args], text=True, env=GIT_ENV)
 
 def resolve_claims_revision(value):
+    global GIT_ENV
     """r19 C2: the stamped revision is a durable, explicit commit id.
 
     Every byte this counter reads comes from the revision itself, so the
@@ -23,6 +25,7 @@ def resolve_claims_revision(value):
         "souji_rev_pin", ROOT / "tools" / "souji-rev-pin.py")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
+    GIT_ENV = module._env()
     try:
         return module.resolve_durable(str(ROOT), value, [], tree_check=False)
     except module.Refusal as exc:
@@ -30,7 +33,8 @@ def resolve_claims_revision(value):
         raise SystemExit(2)
 
 rev = resolve_claims_revision(revision)
-paths = set(git("ls-tree", "-r", "--name-only", rev).splitlines())
+paths = set(git("ls-tree", "-r", "--name-only", rev, "--",
+                "tools", "tests/fixtures", "corpus/knowledge", "corpus/SOURCES.md").splitlines())
 source = git("show", rev+":corpus/SOURCES.md")
 rows = [[c.strip() for c in line.split("|")[1:-1]] for line in source.splitlines()
         if re.match(r"^\|\s*S\d{3,}\s*\|", line)]

@@ -1,30 +1,32 @@
 #!/usr/bin/env python3
 """souji-rev-pin — durable revision resolution for lane evidence runners.
 
-Round 19 (C2). A record's `measured_commit` is only honest when the revision
-it names is (a) a full 40-hex commit id, (b) reachable from a durable ref —
-`refs/heads`, `refs/tags` or `refs/remotes`, explicitly never `refs/jj/*`
-(the r17 receipt-root rule) — and (c) the tracked paths the record claims to
-measure have the same bytes at that revision as in the working tree.
+Round 19 introduced full durable IDs. Round 20 additionally compares the
+exact owned regular-file/directory input set to committed blob bytes,
+including additions and omissions. Durable roots remain refs/heads,
+refs/tags and refs/remotes, never refs/jj. Callers recheck the same input
+boundary before writing; external runtimes and filesystem races stay outside it.
 
 A revision that fails any check is refused with exit 2 and a typed message;
 callers must refuse before writing a record. This tool is a resolution
 helper, not a verdict: it never decides whether a measurement is sufficient.
 
 Sources (opened 2026-10-21):
-  S079 git-rev-parse(1) — a revision may be named by a symbolic ref; the
-       durable check therefore rejects HEAD and branch names.
-  S080 git-for-each-ref(1) — refnamespaces can be selected explicitly, which
-       is how refs/jj is excluded by construction.
-  S081 git-diff(1) — `--quiet` exits 1 on differences and 0 otherwise.
+  S089 git(1) — repository-selection environment can override -C.
+  S091 git-rev-parse(1) — verifies an object, not its durability.
+  S092 git-for-each-ref(1) — selects namespaces; durability is lane policy.
+  S093 git-diff(1) — quiet status covers only selected paths. The r20
+       snapshot compares raw blobs and enumerates bounded directories.
 """
 
 from __future__ import annotations
 
 import argparse
+import hashlib
 import os
 import re
 import shutil
+import stat
 import subprocess
 import sys
 import tempfile
@@ -38,16 +40,22 @@ GIT_CONFIG = [
 ]
 
 
-class Refusal(Exception):
+class Refusal(ValueError):
     """A revision the runner must not record."""
 
 
 def _env():
-    env = dict(os.environ)
+    # Repository selection/configuration belongs to the supplied root, never
+    # an inherited GIT_DIR, GIT_WORK_TREE, alternate object store or index.
+    env = {key: value for key, value in os.environ.items()
+           if not key.startswith("GIT_")}
     env.update({
         "GIT_TERMINAL_PROMPT": "0",
         "GIT_OPTIONAL_LOCKS": "0",
         "GIT_CONFIG_NOSYSTEM": "1",
+        "GIT_CONFIG_GLOBAL": "/dev/null",
+        "GIT_NO_LAZY_FETCH": "1",
+        "GIT_NO_REPLACE_OBJECTS": "1",
         "LC_ALL": "C",
     })
     return env
@@ -81,6 +89,94 @@ def durable_tips(root):
         obj, peeled = parts[0], parts[1]
         tips.append(peeled or obj)
     return [tip for tip in tips if COMMIT_RE.match(tip)]
+
+
+def input_snapshot(root, rev, paths):
+    """Bind a bounded owned file/directory set to exact committed blob bytes.
+
+    Re-enumerate the directories on every invocation, including untracked and
+    ignored files: an added counted entry must not disappear behind git diff.
+    This is not a filesystem sandbox or an external-runtime attestation.
+    """
+    root = os.path.abspath(root)
+    selected = []
+    for path in paths:
+        if not isinstance(path, str) or not path or os.path.isabs(path):
+            raise Refusal("invalid measured path %r" % path)
+        parts = path.split("/")
+        if any(part in ("", ".", "..") for part in parts):
+            raise Refusal("measured path %r escapes or is ambiguous" % path)
+        if parts[0] in (".git", ".jj") or (
+                parts[0] == "census" and (len(parts) == 1
+                or parts[1].startswith("operator-sweep-"))):
+            raise Refusal("protected measured path %r" % path)
+        selected.append(path)
+    if not selected:
+        raise Refusal("no measured paths supplied")
+    tree = _git(root, "ls-tree", "-r", "-z", "--full-tree", rev, "--",
+                *selected).stdout
+    expected = {}
+    for row in tree.split(b"\0"):
+        if not row:
+            continue
+        metadata, name = row.split(b"\t", 1)
+        mode, kind, oid = metadata.split()
+        relative = os.fsdecode(name)
+        if kind != b"blob" or mode not in (b"100644", b"100755"):
+            raise Refusal("nonregular committed measured input %s" % relative)
+        expected[relative] = hashlib.sha256(
+            _git(root, "cat-file", "blob", oid.decode("ascii")).stdout
+        ).hexdigest()
+    actual = {}
+
+    def capture(relative):
+        absolute = os.path.join(root, relative)
+        # Check every parent without following a symlink into another surface.
+        current = root
+        for component in relative.split("/"):
+            current = os.path.join(current, component)
+            if stat.S_ISLNK(os.lstat(current).st_mode):
+                raise Refusal("symlink measured input %s" % relative)
+        fd = os.open(absolute, os.O_RDONLY | os.O_NONBLOCK | os.O_NOFOLLOW)
+        with os.fdopen(fd, "rb") as handle:
+            if not stat.S_ISREG(os.fstat(handle.fileno()).st_mode):
+                raise Refusal("nonregular measured input %s" % relative)
+            actual[relative] = hashlib.file_digest(handle, "sha256").hexdigest()
+
+    def walk_error(exc):
+        raise exc
+
+    try:
+        for relative in selected:
+            absolute = os.path.join(root, relative)
+            current = root
+            for component in relative.split("/"):
+                current = os.path.join(current, component)
+                if stat.S_ISLNK(os.lstat(current).st_mode):
+                    raise Refusal("symlink measured input %s" % relative)
+            mode = os.lstat(absolute).st_mode
+            if stat.S_ISLNK(mode):
+                raise Refusal("symlink measured input %s" % relative)
+            if stat.S_ISDIR(mode):
+                for parent, dirs, files in os.walk(absolute, followlinks=False,
+                                                   onerror=walk_error):
+                    for name in dirs:
+                        if os.path.islink(os.path.join(parent, name)):
+                            raise Refusal("symlink measured directory %s" % relative)
+                    for name in files:
+                        capture(os.path.relpath(os.path.join(parent, name), root))
+            else:
+                capture(relative)
+    except OSError as exc:
+        raise Refusal("unreadable measured input: %s" % exc) from exc
+    if actual != expected:
+        missing = sorted(set(expected) - set(actual))
+        added = sorted(set(actual) - set(expected))
+        changed = sorted(path for path in actual.keys() & expected.keys()
+                         if actual[path] != expected[path])
+        raise Refusal("measured inputs differ from %s (missing=%s added=%s changed=%s)"
+                      % (rev, missing, added, changed))
+    return dict(sorted(actual.items()))
 
 
 def resolve_durable(root, rev, measured_paths=None, tree_check=True):
@@ -127,23 +223,7 @@ def resolve_durable(root, rev, measured_paths=None, tree_check=True):
     if not tree_check:
         return rev
 
-    abs_paths = []
-    for path in measured_paths:
-        norm = os.path.normpath(path)
-        if os.path.isabs(norm) or norm.startswith(".."):
-            raise Refusal("measured path %r escapes the repository" % path)
-        abs_paths.append(norm)
-    diff = _git(root, "diff", "--quiet", rev, "--", *abs_paths, check=False)
-    if diff.returncode == 1:
-        raise Refusal(
-            "tracked measured paths differ from %s (a record must not claim "
-            "bytes the revision does not contain)" % rev
-        )
-    if diff.returncode != 0:
-        raise Refusal(
-            "git diff failed for measured paths: %s"
-            % diff.stderr.decode("utf-8", "replace").strip()[:200]
-        )
+    input_snapshot(root, rev, measured_paths)
     return rev
 
 

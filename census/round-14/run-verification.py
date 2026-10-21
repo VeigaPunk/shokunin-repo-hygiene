@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Run only r14 owned checks; never a live census or deletion certification."""
+import argparse
 import datetime
 import hashlib
 import importlib.util
@@ -37,22 +38,66 @@ MEASURED_PATHS = [
     "census/round-14/check-timeout-anchor.py",
     "census/round-14/run-verification.py",
     "census/round-13/run-verification.py",
+    "tools/souji-rev-pin.py",
+    "census/round-14/run-targeted.py",
+    "tests/fixtures/r14-cache-frozen",
+    "corpus/SOURCES.md",
+    "census/round-13/verification.json",
 ]
+PIN_MODULE = None
+INPUT_SHA256 = {}
 
 
 def resolve_revision():
     """Return a durable revision or refuse with exit 2 before any record."""
-    spec = importlib.util.spec_from_file_location(
-        "souji_rev_pin", ROOT / "tools" / "souji-rev-pin.py")
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    global PIN_MODULE, INPUT_SHA256
     head = git("rev-parse", "HEAD")
+    helper = ROOT / "tools/souji-rev-pin.py"
     try:
-        return module.resolve_durable(str(ROOT), head, MEASURED_PATHS)
-    except module.Refusal as exc:
+        if helper.parent.is_symlink() or helper.is_symlink() or not helper.is_file():
+            raise ValueError("nonregular revision helper tools/souji-rev-pin.py")
+        committed = subprocess.check_output(
+            ["git", "-C", str(ROOT), "show", head + ":tools/souji-rev-pin.py"], env=ENV)
+        if helper.read_bytes() != committed:
+            raise ValueError("tools/souji-rev-pin.py differs from measured commit")
+        spec = importlib.util.spec_from_file_location("souji_rev_pin", helper)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        PIN_MODULE = module
+        revision = module.resolve_durable(str(ROOT), head, MEASURED_PATHS)
+        INPUT_SHA256 = module.input_snapshot(str(ROOT), revision, MEASURED_PATHS)
+        return revision
+    except (OSError, ValueError, SyntaxError, ImportError, subprocess.CalledProcessError) as exc:
         print("run-verification: refused: %s (no record written)" % exc,
               file=sys.stderr)
         raise SystemExit(2)
+
+def checked_inputs(revision):
+    observed = PIN_MODULE.input_snapshot(str(ROOT), revision, MEASURED_PATHS)
+    if observed != INPUT_SHA256:
+        raise PIN_MODULE.Refusal("measured input set changed; no record written")
+    return observed
+
+
+def output_path():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--output", default="census/round-14/verification.json")
+    value = parser.parse_args().output
+    relative = Path(value)
+    if (relative.is_absolute() or ".." in relative.parts
+            or len(relative.parts) != 3 or relative.parts[0] != "census"
+            or not relative.parts[1].startswith("round-")
+            or not relative.parts[1][6:].isdigit()
+            or relative.suffix != ".json"):
+        raise ValueError("output must be census/round-N/<new>.json")
+    target = ROOT / relative
+    if target.exists() or target.is_symlink():
+        raise ValueError("refuse overwriting exercised evidence")
+    if target.parent.is_symlink() or target.parent.resolve().parent != ROOT / "census":
+        raise ValueError("output parent escapes census")
+    if not target.parent.is_dir():
+        raise ValueError("output parent must exist")
+    return target
 
 def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
@@ -80,9 +125,7 @@ def run(name, command, revision, expected=0, seconds=150):
     return result
 
 def main():
-    target = ROOT/"census/round-14/verification.json"
-    if target.exists():
-        raise RuntimeError("Refuse overwriting exercised evidence; use a new attempt filename")
+    target = output_path()
     revision = resolve_revision()
     paths = ["tools/souji-evidence-cache.py", "tools/souji-census.sh",
              "tests/fixtures/r14-evidence-cache.py", "tests/fixtures/r14-census-boundary.py",
@@ -113,15 +156,24 @@ def main():
         baseline_digest = sha(baseline)
     after = {p: sha(ROOT/p) for p in paths}
     historical_after = sha(ROOT/"census/round-13/verification.json")
+    inputs_after = checked_inputs(revision)
     data = dict(timestamp=datetime.datetime.now(datetime.timezone.utc).isoformat(),
                 measured_commit=revision, baseline_commit=BASE, baseline_census_sha256=baseline_digest,
                 installed_sha256=after, artifacts_unchanged_during_run=before == after,
+                input_sha256=inputs_after, inputs_unchanged_during_run=True,
+                input_scope="Owned repository files only; external commands, host state, "
+                            "configuration and environment are not attested.",
                 historical_evidence_sha256_before=historical_before,
                 historical_evidence_sha256_after=historical_after,
                 historical_evidence_unchanged=historical_before == historical_after, results=results,
                 scope="All fixtures isolated under /var/tmp; no real credential-store probe or live census. No deletion certification.")
-    target.write_text(json.dumps(data, indent=2)+"\n")
+    with target.open("x", encoding="utf-8") as handle:
+        handle.write(json.dumps(data, indent=2)+"\n")
     return 0 if before == after and historical_before == historical_after and all(x["matched"] for x in results) else 1
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    try:
+        raise SystemExit(main())
+    except (OSError, ValueError, RuntimeError, subprocess.CalledProcessError) as exc:
+        print("run-verification: refused: %s (no record written)" % exc, file=sys.stderr)
+        raise SystemExit(2)

@@ -14,9 +14,9 @@ CLI at a named commit with --round 18. Cases:
                                                 -> exit 0
 
 The same four cases run against a base-arm gate extracted with
-`git show <base-rev>:tools/souji-landing-gate.py`. The base arm MUST fail at
-least one case (the unmarked cut is a silent pass before the rule); if it
-does not, this fixture is vacuous and reports FAIL.
+`git show <base-rev>:tools/souji-landing-gate.py`. The base arm MUST expose
+both the unmarked-cut false pass and wrapped-bullet false failure. Each
+arm must also exercise one report, marker, STATUS line and carry heading.
 
 Usage:
   python3 tests/fixtures/r19-carry-wrap.py [--tool PATH] [--base-rev REV]
@@ -159,6 +159,12 @@ def run_gate(tool, repo, rev, out_path):
             payload = {}
     ids = sorted({f.get("id") for f in payload.get("findings", [])
                   if isinstance(f, dict)})
+    counts = payload.get("summary", {})
+    expected_counts = {"checked_reports": 1, "checked_markers": 1,
+                       "status_lines": 1, "carry_heading": 1}
+    counters_ok = all(counts.get(key) == value for key, value in expected_counts.items())
+    if not counters_ok:
+        return 2, ids, "unexercised/mutated summary counters: %r" % counts
     return proc.returncode, ids, (proc.stderr or "").strip()[:200]
 
 
@@ -180,6 +186,7 @@ def main(argv=None):
     top = tempfile.mkdtemp(prefix=SCRATCH_PREFIX, dir="/var/tmp")
     passed = failed = 0
     base_failed = 0
+    discriminators = set()
     try:
         base_tool = os.path.join(top, "base-gate.py")
         show = subprocess.run(
@@ -215,14 +222,16 @@ def main(argv=None):
             bok = bcode == case["expect_exit"] and bids == case["expect_ids"]
             if not bok:
                 base_failed += 1
+                discriminators.add(name)
             print("CASE\t%s\tbase/%s\texit=%d ids=%s"
                   % ("pass" if bok else "discriminates", name, bcode, bids))
 
         total = passed + failed
-        if base_failed == 0:
+        required_discriminators = {"wrap-unmarked", "wrap-bullet-wrapped"}
+        if discriminators != required_discriminators:
             failed += 1
-            print("CASE\tFAIL\tbase-vacuity\tbase arm matched every case; "
-                  "the fixture cannot discriminate the fix")
+            print("CASE\tFAIL\tbase-vacuity\tgot=%s want=%s"
+                  % (sorted(discriminators), sorted(required_discriminators)))
         print("SUMMARY total=%d failed=%d base_discriminating=%d"
               % (total, failed, base_failed))
         return 0 if failed == 0 else 1

@@ -1,0 +1,16 @@
+# Input-set rederivation review
+
+**Axis:** operability (C2; legacy-unmapped, score 8, claimed delta 0). **Finding:** open — the after-command snapshot can silently omit leaves under an unreadable directory, so it is not a complete rederivation of a selected bounded directory.
+
+**Counterexample:** select a bounded directory (for example, the frozen-fixture directory), then add a nested regular input file inside a child directory whose enumeration raises `OSError` before the after-command snapshot. `input_snapshot` uses `os.walk(absolute, followlinks=False)` without `onerror` at `tools/souji-rev-pin.py:145-159`; Python's documented default is to ignore `scandir()` errors. The child and its regular leaves are therefore absent from `actual`, and the comparison at `:162-169` can still return success when the remaining visible files equal the committed map. The runner's second snapshot does re-run the helper, but repeats the same blind spot; this defeats the “rederive the entire input set after commands” guarantee rather than merely omitting a digest for a known filename.
+
+**Evidence (source-only; no runner, fixture, or target code was executed):**
+
+- `tools/souji-rev-pin.py:145-159` walks selected directories and captures only reached filenames; it does not provide an `onerror` callback. `:160-161` catches `OSError`, but cannot catch directory-scan errors that `os.walk` suppresses by default. `:162-169` only compares the resulting maps.
+- `census/round-14/run-verification.py:43` selects `tests/fixtures/r14-cache-frozen` as a directory; `:61-72` takes the initial snapshot and `checked_inputs` calls `input_snapshot` again before output. The identical re-enumeration therefore remains vulnerable.
+- `census/round-14/run-targeted.py:23-25,44-46` uses the same complete measured-path list plus prior evidence and the same post-command recheck. `census/round-13/run-verification.py:103-109,132-134,489-492` likewise selects bounded directories (`tests/fixtures/r13-cert-frozen`, `corpus/knowledge`) and compares a second snapshot before writing.
+- Python documentation for [`os.walk`](https://docs.python.org/3/library/os.html#os.walk) specifies that, absent `onerror`, errors from `scandir()` are ignored.
+
+**Smallest safe correction / oracle:** make traversal errors fail closed (pass an `onerror` callback that raises, letting the existing `OSError` handler convert it to `Refusal`, or use an equivalent explicit traversal). Add one helper/caller oracle that forces enumeration of a newly added child directory to raise `PermissionError`/`OSError` during the post-command snapshot and requires refusal with no output. This tests the actual missing-set case without relying on host permissions. The public source reads establish code shape only; no fresh execution or runtime refusal is claimed.
+
+**Observed source identity:** preregistration names baseline `12516f7dcdd5b165e5ee208d44a38d63b5bd5812`. My single source read observed reader snapshot tags `souji-rev-pin.py #18FF`, r13 runner `#8EBD`, r14 runner `#658E`, r14 targeted runner `#7C4E`, and cache demonstration `#0E04`; these are reader snapshot identifiers, not commit IDs or cryptographic digests. No install/update was made.

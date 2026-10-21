@@ -1049,3 +1049,114 @@ after `SUMMARY` while the three r19 fixtures print a space, so the committed rec
 `census/round-19/final-verification-63bb887.json` carries the fixture tallies in each entry's
 `tail` but not in a parsed `summary` field. The regex now accepts any whitespace; the record's
 tails are the observed output and no count is changed.
+
+## 2026-10-21 — round 20 repair-first preregistration and named historical corrections
+
+Author exactly souji20attempt1; observed master local=remote
+`12516f7dcdd5b165e5ee208d44a38d63b5bd5812`, ahead=0, detached HEAD, tracked=0,
+one operator-owned untracked exception. The round19 outside decision is
+**rejected-harmed** (`corpus/lessons/round-19-verifier-spotcheck.md`, MANIFEST index390);
+earlier author-improved language is not current admission. C1 calibration (lowest7) repairs
+exact per-item auditor authority/provenance; C2 operability repairs actual input binding
+and the full-ID consumer cutover. The independent oracle predates outputs in
+`.ufo/waves/round-20/preregistration.txt`; the policyv2 same-spec plan/run is64 distinct
+items, one rendered taskCall. No runtime result is pre-claimed. One production integration
+owner, three actual external worktrees rooted at `/var/tmp/souji-r20-<scope>-12516f7`,
+each observed at the full baseline; no in-source clones.
+
+**Correction to r19 C2 “the recorded historical commands with a hash still run” above:**
+abbreviated hashes did not run after the strict resolver cutover. This was an operability
+harm, not an intended trade cancelled by safety. Current replacements, resolved read-only
+from this repo, are the five full-ID commands under `corpus/README.md` Round20.
+They supersede these historical instruction tokens without rewriting any old bytes:
+
+| historical locations | old token | full current argument |
+|---|---|---|
+| this LOG r13 counting paragraph; corpus/README.md r13 inventory; corpus/lessons/round-13.md Gate; census/round-13/counts.json command0 | 31984f4 | 31984f473ce4bdab61a99b16cca194b28108cb81 |
+| same r13 locations and command1 | 6f8ee0f | 6f8ee0f38a14a3cb599ee606c486a55ec64e8ae6 |
+| this LOG r14 counting paragraph; corpus/README.md r14 inventory; corpus/lessons/round-14.md inventory | a31642d | a31642d14006830ec62edf40b0354c3699728c4a |
+| same r14 “same command” after argument | 552cae4 | 552cae4204b3ab818419ad8adbfef3a4da29a3e0 |
+| corpus/README.md r19 count correction; corpus/lessons/round-19.md R19-M1 | b576341 | b5763415cc67ecff1e8fe56c58c39a6fb106d7a3 |
+| census/round-19/c2-smoke.txt abbreviated display, not a literal executable ellipsis | 3ab2c81... | 3ab2c81479f5004c8bc91946eea482caec45408f |
+
+The r14 counts.json arguments already use full IDs and stay unchanged. Historical records
+remain their original runs, not new executions. Full-ID/durable-ref refusal remains; caller
+demonstrations are required before the migration is graded.
+
+**Correction to r19 wave/acceptance authority:** the ninety-member registry is a plan
+inventory, not68 registry members. Packed starts68, committed reports67, packing-unexecuted22;
+ReviewerRevPinHelper has no available committed report, not a proven dead seat and receives
+no credit or respawn. The first68 attempt was wholly refused, not68 starts; later68 actual
+starts meet the numeric floor. The65-item wave2 was preparation only. Erratum20 “complete
+wave set” means all then-available evidence was committed, not that every report/transcript
+exists. The18/18 acceptance binds bbeb73b, not final e6df080 bytes; the late r17 fixture
+29/0 observation is separate. None of these distinctions erase the prior harm.
+
+Sources opened this round: official git selector/diff/rev-parse/for-each-ref pages and
+filter-branch WARNING. New scoped S089/S091–S093 admitted, S090 actually rejected as
+cleanup/history-rewrite authority; old teaches corrections are new rows. The missing r19
+source-reject catalogue/search accounting is named as missing, never fabricated retroactively.
+Gate quotes and actual decisions: `corpus/lessons/round-20.md`. Source census start exit0,
+souji ok,17 duplicate-URL/scope warnings, no errors. No install/update. Certification OFF,
+K5 HELD, F5 reap/NAMESPACE held. The operator sweep remains unread/uncopied/unedited/
+uncommitted/unreaped, and list-only observations never authorize killing or deletion.
+
+## 2026-10-21 — round 20 recovery implementation (same claim, attempt 1)
+
+Inherited r20 preregistration and corpus/authority drafts are retained only after
+source inspection and public-source reopens. The old 64 pending handles never
+executed (parent ruling: 64 registered, 0 started/consumed, dead-session orphans).
+Fresh unchanged 64-seat dispatch attempts 1–3 were wholly refused at the 100-job
+cap; attempt4 started the validated complete recovery wave. Its policy-v2 spec,
+unchanged dispatch, attempt responses and exact identity registry are under
+`.ufo/waves/round-20/`. Failed provider seats are not replaced; the L1 holds the
+planner/integration seat. No runtime pass is asserted by this implementation entry.
+
+C1 calibration repairs `tools/souji-seat-audit.py`: item-local standalone positive
+delivery directives replace the five-suffix wildcard; exact OWN ONLY and literal
+own-slot scratch grants remain. Fenced/denied mentions and hidden truncated targets
+do not authorize a write. Receipts bind consumed source/spec/transcript/manifest
+bytes and refuse detected import/repeated-read/read-window drift. Visible signal
+prefix/variable and root=/scratch-prefix cases have inert transcript controls.
+`tests/fixtures/r20-audit-contract.py` is the independent complete oracle;
+`tests/fixtures/r19-seat-audit-shapes.py` migrates old positive grants and preserves
+the tools/kill/killpg controls. Carry fixture now requires both baseline
+discriminators and exact exercised counters. No actual signal or process scan
+is part of this repair.
+
+C2 operability repairs `tools/souji-rev-pin.py` and the r13/r14 producing callers.
+Named bounded directories are enumerated fail-closed, additions/omissions and raw
+regular-file bytes compared with committed blobs, helper bytes checked before import,
+and the complete selected set rechecked before output. Helper/wrapper/frozen/corpus
+and optional-prior inputs contributing fields are included; post-check digest fields
+come from the verified map. Git repository-selection environment is stripped for
+all helper/counter reads, without host/global changes. Both actual count consumers
+remain strict full-ID committed-data readers; r14 tree enumeration is narrowed to
+the paths its output fields actually use. All five current README commands use full
+durable IDs; immutable historical commands are corrected by the preceding named index.
+Refusal is exit2 before any record; the cache demonstration's binding refusals use
+stderr only. External binaries/environment and atomic-filesystem guarantees remain
+outside these file-input receipts.
+
+Prior rejection and source precision are mined in
+`corpus/lessons/round-20.md`: Q39–Q44, all twenty r19 errata, explicit r19 accounting,
+source-only vs runtime boundaries, and the exact F5 read/exclusion/redaction scope.
+S089–S095 were opened this round: six scoped documentary admits and actual rejected
+cleanup-authority candidate S090; no existing source cells were rewritten and no new
+knowledge path/coverage claim is made. The existing F5 entry is narrowed, not expanded
+into reap/private-data authority. Certification OFF, K5 HELD, both specific round18
+operator requests HELD. No tool install/update, pacman transaction, cleanup, inherited
+process signal, vault/private configuration or operator-sweep access was performed by L1.
+
+### Round20 correction — initial coordinator discovery scope
+
+The preceding broad “no operator-sweep access performed by L1” wording is too strong:
+the first bare lane-directory reader call implicitly rendered nested child-name/
+metadata entries, including that excluded directory name. It was a scope deviation,
+not an allowed metadata-only exception. Native call:
+`census/round-20/coordinator-start-excerpt.txt:43`; explicit disposition:
+`census/round-20/coordinator-scope-deviation.json`. No finding in the claims relies on
+that inventory. No file content under the operator-owned directory was explicitly
+opened, copied, changed, staged or reaped. Q45 and SKILL prohibit implicit root
+expansion; source auditor and inert fixture now flag exact root read calls. The
+failure is retained and reported, not rerun or laundered into a clean-source claim.

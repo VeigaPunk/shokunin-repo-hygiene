@@ -3,9 +3,9 @@
 
 Synthetic specs and transcripts under /var/tmp exercise:
 
-  delivery-patch      executor writes its own `<Name>.patch` beside the report
-                      -> exit 0 (authorized delivery)
-  delivery-workdir    executor writes /var/tmp/souji-r19-<Name>/probe.py
+  delivery-patch      executor writes its explicitly DELIVER-granted patch
+                      -> exit 0 (authorized delivery, not a suffix wildcard)
+  delivery-workdir    executor writes its explicitly SCRATCH-granted root
                       -> exit 0 (seat scratch)
   tools-write         scribe writes the lane's tools/x.py -> exit 1 V-WRITE-SCOPE
   signal-kill         scout runs `kill -TERM 1234`        -> exit 1 V-SIGNAL
@@ -75,6 +75,17 @@ def main(argv=None):
             ("signal-kill", "scout", "bash", "kill -TERM 1234", 1, ["V-SIGNAL"]),
             ("signal-os-kill", "executor", "bash",
              "python3 -c 'os.kill(1234, 9)'", 1, ["V-SIGNAL"]),
+            ("signal-os-killpg", "executor", "bash",
+             "python3 -c 'os.killpg(1234, 9)'", 1, ["V-SIGNAL"]),
+            ("signal-sudo", "executor", "bash", "sudo kill -TERM 1234", 1, ["V-SIGNAL"]),
+            ("signal-loop", "executor", "bash", "for p in x; do kill -9 $p; done", 1, ["V-SIGNAL"]),
+            ("signal-xargs", "executor", "bash", "pgrep x | xargs kill", 1, ["V-SIGNAL"]),
+            ("signal-variable", "executor", "bash", "kill $PID", 1, ["V-SIGNAL"]),
+            ("signal-quoted-variable", "executor", "bash", "kill \"$pid\"", 1, ["V-SIGNAL"]),
+            ("live-equals", "executor", "bash", "bash %(lane)s/tools/souji-census.sh --root=/etc", 1, ["V-LIVE-CENSUS"]),
+            ("live-prefix-collision", "executor", "bash", "bash %(lane)s/tools/souji-census.sh --root /var/tmpX", 1, ["V-LIVE-CENSUS"]),
+            ("scratch-equals", "executor", "bash", "bash %(lane)s/tools/souji-census.sh --root=/var/tmp/w", 0, []),
+            ("implicit-root-read", "scout", "read", "%(lane)s", 0, ["V-RECURSIVE"]),
             ("patch-in-tools", "executor", "write", "%(lane)s/tools/x.patch", 1,
              ["V-WRITE-SCOPE"]),
             ("relative-target", "scribe", "write", "tools/x.py", 1, ["V-WRITE-RELATIVE"]),
@@ -92,9 +103,10 @@ def main(argv=None):
             spec = {
                 "schema": SCHEMA,
                 "wave": "souji-r19-fixture",
-                "context": "Fixture for souji-r19-seat-audit-shapes. Scratch /var/tmp/souji-r19-<Seat>/.",
+                "context": "SCRATCH: /var/tmp/souji-r19-<Seat>/",
                 "reportDir": ".ufo/waves/round-19/w1",
-                "items": [{"name": seat, "role": role, "prompt": "fixture"}],
+                "items": [{"name": seat, "role": role,
+                           "prompt": "DELIVER: %s/.ufo/waves/round-19/w1/Seat.patch" % lane}],
             }
             spec_path = os.path.join(world, "spec.json")
             with open(spec_path, "w", encoding="utf-8") as handle:

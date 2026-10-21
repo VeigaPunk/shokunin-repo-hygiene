@@ -100,21 +100,47 @@ MEASURED_PATHS = [
     "tests/fixtures/r13-cert-evidence.py",
     "tests/fixtures/r13-repo-structure.sh",
     "tests/fixtures/r13-quarantine-bounds.sh",
-    "tests/fixtures/r13-cert-frozen/expected.json",
+    "tests/fixtures/r13-cert-frozen",
     "census/round-13/run-verification.py",
+    "tools/souji-rev-pin.py",
+    "tools/souji-round9-selftest.sh",
+    "corpus/SOURCES.md",
+    "corpus/knowledge",
+    "LOG.md",
+    "census/round-13/replay-wrong-bytes.json",
+    "census/round-13/replay-candidate.json",
+    "census/round-13/replay-fragments",
+    "census/round-10/cert-16.json",
+    "tools/cand-census-03.sh",
 ]
+PIN_MODULE = None
+INPUT_PATHS = []
+INPUT_SHA256 = {}
 
 
 def resolve_revision():
     """Return a durable revision or refuse with exit 2 before any record."""
-    spec = importlib.util.spec_from_file_location(
-        "souji_rev_pin", ROOT / "tools" / "souji-rev-pin.py")
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    global PIN_MODULE, INPUT_PATHS, INPUT_SHA256, PREVIOUS_SOURCE
     head = git("rev-parse", "HEAD")
+    helper = ROOT / "tools/souji-rev-pin.py"
     try:
-        return module.resolve_durable(str(ROOT), head, MEASURED_PATHS)
-    except module.Refusal as exc:
+        if helper.parent.is_symlink() or helper.is_symlink() or not helper.is_file():
+            raise ValueError("nonregular revision helper tools/souji-rev-pin.py")
+        committed = subprocess.check_output(
+            ["git", "-C", str(ROOT), "show", head + ":tools/souji-rev-pin.py"], env=ENV)
+        if helper.read_bytes() != committed:
+            raise ValueError("tools/souji-rev-pin.py differs from measured commit")
+        spec = importlib.util.spec_from_file_location("souji_rev_pin", helper)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        INPUT_PATHS = list(MEASURED_PATHS)
+        if PREVIOUS_SOURCE is not None:
+            INPUT_PATHS.append(PREVIOUS_SOURCE)
+        PIN_MODULE = module
+        revision = module.resolve_durable(str(ROOT), head, INPUT_PATHS)
+        INPUT_SHA256 = module.input_snapshot(str(ROOT), revision, INPUT_PATHS)
+        return revision
+    except (OSError, ValueError, SyntaxError, ImportError, subprocess.CalledProcessError) as exc:
         print("run-verification: refused: %s (no record written)" % exc,
               file=sys.stderr)
         raise SystemExit(2)
@@ -128,7 +154,7 @@ def dependency_map(command, name):
     operator-sweep trees are never entered. External absolute paths are
     excluded; results whose external inputs are mutable are reuse-exempt.
     """
-    paths = {RUNNER_PATH}
+    paths = {RUNNER_PATH, *INPUT_SHA256}
     if name.endswith(".sh-selftest"):
         helper = ROOT / "tools/souji-round9-selftest.sh"
         if helper.is_file() and not helper.is_symlink():
@@ -178,10 +204,11 @@ def gate_reuse(prior):
         with handle:
             json.dump(record, handle, indent=2, sort_keys=True)
             handle.write("\n")
+        required = [part for path in sorted(INPUT_SHA256) for part in ("--require", path)]
         try:
             process = subprocess.run(
                 [sys.executable, str(GATE), "--root", str(ROOT),
-                 "--record", str(record_path)],
+                 "--record", str(record_path), *required],
                 capture_output=True, text=True, timeout=GATE_TIMEOUT, env=ENV)
             exit_code = process.returncode
             stdout = process.stdout or ""
@@ -417,6 +444,7 @@ def main(argv=None):
 
 def execute(round_number, output, previous):
     global CURRENT_REV, PREVIOUS, PREVIOUS_RESULTS, RETRY_NAMES, PREVIOUS_SOURCE
+    PREVIOUS_SOURCE = lane_relative(previous) if previous is not None else None
     revision = resolve_revision()
     CURRENT_REV = revision
     PREVIOUS = json.loads(previous.read_text()) if previous is not None else None
@@ -468,11 +496,17 @@ def execute(round_number, output, previous):
         ):
             admitted.append(str(entry.relative_to(ROOT)))
     after = {str(path.relative_to(ROOT)): digest(path) for path in artifacts}
+    inputs_after = PIN_MODULE.input_snapshot(str(ROOT), revision, INPUT_PATHS)
+    if inputs_after != INPUT_SHA256:
+        raise PIN_MODULE.Refusal("measured input set changed during run; no record written")
     record = dict(round=round_number, measured_commit=revision, baseline_commit=BASE,
                   recorded_at=datetime.datetime.now(datetime.timezone.utc).isoformat(),
                   installed_sha256=after, artifacts_unchanged_during_run=before == after,
+                  input_sha256=inputs_after, inputs_unchanged_during_run=True,
+                  input_scope="Owned repository files only; external commands, host state, "
+                              "configuration and environment are not attested.",
                   retention_gate=dict(
-                      path=GATE_LABEL, sha256=sha_or_none(GATE),
+                      path=GATE_LABEL, sha256=inputs_after[GATE_LABEL],
                       policy="reuse a prior matched result only when the gate exits 0; "
                              "legacy, unstable, missing-revision, non-matched and "
                              "external-mutable results re-execute"),
