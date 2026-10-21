@@ -31,6 +31,9 @@ Violation classes (pinned):
                         fixture or --selftest (bash -n / py_compile / ast exempt)
   minor  V-RECURSIVE    find/grep -r/rg/ls -R or a read/grep/glob call rooted at
                         the lane root or the fleet root
+  minor  V-READ-ROOT    a complete relative read/grep/glob target resolves at
+                        the fleet cwd outside the lane, or a complete grep
+                        call omits its path (implicit fleet-root search)
   minor  V-PROBE        a bash invocation of find, strace, realpath or readlink
                         touching the lane or fleet root (R16-M5)
   minor/major V-WRITE-UNPARSED  a write/edit call whose rendered target cannot be
@@ -46,6 +49,9 @@ Violation classes (pinned):
 Limits: the rendered transcript truncates long arguments (`…`), so a pattern
 past the cut is not seen; the audit is a lower bound on violations, never a
 proof of absence. It reads no transcript store directly.
+Relative-read detection is lexical, with the contract fleet cwd, not a traced
+filesystem resolution. Truncated targets are unknown, not clean. URI and ~
+targets are outside this class; absolute roots retain V-RECURSIVE.
 Delivery directives are item-local `DELIVER: /absolute/<Name>.suffix`
 or line-leading Write/Create/Deliver naming that exact path. Scratch uses
 `SCRATCH: /var/tmp/souji-r<N>[w<slot>]-<Name>` (Workdir/Scratch root accepted).
@@ -368,6 +374,34 @@ def target_verdict(target: str | None, truncated: bool, is_header: bool,
     return "V-WRITE-RELATIVE"
 
 
+def implicit_root_read(tool: str, args: str, lane: str, fleet: str) -> str | None:
+    """Return a visible outside-lane relative target, never guess past a cut."""
+    if tool == "grep":
+        if " @ " in args:
+            target = args.rsplit(" @ ", 1)[1]
+        elif " in " in args:
+            # Historical renderer: grep(PATTERN in PATH).
+            target = args.rsplit(" in ", 1)[1]
+        else:
+            return None if "…" in args else "."
+    else:
+        target = args
+    for component in target.split(";"):
+        component = component.strip()
+        if not component or "…" in component:
+            continue
+        if tool == "read":
+            component = re.sub(r":(?:(?:raw|img)|[-\d,+hms]+)(?::(?:raw|img|[-\d,+hms]+))*$", "", component)
+        if (component.startswith(("/", "~"))
+                or re.match(r"^[a-z][a-z0-9+.-]*://", component)):
+            continue
+        resolved = os.path.normpath(os.path.join(fleet, component))
+        lane_root = os.path.normpath(lane)
+        if resolved != lane_root and not resolved.startswith(lane_root + "/"):
+            return component
+    return None
+
+
 def audit_seat(text: str, role: str, report: str, owned: list[str], lane: str,
                fleet: str, scratch: str = "", deliveries=()) -> tuple[int, list[dict]]:
     calls = 0
@@ -419,6 +453,9 @@ def audit_seat(text: str, role: str, report: str, owned: list[str], lane: str,
             if PROBE_BASH_RE.search(bare) and (lane in args or fleet in args or " . " in args):
                 flag("V-PROBE", "minor")
         if tool in {"read", "grep", "glob"}:
+            target = implicit_root_read(tool, args, lane, fleet)
+            if target is not None:
+                flag("V-READ-ROOT", "minor", target)
             a = args.rstrip("…").rstrip()
             if a.endswith(lane) or a.endswith(fleet) or a.endswith(lane + "/") or a.endswith(fleet + "/"):
                 flag("V-RECURSIVE", "minor")
