@@ -2,6 +2,11 @@ STATUS: DONE — the r19 plan has receipts for individual C1/C2/C3 runs, but omi
 
 # Findings
 
+## Affected axes
+
+- **Calibration (lowest, 7):** direct improvement. Commit-bound records let an outside verifier distinguish measured behavior from a later rerun or stale report.
+- **Operability (8) and coverage (8):** no change claimed. This is evidence packaging only; it grants no process-control authority or expanded claim boundary.
+
 ## One bounded move
 
 Before closure, make an r18-shaped, commit-bound r19 evidence packet. Preserve the existing per-command outputs; add the missing aggregate records below and point the round report/lesson at the exact committed paths. Use the seven-character prefix of each record's actual measured code revision in the matrix and final-verification filenames; do not reuse the existing `63bb887` suffix for changed bytes.
@@ -26,9 +31,19 @@ R19's preregistration specifies C1 command outputs and the singular audit-rechec
 
 The existing final-verification record is commit-keyed and captures changed-file hashes (`census/round-19/final-verification-63bb887.json:1-20`); the runner documents the required final-revision output naming (`census/round-19/run-acceptance.py:1-13`). Since the measured revision and a changed fixture differ from the current lane tip, the record is a historical receipt, not evidence for the later changed fixture. No current r19 `c1-matrix-*.json`, `source-counts.json`, `counts.json`, top-level audit aggregate, `dead-seats.json`, or transcript manifest was present in the directory inventories I read.
 
+## Risks
+
+- A stale filename can make an old receipt appear to attest newer bytes. Keep `final-verification-63bb887.json` historical and suffix the new record with its actual measured revision.
+- Duplicate count/audit outputs can create competing sources of truth unless an aggregate binds their inputs.
+- Do not classify packing-dropped seats as dead or replaced; a manifest without its referenced transcripts is incomplete.
+
+## Verification
+
+The outside closure can compare recorded hashes to committed bytes, recompute count deltas and audit totals from the records, inspect dead-seat dispositions, and run `sha256sum -c --quiet` on the transcript manifest. None of these closure checks was run by this seat.
+
 # Evidence
 
-- R18 closure evidence: `corpus/lessons/round-18-verifier-spotcheck.md:45-56,64-68,82`; source-count format `census/round-18/source-counts.json:1-8`; matrix identity/fixture metadata `census/round-18/c1-matrix-4800fd7.json:2540-2565`; dead-seat schema ` .ufo/waves/round-18/dead-seats.json:1-13`.
+- R18 closure evidence: `corpus/lessons/round-18-verifier-spotcheck.md:45-56,64-68,82`; source-count format `census/round-18/source-counts.json:1-8`; matrix identity/fixture metadata `census/round-18/c1-matrix-4800fd7.json:2540-2565`; dead-seat schema `.ufo/waves/round-18/dead-seats.json:1-13`.
 - R19 preregistered paths and corrections: `.ufo/waves/round-19/preregistration.txt:23-31,56-64,79-96`.
 - Current r19 records read: `census/round-19/c1-carry.txt:4-18`, `c1-audit.txt:22-30`, `counts-start.json:1-20`, `counts-end.json:20-56`, `final-verification-63bb887.json:1-20`, and `run-acceptance.py:1-13`.
 - Read-only revision comparison: current `HEAD` was `3a25875cee6053ec7f76ed278986d6367bf7bff7`; `git diff --name-status 63bb8878bace9f814c1d94a8c7932b37da1259c8..HEAD` included modifications to `tests/fixtures/r19-seat-audit-shapes.py` and `census/round-19/run-acceptance.py`.
