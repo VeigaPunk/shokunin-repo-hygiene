@@ -130,13 +130,16 @@ def expected_case_ids(include_baseline: bool = False) -> set[str]:
         "r14-helper-dirty", "r14-helper-syntax-invalid", "r14-wrapper-dirty",
         "r14-frozen-dirty", "r14-sources-dirty",
         "targeted-helper-dirty", "targeted-helper-syntax-invalid", "targeted-wrapper-dirty",
-        "targeted-frozen-dirty", "targeted-sources-dirty", "targeted-prior-attempt-dirty",
+        "targeted-verifier-syntax-invalid", "targeted-frozen-dirty", "targeted-sources-dirty",
+        "targeted-prior-attempt-dirty",
         "demo-helper-dirty", "demo-helper-syntax-invalid", "demo-wrapper-dirty",
         "demo-historical-input-dirty",
         "historical-r13-31984f473ce4bdab61a99b16cca194b28108cb81",
         "historical-r13-6f8ee0f38a14a3cb599ee606c486a55ec64e8ae6",
         "historical-r14-a31642d14006830ec62edf40b0354c3699728c4a",
         "historical-r14-552cae4204b3ab818419ad8adbfef3a4da29a3e0",
+        "writer-r13-clean", "writer-r14-clean", "writer-targeted-clean",
+        "writer-demo-clean", "drift-r13", "drift-r14", "drift-targeted", "drift-demo",
     }
     if include_baseline:
         names.update(BASELINE_PAIR_CASE_IDS)
@@ -150,9 +153,12 @@ def sha256(data: bytes) -> str:
 def safe_relative(value: str) -> str:
     if not isinstance(value, str) or not value:
         raise FixturePrerequisite("measured path is empty or not text")
+    raw_parts = value.split("/")
+    if value.startswith("/") or any(part in ("", ".", "..") for part in raw_parts):
+        raise FixturePrerequisite("measured path is not a canonical repository-relative path")
     path = PurePosixPath(value)
-    if path.is_absolute() or any(part in ("", ".", "..") for part in path.parts):
-        raise FixturePrerequisite("measured path is not a safe repository-relative path")
+    if path.is_absolute():
+        raise FixturePrerequisite("measured path is not a canonical repository-relative path")
     if path.parts[0] in (".git", ".jj"):
         raise FixturePrerequisite("measured path enters repository metadata")
     if path.as_posix() == "census":
@@ -591,6 +597,145 @@ print(json.dumps({
 }, sort_keys=True))
 '''
 
+WRITER_DRIVER = r'''import contextlib, hashlib, importlib.util, io, json, sys
+from pathlib import Path
+repo, kind, script, output, commit, drift_path, expected_snapshot_json = sys.argv[1:]
+expected_snapshot = json.loads(expected_snapshot_json)
+stdout = io.StringIO()
+stderr = io.StringIO()
+module = None
+state = {"producer_stubbed": False, "producer_calls": 0, "drift_written": False}
+status = "exception"
+exit_code = None
+exception_type = ""
+exception_message = ""
+def load(relative, name):
+    spec = importlib.util.spec_from_file_location(name, Path(repo) / relative)
+    if spec is None or spec.loader is None:
+        raise RuntimeError("entrypoint loader unavailable")
+    loaded = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(loaded)
+    return loaded
+def mutate_drift():
+    if not drift_path or state["drift_written"]:
+        return
+    target = Path(repo) / drift_path
+    suffix = b" \n" if target.suffix.lower() == ".json" else b"\n<!-- inert writer drift -->\n"
+    target.write_bytes(target.read_bytes() + suffix)
+    state["drift_written"] = True
+def marked_result(name, command, expected, revision):
+    return {
+        "name": name, "command": command, "exit_code": expected,
+        "expected_exit": expected, "matched": True,
+        "stdout": "finding artifact-digest-mismatch:\nfinding artifact-candidate:\n",
+        "stderr": "", "seconds": 0.0, "measured_commit": revision,
+        "dependencies": {}, "dependencies_stable": True,
+        "reuse_eligible": True,
+    }
+def r13_producer(name, command, expected=0, seconds=120):
+    state["producer_stubbed"] = True
+    state["producer_calls"] += 1
+    mutate_drift()
+    return marked_result(name, command, expected, module.CURRENT_REV)
+def r14_producer(name, command, revision, expected=0, seconds=150):
+    state["producer_stubbed"] = True
+    state["producer_calls"] += 1
+    mutate_drift()
+    return marked_result(name, command, expected, revision)
+def demo_producer(gate, gate_state, base, initial_commit):
+    state["producer_stubbed"] = True
+    state["producer_calls"] += 1
+    mutate_drift()
+    return {
+        "schema": "souji-r14-cache-demonstration-v1",
+        "demonstration": "digest-bound-retention",
+        "status": "ok",
+        "measured_commit": initial_commit,
+        "harness_revision": initial_commit,
+        "gate": dict(gate_state),
+        "checks": {},
+        "failed_checks": [],
+    }
+try:
+    with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+        if kind == "r13":
+            module = load(script, "r20_writer_r13")
+            module.BASE = commit
+            module.run = r13_producer
+            result = module.main(["--round", "20", "--output", output])
+        elif kind == "r14":
+            module = load(script, "r20_writer_r14")
+            module.BASE = commit
+            module.run = r14_producer
+            sys.argv = [script, "--output", output]
+            result = module.main()
+        elif kind == "targeted":
+            module = load(script, "r20_writer_targeted")
+            module.module.BASE = commit
+            module.module.run = r14_producer
+            sys.argv = [script, "--output", output]
+            result = module.main()
+        elif kind == "demo":
+            module = load(script, "r20_writer_demo")
+            module.BASELINE_COMMIT = commit
+            module.run_demonstration = demo_producer
+            result = module.main(["--gate", str(Path(repo) / "tools/souji-evidence-cache.py")])
+        else:
+            raise RuntimeError("unknown writer caller kind")
+    status = "return"
+    exit_code = result if isinstance(result, int) else 0
+except SystemExit as exc:
+    status = "exit"
+    exit_code = exc.code if isinstance(exc.code, int) else 0
+except BaseException as exc:
+    status = "exception"
+    exception_type = type(exc).__name__
+    exception_message = str(exc)
+first_refusal = next((line for line in stderr.getvalue().splitlines() if line.strip()), "")
+reason = first_refusal or exception_message
+record = None
+output_path = Path(repo) / output if output else None
+if output_path is not None and output_path.is_file():
+    try:
+        record = json.loads(output_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        record = None
+elif kind == "demo" and status == "return" and exit_code == 0:
+    try:
+        record = json.loads(stdout.getvalue())
+    except ValueError:
+        record = None
+input_hashes = record.get("input_sha256") if isinstance(record, dict) else None
+def valid_hash(value):
+    return (isinstance(value, str) and len(value) == 64
+            and all(character in "0123456789abcdef" for character in value))
+input_sha256_valid = (
+    isinstance(input_hashes, dict)
+    and input_hashes == expected_snapshot
+    and all(valid_hash(value) for value in input_hashes.values())
+)
+revision_valid = (isinstance(record, dict)
+                  and record.get("measured_commit") == commit)
+record_absent = (not output_path.exists() if output_path is not None
+                 else record is None and stdout.getvalue() == "")
+print(json.dumps({
+    "status": status,
+    "exit_code": exit_code,
+    "exception_type": exception_type,
+    "reason": reason,
+    "producer_stubbed": state["producer_stubbed"],
+    "producer_calls": state["producer_calls"],
+    "drift_written": state["drift_written"],
+    "record_exists": record is not None,
+    "record_absent": record_absent,
+    "input_sha256_valid": input_sha256_valid,
+    "inputs_unchanged_during_run": (
+        isinstance(record, dict) and record.get("inputs_unchanged_during_run") is True),
+    "measured_revision_valid": revision_valid,
+    "stdout_empty": stdout.getvalue() == "",
+}, sort_keys=True))
+'''
+
 
 def helper_controls(repo: Path, measured: list[str], files: dict[str, tuple[bytes, int]],
                     decoy: Path, top: Path, cases: Cases) -> None:
@@ -670,6 +815,16 @@ def caller_command(repo: Path, name: str, kind: str, script: str,
     raise FixturePrerequisite("unknown caller kind")
 
 
+def expected_refusal_fragment(case_name: str, changed_path: str) -> str:
+    if case_name in ("helper-dirty", "helper-syntax-invalid"):
+        return HELPER + " differs from measured commit"
+    if case_name == "verifier-syntax-invalid":
+        return ROUND14 + " differs from measured commit"
+    if case_name == "counted-knowledge-added":
+        return "missing=[] added=%r changed=[]" % [changed_path]
+    return "missing=[] added=[] changed=%r" % [changed_path]
+
+
 def caller_refusal(repo: Path, name: str, kind: str, script: str,
                    case_name: str, changed_path: str, decoy: Path) -> tuple[bool, str]:
     command, output_relative = caller_command(repo, name, kind, script, case_name)
@@ -684,17 +839,23 @@ def caller_refusal(repo: Path, name: str, kind: str, script: str,
     except (OSError, subprocess.TimeoutExpired) as exc:
         return False, "caller invocation failed before an observed refusal: " + type(exc).__name__
     combined = proc.stdout + proc.stderr
+    first_refusal = next((line for line in proc.stderr.splitlines() if line.strip()), "")
+    reason_fragment = expected_refusal_fragment(case_name, changed_path)
+    reason_ok = reason_fragment in first_refusal
     specific = changed_path in combined
     if kind == "demo":
         stdout_empty = proc.stdout == ""
-        return (proc.returncode == 2 and specific and stdout_empty,
-                "exit=%d changed_path_named=%d stdout_empty=%d refusal_on_stderr=1" %
-                (proc.returncode, int(specific), int(stdout_empty)))
+        return (proc.returncode == 2 and specific and reason_ok and stdout_empty,
+                "exit=%d changed_path_named=%d reason_family=%d stdout_empty=%d "
+                "first_refusal=%s" %
+                (proc.returncode, int(specific), int(reason_ok), int(stdout_empty), first_refusal))
     output_absent = output_relative is not None and not (repo / output_relative).exists()
     no_suite_output = proc.stdout == ""
-    return (proc.returncode == 2 and specific and output_absent and no_suite_output,
-            "exit=%d changed_path_named=%d output_absent=%d suite_stdout_absent=%d" %
-            (proc.returncode, int(specific), int(output_absent), int(no_suite_output)))
+    return (proc.returncode == 2 and specific and reason_ok and output_absent and no_suite_output,
+            "exit=%d changed_path_named=%d reason_family=%d output_absent=%d "
+            "suite_stdout_absent=%d first_refusal=%s" %
+            (proc.returncode, int(specific), int(reason_ok), int(output_absent),
+             int(no_suite_output), first_refusal))
 
 
 def mutate_and_call(repo: Path, name: str, kind: str, script: str,
@@ -756,7 +917,10 @@ def mutation_plan(name: str, kind: str, script: str, measured: list[str],
             ("sources-dirty", "corpus/SOURCES.md", False),
         ])
         if name == "targeted":
-            plan.append(("prior-attempt-dirty", R14_PRIOR, False))
+            plan.extend([
+                ("verifier-syntax-invalid", ROUND14, False),
+                ("prior-attempt-dirty", R14_PRIOR, False),
+            ])
     elif name == "demo":
         plan.append(("historical-input-dirty", R13_PRIOR, False))
     for label, path, _add in plan:
@@ -778,9 +942,98 @@ def run_caller_matrix(top: Path, root: Path, caller_specs: list[dict[str, object
         for case_name, relative, add_file in plan:
             mutate_and_call(repo, name, kind, script, case_name, relative,
                             decoy, cases, add_file=add_file,
-                            invalid_syntax=case_name == "helper-syntax-invalid")
+                            invalid_syntax=case_name in (
+                                "helper-syntax-invalid", "verifier-syntax-invalid"))
 
 
+
+
+def invoke_writer(repo: Path, kind: str, script: str, output: str,
+                  commit: str, drift_path: str,
+                  expected_snapshot: dict[str, str]) -> dict[str, object]:
+    try:
+        proc = subprocess.run(
+            [sys.executable, "-B", "-c", WRITER_DRIVER, str(repo), kind, script,
+             output, commit, drift_path, json.dumps(expected_snapshot, sort_keys=True)],
+            cwd=repo, env=CLEAN_ENV, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            text=True, timeout=180)
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return {"status": "invocation-failed", "exception_type": type(exc).__name__}
+    try:
+        return json.loads(proc.stdout) if proc.returncode == 0 else {
+            "status": "driver-failed", "exception_type": "driver-exit-%d" % proc.returncode}
+    except ValueError:
+        return {"status": "driver-failed", "exception_type": "invalid-driver-json"}
+
+
+def run_writer_controls(top: Path, root: Path, caller_specs: list[dict[str, object]],
+                        cases: Cases) -> None:
+    drift_paths = {
+        "r13": "corpus/SOURCES.md",
+        "r14": "corpus/SOURCES.md",
+        "targeted": "corpus/SOURCES.md",
+        "demo": R13_PRIOR,
+    }
+    for spec in caller_specs:
+        name = str(spec["name"])
+        kind = str(spec["kind"])
+        script = str(spec["script"])
+        measured = list(spec["measured"])
+        extras = list(spec["extras"])
+        drift_path = drift_paths[name]
+        if not covered_by_measured(drift_path, list(dict.fromkeys([*measured, *extras]))):
+            raise FixturePrerequisite("writer-drift input is absent from measured closure: " + drift_path)
+        for phase in ("clean", "drift"):
+            repo, input_files, _paths = make_sandbox(
+                top, "writer-%s-%s" % (name, phase), root, measured, extras)
+            expected_snapshot = current_snapshot(input_files, measured)
+            commit = run_git(repo, "rev-parse", "HEAD").stdout.decode("ascii").strip()
+            output = "" if kind == "demo" else (
+                "census/round-20/writer-%s-%s.json" % (name, phase))
+            changed = drift_path if phase == "drift" else ""
+            observed = invoke_writer(
+                repo, kind, script, output, commit, changed, expected_snapshot)
+            stubbed = observed.get("producer_stubbed") is True and int(
+                observed.get("producer_calls", 0) or 0) > 0
+            if phase == "clean":
+                good = (observed.get("status") == "return"
+                        and observed.get("exit_code") == 0
+                        and stubbed
+                        and observed.get("record_exists") is True
+                        and observed.get("input_sha256_valid") is True
+                        and observed.get("inputs_unchanged_during_run") is True
+                        and observed.get("measured_revision_valid") is True)
+                cases.add("writer-%s-clean" % name, good,
+                          "producer_stubbed=%s calls=%s top_level_input_sha256=%d "
+                          "measured_revision=%d record_exists=%d" %
+                          ("True" if stubbed else "False", observed.get("producer_calls", 0),
+                           int(observed.get("input_sha256_valid") is True),
+                           int(observed.get("measured_revision_valid") is True),
+                           int(observed.get("record_exists") is True)))
+                continue
+            reason = str(observed.get("reason", ""))
+            expected_change = "missing=[] added=[] changed=%r" % [drift_path]
+            reason_family = ("measured inputs differ from" in reason
+                             and expected_change in reason)
+            status = observed.get("status")
+            typed_refusal = (status == "exception"
+                             and observed.get("exception_type") == "Refusal")
+            returned_refusal = (status in ("return", "exit")
+                                and observed.get("exit_code") == 2)
+            no_record = (observed.get("record_absent") is True
+                         and observed.get("record_exists") is False)
+            good = (stubbed and observed.get("drift_written") is True
+                    and (typed_refusal or returned_refusal)
+                    and reason_family and no_record
+                    and observed.get("stdout_empty") is True)
+            cases.add("drift-%s" % name, good,
+                      "producer_stubbed=%s calls=%s drift_written=%d typed_refusal=%d "
+                      "returned_refusal=%d reason_family=%d no_record=%d stdout_empty=%d "
+                      "first_refusal=%s" %
+                      ("True" if stubbed else "False", observed.get("producer_calls", 0),
+                       int(observed.get("drift_written") is True), int(typed_refusal),
+                       int(returned_refusal), int(reason_family), int(no_record),
+                       int(observed.get("stdout_empty") is True), reason))
 def invoke_tripwire(repo: Path, kind: str, script: str, output: str,
                     commit: str, changed_path: str, witness: str) -> dict[str, object]:
     try:
@@ -1025,6 +1278,7 @@ def main(argv: list[str] | None = None) -> int:
                  "measured": demo_paths, "extras": []},
             ]
             run_caller_matrix(top, root, caller_specs, existing_knowledge, decoy, cases)
+            run_writer_controls(top, root, caller_specs, cases)
             if args.baseline:
                 run_baseline_pairs(top, root, args.baseline, caller_specs, cases)
         run_historical_counters(root, cases)

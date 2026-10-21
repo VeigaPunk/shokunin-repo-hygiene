@@ -1,0 +1,79 @@
+# SoujiR20-2.AuditCase11 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Read-only exact-case falsifier for C1 oracle `deliver-alternative-txt`. Inspect ONLY pinned /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r20-audit-contract.py, /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-seat-audit.py and /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-20/preregistration.txt at 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1; optionally pinned r19 non-author lesson for the named original defect. Trace the exact stimulus, expected severity/class/receipt and production predicate WITHOUT executing it. Attack whether this case is genuinely independent, non-vacuous and preserves explicit permissions; propose one concrete stronger counterexample if warranted, else bounded source agreement. Do not substitute other cases or broad audit. Report the case ID and exact code lines; all source-only.
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: calibration
+
+Report: write your scoped findings to .ufo/waves/round-20/final/AuditCase11.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+→ read(skill://godspeed) ⇒ ok · 18 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tests/fixtures/r20-au…) ⇒ ok · 496 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tools/souji-seat-audi…) ⇒ ok · 687 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:.ufo/waves/round-20/p…) ⇒ ok · 11 lines
+
+## assistant
+
+→ read(artifact://36655:raw:2-4) ⇒ ok · 5 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tools/souji-seat-audi…) ⇒ ok · 685 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tests/fixtures/r20-au…) ⇒ ok · 498 lines
+
+## assistant
+
+Source is read and the trace is complete. The pinned case passes by trace, but tracing the `edit` path surfaced a production blind spot the pinned table cannot see. Writing the report now.
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-20/final/AuditCase11.md) ⇒ ok · 2 lines
+
+## assistant
+
+STATUS: PARTIAL. `deliver-alternative-txt` is correctly specified and passes by source trace, but the pinned auditor has a write-scope blind spot that the pinned table cannot see. Nothing was executed; findings are source-traced.
+
+**Case `deliver-alternative-txt`** (fixture L156–L161; expected `WRITE_SCOPE` at L32)
+- Stimulus: prompt `DELIVER: <stem>.patch` (L161); transcript `→ write(<stem>.txt) ⇒ ok`. Expected `(("V-WRITE-SCOPE","major"),)`.
+- Trace: `delivery_paths` grants only `<stem>.patch` (auditor L134–L150); allowed is `[report, <stem>.patch]` (L342–L343); `target_verdict` falls through to `"V-WRITE-SCOPE"` (L285–L289); severity is major (L349–L355). Result matches expected.
+- Independent: yes. The expected value is a literal, and the case differs from control `unrequested-txt` (L148–L151) only by the DELIVER line.
+- Non-vacuous: only partly. A grant-ignoring auditor also passes it; only `deliver-exact-patch` (L153–L155) catches that.
+- Explicit permission: preserved. The DELIVER stays in the prompt, so refusal reflects exact-path scope.
+
+**Counterexample (predicted, not run):** two calls, `→ write(<stem>.patch) ⇒ ok` then `→ edit([<stem>.patch#AB12] MV <stem>.txt) ⇒ ok`.
+- Expected: exactly one `(V-WRITE-SCOPE, major)`.
+- Predicted production output: `()`.
+- Cause: `EDIT_HEADER_RE` (L93–L96) captures only the header; `write_targets` returns headers and never classifies the MV destination (L230–L231, L245–L246). The `.txt` destination is therefore never classified.
+- Impact: any MV destination is unaudited. This covers the `.txt` and `.py` alternatives, `tools/` and `tests/`, and foreign slots, even with an errored status. Only V-SURFACE still applies, since L332 scans full args.
+- Caveat: the `edit … MV` rendering is inferred from the L95 lookahead and the edit-tool op table; I did not inspect a transcript containing MV.
+- Suggested direction (not applied): classify each MV operand through `target_verdict`, fail closed on quoted or unparseable operands, and add the probe under an explicit oracle revision rather than mutating the pinned stimulus.
+
+**Not checked:** the baseline half (`--base-tool`) and the optional r19 lesson, which has no exact path named in the assigned files.
+
+**Tooling:** none installed or updated.
+
+Report: `.ufo/waves/round-20/final/AuditCase11.md`

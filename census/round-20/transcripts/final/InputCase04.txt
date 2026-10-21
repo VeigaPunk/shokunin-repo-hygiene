@@ -1,0 +1,78 @@
+# SoujiR20-2.InputCase04 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Read-only exact C2 caller-case falsifier `r13-frozen-dirty`. Inspect pinned /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r20-input-binding.py, /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-rev-pin.py and ONLY the applicable caller among /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-13/run-verification.py, /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/run-verification.py, /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/run-targeted.py, /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/cache-demonstration.py at 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1. Trace actual entrypoint, inert changed byte, relevant input closure, exit2/no-stdout/no-output predicate and any baseline producer witness. Is the test behavioral or only wiring, can a prerequisite refusal masquerade as the required reason, and is the input actually consumed by this caller? No runtime/code import; propose one bounded counterexample or source agreement. No unrelated knowledge requirement for r14.
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: operability
+
+Report: write your scoped findings to .ufo/waves/round-20/final/InputCase04.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+→ read(skill://godspeed) ⇒ ok · 18 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tests/fixtures/r20-in…) ⇒ ok · 1039 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tools/souji-rev-pin.py) ⇒ ok · 407 lines
+
+## assistant
+
+Fixture and helper are read. The `r13-frozen-dirty` label maps to the round-13 caller (`mutation_plan("r13")` adds `frozen-dirty` on `R13_FROZEN`), so I'll read only that caller, plus the frozen-fixture tree it names.
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:census/round-13/run-v…) ⇒ ok · 523 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin ls-tree -r --full-tree 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1 -- …) ⇒ ok · 11 lines
+
+## assistant
+
+The round-13 caller is the applicable one. Next I'll check that its declared closure is tracked at the pin, since the fixture commits the working tree and could mask untracked inputs, and get blob IDs for the named sources.
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin ls-tree 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1 -- tools/souji-ver…) ⇒ ok · 24 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin rev-parse 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1^{commit} 1988860…) ⇒ ok · 7 lines
+
+## assistant
+
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-20/final/InputCase04.md) ⇒ ok · 2 lines
+
+## assistant
+
+Report written to `.ufo/waves/round-20/final/InputCase04.md` (lane-relative). Source-only; I did not run the fixture or the caller, and I installed nothing.
+
+**Verdict: source agreement for `r13-frozen-dirty` as written. No blocking defect, so no `STATUS: PARTIAL`.**
+
+- **Entrypoint:** `census/round-13/run-verification.py` is the only applicable caller. The case label comes only from `mutation_plan("r13")`.
+- **Mutation:** `tests/fixtures/r13-cert-frozen/expected.json` gets `b" \n"` appended. That is inert to a JSON parser and a byte change to the gate.
+- **Refusal path:** `resolve_revision()` is the first refusing step. `input_snapshot` reports `changed=['tests/fixtures/r13-cert-frozen/expected.json']`, which raises `SystemExit(2)`. Nothing reaches stdout, and the output file is never opened.
+- **Consumption:** not observed by the test. The caller passes the frozen directory as argv to `tools/souji-cert-evidence.py --frozen`; whether that child reads `expected.json` is [INFERENCE].
+- **Baseline witness:** none for r13 frozen. The only frozen baseline pair is r14's.
+
+**Bounded counterexample (predicate, not caller):** the predicate is a substring match on the path. Replacing `expected.json` with a symlink, or unlinking it, produces exit 2, the path named, empty stdout and no output. The case would pass without any byte change being evaluated. Tightening to the exact `changed=['…']` token would close this.
+
+**Non-blocking boundary note:** the gate compares content only and never checks mode. Mode-only drift is accepted, and the fixture has no mode variant. The helper's documented contract is bytes, so this is in scope as written; L1 must decide whether to bind mode.
+
+**Adjacent, same caller:** `r13-helper-syntax-invalid` passes on the byte-diff refusal and never reaches the syntax path.
+
+**For L1:** run the fixture from a clean clone at `1988860`, because its closure comes from the working tree. All 23 declared inputs are tracked at the pin.

@@ -1,0 +1,79 @@
+# SoujiR20-2.InputCase11 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Read-only exact C2 caller-case falsifier `r14-wrapper-dirty`. Inspect pinned /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r20-input-binding.py, /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-rev-pin.py and ONLY the applicable caller among /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-13/run-verification.py, /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/run-verification.py, /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/run-targeted.py, /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/cache-demonstration.py at 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1. Trace actual entrypoint, inert changed byte, relevant input closure, exit2/no-stdout/no-output predicate and any baseline producer witness. Is the test behavioral or only wiring, can a prerequisite refusal masquerade as the required reason, and is the input actually consumed by this caller? No runtime/code import; propose one bounded counterexample or source agreement. No unrelated knowledge requirement for r14.
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: operability
+
+Report: write your scoped findings to .ufo/waves/round-20/final/InputCase11.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+Starting with the required skill read, the pinned-commit check, and the two named fixture and pin-tool sources in parallel.
+→ read(skill://godspeed) ⇒ ok · 18 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin cat-file -t 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1 && git -C /hom…) ⇒ ok · 3 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tests/fixtures/r20-in…) ⇒ ok · 951 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tools/souji-rev-pin.p…) ⇒ ok · 407 lines
+
+## assistant
+
+The fixture's middle section was elided, and the applicable caller for `r14-wrapper-dirty` is `census/round-14/run-verification.py`, since the case name maps to `ROUND14` as `script`. Next I'll read the elided fixture lines, the pinned wrapper, and confirm the baseline commit resolves.
+→ read(artifact://36671:386-476) ⇒ ok · 99 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:census/round-14/run-v…) ⇒ ok · 180 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin cat-file -t 12516f7dcdd5b165e5ee208d44a38d63b5bd5812 && git -C /hom…) ⇒ ok · 5 lines
+
+## assistant
+
+The pinned wrapper gates before any suite output, so the r14-wrapper-dirty path is now traceable. Next I'll read the remaining elided fixture lines and check the baseline wrapper at the preregistered baseline, which determines whether this case has a red-before witness.
+→ read(artifact://36671:480-524) ⇒ ok · 53 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 12516f7dcdd5b165e5ee208d44a38d63b5bd5812:census/round-14/run-v…) ⇒ ok · 128 lines
+
+## assistant
+
+The baseline wrapper already self-binds (`census/round-14/run-verification.py` is in its `MEASURED_PATHS`), so the red-before question depends on what the baseline helper refuses. Reading that helper at the same pinned baseline.
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 12516f7dcdd5b165e5ee208d44a38d63b5bd5812:tools/souji-rev-pin.p…) ⇒ ok · 325 lines
+
+## assistant
+
+The applicable caller traces cleanly, and the pinned gate refuses before any output. I'm writing the report now.
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-20/final/InputCase11.md) ⇒ ok · 2 lines
+
+## assistant
+
+**Verdict: source agreement for `r14-wrapper-dirty`. No blocking defect.** The report is at `.ufo/waves/round-20/final/InputCase11.md`.
+
+- **Entrypoint and gate:** the case runs the real `census/round-14/run-verification.py` in a subprocess. The inert appended byte is consumed by `resolve_revision()` → `input_snapshot()` before any stdout, suite command, or record write. The refusal is `measured inputs differ from … changed=['census/round-14/run-verification.py']`, exit 2. The wrapper's self-entry is at `MEASURED_PATHS` L39, and the fixture's static list matches the runtime list.
+- **Masquerade, current matrix:** I found no reachable prerequisite refusal that passes. The decoy `GIT_*` environment is stripped on both the wrapper and helper paths.
+- **Predicate weakness, non-blocking:** exit 2, empty stdout, and absent output are also what a clean run produces here, because BASE `a31642d` is missing from the single-commit sandbox. Only the path substring discriminates. A latent counterexample exists: an entrypoint Python cannot open passes all four clauses. `mutate_and_call` cannot produce it today. The proposed tightening is to match `measured inputs differ from` and `changed=['census/round-14/run-verification.py']`. I did not apply it.
+- **Baseline witness:** none exists or can exist. The R19 helper at 12516f7 already refuses a dirty tracked wrapper via `git diff --quiet`, but without naming the path. The seven baseline pairs correctly omit it.
+- **Operability caveats for L1:** the fixture copies `--root` working-tree bytes, not blobs at 1988860, so run it from a clean clone at the pin. The pinned helper needs Python 3.11 or later for `hashlib.file_digest`; I did not probe the host interpreter.
+
+Commands were read-only `git cat-file`, `rev-parse` and `show` at the named pinned paths, all exit 0. Nothing was executed, no tools were installed, and the only write is the report.

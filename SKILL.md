@@ -335,3 +335,15 @@ Other-uid residue is outside this tool, not wholesale ownership assigned to Mori
 The specific `souji | round-18` F5 reap and NAMESPACE_SHA256 requests remain **HELD**;
 historical58-orphan observations are dated, not current counts. No listing grants killing,
 quarantine or deletion. Certification **OFF**, K5 **HELD**.
+
+### F5 privacy defect — supersedes unqualified r19 redaction wording
+
+The canary evidence applies to `cmd` only. `reason` currently receives argv/fd
+path text with control-byte sanitation, not secret-shape redaction; a sensitive
+path can remain visible. Raw argv is read before any printing-time redaction.
+Do not call this scanner secret-free or its entire table redacted. This round
+permits no live proc/private-value probe or historical snapshot inspection:
+operator/Kagi owns the exposure ruling in the `souji | round-20` L0 request.
+Only separately scoped synthetic evidence can justify a later repair. No reap,
+purge or deletion authority follows. Current correction and source bindings:
+`corpus/knowledge/process-residue-observations.md`; QUALITY Q46.

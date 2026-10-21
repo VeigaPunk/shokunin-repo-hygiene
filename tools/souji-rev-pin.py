@@ -12,8 +12,10 @@ callers must refuse before writing a record. This tool is a resolution
 helper, not a verdict: it never decides whether a measurement is sufficient.
 
 Sources (opened 2026-10-21):
-  S089 git(1) — repository-selection environment can override -C.
-  S091 git-rev-parse(1) — verifies an object, not its durability.
+  S089 git(1) — names the repository-selection variables; their effect
+       on a supplied -C directory is a lane deduction from those facts.
+  S099 git-rev-parse(1) — typed peeling checks object existence/type;
+       the helper uses ^{commit}, not plain conversion alone.
   S092 git-for-each-ref(1) — selects namespaces; durability is lane policy.
   S093 git-diff(1) — quiet status covers only selected paths. The r20
        snapshot compares raw blobs and enumerates bounded directories.

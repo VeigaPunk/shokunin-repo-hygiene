@@ -151,3 +151,22 @@ The fd-link permission sentence in the original kernel-facts list is supported
 by this specific opened scope: reading or dereferencing those symlinks is
 governed by PTRACE_MODE_READ_FSCREDS. S086 still teaches entries and link
 contents; neither source grants Souji access to private values or signal authority.
+
+### Final round-20 source and privacy correction
+
+S096 supersedes S095's teaching: the fd access-mode fact comes from the page;
+the prohibition on private-value probes and signalling is Souji policy, not
+that page's teaching. The located permission quotation remains unchanged.
+
+This explicitly supersedes Safety rules item 3 above and any unqualified
+argv-redaction wording in Q32 or the r19 SKILL pattern: tested fake canaries
+exercise **cmd**, not **reason**. The reason column contains argv/fd path
+text with control-byte sanitation only. A credential-shaped path can remain
+visible there; that is a real source-level privacy defect, not proof of a
+secret-free read or fully redacted table. No private-value payload, live proc
+scan or historical TSV was inspected to measure exposure this round.
+
+The raw-read and reason-output risk is operator/Kagi-owned for exposure
+assessment; a separate synthetic-only repair needs the recorded round20 L0
+ruling. No scanner code or canary fixture is changed here. Observation and
+nomination grant no reap, deletion, snapshot-purge or credential authority.

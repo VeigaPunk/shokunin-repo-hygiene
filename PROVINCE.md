@@ -157,3 +157,13 @@ operator. F5 reap and NAMESPACE_SHA256 remain HELD under the specific round18 re
 Process listings never authorize killing, quarantine or deletion; certification OFF,
 K5 HELD. This round repairs evidence/consumer contracts only and acquires no cleanup,
 host-management or fleet-orchestration authority.
+
+### Round20 privacy limit
+
+The Refuses policy is not proof that the scanner avoids all raw private values:
+it reads raw same-uid argv, and its reason column sanitizes control bytes but
+does not apply the cmd canary redactor to path text. The current source-level
+defect and unknown historical exposure are explicitly held for operator/Kagi,
+not an authorization for Souji to inspect private snapshots or live processes.
+See the `souji | round-20` F5 reason-field L0 request and the final correction in
+`corpus/knowledge/process-residue-observations.md`.

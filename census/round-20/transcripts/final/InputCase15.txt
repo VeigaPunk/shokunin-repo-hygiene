@@ -1,0 +1,114 @@
+# SoujiR20-2.InputCase15 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Read-only exact C2 caller-case falsifier `targeted-wrapper-dirty`. Inspect pinned /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r20-input-binding.py, /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-rev-pin.py and ONLY the applicable caller among /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-13/run-verification.py, /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/run-verification.py, /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/run-targeted.py, /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/cache-demonstration.py at 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1. Trace actual entrypoint, inert changed byte, relevant input closure, exit2/no-stdout/no-output predicate and any baseline producer witness. Is the test behavioral or only wiring, can a prerequisite refusal masquerade as the required reason, and is the input actually consumed by this caller? No runtime/code import; propose one bounded counterexample or source agreement. No unrelated knowledge requirement for r14.
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: operability
+
+Report: write your scoped findings to .ufo/waves/round-20/final/InputCase15.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+I'll read the godspeed skill first, as the matching-skill rule requires, then pull the pinned files.
+→ read(skill://godspeed) ⇒ ok · 18 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin cat-file -s 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tests/fixtures…) ⇒ ok · 7 lines
+
+## assistant
+
+The fixture is about 48 KB, so I'll pull the four smaller pinned files now and page the fixture through its artifact.
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tests/fixtures/r20-in…) ⇒ ok · 1039 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tools/souji-rev-pin.py) ⇒ ok · 407 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:census/round-14/run-t…) ⇒ ok · 70 lines
+
+## assistant
+
+The fixture's `targeted` caller is `census/round-14/run-targeted.py`, which loads `census/round-14/run-verification.py` as its module. I'll read that imported module (needed for its `MEASURED_PATHS`, `resolve_revision`, and `output_path`) and check whether the wrapper itself is in the measured closure.
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:census/round-14/run-v…) ⇒ ok · 180 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin log --oneline -1 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1 && git -C…) ⇒ ok · 21 lines
+
+## assistant
+
+The fixture's `targeted` case runs `census/round-14/run-targeted.py`, and that wrapper is in the r14 `MEASURED_PATHS` (line 10 of the list). Next I'll check the preregistered baseline (`12516f7…`) and its targeted wrapper, which the baseline producer witness depends on.
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin cat-file -t 12516f7dcdd5b165e5ee208d44a38d63b5bd5812; git -C /home/…) ⇒ ok · 17 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 12516f7dcdd5b165e5ee208d44a38d63b5bd5812:census/round-14/run-t…) ⇒ ok · 60 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 12516f7dcdd5b165e5ee208d44a38d63b5bd5812:census/round-14/run-v…) ⇒ ok · 130 lines
+
+## assistant
+
+Baseline `12516f7…` is an ancestor of the pinned commit and contains the whole current closure. The baseline targeted wrapper does not bind itself, and the old runner's `MEASURED_PATHS` lists 8 entries without it. Next I'll check whether the baseline helper exposes the `resolve_durable`/`Refusal` API the old runner calls, since the baseline producer witness depends on that.
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 12516f7dcdd5b165e5ee208d44a38d63b5bd5812:tools/souji-rev-pin.py) ⇒ ok · 325 lines
+
+## assistant
+
+The baseline helper exposes `resolve_durable` and `Refusal`, so the old runner can run. Its tree check is tracked-only on the old 8 paths, which leaves the wrapper unbound at baseline. Next I'll pin line numbers for the claims I'll cite, using file-scoped `git grep` at the pinned commit.
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin grep -n -e "wrapper-dirty" -e "covered_by_measured(" -e "def caller…) ⇒ ok · 65 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin grep -n -e "MEASURED_PATHS" -e "def resolve_revision" -e "def check…) ⇒ ok · 19 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin grep -n -e "argv" -e "output_path" -e "resolve_revision" -e "checke…) ⇒ ok · 15 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin grep -n -e "def input_snapshot" -e "def resolve_durable" -e "measur…) ⇒ ok · 35 lines
+
+## assistant
+
+I have the key line numbers. A final file-scoped batch will pin the remaining citations: the wrapper's slot in the runner's `MEASURED_PATHS`, the fixture's timeout and blocked-exit paths, the wrapper's `exec_module` ordering, and the helper's symlink refusals.
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin grep -n -e "census/round-14/run-targeted.py" -e "census/round-14/ru…) ⇒ ok · 6 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin grep -n -e "timeout=90" -e "return 2 if blocked" -e "cases.summary(…) ⇒ ok · 21 lines
+
+## assistant
+
+The fixture's `targeted` case is sound at the pinned commit, with one predicate weakness and several coverage gaps. I'll write the report now.
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-20/final/InputCase15.md) ⇒ ok · 2 lines
+
+## assistant
+
+**Verdict: source agreement.** At the pinned commit `1988860`, `targeted-wrapper-dirty` refuses for the designed reason. I found no blocking defect in this case. Gaps are non-blocking. Report: `.ufo/waves/round-20/final/InputCase15.md`.
+
+**Trace (source-level, not executed)**
+- The fixture runs `python3 -B census/round-14/run-targeted.py --output census/round-20/r20-targeted-wrapper-dirty.json` in a synthetic sandbox. It appends the inert comment `\n# inert r20 input-binding mutation\n` to the wrapper (fixture:651, :700).
+- The wrapper is entry 10 of the runner's `MEASURED_PATHS` (run-verification.py:42). The binding runs in `resolve_revision` → rev-pin `resolve_durable` → `input_snapshot` (run-verification.py:67; rev-pin:226, :94).
+- The refusal on stderr is `measured inputs differ from <sandbox HEAD> (missing=[] added=[] changed=['census/round-14/run-targeted.py'])`. `SystemExit(2)` escapes run-targeted.py:65, so the exit is 2. Stdout is empty and the output path is never created.
+
+**Answers**
+- **Behavioral or wiring?** Behavioral at the process boundary: the digest comparison decides. Wiring only for membership, since the wrapper never checks its own bytes. The oracle is a substring match, which is precise in practice but does not pin the reason family.
+- **Can a prerequisite refusal masquerade?** Not in the shipped matrix. The reachable exit-2 paths either do not name the wrapper, or name it only through the symlink/unreadable checks that fixture:198–206 and :715 exclude before invocation. **Bounded counterexample:** a symlinked or unopenable wrapper yields exit 2, the path named, empty stdout and no output, so the predicate passes with no digest comparison. Only the pre-invocation guard at fixture:715 prevents this.
+- **Is the input consumed?** Yes, twice. The interpreter executes the wrapper and imports the runner before binding. The digest check runs at start, and again after the suite via `checked_inputs` (run-targeted.py:46). This case exercises only the start check.
+
+**Baseline witness.** `12516f7` is an ancestor of `1988860` and contains the whole current closure. Its runner binds only 8 entries and omits the wrapper, so the old wrapper reaches the producer. The current code refuses on the overlay sandbox. The pair is red-before / green-after by source. This was derived, not executed.
+
+**Non-blocking gaps**
+1. The predicate is textual (fixture:687). Pin `refused: measured inputs differ from` plus `changed=['census/round-14/run-targeted.py']`.
+2. There is no caller-level clean control. The helper controls cover only the r13 closure.
+3. Nothing dirties a measured input mid-run, so the post-suite check is untested.
+4. The fixture copies the lane working tree, not the pinned commit, and prints no subject revision.
+5. [INFERENCE] A regression that accepts the wrapper hits the 90 s kill, which leaves suite grandchildren running (`start_new_session=True`, run-verification.py:108).
+6. An unborn or non-repo root exits 1 via `CalledProcessError`, not the documented 2.
+7. Fixture prerequisite blocks also exit 2, the same code as the refusal under test.
+8. Whether the child command `cache-demonstration.py`'s own closure is a subset of the targeted closure is unverified. That is outside single-caller scope.
+
+**Verification and tooling.** Source-only. I executed no fixture, caller or Python code. I ran read-only git against the pinned commit and the named baseline, plus file-scoped `grep`. One non-recursive `ls-tree` covered the named `census/round-14/` subdirectory. I did not read the round-13 or `cache-demonstration.py` content. No installs or updates were performed.

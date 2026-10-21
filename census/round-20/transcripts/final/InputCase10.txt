@@ -1,0 +1,80 @@
+# SoujiR20-2.InputCase10 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Read-only exact C2 caller-case falsifier `r14-helper-syntax-invalid`. Inspect pinned /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r20-input-binding.py, /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-rev-pin.py and ONLY the applicable caller among /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-13/run-verification.py, /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/run-verification.py, /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/run-targeted.py, /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/cache-demonstration.py at 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1. Trace actual entrypoint, inert changed byte, relevant input closure, exit2/no-stdout/no-output predicate and any baseline producer witness. Is the test behavioral or only wiring, can a prerequisite refusal masquerade as the required reason, and is the input actually consumed by this caller? No runtime/code import; propose one bounded counterexample or source agreement. No unrelated knowledge requirement for r14.
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: operability
+
+Report: write your scoped findings to .ufo/waves/round-20/final/InputCase10.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+I'll read the godspeed skill and the three named pinned sources in parallel.
+→ read(skill://godspeed) ⇒ ok · 18 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tests/fixtures/r20-in…) ⇒ ok · 1039 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tools/souji-rev-pin.py) ⇒ ok · 407 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin rev-parse --verify 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1^{commit}) ⇒ ok · 4 lines
+
+## assistant
+
+The fixture defines the `r14` matrix row as `census/round-14/run-verification.py`, so that is the only caller to read. Pulling it at the pinned commit now.
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:census/round-14/run-v…) ⇒ ok · 180 lines
+
+## assistant
+
+The caller's first gate is a byte comparison, which runs before the helper is ever imported. I need the pre-R20 baseline version of this same caller to check for a producer witness.
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 12516f7dcdd5b165e5ee208d44a38d63b5bd5812:census/round-14/run-v…) ⇒ ok · 128 lines
+→ web_search(CPython SyntaxError __str__ filename basename "line" exceptions.c SyntaxError_str my_basename) ⇒ ok · 166 lines
+
+## assistant
+
+The baseline caller imports the helper outside any `try` and before any byte gate, which matters for the witness question. One more read-only check: whether the pinned baseline even contains the helper file.
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin cat-file -t 12516f7dcdd5b165e5ee208d44a38d63b5bd5812:tools/souji-re…) ⇒ ok · 2 lines
+
+## assistant
+
+I have what I need to trace the row. Writing the scoped report to the lane path.
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-20/final/InputCase10.md) ⇒ ok · 2 lines
+
+## assistant
+
+STATUS: PARTIAL. `r14-helper-syntax-invalid` does not establish its named reason. The pinned caller refuses correctly for this input, but the row's label, predicate and witness coverage are the defect. Nothing was executed or imported, and no tools were installed or updated.
+
+Report: `.ufo/waves/round-20/final/InputCase10.md`
+
+- **Entrypoint:** `census/round-14/run-verification.py` runs as a subprocess in a synthetic repo, with ambient `GIT_*` pointing at a decoy. The refusal is the byte gate in `resolve_revision()`: `helper.read_bytes() != git show HEAD:tools/souji-rev-pin.py` raises `"tools/souji-rev-pin.py differs from measured commit"`, giving exit 2, empty stdout and no output file.
+- **Changed byte is not inert.** The mutation appends `def r20_invalid(:`, which contradicts the fixture docstring. The byte gate runs before any parse or import, so the syntax branch is never reached. This row exercises the same branch as `r14-helper-dirty`.
+- **Input consumed:** only as bytes. The closure includes the helper and the entry script, and `ROOT` resolves to the sandbox. The helper's syntax is never consumed.
+- **Behavioral or wiring:** behavioral at the process boundary, but not about reason. The predicate is exit 2, plus the substring `tools/souji-rev-pin.py` in output, plus no output file and empty stdout.
+- **Masquerade:** yes. A Git `CalledProcessError` embeds the helper path, so it passes the row. It is blocked today by the caller's `GIT_*` filter and by the fixture committing the helper.
+- **Counterexample M3** (source trace, not executed): remove the `GIT_*` filter in a private copy. Predicted: `r14-helper-syntax-invalid` and `r14-helper-dirty` still pass despite broken ambient isolation. `r14-frozen-dirty`, `r14-sources-dirty` and `r14-wrapper-dirty` fail, so matrix-level detection survives only through those siblings.
+- **Baseline witness:** none for this row. `baseline-r14-helper` is inert-only. The pinned baseline `12516f7` imports the helper outside any `try`, so a parse-invalid helper would exit 1 there. That is a red-before in source, but no pair records it. [INFERENCE: from source, not executed.]
+- **Fix directions (not applied):** commit the broken helper into the sandbox HEAD so the parse branch is reached and asserts `invalid syntax`; tighten dirty-row predicates to the exact reason text and reject Git-failure text; correct the docstring; pin the fixture root to a clean checkout at 1988860.

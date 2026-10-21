@@ -1,0 +1,81 @@
+# SoujiR20-2.InputCase12 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Read-only exact C2 caller-case falsifier `r14-frozen-dirty`. Inspect pinned /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r20-input-binding.py, /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-rev-pin.py and ONLY the applicable caller among /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-13/run-verification.py, /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/run-verification.py, /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/run-targeted.py, /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/cache-demonstration.py at 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1. Trace actual entrypoint, inert changed byte, relevant input closure, exit2/no-stdout/no-output predicate and any baseline producer witness. Is the test behavioral or only wiring, can a prerequisite refusal masquerade as the required reason, and is the input actually consumed by this caller? No runtime/code import; propose one bounded counterexample or source agreement. No unrelated knowledge requirement for r14.
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: operability
+
+Report: write your scoped findings to .ufo/waves/round-20/final/InputCase12.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+I'll start by reading the two always-applicable pinned files and confirming the pinned commit exists. The caller is chosen after the fixture shows which one it exercises.
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin cat-file -t 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1 && git -C /hom…) ⇒ ok · 3 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tests/fixtures/r20-in…) ⇒ ok · 1041 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tools/souji-rev-pin.p…) ⇒ ok · 408 lines
+
+## assistant
+
+The fixture and helper are read. The `r14-frozen-dirty` case maps to the round-14 `run-verification.py` caller (`name="r14"`, `script=ROUND14`, `frozen-dirty` against `tests/fixtures/r14-cache-frozen/expected.json`). I'll read that caller and the frozen input together.
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:census/round-14/run-v…) ⇒ ok · 181 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin cat-file -s 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tests/fixtures…) ⇒ ok · 12 lines
+
+## assistant
+
+The round-14 caller is now read. Before writing up, I'll confirm the closure members are regular blobs at the pinned commit, since the helper refuses symlinks and non-regular entries.
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin ls-tree -r -l 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1 -- tools/sou…) ⇒ ok · 16 lines
+
+## assistant
+
+All closure members are regular blobs at the pin, and the frozen directory holds exactly three regular files. I'll get the fixture's blob ID so the report can cite every file it relies on.
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin ls-tree 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1 -- tests/fixtures/…) ⇒ ok · 4 lines
+
+## assistant
+
+The pinned caller path is fully traced and the fixture's gaps are confirmed. I'm writing the report now.
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-20/final/InputCase12.md) ⇒ ok · 2 lines
+
+## assistant
+
+STATUS: PARTIAL. The pinned round-14 caller refuses the `r14-frozen-dirty` mutation for the right reason, so the row does not refute the production caller. The C2 oracle that grades the row is not sufficient operability evidence.
+
+Report: `/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-20/final/InputCase12.md`
+
+- **Trace:** the applicable caller is `census/round-14/run-verification.py`. The dirty `expected.json` is refused in `resolve_revision` by the helper's `input_snapshot` (`changed=['tests/fixtures/r14-cache-frozen/expected.json']`), then `SystemExit(2)`. No suite command, stdout, or record write is reached.
+- **Masquerade:** prerequisite refusals do not name the frozen file, so they fail the row. Any snapshot refusal that names the file (`missing`, `added`, symlink, unreadable) would pass the substring predicate. The pinned inert append cannot reach those paths.
+- **Consumption:** the caller never reads `expected.json`. It hashes the whole directory and passes it to the child `--frozen` step. The row proves refusal before consumption, not what the child reads.
+- **CE-1 (success-path blind spot):** making `checked_inputs` raise unconditionally leaves every r14 row and the r14 baseline pair unchanged. No row reaches the record write, so C2 stays green while no record can be produced.
+- **CE-2 (refusal-only blind spot):** a wrapper that lists its file closure and exits 2 passes `r14-frozen-dirty` and every other r14 dirty row. No row runs an unmodified sandbox through a current caller.
+- **Provenance:** the fixture reads the `--root` working tree and never checks HEAD against `1988860…`.
+- **Fixes (fixture only):** add a clean-accept row per caller; add a stub-run success row and a post-run mutation row; tighten the predicate to `changed=['<path>']` with `missing=[] added=[]`; record root HEAD.
+- **Checks for L1 (not run here):** `python3 tests/fixtures/r20-input-binding.py --root <clean checkout at 1988860…>`. After the fixes, expect the new rows to pass and a deliberately broken `checked_inputs` to fail.
+
+Tooling: no installs or updates. Static git reads only; nothing was executed or imported. This is an advisory author-side report, not closure or promotion.

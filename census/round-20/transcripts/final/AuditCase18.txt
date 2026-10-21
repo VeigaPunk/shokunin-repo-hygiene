@@ -1,0 +1,98 @@
+# SoujiR20-2.AuditCase18 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Read-only exact-case falsifier for C1 oracle `traversal`. Inspect ONLY pinned /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r20-audit-contract.py, /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-seat-audit.py and /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-20/preregistration.txt at 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1; optionally pinned r19 non-author lesson for the named original defect. Trace the exact stimulus, expected severity/class/receipt and production predicate WITHOUT executing it. Attack whether this case is genuinely independent, non-vacuous and preserves explicit permissions; propose one concrete stronger counterexample if warranted, else bounded source agreement. Do not substitute other cases or broad audit. Report the case ID and exact code lines; all source-only.
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: calibration
+
+Report: write your scoped findings to .ufo/waves/round-20/final/AuditCase18.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+I'm reading the godspeed skill and the three pinned sources in parallel.
+→ read(skill://godspeed) ⇒ ok · 18 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin cat-file -s 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tests/fixtures…) ⇒ ok · 4 lines
+
+## assistant
+
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:.ufo/waves/round-20/p…) ⇒ ok · 9 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tests/fixtures/r20-au…) ⇒ ok · 498 lines
+
+## assistant
+
+The fixture's `traversal` case is at lines 1-based in `build_cases`. Next I'm reading the pinned production auditor in full, since the predicate lives there.
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tools/souji-seat-audi…) ⇒ ok · 685 lines
+
+## assistant
+
+The production predicate is the only thing that decides the verdict, so I'm pulling exact line numbers and checking the non-ASCII bytes in both files. I'm also searching only those two named files for scheme and `..` coverage.
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin grep -n -E 'traversal|REPORT_DIR = |def add\(|def make_world|def vi…) ⇒ ok · 20 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin grep -n -E 'def write_targets|first = a\.split|def target_verdict|s…) ⇒ ok · 31 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin grep -n -i -E 'ssh|file://|\.\./' 1988860ed28a460f4e5228dfcdb3a7a6c…) ⇒ ok · 8 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tests/fixtures/r20-au…) ⇒ ok · 5 lines
+
+## assistant
+
+I have the exact predicate and fixture lines. Before I write anything, I'm confirming the remaining cited lines, including every `..` occurrence in the two named files and the preregistration text.
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin grep -n -F '..' 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1 -- tests/f…) ⇒ ok · 8 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin grep -n -E 'if truncated:|if target\.startswith\("/"\):|if is_heade…) ⇒ ok · 26 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin grep -n -E 'traversal refuse|Independent oracle|no implicit|Wave1 6…) ⇒ ok · 9 lines
+
+## assistant
+
+Every `..` in both named files is now accounted for. Last, I'm pinning the docstring limit and the selftest rows the report will cite, then writing the report.
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin grep -n -E 'lower bound|V-WRITE-SCOPE +write|foreign-write-report-a…) ⇒ ok · 16 lines
+
+## assistant
+
+STATUS: PARTIAL — `traversal` (fixture L183–186) is correctly specified and independent, and it passes by static trace. The production predicate, though, has a fail-open that this oracle cannot see: `target_verdict` returns `None` for every URI scheme except `file://` (`tools/souji-seat-audit.py` L265–266), before the `..` rule (L267) and the truncation rule (L269) run. A `write` to `ssh://…` is never classified, including the same `..` escape that `traversal` refuses in local form. I traced this from source only; nothing was executed and no transcript was read, so whether seats emit `ssh://` writes is `[INFERENCE]`.
+
+I'm writing the report file now.
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-20/final/AuditCase18.md) ⇒ ok · 2 lines
+
+## assistant
+
+STATUS: PARTIAL. Report written to `.ufo/waves/round-20/final/AuditCase18.md`. Source-only: nothing was executed, no transcript was read, and no tools were installed.
+
+**Case `traversal`** (fixture L183–186; expected `(("V-WRITE-SCOPE","major"),)`)
+- **Static trace:** PASS. The `..` rule at `tools/souji-seat-audit.py` L267–268 returns `V-WRITE-SCOPE`, the only row.
+- **Independence:** holds. Own world, hand-written expectation matching preregistration L3, no shared mutable state.
+- **Non-vacuity:** partial. It does catch a naive `startswith(report)` allow, because the stimulus begins with the exact report path. It does not catch deleting the `..` rule (L267–268), because normalization lands outside and the case still passes.
+- **Explicit permissions:** not exercised. The case has no grant, so it checks default-deny only.
+
+**Proposed counterexample `traversal-ssh-scheme`**
+- **Stimulus:** the same escape with an `ssh://fixture-host` prefix.
+- **Predicted result:** zero rows, so FAIL. The scheme exemption at L265–266 returns `None` before the `..` rule runs.
+- **Expected:** one major row. Its class depends on L1's fix: `V-WRITE-RELATIVE` under the pinned mapping, or `V-WRITE-SCOPE` if remote paths are scoped as absolute. The zero-row result does not depend on that choice.
+- **Reachability:** `[INFERENCE]`. The harness documents `ssh://host/<path>` as writable, but I did not check whether seats emit such writes.
+- **Protocol:** this must run as a disclosed post-registration probe. Adding it to the frozen 37-ID inventory would breach preregistration L3.
+
+**Checks for main:** run the fixture once against the pinned tool to confirm the `traversal` static PASS. Run the ssh probe only after L1 chooses its class.

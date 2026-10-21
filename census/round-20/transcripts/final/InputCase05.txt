@@ -1,0 +1,108 @@
+# SoujiR20-2.InputCase05 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Read-only exact C2 caller-case falsifier `r13-sources-dirty`. Inspect pinned /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r20-input-binding.py, /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-rev-pin.py and ONLY the applicable caller among /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-13/run-verification.py, /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/run-verification.py, /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/run-targeted.py, /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/cache-demonstration.py at 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1. Trace actual entrypoint, inert changed byte, relevant input closure, exit2/no-stdout/no-output predicate and any baseline producer witness. Is the test behavioral or only wiring, can a prerequisite refusal masquerade as the required reason, and is the input actually consumed by this caller? No runtime/code import; propose one bounded counterexample or source agreement. No unrelated knowledge requirement for r14.
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: operability
+
+Report: write your scoped findings to .ufo/waves/round-20/final/InputCase05.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+I'll read the godspeed skill and the two named pinned sources first.
+→ read(skill://godspeed) ⇒ ok · 18 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tests/fixtures/r20-in…) ⇒ ok · 1039 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tools/souji-rev-pin.py) ⇒ ok · 407 lines
+
+## assistant
+
+The fixture's `r13-sources-dirty` case mutates `corpus/SOURCES.md` and runs the round-13 runner, so that runner is the applicable caller. I'll read it and the attacked input at the pin.
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:census/round-13/run-v…) ⇒ ok · 523 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:corpus/SOURCES.md) ⇒ ok · 134 lines
+
+## assistant
+
+The applicable caller binds `corpus/SOURCES.md` in `MEASURED_PATHS` and refuses in `resolve_revision()` before any producer runs. Next I'll read the same caller at the preregistered baseline to test the producer-witness pair, and confirm the baseline inputs exist there.
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 12516f7dcdd5b165e5ee208d44a38d63b5bd5812:census/round-13/run-v…) ⇒ ok · 489 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin cat-file -e 12516f7dcdd5b165e5ee208d44a38d63b5bd5812:corpus/SOURCES…) ⇒ ok · 7 lines
+
+## assistant
+
+The pinned baseline runner does not list `corpus/SOURCES.md` in `MEASURED_PATHS`, yet it still reads that file to build the record's `sources` census. That makes the baseline pair a real red-before witness. Next I'll confirm every path in the baseline-pair closure exists at both pins, and read the baseline helper that the baseline caller imports.
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin ls-tree --name-only 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1 -- too…) ⇒ ok · 24 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin ls-tree --name-only 12516f7dcdd5b165e5ee208d44a38d63b5bd5812 -- too…) ⇒ ok · 30 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 12516f7dcdd5b165e5ee208d44a38d63b5bd5812:tools/souji-rev-pin.py) ⇒ ok · 327 lines
+
+## assistant
+
+The baseline helper is `git diff --quiet` over tracked measured paths only, and the baseline runner's measured list omits `corpus/SOURCES.md`, so the baseline pair reaches its first producer. Before writing, I'll record content digests of the four pinned sources I attacked, so the report ties to exact bytes.
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tests/fixtures/r20-in…) ⇒ ok · 2 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tools/souji-rev-pin.p…) ⇒ ok · 4 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:census/round-13/run-v…) ⇒ ok · 4 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:corpus/SOURCES.md | s…) ⇒ ok · 4 lines
+
+## assistant
+
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-20/final/InputCase05.md) ⇒ ok · 2 lines
+
+## assistant
+
+## InputCase05: `r13-sources-dirty`, source-only falsifier
+
+**Verdict:** source agreement. I found no blocking defect, so there is no `STATUS: PARTIAL`. The case is a valid behavioral refusal oracle for the round-13 runner's `corpus/SOURCES.md` binding at pin `1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1`. Its baseline pair is a valid red-before witness at `12516f7dcdd5b165e5ee208d44a38d63b5bd5812`.
+
+**Operability:** the refusal happens before any suite or producer runs. It exits 2 with empty stdout, names the path on stderr, and writes no output. The predicate's weak point is text attribution (residual R1).
+
+**Traced at 1988860:**
+- Entrypoint: `census/round-13/run-verification.py --round 20 --output census/round-20/r20-r13-sources-dirty.json --retry-failed --previous census/round-13/verification.json`, run in an isolated sandbox.
+- Refusal path: `execute()` calls `resolve_revision()` before any `run()` and before the previous file is parsed. `input_snapshot` raises `measured inputs differ … changed=['corpus/SOURCES.md']`. `SystemExit(2)` is raised, so the generic handler is bypassed.
+- Inert byte: an appended HTML comment. It is census-neutral, so only the byte binding can refuse.
+- Closure: `corpus/SOURCES.md` is a literal in `MEASURED_PATHS`. Removing it would block the fixture, not pass it. All 23 round-13 closure entries exist at 1988860.
+- Consumption: `execute()` reads SOURCES into `census` and the record's `sources`. This is static evidence only. No case exercises it behaviorally.
+- Baseline witness: the baseline runner's `MEASURED_PATHS` (12 entries) omits SOURCES. The baseline reaches its first producer, and the driver's `ProducerReached` is not swallowed. The baseline closure exists at `12516f7`.
+
+**Masquerade:** no SOURCES-naming refusal is reachable in this matrix. Unreadable, symlinked or missing SOURCES are ruled out by the fixture's pre-checks. `could-not-evaluate` only fires after binding passes. Ambient `GIT_DIR` would FAIL the case, because the refusal would not name SOURCES.
+
+**Non-blocking residuals:**
+- **R1:** tighten the predicate to the exact text `missing=[] added=[] changed=['corpus/SOURCES.md']`. Exit 2 is shared with the generic `could-not-evaluate` path, so only the text discriminates.
+- **R2:** the census is read mid-run, but the bound digests are taken only at the start and end. A bytes-B-then-A writer goes undetected, and the record's literal `inputs_unchanged_during_run=True` overclaims. The helper docstring excludes filesystem races, so this does not affect this case.
+- **R3:** the matrix copies closure bytes from `--root`'s working tree. The verdict covers the pin only if the fixture runs from a clean 1988860 checkout. I did not verify that.
+- **R4:** `LOG.md`, `census/round-10/cert-16.json` and `tools/cand-census-03.sh` are declared but not read directly by the caller. L1 should confirm whether any measured subcommand reads them.
+
+**Pinned sha256:** fixture `160f92c4…310aef`; `souji-rev-pin.py` `d3e9111b…5f32e`; round-13 runner `c122d70a…760b8`; `SOURCES.md` `4bda35d5…4072`.
+
+**Commands:** only read-only `git show`, `git ls-tree --name-only`, `git cat-file -e/-t` and `sha256sum` on pinned revisions, all exit 0. No fixture or caller was executed, nothing was imported, and no working-tree file was read.
+
+**Installs or updates:** none.
+
+**Checks for L1 (not run here):** from a clean 1988860 checkout, run `python3 tests/fixtures/r20-input-binding.py --baseline 12516f7dcdd5b165e5ee208d44a38d63b5bd5812`. Expect `CASE pass r13-sources-dirty`, `CASE pass baseline-r13-sources` and `INVENTORY exact`.
+
+**Report:** `.ufo/waves/round-20/final/InputCase05.md` in the lane. Author-side advisory, not non-author closure. No SHONEN marks.

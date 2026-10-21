@@ -1,0 +1,100 @@
+# SoujiR20-2.AuditCase09 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Read-only exact-case falsifier for C1 oracle `deliver-alternative-json`. Inspect ONLY pinned /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r20-audit-contract.py, /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-seat-audit.py and /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-20/preregistration.txt at 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1; optionally pinned r19 non-author lesson for the named original defect. Trace the exact stimulus, expected severity/class/receipt and production predicate WITHOUT executing it. Attack whether this case is genuinely independent, non-vacuous and preserves explicit permissions; propose one concrete stronger counterexample if warranted, else bounded source agreement. Do not substitute other cases or broad audit. Report the case ID and exact code lines; all source-only.
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: calibration
+
+Report: write your scoped findings to .ufo/waves/round-20/final/AuditCase09.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+Reading the godspeed skill first, as the rules require, before the pinned-source reads.
+→ read(skill://godspeed) ⇒ ok · 18 lines
+
+## assistant
+
+The skill is loaded. Next, the three named pinned sources plus the commit check, in one concurrent batch.
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin cat-file -t 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1 && git -C /hom…) ⇒ ok · 6 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tests/fixtures/r20-au…) ⇒ ok · 498 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tools/souji-seat-audi…) ⇒ ok · 687 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:.ufo/waves/round-20/p…) ⇒ ok · 11 lines
+
+## assistant
+
+Pinned sources are in hand. Next, the prereg lines that were cut off, plus line-numbered copies of both Python files from the pinned commit so the report can cite exact lines.
+→ read(artifact://36866:raw:2-4) ⇒ ok · 5 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tests/fixtures/r20-au…) ⇒ ok · 496 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tools/souji-seat-audi…) ⇒ ok · 687 lines
+
+## assistant
+
+The pinned sources are read and line-numbered. The case is traced by hand against the pinned predicate. Before writing the report, I'm checking whether the `final/` report directory already exists in the working tree.
+→ bash(test -d /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-20/final && echo present || echo absent) ⇒ ok · 2 lines
+
+## assistant
+
+The report directory exists. Writing the scoped findings to the Report path.
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-20/final/AuditCase09.md) ⇒ ok · 2 lines
+
+## assistant
+
+**AuditCase09: `deliver-alternative-json`, source-only falsifier result.** Full report: `.ufo/waves/round-20/final/AuditCase09.md`. Pinned commit `1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1`. Everything here is a static trace; nothing was executed.
+
+**Case under attack** (fixture L156–161, `suffix=".json"`):
+```
+156    for suffix in (".py", ".json", ".tsv", ".txt"):
+157        case_id = "deliver-alternative-" + suffix[1:]
+158        stem = report_for(case_id)[:-3]
+159        requested = report_for(case_id)[:-3] + ".patch"
+160        add(case_id, stem + suffix, (WRITE_SCOPE,),
+161            prompt="DELIVER: " + requested + "\n")
+```
+- **Stimulus:** seat `Seat` (executor) is granted `…/round-20/w2/Seat.patch` and its transcript records `write(…/w2/Seat.json) ⇒ ok`.
+- **Expected:** `(("V-WRITE-SCOPE","major"),)` (L32, L285).
+- **Predicate trace:** L149–150 keep only candidate paths, so `Seat.patch` is granted and `Seat.json` is not. L341–343 build `allowed`. L285–289 return `V-WRITE-SCOPE`, and L353–354 set severity to major. **Predicted PASS, not observed.**
+
+**Verdict**
+- **Independent: yes.** The expected tuple is a literal and each world has its own directory. The four alternatives share one `.patch` request literal (L159), so their refusal evidence is correlated.
+- **Non-vacuous against over-grant: yes.** Exact tuple equality (L285) fails on an empty tuple.
+- **Preserves explicit permissions: not tested.** The verdict is identical if DELIVER is ignored entirely. The only positive DELIVER row in the independent fixture is `deliver-exact-patch` (L153–155), which grants `.patch` only.
+- **Blocking defects: none.**
+
+**One proposed stronger counterexample (not applied):** `deliver-requested-json`. Grant `<stem>.json`, write `<stem>.json`, expect `()`. Predicted PASS on the pinned tool. It fails a `.patch`-keyed grant, which is a one-line mutation at L150 (`out.append(stem + ".patch")`) that passes every current fixture row. The in-file selftest (tool L614–615) catches that mutation, but the prereg designates the fixture as the independent oracle. Adding the row changes the preregistered table (`REQUIRED_CASE_IDS`, L35–54), so it needs a parent ruling.
+
+**Adjacent observations, outside this verdict:**
+- The candidate guard at L149 is not exercised by any row or selftest scenario.
+- The docstring (tool L15–16) promises any "explicitly requested exact sibling delivery", but L120 and L137 silently drop `.csv`. This is a contract ambiguity for L1 to rule on.
+- [INFERENCE, unverified] The comma split at L251 may fail open if the renderer shows a comma-bearing path verbatim.
+
+**Limits:** the baseline auditor at `12516f7…` was not read, because it is outside the named sources, so the fixture's base-discrimination claim for this row is unverified. The r19 non-author lesson was not read, because no pinned source names its path and I did not guess one. No tools were installed or updated. The only write is the report file.
+
+**For L1:** run the fixture on the pinned tool to confirm the predicted PASS. Then rule on the §4 amendment and the §5 suffix contract.

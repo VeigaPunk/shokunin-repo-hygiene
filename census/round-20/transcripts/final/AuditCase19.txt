@@ -1,0 +1,91 @@
+# SoujiR20-2.AuditCase19 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Read-only exact-case falsifier for C1 oracle `scratch-r20w2-exact`. Inspect ONLY pinned /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r20-audit-contract.py, /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-seat-audit.py and /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-20/preregistration.txt at 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1; optionally pinned r19 non-author lesson for the named original defect. Trace the exact stimulus, expected severity/class/receipt and production predicate WITHOUT executing it. Attack whether this case is genuinely independent, non-vacuous and preserves explicit permissions; propose one concrete stronger counterexample if warranted, else bounded source agreement. Do not substitute other cases or broad audit. Report the case ID and exact code lines; all source-only.
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: calibration
+
+Report: write your scoped findings to .ufo/waves/round-20/final/AuditCase19.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+I'm starting with the three pinned source files named in the assignment, read concurrently at commit 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1.
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tests/fixtures/r20-au…) ⇒ ok · 496 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tools/souji-seat-audi…) ⇒ ok · 687 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:.ufo/waves/round-20/p…) ⇒ ok · 11 lines
+
+## assistant
+
+Key source is in hand: the case `scratch-r20w2-exact` is at fixture lines 188–190 and the production scratch branch is at `scratch_path` and `target_verdict`. Two preregistration lines were truncated, so I'll read them raw before tracing.
+→ read(artifact://36872:raw:2-4) ⇒ ok · 5 lines
+
+## assistant
+
+The preregistration confirms the labels: its C1 table says `r19w2` scratch exact allow and other-slot refuse, while the case under attack is `r20w2`. I'll read the last two preregistration lines for any other scratch or lesson reference.
+→ read(artifact://36872:raw:5-6) ⇒ ok · 2 lines
+
+## assistant
+
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-20/final/AuditCase19.md) ⇒ ok · 2 lines
+
+## assistant
+
+**AuditCase19: `scratch-r20w2-exact`.** The case is correct and independent, and it is non-vacuous for the scratch grant. The gap is that no fixture case pins the scratch subtree boundary. Everything below is a static trace from pinned commit 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1. Nothing was executed.
+
+**Case (fixture L188–190):**
+```
+    scratch_root = "/var/tmp/souji-r20w2-Seat"
+    add("scratch-r20w2-exact", scratch_root + "/probe.txt",
+        prompt="SCRATCH: " + scratch_root + "\n")
+```
+Expected is `()` (L33 default). The auditor path is `scratch_path` L166–174, which returns `/var/tmp/souji-r20w2-Seat`. Then `_under` L193–195 is true, and `target_verdict` L287–288 returns `None`. Predicted: `CASE PASS`, violations `[]`.
+
+**Findings:**
+- **Independent:** the expectation and stimulus are literal constants, not computed from the predicate under test.
+- **Non-vacuous for the grant branch:** removing the grant gives `V-WRITE-SCOPE` (L289) and this case FAILs. The paired refusal `scratch-no-fallback` (L196) separates the grant from wave-slot inference.
+- **Not self-validating for parsing:** an allow case still passes if no write parses. `run_case` and `violations` never read `calls`. Only the paired refusal catches that.
+- **Boundary gap (main finding):** every scratch-granting fixture case uses an exact root or a different slot. None uses a same-root sibling such as `…Seat2/…`. Replacing `_under` L195 with `startswith` therefore passes all 37 required IDs (static enumeration). The OWN boundary is pinned by `own-only-sibling` (L180), but no scratch equivalent exists.
+
+**One proposed counterexample.** Insert after L190:
+```
+    add("scratch-r20w2-sibling-prefix", scratch_root + "2/probe.txt", (WRITE_SCOPE,),
+        prompt="SCRATCH: " + scratch_root + "\n")
+```
+Also add its ID to `REQUIRED_CASE_IDS` (L44), which makes 38. Predicted: PASS on the pinned build (`V-WRITE-SCOPE` major), FAIL under the `startswith` mutant. This is a post-preregistration addition and must be disclosed as such.
+
+**Non-blocking observations:**
+- Preregistration line 3 labels the row `r19w2`, but the case uses `r20w2`. L1 should record the mapping.
+- Fixture L8–9 claims baseline scratch shapes are checked, but `BASE_BROAD_CASE_IDS` (L55–61) contains none.
+- Writes made through `bash` are outside every class.
+
+No blocking defect found, so no `STATUS: PARTIAL`. Installs: none. Executions: none.
+
+Report: `.ufo/waves/round-20/final/AuditCase19.md`

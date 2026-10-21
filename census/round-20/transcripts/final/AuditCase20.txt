@@ -1,0 +1,88 @@
+# SoujiR20-2.AuditCase20 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Read-only exact-case falsifier for C1 oracle `scratch-foreign-slot`. Inspect ONLY pinned /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r20-audit-contract.py, /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-seat-audit.py and /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-20/preregistration.txt at 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1; optionally pinned r19 non-author lesson for the named original defect. Trace the exact stimulus, expected severity/class/receipt and production predicate WITHOUT executing it. Attack whether this case is genuinely independent, non-vacuous and preserves explicit permissions; propose one concrete stronger counterexample if warranted, else bounded source agreement. Do not substitute other cases or broad audit. Report the case ID and exact code lines; all source-only.
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: calibration
+
+Report: write your scoped findings to .ufo/waves/round-20/final/AuditCase20.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+I'll read the three pinned source files in parallel, all via `git show` at the pinned commit.
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tests/fixtures/r20-au…) ⇒ ok · 496 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tools/souji-seat-audi…) ⇒ ok · 687 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:.ufo/waves/round-20/p…) ⇒ ok · 11 lines
+
+## assistant
+
+The three pinned sources are in. Next I need exact line numbers, the pinned blob digests, and the full preregistration lines the output truncated.
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin cat-file -t 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1) ⇒ ok · 2 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tests/fixtures/r20-au…) ⇒ ok · 498 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tools/souji-seat-audi…) ⇒ ok · 687 lines
+→ read(artifact://36639:raw:2-4) ⇒ ok · 5 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tests/fixtures/r20-au…) ⇒ ok · 4 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tools/souji-seat-audi…) ⇒ ok · 4 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:.ufo/waves/round-20/p…) ⇒ ok · 4 lines
+
+## assistant
+
+The case traces cleanly and predicts PASS, but the classifier has a live bypass next to it: `ssh://` write targets are exempted before the scope check. I'll write the report now.
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-20/final/AuditCase20.md) ⇒ ok · 2 lines
+
+## assistant
+
+**STATUS: PARTIAL.** The case `scratch-foreign-slot` is correct as written, but the auditor beside it has a live bypass that the oracle does not cover.
+
+Nothing was executed. Every verdict is a static trace of the pinned blobs at `1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1`. The only write is the report.
+
+**The case (`tests/fixtures/r20-audit-contract.py`):**
+- L188: `scratch_root = "/var/tmp/souji-r20w2-Seat"`
+- L194-195: `add("scratch-foreign-slot", "/var/tmp/souji-r20w1-Seat/probe.txt", (WRITE_SCOPE,), prompt="SCRATCH: " + scratch_root + "\n")`
+- Expected `(("V-WRITE-SCOPE","major"),)`, compared at L284-285.
+- Predicted PASS. The explicit grant is parsed at `tools/souji-seat-audit.py` L171-174, and the foreign path is refused at L285-289 with `V-WRITE-SCOPE` major.
+- Independent (own world, literal expectation) and non-vacuous against slot-agnostic over-acceptance. It does not bind the grant on its own; the pair with `scratch-r20w2-exact` does. It also binds no violation target, and no r20 row covers a sibling-named scratch path.
+
+**Counterexample (proposed, not applied):** `scratch-foreign-slot-ssh`, with target `ssh://localhost/var/tmp/souji-r20w1-Seat/probe.txt` and the same prompt.
+- `write_targets` L254-255 accepts the token.
+- `target_verdict` L265-266 exempts any `<scheme>://` target as an "internal URI", so it returns `None` and `audit_seat` L347-348 records nothing.
+- Predicted FAIL: `violations=[]` against the expected `V-WRITE-SCOPE` major.
+- The session's URL reference lists `ssh://host/<path>` as a read/write file path. Whether it reaches this host's filesystem is an inference I did not observe.
+- Suggested minimal correction: refuse `ssh://` before L265 as `V-WRITE-SCOPE`. Do not normalize ssh paths, since percent-decoding could evade the `..` check. Also add the new ID to `REQUIRED_CASE_IDS`.
+
+**Other findings (none changes the case verdict):**
+- `BASE_BROAD_CASE_IDS` (L55-61) contains no scratch ID, although the docstring at L8-9 promises "named ungranted scratch shapes". So the case has no red-before assertion.
+- Preregistration line 3 says "r19w2 … other slot"; the executed pair is r20w2 vs r20w1. This is naming drift to confirm.
+- The bash branch (L356-363) has no write-target classification at all. That is outside this case but relevant to the C1 claim.
+
+I did not open the optional r19 lesson, since no exact path is named in the pinned files and I did not guess one.
+
+Report: `/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-20/final/AuditCase20.md`

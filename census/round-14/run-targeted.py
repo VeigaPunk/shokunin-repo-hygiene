@@ -7,15 +7,41 @@ this does not reuse or relabel them as new executions.
 import datetime
 import importlib.util
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
-spec = importlib.util.spec_from_file_location("r14_verify", ROOT/"census/round-14/run-verification.py")
-module = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(module)
+# The imported producer is itself a measured input. Verify its bytes before
+# importing it so a dirty, syntax-invalid wrapper cannot escape as exit 1.
+_BOOT_ENV = {key: value for key, value in os.environ.items()
+             if not key.startswith("GIT_")}
+_BOOT_ENV.update(GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL="/dev/null",
+                 GIT_OPTIONAL_LOCKS="0", GIT_NO_LAZY_FETCH="1",
+                 GIT_NO_REPLACE_OBJECTS="1", GIT_TERMINAL_PROMPT="0", LC_ALL="C")
+_BOOT_GIT = ["git", "-C", str(ROOT), "-c", "maintenance.auto=false",
+             "-c", "core.fsmonitor=false", "-c", "core.hooksPath=/dev/null"]
+_VERIFIER = "census/round-14/run-verification.py"
+try:
+    verifier = ROOT / _VERIFIER
+    if (any(path.is_symlink() for path in
+            (ROOT / "census", verifier.parent, verifier)) or not verifier.is_file()):
+        raise ValueError("nonregular imported verifier " + _VERIFIER)
+    head = subprocess.check_output(_BOOT_GIT + ["rev-parse", "HEAD"],
+                                   env=_BOOT_ENV).decode().strip()
+    expected = subprocess.check_output(_BOOT_GIT + ["show", head + ":" + _VERIFIER],
+                                       env=_BOOT_ENV)
+    if verifier.read_bytes() != expected:
+        raise ValueError(_VERIFIER + " differs from measured commit")
+    spec = importlib.util.spec_from_file_location("r14_verify", verifier)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+except (OSError, ValueError, SyntaxError, ImportError, subprocess.CalledProcessError) as exc:
+    print("run-targeted: refused importing %s: %s (no record written)"
+          % (_VERIFIER, exc), file=sys.stderr)
+    raise SystemExit(2)
 
 def main():
     target = module.output_path()

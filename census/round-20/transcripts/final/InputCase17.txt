@@ -1,0 +1,69 @@
+# SoujiR20-2.InputCase17 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Read-only exact C2 caller-case falsifier `targeted-prior-attempt-dirty`. Inspect pinned /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r20-input-binding.py, /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-rev-pin.py and ONLY the applicable caller among /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-13/run-verification.py, /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/run-verification.py, /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/run-targeted.py, /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/cache-demonstration.py at 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1. Trace actual entrypoint, inert changed byte, relevant input closure, exit2/no-stdout/no-output predicate and any baseline producer witness. Is the test behavioral or only wiring, can a prerequisite refusal masquerade as the required reason, and is the input actually consumed by this caller? No runtime/code import; propose one bounded counterexample or source agreement. No unrelated knowledge requirement for r14.
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: operability
+
+Report: write your scoped findings to .ufo/waves/round-20/final/InputCase17.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+→ read(skill://godspeed) ⇒ ok · 18 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tests/fixtures/r20-in…) ⇒ ok · 1039 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tools/souji-rev-pin.py) ⇒ ok · 407 lines
+
+## assistant
+
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:census/round-14/run-t…) ⇒ ok · 68 lines
+
+## assistant
+
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin ls-tree 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1 -- census/round-14…) ⇒ ok · 5 lines
+
+## assistant
+
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-20/final/InputCase17.md) ⇒ ok · 2 lines
+
+## assistant
+
+STATUS: PARTIAL. The report is at `.ufo/waves/round-20/final/InputCase17.md` in the lane.
+
+The applicable caller is `census/round-14/run-targeted.py`. It binds the prior by appending `census/round-14/verification-attempt-1.json` to `module.MEASURED_PATHS` before `resolve_revision()`. It never reads the prior's content, so the input is consumed only as a bound digest. The inert `" \n"` mutation is a sound probe of that binding.
+
+- **Blocking: the `--baseline` path cannot certify a targeted refusal.** The tripwire driver calls `module.main()` directly. That bypasses the wrapper's only exit-2 handler, which sits under `if __name__ == "__main__"`. A correct refusal is recorded as `exception`, so `baseline-targeted-wrapper` fails deterministically. This assumes r14 raises the handled types.
+- **Blocking for C2: no red-before for the prior.** None of the seven baseline pairs mutates the prior. `baseline-targeted-wrapper` mutates the wrapper.
+- **The matrix case is behavioral but uncontrolled.** Its only real check is exit 2 plus the prior path appearing in output. The stdout and output-absent conjuncts are vacuous. There is no clean control, so an environment-induced message naming the prior would also pass.
+- **Closure gap.** The wrapper hashes or reads inputs outside the snapshot set. A dirty pre-run copy is recorded without refusal, and a mid-run change writes a record and exits 1.
+
+Not verified: I did not open `census/round-14/run-verification.py`, which the bound excluded even though the applicable caller imports it. Items that depend on it are tagged `[UNVERIFIED-R14]` in the report. L1 should run `--baseline 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1` to confirm the expected FAIL, and read that module once to close the tagged items.
+
+No tools were installed or updated, and nothing was built, run, or imported.

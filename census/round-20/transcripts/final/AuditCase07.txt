@@ -1,0 +1,76 @@
+# SoujiR20-2.AuditCase07 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Read-only exact-case falsifier for C1 oracle `deliver-exact-patch`. Inspect ONLY pinned /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r20-audit-contract.py, /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-seat-audit.py and /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-20/preregistration.txt at 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1; optionally pinned r19 non-author lesson for the named original defect. Trace the exact stimulus, expected severity/class/receipt and production predicate WITHOUT executing it. Attack whether this case is genuinely independent, non-vacuous and preserves explicit permissions; propose one concrete stronger counterexample if warranted, else bounded source agreement. Do not substitute other cases or broad audit. Report the case ID and exact code lines; all source-only.
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: calibration
+
+Report: write your scoped findings to .ufo/waves/round-20/final/AuditCase07.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+I'll pull the three pinned sources and their sizes in one batch.
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin cat-file -s 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tests/fixtures…) ⇒ ok · 4 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tests/fixtures/r20-au…) ⇒ ok · 498 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tools/souji-seat-audi…) ⇒ ok · 687 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:.ufo/waves/round-20/p…) ⇒ ok · 11 lines
+
+## assistant
+
+The three pinned sources are in. Next I'll pull numbered line ranges for the fixture, the auditor, and the preregistration's C1 rows so I can cite exact lines.
+→ read(artifact://36850:1-240) ⇒ error · 1 line — Artifact 36850 not found. Available: 6, 9, 13, 28, 29, 37, 38, 43, 66, 70, 71, 74, 75, 86, 88, 94, 101, 104, 110, 111, …
+→ read(artifact://36851:1-200) ⇒ error · 1 line — Artifact 36851 not found. Available: 6, 9, 13, 28, 29, 37, 38, 43, 66, 70, 71, 74, 75, 86, 88, 94, 101, 104, 110, 111, …
+→ read(artifact://36852:raw:1-6) ⇒ ok · 6 lines
+
+## assistant
+
+The artifact IDs I guessed were wrong, but the preregistration read worked. I'll number the pinned fixture and auditor with `cat -n` at the same commit so I can cite exact lines.
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tests/fixtures/r20-au…) ⇒ ok · 496 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tools/souji-seat-audi…) ⇒ ok · 687 lines
+
+## assistant
+
+I have the exact lines I need. Writing the scoped report to the lane now.
+→ write(.ufo/waves/round-20/final/AuditCase07.md) ⇒ ok · 2 lines
+
+## assistant
+
+AuditCase07 is written to `.ufo/waves/round-20/final/AuditCase07.md`. Source-only: I read the three pinned files via `git show` at 1988860 and executed nothing.
+
+- **Case `deliver-exact-patch`** (fixture L153–155; expected `()`, L33/L133): traces to PASS. `delivery_paths` (tools L149) grants the exact `Seat.patch`, and `target_verdict` (L287) allows it. The case is independent: its own world, hard-coded expectation, and it runs before any read-patch.
+- **Blocking defects:** none in this case, so no `STATUS: PARTIAL`.
+- **Gaps (non-blocking):**
+  - A parser that records zero calls still passes it, because nothing checks `calls == 1` (L228–232, L285).
+  - A verbatim-grant mutant that drops the candidate filter passes the whole fixture and the selftest. No row tests an explicit `DELIVER` naming a non-candidate path.
+- **Proposed counterexample** (not applied): `deliver-cross-seat-grant`. It is an explicit `DELIVER` for `Neighbor.patch`, written by Seat, expected `WRITE_SCOPE`. The production predicate should refuse it, and the verbatim-grant mutant would fail it. It adds a row beyond the preregistered C1 table, so L1 must rule on it.
+- **Adjacent defect** (outside this case, non-blocking): `delivery_paths` L141–142 and `scratch_path` L159–160 toggle one fence flag on any ``` or ~~~ line. A `DELIVER` line inside a `~~~` block after a ```` ```bash ```` line is granted.
+
+No tool installs or updates. The optional r19 lesson was not consulted because no exact pinned path is named.

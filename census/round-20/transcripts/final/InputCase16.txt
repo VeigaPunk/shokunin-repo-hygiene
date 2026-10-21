@@ -1,0 +1,87 @@
+# SoujiR20-2.InputCase16 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Read-only exact C2 caller-case falsifier `targeted-frozen-dirty`. Inspect pinned /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r20-input-binding.py, /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-rev-pin.py and ONLY the applicable caller among /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-13/run-verification.py, /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/run-verification.py, /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/run-targeted.py, /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/cache-demonstration.py at 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1. Trace actual entrypoint, inert changed byte, relevant input closure, exit2/no-stdout/no-output predicate and any baseline producer witness. Is the test behavioral or only wiring, can a prerequisite refusal masquerade as the required reason, and is the input actually consumed by this caller? No runtime/code import; propose one bounded counterexample or source agreement. No unrelated knowledge requirement for r14.
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: operability
+
+Report: write your scoped findings to .ufo/waves/round-20/final/InputCase16.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+→ read(skill://godspeed) ⇒ ok · 18 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tests/fixtures/r20-in…) ⇒ ok · 1039 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tools/souji-rev-pin.py) ⇒ ok · 407 lines
+
+## assistant
+
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:census/round-14/run-t…) ⇒ ok · 68 lines
+
+## assistant
+
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin cat-file -t 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1) ⇒ ok · 4 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin ls-tree -l 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1 -- tests/fixtur…) ⇒ ok · 6 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin ls-tree -r -l 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1 -- tests/fix…) ⇒ ok · 4 lines
+
+## assistant
+
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-20/final/InputCase16.md) ⇒ ok · 2 lines
+
+## assistant
+
+Report written. Before I finalize, I'm tagging the predicted (unobserved) outcomes as `[INFERENCE]`, since the contract requires that.
+→ grep(Row passes|row would FAIL|would still pass|the row would FAIL @ /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves…) ⇒ ok · 13 lines
+
+## assistant
+
+→ edit([souji-shokunin/.ufo/waves/round-20/final/InputCase16.md#1B19] PUT 61.=61: +- Each is a `ValueError`, so `__main__` yie…) ⇒ ok · 20 lines
+
+## assistant
+
+STATUS: PARTIAL. The `targeted-frozen-dirty` row cannot establish its required reason or its refuse-before-suite ordering. The report is at `.ufo/waves/round-20/final/InputCase16.md` in the lane.
+
+**Entrypoint and gates (source, pinned `census/round-14/run-targeted.py`):** The `__main__` block maps `OSError`/`ValueError`/`RuntimeError` to stderr plus exit 2. `main()` ignores argv, so `--output` is never read there. The only pre-run gate is `module.resolve_revision()`, inherited from the r14 runner. The only post-run gate is `module.checked_inputs()`, which runs after all six suite commands.
+
+**Inert byte:** Appending `" \n"` to `tests/fixtures/r14-cache-frozen/expected.json` is a valid byte-level binding mutation.
+
+**Consumption:** The caller never opens or names the frozen file. It enters only through the r14 closure hash (`input_sha256`). The row proves closure binding, not consumption.
+
+**Counterexamples:**
+- **M1, prerequisite masquerade (source-verified):** Deleting the sandbox copy, or replacing it with a symlink, produces a helper refusal that names the same path. That satisfies the predicate (rc 2, path in stderr, no record) without a byte-dirty input. The predicate cannot tell the two apart.
+- **M2, suite-then-refuse (conditional on r14):** If `resolve_revision()` lacks the working-tree comparison, the suite runs and then refuses post-run. The row still passes, and it has no producer tripwire to see the suite run.
+
+**Baseline witness:** None for this row. The only targeted baseline pair, `baseline-targeted-wrapper`, cannot pass as written (O1). The tripwire driver imports `run-targeted.py` under a non-`__main__` name and calls `main()`, which bypasses the exit-2 mapping. Its changed side therefore never registers exit 2, so `--baseline` cannot be green for the targeted caller.
+
+**Unverified (r14, not opened per the lane bound):** `resolve_revision`, `checked_inputs`, `output_path`, `MEASURED_PATHS` membership, and whether `run`/`ENV` capture output and strip `GIT_*`.
+
+**Proposed for L1 (not applied):** exact helper refusal-shape check; producer tripwire with the `__main__` mapping mirrored; a clean control per caller; a targeted red-before pair for the frozen file; sandboxes built from the pinned commit; reconcile targeted extras (`R13_PRIOR` is in the baseline pair but missing from the matrix).
+
+Checks: none executed. Everything was read via `git show`/`ls-tree`/`cat-file` at the pin. Predicted outcomes are tagged `[INFERENCE]`. No installs or updates.

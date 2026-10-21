@@ -1160,3 +1160,65 @@ that inventory. No file content under the operator-owned directory was explicitl
 opened, copied, changed, staged or reaped. Q45 and SKILL prohibit implicit root
 expansion; source auditor and inert fixture now flag exact root read calls. The
 failure is retained and reported, not rerun or laundered into a clean-source claim.
+
+## 2026-10-21 — round20 final falsification and repair record
+
+The pushed build pin is `1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1`.
+The second validated unchanged 64-seat batch ran against it: 3 executors,
+3 mutation testers,22 scouts,2 connectors,16 critics,16 reviewers,2 scribes.
+All64 completed; no provider-dead seat in this wave. The earlier recovery wave
+had64 actual starts,39 completed and25 provider-dead (3 Cursor usage limits,
+4 Codex capacity,18 zai429); exact names/errors are in
+`census/round-20/recovery-seat-outcomes.json`. Total actual starts128.
+The latest parent ruling in `census/round-20/orphan-ruling.txt` supersedes the
+earlier dead64/budget excerpt: old64 handles were registered but unexecuted,
+consuming0. Counting them conservatively would be192, still within200.
+The three cap refusals observed the runtime's threshold message, not an
+instrumented exact live-job census; no reservation-release proof is claimed.
+
+At the build pin, FinalAuditRuntime actually observed auditor103/0,
+r19 shapes17/0 with12 baseline differences, and the independent C1 oracle50/0
+with11 baseline over-authorizations. FinalCallerRuntime actually observed
+43 exact C2 cases, helper11/0, old fixture13/0/base6. FinalReplayRuntime observed
+carry4/0/base2 and five exact historical semantic replay matches; the pointer
+fixture11/0 includes a permissive historical subcase returning2, not a clean
+historical-arm proof. The replay gate digest differs from its historical
+expected digest; semantic equality is not byte identity.
+Three single-change mutants were killed (0/1/0, exact restoration):
+directive-prefix grant, repeated-input overwrite, and protected-ancestor bypass.
+The reports under `.ufo/waves/round-20/final/` preserve the actual controls.
+The six outer clone/checkout setups predated late Git-neutralization guidance;
+hook/maintenance freedom is unproved, no retrospective clean claim or rerun.
+
+Final falsifiers exposed actual additional C1 defects: authority-side traversal,
+nonfinal/negated OWN ONLY, mixed fence markers, unparsed edit MV destinations,
+prose CLONES/ALLOWED-EXEC escalation, filesystem URI exemption and comma cuts.
+They are repaired with a shared matching-fence directive reader, exact positive
+clauses, normalized-grant traversal refusal, visible MV operand checks, narrow
+control-URI exceptions and fail-closed ambiguous paths. New oracle rows are
+post-discovery extensions, not falsely pre-registered cases; original expected
+rows and11 base witnesses are unchanged. C2 now checks the imported r14 wrapper
+before targeted import. The oracle requires exact refusal families and complete
+writer maps, and adds four marked producer-stubbed writers plus four drift
+refusals. These are actual record-path tests, not full historical suite execution.
+
+S096-S099 append source corrections without editing old cells: page-only fd
+teaching, meaningful two-part history rejection flip, timeout's KILL137 exception,
+and typed-object existence versus plain rev-parse conversion. Current page-level
+research remains seven pages (six scoped admits,one cleanup reject); eleven new
+rows include four corrections, not eleven independent sources or knowledge paths.
+Final census output is still required before a conformance pass is credited.
+
+The F5 reason column has a real source-level privacy defect: cmd canaries do not
+redact argv/fd path text in reason. Universal wording is explicitly superseded;
+the code is unchanged and historical exposure unmeasured. Parent Main confirmed
+that ruling is operator/Kagi-owned. The new round20 L0 question records it; no live
+proc/private snapshot, credential payload, inherited signal, purge or reap was used.
+The InputCase03 census-pathspec status query is another disclosed metadata-scope
+deviation; its affected output is void, not a clean-source claim.
+
+The source-code and oracle changes above are the work underlying later actual
+acceptance/census/audit JSONs under `census/round-20/`; each record names its own
+measured revision. A future record in that directory is not a claim of a run in
+this entry. Main's complete18-command acceptance follows the repaired code pin;
+no final-tree pass is pre-claimed here. No install or update was performed.

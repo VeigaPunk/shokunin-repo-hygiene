@@ -276,3 +276,83 @@ Complete visible source STATUS paragraphs are retained below. The existing gate 
 - ErrataCarry `.ufo/waves/round-20/recovery/ErrataCarry.md:17` — open — **STATUS: OPEN.** Carry M1/M2 have positive historical receipts, and static inspection shows exact-delivery filtering plus receipt hashing/recheck code. C1 is not closed by this read-only evidence: the exact Erratum 7 protected-path witness is absent from the bounded selftest, the separate historical fixture was not in the permitted read set, and no fresh execution verified `OWN ONLY` wiring or receipt/hash-drift behavior. No tools were installed; no target code, tests, builds, or smokes were run.
 - ErrataFinal `.ufo/waves/round-20/recovery/ErrataFinal.md:41` — open — **STATUS: OPEN** — the r19 final tip is explicitly unadjudicated, and the available `18/18` acceptance does not cover all final-tip hashed bytes. The missing evidence is a non-author adjudication and full, properly bound acceptance at `e6df080` (or an explicit record that no such acceptance exists); this scout does not supply either.
 - CorpusAdmission `.ufo/waves/round-20/recovery/CorpusAdmission.md:17` — open — **STATUS: OPEN** — reconcile the broad “no knowledge growth” wording with the round-20 correction to an existing knowledge entry. This is a bounded source-accounting/calibration issue; it does not by itself overturn the correctly separated five-admit/one-reject source tally, establish new coverage, or close either C1 or C2.
+
+## Final falsifier adjudication before measured repair pin
+
+Both successful waves are complete: recovery64 starts/39 completed/25 provider-dead;
+final64 starts/64 completed/0 dead. Total128 actual starts, no identity replacement.
+The later parent ruling in census/round-20/orphan-ruling.txt supersedes the earlier
+64-dead budget excerpt. Even that obsolete conservative accounting would be192.
+Cap refusal text was observed three times; an exact live-job count was not measured.
+
+The final pinned-build falsifiers found real C1 authority traversal, OWN placement/
+negation, matching-fence, MV operand, prose execution-tag, URI and comma ambiguities.
+These are repaired, and their oracle extensions are explicitly post-discovery—not
+all pre-registered before implementation. Original expected cases and11 old baseline
+witnesses remain unchanged. census/round-20/oracles-before-final.json retains the
+actual non-clean runs against build1988860: C1 new violations and the targeted
+imported-verifier SyntaxError refusal defect. No historical measurement suites ran.
+
+C2's new clean writer and drift controls use explicitly marked harmless producers;
+they test real main-function record writes, full independently calculated input maps,
+and post-producer refusal. They do not establish full legacy-suite success or positive
+production cache retention. Dirty syntax cases deliberately fail the byte gate before
+import, not a claimed SyntaxError-handler branch. Exact reason-family checks reject
+prerequisite errors that merely happen to mention a path.
+
+The following source critiques are not product failures: default-dirty wrappers were
+already refused at the baseline (preservation controls need not be new discriminators);
+the targeted baseline tripwire really catches resolve_revision's SystemExit2, as the
+actual43-case run confirmed; an aggregate record does not make independently runnable
+C1/C2 behavior causally dependent, and its named command results are not a scalar score.
+FinalFrontier's 72/20/3 status histogram is incorrect and is not used. Actual counters
+and the maintained source validator, not a vote of advisors, determine the measurements.
+
+Known limits remain open, not papered over: parsed file targets are not a complete Bash/
+Python interpreter; input endpoints are not atomic filesystem or loader attestation;
+missing transcript names mean partial coverage; a manifest fingerprint does not verify
+its entries. The permissive historical pointer-fixture arm returning2 is not a clean
+historical-arm proof. All six outer Git clone setups predated late neutralization
+instructions; no hook/maintenance-free attestation or rerun is fabricated.
+
+The ConsumerSkill root glob and grep, coordinator implicit-root metadata read and
+InputCase03 census-pathspec status query are disclosed scope deviations. Their inventory
+outputs are void as evidence; named committed-file checks independently establish the
+claims. The final adjudication catalogue preserves the whole103-report denominator
+and per-report dispositions, rather than calling every STATUS mention an open bug.
+
+## Gate
+
+### Final source amendment — supersedes every earlier subtotal
+
+All pages below were opened by L1 on2026-10-21 (the same public pages already recorded
+above); no page command was executed. New correction rows are append-only:
+
+| row | URL and located quote, at most25 words | decision |
+|---|---|---|
+| S096 | https://man7.org/linux/man-pages/man5/proc_pid_fd.5.html, man-pages6.19 DESCRIPTION permission paragraph: “Permission to dereference or read (readlink(2)) the symbolic links in this directory is governed by a ptrace access mode PTRACE_MODE_READ_FSCREDS check” | mined, page fact only; Souji privacy/signal policy is separate |
+| S097 | https://git-scm.com/docs/git-filter-branch, last updated2.44.0, WARNING: “its use is not recommended.” | rejected under PROVINCE Refuses; supersedes S090's non-reversing flip and explicitly aligns with S032's warning-withdrawal plus operator mission/province change conditions |
+| S098 | https://web.archive.org/web/20260919212856id_/https://www.gnu.org/software/coreutils/manual/html_node/timeout-invocation.html, GNU Coreutils 9.12 section23.6 Exit status: “137 if command or timeout is sent the KILL(9) signal (128+9)” | mined; qualifies S094's124 teaching with the documented KILL exception, not descendant containment |
+| S099 | https://git-scm.com/docs/git-rev-parse, version2.56.0 OPTIONS verify: “can be turned into a raw 20-byte SHA-1” | mined; following typed-peeling paragraph adds existence/type checks; full-ID and durable-root rules remain lane policy |
+
+For S093 the same opened page's OPTIONS/exit-code additionally says: “it exits with 1
+if there were differences and 0 means no differences.” The source facts, quoted version
+and version-table date are distinct from access date or lane deductions. S089's conclusion
+about -C alone is explicitly a lane deduction from the documented environment variables.
+S090/S097 revisit S032's same page, not independent corroboration or a historical r19 reject.
+
+S096/S098/S099 absent→mined and S097 absent→rejected; all recheck on-release. Used-by:
+S096 the existing F5 entry and this lesson; the other three this lesson. No old cells changed.
+Final round additions:11 tier-A rows,9 mined/2 rejected, across7 distinct opened pages.
+Page-level decisions are6 documentary admits/1 cleanup reject plus4 corrective rows.
+These totals supersede all5-,6-,7-row intermediate narratives; there is no new knowledge
+path or coverage claim. The actual final source census is the authority for fleet counts.
+
+### Final F5 privacy disposition
+
+The reason-field issue is a real source-level defect: cmd canary redaction does not
+redact argv/fd path text in reason. Universal claims are explicitly superseded under
+Q46; scanner code is unchanged, historical exposure unmeasured. Parent Main confirmed
+operator/Kagi ownership. The round20 L0 request is a real open ruling, not permission
+to inspect live proc, private-value payloads or the old TSV. None was done here. Both
+specific round18 reap/NAMESPACE holds, certification OFF and K5 HELD remain.

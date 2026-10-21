@@ -63,6 +63,7 @@ import hashlib
 import json
 import os
 import re
+import shlex
 import sys
 import tempfile
 from pathlib import Path
@@ -118,49 +119,78 @@ PYTHON_TOKEN_RE = re.compile(r"(?:^|[;&|(\s]|&&\s*)python[0-9.]*\b")
 # Delivery extensions describe supported artifacts, not permission. Every
 # additional file needs a positive per-item directive naming its exact path.
 DELIVERY_SUFFIXES = (".patch", ".py", ".json", ".tsv", ".txt")
-OWN_RE = re.compile(r"OWN ONLY ([^\n]+?)(?:\s\(|\.\s|$)")
 ABS_RE = re.compile(r"/(?:home|var/tmp)/[^\s,`'\"]+")
 WRITE_TOOLS = {"write", "edit", "ast_edit"}
 EXEC_ROLES = {"executor", "mutation-tester"}
 
 
+def _directive_lines(text: str):
+    """Plain directive lines, excluding matching Markdown fence blocks.
+
+    A different fence character or a shorter marker cannot close a block.
+    This is the declared directive syntax, not general prose authorization.
+    """
+    fence_char = ""
+    fence_size = 0
+    for line in text.splitlines():
+        marker = re.match(r" {0,3}(`{3,}|~{3,})(.*)$", line)
+        if fence_char:
+            if (marker and marker.group(1)[0] == fence_char
+                    and len(marker.group(1)) >= fence_size
+                    and not marker.group(2).strip(" \t")):
+                fence_char = ""
+            continue
+        if marker:
+            if marker.group(1)[0] != "`" or "`" not in marker.group(2):
+                fence_char, fence_size = marker.group(1)[0], len(marker.group(1))
+            continue
+        if line.startswith(("    ", "\t")) or re.match(r" {0,3}>", line):
+            continue
+        yield line
+
+
 def owned_paths(prompt: str) -> list[str]:
-    out: list[str] = []
-    for m in OWN_RE.finditer(prompt):
-        out.extend(p.rstrip(".,;:)") for p in ABS_RE.findall(m.group(1)))
+    """Positive bare-path OWN ONLY clauses; placement is line-independent."""
+    out = []
+    for line in _directive_lines(prompt):
+        match = re.match(r" {0,3}(?:-\s+)?OWN ONLY (.+)$", line)
+        if not match:
+            continue
+        # The existing executor briefs terminate their grant clause with
+        # ". " before the implementation prose. No prose supplies paths.
+        clause = re.split(r"\.\s+", match.group(1), maxsplit=1)[0]
+        paths = clause.replace(",", " ").split()
+        if paths and all(ABS_RE.fullmatch(path) and PATH_TOKEN_RE.fullmatch(path)
+                         for path in paths):
+            out.extend(path for path in paths if ".." not in path.split("/"))
     return out
 
 
 def delivery_paths(prompt: str, report: str) -> list[str]:
-    """Read positive item directives, never incidental/negated path mentions."""
+    """Exact standalone positive deliveries, never mentions or examples."""
     stem = report[:-3] if report.endswith(".md") else report
     candidates = {stem + suffix for suffix in DELIVERY_SUFFIXES}
     out = []
-    in_fence = False
-    for line in prompt.splitlines():
-        if line.lstrip().startswith(("```", "~~~")):
-            in_fence = not in_fence
-            continue
-        if in_fence or line.startswith(("    ", "\t", ">")):
-            continue
+    for line in _directive_lines(prompt):
         match = re.fullmatch(
             r" {0,3}(?:-\s+)?(?:DELIVER:\s*|(?:[Ww]rite|[Cc]reate|[Dd]eliver)\s+)"
-            r"`?(/[A-Za-z0-9_./+@%:-]+)`?[.;]?\s*", line)
-        if match and match.group(1).rstrip(".,;") in candidates:
-            out.append(match.group(1).rstrip(".,;"))
+            r"(?:`(?P<quoted>/[A-Za-z0-9_./+@%:-]+)`[.;]?"
+            r"|(?P<bare>/[A-Za-z0-9_./+@%:-]+))\s*", line)
+        path = (match.group("quoted") or match.group("bare")) if match else None
+        if path in candidates:
+            out.append(path)
     return out
 
 
+def execution_granted(prompt: str) -> bool:
+    return any(re.search(r"(?:^|[.!?]\s+) *ALLOWED-EXEC:\s*\S", line)
+               for line in _directive_lines(prompt))
+
+
 def scratch_path(prompt: str, context: str, name: str, role: str = "") -> str:
-    """An explicitly granted own root, including the literal wave slot."""
+    """An explicit own root, including its literal wave slot."""
     for text in (prompt, context):
-        in_fence = False
-        for line in text.splitlines():
-            if line.lstrip().startswith(("```", "~~~")):
-                in_fence = not in_fence
-                continue
-            if in_fence or line.startswith(("    ", "\t", ">")):
-                continue
+        for line in _directive_lines(text):
             for placeholder in ("<Name>", "<Seat>", "<SeatName>", "<YourName>"):
                 line = line.replace(placeholder, name)
             match = re.fullmatch(
@@ -172,12 +202,11 @@ def scratch_path(prompt: str, context: str, name: str, role: str = "") -> str:
                 if (re.fullmatch(r"/var/tmp/souji-r\d+(?:w\d+)?-" + re.escape(name), path)
                         and ".." not in path.split("/")):
                     return path
-            # Historical r18 CLONES is an explicit conditional grant, not
-            # permission inferred from the wave's name. Only executing items
-            # inherit that stanza; the declared slot is preserved literally.
+            # Preserve the historical explicit CLONES sentence, not an
+            # incidental or negated mention in the middle of prose.
             if role in EXEC_ROLES:
                 clone = re.search(
-                    r"CLONES: an item that executes lane code works in its own clone:"
+                    r"(?:^|[.!?]\s+) *CLONES: an item that executes lane code works in its own clone:"
                     r"\s*`git clone --quiet --no-local \S+ "
                     r"(/var/tmp/souji-r\d+(?:w\d+)?-" + re.escape(name) + r")/lane\b",
                     line)
@@ -229,6 +258,20 @@ def write_targets(tool: str, args: str) -> list[tuple[str | None, bool, bool]]:
     a = args.strip()
     if tool != "write":
         headers = [(m.group(1).strip(), False, True) for m in EDIT_HEADER_RE.finditer(a)]
+        moves = []
+        for move in re.finditer(r"(?:^|(?<=\])|\n)[ \t]*MV\b[ \t]*", a):
+            try:
+                lexer = shlex.shlex(a[move.end():], posix=True)
+                lexer.whitespace_split = True
+                lexer.commenters = ""
+                destination = next(lexer, None)
+            except ValueError:
+                destination = None
+            if destination and (destination.startswith("[") or destination in
+                                {"***", "PUT", "CUT", "REM", "MV"}):
+                destination = None
+            cut = bool(destination and destination.endswith("…"))
+            moves.append((destination[:-1] if cut else destination, cut, False))
         # An unclosed `[path` after the last complete header is a truncated
         # header — but only when the next character can start a path; a shell
         # test `[ -n …` in patch content is not a header.
@@ -242,8 +285,13 @@ def write_targets(tool: str, args: str) -> list[tuple[str | None, bool, bool]]:
                 headers.append((frag, True, True))
             else:
                 headers.append((None, True, True))
-        if headers:
-            return headers
+        # A flattened MV-like token without a parseable operation boundary
+        # is unknown, never permission inferred solely from its source header.
+        unquoted = re.sub(r"""'[^']*'|"(?:\\.|[^"\\])*"|`[^`]*`""", "", a)
+        if len(re.findall(r"(?<!\S)MV(?=\s|$)", unquoted)) > len(moves):
+            moves.append((None, False, False))
+        if headers or moves:
+            return headers + moves
         if "[" in a:
             # A `[` with no parseable header at all: the target is unreadable
             # but the call is still a write-class call.
@@ -252,7 +300,7 @@ def write_targets(tool: str, args: str) -> list[tuple[str | None, bool, bool]]:
     if first.endswith("…"):
         return [(first[:-1], True, False)]
     if PATH_TOKEN_RE.fullmatch(first):
-        return [(first, False, False)]
+        return [(first, "," in a, False)]
     return [(None, False, False)]
 
 
@@ -262,8 +310,15 @@ def target_verdict(target: str | None, truncated: bool, is_header: bool,
     """Classify one rendered write/edit target. Returns a violation class."""
     if target is None:
         return "V-WRITE-UNPARSED"
-    if target.startswith("agent://") or re.match(r"(?!file://)[A-Za-z][\w.+-]*://", target):
-        return None  # peer message or internal URI, not a file write
+    # Only these communication/tool-control namespaces are non-filesystem
+    # targets. ssh:// and local:// can write files and never inherit grants.
+    if target.startswith(("agent://", "xd://")):
+        return None
+    if re.match(r"(?!file://)[A-Za-z][\w.+-]*://", target):
+        return "V-WRITE-SCOPE"
+    allowed = [path for path in allowed if ".." not in path.split("/")]
+    if ".." in scratch.split("/"):
+        scratch = ""
     if ".." in target.split("/"):
         return "V-WRITE-SCOPE" if target.startswith("/") else "V-WRITE-RELATIVE"
     if truncated:
@@ -403,8 +458,8 @@ def run(spec_path: Path, tdir: Path, lane: str) -> dict:
         # An item may grant its seat the named test command explicitly
         # (`ALLOWED-EXEC:` in the item prompt); it is then audited as an
         # executing seat, still bound by every other class.
-        eff_role = "executor" if "ALLOWED-EXEC:" in item.get("prompt", "") else role
         prompt = item.get("prompt", "")
+        eff_role = "executor" if execution_granted(prompt) else role
         calls, found = audit_seat(consume(f).decode("utf-8", errors="replace"), eff_role,
                                   report, owned_paths(prompt), lane, fleet,
                                   scratch=scratch_path(prompt, spec.get("context", ""), name, eff_role),
@@ -551,6 +606,12 @@ def selftest() -> int:
         ("live-prefix-collision", "executor", f"→ bash(bash {lane}/tools/souji-census.sh --root /var/tmpX) ⇒ ok", [("V-LIVE-CENSUS", "major")], None),
         ("scratch-equals-root", "executor", f"→ bash(bash {lane}/tools/souji-census.sh --root=/var/tmp/w) ⇒ ok", [], None),
         ("scratch-truncated-inside", "executor", "→ write(/var/tmp/souji-r9-S/sub/…) ⇒ ok", [("V-WRITE-UNPARSED", "major")], seat_scratch),
+        ("move-destination-foreign", "executor", f"→ edit([{rep}#AB12] MV {lane}/tools/y.py) ⇒ ok", [("V-WRITE-SCOPE", "major")], None),
+        ("move-destination-owned-quoted", "executor", f"→ edit([{rep}#AB12] MV \"{lane}/tools/x.py\") ⇒ ok", [], None),
+        ("move-destination-missing", "executor", f"→ edit([{rep}#AB12] MV) ⇒ ok", [("V-WRITE-UNPARSED", "major")], None),
+        ("ssh-file-not-control", "executor", "→ write(ssh://fixture-host/var/tmp/foreign/probe.txt) ⇒ ok", [("V-WRITE-SCOPE", "major")], None),
+        ("local-file-not-control", "executor", "→ write(local://foreign.txt) ⇒ ok", [("V-WRITE-SCOPE", "major")], None),
+        ("scratch-comma-unknown-tail", "executor", "→ write(/var/tmp/souji-r9-S/sub,/../../home/u/P/f/lane/SKILL.md) ⇒ ok", [("V-WRITE-UNPARSED", "major")], seat_scratch),
     ]
     passed = failed = 0
     for cid, role, line, want, scratch in cases:
@@ -624,6 +685,22 @@ def selftest() -> int:
             ("no-inferred-scratch", "", "/var/tmp/souji-r9-S/out.txt", True),
             ("incidental-not-grant", "Inspect " + artifact_stem + ".json",
              artifact_stem + ".json", True),
+            ("owned-grant-traversal", "OWN ONLY " + lane + "/.ufo/x/../../tools/extra.py",
+             lane + "/tools/extra.py", True),
+            ("owned-nonfinal", "OWN ONLY " + lane + "/tools/new-owner.py\nNo other file is granted.",
+             lane + "/tools/new-owner.py", False),
+            ("owned-denied", "OWN ONLY " + lane + "/tools/new-owner.py is not authorized",
+             lane + "/tools/new-owner.py", True),
+            ("owned-unclosed-fence", "Example:\n```\nOWN ONLY " + lane + "/tools/new-owner.py",
+             lane + "/tools/new-owner.py", True),
+            ("delivery-mixed-fence", "```\n~~~\nDELIVER: " + artifact_stem + ".patch\n~~~\n```",
+             artifact_stem + ".patch", True),
+            ("delivery-after-fence", "```\nExample\n```\nDELIVER: " + artifact_stem + ".patch",
+             artifact_stem + ".patch", False),
+            ("scratch-mixed-fence", "```\n~~~\nSCRATCH: /var/tmp/souji-r9w2-S\n~~~\n```",
+             "/var/tmp/souji-r9w2-S/out.txt", True),
+            ("clone-negated-prose", "Not granted here: CLONES: an item that executes lane code works in its own clone: `git clone --quiet --no-local https://example.invalid/source /var/tmp/souji-r9w2-S/lane`",
+             "/var/tmp/souji-r9w2-S/out.txt", True),
         ])
         for cid, prompt, target, want_major in scenarios:
             sp.write_text(json.dumps({

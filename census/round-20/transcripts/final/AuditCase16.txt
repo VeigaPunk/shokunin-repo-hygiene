@@ -1,0 +1,93 @@
+# SoujiR20-2.AuditCase16 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Read-only exact-case falsifier for C1 oracle `own-only-exact`. Inspect ONLY pinned /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r20-audit-contract.py, /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-seat-audit.py and /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-20/preregistration.txt at 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1; optionally pinned r19 non-author lesson for the named original defect. Trace the exact stimulus, expected severity/class/receipt and production predicate WITHOUT executing it. Attack whether this case is genuinely independent, non-vacuous and preserves explicit permissions; propose one concrete stronger counterexample if warranted, else bounded source agreement. Do not substitute other cases or broad audit. Report the case ID and exact code lines; all source-only.
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: calibration
+
+Report: write your scoped findings to .ufo/waves/round-20/final/AuditCase16.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+I'll pull the three pinned files at the named commit, read-only, in parallel.
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin cat-file -t 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1 && git -C /hom…) ⇒ ok · 8 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tests/fixtures/r20-au…) ⇒ ok · 498 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tools/souji-seat-audi…) ⇒ ok · 687 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:.ufo/waves/round-20/p…) ⇒ ok · 11 lines
+
+## assistant
+
+The three pinned files are in hand. Next I need exact line numbers for the cases and predicate, plus the full preregistration lines that were truncated, all as read-only pinned-commit queries.
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin grep -n -F -e 'own-only' -e 'OWN ONLY' -e 'owned' -e 'def add(' -e …) ⇒ ok · 25 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin grep -n -F -e 'OWN_RE' -e 'OWN ONLY' -e 'def owned_paths' -e 'ABS_R…) ⇒ ok · 31 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin blame -L '/^OWN_RE = /,+1' 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1…) ⇒ ok · 4 lines
+→ read(artifact://36844:raw:2-4) ⇒ ok · 5 lines
+
+## assistant
+
+The pinned lines are located. Before writing, I want exact line numbers for the DELIVER analog cases and the per-line parser, so the report can cite the contrast precisely.
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin grep -n -F -e 'deliver-denial-trailing-text' -e 'incidental-deliver…) ⇒ ok · 22 lines
+
+## assistant
+
+Findings are settled: the case passes by trace, but only because its OWN ONLY line is the last line of the prompt. I'm writing the report now.
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-20/final/AuditCase16.md) ⇒ ok · 2 lines
+
+## assistant
+
+STATUS: PARTIAL. Source-traced only; nothing was executed, and no installs or updates were made.
+
+**Case `own-only-exact`** (fixture `tests/fixtures/r20-audit-contract.py`):
+- `:178` `owned = str(root / "own-only-exact" / "lane" / "tests" / "fixtures" / "assigned.py")`
+- `:179` `add("own-only-exact", owned, prompt="OWN ONLY " + owned + "\n")`
+- Expected `()` (`:33`), role `executor`, no neighbor, no scratch.
+- Predicted PASS. The grant comes from `OWN_RE` (`tools/souji-seat-audit.py:121`) → `owned_paths` (`:127–131`) → `allowed` (`:342`) → absolute branch (`:285–289`).
+
+**Verdict.** The case passes only because its OWN ONLY line is the last line of the prompt. `OWN_RE` ends with `$` and its group cannot cross `\n`. A non-final OWN ONLY line therefore produces no grant. The fixture has exactly two OWN ONLY prompts (`:179`, `:181`), and both are final-line. DELIVER and SCRATCH are parsed per line (`:140–149`, `:158`), so only OWN has this placement dependence. `git blame` attributes `:121` to `7a79dc2`; the pinned commit did not change it.
+
+**Independence.** Execution is independent. `own-only-sibling` (`:180–181`) shares the `owned` string by construction, but its refusal still tests exact match. Non-vacuity holds only as a pair: alone, the case passes for any tool that ignores writes.
+
+**Proposed counterexample (one): `own-only-exact-nonfinal`.**
+```python
+nonfinal = str(root / "own-only-exact-nonfinal" / "lane" / "tests" / "fixtures" / "assigned.py")
+add("own-only-exact-nonfinal", nonfinal,
+    prompt="OWN ONLY " + nonfinal + "\nNo other file is granted.\n")
+```
+Expected `()`. Predicted `V-WRITE-SCOPE` (major), so FAIL. A trailing blank line (`"\n\n"`) is predicted to fail the same way. A line-anchored parser passes; the current parser fails.
+
+**Adjacent, not proposed.** The same regex over-grants trailing prose. `OWN ONLY <P> is not authorized` and `Do not grant OWN ONLY <P>; this mention grants nothing.` are both predicted to grant `P`. No OWN analog of `deliver-denial-trailing-text` (`:163–164`) or `incidental-delivery-mention` (`:171–172`) exists.
+
+**Unknowns.**
+- Live spec prompt layout was not inspected, so whether real prompts place OWN ONLY last is [INFERENCE].
+- The optional r19 lesson was not read, since no pinned path was named and I did not guess one.
+- The baseline tool was not inspected.
+
+Report: `.ufo/waves/round-20/final/AuditCase16.md`

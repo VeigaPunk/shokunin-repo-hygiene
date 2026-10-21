@@ -1,0 +1,93 @@
+# SoujiR20-2.InputCase07 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Read-only exact C2 caller-case falsifier `r13-counted-knowledge-added`. Inspect pinned /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r20-input-binding.py, /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-rev-pin.py and ONLY the applicable caller among /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-13/run-verification.py, /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/run-verification.py, /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/run-targeted.py, /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-14/cache-demonstration.py at 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1. Trace actual entrypoint, inert changed byte, relevant input closure, exit2/no-stdout/no-output predicate and any baseline producer witness. Is the test behavioral or only wiring, can a prerequisite refusal masquerade as the required reason, and is the input actually consumed by this caller? No runtime/code import; propose one bounded counterexample or source agreement. No unrelated knowledge requirement for r14.
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: operability
+
+Report: write your scoped findings to .ufo/waves/round-20/final/InputCase07.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+Starting with the godspeed skill, the pinned fixture, and the pinned pin tool in parallel.
+→ read(skill://godspeed) ⇒ ok · 18 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tests/fixtures/r20-in…) ⇒ ok · 1039 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tools/souji-rev-pin.py) ⇒ ok · 407 lines
+
+## assistant
+
+The fixture's `counted-knowledge-added` case runs only in the r13 matrix, so `census/round-13/run-verification.py` is the applicable caller. Reading just that file at the pinned commit.
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:census/round-13/run-v…) ⇒ ok · 523 lines
+
+## assistant
+
+The applicable caller is `census/round-13/run-verification.py`. Its refusal path runs through `souji-rev-pin.py`. Next I'm reading its baseline version to trace the producer witness, and checking which of its measured paths exist at the baseline and pinned commits.
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 31984f473ce4bdab61a99b16cca194b28108cb81:census/round-13/run-v…) ⇒ error · 4 lines — fatal: path 'census/round-13/run-verification.py' exists on disk, but not in '31984f473ce4bdab61a99b16cca194b28108cb81'
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin ls-tree -r --name-only 31984f473ce4bdab61a99b16cca194b28108cb81 -- …) ⇒ ok · 18 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin ls-tree -r --name-only 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1 -- …) ⇒ ok · 42 lines
+
+## assistant
+
+Two findings so far. The baseline caller at `31984f47` does not exist, so the `--baseline` pair cannot resolve its inventory there. The pinned commit contains every measured path. The operator's preregistered baseline is `12516f7d…`, so I'm checking that commit: its existence, its path inventory, and its caller.
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin cat-file -t 12516f7dcdd5b165e5ee208d44a38d63b5bd5812) ⇒ ok · 2 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin ls-tree -r --name-only 12516f7dcdd5b165e5ee208d44a38d63b5bd5812 -- …) ⇒ ok · 42 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 12516f7dcdd5b165e5ee208d44a38d63b5bd5812:census/round-13/run-v…) ⇒ ok · 491 lines
+
+## assistant
+
+The preregistered baseline is a usable witness for this case. Its caller has a 12-path `MEASURED_PATHS` without `corpus/knowledge`, yet it still counts that directory in `admitted_entries`. Before I rely on that, I need the baseline `resolve_durable` (in `tools/souji-rev-pin.py` at `12516f7d`), and the file modes of the measured closure at both commits. Symlinks or submodules there would refuse every case, including this one.
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 12516f7dcdd5b165e5ee208d44a38d63b5bd5812:tools/souji-rev-pin.py) ⇒ ok · 325 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin ls-tree -r 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1 -- tools/souji-…) ⇒ ok · 42 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin ls-tree -r 12516f7dcdd5b165e5ee208d44a38d63b5bd5812 -- tools/souji-…) ⇒ ok · 42 lines
+
+## assistant
+
+The baseline helper at `12516f7d` only runs `git diff --quiet rev -- <paths>`, so an untracked added file is invisible to it. Every closure entry at both commits is a regular blob with no symlinks or submodules. One last prerequisite: `choose_existing_admitted` makes the whole fixture block if no admitted knowledge file exists. I'm checking the first sorted candidates at the pinned commit.
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:corpus/knowledge/dupe…) ⇒ ok · 43 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:corpus/knowledge/git-…) ⇒ ok · 28 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:corpus/knowledge/git-…) ⇒ ok · 40 lines
+
+## assistant
+
+All evidence is in. Writing the scoped report.
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-20/final/InputCase07.md) ⇒ ok · 2 lines
+
+## assistant
+
+The falsifier found source agreement for `r13-counted-knowledge-added` at pin 1988860. The predicate is not specific, though: an I/O refusal naming the same file passes it. Report written to `.ufo/waves/round-20/final/InputCase07.md`.
+
+- **Caller trace:** `census/round-13/run-verification.py` refuses in `resolve_revision` → `souji-rev-pin.resolve_durable` → `input_snapshot`. The refusal reads `added=['corpus/knowledge/r20-input-binding-added.md']`. It exits 2, prints nothing to stdout, and never reaches the output file.
+- **Input consumed:** `corpus/knowledge` is both snapshot-measured and globbed into `admitted_entries`. The fixture's closure equals the caller's `INPUT_PATHS`.
+- **Predicate weakness (bounded counterexample, source-derived, not executed):** `changed_path in stdout+stderr` also passes if the added file is unreadable (non-root, mode 0). The caller then refuses with `unreadable measured input: [Errno 13] … <path>`, the same tuple. Hardening: require the `added=[…]` segment with `repr(changed_path)`.
+- **Baseline witness:** `--baseline 12516f7d…` (preregistered) is valid by source. The old caller counts `corpus/knowledge` without measuring it, so it reaches the producer, while the current caller refuses. `--baseline 31984f47…` (the caller's own `BASE`) blocks: the caller and 13 of 23 closure inputs are absent there.
+- **Operability:** the default run reads the working tree, not the pin, so a pinned verdict needs a clean 1988860 clone. The fixture is also blocked by a missing admitted knowledge file, and it does not check for Python 3.11 or later.
+
+Nothing was executed. Actions were read-only `git show`/`ls-tree`/`cat-file`, plus the report write. No installs or updates were made.

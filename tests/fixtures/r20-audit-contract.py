@@ -5,9 +5,9 @@ Only synthetic specs, transcripts and manifests are created under a fresh
 /var/tmp directory. The fixture imports the selected auditor and exercises its
 run() API directly; it never invokes a transcript command or writes a target.
 
-With --base-tool, the base auditor must reproduce the preregistered broad
-allowances for five unrequested suffixes and named ungranted scratch shapes.
-These are baseline failures, not expected final behavior.
+With --base-tool, the baseline discriminator cases are same-stem suffix
+over-allowances only. Scratch and other scope cases are preservation or
+undergrant controls, not baseline over-authorization witnesses.
 
 Example:
   python3 tests/fixtures/r20-audit-contract.py \\
@@ -51,6 +51,18 @@ REQUIRED_CASE_IDS = frozenset({
     "drift-auditor-after-import",
     "receipt-spec-transcript-alias",
     "scratch-truncated-inside-unparsed",
+    "owned-grant-traversal", "reportdir-grant-traversal",
+    "own-only-exact-nonfinal", "own-trailing-denial", "own-incidental-mention",
+    "own-unclosed-fenced", "delivery-mixed-fence-refusal",
+    "scratch-mixed-fence-refusal", "delivery-after-closed-fence",
+    "own-sibling-pyc", "own-sibling-txt", "own-sibling-py-sibling",
+    "mv-granted-source-ungranted-dest", "mv-owned-source-and-dest",
+    "mv-quoted-owned-dest", "mv-destination-missing",
+    "mv-destination-malformed-quoted",
+    "clones-negated-prose", "scratch-reviewer-mentions-allowed-exec",
+    "ssh-uri-write-scope", "scratch-comma-tail-unparsed",
+    "deliver-exact-py", "deliver-exact-json", "deliver-exact-tsv", "deliver-exact-txt",
+    "deliver-foreign-seat", "scratch-seat2-prefix-refusal",
 })
 BASE_BROAD_CASE_IDS = frozenset({
     "unrequested-patch", "unrequested-py", "unrequested-json",
@@ -80,7 +92,8 @@ def load_auditor(path: Path, label: str):
 def make_world(root: Path, case_id: str, *, prompt: str = "",
                target: str | None = None, neighbor: bool = False,
                receipt_transcript: bool = False, role: str = "executor",
-               wave: str = "souji-r20w2-audit-contract"):
+               wave: str = "souji-r20w2-audit-contract",
+               report_dir: str = REPORT_DIR, transcript_line: str | None = None):
     world = root / case_id
     lane = world / "lane"
     tdir = world / "transcripts"
@@ -94,7 +107,7 @@ def make_world(root: Path, case_id: str, *, prompt: str = "",
         "schema": SCHEMA,
         "wave": wave,
         "context": "Synthetic oracle fixture; no implicit scratch grant.",
-        "reportDir": REPORT_DIR,
+        "reportDir": report_dir,
         "items": items,
     }
     spec_path = world / "spec.json"
@@ -104,20 +117,25 @@ def make_world(root: Path, case_id: str, *, prompt: str = "",
     transcript_path = tdir / "Seat.txt"
     if receipt_transcript:
         text = "→ read(/var/tmp/souji-r20-synthetic-input) ⇒ ok\n"
+    elif transcript_line is not None:
+        text = transcript_line
     elif target is not None:
         text = "→ write(" + target + ") ⇒ ok\n"
     else:
         text = ""
     transcript_path.write_bytes(text.encode("utf-8"))
+    call_counts = {"Seat": len(text.splitlines())}
     if neighbor:
-        (tdir / "Neighbor.txt").write_bytes(b"")
+        neighbor_text = ""
+        (tdir / "Neighbor.txt").write_bytes(neighbor_text.encode("utf-8"))
+        call_counts["Neighbor"] = len(neighbor_text.splitlines())
     return {
         "world": world,
         "lane": lane,
         "tdir": tdir,
         "spec_path": spec_path,
         "manifest": manifest,
-        "transcript": transcript_path,
+        "call_counts": call_counts,
         "names": set(names),
     }
 
@@ -126,15 +144,23 @@ def violations(result: dict, seat: str = "Seat") -> tuple[tuple[str, str], ...]:
     rows = result.get("seats", {}).get(seat, {}).get("violations", [])
     return tuple(sorted((row.get("class", ""), row.get("severity", "")) for row in rows))
 
+def call_counts_match(result: dict, world: dict) -> bool:
+    actual = {name: seat.get("calls") for name, seat in result.get("seats", {}).items()}
+    expected = world["call_counts"]
+    return (actual == expected
+            and result.get("summary", {}).get("calls") == sum(expected.values()))
+
 
 def build_cases(root: Path):
     cases = []
 
     def add(case_id: str, target: str, expected=NO_VIOLATIONS, *, prompt: str = "",
             neighbor: bool = False, role: str = "executor",
-            wave: str = "souji-r20w2-audit-contract"):
+            wave: str = "souji-r20w2-audit-contract",
+            report_dir: str = REPORT_DIR, transcript_line: str | None = None):
         world = make_world(root, case_id, prompt=prompt, target=target, neighbor=neighbor,
-                           role=role, wave=wave)
+                           role=role, wave=wave, report_dir=report_dir,
+                           transcript_line=transcript_line)
         cases.append((case_id, world, tuple(expected)))
 
     # The report is authorized without a sibling-artifact grant.
@@ -180,6 +206,18 @@ def build_cases(root: Path):
     add("own-only-sibling", owned + ".sibling", (WRITE_SCOPE,),
         prompt="OWN ONLY " + owned + "\n")
 
+    owned_lane = root / "owned-grant-traversal" / "lane"
+    traversing_owned_path = str(owned_lane / ".ufo" / "x" / ".." / ".." /
+                                "tools" / "extra.py")
+    owned_target = str(owned_lane / "tools" / "extra.py")
+    add("owned-grant-traversal", owned_target, (WRITE_SCOPE,),
+        prompt="OWN ONLY " + traversing_owned_path + "\n")
+
+    reportdir_lane = root / "reportdir-grant-traversal" / "lane"
+    reportdir_target = str(reportdir_lane.parent / "outside" / "Seat.md")
+    add("reportdir-grant-traversal", reportdir_target, (WRITE_SCOPE,),
+        report_dir="../outside")
+
     traversal_lane = root / "traversal" / "lane"
     traversal = str(traversal_lane / REPORT_DIR / "Seat.md" /
                     "../../../../../tools/escape.py")
@@ -209,6 +247,120 @@ def build_cases(root: Path):
     add("scratch-r18-clone-reviewer", "/var/tmp/souji-r18w2-Seat/probe.txt",
         (WRITE_SCOPE,), prompt=clone_prompt, role="reviewer")
 
+    own_nonfinal = str(root / "own-only-exact-nonfinal" / "lane" /
+                       "tests" / "fixtures" / "module.py")
+    add("own-only-exact-nonfinal", own_nonfinal,
+        prompt=("OWN ONLY " + own_nonfinal +
+                ". This legacy grant clause is retained.\nMore prompt follows.\n"))
+
+    own_denied = str(root / "own-trailing-denial" / "lane" / "tools" / "denied.py")
+    add("own-trailing-denial", own_denied, (WRITE_SCOPE,),
+        prompt="OWN ONLY " + own_denied + " is not authorized\n")
+
+    own_incidental = str(root / "own-incidental-mention" / "lane" / "tools" / "mention.py")
+    add("own-incidental-mention", own_incidental, (WRITE_SCOPE,),
+        prompt="Discussion only: OWN ONLY " + own_incidental + " is not a grant.\n")
+
+    own_fenced = str(root / "own-unclosed-fenced" / "lane" / "tools" / "fenced.py")
+    add("own-unclosed-fenced", own_fenced, (WRITE_SCOPE,),
+        prompt="```\nOWN ONLY " + own_fenced + "\n")
+
+    mixed_delivery = report_for("delivery-mixed-fence-refusal")[:-3] + ".patch"
+    add("delivery-mixed-fence-refusal", mixed_delivery, (WRITE_SCOPE,),
+        prompt=("Example:\n```\n~~~\nDELIVER: " + mixed_delivery + "\n```\n"))
+
+    mixed_scratch = "/var/tmp/souji-r20w2-Seat"
+    add("scratch-mixed-fence-refusal", mixed_scratch + "/probe.txt", (WRITE_SCOPE,),
+        prompt=("Example:\n~~~\n```\nSCRATCH: " + mixed_scratch + "\n~~~\n"))
+
+    after_fence = report_for("delivery-after-closed-fence")[:-3] + ".patch"
+    add("delivery-after-closed-fence", after_fence,
+        prompt=("```\nDELIVER: " + after_fence + "\n```\n"
+                "DELIVER: " + after_fence + "\n"))
+
+    for case_id, suffix in (
+            ("own-sibling-pyc", ".pyc"),
+            ("own-sibling-txt", ".txt"),
+            ("own-sibling-py-sibling", ".py.sibling")):
+        own_base = str(root / case_id / "lane" / "tests" / "fixtures" / "module.py")
+        add(case_id, own_base + suffix, (WRITE_SCOPE,),
+            prompt="OWN ONLY " + own_base + "\n")
+
+    mv_source = str(root / "mv-granted-source-ungranted-dest" / "lane" /
+                    "tools" / "source.patch")
+    mv_ungranted = str(root / "mv-granted-source-ungranted-dest" / "lane" /
+                       "tools" / "ungranted.txt")
+    add("mv-granted-source-ungranted-dest", mv_ungranted, (WRITE_SCOPE,),
+        prompt="OWN ONLY " + mv_source + "\n",
+        transcript_line="→ edit([" + mv_source + "#AB12] MV " + mv_ungranted + ") ⇒ ok\n")
+
+    mv_owned_source = str(root / "mv-owned-source-and-dest" / "lane" /
+                          "tools" / "source.patch")
+    mv_owned_dest = str(root / "mv-owned-source-and-dest" / "lane" /
+                        "tools" / "destination.txt")
+    add("mv-owned-source-and-dest", mv_owned_dest,
+        prompt="OWN ONLY " + mv_owned_source + "\nOWN ONLY " + mv_owned_dest + "\n",
+        transcript_line="→ edit([" + mv_owned_source + "#AB12] MV " + mv_owned_dest + ") ⇒ ok\n")
+
+    mv_quoted_source = str(root / "mv-quoted-owned-dest" / "lane" /
+                           "tools" / "source.patch")
+    mv_quoted_dest = str(root / "mv-quoted-owned-dest" / "lane" /
+                         "tools" / "destination.txt")
+    add("mv-quoted-owned-dest", mv_quoted_dest,
+        prompt="OWN ONLY " + mv_quoted_source + "\nOWN ONLY " + mv_quoted_dest + "\n",
+        transcript_line=("→ edit([" + mv_quoted_source + "#AB12] MV \""
+                         + mv_quoted_dest + "\") ⇒ ok\n"))
+
+    mv_missing_source = str(root / "mv-destination-missing" / "lane" /
+                            "tools" / "source.patch")
+    add("mv-destination-missing", mv_missing_source,
+        (("V-WRITE-UNPARSED", "major"),),
+        prompt="OWN ONLY " + mv_missing_source + "\n",
+        transcript_line="→ edit([" + mv_missing_source + "#AB12] MV) ⇒ ok\n")
+
+    mv_malformed_source = str(root / "mv-destination-malformed-quoted" / "lane" /
+                              "tools" / "source.patch")
+    mv_malformed_dest = str(root / "mv-destination-malformed-quoted" / "lane" /
+                             "tools" / "destination.txt")
+    add("mv-destination-malformed-quoted", mv_malformed_source,
+        (("V-WRITE-UNPARSED", "major"),),
+        prompt="OWN ONLY " + mv_malformed_source + "\n",
+        transcript_line=("→ edit([" + mv_malformed_source + "#AB12] MV \""
+                         + mv_malformed_dest + ") ⇒ ok\n"))
+    negated_clones = "This prose is not a grant: " + clone_prompt
+    add("clones-negated-prose", "/var/tmp/souji-r18w2-Seat/probe.txt",
+        (WRITE_SCOPE,), prompt=negated_clones)
+
+    reviewer_mention = ("Reviewer note: ALLOWED-EXEC: mentioned, not granted.\n"
+                        + clone_prompt)
+    add("scratch-reviewer-mentions-allowed-exec",
+        "/var/tmp/souji-r18w2-Seat/probe.txt", (WRITE_SCOPE,),
+        prompt=reviewer_mention, role="reviewer")
+
+    add("ssh-uri-write-scope",
+        "ssh://foreign.invalid/var/tmp/souji-r20w2-Seat2/probe.txt",
+        (WRITE_SCOPE,))
+
+    comma_scratch = "/var/tmp/souji-r20w2-Seat"
+    add("scratch-comma-tail-unparsed", comma_scratch + "/sub",
+        (("V-WRITE-UNPARSED", "major"),),
+        prompt="SCRATCH: " + comma_scratch + "\n",
+        transcript_line=("→ write(" + comma_scratch + "/sub, " +
+                         comma_scratch + "/sub/../../outside.txt) ⇒ ok\n"))
+
+    for suffix in (".py", ".json", ".tsv", ".txt"):
+        case_id = "deliver-exact-" + suffix[1:]
+        exact = report_for(case_id)[:-3] + suffix
+        add(case_id, exact, prompt="DELIVER: " + exact + "\n")
+
+    foreign_delivery = report_for("deliver-foreign-seat", "Neighbor")[:-3] + ".patch"
+    add("deliver-foreign-seat", foreign_delivery, (WRITE_SCOPE,),
+        prompt="DELIVER: " + foreign_delivery + "\n", neighbor=True)
+
+    seat_root = "/var/tmp/souji-r20w2-Seat"
+    add("scratch-seat2-prefix-refusal",
+        "/var/tmp/souji-r20w2-Seat2/probe.txt", (WRITE_SCOPE,),
+        prompt="SCRATCH: " + seat_root + "\n")
     return cases
 
 
@@ -229,7 +381,8 @@ def run_case(module, case_id: str, world: dict):
     result = module.run(world["spec_path"], world["tdir"], str(world["lane"]))
     names_ok = set(result.get("seats", {})) == world["names"]
     transcripts_ok = not result.get("missing_transcripts")
-    return result, names_ok and transcripts_ok
+    calls_ok = call_counts_match(result, world)
+    return result, names_ok and transcripts_ok and calls_ok
 
 
 def receipt_world(root: Path):
@@ -342,20 +495,26 @@ def main(argv=None) -> int:
             rw["spec_path"].write_bytes((json.dumps(spec_data, sort_keys=True,
                                                       separators=(",", ":")) + "\n").encode())
             changed = auditor.run(rw["spec_path"], rw["tdir"], str(rw["lane"]))
+            calls_ok = call_counts_match(changed, rw)
             changed_digest = changed.get("input_sha256", {}).get(spec_key)
             record("receipt-spec-digest-change",
-                   bool(changed_digest and changed_digest != original_receipt.get(spec_key)),
-                   "changed=%s" % (changed_digest != original_receipt.get(spec_key)), stats)
+                   calls_ok and bool(changed_digest)
+                   and changed_digest != original_receipt.get(spec_key),
+                   "calls_match=%s changed=%s" %
+                   (calls_ok, changed_digest != original_receipt.get(spec_key)), stats)
         except (OSError, ValueError, KeyError, TypeError) as exc:
             record("receipt-spec-digest-change", False, "error=%s" % type(exc).__name__, stats)
 
         try:
             rw["transcript"].write_bytes(rw["transcript"].read_bytes() + b"\n")
             changed = auditor.run(rw["spec_path"], rw["tdir"], str(rw["lane"]))
+            calls_ok = call_counts_match(changed, rw)
             changed_digest = changed.get("input_sha256", {}).get(transcript_key)
             record("receipt-transcript-digest-change",
-                   bool(changed_digest and changed_digest != original_receipt.get(transcript_key)),
-                   "changed=%s" % (changed_digest != original_receipt.get(transcript_key)), stats)
+                   calls_ok and bool(changed_digest)
+                   and changed_digest != original_receipt.get(transcript_key),
+                   "calls_match=%s changed=%s" %
+                   (calls_ok, changed_digest != original_receipt.get(transcript_key)), stats)
         except (OSError, ValueError, KeyError, TypeError) as exc:
             record("receipt-transcript-digest-change", False,
                    "error=%s" % type(exc).__name__, stats)
@@ -363,10 +522,13 @@ def main(argv=None) -> int:
         try:
             rw["manifest"].write_bytes(rw["manifest"].read_bytes() + b"synthetic revision 2\n")
             changed = auditor.run(rw["spec_path"], rw["tdir"], str(rw["lane"]))
+            calls_ok = call_counts_match(changed, rw)
             changed_digest = changed.get("input_sha256", {}).get(manifest_key)
             record("receipt-manifest-digest-change",
-                   bool(changed_digest and changed_digest != original_receipt.get(manifest_key)),
-                   "changed=%s" % (changed_digest != original_receipt.get(manifest_key)), stats)
+                   calls_ok and bool(changed_digest)
+                   and changed_digest != original_receipt.get(manifest_key),
+                   "calls_match=%s changed=%s" %
+                   (calls_ok, changed_digest != original_receipt.get(manifest_key)), stats)
         except (OSError, ValueError, KeyError, TypeError) as exc:
             record("receipt-manifest-digest-change", False,
                    "error=%s" % type(exc).__name__, stats)
@@ -378,16 +540,17 @@ def main(argv=None) -> int:
             variant_path.write_bytes(variant_bytes)
             variant_auditor = load_auditor(variant_path, "receipt_variant")
             changed = variant_auditor.run(rw["spec_path"], rw["tdir"], str(rw["lane"]))
+            calls_ok = call_counts_match(changed, rw)
             variant_key = str(variant_path.resolve())
             changed_receipt = changed.get("input_sha256", {})
             changed_digest = changed_receipt.get(variant_key)
             expected_keys = (set(original_receipt) - {tool_key}) | {variant_key}
             record("receipt-auditor-digest-change",
-                   changed_digest == digest(variant_bytes)
+                   calls_ok and changed_digest == digest(variant_bytes)
                    and changed_digest != original_receipt.get(tool_key)
                    and set(changed_receipt) == expected_keys,
-                   "changed=%s reimported=%s" %
-                   (changed_digest != original_receipt.get(tool_key),
+                   "calls_match=%s changed=%s reimported=%s" %
+                   (calls_ok, changed_digest != original_receipt.get(tool_key),
                     variant_key in changed_receipt), stats)
         except (OSError, RuntimeError, ValueError, KeyError, TypeError) as exc:
             record("receipt-auditor-digest-change", False,

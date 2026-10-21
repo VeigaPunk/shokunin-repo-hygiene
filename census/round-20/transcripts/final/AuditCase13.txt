@@ -1,0 +1,96 @@
+# SoujiR20-2.AuditCase13 (parked)
+
+## user
+
+Complete assignment thoroughly:
+
+/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim — let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+Read-only exact-case falsifier for C1 oracle `deliver-example-fenced`. Inspect ONLY pinned /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r20-audit-contract.py, /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-seat-audit.py and /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-20/preregistration.txt at 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1; optionally pinned r19 non-author lesson for the named original defect. Trace the exact stimulus, expected severity/class/receipt and production predicate WITHOUT executing it. Attack whether this case is genuinely independent, non-vacuous and preserves explicit permissions; propose one concrete stronger counterexample if warranted, else bounded source agreement. Do not substitute other cases or broad audit. Report the case ID and exact code lines; all source-only.
+
+Lane bounds: leaf member — no subagent dispatch.
+Judged on: calibration
+
+Report: write your scoped findings to .ufo/waves/round-20/final/AuditCase13.md
+
+# Tooling directive — operator, 2026-10-19 (always on, every agent)
+
+Any agent — main session or subagent, any lane, any wave — installs or updates any tool that
+helps its task or is a strict upgrade, with full privilege, without asking first. Passwordless
+`sudo` is available.
+
+- Channel order: `sudo pacman -S --needed --noconfirm <pkg>` → `uv tool install <pkg>` →
+  official release binary into `~/.local/bin` → `cargo install` / `npm -g`. Official sources
+  only; never pipe an unverified remote script into a shell.
+- Full-system upgrades (`pacman -Syu`) go through tsukuroi-shokunin's update-safety gate first:
+  boot-chain packages can break boot (mkinitcpio 42 moves root to `/sysroot`; the host's
+  `btrfs-overlayfs` and `plymouth` hooks still expect `/new_root`). Never run a partial upgrade
+  (`pacman -Sy <pkg>`). If an install fails on a stale sync database, report it.
+- Record every install or update — tool, version, channel, reason — in your report or handoff.
+
+## assistant
+
+Starting with the three pinned source files, read in parallel and line-numbered.
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tests/fixtures/r20-au…) ⇒ ok · 496 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:tools/souji-seat-audi…) ⇒ ok · 687 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 1988860ed28a460f4e5228dfcdb3a7a6c5b8d8f1:.ufo/waves/round-20/p…) ⇒ ok · 11 lines
+
+## assistant
+
+→ read(artifact://36812:raw:2-4) ⇒ ok · 5 lines
+
+## assistant
+
+The preregistration's C1 table (line 3) does not list the fenced case, so provenance matters for the independence attack. I'll check the pinned file history for when the fence logic and this case entered, restricted to the named files.
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin log --format='%h %ad %s' --date=short 1988860ed28a460f4e5228dfcdb3a…) ⇒ ok · 8 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin log --format='%h %ad %s' --date=short -S 'deliver-example-fenced' 1…) ⇒ ok · 4 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin log --format='%h %ad %s' --date=short -S 'in_fence' 1988860ed28a460…) ⇒ ok · 4 lines
+
+## assistant
+
+The fence predicate and the fenced case both first appear in the pinned round-20 commit. Next I'll check whether the preregistration table predates that commit, which determines whether this case is preregistered.
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin log --format='%h %ad %s' --date=short 1988860ed28a460f4e5228dfcdb3a…) ⇒ ok · 2 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin log --format='%h %ad %s' --date=short 1988860ed28a460f4e5228dfcdb3a…) ⇒ ok · 4 lines
+→ bash(git -C /home/vgpnk/Projects/shokunin/souji-shokunin log --format='%h %ad %s' --date=short -S 'delivery_paths' 1988860ed…) ⇒ ok · 4 lines
+
+## assistant
+
+The lane file is `.ufo/waves/round-20/final/AuditCase13.md`. I'm writing the scoped findings there now.
+→ write(/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-20/final/AuditCase13.md) ⇒ ok · 2 lines
+
+## assistant
+
+STATUS: PARTIAL — Source trace only (nothing executed). The pinned fence predicate treats every fence marker as a toggle. A `DELIVER:` example inside a backtick fence therefore becomes a grant once a `~~~` line sits inside that fence (`tools/souji-seat-audit.py:141-143`; same toggle at `:159-161` in `scratch_path`). `deliver-example-fenced` cannot detect this, because its single backtick fence still refuses. The preregistered rule "Unrequested same-stem delivery must stay major" is not established for mixed-marker examples. The trigger is narrow, but the rule has no exception, so this is blocking for C1 as written until L1 runs the counterexample below.
+
+**Case `deliver-example-fenced`** (`tests/fixtures/r20-audit-contract.py:167-169`):
+```
+167    fenced_path = report_for("deliver-example-fenced")[:-3] + ".patch"
+168    add("deliver-example-fenced", fenced_path, (WRITE_SCOPE,),
+169        prompt="Example only; not a grant:\n```\nDELIVER: " + fenced_path + "\n```\n")
+```
+Predicate (`tools/souji-seat-audit.py:140-145`): fence lines toggle `in_fence` and in-fence lines are skipped.
+
+**Verdicts (hand trace):**
+- **Trace.** Stimulus is one `write` to the same-stem `.patch`, with no effective grant. `delivery_paths` returns `[]`, so the target is refused as `V-WRITE-SCOPE`/`major`, matching the expected tuple. Predicted PASS.
+- **Independence: world-level yes, provenance no.** Each case has its own directory and the expected value is a literal. However, the fixture, the preregistration, the `in_fence` predicate and `delivery_paths` all first appear in pinned commit `1988860`. The preregistration's enumerated C1 table (line 3) does not name this case. Git cannot show the preregistration preceded the implementation, so that claim is unverified.
+- **Non-vacuity: partial.** It kills fence-blind mutants (deleting `:141-145` makes the write allowed). It does not kill dropping `~~~` from the tuple, mixed markers, or a never-cleared (sticky) fence. Sticky survives the whole table.
+- **Explicit permissions: refusal only.** Explicit grants are covered by `deliver-exact-patch`, not by this case. No case tests an explicit `DELIVER:` after a closed fence; the pinned code handles that correctly.
+
+**Proposed counterexample (one, not added):** `deliver-example-mixed-fence`
+```python
+mixed_path = report_for("deliver-example-mixed-fence")[:-3] + ".patch"
+add("deliver-example-mixed-fence", mixed_path, (WRITE_SCOPE,),
+    prompt="Example only; not a grant:\n```\n~~~\nDELIVER: " + mixed_path + "\n~~~\n```\n")
+```
+Under CommonMark the `DELIVER:` line is inside the backtick fence and must refuse. The pinned predicate instead toggles off at `~~~`, grants `P` (`:146-150`, `:343`), and the write is allowed (`:287-288`). Predicted FAIL: a false negative on an unrequested delivery. The same defect lets a mixed-marker `SCRATCH:` example grant a slot root.
+
+**Adjacent, not acted on:** `owned_paths` (`:127-131`) has no fence skip, so a fenced `OWN ONLY` example can grant ownership in some shapes. The fixture docstring (`:8-10`) mentions scratch shapes that `BASE_BROAD_CASE_IDS` (`:55-61`) does not contain. The baseline expectation for this case is unverified because baseline `12516f7` is out of scope. The optional r19 lesson was not opened because no pinned path is named, and I did not guess one.
+
+**Scope:** Read-only `git show` of the three named files at the pin, plus file-scoped `git log`/`-S` on those paths. Nothing executed. No installs. Only the report was written, to `.ufo/waves/round-20/final/AuditCase13.md`. No subagents.
