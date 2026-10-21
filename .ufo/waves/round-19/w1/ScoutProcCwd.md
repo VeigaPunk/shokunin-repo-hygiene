@@ -11,7 +11,7 @@ STATUS: DONE — the man7 page's cwd-link statement and its documentary limits a
 
 # Evidence
 
-- Public source opened at https://man7.org/linux/man-pages/man5/proc_pid_cwd.5.html, accessed 2026-10-21. Located quote, § DESCRIPTION (`#DESCRIPTION`): “This is a symbolic link to the current working directory of the process.” (11 words.) This is the page's cwd-link definition; there is no deleted/unlinked-representation quote to extract from this page.
+- Public source opened at https://man7.org/linux/man-pages/man5/proc_pid_cwd.5.html, accessed 2026-10-21. Located quote, § DESCRIPTION (`#DESCRIPTION`): “This is a symbolic link to the current working directory of the process.” (13 words.) This is the page's cwd-link definition; there is no deleted/unlinked-representation quote to extract from this page.
 - Read the rendered page and its raw HTML. The raw page's DESCRIPTION, NAME, SEE ALSO, and COLOPHON sections contain no deleted-suffix or inode-identity statement. The page contains no `exe` mention and makes no cwd-versus-exe comparison.
 - Lane evidence: `corpus/SOURCES.md:96` (S076 scope), `corpus/SOURCES.md:102` (existing S082), and `corpus/knowledge/process-residue-observations.md:15-17,26-31,60-63`.
 
