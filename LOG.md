@@ -1222,3 +1222,15 @@ acceptance/census/audit JSONs under `census/round-20/`; each record names its ow
 measured revision. A future record in that directory is not a claim of a run in
 this entry. Main's complete18-command acceptance follows the repaired code pin;
 no final-tree pass is pre-claimed here. No install or update was performed.
+
+### Round20 acceptance harness correction
+
+The actual full18-command run at4f30f23 returned1 with16 matched commands.
+The failed record is retained as census/round-20/final-acceptance-4f30f23.json.
+C1 completed all primary permission rows and11 baseline witnesses, then the
+oracle raised KeyError(transcript): its new world schema omitted the path key
+still used by receipt tests. The path key is restored, not a test expectation.
+C2 actually passed all52 cases; the aggregator expected tabs between inventory
+fields although the fixture prints spaces. That exact interface spelling is
+corrected without changing counts or accepting a failed verdict. A new code pin
+and fresh exclusive result are required; no old output or verdict is rewritten.

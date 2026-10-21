@@ -135,6 +135,7 @@ def make_world(root: Path, case_id: str, *, prompt: str = "",
         "tdir": tdir,
         "spec_path": spec_path,
         "manifest": manifest,
+        "transcript": transcript_path,
         "call_counts": call_counts,
         "names": set(names),
     }

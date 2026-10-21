@@ -287,7 +287,7 @@ def make_steps(root: Path, baseline_tool: Path, revision: str) -> list[dict]:
         {"name": "r20-input-binding", "argv": [py, "-B", str(root / "tests/fixtures/r20-input-binding.py"), "--root", str(root), "--baseline", BASELINE],
          "expected_summary": {
              "regex": r"SUMMARY\ttotal=52\tpass=52\tfail=0\tblocked=0\tinventory=exact\tbaseline_mismatches=(\d+)",
-             "auxiliary_lines": ["INVENTORY\texact\texpected=52\tobserved=52\tmissing=-\tunexpected=-\tduplicates=0"],
+             "auxiliary_lines": ["INVENTORY\texact\texpected=52 observed=52 missing=- unexpected=- duplicates=0"],
              "baseline_mismatch_group": 1,
          },
          "baseline_mismatch_count": True,
