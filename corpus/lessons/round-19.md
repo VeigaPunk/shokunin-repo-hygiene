@@ -142,3 +142,13 @@ with its disposition).
 | id | class | evidence pointer | captured-by | fix |
 |---|---|---|---|---|
 | R19-M7 | The wave contract's blanket "no git or jj mutations anywhere" collided with falsifier items that run a self-contained fixture creating a synthetic git repository under /var/tmp. `MutRevPin` refused to run the fixture and reported the conflict instead of fabricating a verdict. | seat result `SoujiR19.MutRevPin-2` (session message, 2026-10-21) | the seat's own honesty rule (Q24); the contract wording, not the seat, was wrong | wave 2 wording must allow a private /var/tmp git sandbox created and removed by the named fixture; "no mutations" binds the lane, fleet sibling repos and operator state. The r19 fixture's behavior is unchanged (L1 ran it: 13/0). |
+
+## Correction (appended after wave 1b): Gate quote word counts and teaches scope
+
+`ScribeSources` re-opened S082–S085 and S075/S076 on 2026-10-21: every quote is verbatim and
+every quoted page is HTTP 200, but three Gate word counts were wrong — S082 is **13** words (not
+15), S083 is **13** (not 17), S085 is **18** (not 23); all remain ≤25. Three `teaches` cells
+overreached their pages (S083's vanished-directory clause, S084's "never proof" and S085's
+"never as a liveness proof" are lane inference/policy, not page text) and are superseded by
+**S086–S088**, which change only those teaches cells. No other SOURCES cell changed. The seat did
+not re-open S079–S081 (outside its item); that second source check remains open.
