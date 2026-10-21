@@ -152,7 +152,7 @@ def process_identity(pid: int):
     """Session ID (stat field 6) and starttime (field 22) for one pid."""
     try:
         stat = Path("/proc/%d/stat" % pid).read_text(encoding="utf-8")
-    except OSError:
+    except (OSError, UnicodeDecodeError):
         return None
     close = stat.rfind(")")
     if close < 0:
