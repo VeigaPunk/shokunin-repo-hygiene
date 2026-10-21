@@ -95,6 +95,7 @@ INPUT_PATHS = tuple(sorted(set((
     "tests/fixtures/r20-audit-contract.py",
     "tests/fixtures/r20-input-binding.py",
     "census/round-21/run-acceptance.py",
+    "census/round-21/step-inventory.json",
 ))))
 INPUT_DIRS = (
     "tests/fixtures/r13-cert-frozen",
@@ -230,19 +231,15 @@ def combined_snapshot(pin, root: Path, revision: str,
 def output_path(raw: str, root: Path) -> Path:
     candidate = Path(raw)
     if not candidate.is_absolute():
-        candidate = root / candidate
-    candidate = candidate.absolute()
+        raise Refusal("output must be an absolute path outside the source repository")
+    parent = candidate.parent.resolve(strict=True)
+    if parent != candidate.parent or not parent.is_dir():
+        raise Refusal("output parent must be an existing canonical non-symlink directory")
+    candidate = parent / candidate.name
+    if candidate == root or root in candidate.parents:
+        raise Refusal("output must be outside the source repository")
     if candidate.exists() or candidate.is_symlink():
         raise Refusal("refusing existing output: " + str(candidate))
-    if not candidate.parent.is_dir() or candidate.parent.is_symlink():
-        raise Refusal("output parent must be an existing non-symlink directory")
-    for relative in INPUT_DIRS:
-        selected = root / relative
-        try:
-            candidate.relative_to(selected)
-        except ValueError:
-            continue
-        raise Refusal("output overlaps a measured input directory: " + relative)
     return candidate
 
 
@@ -526,7 +523,7 @@ def historical_agreement_root(root: Path, temp_root: Path) -> Path:
 
 def source_state(source: Path) -> dict:
     def git(*args):
-        proc = subprocess.run(["git", "-C", str(source), *args], env=CHILD_ENV,
+        proc = subprocess.run(["git", "-c", "core.fsmonitor=false", "-C", str(source), *args], env=CHILD_ENV,
                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if proc.returncode:
             raise Refusal("source state cannot be read: " + decode_exact(proc.stderr))
@@ -534,6 +531,23 @@ def source_state(source: Path) -> dict:
     bare = git("rev-parse", "--is-bare-repository") == "true"
     return {"head": git("rev-parse", "--verify", "HEAD^{commit}"),
             "bare": bare, "status": "" if bare else git("status", "--porcelain", "--untracked-files=no")}
+
+
+def inventory_projection(steps: list[dict], root: Path, baseline: Path,
+                         revision: str, agreement_root: Path) -> list[dict]:
+    result = []
+    for step in steps:
+        row = {key: step[key] for key in ("name", "expected_summary", "pass_pattern",
+               "pass_count", "record_checks", "exact_json", "baseline_mismatch_count") if key in step}
+        row["kind"] = step.get("kind", "summary")
+        row["argv"] = [
+            arg.replace(str(agreement_root), "<ROOT>").replace(str(root), "<ROOT>")
+               .replace(str(baseline), "<BASELINE>").replace(revision, "<REV>")
+            for arg in step["argv"]
+        ]
+        row["argv"][0] = "<PYTHON>"
+        result.append(json.loads(json.dumps(row).replace(revision, "<REV>")))
+    return result
 
 
 def main(argv=None) -> int:
@@ -571,6 +585,9 @@ def main(argv=None) -> int:
             steps = make_steps(root, baseline_tool, args.rev, agreement_root)
             if len(steps) != EXPECTED_COMMANDS or len(COUNTER_EXPECTATIONS) != 5:
                 raise Refusal("fixed acceptance inventory changed")
+            frozen = json.loads(read_regular(root / "census/round-21/step-inventory.json"))
+            if inventory_projection(steps, root, baseline_tool, args.rev, agreement_root) != frozen["steps"]:
+                raise Refusal("acceptance commands differ from the frozen r20 inventory")
             literal_lane = "/home/vgpnk/Projects/shokunin/" + "souji-shokunin"
             for step in steps:
                 program = Path(step["argv"][2])
