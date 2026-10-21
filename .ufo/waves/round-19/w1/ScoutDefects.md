@@ -1,0 +1,57 @@
+STATUS: DONE — D1–D5 re-derived from r18 evidence; D4 maps into C1, none maps into C2, and D1/D2/D3/D5 remain unclaimed repairs.
+
+# Findings
+
+Scope: this is a source-evidence re-derivation, not an acceptance run. R18 closure findings below are the admitted basis; r19 preregistration/spec text is cited only for planned scope and acceptance. I do not treat integrated worktree code as proof that a repair passed.
+
+## D1 — gate receipt does not bind the cited revision
+
+- **Committed evidence / class:** The closure identifies `.ufo/reports/round-18/souji.md:70` as claiming an exit-0 recheck at final tip `8be65236a4b61fffe9c0d05d30043650848c0a60`, but says no committed receipt has that revision (`corpus/lessons/round-18-verifier-spotcheck.md:145`). The report itself distinguishes the receipt at line 69 from the claimed recheck at line 70 (`.ufo/reports/round-18/souji.md:68-70`). The committed `census/round-18/gate-pointers-after-final.json:2-4,25-39` is a successful, zero-finding receipt, but `resolved_rev` is `74f9adb489fcf1393bbd479425acf5545ded9908`, not `8be6523…`; the matching command is recorded in `corpus/lessons/round-18.md:73`. **Defect class:** evidence/provenance binding mismatch, not a failed gate result.
+- **Must change:** Correct the claim at `.ufo/reports/round-18/souji.md:70` in a later, append-only correction, or supply a new committed receipt under `census/round-19/` for the exact revision the claim names. The closure record attributes the report to the fleet-level `.ufo/reports` path; I did not edit that path.
+- **Acceptance:** To retain the 8be claim, run the same gate invocation against a clean root at that revision and commit its JSON output later, e.g. `python3 tools/souji-landing-gate.py --root <clean-root-at-8be6523> --rev 8be65236a4b61fffe9c0d05d30043650848c0a60 --base b576341 --round 18 --fleet-root /home/vgpnk/Projects/shokunin --json census/round-19/gate-pointers-after-8be6523.json`. The receipt's `resolved_rev` must equal the full cited 8be hash; merely committing a receipt at 8be, or citing a record whose `resolved_rev` is 74f9, does not bind the 8be recheck. The honest alternative is to cite only `74f9adb489fcf1393bbd479425acf5545ded9908`, as the existing receipt does.
+- **Claim mapping:** Not C1 or C2. C2 is limited to revision validation in the named r13/r14 runners (`.ufo/waves/round-19/preregistration.txt:35-49`); it does not backfill the r18 gate receipt. D1 remains an unclaimed repair (`:66-70`).
+
+## D2 — agreement records do not pin the measured counter bytes
+
+- **Committed evidence / class:** The closure says `proc-agreement-counterfix.json` records only tool base `4800fd7`, while the corrected counter is at `2d4c7f8` (SHA-256 prefix `a2653019…`) and `counter-exclusion-repair.json` supplies its `measured_commit` without a digest (`corpus/lessons/round-18-verifier-spotcheck.md:146`). The records show the gap: `census/round-18/proc-agreement-counterfix.json:1-8` names `base_code_commit` and two 66=66 pairs but has no counter digest; `census/round-18/counter-exclusion-repair.json:1-11` names measured commit `2d4c7f8…`, the selftest, and agreement record, but no counter digest. **Defect class:** measured-artifact identity is under-bound; commit identity alone does not pin the bytes being compared.
+- **Must change:** Add a new pinned evidence record, not an inferred digest, that binds the tool and counter SHA-256 values, their measured commits, and the two source agreement snapshots. The planned shape names `census/round-19/proc-agreement-pinned.json` and checker `census/round-19/verify-agreement-pin.py` (`.ufo/waves/round-19/w1-spec.json:392-397`). This is a planned repair, not evidence that those artifacts exist or passed.
+- **Acceptance:** The planned synthetic checker command is `python3 census/round-19/verify-agreement-pin.py --selftest`; acceptance of the real record must additionally recompute/compare each recorded digest against its exact committed bytes and both snapshot files. The plan does not specify the real-record CLI invocation, so that argv remains unresolved. The existing `python3 census/round-18/leak-count.py --selftest` in `counter-exclusion-repair.json:7-9` tests counter behavior, not digest binding.
+- **Claim mapping:** Not C1 or C2. The r19 plan lists D2 among non-claim repairs (`.ufo/waves/round-19/preregistration.txt:66-70`); the packing note says `ExecD2Pin` was dropped, so no acceptance is reported here.
+
+## D3 — selftest baseline 33 is static, not receipt-backed
+
+- **Committed evidence / class:** The closure states that baseline `33` came from a wave-2 static count, while final `61/0` has a committed run receipt (`corpus/lessons/round-18-verifier-spotcheck.md:147`). The source is explicit: `.ufo/waves/round-18/w2/RevGatePointerCode.md:19` says `33→53` is a static count and execution was not re-run there. In contrast, `corpus/lessons/round-18.md:14` reports final `61/0`, and `census/round-18/final-verification-4800fd7.json:29-39` records the `--selftest` command and result. The unqualified historical `33→53` claim is at `corpus/lessons/round-18.md:7`. **Defect class:** measurement-source labeling / receipt gap.
+- **Must change:** Supersede the `33` baseline wording at `corpus/lessons/round-18.md:7` with an explicit “static count” label in an append-only correction, and carry that correction in the r19 Gate text/LOG entry; the planned correction requests both (`.ufo/waves/round-19/w1-spec.json:424-429`). Alternatively, produce a committed execution receipt for the baseline.
+- **Acceptance:** For the label route, the r19 Gate and append-only LOG correction must identify 33 as static and point to `RevGatePointerCode.md:19`. For a run receipt, extract `b576341:tools/souji-landing-gate.py` into private `/var/tmp` scratch, run `python3 <extracted-gate> --selftest`, and commit its stdout/exit receipt showing 33/0. Running the current gate's `--selftest` is not evidence for the historical 33 baseline.
+- **Claim mapping:** Not C1 or C2; D3 is an unclaimed evidence correction (`preregistration.txt:66-70`). The packing note says `ScribeD3` was dropped.
+
+## D4 — auditor misses signals and misclassifies authorized audit shapes
+
+- **Committed evidence / class:** The closure says there was no signal class, so MatrixR18's foreign-prefix SIGKILL incident (R18-M6) was found only by self-disclosure, and calls for the forbidden-read rule to be restated in the next dispatch (`corpus/lessons/round-18-verifier-spotcheck.md:148`). R18-M6 records four foreign PIDs in `corpus/lessons/round-18.md:28`. The auditor review, explicitly read at b576341, records a false major for the contract-authorized patch delivery (`.ufo/waves/round-18/w1/ScoutSeatAuditR18.md:32,47-58`) and says signal and `/proc/<pid>/environ` reads are invisible (`:89-98`). **Defect class:** auditor false negative for forbidden signalling, false positive for authorized write shapes, and a dispatch-contract omission risk.
+- **Must change:** In base `tools/souji-seat-audit.py`, add the signal classification in the `audit_seat()` call-check block (`:245-270`) and correct the allowed-path decision (`target_verdict` `:173-225`, `allowed` at `:250`) so the exact authorized patch/workdir shapes are clean while tools/ writes remain major. Restate the explicit `/proc/*/environ`/credential-read prohibition in the next dispatch contract; that is a prompt/contract change, not another auditor symbol. The r18 closure also records nine confirmed driver-state reads; they must remain majors, not be whitelisted away (`.ufo/waves/round-19/preregistration.txt:29-31`).
+- **Acceptance:** C1's specified checks are `python3 tests/fixtures/r19-seat-audit-shapes.py --tool <base|installed>` and `python3 tools/souji-seat-audit.py --selftest`, plus re-auditing the committed r18 transcripts into `census/round-19/seat-audit-r18-recheck.json` and confirming the nine driver-state reads stay major (`preregistration.txt:28-31`). This report did not run them.
+- **Claim mapping:** D4's signal class and audit shapes are explicitly part of C1 (`preregistration.txt:66-70`); not C2. The dispatch ban is a required companion contract rule, not evidence of a separate axis claim.
+
+## D5 — fixture cleanup does not recheck PID identity before per-PID signalling
+
+- **Committed evidence / class:** The closure identifies a theoretical PID-recycle window because r15/r17 `kill_session` lacks run-matrix's `(pid, starttime)` recheck (`corpus/lessons/round-18-verifier-spotcheck.md:149`). The r18 fixture reports describe the existing scan by session field 6, without a per-PID starttime recheck: `tests/fixtures/r15-census-config.py:269-294` as documented in `.ufo/waves/round-18/w1/FixtureReapR15.md:9-13`, and `tests/fixtures/r17-census-hygiene.py:149-170` in `FixtureReapR17.md:9-13`. `corpus/lessons/round-18.md:60` distinguishes session ID from starttime as the PID-identity check. **Defect class:** TOCTOU/PID-reuse containment gap.
+- **Must change:** Update `kill_session` in both fixtures (`tests/fixtures/r15-census-config.py:269-294`; `tests/fixtures/r17-census-hygiene.py:149-170`) to snapshot `(pid,starttime)` with the session scan, reread immediately before each per-PID SIGKILL, and skip/report a vanished or mismatched identity while preserving session-membership and existing case expectations. This is a bounded narrowing of the window, not proof of atomic PID identity.
+- **Acceptance:** The planned D5 item requires `python3 -m py_compile <private-r15-copy> <private-r17-copy>` (`.ufo/waves/round-19/w1-spec.json:400-405`); that is syntax-only. No D5-specific behavioral command is specified in the committed evidence. A complete acceptance also needs a deterministic fixture case forcing a vanished or changed starttime between scan and signal and asserting that the replacement is not signalled. The packing note says `ExecD5Recheck` was dropped, so that behavior is unexecuted here.
+- **Claim mapping:** Not C1 or C2. D5 remains an unclaimed repair (`preregistration.txt:66-70`).
+
+# Evidence
+
+- The admitted closure and its routed-defect rows are `corpus/lessons/round-18-verifier-spotcheck.md:20-22,143-152`; the r18 lesson supplies the measured receipts, R18-M6, and residuals at `corpus/lessons/round-18.md:7,14-17,28,60,73,115-121`.
+- C1/C2 boundaries and the explicit D1–D5 non-claim list are ` .ufo/waves/round-19/preregistration.txt:7-49,66-70`. The item prompts cited above are plans only; the supplied packing note marks D2, D3, and D5 implementation seats dropped.
+- Confidence: high for the five defect classes, r18 evidence, and C1/C2 mapping. Remaining gaps are the absent 8be-bound receipt, the unspecified real-record D2 checker invocation, and the lack of a behavior-level D5 acceptance command.
+
+# Commands run
+
+- Read/search of the cited r18 closure, r18 lesson, their targeted reports/records, and r19 preregistration/spec (static only).
+- `git -C /home/vgpnk/Projects/shokunin/souji-shokunin ls-tree -r --name-only 3ab2c81 -- .ufo/reports/round-18` — no lane-tree entry; the fleet-level r18 report was read read-only at `.ufo/reports/round-18/souji.md:64-73`.
+- Checked `xd://lsp`; no LSP tool is mounted. Searches were used only to locate source lines, not as semantic proof.
+- No gate, fixture, selftest, census, build, lint, or formatter was run; no tools were installed.
+
+# Contract compliance
+
+Only this scoped report is written. No subagents, git/jj mutations, signals, `/proc` reads, installs, scratch files, or other repository writes.

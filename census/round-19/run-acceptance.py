@@ -57,7 +57,7 @@ CHANGED = [
 COMMANDS = [
     ("gate-selftest", ["python3", "tools/souji-landing-gate.py", "--selftest"], 0),
     ("gate-replays", ["python3", "census/round-17/gate-replays.py",
-                      "--output", "census/round-19/gate-replays-final.json"], 0),
+                      "--output", "census/round-19/gate-replays-final-{short}.json"], 0),
     ("carry-fixture", ["python3", "tests/fixtures/r19-carry-wrap.py"], 0),
     ("rev-pin-fixture", ["python3", "tests/fixtures/r19-rev-pin.py"], 0),
     ("audit-shapes-fixture", ["python3", "tests/fixtures/r19-seat-audit-shapes.py"], 0),
@@ -128,7 +128,7 @@ def main(argv=None):
     }
     matched_all = True
     for name, argv0, expected in COMMANDS:
-        argv = [item.replace("REV", rev) for item in argv0]
+        argv = [item.replace("REV", rev).replace("{short}", rev[:7]) for item in argv0]
         started = time.monotonic()
         proc = subprocess.run(argv, cwd=ROOT, env=ENV, capture_output=True,
                               text=True, timeout=1800)

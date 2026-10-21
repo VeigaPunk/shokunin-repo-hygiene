@@ -1,0 +1,31 @@
+STATUS: DONE — D5’s identity recheck and the fixture-local behavior that must remain intact are mapped below.
+
+# Findings
+
+- **D5 change boundary:** the r18 lesson identifies only the missing `(pid, starttime)` recheck in the r15/r17 fixture `kill_session` routines. The worktree diff against `3ab2c81` adds a `process_identity(pid)` helper returning the `/proc/<pid>/stat` session ID (tail index 3) and starttime (tail index 19), snapshots `(pid, starttime)` for session members, re-reads identity immediately before each per-PID signal, and skips a missing or changed identity. The existing final `killpg` remains. This is the recheck core of `run-matrix.py`, not a request to import its same-UID filter, pidfd path, or structured kill-result records.
+- **Observed run-matrix reference:** it snapshots same-UID session members, then rechecks `(session_id, start_time)` after opening a pidfd and before pidfd signaling, or immediately before `os.kill` on the fallback path. It reports per-member outcomes. Its file is unchanged from base in the current worktree (`census/round-18/run-matrix.py`, lines 72–140; result validation at 239–246). Both fixture callers remain timeout-only, unlike the matrix runner’s calls after normal completion and timeout.
+- **Case oracles to preserve:** r15 still has exactly `R15CFG-01` through `R15CFG-20`; its pinned class mapping remains benign `{01,04,06,07,09,10,12,13,15,16}`, refusal `{02,11,17,19}`, degrade `{03}`, preserve `{05,18,20}`, safety `{08,14}`. Its `HARM_CASES`, per-case row/value/access checks, ordered R15CFG-16 check, and R15CFG-20 compare exits 0/3/2 are not D5 edit targets. r17 still has exactly `R17-01` through `R17-29`; its class mapping remains repair `{01–04,07–09,14–16,20,24,26}`, preserve `{05,06,11,17,21,22,27,28}`, refuse `{10,12,13,18,19,23,25,29}`. Keep R17-17 classified as preserve and its documented status-unverifiable oracle. The worktree code diff for each fixture is confined to the helper and `kill_session`; no case table or case assertion changes appear in either diff.
+- **Output contract:** preserve the `CASE`/`SUMMARY` lines, the exact expected-ID sequence and synthetic `id-set` failure behavior, plus return code derived from failure count. The matrix accepts only a nonempty total, the matching non-synthetic CASE count, matching FAIL count, and rc 0/1 according to failures. r15 and r17 both cap human-readable case details at 400 characters; r15 retains its observed-exit/finding fields and JSON shape, while r17 retains its `class=` detail field and JSON shape.
+- **Fixture-specific differences a shared edit must not flatten:** r15 reads stat as ASCII with replacement, has no `scandir` OSError guard, sorts the leader first, catches only `ProcessLookupError` around `os.kill`/`killpg`, and its timeout caller re-raises the original timeout after `communicate()`. r17 reads UTF-8 without replacement, catches scan `OSError` and proceeds with no members, sorts by PID, catches broader `OSError` around both signals, and reconstructs `TimeoutExpired` with captured output/stderr. Both retain their own argument conventions (`--tool` for r15; `--census` with `--tool` alias for r17) and caller-specific behavior.
+- **One r17 preservation gap in the observed integrated helper:** at base, the inline r17 scan caught `ValueError` around the read/parse/signal block; the new helper catches only `OSError` around `read_text(encoding="utf-8")`, while its `ValueError` catch covers only integer conversion. A `UnicodeDecodeError` (a `ValueError`) from the read could therefore now escape `kill_session`. This differs from r15’s `errors="replace"` behavior and is not required for the identity recheck; preserve the old r17 failure handling if D5 is intended to leave unrelated timeout cleanup behavior unchanged.
+- **r15 frozen-pin follow-through:** `r15-preservation-frozen/expected.json` pins the r15 fixture digest, so updating it and its paired `record.json` is necessary when this fixture changes. The current expected pin is `790024c9…`; the base pin was `451c2447…`. r17 is not in that frozen file map. The record regeneration is artifact churn, not permission to alter fixture case expectations.
+
+# Evidence
+
+- D5 statement: `corpus/lessons/round-18-verifier-spotcheck.md:148-150`.
+- Current r15 helper/recheck, leader-first order, signal catches, and unchanged `killpg`: `tests/fixtures/r15-census-config.py:269-312`; timeout caller: `:315-328`.
+- Current r17 helper/recheck, scan guard, PID sort, signal catches, and unchanged `killpg`: `tests/fixtures/r17-census-hygiene.py:151-194`; timeout caller: `:199-225`.
+- Matrix identity parsing and recheck: `census/round-18/run-matrix.py:72-140`; result validity: `:239-246`. The fixture-to-CLI mapping is at `:54-60`.
+- r15 IDs/classes: `tests/fixtures/r15-census-config.py:129-177`; case implementations and output/summary contract: `:1161-1460`, `:1570-1631`. r17 IDs/classes and the R17-17 rationale: `tests/fixtures/r17-census-hygiene.py:73-100`; case map and output/summary contract: `:1209-1351`.
+- Frozen fixture pin: `tests/fixtures/r15-preservation-frozen/expected.json:1-10`. The base-to-worktree D5 source diffs have one hunk each: r15 base hunk begins at line 266; r17 at line 148. `census/round-18/run-matrix.py` has no base-to-worktree diff.
+
+# Commands run
+
+- Read the required skill, preregistration, D5 lesson, relevant source ranges, and frozen expected pin.
+- Read-only inspection: `git diff 3ab2c81 -- tests/fixtures/r15-census-config.py`, `git diff 3ab2c81 -- tests/fixtures/r17-census-hygiene.py`, and `git diff 3ab2c81 -- census/round-18/run-matrix.py` (no matrix diff). Also inspected the r15 frozen expected/record diffs, `git status --porcelain | wc -l`, and `git grep -n 'r17-census-hygiene\|r15-census-config' -- tools/`.
+- No fixture, test, build, or selftest was run; this is source/diff review only. No tool was installed.
+
+# Contract compliance
+
+- Wrote only this assigned report. No source, test, census, corpus, or other lane file was edited by this scout.
+- No subagents, orchestration, signals, network access, secret reads, or git/jj mutations. No scratch files or tool installs.
