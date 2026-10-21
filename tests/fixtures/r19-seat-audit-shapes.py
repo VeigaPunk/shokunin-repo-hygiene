@@ -73,6 +73,10 @@ def main(argv=None):
             ("delivery-workdir", "executor", "write", "/var/tmp/souji-r19-Seat/probe.py", 0, []),
             ("tools-write", "scribe", "write", "%(lane)s/tools/x.py", 1, ["V-WRITE-SCOPE"]),
             ("signal-kill", "scout", "bash", "kill -TERM 1234", 1, ["V-SIGNAL"]),
+            ("signal-os-kill", "executor", "bash",
+             "python3 -c 'os.kill(1234, 9)'", 1, ["V-SIGNAL"]),
+            ("patch-in-tools", "executor", "write", "%(lane)s/tools/x.patch", 1,
+             ["V-WRITE-SCOPE"]),
             ("relative-target", "scribe", "write", "tools/x.py", 1, ["V-WRITE-RELATIVE"]),
         ]
 
