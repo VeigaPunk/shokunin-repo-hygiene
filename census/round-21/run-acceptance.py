@@ -361,12 +361,14 @@ def failure_lines(text: str) -> list[str]:
 
 def numeric_leaves(value, prefix: str = "") -> dict[str, int]:
     found: dict[str, int] = {}
-    if isinstance(value, dict):
-        for key, item in value.items():
-            child = key if not prefix else prefix + "." + key
-            found.update(numeric_leaves(item, child))
-    elif isinstance(value, int) and not isinstance(value, bool):
-        found[prefix] = value
+    pending = [(value, prefix)]
+    while pending:
+        current, path = pending.pop()
+        if isinstance(current, dict):
+            for key, item in reversed(current.items()):
+                pending.append((item, key if not path else path + "." + key))
+        elif isinstance(current, int) and not isinstance(current, bool):
+            found[path] = current
     return found
 
 
@@ -464,7 +466,7 @@ def summarize_result(step: dict, returncode: int | None,
     elif kind == "counter":
         try:
             observed = json.loads(stdout)
-        except (ValueError, TypeError):
+        except (ValueError, TypeError, RecursionError):
             observed = None
         expected = step["expected_summary"]
         if step["exact_json"]:
@@ -491,7 +493,7 @@ def summarize_result(step: dict, returncode: int | None,
     elif kind == "cache-demo":
         try:
             payload = json.loads(stdout)
-        except (ValueError, TypeError):
+        except (ValueError, TypeError, RecursionError):
             payload = None
         checks = payload.get("checks") if isinstance(payload, dict) else None
         case_rows = payload.get("cases") if isinstance(payload, dict) else None

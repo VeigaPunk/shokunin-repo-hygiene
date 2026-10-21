@@ -66,6 +66,9 @@ def main():
         for case in cases:
             record = records[case['step_name']]
             stdout = case.get('stdout', record['stdout'])
+            if 'stdout_nested_array_depth' in case:
+                depth = case['stdout_nested_array_depth']
+                stdout = '[' * depth + '0' + ']' * depth
             if 'json_set' in case:
                 payload = json.loads(stdout)
                 for path, value in case['json_set']:

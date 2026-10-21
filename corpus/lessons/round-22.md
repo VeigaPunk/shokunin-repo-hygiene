@@ -41,3 +41,16 @@ Wave1 is source-only, with L1 planner/integration ownership and no concurrent pr
 ## Seat-reported failures
 
 Failure paragraphs and concrete final dispositions are appended after the terminal wave outputs; a source-only draft's own lack of integration is not runtime failure evidence.
+
+### Source-review completion of malformed-shape contract
+
+Counter10/Counter9 identified that decoder recursion errors escaped the
+per-step rejection path. Before repairing that path, two literal1200-deep
+array vectors were appended (counter/cache) to the unchanged original212
+decisions: final oracle214. Each baseline/changed final run uses that SAME
+214-vector file; the original212 expectations remain untouched.
+JSON decoding now treats its RecursionError as a rejected result, and numeric
+leaf collection uses an iterative walk with the same values/order rather
+than producer-controlled Python call depth. This is the preregistered
+malformed-result rejection boundary, not a new axis claim or arbitrary
+resource-exhaustion guarantee. Actual observations follow the terminal waves.
