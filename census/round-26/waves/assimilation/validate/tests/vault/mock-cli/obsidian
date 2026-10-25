@@ -1,0 +1,123 @@
+#!/usr/bin/env bash
+# mock obsidian CLI — adversarial probe shim for seat S53 (vadv-53).
+#
+# This is NOT the real Obsidian. It never launches the desktop app; it only
+# logs its argv and emulates one contract mode chosen by $MOCK_MODE, so the
+# harness can force the degraded/racy CLI situations the seat must test.
+#
+# Modes
+#   ok       print the real sha256 of $MOCK_VAULT_FILE (honest CLI)
+#   stale    print $MOCK_CLAIM_HASH regardless of file content (lying CLI)
+#   mutate   print the real sha256, then rewrite $MOCK_VAULT_FILE with
+#            $MOCK_MUTATE_BYTES bytes of $MOCK_MUTATE_CHAR (race window)
+#   swap     print the real sha256, then atomically rename a same-size,
+#            different-content file over $MOCK_VAULT_FILE (rename TOCTOU)
+#   slow     sleep 3, then behave like ok
+#   hang     sleep 600 (tool must bound the call itself)
+#   error    exit 3 with a stderr diagnostic
+#   garbage  exit 0 with non-parseable output
+#   empty    exit 0 with no output
+#   gui      behave like the real /usr/bin/obsidian GUI launcher: touch
+#            $MOCK_GUI_SENTINEL, then sleep. If the sentinel appears, the
+#            tool under test executed the app launcher — a hard hazard on
+#            this host (it spawns the desktop app).
+#
+# Env: MOCK_MODE, MOCK_LOG, MOCK_VAULT_FILE, MOCK_CLAIM_HASH,
+#      MOCK_MUTATE_BYTES, MOCK_MUTATE_CHAR, MOCK_GUI_SENTINEL
+set -uo pipefail
+
+MOCK_MODE=${MOCK_MODE:-ok}
+MOCK_LOG=${MOCK_LOG:-/tmp/adv53-mock.log}
+MOCK_VAULT_FILE=${MOCK_VAULT_FILE:-}
+MOCK_CLAIM_HASH=${MOCK_CLAIM_HASH:-}
+MOCK_MUTATE_BYTES=${MOCK_MUTATE_BYTES:-4096}
+MOCK_MUTATE_CHAR=${MOCK_MUTATE_CHAR:-x}
+
+if [ -n "$MOCK_LOG" ]; then
+  {
+    flock 9
+    printf '%s\t%s\t%s\n' "$(date +%s.%N)" "$MOCK_MODE" "$*" >>"$MOCK_LOG"
+  } 9>>"$MOCK_LOG" 2>/dev/null || true
+fi
+
+mock_sha() { sha256sum -- "$1" 2>/dev/null | cut -d' ' -f1; }
+mock_size() { stat -c %s -- "$1" 2>/dev/null || printf '0'; }
+
+emit_hash() { # $1 hash
+  local h=$1 f=${MOCK_VAULT_FILE:-}
+  printf '{"ok":true,"path":"%s","sha256":"%s","size":%s}\n' "$f" "$h" "$(mock_size "$f")"
+  printf 'sha256 %s %s\n' "$f" "$h"
+}
+
+case "$MOCK_MODE" in
+  hang)
+    sleep 600
+    exit 0
+    ;;
+  slow)
+    sleep 3
+    ;;
+  gui)
+    # Emulate the real /usr/bin/obsidian: launching it starts the desktop
+    # app. Touching the sentinel is how the harness detects that the tool
+    # executed the app launcher instead of a CLI.
+    [ -n "${MOCK_GUI_SENTINEL:-}" ] && printf 'gui-launched\n' >>"${MOCK_GUI_SENTINEL}"
+    sleep 600
+    exit 0
+    ;;
+esac
+
+# Version-ish probes answer before any hash work.
+case "${1:-}" in
+  --version|version|-V)
+    printf 'obsidian 1.14.4 (mock-cli shim; not the real app)\n'
+    exit 0
+    ;;
+esac
+
+case "$MOCK_MODE" in
+  error)
+    printf 'mock: vault index unavailable (cli-error)\n' >&2
+    exit 3
+    ;;
+  garbage)
+    printf '\x00\x01not-a-hash-not-json\n'
+    exit 0
+    ;;
+  empty)
+    exit 0
+    ;;
+  stale)
+    emit_hash "${MOCK_CLAIM_HASH:-0000000000000000000000000000000000000000000000000000000000000000}"
+    exit 0
+    ;;
+  mutate)
+    h=$(mock_sha "$MOCK_VAULT_FILE")
+    emit_hash "$h"
+    if [ -n "$MOCK_VAULT_FILE" ] && [ -e "$MOCK_VAULT_FILE" ]; then
+      head -c "$MOCK_MUTATE_BYTES" < /dev/zero | tr '\0' "$MOCK_MUTATE_CHAR" >>"$MOCK_VAULT_FILE"
+    fi
+    exit 0
+    ;;
+  swap)
+    # Same-size replacement via atomic rename: no size or mtime-of-open cue,
+    # only a content hash can catch it.
+    h=$(mock_sha "$MOCK_VAULT_FILE")
+    emit_hash "$h"
+    if [ -n "$MOCK_VAULT_FILE" ] && [ -e "$MOCK_VAULT_FILE" ]; then
+      local_tmp="${MOCK_VAULT_FILE}.swap.$$"
+      head -c "$MOCK_MUTATE_BYTES" < /dev/zero | tr '\0' "${MOCK_MUTATE_CHAR:-Y}" > "$local_tmp"
+      touch -r "$MOCK_VAULT_FILE" "$local_tmp" 2>/dev/null || true
+      mv -f -- "$local_tmp" "$MOCK_VAULT_FILE"
+    fi
+    exit 0
+    ;;
+  ok|slow|*)
+    if [ -n "$MOCK_VAULT_FILE" ] && [ -f "$MOCK_VAULT_FILE" ]; then
+      emit_hash "$(mock_sha "$MOCK_VAULT_FILE")"
+    else
+      printf '{"ok":true,"path":"%s","sha256":null,"note":"mock: no vault file"}\n' "${MOCK_VAULT_FILE:-}"
+    fi
+    exit 0
+    ;;
+esac

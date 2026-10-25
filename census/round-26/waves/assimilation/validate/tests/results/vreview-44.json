@@ -1,0 +1,116 @@
+{
+ "seat": "S44",
+ "role": "reviewer",
+ "round": 4,
+ "lane": "souji-shokunin",
+ "task": "Obsidian-CLI vault verification",
+ "generated_at": "2026-10-18T14:16:02-03:00",
+ "method": {
+  "design": "independent review: own fixture world under /tmp/s44-review (11 single/multi-row ledgers + src/vault trees), own real-vault e2e rows under tests/vault/s44-*, own mock CLI + GUI-sentinel hazard probes; peer artifacts (vrun-*, vreview-42/45/47, vadv-51/53/54, census/round-4) read as corroboration only, never as input to my verdicts",
+  "freeze": "candidates copied to /tmp/s44-review/frozen/ before scoring (implementors were still iterating: impl-20 sha changed 3 times during my run); all scores below are against the frozen shas recorded in impls[*].sha256",
+  "normalization": "r4 vocabulary VERIFIED(receipt) / NOT-VERIFIED(reason) and r2 vocabulary VERDICT<TAB>..SAFE|NOT-SAFE normalized to VERIFIED / NOT-VERIFIED; receipt checked only when VERIFIED",
+  "severity": "false-SAFE (want NOT-VERIFIED, got VERIFIED) = fatal/disqualifying; false negative = major; spec-silent gaps = advisory",
+  "readonly": "real vault hashed (full manifest, 63 files, no-symlink-follow) before and after every probe batch; live ledger sha256 checked each batch; /usr/bin/obsidian and bare `obsidian` never executed by this seat",
+  "interface": "candidates called both ways: --ledger flag (impl-20/24) and SOUJI_LEDGER env (impl-21, r2 baseline) — each impl scored on the interface it implements"
+ },
+ "impls": {
+  "souji-vault-verify.impl-20.sh": {
+   "path": "tools/souji-vault-verify.impl-20.sh",
+   "sha256": "95fa47182cc163f570f032da398e4bb6f7506c2d7befbc49641e830eccc9a32a",
+   "shipped_mode": "755",
+   "scores": {"matrix": 19, "max_matrix": 19, "selftest": "35/35 rc=0 (stable x3)"},
+   "fatal_defects": [],
+   "major_defects": [],
+   "advisory_defects": [
+    "cli-path-calls-vault:hash-which-the-real-CLI-does-not-implement (advisory: fallback still decides; CLI is explicitly advisory-only)",
+    "row-incomplete-on-uppercase-hex (strict lowercase match; spec-silent, stricter = safer)"
+   ],
+   "gui_invocations": 0,
+   "cli_behavior": "with --cli and a PATH containing ONLY a bare `obsidian`: refuses it (cli=unavailable, sentinel 0); with ONLY `obsidian-cli`: executes it under timeout, hang bounded (rc 124 -> cli=timeout in 6s), never executes the resolved `obsidian` name",
+   "selectable": true
+  },
+  "souji-vault-verify.impl-24.sh": {
+   "path": "tools/souji-vault-verify.impl-24.sh",
+   "sha256": "2b224647abedc3ee00b38c3d5e1dee38baab05a705a8bebbdc65fb7b4cc47a50",
+   "shipped_mode": "755",
+   "scores": {"matrix": 17, "max_matrix": 19, "selftest": "13/13 rc=0"},
+   "fatal_defects": [],
+   "major_defects": [
+    "V12-dir-digest: directory artifacts NOT-VERIFIED(source-absent) — no dir-digest row support (r2 impl-12 had it via dir_digest)",
+    "V14-no-trailing-newline: final ledger row without trailing \\n is dropped (rows=0)"
+   ],
+   "advisory_defects": [],
+   "gui_invocations": 0,
+   "cli_behavior": "--cli performs a read-only probe (socket/shim discovery) and never executes any CLI binary; verified with hang + gui mocks: sentinel 0, rc 0 in 0s",
+   "selectable": true
+  },
+  "impl-21.sh": {
+   "path": "tools/impl-21.sh",
+   "sha256": "ed1881e8fd82748934a6f086164698aa7a30b4c47149adc93df1f4e349eba4dc",
+   "shipped_mode": "755",
+   "scores": {"matrix": 18, "max_matrix": 19, "selftest": "FAIL rc=1 (2 checks: L2 preserved-repo row + C1 cli=agree evidence; plus unbound LIE_OLD at line 786)"},
+   "fatal_defects": ["selftest exit != 0 — disqualifying per round-2 precedent"],
+   "major_defects": [
+    "rejects --ledger (env-only SOUJI_LEDGER): exits 2 under the runner-26/28 interface",
+    "V7b-self-row-sym: symlinked vault copy of the same bytes is accepted as moved-to-obsidian (no source-equals-vault guard)"
+   ],
+   "gui_invocations": 0,
+   "cli_behavior": "discovery refuses desktop-launcher candidates via content guard (is_gui_launcher); no execution observed",
+   "selectable": false
+  },
+  "souji-verify.sh (r2 baseline)": {
+   "path": "tools/souji-verify.sh",
+   "sha256": "7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820",
+   "shipped_mode": "755",
+   "scores": {"matrix": 17, "max_matrix": 19, "selftest": "24/24 rc=0"},
+   "fatal_defects": [],
+   "major_defects": [
+    "V14-no-trailing-newline: final row without trailing \\n dropped",
+    "V7b-self-row-sym: symlinked self-copy accepted (no source-equals-vault guard)"
+   ],
+   "advisory_defects": ["no --ledger flag (env-only), no --cli, no dir-digest row support beyond r2's own E6 shape"],
+   "gui_invocations": 0,
+   "selectable": false,
+   "note": "control only — r4 candidates must dominate it on the vault surface"
+  }
+ },
+ "matrix": [
+  {"id": "V1-match", "want": "VERIFIED(moved-to-obsidian)", "impl-20": "PASS", "impl-24": "PASS", "impl-21": "PASS", "r2": "PASS", "evidence": "ledger row + live re-hash both sides"},
+  {"id": "V2-vault-drift", "want": "NOT-VERIFIED", "impl-20": "PASS", "impl-24": "PASS", "impl-21": "PASS", "r2": "PASS", "evidence": "vault file tampered after row: vault-sha-mismatch; no false-SAFE"},
+  {"id": "V3-source-drift", "want": "NOT-VERIFIED", "impl-20": "PASS", "impl-24": "PASS", "impl-21": "PASS", "r2": "PASS", "evidence": "source tampered: source-sha-mismatch"},
+  {"id": "V4-vault-missing", "want": "NOT-VERIFIED", "impl-20": "PASS", "impl-24": "PASS", "impl-21": "PASS", "r2": "PASS", "evidence": "vault path absent: vault-absent/unreachable"},
+  {"id": "V5-no-row", "want": "NOT-VERIFIED", "impl-20": "PASS", "impl-24": "PASS", "impl-21": "PASS", "r2": "PASS", "evidence": "no matching ledger row"},
+  {"id": "V6-vault-space", "want": "VERIFIED(moved-to-obsidian)", "impl-20": "PASS", "impl-24": "PASS", "impl-21": "PASS", "r2": "PASS", "evidence": "vault path with a space"},
+  {"id": "V7-self-row", "want": "NOT-VERIFIED", "impl-20": "PASS", "impl-24": "PASS", "impl-21": "PASS", "r2": "PASS", "evidence": "row points artifact at itself: source-equals-vault (impl-20/24/21) or hash mismatch"},
+  {"id": "V7b-self-row-sym", "want": "NOT-VERIFIED", "impl-20": "PASS", "impl-24": "PASS", "impl-21": "FAIL(false-SAFE)", "r2": "FAIL(false-SAFE)", "evidence": "symlinked self-copy: impl-20/24 refuse non-regular vault target / guard; impl-21+r2 accept moved-to-obsidian"},
+  {"id": "V8-vault-brackets", "want": "VERIFIED(moved-to-obsidian)", "impl-20": "PASS", "impl-24": "PASS", "impl-21": "PASS", "r2": "PASS", "evidence": "vault path `br [tag] dir/`"},
+  {"id": "V9-src-brackets", "want": "VERIFIED(moved-to-obsidian)", "impl-20": "PASS", "impl-24": "PASS", "impl-21": "PASS", "r2": "PASS", "evidence": "source path `br [tag] src/`"},
+  {"id": "V10-empty-vaultsha", "want": "NOT-VERIFIED", "impl-20": "PASS", "impl-24": "PASS", "impl-21": "PASS", "r2": "PASS", "evidence": "empty vault_sha256 column is never a receipt"},
+  {"id": "V11-vault-is-dir", "want": "NOT-VERIFIED", "impl-20": "PASS", "impl-24": "PASS", "impl-21": "PASS", "r2": "PASS", "evidence": "vault path resolves to a directory"},
+  {"id": "V12-dir-digest", "want": "VERIFIED(moved-to-obsidian)", "impl-20": "PASS", "impl-24": "FAIL(no dir support)", "impl-21": "PASS", "r2": "PASS", "evidence": "directory artifact + dir-digest ledger row"},
+  {"id": "V13-upper-hex", "want": "NOT-VERIFIED", "impl-20": "PASS", "impl-24": "PASS", "impl-21": "PASS", "r2": "PASS", "evidence": "uppercase-hex row never mints SAFE (all four refuse; strict-lowercase vs mismatch both acceptable)"},
+  {"id": "V14-no-trailing-nl", "want": "VERIFIED(moved-to-obsidian)", "impl-20": "PASS", "impl-24": "FAIL(dropped row)", "impl-21": "PASS", "r2": "FAIL(dropped row)", "evidence": "last ledger row without trailing newline"},
+  {"id": "V15-fifo-vault", "want": "NOT-VERIFIED", "impl-20": "PASS", "impl-24": "PASS", "impl-21": "PASS", "r2": "PASS", "evidence": "FIFO as vault target: no hang, no read"},
+  {"id": "V16-hole-dir-row", "want": "NOT-VERIFIED", "impl-20": "PASS", "impl-24": "PASS", "impl-21": "PASS", "r2": "PASS", "evidence": "dir row with empty source+vault digest columns never a receipt"},
+  {"id": "L1-real-vault", "want": "VERIFIED(moved-to-obsidian)", "impl-20": "PASS", "impl-24": "PASS", "impl-21": "PASS", "r2": "PASS", "evidence": "real vault Home.md, sha 98afa2b8, read-only"},
+  {"id": "L2-real-vault-brk", "want": "VERIFIED(moved-to-obsidian)", "impl-20": "PASS", "impl-24": "PASS", "impl-21": "PASS", "r2": "PASS", "evidence": "real vault `audio [game-audio]/audio-frontier.md`, sha b0292b91, read-only"}
+ ],
+ "cli_contract": {
+  "official_cli_state": "NOT INVOCABLE on this host: no ~/.local/bin/obsidian shim, no /usr/local/bin/obsidian, no obsidian-cli binary (pacman -Ql obsidian ships only the GUI launcher + asars); socket $XDG_RUNTIME_DIR/.obsidian-cli.sock is transient (present only while the desktop app runs — spawned by sibling seats' probes, absent between runs)",
+  "no_hash_command": "the 1.14.4 bundle (obsidian-1.14.4.asar) registers no hash/digest CLI command: `vault` handler supports only info: name|path|files|folders|size; grep -c 'vault:hash' -> 0. Full handler inventory (registerHandler + registerCliHandler): bases, bookmark(s), command(s), create, daily, deadends, delete, diff, file(s), folder(s), help, history, hotkey(s), links, move, open, orphans, outline, plugin(s), prepend, properties, random, read, recents, reload, rename, restart, search, snippets, sync, tabs, tag(s), task(s), templates, theme(s), unique, unresolved, vault, vaults, version, web, wordcount, workspace(s), workspaces",
+  "third_party": "obsidian-cli-inspector v1.0.3 is a third-party read-only index (its 'Hash' field is size:mtime, not a content digest — reproduced by S42/S35) and notesmd-cli v0.3.7 implements list-vaults only; neither is a sha256 oracle",
+  "consequence": "sha256sum under the vault path is the only vault-side oracle available; any `--cli` path must be advisory and must degrade to the fallback. impl-20's cli call target `vault:hash` is hypothetical (interface the real CLI does not implement); harmless today (unavailable/timeout -> fallback decides) but must not be recorded as a live CLI capability"
+ },
+ "rails": {
+  "real_vault_readonly": "PASS — full manifest sha256 9e6ecc0f... identical before (13:56) and after (14:16) every batch; 63 files; no symlink-follow",
+  "live_ledger_header_only": "PASS — sha256 3f7e9f2a... unchanged through the whole session; 1 line",
+  "no_gui_execution_by_candidates": "PASS — impl-20/24/21/r2 executed no `obsidian`/electron process in any of my probes (GUI sentinel bytes stayed 0; name-log shows only obsidian-cli-named candidates executed, by impl-20 under --cli)",
+  "gui_app_launches_observed": "3 app launches during the wave, ALL from sibling-seat harness runs, not from r4 candidate tools: 13:58:37 (adv53-harness --only m, PID tree 2202693->2202699->electron 2203988), 14:05:04 (same harness, base3-m), 14:10:28 (S53 xtrace debug run — log line `++ obsidian` inside their own debug script, electron 1994731 then FATAL: GPU process isn't usable). Each spawn was transient; the app rewrote .obsidian/app.json + core-plugins.json (content of vault notes unchanged: manifest identical). FLAGGED for the parent: the harness family that runs `--cli` probes must be audited before any future wave so no seat shells a bare `obsidian` name; the vault content was never modified by any of them",
+  "no_lane_writes_outside_scope": "PASS — this seat wrote only tests/results/vreview-44.json, tests/vault/s44-* (fixtures) and /tmp scratch"
+ },
+ "summary": {
+  "ranking": ["souji-vault-verify.impl-20.sh", "souji-vault-verify.impl-24.sh"],
+  "disqualified": ["impl-21.sh (selftest exit 1)"],
+  "recommendation": "impl-20 for the vault surface (19/19, only candidate with dir-digest rows + no-trailing-newline handling + self-row guard + verified GUI-refusal on --cli). impl-24 is a sound second: simpler, never touches the CLI, but lacks dir-digest rows and drops the final newline-less ledger row. Both are advisory-CLI only; the sha256sum fallback is the receipt of record in both. If the wave installs a winner, re-run my matrix against the installed copy — impl-20 was still iterating during this review (3 shas seen), so the frozen sha 95fa4718 is the one that scored 19/19."
+ }
+}

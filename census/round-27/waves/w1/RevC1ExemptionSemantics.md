@@ -1,0 +1,17 @@
+## Status
+STATUS: PASS — both proposed exemptions suppress exact false-positive pointer tokens, with truthful reasons; neither is stale.
+
+## Evidence
+- Revision reviewed: `e78ac7c4837b81b634db4a927605a751a7f006ba` (lane HEAD; read-only).
+- `QUALITY.md` is actually `corpus/QUALITY.md`. Q59 sentence: “For each frozen claim, the declared axis must correspond to the actual class of surface the claim changes (a gate/runnable fixture on an input edge class is an operability surface; a corpus/knowledge/registry change is a coverage surface; a self-assessment-file change is a calibration surface).” Here `corpus/knowledge/registry` is prose inside the sentence, not a citation/reference to a repository object. The Q59 row's criterion/check cells are prose and command text; no registry object is evidenced by this token. Exact-path exemption is therefore truthful and suitably narrow.
+- Q57 check column (`corpus/QUALITY.md:141`) includes: “corpus/lessons/round-24.md:232:S118 LOG.md:1692 SCORECARD.md:181”. The fixture `tests/fixtures/r25-q57-check.sh:24-25` consumes each SITE argument by splitting `file:line:id`; line 31 looks up the ID in the tally. Thus `round-24.md:232:S118` is a composite enumerated-site token, not a path citation to a literal file named with colons. `corpus/lessons/round-24.md:232` exists and states `| S118 | unverifiable | DOI → IEEE 202, 0 bytes, twice; quote in IEEE staging + PDF mirror; venue cell wrong | contradicts its own cell; accepted under r22 definitions (W2Slice F1) |`.
+- Q31 (`corpus/QUALITY.md:80`) specifically permits committed `path<TAB>reason` exemptions for deliberate non-files and says an exemption suppressing nothing is itself a finding. Gate source (`tools/souji-landing-gate.py:876-902, 905-961, 1104-1113`) parses unique exact paths with nonempty reason, tracks used exemptions, and emits `LG-DANGLING-PTR-EXEMPT-STALE` for unused rows. The draft reasons identify the exact Q59 prose token and Q57 composite token; they are not generic suppressions.
+- No better in-scope fix: changing pointer grammar to special-case either token would alter the gate's general recognition behavior and its frozen authority/checker surface. The frozen preregistration explicitly requires exactly these two committed exemption rows and bars edits to QUALITY.md or another authority file. Grammar redesign is therefore outside this round's frozen C1 resolution; it can be considered only via a stricter, separately logged future amendment, not substituted post-data.
+
+## Findings
+1. Exemption `corpus/knowledge/registry` is justified: Q59's occurrence is prose, not a real citation; exact-token suppression does not conceal a missing cited object.
+2. Exemption `corpus/lessons/round-24.md:232:S118` is justified: it is the fixture's enumerated `file:line:id` site token, and its referenced line exists and is the S118 row. The reason accurately describes this composite use.
+3. No stale-exemption finding is indicated: each token occurs in the cited authority text and corresponds to the gate's path-token over-match. The landing gate itself was not run by this reviewer.
+
+## Attack log
+None. The proposed exemptions are justified, subject to the frozen requirement that the two rows be committed and the landing gate confirm `findings=0`.

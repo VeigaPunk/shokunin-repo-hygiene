@@ -1,0 +1,203 @@
+{
+  "seat": "S63",
+  "role": "final-judge",
+  "round": "souji-shokunin-round-2",
+  "date": "2026-10-18",
+  "judgment_window_local": "2026-10-18T12:56:43-03:00 .. 2026-10-18T13:01:01-03:00",
+  "protocol": {
+    "mode": "identical, independent",
+    "independence": "sibling workers' artifacts (tools/souji-verify.impl-*.sh) and other seats' result files (tests/results/*) were not read; every number below was re-derived from the spec, raw git/rg commands, and this seat's own differential oracle",
+    "oracle": {
+      "path": "/tmp/s63/souji-verify.sh",
+      "sha256": "b89491ca8b798753e43208edaac35428aabb5f849c952edf849e63bc6e212a4b",
+      "lines": 597,
+      "note": "seat S63's independent spec implementation, used only as a differential oracle; not landed in the repo; removed after judging"
+    },
+    "landed_by_this_seat": ["tests/results/final-63.json"],
+    "not_modified_by_this_seat": "tools/souji-verify.sh (judged as found; no write)"
+  },
+  "judged_artifact": {
+    "path": "souji-shokunin/tools/souji-verify.sh",
+    "primary_judged_revision": {
+      "sha256": "586bc36c6039b9c9bf5846b85156b02dd3daa6f594c03d6ba474a9c71f2fc812",
+      "bytes": 29139,
+      "lines": 804,
+      "mode": "0755",
+      "mtime": "2026-10-18T13:00:00-03:00",
+      "full_battery": "pass",
+      "hash_stable_at_close": "verified at 2026-10-18T13:01:01-03:00"
+    },
+    "revisions_observed": [
+      {
+        "sha256": "d32bac5d8ae8c66930418edb8e0b9f064109a00866b87ae1baaa3156dd36c077",
+        "bytes": 28961,
+        "mtime": "2026-10-18T12:55",
+        "full_battery": "pass (selftest 26/26; 7-target live grid ground-truth 7/7; oracle differential 7/7; determinism; json 7/7; read-only state unchanged)",
+        "known_defect": "D4-tmp-litter present"
+      },
+      {
+        "sha256": "d7edd71df33b4c3ed2b65e7cc4853bc0fb915873efba1ea458e6069d5398a19f",
+        "bytes": 29107,
+        "mtime": "2026-10-18T12:57:43-03:00",
+        "delta": "dead code removed; ERRORS path wired so internal evaluation errors now emit NOT-SAFE(none, internal-error) and exit 1",
+        "full_battery": "pass (same results as above)",
+        "known_defect": "D4-tmp-litter present"
+      },
+      {
+        "sha256": "586bc36c6039b9c9bf5846b85156b02dd3daa6f594c03d6ba474a9c71f2fc812",
+        "bytes": 29139,
+        "mtime": "2026-10-18T13:00:00-03:00",
+        "delta": "D4 fixed: worktree_row_for is called in the parent shell and returns via global WT_ROW, so CLEANUP_PATHS registration survives to the EXIT trap",
+        "full_battery": "pass",
+        "known_defect": "none"
+      }
+    ],
+    "motion_note": "the artifact was replaced twice while this seat judged it (12:57:43 and 13:00:00); all three revisions were snapshot-pinned and battery-tested independently. The parent should pin the final hash after the wave closes and re-run --selftest on the pinned revision."
+  },
+  "selftest": {
+    "command": "bash tools/souji-verify.sh --selftest",
+    "exit": 0,
+    "pass": 26,
+    "fail": 0,
+    "elapsed": "<1s",
+    "cases": [
+      "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9",
+      "F8-control", "F7-control",
+      "F10-cli", "F10-cli:app.env", "F10-cli:creds.pem", "F10-cli:notes.txt",
+      "F10-canary", "F10-unchanged", "F10-unreadable", "F10-unreadable",
+      "EXIT-missing", "EXIT-missing",
+      "EXIT-usage", "EXIT-usage-noval", "EXIT-noargs",
+      "JSON-mode", "JSON-mode"
+    ],
+    "sample_evidence": {
+      "F1": "SAFE(pushed) intro=92150995dbb2 default=refs/remotes/origin/master",
+      "F2": "NOT-SAFE(none) (local-only introducing commit)",
+      "F3": "NOT-SAFE(unpushed-dirty) unpushed=2 dirty=1",
+      "F4": "SAFE(metadata-prune) unique=0 dir=absent",
+      "F5": "NOT-SAFE(unpushed-branch) branch=wtfeat unpushed=1",
+      "F6": "SAFE(moved-to-obsidian) both sha256 sides matched",
+      "F7": "SAFE(stale) refs=0",
+      "F8": "SAFE(stale) refs=0 (census mention absorbed, D3)",
+      "F9": "SAFE(pushed) default=refs/remotes/origin/master (origin/HEAD absent)",
+      "F8-control": "raw sweep does see the census mention: ./souji-shokunin/census/round-2/seat-01.json (D3 exclusion is load-bearing)",
+      "F10-unreadable": "mode-000 .env/.pem copies still NOT-SAFE(secrets-refusal): refusal is from the basename rule, not from opening the file",
+      "F10-canary": "no canary value reached stdout/stderr"
+    }
+  },
+  "live_grid": {
+    "measured": "2026-10-18T12:59:31-03:00 .. 13:01:01-03:00 (ground truth re-derived in the same minute as the tool runs)",
+    "entries": [
+      {
+        "target": "/home/vgpnk/Projects/shokunin/kotodama-shokunin",
+        "expected": "NOT-SAFE (round-2 acceptance gate; unpushed commits + dirty tree)",
+        "ground_truth": {
+          "commands": [
+            "git -C <target> log --oneline HEAD --not --remotes | wc -l -> 39",
+            "git -C <target> log --oneline --branches --not --remotes | wc -l -> 39",
+            "git -C <target> status --porcelain | wc -l -> 0"
+          ],
+          "drift_note": "round-1 mint said 37/17; 38/22 at 12:56; 39/0 at 12:59 (the lane's own agent committed during judging) - tool tracked live truth exactly at each instant"
+        },
+        "observed": {"verdict": "NOT-SAFE", "receipt": "unpushed", "evidence": "unpushed=39 dirty=0"},
+        "match": true
+      },
+      {
+        "target": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+        "expected": "NOT-SAFE (own lane has untracked round-2 artifacts)",
+        "ground_truth": {"unpushed_HEAD": 4, "unpushed_branches": 4, "dirty": 2},
+        "observed": {"verdict": "NOT-SAFE", "receipt": "unpushed-dirty", "evidence": "unpushed=4 dirty=2"},
+        "match": true,
+        "note": "counts volatile (other seats writing during the wave)"
+      },
+      {
+        "target": "/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r98",
+        "expected": "NOT-SAFE(unpushed-branch)",
+        "ground_truth": {"command": "git -C game-dev-2d-shokunin log --oneline wt-r98 --not --remotes | wc -l -> 1", "dir_present": false},
+        "observed": {"verdict": "NOT-SAFE", "receipt": "unpushed-branch", "evidence": "owner=game-dev-2d-shokunin branch=wt-r98 unpushed=1"},
+        "match": true
+      },
+      {
+        "target": "/tmp/r87-B1",
+        "expected": "SAFE(metadata-prune)",
+        "ground_truth": {"head": "28706dc73a9b7667851fd82adb71e905ae5eb896", "unique": "git -C lore-shokunin log --oneline <head> --not --all | wc -l -> 0", "dir_absent": true, "registration": "present in lore-shokunin worktree list --porcelain"},
+        "observed": {"verdict": "SAFE", "receipt": "metadata-prune", "evidence": "owner=lore-shokunin head=28706dc73a9b unique=0 dir=absent"},
+        "match": true
+      },
+      {
+        "target": "/home/vgpnk/Projects/shokunin/.devin/skills/flashseat/SKILL.md",
+        "expected": "SAFE(pushed) (D1: default branch resolves to origin/master on the fleet root)",
+        "ground_truth": {"intro": "d41a9f578f4716960faf0a936fe453144d154dd2", "ancestor_of_origin_master": true},
+        "observed": {"verdict": "SAFE", "receipt": "pushed", "evidence": "intro=d41a9f578f47 default=refs/remotes/origin/master"},
+        "match": true
+      },
+      {
+        "target": "/tmp/s63-no-such-target-63.env",
+        "expected": "NOT-SAFE(secrets-refusal), no filesystem read",
+        "observed": {"verdict": "NOT-SAFE", "receipt": "secrets-refusal", "evidence": "basename-rule short-circuit (no read)"},
+        "match": true,
+        "note": "path deliberately nonexistent; refusal precedes existence checks (spec F10 ordering)"
+      },
+      {
+        "target": "/tmp/s63-no-such-target-63",
+        "expected": "NOT-SAFE(unreachable), exit stays 0",
+        "observed": {"verdict": "NOT-SAFE", "receipt": "unreachable", "evidence": "missing-target", "exit": 0},
+        "match": true
+      }
+    ]
+  },
+  "differential_vs_oracle": {
+    "targets": 7,
+    "verdict_receipt_agreement": "7/7 per revision (v1, v2, v3)",
+    "field_diff": "none (fields path/verdict/receipt identical; evidence strings differ only in formatting)"
+  },
+  "contract_checks": {
+    "determinism": "two consecutive identical target lists produce byte-identical output (checked per revision)",
+    "json_mode": "--json: 7/7 lines parse as JSON; path/verdict/receipt fields match the TSV run; exit 0",
+    "exit_codes": {"live_evaluation": 0, "selftest": 0, "no_args": 2, "unknown_flag": 2, "bad_stale_days": 2, "missing_target": 0},
+    "stale_polarity_live": {
+      "no_refs": "SAFE(stale) age=170d",
+      "live_ref_added": "NOT-SAFE(none) (sweep detected the new reference)",
+      "stale_days_honored": "NOT-SAFE(none) under --stale-days 100000"
+    },
+    "read_only": {
+      "probe": ".git/index and .git/HEAD sha256 + mtime for fleet root, lore-shokunin, kotodama-shokunin",
+      "result": "unchanged before/after the 3-invocation battery (all revisions); GIT_OPTIONAL_LOCKS=0 in the tool"
+    },
+    "static_audit": {
+      "forbidden_git_verbs": "absent from code (single match is the header docstring); fixture construction uses init/add/write-tree/commit-tree/update-ref exclusively inside mktemp; evaluation path runs read-only plumbing only (log, status, rev-parse, merge-base, for-each-ref, symbolic-ref, worktree list)",
+      "secrets": "basename short-circuit before any read; selftest canary + mode-000 probes pass; live secret-shaped probe refused; sweep never opens secret-shaped files (globs + per-hit filter)",
+      "selftest_isolation": "SHOKUNIN_ROOT and SOUJI_LEDGER are overridden to its own mktemp fixture; stray-tmp census across all my selftest runs: 1 stale dir from 12:53 (predating my runs, not created by the canonical tool's runs I executed), unchanged before/after"
+    }
+  },
+  "defects_found_and_status": [
+    {
+      "id": "D4-tmp-litter",
+      "found_by": "this seat (S63)",
+      "severity": "low (hygiene only; verdict-neutral)",
+      "description": "one /tmp/souji-wt-index.XXXXXX (~5 KB) leaked per invocation performing a worktree registration lookup: the index file was created inside the command substitution $(worktree_row_for ...), so WORKTREE_INDEX and its CLEANUP_PATHS registration lived only in the subshell and the EXIT trap never removed the file",
+      "repro": "count /tmp/souji-wt-index.* around single invocations: revision d32bac5d - 1797 -> 1798 (worktree target /tmp/r87-B1), 1798 -> 1798 (repo-root target, no lookup), 1798 -> 1799 (missing target); revision d7edd71d - 2065 -> 2066; fleet-wide census at 12:59 = 2107 files, ~11 MB accumulated across the wave",
+      "impact": "only /tmp litter; no verdict, no live-tree, no rail impact (writes stayed inside /tmp)",
+      "status": "fixed in revision 586bc36c (WT_ROW global + parent-shell call); re-tested: 2107 -> 2107 after a worktree-lookup invocation"
+    }
+  ],
+  "observations": [
+    "repo-root unpushed is HEAD-scoped (log HEAD --not --remotes); the spec does not pin that command and round-1 used --branches --not --remotes; values coincide today (kotodama 39/39, souji 4/4)",
+    "the stale sweep excludes the target file itself from its own reference count, and enforces the D3 exclusions twice (globs + per-hit filter); .ufo/state and .ufo/watchdog.log are additionally excluded so driver state is never read",
+    "no present-dir worktree registrations exist live today (all 24 are dir-absent), so the dir-present dirty branch had no live case; it is covered by source reading and the selftest fixtures",
+    "sweep root for targets outside SHOKUNIN_ROOT is the target's own directory/repo rather than the whole fleet root - bounded and fast, and the D3 guard still applies",
+    "ledger supports a directory-content hash (dir_sha256) for repo-root rows - a defined extension beyond the spec's file-level sha256; harmless today (the live ledger has no rows)",
+    "TSV output does not sanitize tab characters in the path field (JSON output escapes them); observation only",
+    "exit 1 'evaluation error' is now reachable only through internal classify failures (wired in revision d7edd71d); all spec scenarios exited 0 as required"
+  ],
+  "final_verdict": {
+    "status": "PASS",
+    "basis": [
+      "spec fixture coverage F1-F10 all pass with exact verdict + receipt (26/26 selftest cases)",
+      "kotodama gate: NOT-SAFE(unpushed) with live-truth evidence, as round 2 requires",
+      "live grid 7/7 matches independently re-derived ground truth; differential vs an independent oracle 7/7",
+      "determinism, JSON contract, exit-code contract, read-only probe, secrets rails, and forbidden-verb audit all clean"
+    ],
+    "residual_risk": "the artifact was still being replaced at judgment close (three revisions observed in ~5 minutes). Verdicts above are bound to the pinned hashes; the parent must pin the final revision and re-run --selftest once the wave stops writing.",
+    "one_defect": "D4-tmp-litter was present in the first two revisions and is fixed in 586bc36c"
+  }
+}

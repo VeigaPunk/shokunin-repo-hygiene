@@ -1,0 +1,109 @@
+{
+  "case": "case-V1",
+  "schema": "souji-vault-fixture/1",
+  "title": "clean vault pair — source file + byte-identical vault copy + matching ledger row",
+  "spec_case": "V1: a fake vault dir with note.md, a source file with identical bytes, and a ledger row matching source path + source sha256 + vault path + vault sha256. Expected: VERIFIED.",
+  "seat": "S09",
+  "round": 4,
+  "intent": "A fake vault dir holds note.md; a source file holds identical bytes; the ledger tests/vault/ledger-V1.tsv holds one row whose source path + source sha256 + vault path + vault sha256 all match. Expected verdict: VERIFIED (receipt moved-to-obsidian). Under the r2 vocabulary the installed tools/souji-verify.sh reports SAFE + moved-to-obsidian for the same inputs — see crosscheck.",
+  "builder": "tests/vault/case-V1/make-fixture.sh",
+  "builder_cli": "bash tests/vault/case-V1/make-fixture.sh [--out DIR] [--ledger FILE] [--quiet] [--skip-ledger] [--print-row] [--print-hashes]",
+  "fixture_root_placeholder": "@FIXTURE_ROOT@",
+  "path_convention": "substitute @FIXTURE_ROOT@ with the FIXTURE_ROOT printed by make-fixture.sh; make-fixture.sh also writes the substituted copy to <ROOT>/expected.json. Evaluate the target by that exact absolute path — ledger matching is path-exact.",
+  "ledger_path": "tests/vault/ledger-V1.tsv",
+  "ledger_path_in_root": "@FIXTURE_ROOT@/ledger.tsv",
+  "ledger_columns": ["source_path", "source_sha256", "vault_path", "vault_sha256", "exported_at", "note"],
+  "ledger_header": "source_path\tsource_sha256\tvault_path\tvault_sha256\texported_at\tnote",
+  "live_ledger_untouched": "corpus/knowledge/obsidian-ledger.tsv stays header-only; the builder never writes it (test ledgers live under tests/vault/)",
+  "content": {
+    "source_file": "@FIXTURE_ROOT@/source/note.md",
+    "vault_file": "@FIXTURE_ROOT@/vault/note.md",
+    "sha256": "a63192a11325e61f3aebfd483c34f21c05c5bf815bc83cef7866a92b8132f840",
+    "bytes": 161,
+    "identical": "cmp -s on the two files exits 0; both sha256sum values equal the constant",
+    "vault_mode": "0444"
+  },
+  "declared_ledger_rows": [
+    {
+      "id": "clean-pair-row",
+      "source_path": "@FIXTURE_ROOT@/source/note.md",
+      "source_sha256": "a63192a11325e61f3aebfd483c34f21c05c5bf815bc83cef7866a92b8132f840",
+      "vault_path": "@FIXTURE_ROOT@/vault/note.md",
+      "vault_sha256": "a63192a11325e61f3aebfd483c34f21c05c5bf815bc83cef7866a92b8132f840",
+      "exported_at": "2026-10-18",
+      "note": "case-V1 clean pair",
+      "why": "full match: both paths exist and both hashes are the actual file bytes"
+    }
+  ],
+  "targets": [
+    "@FIXTURE_ROOT@/source/note.md"
+  ],
+  "expect": [
+    {
+      "path": "@FIXTURE_ROOT@/source/note.md",
+      "vault_path": "@FIXTURE_ROOT@/vault/note.md",
+      "verdict": "VERIFIED",
+      "receipt": "moved-to-obsidian",
+      "why": "byte-identical pair on both sides plus a fully matching ledger row (all four conjuncts)"
+    }
+  ],
+  "expect_string": "VERIFIED",
+  "accept": {
+    "exact": ["VERIFIED"],
+    "contains": ["VERIFIED"],
+    "structured": {"verdict": "VERIFIED", "receipt": "moved-to-obsidian"},
+    "note": "a harness may render the verdict as one token or as verdict+receipt fields; both satisfy this case as long as the verdict class is VERIFIED (never NOT-VERIFIED and never SAFE/NOT-SAFE r2 vocabulary) and the receipt, where printed, is moved-to-obsidian"
+  },
+  "must_not_be": ["NOT-VERIFIED", "NOT-SAFE"],
+  "failure_modes_caught": [
+    "false NOT-VERIFIED on a fully matching row — the case is the positive control: every conjunct (source path, source sha256, vault path, vault sha256) passes, so any NOT-VERIFIED verdict is a false negative",
+    "class collapse: reporting NOT-VERIFIED(none) or NOT-VERIFIED(unreachable) instead of VERIFIED — caught by expect.verdict",
+    "r2-vocabulary leakage into the r4 interface (SAFE where the r4 contract says VERIFIED) — caught by must_not_be; the r2 tool itself is covered by crosscheck below"
+  ],
+  "disarmed": {
+    "method": "run with a header-only ledger (e.g. `bash make-fixture.sh --ledger <tmp>/empty.tsv --skip-ledger`, then point the tool's ledger override at that file, or restore tests/vault/ledger-V1.tsv to header-only)",
+    "expected": {
+      "verdict": "NOT-VERIFIED",
+      "receipt": "none"
+    },
+    "why": "the row is the receipt: without it the vault copy is not evidence"
+  },
+  "crosscheck": {
+    "note": "the r2 tool tools/souji-verify.sh predates the r4 VERIFIED vocabulary; for these inputs its expected output is the same verdict pair under r2 names",
+    "tool_sha256": "7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820",
+    "command": "env SOUJI_LEDGER=<FIXTURE_ROOT>/ledger.tsv bash tools/souji-verify.sh \"<FIXTURE_ROOT>/source/note.md\"",
+    "expected_line": "VERDICT\t@FIXTURE_ROOT@/source/note.md\tSAFE\tmoved-to-obsidian\tledger-row vault=@FIXTURE_ROOT@/vault/note.md source-sha256=a63192a11325",
+    "seam": "SOUJI_LEDGER env override (defaults to corpus/knowledge/obsidian-ledger.tsv, which stays header-only)",
+    "measured": "2026-10-18: armed run printed exactly the expected_line (SAFE, moved-to-obsidian, exit 0); header-only ledger printed NOT-SAFE none with obsidian=no-matching-ledger-row"
+  },
+  "determinism": {
+    "note": "fixed content; two builds at different roots produce byte-identical files and equal sha256 values (paths vary per run); the builder asserts the constant and cross-checks this file",
+    "sha256": "a63192a11325e61f3aebfd483c34f21c05c5bf815bc83cef7866a92b8132f840"
+  },
+  "build": {
+    "entry": "bash make-fixture.sh [--out DIR] [--ledger FILE] [--quiet] [--skip-ledger] [--print-row] [--print-hashes]",
+    "default_out": "fresh mktemp -d",
+    "writes": [
+      "<ROOT>/.case-V1-fixture (marker)",
+      "<ROOT>/source/note.md",
+      "<ROOT>/vault/note.md (0444)",
+      "<ROOT>/ledger.tsv",
+      "<ROOT>/expected.json (substituted)",
+      "<LEDGER> (default tests/vault/ledger-V1.tsv)"
+    ],
+    "git": "git init -q -b master on <ROOT> (offline, no commits) so the fixture root behaves like a real repo and the pushed receipt must fall through to the ledger",
+    "safety": "never reads or writes the live ledger, the real vault, or any sibling repo; writes only under --out and --ledger FILE"
+  },
+  "files_expected_in_fixture_root": [
+    ".case-V1-fixture",
+    "source/note.md",
+    "vault/note.md",
+    "ledger.tsv",
+    "expected.json"
+  ],
+  "notes": [
+    "stdout contract: line 1 = JSON {case,root,targets,expect,vault,ledger,sha256}; line 2 = FIXTURE_READY V1 <ROOT> (third token is the ROOT, never the target); --quiet emits KEY=VALUE lines plus the FIXTURE_READY line.",
+    "The vault here is a fake vault dir under the fixture root — no Obsidian process, no CLI, no network is involved.",
+    "Exit codes: 0 ok, 1 build/assertion failure, 2 usage."
+  ]
+}

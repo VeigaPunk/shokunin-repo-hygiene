@@ -1,0 +1,81 @@
+# Round 25 — common-dir structure coverage, size-census edge classes, and the C1 kill-rule instrument
+
+Author: SoujiR25 (`souji-shokunin <souji@shokunin.local>`). Lane base: `a6d2d157755ef36b1dd4b9d53ad6d5b2ad6a3afe`. Round prompt: `/home/vgpnk/Projects/shokunin/.ufo/prompts/souji-round-25.md`. Frozen claims: `.ufo/waves/round-25/preregistration.txt`; append-only amendments 1–3. C1 was measured at its independent candidate commit `7e4dbef94061578fca2f58621f87908c886cc431`, before C3's F2 entry/map row; C2 at `679e2d02f46ec06447d679d9395d6592c5e35f5c`; C3 at the candidate commit named in `census/round-25/records/c3-after.tsv`.
+
+## Claim and boundary
+
+| claim | frozen axis | observed result | verdict |
+|---|---|---|---|
+| C1 — add Q56's base-entry kill rule to the coverage-map instrument | calibration (7, lowest) | At C1 candidate `7e4dbef`, real run `grounded=6 mapped=6 dangling=0 mismatches=0 kill_tested=6 kill_violations=0`, rc 0; fixture `cases=16 pass=16 control=FALSE-GREEN-REJECTED`; red old tool `cases=16 pass=9`. The r24 nine cases still pass 9/9. | **verified**. C1 measured before C3's new entry/map pair, so its after-counter does not depend on C3. |
+| C2 — exercise bare/non-empty, bare/empty, subdirectory and partialClone-only refusal shapes | operability (8, frozen) | Existing fixture 8/8 → extended fixture 12/12; old `1efe406` 11/12 (subdirectory fails), regressed `778747e` 10/12 (bare cases fail). The 12-case fixture kills 12/20 listed mutants; survivors are disclosed below. | **unprovable on the declared axis**. W2 review shows the change is coverage of edge classes, not a change to runnable operability; the frozen axis is not relabeled. Treat the coverage interpretation as a calibration harm, not a second coverage claim. |
+| C3 — common-dir manifest envelope and colocated/plain precondition | coverage (8) | Structure fixture 5/5 → 7/7 against unchanged probe; linked worktree reports common dir plus private gitdir manifests; keep-ref clone has `references.others.count=2` vs plain 0. | **verified as a bounded fixture result**; red-arm receipt timing and the literal-oracle deviation are disclosed as process limits. |
+
+No owned axis score changed; the lane has no re-derivable 0–10 score mapping. C2's actual surface is coverage, which overlaps C3; it cannot be silently reassigned to make the three frozen claims distinct. No round admission is claimed because C2 does not verify on its declared operability axis and the axis-misattribution harms calibration.
+
+C1's original `kill_tested=4` target was a stale count copied from the r24 base: six base entries carry `ground: F<k>` (four F2, two F4). Amendment 1 corrected the literal to 6 before C1 data; `ScoutC1AmendmentHistory.md` confirms amendment 3 and its 16-case target preceded all C1 fixture scoring. Amendment 3's final C1 fixture is 16/16; the earlier W2 reference to a 15-case C1 set was a conflation with the separate R17 record-agreement fixture, not an observed C1 artifact.
+
+## Process deviations and scope
+
+- W1's validated 32-seat task batch was accidentally dispatched twice. The first 32-seat batch yielded two duplicate reports (`ScoutGateCensus`, `ScoutToolSHA256Counter`) and 30 seats were cancelled when the duplicate was noticed. The second 32-seat batch had eight Cursor `RATE_LIMITED_CHANGEABLE` failures (listed in the report) and 24 returned seats. No seat wrote outside its lane report/draft scope; no replacement seats were spawned.
+- W2 was a distinct validated v1 falsification batch of 39 seats (11 reviewer, 11 critic, 8 mutation-tester, 8 scout, 1 sentinel); 39 reports landed, no W2 seat died. The two waves plus the accidental duplicate dispatch total 103 spawn attempts; 38 were cancelled/failed. No residual task call.
+- The five base-control receipts initially committed in `6e4737e` had hand-assembled bodies (the C2/C3 outputs did not match the cited fixture hashes and three UTC values predated the measured revision). They were replaced with `souji-receipt-run.py run` receipts at `6deb535`; see W2 `ScoutPreregAudit.md`. The C1 refusal-control receipt is intentionally `RECEIPT-COUNTS-ABSENT` on verify because it has no stdout count line; the other four base receipts verify.
+- C3's two W1 red-arm mutant observations were independently re-run in W2 and are captured in `RevC3RedWitness.md`/`MutC3Control.md`, but the amendment-required red-arm receipts were not committed before the first W1 green draft run. This is a conformance defect; no claim is made that the ordering requirement was met.
+- The lane and fleet tool identities were unchanged; no tools were installed or upgraded. No L0 question was filed. No external repo, credential, operator-sweep, `.scratch/`, `/proc`, or cleanup target was inspected or changed.
+
+## Gate
+
+### Opened sources and curation (2026-10-25)
+
+SOURCES before: 123 rows, S001–S123 contiguous; `sources-census.sh validate --root /home/vgpnk/Projects/shokunin souji` exit 0, 31 warning-only W04 rows, no errors. Counts: malformed 0; tiers A=117/B=5/C=1; statuses mined=100/queued=15/rejected=8; duplicate ids none; enum/tier-inflation violations none; mined used-by paths missing 0.
+
+SOURCES after: 127 rows, S001–S127 contiguous; same validator exit 0 (34 W04 warnings, 0 errors). Counts: malformed 0; tiers A=120/B=5/C=2; statuses mined=103/queued=15/rejected=9; duplicate ids none; enum/tier-inflation violations none; mined used-by paths missing 0. The W2 census is in `.ufo/waves/round-25/w2/ScoutSOURCESCensus.md`; the L1 final run/output is recorded in the round report.
+
+- **ADMIT SOURCES S124** — https://git-scm.com/docs/gitrepository-layout § commondir, accessed 2026-10-25. Snapshot `census/round-25/sources/gitrepository-layout.5.txt`. Quote (23 words): “If this file exists, $GIT_COMMON_DIR (see git[1]) will be set to the path specified in this file if it is not explicitly set.” It grounds the commondir pointer, not all linked-worktree behavior.
+- **ADMIT SOURCES S125** — https://git-scm.com/docs/git § ENVIRONMENT VARIABLES `GIT_COMMON_DIR`, accessed 2026-10-25. Snapshot `census/round-25/sources/git.1.txt`. Quote (22 words): “If this variable is set to a path, non-worktree files that are normally in $GIT_DIR will be taken from this path instead.” This is the source required by prereg amendment 2; it describes shared-file redirection, not the option's resolution algorithm.
+- **ADMIT SOURCES S126** — https://git-scm.com/docs/git-worktree § DETAILS, accessed 2026-10-25. Snapshot `census/round-25/sources/git-worktree.1.txt`. Quote (12 words): “$GIT_COMMON_DIR is set to point back to the main worktree’s $GIT_DIR.” It grounds the linked-worktree relation. The exact probe call is also located at `tools/souji-repo-structure.sh:193`.
+- **REJECT SOURCES S127** — https://git-scm.com/docs/gitglossary, accessed 2026-10-25. Snapshot `census/round-25/sources/gitglossary.7.txt`; quote from § worktree (12 words): “most of which are shared among other worktrees of a single repository.” The bounded page search `grep -ciE 'common|COMMON_DIR' census/round-25/sources/gitglossary.7.txt` returned 0; the glossary does not define a common directory. Flip: a later release adds a located definition.
+- The opened git-rev-parse(1) page was screened as corroborating exact-option documentation and not given a registry row; the lane code at `tools/souji-repo-structure.sh:193` names the call. No row was opened from or adopted from `shokuknow`; assimilation is none.
+- Added tier counts: three A/mined rows S124–S126 and one C/rejected row S127. No prior row status/recheck/used-by cell changed. F2 source path advanced to `S124 → S125 → S126`; F2 remains frontier, not Core. `considerthese/` is absent in this lane (reported in the final report).
+
+### Quarantine-slice vocabulary (D6, R24-M22)
+
+Round-24 quarantine-slice verdicts are keyed by campaign register (lane, id) = (souji, Sxxx), not lane-registry ids. `census/round-24/records/slice-verdicts.tsv` is the authoritative gate record; `.ufo/waves/round-24/assimilation/slice-verdicts.tsv` is the scouts’ detail reading. The detail classes `present`, `present-via-mirror`, and `present-quote-needs-fix` map to r24 gate `accepted`.
+
+The r24 vocabulary collapses round 22's `present` and `accepted` pass classes into one r24 `accepted`. S126 and S138 are vocabulary collapse, not re-grades. S118 is the only re-grade: r22 `unverifiable` → r24 `accepted` after the source was found in a reachable mirror and a re-cite was available. S123/S131/S133 detail `present` cells record digest presence, not quote matches in their cited payloads; their gate admissions are limited to the located spans in the cited Git/worktree or rename documentation. Key the campaign rows by lane plus id, never a bare S-number. Both TSVs now point to this mapping. The bounded Q57 checks are `tests/fixtures/r25-slice-mapping.py` and `tests/fixtures/r25-q57-check.sh`; the latter covers the explicitly listed citations only, not omission discovery or authority correctness.
+
+Assimilation: none this round. The package slice and `shokuknow` materials remain untouched. The r24 slice tables themselves are append-only; no verdict row was edited. The r24 tally sentences at `corpus/lessons/round-24.md:240`, `:232` (S118), `LOG.md:1692`, and `SCORECARD.md:181` carry appended superseded-by notes; D4's README :40 status marker adds no line and no pipe. D5's lane-authored correction is appended to `corpus/lessons/round-22.md`; the non-author round-22 spot-check remains unchanged.
+
+## Mistakes
+
+Witness legend: **SHOWN** = executed and failing on the defect; **NONE** = no executable witness.
+
+| id | class | evidence | captured-by | fix | failure witness |
+|---|---|---|---|---|---|
+| R25-M1 | number-drift — C1's `kill_tested=4` after-target was copied from a different base and did not count the six entries grounded at this lane's named base | Original `preregistration.txt` after-target literal `kill_tested=4`; `coverage-agreement-at-base.tsv` reports `grounded=6`; the measured C1 candidate command prints `kill_tested=6` | none; the before receipt counted ordinary grounded entries but the prereg literal was copied without re-deriving the new kill count | Amendment 1 corrected the literal to 6 before C1 scoring; Q58 records the base-target check | **SHOWN**: same C1 command at candidate `7e4dbef` prints `kill_tested=6`; original target 4 fails. The old tool rejects the new flag (rc 2), and the draft tool's F2-only mutant prints 4 and fails k5 / the real target (W2 `RevC1BaseCount.md`). |
+| R25-M2 | attribution/landing — L1 issued the same 32-seat W1 taskCall twice; the duplicate batch created two duplicate completed reports and 30 canceled seat identities | W1 task-call transcript and `.ufo/waves/round-25/w1/swarm-registry.json`; 30 original handles were canceled after duplicate dispatch | Round prompt §6.2: one batched task call per validated wave; I failed to preserve/record the first return before retrying | Preserve the first task response and call `record` once; log the duplicate dispatch and cancellations, do not count duplicates as distinct attack work | **SHOWN**: the second identical dispatch returned `L1Souji25.<name>-2` identities; 30 first-call agents were canceled, while two first-call census seats had already returned. The final W1 registry assigns only the surviving 32 handles. |
+
+R17 residual: r24 already fixed the post-stderr counts shadow in `315422b`; r25 extends the fixture, not the production behavior. Red c872eec blob scores 14/15; current tool scores 15/15. The documentation correction is cosmetic and the prior code fix remains r24 work. R15 cross-revision K1 decoy anchoring remains open. The current fixture also leaves the per-ground-vs-per-entry mutant, non-md-base-entry and malformed-`--base-rev` cases untested (W2 `MutC1AlwaysPass.md`); they are disclosed limits, not claimed as exhaustively covered.
+
+## Seat-reported failures
+
+W1 had two identical 32-seat task batches because of the duplicate dispatch. The first batch returned two duplicate census reports and 30 seats were canceled; the second batch had eight `Cursor RATE_LIMITED_CHANGEABLE` failures, all with the same provider text: “You've hit your usage limit: You've saved $3102 on API model usage this month with Ultra. Switch to a different model or set a Spend Limit to continue with Auto. Your usage limits will reset on 11/18/2026.” Failed/canceled identities and reports are itemized under `.ufo/waves/round-25/w1/`; no dead seat was respawned under a replacement name. W2 had 39 spawned seats (11 reviewer, 11 critic, 8 mutation-tester, 8 scout, 1 sentinel); its reports are under `.ufo/waves/round-25/w2/`. Final W2 completed/dead counts are stated in the fleet report from the committed registry and report inventory.
+
+## Trend verdicts
+
+- **expansion — unchanged.** The new F2 entry deepens already-mapped frontier ground; F2 remains frontier and no new coverage-map ground or Core transition is claimed. SOURCES row growth is curation, not knowledge expansion.
+- **quality — improved (bounded).** The new F2 entry adds sourced common-dir and linked-worktree limits; C2 and C3 fixtures produce bounded edge-case outputs. The C2 refusal cases 11/12 report a manifest delta but do not gate on it; the 12/20 listed mutant set has eight survivors; no universal no-write claim is made. No existing admitted entry was found false in this round.
+- **discernment — improved (bounded).** The r24 D6 disagreement is reconciled into the Q57 lesson/criterion and an 8-row mapping check; the checker has a red-before/green-after witness. It is enumerated-site agreement, not proof the authoritative table is true or that all future citations are discovered. SOURCES S124–S127's admit/reject pair did not receive a non-author outside spot-check this round; that remains closure debt.
+
+## Boundaries and remaining holds
+
+F2 remains frontier; no lane-bound size baseline, fleet figure, deletion authority, or promotion of the r13 probe to a new capability is claimed. C3 leaves the probe bytes unchanged and tests its linked-worktree/common-dir envelope; the worktree root itself is not in the manifest. C2's amendment-2 text overstates manifest gating for cases 11/12; the fixture reports `manifest_changed` but does not include it in the predicate. C2 also survives eight listed tool mutants. R7 count-in-stderr behavior was changed in r24; r25 does not add a new receipt-run fixture case. R15 remains open. Certification OFF, K5 HELD, F5 reap and NAMESPACE holds unchanged.
+
+## Round 25 final evidence (append-only closeout)
+
+- C3 candidate receipt `census/round-25/records/c3-after.tsv` verifies at `728b2ce71acbe574ae3036b456724d0a3d6f8f08`: fixture `selftest=PASS ids=7/7`, rc 0. C1 and C2 after receipts also verify at their named independent candidates (`7e4dbef` and `679e2d0`).
+- Q57 cross-table fixture: `python3 -B tests/fixtures/r25-slice-mapping.py --root .` → `rows=8/8 status=PASS`; citation checker → `q57=PASS` for the four listed sites. Red-before at base: NO-POINTER ×2, STALE ×4, rc 1 (W2 `MutQ57Check.md`).
+- R7 correction to the earlier boundary sentence above: r25 does add a supplemental synthetic witness. `python3 -B tests/fixtures/r25-receipt-stderr.py --root . --rev 728b2ce71acbe574ae3036b456724d0a3d6f8f08` → old `c872eec` `verify=ok`, current runner `RECEIPT-COUNTS-ABSENT`, `cases=1 pass=1`; the behavior fix itself remains r24 work.
+- Opened-source snapshots verify `sha256sum -c census/round-25/sources/SHA256SUMS` → 5/5. End SOURCES validation exits 0 with 34 W04 warnings, 0 errors; census remains 127 rows, malformed/duplicate/enum/used-by-missing 0.
+- W2 registry assigns 39 seat identities; 39 W2 reports landed with no W2 deaths. The final report records W1's duplicate dispatch, 30 canceled duplicate identities and eight rate-limit failures.
+- R23 tool counter at candidate `728b2ce71acbe574ae3036b456724d0a3d6f8f08`: `keys=4 records=4 occurrences=17 mismatches=0`, receipt `census/round-25/records/record-agreement-at-tip.tsv` verifies. The candidate-bound measurement is before the receipt itself is added.
+- The earlier boundary clause at line 71 saying “r25 does not add a new receipt-run fixture case” is superseded by the R7 synthetic fixture above; this remains a test-only witness for the r24 code change.

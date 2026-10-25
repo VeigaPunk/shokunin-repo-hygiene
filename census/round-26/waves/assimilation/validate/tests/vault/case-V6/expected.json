@@ -1,0 +1,119 @@
+{
+  "case": "case-V6",
+  "schema": "souji-vault-fixture/1",
+  "title": "ledger TSV with CRLF line endings + a valid row -> the row still parses -> VERIFIED",
+  "spec_case": "V6: ledger TSV with CRLF line endings + a valid row. Expected: row still parses -> VERIFIED (explicit CRLF-handling verdict).",
+  "seat": "S14",
+  "round": 4,
+  "builder": "tests/vault/case-V6/make-fixture.sh",
+  "builder_cli": "bash tests/vault/case-V6/make-fixture.sh [--out DIR] [--ledger FILE] [--quiet] [--print-row] [--print-hashes]",
+  "readme": "tests/vault/case-V6/README.md",
+  "selftest": "tests/vault/case-V6/selftest.sh",
+  "fixture_root_placeholder": "@FIXTURE_ROOT@",
+  "path_convention": "substitute @FIXTURE_ROOT@ with the ROOT printed by make-fixture.sh (FIXTURE_READY V6 <ROOT>); make-fixture.sh also writes the substituted copy to <ROOT>/expected.json. probes[].ledger and probes[].target are relative to the fixture root.",
+  "ledger_path": "@FIXTURE_ROOT@/ledger.tsv",
+  "ledger_columns": ["source_path", "source_sha256", "vault_path", "vault_sha256", "exported_at", "note"],
+  "ledger_header": "source_path\tsource_sha256\tvault_path\tvault_sha256\texported_at\tnote",
+  "live_ledger_untouched": "corpus/knowledge/obsidian-ledger.tsv stays header-only; the builder never writes it (test ledgers live under tests/vault/ and the fixture root)",
+  "crlf_contract": {
+    "primary_ledger": "@FIXTURE_ROOT@/ledger-crlf.tsv",
+    "line_endings": "CRLF on every line (header and row): exactly 2 CR bytes, 2 lines, each line ending CR LF",
+    "row_columns": 6,
+    "what_must_hold": "the CRLF ledger parses exactly like the LF control: the valid row still matches -> VERIFIED(moved-to-obsidian)",
+    "lf_control": "@FIXTURE_ROOT@/ledger-lf-control.tsv (identical row, LF endings; isolates CRLF as the only variable)",
+    "truncated_boundary": "@FIXTURE_ROOT@/ledger-crlf-truncated.tsv (CRLF row truncated after the 4 hash columns; the CR then rides on vault_sha256, so the digest comparison fails -> NOT-VERIFIED with a sha-mismatch reason). Informational boundary, NOT a judged probe: a schema-tolerant harness that strips CR from every field may legitimately still verify it, so no verdict is required of candidate harnesses here. selftest.sh pins it against the r2 tool."
+  },
+  "probes": [
+    {
+      "id": "crlf-valid-row",
+      "ledger": "ledger-crlf.tsv",
+      "target": "src/payload.md",
+      "verdict": "VERIFIED",
+      "receipt": "moved-to-obsidian",
+      "contains": ["moved-to-obsidian"],
+      "role": "the assignment's case: CRLF header + CRLF valid row -> the row still parses -> VERIFIED"
+    },
+    {
+      "id": "lf-control",
+      "ledger": "ledger-lf-control.tsv",
+      "target": "src/payload.md",
+      "verdict": "VERIFIED",
+      "receipt": "moved-to-obsidian",
+      "contains": ["moved-to-obsidian"],
+      "role": "control: the identical row with LF endings; isolates CRLF as the only variable"
+    }
+  ],
+  "targets": [
+    {
+      "id": "crlf-valid-row",
+      "path": "@FIXTURE_ROOT@/src/payload.md",
+      "vault_path": "@FIXTURE_ROOT@/vault/payload.md",
+      "ledger": "@FIXTURE_ROOT@/ledger-crlf.tsv",
+      "expected": {
+        "verdict": "VERIFIED",
+        "receipt": "moved-to-obsidian"
+      },
+      "why": "byte-identical source/vault pair plus a fully matching ledger row whose lines end CRLF; the trailing CR rides on the last column (note), so every hash column stays clean"
+    }
+  ],
+  "expect": [
+    {
+      "path": "@FIXTURE_ROOT@/src/payload.md",
+      "vault_path": "@FIXTURE_ROOT@/vault/payload.md",
+      "ledger": "@FIXTURE_ROOT@/ledger-crlf.tsv",
+      "verdict": "VERIFIED",
+      "receipt": "moved-to-obsidian",
+      "verdict_string": "VERIFIED(moved-to-obsidian)"
+    }
+  ],
+  "accept": {
+    "exact": ["VERIFIED(moved-to-obsidian)"],
+    "contains": ["moved-to-obsidian"],
+    "structured": {"verdict": "VERIFIED", "receipt": "moved-to-obsidian"},
+    "note": "a harness may render the verdict as one token or as separate fields; both satisfy this case as long as the verdict class is VERIFIED (never NOT-VERIFIED) and the output names the moved-to-obsidian receipt that justified it"
+  },
+  "must_not_be": ["NOT-VERIFIED", "NOT-SAFE"],
+  "disarmed": {
+    "method": "point the tool at a header-only ledger: printf 'source_path\\tsource_sha256\\tvault_path\\tvault_sha256\\texported_at\\tnote\\n' > /tmp/empty.tsv; SOUJI_LEDGER=/tmp/empty.tsv tools/souji-verify.sh @FIXTURE_ROOT@/src/payload.md",
+    "expected": {"verdict": "NOT-VERIFIED", "receipt": "none"},
+    "why": "the row is the receipt: without it the byte-identical vault copy is not evidence"
+  },
+  "crosscheck_round2": {
+    "note": "the r2 tool tools/souji-verify.sh predates the r4 VERIFIED vocabulary; for these inputs its expected output is the same verdict pair under r2 names (measured; selftest.sh pins it)",
+    "command": "SOUJI_LEDGER=@FIXTURE_ROOT@/ledger-crlf.tsv bash tools/souji-verify.sh @FIXTURE_ROOT@/src/payload.md",
+    "expected_line": "VERDICT\t@FIXTURE_ROOT@/src/payload.md\tSAFE\tmoved-to-obsidian\tledger-row vault=@FIXTURE_ROOT@/vault/payload.md source-sha256=127ac886a92b",
+    "tool_sha256": "7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820",
+    "seam": "SOUJI_LEDGER env override (defaults to corpus/knowledge/obsidian-ledger.tsv, which stays header-only)"
+  },
+  "failure_modes_caught": [
+    "CRLF-hostile ledger parsing: exact-equality header checks, $-anchored row matching, or any parser that treats the trailing CR as data in a way that rejects the row -> V6a flips from VERIFIED to NOT-VERIFIED",
+    "false VERIFIED on a mismatched pair: the sha columns must still decide; the fixture's hashes are the true digests, so a harness that skips the vault-side hash check cannot be caught here (V2/V4 own that) but a harness that skips CRLF handling is caught by V6a",
+    "always-NOT-VERIFIED stub: V6b (LF control) and V6a both require VERIFIED, so a harness that never verifies fails"
+  ],
+  "consumers": {
+    "runner-26": "reads probes[] (per-probe ledger/target/verdict/contains); load-tested against this fixture (2 rows emitted)",
+    "runner-28": "reads probes[] (per-probe ledger against the case dir, target against its --out root); full matrix run passed both V6 probes for impl-20 and impl-24",
+    "runner-29": "explicit case-V6 probes branch: resolves probes[].ledger/target against its --out root with a case-dir fallback, and additionally judges ledger-crlf-truncated.tsv as NOT-VERIFIED(mismatch) when present — note that a CR-stripping candidate (impl-24) legitimately verifies the truncated row, so that extra row is stricter than this case's judged contract"
+  },
+  "determinism": {
+    "note": "fixed payload bytes and exported_at; ledger rows embed per-root absolute paths, so ledger file hashes vary per build root while the payload sha256 is constant",
+    "payload_sha256": "127ac886a92b2d75784d8bbf12834d514aae8e334417a21d5b272b82f09eaece",
+    "payload_bytes": 42
+  },
+  "files_expected_in_fixture_root": [
+    ".case-V6-fixture",
+    "src/payload.md",
+    "vault/payload.md",
+    "ledger-crlf.tsv",
+    "ledger-lf-control.tsv",
+    "ledger-crlf-truncated.tsv",
+    "ledger.tsv",
+    "expected.json"
+  ],
+  "notes": [
+    "The builder writes ONLY: <FIXTURE_ROOT>/** and <LEDGER> (default tests/vault/ledger-V6.tsv). The live ledger and the real vault /home/vgpnk/Documents/shokoknowledge are never read or written by this fixture; the vault-side copies live under the fixture root.",
+    "No Obsidian process, no CLI and no network are involved; the GUI launcher /usr/bin/obsidian is never executed.",
+    "stdout contract: line 1 = JSON {case,root,targets,expect,ledger,sha256}; line 2 = FIXTURE_READY V6 <ROOT>; --quiet emits FIXTURE_READY + KEY=VALUE lines only.",
+    "Exit codes: 0 ok, 1 build/assertion failure, 2 usage."
+  ]
+}

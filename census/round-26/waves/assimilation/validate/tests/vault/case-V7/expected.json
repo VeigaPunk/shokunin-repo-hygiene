@@ -1,0 +1,198 @@
+{
+  "case": "case-V7",
+  "schema": "souji-vault-fixture/1",
+  "title": "ledger rows with extra columns beyond the 6 canonical -> VERIFIED (extra columns ignored, note recorded)",
+  "spec_case": "V7: a ledger row carries extra columns beyond the 6 canonical (source_path, source_sha256, vault_path, vault_sha256, exported_at, note). Expected: VERIFIED — the canonical positions decide, extra columns are ignored, the note column is still read, and hash checking is not weakened.",
+  "seat": "S15",
+  "round": 4,
+  "builder": "tests/vault/case-V7/make-fixture.sh",
+  "builder_cli": "bash tests/vault/case-V7/make-fixture.sh [--out DIR] [--ledger FILE] [--quiet] [--print-ledger] [--print-hashes]",
+  "fixture_root_placeholder": "@FIXTURE_ROOT@",
+  "path_convention": "make-fixture.sh substitutes @FIXTURE_ROOT@ with the built root (absolute) and writes the substituted copy to <ROOT>/expected.json; every path below is absolute after substitution; ledger matching is path-exact",
+  "ledger_path": "@FIXTURE_ROOT@/ledger.tsv",
+  "ledger_columns": ["source_path", "source_sha256", "vault_path", "vault_sha256", "exported_at", "note"],
+  "ledger_header": "source_path\tsource_sha256\tvault_path\tvault_sha256\texported_at\tnote",
+  "live_ledger_untouched": "corpus/knowledge/obsidian-ledger.tsv stays header-only; the builder never writes it (test ledgers live under tests/vault/)",
+  "declared_ledger_rows": [
+    {
+      "id": "extra-cols-row",
+      "columns": 7,
+      "source_path": "@FIXTURE_ROOT@/source/src/extra-cols-notes.md",
+      "source_sha256": "1543cfa1785f270374b6f16407440152cbfd27dd08b1ad1f24f71267ab456206",
+      "vault_path": "@FIXTURE_ROOT@/vault/extra-cols-notes.md",
+      "vault_sha256": "1543cfa1785f270374b6f16407440152cbfd27dd08b1ad1f24f71267ab456206",
+      "exported_at": "2026-10-18",
+      "note": "case-V7 extra-cols",
+      "extra_columns": ["exported_by=souji-fixture"],
+      "why": "the canonical six positions all match; the extra 7th column must be ignored, and the note (column 6) must still be read and recorded in the verdict output"
+    },
+    {
+      "id": "extra-cols-8-row",
+      "columns": 8,
+      "source_path": "@FIXTURE_ROOT@/source/src/extra-cols-8-notes.md",
+      "source_sha256": "f2b8420064e81b6efc0eab1917cbb4ff6a088cef150251c66d4b3545a36eef53",
+      "vault_path": "@FIXTURE_ROOT@/vault/extra-cols-8-notes.md",
+      "vault_sha256": "f2b8420064e81b6efc0eab1917cbb4ff6a088cef150251c66d4b3545a36eef53",
+      "exported_at": "2026-10-18",
+      "note": "case-V7 extra-cols-8",
+      "extra_columns": ["exported_by=souji-fixture", ""],
+      "why": "two extra columns, the second empty: catches parsers that split on whitespace or choke on empty trailing fields"
+    },
+    {
+      "id": "six-cols-row",
+      "columns": 6,
+      "source_path": "@FIXTURE_ROOT@/source/src/six-cols-notes.md",
+      "source_sha256": "ada33bd81eeab6375081b16fe83dc8db9418131bc62e97a68b6439ac6a68a781",
+      "vault_path": "@FIXTURE_ROOT@/vault/six-cols-notes.md",
+      "vault_sha256": "ada33bd81eeab6375081b16fe83dc8db9418131bc62e97a68b6439ac6a68a781",
+      "exported_at": "2026-10-18",
+      "note": "case-V7 six-cols control",
+      "extra_columns": [],
+      "why": "baseline control: a canonical 6-column row must verify, proving the 7/8-column successes are not the result of a loosened parser"
+    },
+    {
+      "id": "extra-cols-mismatch-row",
+      "columns": 7,
+      "source_path": "@FIXTURE_ROOT@/source/src/extra-cols-mismatch.md",
+      "source_sha256": "2ceca233cfc70cfd9a07e6e889ea21951c9ee433250cc6b6cc0cd6e9bf3f4239",
+      "vault_path": "@FIXTURE_ROOT@/vault/extra-cols-mismatch.md",
+      "vault_sha256": "2ceca233cfc70cfd9a07e6e889ea21951c9ee433250cc6b6cc0cd6e9bf3f4239",
+      "exported_at": "2026-10-18",
+      "note": "case-V7 extra-cols mismatch",
+      "extra_columns": ["exported_by=souji-fixture"],
+      "why": "the vault copy was edited after export (actual digest 6e28bf53...), so the vault-side conjunct fails even though the row has extra columns: ignoring extras must not weaken hash checking"
+    }
+  ],
+  "targets": [
+    "@FIXTURE_ROOT@/source/src/extra-cols-notes.md",
+    "@FIXTURE_ROOT@/source/src/extra-cols-8-notes.md",
+    "@FIXTURE_ROOT@/source/src/six-cols-notes.md",
+    "@FIXTURE_ROOT@/source/src/extra-cols-mismatch.md"
+  ],
+  "expect": [
+    {
+      "path": "@FIXTURE_ROOT@/source/src/extra-cols-notes.md",
+      "vault_path": "@FIXTURE_ROOT@/vault/extra-cols-notes.md",
+      "verdict": "VERIFIED",
+      "reason": null,
+      "receipt": "moved-to-obsidian",
+      "verdict_string": "VERIFIED",
+      "ledger_row": "extra-cols-row",
+      "note_recorded": "case-V7 extra-cols",
+      "why": "PRIMARY target: 7-column row, both paths exist and both digests equal the row's recorded values; the tool must report VERIFIED and its evidence/note field must carry the row's note text (case-V7 extra-cols) as the recorded note"
+    },
+    {
+      "path": "@FIXTURE_ROOT@/source/src/extra-cols-8-notes.md",
+      "vault_path": "@FIXTURE_ROOT@/vault/extra-cols-8-notes.md",
+      "verdict": "VERIFIED",
+      "reason": null,
+      "receipt": "moved-to-obsidian",
+      "verdict_string": "VERIFIED",
+      "ledger_row": "extra-cols-8-row",
+      "note_recorded": "case-V7 extra-cols-8",
+      "why": "8-column row with an empty trailing field; extra columns including the empty one must be ignored"
+    },
+    {
+      "path": "@FIXTURE_ROOT@/source/src/six-cols-notes.md",
+      "vault_path": "@FIXTURE_ROOT@/vault/six-cols-notes.md",
+      "verdict": "VERIFIED",
+      "reason": null,
+      "receipt": "moved-to-obsidian",
+      "verdict_string": "VERIFIED",
+      "ledger_row": "six-cols-row",
+      "note_recorded": "case-V7 six-cols control",
+      "why": "control: canonical 6-column row; a correct tool must still return VERIFIED"
+    },
+    {
+      "path": "@FIXTURE_ROOT@/source/src/extra-cols-mismatch.md",
+      "vault_path": "@FIXTURE_ROOT@/vault/extra-cols-mismatch.md",
+      "verdict": "NOT-VERIFIED",
+      "reason": "vault-hash-mismatch",
+      "receipt": null,
+      "verdict_string": "NOT-VERIFIED(vault-hash-mismatch)",
+      "ledger_row": "extra-cols-mismatch-row",
+      "why": "7-column row whose vault copy was edited after export; ignoring extra columns must not weaken the vault-side hash check"
+    }
+  ],
+  "expect_string": "VERIFIED",
+  "accept": {
+    "exact": ["VERIFIED"],
+    "contains": ["VERIFIED"],
+    "structured": {"verdict": "VERIFIED", "receipt": "moved-to-obsidian"},
+    "note": "the primary target must be VERIFIED (never NOT-VERIFIED/NOT-SAFE). Class-level judging is by verdict; the note-recording expectation is declared per target in expect[].note_recorded and in note_recording below — a harness that renders VERIFIED plus the row's note satisfies both."
+  },
+  "note_recording": {
+    "requirement": "extra columns beyond the 6 canonical must be ignored for matching, but the canonical note column (column 6) must still be read and recorded — the row's note text is the recorded annotation of the export",
+    "rows": {
+      "extra-cols-notes.md": "case-V7 extra-cols",
+      "extra-cols-8-notes.md": "case-V7 extra-cols-8",
+      "six-cols-notes.md": "case-V7 six-cols control",
+      "extra-cols-mismatch.md": "case-V7 extra-cols mismatch"
+    },
+    "recovery_check": "awk -F'\\t' 'NR>1 {print $6}' <ROOT>/ledger.tsv prints exactly the four declared notes (column 6), proving the note survives after 0, 1 and 2 extra columns; the selftest asserts this",
+    "r2_gap": "the installed r2 tool reads `IFS=TAB read -r sp ss vp vs _rest` and never surfaces the note — note recording in the verdict output is the r4 delta this case pins"
+  },
+  "must_not_be": ["NOT-VERIFIED(extra-columns)", "NOT-VERIFIED(malformed-row)", "NOT-VERIFIED(column-count)", "NOT-SAFE(extra-columns)"],
+  "must_not_be_applies_to": "the primary target (extra-cols-notes.md)",
+  "failure_modes_caught": [
+    "column-count rejection: a parser that requires exactly 6 columns reports NOT-VERIFIED/malformed for the 7- and 8-column rows — caught by expect[0]/expect[1]",
+    "note dropped: a parser that only reads columns 1-4 reports VERIFIED but loses the note — caught by note_recording (the note text must appear in the verdict line; the r2 tool never surfaces it)",
+    "weakened hashing: a tool that 'ignores extra columns' by skipping hash checks reports VERIFIED on the edited vault copy — caught by expect[3]",
+    "loosened matching: a tool that splits on whitespace matches the 8-column row's empty trailing field incorrectly or misfires on the note — caught by expect[1]",
+    "blanket failure: a tool that never returns VERIFIED fails the six-cols control — caught by expect[2]"
+  ],
+  "source_side": {
+    "extra_cols_notes": {"path": "@FIXTURE_ROOT@/source/src/extra-cols-notes.md", "exists": true, "sha256": "1543cfa1785f270374b6f16407440152cbfd27dd08b1ad1f24f71267ab456206", "matches_row": true},
+    "extra_cols_8_notes": {"path": "@FIXTURE_ROOT@/source/src/extra-cols-8-notes.md", "exists": true, "sha256": "f2b8420064e81b6efc0eab1917cbb4ff6a088cef150251c66d4b3545a36eef53", "matches_row": true},
+    "six_cols_notes": {"path": "@FIXTURE_ROOT@/source/src/six-cols-notes.md", "exists": true, "sha256": "ada33bd81eeab6375081b16fe83dc8db9418131bc62e97a68b6439ac6a68a781", "matches_row": true},
+    "extra_cols_mismatch": {"path": "@FIXTURE_ROOT@/source/src/extra-cols-mismatch.md", "exists": true, "sha256": "2ceca233cfc70cfd9a07e6e889ea21951c9ee433250cc6b6cc0cd6e9bf3f4239", "matches_row": true}
+  },
+  "vault_side": {
+    "extra_cols_notes": {"path": "@FIXTURE_ROOT@/vault/extra-cols-notes.md", "exists": true, "sha256_actual": "1543cfa1785f270374b6f16407440152cbfd27dd08b1ad1f24f71267ab456206", "sha256_recorded_in_row": "1543cfa1785f270374b6f16407440152cbfd27dd08b1ad1f24f71267ab456206", "tampered": false, "mode": "0444"},
+    "extra_cols_8_notes": {"path": "@FIXTURE_ROOT@/vault/extra-cols-8-notes.md", "exists": true, "sha256_actual": "f2b8420064e81b6efc0eab1917cbb4ff6a088cef150251c66d4b3545a36eef53", "sha256_recorded_in_row": "f2b8420064e81b6efc0eab1917cbb4ff6a088cef150251c66d4b3545a36eef53", "tampered": false, "mode": "0444"},
+    "six_cols_notes": {"path": "@FIXTURE_ROOT@/vault/six-cols-notes.md", "exists": true, "sha256_actual": "ada33bd81eeab6375081b16fe83dc8db9418131bc62e97a68b6439ac6a68a781", "sha256_recorded_in_row": "ada33bd81eeab6375081b16fe83dc8db9418131bc62e97a68b6439ac6a68a781", "tampered": false, "mode": "0444"},
+    "extra_cols_mismatch": {"path": "@FIXTURE_ROOT@/vault/extra-cols-mismatch.md", "exists": true, "sha256_actual": "6e28bf53541405576602483a415a368a088845fe63f683085a379d7d2b1b632f", "sha256_recorded_in_row": "2ceca233cfc70cfd9a07e6e889ea21951c9ee433250cc6b6cc0cd6e9bf3f4239", "tampered": true, "delta": "edited inside the vault after export (240 vs 329 bytes)", "mode": "0444"}
+  },
+  "crosscheck": {
+    "note": "the r2 tool tools/souji-verify.sh parses rows with `IFS=TAB read -r sp ss vp vs _rest`, so extra columns land in _rest and are ignored; for the three matched pairs its expected output is SAFE(moved-to-obsidian) under r2 names",
+    "command": "SOUJI_LEDGER=@FIXTURE_ROOT@/ledger.tsv SHOKUNIN_ROOT=@FIXTURE_ROOT@ bash tools/souji-verify.sh @FIXTURE_ROOT@/source/src/extra-cols-notes.md @FIXTURE_ROOT@/source/src/extra-cols-8-notes.md @FIXTURE_ROOT@/source/src/six-cols-notes.md @FIXTURE_ROOT@/source/src/extra-cols-mismatch.md",
+    "expected_lines": [
+      "VERDICT\t<target1>\tSAFE\tmoved-to-obsidian\tledger-row vault=<vault1> source-sha256=1543cfa1785f",
+      "VERDICT\t<target2>\tSAFE\tmoved-to-obsidian\tledger-row vault=<vault2> source-sha256=f2b8420064e8",
+      "VERDICT\t<target3>\tSAFE\tmoved-to-obsidian\tledger-row vault=<vault3> source-sha256=ada33bd81eea",
+      "VERDICT\t<target4>\tNOT-SAFE\tnone\tpushed=no-introducing-commit; obsidian=vault-sha-mismatch; obsidian=no-matching-ledger-row; stale=not-scratch-type"
+    ],
+    "seam": "SOUJI_LEDGER env override (defaults to corpus/knowledge/obsidian-ledger.tsv, which stays header-only)",
+    "note_recording_gap": "the r2 tool ignores the note column entirely (it reads 4 fields + _rest); recording the note text in the verdict output is the r4 delta this case pins via accept.contains"
+  },
+  "determinism": {
+    "note": "fixed payload bytes; two builds at different roots produce byte-identical files and equal sha256 values; the builder asserts every copied file against the five digest constants and checks the ledger's column counts per row",
+    "sha256": {
+      "six-cols-notes.md": "ada33bd81eeab6375081b16fe83dc8db9418131bc62e97a68b6439ac6a68a781",
+      "extra-cols-notes.md": "1543cfa1785f270374b6f16407440152cbfd27dd08b1ad1f24f71267ab456206",
+      "extra-cols-8-notes.md": "f2b8420064e81b6efc0eab1917cbb4ff6a088cef150251c66d4b3545a36eef53",
+      "extra-cols-mismatch.md (source)": "2ceca233cfc70cfd9a07e6e889ea21951c9ee433250cc6b6cc0cd6e9bf3f4239",
+      "extra-cols-mismatch.md (vault)": "6e28bf53541405576602483a415a368a088845fe63f683085a379d7d2b1b632f"
+    }
+  },
+  "files_expected_in_fixture_root": [
+    ".case-V7-fixture",
+    "source/src/extra-cols-notes.md",
+    "source/src/extra-cols-8-notes.md",
+    "source/src/six-cols-notes.md",
+    "source/src/extra-cols-mismatch.md",
+    "vault/extra-cols-notes.md",
+    "vault/extra-cols-8-notes.md",
+    "vault/six-cols-notes.md",
+    "vault/extra-cols-mismatch.md",
+    "ledger.tsv",
+    "expected.json"
+  ],
+  "notes": [
+    "The builder writes ONLY: <FIXTURE_ROOT>/** and <LEDGER> when --ledger is given (default: none — the canonical ledger is always <ROOT>/ledger.tsv). The live ledger and the real vault /home/vgpnk/Documents/shokoknowledge are never touched; this case is self-contained under tests/vault/.",
+    "The vault here is a fake vault dir under the fixture root — no Obsidian process, no CLI, no network is involved; vault files are mode 0444 (read-only signal).",
+    "stdout contract: line 1 = JSON {case,schema,root,ledger,targets,expect}; line 2 = FIXTURE_READY case-V7 <ROOT>; then LEDGER=, TARGET=, VAULT=, EXPECT=, NOTE_EXPECTED=, TARGET_2..4/EXPECT_2..4. --quiet emits FIXTURE_READY + KEY=VALUE lines only.",
+    "Exit codes: 0 built (also for --print-*), 1 build/assertion failure, 2 usage.",
+    "Runner note: r4 impls are invoked as `<tool> --ledger <file> <target>` (V2/runner-28 convention) or with SOUJI_LEDGER=<file> (r2 convention); the r2 installed tool accepts ONLY the SOUJI_LEDGER env var — `--ledger` on it is a usage error. The ledger path for this case is this file's 'ledger' key after substitution (<ROOT>/ledger.tsv)."
+  ]
+}

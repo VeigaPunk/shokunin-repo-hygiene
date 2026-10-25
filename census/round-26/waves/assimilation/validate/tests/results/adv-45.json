@@ -1,0 +1,220 @@
+{
+  "seat": "S45",
+  "role": "adversarial tester: obsidian-ledger integrity",
+  "round": 2,
+  "lane_repo": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+  "spec": {
+    "path": "tools/souji-verify.spec.md",
+    "sha256": "59b2ba61cf4ecb82e81d37b58c9c2ca436995c288a1a97a878c5bd65d350c067"
+  },
+  "harness": {
+    "path": "/tmp/adv-45/run-adv45.sh",
+    "sha256": "c9d8067f5c7e6580acf5bd46300375e9d0417da1eb741b3b9f9adee6b5e994be",
+    "family": "ledger integrity (control / wrong-source-sha / missing-vault / extra-columns / short-row / path-form / wrong-vault-sha)"
+  },
+  "invocation": "cd <fixture repo>; SHOKUNIN_ROOT=<fixture fleet root> SOUJI_LEDGER=<fixture ledger> bash <tool> --stale-days 1 <target>",
+  "tool": {
+    "path": "/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh",
+    "present": true,
+    "sha256": "586bc36c6039b9c9bf5846b85156b02dd3daa6f594c03d6ba474a9c71f2fc812",
+    "sha256_after_run": "586bc36c6039b9c9bf5846b85156b02dd3daa6f594c03d6ba474a9c71f2fc812",
+    "mtime": "2026-10-18 13:00:00.131474796 -0300",
+    "size": 29139,
+    "selftest_rc": 0,
+    "selftest_tail": "JSON-mode PASS jsonl SAFE/pushed {\"path\":\"/tmp/souji-selftest.79urrU/fleet/beta-shokunin/pushed-file.txt\",\"kind\":\"artifact\",\"verdict\":\"SAFE\",\"receipt\":\"pushed\",\"evidence\":\"intro=b10bd96e1911 default=refs/remotes/origin/master repo=/tmp/souji-selftest.79urrU/fleet/beta-shokunin\"} json contract SELFTE"
+  },
+  "run_utc": "2026-10-18T16:00:50Z",
+  "host_git": "git version 2.55.0",
+  "cases": [
+    {
+      "id": "A0",
+      "binding": true,
+      "family": "control-6col",
+      "constructed": "untracked notes/alpha-doc.txt; 6-col row all four fields match; vault file present matching sha ",
+      "expected": {
+        "verdict": "SAFE",
+        "receipt": "moved-to-obsidian"
+      },
+      "oracle": "SAFE(moved-to-obsidian)",
+      "observed": {
+        "rc": 0,
+        "verdict": "SAFE",
+        "receipt": "moved-to-obsidian",
+        "evidence_line": "ledger=/tmp/adv-45/work.C1SXyv/A0/ledger.tsv src_sha256=ef425ec96caf vault=/tmp/adv-45/work.C1SXyv/A0/vault/vault-alpha.txt ",
+        "readonly": "intact"
+      },
+      "match": true
+    },
+    {
+      "id": "A0R",
+      "binding": false,
+      "family": "control-rel-invocation",
+      "constructed": "same fixture as A0; target passed repo-relative (cwd=repo), ledger row absolute ",
+      "expected": {
+        "verdict": "SAFE",
+        "receipt": "moved-to-obsidian"
+      },
+      "oracle": "SAFE(moved-to-obsidian)",
+      "observed": {
+        "rc": 0,
+        "verdict": "SAFE",
+        "receipt": "moved-to-obsidian",
+        "evidence_line": "ledger=/tmp/adv-45/work.C1SXyv/A0R/ledger.tsv src_sha256=ef425ec96caf vault=/tmp/adv-45/work.C1SXyv/A0R/vault/vault-alpha.txt ",
+        "readonly": "intact"
+      },
+      "match": true
+    },
+    {
+      "id": "A1",
+      "binding": true,
+      "family": "ledger-wrong-source-sha",
+      "constructed": "row source_path matches target, source_sha256=sha('adv45-wrong-source') != actual; vault file present+sha ok ",
+      "expected": {
+        "verdict": "NOT-SAFE",
+        "receipt": "none"
+      },
+      "oracle": "NOT-SAFE",
+      "observed": {
+        "rc": 0,
+        "verdict": "NOT-SAFE",
+        "receipt": "none",
+        "evidence_line": "untracked repo=/tmp/adv-45/work.C1SXyv/A1/repo ledger=miss scratch=no mtime_age_days=0 ",
+        "readonly": "intact"
+      },
+      "match": true
+    },
+    {
+      "id": "A2",
+      "binding": true,
+      "family": "ledger-vault-missing",
+      "constructed": "row source side fully matches; vault_path=/tmp/adv-45/work.C1SXyv/A2/vault/vault-ghost.txt does NOT exist; vault_sha256 given ",
+      "expected": {
+        "verdict": "NOT-SAFE",
+        "receipt": "none"
+      },
+      "oracle": "NOT-SAFE",
+      "observed": {
+        "rc": 0,
+        "verdict": "NOT-SAFE",
+        "receipt": "none",
+        "evidence_line": "untracked repo=/tmp/adv-45/work.C1SXyv/A2/repo ledger=miss scratch=no mtime_age_days=0 ",
+        "readonly": "intact"
+      },
+      "match": true
+    },
+    {
+      "id": "A3a",
+      "binding": true,
+      "family": "ledger-extra-columns-appended",
+      "constructed": "8-col ledger (2 extras appended); the four match fields present and correct; vault present matching sha ",
+      "expected": {
+        "verdict": "SAFE",
+        "receipt": "moved-to-obsidian"
+      },
+      "oracle": "SAFE(moved-to-obsidian)",
+      "observed": {
+        "rc": 0,
+        "verdict": "SAFE",
+        "receipt": "moved-to-obsidian",
+        "evidence_line": "ledger=/tmp/adv-45/work.C1SXyv/A3a/ledger.tsv src_sha256=1e9bd9adb826 vault=/tmp/adv-45/work.C1SXyv/A3a/vault/vault-echo.txt ",
+        "readonly": "intact"
+      },
+      "match": true
+    },
+    {
+      "id": "A3b",
+      "binding": false,
+      "family": "ledger-extra-columns-interleaved",
+      "constructed": "8-col ledger with extras INTERLEAVED before vault_path; header-indexed parse required; four match fields correct ",
+      "expected": {
+        "verdict": "SAFE",
+        "receipt": "moved-to-obsidian"
+      },
+      "oracle": "SAFE(moved-to-obsidian)",
+      "observed": {
+        "rc": 0,
+        "verdict": "NOT-SAFE",
+        "receipt": "none",
+        "evidence_line": "untracked repo=/tmp/adv-45/work.C1SXyv/A3b/repo ledger=miss scratch=no mtime_age_days=0 ",
+        "readonly": "intact"
+      },
+      "match": false
+    },
+    {
+      "id": "A4",
+      "binding": true,
+      "family": "ledger-short-row",
+      "constructed": "row for target has only path+sha (no vault path/sha) => cannot match all four fields; decoy valid row for other path ",
+      "expected": {
+        "verdict": "NOT-SAFE",
+        "receipt": "none"
+      },
+      "oracle": "NOT-SAFE",
+      "observed": {
+        "rc": 0,
+        "verdict": "NOT-SAFE",
+        "receipt": "none",
+        "evidence_line": "untracked repo=/tmp/adv-45/work.C1SXyv/A4/repo ledger=miss scratch=no mtime_age_days=0 ",
+        "readonly": "intact"
+      },
+      "match": true
+    },
+    {
+      "id": "A5",
+      "binding": false,
+      "family": "ledger-relative-source-path",
+      "constructed": "row source_path stored repo-relative while target is passed absolute; ledger-integrity fields all correct ",
+      "expected": {
+        "verdict": "SAFE",
+        "receipt": "moved-to-obsidian"
+      },
+      "oracle": "SAFE(moved-to-obsidian)",
+      "observed": {
+        "rc": 0,
+        "verdict": "SAFE",
+        "receipt": "moved-to-obsidian",
+        "evidence_line": "ledger=/tmp/adv-45/work.C1SXyv/A5/ledger.tsv src_sha256=9e8720270546 vault=/tmp/adv-45/work.C1SXyv/A5/vault/vault-india.txt ",
+        "readonly": "intact"
+      },
+      "match": true
+    },
+    {
+      "id": "A6",
+      "binding": true,
+      "family": "ledger-wrong-vault-sha",
+      "constructed": "row source side fully matches + vault file exists, but vault_sha256=sha('adv45-wrong-vault') != actual vault digest ",
+      "expected": {
+        "verdict": "NOT-SAFE",
+        "receipt": "none"
+      },
+      "oracle": "NOT-SAFE",
+      "observed": {
+        "rc": 0,
+        "verdict": "NOT-SAFE",
+        "receipt": "none",
+        "evidence_line": "untracked repo=/tmp/adv-45/work.C1SXyv/A6/repo ledger=miss scratch=no mtime_age_days=0 ",
+        "readonly": "intact"
+      },
+      "match": true
+    }
+  ],
+  "summary": {
+    "cases_total": 9,
+    "binding_pass": 6,
+    "binding_fail": 0,
+    "advisory_pass": 2,
+    "advisory_fail": 1,
+    "readonly_violations": 0
+  },
+  "verdict": "PASS",
+  "notes": [
+    "Binding cases: A0 (control), A1 (wrong source sha), A2 (vault missing), A3a (extra columns appended), A4 (short row), A6 (wrong vault sha).",
+    "Advisory cases: A0R (relative-invocation probe), A3b (extras interleaved inside the first 4 columns; the spec is silent on column order), A5 (repo-relative source_path row; the spec does not fix the source-path form).",
+    "Expected receipts are derived independently (oracle) with spec commands: git log --diff-filter=A --format=%H -1 -- <rel> + header-indexed ledger lookup + sha256sum on both sides.",
+    "SOUJI_LEDGER points each run at the case's hermetic ledger; identical copies also exist at the target repo's corpus/knowledge/, <SHOKUNIN_ROOT>/souji-shokunin/corpus/knowledge/ and <SHOKUNIN_ROOT>/corpus/knowledge/ so ledger-root convention does not confound the adversarial signal. If control A0 fails, check the tool's ledger-root convention first.",
+    "Targets are untracked files in mktemp fixture repos (no commits touch them), so the pushed receipt is cleanly inapplicable and only the ledger/stale branches can yield SAFE.",
+    "git mutations (init/commit) occur ONLY inside mktemp fixture repos under /tmp/adv-45; the live tree is never written.",
+    "Read-only check: every non-.git fixture file is hashed before/after each tool run; any change is reported per case and counted in summary.readonly_violations.",
+    "tool.sha256 vs tool.sha256_after_run detect mid-run revisions of the tool under test."
+  ]
+}

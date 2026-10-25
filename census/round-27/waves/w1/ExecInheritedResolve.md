@@ -1,0 +1,19 @@
+## Status
+STATUS: PASS — catalogued all 36 porcelain leftovers in round-26 w1; none match operator-owned filename patterns.
+
+## Evidence
+- Command: `git -C /home/vgpnk/Projects/shokunin/souji-shokunin status --porcelain -- .ufo/waves/round-26/w1`; output: 11 tracked-modified, 25 untracked.
+- Command: `ls -la --time-style=full-iso /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-26/w1/`; observed mtimes span 2026-10-25 14:26–14:55 -0300. The newest listed file was `distill-findings.md`, 14:55:24.
+- Revision context: round-27 preregistration line 1 pins base `e78ac7c4837b81b634db4a927605a751a7f006ba`; `git log --oneline -- .ufo/waves/round-26/w1` shows commits `166baa1` (round-26 wave record) and `bd6588c` (wave evidence).
+- Source quote (preregistration line 1): “Attempt 2; attempt 1 died with no lane writes”.
+- No `round-*-aggregator-*` or `verifier-spotcheck` names appear among the porcelain paths. Classification is by filename/type; modified report bodies were not individually re-read.
+
+## Findings
+1. Tracked-modified (all seat reports/results except scripts): 2026-10-25 14:40:01-03:00 `CritAmendNeed.md`; 14:39:52 `ExecLandingCheck.md`; 14:40:48 `LabGitVersion.md`; 14:40:00 `ScribeQ58Note.md`; 14:41:31 `SimpCounterCheck.md`; 14:39:25 `landing-check.md`; 14:39:37 `q58-note.md`; 14:41:05 `report-draft.md`; 14:38:58 `results-count.py` (script); 14:39:43 `shonen-lines.md`; 14:40:26 `verify-loop.sh` (script).
+2. Untracked seat reports/results (all .md): `CritAdmissionHistory.md` 14:43:09; `CritEntryB.md` 14:39:22; `CritKillRules.md` 14:38:41; `CritNoHarm.md` 14:42:01; `DistillPlanCheck.md` 14:44:43; `ExecReportAssemble.md` 14:42:04; `ExecResultsCount.md` 14:39:53; `ExecShonenFile.md` 14:40:15; `ExecVerifyLoop.md` 14:42:27; `LabQ56Mechanics.md` 14:39:01; `MutC1Surgery.md` 14:40:26; `RevAssimRules.md` 14:38:52; `RevC2Kill.md` 14:48:19; `RevC2Scope.md` 14:41:47; `RevCensusSchema.md` 14:38:58; `RevMirrorGate.md` 14:39:20; `RevTrendWording.md` 14:41:23; `ScoutRegroundDocs.md` 14:49:17; `ScoutShonen.md` 14:50:55; `ScoutWavePrompt.md` 14:53:48; `ScribeReportDraft.md` 14:41:22; `distill-findings.md` 14:55:24; `report-rendered.md` 14:40:52.
+3. Untracked scripts: `report-assemble.py` 14:40:47. No operator-owned files identified.
+4. Resolution recommendation: commit as round-26 wave evidence under this round’s entry; no sweep recommended because these are inherited evidence and tooling rather than disposable scratch. Exact helper path list:
+`-- .ufo/waves/round-26/w1/CritAmendNeed.md .ufo/waves/round-26/w1/ExecLandingCheck.md .ufo/waves/round-26/w1/LabGitVersion.md .ufo/waves/round-26/w1/ScribeQ58Note.md .ufo/waves/round-26/w1/SimpCounterCheck.md .ufo/waves/round-26/w1/landing-check.md .ufo/waves/round-26/w1/q58-note.md .ufo/waves/round-26/w1/report-draft.md .ufo/waves/round-26/w1/results-count.py .ufo/waves/round-26/w1/shonen-lines.md .ufo/waves/round-26/w1/verify-loop.sh .ufo/waves/round-26/w1/CritAdmissionHistory.md .ufo/waves/round-26/w1/CritEntryB.md .ufo/waves/round-26/w1/CritKillRules.md .ufo/waves/round-26/w1/CritNoHarm.md .ufo/waves/round-26/w1/DistillPlanCheck.md .ufo/waves/round-26/w1/ExecReportAssemble.md .ufo/waves/round-26/w1/ExecResultsCount.md .ufo/waves/round-26/w1/ExecShonenFile.md .ufo/waves/round-26/w1/ExecVerifyLoop.md .ufo/waves/round-26/w1/LabQ56Mechanics.md .ufo/waves/round-26/w1/MutC1Surgery.md .ufo/waves/round-26/w1/RevAssimRules.md .ufo/waves/round-26/w1/RevC2Kill.md .ufo/waves/round-26/w1/RevC2Scope.md .ufo/waves/round-26/w1/RevCensusSchema.md .ufo/waves/round-26/w1/RevMirrorGate.md .ufo/waves/round-26/w1/RevTrendWording.md .ufo/waves/round-26/w1/ScoutRegroundDocs.md .ufo/waves/round-26/w1/ScoutShonen.md .ufo/waves/round-26/w1/ScoutWavePrompt.md .ufo/waves/round-26/w1/ScribeReportDraft.md .ufo/waves/round-26/w1/distill-findings.md .ufo/waves/round-26/w1/report-assemble.py .ufo/waves/round-26/w1/report-rendered.md`.
+
+## Attack log
+- None.

@@ -1,0 +1,382 @@
+{
+ "seat": "S30",
+ "kind": "test-runner",
+ "round": 2,
+ "lane": "souji-shokunin",
+ "artifact": "tools/souji-verify.sh (independent verification)",
+ "preamble": {
+  "cwd": "/home/vgpnk/Projects/shokunin",
+  "fixture_root": "(mktemp -d workspace; removed on exit unless SOUJI_KEEP=1)",
+  "mode": "dry-run; read-only over every inspected surface; all fixtures under mktemp -d",
+  "fragment_path": "/home/vgpnk/Projects/shokunin/souji-shokunin/tests/results/runner-30.json",
+  "written_at": "2026-10-18T12:56:43.667950-03:00",
+  "runner": "embedded harness (see harness.source; re-run via harness.rerun_cmd)",
+  "env": {
+   "SOUJI_LANE": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+   "SOUJI_ROOT": "/home/vgpnk/Projects/shokunin",
+   "bash": "5.3.15(1)-release"
+  }
+ },
+ "tool": {
+  "path": "/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh",
+  "sha256_before": "d32bac5d8ae8c66930418edb8e0b9f064109a00866b87ae1baaa3156dd36c077",
+  "sha256_after": "d32bac5d8ae8c66930418edb8e0b9f064109a00866b87ae1baaa3156dd36c077",
+  "stable_during_run": true,
+  "bytes": 28961,
+  "selftest_exit": 0,
+  "selftest_seconds": 0.23
+ },
+ "harness": {
+  "sha256": "5059f826c4777ec0bd92175eaf936afdda16d2b5aa12034dd079e11773dd9871",
+  "rerun_cmd": "SOUJI_WAIT_MAX=900 SOUJI_SETTLE=20 bash /tmp/souji-seat30-r2/harness.sh  # or extract .harness.source to a file and run it",
+  "source": "#!/usr/bin/env bash\n# souji-verify.sh \u2014 independent test runner (souji-shokunin round 2, seat S30)\n#\n# Builds its own isolated fixture fleet under mktemp -d from the binding spec\n# (tools/souji-verify.spec.md), runs the candidate tools/souji-verify.sh\n# against every fixture case F1..F10 plus extra CLI/safety/read-only checks,\n# and writes a machine-readable result fragment to tests/results/runner-30.json.\n#\n# Read-only over every surface it inspects. Writes only:\n#   - $OUT (default <lane>/tests/results/runner-30.json)\n#   - its own mktemp -d workspace (removed on exit unless SOUJI_KEEP=1)\n#\n# Env knobs (all optional):\n#   SOUJI_LANE      lane repo          (default /home/vgpnk/Projects/shokunin/souji-shokunin)\n#   SOUJI_ROOT      fleet root         (default /home/vgpnk/Projects/shokunin)\n#   SOUJI_TOOL      tool under test    (default $SOUJI_LANE/tools/souji-verify.sh)\n#   SOUJI_OUT       result json path   (default $SOUJI_LANE/tests/results/runner-30.json)\n#   SOUJI_WAIT_MAX  seconds to wait for the tool to appear and settle (default 0)\n#   SOUJI_SETTLE    seconds tool file must stay unchanged after appearing (default 0)\n#   SOUJI_KEEP      1 = keep the mktemp workspace for debugging\n#   SOUJI_FIXTURES_ONLY 1 = build fixtures, dump evidence, exit (no tool needed)\nset -euo pipefail\n\nLANE=${SOUJI_LANE:-/home/vgpnk/Projects/shokunin/souji-shokunin}\nFLEET=${SOUJI_ROOT:-/home/vgpnk/Projects/shokunin}\nTOOL=${SOUJI_TOOL:-$LANE/tools/souji-verify.sh}\nOUT=${SOUJI_OUT:-$LANE/tests/results/runner-30.json}\nWAIT_MAX=${SOUJI_WAIT_MAX:-0}\nSETTLE=${SOUJI_SETTLE:-0}\nKEEP=${SOUJI_KEEP:-0}\nFIXTURES_ONLY=${SOUJI_FIXTURES_ONLY:-0}\n\nWORK=$(mktemp -d /tmp/souji-s30.XXXXXX)\nFAKE=$WORK/root\nmkdir -p \"$FAKE\" \"$WORK/origins\" \"$WORK/vault\" \"$WORK/out\"\nCASES=$WORK/out/cases.jsonl\n: >\"$CASES\"\ncleanup() { [ \"$KEEP\" = 1 ] || rm -rf \"$WORK\"; }\ntrap cleanup EXIT\n\n# Isolate git from user/system config; no network, no prompts, no gpg.\nexport GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null\nexport GIT_TERMINAL_PROMPT=0\nGITC=(git -c commit.gpgsign=false -c core.hooksPath=/dev/null)\nexport GIT_AUTHOR_DATE='2026-10-18T10:00:00-03:00'\nexport GIT_COMMITTER_DATE='2026-10-18T10:00:00-03:00'\n\nnote() { printf '%s\\n' \"$*\" >&2; }\n\n# ---------------------------------------------------------------- case record\nemit_case() { # id suite target cmd exit raw expected result note [fixture_json]\n  python3 - \"$CASES\" \"$@\" <<'PY'\nimport json, sys\npath, cid, suite, target, cmd, exit_code, raw, expected, result, note = sys.argv[1:11]\nfixture = sys.argv[11] if len(sys.argv) > 11 else \"\"\nrec = {\"case\": cid, \"suite\": suite, \"target\": target, \"cmd\": cmd,\n       \"exit\": int(exit_code), \"raw\": raw, \"expected\": expected,\n       \"result\": result, \"note\": note}\nif fixture:\n    try:\n        rec[\"fixture\"] = json.loads(fixture)\n    except Exception:\n        rec[\"fixture_raw\"] = fixture\nwith open(path, \"a\") as fh:\n    fh.write(json.dumps(rec, sort_keys=True) + \"\\n\")\nPY\n}\n\n# Line parser: sets F1..F5 from a tab-separated verdict line; normalizes\n# a \"SAFE(receipt)\" style field 3 into verdict+receipt with a format warning.\nparse_line() { # line\n  P_RAW=$1\n  local -a FF=()\n  mapfile -t FF < <(printf '%s' \"$1\" | awk -F'\\t' '{for(i=1;i<=5;i++) print $i}')\n  F1=${FF[0]:-} F2=${FF[1]:-} F3=${FF[2]:-} F4=${FF[3]:-} F5=${FF[4]:-}\n  P_WARN=\"\"\n  if [[ ! \"$F3\" =~ ^(SAFE|NOT-SAFE)$ && \"$F3\" =~ ^(SAFE|NOT-SAFE)\\((.*)\\)$ ]]; then\n    P_WARN=\"field3 carried receipt in parens\"\n    F4=${BASH_REMATCH[2]}\n    F3=${BASH_REMATCH[1]}\n  fi\n}\n\n# Single-target assertion. Args: id target expected_verdict expected_receipts(,sep|*) [evidence_regex] [extra_flags...]\nRUN_TMO=${RUN_TMO:-120}\nTOOL_ENV=()\nrun_case() {\n  local cid=$1 target=$2 exp_v=$3 exp_r=$4 ev_re=${5:-} ; shift 5 || shift 4\n  if [ \"$ev_re\" = \"-\" ]; then ev_re=\"\"; fi\n  local -a extra=(\"$@\")\n  local rc out err dur start end\n  P_WARN=\"\"\n  start=$(date +%s.%N)\n  set +e\n  out=$(timeout \"$RUN_TMO\" \"${TOOL_ENV[@]}\" bash \"$TOOL\" \"${extra[@]}\" \"$target\" 2>\"$WORK/err.txt\"); rc=$?\n  set -e\n  end=$(date +%s.%N); dur=$(python3 -c \"print(f'{$end-$start:.2f}')\")\n  err=$(head -c 400 \"$WORK/err.txt\" || true)\n  local cmd=\"${TOOL_ENV[*]:-} bash $TOOL ${extra[*]:-} $target\"\n  local nl; nl=$(printf '%s\\n' \"$out\" | grep -c . || true)\n  local line; line=$(printf '%s\\n' \"$out\" | sed -n '1p')\n  local result=fail note=\"\" verdict=\"\" receipt=\"\"\n  if [ \"$rc\" -ne 0 ]; then\n    note=\"exit $rc (expected 0); stderr: $err\"\n  elif [ \"$nl\" -ne 1 ]; then\n    note=\"expected exactly 1 stdout line, got $nl\"\n  else\n    parse_line \"$line\"\n    verdict=$F3; receipt=$F4\n    if [ \"$F2\" != \"$target\" ]; then note=\"field2 '$F2' != target\"; fi\n    if [ \"$verdict\" != \"$exp_v\" ]; then\n      note=\"${note:+$note; }verdict '$verdict' != '$exp_v'\"\n    else\n      local okr=0\n      if [ \"$exp_r\" = \"*\" ]; then okr=1; else\n        IFS=',' read -r -a acc <<<\"$exp_r\"\n        for a in \"${acc[@]}\"; do [ \"$receipt\" = \"$a\" ] && okr=1; done\n      fi\n      if [ \"$okr\" != 1 ]; then\n        note=\"${note:+$note; }receipt '$receipt' not in '$exp_r'\"\n      elif [ -n \"$ev_re\" ] && ! printf '%s' \"$F5\" | grep -Eq \"$ev_re\"; then\n        note=\"${note:+$note; }evidence '$F5' !~ /$ev_re/\"\n      fi\n    fi\n  fi\n  [ -z \"$note\" ] && result=pass\n  [ -n \"$P_WARN\" ] && note=\"${note:+$note; }FORMAT: $P_WARN\"\n  emit_case \"$cid\" \"$SUITE\" \"$target\" \"$cmd $([ -n \"${extra[*]:-}\" ] && echo \"[dur=${dur}s]\")\" \"$rc\" \\\n            \"$(printf '%s' \"$out\" | head -c 700)\" \\\n            \"$exp_v receipt=$exp_r${ev_re:+ ev~$ev_re}\" \"$result\" \"$note\"\n  printf '%-4s %-9s %-9s %s\\n' \"$cid\" \"$result\" \"${verdict:-?}\" \"$note\" >&2\n}\n\n# ---------------------------------------------------------------- fixtures\nmklane() { # lane-name origin-name -> seeds bare origin, clones it into $FAKE/<lane>\n  local lane=$1 oh=$2\n  \"${GITC[@]}\" init --bare -q -b master \"$WORK/origins/$oh.git\"\n  mkdir -p \"$WORK/seed/$oh\"\n  \"${GITC[@]}\" init -q -b master \"$WORK/seed/$oh\"\n  \"${GITC[@]}\" -C \"$WORK/seed/$oh\" config user.name \"S30 fixture\"\n  \"${GITC[@]}\" -C \"$WORK/seed/$oh\" config user.email \"s30@fixture.local\"\n  echo base >\"$WORK/seed/$oh/base.txt\"\n  \"${GITC[@]}\" -C \"$WORK/seed/$oh\" add -A\n  \"${GITC[@]}\" -C \"$WORK/seed/$oh\" commit -q -m \"seed base\"\n  \"${GITC[@]}\" -C \"$WORK/seed/$oh\" push -q \"$WORK/origins/$oh.git\" master\n  \"${GITC[@]}\" clone -q \"$WORK/origins/$oh.git\" \"$FAKE/$lane\"\n  \"${GITC[@]}\" -C \"$FAKE/$lane\" config user.name \"S30 fixture\"\n  \"${GITC[@]}\" -C \"$FAKE/$lane\" config user.email \"s30@fixture.local\"\n}\n\nbuild_fixtures() {\n  # fake fleet root is itself a repo (realistic) + the lane repo dir for the ledger\n  \"${GITC[@]}\" init -q -b master \"$FAKE\"\n  \"${GITC[@]}\" -C \"$FAKE\" config user.name \"S30 fixture\"\n  \"${GITC[@]}\" -C \"$FAKE\" config user.email \"s30@fixture.local\"\n  echo \"fleet root fixture\" >\"$FAKE/README.md\"\n  \"${GITC[@]}\" -C \"$FAKE\" add -A\n  \"${GITC[@]}\" -C \"$FAKE\" commit -q -m \"fixture fleet root\"\n  mkdir -p \"$FAKE/souji-shokunin/corpus/knowledge\"\n  \"${GITC[@]}\" init -q -b master \"$FAKE/souji-shokunin\"\n  \"${GITC[@]}\" -C \"$FAKE/souji-shokunin\" config user.name \"S30 fixture\"\n  \"${GITC[@]}\" -C \"$FAKE/souji-shokunin\" config user.email \"s30@fixture.local\"\n  printf 'source_path\\tsource_sha256\\tvault_path\\tvault_sha256\\texported_at\\tnote\\n' \\\n    >\"$FAKE/souji-shokunin/corpus/knowledge/obsidian-ledger.tsv\"\n  \"${GITC[@]}\" -C \"$FAKE/souji-shokunin\" add -A\n  \"${GITC[@]}\" -C \"$FAKE/souji-shokunin\" commit -q -m \"fixture ledger header\"\n\n  # F1 \u2014 file introduced pre-default-branch-tip, ancestor of origin/master\n  mklane lane-a-shokunin a\n  A=$FAKE/lane-a-shokunin\n  echo one >\"$A/f1.txt\"; \"${GITC[@]}\" -C \"$A\" add f1.txt; \"${GITC[@]}\" -C \"$A\" commit -q -m \"c1 adds f1.txt\"\n  echo two >\"$A/other.txt\"; \"${GITC[@]}\" -C \"$A\" add other.txt; \"${GITC[@]}\" -C \"$A\" commit -q -m \"c2\"\n  \"${GITC[@]}\" -C \"$A\" push -q origin master\n  echo three >>\"$A/other.txt\"; \"${GITC[@]}\" -C \"$A\" commit -q -am \"c3\"; \"${GITC[@]}\" -C \"$A\" push -q origin master\n\n  # F2 \u2014 introducing commit is local-only\n  mklane lane-b-shokunin b\n  B=$FAKE/lane-b-shokunin\n  echo local >\"$B/f2-local.txt\"; \"${GITC[@]}\" -C \"$B\" add f2-local.txt; \"${GITC[@]}\" -C \"$B\" commit -q -m \"local-only adds f2-local.txt\"\n\n  # F3 \u2014 kotodama-shaped: unpushed commits + dirty tree\n  mklane lane-c-shokunin c\n  C=$FAKE/lane-c-shokunin\n  echo u1 >\"$C/u1.txt\"; \"${GITC[@]}\" -C \"$C\" add u1.txt; \"${GITC[@]}\" -C \"$C\" commit -q -m \"unpushed 1\"\n  echo u2 >\"$C/u2.txt\"; \"${GITC[@]}\" -C \"$C\" add u2.txt; \"${GITC[@]}\" -C \"$C\" commit -q -m \"unpushed 2\"\n  echo dirty >>\"$C/base.txt\"\n  echo stray >\"$C/stray-untracked.txt\"\n\n  # F4/F5 owner lanes\n  mklane lane-d-shokunin d\n  D=$FAKE/lane-d-shokunin\n  \"${GITC[@]}\" -C \"$D\" worktree add -q --detach \"$FAKE/wt-f4\" master\n  rm -rf \"$FAKE/wt-f4\"                      # dir absent, admin registration kept\n\n  mklane lane-e-shokunin e\n  E=$FAKE/lane-e-shokunin\n  \"${GITC[@]}\" -C \"$E\" worktree add -q -b wt-f5 \"$FAKE/wt-f5\" master\n  echo extra >\"$FAKE/wt-f5/extra.txt\"; \"${GITC[@]}\" -C \"$FAKE/wt-f5\" add extra.txt; \"${GITC[@]}\" -C \"$FAKE/wt-f5\" commit -q -m \"wt-f5 unpushed commit\"\n\n  # F6 \u2014 ledger-matched file (untracked locally; vault copy matches sha256)\n  mklane lane-f-shokunin f\n  Fx=$FAKE/lane-f-shokunin\n  printf 'fixture note 6\\n' >\"$Fx/f6-note.md\"\n  cp \"$Fx/f6-note.md\" \"$WORK/vault/f6-note.md\"\n  printf '%s\\t%s\\t%s\\t%s\\t%s\\t%s\\n' \\\n    \"$Fx/f6-note.md\" \"$(sha256sum \"$Fx/f6-note.md\" | cut -d' ' -f1)\" \\\n    \"$WORK/vault/f6-note.md\" \"$(sha256sum \"$WORK/vault/f6-note.md\" | cut -d' ' -f1)\" \\\n    \"2026-10-18T00:00:00-03:00\" \"S30 fixture\" \\\n    >>\"$FAKE/souji-shokunin/corpus/knowledge/obsidian-ledger.tsv\"\n\n  # F7 \u2014 scratch file, no live refs, old mtime\n  mklane lane-g-shokunin g\n  G=$FAKE/lane-g-shokunin\n  mkdir -p \"$G/.scratch\"\n  printf 'f7 core snapshot bytes\\n' >\"$G/.scratch/s30-f7-unique.log\"\n  touch -d '3 days ago' \"$G/.scratch/s30-f7-unique.log\"\n  # X3 helper: fresh scratch file for the --stale-days age gate\n  printf 'fresh scratch bytes\\n' >\"$G/.scratch/s30-fresh-uniq.log\"\n\n  # F8 \u2014 same, but basename appears in a census-like dir (D3 exclusion must hold)\n  mklane lane-h-shokunin h\n  H=$FAKE/lane-h-shokunin\n  mkdir -p \"$H/.scratch\"\n  printf 'f8 draft bytes\\n' >\"$H/.scratch/s30-f8-draft.log\"\n  touch -d '3 days ago' \"$H/.scratch/s30-f8-draft.log\"\n  mkdir -p \"$FAKE/souji-shokunin/census\"\n  printf '{\"probe\":\"s30-f8-draft.log\",\"note\":\"census-like reference; must NOT count (D3)\"}\\n' \\\n    >\"$FAKE/souji-shokunin/census/d3-probe.json\"\n\n  # F9 \u2014 origin/HEAD missing, single origin branch ref\n  mklane lane-i-shokunin i\n  I=$FAKE/lane-i-shokunin\n  echo nine >\"$I/f9.txt\"; \"${GITC[@]}\" -C \"$I\" add f9.txt; \"${GITC[@]}\" -C \"$I\" commit -q -m \"c1 adds f9.txt\"\n  echo more >\"$I/more.txt\"; \"${GITC[@]}\" -C \"$I\" add more.txt; \"${GITC[@]}\" -C \"$I\" commit -q -m \"c2\"\n  \"${GITC[@]}\" -C \"$I\" push -q origin master\n  rm -f \"$I/.git/refs/remotes/origin/HEAD\"\n  if \"${GITC[@]}\" -C \"$I\" symbolic-ref --quiet refs/remotes/origin/HEAD >/dev/null; then\n    echo \"F9 fixture setup failed: origin/HEAD still present\" >&2; exit 1\n  fi\n  if ! \"${GITC[@]}\" -C \"$I\" rev-parse --verify -q origin/master >/dev/null; then\n    echo \"F9 fixture setup failed: origin/master missing\" >&2; exit 1\n  fi\n\n  # F10 \u2014 secret-shaped basenames (dummy content; the tool must refuse to read)\n  mklane lane-j-shokunin j\n  J=$FAKE/lane-j-shokunin\n  printf 'S30_FIXTURE=not-a-secret\\n' >\"$J/config.env\"\n  printf '{\"fixture\":true}\\n' >\"$J/mycredentials.json\"\n  printf 'fixture\\n' >\"$J/id_fixture_probe\"\n\n  # W1 extra: worktree present + dirty (detached at pushed master tip)\n  mklane lane-k-shokunin k\n  K=$FAKE/lane-k-shokunin\n  \"${GITC[@]}\" -C \"$K\" worktree add -q --detach \"$FAKE/wt-w1\" master\n  echo dirty >>\"$FAKE/wt-w1/base.txt\"\n}\n\nfixture_evidence() { # -> json on stdout\n  local A=$FAKE/lane-a-shokunin B=$FAKE/lane-b-shokunin C=$FAKE/lane-c-shokunin\n  local D=$FAKE/lane-d-shokunin E=$FAKE/lane-e-shokunin Fx=$FAKE/lane-f-shokunin\n  local intro_a intro_b uniq4 uniq5\n  intro_a=$(\"${GITC[@]}\" -C \"$A\" log --diff-filter=A --format=%H -1 -- f1.txt)\n  intro_b=$(\"${GITC[@]}\" -C \"$B\" log --diff-filter=A --format=%H -1 -- f2-local.txt)\n  uniq4=$(\"${GITC[@]}\" -C \"$D\" log --oneline \"$(\"${GITC[@]}\" -C \"$D\" worktree list --porcelain | awk '/^worktree /{p=$2} /^HEAD /{h=$2} END{print h}')\" --not --all 2>/dev/null | wc -l)\n  uniq5=$(\"${GITC[@]}\" -C \"$E\" log --oneline wt-f5 --not --remotes | wc -l)\n  python3 - \"$FAKE\" \"$intro_a\" \"$intro_b\" \"$uniq4\" \"$uniq5\" <<'PY'\nimport json, subprocess, sys\nfake, ia, ib, u4, u5 = sys.argv[1:6]\ndef g(*a):\n    return subprocess.run([\"git\", \"-c\", \"core.hooksPath=/dev/null\", \"-C\", *a],\n                          capture_output=True, text=True).stdout.strip()\nA = f\"{fake}/lane-a-shokunin\"; B = f\"{fake}/lane-b-shokunin\"; C = f\"{fake}/lane-c-shokunin\"\nD = f\"{fake}/lane-d-shokunin\"; E = f\"{fake}/lane-e-shokunin\"; I = f\"{fake}/lane-i-shokunin\"\nev = {\n \"F1\": {\"intro_f1\": ia, \"ancestor_of_origin_master\":\n        subprocess.run([\"git\", \"-C\", A, \"merge-base\", \"--is-ancestor\", ia, \"origin/master\"],\n                       capture_output=True).returncode == 0,\n        \"origin_head\": g(A, \"symbolic-ref\", \"--short\", \"refs/remotes/origin/HEAD\"),\n        \"origin_master_exists\": subprocess.run([\"git\", \"-C\", A, \"rev-parse\", \"--verify\", \"-q\",\n            \"origin/master\"], capture_output=True).returncode == 0},\n \"F2\": {\"intro_f2_local\": ib, \"ancestor_of_origin_master\":\n        subprocess.run([\"git\", \"-C\", B, \"merge-base\", \"--is-ancestor\", ib, \"origin/master\"]).returncode == 0},\n \"F3\": {\"unpushed\": g(C, \"log\", \"--oneline\", \"master\", \"--not\", \"--remotes\").count(\"\\n\") +\n                  (1 if g(C, \"log\", \"--oneline\", \"master\", \"--not\", \"--remotes\") else 0),\n        \"dirty_lines\": len([l for l in g(C, \"--no-optional-locks\", \"status\", \"--porcelain\").splitlines() if l]),\n        \"untracked\": \"stray-untracked.txt\"},\n \"F4\": {\"worktree_list_has\": f\"{fake}/wt-f4\" in g(D, \"worktree\", \"list\", \"--porcelain\"),\n        \"dir_exists\": __import__(\"os\").path.isdir(f\"{fake}/wt-f4\"),\n        \"unique_commits\": int(u4)},\n \"F5\": {\"dir_exists\": __import__(\"os\").path.isdir(f\"{fake}/wt-f5\"),\n        \"branch\": \"wt-f5\", \"unpushed_on_branch\": int(u5),\n        \"worktree_clean\": g(f\"{fake}/wt-f5\", \"--no-optional-locks\", \"status\", \"--porcelain\") == \"\"},\n \"F6\": {\"ledger_rows\": open(f\"{fake}/souji-shokunin/corpus/knowledge/obsidian-ledger.tsv\").read().count(\"\\n\")},\n \"F9\": {\"origin_head_absent\": subprocess.run([\"git\", \"-C\", I, \"symbolic-ref\", \"--quiet\",\n        \"refs/remotes/origin/HEAD\"], capture_output=True).returncode != 0,\n        \"origin_ref_count\": len([l for l in g(I, \"for-each-ref\", \"--format=%(refname)\",\n        \"refs/remotes/origin/\").splitlines() if l])},\n \"W1\": {\"worktree_present_dirty\": True},\n}\nprint(json.dumps(ev, indent=1, sort_keys=True))\nPY\n}\n\nbuild_fixtures\n\nif [ \"$FIXTURES_ONLY\" = 1 ]; then\n  fixture_evidence\n  echo \"WORK=$WORK (kept=${KEEP})\" >&2\n  exit 0\nfi\n\n# ---------------------------------------------------------------- tool settle\nif [ ! -f \"$TOOL\" ] && [ \"$WAIT_MAX\" -gt 0 ]; then\n  note \"waiting up to ${WAIT_MAX}s for $TOOL ...\"\n  for _ in $(seq 1 \"$WAIT_MAX\"); do\n    sleep 1\n    [ -f \"$TOOL\" ] && break\n  done\nfi\nif [ ! -f \"$TOOL\" ]; then\n  note \"TOOL NOT FOUND: $TOOL\"\n  python3 - \"$OUT\" \"$TOOL\" \"$WORK\" <<'PY'\nimport json, sys, datetime\nout, tool, work = sys.argv[1:4]\njson.dump({\"seat\": \"S30\", \"kind\": \"test-runner\", \"round\": 2,\n           \"status\": \"PENDING-TOOL-ABSENT\", \"tool\": tool,\n           \"written_at\": datetime.datetime.now().astimezone().isoformat()},\n          open(out, \"w\"), indent=1)\nPY\n  exit 1\nfi\nif [ \"$SETTLE\" -gt 0 ]; then\n  prev=$(sha256sum \"$TOOL\" | cut -d' ' -f1); stable=0\n  for _ in $(seq 1 \"$SETTLE\"); do\n    sleep 1\n    cur=$(sha256sum \"$TOOL\" | cut -d' ' -f1)\n    [ \"$cur\" = \"$prev\" ] && stable=$((stable + 1)) || { stable=0; prev=$cur; }\n    [ \"$stable\" -ge \"$SETTLE\" ] && { stable=$SETTLE; break; }\n  done\n  note \"tool settled (stable ${stable}s)\"\nfi\nTOOL_SHA=$(sha256sum \"$TOOL\" | cut -d' ' -f1)\nTOOL_BYTES=$(stat -c %s \"$TOOL\")\nnote \"tool sha256=$TOOL_SHA bytes=$TOOL_BYTES\"\n\n# fixture repo state snapshots for the read-only suite\nsnap() { for r in lane-a-shokunin lane-b-shokunin lane-c-shokunin lane-d-shokunin \\\n                 lane-e-shokunin lane-f-shokunin lane-g-shokunin lane-h-shokunin \\\n                 lane-i-shokunin lane-j-shokunin lane-k-shokunin souji-shokunin; do\n           printf '%s %s\\n' \"$r\" \"$(\"${GITC[@]}\" -C \"$FAKE/$r\" rev-parse HEAD 2>/dev/null || echo NOHEAD; \\\n             \"${GITC[@]}\" --no-optional-locks -C \"$FAKE/$r\" status --porcelain 2>/dev/null | sort | tr '\\n' ';' || true)\"\n         done; }\nSNAP_BEFORE=$WORK/out/snap-before.txt; SNAP_AFTER=$WORK/out/snap-after.txt\nsnap >\"$SNAP_BEFORE\"\nWTB4=$(\"${GITC[@]}\" -C \"$FAKE/lane-d-shokunin\" worktree list --porcelain | grep -c '^worktree ')\nWTB5=$(\"${GITC[@]}\" -C \"$FAKE/lane-e-shokunin\" worktree list --porcelain | grep -c '^worktree ')\n\n# ---------------------------------------------------------------- suite A\nSUITE=A_tool_selftest\nstart=$(date +%s.%N)\nset +e\nSELF_OUT=$(timeout 300 bash \"$TOOL\" --selftest 2>&1); SELF_RC=$?\nset -e\nend=$(date +%s.%N); SELF_DUR=$(python3 -c \"print(f'{$end-$start:.2f}')\")\nSELF_RESULT=pass; SELF_NOTE=\"exit 0\"\nif [ \"$SELF_RC\" -ne 0 ]; then SELF_RESULT=fail; SELF_NOTE=\"exit $SELF_RC\"; fi\nemit_case \"A1\" \"$SUITE\" \"$TOOL\" \"bash $TOOL --selftest [dur=${SELF_DUR}s]\" \"$SELF_RC\" \\\n  \"$(printf '%s' \"$SELF_OUT\" | tail -c 700)\" \"exit 0\" \"$SELF_RESULT\" \"$SELF_NOTE\"\nnote \"A1 --selftest exit=$SELF_RC dur=${SELF_DUR}s\"\n\n# ---------------------------------------------------------------- suite B\nSUITE=B_fixtures\nTOOL_ENV=(env \"SHOKUNIN_ROOT=$FAKE\" \"SOUJI_LEDGER=$FAKE/souji-shokunin/corpus/knowledge/obsidian-ledger.tsv\")\nrun_case F1  \"$FAKE/lane-a-shokunin/f1.txt\"      SAFE     pushed -\nrun_case F2  \"$FAKE/lane-b-shokunin/f2-local.txt\" NOT-SAFE \"pushed-unverifiable,none\" -\nrun_case F3  \"$FAKE/lane-c-shokunin\"             NOT-SAFE \"*\" 'unpushed=[1-9][0-9]*[[:space:]]+dirty=[1-9][0-9]*'\nrun_case F4  \"$FAKE/wt-f4\"                       SAFE     metadata-prune -\nrun_case F5  \"$FAKE/wt-f5\"                       NOT-SAFE unpushed-branch -\nrun_case F6  \"$FAKE/lane-f-shokunin/f6-note.md\"  SAFE     moved-to-obsidian -\nrun_case F7  \"$FAKE/lane-g-shokunin/.scratch/s30-f7-unique.log\" SAFE stale -\nrun_case F8  \"$FAKE/lane-h-shokunin/.scratch/s30-f8-draft.log\"  SAFE stale -\nrun_case F9  \"$FAKE/lane-i-shokunin/f9.txt\"      SAFE     pushed -\nrun_case F10 \"$FAKE/lane-j-shokunin/config.env\"  NOT-SAFE secrets-refusal -\nrun_case W1  \"$FAKE/wt-w1\"                       NOT-SAFE dirty -\n\n# ---------------------------------------------------------------- suite C\nSUITE=C_cli_contract\nrun_case X1  \"$FAKE/lane-a-shokunin/no-such-file.txt\" NOT-SAFE unreachable -\nrun_case X2  \"\"                                  NOT-SAFE unreachable -\nrun_case X3  \"$FAKE/lane-g-shokunin/.scratch/s30-fresh-uniq.log\" NOT-SAFE none - --stale-days 3\nrun_case X4  \"$FAKE/lane-j-shokunin/mycredentials.json\" NOT-SAFE secrets-refusal -\nrun_case X5  \"$FAKE/lane-j-shokunin/id_fixture_probe\"   NOT-SAFE secrets-refusal -\n\n# X6: unknown flag must exit 2\nset +e\nX6_OUT=$(timeout 30 bash \"$TOOL\" --bogus-flag \"$FAKE/lane-a-shokunin/f1.txt\" 2>&1); X6_RC=$?\nset -e\nX6_RESULT=fail; X6_NOTE=\"\"\n[ \"$X6_RC\" -eq 2 ] && { X6_RESULT=pass; X6_NOTE=\"exit 2\"; } || X6_NOTE=\"exit $X6_RC (expected 2)\"\nemit_case \"X6\" \"$SUITE\" \"--bogus-flag\" \"bash $TOOL --bogus-flag <path>\" \"$X6_RC\" \\\n  \"$(printf '%s' \"$X6_OUT\" | head -c 300)\" \"exit 2\" \"$X6_RESULT\" \"$X6_NOTE\"\nnote \"X6 --bogus-flag exit=$X6_RC\"\n\n# X7: no arguments at all (usage expected; ambiguity recorded if eval'd)\nset +e\nX7_OUT=$(timeout 30 bash \"$TOOL\" 2>&1); X7_RC=$?\nset -e\nX7_RESULT=fail; X7_NOTE=\"\"\nif [ \"$X7_RC\" -eq 2 ]; then X7_RESULT=pass; X7_NOTE=\"exit 2\"\nelif [ \"$X7_RC\" -eq 0 ]; then X7_RESULT=info\n  X7_NOTE=\"exit 0 with empty input (spec-ambiguous: usage(2) vs zero-target eval(0))\"\nelse X7_NOTE=\"exit $X7_RC\"; fi\nemit_case \"X7\" \"$SUITE\" \"(no args)\" \"bash $TOOL\" \"$X7_RC\" \\\n  \"$(printf '%s' \"$X7_OUT\" | head -c 300)\" \"exit 2 (usage)\" \"$X7_RESULT\" \"$X7_NOTE\"\n\n# X8: --json must be parseable and carry both targets/verdicts\nset +e\nX8_OUT=$(timeout 120 \"${TOOL_ENV[@]}\" bash \"$TOOL\" --json \"$FAKE/lane-a-shokunin/f1.txt\" \"$FAKE/lane-c-shokunin\" 2>&1); X8_RC=$?\nset -e\nX8_RESULT=fail; X8_NOTE=\"\"\nX8_KIND=$(printf '%s' \"$X8_OUT\" | python3 -c '\nimport json,sys\ns=sys.stdin.read()\ntry:\n    json.loads(s); print(\"single\"); sys.exit(0)\nexcept Exception:\n    pass\nfor l in s.splitlines():\n    if l.strip():\n        try: json.loads(l)\n        except Exception: print(\"bad\"); sys.exit(2)\nprint(\"jsonl\")\n' 2>/dev/null || true)\nif [ \"$X8_RC\" -ne 0 ]; then X8_NOTE=\"exit $X8_RC\"\nelif [ \"$X8_KIND\" = \"bad\" ] || [ -z \"$X8_KIND\" ]; then X8_NOTE=\"not parseable as JSON or JSONL\"\nelse\n  X8_RESULT=pass; X8_NOTE=\"parseable JSON ($X8_KIND)\"\n  printf '%s' \"$X8_OUT\" | grep -q \"f1.txt\" || { X8_RESULT=fail; X8_NOTE=\"JSON missing target f1.txt\"; }\n  printf '%s' \"$X8_OUT\" | grep -q \"NOT-SAFE\" || { X8_RESULT=fail; X8_NOTE=\"${X8_NOTE}; JSON missing NOT-SAFE\"; }\n  if [ \"$X8_KIND\" = \"jsonl\" ]; then\n    X8_OBJS=$(printf '%s\\n' \"$X8_OUT\" | grep -c . || true)\n    [ \"$X8_OBJS\" -ge 2 ] || { X8_RESULT=fail; X8_NOTE=\"${X8_NOTE}; only $X8_OBJS object(s) for 2 targets\"; }\n  fi\nfi\nemit_case \"X8\" \"$SUITE\" \"2 targets\" \"bash $TOOL --json <f1.txt> <lane-c>\" \"$X8_RC\" \\\n  \"$(printf '%s' \"$X8_OUT\" | head -c 500)\" \"parseable JSON with both targets\" \"$X8_RESULT\" \"$X8_NOTE\"\nnote \"X8 --json exit=$X8_RC $X8_NOTE\"\n\n# X9: multi-target default output = one line per target\nset +e\nX9_OUT=$(timeout 120 \"${TOOL_ENV[@]}\" bash \"$TOOL\" \"$FAKE/lane-a-shokunin/f1.txt\" \"$FAKE/lane-c-shokunin\" 2>&1); X9_RC=$?\nset -e\nX9_LINES=$(printf '%s\\n' \"$X9_OUT\" | grep -c . || true)\nX9_RESULT=fail; X9_NOTE=\"\"\nif [ \"$X9_RC\" -ne 0 ]; then X9_NOTE=\"exit $X9_RC\"\nelif [ \"$X9_LINES\" -ne 2 ]; then X9_NOTE=\"expected 2 lines, got $X9_LINES\"\nelif printf '%s\\n' \"$X9_OUT\" | sed -n '1p' | grep -q \"f1.txt\" && printf '%s\\n' \"$X9_OUT\" | sed -n '2p' | grep -q \"lane-c-shokunin\"; then\n  X9_RESULT=pass; X9_NOTE=\"2 lines, paths match order\"\nelse X9_NOTE=\"line/path mismatch\"; fi\nemit_case \"X9\" \"$SUITE\" \"2 targets\" \"bash $TOOL <f1.txt> <lane-c>\" \"$X9_RC\" \\\n  \"$(printf '%s' \"$X9_OUT\" | head -c 500)\" \"2 lines, order preserved\" \"$X9_RESULT\" \"$X9_NOTE\"\n\n# ---------------------------------------------------------------- suite D live\nSUITE=D_live_checks\nRUN_TMO=300\nTOOL_ENV=()\nKOT=$FLEET/kotodama-shokunin\nif [ -d \"$KOT\" ]; then\n  run_case L1 \"$KOT\" NOT-SAFE \"*\"\nelse\n  emit_case \"L1\" \"$SUITE\" \"$KOT\" \"n/a\" 0 \"\" \"NOT-SAFE (r2 gate trap)\" \"skip\" \"kotodama not present\"\nfi\n\n# L2: one absent lore worktree (r3 metadata-prune candidate)\nLOREWT=$(\"${GITC[@]}\" -C \"$FLEET/lore-shokunin\" worktree list --porcelain 2>/dev/null | awk '/^worktree /{print $2}' | while read -r p; do if [ ! -d \"$p\" ]; then echo \"$p\"; break; fi; done)\nif [ -n \"${LOREWT:-}\" ]; then\n  run_case L2 \"$LOREWT\" SAFE metadata-prune\nelse\n  emit_case \"L2\" \"$SUITE\" \"lore worktree\" \"n/a\" 0 \"\" \"SAFE metadata-prune\" \"skip\" \"no absent lore worktree found\"\nfi\n\n# L3: b2f2efa pushed file (r1 census: 109/109 pushed)\nL3P=\"\"\nfor cand in \"$FLEET/.ufo/interactive-l1-20261015T050057Z/launch-chousa.json\" \\\n            \"$FLEET/.ufo/interactive-l1-20261015T050057Z/launch-kengaku.json\"; do\n  if [ -e \"$cand\" ]; then L3P=$cand; break; fi\ndone\nif [ -n \"$L3P\" ]; then\n  run_case L3 \"$L3P\" SAFE pushed\nelse\n  emit_case \"L3\" \"$SUITE\" \"b2f2efa file\" \"n/a\" 0 \"\" \"SAFE pushed\" \"skip\" \"no sample b2f2efa path present\"\nfi\n\n# L4: gd2d named-branch worktree (expectation derived from live branch state)\nGD2D=$FLEET/game-dev-2d-shokunin\nL4P=\"\"\nif [ -d \"$GD2D\" ]; then\n  L4P=$(\"${GITC[@]}\" -C \"$GD2D\" worktree list --porcelain 2>/dev/null | awk '/^worktree /{p=$2} /^branch /{b=$2} /^$/{if (b ~ /wt-r/ && p!=\"\") {print p\"|\"b; p=\"\"; b=\"\"}}')\nfi\nif [ -n \"$L4P\" ]; then\n  L4_PATH=${L4P%%|*}; L4_BR=${L4P##*|}; L4_BR=${L4_BR#refs/heads/}\n  L4_UNPUSHED=$(\"${GITC[@]}\" -C \"$GD2D\" log --oneline \"$L4_BR\" --not --remotes 2>/dev/null | grep -c . || true)\n  if [ \"${L4_UNPUSHED:-0}\" -gt 0 ]; then\n    run_case L4 \"$L4_PATH\" NOT-SAFE unpushed-branch\n  else\n    emit_case \"L4\" \"$SUITE\" \"$L4_PATH\" \"n/a\" 0 \"\" \"branch pushed since r1; info only\" \"info\" \\\n      \"branch $L4_BR has 0 unpushed commits now\"\n  fi\nelse\n  emit_case \"L4\" \"$SUITE\" \"gd2d wt-r worktree\" \"n/a\" 0 \"\" \"NOT-SAFE unpushed-branch\" \"skip\" \"not found\"\nfi\n\n# ---------------------------------------------------------------- suite E read-only\nSUITE=E_readonly\nsnap >\"$SNAP_AFTER\"\nWTB5_AFTER=$(\"${GITC[@]}\" -C \"$FAKE/lane-e-shokunin\" worktree list --porcelain | grep -c '^worktree ')\nWTB4_AFTER=$(\"${GITC[@]}\" -C \"$FAKE/lane-d-shokunin\" worktree list --porcelain | grep -c '^worktree ')\nRO_RESULT=pass; RO_NOTE=\"fixture repos + worktree registrations unchanged\"\nif ! diff -q \"$SNAP_BEFORE\" \"$SNAP_AFTER\" >/dev/null; then\n  RO_RESULT=fail; RO_NOTE=\"fixture repo state changed: $(diff \"$SNAP_BEFORE\" \"$SNAP_AFTER\" | head -c 300)\"\nfi\nif [ \"$WTB4_AFTER\" != \"$WTB4\" ] || [ \"$WTB5_AFTER\" != \"$WTB5\" ]; then\n  RO_RESULT=fail; RO_NOTE=\"$RO_NOTE; worktree registration count changed\"\nfi\nemit_case \"R1\" \"$SUITE\" \"$FAKE\" \"post-run fixture state diff\" 0 \"\" \\\n  \"fixtures byte-stable across tool runs\" \"$RO_RESULT\" \"$RO_NOTE\"\n\n# ---------------------------------------------------------------- assemble\nTOOL_SHA_AFTER=$(sha256sum \"$TOOL\" | cut -d' ' -f1)\nHARNESS_SHA=$(sha256sum \"$0\" | cut -d' ' -f1)\ncp \"$0\" \"$WORK/out/harness-snapshot.sh\"\nfixture_evidence >\"$WORK/out/fixtures.json\"\n\npython3 - \"$CASES\" \"$WORK\" \"$OUT\" \"$TOOL\" \"$TOOL_SHA\" \"$TOOL_SHA_AFTER\" \"$TOOL_BYTES\" \\\n        \"$HARNESS_SHA\" \"$LANE\" \"$FLEET\" \"$SELF_OUT\" \"$SELF_RC\" \"$SELF_DUR\" \"$BASH_VERSION\" >/dev/null <<'PY'\nimport json, sys, os, datetime\n(cases_path, work, out, tool, sha_before, sha_after, tool_bytes,\n harness_sha, lane, fleet, self_out, self_rc, self_dur, bashv) = sys.argv[1:15]\n\ncases = [json.loads(l) for l in open(cases_path)]\nfixture_ev = json.load(open(work + \"/out/fixtures.json\"))\nharness_src = open(work + \"/out/harness-snapshot.sh\").read()\n\npasses = [c for c in cases if c[\"result\"] == \"pass\"]\nfails  = [c for c in cases if c[\"result\"] == \"fail\"]\ninfos  = [c for c in cases if c[\"result\"] in (\"info\", \"skip\")]\ngate = {c[\"case\"]: c[\"result\"] for c in cases if c[\"case\"] in (\"A1\", \"L1\")}\ncritical_fail = [c[\"case\"] for c in fails]\n\nverdict = \"PASS\" if not critical_fail else \"FAIL\"\nif verdict == \"FAIL\" and set(critical_fail) <= {\"X7\"}:\n    verdict = \"PASS-WITH-NOTES\"\n\ndoc = {\n \"seat\": \"S30\", \"kind\": \"test-runner\", \"round\": 2, \"lane\": \"souji-shokunin\",\n \"artifact\": \"tools/souji-verify.sh (independent verification)\",\n \"preamble\": {\n   \"cwd\": fleet,\n   \"fixture_root\": \"(mktemp -d workspace; removed on exit unless SOUJI_KEEP=1)\",\n   \"mode\": \"dry-run; read-only over every inspected surface; all fixtures under mktemp -d\",\n   \"fragment_path\": out,\n   \"written_at\": datetime.datetime.now().astimezone().isoformat(),\n   \"runner\": \"embedded harness (see harness.source; re-run via harness.rerun_cmd)\",\n   \"env\": {\"SOUJI_LANE\": lane, \"SOUJI_ROOT\": fleet, \"bash\": bashv},\n },\n \"tool\": {\n   \"path\": tool, \"sha256_before\": sha_before, \"sha256_after\": sha_after,\n   \"stable_during_run\": sha_before == sha_after, \"bytes\": int(tool_bytes),\n   \"selftest_exit\": int(self_rc), \"selftest_seconds\": float(self_dur),\n },\n \"harness\": {\n   \"sha256\": harness_sha,\n   \"rerun_cmd\": (\"SOUJI_WAIT_MAX=900 SOUJI_SETTLE=20 bash /tmp/souji-seat30-r2/harness.sh\"\n                 \"  # or extract .harness.source to a file and run it\"),\n   \"source\": harness_src,\n },\n \"suites\": {\n   \"A_tool_selftest\": {\"cmd\": f\"bash {tool} --selftest\", \"exit\": int(self_rc),\n                       \"seconds\": float(self_dur),\n                       \"tail\": self_out[-700:]},\n   \"B_fixtures\": [c for c in cases if c[\"suite\"] == \"B_fixtures\"],\n   \"C_cli_contract\": [c for c in cases if c[\"suite\"] == \"C_cli_contract\"],\n   \"D_live_checks\": [c for c in cases if c[\"suite\"] == \"D_live_checks\"],\n   \"E_readonly\": [c for c in cases if c[\"suite\"] == \"E_readonly\"],\n },\n \"fixture_evidence\": fixture_ev,\n \"summary\": {\n   \"cases\": len(cases), \"pass\": len(passes), \"fail\": len(fails), \"info_or_skip\": len(infos),\n   \"critical\": gate, \"failures\": [{\"case\": c[\"case\"], \"note\": c[\"note\"], \"raw\": c[\"raw\"][:200]} for c in fails],\n   \"verdict\": verdict,\n },\n \"notes\": [\n   \"F1..F10 mirror the binding spec's selftest cases; constructed independently of the tool's own --selftest.\",\n   \"F3 evidence assertion requires the spec's unpushed=N dirty=M counts in the evidence field.\",\n   \"X7 no-args behaviour is spec-ambiguous (usage 2 vs zero-target 0) and graded info, not fail.\",\n   \"X8 accepts either a single JSON document or JSONL (one object per target): the spec fixes neither; the tool documents JSONL.\",\n   \"Fixture root is injected via SOUJI_ROOT (SHOKUNIN_ROOT) + SOUJI_LEDGER; if F4/F5/F6 fail, check whether the tool honours that injection.\",\n ],\n}\njson.dump(doc, open(out, \"w\"), indent=1, sort_keys=False)\nprint(verdict)\nPY\n\nnote \"wrote $OUT\"\nVERDICT=$(python3 -c \"import json;d=json.load(open('$OUT'));print(d['summary']['verdict'])\")\nprintf 'SUMMARY %s\\n' \"$(python3 -c \"import json;d=json.load(open('$OUT'));print(d['summary']['verdict'], d['summary']['pass'],'/',d['summary']['cases'])\")\"\nif [ \"$KEEP\" = 1 ]; then note \"keeping $WORK\"; fi\ncase \"$VERDICT\" in\n  FAIL) exit 1 ;;\n  *)    exit 0 ;;\nesac\n"
+ },
+ "suites": {
+  "A_tool_selftest": {
+   "cmd": "bash /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh --selftest",
+   "exit": 0,
+   "seconds": 0.23,
+   "tail": "PASS\texit=2\tusage: souji-verify.sh [--selftest] [--stale-days N] [--json] <path>...\tcli\nJSON-mode\tPASS\texit=0\t{\"path\":\"/tmp/souji-selftest.G6lVhn/fleet/beta-shokunin/pushed-file.txt\",\"kind\":\"artifact\",\"verdict\":\"SAFE\",\"receipt\":\"pushed\",\"evidence\":\"intro=b10bd96e1911 default=refs/remotes/origin/master repo=/tmp/souji-selftest.G6lVhn/fleet/beta-shokunin\"}\tcli\nJSON-mode\tPASS\tjsonl SAFE/pushed\t{\"path\":\"/tmp/souji-selftest.G6lVhn/fleet/beta-shokunin/pushed-file.txt\",\"kind\":\"artifact\",\"verdict\":\"SAFE\",\"receipt\":\"pushed\",\"evidence\":\"intro=b10bd96e1911 default=refs/remotes/origin/master repo=/tmp/souji-selftest.G6lVhn/fleet/beta-shokunin\"}\tjson contract\nSELFTEST SUMMARY pass=26 fail=0\nSELFTEST PASS"
+  },
+  "B_fixtures": [
+   {
+    "case": "F1",
+    "cmd": "env SHOKUNIN_ROOT=/tmp/souji-s30.ZeIfRE/root SOUJI_LEDGER=/tmp/souji-s30.ZeIfRE/root/souji-shokunin/corpus/knowledge/obsidian-ledger.tsv bash /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh  /tmp/souji-s30.ZeIfRE/root/lane-a-shokunin/f1.txt ",
+    "exit": 0,
+    "expected": "SAFE receipt=pushed",
+    "note": "",
+    "raw": "VERDICT\t/tmp/souji-s30.ZeIfRE/root/lane-a-shokunin/f1.txt\tSAFE\tpushed\tintro=7a5939eeb2a6 default=refs/remotes/origin/master repo=/tmp/souji-s30.ZeIfRE/root/lane-a-shokunin",
+    "result": "pass",
+    "suite": "B_fixtures",
+    "target": "/tmp/souji-s30.ZeIfRE/root/lane-a-shokunin/f1.txt"
+   },
+   {
+    "case": "F2",
+    "cmd": "env SHOKUNIN_ROOT=/tmp/souji-s30.ZeIfRE/root SOUJI_LEDGER=/tmp/souji-s30.ZeIfRE/root/souji-shokunin/corpus/knowledge/obsidian-ledger.tsv bash /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh  /tmp/souji-s30.ZeIfRE/root/lane-b-shokunin/f2-local.txt ",
+    "exit": 0,
+    "expected": "NOT-SAFE receipt=pushed-unverifiable,none",
+    "note": "",
+    "raw": "VERDICT\t/tmp/souji-s30.ZeIfRE/root/lane-b-shokunin/f2-local.txt\tNOT-SAFE\tnone\tintro=b1de37782375 default=refs/remotes/origin/master not-ancestor refs=n/a",
+    "result": "pass",
+    "suite": "B_fixtures",
+    "target": "/tmp/souji-s30.ZeIfRE/root/lane-b-shokunin/f2-local.txt"
+   },
+   {
+    "case": "F3",
+    "cmd": "env SHOKUNIN_ROOT=/tmp/souji-s30.ZeIfRE/root SOUJI_LEDGER=/tmp/souji-s30.ZeIfRE/root/souji-shokunin/corpus/knowledge/obsidian-ledger.tsv bash /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh  /tmp/souji-s30.ZeIfRE/root/lane-c-shokunin ",
+    "exit": 0,
+    "expected": "NOT-SAFE receipt=* ev~unpushed=[1-9][0-9]*[[:space:]]+dirty=[1-9][0-9]*",
+    "note": "",
+    "raw": "VERDICT\t/tmp/souji-s30.ZeIfRE/root/lane-c-shokunin\tNOT-SAFE\tunpushed-dirty\tunpushed=2 dirty=2",
+    "result": "pass",
+    "suite": "B_fixtures",
+    "target": "/tmp/souji-s30.ZeIfRE/root/lane-c-shokunin"
+   },
+   {
+    "case": "F4",
+    "cmd": "env SHOKUNIN_ROOT=/tmp/souji-s30.ZeIfRE/root SOUJI_LEDGER=/tmp/souji-s30.ZeIfRE/root/souji-shokunin/corpus/knowledge/obsidian-ledger.tsv bash /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh  /tmp/souji-s30.ZeIfRE/root/wt-f4 ",
+    "exit": 0,
+    "expected": "SAFE receipt=metadata-prune",
+    "note": "",
+    "raw": "VERDICT\t/tmp/souji-s30.ZeIfRE/root/wt-f4\tSAFE\tmetadata-prune\towner=/tmp/souji-s30.ZeIfRE/root/lane-d-shokunin head=72d179f5886f unique=0 dir=absent",
+    "result": "pass",
+    "suite": "B_fixtures",
+    "target": "/tmp/souji-s30.ZeIfRE/root/wt-f4"
+   },
+   {
+    "case": "F5",
+    "cmd": "env SHOKUNIN_ROOT=/tmp/souji-s30.ZeIfRE/root SOUJI_LEDGER=/tmp/souji-s30.ZeIfRE/root/souji-shokunin/corpus/knowledge/obsidian-ledger.tsv bash /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh  /tmp/souji-s30.ZeIfRE/root/wt-f5 ",
+    "exit": 0,
+    "expected": "NOT-SAFE receipt=unpushed-branch",
+    "note": "",
+    "raw": "VERDICT\t/tmp/souji-s30.ZeIfRE/root/wt-f5\tNOT-SAFE\tunpushed-branch\towner=/tmp/souji-s30.ZeIfRE/root/lane-e-shokunin branch=wt-f5 unpushed=1",
+    "result": "pass",
+    "suite": "B_fixtures",
+    "target": "/tmp/souji-s30.ZeIfRE/root/wt-f5"
+   },
+   {
+    "case": "F6",
+    "cmd": "env SHOKUNIN_ROOT=/tmp/souji-s30.ZeIfRE/root SOUJI_LEDGER=/tmp/souji-s30.ZeIfRE/root/souji-shokunin/corpus/knowledge/obsidian-ledger.tsv bash /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh  /tmp/souji-s30.ZeIfRE/root/lane-f-shokunin/f6-note.md ",
+    "exit": 0,
+    "expected": "SAFE receipt=moved-to-obsidian",
+    "note": "",
+    "raw": "VERDICT\t/tmp/souji-s30.ZeIfRE/root/lane-f-shokunin/f6-note.md\tSAFE\tmoved-to-obsidian\tledger=/tmp/souji-s30.ZeIfRE/root/souji-shokunin/corpus/knowledge/obsidian-ledger.tsv src_sha256=475015a46400 vault=/tmp/souji-s30.ZeIfRE/vault/f6-note.md",
+    "result": "pass",
+    "suite": "B_fixtures",
+    "target": "/tmp/souji-s30.ZeIfRE/root/lane-f-shokunin/f6-note.md"
+   },
+   {
+    "case": "F7",
+    "cmd": "env SHOKUNIN_ROOT=/tmp/souji-s30.ZeIfRE/root SOUJI_LEDGER=/tmp/souji-s30.ZeIfRE/root/souji-shokunin/corpus/knowledge/obsidian-ledger.tsv bash /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh  /tmp/souji-s30.ZeIfRE/root/lane-g-shokunin/.scratch/s30-f7-unique.log ",
+    "exit": 0,
+    "expected": "SAFE receipt=stale",
+    "note": "",
+    "raw": "VERDICT\t/tmp/souji-s30.ZeIfRE/root/lane-g-shokunin/.scratch/s30-f7-unique.log\tSAFE\tstale\tmtime_age_days=3 refs=0 scratch-type=yes",
+    "result": "pass",
+    "suite": "B_fixtures",
+    "target": "/tmp/souji-s30.ZeIfRE/root/lane-g-shokunin/.scratch/s30-f7-unique.log"
+   },
+   {
+    "case": "F8",
+    "cmd": "env SHOKUNIN_ROOT=/tmp/souji-s30.ZeIfRE/root SOUJI_LEDGER=/tmp/souji-s30.ZeIfRE/root/souji-shokunin/corpus/knowledge/obsidian-ledger.tsv bash /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh  /tmp/souji-s30.ZeIfRE/root/lane-h-shokunin/.scratch/s30-f8-draft.log ",
+    "exit": 0,
+    "expected": "SAFE receipt=stale",
+    "note": "",
+    "raw": "VERDICT\t/tmp/souji-s30.ZeIfRE/root/lane-h-shokunin/.scratch/s30-f8-draft.log\tSAFE\tstale\tmtime_age_days=3 refs=0 scratch-type=yes",
+    "result": "pass",
+    "suite": "B_fixtures",
+    "target": "/tmp/souji-s30.ZeIfRE/root/lane-h-shokunin/.scratch/s30-f8-draft.log"
+   },
+   {
+    "case": "F9",
+    "cmd": "env SHOKUNIN_ROOT=/tmp/souji-s30.ZeIfRE/root SOUJI_LEDGER=/tmp/souji-s30.ZeIfRE/root/souji-shokunin/corpus/knowledge/obsidian-ledger.tsv bash /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh  /tmp/souji-s30.ZeIfRE/root/lane-i-shokunin/f9.txt ",
+    "exit": 0,
+    "expected": "SAFE receipt=pushed",
+    "note": "",
+    "raw": "VERDICT\t/tmp/souji-s30.ZeIfRE/root/lane-i-shokunin/f9.txt\tSAFE\tpushed\tintro=d391da5de042 default=refs/remotes/origin/master repo=/tmp/souji-s30.ZeIfRE/root/lane-i-shokunin",
+    "result": "pass",
+    "suite": "B_fixtures",
+    "target": "/tmp/souji-s30.ZeIfRE/root/lane-i-shokunin/f9.txt"
+   },
+   {
+    "case": "F10",
+    "cmd": "env SHOKUNIN_ROOT=/tmp/souji-s30.ZeIfRE/root SOUJI_LEDGER=/tmp/souji-s30.ZeIfRE/root/souji-shokunin/corpus/knowledge/obsidian-ledger.tsv bash /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh  /tmp/souji-s30.ZeIfRE/root/lane-j-shokunin/config.env ",
+    "exit": 0,
+    "expected": "NOT-SAFE receipt=secrets-refusal",
+    "note": "",
+    "raw": "VERDICT\t/tmp/souji-s30.ZeIfRE/root/lane-j-shokunin/config.env\tNOT-SAFE\tsecrets-refusal\tbasename-rule short-circuit (no read)",
+    "result": "pass",
+    "suite": "B_fixtures",
+    "target": "/tmp/souji-s30.ZeIfRE/root/lane-j-shokunin/config.env"
+   },
+   {
+    "case": "W1",
+    "cmd": "env SHOKUNIN_ROOT=/tmp/souji-s30.ZeIfRE/root SOUJI_LEDGER=/tmp/souji-s30.ZeIfRE/root/souji-shokunin/corpus/knowledge/obsidian-ledger.tsv bash /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh  /tmp/souji-s30.ZeIfRE/root/wt-w1 ",
+    "exit": 0,
+    "expected": "NOT-SAFE receipt=dirty",
+    "note": "",
+    "raw": "VERDICT\t/tmp/souji-s30.ZeIfRE/root/wt-w1\tNOT-SAFE\tdirty\towner=/tmp/souji-s30.ZeIfRE/root/lane-k-shokunin dirty=1",
+    "result": "pass",
+    "suite": "B_fixtures",
+    "target": "/tmp/souji-s30.ZeIfRE/root/wt-w1"
+   }
+  ],
+  "C_cli_contract": [
+   {
+    "case": "X1",
+    "cmd": "env SHOKUNIN_ROOT=/tmp/souji-s30.ZeIfRE/root SOUJI_LEDGER=/tmp/souji-s30.ZeIfRE/root/souji-shokunin/corpus/knowledge/obsidian-ledger.tsv bash /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh  /tmp/souji-s30.ZeIfRE/root/lane-a-shokunin/no-such-file.txt ",
+    "exit": 0,
+    "expected": "NOT-SAFE receipt=unreachable",
+    "note": "",
+    "raw": "VERDICT\t/tmp/souji-s30.ZeIfRE/root/lane-a-shokunin/no-such-file.txt\tNOT-SAFE\tunreachable\tmissing-target",
+    "result": "pass",
+    "suite": "C_cli_contract",
+    "target": "/tmp/souji-s30.ZeIfRE/root/lane-a-shokunin/no-such-file.txt"
+   },
+   {
+    "case": "X2",
+    "cmd": "env SHOKUNIN_ROOT=/tmp/souji-s30.ZeIfRE/root SOUJI_LEDGER=/tmp/souji-s30.ZeIfRE/root/souji-shokunin/corpus/knowledge/obsidian-ledger.tsv bash /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh   ",
+    "exit": 0,
+    "expected": "NOT-SAFE receipt=unreachable",
+    "note": "",
+    "raw": "VERDICT\t\tNOT-SAFE\tunreachable\tempty-target",
+    "result": "pass",
+    "suite": "C_cli_contract",
+    "target": ""
+   },
+   {
+    "case": "X3",
+    "cmd": "env SHOKUNIN_ROOT=/tmp/souji-s30.ZeIfRE/root SOUJI_LEDGER=/tmp/souji-s30.ZeIfRE/root/souji-shokunin/corpus/knowledge/obsidian-ledger.tsv bash /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh --stale-days 3 /tmp/souji-s30.ZeIfRE/root/lane-g-shokunin/.scratch/s30-fresh-uniq.log [dur=0.02s]",
+    "exit": 0,
+    "expected": "NOT-SAFE receipt=none",
+    "note": "",
+    "raw": "VERDICT\t/tmp/souji-s30.ZeIfRE/root/lane-g-shokunin/.scratch/s30-fresh-uniq.log\tNOT-SAFE\tnone\tuntracked repo=/tmp/souji-s30.ZeIfRE/root/lane-g-shokunin ledger=miss scratch=yes mtime_age_days=0",
+    "result": "pass",
+    "suite": "C_cli_contract",
+    "target": "/tmp/souji-s30.ZeIfRE/root/lane-g-shokunin/.scratch/s30-fresh-uniq.log"
+   },
+   {
+    "case": "X4",
+    "cmd": "env SHOKUNIN_ROOT=/tmp/souji-s30.ZeIfRE/root SOUJI_LEDGER=/tmp/souji-s30.ZeIfRE/root/souji-shokunin/corpus/knowledge/obsidian-ledger.tsv bash /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh  /tmp/souji-s30.ZeIfRE/root/lane-j-shokunin/mycredentials.json ",
+    "exit": 0,
+    "expected": "NOT-SAFE receipt=secrets-refusal",
+    "note": "",
+    "raw": "VERDICT\t/tmp/souji-s30.ZeIfRE/root/lane-j-shokunin/mycredentials.json\tNOT-SAFE\tsecrets-refusal\tbasename-rule short-circuit (no read)",
+    "result": "pass",
+    "suite": "C_cli_contract",
+    "target": "/tmp/souji-s30.ZeIfRE/root/lane-j-shokunin/mycredentials.json"
+   },
+   {
+    "case": "X5",
+    "cmd": "env SHOKUNIN_ROOT=/tmp/souji-s30.ZeIfRE/root SOUJI_LEDGER=/tmp/souji-s30.ZeIfRE/root/souji-shokunin/corpus/knowledge/obsidian-ledger.tsv bash /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh  /tmp/souji-s30.ZeIfRE/root/lane-j-shokunin/id_fixture_probe ",
+    "exit": 0,
+    "expected": "NOT-SAFE receipt=secrets-refusal",
+    "note": "",
+    "raw": "VERDICT\t/tmp/souji-s30.ZeIfRE/root/lane-j-shokunin/id_fixture_probe\tNOT-SAFE\tsecrets-refusal\tbasename-rule short-circuit (no read)",
+    "result": "pass",
+    "suite": "C_cli_contract",
+    "target": "/tmp/souji-s30.ZeIfRE/root/lane-j-shokunin/id_fixture_probe"
+   },
+   {
+    "case": "X6",
+    "cmd": "bash /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh --bogus-flag <path>",
+    "exit": 2,
+    "expected": "exit 2",
+    "note": "exit 2",
+    "raw": "usage: souji-verify.sh [--selftest] [--stale-days N] [--json] <path>...",
+    "result": "pass",
+    "suite": "C_cli_contract",
+    "target": "--bogus-flag"
+   },
+   {
+    "case": "X7",
+    "cmd": "bash /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh",
+    "exit": 2,
+    "expected": "exit 2 (usage)",
+    "note": "exit 2",
+    "raw": "usage: souji-verify.sh [--selftest] [--stale-days N] [--json] <path>...",
+    "result": "pass",
+    "suite": "C_cli_contract",
+    "target": "(no args)"
+   },
+   {
+    "case": "X8",
+    "cmd": "bash /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh --json <f1.txt> <lane-c>",
+    "exit": 0,
+    "expected": "parseable JSON with both targets",
+    "note": "parseable JSON (jsonl)",
+    "raw": "{\"path\":\"/tmp/souji-s30.ZeIfRE/root/lane-a-shokunin/f1.txt\",\"kind\":\"artifact\",\"verdict\":\"SAFE\",\"receipt\":\"pushed\",\"evidence\":\"intro=7a5939eeb2a6 default=refs/remotes/origin/master repo=/tmp/souji-s30.ZeIfRE/root/lane-a-shokunin\"}\n{\"path\":\"/tmp/souji-s30.ZeIfRE/root/lane-c-shokunin\",\"kind\":\"repo-root\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"unpushed-dirty\",\"evidence\":\"unpushed=2 dirty=2\"}",
+    "result": "pass",
+    "suite": "C_cli_contract",
+    "target": "2 targets"
+   },
+   {
+    "case": "X9",
+    "cmd": "bash /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh <f1.txt> <lane-c>",
+    "exit": 0,
+    "expected": "2 lines, order preserved",
+    "note": "2 lines, paths match order",
+    "raw": "VERDICT\t/tmp/souji-s30.ZeIfRE/root/lane-a-shokunin/f1.txt\tSAFE\tpushed\tintro=7a5939eeb2a6 default=refs/remotes/origin/master repo=/tmp/souji-s30.ZeIfRE/root/lane-a-shokunin\nVERDICT\t/tmp/souji-s30.ZeIfRE/root/lane-c-shokunin\tNOT-SAFE\tunpushed-dirty\tunpushed=2 dirty=2",
+    "result": "pass",
+    "suite": "C_cli_contract",
+    "target": "2 targets"
+   }
+  ],
+  "D_live_checks": [
+   {
+    "case": "L1",
+    "cmd": " bash /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh  /home/vgpnk/Projects/shokunin/kotodama-shokunin ",
+    "exit": 0,
+    "expected": "NOT-SAFE receipt=*",
+    "note": "",
+    "raw": "VERDICT\t/home/vgpnk/Projects/shokunin/kotodama-shokunin\tNOT-SAFE\tunpushed-dirty\tunpushed=38 dirty=22",
+    "result": "pass",
+    "suite": "D_live_checks",
+    "target": "/home/vgpnk/Projects/shokunin/kotodama-shokunin"
+   },
+   {
+    "case": "L2",
+    "cmd": " bash /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh  /tmp/r87-B1 ",
+    "exit": 0,
+    "expected": "SAFE receipt=metadata-prune",
+    "note": "",
+    "raw": "VERDICT\t/tmp/r87-B1\tSAFE\tmetadata-prune\towner=/home/vgpnk/Projects/shokunin/lore-shokunin head=28706dc73a9b unique=0 dir=absent",
+    "result": "pass",
+    "suite": "D_live_checks",
+    "target": "/tmp/r87-B1"
+   },
+   {
+    "case": "L3",
+    "cmd": " bash /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh  /home/vgpnk/Projects/shokunin/.ufo/interactive-l1-20261015T050057Z/launch-chousa.json ",
+    "exit": 0,
+    "expected": "SAFE receipt=pushed",
+    "note": "",
+    "raw": "VERDICT\t/home/vgpnk/Projects/shokunin/.ufo/interactive-l1-20261015T050057Z/launch-chousa.json\tSAFE\tpushed\tintro=b2f2efae7549 default=refs/remotes/origin/master repo=/home/vgpnk/Projects/shokunin",
+    "result": "pass",
+    "suite": "D_live_checks",
+    "target": "/home/vgpnk/Projects/shokunin/.ufo/interactive-l1-20261015T050057Z/launch-chousa.json"
+   },
+   {
+    "case": "L4",
+    "cmd": " bash /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh  /home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r100 ",
+    "exit": 0,
+    "expected": "NOT-SAFE receipt=unpushed-branch",
+    "note": "",
+    "raw": "VERDICT\t/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r100\tNOT-SAFE\tunpushed-branch\towner=/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin branch=wt-r100 unpushed=1",
+    "result": "pass",
+    "suite": "D_live_checks",
+    "target": "/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r100"
+   }
+  ],
+  "E_readonly": [
+   {
+    "case": "R1",
+    "cmd": "post-run fixture state diff",
+    "exit": 0,
+    "expected": "fixtures byte-stable across tool runs",
+    "note": "fixture repos + worktree registrations unchanged",
+    "raw": "",
+    "result": "pass",
+    "suite": "E_readonly",
+    "target": "/tmp/souji-s30.ZeIfRE/root"
+   }
+  ]
+ },
+ "fixture_evidence": {
+  "F1": {
+   "ancestor_of_origin_master": true,
+   "intro_f1": "7a5939eeb2a6a62ef9021f7ceb1096554e85af91",
+   "origin_head": "origin/master",
+   "origin_master_exists": true
+  },
+  "F2": {
+   "ancestor_of_origin_master": false,
+   "intro_f2_local": "b1de37782375d829874236b55caabf2d3d17e8f5"
+  },
+  "F3": {
+   "dirty_lines": 2,
+   "unpushed": 2,
+   "untracked": "stray-untracked.txt"
+  },
+  "F4": {
+   "dir_exists": false,
+   "unique_commits": 0,
+   "worktree_list_has": true
+  },
+  "F5": {
+   "branch": "wt-f5",
+   "dir_exists": true,
+   "unpushed_on_branch": 1,
+   "worktree_clean": true
+  },
+  "F6": {
+   "ledger_rows": 2
+  },
+  "F9": {
+   "origin_head_absent": true,
+   "origin_ref_count": 1
+  },
+  "W1": {
+   "worktree_present_dirty": true
+  }
+ },
+ "summary": {
+  "cases": 26,
+  "pass": 26,
+  "fail": 0,
+  "info_or_skip": 0,
+  "critical": {
+   "A1": "pass",
+   "L1": "pass"
+  },
+  "failures": [],
+  "verdict": "PASS"
+ },
+ "notes": [
+  "F1..F10 mirror the binding spec's selftest cases; constructed independently of the tool's own --selftest.",
+  "F3 evidence assertion requires the spec's unpushed=N dirty=M counts in the evidence field.",
+  "X7 no-args behaviour is spec-ambiguous (usage 2 vs zero-target 0) and graded info, not fail.",
+  "X8 accepts either a single JSON document or JSONL (one object per target): the spec fixes neither; the tool documents JSONL.",
+  "Fixture root is injected via SOUJI_ROOT (SHOKUNIN_ROOT) + SOUJI_LEDGER; if F4/F5/F6 fail, check whether the tool honours that injection."
+ ]
+}

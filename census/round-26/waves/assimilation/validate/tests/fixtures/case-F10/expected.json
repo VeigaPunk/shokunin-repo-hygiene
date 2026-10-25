@@ -1,0 +1,55 @@
+{
+  "case": "F10",
+  "title": "secrets-refusal on secret-shaped basenames; the normal file is evaluated by the ordinary receipt chain",
+  "spec": "tools/souji-verify.spec.md",
+  "spec_clauses": [
+    "safety-rails: never read *.env / *credential* / *secret* / id_* / *.pem; verdict NOT-SAFE(secrets-refusal)",
+    "artifact kind 3 receipt chain: pushed / moved-to-obsidian / stale / none"
+  ],
+  "path_base": "relative to this case directory; a selftest may relocate the payload into a mktemp git repo, so match on the trailing path, not on an absolute prefix",
+  "payload_files": ["app.env", "creds.pem", "notes.txt"],
+  "metadata_files": ["expected.json", "README.md"],
+  "run_exit_code": 0,
+  "line_format": "VERDICT<TAB>path<TAB>SAFE|NOT-SAFE<TAB>receipt-or-reason<TAB>decisive-evidence (5 tab-separated fields)",
+  "targets": [
+    {
+      "path": "app.env",
+      "class": "secret-shaped",
+      "matched_rule": "*.env",
+      "expected": {
+        "verdict": "NOT-SAFE",
+        "receipt": "secrets-refusal"
+      }
+    },
+    {
+      "path": "creds.pem",
+      "class": "secret-shaped",
+      "matched_rule": "*.pem",
+      "expected": {
+        "verdict": "NOT-SAFE",
+        "receipt": "secrets-refusal"
+      }
+    },
+    {
+      "path": "notes.txt",
+      "class": "normal",
+      "matched_rule": "none",
+      "expected": {
+        "verdict_set": ["SAFE", "NOT-SAFE"],
+        "receipt_canonical_plain_copy": "none",
+        "receipt_set": ["none", "pushed", "pushed-unverifiable"],
+        "forbidden_receipt": "secrets-refusal"
+      }
+    }
+  ],
+  "leak_canaries": {
+    "app.env": "SOUJI-F10-CANARY-ENV-9d4c1a",
+    "creds.pem": "SOUJI-F10-CANARY-PEM-7b2e80"
+  },
+  "assertions": [
+    "each secret-shaped target is reported NOT-SAFE with receipt secrets-refusal",
+    "notes.txt never receives secrets-refusal; its receipt is one of none/pushed/pushed-unverifiable",
+    "tool stdout+stderr contains neither leak canary",
+    "the tool never opens app.env or creds.pem (basename short-circuit only)"
+  ]
+}

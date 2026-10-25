@@ -1,0 +1,230 @@
+{
+ "seat": "S42",
+ "role": "reviewer",
+ "round": 4,
+ "lane": "souji-shokunin",
+ "deliverable": "independent review of round-4 Obsidian-CLI vault verification (ledger-backed moved-to-obsidian)",
+ "generated_at": "2026-10-18T14:18:25-03:00",
+ "method": {
+  "fixture": "/tmp/s42-review/fx2 - 32 ground-truth cases: ledger semantics (tamper / vault-absent / source-tamper / empty-hash / header-only / malformed / traversal / secrets / dir-digest / spaces / FIFO / symlink-loop / mode-000 / /proc stat-quirk / uppercase-hex / unterminated final row / CRLF / duplicate rows / self-receipt)",
+  "cli": "independent mock obsidian CLI (ok/slow/error/garbage/empty/hang/lie) on PATH + poisoned GUI shim. Oracle derived from the contract: the CLI is ADVISORY, so a stale/erroring/hanging CLI must not flip a hash-verified row, and a lying CLI must never manufacture SAFE from a mismatching row.",
+  "live": "real vault read-only: correct row / wrong vault hash / header-only / missing ledger / restored row + full vault sha256 manifest before-after + live ledger digest + line count",
+  "concurrency": "torn write, concurrent append, mv-replaced ledger (no false-SAFE tolerated)",
+  "shared": "seat-authored tests/vault/case-V{1,2,4,5,8} fixtures built by their own make-fixture.sh",
+  "vocabulary": "VERIFIED/NOT-VERIFIED normalized to SAFE/NOT-SAFE; parenthesized reasons and all four output shapes parsed",
+  "harness": "/tmp/s42-review/{lib.sh,mkfixture2.sh,run_cases.sh,run_cli.sh,run_live.sh,run_conc.sh,run_shared.sh,review.sh}",
+  "corrections_made": "two of my own oracles were wrong and were fixed after testing cases where the tool was right: (a) the CLI family originally demanded NOT-SAFE when the advisory CLI errored - corrected to the contract; (b) three flagged 'defects' (symlink refusal, self-row refusal, CRLF tolerance) are defensible policy and were reclassified, except the self-receipt case which is a genuine false-SAFE."
+ },
+ "findings": [
+  {
+   "id": "F1",
+   "title": "official Obsidian CLI is unregistered on this host",
+   "verdict": "NOT-VERIFIED",
+   "evidence": [
+    "~/.local/bin/obsidian-cli absent; ~/.local/bin/obsidian absent (the app's register handler copies <resources>/obsidian-cli to ~/.local/bin/obsidian)",
+    "socket $XDG_RUNTIME_DIR/.obsidian-cli.sock absent (/run/user/1000)",
+    "/usr/lib/obsidian holds only app.asar, obsidian.asar, icon.png - no cli shim",
+    "~/.config/obsidian/obsidian.json has \"cli\":true, so the flag is on but the shim was never registered"
+   ],
+   "consequence": "CLI-assisted verification cannot be exercised today; the sha256sum fallback is the operational path and no tool may invoke /usr/bin/obsidian (GUI launcher).",
+   "corroboration": "S05 seat-05.json (same conclusion, independently); impl-20/24 both degrade to fallback."
+  },
+  {
+   "id": "F2",
+   "title": "obsidian-cli-inspector's Hash is size:mtime, not a content digest",
+   "verdict": "DECISIVE-NEGATIVE",
+   "evidence": [
+    "view describe prints 'Hash: <size>:<mtime_epoch>' e.g. '5:1792342762'",
+    "controlled probe: note rewritten AAAA->BBBB, same size, mtime restored -> identical Hash while sha256 changed to 0bc4ed51...",
+    "obsidian-cli-inspector v1.0.3 sha256 0522cd2eaeda54da9609d3a121203d3a1241d22bfba770a6cc3039ced9bee9b1"
+   ],
+   "consequence": "The inspector cannot serve as the vault-side sha256 oracle; sha256sum remains the verifier of record.",
+   "corroboration": "S35 vrun-35.json cli_finding (same result); S05."
+  },
+  {
+   "id": "F3",
+   "title": "real vault contains 20 symlinks into sibling repos",
+   "verdict": "TRAP",
+   "evidence": [
+    "63 regular files, 58 *.md, 20 symlinks",
+    "every <lane>/source -> ../<lane>-shokunin and protocol -> kimi-shokunin/skills/shokunin/protocol",
+    "find -L reaches ~7,680 .md files across sibling repos"
+   ],
+   "consequence": "A vault walk must not follow symlinks; a naive find -L hash walk leaves the vault and hashes sibling repos.",
+   "corroboration": "S41 anchors vault_files=63; S47/S48 manifests."
+  },
+  {
+   "id": "F4",
+   "title": "the pushed receipt masks the vault row",
+   "verdict": "TRAP",
+   "evidence": [
+    "committed lane file + absent ledger -> 'VERDICT ... SAFE pushed intro=36746332cab0'",
+    "same file + valid vault row -> still SAFE(pushed); the vault path is never consulted"
+   ],
+   "consequence": "A live-vault probe must use an UNTRACKED source file, or the pushed receipt short-circuits the vault check.",
+   "corroboration": "souji-verify receipt precedence (spec order pushed -> moved-to-obsidian -> stale)."
+  },
+  {
+   "id": "F5",
+   "title": "self-receipt row is a false-SAFE in impl-24",
+   "verdict": "FATAL (independently reproduced)",
+   "evidence": [
+    "row with vault_path == source_path and matching hashes",
+    "impl-24 -> 'VERIFIED ... moved-to-obsidian ... verified=live' (self-satisfying; proves nothing about a vault)",
+    "impl-20 -> 'NOT-SAFE none source-equals-vault'; r2 -> SAFE (same gap, lower severity for an installed r2 tool)"
+   ],
+   "consequence": "impl-24 is not selectable: the row is its own evidence.",
+   "corroboration": "S45 V06 fatal class, reproduced by S41 vreview-41.json; I reproduced it directly."
+  },
+  {
+   "id": "F6",
+   "title": "impl-21 selftest is broken",
+   "verdict": "FATAL (independently reproduced)",
+   "evidence": [
+    "--selftest: 'FAIL L2: got SAFE(moved-to-obsidian) want NOT-SAFE(none)' and \"FAIL C1: evidence lacks 'cli=agree'\"",
+    "line 786: 'LIE_OLD: unbound variable'"
+   ],
+   "consequence": "impl-21 is not selectable.",
+   "corroboration": "S41 vreview-41.json reports the same two failures and the same unbound variable."
+  }
+ ],
+ "impls": {
+  "souji-vault-verify.impl-20": {
+   "path": "/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-vault-verify.impl-20.sh",
+   "sha256": "95fa47182cc163f570f032da398e4bb6f7506c2d7befbc49641e830eccc9a32a",
+   "shipped_mode": "755",
+   "scores": {
+    "fixture": 9.68,
+    "cli": 10.0,
+    "live-vault": 10.0,
+    "concurrency": 10.0,
+    "shared-contract": 10.0
+   },
+   "totals": {
+    "fixture": "30/31",
+    "cli": "10/10",
+    "live-vault": "8/8",
+    "concurrency": "3/3",
+    "shared-contract": "5/5"
+   },
+   "total": 56,
+   "max_total": 57,
+   "fixture_failures": [
+    "V15-upperhex"
+   ],
+   "fatal_defects": [],
+   "selectable": true
+  },
+  "souji-vault-verify.impl-24": {
+   "path": "/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-vault-verify.impl-24.sh",
+   "sha256": "2b224647abedc3ee00b38c3d5e1dee38baab05a705a8bebbdc65fb7b4cc47a50",
+   "shipped_mode": "755",
+   "scores": {
+    "fixture": 8.71,
+    "cli": 10.0,
+    "live-vault": 10.0,
+    "concurrency": 10.0,
+    "shared-contract": 10.0
+   },
+   "totals": {
+    "fixture": "27/31",
+    "cli": "10/10",
+    "live-vault": "8/8",
+    "concurrency": "3/3",
+    "shared-contract": "5/5"
+   },
+   "total": 53,
+   "max_total": 57,
+   "fixture_failures": [
+    "V12-dir",
+    "V15-upperhex",
+    "U-no-nl",
+    "V25-selfrow"
+   ],
+   "fatal_defects": [
+    "F5 self-receipt row yields false-SAFE"
+   ],
+   "selectable": false
+  },
+  "souji-vault-verify.impl-99": {
+   "path": "/tmp/s29-mock/souji-vault-verify.impl-99.sh",
+   "sha256": "abf054807870d222d54be897a94991f748177deae86657fd03d9834330db6721",
+   "shipped_mode": "755",
+   "scores": {
+    "fixture": 8.71,
+    "cli": 3.0,
+    "live-vault": 7.5,
+    "concurrency": 10.0,
+    "shared-contract": 6.0
+   },
+   "totals": {
+    "fixture": "27/31",
+    "cli": "3/10",
+    "live-vault": "6/8",
+    "concurrency": "3/3",
+    "shared-contract": "3/5"
+   },
+   "total": 42,
+   "max_total": 57,
+   "fixture_failures": [
+    "V12-dir",
+    "V14-secret",
+    "V15-upperhex",
+    "V25-selfrow"
+   ],
+   "fatal_defects": [
+    "reads and verifies a secret-shaped .env source instead of refusing"
+   ],
+   "selectable": false
+  },
+  "souji-verify (r2, installed)": {
+   "path": "/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh",
+   "sha256": "7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820",
+   "shipped_mode": "755",
+   "scores": {
+    "fixture": 9.03,
+    "cli": 1.0,
+    "live-vault": 10.0,
+    "concurrency": 10.0,
+    "shared-contract": 10.0
+   },
+   "totals": {
+    "fixture": "28/31",
+    "cli": "1/10",
+    "live-vault": "8/8",
+    "concurrency": "3/3",
+    "shared-contract": "5/5"
+   },
+   "total": 45,
+   "max_total": 57,
+   "fixture_failures": [
+    "V15-upperhex",
+    "U-no-nl",
+    "V25-selfrow"
+   ],
+   "fatal_defects": [],
+   "selectable": true
+  }
+ },
+ "aggregate": {
+  "ranking": [
+   "souji-vault-verify.impl-20 (56/57)",
+   "souji-verify (r2, installed) (45/57)",
+   "souji-vault-verify.impl-24 (53/57)",
+   "souji-vault-verify.impl-99 (42/57)"
+  ],
+  "selectable": [
+   "souji-vault-verify.impl-20",
+   "souji-verify (r2, installed)"
+  ],
+  "winner_inputs": {
+   "impl": "souji-vault-verify.impl-20",
+   "sha256": "95fa47182cc163f570f032da398e4bb6f7506c2d7befbc49641e830eccc9a32a"
+  },
+  "caveats": [
+   "impl-20 was rewritten repeatedly during the wave (20KB syntax-broken -> 38KB -> 40KB); this review scores the file as of the sha256 recorded above.",
+   "impl-17/18/19/22/23 never appeared under tools/ during my window.",
+   "The installed r2 tool predates the --cli flag by design; its low CLI score is a capability gap, not a defect."
+  ]
+ }
+}

@@ -1,0 +1,1451 @@
+{
+ "case_count": 14,
+ "conflicts": [],
+ "environment_observations": {
+  "note": "rg: unrecognized flag --basename ",
+  "rg_basename_flag_supported": false,
+  "rg_version": "ripgrep 15.2.0 (rev e89fff89ac)"
+ },
+ "findings": [
+  "All adversarial invocations pass on the evaluated build: a fifo target terminates (no content read) and is NOT-SAFE; paths with spaces survive single, batch and relative-path invocations with the path echoed exactly and 5 tab fields; a 0-byte committed file is SAFE(pushed), not unreachable; a 0-byte stale scratch file is SAFE(stale), not unreachable; an untracked 0-byte file is NOT-SAFE(none), not unreachable.",
+  "Spec observation (D3): `rg -l --no-ignore --basename <name> <repo>` is not executable on this host - ripgrep 15.2.0 rejects --basename (exit 2, 'unrecognized flag'). The tool implements the intended zero-live-reference sweep with an equivalent content search (globs before --, plus a post-filter case statement); case A4 confirms the stale receipt fires with refs=0. Independently recorded by seats S19/S27.",
+  "Build churn: tools/souji-verify.sh was rewritten by parallel builder seats during this round (observed shas 268042e7, 714b3850, 8ec74ba8, 112f9163, d32bac5d). Selftest results on the moving file varied (e.g. F8 census-exclusion and JSON-mode failures on intermediate builds); this evaluation pins one sha and checks live_path_sha256_after_run equals it.",
+  "Fixture safety: the tool left both fixture git repositories byte-identical (fixture_unmodified=1) and emitted no stderr noise on the adversarial inputs.",
+  "Harness calibration: the same harness run against a deliberately naive stub failed exactly the defect-detector cases (fifo hang via eager sha256sum, word-split paths, 0-byte -> unreachable), so the green result on the real tool is not vacuous."
+ ],
+ "fixture": {
+  "facts": {
+   "fixture_ancestor_empty_rc": "0",
+   "fixture_ancestor_spaced_rc": "0",
+   "fixture_fifo_is_fifo": "1",
+   "fixture_fifo_path": "/tmp/adv-43/work-iAVcGZIA/fix/advrepo/zz-fifo-adv43",
+   "fixture_fifo_repo_master": "6624575043fb5325957b3f6fc5e909647dfef04b",
+   "fixture_fifo_size": "0",
+   "fixture_head": "147682593fb9389d3f99aa90a948cc229b6cec85",
+   "fixture_intro_empty": "147682593fb9389d3f99aa90a948cc229b6cec85",
+   "fixture_intro_spaced": "147682593fb9389d3f99aa90a948cc229b6cec85",
+   "fixture_mtime_stale": "2026-08-31 21:00:00.000000000 -0300",
+   "fixture_origin_head": "origin/master",
+   "fixture_origin_master": "147682593fb9389d3f99aa90a948cc229b6cec85",
+   "fixture_repo_plain": "/tmp/adv-43/work-iAVcGZIA/fix/advrepo",
+   "fixture_repo_spaces": "/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces",
+   "fixture_sha_empty": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "fixture_size_empty": "0",
+   "fixture_size_stale_zero": "0",
+   "fixture_unmodified": "1"
+  },
+  "note": "isolated mktemp git repos (no fetch); pushed fixtures proven pushed by local refs only",
+  "repo": "/tmp/adv-43/work-iAVcGZIA/fix/advrepo",
+  "scratch_dir": "/tmp/adv-43/work-iAVcGZIA"
+ },
+ "hard_failure_count": 0,
+ "harness": {
+  "assembler": "/tmp/adv-43/assemble.py",
+  "assembler_sha256": "756a18e699f3bafd5383f97ee69e9f09eb7ceaa379d397e638160549d6aeff8f",
+  "rerun": "bash /tmp/adv-43/adv-43.sh   # writes the repo result JSON; SOUJI_TOOL_OVERRIDE / RESULT_PATH override target+dest",
+  "script": "/tmp/adv-43/adv-43.sh",
+  "script_sha256": "b9fa1384816bef16aae93d44f8e5807e627ffc2fa0df5bbc0e0f639999a4103f"
+ },
+ "harness_selfcheck": {
+  "note": "harness self-validation against a deliberately naive tool (eager unquoted sha256sum => fifo hang + word-splitting; [ -s ] => 0-byte unreachable): the harness must FAIL those cases. Observed failures confirm the detectors fire.",
+  "stub_cases_failed": [
+   "A1",
+   "A10",
+   "A12",
+   "A2",
+   "A3",
+   "A4",
+   "A6",
+   "A7",
+   "A8",
+   "A9"
+  ],
+  "stub_cases_passed": [
+   "A0",
+   "A11",
+   "A13",
+   "A5"
+  ],
+  "stub_tool_sha256": "6815920b28b4efff595ccb2bb6a758c8ddf69a524651029038d473d4946e007d"
+ },
+ "invocations": [
+  {
+   "argv": [
+    "--selftest"
+   ],
+   "checks": [
+    {
+     "hard": true,
+     "name": "selftest_rc0",
+     "observed": "rc=0 ms=254",
+     "pass": true
+    },
+    {
+     "hard": false,
+     "name": "selftest_fail_lines",
+     "observed": "failed_checks=[]",
+     "pass": true
+    },
+    {
+     "hard": false,
+     "name": "selftest_summary_present",
+     "observed": "summary=['SELFTEST SUMMARY pass=26 fail=0']",
+     "pass": true
+    }
+   ],
+   "duration_ms": "254",
+   "hard_failures": [],
+   "id": "A0",
+   "kind": "selftest",
+   "rc": 0,
+   "rows": [
+    {
+     "evidence": "pushed ancestor pre-tip",
+     "nfields": 5,
+     "path": "PASS",
+     "raw": "F1\tPASS\tSAFE(pushed)\tintro=92150995dbb2 default=refs/remotes/origin/master repo=/tmp/souji-selftest.1g6VG7/fleet/alpha-shokunin\tpushed ancestor pre-tip",
+     "reason": "pushed",
+     "tag": "F1",
+     "verdict": "SAFE"
+    },
+    {
+     "evidence": "local-only introducing commit",
+     "nfields": 5,
+     "path": "PASS",
+     "raw": "F2\tPASS\tNOT-SAFE(none)\tuntracked repo=/tmp/souji-selftest.1g6VG7/fleet/alpha-shokunin ledger=miss scratch=no mtime_age_days=0\tlocal-only introducing commit",
+     "reason": "none",
+     "tag": "F2",
+     "verdict": "NOT-SAFE"
+    },
+    {
+     "evidence": "repo-root unpushed+dirty",
+     "nfields": 5,
+     "path": "PASS",
+     "raw": "F3\tPASS\tNOT-SAFE(unpushed-dirty)\tunpushed=2 dirty=1\trepo-root unpushed+dirty",
+     "reason": "unpushed-dirty",
+     "tag": "F3",
+     "verdict": "NOT-SAFE"
+    },
+    {
+     "evidence": "worktree dir absent, unique=0",
+     "nfields": 5,
+     "path": "PASS",
+     "raw": "F4\tPASS\tSAFE(metadata-prune)\towner=/tmp/souji-selftest.1g6VG7/fleet/delta-shokunin head=374e98322b53 unique=0 dir=absent\tworktree dir absent, unique=0",
+     "reason": "metadata-prune",
+     "tag": "F4",
+     "verdict": "SAFE"
+    },
+    {
+     "evidence": "worktree named branch, 1 unpushed",
+     "nfields": 5,
+     "path": "PASS",
+     "raw": "F5\tPASS\tNOT-SAFE(unpushed-branch)\towner=/tmp/souji-selftest.1g6VG7/fleet/delta-shokunin branch=wtfeat unpushed=1\tworktree named branch, 1 unpushed",
+     "reason": "unpushed-branch",
+     "tag": "F5",
+     "verdict": "NOT-SAFE"
+    },
+    {
+     "evidence": "ledger row + both sha256",
+     "nfields": 5,
+     "path": "PASS",
+     "raw": "F6\tPASS\tSAFE(moved-to-obsidian)\tledger=/tmp/souji-selftest.1g6VG7/fleet/corpus/knowledge/obsidian-ledger.tsv src_sha256=a5494bd42ccc vault=/tmp/souji-selftest.1g6VG7/vault/sample.bin\tledger row + both sha256",
+     "reason": "moved-to-obsidian",
+     "tag": "F6",
+     "verdict": "SAFE"
+    },
+    {
+     "evidence": "scratch, no refs, old mtime",
+     "nfields": 5,
+     "path": "PASS",
+     "raw": "F7\tPASS\tSAFE(stale)\tmtime_age_days=290 refs=0 scratch-type=yes\tscratch, no refs, old mtime",
+     "reason": "stale",
+     "tag": "F7",
+     "verdict": "SAFE"
+    },
+    {
+     "evidence": "census mention absorbed (D3)",
+     "nfields": 5,
+     "path": "PASS",
+     "raw": "F8\tPASS\tSAFE(stale)\tmtime_age_days=290 refs=0 scratch-type=yes\tcensus mention absorbed (D3)",
+     "reason": "stale",
+     "tag": "F8",
+     "verdict": "SAFE"
+    },
+    {
+     "evidence": "origin/HEAD absent, single origin ref",
+     "nfields": 5,
+     "path": "PASS",
+     "raw": "F9\tPASS\tSAFE(pushed)\tintro=b10bd96e1911 default=refs/remotes/origin/master repo=/tmp/souji-selftest.1g6VG7/fleet/beta-shokunin\torigin/HEAD absent, single origin ref",
+     "reason": "pushed",
+     "tag": "F9",
+     "verdict": "SAFE"
+    },
+    {
+     "evidence": "D3 exclusion is load-bearing",
+     "nfields": 5,
+     "path": "PASS",
+     "raw": "F8-control\tPASS\tcensus-mention-present\t./souji-shokunin/census/round-2/seat-01.json\tD3 exclusion is load-bearing",
+     "reason": "./souji-shokunin/census/round-2/seat-01.json",
+     "tag": "F8-control",
+     "verdict": "census-mention-present"
+    },
+    {
+     "evidence": "mtime threshold honored",
+     "nfields": 5,
+     "path": "PASS",
+     "raw": "F7-control\tPASS\tNOT-SAFE(none)\tuntracked repo=/tmp/souji-selftest.1g6VG7/fleet/alpha-shokunin ledger=miss scratch=yes mtime_age_days=290\tmtime threshold honored",
+     "reason": "none",
+     "tag": "F7-control",
+     "verdict": "NOT-SAFE"
+    },
+    {
+     "evidence": "/tmp/souji-selftest.1g6VG7/fleet/secrets/app.env",
+     "nfields": 17,
+     "path": "PASS",
+     "raw": "F10-cli\tPASS\texit=0\tVERDICT\t/tmp/souji-selftest.1g6VG7/fleet/secrets/app.env\tNOT-SAFE\tsecrets-refusal\tbasename-rule short-circuit (no read) VERDICT\t/tmp/souji-selftest.1g6VG7/fleet/secrets/creds.pem\tNOT-SAFE\tsecrets-refusal\tbasename-rule short-circuit (no read) VERDICT\t/tmp/souji-selftest.1g6VG7/fleet/secrets/notes.txt\tNOT-SAFE\tnone\tuntracked repo=/tmp/souji-selftest.1g6VG7/fleet ledger=miss scrat",
+     "reason": "VERDICT",
+     "tag": "F10-cli",
+     "verdict": "exit=0"
+    },
+    {
+     "evidence": "secret-shaped target",
+     "nfields": 5,
+     "path": "PASS",
+     "raw": "F10-cli:app.env\tPASS\tNOT-SAFE(secrets-refusal)\t5-field line\tsecret-shaped target",
+     "reason": "secrets-refusal",
+     "tag": "F10-cli:app.env",
+     "verdict": "NOT-SAFE"
+    },
+    {
+     "evidence": "secret-shaped target",
+     "nfields": 5,
+     "path": "PASS",
+     "raw": "F10-cli:creds.pem\tPASS\tNOT-SAFE(secrets-refusal)\t5-field line\tsecret-shaped target",
+     "reason": "secrets-refusal",
+     "tag": "F10-cli:creds.pem",
+     "verdict": "NOT-SAFE"
+    },
+    {
+     "evidence": "ordinary file not secret-shaped",
+     "nfields": 5,
+     "path": "PASS",
+     "raw": "F10-cli:notes.txt\tPASS\tplain receipt=none\t5-field line\tordinary file not secret-shaped",
+     "reason": "5-field line",
+     "tag": "F10-cli:notes.txt",
+     "verdict": "plain receipt=none"
+    },
+    {
+     "evidence": "secrets never opened",
+     "nfields": 5,
+     "path": "PASS",
+     "raw": "F10-canary\tPASS\tno-canary-leak\tstdout+stderr clean\tsecrets never opened",
+     "reason": "stdout+stderr clean",
+     "tag": "F10-canary",
+     "verdict": "no-canary-leak"
+    },
+    {
+     "evidence": "read-only",
+     "nfields": 5,
+     "path": "PASS",
+     "raw": "F10-unchanged\tPASS\tsecret-files-unchanged\thashes stable\tread-only",
+     "reason": "hashes stable",
+     "tag": "F10-unchanged",
+     "verdict": "secret-files-unchanged"
+    },
+    {
+     "evidence": "/tmp/souji-selftest.1g6VG7/f10-unreadable/app.env",
+     "nfields": 13,
+     "path": "PASS",
+     "raw": "F10-unreadable\tPASS\texit=0\tVERDICT\t/tmp/souji-selftest.1g6VG7/f10-unreadable/app.env\tNOT-SAFE\tsecrets-refusal\tbasename-rule short-circuit (no read) VERDICT\t/tmp/souji-selftest.1g6VG7/f10-unreadable/creds.pem\tNOT-SAFE\tsecrets-refusal\tbasename-rule short-circuit (no read)\tcli",
+     "reason": "VERDICT",
+     "tag": "F10-unreadable",
+     "verdict": "exit=0"
+    },
+    {
+     "evidence": "no read of secret-shaped files",
+     "nfields": 5,
+     "path": "PASS",
+     "raw": "F10-unreadable\tPASS\tboth NOT-SAFE(secrets-refusal)\tmode-000 copies\tno read of secret-shaped files",
+     "reason": "secrets-refusal",
+     "tag": "F10-unreadable",
+     "verdict": "both NOT-SAFE"
+    },
+    {
+     "evidence": "/tmp/souji-selftest.1g6VG7/fleet/does-not-exist.bin",
+     "nfields": 9,
+     "path": "PASS",
+     "raw": "EXIT-missing\tPASS\texit=0\tVERDICT\t/tmp/souji-selftest.1g6VG7/fleet/does-not-exist.bin\tNOT-SAFE\tunreachable\tmissing-target\tcli",
+     "reason": "VERDICT",
+     "tag": "EXIT-missing",
+     "verdict": "exit=0"
+    },
+    {
+     "evidence": "missing target",
+     "nfields": 5,
+     "path": "PASS",
+     "raw": "EXIT-missing\tPASS\tNOT-SAFE(unreachable)\texit=0\tmissing target",
+     "reason": "unreachable",
+     "tag": "EXIT-missing",
+     "verdict": "NOT-SAFE"
+    },
+    {
+     "evidence": "cli",
+     "nfields": 5,
+     "path": "PASS",
+     "raw": "EXIT-usage\tPASS\texit=2\tusage: souji-verify.sh [--selftest] [--stale-days N] [--json] <path>...\tcli",
+     "reason": "usage: souji-verify.sh [--selftest] [--stale-days N] [--json] <path>...",
+     "tag": "EXIT-usage",
+     "verdict": "exit=2"
+    },
+    {
+     "evidence": "cli",
+     "nfields": 5,
+     "path": "PASS",
+     "raw": "EXIT-usage-noval\tPASS\texit=2\tusage: souji-verify.sh [--selftest] [--stale-days N] [--json] <path>...\tcli",
+     "reason": "usage: souji-verify.sh [--selftest] [--stale-days N] [--json] <path>...",
+     "tag": "EXIT-usage-noval",
+     "verdict": "exit=2"
+    },
+    {
+     "evidence": "cli",
+     "nfields": 5,
+     "path": "PASS",
+     "raw": "EXIT-noargs\tPASS\texit=2\tusage: souji-verify.sh [--selftest] [--stale-days N] [--json] <path>...\tcli",
+     "reason": "usage: souji-verify.sh [--selftest] [--stale-days N] [--json] <path>...",
+     "tag": "EXIT-noargs",
+     "verdict": "exit=2"
+    },
+    {
+     "evidence": "cli",
+     "nfields": 5,
+     "path": "PASS",
+     "raw": "JSON-mode\tPASS\texit=0\t{\"path\":\"/tmp/souji-selftest.1g6VG7/fleet/beta-shokunin/pushed-file.txt\",\"kind\":\"artifact\",\"verdict\":\"SAFE\",\"receipt\":\"pushed\",\"evidence\":\"intro=b10bd96e1911 default=refs/remotes/origin/master repo=/tmp/souji-selftest.1g6VG7/fleet/beta-shokunin\"}\tcli",
+     "reason": "{\"path\":\"/tmp/souji-selftest.1g6VG7/fleet/beta-shokunin/pushed-file.txt\",\"kind\":\"artifact\",\"verdict\":\"SAFE\",\"receipt\":\"pushed\",\"evidence\":\"intro=b10bd96e1911 default=refs/remotes/origin/master repo=/tmp/souji-selftest.1g6VG7/fleet/beta-shokunin\"}",
+     "tag": "JSON-mode",
+     "verdict": "exit=0"
+    },
+    {
+     "evidence": "json contract",
+     "nfields": 5,
+     "path": "PASS",
+     "raw": "JSON-mode\tPASS\tjsonl SAFE/pushed\t{\"path\":\"/tmp/souji-selftest.1g6VG7/fleet/beta-shokunin/pushed-file.txt\",\"kind\":\"artifact\",\"verdict\":\"SAFE\",\"receipt\":\"pushed\",\"evidence\":\"intro=b10bd96e1911 default=refs/remotes/origin/master repo=/tmp/souji-selftest.1g6VG7/fleet/beta-shokunin\"}\tjson contract",
+     "reason": "{\"path\":\"/tmp/souji-selftest.1g6VG7/fleet/beta-shokunin/pushed-file.txt\",\"kind\":\"artifact\",\"verdict\":\"SAFE\",\"receipt\":\"pushed\",\"evidence\":\"intro=b10bd96e1911 default=refs/remotes/origin/master repo=/tmp/souji-selftest.1g6VG7/fleet/beta-shokunin\"}",
+     "tag": "JSON-mode",
+     "verdict": "jsonl SAFE/pushed"
+    },
+    {
+     "nfields": 1,
+     "raw": "SELFTEST SUMMARY pass=26 fail=0"
+    },
+    {
+     "nfields": 1,
+     "raw": "SELFTEST PASS"
+    }
+   ],
+   "soft_failures": [],
+   "status": "PASS",
+   "stderr": "",
+   "stdout": "F1\tPASS\tSAFE(pushed)\tintro=92150995dbb2 default=refs/remotes/origin/master repo=/tmp/souji-selftest.1g6VG7/fleet/alpha-shokunin\tpushed ancestor pre-tip\nF2\tPASS\tNOT-SAFE(none)\tuntracked repo=/tmp/souji-selftest.1g6VG7/fleet/alpha-shokunin ledger=miss scratch=no mtime_age_days=0\tlocal-only introducing commit\nF3\tPASS\tNOT-SAFE(unpushed-dirty)\tunpushed=2 dirty=1\trepo-root unpushed+dirty\nF4\tPASS\tSAFE(metadata-prune)\towner=/tmp/souji-selftest.1g6VG7/fleet/delta-shokunin head=374e98322b53 unique=0 dir=absent\tworktree dir absent, unique=0\nF5\tPASS\tNOT-SAFE(unpushed-branch)\towner=/tmp/souji-selftest.1g6VG7/fleet/delta-shokunin branch=wtfeat unpushed=1\tworktree named branch, 1 unpushed\nF6\tPASS\tSAFE(moved-to-obsidian)\tledger=/tmp/souji-selftest.1g6VG7/fleet/corpus/knowledge/obsidian-ledger.tsv src_sha256=a5494bd42ccc vault=/tmp/souji-selftest.1g6VG7/vault/sample.bin\tledger row + both sha256\nF7\tPASS\tSAFE(stale)\tmtime_age_days=290 refs=0 scratch-type=yes\tscratch, no refs, old mtime\nF8\tPASS\tSAFE(stale)\tmtime_age_days=290 refs=0 scratch-type=yes\tcensus mention absorbed (D3)\nF9\tPASS\tSAFE(pushed)\tintro=b10bd96e1911 default=refs/remotes/origin/master repo=/tmp/souji-selftest.1g6VG7/fleet/beta-shokunin\torigin/HEAD absent, single origin ref\nF8-control\tPASS\tcensus-mention-present\t./souji-shokunin/census/round-2/seat-01.json\tD3 exclusion is load-bearing\nF7-control\tPASS\tNOT-SAFE(none)\tuntracked repo=/tmp/souji-selftest.1g6VG7/fleet/alpha-shokunin ledger=miss scratch=yes mtime_age_days=290\tmtime threshold honored\nF10-cli\tPASS\texit=0\tVERDICT\t/tmp/souji-selftest.1g6VG7/fleet/secrets/app.env\tNOT-SAFE\tsecrets-refusal\tbasename-rule short-circuit (no read) VERDICT\t/tmp/souji-selftest.1g6VG7/fleet/secrets/creds.pem\tNOT-SAFE\tsecrets-refusal\tbasename-rule short-circuit (no read) VERDICT\t/tmp/souji-selftest.1g6VG7/fleet/secrets/notes.txt\tNOT-SAFE\tnone\tuntracked repo=/tmp/souji-selftest.1g6VG7/fleet ledger=miss scratch=no mtime_age_days=0\tcli\nF10-cli:app.env\tPASS\tNOT-SAFE(secrets-refusal)\t5-field line\tsecret-shaped target\nF10-cli:creds.pem\tPASS\tNOT-SAFE(secrets-refusal)\t5-field line\tsecret-shaped target\nF10-cli:notes.txt\tPASS\tplain receipt=none\t5-field line\tordinary file not secret-shaped\nF10-canary\tPASS\tno-canary-leak\tstdout+stderr clean\tsecrets never opened\nF10-unchanged\tPASS\tsecret-files-unchanged\thashes stable\tread-only\nF10-unreadable\tPASS\texit=0\tVERDICT\t/tmp/souji-selftest.1g6VG7/f10-unreadable/app.env\tNOT-SAFE\tsecrets-refusal\tbasename-rule short-circuit (no read) VERDICT\t/tmp/souji-selftest.1g6VG7/f10-unreadable/creds.pem\tNOT-SAFE\tsecrets-refusal\tbasename-rule short-circuit (no read)\tcli\nF10-unreadable\tPASS\tboth NOT-SAFE(secrets-refusal)\tmode-000 copies\tno read of secret-shaped files\nEXIT-missing\tPASS\texit=0\tVERDICT\t/tmp/souji-selftest.1g6VG7/fleet/does-not-exist.bin\tNOT-SAFE\tunreachable\tmissing-target\tcli\nEXIT-missing\tPASS\tNOT-SAFE(unreachable)\texit=0\tmissing target\nEXIT-usage\tPASS\texit=2\tusage: souji-verify.sh [--selftest] [--stale-days N] [--json] <path>...\tcli\nEXIT-usage-noval\tPASS\texit=2\tusage: souji-verify.sh [--selftest] [--stale-days N] [--json] <path>...\tcli\nEXIT-noargs\tPASS\texit=2\tusage: souji-verify.sh [--selftest] [--stale-days N] [--json] <path>...\tcli\nJSON-mode\tPASS\texit=0\t{\"path\":\"/tmp/souji-selftest.1g6VG7/fleet/beta-shokunin/pushed-file.txt\",\"kind\":\"artifact\",\"verdict\":\"SAFE\",\"receipt\":\"pushed\",\"evidence\":\"intro=b10bd96e1911 default=refs/remotes/origin/master repo=/tmp/souji-selftest.1g6VG7/fleet/beta-shokunin\"}\tcli\nJSON-mode\tPASS\tjsonl SAFE/pushed\t{\"path\":\"/tmp/souji-selftest.1g6VG7/fleet/beta-shokunin/pushed-file.txt\",\"kind\":\"artifact\",\"verdict\":\"SAFE\",\"receipt\":\"pushed\",\"evidence\":\"intro=b10bd96e1911 default=refs/remotes/origin/master repo=/tmp/souji-selftest.1g6VG7/fleet/beta-shokunin\"}\tjson contract\nSELFTEST SUMMARY pass=26 fail=0\nSELFTEST PASS\n",
+   "timeout_hit": false
+  },
+  {
+   "argv": [
+    "/tmp/adv-43/work-iAVcGZIA/fix/advrepo/zz-fifo-adv43"
+   ],
+   "checks": [
+    {
+     "hard": true,
+     "name": "terminates",
+     "observed": "timeout_flag=0 rc=0 ms=37",
+     "pass": true
+    },
+    {
+     "hard": true,
+     "name": "rc0",
+     "observed": "rc=0",
+     "pass": true
+    },
+    {
+     "hard": false,
+     "name": "no_crash_noise",
+     "observed": "stderr_noise=[]",
+     "pass": true
+    },
+    {
+     "hard": false,
+     "name": "stderr_quiet",
+     "observed": "stderr_bytes=0 first=''",
+     "pass": true
+    },
+    {
+     "hard": true,
+     "name": "single_row",
+     "observed": "rows=1",
+     "pass": true
+    },
+    {
+     "hard": true,
+     "name": "verdict_notsafe",
+     "observed": "verdict=NOT-SAFE reason=none",
+     "pass": true
+    },
+    {
+     "hard": false,
+     "name": "tag_literal_VERDICT",
+     "observed": "tag='VERDICT'",
+     "pass": true
+    },
+    {
+     "hard": false,
+     "name": "fields5",
+     "observed": "nfields=5",
+     "pass": true
+    }
+   ],
+   "duration_ms": "37",
+   "hard_failures": [],
+   "id": "A1",
+   "kind": "fifo",
+   "rc": 0,
+   "rows": [
+    {
+     "evidence": "untracked repo=/tmp/adv-43/work-iAVcGZIA/fix/advrepo ledger=miss scratch=no mtime_age_days=0",
+     "nfields": 5,
+     "path": "/tmp/adv-43/work-iAVcGZIA/fix/advrepo/zz-fifo-adv43",
+     "raw": "VERDICT\t/tmp/adv-43/work-iAVcGZIA/fix/advrepo/zz-fifo-adv43\tNOT-SAFE\tnone\tuntracked repo=/tmp/adv-43/work-iAVcGZIA/fix/advrepo ledger=miss scratch=no mtime_age_days=0",
+     "reason": "none",
+     "tag": "VERDICT",
+     "verdict": "NOT-SAFE"
+    }
+   ],
+   "soft_failures": [],
+   "status": "PASS",
+   "stderr": "",
+   "stdout": "VERDICT\t/tmp/adv-43/work-iAVcGZIA/fix/advrepo/zz-fifo-adv43\tNOT-SAFE\tnone\tuntracked repo=/tmp/adv-43/work-iAVcGZIA/fix/advrepo ledger=miss scratch=no mtime_age_days=0\n",
+   "timeout_hit": false
+  },
+  {
+   "argv": [
+    "advrepo with spaces/empty.txt"
+   ],
+   "checks": [
+    {
+     "hard": true,
+     "name": "terminates",
+     "observed": "timeout_flag=0 rc=0 ms=12",
+     "pass": true
+    },
+    {
+     "hard": true,
+     "name": "rc0",
+     "observed": "rc=0",
+     "pass": true
+    },
+    {
+     "hard": false,
+     "name": "no_crash_noise",
+     "observed": "stderr_noise=[]",
+     "pass": true
+    },
+    {
+     "hard": false,
+     "name": "stderr_quiet",
+     "observed": "stderr_bytes=0 first=''",
+     "pass": true
+    },
+    {
+     "hard": true,
+     "name": "single_row",
+     "observed": "rows=1",
+     "pass": true
+    },
+    {
+     "hard": true,
+     "name": "verdict_safe",
+     "observed": "verdict=SAFE reason=pushed",
+     "pass": true
+    },
+    {
+     "hard": true,
+     "name": "reason_pushed",
+     "observed": "reason=pushed",
+     "pass": true
+    },
+    {
+     "hard": true,
+     "name": "path_exact",
+     "observed": "path='advrepo with spaces/empty.txt' argv='advrepo with spaces/empty.txt'",
+     "pass": true
+    },
+    {
+     "hard": false,
+     "name": "tag_literal_VERDICT",
+     "observed": "tag='VERDICT'",
+     "pass": true
+    },
+    {
+     "hard": false,
+     "name": "fields5",
+     "observed": "nfields=5",
+     "pass": true
+    }
+   ],
+   "duration_ms": "12",
+   "hard_failures": [],
+   "id": "A10",
+   "kind": "relpath",
+   "rc": 0,
+   "rows": [
+    {
+     "evidence": "intro=147682593fb9 default=refs/remotes/origin/master repo=/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces",
+     "nfields": 5,
+     "path": "advrepo with spaces/empty.txt",
+     "raw": "VERDICT\tadvrepo with spaces/empty.txt\tSAFE\tpushed\tintro=147682593fb9 default=refs/remotes/origin/master repo=/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces",
+     "reason": "pushed",
+     "tag": "VERDICT",
+     "verdict": "SAFE"
+    }
+   ],
+   "soft_failures": [],
+   "status": "PASS",
+   "stderr": "",
+   "stdout": "VERDICT\tadvrepo with spaces/empty.txt\tSAFE\tpushed\tintro=147682593fb9 default=refs/remotes/origin/master repo=/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces\n",
+   "timeout_hit": false
+  },
+  {
+   "argv": [
+    "--stale-days",
+    "10000",
+    "/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/empty-scratch.log"
+   ],
+   "checks": [
+    {
+     "hard": true,
+     "name": "terminates",
+     "observed": "timeout_flag=0 rc=0 ms=13",
+     "pass": true
+    },
+    {
+     "hard": true,
+     "name": "rc0",
+     "observed": "rc=0",
+     "pass": true
+    },
+    {
+     "hard": false,
+     "name": "no_crash_noise",
+     "observed": "stderr_noise=[]",
+     "pass": true
+    },
+    {
+     "hard": false,
+     "name": "stderr_quiet",
+     "observed": "stderr_bytes=0 first=''",
+     "pass": true
+    },
+    {
+     "hard": true,
+     "name": "single_row",
+     "observed": "rows=1",
+     "pass": true
+    },
+    {
+     "hard": true,
+     "name": "verdict_notsafe",
+     "observed": "verdict=NOT-SAFE reason=none",
+     "pass": true
+    }
+   ],
+   "duration_ms": "13",
+   "hard_failures": [],
+   "id": "A11",
+   "kind": "stale_days",
+   "rc": 0,
+   "rows": [
+    {
+     "evidence": "untracked repo=/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces ledger=miss scratch=yes mtime_age_days=47",
+     "nfields": 5,
+     "path": "/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/empty-scratch.log",
+     "raw": "VERDICT\t/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/empty-scratch.log\tNOT-SAFE\tnone\tuntracked repo=/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces ledger=miss scratch=yes mtime_age_days=47",
+     "reason": "none",
+     "tag": "VERDICT",
+     "verdict": "NOT-SAFE"
+    }
+   ],
+   "soft_failures": [],
+   "status": "PASS",
+   "stderr": "",
+   "stdout": "VERDICT\t/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/empty-scratch.log\tNOT-SAFE\tnone\tuntracked repo=/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces ledger=miss scratch=yes mtime_age_days=47\n",
+   "timeout_hit": false
+  },
+  {
+   "argv": [
+    "/tmp/adv-43/work-iAVcGZIA/fix/advrepo/empty-plain-adv43.bin"
+   ],
+   "checks": [
+    {
+     "hard": true,
+     "name": "terminates",
+     "observed": "timeout_flag=0 rc=0 ms=14",
+     "pass": true
+    },
+    {
+     "hard": true,
+     "name": "rc0",
+     "observed": "rc=0",
+     "pass": true
+    },
+    {
+     "hard": false,
+     "name": "no_crash_noise",
+     "observed": "stderr_noise=[]",
+     "pass": true
+    },
+    {
+     "hard": false,
+     "name": "stderr_quiet",
+     "observed": "stderr_bytes=0 first=''",
+     "pass": true
+    },
+    {
+     "hard": true,
+     "name": "single_row",
+     "observed": "rows=1",
+     "pass": true
+    },
+    {
+     "hard": true,
+     "name": "verdict_notsafe",
+     "observed": "verdict=NOT-SAFE reason=none",
+     "pass": true
+    },
+    {
+     "hard": true,
+     "name": "reason_not_unreachable",
+     "observed": "reason=none (0-byte file exists; unreachable is only for an empty/missing target)",
+     "pass": true
+    }
+   ],
+   "duration_ms": "14",
+   "hard_failures": [],
+   "id": "A12",
+   "kind": "zero_plain",
+   "rc": 0,
+   "rows": [
+    {
+     "evidence": "untracked repo=/tmp/adv-43/work-iAVcGZIA/fix/advrepo ledger=miss scratch=no mtime_age_days=0",
+     "nfields": 5,
+     "path": "/tmp/adv-43/work-iAVcGZIA/fix/advrepo/empty-plain-adv43.bin",
+     "raw": "VERDICT\t/tmp/adv-43/work-iAVcGZIA/fix/advrepo/empty-plain-adv43.bin\tNOT-SAFE\tnone\tuntracked repo=/tmp/adv-43/work-iAVcGZIA/fix/advrepo ledger=miss scratch=no mtime_age_days=0",
+     "reason": "none",
+     "tag": "VERDICT",
+     "verdict": "NOT-SAFE"
+    }
+   ],
+   "soft_failures": [],
+   "status": "PASS",
+   "stderr": "",
+   "stdout": "VERDICT\t/tmp/adv-43/work-iAVcGZIA/fix/advrepo/empty-plain-adv43.bin\tNOT-SAFE\tnone\tuntracked repo=/tmp/adv-43/work-iAVcGZIA/fix/advrepo ledger=miss scratch=no mtime_age_days=0\n",
+   "timeout_hit": false
+  },
+  {
+   "argv": [
+    ""
+   ],
+   "checks": [
+    {
+     "hard": true,
+     "name": "terminates",
+     "observed": "timeout_flag=0 rc=0 ms=5",
+     "pass": true
+    },
+    {
+     "hard": true,
+     "name": "rc0",
+     "observed": "rc=0",
+     "pass": true
+    },
+    {
+     "hard": false,
+     "name": "no_crash_noise",
+     "observed": "stderr_noise=[]",
+     "pass": true
+    },
+    {
+     "hard": false,
+     "name": "stderr_quiet",
+     "observed": "stderr_bytes=0 first=''",
+     "pass": true
+    },
+    {
+     "hard": true,
+     "name": "single_row",
+     "observed": "rows=1",
+     "pass": true
+    },
+    {
+     "hard": true,
+     "name": "verdict_notsafe",
+     "observed": "verdict=NOT-SAFE reason=unreachable",
+     "pass": true
+    },
+    {
+     "hard": true,
+     "name": "reason_unreachable",
+     "observed": "reason=unreachable",
+     "pass": true
+    }
+   ],
+   "duration_ms": "5",
+   "hard_failures": [],
+   "id": "A13",
+   "kind": "empty_target",
+   "rc": 0,
+   "rows": [
+    {
+     "evidence": "empty-target",
+     "nfields": 5,
+     "path": "",
+     "raw": "VERDICT\t\tNOT-SAFE\tunreachable\tempty-target",
+     "reason": "unreachable",
+     "tag": "VERDICT",
+     "verdict": "NOT-SAFE"
+    }
+   ],
+   "soft_failures": [],
+   "status": "PASS",
+   "stderr": "",
+   "stdout": "VERDICT\t\tNOT-SAFE\tunreachable\tempty-target\n",
+   "timeout_hit": false
+  },
+  {
+   "argv": [
+    "/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/dir with spaces/pushed file with spaces.txt"
+   ],
+   "checks": [
+    {
+     "hard": true,
+     "name": "terminates",
+     "observed": "timeout_flag=0 rc=0 ms=11",
+     "pass": true
+    },
+    {
+     "hard": true,
+     "name": "rc0",
+     "observed": "rc=0",
+     "pass": true
+    },
+    {
+     "hard": false,
+     "name": "no_crash_noise",
+     "observed": "stderr_noise=[]",
+     "pass": true
+    },
+    {
+     "hard": false,
+     "name": "stderr_quiet",
+     "observed": "stderr_bytes=0 first=''",
+     "pass": true
+    },
+    {
+     "hard": true,
+     "name": "single_row",
+     "observed": "rows=1",
+     "pass": true
+    },
+    {
+     "hard": true,
+     "name": "verdict_safe",
+     "observed": "verdict=SAFE reason=pushed",
+     "pass": true
+    },
+    {
+     "hard": true,
+     "name": "reason_pushed",
+     "observed": "reason=pushed",
+     "pass": true
+    },
+    {
+     "hard": true,
+     "name": "path_exact",
+     "observed": "path='/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/dir with spaces/pushed file with spaces.txt' argv='/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/dir with spaces/pushed file with spaces.txt'",
+     "pass": true
+    },
+    {
+     "hard": false,
+     "name": "tag_literal_VERDICT",
+     "observed": "tag='VERDICT'",
+     "pass": true
+    },
+    {
+     "hard": false,
+     "name": "fields5",
+     "observed": "nfields=5",
+     "pass": true
+    }
+   ],
+   "duration_ms": "11",
+   "hard_failures": [],
+   "id": "A2",
+   "kind": "pushed_spaces",
+   "rc": 0,
+   "rows": [
+    {
+     "evidence": "intro=147682593fb9 default=refs/remotes/origin/master repo=/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces",
+     "nfields": 5,
+     "path": "/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/dir with spaces/pushed file with spaces.txt",
+     "raw": "VERDICT\t/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/dir with spaces/pushed file with spaces.txt\tSAFE\tpushed\tintro=147682593fb9 default=refs/remotes/origin/master repo=/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces",
+     "reason": "pushed",
+     "tag": "VERDICT",
+     "verdict": "SAFE"
+    }
+   ],
+   "soft_failures": [],
+   "status": "PASS",
+   "stderr": "",
+   "stdout": "VERDICT\t/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/dir with spaces/pushed file with spaces.txt\tSAFE\tpushed\tintro=147682593fb9 default=refs/remotes/origin/master repo=/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces\n",
+   "timeout_hit": false
+  },
+  {
+   "argv": [
+    "/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/empty.txt"
+   ],
+   "checks": [
+    {
+     "hard": true,
+     "name": "terminates",
+     "observed": "timeout_flag=0 rc=0 ms=12",
+     "pass": true
+    },
+    {
+     "hard": true,
+     "name": "rc0",
+     "observed": "rc=0",
+     "pass": true
+    },
+    {
+     "hard": false,
+     "name": "no_crash_noise",
+     "observed": "stderr_noise=[]",
+     "pass": true
+    },
+    {
+     "hard": false,
+     "name": "stderr_quiet",
+     "observed": "stderr_bytes=0 first=''",
+     "pass": true
+    },
+    {
+     "hard": true,
+     "name": "single_row",
+     "observed": "rows=1",
+     "pass": true
+    },
+    {
+     "hard": true,
+     "name": "verdict_safe",
+     "observed": "verdict=SAFE reason=pushed",
+     "pass": true
+    },
+    {
+     "hard": true,
+     "name": "reason_pushed",
+     "observed": "reason=pushed",
+     "pass": true
+    },
+    {
+     "hard": true,
+     "name": "path_exact",
+     "observed": "path='/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/empty.txt' argv='/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/empty.txt'",
+     "pass": true
+    },
+    {
+     "hard": false,
+     "name": "tag_literal_VERDICT",
+     "observed": "tag='VERDICT'",
+     "pass": true
+    },
+    {
+     "hard": false,
+     "name": "fields5",
+     "observed": "nfields=5",
+     "pass": true
+    }
+   ],
+   "duration_ms": "12",
+   "hard_failures": [],
+   "id": "A3",
+   "kind": "empty_pushed",
+   "rc": 0,
+   "rows": [
+    {
+     "evidence": "intro=147682593fb9 default=refs/remotes/origin/master repo=/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces",
+     "nfields": 5,
+     "path": "/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/empty.txt",
+     "raw": "VERDICT\t/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/empty.txt\tSAFE\tpushed\tintro=147682593fb9 default=refs/remotes/origin/master repo=/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces",
+     "reason": "pushed",
+     "tag": "VERDICT",
+     "verdict": "SAFE"
+    }
+   ],
+   "soft_failures": [],
+   "status": "PASS",
+   "stderr": "",
+   "stdout": "VERDICT\t/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/empty.txt\tSAFE\tpushed\tintro=147682593fb9 default=refs/remotes/origin/master repo=/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces\n",
+   "timeout_hit": false
+  },
+  {
+   "argv": [
+    "/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/empty-scratch.log"
+   ],
+   "checks": [
+    {
+     "hard": true,
+     "name": "terminates",
+     "observed": "timeout_flag=0 rc=0 ms=20",
+     "pass": true
+    },
+    {
+     "hard": true,
+     "name": "rc0",
+     "observed": "rc=0",
+     "pass": true
+    },
+    {
+     "hard": false,
+     "name": "no_crash_noise",
+     "observed": "stderr_noise=[]",
+     "pass": true
+    },
+    {
+     "hard": false,
+     "name": "stderr_quiet",
+     "observed": "stderr_bytes=0 first=''",
+     "pass": true
+    },
+    {
+     "hard": true,
+     "name": "single_row",
+     "observed": "rows=1",
+     "pass": true
+    },
+    {
+     "hard": true,
+     "name": "verdict_safe",
+     "observed": "verdict=SAFE reason=stale",
+     "pass": true
+    },
+    {
+     "hard": true,
+     "name": "reason_stale",
+     "observed": "reason=stale",
+     "pass": true
+    },
+    {
+     "hard": false,
+     "name": "tag_literal_VERDICT",
+     "observed": "tag='VERDICT'",
+     "pass": true
+    },
+    {
+     "hard": false,
+     "name": "fields5",
+     "observed": "nfields=5",
+     "pass": true
+    }
+   ],
+   "duration_ms": "20",
+   "hard_failures": [],
+   "id": "A4",
+   "kind": "empty_stale",
+   "rc": 0,
+   "rows": [
+    {
+     "evidence": "mtime_age_days=47 refs=0 scratch-type=yes",
+     "nfields": 5,
+     "path": "/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/empty-scratch.log",
+     "raw": "VERDICT\t/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/empty-scratch.log\tSAFE\tstale\tmtime_age_days=47 refs=0 scratch-type=yes",
+     "reason": "stale",
+     "tag": "VERDICT",
+     "verdict": "SAFE"
+    }
+   ],
+   "soft_failures": [],
+   "status": "PASS",
+   "stderr": "",
+   "stdout": "VERDICT\t/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/empty-scratch.log\tSAFE\tstale\tmtime_age_days=47 refs=0 scratch-type=yes\n",
+   "timeout_hit": false
+  },
+  {
+   "argv": [
+    "/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/no such dir/no such file.txt"
+   ],
+   "checks": [
+    {
+     "hard": true,
+     "name": "terminates",
+     "observed": "timeout_flag=0 rc=0 ms=28",
+     "pass": true
+    },
+    {
+     "hard": true,
+     "name": "rc0",
+     "observed": "rc=0",
+     "pass": true
+    },
+    {
+     "hard": false,
+     "name": "no_crash_noise",
+     "observed": "stderr_noise=[]",
+     "pass": true
+    },
+    {
+     "hard": false,
+     "name": "stderr_quiet",
+     "observed": "stderr_bytes=0 first=''",
+     "pass": true
+    },
+    {
+     "hard": true,
+     "name": "single_row",
+     "observed": "rows=1",
+     "pass": true
+    },
+    {
+     "hard": true,
+     "name": "verdict_notsafe",
+     "observed": "verdict=NOT-SAFE reason=unreachable",
+     "pass": true
+    },
+    {
+     "hard": true,
+     "name": "reason_unreachable",
+     "observed": "reason=unreachable",
+     "pass": true
+    }
+   ],
+   "duration_ms": "28",
+   "hard_failures": [],
+   "id": "A5",
+   "kind": "missing",
+   "rc": 0,
+   "rows": [
+    {
+     "evidence": "missing-target",
+     "nfields": 5,
+     "path": "/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/no such dir/no such file.txt",
+     "raw": "VERDICT\t/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/no such dir/no such file.txt\tNOT-SAFE\tunreachable\tmissing-target",
+     "reason": "unreachable",
+     "tag": "VERDICT",
+     "verdict": "NOT-SAFE"
+    }
+   ],
+   "soft_failures": [],
+   "status": "PASS",
+   "stderr": "",
+   "stdout": "VERDICT\t/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/no such dir/no such file.txt\tNOT-SAFE\tunreachable\tmissing-target\n",
+   "timeout_hit": false
+  },
+  {
+   "argv": [
+    "/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces"
+   ],
+   "checks": [
+    {
+     "hard": true,
+     "name": "terminates",
+     "observed": "timeout_flag=0 rc=0 ms=10",
+     "pass": true
+    },
+    {
+     "hard": true,
+     "name": "rc0",
+     "observed": "rc=0",
+     "pass": true
+    },
+    {
+     "hard": false,
+     "name": "no_crash_noise",
+     "observed": "stderr_noise=[]",
+     "pass": true
+    },
+    {
+     "hard": false,
+     "name": "stderr_quiet",
+     "observed": "stderr_bytes=0 first=''",
+     "pass": true
+    },
+    {
+     "hard": true,
+     "name": "single_row",
+     "observed": "rows=1",
+     "pass": true
+    },
+    {
+     "hard": true,
+     "name": "verdict_notsafe",
+     "observed": "verdict=NOT-SAFE reason=dirty",
+     "pass": true
+    },
+    {
+     "hard": true,
+     "name": "evidence_has_unpushed_count",
+     "observed": "evidence='unpushed=0 dirty=1'",
+     "pass": true
+    }
+   ],
+   "duration_ms": "10",
+   "hard_failures": [],
+   "id": "A6",
+   "kind": "reporoot",
+   "rc": 0,
+   "rows": [
+    {
+     "evidence": "unpushed=0 dirty=1",
+     "nfields": 5,
+     "path": "/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces",
+     "raw": "VERDICT\t/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces\tNOT-SAFE\tdirty\tunpushed=0 dirty=1",
+     "reason": "dirty",
+     "tag": "VERDICT",
+     "verdict": "NOT-SAFE"
+    }
+   ],
+   "soft_failures": [],
+   "status": "PASS",
+   "stderr": "",
+   "stdout": "VERDICT\t/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces\tNOT-SAFE\tdirty\tunpushed=0 dirty=1\n",
+   "timeout_hit": false
+  },
+  {
+   "argv": [
+    "/tmp/adv-43/work-iAVcGZIA/fix/advrepo/zz-fifo-adv43",
+    "/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/dir with spaces/pushed file with spaces.txt",
+    "/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/empty.txt",
+    "/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/empty-scratch.log",
+    "/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/no such dir/no such file.txt",
+    "/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces"
+   ],
+   "checks": [
+    {
+     "hard": true,
+     "name": "terminates",
+     "observed": "timeout_flag=0 rc=0 ms=94",
+     "pass": true
+    },
+    {
+     "hard": true,
+     "name": "rc0",
+     "observed": "rc=0",
+     "pass": true
+    },
+    {
+     "hard": false,
+     "name": "no_crash_noise",
+     "observed": "stderr_noise=[]",
+     "pass": true
+    },
+    {
+     "hard": false,
+     "name": "stderr_quiet",
+     "observed": "stderr_bytes=0 first=''",
+     "pass": true
+    },
+    {
+     "hard": true,
+     "name": "rows_eq_argv",
+     "observed": "rows=6 argv=6",
+     "pass": true
+    },
+    {
+     "hard": true,
+     "name": "path_set_match",
+     "observed": "paths=['/tmp/adv-43/work-iAVcGZIA/fix/advrepo/zz-fifo-adv43', '/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/dir with spaces/pushed file with spaces.txt', '/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/empty.txt', '/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/empty-scratch.log', '/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/no such dir/no such file.txt', '/tmp/adv-43/work-iAVcGZI",
+     "pass": true
+    },
+    {
+     "hard": true,
+     "name": "per_target_verdicts",
+     "observed": "mismatches=[]",
+     "pass": true
+    },
+    {
+     "hard": false,
+     "name": "all_fields5",
+     "observed": "nfields=[5, 5, 5, 5, 5, 5]",
+     "pass": true
+    }
+   ],
+   "duration_ms": "94",
+   "hard_failures": [],
+   "id": "A7",
+   "kind": "multi",
+   "rc": 0,
+   "rows": [
+    {
+     "evidence": "untracked repo=/tmp/adv-43/work-iAVcGZIA/fix/advrepo ledger=miss scratch=no mtime_age_days=0",
+     "nfields": 5,
+     "path": "/tmp/adv-43/work-iAVcGZIA/fix/advrepo/zz-fifo-adv43",
+     "raw": "VERDICT\t/tmp/adv-43/work-iAVcGZIA/fix/advrepo/zz-fifo-adv43\tNOT-SAFE\tnone\tuntracked repo=/tmp/adv-43/work-iAVcGZIA/fix/advrepo ledger=miss scratch=no mtime_age_days=0",
+     "reason": "none",
+     "tag": "VERDICT",
+     "verdict": "NOT-SAFE"
+    },
+    {
+     "evidence": "intro=147682593fb9 default=refs/remotes/origin/master repo=/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces",
+     "nfields": 5,
+     "path": "/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/dir with spaces/pushed file with spaces.txt",
+     "raw": "VERDICT\t/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/dir with spaces/pushed file with spaces.txt\tSAFE\tpushed\tintro=147682593fb9 default=refs/remotes/origin/master repo=/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces",
+     "reason": "pushed",
+     "tag": "VERDICT",
+     "verdict": "SAFE"
+    },
+    {
+     "evidence": "intro=147682593fb9 default=refs/remotes/origin/master repo=/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces",
+     "nfields": 5,
+     "path": "/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/empty.txt",
+     "raw": "VERDICT\t/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/empty.txt\tSAFE\tpushed\tintro=147682593fb9 default=refs/remotes/origin/master repo=/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces",
+     "reason": "pushed",
+     "tag": "VERDICT",
+     "verdict": "SAFE"
+    },
+    {
+     "evidence": "mtime_age_days=47 refs=0 scratch-type=yes",
+     "nfields": 5,
+     "path": "/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/empty-scratch.log",
+     "raw": "VERDICT\t/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/empty-scratch.log\tSAFE\tstale\tmtime_age_days=47 refs=0 scratch-type=yes",
+     "reason": "stale",
+     "tag": "VERDICT",
+     "verdict": "SAFE"
+    },
+    {
+     "evidence": "missing-target",
+     "nfields": 5,
+     "path": "/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/no such dir/no such file.txt",
+     "raw": "VERDICT\t/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/no such dir/no such file.txt\tNOT-SAFE\tunreachable\tmissing-target",
+     "reason": "unreachable",
+     "tag": "VERDICT",
+     "verdict": "NOT-SAFE"
+    },
+    {
+     "evidence": "unpushed=0 dirty=1",
+     "nfields": 5,
+     "path": "/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces",
+     "raw": "VERDICT\t/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces\tNOT-SAFE\tdirty\tunpushed=0 dirty=1",
+     "reason": "dirty",
+     "tag": "VERDICT",
+     "verdict": "NOT-SAFE"
+    }
+   ],
+   "soft_failures": [],
+   "status": "PASS",
+   "stderr": "",
+   "stdout": "VERDICT\t/tmp/adv-43/work-iAVcGZIA/fix/advrepo/zz-fifo-adv43\tNOT-SAFE\tnone\tuntracked repo=/tmp/adv-43/work-iAVcGZIA/fix/advrepo ledger=miss scratch=no mtime_age_days=0\nVERDICT\t/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/dir with spaces/pushed file with spaces.txt\tSAFE\tpushed\tintro=147682593fb9 default=refs/remotes/origin/master repo=/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces\nVERDICT\t/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/empty.txt\tSAFE\tpushed\tintro=147682593fb9 default=refs/remotes/origin/master repo=/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces\nVERDICT\t/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/empty-scratch.log\tSAFE\tstale\tmtime_age_days=47 refs=0 scratch-type=yes\nVERDICT\t/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/no such dir/no such file.txt\tNOT-SAFE\tunreachable\tmissing-target\nVERDICT\t/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces\tNOT-SAFE\tdirty\tunpushed=0 dirty=1\n",
+   "timeout_hit": false
+  },
+  {
+   "argv": [
+    "--json",
+    "/tmp/adv-43/work-iAVcGZIA/fix/advrepo/zz-fifo-adv43",
+    "/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/dir with spaces/pushed file with spaces.txt",
+    "/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/empty.txt"
+   ],
+   "checks": [
+    {
+     "hard": true,
+     "name": "terminates",
+     "observed": "timeout_flag=0 rc=0 ms=72",
+     "pass": true
+    },
+    {
+     "hard": true,
+     "name": "rc0",
+     "observed": "rc=0",
+     "pass": true
+    },
+    {
+     "hard": false,
+     "name": "no_crash_noise",
+     "observed": "stderr_noise=[]",
+     "pass": true
+    },
+    {
+     "hard": false,
+     "name": "stderr_quiet",
+     "observed": "stderr_bytes=0 first=''",
+     "pass": true
+    },
+    {
+     "hard": true,
+     "name": "jsonl_all_lines_parse",
+     "observed": "lines=3 errors=[]",
+     "pass": true
+    },
+    {
+     "hard": false,
+     "name": "json_mentions_notsafe",
+     "observed": "has_NOT-SAFE=True",
+     "pass": true
+    },
+    {
+     "hard": false,
+     "name": "json_mentions_safe",
+     "observed": "has_SAFE=True",
+     "pass": true
+    },
+    {
+     "hard": false,
+     "name": "json_has_path_and_verdict",
+     "observed": "shapes=[['evidence', 'kind', 'path', 'receipt', 'verdict'], ['evidence', 'kind', 'path', 'receipt', 'verdict'], ['evidence', 'kind', 'path', 'receipt', 'verdict']]",
+     "pass": true
+    }
+   ],
+   "duration_ms": "72",
+   "hard_failures": [],
+   "id": "A8",
+   "kind": "json",
+   "rc": 0,
+   "rows": [
+    {
+     "nfields": 1,
+     "raw": "{\"path\":\"/tmp/adv-43/work-iAVcGZIA/fix/advrepo/zz-fifo-adv43\",\"kind\":\"artifact\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"none\",\"evidence\":\"untracked repo=/tmp/adv-43/work-iAVcGZIA/fix/advrepo ledger=miss scratch=no mtime_age_days=0\"}"
+    },
+    {
+     "nfields": 1,
+     "raw": "{\"path\":\"/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/dir with spaces/pushed file with spaces.txt\",\"kind\":\"artifact\",\"verdict\":\"SAFE\",\"receipt\":\"pushed\",\"evidence\":\"intro=147682593fb9 default=refs/remotes/origin/master repo=/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces\"}"
+    },
+    {
+     "nfields": 1,
+     "raw": "{\"path\":\"/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/empty.txt\",\"kind\":\"artifact\",\"verdict\":\"SAFE\",\"receipt\":\"pushed\",\"evidence\":\"intro=147682593fb9 default=refs/remotes/origin/master repo=/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces\"}"
+    }
+   ],
+   "soft_failures": [],
+   "status": "PASS",
+   "stderr": "",
+   "stdout": "{\"path\":\"/tmp/adv-43/work-iAVcGZIA/fix/advrepo/zz-fifo-adv43\",\"kind\":\"artifact\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"none\",\"evidence\":\"untracked repo=/tmp/adv-43/work-iAVcGZIA/fix/advrepo ledger=miss scratch=no mtime_age_days=0\"}\n{\"path\":\"/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/dir with spaces/pushed file with spaces.txt\",\"kind\":\"artifact\",\"verdict\":\"SAFE\",\"receipt\":\"pushed\",\"evidence\":\"intro=147682593fb9 default=refs/remotes/origin/master repo=/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces\"}\n{\"path\":\"/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/empty.txt\",\"kind\":\"artifact\",\"verdict\":\"SAFE\",\"receipt\":\"pushed\",\"evidence\":\"intro=147682593fb9 default=refs/remotes/origin/master repo=/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces\"}\n",
+   "timeout_hit": false
+  },
+  {
+   "argv": [
+    "/tmp/adv-43/work-iAVcGZIA/fix/advrepo/zz-fifo-adv43",
+    "/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/dir with spaces/pushed file with spaces.txt",
+    "/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/empty.txt",
+    "/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/empty-scratch.log",
+    "/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/no such dir/no such file.txt",
+    "/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces"
+   ],
+   "checks": [
+    {
+     "hard": true,
+     "name": "terminates",
+     "observed": "timeout_flag=0 rc=0",
+     "pass": true
+    },
+    {
+     "hard": true,
+     "name": "rc0",
+     "observed": "rc=0",
+     "pass": true
+    },
+    {
+     "hard": true,
+     "name": "stdout_identical_to_A7",
+     "observed": "identical=True len=923 vs 923",
+     "pass": true
+    }
+   ],
+   "duration_ms": "104",
+   "hard_failures": [],
+   "id": "A9",
+   "kind": "determinism",
+   "rc": 0,
+   "rows": [
+    {
+     "evidence": "untracked repo=/tmp/adv-43/work-iAVcGZIA/fix/advrepo ledger=miss scratch=no mtime_age_days=0",
+     "nfields": 5,
+     "path": "/tmp/adv-43/work-iAVcGZIA/fix/advrepo/zz-fifo-adv43",
+     "raw": "VERDICT\t/tmp/adv-43/work-iAVcGZIA/fix/advrepo/zz-fifo-adv43\tNOT-SAFE\tnone\tuntracked repo=/tmp/adv-43/work-iAVcGZIA/fix/advrepo ledger=miss scratch=no mtime_age_days=0",
+     "reason": "none",
+     "tag": "VERDICT",
+     "verdict": "NOT-SAFE"
+    },
+    {
+     "evidence": "intro=147682593fb9 default=refs/remotes/origin/master repo=/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces",
+     "nfields": 5,
+     "path": "/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/dir with spaces/pushed file with spaces.txt",
+     "raw": "VERDICT\t/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/dir with spaces/pushed file with spaces.txt\tSAFE\tpushed\tintro=147682593fb9 default=refs/remotes/origin/master repo=/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces",
+     "reason": "pushed",
+     "tag": "VERDICT",
+     "verdict": "SAFE"
+    },
+    {
+     "evidence": "intro=147682593fb9 default=refs/remotes/origin/master repo=/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces",
+     "nfields": 5,
+     "path": "/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/empty.txt",
+     "raw": "VERDICT\t/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/empty.txt\tSAFE\tpushed\tintro=147682593fb9 default=refs/remotes/origin/master repo=/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces",
+     "reason": "pushed",
+     "tag": "VERDICT",
+     "verdict": "SAFE"
+    },
+    {
+     "evidence": "mtime_age_days=47 refs=0 scratch-type=yes",
+     "nfields": 5,
+     "path": "/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/empty-scratch.log",
+     "raw": "VERDICT\t/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/empty-scratch.log\tSAFE\tstale\tmtime_age_days=47 refs=0 scratch-type=yes",
+     "reason": "stale",
+     "tag": "VERDICT",
+     "verdict": "SAFE"
+    },
+    {
+     "evidence": "missing-target",
+     "nfields": 5,
+     "path": "/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/no such dir/no such file.txt",
+     "raw": "VERDICT\t/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/no such dir/no such file.txt\tNOT-SAFE\tunreachable\tmissing-target",
+     "reason": "unreachable",
+     "tag": "VERDICT",
+     "verdict": "NOT-SAFE"
+    },
+    {
+     "evidence": "unpushed=0 dirty=1",
+     "nfields": 5,
+     "path": "/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces",
+     "raw": "VERDICT\t/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces\tNOT-SAFE\tdirty\tunpushed=0 dirty=1",
+     "reason": "dirty",
+     "tag": "VERDICT",
+     "verdict": "NOT-SAFE"
+    }
+   ],
+   "soft_failures": [],
+   "status": "PASS",
+   "stderr": "",
+   "stdout": "VERDICT\t/tmp/adv-43/work-iAVcGZIA/fix/advrepo/zz-fifo-adv43\tNOT-SAFE\tnone\tuntracked repo=/tmp/adv-43/work-iAVcGZIA/fix/advrepo ledger=miss scratch=no mtime_age_days=0\nVERDICT\t/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/dir with spaces/pushed file with spaces.txt\tSAFE\tpushed\tintro=147682593fb9 default=refs/remotes/origin/master repo=/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces\nVERDICT\t/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/empty.txt\tSAFE\tpushed\tintro=147682593fb9 default=refs/remotes/origin/master repo=/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces\nVERDICT\t/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/empty-scratch.log\tSAFE\tstale\tmtime_age_days=47 refs=0 scratch-type=yes\nVERDICT\t/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces/no such dir/no such file.txt\tNOT-SAFE\tunreachable\tmissing-target\nVERDICT\t/tmp/adv-43/work-iAVcGZIA/fix/advrepo with spaces\tNOT-SAFE\tdirty\tunpushed=0 dirty=1\n",
+   "timeout_hit": false
+  }
+ ],
+ "kind": "adversarial",
+ "lane_repo_head": "ab7f2f7",
+ "pass_case_count": 14,
+ "role": "adversarial-tester",
+ "round": 2,
+ "seat": "S43",
+ "strict_failures": [],
+ "target": "tools/souji-verify.sh adversarial: target is a fifo; a path with spaces; a 0-byte file",
+ "tool": {
+  "bash_n_err": "",
+  "bash_n_ok": true,
+  "churn_note": "live file stable at evaluated sha d32bac5d8ae8c66930418edb8e0b9f064109a00866b87ae1baaa3156dd36c077",
+  "executable": true,
+  "live_path": "/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh",
+  "live_path_sha256_after_run": "d32bac5d8ae8c66930418edb8e0b9f064109a00866b87ae1baaa3156dd36c077",
+  "mtime": "2026-10-18 12:55:17.576863506 -0300",
+  "path": "/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh",
+  "present": true,
+  "sha256": "d32bac5d8ae8c66930418edb8e0b9f064109a00866b87ae1baaa3156dd36c077",
+  "size": "28961"
+ },
+ "totals": {
+  "cases": 14,
+  "failed": 0,
+  "passed": 14
+ },
+ "verdict": "PASS"
+}

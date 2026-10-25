@@ -1,0 +1,757 @@
+{
+  "seat": "S54",
+  "kind": "compliance-judge",
+  "round": 2,
+  "lane": "souji-shokunin",
+  "artifact": "tools/souji-verify.sh",
+  "verdict": "COMPLIANT-WITH-ADVISORIES",
+  "advisories": [
+    "DY13",
+    "DY16"
+  ],
+  "judged_sha256": "586bc36c6039b9c9bf5846b85156b02dd3daa6f594c03d6ba474a9c71f2fc812",
+  "pinned": true,
+  "artifact_bytes": 29139,
+  "artifact_mode": "-rwxr-xr-x",
+  "artifact_lines": 810,
+  "spec": "tools/souji-verify.spec.md",
+  "spec_sha256": "59b2ba61cf4ecb82e81d37b58c9c2ca436995c288a1a97a878c5bd65d350c067",
+  "judged_at": {
+    "t0": "2026-10-18T13:00:39-03:00",
+    "t1": "2026-10-18T13:00:41-03:00"
+  },
+  "counts": {
+    "total": 38,
+    "pass": 36,
+    "fail": 0,
+    "flag": 2,
+    "skip": 0
+  },
+  "method": "independent battery: comment-aware static clause scan (ST01-ST12) + dynamic CLI probes on live and /tmp fixture targets (DY01-DY20b), each check records the exact command and observed output; expectations re-derived by the judge from the spec's own recipes (default-branch chain, ancestor checks, worktree unique counts) rather than trusted from the tool; read-only enforced by before/after snapshots plus strace",
+  "checks": [
+    {
+      "id": "ST01",
+      "status": "pass",
+      "spec_ref": "spec:run/determinism",
+      "expected": "set -euo pipefail present in executable text",
+      "observed": "13:set -euo pipefail ",
+      "cmd": "comment-stripped grep",
+      "notes": ""
+    },
+    {
+      "id": "ST02",
+      "status": "pass",
+      "spec_ref": "spec:CLI",
+      "expected": "bash shebang and executable bit",
+      "observed": "mode=-rwxr-xr-x head=#!/usr/bin/env bash",
+      "cmd": "stat -c %A; head -1",
+      "notes": ""
+    },
+    {
+      "id": "ST03",
+      "status": "pass",
+      "spec_ref": "spec:rails/git-mutations",
+      "expected": "no fetch/push/commit/branch/checkout/reset/rebase porcelain, no worktree writes in executable lines",
+      "observed": "banned=[] branch=[] wtwrite=[] commit-tree-plumbing=[123:    if git -C \"$repo\" rev-parse --verify --quiet \"$rev^{commit}\" >/dev/null 2>&1; then 136:  if git -C \"$repo\" rev-parse --verify --quiet 'refs/heads/master^{commit}' >/dev/null 2>&1; then 496:    c=$(git -C \"$repo\" commit-tree \"$tree\" -p \"$parent\" -m \"$msg\") 498:    c=$(git -C \"$repo\" commit-tree \"$tree\" -m \"$msg\")]",
+      "cmd": "rg -n over comment-stripped copy",
+      "notes": "commit-tree and rev-parse ^{commit} are fixture-plumbing/revision syntax, not the banned porcelain 'commit'; usage confined to selftest fixture construction"
+    },
+    {
+      "id": "ST04",
+      "status": "pass",
+      "spec_ref": "spec:rails/secrets + F10",
+      "expected": "*.env, *credential*, *secret*, id_*, *.pem predicates present",
+      "observed": "missing:[]",
+      "cmd": "rg -q per pattern on tools/souji-verify.sh",
+      "notes": ""
+    },
+    {
+      "id": "ST05",
+      "status": "pass",
+      "spec_ref": "spec:D1",
+      "expected": "origin/HEAD symbolic-ref + origin/ strip + origin/* fallback + pushed-unverifiable marker",
+      "observed": "head=1 strip=1 originrefs=1 unverifiable=1",
+      "cmd": "rg -q probes",
+      "notes": ""
+    },
+    {
+      "id": "ST06",
+      "status": "pass",
+      "spec_ref": "spec:D3/F8",
+      "expected": "reference sweep carries exclusions for census, tests, .ufo-quarantine, .git (exact glob anchoring judged by DY13/DY13c)",
+      "observed": "missing:[]",
+      "cmd": "rg -q families",
+      "notes": ""
+    },
+    {
+      "id": "ST07",
+      "status": "pass",
+      "spec_ref": "spec:stale",
+      "expected": "scratch types .scratch/, *.out, *.log, checkpoint json/png, *-draft.* present",
+      "observed": "missing:[]",
+      "cmd": "rg -q probes",
+      "notes": ""
+    },
+    {
+      "id": "ST08",
+      "status": "pass",
+      "spec_ref": "spec:CLI/output",
+      "expected": "VERDICT/SAFE/NOT-SAFE vocabulary; exit literals subset of {0,1,2}",
+      "observed": "missing:[] exit-literals=[0,2,] out-of-range=[]",
+      "cmd": "rg -o 'exit N'",
+      "notes": ""
+    },
+    {
+      "id": "ST09",
+      "status": "pass",
+      "spec_ref": "spec:moved-to-obsidian",
+      "expected": "ledger path + sha256 both sides in executable text",
+      "observed": "missing:[]",
+      "cmd": "comment-stripped rg",
+      "notes": ""
+    },
+    {
+      "id": "ST10",
+      "status": "pass",
+      "spec_ref": "spec:CLI",
+      "expected": "--selftest --stale-days --json parsed",
+      "observed": "missing:[]",
+      "cmd": "rg -q probes",
+      "notes": ""
+    },
+    {
+      "id": "ST11",
+      "status": "pass",
+      "spec_ref": "spec:fixtures",
+      "expected": "selftest references fixture cases F1..F10",
+      "observed": "missing:[]",
+      "cmd": "rg -q 'F<n>'",
+      "notes": ""
+    },
+    {
+      "id": "DY01",
+      "status": "pass",
+      "spec_ref": "spec:CLI/exit-2",
+      "expected": "no args -> exit 2 usage",
+      "observed": "rc=2 out=[] err=[usage: souji-verify.sh [--selftest] [--stale-days N] [--json] <path>... ]",
+      "cmd": "tools/souji-verify.sh",
+      "notes": "spec-note: '2 = usage'; zero-target invocation reading ambiguous (A1)"
+    },
+    {
+      "id": "DY02",
+      "status": "pass",
+      "spec_ref": "spec:CLI/exit-2",
+      "expected": "unknown flag -> exit 2",
+      "observed": "rc=2 out=[]",
+      "cmd": "tools/souji-verify.sh --s54-unknown-flag /tmp",
+      "notes": ""
+    },
+    {
+      "id": "DY03a",
+      "status": "pass",
+      "spec_ref": "spec:CLI/exit-2",
+      "expected": "--stale-days without value -> exit 2",
+      "observed": "rc=2",
+      "cmd": "tools/souji-verify.sh --stale-days",
+      "notes": ""
+    },
+    {
+      "id": "DY03b",
+      "status": "pass",
+      "spec_ref": "spec:CLI/exit-2",
+      "expected": "non-numeric --stale-days -> exit 2 (flag if tolerated)",
+      "observed": "rc=2 out=[]",
+      "cmd": "tools/souji-verify.sh --stale-days notanumber /tmp",
+      "notes": "spec silent on numeric validation (A2)"
+    },
+    {
+      "id": "DY04",
+      "status": "pass",
+      "spec_ref": "spec:rails/unreachable",
+      "expected": "missing target -> rc0, NOT-SAFE, reason unreachable",
+      "observed": "rc=0 line=[VERDICT /tmp/s54-compliance/definitely-absent-155565-path NOT-SAFE unreachable missing-target ]",
+      "cmd": "tools/souji-verify.sh /tmp/s54-compliance/definitely-absent-155565-path",
+      "notes": ""
+    },
+    {
+      "id": "DY05",
+      "status": "pass",
+      "spec_ref": "spec:rails/unreachable",
+      "expected": "empty target -> rc0, NOT-SAFE(unreachable)",
+      "observed": "rc=0 line=[VERDICT  NOT-SAFE unreachable empty-target ]",
+      "cmd": "tools/souji-verify.sh ''",
+      "notes": ""
+    },
+    {
+      "id": "DY06",
+      "status": "pass",
+      "spec_ref": "spec:output",
+      "expected": "2 lines, 5 tab fields, VERDICT/SAFE|NOT-SAFE/evidence nonempty",
+      "observed": "rc=0 out=[VERDICT /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.spec.md NOT-SAFE none untracked repo=/home/vgpnk/Projects/shokunin/souji-shokunin ledger=miss scratch=no mtime_age_days=0 VERDICT /tmp/s54-compliance/definitely-absent-155565-path NOT-SAFE unreachable missing-target ]",
+      "cmd": "tools/souji-verify.sh <spec> <missing>",
+      "notes": ""
+    },
+    {
+      "id": "DY07",
+      "status": "pass",
+      "spec_ref": "spec:rails/secrets + F10",
+      "expected": "6 secret-shaped mode-000 paths -> NOT-SAFE(secrets-refusal), no read errors",
+      "observed": "rc=0 out=[VERDICT /tmp/s54-compliance/sec/a.env NOT-SAFE secrets-refusal basename-rule short-circuit (no read) VERDICT /tmp/s54-compliance/sec/.env NOT-SAFE secrets-refusal basename-rule short-circuit (no read) VERDICT /tmp/s54-compliance/sec/b-credentials.json NOT-SAFE secrets-refusal basename-rule short-circuit (no read) VERDICT /tmp/s54-compliance/sec/c-secret.txt NOT-SAFE secrets-refusal basename-rule s] err=[]",
+      "cmd": "tools/souji-verify.sh /tmp/s54-compliance/sec/{a.env,.env,b-credentials.json,c-secret.txt,id_rsa,d.pem}",
+      "notes": "mode-000 proves content was never read; names match *.env,*credential*,*secret*,id_*,*.pem"
+    },
+    {
+      "id": "DY08",
+      "status": "pass",
+      "spec_ref": "MINT:kotodama-gate + spec:repo-root",
+      "expected": "kotodama repo-root -> NOT-SAFE with unpushed=/dirty= evidence",
+      "observed": "rc=0 line=[VERDICT /home/vgpnk/Projects/shokunin/kotodama-shokunin NOT-SAFE unpushed unpushed=39 dirty=0 ] judge-recheck@2026-10-18T13:00:39-03:00 unpushed=39 dirty=0",
+      "cmd": "tools/souji-verify.sh /home/vgpnk/Projects/shokunin/kotodama-shokunin; judge: git -C /home/vgpnk/Projects/shokunin/kotodama-shokunin log --branches --not --remotes | wc -l; git -C /home/vgpnk/Projects/shokunin/kotodama-shokunin status --porcelain | wc -l",
+      "notes": "kotodama has in-flight round writes; judge recheck timestamp recorded for drift"
+    },
+    {
+      "id": "DY09",
+      "status": "pass",
+      "spec_ref": "spec:repo-root",
+      "expected": "clean+pushed repo-root -> still NOT-SAFE, unpushed=0 dirty=0",
+      "observed": "rc=0 line=[VERDICT /home/vgpnk/Projects/shokunin/kagi-shokunin NOT-SAFE none unpushed=0 dirty=0 ]",
+      "cmd": "tools/souji-verify.sh /home/vgpnk/Projects/shokunin/kagi-shokunin",
+      "notes": ""
+    },
+    {
+      "id": "DY10",
+      "status": "pass",
+      "spec_ref": "spec:pushed receipt + D1",
+      "expected": "expected=SAFE-pushed (lane ref resolution: [refs/heads/master])",
+      "observed": "rc=0 line=[VERDICT /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-1/census.tsv SAFE pushed intro=652b6f8f1a27 default=refs/heads/master repo=/home/vgpnk/Projects/shokunin/souji-shokunin ] judge-add-commit=652b6f8f1a279d2d977f2db208384ca5179994b1",
+      "cmd": "tools/souji-verify.sh /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-1/census.tsv; judge chain: symbolic-ref/single-origin/local-master then merge-base --is-ancestor",
+      "notes": "A5: lane repo has no remote refs; local-master fallback ref choice (refs/heads/master vs refs/remotes/origin/master) is unspecified by the spec"
+    },
+    {
+      "id": "DY11",
+      "status": "pass",
+      "spec_ref": "spec:pushed receipt",
+      "expected": "fleet-root pre-tip file -> SAFE(pushed)",
+      "observed": "rc=0 line=[VERDICT /home/vgpnk/Projects/shokunin/shokunin.conf.full-roster-20261015 SAFE pushed intro=99efc52b3a6f default=refs/remotes/origin/master repo=/home/vgpnk/Projects/shokunin ]",
+      "cmd": "tools/souji-verify.sh /home/vgpnk/Projects/shokunin/shokunin.conf.full-roster-20261015",
+      "notes": ""
+    },
+    {
+      "id": "DY12",
+      "status": "pass",
+      "spec_ref": "spec:stale + F7",
+      "expected": "old scratch file, zero refs -> SAFE(stale)",
+      "observed": "rc=0 line=[VERDICT /tmp/s54-compliance/fix/souji-shokunin/.scratch/old-draft.out SAFE stale mtime_age_days=3 refs=0 scratch-type=yes ]",
+      "cmd": "tools/souji-verify.sh /tmp/s54-compliance/fix/souji-shokunin/.scratch/old-draft.out",
+      "notes": ""
+    },
+    {
+      "id": "DY13c",
+      "status": "pass",
+      "spec_ref": "spec:D3/F8",
+      "expected": "F8-faithful: SHOKUNIN_ROOT=fleet-like fixture root -> SAFE(stale), census mention absorbed",
+      "observed": "rc=0 line=[VERDICT /tmp/s54-compliance/fix/souji-shokunin/.scratch/old-draft2.out SAFE stale mtime_age_days=3 refs=0 scratch-type=yes ]",
+      "cmd": "SHOKUNIN_ROOT=/tmp/s54-compliance/fix tools/souji-verify.sh /tmp/s54-compliance/fix/souji-shokunin/.scratch/old-draft2.out",
+      "notes": ""
+    },
+    {
+      "id": "DY13",
+      "status": "flag",
+      "spec_ref": "spec:D3/F8 robustness",
+      "expected": "outside SHOKUNIN_ROOT: absolute external repo named souji-shokunin -> ideally SAFE(stale); NOT-SAFE is conservative (not false-SAFE)",
+      "observed": "rc=0 line=[VERDICT /tmp/s54-compliance/fix/souji-shokunin/.scratch/old-draft2.out NOT-SAFE none untracked repo=/tmp/s54-compliance/fix/souji-shokunin ledger=miss scratch=yes mtime_age_days=3 ]",
+      "cmd": "tools/souji-verify.sh /tmp/s54-compliance/fix/souji-shokunin/.scratch/old-draft2.out",
+      "notes": "glob anchoring outside the declared root differs; DY13c/selftest F8 are the binding F8 checks"
+    },
+    {
+      "id": "DY13b",
+      "status": "pass",
+      "spec_ref": "spec:stale control",
+      "expected": "basename referenced from live file -> NOT-SAFE (zero-ref condition real)",
+      "observed": "rc=0 line=[VERDICT /tmp/s54-compliance/fix/souji-shokunin/.scratch/old-draft.out NOT-SAFE none untracked repo=/tmp/s54-compliance/fix/souji-shokunin ledger=miss scratch=yes mtime_age_days=3 ]",
+      "cmd": "tools/souji-verify.sh /tmp/s54-compliance/fix/souji-shokunin/.scratch/old-draft.out with /tmp/s54-compliance/fix/souji-shokunin/live-ref.txt",
+      "notes": ""
+    },
+    {
+      "id": "DY14a",
+      "status": "pass",
+      "spec_ref": "spec:stale mtime + default 1",
+      "expected": "fresh scratch file default --stale-days 1 -> NOT-SAFE",
+      "observed": "rc=0 line=[VERDICT /tmp/s54-compliance/fix/souji-shokunin/.scratch/fresh.log NOT-SAFE none untracked repo=/tmp/s54-compliance/fix/souji-shokunin ledger=miss scratch=yes mtime_age_days=0 ]",
+      "cmd": "tools/souji-verify.sh /tmp/s54-compliance/fix/souji-shokunin/.scratch/fresh.log",
+      "notes": ""
+    },
+    {
+      "id": "DY14b",
+      "status": "pass",
+      "spec_ref": "spec:--stale-days",
+      "expected": "1-hour-old scratch, --stale-days 0 -> SAFE(stale) (threshold honored down; strict elapsed>N reading)",
+      "observed": "rc=0 line=[VERDICT /tmp/s54-compliance/fix/souji-shokunin/.scratch/old-hour.out SAFE stale mtime_age_days=0 refs=0 scratch-type=yes ]",
+      "cmd": "touch -d '1 hour ago'; tools/souji-verify.sh --stale-days 0 /tmp/s54-compliance/fix/souji-shokunin/.scratch/old-hour.out",
+      "notes": "retry-robust: file age ~3600s keeps this probe clear of the age==0 boundary"
+    },
+    {
+      "id": "DY14c",
+      "status": "pass",
+      "spec_ref": "spec:--stale-days",
+      "expected": "--stale-days 9999 3-day file -> NOT-SAFE (threshold honored up)",
+      "observed": "rc=0 line=[VERDICT /tmp/s54-compliance/fix/souji-shokunin/.scratch/old-draft2.out NOT-SAFE none untracked repo=/tmp/s54-compliance/fix/souji-shokunin ledger=miss scratch=yes mtime_age_days=3 ]",
+      "cmd": "tools/souji-verify.sh --stale-days 9999 /tmp/s54-compliance/fix/souji-shokunin/.scratch/old-draft2.out",
+      "notes": ""
+    },
+    {
+      "id": "DY15",
+      "status": "pass",
+      "spec_ref": "spec:determinism",
+      "expected": "two identical runs byte-identical stdout",
+      "observed": "lines=3 diff=[none]",
+      "cmd": "tools/souji-verify.sh <spec> <census.tsv> <missing> (x2)",
+      "notes": ""
+    },
+    {
+      "id": "DY16",
+      "status": "flag",
+      "spec_ref": "spec:--json",
+      "expected": "valid JSON, one entry per target",
+      "observed": "rc=0 jq=ok entries=[] out=[{\"path\":\"/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.spec.md\",\"kind\":\"artifact\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"none\",\"evidence\":\"untracked repo=/home/vgpnk/Projects/shokunin/souji-shokunin ledger=miss scratch=no mtime_age_days=0\"} {\"path\":\"/tmp/s54-compliance/definitely-absent-155565-path\",\"kind\":\"artifact\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"unreachable\",\"evidence\":\"missing-targe]",
+      "cmd": "tools/souji-verify.sh --json <spec> <missing>",
+      "notes": "top-level shape not pinned by spec; entries==2 enforced when array/known container, else flag"
+    },
+    {
+      "id": "DY17",
+      "status": "pass",
+      "spec_ref": "spec:--selftest",
+      "expected": "selftest exit 0 twice",
+      "observed": "rc_first=0 rc_second=0 first_out_lines=28",
+      "cmd": "tools/souji-verify.sh --selftest (x2)",
+      "notes": ""
+    },
+    {
+      "id": "DY18",
+      "status": "pass",
+      "spec_ref": "spec:exit codes",
+      "expected": "all observed rcs within {0,1,2}",
+      "observed": "probes=24 out-of-range=[] rc-list=0,2,",
+      "cmd": "aggregate over logs/rc.tsv",
+      "notes": ""
+    },
+    {
+      "id": "DY19",
+      "status": "pass",
+      "spec_ref": "spec:read-only",
+      "expected": "no changes to watched surfaces (state/watchdog/config mtimes, tool/spec/ledger hashes, repo git status/HEAD)",
+      "observed": "snapdiff=[] newfiles=[]",
+      "cmd": "stat+sha256+git status snapshots before/after; find -newer marker",
+      "notes": "git may refresh .git/index on its own (excluded from find); flags here are leads, full files in snap/"
+    },
+    {
+      "id": "DY20",
+      "status": "pass",
+      "spec_ref": "spec:rails/read-only",
+      "expected": "no absolute writes outside /tmp, no connects, secret paths never opened",
+      "observed": "tool_rc=0 abs-writes-outside-tmp=[] rel-writes=0 connects=[] secret-opens=[]",
+      "cmd": "strace -f -e trace=openat,open,connect tools/souji-verify.sh --stale-days 1 <sec/a.env> <old-draft2.out>",
+      "notes": "relative opens come from git children operating inside their repo (dirfd chdir); absolute-path rule is the decisive one"
+    },
+    {
+      "id": "DY20b",
+      "status": "pass",
+      "spec_ref": "spec:--selftest isolation",
+      "expected": "selftest absolute writes confined to /tmp mktemp dirs (incl. tool pid); no network",
+      "observed": "tool_rc=0 horizon-abs-outside-tmp=[] tool-pid-abs-outside-tmp=[] rel-writes-git-children=53 connects=[]",
+      "cmd": "strace -f -e trace=openat,open,connect tools/souji-verify.sh --selftest",
+      "notes": "tool-pid writes verified absolute under /tmp/souji-selftest.*; relative writes are git plumbing inside the fixture repos"
+    },
+    {
+      "id": "ST12",
+      "status": "pass",
+      "spec_ref": "spec:stale sweep + host",
+      "expected": "host rg supports --basename OR tool does not rely on it",
+      "observed": "host_rg_basename=no tool_uses_basename=no rg_version=ripgrep 15.2.0 (rev e89fff89ac)",
+      "cmd": "rg --help | grep -q -- --basename; rg -q -- --basename tools/souji-verify.sh",
+      "notes": "host rg 15.2.0 rejects --basename (rc=2, 0 lines): a literal use degenerates the zero-ref test to always-true -> false-SAFE risk; DY13b decides"
+    }
+  ],
+  "fixture_coverage": {
+    "F1": {
+      "result": "PASS",
+      "expected": "SAFE(pushed)",
+      "observed": "intro=92150995dbb2 default=refs/remotes/origin/master repo=/tmp/souji-selftest.yDBJXC/fleet/alpha-shokunin",
+      "label": "pushed ancestor pre-tip"
+    },
+    "F2": {
+      "result": "PASS",
+      "expected": "NOT-SAFE(none)",
+      "observed": "untracked repo=/tmp/souji-selftest.yDBJXC/fleet/alpha-shokunin ledger=miss scratch=no mtime_age_days=0",
+      "label": "local-only introducing commit"
+    },
+    "F3": {
+      "result": "PASS",
+      "expected": "NOT-SAFE(unpushed-dirty)",
+      "observed": "unpushed=2 dirty=1",
+      "label": "repo-root unpushed+dirty"
+    },
+    "F4": {
+      "result": "PASS",
+      "expected": "SAFE(metadata-prune)",
+      "observed": "owner=/tmp/souji-selftest.yDBJXC/fleet/delta-shokunin head=374e98322b53 unique=0 dir=absent",
+      "label": "worktree dir absent, unique=0"
+    },
+    "F5": {
+      "result": "PASS",
+      "expected": "NOT-SAFE(unpushed-branch)",
+      "observed": "owner=/tmp/souji-selftest.yDBJXC/fleet/delta-shokunin branch=wtfeat unpushed=1",
+      "label": "worktree named branch, 1 unpushed"
+    },
+    "F6": {
+      "result": "PASS",
+      "expected": "SAFE(moved-to-obsidian)",
+      "observed": "ledger=/tmp/souji-selftest.yDBJXC/fleet/corpus/knowledge/obsidian-ledger.tsv src_sha256=a5494bd42ccc vault=/tmp/souji-selftest.yDBJXC/vault/sample.bin",
+      "label": "ledger row + both sha256"
+    },
+    "F7": {
+      "result": "PASS",
+      "expected": "SAFE(stale)",
+      "observed": "mtime_age_days=290 refs=0 scratch-type=yes",
+      "label": "scratch, no refs, old mtime"
+    },
+    "F8": {
+      "result": "PASS",
+      "expected": "SAFE(stale)",
+      "observed": "mtime_age_days=290 refs=0 scratch-type=yes",
+      "label": "census mention absorbed (D3)"
+    },
+    "F9": {
+      "result": "PASS",
+      "expected": "SAFE(pushed)",
+      "observed": "intro=b10bd96e1911 default=refs/remotes/origin/master repo=/tmp/souji-selftest.yDBJXC/fleet/beta-shokunin",
+      "label": "origin/HEAD absent, single origin ref"
+    },
+    "F10": {
+      "result": "absent"
+    }
+  },
+  "selftest_cases": {
+    "F1": {
+      "result": "PASS",
+      "expected": "SAFE(pushed)",
+      "observed": "intro=92150995dbb2 default=refs/remotes/origin/master repo=/tmp/souji-selftest.yDBJXC/fleet/alpha-shokunin",
+      "label": "pushed ancestor pre-tip"
+    },
+    "F2": {
+      "result": "PASS",
+      "expected": "NOT-SAFE(none)",
+      "observed": "untracked repo=/tmp/souji-selftest.yDBJXC/fleet/alpha-shokunin ledger=miss scratch=no mtime_age_days=0",
+      "label": "local-only introducing commit"
+    },
+    "F3": {
+      "result": "PASS",
+      "expected": "NOT-SAFE(unpushed-dirty)",
+      "observed": "unpushed=2 dirty=1",
+      "label": "repo-root unpushed+dirty"
+    },
+    "F4": {
+      "result": "PASS",
+      "expected": "SAFE(metadata-prune)",
+      "observed": "owner=/tmp/souji-selftest.yDBJXC/fleet/delta-shokunin head=374e98322b53 unique=0 dir=absent",
+      "label": "worktree dir absent, unique=0"
+    },
+    "F5": {
+      "result": "PASS",
+      "expected": "NOT-SAFE(unpushed-branch)",
+      "observed": "owner=/tmp/souji-selftest.yDBJXC/fleet/delta-shokunin branch=wtfeat unpushed=1",
+      "label": "worktree named branch, 1 unpushed"
+    },
+    "F6": {
+      "result": "PASS",
+      "expected": "SAFE(moved-to-obsidian)",
+      "observed": "ledger=/tmp/souji-selftest.yDBJXC/fleet/corpus/knowledge/obsidian-ledger.tsv src_sha256=a5494bd42ccc vault=/tmp/souji-selftest.yDBJXC/vault/sample.bin",
+      "label": "ledger row + both sha256"
+    },
+    "F7": {
+      "result": "PASS",
+      "expected": "SAFE(stale)",
+      "observed": "mtime_age_days=290 refs=0 scratch-type=yes",
+      "label": "scratch, no refs, old mtime"
+    },
+    "F8": {
+      "result": "PASS",
+      "expected": "SAFE(stale)",
+      "observed": "mtime_age_days=290 refs=0 scratch-type=yes",
+      "label": "census mention absorbed (D3)"
+    },
+    "F9": {
+      "result": "PASS",
+      "expected": "SAFE(pushed)",
+      "observed": "intro=b10bd96e1911 default=refs/remotes/origin/master repo=/tmp/souji-selftest.yDBJXC/fleet/beta-shokunin",
+      "label": "origin/HEAD absent, single origin ref"
+    },
+    "F8-control": {
+      "result": "PASS",
+      "expected": "census-mention-present",
+      "observed": "./souji-shokunin/census/round-2/seat-01.json",
+      "label": "D3 exclusion is load-bearing"
+    },
+    "F7-control": {
+      "result": "PASS",
+      "expected": "NOT-SAFE(none)",
+      "observed": "untracked repo=/tmp/souji-selftest.yDBJXC/fleet/alpha-shokunin ledger=miss scratch=yes mtime_age_days=290",
+      "label": "mtime threshold honored"
+    },
+    "F10-cli": {
+      "result": "PASS",
+      "expected": "exit=0",
+      "observed": "VERDICT",
+      "label": "/tmp/souji-selftest.yDBJXC/fleet/secrets/app.env"
+    },
+    "F10-cli:app.env": {
+      "result": "PASS",
+      "expected": "NOT-SAFE(secrets-refusal)",
+      "observed": "5-field line",
+      "label": "secret-shaped target"
+    },
+    "F10-cli:creds.pem": {
+      "result": "PASS",
+      "expected": "NOT-SAFE(secrets-refusal)",
+      "observed": "5-field line",
+      "label": "secret-shaped target"
+    },
+    "F10-cli:notes.txt": {
+      "result": "PASS",
+      "expected": "plain receipt=none",
+      "observed": "5-field line",
+      "label": "ordinary file not secret-shaped"
+    },
+    "F10-canary": {
+      "result": "PASS",
+      "expected": "no-canary-leak",
+      "observed": "stdout+stderr clean",
+      "label": "secrets never opened"
+    },
+    "F10-unchanged": {
+      "result": "PASS",
+      "expected": "secret-files-unchanged",
+      "observed": "hashes stable",
+      "label": "read-only"
+    },
+    "F10-unreadable": {
+      "result": "PASS",
+      "expected": "both NOT-SAFE(secrets-refusal)",
+      "observed": "mode-000 copies",
+      "label": "no read of secret-shaped files"
+    },
+    "EXIT-missing": {
+      "result": "PASS",
+      "expected": "NOT-SAFE(unreachable)",
+      "observed": "exit=0",
+      "label": "missing target"
+    },
+    "EXIT-usage": {
+      "result": "PASS",
+      "expected": "exit=2",
+      "observed": "usage: souji-verify.sh [--selftest] [--stale-days N] [--json] <path>...",
+      "label": "cli"
+    },
+    "EXIT-usage-noval": {
+      "result": "PASS",
+      "expected": "exit=2",
+      "observed": "usage: souji-verify.sh [--selftest] [--stale-days N] [--json] <path>...",
+      "label": "cli"
+    },
+    "EXIT-noargs": {
+      "result": "PASS",
+      "expected": "exit=2",
+      "observed": "usage: souji-verify.sh [--selftest] [--stale-days N] [--json] <path>...",
+      "label": "cli"
+    },
+    "JSON-mode": {
+      "result": "PASS",
+      "expected": "jsonl SAFE/pushed",
+      "observed": "{\"path\":\"/tmp/souji-selftest.yDBJXC/fleet/beta-shokunin/pushed-file.txt\",\"kind\":\"artifact\",\"verdict\":\"SAFE\",\"receipt\":\"pushed\",\"evidence\":\"intro=b10bd96e1911 default=refs/remotes/origin/master repo=/tmp/souji-selftest.yDBJXC/fleet/beta-shokunin\"}",
+      "label": "json contract"
+    }
+  },
+  "selftest_second_run_summary": {
+    "pass": 23,
+    "fail": 0
+  },
+  "independent_replications": [
+    {
+      "case": "F4-live",
+      "target": "/tmp/r87-B1",
+      "judge": "git -C lore-shokunin worktree list --porcelain; dir absent; git -C lore-shokunin log --oneline <HEAD> --not --all | wc -l = 0",
+      "tool_verdict": "SAFE(metadata-prune)",
+      "matches_spec": true,
+      "note": "19 lore registrations in the same shape; owning repo had 1 dirty entry (lore work), metadata verdict still spec-SAFE"
+    },
+    {
+      "case": "F4-live-2",
+      "target": "/home/vgpnk/Projects/shokunin/r80-baseline-frozen-worktree",
+      "judge": "dir absent; unique=0 derived against game-dev-2d-shokunin",
+      "tool_verdict": "SAFE(metadata-prune)",
+      "matches_spec": true
+    },
+    {
+      "case": "F5-live",
+      "target": "/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin-wt-r98",
+      "judge": "dir absent; named branch wt-r98; git log --oneline wt-r98 --not --remotes | wc -l = 1",
+      "tool_verdict": "NOT-SAFE(unpushed-branch) unpushed=1",
+      "matches_spec": true,
+      "note": "the overlapping-bullet ambiguity (dir absent+unique=0 vs named-branch-unpushed) resolves to F5's expected NOT-SAFE"
+    },
+    {
+      "case": "F7",
+      "target": "/tmp/s54-compliance/fix/souji-shokunin/.scratch/old-draft.out",
+      "judge": "3-day-old .out in .scratch, zero refs",
+      "tool_verdict": "SAFE(stale) refs=0",
+      "matches_spec": true,
+      "check": "DY12"
+    },
+    {
+      "case": "F8",
+      "target": "/tmp/s54-compliance/fix/souji-shokunin/.scratch/old-draft2.out (SHOKUNIN_ROOT=/tmp/s54-compliance/fix)",
+      "judge": "basename mentioned only in souji-shokunin/census/notes.tsv",
+      "tool_verdict": "SAFE(stale) refs=0",
+      "matches_spec": true,
+      "check": "DY13c"
+    },
+    {
+      "case": "F8-control",
+      "target": "/tmp/s54-compliance/fix/souji-shokunin/.scratch/old-draft.out",
+      "judge": "same basename referenced from a live non-excluded file",
+      "tool_verdict": "NOT-SAFE(none)",
+      "matches_spec": true,
+      "check": "DY13b"
+    },
+    {
+      "case": "F10",
+      "target": "/tmp/s54-compliance/sec/{a.env,.env,b-credentials.json,c-secret.txt,id_rsa,d.pem}",
+      "judge": "mode-000 dummy files; refusal must not open them; strace shows no secret opens",
+      "tool_verdict": "6/6 NOT-SAFE(secrets-refusal)",
+      "matches_spec": true,
+      "check": "DY07"
+    },
+    {
+      "case": "F1/F9-pushed",
+      "target": "census/round-1/census.tsv + shokunin.conf.full-roster-20261015",
+      "judge": "judge re-derived intro commit 652b6f8f1a27 (ancestor of resolved local master) and 99efc52b3a6f (ancestor of origin/master)",
+      "tool_verdict": "SAFE(pushed) with matching intro prefixes",
+      "matches_spec": true,
+      "checks": "DY10/DY11"
+    },
+    {
+      "case": "F3-live",
+      "target": "kotodama-shokunin",
+      "judge": "repo-root unpushed+dirty at judge time; NOT-SAFE is the r2 gate",
+      "tool_verdict": "NOT-SAFE(unpushed) unpushed=39 dirty=0 at 13:00:39 (was unpushed=38 dirty=22 at 12:57:32; live lane drift)",
+      "matches_spec": true,
+      "check": "DY08"
+    }
+  ],
+  "read_only_evidence": {
+    "strace_normal_run": "no absolute writes outside /tmp; no connect(); secret paths never opened (DY20)",
+    "strace_selftest": "tool-pid absolute writes only under /tmp/souji-selftest.*; relative writes are git plumbing inside fixture repos; no connect() (DY20b)",
+    "snapshot": "tools/souji-verify.sh, spec and obsidian-ledger sha256 unchanged; .ufo/state, .ufo/watchdog.log, ~/.config mtimes unchanged; fleet+lane git status/HEAD unchanged across the battery (DY19)",
+    "git_mutations": "comment-stripped scan finds no fetch/push/commit/branch/checkout/reset/rebase porcelain; commit-tree appears only in selftest fixture construction (ST03)"
+  },
+  "decisive_numbers": {
+    "selftest": "26 assertions PASS / 0 FAIL (F1-F10 + F7/F8 controls + F10-cli/unreadable/canary/unchanged + EXIT-* + JSON-mode), reproduced twice",
+    "kotodama_gate": "NOT-SAFE(unpushed) unpushed=39 dirty=0 at 13:00:39 (live lane; earlier reading unpushed=38 dirty=22 at 12:57:32)",
+    "kagi_repo_root": "NOT-SAFE(none) unpushed=0 dirty=0 (repo-root SAFE only via moved-to-obsidian)",
+    "pushed_receipts": "intro 652b6f8f1a27 for census.tsv (local-master fallback); intro 99efc52b3a6f for the fleet config snapshot (origin/master ancestor) - both re-derived by the judge",
+    "stale": "F7/F8 SAFE(stale) with refs=0; live-reference control NOT-SAFE; --stale-days 0 / 9999 both honored",
+    "secrets": "6/6 secret-shaped mode-000 paths NOT-SAFE(secrets-refusal), zero reads"
+  },
+  "revision_churn": [
+    {
+      "t": "2026-10-18T12:51:45-03:00",
+      "sha256_prefix": "72ba71ef",
+      "event": "first appearance of tools/souji-verify.sh"
+    },
+    {
+      "t": "2026-10-18T12:52:55-03:00",
+      "sha256_prefix": "8c75fa1e",
+      "event": "early 90s-stable point (777 lines)"
+    },
+    {
+      "t": "2026-10-18T12:54:13-03:00",
+      "sha256_prefix": "8ec74ba8",
+      "event": "overwritten during first battery run (mixed-run discarded)"
+    },
+    {
+      "t": "2026-10-18T12:55:28-03:00",
+      "sha256_prefix": "d32bac5d",
+      "event": "90s-stable (804 lines); own selftest 26/0 on a frozen copy"
+    },
+    {
+      "t": "2026-10-18T12:57:31-03:00",
+      "sha256_prefix": "13672fdc",
+      "event": "pinned run: 35 pass / 2 flag / 0 fail"
+    },
+    {
+      "t": "2026-10-18T12:58:50-03:00",
+      "sha256_prefix": "d7edd71d",
+      "event": "churn observed; two pinned runs, DY20b parser then corrected"
+    },
+    {
+      "t": "2026-10-18T12:59:40-03:00",
+      "sha256_prefix": "023c4561",
+      "event": "changed during run3"
+    },
+    {
+      "t": "2026-10-18T12:59:55-03:00",
+      "sha256_prefix": "92c44558",
+      "event": "pinned run4: 36 pass / 2 flag"
+    },
+    {
+      "t": "2026-10-18T13:00:24-03:00",
+      "sha256_prefix": "586bc36c",
+      "event": "FINAL judged revision; 15s-stable check then battery start==end"
+    }
+  ],
+  "limitations": [
+    "The artifact is being rewritten by parallel seats during round 2; the verdict applies to sha256 586bc36c6039b9c9bf5846b85156b02dd3daa6f594c03d6ba474a9c71f2fc812 only (start==end at run time). Sibling copies tools/souji-verify.impl-09..16.sh also exist. Re-run the embedded harness to re-validate a later revision.",
+    "F6 (moved-to-obsidian) is verified only through the tool's own selftest: the live ledger is header-only and the judge must not mutate it.",
+    "F9 is verified only through the selftest; live repos either have origin/HEAD (fleet) or no remote refs at all (lane repo), so DY10 exercises the local-master fallback instead.",
+    "Live kotodama numbers drift while its round runs (unpushed 38->39, dirty 22->0 within minutes); DY08 asserts NOT-SAFE plus the presence of unpushed=/dirty= fields, not exact counts.",
+    "Relative-path opens under strace are attributed to git children operating inside mktemp fixtures; the decisive check is absolute-path writes (none outside /tmp) plus the fleet-wide new-file scan.",
+    "--json output is JSONL (one object per line), not a single JSON document; the spec does not pin the shape (advisory A3)."
+  ],
+  "conflicts": [
+    {
+      "kind": "spec-vs-environment",
+      "detail": "The spec's stale sweep mandates `rg -l --no-ignore --basename <name> <repo>`, but this host's rg 15.2.0 rejects --basename (rc=2, 0 lines). A literal implementation would read the failed sweep as 'zero references' and could false-SAFE. The judged tool does not use --basename, and the judge's live-reference control (DY13b) proves the zero-ref condition is real."
+    },
+    {
+      "kind": "ambiguity",
+      "id": "A5",
+      "detail": "The lane repo has no remote refs; D1's chain resolves to local refs/heads/master. The tool compares against that ref and reports default=refs/heads/master; the spec does not say whether the ancestor check must prefer a remote ref."
+    },
+    {
+      "kind": "ambiguity",
+      "id": "A6",
+      "detail": "The worktree bullets overlap when the dir is absent, unique=0 and the named branch is unpushed. F5 fixes the intended precedence; the tool returns NOT-SAFE(unpushed-branch) for game-dev-2d wt-r98, matching F5."
+    },
+    {
+      "kind": "ambiguity",
+      "id": "A1-A3",
+      "detail": "no-args usage, non-numeric --stale-days, and --json shape are unspecified; judged leniently (A1/A2 pass on the observed exit-2 contract; A3 recorded as the DY16 flag)."
+    }
+  ],
+  "advisory_details": [
+    {
+      "id": "DY13",
+      "detail": "For an absolute external repo named souji-shokunin located OUTSIDE SHOKUNIN_ROOT, the census exclusion does not absorb a census-only mention, so the verdict stays NOT-SAFE. This is the conservative direction (false-negative, never false-SAFE); the F8-faithful in-root case (DY13c) and the tool's own F8 both yield SAFE(stale)."
+    },
+    {
+      "id": "DY16",
+      "detail": "--json emits one JSON object per target per line (JSONL). Valid JSON, exit 0, one entry per target; shape not pinned by the spec."
+    }
+  ],
+  "reproduction": {
+    "harness_sha256": "37d161967938c2f606d8c0561655ee77375caf4b67066cc63317e5dcfbd687e5",
+    "harness_script": "#!/bin/bash\n# S54 compliance battery \u2014 independent judge for tools/souji-verify.sh vs souji-verify.spec.md (round 2)\n# Read-only over every surface except its own /tmp workspace. Never runs banned git subcommands.\nset -uo pipefail\n\nLANE=${LANE:-/home/vgpnk/Projects/shokunin/souji-shokunin}\nROOT=${ROOT:-/home/vgpnk/Projects/shokunin}\nTOOL=${TOOL_OVERRIDE:-\"$LANE/tools/souji-verify.sh\"}\nSPEC=\"$LANE/tools/souji-verify.spec.md\"\nW=/tmp/s54-compliance\nLOGS=\"$W/logs\"\nCHECKS=\"$W/checks.tsv\"\nFIX=\"$W/fix\"\nmkdir -p \"$LOGS\" \"$FIX\"\n: > \"$CHECKS\"\n\nrecord() { # id status spec_ref expected observed cmd notes\n  printf '%s\\t%s\\t%s\\t%s\\t%s\\t%s\\t%s\\n' \"$1\" \"$2\" \"$3\" \"$4\" \"$5\" \"$6\" \"$7\" >> \"$CHECKS\"\n}\nclip() { head -c 400 | tr '\\n\\t' '  ' ; }\nrc_of() { # file -> last-line placeholder; we store rc in $RC global\n  RC=$1\n}\n\nRUNS=0\nRCLOG=\"$W/rc.tsv\"; : > \"$RCLOG\"\nrun() { # run <id> <cmd...> ; sets RC, $LOGS/<id>.out/.err, appends rc\n  local id=$1; shift\n  RUNS=$((RUNS+1))\n  \"$@\" > \"$LOGS/$id.out\" 2> \"$LOGS/$id.err\"\n  RC=$?\n  printf '%s\\t%s\\n' \"$id\" \"$RC\" >> \"$RCLOG\"\n}\n\nT0=$(date -Iseconds)\nTOOL_SHA=$(sha256sum \"$TOOL\" 2>/dev/null | cut -d' ' -f1)\nSPEC_SHA=$(sha256sum \"$SPEC\" 2>/dev/null | cut -d' ' -f1)\nTOOL_MODE=$(stat -c '%A' \"$TOOL\" 2>/dev/null)\nTOOL_BYTES=$(stat -c '%s' \"$TOOL\" 2>/dev/null)\nTOOL_HEAD=$(head -1 \"$TOOL\" 2>/dev/null)\n\n# ---------- STATIC CHECKS ----------\nif [ -s \"$TOOL\" ]; then\n  # ST01 set -euo pipefail (comment-aware)\n  sed 's/#.*$//' \"$TOOL\" > \"$LOGS/tool-nocomment.txt\"\n  if grep -qE '(^|[[:space:]])set -euo pipefail' \"$LOGS/tool-nocomment.txt\"; then ST01=pass; else ST01=fail; fi\n  record ST01 \"$ST01\" \"spec:run/determinism\" \"set -euo pipefail present in executable text\" \\\n    \"$(grep -n 'set -euo pipefail' \"$LOGS/tool-nocomment.txt\" | head -1 | clip)\" \"comment-stripped grep\" \"\"\n\n  # ST02 executable bit + bash shebang\n  if [ -x \"$TOOL\" ] && printf '%s' \"$TOOL_HEAD\" | grep -q '^#!.*bash'; then ST02=pass; else ST02=fail; fi\n  record ST02 \"$ST02\" \"spec:CLI\" \"bash shebang and executable bit\" \"mode=$TOOL_MODE head=$TOOL_HEAD\" \"stat -c %A; head -1\" \"\"\n\n  # ST03 forbidden git subcommand scan (comments stripped); commit-tree/rev-syntax are not `git commit`\n  BANNED_RAW=$(rg -n '\\bgit\\b[^;|&]*\\b(fetch|push|commit|checkout|reset|rebase)\\b' \"$LOGS/tool-nocomment.txt\" 2>/dev/null | head -40)\n  COMMITTREE=\"\"; BANNED=\"\"\n  if [ -n \"$BANNED_RAW\" ]; then\n    COMMITTREE=$(printf '%s\\n' \"$BANNED_RAW\" | grep -E 'commit-tree|\\^\\{commit\\}' | head -10)\n    BANNED=$(printf '%s\\n' \"$BANNED_RAW\" | grep -vE 'commit-tree|\\^\\{commit\\}' | head -20)\n  fi\n  BRANCH=$(rg -n '\\bgit\\b[^;|&]*[[:space:]]branch\\b' \"$LOGS/tool-nocomment.txt\" 2>/dev/null | head -20)\n  WTWRITE=$(rg -n 'worktree[[:space:]]+(add|remove|move|prune|lock|unlock)' \"$LOGS/tool-nocomment.txt\" 2>/dev/null | head -20)\n  if [ -z \"$BANNED\" ] && [ -z \"$BRANCH\" ] && [ -z \"$WTWRITE\" ]; then ST03=pass; else ST03=fail; fi\n  record ST03 \"$ST03\" \"spec:rails/git-mutations\" \"no fetch/push/commit/branch/checkout/reset/rebase porcelain, no worktree writes in executable lines\" \\\n    \"banned=[$(printf '%s' \"$BANNED\" | clip)] branch=[$(printf '%s' \"$BRANCH\" | clip)] wtwrite=[$(printf '%s' \"$WTWRITE\" | clip)] commit-tree-plumbing=[$(printf '%s' \"$COMMITTREE\" | clip)]\" \\\n    \"rg -n over comment-stripped copy\" \"commit-tree and rev-parse ^{commit} are fixture-plumbing/revision syntax, not the banned porcelain 'commit'; usage confined to selftest fixture construction\"\n\n  # ST04 secrets refusal predicate has all five pattern families\n  MISS=\"\"\n  for p in '\\.env' 'credential' 'secret' 'id_' '\\.pem'; do\n    rg -q \"$p\" \"$TOOL\" || MISS=\"$MISS $p\"\n  done\n  if [ -z \"$MISS\" ]; then ST04=pass; else ST04=fail; fi\n  record ST04 \"$ST04\" \"spec:rails/secrets + F10\" \"*.env, *credential*, *secret*, id_*, *.pem predicates present\" \\\n    \"missing:[$MISS]\" \"rg -q per pattern on tools/souji-verify.sh\" \"\"\n\n  # ST05 D1 default-branch resolution recipe\n  D1a=0; D1b=0; D1c=0; D1d=0\n  rg -q 'symbolic-ref' \"$TOOL\" && rg -q 'refs/remotes/origin/HEAD' \"$TOOL\" && D1a=1\n  rg -q 'sed .*origin/' \"$TOOL\" && D1b=1\n  rg -q 'refs/remotes/origin' \"$TOOL\" && D1c=1\n  rg -q \"pushed-unverifiable\" \"$TOOL\" && D1d=1\n  if [ \"$D1a$D1b$D1c$D1d\" = 1111 ]; then ST05=pass; else ST05=fail; fi\n  record ST05 \"$ST05\" \"spec:D1\" \"origin/HEAD symbolic-ref + origin/ strip + origin/* fallback + pushed-unverifiable marker\" \\\n    \"head=$D1a strip=$D1b originrefs=$D1c unverifiable=$D1d\" \"rg -q probes\" \"\"\n\n  # ST06 D3 sweep exclusions\n  X=\"\"\n  rg -q 'census' \"$TOOL\" || X=\"$X census\"\n  rg -q 'tests' \"$TOOL\" || X=\"$X tests\"\n  rg -q 'quarantine' \"$TOOL\" || X=\"$X quarantine\"\n  rg -q '\\.git' \"$TOOL\" || X=\"$X git\"\n  if [ -z \"$X\" ]; then ST06=pass; else ST06=fail; fi\n  record ST06 \"$ST06\" \"spec:D3/F8\" \"reference sweep carries exclusions for census, tests, .ufo-quarantine, .git (exact glob anchoring judged by DY13/DY13c)\" \\\n    \"missing:[$X]\" \"rg -q families\" \"\"\n\n  # ST07 stale-type classifier\n  Y=\"\"\n  rg -q '\\.scratch' \"$TOOL\" || Y=\"$Y .scratch\"\n  rg -q '\\.out' \"$TOOL\" || Y=\"$Y .out\"\n  rg -q '\\.log' \"$TOOL\" || Y=\"$Y .log\"\n  rg -qi 'draft' \"$TOOL\" || Y=\"$Y draft\"\n  rg -qi 'checkpoint|png|json' \"$TOOL\" || Y=\"$Y checkpoint\"\n  if [ -z \"$Y\" ]; then ST07=pass; else ST07=fail; fi\n  record ST07 \"$ST07\" \"spec:stale\" \"scratch types .scratch/, *.out, *.log, checkpoint json/png, *-draft.* present\" \\\n    \"missing:[$Y]\" \"rg -q probes\" \"\"\n\n  # ST08 output vocabulary + exit codes subset\n  V=\"\"\n  rg -q 'VERDICT' \"$TOOL\" || V=\"$V VERDICT\"\n  rg -q 'SAFE' \"$TOOL\" && rg -q 'NOT-SAFE' \"$TOOL\" || V=\"$V verdicts\"\n  EXITS=$(rg -o 'exit [0-9]+' \"$TOOL\" | rg -o '[0-9]+' | sort -u | tr '\\n' ',' )\n  BADEXIT=$(printf '%s' \"$EXITS\" | tr ',' '\\n' | rg -v '^$|^[012]$' | tr '\\n' ',' )\n  if [ -z \"$V\" ] && [ -z \"$BADEXIT\" ]; then ST08=pass; else ST08=fail; fi\n  record ST08 \"$ST08\" \"spec:CLI/output\" \"VERDICT/SAFE/NOT-SAFE vocabulary; exit literals subset of {0,1,2}\" \\\n    \"missing:[$V] exit-literals=[$EXITS] out-of-range=[$BADEXIT]\" \"rg -o 'exit N'\" \"\"\n\n  # ST09 ledger handling\n  L=\"\"\n  rg -q 'obsidian-ledger.tsv' \"$LOGS/tool-nocomment.txt\" || L=\"$L ledger-path\"\n  rg -q 'sha256sum' \"$LOGS/tool-nocomment.txt\" || L=\"$L sha256sum\"\n  if [ -z \"$L\" ]; then ST09=pass; else ST09=fail; fi\n  record ST09 \"$ST09\" \"spec:moved-to-obsidian\" \"ledger path + sha256 both sides in executable text\" \"missing:[$L]\" \"comment-stripped rg\" \"\"\n\n  # ST10 option parsing surface\n  P=\"\"\n  rg -q -- '--selftest' \"$TOOL\" || P=\"$P selftest\"\n  rg -q -- '--stale-days' \"$TOOL\" || P=\"$P stale-days\"\n  rg -q -- '--json' \"$TOOL\" || P=\"$P json\"\n  if [ -z \"$P\" ]; then ST10=pass; else ST10=fail; fi\n  record ST10 \"$ST10\" \"spec:CLI\" \"--selftest --stale-days --json parsed\" \"missing:[$P]\" \"rg -q probes\" \"\"\n\n  # ST11 selftest covers F1..F10 labels\n  F=\"\"\n  for n in 1 2 3 4 5 6 7 8 9 10; do\n    rg -q \"F$n\\b\" \"$TOOL\" || F=\"$F F$n\"\n  done\n  if [ -z \"$F\" ]; then ST11=pass; else ST11=fail; fi\n  record ST11 \"$ST11\" \"spec:fixtures\" \"selftest references fixture cases F1..F10\" \"missing:[$F]\" \"rg -q 'F<n>'\" \"\"\nelse\n  for id in ST01 ST02 ST03 ST04 ST05 ST06 ST07 ST08 ST09 ST10 ST11; do\n    record \"$id\" skip \"static\" \"tool present\" \"tools/souji-verify.sh absent or empty\" \"test -s\" \"\"\n  done\nfi\n\n# ---------- DYNAMIC CHECKS ----------\nif [ ! -s \"$TOOL\" ]; then\n  for id in DY01 DY02 DY03 DY04 DY05 DY06 DY07 DY08 DY09 DY10 DY11 DY12 DY13 DY14 DY15 DY16 DY17 DY18 DY19 DY20; do\n    record \"$id\" skip \"dynamic\" \"tool present\" \"tools/souji-verify.sh absent or empty\" \"test -s\" \"\"\n  done\n  echo \"SKIP-ALL: tool absent\"\n  exit 3\nfi\n\n# helpers for dynamic checks\nOUT_rc() { printf '%s' \"$1\"; }\nlines_of() { wc -l < \"$1\" | tr -d ' '; }\nverdict_field() { if [ \"$#\" -gt 0 ]; then cut -f3 \"$1\"; else cut -f3; fi; }\nreason_field() { if [ \"$#\" -gt 0 ]; then cut -f4 \"$1\"; else cut -f4; fi; }\n\n# snapshot hashes for read-only check (DY19)\nmkdir -p \"$W/snap\"\nMARK=\"$W/snap/marker\"; : > \"$MARK\"\nsnap_pre() {\n  {\n    stat -c '%Y %n' \"$ROOT/.ufo/watchdog.log\" 2>/dev/null || echo \"absent watchdog\"\n    stat -c '%Y %n' \"$ROOT/.ufo/state\" 2>/dev/null || echo \"absent state\"\n    stat -c '%Y %n' \"$HOME/.config\" 2>/dev/null || echo \"absent config\"\n    sha256sum \"$TOOL\" \"$SPEC\" \"$LANE/corpus/knowledge/obsidian-ledger.tsv\" 2>/dev/null\n    git -C \"$ROOT\" --no-optional-locks status --porcelain 2>/dev/null | sort | sha256sum\n    git -C \"$LANE\" --no-optional-locks status --porcelain 2>/dev/null | sort | sha256sum\n    git -C \"$LANE\" rev-parse HEAD 2>/dev/null\n    git -C \"$ROOT\" rev-parse HEAD 2>/dev/null\n  } > \"$W/snap/pre.txt\"\n}\nsnap_pre\n\n# run probes from the fleet root (realistic invocation cwd)\ncd \"$ROOT\" || { echo \"cannot cd $ROOT\" >&2; exit 1; }\n\n# DY01 no args -> usage 2 (ambiguity A1 noted)\nrun DY01 \"$TOOL\"\nif [ \"$RC\" -eq 2 ]; then DY01=pass; elif [ \"$RC\" -eq 0 ]; then DY01=flag; else DY01=fail; fi\nrecord DY01 \"$DY01\" \"spec:CLI/exit-2\" \"no args -> exit 2 usage\" \"rc=$RC out=[$(clip < \"$LOGS/DY01.out\")] err=[$(clip < \"$LOGS/DY01.err\")]\" \\\n  \"tools/souji-verify.sh\" \"spec-note: '2 = usage'; zero-target invocation reading ambiguous (A1)\"\n\n# DY02 unknown flag\nrun DY02 \"$TOOL\" --s54-unknown-flag /tmp\nif [ \"$RC\" -eq 2 ]; then DY02=pass; else DY02=fail; fi\nrecord DY02 \"$DY02\" \"spec:CLI/exit-2\" \"unknown flag -> exit 2\" \"rc=$RC out=[$(clip < \"$LOGS/DY02.out\")]\" \"tools/souji-verify.sh --s54-unknown-flag /tmp\" \"\"\n\n# DY03 missing/stale/bad values\nrun DY03a \"$TOOL\" --stale-days\nDY03A=pass; [ \"$RC\" -eq 2 ] || DY03A=fail\nrecord DY03a \"$DY03A\" \"spec:CLI/exit-2\" \"--stale-days without value -> exit 2\" \"rc=$RC\" \"tools/souji-verify.sh --stale-days\" \"\"\nrun DY03b \"$TOOL\" --stale-days notanumber /tmp\nDY03B=pass; [ \"$RC\" -eq 2 ] || DY03B=flag\nrecord DY03b \"$DY03B\" \"spec:CLI/exit-2\" \"non-numeric --stale-days -> exit 2 (flag if tolerated)\" \"rc=$RC out=[$(clip < \"$LOGS/DY03b.out\")]\" \"tools/souji-verify.sh --stale-days notanumber /tmp\" \"spec silent on numeric validation (A2)\"\n\n# DY04 missing path\nMISSING=\"$W/definitely-absent-$$-path\"\nrun DY04 \"$TOOL\" \"$MISSING\"\nD4=pass\n[ \"$RC\" -eq 0 ] || D4=fail\n[ \"$(lines_of \"$LOGS/DY04.out\")\" -eq 1 ] || D4=fail\n[ \"$(verdict_field < \"$LOGS/DY04.out\")\" = \"NOT-SAFE\" ] || D4=fail\nprintf '%s' \"$(reason_field < \"$LOGS/DY04.out\")\" | grep -q 'unreachable' || D4=fail\nrecord DY04 \"$D4\" \"spec:rails/unreachable\" \"missing target -> rc0, NOT-SAFE, reason unreachable\" \\\n  \"rc=$RC line=[$(clip < \"$LOGS/DY04.out\")]\" \"tools/souji-verify.sh $MISSING\" \"\"\n\n# DY05 empty-string target\nrun DY05 \"$TOOL\" \"\"\nD5=pass\n[ \"$RC\" -eq 0 ] || D5=fail\nprintf '%s' \"$(reason_field < \"$LOGS/DY05.out\")\" | grep -q 'unreachable' || D5=fail\nrecord DY05 \"$D5\" \"spec:rails/unreachable\" \"empty target -> rc0, NOT-SAFE(unreachable)\" \\\n  \"rc=$RC line=[$(clip < \"$LOGS/DY05.out\")]\" \"tools/souji-verify.sh ''\" \"\"\n\n# DY06 line format on a mixed normal run\nrun DY06 \"$TOOL\" \"$SPEC\" \"$MISSING\"\nD6=pass\n[ \"$RC\" -eq 0 ] || D6=fail\n[ \"$(lines_of \"$LOGS/DY06.out\")\" -eq 2 ] || D6=fail\nawk -F'\\t' 'NF!=5{bad++} $1!=\"VERDICT\"{bad++} $3!=\"SAFE\"&&$3!=\"NOT-SAFE\"{bad++} $5==\"\"{bad++} END{exit bad==0?0:1}' \"$LOGS/DY06.out\" || D6=fail\nrecord DY06 \"$D6\" \"spec:output\" \"2 lines, 5 tab fields, VERDICT/SAFE|NOT-SAFE/evidence nonempty\" \\\n  \"rc=$RC out=[$(clip < \"$LOGS/DY06.out\")]\" \"tools/souji-verify.sh <spec> <missing>\" \"\"\n\n# DY07 secrets refusal (mode-000 dummies; tool must refuse without reading)\nSEC=\"$W/sec\"; rm -rf \"$SEC\"; mkdir -p \"$SEC\"\nfor n in a.env .env b-credentials.json c-secret.txt id_rsa d.pem; do\n  printf 's54-dummy-do-not-read\\n' > \"$SEC/$n\"; chmod 000 \"$SEC/$n\"\ndone\nrun DY07 \"$TOOL\" \"$SEC/a.env\" \"$SEC/.env\" \"$SEC/b-credentials.json\" \"$SEC/c-secret.txt\" \"$SEC/id_rsa\" \"$SEC/d.pem\"\nD7=pass\n[ \"$RC\" -eq 0 ] || D7=fail\n[ \"$(lines_of \"$LOGS/DY07.out\")\" -eq 6 ] || D7=fail\ntail -n +1 \"$LOGS/DY07.out\" | awk -F'\\t' '$3==\"NOT-SAFE\" && $4 ~ /^secrets-refusal/ {ok++} END{exit ok==6?0:1}' || D7=fail\nif grep -qiE 'permission denied|operation not permitted|cat: .*: Permission' \"$LOGS/DY07.err\" \"$LOGS/DY07.out\"; then D7=fail; fi\nrecord DY07 \"$D7\" \"spec:rails/secrets + F10\" \"6 secret-shaped mode-000 paths -> NOT-SAFE(secrets-refusal), no read errors\" \\\n  \"rc=$RC out=[$(clip < \"$LOGS/DY07.out\")] err=[$(clip < \"$LOGS/DY07.err\")]\" \"tools/souji-verify.sh $SEC/{a.env,.env,b-credentials.json,c-secret.txt,id_rsa,d.pem}\" \\\n  \"mode-000 proves content was never read; names match *.env,*credential*,*secret*,id_*,*.pem\"\n\n# DY08 kotodama gate (live target; numbers may drift)\nKOD=\"$ROOT/kotodama-shokunin\"\nKOD_U=$(git -C \"$KOD\" log --branches --not --remotes --oneline 2>/dev/null | wc -l | tr -d ' ')\nKOD_D=$(git -C \"$KOD\" --no-optional-locks status --porcelain 2>/dev/null | wc -l | tr -d ' ')\nKOD_T=$(date -Iseconds)\nrun DY08 \"$TOOL\" \"$KOD\"\nD8=pass\n[ \"$RC\" -eq 0 ] || D8=fail\n[ \"$(verdict_field < \"$LOGS/DY08.out\")\" = \"NOT-SAFE\" ] || D8=fail\ngrep -q 'unpushed=' \"$LOGS/DY08.out\" || D8=fail\ngrep -q 'dirty=' \"$LOGS/DY08.out\" || D8=fail\nrecord DY08 \"$D8\" \"MINT:kotodama-gate + spec:repo-root\" \"kotodama repo-root -> NOT-SAFE with unpushed=/dirty= evidence\" \\\n  \"rc=$RC line=[$(clip < \"$LOGS/DY08.out\")] judge-recheck@$KOD_T unpushed=$KOD_U dirty=$KOD_D\" \\\n  \"tools/souji-verify.sh $KOD; judge: git -C $KOD log --branches --not --remotes | wc -l; git -C $KOD status --porcelain | wc -l\" \\\n  \"kotodama has in-flight round writes; judge recheck timestamp recorded for drift\"\n\n# DY09 repo-root clean-pushed still NOT-SAFE\nKAG=\"$ROOT/kagi-shokunin\"\nrun DY09 \"$TOOL\" \"$KAG\"\nD9=pass\n[ \"$RC\" -eq 0 ] || D9=fail\n[ \"$(verdict_field < \"$LOGS/DY09.out\")\" = \"NOT-SAFE\" ] || D9=fail\ngrep -q 'unpushed=0 dirty=0' \"$LOGS/DY09.out\" || D9=fail\nrecord DY09 \"$D9\" \"spec:repo-root\" \"clean+pushed repo-root -> still NOT-SAFE, unpushed=0 dirty=0\" \\\n  \"rc=$RC line=[$(clip < \"$LOGS/DY09.out\")]\" \"tools/souji-verify.sh $KAG\" \"\"\n\n# DY10 pushed receipt on lane file \u2014 expectation derived from the spec's D1 chain, not assumed\nCEN=\"$LANE/census/round-1/census.tsv\"\nCEN_ADD=$(git -C \"$LANE\" log --diff-filter=A --format=%H -1 -- census/round-1/census.tsv 2>/dev/null)\nLANE_SYM=$(git -C \"$LANE\" symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null | sed 's@^origin/@@')\nLANE_N=$(git -C \"$LANE\" for-each-ref --format='%(refname)' 'refs/remotes/origin/*' 2>/dev/null | grep -cv 'origin/HEAD$')\nLANE_REF=\"\"\nif [ -n \"$LANE_SYM\" ]; then LANE_REF=\"refs/remotes/origin/$LANE_SYM\"\nelif [ \"$LANE_N\" -eq 1 ]; then LANE_REF=\"refs/remotes/origin/$(git -C \"$LANE\" for-each-ref --format='%(refname:short)' 'refs/remotes/origin/*' 2>/dev/null | grep -v 'origin/HEAD' | sed 's@^origin/@@' | head -1)\"\nelif git -C \"$LANE\" show-ref --verify --quiet refs/heads/master; then LANE_REF=refs/heads/master\nfi\nLANE_EXP=unverifiable\nif [ -n \"$LANE_REF\" ] && [ -n \"$CEN_ADD\" ]; then\n  if git -C \"$LANE\" merge-base --is-ancestor \"$CEN_ADD\" \"$LANE_REF\" 2>/dev/null; then LANE_EXP=SAFE-pushed; else LANE_EXP=NOT-SAFE; fi\nfi\nrun DY10 \"$TOOL\" \"$CEN\"\nD10=pass\ncase \"$LANE_EXP\" in\n  SAFE-pushed)\n    [ \"$(verdict_field < \"$LOGS/DY10.out\")\" = \"SAFE\" ] || D10=fail\n    printf '%s' \"$(reason_field < \"$LOGS/DY10.out\")\" | grep -qi 'pushed' || D10=fail\n    INTRO=$(clip < \"$LOGS/DY10.out\" | grep -oE 'intro=[0-9a-f]{7,40}' | head -1 | cut -d= -f2)\n    [ \"${#INTRO}\" -ge 7 ] || D10=fail\n    case \"$CEN_ADD\" in \"$INTRO\"*) : ;; *) D10=fail ;; esac;;\n  NOT-SAFE)\n    [ \"$(verdict_field < \"$LOGS/DY10.out\")\" = \"NOT-SAFE\" ] || D10=fail;;\n  unverifiable)\n    [ \"$(verdict_field < \"$LOGS/DY10.out\")\" = \"SAFE\" ] && D10=fail\n    D10=flag;;\nesac\nrecord DY10 \"$D10\" \"spec:pushed receipt + D1\" \"expected=$LANE_EXP (lane ref resolution: [$LANE_REF])\" \\\n  \"rc=$RC line=[$(clip < \"$LOGS/DY10.out\")] judge-add-commit=$CEN_ADD\" \\\n  \"tools/souji-verify.sh $CEN; judge chain: symbolic-ref/single-origin/local-master then merge-base --is-ancestor\" \\\n  \"A5: lane repo has no remote refs; local-master fallback ref choice (refs/heads/master vs refs/remotes/origin/master) is unspecified by the spec\"\n\n# DY11 pushed receipt positive (fleet-root file)\nFLEETFILE=\"$ROOT/shokunin.conf.full-roster-20261015\"\n[ -e \"$FLEETFILE\" ] || FLEETFILE=\"$ROOT/.ufo/interactive-l1-20261015T050057Z/interactive-wall.png\"\nrun DY11 \"$TOOL\" \"$FLEETFILE\"\nD11=pass\n[ \"$RC\" -eq 0 ] || D11=fail\n[ \"$(verdict_field < \"$LOGS/DY11.out\")\" = \"SAFE\" ] || D11=fail\nprintf '%s' \"$(reason_field < \"$LOGS/DY11.out\")\" | grep -qi 'pushed' || D11=fail\nrecord DY11 \"$D11\" \"spec:pushed receipt\" \"fleet-root pre-tip file -> SAFE(pushed)\" \\\n  \"rc=$RC line=[$(clip < \"$LOGS/DY11.out\")]\" \"tools/souji-verify.sh $FLEETFILE\" \"\"\n\n# ---- /tmp fixture repo for stale F7/F8 + mtime gate ----\nFR=\"$FIX/souji-shokunin\"; rm -rf \"$FR\"; mkdir -p \"$FR/.scratch\" \"$FR/census\"\ngit -C \"$FR\" init -q 2>/dev/null\nprintf 'S54 stale fixture A\\n' > \"$FR/.scratch/old-draft.out\"\nprintf 'S54 stale fixture B\\n' > \"$FR/.scratch/old-draft2.out\"\nprintf 'S54 stale fixture C\\n' > \"$FR/.scratch/fresh.log\"\nprintf 'census mentions old-draft2.out only\\n' > \"$FR/census/notes.tsv\"\ntouch -d '3 days ago' \"$FR/.scratch/old-draft.out\" \"$FR/.scratch/old-draft2.out\"\n\n# DY12 F7 replicate: old scratch file, zero live refs -> SAFE(stale)\nrun DY12 \"$TOOL\" \"$FR/.scratch/old-draft.out\"\nD12=pass\n[ \"$RC\" -eq 0 ] || D12=fail\n[ \"$(verdict_field < \"$LOGS/DY12.out\")\" = \"SAFE\" ] || D12=fail\nprintf '%s' \"$(reason_field < \"$LOGS/DY12.out\")\" | grep -qi 'stale' || D12=fail\nrecord DY12 \"$D12\" \"spec:stale + F7\" \"old scratch file, zero refs -> SAFE(stale)\" \\\n  \"rc=$RC line=[$(clip < \"$LOGS/DY12.out\")]\" \"tools/souji-verify.sh $FR/.scratch/old-draft.out\" \"\"\n\n# DY13c F8-faithful: repo under a fleet-like SHOKUNIN_ROOT -> census mention must be absorbed\nrun DY13c env SHOKUNIN_ROOT=\"$FIX\" \"$TOOL\" \"$FR/.scratch/old-draft2.out\"\nD13C=pass\n[ \"$(verdict_field < \"$LOGS/DY13c.out\")\" = \"SAFE\" ] || D13C=fail\nprintf '%s' \"$(reason_field < \"$LOGS/DY13c.out\")\" | grep -qi 'stale' || D13C=fail\nrecord DY13c \"$D13C\" \"spec:D3/F8\" \"F8-faithful: SHOKUNIN_ROOT=fleet-like fixture root -> SAFE(stale), census mention absorbed\" \\\n  \"rc=$RC line=[$(clip < \"$LOGS/DY13c.out\")]\" \"SHOKUNIN_ROOT=$FIX tools/souji-verify.sh $FR/.scratch/old-draft2.out\" \"\"\n# DY13 outside-root robustness (informational; conservative direction only)\nrun DY13 \"$TOOL\" \"$FR/.scratch/old-draft2.out\"\nD13=pass\nif [ \"$(verdict_field < \"$LOGS/DY13.out\")\" = \"SAFE\" ]; then\n  printf '%s' \"$(reason_field < \"$LOGS/DY13.out\")\" | grep -qi 'stale' || D13=fail\nelse\n  D13=flag\nfi\nrecord DY13 \"$D13\" \"spec:D3/F8 robustness\" \"outside SHOKUNIN_ROOT: absolute external repo named souji-shokunin -> ideally SAFE(stale); NOT-SAFE is conservative (not false-SAFE)\" \\\n  \"rc=$RC line=[$(clip < \"$LOGS/DY13.out\")]\" \"tools/souji-verify.sh $FR/.scratch/old-draft2.out\" \\\n  \"glob anchoring outside the declared root differs; DY13c/selftest F8 are the binding F8 checks\"\n\n# DY13b control: same basename referenced in a live (non-excluded) file -> NOT-SAFE\nprintf 'control ref old-draft.out\\n' > \"$FR/live-ref.txt\"\nrun DY13b \"$TOOL\" \"$FR/.scratch/old-draft.out\"\nD13B=pass\n[ \"$RC\" -eq 0 ] || D13B=fail\n[ \"$(verdict_field < \"$LOGS/DY13b.out\")\" = \"NOT-SAFE\" ] || D13B=fail\nrecord DY13b \"$D13B\" \"spec:stale control\" \"basename referenced from live file -> NOT-SAFE (zero-ref condition real)\" \\\n  \"rc=$RC line=[$(clip < \"$LOGS/DY13b.out\")]\" \"tools/souji-verify.sh $FR/.scratch/old-draft.out with $FR/live-ref.txt\" \"\"\nrm -f \"$FR/live-ref.txt\"\n\n# DY14 mtime + --stale-days gate both directions\nrun DY14a \"$TOOL\" \"$FR/.scratch/fresh.log\"\nD14A=pass\n[ \"$(verdict_field < \"$LOGS/DY14a.out\")\" = \"NOT-SAFE\" ] || D14A=fail\nrecord DY14a \"$D14A\" \"spec:stale mtime + default 1\" \"fresh scratch file default --stale-days 1 -> NOT-SAFE\" \\\n  \"rc=$RC line=[$(clip < \"$LOGS/DY14a.out\")]\" \"tools/souji-verify.sh $FR/.scratch/fresh.log\" \"\"\nprintf 'S54 hour-old fixture\\n' > \"$FR/.scratch/old-hour.out\"; touch -d '1 hour ago' \"$FR/.scratch/old-hour.out\"\nrun DY14b \"$TOOL\" --stale-days 0 \"$FR/.scratch/old-hour.out\"\nD14B=pass\n[ \"$(verdict_field < \"$LOGS/DY14b.out\")\" = \"SAFE\" ] || D14B=fail\nprintf '%s' \"$(reason_field < \"$LOGS/DY14b.out\")\" | grep -qi 'stale' || D14B=fail\nrecord DY14b \"$D14B\" \"spec:--stale-days\" \"1-hour-old scratch, --stale-days 0 -> SAFE(stale) (threshold honored down; strict elapsed>N reading)\" \\\n  \"rc=$RC line=[$(clip < \"$LOGS/DY14b.out\")]\" \"touch -d '1 hour ago'; tools/souji-verify.sh --stale-days 0 $FR/.scratch/old-hour.out\" \\\n  \"retry-robust: file age ~3600s keeps this probe clear of the age==0 boundary\"\nrun DY14c \"$TOOL\" --stale-days 9999 \"$FR/.scratch/old-draft2.out\"\nD14C=pass\n[ \"$(verdict_field < \"$LOGS/DY14c.out\")\" = \"NOT-SAFE\" ] || D14C=fail\nrecord DY14c \"$D14C\" \"spec:--stale-days\" \"--stale-days 9999 3-day file -> NOT-SAFE (threshold honored up)\" \\\n  \"rc=$RC line=[$(clip < \"$LOGS/DY14c.out\")]\" \"tools/souji-verify.sh --stale-days 9999 $FR/.scratch/old-draft2.out\" \"\"\n\n# DY15 determinism: same command twice identical stdout+rc\nrun DY15a \"$TOOL\" \"$SPEC\" \"$CEN\" \"$MISSING\"\nrun DY15b \"$TOOL\" \"$SPEC\" \"$CEN\" \"$MISSING\"\nD15=pass\ncmp -s \"$LOGS/DY15a.out\" \"$LOGS/DY15b.out\" || D15=fail\n[ \"$(lines_of \"$LOGS/DY15a.out\")\" -eq 3 ] || D15=fail\nrecord DY15 \"$D15\" \"spec:determinism\" \"two identical runs byte-identical stdout\" \\\n  \"lines=$(lines_of \"$LOGS/DY15a.out\") diff=[$(cmp -s \"$LOGS/DY15a.out\" \"$LOGS/DY15b.out\" && echo none || echo DIFF)]\" \\\n  \"tools/souji-verify.sh <spec> <census.tsv> <missing> (x2)\" \"\"\n\n# DY16 --json\nrun DY16 \"$TOOL\" --json \"$SPEC\" \"$MISSING\"\nD16=pass\n[ \"$RC\" -eq 0 ] || D16=fail\njq -e . < \"$LOGS/DY16.out\" > /dev/null 2>&1 || D16=fail\nJN=$(jq -r 'if type==\"array\" then length elif type==\"object\" then (.results//.targets//.verdicts//empty|length) else empty end' < \"$LOGS/DY16.out\" 2>/dev/null)\n[ \"$JN\" = \"2\" ] || D16=flag\nrecord DY16 \"$D16\" \"spec:--json\" \"valid JSON, one entry per target\" \\\n  \"rc=$RC jq=ok entries=[$JN] out=[$(clip < \"$LOGS/DY16.out\")]\" \"tools/souji-verify.sh --json <spec> <missing>\" \\\n  \"top-level shape not pinned by spec; entries==2 enforced when array/known container, else flag\"\n\n# DY17 selftest x2\nSEL_T0=$(date -Iseconds)\nrun DY17a \"$TOOL\" --selftest\nD17A_RC=$RC\nrun DY17b \"$TOOL\" --selftest\nD17B_RC=$RC\nD17=pass\n[ \"$D17A_RC\" -eq 0 ] || D17=fail\n[ \"$D17B_RC\" -eq 0 ] || D17=fail\nrecord DY17 \"$D17\" \"spec:--selftest\" \"selftest exit 0 twice\" \\\n  \"rc_first=$D17A_RC rc_second=$D17B_RC first_out_lines=$(wc -l < \"$LOGS/DY17a.out\" | tr -d ' ')\" \"tools/souji-verify.sh --selftest (x2)\" \"\"\n\n# fixture-case evidence from selftest output\nFCOV=\"$W/fixture-coverage.txt\"; : > \"$FCOV\"\nfor n in 1 2 3 4 5 6 7 8 9 10; do\n  if rg -q \"F$n[^0-9]\" \"$LOGS/DY17a.out\"; then st=seen; else st=not-in-output; fi\n  printf 'F%s\\t%s\\n' \"$n\" \"$st\" >> \"$FCOV\"\ndone\nrg -n \"F[0-9]+|metadata-prune|unpushed-branch|secrets-refusal|pushed-unverifiable\" \"$LOGS/DY17a.out\" | head -40 > \"$W/selftest-cases.txt\"\n\n# DY18 exit-inventory over all dynamic probes\nBADRC=$(cut -f2 \"$RCLOG\" | rg -v '^[012]$' | tr '\\n' ' ')\nD18=pass\n[ -z \"$BADRC\" ] || D18=fail\nrecord DY18 \"$D18\" \"spec:exit codes\" \"all observed rcs within {0,1,2}\" \\\n  \"probes=$(wc -l < \"$RCLOG\" | tr -d ' ') out-of-range=[$BADRC] rc-list=$(cut -f2 \"$RCLOG\" | sort -u | tr '\\n' ',' )\" \\\n  \"aggregate over logs/rc.tsv\" \"\"\n\n# DY19 read-only snapshot diff\nsnap_pre_post() {\n  {\n    stat -c '%Y %n' \"$ROOT/.ufo/watchdog.log\" 2>/dev/null || echo \"absent watchdog\"\n    stat -c '%Y %n' \"$ROOT/.ufo/state\" 2>/dev/null || echo \"absent state\"\n    stat -c '%Y %n' \"$HOME/.config\" 2>/dev/null || echo \"absent config\"\n    sha256sum \"$TOOL\" \"$SPEC\" \"$LANE/corpus/knowledge/obsidian-ledger.tsv\" 2>/dev/null\n    git -C \"$ROOT\" --no-optional-locks status --porcelain 2>/dev/null | sort | sha256sum\n    git -C \"$LANE\" --no-optional-locks status --porcelain 2>/dev/null | sort | sha256sum\n    git -C \"$LANE\" rev-parse HEAD 2>/dev/null\n    git -C \"$ROOT\" rev-parse HEAD 2>/dev/null\n  } > \"$W/snap/post.txt\"\n  diff \"$W/snap/pre.txt\" \"$W/snap/post.txt\" > \"$W/snap/diff.txt\" 2>&1\n}\nsnap_pre_post\nNEWFILES=$(find \"$ROOT\" -maxdepth 3 -newer \"$MARK\" \\( -path '*/.git' -o -path '*/.git/*' \\) -prune -o -newer \"$MARK\" -print 2>/dev/null | grep -v '^/tmp' | grep -v \"$W\" | head -40)\nD19=pass\n[ -s \"$W/snap/diff.txt\" ] && D19=flag\n[ -n \"$NEWFILES\" ] && D19=flag\nrecord DY19 \"$D19\" \"spec:read-only\" \"no changes to watched surfaces (state/watchdog/config mtimes, tool/spec/ledger hashes, repo git status/HEAD)\" \\\n  \"snapdiff=[$(clip < \"$W/snap/diff.txt\")] newfiles=[$(printf '%s' \"$NEWFILES\" | clip)]\" \\\n  \"stat+sha256+git status snapshots before/after; find -newer marker\" \\\n  \"git may refresh .git/index on its own (excluded from find); flags here are leads, full files in snap/\"\n\n# DY20 strace: writes confined to /tmp + no network + secret files unopened\nSTRACE=skip\nif command -v strace >/dev/null 2>&1; then\n  S=\"$W/strace\"\n  rm -f \"$S.raw\" \"$S.out\" \"$S.err\"\n  strace -f -qq -e trace=openat,open,connect -o \"$S.raw\" \"$TOOL\" --stale-days 1 \"$SEC/a.env\" \"$FR/.scratch/old-draft2.out\" > \"$S.out\" 2> \"$S.err\"\n  SRC=$?\n  if [ -s \"$S.raw\" ]; then\n    STRACE=recorded\n    WABS=$(grep -E 'openat\\(.*(O_WRONLY|O_RDWR|O_CREAT)' \"$S.raw\" | grep -E '\"\\/' | grep -v '/tmp/' | grep -v '/dev/' | grep -v '/proc/' | grep -v ' = -1 ' | head -15)\n    WREL=$(grep -E 'openat\\(.*(O_WRONLY|O_RDWR|O_CREAT)' \"$S.raw\" | grep -vE '\"\\/' | grep -v ' = -1 ' | wc -l | tr -d ' ')\n    NET=$(grep -E 'connect\\(' \"$S.raw\" | head -10)\n    SECREAD=$(grep -E 'openat\\(.*(a\\.env|b-credentials|c-secret|id_rsa|d\\.pem)' \"$S.raw\" | grep -v 'O_DIRECTORY' | grep -v 'ENOENT' | head -10)\n    D20=pass\n    [ -n \"$WABS\" ] && D20=fail\n    [ -n \"$NET\" ] && D20=flag\n    [ -n \"$SECREAD\" ] && D20=fail\n    record DY20 \"$D20\" \"spec:rails/read-only\" \"no absolute writes outside /tmp, no connects, secret paths never opened\" \\\n      \"tool_rc=$SRC abs-writes-outside-tmp=[$(printf '%s' \"$WABS\" | clip)] rel-writes=$WREL connects=[$(printf '%s' \"$NET\" | clip)] secret-opens=[$(printf '%s' \"$SECREAD\" | clip)]\" \\\n      \"strace -f -e trace=openat,open,connect tools/souji-verify.sh --stale-days 1 <sec/a.env> <old-draft2.out>\" \\\n      \"relative opens come from git children operating inside their repo (dirfd chdir); absolute-path rule is the decisive one\"\n  else\n    record DY20 skip \"spec:rails/read-only\" \"strace trace\" \"straced rc=$SRC produced no trace\" \"strace ...\" \"\"\n  fi\nfi\n\n# DY20b strace of --selftest: fixture writes must stay under /tmp\nif command -v strace >/dev/null 2>&1; then\n  S=\"$W/strace-self\"; rm -f \"$S.raw\" \"$S.out\" \"$S.err\"\n  strace -f -qq -e trace=openat,open,connect -o \"$S.raw\" \"$TOOL\" --selftest > \"$S.out\" 2> \"$S.err\"\n  SRC2=$?\n  if [ -s \"$S.raw\" ]; then\n    W2=$(grep -E 'openat\\(.*(O_WRONLY|O_RDWR|O_CREAT)' \"$S.raw\" | grep -E '\"\\/' | grep -v '/tmp/' | grep -v '/dev/' | grep -v '/proc/' | grep -v ' = -1 ' | head -15)\n    W2REL=$(grep -E 'openat\\(.*(O_WRONLY|O_RDWR|O_CREAT)' \"$S.raw\" | grep -vE '\"\\/' | grep -v ' = -1 ' | wc -l | tr -d ' ')\n    TP=$(awk '{print $1}' \"$S.raw\" | head -1)\n    W2TP=$(grep \"^$TP \" \"$S.raw\" | grep -E 'openat\\(.*(O_WRONLY|O_RDWR|O_CREAT)' | grep -E '\"\\/' | grep -v '/tmp/' | grep -v '/dev/' | grep -v ' = -1 ' | head -10)\n    N2=$(grep -E 'connect\\(' \"$S.raw\" | head -5)\n    D20B=pass\n    [ -n \"$W2\" ] && D20B=fail\n    [ -n \"$W2TP\" ] && D20B=fail\n    [ -n \"$N2\" ] && D20B=flag\n    record DY20b \"$D20B\" \"spec:--selftest isolation\" \"selftest absolute writes confined to /tmp mktemp dirs (incl. tool pid); no network\" \\\n      \"tool_rc=$SRC2 horizon-abs-outside-tmp=[$(printf '%s' \"$W2\" | clip)] tool-pid-abs-outside-tmp=[$(printf '%s' \"$W2TP\" | clip)] rel-writes-git-children=$W2REL connects=[$(printf '%s' \"$N2\" | clip)]\" \\\n      \"strace -f -e trace=openat,open,connect tools/souji-verify.sh --selftest\" \\\n      \"tool-pid writes verified absolute under /tmp/souji-selftest.*; relative writes are git plumbing inside the fixture repos\"\n  else\n    record DY20b skip \"spec:--selftest isolation\" \"strace trace\" \"straced rc=$SRC2 produced no trace\" \"strace ...\" \"\"\n  fi\nfi\n\n# ST12 host rg capability vs spec-mandated --basename (environment fact, decided by DY12/13/13b)\nif [ -s \"$TOOL\" ]; then\n  RG_BASENAME=no\n  rg -q -- '--basename' \"$LOGS/ST12-probe\" 2>/dev/null || true\n  if rg --help 2>&1 | grep -q -- '--basename'; then RG_BASENAME=yes; fi\n  TOOL_USES=no; rg -q -- '--basename' \"$TOOL\" && TOOL_USES=yes\n  if [ \"$RG_BASENAME\" = no ] && [ \"$TOOL_USES\" = yes ]; then ST12=flag; else ST12=pass; fi\n  record ST12 \"$ST12\" \"spec:stale sweep + host\" \"host rg supports --basename OR tool does not rely on it\" \\\n    \"host_rg_basename=$RG_BASENAME tool_uses_basename=$TOOL_USES rg_version=$(rg --version 2>/dev/null | head -1)\" \\\n    \"rg --help | grep -q -- --basename; rg -q -- --basename tools/souji-verify.sh\" \\\n    \"host rg 15.2.0 rejects --basename (rc=2, 0 lines): a literal use degenerates the zero-ref test to always-true -> false-SAFE risk; DY13b decides\"\nfi\n\n# meta\nT1=$(date -Iseconds)\nTOOL_SHA_END=$(sha256sum \"$TOOL\" 2>/dev/null | cut -d' ' -f1)\nKOD_U2=$(git -C \"$KOD\" log --branches --not --remotes --oneline 2>/dev/null | wc -l | tr -d ' ')\nKOD_D2=$(git -C \"$KOD\" --no-optional-locks status --porcelain 2>/dev/null | wc -l | tr -d ' ')\n\ncat > \"$W/meta.json\" <<EOF\n{\n  \"seat\": \"S54\",\n  \"kind\": \"compliance-judge\",\n  \"lane\": \"souji-shokunin\",\n  \"artifact\": \"tools/souji-verify.sh\",\n  \"spec\": \"tools/souji-verify.spec.md\",\n  \"tool_sha256_start\": \"$TOOL_SHA\",\n  \"tool_sha256_end\": \"$TOOL_SHA_END\",\n  \"tool_bytes\": \"$TOOL_BYTES\",\n  \"tool_mode\": \"$TOOL_MODE\",\n  \"spec_sha256\": \"$SPEC_SHA\",\n  \"judged_t0\": \"$T0\",\n  \"judged_t1\": \"$T1\",\n  \"selftest_rc_first\": \"$D17A_RC\",\n  \"kotodama_recheck\": {\"t\": \"$KOD_T\", \"unpushed_before\": \"$KOD_U\", \"dirty_before\": \"$KOD_D\", \"unpushed_after\": \"$KOD_U2\", \"dirty_after\": \"$KOD_D2\"},\n  \"fixture_repo\": \"$FR\",\n  \"rg_version\": \"$(rg --version 2>/dev/null | head -1)\",\n  \"rg_basename_support\": \"$(rg --help 2>&1 | grep -q -- '--basename' && echo yes || echo no)\",\n  \"harness_sha256\": \"$(sha256sum \"$W/compliance54.sh\" 2>/dev/null | cut -d' ' -f1)\",\n  \"probe_cwd\": \"$ROOT\",\n  \"amb_notes\": \"A1 no-args usage ambiguous; A2 non-numeric --stale-days unspecified; A3 --json top-level shape unspecified; A4 host rg lacks --basename so spec's literal sweep command cannot run (behavior decided by DY12/DY13/DY13b/DY13c); A5 lane repo has no remote refs, so D1's local-master fallback is the only resolution path and the spec does not pin which ref is compared\"\n}\nEOF\necho \"DONE rc=0 t0=$T0 t1=$T1 tool_sha=$TOOL_SHA\"\nexit 0\n",
+    "invocation": "bash <harness_script>   # writes checks.tsv/meta.json under /tmp/s54-compliance; TOOL_OVERRIDE=<path> re-targets another revision",
+    "scratch_note": "Raw per-check logs lived in /tmp/s54-compliance (scratch; removed after this result was written). Every decisive observation is embedded in checks[].observed."
+  }
+}
