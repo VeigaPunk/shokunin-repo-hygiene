@@ -39,14 +39,14 @@ when the file exists, not before.
 | F1 git-native housekeeping vs receipts | frontier, entries held | `knowledge/git-auto-maintenance-prunes-worktrees.md`, `knowledge/git-grace-periods-and-expire-to.md`, `knowledge/git-auto-maintenance-trigger-set.md`, `knowledge/git-auto-maintenance-trigger-set-r23.md` |
 | F2 repository size census | frontier, no entry (r12 candidate deferred, `lessons/round-12.md` `## Gate`; sweep: `ls corpus/knowledge \| grep -ciE 'size\|structure\|sizer'` → 0, 2026-10-19); superseded by Round 24 F2 row (:517) | — |
 | F3 duplicate verdicts | frontier, entry held | `knowledge/dupe-finders-detect-then-act.md` |
-| F4 restorable quarantine, file-system semantics | frontier; layout held, staging primitive + record read side admitted r22 (see § Round22 attempt 2) | `knowledge/trash-spec-restorable-quarantine.md`, `knowledge/quarantine-same-filesystem-rename.md`, `knowledge/quarantine-staging-no-copy-r23.md`, `knowledge/quarantine-origin-record-fields-r24.md` |
+| F4 restorable quarantine, file-system semantics | frontier; layout and staging held; read-side fields admitted r24; reference writer + mechanism set admitted r27 (implementation evidence only) | `knowledge/trash-spec-restorable-quarantine.md`, `knowledge/quarantine-same-filesystem-rename.md`, `knowledge/quarantine-staging-no-copy-r23.md`, `knowledge/quarantine-origin-record-fields-r24.md`, `knowledge/origin-record-writer-r27.md`, `knowledge/origin-record-mechanism-set-r33.md` |
 
 ## Frontier
 
 - F1 git-native housekeeping vs receipts — next: the trigger set and the measured prune are now held (round-26 entries `knowledge/git-auto-maintenance-trigger-set{,-r23}.md`, S128-S132); remaining: keep-ref expiry unmeasured, fleet exposure numerator re-census.
 - F2 repository size census — next: the /var/tmp write-safety fixture for `git repo structure`.
 - F3 duplicate verdicts — next: a `duplicate` receipt class is an operator decision (taxonomy change).
-- F4 restorable quarantine — next: per-item origin records (trashinfo-style) and `mv --no-copy` staging are tool changes for the operator. *(r22: the primitive and the record's read side are now admitted — see § Round22 attempt 2; the record format and any staging tool change remain the operator's decision.)*
+- F4 restorable quarantine — next: the receipt's per-item format and any staging-tool change remain operator decisions; r27 adds a pinned GLib reference writer and mechanism set, not a normative Souji format.
 
 ### Corrections (r12)
 
