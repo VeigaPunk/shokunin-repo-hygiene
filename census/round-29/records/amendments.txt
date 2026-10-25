@@ -1,0 +1,28 @@
+Souji round 29 — stricter-only amendments to the frozen preregistration (append-only log, L1-owned).
+Frozen text, targets and kill rules in preregistration.txt are NOT edited. Each amendment only adds a condition a
+target state must also satisfy; the headline literals (k1=0 k2=0 mismatches=0; failed=0 uncovered=0 floor_violations=0;
+F3 entries 2; rows 143; coverage 15/15; gate 2/2) stay the same. Source: wave-1 attack seats (reports under
+census/round-29/waves/ after capture): Reviewer44 (cheapest target-reaching states; composite cheat at scratch rev 702ac00
+meets every frozen counter with no claimed work), Critic51 (K2 satisfiable with an empty marker), Reviewer40 (C2: CR escape,
+source fidelity, permuted receipt), Reviewer43 (C3 gate reads the working tree, slice paths absent at base, prereg SUMMARY
+shapes omit rev=), Critic49 (C3 baseline is a tagging artifact; restatement pair). Every amendment landed before the
+measured landing commit of its claim; the frozen v1 instruments stay at their frozen bytes (records/frozen-digests.txt).
+
+A1 (C1, K2) — tools/souji-registry-agreement.py v2: --list-rev REQUIRED (the stale list is never read at the measured rev);
+   K2 requires append-only by bytes (blob at REV starts with blob at list-rev), the stale line byte-identical and unique, and
+   a correction line starting `R29-CORRECTION ` that carries the exact `file:line` tag (delimited), the integers 1382 and 152
+   (the r26 `records=` and `failed=` values derived by running the digest-pinned frozen census/round-29/c2-counter.py at
+   list-rev, refusing a counter whose sha256 differs from records/frozen-digests.txt) and a derivation-source path that
+   resolves at REV. Base do-nothing control with v2: `k1=6 k2=4 mismatches=10` (unchanged).
+A2 (C1, K1) — v2 also flags row ids present at list-rev and absent at REV (row-deleted), registry rows indented 4+ spaces or by a
+   tab (indented-row), and reads `source:` lines to end of file. Base with v2: k1=6 (unchanged). Fixture
+   tests/fixtures/r29-registry-agreement.py (20 cases + always-zero control) is the able-to-fail receipt:
+   records/c1-fixture-red-before.txt (v1 frozen tool 8/20, reverse-check-deleted mutant 15/20, v2 20/20).
+A3 (C2) — census/round-29/c2-counter-v2.py (the frozen c2-counter.py stays): decodes `\r` escapes too (host sha256sum escapes CR);
+   `lost` = a base-manifest record absent from the REV manifest that is not accounted in the REV excluded.tsv or renames.tsv;
+   `fidelity` = a record whose tracked source blob .ufo/waves/round-N/<rel> (renames mapped back) differs; r26 floor raised from
+   1230 to 1378 (= 1382 - 4 root-`__pycache__/` records; `git show 691dd29:census/round-26/waves/manifest.sha256 | grep -c
+   __pycache__` = 4); `--require-rounds` (the final tip requires 26,27,28,29); `tool_unchanged` (the capture tool blob at REV must
+   differ from the base blob). Base with v2: `manifests=3 failed=152 uncovered=14 lost=0 fidelity=11 floor_violations=0
+   tool_unchanged=1` — v2 surfaces 11 r26 records whose committed source blob differs from the recorded hash (the r28 capture
+   copied modified bytes and then restored the tracked files).

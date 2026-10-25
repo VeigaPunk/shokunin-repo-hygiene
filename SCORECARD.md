@@ -289,3 +289,9 @@ their bytes are unchanged. Re-derivation per cell:
 | C2 grounded F1 knowledge entries (S128-S132) | coverage | grounded_f1=0, registry rows=127 at base | grounded_f1=2, rows=132; gate entries=2 ok=2 fail=0; coverage agreement grounded=9 mapped=9, kill_violations=0 | census/round-26/c2-counter.sh, c2-gate.tsv, c2-k4-{base,after}.tsv | 9a6e0f1 |
 | C3 prereg axis-of-surface checker | operability | tool absent at base | claims=3 flags=0 self-hosted; fixture cases=12 pass=12 control=FALSE-GREEN-REJECTED | census/round-26/c3-counter.sh, receipts c3-before/after.tsv | 0c92c2e |
 
+
+### R29 append-only correction (round 29, C1)
+
+R29-CORRECTION SCORECARD.md:23 measured at rev 691dd29211c53d0ef94fa072394cb9c8a69fe92e: the r26 receipt has 1382 records, 152 naming paths absent from the committed tree, and 14 committed symlinks with no record; command: python3 -B census/round-29/c2-counter.py --root <lane> --rev 691dd29211c53d0ef94fa072394cb9c8a69fe92e → SUMMARY manifests=3 failed=152 uncovered=14 floor_violations=0 (rc 1).
+R29-CORRECTION SCORECARD.md:23 the "2 malformed newline-path records" reading is superseded, not edited: the 152 absences are the defect — all 152 match ignore rules rebuilt from the committed .gitignore stack (148 nested inside the capture, 4 by root `__pycache__/`) — and the 2 escaped rows are valid GNU escapes whose digests equal the committed blobs, which this host's uutils sha256sum 0.8.0 rejects as improperly formatted.
+R29-CORRECTION SCORECARD.md:23 still true at the same rev: r27 (124 records) and r28 (75 records) verify with failed=0 and uncovered=0; the dirty `.ufo/waves` 163→0 count and the fixture line `cases=6 pass=6 control=TAMPER-REJECTED` are working-tree and tool-run claims and are not re-derived here from committed bytes.
