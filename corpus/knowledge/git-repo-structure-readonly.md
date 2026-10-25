@@ -1,6 +1,7 @@
 source: S035 — https://git-scm.com/docs/git-repo, COMMANDS / structure; S036 — https://git-scm.com/docs/git, ENVIRONMENT VARIABLES / GIT_OPTIONAL_LOCKS; S037 — https://github.com/git/git/blob/v2.55.0/builtin/repo.c, structure_count_references / count_objects / cmd_repo_structure
 verified-at: 2026-10-20; host Git 2.55.0 (package 2.55.0-1), web docs 2.56.0; empirical result recorded in census/round-13/verification.json
 recheck: bash tests/fixtures/r13-repo-structure.sh --selftest --probe tools/souji-repo-structure.sh
+ground: F2 — repository size census (structure census of refs-rooted reachable objects)
 
 # Repository structure census: describe reachable objects, do not authorize removal
 
@@ -44,3 +45,5 @@ are outside the refs-rooted census. Linked-worktree outputs describe the
 shared common store, so do not sum them as independent repositories.
 
 Freshness note (r16, 2026-10-20): the host now runs Git 2.56.0 (pacman `git 2.56.0-1`, installed 2026-10-20); this entry was verified on 2.55.0 and has not been re-verified on 2.56.0. Treat it as pending recheck (routed to r17), not as re-confirmed.
+
+Re-verification (r24, 2026-10-25): the `recheck:` command above was run unchanged on host Git 2.56.0 (pacman `git 2.56.0-1`) and printed `selftest=PASS ids=5/5` (manifest-control, write-free, object-metrics 29 checks, bogus-repo, promisor-refusal), exit 0; output `census/round-24/records/r13-repo-structure-recheck-git2.56.0.out`, receipt `census/round-24/records/r13-recheck-receipt.tsv`. This closes the r16 freshness note for 2.56.0 only. Its bounds stand and one is sharpened by r24 review (`.ufo/waves/round-24/w1/ReviewRepoStructureFixture.md`): the fixture's manifest is rooted at `--absolute-git-dir`, so from a linked worktree it would not see writes to the shared object store, and its write-free case also passes a probe that does nothing. The r24 debris census fixture (`tests/fixtures/r24-size-census.py`) roots its manifest at the common git dir instead.

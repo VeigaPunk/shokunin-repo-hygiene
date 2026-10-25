@@ -500,3 +500,33 @@ evidence lives outside this repository. No fleet size figure is claimed anywhere
   `../LOG.md` `Round22 attempt2 corrections`.
 - The sweep for the D4 class found exactly one tally sentence (the one corrected above);
   the other r22 mentions in this file state no class counts.
+
+## Round 24 — F2 write-safety census, coverage-map agreement, receipt verify symmetry
+
+Appended; the sections above stand. For the entries column only, this table supersedes the F2
+rows at :40 (r12 map) and :68 (Round 13); their status prose stays as history. F4's r12 row
+(:42) already names both F4-grounded entries and is not repeated. Landing condition (the r17
+convention at :205-211): the F2 row lands only in the same commit as
+`knowledge/count-objects-linked-worktree-garbage.md` (carrying a `ground: F2` line),
+`../tools/souji-size-census.py` and `../tests/fixtures/r24-size-census.py`; otherwise its cells
+name only the files present at that commit.
+
+| ground | status | entries / runnable evidence |
+|---|---|---|
+| F2 repository size census | frontier; read side (three entries, r13/r23) plus a write-safety debris census (r24 C1): `count-objects -v` read against the common git dir so a linked worktree's `garbage: 1` is not reported, `fsck` unreachable count without `--lost-found`, alternates counted; `--lost-found`, promisor/partialClone and non-repositories refused (exit 2). The 8 frozen fixture cases fence the no-write envelope; one lane-bound measurement, no fleet figure | `knowledge/git-repo-structure-readonly.md` (S035–S037); `knowledge/repo-size-census-readonly.md` (S115–S117); `knowledge/count-objects-garbage-readings-r25.md` (S118–S119); `knowledge/count-objects-linked-worktree-garbage.md` (r24, assimilated); `../tools/souji-size-census.py`; `../tests/fixtures/r24-size-census.py`; `../census/round-24/size-census-lane.txt` |
+| Coverage-map agreement (calibration of this file; not a ground) | tool change, outside admission pending: `MISSING-FROM-MAP` and `DANGLING-MAP-PATH` over every table in this file whose header reads `ground` / … / `entries…` | `../tools/souji-coverage-agreement.py`; `../tests/fixtures/r24-coverage-agreement.py` |
+| Receipt verify/run symmetry (r23 residuals) | runner change, outside admission pending: `verify` refuses a non-durable rev (`RECEIPT-REV-NOT-DURABLE`) and a `tool=` absent from `cmd=` argv (`RECEIPT-TOOL-NOT-IN-ARGV`); the five r23 receipts must still verify | `../tools/souji-receipt-run.py`; `../tests/fixtures/r24-receipt-verify.py` |
+
+### Frontier (r24)
+
+- F2 — next after the write-safety fixture: put `../tools/souji-repo-structure.sh` under the same
+  `.git` manifest envelope the r24 fixture uses (its r13 no-change result is bounded, see
+  `knowledge/git-repo-structure-readonly.md`), then the colocated/plain byte-comparison
+  precondition (:233-234) before any `git repo structure` size baseline. Size attribution by
+  object or path stays frontier; a fleet figure stays unclaimed.
+- F1, F3, F4 — unchanged. F5 stays list-only; the reap protocol and NAMESPACE pin remain
+  operator-held. Certification OFF, K5 HELD.
+
+Routed defect from `lessons/round-23-verifier-spotcheck.md` :41 (map table versus the "read side
+now holds three" prose): answered by the F2 row above, which names every F2 entry in its entries
+column, and C2's `MISSING-FROM-MAP` now counts any recurrence as a mismatch.

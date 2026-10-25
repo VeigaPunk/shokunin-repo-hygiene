@@ -3,21 +3,35 @@
 
 CLI: python3 -B tools/souji-size-census.py --repo PATH | --help
 
-PATH may be a work tree (main or linked), any subdirectory of one, or a bare
-repository; discovery is `git -C PATH rev-parse`. Every census command runs
+PATH must be a work-tree top level (main or linked) or a bare repository's
+git dir; a subdirectory or a non-repository below some repository is refused. Every census command runs
 against the resolved COMMON git dir (`--git-dir=<common>`), so a linked
 worktree reports the common-dir figure: `git -C <linked> count-objects -v`
 counts <common>/worktrees/<id>/refs as garbage, `--git-dir=<common>` does not.
 
-Read-only envelope: inherited GIT_* variables (incl. GIT_OBJECT_DIRECTORY,
-  GIT_ALTERNATE_OBJECT_DIRECTORIES) are dropped, then
-  GIT_OPTIONAL_LOCKS=0 (no optional locks), GIT_NO_LAZY_FETCH=1 (no promisor
-  fetch), GIT_TERMINAL_PROMPT=0, GIT_NO_REPLACE_OBJECTS=1, LC_ALL=C;
-  -c maintenance.auto=false -c gc.auto=0 -c core.fsmonitor=false;
-  never `cd`, never a shell string: argv lists only, stdin is /dev/null.
+Read-only envelope (r24 SentinelSizeEnvelope): the child env is an ALLOWLIST,
+  not the caller's env minus GIT_* (GIT_EXEC_PATH, GIT_CONFIG_COUNT/PARAMETERS,
+  GIT_TRACE*, GIT_DIR and PATH all reached fsck otherwise): PATH=/usr/bin:/bin,
+  LC_ALL=C, HOME=<nonexistent>, GIT_CONFIG_NOSYSTEM=1, GIT_CONFIG_SYSTEM and
+  GIT_CONFIG_GLOBAL=/dev/null, GIT_NO_LAZY_FETCH=1, GIT_ALLOW_PROTOCOL=none,
+  GIT_PROTOCOL_FROM_USER=0, GIT_OPTIONAL_LOCKS=0, GIT_TERMINAL_PROMPT=0,
+  GIT_PAGER=cat, GIT_NO_REPLACE_OBJECTS=1; absolute /usr/bin/git with
+  --no-pager --no-lazy-fetch --no-optional-locks; -c maintenance.auto=false
+  -c maintenance.autoDetach=false -c gc.auto=0 -c core.fsmonitor=false (a repo
+  core.fsmonitor executes a program under fsck) -c core.hooksPath=/dev/null;
+  every git call has a 900 s timeout (a FIFO in include.path, fsck.skipList or
+  alternates hangs git; no -c override exists); never `cd`, never a shell
+  string: argv lists only, stdin is /dev/null. PATH must be the repository's
+  top level (or a bare repository's git dir), so discovery cannot walk up to
+  an enclosing repository.
 Commands: `count-objects -v`, `fsck --unreachable --no-reflogs --no-progress`.
 `fsck --lost-found` writes .git/lost-found/ and is never run; `--lost-found`
 on this tool's argv is refused like any unknown argument.
+Sources: S120 (path.c@v2.56.0 report_linked_checkout_garbage returns early without
+a separate common dir, so reading the common dir skips the private-gitdir sweep),
+S122 (builtin/count-objects.c@v2.56.0 -v path and KiB floor); entry
+corpus/knowledge/count-objects-linked-worktree-garbage.md.
+
 Promisor/partial-clone repositories are refused (exit 2) before any walk:
 `extensions.partialClone` set, any `remote.*.promisor` true, or any
 `objects/pack/*.promisor` file (a blobless clone keeps it after its config is
@@ -45,15 +59,19 @@ Exit codes
      alternate path is such a line; an empty repository's fsck prints
      `notice: No default references` and therefore exits 1)
   2  refused: usage / unknown argv, PATH not a repository (rev-parse exit
-     non-zero), promisor or partial-clone repository
+     non-zero) or not its top level, promisor or partial-clone repository
 """
 import os
 import subprocess
 import sys
 
 TOOL = "souji-size-census"
-CONFIG = ("-c", "maintenance.auto=false", "-c", "gc.auto=0",
-          "-c", "core.fsmonitor=false")
+GIT = "/usr/bin/git"
+GLOBAL = ("--no-pager", "--no-lazy-fetch", "--no-optional-locks")
+CONFIG = ("-c", "maintenance.auto=false", "-c", "maintenance.autoDetach=false",
+          "-c", "gc.auto=0", "-c", "core.fsmonitor=false",
+          "-c", "core.hooksPath=/dev/null")
+TIMEOUT_S = 900
 GARBAGE_WARNING = "warning: garbage found: "
 USAGE = "usage: python3 -B tools/souji-size-census.py --repo PATH\n"
 
@@ -67,18 +85,22 @@ class GitFailure(Exception):
 
 
 def git_env():
-    env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
-    env.update(GIT_OPTIONAL_LOCKS="0", GIT_NO_LAZY_FETCH="1",
-               GIT_TERMINAL_PROMPT="0", GIT_NO_REPLACE_OBJECTS="1",
-               LC_ALL="C")
-    return env
+    return {"PATH": "/usr/bin:/bin", "LC_ALL": "C",
+            "HOME": "/nonexistent-souji-size-census",
+            "GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_SYSTEM": "/dev/null",
+            "GIT_CONFIG_GLOBAL": "/dev/null", "GIT_NO_LAZY_FETCH": "1",
+            "GIT_ALLOW_PROTOCOL": "none", "GIT_PROTOCOL_FROM_USER": "0",
+            "GIT_OPTIONAL_LOCKS": "0", "GIT_TERMINAL_PROMPT": "0",
+            "GIT_PAGER": "cat", "GIT_NO_REPLACE_OBJECTS": "1"}
 
 
 def git(env, *args):
-    argv = ["git", *CONFIG, *args]
+    argv = [GIT, *GLOBAL, *CONFIG, *args]
     try:
         p = subprocess.run(argv, env=env, stdin=subprocess.DEVNULL,
-                           capture_output=True)
+                           capture_output=True, timeout=TIMEOUT_S)
+    except subprocess.TimeoutExpired:
+        raise GitFailure(f"{' '.join(argv)} timed out after {TIMEOUT_S}s") from None
     except OSError as e:
         raise GitFailure(f"cannot run git: {e}") from None
     dec = lambda b: b.decode("utf-8", "surrogateescape")
@@ -108,13 +130,18 @@ def parse_argv(argv):
 def resolve(env, path):
     rc, out, err, argv = git(env, "-C", path, "rev-parse",
                              "--path-format=absolute", "--git-common-dir",
-                             "--git-dir", "--is-bare-repository")
+                             "--git-dir", "--is-bare-repository",
+                             "--show-toplevel")
     if rc != 0:
         raise Refused("not a repository: " + fail_text(argv, rc, err))
     lines = out.split("\n")
     if err or len(lines) < 3:
         raise GitFailure(fail_text(argv, rc, err))
     common, gitdir, bare = lines[0], lines[1], lines[2]
+    top = gitdir if bare == "true" else (lines[3] if len(lines) > 3 else "")
+    if os.path.realpath(path) != os.path.realpath(top):
+        raise Refused(f"--repo must name the repository itself ({top}), "
+                      "not a directory inside or below it")
     if bare == "true":
         return common, "bare"
     return common, ("main" if os.path.realpath(gitdir) ==

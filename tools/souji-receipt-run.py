@@ -26,9 +26,16 @@ Receipt v1 header, in this order, then the two fences:
 
 Refusals (exit 2, no receipt written): --rev not a full 40-hex id; --rev not reachable from
 refs/heads, refs/tags or refs/remotes (refs/jj/* never counts — Q37); --tool absent at --rev;
---out under /tmp (Q4); --out inside --root (a receipt is not a repo write).
+--out under /tmp (Q4); --out inside --root (a receipt is not a repo write); --tool not an exact
+element of the command argv (TOOL-NOT-IN-ARGV, the same predicate `verify` applies); a --tool path
+that redaction would rewrite (TOOL-PATH-REDACTED). `cmd=` redacts each argv element before
+joining, then the joined line.
 `verify` exits 2 with one of: RECEIPT-MALFORMED, RECEIPT-TOOL-DIGEST-MISMATCH,
-RECEIPT-TOOL-ABSENT, RECEIPT-REV-MALFORMED, RECEIPT-COUNTS-ABSENT.
+RECEIPT-TOOL-ABSENT, RECEIPT-REV-MALFORMED, RECEIPT-COUNTS-ABSENT, RECEIPT-REV-NOT-DURABLE (the
+same durable-ref predicate `run` refuses on), RECEIPT-TOOL-NOT-IN-ARGV (`tool=` is not an exact
+element of shlex.split(cmd); `./tools/x` does not match `tools/x`); a `cmd=` that does not parse
+as shell words is RECEIPT-MALFORMED. Argv membership binds the label to the recorded text, not to
+the program that ran: `python3 tools/y.py tools/x.py` still verifies for tool=tools/x.py.
 
 The measured tree is a private `--no-local` clone under /var/tmp, checked out detached at <rev>:
 the runner never writes the source repository and never fetches from a remote. It is a counter
@@ -56,7 +63,11 @@ SCRATCH_ROOT = "/var/tmp"
 COUNTS_RE = re.compile(
     r"(?:assertions=\d+ resolved=\d+ skipped=\d+ mismatches=\d+"
     r"|keys=\d+ records=\d+ occurrences=\d+ mismatches=\d+"
-    r"|entries=\d+ ok=\d+.*?fail=\d+)"
+    r"|entries=\d+ ok=\d+.*?fail=\d+"
+    r"|grounded=\d+ mapped=\d+ dangling=\d+ mismatches=\d+"
+    r"|cases=\d+ pass=\d+"
+    r"|garbage=\d+ size_garbage=\d+ unreachable=\d+ alternates=\d+"
+    r"|selftest=(?:PASS|FAIL) ids=\d+/\d+)"
 )
 REV_RE = re.compile(r"^[0-9a-f]{40}$")
 HEADER_ORDER = ("receipt", "rev", "tool", "tool_sha256", "cmd", "rc", "utc")
@@ -164,6 +175,10 @@ def cmd_run(args: argparse.Namespace) -> int:
     why = command_refusal(args.command)
     if why:
         return refuse(why.split(":", 1)[0], why.split(":", 1)[1].strip())
+    if tool not in args.command:
+        return refuse("TOOL-NOT-IN-ARGV", f"{tool} is not an argv element of the command")
+    if redact(tool) != tool:
+        return refuse("TOOL-PATH-REDACTED", "the tool path would be rewritten by redaction")
     for protected in ("/.ufo/state/", "/.tower/", "/.scratch/", "/MANIFEST.json"):
         if protected in out:
             return refuse("OUT-PROTECTED", f"{protected} is operator or orchestrator runtime")
@@ -221,7 +236,7 @@ def cmd_run(args: argparse.Namespace) -> int:
         f"rev={rev}",
         f"tool={tool}",
         f"tool_sha256={digest}",
-        f"cmd={redact(shlex.join(args.command))}",
+        f"cmd={redact(shlex.join([redact(a) for a in args.command]))}",
         f"rc={proc.returncode}",
         f"utc={dt.datetime.now(dt.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')}",
         "--- stdout ---",
@@ -278,6 +293,18 @@ def cmd_verify(args: argparse.Namespace) -> int:
                       f"receipt {header['tool_sha256'][:12]} != tree {actual[:12]} at {rev}")
     if not COUNTS_RE.search(header["_body"]):
         return refuse("RECEIPT-COUNTS-ABSENT", "no counts line in the recorded output")
+    if not durable_rev(root, rev):
+        return refuse("RECEIPT-REV-NOT-DURABLE",
+                      f"{rev} is not reachable from refs/heads|tags|remotes")
+    try:
+        argv = shlex.split(header["cmd"])
+    except ValueError as exc:
+        return refuse("RECEIPT-MALFORMED", f"cmd= does not parse as shell words: {exc}")
+    why = command_refusal(argv)
+    if why:
+        return refuse("RECEIPT-COMMAND-REFUSED", why)
+    if tool not in argv:
+        return refuse("RECEIPT-TOOL-NOT-IN-ARGV", f"{tool} is not an argv element of cmd=")
     print(f"verify=ok rev={rev} tool={tool} tool_sha256={actual}")
     return 0
 
