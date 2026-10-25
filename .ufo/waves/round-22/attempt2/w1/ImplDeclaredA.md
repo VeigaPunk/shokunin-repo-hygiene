@@ -19,6 +19,8 @@ installed or updated (no pacman/uv/npx/cargo/npm transaction was run).
 | `.ufo/waves/round-22/attempt2/w1/evidence/impl-a/base-skipped.txt` | `7abf02f84c0569cfeb2941467dd08d1d79eac081e143441d508391313649d1fc` |
 | `.ufo/waves/round-22/attempt2/w1/evidence/impl-a/tip-70af563.counts` | `d11de402d850e81a86489ae6babb60ef638528d49dd9bdd8cd69f434af511fef` |
 | `.ufo/waves/round-22/attempt2/w1/evidence/impl-a/tip-70af563.tsv` | `51c7a99b97e9c39dd17d85937208174eb119bbe25c2698755e8dd3ee7d400714` |
+| `.ufo/waves/round-22/attempt2/w1/evidence/impl-a/head-5fdd5d5.counts` | `5899dd50304d679ab4b723a401d46f92f06d44001e6b0c98abeb7124a59f3c66` |
+| `.ufo/waves/round-22/attempt2/w1/evidence/impl-a/head-5fdd5d5.tsv` | `d60d5c625c26658ac0f096bac6feda534c01a1b15f63930657ae1300d0c07a3c` |
 | `.ufo/waves/round-22/attempt2/w1/ImplDeclaredA.md` | this report |
 
 ## Interface implemented (as frozen)
@@ -71,9 +73,9 @@ names in prose (fleet-relative pointer, unnamed receipt, absent banked file):
 
 Class distribution at base: A=50, B=6, C=0. Glob expansion exercised: `census/round-17/jj-receipts-*.txt` → `glob matches 2 tracked file(s) at 4edb25d`. The six B tokens (`41553adb139d06511dc386bb3ce4326aebfba675`, `31984f4`, `b912328d00d19f26918240710d0b5e0f334880ff`, `5fa6017`, `6f8ee0f`, `29c1f7e8df849be8ee1b2d62d2351e17ec9d21a8`) all resolve. Class C has no instance in the real document (no 64-hex token in `SCORECARD.md` at either revision); it is exercised only by the fixtures.
 
-## Tip measurement at 70af563 (executed; bounded finding, not my repair)
+## Later revisions (executed; the lane moved while this candidate landed)
 
-Command: same with `--rev 70af563`.
+At 70af563 (the then-HEAD when I measured):
 
 ```
 assertions=57 resolved=56 skipped=46 mismatches=1
@@ -81,14 +83,24 @@ exit=1
 ```
 
 Class distribution: A=52, B=5 (`4edb25dfe262515d0da63224bbba71e02e36cba5`, `6f8ee0f`, `31984f4`, `5fa6017`, `29c1f7e8df849be8ee1b2d62d2351e17ec9d21a8`, all resolved), C=0. The single
-mismatch is `SCORECARD.md:83`, `.ufo/scopes/souji-mint-20261018/obsidian-cli-probe.md`, class A,
+mismatch was `SCORECARD.md:83`, `.ufo/scopes/souji-mint-20261018/obsidian-cli-probe.md`, class A,
 path absent at 70af563 — the Planned-r4 bullet whose own sentence says the file is absent.
-C1's M_after=0 therefore depends on that line's repair, which is outside my write authority
-(I may write only this report and `evidence/impl-a/`). Both frozen repair branches are
-available to its owner: drop the evidence role (de-backtick), or supply a committed receipt;
-naming a revision would be false because the file exists at none. [INFERENCE, from the single
-observed mismatch and the frozen repair rule: after a truth-preserving repair, M_after = 0.]
-I told `L1Souji22.DraftScorecard` the same in one line; it owns/carries the drafted text, I do not.
+That line was outside my write authority; I told `L1Souji22.DraftScorecard` it owned the repair
+and that de-backticking is one of the three frozen repair branches (the sentence already carries
+the real receipt: `ls -> No such file or directory`), while naming a revision would be false
+because the file exists at none.
+
+At the current HEAD 5fdd5d5, after other seats committed the repair:
+
+```
+assertions=61 resolved=61 skipped=46 mismatches=0
+exit=0
+```
+
+Class distribution A=51, B=10, C=0. C1's after-target `M_after = 0` is therefore met at the
+current tip as measured by candidate A. Skipped composition at HEAD: 22 command/prose spans,
+9 embedded hex runs, 9 non-path non-hex spans, 3 absolute/home paths, 2 composite spans,
+1 non-clean glob (`head-5fdd5d5.tsv`).
 
 ## Every token classified `skipped` at base 4edb25d (45 tokens, with reason)
 
@@ -157,16 +169,22 @@ enumeration runs to 46 skipped (`tip-70af563.tsv`): 21 command/prose, 10 non-pat
 5. **Glob.** `*` is expanded with `fnmatch.fnmatchcase` over `ls-tree -r --name-only <rev>`, so `*` may cross `/`; a glob (possibly matching several files) is never a class-C digest target.
 6. **Class C "exactly one backticked path".** Counts clean non-glob repo-relative paths in the same cell; 0 or ≥2 paths → the 64-hex token is skipped with the count in the reason, never asserted against an arbitrary path.
 7. **Revision context.** Case-insensitive word-boundary match on `commit|rev|revision|measured|at`, plus the plural inflections `commits|revisions` (same word), plus `census/round-<N>/` anywhere in the cell. `at` alone is enough, as frozen.
-8. **Limits, stated rather than hidden.** Uppercase hex is not scanned (no uppercase SHA exists in the document); a class-A path is present iff it is a tracked file entry at `--rev` (a directory-only path would read absent — none occurred); escaped `\|` outside backticks would split a cell (none occurred); an unmatched backtick yields no candidate token.
+8. **Duplicate token occurrences.** Every occurrence of a candidate token is one assertion, even when the same path or revision token repeats in one line (HEAD line 14 names `4edb25dfe…` twice: backticked as the base and bare in the "measured at" cell). The landed tool dedupes a repeated hex token per line, which is why it reports 60 assertions at HEAD where candidate A reports 61; both verdicts are the same and both exit 0. Counting occurrences follows the frozen "every candidate token the scanner saw".
+9. **Limits, stated rather than hidden.** Uppercase hex is not scanned (no uppercase SHA exists in the document); a class-A path is present iff it is a tracked file entry at `--rev` (a directory-only path would read absent — none occurred); escaped `\|` outside backticks would split a cell (none occurred); an unmatched backtick yields no candidate token.
 
-## Cross-check against the landed tool (executed)
+## Cross-check against the landed tool (executed, pinned committed bytes)
 
-`tools/souji-declared-evidence.py` at 70af563, same revisions:
+The worktree copy of `tools/souji-declared-evidence.py` was modified by another seat while I
+worked, so I compared against the committed bytes extracted with
+`git show 70af563:tools/souji-declared-evidence.py > /var/tmp/lp.py` and ran that file:
 
-* base 4edb25d: landed `assertions=56 resolved=53 skipped=33 mismatches=3`; candidate A `56/53/45/3`. The per-assertion `(line, token, class)` multisets are identical (`comm -3` after dropping my TSV header: empty). The +12 skipped is exactly my enumeration of the 12 embedded hex runs listed above, which the landed tool does not emit as rows.
-* tip 70af563: landed `57/56/37/1`; candidate A `57/56/46/1`; assertion multisets identical, +9 skipped = the 9 embedded runs at tip.
+* base 4edb25d: landed `assertions=56 resolved=53 skipped=33 mismatches=3`; candidate A `56/53/45/3`. The per-assertion `(line, token, class)` multisets are identical. The +12 skipped is exactly my enumeration of the 12 embedded hex runs listed above, which the landed tool does not emit as rows.
+* 70af563: landed `57/56/37/1`; candidate A `57/56/46/1`; assertion multisets identical, +9 skipped = the 9 embedded runs.
+* HEAD 5fdd5d5: landed `60/60/37/0`; candidate A `61/61/46/0`. The only difference is the duplicated base-revision token on line 14, counted twice by candidate A (two occurrences) and once by the landed tool (per-line dedupe) — same class, same verdict, same exit code.
 
-So on the real corpus the two implementations agree on every assertion, its class and its verdict; they differ only in how exhaustively excluded tokens are enumerated, which the prereg's `N+S` sentence asks for.
+So on the real corpus the two implementations agree on every distinct assertion, its class and
+its verdict; they differ only in duplicate-occurrence accounting and in how exhaustively
+excluded tokens are enumerated, which the prereg's `N+S` sentence asks for.
 
 ## Operability / read-only receipts (executed)
 
@@ -177,7 +195,8 @@ So on the real corpus the two implementations agree on every assertion, its clas
 
 ## Risks / open items (bounded)
 
-1. Tip 70af563 is still red (`mismatches=1`) on line 83; C1's M_after=0 is unreachable until that span loses its evidence role. Not my file to edit, and not a defect of the instrument.
-2. My skipped accounting is a superset of the landed tool's (+embedded runs). If a reviewer expects `S` to match the landed number, the +12/+9 is the whole explanation and is enumerated line by line above.
-3. Class C is not exercised by the real document, only by fixtures (correct and wrong digest). The real-corpus C evidence is therefore fixture-only, not production.
-4. Fixture repo construction depends on `git init -b` (git 2.56.0 here) and a writable `/var/tmp`; failure of either aborts selftest with a non-zero exit rather than a false pass.
+1. The lane tip moved twice while I worked (`4edb25d` base → `70af563` → `5fdd5d5`). At `70af563` the instrument was red on `SCORECARD.md:83`; at HEAD `5fdd5d5` it is green (`61/61/46/0`, exit 0). The repair was made by another seat, not me: I did not edit `SCORECARD.md`, and the worktree showed `M SCORECARD.md` and `M tools/souji-declared-evidence.py` from other seats. All my measurements read committed bytes only (`git show <rev>:<file>`), so uncommitted edits cannot affect any number here.
+2. My skipped accounting is a superset of the landed tool's (+embedded runs). If a reviewer expects `S` to match the landed number, the +12/+9/+9 is the whole explanation and is enumerated line by line above.
+3. Duplicate-token accounting differs from the landed tool (per occurrence vs per line). At HEAD that is the entire `61` vs `60` assertion gap; verdicts and exit codes agree.
+4. Class C is not exercised by the real document, only by fixtures (correct and wrong digest). The real-corpus C evidence is therefore fixture-only, not production.
+5. Fixture repo construction depends on `git init -b` (git 2.56.0 here) and a writable `/var/tmp`; failure of either aborts selftest with a non-zero exit rather than a false pass.

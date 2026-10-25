@@ -542,3 +542,42 @@ HEAD:corpus/README.md:425
 `corpus/SOURCES.md:129` cites the vendor digest `1634d206…8bb5`, and
 `sha256sum census/round-22/attempt2/sources/vendor-noreplace-probe.out` = `1634d206ef534f68…8bb5`.
 The citation is true; redacting those two lines would break it.
+
+## 6. Addendum 2 — tip `ee1aef2`, C1 tool dirty in the worktree
+
+After §5 the lane advanced twice more: `5fdd5d5` ("declared-evidence instrument hardening and honest
+calibration row": `SCORECARD.md`, `corpus/knowledge/quarantine-staging-no-copy-r23.md`,
+`tools/souji-declared-evidence.py`) and `ee1aef2`. Measured at `ee1aef2`:
+
+```
+git rev-parse --short HEAD            -> ee1aef2
+git status --porcelain -- tools/      ->  M tools/souji-declared-evidence.py      # dirty
+sha256sum tools/souji-gate-check.py   -> 5b8025a83f16957cb2ff6aca0adecfc3a6a1ff796c3eed1d70018ecc339b3062
+python3 -B tools/souji-declared-evidence.py --root . --file SCORECARD.md --rev HEAD --format counts
+  tools/souji-declared-evidence.py:108: SyntaxWarning: "\|" is an invalid escape sequence.
+  assertions=60 resolved=60 skipped=38 mismatches=0        rc=0
+python3 -B tools/souji-gate-check.py … (preregistration C2 command)
+  entries=2 ok=2 slice_verdicts=8 slice_total=8 fail=0     rc=0
+```
+
+Warning source: `tools/souji-declared-evidence.py:108`, the non-raw docstring
+`"""Table cells when the line is a table row (escaped \| does not split), else the whole line."""`.
+stderr only, so the one-line stdout contract holds; but the counter was measured from a dirty
+worktree, and `\|` becomes an error in a future Python. Fix: `r"""…"""`, commit, re-run from a clean
+tree. (`tools/souji-declared-evidence.py:306` still ends the selftest with
+`subprocess.run(["rm","-rf",base], check=False)`; `:55-58` still calls `subprocess.run` with no
+`env=`.)
+
+Hardening landed at `5fdd5d5` that changes this review's §2 reasoning:
+
+* `Repo.read_declaration` no longer falls back to the filesystem for a repo-relative declaration;
+  it raises `SystemExit("declaration is not present at %s: %s")`. Only an absolute path (selftest
+  fixture) is read from disk. A declaration token therefore cannot reach the filesystem at all.
+* class-A globs now go through `_segmatch` (per-segment `fnmatchcase`), so `*` never crosses `/`.
+* `PATH_RE`/`GLOB_RE` widened to `[A-Za-z0-9_./@+-]` and the hex regexes are case-insensitive with
+  `(?<![0-9A-Za-z_])` boundaries — no authority change; `../../../etc/passwd.md` still matches
+  `PATH_RE`, so F10's warning about a worktree-reading repair remains current.
+
+Both counters are green at `ee1aef2`; the `impl-gate/` receipts remain stale against these bytes
+(§5.2), and one more edit of the C1 tool is in flight, so no digest in this file should be read as
+the round's final receipt.

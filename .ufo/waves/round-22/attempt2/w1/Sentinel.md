@@ -1,12 +1,14 @@
 STATUS: PASS
 
-All three assigned surfaces reviewed at lane tip `af73b8b` (`round-22: review-driven hardening of
-gate-check…`), base `4edb25dfe262515d0da63224bbba71e02e36cba5`. No credential material anywhere, no
-execution path from crafted SCORECARD/Gate text, no new deletion authority in the round. One
-**medium** defect (symlink escape in the C2 counter's snapshot containment) was live when this review
-began and was fixed by `af73b8b` while it ran; the fix is verified by an executed before/after. Six
-low findings and five informational observations remain. Evidence:
-`.ufo/waves/round-22/attempt2/w1/evidence/Sentinel.md` (209-file census at 06:48:30Z plus a 224-file
+All three assigned surfaces reviewed. The lane advanced four times during the review
+(`2a130b4 → 5ff5041 → d6a75ba → af73b8b → 5fdd5d5 → ee1aef2`, with an edit of the C1 tool still
+uncommitted in the worktree when this report was written), so every measurement below is pinned to
+the sha it was taken at. No credential material anywhere, no execution path from crafted
+SCORECARD/Gate text, no new deletion authority in the round. One **medium** defect (symlink escape in
+the C2 counter's snapshot containment) was live when this review began and was fixed by `af73b8b`;
+the fix is verified by an executed before/after. Remaining: six low findings, five informational
+observations, and the moving-target facts in the final section. Evidence:
+`.ufo/waves/round-22/attempt2/w1/evidence/Sentinel.md` (209-file census at 06:48:30Z, 224-file
 addendum at 06:54:07Z, per-file sha256, every finding located).
 
 Read-only throughout: no tool installed, no package manager, no git/jj write, no commit, no cleanup,
@@ -37,8 +39,12 @@ marked as such.
 ## Executed evidence
 
 ```
+# at af73b8b (tools/souji-declared-evidence.py sha 58ddbfef…)
 $ python3 -B tools/souji-declared-evidence.py --root . --file SCORECARD.md --rev HEAD --format counts
 assertions=59 resolved=59 skipped=36 mismatches=0                                    rc=0
+# at ee1aef2 (tool modified in the worktree, sha 05b53b7d… committed + further dirty edits)
+$ python3 -B tools/souji-declared-evidence.py --root . --file SCORECARD.md --rev HEAD --format counts
+assertions=60 resolved=60 skipped=38 mismatches=0                                    rc=0
 $ python3 -B tools/souji-gate-check.py --root . --round-date 2026-10-25 \
     --entries corpus/knowledge/quarantine-staging-no-copy-r23.md \
               corpus/knowledge/quarantine-origin-record-fields-r24.md \
@@ -200,6 +206,49 @@ used `-B`. `git status` also shows a tracked deletion
 (`census/round-10/__pycache__/S13-candidate-battery.cpython-314.pyc`) and modifications under
 `tests/vault/…` that none of my commands touch — concurrent sibling activity, for the lane's own
 hygiene census to attribute.
+
+## Final state (moving target, pinned)
+
+The lane advanced four times while this review ran. Measured states, each with the bytes it was
+measured on:
+
+| commit | `tools/souji-gate-check.py` | `tools/souji-declared-evidence.py` | C1 counts | C2 counts |
+|---|---|---|---|---|
+| `2a130b4` | `d85c2696…` | `58ddbfef…` | `58/58/36/0` | `2 ok, 8/8, fail=0` |
+| `af73b8b` | `5b8025a8…` (realpath fix) | `58ddbfef…` | `59/59/36/0` | `2 ok, 8/8, fail=0` |
+| `ee1aef2` | `5b8025a8…` | `05b53b7d…` committed, **dirty in worktree** | `60/60/38/0` | `2 ok, 8/8, fail=0` |
+
+**F14 — `finding:low` — a claim is currently being measured from a dirty worktree, and the C1
+counter prints a Python warning on every run.** At report time `git status --porcelain -- tools/`
+shows ` M tools/souji-declared-evidence.py`, and the counter emits:
+
+```
+…/tools/souji-declared-evidence.py:108: SyntaxWarning: "\|" is an invalid escape sequence.
+```
+
+The source is the docstring `"""Table cells when the line is a table row (escaped \| does not
+split), else …"""` — a non-raw docstring containing `\|`. It is stderr-only, so the one-line stdout
+contract is intact, but (a) a count produced by uncommitted bytes is not a claim about a committed
+revision, and (b) the sequence is scheduled to become an error in a future Python, which would break
+the counter at compile time on the measuring host. Minimal fix: make that docstring raw (`r"""…"""`),
+commit, and re-run both counters from a clean tree before any receipt is recorded.
+
+**F15 — `finding:info` — the C1 hardening at `5fdd5d5` closed the worktree-read class.**
+`Repo.read_declaration` now raises `SystemExit("declaration is not present at <rev>: …")` for a
+repo-relative declaration absent at `--rev`, instead of silently reading the filesystem, and reads
+from disk only for an absolute path (the selftest fixture). That is the correct shape and it removes
+the "measure revision R from uncommitted bytes" hole; it also removes the only route by which a
+declaration token could have reached the filesystem, which is what F10 warns a future repair might
+reintroduce. The same commit replaced the class-A glob matcher with `_segmatch` (`*` never crosses
+`/`), which tightens calibration without changing authority.
+
+Unchanged in the same window: no `eval`/`exec`/`shell=True`/`os.system`/`os.popen`/network/`chmod`
+in either tool; `Repo.git` still runs `subprocess.run` without `env=` (F9); both selftests still end
+with `subprocess.run(["rm","-rf",base])` (F4).
+
+Because the tip moved after the round's own receipts were written, every digest quoted in this
+report is a point-in-time value. The authoritative statement for C1/C2 is a receipt generated after
+the final edit, from a clean tree — which is exactly what F3 asks for.
 
 ## Not claimed
 
