@@ -1,0 +1,221 @@
+SCOUTCOLLISION — frozen id-collision precondition for the assimilation append
+round 22 / attempt 2 / wave 1
+Base lane revision: 4edb25dfe262515d0da63224bbba71e02e36cba5
+Run: 2026-10-25, read-only. No registry edit, no git/jj write, no cleanup.
+All work in /var/tmp scratch; nothing written outside this evidence dir.
+
+Inputs (read-only):
+  REG = /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/SOURCES.md
+  APP = /home/vgpnk/Projects/shokuknow/merge/souji/SOURCES.append.md
+
+Frozen extraction pattern (verbatim, 0-3 leading spaces):
+  PAT='^ {0,3}\|[[:space:]]*S[0-9]{3,}'
+
+Contrast pattern (column-zero only, the defect the frozen pattern exists for):
+  COLZERO='^\|[[:space:]]*S[0-9]{3,}'
+
+
+==========================================================================
+1. REAL PAIR — FROZEN EXTRACTION AND COLLISION
+==========================================================================
+
+$ grep -oE "$PAT" "$REG" | grep -oE 'S[0-9]{3,}' | sort -u > reg.raw
+$ grep -oE "$PAT" "$APP" | grep -oE 'S[0-9]{3,}' | sort -u > app.raw
+reg count: 114
+app count: 134
+
+$ comm -12 reg.raw app.raw > collisions
+COLLISIONS count: 6
+covariance rows:
+  S109
+  S110
+  S111
+  S112
+  S113
+  S114
+
+REGISTRY ID LIST (114 ids, contiguous S001..S114 — verified with
+`diff <(seq-formatted S001..S114) reg.raw` => "CONTIGUOUS S001..S114: no gaps"):
+  S001 S002 S003 S004 S005 S006 S007 S008 S009 S010 S011 S012 S013 S014 S015
+  S016 S017 S018 S019 S020 S021 S022 S023 S024 S025 S026 S027 S028 S029 S030
+  S031 S032 S033 S034 S035 S036 S037 S038 S039 S040 S041 S042 S043 S044 S045
+  S046 S047 S048 S049 S050 S051 S052 S053 S054 S055 S056 S057 S058 S059 S060
+  S061 S062 S063 S064 S065 S066 S067 S068 S069 S070 S071 S072 S073 S074 S075
+  S076 S077 S078 S079 S080 S081 S082 S083 S084 S085 S086 S087 S088 S089 S090
+  S091 S092 S093 S094 S095 S096 S097 S098 S099 S100 S101 S102 S103 S104 S105
+  S106 S107 S108 S109 S110 S111 S112 S113 S114
+
+STAGED ID LIST (134 ids, contiguous S109..S242; head S109, tail S242):
+  S109 S110 S111 S112 S113 S114 S115 S116 S117 S118 S119 S120 S121 S122 S123
+  S124 ... (contiguous) ... S240 S241 S242
+
+COLLISION COUNT FOR THE VERBATIM REAL PAIR = 6   (NOT 0)
+
+The six colliding ids are NOT the same source rows. Both files number a
+different theme in the same id window:
+
+  lane registry S109..S114   = restorable-quarantine staging theme
+    line 129  S109  souji round-2 RENAME_NOREPLACE probe, vendored
+    line 130  S110  rename(2), man-pages 6.19
+    line 131  S111  mv(1), GNU coreutils
+    line 132  S112  gio(1), GIO commandline tool (glib2 2.90.1)
+    line 133  S113  GLib GIO g_file_trash() method reference
+    line 134  S114  statx(2), man-pages 6.19
+
+  campaign staged            = git auto-maintenance trigger set theme
+    line   7  S109  git-fetch(1)
+    line   8  S110  git/git v2.56.0 builtin/fetch.c, merge.c, rebase.c, am.c, commit.c
+    line   9  S111  git/git v2.56.0 builtin/pull.c
+    line  10  S112  git-count-objects(1)
+    line  11  S113  git-fsck(1)
+    line  12  S114  git-prune(1)
+
+=> A verbatim append of SOURCES.append.md would create SIX DUPLICATE ids
+   carrying unrelated rows. The precondition FAILS for the verbatim pair.
+
+
+==========================================================================
+2. GUARD PROOF — FROZEN PATTERN CATCHES AN INDENTED ROW, COLUMN-ZERO MISSES
+==========================================================================
+
+Scratch fixtures (built in /var/tmp/scoutcollision-guard.u7wKhA):
+
+  registry.md:
+    | S001 | scratch row one | docs | A | teaches a | x | teaches b | mined | 2026-10-25 | 90d | — |
+      | S002 | scratch INDENTED row two (two leading spaces) | docs | A | teaches a | x | teaches b | mined | 2026-10-25 | 90d | — |
+    | S003 | scratch row three | docs | A | teaches a | x | teaches b | mined | 2026-10-25 | 90d | — |
+
+  staged.md:
+    | S002 | staged row colliding on S002 | docs | A | teaches a | x | teaches b | mined | 2026-10-25 | 90d | — |
+    | S004 | staged row with a fresh id | docs | A | teaches a | x | teaches b | mined | 2026-10-25 | 90d | — |
+
+  Confirm the indented row really carries S002:
+  $ grep -n 'S002' registry.md
+  2:  | S002 | scratch INDENTED row two (two leading spaces) | ... |
+
+  --- FROZEN pattern extraction, registry ---
+  S001
+  S002
+  S003
+
+  --- FROZEN pattern extraction, staged ---
+  S002
+  S004
+
+  --- collisions (FROZEN 0-3 space pattern) ---
+  S002
+  FROZEN_COLLISION_COUNT=1          <-- NONEMPTY, as required
+
+  --- COLUMN-ZERO-ONLY pattern, same registry ---
+  S001
+  S003                            <-- S002 absent from the registry side
+
+  --- collisions (column-zero-only pattern) ---
+  (empty)
+  COLZERO_COLLISION_COUNT=0        <-- MISS: false clean
+
+GUARD RESULT: PASS. The frozen 0-3-space pattern reports the collision; the
+column-zero-only pattern reports a false clean on the identical bytes. That
+is exactly the defect the 0-3-space allowance exists to prevent.
+
+Note on live files (scoped, not a downgrade of the guard): neither real file
+currently contains an indented row —
+  $ grep -cE '^ +\|' registry.md  => 0
+  $ grep -cE '^ +\|' SOURCES.append.md => 0
+so the guard is precautionary for today's bytes, not load-bearing for them.
+
+
+==========================================================================
+3. ROWS THE TWO ADOPTED ENTRIES CITE, AND THE CAMPAIGN->LANE MAP
+==========================================================================
+
+Adopted entries and their citation lists (grep -oE '\bS[0-9]{3}\b' | sort -u):
+  corpus/knowledge/quarantine-staging-no-copy-r23.md   -> S109 S110 S111 S123
+  corpus/knowledge/quarantine-origin-record-fields-r24.md -> S022 S112 S113 S114
+
+Every one of those lane ids EXCEPT S123 exists in the registry. S123 is a
+campaign id that the r23 entry names only inside its REJECT line
+("staged row campaign-S123 (git-worktree SYNOPSIS text ...)"), i.e. a cited
+rejection, and S123 is absent from corpus/ (only entries about it).
+
+CAMPAIGN ROWS CITED, resolved by source identity (not by number):
+  campaign S115  -> lane S111  | https://man7.org/linux/man-pages/man1/mv.1.html
+  campaign S116  -> lane S110  | https://man7.org/linux/man-pages/man2/rename.2.html
+  campaign S117  -> lane S114  | https://man7.org/linux/man-pages/man2/statx.2.html
+  campaign S124  -> lane S109  | own-work: lanes/souji/round2/evidence/noreplace_probe.py
+  campaign S126  -> lane S113  | https://docs.gtk.org/gio/method.File.trash.html
+  campaign S137  -> lane S112  | https://man.archlinux.org/man/gio.1.en
+  (campaign S022-sourced trash layout is lane S022 already, unchanged)
+
+All six adopted sources are ALREADY in the lane registry at S109..S114.
+So the adopted theme needs NO new registry row at all; the six campaign rows
+are re-presentations of rows the lane assimilated earlier.
+
+--- LANE'S NEXT FREE ID ---
+Registry ids are contiguous S001..S114, so the next free id is S115.
+
+--- MAP A: uniform offset (the whole staged file as one block) ---
+  lane_id = campaign_id + 6      (offset = 115 - 109)
+  campaign S109..S242  ->  lane S115..S248
+  $ awk offset-6 over app.raw -> app_mapped
+  mapped min = S115  mapped max = S248  count = 134
+  $ comm -12 reg.raw app_mapped
+  MAPPED_COLLISION_COUNT=0
+  Six cited rows under Map A: S115->S121, S116->S122, S117->S123,
+  S124->S130, S126->S132, S137->S143 (+ S022 unchanged).
+  Map A is collision-free by construction (min 115 > registry max 114).
+  CAVEAT: Map A gives the lane a SECOND row for each of the six sources
+  (S121/S122/S123/S130/S132/S143 duplicating S111/S110/S114/S109/S113/S112).
+
+--- MAP B: identity map (what the entry text already does) ---
+  A cited campaign row that already resolves to a lane row keeps that lane
+  row: S115->S111, S116->S110, S117->S114, S124->S109, S126->S113,
+  S137->S112, S022->S022. Collisions added: 0. No duplicate source rows.
+  Only genuinely new campaign rows take new ids from S115 upward.
+
+RECOMMENDED: Map B for the adopted theme (six sources, zero new rows, zero
+collisions), with Map A's offset arithmetic held only as the scheme for
+appending the campaign rows the lane has NOT yet assimilated. Map A applied
+wholesale would duplicate six already-assimilated sources.
+
+
+==========================================================================
+4. BOUNDED FINDINGS
+==========================================================================
+
+F1. OBSERVED. Verbatim registry-vs-staged collision count = 6 (S109..S114).
+    The task's "must be 0 for the real pair" does not hold for the verbatim
+    pair; it holds only after a map is applied. Failure MODE asserted by the
+    numbers, not inferred.
+
+F2. OBSERVED. The collision is a NUMBERING collision, not a content
+    collision: the same six ids carry two unrelated themes (quarantine
+    staging in the lane, auto-maintenance triggers in the campaign).
+
+F3. OBSERVED. All six sources cited by the two adopted entries already exist
+    in the lane registry at S109..S114. The adopted theme requires zero new
+    registry rows.
+
+F4. OBSERVED. Map A (offset +6) yields 0 collisions over the full 134-row
+    block, mapped range S115..S248, but duplicates six already-held sources.
+
+F5. OBSERVED. Guard PASS: frozen pattern finds the indented S002 collision
+    (count 1); column-zero-only pattern returns count 0 on the same bytes.
+
+F6. OBSERVED. Neither real file currently has an indented row (count 0
+    each), so the 0-3-space allowance is precautionary today.
+
+F7. OBSERVED / SCOPE NOTE. The r23 entry names campaign S123 in a REJECT
+    line; S123 exists in no registry row (corpus max id is S114). Reported
+    as a citation observation only — this lane does not edit entries.
+
+UNRESOLVED / NOT CLAIMED BY THIS SCOUT
+  - Which map the appending seat adopts is not decided here; both are
+    quantified above and Map B is recommended.
+  - No registry row was created, moved, renumbered or deleted. Read-only.
+
+==========================================================================
+5. TOOLING
+==========================================================================
+No tool installed or updated. Only POSIX grep/awk/sort/comm/sed/diff and
+coreutils mktemp were used. No package transaction was run.

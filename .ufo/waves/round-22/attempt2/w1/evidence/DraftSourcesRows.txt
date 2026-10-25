@@ -1,0 +1,409 @@
+DraftSourcesRows — SOURCES registry draft for the sources the two adopted entries cite
+=======================================================================================
+Seat: L1Souji22.DraftSourcesRows (leaf scribe; no subagent dispatch)
+Lane: souji — repo/workspace hygiene (掃除)
+Round: 22, attempt 2 (hyaku), wave w1
+Date of this work: 2026-10-25
+Base lane revision (preregistration): 4edb25dfe262515d0da63224bbba71e02e36cba5
+Lane HEAD when this draft was written: 2a130b4 ("round-22: repair the last declared-evidence mismatch")
+Mode: READ-ONLY. No registry edit, no git/jj write, no staged-package edit, no cleanup.
+
+Inputs (absolute paths; all read-only)
+-------------------------------------
+- Staged candidate rows: /home/vgpnk/Projects/shokuknow/merge/souji/SOURCES.append.md
+  (134 staged rows, S109..S242; READ-ONLY repo, nothing fetched/committed there)
+- Lane schema + current registry: /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/SOURCES.md
+- Adopted entry 1: corpus/knowledge/quarantine-staging-no-copy-r23.md
+- Adopted entry 2: corpus/knowledge/quarantine-origin-record-fields-r24.md
+- Snapshot dir: census/round-22/attempt2/sources/
+
+1. Schema read from the lane registry (corpus/SOURCES.md)
+----------------------------------------------------------
+$ grep -n '^| id | source' corpus/SOURCES.md
+19:| id | source | kind | tier | scope | anchor | teaches | status | opened | recheck | used-by |
+
+Columns = 11: id, source, kind, tier, scope, anchor, teaches, status, opened, recheck, used-by.
+
+Status set actually used across the 114 registered rows (col 8):
+$ awk -F'|' '/^\| S[0-9]{3} /{gsub(/^ +| +$/,"",$9); print $9}' corpus/SOURCES.md | sort | uniq -c
+     91 mined
+     15 queued
+      8 rejected
+=> admitted status values: mined | queued | rejected. All six drafted rows are `mined`.
+
+Recheck forms actually used (col 10, leading token):
+$ awk -F'|' '/^\| S[0-9]{3} /{gsub(/^ +| +$/,"",$11); print $11}' corpus/SOURCES.md | sort | uniq -c
+      6 180d
+      7 365d
+      5 90d
+      1 on-change
+      1 on-correction
+     94 on-release
+=> valid forms for this draft: `NNd` (calendar-bounded) or the symbolic cadence
+   on-release / on-change / on-correction. `opened` is a literal ISO date.
+
+2. Which staged candidate ids the two entries actually cite
+-----------------------------------------------------------
+$ grep -n '^source:' corpus/knowledge/quarantine-staging-no-copy-r23.md
+source: S109 — souji round-2 noreplace probe, vendored byte-exact at census/round-22/attempt2/sources/vendor-noreplace-probe.out (sha256 1634d206…8bb5); not re-run in this lane
+source: S110 — https://man7.org/linux/man-pages/man2/rename.2.html
+source: S111 — https://man7.org/linux/man-pages/man1/mv.1.html
+
+$ grep -n '^source:' corpus/knowledge/quarantine-origin-record-fields-r24.md
+source: S112 — https://man.archlinux.org/man/gio.1.en (glib2 2.90.1)
+source: S113 — https://docs.gtk.org/gio/method.File.trash.html (GLib GIO)
+source: S114 — https://man7.org/linux/man-pages/man2/statx.2.html
+source: S022 — https://specifications.freedesktop.org/trash/latest/ (Trash spec layout, already in this registry)
+
+The entries cite LANE ids S109–S114 plus S022. Re-pointing them to the staged
+package's campaign ids (the preregistration's "re-pointed by DOCUMENT" rule) maps
+one-to-one, because the URL (or, for the probe, the vendored bytes) decides the id:
+
+  staged id -> document                                   -> lane id (already landed)
+  S124      -> round-2 noreplace probe output, vendored    -> S109
+  S116      -> rename(2), man-pages 6.19                   -> S110
+  S115      -> mv(1), GNU coreutils                        -> S111
+  S137      -> gio(1), glib2 2.90.1                        -> S112
+  S126      -> GLib GIO g_file_trash() method reference    -> S113
+  S117      -> statx(2), man-pages 6.19                    -> S114
+  (S022     -> FreeDesktop Trash Spec                      -> S022, PRE-EXISTING, not duplicated)
+
+Base-revision proof that S109 is the first free id, and that these six rows were
+appended after the freeze (i.e. they are this attempt's landing, not base bytes):
+$ git show 4edb25d:corpus/SOURCES.md | grep -oE '^\| S[0-9]{3} ' | tail -3
+| S106
+| S107
+| S108
+$ git show 4edb25d:corpus/SOURCES.md | grep -c '^| S109 '
+0
+$ git log --oneline -S'| S109 |' -- corpus/SOURCES.md | head -3
+a211e4d round-22: declared-evidence audit tool, assimilation entries and gate checker
+
+=> At base the next free id is S109; the registry at HEAD carries S109–S114 for
+   exactly these six documents. This draft therefore issues S-NEW-<slug>
+   placeholders (as the item requires) plus this mapping; an appender that runs
+   after the freeze must reuse S109–S114, or skip the append as already landed.
+
+3. Quote re-derivation: every quote cell checked against the named snapshot
+--------------------------------------------------------------------------
+All line numbers are line numbers of the committed .txt snapshot in
+census/round-22/attempt2/sources/ (raw HTML kept alongside as .raw).
+
+3a. mv(1) — snapshot man7-mv.1.txt
+$ sed -n '70,100p' man7-mv.1.txt      (excerpt)
+ --exchange
+ exchange source and destination
+ ...
+ --no-copy
+ do not copy if renaming fails
+$ grep -n -E 'coreutils [0-9]' man7-mv.1.raw
+202:<span class="footline">GNU coreutils 9.11              April 2026                          <i>MV</i>(1)</span>
+VERDICT: staged anchor's two option strings are verbatim at lines 75-76 and 90-91.
+         Staged anchor's "GNU coreutils 9.11 (April 2026)" is confirmed by the
+         snapshot footer.
+         Staged anchor's trailing clause "host coreutils 9.12 `man mv` lists the
+         same two options" is NOT in this snapshot (it is a host-man claim made
+         by the staging lane) -> dropped, see decision N4.
+
+3b. rename(2) — snapshot man7-rename.2.txt
+$ sed -n '140,167p' man7-rename.2.txt
+ RENAME_EXCHANGE
+ Atomically exchange oldpath and newpath. ...
+ RENAME_NOREPLACE
+ Don't overwrite newpath of the rename. Return an error if
+ newpath already exists.
+ RENAME_NOREPLACE can't be employed together with
+ RENAME_EXCHANGE.
+ RENAME_NOREPLACE requires support from the underlying
+ filesystem. Support for various filesystems was added as
+ follows:
+ • ext4 (Linux 3.15);
+ • btrfs, tmpfs, and cifs (Linux 3.17);
+ • xfs (Linux 4.0);
+ • Support for many other filesystems was added in Linux
+ 4.9, including ext2, minix, reiserfs, jfs, vfat, and
+ bpf.
+$ grep -n -E 'man-pages [0-9]' man7-rename.2.raw
+399:<span class="footline">Linux man-pages 6.19            2026-02-08                      <i>rename</i>(2)</span>
+$ grep -c 'renameat2' man7-rename.2.txt
+9
+VERDICT: staged anchor's § DESCRIPTION "flags" locator and the three claims
+         (refusal, incompatibility, per-filesystem schedule incl. cifs 3.17 and
+         "many more 4.9") all re-derive. `renameat2` is named 9x in the snapshot,
+         so the source cell may keep both page names.
+         Staged teaches omitted the incompatibility sentence; restored (N6).
+
+3c. statx(2) — snapshot man7-statx.2.txt
+$ grep -n -E 'stx_ino|stx_nlink|stx_btime|stx_mnt_id|STATX_BTIME|STATX_MNT_ID' man7-statx.2.txt
+79: __u32 stx_nlink; /* Number of hard links */
+83: __u64 stx_ino; /* Inode number */
+92: struct statx_timestamp stx_btime; /* Creation */
+106: __u64 stx_mnt_id; /* Mount ID */
+237: STATX_BTIME Want stx_btime
+240: STATX_MNT_ID Want stx_mnt_id (since Linux 5.8)
+243: STATX_MNT_ID_UNIQUE Want unique stx_mnt_id (since Linux 6.8)
+$ grep -n -E 'man-pages [0-9]' man7-statx.2.raw
+587:<span class="footline">Linux man-pages 6.19            2026-02-08                       <i>statx</i>(2)</span>
+VERDICT: all four fields and both constants re-derive; "unique since Linux 6.8"
+         belongs to STATX_MNT_ID_UNIQUE specifically (the field itself exists
+         since 5.8) -> teaches phrased accordingly (N7).
+
+3d. gio(1) — snapshot arch-gio.1.txt
+$ sed -n '440,450p' arch-gio.1.txt
+ This command removes files irreversibly. If you want a reversible
+ way to remove files, see the trash command.
+$ sed -n '566,572p' arch-gio.1.txt
+ --list
+ List files in the trash with their original
+ locations.
+ --restore
+ Restore a file from trash to its original location. A URI
+ beginning with trash:// is expected here. If the original directory
+ doesn't exist, it will be recreated.
+$ grep -n -E 'Version|<dd>2\.' arch-gio.1.raw        (excerpt)
+602:<a href="https://www.archlinux.org/packages/core/x86_64/glib2/">core/glib2</a>
+603:<dt>Version:</dt>
+604:<dd>2.90.1-1</dd>
+VERDICT: staged teaches' three claims re-derive, including "recreating the
+         original directory if it is gone" (line 572 "it will be recreated").
+         Version source: the Arch package block, 2.90.1-1 -> anchor cites it.
+
+3e. GIO File.trash — snapshot gtk-filetrash.txt
+$ sed -n '405,409p' gtk-filetrash.txt
+ Sends file to the “Trashcan”, if possible. This is similar to
+ deleting it, but the user can recover it before emptying the trashcan.
+ Trashing is disabled for system mounts by default (see
+ g_unix_mount_entry_is_system_internal()), so this call can return the
+ G_IO_ERROR_NOT_SUPPORTED error.
+$ grep -n -E 'API Version|Library Version' gtk-filetrash.txt
+59:API Version: 2.0
+62:Library Version: 2.91.0
+VERDICT: recoverability and the G_IO_ERROR_NOT_SUPPORTED refusal re-derive.
+         Two corrections: the snapshot writes “Trashcan” with typographic
+         quotes (staged anchor used straight ones -> anchor switched to a
+         non-quoting locator, N8); the page says the call CAN return the error
+         and that trashing is DISABLED FOR SYSTEM MOUNTS BY DEFAULT - it does
+         not say "instead of removing the file" (N9).
+         Also: this snapshot declares Library Version 2.91.0 while gio(1) is
+         2.90.1-1 -> recorded in the anchor, raised as finding F2.
+
+3f. round-2 noreplace probe — snapshot vendor-noreplace-probe.out
+$ cat vendor-noreplace-probe.out
+/var/tmp	fstype=btrfs	NOREPLACE_new=0(ok)	NOREPLACE_existing=-1(EEXIST)	plain_overwrite=0(ok)
+/home/vgpnk/Projects/shokunin	fstype=btrfs	NOREPLACE_new=0(ok)	NOREPLACE_existing=-1(EEXIST)	plain_overwrite=0(ok)
+/home/vgpnk/Projects/shokuknow	fstype=btrfs	NOREPLACE_new=0(ok)	NOREPLACE_existing=-1(EEXIST)	plain_overwrite=0(ok)
+/dev/shm	fstype=tmpfs	NOREPLACE_new=0(ok)	NOREPLACE_existing=-1(EEXIST)	plain_overwrite=0(ok)
+/tmp	fstype=xfs	NOREPLACE_new=0(ok)	NOREPLACE_existing=-1(EEXIST)	plain_overwrite=0(ok)
+kernel: 7.2.11-arch1-1
+$ wc -l vendor-noreplace-probe.out
+6 vendor-noreplace-probe.out
+$ grep -n '2026' vendor-noreplace-probe.out || echo 'NO DATE LINE'
+NO DATE LINE
+$ sha256sum vendor-noreplace-probe.out
+1634d206ef534f683b5d469a9f0333c80a4aaba58215bb63683111c024be8bb5  vendor-noreplace-probe.out
+VERDICT: the five-device claim re-derives exactly (EEXIST on an existing target on
+         all five; plain overwrite ok on all five). The staged "run 2026-10-23" and
+         "probe sha256 11df88f1…" are NOT in these bytes: the run date is campaign
+         provenance and the probe-script digest is unverifiable here (the script is
+         not in this lane) -> date kept but labelled provenance, script digest
+         dropped (N1, N2). sha256 1634d206… was measured by me, full value used.
+
+4. Normalization decisions (each quoted; no registry byte was written)
+---------------------------------------------------------------------
+N1  id -> placeholder. The item requires `S-NEW-<slug>` ids, so no numeric id is
+    asserted by this draft. Slugs chosen per document: noreplace-probe,
+    rename-noreplace, mv-no-copy, gio-trash-cli, gio-file-trash, statx-identity.
+    The numeric landing (S109–S114 at a211e4d) is recorded in section 2 as a
+    mapping, not as a claim that the draft wrote it.
+N2  Campaign-script digest dropped. Staged anchor S124 carried "probe sha256
+    11df88f1…"; `lanes/souji/round2/evidence/noreplace_probe.py` does not exist in
+    this lane (only the vendored output does), so the digest cannot be re-derived
+    here. A record may not carry a digest it cannot re-check. Kept: the vendored
+    output's own sha256, measured (1634d206…8bb5).
+N3  own-work source cell names the IN-LANE bytes. Staged source for S124 pointed at
+    a campaign path only. Rewritten to
+    "lanes/souji/round2/evidence/noreplace_probe.py, byte-exact copy at
+    census/round-22/attempt2/sources/vendor-noreplace-probe.out (sha256 1634d206…8bb5)"
+    so the row's evidence pointer resolves inside this lane.
+N4  Unverifiable host claim dropped. Staged anchor S115 said "host coreutils 9.12
+    `man mv` lists the same two options". That is a host-man observation, not
+    snapshot text, and I did not re-run `man mv`. Replaced by the snapshot footer
+    locator "GNU coreutils 9.11 April 2026", which the raw snapshot shows.
+N5  used-by re-pointed. Staged used-by named
+    `corpus/knowledge/quarantine-staging-no-copy.md` and, for S126/S137,
+    `corpus/knowledge/quarantine-origin-record-fields-r23.md`. These ABSENT paths
+    were verified:
+      $ for p in corpus/knowledge/quarantine-staging-no-copy.md \
+                 corpus/knowledge/quarantine-origin-record-fields-r23.md; do ...
+      ABSENT corpus/knowledge/quarantine-staging-no-copy.md
+      ABSENT corpus/knowledge/quarantine-origin-record-fields-r23.md
+    Each row's used-by now names exactly the adopted entry whose frontmatter cites
+    it: quarantine-staging-no-copy-r23.md for probe/rename/mv,
+    quarantine-origin-record-fields-r24.md for gio(1)/File.trash/statx.
+    Both entries are never written into one used-by cell: only one of them cites a
+    given row, and a second name would be a citation the bytes do not support.
+N6  teaches completed from the page. Staged S116 teaches omitted that the flag
+    "can't be employed together with RENAME_EXCHANGE"; restored, because the r23
+    entry invokes exactly that distinction in its "does NOT establish" section.
+N7  statx teaches precision. "unique since Linux 6.8" attached to
+    STATX_MNT_ID_UNIQUE (line 243), not to the field (line 106).
+N8  Anchor quoting removed where the snapshot uses typographic quotes. gtk
+    snapshot has “Trashcan”, so the staged "Sends file to the 'Trashcan', if
+    possible" would not be a byte-equal quote. The anchor now names the two
+    sentences positionally (§ Description, recover-before-emptying sentence and
+    the system-mount paragraph); the exact bytes remain in the entry Gate.
+N9  teaches narrowed to the page's modality. "on system mounts it returns
+    G_IO_ERROR_NOT_SUPPORTED instead of removing the file" -> "trashing is
+    disabled for system mounts by default, so the call can return
+    G_IO_ERROR_NOT_SUPPORTED". The strong form ("returns ... instead of
+    removing") is not in the snapshot.
+N10 Markdown emphasis stripped from teaches (`**recoverable**`, `**refuse rather
+    than delete**`, `**with their original locations**`). The lane's registry
+    teaches cells are plain prose; emphasis adds no fact and complicates
+    downstream grep/citation.
+N11 Quotes inside cells: no cell contains a literal or escaped `|`. Double quotes
+    are used nowhere inside the six drafted cells; option/flag names are plain or
+    backticked. Verified mechanically in section 6.
+N12 recheck cadence aligned to the citing entry. The r23 entry states
+    "recheck: 90d — re-open census/round-22/attempt2/sources/{man7-rename.2,
+    man7-mv.1}.txt and the vendored probe output"; the r24 entry states
+    "recheck: 180d — re-open ...{arch-gio.1,gtk-filetrash,freedesktop-trash,
+    man7-statx.2}.txt". Rows carried the matching `90d` / `180d`; the staged
+    rows' vaguer "on-release — ..." was replaced because a snapshot-bound row has
+    a calendar cadence, not a release trigger.
+N13 opened = 2026-10-25 on all six rows (item requirement; matches the entries'
+    verified-at and the snapshots' opening round).
+N14 Tier/kind. Docs rows are `docs` / tier A (the lane's own precedent for these
+    pages, e.g. S110-S114); the probe output is `own-work` / tier A. The staged
+    rows already agreed; no change.
+N15 S022 is cited, not duplicated. It exists at corpus/SOURCES.md:42 and was left
+    untouched (see section 5, X1).
+
+5. Draft block (append-only; header + 6 rows; nothing else)
+-----------------------------------------------------------
+Column order: id | source | kind | tier | scope | anchor | teaches | status | opened | recheck | used-by
+
+| id | source | kind | tier | scope | anchor | teaches | status | opened | recheck | used-by |
+|---|---|---|---|---|---|---|---|---|---|---|
+| S-NEW-noreplace-probe | souji round-2 RENAME_NOREPLACE probe, vendored — lanes/souji/round2/evidence/noreplace_probe.py, byte-exact copy at census/round-22/attempt2/sources/vendor-noreplace-probe.out (sha256 1634d206ef534f683b5d469a9f0333c80a4aaba58215bb63683111c024be8bb5) | own-work | A | whether renameat2 RENAME_NOREPLACE is implemented on the devices this fleet's repositories live on — this host's five probed directories only, not the upstream support schedule | the five device lines of the vendored probe output (/var/tmp, /home/vgpnk/Projects/shokunin, /home/vgpnk/Projects/shokuknow on btrfs; /dev/shm on tmpfs; /tmp on xfs) plus the kernel line 7.2.11-arch1-1; the file carries no date line, so 2026-10-23 is the round-2 campaign's provenance and not snapshot text | on every one of the five probed devices NOREPLACE_existing reads -1(EEXIST) while plain_overwrite reads 0(ok), so the no-clobber refusal held where it was measured and a plain rename overwrote the existing target | mined | 2026-10-25 | 90d | corpus/knowledge/quarantine-staging-no-copy-r23.md |
+| S-NEW-rename-noreplace | rename(2), Linux man-pages 6.19 (2026-02-08) — https://man7.org/linux/man-pages/man2/rename.2.html | docs | A | atomic no-overwrite and atomic-swap primitives for quarantine staging, with the per-filesystem support schedule; not a receipt format and not this host's devices (the vendored probe row holds those) | § DESCRIPTION flags RENAME_EXCHANGE and RENAME_NOREPLACE, the incompatibility sentence and the filesystem list; snapshot census/round-22/attempt2/sources/man7-rename.2.txt lines 143-167, snapshot footer Linux man-pages 6.19 2026-02-08 | RENAME_NOREPLACE returns an error instead of overwriting an existing newpath, cannot be employed together with RENAME_EXCHANGE, and requires filesystem support (ext4 3.15; btrfs, tmpfs and cifs 3.17; xfs 4.0; many more in 4.9) | mined | 2026-10-25 | 90d | corpus/knowledge/quarantine-staging-no-copy-r23.md |
+| S-NEW-mv-no-copy | mv(1), GNU coreutils — https://man7.org/linux/man-pages/man1/mv.1.html | docs | A | the mv --no-copy and mv --exchange staging verbs only, not the across-filesystem copy-then-remove behaviour S025 holds and not this host's devices | § OPTIONS --exchange and --no-copy; snapshot census/round-22/attempt2/sources/man7-mv.1.txt lines 75-76 and 90-91, snapshot footer GNU coreutils 9.11 April 2026 | --no-copy means do not copy if renaming fails, so the failure is reported rather than satisfied by copying; --exchange exchanges source and destination | mined | 2026-10-25 | 90d | corpus/knowledge/quarantine-staging-no-copy-r23.md |
+| S-NEW-gio-trash-cli | gio(1), GIO commandline tool (glib2 2.90.1-1, Arch core) — https://man.archlinux.org/man/gio.1.en | docs | A | the read side of a per-item origin record — how a trash item's original location is listed and restored, plus the named irreversible alternative; not the on-disk layout (S022) and not the API contract (S-NEW-gio-file-trash) | § COMMANDS trash --list and --restore, and § COMMANDS remove; snapshot census/round-22/attempt2/sources/arch-gio.1.txt lines 443-444 and 566-572, Arch package core/glib2 version 2.90.1-1 | gio trash --list lists files in the trash with their original locations and --restore restores a file from trash to its original location, recreating the original directory when it does not exist; gio remove removes files irreversibly and points at trash for the reversible way | mined | 2026-10-25 | 180d | corpus/knowledge/quarantine-origin-record-fields-r24.md |
+| S-NEW-gio-file-trash | GLib GIO, g_file_trash() method reference — https://docs.gtk.org/gio/method.File.trash.html | docs | A | the contract of the trash call a per-item origin record would be produced by — recoverability and the unsupported-mount refusal; not the on-disk layout (S022) and not the CLI read side (S-NEW-gio-trash-cli) | § Description, the recover-it-before-emptying sentence and the system-mount G_IO_ERROR_NOT_SUPPORTED paragraph; snapshot census/round-22/attempt2/sources/gtk-filetrash.txt lines 405-409, page header Library Version 2.91.0 | the call is documented recoverable — the user can recover the file before emptying the trashcan — and trashing is disabled for system mounts by default, so the call can return G_IO_ERROR_NOT_SUPPORTED | mined | 2026-10-25 | 180d | corpus/knowledge/quarantine-origin-record-fields-r24.md |
+| S-NEW-statx-identity | statx(2), Linux man-pages 6.19 (2026-02-08) — https://man7.org/linux/man-pages/man2/statx.2.html | docs | A | the identity and origin fields a per-item record can carry (inode, link count, creation time, mount id) and the constants that request them; not a duplicate-detection algorithm | § DESCRIPTION struct statx fields stx_ino, stx_nlink, stx_btime, stx_mnt_id; § CONSTANTS STATX_BTIME and STATX_MNT_ID_UNIQUE; snapshot census/round-22/attempt2/sources/man7-statx.2.txt lines 79-106 and 237-243, snapshot footer Linux man-pages 6.19 2026-02-08 | stx_ino is the inode number, stx_nlink the number of hard links, stx_btime the creation timestamp and stx_mnt_id the mount id, whose unique form is requested with STATX_MNT_ID_UNIQUE and is available since Linux 6.8 | mined | 2026-10-25 | 180d | corpus/knowledge/quarantine-origin-record-fields-r24.md |
+
+6. Mechanical conformance of the draft block
+--------------------------------------------
+Field count (11 columns => awk -F'|' NF == 13) and empty-cell check, run over the
+block above as written in this file:
+
+$ cd .ufo/waves/round-22/attempt2/w1/evidence
+$ awk -F'|' '/^\| S-NEW-/{n=NF; bad=0; for(i=2;i<NF;i++){c=$i; gsub(/^ +| +$/,"",c); if(c=="") bad=1} printf "%s fields=%d empty=%d\n", $2, NF, bad}' DraftSourcesRows.txt
+ S-NEW-noreplace-probe  fields=13 empty=0
+ S-NEW-rename-noreplace  fields=13 empty=0
+ S-NEW-mv-no-copy  fields=13 empty=0
+ S-NEW-gio-trash-cli  fields=13 empty=0
+ S-NEW-gio-file-trash  fields=13 empty=0
+ S-NEW-statx-identity  fields=13 empty=0
+
+$ awk '/^\| S-NEW-/{if(index($0,"\\|")>0) print "ESCAPED-PIPE: "$2}' DraftSourcesRows.txt
+(no output)
+
+$ awk -F'|' '/^\| S-NEW-/{printf "%s NF=%d\n",$2,NF}' DraftSourcesRows.txt | sort -u
+ S-NEW-gio-file-trash  NF=13
+ S-NEW-gio-trash-cli  NF=13
+ S-NEW-mv-no-copy  NF=13
+ S-NEW-noreplace-probe  NF=13
+ S-NEW-rename-noreplace  NF=13
+ S-NEW-statx-identity  NF=13
+
+Interpretation: 11 columns split on the separator give NF = 13 (one empty field
+before the leading pipe, one after the trailing pipe, 11 cells). NF is 13 on all
+six rows, so no cell carries a literal pipe; and no cell contains the two-byte
+sequence backslash-pipe -> no escaped pipe either.
+
+$ awk -F'|' '/^\| S-NEW-/{for(i=2;i<=12;i++){gsub(/^ +| +$/,"",$i)} printf "%s | %s | %s | %s\n",$2,$9,$10,$11}' DraftSourcesRows.txt
+S-NEW-noreplace-probe | mined | 2026-10-25 | 90d
+S-NEW-rename-noreplace | mined | 2026-10-25 | 90d
+S-NEW-mv-no-copy | mined | 2026-10-25 | 90d
+S-NEW-gio-trash-cli | mined | 2026-10-25 | 180d
+S-NEW-gio-file-trash | mined | 2026-10-25 | 180d
+S-NEW-statx-identity | mined | 2026-10-25 | 180d
+
+Status/opened/recheck gate: status `mined` on all six (member of the registry's
+{mined, queued, rejected}); opened `2026-10-25` on all six (ISO date, equal to the
+entries' verified-at); recheck `90d`/`180d` (NNd form, aligned to the citing entry
+per N12). All three columns are non-empty on every row.
+
+7. Deliberately NOT appended (staged rows no admitted entry cites)
+-----------------------------------------------------------------
+The staged package holds 134 rows (S109..S242). Only six of them are cited by the
+two adopted entries. Every other staged row was left out, because the adopted-row
+rule admits ONLY rows an admitted entry cites:
+
+(a) Thematically adjACENT quarantine rows that are still NOT cited by either
+    adopted entry - called out explicitly because they are the tempting ones:
+      staged S125  statx(2) mount-id uniqueness   -> the r24 entry cites S114
+                    for the identity fields; S125's narrower mount-id wording is
+                    not cited, and its unique-id caveat is carried by S114's anchor.
+      staged S133  round-3 r24-renameat2-probe    -> second device list (8 paths);
+                    the r23 entry reuses the round-2 vendored probe (S109).
+      staged S146  GVFS trashitem.c reader        -> on-disk record shape; the r24
+                    entry keeps S022 for the layout and adds only the read side
+                    (S112) and the write contract (S113).
+      staged S152  GLib glocalfile.c writer       -> writer sequence; not cited.
+      staged S158/S159/S173  POSIX O_EXCL/rename/fsync -> record atomicity and
+                    durability; the entries do not cite them (the record-format
+                    decision is still the operator's).
+(b) Everything else in the package: git auto-maintenance and worktree-prune rows
+    (staged S109-S114, S123, S130-S135, S141-S143, S147-S148, S151, S153-S155,
+    S160-S161, S165-S166, S176-S177, S185, S194-S195), git size/gc census rows
+    (S118, S122, S136, S138-S140, S144-S150, S156-S157, S162-S164, S167-S172,
+    S174-S175, S178-S184, S186-S193, S196-S242 as staged), hosted/self-hosted
+    service rows, and every locale variant. None is cited by
+    quarantine-staging-no-copy-r23.md or quarantine-origin-record-fields-r24.md.
+(c) staged S022 does not exist in the package; the registry's own S022 row
+    (corpus/SOURCES.md:42) was cited by the r24 entry and is therefore NOT
+    duplicated, and NOT edited (see X1).
+
+8. Findings raised, not fixed by this seat
+------------------------------------------
+F1 The six rows are already landed. At base 4edb25d the registry ends at S108; the
+   rows S109-S114 exist at HEAD (added by a211e4d) for exactly these six documents.
+   This draft is therefore a normalization check of that landing, not a new
+   append. Any appender must not create a second set.
+F2 Version skew inside the snapshot set: gtk-filetrash.txt declares Library
+   Version 2.91.0, arch-gio.1 is glib2 2.90.1-1, and the r24 entry's verified-at
+   says "glib2 2.90.1 gio(1)". Harmless for the cited sentences (checked), but the
+   two snapshots are not the same GLib release.
+F3 The vendored probe output has no date line; its 2026-10-23 run date is campaign
+   provenance. A future Gate that quotes a date from this file would fail its own
+   verbatim check. (My row records the date as provenance, in the anchor prose.)
+F4 Landed-row divergence from the re-derived bytes (reported, not edited):
+   - S110 teaches lists "btrfs and tmpfs 3.17" and omits cifs, which the snapshot
+     names at line 161 ("btrfs, tmpfs, and cifs (Linux 3.17)").
+   - S111 teaches ends "..., on any filesystem"; neither this page nor the probe
+     states "any filesystem" (probe = 5 directories). The row's own scope
+     disclaims the across-filesystem behaviour, so the clause is out of scope.
+   - S112 teaches says --restore "consumes exactly that location"; the page says a
+     trash:// URI is expected and that a missing original directory is recreated.
+   - S113 teaches says the call "returns G_IO_ERROR_NOT_SUPPORTED rather than
+     deleting"; the page says it "can return" the error and that trashing is
+     disabled for system mounts by default.
+   These are wording/scope issues in already-committed rows; changing them is an
+   edit to committed registry bytes and outside a draft seat's authority.
+X1 S022's used-by (corpus/SOURCES.md:42) names only
+   corpus/knowledge/trash-spec-restorable-quarantine.md, although the r24 entry now
+   cites S022 in its frontmatter. Extending used-by would be an EDIT of an existing
+   row, which the adopted-row rule does not authorize here; recorded as a curation
+   item for the appender, not performed.
+
+9. What this seat did NOT do
+----------------------------
+- No edit to corpus/SOURCES.md or any registry file (byte-for-byte untouched).
+- No git/jj write, no commit, no fetch/push; the two git invocations above are
+  read-only (`git show`, `git log -S`).
+- No campaign tool run in /home/vgpnk/Projects/shokuknow; that tree was read only.
+- No mutating cleanup, no process signalling, no deletion authority created.
+- No subagent dispatch (leaf member).
+- No tool installed or upgraded this task (nothing needed); no pacman transaction.

@@ -1,0 +1,121 @@
+slice123 — absent-defect register row S123 (lane souji) — hand-check receipts
+access date: 2026-10-25
+register (read-only): /home/vgpnk/Projects/shokuknow/.ufo/waves/corpus-expansion-1/absent-defect-register.md
+preregistration: .ufo/waves/round-22/attempt2/preregistration.txt (frozen 2026-10-25)
+lane base rev: 4edb25dfe262515d0da63224bbba71e02e36cba5
+frozen class for S123: refused
+
+NOTE ON EXTRACTION COMMAND: the preregistration contains no register-extraction
+awk line (it freezes the counters, per-entry predicate, slice predicate and kill
+rules only). The row was therefore extracted with the field-4 id selection
+prescribed for this item, executed read-only; output verbatim below.
+
+  $ awk -F'|' '$4 ~ /S123/ {print NR": "$0}' \
+      /home/vgpnk/Projects/shokuknow/.ufo/waves/corpus-expansion-1/absent-defect-register.md
+
+OBSERVED (line 172; line 364 is a tameshi row and was deliberately not parsed):
+| `souji` | round2 | S123 | `payload-absent` | lanes/souji/round2/evidence/r23-trigger-prune.out | `git worktree prune [-n] [-v] [--expire <expire>]` | cited source, companion URLs and local artifacts were all checked; the quote is in none of them |
+
+=====================================================================
+A. PAYLOAD BYTE CHECK (executed)
+=====================================================================
+file:   /home/vgpnk/Projects/shokuknow/lanes/souji/round2/evidence/r23-trigger-prune.out
+size:   1043 bytes, 15 lines
+sha256: 510722c11a97f6bca8f93e49b8a279f1f109d0222e40f675d001058768e069b4
+opened read-only; nothing written back.
+
+  $ grep -c -i 'worktree' <file>   -> 0
+  $ grep -c -i 'prune'    <file>   -> 1
+  $ grep -n -i 'prune'    <file>   -> 10:# provenance: produced by fixtures/r23-trigger-prune.sh on git 2.56.0
+  $ grep -n 'expire'      <file>   -> (no match)
+  $ grep -qF 'git worktree prune [-n] [-v] [--expire <expire>]' <file> -> SPAN_ABSENT
+
+The single "prune" hit is the fixture script name, not the subcommand synopsis.
+The payload itself is an 8-case fetch/pull/merge/rebase refcount probe
+(SOUJI-R23-TRIGGER-*); it invokes no `git worktree` command.
+
+RESULT: the quoted span is absent from the named payload. The row's
+`payload-absent` label is REPRODUCED from bytes.
+
+=====================================================================
+B. WHERE THE SPAN ACTUALLY LIVES (executed; two independent sources)
+=====================================================================
+B1. installed manual page — git-worktree(1), git version 2.56.0
+    command: man git-worktree | col -b
+    locator: SYNOPSIS (heading line 6), synopsis entry line 12
+    exact span, 9 words: git worktree prune [-n] [-v] [--expire <expire>]
+    embedded snapshot below = lines 1-20 of that pipeline, 738 bytes
+    sha256(embedded snapshot) = b9d571b305dd725dcfea8b7194a2be562377efa789bed6e09b190ee1d5951f4f
+
+MAN-SNAPSHOT-BEGIN >>>
+GIT-WORKTREE(1)			   Git Manual			GIT-WORKTREE(1)
+
+NAME
+     git-worktree - Manage multiple working trees
+
+SYNOPSIS
+     git worktree add [-f] [--detach] [--checkout] [--lock [--reason <string>]]
+		      [--orphan] [(-b | -B) <new-branch>] <path> [<commit-ish>]
+     git worktree list [-v | --porcelain [-z]]
+     git worktree lock [--reason <string>] <worktree>
+     git worktree move <worktree> <new-path>
+     git worktree prune [-n] [-v] [--expire <expire>]
+     git worktree remove [-f] <worktree>
+     git worktree repair [<path>...]
+     git worktree unlock <worktree>
+
+DESCRIPTION
+     Manage multiple working trees attached to the same repository.
+
+     A git repository can support multiple working trees, allowing you to check
+
+<<< MAN-SNAPSHOT-END
+
+B2. public web page — https://git-scm.com/docs/git-worktree
+    fetched 2026-10-25, curl exit 0, 200, raw HTML 98918 bytes
+    sha256(raw HTML snapshot) = fa25690b04900cfc1f1b52bb6b23a85d63f8b763477cca71e655434adbfc63d2
+    locator: <h2 id="_synopsis">SYNOPSIS</h2> at HTML line 2409; span line 2417
+    tags-stripped text of that line = git worktree prune [-n] [-v] [--expire <expire>]
+    sha256(tags-stripped 58-byte line) = 831edb0a0e45f5c939e21e72a18d0d219e4fe61e4b60f4f57cc47f9418f701c8
+
+B3. lane-local provenance scan (read-only, fixed-string, whole lane)
+    $ grep -rIl -F 'git worktree prune [-n] [-v] [--expire <expire>]' \
+        /home/vgpnk/Projects/shokuknow/lanes/souji
+    ./round2/SOURCES-PROPOSED.md
+    ./round15/evidence/cnblogs-worktree-zh.txt
+    ./round16/evidence/git-worktree-c-247.c
+    ./round16/evidence/git-worktree-c-248.c
+
+    round2/SOURCES-PROPOSED.md:44
+      - Upstream semantics for the same operation: https://git-scm.com/docs/git-worktree — § OPTIONS "git worktree prune [-n] [-v] [--expire <expire>]"
+    round16/evidence/git-worktree-c-247.c:40   N_("git worktree prune [-n] [-v] [--expire <expire>]")
+    round16/evidence/git-worktree-c-248.c:42   N_("git worktree prune [-n] [-v] [--expire <expire>]")
+    round15/evidence/cnblogs-worktree-zh.txt:90 and :370  (same line, mirrored doc)
+
+    The sentence was already on record in this lane, attached to the git-scm
+    URL — but not in the artifact the register row names. [INFERENCE] The
+    SOURCES-PROPOSED.md locator "§ OPTIONS" is itself off by one section: B1/B2
+    place the span in SYNOPSIS, whereas the page's OPTIONS entry for --expire
+    reads "--expire <time>", a different string.
+
+=====================================================================
+C. DISPOSITION
+=====================================================================
+class: refused — citation-class defect with confirmed payload absence.
+
+ 1. Absence is byte-level: the named artifact has 1043 bytes and no `worktree`
+    token (sha256 above). The register's artifact-scoped claim holds.
+ 2. The span is a real sentence verbatim in git-worktree(1) SYNOPSIS line 12
+    and on https://git-scm.com/docs/git-worktree SYNOPSIS line 2417. So this is
+    a wrong-source citation, NOT a fabricated quote.
+ 3. The row's blanket tail — "companion URLs and local artifacts were all
+    checked; the quote is in none of them" — is overbroad, and is false for the
+    one companion URL the lane itself pairs with this sentence
+    (git-scm.com/docs/git-worktree, round2/SOURCES-PROPOSED.md:44).
+ 4. The register was quoted, not edited; no correction was written back and none
+    is proposed here.
+
+bounds honoured: no git/jj writes, no commit, no lane-index/state/log/manifest
+write, no deletion authority, no process signals; shokuknow read-only; no
+/proc, credentials, private TSVs or operator-sweep census; one https fetch.
+Writes: this evidence file and .ufo/waves/round-22/attempt2/w1/Slice123.md only.

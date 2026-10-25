@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <title>Trash Specification</title>
+  <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=649a27d8" />
+  <link rel="stylesheet" type="text/css" href="_static/css/style.css?v=6a0f283a" />
+  <link rel="stylesheet" type="text/css" href="_static/css/fdo-sphinx.css?v=d675782e" />
+  <link rel="icon" type="image/x-icon" href="_static/images/favicon.ico" />
+</head>
+<body class="single offline js-off">
+  <div class="bypass-block"><a href="#_content">Jump to content</a></div>
+  <div id="_outer-wrap">
+    <div id="_white-bg">
+      <div id="_header">
+        <div id="_logo"><a href="https://specifications.freedesktop.org/"><img src="_static/images/logo.svg" alt="Freedesktop Logo" /><span></span></a></div>
+        <div class="crumbs inactive"><a class="single-crumb" href="#index" accesskey="c"><span class="single-contents-icon"></span>Trash Specification</a><div class="bubble-corner active-contents"></div></div>
+        <div class="clearme"></div>
+      </div>
+    </div>
+    <div id="_fixed-header-wrap" class="inactive">
+      <div id="_fixed-header">
+        <div class="crumbs inactive"><a class="single-crumb" href="#index" accesskey="c"><span class="single-contents-icon"></span>Show Contents: Trash Specification</a></div>
+        <div class="buttons"><a class="top-button button" href="#">Top</a><div class="clearme"></div></div>
+        <div class="clearme"></div>
+      </div>
+      <div class="active-contents bubble">
+        <div class="bubble-container">
+          <div id="_bubble-toc">
+            <ol>
+              <li class="inactive"><a href="#abstract"><span class="number">1 </span><span class="name">Abstract</span></a></li>
+              <li class="inactive"><a href="#introduction"><span class="number">2 </span><span class="name">Introduction</span></a></li>
+              <li class="inactive"><a href="#scope-and-limitations"><span class="number">3 </span><span class="name">Scope and limitations</span></a></li>
+              <li class="inactive"><a href="#definitions"><span class="number">4 </span><span class="name">Definitions</span></a></li>
+              <li class="inactive"><a href="#trash-directories"><span class="number">5 </span><span class="name">Trash directories</span></a></li>
+              <li class="inactive"><a href="#contents-of-a-trash-directory"><span class="number">6 </span><span class="name">Contents of a trash directory</span></a></li>
+              <li class="inactive"><a href="#directory-size-cache"><span class="number">7 </span><span class="name">Directory size cache</span></a></li>
+              <li class="inactive"><a href="#non-normative-suggested-algorithm-for-calculating-the-size-of-a-trash-directory"><span class="number">8 </span><span class="name">Non-normative: suggested algorithm for calculating the size of a trash directory</span></a></li>
+              <li class="inactive"><a href="#implementation-notes"><span class="number">9 </span><span class="name">Implementation notes</span></a></li>
+              <li class="inactive"><a href="#administrativia"><span class="number">10 </span><span class="name">Administrativia</span></a></li>
+            </ol>
+          </div>
+          <div class="clearme"></div>
+        </div>
+      </div>
+    </div>
+    <div id="_toc-bubble-wrap"></div>
+
+    <div id="_content" class="">
+      <div class="documentation">
+        <div class="article" id="index" lang="en">
+          <div class="titlepage">
+            <div>
+              <div><h1 class="title"><span class="number"> </span><span class="name">Trash Specification</span> <a title="Permalink" class="permalink" href="#index">#</a></h1></div>
+              <div class="authorgroup">
+                <div><span class="imprint-label">Authors: </span>
+                  <div class="author-info"><span class="author-name">Mikhail Ramendik </span><code class="email">&lt;mr@ramendik.ru&gt;</code></div>
+                  <div class="author-info"><span class="author-name">David Faure </span><code class="email">&lt;faure@kde.org&gt;</code></div>
+                  <div class="author-info"><span class="author-name">Alexander Larsson </span><code class="email">&lt;alexl@redhat.com&gt;</code></div>
+                  <div class="author-info"><span class="author-name">Ryan Lortie </span><code class="email">&lt;desrt@desrt.ca&gt;</code></div>
+                </div>
+                <br />
+              </div>
+              <div class="date"><span class="imprint-label">Publication Date: </span>2014-01-02, <span class="imprint-label">Version: </span>1.0</div>
+            </div>
+          </div>
+          <div class="line">
+            <div class="toc">
+              <dl>
+                <dt><span class="sect1"><a href="#abstract"><span class="number">1 </span><span class="name">Abstract</span></a></span></dt>
+                <dt><span class="sect1"><a href="#introduction"><span class="number">2 </span><span class="name">Introduction</span></a></span></dt>
+                <dt><span class="sect1"><a href="#scope-and-limitations"><span class="number">3 </span><span class="name">Scope and limitations</span></a></span></dt>
+                <dt><span class="sect1"><a href="#definitions"><span class="number">4 </span><span class="name">Definitions</span></a></span></dt>
+                <dt><span class="sect1"><a href="#trash-directories"><span class="number">5 </span><span class="name">Trash directories</span></a></span></dt>
+                <dt><span class="sect1"><a href="#contents-of-a-trash-directory"><span class="number">6 </span><span class="name">Contents of a trash directory</span></a></span></dt>
+                <dt><span class="sect1"><a href="#directory-size-cache"><span class="number">7 </span><span class="name">Directory size cache</span></a></span></dt>
+                <dt><span class="sect1"><a href="#non-normative-suggested-algorithm-for-calculating-the-size-of-a-trash-directory"><span class="number">8 </span><span class="name">Non-normative: suggested algorithm for calculating the size of a trash directory</span></a></span></dt>
+                <dt><span class="sect1"><a href="#implementation-notes"><span class="number">9 </span><span class="name">Implementation notes</span></a></span></dt>
+                <dt><span class="sect1"><a href="#administrativia"><span class="number">10 </span><span class="name">Administrativia</span></a></span></dt>
+              </dl>
+            </div>
+          </div>
+          
+  <section id="trash-specification">
+<section class="sect1" id="abstract">
+<h2 class="title"><span class="section-number">1 </span><span class="name">Abstract</span><a class="headerlink" href="#abstract" title="Link to this heading">#</a></h2>
+<p>The purpose of this Specification is to provide a common way in which
+all “Trash can” implementations should store, list, and undelete trashed
+files. By complying with this Specification, various Trash
+implementations will be able to work with the same devices and use the
+same Trash storage. For example, if one implementation sends a file into
+the Trash can, another will be able to list it, undelete it, or clear it
+from the Trash.</p>
+</section>
+<section class="sect1" id="introduction">
+<h2 class="title"><span class="section-number">2 </span><span class="name">Introduction</span><a class="headerlink" href="#introduction" title="Link to this heading">#</a></h2>
+<p>An ability to recover accidentally deleted files has become the de facto
+standard for today's desktop user experience.</p>
+<p>Users do not expect that anything they delete is permanently gone.
+Instead, they are used to a “Trash can” metaphor. A deleted document
+ends up in a “Trash can”, and stays there at least for some time — until
+the can is manually or automatically cleaned.</p>
+<p>This system has its own problems. Notably, cleaning disk space becomes a
+two-step operation — delete files and empty trash; this can lead to
+confusion for inexperienced users (“what's taking up my space?!”). Also,
+it is not easy to adapt the system to a multiuser environment. Besides,
+there is a potential for abuse by uneducated users — anecdotal evidence
+says they sometimes store important documents in the Trash can, and lose
+them when it gets cleaned!</p>
+<p>However, the benefits of this system are so great, and the user
+expectation for it so high, that it definitely should be implemented on
+a free desktop system. And in fact, several implementations existed
+before this specification — some as command line utilities, some as
+preloaded libraries, and some as parts of major desktop environments.
+For example, both Gnome and KDE had their own trash mechanisms.</p>
+<p>This Specification is to provide a common way in which all Trash can
+implementations must store trashed files. By complying with this
+Specification, various Trash implementations will be able to work with
+the same devices and use the same Trash storage.</p>
+<p>This ability is important, at least, for shared network resources,
+removable devices, and in cases when different implementations are used
+on the same machine at different moments (for example, some users prefer
+Gnome, others prefer KDE, and yet others are command-line fans).</p>
+</section>
+<section class="sect1" id="scope-and-limitations">
+<h2 class="title"><span class="section-number">3 </span><span class="name">Scope and limitations</span><a class="headerlink" href="#scope-and-limitations" title="Link to this heading">#</a></h2>
+<p>This Specification only describes the Trash storage. It does <strong>not</strong>
+limit the ways in which the actual implementations should operate, as
+long as they use the same Trash storage. Command line utilities,
+desktop-integrated solutions and preloaded libraries can work with this
+specification.<a class="footnote-reference brackets" href="#id10" id="id1" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a></p>
+<p>This Specification is geared towards the Unix file system tree approach.
+However, with slight modifications, it can easily be used with another
+kind of file system tree (for example, with drive letters).</p>
+<p>A multi-user environment, where users have specific numeric identifiers,
+is essential for this Specification.</p>
+<p>File systems and logon systems can be case-sensitive or
+non-case-sensitive; therefore, systems should generally not allow user
+names that differ only in case.</p>
+</section>
+<section class="sect1" id="definitions">
+<h2 class="title"><span class="section-number">4 </span><span class="name">Definitions</span><a class="headerlink" href="#definitions" title="Link to this heading">#</a></h2>
+<p>Trash, or Trash can — the storage of files that were trashed (“deleted”)
+by the user. These files can be listed, undeleted, or cleaned from the
+trash can.</p>
+<p>Trashing — a “delete” operation in which files are transferred into the
+Trash can.</p>
+<p>Erasing — an operation in which files (possibly already in the Trash
+can) are removed (unlinked) from the file system. An erased file is
+generally considered to be non-recoverable; the space used by this file
+is freed. [A “shredding” operation, physically overwriting the data, may
+or may not accompany an erasing operation; the question of shredding is
+beyond the scope of this document].</p>
+<p>Original location — the name and location that a file (currently in the
+trash) had prior to getting trashed.</p>
+<p>Original filename — the name that a file (currently in the trash) had
+prior to getting trashed.</p>
+<p>Top directory , $topdir — the directory where a file system is mounted.
+“/” is the top directory for the root file system, but not for the other
+mounted file systems. For example, separate file systems might be
+mounted on “/home”, “/media/flash”, etc. In this text, the designation
+“$topdir” is used for “any top directory”.</p>
+<p>User identifier , $uid — the numeric user identifier for a user. $uid is
+used here as “the numeric user identifier of the user who is currently
+logged on”.</p>
+<p>Trash directory — a directory where trashed files, as well as the
+information on their original name/location and time of trashing, are
+stored. There may be several trash directories on one system; this
+Specification defines their location and contents. In this text, the
+designation “$trash” is used for “any trash directory”.</p>
+<p>“Home trash” directory — a user's main trash directory. Its name and
+location is defined in this document.</p>
+<p>The key words &quot;MUST&quot;, &quot;MUST NOT&quot;, &quot;REQUIRED&quot;, &quot;SHALL&quot;, &quot;SHALL NOT&quot;,
+&quot;SHOULD&quot;, &quot;SHOULD NOT&quot;, &quot;RECOMMENDED&quot;, &quot;MAY&quot;, and &quot;OPTIONAL&quot; in this
+document are to be interpreted as described in <a class="ulink reference external" href="http://www.faqs.org/rfcs/rfc2119.html" target="_blank">RFC
+2119</a>.</p>
+</section>
+<section class="sect1" id="trash-directories">
+<h2 class="title"><span class="section-number">5 </span><span class="name">Trash directories</span><a class="headerlink" href="#trash-directories" title="Link to this heading">#</a></h2>
+<p>A system can have one or more trash directories. The contents of any
+trash directory are to be compliant with the same standard, described
+below.</p>
+<p>For every user<a class="footnote-reference brackets" href="#id11" id="id2" role="doc-noteref"><span class="fn-bracket">[</span>2<span class="fn-bracket">]</span></a> a “home trash” directory MUST be available. Its
+name and location are $XDG_DATA_HOME/Trash<a class="footnote-reference brackets" href="#id12" id="id3" role="doc-noteref"><span class="fn-bracket">[</span>3<span class="fn-bracket">]</span></a> ; $XDG_DATA_HOME is the
+base directory for user-specific data, as defined in the <a class="ulink reference external" href="http://www.freedesktop.org/Standards/basedir-spec" target="_blank">Desktop Base
+Directory
+Specification</a>.</p>
+<p>The “home trash” SHOULD function as the user's main trash directory.
+Files that the user trashes from the same file system (device/partition)
+SHOULD be stored here (see the next section for the storage details). A
+“home trash” directory SHOULD be automatically created for any new user.
+If this directory is needed for a trashing operation but does not exist,
+the implementation SHOULD automatically create it, without any warnings
+or delays.</p>
+<p>The implementation MAY also support trashing files from the rest of the
+system (including other partitions, shared network resources, and
+removable devices) into the “home trash” directory . This is a
+“failsafe” method: trashing works for all file locations, the user can
+not fill up any space except the home directory, and as other users
+generally do not have access to it, no security issues arise.</p>
+<p>However, this solution leads to costly file copying (between partitions,
+over the network, from a removable device, etc.) A delay instead of a
+quick “delete” operation can be unpleasant to users.</p>
+<p>An implementation MAY choose not to support trashing in some of these
+cases (notably on network resources and removable devices). This is what
+some well known operating systems do.</p>
+<p>It MAY also choose to provide trashing in the “top directories” of some
+or all mounted resources. This trashing is done in two ways, described
+below as (1) and (2).</p>
+<p>(1) An administrator can create an $topdir/.Trash directory. The
+permissions on this directories should permit all users who can trash
+files at all to write in it.; and the “sticky bit” in the permissions
+must be set, if the file system supports it.</p>
+<p>When trashing a file from a non-home partition/device<a class="footnote-reference brackets" href="#id13" id="id4" role="doc-noteref"><span class="fn-bracket">[</span>4<span class="fn-bracket">]</span></a> , an
+implementation (if it supports trashing in top directories) MUST check
+for the presence of $topdir/.Trash.</p>
+<p>When preparing a list of all trashed files (for example, to show to the
+user), an implementation also MUST check for .Trash in all top
+directories that are known to it.</p>
+<p>If this directory is present, the implementation MUST, by default, check
+for the “sticky bit”. (It MAY provide a way for the administrator, <em>and
+only the administrator</em>, to disable this checking for a particular top
+directory, in order to support file systems that do not have the “sticky
+bit”).</p>
+<p>The implementation also MUST check that this directory is not a symbolic
+link.</p>
+<p>If any of these checks fail, the implementation MUST NOT use this
+directory for either trashing or undeleting files, even if an
+appropriate $uid directory (see below) already exists in it. Besides,
+the implementation SHOULD report the failed check to the administrator,
+and MAY also report it to the user.</p>
+<p>The following paragraph applies ONLY to the case when the implementation
+supports trashing in the top directory, and a $topdir/.Trash exists and
+has passed the checks:</p>
+<p>If the directory exists and passes the checks, a subdirectory of the
+$topdir/.Trash directory is to be used as the user's trash directory for
+this partition/device. The name of this subdirectory is the numeric
+identifier of the current user ($topdir/.Trash/$uid). When trashing a
+file, if this directory does not exist for the current user, the
+implementation MUST immediately create it, without any warnings or
+delays for the user.</p>
+<p>(2) If an $topdir/.Trash directory is absent, an $topdir/.Trash-$uid
+directory is to be used as the user's trash directory for this
+device/partition. $uid is the user's numeric identifier.</p>
+<p>The following paragraph applies ONLY to the case when the implementation
+supports trashing in the top directory, and a $topdir/.Trash does not
+exist or has not passed the checks:</p>
+<p>When trashing a file, if an $topdir/.Trash-$uid directory does not
+exist, the implementation MUST immediately create it, without any
+warnings or delays for the user.</p>
+<p>When trashing a file, if this directory does not exist for the current
+user, the implementation MUST immediately create it, without any
+warnings or delays for the user.</p>
+<p><strong>Notes.</strong> If an implementation provides trashing in top directories at
+all, it MUST support both (1) and (2).</p>
+<p>If an implementation does NOT provide trashing in top directories, and
+does provide the user with some interface to view and/or undelete
+trashed files, it SHOULD make a “best effort” to show files trashed in
+top directories (by both methods) to the user, among other trashed files
+or in a clearly accessible separate way.</p>
+<p>When trashing a file, if the method (1) fails at any point — that is,
+the $topdir/.Trash directory does not exist, or it fails the checks, or
+the system refuses to create an $uid directory in it — the
+implementation MUST, by default, fall back to method (2), described
+below. Except for the case when $topdir/.Trash fails the checks, the
+fallback must be immediate, without any warnings or delays. The
+implementation MAY, however, provide a way for the administrator to
+disable (2) completely.</p>
+<p>If both (1) and (2) fail (that is, no $topdir/.Trash directory exists,
+and an attempt to create $topdir/.Trash-$uid fails), the implementation
+MUST either trash the file into the user's “home trash” or refuse to
+trash it. The choice between these options can be pre-determined, or it
+can depend on the particular situation (for example, “no trashing of
+very large files”). However, if an implementation refuses to trash a
+file after a user action that generally causes trashing, it MUST clearly
+warn the user that the trashing has failed. It MUST NOT erase the file
+without user confirmation.</p>
+<p>For showing trashed files, implementations SHOULD support (1) and (2) at
+the same time (that is, if both $topdir/.Trash/$uid and
+$topdir/.Trash-$uid are present, it should list trashed files from both
+of them).</p>
+</section>
+<section class="sect1" id="contents-of-a-trash-directory">
+<h2 class="title"><span class="section-number">6 </span><span class="name">Contents of a trash directory</span><a class="headerlink" href="#contents-of-a-trash-directory" title="Link to this heading">#</a></h2>
+<p>The previous section has described the location of trash directories.
+This section concerns the contents of any trash directory (including the
+“home trash” directory). This trash directory will be named “$trash”
+here.</p>
+<p>A trash directory contains two subdirectories, named <strong>info</strong> and
+<strong>files</strong>.</p>
+<p>The <strong>$trash/files</strong> directory contains the files and directories that
+were trashed. When a file or directory is trashed, it MUST be moved into
+this directory<a class="footnote-reference brackets" href="#id14" id="id5" role="doc-noteref"><span class="fn-bracket">[</span>5<span class="fn-bracket">]</span></a>. The names of files in this directory are to be
+determined by the implementation; the only limitation is that they must
+be unique within the directory. <em>Even if a file with the same name and
+location gets trashed many times, each subsequent trashing must not
+overwrite a previous copy.</em> The access rights, access time, modification
+time and extended attributes (if any) for a file/directory in
+$trash/files SHOULD be the same as the file/directory had before getting
+trashed.</p>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>While an implementation may choose to base filenames
+in the $trash/files directory on the original filenames, this is never
+to be taken for granted<a class="footnote-reference brackets" href="#id15" id="id6" role="doc-noteref"><span class="fn-bracket">[</span>6<span class="fn-bracket">]</span></a>. A filename in the $trash/files directory
+MUST NEVER be used to recover the original filename; use the info file
+(see below) for that. (If an info file corresponding to a
+file/directory in $trash/files is not available, this is an emergency
+case, and MUST be clearly presented as such to the user or to the system
+administrator).</p>
+</div>
+<p>The <strong>$trash/info</strong> directory contains an “information file” for every
+file and directory in $trash/files. This file MUST have exactly the same
+name as the file or directory in $trash/files, plus the extension
+“.trashinfo”<a class="footnote-reference brackets" href="#id16" id="id7" role="doc-noteref"><span class="fn-bracket">[</span>7<span class="fn-bracket">]</span></a>.</p>
+<p>The format of this file is similar to the format of a desktop entry
+file, as described in the <a class="ulink reference external" href="http://www.freedesktop.org/Standards/desktop-entry-spec" target="_blank">Desktop Entry
+Specification</a>
+. Its first line must be [Trash Info].</p>
+<p>It also must have two lines that are key/value pairs as described in the
+Desktop Entry Specification:</p>
+<ul>
+<li><p>The key “Path” contains the original location of the file/directory,
+as either an absolute pathname (starting with the slash character
+“/”) or a relative pathname (starting with any other character). A
+relative pathname is to be from the directory in which the trash
+directory resides (for example, from $XDG_DATA_HOME for the “home
+trash” directory); it MUST not include a “..” directory, and for
+files not “under” that directory, absolute pathnames must be used.
+The system SHOULD support absolute pathnames only in the “home trash”
+directory, not in the directories under $topdir.</p>
+<p>The value type for this key is “string”; it SHOULD store the file
+name as the sequence of bytes produced by the file system, with
+characters escaped as in URLs (as defined by <a class="ulink reference external" href="http://www.faqs.org/rfcs/rfc2396.html" target="_blank">RFC
+2396</a>, section 2).</p>
+</li>
+<li><p>The key “DeletionDate” contains the date and time when the
+file/directory was trashed. The date and time are to be in the
+YYYY-MM-DDThh:mm:ss format (see <a class="ulink reference external" href="http://www.faqs.org/rfcs/rfc3339.html" target="_blank">RFC
+3339</a>). The time zone
+should be the user's (or filesystem's) local time. The value type for
+this key is “string”.</p></li>
+</ul>
+<p>Example:</p>
+<div class="verbatim-wrap highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="k">[Trash Info]</span>
+<span class="na">Path</span><span class="o">=</span><span class="s">foo/bar/meow.bow-wow</span>
+<span class="na">DeletionDate</span><span class="o">=</span><span class="s">20040831T22:32:08</span>
+</pre></div>
+</div>
+<p>The implementation MUST ignore any other lines in this file, except the
+first line (must be [Trash Info]) and these two key/value pairs. If a
+string that starts with “Path=” or “DeletionDate=” occurs several times,
+the first occurence is to be used.<a class="footnote-reference brackets" href="#id17" id="id8" role="doc-noteref"><span class="fn-bracket">[</span>8<span class="fn-bracket">]</span></a></p>
+<p>Note that $trash/info has no subdirectories. For a directory in
+$trash/files, only an information file for its own name is needed. This
+is because, when a subdirectory gets trashed, it must be moved to
+$trash/files with its entire contents. The names of the files and
+directories within the directory MUST NOT be altered; the implementation
+also SHOULD preserve the access and modification time for them.</p>
+<p>When trashing a file or directory, the implementation MUST create the
+corresponding file in $trash/info first. Moreover, it MUST try to do
+this in an atomic fashion, so that if two processes try to trash files
+with the same filename this will result in two different trash files. On
+Unix-line systems this is done by generating a filename, and then
+opening with O_EXCL. If that succeeds the creation was atomic (at least
+on the same machine), if it fails you need to pick another filename.</p>
+</section>
+<section class="sect1" id="directory-size-cache">
+<h2 class="title"><span class="section-number">7 </span><span class="name">Directory size cache</span><a class="headerlink" href="#directory-size-cache" title="Link to this heading">#</a></h2>
+<p>In order to speed up the calculation of the total size of a particular
+trash directory, implementations (since version 1.0 of this
+specification) SHOULD create or update the <strong>$trash/directorysizes</strong>
+file, which is a cache of the sizes of the directories that were trashed
+into this trash directory. Individual trashed files are not present in
+this cache, since their size can be determined with a call to stat().</p>
+<p>Each entry contains the name and size of the trashed directory, as well
+as the modification time of the corresponding <strong>trashinfo file</strong>
+(IMPORTANT: not the modification time of the directory itself)<a class="footnote-reference brackets" href="#id18" id="id9" role="doc-noteref"><span class="fn-bracket">[</span>9<span class="fn-bracket">]</span></a>.</p>
+<p>The size is calculated as the disk space used by the directory and its
+contents, that is, the size of the blocks, in bytes (in the same way as
+the `du -B1` command calculates).</p>
+<p>The modification time is stored as an integer, the number of seconds
+since Epoch. Implementations SHOULD use at least 64 bits for this number
+in memory.</p>
+<p>The “directorysizes” file has a simple text-based format, where each
+line is:</p>
+<div class="verbatim-wrap highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="o">[</span>size<span class="o">]</span><span class="w"> </span><span class="o">[</span>mtime<span class="o">]</span><span class="w"> </span><span class="o">[</span>percent-encoded-directory-name<span class="o">]</span>
+</pre></div>
+</div>
+<p>Example:</p>
+<div class="verbatim-wrap highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="m">16384</span><span class="w"> </span><span class="m">15803468</span><span class="w"> </span>Documents
+<span class="m">8192</span><span class="w"> </span><span class="m">15803582</span><span class="w"> </span>Another_Folder
+</pre></div>
+</div>
+<p>The last entry on each line is the name of the trashed directory, stored
+as the sequence of bytes produced by the file system, with characters
+escaped as in URLs (as defined by <a class="ulink reference external" href="http://www.faqs.org/rfcs/rfc2396.html" target="_blank">RFC
+2396</a>, section 2). Strictly
+speaking, percent-encoding is really only necessary for the newline
+character and for '%' itself. However, encoding all control characters
+or fully applying RFC 2396 for consistency with trashinfo files is
+perfectly valid, and even if an implementation does not use such
+encoding. it MUST be able to read names encoded with it.</p>
+<p>The character '/' is not allowed in the directory name (even as %2F),
+since all these directories must be direct children of the &quot;files&quot;
+directory. Absolute paths are not allowed for the same reason.</p>
+<p>To update the directorysizes file, implementations MUST use a temporary
+file followed by an atomic rename() operation, in order to avoid
+corruption due to two implementations writing to the file at the same
+time. The fact that the changes from one of the writers could get lost
+isn't an issue, as the cache can be updated again later on to add that
+entry.</p>
+</section>
+<section class="sect1" id="non-normative-suggested-algorithm-for-calculating-the-size-of-a-trash-directory">
+<h2 class="title"><span class="section-number">8 </span><span class="name">Non-normative: suggested algorithm for calculating the size of a trash directory</span><a class="headerlink" href="#non-normative-suggested-algorithm-for-calculating-the-size-of-a-trash-directory" title="Link to this heading">#</a></h2>
+<div class="verbatim-wrap highlight-text notranslate"><div class="highlight"><pre><span></span>load directorysizes file into memory as a hash directory_name -&gt; (size, mtime, seen=false)
+totalsize = 0
+list &quot;files&quot; directory, and for each item:
+  stat the item
+  if a file:
+      totalsize += file size
+  if a directory:
+      stat the trashinfo file to get its mtime
+      lookup entry in hash
+      if no entry found or entry&#39;s cached mtime != trashinfo&#39;s mtime:
+          calculate directory size (from disk)
+          totalsize += calculated size
+          add/update entry in hash (size of directory, trashinfo&#39;s mtime, seen=true)
+      else:
+          totalsize += entry&#39;s cached size
+          update entry in hash to set seen=true
+done
+remove entries from hash which have (seen == false)
+write out hash back to directorysizes file
+</pre></div>
+</div>
+</section>
+<section class="sect1" id="implementation-notes">
+<h2 class="title"><span class="section-number">9 </span><span class="name">Implementation notes</span><a class="headerlink" href="#implementation-notes" title="Link to this heading">#</a></h2>
+<p>The names of the files/directories in $trash/info SHOULD be somehow
+related to original file names. This can help manual recovery in
+emergency cases (for example, if the corresponding info file is lost).</p>
+<p>When trashing a file or directory, the implementation SHOULD check
+whether the user has the necessary permissions to delete it, before
+starting the trashing operation itself.</p>
+<p>When copying, rather than moving, a file into the trash (when trashing
+to the “home trash” from a different partition), exact preservation of
+permissions might be impossible. Notably, a file/directory that was
+owned by another user will now be owned by this user (changing owners is
+usually only available to root). This SHOULD NOT cause the trashing
+operation to fail.</p>
+<p>In this same situation, setting the permissions should be done <em>after</em>
+writing the copied file, as they might make it unwriteable..</p>
+<p>A trashing operation might be refused because of insufficient
+permissions, even when the user does have the right to delete a file or
+directory. This may happen when the user has the right to delete a
+file/directory, but not to read it (or, in the case of a directory, to
+list it). In this case, the best solution is probably to warn the user,
+offering options to delete the file/directory or leave it alone. As
+noted earlier, when the user reasonably expects a file to be trashed,
+the implementation MUST NOT delete it without warning the user.</p>
+<p>Automatic trash cleaning may, and probably eventually should, be
+implemented. But the implementation should be somehow known to the user.</p>
+<p>If a directory was trashed in its entirety, it is easiest to undelete it
+or remove it from the trash only in its entirety as well, not as
+separate files. The user might not have the permissions to delete some
+files in it even while they do have the permission to delete the
+directory!</p>
+<p><strong>Important note on scope</strong>. This specification currently does NOT
+define trashing on remote machines where multiuser permissions are
+implemented but the numeric user ID is not supported, like FTP sites and
+CIFS shares. In systems implementing this specification, trashing of
+files from such machines is to be done only to the user's home trash
+directory (if at all). A future version may address this limitation.</p>
+</section>
+<section class="sect1" id="administrativia">
+<h2 class="title"><span class="section-number">10 </span><span class="name">Administrativia</span><a class="headerlink" href="#administrativia" title="Link to this heading">#</a></h2>
+<section class="sect2" id="copyright-and-license">
+<h3 class="title"><span class="section-number">10.1 </span><span class="name">Copyright and License</span><a class="headerlink" href="#copyright-and-license" title="Link to this heading">#</a></h3>
+<p>Copyright (C) 2004-2014 Mikhail Ramendik , <a class="email reference external" href="mailto:mr&#37;&#52;&#48;ramendik&#46;ru">mr<span>&#64;</span>ramendik<span>&#46;</span>ru</a> .</p>
+<p>The originators of the ideas that are described here did not object to
+this copyright. The author is ready to transfer the copyright to a
+standards body that would be committed to keeping this specification, or
+any successor to it, an open standard.</p>
+<p>The license: Use and distribute as you wish. If you make a modified
+version and redistribute it, (a) keep the name of the author and
+contributors somewhere, and (b) indicate that this is a modified
+version.</p>
+<p>Implementation under any license at all is explicitly allowed.</p>
+</section>
+<section class="sect2" id="location">
+<h3 class="title"><span class="section-number">10.2 </span><span class="name">Location</span><a class="headerlink" href="#location" title="Link to this heading">#</a></h3>
+<p><a class="ulink reference external" href="http://standards.freedesktop.org/trash-spec/trashspec-latest.html" target="_blank">http://standards.freedesktop.org/trash-spec/trashspec-latest.html</a> .</p>
+</section>
+<section class="sect2" id="version-history">
+<h3 class="title"><span class="section-number">10.3 </span><span class="name">Version history</span><a class="headerlink" href="#version-history" title="Link to this heading">#</a></h3>
+<p>0.1 “First try”, August 30, 2004. Initial draft. “Implementation notes”
+not written as yet.</p>
+<p>0.2 August 30, 2004. Updated with feedback by Alexander Larsson
+(alexl[at]redhat.com) and by Dave Cridland (dave[at]cridland.net)</p>
+<p>0.3 September 8, 2004. Changed the name and location of the “home trash”
+directory, and introduced the generic term “home trash”. Changed the
+trash info file format to a .desktop-like one. Added directions on
+creation of info files and copying of trashed files. Changed user names
+to user ids. Added implementation notes. Added a copyright notice.</p>
+<p>0.4 September 9, 2004. Changed [Trash entry] to [Trash info] and fixed
+some typo's</p>
+<p>0.5 September 9, 2004. Changed [Trash info] to [Trash Info]</p>
+<p>0.6 October 8, 2004. Corrections by Alexander Larsson (alexl[at]redhat.com).
+Also added “note on scope”. Cleaned up HTML. Added a link to this
+document on the freedesktop.org standards page</p>
+<p>0.7 April 12, 2005. Added URL-style encoding for the name of the deleted
+file, as implemented in KDE 3.4</p>
+<p>0.8 March 14, 2012. Update David Faure's email address, fix permanent
+URL for this spec.</p>
+<p>1.0 January 2, 2014. Add directorysizes cache; style review.</p>
+<p class="rubric">Footnotes</p>
+<aside class="footnote-list brackets">
+<aside class="footnote brackets" id="id10" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">1</a><span class="fn-bracket">]</span></span>
+<p>However, developers of preloaded libraries should somehow work around
+the case when a desktop environment also supporting the Trash
+specification is run on top of them. “Double trashing” and “trashing
+of the trash” should be avoided.</p>
+</aside>
+<aside class="footnote brackets" id="id11" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id2">2</a><span class="fn-bracket">]</span></span>
+<p>To be more precise, for every user who can use the trash facility. In
+general, all human users, and possibly some “robotic” ones like ftp,
+should be able to use the trash facility.</p>
+</aside>
+<aside class="footnote brackets" id="id12" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id3">3</a><span class="fn-bracket">]</span></span>
+<p>For case sensitive file systems, note the case.</p>
+</aside>
+<aside class="footnote brackets" id="id13" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id4">4</a><span class="fn-bracket">]</span></span>
+<p>To be more precise, from a partition/device different from the one on
+which $XDG_DATA_HOME resides.</p>
+</aside>
+<aside class="footnote brackets" id="id14" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id5">5</a><span class="fn-bracket">]</span></span>
+<p>“$trash/files/”, <strong>not</strong> into “$trash/” as in many existing
+implementations!</p>
+</aside>
+<aside class="footnote brackets" id="id15" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id6">6</a><span class="fn-bracket">]</span></span>
+<p>At least because another implementation might trash files into the
+same trash directory</p>
+</aside>
+<aside class="footnote brackets" id="id16" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id7">7</a><span class="fn-bracket">]</span></span>
+<p>For example, if the file in $trash/files is named foo.bar , the
+corresponding file in $trash/info MUST be named foo.bar.trashinfo</p>
+</aside>
+<aside class="footnote brackets" id="id17" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id8">8</a><span class="fn-bracket">]</span></span>
+<p>This provides for future extension</p>
+</aside>
+<aside class="footnote brackets" id="id18" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id9">9</a><span class="fn-bracket">]</span></span>
+<p>Rationale: If an older trash implementation restores a trashed
+directory, adds files to a nested subdir and trashes it again, the
+modification time of the directoy didn't change, so it is not a good
+indicator. However the modification time of the trashinfo file will
+have changed, since it is always the time of the actual trashing
+operation.</p>
+</aside>
+</aside>
+</section>
+</section>
+</section>
+
+
+        </div>
+      </div>
+      <div class="page-bottom"></div>
+    </div>
+  </div>
+  <div id="_footer-wrap">
+    <div id="_footer">
+      <p>© 2026 Freedesktop.org</p>
+    </div>
+  </div>
+</body>
+</html>

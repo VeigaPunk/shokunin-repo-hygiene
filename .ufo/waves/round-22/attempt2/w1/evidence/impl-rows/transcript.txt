@@ -1,0 +1,181 @@
+row-check.py — transcript (souji round 22, attempt 2, w1, ImplRowNormalizer)
+generated: 2026-10-25T06:50:50Z
+lane: /home/vgpnk/Projects/shokunin/souji-shokunin
+base revision: 4edb25dfe262515d0da63224bbba71e02e36cba5
+python: Python 3.14.8
+host: Linux 7.2.11-arch1-1
+
+sha256 row-check.py       bc186507f9b160e42a2e6904726aff4c36081f375e65ef4879e14ca6338e95eb
+sha256 rows-fixture.md    a6bc936d8ed909dc4a2ff4eac7db10f6b448e62e511770f2a3ff8df40287a85e
+sha256 expect.tsv         55fb48aa723a60caa7a5b22a1185f233368d35f69b30efe08d6725b48600aa22
+
+### 1. vocabulary provenance — derived from corpus/SOURCES.md, not invented
+$ python3 -B .ufo/waves/round-22/attempt2/w1/evidence/impl-rows/row-check.py --derive-vocab corpus/SOURCES.md
+registry=corpus/SOURCES.md rows=114
+statuses derived=mined,queued,rejected constants=mined,queued,rejected match=yes
+cadences derived=on-change,on-correction,on-release constants=on-change,on-correction,on-release match=yes
+exit=0
+
+### 2. built-in selftest — every code must fail on its own fixture
+$ python3 -B .ufo/waves/round-22/attempt2/w1/evidence/impl-rows/row-check.py --selftest
+selftest cases=14 pass=14 fail=0 control=FALSE-GREEN-REJECTED
+exit=0
+
+### 3. fixture table — good row clean, one row per defect class
+###    expectations are asserted by --expect, not eyeballed
+$ python3 -B .ufo/waves/round-22/attempt2/w1/evidence/impl-rows/row-check.py --table .ufo/waves/round-22/attempt2/w1/evidence/impl-rows/rows-fixture.md --expect .ufo/waves/round-22/attempt2/w1/evidence/impl-rows/rows-fixture.expect.tsv --registry corpus/SOURCES.md --root . --today 2026-10-25
+table=.ufo/waves/round-22/attempt2/w1/evidence/impl-rows/rows-fixture.md root=/home/vgpnk/Projects/shokunin/souji-shokunin rows=14
+row=40 id=S901 E01 column-count fields=10 expected=11
+row=41 id=S91 E02 id-format id=S91
+row=42 id=S902 X01 indent indent=4 max=3
+row=43 id=S903 X02 pipe-in-cell form=literal char=97 text=cope | § 1 | a|b inside one c
+row=43 id=S903 E01 column-count fields=12 expected=11
+row=44 id=S904 X02 pipe-in-cell form=escaped char=100
+row=44 id=S904 E01 column-count fields=12 expected=11
+row=45 id=S905 E07 status-enum status=watch
+row=46 id=S906 E09 recheck-format recheck=90 days
+row=47 id=S907 E11 used-by-missing used-by=corpus/knowledge/r22-append-target-absent.md
+row=48 id=S908 E05 kind-enum kind=blog
+row=49 id=S909 E06 tier-enum tier=D
+row=50 id=S910 E08 opened-format opened=2026-13-01
+row=51 id=S911 E10 community-at-A community-at-A
+row=52 id=S114 E03 duplicate-id where=registry
+summary rows=14 ok=1 fail=13 codes=E01:3,E02:1,E03:1,E05:1,E06:1,E07:1,E08:1,E09:1,E10:1,E11:1,X01:1,X02:2
+expect=.ufo/waves/round-22/attempt2/w1/evidence/impl-rows/rows-fixture.expect.tsv ids=14 unmet=0
+exit=1
+
+### 4. calibration — the live 114-row registry must draw no finding,
+###    and the registry must be byte-identical across the run (read-only)
+$ sha256sum corpus/SOURCES.md   # before
+f0672c30d993d9d830deb270a292968fe136760bc08c321924d846cb002c670b  corpus/SOURCES.md
+
+$ python3 -B .ufo/waves/round-22/attempt2/w1/evidence/impl-rows/row-check.py --table corpus/SOURCES.md --root . --today 2026-10-25
+table=corpus/SOURCES.md root=/home/vgpnk/Projects/shokunin/souji-shokunin rows=114
+summary rows=114 ok=114 fail=0 codes=-
+exit=0
+
+$ sha256sum corpus/SOURCES.md   # after
+f0672c30d993d9d830deb270a292968fe136760bc08c321924d846cb002c670b  corpus/SOURCES.md
+identical=yes
+
+### 5. independent agreement — maintained validator on the same bytes
+$ /home/vgpnk/Projects/shokunin/scripts/sources-census.sh validate --root /home/vgpnk/Projects/shokunin souji
+souji	W04	S035 duplicate url git-scm.com/docs/git-repo across scopes
+souji	W04	S036 duplicate url git-scm.com/docs/git across scopes
+souji	W04	S038 duplicate url www.gnu.org/software/coreutils/manual/html_node/timeout-invocation.html across scopes
+souji	W04	S049 duplicate url git-scm.com/docs/git across scopes
+souji	W04	S057 duplicate url git-scm.com/docs/git-config across scopes
+souji	W04	S058 duplicate url git-scm.com/docs/git-worktree across scopes
+souji	W04	S059 duplicate url git-scm.com/docs/gitattributes across scopes
+souji	W04	S063 duplicate url git-scm.com/docs/git-gc across scopes
+souji	W04	S065 duplicate url www.gnu.org/software/bash/manual/html_node/The-Set-Builtin.html across scopes
+souji	W04	S072 duplicate url www.gnu.org/software/bash/manual/html_node/The-Set-Builtin.html across scopes
+souji	W04	S073 duplicate url man7.org/linux/man-pages/man2/kill.2.html across scopes
+souji	W04	S075 duplicate url man7.org/linux/man-pages/man5/proc_pid_stat.5.html across scopes
+souji	W04	S076 duplicate url man7.org/linux/man-pages/man5/proc_pid_exe.5.html across scopes
+souji	W04	S077 duplicate url man7.org/linux/man-pages/man2/open.2.html across scopes
+souji	W04	S086 duplicate url man7.org/linux/man-pages/man5/proc_pid_fd.5.html across scopes
+souji	W04	S087 duplicate url man7.org/linux/man-pages/man5/proc_pid_wchan.5.html across scopes
+souji	W04	S088 duplicate url man7.org/linux/man-pages/man5/proc_pid_status.5.html across scopes
+souji	W04	S089 duplicate url git-scm.com/docs/git across scopes
+souji	W04	S090 duplicate url git-scm.com/docs/git-filter-branch across scopes
+souji	W04	S091 duplicate url git-scm.com/docs/git-rev-parse across scopes
+souji	W04	S092 duplicate url git-scm.com/docs/git-for-each-ref across scopes
+souji	W04	S093 duplicate url git-scm.com/docs/git-diff across scopes
+souji	W04	S094 duplicate url www.gnu.org/software/coreutils/manual/html_node/timeout-invocation.html across scopes
+souji	W04	S095 duplicate url man7.org/linux/man-pages/man5/proc_pid_fd.5.html across scopes
+souji	W04	S096 duplicate url man7.org/linux/man-pages/man5/proc_pid_fd.5.html across scopes
+souji	W04	S097 duplicate url git-scm.com/docs/git-filter-branch across scopes
+souji	W04	S098 duplicate url www.gnu.org/software/coreutils/manual/html_node/timeout-invocation.html across scopes
+souji	W04	S099 duplicate url git-scm.com/docs/git-rev-parse across scopes
+souji	W04	S106 duplicate url docs.python.org/3/library/json.html across scopes
+souji	W04	S108 duplicate url docs.python.org/3/builtins/exceptions.html across scopes
+souji	ok	/home/vgpnk/Projects/shokunin/souji-shokunin/corpus/SOURCES.md
+exit=0
+
+### 6. red -> green flips — one cell changed, the finding is the only delta
+$ [stdin: status=watch (red)] python3 -B .ufo/waves/round-22/attempt2/w1/evidence/impl-rows/row-check.py --table - --root . --today 2026-10-25
+table=<stdin> root=/home/vgpnk/Projects/shokunin/souji-shokunin rows=1
+row=3 id=S905 E07 status-enum status=watch
+summary rows=1 ok=0 fail=1 codes=E07:1
+exit=1
+
+$ [stdin: status=queued (green)] python3 -B .ufo/waves/round-22/attempt2/w1/evidence/impl-rows/row-check.py --table - --root . --today 2026-10-25
+table=<stdin> root=/home/vgpnk/Projects/shokunin/souji-shokunin rows=1
+summary rows=1 ok=1 fail=0 codes=-
+exit=0
+
+$ [stdin: indent=4 (red)] python3 -B .ufo/waves/round-22/attempt2/w1/evidence/impl-rows/row-check.py --table - --root . --today 2026-10-25
+table=<stdin> root=/home/vgpnk/Projects/shokunin/souji-shokunin rows=1
+row=3 id=S902 X01 indent indent=4 max=3
+summary rows=1 ok=0 fail=1 codes=X01:1
+exit=1
+
+$ [stdin: indent=0 (green)] python3 -B .ufo/waves/round-22/attempt2/w1/evidence/impl-rows/row-check.py --table - --root . --today 2026-10-25
+table=<stdin> root=/home/vgpnk/Projects/shokunin/souji-shokunin rows=1
+summary rows=1 ok=1 fail=0 codes=-
+exit=0
+
+### 7. TSV machine format — findings on stdout only, summary on stderr
+$ python3 row-check.py --table rows-fixture.md --format tsv ... 2>/dev/null
+40	S901	E01	fields=10 expected=11
+41	S91	E02	id=S91
+42	S902	X01	indent=4 max=3
+43	S903	X02	form=literal char=97 text=cope | § 1 | a|b inside one c
+43	S903	E01	fields=12 expected=11
+44	S904	X02	form=escaped char=100
+44	S904	E01	fields=12 expected=11
+45	S905	E07	status=watch
+46	S906	E09	recheck=90 days
+47	S907	E11	used-by=corpus/knowledge/r22-append-target-absent.md
+48	S908	E05	kind=blog
+49	S909	E06	tier=D
+50	S910	E08	opened=2026-13-01
+51	S911	E10	community-at-A
+52	S114	E03	where=registry
+exit=1
+
+### 8. write surface — three read-mode opens, one selftest write in a TemporaryDirectory
+$ grep -nE 'open\(|write|remove|unlink|rename|rmtree|subprocess|os\.system' row-check.py
+232:    with open(path, encoding="utf-8") as handle:
+247:    with open(path, encoding="utf-8") as handle:
+364:        with open(os.path.join(root, "corpus", "knowledge", "fixture-target.md"),
+366:            handle.write("fixture target\n")
+exit=0
+note: lines 232 and 247 are read-mode loads of the table and the expectation TSV.
+note: lines 364-366 create corpus/knowledge/fixture-target.md inside a
+note: tempfile.TemporaryDirectory() so --selftest can prove E11 fires without
+note: touching any lane path; the directory is removed with the context manager.
+note: no write, remove, rename, chmod or subprocess call exists elsewhere in the tool.
+### 9.a. cross-check (good) — row-check and the maintained validator on the same temp lane
+$ [temp lane /tmp/rowcheck-cross-good.5Ig3OD] cat corpus/SOURCES.md (row only)
+| id | source | kind | tier | scope | anchor | teaches | status | opened | recheck | used-by |
+|---|---|---|---|---|---|---|---|---|---|---|
+| S990 | cross-check row — https://example.invalid/x | docs | A | cross scope | § 1 | cross check row | queued | 2026-10-25 | 90d | — |
+
+$ row-check.py --table /tmp/rowcheck-cross-good.5Ig3OD/corpus/SOURCES.md --root /tmp/rowcheck-cross-good.5Ig3OD
+table=/tmp/rowcheck-cross-good.5Ig3OD/corpus/SOURCES.md root=/tmp/rowcheck-cross-good.5Ig3OD rows=1
+summary rows=1 ok=1 fail=0 codes=-
+exit=0
+
+$ sources-census.sh validate --root /tmp/rowcheck-cross-good.5Ig3OD /tmp/rowcheck-cross-good.5Ig3OD
+rowcheck-cross-good.5Ig3OD	ok	/tmp/rowcheck-cross-good.5Ig3OD/corpus/SOURCES.md
+exit=0
+
+### 9.b. cross-check (bad) — row-check and the maintained validator on the same temp lane
+$ [temp lane /tmp/rowcheck-cross-bad.0qGYjH] cat corpus/SOURCES.md (row only)
+| id | source | kind | tier | scope | anchor | teaches | status | opened | recheck | used-by |
+|---|---|---|---|---|---|---|---|---|---|---|
+| S991 | cross bad — https://example.invalid/y | docs | A | cross scope | § 1 | a|b | queued | 2026-10-25 | 90d | — |
+
+$ row-check.py --table /tmp/rowcheck-cross-bad.0qGYjH/corpus/SOURCES.md --root /tmp/rowcheck-cross-bad.0qGYjH
+table=/tmp/rowcheck-cross-bad.0qGYjH/corpus/SOURCES.md root=/tmp/rowcheck-cross-bad.0qGYjH rows=1
+row=5 id=S991 X02 pipe-in-cell form=literal char=81 text=cope | § 1 | a|b | queued | 2
+row=5 id=S991 E01 column-count fields=12 expected=11
+summary rows=1 ok=0 fail=1 codes=E01:1,X02:1
+exit=1
+
+$ sources-census.sh validate --root /tmp/rowcheck-cross-bad.0qGYjH /tmp/rowcheck-cross-bad.0qGYjH
+rowcheck-cross-bad.0qGYjH	E01	S991 fields=12
+exit=1
+

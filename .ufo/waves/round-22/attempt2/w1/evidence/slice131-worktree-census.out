@@ -1,0 +1,123 @@
+# S131 hand-check receipt — lane souji, register row extraction + payload search
+# item: L1Souji22.Slice131   access date: 2026-10-25   round 22 attempt 2 (hyaku)
+# read-only: no lane-repo writes other than this file and Slice131.md; no git/jj writes.
+# tooling: none installed or updated for this item.
+
+## 1. Frozen row extraction (field 4 = id cell)
+
+command:
+  awk -F'|' 'NR==175 && $4 ~ /S131/ {print $2"|"$3"|"$4"|"$5"|"$6}' \
+      /home/vgpnk/Projects/shokuknow/.ufo/waves/corpus-expansion-1/absent-defect-register.md
+
+output (exit=0):
+   `souji` | round2 | S131 | `payload-absent` | lanes/souji/round2/evidence/r23-worktree-census.out
+
+registered quote cell (field 7), verbatim:
+  `-n, --dry-run With prune, do not remove anything; just report what it would remove.`
+
+register class: payload-absent
+derived slice line (census/round-22/attempt2/quarantine-slice, line 5):
+   S131   `payload-absent`
+
+## 2. Cited source snapshot (read 2026-10-25, verbatim, 43 lines / 1672 bytes)
+
+path:   /home/vgpnk/Projects/shokuknow/lanes/souji/round2/evidence/r23-worktree-census.out
+sha256: 1ac71c4f7199a134c204b45f339aadfc7e90c84b2d640cbed181b3577b9392fd
+
+--- BEGIN CITED SOURCE (verbatim) ---
+# souji round-2 read-only worktree census (CANNOT-ANSWER item 7)
+# run 2026-10-23, git 2.56.0 (Arch linux x64), kernel 7.2.11-arch1-1
+# READ-ONLY: only `worktree list` and `worktree prune --dry-run` were used.
+# `git worktree prune` (the mutating form) was NEVER run.
+#
+repo=/home/vgpnk/Projects/shokunin
+--- git worktree list (count) ---
+5
+--- registrations ---
+worktree /home/vgpnk/Projects/shokunin
+worktree /fast/scratch/hyaku/native-mutation-proof
+worktree /fast/scratch/hyaku/root-closure-null-round
+worktree /fast/scratch/hyaku/s3-nonauthor64
+worktree /fast/scratch/hyaku/s3-ready66
+--- per-registration state ---
+native-mutation-proof    gitdir_target_exists=yes   index_mtime=2026-10-21 19:24:02 locked=no
+root-closure-null-round  gitdir_target_exists=yes   index_mtime=2026-10-21 17:37:44 locked=no
+s3-nonauthor64           gitdir_target_exists=yes   index_mtime=2026-10-21 15:58:38 locked=no
+s3-ready66               gitdir_target_exists=yes   index_mtime=2026-10-21 17:49:14 locked=no
+--- prune census (dry-run only) ---
+default expiry (3.months.ago):      (no output — none prunable)
+--expire=now (most aggressive):      (no output — none prunable)
+--expire=never:                      (no output — none prunable)
+--- campaign repo ---
+repo=/home/vgpnk/Projects/shokuknow
+worktree list count: 1
+prune --dry-run --expire now:        (no output — none prunable)
+--- post-check: nothing was pruned ---
+worktree list count after: 5
+--- comparison to the round-12 census figure (0 prunable, 3 locked) ---
+today: 0 prunable, 0 locked, 5 registrations (all 4 extra have live working
+directories and index mtimes of 2026-10-21, far inside the 3-month expiry)
+--- END CITED SOURCE ---
+
+## 3. Payload presence test — ABSENT
+
+literal grep (case-sensitive) for the registered quote:
+  grep -c -- '-n, --dry-run With prune, do not remove anything' <cited source>
+  -> 0
+
+grep for the distinctive tail:
+  grep -c 'do not remove anything' <cited source>
+  -> 0
+
+whitespace-collapsed containment (python3, norm = re.sub(r"\s+"," ",s).strip()):
+  norm(quote) in norm(cited source)            -> False
+  norm(quote) in norm(rendered git-worktree)   -> True   (offset 10121)
+  norm(quote) in norm(rendered git-prune)      -> False  (git-prune words differ, see §5)
+
+Only dry-run strings present in the payload are execution lines, e.g.:
+  line 3:  # READ-ONLY: only `worktree list` and `worktree prune --dry-run` were used.
+  line 20: --- prune census (dry-run only) ---
+  line 27: prune --dry-run --expire now:        (no output — none prunable)
+None carries the option-synopsis sentence.
+
+## 4. Located span in the installed primary source
+
+package: git 2.56.0-1 (pacman -Q git)
+man page: /usr/share/man/man1/git-worktree.1.gz
+  sha256(gz)              = 23a15bc3a5c48284727d665ce09e515a003959eaab706664d634563f51b91111
+  sha256(zcat -)          = 2330c8c82928bdf439fc8cdfac3fd7805fdd6b2cbc243fe9c2285ff13fa32408
+  sha256(MANWIDTH=100 man -P cat git-worktree) = 25d48384d9b12b4db716d3f49e587f8f27ed3e225c565d54183373f827053986
+  header: "Manual: Git Manual" / "Source: Git 2.56.0" / date 2026-09-27
+
+locator: section OPTIONS, item `-n, --dry-run`
+rendered (MANWIDTH=100 man -P cat git-worktree), lines 189-190:
+  189:      -n, --dry-run
+  190:          With prune, do not remove anything; just report what it would remove.
+
+raw roff (/tmp/git-worktree.1.txt), lines 352-356:
+  .PP
+  \fB\-n\fR, \fB\-\-dry\-run\fR
+  .RS 4
+  With
+  \fBprune\fR, do not remove anything; just report what it would remove\&.
+  .RE
+
+exact located span (17 words, <=25):
+  "-n, --dry-run With prune, do not remove anything; just report what it would remove."
+
+## 5. Disambiguation against git-prune(1)
+
+MANWIDTH=100 man -P cat git-prune, lines 24-25:
+      -n, --dry-run
+          Do not remove anything; just report what it would remove.
+git-prune(1) omits the words "With prune,". The registered span therefore resolves
+uniquely to git-worktree(1) OPTIONS `-n, --dry-run`, not to git-prune(1).
+
+## 6. Conclusion for this row
+
+- payload absent from the cited local artifact (0 literal, 0 normalized matches): confirmed.
+- span is real, verbatim, and >= 17 words short, in the installed git-worktree(1) OPTIONS.
+- the register cites a local census for text that lives in git-worktree(1): citation-class defect.
+- disposition: refused (payload absent / citation-class defect), reason stated;
+  flip: re-cite the same span against git-worktree(1) OPTIONS `-n, --dry-run`
+  (git 2.56.0, man page dated 2026-09-27) instead of editing the quote.
