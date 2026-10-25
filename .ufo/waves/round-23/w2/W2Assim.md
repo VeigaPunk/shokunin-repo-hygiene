@@ -63,7 +63,7 @@ None of these is an admission error; all are repair-or-disclose defects in the s
    (staged S112–S114 are the same documents as lane S115–S117 while lane S112–S114 are
    gio/GLib/statx — `SOURCES.append.md:10-12` vs `corpus/SOURCES.md:132-134`; the staged title
    "both target languages read `garbage` the same way" is verbatim
-   `count-objects-garbage-semantics-r24.md:8`).
+   `count-objects-garbage-semantics-r24.md:9`).
 
 ## Findings
 

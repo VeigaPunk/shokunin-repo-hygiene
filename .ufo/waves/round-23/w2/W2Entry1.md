@@ -28,8 +28,9 @@ $ git status --porcelain
 ?? census/operator-sweep-20261019/
 ```
 
-The file was created at `4765250` and has not been touched since; the only worktree delta is
-an untracked directory outside this attack.
+The file was created at `4765250` and has not been touched since: `git log` above lists
+only `4765250`, and `git status`/`git diff` show no modification to it. (`git status` on
+this live lane also shows other wave-2 seats' in-flight edits; none touches this artifact.)
 
 ```
 $ sha256sum census/round-23/sources/git-*.txt
@@ -178,7 +179,7 @@ the same option. Disclose, do not silently accept.
 
 ### F5 — disclose — "the two halves that entry names as missing" overstates the sibling
 
-`corpus/knowledge/repo-size-census-readonly.md:66-69` claims
+`corpus/knowledge/repo-size-census-readonly.md:62-69` claims
 `corpus/knowledge/git-repo-structure-readonly.md` names both halves as missing. Its decision
 table names only the unreachable half explicitly (`Need unreachable-object accounting | Use
 a separate read-only object census`, line 19); the size half is named as *"obtain
@@ -190,7 +191,7 @@ size half rather than claiming it named this instrument.
 
 ### F6 — disclose — lane-link parenthetical can misbind the structure selftest's commit
 
-`corpus/knowledge/repo-size-census-readonly.md:64-66`: "recorded in
+`corpus/knowledge/repo-size-census-readonly.md:62-66`: "recorded in
 `census/round-13/verification.json` (measured_commit `6f8ee0f3…`, `structure-selftest`
 exit 0, `artifacts_unchanged_during_run` true)."
 

@@ -221,3 +221,18 @@ Verdict above is on `git archive 1026900`; nothing here was run against the dirt
   fetches quoted here, not of a canonical page.
 - Not attacked by me: C1/C2 instruments, `repo-size-census-readonly.md`, the S115-S117 manual rows beyond the
   two `garbage`/`size-garbage` lines cited.
+
+---
+
+## 8. Convergence with `W2Digests.md`
+
+The W2Digests seat lands the same defect from a different angle (its § 3 "two community digests are
+published"): F1 here is not a duplicate but the same defect reached from live re-fetch — this seat measured
+the non-reproducibility, W2Digests measured the missing committed-side binding. Both actions reduce to:
+publish digests of the committed extracts (or commit the pages the published digests bind). One refinement
+their reading adds [INFERENCE of cause, their evidence]: the lane already holds two 129655-byte fetches with
+different digests, so equal size + different digest is expected. My own byte-level diff of a 129547-byte
+fetch vs a 129655-byte fetch attributes the 108-byte gap to three inserted blocks (a `data-emotion` style
+rule, a `div class="style…` opener, a `></div` closer) — a conditional render block, not article content —
+so the size split is conditional markup, not a second edition. The CSDN 182147-vs-180456 gap (1,691 bytes)
+has no such attribution from this seat.

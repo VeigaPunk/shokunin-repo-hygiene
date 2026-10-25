@@ -20,8 +20,8 @@ exact, frozen exemption allowlist. Control (do nothing) = the same bytes at the 
 `keys=4 records=3 occurrences=13 mismatches=6` revision-scoped (`mismatches=29` with the live
 worktree arm), receipt `census/round-23/records/agreement-control-base.txt`. After: `0`
 (`census/round-23/records/agreement-after.tsv`). Fixture `tests/fixtures/r23-record-agreement.py`
-9/9 with `control=FALSE-GREEN-REJECTED`: eight cases require a nonzero mismatch, so an
-always-zero emitter fails them.
+11/11 with `control=FALSE-GREEN-REJECTED`: ten cases require a nonzero mismatch, so an
+always-zero emitter fails them; the eleventh is the green-on-clean target.
 
 **C2 — operability (8).** `tools/souji-receipt-run.py` re-derives a counter at a full durable
 revision in a private `--no-local` clone and emits a receipt binding rev, tool path, the sha256 of

@@ -1578,8 +1578,8 @@ nothing) = the same tool bytes at base: keys=4 records=3 occurrences=13
 mismatches=6, rc 1 (receipt census/round-23/records/agreement-control-base.txt,
 revision-scoped arm `--no-worktree`; the live-worktree arm adds one K4 row per
 uncommitted path and is reported separately).
-After: mismatches=0 at the landing tip (receipt
-census/round-23/records/agreement-after.tsv). The instrument's own fixture
+After: mismatches=0 at the landing tip with the revision-scoped arm (receipt
+census/round-23/records/agreement-after.tsv, rev 53780181aa0f9969eb16b96086c6638acedde1e7, rc=0). The instrument's own fixture
 tests/fixtures/r23-record-agreement.py kills an always-zero emitter on ten of its
 eleven cases (the eleventh is the green-on-clean target).
 
@@ -1595,10 +1595,10 @@ carrying the r22 stale digest 5b8025a8...: RECEIPT-TOOL-DIGEST-MISMATCH, rc 2.
 Named limits: the digest binds bytes, not execution (a typed receipt passes
 verify); K4 is worktree-scoped, so C1's K4 is not revision-reproducible.
 
-C3 coverage (8). One assimilation theme on F2 (repository size census), the
-lane's only frontier row that held no entry: corpus/knowledge/repo-size-census-readonly.md
+C3 coverage (8). One assimilation theme on F2's read side: corpus/knowledge/repo-size-census-readonly.md
 (S115-S117) and corpus/knowledge/count-objects-garbage-readings-r25.md
-(S118-S119), re-grounded from sources opened this round (installed git 2.56.0
+(S118-S119); F2 already held one entry (git-repo-structure-readonly.md) and the
+delta is F2 entries 1 -> 3, re-grounded from sources opened this round (installed git 2.56.0
 man pages snapshotted under census/round-23/sources/ with sha256, plus two
 community pages fetched live). Registry 114 -> 119 rows, 0 malformed, 0
 duplicate ids, sources-census validate exit 0. No fleet size figure is claimed;
@@ -1618,7 +1618,7 @@ snapshot, citing round-22 M17/M19/M21. D8: disclosed above.
 Wave. One v1 wave under scripts/hyaku/ufo-wave-policy.json, 41 seats
 (9 scout, 9 scribe, 9 reviewer, 4 critic, 3 executor, 2 revenger,
 2 mutation-tester, 1 connector, 1 sentinel, 1 simplifier) dispatched as one
-task call from .ufo/waves/round-23/w1-spec.json, plus a residual reviewer
-call. L1 holds the planner seat. No deletion outside this repo, no history
+task call from .ufo/waves/round-23/w1-spec.json, and wave 2 (33 falsify seats) from
+.ufo/waves/round-23/w2-spec.json — 74 seats total, no residual call. L1 holds the planner seat. No deletion outside this repo, no history
 rewrite, no credentials, no live /proc census, no operator-sweep contents.
 Certification OFF, K5 HELD, F5 reap and NAMESPACE holds unchanged.

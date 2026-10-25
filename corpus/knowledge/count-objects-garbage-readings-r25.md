@@ -1,7 +1,7 @@
 source: S118 — https://qiita.com/koseki/items/f1af58f1ec1693f0536a — tier B (community), JA
 source: S119 — https://bbs.csdn.net/weixin_33940469/article/details/100327798 — tier B (community), ZH
 verified-at: 2026-10-25 — both pages fetched live this round (curl rc=0; 129655 and 182147 bytes); no git-version claim is drawn from either
-recheck: 180d — re-fetch census/round-23/sources/qiita-gc-auto.raw and census/round-23/sources/csdn-count-objects-vh.raw, then grep each Gate span
+recheck: 180d — re-fetch both community pages live and re-grep each Gate span against the LIVE page bytes (the committed extracts cannot re-test claim 2's negative), and re-hash the committed extracts against census/round-23/sources/SHA256SUMS
 ground: F2 — repository size census (what the two target-language communities say `garbage` counts, and what they do not say)
 
 # The two target-language communities do not read `garbage` the same way: one glosses the field, the other means the collection
@@ -56,7 +56,7 @@ census quote must take the unit from the manual and may cite S119 only for the
 url: https://qiita.com/koseki/items/f1af58f1ec1693f0536a
 url: https://bbs.csdn.net/weixin_33940469/article/details/100327798
 opened: 2026-10-25
-fetched: curl rc=0 — qiita 129655 bytes sha256 2020b283cdb0b466f4e594180cb358a02f07319ad12c6e33eb078176fa21daa8; csdn 182147 bytes sha256 5a8b27ed3982a915b3b9a82b7d2ff1677f0d377a080be4c7367500bd06f65ab7
+fetched: 2026-10-25; the committed bounded extracts are `census/round-23/sources/qiita-gc-auto.raw` (sha256 7d2298c139c128dd…) and `census/round-23/sources/csdn-count-objects-vh.raw` (sha256 96aecd9198e70670…); the raw page fetches are volatile one-shots (per-response tokens) and are not reproducible, so the extract digests are the binding ones (Q1)
 
 - ADMIT: "无法被 Git 识别的垃圾文件大小" — § 2.1 field table, `garbage` row — reason: the community gloss names the unrecognised-file reading this entry adopts, and its size noun is the unit error the body flags — snapshot: census/round-23/sources/csdn-count-objects-vh.raw
 - ADMIT: "gc.auto (6700)" — § ガベージコレクション, `gc.auto` section — reason: the JA page's subject is gc config, which is what makes its ガベージ the collection rather than the field — snapshot: census/round-23/sources/qiita-gc-auto.raw

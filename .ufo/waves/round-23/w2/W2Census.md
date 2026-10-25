@@ -29,8 +29,9 @@ here.
 pre-existing `W04` warnings and no `E` finding. Prereg target `>=117` is met; the SCORECARD/README/
 lesson/LOG claim `114 → 119` holds.
 
-**falsified** for one number the report publishes in the same sentence: the tier histogram
-after-value `A113/B3/C2` (`report-draft.md:133`) is wrong — measured **A113/B5/C1**. See F1.
+**falsified** for one number the draft report publishes in the same sentence: the tier histogram
+after-value `A113/B3/C2` (`report-draft.md:133`) is wrong — measured **A113/B5/C1**. That draft is
+untracked, so no committed artifact carries the wrong number yet. See F1.
 
 ## Re-derivation (commands and outputs)
 
@@ -175,9 +176,10 @@ row/malformed/duplicate counters discriminate"). That disclosure is accurate and
 
 ## Findings
 
-### F1 — `report-draft.md:133`: tier histogram after-value is wrong (severity: medium; action: **fix**)
+### F1 — `report-draft.md:133`: tier histogram after-value is wrong (severity: medium; action: **fix before the report lands**)
 
-Line as committed (identical bytes at the tip, `git diff --quiet HEAD` clean):
+The line lives only in the **untracked** draft (see "tracking facts" above — no committed bytes
+carry it; the committed artifacts state only the `114 → 119` row delta, which is correct):
 
 ```
 tier histogram A110/B3/C1 → A113/B3/C2, status mined91/queued15/rejected8 → mined96/queued15/rejected8,
@@ -225,7 +227,7 @@ unlike C1/C2 which name tool digests and receipt revisions. The counter itself i
 unpinned: `/home/vgpnk/Projects/shokunin/scripts/sources-census.sh`, `sha256
 3fb7261569f46423dd80ecc23e0a23789a7926f667c7a3fc559d2439d4a64e30`, not tracked in the lane
 (`git ls-files scripts/sources-census.sh` → 0 paths), and it reads the working tree rather than a
-revision. The committed report discloses the exit-0 vacuity but not this pinning gap
+revision. The draft's named limits disclose the exit-0 vacuity but not this pinning gap
 (`grep -n 'fleet-owned\|no lane blob\|outside the lane\|unpinned'` over `corpus/lessons/round-23.md`,
 `corpus/README.md`, `report-draft.md` → no hit).
 

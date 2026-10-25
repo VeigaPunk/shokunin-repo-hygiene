@@ -131,8 +131,12 @@ def durable_rev(root: str, rev: str) -> bool:
 
 
 def blob_sha_bytes(root: str, rev: str, path: str) -> str | None:
+    env = {k: v for k, v in os.environ.items() if k not in ("GIT_DIR", "GIT_WORK_TREE")}
+    env["GIT_NO_REPLACE_OBJECTS"] = "1"
+    env["GIT_NO_LAZY_FETCH"] = "1"
     proc = subprocess.run(["git", "-C", root, "-c", "maintenance.auto=false",
-                           "cat-file", "blob", f"{rev}:{path}"], capture_output=True)
+                           "cat-file", "blob", f"{rev}:{path}"],
+                          capture_output=True, env=env)
     if proc.returncode != 0:
         return None
     return hashlib.sha256(proc.stdout).hexdigest()
