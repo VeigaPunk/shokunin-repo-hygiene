@@ -5,8 +5,9 @@ Reads a self-assessment file (default SCORECARD.md) at a committed revision and
 re-derives its machine-checkable assertions from the same revision:
 
   class A — a backticked repo-relative path (optional :<line>, optional '*'
-            glob) must exist in the tree at --rev, or at the revision named in
-            the same span as '<rev>:<path>'.
+            glob, where '*' never crosses '/') must exist in the tree at --rev,
+            or at the revision the same span names as '<rev>:<path>' (a cell
+            that names its own revision is asserted at that revision).
   class B — a bare 7..40-char hex token in a cell that names a revision context
             (commit/commits/rev/revision/measured/at, or a census/round-<N>/
             path) must resolve with `git cat-file -e <tok>^{commit}`.
@@ -31,11 +32,11 @@ import sys
 import tempfile
 
 EXT = r"(?:py|sh|json|tsv|md|txt)"
-PATH_RE = re.compile(r"^[A-Za-z0-9_.][A-Za-z0-9_./-]*\.%s$" % EXT)
-GLOB_RE = re.compile(r"^[A-Za-z0-9_.*][A-Za-z0-9_./*-]*\.%s$" % EXT)
-REV_AT_PATH_RE = re.compile(r"^([0-9a-f]{7,40}):(\S+)$")
-HEX_B_RE = re.compile(r"(?<![A-Za-z0-9_.-])([0-9a-f]{7,40})(?![A-Za-z0-9_.-])")
-HEX64_RE = re.compile(r"(?<![A-Za-z0-9_.-])([0-9a-f]{64})(?![A-Za-z0-9_.-])")
+PATH_RE = re.compile(r"^[A-Za-z0-9_.][A-Za-z0-9_./@+-]*\.%s$" % EXT)
+GLOB_RE = re.compile(r"^[A-Za-z0-9_.*][A-Za-z0-9_./@+*-]*\.%s$" % EXT)
+REV_AT_PATH_RE = re.compile(r"^([0-9a-fA-F]{7,40}):(\S+)$")
+HEX_B_RE = re.compile(r"(?<![0-9A-Za-z_])([0-9a-fA-F]{7,40})(?![0-9A-Za-z_])")
+HEX64_RE = re.compile(r"(?<![0-9A-Za-z_])([0-9a-fA-F]{64})(?![0-9A-Za-z_])")
 SPAN_RE = re.compile(r"`([^`]+)`")
 LINE_SUFFIX_RE = re.compile(r":(\d+)$")
 REV_WORDS = re.compile(r"\b(commit|commits|rev|revision|revisions|measured|at)\b", re.I)
@@ -70,19 +71,34 @@ class Repo:
         return self.git("show", "%s:%s" % (rev, path))
 
     def read_declaration(self, rev: str, relfile: str) -> str:
-        """From the revision when tracked there, else from the filesystem."""
+        """From the revision; an absolute path (a selftest fixture) is read from disk.
+
+        A repo-relative declaration that is absent at --rev is an error, never a
+        silent worktree read: auditing revision R must not measure R's absence as
+        a clean result from uncommitted bytes.
+        """
         if relfile in self.tracked(rev):
             data = self.blob(rev, relfile)
             if data is not None:
                 return data.decode("utf-8", "replace")
-        path = relfile if os.path.isabs(relfile) else os.path.join(self.root, relfile)
-        with open(path, "r", encoding="utf-8", errors="replace") as fh:
-            return fh.read()
+        if os.path.isabs(relfile):
+            with open(relfile, "r", encoding="utf-8", errors="replace") as fh:
+                return fh.read()
+        raise SystemExit("declaration is not present at %s: %s" % (rev, relfile))
 
     def path_present(self, rev: str, path: str) -> bool:
         if path in self.tracked(rev):
             return True
         return self.blob(rev, path) is not None
+
+
+def _segmatch(pattern: str, path: str) -> bool:
+    """fnmatch per path segment, so '*' never crosses '/'."""
+    pp = pattern.split("/")
+    sp = path.split("/")
+    if len(pp) != len(sp):
+        return False
+    return all(fnmatch.fnmatchcase(b, a) for a, b in zip(pp, sp))
 
 
 def cells_of(line: str) -> list[str]:
@@ -117,7 +133,10 @@ def classify(repo: Repo, rev: str, decl_file: str):
 
         seen_hex: set[str] = set()
         for cell in cells_of(line):
-            digests = set(HEX64_RE.findall(cell))
+            scan = SPAN_RE.sub(
+                lambda m: (" " + m.group(1).strip() + " ")
+                if re.fullmatch(r"[0-9A-Fa-f]{7,64}", m.group(1).strip()) else " ", cell)
+            digests = {d.lower() for d in HEX64_RE.findall(scan)}
             if digests:
                 path_spans = [LINE_SUFFIX_RE.sub("", s.strip()) for s in SPAN_RE.findall(cell)]
                 path_spans = [p for p in path_spans if PATH_RE.match(p)]
@@ -129,7 +148,7 @@ def classify(repo: Repo, rev: str, decl_file: str):
                     skipped += len(digests)
                     seen_hex |= digests
             ctx = bool(REV_WORDS.search(cell) or CENSUS_ROUND_RE.search(cell))
-            for h in sorted(set(HEX_B_RE.findall(cell)) - seen_hex):
+            for h in sorted({t.lower() for t in HEX_B_RE.findall(scan)} - seen_hex):
                 if len(h) == 64:
                     skipped += 1
                     continue
@@ -147,7 +166,7 @@ def evaluate(repo: Repo, a: dict):
         if not repo.rev_ok(a["rev"]):
             return "mismatch:rev-unresolved", "named revision %s does not resolve" % a["rev"]
         if "glob" in a:
-            hits = [f for f in repo.tracked(a["rev"]) if fnmatch.fnmatch(f, a["glob"])]
+            hits = [f for f in repo.tracked(a["rev"]) if _segmatch(a["glob"], f)]
             return ("resolved", "%d match(es) at %s" % (len(hits), a["rev"])) if hits \
                 else ("mismatch:path-absent", "glob matches nothing at %s" % a["rev"])
         if repo.path_present(a["rev"], a["path"]):
