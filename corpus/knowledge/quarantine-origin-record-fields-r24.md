@@ -9,11 +9,12 @@ ground: F4 — restorable quarantine (the read side of a per-item origin record)
 # A per-item origin record must carry the original path, because that is what restore consumes
 
 ## Claim (F4, sourced — amends the round-2 record entries)
-The lane already holds the trash *layout* (S022, § 6 Contents of a trash directory: `info/<name>.trashinfo` with
-`Path` and `DeletionDate`, written before the payload moves) and the *write
-contract* (S113: the trash call is documented recoverable and refuses rather
-than deleting). What was missing is the **read side**: which field a restore
-actually consumes.
+The lane already holds the trash *layout* (S022, § 6 Contents of a trash
+directory: `info/<name>.trashinfo` with `Path` and `DeletionDate`, written
+before the payload moves). The *write contract* is taken from S113, which this
+round mints: the trash call is documented recoverable and can refuse with
+`G_IO_ERROR_NOT_SUPPORTED` instead of deleting. What was missing is the
+**read side**: which field a restore actually consumes.
 
 1. **The original location is the load-bearing field.** `gio trash --list`
    "List files in the trash with their original locations." and
