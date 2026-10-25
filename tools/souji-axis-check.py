@@ -59,25 +59,33 @@ def parse_prereg(path: str):
     block = m.group(1)
     claims = {}
     order = []
+    raw = {}
     cur = None
+    buf = []
     for line in block.splitlines():
         cm = re.match(r"^CLAIM\s+(\S+)\s*$", line)
         if cm:
+            if cur is not None:
+                raw[cur] = buf
             cur = cm.group(1)
             claims[cur] = {}
             order.append(cur)
+            buf = []
             continue
         if cur is None:
             continue
+        buf.append(line)
         kv = re.match(r"^(axis|surface-class|enumerate)\s*:\s*(.+?)\s*$", line)
         if kv:
             claims[cur][kv.group(1)] = kv.group(2)
+    if cur is not None:
+        raw[cur] = buf
     if not order:
         return None, "MACHINE BLOCK contains no CLAIM blocks"
     for cid in order:
         if "axis" not in claims[cid]:
             return None, f"CLAIM {cid} has no `axis:` line"
-    return claims, order, text
+    return claims, order, raw, text
 
 
 def parse_scores(path: str):
@@ -98,8 +106,9 @@ def parse_scores(path: str):
     return scores, None
 
 
-def check(claims, order, scores):
+def check(claims, order, scores, raw=None):
     flags = []
+    raw = raw or {}
     for cid in order:
         c = claims[cid]
         axis = c.get("axis", "")
@@ -112,15 +121,12 @@ def check(claims, order, scores):
             flags.append((cid, "R2", "no `surface-class:` line"))
         elif sc in SURFACE_AXIS and axis in OWNED_AXES and axis != SURFACE_AXIS[sc]:
             flags.append((cid, "R2", f"surface-class {sc!r} declared on {axis!r}; allowed only on {SURFACE_AXIS[sc]!r}"))
-        # R4
+        # R4: a whole-word universal quantifier in the claim text without a
+        # same-claim `enumerate:` line naming its counting command is flagged.
         if "enumerate" not in c:
-            flags.append((cid, "R4", "claim block missing `enumerate:` line"))
-        else:
-            enum_val = c["enumerate"]
-            for w in UNIVERSAL_WORDS:
-                if re.search(rf"\b{w}\b", enum_val):
-                    flags.append((cid, "R4", f"`enumerate:` value {enum_val!r} contains the universal quantifier {w!r}"))
-                    break
+            block_text = " ".join(raw.get(cid, []))
+            if any(re.search(rf"\b{w}\b", block_text) for w in UNIVERSAL_WORDS):
+                flags.append((cid, "R4", "universal quantifier in claim text without `enumerate:` line"))
     # R3
     if scores:
         lowest = min(scores, key=lambda a: scores[a])
@@ -138,13 +144,15 @@ def main() -> int:
     claims_out = parse_prereg(args.prereg)
     if claims_out[0] is None:
         return fail2(claims_out[1])
-    claims, order, _ = claims_out
+    claims, order, raw, _ = claims_out
     scores_out = parse_scores(args.scorecard)
     if scores_out[0] is None:
         return fail2(scores_out[1])
     scores = scores_out[0]
 
-    flags = check(claims, order, scores)
+    flags = check(claims, order, scores, raw)
+
+
     for cid, rule, detail in flags:
         print(f"FLAG {cid} {rule} {detail}")
     print(f"claims={len(order)} flags={len(flags)}")
