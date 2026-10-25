@@ -80,9 +80,10 @@ independently adjudicated in `corpus/lessons/round-13-verifier-spotcheck.md`.
   instead on the standalone ledger-verify capability
   (`tools/souji-vault-verify.sh`, installed r4). Finding: no usable CLI
   entry point on this host. The r4 note said the finding was banked in
-  `.ufo/scopes/souji-mint-20261018/obsidian-cli-probe.md`; that file is absent
-  (checked 2026-10-25, `ls` -> "No such file or directory"), so the finding is
-  not retrievable from committed bytes. Completion-criterion obsidian-row
+  the operator scope file .ufo/scopes/souji-mint-20261018/obsidian-cli-probe.md;
+  that file is absent (checked 2026-10-25, ls -> "No such file or directory"),
+  so the finding is not retrievable from committed bytes and is no longer
+  presented as a banked artifact. Completion-criterion obsidian-row
   requirement waived by the operator.
 - **r5 (verification round, all axes):** audit rounds 1–4 verdicts and
   outputs for correctness and missed items, folded into the round's own
