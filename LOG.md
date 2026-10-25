@@ -1579,7 +1579,7 @@ mismatches=6, rc 1 (receipt census/round-23/records/agreement-control-base.txt,
 revision-scoped arm `--no-worktree`; the live-worktree arm adds one K4 row per
 uncommitted path and is reported separately).
 After: mismatches=0 at the landing tip with the revision-scoped arm (receipt
-census/round-23/records/agreement-after.tsv, rev 53780181aa0f9969eb16b96086c6638acedde1e7, rc=0). The instrument's own fixture
+census/round-23/records/agreement-after.tsv, rev 3b72beacfbcc05b2e38ef246e22787b052e34b8d, rc=0). The instrument's own fixture
 tests/fixtures/r23-record-agreement.py kills an always-zero emitter on ten of its
 eleven cases (the eleventh is the green-on-clean target).
 
