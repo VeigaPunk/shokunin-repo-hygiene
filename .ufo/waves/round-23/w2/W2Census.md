@@ -5,22 +5,20 @@ status histogram, malformed rows, duplicate ids, `sources-census.sh validate` ex
 full output. The gate-check arm (`tools/souji-gate-check.py`) and the two entries are other seats'
 slices and are **not** re-run here.
 
-Lane tip: jj `@` = `lyykwskx`, HEAD commit `1026900` (git). Registry bytes at the tip:
-`git rev-parse HEAD:corpus/SOURCES.md` = `c82f11138bffaba30386fec161ad5b4f658a8ef9`, and the same
-blob at `4765250`, `c0eeaa7`, `1026900` — the registry did not move between the round's three
-landings. `git hash-object corpus/SOURCES.md` = `c82f1113…`, the same as `HEAD:corpus/SOURCES.md`,
-so the working-tree registry is the tip blob (`sha256 027379dc…e0c9`).
+Lane tip at write time: `cfd5d79` (git `HEAD`), reached via the wave-2 landings `1dd8b1e`,
+`5378018`, `3b72bea`, `cfd5d79` after `1026900`. Registry bytes: `HEAD:corpus/SOURCES.md` =
+`c82f11138bffaba30386fec161ad5b4f658a8ef9`, and `git hash-object corpus/SOURCES.md` =
+`c82f1113…` — identical, so the working-tree registry IS the committed tip blob.
 
-Two tracking facts that change how findings are graded: `.ufo/waves/round-23/report-draft.md` is
-**untracked** (`git status --porcelain` → `??`, absent from `git ls-files`, not gitignored), so the
-round report is still a working draft and the numbers in it are not committed bytes; the committed
-claims are the `114 → 119` deltas in `SCORECARD.md:23`, `corpus/README.md:458`,
-`corpus/lessons/round-23.md:85-86` and `LOG.md:1599`. Sibling wave-2 seats were editing 13 other
-tracked files while I ran (`git status --porcelain` → 13 ` M` entries incl. `SCORECARD.md`,
-`corpus/README.md`, `corpus/lessons/round-23.md`, `.ufo/waves/round-23/preregistration.txt`); none of
-them touch `corpus/SOURCES.md`, which stayed at blob `c82f1113…`, and a re-run after those edits
-still gave rows 119 / `E`=0 / `W04`=30 / rc 0. Concurrent lane edits are not mine and not modified
-here.
+Tracking fact that changes how F1/F2 are graded: `.ufo/waves/round-23/report-draft.md` is
+**committed** as of landing `1dd8b1e` (it was an untracked draft when this review began, then a
+sibling landed it mid-run). `git show HEAD:.ufo/waves/round-23/report-draft.md` confirms the wrong
+histogram and the "own receipt" sentence are now committed bytes. The committed C3 claims in
+`SCORECARD.md:23`, `corpus/README.md:458`, `corpus/lessons/round-23.md:85-86`, `LOG.md:1599` carry
+only the `114 → 119` row delta (correct) — not the histogram. Sibling seats edited many tracked
+files during my run; none touched `corpus/SOURCES.md`, which held blob `c82f1113…` at every tip I
+saw (`1026900` → `cfd5d79`), and a re-run at the final tip still gave rows 119 / `E`=0 / `W04`=30 /
+rc 0. Concurrent lane edits are not mine and not modified here.
 
 ## Verdict
 
@@ -29,9 +27,9 @@ here.
 pre-existing `W04` warnings and no `E` finding. Prereg target `>=117` is met; the SCORECARD/README/
 lesson/LOG claim `114 → 119` holds.
 
-**falsified** for one number the draft report publishes in the same sentence: the tier histogram
-after-value `A113/B3/C2` (`report-draft.md:133`) is wrong — measured **A113/B5/C1**. That draft is
-untracked, so no committed artifact carries the wrong number yet. See F1.
+**falsified** for one number now committed in the round report: the tier histogram after-value
+`A113/B3/C2` (`report-draft.md:133`, committed at `1dd8b1e`) is wrong — measured **A113/B5/C1**.
+See F1.
 
 ## Re-derivation (commands and outputs)
 
@@ -176,10 +174,12 @@ row/malformed/duplicate counters discriminate"). That disclosure is accurate and
 
 ## Findings
 
-### F1 — `report-draft.md:133`: tier histogram after-value is wrong (severity: medium; action: **fix before the report lands**)
+### F1 — `report-draft.md:133`: tier histogram after-value is wrong (severity: medium; action: **fix**)
 
-The line lives only in the **untracked** draft (see "tracking facts" above — no committed bytes
-carry it; the committed artifacts state only the `114 → 119` row delta, which is correct):
+The line is **committed** as of landing `1dd8b1e` (see "tracking facts" above; it was an untracked
+draft at the start of this run, and a sibling landed it mid-run). The other committed artifacts
+state only the `114 → 119` row delta, which is correct — but the report is now a landed artifact
+carrying a falsified number:
 
 ```
 tier histogram A110/B3/C1 → A113/B3/C2, status mined91/queued15/rejected8 → mined96/queued15/rejected8,

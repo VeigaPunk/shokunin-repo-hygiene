@@ -2,7 +2,7 @@ source: S115 — https://git-scm.com/docs/git-count-objects — § OPTIONS -v/--
 source: S116 — https://git-scm.com/docs/git-fsck — § OPTIONS --unreachable, --dangling, --no-reflogs, --lost-found — git 2.56.0
 source: S117 — https://git-scm.com/docs/git-prune — § DESCRIPTION, § OPTIONS -n/--dry-run, --expire — git 2.56.0
 verified-at: 2026-10-25 — host git 2.56.0-1; the three pages opened live this round and the installed man pages re-read the same day
-recheck: 90d — re-read `man git-count-objects`, `man git-fsck`, `man git-prune` after a host git upgrade
+recheck: on-release — re-read `man git-count-objects`, `man git-fsck`, `man git-prune` after a host git upgrade (matches the S115–S117 rows)
 ground: F2 — repository size census (the census instruments and the write side effect a write-safety fixture must fence)
 
 # A read-only size census needs three different instruments, and one of them writes
@@ -12,8 +12,8 @@ ground: F2 — repository size census (the census instruments and the write side
 The census cannot be built from one instrument, and **one of the three candidate
 instruments writes to the repository** unless it is explicitly held back.
 
-1. **`git count-objects -v` is the size instrument, and it reports objects git
-   considers garbage.** § OPTIONS `-v, --verbose` lists `count`, `size`,
+1. **`git count-objects -v` is the size instrument, and it reports files git
+   considers garbage (not objects).** § OPTIONS `-v, --verbose` lists `count`, `size`,
    `in-pack`, `packs`, `size-pack`, `prune-packable`, `garbage`, `size-garbage`
    and `alternate`. Two census consequences: `garbage`/`size-garbage` are not
    object-graph state at all — they are unrecognised files, so a size census that
@@ -24,8 +24,8 @@ instruments writes to the repository** unless it is explicitly held back.
    § OPTIONS: `--unreachable` prints objects reachable from no reference node;
    `--dangling, --no-dangling` prints objects that exist but are never *directly*
    used (default); `--no-reflogs` refuses to treat reflog-only commits as
-   reachable. § DESCRIPTION fixes the default head set: the index file, all
-   SHA-1 references in the `refs` namespace, and all reflogs.
+   reachable. § OPTIONS fixes the default head set: the index file, all SHA-1
+   references in the `refs` namespace, and all reflogs.
 3. **`git fsck --lost-found` WRITES.** § OPTIONS: it writes dangling objects into
    `.git/lost-found/commit/` or `.git/lost-found/other/`, and for a blob the
    *contents* are written into the file rather than its object name. **This is the
@@ -47,9 +47,9 @@ instruments writes to the repository** unless it is explicitly held back.
 - `git fsck`'s default head set depends on the **index** and the **reflogs**, both
   of which vary per repository; a census run against a different worktree or with
   a different index is not the same census.
-- `git prune` is documented as a low-level command, and the page's own note says
-  users should run `git gc`, which calls it. Nothing here recommends running
-  either.
+- `git prune` is an ancillary command (`git(1)`, Ancillary Commands /
+  Manipulators — not a plumbing command), and the page's own note says users
+  should run `git gc`, which calls it. Nothing here recommends running either.
 - No claim is made that any of these instruments is safe to run concurrently with
   another writer; that is exactly what the `/var/tmp` write-safety fixture would
   have to establish and is still owed.
@@ -64,10 +64,12 @@ instruments writes to the repository** unless it is explicitly held back.
 `tools/souji-repo-structure.sh`, and its observed no-persistent-change result is
 recorded in `census/round-13/verification.json` (measured_commit `6f8ee0f3…`,
 `structure-selftest` exit 0, `artifacts_unchanged_during_run` true). This entry
-supplies the two halves that entry names as missing: the **unreachable** census
-(read-only forms only) and the **size** census including
+supplies the halves that entry names as missing — the **unreachable** census
+(read-only forms only) — and the size census it does not report, including
 `garbage`/`size-garbage`/`alternate`. The `--lost-found` write is the concrete
-hazard such a fixture must exclude.
+hazard such a fixture must exclude. (`git-repo-structure-readonly.md`'s
+structure-selftest exit-0 result is bound at `census/round-13/verification.json`'s
+measured_commit, not at the hash this entry's parenthetical once named.)
 
 ## Gate
 

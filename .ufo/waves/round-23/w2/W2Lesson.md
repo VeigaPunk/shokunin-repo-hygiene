@@ -128,19 +128,18 @@ Action: **fix** (record the five snapshot digests in the entry Gate blocks or a
 `census/round-23/sources/SHA256` file) or **disclose** the claim to "fetched-page digests for
 the two community pages".
 
-### F7 — LOW: four Gate quotes are not contiguous byte strings (man-page soft wraps)
+### F7 — LOW: two of the lesson's five Gate quotes (and two entry quotes) are not contiguous byte strings
 
-Whitespace-normalized all nine match; strictly verbatim, four do not (a `\n\t` intervenes):
-
-```
-$ python3 check:  raw=False wsnorm=True  "garbage: the number of files … nor valid packs"        (S115, git-count-objects.1.txt:30-31)
-                  raw=False wsnorm=True  "alternate: absolute path … one line per path."         (entry ADMIT, git-count-objects.1.txt)
-                  raw=False wsnorm=True  "Write dangling objects into …, depending on type."      (S116, git-fsck.1.txt:71-72)
-                  raw=False wsnorm=True  "prunes all unpacked objects unreachable … database"     (entry ADMIT, git-prune.1.txt)
-                  raw=True               S117 dry-run, S118 qiita, S119 csdn                     (contiguous)
-```
-
-Action: **accept** with a "quoted modulo man-page wrap" note, or quote the wrapped fragment.
+Strictly verbatim (`q in text`), S115's `garbage:` quote and S116's `--lost-found` quote fail:
+each is split by the man-page soft wrap (a `\n\t` intervenes at `git-count-objects.1.txt:30-31`
+and `git-fsck.1.txt:71-72`). Two further ADMIT quotes inside
+`corpus/knowledge/repo-size-census-readonly.md`'s Gate (`alternate:`, `prunes all unpacked
+objects…`) are wrapped the same way. S117's `-n` quote, S118's `6700` quote and S119's
+`无法被 Git 识别的垃圾文件大小` are contiguous. Every quote passes the gate's own `squash()`
+normalization (`tools/souji-gate-check.py:107-112`), which is why `fail=0` — so this is a
+presentation defect only: the lesson prints them as single-line strings without noting the
+wrap. — Action: **accept** with a "quoted modulo man-page wrap" note, or quote the wrapped
+fragment.
 
 ### F8 — LOW: "eight cases require a nonzero mismatch" — actually seven
 
