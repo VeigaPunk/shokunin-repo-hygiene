@@ -187,8 +187,16 @@ def cmd_run(args: argparse.Namespace) -> int:
         if sp.returncode != 0:
             return refuse("SPARSE-INIT-FAILED", sp.stderr.strip())
         with open(os.path.join(tree, ".git", "info", "sparse-checkout"), "w") as fh:
-            fh.write("/*\n!/census/operator-sweep-*\n")
+            fh.write("/*")
+            fh.write(chr(10))
+            fh.write("!/census/operator-sweep-*")
+            fh.write(chr(10))
 
+        co = subprocess.run(["git", "-C", tree, "-c", "maintenance.auto=false",
+                             "checkout", "--quiet", "--detach", rev],
+                            capture_output=True, text=True)
+        if co.returncode != 0:
+            return refuse("CHECKOUT-FAILED", co.stderr.strip())
         run_env = {k: v for k, v in os.environ.items()
                    if k not in ("GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE")}
         run_env["GIT_OPTIONAL_LOCKS"] = "0"
