@@ -43,7 +43,7 @@ LOCATOR_RE = re.compile(r"(§|section|line |lines |paragraph|DESCRIPTION|OPTIONS
 ADMIT_RE = re.compile(r"^\s*[-*]\s*ADMIT:", re.M)
 REJECT_RE = re.compile(r"^\s*[-*]\s*REJECT:", re.M)
 REASON_RE = re.compile(r"(reason:|because|—)", re.I)
-ROW_REASON_RE = re.compile(r"reason:\s*\S", re.I)
+ROW_REASON_RE = re.compile(r"reason:\s*[^\s—–-]\S*", re.I)
 SLICE_ID_RE = re.compile(r"S\d{3,}")
 CLASSES = {"present", "accepted", "unverifiable", "refused"}
 
@@ -84,7 +84,7 @@ def check_entry(root: str, rel: str, round_date: str, snapshot_dir: str):
         quotes = QUOTE_RE.findall(line)
         if not quotes:
             continue
-        locator_probe = SNAPSHOT_RE.sub("", line)
+        locator_probe = QUOTE_RE.sub("", SNAPSHOT_RE.sub("", line))
         if not LOCATOR_RE.search(locator_probe):
             fails.append("check3-no-locator-gate-line-%d" % lineno)
             continue

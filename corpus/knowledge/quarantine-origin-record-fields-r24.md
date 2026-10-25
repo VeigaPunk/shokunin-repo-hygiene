@@ -68,8 +68,8 @@ url: https://man.archlinux.org/man/gio.1.en
 snapshot: census/round-22/attempt2/sources/arch-gio.1.txt
 opened: 2026-10-25
 
-- ADMIT: "List files in the trash with their original locations." — § COMMANDS trash --list — reason: --list prints the field a restore consumes — snapshot: census/round-22/attempt2/sources/arch-gio.1.txt
-- ADMIT: "Restore a file from trash to its original location. A URI beginning with trash:// is expected here." — § COMMANDS trash --restore — reason: --restore consumes exactly that original location — snapshot: census/round-22/attempt2/sources/arch-gio.1.txt
+- ADMIT: "List files in the trash with their original locations." — § COMMANDS trash --list — reason: the list command prints the field a restore consumes — snapshot: census/round-22/attempt2/sources/arch-gio.1.txt
+- ADMIT: "Restore a file from trash to its original location. A URI beginning with trash:// is expected here." — § COMMANDS trash --restore — reason: the restore command consumes exactly that original location — snapshot: census/round-22/attempt2/sources/arch-gio.1.txt
 - ADMIT: "Sends file to the “Trashcan”, if possible. This is similar to deleting it, but the user can recover it before emptying the trashcan." — § Description — reason: write-side recoverability and refusal, not deletion — snapshot: census/round-22/attempt2/sources/gtk-filetrash.txt
 - ADMIT: "The key “Path” contains the original location of the file/directory" — § 6 Contents of a trash directory, key/value list — reason: the spec makes the original location a required key — snapshot: census/round-22/attempt2/sources/freedesktop-trash.txt
 - ADMIT: "The key “DeletionDate” contains the date and time when the file/directory was trashed." — § 6 Contents of a trash directory, key/value list — reason: the spec's second required key; its format is fixed, its policy is not — snapshot: census/round-22/attempt2/sources/freedesktop-trash.txt
