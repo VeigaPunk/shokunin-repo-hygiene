@@ -1,0 +1,45 @@
+souji round 24 — preregistration amendment 1 (append-only; the frozen file is unchanged)
+written by the L1 after wave-1 attacks and BEFORE any control or after receipt was committed.
+Every change below is stricter than the frozen text (no case dropped, no target lowered) and is
+labelled pre-data-legal by CritPrereg. Disclosed deviation: the L1 ran sanity executions of the
+C2 tool (at base: mismatches=2) and the C3 fixture (base runner 6/8 refusals=0/2; patched runner
+8/8 refusals=2/2) before this amendment and before the control receipts were committed; those
+runs are not claim evidence. Control receipts were not committed at freeze time (§9 asks for it
+before data); they are committed before any after-receipt, as the remedy CritPrereg names.
+
+C1 (sources: ProbeGarbageKinds, ReviewRepoStructureFixture, CritC1Control, CritPrereg, ConnSiblings)
+- Manifest: every entry under the COMMON git dir (directories included), st_mtime_ns, sha256 of
+  regular files; atime/ctime still excluded (named limit: a tool that restores directory mtimes
+  after a write is invisible to this manifest).
+- Case 3: one 2048-byte junk file in objects/pack -> garbage=1 AND size_garbage=2; a second arm
+  plants the same junk in a repo with a linked worktree and runs the tool on the LINKED path ->
+  garbage=1 size_garbage=2.
+- Cases 4 and 5 also assert manifest unchanged across the tool run; case 4 reads its raw linked
+  witness AFTER the tool run; case 5's alternate is an existing objects dir and is manifested too.
+- Case 6 partialClone arm: a real `git clone --filter=blob:none` (remote.origin.promisor=true and
+  .promisor packs), plus the same clone with the promisor key unset (refused via the .promisor pack).
+- Fixture strips GIT_* from every subprocess env; precondition git >= 2.46.0 else exit 2
+  (`precondition=FAIL`), never a case failure.
+- Tool internals (counts line unchanged): alternates= counts `alternate:` output lines;
+  census.unreachable_scope=includes-alternates when alternates>0; refusal also on any
+  objects/pack/*.promisor file.
+
+C2 (sources: CritPrereg, CritC2Gameable)
+- Kill rule widened: C2 fails if ANY entry grounded at base is absent at tip or carries a
+  different F<k> at tip (per-entry, not a count).
+- Mapping requires a backticked `knowledge/<name>` span in an entries-column cell (status-column
+  mentions never map) — this is what the frozen "basename appears in an entries-column cell" means;
+  the fixture's case 3 (named only in STATUS) pins it.
+- C2's verdict also requires `python3 -B tests/fixtures/r24-coverage-agreement.py --tool
+  tools/souji-coverage-agreement.py` -> `cases=9 pass=9 control=FALSE-GREEN-REJECTED` at the tip.
+
+C3 (sources: CritC3Value, CritPrereg, MutRunnerPlan, RevR23Residuals)
+- Pinned target line: `cases=8 pass=8 refusals=2/2 regress=5/5`, exit 0.
+- Case a requires two instances: a commit on no ref, and a commit held only by refs/jj/keep/*.
+- Symmetry made literal (the claim's title): `run` refuses TOOL-NOT-IN-ARGV and TOOL-PATH-REDACTED;
+  `verify` mirrors run's command_refusal (RECEIPT-COMMAND-REFUSED) and reports an unparsable cmd=
+  as RECEIPT-MALFORMED; cmd= redacts per argv element before joining.
+- Separate widening (not a C3 clause): verify's COUNTS_RE also accepts the round-24 counts lines
+  (`grounded=… mismatches=`, `cases=… pass=`, `garbage=… alternates=`, `selftest=… ids=`) so the
+  round's counters can carry Q55 receipts.
+- Named limit kept: argv membership binds the label to recorded text, not to the executed program.
