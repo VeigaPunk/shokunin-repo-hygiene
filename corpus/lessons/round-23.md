@@ -160,7 +160,7 @@ repaired or is disclosed here:
   the `tool=` label is not bound to argv (disclosed).
 - **C1 citations (W2Log/W2Digests/W2Lesson)** — `agreement-after.txt` never existed and the
   old `agreement-after.tsv` was the failing rc=1 receipt; the after-receipt is regenerated at
-  the landing tip (rev `__FINALREV__`, rc=0) and every citation names it. Control numbers
+  the landing tip (rev `eb1aa49783ae4a0d42e062aa5a61e49a91b0f76a`, rc=0) and every citation names it. Control numbers
   standardized on 6 (revision-scoped) / 29 (live worktree at base).
 - **C3 records (W2Census/W2Sources/W2Assim/W2Entry1/W2Entry2)** — tier histogram corrected
   (A113/B5/C1), five Gate decisions (not four), entry 1 fixed on `fsck`'s `§ OPTIONS` head
