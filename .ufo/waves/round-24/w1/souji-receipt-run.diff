@@ -1,0 +1,29 @@
+--- a/tools/souji-receipt-run.py
++++ b/.ufo/waves/round-24/w1/souji-receipt-run.py
+@@ -28,7 +28,9 @@
+ refs/heads, refs/tags or refs/remotes (refs/jj/* never counts — Q37); --tool absent at --rev;
+ --out under /tmp (Q4); --out inside --root (a receipt is not a repo write).
+ `verify` exits 2 with one of: RECEIPT-MALFORMED, RECEIPT-TOOL-DIGEST-MISMATCH,
+-RECEIPT-TOOL-ABSENT, RECEIPT-REV-MALFORMED, RECEIPT-COUNTS-ABSENT.
++RECEIPT-TOOL-ABSENT, RECEIPT-REV-MALFORMED, RECEIPT-COUNTS-ABSENT, RECEIPT-REV-NOT-DURABLE (the
++same durable-ref predicate `run` refuses on), RECEIPT-TOOL-NOT-IN-ARGV (`tool=` is not an exact
++element of shlex.split(cmd); `./tools/x` does not match `tools/x`).
+ 
+ The measured tree is a private `--no-local` clone under /var/tmp, checked out detached at <rev>:
+ the runner never writes the source repository and never fetches from a remote. It is a counter
+@@ -278,6 +280,15 @@
+                       f"receipt {header['tool_sha256'][:12]} != tree {actual[:12]} at {rev}")
+     if not COUNTS_RE.search(header["_body"]):
+         return refuse("RECEIPT-COUNTS-ABSENT", "no counts line in the recorded output")
++    if not durable_rev(root, rev):
++        return refuse("RECEIPT-REV-NOT-DURABLE",
++                      f"{rev} is not reachable from refs/heads|tags|remotes")
++    try:
++        argv = shlex.split(header["cmd"])
++    except ValueError:
++        argv = []
++    if tool not in argv:
++        return refuse("RECEIPT-TOOL-NOT-IN-ARGV", f"{tool} is not an argv element of cmd=")
+     print(f"verify=ok rev={rev} tool={tool} tool_sha256={actual}")
+     return 0
+ 
