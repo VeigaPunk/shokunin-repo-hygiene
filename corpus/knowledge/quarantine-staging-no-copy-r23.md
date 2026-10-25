@@ -5,9 +5,17 @@ verified-at: 2026-10-25 — Linux man-pages 6.19 (2026-02-08) snapshots opened t
 recheck: 90d — re-open census/round-22/attempt2/sources/{man7-rename.2,man7-mv.1}.txt and the vendored probe output
 ground: F4 — restorable quarantine (the staging primitive: no-clobber rename)
 
-# A no-clobber staging primitive exists on every device this fleet uses — and `mv --no-copy` is the portable fallback
+# A no-clobber staging primitive exists on the five devices this fleet's repositories live on — and `mv --no-copy` is the portable fallback
 
 ## Claim (F4, sourced + one vendored measurement)
+
+**What this entry is not:** the primitive's *semantics* are already held by
+`corpus/knowledge/quarantine-same-filesystem-rename.md` (S025: `mv --no-copy`
+as the fail-closed guard; an observed `renameat2(…, RENAME_NOREPLACE)`). This
+entry adds (a) the man-page statement of the refusal and its per-filesystem
+support schedule (S110/S111) and (b) a **vendored, five-device availability
+observation** (S109) with the provenance stated. No tool or format change is
+made or authorized here.
 `renameat2(RENAME_NOREPLACE)` and `mv --no-copy` both turn "the destination
 already exists" into a failure instead of a silent overwrite. That is the
 primitive a quarantine staging step needs before it is allowed to move a
@@ -63,7 +71,7 @@ url: https://man7.org/linux/man-pages/man2/rename.2.html
 snapshot: census/round-22/attempt2/sources/man7-rename.2.txt
 opened: 2026-10-25
 
-- ADMIT: "RENAME_NOREPLACE Don't overwrite newpath of the rename. Return an error if newpath already exists." — § DESCRIPTION flags — snapshot: census/round-22/attempt2/sources/man7-rename.2.txt
-- ADMIT: "RENAME_NOREPLACE requires support from the underlying filesystem." — § DESCRIPTION flags — snapshot: census/round-22/attempt2/sources/man7-rename.2.txt
-- ADMIT: "do not copy if renaming fails" — § DESCRIPTION, option --no-copy — snapshot: census/round-22/attempt2/sources/man7-mv.1.txt
-- REJECT: staged row campaign-S123 (git-worktree SYNOPSIS text quoted against a local trigger-probe payload) — reason: the cited artifact is a probe output whose bytes do not contain the quoted synopsis, so the row is a wrong-source citation rather than a fact about the payload; flip: re-cite the synopsis against git-worktree(1) if the lane ever needs it, and keep the probe output for its own PASS lines.
+- ADMIT: "RENAME_NOREPLACE Don't overwrite newpath of the rename. Return an error if newpath already exists." — § DESCRIPTION flags — reason: the refusal semantics this entry's staging claim depends on — snapshot: census/round-22/attempt2/sources/man7-rename.2.txt
+- ADMIT: "RENAME_NOREPLACE requires support from the underlying filesystem." — § DESCRIPTION flags — reason: names the precondition the five-device measurement tests — snapshot: census/round-22/attempt2/sources/man7-rename.2.txt
+- ADMIT: "do not copy if renaming fails" — § DESCRIPTION, option --no-copy — reason: the portable fallback this entry recommends when the flag is unavailable — snapshot: census/round-22/attempt2/sources/man7-mv.1.txt
+- REJECT: staged entry quarantine-staging-no-copy-r24 (same primitive, a second device list, no new refusal semantics or field) — reason: duplicate ground; the r23 entry already records the five-device measurement and the package adds an eight-mount list without a consequence this lane's staging plan would change — flip: a measurement on a filesystem or mount namespace the r23 entry did not cover, plus a consequence a staging tool would change.

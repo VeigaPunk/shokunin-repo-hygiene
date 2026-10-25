@@ -29,6 +29,7 @@ import argparse
 import io
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -36,12 +37,13 @@ import tempfile
 QUOTE_RE = re.compile(r'"([^"]{2,400})"')
 URL_RE = re.compile(r"https://\S+")
 OPENED_RE = re.compile(r"opened:\s*(\d{4}-\d{2}-\d{2})")
-SOURCE_RE = re.compile(r"^source:\s*(S\d{3,})", re.M)
+SOURCE_RE = re.compile(r"^\s*(?:[-*]\s*)?source:\s*(S\d{3,})", re.M)
 SNAPSHOT_RE = re.compile(r"snapshot:\s*(\S+)")
 LOCATOR_RE = re.compile(r"(§|section|line |lines |paragraph|DESCRIPTION|OPTIONS|COMMANDS|SYNOPSIS|heading)", re.I)
 ADMIT_RE = re.compile(r"^\s*[-*]\s*ADMIT:", re.M)
 REJECT_RE = re.compile(r"^\s*[-*]\s*REJECT:", re.M)
 REASON_RE = re.compile(r"(reason:|because|—)", re.I)
+ROW_REASON_RE = re.compile(r"reason:\s*\S", re.I)
 SLICE_ID_RE = re.compile(r"S\d{3,}")
 CLASSES = {"present", "accepted", "unverifiable", "refused"}
 
@@ -82,7 +84,8 @@ def check_entry(root: str, rel: str, round_date: str, snapshot_dir: str):
         quotes = QUOTE_RE.findall(line)
         if not quotes:
             continue
-        if not LOCATOR_RE.search(line):
+        locator_probe = SNAPSHOT_RE.sub("", line)
+        if not LOCATOR_RE.search(locator_probe):
             fails.append("check3-no-locator-gate-line-%d" % lineno)
             continue
         snap = SNAPSHOT_RE.search(line)
@@ -96,7 +99,8 @@ def check_entry(root: str, rel: str, round_date: str, snapshot_dir: str):
                 continue
             spar = snap.group(1)
             spath = spar if os.path.isabs(spar) else os.path.normpath(os.path.join(root, spar))
-            if not spath.startswith(snap_root + os.sep) and spath != snap_root:
+            real_sp = os.path.realpath(spath)
+            if not real_sp.startswith(os.path.realpath(snap_root) + os.sep) and real_sp != os.path.realpath(snap_root):
                 fails.append("check4-snapshot-outside-dir-line-%d" % lineno)
                 continue
             if not os.path.isfile(spath):
@@ -128,8 +132,8 @@ def check_entry(root: str, rel: str, round_date: str, snapshot_dir: str):
     if not REJECT_RE.search(gate):
         fails.append("check6-no-reject")
     for line in gate.splitlines():
-        if REJECT_RE.search(line) and not REASON_RE.search(line):
-            fails.append("check6-reject-without-reason")
+        if (ADMIT_RE.search(line) or REJECT_RE.search(line)) and not ROW_REASON_RE.search(line):
+            fails.append("check6-row-without-reason")
             break
     return (not fails), fails
 
@@ -168,9 +172,8 @@ def check_slice(root: str, slice_rel: str, verdicts_rel: str):
                     continue
                 rows[vid] = cls
     verified = sum(1 for i in ids if i in rows)
-    for i in ids:
-        if i not in rows:
-            fails.append("verdict-missing:%s" % i)
+    # frozen rule: a missing verdict row is a failure of the V==T condition and is
+    # counted in NEITHER V nor F (it simply cannot raise V to T), so no `fail` entry.
     return verified, len(ids), fails
 
 
@@ -213,13 +216,13 @@ def _entry(gate_body: str, sources="source: S109 — example\nsource: S110 — e
 def _gate(quote: str, opened="2026-10-25", snap="census/sources/x.txt",
           admit=True, reject=True) -> str:
     lines = ["## Gate", "", "url: https://example.invalid/doc", "opened: %s" % opened, ""]
-    lines.append('- ADMIT: "%s" — § DESCRIPTION — snapshot: %s' % (quote, snap))
+    lines.append('- ADMIT: "%s" — § DESCRIPTION — reason: fixture grounds the claim here — snapshot: %s' % (quote, snap))
     if admit:
         pass
     else:
         lines[-1] = lines[-1].replace("ADMIT", "NOTE")
     if reject:
-        lines.append("- REJECT: staged row S999: reason: quote cited against the wrong artifact")
+        lines.append("- REJECT: staged row S999 — reason: quote cited against the wrong artifact")
     return "\n".join(lines)
 
 
@@ -235,14 +238,21 @@ def selftest(out=sys.stdout) -> int:
         cases = {
             "good": _entry(_gate(good_quote)),
             "no-date": _entry(_gate(good_quote, opened="2026-10-24")),
-            "long-quote": _entry(_gate(" ".join(["word"] * 30))),
+            "long-quote": _entry(_gate(" ".join(["word"] * 26))),
             "quote-absent": _entry(_gate("this sentence is not in the snapshot")),
             "dangling-source": _entry(_gate(good_quote), sources="source: S999 — missing\n"),
             "no-reject": _entry(_gate(good_quote, reject=False)),
-            "no-gate": "source: S109 — example\n\n# fixture entry without a gate\n",
+            "no-gate": None,  # filled below: a byte-exact copy of a synthetic staged entry
         }
         for name, body in cases.items():
-            _mk(base, "entries/%s.md" % name, body)
+            if body is not None:
+                _mk(base, "entries/%s.md" % name, body)
+        staged = _mk(base, "pkg/staged-entry.md",
+                     "source: S109 — example\n\n# synthetic staged entry (no Gate)\n\nbody\n")
+        shutil.copyfile(staged, _mk(base, "entries/no-gate.md", ""))
+        import hashlib as _h
+        sha = lambda f: _h.sha256(open(f, "rb").read()).hexdigest()
+        assert sha(staged) == sha(os.path.join(base, "entries/no-gate.md")), "fixture6 is not byte-exact"
         verdicts_good = "S114\tpresent\tregister row + payload bytes\nS123\trefused\tcitation-class defect\n"
         _mk(base, "census/verdicts-good.tsv", verdicts_good)
         _mk(base, "census/verdicts-partial.tsv", "S114\tpresent\tevidence\n")
@@ -265,7 +275,8 @@ def selftest(out=sys.stdout) -> int:
         rc = run(base, "2026-10-25", ["entries/good.md"], "census/sources",
                  "census/slice", "census/verdicts-partial.tsv", buf)
         line = buf.getvalue().strip().splitlines()[-1]
-        checks.append(("fixture partial-verdicts -> fail", rc == 1 and "slice_verdicts=1" in line, line))
+        checks.append(("fixture partial-verdicts -> fail on V!=T with fail=0",
+                       rc == 1 and "slice_verdicts=1" in line and "slice_total=2" in line and line.endswith("fail=0"), line))
         # control: a checker that always prints the green line must not survive the fixture set
         green = "entries=1 ok=1 slice_verdicts=2 slice_total=2 fail=0"
         control_survives = green.startswith("entries=1 ok=1") and score("no-gate")[1].startswith("entries=1 ok=1")

@@ -347,12 +347,18 @@ fix`; a fix counts only when a fixture shows it can fail.
 
 **Register slice (all 8 rows carry a verdict;**
 `census/round-22/attempt2/slice-verdicts.tsv`**).**
-5 accepted with corrected quotes (S114 markup `git-repack[1]`, S124
-intervening `NOREPLACE_new` field, S131 payload's own dry-run line, S133
-payload's SUMMARY line, S138 heading marker), 1 present (S126), 1 refused
-(S123 — quote absent from the cited fixture and its output; flip: cite
-`git-worktree(1):12`), 1 unverifiable (S118 — DOI answers 202 with an empty
-body; unreachable is not fabrication).
+Final classification after the independent second pass (`RevSliceVerif`):
+5 **accepted** with a stated correction (S114 markup `git-repack[1]`; S123 and
+S131 man-page spans that the rows cite against local payloads; S124
+intervening `NOREPLACE_new` field; S133 rename(2) span against a probe),
+2 **present** (S126; S138), 1 **unverifiable** (S118 — DOI answers 202 with an
+empty body; unreachable is not fabrication), **0 refused**.
+The boundary is stated here because two passes first disagreed on it:
+`accepted` = the quoted span is real and locates to a document, so the row is
+repairable by re-citing it; `refused` = the span is in no reachable document;
+`unverifiable` = the source cannot be read at all. All seven `payload-absent`
+labels turned out to be false positives of the campaign checker (no asciidoc
+`[1]`/`(1)` fold, tag-separator folds, markdown heading vs rendered `<h2>`).
 
 **Gate counters (this round's tool).**
 `python3 -B tools/souji-gate-check.py --root . --round-date 2026-10-25
@@ -423,3 +429,28 @@ after data is scored is not the claim's rule). Each is recorded with a flip.
   reused), recorded here and in the report. *Flip:* a reader resolving ids by
   arithmetic instead of by document would cite the wrong row — the map is the
   only guard.
+
+## Attempt 2 — claims-level corrections (M22–M23)
+
+- **M22 — the novelty of the adopted theme was overstated.** The first version
+  of `quarantine-origin-record-fields-r24.md` said the record's *read side* was
+  missing. It was not: the admitted
+  `corpus/knowledge/trash-spec-restorable-quarantine.md` already holds § 6's
+  `Path` requirement and the no-overwrite/`O_EXCL` ordering, and the HELD
+  `quarantine-same-filesystem-rename.md` already holds the `RENAME_NOREPLACE`
+  observation and `mv --no-copy` as the fail-closed guard. `CritC2Coverage`
+  (seat) derived both files' line references and graded the claim's coverage
+  credit `fails` (Q1, Q2). *Captured-by:* the coverage map plus QUALITY Q1/Q2 —
+  present as prose, not enforced before drafting. *Fix:* both entries now state
+  an explicit delta over the held entries and the r23 title is narrowed to the
+  five measured devices. *Flip:* the claim is only admissible as **import with
+  re-grounding**, not as new ground; the report records that verdict, and
+  coverage score is left unchanged.
+- **M23 — the verdict boundary was unstated and drifted between seats.** The
+  first pass classed S131 `refused` and S133 `accepted` for the same shape, and
+  the committed TSV then disagreed with its own seat reports on S131/S138.
+  `RevSliceVerif`'s blind second pass decided each from bytes and disagreed
+  three times. *Captured-by:* the second-pass duty (QUALITY Q5), which found the
+  boundary missing. *Fix:* the boundary sentences above; the TSV now follows
+  them (5/2/1/0). *Flip:* a row classed `accepted` whose span is in no
+  reachable document would show the boundary is still being applied wrongly.

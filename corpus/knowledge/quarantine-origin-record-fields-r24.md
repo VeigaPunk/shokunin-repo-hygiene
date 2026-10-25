@@ -6,15 +6,20 @@ verified-at: 2026-10-25 — glib2 2.90.1 gio(1); GIO method reference; Linux man
 recheck: 180d — re-open census/round-22/attempt2/sources/{arch-gio.1,gtk-filetrash,freedesktop-trash,man7-statx.2}.txt
 ground: F4 — restorable quarantine (the read side of a per-item origin record)
 
-# A per-item origin record must carry the original path, because that is what restore consumes
+# A per-item origin record must carry the original path, because that is what restore consumes (amendment: adds the restore command and the identity fields)
 
 ## Claim (F4, sourced — amends the round-2 record entries)
-The lane already holds the trash *layout* (S022, § 6 Contents of a trash
-directory: `info/<name>.trashinfo` with `Path` and `DeletionDate`, written
-before the payload moves). The *write contract* is taken from S113, which this
-round mints: the trash call is documented recoverable and can refuse with
-`G_IO_ERROR_NOT_SUPPORTED` instead of deleting. What was missing is the
-**read side**: which field a restore actually consumes.
+The lane's admitted entry `corpus/knowledge/trash-spec-restorable-quarantine.md`
+already holds the trash *layout* and the spec's read side (S022, § 6 Contents
+of a trash directory: `info/<name>.trashinfo` with `Path` and `DeletionDate`,
+written before the payload moves; "The key "Path" contains the original
+location"; a payload name must never be used to recover it). **This entry is an
+amendment by addition, not new ground.** It adds three things the held entry
+does not carry: (a) the *restore command's* own consumption of that field
+(`gio trash --list/--restore`, S112), (b) the write-side API contract with its
+refusal mode (S113: recoverable; can return `G_IO_ERROR_NOT_SUPPORTED` when
+trashing is disabled for system mounts), and (c) the identity fields a record
+may carry (S114: `stx_ino`, `stx_nlink`, `stx_btime`, `stx_mnt_id`).
 
 1. **The original location is the load-bearing field.** `gio trash --list`
    "List files in the trash with their original locations." and
@@ -63,10 +68,10 @@ url: https://man.archlinux.org/man/gio.1.en
 snapshot: census/round-22/attempt2/sources/arch-gio.1.txt
 opened: 2026-10-25
 
-- ADMIT: "List files in the trash with their original locations." — § COMMANDS trash --list — snapshot: census/round-22/attempt2/sources/arch-gio.1.txt
-- ADMIT: "Restore a file from trash to its original location. A URI beginning with trash:// is expected here." — § COMMANDS trash --restore — snapshot: census/round-22/attempt2/sources/arch-gio.1.txt
-- ADMIT: "Sends file to the “Trashcan”, if possible. This is similar to deleting it, but the user can recover it before emptying the trashcan." — § Description — snapshot: census/round-22/attempt2/sources/gtk-filetrash.txt
-- ADMIT: "The key “Path” contains the original location of the file/directory" — § 6 Contents of a trash directory, key/value list — snapshot: census/round-22/attempt2/sources/freedesktop-trash.txt
-- ADMIT: "The key “DeletionDate” contains the date and time when the file/directory was trashed." — § 6 Contents of a trash directory, key/value list — snapshot: census/round-22/attempt2/sources/freedesktop-trash.txt
-- ADMIT: "__u64 stx_ino; /* Inode number */" — § DESCRIPTION struct statx — snapshot: census/round-22/attempt2/sources/man7-statx.2.txt
-- REJECT: staged entry quarantine-staging-no-copy-r24 (same primitive, second device list, no new field or refusal semantics) — reason: duplicate ground; the r23 entry already recorded the five-device measurement and this package adds an eighth-mount list without a new consequence for the lane; flip: a measurement on a filesystem or mount namespace the r23 entry did not cover, plus a consequence the staging tool would change.
+- ADMIT: "List files in the trash with their original locations." — § COMMANDS trash --list — reason: --list prints the field a restore consumes — snapshot: census/round-22/attempt2/sources/arch-gio.1.txt
+- ADMIT: "Restore a file from trash to its original location. A URI beginning with trash:// is expected here." — § COMMANDS trash --restore — reason: --restore consumes exactly that original location — snapshot: census/round-22/attempt2/sources/arch-gio.1.txt
+- ADMIT: "Sends file to the “Trashcan”, if possible. This is similar to deleting it, but the user can recover it before emptying the trashcan." — § Description — reason: write-side recoverability and refusal, not deletion — snapshot: census/round-22/attempt2/sources/gtk-filetrash.txt
+- ADMIT: "The key “Path” contains the original location of the file/directory" — § 6 Contents of a trash directory, key/value list — reason: the spec makes the original location a required key — snapshot: census/round-22/attempt2/sources/freedesktop-trash.txt
+- ADMIT: "The key “DeletionDate” contains the date and time when the file/directory was trashed." — § 6 Contents of a trash directory, key/value list — reason: the spec's second required key; its format is fixed, its policy is not — snapshot: census/round-22/attempt2/sources/freedesktop-trash.txt
+- ADMIT: "__u64 stx_ino; /* Inode number */" — § DESCRIPTION struct statx — reason: an identity field a record can carry alongside the original path — snapshot: census/round-22/attempt2/sources/man7-statx.2.txt
+- REJECT: staged entry quarantine-origin-record-fields-r23 (write contract only) — reason: dominated by this entry, which carries the same write contract (S113) plus the restore command and the identity fields; adopting both would duplicate the write-contract claim with no added field — flip: a fact about the record the r23 entry holds and this one does not (the on-disk writer or the durability guarantee).
