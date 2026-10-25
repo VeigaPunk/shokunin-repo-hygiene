@@ -1,0 +1,538 @@
+{
+  "seat": "S40",
+  "role": "reviewer",
+  "round": 2,
+  "lane": "souji-shokunin",
+  "deliverable": "tools/souji-verify.sh (round-2 build) — independent review",
+  "reviewed_at": "2026-10-18T16:01:56Z",
+  "target": {
+    "path": "tools/souji-verify.sh",
+    "sha256": "586bc36c6039b9c9bf5846b85156b02dd3daa6f594c03d6ba474a9c71f2fc812",
+    "bytes": 29139,
+    "sha256_at_assembly": "586bc36c6039b9c9bf5846b85156b02dd3daa6f594c03d6ba474a9c71f2fc812",
+    "bytes_at_assembly": 29139,
+    "revision_note": "tested revision == file at assembly time"
+  },
+  "lane_git_head_at_review": "ab7f2f706f35f466b515b474fc9c76e0ddd71ae2",
+  "lane_git_status_at_review": [
+    "M corpus/knowledge/obsidian-ledger.tsv",
+    "?? tests/",
+    "?? tools/"
+  ],
+  "method": {
+    "independence": "reviewer-built fixtures (harness.sh, snapshot embedded below) constructed from the binding spec; NOT the tool's own --selftest fixtures; F1-F10 re-derived independently",
+    "world": "/tmp/s40-world.DpphnI",
+    "world_recipe": [
+      "$W/world/ra: repo, pre/f1.txt added in commit A, tip commit B, refs/heads/main=B, refs/remotes/origin/main=B, refs/remotes/origin/HEAD -> refs/remotes/origin/main (F1)",
+      "$W/world/rl: repo, c0(README), A(adds pre/f2.txt), B(tip); refs/remotes/origin/master=c0 (F2: A not an ancestor of origin/master)",
+      "$W/world/rd: repo, c0, c1 local-only commit, tracked file modified (F3 kotodama shape)",
+      "$W/owner-shokunin: repo, OC=c0; refs/remotes/origin/master=OC; worktrees: wt-gone (detached, dir rm-ed, unique=0), wt-branch (branch bfix = OC+1 local commit, dir rm-ed), wt-live (branch blive=OC, dir present, untracked file) (F4/F5/F5b)",
+      "ledger $W/corpus/knowledge/obsidian-ledger.tsv: 3 rows (lf correct; lf-bad vault sha corrupted; lf-mod source modified post-export) (F6/F6n)",
+      "$W/world/rp: repo with sc1/zq7x-keep.out (old, no refs), sc2/zq7x-census.out (old; basename appears in souji-shokunin/census-like dirs), sc3/zq7x-live.out (old; same-basename live sibling + content mention), sc4/zq7x-new.out (fresh), sc5/zq7x-old5.out (old) (F7/F7n/F8/thresholds)",
+      "$W/world/sec: dummy .env dummy.env credentials.json id_dummy key.pem (never read by the harness)"
+    ],
+    "rg_flag_note": "binding spec's stale sweep uses `rg -l --no-ignore --basename <name>`; installed rg 15.2.0 rejects --basename (exit 2, 'unrecognized flag') — implemented behavior measured, see extra_evidence",
+    "safety_audit": "static source scan (forbidden git subcommands) + strace traces: A=--selftest, B=refusal target dummy.env, C=live kotodama+AXES.md (read-only audit)"
+  },
+  "summary": {
+    "cases_total": 36,
+    "cases_scored": 32,
+    "cases_pass": 32,
+    "cases_fail": 0,
+    "observe_only": 4,
+    "false_safe_detected": [],
+    "selftest_exit_zero": true,
+    "verdict": "PASS"
+  },
+  "cases": [
+    {
+      "id": "F1",
+      "pass": true,
+      "expect": "SAFE|pushed",
+      "exit": "0",
+      "verdict": "SAFE",
+      "receipt": "pushed",
+      "evidence": "intro=88ebf69d391b default=refs/remotes/origin/main repo=/tmp/s40-world.DpphnI/world/ra",
+      "command": "env SHOKUNIN_ROOT=$W tools/souji-verify.sh $W/world/ra/pre/f1.txt"
+    },
+    {
+      "id": "F2",
+      "pass": true,
+      "expect": "NOT-SAFE|none|pushed-unverifiable",
+      "exit": "0",
+      "verdict": "NOT-SAFE",
+      "receipt": "none",
+      "evidence": "intro=f681c789ba88 default=refs/remotes/origin/master not-ancestor refs=n/a",
+      "command": "env SHOKUNIN_ROOT=$W tools/souji-verify.sh $W/world/rl/pre/f2.txt"
+    },
+    {
+      "id": "F3",
+      "pass": true,
+      "expect": "NOT-SAFE|unpushed=N dirty=M",
+      "exit": "0",
+      "verdict": "NOT-SAFE",
+      "receipt": "unpushed-dirty",
+      "evidence": "unpushed=2 dirty=1",
+      "command": "env SHOKUNIN_ROOT=$W tools/souji-verify.sh $W/world/rd"
+    },
+    {
+      "id": "F4",
+      "pass": true,
+      "expect": "SAFE|metadata-prune",
+      "exit": "0",
+      "verdict": "SAFE",
+      "receipt": "metadata-prune",
+      "evidence": "owner=/tmp/s40-world.DpphnI/owner-shokunin head=46a79cf3e57d unique=0 dir=absent",
+      "command": "env SHOKUNIN_ROOT=$W tools/souji-verify.sh $W/wt/wt-gone"
+    },
+    {
+      "id": "F5",
+      "pass": true,
+      "expect": "NOT-SAFE|unpushed-branch",
+      "exit": "0",
+      "verdict": "NOT-SAFE",
+      "receipt": "unpushed-branch",
+      "evidence": "owner=/tmp/s40-world.DpphnI/owner-shokunin branch=bfix unpushed=1",
+      "command": "env SHOKUNIN_ROOT=$W tools/souji-verify.sh $W/wt/wt-branch"
+    },
+    {
+      "id": "F5b",
+      "pass": true,
+      "expect": "NOT-SAFE|dirty",
+      "exit": "0",
+      "verdict": "NOT-SAFE",
+      "receipt": "dirty",
+      "evidence": "owner=/tmp/s40-world.DpphnI/owner-shokunin dirty=1",
+      "command": "env SHOKUNIN_ROOT=$W tools/souji-verify.sh $W/wt/wt-live"
+    },
+    {
+      "id": "F6",
+      "pass": true,
+      "expect": "SAFE|moved-to-obsidian",
+      "exit": "0",
+      "verdict": "SAFE",
+      "receipt": "moved-to-obsidian",
+      "evidence": "ledger=/tmp/s40-world.DpphnI/corpus/knowledge/obsidian-ledger.tsv src_sha256=ab2979043216 vault=/tmp/s40-world.DpphnI/vault/lf.txt",
+      "command": "env SHOKUNIN_ROOT=$W tools/souji-verify.sh $W/world/arts/lf.txt"
+    },
+    {
+      "id": "F6n1",
+      "pass": true,
+      "expect": "NOT-SAFE|!=moved-to-obsidian",
+      "exit": "0",
+      "verdict": "NOT-SAFE",
+      "receipt": "none",
+      "evidence": "no-repo ledger=miss scratch=no mtime_age_days=0",
+      "command": "env SHOKUNIN_ROOT=$W tools/souji-verify.sh $W/world/arts/lf-bad.txt"
+    },
+    {
+      "id": "F6n2",
+      "pass": true,
+      "expect": "NOT-SAFE|!=moved-to-obsidian",
+      "exit": "0",
+      "verdict": "NOT-SAFE",
+      "receipt": "none",
+      "evidence": "no-repo ledger=miss scratch=no mtime_age_days=0",
+      "command": "env SHOKUNIN_ROOT=$W tools/souji-verify.sh $W/world/arts/lf-mod.txt"
+    },
+    {
+      "id": "F7",
+      "pass": true,
+      "expect": "SAFE|stale",
+      "exit": "0",
+      "verdict": "SAFE",
+      "receipt": "stale",
+      "evidence": "mtime_age_days=3 refs=0 scratch-type=yes",
+      "command": "env SHOKUNIN_ROOT=$W tools/souji-verify.sh $W/world/rp/sc1/zq7x-keep.out"
+    },
+    {
+      "id": "F8",
+      "pass": true,
+      "expect": "SAFE|stale (census excluded)",
+      "exit": "0",
+      "verdict": "SAFE",
+      "receipt": "stale",
+      "evidence": "mtime_age_days=3 refs=0 scratch-type=yes",
+      "command": "env SHOKUNIN_ROOT=$W tools/souji-verify.sh $W/world/rp/sc2/zq7x-census.out"
+    },
+    {
+      "id": "F7n",
+      "pass": true,
+      "expect": "NOT-SAFE|!=stale",
+      "exit": "0",
+      "verdict": "NOT-SAFE",
+      "receipt": "none",
+      "evidence": "untracked repo=/tmp/s40-world.DpphnI/world/rp ledger=miss scratch=yes mtime_age_days=3",
+      "command": "env SHOKUNIN_ROOT=$W tools/souji-verify.sh $W/world/rp/sc3/zq7x-live.out"
+    },
+    {
+      "id": "F7n2",
+      "pass": true,
+      "expect": "NOT-SAFE|!=stale (fresh)",
+      "exit": "0",
+      "verdict": "NOT-SAFE",
+      "receipt": "none",
+      "evidence": "untracked repo=/tmp/s40-world.DpphnI/world/rp ledger=miss scratch=yes mtime_age_days=0",
+      "command": "env SHOKUNIN_ROOT=$W tools/souji-verify.sh $W/world/rp/sc4/zq7x-new.out"
+    },
+    {
+      "id": "Fthr5",
+      "pass": true,
+      "expect": "NOT-SAFE|!=stale (3d < 5d)",
+      "exit": "0",
+      "verdict": "NOT-SAFE",
+      "receipt": "none",
+      "evidence": "untracked repo=/tmp/s40-world.DpphnI/world/rp ledger=miss scratch=yes mtime_age_days=3",
+      "command": "env SHOKUNIN_ROOT=$W tools/souji-verify.sh --stale-days 5 $W/world/rp/sc5/zq7x-old5.out"
+    },
+    {
+      "id": "Fthr1",
+      "pass": true,
+      "expect": "SAFE|stale (3d > 1d)",
+      "exit": "0",
+      "verdict": "SAFE",
+      "receipt": "stale",
+      "evidence": "mtime_age_days=3 refs=0 scratch-type=yes",
+      "command": "env SHOKUNIN_ROOT=$W tools/souji-verify.sh --stale-days 1 $W/world/rp/sc5/zq7x-old5.out"
+    },
+    {
+      "id": "F10-1",
+      "pass": true,
+      "expect": "NOT-SAFE|secrets-refusal",
+      "exit": "0",
+      "verdict": "NOT-SAFE",
+      "receipt": "secrets-refusal",
+      "evidence": "basename-rule short-circuit (no read)",
+      "command": "env SHOKUNIN_ROOT=$W tools/souji-verify.sh $W/world/sec/.env"
+    },
+    {
+      "id": "F10-2",
+      "pass": true,
+      "expect": "NOT-SAFE|secrets-refusal",
+      "exit": "0",
+      "verdict": "NOT-SAFE",
+      "receipt": "secrets-refusal",
+      "evidence": "basename-rule short-circuit (no read)",
+      "command": "env SHOKUNIN_ROOT=$W tools/souji-verify.sh $W/world/sec/dummy.env"
+    },
+    {
+      "id": "F10-3",
+      "pass": true,
+      "expect": "NOT-SAFE|secrets-refusal",
+      "exit": "0",
+      "verdict": "NOT-SAFE",
+      "receipt": "secrets-refusal",
+      "evidence": "basename-rule short-circuit (no read)",
+      "command": "env SHOKUNIN_ROOT=$W tools/souji-verify.sh $W/world/sec/credentials.json"
+    },
+    {
+      "id": "F10-4",
+      "pass": true,
+      "expect": "NOT-SAFE|secrets-refusal",
+      "exit": "0",
+      "verdict": "NOT-SAFE",
+      "receipt": "secrets-refusal",
+      "evidence": "basename-rule short-circuit (no read)",
+      "command": "env SHOKUNIN_ROOT=$W tools/souji-verify.sh $W/world/sec/id_dummy"
+    },
+    {
+      "id": "F10-5",
+      "pass": true,
+      "expect": "NOT-SAFE|secrets-refusal",
+      "exit": "0",
+      "verdict": "NOT-SAFE",
+      "receipt": "secrets-refusal",
+      "evidence": "basename-rule short-circuit (no read)",
+      "command": "env SHOKUNIN_ROOT=$W tools/souji-verify.sh $W/world/sec/key.pem"
+    },
+    {
+      "id": "F10-6",
+      "pass": true,
+      "expect": "NOT-SAFE|secrets-refusal",
+      "exit": "0",
+      "verdict": "NOT-SAFE",
+      "receipt": "secrets-refusal",
+      "evidence": "basename-rule short-circuit (no read)"
+    },
+    {
+      "id": "F10-7",
+      "pass": true,
+      "expect": "NOT-SAFE|secrets-refusal",
+      "exit": "0",
+      "verdict": "NOT-SAFE",
+      "receipt": "secrets-refusal",
+      "evidence": "basename-rule short-circuit (no read)"
+    },
+    {
+      "id": "CLI-missing",
+      "pass": true,
+      "expect": "NOT-SAFE|unreachable exit0",
+      "exit": "0",
+      "verdict": "NOT-SAFE",
+      "receipt": "unreachable",
+      "evidence": "missing-target",
+      "command": "env SHOKUNIN_ROOT=$W tools/souji-verify.sh $W/nope/nothing-here"
+    },
+    {
+      "id": "CLI-usage",
+      "pass": true,
+      "expect": "exit=2",
+      "exit": "2",
+      "verdict": "",
+      "receipt": "",
+      "evidence": "",
+      "command": "env SHOKUNIN_ROOT=$W tools/souji-verify.sh --bogus-flag $W/world/ra/pre/f1.txt"
+    },
+    {
+      "id": "CLI-noargs",
+      "pass": null,
+      "expect": "observe",
+      "exit": "2",
+      "verdict": "",
+      "receipt": "",
+      "evidence": "",
+      "command": "env SHOKUNIN_ROOT=$W tools/souji-verify.sh"
+    },
+    {
+      "id": "CLI-json",
+      "pass": true,
+      "expect": "valid JSON(L) w/ both verdicts (exit 0)",
+      "exit": "0",
+      "verdict": "",
+      "receipt": "",
+      "evidence": "{\"path\":\"/tmp/s40-world.DpphnI/world/ra/pre/f1.txt\",\"kind\":\"artifact\",\"verdict\":\"SAFE\",\"receipt\":\"pushed\",\"evidence\":\"intro=88ebf69d391b default=refs/remotes/origin/main repo=/tmp/s40-world.DpphnI/wor",
+      "command": "env SHOKUNIN_ROOT=$W tools/souji-verify.sh --json $W/world/ra/pre/f1.txt $W/world/sec/dummy.env"
+    },
+    {
+      "id": "SELFTEST",
+      "pass": true,
+      "expect": "exit 0 twice",
+      "exit": "0",
+      "verdict": "",
+      "receipt": "",
+      "evidence": "run2=0 wall=0s",
+      "command": "env SHOKUNIN_ROOT=$W tools/souji-verify.sh --selftest  (twice)"
+    },
+    {
+      "id": "REPEAT-F4",
+      "pass": true,
+      "expect": "stable SAFE|metadata-prune",
+      "exit": "0",
+      "verdict": "",
+      "receipt": "",
+      "evidence": "SAFE|metadata-prune vs SAFE|metadata-prune",
+      "command": "env SHOKUNIN_ROOT=$W tools/souji-verify.sh $W/wt/wt-gone  (twice)"
+    },
+    {
+      "id": "OBS-outside-repo",
+      "pass": null,
+      "expect": "observe",
+      "exit": "0",
+      "verdict": "SAFE",
+      "receipt": "stale",
+      "evidence": "mtime_age_days=3 refs=0 scratch-type=yes",
+      "command": "env SHOKUNIN_ROOT=$W tools/souji-verify.sh $W/world/out-of-repo/zq7x-outside.out"
+    }
+  ],
+  "live_checks": [
+    {
+      "id": "L1-kotodama",
+      "pass": true,
+      "expect": "NOT-SAFE; unpushed==independent>=1; dirty within +/-1",
+      "exit": "0",
+      "verdict": "NOT-SAFE",
+      "receipt": "unpushed",
+      "evidence": "tool=unpushed=39 dirty=0 | independent: unpushed=39 dirty=0",
+      "command": "env SHOKUNIN_ROOT=$FLEET tools/souji-verify.sh $FLEET/kotodama-shokunin"
+    },
+    {
+      "id": "L2-fleet-AXES-pushed",
+      "pass": true,
+      "expect": "SAFE|pushed (origin/HEAD->master)",
+      "exit": "0",
+      "verdict": "SAFE",
+      "receipt": "pushed",
+      "evidence": "intro=609ecb6e09c5 default=refs/remotes/origin/master repo=/home/vgpnk/Projects/shokunin",
+      "command": "env SHOKUNIN_ROOT=$FLEET tools/souji-verify.sh $FLEET/AXES.md"
+    },
+    {
+      "id": "L3-lore-prune",
+      "pass": true,
+      "expect": "SAFE|metadata-prune (unique=0)",
+      "exit": "0",
+      "verdict": "SAFE",
+      "receipt": "metadata-prune",
+      "evidence": "independent unique=0",
+      "command": "env SHOKUNIN_ROOT=$FLEET tools/souji-verify.sh <first prunable+absent lore worktree from worktree list --porcelain>"
+    },
+    {
+      "id": "L4-gd2d-wt-r100",
+      "pass": true,
+      "expect": "NOT-SAFE|unpushed-branch",
+      "exit": "0",
+      "verdict": "NOT-SAFE",
+      "receipt": "unpushed-branch",
+      "evidence": "tool=owner=/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin branch=wt-r100 unpushed=1 | independent bfix-unpushed=1",
+      "command": "env SHOKUNIN_ROOT=$FLEET tools/souji-verify.sh $FLEET/game-dev-2d-shokunin-wt-r100"
+    },
+    {
+      "id": "L5-gd2d-r80",
+      "pass": true,
+      "expect": "SAFE|metadata-prune",
+      "exit": "0",
+      "verdict": "SAFE",
+      "receipt": "metadata-prune",
+      "evidence": "owner=/home/vgpnk/Projects/shokunin/game-dev-2d-shokunin head=d9320ddf339a unique=0 dir=absent",
+      "command": "env SHOKUNIN_ROOT=$FLEET tools/souji-verify.sh $FLEET/r80-baseline-frozen-worktree"
+    },
+    {
+      "id": "L6-lane-file",
+      "pass": null,
+      "expect": "observe (fallback-3: no origin refs, local master)",
+      "exit": "0",
+      "verdict": "SAFE",
+      "receipt": "pushed",
+      "evidence": "intro=ccbb1326204b default=refs/heads/master repo=/home/vgpnk/Projects/shokunin/souji-shokunin",
+      "command": "env SHOKUNIN_ROOT=$FLEET tools/souji-verify.sh $LANE/LOG.md"
+    },
+    {
+      "id": "L7-fleet-root",
+      "pass": null,
+      "expect": "observe",
+      "exit": "0",
+      "verdict": "NOT-SAFE",
+      "receipt": "unpushed",
+      "evidence": "unpushed=9 dirty=0 dirty(independent)=0",
+      "command": "env SHOKUNIN_ROOT=$FLEET tools/souji-verify.sh $FLEET"
+    }
+  ],
+  "findings": [
+    {
+      "severity": "medium",
+      "id": "FIND-fallback-local-master",
+      "claim": "Spec fallback-3 ('master' if it exists locally) yields SAFE(pushed) from local-only evidence on a repo with zero remote-tracking refs; the push state is unverifiable locally — a false-SAFE risk class for removal gating. Recommend: after fallback-3, accept only when refs/remotes/origin/<name> exists (or local tip equals a remote-tracking ref); else NOT-SAFE(pushed-unverifiable).",
+      "evidence": "L6: tool printed 'SAFE pushed intro=ccbb1326204b default=refs/heads/master' for souji-shokunin/LOG.md; in that repo 'git for-each-ref refs/remotes/ | wc -l' = 0 and 'git rev-parse refs/heads/master' = ab7f2f7; spec lines 37-41 list the fallback chain."
+    },
+    {
+      "severity": "low",
+      "id": "FIND-spec-rg-basename",
+      "claim": "Binding spec's stale sweep uses `rg -l --no-ignore --basename <name>`; installed ripgrep rejects --basename (rc=2). A literal implementation fails F7/F8. The tool correctly substitutes a cd-relative fixed-string sweep with dual-anchored census/tests/quarantine exclusions; verified by F7/F8/F7n. Recommend amending the spec text.",
+      "evidence": "`rg -l --no-ignore --basename zq7x-keep.out DIR` -> 'rg: unrecognized flag --basename', rc=2 (ripgrep 15.2.0); tool sweep_refs (cd + rg --fixed-strings + exclusions); F7 SAFE(stale refs=0), F8 SAFE(stale refs=0), F7n NOT-SAFE(none, refs>0)."
+    },
+    {
+      "severity": "low",
+      "id": "FIND-error-vs-zero-unique",
+      "claim": "Worktree unique-commit counting collapses git errors to 0 (count_lines), so an unreadable/bogus worktree HEAD yields SAFE(metadata-prune). Spec's literal `| wc -l` shares the blindness, but AGENTS.md says uncertain => NOT-SAFE. Partially mitigated: newest revision adds a top-level guard for non-swallowed failures (see FIND-top-level-guard); this path is swallowed by design.",
+      "evidence": "Crafted registration wt-bogus (HEAD=0000...0, dir absent): porcelain reports 'HEAD 0000000000000000000000000000000000000000 ... prunable'; tool printed 'VERDICT <path>/wt-bogus SAFE metadata-prune owner=... head=000000000000 unique=0 dir=absent' rc=0; direct `git -C owner log --oneline 0000... --not --all` rc=128."
+    },
+    {
+      "severity": "info",
+      "id": "FIND-top-level-guard",
+      "claim": "Revision d7edd71d hardened the evaluate loop: a classify_target exception or empty verdict now yields NOT-SAFE(none internal-error), increments ERRORS, and the process exits 1. Verified by source diff; battery unaffected.",
+      "evidence": "Cumulative diff vs d32bac5d shows 'classify_target \"$t\" || rc=$?' + 'if [ \"$rc\" -ne 0 ] || [ -z \"$RES_VERDICT\" ]; then ERRORS=...; result NOT-SAFE none \"internal-error rc=$rc\"'; selftest still pass=26 fail=0."
+    },
+    {
+      "severity": "info",
+      "id": "FIND-moving-target",
+      "claim": "tools/souji-verify.sh was rewritten several times inside the review window as the round integrated; the review anchors to one tested revision (sha checked immediately before and after the battery run), and records the assembly-time hash separately.",
+      "evidence": "sha256 chain observed: 8c75fa1e (27736B, source read) -> 112f9163 (29166B) -> d32bac5d (28961B, full battery pass) -> 13672fdc (28917B, -unused symbols only) -> d7edd71d (29107B, +internal-error guard) -> 586bc36c (29139B, 810 lines, final anchor: full battery + strace rerun, stable across the run); target.sha256 vs target.sha256_at_assembly record the tested vs assembly-time hashes."
+    },
+    {
+      "severity": "info",
+      "id": "FIND-secret-refusal-no-read",
+      "claim": "Secrets rail verified decisively: refusal short-circuits on basename before any open; strace of the refusal invocation shows zero mentions of the target path. The tool's selftest additionally checks canary non-leakage, hash stability, mode-000 copies, and that an ordinary sibling file is not misclassified.",
+      "evidence": "trace-B-refusal.log: 0 lines mentioning world/sec/dummy.env; selftest F10-cli x3 + F10-canary + F10-unchanged + F10-unreadable PASS (SUMMARY pass=26 fail=0, twice)."
+    },
+    {
+      "severity": "info",
+      "id": "FIND-live-index-lock",
+      "claim": "Live read-only audit: only write-mode syscalls on live surfaces are `git status`'s transient .git/index.lock (created+unlinked) on kotodama; no refs/objects/content written; zero writes to .ufo/state, .ufo/watchdog.log, or ~/.config.",
+      "evidence": "trace-C-live.log write-ish lines: /dev/null plus one openat/unlink pair on /home/vgpnk/Projects/shokunin/kotodama-shokunin/.git/index.lock; no other /home paths."
+    },
+    {
+      "severity": "info",
+      "id": "FIND-jsonl",
+      "claim": "`--json` emits JSONL (one object per target) with path/kind/verdict/receipt/evidence; both verdicts parse and match text mode. Spec does not pin the JSON container; JSONL accepted.",
+      "evidence": "json-output.txt: two lines, SAFE pushed + NOT-SAFE secrets-refusal; CLI-json case PASS (python3 per-line json.loads)."
+    },
+    {
+      "severity": "info",
+      "id": "FIND-fleet-root-state",
+      "claim": "Live datum for the round: fleet root itself is NOT-SAFE with unpushed=9 dirty=0 (9 local commits ahead of refs/remotes/origin/master); independently re-derived with the same convention.",
+      "evidence": "L7: 'VERDICT <fleet> NOT-SAFE unpushed unpushed=9 dirty=0'; `git -C <fleet> log --oneline HEAD --not --remotes | wc -l` = 9; `git status --porcelain | wc -l` = 0."
+    },
+    {
+      "severity": "info",
+      "id": "FIND-live-drift-kotodama",
+      "claim": "Live targets drift during the round: kotodama's in-flight workers committed their tree mid-review (dirty 22 -> 0, unpushed 38 -> 39). The L1 acceptance was made drift-tolerant: verdict NOT-SAFE, tool unpushed must equal the independent count and be >=1, dirty within +/-1 of the independent count.",
+      "evidence": "Run-3 L1 row: 'tool=unpushed=39 dirty=0 | independent: unpushed=39 dirty=0' (earlier run: 'tool=unpushed=38 dirty=22 | independent: unpushed=38 dirty=22')."
+    }
+  ],
+  "extra_evidence": [
+    "harness started: 2026-10-18T16:01:10Z mode=run",
+    "ledger rows: 3 (lf ok; lf-bad vault-sha mismatch; lf-mod source-sha mismatch)",
+    "== fixture facts (independent derivations) ==",
+    "world=/tmp/s40-world.DpphnI",
+    "f1 introducing: 88ebf69d391bc9669bfa0081021f6d9b39c73435 ; ancestor of refs/remotes/origin/main: yes",
+    "f2 introducing: f681c789ba88ae1722aa4e534e8483895d140dd4 ; ancestor of refs/remotes/origin/master: no",
+    "rd unpushed(--branches --not --remotes)=2 dirty=1",
+    "owner porcelain:",
+    "  owner| worktree /tmp/s40-world.DpphnI/owner-shokunin",
+    "  owner| HEAD 46a79cf3e57d16234e0bdd42df33278765abc1b4",
+    "  owner| branch refs/heads/master",
+    "  owner| ",
+    "  owner| worktree /tmp/s40-world.DpphnI/wt/wt-branch",
+    "  owner| HEAD 1e90942708c4c7a4ba55dd7ac29c53e794a729da",
+    "  owner| branch refs/heads/bfix",
+    "  owner| prunable gitdir file points to non-existent location",
+    "  owner| ",
+    "  owner| worktree /tmp/s40-world.DpphnI/wt/wt-gone",
+    "  owner| HEAD 46a79cf3e57d16234e0bdd42df33278765abc1b4",
+    "  owner| detached",
+    "  owner| prunable gitdir file points to non-existent location",
+    "  owner| ",
+    "  owner| worktree /tmp/s40-world.DpphnI/wt/wt-live",
+    "  owner| HEAD 46a79cf3e57d16234e0bdd42df33278765abc1b4",
+    "  owner| branch refs/heads/blive",
+    "  owner| ",
+    "wt-gone dir exists: no; unique(HEAD)=0",
+    "wt-branch exists: no; bfix unpushed(-not --remotes)=1",
+    "wt-live exists: yes; dirty=1",
+    "rg version: ripgrep 15.2.0 (rev e89fff89ac)",
+    "spec-literal rg --basename probe: stderr=rg: unrecognized flag --basename rc=2",
+    "content-sweep zq7x-keep.out (self+all): 0",
+    "content-sweep zq7x-live.out (self+all): 2",
+    "content-sweep zq7x-census.out (census excluded): 2",
+    "content-sweep zq7x-census.out (census included): 2",
+    "tool=/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh executable=yes sha256=586bc36c6039b9c9bf5846b85156b02dd3daa6f594c03d6ba474a9c71f2fc812 bytes=29139",
+    "lore pick=/tmp/r87-B1 exists=no",
+    "harness finished: 2026-10-18T16:01:11Z"
+  ],
+  "harness_script_snapshot": "#!/bin/bash\n# S40 (reviewer) — independent review harness for souji-shokunin tools/souji-verify.sh\n# Deterministic: builds an isolated fixture world under mktemp -d; writes only\n# into $OUTDIR (default /tmp/s40-review) and the mktemp world (cleaned on demand).\n# Usage: MODE=build|run bash harness.sh\nset -uo pipefail\n\nTOOL=${TOOL:-/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh}\nOUTDIR=${OUTDIR:-/tmp/s40-review}\nFLEET=${FLEET:-/home/vgpnk/Projects/shokunin}\nLANE=${LANE:-/home/vgpnk/Projects/shokunin/souji-shokunin}\nMODE=${MODE:-run}\n\nW=$(mktemp -d /tmp/s40-world.XXXXXX)\nmkdir -p \"$OUTDIR\"\nCASES=\"$OUTDIR/cases.tsv\";  : > \"$CASES\"\nLIVE=\"$OUTDIR/live.tsv\";    : > \"$LIVE\"\nEXTRA=\"$OUTDIR/extra.txt\";  : > \"$EXTRA\"\nFIND=\"$OUTDIR/findings.tsv\";: > \"$FIND\"\n\n# --- tool invocation form -------------------------------------------------\nTOOLCMD=(\"$TOOL\")\n[ -x \"$TOOL\" ] || TOOLCMD=(bash \"$TOOL\")\n\ngq() { git -c user.name=S40 -c user.email=s40@fixture.local -c init.defaultBranch=master \"$@\"; }\n\nrecord() { # file id pass expect exit verdict receipt evidence\n  local f=\"$1\" id=\"$2\" pass=\"$3\" expect=\"$4\" ec=\"$5\" v=\"$6\" r=\"$7\" ev=\"$8\"\n  ev=${ev//$'\\t'/ }\n  printf '%s\\t%s\\t%s\\t%s\\t%s\\t%s\\t%s\\n' \"$id\" \"$pass\" \"$expect\" \"$ec\" \"$v\" \"$r\" \"$ev\" >> \"$f\"\n}\nnote() { printf '%s\\n' \"$*\" >> \"$EXTRA\"; }\nfinding() { printf '%s\\t%s\\t%s\\t%s\\n' \"$1\" \"$2\" \"$3\" \"$4\" >> \"$FIND\"; }\n\ncall_tool() { # args...; sets RC LINE FULLOUT ; SR = SHOKUNIN_ROOT override\n  FULLOUT=$(env SHOKUNIN_ROOT=\"${SR:-$W}\" \"${TOOLCMD[@]}\" \"$@\" 2>&1); RC=$?\n  LINE=$(printf '%s\\n' \"$FULLOUT\" | head -n1)\n  V_VERDICT=\"\"; V_RECEIPT=\"\"; V_EVID=\"\"; V_PATH=\"\"\n  if [ -n \"$LINE\" ]; then IFS=$'\\t' read -r _TAG V_PATH V_VERDICT V_RECEIPT V_EVID <<<\"$LINE\"; fi\n}\n\nverdict_is() { [ \"${V_VERDICT:-}\" = \"$1\" ]; }\nreceipt_is() { [ \"${V_RECEIPT:-}\" = \"$1\" ]; }\nreceipt_in() { local x; for x in \"$@\"; do [ \"${V_RECEIPT:-}\" = \"$x\" ] && return 0; done; return 1; }\n\n# ======================= fixture world =====================================\nbuild_world() {\n  mkdir -p \"$W/world\" \"$W/wt\" \"$W/corpus/knowledge\" \"$W/vault\" \\\n           \"$W/souji-shokunin/census\" \"$W/world/arts\" \"$W/world/sec\" \"$W/world/out-of-repo\"\n  # fixture lane repo (mirrors SHOKUNIN_ROOT/*-shokunin shape for owner scanning)\n  gq -C \"$W/souji-shokunin\" init -q\n  echo \"s40 fixture lane\" > \"$W/souji-shokunin/README.md\"\n  gq -C \"$W/souji-shokunin\" add README.md; gq -C \"$W/souji-shokunin\" commit -qm \"fixture lane c0\"\n\n  # --- RA: pushed repo, origin/HEAD -> refs/remotes/origin/main (F1, D1 symref path)\n  RA=\"$W/world/ra\"; mkdir -p \"$RA/pre\"\n  gq -C \"$RA\" init -q\n  echo \"f1 payload\" > \"$RA/pre/f1.txt\"\n  gq -C \"$RA\" add pre/f1.txt; gq -C \"$RA\" commit -qm \"add f1\"\n  echo \"tip\" > \"$RA/README\"; gq -C \"$RA\" add README; gq -C \"$RA\" commit -qm \"tip\"\n  gq -C \"$RA\" branch -f main HEAD\n  gq -C \"$RA\" update-ref refs/remotes/origin/main HEAD\n  gq -C \"$RA\" symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/main\n\n  # --- RL: local-only introducing commit (F2) — origin/master behind it\n  RL=\"$W/world/rl\"; mkdir -p \"$RL/pre\"\n  gq -C \"$RL\" init -q\n  echo \"root\" > \"$RL/README\"; gq -C \"$RL\" add README; gq -C \"$RL\" commit -qm \"c0\"\n  RL_C0=$(git -C \"$RL\" rev-parse HEAD)\n  echo \"f2 payload\" > \"$RL/pre/f2.txt\"; gq -C \"$RL\" add pre/f2.txt; gq -C \"$RL\" commit -qm \"A: add f2 (local only)\"\n  RL_A=$(git -C \"$RL\" rev-parse HEAD)\n  echo \"tip2\" >> \"$RL/README\"; gq -C \"$RL\" add README; gq -C \"$RL\" commit -qm \"B: tip\"\n  gq -C \"$RL\" update-ref refs/remotes/origin/master \"$RL_C0\"\n\n  # --- RD: repo-root, unpushed commit + dirty tree (F3, kotodama-shaped)\n  RD=\"$W/world/rd\"; mkdir -p \"$RD\"\n  gq -C \"$RD\" init -q\n  echo \"a\" > \"$RD/a.txt\"; gq -C \"$RD\" add a.txt; gq -C \"$RD\" commit -qm \"c0\"\n  echo \"b\" > \"$RD/b.txt\"; gq -C \"$RD\" add b.txt; gq -C \"$RD\" commit -qm \"c1 local-only\"\n  echo \"dirty\" >> \"$RD/a.txt\"\n\n  # --- OWNER: worktree registrations (F4, F5, F5b)\n  O=\"$W/owner-shokunin\"; mkdir -p \"$O\"\n  gq -C \"$O\" init -q\n  echo \"o\" > \"$O/o.txt\"; gq -C \"$O\" add o.txt; gq -C \"$O\" commit -qm \"oc0\"\n  OC=$(git -C \"$O\" rev-parse HEAD)\n  gq -C \"$O\" update-ref refs/remotes/origin/master \"$OC\"\n  gq -C \"$O\" worktree add -q --detach \"$W/wt/wt-gone\" HEAD\n  rm -rf \"$W/wt/wt-gone\"\n  gq -C \"$O\" worktree add -q -b bfix \"$W/wt/wt-branch\" HEAD\n  echo \"x\" > \"$W/wt/wt-branch/bf.txt\"\n  gq -C \"$W/wt/wt-branch\" add bf.txt; gq -C \"$W/wt/wt-branch\" commit -qm \"bfix local-only work\"\n  rm -rf \"$W/wt/wt-branch\"\n  gq -C \"$O\" worktree add -q -b blive \"$W/wt/wt-live\" HEAD\n  echo \"untracked\" > \"$W/wt/wt-live/untracked.txt\"\n\n  # --- ledger (F6 / F6n) at $W/corpus/knowledge/obsidian-ledger.tsv\n  LK=\"$W/corpus/knowledge/obsidian-ledger.tsv\"\n  printf 'source_path\\tsource_sha256\\tvault_path\\tvault_sha256\\texported_at\\tnote\\n' > \"$LK\"\n  echo \"archived payload s40\" > \"$W/world/arts/lf.txt\"\n  cp \"$W/world/arts/lf.txt\" \"$W/vault/lf.txt\"\n  s1=$(sha256sum \"$W/world/arts/lf.txt\" | cut -d' ' -f1)\n  v1=$(sha256sum \"$W/vault/lf.txt\" | cut -d' ' -f1)\n  printf '%s\\t%s\\t%s\\t%s\\t2026-10-18T00:00:00Z\\ts40-fixture\\n' \"$W/world/arts/lf.txt\" \"$s1\" \"$W/vault/lf.txt\" \"$v1\" >> \"$LK\"\n  # F6n1: source sha ok, vault sha mismatched\n  echo \"bad payload\" > \"$W/world/arts/lf-bad.txt\"\n  echo \"different vault copy\" > \"$W/vault/lf-bad.txt\"\n  sb=$(sha256sum \"$W/world/arts/lf-bad.txt\" | cut -d' ' -f1)\n  vb=$(sha256sum \"$W/vault/lf-bad.txt\" | cut -d' ' -f1)\n  vb_wrong=$(printf 'wrong-%s' \"$vb\" | sha256sum | cut -d' ' -f1)\n  printf '%s\\t%s\\t%s\\t%s\\t2026-10-18T00:00:00Z\\ts40-fixture-bad-vault\\n' \"$W/world/arts/lf-bad.txt\" \"$sb\" \"$W/vault/lf-bad.txt\" \"$vb_wrong\" >> \"$LK\"\n  # F6n2: source file changed after export (source sha mismatch)\n  echo \"mod payload\" > \"$W/world/arts/lf-mod.txt\"\n  cp \"$W/world/arts/lf-mod.txt\" \"$W/vault/lf-mod.txt\"\n  s2=$(sha256sum \"$W/world/arts/lf-mod.txt\" | cut -d' ' -f1)\n  v2=$(sha256sum \"$W/vault/lf-mod.txt\" | cut -d' ' -f1)\n  echo \"modified after export\" >> \"$W/world/arts/lf-mod.txt\"\n  printf '%s\\t%s\\t%s\\t%s\\t2026-10-18T00:00:00Z\\ts40-fixture-mod\\n' \"$W/world/arts/lf-mod.txt\" \"$s2\" \"$W/vault/lf-mod.txt\" \"$v2\" >> \"$LK\"\n  note \"ledger rows: 3 (lf ok; lf-bad vault-sha mismatch; lf-mod source-sha mismatch)\"\n\n  # --- scratch fixtures inside a repo RP (F7, F7n, F8, threshold)\n  RP=\"$W/world/rp\"; mkdir -p \"$RP\"\n  gq -C \"$RP\" init -q\n  echo \"rp\" > \"$RP/README\"; gq -C \"$RP\" add README; gq -C \"$RP\" commit -qm \"rp0\"\n  mkdir -p \"$RP/sc1\" \"$RP/sc2\" \"$RP/sc3\" \"$RP/sc4\" \"$RP/sc5\" \"$RP/refs\" \"$RP/souji-shokunin/census\"\n  echo \"keep payload\" > \"$RP/sc1/zq7x-keep.out\";   touch -d '3 days ago' \"$RP/sc1/zq7x-keep.out\"\n  echo \"census payload\" > \"$RP/sc2/zq7x-census.out\"; touch -d '3 days ago' \"$RP/sc2/zq7x-census.out\"\n  echo \"live payload\" > \"$RP/sc3/zq7x-live.out\";   touch -d '3 days ago' \"$RP/sc3/zq7x-live.out\"\n  echo \"fresh payload\" > \"$RP/sc4/zq7x-new.out\"\n  echo \"old payload\" > \"$RP/sc5/zq7x-old5.out\";    touch -d '3 days ago' \"$RP/sc5/zq7x-old5.out\"\n  echo \"live reference to zq7x-live.out lives here\" > \"$RP/refs/live.md\"\n  mkdir -p \"$RP/sc3b\"; echo \"another live artifact named zq7x-live.out\" > \"$RP/sc3b/zq7x-live.out\"\n  echo 'mentions zq7x-census.out (census-like, must be excluded)' > \"$RP/souji-shokunin/census/fake.json\"\n  echo 'mentions zq7x-census.out (census-like, must be excluded)' > \"$W/souji-shokunin/census/fake.json\"\n  # out-of-repo scratch shape (observation only)\n  echo \"out payload\" > \"$W/world/out-of-repo/zq7x-outside.out\"; touch -d '3 days ago' \"$W/world/out-of-repo/zq7x-outside.out\"\n\n  # --- secrets-shaped dummies (F10) — dummy content only, never read by this harness\n  mkdir -p \"$W/world/sec\"\n  printf 'S40-DUMMY-NOT-A-SECRET\\n' > \"$W/world/sec/.env\"\n  printf 'S40-DUMMY-NOT-A-SECRET\\n' > \"$W/world/sec/dummy.env\"\n  printf 'S40-DUMMY-NOT-A-SECRET\\n' > \"$W/world/sec/credentials.json\"\n  printf 'S40-DUMMY-NOT-A-SECRET\\n' > \"$W/world/sec/id_dummy\"\n  printf 'S40-DUMMY-NOT-A-SECRET\\n' > \"$W/world/sec/key.pem\"\n  mkdir -p \"$W/world/sec2/.env\"\n  printf 'S40-DUMMY-NOT-A-SECRET\\n' > \"$W/world/sec2/.env/inner.txt\"\n  printf 'S40-DUMMY-NOT-A-SECRET\\n' > \"$W/world/sec2/mysecrets.txt\"\n}\n\nfixture_facts() {\n  note \"== fixture facts (independent derivations) ==\"\n  note \"world=$W\"\n  note \"f1 introducing: $(git -C \"$RA\" log --diff-filter=A --format=%H -1 -- pre/f1.txt) ; ancestor of refs/remotes/origin/main: $(git -C \"$RA\" merge-base --is-ancestor \"$(git -C \"$RA\" log --diff-filter=A --format=%H -1 -- pre/f1.txt)\" refs/remotes/origin/main && echo yes || echo no)\"\n  note \"f2 introducing: $RL_A ; ancestor of refs/remotes/origin/master: $(git -C \"$RL\" merge-base --is-ancestor \"$RL_A\" refs/remotes/origin/master && echo yes || echo no)\"\n  note \"rd unpushed(--branches --not --remotes)=$(git -C \"$RD\" log --branches --not --remotes --oneline | wc -l) dirty=$(git -C \"$RD\" status --porcelain | wc -l)\"\n  note \"owner porcelain:\"\n  git -C \"$O\" worktree list --porcelain | sed 's/^/  owner| /' >> \"$EXTRA\"\n  note \"wt-gone dir exists: $([ -e \"$W/wt/wt-gone\" ] && echo yes || echo no); unique(HEAD)=$(git -C \"$O\" log --oneline \"$OC\" --not --all | wc -l)\"\n  note \"wt-branch exists: $([ -e \"$W/wt/wt-branch\" ] && echo yes || echo no); bfix unpushed(-not --remotes)=$(git -C \"$O\" log --oneline bfix --not --remotes | wc -l)\"\n  note \"wt-live exists: $([ -e \"$W/wt/wt-live\" ] && echo yes || echo no); dirty=$(git -C \"$W/wt/wt-live\" status --porcelain | wc -l)\"\n  note \"rg version: $(rg --version | head -n1)\"\n  note \"spec-literal rg --basename probe: stderr=$(rg -l --no-ignore --basename zq7x-keep.out \"$W\" 2>&1 >/dev/null | head -n1) rc=$(rg -l --no-ignore --basename zq7x-keep.out \"$W\" >/dev/null 2>&1; echo $?)\"\n  note \"content-sweep zq7x-keep.out (self+all): $(rg -l --no-ignore zq7x-keep.out \"$W\" -g '!.git' 2>/dev/null | wc -l)\"\n  note \"content-sweep zq7x-live.out (self+all): $(rg -l --no-ignore zq7x-live.out \"$W\" -g '!.git' 2>/dev/null | wc -l)\"\n  note \"content-sweep zq7x-census.out (census excluded): $(rg -l --no-ignore zq7x-census.out \"$W\" -g '!.git' -g '!souji-shokunin/census/**' 2>/dev/null | wc -l)\"\n  note \"content-sweep zq7x-census.out (census included): $(rg -l --no-ignore zq7x-census.out \"$W\" -g '!.git' 2>/dev/null | wc -l)\"\n}\n\n# ======================= cases =============================================\nrun_cases() {\n  # F1\n  call_tool \"$RA/pre/f1.txt\"\n  if [ \"$RC\" = 0 ] && verdict_is SAFE && receipt_is pushed; then p=1; else p=0; fi\n  record \"$CASES\" F1 \"$p\" \"SAFE|pushed\" \"$RC\" \"${V_VERDICT:-}\" \"${V_RECEIPT:-}\" \"${V_EVID:-}\"\n\n  # F2\n  call_tool \"$RL/pre/f2.txt\"\n  if [ \"$RC\" = 0 ] && verdict_is NOT-SAFE && receipt_in none pushed-unverifiable; then p=1; else p=0; fi\n  record \"$CASES\" F2 \"$p\" \"NOT-SAFE|none|pushed-unverifiable\" \"$RC\" \"${V_VERDICT:-}\" \"${V_RECEIPT:-}\" \"${V_EVID:-}\"\n\n  # F3\n  call_tool \"$RD\"\n  if [ \"$RC\" = 0 ] && verdict_is NOT-SAFE && [[ \"${V_EVID:-}\" =~ unpushed=[0-9]+\\ dirty=[0-9]+ ]]; then p=1; else p=0; fi\n  record \"$CASES\" F3 \"$p\" \"NOT-SAFE|unpushed=N dirty=M\" \"$RC\" \"${V_VERDICT:-}\" \"${V_RECEIPT:-}\" \"${V_EVID:-}\"\n\n  # F4\n  call_tool \"$W/wt/wt-gone\"\n  if [ \"$RC\" = 0 ] && verdict_is SAFE && receipt_is metadata-prune; then p=1; else p=0; fi\n  record \"$CASES\" F4 \"$p\" \"SAFE|metadata-prune\" \"$RC\" \"${V_VERDICT:-}\" \"${V_RECEIPT:-}\" \"${V_EVID:-}\"\n\n  # F5\n  call_tool \"$W/wt/wt-branch\"\n  if [ \"$RC\" = 0 ] && verdict_is NOT-SAFE && receipt_is unpushed-branch; then p=1; else p=0; fi\n  record \"$CASES\" F5 \"$p\" \"NOT-SAFE|unpushed-branch\" \"$RC\" \"${V_VERDICT:-}\" \"${V_RECEIPT:-}\" \"${V_EVID:-}\"\n\n  # F5b (dir present + dirty)\n  call_tool \"$W/wt/wt-live\"\n  if [ \"$RC\" = 0 ] && verdict_is NOT-SAFE && receipt_is dirty; then p=1; else p=0; fi\n  record \"$CASES\" F5b \"$p\" \"NOT-SAFE|dirty\" \"$RC\" \"${V_VERDICT:-}\" \"${V_RECEIPT:-}\" \"${V_EVID:-}\"\n\n  # F6\n  call_tool \"$W/world/arts/lf.txt\"\n  if [ \"$RC\" = 0 ] && verdict_is SAFE && receipt_is moved-to-obsidian; then p=1; else p=0; fi\n  record \"$CASES\" F6 \"$p\" \"SAFE|moved-to-obsidian\" \"$RC\" \"${V_VERDICT:-}\" \"${V_RECEIPT:-}\" \"${V_EVID:-}\"\n\n  # F6n1 vault sha mismatch\n  call_tool \"$W/world/arts/lf-bad.txt\"\n  if [ \"$RC\" = 0 ] && verdict_is NOT-SAFE && ! receipt_is moved-to-obsidian; then p=1; else p=0; fi\n  record \"$CASES\" F6n1 \"$p\" \"NOT-SAFE|!=moved-to-obsidian\" \"$RC\" \"${V_VERDICT:-}\" \"${V_RECEIPT:-}\" \"${V_EVID:-}\"\n\n  # F6n2 source sha mismatch\n  call_tool \"$W/world/arts/lf-mod.txt\"\n  if [ \"$RC\" = 0 ] && verdict_is NOT-SAFE && ! receipt_is moved-to-obsidian; then p=1; else p=0; fi\n  record \"$CASES\" F6n2 \"$p\" \"NOT-SAFE|!=moved-to-obsidian\" \"$RC\" \"${V_VERDICT:-}\" \"${V_RECEIPT:-}\" \"${V_EVID:-}\"\n\n  # F7\n  call_tool \"$RP/sc1/zq7x-keep.out\"\n  if [ \"$RC\" = 0 ] && verdict_is SAFE && receipt_is stale; then p=1; else p=0; fi\n  record \"$CASES\" F7 \"$p\" \"SAFE|stale\" \"$RC\" \"${V_VERDICT:-}\" \"${V_RECEIPT:-}\" \"${V_EVID:-}\"\n\n  # F8\n  call_tool \"$RP/sc2/zq7x-census.out\"\n  if [ \"$RC\" = 0 ] && verdict_is SAFE && receipt_is stale; then p=1; else p=0; fi\n  record \"$CASES\" F8 \"$p\" \"SAFE|stale (census excluded)\" \"$RC\" \"${V_VERDICT:-}\" \"${V_RECEIPT:-}\" \"${V_EVID:-}\"\n\n  # F7n live reference\n  call_tool \"$RP/sc3/zq7x-live.out\"\n  if [ \"$RC\" = 0 ] && verdict_is NOT-SAFE && ! receipt_is stale; then p=1; else p=0; fi\n  record \"$CASES\" F7n \"$p\" \"NOT-SAFE|!=stale\" \"$RC\" \"${V_VERDICT:-}\" \"${V_RECEIPT:-}\" \"${V_EVID:-}\"\n\n  # F7n2 fresh mtime\n  call_tool \"$RP/sc4/zq7x-new.out\"\n  if [ \"$RC\" = 0 ] && verdict_is NOT-SAFE && ! receipt_is stale; then p=1; else p=0; fi\n  record \"$CASES\" F7n2 \"$p\" \"NOT-SAFE|!=stale (fresh)\" \"$RC\" \"${V_VERDICT:-}\" \"${V_RECEIPT:-}\" \"${V_EVID:-}\"\n\n  # threshold direction\n  call_tool --stale-days 5 \"$RP/sc5/zq7x-old5.out\"\n  if [ \"$RC\" = 0 ] && verdict_is NOT-SAFE && ! receipt_is stale; then p=1; else p=0; fi\n  record \"$CASES\" Fthr5 \"$p\" \"NOT-SAFE|!=stale (3d < 5d)\" \"$RC\" \"${V_VERDICT:-}\" \"${V_RECEIPT:-}\" \"${V_EVID:-}\"\n  call_tool --stale-days 1 \"$RP/sc5/zq7x-old5.out\"\n  if [ \"$RC\" = 0 ] && verdict_is SAFE && receipt_is stale; then p=1; else p=0; fi\n  record \"$CASES\" Fthr1 \"$p\" \"SAFE|stale (3d > 1d)\" \"$RC\" \"${V_VERDICT:-}\" \"${V_RECEIPT:-}\" \"${V_EVID:-}\"\n\n  # F10 secrets refusal (7 shapes)\n  local i=0 f\n  local -a sf=( \"$W/world/sec/.env\" \"$W/world/sec/dummy.env\" \"$W/world/sec/credentials.json\" \\\n                \"$W/world/sec/id_dummy\" \"$W/world/sec/key.pem\" \\\n                \"$W/world/sec2/.env/inner.txt\" \"$W/world/sec2/mysecrets.txt\" )\n  for f in \"${sf[@]}\"; do\n    i=$((i+1))\n    call_tool \"$f\"\n    if [ \"$RC\" = 0 ] && verdict_is NOT-SAFE && receipt_is secrets-refusal; then p=1; else p=0; fi\n    record \"$CASES\" \"F10-$i\" \"$p\" \"NOT-SAFE|secrets-refusal\" \"$RC\" \"${V_VERDICT:-}\" \"${V_RECEIPT:-}\" \"${V_EVID:-}\" \"${f##*/}\"\n  done\n\n  # CLI: missing target\n  call_tool \"$W/nope/nothing-here\"\n  if [ \"$RC\" = 0 ] && verdict_is NOT-SAFE && receipt_is unreachable; then p=1; else p=0; fi\n  record \"$CASES\" CLI-missing \"$p\" \"NOT-SAFE|unreachable exit0\" \"$RC\" \"${V_VERDICT:-}\" \"${V_RECEIPT:-}\" \"${V_EVID:-}\"\n\n  # CLI: unknown flag -> exit 2\n  call_tool --bogus-flag \"$RA/pre/f1.txt\"\n  if [ \"$RC\" = 2 ]; then p=1; else p=0; fi\n  record \"$CASES\" CLI-usage \"$p\" \"exit=2\" \"$RC\" \"${V_VERDICT:-}\" \"${V_RECEIPT:-}\" \"${V_EVID:-}\"\n\n  # CLI: no args (observe)\n  call_tool\n  record \"$CASES\" CLI-noargs \"0\" \"observe\" \"$RC\" \"${V_VERDICT:-}\" \"${V_RECEIPT:-}\" \"${V_EVID:-}\"\n\n  # CLI: --json parses and matches text verdicts (JSONL: one object per target)\n  local jout jrc\n  jout=$(env SHOKUNIN_ROOT=\"$W\" \"${TOOLCMD[@]}\" --json \"$RA/pre/f1.txt\" \"$W/world/sec/dummy.env\" 2>&1); jrc=$?\n  if [ \"$jrc\" = 0 ] && printf '%s' \"$jout\" | python3 -c '\nimport json,sys\ns=sys.stdin.read()\nrows=[json.loads(l) for l in s.splitlines() if l.strip()]\nvs=[r.get(\"verdict\") for r in rows]\nassert \"SAFE\" in vs and \"NOT-SAFE\" in vs, vs\n' 2>\"$OUTDIR/json-err.txt\"; then p=1; else p=0; fi\nrecord \"$CASES\" CLI-json \"$p\" \"valid JSON(L) w/ both verdicts (exit 0)\" \"$jrc\" \"\" \"\" \"$(printf '%s' \"$jout\" | head -c 200)\"\n  printf '%s\\n' \"$jout\" > \"$OUTDIR/json-output.txt\"\n\n  # selftest x2\n  local t0 t1 st1 st2\n  t0=$(date +%s); env SHOKUNIN_ROOT=\"$W\" \"${TOOLCMD[@]}\" --selftest >\"$OUTDIR/selftest-1.out\" 2>&1; st1=$?; t1=$(date +%s)\n  env SHOKUNIN_ROOT=\"$W\" \"${TOOLCMD[@]}\" --selftest >\"$OUTDIR/selftest-2.out\" 2>&1; st2=$?\n  if [ \"$st1\" = 0 ] && [ \"$st2\" = 0 ]; then p=1; else p=0; fi\n  record \"$CASES\" SELFTEST \"$p\" \"exit 0 twice\" \"$st1\" \"\" \"\" \"run2=$st2 wall=$((t1-t0))s\"\n\n  # stability: repeat F4 + F7 + live kotodama later; repeat here F4/F7\n  call_tool \"$W/wt/wt-gone\"; r1=\"${V_VERDICT}|${V_RECEIPT}\"\n  call_tool \"$W/wt/wt-gone\"; r2=\"${V_VERDICT}|${V_RECEIPT}\"\n  if [ \"$r1\" = \"$r2\" ] && [ \"$r1\" = \"SAFE|metadata-prune\" ]; then p=1; else p=0; fi\n  record \"$CASES\" REPEAT-F4 \"$p\" \"stable SAFE|metadata-prune\" \"0\" \"\" \"\" \"$r1 vs $r2\"\n\n  # observe: stale-shaped file outside any git repo\n  call_tool \"$W/world/out-of-repo/zq7x-outside.out\"\n  record \"$CASES\" OBS-outside-repo \"0\" \"observe\" \"$RC\" \"${V_VERDICT:-}\" \"${V_RECEIPT:-}\" \"${V_EVID:-}\"\n}\n\n# ======================= live checks (read-only) ===========================\nrun_live() {\n  SR=\"$FLEET\"\n  local kt=\"$FLEET/kotodama-shokunin\" lane_head lane_status\n\n  # L1 kotodama (drift-tolerant: tool counts must equal independent re-derivation)\n  call_tool \"$kt\"\n  kt_unp=$(git -C \"$kt\" log --oneline HEAD --not --remotes | wc -l)\n  kt_dirty=$(git -C \"$kt\" status --porcelain | wc -l)\n  local tu td\n  tu=$(printf '%s' \"${V_EVID:-}\" | sed -n 's/.*unpushed=\\([0-9]*\\).*/\\1/p')\n  td=$(printf '%s' \"${V_EVID:-}\" | sed -n 's/.*dirty=\\([0-9]*\\).*/\\1/p')\n  if [ \"$RC\" = 0 ] && verdict_is NOT-SAFE && [ -n \"$tu\" ] && [ -n \"$td\" ] \\\n     && [ \"$((10#$tu))\" = \"$kt_unp\" ] && [ \"$((10#$tu))\" -ge 1 ] \\\n     && [ \"$((10#$td - 10#$kt_dirty))\" -le 1 ] && [ \"$((10#$kt_dirty - 10#$td))\" -le 1 ]; then p=1; else p=0; fi\n  record \"$LIVE\" L1-kotodama \"$p\" \"NOT-SAFE; unpushed==independent>=1; dirty within +/-1\" \"$RC\" \"${V_VERDICT:-}\" \"${V_RECEIPT:-}\" \"tool=${V_EVID:-} | independent: unpushed=$kt_unp dirty=$kt_dirty\"\n\n  # L2 fleet-root pushed file (D1 symref path on live origin/master)\n  call_tool \"$FLEET/AXES.md\"\n  if [ \"$RC\" = 0 ] && verdict_is SAFE && receipt_is pushed; then p=1; else p=0; fi\n  record \"$LIVE\" L2-fleet-AXES-pushed \"$p\" \"SAFE|pushed (origin/HEAD->master)\" \"$RC\" \"${V_VERDICT:-}\" \"${V_RECEIPT:-}\" \"${V_EVID:-}\"\n\n  # L3 lore prunable detached worktree (dir absent, unique=0)\n  local lp hdr\n  lp=$(pick_prunable \"$FLEET/lore-shokunin\" detached)\n  note \"lore pick=$lp exists=$([ -e \"$lp\" ] && echo yes || echo no)\"\n  if [ -n \"$lp\" ]; then\n    call_tool \"$lp\"\n    hdr=$(git -C \"$FLEET/lore-shokunin\" worktree list --porcelain | awk -v p=\"$lp\" '$1==\"worktree\"{w=$2} w==p && $1==\"HEAD\"{print $2}')\n    local uniq; uniq=$(git -C \"$FLEET/lore-shokunin\" log --oneline \"$hdr\" --not --all | wc -l)\n    if [ \"$RC\" = 0 ] && verdict_is SAFE && receipt_is metadata-prune; then p=1; else p=0; fi\n    record \"$LIVE\" L3-lore-prune \"$p\" \"SAFE|metadata-prune (unique=0)\" \"$RC\" \"${V_VERDICT:-}\" \"${V_RECEIPT:-}\" \"independent unique=$uniq\"\n  else\n    record \"$LIVE\" L3-lore-prune \"0\" \"SAFE|metadata-prune\" \"-1\" \"\" \"\" \"no prunable detached worktree found\"\n  fi\n\n  # L4 gd2d named-branch worktree with 1 unpushed commit\n  local gp\n  gp=\"$FLEET/game-dev-2d-shokunin-wt-r100\"\n  call_tool \"$gp\"\n  local gd_unp; gd_unp=$(git -C \"$FLEET/game-dev-2d-shokunin\" log --oneline wt-r100 --not --remotes | wc -l)\n  if [ \"$RC\" = 0 ] && verdict_is NOT-SAFE && receipt_is unpushed-branch; then p=1; else p=0; fi\n  record \"$LIVE\" L4-gd2d-wt-r100 \"$p\" \"NOT-SAFE|unpushed-branch\" \"$RC\" \"${V_VERDICT:-}\" \"${V_RECEIPT:-}\" \"tool=${V_EVID:-} | independent bfix-unpushed=$gd_unp\"\n\n  # L5 gd2d detached prunable (r80)\n  call_tool \"$FLEET/r80-baseline-frozen-worktree\"\n  if [ \"$RC\" = 0 ] && verdict_is SAFE && receipt_is metadata-prune; then p=1; else p=0; fi\n  record \"$LIVE\" L5-gd2d-r80 \"$p\" \"SAFE|metadata-prune\" \"$RC\" \"${V_VERDICT:-}\" \"${V_RECEIPT:-}\" \"${V_EVID:-}\"\n\n  # L6 lane file (souji LOG.md) — spec fallback-3 observation\n  call_tool \"$LANE/LOG.md\"\n  record \"$LIVE\" L6-lane-file \"0\" \"observe (fallback-3: no origin refs, local master)\" \"$RC\" \"${V_VERDICT:-}\" \"${V_RECEIPT:-}\" \"${V_EVID:-}\"\n\n  # L7 fleet root itself — observe\n  call_tool \"$FLEET\"\n  kt_dirty=$(git -C \"$FLEET\" status --porcelain | wc -l)\n  record \"$LIVE\" L7-fleet-root \"0\" \"observe\" \"$RC\" \"${V_VERDICT:-}\" \"${V_RECEIPT:-}\" \"${V_EVID:-} dirty(independent)=$kt_dirty\"\n\n  SR=\"$W\"\n}\n\npick_prunable() { # repo, mode(detached|named) -> path of first prunable+dir-absent worktree\n  local repo=\"$1\" mode=\"$2\" path=\"\" cur=\"\"\n  while IFS= read -r ln; do\n    case \"$ln\" in\n      \"worktree \"*) path=\"${ln#worktree }\" ;;\n      \"branch \"*) cur=\"named\" ;;\n      \"detached\"*) cur=\"detached\" ;;\n      \"prunable\"*)\n        if [ -n \"$path\" ] && [ ! -e \"$path\" ]; then\n          if [ \"$mode\" = \"$cur\" ]; then printf '%s\\n' \"$path\"; return 0; fi\n        fi\n        ;;\n      \"\") path=\"\"; cur=\"\" ;;\n    esac\n  done < <(git -C \"$repo\" worktree list --porcelain)\n  return 1\n}\n\n# ======================= main ==============================================\nnote \"harness started: $(date -u +%Y-%m-%dT%H:%M:%SZ) mode=$MODE\"\n\nbuild_world\nfixture_facts\n\nif [ \"$MODE\" = \"build\" ]; then\n  echo \"world built: $W\"\n  exit 0\nfi\n\nif [ ! -f \"$TOOL\" ]; then\n  echo \"TOOL NOT PRESENT: $TOOL\" >&2\n  note \"TOOL NOT PRESENT at review time\"\n  exit 3\nfi\nnote \"tool=$TOOL executable=$([ -x \"$TOOL\" ] && echo yes || echo no) sha256=$(sha256sum \"$TOOL\" | cut -d' ' -f1) bytes=$(stat -c %s \"$TOOL\")\"\n\nrun_cases\nrun_live\nnote \"harness finished: $(date -u +%Y-%m-%dT%H:%M:%SZ)\"\necho \"done: $W\"\n",
+  "strace_analysis": [
+    "trace A (selftest) rc=0 ; trace B (refusal) rc=0 ; trace C (live) rc=0",
+    "trace A: lines=5469 write-ish=1048 outside-/tmp=536 live-surface-writes=0 ufo-state-writes=0",
+    "trace B: lines=35 write-ish=1 outside-/tmp=0 live-surface-writes=0 ufo-state-writes=0",
+    "trace C: lines=738 write-ish=19 outside-/tmp=2 live-surface-writes=2 ufo-state-writes=0",
+    "trace A: secret-shaped-path lines=23",
+    "trace B: secret-shaped-path lines=0",
+    "trace C: secret-shaped-path lines=0",
+    "trace B: any-lines-mentioning-target=0 read-open-lines=0",
+    "trace A sample write-ish outside /tmp (first 12):",
+    "  A| 186689 mkdir(\"/tmp\", 0777)              = -1 EEXIST (File exists)",
+    "  A| 186689 mkdir(\"souji-selftest.TddXDK\", 0777) = -1 EEXIST (File exists)",
+    "  A| 186689 mkdir(\"fleet\", 0777)             = 0",
+    "  A| 186691 openat(AT_FDCWD, \".git/objects/c6/tmp_obj_J7tekF\", O_RDWR|O_CREAT|O_EXCL, 0444) = -1 ENOENT (No such file or directory)",
+    "  A| 186691 mkdir(\".git/objects/c6\", 0777)   = 0",
+    "  A| 186691 openat(AT_FDCWD, \".git/objects/c6/tmp_obj_GDGccA\", O_RDWR|O_CREAT|O_EXCL, 0444) = 5",
+    "  A| 186691 unlink(\".git/objects/c6/tmp_obj_GDGccA\") = 0",
+    "  A| 186693 openat(AT_FDCWD, \".git/objects/22/tmp_obj_1GE7zI\", O_RDWR|O_CREAT|O_EXCL, 0444) = -1 ENOENT (No such file or directory)",
+    "  A| 186693 mkdir(\".git/objects/22\", 0777)   = 0",
+    "  A| 186693 openat(AT_FDCWD, \".git/objects/22/tmp_obj_bOPU7r\", O_RDWR|O_CREAT|O_EXCL, 0444) = 4",
+    "  A| 186693 unlink(\".git/objects/22/tmp_obj_bOPU7r\") = 0",
+    "  A| 186694 openat(AT_FDCWD, \".git/objects/2e/tmp_obj_Vs8sUz\", O_RDWR|O_CREAT|O_EXCL, 0444) = -1 ENOENT (No such file or directory)",
+    "trace C sample live-surface write-ish (first 12):",
+    "  C| 187397 openat(AT_FDCWD, \"/home/vgpnk/Projects/shokunin/kotodama-shokunin/.git/index.lock\", O_RDWR|O_CREAT|O_EXCL|O_CLOEXEC, 0666) = 3",
+    "  C| 187397 unlink(\"/home/vgpnk/Projects/shokunin/kotodama-shokunin/.git/index.lock\") = 0"
+  ]
+}

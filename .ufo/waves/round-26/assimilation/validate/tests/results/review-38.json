@@ -1,0 +1,606 @@
+{
+  "seat": "S38",
+  "role": "reviewer",
+  "round": 2,
+  "date": "2026-10-18",
+  "lane": "souji-shokunin",
+  "assignment": "Independent review of tools/souji-verify.sh against tools/souji-verify.spec.md (identical remit to S33). Reviewer-authored oracle + 27-case adversarial battery; no builder fixtures reused.",
+  "spec": {
+    "path": "tools/souji-verify.spec.md",
+    "sha256": "59b2ba61cf4ecb82e81d37b58c9c2ca436995c288a1a97a878c5bd65d350c067"
+  },
+  "artifact_reviewed": {
+    "path": "tools/souji-verify.sh",
+    "sha256": "586bc36c6039b9c9bf5846b85156b02dd3daa6f594c03d6ba474a9c71f2fc812",
+    "bytes": 29139,
+    "lines": 810,
+    "mode": "-rwxr-xr-x",
+    "mtime": "2026-10-18 13:00:00.131474796 -0300",
+    "stable_across_measurement_window": true,
+    "note": "Every number in this file was measured on the frozen snapshot of this sha, with hash-before == hash-after across the pass; the live file hashed equal at write time. The tool was rewritten six times during the seat window; two intermediate hashes (13672fdc, and the earlier d7edd71d) were observed as the author iterated on defects this seat reported.",
+    "live_file_sha256": "586bc36c6039b9c9bf5846b85156b02dd3daa6f594c03d6ba474a9c71f2fc812",
+    "live_file_equals_reviewed": true
+  },
+  "revision_churn": [
+    {
+      "sha256": "8c75fa1e5fc68e9d791178faa8b9c465af9b84edd70144bc6ef306d09953332f",
+      "lines": 777,
+      "bytes": 27736,
+      "seen": "12:52:44 -0300",
+      "result": "selftest rc=1 (F8 + JSON-mode harness); independent battery 25/26 (F8-stale-census-pollution FAIL)"
+    },
+    {
+      "sha256": "8ec74ba8996cb89a146dfbc83747a1e7302df391fae4f43fed1dcf2f76a03792",
+      "lines": 796,
+      "seen": "12:53:47 -0300",
+      "result": "sweep_refs fixed (globs before --, post-filter); selftest exit 0 (26/26); battery 26/26"
+    },
+    {
+      "sha256": "d32bac5d8ae8c66930418edb8e0b9f064109a00866b87ae1baaa3156dd36c077",
+      "lines": 804,
+      "bytes": 28961,
+      "seen": "12:55:17 -0300",
+      "result": "selftest 26/26; battery 27/27; live 13/13 verdict; temp leak 3 files; relative-TMPDIR defect; mode 644"
+    },
+    {
+      "sha256": "d7edd71df33b4c3ed2b65e7cc4853bc0fb915873efba1ea458e6069d5398a19f",
+      "lines": 807,
+      "bytes": 29107,
+      "seen": "12:57:43 -0300",
+      "result": "selftest 26/26; battery 27/27; live 13/13 verdict; temp leak 3 files; relative-TMPDIR defect; mode 755"
+    },
+    {
+      "sha256": "586bc36c6039b9c9bf5846b85156b02dd3daa6f594c03d6ba474a9c71f2fc812",
+      "lines": 810,
+      "bytes": 29139,
+      "seen": "2026-10-18 13:00:00.131474796 -0300 (reviewed)",
+      "result": "selftest 26/26 exit 0; battery 27/27; live 13/13 verdict; temp leak 0; relative-TMPDIR defect still open; mode 755"
+    }
+  ],
+  "headline": "PASS on the reviewed revision: selftest 26/26 exit 0, independent battery 27/27 (0 skip), 13/13 live-target verdict agreement, safety rails clean, no temp-file leak. One open low-severity tool defect remains (relative TMPDIR makes --selftest fail, fail-closed) plus two spec defects (rg --basename does not exist; exclusion globs are cwd-sensitive). Earlier findings (D3 glob misplacement, temp leak, non-executable mode) were fixed by the author during the seat window and re-verified.",
+  "results": {
+    "selftest": {
+      "command": "bash tools/souji-verify.sh --selftest",
+      "exit_code": 0,
+      "checks_pass": 26,
+      "checks_fail": 0,
+      "fixture_isolation": "mktemp -d; git -C targets during selftest all under $TMPDIR; 0 git calls against the live fleet root; 0 forbidden git verbs",
+      "cases_declared": [
+        "F1",
+        "F2",
+        "F3",
+        "F4",
+        "F5",
+        "F6",
+        "F7",
+        "F8",
+        "F8-control",
+        "F7-control",
+        "F9",
+        "F10-cli:app.env",
+        "F10-cli:creds.pem",
+        "F10-cli:notes.txt",
+        "F10-canary",
+        "F10-unchanged",
+        "EXIT-missing",
+        "EXIT-usage",
+        "EXIT-usage-noval",
+        "EXIT-noargs",
+        "JSON-mode"
+      ]
+    },
+    "independent_battery": {
+      "harness": "reviewer-authored fixtures mirroring $SHOKUNIN_ROOT (alpha/beta/gamma/delta/epsilon/zeta/eta + vault + census), not the tool fixtures",
+      "cases": 27,
+      "pass": 27,
+      "fail": 0,
+      "skip": 0,
+      "covers": [
+        "F1 pushed ancestor (pre-tip introducing commit)",
+        "F2 local-only introducing commit -> NOT-SAFE",
+        "F9 origin/HEAD absent, single origin/trunk ref resolves (D1)",
+        "F6 ledger row + matching source and vault sha256 -> SAFE(moved-to-obsidian)",
+        "F6-neg source sha mismatch -> NOT-SAFE",
+        "F6-neg vault sha mismatch -> NOT-SAFE",
+        "F4 worktree registration dir absent unique=0 -> SAFE(metadata-prune)",
+        "F5 worktree named branch 1+ unpushed -> NOT-SAFE(unpushed-branch)",
+        "F5b worktree present and dirty -> NOT-SAFE(dirty)",
+        "F7 scratch, no refs, old mtime -> SAFE(stale)",
+        "F8 scratch basename mentioned only under souji-shokunin/census -> still SAFE(stale) (D3)",
+        "F8b scratch basename mentioned in a live non-bookkeeping file -> NOT-SAFE (fail-closed control)",
+        "F13 fresh scratch -> NOT-SAFE; F13 --stale-days 30 refuses a 3-day-old file",
+        "F3 repo-root unpushed+dirty -> NOT-SAFE with unpushed=1 dirty=2 in evidence",
+        "F1b clean repo-root -> NOT-SAFE unpushed=0 dirty=0 (SAFE only via moved-to-obsidian)",
+        "F10 .env and credentials* -> NOT-SAFE(secrets-refusal)",
+        "F11 missing target -> NOT-SAFE(unreachable), exit 0",
+        "usage errors -> exit 2; multi-target one line each; exactly 5 tab fields; literal VERDICT",
+        "determinism (two identical runs byte-identical); --json parses; all-NOT-SAFE exits 0",
+        "read-only: sandbox file-hash manifest unchanged across a full pass"
+      ]
+    },
+    "live_acceptance": {
+      "targets": 13,
+      "verdict_agreement": "13/13",
+      "exact_verdict_receipt_agreement": "10/13",
+      "differences": "3 rows agree NOT-SAFE but the tool gives a more specific reason (unpushed / unpushed-dirty) where the reviewer oracle says none; no SAFE/NOT-SAFE disagreement",
+      "gate_kotodama": {
+        "command": "bash tools/souji-verify.sh $SHOKUNIN_ROOT/kotodama-shokunin",
+        "observed": "NOT-SAFE unpushed unpushed=39 dirty=0",
+        "independent_counts": "git log --oneline HEAD --not --remotes -> 39; git status --porcelain -> 0. At 12:55 the same target read unpushed=38 dirty=22 (reason unpushed-dirty); its dirty state cleared during the round.",
+        "result": "PASS (r1/r2 acceptance gate: must be NOT-SAFE)"
+      },
+      "gate_fleet_root": {
+        "observed": "NOT-SAFE unpushed unpushed=9 dirty=0"
+      },
+      "gate_gd2d_worktree": {
+        "target": "$SHOKUNIN_ROOT/game-dev-2d-shokunin-wt-r100",
+        "observed": "NOT-SAFE unpushed-branch owner=... branch=wt-r100 unpushed=1",
+        "result": "PASS: matches r1 ground truth that gd2d wt-r98/99/100 stay NOT-SAFE until pushed"
+      },
+      "lore_metadata_prune": {
+        "targets": [
+          "/tmp/r87-B1",
+          "/tmp/r87-C5",
+          "/tmp/r87-C6"
+        ],
+        "observed": "SAFE metadata-prune unique=0 dir=absent",
+        "result": "agrees with r1 census"
+      },
+      "pushed_files": {
+        "targets": [
+          "$SHOKUNIN_ROOT/shokunin.conf",
+          "$SHOKUNIN_ROOT/shokunin.conf.full-roster-20261015",
+          "$SHOKUNIN_ROOT/audio-publish-commit-map-20261016.txt",
+          "$SHOKUNIN_ROOT/templates/round-prompt.md"
+        ],
+        "observed": "SAFE pushed",
+        "result": "agrees with reviewer oracle (D1 resolves origin/master)"
+      },
+      "runtime": "28 ms for the fleet root + kotodama repo-root pair (wall clock, warm cache; measured on d32bac5d)"
+    },
+    "safety_rails": {
+      "forbidden_git_verbs": "none (git shim logging every invocation: no fetch/push/commit/branch/checkout/reset/rebase in --selftest or in evaluation)",
+      "live_tree_access_during_selftest": "0 git invocations against /home/vgpnk/Projects/shokunin",
+      "writes_outside_tmp": "none observed; fixture tree sha256 manifest unchanged; secrets fixtures unchanged (tool reports their hashes stable); the 3-file souji-wt-index leak measured on earlier revisions is fixed in the reviewed revision (leftovers=0)",
+      "secret_reads": "secret-shaped targets short-circuit before any open; tool selftest canary F10-canary PASS (canary strings never appear on stdout/stderr)",
+      "exit_codes_observed": [
+        0,
+        1,
+        2
+      ]
+    },
+    "cli_contract": {
+      "tsv": "VERDICT<TAB>path<TAB>SAFE|NOT-SAFE<TAB>receipt<TAB>evidence; exactly 5 fields; one line per target",
+      "json": "one JSON object per line, keys path/kind/verdict/receipt/evidence (spec is silent on JSON schema)",
+      "stale_days": "default 1 honored; --stale-days 30 refuses a 3-day-old scratch file",
+      "usage": "unknown flag and no-targets both exit 2"
+    }
+  },
+  "battery_cases": [
+    {
+      "case": "F1-pushed",
+      "expected": "SAFE/^pushed$ rc=0",
+      "observed": "ok",
+      "status": "PASS",
+      "note": "map=VERDICT|SB/beta-shokunin/notes/keep.txt|SAFE|pushed|intro=d10e9177c14b default=refs/remotes/origin/master repo=SB/beta-shokunin"
+    },
+    {
+      "case": "F2-local-only",
+      "expected": "NOT-SAFE/none|pushed-unverifiable rc=0",
+      "observed": "ok",
+      "status": "PASS",
+      "note": "map=VERDICT|SB/alpha-shokunin/data/local-only.txt|NOT-SAFE|none|intro=cd70a525bf71 default=refs/remotes/origin/master not-ancestor refs=n/a"
+    },
+    {
+      "case": "F9-originHEAD-absent",
+      "expected": "SAFE/^pushed$ rc=0",
+      "observed": "ok",
+      "status": "PASS",
+      "note": "map=VERDICT|SB/gamma-shokunin/g.txt|SAFE|pushed|intro=4ac086582d7b default=refs/remotes/origin/trunk repo=SB/gamma-shokunin"
+    },
+    {
+      "case": "F6-ledger-match",
+      "expected": "SAFE/^moved-to-obsidian$ rc=0",
+      "observed": "ok",
+      "status": "PASS",
+      "note": "map=VERDICT|SB/epsilon-shokunin/export.md|SAFE|moved-to-obsidian|ledger=SB/souji-shokunin/corpus/knowledge/obsidian-ledger.tsv src_sha256=a2db6c8f43cf vault=SB/vault/export.md"
+    },
+    {
+      "case": "F6-neg-source-sha",
+      "expected": "NOT-SAFE/none|pushed-unverifiable rc=0",
+      "observed": "ok",
+      "status": "PASS",
+      "note": "map=VERDICT|SB/zeta-shokunin/mismatch.md|NOT-SAFE|none|untracked repo=SB/zeta-shokunin ledger=miss scratch=no mtime_age_days=0"
+    },
+    {
+      "case": "F6-neg-vault-sha",
+      "expected": "NOT-SAFE/none|pushed-unverifiable rc=0",
+      "observed": "ok",
+      "status": "PASS",
+      "note": "map=VERDICT|SB/eta-shokunin/vaultmm.md|NOT-SAFE|none|untracked repo=SB/eta-shokunin ledger=miss scratch=no mtime_age_days=0"
+    },
+    {
+      "case": "F4-wt-absent-unique0",
+      "expected": "SAFE/^metadata-prune$ rc=0",
+      "observed": "ok",
+      "status": "PASS",
+      "note": "map=VERDICT|SB/wt-absent|SAFE|metadata-prune|owner=SB/delta-shokunin head=7e40f18ee2ae unique=0 dir=absent"
+    },
+    {
+      "case": "F5-wt-unpushed-branch",
+      "expected": "NOT-SAFE/unpushed-branch rc=0",
+      "observed": "ok",
+      "status": "PASS",
+      "note": "map=VERDICT|SB/wt-branch|NOT-SAFE|unpushed-branch|owner=SB/delta-shokunin branch=feat unpushed=2"
+    },
+    {
+      "case": "F5b-wt-present-dirty",
+      "expected": "NOT-SAFE/dirty rc=0",
+      "observed": "ok",
+      "status": "PASS",
+      "note": "map=VERDICT|SB/wt-dirty|NOT-SAFE|dirty|owner=SB/delta-shokunin dirty=1"
+    },
+    {
+      "case": "F7-stale-norefs",
+      "expected": "SAFE/^stale$ rc=0",
+      "observed": "ok",
+      "status": "PASS",
+      "note": "map=VERDICT|SB/alpha-shokunin/.scratch/old-thing.log|SAFE|stale|mtime_age_days=3 refs=0 scratch-type=yes"
+    },
+    {
+      "case": "F8-stale-census-pollution",
+      "expected": "SAFE/^stale$ rc=0",
+      "observed": "ok",
+      "status": "PASS",
+      "note": "map=VERDICT|SB/alpha-shokunin/.scratch/keepme.log|SAFE|stale|mtime_age_days=3 refs=0 scratch-type=yes"
+    },
+    {
+      "case": "F8b-stale-real-content-ref",
+      "expected": "NOT-SAFE/none rc=0",
+      "observed": "ok",
+      "status": "PASS",
+      "note": "map=VERDICT|SB/alpha-shokunin/.scratch/ctl.log|NOT-SAFE|none|untracked repo=SB/alpha-shokunin ledger=miss scratch=yes mtime_age_days=3"
+    },
+    {
+      "case": "F13-fresh-not-stale",
+      "expected": "NOT-SAFE/none rc=0",
+      "observed": "ok",
+      "status": "PASS",
+      "note": "map=VERDICT|SB/alpha-shokunin/.scratch/fresh.log|NOT-SAFE|none|untracked repo=SB/alpha-shokunin ledger=miss scratch=yes mtime_age_days=0"
+    },
+    {
+      "case": "F13-threshold-30",
+      "expected": "NOT-SAFE/none rc=0",
+      "observed": "ok",
+      "status": "PASS",
+      "note": "map=VERDICT|SB/alpha-shokunin/.scratch/old-thing.log|NOT-SAFE|none|untracked repo=SB/alpha-shokunin ledger=miss scratch=yes mtime_age_days=3"
+    },
+    {
+      "case": "F3-repo-root-dirty",
+      "expected": "NOT-SAFE/unpushed=[1-9] rc=0",
+      "observed": "ok",
+      "status": "PASS",
+      "note": "map=VERDICT|SB/alpha-shokunin|NOT-SAFE|unpushed-dirty|unpushed=1 dirty=2"
+    },
+    {
+      "case": "F1b-clean-repo-root",
+      "expected": "NOT-SAFE/unpushed=0 rc=0",
+      "observed": "ok",
+      "status": "PASS",
+      "note": "map=VERDICT|SB/beta-shokunin|NOT-SAFE|none|unpushed=0 dirty=0"
+    },
+    {
+      "case": "F10-dotenv",
+      "expected": "NOT-SAFE/secrets-refusal rc=0",
+      "observed": "ok",
+      "status": "PASS",
+      "note": "map=VERDICT|SB/secret-dir/.env|NOT-SAFE|secrets-refusal|basename-rule short-circuit (no read)"
+    },
+    {
+      "case": "F10b-credentials",
+      "expected": "NOT-SAFE/secrets-refusal rc=0",
+      "observed": "ok",
+      "status": "PASS",
+      "note": "map=VERDICT|SB/secret-dir/credentials.json|NOT-SAFE|secrets-refusal|basename-rule short-circuit (no read)"
+    },
+    {
+      "case": "F11-missing-target",
+      "expected": "NOT-SAFE/unreachable rc=0",
+      "observed": "ok",
+      "status": "PASS",
+      "note": "map=VERDICT|SB/no-such-path|NOT-SAFE|unreachable|missing-target"
+    },
+    {
+      "case": "usage-unknown-flag",
+      "expected": "rc=2",
+      "observed": "rc=2",
+      "status": "PASS",
+      "note": ""
+    },
+    {
+      "case": "usage-no-targets",
+      "expected": "rc=2",
+      "observed": "rc=2",
+      "status": "PASS",
+      "note": ""
+    },
+    {
+      "case": "multi-target-2-lines",
+      "expected": "2 VERDICT lines rc=0",
+      "observed": "2",
+      "status": "PASS",
+      "note": ""
+    },
+    {
+      "case": "line-5-tab-fields",
+      "expected": "5",
+      "observed": "5",
+      "status": "PASS",
+      "note": "VERDICT|SB/beta-shokunin/notes/keep.txt|SAFE|pushed|intro=d10e9177c14b default=refs/remotes/origin/master repo=SB/beta-shokunin"
+    },
+    {
+      "case": "determinism-identical-runs",
+      "expected": "identical",
+      "observed": "identical",
+      "status": "PASS",
+      "note": ""
+    },
+    {
+      "case": "json-parses",
+      "expected": "valid JSON",
+      "observed": "ok",
+      "status": "PASS",
+      "note": "shape=[\"path\",\"kind\",\"verdict\",\"receipt\",\"evidence\"]"
+    },
+    {
+      "case": "exit0-for-all-notsafe",
+      "expected": "rc=0",
+      "observed": "rc=0",
+      "status": "PASS",
+      "note": ""
+    },
+    {
+      "case": "read-only-sandbox-hash",
+      "expected": "unchanged",
+      "observed": "unchanged",
+      "status": "PASS",
+      "note": ""
+    }
+  ],
+  "live_targets": [
+    {
+      "path": "ROOT",
+      "oracle_verdict": "NOT-SAFE",
+      "oracle_receipt": "none",
+      "tool_verdict": "NOT-SAFE",
+      "tool_receipt": "unpushed",
+      "exact_match": false,
+      "verdict_match": true
+    },
+    {
+      "path": "ROOT/audio-publish-commit-map-20261016.txt",
+      "oracle_verdict": "SAFE",
+      "oracle_receipt": "pushed",
+      "tool_verdict": "SAFE",
+      "tool_receipt": "pushed",
+      "exact_match": true,
+      "verdict_match": true
+    },
+    {
+      "path": "ROOT/game-dev-2d-shokunin",
+      "oracle_verdict": "NOT-SAFE",
+      "oracle_receipt": "none",
+      "tool_verdict": "NOT-SAFE",
+      "tool_receipt": "unpushed",
+      "exact_match": false,
+      "verdict_match": true
+    },
+    {
+      "path": "ROOT/game-dev-2d-shokunin-wt-r100",
+      "oracle_verdict": "NOT-SAFE",
+      "oracle_receipt": "unpushed-branch",
+      "tool_verdict": "NOT-SAFE",
+      "tool_receipt": "unpushed-branch",
+      "exact_match": true,
+      "verdict_match": true
+    },
+    {
+      "path": "ROOT/kotodama-shokunin",
+      "oracle_verdict": "NOT-SAFE",
+      "oracle_receipt": "none",
+      "tool_verdict": "NOT-SAFE",
+      "tool_receipt": "unpushed",
+      "exact_match": false,
+      "verdict_match": true
+    },
+    {
+      "path": "ROOT/no-such-stray-xyz",
+      "oracle_verdict": "NOT-SAFE",
+      "oracle_receipt": "unreachable",
+      "tool_verdict": "NOT-SAFE",
+      "tool_receipt": "unreachable",
+      "exact_match": true,
+      "verdict_match": true
+    },
+    {
+      "path": "ROOT/shokunin.conf",
+      "oracle_verdict": "SAFE",
+      "oracle_receipt": "pushed",
+      "tool_verdict": "SAFE",
+      "tool_receipt": "pushed",
+      "exact_match": true,
+      "verdict_match": true
+    },
+    {
+      "path": "ROOT/shokunin.conf.full-roster-20261015",
+      "oracle_verdict": "SAFE",
+      "oracle_receipt": "pushed",
+      "tool_verdict": "SAFE",
+      "tool_receipt": "pushed",
+      "exact_match": true,
+      "verdict_match": true
+    },
+    {
+      "path": "ROOT/souji-shokunin/tools/souji-verify.spec.md",
+      "oracle_verdict": "NOT-SAFE",
+      "oracle_receipt": "none",
+      "tool_verdict": "NOT-SAFE",
+      "tool_receipt": "none",
+      "exact_match": true,
+      "verdict_match": true
+    },
+    {
+      "path": "ROOT/templates/round-prompt.md",
+      "oracle_verdict": "SAFE",
+      "oracle_receipt": "pushed",
+      "tool_verdict": "SAFE",
+      "tool_receipt": "pushed",
+      "exact_match": true,
+      "verdict_match": true
+    },
+    {
+      "path": "/tmp/r87-B1",
+      "oracle_verdict": "SAFE",
+      "oracle_receipt": "metadata-prune",
+      "tool_verdict": "SAFE",
+      "tool_receipt": "metadata-prune",
+      "exact_match": true,
+      "verdict_match": true
+    },
+    {
+      "path": "/tmp/r87-C5",
+      "oracle_verdict": "SAFE",
+      "oracle_receipt": "metadata-prune",
+      "tool_verdict": "SAFE",
+      "tool_receipt": "metadata-prune",
+      "exact_match": true,
+      "verdict_match": true
+    },
+    {
+      "path": "/tmp/r87-C6",
+      "oracle_verdict": "SAFE",
+      "oracle_receipt": "metadata-prune",
+      "tool_verdict": "SAFE",
+      "tool_receipt": "metadata-prune",
+      "exact_match": true,
+      "verdict_match": true
+    }
+  ],
+  "findings": [
+    {
+      "id": "S38-F1",
+      "severity": "high",
+      "status": "fixed-before-reviewed-revision",
+      "title": "D3 sweep exclusions were inert: globs placed after `rg -- <pattern>` are positional paths",
+      "evidence": "Revision 8c75fa1e: battery F8-stale-census-pollution FAIL (VERDICT .../.scratch/keepme.log NOT-SAFE none, expected SAFE stale) and the tool own --selftest printed `F8 FAIL expected=SAFE(stale) refs=0 observed=NOT-SAFE(none)` with exit 1. Raw repro: `rg -l --no-ignore --hidden --fixed-strings --no-messages -- \"keepme.log\" . -g \"!souji-shokunin/census/**\"` prints ./souji-shokunin/census/round-1/seat-99.json (exit 2: the -g args are treated as paths).",
+      "impact": "Round-1 defect D3 reappeared; the effect was fail-closed (false NOT-SAFE, never false SAFE).",
+      "resolution": "Revision 8ec74ba8 moved all -g globs before `--` and added a belt-and-braces relative-path post-filter; re-verified 27/27 on the reviewed revision."
+    },
+    {
+      "id": "S38-F2",
+      "severity": "medium",
+      "status": "open-spec-defect",
+      "title": "Spec literal D3 command uses `rg --basename`, which does not exist in ripgrep 15.2.0",
+      "evidence": "`rg -l --no-ignore --basename old-thing.log <root>` -> `rg: unrecognized flag --basename`, exit 2; `rg --help | grep -i basename` empty. Host: ripgrep 15.2.0 (rev e89fff89ac).",
+      "impact": "Spec not executable as written; every implementation must translate. The reviewed tool uses a fixed-string content sweep (--fixed-strings) with D3 exclusions, which is the fail-closed reading.",
+      "recommendation": "Amend the spec to the executable form: `rg -l --no-ignore -F -e <basename> <root> -g '!**/souji-shokunin/census/**' ...`"
+    },
+    {
+      "id": "S38-F3",
+      "severity": "medium",
+      "status": "open-spec-defect",
+      "title": "Spec exclusion globs are cwd-sensitive when the search root is an absolute path",
+      "evidence": "Same rg invocation with `-g '!souji-shokunin/census/**'` before the pattern: with cwd=<root> the census file is excluded (rc=1); with cwd=/tmp and an absolute <root> the same file is returned (rc=0). `**/`-anchored globs exclude in both cases.",
+      "impact": "A literal implementation of the spec sweep self-pollutes on census fragments whenever cwd differs from the fleet root (exactly the D3 trap).",
+      "mitigation_in_reviewed_tool": "It cds into the sweep root and passes both anchor forms (`!souji-shokunin/census/**` and `!**/souji-shokunin/census/**`), which is robust; verified by F8 + F8b.",
+      "recommendation": "Spec should require cd-to-root plus `**/`-anchored globs."
+    },
+    {
+      "id": "S38-F4",
+      "severity": "low",
+      "status": "open-tool-defect",
+      "title": "--selftest fails (fail-closed) when TMPDIR is a relative path",
+      "repro": "mkdir rel-tmp && TMPDIR=rel-tmp bash tools/souji-verify.sh --selftest",
+      "evidence": "F4 FAIL expected=SAFE(metadata-prune) observed=NOT-SAFE(unreachable) missing-target; F5 same; SUMMARY pass=24 fail=2; exit 1. With an absolute TMPDIR: pass=26 fail=0, exit 0.",
+      "root_cause": "Fixture paths remain relative (mktemp returns the relative template), while worktree_row_for canonicalizes the target with `realpath -m`; the worktree index is keyed by git relative `worktree <path>` output, so the lookup misses.",
+      "impact": "Selftest false failure only; never affects target evaluation and never emits a false SAFE."
+    },
+    {
+      "id": "S38-F5",
+      "severity": "low",
+      "status": "fixed-in-reviewed-revision",
+      "title": "--selftest leaked souji-wt-index.* temp files in earlier revisions; clean in the reviewed revision",
+      "repro": "rm -rf /tmp/s38-tmp && mkdir /tmp/s38-tmp && TMPDIR=/tmp/s38-tmp bash tools/souji-verify.sh --selftest; find /tmp/s38-tmp -mindepth 1 | wc -l",
+      "evidence": "Revision d7edd71d: exit 0 with leftovers=3 (souji-wt-index.f43Eoe/.zw7f3h/.yb4AmP). Reviewed revision: same command, leftovers=0. Fix: worktree_row_for now writes WT_ROW and is called without `$( )`, so CLEANUP_PATHS registration reaches the parent EXIT trap.",
+      "root_cause": "worktree_row_for was invoked as `row=$(worktree_row_for ...)`; the command substitution ran in a subshell, so its `CLEANUP_PATHS+=` never reached the parent trap.",
+      "impact": "No action needed now; regression risk if the function is ever called inside command substitution again."
+    },
+    {
+      "id": "S38-F6",
+      "severity": "info",
+      "status": "open-spec-ambiguity",
+      "title": "Worktree bullet order: spec lists metadata-prune before unpushed-branch; r1 ground truth requires the opposite",
+      "evidence": "gd2d wt-r98/99/100 are named-branch registrations with absent dirs, 1 unpushed commit each, and 0 unique commits vs `--not --all`; r1 requires NOT-SAFE(unpushed-branch), so the metadata-prune shortcut must not swallow them. The reviewed tool checks branch-unpushed first (live: wt-r100 -> NOT-SAFE(unpushed-branch)). The reviewer oracle initially used the spec literal order and disagreed; corrected to ground truth, after which live verdict agreement is 13/13.",
+      "recommendation": "Make precedence explicit in the spec."
+    },
+    {
+      "id": "S38-F7",
+      "severity": "info",
+      "status": "fixed-in-reviewed-revision",
+      "title": "Tool was not executable in early revisions; reviewed revision is mode 755",
+      "evidence": "Early revisions: stat -> -rw-r--r--. Reviewed revision: -rwxr-xr-x, 29139 bytes.",
+      "impact": "No action needed; keep mode 755 in the promoted copy."
+    },
+    {
+      "id": "S38-F8",
+      "severity": "info",
+      "status": "process",
+      "title": "Artifact churned six times inside an ~11 minute review window",
+      "evidence": "8c75fa1e (12:52:44) -> 8ec74ba8 (12:53:47) -> d32bac5d (12:55:17) -> 13672fdc (observed 12:56, not evaluated) -> d7edd71d (12:57:43) -> 586bc36c (12:58, reviewed; live file hashed equal at write time).",
+      "recommendation": "Parent should pin a sha for the round and re-run the embedded harness after any further edit."
+    }
+  ],
+  "candidate_comparison": {
+    "note": "Candidates measured with the same 27-case battery and their own --selftest, at the shas below; the promoted artifact is the one reviewed above.",
+    "impl-09": {
+      "sha256": "18ae0ae27b3df38712aaefb318b4011d210324a4b4dbf8f149befa59fd0da05b",
+      "selftest": "PASS (14/14), rc=0",
+      "battery": "27/27",
+      "earlier_revision_note": "the 12:52 revision failed F7/F8 because its live_refs used `rg ... -- <name> <root> -g ...` and returned unknown on rg exit 2, making the stale receipt unreachable (battery 24/26, selftest rc=1)"
+    },
+    "impl-12": {
+      "sha256": "7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820",
+      "selftest": "24 checks, 0 failed, rc=0",
+      "battery": "27/27",
+      "earlier_revision_note": "at 12:51 its selftest had 4 failures, partly vacuous F6/F7/F8 fixtures (fixture files were committed and pushed, so SAFE(pushed) fired first) and an empty-path parsing bug; runtime semantics were already sound (battery 27/27)"
+    }
+  },
+  "review_harness": {
+    "note": "Self-contained: extract the three scripts below into a scratch dir with `jq -jr` (byte-exact, no added newline, so the extracted files match the recorded sha256 values), chmod +x, build the sandbox, then run the battery. The battery takes <tool> <sandbox> <out.tsv> [tool-source-for-env-detection]; the tool must be executable or wrapped (`exec bash /path/to/tool \"$@\"`).",
+    "how_to_reproduce": [
+      "S=/tmp/s38-repro; mkdir -p $S; cd $S",
+      "jq -jr .review_harness.oracle_sh tests/results/review-38.json > oracle.sh",
+      "jq -jr .review_harness.fixtures_sh tests/results/review-38.json > fixtures.sh",
+      "jq -jr .review_harness.battery_sh tests/results/review-38.json > battery.sh",
+      "chmod +x oracle.sh fixtures.sh battery.sh",
+      "sha256sum oracle.sh fixtures.sh battery.sh  # must equal review_harness.*_sha256",
+      "./fixtures.sh $S/sb",
+      "export SOUJI_LEDGER=$S/sb/souji-shokunin/corpus/knowledge/obsidian-ledger.tsv SOUJI_VAULT=$S/sb/vault",
+      "./battery.sh /path/to/tools/souji-verify.sh $S/sb $S/out.tsv /path/to/tools/souji-verify.sh",
+      "bash /path/to/tools/souji-verify.sh --selftest"
+    ],
+    "oracle_sha256": "66b25daa46c7e7ff0c800183873c0391beaee54b1f001217abe74cef222ce002",
+    "battery_sha256": "6774b3f4de7dd04e9a8e25f995f8ac793071482bf4ab35ba91fba118b9c328c5",
+    "fixtures_sha256": "a54e31a6cb97c7574ee6fe14aa5f42612cb5d7f5e543bba4c6b0d10d2ac4829f",
+    "oracle_sh": "#!/usr/bin/env bash\n# Reviewer S38 independent oracle v2 for tools/souji-verify.sh (round 2 spec).\n# Not shipped; used to ground the reviewer's expected verdicts.\nset -euo pipefail\n\nROOT=\"${SHOKUNIN_ROOT:-/home/vgpnk/Projects/shokunin}\"\nLANE_REPO=\"$ROOT/souji-shokunin\"\nLEDGER=\"$LANE_REPO/corpus/knowledge/obsidian-ledger.tsv\"\nSTALE_DAYS=1\nJSON=0\nTARGETS=()\n\nusage() { echo \"usage: oracle.sh [--stale-days N] [--json] <path>...\" >&2; exit 2; }\n\nwhile [ $# -gt 0 ]; do\n  case \"$1\" in\n    --stale-days) [ $# -ge 2 ] || usage; STALE_DAYS=\"$2\"; shift 2 ;;\n    --json) JSON=1; shift ;;\n    --selftest) echo \"oracle: no selftest\" >&2; exit 2 ;;\n    --*) usage ;;\n    *) TARGETS+=(\"$1\"); shift ;;\n  esac\ndone\n[ \"${#TARGETS[@]}\" -gt 0 ] || usage\n\nis_secret() {\n  case \"$(basename \"$1\")\" in\n    *.env|*credential*|*secret*|id_*|*.pem) return 0 ;;\n    *) return 1 ;;\n  esac\n}\n\nresolve_default_ref() {\n  local repo=\"$1\" ref single\n  ref=$(git -C \"$repo\" symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null || true)\n  if [ -n \"$ref\" ]; then echo \"${ref#origin/}\"; return 0; fi\n  single=$(git -C \"$repo\" for-each-ref --format='%(refname)' refs/remotes/origin/ 2>/dev/null | grep -v '^refs/remotes/origin/HEAD$' | sed 's@^refs/remotes/origin/@@' | sort -u)\n  if [ \"$(printf '%s\\n' \"$single\" | grep -c .)\" = \"1\" ]; then echo \"$single\"; return 0; fi\n  if git -C \"$repo\" rev-parse --verify -q refs/heads/master >/dev/null; then echo master; return 0; fi\n  return 1\n}\n\n# Intent of the spec's (literal, non-existent) `rg --basename`: zero live\n# *content* references to the basename, under the D3 exclusions.\nlive_refs() {\n  local name=\"$1\" repo=\"$2\"\n  rg -l --no-ignore -F -e \"$name\" \"$repo\" \\\n     -g '!.git' -g '!**/souji-shokunin/census/**' -g '!**/souji-shokunin/tests/**' \\\n     -g '!**/.ufo-quarantine/**' 2>/dev/null | wc -l\n}\n\nledger_match() {\n  local path=\"$1\" sha rowsp rs rv vp vs\n  [ -f \"$LEDGER\" ] || return 1\n  [ -f \"$path\" ] || return 1\n  sha=$(sha256sum \"$path\" | cut -d' ' -f1)\n  rowsp=$(awk -F'\\t' -v p=\"$path\" -v s=\"$sha\" 'NR>1 && $1==p && $2==s {print NR}' \"$LEDGER\")\n  [ -n \"$rowsp\" ] || return 1\n  rs=\"${rowsp%%$'\\n'*}\"\n  vp=$(awk -F'\\t' -v n=\"$rs\" 'NR==n{print $3}' \"$LEDGER\")\n  vs=$(awk -F'\\t' -v n=\"$rs\" 'NR==n{print $4}' \"$LEDGER\")\n  [ -f \"$vp\" ] || return 1\n  [ \"$(sha256sum \"$vp\" | cut -d' ' -f1)\" = \"$vs\" ] || return 1\n  return 0\n}\n\nwt_owner_of() { # path -> owner repo or empty; the main worktree is not a registration\n  local t=\"$1\" cand main\n  for cand in \"$ROOT/souji-shokunin\" \"$ROOT\" \"$ROOT\"/*-shokunin; do\n    [ -e \"$cand/.git\" ] || continue\n    main=$(git -C \"$cand\" rev-parse --show-toplevel 2>/dev/null || true)\n    [ -n \"$main\" ] && [ \"$main\" = \"$t\" ] && continue\n    if git -C \"$cand\" worktree list --porcelain 2>/dev/null | grep -Fxq \"worktree $t\"; then echo \"$cand\"; return 0; fi\n  done\n  return 1\n}\n\nOUT=()\nfor t in \"${TARGETS[@]}\"; do\n  if is_secret \"$t\"; then OUT+=(\"$t|NOT-SAFE|secrets-refusal|basename matched secret pattern\"); continue; fi\n\n  owner=$(wt_owner_of \"$t\" || true)\n  if [ -n \"$owner\" ]; then\n    head=$(git -C \"$owner\" worktree list --porcelain | awk -v p=\"worktree $t\" '$0==p{f=1} f&&/^HEAD /{print $2; exit}')\n    br=$(git -C \"$owner\" worktree list --porcelain | awk -v p=\"worktree $t\" '$0==p{f=1} f&&/^branch /{print $2; exit}')\n    if [ -n \"$br\" ]; then\n      unp=$(git -C \"$owner\" log --oneline \"$br\" --not --remotes 2>/dev/null | wc -l)\n      if [ \"$unp\" != \"0\" ]; then OUT+=(\"$t|NOT-SAFE|unpushed-branch|branch=$br unpushed=$unp\"); continue; fi\n    fi\n    if [ ! -e \"$t\" ]; then\n      uniq=$(git -C \"$owner\" log --oneline \"$head\" --not --all 2>/dev/null | wc -l)\n      if [ \"$uniq\" = \"0\" ]; then OUT+=(\"$t|SAFE|metadata-prune|unique=0 dir-absent\"); else OUT+=(\"$t|NOT-SAFE|none|unique=$uniq\"); fi\n      continue\n    fi\n    d=$(git -C \"$t\" status --porcelain 2>/dev/null | wc -l)\n    if [ \"$d\" != \"0\" ]; then OUT+=(\"$t|NOT-SAFE|dirty|dirty=$d\"); continue; fi\n    OUT+=(\"$t|NOT-SAFE|none|live worktree\"); continue\n  fi\n\n  if [ -z \"$t\" ] || [ ! -e \"$t\" ]; then OUT+=(\"$t|NOT-SAFE|unreachable|path missing or empty\"); continue; fi\n\n  if [ -d \"$t\" ] && [ -d \"$t/.git\" ]; then\n    unp=$(git -C \"$t\" log --oneline HEAD --not --remotes 2>/dev/null | wc -l)\n    dirt=$(git -C \"$t\" status --porcelain 2>/dev/null | wc -l)\n    if ledger_match \"$t\"; then OUT+=(\"$t|SAFE|moved-to-obsidian|ledger\"); else OUT+=(\"$t|NOT-SAFE|none|unpushed=$unp dirty=$dirt\"); fi\n    continue\n  fi\n\n  repo=$(git -C \"$(dirname \"$t\")\" rev-parse --show-toplevel 2>/dev/null || true)\n  if [ -n \"$repo\" ]; then\n    def=$(resolve_default_ref \"$repo\" || true)\n    intro=$(git -C \"$repo\" log --diff-filter=A --format=%H -1 -- \"$t\" 2>/dev/null || true)\n    if [ -n \"$def\" ] && [ -n \"$intro\" ] && git -C \"$repo\" merge-base --is-ancestor \"$intro\" \"refs/remotes/origin/$def\" 2>/dev/null; then\n      OUT+=(\"$t|SAFE|pushed|intro=${intro:0:12} ancestor-of=origin/$def\"); continue\n    fi\n    if ledger_match \"$t\"; then OUT+=(\"$t|SAFE|moved-to-obsidian|ledger row sha match\"); continue; fi\n    base=$(basename \"$t\")\n    scratchy=0\n    case \"$t\" in */.scratch/*|*.out|*.log|*checkpoint*.json|*checkpoint*.png|*-draft.*) scratchy=1 ;; esac\n    if [ \"$scratchy\" = \"1\" ] && [ \"$(live_refs \"$base\" \"$ROOT\")\" = \"0\" ] \\\n       && [ -n \"$(find \"$t\" -maxdepth 0 -mtime +\"$STALE_DAYS\" 2>/dev/null)\" ]; then\n      OUT+=(\"$t|SAFE|stale|mtime>$STALE_DAYS refs=0\"); continue\n    fi\n    if [ -z \"$def\" ]; then OUT+=(\"$t|NOT-SAFE|pushed-unverifiable|no default branch ref\"); continue; fi\n  fi\n  OUT+=(\"$t|NOT-SAFE|none|no receipt\")\ndone\n\nif [ \"$JSON\" = \"1\" ]; then\n  printf '['\n  first=1\n  for l in \"${OUT[@]}\"; do\n    IFS='|' read -r p v r e <<<\"$l\"\n    [ $first = 1 ] || printf ','\n    first=0\n    jq -cn --arg p \"$p\" --arg v \"$v\" --arg r \"$r\" --arg e \"$e\" '{path:$p,verdict:$v,receipt:$r,evidence:$e}'\n  done\n  printf ']\\n'\nelse\n  for l in \"${OUT[@]}\"; do\n    IFS='|' read -r p v r e <<<\"$l\"\n    printf 'VERDICT\\t%s\\t%s\\t%s\\t%s\\n' \"$p\" \"$v\" \"$r\" \"$e\"\n  done\nfi\nexit 0\n",
+    "battery_sh": "#!/usr/bin/env bash\n# Reviewer S38 adversarial battery v2. Usage: battery.sh <tool> <sandbox> <out.tsv>\nset -uo pipefail\nTOOL=\"$1\"; SB=\"$2\"; OUT=\"$3\"\n: > \"$OUT\"\nPASS=0; FAIL=0; SKIP=0\n\nOUTDIR=$(mktemp -d \"$SB/.battery.XXXXXX\")\nEXFIL=\"$OUTDIR/exit\"\n\nrun() { # run <ex-file> <args...>; echoes exit code\n  local exf=\"$1\"; shift\n  ( \"$TOOL\" \"$@\" ; echo \"exit=$?\" > \"$exf\" ) > \"$OUTDIR/rec.out\" 2>&1 || true\n  sed -n 's/^exit=//p' \"$exf\"\n}\n\ncase_row() {\n  printf '%s\\t%s\\t%s\\t%s\\t%s\\n' \"$1\" \"$2\" \"$3\" \"$4\" \"$5\" >> \"$OUT\"\n  case \"$4\" in PASS) PASS=$((PASS+1));; FAIL) FAIL=$((FAIL+1));; *) SKIP=$((SKIP+1));; esac\n}\n\nnorm() { sed -e \"s@$SB@SB@g\" -e 's/\\t/|/g'; }\n\n# expect <case> <SAFE|NOT-SAFE> <regex on receipt OR evidence> <expected rc> <args...>\nexpect() {\n  local case=\"$1\" ev=\"$2\" er=\"$3\" erc=\"$4\"; shift 4\n  local rc; rc=$(run \"$EXFIL\" \"$@\")\n  local line; line=$(grep -v '^exit=' \"$OUTDIR/rec.out\" | grep -v '^$' | head -1)\n  local map; map=$(norm <<<\"$line\")\n  local gv gr ge\n  gv=$(cut -d$'\\t' -f3 <<<\"$line\"); gr=$(cut -d$'\\t' -f4 <<<\"$line\"); ge=$(cut -d$'\\t' -f5 <<<\"$line\")\n  if [ \"$rc\" != \"$erc\" ]; then case_row \"$case\" \"rc=$erc\" \"rc=$rc\" FAIL \"map=$map\"; return; fi\n  if [ \"$gv\" != \"$ev\" ]; then case_row \"$case\" \"$ev\" \"${gv:-<none>}\" FAIL \"map=$map\"; return; fi\n  if grep -Eq \"$er\" <<<\"$gr\" || grep -Eq \"$er\" <<<\"$ge\"; then\n    case_row \"$case\" \"$ev/$er rc=$erc\" \"ok\" PASS \"map=$map\"\n  else\n    case_row \"$case\" \"$ev/$er\" \"$gv/${gr:-<none>}\" FAIL \"map=$map\"\n  fi\n}\n\n# sandbox override detection\nexport SOUJI_LEDGER=\"$SB/souji-shokunin/corpus/knowledge/obsidian-ledger.tsv\"\nexport SOUJI_VAULT=\"$SB/vault\"\nSRC=\"${4:-$TOOL}\"\nOVERRIDE=\"\"\nif grep -q 'SHOKUNIN_ROOT' \"$SRC\" 2>/dev/null; then OVERRIDE=SHOKUNIN_ROOT; fi\nif [ -z \"$OVERRIDE\" ]; then\n  for v in SOUJI_ROOT SOUJI_VERIFY_ROOT; do\n    if grep -q \"$v\" \"$SRC\" 2>/dev/null; then OVERRIDE=\"$v\"; break; fi\n  done\nfi\nif [ -n \"$OVERRIDE\" ]; then\n  export \"$OVERRIDE=$SB\"\n  SANDBOXED=1\nelse\n  SANDBOXED=0\nfi\n\nif [ \"$SANDBOXED\" = 1 ]; then\n  expect F1-pushed                      SAFE     '^pushed$'              0 \"$SB/beta-shokunin/notes/keep.txt\"\n  expect F2-local-only                  NOT-SAFE 'none|pushed-unverifiable' 0 \"$SB/alpha-shokunin/data/local-only.txt\"\n  expect F9-originHEAD-absent           SAFE     '^pushed$'              0 \"$SB/gamma-shokunin/g.txt\"\n  expect F6-ledger-match                SAFE     '^moved-to-obsidian$'   0 \"$SB/epsilon-shokunin/export.md\"\n  expect F6-neg-source-sha              NOT-SAFE 'none|pushed-unverifiable' 0 \"$SB/zeta-shokunin/mismatch.md\"\n  expect F6-neg-vault-sha               NOT-SAFE 'none|pushed-unverifiable' 0 \"$SB/eta-shokunin/vaultmm.md\"\n  expect F4-wt-absent-unique0           SAFE     '^metadata-prune$'      0 \"$SB/wt-absent\"\n  expect F5-wt-unpushed-branch          NOT-SAFE 'unpushed-branch'       0 \"$SB/wt-branch\"\n  expect F5b-wt-present-dirty           NOT-SAFE 'dirty'                 0 \"$SB/wt-dirty\"\n  expect F7-stale-norefs                SAFE     '^stale$'               0 \"$SB/alpha-shokunin/.scratch/old-thing.log\"\n  expect F8-stale-census-pollution      SAFE     '^stale$'               0 \"$SB/alpha-shokunin/.scratch/keepme.log\"\n  expect F8b-stale-real-content-ref     NOT-SAFE 'none'                  0 \"$SB/alpha-shokunin/.scratch/ctl.log\"\n  expect F13-fresh-not-stale            NOT-SAFE 'none'                  0 \"$SB/alpha-shokunin/.scratch/fresh.log\"\n  expect F13-threshold-30               NOT-SAFE 'none'                  0 --stale-days 30 \"$SB/alpha-shokunin/.scratch/old-thing.log\"\nelse\n  for c in F1-pushed F2-local-only F9-originHEAD-absent F6-ledger-match F6-neg-source-sha F6-neg-vault-sha F4-wt-absent-unique0 F5-wt-unpushed-branch F7-stale-norefs F8-stale-census-pollution F8b-stale-real-content-ref F13-fresh-not-stale F13-threshold-30; do\n    case_row \"$c\" \"sandboxed\" \"no-env-override-in-tool\" SKIP \"tool exposes no SHOKUNIN_ROOT/SOUJI_ROOT override; fixture cannot be hosted in a sandbox\"\n  done\nfi\n\n# always runnable: repo-root kind, secrets, unreachable, contract\nexpect F3-repo-root-dirty             NOT-SAFE 'unpushed=[1-9]'          0 \"$SB/alpha-shokunin\"\nexpect F1b-clean-repo-root            NOT-SAFE 'unpushed=0'             0 \"$SB/beta-shokunin\"\nexpect F10-dotenv                     NOT-SAFE 'secrets-refusal'        0 \"$SB/secret-dir/.env\"\nexpect F10b-credentials               NOT-SAFE 'secrets-refusal'        0 \"$SB/secret-dir/credentials.json\"\nexpect F11-missing-target             NOT-SAFE 'unreachable'            0 \"$SB/no-such-path\"\n\nrc=$(run \"$EXFIL\" --bogus)\n[ \"${rc:-}\" = 2 ] && case_row usage-unknown-flag \"rc=2\" \"rc=$rc\" PASS \"\" || case_row usage-unknown-flag \"rc=2\" \"rc=${rc:-none}\" FAIL \"\"\nrc=$(run \"$EXFIL\")\n[ \"${rc:-}\" = 2 ] && case_row usage-no-targets \"rc=2\" \"rc=$rc\" PASS \"\" || case_row usage-no-targets \"rc=2\" \"rc=${rc:-none}\" FAIL \"\"\n\nrc=$(run \"$EXFIL\" \"$SB/beta-shokunin/notes/keep.txt\" \"$SB/no-such-path\")\nn=$(grep -c $'^VERDICT\\t' \"$OUTDIR/rec.out\" 2>/dev/null || true)\n[ \"$rc\" = 0 ] && [ \"$n\" = 2 ] && case_row multi-target-2-lines \"2 VERDICT lines rc=0\" \"$n\" PASS \"\" \\\n  || case_row multi-target-2-lines \"2 lines rc=0\" \"$n\" FAIL \"rc=${rc:-none} out=$(head -3 \"$OUTDIR/rec.out\" | norm)\"\nln=$(grep -m1 $'^VERDICT\\t' \"$OUTDIR/rec.out\" || true)\nnf=$(awk -F'\\t' '{print NF}' <<<\"$ln\")\n[ \"$nf\" = 5 ] && case_row line-5-tab-fields \"5\" \"$nf\" PASS \"$(norm <<<\"$ln\")\" || case_row line-5-tab-fields \"5\" \"${nf:-0}\" FAIL \"$(norm <<<\"$ln\")\"\n\n\"$TOOL\" \"$SB/beta-shokunin/notes/keep.txt\" \"$SB/no-such-path\" > \"$OUTDIR/d1\" 2>&1 || true\n\"$TOOL\" \"$SB/beta-shokunin/notes/keep.txt\" \"$SB/no-such-path\" > \"$OUTDIR/d2\" 2>&1 || true\ncmp -s \"$OUTDIR/d1\" \"$OUTDIR/d2\" && case_row determinism-identical-runs identical identical PASS \"\" || case_row determinism-identical-runs identical differs FAIL \"\"\n\n\"$TOOL\" --json \"$SB/beta-shokunin/notes/keep.txt\" \"$SB/no-such-path\" > \"$OUTDIR/j.out\" 2>&1 || true\nif jq -e . \"$OUTDIR/j.out\" >/dev/null 2>&1; then\n  case_row json-parses \"valid JSON\" ok PASS \"shape=$(jq -c 'if type==\"array\" then (.[0]|keys_unsorted) else keys_unsorted end' \"$OUTDIR/j.out\" 2>/dev/null | head -c 140)\"\nelse\n  case_row json-parses \"valid JSON\" invalid FAIL \"head=$(head -c 160 \"$OUTDIR/j.out\" | norm)\"\nfi\n\nrc=$(run \"$EXFIL\" \"$SB/secret-dir/.env\" \"$SB/no-such-path\")\n[ \"${rc:-}\" = 0 ] && case_row exit0-for-all-notsafe \"rc=0\" \"rc=$rc\" PASS \"\" || case_row exit0-for-all-notsafe \"rc=0\" \"rc=${rc:-none}\" FAIL \"\"\n\n# read-only check: nothing in the sandbox changes across a full pass\nhash_before=$(cd \"$SB\" && find . -path ./.battery.* -prune -o -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum)\n\"$TOOL\" \"$SB/alpha-shokunin\" \"$SB/beta-shokunin/notes/keep.txt\" \"$SB/wt-absent\" \"$SB/alpha-shokunin/.scratch/old-thing.log\" >/dev/null 2>&1 || true\nhash_after=$(cd \"$SB\" && find . -path ./.battery.* -prune -o -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum)\n[ \"$hash_before\" = \"$hash_after\" ] && case_row read-only-sandbox-hash unchanged unchanged PASS \"\" \\\n  || case_row read-only-sandbox-hash unchanged CHANGED FAIL \"before=$hash_before after=$hash_after\"\n\necho \"PASS=$PASS FAIL=$FAIL SKIP=$SKIP\" >> \"$OUT\"\nrm -rf \"$OUTDIR\"\n",
+    "fixtures_sh": "#!/usr/bin/env bash\n# Reviewer S38: build an independent fixture sandbox mirroring $SHOKUNIN_ROOT shape.\nset -euo pipefail\nSB=\"$1\"\nrm -rf \"$SB\"; mkdir -p \"$SB\"\n\ngi() { git -C \"$1\" init -q -b master; }\n\nexport GIT_AUTHOR_NAME=\"souji-review\" GIT_AUTHOR_EMAIL=\"review@shokunin.local\"\nexport GIT_COMMITTER_NAME=\"souji-review\" GIT_COMMITTER_EMAIL=\"review@shokunin.local\"\n\n# --- alpha-shokunin: dirty + unpushed (F3, F2, F7, F8, F8b, F13b, control) ----\nA=\"$SB/alpha-shokunin\"; mkdir -p \"$A/data\" \"$A/.scratch\"; gi \"$A\"\nprintf 'alpha report v1\\n' > \"$A/data/report.txt\"\ngit -C \"$A\" add -A; git -C \"$A\" commit -qm c1\ngit -C \"$A\" update-ref refs/remotes/origin/master HEAD\ngit -C \"$A\" symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/master\nprintf 'local only\\n' > \"$A/data/local-only.txt\"\nprintf 'notes: control ref to ctl.log lives here\\n' > \"$A/notes.md\"\ngit -C \"$A\" add -A; git -C \"$A\" commit -qm c2\nprintf 'uncommitted edit\\n' >> \"$A/notes.md\"          # dirty (tracked modification)\nprintf 'old scratch\\n'   > \"$A/.scratch/old-thing.log\"\nprintf 'keep me\\n'       > \"$A/.scratch/keepme.log\"\nprintf 'referenced elsewhere\\n' > \"$A/.scratch/ctl.log\"\nprintf 'fresh scratch\\n' > \"$A/.scratch/fresh.log\"\ntouch -d '3 days ago' \"$A/.scratch/old-thing.log\" \"$A/.scratch/keepme.log\" \"$A/.scratch/ctl.log\"\n\n# census-like dirs that must be excluded from the reference sweep (D3) — both\n# inside the fixture repo and at sandbox root, to cover either sweep root.\nmkdir -p \"$SB/souji-shokunin/census/round-1\"\nprintf '{\"seat\":\"S99\",\"ref\":\"keepme.log\"}\\n' > \"$SB/souji-shokunin/census/round-1/seat-99.json\"\n\n# --- beta-shokunin: clean, pushed (F1) --------------------------------------\nB=\"$SB/beta-shokunin\"; mkdir -p \"$B/notes\"; gi \"$B\"\nprintf 'keep\\n' > \"$B/notes/keep.txt\"\ngit -C \"$B\" add -A; git -C \"$B\" commit -qm c1\ngit -C \"$B\" update-ref refs/remotes/origin/master HEAD\ngit -C \"$B\" symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/master\n\n# --- gamma-shokunin: no origin/HEAD, single origin/trunk (F9) ---------------\nG=\"$SB/gamma-shokunin\"; mkdir -p \"$G\"; gi \"$G\"\nprintf 'g\\n' > \"$G/g.txt\"\ngit -C \"$G\" add -A; git -C \"$G\" commit -qm c1\ngit -C \"$G\" update-ref refs/remotes/origin/trunk HEAD\n\n# --- delta-shokunin: worktree owner (F4, F5) --------------------------------\nD=\"$SB/delta-shokunin\"; mkdir -p \"$D\"; gi \"$D\"\nprintf 'd\\n' > \"$D/d.txt\"\ngit -C \"$D\" add -A; git -C \"$D\" commit -qm c1\ngit -C \"$D\" worktree add -q --detach \"$SB/wt-absent\"\nrm -rf \"$SB/wt-absent\"\ngit -C \"$D\" worktree add -q -b feat \"$SB/wt-branch\"\nprintf 'feat\\n' > \"$SB/wt-branch/feat.txt\"\ngit -C \"$SB/wt-branch\" add -A; git -C \"$SB/wt-branch\" commit -qm c-feat\ngit -C \"$D\" worktree add -q --detach \"$SB/wt-dirty\"\nprintf 'untracked work\\n' > \"$SB/wt-dirty/stray.txt\"\n\n# --- epsilon-shokunin: ledger source on a side branch (F6) ------------------\nE=\"$SB/epsilon-shokunin\"; mkdir -p \"$E\"; gi \"$E\"\nprintf 'base\\n' > \"$E/base.txt\"\ngit -C \"$E\" add -A; git -C \"$E\" commit -qm base\ngit -C \"$E\" checkout -qb side\nprintf 'the exported artifact\\n' > \"$E/export.md\"\ngit -C \"$E\" add -A; git -C \"$E\" commit -qm c-export\ngit -C \"$E\" checkout -q master\nprintf 'the exported artifact\\n' > \"$E/export.md\"   # untracked copy on master, identical bytes\n\n# --- zeta-shokunin: ledger row with sha mismatch (negative F6) --------------\nZ=\"$SB/zeta-shokunin\"; mkdir -p \"$Z\"; gi \"$Z\"\nprintf 'base\\n' > \"$Z/base.txt\"\ngit -C \"$Z\" add -A; git -C \"$Z\" commit -qm base\ngit -C \"$Z\" checkout -qb side\nprintf 'mismatch test\\n' > \"$Z/mismatch.md\"\ngit -C \"$Z\" add -A; git -C \"$Z\" commit -qm c-mm\ngit -C \"$Z\" checkout -q master\nprintf 'mismatch test\\n' > \"$Z/mismatch.md\"          # untracked copy on master, identical bytes\n\n# --- eta-shokunin: ledger row, correct source sha, vault sha mismatch (neg F6)\nET=\"$SB/eta-shokunin\"; mkdir -p \"$ET\"; gi \"$ET\"\nprintf 'base\\n' > \"$ET/base.txt\"\ngit -C \"$ET\" add -A; git -C \"$ET\" commit -qm base\ngit -C \"$ET\" checkout -qb side\nprintf 'vault mismatch\\n' > \"$ET/vaultmm.md\"\ngit -C \"$ET\" add -A; git -C \"$ET\" commit -qm c-vm\ngit -C \"$ET\" checkout -q master\nprintf 'vault mismatch\\n' > \"$ET/vaultmm.md\"\nmkdir -p \"$SB/vault\"\nprintf 'DIFFERENT VAULT BYTES\\n' > \"$SB/vault/vaultmm.md\"\n\n# --- vault side (read-only target for ledger rows) --------------------------\nmkdir -p \"$SB/vault\"\ncp \"$E/export.md\" \"$SB/vault/export.md\"\ncp \"$Z/mismatch.md\" \"$SB/vault/mismatch.md\"\n\n# --- ledger mirror ----------------------------------------------------------\nmkdir -p \"$SB/souji-shokunin/corpus/knowledge\"\nL=\"$SB/souji-shokunin/corpus/knowledge/obsidian-ledger.tsv\"\n{\n  printf 'source_path\\tsource_sha256\\tvault_path\\tvault_sha256\\texported_at\\tnote\\n'\n  printf '%s\\t%s\\t%s\\t%s\\t2026-10-18\\tfixture\\n' \\\n    \"$E/export.md\" \"$(sha256sum \"$E/export.md\" | cut -d' ' -f1)\" \\\n    \"$SB/vault/export.md\" \"$(sha256sum \"$SB/vault/export.md\" | cut -d' ' -f1)\"\n  printf '%s\\t%s\\t%s\\t%s\\t2026-10-18\\tfixture-sha-mismatch\\n' \\\n    \"$Z/mismatch.md\" \"$(printf 'deadbeef%.0s' {1..8})\" \\\n    \"$SB/vault/mismatch.md\" \"$(sha256sum \"$SB/vault/mismatch.md\" | cut -d' ' -f1)\"\n  printf '%s\\t%s\\t%s\\t%s\\t2026-10-18\\tvault-sha-unverifiable\\n' \\\n    \"$ET/vaultmm.md\" \"$(sha256sum \"$ET/vaultmm.md\" | cut -d' ' -f1)\" \\\n    \"$SB/vault/vaultmm.md\" \"$(printf 'ab%.0s' {1..32})\"\n} > \"$L\"\n\n# --- secrets fixture (F10) --------------------------------------------------\nmkdir -p \"$SB/secret-dir\"\nprintf 'TOKEN=fixture-not-real\\n' > \"$SB/secret-dir/.env\"\nprintf 'plain\\n' > \"$SB/secret-dir/credentials.json\"\n\necho \"fixtures built at $SB\"\n"
+  },
+  "limits": [
+    "Live probes are read-only and were run against the real fleet root; results reflect the fleet state at 12:55-12:57 on 2026-10-18 and will drift as lanes work.",
+    "No strace-style syscall audit was used; no-write and no-read claims rest on hash manifests, the git shim log, the tool selftest canary, and source review.",
+    "The reviewer oracle is a second implementation, not an authority; where it first disagreed with the tool (worktree precedence) the r1 ground truth was used to adjudicate and the oracle was corrected.",
+    "The artifact moved during the review; only the sha pinned above is covered.",
+    "Numbers were measured on the frozen snapshot for the reviewed sha; the live file matched that sha at write time, but the writer was still iterating, so re-run the embedded harness after any later edit."
+  ]
+}

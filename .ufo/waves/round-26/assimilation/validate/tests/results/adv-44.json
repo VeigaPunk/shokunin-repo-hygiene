@@ -1,0 +1,492 @@
+{
+  "seat": "S44",
+  "role": "adversarial tester",
+  "lane": "souji-shokunin",
+  "round": 2,
+  "tool": {
+    "path": "/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh",
+    "present": true,
+    "sha256": "586bc36c6039b9c9bf5846b85156b02dd3daa6f594c03d6ba474a9c71f2fc812",
+    "size": 29139,
+    "mtime": "2026-10-18 13:00:00.131474796 -0300",
+    "sha256_at_write": "586bc36c6039b9c9bf5846b85156b02dd3daa6f594c03d6ba474a9c71f2fc812",
+    "graded_sha256": "586bc36c6039b9c9bf5846b85156b02dd3daa6f594c03d6ba474a9c71f2fc812",
+    "drift_since_graded_run": false
+  },
+  "environment": {
+    "git_version": "git version 2.55.0",
+    "rg_versions": [
+      [
+        "/usr/bin/rg",
+        "ripgrep 15.2.0"
+      ],
+      [
+        "/home/vgpnk/.local/bin/rg",
+        "ripgrep 15.2.0 (rev e89fff89ac)"
+      ]
+    ],
+    "rg_basename_supported": false,
+    "rg_basename_probe": "rg: unrecognized flag --basename",
+    "fixture_rebuild": "bash /tmp/adv-44/build-fixtures.sh (git plumbing only: init/symbolic-ref/add/write-tree/commit-tree/update-ref/worktree add --detach; no fetch/push/commit/branch/checkout/reset/rebase)",
+    "fixture_script_sha256": "09c7580b68a6b1d21f351ebab82c8dec76311c6e566488a0102e2489afa64e2d",
+    "runner_script_sha256": "d2727af0e92206ea8772116d6c2ebde3095bbd503ad92c3232e70261943d4cb9",
+    "reference_script_sha256": "057f36285954035ce69d8b3eff9d3de6449e557aea690b5c7f6bb6b1d52b9424"
+  },
+  "cases": [
+    {
+      "id": "A1",
+      "scenario": "repo with no origin at all; local default branch = master",
+      "target": "/tmp/adv-44/fixtures/A1-no-origin-master/data/a1.txt",
+      "expected": "SAFE(pushed) [spec fallback: 'master' exists locally and holds the introducing commit]",
+      "observed": {
+        "exit_code": 0,
+        "verdict_line": "VERDICT\t/tmp/adv-44/fixtures/A1-no-origin-master/data/a1.txt\tSAFE\tpushed\tintro=29a88a030491 default=refs/heads/master repo=/tmp/adv-44/fixtures/A1-no-origin-master",
+        "verdict": "SAFE",
+        "reason": "pushed",
+        "evidence_field": "intro=29a88a030491 default=refs/heads/master repo=/tmp/adv-44/fixtures/A1-no-origin-master",
+        "stdout_lines": 1,
+        "stdout": "VERDICT\t/tmp/adv-44/fixtures/A1-no-origin-master/data/a1.txt\tSAFE\tpushed\tintro=29a88a030491 default=refs/heads/master repo=/tmp/adv-44/fixtures/A1-no-origin-master",
+        "stderr_head": ""
+      },
+      "severity": "pass",
+      "note": "spec fallback to local master resolved the receipt",
+      "grading_note": "No remote exists, so 'pushed' is nominal; the binding spec's local-master fallback makes SAFE(pushed) the literal answer. NOT-SAFE here is a conservative deviation, not a safety hole."
+    },
+    {
+      "id": "A2",
+      "scenario": "repo with no origin at all; local default branch = main (no master)",
+      "target": "/tmp/adv-44/fixtures/A2-no-origin-main/data/a2.txt",
+      "expected": "NOT-SAFE(pushed-unverifiable|none) [spec literal: no origin refs and no local master]",
+      "observed": {
+        "exit_code": 0,
+        "verdict_line": "VERDICT\t/tmp/adv-44/fixtures/A2-no-origin-main/data/a2.txt\tNOT-SAFE\tpushed-unverifiable\tintro=87a171e7488c default=unresolved refs=n/a",
+        "verdict": "NOT-SAFE",
+        "reason": "pushed-unverifiable",
+        "evidence_field": "intro=87a171e7488c default=unresolved refs=n/a",
+        "stdout_lines": 1,
+        "stdout": "VERDICT\t/tmp/adv-44/fixtures/A2-no-origin-main/data/a2.txt\tNOT-SAFE\tpushed-unverifiable\tintro=87a171e7488c default=unresolved refs=n/a",
+        "stderr_head": ""
+      },
+      "severity": "pass",
+      "note": "no remote surface exists; refusal is correct",
+      "grading_note": "A tool that resolves the default branch via HEAD or the sole local branch reports SAFE(pushed) here: that is a false-SAFE, because the repo has no remote at all."
+    },
+    {
+      "id": "B1",
+      "scenario": "origin/HEAD symref points at a deleted ref (origin/main); single existing origin ref origin/master holds the artifact",
+      "target": "/tmp/adv-44/fixtures/B1-dangling-symref-pushed/data/b1.txt",
+      "expected": "SAFE(pushed) [robust fallback to the single existing origin ref] or NOT-SAFE(pushed-unverifiable) [literal: resolved name does not exist]; must not crash",
+      "observed": {
+        "exit_code": 0,
+        "verdict_line": "VERDICT\t/tmp/adv-44/fixtures/B1-dangling-symref-pushed/data/b1.txt\tSAFE\tpushed\tintro=f07c6dbbe7fc default=refs/remotes/origin/master repo=/tmp/adv-44/fixtures/B1-dangling-symref-pushed",
+        "verdict": "SAFE",
+        "reason": "pushed",
+        "evidence_field": "intro=f07c6dbbe7fc default=refs/remotes/origin/master repo=/tmp/adv-44/fixtures/B1-dangling-symref-pushed",
+        "stdout_lines": 1,
+        "stdout": "VERDICT\t/tmp/adv-44/fixtures/B1-dangling-symref-pushed/data/b1.txt\tSAFE\tpushed\tintro=f07c6dbbe7fc default=refs/remotes/origin/master repo=/tmp/adv-44/fixtures/B1-dangling-symref-pushed",
+        "stderr_head": ""
+      },
+      "severity": "pass",
+      "note": "dangling symref survived; fell back to the single existing origin ref",
+      "grading_note": "Trap: naive resolution uses the symref name 'main' and then dies (set -e) or mis-resolves. A crash or a missing verdict line is a hard failure irrespective of which reading is taken."
+    },
+    {
+      "id": "B2",
+      "scenario": "same dangling origin/HEAD; artifact commit is absent from origin/master",
+      "target": "/tmp/adv-44/fixtures/B2-dangling-symref-unpushed/data/b2.txt",
+      "expected": "NOT-SAFE(*) [artifact absent from every existing remote-tracking ref]",
+      "observed": {
+        "exit_code": 0,
+        "verdict_line": "VERDICT\t/tmp/adv-44/fixtures/B2-dangling-symref-unpushed/data/b2.txt\tNOT-SAFE\tnone\tintro=358a18811a5e default=refs/remotes/origin/master not-ancestor refs=n/a",
+        "verdict": "NOT-SAFE",
+        "reason": "none",
+        "evidence_field": "intro=358a18811a5e default=refs/remotes/origin/master not-ancestor refs=n/a",
+        "stdout_lines": 1,
+        "stdout": "VERDICT\t/tmp/adv-44/fixtures/B2-dangling-symref-unpushed/data/b2.txt\tNOT-SAFE\tnone\tintro=358a18811a5e default=refs/remotes/origin/master not-ancestor refs=n/a",
+        "stderr_head": ""
+      },
+      "severity": "pass",
+      "note": "artifact absent from every existing remote-tracking ref",
+      "grading_note": "Strongest falsifier: the artifact is not on origin/master, so SAFE can only come from resolving local HEAD."
+    },
+    {
+      "id": "C_noroot",
+      "scenario": "prunable worktree registration of a dirty owner; evaluated without SHOKUNIN_ROOT override",
+      "target": "/tmp/adv-44/fixtures/C-dirty-owner/root/adv44-wt-1",
+      "expected": "",
+      "observed": {
+        "exit_code": 0,
+        "verdict_line": "VERDICT\t/tmp/adv-44/fixtures/C-dirty-owner/root/adv44-wt-1\tNOT-SAFE\tunreachable\tmissing-target",
+        "verdict": "NOT-SAFE",
+        "reason": "unreachable",
+        "evidence_field": "missing-target",
+        "stdout_lines": 1,
+        "stdout": "VERDICT\t/tmp/adv-44/fixtures/C-dirty-owner/root/adv44-wt-1\tNOT-SAFE\tunreachable\tmissing-target",
+        "stderr_head": ""
+      },
+      "severity": "informational",
+      "note": "owner not discoverable outside the scanned roots",
+      "grading_note": "Informational: without a SHOKUNIN_ROOT override the owner is outside any scanned root, so the tool cannot see the registration."
+    },
+    {
+      "id": "C_root",
+      "scenario": "same, with SHOKUNIN_ROOT=$FIX/C-dirty-owner/root so owner detection can find adv44-owner-shokunin",
+      "target": "/tmp/adv-44/fixtures/C-dirty-owner/root/adv44-wt-1",
+      "expected": "SAFE(metadata-prune) [spec kind 2 / F4 shape: dir absent AND unique commits = 0]",
+      "observed": {
+        "exit_code": 0,
+        "verdict_line": "VERDICT\t/tmp/adv-44/fixtures/C-dirty-owner/root/adv44-wt-1\tSAFE\tmetadata-prune\towner=/tmp/adv-44/fixtures/C-dirty-owner/root/adv44-owner-shokunin head=3f23196dc6a0 unique=0 dir=absent",
+        "verdict": "SAFE",
+        "reason": "metadata-prune",
+        "evidence_field": "owner=/tmp/adv-44/fixtures/C-dirty-owner/root/adv44-owner-shokunin head=3f23196dc6a0 unique=0 dir=absent",
+        "stdout_lines": 1,
+        "stdout": "VERDICT\t/tmp/adv-44/fixtures/C-dirty-owner/root/adv44-wt-1\tSAFE\tmetadata-prune\towner=/tmp/adv-44/fixtures/C-dirty-owner/root/adv44-owner-shokunin head=3f23196dc6a0 unique=0 dir=absent",
+        "stderr_head": ""
+      },
+      "severity": "pass",
+      "note": "spec kind-2 prune condition recognised",
+      "grading_note": "Spec-literal answer is SAFE(metadata-prune); the owner's own dirt is not the registration's. NOT-SAFE(dirty) is conservative but misattributes the owner's state to the target."
+    },
+    {
+      "id": "D",
+      "scenario": "scratch-type target whose only live reference lives in a hidden dir (.scratch/)",
+      "target": "/tmp/adv-44/fixtures/D-hidden-ref/.scratch/run-22-checkpoint.json",
+      "expected": "NOT-SAFE(*) [a live reference exists in .scratch/round-22-notes.md]",
+      "observed": {
+        "exit_code": 0,
+        "verdict_line": "VERDICT\t/tmp/adv-44/fixtures/D-hidden-ref/.scratch/run-22-checkpoint.json\tNOT-SAFE\tnone\tuntracked repo=/tmp/adv-44/fixtures/D-hidden-ref ledger=miss scratch=yes mtime_age_days=8",
+        "verdict": "NOT-SAFE",
+        "reason": "none",
+        "evidence_field": "untracked repo=/tmp/adv-44/fixtures/D-hidden-ref ledger=miss scratch=yes mtime_age_days=8",
+        "stdout_lines": 1,
+        "stdout": "VERDICT\t/tmp/adv-44/fixtures/D-hidden-ref/.scratch/run-22-checkpoint.json\tNOT-SAFE\tnone\tuntracked repo=/tmp/adv-44/fixtures/D-hidden-ref ledger=miss scratch=yes mtime_age_days=8",
+        "stderr_head": ""
+      },
+      "severity": "pass",
+      "note": "hidden-dir reference respected (Dctl, the same fixture without the .scratch/ reference, yields SAFE(stale), so the difference is load-bearing)",
+      "grading_note": "The spec's own `-g '!.git'` exclusion only makes sense with hidden paths included, so `--hidden` is required. Measured: `rg -l --no-ignore 'run-22-checkpoint' <root> -g '!.git'` returns 0 lines while `--hidden` returns the live reference."
+    },
+    {
+      "id": "Dctl",
+      "scenario": "control for D: same scratch type and old mtime, zero references anywhere",
+      "target": "/tmp/adv-44/fixtures/Dctl-no-ref/.scratch/run-22-checkpoint.json",
+      "expected": "SAFE(stale) [scratch type, zero references, mtime older than 1 day]",
+      "observed": {
+        "exit_code": 0,
+        "verdict_line": "VERDICT\t/tmp/adv-44/fixtures/Dctl-no-ref/.scratch/run-22-checkpoint.json\tSAFE\tstale\tmtime_age_days=8 refs=0 scratch-type=yes",
+        "verdict": "SAFE",
+        "reason": "stale",
+        "evidence_field": "mtime_age_days=8 refs=0 scratch-type=yes",
+        "stdout_lines": 1,
+        "stdout": "VERDICT\t/tmp/adv-44/fixtures/Dctl-no-ref/.scratch/run-22-checkpoint.json\tSAFE\tstale\tmtime_age_days=8 refs=0 scratch-type=yes",
+        "stderr_head": ""
+      },
+      "severity": "pass",
+      "note": "stale path reachable for an unreferenced scratch file (makes D load-bearing)",
+      "grading_note": "Control case: makes D's NOT-SAFE load-bearing by proving the stale receipt fires when there is genuinely no reference."
+    },
+    {
+      "id": "Dctl_thresh0",
+      "scenario": "Dctl with --stale-days 0 (8-day-old file is older than 0 days)",
+      "target": "/tmp/adv-44/fixtures/Dctl-no-ref/.scratch/run-22-checkpoint.json",
+      "expected": "SAFE(stale) [8 days is older than 0 days]",
+      "observed": {
+        "exit_code": 0,
+        "verdict_line": "VERDICT\t/tmp/adv-44/fixtures/Dctl-no-ref/.scratch/run-22-checkpoint.json\tSAFE\tstale\tmtime_age_days=8 refs=0 scratch-type=yes",
+        "verdict": "SAFE",
+        "reason": "stale",
+        "evidence_field": "mtime_age_days=8 refs=0 scratch-type=yes",
+        "stdout_lines": 1,
+        "stdout": "VERDICT\t/tmp/adv-44/fixtures/Dctl-no-ref/.scratch/run-22-checkpoint.json\tSAFE\tstale\tmtime_age_days=8 refs=0 scratch-type=yes",
+        "stderr_head": ""
+      },
+      "severity": "pass",
+      "note": "8-day-old file is older than the 0-day threshold",
+      "grading_note": ""
+    },
+    {
+      "id": "Dctl_thresh30",
+      "scenario": "Dctl with --stale-days 30 (8-day-old file is NOT older than 30 days)",
+      "target": "/tmp/adv-44/fixtures/Dctl-no-ref/.scratch/run-22-checkpoint.json",
+      "expected": "NOT-SAFE(*) [8 days is not older than 30 days]",
+      "observed": {
+        "exit_code": 0,
+        "verdict_line": "VERDICT\t/tmp/adv-44/fixtures/Dctl-no-ref/.scratch/run-22-checkpoint.json\tNOT-SAFE\tnone\tuntracked repo=/tmp/adv-44/fixtures/Dctl-no-ref ledger=miss scratch=yes mtime_age_days=8",
+        "verdict": "NOT-SAFE",
+        "reason": "none",
+        "evidence_field": "untracked repo=/tmp/adv-44/fixtures/Dctl-no-ref ledger=miss scratch=yes mtime_age_days=8",
+        "stdout_lines": 1,
+        "stdout": "VERDICT\t/tmp/adv-44/fixtures/Dctl-no-ref/.scratch/run-22-checkpoint.json\tNOT-SAFE\tnone\tuntracked repo=/tmp/adv-44/fixtures/Dctl-no-ref ledger=miss scratch=yes mtime_age_days=8",
+        "stderr_head": ""
+      },
+      "severity": "pass",
+      "note": "--stale-days 30 correctly excludes the 8-day-old file",
+      "grading_note": ""
+    },
+    {
+      "id": "A1_root",
+      "scenario": "repo-root kind: no-origin repo, clean tree, 2 local-only commits",
+      "target": "/tmp/adv-44/fixtures/A1-no-origin-master",
+      "expected": "NOT-SAFE with evidence field 'unpushed=2 dirty=0' [spec kind 1]",
+      "observed": {
+        "exit_code": 0,
+        "verdict_line": "VERDICT\t/tmp/adv-44/fixtures/A1-no-origin-master\tNOT-SAFE\tunpushed\tunpushed=2 dirty=0",
+        "verdict": "NOT-SAFE",
+        "reason": "unpushed",
+        "evidence_field": "unpushed=2 dirty=0",
+        "stdout_lines": 1,
+        "stdout": "VERDICT\t/tmp/adv-44/fixtures/A1-no-origin-master\tNOT-SAFE\tunpushed\tunpushed=2 dirty=0",
+        "stderr_head": ""
+      },
+      "severity": "pass",
+      "note": "kind-1 counts reported as specified",
+      "grading_note": "Kind-1 surface on a repo that has no remote at all: unpushed counts must be derived without an upstream."
+    },
+    {
+      "id": "C_owner_root",
+      "scenario": "repo-root kind: the dirty owner repo itself (2 unpushed commits, 2 dirty entries)",
+      "target": "/tmp/adv-44/fixtures/C-dirty-owner/root/adv44-owner-shokunin",
+      "expected": "NOT-SAFE with evidence field 'unpushed=2 dirty=2' [spec kind 1]",
+      "observed": {
+        "exit_code": 0,
+        "verdict_line": "VERDICT\t/tmp/adv-44/fixtures/C-dirty-owner/root/adv44-owner-shokunin\tNOT-SAFE\tunpushed-dirty\tunpushed=2 dirty=2",
+        "verdict": "NOT-SAFE",
+        "reason": "unpushed-dirty",
+        "evidence_field": "unpushed=2 dirty=2",
+        "stdout_lines": 1,
+        "stdout": "VERDICT\t/tmp/adv-44/fixtures/C-dirty-owner/root/adv44-owner-shokunin\tNOT-SAFE\tunpushed-dirty\tunpushed=2 dirty=2",
+        "stderr_head": ""
+      },
+      "severity": "pass",
+      "note": "kind-1 counts reported as specified on a dirty no-origin repo",
+      "grading_note": "Kind-1 surface on the dirty owner; also checks the tool never touches the owner's registration when asked about the repo root."
+    },
+    {
+      "id": "empty_string",
+      "scenario": "empty-string target (safety rail)",
+      "target": "",
+      "expected": "NOT-SAFE(unreachable) with exit 0",
+      "observed": {
+        "exit_code": 0,
+        "verdict_line": "VERDICT\t\tNOT-SAFE\tunreachable\tempty-target",
+        "verdict": "NOT-SAFE",
+        "reason": "unreachable",
+        "evidence_field": "empty-target",
+        "stdout_lines": 1,
+        "stdout": "VERDICT\t\tNOT-SAFE\tunreachable\tempty-target",
+        "stderr_head": ""
+      },
+      "severity": "pass",
+      "note": "empty-string target refused",
+      "grading_note": "Spec rail: empty target -> NOT-SAFE(unreachable), exit stays 0."
+    },
+    {
+      "id": "json_after",
+      "scenario": "flag placed after the positional target",
+      "target": "/tmp/adv-44/fixtures/A1-no-origin-master/data/a1.txt",
+      "expected": "informational: the spec's CLI form is flags-first; record what happens when the flag follows the path",
+      "observed": {
+        "exit_code": 0,
+        "verdict_line": "{\"path\":\"/tmp/adv-44/fixtures/A1-no-origin-master/data/a1.txt\",\"kind\":\"artifact\",\"verdict\":\"SAFE\",\"receipt\":\"pushed\",\"evidence\":\"intro=29a88a030491 default=refs/heads/master repo=/tmp/adv-44/fixtures/A1-no-origin-master\"}",
+        "verdict": null,
+        "reason": "",
+        "evidence_field": "",
+        "stdout_lines": 1,
+        "stdout": "{\"path\":\"/tmp/adv-44/fixtures/A1-no-origin-master/data/a1.txt\",\"kind\":\"artifact\",\"verdict\":\"SAFE\",\"receipt\":\"pushed\",\"evidence\":\"intro=29a88a030491 default=refs/heads/master repo=/tmp/adv-44/fixtures/A1-no-origin-master\"}",
+        "stderr_head": ""
+      },
+      "severity": "informational",
+      "note": "--json after the path did not emit a per-target VERDICT line",
+      "grading_note": ""
+    },
+    {
+      "id": "A2_json",
+      "scenario": "A2 under --json",
+      "target": "/tmp/adv-44/fixtures/A2-no-origin-main/data/a2.txt",
+      "expected": "exit 0 (JSON surface, not graded on shape)",
+      "observed": {
+        "exit_code": 0,
+        "verdict_line": "{\"path\":\"/tmp/adv-44/fixtures/A2-no-origin-main/data/a2.txt\",\"kind\":\"artifact\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"pushed-unverifiable\",\"evidence\":\"intro=87a171e7488c default=unresolved refs=n/a\"}",
+        "verdict": null,
+        "reason": "",
+        "evidence_field": "",
+        "stdout_lines": 1,
+        "stdout": "{\"path\":\"/tmp/adv-44/fixtures/A2-no-origin-main/data/a2.txt\",\"kind\":\"artifact\",\"verdict\":\"NOT-SAFE\",\"receipt\":\"pushed-unverifiable\",\"evidence\":\"intro=87a171e7488c default=unresolved refs=n/a\"}",
+        "stderr_head": ""
+      },
+      "severity": "informational",
+      "note": "",
+      "grading_note": ""
+    },
+    {
+      "id": "empty_target",
+      "scenario": "missing target (safety rail)",
+      "target": "/tmp/adv-44/fixtures/does-not-exist-44",
+      "expected": "NOT-SAFE(unreachable) with exit 0",
+      "observed": {
+        "exit_code": 0,
+        "verdict_line": "VERDICT\t/tmp/adv-44/fixtures/does-not-exist-44\tNOT-SAFE\tunreachable\tmissing-target",
+        "verdict": "NOT-SAFE",
+        "reason": "unreachable",
+        "evidence_field": "missing-target",
+        "stdout_lines": 1,
+        "stdout": "VERDICT\t/tmp/adv-44/fixtures/does-not-exist-44\tNOT-SAFE\tunreachable\tmissing-target",
+        "stderr_head": ""
+      },
+      "severity": "pass",
+      "note": "safety rail honoured",
+      "grading_note": "Spec rail: empty/missing target -> NOT-SAFE(unreachable), exit stays 0."
+    }
+  ],
+  "safety": {
+    "git_invocations_traced": 232,
+    "subcommand_histogram": {
+      "worktree": 80,
+      "rev-parse": 40,
+      "log": 29,
+      "symbolic-ref": 14,
+      "for-each-ref": 12,
+      "update-ref": 12,
+      "merge-base": 10,
+      "add": 9,
+      "write-tree": 9,
+      "commit-tree": 9,
+      "init": 5,
+      "status": 3
+    },
+    "banned_subcommand_hits": [],
+    "banned_subcommand_count": 0,
+    "raw_text_grep_hits_informational": [
+      "-C /tmp/souji-selftest.Rt3Kys/fleet/alpha-shokunin commit-tree 805ad803a26775afa8249a55e45bfbe962f1a3e8 -p b4dc14b20e9aae2007c26ce05d8179c9f7486dea -m C: local-only commit"
+    ],
+    "raw_text_grep_note": "raw grep false-positives on commit-message text (e.g. '-m C: local-only commit'); the parsed histogram above is the authoritative check",
+    "read_only_surfaces": "every traced git invocation listed in evidence/git-calls.log; shim logged argv verbatim",
+    "live_fleet_invocations": 66,
+    "live_fleet_subcommand_histogram": {
+      "worktree": 66
+    },
+    "live_fleet_samples": [
+      "-C /home/vgpnk/Projects/shokunin/audio-shokunin worktree list --porcelain",
+      "-C /home/vgpnk/Projects/shokunin/chousa-shokunin worktree list --porcelain",
+      "-C /home/vgpnk/Projects/shokunin/game-dev-2d-shokunin worktree list --porcelain",
+      "-C /home/vgpnk/Projects/shokunin/game-dev-3d-shokunin worktree list --porcelain",
+      "-C /home/vgpnk/Projects/shokunin/kagi-shokunin worktree list --porcelain",
+      "-C /home/vgpnk/Projects/shokunin/kaidoku-shokunin worktree list --porcelain"
+    ],
+    "live_tree_before_after_identical": true,
+    "protected_surface_probe": [
+      "/home/vgpnk/Projects/shokunin/.ufo/state 2026-10-15 01:45:42.320700224 -0300 1588",
+      "/home/vgpnk/Projects/shokunin/.ufo/watchdog.log 2026-10-15 01:58:27.413802468 -0300 27518"
+    ]
+  },
+  "adjacent": {
+    "selftest_exit": 0,
+    "selftest_summary_line": "SELFTEST SUMMARY pass=26 fail=0",
+    "selftest_tail": [
+      "F10-unchanged\tPASS\tsecret-files-unchanged\thashes stable\tread-only",
+      "F10-unreadable\tPASS\texit=0\tVERDICT\t/tmp/souji-selftest.Rt3Kys/f10-unreadable/app.env\tNOT-SAFE\tsecrets-refusal\tbasename-rule short-circuit (no read) VERDICT\t/tmp/souji-selftest.Rt3Kys/f10-unreadable/creds.pem\tNOT-SAFE\tsecrets-refusal\tbasename-rule short-circuit (no read)\tcli",
+      "F10-unreadable\tPASS\tboth NOT-SAFE(secrets-refusal)\tmode-000 copies\tno read of secret-shaped files",
+      "EXIT-missing\tPASS\texit=0\tVERDICT\t/tmp/souji-selftest.Rt3Kys/fleet/does-not-exist.bin\tNOT-SAFE\tunreachable\tmissing-target\tcli",
+      "EXIT-missing\tPASS\tNOT-SAFE(unreachable)\texit=0\tmissing target",
+      "EXIT-usage\tPASS\texit=2\tusage: souji-verify.sh [--selftest] [--stale-days N] [--json] <path>...\tcli",
+      "EXIT-usage-noval\tPASS\texit=2\tusage: souji-verify.sh [--selftest] [--stale-days N] [--json] <path>...\tcli",
+      "EXIT-noargs\tPASS\texit=2\tusage: souji-verify.sh [--selftest] [--stale-days N] [--json] <path>...\tcli",
+      "JSON-mode\tPASS\texit=0\t{\"path\":\"/tmp/souji-selftest.Rt3Kys/fleet/beta-shokunin/pushed-file.txt\",\"kind\":\"artifact\",\"verdict\":\"SAFE\",\"receipt\":\"pushed\",\"evidence\":\"intro=b10bd96e1911 default=refs/remotes/origin/master repo=/tmp/souji-selftest.Rt3Kys/fleet/beta-shokunin\"}\tcli",
+      "JSON-mode\tPASS\tjsonl SAFE/pushed\t{\"path\":\"/tmp/souji-selftest.Rt3Kys/fleet/beta-shokunin/pushed-file.txt\",\"kind\":\"artifact\",\"verdict\":\"SAFE\",\"receipt\":\"pushed\",\"evidence\":\"intro=b10bd96e1911 default=refs/remotes/origin/master repo=/tmp/souji-selftest.Rt3Kys/fleet/beta-shokunin\"}\tjson contract",
+      "SELFTEST SUMMARY pass=26 fail=0",
+      "SELFTEST PASS"
+    ],
+    "selftest_stderr_head": [],
+    "empty_target_exit": 0,
+    "json_flag_exit": 0,
+    "mixed_all_exit": 0,
+    "mixed_all_lines": 5
+  },
+  "findings": [
+    {
+      "id": "F-rg-basename",
+      "severity": "spec-defect",
+      "statement": "The spec's D3 sweep command uses `rg -l --no-ignore --basename`, which ripgrep 15.2.0 rejects: both /usr/bin/rg and ~/.local/bin/rg exit 2 with 'rg: unrecognized flag --basename'.",
+      "consequence": "A literal implementation cannot evaluate any stale receipt (F7/F8, kind-3 stale branch); under set -e it aborts the whole evaluation with exit 1.",
+      "workaround_proven": "rg --files --no-ignore -g '**/<name>' <root>  and  rg -l --no-ignore -g '**/<name>' <pattern> <root> both work (rc=0, correct single hit in the fixtures).",
+      "evidence": "evidence/reference.txt, section 'rg evidence-sweep capability probe'",
+      "status_in_tested_revision": "not affected: the tested implementation contains no --basename and builds the sweep from `rg -l --no-ignore --hidden --fixed-strings` (line 324). The defect is in the spec text and would bite a literal implementation or a copied selftest."
+    },
+    {
+      "id": "F-rg-hidden",
+      "severity": "spec-defect-downstream",
+      "statement": "The sweep recipe as written does not include hidden paths, yet it carries `-g '!.git'` (redundant unless hidden paths are searched). Measured on fixture D: the recipe returns 0 lines for a name whose only live reference is .scratch/round-22-notes.md, while adding --hidden returns that reference.",
+      "consequence": "Any implementation that copies the recipe verbatim (or uses `rg --files` basename mode without --hidden) judges .scratch-checkpoint artifacts 'zero live references' and emits SAFE(stale) on still-referenced scratch files: a false-SAFE on the exact surface the lane prunes.",
+      "workaround_proven": "rg -l --no-ignore --hidden -g '!.git' ... finds the hidden reference; rg --files --no-ignore --hidden -g '**/<name>' can even see a target that itself lives in a hidden dir.",
+      "evidence": "fixture D + evidence/reference.txt",
+      "status_in_tested_revision": "not affected: the tested implementation passes --hidden (line 324), and the D/Dctl pair confirms the sweep actually finds the hidden reference."
+    }
+  ],
+  "summary": {
+    "cases_run": 16,
+    "pass": 13,
+    "conservative_deviation": 0,
+    "spec_ambiguous_accepted": 0,
+    "false_safe": 0,
+    "critical_failures": 0,
+    "not_run": 0,
+    "verdict": "PASS",
+    "run_invocation": "bash /tmp/adv-44/build-fixtures.sh && bash /tmp/adv-44/run.sh && python3 /tmp/adv-44/gen-json.py"
+  },
+  "revision_history": [
+    {
+      "sha256": "8c75fa1e5fc68e9d791178faa8b9c465af9b84edd70144bc6ef306d09953332f",
+      "size": 27736,
+      "observed_at": "first battery run this session (evidence later overwritten by subsequent runs)",
+      "selftest": "exit 1, SUMMARY pass=16 fail=2 \u2014 F8 (expected SAFE(stale), observed NOT-SAFE(none): census exclusion not applied) and JSON-mode (the flag was treated as a positional target)",
+      "adversarial_cases": "A1/A2/B1/B2/C_root/D all behaved as recorded for the final revision; all exit 0"
+    },
+    {
+      "sha256": "d32bac5d8ae8c66930418edb8e0b9f064109a00866b87ae1baaa3156dd36c077",
+      "size": 28961,
+      "observed_at": "second battery run (pre-log revision, recorded from the session transcript)",
+      "selftest": "exit 0, SUMMARY pass=26 fail=0",
+      "adversarial_cases": "same verdicts as the final revision; --json after the path already emitted a JSON object"
+    },
+    {
+      "sha256": "d7edd71df33b4c3ed2b65e7cc4853bc0fb915873efba1ea458e6069d5398a19f",
+      "size": 29107,
+      "mtime": "2026-10-18 12:57:43.608280519 -0300",
+      "selftest": "exit 0 (SELFTEST SUMMARY pass=26 fail=0)"
+    },
+    {
+      "sha256": "586bc36c6039b9c9bf5846b85156b02dd3daa6f594c03d6ba474a9c71f2fc812",
+      "size": 29139,
+      "mtime": "2026-10-18 13:00:00.131474796 -0300",
+      "selftest": "exit 0 (SELFTEST SUMMARY pass=26 fail=0)"
+    }
+  ],
+  "controls": {
+    "D_vs_Dctl": "D (hidden-dir reference present) -> NOT-SAFE(none); Dctl (identical fixture, reference removed) -> SAFE(stale). The pair isolates the reference sweep as the discriminator.",
+    "Dctl_thresh0_vs_30": "same 8-day-old file: --stale-days 0 -> SAFE(stale), --stale-days 30 -> NOT-SAFE(none). The threshold flag is load-bearing.",
+    "A1_vs_A2": "identical no-origin shape except the local default branch: master -> SAFE(pushed) via the spec fallback, main -> NOT-SAFE(pushed-unverifiable) via the 'unresolved' branch. No HEAD-based shortcut."
+  },
+  "determinism": {
+    "previous_run_dir": "/tmp/adv-44/evidence-prev",
+    "compared_case_ids": [
+      "A1",
+      "A1_root",
+      "A2",
+      "A2_json",
+      "B1",
+      "B2",
+      "C_noroot",
+      "C_owner_root",
+      "D",
+      "Dctl",
+      "Dctl_thresh0",
+      "Dctl_thresh30",
+      "empty_string",
+      "empty_target",
+      "json_after",
+      "mixed_all"
+    ],
+    "identical": true,
+    "mismatches": []
+  }
+}

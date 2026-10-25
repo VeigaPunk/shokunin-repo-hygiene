@@ -1,0 +1,58 @@
+{
+  "case": "F5",
+  "title": "worktree on a named branch with 1 commit not under any remote-tracking ref",
+  "spec": "tools/souji-verify.spec.md (fixture case F5)",
+  "artifact_kind": "worktree-registration",
+  "target": "${CASE_ROOT}/wt-f5",
+  "owner_repo": "${CASE_ROOT}/owner-shokunin",
+  "worktree_paths": [
+    "${CASE_ROOT}/wt-f5"
+  ],
+  "extra_paths": {
+    "admin_dir": "${CASE_ROOT}/owner-shokunin/.git/worktrees/wt-f5",
+    "main_worktree": "${CASE_ROOT}/owner-shokunin"
+  },
+  "fixture_state": {
+    "worktree_dir_present": true,
+    "worktree_registered": true,
+    "worktree_head": {
+      "kind": "branch",
+      "ref": "feature-f5"
+    },
+    "unique_commits": 0,
+    "unpushed_commits": 1,
+    "ahead_of_origin_master": 1,
+    "worktree_registration_count": 2,
+    "dirty_worktree": 0,
+    "dirty_owner": 0
+  },
+  "expected": {
+    "verdict": "NOT-SAFE",
+    "receipt": "unpushed-branch",
+    "reason": "spec rule: named branch with unpushed commits (log --oneline <branch> --not --remotes | wc -l > 0)",
+    "line_regex": "^VERDICT\t${CASE_ROOT}/wt-f5\tNOT-SAFE\tunpushed-branch\t"
+  },
+  "counting_commands": {
+    "unpushed_commits": "git -C ${CASE_ROOT}/owner-shokunin log --oneline feature-f5 --not --remotes | wc -l",
+    "unique_commits": "git -C ${CASE_ROOT}/owner-shokunin log --oneline feature-f5 --not --all | wc -l",
+    "ahead_of_origin_master": "git -C ${CASE_ROOT}/owner-shokunin rev-list --count refs/remotes/origin/master..feature-f5",
+    "registration_listed": "git -C ${CASE_ROOT}/owner-shokunin worktree list --porcelain | grep -c '^worktree ${CASE_ROOT}/wt-f5$'",
+    "worktree_branch": "git -C ${CASE_ROOT}/wt-f5 rev-parse --abbrev-ref HEAD",
+    "worktree_clean": "git -C ${CASE_ROOT}/wt-f5 status --porcelain | wc -l"
+  },
+  "env": {
+    "SHOKUNIN_ROOT": "${CASE_ROOT}"
+  },
+  "build": {
+    "script": "tests/fixtures/case-F5/make-fixture.sh",
+    "invocation": "make-fixture.sh --out ${CASE_ROOT}",
+    "manifest_from": "stdout: one compact JSON manifest with resolved owner_repo/target paths"
+  },
+  "discriminates": [
+    "a verifier that checks the worktree dir's presence/dirtiness first and never consults the worktree branch (would print NOT-SAFE(dirty) or a bare NOT-SAFE)",
+    "a verifier that treats the existing worktree directory as a repo-root artifact ([ -d path/.git ] vs [ -e path/.git ]) and reports unpushed counts instead of the unpushed-branch receipt",
+    "a verifier that resolves the worktree branch from the owner's own HEAD instead of the registration's HEAD",
+    "a verifier that fetches to decide (origin/master is fake and parked 1 commit behind; the unpushed count must come from existing refs)"
+  ],
+  "_note": "${CASE_ROOT} is the --out directory handed to make-fixture.sh; it is printed as case_root in the script's stdout manifest."
+}

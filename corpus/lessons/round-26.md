@@ -24,8 +24,9 @@ Admitted rows instead re-ground the *en* single source of truth: S128
 inherits fetch's trigger), S131 (the campaign's measured prune fixture,
 re-grounded byte-for-byte by sha256) and S132 (the fleet worktree census,
 0 prunable / 5 registrations). S131/S132 are own-work tier A per the source
-registry contract: the lane's re-runnable gate output, re-run in r26 by
-sha256 verification rather than by re-executing the campaign fixture.
+registry contract: the CAMPAIGN lane ran the fixture (2026-10-23); this
+lane re-verified the bytes by sha256 this round and did not execute the
+fixture.
 
 ## Findings
 

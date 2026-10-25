@@ -1,0 +1,237 @@
+{
+  "seat": "S61",
+  "role": "final-judge",
+  "round": 4,
+  "lane": "souji-shokunin",
+  "task": "Obsidian-CLI vault verification",
+  "generated_at_utc": "2026-10-18T17:12:00Z",
+  "judge": {
+    "battery": "tests/vault/s61-judge.sh",
+    "battery_sha256": "69f8a38c540c1f3011318ed2be3e88307aae163bef9739ddb14315517e3830b1",
+    "method": "independent: own P1-P10 probes (single-row ledgers under /tmp), shape-agnostic verdict parsing (r2 field-3 and r4 field-1 vocabularies normalized), own mock-CLI battery (agree/lie/hang/error/garbage/empty), own fixture sweep; peer vrun/vadv/vreview artifacts read as corroboration only",
+    "invocation": "env SOUJI_LEDGER=<ledger> bash <tool> --stale-days 1 -- <target>; CLI tests add SOUJI_CLI (impl-21, impl-24) or SOUJI_CLI_BIN (impl-20) with mock binaries under /tmp/s61/clitest/bin",
+    "note": "candidates may land non-executable; battery always invokes via `bash <tool>`"
+  },
+  "candidates": [
+    {
+      "name": "souji-vault-verify.impl-20",
+      "path": "tools/souji-vault-verify.impl-20.sh",
+      "sha256": "95fa47182cc163f570f032da398e4bb6f7506c2d7befbc49641e830eccc9a32a",
+      "version_note": "three shas observed in the judging window: eed52677 (DOA, syntax error line 271), 52885564 (first clean version, battery 9/9 + selftest 35/35), then a mid-edit regression window (800a4fe8/86f5ffbc: incomplete edit, syntax error line 521, selftest 7 FAIL), settling at 95fa4718 (current, verified stable across repeated hashing). Judged at 95fa4718; behavior identical to 52885564 on the full battery.",
+      "selftest": {"exit": 0, "tail": "selftest: 35 checks, 0 failed"},
+      "battery": {"probes": 18, "pass": 9, "fail": 0, "observed_advisory": 1},
+      "probe_detail": {
+        "P1_valid_row": "PASS SAFE(moved-to-obsidian)",
+        "P2_row_no_trailing_newline": "PASS SAFE(moved-to-obsidian)",
+        "P3_3field_dir_row_vault_differs": "PASS NOT-SAFE(none)",
+        "P4_4field_dir_row_empty_vault_hash": "PASS NOT-SAFE(none)",
+        "P5_self_receipt_source_eq_vault": "PASS NOT-SAFE(none) — refuses source-equals-vault",
+        "P6_vault_path_outside_vault_root": "ADVISORY SAFE(moved-to-obsidian) — spec-silent; row hash pair verified live",
+        "P7_vault_tampered_after_row": "PASS NOT-SAFE(none) vault-sha-mismatch",
+        "P8_source_tampered_after_row": "PASS NOT-SAFE(none) source-sha-mismatch",
+        "P9_real_vault_Home_md_match": "PASS SAFE(moved-to-obsidian)",
+        "P10_real_vault_Home_md_wrong_sha": "PASS NOT-SAFE(none)"
+      },
+      "cli_layer": {
+        "verdict": "FULL PASS — the only candidate with a complete, bounded, honest CLI integration (all six states re-verified at 95fa4718)",
+        "agree": "cli=agree (mock returns the live vault hash)",
+        "lie": "cli=disagreement(claimed=000000000000); local hash still decides; rc=0",
+        "hang": "cli=timeout; bounded at SOUJI_CLI_TIMEOUT (3s measured 3.04s wall)",
+        "error": "cli=error(rc=3) recorded; rc=0",
+        "garbage": "cli=unparseable recorded; rc=0",
+        "empty": "cli=empty recorded; rc=0",
+        "gui_safety": "zero references to /usr/bin/obsidian, /usr/lib/obsidian, or electron43 in source (grep -c = 0); accepts only an obsidian-cli-named binary or a ~/.local/bin/obsidian symlink whose target basename is obsidian-cli"
+      },
+      "peer_corroboration": {
+        "runner-27": "26/26 (fresh re-run by S61 at current shas)",
+        "runner-40": "23 pass / 1 fail — C11.no-gui-spawn 'before=2 after=0' adjudicated as a false alarm: a count going 2->0 cannot be a spawn; direct pgrep during impl-20 execution shows no electron43/obsidian process (the before=2 was a sibling seat's mock-CLI process still visible in the process table); impl-20 source contains no launcher reference, so it cannot spawn the GUI"
+      },
+      "verdict": "CLEAN — recommended winner"
+    },
+    {
+      "name": "souji-vault-verify.impl-24",
+      "path": "tools/souji-vault-verify.impl-24.sh",
+      "sha256": "2b224647abedc3ee00b38c3d5e1dee38baab05a705a8bebbdc65fb7b4cc47a50",
+      "selftest": {"exit": 0, "tail": "selftest: 13 checks, 0 failed"},
+      "battery": {"probes": 18, "pass": 7, "fail": 1, "observed_advisory": 2},
+      "probe_detail": {
+        "P2_row_no_trailing_newline": "FAIL NOT-SAFE(none) — unterminated final row dropped (same defect class as installed tool)",
+        "P5_self_receipt": "ADVISORY SAFE — self-receipt accepted",
+        "P6_outside_vault": "ADVISORY SAFE",
+        "others": "P1/P3/P4/P7/P8/P9/P10 PASS"
+      },
+      "cli_layer": {
+        "verdict": "PRESENCE-ONLY — no CLI invocation observed",
+        "evidence": "with SOUJI_CLI=<mock> the output records 'cli-state=present hint=<mock>' but the mock's log/marker shows it is never executed (lie/hang mocks return instantly with cli=present; hang mock did not block)"
+      },
+      "peer_corroboration": {
+        "runner-27": "26/26 (fresh re-run by S61; vocabulary-aware)",
+        "runner-40": "11 FAIL — r2-format parser cannot read impl-24's field-1 r4 vocabulary; parse artifact, not behavior",
+        "vrun-24": "11 pass / 2 fail at earlier sha (V3 evidence-string, V6-V6c CRLF-truncated row read as VERIFIED by the runner's oracle)"
+      },
+      "verdict": "RUNNER-UP — behaviorally solid except the unterminated-row defect; CLI integration is presence-only"
+    },
+    {
+      "name": "impl-21",
+      "path": "tools/impl-21.sh",
+      "sha256": "ed1881e8fd82748934a6f086164698aa7a30b4c47149adc93df1f4e349eba4dc",
+      "selftest": {"exit": 1, "tail": "FAIL E6/L2/C1 + 'LIE_OLD: unbound variable' (line 786); the exec-bit-dependent failures disappear when run via bash, but E6 (dir evidence string), L2 (dir row with empty vault digest accepted) and the LIE_OLD crash remain real"},
+      "battery": {"probes": 18, "pass": 8, "fail": 0, "observed_advisory": 2},
+      "probe_detail": {
+        "P5_self_receipt": "ADVISORY SAFE",
+        "P6_outside_vault": "ADVISORY SAFE",
+        "others": "all PASS — fixes both defect classes"
+      },
+      "cli_layer": {
+        "verdict": "CRASH ON DISAGREEMENT",
+        "agree": "cli=agree (rc=0)",
+        "lie": "CRASH — 'line 322: vh: unbound variable', exit 1 (reproduced twice with a lying mock)",
+        "hang": "bounded correctly (3s)",
+        "error/garbage/empty": "recorded, rc=0",
+        "note": "the crash is in the disagreement path of its headline --cli feature"
+      },
+      "verdict": "DISQUALIFIED from the top rank — vault-receipt behavior is excellent but selftest is red and the CLI disagreement path crashes"
+    },
+    {
+      "name": "souji-verify (installed, r2 canonical)",
+      "path": "tools/souji-verify.sh",
+      "sha256": "7efda63bd7607009f98604356baf2fabeff1e3d8ca2b946be47bf22cd32c6820",
+      "selftest": {"exit": 0, "tail": "selftest: 24 checks, 0 failed"},
+      "battery": {"probes": 18, "pass": 6, "fail": 2, "observed_advisory": 2},
+      "probe_detail": {
+        "P2_row_no_trailing_newline": "FAIL false NOT-SAFE (unterminated row dropped by `while read`)",
+        "P3_3field_dir_row_vault_differs": "FAIL false SAFE — missing vault_sha256 column collapses to empty, digest check skipped (`[ -n \"$vs\" ] &&` guard in try_obsidian)",
+        "P5/P6": "ADVISORY SAFE",
+        "others": "PASS"
+      },
+      "cli_layer": {"verdict": "ABSENT — no --cli flag; r2 scope"},
+      "peer_corroboration": {
+        "runner-30/35/38/39/40": "PASS (35/38/39/40 re-verified at current shas)",
+        "vadv-50": "19/19 binding survival; 1 advisory false-SAFE candidate F5 = the P3 dir-column class (reproduced independently by S61)",
+        "vadv-51": "PASS; vadv-54: 7 fail / 6 warn (self-move rows, symlink alias, newline paths — mostly spec-silent or write-through concerns)"
+      },
+      "verdict": "SAFE FALLBACK — remains the installed tool of record until the operator promotes a candidate; carries the two defect classes"
+    }
+  ],
+  "winner": "souji-vault-verify.impl-20",
+  "winner_sha256": "95fa47182cc163f570f032da398e4bb6f7506c2d7befbc49641e830eccc9a32a",
+  "winner_inputs": {
+    "selection_order": [
+      "selftest_exit==0",
+      "battery_fail==0 (P1-P10 core probes)",
+      "cli_layer_full (agree/lie/hang/error/garbage all recorded, none fatal, bounded)",
+      "gui_safety (zero launcher references)",
+      "peer_corroboration (runner-27 26/26)"
+    ],
+    "ranking": [
+      {"rank": 1, "candidate": "souji-vault-verify.impl-20", "sha12": "95fa47182cc1", "battery": "9/0", "selftest": "35/35", "cli": "full"},
+      {"rank": 2, "candidate": "souji-vault-verify.impl-24", "sha12": "2b224647abed", "battery": "7/1", "selftest": "13/13", "cli": "presence-only"},
+      {"rank": 3, "candidate": "impl-21", "sha12": "ed1881e8fd82", "battery": "8/0", "selftest": "FAIL", "cli": "crash-on-disagreement"},
+      {"rank": 4, "candidate": "souji-verify (installed)", "sha12": "7efda63bd760", "battery": "6/2", "selftest": "24/24", "cli": "absent"}
+    ]
+  },
+  "defect_registry": [
+    {
+      "id": "V4-D1",
+      "class": "false-SAFE",
+      "tool": "souji-verify (installed)",
+      "description": "3-field directory ledger row (vault_sha256 column absent) whose vault content differs from the source yields SAFE; the missing column collapses to empty and the digest check is skipped",
+      "evidence": "S61 P3 repro /tmp/s61/d1 (led3.tsv); S55 probes3 D1; vadv-50 advisory F5",
+      "status": "FIXED in impl-20 and impl-24 (both NOT-SAFE on P3/P4)"
+    },
+    {
+      "id": "V4-D2",
+      "class": "false NOT-SAFE",
+      "tool": "souji-verify (installed), impl-24",
+      "description": "a valid final ledger row without a trailing newline is dropped (`while read`), yielding NOT-SAFE despite a complete matching row",
+      "evidence": "S61 P2 clean repro /tmp/s61/ledgertest (ledg-nonl.tsv vs ledg-nl.tsv)",
+      "status": "FIXED in impl-20 and impl-21; still present in installed tool and impl-24"
+    },
+    {
+      "id": "V4-D3",
+      "class": "crash",
+      "tool": "impl-21",
+      "description": "CLI disagreement path dies on unbound variable `vh` (line 322); exit 1 instead of a recorded disagreement",
+      "evidence": "S61 mock-lie repro; also 'LIE_OLD: unbound variable' at line 786 inside its own selftest",
+      "status": "OPEN in impl-21 (ed1881e8)"
+    },
+    {
+      "id": "V4-D4",
+      "class": "spec-silent",
+      "tool": "all candidates + installed",
+      "description": "self-receipt (vault_path == source_path) and vault paths outside any vault root both yield SAFE; a receipt naming no distinct copy is arguably not an export",
+      "evidence": "S61 P5/P6; vadv-54 P1/P2/P3/P6",
+      "status": "impl-20 rejects self-receipt (P5 PASS); outside-vault remains advisory in all"
+    },
+    {
+      "id": "V4-D5",
+      "class": "process",
+      "tool": "impl-20",
+      "description": "version race — four shas observed in the judging window: eed52677 (syntactically broken, DOA), 52885564 (first clean version), a mid-edit regression window (800a4fe8/86f5ffbc, incomplete edit), settling at 95fa4718 (judged, stable across repeated hashing)",
+      "evidence": "vrun-27 2/20 and vadv-50 0/19 at eed52677; S61 full battery + selftest clean at 52885564 and at the final 95fa4718",
+      "status": "closed at the final sha 95fa4718"
+    },
+    {
+      "id": "V4-D6",
+      "class": "harness artifact",
+      "tool": "runner-40",
+      "description": "C11.no-gui-spawn 'before=2 after=0' is a false alarm: no electron43/obsidian process exists; the before-count was a sibling seat's mock-CLI process in the process table; impl-20 has zero launcher references",
+      "evidence": "S61 direct pgrep before/after impl-20 execution; grep -c launcher refs = 0",
+      "status": "adjudicated as not a tool defect"
+    },
+    {
+      "id": "V4-D7",
+      "class": "SAFETY INCIDENT (lane, not candidate)",
+      "tool": "tests/vault/adv53-harness.sh (seat S53)",
+      "description": "At 14:10:27 local the S53 adv53 harness EXECUTED the bare `obsidian` name (xtrace `++ obsidian` right after the M8 gui-sentinel check, /tmp/adv53/dbg-xtrace.log line ~1059); on this host that name resolves to /usr/bin/obsidian, the GUI launcher, so the real Obsidian desktop app spawned (pid 1994731, electron43 /usr/lib/obsidian/app.asar, parent = S53's bash -x adv53-harness.sh). The app ran ~70s, opened the shokoknowledge vault, rewrote .obsidian metadata, created /run/user/1000/.obsidian-cli.sock, then exited on a GPU fatal ('GPU process isn't usable. Goodbye.').",
+      "vault_impact": "CONTENT UNCHANGED — md manifest sha256 01e5efdb... and full content manifest 299d6b6a... are identical to pre-incident values; only .obsidian metadata changed (git status: M .obsidian/core-plugins.json, M .obsidian/workspace.json; diffs are plugin order and workspace UI state; no notes touched)",
+      "cli_side_effect": "for ~70s the official CLI socket existed at /run/user/1000/.obsidian-cli.sock (first time observed on this host); it disappeared when the app exited",
+      "attribution": "NOT caused by any judged candidate or by this seat's battery; no judged tool was in that process tree. The M8 hazard case was designed to prove the launcher is never executed; its own harness executed the name it guards against.",
+      "status": "OPEN — routed to the parent: the round's safety claim 'the GUI launcher is never executed' holds for every judged run and this seat's battery, but NOT for the wave as a whole"
+    }
+  ],
+  "rails": {
+    "real_vault": "/home/vgpnk/Documents/shokoknowledge",
+    "real_vault_md_manifest": "01e5efdbf38fa07965227b990cea0a47e6366cc03bc084c8b6e81a7ac1ea3bbb",
+    "real_vault_content_manifest": "299d6b6a9828cfc613f46daee146a995a28345849f2183714a6a4662f843a401",
+    "vault_content_unchanged": true,
+    "vault_metadata_note": "the 14:10 GUI-spawn incident (V4-D7) rewrote .obsidian/ metadata; no vault content changed; the content manifest (files only, no mtimes) is the stability signal — a full-tree manifest including mtimes naturally differs across the incident",
+    "live_ledger": "corpus/knowledge/obsidian-ledger.tsv",
+    "live_ledger_sha256": "3f7e9f2ab9e614464cb031d3f00a812a21f0e889f7666309a90d7784b75a9599",
+    "live_ledger_lines": 1,
+    "live_ledger_header_only": true,
+    "live_ledger_unchanged_across_all_runs": true,
+    "gui_launcher": "/usr/bin/obsidian never executed by any JUDGED run or by this seat's battery (source-inspection + pgrep evidence); the name WAS executed once by the S53 adv53 harness outside the judged path (V4-D7)"
+  },
+  "cli_entry_point_finding": {
+    "official_cli_available": false,
+    "mechanism": "second launch of the app binary connects to $XDG_RUNTIME_DIR/.obsidian-cli.sock as a client of the running app; no shim at ~/.local/bin/obsidian or /usr/local/bin/obsidian; socket absent; app not running",
+    "fallback": "read-only sha256sum under the vault path is the operational verification path; the official CLI, when present, is advisory only — never the receipt of record",
+    "cross_seat_evidence": ["census/round-4/seat-03.json", "census/round-4/seat-05.json", "census/round-4/seat-06.json", "census/round-4/seat-07.json", "census/round-4/seat-08.json"]
+  },
+  "artifact_index": {
+    "my_battery_runs": [
+      "/tmp/s61/vfinal-61-installed-baseline.json",
+      "/tmp/s61/vfinal-61-impl20-FINAL2.json",
+      "/tmp/s61/final-souji-vault-verify.impl-24.json",
+      "/tmp/s61/final-impl-21.json"
+    ],
+    "peer_artifacts_read": [
+      "tests/results/vrun-24.json", "tests/results/vrun-27.json", "tests/results/vrun-30.json",
+      "tests/results/vrun-33.json", "tests/results/vrun-35.json", "tests/results/vrun-38.json",
+      "tests/results/vrun-39.json", "tests/results/vrun-40.json",
+      "tests/results/vadv-49.json", "tests/results/vadv-50.json", "tests/results/vadv-51.json",
+      "tests/results/vadv-54.json", "tests/results/vfinal-59.json", "tests/results/vfinal-62.json",
+      "tests/results/vreview-42.json",
+      "tests/vault/s55-raw/probes.tsv", "tests/vault/s55-raw/probes2.tsv", "tests/vault/s55-raw/probes3.tsv"
+    ],
+    "fixture_status": "case-V1/V2/V4/V6/V7/V8 build and are consumed by the battery; case-V3 builder fails; case-V5 target path is not resolvable from its builder output (skipped, recorded)"
+  },
+  "process_findings": [
+    "Fixture interface chaos persists from r2: builders emit at least three key conventions (FIXTURE_ROOT/TARGET, ROOT/LEDGER/TARGET, FIXTURE_READY + LEDGER/TARGET); a judge must parse all three",
+    "Candidate vocabulary split: r2 (VERDICT\\tpath\\tSAFE...) vs r4 (VERIFIED / NOT-VERIFIED(reason) leading field-1); runners and judges must normalize or silently mis-score (runner-40 vs impl-24)",
+    "Version race: impl-20 was edited live through the judging window (eed52677 -> 52885564 -> 800a4fe8/86f5ffbc mid-edit -> 95fa4718); judging must pin shas at first and last contact — the judged sha is 95fa4718, verified stable across repeated hashing before the final battery run",
+    "Seat artifacts wrote fixture trees under tests/vault/ (s55-vault mode-000 files, 25+ MB mock-cli trees) — lane-cleanup candidate for a later round"
+  ],
+  "verdict": "WINNER-NAMED — souji-vault-verify.impl-20 (sha 95fa47182cc1) recommended for promotion; installed souji-verify remains the tool of record until the operator promotes; impl-21 and impl-24 carry open defects; no false-SAFE survives in the winner's P1-P10 battery and the real vault content + live ledger are byte-identical across every judged run; one lane-level GUI-spawn incident (V4-D7, seat S53 harness) is recorded and routed to the parent"
+}

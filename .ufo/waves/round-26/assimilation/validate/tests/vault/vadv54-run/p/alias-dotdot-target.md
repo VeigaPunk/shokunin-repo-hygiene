@@ -1,0 +1,1 @@
+/home/vgpnk/Projects/shokunin/souji-shokunin/tests/vault/vadv54-run/p/p3.md

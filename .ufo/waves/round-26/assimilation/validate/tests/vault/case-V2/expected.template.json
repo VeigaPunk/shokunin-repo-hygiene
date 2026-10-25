@@ -1,0 +1,123 @@
+{
+  "case": "case-V2",
+  "schema": "souji-vault-fixture/1",
+  "title": "vault copy content differs from the ledger row's vault_sha256 -> NOT-VERIFIED(vault-hash-mismatch)",
+  "spec_case": "V2: a vault file whose content differs from what the ledger's vault sha256 says (tamper case). Expected: NOT-VERIFIED with a reason mentioning hash mismatch.",
+  "builder": "tests/vault/case-V2/make-fixture.sh",
+  "readme": "tests/vault/case-V2/README.md",
+  "fixture_root_placeholder": "@FIXTURE_ROOT@",
+  "path_convention": "make-fixture.sh substitutes @FIXTURE_ROOT@ with the built root (absolute) and writes the substituted copy to <ROOT>/expected.json; this case-directory copy stays in placeholder form (pristine copy: expected.template.json) so it never points at a reaped temp root. Every path below is absolute after substitution.",
+  "fixture_root": "@FIXTURE_ROOT@",
+  "ledger": "@FIXTURE_ROOT@/ledger.tsv",
+  "ledger_path": "@FIXTURE_ROOT@/ledger.tsv",
+  "ledger_columns": ["source_path", "source_sha256", "vault_path", "vault_sha256", "exported_at", "note"],
+  "ledger_header": "source_path\tsource_sha256\tvault_path\tvault_sha256\texported_at\tnote",
+  "declared_ledger_rows": [
+    {
+      "id": "tamper-row",
+      "source_path": "@FIXTURE_ROOT@/source/src/tamper-notes.md",
+      "source_sha256": "59bea10a81540fd2252880d03f32ce22761d82b997ca276f58150223c1a90bd7",
+      "vault_path": "@FIXTURE_ROOT@/vault/tamper-notes.md",
+      "vault_sha256": "59bea10a81540fd2252880d03f32ce22761d82b997ca276f58150223c1a90bd7",
+      "exported_at": "2026-10-18",
+      "note": "case-V2 vault-tamper",
+      "why": "export-time bytes were byte-identical (row vault_sha256 = source bytes); the vault copy was edited after export, so its current digest is 91d9f779... (same byte count, different bytes) and the vault-side conjunct fails while the source side still matches"
+    },
+    {
+      "id": "tamper-subtle-row",
+      "source_path": "@FIXTURE_ROOT@/source/src/subtle-notes.md",
+      "source_sha256": "a0d7a278477b87ea36f42d1ad27bd777ee791f1594200500f172c2b7b7344b96",
+      "vault_path": "@FIXTURE_ROOT@/vault/subtle-notes.md",
+      "vault_sha256": "a0d7a278477b87ea36f42d1ad27bd777ee791f1594200500f172c2b7b7344b96",
+      "exported_at": "2026-10-18",
+      "note": "case-V2 vault-tamper-subtle",
+      "why": "the vault copy differs from the export-time bytes by exactly one byte (a dropped trailing newline): current digest f1ebc6ec..., one byte shorter than the source"
+    },
+    {
+      "id": "matched-row",
+      "source_path": "@FIXTURE_ROOT@/source/src/matched-notes.md",
+      "source_sha256": "2aa2322dc2298a6dba5f7005108ef4a196ce59f94ef0ee98600b2c70640f277b",
+      "vault_path": "@FIXTURE_ROOT@/vault/matched-notes.md",
+      "vault_sha256": "2aa2322dc2298a6dba5f7005108ef4a196ce59f94ef0ee98600b2c70640f277b",
+      "exported_at": "2026-10-18",
+      "note": "case-V2 control matched",
+      "why": "control row: both sides are byte-identical to the row's recorded digests, so a correct tool returns VERIFIED -- proving the tamper verdicts are not a blanket failure"
+    }
+  ],
+  "primary_target": "@FIXTURE_ROOT@/source/src/tamper-notes.md",
+  "targets": [
+    "@FIXTURE_ROOT@/source/src/tamper-notes.md",
+    "@FIXTURE_ROOT@/source/src/subtle-notes.md",
+    "@FIXTURE_ROOT@/source/src/matched-notes.md"
+  ],
+  "expect": [
+    {
+      "path": "@FIXTURE_ROOT@/source/src/tamper-notes.md",
+      "vault_path": "@FIXTURE_ROOT@/vault/tamper-notes.md",
+      "verdict": "NOT-VERIFIED",
+      "reason": "vault-hash-mismatch",
+      "receipt": null,
+      "verdict_string": "NOT-VERIFIED(vault-hash-mismatch)",
+      "why": "source path exists and its sha256 equals the row's source_sha256; the vault file exists but its sha256 (91d9f779...) differs from the row's vault_sha256 (59bea10a...) -- the vault-side conjunct is the only failure, and the files have identical byte counts"
+    },
+    {
+      "path": "@FIXTURE_ROOT@/source/src/subtle-notes.md",
+      "vault_path": "@FIXTURE_ROOT@/vault/subtle-notes.md",
+      "verdict": "NOT-VERIFIED",
+      "reason": "vault-hash-mismatch",
+      "receipt": null,
+      "verdict_string": "NOT-VERIFIED(vault-hash-mismatch)",
+      "accept": {
+        "exact": ["NOT-VERIFIED(vault-hash-mismatch)"],
+        "contains": ["NOT-VERIFIED", "mismatch"],
+        "structured": {"verdict": "NOT-VERIFIED", "reason": "vault-hash-mismatch"},
+        "reason_aliases_accepted": ["vault-hash-mismatch", "vault-sha-mismatch", "vault-hash-drift", "vault-sha256-mismatch", "vault-digest-mismatch"],
+        "note": "per-target accept so harnesses that bind the case-level accept block to the primary target only still judge this row tolerantly; any reason containing 'mismatch' (or 'drift') satisfies the case"
+      },
+      "why": "same shape as the primary target but the vault copy differs by exactly one byte (dropped trailing newline): catches size- or mtime-based shortcuts and any non-byte-exact comparison"
+    },
+    {
+      "path": "@FIXTURE_ROOT@/source/src/matched-notes.md",
+      "vault_path": "@FIXTURE_ROOT@/vault/matched-notes.md",
+      "verdict": "VERIFIED",
+      "reason": null,
+      "receipt": "moved-to-obsidian",
+      "verdict_string": "VERIFIED",
+      "why": "control: both paths exist and both digests equal the row's recorded values"
+    }
+  ],
+  "expect_string": "NOT-VERIFIED(vault-hash-mismatch)",
+  "accept": {
+    "exact": ["NOT-VERIFIED(vault-hash-mismatch)"],
+    "contains": ["NOT-VERIFIED", "mismatch"],
+    "structured": {"verdict": "NOT-VERIFIED", "reason": "vault-hash-mismatch"},
+    "reason_aliases_accepted": ["vault-hash-mismatch", "vault-sha-mismatch", "vault-hash-drift", "vault-sha256-mismatch", "vault-digest-mismatch"],
+    "r2_baseline": {"verdict": "NOT-SAFE", "reason": "none", "evidence_substr": "obsidian=vault-sha-mismatch"},
+    "note": "the primary target must be NOT-VERIFIED (r4 vocabulary) or NOT-SAFE (r2 baseline tool) and its first/primary reason or evidence must name a vault-side hash mismatch; any spelling containing 'vault' + ('hash' or 'sha' or 'digest') + 'mismatch' satisfies the case. A bare class token with the reason in a separate field also satisfies it as long as the reason names the vault side."
+  },
+  "must_not_be": ["VERIFIED", "SAFE", "NOT-VERIFIED(source-hash-mismatch)", "NOT-VERIFIED(source-absent)", "NOT-VERIFIED(vault-absent)"],
+  "must_not_be_applies_to": "the primary target (tamper-notes.md)",
+  "failure_modes_caught": [
+    "vault-side skip: a tool that checks only the source hash reports VERIFIED -- caught by expect.verdict",
+    "source/vault confusion: a tool that compares the vault file against source_sha256, or the source file against vault_sha256, misclassifies the tamper as a source-side failure -- caught by must_not_be",
+    "class collapse: reporting SAFE or a generic NOT-SAFE with no vault-side reason instead of the distinct NOT-VERIFIED(vault-hash-mismatch) class -- caught by expect.verdict_string",
+    "blanket failure: a tool that never returns VERIFIED fails the matched control -- caught by expect[2].verdict",
+    "coarse tamper detection: a size/mtime shortcut passes the primary target (same byte count as source) but fails the subtle target (one byte shorter) -- caught by expect[1]"
+  ],
+  "source_side": {
+    "tamper_notes": {"path": "@FIXTURE_ROOT@/source/src/tamper-notes.md", "exists": true, "sha256": "59bea10a81540fd2252880d03f32ce22761d82b997ca276f58150223c1a90bd7", "matches_row": true},
+    "subtle_notes": {"path": "@FIXTURE_ROOT@/source/src/subtle-notes.md", "exists": true, "sha256": "a0d7a278477b87ea36f42d1ad27bd777ee791f1594200500f172c2b7b7344b96", "matches_row": true},
+    "matched_notes": {"path": "@FIXTURE_ROOT@/source/src/matched-notes.md", "exists": true, "sha256": "2aa2322dc2298a6dba5f7005108ef4a196ce59f94ef0ee98600b2c70640f277b", "matches_row": true}
+  },
+  "vault_side": {
+    "tamper_notes": {"path": "@FIXTURE_ROOT@/vault/tamper-notes.md", "exists": true, "sha256_actual": "91d9f779647195141205fd585456e4bfbaef72f6ceef89c9c95375eddcf997e4", "sha256_recorded_in_row": "59bea10a81540fd2252880d03f32ce22761d82b997ca276f58150223c1a90bd7", "tampered": true, "delta": "same byte count (215), different bytes", "mode": "0444"},
+    "subtle_notes": {"path": "@FIXTURE_ROOT@/vault/subtle-notes.md", "exists": true, "sha256_actual": "f1ebc6ec0aa343dd04c172a2e3f47ee603ad28ceae27243fa9a79b93e03b7423", "sha256_recorded_in_row": "a0d7a278477b87ea36f42d1ad27bd777ee791f1594200500f172c2b7b7344b96", "tampered": true, "delta": "one byte removed (trailing newline)", "mode": "0444"},
+    "matched_notes": {"path": "@FIXTURE_ROOT@/vault/matched-notes.md", "exists": true, "sha256_actual": "2aa2322dc2298a6dba5f7005108ef4a196ce59f94ef0ee98600b2c70640f277b", "sha256_recorded_in_row": "2aa2322dc2298a6dba5f7005108ef4a196ce59f94ef0ee98600b2c70640f277b", "tampered": false, "mode": "0444"}
+  },
+  "runner_notes": {
+    "tool_cli": "runners invoke the tool under test as: <tool> --ledger <file> --fallback <source-path>; the verdict is the first whitespace-separated token of the first output line starting with VERIFIED or NOT-VERIFIED",
+    "ledger_resolution": "read the ledger path from this file's 'ledger' key (absolute after substitution); the case directory's ledger.tsv is a same-run copy",
+    "selftest": "bash make-fixture.sh --selftest (fixture-integrity assertions A1-A8; exit 0 = fixture coherent)"
+  },
+  "git_context": "the built root gets an offline `git init` (no commits) so repo-discovery code paths behave as on a real lane; no fetch/push/commit/branch/checkout/reset/rebase is ever run"
+}

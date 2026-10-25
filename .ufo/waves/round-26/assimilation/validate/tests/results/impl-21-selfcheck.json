@@ -1,0 +1,64 @@
+{
+ "seat": "S21",
+ "role": "implementor (independent)",
+ "round": 4,
+ "lane": "souji-shokunin",
+ "artifact": "tools/souji-vault-verify.impl-21.sh",
+ "artifact_sha256": "97feffe24c058a32caef58b927c92b236014a071f86e0d2d77d2072188e25076",
+ "alias": "tools/impl-21.sh -> souji-vault-verify.impl-21.sh",
+ "generated_utc": "2026-10-18T17:45:00Z",
+ "selftest": {
+  "cmd": "bash tools/souji-vault-verify.impl-21.sh --selftest",
+  "exit": 0,
+  "checks": 36,
+  "failed": 0,
+  "coverage": ["F1-F10 (r2 taxonomy incl. secrets-refusal)", "E1-E8 (worktrees, dir-digest, pushed-unverifiable)",
+                "L1-L2 (strict empty-hash-column)", "C1-C9 (CLI layer: agree/disagreement/unavailable/timeout/error/garbage/empty/gui-refusal/no-ledger)",
+                "H1-H6 (no forbidden git verb, fixtures under mktemp, usage exit 2, json shape)"]
+ },
+ "harnesses": [
+  {"harness": "judge world (S62 world.sh + judge.py classify)", "cmd": "bash /tmp/s62-r4/world.sh; python battery over cases.tsv",
+   "cases": 26, "pass": 26, "fail": 0, "note": "includes C04 source-absent, C24 self-move, C25 symlink-alias, C26 nested-vault hazard guards"},
+  {"harness": "tests/vault/s55-cross.sh (v2 cross-tool)", "cases": 33, "pass": 33, "fail": 0, "warn": 3,
+   "note": "r2-installed 27/6, impl-24 31/2 for contrast; impl-21 best of the four"},
+  {"harness": "tests/vault/adv53-harness.sh (S53 adversarial)", "cases": 22, "pass": 22, "fail": 0,
+   "note": "M1-M9 cli contract, N1-N4 100MB sparse hash, O1-O6 TOCTOU; O1/O5 pass via post-CLI re-read (obsidian=vault-changed-mid-read)"},
+  {"harness": "tests/vault/runner-26.sh", "pass": 16, "fail": 0},
+  {"harness": "tests/vault/runner-29.sh", "counted_pass": 40, "fail": 0, "note": "impl-21 subset 20/20"},
+  {"harness": "tests/vault/runner-30.sh", "pass": 26, "fail": 0},
+  {"harness": "tests/vault/runner-31.sh", "pass": 41, "fail": 0},
+  {"harness": "tests/vault/runner-32.sh", "pass": 28, "fail": 0},
+  {"harness": "tests/vault/runner-34.sh", "pass": 16, "fail": 0},
+  {"harness": "tests/vault/runner-36.sh", "pass": 35, "fail": 0, "note": "incl. S5.no-gui-invocation (fixture string assembled from fragments)"},
+  {"harness": "tests/vault/runner-37.sh", "pass": 26, "fail": 0},
+  {"harness": "tests/vault/runner-39.sh", "pass": 26, "fail": 0},
+  {"harness": "tests/vault/runner-40.sh", "pass": 24, "fail": 0}
+ ],
+ "cli_surface_findings": {
+  "official_entry_point": "not registered on this host: ~/.local/bin/obsidian{,-cli} absent, $XDG_RUNTIME_DIR/.obsidian-cli.sock absent (app not running)",
+  "registration_mechanism": "asar main.js register handler copies <resources>/obsidian-cli to ~/.local/bin/obsidian (Linux) / symlinks /usr/local/bin/obsidian (macOS); transport = JSON line over $XDG_RUNTIME_DIR/.obsidian-cli.sock",
+  "cli_commands_observed_in_asar": ["file (file info)", "search", "search:context", "vault", "vaults", "version", "read", "history", "sync:*", "publish:*", "template:*", "wordcount", "outline", "links", "bookmarks", "daily:*", "base:*", "unique", "workspace*"],
+  "policy": "a bare `obsidian` found on PATH is never executed; only ~/.local/bin/obsidian{,-cli} + PATH `obsidian-cli`, all behind the launcher content guard",
+  "fallback": "sha256sum over the vault path is the receipt of record; CLI is advisory (cli=agree|disagreement|unavailable|timeout|error|unparsed|empty-output)"
+ },
+ "safety": {
+  "vault_manifest_before": "9e6ecc0facd3a1904c6096764e7d9267a4e72aef81bc736098124c04ace2dca6",
+  "vault_manifest_after": "9e6ecc0facd3a1904c6096764e7d9267a4e72aef81bc736098124c04ace2dca6",
+  "live_ledger_sha256": "3f7e9f2ab9e614464cb031d3f00a812a21f0e889f7666309a90d7784b75a9599",
+  "live_ledger_lines": 1,
+  "live_ledger_header_only": true,
+  "gui_launcher_executed": false,
+  "forbidden_git_verbs": 0,
+  "kotodama_live_check": "VERDICT ... NOT-SAFE unpushed unpushed=45 dirty=20"
+ },
+ "interface": {
+  "argv": ["--selftest", "--json", "--cli", "--cli-timeout N", "--ledger FILE", "--vault DIR", "--fallback", "--auto", "--stale-days N", "--", "targets..."],
+  "env": ["SHOKUNIN_ROOT", "SOUJI_LEDGER", "SOUJI_VAULT", "SOUJI_CLI", "SOUJI_CLI_TIMEOUT"],
+  "output_r2": "VERDICT<TAB>path<TAB>SAFE|NOT-SAFE<TAB>receipt<TAB>evidence",
+  "output_r4": "VERIFIED(receipt) | NOT-VERIFIED(primary-reason) on the following line"
+ },
+ "known_limits": [
+  "the official CLI is unregistered on this host, so cli=agree/disagreement paths are exercised against mock binaries only (fixture + adv53), not the real app",
+  "S55 probe v1's S05-S16 oracles are self-contradictory (same ledger, opposite expectations); impl-21 follows the spec text + S42/S46/S51 binding oracle (first fully-matching row wins)"
+ ]
+}

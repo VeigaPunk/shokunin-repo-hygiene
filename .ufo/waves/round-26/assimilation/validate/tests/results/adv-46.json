@@ -1,0 +1,751 @@
+{
+  "seat": "S46",
+  "role": "adversarial-tester",
+  "round": 2,
+  "lane": "souji-shokunin",
+  "generated_at": "2026-10-18T15:56:44+00:00",
+  "tool": {
+    "path": "/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh",
+    "sha256": "d32bac5d8ae8c66930418edb8e0b9f064109a00866b87ae1baaa3156dd36c077",
+    "sha256_after": "d32bac5d8ae8c66930418edb8e0b9f064109a00866b87ae1baaa3156dd36c077",
+    "exec_mode": "direct"
+  },
+  "harness": {
+    "battery": "/tmp/adv-46/adv-battery.sh",
+    "assembler": "/tmp/adv-46/assemble.py",
+    "note": "degraded PATH = mirror of every real PATH dir with rg and/or git hidden; TMPDIR probes = chmod 500 dir / missing dir",
+    "shokunin_root": "/home/vgpnk/Projects/shokunin",
+    "path": "/home/vgpnk/.grok/bin:/home/vgpnk/.kimi-code/bin:/run/user/1000/fnm_multishells/2299822_1792332766525/bin:/home/vgpnk/.local/share/fnm:/home/vgpnk/.local/share/mise/installs/node/latest/bin:/home/vgpnk/.local/share/mise/shims:/home/vgpnk/.local/share/omarchy/bin:/home/vgpnk/.opencode/bin:/home/vgpnk/.local/bin:/run/user/1000/fnm_multishells/1630_1792206008234/bin:/usr/local/sbin:/usr/local/bin:/usr/bin:/usr/lib/jvm/default/bin:/usr/bin/site_perl:/usr/bin/vendor_perl:/usr/bin/core_perl:/run/user/1000/fnm_multishells/2300044_1792332769915/bin",
+    "farm_checks": [
+      "farm=norg rg_resolvable=0 git_resolvable=1 bash_resolvable=1",
+      "farm=nogit git_resolvable=0 rg_resolvable=1 bash_resolvable=1",
+      "farm=both rg_resolvable=0 git_resolvable=0 bash_resolvable=1"
+    ]
+  },
+  "checks": [
+    {
+      "id": "H1-tool-hash",
+      "desc": "tool sha256 stable across the run",
+      "pass": true,
+      "detail": "before=d32bac5d8ae8c66930418edb8e0b9f064109a00866b87ae1baaa3156dd36c077 after=d32bac5d8ae8c66930418edb8e0b9f064109a00866b87ae1baaa3156dd36c077 exec=direct"
+    },
+    {
+      "id": "H2-selftest-baseline",
+      "desc": "baseline --selftest exit 0",
+      "pass": true,
+      "detail": "rc=0 stderr=''"
+    },
+    {
+      "id": "H3-no-crash-hang-rc",
+      "desc": "every case: rc in {0,1,2}, no timeout kill, no crash markers",
+      "pass": false,
+      "detail": "c21[nogit] rc=127 rc-out-of-range,crash-marker; c31[norg_nogit] rc=127 rc-out-of-range,crash-marker"
+    },
+    {
+      "id": "H4a-missing-unreachable",
+      "desc": "missing target -> NOT-SAFE(unreachable), rc 0",
+      "pass": true,
+      "detail": "{\"path\": \"/tmp/adv-46/missing-target.txt\", \"verdict\": \"NOT-SAFE\", \"receipt\": \"unreachable\", \"evidence\": \"missing-target\"}"
+    },
+    {
+      "id": "H4b-secrets-refusal",
+      "desc": "*.env target -> NOT-SAFE(secrets-refusal)",
+      "pass": true,
+      "detail": "{\"path\": \"/tmp/adv-46/fake.env\", \"verdict\": \"NOT-SAFE\", \"receipt\": \"secrets-refusal\", \"evidence\": \"basename-rule short-circuit (no read)\"}"
+    },
+    {
+      "id": "H4c-empty-arg",
+      "desc": "empty-string target -> NOT-SAFE(unreachable), rc 0",
+      "pass": true,
+      "detail": "{\"path\": \"\", \"verdict\": \"NOT-SAFE\", \"receipt\": \"unreachable\", \"evidence\": \"empty-target\"}"
+    },
+    {
+      "id": "H5-kotodama-repo-root",
+      "desc": "kotodama repo-root -> NOT-SAFE with unpushed/dirty counts",
+      "pass": true,
+      "detail": "{\"path\": \"/home/vgpnk/Projects/shokunin/kotodama-shokunin\", \"verdict\": \"NOT-SAFE\", \"receipt\": \"unpushed-dirty\", \"evidence\": \"unpushed=38 dirty=22\"}"
+    },
+    {
+      "id": "H6-lane-repo-root",
+      "desc": "souji-shokunin repo-root -> NOT-SAFE (no ledger row possible)",
+      "pass": true,
+      "detail": "{\"path\": \"/home/vgpnk/Projects/shokunin/souji-shokunin\", \"verdict\": \"NOT-SAFE\", \"receipt\": \"unpushed-dirty\", \"evidence\": \"unpushed=4 dirty=2\"}"
+    },
+    {
+      "id": "c20",
+      "desc": "git absent: no SAFE(pushed) verdict (ancestry unverifiable)",
+      "pass": true,
+      "detail": "ok; non-pushed SAFE recorded: []"
+    },
+    {
+      "id": "c30",
+      "desc": "git+rg absent: no SAFE verdict for any target",
+      "pass": false,
+      "detail": "SAFE claimed for: ['/tmp/adv-46/fake.log']"
+    },
+    {
+      "id": "H9-usage-bad-flag",
+      "desc": "unknown flag -> usage exit 2",
+      "pass": true,
+      "detail": "rc=2 stderr='usage: souji-verify.sh [--selftest] [--stale-days N] [--json] <path>...\\n'"
+    },
+    {
+      "id": "H9b-usage-no-args",
+      "desc": "no args -> usage exit 2 (soft)",
+      "pass": true,
+      "detail": "rc=2"
+    },
+    {
+      "id": "H10-tmpdir-invariance",
+      "desc": "evaluation identical under unwritable/missing TMPDIR",
+      "pass": true,
+      "detail": "baseline_vs_tmpro=True baseline_vs_tmpbad=True"
+    },
+    {
+      "id": "H10b-selftest-tmpdir",
+      "desc": "selftest under unwritable TMPDIR exits 1 (clean) or 0, never crash/hang",
+      "pass": true,
+      "detail": "rc=1 flags=[]"
+    },
+    {
+      "id": "H10c-selftest-tmpbad",
+      "desc": "selftest under missing TMPDIR exits 1 (clean) or 0, never crash/hang",
+      "pass": true,
+      "detail": "rc=1 flags=[]"
+    },
+    {
+      "id": "H11-json-agrees",
+      "desc": "--json verdicts match plain mode (path+verdict)",
+      "pass": true,
+      "detail": "equal=True"
+    }
+  ],
+  "false_safe_instances": [],
+  "cases": [
+    {
+      "id": "c01",
+      "env": "baseline",
+      "mode": "eval",
+      "argv": [
+        "/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.spec.md",
+        "/tmp/adv-46/missing-target.txt",
+        "/tmp/adv-46/fake.env",
+        "/home/vgpnk/Projects/shokunin/souji-shokunin",
+        "/home/vgpnk/Projects/shokunin/kotodama-shokunin",
+        "/home/vgpnk/Projects/shokunin/kotodama-shokunin/.scratch",
+        "/tmp/adv-46/fake.log"
+      ],
+      "rc": 0,
+      "duration_ms": 118,
+      "flags": [],
+      "verdicts": [
+        {
+          "path": "/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.spec.md",
+          "verdict": "NOT-SAFE",
+          "receipt": "none",
+          "evidence": "untracked repo=/home/vgpnk/Projects/shokunin/souji-shokunin ledger=miss scratch=no mtime_age_days=0"
+        },
+        {
+          "path": "/tmp/adv-46/missing-target.txt",
+          "verdict": "NOT-SAFE",
+          "receipt": "unreachable",
+          "evidence": "missing-target"
+        },
+        {
+          "path": "/tmp/adv-46/fake.env",
+          "verdict": "NOT-SAFE",
+          "receipt": "secrets-refusal",
+          "evidence": "basename-rule short-circuit (no read)"
+        },
+        {
+          "path": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+          "verdict": "NOT-SAFE",
+          "receipt": "unpushed-dirty",
+          "evidence": "unpushed=4 dirty=2"
+        },
+        {
+          "path": "/home/vgpnk/Projects/shokunin/kotodama-shokunin",
+          "verdict": "NOT-SAFE",
+          "receipt": "unpushed-dirty",
+          "evidence": "unpushed=38 dirty=22"
+        },
+        {
+          "path": "/home/vgpnk/Projects/shokunin/kotodama-shokunin/.scratch",
+          "verdict": "NOT-SAFE",
+          "receipt": "none",
+          "evidence": "untracked repo=/home/vgpnk/Projects/shokunin/kotodama-shokunin ledger=miss scratch=no mtime_age_days=0"
+        },
+        {
+          "path": "/tmp/adv-46/fake.log",
+          "verdict": "NOT-SAFE",
+          "receipt": "none",
+          "evidence": "no-repo ledger=miss scratch=yes mtime_age_days=17"
+        }
+      ],
+      "stderr_tail": ""
+    },
+    {
+      "id": "c02",
+      "env": "baseline",
+      "mode": "selftest",
+      "argv": [
+        "--selftest"
+      ],
+      "rc": 0,
+      "duration_ms": 228,
+      "flags": [],
+      "verdicts": [],
+      "stderr_tail": ""
+    },
+    {
+      "id": "c03",
+      "env": "baseline",
+      "mode": "eval_json",
+      "argv": [
+        "--json",
+        "/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.spec.md",
+        "/tmp/adv-46/missing-target.txt",
+        "/tmp/adv-46/fake.env",
+        "/home/vgpnk/Projects/shokunin/souji-shokunin",
+        "/home/vgpnk/Projects/shokunin/kotodama-shokunin",
+        "/home/vgpnk/Projects/shokunin/kotodama-shokunin/.scratch",
+        "/tmp/adv-46/fake.log"
+      ],
+      "rc": 0,
+      "duration_ms": 140,
+      "flags": [],
+      "verdicts": [
+        {
+          "path": "/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.spec.md",
+          "verdict": "NOT-SAFE",
+          "receipt": "none",
+          "evidence": "untracked repo=/home/vgpnk/Projects/shokunin/souji-shokunin ledger=miss scratch=no mtime_age_days=0",
+          "parsed": "json"
+        },
+        {
+          "path": "/tmp/adv-46/missing-target.txt",
+          "verdict": "NOT-SAFE",
+          "receipt": "unreachable",
+          "evidence": "missing-target",
+          "parsed": "json"
+        },
+        {
+          "path": "/tmp/adv-46/fake.env",
+          "verdict": "NOT-SAFE",
+          "receipt": "secrets-refusal",
+          "evidence": "basename-rule short-circuit (no read)",
+          "parsed": "json"
+        },
+        {
+          "path": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+          "verdict": "NOT-SAFE",
+          "receipt": "unpushed-dirty",
+          "evidence": "unpushed=4 dirty=2",
+          "parsed": "json"
+        },
+        {
+          "path": "/home/vgpnk/Projects/shokunin/kotodama-shokunin",
+          "verdict": "NOT-SAFE",
+          "receipt": "unpushed-dirty",
+          "evidence": "unpushed=38 dirty=22",
+          "parsed": "json"
+        },
+        {
+          "path": "/home/vgpnk/Projects/shokunin/kotodama-shokunin/.scratch",
+          "verdict": "NOT-SAFE",
+          "receipt": "none",
+          "evidence": "untracked repo=/home/vgpnk/Projects/shokunin/kotodama-shokunin ledger=miss scratch=no mtime_age_days=0",
+          "parsed": "json"
+        },
+        {
+          "path": "/tmp/adv-46/fake.log",
+          "verdict": "NOT-SAFE",
+          "receipt": "none",
+          "evidence": "no-repo ledger=miss scratch=yes mtime_age_days=17",
+          "parsed": "json"
+        }
+      ],
+      "stderr_tail": ""
+    },
+    {
+      "id": "c04",
+      "env": "baseline",
+      "mode": "usage",
+      "argv": [],
+      "rc": 2,
+      "duration_ms": 3,
+      "flags": [],
+      "verdicts": [],
+      "stderr_tail": "usage: souji-verify.sh [--selftest] [--stale-days N] [--json] <path>...\n"
+    },
+    {
+      "id": "c05",
+      "env": "baseline",
+      "mode": "usage",
+      "argv": [
+        "--bogus-flag"
+      ],
+      "rc": 2,
+      "duration_ms": 3,
+      "flags": [],
+      "verdicts": [],
+      "stderr_tail": "usage: souji-verify.sh [--selftest] [--stale-days N] [--json] <path>...\n"
+    },
+    {
+      "id": "c06",
+      "env": "baseline",
+      "mode": "eval_empty_arg",
+      "argv": [],
+      "rc": 0,
+      "duration_ms": 4,
+      "flags": [],
+      "verdicts": [
+        {
+          "path": "",
+          "verdict": "NOT-SAFE",
+          "receipt": "unreachable",
+          "evidence": "empty-target"
+        }
+      ],
+      "stderr_tail": ""
+    },
+    {
+      "id": "c10",
+      "env": "norg",
+      "mode": "eval",
+      "argv": [
+        "/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.spec.md",
+        "/tmp/adv-46/missing-target.txt",
+        "/tmp/adv-46/fake.env",
+        "/home/vgpnk/Projects/shokunin/souji-shokunin",
+        "/home/vgpnk/Projects/shokunin/kotodama-shokunin",
+        "/home/vgpnk/Projects/shokunin/kotodama-shokunin/.scratch",
+        "/tmp/adv-46/fake.log"
+      ],
+      "rc": 0,
+      "duration_ms": 98,
+      "flags": [],
+      "verdicts": [
+        {
+          "path": "/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.spec.md",
+          "verdict": "NOT-SAFE",
+          "receipt": "none",
+          "evidence": "untracked repo=/home/vgpnk/Projects/shokunin/souji-shokunin ledger=miss scratch=no mtime_age_days=0"
+        },
+        {
+          "path": "/tmp/adv-46/missing-target.txt",
+          "verdict": "NOT-SAFE",
+          "receipt": "unreachable",
+          "evidence": "missing-target"
+        },
+        {
+          "path": "/tmp/adv-46/fake.env",
+          "verdict": "NOT-SAFE",
+          "receipt": "secrets-refusal",
+          "evidence": "basename-rule short-circuit (no read)"
+        },
+        {
+          "path": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+          "verdict": "NOT-SAFE",
+          "receipt": "unpushed-dirty",
+          "evidence": "unpushed=4 dirty=2"
+        },
+        {
+          "path": "/home/vgpnk/Projects/shokunin/kotodama-shokunin",
+          "verdict": "NOT-SAFE",
+          "receipt": "unpushed-dirty",
+          "evidence": "unpushed=38 dirty=22"
+        },
+        {
+          "path": "/home/vgpnk/Projects/shokunin/kotodama-shokunin/.scratch",
+          "verdict": "NOT-SAFE",
+          "receipt": "none",
+          "evidence": "untracked repo=/home/vgpnk/Projects/shokunin/kotodama-shokunin ledger=miss scratch=no mtime_age_days=0"
+        },
+        {
+          "path": "/tmp/adv-46/fake.log",
+          "verdict": "SAFE",
+          "receipt": "stale",
+          "evidence": "mtime_age_days=17 refs=0 scratch-type=yes"
+        }
+      ],
+      "stderr_tail": ""
+    },
+    {
+      "id": "c11",
+      "env": "norg",
+      "mode": "selftest",
+      "argv": [
+        "--selftest"
+      ],
+      "rc": 1,
+      "duration_ms": 220,
+      "flags": [],
+      "verdicts": [],
+      "stderr_tail": "SELFTEST FAIL\n"
+    },
+    {
+      "id": "c20",
+      "env": "nogit",
+      "mode": "eval",
+      "argv": [
+        "/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.spec.md",
+        "/tmp/adv-46/missing-target.txt",
+        "/tmp/adv-46/fake.env",
+        "/home/vgpnk/Projects/shokunin/souji-shokunin",
+        "/home/vgpnk/Projects/shokunin/kotodama-shokunin",
+        "/home/vgpnk/Projects/shokunin/kotodama-shokunin/.scratch",
+        "/tmp/adv-46/fake.log"
+      ],
+      "rc": 0,
+      "duration_ms": 109,
+      "flags": [],
+      "verdicts": [
+        {
+          "path": "/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.spec.md",
+          "verdict": "NOT-SAFE",
+          "receipt": "none",
+          "evidence": "no-repo ledger=miss scratch=no mtime_age_days=0"
+        },
+        {
+          "path": "/tmp/adv-46/missing-target.txt",
+          "verdict": "NOT-SAFE",
+          "receipt": "unreachable",
+          "evidence": "missing-target"
+        },
+        {
+          "path": "/tmp/adv-46/fake.env",
+          "verdict": "NOT-SAFE",
+          "receipt": "secrets-refusal",
+          "evidence": "basename-rule short-circuit (no read)"
+        },
+        {
+          "path": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+          "verdict": "NOT-SAFE",
+          "receipt": "none",
+          "evidence": "unpushed=0 dirty=0"
+        },
+        {
+          "path": "/home/vgpnk/Projects/shokunin/kotodama-shokunin",
+          "verdict": "NOT-SAFE",
+          "receipt": "none",
+          "evidence": "unpushed=0 dirty=0"
+        },
+        {
+          "path": "/home/vgpnk/Projects/shokunin/kotodama-shokunin/.scratch",
+          "verdict": "NOT-SAFE",
+          "receipt": "none",
+          "evidence": "no-repo ledger=miss scratch=no mtime_age_days=0"
+        },
+        {
+          "path": "/tmp/adv-46/fake.log",
+          "verdict": "NOT-SAFE",
+          "receipt": "none",
+          "evidence": "no-repo ledger=miss scratch=yes mtime_age_days=17"
+        }
+      ],
+      "stderr_tail": ""
+    },
+    {
+      "id": "c21",
+      "env": "nogit",
+      "mode": "selftest",
+      "argv": [
+        "--selftest"
+      ],
+      "rc": 127,
+      "duration_ms": 5,
+      "flags": [
+        "rc-out-of-range",
+        "crash-marker"
+      ],
+      "verdicts": [],
+      "stderr_tail": "/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh: line 510: git: command not found\n"
+    },
+    {
+      "id": "c30",
+      "env": "norg_nogit",
+      "mode": "eval",
+      "argv": [
+        "/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.spec.md",
+        "/tmp/adv-46/missing-target.txt",
+        "/tmp/adv-46/fake.env",
+        "/home/vgpnk/Projects/shokunin/souji-shokunin",
+        "/home/vgpnk/Projects/shokunin/kotodama-shokunin",
+        "/home/vgpnk/Projects/shokunin/kotodama-shokunin/.scratch",
+        "/tmp/adv-46/fake.log"
+      ],
+      "rc": 0,
+      "duration_ms": 81,
+      "flags": [],
+      "verdicts": [
+        {
+          "path": "/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.spec.md",
+          "verdict": "NOT-SAFE",
+          "receipt": "none",
+          "evidence": "no-repo ledger=miss scratch=no mtime_age_days=0"
+        },
+        {
+          "path": "/tmp/adv-46/missing-target.txt",
+          "verdict": "NOT-SAFE",
+          "receipt": "unreachable",
+          "evidence": "missing-target"
+        },
+        {
+          "path": "/tmp/adv-46/fake.env",
+          "verdict": "NOT-SAFE",
+          "receipt": "secrets-refusal",
+          "evidence": "basename-rule short-circuit (no read)"
+        },
+        {
+          "path": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+          "verdict": "NOT-SAFE",
+          "receipt": "none",
+          "evidence": "unpushed=0 dirty=0"
+        },
+        {
+          "path": "/home/vgpnk/Projects/shokunin/kotodama-shokunin",
+          "verdict": "NOT-SAFE",
+          "receipt": "none",
+          "evidence": "unpushed=0 dirty=0"
+        },
+        {
+          "path": "/home/vgpnk/Projects/shokunin/kotodama-shokunin/.scratch",
+          "verdict": "NOT-SAFE",
+          "receipt": "none",
+          "evidence": "no-repo ledger=miss scratch=no mtime_age_days=0"
+        },
+        {
+          "path": "/tmp/adv-46/fake.log",
+          "verdict": "SAFE",
+          "receipt": "stale",
+          "evidence": "mtime_age_days=17 refs=0 scratch-type=yes"
+        }
+      ],
+      "stderr_tail": ""
+    },
+    {
+      "id": "c31",
+      "env": "norg_nogit",
+      "mode": "selftest",
+      "argv": [
+        "--selftest"
+      ],
+      "rc": 127,
+      "duration_ms": 5,
+      "flags": [
+        "rc-out-of-range",
+        "crash-marker"
+      ],
+      "verdicts": [],
+      "stderr_tail": "/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh: line 510: git: command not found\n"
+    },
+    {
+      "id": "c40",
+      "env": "tmpro",
+      "mode": "eval",
+      "argv": [
+        "/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.spec.md",
+        "/tmp/adv-46/missing-target.txt",
+        "/tmp/adv-46/fake.env",
+        "/home/vgpnk/Projects/shokunin/souji-shokunin",
+        "/home/vgpnk/Projects/shokunin/kotodama-shokunin",
+        "/home/vgpnk/Projects/shokunin/kotodama-shokunin/.scratch",
+        "/tmp/adv-46/fake.log"
+      ],
+      "rc": 0,
+      "duration_ms": 87,
+      "flags": [],
+      "verdicts": [
+        {
+          "path": "/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.spec.md",
+          "verdict": "NOT-SAFE",
+          "receipt": "none",
+          "evidence": "untracked repo=/home/vgpnk/Projects/shokunin/souji-shokunin ledger=miss scratch=no mtime_age_days=0"
+        },
+        {
+          "path": "/tmp/adv-46/missing-target.txt",
+          "verdict": "NOT-SAFE",
+          "receipt": "unreachable",
+          "evidence": "missing-target"
+        },
+        {
+          "path": "/tmp/adv-46/fake.env",
+          "verdict": "NOT-SAFE",
+          "receipt": "secrets-refusal",
+          "evidence": "basename-rule short-circuit (no read)"
+        },
+        {
+          "path": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+          "verdict": "NOT-SAFE",
+          "receipt": "unpushed-dirty",
+          "evidence": "unpushed=4 dirty=2"
+        },
+        {
+          "path": "/home/vgpnk/Projects/shokunin/kotodama-shokunin",
+          "verdict": "NOT-SAFE",
+          "receipt": "unpushed-dirty",
+          "evidence": "unpushed=38 dirty=22"
+        },
+        {
+          "path": "/home/vgpnk/Projects/shokunin/kotodama-shokunin/.scratch",
+          "verdict": "NOT-SAFE",
+          "receipt": "none",
+          "evidence": "untracked repo=/home/vgpnk/Projects/shokunin/kotodama-shokunin ledger=miss scratch=no mtime_age_days=0"
+        },
+        {
+          "path": "/tmp/adv-46/fake.log",
+          "verdict": "NOT-SAFE",
+          "receipt": "none",
+          "evidence": "no-repo ledger=miss scratch=yes mtime_age_days=17"
+        }
+      ],
+      "stderr_tail": "/tmp/adv-46/run.rNNKmn/tmp-ro/souji-wt-index.XXXXXX': Permission denied\n/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh: line 172: : No such file or directory\nmktemp: failed to create file via template '/tmp/adv-46/run.rNNKmn/tmp-ro/souji-wt-index.XXXXXX': Permission denied\n/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh: line 172: : No such file or directory\n"
+    },
+    {
+      "id": "c41",
+      "env": "tmpro",
+      "mode": "selftest",
+      "argv": [
+        "--selftest"
+      ],
+      "rc": 1,
+      "duration_ms": 3,
+      "flags": [],
+      "verdicts": [],
+      "stderr_tail": "mktemp: failed to create directory via template '/tmp/adv-46/run.rNNKmn/tmp-ro/souji-selftest.XXXXXX': Permission denied\n"
+    },
+    {
+      "id": "c50",
+      "env": "tmpbad",
+      "mode": "eval",
+      "argv": [
+        "/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.spec.md",
+        "/tmp/adv-46/missing-target.txt",
+        "/tmp/adv-46/fake.env",
+        "/home/vgpnk/Projects/shokunin/souji-shokunin",
+        "/home/vgpnk/Projects/shokunin/kotodama-shokunin",
+        "/home/vgpnk/Projects/shokunin/kotodama-shokunin/.scratch",
+        "/tmp/adv-46/fake.log"
+      ],
+      "rc": 0,
+      "duration_ms": 79,
+      "flags": [],
+      "verdicts": [
+        {
+          "path": "/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.spec.md",
+          "verdict": "NOT-SAFE",
+          "receipt": "none",
+          "evidence": "untracked repo=/home/vgpnk/Projects/shokunin/souji-shokunin ledger=miss scratch=no mtime_age_days=0"
+        },
+        {
+          "path": "/tmp/adv-46/missing-target.txt",
+          "verdict": "NOT-SAFE",
+          "receipt": "unreachable",
+          "evidence": "missing-target"
+        },
+        {
+          "path": "/tmp/adv-46/fake.env",
+          "verdict": "NOT-SAFE",
+          "receipt": "secrets-refusal",
+          "evidence": "basename-rule short-circuit (no read)"
+        },
+        {
+          "path": "/home/vgpnk/Projects/shokunin/souji-shokunin",
+          "verdict": "NOT-SAFE",
+          "receipt": "unpushed-dirty",
+          "evidence": "unpushed=4 dirty=2"
+        },
+        {
+          "path": "/home/vgpnk/Projects/shokunin/kotodama-shokunin",
+          "verdict": "NOT-SAFE",
+          "receipt": "unpushed-dirty",
+          "evidence": "unpushed=38 dirty=22"
+        },
+        {
+          "path": "/home/vgpnk/Projects/shokunin/kotodama-shokunin/.scratch",
+          "verdict": "NOT-SAFE",
+          "receipt": "none",
+          "evidence": "untracked repo=/home/vgpnk/Projects/shokunin/kotodama-shokunin ledger=miss scratch=no mtime_age_days=0"
+        },
+        {
+          "path": "/tmp/adv-46/fake.log",
+          "verdict": "NOT-SAFE",
+          "receipt": "none",
+          "evidence": "no-repo ledger=miss scratch=yes mtime_age_days=17"
+        }
+      ],
+      "stderr_tail": "-missing/souji-wt-index.XXXXXX': No such file or directory\n/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh: line 172: : No such file or directory\nmktemp: failed to create file via template '/tmp/adv-46/run.rNNKmn/tmp-missing/souji-wt-index.XXXXXX': No such file or directory\n/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh: line 172: : No such file or directory\n"
+    },
+    {
+      "id": "c51",
+      "env": "tmpbad",
+      "mode": "selftest",
+      "argv": [
+        "--selftest"
+      ],
+      "rc": 1,
+      "duration_ms": 4,
+      "flags": [],
+      "verdicts": [],
+      "stderr_tail": "mktemp: failed to create directory via template '/tmp/adv-46/run.rNNKmn/tmp-missing/souji-selftest.XXXXXX': No such file or directory\n"
+    }
+  ],
+  "summary": {
+    "hard_failures": 2,
+    "warnings": 0,
+    "false_safe": 0,
+    "crashes_or_hangs": 2,
+    "selftest_grades": {
+      "baseline": {
+        "env": "baseline",
+        "rc": 0,
+        "grade": "passes-without-tool",
+        "flags": [],
+        "stderr": ""
+      },
+      "norg": {
+        "env": "no-rg",
+        "rc": 1,
+        "grade": "graceful(clean-fail)",
+        "flags": [],
+        "stderr": "SELFTEST FAIL\n"
+      },
+      "nogit": {
+        "env": "no-git",
+        "rc": 127,
+        "grade": "broken(crash/rc=127)",
+        "flags": [
+          "rc-out-of-range",
+          "crash-marker"
+        ],
+        "stderr": "/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh: line 510: git: command not found\n"
+      },
+      "norg_nogit": {
+        "env": "no-rg-no-git",
+        "rc": 127,
+        "grade": "broken(crash/rc=127)",
+        "flags": [
+          "rc-out-of-range",
+          "crash-marker"
+        ],
+        "stderr": "/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-verify.sh: line 510: git: command not found\n"
+      },
+      "tmpro": {
+        "env": "TMPDIR-unwritable",
+        "rc": 1,
+        "grade": "graceful(clean-fail)",
+        "flags": [],
+        "stderr": "mktemp: failed to create directory via template '/tmp/adv-46/run.rNNKmn/tmp-ro/souji-selftest.XXXXXX': Permission denied\n"
+      },
+      "tmpbad": {
+        "env": "TMPDIR-missing",
+        "rc": 1,
+        "grade": "graceful(clean-fail)",
+        "flags": [],
+        "stderr": "mktemp: failed to create directory via template '/tmp/adv-46/run.rNNKmn/tmp-missing/souji-selftest.XXXXXX': No such file or directory\n"
+      }
+    },
+    "headline": "H3-no-crash-hang-rc: c21[nogit] rc=127 rc-out-of-range,crash-marker; c31[norg_nogit] rc=127 rc-out-of-range,crash-marker; c30: SAFE claimed for: ['/tmp/adv-46/fake.log']"
+  }
+}

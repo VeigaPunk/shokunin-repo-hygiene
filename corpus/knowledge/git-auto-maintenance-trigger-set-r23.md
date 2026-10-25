@@ -3,11 +3,11 @@ source: S129 — https://github.com/git/git/tree/v2.56.0/builtin — tag v2.56.0
 source: S130 — https://github.com/git/git/blob/v2.56.0/builtin/pull.c — tag v2.56.0 `builtin/pull.c:392`
 source: S128 — https://git-scm.com/docs/git-fetch — § OPTIONS `--auto-maintenance, --no-auto-maintenance, --auto-gc, --no-auto-gc` — git 2.56.0
 source: S132 — lanes/souji/round2/evidence/r23-worktree-census.out — the fleet's own worktree registrations, 0 prunable
-verified-at: 2026-10-25 — git 2.56.0; campaign evidence re-grounded by this lane (fixture sha256 11c136aa…, evidence sha256 510722c1…, census sha256 1ac71c4f… — all verified byte-for-byte this round)
+verified-at: 2026-10-25 — host git 2.56.0; MEASURED IN THE CAMPAIGN, NOT BY THIS LANE: only the fetch 2 -> 1 arm is isolated, in lanes/souji/round2/evidence/r23-trigger-prune.out:2 (run 2026-10-23, git 2.56.0, kernel 7.2.11-arch1-1); the rows named pull (:4), merge (:5) and rebase (:6) do not measure those commands — the pull case runs git fetch (fixture :146) and the merge and rebase cases run a plain git commit after the before-count (fixture :153, :161); this lane read those bytes on 2026-10-25 (sha256 510722c1…, fixture 11c136aa…) and did not execute the fixture
 recheck: 90d — re-run `bash lanes/souji/round2/fixtures/r23-trigger-prune.sh` in the campaign checkout (expect 7 PASS, exit 0); fixture is the campaign's own-work evidence, not this lane's run
 ground: F1 — git-native housekeeping vs receipts (the trigger set is now MEASURED, not inferred)
 
-# `fetch`, `merge`, `rebase` and `pull` auto-maintenance all prune a stale worktree registration
+# `fetch` auto-maintenance prunes a stale worktree registration (measured); pull/merge/rebase rows are confounded and not attributed
 
 ## Claim (F1, measured)
 
@@ -17,17 +17,27 @@ commands as "call sites only — whether each prunes was not fixture-run".
 This entry closes that gap **on git 2.56.0, on this host**, using the
 campaign's own-work fixture and evidence (S131), re-grounded by this lane.
 
-1. **All four commands prune.** With a stale registration (working
-   directory removed, index aged past `gc.worktreePruneExpire` — fixture
-   `touch -d '4 months ago'` at `fixtures/r23-trigger-prune.sh:126`), the
-   registration count goes **2 → 1** under `git fetch`, under `git pull`,
-   under a real non-fast-forward `git merge` (fixture line 149), and under
-   `git rebase` (evidence rows `id=SOUJI-R23-TRIGGER-{fetch,pull,merge,rebase}
-   … verdict=PASS` in `evidence/r23-trigger-prune.out:2-6`). The `git pull`
-   result is the expected consequence of S130: pull spawns `fetch`
-   (`census/round-26/sources/git-builtin-pull.c:392`), so it inherits fetch's
-   trigger by process spawn.
-2. **No souji receipt is involved.** The lane's own `PROVINCE.md` makes
+1. **Fetch prunes, and it is the only isolated measurement.** With a stale
+   registration (working directory removed, index aged past
+   `gc.worktreePruneExpire` — fixture `touch -d '4 months ago'` at
+   `fixtures/r23-trigger-prune.sh:126`), the registration count goes
+   **2 → 1** under `git fetch` alone (evidence row
+   `id=SOUJI-R23-TRIGGER-fetch case=fetch before=2 after=1 expect=1 verdict=PASS`
+   at `evidence/r23-trigger-prune.out:2`; the campaign ran the fixture on
+   2026-10-23, git 2.56.0 — this lane only read the bytes this round).
+2. **The pull, merge and rebase rows are confounded and are NOT
+   attributions to those commands.** The campaign fixture's `pull` case
+   runs `git fetch -q origin` (fixture `:144-147`), so its PASS row is a
+   second fetch; the `merge` and `rebase` cases run a plain `git commit`
+   after the before-count (fixture `:153`, `:161`), and the lane's own
+   entry `git-auto-maintenance-prunes-worktrees.md` (SKILL.md:95) shows
+   that commit alone prunes under this expiry aging. The merge case is
+   additionally a fast-forward (replayed; fixture comment at `:149` is not
+   the merge command at `:155`). What remains true: `git pull` inherits
+   fetch's trigger by spawn (S130, `builtin/pull.c:392`), and the call
+   sites for all five commands exist (S129) — those are inferences from
+   source, not measurements.
+3. **No souji receipt is involved.** The lane's own `PROVINCE.md` makes
    removal receipt-gated — "receipt-gated removal of stale, duplicate, and
    already-preserved artifacts" (PROVINCE.md:3) — and lists dead worktree
    metadata as lane-repo hygiene held to a receipt (PROVINCE.md § Owns).
@@ -37,14 +47,14 @@ campaign's own-work fixture and evidence (S131), re-grounded by this lane.
    matches for `receipt` in all 206 lines). This is the same class of event the
    lane already records for `git commit` ("Git deletes without a receipt",
    SKILL.md:95, r12).
-3. **The two off-switches work, and they are different mechanisms.**
+4. **The two off-switches work, and they are different mechanisms.**
    `maintenance.auto=false`, applied per invocation with `-c` (fixture line
    141), holds the registration at 2 (`case=fetch-auto-off after=2`), and
    `git worktree lock --reason r23-trigger` (fixture line 129) also holds it
    at 2 (`case=locked after=2`). The config switch suppresses the *task*; the
    lock protects the *registration* even if the task runs. A deployment that
    wants neither must set both.
-4. **The expiry is a third, independent guard.** The `fresh` case runs the
+5. **The expiry is a third, independent guard.** The `fresh` case runs the
    same `git fetch` against a registration whose index is **not** aged, and
    the registration survives at 2 (`case=fresh after=2`). So the task
    demonstrably ran, and the `3.months.ago` expiry — not the absence of a
@@ -82,9 +92,10 @@ campaign's own-work fixture and evidence (S131), re-grounded by this lane.
 
 The lane's F1 frontier asked for the exposure census. The census's
 **denominator** is now known and measured: five trigger commands at v2.56.0
-(S129), of which four reach the prune path (S131) and one — `git pull` —
-reaches it by way of `git fetch` (S130). The **numerator** for the fleet is
-in S132: 5 registrations, 0 prunable, 0 locked.
+(S129); the only isolated measured prune arm is `git fetch` (S131); the
+remaining named commands are call-sites-only or confounded rows, and
+`git pull` inherits fetch's trigger by spawn (S130). The **numerator** for
+the fleet is in S132: 5 registrations, 0 prunable, 0 locked.
 
 ## Freshness
 
@@ -94,7 +105,8 @@ coverage the commit-path entry carries for the trigger set.
 ## Gate
 
 opened: 2026-10-25
-- ADMIT: the measured prune fixture entry; reason: fixture r23-trigger-prune.sh and evidence r23-trigger-prune.out re-grounded byte-for-byte this round (sha256 11c136aa…, 510722c1…); census 1ac71c4f….
+- ADMIT: the measured prune fixture entry; reason: the campaign ran the fixture (2026-10-23, git 2.56.0, kernel 7.2.11-arch1-1); this lane verified the bytes unchanged (sha256 fixture 11c136aa…, evidence 510722c1…, census 1ac71c4f…) and did not execute it.
+- Same-run caveat: the pull row (:4) is a git fetch (fixture :146); the merge and rebase rows (:5-6) are preceded by a plain git commit (fixture :153, :161) that alone takes the count 2 -> 1 — those three rows are not attributions to pull, merge or rebase.
 - REJECT: the staged package ids S109/S110/S111/S123 as-is; reason: they collide with the lane registry S109-S127, so the rows were re-pointed by document to S128-S132 before appending.
 - "run_auto_maintenance(the_repository, verbosity < 0);" — snapshot: census/round-26/sources/git-builtin-merge.c lines 506-509
 - "run_auto_maintenance(the_repository, verbosity < 0);" — snapshot: census/round-26/sources/git-builtin-fetch.c line 2926
