@@ -18,25 +18,32 @@ This entry closes that gap **on git 2.56.0, on this host**, using the
 campaign's own-work fixture and evidence (S131), re-grounded by this lane.
 
 1. **All four commands prune.** With a stale registration (working
-   directory removed, index aged past `gc.worktreePruneExpire`), the
+   directory removed, index aged past `gc.worktreePruneExpire` — fixture
+   `touch -d '4 months ago'` at `fixtures/r23-trigger-prune.sh:126`), the
    registration count goes **2 → 1** under `git fetch`, under `git pull`,
-   under a real non-fast-forward `git merge`, and under `git rebase`
-   (evidence rows `id=SOUJI-R23-TRIGGER-{fetch,pull,merge,rebase} …
-   verdict=PASS`). The `git pull` result is the expected consequence of
-   S130: pull spawns `fetch`, so it inherits fetch's trigger by process
-   spawn.
-2. **No souji receipt is involved.** The lane's own `PROVINCE.md` § Refuses
-   makes removal receipt-gated; git's own maintenance path performs the
-   registration removal with **no receipt, no lane involvement and no
-   operator decision** — the same class of event the lane already records
-   for `git commit` ("Git deletes without a receipt", SKILL.md r12).
+   under a real non-fast-forward `git merge` (fixture line 149), and under
+   `git rebase` (evidence rows `id=SOUJI-R23-TRIGGER-{fetch,pull,merge,rebase}
+   … verdict=PASS` in `evidence/r23-trigger-prune.out:2-6`). The `git pull`
+   result is the expected consequence of S130: pull spawns `fetch`
+   (`census/round-26/sources/git-builtin-pull.c:392`), so it inherits fetch's
+   trigger by process spawn.
+2. **No souji receipt is involved.** The lane's own `PROVINCE.md` makes
+   removal receipt-gated — "receipt-gated removal of stale, duplicate, and
+   already-preserved artifacts" (PROVINCE.md:3) — and lists dead worktree
+   metadata as lane-repo hygiene held to a receipt (PROVINCE.md § Owns).
+   Git's own maintenance path performs the registration removal in a
+   disposable `/var/tmp` repository with **no receipt, no lane involvement
+   and no operator decision**; the fixture contains no receipt tooling (0
+   matches for `receipt` in all 206 lines). This is the same class of event the
+   lane already records for `git commit` ("Git deletes without a receipt",
+   SKILL.md:95, r12).
 3. **The two off-switches work, and they are different mechanisms.**
-   `maintenance.auto=false` (S128's switch, applied as a config) holds the
-   registration at 2 (`case=fetch-auto-off after=2`), and
-   `git worktree lock` also holds it at 2 (`case=locked after=2`). The
-   config switch suppresses the *task*; the lock protects the
-   *registration* even if the task runs. A deployment that wants neither
-   must set both.
+   `maintenance.auto=false`, applied per invocation with `-c` (fixture line
+   141), holds the registration at 2 (`case=fetch-auto-off after=2`), and
+   `git worktree lock --reason r23-trigger` (fixture line 129) also holds it
+   at 2 (`case=locked after=2`). The config switch suppresses the *task*; the
+   lock protects the *registration* even if the task runs. A deployment that
+   wants neither must set both.
 4. **The expiry is a third, independent guard.** The `fresh` case runs the
    same `git fetch` against a registration whose index is **not** aged, and
    the registration survives at 2 (`case=fresh after=2`). So the task
