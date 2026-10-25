@@ -65,7 +65,7 @@ when the file exists, not before.
 
 | ground | status | entries / runnable evidence |
 |---|---|---|
-| F2 repository size census | bounded structure-census capability acquired; wider size attribution remains frontier | `knowledge/git-repo-structure-readonly.md` (S035/S036/S037); `../tools/souji-repo-structure.sh`; `../tests/fixtures/r13-repo-structure.sh`; `../census/round-13/verification.json` |
+| F2 repository size census | bounded structure-census capability acquired; wider size attribution remains frontier. **r23: the read side now holds three entries** (`git-repo-structure-readonly.md`, `repo-size-census-readonly.md`, `count-objects-garbage-readings-r25.md`); the write-safety fixture and any measurement remain owed (see § Round 23) | `knowledge/git-repo-structure-readonly.md` (S035/S036/S037); `../tools/souji-repo-structure.sh`; `../tests/fixtures/r13-repo-structure.sh`; `../census/round-13/verification.json` |
 | Certification evidence integrity | declared-fragment consistency only; deletion certification OFF | `../tools/souji-cert-evidence.py`; `../tests/fixtures/r13-cert-frozen/`; round-13 lesson Gate and Mistakes |
 | Quarantine operation bounds | per-target move/digest bound, special-file refusal; not comprehensive certification | `../tests/fixtures/r13-quarantine-bounds.sh`; same-command red-before/after results in `../census/round-13/verification.json` |
 
@@ -437,10 +437,66 @@ Coverage-map effect: F4 moves from "frontier, entries held" to "frontier,
 entries admitted for the staging primitive and the record read side"; the
 operator still owns the record format and any staging tool change.
 The lane's absent-defect register slice (8 rows) now carries a verdict each —
-5 accepted with corrected quotes, 1 present, 1 refused (wrong-source
-citation), 1 unverifiable (unreachable DOI). Verdict table:
-`../census/round-22/attempt2/slice-verdicts.tsv`.
+5 accepted with corrected quotes, 2 present, 0 refused, 1 unverifiable
+(unreachable DOI). Verdict table:
+`../census/round-22/attempt2/slice-verdicts.tsv`. (Corrected in round 23: this
+sentence's two middle cells disagreed with the receipt until r23 — one verdict
+class was undercounted and one was counted that the receipt does not hold. The
+receipt above is the authority; the correction is recorded in `../LOG.md`
+`Round22 attempt2 corrections`, which names both superseded cells.)
 
 The r22 attempt-1 result-contract material above is unchanged and not
 re-claimed; the non-author judgment in
 `lessons/round-22-verifier-spotcheck.md` still controls that claim.
+
+## Round 23 — record agreement, blob-bound receipts, F2 read side
+
+| claim | axis | before → after | counting command |
+|---|---|---|---|
+| C1 record agreement | calibration (7) | `mismatches=20` at the base revision → `0` at the landing tip | `python3 -B tools/souji-record-agreement.py --rev <full40>` (`keys=4 records=… occurrences=… mismatches=M`, exit 0 iff M=0) |
+| C2 blob-bound receipts | operability (8) | receipts carrying `tool_sha256=` under `census/`: `0` → `5`, each `verify=ok` | `grep -rlE '^tool_sha256=[0-9a-f]{64}$' census/ \| wc -l` |
+| C3 F2 read side | coverage (8) | registry `114 → 119` rows; F2 entries `1 → 3`; gate `entries=2 ok=2 fail=0` | `sources-census.sh validate --root /home/vgpnk/Projects/shokunin souji`; `tools/souji-gate-check.py --entries … --snapshot-dir census/round-23/sources` |
+
+**C1** is one instrument, four keys, all derived from receipts and committed bytes: K1 the r22
+C1 after-state is bound to the revision SCORECARD names (`census/round-23/records/declared-evidence-after.tsv`,
+rev `9301d98c…`, `assertions=63 resolved=63 skipped=40 mismatches=0`); K2 every superseded
+scalar in `../LOG.md`'s round-22 section is named by a later `superseded by` line while the
+filed bytes survive; K3 the register-slice tally in this file and in `lessons/round-22.md`
+equals `../census/round-22/attempt2/slice-verdicts.tsv`; K4 no uncommitted round work outside
+`../census/round-23/records/uncommitted-exemptions.tsv`. The base run is the do-nothing control
+(`census/round-23/records/agreement-control-base.txt`), and `../tests/fixtures/r23-record-agreement.py`
+rejects an always-zero emitter on eight of its nine cases.
+
+**C2** is `../tools/souji-receipt-run.py`: a counter is re-derived at a full durable revision in a
+private `--no-local` clone, and the receipt binds the revision, the tool path, the sha256 of the
+bytes the command actually ran against, the argv, the exit code and redacted output. `verify`
+re-reads the tree at the receipt's revision and refuses a digest that is not the committed blob
+(`RECEIPT-TOOL-DIGEST-MISMATCH`). Named limit: a receipt binds bytes, not execution — a typed
+receipt passes `verify`; and K4 is a worktree observation, so C1's K4 is not revision-reproducible.
+
+**C3** adopts the `corpus-expansion-1` theme for F2's read side, re-grounded from sources opened
+this round: `knowledge/repo-size-census-readonly.md` (S115–S117, installed git 2.56.0 manual pages
+snapshotted under `../census/round-23/sources/` with sha256) and
+`knowledge/count-objects-garbage-readings-r25.md` (S118–S119, two community pages fetched live and
+kept as bounded extracts). The staged package's own-work fleet census row is **rejected**: its
+evidence lives outside this repository. No fleet size figure is claimed anywhere in either entry.
+
+### Frontier (r23)
+
+- F2 — the read side now has entries; what remains is actable work, not reading: the `/var/tmp`
+  write-safety fixture that must exclude `git fsck --lost-found` (S116), a lane-bound size/debris
+  measurement of this repo (never a claim about the fleet), and the colocated/plain precondition
+  from the r17 section. `alternate` object databases must be read by any size figure (S115).
+- F1, F3, F4 — unchanged. F5 stays list-only; the reap protocol and NAMESPACE pin remain
+  operator-held. Certification OFF, K5 HELD.
+
+### Round 23 corrections
+
+- The r22 slice tally sentence above was corrected **in place** (2 present, 0 refused) rather
+  than by an appended block. This departs from this file's "corrections below" convention
+  deliberately: C1's K3 key reads the tally from this file and has no quoted-historical
+  allowance, so a stale pair quoted in a correction block would re-open the defect. The
+  superseded cells are named in words instead of numbers, and the append-only record lives in
+  `../LOG.md` `Round22 attempt2 corrections`.
+- The sweep for the D4 class found exactly one tally sentence (the one corrected above);
+  the other r22 mentions in this file state no class counts.

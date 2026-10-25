@@ -21,6 +21,8 @@ installed or updated (no pacman/uv/npx/cargo/npm transaction was run).
 | `.ufo/waves/round-22/attempt2/w1/evidence/impl-a/tip-70af563.tsv` | `51c7a99b97e9c39dd17d85937208174eb119bbe25c2698755e8dd3ee7d400714` |
 | `.ufo/waves/round-22/attempt2/w1/evidence/impl-a/head-5fdd5d5.counts` | `5899dd50304d679ab4b723a401d46f92f06d44001e6b0c98abeb7124a59f3c66` |
 | `.ufo/waves/round-22/attempt2/w1/evidence/impl-a/head-5fdd5d5.tsv` | `d60d5c625c26658ac0f096bac6feda534c01a1b15f63930657ae1300d0c07a3c` |
+| `.ufo/waves/round-22/attempt2/w1/evidence/impl-a/head-c9f1fe3.counts` | `5899dd50304d679ab4b723a401d46f92f06d44001e6b0c98abeb7124a59f3c66` |
+| `.ufo/waves/round-22/attempt2/w1/evidence/impl-a/head-c9f1fe3.tsv` | `9b343c6cc9f6d2c9257cd688ef42d2d89a0531d87a9ee63f4b822d008e3fd106` |
 | `.ufo/waves/round-22/attempt2/w1/ImplDeclaredA.md` | this report |
 
 ## Interface implemented (as frozen)
@@ -50,7 +52,7 @@ control=FALSE-GREEN-REJECTED
 exit=0
 ```
 
-Fixture shape: one synthetic repo under the `/var/tmp` scratch dir with three commits (`present.sh` + `revonly.md`; `later.md`; the declaration fixtures). Fixture 1 exercises all three classes positively (A twice, B twice, C once); fixture 4's digest is 64 zeros on a present file; fixture 3 uses `deadbeef`×5. The control is an in-process always-zero "tool": it satisfies fixture 1 trivially but cannot produce the `>=1` that fixtures 2–5 require, so the same fixture set rejects it — this is the mech­anism reported as `control=FALSE-GREEN-REJECTED`, not a separate binary.
+Fixture shape: one synthetic repo under the `/var/tmp` scratch dir with three commits (`present.sh` + `revonly.md`; `later.md`; the declaration fixtures). Fixture 1 exercises all three classes positively (A twice, B twice, C once); fixture 4's digest is 64 zeros on a present file; fixture 3 uses `deadbeef`×5. The control is an in-process always-zero "tool": it satisfies fixture 1 trivially but cannot produce the `>=1` that fixtures 2–5 require, so the same fixture set rejects it — this is the mechanism reported as `control=FALSE-GREEN-REJECTED`, not a separate binary.
 
 ## Real base run (executed)
 
@@ -90,17 +92,25 @@ and that de-backticking is one of the three frozen repair branches (the sentence
 the real receipt: `ls -> No such file or directory`), while naming a revision would be false
 because the file exists at none.
 
-At the current HEAD 5fdd5d5, after other seats committed the repair:
+At 5fdd5d5 (HEAD when I measured it), after other seats committed the repair:
 
 ```
 assertions=61 resolved=61 skipped=46 mismatches=0
 exit=0
 ```
 
-Class distribution A=51, B=10, C=0. C1's after-target `M_after = 0` is therefore met at the
-current tip as measured by candidate A. Skipped composition at HEAD: 22 command/prose spans,
+Re-measured at c9f1fe3 (the newest tip I observed; the lane committed twice more while I wrote
+this), byte-identical counts line:
+
+```
+assertions=61 resolved=61 skipped=46 mismatches=0
+exit=0
+```
+
+Class distribution A=51, B=10, C=0. C1's after-target `M_after = 0` is therefore met at both
+later revisions as measured by candidate A. Skipped composition at HEAD: 22 command/prose spans,
 9 embedded hex runs, 9 non-path non-hex spans, 3 absolute/home paths, 2 composite spans,
-1 non-clean glob (`head-5fdd5d5.tsv`).
+1 non-clean glob (`head-5fdd5d5.tsv`, `head-c9f1fe3.tsv`).
 
 ## Every token classified `skipped` at base 4edb25d (45 tokens, with reason)
 
@@ -181,10 +191,17 @@ worked, so I compared against the committed bytes extracted with
 * base 4edb25d: landed `assertions=56 resolved=53 skipped=33 mismatches=3`; candidate A `56/53/45/3`. The per-assertion `(line, token, class)` multisets are identical. The +12 skipped is exactly my enumeration of the 12 embedded hex runs listed above, which the landed tool does not emit as rows.
 * 70af563: landed `57/56/37/1`; candidate A `57/56/46/1`; assertion multisets identical, +9 skipped = the 9 embedded runs.
 * HEAD 5fdd5d5: landed `60/60/37/0`; candidate A `61/61/46/0`. The only difference is the duplicated base-revision token on line 14, counted twice by candidate A (two occurrences) and once by the landed tool (per-line dedupe) — same class, same verdict, same exit code.
+* Newest scanner (`git show c9f1fe3:tools/souji-declared-evidence.py`, after its escaped-pipe and regex hardening): base `55/52/33/3` vs candidate `56/53/45/3` — a one-assertion difference: the bare 40-hex token `41553adb139d06511dc386bb3ce4326aebfba675` at line 14, inside a cell that names `census/round-21/`, is asserted as class B by candidate A (it resolves) and is not asserted by that scanner. At c9f1fe3: landed `60/60/38/0` vs candidate `61/61/46/0`, again only the duplicate-occurrence difference.
 
 So on the real corpus the two implementations agree on every distinct assertion, its class and
-its verdict; they differ only in duplicate-occurrence accounting and in how exhaustively
-excluded tokens are enumerated, which the prereg's `N+S` sentence asks for.
+its verdict, except one bare hex token that the newest scanner drops while candidate A asserts;
+they also differ in duplicate-occurrence accounting and in how exhaustively excluded tokens are
+enumerated, which the prereg's `N+S` sentence asks for.
+
+The lane has since committed `4a6ee90` ("escaped-pipe cell split in the declared-evidence
+scanner"), i.e. the landed scanner was still splitting a cell at `\|` when I compared. Candidate
+A never had that behaviour: `cells_of()` keeps a backticked span atomic, so the one escaped pipe
+in `SCORECARD.md:14` stays inside its command span and the span is skipped once, not split.
 
 ## Operability / read-only receipts (executed)
 
@@ -195,8 +212,8 @@ excluded tokens are enumerated, which the prereg's `N+S` sentence asks for.
 
 ## Risks / open items (bounded)
 
-1. The lane tip moved twice while I worked (`4edb25d` base → `70af563` → `5fdd5d5`). At `70af563` the instrument was red on `SCORECARD.md:83`; at HEAD `5fdd5d5` it is green (`61/61/46/0`, exit 0). The repair was made by another seat, not me: I did not edit `SCORECARD.md`, and the worktree showed `M SCORECARD.md` and `M tools/souji-declared-evidence.py` from other seats. All my measurements read committed bytes only (`git show <rev>:<file>`), so uncommitted edits cannot affect any number here.
-2. My skipped accounting is a superset of the landed tool's (+embedded runs). If a reviewer expects `S` to match the landed number, the +12/+9/+9 is the whole explanation and is enumerated line by line above.
-3. Duplicate-token accounting differs from the landed tool (per occurrence vs per line). At HEAD that is the entire `61` vs `60` assertion gap; verdicts and exit codes agree.
+1. The lane tip moved repeatedly while I worked (`4edb25d` base → `70af563` → `5fdd5d5` → `c9f1fe3`). At `70af563` the instrument was red on `SCORECARD.md:83`; at `5fdd5d5` and `c9f1fe3` it is green (`61/61/46/0`, exit 0). The repair was made by another seat, not me: I did not edit `SCORECARD.md`, and the worktree showed `M SCORECARD.md` and `M tools/souji-declared-evidence.py` from other seats. All my measurements read committed bytes only (`git show <rev>:<file>`), so uncommitted edits cannot affect any number here.
+2. My skipped accounting is a superset of the landed scanner's embedded-run enumeration: against the pinned 70af563 scanner, +12 at base (33→45) and +9 at 70af563/5fdd5d5 (37→46); against the newest c9f1fe3 scanner, 38→46 at c9f1fe3 (+8). Every extra token is itemised above.
+3. Duplicate-token accounting differs from the landed scanner (per occurrence vs per line). At 5fdd5d5 that is the entire `61` vs `60` assertion gap; at c9f1fe3 there is also the dropped `41553adb…` B token noted above. Verdicts and exit codes agree in every compared pair.
 4. Class C is not exercised by the real document, only by fixtures (correct and wrong digest). The real-corpus C evidence is therefore fixture-only, not production.
 5. Fixture repo construction depends on `git init -b` (git 2.56.0 here) and a writable `/var/tmp`; failure of either aborts selftest with a non-zero exit rather than a false pass.

@@ -2,42 +2,49 @@ STATUS: PASS
 
 # DraftScorecard — bookkeeping text for round 22 attempt 2 (scribe seat)
 
-Drafted, not landed. No byte of `SCORECARD.md`, `corpus/README.md`, the lane index,
-`.ufo/state`, MANIFEST or any sibling repo was written by this seat. The two deliverables are
-this report and `.ufo/waves/round-22/attempt2/w1/evidence/DraftScorecard.md`.
+Drafted, not landed. This seat wrote only this report and
+`.ufo/waves/round-22/attempt2/w1/evidence/DraftScorecard.md` (plus `/var/tmp` scratch for
+measurement). No byte of `SCORECARD.md`, `corpus/README.md`, the lane index, `.ufo/state`,
+`MANIFEST.json`, fleet `templates/`/`scripts/`, or any sibling repo was written.
 
-Frozen contract read before any verdict:
-`.ufo/waves/round-22/attempt2/preregistration.txt`. C1 = declared-evidence calibration audit;
-its counter, three assertion classes, five fixtures + do-nothing control, and kill rule are
-used as written. C2 = assimilation of the restorable-quarantine-staging theme, 2 entries +
-one verdict per absent-defect-register row. Neither claim is re-scoped here; attempt 1's
-strict-adequacy claim is treated as unproven throughout the drafted prose.
+Frozen contract read first: `.ufo/waves/round-22/attempt2/preregistration.txt` — C1's counter,
+three assertion classes, five fixtures plus the do-nothing control and kill rule, and C2's
+per-entry predicate, slice predicate and kill rule are used exactly as frozen. No axis was
+re-scoped, no verdict invented; attempt 1's strict-adequacy claim is treated as unproven
+throughout the drafted prose.
 
 ---
 
-## 1. Executed measurements (all read-only, git plumbing only)
+## 1. Executed measurements
 
-### C1 — declared-evidence counter
+### 1.1 C1 counter across the round's revisions
 
-    $ python3 -B tools/souji-declared-evidence.py --root . --file SCORECARD.md \
-          --rev 4edb25d --format counts
-    assertions=56 resolved=53 skipped=33 mismatches=3        exit=1
+    python3 -B tools/souji-declared-evidence.py --root . --file SCORECARD.md \
+        --rev <REV> --format counts
 
-That equals the committed receipt `census/round-22/attempt2/declared-evidence-before.tsv`
-(last line), so the before receipt reproduces from committed bytes.
+    REV        scanner state                              printed line                                      exit
+    4edb25d    pre-hardening / pre-split                   assertions=56 resolved=53 skipped=33 mismatches=3  1
+    4edb25d    current (65817d0d, post-split)              assertions=55 resolved=52 skipped=33 mismatches=3  1
+    70af563    pre-hardening                               assertions=57 resolved=56 skipped=37 mismatches=1  1
+    3216c19    pre-hardening                               assertions=56 resolved=56 skipped=36 mismatches=0  0
+    d6a75ba    pre-hardening                               assertions=58 resolved=58 skipped=36 mismatches=0  0
+    af73b8b    hardened (5fdd5d5), pre-split               assertions=59 resolved=59 skipped=37 mismatches=0  0
+    5fdd5d5    current                                     assertions=60 resolved=60 skipped=38 mismatches=0  0
+    c9f1fe3    current                                     assertions=60 resolved=60 skipped=38 mismatches=0  0
 
-    $ ... --rev 70af563c3086d5799a7fdaf988ba3b687f3b128c ...
-    assertions=57 resolved=56 skipped=37 mismatches=1        exit=1
+The scanner itself changed twice inside this round — `5fdd5d5` (instrument hardening: skip
+accounting moves by one at unchanged classification) and `4a6ee90` (escaped-pipe cell split).
+Consequence worth L1's attention: the committed before receipt
+`census/round-22/attempt2/declared-evidence-before.tsv` records `56/53/33/3` and is no longer
+reproducible by the current tool, which prints `55/52/33/3` at the same revision; the dropped
+token is one class-B `41553adb…` that no longer sits in a revision-named cell after the split.
+`mismatches=3` is unchanged, so C1's before condition (`M_before > 0`) holds either way.
 
-The single surviving mismatch at that tip was `SCORECARD.md:83`, class A,
-`.ufo/scopes/souji-mint-20261018/obsidian-cli-probe.md` (`mismatch:path-absent`). Another
-seat repaired it in `2a130b4` before this seat could carry it; I did not duplicate the repair.
-
-    $ ... --rev 3216c1998fe04d7e23793ffd4e135bd37c3a11f4 ...
-    assertions=56 resolved=56 skipped=36 mismatches=0        exit=0
-
-    $ ... --rev d6a75bad8129960bdb96874421298e3bf42aa8c4 ...
-    assertions=58 resolved=58 skipped=36 mismatches=0        exit=0
+At `70af563` the single mismatch was `SCORECARD.md:83`, class A,
+`.ufo/scopes/souji-mint-20261018/obsidian-cli-probe.md` (`mismatch:path-absent`) — a truthful
+"this file is absent" sentence read as an evidence path. Another seat repaired it in `2a130b4`;
+`ImplDeclaredA` independently reported the same token and reasoning. This seat did not
+duplicate the repair.
 
     $ python3 -B tools/souji-declared-evidence.py --selftest
     PASS fixture1 all-good -> 0 ...
@@ -45,24 +52,21 @@ seat repaired it in `2a130b4` before this seat could carry it; I did not duplica
     PASS control always-zero -> FALSE-GREEN-REJECTED [FALSE-GREEN-REJECTED]
     selftest=8/8                                             exit=0
 
-### C1 — drafted text measured (the number Block 2 must carry)
+### 1.2 Drafted text measured (the number Block 2 must carry)
 
-Base = committed `d6a75ba` bytes (`SCORECARD.md` sha256
-`725e64458916306dfb951380cf3794b8473b7fa8ed740ccb4b884769991c4cc0`) with drafted Blocks 1,
-2 and 4 applied to a scratch copy:
+Base = `5fdd5d5:SCORECARD.md`, Blocks 1, 2 and 4 applied to a scratch copy, run against
+`c9f1fe3` with the current scanner:
 
     $ python3 -B tools/souji-declared-evidence.py --root . \
-          --file /var/tmp/ds-cand/SCORECARD.md --rev d6a75ba --format counts
-    assertions=65 resolved=65 skipped=40 mismatches=0        exit=0
+          --file /var/tmp/ds-cand/SCORECARD.md --rev c9f1fe3 --format counts
+    assertions=66 resolved=66 skipped=44 mismatches=0        exit=0
 
-    per-row tsv filter for observed != resolved: no rows
+tsv filter for `observed != resolved`: no rows. Token delta against the `5fdd5d5` base's 60:
+−1 class B (`af73b8ba92…`), +4 class B (`4edb25d`, `5fdd5d5` ×2,
+`c9f1fe3caf642dfe3a9e00de94caf1d4bf86503f`), +3 class A (`SCORECARD.md` ×2,
+`corpus/README.md`) → 66; skipped 38 → 44.
 
-Assertion delta, base → drafted text (enumerated by diffing the two tsv token sets):
-+3 class A (`corpus/README.md`, `SCORECARD.md` ×2), +4 class B (`4edb25d` ×2, `d6a75ba`,
-`d6a75bad8129960bdb96874421298e3bf42aa8c4`); +4 skipped (three non-path spans in Block 1,
-`mv --no-copy` in Block 4). 58+7=65, 36+4=40.
-
-### C2 — gate counter and registry conformance (inputs to Blocks 3a/3b)
+### 1.3 C2 counter and registry conformance (inputs to Blocks 3a/3b)
 
     $ python3 -B tools/souji-gate-check.py --root . --round-date 2026-10-25 \
         --entries corpus/knowledge/quarantine-staging-no-copy-r23.md \
@@ -79,93 +83,110 @@ Assertion delta, base → drafted text (enumerated by diffing the two tsv token 
     $ bash /home/vgpnk/Projects/shokunin/scripts/sources-census.sh validate \
         --root /home/vgpnk/Projects/shokunin souji
     ... W04 duplicate-url lines ...
-    souji   ok   /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/SOURCES.md   exit=0
+    souji   ok   .../souji-shokunin/corpus/SOURCES.md        exit=0
 
-Registry row count re-derived: `grep -cE '^\|[[:space:]]*S[0-9]{3,}[[:space:]]*\|' corpus/SOURCES.md`
-→ `114`. Adopted rows the two entries cite: S109–S111 (r23 entry frontmatter) and
-S112–S114 + existing S022 (r24 entry frontmatter) — read from the entry files, not inferred.
+Registry rows re-derived: `grep -cE '^\|[[:space:]]*S[0-9]{3,}[[:space:]]*\|' corpus/SOURCES.md`
+→ `114`. Source ids the entries cite, read from their frontmatter: S109–S111 (r23),
+S112–S114 + existing S022 (r24).
+
+### 1.4 Membership delta (for the row's honesty clause)
+
+Multiset diff of the counter's tsv token sets, `4edb25d` → `5fdd5d5`, current scanner:
+55 tokens → 60; 6 retired, 11 added. Retired: the never-existing `.ufo/scopes/…` path,
+`AXES.md`, `reason-after.txt`, `census/round-14/verification*.json`, `31984f4`, `b912328…`.
+Added: `census/round-14/verification.json`, `census/round-21/reason-after.txt`,
+`census/round-22/attempt2/declared-evidence-before.tsv` ×2,
+`corpus/lessons/round-22-verifier-spotcheck.md`, `31984f473c…`, `4edb25dfe2…` ×3,
+`af73b8ba92…`, `d7266c5`.
 
 ---
 
 ## 2. Drafted text (paste-ready, in the evidence file)
 
-- **Block 1** — replacement `## Capabilities` row, 4 columns, describing exactly the frozen
-  three classes, the read-only/git-only surface, and four explicit limits (one file, three
-  classes, skipped-not-verified, no authorship/execution/prose truth). No universal clause.
-  It replaces the row already on disk because that row cites `S109–S114`, which are C2
-  registry rows, not C1 evidence.
-- **Block 2** — replacement calibration `Axes` row: before `4edb25d` →
-  `assertions=56 resolved=53 skipped=33 mismatches=3`; after the paste tip →
-  `assertions=65 resolved=65 skipped=40 mismatches=0`; membership (not identity) stated;
-  score column stays 7 with the move to 8 left to closure; attempt 1 explicitly **unproven**
-  and not re-claimed, re-pinned or reworded; counting command + both measured revisions in
-  the measured-commit cell.
-- **Block 3a/3b** — `corpus/README.md` coverage-map row and `## Frontier` F4 bullet, naming
-  the two adopted entries with their source ids and the remaining operator decision
-  (record format; `renameat2`/`mv --no-copy` staging as a tool change; no lane deletion
-  authority).
-- **Block 4** — one-line `## Planned` pointer for r23 (F4's operator-owned piece, else the
-  same counter on the lane's next declared surface `corpus/README.md`).
-- **Recompute rule** — drafting is not measurement: assertions = base+7, skipped = base+4,
-  mismatches = 0, and the printed line must be pasted into both places in Block 2.
+- **Block 1** — replacement `## Capabilities` row, 4 columns, naming the exact three classes,
+  the read-only/git-only surface, and four limits (one file per run; three classes only;
+  skipped spans not itemised; class C has no instance on `SCORECARD.md`; class B proves
+  existence, not measurement) plus "no authorship, execution or prose truth". No universal
+  clause. It replaces the row on disk because that row cites `S109–S114`.
+- **Block 2** — replacement calibration `Axes` row: the before receipt's
+  `56/53/33/3` **and** the current scanner's `55/52/33/3` at the same revision (with the
+  escaped-pipe reason); drafted tip `66/66/44/0`; membership "6 retired / 11 added"; attempt 1
+  rejected-honest-stop and **unproven**, not re-claimed; score 7 unchanged with the 8-move left
+  to closure; counting command plus full before and after hashes in the measured-commit cell.
+- **Block 3a/3b** — `corpus/README.md` coverage-map row and `## Frontier` F4 bullet: both
+  adopted entries named with their source ids, the HELD entry marked HELD, and the remaining
+  operator decision (record format; `renameat2`/`mv --no-copy` as a tool change; no lane
+  deletion authority).
+- **Block 4** — one-line `## Planned` pointer for r23.
+- **Recompute rule** — the printed line at the paste commit is authoritative; the drafted text
+  contributes +6 assertions and +6 skips against the `5fdd5d5` base.
 
-### Q10 self-check on the drafted rows
+### Q10 self-check
 
 | requirement | drafted state |
 |---|---|
-| prose numbers equal table numbers | Block 2's prose and command cell carry the same `65/65/40/0`; score column 7 equals `## Saturation` "calibration 7" |
-| every row carries its counting command | Block 1: `--selftest`; Block 2: full `--format counts` invocation |
-| every row carries its measured commit | Block 1: `4edb25d` (3 mismatches) and `d6a75ba` (0); Block 2: before `4edb25dfe…`, after anchored to the drafted text over `d6a75bad…` plus the paste commit |
-| no dependence on an unmade claim | attempt 1's strict-adequacy claim is described as unproven in both Block 1 and Block 2 |
+| prose numbers equal table numbers | Block 2 prose and command cell carry the identical `66/66/44/0`; the dual before-measurement is labelled by scanner |
+| every row carries its counting command | Block 1: `--selftest` invocation; Block 2: full `--format counts` invocation |
+| every row carries its measured commit | Block 1: `4edb25d` (3 mismatches) and `5fdd5d5` (0); Block 2: full `4edb25dfe…` before-hash and full `c9f1fe3c…` after-anchor |
+| score consistency | score column 7 equals `## Saturation` "calibration 7"; the 8-move is left to closure |
+| no unproven claim reused | attempt 1's strict adequacy is called unproven in Blocks 1 and 2 |
 
 ---
 
 ## 3. Bounded findings
 
-1. **[measured] Mis-citation in the landed capability row.** `SCORECARD.md:74` at `d6a75ba`
-   attributed C1 to `S109–S114`, which are the rows the C2 quarantine entries cite
-   (`corpus/SOURCES.md:129–134`). C1 has no registry row of its own; Block 1 drops the S-ids
-   instead of inventing them.
-2. **[measured] Coverage-map contradiction.** `corpus/README.md:42` says "layout held" while
-   the same file says F4 holds an admitted layout entry and the HELD entry is
-   `quarantine-same-filesystem-rename.md` (lines 59–61, 88–90). Block 3a fixes the status
-   cell and marks the HELD entry inside the entries cell.
-3. **[measured] An "after" count is not a free addition to the row.** Each revision token
-   written into the row becomes a class-B assertion. My own draft went 62 → 63 → 65 as I
-   added the paste-tip anchor; the landed row's earlier `56/56/36` was correct only for
-   `3216c19` and would have been stale prose at the next tip. This is why Block 2 states the
-   numbers it was measured with and carries a recompute rule.
-4. **[measured] "the same 56 assertions" was numerically true, membership-false.** Base →
-   `3216c19` dropped three class-A spans (`AXES.md` → absolute fleet path, `reason-after.txt`
-   → `census/round-21/reason-after.txt`, the never-existing `.ufo/scopes/…` path) and two
-   class-B tokens, and added four class-A pointers plus one class-B token; the totals
-   coincided at 56. Block 2 says membership differs and names the three kinds of change.
-5. **[measured] The lane moved three times during this seat.** `4edb25d` → `70af563` →
-   `3216c19` → `d6a75ba`, and working-tree edits continue (`SCORECARD.md` working hash
-   `99dbc5d3…` vs committed `725e6445…` at `d6a75ba`). Every number in the drafts is pinned
-   to committed `d6a75ba` bytes; pasting onto a later tree requires the recompute rule.
-6. **[source-inferred, not executed] `report`-only limits.** The audit cannot show
-   authorship, that a cited command was ever run, or that un-tokenised prose is true; Block 1
-   says so in the row itself. C1 covers `SCORECARD.md` only, so nothing is claimed for
-   `corpus/README.md` or `SKILL.md` (the reason Block 4 makes README the next surface rather
-   than an already-audited one).
+1. **[measured] The landed row's counts no longer match the counter.** The row landed at
+   `ee1aef2` quotes `assertions=59 resolved=59 skipped=37` (that is `af73b8b`) and only
+   `mismatches=0` for the tip; the current scanner prints `60/60/38/0` at `5fdd5d5` and at
+   `c9f1fe3`. Block 2 supplies the tip line and the full numbers.
+2. **[measured] The landed row's membership count is wrong.** It says "5 base tokens retired,
+   6 added"; the measured multiset diff at the current scanner is 6 retired and 11 added
+   (55 − 6 + 11 = 60). Block 2 states the measured pair.
+3. **[measured] The before receipt is scanner-stamped and no longer reproducible.** The
+   committed receipt and the row both quote `56/53/33/3` at `4edb25d`; the current tool prints
+   `55/52/33/3` there. `mismatches=3` is unchanged, so the claim survives, but a row that
+   quotes the receipt without saying so is not reproducible by the tool it names. Block 2
+   quotes both with attribution.
+4. **[measured] Mis-citation survives in the capability row.** `SCORECARD.md:74` still
+   attributes C1 to `S109–S114`, the rows the C2 quarantine entries cite
+   (`corpus/SOURCES.md:129–134`). C1 has no registry row; Block 1 drops the S-ids rather than
+   inventing one.
+5. **[measured] Coverage-map contradiction.** `corpus/README.md:42` says "layout held" while
+   lines 59–61 and 88–90 say F4 holds an admitted layout entry and the HELD entry is
+   `quarantine-same-filesystem-rename.md`. Block 3a fixes the status cell and marks HELD in the
+   entries cell; Block 3b replaces a Frontier bullet that still calls the origin records
+   un-staged work.
+6. **[measured] A counts line in this file is not free.** Each revision token written into the
+   row becomes a class-B assertion, and skip accounting moves with the scanner. My own draft
+   measured 62 → 63 → 65 → 66 as the base and the text changed, and 40 → 41 → 43 → 44 skipped
+   across scanner revisions. That is why Block 2 carries a recompute rule instead of a copied
+   number.
+7. **[measured] The lane moved four times during this seat** (`70af563` → `3216c19` →
+   `d6a75ba` → `5fdd5d5` → `c9f1fe3`), including a rewrite of the row this seat drafts, a
+   hardening of the counter and a cell-splitting fix. Drafts target the current bytes; a
+   further rewrite of line 14 or of the tool invalidates the `66/66/44` line only, not the
+   wording.
+8. **[source-inferred, not executed] Audit scope.** C1 reads `SCORECARD.md` and nothing else, so
+   no claim is made here for `corpus/README.md`, `SKILL.md` or `LOG.md`; that is why Block 4
+   names README as the next surface rather than an already-audited one.
 
 ## 4. Process, deviations, out-of-scope
 
-- Tooling: none installed, none upgraded, no `pacman` transaction attempted.
-- Writes: this report; the named evidence file; and scratch under `/var/tmp` used by the
-  counter (`/var/tmp/ds-cand/SCORECARD.md`, sha256
-  `3581b87a6da3961e66070b29b7436ca23fbdfc2e5ea0a6bb414df6119e411c4d`) plus tsv dumps in
-  `/var/tmp`. The scratch copy is not evidence — the drafted blocks in the evidence file are.
-- Deviation, disclosed: one scratch-copy string replacement (62 → 65 in the two count
-  positions) was done with a scripted replace instead of the per-edit tool. It touched only
-  the `/var/tmp` candidate, never the lane repo; the result was re-verified by the counter
-  (`65/65/40/0`) and by a token-set diff against the frozen base.
-- Out of scope, untouched: both target files remain unedited by this seat; no git/jj write,
-  no commit, no index/state/watchdog/MANIFEST change, no sibling repo, no `/proc`, no
-  credentials, no operator-sweep census content, no mutating cleanup, no process signalling.
-- Not claimed: any admission or closure verdict, any score change, any resolution of attempt
-  1's adequacy claim, any statement about files the audit does not read.
+- Tooling: none installed or upgraded; no `pacman` transaction attempted.
+- Writes: this report, the named evidence file, and `/var/tmp/ds-cand/SCORECARD.md`
+  (sha256 `b55034dbe962e73446373ffe5ce9ddbca571dcd1bef71b1b2d2191be8b2b410c`) plus tsv dumps in
+  `/var/tmp`. The scratch copy is measurement scaffolding, not evidence; the blocks in the
+  evidence file are the durable artifact.
+- Deviation, disclosed: two count substitutions on that scratch copy were done with scripted
+  replacements instead of the per-edit tool; one produced a duplicated `mismatches=0` tail that
+  I removed with the edit tool. Only `/var/tmp` was affected, never the lane repo; the final
+  line was re-verified by the counter (`66/66/44/0`) and by a token-set diff.
+- Out of scope, untouched: both target files unedited by this seat; no git/jj write, commit,
+  index, `.ufo/state`, watchdog log, MANIFEST, fleet templates/scripts, sibling repo, `/proc`,
+  credentials, private TSVs, `.tower`, operator-sweep census content; no mutating cleanup; no
+  process signalling; no deletion authority created.
+- Not claimed: admission, closure, any score change, any resolution of attempt 1's adequacy
+  claim, or any statement about bytes the audit does not read.
 
 ## 5. Artifacts
 

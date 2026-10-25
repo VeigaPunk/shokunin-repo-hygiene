@@ -1520,3 +1520,101 @@ L1 holds the planner seat. No new cleanup authority, no live /proc,
 no credentials, no operator-sweep contents. Certification OFF,
 K5 HELD. Fleet-root and lane untracked paths were classified, never
 deleted.
+
+Round22 attempt2 corrections (round 23, append-only)
+=====================================================
+Filed bytes above are unchanged. This block supersedes exactly three
+claims in the Round22 attempt2 entry; nothing else in it is re-opened.
+
+1. C1 base tuple. The entry quotes assertions=56 resolved=53 skipped=33 mismatches=3
+   from census/round-22/attempt2/declared-evidence-before.tsv. That file is the
+   pre-hardening scanner's reading. The authoritative before receipt is
+   census/round-22/attempt2/declared-evidence-before-final.tsv: assertions=55 resolved=52 skipped=33 mismatches=3
+   (the earlier receipt is superseded by it; SCORECARD.md already quotes the
+   -final figure). The difference is one class-B token the pre-split scanner
+   asserted inside a revision-named cell.
+
+2. Register-slice tally. The entry says "5 accepted with corrected quotes, 1 present, 1 refused
+   (S123 wrong-source citation), 1 unverifiable (S118 DOI 202 empty body)".
+   census/round-22/attempt2/slice-verdicts.tsv holds 5 accepted, 2 present,
+   0 refused, 1 unverifiable. The pairs "1 present" and "1 refused" are
+   superseded by 2 present and 0 refused; corpus/README.md carried the same
+   wrong pair and was corrected in place in round 23.
+
+3. C2 tool digest. The entry's after-run is bound to gate-check blob f26aa728
+   (sha256 5b8025a8...), which is the tool that actually produced the run; the
+   blob at the entry's own named tip 77d6595 is 63ac63b8 (sha256
+   d5ed0805b10f283fcc240a2daa628681a9c76bec7df1fe1cbc7e204754ecdc9d), so
+   "5b8025a8..." is stale at that tip, not wrong for the run. Both digests are
+   now recorded: census/round-23/records/gate-check-at-lane-base.tsv binds
+   d5ed0805... at 1208bfb and census/round-23/records/gate-check-at-first-landing.tsv
+   binds d85c2696... at a211e4d. No committed tool blob reproduces the entry's
+   "before fail=10" state: at a211e4d the entries co-land with the tool, at
+   4edb25d neither exists, and the tip blob scores fail=0. That half of the
+   before-state stays unrecoverable and is reported as such, not reconstructed.
+
+D8 note: the derived register-slice row for S118 carries a stray backtick
+inherited from the campaign register's id cell. The row is digest-bound twice
+in r22 evidence and is not edited here; the count is unaffected
+(slice_verdicts=8 slice_total=8).
+
+Round23 (2026-10-25) — record agreement, blob-bound receipts, F2 read side
+==========================================================================
+Three claims frozen before data in .ufo/waves/round-23/preregistration.txt
+against lane base 1208bfb4924d9c6d4fdd1cdf8ccdc29b834893cd. Inbound: the
+non-author spot-check's routed defects D1-D8
+(corpus/lessons/round-22-verifier-spotcheck.md section 6).
+
+C1 calibration (lowest axis, 7). tools/souji-record-agreement.py re-derives
+four declared-vs-observed keys from committed bytes: K1 a receipt binds the
+r22 C1 after-state at the revision SCORECARD names; K2 every superseded scalar
+in LOG.md's round-22 section is covered by a later "superseded by" line and the
+filed occurrence still exists; K3 the register-slice tally in README and the
+r22 lesson equals census/round-22/attempt2/slice-verdicts.tsv; K4 no
+uncommitted round work outside a committed exemption row. Control (do
+nothing) = the same tool bytes at base: keys=4 records=3 occurrences=13
+mismatches=20, rc 1 (receipt census/round-23/records/agreement-control-base.txt).
+After: mismatches=0 at the landing tip (receipt
+census/round-23/records/agreement-after.txt). The instrument's own fixture
+tests/fixtures/r23-record-agreement.py kills an always-zero emitter on eight
+cases.
+
+C2 operability (8). tools/souji-receipt-run.py re-derives a counter at a full
+durable revision in a private --no-local clone, and writes a receipt binding
+rev, tool path, tool sha256 of the bytes the command ran against, argv, exit
+code and redacted output; verify re-reads the tree at the receipt's revision
+and refuses a digest that is not the committed blob. Counter
+grep -rlE '^tool_sha256=[0-9a-f]{64}$' census/ | wc -l: 0 before, 5 after
+(declared-evidence@9301d98, gate-check@a211e4d, gate-check@1208bfb,
+record-agreement@<tip>, gate-check@<C3 tip>). Refusal demonstrated on a receipt
+carrying the r22 stale digest 5b8025a8...: RECEIPT-TOOL-DIGEST-MISMATCH, rc 2.
+Named limits: the digest binds bytes, not execution (a typed receipt passes
+verify); K4 is worktree-scoped, so C1's K4 is not revision-reproducible.
+
+C3 coverage (8). One assimilation theme on F2 (repository size census), the
+lane's only frontier row that held no entry: corpus/knowledge/repo-size-census-readonly.md
+(S115-S117) and corpus/knowledge/count-objects-garbage-readings-r25.md
+(S118-S119), re-grounded from sources opened this round (installed git 2.56.0
+man pages snapshotted under census/round-23/sources/ with sha256, plus two
+community pages fetched live). Registry 114 -> 119 rows, 0 malformed, 0
+duplicate ids, sources-census validate exit 0. No fleet size figure is claimed;
+the staged package's own-work census row is rejected because its evidence lives
+outside this repo.
+
+Routed defects. D1: the seven inherited round-22 leftovers are committed here
+(ScoutInherited re-derived both evidence digests and every moved number).
+D2: receipt census/round-23/records/declared-evidence-after.tsv binds
+assertions=63 resolved=63 skipped=40 mismatches=0 at 9301d98c1c689c79741f0f1ba1f171138d20af07,
+the revision SCORECARD names. D3: digest chain recorded, before-state
+unrecoverable (see correction 3). D4: README corrected in place. D5: correction
+block above. D6: r22 lesson Gate reject reason corrected. D7: QUALITY Q54
+requires a Gate's "§ <heading>" locator to resolve to a heading line in a named
+snapshot, citing round-22 M17/M19/M21. D8: disclosed above.
+
+Wave. One v1 wave under scripts/hyaku/ufo-wave-policy.json, 41 seats
+(9 scout, 9 scribe, 9 reviewer, 4 critic, 3 executor, 2 revenger,
+2 mutation-tester, 1 connector, 1 sentinel, 1 simplifier) dispatched as one
+task call from .ufo/waves/round-23/w1-spec.json, plus a residual reviewer
+call. L1 holds the planner seat. No deletion outside this repo, no history
+rewrite, no credentials, no live /proc census, no operator-sweep contents.
+Certification OFF, K5 HELD, F5 reap and NAMESPACE holds unchanged.

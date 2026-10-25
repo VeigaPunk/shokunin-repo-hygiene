@@ -1,0 +1,120 @@
+souji round 23 — preregistration (frozen before data)
+lane base 1208bfb4924d9c6d4fdd1cdf8ccdc29b834893cd (branch master, ahead=0 behind=0)
+date 2026-10-25
+author SoujiR23 (lane identity souji-shokunin <souji@shokunin.local>)
+inbound: corpus/lessons/round-22-verifier-spotcheck.md sections 6 (D1-D8) and 7
+axes: calibration (7, lowest non-retired), operability (8), coverage (8)
+
+HARD BOUND (carried into every wave context): souji is a hygiene lane, but its write scope is
+its own repo only. Never delete, move, quarantine or classify-for-cleanup anything in
+/home/vgpnk/Projects/shokunin outside souji-shokunin/. Incident 2026-10-25: the fleet's tracked
+.scratch/ tree was deleted mid-run by an unidentified seat.
+
+=====================================================================
+C1 — calibration. Record agreement: self-assessment vs observed repo state.
+=====================================================================
+Claim: the four declared r22 bookkeeping defects the non-author spot-check routed to this lane
+(D2 no receipt binds the named revision, D5 superseded LOG numbers uncorrected, D4 README slice
+tally wrong, D1 uncommitted round work) are repaired AND the lane holds an instrument that
+re-derives them, so that at the round tip the instrument reports mismatches=0 while the
+do-nothing control (the same instrument at the base revision) reports mismatches>=1.
+
+Counter (frozen predicate, one command):
+  python3 tools/souji-record-agreement.py --rev <full40> --root /home/vgpnk/Projects/shokunin/souji-shokunin
+Counts line: keys=K records=R occurrences=O mismatches=M   (exit 0 iff M==0)
+
+Frozen key set (each key = one routed defect class; the VALUE is always derived from a receipt,
+never declared in the key table):
+  K1 after-receipt binding (D2): the r22 C1 after 4-tuple quoted in SCORECARD.md must equal the
+     counts line of census/round-23/records/declared-evidence-after.tsv, the revision token on
+     that same physical line must equal the receipt's rev= header, and the receipt must exist in
+     the tree at --rev. Mismatch classes: receipt-absent, value-disagree, rev-disagree.
+  K2 superseded-number correction (D5): every 4-tuple occurrence inside LOG.md's
+     "Round22 attempt2" section that disagrees with census/round-22/attempt2/declared-evidence-before.tsv
+     must be named by a LATER LOG.md line carrying the marker "superseded by" and the same
+     4-tuple; and the filed historical occurrence must still exist (its deletion is itself a
+     mismatch: filed bytes are append-only).
+  K3 slice tally (D4): for each class in {accepted,present,unverifiable,refused} every
+     "<n> <class>" occurrence in corpus/README.md and corpus/lessons/round-22.md must equal the
+     tally derived from census/round-22/attempt2/slice-verdicts.tsv, and each record must carry
+     at least one occurrence of each class.
+  K4 uncommitted round work (D1): each `git status --porcelain` path in the lane working tree
+     that no committed exemption names is one mismatch. Exemption file (committed, read at --rev):
+     census/round-23/records/uncommitted-exemptions.tsv, one `path<TAB>reason` row per
+     operator-owned path. (Amended pre-data from corpus/pointer-exemptions.tsv: the landing gate
+     parses that file and refuses an unknown row shape with a whole-lane exit 2 — proved by the
+     SimplTouched seat at 05:5x, before any after-data.)
+
+Per-predicate mapping is fixed in code constants in tools/souji-record-agreement.py; the tool is
+the frozen contract. It reads git objects only (git cat-file/ls-tree) plus one working-tree
+status query for K4.
+
+Target: M_after = 0.  Before: measured at the base revision with the same bytes.
+Kill rule: any mismatch class with no covering repair keeps C1 unverified; the round reports the
+residual honestly (honest stop), it does not narrow the key set after data.
+Control rule (claim-sizing gate, §9): the cheap control is "do nothing" = run the instrument at
+base (1208bfb). If that control reports M=0 the counter or target is wrong and the round repairs
+the counter BEFORE any after-data. Receipt: census/round-23/records/agreement-control-base.tsv.
+Additional control: the fixture's cases 2-6 each require >=1 mismatch, so an always-zero emitter
+is rejected by the same harness (control=FALSE-GREEN-REJECTED).
+Sourced ground: S115/S116/S117 (git-count-objects, git-fsck, git-prune), opened 2026-10-25 —
+the write-side-effect distinction the round's read-only receipts depend on (git fsck --lost-found
+writes; a receipt runner must stay read-only).
+
+=====================================================================
+C2 — operability. Blob-bound receipts: re-derivation at a named revision.
+=====================================================================
+Claim: the lane gains a runner that re-derives a counter at a full durable revision and emits a
+receipt binding (rev, tool path, tool sha256 at rev, command, rc, stdout), and a verifier that
+refuses a receipt whose recorded tool digest is not the committed blob at the named revision.
+This closes the spot-check's D3 finding: the r22 after-run was measured with tool blob f26aa728
+while the report cited 5b8025a8…, and no "before" receipt existed.
+
+Counter (one command):
+  grep -rlE '^tool_sha256=[0-9a-f]{64}$' census/ | wc -l
+Before target: 0. After target: >= 4 (declared-evidence before, declared-evidence after,
+gate-check before, gate-check after), each verifiable with
+  python3 tools/souji-receipt-run.py verify <receipt>
+Refusal demonstration (must fire): verify on a receipt whose tool_sha256 is the stale r22
+5b8025a8… value exits nonzero with RECEIPT-TOOL-DIGEST-MISMATCH.
+Kill rule: a receipt whose verify exits 0 while its tool bytes at rev differ from the recorded
+digest kills the claim. The runner is read-only with respect to the lane (materializes
+`git archive <rev>` under /var/tmp; never writes the lane tree, never fetches).
+Control: the base revision has zero bound receipts, so the target is unreachable by doing nothing.
+
+=====================================================================
+C3 — coverage. Assimilation: one theme (F2 size census read side), 2 entries, 3 rows.
+=====================================================================
+Theme: F2 repository size census — the lane's only frontier row with NO entry
+(corpus/README.md F2: "frontier, no entry"). Package /home/vgpnk/Projects/shokuknow/merge/souji/
+(staged 2026-10-24, read-only). Entries taken:
+  corpus/knowledge/repo-size-census-readonly.md   (staged id S112-S114 -> lane re-pointed)
+  corpus/knowledge/count-objects-garbage-readings-r25.md (staged S134/S138/S139, renamed: the
+  entry claims only what this lane opened, so it does not inherit the staged fleet-census claim)
+Re-grounding (CORPUS rule 1): every cited source re-opened by this lane on 2026-10-25, live or
+from the installed man pages, with this lane's own access date and a <=25-word located quote in
+the lesson's ## Gate. Staged `opened` dates and quotes prove nothing.
+Id collision: registry holds 114 rows (max S114); staged S112-S114 collide. Adopted ids continue
+the registry at S115. Citation re-pointing is BY DOCUMENT (URL is the evidence; id follows it).
+Counter (frozen):
+  python3 tools/souji-gate-check.py --root <lane> --round-date 2026-10-25 \
+    --entries corpus/knowledge/repo-size-census-readonly.md \
+    corpus/knowledge/count-objects-garbage-readings-r25.md \
+    --snapshot-dir census/round-23/sources --slice census/round-23/records/empty-slice \
+    --slice-verdicts census/round-23/records/empty-verdicts
+  plus /home/vgpnk/Projects/shokunin/scripts/sources-census.sh validate --root /home/vgpnk/Projects/shokunin souji
+Targets: gate-check entries=2 ok=2 fail=0; registry rows 114 -> >=117 with 0 malformed and 0
+duplicate ids; census exit 0. Kill rule: an entry that fails its own gate, or a row whose id
+collides, lands nothing and the round reports the refusal.
+Control: the two staged entries cite staged ids that resolve to DIFFERENT sources in this lane's
+registry (S112-S114 are the quarantine rows) — an append of the staged rows as-is is the cheap
+control and it must fail the census/gate (duplicate id). That receipt is committed before append.
+
+=====================================================================
+Bounds (unchanged, carried into every wave)
+=====================================================================
+Certification OFF. K5 HELD. F5 reap + NAMESPACE_SHA256 holds unchanged. No deletion, no move, no
+quarantine outside souji-shokunin/; no history rewrite; no credentials; no live /proc census; no
+operator-sweep contents read or staged; .ufo/state/, .ufo/watchdog.log, MANIFEST.json, the fleet
+scripts/ and templates/ never written; sibling lanes and jj state never touched. Round landing
+goes only through scripts/hyaku/jj-lane.sh (lane) and fleet-commit.sh (fleet report).

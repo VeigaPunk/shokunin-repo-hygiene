@@ -458,3 +458,35 @@ after data is scored is not the claim's rule). Each is recorded with a flip.
   boundary missing. *Fix:* the boundary sentences above; the TSV now follows
   them (5/2/1/0). *Flip:* a row classed `accepted` whose span is in no
   reachable document would show the boundary is still being applied wrongly.
+
+## Attempt 2 — round-23 correction to one reject reason (D6)
+
+Appended by round 23; the filed text above is unchanged.
+
+The REFUSED bullet for `quarantine-staging-no-copy-r24.md` gives the reason "same
+primitive, second device list, no new refusal semantics or field, so no new
+consequence for the lane", and a flip that the candidate already satisfies (its
+mounts lie outside the r23 entry's five devices, and it names its own
+consequence). Read against the candidate's bytes the reason is false: the
+candidate adds `RENAME_EXCHANGE` and `RENAME_WHITEOUT`, and it states the
+consequence "a staging tool could therefore use an atomic swap". Its "eight
+writable paths" is eight probe rows over seven distinct path strings.
+
+Corrected reason (entry-level, which is what actually decided it): the candidate
+is dominated by the admitted r23 entry on the entry budget — r23 already holds
+the no-clobber staging primitive and the `mv --no-copy` refusal the lane needs —
+and the swap/whiteout verbs change no lane consequence this round, because no
+staging tool exists to use them. The candidate's own delta over r23 is named:
+`RENAME_EXCHANGE`/`RENAME_WHITEOUT`, and seven distinct writable paths versus
+r23's five.
+
+Corrected flip: a round that is actually building the staging tool, so an atomic
+swap is a consequence it would implement — not merely another device list.
+
+Witness that this is a real correction and not a re-wording: the reason as filed
+is contradicted by the candidate's own sentence at
+`/home/vgpnk/Projects/shokuknow/merge/souji/knowledge/corpus/knowledge/quarantine-staging-no-copy-r24.md`,
+which `RevD6` quotes; the phrase "no new refusal semantics or field" cannot be
+true of a file that adds two rename flags. The spot-check's own §4 recorded the
+same disagreement (D6). The filed text is preserved above and in the spot-check;
+no filed evidence was rewritten.
