@@ -1,0 +1,21 @@
+## Status
+STATUS: PASS — no-harm sweep clean: no new untracked seat-written file at fleet root; no PROVINCE.md/SKILL.md change; no source-package write to shokuknow; no operator-owned fleet file edited by this session. One fixable premise defect found in C1(a) (tracked wave copy mislabeled "uncommittable") — reported below, not an attack.
+
+## Evidence
+Sweep command: `git -C /home/vgpnk/Projects/shokunin status --porcelain` (and with `--untracked-files=all`) → output: 7 modified tracked files only, zero `??` entries at fleet root (rev: master @ 0c96332 for lane; fleet HEAD 0c963329? fleet git HEAD `fleet: rev-parse HEAD` not captured; lane HEAD = 0c963329 = origin/master).
+
+1. Fleet root dirty set (all tracked, none new): `M .scratch/goal-20261025-hyaku-run7.md`, `M .ufo/l0-questions.md` (+2 lines: tabi round-27 question append), `M .ufo/state/{kasegi,kengaku,souji,tabi}.report-baseline`, `M .ufo/watchdog.log` (+18). No `??`.
+2. `git -C .../souji-shokunin status --porcelain -- PROVINCE.md SKILL.md` → empty; both tracked and clean.
+3. Lane git/jj: reflog `0c96332 HEAD@{0}: export from jj`; master == origin/master == HEAD == 0c963329 (round-28 frozen preregistration + before-receipts + do-nothing controls, author souji@shokunin.local); index clean (`diff --cached --stat` empty). Detached HEAD is the jj-export norm.
+4. shokuknow: `find merge/souji -newermt '2026-10-25 00:00'` → none; `git status --porcelain` untracked souji paths all predate run (lanes/souji/round13-16 mtimes 2026-10-24 16:57-22:03; merge/souji staged entries mtime 2026-10-24 23:33). No today-write.
+5. `git ls-tree 3a2a80d... -- .ufo/waves/round-24/assimilation/slice-verdicts.tsv` → `100644 blob 3e339511...`; `ls-files -v` → `H`; `git diff HEAD -- <path>` → empty. Wave copy tracked since base, unchanged.
+6. Committed `census/round-24/records/slice-verdicts.tsv` (blob d5a8031, 1860 B) says, opened this run: "# ids below are campaign register ids (absent-defect-register.md), NOT lane registry ids; detail table: .ufo/waves/round-24/assimilation/slice-verdicts.tsv". Wave copy (1958 B) comment: "scout detail, not the gate verdict; the mapping is in corpus/lessons/round-25.md § Quarantine-slice vocabulary".
+
+## Findings
+1. No misroot: zero untracked files at fleet root (default and `--untracked-files=all`); all dirty fleet-root paths are tracked operator/harness-owned files whose deltas are harness telemetry (baselines, watchdog) or the operator question-log append (tabi r27) — no seat-authored content drop.
+2. No PROVINCE.md refuses / SKILL.md certification-wording change in the lane; both clean. No source-package write: shokuknow untouched today. No operator-owned fleet file edited by this session.
+3. Lane git/jj state: only delta vs preregistered base is the L1 integrator's round-28 preregistration commit (0c963329), consistent with the frozen contract; no index mutations; working tree holds the in-flight C1/C3 edits (QUALITY.md Q57/Q59, r26 wave mods) expected for the round.
+4. [C1(a) premise defect, fixable] The claim calls `.ufo/waves/round-24/assimilation/slice-verdicts.tsv` "uncommittable" and drops it from the Q57 command. It is actually git-tracked at base and HEAD (blob 3e339511, unchanged). Moreover the committed replacement authority `census/round-24/records/slice-verdicts.tsv` self-describes its detail table as the wave copy, and the wave copy self-describes the census file as authoritative — mutual cross-reference. Dropping the wave path from the check is still operationally valid if the check consumes only the census file's aggregate rows; the "uncommittable" rationale is factually wrong and the two authorities should be reconciled in the delivered q57-sites.txt (single source of truth) to avoid an orphaned detail table.
+
+## Attack log
+Not an attack on the approach: the C1(a) defect is a stale premise in claim wording, not a counter/target change. Fixable smallest correction: reword C1(a) to say the wave copy is "superseded by the committed census table (real detail rows merged into the census file or explicitly referenced)", and verify the Q57 check reads only the committed file before dropping the wave path. No axis harmed; landing-gate target unchanged.

@@ -1748,3 +1748,20 @@ Q57 verification: `r25-slice-mapping.py` → rows=8/8, both TSV pointers, S118 a
 - Attempt 1 died before work (`watchdog.log:1377`); attempt 2 dispatched one v2 wave of 79 seats. Results and seat reports are in `.ufo/waves/round-27/`; 36 r26 leftovers remain under `.ufo/waves/round-26/w1/` because lane helper refuses `.ufo` paths; no unrelated or operator-owned files were swept.
 - Assimilation: S119 rejected pending decision-time pin; S118 source-register slice marked unverifiable. `considerthese/` absent. No tools installed/updated; certification OFF, K5 HELD, F5 reap and NAMESPACE holds unchanged.
 - No owned score changed (calibration 7, coverage 8, operability 8); C1 failure means no round admission.
+
+## 2026-10-25 — Round 28 attempt 1: Q57/Q59 pointer repair, POSIX F4 entries, wave evidence capture
+
+Three claims were frozen in `census/round-28/records/preregistration.txt` at base `3a2a80d0d18940a5e352ebc526da22a57dad83c4`; the base and skip-work controls were committed before the wave at `0c96332932e66bbaf9cf1c246091d3275a0ab612`.
+
+- C1 calibration: the lane landing gate reports SUMMARY `findings=2` at base and `findings=0` at `765fe8bd602ac679d01e7a0790711485209ab8bd`; `checked_reg=52` at both. The final gate exit remains 2 (`COULD-NOT-EVALUATE`) because no committed `.ufo/waves/round-28/*.md` reports exist at the measured revision. Q57 selector bytes are in `census/round-28/q57-sites.txt`; Q59's prose token is reworded in `corpus/QUALITY.md`. No exemption row was used.
+- C2 coverage: two new F4 entries and three POSIX rows were added; grounded F4 entries 4→6, SOURCES rows 135→139, Gate `entries=2 ok=2 slice_verdicts=8 slice_total=8 fail=0`, source census rc 0. The separately admitted S119 decision appends S215 and therefore causes the frozen registry counter target 138 to miss (139). Coverage-agreement at the tip reports global `grounded=13 mapped=13 dangling=0 mismatches=0`, not the frozen F4-only `6/6` literal. Honest stop; no target/counter rewrite.
+- C3 operability: capture tool + six-case fixture added; rounds 26/27 captured into `census/round-{26,27}/waves/`; modified r26 tracked files were restored to HEAD after capture; `.gitignore` now carries `.ufo/waves/`, `census/operator-sweep-*/`, `__pycache__/`. Frozen dirty-wave counter 163→0; fixture `cases=6 pass=6 control=TAMPER-REJECTED`. `sha256sum -c` on r26 warns that two newline-containing path rows are improperly formatted (rc 0); r27 verifies cleanly. This receipt limitation is disclosed and not certified as full verification.
+- Frontier: new S212–S214 re-grounded POSIX Issue 8 pages at `census/round-28/sources/`; S215 is a decision-time-pinned zh-Hans corroboration. Gate rejects S216 (F3) and S138 (F1/F2). No prior row cells changed. `considerthese/` is absent; no assimilation from that directory.
+- Mistake mined: stale-premise / checker disagreement; details in `corpus/lessons/round-28.md` `## Mistakes`.
+- Wave: one v2 wave, 64 seats dispatched, L1 held planner. Seat reports on disk when this LOG entry was written: 55; dispatcher `w1-results.json`/dead-seat statuses had not yet arrived. Do not infer remaining seat outcomes.
+
+Axis scores unchanged (calibration 7, coverage 8, operability 8); C2 misses its frozen counter and C3 has a manifest-verification limitation, so no round admission is claimed. No tools installed/updated; certification OFF, K5 HELD, F5 reap and NAMESPACE holds unchanged.
+
+### Round 28 wave result correction (2026-10-25)
+
+The dispatcher subsequently delivered `census/round-28/waves/w1-results.json`: 64/64 result payloads, role mix executor 20 / reviewer 12 / scribe 8 / critic 6 / mutation-tester 6 / scout 6 / connector 2 / sentinel 2 / simplifier 2; no replacement seats. Scribe21 returned an aborted result due to conflicting evidence constraints; Scribe28 returned `[WAIT]` with no report. The earlier "55 reports, results not yet arrived" line records its write-time state and is superseded for final seat accounting. Full evidence is in the captured wave receipt.

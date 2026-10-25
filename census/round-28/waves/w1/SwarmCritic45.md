@@ -1,0 +1,21 @@
+## Status
+STATUS: PARTIAL — Causality is structurally separable, but control receipts do not establish per-claim no-op failure; L2 floor cannot be certified from opened evidence.
+
+## Evidence
+- Opened frozen contract `census/round-28/records/preregistration.txt` lines 3–9: C1 calibration, C2 coverage, C3 operability; target predicates are individually enumerated.
+- `census/round-28/records/c1-control.tsv`: output lists two exact landing-gate findings and `SUMMARY findings=2`; this is a valid C1 baseline/no-op failure receipt.
+- `census/round-28/records/c2-control.tsv`: only `grounded_f4=4` and `rows=135`; supports C2 baseline shortfall, not the required gate/census/map outcomes.
+- `census/round-28/records/axis-check-before.txt`: `claims=3 flags=0`, `axis_rc=0`; establishes only the pre-wave axis check, not post-wave or L2 role split.
+- `.ufo/waves/round-28/w1/round-28.md` lines 1–17 explicitly leaves gate choices, C3 controls, after-state, and residuals as `[AFTER]` placeholders. Therefore current local evidence does not certify the L2 floor (>=8 seats, roles split) or completed end-state.
+
+## Findings
+1. **Causal separation: provisionally yes.** C1 operates on the two citations/prose tokens in lesson/quality materials; C2 changes knowledge entries and SOURCES; C3 adds capture utility/fixture and ignore/capture state. No frozen counter is shared: C1 landing-gate findings, C2 corpus/gate/census/map counts, C3 capture/status/fixture. C1’s landing-gate check is not predicated on captured C3 receipts: baseline report check says no wave report existed at base, while its two findings are independently enumerated. C2 is independent of C1’s citation rewording. But actual implementation could couple these by editing the same file(s); review the resulting diff before accepting separation.
+2. **Do-nothing controls: incomplete.** C1 has an explicit no-op receipt failing target (`findings=2`). C2’s `c2-control.tsv` proves only two baseline counts; it does not show the frozen gate, census, or agreement predicates fail. C3’s `c3-control.tsv` was not opened, so the per-claim no-op receipt is unverified. Contract names control records, but their existence alone is not a receipt of target failure.
+3. **Universal clauses: bounded in the frozen claims.** C1 enumerates exactly (a)/(b); C2 enumerates two entries and S212–S215 disposition; C3 enumerates rounds 26/27 plus round 28 end capture and fixture cases. The broad descriptor “refuses special files/escaping” is not itself a finite test set in the claim; fixture enumerates six cases, but the opened wave draft does not identify them. Do not treat six cases as proof of all special-file/escape variants.
+4. **Lowest axis: yes by preregistration, not yet by outcome.** C1 is explicitly calibration score 7, the lowest non-retired axis. Its base control has two findings, making it a meaningful target. Completion still requires landing-tip zero findings without exemptions.
+5. **L2 floor: unproven.** The opened wave draft contains no roster/role-split evidence or settled wave shape, only placeholders. A single batched wave can meet the stated floor in principle, but no evidence here shows >=8 actual seats with roles split. Verdict: cannot certify; require committed roster/role evidence, not seat count inferred from peer activity.
+
+## Attack log
+- Counterexample to treating the whole round as evidenced: C2 may reach grounded=6/rows=138 while gate/census/map fail; the only opened C2 control records the two counts and cannot rule this out. Similarly C3 could have a valid fixture yet fail dirty-path target. Preserve independent per-claim acceptance; no cross-claim success inference.
+- Impacted axes: C1 calibration (score 7), C2 coverage (8), C3 operability (8); L2-floor is a round-shape acceptance concern, not an axis result.
+- Smallest safe correction: before the L1 integrates, require the frozen no-op control outputs for C2 gate/census/map and C3 fixture/status/manifest targets, plus a roster artifact showing >=8 seats and role split. Keep the existing predicates unchanged; mark any unobserved result unverified rather than passing.

@@ -1,0 +1,19 @@
+## Status
+STATUS: PARTIAL — fixed-state gate baseline already failed with 10 unrelated `LG-SEAT-UNCARRIED` findings; Q57 mutant survived, Q59 was detected, and the unused-exemption probe was flagged.
+
+## Evidence
+- Detector: `python3 -B <scratch>/tools/souji-landing-gate.py --root <scratch> --rev <scratch-rev> --round 28 --fleet-root /home/vgpnk/Projects/shokunin`. Scratch tree was based on `git archive HEAD` at lane `0c96332932e66bbaf9cf1c246091d3275a0ab612`, with the observed corrected `corpus/QUALITY.md`, `census/round-28/q57-sites.txt`, and round-28 wave snapshot overlaid; lane history was fetched into scratch to resolve measured-commit pins.
+- Frozen rule: `/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-28/records/preregistration.txt:5` — “any finding remaining, or an exemption row used to clear a finding, fails the claim.” Gate checks path existence before exemptions: `/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-landing-gate.py:957-961` — “if _path_exists_in_tree(path, tree_paths): continue”.
+- Pristine fixed projection `b9c3404f308e9297e16f47153467b51c8f58b439`: `SUMMARY findings=10 checked_reg=52 checked_changed=0 checked_pins=13 checked_measured=3 checked_markers=10 status_lines=38 carry_heading=0 checked_reports=41`; exit 1. The 10 outputs were existing round-28 `LG-SEAT-UNCARRIED` reports.
+- After each probe, restored gate output returned to `SUMMARY findings=10 ... checked_reports=41`, exit 1.
+- Restoration hashes matched the pristine saved bytes: `corpus/QUALITY.md` `acb6b54056bd9960aead41024bc95a4e34574aca1f3aaa82fd4ea8f44afca537`; `corpus/pointer-exemptions.tsv` `9d6a0352186076e9a027facd581d869195b663e305fe92fddf224cb073bb68cf`. Scratch `/var/tmp/souji-r28-SwarmMutationTester47/` was removed.
+
+## Findings
+1. **Q57 path regression — SURVIVED.** Mutated only the second mapping argument to `.ufo/waves/round-24/assimilation/slice-verdicts.tsv`. Gate output remained at 10 findings, with no Q57 `LG-DANGLING-PTR`; summary was identical to pristine. `git ls-tree` in scratch showed the target is committed in this tree (`100644 blob 3e339511c14892a18af93303f9992daad53b9e57 .ufo/waves/round-24/assimilation/slice-verdicts.tsv`), so the gate’s existence check treats it as resolved. This is a detector-coverage finding; no contract change made.
+2. **Q59 token regression — TARGET FLAG OBSERVED, formal kill INCONCLUSIVE.** Mutated `knowledge-registry` back to `corpus/knowledge/registry`. Output added `LG-DANGLING-PTR\tcorpus/knowledge/registry\tcorpus/QUALITY.md:143 cites path absent at fed6eb27d1d9`; summary `findings=11` (exit 1). The target was detected, but the pristine detector already failed, so this is not a clean-baseline killed mutant.
+3. **Two unused exemptions — FLAGGED; frozen kill rule fails the mutant.** Added rows for the two historical Q57/Q59 bad tokens while keeping corrected cells. Output added `LG-DANGLING-PTR-EXEMPT-STALE` for `.ufo/waves/round-24/assimilation/slice-verdicts.tsv` and `corpus/knowledge/registry`; summary `findings=12` (exit 1). JSON summary had `ptr_exempt=4` from existing rows; the two new rows themselves were explicitly stale/unused. Under the frozen rule, remaining findings fail this mutant claim.
+
+## Attack log
+1. Q57: corrected-cell path reverted; gate did not re-flag because the path exists in the committed snapshot. Verdict: survived / coverage finding; overall clean-baseline verdict unavailable.
+2. Q59: corrected token reverted; target dangling-pointer finding appeared. Verdict: target detected, formal kill inconclusive due to the 10-finding pristine baseline.
+3. Exemption substitution: two stale rows tested; both produced stale-exemption findings and the mutated claim fails the frozen kill rule. All scratch bytes were restored to the saved pristine hashes before scratch cleanup.

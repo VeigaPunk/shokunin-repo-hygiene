@@ -1,0 +1,15 @@
+## Status
+STATUS: PARTIAL — both requested lane entries are absent; reviewed the read-only staged candidates and found contract blockers.
+
+## Evidence
+- Lane `corpus/knowledge/`: listing contains `origin-record-writer-r27.md` and `origin-record-mechanism-set-r33.md`, but not either r28 target. Registry `corpus/SOURCES.md:154-156` ends at S211; round-28 `sources/` contains only `SHA256SUMS` and `git-fetch-zh-HANS-CN.html`.
+- Staged candidate paths: `/home/vgpnk/Projects/shokuknow/merge/souji/knowledge/corpus/knowledge/origin-record-exclusivity-r28.md` and `.../origin-record-durability-r28.md`; `MERGE-REPORT.md` says “Nothing was written into the lane repo.” Both candidates include source/verified-at/recheck and `ground: F4`, but neither has `## Gate`.
+- Re-opened POSIX Issue 8 fsync page from `https://pubs.opengroup.org/onlinepubs/9799919799/functions/fsync.html` into `/var/tmp/souji-r28-SwarmReviewer32/fsync.html` (SHA-256 `5c2975abbb2d65fcad92a4da5241f4f4001f0e5d8cf57f752d9486073ca49747`). Its DESCRIPTION says: “The nature of the transfer is implementation-defined.” The candidate's purported fsync quote “all data up to the time of the call is recorded on the disk” does not occur in the reopened page. `grep` against that opened page returned 0 matches.
+- Opened sources this run; their locations and quotes: lane preregistration `census/round-28/records/preregistration.txt` C2: “S212 = open(), S213 = rename(), S214 = fsync()”; merge report: “Nothing was written into the lane repo.”
+
+## Findings
+1. **Disagree — `origin-record-exclusivity-r28.md`.** Candidate provenance trio and `ground: F4` are present; no credential material or unenumerated universal clause observed. It lacks the required `## Gate` admit/reject decisions. Its source references S158/S159 are staged-package ids, not the frozen-round lane ids S212/S213; there is no POSIX snapshot in `census/round-28/sources/` to ground its quotes. The lane target has not been admitted, so an admission review is impossible at this point.
+2. **Disagree — `origin-record-durability-r28.md`.** Provenance trio and `ground: F4` are present; no credential material or unenumerated universal clause observed. It lacks the required `## Gate` decisions, cites staged id S173 rather than frozen-round S214, and no fsync snapshot exists in round-28 sources. More seriously, the candidate attributes the crash/disk guarantee to the cited fsync page, but the Issue 8 fsync page reopened this run describes transfer as implementation-defined and does not contain that claimed quote. The lane target has not been admitted.
+
+## Attack log
+- C2 is not evidenced as completed at the observed state: required lane entries, S212-S214 rows, POSIX snapshots, and candidate Gate blocks are absent. This is a finding against the frozen contract, not a proposed counter change.
