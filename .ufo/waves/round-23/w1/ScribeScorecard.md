@@ -13,8 +13,11 @@ STATUS: PASS — four verbatim-ready blocks drafted (three axis rows, one capabi
 revision; the calibration row **simulated against the frozen K1 predicate** (0 mismatches where the
 row currently applied at `SCORECARD.md:14` produces 2); both r23 fixtures executed here
 (`selftest=9/9` C1 with `control=FALSE-GREEN-REJECTED`, `selftest=8/8` C2 including the
-stale-digest refusal at `rc=2/RECEIPT-TOOL-DIGEST-MISMATCH`). `SCORECARD.md` was **not** edited by
-this seat; the only lane write is this report.
+stale-digest refusal at `rc=2/RECEIPT-TOOL-DIGEST-MISMATCH`). At the committed tip `4765250` the
+instrument reports `keys=4 records=4 occurrences=18 mismatches=4` — one K1 row (the stale base tuple
+the calibration row below removes) and three K4 rows (uncommitted wave file, `SCORECARD.md`,
+`tools/__pycache__/`); K2 and K3 are already clean. `SCORECARD.md` was **not** edited by this seat;
+the only lane write is this report.
 
 Reading conventions: pipes inside a table cell are written `\|` (a bare `|` splits the row); inside
 the cell bodies below, `-` and `->` stand where a pipe or arrow would otherwise appear.
@@ -112,14 +115,20 @@ $ ls corpus/knowledge/                                                     -> 13
 The base figures are `ScoutRegistryCensus.md` E2/E4/E5/E6/E8, re-derived here for the row count
 (`grep -cE '^ {0,3}\|[[:space:]]*S[0-9]{3,}[[:space:]]*\|' corpus/SOURCES.md` -> 114 at base).
 
-E7 — K1 simulation. Replaying the frozen K1 predicate over the live `SCORECARD.md` bytes (read-only
-replica of the instrument's `k1`, receipt value `assertions=63 resolved=63 skipped=40 mismatches=0`,
-receipt rev `9301d98c1c689c79741f0f1ba1f171138d20af07`):
+E7 — K1 simulation at the committed tip `4765250` (read-only replica of the instrument's `k1`;
+receipt value `assertions=63 resolved=63 skipped=40 mismatches=0`, receipt rev
+`9301d98c1c689c79741f0f1ba1f171138d20af07`):
 
 ```
-as applied now (SCORECARD.md:14)  -> 2 x value-disagree ('assertions=55 resolved=52 skipped=33 mismatches=3')
-with the calibration row below     -> 0 mismatches, 2 bound occurrences
+committed SCORECARD.md:14         -> 4 tuples on the line, 2 of them the stale
+                                     'assertions=55 resolved=52 skipped=33 mismatches=3'
+with the calibration row below    -> K1 occurrences=1, mismatches=0
+row + the filled r22 paragraph    -> K1 occurrences=2, mismatches=0   (the paragraph adds no tuple
+                                     until the placeholders are substituted)
 ```
+
+The instrument reports that line once (`MISMATCH K1 SCORECARD.md:14 value-disagree …`), but the stale
+token sits in two cells of the row, so the row must lose both.
 
 E8 — K2/K3 simulation over the landed worktree bytes (same predicate; receipts
 `census/round-22/attempt2/declared-evidence-before-final.tsv` and `slice-verdicts.tsv`):

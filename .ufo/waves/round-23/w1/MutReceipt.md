@@ -1,6 +1,7 @@
 # MutReceipt — C2 receipt runner: clause enumeration and mutant verdicts
 
-STATUS: PARTIAL — 26 mutants over 20 clauses; 9 killed, **uncovered=17**. The fixture is now a
+STATUS: PARTIAL — 26 mutants over 21 clauses (the 12 enumerated plus 9 the implementation adds or
+implies); 9 killed, **uncovered=17**. The fixture is now a
 valid detector (baseline 8/8 against `f8c5d217…`), and on it the "tool digest from the tree at rev"
 clause is **not** killed by case 3 and cannot be: case 3 discriminates only the `verify` side. The
 stdout/stderr-verbatim clause is uncovered *by the fixture's own concession*, while the shipped
@@ -8,8 +9,8 @@ runner demonstrably does not record verbatim bytes.
 
 ## Evidence
 
-Bytes tested (read-only copies; both halves were rewritten by the L1 mid-run and I re-baselined
-twice — the hashes below are the ones every verdict belongs to):
+Bytes tested (read-only copies; both halves were rewritten by the L1 mid-run and I re-baselined on
+every revision — the hashes below are the ones every verdict belongs to):
 
 | artifact | sha256 | note |
 |---|---|---|
@@ -18,10 +19,10 @@ twice — the hashes below are the ones every verdict belongs to):
 | superseded runner | `359cc415…`, `8ba27613…`, `1ec9b2fe…` | 5/8, 6/8, 8/8 baselines; **not** these verdicts |
 | superseded fixture | `6ab9ac7b…`, `bef5126d…` | 5/8 and 7/8 baselines; **not** these verdicts |
 
-Both halves were rewritten by the L1 while this seat ran (three runner revisions, two fixture
-revisions). The matrix was re-derived from scratch on each; the verdict shape below is the one the
-final pair produces, and the earlier pairs produced the same 9 killed / 17 survived split except
-where noted in finding 3.
+Both halves were rewritten by the L1 while this seat ran (four runner revisions, three fixture
+revisions). The matrix was re-derived from scratch on each; the final pair produces the 9 killed /
+17 survived split below, and the earlier pairs produced the same split except where finding 3 notes
+a mid-run repair.
 
 Lane base `1208bfb4924d9c6d4fdd1cdf8ccdc29b834893cd`. Harness under `/var/tmp/souji-r23-MutReceipt`
 (scratch only, removed at end; nothing written into the lane, no `git` write, no `pacman`).
@@ -42,7 +43,7 @@ once before the run.
 
 ## Findings
 
-### 1. The mutant table (one mutant per clause; `uncovered=17`)
+### 1. The mutant table (26 mutants; `uncovered=17`)
 
 | mutant | clause | killing case | verdict |
 |---|---|---|---|
@@ -117,28 +118,31 @@ reaches it.
 
 ### 3. "stdout/stderr captured verbatim" is uncovered by concession, and the runner is not verbatim
 
-`CTRL_RE` at `tools/souji-receipt-run.py:73` is `[\x00-\x1f\x7f]`, and `redact()` at `:78` replaces
-those with a space — `\x0a` included. Both captured streams pass through it (`:204`, `:206`).
-Receipt produced this run from the fixture's own counter template (two stdout lines, two stderr
-lines):
+M15 and M16 survive because the fixture deliberately stops looking: `r23-receipt-run.py:305` reads
+"Presence, not layout: the runner may normalize control characters in the captured output", and
+`:308` collapses whitespace before the substring test. The clause the task enumerates is therefore
+untested — a runner that rewrites the captured bytes is indistinguishable from one that does not.
+
+The rewrite is real. On the final bytes (`0d36ce98…`), reproduced this run:
 
 ```
---- stdout ---
-assertions=4 resolved=3 skipped=1 mismatches=0 label=two words
---- stderr ---
-line-one line-two
+twoline   run_rc=0  true=b'assertions=1 resolved=1 skipped=0 mismatches=0\nlabel=two words\n'
+                    receipt=b'… mismatches=0\nlabel=two words\n'          byte-identical: True
+crlf      run_rc=0  true=b'assertions=1 resolved=1 skipped=0 mismatches=0   \r\n\n'
+                    receipt=b'assertions=1 resolved=1 skipped=0 mismatches=0   \n'   identical: False
+nonutf8   run_rc=1  true=b'assertions=1 resolved=1 skipped=0 mismatches=0\n\xff\n'
+                    UnicodeDecodeError: 'utf-8' codec can't decode byte 0xff …  (no receipt)
 ```
 
-against the truth `'assertions=4 resolved=3 skipped=1 mismatches=0\nlabel=two words\n'` and
-`'line-one\nline-two\n'`. Two lines each became one. M15 and M16 survive because the fixture deliberately stops looking:
-`r23-receipt-run.py:305` reads "Presence, not layout: the runner may normalize control characters in
-the captured output", and `:308` collapses whitespace before the substring test. So the clause the
-task enumerates is not tested at all, and a receipt can no longer be re-parsed line-wise downstream.
+Line structure survives now — `CTRL_RE` at `tools/souji-receipt-run.py:74` excludes `\x0a` — but
+`\r` is still replaced at `:79`, `text=True` (`:191`) still translates `\r\n`, `rstrip("\n")` at
+`:205`/`:207` still drops trailing newlines, and a non-UTF-8 byte still aborts the run with no
+receipt. The intermediate revision `1ec9b2fe…` flattened *every* newline (`CTRL_RE` was
+`[\x00-\x1f\x7f]`), which is why the earlier fixture baseline was red.
 
-Two further violations of the same clause, reproduced on the current bytes: `text=True` (`:190`)
-turns `\r\n` into `\n` (true `…  \r\n\n` → recorded `…  \n`), and a non-UTF-8 byte aborts the run with
-`UnicodeDecodeError`, `run_rc=1`, and **no receipt** — a counter whose output is not valid UTF-8
-cannot be receipted at all.
+One more fidelity note from the same probe: when the command fails, the captured stderr carries the
+transient clone path (`/var/tmp/souji-receipt-<random>/repo/...`), so a receipt can record a path
+that no longer exists at read time.
 
 ### 4. Read-only detection is a before/after porcelain snapshot — three blind spots
 
@@ -155,10 +159,10 @@ measured tree.
 The preregistration's C2 kill rule says "The runner is read-only with respect to the lane
 (materializes git archive <rev> under /var/tmp; never writes the lane tree, never fetches)." The
 shipped runner instead clones into `scratch/repo` and checks out detached at rev
-(`tools/souji-receipt-run.py:170-177`). The substitution is defensible — a counter that needs git
+(`tools/souji-receipt-run.py:171-176`). The substitution is defensible — a counter that needs git
 plumbing gets a real repository — but it changes the frozen wording, and M04 shows nothing detects a
 checkout of the wrong rev. Note also that this `git` invocation is the only one without the
-environment scrub and `-c maintenance.auto=false` that every other call site applies (`:106-114`); it
+environment scrub and `-c maintenance.auto=false` that every other call site applies (`:107-115`); it
 inherits `GIT_*` from the caller. Whether `clone --no-local` can write into the source repo is
 [INFERENCE], untested here.
 
@@ -186,9 +190,10 @@ Attack 2: "the 8 cases bind the 12 enumerated clauses." **Refuted for 17 of 26 m
 three clauses the claim's own kill rule depends on: the digest binding (M05), durability
 (M03/M03b) and the read-only property under transient writes (M09).
 
-Attack 3: "a receipt records what ran." **Partially refuted** — `redact()` flattens every newline and
-`text=True` re-encodes the streams, so the receipt records a normalized rendering, and non-UTF-8
-output produces no receipt at all.
+Attack 3: "a receipt records what ran." **Partially refuted** — `text=True` plus `rstrip("\n")`
+re-encode both streams (CRLF to LF, trailing newlines dropped), `redact()` still rewrites `\r`, and
+non-UTF-8 output produces no receipt at all. An earlier revision of the same file flattened every
+newline; that one is repaired.
 
 Restoration: `cur-run.py` and `fixture.py` are copies; the lane originals were never opened for
 write. The harness re-hashed the tested file after every mutant and printed `identical=True`.
