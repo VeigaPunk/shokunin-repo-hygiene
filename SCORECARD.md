@@ -259,3 +259,13 @@ The five superseded-by lines themselves moved from `0eca7c8` lines 250-254 to li
 their bytes are unchanged. Re-derivation per cell:
 `git show <rev>:SCORECARD.md | sed -n '<n>p'`.
 
+---
+
+### Round 26 measurements (2026-10-25; lane base 89e0fceeefcf28db313c94120be6d25e03c60094)
+
+| claim | axis | before | after | counting command | measured commit |
+|---|---|---|---|---|---|
+| C1 r24 scaffold integration + R3 note + capability rows | calibration | markers=2, headings `17 175 231` (r23, r24-fenced, r25-last) at base | markers=0, headings `17 44 78` (r25 < r24 < r23); byte-spans of all seven amendment-2 regions re-verified | census/round-26/c1-counter.sh, receipt c1-after.tsv | 07f83e6 |
+| C2 grounded F1 knowledge entries (S128-S132) | coverage | grounded_f1=0, registry rows=127 at base | grounded_f1=2, rows=132; gate entries=2 ok=2 fail=0; coverage agreement grounded=9 mapped=9, kill_violations=0 | census/round-26/c2-counter.sh, c2-gate.tsv, c2-k4-{base,after}.tsv | 9a6e0f1 |
+| C3 prereg axis-of-surface checker | operability | tool absent at base | claims=3 flags=0 self-hosted; fixture cases=12 pass=12 control=FALSE-GREEN-REJECTED | census/round-26/c3-counter.sh, receipts c3-before/after.tsv | 0c92c2e |
+

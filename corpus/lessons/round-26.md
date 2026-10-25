@@ -3,7 +3,7 @@
 Round 26 ran three claims: C1 (calibration) integrated the r24 scaffold
 payloads into SCORECARD.md; C2 admitted two grounded F1 knowledge entries and
 registry rows S128-S132; C3 built `tools/souji-axis-check.py` with a
-11-case FALSE-GREEN-controlled fixture. This file records the gate decision,
+12-case FALSE-GREEN-controlled fixture. This file records the gate decision,
 the re-grounding receipts, and the fixable residuals left for later rounds.
 
 ## Gate
@@ -46,10 +46,22 @@ sha256 verification rather than by re-executing the campaign fixture.
   headings; the margin of C1 is the byte-diff, recorded in the report.
 - The R3 receipt-label pitfall (from the r25 gate): the receipt's `tool`
   binds the labelled file's committed bytes *and* the argv label. The c3
-  counter's `--stub` arm is a separate labelled file commit, so the control
-  receipt's `tool_sha256` legitimately differs from the main receipts';
-  each receipt's label is its own argv element, so
-  `receipt-run --tool` accepts all three.
+  counter changed mid-round (its `--stub` arm was replaced by the fixture's
+  integrated case 12), so the regenerated receipts bind the new counter
+  bytes at their own revs; each receipt's label is its own argv element.
+- The frozen C3 case set is 12 cases (the r25-C2 replica and an integrated
+  always-green stub control); the first 11-case fixture did not implement
+  the frozen set. Wave ExecAxisFixture delivered the 12-case fixture; the
+  L1 adopted it and fixed the tool's R4 to scan raw claim text (flag only
+  when `enumerate:` is absent AND a universal word is present).
+- C2 K2 requires a `## Gate` section per admitted entry (opened date,
+  ADMIT/REJECT with reason, located ≤25-word snapshot quotes). Both entries
+  gained Gate sections; the first quote attempts failed because the man-page
+  HTML wraps the sentence in inline tags and the C comments carry a `* `
+  decoration — tag-free code/manual token quotes were substituted.
+- Wave ExecC1Surgery found C1's first landing omitted the two r24 capability
+  rows; they were appended and the c1-after receipt regenerated at the new
+  tip (markers=0, headings=17 44 78, byte-spans re-verified).
 
 ## Residuals
 
@@ -68,9 +80,16 @@ sha256 verification rather than by re-executing the campaign fixture.
 
 ## Receipts
 
-- `census/round-26/records/c1-after.tsv` (a529c76, markers=0, order
+- `census/round-26/records/c1-after.tsv` (07f83e6, markers=0, order
   17<44<78) + byte-diff annex in the round report.
 - `census/round-26/records/c2-before.tsv` (base 89e0fce: F1=0, rows=127),
-  `c2-after.tsv` (d6c13b0: F1=2, rows=132), real gate rc=0.
+  `c2-after.tsv` (tip: F1=2, rows=132), `c2-gate.tsv` (entries=2 ok=2
+  fail=0), `c2-k4-base.tsv` (grounded=7 mapped=7), `c2-k4-after.tsv`
+  (grounded=9 mapped=9, kill_violations=0), real registry gate rc=0.
 - `census/round-26/records/c3-before.tsv` (tool absent), `c3-after.tsv`
-  (flags=0 at tip d2e6253), `c3-control.tsv` (FALSE-GREEN-REJECTED, rc=1).
+  (claims=3 flags=0 at tip 0c92c2e; fixture cases=12 pass=12
+  control=FALSE-GREEN-REJECTED, fixture_exit=0); all verify=ok.
+
+## Mistakes table
+
+- R26-M1 (attribution/scope; captured-by none → fixed by C3 instrument + QUALITY Q59): the round-25 C2 claim declared operability for a change that covered four input edge classes. This round's C3 instrument makes the check mechanical, and Q59 records the criterion. The frozen C3 case 1 is the r25-C2 replica and fails on a stub (discriminator).
