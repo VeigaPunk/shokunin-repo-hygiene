@@ -1,15 +1,22 @@
 #!/usr/bin/env python3
-"""souji-coverage-agreement.py — coverage-map agreement instrument (round 24, C2).
+"""souji-coverage-agreement.py — coverage-map agreement instrument (round 24 C2, round 25 C1).
 
 Coverage map: corpus/README.md tables whose header's first cell is `ground` and third cell begins
 `entries` (case-insensitive). A row carries F<k> when its ground cell matches ^F[0-9]+ then space,
 `-` or end. Knowledge path: a backticked entries-cell span ending `knowledge/<name>`.
   MISSING-FROM-MAP   entry with front-matter `ground: F<k>` named by no knowledge path of any F<k> row
   DANGLING-MAP-PATH  knowledge path (one per README line and name) absent from corpus/knowledge at rev
+  KILL-RULE          (--base-rev only) entry grounded at base that at rev is not a blob, or lacks a
+                     front-matter `ground: F<k>` line for some base F<k> (extra grounds allowed);
+                     one row per entry
 Output: sorted MISMATCH<TAB><class><TAB><path><TAB><detail> rows, then
   grounded=G mapped=M dangling=D mismatches=X   (mapped: every F<k> of the entry is mapped)
-Exit 0 iff X == 0, 1 otherwise, 2 refused (argv, non-40-hex rev, not a commit, git failure).
-Reads committed bytes only (`git show <rev>:<path>`, `git ls-tree`). Contract: round-24 prereg C2.
+with --base-rev the counts line gains ` kill_tested=N kill_violations=V` (N: entries grounded at
+base; V: entries with a KILL-RULE row; X counts map rows only). Without --base-rev the output is
+the r24 output. --base-rev is refused like --rev.
+Exit 0 iff X == 0 and V == 0, 1 otherwise, 2 refused (argv, non-40-hex rev, not a commit, git
+failure). Reads committed bytes only (`git show <rev>:<path>`, `git ls-tree`).
+Contract: round-24 prereg C2; round-25 prereg C1 (--base-rev) and its amendments 1 and 3.
 """
 from __future__ import annotations
 import argparse
@@ -93,7 +100,40 @@ def front_grounds(text: str) -> set[int]:
     return ks
 
 
-def measure(root: str, rev: str) -> tuple[list[tuple[str, str, str]], dict[str, int]]:
+def entry_grounds(root: str, rev: str, tree: dict[str, str]) -> dict[str, set[int]]:
+    """name -> front-matter F<k> set for every grounded `.md` blob of the knowledge tree."""
+    out: dict[str, set[int]] = {}
+    for name in sorted(tree):
+        if not name.endswith(".md") or tree[name] != "blob":
+            continue
+        ks = front_grounds(show(root, rev, f"{KNOWLEDGE}/{name}"))
+        if ks:
+            out[name] = ks
+    return out
+
+
+def kill_rule(root: str, base_rev: str, tree: dict[str, str],
+              grounds: dict[str, set[int]]) -> tuple[list[tuple[str, str, str]], int]:
+    """One KILL-RULE row per base-grounded entry lost or re-grounded at rev; entries tested."""
+    base = entry_grounds(root, base_rev, knowledge_tree(root, base_rev))
+    rows: list[tuple[str, str, str]] = []
+    for name, base_ks in base.items():
+        path = f"{KNOWLEDGE}/{name}"
+        kind = tree.get(name)
+        got = grounds.get(name, set())
+        had = ",".join(f"F{k}" for k in sorted(base_ks))
+        if kind != "blob":
+            rows.append(("KILL-RULE", path, f"base_grounds={had} rev={kind or 'absent'}"))
+        elif not base_ks <= got:
+            lost = ",".join(f"F{k}" for k in sorted(base_ks - got))
+            have = ",".join(f"F{k}" for k in sorted(got)) or "none"
+            rows.append(("KILL-RULE", path,
+                         f"base_grounds={had} lost={lost} rev_grounds={have}"))
+    return rows, len(base)
+
+
+def measure(root: str, rev: str, base_rev: str | None = None
+            ) -> tuple[list[tuple[str, str, str]], dict[str, int]]:
     tree = knowledge_tree(root, rev)
     mapped_by_k: dict[int, set[str]] = {}
     rows_by_k: dict[int, int] = {}
@@ -113,22 +153,22 @@ def measure(root: str, rev: str) -> tuple[list[tuple[str, str, str]], dict[str, 
             rows_by_k[k] = rows_by_k.get(k, 0) + 1
             mapped_by_k.setdefault(k, set()).update(names)
     dangling = len(mismatches)
-    grounded = mapped = 0
-    for name in sorted(tree):
-        if not name.endswith(".md") or tree[name] != "blob":
-            continue
-        ks = front_grounds(show(root, rev, f"{KNOWLEDGE}/{name}"))
-        if not ks:
-            continue
-        grounded += 1
+    grounds = entry_grounds(root, rev, tree)
+    mapped = 0
+    for name, ks in grounds.items():
         missing = [k for k in sorted(ks) if name not in mapped_by_k.get(k, set())]
         mapped += not missing
         for k in missing:
             mismatches.append(("MISSING-FROM-MAP", f"{KNOWLEDGE}/{name}",
                                f"ground=F{k} map_rows_F{k}={rows_by_k.get(k, 0)}"))
-    mismatches.sort()
-    counts = {"grounded": grounded, "mapped": mapped, "dangling": dangling,
+    counts = {"grounded": len(grounds), "mapped": mapped, "dangling": dangling,
               "mismatches": len(mismatches)}
+    if base_rev is not None:
+        kills, tested = kill_rule(root, base_rev, tree, grounds)
+        mismatches += kills
+        counts["kill_tested"] = tested
+        counts["kill_violations"] = len(kills)
+    mismatches.sort()
     return mismatches, counts
 
 
@@ -137,23 +177,30 @@ class Parser(argparse.ArgumentParser):
         raise Refused(f"argv: {message}")
 
 
+def commit_rev(root: str, flag: str, rev: str) -> None:
+    if not FULL_REV.fullmatch(rev):
+        raise Refused(f"{flag} must be a full 40-hex commit id, got {rev!r}")
+    git(root, "rev-parse", "--verify", "--quiet", f"{rev}^{{commit}}")
+
+
 def main(argv: list[str]) -> int:
-    parser = Parser(description="coverage-map agreement over committed bytes (r24 C2)")
+    parser = Parser(description="coverage-map agreement over committed bytes (r24 C2, r25 C1)")
     parser.add_argument("--root", required=True)
     parser.add_argument("--rev", required=True)
+    parser.add_argument("--base-rev")
     try:
         args = parser.parse_args(argv)
-        if not FULL_REV.fullmatch(args.rev):
-            raise Refused(f"--rev must be a full 40-hex commit id, got {args.rev!r}")
-        git(args.root, "rev-parse", "--verify", "--quiet", f"{args.rev}^{{commit}}")
-        mismatches, counts = measure(args.root, args.rev)
+        commit_rev(args.root, "--rev", args.rev)
+        if args.base_rev is not None:
+            commit_rev(args.root, "--base-rev", args.base_rev)
+        mismatches, counts = measure(args.root, args.rev, args.base_rev)
     except Refused as exc:
         print(f"souji-coverage-agreement: refused: {exc}", file=sys.stderr)
         return 2
     for cls, path, detail in mismatches:
         print(f"MISMATCH\t{cls}\t{path}\t{detail}")
     print(" ".join(f"{k}={v}" for k, v in counts.items()))
-    return 0 if counts["mismatches"] == 0 else 1
+    return 0 if counts["mismatches"] == 0 and counts.get("kill_violations", 0) == 0 else 1
 
 
 if __name__ == "__main__":
