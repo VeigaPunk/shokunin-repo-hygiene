@@ -278,3 +278,93 @@ dispatched identities. Do not subtract the6 twice or count void reports as
 dead. The final13-want review remains unproven independently of the original
 214 measurements and RevProbe258's compliant reproduction.
 
+
+## Attempt 2 (hyaku retry) — mistakes
+
+Frozen contract: `.ufo/waves/round-22/attempt2/preregistration.txt` (written
+before any measurement). Fields are `class · evidence pointer · captured-by ·
+fix`; a fix counts only when a fixture shows it can fail.
+
+- **M13 — self-assessment overreach by the lane's own author.**
+  `round-22-verifier-spotcheck.md` records that attempt 1 claimed an
+  independent strict-adequacy proof its evidence could not carry (a VOID
+  review cannot substitute for authority). This retry does not re-claim,
+  re-pin or reword it. *Captured-by:* the spot-check rule that a retained
+  VOID PASS is not evidence — no lane-side rule existed to catch it, so this
+  is `none` on the lane bar. *Fix:* every claim in this attempt names a
+  command that re-derives it from committed bytes, and the adequacy claim is
+  retired from the round (not narrowed after the fact).
+- **M14 — citation-class defects in the register slice (7 of 8 rows).**
+  Rows S123/S131/S133 quote man-page prose (`git worktree prune [-n] …` is
+  `git-worktree(1):12`; `-n, --dry-run …` is `:218`; `RENAME_NOREPLACE …` is
+  `rename(2)`) against local probe outputs that do not contain the text.
+  *Captured-by:* CORPUS.md "a quote names its location" and QUALITY Q2 —
+  present as prose rules, unenforced mechanically on the campaign side.
+  *Fix:* gate-check check 4 requires every quoted span to appear verbatim in
+  the named committed snapshot; a byte-exact staged copy without provenance
+  fails the gate (`tools/souji-gate-check.py --selftest` fixture 7).
+- **M15 — the lane's own SCORECARD carried three assertions that do not
+  resolve at its measured revision.** At base `4edb25d`: `AXES.md` (a fleet
+  file written as if lane-relative), a bare `reason-after.txt` (real file is
+  `census/round-21/reason-after.txt`), and
+  `.ufo/scopes/souji-mint-20261018/obsidian-cli-probe.md`, which does not
+  exist on disk. *Captured-by:* QUALITY Q10 (bookkeeping matches the repo) —
+  stated, never machine-checked. *Fix:* `tools/souji-declared-evidence.py`
+  plus the before receipt `census/round-22/attempt2/declared-evidence-before.tsv`
+  (`assertions=56 resolved=53 skipped=33 mismatches=3`); the always-zero
+  control is rejected by the same fixtures, so the counter cannot be met by
+  asserting it.
+- **M16 — campaign row ids are not lane row ids.** Adopting the staged rows
+  verbatim would have opened the lane registry at S115–S137 with S109–S114
+  unused and two id spaces interleaved. CORPUS.md rule 2 (append-only) makes
+  the lane's next free id the only legal one. *Captured-by:* CORPUS.md rule 2,
+  enforced by the frozen collision step (`assimilation/collisions` is empty:
+  reg 108 ids, staged 134 ids, 0 collisions). *Fix:* ids continue at S109 and
+  every citation is re-pointed by document: campaign S124→S109, S116→S110,
+  S115→S111, S137→S112, S126→S113, S117→S114; S022 was already present and
+  is cited, not duplicated.
+
+## Gate — attempt 2
+
+**Candidates (theme: restorable-quarantine staging, one theme, §10).**
+- `quarantine-staging-no-copy-r23.md` → ADMITTED. Ground F4. Gate quotes
+  S110 (§ DESCRIPTION `RENAME_NOREPLACE`) and S111 (§ OPTIONS `--no-copy`)
+  from committed snapshots; the five-device measurement is a *vendored*
+  byte-exact copy (sha256 `1634d206…8bb5`) labelled as not re-run here.
+- `quarantine-origin-record-fields-r24.md` → ADMITTED. Ground F4 read side.
+  Gate quotes S112 (`gio trash --list/--restore`), S113 (GIO `File.trash`
+  Description), S022 (`Path`/`DeletionDate` keys) and S114 (`struct statx`).
+- `quarantine-staging-no-copy-r24.md` → REFUSED. Reason: same primitive,
+  second device list, no new refusal semantics or field, so no new
+  consequence for the lane. Flip: a measurement on a filesystem or mount
+  namespace the r23 entry did not cover *and* a consequence a staging tool
+  would change.
+- Campaign rows are not appended wholesale: only the six rows the two
+  admitted entries cite (S109–S114 lane ids) enter `corpus/SOURCES.md`
+  (114 rows total, `sources-census.sh validate` exit 0 at commit
+  `a211e4d1bf6ea592670d16269f34e9f67f33e8b3`). A row no admitted entry cites
+  is not appended (CORPUS.md rule 4).
+
+**Register slice (all 8 rows carry a verdict;**
+`census/round-22/attempt2/slice-verdicts.tsv`**).**
+5 accepted with corrected quotes (S114 markup `git-repack[1]`, S124
+intervening `NOREPLACE_new` field, S131 payload's own dry-run line, S133
+payload's SUMMARY line, S138 heading marker), 1 present (S126), 1 refused
+(S123 — quote absent from the cited fixture and its output; flip: cite
+`git-worktree(1):12`), 1 unverifiable (S118 — DOI answers 202 with an empty
+body; unreachable is not fabrication).
+
+**Gate counters (this round's tool).**
+`python3 -B tools/souji-gate-check.py --root . --round-date 2026-10-25
+--entries corpus/knowledge/quarantine-staging-no-copy-r23.md
+corpus/knowledge/quarantine-origin-record-fields-r24.md
+--snapshot-dir census/round-22/attempt2/sources
+--slice census/round-22/attempt2/quarantine-slice
+--slice-verdicts census/round-22/attempt2/slice-verdicts.tsv`
+→ `entries=2 ok=2 slice_verdicts=8 slice_total=8 fail=0`, exit 0.
+Before (entries absent): `entries=2 ok=0 slice_verdicts=0 slice_total=8 fail=10`,
+exit 1.
+
+**Spot-check.** The non-author duty is `RevSliceVerif` (wave seat, independent
+re-derivation of all 8 slice rows from primary bytes) plus the G1 audit TSV;
+a lane-dispatched seat is still the lane, so no outside claim is made here.

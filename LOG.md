@@ -1465,3 +1465,58 @@ census/round-22/terminal-accounting.json. Bounded repair/evidence landed
 109 reports/13 markers; census/round-22/landing-473e98a.json.
 Second-replacement final report names the later terminal-evidence commit.
 
+
+Round22 attempt2 (hyaku retry of a rejected-honest-stop round)
+=============================================================
+Claim boundary. Attempt1's strict-adequacy claim is NOT re-claimed,
+re-pinned or reworded; corpus/lessons/round-22-verifier-spotcheck.md
+still controls it. Two claims were frozen before data in
+.ufo/waves/round-22/attempt2/preregistration.txt (base 4edb25d):
+C1 calibration (declared-evidence audit) and C2 coverage (one
+assimilation theme + register-slice verdicts).
+
+C1 — tools/souji-declared-evidence.py (new instrument). It reads a
+self-assessment file at a committed revision and re-derives three
+frozen assertion classes from the same revision: backticked path
+pointers (optional :line, optional glob, optional <rev>:<path>),
+bare 7..40-hex revision tokens in a revision-context cell, and
+64-hex digests paired with exactly one path. Base measurement
+`--rev 4edb25d --file SCORECARD.md` -> assertions=56 resolved=53
+skipped=33 mismatches=3 (receipt census/round-22/attempt2/
+declared-evidence-before.tsv). The three real defects: fleet
+AXES.md written as lane-relative; bare reason-after.txt (real path
+census/round-21/reason-after.txt); .ufo/scopes/souji-mint-20261018/
+obsidian-cli-probe.md, absent on disk. All three repaired in
+SCORECARD.md by naming the right path/revision or by recording the
+absence instead of asserting a banked file. Selftest 8/8 including
+the always-zero control, which the same fixtures reject
+(FALSE-GREEN-REJECTED), so the target is unreachable by asserting it.
+
+C2 — assimilation, one theme (restorable-quarantine staging, §10),
+2 entries adopted from /home/vgpnk/Projects/shokuknow/merge/souji:
+corpus/knowledge/quarantine-staging-no-copy-r23.md (S109-S111) and
+corpus/knowledge/quarantine-origin-record-fields-r24.md
+(S112-S114 + existing S022). Sources re-opened this round; six
+snapshots committed under census/round-22/attempt2/sources/ with
+sha256; the five-device RENAME_NOREPLACE measurement is a vendored
+byte-exact payload (sha256 1634d206...8bb5) labelled as not re-run
+in this lane. Registry 108->114 rows, mined 85->91,
+sources-census validate exit 0 with only the retained duplicate-URL
+warnings. Id collision step: reg108/staged134/collisions0; adopted
+ids continue at S109 and citations were re-pointed by document
+(S124->S109, S116->S110, S115->S111, S137->S112, S126->S113,
+S117->S114). Register slice (8 rows) verdicts: 5 accepted with
+corrected quotes, 1 present, 1 refused (S123 wrong-source
+citation), 1 unverifiable (S118 DOI 202 empty body).
+Gate counter tools/souji-gate-check.py: before entries=2 ok=0
+slice_verdicts=0/8 fail=10 exit1; after entries=2 ok=2
+slice_verdicts=8/8 fail=0 exit0; selftest 9/9.
+
+Wave. One v1 wave under scripts/hyaku/ufo-wave-policy.json, 53
+seats (12 executor, 15 reviewer, 8 scout, 7 scribe, 4 critic,
+3 mutation-tester, 2 revenger, 1 sentinel, 1 connector), dispatched
+as one task call from .ufo/waves/round-22/attempt2/w1-spec.json.
+L1 holds the planner seat. No new cleanup authority, no live /proc,
+no credentials, no operator-sweep contents. Certification OFF,
+K5 HELD. Fleet-root and lane untracked paths were classified, never
+deleted.

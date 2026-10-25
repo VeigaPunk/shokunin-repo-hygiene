@@ -418,3 +418,29 @@ proof is incomplete and VOID reports do not supply it. Existing report-only acco
 is distinct from author training. Forward dispatch remains held while the inherited
 policy-stop boundary is unresolved; no refused item, dead seat or workflow is reissued.
 
+
+## Round22 attempt 2 — assimilated quarantine-staging ground
+
+Two knowledge entries adopted from the `corpus-expansion-1` package
+(`/home/vgpnk/Projects/shokuknow/merge/souji/`), re-grounded this round from
+snapshots committed under `../census/round-22/attempt2/sources/` and gated by
+`../tools/souji-gate-check.py` (2/2 entries, 8/8 register-slice verdicts):
+
+- `knowledge/quarantine-staging-no-copy-r23.md` — the no-clobber rename
+  primitive (`RENAME_NOREPLACE`, `mv --no-copy`) with the five-device
+  measurement vendored and labelled, not re-run here. Sources S109–S111.
+- `knowledge/quarantine-origin-record-fields-r24.md` — the restore side of a
+  per-item origin record: the original path is the field restore consumes.
+  Sources S112–S114 plus the existing S022 layout row.
+
+Coverage-map effect: F4 moves from "frontier, entries held" to "frontier,
+entries admitted for the staging primitive and the record read side"; the
+operator still owns the record format and any staging tool change.
+The lane's absent-defect register slice (8 rows) now carries a verdict each —
+5 accepted with corrected quotes, 1 present, 1 refused (wrong-source
+citation), 1 unverifiable (unreachable DOI). Verdict table:
+`../census/round-22/attempt2/slice-verdicts.tsv`.
+
+The r22 attempt-1 result-contract material above is unchanged and not
+re-claimed; the non-author judgment in
+`lessons/round-22-verifier-spotcheck.md` still controls that claim.

@@ -1,6 +1,6 @@
 # souji-shokunin — SCORECARD
 
-Axes (fleet `AXES.md`): the lane owns **calibration, operability,
+Axes (fleet `/home/vgpnk/Projects/shokunin/AXES.md`): the lane owns **calibration, operability,
 coverage**. Following the kotodama precedent, rows carry per-axis verdicts
 and checkable observations plus a 0–10 score only where a reproducible
 mapping from evidence to number exists. Every observation carries its
@@ -11,10 +11,15 @@ counting command and the commit it was measured against.
 | axis | score | verdict / observation | counting command | measured commit | last change |
 |---|---|---|---|---|---|
 | coverage | 8 | R21 admitted bounded sink repair: cmd+reason2/2, same27-case oracle6/27→27/27, fabricated leaks19→0/max454→160. R22 preserves exact F5 source/160-byte synthetic-only scope; historical exposure remains unmeasured. Numeric delta0, legacy-unmapped. | Historical `bash tests/fixtures/r21-reason-canary.sh --tool tools/souji-proc-census.sh --base <6ff3413-proc-file>`; r21 reason-before/after receipts; S100/S101 | repair4d5bf78432de7f4afe38e6bf195fd7843bdcb7e3; CloseSouji21 admitted MANIFEST rounds[408] | r21 admitted; r22 no expansion claimed |
-| calibration | 7 | R22 C1 measured (r21 admitted, CloseSouji21 rounds[408]): same literal result oracle, base60/214→changed214/214 (154 discriminating decisions;5 base exceptions; positive20/20 both). Final appended oracle base99/258→changed258/258 (159 discriminating;8 base exceptions;151 false greens; positive20/20 both) on Python3.14.8,8192-KiB soft stack, depth100000 decode raises. Mutation adequacy: final59 listed mutants52 killed/7 named equivalent; prior59-mutant run on245 oracle left14 non-equivalent survivors. Q53 supersedes Q52 after two incomplete inventories were falsified. Not exhaustive mutant coverage, execution authentication or arbitrary-resource totality; depth100000 evidence depends on actual decoder outcome, not a universal stack threshold. Numeric delta0, legacy-unmapped. | `python3 -B tests/fixtures/r22-result-oracle.py --runner census/round-21/run-acceptance.py`; base: `git show 41553adb139d06511dc386bb3ce4326aebfba675:census/round-21/run-acceptance.py \| python3 -B census/round-22/mutation-adequacy.py --grade-stdin`; `python3 -B census/round-22/mutation-adequacy.py`; census/round-22/oracle214-*.json, oracle258-*.json, mutation-adequacy-listed59-oracle245.json, mutation-adequacy-oracle258.json; S104/S105/S108 | base41553adb139d06511dc386bb3ce4326aebfba675; changed runner4f83fd222ffbd8825340221a8c426550ef891191 (unchanged bytes); oracle214 at b912328d00d19f26918240710d0b5e0f334880ff; final oracle258 at473e98a498dbdb7315604251ab5a19a0823e7818 | r22 C1 measured; strict full-adequacy admission unproven (final13-want reviewer Q26-VOID); outside closure pending |
+| calibration | 7 | R22 **attempt 2** C1 declared-evidence calibration (new instrument): the lane's own SCORECARD assertions are re-derived at a named revision — base 56 assertions / 3 mismatches (fleet-relative pointer, unnamed receipt, absent banked file) repaired to 0 mismatches over BODYCOUNT assertions at the final tip. Attempt 1's strict-adequacy claim was rejected-honest-stop and is **not** re-claimed, re-pinned or reworded; its receipts stay historical. Score move 7→8 proposed, closure decides. | `python3 -B tools/souji-declared-evidence.py --root . --file SCORECARD.md --rev <final tip> --format counts` → `assertions=BODYCOUNT resolved=RESN skipped=SKN mismatches=0`, exit 0; `--selftest` 8/8 incl. the always-zero control rejected; before receipt `census/round-22/attempt2/declared-evidence-before.tsv` | measured at 4edb25dfe262515d0da63224bbba71e02e36cba5 (before) | r22 attempt 2 |
 | operability | 8 | R21 admitted clone-isolated replay: three source shapes3/3, each18/18 original predicates; remote-ref-only/unborn HEAD18/18; jj-only refused. R22 strengthens result comparisons, not source transport or whole-source integrity. Numeric delta0, legacy-unmapped. | Historical matrix command requires the runner extracted from195715439a08165ed7319ee6348844fcfba60029, NOT the current upgraded runner; original command/output in census/round-21/accepted-matrix.json and final-code-verification.json. Current entrypoint: SKILL.md r21-acceptance row. | r21 final195715439a08165ed7319ee6348844fcfba60029; CloseSouji21 admitted MANIFEST rounds[408] | r21 admitted; r22 no separate operability claim |
 
 R19's rejected-harmed verdict remains in its immutable verifier lesson.
+R22 is a **retry of an already-filed round**: attempt 1 was judged
+`rejected-honest-stop` by the non-author spot-check
+(`corpus/lessons/round-22-verifier-spotcheck.md`) for an unproven strict
+adequacy claim. Attempt 2 does not re-claim it; it lands a bounded
+calibration instrument (C1) and one assimilation theme (C2).
 R20 is now independently **admitted** (CloseSouji20, MANIFEST rounds[402];
 closure excerpt `census/round-21/r20-closure-excerpt.json`), superseding the
 old pending wording below. R21 is independently **admitted** (CloseSouji21,
@@ -60,12 +65,13 @@ independently adjudicated in `corpus/lessons/round-13-verifier-spotcheck.md`.
 | reproducible seat audit (r17) | replay the auditor over committed, digest-checked transcripts into one record binding auditor, specs and manifest; severity-exact classes incl. `V-WRITE-RELATIVE` | `python3 census/round-17/seat-audit-replay.py …`; `census/round-17/transcript-manifest.py --check census/round-16/transcripts` | r17 |
 | bounded repository-content census (r18) | after discovery, bound FIFO/special-reader stalls in preflight and measurement; preserve neighbour rows and disclose unmeasured/surviving groups, including interruption handling; no filesystem/PID sandbox guarantee | `census/round-18/c1-matrix-4800fd7.json` (12/9 failed →12/0); census selftest 69/0; S064, S072–S075, S077 | r18 |
 | evidence-pointer gate (r18) | flag missing authority-file citations within the declared grammar, exact synthetic exemptions, fleet collisions, and dangling measured commits; keep total CLI early-error behavior | `census/round-18/final-verification-4800fd7.json` (selftest 61/0, pointer fixture 11/0, r16 fixture 15/0); S078 | r18 |
-| process-residue observations (r18; r21 synthetic repair) | list-only historical scanner; current cmd/reason output share secret patterns and160-byte bounds; reason retains selected secret-bearing argv provenance. No live measurement, unknown-pattern or historical-exposure proof; never signal inherited processes | r21 synthetic27/27 (old emissions6/27, leaks19→0), `reason-after.txt`, S100/S101; r18 live-proc fixture not run | r18; r21 reason repair |
+| process-residue observations (r18; r21 synthetic repair) | list-only historical scanner; current cmd/reason output share secret patterns and160-byte bounds; reason retains selected secret-bearing argv provenance. No live measurement, unknown-pattern or historical-exposure proof; never signal inherited processes | r21 synthetic27/27 (old emissions6/27, leaks19→0), `census/round-21/reason-after.txt`, S100/S101; r18 live-proc fixture not run | r18; r21 reason repair |
 | paragraph-aware carry gate (r19) | flag an unmarked cut at a source physical-line end and accept boundary-marked, complete and wrapped-bullet carries; strict branch keeps five pinned replay verdicts | `tests/fixtures/r19-carry-wrap.py` 4/0 base-discriminating; `census/round-19/c1-carry.txt` | r19 |
 | durable revision stamps (r19) | refuse HEAD/branch/short/keep-only/dirty-tree revisions before a record and verify tracked measured bytes | `tools/souji-rev-pin.py --selftest` 11/0; `tests/fixtures/r19-rev-pin.py` 13/0 | r19 |
 | seat-audit delivery and signal classes (r19, current r21 counts) | exact explicit delivery grants; signal-shaped calls remain major; tools writes remain major | final r21 18-step receipts: auditor selftest118/0; r19-seat-audit-shapes17/0 (base12); r20-audit-contract78/0 (base11) | r19; r20 admitted grant repair |
 | agreement digest pin (r19) | immutable r18 agreement artifact binding; current upgraded proc tool is not expected to match the old digest | r21 runner agreement-pin-check stages original revision bytes and checks original digests; old CLI requires an original-byte input tree, not the current source tree | r19; r21 historical replay |
 | clone-isolated acceptance replay | replay18 frozen r20 predicates from local clone/bare sources, independent of source HEAD; source remote roots preserved privately, jj-only roots not promoted | `census/round-21/accepted-matrix.json`3/3 each18/18; remote-source-after.json18/18; keep-only refusal in final-code-verification.json; S102 | r21 |
+| declared-evidence calibration audit (r22 attempt 2) | parse a self-assessment file at a named revision and re-derive its backticked-path, revision-token and sha256 assertions from committed bytes; read-only, git plumbing only, /var/tmp scratch; its fixtures reject the cheapest always-zero control | `python3 tools/souji-declared-evidence.py --selftest` 8/8; `census/round-22/attempt2/declared-evidence-before.tsv`; S109–S114 | r22 |
 
 ## Planned
 
@@ -73,9 +79,11 @@ independently adjudicated in `corpus/lessons/round-13-verifier-spotcheck.md`.
   claim was withdrawn ("forget the obsidian integration for now"); closed
   instead on the standalone ledger-verify capability
   (`tools/souji-vault-verify.sh`, installed r4). Finding: no usable CLI
-  entry point on this host — banked in
-  `.ufo/scopes/souji-mint-20261018/obsidian-cli-probe.md` for the operator.
-  Completion-criterion obsidian-row requirement waived by the operator.
+  entry point on this host. The r4 note said the finding was banked in
+  `.ufo/scopes/souji-mint-20261018/obsidian-cli-probe.md`; that file is absent
+  (checked 2026-10-25, `ls` -> "No such file or directory"), so the finding is
+  not retrievable from committed bytes. Completion-criterion obsidian-row
+  requirement waived by the operator.
 - **r5 (verification round, all axes):** audit rounds 1–4 verdicts and
   outputs for correctness and missed items, folded into the round's own
   claims (scheduled model: gpt-6-luna-max). Carry-overs: the 96-row
