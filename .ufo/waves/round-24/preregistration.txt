@@ -1,0 +1,133 @@
+souji round 24 — preregistration (frozen before data)
+lane base a65fac98964b445758e94c805728c9a19d302ff8 (branch master, ahead=0 behind=0)
+date 2026-10-25
+author SoujiR24 (L1, lane identity souji-shokunin <souji@shokunin.local>)
+inbound: corpus/lessons/round-23-verifier-spotcheck.md (routed: coverage-map table vs prose for F2);
+         SCORECARD `r24 — planned` (F2 write-safety fixture excluding `fsck --lost-found`;
+         residual C1/C2 limits of r23)
+axes: calibration (7, lowest non-retired), operability (8), coverage (8)
+
+HARD BOUND (carried into every wave context): souji is a hygiene lane, but its write scope is
+its own repo only. Never delete, move, quarantine or classify-for-cleanup anything in
+/home/vgpnk/Projects/shokunin outside souji-shokunin/. Incident 2026-10-25: the fleet's tracked
+.scratch/ tree was deleted mid-run.
+
+Pre-freeze design probe (L1, /var/tmp scratch, removed; git 2.56.0), recorded so the oracles below
+are not guesses: main worktree `garbage: 0`; `git -C <linked> count-objects -v` -> `garbage: 1`
+with stderr `warning: garbage found: <common>/worktrees/<id>/refs`; the same repo read with
+`--git-dir=<common dir>` -> `garbage: 0`; a junk file in objects/pack and an invalid loose name
+objects/12/zz each -> `garbage: 1`; a stray file directly in objects/ -> `garbage: 0`;
+`fsck --unreachable --no-reflogs` lists the dangling blob and creates no lost-found; `fsck
+--lost-found` writes .git/lost-found/other/<oid>. This probe is design input, not claim data.
+
+=====================================================================
+C1 — coverage (8). F2 write-safety census: frontier remainder -> runnable tool + fixture.
+=====================================================================
+Surface moved: F2's actable remainder named in corpus/README.md `### Frontier (r23)` ("the /var/tmp
+write-safety fixture that must exclude git fsck --lost-found ... a lane-bound size/debris
+measurement of this repo"). New operation class: a debris census (count-objects -v garbage /
+size-garbage / alternates + fsck unreachable count) with a measured no-write envelope, a
+linked-worktree false-positive discount, and a refused --lost-found.
+Command that would show it unmoved: `git cat-file -e <rev>:tests/fixtures/r24-size-census.py`
+fails, or the fixture below does not print the target line.
+
+Tool CLI (frozen contract):
+  python3 -B tools/souji-size-census.py --repo PATH
+  stdout LC_ALL=C key=value lines; last line is the counts line:
+    garbage=G size_garbage=K unreachable=U alternates=A
+  exit 0 ok; 2 refused (unknown argv incl. any --lost-found, promisor/partialClone repo, not a
+  repository); 1 git failure. count-objects runs against the resolved COMMON git dir, so a linked
+  worktree path reports the common-dir figure. `warning: garbage found:` stderr lines are expected
+  and passed through as census.warning= lines; any other stderr is a failure.
+
+Counter (frozen, one command over committed bytes at the landing tip):
+  python3 -B tests/fixtures/r24-size-census.py --tool tools/souji-size-census.py
+Last line: cases=C pass=P control=FALSE-GREEN-REJECTED|FALSE-GREEN-ACCEPTED lost_found=WRITE-DETECTED|NOT-DETECTED
+exit 0 iff P==C and control=FALSE-GREEN-REJECTED and lost_found=WRITE-DETECTED.
+Frozen case set (C=8), each in its own /var/tmp repo, trap-cleaned:
+  1 clean      — tool exit 0; .git manifest (sorted path+type+mode+size+mtime+sha256 of regular
+                 files; atime/ctime excluded) identical before/after; counts all 0.
+  2 dangling   — one unreferenced blob: unreachable=1; manifest unchanged; no .git/lost-found.
+  3 garbage    — one junk file in objects/pack: garbage=1; manifest unchanged.
+  4 linked     — tool on a linked worktree path: garbage=0, while raw `git -C <linked>
+                 count-objects -v` reads garbage: 1 (witness the false positive exists here).
+  5 alternates — objects/info/alternates with one path: alternates=1.
+  6 refusal    — extra argv `--lost-found` -> exit 2; partialClone repo -> exit 2; manifest
+                 unchanged in both.
+  7 detector   — `git fsck --lost-found` run directly on a case-2 repo changes the manifest and
+                 creates .git/lost-found/other/<oid> -> lost_found=WRITE-DETECTED.
+  8 control    — a stub emitter that prints `garbage=0 size_garbage=0 unreachable=0
+                 alternates=0` and exits 0 without running git, run through cases 2-5, must fail
+                 at least one -> control=FALSE-GREEN-REJECTED.
+Before (do-nothing control): at base the fixture and tool are absent -> `cases=0 pass=0`; and the
+cheapest skip-the-work control (the case-8 stub as --tool) is scored by the same fixture and must
+NOT print the target line; its receipt is committed before any after-data.
+After target: `cases=8 pass=8 control=FALSE-GREEN-REJECTED lost_found=WRITE-DETECTED`, exit 0.
+Lane-bound measurement: one run of the tool on /home/vgpnk/Projects/shokunin/souji-shokunin,
+committed as census/round-24/size-census-lane.txt. It is a figure about this repo only; no fleet
+figure is claimed.
+Kill rule: any case failing at the landing tip -> C1 not verified (honest stop); no case is dropped
+or re-specified after any seat has scored.
+Sourced: the knowledge entry this claim lands (assimilation theme below) cites SOURCES rows opened
+this round (git.git path.c / builtin/count-objects.c at v2.56.0; git-worktree DETAILS).
+
+=====================================================================
+C2 — calibration (7, lowest). Coverage-map agreement: declared coverage vs entry files.
+=====================================================================
+Self-assessment: the corpus/README.md coverage-map tables (header first cell `ground`, third header
+cell beginning `entries`). Observed state: corpus/knowledge/*.md entries at the revision.
+Tool CLI (frozen): python3 -B tools/souji-coverage-agreement.py --root <lane> --rev <full40>
+Counts line: grounded=G mapped=M dangling=D mismatches=X ; exit 0 iff X==0.
+Mismatch classes (each row `MISMATCH\t<class>\t<path>\t<detail>`):
+  MISSING-FROM-MAP  an entry corpus/knowledge/<n>.md at rev carrying a front-matter line
+                    `ground: F<k>` whose basename appears in NO entries-column cell of any
+                    coverage-map row whose ground cell starts with the token F<k> (F<k> followed
+                    by a space, `-`, or end of cell).
+  DANGLING-MAP-PATH a backticked path in an entries-column cell ending `knowledge/<name>` whose
+                    corpus/knowledge/<name> does not exist at rev.
+mismatches = MISSING-FROM-MAP + DANGLING-MAP-PATH; grounded = entries with a `ground: F<k>` line.
+Control (do nothing): the same tool at base a65fac98964b445758e94c805728c9a19d302ff8.
+After target: mismatches=0 at the landing tip.
+Kill rule: grounded(tip) < grounded(base) -> C2 fails (no entry may be deleted or un-grounded to
+reach 0); a counter edit after any seat scored is a deviation reported as such.
+Fixture: tests/fixtures/r24-coverage-agreement.py; an always-zero emitter must fail it.
+
+=====================================================================
+C3 — operability (8). Receipt verify/run symmetry (r23 named residuals).
+=====================================================================
+r23 disclosed: `verify` accepts a non-durable rev while `run` refuses it; the `tool=` label is not
+bound to the recorded argv.
+Counter (frozen): python3 -B tests/fixtures/r24-receipt-verify.py --tool tools/souji-receipt-run.py
+Last line: cases=C pass=P refusals=R/2 regress=N/5 ; exit 0 iff P==C.
+Frozen cases:
+  a non-durable — a well-formed receipt whose rev is a full commit reachable from no durable ref
+                  -> verify exit 2 RECEIPT-REV-NOT-DURABLE.
+  b label       — a well-formed receipt whose `tool=` path does not occur as an argv element of
+                  its `cmd=` -> verify exit 2 RECEIPT-TOOL-NOT-IN-ARGV.
+  c clean       — a receipt produced by `run` in a synthetic repo -> verify exit 0.
+  d regression  — each of the five committed r23 receipts (census/round-23/records/
+                  {declared-evidence-after,gate-check-at-first-landing,gate-check-at-lane-base,
+                  gate-check-c3,agreement-after}.tsv) -> verify=ok against the lane root.
+Before (control): the base runner -> refusals=0/2. After target: refusals=2/2 regress=5/5, exit 0.
+Kill rule: any regression receipt refused at tip -> C3 harmed (reported, not narrowed).
+
+=====================================================================
+Separability
+=====================================================================
+C1 touches tools/souji-size-census.py + its fixture + one knowledge entry; C2 touches
+tools/souji-coverage-agreement.py + its fixture + README map rows; C3 touches
+tools/souji-receipt-run.py verify + its fixture. Each counter runs without the others' files.
+Note: C1's new F2 entry must also appear in the coverage map for C2's after-state to stay 0; C2's
+counter is evaluated at the landing tip whatever C1 lands, and C2's base control does not depend on C1.
+
+=====================================================================
+Assimilation (§10; rides inside C1, no claim slot)
+=====================================================================
+Theme: F2 linked-worktree `garbage` false positive. Package merge/souji entries considered:
+garbage-false-positive-modes-r25/-r26/-r27, count-objects-garbage-semantics-r23.
+At most 2 admitted, at least 1 rejected; every cited source re-opened this round; own-work rows
+whose evidence lives in shokuknow (S134/S141/S147/S153 staged ids) are not appendable as-is.
+Collision check: reg-ids 119, staged-ids 134, collisions 11 (wave evidence
+.ufo/waves/round-24/assimilation/). Quarantine slice: 8 rows (S114 S118 S123 S124 S126 S131 S133
+S138 staged ids), hand-checked this round by wave-1 scouts before any is appended.
+considerthese/: absent in this lane.
