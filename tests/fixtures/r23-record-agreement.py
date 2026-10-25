@@ -20,7 +20,7 @@ Frozen paths the synthetic repo carries (preregistration C1):
   census/round-22/attempt2/declared-evidence-before.tsv  K2 receipt
   census/round-22/attempt2/slice-verdicts.tsv            K3 receipt
   corpus/README.md, corpus/lessons/round-22.md           K3 records
-  corpus/pointer-exemptions.tsv                          K4 exemptions ("uncommitted:" rows)
+  census/round-23/records/uncommitted-exemptions.tsv      K4 exemption allowlist (path<TAB>reason)
 
 Two-commit shape. A commit cannot contain its own object id, so the K1 receipt cannot name the
 revision that carries it. The repo is therefore built as: commit 1 = the measured revision
@@ -51,6 +51,8 @@ import signal
 import subprocess
 import sys
 
+sys.dont_write_bytecode = True
+
 SCRATCH_ROOT = "/var/tmp/souji-r23-ExecFixtureAgreement"
 TOOL_REL = os.path.join("tools", "souji-record-agreement.py")
 
@@ -65,7 +67,7 @@ K2_RECEIPT_FINAL = "census/round-22/attempt2/declared-evidence-before-final.tsv"
 WAVE_NOTE = ".ufo/waves/round-23/w1/seat-notes.md"
 K3_RECEIPT = "census/round-22/attempt2/slice-verdicts.tsv"
 K3_RECORDS = ("corpus/README.md", "corpus/lessons/round-22.md")
-K4_EXEMPT = "corpus/pointer-exemptions.tsv"
+K4_EXEMPT = "census/round-23/records/uncommitted-exemptions.tsv"
 OPERATOR_DIR = "census/operator-sweep-20261019/"
 OPERATOR_FILE = OPERATOR_DIR + "probe.out"
 STRAY_PATH = ".ufo/waves/round-23/w1/evidence/impl-a/head-c9f1fe3.tsv"
@@ -196,10 +198,11 @@ def f_lesson() -> str:
 
 
 def f_exemptions() -> str:
+    # the instrument reads a dedicated file whose rows are `path<TAB>reason`; the allowlist is a
+    # frozen constant, so only an operator-owned path can ever be exempted
     return (
-        "# pointer exemptions (synthetic fixture): uncommitted: rows are operator-owned paths\n"
-        f"uncommitted:{OPERATOR_DIR}\toperator-owned untracked output, never committed or "
-        "opened by the lane\n"
+        "# uncommitted exemptions (synthetic fixture)\n"
+        f"{OPERATOR_DIR}\toperator-owned untracked output, never committed or opened by the lane\n"
     )
 
 
@@ -303,7 +306,19 @@ def mutate(repo: str, variant: str) -> None:
     if variant == "dirty-unexempted":
         write_file(repo, STRAY_PATH, "round work left in the working tree\n")
         return
+    if variant == "class-missing":
+        rewrite(repo, K3_RECORDS[0], lambda t: t.replace("unverifiable", "unknown"))
+        commit(repo, "case: README loses a tally class (K3 class-absent)")
+        return
+    if variant == "tally-stale-log":
+        # drop the correction line so the filed stale tally is uncovered: the K2 tally arm
+        def drop_correction(t: str) -> str:
+            return "".join(l for l in t.splitlines(True) if "superseded by 2 present" not in l)
+        rewrite(repo, K2_RECORD, drop_correction)
+        commit(repo, "case: LOG tally disagrees and its correction is gone (K2 tally arm)")
+        return
     if variant == "exempted-dirty":
+        write_file(repo, OPERATOR_FILE, "operator-owned, never committed\n")
         return
     raise SystemExit(f"fixture: unknown variant {variant!r}")
 
@@ -410,13 +425,23 @@ def case_k4_stray(res: dict) -> tuple[bool, str]:
             "rc!=0 K4 uncommitted-path naming the stray round path")
 
 
+def case_k3_class(res: dict) -> tuple[bool, str]:
+    hits = [r for r in res["rows"] if r["key"] == "K3" and r["cls"] == "class-absent"]
+    return (bool(hits) and res["rc"] != 0, "rc!=0 K3 class-absent>=1")
+
+
+def case_k2_tally(res: dict) -> tuple[bool, str]:
+    hits = [r for r in res["rows"] if r["key"] == "K2" and r["cls"] == "uncorrected"]
+    return (bool(hits) and res["rc"] != 0, "rc!=0 K2 uncorrected>=1 (tally arm)")
+
+
 def case_k4_exempt(res: dict) -> tuple[bool, str]:
     have = classes(res, "K4")
     return (not have, "K4 rows=0 (exempted operator path is not a mismatch)")
 
 
 CASES = [
-    # case 1 is the target (green-on-clean); the always-zero control is cases 2-8
+    # case 1 is the target (green-on-clean); every other case requires >=1 mismatch
     ("repaired", case_repaired, False),
     ("receipt-absent", lambda r: case_k1(r, "receipt-absent"), True),
     ("counts-disagree", lambda r: case_k1(r, "value-disagree", ("rev-disagree",)), True),
@@ -426,6 +451,8 @@ CASES = [
     ("tally-wrong", case_k3, True),
     ("dirty-unexempted", case_k4_stray, True),
     ("exempted-dirty", case_k4_exempt, False),  # green-on-clean is not a false-green control
+    ("class-missing", case_k3_class, True),
+    ("tally-stale-log", case_k2_tally, True),
 ]
 
 

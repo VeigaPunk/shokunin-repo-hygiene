@@ -453,7 +453,7 @@ re-claimed; the non-author judgment in
 
 | claim | axis | before → after | counting command |
 |---|---|---|---|
-| C1 record agreement | calibration (7) | `mismatches=20` at the base revision → `0` at the landing tip | `python3 -B tools/souji-record-agreement.py --rev <full40>` (`keys=4 records=… occurrences=… mismatches=M`, exit 0 iff M=0) |
+| C1 record agreement | calibration (7) | `mismatches=6` at the base revision → `0` at the landing tip | `python3 -B tools/souji-record-agreement.py --rev <full40>` (`keys=4 records=… occurrences=… mismatches=M`, exit 0 iff M=0) |
 | C2 blob-bound receipts | operability (8) | receipts carrying `tool_sha256=` under `census/`: `0` → `5`, each `verify=ok` | `grep -rlE '^tool_sha256=[0-9a-f]{64}$' census/ \| wc -l` |
 | C3 F2 read side | coverage (8) | registry `114 → 119` rows; F2 entries `1 → 3`; gate `entries=2 ok=2 fail=0` | `sources-census.sh validate --root /home/vgpnk/Projects/shokunin souji`; `tools/souji-gate-check.py --entries … --snapshot-dir census/round-23/sources` |
 

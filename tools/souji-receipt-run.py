@@ -48,6 +48,8 @@ import shlex
 import shutil
 import subprocess
 import sys
+
+sys.dont_write_bytecode = True
 import tempfile
 
 SCRATCH_ROOT = "/var/tmp"
@@ -96,11 +98,12 @@ def command_refusal(argv: list[str]) -> str | None:
         return None
     if "-C" in argv or "--git-dir" in argv or "--work-tree" in argv:
         return "GIT-DIRECTED-COMMAND: a -C/--git-dir/--work-tree command escapes the measured tree"
-    sub = next((a for a in argv[1:] if not a.startswith("-")), "")
     if "--lost-found" in argv:
         return "WRITE-SIDE-EFFECT: git fsck --lost-found writes into the repository"
-    if sub in DENY_SUBCOMMANDS:
-        return f"MUTATING-SUBCOMMAND: git {sub} is not a counter"
+    # every token, not only the first non-dash one: `git -c k=v gc` must not slip through
+    for token in argv[1:]:
+        if token in DENY_SUBCOMMANDS:
+            return f"MUTATING-SUBCOMMAND: git {token} is not a counter"
     return None
 
 
@@ -147,7 +150,7 @@ def cmd_run(args: argparse.Namespace) -> int:
     tool = args.tool
     if blob_sha_bytes(root, rev, tool) is None:
         return refuse("TOOL-ABSENT", f"{tool} does not exist at {rev}")
-    out = os.path.abspath(args.out)
+    out = os.path.realpath(args.out)
     if out.startswith("/tmp/") or out == "/tmp":
         return refuse("OUT-UNDER-TMP", "receipts go outside /tmp (Q4)")
     if out == root or out.startswith(root + os.sep):

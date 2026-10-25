@@ -25,6 +25,8 @@ import os
 import re
 import sys
 
+sys.dont_write_bytecode = True
+
 LOCATOR_RE = re.compile(r"§\s*([^\s—–,;)\"']+)")
 SNAPSHOT_RE = re.compile(r"snapshot:\s*([^\s]+)")
 
@@ -45,11 +47,37 @@ def gate_block(text: str) -> str:
     return "\n".join(out)
 
 
+def resolve(rel: str, snapshot_dir: str) -> str:
+    """The declared path first, then the same basename under --snapshot-dir."""
+    rel = rel.rstrip(".,;")
+    for cand in (rel, os.path.join(snapshot_dir, os.path.basename(rel))):
+        if os.path.isfile(cand):
+            return cand
+    return ""
+
+
+HTML_H = re.compile(r"<h[1-6][^>]*>(.*?)</h[1-6]>", re.S)
+TAG_RE = re.compile(r"<[^>]+>")
+MAN_HEAD = re.compile(r"^[A-Z][A-Z0-9 ._'’-]{2,}$")
+
+
+def headings(text: str) -> set[str]:
+    """Heading set for the three formats the lane stores: HTML, man7 text, groff output."""
+    heads: set[str] = set()
+    for m in HTML_H.finditer(text):
+        heads.add(TAG_RE.sub("", m.group(1)).strip().lower())
+    for line in text.splitlines():
+        stripped = line.strip()
+        if MAN_HEAD.match(stripped):
+            heads.add(stripped.lower())
+    return heads
+
+
 def snapshot_texts(block: str, snapshot_dir: str) -> dict[str, str]:
     texts: dict[str, str] = {}
     for m in SNAPSHOT_RE.finditer(block):
         rel = m.group(1).rstrip(".,;")
-        path = rel if os.path.isabs(rel) else os.path.join(snapshot_dir, os.path.basename(rel))
+        path = resolve(rel, snapshot_dir)
         try:
             with open(path, encoding="utf-8", errors="replace") as fh:
                 texts[rel] = fh.read()
@@ -73,17 +101,17 @@ def check(entries: list[str], snapshot_dir: str, mutations: dict[str, tuple[str,
             print(f"LOCATOR-BAD\t{entry}\t-\tGate names no snapshot")
             bad += 1
             continue
-        haystack = "\n".join(snaps.values()).lower()
+        heads: set[str] = set()
+        for text in snaps.values():
+            heads |= headings(text)
+        haystack = "\n".join(sorted(heads))
         for m in LOCATOR_RE.finditer(block):
             loc = m.group(1)
             total += 1
-            head = loc.strip()
-            if head.lower() not in haystack:
-                # a hyphenated locator ("no-dangling") resolves on its first segment
-                head = loc.split("-")[0].strip()
-            if not head or head.lower() not in haystack:
+            head = loc.strip().rstrip(".,;")
+            if not head or not any(head.lower() in h for h in heads):
                 bad += 1
-                print(f"LOCATOR-BAD\t{entry}\t{loc}\t'{head}' appears in none of: "
+                print(f"LOCATOR-BAD\t{entry}\t{loc}\t'{head}' is no heading in: "
                       + ",".join(sorted(snaps)))
     return len(entries), total, bad
 

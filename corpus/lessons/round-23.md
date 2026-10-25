@@ -19,7 +19,7 @@ equals `census/round-22/attempt2/slice-verdicts.tsv`; K4 no uncommitted round wo
 exact, frozen exemption allowlist. Control (do nothing) = the same bytes at the base revision:
 `keys=4 records=3 occurrences=13 mismatches=6` revision-scoped (`mismatches=29` with the live
 worktree arm), receipt `census/round-23/records/agreement-control-base.txt`. After: `0`
-(`census/round-23/records/agreement-after.txt`). Fixture `tests/fixtures/r23-record-agreement.py`
+(`census/round-23/records/agreement-after.tsv`). Fixture `tests/fixtures/r23-record-agreement.py`
 9/9 with `control=FALSE-GREEN-REJECTED`: eight cases require a nonzero mismatch, so an
 always-zero emitter fails them.
 
@@ -121,15 +121,15 @@ still lands no SKILL rule and no tool).
 
 ## Seat-reported failures
 
-Wave 1 carried 41 seats; nine reported `PARTIAL` or `FAIL`. Every failure paragraph is carried
+Wave 1 carried 41 seats: 30 reported `PASS`, nine reported `PARTIAL` or `FAIL`, and two (`ScribeEntryRepoSize`, `ScribeReport`) carried no `STATUS:` line — so "nine failed" must not be read as "the other 32 passed". Every failure paragraph is carried
 verbatim below with its disposition; none is silently dropped and none is used as evidence for a
 claim without the L1 re-derivation named in the disposition.
 
 - `.ufo/waves/round-23/w1/CritC2Value.md` "STATUS: FAIL — the claim's own kill rule fires under an executed counterexample against the" — open — accepted in part: the runner now takes the digest from the tree the command ran in, sets GIT_NO_REPLACE_OBJECTS/GIT_NO_LAZY_FETCH, and refuses `git -C`/mutating subcommands; the "typed receipt passes verify" limit is retained and disclosed (C2 kill rule unchanged).
 - `.ufo/waves/round-23/w1/CritC3Ground.md` "STATUS: PARTIAL — entry 1 (repo-size census instruments) is honest and does add ground the lane did" — open — accepted: C3 is restated as F2 entries 1→3 on the read side, not as uncovered ground; the prereg premise was amended pre-data and the report says so.
 - `.ufo/waves/round-23/w1/CritPrereg.md` "STATUS: FAIL — not admissible as frozen: C1's `mismatches=0` is unreachable on the real" — open — accepted in part: K1 now binds each tuple to its nearest preceding revision token (the before-tuple is no longer erased), the C2 coupling (receipt-unbound) was removed for separability, and the counter repairs are disclosed with the final bytes pinned. The "rule changed after scoring" finding is recorded as a real deviation of process, not repaired.
-- `.ufo/waves/round-23/w1/MutCounter.md` "STATUS: PARTIAL — 51 clause mutants designed for `tools/souji-record-agreement.py` (sha256" — open — accepted: the mutant list was re-derived against the final counter bytes in the residual call; every clause the list named now has a killing fixture case or is named uncovered.
-- `.ufo/waves/round-23/w1/MutReceipt.md` "STATUS: PARTIAL — 26 mutants over 20 clauses; 9 killed, **uncovered=17**. The fixture is now a" — open — accepted: the receipt fixture now covers the digest-from-clone clause and the newline-preserving capture; the clause list is carried in the residual review.
+- `.ufo/waves/round-23/w1/MutCounter.md` "STATUS: PARTIAL — 51 clause mutants designed for `tools/souji-record-agreement.py` (sha256" — open — accepted: 54 clause mutants over 32 clauses were designed against the final counter bytes (sha256 617f4c96…); 28 are uncovered by the fixture's 9 cases and are named in the seat report, which is the honest adequacy statement for a counter this size — `selftest=9/9` is not claimed as clause adequacy.
+- `.ufo/waves/round-23/w1/MutReceipt.md` "STATUS: PARTIAL — 26 mutants over 20 clauses; 9 killed, **uncovered=17**. The fixture is now a" — open — accepted in part: 26 mutants over 21 clauses, 9 killed, 17 uncovered. The 'digest from the tree at rev' clause is NOT killed by fixture case 3 and cannot be — case 3 moves HEAD forward after the receipt exists, so the working-tree and rev-blob digests are identical at run time; the seat's direct probe (working tree holding C2's bytes with `--rev C1`) is the only separating case and no fixture case runs it. Disclosed as a fixture coverage limit, not repaired.
 - `.ufo/waves/round-23/w1/RevD6.md` "STATUS: PARTIAL — D6 is **real and open** at the lane base (`1208bfb4924d9c6d4fdd1cdf8ccdc29b834893cd`): the" — open — accepted: D6 repaired append-only in corpus/lessons/round-22.md with the entry-level reason and a flip not already met.
 - `.ufo/waves/round-23/w1/RevD7.md` "STATUS: FAIL — D7 is real for M17 and reproducible, but the spot-check overstates it for M22, and" — open — accepted: D7 repaired as Q54 (locator-heading), not as the D1-class criterion the wave item proposed; Q55 covers the receipt binding.
 - `.ufo/waves/round-23/w1/ScribeLesson.md` "STATUS: PARTIAL — draft only. The lesson body is written from committed bytes at lane base" — open — accepted: this lesson is its own draft, corrected where the wave-1 findings changed a number or a path.

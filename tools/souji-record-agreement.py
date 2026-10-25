@@ -34,11 +34,14 @@ Frozen contract: .ufo/waves/round-23/preregistration.txt (C1).
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
 import subprocess
 import sys
+
+sys.dont_write_bytecode = True
 
 K1_RECEIPT = "census/round-23/records/declared-evidence-after.tsv"
 K1_RECORDS = ("SCORECARD.md",)
@@ -49,6 +52,10 @@ K2_SECTION_START = re.compile(r"^Round22 attempt2")
 K2_SECTION_END = re.compile(r"^=====")
 K2_RECEIPT = "census/round-22/attempt2/declared-evidence-before-final.tsv"
 K2_CORRECTION_MARKER = "superseded by"
+# the r22 section body's sha256 lives in a committed record (census/round-23/records/
+# k2-section-sha256): filed bytes are append-only, so the section must be byte-identical and the
+# correction must be a *later* act. A repository without that record (the fixture) skips the check.
+K2_SECTION_SHA_FILE = "census/round-23/records/k2-section-sha256"
 
 K3_RECEIPT = "census/round-22/attempt2/slice-verdicts.tsv"
 K3_RECORDS = ("corpus/README.md", "corpus/lessons/round-22.md")
@@ -91,6 +98,8 @@ def git(root: str, *args: str, check: bool = False) -> subprocess.CompletedProce
     env["GIT_CONFIG_COUNT"] = "1"
     env["GIT_CONFIG_KEY_0"] = "core.fsmonitor"
     env["GIT_CONFIG_VALUE_0"] = "false"
+    # a read-only instrument must not refresh the lane's index on `git status`
+    env["GIT_OPTIONAL_LOCKS"] = "0"
     cmd = ["git", "-C", root, "-c", "maintenance.auto=false", *args]
     return subprocess.run(cmd, capture_output=True, text=True, env=env, check=check)
 
@@ -217,6 +226,17 @@ class Report:
             if K2_SECTION_END.match(lines[j]):
                 end = j
                 break
+        want_digest = ""
+        sha_text = read_at(self.root, self.rev, K2_SECTION_SHA_FILE)
+        for line in (sha_text or "").splitlines():
+            if line.strip() and not line.startswith("#"):
+                want_digest = line.strip()
+        if want_digest:
+            body_text = "\n".join(lines[body_start:end]).rstrip()
+            section_digest = hashlib.sha256(body_text.encode()).hexdigest()
+            if section_digest != want_digest:
+                self.bad("K2", K2_RECORD, "section-modified",
+                         f"r22 section body {section_digest[:12]} != recorded {want_digest[:12]}")
         found = 0
         paras = paragraphs(lines[body_start:end], body_start)
         for start_line, text in paras:
@@ -233,11 +253,18 @@ class Report:
                 if n != want_tally.get(cls, 0):
                     stale.append(m.group(0))
             for occ in stale:
-                # a correction may be anywhere later in the file, on one line or wrapped
+                # the correction must be strictly AFTER the scanned section, must quote the stale
+                # value and must carry the receipt-derived corrected value
+                if occ.startswith("assertions="):
+                    want = want_counts
+                else:
+                    n, cls = occ.split(" ", 1)
+                    want = f"{want_tally.get(cls, 0)} {cls}"
                 later = any(
                     K2_CORRECTION_MARKER in " ".join(lines[k:min(k + 6, len(lines))])
                     and occ in " ".join(lines[k:min(k + 6, len(lines))])
-                    for k in range(start_line, len(lines))
+                    and want and want in " ".join(lines[k:min(k + 6, len(lines))])
+                    for k in range(end, len(lines))
                 )
                 if not later:
                     self.bad("K2", f"{K2_RECORD}:{start_line + 1}", "uncorrected",

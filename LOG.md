@@ -1548,10 +1548,12 @@ claims in the Round22 attempt2 entry; nothing else in it is re-opened.
    "5b8025a8..." is stale at that tip, not wrong for the run. Both digests are
    now recorded: census/round-23/records/gate-check-at-lane-base.tsv binds
    d5ed0805... at 1208bfb and census/round-23/records/gate-check-at-first-landing.tsv
-   binds d85c2696... at a211e4d. No committed tool blob reproduces the entry's
-   "before fail=10" state: at a211e4d the entries co-land with the tool, at
-   4edb25d neither exists, and the tip blob scores fail=0. That half of the
-   before-state stays unrecoverable and is reported as such, not reconstructed.
+   binds d85c2696... at a211e4d. No committed tree or revision reproduces the entry's
+   "before fail=10" state: committed blob 4309d769 emits fail=10 only given an
+   absent-input tree that no commit holds (the entries co-land with the tool at
+   a211e4d, 4edb25d holds neither, and the tip blob scores fail=0). The half
+   is not reconstructed in any census/ receipt; the nearest commit (24d43cd,
+   tool+entries without the slice) scores fail=12.
 
 D8 note: the derived register-slice row for S118 carries a stray backtick
 inherited from the campaign register's id cell. The row is digest-bound twice
@@ -1573,11 +1575,13 @@ filed occurrence still exists; K3 the register-slice tally in README and the
 r22 lesson equals census/round-22/attempt2/slice-verdicts.tsv; K4 no
 uncommitted round work outside a committed exemption row. Control (do
 nothing) = the same tool bytes at base: keys=4 records=3 occurrences=13
-mismatches=20, rc 1 (receipt census/round-23/records/agreement-control-base.txt).
+mismatches=6, rc 1 (receipt census/round-23/records/agreement-control-base.txt,
+revision-scoped arm `--no-worktree`; the live-worktree arm adds one K4 row per
+uncommitted path and is reported separately).
 After: mismatches=0 at the landing tip (receipt
-census/round-23/records/agreement-after.txt). The instrument's own fixture
-tests/fixtures/r23-record-agreement.py kills an always-zero emitter on eight
-cases.
+census/round-23/records/agreement-after.tsv). The instrument's own fixture
+tests/fixtures/r23-record-agreement.py kills an always-zero emitter on ten of its
+eleven cases (the eleventh is the green-on-clean target).
 
 C2 operability (8). tools/souji-receipt-run.py re-derives a counter at a full
 durable revision in a private --no-local clone, and writes a receipt binding
