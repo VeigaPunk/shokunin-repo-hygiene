@@ -223,7 +223,7 @@ class Report:
             body_start += 1
         end = len(lines)
         for j in range(body_start, len(lines)):
-            if K2_SECTION_END.match(lines[j]):
+            if K2_SECTION_END.match(lines[j]) or K2_SECTION_START.match(lines[j]):
                 end = j
                 break
         want_digest = ""
