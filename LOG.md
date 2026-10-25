@@ -1739,3 +1739,12 @@ The C3 after receipt is `census/round-25/records/c3-after.tsv` (`rev=728b2ce71ac
 R7 (stderr-only counts) has a synthetic regression witness `tests/fixtures/r25-receipt-stderr.py`: at 728b, old runner blob c872eec accepts a counts line found only after the stderr fence; current runner refuses `RECEIPT-COUNTS-ABSENT`, `cases=1 pass=1`. This tests the r24 implementation fix, not a new r25 runner change.
 
 Q57 verification: `r25-slice-mapping.py` → rows=8/8, both TSV pointers, S118 accepted; `r25-q57-check.sh` → base red and current working tree `q57=PASS` over four explicitly listed citation sites. The site list is bounded; omission discovery is not claimed. C3 red-arm mutant results are independently reproduced in W2 reports; the amendment's requested committed pre-after-data red-arm receipts were not produced, disclosed as a process defect.
+
+## 2026-10-25 — Round 27 attempt 2: F4 source admission, pre-report gate, honest stop
+
+- C1 calibration — frozen landing-gate finding count was 2 at base `e78ac7c` and remained 2 at candidate `6cb22dc`; rc 2. No exemption was landed because the Q57 S118 site carries stale classification and suppressing it could hide a real citation defect. Claim failed.
+- C2 coverage — GLib 2.84.0 writer/mechanism entries admitted on F4: registry rows 132→135, grounded F4 entries 2→4; `souji-gate-check.py` entries=2 ok=2 slice_verdicts=8 slice_total=8 fail=0; fleet sources census rc 0. Evidence `census/round-27/records/c2-after.tsv`; map and source pins under `census/round-27/`.
+- C3 operability — new `tools/souji-pre-report-gate.sh` + fixture: 4 isolated cases pass and always-pass control rejected. Evidence `census/round-27/records/c3-after.tsv`; gate registry row in SKILL.md.
+- Attempt 1 died before work (`watchdog.log:1377`); attempt 2 dispatched one v2 wave of 79 seats. Results and seat reports are in `.ufo/waves/round-27/`; 36 r26 leftovers remain under `.ufo/waves/round-26/w1/` because lane helper refuses `.ufo` paths; no unrelated or operator-owned files were swept.
+- Assimilation: S119 rejected pending decision-time pin; S118 source-register slice marked unverifiable. `considerthese/` absent. No tools installed/updated; certification OFF, K5 HELD, F5 reap and NAMESPACE holds unchanged.
+- No owned score changed (calibration 7, coverage 8, operability 8); C1 failure means no round admission.
