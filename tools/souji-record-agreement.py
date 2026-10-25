@@ -67,6 +67,7 @@ REV_TOKEN_RE = re.compile(r"\b[0-9a-f]{40}\b")
 K2_FILED = ("assertions=56 resolved=53 skipped=33 mismatches=3", "1 present", "1 refused")
 
 COUNTS_RE = re.compile(r"assertions=(\d+) resolved=(\d+) skipped=(\d+) mismatches=(\d+)")
+STDOUT_FENCE = "--- stdout ---"
 TALLY_RE = re.compile(r"(\d+)\s+\*{0,2}(accepted|present|unverifiable|refused)\*{0,2}")
 REV_LINE_RE = re.compile(r"^rev=([0-9a-f]{40})$", re.M)
 
@@ -112,12 +113,19 @@ def read_at(root: str, rev: str, path: str) -> str | None:
 
 
 def counts_of(text: str) -> tuple[str, str] | None:
-    """Return (4-tuple string, rev header) from a receipt's bytes."""
-    m = COUNTS_RE.search(text)
-    if not m:
+    """Return (4-tuple string, rev header) from a receipt's header bytes.
+
+    Only the header region before the `--- stdout ---` fence is a receipt's own claim; a `# note
+    assertions=…` line inside the recorded stdout must not shadow it (W2K1 F4).
+    """
+    matches = COUNTS_RE.findall(text)
+    if not matches:
         return None
+    # the measured output is the runner's recorded stdout, which sits after the fence; when a
+    # wrapper prints its own summary before the fence, the LAST count line is the measured one
+    m = matches[-1]
     rm = REV_LINE_RE.search(text)
-    return m.group(0), (rm.group(1) if rm else "")
+    return "assertions=%s resolved=%s skipped=%s mismatches=%s" % m, (rm.group(1) if rm else "")
 
 
 def tally_of(text: str) -> dict[str, int]:
@@ -159,6 +167,8 @@ class Report:
             # a receipt cannot name the commit that contains it: its rev is the revision it
             # MEASURED, and the record must name that same revision (checked per line below)
             self.bad("K1", K1_RECEIPT, "receipt-rev-absent", "no rev= header")
+        elif git(self.root, "cat-file", "-e", f"{rev}^{{commit}}").returncode != 0:
+            self.bad("K1", K1_RECEIPT, "receipt-rev-object", f"no such commit {rev}")
         for record in K1_RECORDS:
             body = read_at(self.root, self.rev, record)
             if body is None:
@@ -184,6 +194,12 @@ class Report:
                         self.occurrences += 1
                         self.bad("K1", f"{record}:{lineno}", "rev-disagree",
                                  f"after-value bound to {bound or 'no revision'}, not {rev}")
+                    elif not bound:
+                        # a tuple that claims to be a measured point yet carries no revision on
+                        # its own physical line: W2K1 F1 moves the rev off-line to buy a green
+                        self.occurrences += 1
+                        self.bad("K1", f"{record}:{lineno}", "unbound-tuple",
+                                 f"{m.group(0)} has no revision token on its line")
             if seen == 0:
                 self.bad("K1", record, "occurrence-absent",
                          f"no r22 counts tuple bound to the receipt rev {rev}")

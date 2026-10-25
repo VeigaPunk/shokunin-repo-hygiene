@@ -179,10 +179,16 @@ def cmd_run(args: argparse.Namespace) -> int:
                                 root, tree], capture_output=True, text=True)
         if clone.returncode != 0:
             return refuse("CLONE-FAILED", clone.stderr.strip())
-        co = subprocess.run(["git", "-C", tree, "-c", "maintenance.auto=false",
-                             "checkout", "--quiet", "--detach", rev], capture_output=True, text=True)
-        if co.returncode != 0:
-            return refuse("CHECKOUT-FAILED", co.stderr.strip())
+        # sparse-checkout: the lane's operator-sweep blob tree is bound materialized in the clone
+        # (W2Bounds F1) — the receipt run must not copy those contents, even transiently
+        sp = subprocess.run(["git", "-C", tree, "-c", "maintenance.auto=false",
+                             "sparse-checkout", "init", "--no-cone"],
+                            capture_output=True, text=True)
+        if sp.returncode != 0:
+            return refuse("SPARSE-INIT-FAILED", sp.stderr.strip())
+        with open(os.path.join(tree, ".git", "info", "sparse-checkout"), "w") as fh:
+            fh.write("/*\n!/census/operator-sweep-*\n")
+
         run_env = {k: v for k, v in os.environ.items()
                    if k not in ("GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE")}
         run_env["GIT_OPTIONAL_LOCKS"] = "0"

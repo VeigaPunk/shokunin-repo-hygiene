@@ -83,7 +83,9 @@ landing path, not a content rewrite. No `abandon`/`rebase`/`squash`/`undo` op in
 ### 2. Nothing outside the lane written by the round
 
 ```
-$ cd /home/vgpnk/Projects/shokunin && git status --porcelain=v1 | wc -l   -> 22
+$ cd /home/vgpnk/Projects/shokunin && git status --porcelain=v1 | wc -l   -> 22 (24 by filing:
+   + `?? .ufo/reports/round-24/tabi.md`, + a transient `?? .ufo/waves/round-23|24/` entry that
+   appeared and vanished between calls as orchestration proceeded; no souji-attributed change)
 $ git status --porcelain=v1
  M .ufo/state/{chousa,kagi,kaidoku,kake,kama,kasegi,kengaku,kumitate,mado,mori,souji,tabi,tameshi,tsukuroi}.report-baseline
  M .ufo/watchdog.log
@@ -91,8 +93,14 @@ $ git status --porcelain=v1
  M scripts/hyaku/lane-addendum.md
 ?? .omp/mcp.json
 ?? .scratch/goal-20261025-hyaku-12h.md
+?? .ufo/reports/round-24/tabi.md
 ?? .ufo/state/{kotoba,kotodama,revenger}.report-baseline
 ```
+
+No `.ufo/reports/round-23/souji.md` exists yet — `ls .ufo/reports/round-23/ | grep -i souji` returns
+nothing, and the `souji.report-baseline` digest `e3b0c442…` is the sha256 of the empty string, i.e.
+the watchdog recorded round 23 with no published report. Consistent with the report being drafted
+in-lane at `.ufo/waves/round-23/report-draft.md` (untracked, inside the lane).
 
 Attribution of every entry (mtimes, and the only souji-named ones):
 

@@ -211,11 +211,15 @@ prose, or bind the correction to a lane-resolvable artifact.
 
 ## Live-worktree observation (transient, not a row defect)
 
-The tip run now reports `MISMATCH K4 .ufo/waves/round-23/report-draft.md uncommitted-path ??`
-(mismatches=1, rc=1). The file is 20 KB, mtime 05:37 local (~7 min before this run) — a
-concurrent wave-2 scribe's in-flight draft, not a landed defect. The round's `mismatches=0`
-after-state is nonetheless not observable in the live worktree until that draft is committed or
-exempted; flag for the landing gate.
+At my first tip run (`08:4x UTC`) K4 reported `MISMATCH K4 .ufo/waves/round-23/report-draft.md
+uncommitted-path ??`; by `08:55` the porcelain set had grown to `M` `W2D1.md`/`W2Lesson.md`/
+`W2Q54.md`/`repo-size-census-readonly.md` and `??` `W2Sources.md`,
+`tests/fixtures/__pycache__/` (`r23-locator-heading.cpython-314.pyc`, 05:53 — not mine: every
+fixture run of mine carried `-B`, and direct script execution never caches itself; most likely a
+sibling's `py_compile`/import), plus `census/operator-sweep-20261019/` (exempted). All are
+concurrent wave-2 artifacts, not landed defects — but the round's `mismatches=0` after-state is
+not observable in the live worktree until w2 seat reports are committed and any stray pycache is
+removed or exempted; flag for the landing gate.
 
 ## Residual risk / verification gaps
 

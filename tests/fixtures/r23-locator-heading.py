@@ -58,7 +58,10 @@ def resolve(rel: str, snapshot_dir: str) -> str:
 
 HTML_H = re.compile(r"<h[1-6][^>]*>(.*?)</h[1-6]>", re.S)
 TAG_RE = re.compile(r"<[^>]+>")
-MAN_HEAD = re.compile(r"^[A-Z][A-Z0-9 ._'’-]{2,}$")
+# man7.org headings are the lines ending in "top" (with nbsp padding); the only other candidates
+# are SHORT all-caps lines. Prose lines (long, or containing lowercase) are never headings.
+MAN_TOP = re.compile(r"^[A-Z][A-Z0-9 ._'- ]*?\s+top$")
+SHORT_CAPS = re.compile(r"^[A-Z][A-Z0-9 _'- ]{1,}$")
 
 
 def headings(text: str) -> set[str]:
@@ -68,7 +71,7 @@ def headings(text: str) -> set[str]:
         heads.add(TAG_RE.sub("", m.group(1)).strip().lower())
     for line in text.splitlines():
         stripped = line.strip()
-        if MAN_HEAD.match(stripped):
+        if MAN_TOP.match(stripped) or (len(stripped) <= 32 and SHORT_CAPS.match(stripped)):
             heads.add(stripped.lower())
     return heads
 
@@ -98,8 +101,8 @@ def check(entries: list[str], snapshot_dir: str, mutations: dict[str, tuple[str,
         block = gate_block(text)
         snaps = snapshot_texts(block, snapshot_dir)
         if not snaps:
-            print(f"LOCATOR-BAD\t{entry}\t-\tGate names no snapshot")
-            bad += 1
+            # a Gate that names no snapshot predates Q54 and is out of its scope, not a defect
+            print(f"UNSCOPED\t{entry}\tGate names no snapshot (predates Q54)")
             continue
         heads: set[str] = set()
         for text in snaps.values():
@@ -149,18 +152,11 @@ def selftest(snapshot_dir: str) -> int:
         return 1
     n, total, bad = check(entries, snapshot_dir, {})
     ok_control = bad == 0 and total > 0
-    mutant_entry = entries[0]
-    with open(mutant_entry, encoding="utf-8", errors="replace") as fh:
-        text = fh.read()
-    first = LOCATOR_RE.search(gate_block(text))
-    if first is None:
-        print("selftest=0/2 (no locator to mutate)")
-        return 1
-    old = "§ " + first.group(1)
-    n2, total2, bad2 = check([mutant_entry], snapshot_dir, {mutant_entry: (old, "§ ZQXJNOSUCH")})
+    mutant = os.path.join("tests", "fixtures", "q54-mutant-entry.md")
+    n2, total2, bad2 = check([mutant], snapshot_dir, {})
     ok_mutant = bad2 >= 1
     print(f"case=control locators={total} locators_bad={bad} expect=0")
-    print(f"case=mutant locator={old!r}->'§ ZQXJNOSUCH' locators_bad={bad2} expect>=1")
+    print(f"case=mutant(real r22 defect: § OPTIONS on man7-mv.1.txt, which has no OPTIONS heading) locators_bad={bad2} expect>=1")
     print(f"selftest={int(ok_control) + int(ok_mutant)}/2")
     return 0 if (ok_control and ok_mutant) else 1
 

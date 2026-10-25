@@ -66,7 +66,7 @@ re-derives the mutant inventory against the final bytes. This is reported as a d
 | R23-M5 | calibration, superseded numbers kept (D5) | `LOG.md` kept `assertions=56 resolved=53` and the wrong tally pair with no correction | Q41 required an append-only replacement index, but nothing detected its absence | `LOG.md` `Round22 attempt2 corrections` names both cells under `superseded by`; K2 fails when a stale scalar has no later correction, and also when the filed occurrence is deleted. |
 | R23-M6 | discernment, overbroad reject reason (D6) | the r22 lesson rejected a candidate on "no new refusal semantics or field" while the candidate added `RENAME_EXCHANGE`/`RENAME_WHITEOUT` and named its own consequence | Q1/Q2 required a located quote, not that a reject reason be true of the bytes it describes | append-only correction in `corpus/lessons/round-22.md`: entry-level reason (budget + `mv --no-copy` fallback) plus the named delta and a flip not already met. |
 | R23-M7 | discernment, `captured-by: none` with no criterion (D7) | M17 (and M19/M21, not routed) record `captured-by: none`; `corpus/QUALITY.md` was unchanged base→tip | LEARNING step 3 asks for a criterion when no rule caught the mistake; nothing enforced it | Q54: a Gate's `§ <NAME>` locator must appear in one of the Gate's own snapshots; witness `tests/fixtures/r23-locator-heading.py` (real entries 0 bad, mutant 6 bad, `selftest=2/2`). The spot-check's M22 half is overstated — that row names Q1/Q2. |
-| R23-M8 | scope, wave-1 seat writes | `SimplTouched` created `tools/__pycache__/` by importing a lane tool without `-B`; the directory is a K4 mismatch and the lane has no `.gitignore` | Q26's write audit covers declared paths, not interpreter side effects | removed before landing; every later run uses `python3 -B`; the K4 base control's `__pycache__` row is the witness that the counter sees it. |
+| R23-M8 | scope, wave-1 seat writes | `SimplTouched` created `tools/__pycache__/` by importing a lane tool without `-B`; the directory is a K4 mismatch and the lane has no `.gitignore` | Q26's write audit covers declared paths, not interpreter side effects | removed before landing; lane runs and fixtures force `python3 -B` (`sys.dont_write_bytecode`), while the receipt runner records each command's argv verbatim — receipts that record a plain `python3` are the command's true argv, not a lane run (W2Lesson F3, disclosed). The K4 base control's `__pycache__` row is the witness that the counter sees it. |
 
 ## Gate
 
@@ -134,6 +134,81 @@ claim without the L1 re-derivation named in the disposition.
 - `.ufo/waves/round-23/w1/RevD7.md` "STATUS: FAIL — D7 is real for M17 and reproducible, but the spot-check overstates it for M22, and" — open — accepted: D7 repaired as Q54 (locator-heading), not as the D1-class criterion the wave item proposed; Q55 covers the receipt binding.
 - `.ufo/waves/round-23/w1/ScribeLesson.md` "STATUS: PARTIAL — draft only. The lesson body is written from committed bytes at lane base" — open — accepted: this lesson is its own draft, corrected where the wave-1 findings changed a number or a path.
 - `.ufo/waves/round-23/w1/SentinelScope.md` "STATUS: PARTIAL — 1 HIGH, 4 MEDIUM, 1 LOW; item 4's claim is accurate and confirmed from both the opened page and the installed manual. No credential was read or printed this run; `.scratch/` and operator-sweep contents were not opened." — open — accepted: argv refusal list, redaction ported from tools/souji-proc-census.sh, GIT_OPTIONAL_LOCKS=0, newline-preserving capture and the out-path guards landed in the runner; the "grep counter counts files, not verified receipts" attack is disclosed and paired with a verify-per-receipt command.
+## Wave 2 summary (falsify, 33 seats)
+
+Wave 2 re-derived every claim at the tip and falsified several recorded details; each was
+repaired or is disclosed here:
+
+- **K1 (W2K1)** — falsified as an adequate checker, record honest: added `unbound-tuple`
+  (a tuple whose own physical line carries no revision) and `receipt-rev-object` (receipt rev
+  must name a real commit) to the instrument, and switched counts parsing to last-wins so a
+  pre-fence summary line cannot shadow the measured output. All three holes now have fixture
+  cases (selftest 12/12). The decoy-line and stale-digest cross-instrument gaps (F2/F5) are
+  named limits: K1 binds per line, and `verify` remains the authority on tool digests.
+- **Q54 (W2Q54)** — falsified as a substring search; the fixture now resolves headings
+  (man7.org `top` lines and short all-caps lines), the mutant is the real r22 shape
+  (`tests/fixtures/q54-mutant-entry.md`, `§ OPTIONS` against `man7-mv.1.txt`), and older
+  Gates without snapshots are unscoped. The production gate still checks only quote presence;
+  Q54's own command is the heading check.
+- **C2 runner (W2Bounds F1)** — the clone materialized the lane's tracked operator-sweep
+  blob tree; the runner now uses sparse-checkout excluding `census/operator-sweep-*` so those
+  contents never land in `/var/tmp`. The `"no operator-sweep contents"` bound is therefore
+  instrument-true from this commit on.
+- **C2 verifier (W2C2Verify)** — `blob_sha_bytes` lacked `GIT_NO_REPLACE_OBJECTS`; hardened,
+  and a `git replace` counterexample now refuses while the five committed receipts still verify.
+  `verify` still accepts a non-durable rev while `run` refuses it (asymmetry, disclosed) and
+  the `tool=` label is not bound to argv (disclosed).
+- **C1 citations (W2Log/W2Digests/W2Lesson)** — `agreement-after.txt` never existed and the
+  old `agreement-after.tsv` was the failing rc=1 receipt; the after-receipt is regenerated at
+  the landing tip (rev `__FINALREV__`, rc=0) and every citation names it. Control numbers
+  standardized on 6 (revision-scoped) / 29 (live worktree at base).
+- **C3 records (W2Census/W2Sources/W2Assim/W2Entry1/W2Entry2)** — tier histogram corrected
+  (A113/B5/C1), five Gate decisions (not four), entry 1 fixed on `fsck`'s `§ OPTIONS` head
+  set, `count-objects` counting files not objects, `prune` as an ancillary command, recheck
+  cadence unified to `on-release`, and the community snapshot digests are now bound via
+  `census/round-23/sources/SHA256SUMS` with the volatile one-shot fetch digests recorded as
+  one-shots. The staged own-work row's rejection and the "same way" claim's rejection hold.
+- **Fixture counts** — LOG/README/lesson now say 12/12 record-agreement cases (10 false-green
+  controls) and 8/8 receipt-run cases, with the reference-runner mutant sweep (12/12) noted.
+- **Seat-failure carry** — wave-2 reports are carried below with their verdicts; `STATUS:`
+  lines for the nine failing wave-1 seats are appended after this section.
+
+
+### Wave 2 seat reports
+
+- `.ufo/waves/round-23/w2/W2Assim.md` STATUS: (none) — wave-2 verdict: survives
+- `.ufo/waves/round-23/w2/W2Bounds.md` STATUS: (none) — wave-2 verdict: falsified
+- `.ufo/waves/round-23/w2/W2C1Ctl.md` STATUS: (none) — wave-2 verdict: falsified
+- `.ufo/waves/round-23/w2/W2C2Count.md` STATUS: (none) — wave-2 verdict: falsified
+- `.ufo/waves/round-23/w2/W2C2Run.md` STATUS: (none) — wave-2 verdict: survives
+- `.ufo/waves/round-23/w2/W2C2Verify.md` STATUS: (none) — wave-2 verdict: mixed
+- `.ufo/waves/round-23/w2/W2C3Control.md` STATUS: (none) — wave-2 verdict: falsified
+- `.ufo/waves/round-23/w2/W2Census.md` STATUS: (none) — wave-2 verdict: falsified
+- `.ufo/waves/round-23/w2/W2Control.md` STATUS: (none) — wave-2 verdict: falsified
+- `.ufo/waves/round-23/w2/W2D1.md` STATUS: closed — the D1 disposition survives all three tests at lane tip `5378018` (the — wave-2 verdict: survives
+- `.ufo/waves/round-23/w2/W2D3.md` STATUS: **closed** at the repaired tip `466f539` — the D3 disposition survives on both halves, and the three defects this seat raised at `1026900` were repaired by the round before it closed (F1/F2 wording at `3b72bea`, F3 receipt re-bound at `cfd5d79`, citations fixed at `3b72bea`/`466f539`; see th — wave-2 verdict: survives
+- `.ufo/waves/round-23/w2/W2D6.md` STATUS: (none) — wave-2 verdict: falsified
+- `.ufo/waves/round-23/w2/W2D7.md` STATUS: **FALSIFIED** — Q54 does not close D7. Its check is a case-folded substring search over the — wave-2 verdict: falsified
+- `.ufo/waves/round-23/w2/W2Digests.md` STATUS: (none) — wave-2 verdict: mixed
+- `.ufo/waves/round-23/w2/W2Entry1.md` STATUS: (none) — wave-2 verdict: falsified
+- `.ufo/waves/round-23/w2/W2Entry2.md` STATUS: (none) — wave-2 verdict: survives
+- `.ufo/waves/round-23/w2/W2FixAgree.md` STATUS: (none) — wave-2 verdict: mixed
+- `.ufo/waves/round-23/w2/W2FixReceipt.md` STATUS: (none) — wave-2 verdict: mixed
+- `.ufo/waves/round-23/w2/W2K1.md` STATUS: (none) — wave-2 verdict: mixed
+- `.ufo/waves/round-23/w2/W2K2.md` STATUS: (none) — wave-2 verdict: falsified
+- `.ufo/waves/round-23/w2/W2K3.md` STATUS: **survives** as frozen, with three findings the round must fix or disclose and one — wave-2 verdict: survives
+- `.ufo/waves/round-23/w2/W2K4.md` STATUS: FAIL — claim **falsified** at the lane tip; K4 itself kills 9 of 13 input mutants, — wave-2 verdict: falsified
+- `.ufo/waves/round-23/w2/W2Lesson.md` STATUS: (none) — wave-2 verdict: falsified
+- `.ufo/waves/round-23/w2/W2Log.md` STATUS: (none) — wave-2 verdict: falsified
+- `.ufo/waves/round-23/w2/W2Misroot.md` STATUS: (none) — wave-2 verdict: survives
+- `.ufo/waves/round-23/w2/W2Q54.md` STATUS: (none) — wave-2 verdict: falsified
+- `.ufo/waves/round-23/w2/W2Q55.md` STATUS: (none) — wave-2 verdict: falsified
+- `.ufo/waves/round-23/w2/W2Readme.md` STATUS: (none) — wave-2 verdict: falsified
+- `.ufo/waves/round-23/w2/W2Scope.md` STATUS: (none) — wave-2 verdict: survives
+- `.ufo/waves/round-23/w2/W2Scorecard.md` STATUS: (none) — wave-2 verdict: mixed
+- `.ufo/waves/round-23/w2/W2Seats.md` STATUS: PARTIAL — 54 clause mutants designed for `tools/souji-record-agreement.py` (sha256 — wave-2 verdict: falsified
+- `.ufo/waves/round-23/w2/W2Sep.md` STATUS: **PARTIAL** — C1's *instrument* is separable from C2 (survives); C1's *evidence* is not — wave-2 verdict: falsified
+- `.ufo/waves/round-23/w2/W2Sources.md` STATUS: **survives** — all five assigned checks pass on the committed tip bytes; the census — wave-2 verdict: survives
 
 ## Trend verdicts
 

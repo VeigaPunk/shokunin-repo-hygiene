@@ -278,6 +278,14 @@ def mutate(repo: str, variant: str) -> None:
         commit(repo, "case: SCORECARD line names a token that is not the receipt rev= "
                      "(K1 rev-disagree)")
         return
+    if variant == "unbound-tuple":
+        # W2K1 F1: the rev token moves off the tuple's physical line AND the tuple is wrong.
+        # A silently-dropped tuple would buy a green; the instrument must flag unbound-tuple.
+        rewrite(repo, K1_RECORD, lambda t: re.sub(
+            r"measured at [0-9a-f]{40}", "measured-on-another-line", t))
+        rewrite(repo, K1_RECORD, lambda t: t.replace(AFTER_TUPLE, AFTER_TUPLE_WRONG))
+        commit(repo, "case: unbound wrong tuple (K1 unbound-tuple)")
+        return
     if variant == "uncorrected-log":
         rewrite(repo, K2_RECORD, lambda t: "".join(
             line for line in t.splitlines(keepends=True)
@@ -391,6 +399,12 @@ def got_text(result: dict) -> str:
 
 
 # --------------------------------------------------------------------------- cases
+def case_unbound(res: dict) -> tuple[bool, str]:
+    have = classes(res, "K1")
+    return ("unbound-tuple" in have and res["rc"] != 0,
+            "rc!=0 K1 unbound-tuple>=1")
+
+
 def case_repaired(res: dict) -> tuple[bool, str]:
     c = res["counts"]
     ok = (res["rc"] == 0 and c is not None and c["mismatches"] == 0
@@ -446,6 +460,7 @@ CASES = [
     ("receipt-absent", lambda r: case_k1(r, "receipt-absent"), True),
     ("counts-disagree", lambda r: case_k1(r, "value-disagree", ("rev-disagree",)), True),
     ("rev-disagree", lambda r: case_k1(r, "rev-disagree"), True),
+    ("unbound-tuple", case_unbound, True),
     ("uncorrected-log", lambda r: case_k2(r, "uncorrected"), True),
     ("filed-deleted", lambda r: case_k2(r, "filed"), True),
     ("tally-wrong", case_k3, True),

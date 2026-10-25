@@ -5,10 +5,11 @@ status histogram, malformed rows, duplicate ids, `sources-census.sh validate` ex
 full output. The gate-check arm (`tools/souji-gate-check.py`) and the two entries are other seats'
 slices and are **not** re-run here.
 
-Lane tip at write time: `cfd5d79` (git `HEAD`), reached via the wave-2 landings `1dd8b1e`,
-`5378018`, `3b72bea`, `cfd5d79` after `1026900`. Registry bytes: `HEAD:corpus/SOURCES.md` =
+Lane tip at write time: `466f539` (git `HEAD`), reached via the wave-2 landings `1dd8b1e`,
+`5378018`, `3b72bea`, `cfd5d79`, `466f539` after `1026900`. Registry bytes: `HEAD:corpus/SOURCES.md` =
 `c82f11138bffaba30386fec161ad5b4f658a8ef9`, and `git hash-object corpus/SOURCES.md` =
 `c82f1113…` — identical, so the working-tree registry IS the committed tip blob.
+
 
 Tracking fact that changes how F1/F2 are graded: `.ufo/waves/round-23/report-draft.md` is
 **committed** as of landing `1dd8b1e` (it was an untracked draft when this review began, then a
@@ -17,7 +18,7 @@ histogram and the "own receipt" sentence are now committed bytes. The committed 
 `SCORECARD.md:23`, `corpus/README.md:458`, `corpus/lessons/round-23.md:85-86`, `LOG.md:1599` carry
 only the `114 → 119` row delta (correct) — not the histogram. Sibling seats edited many tracked
 files during my run; none touched `corpus/SOURCES.md`, which held blob `c82f1113…` at every tip I
-saw (`1026900` → `cfd5d79`), and a re-run at the final tip still gave rows 119 / `E`=0 / `W04`=30 /
+saw (`1026900` → `466f539`), and a re-run at the final tip still gave rows 119 / `E`=0 / `W04`=30 /
 rc 0. Concurrent lane edits are not mine and not modified here.
 
 ## Verdict
@@ -200,7 +201,7 @@ Fix: replace `A113/B3/C2` with `A113/B5/C1` (or delete the histogram from the re
 C3 row does not carry it, so only the report is affected — `grep -rn 'A113/B3/C2'` over
 `/home/vgpnk/Projects/shokunin` hits this one line only).
 
-### F2 — `report-draft.md:119-120` calls the C3 control a "receipt"; no such receipt exists (severity: medium; action: **fix or disclose**)
+### F2 — `report-draft.md:119-120` calls the C3 control "the collision step's own receipt"; the timing claim is now discharged but the report sentence still conflates it (severity: low; action: **accept with disclosure**)
 
 ```
 118: Controls. … C3's control is the
@@ -208,16 +209,18 @@ C3 row does not carry it, so only the report is affected — `grep -rn 'A113/B3/
 120: own receipt).
 ```
 
-The prereg's C3 control clause says "That receipt is committed before append". What is committed is
-a **scout report**, not a receipt: `.ufo/waves/round-23/w1/ScoutIdCollision.md:142-200` (committed
-at `4765250`) pastes the control arm's `rc=1` and the three `E03 duplicate id` lines. There is no
-`receipt=v1` artifact for it — `grep -rl '^receipt=v1' census/` returns exactly five files
-(`agreement-after`, `declared-evidence-after`, `gate-check-at-first-landing`,
-`gate-check-at-lane-base`, `gate-check-c3`), and none of them runs `sources-census.sh`.
-
-The control's *substance* reproduces (my §"Discriminating power" fixture fires the same `E03`), so
-the claim's control is real; the artifact-type word is not. Fix: name the scout report and its
-commit, or land the control through `tools/souji-receipt-run.py` so the sentence becomes true.
+When I first wrote this, no committed receipt existed — `grep -rl '^receipt=v1' census/` returned
+five files, none running `sources-census.sh`, and the only evidence was a committed scout report
+(`.ufo/waves/round-23/w1/ScoutIdCollision.md:142-200` at `4765250`). A sibling then landed the real
+control receipt mid-run: `census/round-23/records/c3-control-e03.txt`, which honestly labels itself
+`POST-HOC and tip-labelled — the prereg promised this control receipt before the append and it was
+not filed then; this is a re-derivation at the landing tip`. So the *artifact* now exists and its
+content is correct (E03 on S112/S113/S114, rows 119 → 122, exit=1). The residual is only the
+report's "own receipt" phrasing, which still describes a before-append artifact; the receipt's own
+note is the honest disclosure. The control's substance reproduces (my §"Discriminating power"
+fixture fires the same `E03`), so the claim's control is real. Accept with disclosure — the report
+sentence should point at `c3-control-e03.txt` and its post-hoc label, not at the collision step as
+if the receipt predated the append.
 
 ### F3 — C3's census arm is unbound: no revision, no tool digest (severity: low-medium; action: **disclose**)
 
@@ -227,7 +230,7 @@ unlike C1/C2 which name tool digests and receipt revisions. The counter itself i
 unpinned: `/home/vgpnk/Projects/shokunin/scripts/sources-census.sh`, `sha256
 3fb7261569f46423dd80ecc23e0a23789a7926f667c7a3fc559d2439d4a64e30`, not tracked in the lane
 (`git ls-files scripts/sources-census.sh` → 0 paths), and it reads the working tree rather than a
-revision. The draft's named limits disclose the exit-0 vacuity but not this pinning gap
+revision. The report's named limits disclose the exit-0 vacuity but not this pinning gap
 (`grep -n 'fleet-owned\|no lane blob\|outside the lane\|unpinned'` over `corpus/lessons/round-23.md`,
 `corpus/README.md`, `report-draft.md` → no hit).
 
