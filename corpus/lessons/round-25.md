@@ -69,3 +69,13 @@ W1 had two identical 32-seat task batches because of the duplicate dispatch. The
 ## Boundaries and remaining holds
 
 F2 remains frontier; no lane-bound size baseline, fleet figure, deletion authority, or promotion of the r13 probe to a new capability is claimed. C3 leaves the probe bytes unchanged and tests its linked-worktree/common-dir envelope; the worktree root itself is not in the manifest. C2's amendment-2 text overstates manifest gating for cases 11/12; the fixture reports `manifest_changed` but does not include it in the predicate. C2 also survives eight listed tool mutants. R7 count-in-stderr behavior was changed in r24; r25 does not add a new receipt-run fixture case. R15 remains open. Certification OFF, K5 HELD, F5 reap and NAMESPACE holds unchanged.
+
+## Round 25 final evidence (append-only closeout)
+
+- C3 candidate receipt `census/round-25/records/c3-after.tsv` verifies at `728b2ce71acbe574ae3036b456724d0a3d6f8f08`: fixture `selftest=PASS ids=7/7`, rc 0. C1 and C2 after receipts also verify at their named independent candidates (`7e4dbef` and `679e2d0`).
+- Q57 cross-table fixture: `python3 -B tests/fixtures/r25-slice-mapping.py --root .` → `rows=8/8 status=PASS`; citation checker → `q57=PASS` for the four listed sites. Red-before at base: NO-POINTER ×2, STALE ×4, rc 1 (W2 `MutQ57Check.md`).
+- R7 correction to the earlier boundary sentence above: r25 does add a supplemental synthetic witness. `python3 -B tests/fixtures/r25-receipt-stderr.py --root . --rev 728b2ce71acbe574ae3036b456724d0a3d6f8f08` → old `c872eec` `verify=ok`, current runner `RECEIPT-COUNTS-ABSENT`, `cases=1 pass=1`; the behavior fix itself remains r24 work.
+- Opened-source snapshots verify `sha256sum -c census/round-25/sources/SHA256SUMS` → 5/5. End SOURCES validation exits 0 with 34 W04 warnings, 0 errors; census remains 127 rows, malformed/duplicate/enum/used-by-missing 0.
+- W2 registry assigns 39 seat identities; 39 W2 reports landed with no W2 deaths. The final report records W1's duplicate dispatch, 30 canceled duplicate identities and eight rate-limit failures.
+- R23 tool counter at candidate `728b2ce71acbe574ae3036b456724d0a3d6f8f08`: `keys=4 records=4 occurrences=17 mismatches=0`, receipt `census/round-25/records/record-agreement-at-tip.tsv` verifies. The candidate-bound measurement is before the receipt itself is added.
+- The earlier boundary clause at line 71 saying “r25 does not add a new receipt-run fixture case” is superseded by the R7 synthetic fixture above; this remains a test-only witness for the r24 code change.

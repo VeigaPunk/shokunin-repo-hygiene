@@ -1719,3 +1719,23 @@ superseded by LOG.md:1692; mapping corpus/lessons/round-25.md § Quarantine-slic
 R24-M25: the Round24 title at LOG.md:1628 overstates the measured surface. R1 closed; R2 narrowed to `tool=` argv-text presence; general `run`/`verify` symmetry remains unproved (corpus/lessons/round-25.md).
 
 R3 (2026-10-25): the sentence at LOG.md:1588 is overbroad. `tool_sha256` binds the labelled committed file bytes and a recorded argv label; it does not bind the executed program. At base a6d2d15, 21 tracked `tool_sha256` grep hits yielded 19 `verify=ok` and two malformed non-receipts; one more current refusal receipt is `RECEIPT-COUNTS-ABSENT`. The exact count and command are in `corpus/lessons/round-25.md`.
+
+## 2026-10-25 — Round 25 honest stop: C1 kill rule, C2 refusal fixture, C3 common-dir envelope
+
+Three claims were frozen in `.ufo/waves/round-25/preregistration.txt` and amendments 1–3. C1 calibration is measured independently at `7e4dbef`: `grounded=6 mapped=6 dangling=0 mismatches=0 kill_tested=6 kill_violations=0`; fixture 16/16. C2's extended refusal fixture is 12/12 at `679e2d0`; W2 review found the changed surface is coverage of four edge classes rather than operability, so C2 is unprovable on its declared axis and calibration is harmed by that attribution. C3 common/private-directory fixture is 7/7 at `728b2ce`; the production probe bytes are unchanged. No owned-axis score changes.
+
+SOURCES 123→127 rows; validation rc 0 (31→34 warning-only W04, 0 errors), tiers A=117/B=5/C=1 → A=120/B=5/C=2, status mined=100/queued=15/rejected=8 → 103/15/9, malformed/duplicate/enum/used-by-missing all 0. Added S124–S126 mined and S127 rejected; no prior status/recheck/used-by cells changed. Assimilation none. The F2 row remains frontier and no F2/Core promotion or size baseline is claimed.
+
+R25-M1: C1's original `kill_tested=4` was copied from an earlier base; the actual a6d2d15 tree has six grounded entries. Amendment 1 corrected the literal to 6 before C1 scoring; Q58 records the regression. R25-M2 records the duplicate W1 taskCall and cancellation; no duplicate lane report is treated as new attack work. R24-M22 produced Q57 and an eight-row cross-table mapping; its bounded checks are in `tests/fixtures/r25-slice-mapping.py` and `r25-q57-check.sh`. D4, D5 and R17 corrections are appended in the round-25 lesson / round-22 and round-23 lessons; R15 remains open.
+
+W1 intended 32-seat v1 batch, accidentally called twice: 64 W1 spawn attempts, 30 duplicate seats canceled, 8 Cursor rate-limit failures, 26 returned reports including two duplicate census reports. W2 was a distinct 39-seat v1 falsification batch (11 reviewer, 11 critic, 8 mutation-tester, 8 scout, 1 sentinel), all 39 reports landed, no W2 deaths; round total 103 attempted seats, 38 canceled/failed. The exact seat ids, dead-seat error and W1/W2 reports are in `.ufo/waves/round-25/`.
+
+No L0 question; no tool installs/updates; certification OFF, K5 HELD, F5 reap and NAMESPACE holds unchanged. Round disposition: honest stop / no admission because C2 does not verify on its frozen operability axis.
+
+### Round25 final evidence addendum
+
+The C3 after receipt is `census/round-25/records/c3-after.tsv` (`rev=728b2ce71acbe574ae3036b456724d0a3d6f8f08`, fixture `selftest=PASS ids=7/7`, `verify=ok`). The planned r23 record-agreement counter was re-run at the same candidate and receipted in `census/round-25/records/record-agreement-at-tip.tsv`: `keys=4 records=4 occurrences=17 mismatches=0`, `verify=ok`.
+
+R7 (stderr-only counts) has a synthetic regression witness `tests/fixtures/r25-receipt-stderr.py`: at 728b, old runner blob c872eec accepts a counts line found only after the stderr fence; current runner refuses `RECEIPT-COUNTS-ABSENT`, `cases=1 pass=1`. This tests the r24 implementation fix, not a new r25 runner change.
+
+Q57 verification: `r25-slice-mapping.py` → rows=8/8, both TSV pointers, S118 accepted; `r25-q57-check.sh` → base red and current working tree `q57=PASS` over four explicitly listed citation sites. The site list is bounded; omission discovery is not claimed. C3 red-arm mutant results are independently reproduced in W2 reports; the amendment's requested committed pre-after-data red-arm receipts were not produced, disclosed as a process defect.
