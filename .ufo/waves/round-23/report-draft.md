@@ -1,7 +1,7 @@
 # souji-shokunin — round 23 report (hyaku, attempt 1)
 
 Lane: `/home/vgpnk/Projects/shokunin/souji-shokunin` (repo and workspace hygiene, 掃除).
-Round base `1208bfb4924d9c6d4fdd1cdf8ccdc29b834893cd`; lane tip at landing `__TIP__`.
+Round base `1208bfb4924d9c6d4fdd1cdf8ccdc29b834893cd`; lane tip at landing `94fe8094f52098b8d2a27dcdaeba953f6ec1a487`.
 Preregistration `.ufo/waves/round-23/preregistration.txt`. Inbound work: the non-author spot-check
 of round 22, `corpus/lessons/round-22-verifier-spotcheck.md` §5–§7, which routed defects D1–D8 to
 this lane.
@@ -103,13 +103,13 @@ Round total: **74 seats** (41 + 33), both waves validated under policy v1 and di
 | `SCORECARD.md` r23 measurements, two capability rows, planned | `Round23` | `4765250…`, `c0eeaa7a01d309710ab53c41afc6b0df734217a3` |
 | `census/round-23/records/*` (5 bound receipts, 2 control records, refusal demo, exemptions) | `Round23` | `c0eeaa7…` |
 | the seven inherited round-22 leftovers (D1) | `Round23` | `4765250…` |
-| `.ufo/waves/round-23/**` (preregistration, two specs, 74 seat reports) | `Round23` | `4765250…`, `1026900…`, `__W2COMMIT__` |
+| `.ufo/waves/round-23/**` (preregistration, two specs, 74 seat reports) | `Round23` | `4765250…`, `1026900…`, `eb1aa49783ae4a0d42e062aa5a61e49a91b0f76a` |
 
 ## Before → after measurements
 
 | claim | counting command | before | after | measured commit |
 |---|---|---|---|---|
-| C1 record agreement | `cd /home/vgpnk/Projects/shokunin/souji-shokunin && python3 -B tools/souji-record-agreement.py --rev <full40>` | `keys=4 records=3 occurrences=13 mismatches=6` at `1208bfb…` with `--no-worktree` (`mismatches=29` with the live-worktree K4 arm) | `mismatches=0` | tool `617f4c9618c06254c0fd9503d76f681e56452bfff7fa3888009737ddfcdfa8c9`; before `census/round-23/records/agreement-control-base.txt`; after `census/round-23/records/agreement-after.tsv` (`rev=476525026cdb179f2d49441e1cb6c6f7316f3124`) and the tip run `__AFTER__` |
+| C1 record agreement | `cd /home/vgpnk/Projects/shokunin/souji-shokunin && python3 -B tools/souji-record-agreement.py --rev <full40>` | `keys=4 records=3 occurrences=13 mismatches=6` at `1208bfb…` with `--no-worktree` (`mismatches=29` with the live-worktree K4 arm) | `mismatches=0` | tool `617f4c9618c06254c0fd9503d76f681e56452bfff7fa3888009737ddfcdfa8c9`; before `census/round-23/records/agreement-control-base.txt`; after `census/round-23/records/agreement-after.tsv` (`rev=476525026cdb179f2d49441e1cb6c6f7316f3124`) and the tip run ``rev=eb1aa49783ae4a0d42e062aa5a61e49a91b0f76a` rc=0, tool sha256 `dd53c228…`; tip re-run `keys=4 records=4 occurrences=17 mismatches=0`` |
 | C2 blob-bound receipts | `grep -rlE '^tool_sha256=[0-9a-f]{64}$' census/ \| wc -l`, then `python3 tools/souji-receipt-run.py verify --root . <receipt>` | `0` | `5`, every one `verify=ok` | `census/round-23/records/{declared-evidence-after,gate-check-at-first-landing,gate-check-at-lane-base,gate-check-c3,agreement-after}.tsv` |
 | C2 refusal | `python3 tools/souji-receipt-run.py verify --root . <receipt with the r22 stale digest 5b8025a8…>` | n/a (no verifier existed) | `RECEIPT-TOOL-DIGEST-MISMATCH receipt 5b8025a83f16 != tree d5ed0805b10f at 1208bfb…`, exit 2 | `census/round-23/records/refusal-stale-digest.txt` |
 | C3 F2 read side | `/home/vgpnk/Projects/shokunin/scripts/sources-census.sh validate --root /home/vgpnk/Projects/shokunin souji`; `python3 tools/souji-gate-check.py --root . --round-date 2026-10-25 --entries corpus/knowledge/repo-size-census-readonly.md corpus/knowledge/count-objects-garbage-readings-r25.md --snapshot-dir census/round-23/sources --slice census/round-23/records/empty-slice --slice-verdicts census/round-23/records/empty-verdicts` | registry 114 rows, 30 W04, F2 held one entry; the two entries absent | registry 119 rows, `validate` exit 0, 0 E-findings; gate `entries=2 ok=2 slice_verdicts=0 slice_total=0 fail=0`; F2 entries 1 → 3 | `census/round-23/records/gate-check-c3.tsv` (`rev=476525026c…`, tool `d5ed0805…`) |
@@ -130,7 +130,7 @@ counters discriminate.
 ## Sources & frontier
 
 `SOURCES.md` rows **114 → 119** (`grep -cE '^ {0,3}\|[[:space:]]*S[0-9]{3,}[[:space:]]*\|' corpus/SOURCES.md`),
-tier histogram A110/B3/C1 → A113/B3/C2, status mined91/queued15/rejected8 → mined96/queued15/rejected8,
+tier histogram A110/B3/C1 → A113/B5/C1, status mined91/queued15/rejected8 → mined96/queued15/rejected8,
 malformed 0, duplicate ids 0, `sources-census.sh validate` exit 0 (30 pre-existing `W04`
 duplicate-URL warnings, no `E` finding) at the tip. The census exit code was also 0 at round start.
 
@@ -146,7 +146,7 @@ to "frontier, three entries on the read side". F2 does **not** move to core: no 
 tool land, and `PROVINCE.md`'s core test is an admitted entry *plus* a SKILL rule. F1, F3, F4 and F5
 are unchanged; the F5 reap protocol and NAMESPACE pin remain operator-held.
 
-Assimilation: one theme (F2 read side), two admitted entries, four Gate decisions — two ADMIT and
+Assimilation: one theme (F2 read side), two admitted entries, five Gate decisions — two ADMIT and
 three REJECT with flips, all in `corpus/lessons/round-23.md` `### Assimilation decisions`. The
 staged own-work fleet-census row is refused because its evidence lives outside this repository. The
 package's `S134/S138/S139` re-pointing note in the preregistration is corrected in the lesson: the
@@ -205,13 +205,20 @@ No box is `[x]`: promotion is operator-owned and this round has no non-author ve
   2 mutation-tester, 1 connector, 1 sentinel, 1 simplifier. Wave 2: 15 reviewer, 6 critic,
   3 mutation-tester, 3 scout, 2 revenger, 1 sentinel.
 - Planner seat: L1 (the validator rejects `planner`); planning data-walk rode three wave-1 items.
-- Dead seats: `__DEAD__`.
+- Dead seats: `none (all 41 wave-1 seats completed; 33 wave-2 seats completed)`.
 - Every seat ran read-only against the lane except its own report; the two executors delivered
   fixture files under the wave dir, which the L1 copied into `tests/fixtures/` after review.
 
 ## Wave 2 findings
 
-`__W2FINDINGS__`
+Wave 2 (33 falsify seats) confirmed the claims' directions and forced the fixes listed in
+`corpus/lessons/round-23.md` "## Wave 2 summary" — K1's three predicate holes (unbound-tuple,
+receipt-rev-object, last-wins counts), Q54's heading resolution with the real r22 mutant, the
+runner's sparse-checkout exclusion of `census/operator-sweep-*`, verifier `GIT_NO_REPLACE_OBJECTS`,
+entry-1 corrections, snapshot digest binding, control numbers standardized to 6/29/0, and the
+fixture counts 12/12, 8/8 and 2/2. Pending wave-2 details: `verify` accepts a non-durable rev
+(`run` refuses it) and the `tool=` label is not bound to argv — both disclosed as named limits; the
+production gate still checks quote presence only, while Q54's fixture is the heading check.
 
 ## Stale-lane
 
