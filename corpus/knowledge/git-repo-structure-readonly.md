@@ -1,5 +1,5 @@
 source: S035 — https://git-scm.com/docs/git-repo, COMMANDS / structure; S036 — https://git-scm.com/docs/git, ENVIRONMENT VARIABLES / GIT_OPTIONAL_LOCKS; S037 — https://github.com/git/git/blob/v2.55.0/builtin/repo.c, structure_count_references / count_objects / cmd_repo_structure
-verified-at: 2026-10-20; host Git 2.55.0 (package 2.55.0-1), web docs 2.56.0; empirical result recorded in census/round-13/verification.json
+verified-at: 2026-10-25; host Git 2.56.0 (package 2.56.0-1), recheck selftest=PASS ids=5/5 (receipt census/round-24/records/r13-recheck-receipt.tsv); first verified 2026-10-20 on Git 2.55.0 (census/round-13/verification.json)
 recheck: bash tests/fixtures/r13-repo-structure.sh --selftest --probe tools/souji-repo-structure.sh
 ground: F2 — repository size census (structure census of refs-rooted reachable objects)
 

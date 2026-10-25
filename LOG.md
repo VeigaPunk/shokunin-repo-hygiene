@@ -1622,3 +1622,92 @@ task call from .ufo/waves/round-23/w1-spec.json, and wave 2 (33 falsify seats) f
 .ufo/waves/round-23/w2-spec.json — 74 seats total, no residual call. L1 holds the planner seat. No deletion outside this repo, no history
 rewrite, no credentials, no live /proc census, no operator-sweep contents.
 Certification OFF, K5 HELD, F5 reap and NAMESPACE holds unchanged.
+
+
+```text
+Round24 (2026-10-25) — F2 debris census, coverage-map agreement, receipt verify symmetry
+========================================================================================
+Three claims frozen before data in .ufo/waves/round-24/preregistration.txt
+against lane base a65fac98964b445758e94c805728c9a19d302ff8, tightened before
+any control or after receipt by the append-only
+.ufo/waves/round-24/preregistration-amendment-1.txt (stricter only). Inbound:
+SCORECARD "r24 — planned" (the F2 write-safety fixture that must exclude
+git fsck --lost-found; the residual r23 C1/C2 limits) and the r23 non-author
+spot-check's routed defect (coverage-map table vs its own "read side now
+holds three" prose, corpus/lessons/round-23-verifier-spotcheck.md:41).
+
+C1 coverage (8). tools/souji-size-census.py reads count-objects -v
+(garbage, size-garbage, alternates) against the resolved common git dir and
+counts fsck --unreachable --no-reflogs lines, under a scrubbed environment
+with core.fsmonitor=false and core.hooksPath=/dev/null; it refuses
+--lost-found, promisor/partialClone repositories and non-repositories with
+exit 2. Counter python3 -B tests/fixtures/r24-size-census.py --tool
+tools/souji-size-census.py. Before: fixture and tool absent at base
+(cases=0 pass=0 by definition); the case-8 stub as --tool scored cases=8
+pass=4 control=FALSE-GREEN-REJECTED lost_found=WRITE-DETECTED, rc 1
+(receipt census/round-24/records/c1-control-stub.tsv, rev 1efe406e7f39b8fe736be2a566053703a571ffc0).
+After: cases=8 pass=8 control=FALSE-GREEN-REJECTED lost_found=WRITE-DETECTED,
+rc 0 (census/round-24/records/c1-after.tsv, rev 778747eb671f8e85ef5387bc3d7023337b30467c).
+Lane-bound figure census/round-24/size-census-lane.txt: garbage=0
+size_garbage=0 unreachable=1093 alternates=0 at the moment of the run, this
+repository only (jj keep refs, a cruft pack); it is a measurement file, not
+a v1 receipt (verify: RECEIPT-MALFORMED). No fleet figure is claimed.
+Named limits: no-write is a /var/tmp fixture claim on git 2.56.0; the
+manifest excludes atime/ctime; the stderr contract, the not-a-repo exit and
+hostile config/env have no case.
+
+C2 calibration (lowest axis, 7). tools/souji-coverage-agreement.py
+re-derives, at a full revision, whether every `ground: F<k>` entry is named
+by a backticked knowledge/<name> in an F<k> row's entries column and whether
+every such path exists. Control (do nothing) = the same tool at base:
+grounded=4 mapped=2 dangling=0 mismatches=2, rc 1 — the two r23 F2 entries
+named only in a status cell (census/round-24/records/c2-control-base.tsv).
+After: grounded=6 mapped=6 dangling=0 mismatches=0, rc 0
+(census/round-24/records/c2-after.tsv, rev 778747eb671f8e85ef5387bc3d7023337b30467c); fixture
+cases=9 pass=9 control=FALSE-GREEN-REJECTED (c2-fixture-after.tsv). The
+per-entry kill rule holds: all four base-grounded entries carry the same
+F<k> at the tip (git diff adds two ground: lines, removes none). The rule is
+checked by hand, not by the tool. Grounded entries are 6 of 13.
+
+C3 operability (8). tools/souji-receipt-run.py verify now refuses a
+non-durable rev (RECEIPT-REV-NOT-DURABLE, including a refs/jj/keep-only
+commit) and a tool= label that is not an argv element of cmd=
+(RECEIPT-TOOL-NOT-IN-ARGV); run refuses the same label shapes
+(TOOL-NOT-IN-ARGV, TOOL-PATH-REDACTED; runner lines 179-181 at 778747e, no
+counter case exercises the run side). Counter
+python3 -B tests/fixtures/r24-receipt-verify.py --tool
+tools/souji-receipt-run.py --lane-root . Before (base runner bytes):
+cases=8 pass=6 refusals=0/2 regress=5/5, rc 1
+(census/round-24/records/c3-control-base-runner.tsv). After: cases=8 pass=8
+refusals=2/2 regress=5/5, rc 0 (census/round-24/records/c3-after.tsv).
+Named limit kept: argv membership binds the label to recorded text, not to
+the executed program. Of the 20 r23 C1/C2 residuals, 1 is closed, 6 are
+narrowed and 12 stay open (.ufo/waves/round-24/w1/RevR23Residuals.md).
+
+Assimilation (inside C1). One F2 entry,
+corpus/knowledge/count-objects-linked-worktree-garbage.md, grounded on
+git.git path.c at v2.56.0 and v2.30.0, builtin/count-objects.c at v2.56.0
+and git-worktree(1) § REFS (S120-S123; snapshots census/round-24/sources/
+with SHA256SUMS). Staged packages: 2 admitted (r27 re-sourced, r25 matrix
+only), 4 rejected. Quarantine slice 8 rows: 7 accepted, 1 unverifiable
+(S118). Gate entries=1 ok=1 slice_verdicts=8 slice_total=8 fail=0
+(census/round-24/records/gate-check-r24-entry.tsv). Registry 119 -> 123.
+corpus/knowledge/git-repo-structure-readonly.md gains a ground: F2 line and
+is re-verified on git 2.56.0: selftest=PASS ids=5/5
+(census/round-24/records/r13-recheck-receipt.tsv).
+
+r23 counters at the new tip. C3 case d re-verifies the five r23 receipts
+(regress=5/5). The r23 tool_sha256 grep counter now lists 15 files under
+census/, of which 14 verify=ok; the fifteenth is the lane-bound census file
+above. The r23 record-agreement counter carries no r24 receipt.
+
+Wave. Wave 1, 38 seats (12 scout, 10 executor, 4 critic, 4 scribe,
+3 reviewer, 1 sentinel, 1 simplifier, 1 revenger, 1 mutation-tester,
+1 connector), from .ufo/waves/round-24/w1-spec.json; wave 2 (35 falsify
+seats) from .ufo/waves/round-24/w2-spec.json — 73 seats in total. No deletion
+outside this repo, no history rewrite, no credentials, no live /proc census,
+no operator-sweep contents. Certification OFF, K5 HELD, F5 reap and
+NAMESPACE holds unchanged.
+```
+
+---

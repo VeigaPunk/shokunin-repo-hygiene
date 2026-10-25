@@ -68,6 +68,7 @@ K2_FILED = ("assertions=56 resolved=53 skipped=33 mismatches=3", "1 present", "1
 
 COUNTS_RE = re.compile(r"assertions=(\d+) resolved=(\d+) skipped=(\d+) mismatches=(\d+)")
 STDOUT_FENCE = "--- stdout ---"
+STDERR_FENCE = "--- stderr ---"
 TALLY_RE = re.compile(r"(\d+)\s+\*{0,2}(accepted|present|unverifiable|refused)\*{0,2}")
 REV_LINE_RE = re.compile(r"^rev=([0-9a-f]{40})$", re.M)
 
@@ -113,16 +114,22 @@ def read_at(root: str, rev: str, path: str) -> str | None:
 
 
 def counts_of(text: str) -> tuple[str, str] | None:
-    """Return (4-tuple string, rev header) from a receipt's header bytes.
+    """Return (4-tuple string, rev header) from a receipt.
 
-    Only the header region before the `--- stdout ---` fence is a receipt's own claim; a `# note
-    assertions=…` line inside the recorded stdout must not shadow it (W2K1 F4).
+    A fenced receipt's measured value is its recorded stdout section, between `--- stdout ---`
+    and `--- stderr ---`: a summary line before the stdout fence and a line after the stderr
+    fence both stay outside it (r24 W2R23F4: last-wins over the whole text let a post-fence line
+    shadow stdout). Unfenced receipts are read whole. Within the section the last match wins.
     """
-    matches = COUNTS_RE.findall(text)
+    lines = text.splitlines()
+    region = text
+    if STDOUT_FENCE in lines:
+        start = lines.index(STDOUT_FENCE) + 1
+        end = lines.index(STDERR_FENCE, start) if STDERR_FENCE in lines[start:] else len(lines)
+        region = "\n".join(lines[start:end])
+    matches = COUNTS_RE.findall(region)
     if not matches:
         return None
-    # the measured output is the runner's recorded stdout, which sits after the fence; when a
-    # wrapper prints its own summary before the fence, the LAST count line is the measured one
     m = matches[-1]
     rm = REV_LINE_RE.search(text)
     return "assertions=%s resolved=%s skipped=%s mismatches=%s" % m, (rm.group(1) if rm else "")

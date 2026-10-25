@@ -26,10 +26,14 @@ Receipt v1 header, in this order, then the two fences:
 
 Refusals (exit 2, no receipt written): --rev not a full 40-hex id; --rev not reachable from
 refs/heads, refs/tags or refs/remotes (refs/jj/* never counts — Q37); --tool absent at --rev;
---out under /tmp (Q4); --out inside --root (a receipt is not a repo write); --tool not an exact
+--out under /tmp (Q4); --out anywhere but /var/tmp/ (OUT-OUTSIDE-VAR-TMP, r24 W2Scope: the old guard let a receipt truncate fleet files); --out inside --root (a receipt is not a repo write); --tool not an exact
 element of the command argv (TOOL-NOT-IN-ARGV, the same predicate `verify` applies); a --tool path
-that redaction would rewrite (TOOL-PATH-REDACTED). `cmd=` redacts each argv element before
-joining, then the joined line.
+that redaction would rewrite (TOOL-PATH-REDACTED); a command where a whole-line redaction pass
+would still change the per-element-redacted line, i.e. a secret spanning argv elements
+(CMD-SECRET-SHAPED, also any secret-shaped argument whose quoting a whole-line pass would
+break); an argv element holding a newline or CR (CMD-NEWLINE); checked-out tool bytes that
+differ from the committed blob, e.g. symlink/eol/ident (TOOL-CHECKOUT-DIFFERS). `cmd=` is shlex.join of the per-element-redacted argv, so every receipt
+`run` writes parses under `verify`.
 `verify` exits 2 with one of: RECEIPT-MALFORMED, RECEIPT-TOOL-DIGEST-MISMATCH,
 RECEIPT-TOOL-ABSENT, RECEIPT-REV-MALFORMED, RECEIPT-COUNTS-ABSENT, RECEIPT-REV-NOT-DURABLE (the
 same durable-ref predicate `run` refuses on), RECEIPT-TOOL-NOT-IN-ARGV (`tool=` is not an exact
@@ -67,7 +71,7 @@ COUNTS_RE = re.compile(
     r"|grounded=\d+ mapped=\d+ dangling=\d+ mismatches=\d+"
     r"|cases=\d+ pass=\d+"
     r"|garbage=\d+ size_garbage=\d+ unreachable=\d+ alternates=\d+"
-    r"|selftest=(?:PASS|FAIL) ids=\d+/\d+)"
+    r"|selftest=(?:PASS|FAIL) ids=\d+/\d+)(?=\s|$)"
 )
 REV_RE = re.compile(r"^[0-9a-f]{40}$")
 HEADER_ORDER = ("receipt", "rev", "tool", "tool_sha256", "cmd", "rc", "utc")
@@ -85,6 +89,15 @@ REDACTIONS = (
     (re.compile(r"xox[baprs]-[A-Za-z0-9_.-]+"), "[REDACTED]"),
 )
 CTRL_RE = re.compile(r"[\x00-\x08\x0b-\x1f\x7f]")
+
+
+def counts_line(stdout: str) -> str | None:
+    """The last stdout line that STARTS with a counts line (anchored; stderr and prose never count)."""
+    for line in reversed(stdout.splitlines()):
+        match = COUNTS_RE.match(line)
+        if match:
+            return match.group(0)
+    return None
 
 
 def redact(text: str) -> str:
@@ -168,6 +181,9 @@ def cmd_run(args: argparse.Namespace) -> int:
     out = os.path.realpath(args.out)
     if out.startswith("/tmp/") or out == "/tmp":
         return refuse("OUT-UNDER-TMP", "receipts go outside /tmp (Q4)")
+    if not out.startswith("/var/tmp/"):
+        return refuse("OUT-OUTSIDE-VAR-TMP",
+                      "receipts are written under /var/tmp/ and copied into the lane by its helper")
     if out == root or out.startswith(root + os.sep):
         return refuse("OUT-IN-REPO", "the receipt must not be written inside the measured repo")
     if not args.command:
@@ -179,6 +195,13 @@ def cmd_run(args: argparse.Namespace) -> int:
         return refuse("TOOL-NOT-IN-ARGV", f"{tool} is not an argv element of the command")
     if redact(tool) != tool:
         return refuse("TOOL-PATH-REDACTED", "the tool path would be rewritten by redaction")
+    if any("\n" in a or "\r" in a for a in args.command):
+        return refuse("CMD-NEWLINE", "an argv element holds a newline; it would split the receipt header")
+    cmd_line = shlex.join([redact(a) for a in args.command])
+    if (redact(" ".join(args.command)) != " ".join(redact(a) for a in args.command)
+            or redact(cmd_line) != cmd_line):
+        return refuse("CMD-SECRET-SHAPED",
+                      "a secret-shaped argument would leak across argv elements or leave cmd= unparsable; such commands get no receipt")
     for protected in ("/.ufo/state/", "/.tower/", "/.scratch/", "/MANIFEST.json"):
         if protected in out:
             return refuse("OUT-PROTECTED", f"{protected} is operator or orchestrator runtime")
@@ -224,6 +247,11 @@ def cmd_run(args: argparse.Namespace) -> int:
                 digest = hashlib.sha256(fh.read()).hexdigest()
         except OSError as exc:
             return refuse("TOOL-UNREADABLE", f"{tool} in the measured tree: {exc}")
+        # verify hashes the committed blob; a symlink, eol or ident checkout would make the
+        # receipt unverifiable, so run refuses instead of writing it
+        if os.path.islink(os.path.join(tree, tool)) or digest != blob_sha_bytes(tree, rev, tool):
+            return refuse("TOOL-CHECKOUT-DIFFERS",
+                          f"{tool}: checked-out bytes differ from the committed blob at {rev}")
         # errors="replace": a non-UTF-8 byte must produce a receipt with a recorded
         # replacement, not an exception that leaves no evidence at all
         proc = subprocess.run(args.command, cwd=tree, capture_output=True, text=True,
@@ -236,7 +264,7 @@ def cmd_run(args: argparse.Namespace) -> int:
         f"rev={rev}",
         f"tool={tool}",
         f"tool_sha256={digest}",
-        f"cmd={redact(shlex.join([redact(a) for a in args.command]))}",
+        f"cmd={cmd_line}",
         f"rc={proc.returncode}",
         f"utc={dt.datetime.now(dt.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')}",
         "--- stdout ---",
@@ -248,9 +276,9 @@ def cmd_run(args: argparse.Namespace) -> int:
     os.makedirs(os.path.dirname(out) or ".", exist_ok=True)
     with open(out, "w", encoding="utf-8") as fh:
         fh.write(body)
-    counts = COUNTS_RE.search(proc.stdout)
+    counts = counts_line(redact(proc.stdout.rstrip("\n")))
     print(f"receipt={out} rev={rev} tool_sha256={digest} rc={proc.returncode} "
-          f"counts={counts.group(0) if counts else 'none'}")
+          f"counts={counts or 'none'}")
     return 0
 
 
@@ -268,6 +296,11 @@ def parse_receipt(text: str) -> dict[str, str] | None:
     if idx >= len(lines) or lines[idx] != "--- stdout ---":
         return None
     header["_body"] = "\n".join(lines[idx:])
+    try:
+        end = lines.index("--- stderr ---", idx + 1)
+    except ValueError:
+        return None
+    header["_stdout"] = "\n".join(lines[idx + 1:end])
     return header
 
 
@@ -291,8 +324,8 @@ def cmd_verify(args: argparse.Namespace) -> int:
     if actual != header["tool_sha256"]:
         return refuse("RECEIPT-TOOL-DIGEST-MISMATCH",
                       f"receipt {header['tool_sha256'][:12]} != tree {actual[:12]} at {rev}")
-    if not COUNTS_RE.search(header["_body"]):
-        return refuse("RECEIPT-COUNTS-ABSENT", "no counts line in the recorded output")
+    if counts_line(header["_stdout"]) is None:
+        return refuse("RECEIPT-COUNTS-ABSENT", "no stdout line starts with a counts line")
     if not durable_rev(root, rev):
         return refuse("RECEIPT-REV-NOT-DURABLE",
                       f"{rev} is not reachable from refs/heads|tags|remotes")

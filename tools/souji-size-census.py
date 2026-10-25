@@ -22,8 +22,10 @@ Read-only envelope (r24 SentinelSizeEnvelope): the child env is an ALLOWLIST,
   every git call has a 900 s timeout (a FIFO in include.path, fsck.skipList or
   alternates hangs git; no -c override exists); never `cd`, never a shell
   string: argv lists only, stdin is /dev/null. PATH must be the repository's
-  top level (or a bare repository's git dir), so discovery cannot walk up to
-  an enclosing repository.
+  top level (or a bare repository's git dir), so a subdirectory or a
+  non-repository directory below some repository is refused rather than
+  censused as the enclosing repository (a planted gitfile or core.worktree
+  that makes git itself report PATH as a top level is still followed).
 Commands: `count-objects -v`, `fsck --unreachable --no-reflogs --no-progress`.
 `fsck --lost-found` writes .git/lost-found/ and is never run; `--lost-found`
 on this tool's argv is refused like any unknown argument.
@@ -130,15 +132,21 @@ def parse_argv(argv):
 def resolve(env, path):
     rc, out, err, argv = git(env, "-C", path, "rev-parse",
                              "--path-format=absolute", "--git-common-dir",
-                             "--git-dir", "--is-bare-repository",
-                             "--show-toplevel")
+                             "--git-dir", "--is-bare-repository")
     if rc != 0:
         raise Refused("not a repository: " + fail_text(argv, rc, err))
     lines = out.split("\n")
     if err or len(lines) < 3:
         raise GitFailure(fail_text(argv, rc, err))
     common, gitdir, bare = lines[0], lines[1], lines[2]
-    top = gitdir if bare == "true" else (lines[3] if len(lines) > 3 else "")
+    if bare == "true":
+        top = gitdir
+    else:
+        rc, out, err, argv = git(env, "-C", path, "rev-parse",
+                                 "--path-format=absolute", "--show-toplevel")
+        if rc != 0 or err:
+            raise Refused("not a work-tree top level: " + fail_text(argv, rc, err))
+        top = out.rstrip("\n")
     if os.path.realpath(path) != os.path.realpath(top):
         raise Refused(f"--repo must name the repository itself ({top}), "
                       "not a directory inside or below it")

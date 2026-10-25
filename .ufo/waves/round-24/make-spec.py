@@ -456,9 +456,205 @@ it only touches /var/tmp (read it first) and paste the result.""")
     }
 
 
+TIP = "ca7fc1cb6dd1333096c6f3bdbad304686691d126"
+AFTER = "778747eb671f8e85ef5387bc3d7023337b30467c"
+INSTR = "1efe406e7f39b8fe736be2a566053703a571ffc0"
+AMEND = f"{LANE}/.ufo/waves/round-24/preregistration-amendment-1.txt"
+REC = f"{LANE}/census/round-24/records"
+
+
+def wave2() -> dict:
+    goal = (f"Souji round 24, wave 2 (FALSIFY). Every item attacks one landed artifact; a seat that cannot "
+            f"falsify says `survives` with the commands it ran. Frozen contract: {PREREG} plus the append-only "
+            f"{AMEND} (stricter-only, written before any control/after receipt). Landed: instruments "
+            f"{INSTR}; control receipts ce5971c9fe7a04f958f06c7b1933e07ffbc9ddd3; after-state {AFTER}; "
+            f"after-receipts {TIP} (lane tip; read it with `git -C {LANE} rev-parse master`). Receipts live in "
+            f"{REC}/ and verify with `python3 -B {LANE}/tools/souji-receipt-run.py verify --root {LANE} <receipt>`. "
+            f"Wave-1 reports: {LANE}/.ufo/waves/round-24/w1/. Lane base {BASE}.")
+    ITEMS.clear()
+    w = "w2"
+    # ---------------- C1 ----------------
+    add("W2C1Rerun", "reviewer", f"""Attack C1's after-state. In a `/var/tmp` clone of the lane at {TIP} (`git clone --no-local {LANE}`; never run
+in the lane), run `python3 -B tests/fixtures/r24-size-census.py --tool tools/souji-size-census.py` and verify
+`{REC}/c1-after.tsv` and `{REC}/c1-control-stub.tsv` with the runner. Does the tip reproduce `cases=8 pass=8
+control=FALSE-GREEN-REJECTED lost_found=WRITE-DETECTED`, and does the stub control at {INSTR} reproduce `pass=4`
+without the target line? Compare per-CASE lines with the receipt. Verdict survives/falsified.""", w)
+    add("W2C1MutTool", "mutation-tester", f"""Mutation-test C1's TOOL against its fixture. Copy `{LANE}/tools/souji-size-census.py` and
+`tests/fixtures/r24-size-census.py` (at {TIP}) to `/var/tmp/souji-r24-W2C1MutTool/`. One mutant per clause: common-dir
+read (use -C PATH), alternates from file lines, no .promisor-pack refusal, no top-level check, env passthrough
+(caller env), no timeout, no core.fsmonitor override, size_garbage hard-coded 0, unreachable from `--dangling`,
+warning lines treated as failures, stderr ignored. Run the fixture per mutant; table clause/mutant/killed-by-case or
+SURVIVED, `uncovered=<n>`. Survivors are findings, not edits.""", w)
+    add("W2C1MutFixture", "mutation-tester", f"""Mutation-test C1's FIXTURE (`{LANE}/tests/fixtures/r24-size-census.py` at {TIP}): weaken each
+assertion (manifest without directories; whole-second mtimes; case 3 without size check; case 4 witness read before
+the tool; case 6 without the promisor-unset arm; case 7 detector skipped; case 8 control requiring 0 failures) and
+show whether the weakened fixture still FAILS the stub and a known-bad tool (e.g. the plain `git -C PATH
+count-objects -v` cheater). A weakening that changes no outcome = the assertion is untested. Scratch only.""", w)
+    add("W2C1Envelope", "sentinel", f"""Re-attack the hardened C1 envelope (`{LANE}/tools/souji-size-census.py` at {TIP}; read its docstring and
+`{LANE}/.ufo/waves/round-24/w1/SentinelSizeEnvelope.md`). In `/var/tmp/souji-r24-W2C1Envelope/` repos with a harmless
+`touch` marker program, try: repo `core.fsmonitor=<marker>`, caller `GIT_EXEC_PATH`/`GIT_CONFIG_COUNT`/
+`GIT_CONFIG_PARAMETERS`/`GIT_TRACE2_EVENT`/`GIT_DIR` set, a poisoned PATH `git`, `include.path` to a FIFO (expect
+exit 1 after the timeout — you may patch TIMEOUT_S in a scratch COPY to 5 s to test), `core.alternateRefsCommand`,
+`uploadpack.packObjectsHook`. Any marker fired or any write = finding. Paste each probe.""", w)
+    add("W2C1TopLevel", "critic", f"""Attack the new `--repo must be the top level` refusal in `{LANE}/tools/souji-size-census.py` ({TIP}).
+Does it refuse legit inputs (bare repo given as its git dir, bare repo given as its parent, a symlinked path to the
+top level, trailing slash, a linked worktree, a repo whose top level contains a symlink) and does it still let an
+enclosing repo through (path under a non-repo dir inside a repo; `GIT_CEILING_DIRECTORIES` not set)? Scratch repos
+only. Table input/expected/got. Is the C1 fixture blind to any regression here?""", w)
+    add("W2C1LaneMeasure", "reviewer", f"""Attack `{LANE}/census/round-24/size-census-lane.txt` (the lane-bound C1 measurement). Is its rev/tool_sha256
+header true (`git -C {LANE} show {AFTER}:tools/souji-size-census.py | sha256sum`)? Is `unreachable=1093` correctly
+described (jj keep refs, cruft pack, `--no-reflogs`; `.ufo/waves/round-24/w1/ScoutLaneMeasure.md`), and does any
+lane record turn it into a fleet figure or a cleanup recommendation? Re-run the tool read-only on the lane ONCE and
+explain any drift. No fsck --lost-found, no writes.""", w)
+    add("W2C1Axis", "critic", f"""Attack C1's axis naming (§9 of `{FLEET}/.ufo/prompts/souji-round-24.md`): is C1 coverage (F2 frontier →
+a new tool + operation class) or quality (re-scoring a rule the lane holds)? Read `{LANE}/corpus/README.md` § Round 24
+and `### Frontier (r23)`, and AXES.md. Name the command that would show the surface unmoved and run it at {BASE} and
+{TIP}. Verdict: coverage-move holds / mislabelled.""", w)
+    add("W2C1Amend", "critic", f"""Attack the amendment discipline. Diff `{PREREG}` against `{AMEND}` and the fixture bytes
+(`git -C {LANE} show {INSTR}:tests/fixtures/r24-size-census.py`). Is every amendment stricter-only (no case dropped,
+no expected value loosened)? Were any after-receipts created before the amendment commit (`git log` order of
+{INSTR}, ce5971c, {AFTER}, {TIP})? Were the L1's disclosed sanity runs claim data in disguise? Verdict + list.""", w)
+    # ---------------- C2 ----------------
+    add("W2C2Rerun", "reviewer", f"""Attack C2's after-state. Run `python3 -B {LANE}/tools/souji-coverage-agreement.py --root {LANE} --rev {TIP}` and
+`--rev {BASE}`, verify `{REC}/c2-after.tsv`, `c2-control-base.tsv`, `c2-fixture-after.tsv`. Then apply the amended
+per-entry kill rule yourself: list every entry with a `ground: F<k>` line at {BASE} and at {TIP} (`git show`), and
+confirm none disappeared or changed F<k>. Verdict per check.""", w)
+    add("W2C2Mut", "mutation-tester", f"""Mutation-test C2: copy `tools/souji-coverage-agreement.py` and `tests/fixtures/r24-coverage-agreement.py`
+(at {TIP}) to scratch; mutants: entries column index off by one, status column counted, F-token prefix match (F2
+matches F21), front-matter read past the first heading, working-tree read, dangling check off, escaped `\\|` split,
+only first table read. Fixture kills? Then also run each mutant at the real lane {BASE} and {TIP}: which mutants
+change the claim's numbers? `uncovered=<n>`.""", w)
+    add("W2C2Game", "critic", f"""Attack how C2 reached 0. `git -C {LANE} diff {BASE} {TIP} -- corpus/README.md corpus/knowledge/` : the
+README gained a Round 24 table whose F2 row lists all F2 entries, and `git-repo-structure-readonly.md` gained a
+`ground: F2` line. Is either a game (a row that disclaims the capability, a ground line that is false, a superseded
+row left unmarked like README line 40 "frontier, no entry")? Does the new F2 row's status prose match the landed
+bytes? Verdict: real agreement / gamed, with lines.""", w)
+    add("W2C2Calib", "critic", f"""Attack C2's axis: §9 says a calibration claim counts mismatches between the lane's self-assessment
+(SCORECARD/SHONEN) and observed repo state. C2 uses the corpus/README.md coverage map. Read `{FLEET}/AXES.md`
+(calibration definition) and `{LANE}/SCORECARD.md`. Is the coverage map a self-assessment surface? Would the operator
+accept it as the lowest-axis claim? Give the strongest case both ways and your ruling.""", w)
+    # ---------------- C3 ----------------
+    add("W2C3Rerun", "reviewer", f"""Attack C3's after-state. In a `/var/tmp` clone at {TIP}, run `python3 -B tests/fixtures/r24-receipt-verify.py
+--tool tools/souji-receipt-run.py --lane-root .` and the same with the base runner (`git show {BASE}:tools/souji-receipt-run.py`).
+Then verify EVERY receipt in the lane (`grep -rl '^receipt=v1' census/`) with the tip runner and with the base runner;
+any receipt the tip refuses that the base accepted (other than intended) is a C3 harm. Paste the table.""", w)
+    add("W2C3Mut", "mutation-tester", f"""Mutation-test the C3 runner changes (`git -C {LANE} diff {BASE} {TIP} -- tools/souji-receipt-run.py`): one mutant
+per new clause (verify durable check, verify argv check, verify command_refusal mirror, MALFORMED on shlex error,
+run TOOL-NOT-IN-ARGV, run TOOL-PATH-REDACTED, per-element redaction, COUNTS_RE alternatives). Run r23 and r24 receipt
+fixtures per mutant in scratch copies. Table + `uncovered=<n>`.""", w)
+    add("W2C3Symmetry", "critic", f"""Attack the claim title "verify/run symmetry" at {TIP}: enumerate argv/receipt shapes and find any that `run`
+accepts but `verify` refuses on the receipt `run` wrote, or that `verify` accepts but `run` would refuse (e.g.
+`./tools/x`, absolute tool path, tool as a data argument, `bash -c`, redaction-matching args like `password=a$b`,
+tool path with `sk-`). Scratch repo only; paste each pair. Verdict: symmetric / asymmetric with list.""", w)
+    add("W2C3Redact", "sentinel", f"""Attack the per-element redaction change in `run` (`cmd=` now redacts each argv element, then the joined
+line). Construct argv where a secret spans two elements (`--token` `abc...`, `-H` `Authorization: Bearer x`,
+`password` `=` `x`) and compare the cmd= line produced by the base runner and the tip runner in a scratch repo. Any
+secret that the base redacted and the tip leaks = HIGH finding. Paste outputs (use fake secrets only).""", w)
+    add("W2C3CountsRE", "reviewer", f"""Attack the COUNTS_RE widening in `{LANE}/tools/souji-receipt-run.py` ({TIP}). Can a receipt with no real
+measurement pass verify (e.g. stdout `cases=0 pass=0`, a counts line only in stderr, a decoy line)? Note
+`{REC}/c2-fixture-after.tsv`: `run` printed the FIRST counts match (`grounded=2…`, a case line), not the final
+`cases=9 pass=9` line — is any lane record misled by that? Recommend the narrowest fix; do not edit.""", w)
+    # ---------------- sources / entry / assimilation ----------------
+    add("W2SrcPath", "scout", f"""Re-open S120 and S121 (`{LANE}/corpus/SOURCES.md` rows) live: github blob URLs for path.c at v2.56.0 and v2.30.0.
+Check every quote the entry `{LANE}/corpus/knowledge/count-objects-linked-worktree-garbage.md` and the rows carry
+against the live bytes and the snapshots in `{LANE}/census/round-24/sources/` (`sha256sum -c SHA256SUMS`). Check
+line numbers (89-124, 111, 104-108, 112-114, 365-385, 371). Any mismatch = finding.""", w)
+    add("W2SrcCountWt", "scout", f"""Re-open S122 (builtin/count-objects.c@v2.56.0) and S123 (git-scm.com/docs/git-worktree § REFS/DETAILS) live and
+check every quote and line number the entry and rows use (118, 49-52, 151-152; the two git-worktree quotes) against
+live bytes and `{LANE}/census/round-24/sources/`. Also: is S123's scope distinct from S003/S058 (read those rows)?""", w)
+    add("W2EntryClaims", "reviewer", f"""Attack the body of `{LANE}/corpus/knowledge/count-objects-linked-worktree-garbage.md` item by item (items 1-7
+and the NOT-established list). Reproduce in `/var/tmp/souji-r24-W2EntryClaims/` on git 2.56.0: five creation modes
+read 1; active bisect (bad+good marked) reads 2; a refs/worktree ref reads 2 and 3 with reflog; 1023/1024 byte
+size-garbage; uppercase-hex loose name not garbage; `--git-dir=<common>` reads 0 for all. Any claim not reproduced
+or overstated = finding with the line.""", w)
+    add("W2EntryGate", "reviewer", f"""Attack the entry's Gate. Re-run at {TIP}: `python3 -B tools/souji-gate-check.py --root . --round-date 2026-10-25
+--entries corpus/knowledge/count-objects-linked-worktree-garbage.md --snapshot-dir census/round-24/sources --slice
+census/round-24/records/quarantine-slice --slice-verdicts census/round-24/records/slice-verdicts.tsv` and
+`python3 -B tests/fixtures/r23-locator-heading.py --entries <entry> --snapshot-dir census/round-24/sources` (from
+{LANE}, read-only). Then judge each ADMIT/REJECT line: is the reason true of the bytes it describes (R23-M6 class:
+an overbroad reject reason)? Is every flip condition not already met?""", w)
+    add("W2Rejects", "critic", f"""Attack the two rejects by re-opening the staged bytes: `{KPKG}/garbage-false-positive-modes-r26.md` and
+`{KPKG}/count-objects-garbage-semantics-r23.md` (read-only). For each reject reason in the entry's Gate (falsified
+central claim, fleet arm, shokuknow-only evidence, id collision, contradicted 'only two fields'), quote the staged
+line it refers to and say whether the reason is TRUE of those bytes. Also attack the r25 partial admit: is the
+lane really holding committed evidence for the five-mode matrix (C1 case 4 runs only ONE mode)?""", w)
+    add("W2Registry", "scout", f"""Attack the registry at {TIP}: run `/home/vgpnk/Projects/shokunin/scripts/sources-census.sh validate --root
+/home/vgpnk/Projects/shokunin souji` (exit code, E/W lines), count rows (expect 123), check S120-S123 cells: 11
+columns, no `|`, tier/kind/status vocab, `used-by` paths exist at {TIP} and actually cite the id (grep the files),
+recheck form, opened date. Also: does `tools/souji-size-census.py` cite S120/S122 as `used-by` claims? Findings
+with row ids.""", w)
+    add("W2Slice", "reviewer", f"""Attack the quarantine-slice verdicts: `{REC}/slice-verdicts.tsv` (gate format) and
+`{LANE}/.ufo/waves/round-24/assimilation/slice-verdicts.tsv` (detail). Compare each of the 8 rows with
+`.ufo/waves/round-24/w1/ScoutSliceWeb.md` and `ScoutSliceOwnWork.md` and with round 22's
+`{LANE}/census/round-22/attempt2/slice-verdicts.tsv`. Re-fetch ONE web row and ONE own-work row yourself. Is S118
+`unverifiable` consistent with its scout's `present` reading? Are any verdicts unsupported?""", w)
+    add("W2Collisions", "scout", f"""Re-run the §10 id-collision check at {TIP} (registry now 123 rows) exactly as in
+`{FLEET}/.ufo/prompts/souji-round-24.md` §10 into `/var/tmp/souji-r24-W2Collisions/`, and compare with the committed
+`{LANE}/.ufo/waves/round-24/assimilation/{{reg-ids,staged-ids,collisions}}`. Did the appended S120-S123 create new
+collisions with staged ids naming DIFFERENT documents (staged S120-S123)? Is each lane S120-S123 re-pointed by
+document (URL) rather than staged id? Paste lists.""", w)
+    # ---------------- quality / records ----------------
+    add("W2Reverify", "reviewer", f"""Attack the quality-trend evidence: `{LANE}/corpus/knowledge/git-repo-structure-readonly.md` now carries a
+`ground: F2` line and an r24 re-verification note citing `{REC}/r13-recheck-receipt.tsv` and
+`census/round-24/records/r13-repo-structure-recheck-git2.56.0.out`. Verify the receipt, re-run the recheck command
+in a `/var/tmp` clone at {TIP}, and judge: does this entry now 're-verify' under `{FLEET}/LEARNING.md`'s quality rule?
+Is anything in the note overstated?""", w)
+    add("W2ReadmeRow", "reviewer", f"""Attack `{LANE}/corpus/README.md` § `Round 24` (appended): every backticked path must exist at {TIP}
+(`git ls-tree`); every status statement must match landed bytes (e.g. what the C1 fixture fences, what C3 refuses);
+the Frontier (r24) and routed-defect lines must be true. List each false or stale statement with its line.""", w)
+    add("W2R23F4", "critic", f"""Reproduce the r23 instrument hole that ScoutInherited found (`{LANE}/.ufo/waves/round-24/w1/ScoutInherited.md`):
+`tools/souji-record-agreement.py` `counts_of` takes the last counts line anywhere in a receipt, so a line after the
+stderr fence can override the real stdout. In a scratch clone at {TIP}, build the doctored receipt and show the
+false pass. Then say which r23 records (lesson lines 144-147) are contradicted and what the narrowest fix is. This
+is the round's mined mistake candidate: give class / evidence / captured-by / fix / failure witness.""", w)
+    add("W2Inherited", "scout", f"""Re-check inherited state at {TIP}: `git -C {LANE} status --porcelain` and the diffs of
+`.ufo/waves/round-23/w2/W2K1.md` and `W2D3.md` (round-23 seat late updates). Have they changed since
+`.ufo/waves/round-24/w1/ScoutInherited.md`? Is the round-23 seat still writing (file mtimes)? Recommend: commit as
+inherited late round-23 updates in a separate labelled commit, or leave; with reasons under the prompt's
+"Inherited state" rule (`{FLEET}/.ufo/prompts/souji-round-24.md` §6 item 5).""", w)
+    add("W2Misroot", "scout", f"""Final misroot sweep: `git -C {FLEET} status --porcelain` (no pathspec). For each untracked entry decide whether a
+souji round-24 seat wrote it (content names souji and round-24). `{FLEET}/.scratch/` is orchestrator-owned: never a
+misroot, never read. Also list any `/var/tmp/souji-r24-*` leftovers (`ls -d /var/tmp/souji-r24-*`). Table only; do
+not delete, move or copy.""", w)
+    add("W2Separable", "critic", f"""Attack causal separability of C1/C2/C3 as landed: they share commit {AFTER}; C2's after-state includes C1's
+new entry in the map; C1/C2 receipts verify only because C3's COUNTS_RE widening landed. For each claim, can it be
+verified without the others' files (build the counterfactual tree in scratch: e.g. {TIP} with
+tools/souji-receipt-run.py reverted to {BASE}, or without the new entry)? Verdict per claim.""", w)
+    add("W2Trend", "critic", f"""Attack the round's planned trend verdicts before they are written: expansion (new edge class F2 linked-worktree
+garbage + debris-census capability; 0 new map ground?), quality (a stale entry re-verified on git 2.56.0; the new
+entry supersedes/narrows staged claims), discernment (≥1 admit and ≥1 reject with reasons; slice verdicts). Read
+`{FLEET}/LEARNING.md` rules and `{LANE}/corpus/lessons/round-23-verifier-spotcheck.md` trend gradings. Give the
+verdict you would assign each and why.""", w)
+    add("W2Scope", "sentinel", f"""Attack the round's scope bound: list every path the lane commits since {BASE} changed (`git -C {LANE} diff
+--stat {BASE} {TIP}`); flag any write outside {LANE}, any `census/operator-sweep-*` content, any credential-shaped
+string (`grep -nE 'sk-|ghp_|BEGIN .*PRIVATE|password=' ` over the round's new files), any `/tmp` (not /var/tmp) use in
+new tools/fixtures, any `__pycache__`. Findings with paths.""", w)
+    add("W2LessonDraft", "scribe", f"""Draft `corpus/lessons/round-24.md` (deliver at `{LANE}/.ufo/waves/round-24/w2/W2LessonDraft.md`). Base it on
+the committed receipts in `{REC}/`, the preregistration + amendment, wave-1 reports, and (as they land) the other
+wave-2 reports in `{LANE}/.ufo/waves/round-24/w2/`. Sections: Claim and boundary (C1/C2/C3 with before/after and
+receipts), Process deviations (amendments, L1 sanity runs, controls committed after freeze), ## Mistakes (from
+`.ufo/waves/round-24/w1/ScribeLessonMistakes.md` + the r23 F4 last-wins hole + the counts-first-match display; each
+with captured-by and a failure witness), ## Gate (S120-S123 opened 2026-10-25 with URL + ≤25-word quote; ADMIT/REJECT
+list; slice verdicts; S115 used-by change old→new), Q56 proposal text, Trend verdicts draft. Every number must name
+its receipt. No invented evidence.""", w)
+    add("W2ScorecardDraft", "scribe", f"""Draft the SCORECARD.md and LOG.md appends for round 24 (deliver at
+`{LANE}/.ufo/waves/round-24/w2/W2ScorecardDraft.md`). SCORECARD: a `### Round 24 measurements` table (claim, axis,
+before, after, counting command, measured commit) matching the r23 table's shape in `{LANE}/SCORECARD.md`, using
+ONLY the receipts in `{REC}/`; capability rows for the debris census and coverage-map agreement; Planned: mark r24
+done and draft an r25 planned line from the wave-1/2 residuals. LOG: a `Round24` block in the shape of the r23 LOG
+block. Check every number against its receipt and say which you checked.""", w)
+    return {
+        "wave": "souji-r24-w2",
+        "reportDir": ".ufo/waves/round-24/w2",
+        "maxLanes": 64,
+        "context": context(goal),
+        "items": list(ITEMS),
+    }
+
+
 if __name__ == "__main__":
     which = sys.argv[1] if len(sys.argv) > 1 else "w1"
-    spec = {"w1": wave1}[which]()
+    spec = {"w1": wave1, "w2": wave2}[which]()
     out = os.path.join(os.path.dirname(os.path.abspath(__file__)), f"{which}-spec.json")
     with open(out, "w", encoding="utf-8") as fh:
         json.dump(spec, fh, indent=1, ensure_ascii=False)

@@ -504,23 +504,24 @@ evidence lives outside this repository. No fleet size figure is claimed anywhere
 ## Round 24 — F2 write-safety census, coverage-map agreement, receipt verify symmetry
 
 Appended; the sections above stand. For the entries column only, this table supersedes the F2
-rows at :40 (r12 map) and :68 (Round 13); their status prose stays as history. F4's r12 row
-(:42) already names both F4-grounded entries and is not repeated. Landing condition (the r17
-convention at :205-211): the F2 row lands only in the same commit as
-`knowledge/count-objects-linked-worktree-garbage.md` (carrying a `ground: F2` line),
-`../tools/souji-size-census.py` and `../tests/fixtures/r24-size-census.py`; otherwise its cells
-name only the files present at that commit.
+rows at :40 (r12 map), :68 (Round 13) and the r17 "F2 caveat" row at :217; their status prose
+stays as history (:40's "frontier, no entry" is stale and superseded here). F4's r12 row
+(:42) already names both F4-grounded entries and is not repeated. Landing record (r24 W2ReadmeRow / W2C2Game): the
+row landed in 778747eb671f8e85ef5387bc3d7023337b30467c with the entry it names; the tool and
+fixture had landed earlier (1efe406e7f39b8fe736be2a566053703a571ffc0), and
+`../census/round-24/size-census-lane.txt` was a forward citation at 778747e that resolves only
+from ca7fc1cb6dd1333096c6f3bdbad304686691d126 on.
 
 | ground | status | entries / runnable evidence |
 |---|---|---|
-| F2 repository size census | frontier; read side (three entries, r13/r23) plus a write-safety debris census (r24 C1): `count-objects -v` read against the common git dir so a linked worktree's `garbage: 1` is not reported, `fsck` unreachable count without `--lost-found`, alternates counted; `--lost-found`, promisor/partialClone and non-repositories refused (exit 2). The 8 frozen fixture cases fence the no-write envelope; one lane-bound measurement, no fleet figure | `knowledge/git-repo-structure-readonly.md` (S035–S037); `knowledge/repo-size-census-readonly.md` (S115–S117); `knowledge/count-objects-garbage-readings-r25.md` (S118–S119); `knowledge/count-objects-linked-worktree-garbage.md` (r24, assimilated); `../tools/souji-size-census.py`; `../tests/fixtures/r24-size-census.py`; `../census/round-24/size-census-lane.txt` |
+| F2 repository size census | frontier; read side (three entries, r13/r23) plus a write-safety debris census (r24 C1): `count-objects -v` read against the common git dir so a linked worktree's `garbage: 1` is not reported, `fsck` unreachable count without `--lost-found`, alternates counted; `--lost-found`, promisor/partialClone and non-repositories refused (exit 2). Fixture cases 1-6 assert the common-dir `.git` manifest unchanged across the tool run (case 7 proves the detector sees `fsck --lost-found`, case 8 rejects a stub); a tool that restores directory mtimes after writing is invisible to that manifest; the counter does not cover an `extensions.partialClone`-only repo or bare/subdirectory inputs (the tool refuses or handles them). Formerly: the 8 frozen fixture cases fence the no-write envelope; one lane-bound measurement, no fleet figure | `knowledge/git-repo-structure-readonly.md` (S035–S037); `knowledge/repo-size-census-readonly.md` (S115–S117); `knowledge/count-objects-garbage-readings-r25.md` (S118–S119); `knowledge/count-objects-linked-worktree-garbage.md` (r24, assimilated); `../tools/souji-size-census.py`; `../tests/fixtures/r24-size-census.py`; `../census/round-24/size-census-lane.txt` |
 | Coverage-map agreement (calibration of this file; not a ground) | tool change, outside admission pending: `MISSING-FROM-MAP` and `DANGLING-MAP-PATH` over every table in this file whose header reads `ground` / … / `entries…` | `../tools/souji-coverage-agreement.py`; `../tests/fixtures/r24-coverage-agreement.py` |
-| Receipt verify/run symmetry (r23 residuals) | runner change, outside admission pending: `verify` refuses a non-durable rev (`RECEIPT-REV-NOT-DURABLE`) and a `tool=` absent from `cmd=` argv (`RECEIPT-TOOL-NOT-IN-ARGV`); the five r23 receipts must still verify | `../tools/souji-receipt-run.py`; `../tests/fixtures/r24-receipt-verify.py` |
+| Receipt verify/run symmetry (r23 residuals) | runner change, outside admission pending: `verify` refuses a non-durable rev (`RECEIPT-REV-NOT-DURABLE`) and a `tool=` absent from `cmd=` argv (`RECEIPT-TOOL-NOT-IN-ARGV`) — the two counted clauses, with the five r23 receipts still verifying. Not counted by the fixture: `run` refuses `TOOL-NOT-IN-ARGV`, `TOOL-PATH-REDACTED`, `CMD-SECRET-SPANS-ARGV` and `--out` outside `/var/tmp/`; `verify` mirrors run's command refusals (`RECEIPT-COMMAND-REFUSED`), reports an unparsable `cmd=` as `RECEIPT-MALFORMED`, and reads counts only from a stdout line that starts with one | `../tools/souji-receipt-run.py`; `../tests/fixtures/r24-receipt-verify.py` |
 
 ### Frontier (r24)
 
 - F2 — next after the write-safety fixture: put `../tools/souji-repo-structure.sh` under the same
-  `.git` manifest envelope the r24 fixture uses (its r13 no-change result is bounded, see
+  common-git-dir manifest the r24 fixture uses (its own manifest is rooted at `--absolute-git-dir`) (its r13 no-change result is bounded, see
   `knowledge/git-repo-structure-readonly.md`), then the colocated/plain byte-comparison
   precondition (:233-234) before any `git repo structure` size baseline. Size attribution by
   object or path stays frontier; a fleet figure stays unclaimed.
@@ -529,4 +530,7 @@ name only the files present at that commit.
 
 Routed defect from `lessons/round-23-verifier-spotcheck.md` :41 (map table versus the "read side
 now holds three" prose): answered by the F2 row above, which names every F2 entry in its entries
-column, and C2's `MISSING-FROM-MAP` now counts any recurrence as a mismatch.
+column. C2's `MISSING-FROM-MAP` catches a grounded entry that no F<k> row's entries column
+names; it does not read status prose, and an entry still named by an older F2 row (:68) stays
+mapped if the r24 row drops it, so a prose/table disagreement of the r23 kind can recur
+undetected (r24 W2ReadmeRow, W2C2Calib).

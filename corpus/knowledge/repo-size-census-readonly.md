@@ -71,6 +71,23 @@ hazard such a fixture must exclude. (`git-repo-structure-readonly.md`'s
 structure-selftest exit-0 result is bound at `census/round-13/verification.json`'s
 measured_commit, not at the hash this entry's parenthetical once named.)
 
+## Round 24 narrowing (appended 2026-10-25; the text above stands as filed)
+
+- **Claim 1 is narrowed.** `garbage` is not always unrecognised object-database
+  files. Read inside a linked worktree, `count-objects -v` also counts parts of
+  that worktree's private gitdir (`refs`, and `refs/bisect`, `refs/worktree`,
+  `logs/refs/*` once they exist), which are healthy structure and carry no disk
+  use worth reporting; read against the common git dir it does not. A size
+  census therefore reads past that sweep instead of adding it to disk use. See
+  `count-objects-linked-worktree-garbage.md` (S120–S123) and the census rule
+  that `tools/souji-size-census.py` applies.
+- **The write-safety fixture now exists for sequential runs.**
+  `tests/fixtures/r24-size-census.py` fences `count-objects -v` and
+  `fsck --unreachable --no-reflogs` with a common-dir `.git` manifest and shows
+  `fsck --lost-found` writing (`cases=8 pass=8 … lost_found=WRITE-DETECTED`,
+  receipt `census/round-24/records/c1-after.tsv`). Concurrency with another
+  writer is still not established and stays owed.
+
 ## Gate
 
 url: https://git-scm.com/docs/git-count-objects
