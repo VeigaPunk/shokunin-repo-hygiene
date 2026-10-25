@@ -1,0 +1,43 @@
+# round-22 attempt2 residual: C2 counter at the lane tip
+# first measured at 4a6ee90a8f88 ; re-verified at c1664fcd ; final re-verification below at 7bc458c1e1dcf3396e9d65bc68aeae5de78609c4
+# date: 2026-10-25
+
+## C2 input blobs, invariant across the three tips
+tools/souji-gate-check.py                                  f26aa72855e38ee866689d3874e2b2ef8d63212a
+corpus/knowledge/quarantine-staging-no-copy-r23.md         a878a6d9eb1758f7351522a69666352adfd4f663
+corpus/knowledge/quarantine-origin-record-fields-r24.md    38c6e161a8e376a34cf8709161cb407fc2b5748c
+census/round-22/attempt2/quarantine-slice                  19fa47d72382c157845fd0638bd032570de07484
+census/round-22/attempt2/slice-verdicts.tsv                f6131eacf0c3720bd77b82de5289ce5cc361b6ed
+corpus/SOURCES.md                                          3ab461a7c61796bb5009d24b78d004f60b79fbbb
+
+$ git -C $LANE hash-object tools/souji-gate-check.py
+f26aa72855e38ee866689d3874e2b2ef8d63212a
+
+$ python3 -B tools/souji-gate-check.py --selftest
+PASS fixture good -> ok [entries=1 ok=1 slice_verdicts=2 slice_total=2 fail=0]
+PASS fixture no-date -> fail [entries=1 ok=0 slice_verdicts=2 slice_total=2 fail=1]
+PASS fixture long-quote -> fail [entries=1 ok=0 slice_verdicts=2 slice_total=2 fail=2]
+PASS fixture quote-absent -> fail [entries=1 ok=0 slice_verdicts=2 slice_total=2 fail=2]
+PASS fixture dangling-source -> fail [entries=1 ok=0 slice_verdicts=2 slice_total=2 fail=1]
+PASS fixture no-reject -> fail [entries=1 ok=0 slice_verdicts=2 slice_total=2 fail=1]
+PASS fixture no-gate -> fail [entries=1 ok=0 slice_verdicts=2 slice_total=2 fail=1]
+PASS fixture partial-verdicts -> fail on V!=T with fail=0 [entries=1 ok=1 slice_verdicts=1 slice_total=2 fail=0]
+PASS control always-green -> FALSE-GREEN-REJECTED [FALSE-GREEN-REJECTED]
+selftest=9/9
+SELFTEST_RC=0
+
+$ python3 -B tools/souji-gate-check.py --root . --round-date 2026-10-25 --entries corpus/knowledge/quarantine-staging-no-copy-r23.md corpus/knowledge/quarantine-origin-record-fields-r24.md --snapshot-dir census/round-22/attempt2/sources --slice census/round-22/attempt2/quarantine-slice --slice-verdicts census/round-22/attempt2/slice-verdicts.tsv
+entries=2 ok=2 slice_verdicts=8 slice_total=8 fail=0
+REAL_RC=0
+
+$ git -C $LANE diff --stat c1664fcd..7bc458c1e1dcf3396e9d65bc68aeae5de78609c4 -- tools/souji-gate-check.py corpus/knowledge census/round-22/attempt2 corpus/SOURCES.md
+ corpus/SOURCES.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+(empty = C2 inputs unchanged)
+
+## last-observed tip 868075547dcd9b101e055481be89b2e97a38c5c9
+8680755 round-22: residual corrections to the lesson boundary and the S118 verdict cell
+C2 input blobs vs the 7bc458c run above: compare this block with counter.txt header
+entries=2 ok=2 slice_verdicts=8 slice_total=8 fail=0
+REAL_RC=0
+tracked snapshots: 13 / on disk: 13

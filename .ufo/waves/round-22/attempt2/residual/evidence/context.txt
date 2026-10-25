@@ -1,0 +1,87 @@
+# context checks at lane tip c1664fcde8b12c7e6082a98cbbab1f1e7509177d
+
+## slice reproduction (frozen awk from S124/133 evidence, register is read-only)
+$ awk -F'|' -v l='souji' '$2 ~ ("`" l "`") && $3 ~ /round[0-9]+/ && $4 ~ /S[0-9]+/ {print $4, $5}' "$R" | diff - census/round-22/attempt2/quarantine-slice
+SLICE-REPRODUCED-EXACT
+register rows: 8  slice lines: 8
+
+## registry conformance (prereg C2 target)
+$ ./scripts/sources-census.sh validate --root /home/vgpnk/Projects/shokunin --today 2026-10-25 souji
+souji	W04	S035 duplicate url git-scm.com/docs/git-repo across scopes
+souji	W04	S036 duplicate url git-scm.com/docs/git across scopes
+souji	W04	S038 duplicate url www.gnu.org/software/coreutils/manual/html_node/timeout-invocation.html across scopes
+souji	W04	S049 duplicate url git-scm.com/docs/git across scopes
+souji	W04	S057 duplicate url git-scm.com/docs/git-config across scopes
+souji	W04	S058 duplicate url git-scm.com/docs/git-worktree across scopes
+souji	W04	S059 duplicate url git-scm.com/docs/gitattributes across scopes
+souji	W04	S063 duplicate url git-scm.com/docs/git-gc across scopes
+souji	W04	S065 duplicate url www.gnu.org/software/bash/manual/html_node/The-Set-Builtin.html across scopes
+souji	W04	S072 duplicate url www.gnu.org/software/bash/manual/html_node/The-Set-Builtin.html across scopes
+souji	W04	S073 duplicate url man7.org/linux/man-pages/man2/kill.2.html across scopes
+souji	W04	S075 duplicate url man7.org/linux/man-pages/man5/proc_pid_stat.5.html across scopes
+souji	W04	S076 duplicate url man7.org/linux/man-pages/man5/proc_pid_exe.5.html across scopes
+souji	W04	S077 duplicate url man7.org/linux/man-pages/man2/open.2.html across scopes
+souji	W04	S086 duplicate url man7.org/linux/man-pages/man5/proc_pid_fd.5.html across scopes
+souji	W04	S087 duplicate url man7.org/linux/man-pages/man5/proc_pid_wchan.5.html across scopes
+souji	W04	S088 duplicate url man7.org/linux/man-pages/man5/proc_pid_status.5.html across scopes
+souji	W04	S089 duplicate url git-scm.com/docs/git across scopes
+souji	W04	S090 duplicate url git-scm.com/docs/git-filter-branch across scopes
+souji	W04	S091 duplicate url git-scm.com/docs/git-rev-parse across scopes
+souji	W04	S092 duplicate url git-scm.com/docs/git-for-each-ref across scopes
+souji	W04	S093 duplicate url git-scm.com/docs/git-diff across scopes
+souji	W04	S094 duplicate url www.gnu.org/software/coreutils/manual/html_node/timeout-invocation.html across scopes
+souji	W04	S095 duplicate url man7.org/linux/man-pages/man5/proc_pid_fd.5.html across scopes
+souji	W04	S096 duplicate url man7.org/linux/man-pages/man5/proc_pid_fd.5.html across scopes
+souji	W04	S097 duplicate url git-scm.com/docs/git-filter-branch across scopes
+souji	W04	S098 duplicate url www.gnu.org/software/coreutils/manual/html_node/timeout-invocation.html across scopes
+souji	W04	S099 duplicate url git-scm.com/docs/git-rev-parse across scopes
+souji	W04	S106 duplicate url docs.python.org/3/library/json.html across scopes
+souji	W04	S108 duplicate url docs.python.org/3/builtins/exceptions.html across scopes
+souji	ok	/home/vgpnk/Projects/shokunin/souji-shokunin/corpus/SOURCES.md
+VALIDATE_RC=0
+
+## landing gate (rounded to C2's adopted r24 pointer finding F1)
+$ python3 -B tools/souji-landing-gate.py --root . --rev c1664fcde8b12c7e6082a98cbbab1f1e7509177d --round 22
+LG-DANGLING-PTR	../.ufo/waves/hyaku/jj-w1/reports/JjAuditSouji.md	corpus/README.md:217 cites path absent at c1664fcde8b1
+LG-DANGLING-PTR	../.ufo/waves/hyaku/jj-w1/reports/JjTrialSouji.md	corpus/README.md:217 cites path absent at c1664fcde8b1
+LG-DANGLING-PTR	.ufo/waves/hyaku/jj-w1/reports/	corpus/knowledge/jj-colocation-receipts.md:148 cites path absent at c1664fcde8b1
+LG-DANGLING-PTR	.ufo/waves/hyaku/parent-closures/souji22/evidence.json	corpus/lessons/round-22-verifier-spotcheck.md:32 cites path absent at c1664fcde8b1
+SUMMARY	findings=4	checked_reg=50	checked_changed=0	checked_pins=13	checked_measured=3	checked_markers=18	status_lines=134	carry_heading=1	checked_reports=239
+LG_RC=1
+
+## re-check at tip 7bc458c1e1dcf3396e9d65bc68aeae5de78609c4 (SOURCES.md moved c1664fcd->7bc458c: S111 locator/teaches row, commit 7bc458c)
+$ ./scripts/sources-census.sh validate --root /home/vgpnk/Projects/shokunin --today 2026-10-25 souji | tail -2
+souji	W04	S108 duplicate url docs.python.org/3/builtins/exceptions.html across scopes
+souji	ok	/home/vgpnk/Projects/shokunin/souji-shokunin/corpus/SOURCES.md
+VALIDATE_RC=0
+
+$ awk -F'|' '/^\| S111 /{print $7}' corpus/SOURCES.md   # at 7bc458c1e1dcf3396e9d65bc68aeae5de78609c4
+ § DESCRIPTION, options --no-copy and --exchange (the page has no OPTIONS heading); snapshot census/round-22/attempt2/sources/man7-mv.1.txt 
+
+$ python3 -B tools/souji-gate-check.py --root . --round-date 2026-10-25 --entries ... (same argv as counter.txt)
+entries=2 ok=2 slice_verdicts=8 slice_total=8 fail=0
+REAL_RC=0
+
+## final landing-gate + validate counts at tip 7bc458c1e1dcf3396e9d65bc68aeae5de78609c4
+$ python3 -B tools/souji-landing-gate.py --root . --rev 7bc458c1e1dcf3396e9d65bc68aeae5de78609c4 --round 22
+LG-DANGLING-PTR	../.ufo/waves/hyaku/jj-w1/reports/JjAuditSouji.md	corpus/README.md:217 cites path absent at 7bc458c1e1dc
+LG-DANGLING-PTR	../.ufo/waves/hyaku/jj-w1/reports/JjTrialSouji.md	corpus/README.md:217 cites path absent at 7bc458c1e1dc
+LG-DANGLING-PTR	.ufo/waves/hyaku/jj-w1/reports/	corpus/knowledge/jj-colocation-receipts.md:148 cites path absent at 7bc458c1e1dc
+LG-DANGLING-PTR	.ufo/waves/hyaku/parent-closures/souji22/evidence.json	corpus/lessons/round-22-verifier-spotcheck.md:32 cites path absent at 7bc458c1e1dc
+SUMMARY	findings=4	checked_reg=50	checked_changed=0	checked_pins=13	checked_measured=3	checked_markers=18	status_lines=134	carry_heading=1	checked_reports=239
+LG_RC=1
+
+$ ./scripts/sources-census.sh validate --root /home/vgpnk/Projects/shokunin --today 2026-10-25 souji | grep -c 'W04'; ... | tail -1
+W04=30
+souji	ok	/home/vgpnk/Projects/shokunin/souji-shokunin/corpus/SOURCES.md
+VALIDATE_RC=0
+
+## landing gate + validate at last-observed tip 868075547dcd9b101e055481be89b2e97a38c5c9
+LG-DANGLING-PTR	../.ufo/waves/hyaku/jj-w1/reports/JjAuditSouji.md	corpus/README.md:217 cites path absent at 868075547dcd
+LG-DANGLING-PTR	../.ufo/waves/hyaku/jj-w1/reports/JjTrialSouji.md	corpus/README.md:217 cites path absent at 868075547dcd
+LG-DANGLING-PTR	.ufo/waves/hyaku/jj-w1/reports/	corpus/knowledge/jj-colocation-receipts.md:148 cites path absent at 868075547dcd
+LG-DANGLING-PTR	.ufo/waves/hyaku/parent-closures/souji22/evidence.json	corpus/lessons/round-22-verifier-spotcheck.md:32 cites path absent at 868075547dcd
+SUMMARY	findings=4	checked_reg=50	checked_changed=0	checked_pins=13	checked_measured=3	checked_markers=18	status_lines=134	carry_heading=1	checked_reports=239
+LG_RC=1
+W04=30
+souji	ok	/home/vgpnk/Projects/shokunin/souji-shokunin/corpus/SOURCES.md

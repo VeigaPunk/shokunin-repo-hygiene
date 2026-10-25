@@ -1,0 +1,67 @@
+ResSliceVerdicts — per-row span checks against primary bytes (executed 2026-10-25)
+Whitespace-collapsed substring test; documents = committed snapshot, installed man page
+(git 2.56.0, man date 2026-09-27), and live https fetches named below.
+
+== span -> documents (python, collapse=' '.join(s.split())) ==
+== S114
+  span='Note that unreachable, packed objects will remain. If this i' -> ['git-prune']
+== S123
+  span='git worktree prune [-n] [-v] [--expire <expire>]' -> ['git-worktree']
+== S124
+  span='/home/vgpnk/Projects/shokunin fstype=btrfs NOREPLACE_existin' -> NONE
+  span="Don't overwrite newpath of the rename. Return an error if ne" -> ['rename2']
+== S126
+  span='Sends file to the “Trashcan”, if possible. This is similar t' -> ['gtk']
+== S131
+  span='-n, --dry-run With prune, do not remove anything; just repor' -> ['git-worktree']
+== S133
+  span="RENAME_NOREPLACE Don't overwrite newpath of the rename." -> ['rename2']
+== S138
+  span='## gc.auto (6700)' -> NONE
+
+PAYLOAD S123 [('git worktree prune [-n] [-v] [--expire <', False)]
+PAYLOAD S124 [('/home/vgpnk/Projects/shokunin fstype=btr', False),
+              ("Don't overwrite newpath of the rename. R", False)]
+PAYLOAD S131 [('-n, --dry-run With prune, do not remove ', False)]
+PAYLOAD S133 [("RENAME_NOREPLACE Don't overwrite newpath", False)]
+
+== installed man pages (col -bx line numbers) ==
+$ man git-worktree | col -bx | grep -n "git worktree prune\|-n, --dry-run\|would remove"
+12:     git worktree prune [-n] [-v] [--expire <expire>]
+217:     -n, --dry-run
+218:         With prune, do not remove anything; just report what it would remove.
+$ man git-prune | col -bx | grep -n "see git-repack(1)"
+23:     see git-repack(1).
+   (lines 22-23: "Note that unreachable, packed objects will remain. If this is not desired," /
+    "see git-repack(1).")
+
+== committed snapshot, rename(2) ==
+census/round-22/attempt2/sources/man7-rename.2.txt:148-150
+ RENAME_NOREPLACE
+ Don't overwrite newpath of the rename. Return an error if
+ newpath already exists.
+
+== payload bytes (shokuknow read-only) ==
+/home/vgpnk/Projects/shokuknow/lanes/souji/round2/evidence/noreplace-probe.out line 2:
+/home/vgpnk/Projects/shokunin	fstype=btrfs	NOREPLACE_new=0(ok)	NOREPLACE_existing=-1(EEXIST)	plain_overwrite=0(ok)
+  exact register-spliced line (field NOREPLACE_new dropped): 0 matches
+  `NOREPLACE_existing=-1(EEXIST)<TAB>plain_overwrite` matches 5/5 data lines
+  git history of the file: one commit (d9583b5a); the 5-field form is the only form on disk
+/home/vgpnk/Projects/shokuknow/lanes/souji/round3/evidence/r24-renameat2-probe.out line 11:
+SUMMARY: every writable mount implements RENAME_NOREPLACE
+/home/vgpnk/Projects/shokuknow/lanes/souji/round2/evidence/r23-worktree-census.out:
+  "prune --dry-run --expire now:        (no output — none prunable)" present in the
+  campaign-repo section; "-n, --dry-run" 0 matches
+/home/vgpnk/Projects/shokuknow/lanes/souji/round2/evidence/r23-trigger-prune.out:
+  "git worktree prune [-n]" 0 matches; 7 case lines with before/after and verdict=PASS
+
+== live docs pages (https, 2026-10-25) ==
+$ curl -sSL https://git-scm.com/docs/git-worktree -> 200, 98918 bytes
+  synopsis span present after tag strip (spans are <code>-wrapped): True
+  OPTIONS span: page renders "-n --dry-run" (no comma) -> "… -n --dry-run With prune, do not
+  remove anything; just report what it would remove." ; the comma form is man-page only.
+$ curl -sSL https://git-scm.com/docs/git-prune -> 200, 27870 bytes
+  stripped+unescaped: 'Note that unreachable, packed objects will remain. If this is not
+  desired, see git-repack[1].'  (asciidoc xref renders [1], not (1))
+  sha256 == .ufo/waves/round-22/attempt2/w1/evidence/slice114-git-scm-git-prune.html
+          == 5d3dcd3b6588ce51b3cd0afee20f9a17e9f1f071f768e438244e7320fc34de88

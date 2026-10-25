@@ -1,0 +1,36 @@
+ResSliceVerdicts — S138, S114, S126 primary-byte receipts (executed 2026-10-25)
+
+== S138 (qiita) ==
+$ curl -sSL https://qiita.com/koseki/items/f1af58f1ec1693f0536a
+  HTTP=200 SIZE=129655
+  sha256 10773183118b0698f6d6951f0248c148e5f2e46a6962fa88162a43419cf516e2
+  (identical to the seat's fetch, w1/Slice138.md:37)
+$ grep -c '## gc.auto' qiita.html
+0
+$ grep -o 'id="gcauto-6700"[^>]*' qiita.html            -> id="gcauto-6700" class="fragment"
+  heading element: <h2 data-sourcepos="11:1-11:17"> ... gc.auto (6700)</h2>
+
+$ curl -sSL https://qiita.com/api/v2/items/f1af58f1ec1693f0536a     -> 200, 16825
+  body.splitlines()[10] == '## gc.auto (6700)'      (markdown line 11)
+$ curl -sSL https://qiita.com/koseki/items/f1af58f1ec1693f0536a.md  -> 200, 4047, text/x-markdown
+  line 17 == '## gc.auto (6700)'                    (frontmatter occupies lines 1-6)
+
+=> the span is verbatim in the item's own markdown body (public API / .md), NOT in the
+   cited HTML page's bytes; the HTML carries the same heading rendered as <h2>.
+
+== S114 (git-scm git-prune) ==
+live page sha256 5d3dcd3b6588ce51b3cd0afee20f9a17e9f1f071f768e438244e7320fc34de88
+  == .ufo/waves/round-22/attempt2/w1/evidence/slice114-git-scm-git-prune.html (byte-identical)
+stripped text: 'Note that unreachable, packed objects will remain. If this is not desired,
+see git-repack[1].'            -> quoted form `git-repack(1)` is NOT in the page bytes
+man git-prune col -bx lines 22-23 carry 'git-repack(1).'  -> span real in the man rendering
+
+== S126 (docs.gtk.org File.trash) ==
+$ curl -sSL https://docs.gtk.org/gio/method.File.trash.html  -> HTTP=200 SIZE=19401
+$ sha256sum gtk.html census/round-22/attempt2/sources/gtk-filetrash.raw
+a5af1920b16444e0a03d30fcf77de0389533bcedb7243175c915b34c38c21cf3  gtk.html
+a5af1920b16444e0a03d30fcf77de0389533bcedb7243175c915b34c38c21cf3  .../gtk-filetrash.raw
+  (committed snapshot is byte-identical to the live page)
+snapshot line 405-406: 'Sends file to the “Trashcan”, if possible. This is similar to' /
+  'deleting it, but the user can recover it before emptying the trashcan.'
+  register span ends mid-word at '...before emptying t' -> still an exact substring.

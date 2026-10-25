@@ -311,7 +311,7 @@ fix`; a fix counts only when a fixture shows it can fail.
   exist on disk. *Captured-by:* QUALITY Q10 (bookkeeping matches the repo) —
   stated, never machine-checked. *Fix:* `tools/souji-declared-evidence.py`
   plus the before receipt `census/round-22/attempt2/declared-evidence-before.tsv`
-  (`assertions=56 resolved=53 skipped=33 mismatches=3`); the always-zero
+  (`assertions=56 resolved=53 skipped=33 mismatches=3` with the pre-hardening instrument; the pinned instrument scores `55/52/33/3` at the same revision — both kept, neither overwritten); the always-zero
   control is rejected by the same fixtures, so the counter cannot be met by
   asserting it.
 - **M16 — campaign row ids are not lane row ids.** Adopting the staged rows

@@ -1,0 +1,103 @@
+ResClaims — executed measurements (read-only), 2026-10-25 03:57-04:07 -03
+Lane: /home/vgpnk/Projects/shokunin/souji-shokunin
+Pinned revisions (the lane advanced 4a6ee90 -> c9f1fe3 -> f8f0b4a -> 8990ae4 -> c1664fc during the review):
+
+  HEAD at start of review : 4a6ee90a8f8804ba268e44c204e95a931f74a051
+  HEAD at end of review   : c1664fcde8b12c7e6082a98cbbab1f1e7509177d
+  base (prereg freeze)    : 4edb25dfe262515d0da63224bbba71e02e36cba5
+  row-named after tip     : 8990ae4c6284005d42e6edeb9bf0060a2450f566
+  instrument-digests tip  : f8f0b4a2c4ab3d16369413b6aa9f2d2c08590581
+
+Digests at c1664fc (worktree == commit):
+  c45da14715e991d72daf89c7fac6cb63001392010c8d732b2b0c2c71e116c04a  SCORECARD.md
+  65817d0d0d4874e8fab83ef11ae29297a865a8359f554e2ff7d2a753f21448f4  tools/souji-declared-evidence.py
+  5b8025a83f16957cb2ff6aca0adecfc3a6a1ff796c3eed1d70018ecc339b3062  tools/souji-gate-check.py
+  ec77dc25fcbcf1cb2f647d3c6c782eb1400259f522e39483000296a1bfc46b2c  corpus/knowledge/quarantine-staging-no-copy-r23.md
+  015d42930bc18d630c3d20d58cb7707d448e0848d918c176df83258e82d17adc  corpus/knowledge/quarantine-origin-record-fields-r24.md
+  9eb1d40679be0977d456226ed84e8eaf04d143ce09aad1cad55f2047184c4e5b  census/round-22/attempt2/slice-verdicts.tsv
+  12d3c325649ca6026bdb9b98b1edb1ebd2d2dcc61ac519bfa14d7d084c5da7e6  census/round-22/attempt2/quarantine-slice
+  e9d29a663081a21aaa88b9fa090c26b13a58f3cf8fe9efca741a742de661bf97  census/round-22/attempt2/declared-evidence-before.tsv
+  042cee589d983052d85cec3857d590dcdf2acb0ea1abf017fcb7917040042f27  census/round-22/attempt2/instrument-digests.txt
+
+C1 — frozen counter
+  $ python3 -B tools/souji-declared-evidence.py --root . --file SCORECARD.md --rev <R> --format counts
+  4edb25d (base)   assertions=55 resolved=52 skipped=33 mismatches=3   rc=1
+  8990ae4          assertions=62 resolved=62 skipped=39 mismatches=0   rc=0
+  c1664fc (tip)    assertions=62 resolved=62 skipped=39 mismatches=0   rc=0
+  f8f0b4a          assertions=63 resolved=61 skipped=39 mismatches=2   rc=1
+    L14 AXES.md A mismatch:path-absent ; L14 65817d0d0d4874e8 B mismatch:rev-unresolved
+
+  $ python3 -B tools/souji-declared-evidence.py --selftest
+  selftest=8/8 ; PASS control always-zero -> FALSE-GREEN-REJECTED
+
+  Earlier tip, same command (the row then still quoted the base count as 56):
+  4a6ee90 with tool@4a6ee90  -> assertions=60 resolved=60 skipped=38 mismatches=0 rc=0
+  4edb25d with tool@4a6ee90  -> assertions=55 resolved=52 skipped=33 mismatches=3 rc=1
+  4edb25d with tool@5fdd5d5  -> assertions=56 resolved=53 skipped=33 mismatches=3 rc=1
+  only dropped token: 41553adb139d06511dc386bb3ce4326aebfba675 (B, base L14)
+  mechanism (executed): base L14 old cells_of split on the escaped pipe at the
+  `git show ...` span, mis-pairing backticks so the command-embedded 40-hex
+  survived as bare; the escaped-pipe cell split (4a6ee90) blanks the span, and
+  the second occurrence ("base41553adb...") is blocked by (?<![0-9A-Za-z_]).
+  => 55 is the frozen enum's count; the committed before TSV's 56 is not.
+
+  $ wc -l census/round-22/attempt2/declared-evidence-before.tsv -> 57
+  $ tail -1 ... -> assertions=56 resolved=53 skipped=33 mismatches=3
+  $ grep -n 41553adb ... -> 2:14 41553adb... B resolved
+
+  $ cat census/round-22/attempt2/instrument-digests.txt
+  65817d0d0d4874e8fab83ef11ae29297a865a8359f554e2ff7d2a753f21448f4  tools/souji-declared-evidence.py
+  5b8025a83f16957cb2ff6aca0adecfc3a6a1ff796c3eed1d70018ecc339b3062  tools/souji-gate-check.py
+  round=22 attempt=2 date=2026-10-25 lane_tip=f8f0b4a2c4ab3d16369413b6aa9f2d2c08590581
+
+  token sweep over the audited file (raw text, backticks ignored):
+  path-like tokens 66, absent at tip 7 -> census/round-17/jj-receipts-*.txt (glob, 2 matches,
+  counted/resolved), final-code-verification.json, remote-source-after.json, status.sh
+  (bare filenames in command/prose context, not backticked), /home/.../AXES.md (exists on
+  host), .ufo/.../obsidian-cli-probe.md (recorded absent in the row), .ufo/waves/round-18/
+  w1/ScoutCarryWrap.md (exists). hex-like tokens 12, dangling 0. 64-hex tokens: 0.
+
+C2 — frozen counter
+  $ python3 -B tools/souji-gate-check.py --root . --round-date 2026-10-25 \
+      --entries corpus/knowledge/quarantine-staging-no-copy-r23.md \
+                corpus/knowledge/quarantine-origin-record-fields-r24.md \
+      --snapshot-dir census/round-22/attempt2/sources \
+      --slice census/round-22/attempt2/quarantine-slice \
+      --slice-verdicts census/round-22/attempt2/slice-verdicts.tsv
+  entries=2 ok=2 slice_verdicts=8 slice_total=8 fail=0    rc=0
+  $ python3 -B tools/souji-gate-check.py --selftest -> selftest=9/9 ; control always-green
+    -> FALSE-GREEN-REJECTED
+  $ bash /home/vgpnk/Projects/shokunin/scripts/sources-census.sh validate \
+        --root /home/vgpnk/Projects/shokunin souji -> ec=0 (souji ok corpus/SOURCES.md; 114 rows)
+
+  $ awk -F'\t' '{print $2}' census/round-22/attempt2/slice-verdicts.tsv | sort | uniq -c
+    5 accepted | 2 present | 1 unverifiable | 0 refused      (M23 states 5/2/1/0)
+  $ grep -rn "every writable mount" . (excluding .ufo)
+    only census/round-22/attempt2/slice-verdicts.tsv:7 (the S133 verdict row itself)
+  $ nl census/round-22/attempt2/sources/vendor-noreplace-probe.out
+    1 /var/tmp ... 5 /tmp ... 6 kernel: 7.2.11-arch1-1      (6 lines; no "line 11")
+
+  Landing gate (not part of either frozen counter):
+  $ python3 -B tools/souji-landing-gate.py --root . --rev c1664fc --round 22
+    rc=1 findings=4: README.md:217 (x2), jj-colocation-receipts.md:148,
+    round-22-verifier-spotcheck.md:32
+  $ same at --rev 4edb25d --round 22
+    rc=1 findings=4: identical set -> inherited, not introduced by attempt 2.
+
+  Round-1 fixes checked against the tip:
+  - r23 Gate locator: "§ DESCRIPTION, option --no-copy"; man7-mv.1.txt has no OPTIONS
+    heading; the quoted line is :91 under DESCRIPTION (:60). FIXED.
+  - r23 title: "exists on the five devices this fleet's repositories live on". FIXED.
+  - r24 pointer: "merge/souji/knowledge/corpus/knowledge/quarantine-origin-record-fields-r23.md";
+    file exists at /home/vgpnk/Projects/shokuknow/merge/souji/... (stat OK); landing gate no
+    longer emits LG-DANGLING-PTR for it. FIXED in substance (package-relative, no root marker;
+    the gate's extractor ignores the prefix).
+  - slice-verdicts.tsv still has no id-space header; campaign->lane map only in M16/M21. OPEN.
+  - coverage row L13: "R22 preserves ... Numeric delta0 ...; r22 no expansion claimed". M22:
+    "import with re-grounding, not new ground ... coverage score left unchanged". Credit NOT claimed.
+
+Scope: read-only apart from this evidence directory and the report; no git/jj writes, no
+.ufo/state, no MANIFEST, no fleet scripts/templates, shokuknow read only (stat only).
+Two transient /tmp files (/tmp/tip.tsv, /tmp/base.tsv, /tmp/tip2.tsv, /tmp/lg*.out) were
+used only for TSV set-diffing and gate output capture; no repo state written.
+No installs.

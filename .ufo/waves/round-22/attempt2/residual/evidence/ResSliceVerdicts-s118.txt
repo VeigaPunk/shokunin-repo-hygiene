@@ -1,0 +1,47 @@
+ResSliceVerdicts — S118: the "unverifiable" class tested against reachable bytes
+(executed 2026-10-25)
+
+Row under test (campaign id space; lane row at
+/home/vgpnk/Projects/shokuknow/lanes/souji/SOURCES-PROPOSED.md:23):
+  | S118 | On the resemblance and containment of documents —
+    https://doi.org/10.1109/SEQUEN.1997.666900 | paper | B |
+    ... | § 2 "Definitions as set intersection problems"; IEEE ... | 
+    similarity splits into two distinct measures — *resemblance* ("roughly the same")
+    and *containment* ("roughly contained") — each a number between 0 and 1 ... |
+    mined | 2026-10-23 | 365d — re-resolve the DOI and re-read § 2 |
+Register row (line 361) has NO quote column; condition = "the cited source could not be
+fetched, so no quote was checked".
+
+A. DOI target (re-confirmed, same shape as the seat's fetch):
+$ curl -sSI -L https://doi.org/10.1109/SEQUEN.1997.666900
+  HTTP/2 302  location: http://ieeexplore.ieee.org/document/666900/
+  HTTP/1.1 301  location: https://ieeexplore.ieee.org/document/666900/
+  HTTP/2 202  content-length: 0   x-amzn-waf-action: challenge   cache-control: no-store
+
+B. DOI identity resolves (content negotiation, 200):
+$ curl -sSL -H 'Accept: application/vnd.citationstyles.csl+json' \
+      https://doi.org/10.1109/SEQUEN.1997.666900
+  {"DOI":"10.1109/sequen.1997.666900","title":"On the resemblance and containment of
+   documents","publisher":"IEEE Comput. Soc","page":"21-29", ...}
+
+C. Same paper, public readable copy (200, application/pdf, 254930 bytes, 9 pages):
+$ curl -sSL -o broder97.pdf \
+   https://www.cs.princeton.edu/courses/archive/spr05/cos598E/bib/broder97resemblance.pdf
+  sha256 da1227992d4a308f9f6f9f99893fd7b00c26e6cf757b1372f426074c101ef56b
+
+$ pdftotext -layout broder97.pdf broder.txt
+$ grep -n "Definitions as set intersection problems" broder.txt
+71:2    Definitions as set intersection problems
+   (locator text: `§ 2 "Definitions as set intersection problems"` — verbatim, collapse-safe)
+
+$ grep -n "roughly the same|roughly contained|number between 0 and 1" broder.txt
+11:     the informal notions of “roughly the same” and “roughly contained.”
+34:roughly the same. Similarly, the containment c(A, B) of A in B is a number between
+35:0 and 1 that, when close to 1, indicates that A is roughly contained within B.
+   (teaches-cell claim: two measures, each a number between 0 and 1 — verified)
+
+D. ACM mirror https://dlnext.acm.org/doi/10.5555/829502.830043 -> 403 to a non-JS client
+   (not needed; C is sufficient).
+
+=> The source is readable; the locator and the claim both check out. The register's
+   `unreachable` condition was true for the *cited URL bytes*, not for the work.

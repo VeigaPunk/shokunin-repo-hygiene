@@ -1,0 +1,89 @@
+# throwaway fixture repo /var/tmp/sde-fx (git init; removed after run)
+commit1 (EARLY)=91cb9e4efaac0aa1922b912cff03e98e422dd723  tools/present.sh tools/sub/deep.sh census/round-22/a/foo.md
+commit2 (LATE) =ac71bfc6c6132418ef3c46b62ca63fce2a2b6703  + later.md
+HEAD (FX)     =924dfc90d43a4a6f53d87f1f4e75e0cef68a3da4  fixture declarations
+tool sha256  = 65817d0d0d4874e8fab83ef11ae29297a865a8359f554e2ff7d2a753f21448f4
+
+## (a) repo-relative declaration absent at --rev, worktree copy present
+$ python3 -B <tool> --root . --file decl.md --rev 91cb9e4efaac0aa1922b912cff03e98e422dd723 --format counts
+declaration is not present at 91cb9e4efaac0aa1922b912cff03e98e422dd723: decl.md
+exit=1
+
+## (b) uppercase 64-hex WRONG digest
+  | c | note |
+  |---|---|
+  | sha256 `AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA` on `tools/present.sh` | measured commit ac71bfc |
+assertions=3 resolved=2 skipped=1 mismatches=1
+exit=1
+
+## (b2) uppercase 64-hex CORRECT digest (normalisation control)
+  | c | note |
+  |---|---|
+  | sha256 `306C6CA7407560340797866E077E053627AD409277D1B9DA58106FCE4CF717CB` on `tools/present.sh` | measured commit ac71bfc |
+assertions=3 resolved=3 skipped=1 mismatches=0
+exit=0
+
+## (c) path token with trailing period
+  | c | note |
+  |---|---|
+  | `tools/absent.sh.` | measured commit ac71bfc |
+3	ac71bfc	B	resolved	commit/object resolves
+assertions=1 resolved=1 skipped=1 mismatches=0
+exit=0
+
+## (d) glob whose * would cross / (only census/round-22/a/foo.md exists)
+  | c | note |
+  |---|---|
+  | `census/*/foo.md` | measured commit ac71bfc |
+assertions=2 resolved=1 skipped=0 mismatches=1
+exit=1
+
+## (d2) same glob at real depth (control)
+  | c | note |
+  |---|---|
+  | `census/*/*/foo.md` | measured commit ac71bfc |
+assertions=2 resolved=2 skipped=0 mismatches=0
+exit=0
+
+## (e1) valid rev:path
+  | c | note |
+  |---|---|
+  | `ac71bfc:later.md` | measured commit ac71bfc |
+assertions=2 resolved=2 skipped=0 mismatches=0
+exit=0
+
+## (e2) rev:path, path only at another rev
+  | c | note |
+  |---|---|
+  | `91cb9e4:later.md` | measured commit ac71bfc |
+assertions=2 resolved=1 skipped=0 mismatches=1
+exit=1
+
+## (e3) rev:path, unresolved rev
+  | c | note |
+  |---|---|
+  | `deadbeefdeadbeef:tools/present.sh` | measured commit ac71bfc |
+assertions=2 resolved=1 skipped=0 mismatches=1
+exit=1
+
+## (f) EXTRA dangling rev inside compound backticked command, census-context cell
+  | c | note |
+  |---|---|
+  | `git show deadbeefdeadbeefdeadbeefdeadbeefdeadbeef:census/round-22/a/foo.md \| python3 -B x.py`; see census/round-22 at ac71bfc | measured commit ac71bfc |
+3	ac71bfc	B	resolved	commit/object resolves
+assertions=1 resolved=1 skipped=1 mismatches=0
+exit=0
+
+## (h) EXTRA sha256 in a cell with two backticked paths
+  | c | note |
+  |---|---|
+  | sha256 `306c6ca7407560340797866e077e053627ad409277d1b9da58106fce4cf717cb` on `tools/present.sh` and `later.md` | measured commit ac71bfc |
+assertions=3 resolved=3 skipped=1 mismatches=0
+exit=0
+
+## (l) EXTRA uppercase 7-hex inside a ctx backticked span
+  | c | measured commit `AC71BFC` |
+1	ac71bfc	B	resolved	commit/object resolves
+assertions=1 resolved=1 skipped=1 mismatches=0
+exit=0
+
