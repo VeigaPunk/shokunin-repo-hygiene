@@ -101,9 +101,13 @@ def _segmatch(pattern: str, path: str) -> bool:
     return all(fnmatch.fnmatchcase(b, a) for a, b in zip(pp, sp))
 
 
+CELL_SPLIT_RE = re.compile(r"(?<!\\)\|")
+
+
 def cells_of(line: str) -> list[str]:
-    """Table cells when the line is a table row, else the whole line."""
-    return line.split("|") if line.count("|") >= 2 else [line]
+    """Table cells when the line is a table row (an escaped pipe does not split), else the whole line."""
+    parts = CELL_SPLIT_RE.split(line)
+    return parts if len(parts) >= 3 else [line]
 
 
 def classify(repo: Repo, rev: str, decl_file: str):
