@@ -9,7 +9,7 @@ ground: F4 — restorable quarantine (the read side of a per-item origin record)
 # A per-item origin record must carry the original path, because that is what restore consumes
 
 ## Claim (F4, sourced — amends the round-2 record entries)
-The lane already holds the trash *layout* (S022: `info/<name>.trashinfo` with
+The lane already holds the trash *layout* (S022, § 6 Contents of a trash directory: `info/<name>.trashinfo` with
 `Path` and `DeletionDate`, written before the payload moves) and the *write
 contract* (S113: the trash call is documented recoverable and refuses rather
 than deleting). What was missing is the **read side**: which field a restore
@@ -44,9 +44,11 @@ actually consumes.
   reference *behaviour* of a recoverable move, cited for the field it needs.
 - **`DeletionDate` is not a retention policy.** S022 fixes its format
   (`YYYY-MM-DDThh:mm:ss`), not who may empty the trash or when.
-- The dedicated r23 entry `corpus/knowledge/quarantine-origin-record-fields-r23.md`
-  is **not replaced** by this one; this entry adds the restore-side requirement
-  that the r23 entry lacked. It also does not replace S022's layout entry.
+- The campaign's r23 record entry (package file
+  `merge/souji/knowledge/corpus/knowledge/quarantine-origin-record-fields-r23.md`,
+  not adopted in this lane, so it has no lane path) is **not replaced** by this
+  one; this entry adds the restore-side requirement that the r23 entry lacked.
+  It also does not replace S022's layout entry.
 
 ## Lane link and consequence
 F4's next step is "per-item origin records (trashinfo-style)". This entry turns
@@ -63,7 +65,7 @@ opened: 2026-10-25
 - ADMIT: "List files in the trash with their original locations." — § COMMANDS trash --list — snapshot: census/round-22/attempt2/sources/arch-gio.1.txt
 - ADMIT: "Restore a file from trash to its original location. A URI beginning with trash:// is expected here." — § COMMANDS trash --restore — snapshot: census/round-22/attempt2/sources/arch-gio.1.txt
 - ADMIT: "Sends file to the “Trashcan”, if possible. This is similar to deleting it, but the user can recover it before emptying the trashcan." — § Description — snapshot: census/round-22/attempt2/sources/gtk-filetrash.txt
-- ADMIT: "The key “Path” contains the original location of the file/directory" — paragraph, Trash Info key/value list — snapshot: census/round-22/attempt2/sources/freedesktop-trash.txt
-- ADMIT: "The key “DeletionDate” contains the date and time when the file/directory was trashed." — paragraph, Trash Info key/value list — snapshot: census/round-22/attempt2/sources/freedesktop-trash.txt
+- ADMIT: "The key “Path” contains the original location of the file/directory" — § 6 Contents of a trash directory, key/value list — snapshot: census/round-22/attempt2/sources/freedesktop-trash.txt
+- ADMIT: "The key “DeletionDate” contains the date and time when the file/directory was trashed." — § 6 Contents of a trash directory, key/value list — snapshot: census/round-22/attempt2/sources/freedesktop-trash.txt
 - ADMIT: "__u64 stx_ino; /* Inode number */" — § DESCRIPTION struct statx — snapshot: census/round-22/attempt2/sources/man7-statx.2.txt
 - REJECT: staged entry quarantine-staging-no-copy-r24 (same primitive, second device list, no new field or refusal semantics) — reason: duplicate ground; the r23 entry already recorded the five-device measurement and this package adds an eighth-mount list without a new consequence for the lane; flip: a measurement on a filesystem or mount namespace the r23 entry did not cover, plus a consequence the staging tool would change.

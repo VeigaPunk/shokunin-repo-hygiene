@@ -368,3 +368,58 @@ exit 1.
 **Spot-check.** The non-author duty is `RevSliceVerif` (wave seat, independent
 re-derivation of all 8 slice rows from primary bytes) plus the G1 audit TSV;
 a lane-dispatched seat is still the lane, so no outside claim is made here.
+
+## Attempt 2 — seat-driven corrections (M17–M21)
+
+These mistakes were found by the round's own seats after the first landing; the
+frozen predicates were **not** changed to accommodate them (§9: a rule changed
+after data is scored is not the claim's rule). Each is recorded with a flip.
+
+- **M17 — a Gate named a section the document does not have.** `mv(1)` has no
+  `OPTIONS` heading (all options live under `DESCRIPTION`), yet the first
+  version of `quarantine-staging-no-copy-r23.md` cited `§ OPTIONS --no-copy`.
+  *Evidence:* `SnapMv1` (seat) enumerated the page's headings; the frozen
+  locator-token check accepted the wrong one. *Captured-by:* none — the
+  predicate only requires a locator *token*, not that the heading exists.
+  *Fix:* the Gate now says `§ DESCRIPTION, option --no-copy`, and the body
+  repeats the correction. *Flip:* the gate would still pass a invented
+  section name; the next predicate revision should require the named heading
+  to appear in the snapshot (fixture: a Gate naming `§ OPTIONS` against a page
+  without one must fail).
+- **M18 — the counts line is not self-verifying.** `MutPath` showed that
+  mutants which accept an absent path, or route a digest mismatch into
+  `skipped`, both preserve `assertions == resolved + skipped + mismatches`;
+  only the semantic fixtures kill them. *Captured-by:* the fixtures
+  (8/8 baseline, both mutants 6/8 and 7/8). *Fix:* the fixtures stay the
+  detector; the counts line is a summary, never a proof. *Flip:* a mutation
+  that only perturbs the arithmetic would survive.
+- **M19 — class C was unexercised on the audited file.** `MutDigest`: the
+  SCORECARD carries **0** class-C assertions at base and at the tip (rows
+  `{'A': 50, 'B': 6}`), so the correct `--rev`-byte comparison in class C is
+  only exercised by the selftest. The selftest's digest fixtures use a clean
+  worktree, so a mutant that reads the worktree instead of `--rev` survives
+  all 8 fixtures; the seat killed it only with a dirty-worktree fixture it
+  built in `/var/tmp`. *Captured-by:* none in the frozen fixture set.
+  *Fix owed next round:* add the dirty-worktree revision-difference fixture
+  to the tool's selftest (one commit, one dirty file, declaration carrying the
+  dirty digest). *Flip:* that fixture makes the mutant red.
+- **M20 — the census duplicate-URL gate is scope-exact but narrow.**
+  `ScoutCensusMirror` proved `E04`/`E03` fire on a synthetic duplicate row and
+  clear when removed, then bounded the guard: it reads only the first URL in a
+  `source` cell, and `status=rejected` or a `teaches` cell naming
+  `supersedes S<id>` changes the finding to a warning while keeping exit 0.
+  *Captured-by:* the lane's mirror procedure, not a lane rule. *Fix:* none in
+  this lane — `scripts/sources-census.sh` is fleet-owned (never edited here);
+  routed as a bounded finding in the round report.
+- **M21 — campaign ids and lane ids overlap numerically after adoption.**
+  Before the append the frozen collision check was clean (registry 108, staged
+  134, collisions 0). After appending S109–S114, `ScoutCollision` re-ran the
+  same check and found **6** numeric collisions: lane S109–S114 (quarantine
+  theme) versus staged S109–S114 (auto-maintenance theme) — different
+  documents, same numbers. *Captured-by:* none mechanically; CORPUS.md rule 2
+  requires append-only ids, so the overlap is unavoidable for any lane id
+  below the campaign's maximum. *Fix:* the document map is the disambiguator
+  (S124→S109, S116→S110, S115→S111, S137→S112, S126→S113, S117→S114; S022
+  reused), recorded here and in the report. *Flip:* a reader resolving ids by
+  arithmetic instead of by document would cite the wrong row — the map is the
+  only guard.

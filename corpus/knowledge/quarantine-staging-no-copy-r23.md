@@ -21,7 +21,7 @@ artifact violates it.
    page states that the flag needs per-filesystem support and lists ext4 3.15,
    btrfs and tmpfs 3.17, xfs 4.0 — a *precondition*, not a fact about this host.
 2. **`mv --no-copy` is the portable spelling of the same refusal.**
-   "do not copy if renaming fails" (S111, § OPTIONS `--no-copy`). Without it,
+   "do not copy if renaming fails" (S111, § DESCRIPTION, option `--no-copy` — the page has no OPTIONS heading). Without it,
    GNU `mv` may fall back to copy+remove, which turns a cross-device staging
    step into a copy the lane cannot verify atomically.
 3. **The five-device measurement is vendored, not this lane's execution.**
@@ -65,5 +65,5 @@ opened: 2026-10-25
 
 - ADMIT: "RENAME_NOREPLACE Don't overwrite newpath of the rename. Return an error if newpath already exists." — § DESCRIPTION flags — snapshot: census/round-22/attempt2/sources/man7-rename.2.txt
 - ADMIT: "RENAME_NOREPLACE requires support from the underlying filesystem." — § DESCRIPTION flags — snapshot: census/round-22/attempt2/sources/man7-rename.2.txt
-- ADMIT: "do not copy if renaming fails" — § OPTIONS --no-copy — snapshot: census/round-22/attempt2/sources/man7-mv.1.txt
+- ADMIT: "do not copy if renaming fails" — § DESCRIPTION, option --no-copy — snapshot: census/round-22/attempt2/sources/man7-mv.1.txt
 - REJECT: staged row campaign-S123 (git-worktree SYNOPSIS text quoted against a local trigger-probe payload) — reason: the cited artifact is a probe output whose bytes do not contain the quoted synopsis, so the row is a wrong-source citation rather than a fact about the payload; flip: re-cite the synopsis against git-worktree(1) if the lane ever needs it, and keep the probe output for its own PASS lines.
