@@ -90,3 +90,12 @@ in S132: 5 registrations, 0 prunable, 0 locked.
 
 Measured on git 2.56.0 (the current host version), closing the 2.55.0-only
 coverage the commit-path entry carries for the trigger set.
+
+## Gate
+
+opened: 2026-10-25
+- ADMIT: the measured prune fixture entry; reason: fixture r23-trigger-prune.sh and evidence r23-trigger-prune.out re-grounded byte-for-byte this round (sha256 11c136aa…, 510722c1…); census 1ac71c4f….
+- REJECT: the staged package ids S109/S110/S111/S123 as-is; reason: they collide with the lane registry S109-S127, so the rows were re-pointed by document to S128-S132 before appending.
+- "run_auto_maintenance(the_repository, verbosity < 0);" — snapshot: census/round-26/sources/git-builtin-merge.c lines 506-509
+- "run_auto_maintenance(the_repository, verbosity < 0);" — snapshot: census/round-26/sources/git-builtin-fetch.c line 2926
+- https://github.com/git/git/blob/v2.56.0/builtin/pull.c

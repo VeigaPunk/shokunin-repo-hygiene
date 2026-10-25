@@ -65,3 +65,12 @@ census that only watched `git commit` would watch one of five triggers, plus
 flagged pending recheck when the host moved to 2.56.0. This entry is read
 from tag **v2.56.0** source and the host's 2.56.0 manual, so it does not
 repeat that staleness for the trigger set.
+
+## Gate
+
+opened: 2026-10-25
+- ADMIT: the trigger-set entry; reason: re-grounded this round from the v2.56.0 manual and tag sources (snapshots under census/round-26/sources/, bound by SHA256SUMS).
+- REJECT: the staged S-language edition corroboration (zh/ja docs and a vendor page); reason: zh/ja mirrors' version alignment with 2.56.0 unprovable; the vendor page quotes a 2.16.x-era workflow.
+- "--auto-maintenance" — snapshot: census/round-26/sources/git-fetch.1.txt OPTIONS
+- "struct child_process cmd = CHILD_PROCESS_INIT;" — snapshot: census/round-26/sources/git-builtin-pull.c lines 390-391
+- https://git-scm.com/docs/git-fetch
