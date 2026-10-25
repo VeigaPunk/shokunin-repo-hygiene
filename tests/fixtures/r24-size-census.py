@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
-"""r24 C1 counter: F2 write-safety size census over the frozen 8-case set.
+"""r24 C1 counter: F2 write-safety size census over the frozen 8-case set, extended by r25 C2
+with the refusal-surface cases 9-12 (bare-nonempty, bare-empty, subdir, partialClone-only).
 
 Every case builds its own repo under a /var/tmp mkdtemp removed in a finally block; nothing here
 reads or writes the lane. Manifest = sorted (relpath, type, mode, size, mtime_ns, sha256 of regular
 files) over the resolved common git dir, directories included; atime/ctime excluded. Case 5 adds a
 second manifest over the alternate object dir(s) named by objects/info/alternates (resolved per
-git's alternates rule).
+git's alternates rule). Case 9 requires the bare git dir's manifest unchanged; cases 10-12 report
+manifest_changed but do not gate on it (not in the frozen r25 C2 predicates).
 Last line: cases=C pass=P control=FALSE-GREEN-REJECTED|FALSE-GREEN-ACCEPTED
 lost_found=WRITE-DETECTED|NOT-DETECTED
 0: P==C, control=FALSE-GREEN-REJECTED, lost_found=WRITE-DETECTED; 1: otherwise; 2: bad input.
@@ -79,6 +81,25 @@ class Scratch:
         match = COUNTS.fullmatch(lines[-1]) if lines else None
         counts = tuple(map(int, match.groups())) if match else None
         return proc.returncode, counts, changed(before, manifest(gitdir))
+
+    def invoke(self, tool, gitdir, *argv):
+        before = manifest(gitdir)
+        proc = subprocess.run([sys.executable, '-B', str(tool), *map(str, argv)], cwd=self.root,
+                              env=self.env, capture_output=True, text=True, timeout=TIMEOUT)
+        return (proc.returncode, proc.stdout, proc.stderr,
+                changed(before, manifest(gitdir)))
+
+    def bare(self, name='bare'):
+        path = self.root / name
+        self.git('init', '-q', '--bare', '-b', 'main', path)
+        return path
+
+    def commit_bare(self, bare):
+        blob = self.git('-C', bare, 'hash-object', '-w', '--stdin',
+                        stdin='r25 bare\n').stdout.strip()
+        tree = self.git('-C', bare, 'mktree', stdin='100644 blob %s\tf.txt\n' % blob).stdout.strip()
+        commit = self.git('-C', bare, 'commit-tree', tree, '-m', 'r25 bare').stdout.strip()
+        self.git('-C', bare, 'update-ref', 'refs/heads/main', commit)
 
 
 @contextlib.contextmanager
@@ -259,9 +280,69 @@ def case_control(tool):
         return bool(failed), 'stub_failed=%s' % (','.join(failed) or 'none')
 
 
+def tool_counts(stdout):
+    lines = stdout.splitlines()
+    match = COUNTS.fullmatch(lines[-1]) if lines else None
+    return tuple(map(int, match.groups())) if match else None
+
+
+def describe_full(code, stdout, delta, **marks):
+    return describe(code, tool_counts(stdout), delta) + ''.join(
+        ' %s=%s' % item for item in marks.items())
+
+
+def case_bare_nonempty(tool):
+    with scratch() as s:
+        bare = s.bare()
+        s.commit_bare(bare)
+        code, out, err, delta = s.invoke(tool, bare, '--repo', bare)
+        invoked = 'census.invoked_from=bare' in out.splitlines()
+        ok = code == 0 and tool_counts(out) is not None and invoked and not delta
+        return ok, describe_full(code, out, delta, invoked_from_bare=invoked)
+
+
+def case_bare_empty(tool):
+    with scratch() as s:
+        bare = s.bare()
+        code, out, err, delta = s.invoke(tool, bare, '--repo', bare)
+        failure, no_refs = 'git failure' in err, 'No default references' in err
+        counts_line = any(COUNTS.fullmatch(line) for line in out.splitlines())
+        ok = code == 1 and failure and no_refs and not counts_line
+        return ok, describe_full(code, out, delta, stderr_git_failure=failure,
+                                 stderr_no_default_references=no_refs,
+                                 stdout_counts_line=counts_line)
+
+
+def case_subdir(tool):
+    with scratch() as s:
+        repo = s.repo()
+        sub = repo / 'sub'
+        sub.mkdir()
+        code, out, err, delta = s.invoke(tool, s.common_dir(repo), '--repo', sub)
+        named = '--repo must name the repository itself' in err
+        return code == 2 and named, describe_full(code, out, delta, stderr_must_name_repo=named)
+
+
+def case_partialclone_only(tool):
+    with scratch() as s:
+        repo = s.repo()
+        s.git('-C', repo, 'config', 'extensions.partialClone', 'origin')
+        gitdir = s.common_dir(repo)
+        if list((gitdir / 'objects' / 'pack').glob('*.promisor')):
+            raise RuntimeError('setup: partialClone-only repo has a .promisor pack')
+        if s.git('-C', repo, 'config', '--get-regexp', r'^remote\.', check=False).stdout.strip():
+            raise RuntimeError('setup: partialClone-only repo has a remote')
+        code, out, err, delta = s.invoke(tool, gitdir, '--repo', repo)
+        partial = 'partial-clone repository' in err
+        return code == 2 and partial, describe_full(code, out, delta,
+                                                    stderr_partial_clone=partial)
+
+
 CASES = [('clean', case_clean), ('dangling', case_dangling), ('garbage', case_garbage),
          ('linked', case_linked), ('alternates', case_alternates), ('refusal', case_refusal),
-         ('detector', case_detector), ('control', case_control)]
+         ('detector', case_detector), ('control', case_control),
+         ('bare-nonempty', case_bare_nonempty), ('bare-empty', case_bare_empty),
+         ('subdir', case_subdir), ('partialClone-only', case_partialclone_only)]
 
 
 def run(check, tool):
