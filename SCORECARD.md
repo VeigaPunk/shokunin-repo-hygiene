@@ -231,3 +231,28 @@ unproved. Source-row growth is not knowledge growth.
 ## Retired
 
 None.
+
+---
+
+### Round 26 append-only corrections
+
+The five bare `superseded by SCORECARD.md:<n>` lines above are r25 output computed at the
+r25-base layout (`a6d2d15`, 228 lines) and are left byte-verbatim (append-only). The r25
+landing `728b2ce` inserted the `- **r25 — attempted, honest stop …` planned bullet at
+SCORECARD.md:136, so four of the five numbers already resolved one line early at this
+round's frozen base; the r26 C1 integration `a529c76` then removed the generation scaffold
+and re-ordered the file (254 → 233 lines, Round 25 measurements above Round 24), moving all
+five targets. Mapping (old = the number as written; pre-cleanup = the same content at
+`0eca7c8`; post-C1 = `a529c76`):
+
+| cited | content it names | r25 base `a6d2d15` | pre-cleanup `0eca7c8` | post-C1 `a529c76` |
+|---|---|---|---|---|
+| `SCORECARD.md:181` | r24 assimilation row: quarantine-slice sentence | 181 | 182 | 51 |
+| `SCORECARD.md:180` | r24 C3 receipt verify/run symmetry row (the overclaiming title) | 180 | 181 | 50 |
+| `SCORECARD.md:92` | r23 blob-bound receipts row: `tool_sha256` sentence | 92 | 92 | 153 |
+| `SCORECARD.md:224` | r24 "planned → done" bullet: C3 verify/run claim | 224 | 225 | 199 |
+| `SCORECARD.md:225` | r25 "planned" bullet | 225 | 226 | 200 |
+
+The five superseded-by lines themselves moved from `0eca7c8` lines 250-254 to lines 36-40;
+their bytes are unchanged. Re-derivation per cell:
+`git show <rev>:SCORECARD.md | sed -n '<n>p'`.
