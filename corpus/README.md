@@ -37,7 +37,7 @@ when the file exists, not before.
 |---|---|---|
 | receipts: pushed / moved-to-obsidian / stale | core (SKILL.md, tools/) | `knowledge/obsidian-ledger.tsv` (operator-fed, header-only) |
 | F1 git-native housekeeping vs receipts | frontier, entries held | `knowledge/git-auto-maintenance-prunes-worktrees.md`, `knowledge/git-grace-periods-and-expire-to.md` |
-| F2 repository size census | frontier, no entry (r12 candidate deferred, `lessons/round-12.md` `## Gate`; sweep: `ls corpus/knowledge \| grep -ciE 'size\|structure\|sizer'` → 0, 2026-10-19) | — |
+| F2 repository size census | frontier, no entry (r12 candidate deferred, `lessons/round-12.md` `## Gate`; sweep: `ls corpus/knowledge \| grep -ciE 'size\|structure\|sizer'` → 0, 2026-10-19); superseded by Round 24 F2 row (:517) | — |
 | F3 duplicate verdicts | frontier, entry held | `knowledge/dupe-finders-detect-then-act.md` |
 | F4 restorable quarantine, file-system semantics | frontier; layout held, staging primitive + record read side admitted r22 (see § Round22 attempt 2) | `knowledge/trash-spec-restorable-quarantine.md`, `knowledge/quarantine-same-filesystem-rename.md`, `knowledge/quarantine-staging-no-copy-r23.md`, `knowledge/quarantine-origin-record-fields-r24.md` |
 
@@ -534,3 +534,25 @@ column. C2's `MISSING-FROM-MAP` catches a grounded entry that no F<k> row's entr
 names; it does not read status prose, and an entry still named by an older F2 row (:68) stays
 mapped if the r24 row drops it, so a prose/table disagreement of the r23 kind can recur
 undetected (r24 W2ReadmeRow, W2C2Calib).
+
+## Round 25 — common-directory structure census and routed-defect corrections
+
+Appended; the sections above stand. The F2 entries below supersede only the F2 entries column at :517; its status prose stays as history. The stale r12 map status at :40 carries an appended superseded marker (R24-M2/D4), with no line added and no coverage-counter change. The F2 knowledge entry and this map row land together (Q56).
+
+| ground | status | entries / runnable evidence |
+|---|---|---|
+| F2 repository size census | frontier; five sourced entries now cover the read-side facts, r24 debris counter, and r25 common-directory envelope. C2 refusal fixture: 12/12 (8 inherited plus bare/nonempty, bare/empty, subdirectory, partialClone-only); red on pre-fix 1efe406 is 11/12 (subdirectory), while the actual bare regression at 778747e is 10/12 (bare cases 9–10). Seven of twenty tool-clause mutants survive the 12-case fixture; their survivors are disclosed in `corpus/lessons/round-25.md`. C3 structure fixture: selftest=PASS ids=7/7 (was 5/5), including common-dir and colocated/plain checks. Limits: the r25 fixture checks exit/stderr but not manifest equality on cases 11–12; atime/ctime are excluded; content changes remain detected by hashes, but transient byte-identical writes/deletes with restored directory mtime can escape. No size baseline, deletion authority, or F2 promotion to Core is claimed. | `knowledge/git-repo-structure-readonly.md` (SOURCES S035–S037); `knowledge/repo-size-census-readonly.md` (S115–S117); `knowledge/count-objects-garbage-readings-r25.md` (S118–S119); `knowledge/count-objects-linked-worktree-garbage.md` (SOURCES S120–S123); `knowledge/git-repo-structure-common-dir.md` (SOURCES S124–S126); `../tests/fixtures/r24-size-census.py`; `../tests/fixtures/r13-repo-structure.sh`; `../census/round-25/sources/` |
+
+### Frontier (r25)
+
+- F2 — the common-directory no-write envelope and colocated/plain precondition are now measured for the r13 structure probe. Next: one lane-bound structure baseline from a plain `--no-local` clone (this lane is jj-colocated, so its `refs/jj/keep/*` refs make its own figures non-comparable to plain); include alternates and retain the fixture manifest. Size attribution by object/path and any fleet figure remain frontier/unclaimed.
+- F1, F3, F4 — unchanged. F5 stays list-only; reap and NAMESPACE remain operator-held. Certification OFF, K5 HELD.
+
+### Round 25 corrections and limits
+
+- R24-M25 title overclaim: the r24 receipt change closes R1 (non-durable `verify` revision) and narrows R2 (`tool=` occurs in `cmd=` argv); it does not establish general `run`/`verify` symmetry. Further R2/R3/R7/R15/R17 shapes remain disclosed in `corpus/lessons/round-25.md`.
+- R3: the old `tool_sha256=` grep is a candidate-file count, not a verified-receipt count. At base a6d2d15, `git grep -lE '^tool_sha256=[0-9a-f]{64}$' a6d2d157755ef36b1dd4b9d53ad6d5b2ad6a3afe -- census/` finds 21 tracked files; 19 verify, while two false positives are malformed/non-receipt files. A verify=ok result binds labelled committed bytes, not the executed program or command success.
+- D6: `census/round-24/records/slice-verdicts.tsv` is the authoritative gate table; `.ufo/waves/round-24/assimilation/slice-verdicts.tsv` is the detailed reading. Both point to the mapping and vocabulary in `corpus/lessons/round-25.md`; rows are joined by (souji, campaign-id), never bare S-id. Q57's executable check and limits are recorded there.
+- superseded by corpus/README.md:504; correction in corpus/lessons/round-25.md § R24-M25: R1 closed, R2 narrowed; general verify/run symmetry is not established.
+- superseded by corpus/README.md:519; correction in corpus/lessons/round-25.md § R24-M25: the two measured refusal clauses do not witness the run-side and verify-side refusal matrix.
+- R3 correction for the historical sentence at corpus/README.md:471-472: `tool_sha256` binds the labelled committed file bytes and argv text, not the executed program; full correction in corpus/lessons/round-25.md.

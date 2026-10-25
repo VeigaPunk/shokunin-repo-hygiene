@@ -37,6 +37,17 @@ section and must not be scanned.
 
 Cases 2-8 are the always-zero control: each demands >=1 mismatch of a named class, so an emitter
 that always prints `mismatches=0` fails every one of them.
+
+Cases 13-15 (round 25, routed residuals R15/R17/R19; the L1-adjudicated W2K1 shapes):
+  post-stderr-shadow  a fenced receipt whose stdout reads `mismatches=7` and whose post-stderr-
+                      fence text reads `mismatches=0`; K1 must score the stdout line (r24
+                      W2R23F4 witness; old tool 14/15 -> fixed 15/15)
+  stdout-two-line     a wrong `# summary` line BEFORE the stdout fence, then a wrong and a true
+                      counts line inside stdout; the LAST stdout line wins -> green (W2K1 F4)
+  receipt-rev-object  the receipt `rev=` and the SCORECARD token both name a non-commit and still
+                      agree; K1 must flag receipt-rev-object (W2K1 F3 guard)
+R15 (K1 decoy-line anchoring) stays a disclosed limit: no fixture case is added for it, and the
+tool docstring makes no coverage claim for it (L1 adjudication, ExecR17-2).
 """
 from __future__ import annotations
 
@@ -78,12 +89,15 @@ BEFORE_TUPLE = "assertions=55 resolved=52 skipped=33 mismatches=3"
 FILED_TUPLE_HEAD = "assertions=56 resolved=53"        # wrapped on purpose: mirrors LOG.md:1484
 FILED_TUPLE_TAIL = "skipped=33 mismatches=3"          # LOG.md:1485
 WRONG_REV = "ab" * 20
+SHADOW_STDOUT = "assertions=63 resolved=56 skipped=40 mismatches=7"
 
 COUNTS_OUT = re.compile(
     r"^keys=(\d+) records=(\d+) occurrences=(\d+) mismatches=(\d+)$", re.M)
 SCANNED = re.compile(
     r"assertions=|resolved=|skipped=|mismatches=|"
     r"[0-9]+ (?:accepted|present|unverifiable|refused)")
+REV_TOKEN = re.compile(r"\b[0-9a-f]{40}\b")
+REV_LINE = re.compile(r"^rev=([0-9a-f]{40})$", re.M)
 
 
 # --------------------------------------------------------------------------- scratch lifecycle
@@ -165,6 +179,37 @@ def f_receipt_before() -> str:
         "14\t41553adb139d06511dc386bb3ce4326aebfba675\tB\tresolved\tcommit/object resolves\n"
     )
 
+
+def f_receipt_fenced(rev: str, stdout: str, trailer: str) -> str:
+    # the `souji-receipt-run.py run` v1 shape: headers, recorded stdout, recorded stderr; the
+    # trailer is text after the stderr fence, never the measured stdout
+    return (
+        "receipt=v1\n"
+        f"rev={rev}\n"
+        "tool=tools/souji-declared-evidence.py\n"
+        f"cmd=python3 tools/souji-declared-evidence.py --rev {rev} --file SCORECARD.md\n"
+        "rc=1\n"
+        "--- stdout ---\n"
+        f"{stdout}\n"
+        "--- stderr ---\n"
+        "\n"
+        f"{trailer}\n"
+    )
+
+
+def f_receipt_two_line(rev: str) -> str:
+    # a wrong wrapper summary BEFORE the stdout fence; inside stdout a wrong then the true counts
+    return (
+        "receipt=v1\n"
+        f"rev={rev}\n"
+        f"# summary {AFTER_TUPLE_WRONG}\n"
+        "--- stdout ---\n"
+        f"{AFTER_TUPLE_WRONG}\n"
+        f"{AFTER_TUPLE}\n"
+        "--- stderr ---\n"
+        "\n"
+        ""
+    )
 
 def f_slice_verdicts() -> str:
     rows = [
@@ -328,6 +373,22 @@ def mutate(repo: str, variant: str) -> None:
     if variant == "exempted-dirty":
         write_file(repo, OPERATOR_FILE, "operator-owned, never committed\n")
         return
+    if variant == "post-stderr-shadow":
+        def shadow(t: str) -> str:
+            return f_receipt_fenced(REV_LINE.search(t).group(1), SHADOW_STDOUT, AFTER_TUPLE)
+        rewrite(repo, K1_RECEIPT, shadow)
+        commit(repo, "case: receipt stdout mismatches=7, post-stderr shadow mismatches=0 "
+                     "(K1 value-disagree)")
+        return
+    if variant == "stdout-two-line":
+        rewrite(repo, K1_RECEIPT, lambda t: f_receipt_two_line(REV_LINE.search(t).group(1)))
+        commit(repo, "case: wrong pre-fence summary, wrong-then-true stdout (green)")
+        return
+    if variant == "receipt-rev-object":
+        rewrite(repo, K1_RECEIPT, lambda t: f_receipt_fenced(WRONG_REV, AFTER_TUPLE, ""))
+        rewrite(repo, K1_RECORD, lambda t: re.sub(REV_TOKEN.pattern, WRONG_REV, t))
+        commit(repo, "case: receipt rev= and record token name a non-commit (K1 receipt-rev-object)")
+        return
     raise SystemExit(f"fixture: unknown variant {variant!r}")
 
 
@@ -454,6 +515,13 @@ def case_k4_exempt(res: dict) -> tuple[bool, str]:
     return (not have, "K4 rows=0 (exempted operator path is not a mismatch)")
 
 
+def case_k1_shadow(res: dict) -> tuple[bool, str]:
+    hits = [r for r in res["rows"] if r["key"] == "K1" and r["cls"] == "value-disagree"
+            and f"!= receipt {SHADOW_STDOUT} at " in r["detail"]]
+    return (bool(hits) and res["rc"] != 0,
+            "rc!=0 K1 value-disagree>=1 against the stdout tuple (mismatches=7)")
+
+
 CASES = [
     # case 1 is the target (green-on-clean); every other case requires >=1 mismatch
     ("repaired", case_repaired, False),
@@ -468,6 +536,9 @@ CASES = [
     ("exempted-dirty", case_k4_exempt, False),  # green-on-clean is not a false-green control
     ("class-missing", case_k3_class, True),
     ("tally-stale-log", case_k2_tally, True),
+    ("post-stderr-shadow", case_k1_shadow, True),
+    ("stdout-two-line", case_repaired, False),
+    ("receipt-rev-object", lambda r: case_k1(r, "receipt-rev-object"), True),
 ]
 
 

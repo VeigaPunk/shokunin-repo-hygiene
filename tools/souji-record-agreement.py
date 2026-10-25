@@ -8,7 +8,8 @@ Four frozen keys (the round-23 preregistration is the contract; the key set is c
 
   K1 after-receipt binding (spot-check D2). Every `assertions=/resolved=/skipped=/mismatches=`
      4-tuple on an `r22`/`round-22` line of SCORECARD.md that names the receipt's `rev=` value
-     must equal the receipt's counts line, and at least one such bound occurrence must exist.
+     must equal the receipt's counts (read as stated under "Receipt counts" below), and at
+     least one such bound occurrence must exist.
      A tuple on an r22 line that names some other revision is outside K1 (the r22 row quotes
      both ends of its own measurement). The receipt must exist in the tree at --rev.
   K2 superseded-number correction (spot-check D5, extended pre-data to tallies). Inside LOG.md's
@@ -23,6 +24,13 @@ Four frozen keys (the round-23 preregistration is the contract; the key set is c
      tree that no row of census/round-23/records/uncommitted-exemptions.tsv names is one
      mismatch (a dedicated file: corpus/pointer-exemptions.tsv is parsed by the landing gate,
      which refuses a row shape it does not know).
+
+Receipt counts (K1, K2): a fenced receipt's counts are read only from its recorded stdout
+section, the lines between `--- stdout ---` and `--- stderr ---` (to the end when no stderr
+fence follows); the last counts tuple in that section wins, whether or not a label line follows
+it. Text before the stdout fence and text after the stderr fence is never counted, so a
+post-fence `mismatches=0` cannot shadow a stdout `mismatches=7`. An unfenced receipt is read
+whole, last tuple winning.
 
 Counts line: keys=<K> records=<R> occurrences=<O> mismatches=<M>
 Mismatch rows: MISMATCH<TAB><key><TAB><record><TAB><class><TAB><detail>

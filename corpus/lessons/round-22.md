@@ -490,3 +490,7 @@ which `RevD6` quotes; the phrase "no new refusal semantics or field" cannot be
 true of a file that adds two rename flags. The spot-check's own §4 recorded the
 same disagreement (D6). The filed text is preserved above and in the spot-check;
 no filed evidence was rewritten.
+
+## Round 25 source-id namespace correction (D5; append-only)
+
+In this lesson's Attempt 2 Gate and M14 table, bare S123, S124 and S126 (and the related S131/S133) are campaign register ids from the staged shokuknow absent-defect register, not ids in this lane's `corpus/SOURCES.md`. The namespaces overlap: campaign S123 is an own-work output; lane SOURCES S123 is git-worktree(1). Resolve those references by document and campaign lane, never by arithmetic or the bare S-id. Future citations use “campaign S123” or a document/row anchor. The non-author `round-22-verifier-spotcheck.md` remains unchanged; this appended lane correction disambiguates its cited context without rewriting the spot-check.

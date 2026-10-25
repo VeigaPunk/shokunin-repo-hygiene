@@ -1,0 +1,38 @@
+# RevR3Counter — r25 w2: revision-pinned verify-ok counter re-run (a6d2d15 vs current candidate)
+
+## Status
+STATUS: PARTIAL — every count re-derived and matches the W1 scout's numbers (base 21/19, candidate 26/23), the two malformed false positives are identified with reasons, the historic 15/14 figure at 315422b reproduces, and `verify=ok` is shown (code + empirical) not to mean the recorded command succeeded. One defect found: the SCORECARD R3 row cites an evidence file `census/round-25/records/verify-ok-at-base.tsv` that does not exist anywhere (tracked or untracked). The before-cell numbers are correct; the evidence pointer is dangling.
+
+## Evidence
+
+Revisions: lane base `a6d2d157755ef36b1dd4b9d53ad6d5b2ad6a3afe`; current candidate `6deb53561aace9aa14a399f88cf8150da4d4f4bd` (git HEAD, master; jj `@` parent `qlqtqoqv` = 6deb5356). Runner `tools/souji-receipt-run.py` sha256 `279a64739a12f6816392329fe3b9526b0e59cc3ab7b24188b95b1966e065e191` at a6d2d15, 6e4737e and 6deb535. git 2.56.0. All verify runs used the blob of the runner at the measured revision, `python3 -B`, `--root` = lane. Worktree grep hit set = pinned 6deb535 set (26); the modified worktree `census/round-24/records/slice-verdicts.tsv` has no `tool_sha256=` line.
+
+Re-runs (pinned; hits via `git grep -lE '^tool_sha256=[0-9a-f]{64}$' <rev> -- census/`, extracted via `git show <rev>:<path>` into /var/tmp scratch, each verified):
+
+| revision | grep hits | verify=ok | refusals |
+|---|---|---|---|
+| a6d2d15 (base) | 21 | 19 | 2× RECEIPT-MALFORMED |
+| 315422b (history) | 15 | 14 | 1× RECEIPT-MALFORMED |
+| 6deb535 (candidate) | 26 | 23 | 2× RECEIPT-MALFORMED, 1× RECEIPT-COUNTS-ABSENT |
+
+Worktree form (draft shell one-liner, no rev arg, run in lane): `receipts_verify_ok=23 grep_hits=26` — reproduces. Naive pinned form (`git grep -lzE … 6deb535 -- census/ | xargs -0 … verify`) yields 0 because paths come prefixed `6deb535:`; the pinned procedure must strip `<rev>:` (see Finding 3).
+
+## Findings
+
+1. **Malformed false positive #1 — `census/round-24/size-census-lane.txt`** (present at all three revisions; added ca7fc1c). First line is `# lane-bound C1 measurement: this repository only…`, not `receipt=v1`; there is no `rc=` header line and no `--- stderr ---` fence. `parse_receipt` (`tools/souji-receipt-run.py:285-304`) requires `receipt=v1` first, the 7 header keys in order, both fences; it returns None → `RECEIPT-MALFORMED`. It matches the literal grep counter only because it carries a `tool_sha256=09bb8e0d…` line. It is a hand-shaped measurement record, not a receipt v1.
+2. **Malformed false positive #2 — `census/round-24/records/r23-agreement-regress.out`** (present at base and candidate; added 2e7efcf). It is the r23 fixture selftest transcript: line 1 is `tool=/home/vgpnk/…/tools/souji-record-agreement.py` (absolute path), line 2 `tool_sha256=41db9ca8…`, then `case=N …` lines and `selftest=12/12`; no `receipt=v1`, no `rev=`, no fences. It matches the grep only because line 2 starts with `tool_sha256=<64hex>`. Verifies `RECEIPT-MALFORMED`. This is a genuine false positive of the old literal counter and the concrete reason the counter was replaced.
+3. **Candidate third refusal — `census/round-25/records/c1-control-base.tsv` (COUNTS-ABSENT, not malformed).** Well-formed receipt v1 (header order correct, both fences), records `rc=2` and an empty stdout (the frozen C1 do-nothing control: tool at base rejects `--base-rev`). `verify` refuses because `counts_line` finds no counts-prefixed stdout line (`:327-328`) — not because of `rc=2`. The round-25 receipt regeneration (amendments 1/3, commits 1814de5/6deb535) changed only `utc` and, for c2/c3-control-base, stdout case lines; c1-control-base still refuses. This is disclosed by preregistration amendment 3 as by-design (`RECEIPT-COUNTS-ABSENT`), not a defect.
+4. **`verify=ok` does NOT mean the recorded command succeeded.** Code: `cmd_verify` (`tools/souji-receipt-run.py:307-342`) reads only `rev`, `tool`, `tool_sha256`, `_stdout` and `cmd`; it never reads `header["rc"]`, never re-runs the recorded command. It checks: v1 header parses; rev is 40-hex; blob sha256 at rev equals recorded `tool_sha256`; a counts-like stdout line exists; rev durable (reachable from refs/heads|tags|remotes); `cmd=` shlex-parses; tool appears in argv; command shape not refused. Empirical at 6deb535: **3 of the 23 verify=ok receipts record `rc=1`** — `c1-control-stub.tsv`, `c2-control-base.tsv`, `c3-control-base-runner.tsv` — and still print `verify=ok`. Conversely c1-control-base.tsv is refused for missing counts, not for its `rc=2`. So `verify=ok` = well-formed receipt whose labelled tool blob digest matches at a durable rev, with a counts-looking stdout line; it is not execution proof and not a green run.
+5. **SCORECARD R3 evidence pointer is dangling.** The append-only R3 row (SCORECARD.md:245) states: "At base a6d2d15 the candidate grep hits are 21, of which 19 verify and 2 are non-receipts; command/output are in `census/round-25/records/verify-ok-at-base.tsv`." The numbers are correct (re-derived above), but `census/round-25/records/verify-ok-at-base.tsv` **does not exist**: `git ls-tree 6deb535 census/round-25/records/` lists only the five control/at-base receipts, the worktree directory holds the same five, and a repo-wide glob/grep for `verify-ok-at-base` matches only the SCORECARD line itself. The before-counter command/output is not stored anywhere. The row's evidence pointer must point at a real file (or record the command/output) before the row is complete.
+6. **Historic counts are preserved as history.** At 315422b the re-derived figures are 15 hits / 14 verify=ok with the single failure `size-census-lane.txt` — exactly the LOG.md:1700-1702 sentence ("the r23 tool_sha256 grep counter now lists 15 files under census/, of which 14 verify=ok; the fifteenth is the lane-bound census file above"). The new verify=ok wording does not rewrite or contradict that figure; base (21/19) and candidate (26/23) are distinct, revision-pinned values. C3's `gate-check-c3` and the five r23 receipts still verify at every revision checked.
+7. **Wording precision note on the draft counter shell form.** The proposed one-liner (ScoutToolSHA256Counter.md) runs `git grep -lzE … -- census/` with no rev — it pins by the clean-tree precondition (`git diff --quiet HEAD -- census/`), not by an explicit rev. Fed a pinned rev, `git grep -l` emits `rev:path` lines and the naive xargs pipeline verifies 0. The correctly pinned procedure (extract via `git show <rev>:<path>`, then verify) yields the same numbers; the final wording should either strip the `<rev>:` prefix in the shell form or keep the extraction loop as the executable definition.
+
+## Attack log
+- A1: re-ran base counter at a6d2d15 with the base runner blob → 21 hits / 19 ok / 2 MALFORMED (findings 1-2). Numbers in the R3 row hold.
+- A2: re-ran candidate counter at 6deb535 with the candidate runner blob → 26 / 23 / 3 refusals (finding 3). The scout's 23/26 (measured at 6e4737e) holds after the amendment receipt regeneration.
+- A3: re-ran historic counter at 315422b → 15 / 14, confirming LOG.md's figure and the "fifteenth" identification (finding 6).
+- A4: verify-meaning probe — scanned `rc=` vs verify outcome across all 26 candidate hits; three `rc=1` receipts verify ok, one `rc=2` receipt is refused for counts-absent (finding 4).
+- A5: evidence-pointer check — `census/round-25/records/verify-ok-at-base.tsv` absent from tree and worktree (finding 5). Not repaired (read-only seat).
+
+## Tooling / scratch
+No installs. Scratch `/var/tmp/souji-r25-RevR3Counter/`, removed at finish. No lane writes except this report; no git/jj mutation.

@@ -1711,3 +1711,11 @@ NAMESPACE holds unchanged.
 ```
 
 ---
+
+## Round25 append-only corrections to Round24
+
+superseded by LOG.md:1692; mapping corpus/lessons/round-25.md § Quarantine-slice vocabulary; authority census/round-24/records/slice-verdicts.tsv; recount 8 accepted
+
+R24-M25: the Round24 title at LOG.md:1628 overstates the measured surface. R1 closed; R2 narrowed to `tool=` argv-text presence; general `run`/`verify` symmetry remains unproved (corpus/lessons/round-25.md).
+
+R3 (2026-10-25): the sentence at LOG.md:1588 is overbroad. `tool_sha256` binds the labelled committed file bytes and a recorded argv label; it does not bind the executed program. At base a6d2d15, 21 tracked `tool_sha256` grep hits yielded 19 `verify=ok` and two malformed non-receipts; one more current refusal receipt is `RECEIPT-COUNTS-ABSENT`. The exact count and command are in `corpus/lessons/round-25.md`.

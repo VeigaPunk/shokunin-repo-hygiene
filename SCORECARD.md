@@ -133,6 +133,7 @@ independently adjudicated in `corpus/lessons/round-13-verifier-spotcheck.md`.
 - **r23 — done (record agreement, blob-bound receipts, F2 read side):** C1/C2/C3 as measured in the Round 23 table above; D1–D8 dispositions in `LOG.md` `Round23` and `corpus/lessons/round-23.md`.
 - **r24 — planned:** carry the F2 actable remainder (the `/var/tmp` write-safety fixture that must exclude `git fsck --lost-found`), re-run the r23 counters at the new tip, and close the residual C1/C2 limits named above.
 - **r22 — declared calibration:** repair the three inherited OPEN acceptance-predicate gaps, measured by the same synthetic result oracle over baseline and changed code, retaining all18 real positive outputs. Preregistration `29c1f7e8df849be8ee1b2d62d2351e17ec9d21a8`. F5 bytes/160-byte scope and all operator holds unchanged.
+- **r25 — attempted, honest stop; C1 verified at its independent candidate; C2 unprovable on its frozen operability axis because it adds coverage of edge classes; C3 measurement pending.** The axis-misattribution harms calibration; no owned-axis score changes. Certification OFF, K5 HELD.
 
 ## Saturation / stagnation
 
@@ -226,3 +227,26 @@ Planned (append after the existing `- **r24 — planned:** …` line, keeping it
 ```
 
 ---
+
+### Round 25 measurements (2026-10-25; base a6d2d157755ef36b1dd4b9d53ad6d5b2ad6a3afe)
+
+| claim | axis | before | after | counting command | measured commit |
+|---|---|---|---|---|---|
+| C1 coverage-map kill-rule tool row | calibration 7 | Base tool rejects `--base-rev` (rc 2); base receipt `grounded=6` | At the independent C1 candidate `7e4dbef94061578fca2f58621f87908c886cc431`, `grounded=6 mapped=6 dangling=0 mismatches=0 kill_tested=6 kill_violations=0`, rc 0; fixture `cases=16 pass=16 control=FALSE-GREEN-REJECTED`. **Verified**; measured before C3's new F2 entry/map row, so the C1 counter does not depend on C3 landing. | `python3 -B tests/fixtures/r25-coverage-agreement.py --tool tools/souji-coverage-agreement.py`; `python3 -B tools/souji-coverage-agreement.py --root . --rev 7e4dbef94061578fca2f58621f87908c886cc431 --base-rev a6d2d157755ef36b1dd4b9d53ad6d5b2ad6a3afe` | `census/round-25/records/c1-after.tsv` |
+| C2 size-census refusal surfaces | operability 8 (frozen axis; **unprovable on this axis**) | Existing fixture `cases=8 pass=8 control=FALSE-GREEN-REJECTED lost_found=WRITE-DETECTED` | Extended fixture `cases=12 pass=12 control=FALSE-GREEN-REJECTED lost_found=WRITE-DETECTED`, rc 0; old 1efe406 blob 11/12, regression 778747e 10/12. W2 reviewer found the move is coverage of four edge classes, not operability; the frozen axis is not relabeled. | `python3 -B tests/fixtures/r24-size-census.py --tool tools/souji-size-census.py` | `census/round-25/records/c2-after.tsv`, measured rev 679e2d02f46ec06447d679d9395d6592c5e35f5c |
+| C3 common-dir structure envelope and colocated/plain precondition | coverage 8 | `selftest=PASS ids=5/5` | `selftest=PASS ids=7/7`, rc 0; common/private manifests unchanged; refs/jj/keep simulation yields `references.others.count=2` vs 0 | `bash tests/fixtures/r13-repo-structure.sh --selftest --probe tools/souji-repo-structure.sh` | `census/round-25/records/c3-after.tsv`; measured candidate revision recorded in the receipt |
+
+Score delta: 0 for the owned score values; no reproducible 0–10 mapping exists. C1 is measured/verified, C2 is unprovable on its frozen operability axis, and the coverage interpretation would collide with C3; no admission is claimed.
+
+### Round 25 append-only corrections
+
+- R24-M25: C3's old title "receipt verify/run symmetry" overclaimed. At r24, R1 closed and R2 narrowed (label present in argv); general symmetry remains unproved.
+- R24-M22: the old r24 slice sentence at :181 is superseded by the authoritative count `8 accepted / 0 present / 0 unverifiable / 0 refused` in `census/round-24/records/slice-verdicts.tsv`, mapped in `corpus/lessons/round-25.md`.
+- R3 (dated 2026-10-25): `tool_sha256` binds the labelled committed file bytes and argv text, not the executed program. At base a6d2d15 there were 21 tracked grep candidates, 19 verify=ok and 2 malformed non-receipts; reproduced by W2 report `w2/RevR3Counter.md` and the candidate-pinned verify loop.
+- R24-M2: `corpus/README.md:40` status now has an appended marker naming the superseding F2 row at :517; the row itself was not deleted or moved.
+- `corpus/lessons/round-23.md`'s K1 last-wins sentence is superseded by an appended r25 correction; the r24 code fix remains r24 work. R15 cross-revision K1 decoy anchoring remains open.
+- Sources S124–S127 are opened this round. New F2 knowledge on existing frontier ground does not promote F2 to Core.
+
+superseded by SCORECARD.md:181; mapping corpus/lessons/round-25.md § Quarantine-slice vocabulary; authority census/round-24/records/slice-verdicts.tsv; recount 8 accepted
+superseded by SCORECARD.md:180; correction in corpus/lessons/round-25.md § R24-M25: R1 closed, R2 narrowed to recorded argv-text presence; no general symmetry claim.
+superseded by SCORECARD.md:92; correction in corpus/lessons/round-25.md § R3: tool_sha256 binds labelled committed file bytes, not the executed program.

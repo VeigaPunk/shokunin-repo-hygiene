@@ -1,0 +1,35 @@
+diff --git 1/var/tmp/souji-r25-ExecR17/tool-base-716731f.py 2/.ufo/waves/round-25/w1/souji-record-agreement.py
+old mode 100644
+new mode 100755
+index 716731f..075933b
+--- 1/var/tmp/souji-r25-ExecR17/tool-base-716731f.py
++++ 2/.ufo/waves/round-25/w1/souji-record-agreement.py
+@@ -8,7 +8,8 @@ Four frozen keys (the round-23 preregistration is the contract; the key set is c
+ 
+   K1 after-receipt binding (spot-check D2). Every `assertions=/resolved=/skipped=/mismatches=`
+      4-tuple on an `r22`/`round-22` line of SCORECARD.md that names the receipt's `rev=` value
+-     must equal the receipt's counts line, and at least one such bound occurrence must exist.
++     must equal the receipt's counts line (a fenced receipt is counted from its stdout section
++     only; see counts_of), and at least one such bound occurrence must exist.
+      A tuple on an r22 line that names some other revision is outside K1 (the r22 row quotes
+      both ends of its own measurement). The receipt must exist in the tree at --rev.
+   K2 superseded-number correction (spot-check D5, extended pre-data to tallies). Inside LOG.md's
+@@ -116,10 +117,14 @@ def read_at(root: str, rev: str, path: str) -> str | None:
+ def counts_of(text: str) -> tuple[str, str] | None:
+     """Return (4-tuple string, rev header) from a receipt.
+ 
+-    A fenced receipt's measured value is its recorded stdout section, between `--- stdout ---`
+-    and `--- stderr ---`: a summary line before the stdout fence and a line after the stderr
+-    fence both stay outside it (r24 W2R23F4: last-wins over the whole text let a post-fence line
+-    shadow stdout). Unfenced receipts are read whole. Within the section the last match wins.
++    A fenced receipt's counts are read only from its recorded stdout section: the lines after the
++    first line that is exactly `--- stdout ---`, up to the next line that is exactly
++    `--- stderr ---` (or the end of the text when no stderr fence follows). Text before the
++    stdout fence and everything after the stderr fence are never counted, so a post-fence
++    `mismatches=0` cannot shadow a stdout `mismatches=7` (r24 W2R23F4: last-wins over the whole
++    text let a post-fence line shadow stdout). Within the section the last counts-shaped match
++    wins; it need not be the last stdout line (a label line may follow it). Unfenced receipts
++    are read whole, last match winning.
+     """
+     lines = text.splitlines()
+     region = text

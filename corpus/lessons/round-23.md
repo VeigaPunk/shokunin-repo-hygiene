@@ -227,3 +227,7 @@ repaired or is disclosed here:
   the round's own text (C2's `refs/replace` hole, C1's tuple-binding hole, C3's ground already held).
   Bounds: the spot-check's D3 premise is partly false (blob sha1 vs sha256 of the same bytes) and
   D7's M22 half is overstated; both are reported rather than repaired.
+
+## Round 25 append-only correction — R17 counts parsing statement
+
+The Round 23 line 144–146 statement that last-wins parsing closed the counts shadow was too broad: at r23, a later counts-shaped line after the stderr fence could still shadow stdout. Round 24 R24-M12 fixed the implementation at `315422b` by limiting `counts_of` to the stdout section. The r25 fixture extension replays the post-stderr-shadow: the pre-fix `c872eec` tool scores 14/15 and the current tool 15/15. This documents the historical correction; it does not claim an r25 production-code fix. R15's cross-revision K1 decoy-anchor remains open.

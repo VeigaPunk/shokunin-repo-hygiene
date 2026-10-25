@@ -374,3 +374,15 @@ unreachable census as frontier.
 - **discernment — not self-graded.** Sample for the closure: 2 admits (r27 re-sourced, r25 partial)
   and 3 rejects (r25 headline, r26, r23) plus a provenance reject; two reject reasons were false as
   first written and are corrected above.
+
+## Round 25 append-only correction — D6 / R24-M22
+
+The gate record `census/round-24/records/slice-verdicts.tsv` is the one authority. Its r24 tally
+is 8 accepted, 0 present, 0 unverifiable, 0 refused; its header maps detail-table
+`present`, `present-via-mirror` and `present-quote-needs-fix` to `accepted`. S118 is the sole
+re-grade from unverifiable to accepted; S126 and S138 are present→accepted vocabulary collapse,
+not re-grades. These append-only notes supersede the cited r24 cells; both source tables now point
+to this mapping. Campaign ids are keyed by lane plus id, never as bare S-numbers.
+
+superseded by corpus/lessons/round-24.md:240; mapping corpus/lessons/round-25.md § Quarantine-slice vocabulary; authority census/round-24/records/slice-verdicts.tsv; recount 8 accepted
+superseded by corpus/lessons/round-24.md:232; mapping corpus/lessons/round-25.md § Quarantine-slice vocabulary; authority census/round-24/records/slice-verdicts.tsv; recount S118 accepted

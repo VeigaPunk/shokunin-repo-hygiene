@@ -67,8 +67,8 @@
 #   1 = fail: a verdict FAIL or id-set mismatch
 #   2 = could-not-evaluate: git/timeout missing, mktemp failure, or an
 #       unguarded setup command failed (ERR trap)
-#   final line: `selftest=PASS ids=4/4` (baseline mode) or
-#   `selftest=PASS ids=5/5` (--probe mode), or
+#   final line: `selftest=PASS ids=6/6` (baseline mode) or
+#   `selftest=PASS ids=7/7` (--probe mode), or
 #   `selftest=FAIL ids=<got>/<want> missing=[...] extra=[...] failed_verdicts=<n>`
 #   The promisor-refusal case exists only in --probe mode: baseline mode has
 #   no refusal logic and must never run the raw command against a promisor
@@ -103,16 +103,45 @@
 #                                    partialClone repos exit 2 with the matching
 #                                    probe.error, emit no structure key, and
 #                                    are unchanged; no network is contacted
+#   SOUJI-R13-STRUCT-linked-common-dir (round 25) main repo A + linked
+#                                    worktree B (`git worktree add`), run with
+#                                    the repo argument B: detector control on
+#                                    BOTH the common dir and B's private
+#                                    gitdir passes first; rc=0, stderr empty,
+#                                    common-dir and private-gitdir manifests
+#                                    unchanged and non-vacuous,
+#                                    references.branches.count=2,
+#                                    objects.commits.count=1; in --probe mode
+#                                    also probe.git_common_dir == A's resolved
+#                                    absolute git dir, probe.git_dir == B's
+#                                    private gitdir (!= common dir),
+#                                    probe.repo_root == B's toplevel
+#   SOUJI-R13-STRUCT-colocated-vs-plain (round 25) two --no-hardlinks clones
+#                                    of the fixture repo; the colocated-like
+#                                    one carries refs/jj/keep/* (jj keep-ref
+#                                    simulation via update-ref, no jj binary):
+#                                    one keep ref at HEAD and one at an extra
+#                                    commit reachable only from that keep ref.
+#                                    Both runs rc=0 with empty stderr and
+#                                    unchanged git-dir manifests; their
+#                                    references.*/objects.* lines differ and
+#                                    references.others.count is greater on the
+#                                    colocated-like clone. Records the
+#                                    precondition: a colocated figure is not
+#                                    interchangeable with a plain baseline.
 #
 # HERMETIC: hard-coded mktemp -d /var/tmp/souji-r13-repo-structure.XXXXXX
 # (TMPDIR ignored; no tmpfs fallback), trap cleanup, no network, no
 # live repository touched. The measured command is bounded by `timeout 120`.
 #
-# LIMITS: one fresh SHA-1, loose-object, single-commit, normal repository. The
-# fixture does not exercise packs, tags, remotes, linked worktrees, bare
-# repos, alternates, real promisor fetches, submodules or concurrent writers,
-# and makes no claim about them; the promisor/partial case only proves that
-# marked configuration is refused before the walk. The result is an observed
+# LIMITS: fresh SHA-1, loose-object, one- or two-commit repositories: one
+# normal repository, one linked worktree of a second repository, and two
+# local clones (remote-tracking refs, no fetch). The fixture does not exercise
+# packs, tags, bare repos, alternates, real promisor fetches, submodules, real
+# jj-managed repositories or concurrent writers, and makes no claim about
+# them; the promisor/partial case only proves that marked configuration is
+# refused before the walk, and the keep-ref simulation only proves that extra
+# refs/jj/keep/* refs change the census. The result is an observed
 # no-persistent-delta for this run and host, not universal write-safety.
 set -euo pipefail
 shopt -s inherit_errexit
@@ -614,12 +643,218 @@ if ((PROBE_SET)); then
   fi
 fi
 
+# ---------------------------------------------------------------- shared helpers
+manifests_equal() { # manifests_equal <tagA> <tagB>
+  cmp -s "$1.content" "$2.content" && cmp -s "$1.meta" "$2.meta"
+}
+
+DC_REASONS=()
+detector_control() { # detector_control <root> <file-under-root> <label>
+  # Same content/stat/mtime arms as SOUJI-R13-STRUCT-manifest-control, rooted
+  # at <root>; failures are appended to DC_REASONS as <label>:<reason>.
+  local root=$1 file=$2 label=$3 base="$WORK/dc-$3"
+  manifest_all "$root" "$base-a"
+  cp -p "$file" "$base.orig" || die2 "control backup failed: $file"
+  printf 'r25-detector-control\n' >>"$file"
+  manifest_all "$root" "$base-content"
+  if cmp -s "$base-content.content" "$base-a.content"; then
+    DC_REASONS+=("$label:content-delta-not-detected")
+  fi
+  if cmp -s "$base-content.meta" "$base-a.meta"; then
+    DC_REASONS+=("$label:stat-delta-not-detected")
+  fi
+  cp -p "$base.orig" "$file"
+  manifest_all "$root" "$base-restore"
+  manifests_equal "$base-restore" "$base-a" ||
+    DC_REASONS+=("$label:content-restore-not-observed")
+  touch -d '2001-02-03 04:05:06' "$file"
+  manifest_all "$root" "$base-mtime"
+  cmp -s "$base-mtime.content" "$base-a.content" ||
+    DC_REASONS+=("$label:metadata-control-changed-content")
+  if cmp -s "$base-mtime.meta" "$base-a.meta"; then
+    DC_REASONS+=("$label:mtime-delta-not-detected")
+  fi
+  cp -p "$base.orig" "$file"
+  manifest_all "$root" "$base-final"
+  manifests_equal "$base-final" "$base-a" ||
+    DC_REASONS+=("$label:metadata-restore-not-observed")
+}
+
+join_reasons() { # join_reasons <reasons...>
+  local out="" reason
+  for reason in "$@"; do out+="${out:+;} $reason"; done
+  printf '%s' "$out"
+}
+
+# ------------------------------------------------- linked worktree common dir
+# The r13 envelope is rooted at --absolute-git-dir; from a linked worktree
+# that is only the private gitdir, while objects/refs/config live in the
+# common dir. This case roots the no-write manifest at the COMMON dir (which
+# contains the private gitdir under worktrees/<id>) and separately at the
+# private gitdir.
+LW_MAIN="$WORK/linked-main"
+LW_TREE="$WORK/linked-tree"
+LW_BRANCH=r25-linked
+mkdir "$LW_MAIN"
+g "$LW_MAIN" init -q --object-format=sha1 .
+printf 'r25 linked worktree payload\n' >"$LW_MAIN/payload.txt"
+g "$LW_MAIN" add -- payload.txt
+g "$LW_MAIN" commit -qm 'r25 linked fixture commit'
+g "$LW_MAIN" worktree add -q -b "$LW_BRANCH" "$LW_TREE"
+LW_COMMON="$(g "$LW_MAIN" rev-parse --path-format=absolute --absolute-git-dir)"
+LW_PRIV="$(g "$LW_TREE" rev-parse --path-format=absolute --absolute-git-dir)"
+LW_TOP="$(g "$LW_TREE" rev-parse --show-toplevel)"
+LW_SETUP_COMMON="$(g "$LW_TREE" rev-parse --path-format=absolute --git-common-dir)"
+[[ $LW_SETUP_COMMON == "$LW_COMMON" ]] ||
+  die2 "linked worktree common dir $LW_SETUP_COMMON != $LW_COMMON"
+[[ $LW_PRIV == "$LW_COMMON"/worktrees/* ]] ||
+  die2 "linked private gitdir not under common dir: $LW_PRIV"
+
+DC_REASONS=()
+detector_control "$LW_COMMON" "$LW_COMMON/description" linked-common
+detector_control "$LW_PRIV" "$LW_PRIV/gitdir" linked-private
+LW_CTRL=("${DC_REASONS[@]}")
+
+manifest_all "$LW_COMMON" "$WORK/lw-common-before"
+manifest_all "$LW_PRIV" "$WORK/lw-priv-before"
+LW_OUT="$WORK/linked.out"
+LW_ERR="$WORK/linked.err"
+LW_RC="$(run_structure "$LW_TREE" "$LW_OUT" "$LW_ERR")"
+manifest_all "$LW_COMMON" "$WORK/lw-common-after"
+manifest_all "$LW_PRIV" "$WORK/lw-priv-after"
+
+LW_REASONS=()
+if ((${#LW_CTRL[@]} != 0)); then
+  LW_REASONS+=("detector-control-failed" "${LW_CTRL[@]}")
+fi
+((LW_RC == 0)) || LW_REASONS+=("rc=$LW_RC")
+[[ ! -s $LW_ERR ]] || LW_REASONS+=("stderr-nonempty")
+manifests_equal "$WORK/lw-common-before" "$WORK/lw-common-after" ||
+  LW_REASONS+=("common-dir-manifest-delta")
+manifests_equal "$WORK/lw-priv-before" "$WORK/lw-priv-after" ||
+  LW_REASONS+=("private-gitdir-manifest-delta")
+LW_COMMON_N="$(count_lines "$WORK/lw-common-after.meta")"
+LW_PRIV_N="$(count_lines "$WORK/lw-priv-after.meta")"
+for marker in \
+  "$LW_COMMON/HEAD" \
+  "$LW_COMMON/config" \
+  "$LW_COMMON/refs/heads/master" \
+  "$LW_COMMON/refs/heads/$LW_BRANCH" \
+  "$LW_PRIV/HEAD" \
+  "$LW_PRIV/commondir" \
+  "$LW_PRIV/gitdir" \
+  "$LW_PRIV/index"; do
+  grep -Fq -- "$marker" "$WORK/lw-common-after.content" ||
+    LW_REASONS+=("common-manifest-missing=$marker")
+done
+grep -Fq -- "$LW_PRIV/index" "$WORK/lw-priv-after.content" ||
+  LW_REASONS+=("private-manifest-missing=$LW_PRIV/index")
+
+parse_metrics "$LW_OUT"
+CHECKS=0
+FAILS=()
+check_eq references.branches.count 2
+check_eq objects.commits.count 1
+if ((PROBE_SET)); then
+  check_eq probe.status ok
+  check_eq probe.bare false
+  check_eq probe.git_common_dir "$(printf %q "$LW_COMMON")"
+  check_eq probe.git_dir "$(printf %q "$LW_PRIV")"
+  check_eq probe.repo_root "$(printf %q "$LW_TOP")"
+  CHECKS=$((CHECKS + 1))
+  [[ ${M[probe.git_dir]-} != "${M[probe.git_common_dir]-}" ]] ||
+    FAILS+=("probe.git_dir==probe.git_common_dir")
+fi
+LW_REASONS+=("${FAILS[@]}")
+
+if ((${#LW_REASONS[@]} == 0)); then
+  emit SOUJI-R13-STRUCT-linked-common-dir linked-common-dir \
+    "rc=$LW_RC common_entries=$LW_COMMON_N private_entries=$LW_PRIV_N checks=$CHECKS control=PASS verdict=PASS"
+else
+  FAILED=1
+  emit SOUJI-R13-STRUCT-linked-common-dir linked-common-dir \
+    "rc=$LW_RC common_entries=$LW_COMMON_N private_entries=$LW_PRIV_N checks=$CHECKS verdict=FAIL detail=$(join_reasons "${LW_REASONS[@]}")"
+fi
+
+# ------------------------------------------------------ colocated vs plain
+# jj colocation is simulated by refs/jj/keep/* refs (no jj binary): one keep
+# ref at HEAD, one at a commit reachable only from its keep ref, as jj keeps
+# hidden commits alive. Only references.*/objects.* lines are compared; the
+# probe.* lines differ by path alone.
+CP_PLAIN="$WORK/clone-plain"
+CP_COLO="$WORK/clone-colocated"
+"${GIT_GUARDS[@]}" clone -q --no-hardlinks -- "$REPO" "$CP_PLAIN"
+"${GIT_GUARDS[@]}" clone -q --no-hardlinks -- "$REPO" "$CP_COLO"
+CP_HEAD="$(g "$CP_COLO" rev-parse HEAD)"
+CP_TREE="$(g "$CP_COLO" rev-parse 'HEAD^{tree}')"
+CP_HIDDEN="$(printf 'r25 jj keep-ref hidden commit\n' |
+  g "$CP_COLO" commit-tree -p "$CP_HEAD" "$CP_TREE")"
+g "$CP_COLO" update-ref "refs/jj/keep/$CP_HEAD" "$CP_HEAD"
+g "$CP_COLO" update-ref "refs/jj/keep/$CP_HIDDEN" "$CP_HIDDEN"
+CP_PLAIN_GD="$(g "$CP_PLAIN" rev-parse --path-format=absolute --absolute-git-dir)"
+CP_COLO_GD="$(g "$CP_COLO" rev-parse --path-format=absolute --absolute-git-dir)"
+
+manifest_all "$CP_PLAIN_GD" "$WORK/cp-plain-before"
+manifest_all "$CP_COLO_GD" "$WORK/cp-colo-before"
+CP_PLAIN_RC="$(run_structure "$CP_PLAIN" "$WORK/cp-plain.out" "$WORK/cp-plain.err")"
+CP_COLO_RC="$(run_structure "$CP_COLO" "$WORK/cp-colo.out" "$WORK/cp-colo.err")"
+manifest_all "$CP_PLAIN_GD" "$WORK/cp-plain-after"
+manifest_all "$CP_COLO_GD" "$WORK/cp-colo-after"
+
+CP_REASONS=()
+((CP_PLAIN_RC == 0)) || CP_REASONS+=("plain-rc=$CP_PLAIN_RC")
+((CP_COLO_RC == 0)) || CP_REASONS+=("colocated-rc=$CP_COLO_RC")
+[[ ! -s $WORK/cp-plain.err ]] || CP_REASONS+=("plain-stderr-nonempty")
+[[ ! -s $WORK/cp-colo.err ]] || CP_REASONS+=("colocated-stderr-nonempty")
+manifests_equal "$WORK/cp-plain-before" "$WORK/cp-plain-after" ||
+  CP_REASONS+=("plain-manifest-delta")
+manifests_equal "$WORK/cp-colo-before" "$WORK/cp-colo-after" ||
+  CP_REASONS+=("colocated-manifest-delta")
+grep -E '^(references|objects)\.' "$WORK/cp-plain.out" >"$WORK/cp-plain.metrics" || :
+grep -E '^(references|objects)\.' "$WORK/cp-colo.out" >"$WORK/cp-colo.metrics" || :
+[[ -s $WORK/cp-plain.metrics ]] || CP_REASONS+=("plain-no-metrics")
+[[ -s $WORK/cp-colo.metrics ]] || CP_REASONS+=("colocated-no-metrics")
+if cmp -s "$WORK/cp-plain.metrics" "$WORK/cp-colo.metrics"; then
+  CP_REASONS+=("metrics-identical")
+fi
+parse_metrics "$WORK/cp-plain.out"
+CP_PLAIN_OTHERS=${M[references.others.count]-}
+CP_PLAIN_COMMITS=${M[objects.commits.count]-}
+parse_metrics "$WORK/cp-colo.out"
+CP_COLO_OTHERS=${M[references.others.count]-}
+CP_COLO_COMMITS=${M[objects.commits.count]-}
+if [[ $CP_PLAIN_OTHERS =~ ^[0-9]+$ && $CP_COLO_OTHERS =~ ^[0-9]+$ ]]; then
+  ((10#$CP_COLO_OTHERS > 10#$CP_PLAIN_OTHERS)) ||
+    CP_REASONS+=("others.count colocated=$CP_COLO_OTHERS not> plain=$CP_PLAIN_OTHERS")
+else
+  CP_REASONS+=("others.count unparsed plain=$CP_PLAIN_OTHERS colocated=$CP_COLO_OTHERS")
+fi
+declare -A CP_DIFF=()
+while IFS= read -r line; do
+  line=${line#$'\t'}
+  CP_DIFF["${line%%=*}"]=1
+done < <(LC_ALL=C comm -3 <(LC_ALL=C sort "$WORK/cp-plain.metrics") \
+  <(LC_ALL=C sort "$WORK/cp-colo.metrics"))
+CP_DIFF_N=${#CP_DIFF[@]}
+
+CP_FIELDS="plain_rc=$CP_PLAIN_RC colocated_rc=$CP_COLO_RC others_plain=$CP_PLAIN_OTHERS others_colocated=$CP_COLO_OTHERS commits_plain=$CP_PLAIN_COMMITS commits_colocated=$CP_COLO_COMMITS differing_keys=$CP_DIFF_N"
+if ((${#CP_REASONS[@]} == 0)); then
+  emit SOUJI-R13-STRUCT-colocated-vs-plain colocated-vs-plain \
+    "$CP_FIELDS precondition=colocated-not-interchangeable-with-plain-baseline verdict=PASS"
+else
+  FAILED=1
+  emit SOUJI-R13-STRUCT-colocated-vs-plain colocated-vs-plain \
+    "$CP_FIELDS verdict=FAIL detail=$(join_reasons "${CP_REASONS[@]}")"
+fi
+
 # ---------------------------------------------------------------- selftest ids
 SELFTEST_EXPECTED_IDS=(
   SOUJI-R13-STRUCT-manifest-control
   SOUJI-R13-STRUCT-write-free
   SOUJI-R13-STRUCT-object-metrics
   SOUJI-R13-STRUCT-bogus-repo
+  SOUJI-R13-STRUCT-linked-common-dir
+  SOUJI-R13-STRUCT-colocated-vs-plain
 )
 if ((PROBE_SET)); then
   SELFTEST_EXPECTED_IDS+=(SOUJI-R13-STRUCT-promisor-refusal)
