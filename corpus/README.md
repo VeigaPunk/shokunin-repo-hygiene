@@ -46,7 +46,7 @@ when the file exists, not before.
 - F1 git-native housekeeping vs receipts — next: does `fetch`/`merge`/`rebase` auto-maintenance prune on the fleet's live repos (exposure census, `census/round-12/scout-surfaces.md` §a: 0 prunable, 3 locked today).
 - F2 repository size census — next: the /var/tmp write-safety fixture for `git repo structure`.
 - F3 duplicate verdicts — next: a `duplicate` receipt class is an operator decision (taxonomy change).
-- F4 restorable quarantine — next: per-item origin records (trashinfo-style) and `mv --no-copy` staging are tool changes for the operator.
+- F4 restorable quarantine — next: per-item origin records (trashinfo-style) and `mv --no-copy` staging are tool changes for the operator. *(r22: the primitive and the record's read side are now admitted — see § Round22 attempt 2; the record format and any staging tool change remain the operator's decision.)*
 
 ### Corrections (r12)
 
