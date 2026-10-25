@@ -78,8 +78,13 @@ gate-check before, gate-check after), each verifiable with
 Refusal demonstration (must fire): verify on a receipt whose tool_sha256 is the stale r22
 5b8025a8… value exits nonzero with RECEIPT-TOOL-DIGEST-MISMATCH.
 Kill rule: a receipt whose verify exits 0 while its tool bytes at rev differ from the recorded
-digest kills the claim. The runner is read-only with respect to the lane (materializes
-`git archive <rev>` under /var/tmp; never writes the lane tree, never fetches).
+digest kills the claim. The runner is read-only with respect to the lane: it materializes the
+measured revision as a private `--no-local` clone under /var/tmp checked out detached at <rev>
+(amended from "git archive extraction" before any after-data: a bare extraction has no .git, so a
+counter that needs git plumbing — the r22 instruments all do — cannot run in it), never writes the
+source tree, never fetches from a remote. Named limits: the receipt records text, so CRLF and
+trailing newlines are normalised and a non-UTF-8 byte is recorded as a replacement character; the
+digest binds the bytes the command ran against, not the fact that the command ran.
 Control: the base revision has zero bound receipts, so the target is unreachable by doing nothing.
 
 =====================================================================

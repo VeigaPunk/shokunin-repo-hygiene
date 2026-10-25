@@ -10,8 +10,9 @@ inbound: `corpus/lessons/round-22-verifier-spotcheck.md` §2–§7 (D1–D8)
 
 STATUS: PASS — four verbatim-ready blocks drafted (three axis rows, one capability row, one
 `## Planned` line, the corrected r22 paragraph); every measured number carries its command and
-revision; the calibration row **simulated against the frozen K1 predicate** (0 mismatches where the
-row currently applied at `SCORECARD.md:14` produces 2); both r23 fixtures executed here
+revision; the calibration row **simulated against the frozen K1 predicate** (K1 `mismatches=0` where
+the row committed at `SCORECARD.md:14` yields a `value-disagree` row — its stale base tuple sits in
+two cells of that line); both r23 fixtures executed here
 (`selftest=9/9` C1 with `control=FALSE-GREEN-REJECTED`, `selftest=8/8` C2 including the
 stale-digest refusal at `rc=2/RECEIPT-TOOL-DIGEST-MISMATCH`). At the committed tip `4765250` the
 instrument reports `keys=4 records=4 occurrences=18 mismatches=4` — one K1 row (the stale base tuple
@@ -33,7 +34,7 @@ $ sha256sum tools/souji-record-agreement.py ; wc -l tools/souji-record-agreement
 observed earlier this round: 7515bb29cf85f5a9… (05:11, 327 lines), f9ec009107b1c814… (05:17:47),
 e41db3043b865acc… (05:19:06), 66ee7ecfcbc749c3… (05:19). tools/souji-receipt-run.py =
 0d36ce98d1263d4c38a46b97f4654cd2a4242287ddd63161e31bb0e7269a5278.
-$ git status --porcelain | wc -l        -> 23   (identical before and after this seat's fixture runs)
+$ git status --porcelain | wc -l        -> 23   (before and after this seat's fixture runs; 3 after the L1's landing)
 ```
 
 E2 — C1 do-nothing control at the base revision, current bytes, read-only:
@@ -172,6 +173,25 @@ case=7 … got=<before=empty after=empty runner_rc=0> case=8 … got=<sha_equal=
 selftest=8/8
 ```
 
+E11 — the instrument at the committed tip `476525026cdb179f2d49441e1cb6c6f7316f3124` (this is the
+`<R23-TIP>` the rows will name, unless a later commit supersedes it):
+
+```
+$ python3 -B tools/souji-record-agreement.py --root . --rev 476525026cdb179f2d49441e1cb6c6f7316f3124
+MISMATCH  K1  SCORECARD.md:14  value-disagree  assertions=55 resolved=52 skipped=33 mismatches=3 != receipt assertions=63 resolved=63 skipped=40 mismatches=0 at 9301d98c…
+MISMATCH  K4  .ufo/waves/round-23/w1/MutReceipt.md  uncommitted-path  M
+MISMATCH  K4  SCORECARD.md                          uncommitted-path  M
+MISMATCH  K4  tools/__pycache__/                    uncommitted-path  ??
+keys=4 records=4 occurrences=18 mismatches=4
+rc=1
+$ git show 4765250:corpus/SOURCES.md | grep -cE '^ {0,3}\|[[:space:]]*S[0-9]{3,}[[:space:]]*\|'  -> 119
+$ git log --oneline -1  -> 4765250 round-23: record-agreement and blob-bound-receipt instruments, F2 read-side entries, D1-D7 repairs
+```
+
+So C1 is one row and two artifact classes away from 0: the stale base tuple in `SCORECARD.md:14`
+(Deliverable 1 removes it), the still-uncommitted wave files at measurement time, and
+`tools/__pycache__/` (Finding 3).
+
 ## Deliverable 1 — the three axis rows (replace rows `coverage`, `calibration`, `operability`)
 
 Columns: `axis \| score \| verdict / observation \| counting command \| measured commit \| last change`.
@@ -235,17 +255,17 @@ afterwards any drift reports `value-disagree` or `rev-disagree`. The draft is de
 |---|---|---|---|
 | `<R23-C1-REV>` | r22 paragraph | `rev=` header of `census/round-23/records/declared-evidence-after.tsv` | `9301d98c1c689c79741f0f1ba1f171138d20af07` |
 | `<R23-C1-COUNTS>` | r22 paragraph | counts line in that receipt's `--- stdout ---` fence | `assertions=63 resolved=63 skipped=40 mismatches=0` |
-| `<R23-TIP>` | calibration, coverage, operability rows | the round tip commit the counts are read at | not yet made |
-| `<R23-C1-AGREE-COUNTS>` | calibration row (×2) | stdout counts line of `souji-record-agreement.py --rev <R23-TIP>` | not yet measured (shape `keys=4 records=… occurrences=… mismatches=0`) |
+| `<R23-TIP>` | calibration, coverage, operability rows | the round tip commit the counts are read at | `476525026cdb179f2d49441e1cb6c6f7316f3124` (E11; advances with each landing) |
+| `<R23-C1-AGREE-COUNTS>` | calibration row (×2) | stdout counts line of `souji-record-agreement.py --rev <R23-TIP>` | now `keys=4 records=4 occurrences=18 mismatches=4` (1 K1 + 3 K4); with the row below and the wave files committed, `occurrences=17 mismatches=0`, or `18` once the paragraph's placeholders are substituted |
 
 ## Findings
 
-1. **The calibration row applied right now at `SCORECARD.md:14` fails the frozen K1 predicate.**
-   It carries the after tuple *and* the base tuple on the same physical line as the receipt's rev, so
-   K1 reports two `value-disagree` rows for `assertions=55 resolved=52 skipped=33 mismatches=3`
-   (E7). The row in Deliverable 1 keeps the binding (after tuple + `9301d98…` + receipt path), states
-   the base run in prose, and simulates to 0 mismatches with 2 bound occurrences. Location:
-   `SCORECARD.md:14`.
+1. **The calibration row committed at `SCORECARD.md:14` (tip `4765250`) fails the frozen K1
+   predicate.** It carries the after tuple *and* the base tuple on the same physical line as the
+   receipt's rev, so K1 reports `value-disagree` for `assertions=55 resolved=52 skipped=33
+   mismatches=3` — the only K1 row at the tip (E11). The row in Deliverable 1 keeps the binding
+   (after tuple + `9301d98…` + receipt path), states the base run in prose, and simulates to
+   `K1 mismatches=0` at the same bytes (E7). Location: `SCORECARD.md:14`.
 2. **K4's exemption file deviates from the frozen text.** Frozen: `corpus/pointer-exemptions.tsv`
    rows prefixed `uncommitted:`. Tool: `census/round-23/records/uncommitted-exemptions.tsv`, every
    row an exemption, no prefix (E9) — and that file exists with the operator-sweep row, while the
@@ -256,12 +276,13 @@ afterwards any drift reports `value-disagree` or `rev-disagree`. The draft is de
    import artifacts of sibling tool runs; this seat only ever ran the tools as `__main__`.
    `[INFERENCE]` on attribution. A committed `.gitignore` with `__pycache__/` clears it without
    deleting anything and prevents recurrence; an exemption would be false (not operator-owned).
-4. **K4 still lists the D1 leftovers, so C1 cannot reach 0 until they are committed.** The 23 K4
-   rows now are: the seven r22 wave paths (5 `M`, 2 `??`), `.ufo/waves/round-23/`,
-   `census/round-23/`, `corpus/README.md`, `corpus/SOURCES.md`, `corpus/QUALITY.md`, `LOG.md`,
-   `SCORECARD.md`, the two new `corpus/knowledge/*.md` entries,
-   `tools/{souji-record-agreement,souji-receipt-run}.py`, `tests/fixtures/r23-{record-agreement,
-   receipt-run,locator-heading}.py` and `tools/__pycache__/`. The operator sweep is exempted (E9).
+4. **The D1 leftovers are committed; only three K4 paths remain at the tip.** The tip measurement
+   (E11) lists `.ufo/waves/round-23/w1/MutReceipt.md` (a wave report still being written),
+   `SCORECARD.md` (being edited) and `tools/__pycache__/`; the operator sweep is exempted (E9) and
+   the seven r22 wave leftovers plus the entries, registry, `LOG.md`, `README.md`, `QUALITY.md`,
+   instruments and fixtures are now committed. So C1's remaining K4 exposure is the wave tree's own
+   write-in-progress plus the pycache artifact — both clear by committing the wave tree and dealing
+   with Finding 3.
 5. **K2 and K3 are already clean in the worktree — measured, not assumed.** E8 replays both keys
    over the landed bytes: 4 occurrences in the r22 section, `uncorrected=NONE`, and both records
    carry all four classes with no disagreeing tally. The correction block sits *inside* the section
@@ -334,7 +355,8 @@ afterwards any drift reports `value-disagree` or `rev-disagree`. The draft is de
   `tests/`, `.ufo/waves/` were read; nothing was edited, staged, committed, pushed, stashed or
   checked out; no `jj` mutation, no `rm`/`mv`, no signals. One lane write: this file. The two
   fixtures I executed build and clean their own `/var/tmp` synthetic repos; `git status --porcelain`
-  was 23 lines before and after (E1).
+  was byte-identical before and after each of my runs (23 paths at the time of the fixture runs;
+  the L1's landing then reduced it to 3).
 - Nothing outside `/home/vgpnk/Projects/shokunin/souji-shokunin/` was touched. The fleet
   `.scratch/`, `.ufo/state/`, `.ufo/watchdog.log`, `MANIFEST.json`, fleet `scripts/` and `templates/`
   were not written and not read for content. Certification OFF, K5 HELD, F5 reap and NAMESPACE
@@ -342,11 +364,11 @@ afterwards any drift reports `value-disagree` or `rev-disagree`. The draft is de
 - Tool installs/upgrades: none (no `pacman`, `uv`, `npx`, `cargo` or `npm` transaction attempted; the
   host pacman pause was not touched).
 - Scratch written outside the designated `/var/tmp/souji-r23-ScribeScorecard/` directory:
-  `/var/tmp/souji-r23-ScribeScorecard-k4.txt` and `/var/tmp/souji-r23-ScribeScorecard-ctl.txt`
-  (captured instrument stdout, ~4 KB each). They are outside the lane and every protected path; I
-  did **not** delete them, because deletion is prohibited to this seat — the operator or L1 may
-  remove them.
+  `/var/tmp/souji-r23-ScribeScorecard-k4.txt`, `-ctl.txt`, `-tip.txt` (captured instrument stdout,
+  ~1–4 KB each). They are outside the lane and every protected path; I did **not** delete them,
+  because deletion is prohibited to this seat — the operator or L1 may remove them.
 - Not run by this seat, and therefore not claimed: the C3 gate-check on the two new entries (the
-  snapshot dir `census/round-23/sources/` and that run are the L1's), any run at a revision that
-  contains the round's repairs (none exists yet), and the stale-digest refusal transcript (the
-  mechanism is proven by E10 case 3; the artifact is still owed).
+  snapshot dir `census/round-23/sources/` and that run are the L1's); the stale-digest refusal
+  transcript (the mechanism is proven by E10 case 3; the artifact is still owed); and the
+  post-fix `souji-record-agreement.py` run (E7 simulates it; the row that produces it is not
+  committed yet).

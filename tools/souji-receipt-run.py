@@ -188,8 +188,10 @@ def cmd_run(args: argparse.Namespace) -> int:
                 digest = hashlib.sha256(fh.read()).hexdigest()
         except OSError as exc:
             return refuse("TOOL-UNREADABLE", f"{tool} in the measured tree: {exc}")
+        # errors="replace": a non-UTF-8 byte must produce a receipt with a recorded
+        # replacement, not an exception that leaves no evidence at all
         proc = subprocess.run(args.command, cwd=tree, capture_output=True, text=True,
-                              env=run_env)
+                              errors="replace", env=run_env)
     finally:
         shutil.rmtree(scratch, ignore_errors=True)
 
