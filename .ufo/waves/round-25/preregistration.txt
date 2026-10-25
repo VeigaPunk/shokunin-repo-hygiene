@@ -1,0 +1,154 @@
+souji round 25 — preregistration (frozen before data)
+lane base a6d2d157755ef36b1dd4b9d53ad6d5b2ad6a3afe (branch master, ahead=0 behind=0)
+date 2026-10-25
+author SoujiR25 (L1, lane identity souji-shokunin <souji@shokunin.local>)
+inbound: corpus/lessons/round-24-verifier-spotcheck.md (routed D1–D6);
+         SCORECARD "r25 (planned r24)" (kill-rule tool row; README :40 row; size-census-lane.txt;
+         tool_sha256 counter; r23 record-agreement receipt; residuals R3/R7/R15/R17; F2
+         structure-probe envelope)
+axes: calibration (7, lowest non-retired), operability (8), coverage (8)
+
+HARD BOUND (carried into every wave context): souji is a hygiene lane, but its write scope is its
+own repo only. Never delete, move, quarantine or classify-for-cleanup anything in
+/home/vgpnk/Projects/shokunin outside souji-shokunin/. Incident 2026-10-25: the fleet's tracked
+.scratch/ tree was deleted mid-run.
+
+Pre-freeze design probes (L1, /var/tmp scratch, removed; git 2.56.0), recorded so the oracles
+below are not guesses — size-census edge behaviors at tip a6d2d15:
+  bare non-empty (one commit)     -> rc=0, census.invoked_from=bare, counts line
+  bare empty                       -> rc=1 "git failure: … fsck … exited 0: notice: No default references"
+  subdir (dir inside worktree)    -> rc=2 "--repo must name the repository itself"
+  extensions.partialClone-only    -> rc=2 "partial-clone repository (extensions.partialClone=origin)"
+These are design input, not claim data.
+
+=====================================================================
+C1 — calibration (7, lowest). Kill-rule tool row.
+=====================================================================
+Self-assessment defect (r24 C2 limit W2C2Rerun; verifier D-list): Q56's per-entry kill rule
+("every entry grounded at the base revision is present at the tip with the same F<k>") is checked
+by hand (`git diff`), never by the instrument.
+Tool CLI (frozen): python3 -B tools/souji-coverage-agreement.py --root <lane> --rev <full40>
+[--base-rev <full40>]
+When --base-rev is given, the tool additionally reads the knowledge tree at the base revision,
+collects every entry carrying a front-matter `ground: F<k>` line there, and at `--rev` requires
+each such entry to still exist as a blob and to still carry that same F<k> ground line (extra
+ground lines are allowed; removal or re-grounding to another F is a violation). Violations print as
+  MISMATCH	KILL-RULE	corpus/knowledge/<name>	<detail>
+Counts line gains kill_tested=N kill_violations=V; exit 0 iff mismatches==0 AND
+kill_violations==0.
+Counter (frozen): python3 -B tests/fixtures/r25-coverage-agreement.py --tool <path>
+Last line: cases=C pass=P control=FALSE-GREEN-REJECTED|FALSE-GREEN-ACCEPTED; exit 0 iff P==C
+and control=FALSE-GREEN-REJECTED. The fixture is the r24 fixture (9 cases) extended with
+kill-rule cases (all synthetic /var/tmp repos):
+  k1 deleted     base entry E grounded F2 -> tip lacks E          -> KILL-RULE, rc 1
+  k2 regrounded  base E grounded F2 -> tip E grounded F1         -> KILL-RULE, rc 1
+  k3 clean       base E grounded F2 -> tip E same F2, mapped     -> rc 0, kill_tested=1 kill_violations=0
+  k4 multi       base E grounded F2+F3 -> tip keeps both, both map rows list E -> rc 0
+  k0 control     an always-zero emitter must fail >=1 case
+Before (do-nothing control, committed pre-data): the current tool bytes at a6d2d15 reject
+--base-rev (rc 2; receipt census/round-25/records/c1-control-base.tsv). Red-arm: the OLD tool
+bytes (the r24 committed blob at a6d2d15) run against the extended fixture must fail k1–k4; its
+receipt is committed before any after-data.
+After target: real run at the landing tip `--rev <tip> --base-rev a6d2d157755ef36b1dd4b9d53ad6d5b2ad6a3afe`
+prints grounded=G mapped=M dangling=0 mismatches=0 kill_tested=4 kill_violations=0, rc 0; fixture
+cases=C pass=C control=FALSE-GREEN-REJECTED.
+Kill rule: any KILL-RULE violation or mismatches>0 at tip -> C1 not verified (honest stop); no
+case is dropped or re-specified after any seat has scored.
+
+=====================================================================
+C2 — operability (8). Size-census refusal surfaces covered by the frozen fixture.
+=====================================================================
+Routed D2/R24-M24: the bare-repo refusal regression was invisible to the frozen fixture (no
+bare/subdir/partialClone-only cases). The tool at tip carries the fix; the FIXTURE does not cover
+the surface.
+Counter (frozen): python3 -B tests/fixtures/r24-size-census.py --tool <path> — extended case set:
+  1..8 unchanged (r24 frozen cases)
+  9  bare-nonempty  git init --bare + one commit; expect rc=0, counts line, `census.invoked_from=bare`,
+                    .git manifest unchanged
+  10 bare-empty      git init --bare; expect rc=1, stderr contains "git failure" and "No default
+                    references", no counts line on stdout
+  11 subdir          --repo <dir-inside-worktree>; expect rc=2, stderr contains
+                    "--repo must name the repository itself"
+  12 partialClone-only init + `extensions.partialClone=origin` config; expect rc=2, stderr
+                    contains "partial-clone repository"
+  control (stub) stays: the stub emitter must fail >=1 case.
+Last line: cases=C pass=P control=FALSE-GREEN-REJECTED lost_found=WRITE-DETECTED; exit 0 iff
+P==C and both flags are the first spelling.
+Before (do-nothing control, committed pre-data): current fixture at a6d2d15 -> cases=8 pass=8
+(receipt census/round-25/records/c2-control-base.tsv). Red-arm: OLD tool blob
+(1efe406e7f39b8fe736be2a566053703a571ffc0:tools/souji-size-census.py) run against the EXTENDED
+fixture must fail >=1 of cases 9–12 (the bare cases discriminate); receipt committed before any
+after-data.
+After target: cases=12 pass=12 control=FALSE-GREEN-REJECTED lost_found=WRITE-DETECTED, rc 0.
+Kill rule: any case failing at tip -> C2 not verified; no case dropped/re-specified after scoring.
+Disclosed limit (unchanged): the no-write envelope excludes atime/ctime; a write that restores
+mtimes is invisible; hostile config/env have no case.
+
+=====================================================================
+C3 — coverage (8). Structure probe under the common-git-dir envelope; colocated/plain precondition.
+=====================================================================
+Frontier move (README `### Frontier (r24)`): put tools/souji-repo-structure.sh under the same
+common-git-dir manifest the r24 fixture uses, then the colocated/plain byte-comparison
+precondition before any `git repo structure` size baseline.
+Counter (frozen): bash tests/fixtures/r13-repo-structure.sh --selftest --probe tools/souji-repo-structure.sh
+Target final line: selftest=PASS ids=7/7 (was 5/5). New pinned cases:
+  SOUJI-R13-STRUCT-linked-common-dir  main repo A + linked worktree B (`git worktree add`);
+    probe with `--repo B`: rc=0, probe.git_common_dir == A's resolved git dir, and the no-write
+    manifest over the COMMON dir (and the private gitdir) is unchanged before/after; the detector
+    control passes first.
+  SOUJI-R13-STRUCT-colocated-vs-plain  plain clone vs a clone carrying extra refs under
+    `refs/jj/keep/*` (jj keep-ref simulation, no jj binary needed): both probes rc=0 and the
+    colocated-like output differs from the plain one (references.others.count greater); records
+    the precondition that a colocated figure is not interchangeable with a plain baseline.
+Before (committed pre-data): current fixture at a6d2d15 -> selftest=PASS ids=5/5 (receipt
+census/round-25/records/c3-control-base.tsv).
+After target: ids=7/7, rc 0.
+Knowledge entry (landed with this claim, same commit as the README map row):
+corpus/knowledge/git-repo-structure-common-dir.md (ground: F2; source cites SOURCES rows S124/S125
+opened this round). README F2 row entries column gains the entry (Q56).
+Kill rule: any case failing at tip -> C3 not verified; no case dropped/re-specified after scoring.
+Sourced claim: C3 cites SOURCES rows S124/S125 opened this round.
+
+=====================================================================
+Routed fixes (not claims; land with evidence)
+=====================================================================
+D1 (R24-M25): retitle the r24 C3 claim in SCORECARD/LOG to the two named r23 residuals closed
+(R1 non-durable rev, R2 tool= argv binding); preregister the remaining run/verify symmetry shapes
+as future counter cases (named in the lesson).
+D2/D3: carried by C2 (fixture cases) plus disclosure of the envelope corners (ctime/mtime-restoring)
+and of the tool-clause mutant survivors measured before/after the fixture extension.
+D4 (R24-M2): README :40 status cell gains an append-only "superseded by Round 24 F2 row" marker;
+old->new logged in the lesson.
+D5 (F6): bare "S123" disambiguation note appended to corpus/lessons/round-22.md (the spot-check
+file is non-author-owned; the note lives in the lesson and report instead).
+D6 (R24-M22): slice-verdict vocabulary mapping documented in the lesson (both tables, the class
+map, S118 re-classed accepted everywhere); Q57 criterion added citing R24-M22.
+Residuals R3/R7/R15/R17: R3 sentence correction (SCORECARD/LOG append-only note); R7 count-in-
+stderr refusal is fixed in code — the fixture coverage note lands in the lesson; R15/R17 record-
+agreement docstring correction plus three new fixture cases (14/15 -> 15/15 red-before witness).
+tool_sha256 grep counter -> verify=ok count wording; r23 record-agreement counter receipted at the
+tip.
+
+=====================================================================
+Separability
+=====================================================================
+C1 touches tools/souji-coverage-agreement.py + tests/fixtures/r25-coverage-agreement.py;
+C2 touches tests/fixtures/r24-size-census.py only (the tool already carries the fix);
+C3 touches tests/fixtures/r13-repo-structure.sh + one knowledge entry + the README map row.
+Each counter runs without the others' files. C1's after-run at the landing tip depends on the map
+being consistent (C3's entry adds a grounded entry -> C1's grounded count rises; kill_tested stays
+4 because C3's entry is not base-grounded).
+
+=====================================================================
+Assimilation (§10)
+=====================================================================
+Assimilation: none this round. The round is load-maxed on routed-defect remediation; the staged
+package merge/souji stays untouched; the r24 quarantine-slice verdicts stand unchanged.
+
+=====================================================================
+Swarm plan
+=====================================================================
+Two v1 waves (policy /home/vgpnk/Projects/shokunin/scripts/hyaku/ufo-wave-policy.json, band
+32–64): wave 1 = build + first falsifiers (~34 seats), wave 2 = falsify (~34) only if wave 1
+yields >=32 distinct attack items; residual <=8 reviewer/critic seats otherwise. L1 holds the
+planner seat. Seats never mutate the fleet repo, sibling lanes, the lane's jj state or git index.
