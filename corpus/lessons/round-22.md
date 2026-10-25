@@ -356,9 +356,13 @@ empty body; unreachable is not fabrication), **0 refused**.
 The boundary is stated here because two passes first disagreed on it:
 `accepted` = the quoted span is real and locates to a document, so the row is
 repairable by re-citing it; `refused` = the span is in no reachable document;
-`unverifiable` = the source cannot be read at all. All seven `payload-absent`
-labels turned out to be false positives of the campaign checker (no asciidoc
-`[1]`/`(1)` fold, tag-separator folds, markdown heading vs rendered `<h2>`).
+`unverifiable` = the source cannot be read at all. Of the seven `payload-absent`
+labels, three were false positives of the campaign checker (S114, S126, S138: no
+asciidoc `[1]`/`(1)` fold, tag-separator folds, markdown heading vs rendered
+`<h2>`), while four are genuine wrong-source citations whose span is real in a
+*different* document (S123, S124, S131, S133) — re-executed with 0 matches in
+each cited payload. The class cell is therefore not a fabrication verdict even
+where it is right.
 
 **Gate counters (this round's tool).**
 `python3 -B tools/souji-gate-check.py --root . --round-date 2026-10-25
