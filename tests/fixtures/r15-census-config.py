@@ -825,7 +825,7 @@ def run_tool(args: list[str], extra_env: dict[str, str] | None = None) -> Result
     env = {
         "PATH": f"{SPYDIR}:/usr/local/bin:/usr/bin:/bin",
         "HOME": str(HOME),
-        "TMPDIR": "/var/tmp",
+        "TMPDIR": tempfile.gettempdir(),
         "LC_ALL": "C",
         "GIT_CONFIG_GLOBAL": "/dev/null",
         "GIT_CONFIG_SYSTEM": "/dev/null",
@@ -1542,9 +1542,9 @@ def main(argv: list[str]) -> int:
         die(f"tool not readable: {TOOL}: {exc}")
 
     try:
-        SCRATCH = Path(tempfile.mkdtemp(prefix="r15-census-config.", dir="/var/tmp"))
+        SCRATCH = Path(tempfile.mkdtemp(prefix="r15-census-config."))
     except OSError as exc:
-        die(f"cannot create /var/tmp fixture: {exc}")
+        die(f"cannot create TMPDIR fixture: {exc}")
     records: list[dict] = []
     try:
         try:

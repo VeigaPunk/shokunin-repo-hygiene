@@ -187,6 +187,16 @@ set -euo pipefail
 # commands this tool relies on. Remove functions for those names.
 unset -f bash cat git kill find du stat awk grep sort head cut date readlink sleep mktemp setsid mkdir rm cmp tr python3 2>/dev/null || true
 
+# Round 33 C2: a caller TMPDIR that ends in '/' must yield the same scratch
+# spelling the kernel reports. `readlink` of a /proc fd prints the path with
+# single slashes, so the templates below and the prefix case patterns are all
+# built from CENSUS_TMP_ROOT: the caller's TMPDIR with every trailing slash
+# removed, so that "$CENSUS_TMP_ROOT/name" is "/name" when TMPDIR is a root
+# ("/", "//", "///") and "<dir>/name" otherwise. TMPDIR itself is left as the
+# caller set it, so child environments are unchanged.
+CENSUS_TMP_ROOT=${TMPDIR:-/tmp}
+while [ "${CENSUS_TMP_ROOT%/}" != "$CENSUS_TMP_ROOT" ]; do CENSUS_TMP_ROOT=${CENSUS_TMP_ROOT%/}; done
+
 # Clear every inherited GIT_* variable. GIT_DIR/GIT_COMMON_DIR/
 # GIT_OBJECT_DIRECTORY/GIT_ALTERNATE_OBJECT_DIRECTORIES and GIT_CONFIG_*
 # can redirect reads or command execution into a credential store. Global
@@ -306,7 +316,7 @@ trap 'handle_census_signal TERM' TERM
 
 prepare_census_tmp() {
   if [ -z "${CENSUS_TMP:-}" ]; then
-    CENSUS_TMP=$(mktemp -d "${TMPDIR:-/tmp}/souji-census-now.XXXXXX")
+    CENSUS_TMP=$(mktemp -d "${CENSUS_TMP_ROOT}/souji-census-now.XXXXXX")
     trap cleanup_census_tmp EXIT
   fi
 }
@@ -1876,7 +1886,7 @@ emit_compare() { # census of $ROOT vs $COMPARE; writes diff TSV; exit 3 if any c
   root=$(guard_path root "$ROOT") || exit 2
   [ -d "$root" ] || { printf 'souji-census: root is not a directory: %s\n' "$root" >&2; exit 1; }
   load_census "$COMPARE" before
-  CENSUS_TMP=$(mktemp -d "${TMPDIR:-/tmp}/souji-census-now.XXXXXX")
+  CENSUS_TMP=$(mktemp -d "${CENSUS_TMP_ROOT}/souji-census-now.XXXXXX")
   trap cleanup_census_tmp EXIT
   emit_census > "$CENSUS_TMP/now.tsv"
   load_census "$CENSUS_TMP/now.tsv" after
@@ -1987,7 +1997,7 @@ st_worker_tmpdir() { # worker PGID -> CENSUS_TMP via its private stdout file
   local path
   path=$(readlink -- "/proc/$1/fd/1" 2>/dev/null) || return 1
   case "$path" in
-    "${TMPDIR:-/tmp}"/souji-census-now.*/*) printf '%s' "${path%/*}" ;;
+    "${CENSUS_TMP_ROOT}"/souji-census-now.*/*) printf '%s' "${path%/*}" ;;
     *) return 1 ;;
   esac
 }
@@ -2006,7 +2016,7 @@ run_selftest() {
     printf 'souji-census: refusing nested --selftest\n' >&2
     exit 1
   fi
-  ST_TMP=$(mktemp -d "${TMPDIR:-/tmp}/souji-census-selftest.XXXXXX")
+  ST_TMP=$(mktemp -d "${CENSUS_TMP_ROOT}/souji-census-selftest.XXXXXX")
   trap 'rm -rf -- "$ST_TMP"' EXIT
   # Round 16: the census honors the XDG excludes/attributes default; pin it
   # to an absent scratch path so host files cannot change selftest rows.
@@ -2903,7 +2913,7 @@ LAUNCH_CENSUS
     kill -KILL "$term_census_pid" 2>/dev/null || true
   fi
   if [ -e "/proc/$term_launcher_pid" ]; then kill -KILL "$term_launcher_pid" 2>/dev/null || true; fi
-  case "$term_tmp_dir" in "${TMPDIR:-/tmp}"/souji-census-now.*) rm -rf -- "$term_tmp_dir" ;; esac
+  case "$term_tmp_dir" in "${CENSUS_TMP_ROOT}"/souji-census-now.*) rm -rf -- "$term_tmp_dir" ;; esac
 
   # SIGKILL cannot run a trap; the detached timer must still reap the group.
   rm -f -- "$RI/.git/info/attributes" "$ST_TMP/kill-git.pid"
@@ -2967,7 +2977,7 @@ LAUNCH_CENSUS
     kill -KILL "$kill_census_pid" 2>/dev/null || true
   fi
   if [ -e "/proc/$kill_launcher_pid" ]; then kill -KILL "$kill_launcher_pid" 2>/dev/null || true; fi
-  case "$kill_tmp_dir" in "${TMPDIR:-/tmp}"/souji-census-now.*) rm -rf -- "$kill_tmp_dir" ;; esac
+  case "$kill_tmp_dir" in "${CENSUS_TMP_ROOT}"/souji-census-now.*) rm -rf -- "$kill_tmp_dir" ;; esac
 
 
   # An inherited SIG_IGN TERM must not hold a normally-cancelled timer open.

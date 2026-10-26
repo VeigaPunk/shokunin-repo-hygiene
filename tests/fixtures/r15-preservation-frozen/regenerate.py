@@ -12,7 +12,7 @@ runs printed:
   namespace_controls <REV>  tools/souji-census.sh under tests/fixtures/r14-census-boundary.py
 
 Each tool is extracted with `git show <rev>:tools/souji-census.sh` into a
-private /var/tmp directory (removed afterwards). The fixtures run from the
+private TMPDIR directory (removed afterwards). The fixtures run from the
 lane checkout and must equal their bytes at <REV>; the installed tool must too.
 
 Usage: python3 tests/fixtures/r15-preservation-frozen/regenerate.py --rev <REV>
@@ -135,7 +135,7 @@ def main() -> int:
             print(f"regenerate: {rel} differs between {rev[:12]} and the worktree",
                   file=sys.stderr)
             return 2
-    scratch = Path(tempfile.mkdtemp(prefix="souji-r16-repin.", dir="/var/tmp"))
+    scratch = Path(tempfile.mkdtemp(prefix="souji-r16-repin."))
     try:
         runs = {}
         tools = {}

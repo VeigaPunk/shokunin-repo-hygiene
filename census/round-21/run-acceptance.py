@@ -500,7 +500,13 @@ def summarize_result(step: dict, returncode: int | None,
         gate = payload.get("gate") if isinstance(payload, dict) else None
         isolation = payload.get("isolation") if isinstance(payload, dict) else None
         expected = step["expected_summary"]
-        gate_sha = sha256_bytes(read_regular(root / "tools/souji-evidence-cache.py"))
+        # Grade the recorded gate digest against the tool that `revision` ships: this
+        # re-grades pinned historical bytes, so the live working tree is not the subject.
+        # Real runs already bind the tree to `revision` (combined_snapshot + resolve_durable).
+        gate_at_rev = subprocess.run(["git", "-c", "core.fsmonitor=false", "-C", str(root), "cat-file", "blob",
+                                      f"{revision}:tools/souji-evidence-cache.py"],
+                                     env=CHILD_ENV, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        gate_sha = sha256_bytes(gate_at_rev.stdout) if gate_at_rev.returncode == 0 else None
         case_phases = ([row.get("phase") if isinstance(row, dict) else None
                         for row in case_rows] if isinstance(case_rows, list) else None)
         demo_match = (
