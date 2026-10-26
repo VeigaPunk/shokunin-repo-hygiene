@@ -51,8 +51,10 @@ measured class is unevaluated in that replay), `status_lines` counts report
 lines opening a STATUS channel (fenced/table lines included, so 0 means the
 failure channel had nothing to look at), `carry_heading` is 1 iff the lesson
 carries the `## Seat-reported failures` heading, and `checked_reports` is the
-number of `.md` reports under the wave prefix. A zero on any of these means
-the axis was not exercised — never that it passed.
+number of distinct relative `.md` report paths in the union of
+`.ufo/waves/round-N/` and its committed capture `census/round-N/waves/`
+(r31: the base gate read one tree alone, hiding capture-only reports). A zero
+on any of these means the axis was not exercised — never that it passed.
 
 Environment: every git call runs under GIT_ENV — repository-selecting
 ambient variables (GIT_DIR, GIT_WORK_TREE, GIT_INDEX_FILE,
@@ -153,7 +155,21 @@ ROUND_PLACEHOLDER_RE = re.compile(r"round-N", re.IGNORECASE)
 # template placeholder, or that ends in `round-` because the tokenizer cut at
 # one (`"census/round-"+rd+...`), names no path and is not a pointer.
 CAPTURE_POINTER_RE = re.compile(r"^\.ufo/waves/(round-\d+)(/.*)?$")
-TEMPLATE_POINTER_RE = re.compile(r"%s|<[Nn]>|\{N\}")
+# r31 C2: printf conversions (%d, %0Nd, %02d, %.3f ...) are template tokens
+# too, not paths.
+TEMPLATE_POINTER_RE = re.compile(
+    r"%[-+ #0]*\d*(?:\.\d+)?[diouxXeEfFgGaAcsp%]|<[Nn]>|\{N\}"
+)
+# r31 C2: the capture stores a component named `.git` as `.git.captured` and a
+# file named `.gitignore`/`.gitattributes` as `<name>.captured`
+# (tools/souji-wave-evidence-capture.sh store_name), so a pointer at such a
+# name resolves through its stored name.
+CAPTURE_STORED_GIT = ".git"
+CAPTURE_RENAME_NAMES = (".gitignore", ".gitattributes")
+# r31 C2: a token whose components are all letters names prose, not a path
+# (`corpus/authority`, `tools/kill/killpg`); a trailing `/` or any `.`, `-`,
+# `_` or digit makes it a path again.
+LETTERS_ONLY_RE = re.compile(r"[A-Za-z]+")
 # The only measured-commit exemption is bound to the known synthetic r14 value.
 MEASURED_COMMIT_PLACEHOLDER = "0123456789abcdef0123456789abcdef01234567"
 
@@ -389,15 +405,33 @@ def lesson_lines(lesson_text):
 
 
 def failures_section_lines(lesson_text):
-    """Raw lines under `## Seat-reported failures` until the next heading."""
+    """Raw lines under EVERY `## Seat-reported failures` section, each until
+    the next heading.
+
+    r31 C2: the base gate stopped at the first heading after the first such
+    section, so an append-only carry section (a second one at the end of the
+    lesson) was invisible and its failures read as uncarried. A blank
+    separator is kept at each section end so the entry joiner cannot merge a
+    bullet of one section into the previous section's entry."""
     inside = False
+    in_fence = False
     out = []
     for line in lesson_lines(lesson_text):
-        if FAILURES_HEADING_RE.match(line.strip()):
+        stripped = line.strip()
+        if stripped.startswith("```"):
+            # r31 wave-1 SwarmCritic29 finding 7: a heading quoted inside a
+            # fenced block is text, not a section boundary.
+            in_fence = not in_fence
+            if inside:
+                out.append(line)
+            continue
+        if not in_fence and FAILURES_HEADING_RE.match(stripped):
             inside = True
             continue
-        if inside and HEADING_RE.match(line.strip()):
-            break
+        if inside and not in_fence and HEADING_RE.match(stripped):
+            inside = False
+            out.append("")
+            continue
         if inside:
             out.append(line)
     return out
@@ -472,21 +506,35 @@ def carries(block, entry):
     return False
 
 
+def _report_paths(tree, round_no):
+    """Committed seat reports of one round: the union of `.ufo/waves/round-N/`
+    and its committed capture `census/round-N/waves/`, one entry per distinct
+    relative suffix.
+
+    r31 C2: the wave dir is gitignored, so a revision may carry a subset of it
+    as the capture (tools/souji-wave-evidence-capture.sh) and a subset
+    force-added; the base gate read the wave dir alone whenever it held any
+    report, hiding the capture-only ones. A suffix committed in both trees is
+    read once, from the `.ufo/waves/round-N/` copy (the author's bytes; the
+    capture is a copy of it)."""
+    wave_prefix = ".ufo/waves/round-%d/" % round_no
+    capture_prefix = "census/round-%d/waves/" % round_no
+    chosen = {}
+    for prefix, wins in ((capture_prefix, False), (wave_prefix, True)):
+        for path in tree:
+            if not path.startswith(prefix) or not path.endswith(".md"):
+                continue
+            suffix = path[len(prefix):]
+            if wins or suffix not in chosen:
+                chosen[suffix] = path
+    return sorted(chosen.values())
+
+
 def check_carry(root, tree, rev, round_no):
     """Return (findings, n_markers, n_reports, n_status, carry_heading)."""
     wave_prefix = ".ufo/waves/round-%d/" % round_no
     capture_prefix = "census/round-%d/waves/" % round_no
-    reports = sorted(
-        p for p in tree if p.startswith(wave_prefix) and p.endswith(".md")
-    )
-    if not reports:
-        # The wave dir is gitignored, so at a revision that never committed it
-        # the report set is its capture (tools/souji-wave-evidence-capture.sh),
-        # which holds the same relative paths. When both are committed the
-        # wave dir alone is read, so no report is ever counted twice.
-        reports = sorted(
-            p for p in tree if p.startswith(capture_prefix) and p.endswith(".md")
-        )
+    reports = _report_paths(tree, round_no)
     if not reports:
         raise EvalError(
             "no .md reports under %s or %s at %s"
@@ -818,9 +866,28 @@ def _expand_round_ranges(path):
 
 
 def _trim_pointer_token(token):
+    """Drop punctuation, a `:line` spec and a `:<text>` suffix from a token.
+
+    r31 C2: a line spec may be a single number, a hyphen range, an en/em dash
+    range or a comma list (`tools/x.py:274–277`), and a `:<non-digit>` suffix
+    after a path names something inside the cited path (a capture's
+    `:fixture/` slot), not part of it. Both are removed before resolution;
+    neither was, so both were reported as loud absent paths."""
     token = token.rstrip(".,;:!?")
-    token = re.sub(r":\d+(?:-\d+)?(?:,\d+(?:-\d+)?)*$", "", token)
+    token = re.sub(r":\d+(?:[-\u2013\u2014,]\d+)*$", "", token)
+    token = re.sub(r":(?![0-9])[^:\s]*$", "", token)
     return token
+
+
+def _prose_pointer(path):
+    """True iff `path` is prose slash alternation, not a path: no trailing `/`
+    and every component is letters only (`corpus/authority`,
+    `tools/kill/killpg`). A `.`, `-`, `_`, digit or empty component makes it a
+    candidate path again (r31 C2)."""
+    if path.endswith("/"):
+        return False
+    components = path.split("/")
+    return all(LETTERS_ONLY_RE.fullmatch(component) for component in components)
 
 
 def _normalize_pointer_path(path, source):
@@ -851,6 +918,7 @@ def _pointer_paths(text, source):
         if (
             not raw
             or "…" in raw
+            or "..." in raw
             or any(char in raw for char in "<>*")
             or ROUND_PLACEHOLDER_RE.search(raw)
             or not _balanced_braces(raw)
@@ -914,6 +982,48 @@ def _capture_pointer_path(path):
     if not match:
         return None
     return "census/%s/waves%s" % (match.group(1), match.group(2) or "")
+
+
+def _captured_pointer_path(path):
+    """Map a pointer at a gitignored/stored name onto the capture's name.
+
+    `tools/souji-wave-evidence-capture.sh store_name` stores every component
+    named `.git` as `.git.captured` and a file named `.gitignore` or
+    `.gitattributes` as `<name>.captured`, so a committed pointer at the live
+    name resolves there (r31 C2). None when no component is such a name."""
+    trailing = "/" if path.endswith("/") else ""
+    components = path.rstrip("/").split("/")
+    out = []
+    changed = False
+    for index, component in enumerate(components):
+        last = index == len(components) - 1
+        if component == CAPTURE_STORED_GIT:
+            out.append(CAPTURE_STORED_GIT + ".captured")
+            changed = True
+        elif last and component in CAPTURE_RENAME_NAMES:
+            out.append(component + ".captured")
+            changed = True
+        else:
+            out.append(component)
+    if not changed:
+        return None
+    return "/".join(out) + trailing
+
+
+def _pointer_candidates(path):
+    """Resolution candidates for one cited token, in order: the path as cited,
+    its capture-mapped form (r30), and the stored `.captured` name of either
+    (r31)."""
+    candidates = [path]
+    for candidate in (path, _capture_pointer_path(path)):
+        if candidate is None:
+            continue
+        if candidate not in candidates:
+            candidates.append(candidate)
+        stored = _captured_pointer_path(candidate)
+        if stored is not None and stored not in candidates:
+            candidates.append(stored)
+    return candidates
 
 
 def load_pointer_exemptions(root, tree):
@@ -997,15 +1107,17 @@ def check_pointers(root, tree, rev, round_no, fleet_root=None, exemptions=()):
     for source, line_no, line in source_lines:
         for path in _pointer_paths(line, source):
             checked_ptrs += 1
-            if _path_exists_in_tree(path, tree_paths):
-                continue
-            capture_path = _capture_pointer_path(path)
-            if capture_path is not None and _path_exists_in_tree(
-                capture_path, tree_paths
+            if any(
+                _path_exists_in_tree(candidate, tree_paths)
+                for candidate in _pointer_candidates(path)
             ):
                 continue
             if path in exemptions:
                 used_exemptions.add(path)
+                continue
+            if _prose_pointer(path):
+                # Counted and exemptible above, but never reported: a
+                # letters-only slash alternation names prose, not a path.
                 continue
             # Only an explicit one-level escape or the known hyaku report
             # prefix may resolve under the separately supplied fleet root.
