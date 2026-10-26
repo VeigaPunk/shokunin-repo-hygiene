@@ -316,3 +316,23 @@ Owned scores unchanged (calibration 7, coverage 8, operability 8): no reproducib
 ### Planned (appended at round 29)
 
 - **r30 (planned r29):** calibration: bind SCORECARD and SHONEN statements (each capability row's stated count re-run, not only registry used-by) to an observable and count the mismatches; operability: point `tools/souji-landing-gate.py` report discovery at the committed `census/round-<N>/waves/` capture (r28 routed defect 3, not addressed in r29); coverage: choose a frontier surface from `corpus/README.md ## Frontier` (F1/F2/F4) with a counter that names the surface moved. Carry the stale-sweep remainder (`census/round-29/waves/w1/deliver-stale-sweep.tsv`, 5 disagreeing rows) and the Reviewer43 F7 literal-shape defects. Certification OFF, K5 HELD.
+
+### R30 append-only corrections (round 30, C1: capability-table literals vs committed output)
+
+Measured at base 9420341d9a814cb6089c25fb03a4cc9b23dc0d1b by `python3 -B tools/souji-capability-agreement.py --root <lane> --rev <full40> --base 9420341d9a814cb6089c25fb03a4cc9b23dc0d1b --list-rev d4928ec86b667e3d1ed0adb07fb088e500cf1631` (v1 bytes at d4928ec; stricter amendment A3 in the current file). The capability cells above stay as written; each line below records what the named command prints at the measured revision. Of the 13 base mismatches, 7 are notation (the stated numbers equal the printed numbers, in another shape: R03 R06 R07 R08 R09 R10 R11), 4 are counts that grew after the row was written (R04 5 -> 7 ids at r25; R05 18 -> 65 selftest checks by r19; R14 9 -> 15 cases at r25; R15 8 -> 12 cases at r25), R16's cell omits the required `--tool` argument (the r24 invocation, `census/round-24/records/c2-fixture-after.tsv`, still prints 9 of 9), and R18 is a v1 counter artifact: its stdout ends `cases=15 pass=15 control=TAMPER-REJECTED` (`census/round-30/records/d3-green-r28-wave-evidence-capture.txt`) but v1 reads the concatenated stdout+stderr, whose last digit-bearing line is a usage banner the fixture provokes on purpose. Literal provenance per row: `.ufo/waves/round-30/w1/deliver-c1-literal-history.tsv` (SwarmRevenger34: all 13 literals were accurate when written).
+
+R30-CORRECTION SCORECARD.md:154 R03 rc=0 observed=SUMMARY total=5 failed=0 hung=0
+R30-CORRECTION SCORECARD.md:155 R04 rc=0 observed=selftest=PASS ids=7/7
+R30-CORRECTION SCORECARD.md:158 R05 rc=0 observed=SELFTEST pass=65 fail=0
+R30-CORRECTION SCORECARD.md:158 R06 rc=0 observed=SUMMARY total=15 failed=0
+R30-CORRECTION SCORECARD.md:160 R07 rc=0 observed=SUMMARY total=29 failed=0
+R30-CORRECTION SCORECARD.md:161 R08 rc=0 observed=SUMMARY total=35 failed=0 skipped=2
+R30-CORRECTION SCORECARD.md:166 R09 rc=0 observed=SUMMARY total=4 failed=0 base_discriminating=2
+R30-CORRECTION SCORECARD.md:167 R10 rc=0 observed=SUMMARY total=11 failed=0
+R30-CORRECTION SCORECARD.md:167 R11 rc=0 observed=SUMMARY total=13 failed=0 base_discriminating=6
+R30-CORRECTION SCORECARD.md:173 R14 rc=0 observed=selftest=15/15
+R30-CORRECTION SCORECARD.md:174 R15 rc=0 observed=cases=12 pass=12 control=FALSE-GREEN-REJECTED lost_found=WRITE-DETECTED
+R30-CORRECTION SCORECARD.md:175 R16 cmd=python3 -B tests/fixtures/r24-coverage-agreement.py --tool tools/souji-coverage-agreement.py rc=0 observed=cases=9 pass=9 control=FALSE-GREEN-REJECTED
+R30-CORRECTION SCORECARD.md:314 R18 rc=0 observed=Usage: bash tools/souji-wave-evidence-capture.sh <lane-abs> <round-N> [--verify [--rev <full40>]]
+
+The R18 line satisfies only the frozen v1 reading; under A3 the row matches on its stdout line and the banner is refused as an observation. R08's `skipped=2` is the documented invocation without `--baseline-dir` (`corpus/knowledge/jj-colocation-receipts.md` recheck line).
