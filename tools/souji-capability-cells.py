@@ -40,6 +40,17 @@ AMENDMENT A2 (round 31, after wave-1 SwarmCritic31 bound a `15/15` cell to the n
 both branches, must have a count shape — `[word=]N/M`, or two `word=N` fields separated by whitespace or the two
 bytes backslash-t (`cases=8 pass=4`, `total=32<TAB>pass=32`, `pass=61\tfail=0`); anything else is BAD-ROW(shape).
 
+AMENDMENT A4 (round 31, after wave-1 SwarmCritic28 reached 41/41 MATCH with integer pairs in unrelated files, a
+record row hiding the row's own command, an in-round fixture edit, and one sentence bound to several cells;
+stricter-only; v1 and A2 must also meet the target):
+  (a) an item whose cell names a base command may be superseded only by a `run:` row (a record row would hide that
+      the cell's own command now prints something else): BAD-ROW(cmd-item-record);
+  (b) a record path may not have a `sources` component or end in .py .sh .html .htm .raw (code, controls and web
+      captures are not measurement records): BAD-ROW(record-kind);
+  (c) every run binding (base cell or superseding row) executes its script from the --base blob, written over the
+      REV copy in the private clone, so an in-round edit to the script cannot print the literal;
+  (d) no two items may bind the same (record path, literal) pair: BAD-ROW(shared-occurrence) for every such item.
+
 Output: one ITEM line per item, then
     SUMMARY items=<n> bound_run=<a> bound_record=<b> unbound=<u> mismatches=<m> rev=<REV>
 Exit 0 iff mismatches=0; 1 otherwise; 2 could-not-evaluate. Read-only on --root; one private clone per
@@ -171,6 +182,11 @@ def main():
         if m:
             sup[m.group(1)] = (int(m.group(2)), m.group(3).strip("` "), m.group(4), m.group(5).strip("` "))
 
+    occ = {}
+    for iid_, (_l, lit_, kind_, tgt_) in sup.items():
+        if kind_ == "record":
+            occ.setdefault((tgt_, lit_), []).append(iid_)
+    shared = {i for v in occ.values() if len(v) > 1 for i in v}  # A4(d)
     os.makedirs(a.scratch, exist_ok=True)
     work = tempfile.mkdtemp(prefix="c1.", dir=a.scratch)
     cache = {}
@@ -190,6 +206,12 @@ def main():
                 return cache[key]
             git(clone, "checkout", "-qf", "--detach", a.rev)
             git(clone, "clean", "-fdxq")
+            sp = script_of(argv)
+            if sp is not None:  # A4(c): run the script's --base blob
+                b = subprocess.run(["git", "-C", root, "cat-file", "blob", f"{a.base}:{sp}"], capture_output=True)
+                if b.returncode == 0:
+                    with open(os.path.join(clone, sp), "wb") as fh:
+                        fh.write(b.stdout)
             tmp = tempfile.mkdtemp(prefix="t.", dir=work)
             env = dict(os.environ, TMPDIR=tmp, GIT_CONFIG_NOSYSTEM="1")
             env.pop("GIT_DIR", None)
@@ -222,6 +244,8 @@ def main():
                     verdict = "BAD-ROW(line-or-literal)"
                 elif not COUNT_FORM.match(lit):
                     verdict = "BAD-ROW(shape)"  # A2
+                elif iid in shared:
+                    verdict = "BAD-ROW(shared-occurrence)"  # A4(d)
                 elif kind == "run":
                     try:
                         argv = shlex.split(target)
@@ -245,6 +269,10 @@ def main():
                         detail = f"{target} rc={rc} observed={s}"
                         if not (rc == 0 and at_bounds(lit, s)):
                             verdict = "RUN-MISMATCH"
+                elif basecmd:
+                    verdict = "BAD-ROW(cmd-item-record)"  # A4(a)
+                elif "sources" in target.split("/") or target.lower().endswith((".py", ".sh", ".html", ".htm", ".raw")):
+                    verdict = "BAD-ROW(record-kind)"  # A4(b)
                 else:
                     path = target
                     parts = path.split("/")
