@@ -1,0 +1,50 @@
+# SwarmMutationTester29-2 receipts — r30 W2 mutation test of census/round-30/c3-counter-v2.py
+# Scratch: /fast/scratch/hyaku/souji-r30/MutateC3v2/ (removed after capture). Detector: counter run with
+# --root <scratch clone of lane, origin removed> --rev <rev> --scratch <under item dir>. TMPDIR under item dir.
+# Lane target sha256 before AND after all runs: 98d4bd43965206ef8bbf87864e2516927573bf33b020afb463baaa0781d01a45
+# git status --porcelain on lane path after runs: empty (clean). Lane HEAD during work: 9dcd367655fc28ba73d679a0e2cadaff96d2bcb8
+
+[base.py] sha256 98d4bd43965206ef8bbf87864e2516927573bf33b020afb463baaa0781d01a45 (== lane HEAD blob, byte-identical)
+[m1.py] sha256 6065ae6e90a795306cf5ef17819b3abd45f58ee9448bb583de70807fa7b406e9  E1 enumeration regex `^ground: F1(?:[ \t]|$)` -> `^ground: F1`
+[m2.py] sha256 00689155f062656609576c6986a1d17d8a3409756145f6b2893b8415c486d918  `e1 = entry_exact and len(exact) == 3` -> `e1 = len(exact) == 3`
+[m3.py] sha256 4a19116b85004d380affb77edd9f4f7131ca8568546e9bab0b110ad0b796515d  E2 row matcher `^\|\s*F1 ` -> `^\|\s*F1`
+[m4.py] sha256 1dc702945f81fb679081fe8fe47704b775715ee84854261408701c0495bb0452  E3 `got == keep(rec)` -> `len(got) == len(keep(rec))` (rc kept)
+[m5.py] sha256 3dba2759d94526113259c0e0c23279d9a75a065019679c7044a9496ed732a680  E3 `p.returncode == 0 and got and ...` -> `got and ...`
+[m6.py] sha256 71db6b699c9256eb4308df3c8523dadd729631b47299a756546f046d8a09a739  E4 curl block + `live = sha256(q.stdout)` -> `live = want`
+
+## Frozen-state detector (rev 76c94eb = C3 landing; rev 9dcd367 = lane tip)
+pristine@76c94eb rc=0:
+E1 PASS entry_exact=True f1_exact=3
+E2 PASS
+E3 PASS rc=0 replay_lines=10 record_lines=10
+E4 PASS snapshots=4 bad=[]
+SUMMARY-V2 e1=ok e2=ok e3=ok e4=ok f1_exact=3 rev=76c94eb41fc38093d7143a016006b6275e102d5d
+pristine@9dcd367 rc=0: same four legs, SUMMARY rev=9dcd367655fc28ba73d679a0e2cadaff96d2bcb8
+m1..m6 @76c94eb: rc=0 each; `diff pristine-land mX-land` -> IDENTICAL for all six
+m1..m6 @9dcd367: rc=0 each; `diff pristine-tip mX-tip` -> IDENTICAL for all six
+
+## Adversarial-state detector (disposable scratch clones adv-m1..adv-m6, one probe commit atop 9dcd367; origin removed; never pushed)
+adv-m1 rev=5db561193d64bd932c6c0a5295911de3956f18c0  adds corpus/knowledge/zzr30mutprobe-f1jj.md with `ground: F1-jj` line
+  pristine rc=0: E1 PASS entry_exact=True f1_exact=3 | SUMMARY e1=ok ... f1_exact=3
+  mutant  rc=1: E1 FAIL entry_exact=True f1_exact=4 | SUMMARY e1=fail ... f1_exact=4   -> KILLED
+adv-m2 rev=3118082d73a738c7711d1a21348ed4b3c85bba74  strips entry's ground line; adds zzr30mutprobe-f1.md with plain `ground: F1`
+  pristine rc=1: E1 FAIL entry_exact=False f1_exact=3 | SUMMARY e1=fail
+  mutant  rc=0: E1 PASS entry_exact=False f1_exact=3 | SUMMARY e1=ok                    -> KILLED
+adv-m3 rev=37fab3a6aece2634b33c772c53d328aa15ffd5b9  renames README plain row cell `F1 `->`F0 `; F1-jj edge row now names `knowledge/jj-keep-ref-expiry.md`
+  pristine rc=1: E2 FAIL | SUMMARY e2=fail
+  mutant  rc=0: E2 PASS | SUMMARY e2=ok                                                 -> KILLED
+adv-m4 rev=b752ba211e2d48e073b85c0422cc1727085f1a75  fixture step 8 prints `cmd=tampered-note`, exits 0
+  pristine rc=1: E3 FAIL rc=0 replay_lines=10 record_lines=10 | SUMMARY e3=fail
+  mutant  rc=0: E3 PASS rc=0 replay_lines=10 record_lines=10 | SUMMARY e3=ok            -> KILLED
+adv-m5 rev=cf546cce6110123b99e51f9810dd46ffbb77edd1  fixture appends `exit 3` after all RESULT lines
+  pristine rc=1: E3 FAIL rc=3 replay_lines=10 record_lines=10 | SUMMARY e3=fail
+  mutant  rc=0: E3 PASS rc=3 replay_lines=10 record_lines=10 | SUMMARY e3=ok            -> KILLED
+adv-m6 rev=2996ae1143d2967142d3aacd3c57befe46a9e448  first fetch-receipts.tsv URL -> file:///fast/scratch/hyaku/souji-r30/MutateC3v2/adv-m6/decoy.bin (decoy sha256 24810e5f36aa51f1bb0acbd5c53d251fab543ffdd0502d89db73284ac8364ecb != receipt sha256 column); committed snapshot blob still hashes to receipt
+  pristine rc=1: E4 FAIL snapshots=4 bad=['census/round-30/sources/cli-reference@.md.snap:hash'] | SUMMARY e4=fail
+  mutant  rc=0: E4 PASS snapshots=4 bad=[] | SUMMARY e4=ok                              -> KILLED
+
+## Restoration evidence
+lane census/round-30/c3-counter-v2.py sha256 after all runs: 98d4bd43965206ef8bbf87864e2516927573bf33b020afb463baaa0781d01a45 (unchanged; equals HEAD blob)
+git -C lane status --porcelain=v1 -- census/round-30/c3-counter-v2.py: empty
+scratch clone $SCRATCH/c worktree clean (0 entries), HEAD 9dcd367655fc28ba73d679a0e2cadaff96d2bcb8
+mutants lived only in $SCRATCH/m1..m6.py and adv clones under $SCRATCH/adv-m1..6; whole $SCRATCH removed after capture

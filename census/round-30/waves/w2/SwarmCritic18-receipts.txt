@@ -1,0 +1,199 @@
+# receipts — SwarmCritic18, souji r30 w2, C3 coverage-credit attack
+# lane clone tip 9dcd367655fc28ba73d679a0e2cadaff96d2bcb8 ; base 9420341d9a814cb6089c25fb03a4cc9b23dc0d1b
+# toolchain: none installed or upgraded this seat (no pacman, no uv, no npm)
+
+== A. base 9420341 SOURCES.md:75 (S054 row, whole) ==
+| S054 | jj source at tag v0.45.1 — https://github.com/jj-vcs/jj/blob/v0.45.1/lib/src/git_backend.rs (also cli/src/commands/util/gc.rs, lib/src/git.rs) | code | A | creation and removal of `refs/jj/keep/*` in jj 0.45.1 (tag commit 7c41cdeb = host binary); not later releases | git_backend.rs:99-100 NO_GC_REF_NAMESPACE, :868-871 to_no_gc_ref_update, :497 and :1466 write paths, :900-953 recreate_no_gc_refs, :1558-1564 gc; util/gc.rs:34-35, :54-58; git.rs:90-96; companion docs/technical/architecture.md § GitBackend | jj writes a keep ref for every commit it creates or imports (visible or hidden); only `jj util gc` removes non-head keep refs older than its threshold (default 2 weeks); other `refs/jj/` names are `remote-tags/` and `root`; bookmarks live under refs/heads and refs/remotes | mined | 2026-10-20 | on-release | corpus/knowledge/jj-colocation-receipts.md |
+
+== B. base 9420341 corpus/knowledge/jj-colocation-receipts.md lines 12, 30, 31, 86, 108, 122 ==
+- **Import and export run on every command.** "Jujutsu will import and export from and to the Git repo on every `jj` command automatically." — S051 — `sourced`
+- **Source: lifetime, as far as the code goes.** `gc` (`git_backend.rs:1558-1564`) calls `recreate_no_gc_refs` (`:902-953`) with `all_heads_for_gc()`. Keep refs for current heads are kept. Other keep refs are deleted when their loose-ref file is older than the threshold. The source comment calls that timestamp check "still racy on re-import" (`:928-937`). `jj util gc` uses a 14-day threshold by default (`cli/src/commands/util/gc.rs@v0.45.1:55`), and its doc says to run `jj op abandon ..<some old operation>` first (same file, doc comment). — S054 — `sourced`
+- **[INFERENCE]** a commit hidden by a rewrite keeps its keep ref until its operation is abandoned, `jj util gc` runs, and the ref is older than the threshold. The docs read do not state this; the timing is the inference, not the mechanism.
+- **What git gc does.** It removes unreachable objects, and its `--prune` date defaults to two weeks ago (S063, `git-gc.adoc@v2.56.0:18, 81-83`). jj's `util gc` runs `git gc --prune=@<keep_newer>` (`lib/src/git_backend.rs@v0.45.1:977`), so the two prune clocks are linked — S054 — `sourced`
+- **Keep-ref lifetime.** The docs read do not state it. The timing in §3 is an inference from source and from observed keep-ref counts. The lane helper (`scripts/hyaku/jj-lane.sh`) contains neither `jj op abandon` nor `jj util gc`, so hidden keep-held commits in lanes are not pruned by the lane tooling. That is an observation of the helper, not a jj guarantee.
+  - `util gc` pruning of hidden keep-held commits (Limits, first bullet).
+
+== C. tip corpus/README.md lines 39, 46, 216, 228-231 (r12 and r17 rows, untouched by r30) ==
+| F1 git-native housekeeping vs receipts | frontier, entries held | `knowledge/git-auto-maintenance-prunes-worktrees.md`, `knowledge/git-grace-periods-and-expire-to.md`, `knowledge/git-auto-maintenance-trigger-set.md`, `knowledge/git-auto-maintenance-trigger-set-r23.md`, `knowledge/jj-keep-ref-expiry.md` |
+- F1 git-native housekeeping vs receipts — next: the trigger set and the measured prune are now held (round-26 entries `knowledge/git-auto-maintenance-trigger-set{,-r23}.md`, S128-S132); remaining: keep-ref expiry unmeasured, fleet exposure numerator re-census.
+| F1-jj jj-colocated lane repos (edge class of F1) | Core (candidate, admission pending closure): bounded receipt-root rule — durable roots exclude exactly `refs/jj/*`; keep-only novel-content refusal; plain repos byte-identical. F1 itself stays frontier; keep-ref expiry unmeasured | `knowledge/jj-colocation-receipts.md`; `../tests/fixtures/r17-jj-receipts.sh`; `../census/round-17/jj-receipts-base5fa6017.txt`, `../census/round-17/jj-receipts-4f48343.txt` (changed arm 0 failed; r18 correction: was a `ddb7347` record name never committed) |
+- F1 — plain repos: unchanged (:46). jj-colocated residue: a keep-ref
+  expiry measurement (no jj doc read states when jj drops
+  `refs/jj/keep/*`; entry Limits) — unrun. The conservative-refusal cost
+  stays disclosed, not narrowed: a rewritten predecessor jj hides can
+
+== D. tip corpus/README.md lines 598-645 (r30 section) ==
+## Round 30 — F1 keep-ref expiry measured
+
+Appended; the sections above stand. One knowledge entry is admitted for F1, measured this round
+with real jj 0.45.1 and git 2.56.0 in scratch repositories under the round's scratch root, never
+against a lane:
+
+- `knowledge/jj-keep-ref-expiry.md` — what removes a `refs/jj/keep/*` ref and when. One run of
+  an eight-step fixture (steps 1-5 on a main repository, steps 6-8 on a control repository):
+  `git gc --prune=now` leaves the keep ref naming the abandoned commit in place,
+  `jj util gc --expire=now` removes it, and `jj op abandon ..@-` before a second
+  `jj util gc --expire=now` leaves two keep refs where eight stood. The commit object stayed
+  present in every step, so a dropped keep ref is not a deleted object and the object-prune
+  clock is a separate question. The default threshold is two weeks, and `--expire` accepts only
+  the string `now`; a future timestamp is refused, so the "not yet expired" arm is the default
+  run. Fixture `../tests/fixtures/r30-jj-keep-expiry.sh`; measured record
+  `../census/round-30/records/jj-keep-expiry-run.txt` (`jj-version: jj 0.45.1`, eight `RESULT`
+  lines).
+
+Coverage-map effect: the F1 row at `:39` now names a fifth entry with its status cell unchanged
+(`frontier, entries held`); the four entries it already carried are unchanged. F1 stays
+frontier — the entry measures a ref's lifetime, and one entry does not promote a frontier ground
+to Core (PROVINCE `## Round 30 boundary note`).
+
+### Frontier (r30)
+
+- F1 — keep-ref expiry is now measured (the entry above; jj 0.45.1, eight `RESULT` steps,
+  `../census/round-30/records/jj-keep-expiry-run.txt`). Remaining: the fleet exposure numerator
+  re-census named at `:46`; and, disclosed rather than measured here, when the commit object
+  behind a dropped keep ref is pruned by git's own clock — the run records `object_present=yes`
+  at every step and stops before that question.
+- F2, F3, F4 — unchanged. F5 stays list-only; the reap protocol and NAMESPACE pin remain
+  operator-held. Certification OFF, K5 HELD.
+
+### Round 30 corrections
+
+- The r12 F1 row at `:39` was replaced in place rather than superseded by a later table: its
+  entries cell gained `knowledge/jj-keep-ref-expiry.md` and its status cell, already
+  `frontier, entries held`, was not reworded. Map rows are edited in place (r28 did the same to
+  the F4 row at `:42`, r29 to the F3 row at `:41`); the append-only record is this section.
+- `knowledge/jj-colocation-receipts.md` §3 marked the keep-ref timing `[INFERENCE]` and its
+  `Limits` first bullet said the docs read do not state the lifetime. The r30 entry now carries
+  the measured timing (ref removed by `jj util gc` with the operation log still naming the
+  commit); the r17 text stands as history and is not rewritten. What remains unmeasured is the
+  object-prune clock, not the ref's removal.
+
+== E. tip corpus/knowledge/jj-keep-ref-expiry.md lines 14-92, 115-121 ==
+held rule of `corpus/knowledge/jj-colocation-receipts.md` sections 3 and 4; this entry does not
+restate it. What was unmeasured there (its Limits, first bullet) is the removal side: which action
+deletes a keep ref, on what threshold, and what a git-side collection does to a commit that only a
+keep ref names. Four tag-pinned snapshots (two new rows, S220 and S221, and two held rows, S054 and S063) and one measured run answer that.
+
+1. **One function rewrites the ref set.** `recreate_no_gc_refs` takes the heads it is given, keeps
+   the keep refs for them, and builds the deletion list from every other keep ref whose loose-ref
+   file is not newer than `keep_newer`, applying both in one ref transaction
+   (git_backend.rs:900-903, :917-961) [S054]. The heads are `index.all_heads_for_gc()` inside the
+   backend `gc(index, keep_newer)` (git_backend.rs:1558-1564) [S054]. So the ref set is a function of
+   the index/operation views jj reads and of a caller-supplied `keep_newer` instant — not of git.
+2. **The age gate, and the hole in it.** A ref that would otherwise go is kept when its loose-ref
+   file is newer than `keep_newer` (git_backend.rs:938-944) [S054], and the source comment says this
+   check is racy on re-import and that an existing packed ref is not demoted to loose
+   (git_backend.rs:929-937) [S054]. A packed keep ref therefore has no loose file whose mtime can
+   save it. [INFERENCE] the metadata probe fails for a packed ref and the ref goes regardless of age;
+   this path was read, not measured — the fixture's refs are loose.
+3. **`jj util gc --expire` is the lever, with two clocks.** The command's `--expire` is a time
+   threshold whose default prunes only obsolete objects and operations older than two weeks
+   [S220, `jj util gc` lines 3799-3805]; arbitrary absolute and relative timestamps are deferred to
+   a later release, so v0.45.1 accepts the single literal `now` and rejects anything else — the
+   record's `future-expire-control` step shows `--expire=tomorrow` rejected with rc=1. The backend
+   then calls git with `--prune=@<keep_newer>` (git_backend.rs:977) [S054], so the keep-ref age test
+   and git's loose-object prune share one instant.
+4. **`jj op abandon` changes reachability; it does not delete the ref.** The doc says abandoned
+   operations, commits and other unreachable objects can later be garbage collected by using
+   `jj util gc`, and that predecessors are discarded once unreachable from the operation history
+   [S220, line 2419]. The operation object's view holds the set of heads [S221, lines 5-8], which
+   is the state a later `gc` reads. Abandoning is therefore the precondition that lets a keep ref
+   fail the current-heads test in step 1; the deletion still happens inside `jj util gc`.
+5. **`git gc` alone removes neither the ref nor the commit.** git gc removes unreachable objects
+   [S063, lines 18-20] and prunes loose objects older than `--prune`, two weeks by default
+   [S063, lines 81-83], keeping objects newer than that date and everything reachable from them
+   [S063, lines 159-161]. A keep ref is a ref, so the commit it names stays reachable and stays out
+   of that removal. [INFERENCE] that refs are reachability roots is git's ref model rather than a
+   sentence quoted here; the record's `git-gc-prune-now` step is the corroboration.
+
+**Observed:** `census/round-30/records/jj-keep-expiry-run.txt` (fixture
+`tests/fixtures/r30-jj-keep-expiry.sh`, run under `$TMPDIR` on jj 0.45.1 and git 2.56.0; byte-identical
+on replay) prints one `RESULT ` line per step; `keep_refs` counts `refs/jj/keep/*` and `target_keep` says
+whether a keep ref still names the abandoned commit B. Main repository: `1-commit-A-B` keep_refs=7
+target_keep=yes; `2-abandon-B` 8, yes; `3-git-gc-prune-now` 8, yes; `4-util-gc-expire-now` 6, no;
+`5-op-abandon-util-gc-expire-now` (`jj op abandon ..@-`, then `jj util gc --expire=now`) 2, no. Control
+repository: `6-future-expire-control` 8, yes, `--expire=tomorrow` rejected with rc=1;
+`7-default-expire-control` (no `--expire`, two-week default) 8, yes; `8-control-expire-now` 6, no. The
+commit object is present (`object_present=yes`) at every step: the run separates ref removal from
+object removal, and only ref removal is measured here.
+
+## Consequence for souji receipts
+
+A keep-only commit is not a durable receipt root. Steps 4, 5 and 8 remove its keep ref by a `jj util gc` that no lane
+action requests, after which the object is unreachable and a later prune can
+drop it; the held rule that already excludes `refs/jj/*` from a receipt's roots and refuses novel
+keep-only content is `corpus/knowledge/jj-colocation-receipts.md` sections 3 and 4, and it is not
+restated here. This entry supplies the mechanism that makes that rule load-bearing: the ref
+disappears when jj garbage-collects, on jj's threshold, not when git does.
+
+## What this does NOT establish
+
+- **No automatic collection is shown.** The opened CLI reference documents `jj util gc` as the
+  collection command; whether any other jj command invokes backend `gc` was not opened or measured
+  here.
+- **No deletion time can be promised.** The age test is called racy on re-import in the source
+  (git_backend.rs:929-937) [S054], and a packed ref bypasses the test [INFERENCE from :931].
+- **Object removal is not measured.** Every step of the record reports `object_present=yes`; that a
+  later `git gc --prune=now` removes the unreferenced object is git's documented behaviour for
+  unreachable objects [S063] and an inference for this fixture, not a measured row.
+- **The future-expire control bounds v0.45.1 only.** It shows `--expire=tomorrow` rejected in this
+  release; it says nothing about a later one, where arbitrary timestamps are documented as coming.
+- **The hidden-head arm is not measured deterministically.** The fixture's target has a child, so it
+  fails the current-heads test and the age gate alone decides it. The mechanism probe in this wave
+  (`receipt-SwarmExecutor06-keepref-mechanism.txt`) shows a keep ref surviving two `jj util gc
+  --expire=now` runs while naming a commit that `jj log` reports as hidden; which commits
+  `all_heads_for_gc()` returns for hidden heads is not settled by the delivered record.
+  [INFERENCE] a hidden head keeps its ref because the heads list is the index's heads.
+- **No receipt rule is changed.** No class, token, root set or gate moves here; the entry is
+  vocabulary and mechanism for F1.
+
+## Lane link
+- S063 git-gc(1) v2.56.0, section DESCRIPTION, lines 18-20 — "removing unreachable objects which may have been created from prior invocations of 'git add'" — https://git-scm.com/docs/git-gc — snapshot: census/round-30/sources/git-gc.adoc
+- S063 git-gc(1) v2.56.0, OPTIONS `--prune`, lines 81-83 — "Prune loose objects older than date (default is 2 weeks ago, overridable by the config variable `gc.pruneExpire`)." — https://git-scm.com/docs/git-gc — snapshot: census/round-30/sources/git-gc.adoc
+- S063 git-gc(1) v2.56.0, section NOTES, lines 159-161 — "Any object with modification time newer than the `--prune` date is kept, along with everything reachable from it." — https://git-scm.com/docs/git-gc — snapshot: census/round-30/sources/git-gc.adoc
+
+- ADMIT: `corpus/knowledge/jj-keep-ref-expiry.md` — reason: closes the keep-ref-lifetime gap named in `jj-colocation-receipts.md` Limits with four tag-verified sources and one measured run, and leaves the held receipt rule of sections 3 and 4 untouched.
+- REJECT: reading the loose-ref mtime check as an expiry guarantee for a keep ref — reason: the source comment calls that check racy on re-import and a packed ref skips it, so no deletion time can be promised from it.
+
+== F. census/round-30/records/jj-keep-expiry-run.txt (whole) ==
+jj-version: jj 0.45.1-7c41cdeb16b6b321c64e789a966b6adf723816a5
+git-version: git version 2.56.0
+RESULT step=1-commit-A-B keep_refs=7 object_present=yes note=target_keep=yes commits=2
+RESULT step=2-abandon-B keep_refs=8 object_present=yes note=target_keep=yes abandoned=B
+RESULT step=3-git-gc-prune-now keep_refs=8 object_present=yes note=target_keep=yes cmd=git-gc-prune-now
+RESULT step=4-util-gc-expire-now keep_refs=6 object_present=yes note=target_keep=no cmd=jj-util-gc-expire-now
+RESULT step=5-op-abandon-util-gc-expire-now keep_refs=2 object_present=yes note=target_keep=no op_range=..@- ops_naming_target=1
+RESULT step=6-future-expire-control keep_refs=8 object_present=yes note=target_keep=yes expire=tomorrow rc=1 rejected
+RESULT step=7-default-expire-control keep_refs=8 object_present=yes note=target_keep=yes cmd=jj-util-gc-default-2weeks
+RESULT step=8-control-expire-now keep_refs=6 object_present=yes note=target_keep=no cmd=jj-util-gc-expire-now
+
+== G. .ufo/waves/round-30/w1/receipt-SwarmExecutor06-keepref-mechanism.txt output block ==
+## output
+B=583b3d4af8831960342a724b931df79b27d6b4d8 old_workcopy=e39cae3c92dd00b931fd07f3c200fa557b4b7095
+--- jj debug index (head count is the index, not the visible graph)
+Number of commits: 5
+Number of merges: 0
+Max generation number: 3
+Number of heads: 2
+--- visible heads:
+fd3966775cd9
+--- state of the pre-abandon working-copy commit:
+e39cae3c92dd hidden=true
+--- remaining keep refs; whether B is an ancestor of each:
+  refs/jj/keep/e39cae3c92dd00b931fd07f3c200fa557b4b7095 B_ancestor=yes
+  refs/jj/keep/fd3966775cd9ee648fbf3d204ef3383fe8756bda B_ancestor=no
+--- presence: B=yes old_workcopy=yes
+--- jj debug reindex, then gc again
+Finished indexing 5 commits.
+after-reindex keep_refs=2 B_present=yes
+
+== H. sha256 of the files above (tip working tree) ==
+596b554597e6cb1a717e1ee0be063ad284e5c475659a59e3e366edaf5c174729  /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/README.md
+95ff9ba3baf0a81ce972c87f05b9cfe991549b2352a659de28e1b281c0879f27  /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/knowledge/jj-keep-ref-expiry.md
+938caa87356ae119061ceb586572ca1c5aedce30b9b3daa6ae2b41a115a242d6  /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-30/records/jj-keep-expiry-run.txt
+6c5424819cde0e51ea42766341a0b3791d5039879766823d302cccb1b0fa6550  /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r30-jj-keep-expiry.sh
+
+== I. README diff base..tip stat: 46 insertions, 1 deletion; the sole deletion is the :39 map row ==
+ corpus/README.md | 47 ++++++++++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 46 insertions(+), 1 deletion(-)
+-| F1 git-native housekeeping vs receipts | frontier, entries held | `knowledge/git-auto-maintenance-prunes-worktrees.md

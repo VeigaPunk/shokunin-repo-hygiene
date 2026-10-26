@@ -1,0 +1,164 @@
+SwarmCritic21 — r30 w2 receipts (attack on corpus/knowledge/jj-keep-ref-expiry.md and SKILL.md:115)
+date: 2026-10-26 | host: linux 7.2.11-arch1-1 | jj 0.45.1-7c41cdeb16b6b321c64e789a966b6adf723816a5 | git version 2.56.0
+lane clone (origin dropped): git clone -q --no-local /home/vgpnk/Projects/shokunin/souji-shokunin $D/c ; tip 9dcd367655fc28ba73d679a0e2cadaff96d2bcb8
+installs: none performed this seat
+
+=== [A] fixture replay vs committed record ===
+cmd: TMPDIR=<scratch> bash tests/fixtures/r30-jj-keep-expiry.sh > replay.out
+cmd: diff -u census/round-30/records/jj-keep-expiry-run.txt replay.out
+result: BYTE-IDENTICAL (rc=0, empty diff; record has 10 lines: 2 version + 8 RESULT)
+
+=== [B] probe1 — steps 1-4 replicated, reachability after util gc ===
+TARGET=b59d737dfc66da0d7a4758003261cbf229f6b914
+-- keep refs before util gc:
+8
+-- fsck default (pre-gc unreachable):
+2
+after util gc --expire=now:
+keep_refs=6
+target_keep=no
+cat_file_e=yes
+-- fsck unreachable, DEFAULT (reflogs count as reachable) count:
+0
+-- fsck unreachable --no-reflogs count:
+0
+-- fsck --no-reflogs mentions target?
+0
+-- reflogs naming target:
+HEAD
+.git/logs/HEAD
+-- rev-list --all reachability:
+1
+== later git gc --prune=now (default reflog expiry), then cat-file:
+cat_file_e_after_gitgc=yes
+== reflog expire now --all + git gc --prune=now, then cat-file:
+cat_file_e_after_reflog_expire_gc=yes
+BASE=/fast/scratch/hyaku/souji-r30/SwarmCritic21/tmp/probe/r30-probe.aUMMWe
+
+=== [C] probe2 — steps 1-5 replicated, ref-set diff and reachability ===
+### after abandon: refs=8 target_keep=yes
+### after util-gc-now: refs=6 target_keep=no cat_e=yes reachable_from_refs=1
+--- refs removed by step 4:
+63341903dc0f3ab370c93f33a59889869789184f
+cd8c12f54b27eee0dd28a5d28a3db004bfce4e44
+### after op-abandon + util-gc-now: refs=2 target_keep=no cat_e=yes reachable_from_refs=1 ops_naming_target_before=1
+--- refs removed by step 5:
+53bab47a3b663a8ffbf021e676e9c4130e1db11b
+65fb9a2e3e06aa4539769c09d92af32c30293d9b
+a8a87cb2f79a42db26b78944db3e6ea189d8b9ee
+cdc181d9ea39dde37a6ba91567c8a1053375d631
+--- which remaining refs reach target:
+  reaches: c6deca2ae37fb51ef2bb5b4823e05a90b54bc799 6334190 parents=
+### after reflog expire + git gc --prune=now:
+cat_e=yes reachable_from_refs=1
+BASE=/fast/scratch/hyaku/souji-r30/SwarmCritic21/tmp/p2/r30-p2.rWhPx6
+
+--- [C2] parentage of surviving refs and which ref reaches the target (inspection of the probe2 repo after step 5)
+refs/jj/keep/c6deca2ae37fb51ef2bb5b4823e05a90b54bc799  c6deca2  | parents=cd8c12f  (cd8c12f = B, the abandoned target)
+REACHES: refs/jj/keep/c6deca2ae37fb51ef2bb5b4823e05a90b54bc799
+after reflog expire --expire=now --all + git gc --prune=now: cat-file -e B = 0 (present)
+
+=== [D] probe3 — packed vs loose keep ref under the 14-day default ===
+loose control: target_keep(after abandon)=yes loose_file=yes
+loose control after default util gc: keep_refs=8 target_keep=yes
+packed arm: loose_file_before_pack=yes
+packed arm: loose_file_after_pack=no packed_entry=1
+packed arm after default util gc: keep_refs=6 target_keep=no
+BASE=/fast/scratch/hyaku/souji-r30/SwarmCritic21/tmp/p3/r30-p3.5Nrcw4
+
+=== [E] probe4 — control repository steps 6-8, reachability ===
+step6 target_keep=yes
+step7 target_keep=yes
+step8 keep_refs=6 target_keep=no cat_e=yes rev_all=1
+after reflog-expire+git-gc-prune-now: cat_e=yes rev_all=1
+BASE=/fast/scratch/hyaku/souji-r30/SwarmCritic21/tmp/p4/r30-p4.3mwbmP
+
+=== [F] C3 counters (v1 and A2 v2) at landing and tip ===
+L1 PASS f1_entries=3
+L2 PASS coverage="grounded=16 mapped=16 dangling=0 mismatches=0"
+L3 PASS gate="entries=1 ok=1 slice_verdicts=0 slice_total=0 fail=0" rc=0
+L4 PASS snapshots=4 bad=[]
+L5 PASS quotes=14 bad=[]
+L6 PASS cited=['S054', 'S063', 'S220', 'S221'] missing=[] opened_today=['S220', 'S221'] url_unbound=[]
+L7 PASS bad=[]
+L8 PASS run_record=present results=8
+L9 PASS sources-census rc=0
+SUMMARY legs=9 fail=0 f1_entries=3 rev=76c94eb41fc38093d7143a016006b6275e102d5d
+L1 PASS f1_entries=3
+L2 PASS coverage="grounded=16 mapped=16 dangling=0 mismatches=0"
+L3 PASS gate="entries=1 ok=1 slice_verdicts=0 slice_total=0 fail=0" rc=0
+L4 PASS snapshots=4 bad=[]
+L5 PASS quotes=14 bad=[]
+L6 PASS cited=['S054', 'S063', 'S220', 'S221'] missing=[] opened_today=['S220', 'S221'] url_unbound=[]
+L7 PASS bad=[]
+L8 PASS run_record=present results=8
+L9 PASS sources-census rc=0
+SUMMARY legs=9 fail=0 f1_entries=3 rev=9dcd367655fc28ba73d679a0e2cadaff96d2bcb8
+E1 PASS entry_exact=True f1_exact=3
+E2 PASS
+E3 PASS rc=0 replay_lines=10 record_lines=10
+E4 PASS snapshots=4 bad=[]
+SUMMARY-V2 e1=ok e2=ok e3=ok e4=ok f1_exact=3 rev=76c94eb41fc38093d7143a016006b6275e102d5d
+E1 PASS entry_exact=True f1_exact=3
+E2 PASS
+E3 PASS rc=0 replay_lines=10 record_lines=10
+E4 PASS snapshots=4 bad=[]
+SUMMARY-V2 e1=ok e2=ok e3=ok e4=ok f1_exact=3 rev=9dcd367655fc28ba73d679a0e2cadaff96d2bcb8
+
+=== [G] snapshot hashes vs entry verified-at / SHA256SUMS / fetch-receipts.tsv ===
+b330694348c2a6fb21b637425c711d48ac9fa41d0b3596b4ca2955f7a9333554  cli-reference@.md.snap
+95147270e5bc2a689e1191256c0f214d8e52ac6d4523756eb6b8ec8113d86c69  git_backend.rs
+2a48dab85483f8bed666ccc1aebd458d70f4ff57ece1a122aee8889b3209ce18  operation-log.md
+e3dbc4081095faf8d2d760eb4a47a1350f89d0c772f55eaada9cfbcdbeafba8c  git-gc.adoc
+
+=== [H] source bytes quoted in the report ===
+--- census/round-30/sources/git_backend.rs:938-946
+938:         let loose_ref_path = git_repo.path().join(git_ref.name.to_path());
+939:         if let Ok(metadata) = loose_ref_path.metadata() {
+940:             let mtime = metadata.modified().expect("unsupported platform?");
+941:             if mtime > keep_newer {
+942:                 tracing::trace!(?git_ref, "not deleting new");
+943:                 no_gc_refs_to_keep_count += 1;
+944:                 continue;
+945:             }
+946:         }
+--- census/round-30/sources/git_backend.rs:1557-1565
+1557:     #[tracing::instrument(skip(self, index))]
+1558:     fn gc(&self, index: &dyn Index, keep_newer: SystemTime) -> BackendResult<()> {
+1559:         let git_repo = self.lock_git_repo();
+1560:         let new_heads = index
+1561:             .all_heads_for_gc()
+1562:             .map_err(|err| BackendError::Other(err.into()))?
+1563:             .filter(|id| *id != self.root_commit_id);
+1564:         recreate_no_gc_refs(&git_repo, new_heads, keep_newer)?;
+1565: 
+--- census/round-30/sources/git_backend.rs:970-978
+970: fn run_git_gc(program: &OsStr, git_dir: &Path, keep_newer: SystemTime) -> Result<(), GitGcError> {
+971:     let keep_newer = keep_newer
+972:         .duration_since(SystemTime::UNIX_EPOCH)
+973:         .unwrap_or_default(); // underflow
+974:     let mut git = Command::new(program);
+975:     git.arg("--git-dir=.") // turn off discovery
+976:         .arg("gc")
+977:         .arg(format!("--prune=@{} +0000", keep_newer.as_secs()));
+978:     // Don't specify it by GIT_DIR/--git-dir. On Windows, the path could be
+--- census/round-30/sources/operation-log.md:5-9
+5: Jujutsu records each operation that modifies the repo in the "operation log".
+6: You can see the log with `jj op log`. Each operation object contains a snapshot
+7: of how the repo looked at the end of the operation. We call this snapshot a
+8: "view" object. The view contains information about where each bookmark, tag, and
+9: Git ref (in Git-backed repos) pointed, as well as the set of heads in the repo,
+--- census/round-30/sources/cli-reference@.md.snap:3801-3803
+3801:    By default, only obsolete objects and operations older than 2 weeks are pruned.
+3802: 
+3803:    Only the string "now" can be passed to this parameter. Support for arbitrary absolute and relative timestamps will come in a subsequent release.
+--- cli/src/commands/util/gc.rs@v0.45.1:54-58 (fetched live this run, not a lane snapshot)
+54:     let keep_newer = match args.expire.as_deref() {
+55:         None => SystemTime::now() - Duration::from_secs(14 * 86400),
+56:         Some("now") => SystemTime::now() - Duration::ZERO,
+57:         _ => return Err(user_error("--expire only accepts 'now'")),
+58:     };
+
+=== [I] lane tooling grep (no jj gc request) ===
+cmd: grep -rn 'util gc\|op abandon' tools/   -> no output, rc=1 (no match)
+cmd: grep -c 'util gc\|op abandon' /home/vgpnk/Projects/shokunin/scripts/hyaku/jj-lane.sh   -> 0, rc=1

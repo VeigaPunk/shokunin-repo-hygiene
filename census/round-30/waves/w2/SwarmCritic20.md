@@ -1,0 +1,60 @@
+# SwarmCritic20 — causal separability (C1 × C2) as landed, souji round 30 wave 2
+
+## Status
+STATUS: PASS — the attack ran and reproduced the C2 landing-commit miss byte-for-byte; three synthetic revisions localize it to integration ordering (an uncaptured C1-cited path plus a capture commit 79 s late), not to C2's instrument; C2 remains MISS at its landing rev and green at the tip under v1, and A1 adds a second, counter-side miss at the tip.
+
+## Evidence
+All runs from private `git clone --no-local` copies of the lane (origin removed) in `/fast/scratch/hyaku/souji-r30/SwarmCritic20/`; receipts `SwarmCritic20-receipts.txt` in this dir. No installs (python 3.14.8, git 2.56.0, jj 0.45.1 already present).
+
+1. **The frozen contract asserts measurement independence.** `census/round-30/records/preregistration.txt:13`: "each counter is evaluable at its own landing commit without the others".
+2. **The gate's pointer leg has always read SCORECARD.md.** Base tool `9420341…:tools/souji-landing-gate.py:916`: `sources = {`, with `"SCORECARD.md",` at line 920; unchanged at C2's commit `68447af…:tools/souji-landing-gate.py:963`. C2 added only capture mapping ("Map `.ufo/waves/round-N/<suffix>` onto census/round-N/waves/<suffix>.", `:907`) and template skipping.
+3. **C1 appended a committed citation of a gitignored wave path.** `7b16731:SCORECARD.md:322`: "Literal provenance per row: `.ufo/waves/round-30/w1/deliver-c1-literal-history.tsv`". The delivery itself existed on disk from 01:57 (mtime), byte-identical to `census/round-30/waves/w1/deliver-c1-literal-history.tsv` (`cmp` clean).
+4. **At C2's landing commit the frozen v1 counter prints dangling=1** (receipt R3/R10; identical to the L1's `records/c2-after-v1.txt`): `LG-DANGLING-PTR .ufo/waves/round-30/w1/deliver-c1-literal-history.tsv SCORECARD.md:322 cites path absent at 68447afef62e` plus `SUMMARY reports=86 cne=0 dangling=1 other=7 fixture=ok redarm=ok regress=same`.
+5. **Synthetic A (R7): the same C2 tree with only SCORECARD.md reverted to base is green** — `findings=7` (only the 7 LG-SEAT-UNCARRIED), no LG-DANGLING-PTR. Commit `6c344cd…`, diff = `SCORECARD.md 20 deletions`.
+6. **Synthetic B (R8): the same C2 tree with only the cited capture file added is green** — `findings=7`, no dangling. Commit `fe64f3d…`, diff = `deliver-c1-literal-history.tsv 14 insertions`.
+7. **Synthetic C (R9): tip minus only that capture file re-dangles** — `LG-DANGLING-PTR … SCORECARD.md:322 cites path absent at 28a328d2c746`, `findings=1`. So the tip verdict is jointly owned by C1's citation hygiene and capture completeness.
+8. **Ordering:** C1 `7b16731` 02:11:13, C2 `68447af` 02:11:37, capture `aea0525` 02:12:56, C3 `76c94eb` 02:14:37, carry `936efc8` 02:15:15, tip `9dcd367` 02:16:06 (all -0300). The capture landed 79 s after C2 and is unchanged to the tip.
+9. **Tip, frozen v1 (R11):** `SUMMARY reports=86 cne=0 dangling=0 other=0 fixture=ok redarm=ok regress=same rev=9dcd367…` — target exact.
+10. **A1 at the tip also misses (R12):** `SUMMARY-V2 reports=86 expected=86 cne=0 dangling=0 bind=ok nocap=ok ptrarm=ok fixture=ok redarm=ok regress_full=differs`. The L1 recorded v2 only at the landing commit (`records/c2-after-v2.txt`), not at the tip.
+11. **The REGRESS-FULL difference is two intended message lines, and the strip never fires.** A1 says "REGRESS-FULL (every selftest/r16 line equal between BASE and REV except the free-text `err=` tail of a CASE line," (`amendments.txt:12`); the code strips `re.sub(r"\terr=.*$", "", l) if l.startswith("CASE\t")` (`c2-counter-v2.py:69`). The real separator is a space: `fleet=[] err=no .md reports under .ufo/waves/round-18/ at` (R16/R17). Simulating strip_err leaves 2 differing lines, both the C2 rewording `no .md reports under .ufo/waves/round-N/ at` → `… or census/round-N/waves/ at`.
+12. **C1 holds at both revs under both instruments.** A3 and v1 at `7b16731` and at `9dcd367`: `SUMMARY k1=0 k2=0 mismatches=0 rows=18 pointers=10`. A3 base control = `mismatches=12` (matches `controls-amended.tsv:2`; v1 base 13 in `controls.tsv:2`), so the claim is non-vacuous under both.
+13. **C3 holds at both revs under both instruments (R13-R15).** v1 `legs=9 fail=0 f1_entries=3` at `76c94eb` and tip; v2 at tip `e1=ok e2=ok e3=ok e4=ok f1_exact=3`. The gate at `76c94eb` prints no LG-DANGLING-PTR and `checked_reg` rises 58→59 with no LG-PARSE-REG: C3's README/PROVINCE/SKILL/knowledge text does not reach C2's target.
+14. **The r29 carry (R5) moves only non-target fields.** Gate at `76c94eb`: `findings=7`; at `936efc8`: `findings=0 carry_heading=1`. `other=` and `carry_heading` are absent from both C2 targets, and v1's exit rule ignores `other` (`c2-counter.py` exit condition names reports, cne, dangling and the three legs only).
+15. **Wave-1 production, three statements now falsified:** `deliver-records-skeleton.md:92` "causally separable by landing commit"; `deliver-cross-claim.md:187` "Risks: (a) ordering slip — if C2 lands first, the landing SUMMARY prints" / "other=7 and the kill-rule tension surfaces"; `SwarmCritic27.md:27` "C2 and C3 are not causally separable at the final tip." (scoped to the tip and to C3 only).
+
+## Findings
+1. **C2's landing miss has exactly one cause and it is C1's committed prose.** `SCORECARD.md:322` (C1, `7b16731`) cites a wave path whose capture landed later; the C2 gate flags it at `68447af` (Evidence 4), and removing only that block (A) or adding only that capture file (B) each restore `dangling=0`. Impacted: operability (8) measurement only.
+2. **The instruments are separable; the landing-commit SUMMARYs are not.** C1's counter is a function of SCORECARD/SHONEN rows and row commands, none moved by C2 (REGRESS same; A3/v1 target at tip, Evidence 12). C2's gate legs are functions of gate bytes and the r29 capture, none moved by C1 (synthetic A). But v1's `dangling` sums LG-DANGLING-PTR over lane-global sources that both C1 and C3 write into by design (Evidence 2), so at a shared rev the C2 SUMMARY is a function of other claims' text. The prereg sentence in Evidence 1 is therefore false in the measurement sense and true only in the trivial "the counter runs" sense.
+3. **The miss is an integration-order defect, not a predicate or instrument defect.** The convenience of the fix (Evidence 5-7) shows C2's change is green on its own and green with a pre-landed capture; only the 79 s gap (Evidence 8) made the landing rev red. The frozen kill rule is unconditional, so the miss stands and cannot be re-scored without relaxing a frozen rule after data.
+4. **C2's tip greenness is coupled to a non-claim artifact.** Synthetic C (Evidence 7): deleting the C1-cited capture file alone turns the tip red. Wave 1 named this joint ownership for C3 (`SwarmCritic27.md:27`) but not for C1, which is the coupling that actually fired; `deliver-cross-claim.md:187` inverted the severity (it feared C2-first → `other=7`, a field outside the target and outside v1's exit rule, and missed C1-first → `dangling=1`, which is inside both).
+5. **A1 adds a second miss that the L1 recorded only at the landing commit.** The v2 target is missed at the tip too (Evidence 10), from the same one-line comparator defect (Evidence 11); the underlying REGRESS property holds and is *narrower* than A1's intent: exactly two `err=` message lines differ, both the rewording A1 anticipated. A1 as printed therefore fails at both revs, independent of the C1/C2 coupling.
+6. **C3 and the r29 carry do not perturb C2's target.** C3: no dangling at its own commit, `checked_reg` 58→59 with no parse finding, v1 and v2 both green (Evidence 13). Carry: `other=` 7→0 and `carry_heading` 0→1 only, neither target nor exit-bearing (Evidence 14). No axis harm from either.
+
+## Attack log
+- **C2 landing target (v1) — BROKEN.** `dangling=1` at `68447af` (receipt R3/R10). Frozen verdict: MISS at the landing commit, cause integration order (Findings 1, 3).
+- **C2 tip target (v1) — HOLDS.** Exact frozen SUMMARY with `other=0` (receipt R11).
+- **C2 A1 target — BROKEN at landing and at tip.** `regress_full=differs` at both (receipt R12, `records/c2-after-v2.txt`); cause is the `\terr=` comparator, not the gate. Frozen verdict as printed: MISS at both revs; claim-level property HOLDS (only the two intended message lines differ).
+- **C1 claim/target — HOLDS.** v1 and A3, landing rev and tip: `k1=0 k2=0 mismatches=0 rows=18 pointers=10`; base control non-vacuous (A3 12, v1 13).
+- **C1 delivery hygiene — DEFECT-NOT-FATAL to C1, fatal to C2's landing.** A committed self-assessment paragraph cites a gitignored path; it resolves at every rev once the capture exists, but not at the revs before its capture.
+- **C3 claim/target — HOLDS.** v1 and v2, own commit and tip; gate-clean at its own commit.
+- **C1↔C2 causal separability (the assigned question) — instruments HOLDS, landing-rev measurements BROKEN.** Not "non-separable claims": no C2 leg moves C1's rows and no C1 file moves C2's gate/fixture legs (evidence 5, 12). The falsified part is the strong Q59 sentence, and it is falsified by landing order, not by the predicates.
+- **C3 → C2 coupling — HOLDS** (no target effect). **r29 carry → C2 `other=` — HOLDS for the target**, coupling confined to a non-target field.
+- **Wave-1 separability production — BROKEN** on all three statements in Evidence 15: the polarity of the ordering risk was inverted and the coupling that fired was not predicted.
+
+Impacted axes: calibration (7) — C1's text is the coupling source, its own target holds, so no calibration regression; operability (8) — C2 cannot be counted as a clean landing, though the gate change introduces no regression and is byte-green at tip; coverage (8) — unaffected. No axis value moves down.
+
+Honest per-claim verdicts (recommended, no predicate change):
+- **C1 calibration: MET** at `7b16731` and at the tip under v1 and A3; note the delivery defect at `SCORECARD.md:322`.
+- **C2 operability: MISS at landing (frozen kill rule), MET at tip under v1; MISS at landing and tip under A1 as printed.** Record both revs and both instruments; do not call the landing rev a pass, and do not re-run A1 with a patched regex and report "same" — that would rewrite an instrument after data.
+- **C3 coverage: MET** at `76c94eb` and at the tip under v1 and v2.
+
+Smallest safe corrections (stricter-only, none touches a frozen predicate):
+1. Records only: enter the two C2 per-rev rows (v1 landing miss / tip pass; A1 landing + tip miss) and the located causes (`SCORECARD.md:322`, capture commit `aea0525`) in the round's after-state records, and append the A1 tip run that is missing from `records/c2-after-v2.txt`. L1 is the integration owner.
+2. C1 follow-up, next append-only block: cite `census/round-30/waves/w1/deliver-c1-literal-history.tsv` in committed prose. Do not edit `SCORECARD.md:322` in this round: it is already resolvable at the tip and rewriting it would rewrite landed provenance.
+3. A1 follow-up: a stricter-only A4 that keeps A1's output and replaces the blanket err strip with an exact-difference allowlist (the two no-reports `err=` lines), every other normalized line byte-equal — stronger than A1's intent and unambiguous about what is excluded.
+4. If a future round wants a claim-local landing measurement, split `dangling` by source file in the C2 instrument (or run the gate with non-claim sources excluded) as that round's item; doing it now would change the claim's measured predicate after data.
+
+## Deliveries
+- `/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-30/w2/SwarmCritic20.md` (this report)
+- `/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-30/w2/SwarmCritic20-receipts.txt` (R2-R17: gate at five real revs and three synthetic revs, v1/v2 counters, selftest diff, strip simulation; sha256 6fd50a08c49558169da77a8223472006c94790bfa9870bf1bce0a411349af2d8)
+- Scratch `/fast/scratch/hyaku/souji-r30/SwarmCritic20/` removed after the receipts were copied. No lane file, git index, jj state, sibling repo, fleet path or `/home/vgpnk/Projects/shokuknow` was written; the only lane writes are the two files above.

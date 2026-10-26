@@ -1,0 +1,40 @@
+SwarmMutationTester27 — mutation-test receipts, souji round 30 w2 (2026-10-26)
+Target: tools/souji-capability-agreement.py at lane tip 9dcd367655fc28ba73d679a0e2cadaff96d2bcb8 (A3 amended in place)
+Pristine sha256: 88ffa768ac77868c18129977b97f5c3bd12a17c2cc60db76cfbb3786d9a6f3f2
+v1 blob (prereg d4928ec86b667e3d1ed0adb07fb088e500cf1631) diffed against A3 to shape revert mutants
+
+Detector (same per probe, run on pristine P / mutant M / restored R bytes):
+  python3 -B work.py --root <scratch-clone> --rev <scenario-commit> \
+    --base 9420341d9a814cb6089c25fb03a4cc9b23dc0d1b \
+    --list-rev d4928ec86b667e3d1ed0adb07fb088e500cf1631 \
+    --scratch <scratch>/cw --timeout 120 --only R01[,R12]
+Scenario commits: branches probe-S1..S10 from tip in the scratch clone (origin removed):
+  S1: rev=f71d3e90fdfec91a89c967e2a94c36174b90b00f only=R01
+  S2: rev=69c5524e3a110a28d9355a15c23adf5eb2893496 only=R01
+  S3: rev=e7a9d9be1377882caf27079655bdfe4ddeb3ea78 only=R01
+  S4: rev=3d0665b19ef486a50c09f0e73c57f781e8b117b8 only=R01
+  S5: rev=79c4bec90a5518b1abd28e2de273b070136777ce only=R01
+  S6: rev=7852a458e7c8921b96cfc351895c1b5ccc836ca8 only=R01
+  S7: rev=61dd3e511713260c52d47cdc53785ce1cf2797f0 only=R01,R12
+  S8: rev=65ffd627b9f580a838f9b5ba420fe29a422de46e only=R01
+  S9: rev=adc7feba0a75dfc238cff1470a446004d8f2703f only=R01
+  S10: rev=f29eca5e11c9fecab8d4e30b2e3c2cf7d8bf163c only=R01
+
+Lane sanity (pristine counter, real lane tip, --only R01): rc=0, ROW R01 MATCH, k2=0 (lane-sanity.json)
+
+Per-mutant record (P = pristine pass, M = mutant run, R = restored run; R must equal P byte-for-byte):
+id   mutant                                     verdict   P_rc M_rc R_rc mutant sha256[:16] restored
+M1   M1-stdout-first-reverted                   KILLED       0    1    0 6ec87ff509e78074   True (sha==pristine, R==P)
+M2   M2-digit-boundary-removed                  KILLED       1    0    1 1c6f7c007f12a0db   True (sha==pristine, R==P)
+M3   M3-allow-c-after-prefix                    KILLED       1    0    1 3836794512a544bf   True (sha==pristine, R==P)
+M4   M4-banner-check-dropped                    KILLED       1    0    1 1ddc4c5ec598df50   True (sha==pristine, R==P)
+M5   M5-banner-too-broad-colon                  KILLED       0    1    0 8f04e41c1f88f0e7   True (sha==pristine, R==P)
+M6   M6-prefix-check-to-first-path              KILLED       1    0    1 5c4472611d7edb87   True (sha==pristine, R==P)
+M7   M7-scorecard-append-only-removed           KILLED       1    0    1 0f0a99474a612be6   True (sha==pristine, R==P)
+M8   M8-list-rev-read-from-rev                  KILLED       1    0    1 f6b5df5871456c29   True (sha==pristine, R==P)
+M9   M9-shonen-append-only-removed              KILLED       1    0    1 dceeb518da14cd92   True (sha==pristine, R==P)
+M10  M10-kind-shape-containment-to-consumption  KILLED       1    1    1 37bca779fe42ed32   True (sha==pristine, R==P)
+
+Verdicts: 10/10 KILLED, 0 SURVIVED, 0 INCONCLUSIVE. M10 killed at the KINDS diagnostic line only
+(SUMMARY/exit unchanged): P 'KINDS value=0 shape=1 rc=0' vs M 'KINDS value=1 shape=0 rc=0'.
+Lane tracked state after all runs: git status --porcelain over SCORECARD.md SHONEN.md tools tests census -> empty.

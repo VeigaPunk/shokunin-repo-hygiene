@@ -124,3 +124,8 @@ verdicts — byte-identical copies; a `duplicate` receipt class would be a taxon
 
 The ADMIT rows at `:11-:16`, the separate rejections at `:18-:19`, and every flip condition stand unchanged; the
 superseded text at `:17` and `:21` stays in place for the audit trail.
+
+## Round 30 wave-2 correction to the carry above (append-only)
+
+- `census/round-29/waves/w1/SwarmExecutor17.md` — the `open` marker above is superseded: resolved@de874ee, where this lesson's Mistakes row (scope, SwarmExecutor17) records the restored ref and its disclosure. The other six remain open. Ground: `census/round-30/waves/w2/SwarmCritic23.md` finding 4.
+- The seven carried paragraphs are verbatim after whitespace normalization (the reports hard-wrap at about 80 columns and the bullets join those lines with single spaces), not byte-verbatim as the carry's preamble says (same report, finding 2).

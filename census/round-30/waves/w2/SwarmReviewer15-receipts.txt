@@ -1,0 +1,170 @@
+# SwarmReviewer15 receipts — fixture tests/fixtures/r30-jj-keep-expiry.sh @ lane tip 9dcd367655fc28ba73d679a0e2cadaff96d2bcb8 (= C3 landing 76c94eb bytes; git diff 76c94eb..9dcd367 on fixture+record is empty)
+# run 2026-10-26; jj 0.45.1-7c41cdeb16b6b321c64e789a966b6adf723816a5; git 2.56.0; scratch /fast/scratch/hyaku/souji-r30/ReviewJjFixture
+
+## 1. TMPDIR refusal battery (14 variants; all rc=2, guard message, no leftovers)
+# refusal battery, 2026-10-26T05:26:49Z, fixture at lane tip 9dcd367655fc28ba73d679a0e2cadaff96d2bcb8
+=== unset rc=2
+ERROR: TMPDIR is unset or empty; refusing to run
+=== empty rc=2
+ERROR: TMPDIR is unset or empty; refusing to run
+=== lane rc=2
+ERROR: TMPDIR=/home/vgpnk/Projects/shokunin/souji-shokunin resolves inside the souji lane (/home/vgpnk/Projects/shokunin/souji-shokunin); refusing to run
+=== lane-slash rc=2
+ERROR: TMPDIR=/home/vgpnk/Projects/shokunin/souji-shokunin/ resolves inside the souji lane (/home/vgpnk/Projects/shokunin/souji-shokunin); refusing to run
+=== lane-dotdot-ufo rc=2
+ERROR: TMPDIR=/home/vgpnk/Projects/shokunin/souji-shokunin/../.ufo resolves inside /home/vgpnk/Projects/shokunin; refusing to run
+=== lane-corpus-dotdot rc=2
+ERROR: TMPDIR=/home/vgpnk/Projects/shokunin/souji-shokunin/corpus/.. resolves inside the souji lane (/home/vgpnk/Projects/shokunin/souji-shokunin); refusing to run
+=== fleet-x rc=2
+ERROR: TMPDIR=/home/vgpnk/Projects/shokunin/x is not a directory; refusing to run
+=== fleet-root rc=2
+ERROR: TMPDIR=/home/vgpnk/Projects/shokunin resolves inside /home/vgpnk/Projects/shokunin; refusing to run
+=== dot-scratch rc=2
+ERROR: TMPDIR=/home/vgpnk/Projects/shokunin/.scratch resolves inside /home/vgpnk/Projects/shokunin; refusing to run
+=== link-lane rc=2
+ERROR: TMPDIR=/fast/scratch/hyaku/souji-r30/ReviewJjFixture/lanelink resolves inside the souji lane (/home/vgpnk/Projects/shokunin/souji-shokunin); refusing to run
+=== link-corpus rc=2
+ERROR: TMPDIR=/fast/scratch/hyaku/souji-r30/ReviewJjFixture/corpuslink resolves inside the souji lane (/home/vgpnk/Projects/shokunin/souji-shokunin); refusing to run
+=== notadir rc=2
+ERROR: TMPDIR=/fast/scratch/hyaku/souji-r30/ReviewJjFixture/notadir is not a directory; refusing to run
+=== root rc=2
+jj-version: jj 0.45.1-7c41cdeb16b6b321c64e789a966b6adf723816a5
+git-version: git version 2.56.0
+mktemp: failed to create directory via template ‘//r30-jj-keep-expiry.XXXXXX’: Permission denied
+ERROR: mktemp failed under /
+=== leftover-check lane maxdepth1:
+=== leftover-check fleet maxdepth2:
+=== /tmp grep count:
+0
+
+## 2. replay run1 (scratch cwd)
+jj-version: jj 0.45.1-7c41cdeb16b6b321c64e789a966b6adf723816a5
+git-version: git version 2.56.0
+RESULT step=1-commit-A-B keep_refs=7 object_present=yes note=target_keep=yes commits=2
+RESULT step=2-abandon-B keep_refs=8 object_present=yes note=target_keep=yes abandoned=B
+RESULT step=3-git-gc-prune-now keep_refs=8 object_present=yes note=target_keep=yes cmd=git-gc-prune-now
+RESULT step=4-util-gc-expire-now keep_refs=6 object_present=yes note=target_keep=no cmd=jj-util-gc-expire-now
+RESULT step=5-op-abandon-util-gc-expire-now keep_refs=2 object_present=yes note=target_keep=no op_range=..@- ops_naming_target=1
+RESULT step=6-future-expire-control keep_refs=8 object_present=yes note=target_keep=yes expire=tomorrow rc=1 rejected
+RESULT step=7-default-expire-control keep_refs=8 object_present=yes note=target_keep=yes cmd=jj-util-gc-default-2weeks
+RESULT step=8-control-expire-now keep_refs=6 object_present=yes note=target_keep=no cmd=jj-util-gc-expire-now
+## 3. run2 diff vs run1
+IDENTICAL run1 run2
+## 4. run1 diff vs committed record
+IDENTICAL run1 record
+
+## 5. state probe after cleanup-neutralized replay (probe-inspect; fresh run)
+probe-fixture rc=0
+BASE=/fast/scratch/hyaku/souji-r30/ReviewJjFixture/r30-jj-keep-expiry.rRIhrF
+=== A. repo1 full ref list (after full fixture)
+5723c361cc7cf9d45d13cab25eb1aa9164157d38 commit	refs/jj/keep/5723c361cc7cf9d45d13cab25eb1aa9164157d38
+ba5e91df6c30e150a40d92389ff468cc4bc27a7e commit	refs/jj/keep/ba5e91df6c30e150a40d92389ff468cc4bc27a7e
+=== B. repo1 reflog files
+total 4
+drwxr-xr-x 2 vgpnk vgpnk  18 Oct 26 02:27 .
+drwxr-xr-x 8 vgpnk vgpnk 163 Oct 26 02:27 ..
+-rw-r--r-- 1 vgpnk vgpnk 462 Oct 26 02:27 HEAD
+/fast/scratch/hyaku/souji-r30/ReviewJjFixture/r30-jj-keep-expiry.rRIhrF/main/.git/logs/HEAD
+--- git reflog --all (count):
+3
+=== C. repo1 commits visible to git
+5723c361cc7cf9d45d13cab25eb1aa9164157d38 
+ba5e91df6c30e150a40d92389ff468cc4bc27a7e 
+91ae3db6c1994f8ce6fabddf91c7aef6ef086ad5 A
+c87ab581949345f40e408bcea471834f5571c2dd B
+TARGET_B=c87ab581949345f40e408bcea471834f5571c2dd
+=== D. fsck unreachable (reflogs as roots, default)
+0
+=== D2. fsck unreachable --no-reflogs
+0
+=== D3. fsck unreachable full lines (no-reflogs)
+=== E. count-objects
+count: 0
+size: 0
+in-pack: 8
+packs: 1
+size-pack: 1
+prune-packable: 0
+garbage: 0
+size-garbage: 0
+=== F. decisive: git gc --prune=now on repo1, then cat-file -e B
+gc rc=0
+B present after git gc --prune=now
+=== G. if still present: reflog expire then gc
+gc2 rc=0
+B STILL present after reflog expire + gc
+=== H. ops_naming_target probe: fresh repo, count BEFORE any op abandon
+PT=4e24f6588b5e901d009db1e5b0b6a3d72a76e891
+--- op log with the fixture's exact template:
+8cc179a9c15db3c85bb7ce5b5489f0463699e66d8518e2d691177e37c0e8ffa98ca71a223177c07b2deb1cd098c94f8c25179ad1a393ad73ce20bd5c0ae465da commit 1722249fbafb8b2ff942008123e750a5a0936a77
+e3468237b81edf315de77f67faf24032a0670edc7c900405d67117040bf6b5bfc858245357e27ce9f3c66e926bf367fa58dfc54f754c440b0ebb2463490c2ff9 snapshot working copy
+769b2fe124bf92e815830a85b6da0ac7d1ce2264fe050906f07c800eadd02f10fc4617912699ac6f3cfb7cd2e7a355655a34dd6e58cd4d1964cb18cbb8806dfd commit 237f80ef9e5a5f41be7c6ff08cd042e1a9e9f3fd
+b32b4c6b5536dc946d2b5c5e2fde7ae24cb1c044afed0c634f7b0d29c13d3f780146e059520fa0b66b80b03a7590dd24a18f7e6fd19127fe1d6a690161c27f24 snapshot working copy
+ed75f11c6b44e5b766984a73539bedbee4912b825b8353ec18c00c4ab369b24a001b41568f0b9c38bcae372970eb1a670fb7e99b5f8b67809d2c79ceda800ab0 add workspace 'default'
+00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 
+--- grep -c -F PT:
+0
+--- which line matches:
+--- op id lengths:
+128
+128
+128
+128
+128
+128
+
+## 6. parentage + abandon-op description probe (probe2; TARGET derived dynamically)
+TARGET_B=c87ab581949345f40e408bcea471834f5571c2dd
+=== A. repo1 commit graph (sha parents subject)
+5723c361cc7cf9d45d13cab25eb1aa9164157d38 91ae3db6c1994f8ce6fabddf91c7aef6ef086ad5 
+ba5e91df6c30e150a40d92389ff468cc4bc27a7e c87ab581949345f40e408bcea471834f5571c2dd 
+91ae3db6c1994f8ce6fabddf91c7aef6ef086ad5  A
+c87ab581949345f40e408bcea471834f5571c2dd 91ae3db6c1994f8ce6fabddf91c7aef6ef086ad5 B
+=== B. which refs root B (merge-base --is-ancestor)
+no refs/jj/keep/5723c361cc7cf9d45d13cab25eb1aa9164157d38
+ROOTS-B refs/jj/keep/ba5e91df6c30e150a40d92389ff468cc4bc27a7e
+=== C. HEAD reflog content
+=== D. abandon-op description (fresh probe4, exact fixture sequence to step 5 count)
+PT=eecfac773fab6c066e6e8e4e321151c12d5a78f6
+--- matching op-log lines (fixture template):
+1:68bd2da2fba5eab4254321b63b15f933c72d22a21c078364c69af984784b6d21026222b3a7644cbc271e176e6e474ac0f375e5ee4da59f5a1b1321e57d637a44 abandon commit eecfac773fab6c066e6e8e4e321151c12d5a78f6
+--- op log, id truncated to 12 for readability:
+68bd2da2fba5 .. abandon commit eecfac773fab6c066e6e8e4e321151c12d5a78f6
+62f934570cba .. commit b9b91013d7bab9df900a8a0a6b0fe5f94bddc987
+25ea43e4ccb4 .. snapshot working copy
+7f8fc49a69d2 .. commit 6bca4f909f79344440240d7147fd451b708dd211
+602f69700745 .. snapshot working copy
+80a18bb12731 .. add workspace 'default'
+000000000000 .. 
+
+## 7. instrumented step-3 git gc rc (stderr of probe replay)
+IGC-RC=0
+## 7b. probe replay stdout vs record
+IDENTICAL probe-run2 record
+
+## 8. SIGINT mid-run cleanup (leftovers count includes the probe leftover dir, removed after each delay)
+# SIGINT mid-run cleanup test
+delay=0.2 rc=2 leftovers_in_scratch=1
+delay=0.5 rc=0 leftovers_in_scratch=0
+
+## 9. lane-cwd run with lane state hash (git refs + HEAD + status + .jj file listing, sha256)
+# lane-cwd run, lane state hash before/after
+snapA=a214ac946038eb0a8bbc08f81569d73d75c3c4c99b2ed28838f6c651d5de54dc  -
+rc=0
+snapB=a214ac946038eb0a8bbc08f81569d73d75c3c4c99b2ed28838f6c651d5de54dc  -
+LANE-UNTOUCHED
+output IDENTICAL to record
+
+## 10. strace -f file-write classification (full real-fixture run)
+write-ish syscalls total:
+1119
+unique ABSOLUTE write paths outside the scratch tree (excluding /proc,/sys,/dev,/run):
+"/fast"
+(the single /fast entry is mkdir("/fast", 0777) = -1 EEXIST — coreutils mkdir -p chdir-traversal no-op, no modification)
+all other write-ish syscalls use paths under the scratch BASE (absolute) or cwd-relative paths with cwd inside the scratch BASE (sample: jj keep-ref unlinks, git gc object unlinks):
+993080 unlink(".git/refs/jj/keep/f2e3cbcf7131549974c2cfd8ee6fb164eccd7c2b") = 0
+993080 unlink(".git/refs/jj/keep/e5127b0a0dc8edb6794558e20e113fe9ebc603ad") = 0
+993080 unlink(".git/refs/jj/keep/e37ef9d93ca436a71359a0404588e6cb80423f66") = 0
+993080 unlink(".git/refs/jj/keep/ca65c7503ff34ddf6fb08490c35349d0c676b7df") = 0
+993080 unlink(".git/refs/jj/keep/445a4e969aa31baaa08d15d7df6e9e1e689d0ae8") = 0
+993080 unlink(".git/refs/jj/keep/4136aa3dd46b5780518a155b6be51423b491cc13") = 0

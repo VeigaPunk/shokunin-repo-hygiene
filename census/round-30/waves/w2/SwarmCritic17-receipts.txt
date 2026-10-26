@@ -1,0 +1,95 @@
+# r30 w2 — SwarmCritic17 receipts (C2 kill-rule application attack)
+run 2026-10-26, seat leaf read-only; lane <lane> = /home/vgpnk/Projects/shokunin/souji-shokunin
+scratch /fast/scratch/hyaku/souji-r30/SwarmCritic17 (TMPDIR exported there; clone --no-local, origin removed; removed after this file was written)
+tools: git 2.56.0, python 3.14.8, jj 0.45.1-7c41cdeb16b6b321c64e789a966b6adf723816a5 (no install, no pacman)
+
+provenance
+  prereg blob   d4928ec86b667e3d1ed0adb07fb088e500cf1631:census/round-30/records/preregistration.txt
+  amendments    02aea483b4366da8705342657995a310cd21a708:census/round-30/records/amendments.txt
+  base          9420341d9a814cb6089c25fb03a4cc9b23dc0d1b
+  C2 landing    68447afef62e4761249af55a2467657f04046537
+  capture       aea0525305167b8765ce36a3f20e68b1996274b8
+  tip           9dcd367655fc28ba73d679a0e2cadaff96d2bcb8
+
+commit graph (git rev-list --parents -1, lane, read-only)
+  7b16731fcd8ab9b95220b50603314aa8dc92b2ec 02aea483b4366da8705342657995a310cd21a708   C1 landing
+  68447afef62e4761249af55a2467657f04046537 7b16731fcd8ab9b95220b50603314aa8dc92b2ec   C2 landing
+  aea0525305167b8765ce36a3f20e68b1996274b8 68447afef62e4761249af55a2467657f04046537   wave-1 capture + C1/C2 after-measurements
+commits touching the C2 surface between base and tip (only one after the amendments):
+  68447af  census/round-30/records/c2-fixture-red-before.txt, tests/fixtures/r30-landing-gate-discovery.py, tools/souji-landing-gate.py
+frozen counter blob unchanged at every revision tested (sha256 of c2-counter.py, 16 hex):
+  d4928ec 6cd15db9ce0f5555 / 02aea48 6cd15db9ce0f5555 / 68447af 6cd15db9ce0f5555 / 9dcd367 6cd15db9ce0f5555
+
+R1  python3 -B census/round-30/c2-counter.py --root <lane> --rev 68447af --base 9420341 --fleet-root /home/vgpnk/Projects/shokunin
+    (frozen v1 blob; my run, lane working tree dirty: M SKILL.md, M corpus/QUALITY.md, ?? corpus/lessons/round-30.md)
+GATE rc=1 reports=86 cne=0 dangling=1 other=7
+FIXTURE rc=0 line='cases=7 pass=7 control=FALSE-GREEN-REJECTED' d1_d7_pass=True ok
+REDARM rc=1 line='cases=7 pass=3 control=FALSE-GREEN-REJECTED' ok
+REGRESS tools/souji-landing-gate.py base=(0, 'SELFTEST\tpass=65\tfail=0') rev=(0, 'SELFTEST\tpass=65\tfail=0') same
+REGRESS tests/fixtures/r16-landing-gate.py base=(0, 'SUMMARY\ttotal=15\tfailed=0') rev=(0, 'SUMMARY\ttotal=15\tfailed=0') same
+SUMMARY reports=86 cne=0 dangling=1 other=7 fixture=ok redarm=ok regress=same rev=68447afef62e4761249af55a2467657f04046537
+    === byte-identical to the L1's census/round-30/records/c2-after-v1.txt (8 lines, rc=1)
+
+R2  python3 -B <tree@68447af>/tools/souji-landing-gate.py --root <lane> --rev 68447af --round 29 --fleet-root /home/vgpnk/Projects/shokunin   -> rc=1
+LG-DANGLING-PTR	.ufo/waves/round-30/w1/deliver-c1-literal-history.tsv	SCORECARD.md:322 cites path absent at 68447afef62e
+    exactly 1 LG-DANGLING-PTR line (grep -c); 7 LG-SEAT-UNCARRIED; SUMMARY findings=8 checked_reports=86
+    cited text at SCORECARD.md:322 @ 68447af: "Measured at base 9420341d9a814cb6089c25fb03a4cc9b23dc0d1b by `python3 -B tools/souji-capability-agreement.py ..."
+    the pointer sits inside that 1301-byte line (grep -o '.ufo/waves[^`]*' -> .ufo/waves/round-30/w1/deliver-c1-literal-history.tsv)
+    the same line does not exist at base 9420341 (SCORECARD.md base has no round-30 corrections block)
+
+R3  git -C <lane> cat-file -e 68447af:census/round-30/waves/w1/deliver-c1-literal-history.tsv   -> rc=128
+      fatal: path '...' exists on disk, but not in '68447afef62e4761249af55a2467657f04046537'
+    git -C <lane> cat-file -e aea0525:census/round-30/waves/w1/deliver-c1-literal-history.tsv   -> rc=0
+    git -C <lane> show 68447af:tools/pointer-exemptions.tsv -> fatal: path 'tools/pointer-exemptions.tsv' does not exist in '68447af'
+      => no exemption mechanism applied at that rev; the finding is not an exemption-path miss
+
+R4  frozen v1 at the capture commit (ambiguity arm)
+SUMMARY reports=86 cne=0 dangling=0 other=7 fixture=ok redarm=ok regress=same rev=aea0525305167b8765ce36a3f20e68b1996274b8
+    process exit code 0 (v1's exit test ignores other=; reports>0, cne=0, dangling=0, three legs ok)
+    => dangling cleared by aea0525; other still 7 (r29 uncarried seat failures, carried only at 936efc8)
+
+R5  frozen v1 at the final tip
+GATE rc=0 reports=86 cne=0 dangling=0 other=0
+SUMMARY reports=86 cne=0 dangling=0 other=0 fixture=ok redarm=ok regress=same rev=9dcd367655fc28ba73d679a0e2cadaff96d2bcb8
+    (single dangling at 68447af: the SCORECARD.md:322 pointer: dangling 1 -> 0)
+
+R6  A1 v2 (census/round-30/c2-counter-v2.py, blob 31a78084a48ab560 unchanged from 02aea48 to tip)
+    @68447af
+BIND rc=1 reports=86 expected=86 ufo_md=0 cne=0 dangling=1 fail
+NOCAP rc=2 ok / PTRARM rc=1 ok / FIXTURE ok / REDARM ok
+REGRESS-FULL tools/souji-landing-gate.py rc=0/0 lines=66/66 differs
+REGRESS-FULL tests/fixtures/r16-landing-gate.py rc=0/0 lines=16/16 same
+SUMMARY-V2 reports=86 expected=86 cne=0 dangling=1 bind=fail nocap=ok ptrarm=ok fixture=ok redarm=ok regress_full=differs rev=68447af
+    @tip
+BIND rc=0 reports=86 expected=86 ufo_md=0 cne=0 dangling=0 ok
+REGRESS-FULL tools/souji-landing-gate.py rc=0/0 lines=66/66 differs
+SUMMARY-V2 reports=86 expected=86 cne=0 dangling=0 bind=ok nocap=ok ptrarm=ok fixture=ok redarm=ok regress_full=differs rev=9dcd367
+    === byte-identical to census/round-30/records/c2-after-v2.txt (@68447af) and rc=1 at both revs
+
+R7  base gate at base, today, live lane as --root (reproducibility of the frozen BEFORE line)
+python3 -B <tree@9420341>/tools/souji-landing-gate.py --root <lane> --rev 9420341 --round 29 --fleet-root /home/vgpnk/Projects/shokunin   -> rc=2
+LG-DANGLING-PTR	.ufo/waves/round-29/	corpus/lessons/round-29-verifier-spotcheck.md:132 cites path absent at 9420341d9a81
+LG-DANGLING-PTR	census/round-	corpus/QUALITY.md:150 cites path absent at 9420341d9a81
+LG-DANGLING-PTR	corpus/lessons/round-	corpus/QUALITY.md:150 cites path absent at 9420341d9a81
+SUMMARY	findings=3	checked_reg=58	checked_changed=0	checked_pins=13	checked_measured=3	checked_markers=0	status_lines=0	carry_heading=0	checked_reports=0
+COULD-NOT-EVALUATE	no .md reports under .ufo/waves/round-29/ at 9420341d9a814cb6089c25fb03a4cc9b23dc0d1b
+    => reports=0 cne=1 dangling=3 reproduces the frozen BEFORE line despite the live lane holding .ufo/waves/round-29 with 86 .md files (discovery reads the REV tree, gate check_carry:478-492)
+
+R8  regress_full cause, controlled
+    full --selftest outputs of tree@9420341 and tree@68447af: 66 lines each, 2 differing lines, both CASE lines:
+  - ... fleet=[] err=no .md reports under .ufo/waves/round-18/ at f822f82d...
+  + ... fleet=[] err=no .md reports under .ufo/waves/round-18/ or census/round-18/waves/ at f822f82d...
+  - ... fleet=[] err=no .md reports under .ufo/waves/round-16/ at e458a9f0...
+  + ... fleet=[] err=no .md reports under .ufo/waves/round-16/ or census/round-16/waves/ at e458a9f0...
+    char before "err=" in both CASE lines: ' ' (space); the line still starts with "CASE\t"
+    strip with v2 regex \terr=.*$ : outputs still unequal
+    strip with \s+err=.*$       : outputs equal
+    r16 fixture output: 16 lines, identical, SUMMARY total=15 failed=0
+
+verdicts reached from the above
+  68447af is the C2 landing commit (only commit after the amendments that touches gate+fixture; parent 7b16731 = C1 landing)   HOLDS
+  frozen v1 prints `dangling=1` and rc=1 at that commit; the target literal requires dangling=0 and exit 0                      BROKEN TARGET -> MISS
+  the miss is caused by C1's SCORECARD.md:322 line (C1 landed first; capture lands two commits later at aea0525)                CONFIRMED
+  v1 at the tip prints the frozen target literal with rc=0                                                                     CONFIRMED
+  the kill rule's "any other SUMMARY ... is a miss" therefore makes C2's claim a miss                                          CORRECTLY APPLIED
+  A1's regress_full=differs is an instrument defect (tab-anchored strip against a space separator), not a gate regression       CONFIRMED

@@ -1,0 +1,91 @@
+# SwarmCritic16 — round 30 wave 2 receipts (attack on SCORECARD.md:320-338, the C1 corrections block)
+# Lane clone: git clone -q --no-local /home/vgpnk/Projects/shokunin/souji-shokunin c ; git -C c remote remove origin
+# Scratch /fast/scratch/hyaku/souji-r30/SwarmCritic16 removed after this copy. All counters run with python3 -B.
+# v1 = tools/souji-capability-agreement.py blob at d4928ec, sha256 af71db1e898f00575de1e13d80b73a2ac73fbc15cae9c74cdba9eff9e40be620
+# A3 = same path blob at 7b16731, sha256 88ffa768ac77868c18129977b97f5c3bd12a17c2cc60db76cfbb3786d9a6f3f2 (identical at tip 9dcd367)
+# Invocation: --root <lane> --rev <REV> --base 9420341d9a814cb6089c25fb03a4cc9b23dc0d1b --list-rev d4928ec86b667e3d1ed0adb07fb088e500cf1631
+
+== R1 v1 at the C1 landing commit 7b16731, serial full run (18 rows)
+ROW	R14	SCORECARD.md:173	stated=9/9	rc=0	observed=selftest=15/15	CORRECTED
+ROW	R16	SCORECARD.md:175	stated=9/9	rc=0	observed=cases=9 pass=9 control=FALSE-GREEN-REJECTED	CORRECTED
+ROW	R18	SCORECARD.md:314	stated=cases=15 pass=15	rc=0	observed=Usage: bash tools/souji-wave-evidence-capture.sh <lane-abs> <round-N> [--verify [--rev <full40>]]	CORRECTED
+SUMMARY k1=0 k2=0 mismatches=0 rows=18 pointers=10 rev=7b16731fcd8ab9b95220b50603314aa8dc92b2ec
+KINDS value=0 shape=0 rc=0 (diagnostic; not part of the target)
+
+== R2 A3 at 7b16731, serial full run
+ROW	R14	SCORECARD.md:173	stated=9/9	rc=0	observed=selftest=15/15	CORRECTED
+ROW	R18	SCORECARD.md:314	stated=cases=15 pass=15	rc=0	observed=cases=15 pass=15 control=TAMPER-REJECTED	MATCH
+SUMMARY k1=0 k2=0 mismatches=0 rows=18 pointers=10 rev=7b16731fcd8ab9b95220b50603314aa8dc92b2ec
+KINDS value=0 shape=0 rc=0 (diagnostic; not part of the target)
+
+== R3 v1 and A3 at the lane tip 9dcd367 (two runs)
+SUMMARY k1=0 k2=0 mismatches=0 rows=18 pointers=10 rev=9dcd367655fc28ba73d679a0e2cadaff96d2bcb8
+KINDS value=0 shape=0 rc=0 (diagnostic; not part of the target)
+SUMMARY k1=0 k2=0 mismatches=0 rows=18 pointers=10 rev=9dcd367655fc28ba73d679a0e2cadaff96d2bcb8
+KINDS value=0 shape=0 rc=0 (diagnostic; not part of the target)
+
+== R4 v1 and A3 at base 9420341 (do-nothing control)
+base/v1-at-base.txt:SUMMARY k1=13 k2=0 mismatches=13 rows=18 pointers=10 rev=9420341d9a814cb6089c25fb03a4cc9b23dc0d1b
+base/v1-at-base.txt:KINDS value=7 shape=5 rc=1 (diagnostic; not part of the target)
+base/a3-at-base.txt:SUMMARY k1=12 k2=0 mismatches=12 rows=18 pointers=10 rev=9420341d9a814cb6089c25fb03a4cc9b23dc0d1b
+base/a3-at-base.txt:KINDS value=4 shape=7 rc=1 (diagnostic; not part of the target)
+ROW	R18	SCORECARD.md:314	stated=cases=15 pass=15	rc=0	observed=cases=15 pass=15 control=TAMPER-REJECTED	MATCH
+# (committed base control bae103c:census/round-30/records/c1-before.txt reads SUMMARY k1=13 ... mismatch count reproduced above)
+
+== R5 the frozen target is not stable under a concurrent evaluator: v1 full run at 7b16731 while a second
+== run of the R14 fixture was active in the same lane of evaluation
+ROW	R14	SCORECARD.md:173	stated=9/9	rc=1	observed=selftest=14/15	MISMATCH kind=rc
+SUMMARY k1=1 k2=0 mismatches=1 rows=18 pointers=10 rev=7b16731fcd8ab9b95220b50603314aa8dc92b2ec
+# same commit, same command, serial: R1 above (k1=0). R14 re-run alone: CORRECTED, observed=selftest=15/15.
+
+== R6 the R14 fixture ignores TMPDIR and uses one fixed /var/tmp path; two concurrent runs delete each other
+# tests/fixtures/r23-record-agreement.py at 7b16731, lines 67, 105, 584:
+SCRATCH_ROOT = "/var/tmp/souji-r23-ExecFixtureAgreement"
+    shutil.rmtree(SCRATCH_ROOT, ignore_errors=True)
+    os.makedirs(SCRATCH_ROOT, exist_ok=True)
+# counter v1.py lines 11, 149-150 (docstring claim and per-row TMPDIR):
+    `checkout -f` + `clean -fdxq` before every row; TMPDIR is a fresh per-row directory under
+            tmp = tempfile.mkdtemp(prefix="t.", dir=work)
+            env = dict(os.environ, TMPDIR=tmp, GIT_CONFIG_NOSYSTEM="1")
+# two concurrent invocations (bash run.sh a & bash run.sh b & wait), tails:
+# a:
+RuntimeError: git add -A failed: fatal: not a git repository (or any of the parent directories): .git
+rc=1
+# b:
+RuntimeError: git add -A failed: error: unable to create temporary file: No such file or directory
+error: .ufo/waves/round-23/w1/seat-notes.md: failed to insert into database
+fatal: adding files failed
+rc=1
+
+== R7 literal-history endpoints re-run at the named commits (git archive REV | tar -x ; run the row command)
+R04 728b2ce^  selftest=PASS ids=5/5   rc=0
+R04 728b2ce   selftest=PASS ids=7/7   rc=0
+R05 163158a   SELFTEST	pass=18	fail=0   rc=0
+R05 ddb7347   SELFTEST	pass=28	fail=0   rc=0
+R05 4800fd7   SELFTEST	pass=61	fail=0   rc=0
+R05 005f3d3   SELFTEST	pass=65	fail=0   rc=0
+R14 4765250   selftest=9/9    control=FALSE-GREEN-REJECTED   rc=0
+R14 1dd8b1e   selftest=11/11  control=FALSE-GREEN-REJECTED   rc=0
+R14 c872eec   selftest=12/12  control=FALSE-GREEN-REJECTED   rc=0
+R14 728b2ce   selftest=15/15  control=FALSE-GREEN-REJECTED   rc=0
+R15 679e2d0^  cases=8 pass=8 control=FALSE-GREEN-REJECTED lost_found=WRITE-DETECTED   rc=0
+R15 679e2d0   cases=12 pass=12 control=FALSE-GREEN-REJECTED lost_found=WRITE-DETECTED  rc=0
+005f3d3 2026-10-20 round-19: wrap-aware carry gate, truthful audit shapes, durable revision stamps, F5 process
+728b2ce 2026-10-25 round-25: integrate claims, sources, lessons and wave evidence
+679e2d0 2026-10-25 round-25: exercise size-census bare and refusal edge cases
+# one R14 run in a serial probe loop also died with git add -A "not a git repository" and passed on retry:
+# a peer seat running the same fixture was active; same shared-path mechanism as R6.
+
+== R8 provenance path and cited artifacts
+# .ufo/waves/round-30/w1/deliver-c1-literal-history.tsv is gitignored (.gitignore:1 .ufo/waves/) and absent at 7b16731;
+# the committed copy is census/round-30/waves/w1/deliver-c1-literal-history.tsv (added aea0525), sha256 9cb230679d3756956eb8cde1d3b0465824d5a63df52d483742d65ecac474b03d,
+# byte-identical to the live .ufo file at the tip.
+# its class column, rows R03 R05 R06 R07 R08 R09 R10 R11 R15 R16: "never the printed literal (shorthand)" (10 rows)
+# SwarmRevenger34.md STATUS at tip: "all 13 stated counts were accurate when written (0 fabricated)"
+# d3-green record header (7b16731:census/round-30/records/d3-green-r28-wave-evidence-capture.txt:1-2):
+# round-30 L1 (routed r29 closure defect D3): observed full output of: bash tests/fixtures/r28-wave-evidence-capture.sh
+# rev=9420341d9a814cb6089c25fb03a4cc9b23dc0d1b ...
+# corpus/knowledge/jj-colocation-receipts.md:3 at base and tip carries: "the two J6 identity cases SKIP without `--baseline-dir`"
+# unchanged base 9420341 -> tip 9dcd367: tests/fixtures/r28-wave-evidence-capture.sh, r23-record-agreement.py,
+# r13-repo-structure.sh, census/round-24/records/c2-fixture-after.tsv, corpus/knowledge/jj-colocation-receipts.md.
+# SCORECARD.md is byte-identical between 7b16731 and 9dcd367 (only PROVINCE.md changed in that path set).

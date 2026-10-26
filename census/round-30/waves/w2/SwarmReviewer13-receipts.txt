@@ -1,0 +1,129 @@
+SwarmReviewer13 r30-w2 receipts — C2 gate diff review
+commits: base 9420341d9a814cb6089c25fb03a4cc9b23dc0d1b C2 68447afef62e4761249af55a2467657f04046537 tip 9dcd367655fc28ba73d679a0e2cadaff96d2bcb8
+scratch: /fast/scratch/hyaku/souji-r30/ReviewGateDiff (TMPDIR exported here)
+
+== [1] probe.py counter-examples (C2 gate then BASE gate) ==
+Traceback (most recent call last):
+  File "/fast/scratch/hyaku/souji-r30/ReviewGateDiff/probe.py", line 110, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "/fast/scratch/hyaku/souji-r30/ReviewGateDiff/probe.py", line 90, in main
+    worlds[name] = build(os.path.join(scratch, "repos"), env, name)
+                   ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/fast/scratch/hyaku/souji-r30/ReviewGateDiff/probe.py", line 35, in build
+    repo = fx.Repo(base, name, env)
+  File "/fast/scratch/hyaku/souji-r30/ReviewGateDiff/c/tests/fixtures/r30-landing-gate-discovery.py", line 103, in __init__
+    os.makedirs(self.path)
+    ~~~~~~~~~~~^^^^^^^^^^^
+  File "<frozen os>", line 236, in makedirs
+FileExistsError: [Errno 17] File exists: '/fast/scratch/hyaku/souji-r30/ReviewGateDiff/probe-scratch/repos/shadow'
+
+== [2] committed fixture vs C2 gate ==
+CASE D1 PASS exit=0 reports=2 status=2 findings=0
+CASE D2 PASS exit=2 reports=0 status=0 findings=0
+CASE D3 PASS exit=1 reports=1 status=1 findings=1
+CASE D4 PASS exit=1 reports=1 status=1 findings=1
+CASE D5 PASS exit=1 reports=1 status=1 findings=1
+CASE D6 PASS exit=0 reports=1 status=1 findings=0
+CASE D7 PASS exit=1 reports=1 status=1 findings=1
+CONTROL always-zero-emitter FALSE-GREEN-REJECTED failed=D1,D2,D3,D5,D6,D7
+cases=7 pass=7 control=FALSE-GREEN-REJECTED
+
+== [3] committed fixture vs BASE gate ==
+CASE D1 FAIL exit=2 reports=0 status=0 findings=0 FAIL(COULD-NOT-EVALUATE printed; exit=2; checked_reports=0 want 2; status_lines=0 want 2)
+CASE D2 PASS exit=2 reports=0 status=0 findings=0
+CASE D3 PASS exit=1 reports=1 status=1 findings=1
+CASE D4 FAIL exit=1 reports=1 status=1 findings=3 FAIL(template token flagged: round-%s; template token flagged: round-{N})
+CASE D5 PASS exit=1 reports=1 status=1 findings=3
+CASE D6 FAIL exit=1 reports=1 status=1 findings=1 FAIL(mapped: exit=1 want 0; mapped: capture-backed pointer flagged)
+CASE D7 FAIL exit=2 reports=0 status=0 findings=0 FAIL(COULD-NOT-EVALUATE printed; exit=2 want 1; checked_reports=0 want 1; missing LG-SEAT-UNCARRIED)
+CONTROL always-zero-emitter FALSE-GREEN-REJECTED failed=D1,D2,D3,D5,D6,D7
+cases=7 pass=3 control=FALSE-GREEN-REJECTED
+
+== [1] probe.py counter-examples (C2 gate then BASE gate; fresh scratch) ==
+=== gate C2 (/fast/scratch/hyaku/souji-r30/ReviewGateDiff/c/tools/souji-landing-gate.py)
+--- world clean: rc=0 reports=1 status=1
+    (no findings)
+--- world cutmistake: rc=0 reports=1 status=1
+    (no findings)
+--- world excluded: rc=1 reports=1 status=1
+    LG-DANGLING-PTR | .ufo/waves/round-30/junk.log | corpus/lessons/round-30.md:5 cites path absent at 5596b7d20d7d
+--- world exemptstale: rc=1 reports=2 status=2
+    LG-DANGLING-PTR-EXEMPT-STALE | .ufo/waves/round-30/w1/X.md | exemption does not suppress an unresolved pointer or dangling measured_commit at 3cd303479de3
+--- world pcts: rc=1 reports=1 status=1
+    LG-DANGLING-PTR | census/round-%d/waves/ | corpus/lessons/round-30.md:5 cites path absent at fc9ad2effce4
+--- world renamed: rc=1 reports=1 status=1
+    LG-DANGLING-PTR | .ufo/waves/round-30/.gitignore | corpus/lessons/round-30.md:5 cites path absent at 7388903c4da8
+--- world shadow: rc=0 reports=1 status=1
+    (no findings)
+=== gate BASE (/fast/scratch/hyaku/souji-r30/ReviewGateDiff/base-gate.py)
+--- world clean: rc=2 reports=0 status=0
+    COULD-NOT-EVALUATE (stderr seen)
+--- world cutmistake: rc=2 reports=0 status=0
+    LG-DANGLING-PTR | census/round- | corpus/lessons/round-30.md:5 cites path absent at 9bd21e8b01b2
+    COULD-NOT-EVALUATE (stderr seen)
+--- world excluded: rc=2 reports=0 status=0
+    LG-DANGLING-PTR | .ufo/waves/round-30/junk.log | corpus/lessons/round-30.md:5 cites path absent at 5596b7d20d7d
+    COULD-NOT-EVALUATE (stderr seen)
+--- world exemptstale: rc=2 reports=0 status=0
+    COULD-NOT-EVALUATE (stderr seen)
+--- world pcts: rc=2 reports=0 status=0
+    LG-DANGLING-PTR | census/round-%d/waves/ | corpus/lessons/round-30.md:5 cites path absent at fc9ad2effce4
+    COULD-NOT-EVALUATE (stderr seen)
+--- world renamed: rc=2 reports=0 status=0
+    LG-DANGLING-PTR | .ufo/waves/round-30/.gitignore | corpus/lessons/round-30.md:5 cites path absent at 7388903c4da8
+    COULD-NOT-EVALUATE (stderr seen)
+--- world shadow: rc=0 reports=1 status=1
+    (no findings)
+
+== [4] C2 could-not-evaluate message (report-less tree) ==
+Traceback (most recent call last):
+  File "/fast/scratch/hyaku/souji-r30/ReviewGateDiff/d2msg.py", line 18, in <module>
+    repo = fx.Repo(os.path.join(scratch, "repos"), env, "empty")
+  File "/fast/scratch/hyaku/souji-r30/ReviewGateDiff/c/tests/fixtures/r30-landing-gate-discovery.py", line 102, in __init__
+    self.path = os.path.join(base, name)
+                ~~~~~~~~~~~~^^^^^^^^^^^^
+  File "<frozen posixpath>", line 90, in join
+  File "<frozen genericpath>", line 188, in _check_arg_types
+TypeError: join() argument must be str, bytes, or os.PathLike object, not 'dict'
+Traceback (most recent call last):
+  File "/fast/scratch/hyaku/souji-r30/ReviewGateDiff/d2msg.py", line 20, in <module>
+    root, rev = repo.commit("empty world")
+    ^^^^^^^^^
+ValueError: too many values to unpack (expected 2)
+
+== [5] /var/tmp failure modes (unshare mount namespace) ==
+-- /var absent:
+SUMMARY	findings=0	checked_reg=0	checked_changed=0	checked_pins=0	checked_measured=0	checked_markers=0	status_lines=0	carry_heading=0	checked_reports=0
+COULD-NOT-EVALUATE	internal error: FileNotFoundError: [Errno 2] No such file or directory: '/var/tmp/souji-landing-gate-i6ukpoam'
+RC=2
+-- /var/tmp read-only:
+SUMMARY	findings=0	checked_reg=0	checked_changed=0	checked_pins=0	checked_measured=0	checked_markers=0	status_lines=0	carry_heading=0	checked_reports=0
+COULD-NOT-EVALUATE	internal error: OSError: [Errno 30] Read-only file system: '/var/tmp/souji-landing-gate-je88492s'
+RC=2
+
+== [6] exit codes at C2 gate ==
+usage --round junk: RC=2
+unknown rev: RC=2
+clean capture-only: RC=0
+findings (pcts world): RC=1
+rc=2
+stdout SUMMARY present: True
+stderr: COULD-NOT-EVALUATE	no .md reports under .ufo/waves/round-30/ or census/round-30/waves/ at 17162d75b02d27e3b063baf6972cd5df81ceb207
+
+== [7] tip gate run (C2 gate bytes, lane tip tree, round 29) ==
+SUMMARY	findings=0	checked_reg=59	checked_changed=17	checked_pins=13	checked_measured=3	checked_markers=7	status_lines=69	carry_heading=1	checked_reports=86
+RC=0
+
+== [8] cited line numbers at C2 blob ==
+155:CAPTURE_POINTER_RE = re.compile(r"^\.ufo/waves/(round-\d+)(/.*)?$")
+156:TEMPLATE_POINTER_RE = re.compile(r"%s|<[Nn]>|\{N\}")
+485:        # which holds the same relative paths. When both are committed the
+879:                or part.rstrip("/").endswith("round-")
+910:    keeps the same relative names, so the same suffix is where the bytes were
+1003:            if capture_path is not None and _path_exists_in_tree(
+1070:    snapdir = tempfile.mkdtemp(prefix="souji-landing-gate-", dir="/var/tmp")
+2354:        # as findings (exit 1) — a crash is could-not-evaluate (r17 F1).
+tip gate rc=0
+tip stdout tail: SUMMARY	findings=0	checked_reg=59	checked_changed=17	checked_pins=13	checked_measured=3	checked_markers=7	status_lines=69	carry_heading=1	checked_reports=86
+tip stderr: 

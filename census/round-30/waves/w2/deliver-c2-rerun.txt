@@ -1,0 +1,98 @@
+r30 w2 C2 rerun receipt — seat SwarmExecutor02 (leaf, read-only)
+run 2026-10-26, all bytes from committed blobs; scratch /fast/scratch/hyaku/souji-r30/RerunC2 (removed after this file was written)
+
+provenance
+  prereg blob            d4928ec86b667e3d1ed0adb07fb088e500cf1631:census/round-30/c2-counter.py  (124 lines, extracted to scratch, run byte-exact)
+  amendments             ../../records/amendments.txt @ 02aea483b4366da8705342657995a310cd21a708
+  base                   9420341d9a814cb6089c25fb03a4cc9b23dc0d1b
+  C2 landing             68447afef62e4761249af55a2467657f04046537
+  lane tip               9dcd367655fc28ba73d679a0e2cadaff96d2bcb8  (HEAD at run time)
+  86 check               git -C <lane> ls-tree -r --name-only 9420341d9a814cb6089c25fb03a4cc9b23dc0d1b census/round-29/waves | grep -c '\.md$'  ->  86
+
+1. v1 (frozen counter, prereg blob) with --root <lane> --base 9420341 --fleet-root /home/vgpnk/Projects/shokunin
+
+@ 68447afef62e4761249af55a2467657f04046537  rc=1  (MISS)
+GATE rc=1 reports=86 cne=0 dangling=1 other=7
+FIXTURE rc=0 line='cases=7 pass=7 control=FALSE-GREEN-REJECTED' d1_d7_pass=True ok
+REDARM rc=1 line='cases=7 pass=3 control=FALSE-GREEN-REJECTED' ok
+REGRESS tools/souji-landing-gate.py base=(0, 'SELFTEST\tpass=65\tfail=0') rev=(0, 'SELFTEST\tpass=65\tfail=0') same
+REGRESS tests/fixtures/r16-landing-gate.py base=(0, 'SUMMARY\ttotal=15\tfailed=0') rev=(0, 'SUMMARY\ttotal=15\tfailed=0') same
+SUMMARY reports=86 cne=0 dangling=1 other=7 fixture=ok redarm=ok regress=same rev=68447afef62e4761249af55a2467657f04046537
+
+@ 9dcd367655fc28ba73d679a0e2cadaff96d2bcb8  rc=0  (target met)
+GATE rc=0 reports=86 cne=0 dangling=0 other=0
+FIXTURE rc=0 line='cases=7 pass=7 control=FALSE-GREEN-REJECTED' d1_d7_pass=True ok
+REDARM rc=1 line='cases=7 pass=3 control=FALSE-GREEN-REJECTED' ok
+REGRESS tools/souji-landing-gate.py base=(0, 'SELFTEST\tpass=65\tfail=0') rev=(0, 'SELFTEST\tpass=65\tfail=0') same
+REGRESS tests/fixtures/r16-landing-gate.py base=(0, 'SUMMARY\ttotal=15\tfailed=0') rev=(0, 'SUMMARY\ttotal=15\tfailed=0') same
+SUMMARY reports=86 cne=0 dangling=0 other=0 fixture=ok redarm=ok regress=same rev=9dcd367655fc28ba73d679a0e2cadaff96d2bcb8
+
+control on an independent tip clone as --root (removes live-working-tree dependence; live tree had M SKILL.md, M corpus/QUALITY.md, ?? corpus/lessons/round-30.md):
+SUMMARY reports=86 cne=0 dangling=0 other=0 fixture=ok redarm=ok regress=same rev=9dcd367655fc28ba73d679a0e2cadaff96d2bcb8   rc=0
+
+2. the single dangling pointer at the C2 landing commit
+command: python3 -B <lane>/tools/souji-landing-gate.py --root <lane> --rev 68447afef62e4761249af55a2467657f04046537 --round 29 --fleet-root /home/vgpnk/Projects/shokunin   (rc=1, stderr empty)
+LG-DANGLING-PTR	.ufo/waves/round-30/w1/deliver-c1-literal-history.tsv	SCORECARD.md:322 cites path absent at 68447afef62e
+plus 7 LG-SEAT-UNCARRIED (r29 capture reports; other=7) and:
+SUMMARY	findings=8	checked_reg=58	checked_changed=0	checked_pins=13	checked_measured=3	checked_markers=7	status_lines=69	carry_heading=0	checked_reports=86
+
+resolution of that pointer through the C2 capture mapping (gate _capture_pointer_path: .ufo/waves/round-N/S -> census/round-N/waves/S)
+  .ufo/waves/round-30/w1/deliver-c1-literal-history.tsv  mapped to  census/round-30/waves/w1/deliver-c1-literal-history.tsv
+  present at 68447af?  no   (git cat-file -e 68447af:census/round-30/waves/w1/deliver-c1-literal-history.tsv -> rc=128, "exists on disk, but not in")
+  present at tip?      yes  (rc=0; git ls-tree -r --name-only 9dcd367 census/round-30/waves/w1 lists it)
+  commit that added it aea0525 (wave-1 evidence capture, 150 records), ancestor of tip and descendant of 68447af
+  cited text at SCORECARD.md:322 @ 68447af: "... Literal provenance per row: `.ufo/waves/round-30/w1/deliver-c1-literal-history.tsv` (SwarmRevenger34: all 13 lit..."
+  not exempted: tools/pointer-exemptions.tsv at 68447af does not name it (the gate flagged it, and an exemption match is checked before the finding is emitted)
+
+3. v2 (A1 amendment) with --root <lane> --base 9420341 --fleet-root /home/vgpnk/Projects/shokunin
+
+@ 68447af
+BIND rc=1 reports=86 expected=86 ufo_md=0 cne=0 dangling=1 fail
+NOCAP rc=2 ok
+PTRARM rc=1 flagged=['.ufo/waves/round-29/w1/R30v2Absent.md', 'census/round-29/r30v2-absent.md'] real_pointer=.ufo/waves/round-29/w1/SwarmConnector63.md ok
+FIXTURE ok
+REDARM ok
+REGRESS-FULL tools/souji-landing-gate.py rc=0/0 lines=66/66 differs
+REGRESS-FULL tests/fixtures/r16-landing-gate.py rc=0/0 lines=16/16 same
+SUMMARY-V2 reports=86 expected=86 cne=0 dangling=1 bind=fail nocap=ok ptrarm=ok fixture=ok redarm=ok regress_full=differs rev=68447afef62e4761249af55a2467657f04046537   rc=1
+
+@ tip
+BIND rc=0 reports=86 expected=86 ufo_md=0 cne=0 dangling=0 ok
+NOCAP rc=2 ok
+PTRARM rc=1 flagged=['.ufo/waves/round-29/w1/R30v2Absent.md', 'census/round-29/r30v2-absent.md'] real_pointer=.ufo/waves/round-29/w1/SwarmConnector63.md ok
+FIXTURE ok
+REDARM ok
+REGRESS-FULL tools/souji-landing-gate.py rc=0/0 lines=66/66 differs
+REGRESS-FULL tests/fixtures/r16-landing-gate.py rc=0/0 lines=16/16 same
+SUMMARY-V2 reports=86 expected=86 cne=0 dangling=0 bind=ok nocap=ok ptrarm=ok fixture=ok redarm=ok regress_full=differs rev=9dcd367655fc28ba73d679a0e2cadaff96d2bcb8   rc=1
+=> A1 target literal "regress_full=same" is not printed at the tip; the v2 leg is unmet as shipped.
+
+4. regress_full cause: the whole byte difference between base and tip selftests is two err= tails
+base clone 9420341 and tip clone 9dcd367, python3 -B tools/souji-landing-gate.py --selftest, diff -u, 66 lines each:
+- CASE	pass	pointer-without-wave-reports	exit=2 ids=['LG-DANGLING-PTR'] paths=['census/round-18/missing.json'] fleet=[] err=no .md reports under .ufo/waves/round-18/ at f822f82d22c00c7020c979b3376bb383dcdcac94
++ CASE	pass	pointer-without-wave-reports	exit=2 ids=['LG-DANGLING-PTR'] paths=['census/round-18/missing.json'] fleet=[] err=no .md reports under .ufo/waves/round-18/ or census/round-18/waves/ at f822f82d22c00c7020c979b3376bb383dcdcac94
+- CASE	pass	no-wave-dir-exit2	exit=2 ids=[] paths=[] fleet=[] err=no .md reports under .ufo/waves/round-16/ at e458a9f03396e6fc4b96ca42886bb7b7b1db6ba6
++ CASE	pass	no-wave-dir-exit2	exit=2 ids=[] paths=[] fleet=[] err=no .md reports under .ufo/waves/round-16/ or census/round-16/waves/ at e458a9f03396e6fc4b96ca42886bb7b7b1db6ba6
+tests/fixtures/r16-landing-gate.py: diff empty (16 lines each), SUMMARY total=15 failed=0 both.
+line counts 66/66; raw differing lines 2/66; both are CASE lines whose text before " err=" is identical and which carry an err= tail.
+
+mechanism (c2-counter-v2.py:68-69):
+  def strip_err(out):
+      return "\n".join(re.sub(r"\terr=.*$", "", l) if l.startswith("CASE\t") else l for l in out.splitlines())
+  the selftest prints the tail as "fleet=[] err=..." — space, no tab — so the tab-anchored regex never matches and nothing is stripped.
+controlled experiment on the same two normalized outputs:
+  norm equality as-is                                     False
+  strip with v2 regex (r"\terr=")                          False
+  strip with whitespace-tolerant regex (r"\s+err=")        True
+=> the differs verdict is an instrument defect in A1, not a gate regression: every other line, both rc, and the r16 fixture are identical.
+
+5. v1 instrument looseness observed while attacking (not used to change any verdict)
+c2-counter.py:118  return 0 if reports > 0 and cnef == 0 and dangling == 0 and fok and rok and same else 1
+v1 exits 0 for any positive reports count; the literal 86 is only enforced by A1 BIND (expected == 86 computed from the tree). Observed reports at both revs is 86, so the frozen target literal is met; the looseness is in the instrument, not the measurement.
+
+6. verdicts
+  v1 dangling=1 at 68447af, pointer SCORECARD.md:322 -> .ufo/waves/round-30/w1/deliver-c1-literal-history.tsv  CONFIRMED
+  v1 target met at tip (reports=86 cne=0 dangling=0 other=0 fixture=ok redarm=ok regress=same, rc=0)                CONFIRMED, also on an independent tip clone
+  v2 regress_full=differs caused only by the err= tails                                                              CONFIRMED (2 CASE lines, tab-vs-space strip defect)
+  C2 at its landing commit meets the frozen SUMMARY                                                                  REFUTED (dangling=1, other=7, rc=1)
+  C2 meets A1's SUMMARY-V2 target at the tip                                                                         REFUTED as printed (regress_full=differs; cause is the A1 strip defect)

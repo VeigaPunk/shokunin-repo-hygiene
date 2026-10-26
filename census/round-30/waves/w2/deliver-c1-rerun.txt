@@ -1,0 +1,70 @@
+# C1 rerun falsification — seat SwarmExecutor01 (R30 attempt 1, w2), 2026-10-26T05:18Z-05:33Z
+lane HEAD at check: 9dcd367655fc28ba73d679a0e2cadaff96d2bcb8 (read-only git against the lane)
+
+## tools extracted (git show, never written back)
+v1  d4928ec86b667e3d1ed0adb07fb088e500cf1631:tools/souji-capability-agreement.py  232 lines  sha256 af71db1e898f00575de1e13d80b73a2ac73fbc15cae9c74cdba9eff9e40be620
+A3  9dcd367655fc28ba73d679a0e2cadaff96d2bcb8:tools/souji-capability-agreement.py  246 lines  sha256 88ffa768ac77868c18129977b97f5c3bd12a17c2cc60db76cfbb3786d9a6f3f2
+    A3 blob at the C1 landing commit 7b16731fcd8ab9b95220b50603314aa8dc92b2ec = 9b74d73436cb30126768395354a07b4a6c509294;
+    diff(A3@7b16731, A3@9dcd36) rc=0 -> the receipt header "A3 at 7b16731" names the same bytes.
+
+## argv (identical for every run below)
+python3 -B <tool> --root /home/vgpnk/Projects/shokunin/souji-shokunin --rev <REV> \
+  --base 9420341d9a814cb6089c25fb03a4cc9b23dc0d1b --list-rev d4928ec86b667e3d1ed0adb07fb088e500cf1631 \
+  --scratch /fast/scratch/hyaku/souji-r30/RerunC1/s
+
+## serial results (all reproduce the frozen target)
+v1  @7b1673fcd8ab9b95220b50603314aa8dc92b2ec  rc=0  SUMMARY k1=0 k2=0 mismatches=0 rows=18 pointers=10 rev=7b1673...
+a3  @7b1673fcd8ab9b95220b50603314aa8dc92b2ec  rc=0  SUMMARY k1=0 k2=0 mismatches=0 rows=18 pointers=10 rev=7b1673...
+v1  @9dcd367655fc28ba73d679a0e2cadaff96d2bcb8  rc=0  SUMMARY k1=0 k2=0 mismatches=0 rows=18 pointers=10 rev=9dcd36...
+a3  @9dcd367655fc28ba73d679a0e2cadaff96d2bcb8  rc=0  SUMMARY k1=0 k2=0 mismatches=0 rows=18 pointers=10 rev=9dcd36...
+    KINDS value=0 shape=0 rc=0 in all four.
+control v1 @base 9420341d9a814cb6089c25fb03a4cc9b23dc0d1b  rc=1  SUMMARY k1=13 k2=0 mismatches=13 rows=18 pointers=10
+    per-row observations identical to census/round-30/records/c1-before.txt (R18 = usage banner, R16 rc=2).
+repeat  v1 @7b1673  rc=0  output byte-identical to the first v1 run (determinism check).
+
+## receipts compared
+my v1 @7b1673 output == census/round-30/records/c1-after-v1.txt   (28 ROW/PTR lines + SUMMARY + KINDS identical; the
+    receipt carries one extra trailing "rc=0" line, the L1's exit-code annotation).
+my A3 @7b1673 output == census/round-30/records/c1-after-a3.txt   (same, identical).
+=> no row of either receipt disagrees with my rerun at the landing commit.
+
+## rows whose verdict differs, across the 4 serial runs (18 rows x v1/a3 x 7b1673/tip)
+R01 MATCH MATCH MATCH MATCH      R10 CORRECTED x4
+R02 MATCH MATCH MATCH MATCH      R11 CORRECTED x4
+R03 CORRECTED x4                 R12 MATCH MATCH MATCH MATCH
+R04 CORRECTED x4                 R13 MATCH MATCH MATCH MATCH
+R05 CORRECTED x4                 R14 CORRECTED x4
+R06 CORRECTED x4                 R15 CORRECTED x4
+R07 CORRECTED x4                 R16 CORRECTED x4
+R08 CORRECTED x4                 R17 MATCH MATCH MATCH MATCH
+R09 CORRECTED x4                 R18 CORRECTED  MATCH  CORRECTED  MATCH
+DIFFERENCES: exactly one row, R18, and only between the two tool generations (not between revisions):
+  v1 CORRECTED on observed="Usage: bash tools/souji-wave-evidence-capture.sh <lane-abs> <round-N> [--verify
+     [--rev <full40>]]" (recorded at SCORECARD.md:336, disclosed at SCORECARD.md:338);
+  A3 MATCH on observed="cases=15 pass=15 control=TAMPER-REJECTED" (stdout line).
+No row changes verdict between 7b1673 and 9dcd36 under either tool; SUMMARY differs only in rev=.
+
+## nondeterminism
+serial: none. 6 serial runs (v1@7b1673 x2, a3@7b1673, v1@tip, a3@tip, v1@base) gave stable, repeatable output.
+CONCURRENT: BROKEN for row R14 only.
+  two A3 @7b1673 instances in parallel:  A rc=0 k1=0 | B rc=1 k1=1
+     B: ROW R14 rc=1 observed="case=1 expect=rc=0 mismatches=0 keys=4 json-bound got=rc=0 mismatches=0 keys=4" MISMATCH kind=rc
+  three A3 @7b1673 instances in parallel: run2 rc=0 k1=0 | run1 rc=1 k1=1 | run3 rc=1 k1=1
+     run1/run3: ROW R14 rc=1 observed="tool_sha256=<HEX>" MISMATCH kind=rc
+  every other row stayed put in both tests.
+cause (bytes opened this run): tests/fixtures/r23-record-agreement.py at 7b1673
+  :11  "It builds a synthetic lane repo under /var/tmp (hard-coded; never /tmp), trap-cleaned on exit,"
+  :67  SCRATCH_ROOT = "/var/tmp/souji-r23-ExecFixtureAgreement"
+  :105 shutil.rmtree(SCRATCH_ROOT, ignore_errors=True)
+=> row R14's command shares one hard-coded scratch root, so a concurrent instance's cleanup deletes the other's
+   synthetic repo mid-run. The instrument is serial-safe, not concurrency-safe.
+
+## second measurement point (frozen C1 target: "at the C1 landing commit and again at the final lane tip")
+no committed C1 receipt names 9dcd36: both c1-after-v1.txt and c1-after-a3.txt measure rev=7b1673. Evidence for the
+tip point is supplied here (v1 and A3 at 9dcd36, above), both rc=0 with the frozen SUMMARY.
+
+## receipts copied into this directory (scratch then removed)
+SwarmExecutor01-c1-v1-7b1673.txt  SwarmExecutor01-c1-a3-7b1673.txt  SwarmExecutor01-c1-v1-tip.txt
+SwarmExecutor01-c1-a3-tip.txt     SwarmExecutor01-c1-v1-base.txt   SwarmExecutor01-c1-v1-7b1673-run2.txt
+SwarmExecutor01-c1-conc-A.txt     SwarmExecutor01-c1-conc-B.txt    SwarmExecutor01-c1-tri1.txt
+SwarmExecutor01-c1-tri2.txt       SwarmExecutor01-c1-tri3.txt

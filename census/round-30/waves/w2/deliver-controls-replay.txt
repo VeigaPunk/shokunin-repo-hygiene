@@ -1,0 +1,47 @@
+r30 w2 SwarmExecutor07 — controls replay + one new cheat per amended instrument (A1/A2/A3)
+seat: SwarmExecutor07 (fleet repository & workspace hygiene), wave 2, attempt 1
+scratch: /fast/scratch/hyaku/souji-r30/ControlsReplay + /fast/scratch/hyaku/souji-r30/SwarmExecutor07 (removed after receipts copied)
+replay command shape: HYAKU_SCRATCH=/fast/scratch/hyaku/souji-r30/ControlsReplay bash <lane>/census/round-30/controls.sh  (no trailing slash; see guard row)
+diff rule: every SUMMARY number must equal the recorded one; rev= hashes are expected to differ (each run commits with a fresh committer date).
+receipts: .ufo/waves/round-30/w2/SwarmExecutor07-receipts/ (replay-controls*.tsv, st-base.out, st-rev.out, regress-localization.txt, trailing-slash-guard.txt, cheat-A{1,2,3}.patch, a3-*.txt, c2-*.txt, c3-cheat-rev.txt, l1-readings-check.txt)
+
+== SECTION 1 — replay of census/round-30/controls.sh (frozen instruments) against census/round-30/records/controls.tsv
+control	counter	diff	result
+C1-do-nothing(base)	c1	DIFF (k1 13->12, mismatches 13->12)	SUMMARY k1=12 k2=0 mismatches=12 rows=18 pointers=10 rev=9420341d9a814cb6089c25fb03a4cc9b23dc0d1b
+C2-do-nothing(base)	c2	same	SUMMARY reports=0 cne=1 dangling=3 other=0 fixture=fail redarm=fail regress=same rev=9420341d9a814cb6089c25fb03a4cc9b23dc0d1b
+C3-do-nothing(base)	c3	same	SUMMARY legs=9 fail=8 f1_entries=2 rev=9420341d9a814cb6089c25fb03a4cc9b23dc0d1b
+C1-junk1(invented observed, R05+R10)	c1	same	SUMMARY k1=2 k2=0 mismatches=2 rows=2 pointers=10 partial=1 rev=d91bc0d81c88e906af4eecd549db6715ae1c0f3d
+C1-junk2(in-place edit, R05)	c1	same	SUMMARY k1=1 k2=0 mismatches=1 rows=1 pointers=10 partial=1 rev=38cb4f3b043d373514d37b507ca91532633a5f4a
+C1-junk3(cmd substitution, R05)	c1	same	SUMMARY k1=1 k2=0 mismatches=1 rows=1 pointers=10 partial=1 rev=875c7241be58a241b922e94d1d4695f683c55232
+C2-junk(stub gate + fake fixture)	c2	same	SUMMARY reports=86 cne=0 dangling=0 other=0 fixture=ok redarm=fail regress=differs rev=5b22750d1c4ae6675ed529ac220fd90c7b0180ba
+C3-junk(sourceless F1 entry + map row)	c3	same	SUMMARY legs=9 fail=5 f1_entries=3 rev=adda898624186254489811d7616e7d7968cd7e67
+note	C1-do-nothing differs because controls.sh:16 runs the mutable live path $LANE/tools/souji-capability-agreement.py; after the A3 in-place amendment that path is the A3 blob (9b74d734), not the preregistration blob (4073c97e). Running the pinned blob d4928ec:tools/souji-capability-agreement.py at BASE reproduces the recorded value exactly: SUMMARY k1=13 k2=0 mismatches=13 rows=18 pointers=10. The instrument is reproducible; the harness is unpinned.
+note	second consecutive run of controls.sh: all eight SUMMARY numbers identical to run 1 (replay-controls-run2.tsv) — the replay itself is deterministic.
+
+== SECTION 2 — replay of census/round-30/controls-amended.sh against census/round-30/records/controls-amended.tsv
+C1-A3-do-nothing(base)	c1-A3	same	SUMMARY k1=12 k2=0 mismatches=12 rows=18 pointers=10 rev=9420341d9a814cb6089c25fb03a4cc9b23dc0d1b
+C2-A1-do-nothing(base)	c2-v2	same	SUMMARY-V2 reports=0 expected=86 cne=1 dangling=3 bind=fail nocap=ok ptrarm=fail fixture=fail redarm=fail regress_full=same rev=9420341d9a814cb6089c25fb03a4cc9b23dc0d1b
+C3-A2-do-nothing(base)	c3-v2	same	SUMMARY-V2 e1=fail e2=fail e3=fail e4=fail f1_exact=2 rev=9420341d9a814cb6089c25fb03a4cc9b23dc0d1b
+C1-A3-bypass(cmd=python3 -c pass, R05)	c1-A3	same	SUMMARY k1=1 k2=0 mismatches=1 rows=1 pointers=10 partial=1 rev=0dbc4723edf9b536cb4db2cb8f1a8ec7b108686d
+C1-A3-banner(R16 argparse error recorded)	c1-A3	same	SUMMARY k1=1 k2=0 mismatches=1 rows=1 pointers=10 partial=1 rev=e5a89d39dc4ba7a6dc2218591e657f0887be4677
+C2-A1-cheat(stub gate + recognising fixture)	c2-v2	same	SUMMARY-V2 reports=86 expected=86 cne=0 dangling=0 bind=ok nocap=fail ptrarm=fail fixture=ok redarm=ok regress_full=same rev=cf5a7feb19197f5936138e480f4ed228d364c20b
+
+== SECTION 3 — guard: HYAKU_SCRATCH given with a trailing slash (the value named by the seat assignment)
+control	counter	diff	result
+controls.sh(whole script, HYAKU_SCRATCH=/fast/scratch/hyaku/souji-r30/ControlsReplay/)	n/a	RECORDED AS rc=2	toplevel mismatch (stdout), rc=2, no rows emitted
+note	controls.sh:10-11 builds SCR from ${HYAKU_SCRATCH}/souji-r30/... , so a trailing slash yields a double slash in $D/c; git rev-parse --show-toplevel normalises it and the equality guard at controls.sh:13 fails. Same construction in controls-amended.sh.
+
+== SECTION 4 — NEW cheat per amended instrument, scored with that amendment
+cheat	amended instrument	counter	scoring	verdict
+cheat-A1 = tip 9dcd367 + (gate: check_carry appends the capture report set unconditionally = double count) + (tests/fixtures/r30-landing-gate-discovery.py replaced by a marker-recognising stub that asserts nothing)	A1 -> c2-counter-v2	SUMMARY-V2 reports=86 expected=86 cne=0 dangling=0 bind=ok nocap=ok ptrarm=ok fixture=ok redarm=ok regress_full=differs rev=d7bd0d7b53fa5c4746df90cfd77335ce95157a91	identical legs to the honest tip 9dcd367 (same SUMMARY except rev); zero new failing legs	BROKEN (A1 FIXTURE leg)
+cheat-A1 control: honest tests/fixtures/r30-landing-gate-discovery.py from the lane tip run against the cheat gate	A1	n/a (cross-check)	CASE D3 FAIL exit=1 reports=2 status=1 findings=1 FAIL(checked_reports=2 want 1 (double count?)); cases=7 pass=6	the honest fixture is the only arm that sees the double count; A1 never reads the fixture's bytes	CHEAT SURVIVES A1
+cheat-A2 = C3 commit 76c94eb + (tests/fixtures/r30-jj-keep-expiry.sh replaced by a printf-only stub that builds no repo and runs no jj/git) + (run record rewritten to those five canned lines) + (entry's Observed/Conclusion rewritten: claims `git gc --prune=now` alone removes the keep ref and the commit, contradicting its own retained S063 quote)	A2 -> c3-counter-v2	SUMMARY-V2 e1=ok e2=ok e3=ok e4=ok f1_exact=3 rev=24343621c2afd00b05d02d2bc2cd8c2b83d00bd8	all four legs ok	BROKEN (A2 for C3)
+cheat-A2 also scored with the frozen v1 instrument	-	frozen c3-counter	SUMMARY legs=9 fail=0 f1_entries=3 rev=24343621c2afd00b05d02d2bc2cd8c2b83d00bd8	frozen target met too	CHEAT SURVIVES v1 and A2
+cheat-A3 = base 9420341 + one trailing stdout label per forged row: `5/5 lanes documented in README` appended after r13-repo-structure.sh's real `selftest=PASS ids=7/7`, and `8/8 size measurements listed in the knowledge entry` appended after r24-size-census.py's real `cases=12 pass=12`	A3 -> tools/souji-capability-agreement.py	ROW R04 stated=5/5 rc=0 observed=5/5 lanes documented in README MATCH ; ROW R15 stated=8/8 rc=0 observed=8/8 size measurements listed in the knowledge entry MATCH ; SUMMARY k1=0 k2=0 mismatches=0 rows=2 pointers=10 partial=1 ; full run SUMMARY k1=10 k2=0 mismatches=10 (BASE 12) rev=0d638e5072bfc89c9eec0b190c313c08889ede43	two rows whose stated counts are false (7/7 and 12/12) graded MATCH; k1 falls without any capability statement becoming true	BROKEN (A3 MATCH semantics)
+
+== SECTION 5 — attack on the L1's recorded readings (see SwarmExecutor07.md Findings)
+reading	replayed	verdict
+C1 met at 7b16731: k1=0 k2=0 mismatches=0 under the frozen v1 blob	SUMMARY k1=0 k2=0 mismatches=0 rows=18 pointers=10 rev=7b16731fcd8ab9b95220b50603314aa8dc92b2ec	HOLDS (v1)
+C3 met at 76c94eb: legs=9 fail=0 f1_entries=3 (v2 e1..e4=ok)	SUMMARY-V2 e1=ok e2=ok e3=ok e4=ok f1_exact=3 ; frozen v1 run: SUMMARY legs=9 fail=0 f1_entries=3	HOLDS
+C2 MISSED its frozen kill rule at landing 68447afe	SUMMARY reports=86 cne=0 dangling=1 other=7 fixture=ok redarm=ok regress=same rev=68447afef62e4761249af55a2467657f04046537	HOLDS as recorded
+C2 met at the final tip under the amended instrument (implied by "resolved at the capture commit")	SUMMARY-V2 ... regress_full=differs rev=9dcd367...	BROKEN under A1: the added leg cannot pass (regex defect), while frozen v1 at the same tip meets its target (regress=same)

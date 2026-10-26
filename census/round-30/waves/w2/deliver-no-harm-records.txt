@@ -1,0 +1,95 @@
+souji r30 w2 — SwarmExecutor05 — calibration/coverage no-harm records over committed bytes
+base 9420341d9a814cb6089c25fb03a4cc9b23dc0d1b ; tip 9dcd367655fc28ba73d679a0e2cadaff96d2bcb8
+prereg d4928ec86b667e3d1ed0adb07fb088e500cf1631 ; amendments 02aea483b4366da8705342657995a310cd21a708
+env Python 3.14.8, git 2.56.0, jj 0.45.1-7c41cdeb, linux 7.2.11-arch1-1 ; no installs/updates run (pacman paused host-wide)
+method: every reading below is over committed bytes (`git -C <lane> cat-file`/`ls-tree`), except the sources-census
+validate line, which is the live tree (SOURCES.md unmodified in it; the live dirt is corpus/QUALITY.md + an untracked
+corpus/lessons/round-30.md, neither read by these instruments).
+
+== CHECK TABLE (base -> tip, verdict) ==============================================================
+C1 registry agreement | python3 -B tools/souji-registry-agreement.py --root <lane> --rev <r> --list-rev b8cb4b31ce80e2e3314b88e85d40ea9873180804
+  base SUMMARY k1=0 k2=0 mismatches=0 rc=0
+  tip  SUMMARY k1=0 k2=0 mismatches=0 rc=0
+  rows in corpus/SOURCES.md 143 -> 145 (+2 = S220/S221); not vacuous, extended. HOLDS
+C2 coverage agreement | python3 -B tools/souji-coverage-agreement.py --root <lane> --rev <r>
+  base grounded=15 mapped=15 dangling=0 mismatches=0 rc=0
+  tip  grounded=16 mapped=16 dangling=0 mismatches=0 rc=0
+  +1 grounded = corpus/knowledge/jj-keep-ref-expiry.md; dangling still 0. HOLDS
+C3 declared-evidence (r22 C1 instrument, takes --rev) | python3 -B tools/souji-declared-evidence.py --root <lane> --rev <r>
+  base assertions=175 resolved=154 skipped=278 mismatches=21 rc=1
+  tip  assertions=181 resolved=159 skipped=283 mismatches=22 rc=1
+  WORSE by 1 -> receipt R1 below. (Already rc=1 at base; not a r30 target.)
+C4 r29 C2 receipts | python3 -B census/round-29/c2-counter.py --root <lane> --rev <r>
+  base r26 1381/0/0 r27 124/0/0 r28 75/0/0 r29 131/0/0 SUMMARY manifests=4 failed=0 uncovered=0 floor_violations=0 rc=0
+  tip  r26 1381/0/0 r27 124/0/0 r28 75/0/0 r29 131/0/0 r30 150/0/0 SUMMARY manifests=5 failed=0 uncovered=0 floor_violations=0 rc=0
+  r26-r29 receipts still verify at tip; r30 capture added and verifies. HOLDS
+C5 wave capture verify | bash tools/souji-wave-evidence-capture.sh <lane> 30 --verify --rev 9dcd3676...
+  verify-rev rev=9dcd367655fc28ba73d679a0e2cadaff96d2bcb8 records=150 failed=0 uncovered=0 rc=0. HOLDS
+C6 census validate | scripts/sources-census.sh validate --root /home/vgpnk/Projects/shokunin souji (live tree)
+  rc=0, last line `souji ok /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/SOURCES.md`, 36 W04, 0 E-codes.
+  W04 duplicate-url: 36 at base bytes and 36 at tip bytes, identical id set (comm -3 empty both ways);
+  tip W04 ids 36 = base 36, S220/S221 add no duplicate url. HOLDS
+  (note: `--file` mode without a fleet tree also prints E11 used-by; the 4 tip-only E11 ids are S054, S063, S220,
+   S221 all naming corpus/knowledge/jj-keep-ref-expiry.md, which exists — real-root validate is rc=0 with 0 E11.)
+C7 C1 capability counter at tip (attack on the L1's "met") | python3 -B tools/souji-capability-agreement.py --root <lane> --rev <r> --base 9420341... --list-rev d4928ec...
+  tip (A3 bytes, serial) SUMMARY k1=0 k2=0 mismatches=0 rows=18 pointers=10, KINDS value=0 shape=0 rc=0, rc=0
+  tip (v1 bytes from d4928ec, serial) SUMMARY k1=0 k2=0 mismatches=0 rows=18 pointers=10 rc=0
+  landing 7b16731 (A3 bytes, serial) SUMMARY k1=0 k2=0 mismatches=0 rows=18 pointers=10 rc=0
+  base 9420341 (A3 bytes) SUMMARY k1=12 k2=0 mismatches=12 (v1 base recorded 13 in controls.tsv; the 1-row gap is
+  R18, whose v1 observation is the fixture's usage banner and is CORRECTED by SCORECARD.md:314 under v1 only).
+  HOLDS serially; NOT concurrency-safe -> receipt R2 below.
+C8 axis check | python3 -B tools/souji-axis-check.py --prereg census/round-30/records/preregistration.txt --scorecard SCORECARD.md
+  claims=3 flags=0 rc=0. HOLDS
+C9 axes table (SCORECARD.md:13-15) identical at base and tip: coverage 8, calibration 7, operability 8. HOLDS
+
+== R1 declared-evidence +1 mismatch (introduced by the C1 landing 7b16731) =========================
+the only tip-only assertion of 181 that does not resolve, from the --format tsv dumps:
+  322	.ufo/waves/round-30/w1/deliver-c1-literal-history.tsv	A	mismatch:path-absent	not in tree at 9dcd367...
+tool: r22 C1 contract, class A = a backticked repo-relative path must exist at --rev.
+why absent: .gitignore:1 `.ufo/waves/` -> `git check-ignore -v` names ".gitignore:1:.ufo/waves/" for that path.
+content is not lost: census/round-30/waves/w1/deliver-c1-literal-history.tsv is committed, byte-identical to the live
+file, and recorded in the committed manifest:
+  sha256 9cb230679d3756956eb8cde1d3b0465824d5a63df52d483742d65ecac474b03d (capture blob, live file, manifest line
+  `9cb2306...  ./w1/deliver-c1-literal-history.tsv`).
+attribution: `git log -S'.ufo/waves/round-30/w1/deliver-c1-literal-history.tsv' -- SCORECARD.md` -> only 7b16731.
+other 5 new assertions added by the same commit resolve (census/round-24/records/c2-fixture-after.tsv,
+census/round-30/records/d3-green-r28-wave-evidence-capture.txt, d4928ec, 9420341..., census/round-27 receipt).
+=> citation-path defect on a claim surface (same class C2 removed from the gate); the gate does not read SCORECARD.
+
+== R2 the frozen C1 counter is not concurrency-safe (3 of 18 rows share hard-coded /var/tmp roots) ===
+solo control:  --only R14, A3 bytes -> `rc=0 observed=selftest=15/15 CORRECTED`; SUMMARY mismatches=0
+               --only R14, v1 bytes -> `rc=0 observed=selftest=15/15 CORRECTED`; SUMMARY mismatches=0
+two identical full runs at tip, launched concurrently, separate --scratch and separate TMPDIR each:
+  [A] ROW R14 SCORECARD.md:173 stated=9/9 rc=1 observed=case=1 expect=rc=0 mismatches=0 keys=4 json-bound got=rc=0 mismatches=0 keys=4  MISMATCH kind=rc
+  [A] SUMMARY k1=1 k2=0 mismatches=1 rows=18 pointers=10 rev=9dcd3676...
+  [B] SUMMARY k1=0 k2=0 mismatches=0 rows=18 pointers=10 rev=9dcd3676...
+two concurrent runs of different instruments (v1 + A3) earlier produced the same class: A-v1
+`observed=File "<TMP>/c/tests/fixtures/r23-record-agreement.py", line 140, in git`, B-a3 `observed=tool_sha256=<HEX>`,
+both rc=1 / MISMATCH.
+root cause (committed bytes, tip):
+  tests/fixtures/r23-record-agreement.py:67   SCRATCH_ROOT = "/var/tmp/souji-r23-ExecFixtureAgreement"
+  tests/fixtures/r23-record-agreement.py:105  shutil.rmtree(SCRATCH_ROOT, ignore_errors=True)
+  tests/fixtures/r29-registry-agreement.py:18 BASE = '/var/tmp/souji-r29-c1-fixture'   (row R17; cwd of every case)
+  tests/fixtures/r28-wave-evidence-capture.sh:51 scratch_root=${SOUJI_R29_C2FIXTURE_BASE:-/var/tmp/souji-r29-wave-capture-fixture}
+    (row R18; but its runs use `base=$(mktemp -d "$scratch_root/run.XXXXXX")`, so per-run unique)
+  rows R01/R04 use `mktemp -d /var/tmp/souji-r12-maintenance.XXXXXX` / `/var/tmp/souji-r13-repo-structure.XXXXXX` -> unique
+consequence: two seats evaluating C1 at the same time (or the L1 re-running while a seat runs) can print
+`mismatches=1` where the serial reading is 0, i.e. a false C1 miss on the r30 target. r30's own instruments are safe:
+c2-counter*.py, c3-counter*.py and tests/fixtures/r30-landing-gate-discovery.py use tempfile.mkdtemp; r30-jj-keep-expiry.sh
+uses `mktemp -d "$TMPDIR/r30-jj-keep-expiry.XXXXXX"`.
+[R14 demonstrated above; R17 by the same fixed-root pattern, untested => INFERENCE]
+
+== R3 post-claim stale frontier text, routed in w1 and still unfixed at tip (coverage bookkeeping) ==
+corpus/README.md:46  `remaining: keep-ref expiry unmeasured, fleet exposure numerator re-census.`
+corpus/README.md:216 `... F1 itself stays frontier; keep-ref expiry unmeasured |`
+corpus/README.md:623 `F1 — keep-ref expiry is now measured (the entry above; jj 0.45.1, eight RESULT steps,`
+corpus/README.md:39 and :604 name knowledge/jj-keep-ref-expiry.md. Same committed file, two opposite statements about
+the same F1 surface. w1 delivery census/round-30/waves/w1/deliver-sources-rows.md:168 routed it: "flipping that line
+is a C3/L1 act, not a rows act — noted, not done". No counter leg reads :46, so no frozen target is moved.
+
+== NO-CHANGE / NOT-WORSE summary ==================================================================
+worse: declared-evidence mismatches 21 -> 22 (R1). same: registry 0/0/0, coverage dangling 0 / mismatches 0,
+r29 manifests 0 failed / 0 uncovered (counts up 4 -> 5, records up 131 -> 150), census validate rc=0 / W04 36,
+axes 7/8/8, r26-r29 receipts verify. better: coverage grounded/mapped 15 -> 16, registry rows 143 -> 145,
+r30 manifest verifies, C1 capability 12 -> 0 at tip.
+scratch /fast/scratch/hyaku/souji-r30/NoHarmRecords removed after this file was written.

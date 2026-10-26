@@ -1,0 +1,220 @@
+
+### R0 lane tip, target commit, live worktree status
+$ git -C lane rev-parse HEAD
+rc=0
+9dcd367655fc28ba73d679a0e2cadaff96d2bcb8
+C3 commit 76c94eb41fc38093d7143a016006b6275e102d5d
+parent base 9420341d9a814cb6089c25fb03a4cc9b23dc0d1b
+lane tip 9dcd367655fc28ba73d679a0e2cadaff96d2bcb8
+$ git -C lane status --porcelain
+rc=0
+ M SKILL.md
+ M corpus/QUALITY.md
+?? corpus/lessons/round-30.md
+
+### R1 diff base..C3 --stat corpus/SOURCES.md
+$ git diff --stat
+rc=0
+ corpus/SOURCES.md | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+### R2 cell-level diff of touched rows, schema check (BASE vs C3 blob)
+$ python3 -B cell/schema diff
+rc=0
+base rows 143 C3 rows 145 new ['S220', 'S221'] gone []
+S054 cell counts 11 11
+  changed column: usedby
+    base: corpus/knowledge/jj-colocation-receipts.md
+    c3  : corpus/knowledge/jj-colocation-receipts.md, corpus/knowledge/jj-keep-ref-expiry.md
+S063 cell counts 11 11
+  changed column: usedby
+    base: corpus/knowledge/jj-colocation-receipts.md
+    c3  : corpus/knowledge/jj-colocation-receipts.md, corpus/knowledge/jj-keep-ref-expiry.md
+S220 cell count 11 status mined opened 2026-10-26 recheck on-release tier A kind docs
+S221 cell count 11 status mined opened 2026-10-26 recheck on-release tier A kind docs
+C3 rows with !=11 cells: []
+
+### R3 frozen census commands on live lane
+$ frozen census block
+rc=0
+rows=145
+malformed=0
+dupid=[]
+enum+missing=[]
+
+### R4 anchors verified in committed C3 snapshots
+$ anchor/line/hash checks
+rc=0
+-- cli-reference@.md.snap: 4038 lines
+2411:## `jj operation abandon`
+2415:To discard old operation history, use `jj op abandon ..<operation ID>`. It will abandon the specified operation and all its ancestors. The descendants will be reparented onto the root operation.
+2419:Previous versions of a change (or predecessors) are also discarded if they become unreachable from the operation history. The abandoned operations, commits, and other unreachable objects can later be garbage collected by using `jj util gc` command.
+3789:## `jj util gc`
+3801:   By default, only obsolete objects and operations older than 2 weeks are pruned.
+3803:   Only the string "now" can be passed to this parameter. Support for arbitrary absolute and relative timestamps will come in a subsequent release.
+-- operation-log.md: 65 lines; grep -c abandon = 0
+     5	Jujutsu records each operation that modifies the repo in the "operation log".
+     6	You can see the log with `jj op log`. Each operation object contains a snapshot
+     7	of how the repo looked at the end of the operation. We call this snapshot a
+     8	"view" object. The view contains information about where each bookmark, tag, and
+     9	Git ref (in Git-backed repos) pointed, as well as the set of heads in the repo,
+    10	and the current working-copy commit in each workspace. The operation object also
+    11	(in addition to the view) contains pointers to the operation(s) immediately
+    12	before it, as well as metadata about the operation, such as timestamps,
+    45	## Loading an old version of the repo
+    56	snapshotting that's skipped with `--at-op`).
+-- SHA256SUMS vs recomputed C3 blobs
+cli-reference@.md.snap b330694348c2a6fb21b637425c711d48ac9fa41d0b3596b4ca2955f7a9333554  -
+git_backend.rs 95147270e5bc2a689e1191256c0f214d8e52ac6d4523756eb6b8ec8113d86c69  -
+operation-log.md 2a48dab85483f8bed666ccc1aebd458d70f4ff57ece1a122aee8889b3209ce18  -
+git-gc.adoc e3dbc4081095faf8d2d760eb4a47a1350f89d0c772f55eaada9cfbcdbeafba8c  -
+b330694348c2a6fb21b637425c711d48ac9fa41d0b3596b4ca2955f7a9333554  cli-reference@.md.snap
+95147270e5bc2a689e1191256c0f214d8e52ac6d4523756eb6b8ec8113d86c69  git_backend.rs
+2a48dab85483f8bed666ccc1aebd458d70f4ff57ece1a122aee8889b3209ce18  operation-log.md
+e3dbc4081095faf8d2d760eb4a47a1350f89d0c772f55eaada9cfbcdbeafba8c  git-gc.adoc
+
+### R5 live refetch of S220 and S221 sources, 2026-10-26 (this run)
+$ refetch hashes
+rc=0
+b330694348c2a6fb21b637425c711d48ac9fa41d0b3596b4ca2955f7a9333554  refetch.snap
+2a48dab85483f8bed666ccc1aebd458d70f4ff57ece1a122aee8889b3209ce18  refetch-oplog.md
+154561 refetch.snap
+65 refetch-oplog.md
+abandon count: 0
+   By default, only obsolete objects and operations older than 2 weeks are pruned.
+   Only the string "now" can be passed to this parameter. Support for arbitrary absolute and relative timestamps will come in a subsequent release.
+
+### R6 served-page clause of S220 anchor: docs.jj-vcs.dev/v0.45.1/cli-reference/
+$ served page probes
+rc=0
+bytes: 390031
+grep jj-util-gc: 9
+grep 2-week-sentence: 1
+grep jj-file-delete: 0
+grep jj-util-diff: 0
+
+### R7 host jj 0.45.1-7c41cdeb help vs snapshot (independent grounding of teaches cells)
+$ host binary help
+rc=0
+jj 0.45.1-7c41cdeb16b6b321c64e789a966b6adf723816a5
+-- host jj util gc --help
+Run backend-dependent garbage collection.
+
+To garbage-collect old operations and the commits/objects referenced by them, run `jj op abandon
+..<some old operation>` before `jj util gc`.
+
+Usage: jj util gc [OPTIONS]
+
+          By default, only obsolete objects and operations older than 2 weeks are pruned.
+          
+          Only the string "now" can be passed to this parameter. Support for arbitrary absolute and
+          relative timestamps will come in a subsequent release.
+
+  -h, --help
+          Print help (see a summary with '-h')
+
+-- host jj op abandon --help
+Abandon operation history
+
+To discard old operation history, use `jj op abandon ..<operation ID>`. It will abandon the
+specified operation and all its ancestors. The descendants will be reparented onto the root
+operation.
+
+To discard recent operations, use `jj op restore <operation ID>` followed by `jj op abandon
+<operation ID>..@-`.
+
+Previous versions of a change (or predecessors) are also discarded if they become unreachable from
+the operation history. The abandoned operations, commits, and other unreachable objects can later be
+garbage collected by using `jj util gc` command.
+
+-- snapshot :2421
+**Usage:** `jj operation abandon <OPERATION>`
+
+### R8 validator before/after (scratch clone at BASE and at C3) and live-root run
+$ validate comparisons
+rc=0
+IDENTICAL output (37 lines each)
+-- non-W04 lines at C3:
+c	ok	/fast/scratch/hyaku/souji-r30/SwarmCritic22/c/corpus/SOURCES.md
+-- W04 count: 36
+-- live fleet-root run tail:
+souji	ok	/home/vgpnk/Projects/shokunin/souji-shokunin/corpus/SOURCES.md
+
+### R9 lesson Gate / touched-row log status (contract rules 1-2)
+$ lesson status
+rc=0
+-- round-30 lesson files at C3: 0
+-- round-30 lesson files at tip: 0
+-- add-commit search:
+-- working-tree draft (uncommitted):
+?? corpus/lessons/round-30.md
+38 /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/lessons/round-30.md
+
+### R10 search log: Round-30 note presence; last note; r29 landing precedent
+$ search log
+rc=0
+C3 blob grep -c Round-30: 0
+tip blob grep -c Round-30: 0
+-- last search-log headings:
+36:- **Round-22 second-replacement exception correction (2026-10-21).** Question: does the official RecursionError statement justify a universal JSON depth/stack threshold after CritMeasure245's environment counterexample? Reopened one already-identified official page (exceptions), screened one, included one scoped correction S108 superseding S107, excluded zero; no new distinct source. The page specifies exception semantics, while the reviewed experiment supplies only local resource observations. Stop: the distinction resolves; no arbitrary-resource claim or knowledge/frontier promotion follows. URL/date/located quote: round-22 lesson Gate.
+38:- **Round-25 F2 common-directory source search (2026-10-25).** Question: which Git sources define the linked-worktree common directory used by the structure probe, and which define only the shared-file behavior? Opened five distinct official pages live (gitrepository-layout(5), git(1), git-worktree(1), git-rev-parse(1), gitglossary(7)), compared the relevant manuals with installed git 2.56.0-1 and opened v2.56.0 source pages. Identified 5, screened 5; admitted 3 scoped A rows S124–S126, rejected S127 (glossary has no common-directory definition; the page-wide `common` sweep returned 0), and excluded git-rev-parse(1) as corroborating exact-option documentation because the lane code itself names `--git-common-dir`. Stop: commondir semantics, GIT_COMMON_DIR shared-file redirection and linked-worktree DETAILS were located; no source establishes the probe's write-safety or size-attribution claims.
+40:**Round-29 F3 duplicate-verdict row re-grounding (2026-10-25).** Question: which pages actually
+-- r29 note landing commit:
+1dc6785 round-29: C3 F3 duplicate-verdict entries, rows S216-S219, sources, slice, integrity legs
+
+### R11 held entry still states keep-ref lifetime unmeasured (coverage coherence)
+$ git show tip:jj-colocation-receipts.md (lines 106-109)
+rc=0
+## Limits
+
+- **Keep-ref lifetime.** The docs read do not state it. The timing in §3 is an inference from source and from observed keep-ref counts. The lane helper (`scripts/hyaku/jj-lane.sh`) contains neither `jj op abandon` nor `jj util gc`, so hidden keep-held commits in lanes are not pruned by the lane tooling. That is an observation of the helper, not a jj guarantee.
+- **Git-emulated fixture.** J1–J8 synthesize `refs/jj/keep/<sha>` with `git update-ref`. They test how the receipt tools handle a `refs/jj/keep` namespace, not jj's own behaviour. J9 uses jj 0.45.1 to create real keep refs; it is one run per landing. The fixture runs the CLIs, so only the last-defined functions are measured.
+
+### R12 census histograms BASE vs C3 (scratch clone checkouts)
+-- base
+c	rows	143
+c	tier.A	135
+c	tier.B	6
+c	tier.C	2
+c	status.mined	120
+c	status.queued	14
+c	status.rejected	9
+FLEET	rows	143
+FLEET	tier.A	135
+FLEET	tier.B	6
+FLEET	tier.C	2
+FLEET	tier.invalid	0
+FLEET	status.queued	14
+FLEET	status.mined	120
+FLEET	status.rejected	9
+FLEET	status.invalid	0
+FLEET	missing	0
+-- c3
+c	rows	145
+c	tier.A	137
+c	tier.B	6
+c	tier.C	2
+c	status.mined	122
+c	status.queued	14
+c	status.rejected	9
+FLEET	rows	145
+FLEET	tier.A	137
+FLEET	tier.B	6
+FLEET	tier.C	2
+FLEET	tier.invalid	0
+FLEET	status.queued	14
+FLEET	status.mined	122
+FLEET	status.rejected	9
+FLEET	status.invalid	0
+FLEET	missing	0
+
+### R13 host-binary probe of the S220 teaches clause (--expire accepts only now)
+$ git --version; jj --version; probe in scratch jj repo
+rc=0
+git version 2.56.0
+jj 0.45.1-7c41cdeb16b6b321c64e789a966b6adf723816a5
+tomorrow_rc=1
+now_rc=0
+absdate_rc=1
+[stderr] Error: --expire only accepts 'now'
+Error: --expire only accepts 'now'
