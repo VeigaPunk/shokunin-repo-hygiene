@@ -29,6 +29,15 @@ K2  SHONEN pointer tokens. Path-like tokens on the SHONEN.md pointer lines at --
 Append-only: if SCORECARD.md (resp. SHONEN.md) at REV does not begin with its --base bytes, every K1
 (resp. K2) item is a mismatch (fail closed).
 
+AMENDMENT A3 (round 30, after wave-1 seats SwarmCritic24, SwarmReviewer23 and SwarmReviewer20; stricter-only; the
+v1 bytes committed at the preregistration d4928ec86b667e3d1ed0adb07fb088e500cf1631 still run and must also meet the
+target): S is the last digit-bearing line of normalized STDOUT, falling back to stderr only when stdout has none (v1
+concatenated stdout+stderr, so a usage banner a fixture provokes on stderr shadowed its green tally); MATCH needs the
+stated literal at digit boundaries (v1: plain substring, `8/8` matched `18/80`); a `cmd=` must extend the row argv
+(row argv is a prefix) and add no `-c`/`-h`/`--help`/`--version` (v1 accepted any argv sharing the script path, so
+`python3 -c pass <script>` bypassed every row); an observation that is a usage/help/argparse banner is never accepted
+as a correction; the diagnostic kind=shape test uses containment.
+
 Output: one `ROW`/`PTR` line per item, then
     SUMMARY k1=<a> k2=<b> mismatches=<a+b> rows=<n> pointers=<m> rev=<REV>
 Exit 0 iff mismatches=0, 1 otherwise, 2 could-not-evaluate. Read-only on --root.
@@ -43,6 +52,7 @@ import sys
 import tempfile
 
 FULL = re.compile(r"[0-9a-f]{40}")
+BANNER = re.compile(r"(?i)^usage:|error: the following arguments are required|^try .--help")
 PATHTOK = re.compile(r"^[A-Za-z0-9_.\-/]+\.(?:md|py|json|sh|tsv|txt)(?::\d+)?$")
 GITC = ["-c", "core.fsmonitor=false", "-c", "core.hooksPath=/dev/null"]
 
@@ -152,14 +162,16 @@ def main():
             env.pop("GIT_WORK_TREE", None)
             try:
                 q = subprocess.run(argv, cwd=clone, env=env, capture_output=True, timeout=a.timeout)
-                rc, out = q.returncode, (q.stdout + q.stderr).decode("utf-8", "replace")
+                rc, out, err = q.returncode, q.stdout.decode("utf-8", "replace"), q.stderr.decode("utf-8", "replace")
             except subprocess.TimeoutExpired as e:
-                rc, out = 124, ((e.stdout or b"") + (e.stderr or b"")).decode("utf-8", "replace")
+                rc, out, err = 124, (e.stdout or b"").decode("utf-8", "replace"), (e.stderr or b"").decode("utf-8", "replace")
             except OSError as e:
-                rc, out = 127, f"exec error {e.errno}"
+                rc, out, err = 127, "", f"exec error {e.errno}"
             finally:
                 shutil.rmtree(tmp, ignore_errors=True)
-            return rc, summary_line(normalize(out, work))
+            # A3: stdout's last digit-bearing line wins; stderr only when stdout has none
+            s = summary_line(normalize(out, work))
+            return rc, (s if s != "NONE" else summary_line(normalize(err, work)))
 
         for rid, line, stated, cmd in rows:
             if only and rid not in only:
@@ -168,18 +180,21 @@ def main():
             rc, s = run(argv)
             if not sc_append:
                 verdict = "MISMATCH(append-only-violated)"
-            elif stated in s and rc == 0:
+            elif rc == 0 and re.search(r"(?<!\d)" + re.escape(stated) + r"(?!\d)", s):
                 verdict = "MATCH"
             else:
                 verdict = "MISMATCH"
                 for ccmd, crc, cobs in corr.get((line, rid), []):
                     if ccmd is not None:
                         cargv = shlex.split(ccmd)
-                        if first_path(cargv) is None or first_path(cargv) != first_path(argv):
+                        # A3: cmd= extends the row argv (row argv is a prefix) and adds no -c/-h/--help/--version
+                        if cargv[:len(argv)] != argv or any(t in ("-c", "-h", "--help", "--version") for t in cargv[len(argv):]):
                             continue
                         rrc, rs = run(cargv)
                     else:
                         rrc, rs = rc, s
+                    if BANNER.search(rs):
+                        continue  # A3: a usage/help/argparse banner is never an accepted observation
                     if crc == rrc and cobs == rs:
                         verdict = "CORRECTED"
                         rc, s = rrc, rs
@@ -188,8 +203,7 @@ def main():
                 k1 += 1
                 nums_s = re.findall(r"\d+", stated)
                 nums_o = re.findall(r"\d+", s)
-                it = iter(nums_o)
-                kind = "rc" if rc != 0 else ("shape" if all(n in it for n in nums_s) else "value")
+                kind = "rc" if rc != 0 else ("shape" if all(n in nums_o for n in nums_s) else "value")
                 kinds[kind] += 1
                 verdict += f" kind={kind}"
             print(f"ROW\t{rid}\tSCORECARD.md:{line}\tstated={stated}\trc={rc}\tobserved={s}\t{verdict}")
