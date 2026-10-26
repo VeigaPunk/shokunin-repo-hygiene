@@ -26,3 +26,20 @@ A3 (C2) — census/round-29/c2-counter-v2.py (the frozen c2-counter.py stays): d
    differ from the base blob). Base with v2: `manifests=3 failed=152 uncovered=14 lost=0 fidelity=11 floor_violations=0
    tool_unchanged=1` — v2 surfaces 11 r26 records whose committed source blob differs from the recorded hash (the r28 capture
    copied modified bytes and then restored the tracked files).
+A3 disclosure (appended at the C2 landing, 2026-10-25): the v2 floor r26 >= 1378 was derived as 1382 - 4 root `__pycache__/` records.
+   A first capture attempt (uncommitted; the tool then stored each nested `.git` directory as an excluded git-dir with a digest only) produced
+   records=1255 + 11 excluded because 126 records live under the seven fixture `.git/` directories; the tool was then changed to preserve those
+   bytes as `.git.captured` (131 renames.tsv rows, byte-preserving, committed) and the landed receipt has records=1381 >= 1378. The floor was
+   not edited; the tool was changed to meet it. Measured at the C2 landing commit b86200714069022954a3b498cf697d894119b45e: frozen v1 counter
+   `manifests=3 failed=0 uncovered=0 floor_violations=0`; v2 `lost=0 fidelity=0 tool_unchanged=0`; `tools/souji-wave-evidence-capture.sh 26 --verify
+   --rev <that commit>` `records=1381 failed=0 uncovered=0`.
+A4 (C3) — census/round-29/c3-integrity.py (nine legs over committed bytes; the frozen C3 counters stay): `ground: F3` with a word boundary; rows 143 and
+   coverage 15/15 as printed; the gate tool run over an exported copy of REV (the tool reads the working tree, so the export is the committed set);
+   snapshots >= 512 bytes whose sha256 equals both SHA256SUMS and fetch-receipts.tsv (HTTP 200); every Gate quote 4..25 words; every Gate URL occurs in
+   the `source` cell of a row the entry cites; no reserved-TLD host; novelty tokens (identity entry carries stx_ino and stx_nlink, byte-equality entry
+   carries `exit status`, the held F3 entry carries none of them); a slice verdict for campaign S118 plus a 200 fetch receipt for the Broder PDF.
+   Disclosure on Critic49's baseline finding: the held entry dupe-finders-detect-then-act.md carries no `ground:` header, so the frozen `0 -> 2` count
+   measures newly tagged entries; the novelty leg L8 is the strictest feasible observable that the two entries add statements the held entry lacks.
+   Entry scope after the Critic49/Critic53 attacks: Broder (S217) is cited by the identity entry only, as vocabulary that bounds the byte-identical class
+   (no method, threshold or operating point adopted); the byte-equality entry cites S219 and S218 only. S217 used-by therefore names one entry.
+   Row-id mapping (the preregistration text lists the rows in prose order): S216 statx, S217 Broder, S218 link, S219 cmp.

@@ -170,3 +170,24 @@ private snapshot or live-process inspection is authorized by this repair.
 See S100/S101, QUALITY Q49 and the r21 section of
 `corpus/knowledge/process-residue-observations.md`. List-only, inherited reap
 and NAMESPACE holds, certification OFF and K5 HELD are unchanged.
+
+## Round 29 boundary note (F3 duplicate verdicts)
+
+F3 now holds two admitted, re-grounded entries — `corpus/knowledge/duplicate-verdict-identity.md`
+(S216, S217, S218) and `corpus/knowledge/duplicate-verdict-byte-equality.md` (S219, S218) — beside the r12 held entry `corpus/knowledge/dupe-finders-detect-then-act.md`. The
+identity half is the `link(2)`/`statx(2)` rule: two names may be one file, so a duplicate
+verdict compares inodes (`stx_ino`, `stx_nlink`), never path strings. The byte-equality half
+is the documented three-valued `cmp(1)` contract: 0 same, 1 different, 2 trouble — exit 2 is
+trouble, never "different". Broder's resemblance and containment are vocabulary only.
+
+What F3 does **not** hold: no `duplicate` receipt class (a taxonomy change, so an operator
+decision — `## Core / Frontier / Adjacent` above at `:69-70` is unchanged), no
+near-duplicate threshold (document-similarity ground sits outside this frontier's
+byte-identical scope), and no tool change — nothing in `tools/` acquires a duplicate
+verdict. The round-29 SKILL classify row states the rule; it creates no receipt and no
+runnable verdict.
+
+Core and Frontier are otherwise unchanged: Core is the `## Owns` and `## Work surfaces`
+list above (`:60`), and this round adds no entry to either; F3 stays frontier. Certification
+OFF, K5 HELD. Sources: `census/round-29/records/preregistration.txt` claim C3; the two
+entries and their Gates.

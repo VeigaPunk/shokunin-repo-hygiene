@@ -38,7 +38,7 @@ when the file exists, not before.
 | receipts: pushed / moved-to-obsidian / stale | core (SKILL.md, tools/) | `knowledge/obsidian-ledger.tsv` (operator-fed, header-only) |
 | F1 git-native housekeeping vs receipts | frontier, entries held | `knowledge/git-auto-maintenance-prunes-worktrees.md`, `knowledge/git-grace-periods-and-expire-to.md`, `knowledge/git-auto-maintenance-trigger-set.md`, `knowledge/git-auto-maintenance-trigger-set-r23.md` |
 | F2 repository size census | frontier, no entry (r12 candidate deferred, `lessons/round-12.md` `## Gate`; sweep: `ls corpus/knowledge \| grep -ciE 'size\|structure\|sizer'` → 0, 2026-10-19); superseded by Round 24 F2 row (:517) | — |
-| F3 duplicate verdicts | frontier, entry held | `knowledge/dupe-finders-detect-then-act.md` |
+| F3 duplicate verdicts | frontier, entries held | `knowledge/dupe-finders-detect-then-act.md`, `knowledge/duplicate-verdict-identity.md`, `knowledge/duplicate-verdict-byte-equality.md` |
 | F4 restorable quarantine, file-system semantics | frontier; layout and staging held; read-side fields admitted r24; reference writer + mechanism set admitted r27 (implementation evidence only) | `knowledge/trash-spec-restorable-quarantine.md`, `knowledge/quarantine-same-filesystem-rename.md`, `knowledge/quarantine-staging-no-copy-r23.md`, `knowledge/quarantine-origin-record-fields-r24.md`, `knowledge/origin-record-writer-r27.md`, `knowledge/origin-record-mechanism-set-r33.md`, `knowledge/origin-record-exclusivity-r28.md`, `knowledge/origin-record-durability-r28.md` |
 
 ## Frontier
@@ -556,3 +556,41 @@ Appended; the sections above stand. The F2 entries below supersede only the F2 e
 - superseded by corpus/README.md:504; correction in corpus/lessons/round-25.md § R24-M25: R1 closed, R2 narrowed; general verify/run symmetry is not established.
 - superseded by corpus/README.md:519; correction in corpus/lessons/round-25.md § R24-M25: the two measured refusal clauses do not witness the run-side and verify-side refusal matrix.
 - R3 correction for the historical sentence at corpus/README.md:471-472: `tool_sha256` binds the labelled committed file bytes and argv text, not the executed program; full correction in corpus/lessons/round-25.md.
+
+## Round 29 — F3 duplicate verdicts re-grounded
+
+Appended; the sections above stand. Two knowledge entries are admitted for F3, re-grounded
+this round from the four probe rows S216–S219 opened this round, snapshotted under
+`../census/round-29/sources/` and gated by `../tools/souji-gate-check.py`:
+
+- `knowledge/duplicate-verdict-identity.md` — `link(2)`/`statx(2)`: a second name for an
+  existing file works exactly as the original name and no name is the original, so a
+  duplicate verdict compares identity — the `stx_ino` and `stx_nlink` fields of
+  `struct statx` — not path strings; Broder's resemblance and containment enter as
+  vocabulary only. Sources S216, S217, S218.
+- `knowledge/duplicate-verdict-byte-equality.md` — `cmp(1)`'s three-valued exit contract
+  ("Exit status is 0 if inputs are the same, 1 if different, 2 if trouble.") plus the same
+  identity rule; supersedes nothing. Sources S219, S218.
+
+Coverage-map effect: the F3 row at `:41` now reads "frontier, entries held" and names all
+three F3 entries. F3 stays frontier — no `duplicate` receipt class is created (taxonomy
+change, operator decision), no near-duplicate threshold is admitted, and no tool changes.
+
+### Frontier (r29)
+
+- F3 — the identity half and the byte-equality half are now held as entries, and a SKILL
+  classify row states the rule; remaining: a `duplicate` receipt class is an operator
+  decision (taxonomy change), and any near-duplicate measure or threshold is outside this
+  frontier's byte-identical scope (the Broder rows are vocabulary only).
+- F1, F2, F4 — unchanged. F5 stays list-only; the reap protocol and NAMESPACE pin remain
+  operator-held. Certification OFF, K5 HELD.
+
+### Round 29 corrections
+
+- The r12 F3 row at `:41` was replaced in place rather than superseded by a later table:
+  its status cell changed from "frontier, entry held" to "frontier, entries held" and its
+  entries cell gained `knowledge/duplicate-verdict-identity.md` and
+  `knowledge/duplicate-verdict-byte-equality.md`. Map rows are edited in place (r28 did the
+  same to the F4 row at `:42`); the append-only record is this section.
+- The `## Frontier` bullet at `:48` stands as written: "a `duplicate` receipt class is an
+  operator decision (taxonomy change)" remains the next step; the r29 entries do not take it.
