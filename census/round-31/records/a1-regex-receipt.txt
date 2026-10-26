@@ -1,0 +1,136 @@
+A1 REGRESS-FULL RECEIPT — routed round-30 closure defect 3
+==========================================================
+Item: SwarmExecutor10 (souji round 31, wave 1, attempt 1)
+Date: 2026-10-26
+Lane: /home/vgpnk/Projects/shokunin/souji-shokunin
+Lane base: 9f17a1ef571f3a510a51ac233d7cf50ac0c871fc (r31 prereg; r30 base 9420341d9a814cb6089c25fb03a4cc9b23dc0d1b)
+Scratch: /fast/scratch/hyaku/souji-r31/A1Regex/ (TMPDIR set there; every clone had `origin` removed immediately)
+Tooling: python3 3.14.8, git 2.56.0; no installs, nothing upgraded.
+No round-30 file was edited; this is a standalone receipt.
+
+Source locations (read this run)
+--------------------------------
+- census/round-30/c2-counter-v2.py:68-69 — the strip:
+  `def strip_err(out):`
+  `    return "\n".join(re.sub(r"\terr=.*$", "", l) if l.startswith("CASE\t") else l for l in out.splitlines())`
+- tools/souji-landing-gate.py:1423 — the emitted detail:
+  `        detail = "exit=%d ids=%s paths=%s fleet=%s err=%s" % (`
+- tools/souji-landing-gate.py:1437 — the emitted CASE line:
+  `        print("CASE\t%s\t%s\t%s" % (status, case_name, detail))`
+The detail fields are joined by spaces, so the tail is ` err=`, never `\terr=`. The v2 regex can
+never fire on a real CASE line; c2-counter-v2.py:164 compares the unstripped text.
+
+Commands and outputs
+--------------------
+(1) Pair 1 = (rev 68447afef62e4761249af55a2467657f04046537 = r30 C2 landing, base
+9420341d9a814cb6089c25fb03a4cc9b23dc0d1b = r30 lane base), receipt script:
+
+$ export TMPDIR=/fast/scratch/hyaku/souji-r31/A1Regex/tmp
+$ python3 -B /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-31/w1/deliver-a1-regress-full-check.py \
+    --root /home/vgpnk/Projects/shokunin/souji-shokunin \
+    --rev 68447afef62e4761249af55a2467657f04046537 \
+    --base 9420341d9a814cb6089c25fb03a4cc9b23dc0d1b \
+    --scratch /fast/scratch/hyaku/souji-r31/A1Regex
+A1-PAIR rev=68447afef62e4761249af55a2467657f04046537 base=9420341d9a814cb6089c25fb03a4cc9b23dc0d1b workdir=/fast/scratch/hyaku/souji-r31/A1Regex/a1regress.eujkoqks
+A1-BROKEN tools/souji-landing-gate.py rc=0/0 lines=66/66 differs
+A1-FIXED  tools/souji-landing-gate.py rc=0/0 lines=66/66 same
+A1-DIFF-COUNT tools/souji-landing-gate.py broken=2 fixed=0
+A1-DIFF-LINE tools/souji-landing-gate.py #2 base="CASE\tpass\tpointer-without-wave-reports\texit=2 ids=['LG-DANGLING-PTR'] paths=['census/round-18/missing.json'] fleet=[] err=no .md reports under .ufo/waves/round-18/ at <HEX>" rev="CASE\tpass\tpointer-without-wave-reports\texit=2 ids=['LG-DANGLING-PTR'] paths=['census/round-18/missing.json'] fleet=[] err=no .md reports under .ufo/waves/round-18/ or census/round-18/waves/ at <HEX>"
+A1-DIFF-LINE tools/souji-landing-gate.py #60 base='CASE\tpass\tno-wave-dir-exit2\texit=2 ids=[] paths=[] fleet=[] err=no .md reports under .ufo/waves/round-16/ at <HEX>' rev='CASE\tpass\tno-wave-dir-exit2\texit=2 ids=[] paths=[] fleet=[] err=no .md reports under .ufo/waves/round-16/ or census/round-16/waves/ at <HEX>'
+A1-BROKEN tests/fixtures/r16-landing-gate.py rc=0/0 lines=16/16 same
+A1-FIXED  tests/fixtures/r16-landing-gate.py rc=0/0 lines=16/16 same
+SUMMARY-A1 pair=68447afef62e4761249af55a2467657f04046537..9420341d9a814cb6089c25fb03a4cc9b23dc0d1b broken=differs fixed=same
+(rc=0)
+
+(2) Pair 2 = (rev and base both 9f17a1ef571f3a510a51ac233d7cf50ac0c871fc), receipt script:
+
+$ python3 -B /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-31/w1/deliver-a1-regress-full-check.py \
+    --root /home/vgpnk/Projects/shokunin/souji-shokunin \
+    --rev 9f17a1ef571f3a510a51ac233d7cf50ac0c871fc \
+    --base 9f17a1ef571f3a510a51ac233d7cf50ac0c871fc \
+    --scratch /fast/scratch/hyaku/souji-r31/A1Regex
+A1-PAIR rev=9f17a1ef571f3a510a51ac233d7cf50ac0c871fc base=9f17a1ef571f3a510a51ac233d7cf50ac0c871fc workdir=/fast/scratch/hyaku/souji-r31/A1Regex/a1regress.tw0scv34
+A1-BROKEN tools/souji-landing-gate.py rc=0/0 lines=66/66 same
+A1-FIXED  tools/souji-landing-gate.py rc=0/0 lines=66/66 same
+A1-BROKEN tests/fixtures/r16-landing-gate.py rc=0/0 lines=16/16 same
+A1-FIXED  tests/fixtures/r16-landing-gate.py rc=0/0 lines=16/16 same
+SUMMARY-A1 pair=9f17a1ef571f3a510a51ac233d7cf50ac0c871fc..9f17a1ef571f3a510a51ac233d7cf50ac0c871fc broken=same fixed=same
+(rc=0)
+
+(3) Original round-30 v2 counter, pair 1 (its REGRESS-FULL lines are verbatim):
+
+$ python3 -B /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-30/c2-counter-v2.py \
+    --root /home/vgpnk/Projects/shokunin/souji-shokunin \
+    --rev 68447afef62e4761249af55a2467657f04046537 \
+    --base 9420341d9a814cb6089c25fb03a4cc9b23dc0d1b \
+    --fleet-root /home/vgpnk/Projects/shokunin \
+    --scratch /fast/scratch/hyaku/souji-r31/A1Regex/c2v2-pair1
+BIND rc=1 reports=86 expected=86 ufo_md=0 cne=0 dangling=1 fail
+NOCAP rc=2 ok
+PTRARM rc=1 flagged=['.ufo/waves/round-29/w1/R30v2Absent.md', 'census/round-29/r30v2-absent.md'] real_pointer=.ufo/waves/round-29/w1/SwarmConnector63.md ok
+FIXTURE ok
+REDARM ok
+REGRESS-FULL tools/souji-landing-gate.py rc=0/0 lines=66/66 differs
+REGRESS-FULL tests/fixtures/r16-landing-gate.py rc=0/0 lines=16/16 same
+SUMMARY-V2 reports=86 expected=86 cne=0 dangling=1 bind=fail nocap=ok ptrarm=ok fixture=ok redarm=ok regress_full=differs rev=68447afef62e4761249af55a2467657f04046537
+(exit 1)
+
+(4) Original round-30 v2 counter, pair 2 (rev == base):
+
+$ python3 -B /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-30/c2-counter-v2.py \
+    --root /home/vgpnk/Projects/shokunin/souji-shokunin \
+    --rev 9f17a1ef571f3a510a51ac233d7cf50ac0c871fc \
+    --base 9f17a1ef571f3a510a51ac233d7cf50ac0c871fc \
+    --fleet-root /home/vgpnk/Projects/shokunin \
+    --scratch /fast/scratch/hyaku/souji-r31/A1Regex/c2v2-pair2
+BIND rc=0 reports=86 expected=86 ufo_md=0 cne=0 dangling=0 ok
+NOCAP rc=2 ok
+PTRARM rc=1 flagged=['.ufo/waves/round-29/w1/R30v2Absent.md', 'census/round-29/r30v2-absent.md'] real_pointer=.ufo/waves/round-29/w1/SwarmConnector63.md ok
+FIXTURE ok
+REDARM fail
+REGRESS-FULL tools/souji-landing-gate.py rc=0/0 lines=66/66 same
+REGRESS-FULL tests/fixtures/r16-landing-gate.py rc=0/0 lines=16/16 same
+SUMMARY-V2 reports=86 expected=86 cne=0 dangling=0 bind=ok nocap=ok ptrarm=ok fixture=ok redarm=fail regress_full=same rev=9f17a1ef571f3a510a51ac233d7cf50ac0c871fc
+(exit 1)
+
+(5) Direct gate probe at pair 1's rev, to explain the v2 counter's dangling=1 (unrelated to the regex):
+
+$ D=/fast/scratch/hyaku/souji-r31/A1Regex/probe; mkdir -p "$D"
+$ git clone -q --no-local --no-checkout /home/vgpnk/Projects/shokunin/souji-shokunin "$D/c"
+$ git -C "$D/c" remote remove origin
+$ git -C "$D/c" -c user.name=probe -c user.email=probe@localhost -c core.hooksPath=/dev/null \
+    checkout -qf --detach 68447afef62e4761249af55a2467657f04046537
+$ python3 -B "$D/c/tools/souji-landing-gate.py" --root "$D/c" \
+    --rev 68447afef62e4761249af55a2467657f04046537 --round 29 \
+    --fleet-root /home/vgpnk/Projects/shokunin
+LG-DANGLING-PTR	.ufo/waves/round-30/w1/deliver-c1-literal-history.tsv	SCORECARD.md:322 cites path absent at 68447afef62e
+...
+SUMMARY	findings=8	checked_reg=58	checked_changed=0	checked_pins=13	checked_measured=3	checked_markers=7	status_lines=69	carry_heading=0	checked_reports=86
+That path is committed only at 393b011 (census/round-30/waves/w1/deliver-c1-literal-history.tsv and
+.ufo/waves/round-30/w1/deliver-c1-literal-history.tsv are in `git ls-tree -r 9f17a1e` and absent from
+`git ls-tree -r 68447af`). It is the sole BIND dangling at 68447af and is absent at 9f17 (BIND dangling=0).
+
+Method note
+-----------
+The receipt script mirrors c2-counter-v2.py's clone (private `git clone --no-local --no-checkout`,
+`remote remove origin`, detached checkout), run env (TMPDIR=<scratch>/tmp), and `norm()` byte for
+byte (workdir -> <TMP>, tmp paths -> <TMP>, /fast/scratch paths -> <TMP>, hex runs >= 12 -> <HEX>),
+then compares the two selftest programs exactly as c2-counter-v2.py:161-167 does, once with the v2
+strip verbatim (`\terr=.*$`) and once with the strip normalized on the emitted separator
+(`[ \t]err=.*$`). Pair 2 is the same-revision control: both variants are trivially `same`, and the
+v2 counter's REDARM leg necessarily fails there because base and rev are the same tool, so that
+`fail` is a property of the pair, not of the strip.
+
+Conclusion
+----------
+Yes — the round-30 REGRESS-FULL `differs` at (68447af, 9420341) was purely the regex. With the v2
+strip verbatim the gate selftest compares 66/66 lines and differs on exactly 2 lines, both CASE lines
+whose only textual delta is the free-text `err=` tail: commit 68447af reworded the no-reports EvalError
+from `no .md reports under %s at %s` to `no .md reports under %s or %s at %s` (round-18
+`pointer-without-wave-reports` and round-16 `no-wave-dir-exit2`), and the v2 regex looked for `\terr=`
+while the gate emits ` err=` after `fleet=%s`. Normalizing the strip on either emitted separator makes
+the same pair `same` with zero differing lines, leaves the r16 fixture `same` in both variants, and
+leaves the same-revision pair `same`; nothing else in the two outputs moved. The v2 counter's overall
+exit 1 at pair 1 is therefore not evidence against the REGRESS leg: its BIND leg reports the separate,
+unrelated SCORECARD.md:322 pointer to a round-30 delivery that is not committed until 393b011, and its
+REGRESS-FULL `differs` is an artifact of the tab-only regex alone.
