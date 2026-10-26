@@ -30,8 +30,9 @@ CLI:
   python3 tools/souji-landing-gate.py --selftest
 
 Exit: 0 no findings, 1 findings, 2 could-not-evaluate (usage, unknown rev,
-no SKILL.md, missing .ufo/waves/round-N/ at REV, git failure, malformed
-expected.json or pointer-exemptions.tsv shape).
+no SKILL.md, no .md reports in .ufo/waves/round-N/ or at its committed
+capture census/round-N/waves/, git failure, malformed expected.json or
+pointer-exemptions.tsv shape).
 
 Output: one TSV line per finding `ID\tpath\tdetail` (sorted), then
 `SUMMARY\tfindings=K\tchecked_reg=A\tchecked_changed=G\tchecked_pins=B\tchecked_measured=M\tchecked_markers=C\tstatus_lines=S\tcarry_heading=H\tchecked_reports=D`.
@@ -146,6 +147,13 @@ POINTER_PATH_RE = re.compile(
 )
 ROUND_RANGE_RE = re.compile(r"round-\{?(\d+)\.\.(\d+)\}?", re.IGNORECASE)
 ROUND_PLACEHOLDER_RE = re.compile(r"round-N", re.IGNORECASE)
+# r30 C2. tools/souji-wave-evidence-capture.sh copies the gitignored
+# .ufo/waves/round-N/ tree to census/round-N/waves/, so a wave pointer is
+# resolved through that committed capture as well. A token that carries a
+# template placeholder, or that ends in `round-` because the tokenizer cut at
+# one (`"census/round-"+rd+...`), names no path and is not a pointer.
+CAPTURE_POINTER_RE = re.compile(r"^\.ufo/waves/(round-\d+)(/.*)?$")
+TEMPLATE_POINTER_RE = re.compile(r"%s|<[Nn]>|\{N\}")
 # The only measured-commit exemption is bound to the known synthetic r14 value.
 MEASURED_COMMIT_PLACEHOLDER = "0123456789abcdef0123456789abcdef01234567"
 
@@ -466,12 +474,24 @@ def carries(block, entry):
 
 def check_carry(root, tree, rev, round_no):
     """Return (findings, n_markers, n_reports, n_status, carry_heading)."""
-    prefix = ".ufo/waves/round-%d/" % round_no
+    wave_prefix = ".ufo/waves/round-%d/" % round_no
+    capture_prefix = "census/round-%d/waves/" % round_no
     reports = sorted(
-        p for p in tree if p.startswith(prefix) and p.endswith(".md")
+        p for p in tree if p.startswith(wave_prefix) and p.endswith(".md")
     )
     if not reports:
-        raise EvalError("no .md reports under %s at %s" % (prefix, rev))
+        # The wave dir is gitignored, so at a revision that never committed it
+        # the report set is its capture (tools/souji-wave-evidence-capture.sh),
+        # which holds the same relative paths. When both are committed the
+        # wave dir alone is read, so no report is ever counted twice.
+        reports = sorted(
+            p for p in tree if p.startswith(capture_prefix) and p.endswith(".md")
+        )
+    if not reports:
+        raise EvalError(
+            "no .md reports under %s or %s at %s"
+            % (wave_prefix, capture_prefix, rev)
+        )
 
     lesson_path = "corpus/lessons/round-%d.md" % round_no
     lesson = None
@@ -736,6 +756,11 @@ def check_frozen_pins(root, tree, rev, round_no, exemptions=()):
 
 # ---------------------------------------------------------------------------
 # Citation pointers (LG-DANGLING-PTR; round 18+)
+#
+# r30 C2: a `.ufo/waves/round-N/...` pointer also resolves through its
+# committed capture census/round-N/waves/... (CAPTURE_POINTER_RE), and a token
+# carrying a template placeholder (TEMPLATE_POINTER_RE, or a `round-` cut) is
+# not a pointer at all.
 # ---------------------------------------------------------------------------
 
 
@@ -849,6 +874,11 @@ def _pointer_paths(text, source):
             part = _trim_pointer_token(part)
             if not part:
                 continue
+            if (
+                TEMPLATE_POINTER_RE.search(part)
+                or part.rstrip("/").endswith("round-")
+            ):
+                continue
             normalized = _normalize_pointer_path(part, source)
             if (
                 _safe_pointer_path(normalized)
@@ -871,6 +901,19 @@ def _safe_pointer_path(path):
 
 def _path_exists_in_tree(path, tree_paths):
     return _safe_pointer_path(path) and path.rstrip("/") in tree_paths
+
+
+def _capture_pointer_path(path):
+    """Map `.ufo/waves/round-N/<suffix>` onto census/round-N/waves/<suffix>.
+
+    The wave dir is gitignored; its capture (tools/souji-wave-evidence-capture.sh)
+    keeps the same relative names, so the same suffix is where the bytes were
+    committed. A bare directory pointer maps onto the capture directory, which
+    `tree_paths` holds only when that directory carries a committed blob."""
+    match = CAPTURE_POINTER_RE.match(path.rstrip("/"))
+    if not match:
+        return None
+    return "census/%s/waves%s" % (match.group(1), match.group(2) or "")
 
 
 def load_pointer_exemptions(root, tree):
@@ -955,6 +998,11 @@ def check_pointers(root, tree, rev, round_no, fleet_root=None, exemptions=()):
         for path in _pointer_paths(line, source):
             checked_ptrs += 1
             if _path_exists_in_tree(path, tree_paths):
+                continue
+            capture_path = _capture_pointer_path(path)
+            if capture_path is not None and _path_exists_in_tree(
+                capture_path, tree_paths
+            ):
                 continue
             if path in exemptions:
                 used_exemptions.add(path)
