@@ -2,19 +2,40 @@
 
 ## Status
 
-STATUS: PASS — no harm found. 62 lane commands (every registry self-test plus every runnable
+STATUS: PASS for the assigned scope (base→`2c16d01`: no harm) — one post-tip regression is flagged
+after the lane advanced to `f950267`. 62 lane commands (every runnable registry self-test plus every
+runnable
 `tests/fixtures/*`) were run at base `9f17a1ef571f3a510a51ac233d7cf50ac0c871fc` and at tip
 `2c16d018e40db7c23420a2c3bb546b52957bcc25`, each in its own `git clone --no-local` with `origin`
 removed: 57 return the same rc and the same last digit-bearing line, 5 differ for content-driven
 reasons that are all benign, none flips green→red. `souji-registry-agreement` 0/0 and
 `souji-coverage-agreement` 0/0 at both revs; the round-30 capability counter is
 `k1=0 k2=0 mismatches=0` at the tip. Findings below are gaps or pre-existing defects, not
-base→tip regressions (one is a calibration-prose defect inside the new SKILL bullet).
+base→tip regressions, with one exception: the lane advanced during the sweep (`76bb697`, `f950267`)
+and the harm-relevant readings were re-checked there — exactly one new defect appears,
+finding 8 (declared-evidence 21→23 mismatches at `f950267`).
 
 ## Evidence
 
-Scratch: `/fast/scratch/hyaku/souji-r31/w2-SwarmExecutor27/{base,tip}`, `TMPDIR` set explicitly,
+Scratch: `/fast/scratch/hyaku/souji-r31/w2-SwarmExecutor27/{base,tip,head}`, `TMPDIR` set explicitly,
 `rev-parse --show-toplevel` verified per clone, base blobs extracted with `git -C <clone> show`.
+
+Post-tip re-check (the lane advanced during the sweep; `git -C lane log --oneline 2c16d01..HEAD`
+= `76bb697` wave-2 capture/entry corrections, `f950267` lesson + Q67-Q69 + SKILL gate rows +
+SCORECARD r31 measurements + LOG + end census). At a fresh clone of `f950267`
+(worktree was dirty with the L1's in-flight edits, so only the commit is read):
+
+- `souji-registry-agreement` `k1=0 k2=0 mismatches=0`; `souji-coverage-agreement`
+  `grounded=17 mapped=17 dangling=0 mismatches=0`; `souji-capability-agreement`
+  `k1=0 k2=0 mismatches=0 rows=18`; `tools/souji-capability-cells.py`
+  `items=41 bound_run=20 bound_record=20 unbound=1 mismatches=1` (L29 still unbound).
+- `souji-declared-evidence` `assertions=252 resolved=229 skipped=401 mismatches=23` — two MORE
+  than at base or at `2c16d01`, see finding 8.
+- landing gate over rounds 19/24/26/27/28/29/30/31 = `6/20/3/3/3/3/3/3` findings; round 31's seven
+  uncarried wave-1 reports are gone once `corpus/lessons/round-31.md` exists at `f950267`.
+- `tests/fixtures/r31-landing-gate-precision.py` still `cases=10 pass=10
+  control=FALSE-GREEN-REJECTED`; `tests/fixtures/r31-jj-object-clock.sh` still replays the committed
+  record byte-identically.
 
 Base→tip change set (`git -C tip diff --name-status 9f17a1e 2c16d01`, no deletions):
 
@@ -75,9 +96,9 @@ Round-31 instruments, run by this seat at the tip:
   literals occur on the base SCORECARD line they name (41/41, 0 bad).
 
 M1 receipts reproduced at the real lane with `--fleet-root` (read-only `git cat-file`): base gate at
-`1d45496` gives r26 18 / r27 29 / r28 21 findings (28 = 19 uncarried + 2 dangling); base gate at
-`c610830` gives r26 0 / r27 0 / r28 2, and the tip gate at `c610830` gives 0 / 0 / 0 — the same
-numbers as `m1-red-before.txt` and `m1-after.txt`. All `resolved@<40hex>` dispositions
+`1d45496` gives r26 18 / r27 29 / r28 21 findings, where r28's 21 = 19 uncarried + 2 dangling; base
+gate at `c610830` gives r26 0 / r27 0 / r28 2, and the tip gate at `c610830` gives 0 / 0 / 0 — the
+same numbers as `m1-red-before.txt` and `m1-after.txt`. All `resolved@<40hex>` dispositions
 (9 in r26, 16 in r27, 13 in r28) resolve to real commits; bullets 26/29/19.
 
 Landing-gate precision at the tip is unchanged for the pre-existing residual set:
@@ -97,13 +118,15 @@ real pointers, not r31 artefacts.
    wave-2 critic receipt (`census/round-30/waves/w2/SwarmCritic21-receipts.txt:62-63`), not in the
    cited record. Fix: name the receipt the packed arm comes from, or drop the "record discriminates"
    clause.
-2. `SKILL.md` `## Gate registry` — operability. The table has 63 lines at base and at tip: no row for
-   `tools/souji-capability-cells.py`, `tests/fixtures/r31-landing-gate-precision.py`,
-   `tests/fixtures/r31-jj-object-clock.sh` or the three c2/c3 counters, although wave 1 delivered them
+2. `SKILL.md` `## Gate registry` — operability. At the assigned tip the table has 63 lines, the same
+   as base: no row for `tools/souji-capability-cells.py`, `tests/fixtures/r31-landing-gate-precision.py`,
+   `tests/fixtures/r31-jj-object-clock.sh` or the c2/c3 counters, although wave 1 delivered five rows
    (`census/round-31/waves/w1/deliver-quality-q67-q69.md:25` "Block B — append to SKILL.md
-   `## Gate registry`", five rows). Round-29/30 instruments all have rows, so the round's new
-   instruments are the only ones a later seat cannot discover from the gate map. The same delivery's
-   Block A (Q67-Q69) is also unlanded; `corpus/QUALITY.md` is untouched.
+   `## Gate registry`"). At `f950267` three of those rows landed (`souji-capability-cells`,
+   `r31-landing-gate-precision`, `r31-jj-object-clock`, table now 66 lines); the two counter rows
+   `r31-c2-counter` and `r31-c3-counter` are still absent, so the frozen C2/C3 instruments remain
+   undiscoverable from the gate map while their fixtures are registered. Block A (Q67-Q69) landed at
+   `f950267` (`corpus/QUALITY.md` is modified there).
 3. `census/round-31/apply-c3.py` — hygiene/operability. A committed one-shot integration script that
    reads the wave directory by absolute path
    (`W = '/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-31/w1'`), rewrites four
@@ -131,11 +154,23 @@ real pointers, not r31 artefacts.
 6. `corpus/knowledge/jj-dropped-keep-object-lifetime.md:1` — coverage/hygiene nit. The landed entry's
    first source line still reads "S222 — git-reflog(1) at tag v2.56.0 (placeholder id: the L1
    renumbers by document)" although `corpus/SOURCES.md:167` carries S222 and
-   `souji-registry-agreement` is `k1=0`; a landed entry should not read as awaiting renumbering.
+   `souji-registry-agreement` is `k1=0`. At `f950267` a later bullet in the same entry
+   ("Supersedes the source line's `(placeholder id: the L1 renumbers by document)`…") discloses the
+   resolution, so the defect is now cosmetic; the source line itself should still lose the note.
 7. C1 target, measured independently: `unbound=1 mismatches=1` at the tip (L29), so the frozen
    `unbound=0 mismatches=0` is not met on the calibration axis. This matches the L1's pre-landing
    A4 disclosure and `census/round-31/records/c1-after-a4.txt`; it is the claim's own miss, not a
-   regressions introduced by wave 2.
+   regression introduced by wave 2. It still reads `unbound=1` at `f950267`.
+8. `SCORECARD.md:424` (landed in `f950267`) — calibration, NEW after the assigned tip. The jj
+   object-clock measurement row cites its sibling records inconsistently: v1 is cited with its
+   directory (`census/round-31/records/c3-after-c3-counter.txt`) while v2 and v3 are cited as bare
+   basenames (`c3-after-c3-counter-v2.txt`, `c3-after-c3-counter-v3.txt`). `souji-declared-evidence
+   --root . --file SCORECARD.md --rev f950267 --format counts` therefore returns
+   `mismatches=23` against `21` at base and at `2c16d01`, and the two new rows are exactly
+   `424 c3-after-c3-counter-v2.txt A mismatch:path-absent` and
+   `424 c3-after-c3-counter-v3.txt A mismatch:path-absent` (the files exist under
+   `census/round-31/records/`). Fix: prefix both tokens with `census/round-31/records/`; that would
+   return the instrument to its pre-existing 21.
 
 ## Attack log
 
@@ -158,6 +193,12 @@ real pointers, not r31 artefacts.
 - Re-ran the two red fixtures and the r29 fixture in isolation to separate lane defects from my own
   invocation error (finding 5) — the r29 red is an invocation artifact at both revs, not a
   regression; quarantine/proc-census reds are identical at both revs.
+- The lane moved under the sweep: cloned `f950267` and re-ran every instrument that reads the files
+  the two new commits touched (SKILL, QUALITY, SCORECARD, LOG, lesson, README, entry). Registry,
+  coverage and capability agreements stay 0; the landing gate's round 31 goes 7 uncarried → 3
+  pre-existing dangling; the two r31 fixtures stay green and replay-identical; only
+  `souji-declared-evidence` moves, 21 → 23, and the two new rows are the citation defect of
+  finding 8.
 
 Not run, with reason: `census/round-18/leak-count.py --selftest` (whole-host live `/proc` census,
 excluded per seat instruction); `tools/souji-proc-census.sh --selftest` and
@@ -169,8 +210,9 @@ network-dependent fixture exists in the lane. `tests/fixtures/case-F*`, `*-froze
 
 - `.ufo/waves/round-31/w2/SwarmExecutor27.md` (this report).
 - `.ufo/waves/round-31/w2/deliver-no-harm.tsv` — 65 rows: `item, base_rc, base_last_digit_line,
-  tip_rc, tip_last_digit_line, delta, note` for the 62 compared commands plus the 3 new-at-tip
-  instruments.
+  tip_rc, tip_last_digit_line, delta, note` for the 62 commands compared base→tip `2c16d01` plus the
+  3 new-at-tip instruments. The post-`2c16d01` readings live in this report's Evidence block and
+  finding 8, not in the TSV.
 - Scratch `/fast/scratch/hyaku/souji-r31/w2-SwarmExecutor27/` removed after the copies. Nothing was
   written in `/home/vgpnk/Projects/shokunin/souji-shokunin` or anywhere else outside the two paths
   above; no `git`/`jj` mutation ran in the lane; no package transaction ran (no tool installed,
