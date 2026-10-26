@@ -58,12 +58,12 @@ def main():
     tmp = tempfile.mkdtemp(prefix='souji-r29-c3int.', dir='/var/tmp')
     try:
         tar = subprocess.run(['git', '-C', R, 'archive', V, 'tools', 'corpus', 'census/round-29'], capture_output=True)
-        subprocess.run(['tar', '-x', '-C', tmp], input=tar.stdout, check=True)
-        g = subprocess.run([sys.executable, '-B', 'tools/souji-gate-check.py', '--root', '.', '--round-date', '2026-10-25', '--entries', *ENT,
+        ex = tar.returncode == 0 and subprocess.run(['tar', '-x', '-C', tmp], input=tar.stdout, capture_output=True).returncode == 0
+        g = ex and subprocess.run([sys.executable, '-B', 'tools/souji-gate-check.py', '--root', '.', '--round-date', '2026-10-25', '--entries', *ENT,
                             '--snapshot-dir', 'census/round-29/sources', '--slice', 'census/round-29/records/quarantine-slice',
                             '--slice-verdicts', 'census/round-29/records/slice-verdicts.tsv'], capture_output=True, text=True, cwd=tmp)
-        line = [x for x in (g.stdout + g.stderr).splitlines() if x.startswith('entries=')]
-        leg('L3', g.returncode == 0 and line == ['entries=2 ok=2 slice_verdicts=8 slice_total=8 fail=0'], f'gate="{line[0] if line else "none"}" rc={g.returncode}')
+        line = [x for x in (g.stdout + g.stderr).splitlines() if x.startswith('entries=')] if g else []
+        leg('L3', bool(g) and g.returncode == 0 and line == ['entries=2 ok=2 slice_verdicts=8 slice_total=8 fail=0'], f'gate="{line[0] if line else "none"}" rc={g.returncode if g else "export-failed"}')
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
     sums = {}

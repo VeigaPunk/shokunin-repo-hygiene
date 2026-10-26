@@ -1,0 +1,163 @@
+# Mirror validate — append block S216–S219 (C3, SwarmExecutor10)
+
+Scratch root (removed before yield): `/var/tmp/souji-r29-C3MirrorValidate`
+Mirror root: `/var/tmp/souji-r29-C3MirrorValidate/validate`
+Lane base: `691dd29211c53d0ef94fa072394cb9c8a69fe92e` (branch master)
+Mirror construction: `corpus/` copied from the lane; the four rows appended after S215;
+two placeholder knowledge files at their repo-relative paths. `tools/souji-size-census.py`
+is mirrored too because two *existing* rows cite it as `used-by` and the validator resolves
+`used-by` against the mirror root (finding 1 of the seat report).
+
+Commands and verbatim output (one continuous log; nothing trimmed):
+
+```
+# A. mirror content
+files=70
+registry_rows_before=139
+
+# B. sources-census validate --file (rc 0 required)
+$ bash /home/vgpnk/Projects/shokunin/scripts/sources-census.sh validate --file /var/tmp/souji-r29-C3MirrorValidate/validate/corpus/SOURCES.md
+file	W04	S035 duplicate url git-scm.com/docs/git-repo across scopes
+file	W04	S036 duplicate url git-scm.com/docs/git across scopes
+file	W04	S038 duplicate url www.gnu.org/software/coreutils/manual/html_node/timeout-invocation.html across scopes
+file	W04	S049 duplicate url git-scm.com/docs/git across scopes
+file	W04	S057 duplicate url git-scm.com/docs/git-config across scopes
+file	W04	S058 duplicate url git-scm.com/docs/git-worktree across scopes
+file	W04	S059 duplicate url git-scm.com/docs/gitattributes across scopes
+file	W04	S063 duplicate url git-scm.com/docs/git-gc across scopes
+file	W04	S065 duplicate url www.gnu.org/software/bash/manual/html_node/The-Set-Builtin.html across scopes
+file	W04	S072 duplicate url www.gnu.org/software/bash/manual/html_node/The-Set-Builtin.html across scopes
+file	W04	S073 duplicate url man7.org/linux/man-pages/man2/kill.2.html across scopes
+file	W04	S075 duplicate url man7.org/linux/man-pages/man5/proc_pid_stat.5.html across scopes
+file	W04	S076 duplicate url man7.org/linux/man-pages/man5/proc_pid_exe.5.html across scopes
+file	W04	S077 duplicate url man7.org/linux/man-pages/man2/open.2.html across scopes
+file	W04	S086 duplicate url man7.org/linux/man-pages/man5/proc_pid_fd.5.html across scopes
+file	W04	S087 duplicate url man7.org/linux/man-pages/man5/proc_pid_wchan.5.html across scopes
+file	W04	S088 duplicate url man7.org/linux/man-pages/man5/proc_pid_status.5.html across scopes
+file	W04	S089 duplicate url git-scm.com/docs/git across scopes
+file	W04	S090 duplicate url git-scm.com/docs/git-filter-branch across scopes
+file	W04	S091 duplicate url git-scm.com/docs/git-rev-parse across scopes
+file	W04	S092 duplicate url git-scm.com/docs/git-for-each-ref across scopes
+file	W04	S093 duplicate url git-scm.com/docs/git-diff across scopes
+file	W04	S094 duplicate url www.gnu.org/software/coreutils/manual/html_node/timeout-invocation.html across scopes
+file	W04	S095 duplicate url man7.org/linux/man-pages/man5/proc_pid_fd.5.html across scopes
+file	W04	S096 duplicate url man7.org/linux/man-pages/man5/proc_pid_fd.5.html across scopes
+file	W04	S097 duplicate url git-scm.com/docs/git-filter-branch across scopes
+file	W04	S098 duplicate url www.gnu.org/software/coreutils/manual/html_node/timeout-invocation.html across scopes
+file	W04	S099 duplicate url git-scm.com/docs/git-rev-parse across scopes
+file	W04	S106 duplicate url docs.python.org/3/library/json.html across scopes
+file	W04	S108 duplicate url docs.python.org/3/builtins/exceptions.html across scopes
+file	W04	S123 duplicate url git-scm.com/docs/git-worktree across scopes
+file	W04	S124 duplicate url git-scm.com/docs/gitrepository-layout across scopes
+file	W04	S125 duplicate url git-scm.com/docs/git across scopes
+file	W04	S126 duplicate url git-scm.com/docs/git-worktree across scopes
+file	W04	S210 duplicate url raw.githubusercontent.com/GNOME/glib/2.84.0/gio/glocalfile.c across scopes
+file	W04	S216 duplicate url man7.org/linux/man-pages/man2/statx.2.html across scopes
+file	ok	/var/tmp/souji-r29-C3MirrorValidate/validate/corpus/SOURCES.md
+RC=0
+```
+
+No `E` finding of any code appears: E01 (NF), E02 (id shape), E03 (duplicate id), E04
+(duplicate URL+scope), E05–E10 and E11/E12 are all absent, so the script's own verdict is
+`ok` and the append block is admissible. The single new warning is S216/W04: the statx URL
+is already held by S114 under the origin-record scope; S216 carries a different scope
+string, which is why E04 (URL **and** scope) does not fire.
+
+```
+# C. sources-census validate explicit lane-dir form
+$ bash /home/vgpnk/Projects/shokunin/scripts/sources-census.sh validate /var/tmp/souji-r29-C3MirrorValidate/validate
+RC=0
+W04_count=36
+validate	ok	/var/tmp/souji-r29-C3MirrorValidate/validate/corpus/SOURCES.md
+
+# D. sources-census census
+$ bash /home/vgpnk/Projects/shokunin/scripts/sources-census.sh census /var/tmp/souji-r29-C3MirrorValidate/validate
+validate	rows	143
+validate	tier.A	135
+validate	tier.B	6
+validate	tier.C	2
+validate	status.mined	119
+validate	status.queued	15
+validate	status.rejected	9
+FLEET	rows	143
+FLEET	tier.A	135
+FLEET	tier.B	6
+FLEET	tier.C	2
+FLEET	tier.invalid	0
+FLEET	status.queued	15
+FLEET	status.mined	119
+FLEET	status.rejected	9
+FLEET	status.invalid	0
+FLEET	missing	0
+```
+
+`rows 143` = the lane's 139 committed rows plus the four appended rows (the C3 target
+139 -> 143); tier.B rises by 1 (S217) and tier.A by 3; `status.mined` rises by 4.
+
+```
+# E. scratch git: toplevel, commit, registry-agreement K1 on the commit
+$ D=/var/tmp/souji-r29-C3MirrorValidate/gitcheck   # corpus + tools + a comment-only census fixture
+$ git -C "$D" init -q && git -C "$D" rev-parse --show-toplevel
+toplevel=/var/tmp/souji-r29-C3MirrorValidate/gitcheck
+$ git -C "$D" config user.name souji-r29-scratch && git -C "$D" config user.email scratch@invalid
+$ git -C "$D" add -A && git -C "$D" -c maintenance.auto=false commit -q -m "scratch mirror: corpus + S216-S219 + F3 placeholders"
+rev=f915b2a2be22610b8fd8c7235f008bcd4d825a9b
+$ python3 -B /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-registry-agreement.py --root "$D" --rev "$rev"
+K1 used-by-no-cite S215 corpus/knowledge/git-auto-maintenance-trigger-set.md
+K1 cited-not-in-used-by S075 corpus/knowledge/process-residue-observations.md
+K1 cited-not-in-used-by S076 corpus/knowledge/process-residue-observations.md
+K1 cited-not-in-used-by S022 corpus/knowledge/quarantine-origin-record-fields-r24.md
+K1 cited-not-in-used-by S024 corpus/knowledge/quarantine-same-filesystem-rename.md
+K1 cited-not-in-used-by S025 corpus/knowledge/quarantine-same-filesystem-rename.md
+SUMMARY k1=6 k2=0 mismatches=6 rev=f915b2a2be22610b8fd8c7235f008bcd4d825a9b
+RC=1
+new_ids_in_findings=0
+```
+
+K1 is the six pre-existing base disagreements the preregistration names; **none** of the
+six names S216–S219 or either new entry (`new_ids_in_findings=0`), so the append block adds
+zero K1 debt. `k2=0` is vacuous here **by construction**: the scratch repo carries a
+comment-only stale-list fixture because the real `census/round-29/stale-statements.tsv`
+repair belongs to C1, not to this seat. It is not evidence that K2 is green.
+
+```
+# F. structure: NF, escaped pipes, citation sets
+$ awk -F'|' '/^ {0,3}\| S21[6-9] /{printf "%s NF=%d cells=%d\n",$2,NF,NF-2}' "$D/corpus/SOURCES.md"
+ S216  NF=13 cells=11
+ S217  NF=13 cells=11
+ S218  NF=13 cells=11
+ S219  NF=13 cells=11
+$ grep -cE '^\|[[:space:]]*S21[6-9] .*\\\|' "$D/corpus/SOURCES.md"
+escaped_pipes_in_new_rows=0
+duplicate-verdict-identity cites: S216 S217 S218
+duplicate-verdict-byte-equality cites: S219 S217 S218
+
+# G. id collision check (0-3 leading spaces pattern, item 10)
+reg=139 staged=134 collisions=31
+S216 in_lane_registry=0 in_staged=1
+S217 in_lane_registry=0 in_staged=1
+S218 in_lane_registry=0 in_staged=1
+S219 in_lane_registry=0 in_staged=1
+
+# H. DOI landing-page probe (why the row cites the author-hosted PDF)
+$ curl -sS -L --max-time 60 -o doi.body -D doi.head -w "%{http_code} %{size_download}" https://doi.org/10.1109/SEQUEN.1997.666900
+202 0
+rc=0
+HTTP/2 302 
+location: http://ieeexplore.ieee.org/document/666900/
+HTTP/1.1 301 Moved Permanently
+Content-Length: 167
+Location: https://ieeexplore.ieee.org/document/666900/
+HTTP/2 202 
+content-length: 0
+
+# I. fetched-byte digests vs the w1 peer snapshots
+2a47fe319c5894d7d907b5ac03ced8cf64fb786bab69c12d276e90ba18359e8e  statx.2.html
+9cb197a7abe32a459bb3dbe96f67d906ff199e0f9d5f19f41a3a05e46cea1ec9  link.2.html
+5c68e8d874e987391e7679dd2637f953b90087076bffe6de18c40db86cd046a3  cmp.1.html
+da1227992d4a308f9f6f9f99893fd7b00c26e6cf757b1372f426074c101ef56b  broder97resemblance.pdf
+```
+
+All four digests equal the snapshots already delivered at
+`.ufo/waves/round-29/w1/sources/SHA256SUMS` by a sibling seat, i.e. the re-grounding here is
+independent in execution and byte-identical in result.
