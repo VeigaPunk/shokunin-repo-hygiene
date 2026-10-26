@@ -36,7 +36,7 @@ when the file exists, not before.
 | ground | status | entries |
 |---|---|---|
 | receipts: pushed / moved-to-obsidian / stale | core (SKILL.md, tools/) | `knowledge/obsidian-ledger.tsv` (operator-fed, header-only) |
-| F1 git-native housekeeping vs receipts | frontier, entries held | `knowledge/git-auto-maintenance-prunes-worktrees.md`, `knowledge/git-grace-periods-and-expire-to.md`, `knowledge/git-auto-maintenance-trigger-set.md`, `knowledge/git-auto-maintenance-trigger-set-r23.md` |
+| F1 git-native housekeeping vs receipts | frontier, entries held | `knowledge/git-auto-maintenance-prunes-worktrees.md`, `knowledge/git-grace-periods-and-expire-to.md`, `knowledge/git-auto-maintenance-trigger-set.md`, `knowledge/git-auto-maintenance-trigger-set-r23.md`, `knowledge/jj-keep-ref-expiry.md` |
 | F2 repository size census | frontier, no entry (r12 candidate deferred, `lessons/round-12.md` `## Gate`; sweep: `ls corpus/knowledge \| grep -ciE 'size\|structure\|sizer'` → 0, 2026-10-19); superseded by Round 24 F2 row (:517) | — |
 | F3 duplicate verdicts | frontier, entries held | `knowledge/dupe-finders-detect-then-act.md`, `knowledge/duplicate-verdict-identity.md`, `knowledge/duplicate-verdict-byte-equality.md` |
 | F4 restorable quarantine, file-system semantics | frontier; layout and staging held; read-side fields admitted r24; reference writer + mechanism set admitted r27 (implementation evidence only) | `knowledge/trash-spec-restorable-quarantine.md`, `knowledge/quarantine-same-filesystem-rename.md`, `knowledge/quarantine-staging-no-copy-r23.md`, `knowledge/quarantine-origin-record-fields-r24.md`, `knowledge/origin-record-writer-r27.md`, `knowledge/origin-record-mechanism-set-r33.md`, `knowledge/origin-record-exclusivity-r28.md`, `knowledge/origin-record-durability-r28.md` |
@@ -594,3 +594,48 @@ change, operator decision), no near-duplicate threshold is admitted, and no tool
   same to the F4 row at `:42`); the append-only record is this section.
 - The `## Frontier` bullet at `:48` stands as written: "a `duplicate` receipt class is an
   operator decision (taxonomy change)" remains the next step; the r29 entries do not take it.
+
+## Round 30 — F1 keep-ref expiry measured
+
+Appended; the sections above stand. One knowledge entry is admitted for F1, measured this round
+with real jj 0.45.1 and git 2.56.0 in scratch repositories under the round's scratch root, never
+against a lane:
+
+- `knowledge/jj-keep-ref-expiry.md` — what removes a `refs/jj/keep/*` ref and when. One run of
+  an eight-step fixture (steps 1-5 on a main repository, steps 6-8 on a control repository):
+  `git gc --prune=now` leaves the keep ref naming the abandoned commit in place,
+  `jj util gc --expire=now` removes it, and `jj op abandon ..@-` before a second
+  `jj util gc --expire=now` leaves two keep refs where eight stood. The commit object stayed
+  present in every step, so a dropped keep ref is not a deleted object and the object-prune
+  clock is a separate question. The default threshold is two weeks, and `--expire` accepts only
+  the string `now`; a future timestamp is refused, so the "not yet expired" arm is the default
+  run. Fixture `../tests/fixtures/r30-jj-keep-expiry.sh`; measured record
+  `../census/round-30/records/jj-keep-expiry-run.txt` (`jj-version: jj 0.45.1`, eight `RESULT`
+  lines).
+
+Coverage-map effect: the F1 row at `:39` now names a fifth entry with its status cell unchanged
+(`frontier, entries held`); the four entries it already carried are unchanged. F1 stays
+frontier — the entry measures a ref's lifetime, and one entry does not promote a frontier ground
+to Core (PROVINCE `## Round 30 boundary note`).
+
+### Frontier (r30)
+
+- F1 — keep-ref expiry is now measured (the entry above; jj 0.45.1, eight `RESULT` steps,
+  `../census/round-30/records/jj-keep-expiry-run.txt`). Remaining: the fleet exposure numerator
+  re-census named at `:46`; and, disclosed rather than measured here, when the commit object
+  behind a dropped keep ref is pruned by git's own clock — the run records `object_present=yes`
+  at every step and stops before that question.
+- F2, F3, F4 — unchanged. F5 stays list-only; the reap protocol and NAMESPACE pin remain
+  operator-held. Certification OFF, K5 HELD.
+
+### Round 30 corrections
+
+- The r12 F1 row at `:39` was replaced in place rather than superseded by a later table: its
+  entries cell gained `knowledge/jj-keep-ref-expiry.md` and its status cell, already
+  `frontier, entries held`, was not reworded. Map rows are edited in place (r28 did the same to
+  the F4 row at `:42`, r29 to the F3 row at `:41`); the append-only record is this section.
+- `knowledge/jj-colocation-receipts.md` §3 marked the keep-ref timing `[INFERENCE]` and its
+  `Limits` first bullet said the docs read do not state the lifetime. The r30 entry now carries
+  the measured timing (ref removed by `jj util gc` with the operation log still naming the
+  commit); the r17 text stands as history and is not rewritten. What remains unmeasured is the
+  object-prune clock, not the ref's removal.

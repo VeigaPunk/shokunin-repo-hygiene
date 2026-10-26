@@ -191,3 +191,21 @@ Core and Frontier are otherwise unchanged: Core is the `## Owns` and `## Work su
 list above (`:60`), and this round adds no entry to either; F3 stays frontier. Certification
 OFF, K5 HELD. Sources: `census/round-29/records/preregistration.txt` claim C3; the two
 entries and their Gates.
+
+## Round 30 boundary note (F1 keep-ref expiry)
+
+F1 now holds a measured entry — `corpus/knowledge/jj-keep-ref-expiry.md` — beside the four
+entries its map row at `corpus/README.md:39` already named. One entry does not promote F1 to
+Core: Core stays the `## Owns` and `## Work surfaces` list above (`:60`), the F1 row keeps the
+status `frontier, entries held`, and this round adds nothing to either list. What the entry
+records is the git-side lifetime of a keep ref: `git gc --prune=now` leaves a `refs/jj/keep/*`
+ref in place, `jj util gc --expire=now` removes the ref of an abandoned commit while an
+operation still names it, `jj op abandon ..@-` before a second `jj util gc --expire=now` leaves
+two keep refs where eight stood, and the two-week default is the threshold that keeps a ref
+until the lever is pulled. What it does not
+record: jj's own store GC stays out of scope — this lane runs neither `jj op abandon` nor
+`jj util gc` on a lane repository, acquires no authority to, and leaves the operator's store
+alone; the object-prune clock that follows a dropped keep ref is unmeasured here; and no
+receipt tool changes, so the r17 receipt rules stand unchanged. Certification OFF, K5 HELD.
+Sources: `census/round-30/records/preregistration.txt` claim C3; the entry and its Gate; the
+run record `census/round-30/records/jj-keep-expiry-run.txt`.
