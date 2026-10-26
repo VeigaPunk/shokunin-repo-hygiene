@@ -1,0 +1,133 @@
+jj-version: jj 0.45.1-7c41cdeb16b6b321c64e789a966b6adf723816a5
+git-version: git version 2.56.0
+date: 2026-10-26T01:46:09-03:00
+scratch fixtures only; scripts run.sh(case1) run2.sh(case2) run3.sh(case3) run4.sh(case4)
+
+=== run.sh
+set -u
+export JJ_CONFIG=/dev/null JJ_USER=t JJ_EMAIL=t@e.x
+cd "$1" && mkdir fx && cd fx
+jj git init --colocate >/dev/null 2>&1 || { echo INITFAIL; jj git init --colocate; exit 1; }
+git config user.name t; git config user.email t@e.x
+jj config set --repo user.name t; jj config set --repo user.email t@e.x; jj config set --repo snapshot.auto-track 'none()'
+echo one > f.txt; jj file track f.txt; jj describe -m A --quiet 2>&1
+OLD=$(jj log --no-graph -r @ -T commit_id); echo old=$OLD
+jj new --quiet 2>&1; jj describe -r @- -m A2 --quiet 2>&1
+echo "visible @- now: $(jj log --no-graph -r @- -T commit_id)"
+echo "old hidden? $(jj log --no-graph -r $OLD -T 'if(hidden,"hidden","visible")' 2>&1)"
+echo "keep ref for OLD (count): $(git for-each-ref refs/jj/keep | grep -c $OLD)"
+echo "--- op log"; jj op log --no-graph -T 'id.short()++" "++description++"\n"' 2>&1
+echo "--- op abandon"; jj op abandon ..@- 2>&1
+echo "after abandon: keepref=$(git for-each-ref refs/jj/keep | grep -c $OLD) obj=$(git cat-file -t $OLD 2>&1)"
+echo "op log after:"; jj op log --no-graph -T 'id.short()++" "++description++"\n"' 2>&1
+echo "--- util gc (default 14d)"; jj util gc 2>&1
+echo "after default gc: keepref=$(git for-each-ref refs/jj/keep | grep -c $OLD) obj=$(git cat-file -t $OLD 2>&1)"
+echo "--- util gc --expire now"; jj util gc --expire now 2>&1
+echo "after expire-now gc: keepref=$(git for-each-ref refs/jj/keep | grep -c $OLD) obj=$(git cat-file -t $OLD 2>&1)"
+echo "jj log of old: $(jj log --no-graph -r $OLD -T commit_id 2>&1 | head -2)"
+--- output
+old=0f61e62f54600811d7a2bc4443261a3841562fa1
+visible @- now: 03fc549aabc1c29bbd8157f9a12128bf1b081ffb
+old hidden? hidden
+keep ref for OLD (count): 1
+--- op log
+fba23241c8a2 describe commit 0f61e62f54600811d7a2bc4443261a3841562fa1
+cffeae54024e new empty commit
+cf800b0182a3 describe commit 00b6173e83878179cdefa12345765327971304d6
+20834f0b5139 snapshot working copy
+7baff3eee3fd track paths
+5334ffdcdc7b add workspace 'default'
+000000000000 
+--- op abandon
+Abandoned 5 operations and reparented 1 descendant operations.
+after abandon: keepref=1 obj=commit
+op log after:
+07a86eaed4c3 describe commit 0f61e62f54600811d7a2bc4443261a3841562fa1
+000000000000 
+--- util gc (default 14d)
+after default gc: keepref=1 obj=commit
+--- util gc --expire now
+after expire-now gc: keepref=0 obj=commit
+jj log of old: 0f61e62f54600811d7a2bc4443261a3841562fa1
+
+=== run2.sh
+set -u
+export JJ_CONFIG=/dev/null JJ_USER=t JJ_EMAIL=t@e.x
+cd "$1" && mkdir fx && cd fx
+jj git init --colocate >/dev/null 2>&1 || exit 1
+git config user.name t; git config user.email t@e.x
+jj config set --repo user.name t; jj config set --repo user.email t@e.x; jj config set --repo snapshot.auto-track 'none()'
+echo one > f.txt; jj file track f.txt; jj describe -m base --quiet 2>&1; jj new --quiet
+echo two > g.txt; jj file track g.txt; jj describe -m W1 --quiet 2>&1
+W1=$(jj log --no-graph -r @ -T commit_id); echo W1=$W1
+jj describe -m W2 --quiet 2>&1
+echo "W1 hidden: $(jj log --no-graph -r $W1 -T 'if(hidden,"hidden","visible")')  keep=$(git for-each-ref refs/jj/keep | grep -c $W1)  HEADreflog-mentions=$(git reflog show HEAD | grep -c ${W1:0:7})"
+jj op abandon ..@- 2>&1
+echo "after abandon: keep=$(git for-each-ref refs/jj/keep | grep -c $W1) obj=$(git cat-file -t $W1 2>&1)"
+sleep 2
+jj util gc --expire now 2>&1
+echo "after gc now: keep=$(git for-each-ref refs/jj/keep | grep -c $W1) obj=$(git cat-file -t $W1 2>&1 | head -1)"
+echo "jj log W1: $(jj log --no-graph -r $W1 -T commit_id 2>&1 | head -2)"
+git fsck --lost-found 2>&1 | head -3
+--- output
+W1=77cfc043cc9c43f0755ea7279627495a295f0fb5
+W1 hidden: hidden  keep=1  HEADreflog-mentions=0
+Abandoned 8 operations and reparented 1 descendant operations.
+after abandon: keep=1 obj=commit
+after gc now: keep=1 obj=commit
+jj log W1: 77cfc043cc9c43f0755ea7279627495a295f0fb5
+
+=== run3.sh
+set -u
+export JJ_CONFIG=/dev/null JJ_USER=t JJ_EMAIL=t@e.x
+cd "$1" && mkdir fx && cd fx
+jj git init --colocate >/dev/null 2>&1 || exit 1
+git config user.name t; git config user.email t@e.x
+jj config set --repo user.name t; jj config set --repo user.email t@e.x; jj config set --repo snapshot.auto-track 'none()'
+echo one > f.txt; jj file track f.txt; jj describe -m A --quiet 2>&1
+OLD=$(jj log --no-graph -r @ -T commit_id); jj new --quiet; jj describe -r @- -m A2 --quiet 2>&1
+echo "pre: keep=$(git for-each-ref refs/jj/keep | grep -c $OLD)"
+jj op abandon ..@- 2>&1
+sleep 2
+jj util gc --expire now 2>&1
+echo "case3 (describe -r @-, no default gc): keep=$(git for-each-ref refs/jj/keep | grep -c $OLD) obj=$(git cat-file -t $OLD 2>&1|head -1)"
+--- output
+pre: keep=1
+Abandoned 5 operations and reparented 1 descendant operations.
+case3 (describe -r @-, no default gc): keep=0 obj=commit
+
+=== run4.sh
+set -u
+export JJ_CONFIG=/dev/null JJ_USER=t JJ_EMAIL=t@e.x
+cd "$1" && mkdir fx && cd fx
+jj git init --colocate >/dev/null 2>&1 || exit 1
+git config user.name t; git config user.email t@e.x
+jj config set --repo user.name t; jj config set --repo user.email t@e.x; jj config set --repo snapshot.auto-track 'none()'
+echo one > f.txt; jj file track f.txt; jj describe -m A --quiet 2>&1
+OLD=$(jj log --no-graph -r @ -T commit_id); jj new --quiet; jj describe -r @- -m A2 --quiet 2>&1
+jj op abandon ..@- 2>&1
+git pack-refs --all
+echo "loose file present: $(test -e .git/refs/jj/keep/$OLD && echo yes || echo no); packed: $(grep -c $OLD .git/packed-refs)"
+jj util gc 2>&1
+echo "case4 (packed ref, default 14d gc): keep=$(git for-each-ref refs/jj/keep | grep -c $OLD) obj=$(git cat-file -t $OLD 2>&1|head -1)"
+--- output
+Abandoned 5 operations and reparented 1 descendant operations.
+loose file present: no; packed: 1
+case4 (packed ref, default 14d gc): keep=0 obj=commit
+
+=== run5.sh
+set -u
+export JJ_CONFIG=/dev/null JJ_USER=t JJ_EMAIL=t@e.x
+cd "$1" && mkdir fx && cd fx
+jj git init --colocate >/dev/null 2>&1 || exit 1
+git config user.name t; git config user.email t@e.x
+jj config set --repo user.name t; jj config set --repo user.email t@e.x; jj config set --repo snapshot.auto-track 'none()'
+echo one > f.txt; jj file track f.txt; jj describe -m base --quiet 2>&1; jj new --quiet
+echo two > g.txt; jj file track g.txt; jj describe -m W1 --quiet 2>&1
+W1=$(jj log --no-graph -r @ -T commit_id); jj describe -m W2 --quiet 2>&1
+jj new --quiet; jj describe -m W3 --quiet 2>&1
+jj op abandon ..@- 2>&1; sleep 2; jj util gc --expire now 2>&1
+echo "case5 (rewrite of @, one op after, abandon, gc now): keep=$(git for-each-ref refs/jj/keep | grep -c $W1) obj=$(git cat-file -t $W1 2>&1|head -1)"
+--- output
+Abandoned 10 operations and reparented 1 descendant operations.
+case5 (rewrite of @, one op after, abandon, gc now): keep=0 obj=fatal: git cat-file: could not get object info

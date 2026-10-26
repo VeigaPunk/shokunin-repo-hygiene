@@ -1,0 +1,64 @@
+# receipt — r30 C3 keep-ref mechanism probe (seat SwarmExecutor06)
+# run: TMPDIR=/fast/scratch/hyaku/souji-r30/C3JjFixture bash probe-mechanism.sh
+# jj 0.45.1-7c41cdeb16b6b321c64e789a966b6adf723816a5, git 2.56.0, scratch repo under $TMPDIR only
+
+## script
+#!/usr/bin/env bash
+# One-off mechanism probe (r30 C3, seat SwarmExecutor06). Not part of the delivered fixture:
+# it re-runs the fixture's steps 1-5 and then asks which kept ref still holds the abandoned commit.
+set -u
+export TMPDIR=${TMPDIR:?}
+D=$(mktemp -d "$TMPDIR/p.XXXXXX")
+trap 'rm -rf "$D"' EXIT
+NAME=r30-expiry; EMAIL=r30-expiry@example.invalid
+JJCFG=(--color=never --config ui.paginate=never --config "user.name=$NAME" --config "user.email=$EMAIL")
+JJ() { ( cd "$D" && jj -R "$D" "${JJCFG[@]}" "$@" ); }
+G() { git -C "$D" -c maintenance.auto=false -c gc.auto=0 "$@"; }
+
+jj "${JJCFG[@]}" git init --colocate "$D" >/dev/null 2>&1
+printf 'a\n' >"$D/a.txt"; JJ commit -m A a.txt >/dev/null 2>&1
+printf 'b\n' >"$D/b.txt"; JJ commit -m B b.txt >/dev/null 2>&1
+B=$(JJ log --no-graph -r '@-' -T 'commit_id')
+OLDW=$(JJ log --no-graph -r '@' -T 'commit_id')
+echo "B=$B old_workcopy=$OLDW"
+JJ abandon '@-' >/dev/null 2>&1
+G gc --prune=now >/dev/null 2>&1
+JJ util gc --expire=now >/dev/null 2>&1
+JJ op abandon '..@-' >/dev/null 2>&1
+JJ util gc --expire=now >/dev/null 2>&1
+echo "--- jj debug index (head count is the index, not the visible graph)"
+JJ debug index 2>&1 | sed -n '2,5p'
+echo "--- visible heads:"
+JJ log --no-graph -r 'heads(all())' -T 'commit_id.short() ++ "\n"'
+echo "--- state of the pre-abandon working-copy commit:"
+JJ log --no-graph -r "$OLDW" -T 'commit_id.short() ++ " hidden=" ++ hidden ++ "\n"'
+echo "--- remaining keep refs; whether B is an ancestor of each:"
+for r in $(G for-each-ref --format='%(refname)' 'refs/jj/keep/*'); do
+  oid=$(G rev-parse "$r")
+  if G merge-base --is-ancestor "$B" "$oid" 2>/dev/null; then anc=yes; else anc=no; fi
+  echo "  $r B_ancestor=$anc"
+done
+echo "--- presence: B=$(G cat-file -e "$B" 2>/dev/null && echo yes || echo no) old_workcopy=$(G cat-file -e "$OLDW" 2>/dev/null && echo yes || echo no)"
+echo "--- jj debug reindex, then gc again"
+JJ debug reindex 2>&1 | tail -1
+JJ util gc --expire=now >/dev/null 2>&1
+echo "after-reindex keep_refs=$(G for-each-ref --format='%(refname)' 'refs/jj/keep/*' | wc -l | tr -d ' ') B_present=$(G cat-file -e "$B" 2>/dev/null && echo yes || echo no)"
+
+## output
+B=583b3d4af8831960342a724b931df79b27d6b4d8 old_workcopy=e39cae3c92dd00b931fd07f3c200fa557b4b7095
+--- jj debug index (head count is the index, not the visible graph)
+Number of commits: 5
+Number of merges: 0
+Max generation number: 3
+Number of heads: 2
+--- visible heads:
+fd3966775cd9
+--- state of the pre-abandon working-copy commit:
+e39cae3c92dd hidden=true
+--- remaining keep refs; whether B is an ancestor of each:
+  refs/jj/keep/e39cae3c92dd00b931fd07f3c200fa557b4b7095 B_ancestor=yes
+  refs/jj/keep/fd3966775cd9ee648fbf3d204ef3383fe8756bda B_ancestor=no
+--- presence: B=yes old_workcopy=yes
+--- jj debug reindex, then gc again
+Finished indexing 5 commits.
+after-reindex keep_refs=2 B_present=yes

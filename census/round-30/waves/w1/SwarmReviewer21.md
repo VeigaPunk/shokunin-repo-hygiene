@@ -1,0 +1,47 @@
+# SwarmReviewer21 — C2 base re-derivation (round 30, wave 1)
+
+## Status
+
+STATUS: PASS — the frozen C2 base receipt `reports=0 cne=1 dangling=3 other=0 fixture=fail redarm=fail regress=same` re-derives exactly at 9420341d9a814cb6089c25fb03a4cc9b23dc0d1b, by an independent scanner built from the gate's committed logic and corroborated by a direct gate run (no counter); exactly 3 dangling tokens exist at the claimed locations, with one precision correction on the token identity of the two QUALITY.md:150 artifacts; `reports=86` is the right after literal (68 seat reports + 18 deliveries, all read per fixture contract D1; no `.captured` names, no `.md` sources under the capture).
+
+## Evidence
+
+All commands run 2026-10-26 against the lane repo read-only (git plumbing only); base = 9420341d9a814cb6089c25fb03a4cc9b23dc0d1b = HEAD of master (verified `rev-parse`). Lane working tree clean except untracked `corpus/lessons/round-30.md` (not mine), so the gate bytes executed equal the committed bytes at base.
+
+1. Committed `.md` under census/round-29/waves at base:
+   `git -C /home/vgpnk/Projects/shokunin/souji-shokunin ls-tree -r --name-only 9420341d9a814cb6089c25fb03a4cc9b23dc0d1b census/round-29/waves | grep -c '\.md$'` → **86**. All 86 sit directly under `waves/w1/`: 68 `Swarm*.md` + 18 `deliver-*.md` (counts via the same ls-tree piped to `grep -c '/Swarm'` = 68 and `grep -c '/deliver-'` = 18). 46 non-`.md` files: dispatch/spec/ready/results bookkeeping, manifests, tsv/txt/py/sh deliveries, and `w1/sources/` (broder97resemblance.pdf/.txt, cmp.1.html, link.2.html, statx.2.html, SHA256SUMS). `grep -c captured` over the whole capture = **0** — no `.captured` names exist.
+2. Nothing committed under .ufo/waves/round-29/ at base:
+   `git ls-tree -r --name-only 9420341d9a814cb6089c25fb03a4cc9b23dc0d1b .ufo/waves/round-29/` → 0 lines. Context: `.gitignore:1` reads `.ufo/waves/`, yet rounds 13–26 have committed `.ufo/waves/round-N/` trees (round-26: 1218 files, round-22: 522, …) — force-added historically; round-29's is absent, so the gate's report enumeration (tools/souji-landing-gate.py:470, prefix `.ufo/waves/round-29/`) is empty and tools/souji-landing-gate.py:474 raises "no .md reports under" → one `COULD-NOT-EVALUATE` line, `checked_reports=0`, rc=2.
+3. Independent scanner (scratch copy of the gate's pointer logic, replicated from tools/souji-landing-gate.py:141-146 POINTER_PATH_RE, :764-873 helpers, :905-1000 check_pointers incl. source set :916-928, LOG.md round-29 H2 selection, exemptions, fleet resolution): **checked_ptrs=1012, dangling=3, exempt_used=3, fleet=3** over 30 sources. Byte-identical to the gate's own `--json` at base (`checked_ptrs=1012, ptr_fleet=3, ptr_exempt=4` — the 4th exemption is the measured-commit one consumed by check_frozen_pins) and to the gate's TSV findings. Receipt: `.ufo/waves/round-30/w1/SwarmReviewer21-scan-ptrs.txt`.
+4. Direct gate run at base, no counter (receipt: `.ufo/waves/round-30/w1/SwarmReviewer21-gate-base.txt`):
+   ````
+   LG-DANGLING-PTR	.ufo/waves/round-29/	corpus/lessons/round-29-verifier-spotcheck.md:132 cites path absent at 9420341d9a81
+   LG-DANGLING-PTR	census/round-	corpus/QUALITY.md:150 cites path absent at 9420341d9a81
+   LG-DANGLING-PTR	corpus/lessons/round-	corpus/QUALITY.md:150 cites path absent at 9420341d9a81
+   SUMMARY	findings=3	checked_reg=58	checked_changed=0	checked_pins=13	checked_measured=3	checked_markers=0	status_lines=0	carry_heading=0	checked_reports=0
+   COULD-NOT-EVALUATE	no .md reports under .ufo/waves/round-29/ at 9420341d9a814cb6089c25fb03a4cc9b23dc0d1b
+   rc=2
+   ````
+   → dangling=3, other=0 (all 3 findings are LG-DANGLING-PTR; registry 58 parse clean, pins 13 / measured 3 clean, no stale exemptions), cne=1, reports=0. `tests/fixtures/r30-landing-gate-discovery.py` is ABSENT at base (`git cat-file -e` fails) → counter legs `fixture=fail redarm=fail`; rev==base makes REGRESS trivially `same`. Full base receipt matches controls.tsv row `C2-do-nothing(base)`.
+5. Probe for the after literal (receipt: `.ufo/waves/round-30/w1/SwarmReviewer21-probe-ufo-capture.txt`): scratch clone of the lane at base (origin removed), r29 capture copied to `.ufo/waves/round-29/w1`, committed in scratch only as 67f451a0944023f6f622d33a420f4a2742243109; gate run there → `checked_reports=86`, findings=9 = 2 dangling (the QUALITY.md:150 pair; the spotcheck's `.ufo/waves/round-29/` mention now resolves) + **7 LG-SEAT-UNCARRIED** (SwarmCritic49, SwarmCritic51, SwarmCritic53, SwarmExecutor17, SwarmReviewer40, SwarmReviewer42, SwarmReviewer43), `checked_markers=7 status_lines=69 carry_heading=0` — reproduces the preregistration's disclosed pre-freeze probe ("showed 7 LG-SEAT-UNCARRIED findings that discovery will surface") exactly; the 18 `deliver-*.md` contributed none of the 7.
+
+## Findings
+
+1. **[CONFIRMED] Base receipt exact.** `reports=0 cne=1 dangling=3 other=0 fixture=fail redarm=fail regress=same` at 9420341d9a814cb6089c25fb03a4cc9b23dc0d1b, derived without census/round-30/c2-counter.py (independent scanner + direct gate run). Location: census/round-30/records/controls.tsv row `C2-do-nothing(base)`; receipts `.ufo/waves/round-30/w1/SwarmReviewer21-gate-base.txt`, `SwarmReviewer21-scan-ptrs.txt`.
+2. **[CONFIRMED, precision correction] Exactly 3 dangling tokens; locations as claimed; token identity of the QUALITY pair is concatenation fragments, not `round-%s`.** The two corpus/QUALITY.md:150 tokens are `census/round-` and `corpus/lessons/round-` — literal prefixes of the embedded Q60 check code `g("census/round-"+rd+"/records/preregistration.txt")` and `g("corpus/lessons/round-"+rd+".md")`, truncated at the `"` that POINTER_PATH_RE's character class (tools/souji-landing-gate.py:141-146) excludes; the runtime-assembled full paths are template artifacts in the causal sense, and the bare prefixes are absent from the tree. `round-%s` occurs **0 times** on QUALITY.md:150 at base; the literal `census/round-%s/records/preregistration.txt` / `corpus/lessons/round-%s.md` tokens were replaced by the concatenation form in 48e2e95 ("round-29: Q60 check cell without round-%s pointer tokens", 1 file changed), which kept the dangling pair at 2 (verified: gate at 48e2e95 and ea4d798 prints findings=2 with the same two fragment tokens). The third token is `.ufo/waves/round-29/` at corpus/lessons/round-29-verifier-spotcheck.md:132 — dangling because nothing is committed under that path at base (`.gitignore:1`).
+3. **[Stale prose, no action] The routed lesson's description of the false positives is stale relative to base.** corpus/lessons/round-29-verifier-spotcheck.md:131 reads "Landing gate at the tip still prints `findings=2`" attributing them to "`round-%s` tokens, QUALITY.md:150" — at the revision where that file is committed (base) the gate prints findings=3 (its own line 132 adds the third) and the tokens are the concatenation fragments; findings=2 held at 48e2e95/ea4d798. The preregistration's C2 narrative ("template tokens (`round-%s`, `round-<N>`)") inherits the stale token name. Frozen contract unaffected (the base receipt is dangling=3 either way); recorded as prose accuracy only, no prereg change proposed.
+4. **[CONFIRMED] `reports=86` is the right after literal.** 86 = the capture's `.md` count (command in Evidence 1). Composition: 68 `Swarm*.md` seat reports + 18 `deliver-*.md` delivery files, all under `waves/w1/`; zero `.captured` names anywhere in the capture; no `.md` under `w1/sources/` (sources are .pdf/.txt/.html/SHA256SUMS). The frozen fixture contract D1 pins "checked_reports equals the .md count", so the fixed gate must read all 86 — the 18 deliveries are seat-authored files scanned for STATUS failure lines exactly like reports (probe: all 86 read, markers=7, none from deliveries). Two dependencies the L1 should keep true at the C2 landing commit and final tip: (a) census/round-29/waves keeps its 86 `.md` (it is committed at base; C2's landing must not touch it); (b) `.ufo/waves/round-29/` keeps zero committed `.md` — under D3, if both dirs are present the gate reads `.ufo/waves/round-29/` and does not double-count the capture, so a differently-sized set there would move `reports` off 86. At base: 0 committed there.
+5. **[Note, not gameable] The counter's dangling count also matches `LG-DANGLING-PTR-EXEMPT-STALE` lines** (census/round-30/c2-counter.py:89 uses `startswith("LG-DANGLING-PTR")`). At base none exist (all 4 exemptions used: 3 pointer + 1 measured), so the receipt is exact; in an after-state a stale exemption would inflate `dangling` and fail the target — the stricter direction, so no relaxation risk. Flagged for awareness only; not an ATTACK.
+
+## Attack log
+
+None — this item is verification, not attack. No counter predicate, target, or case set is proposed for change; the frozen C2 base receipt and the `reports=86` after literal both stand.
+
+## Deliveries
+
+- `.ufo/waves/round-30/w1/SwarmReviewer21.md` — this report.
+- `.ufo/waves/round-30/w1/SwarmReviewer21-gate-base.txt` — receipt: direct gate run at base (no counter), rc=2.
+- `.ufo/waves/round-30/w1/SwarmReviewer21-scan-ptrs.txt` — receipt: independent scanner output (checked_ptrs=1012, dangling=3, exempt_used=3, fleet=3).
+- `.ufo/waves/round-30/w1/SwarmReviewer21-probe-ufo-capture.txt` — receipt: scratch probe with r29 capture committed under `.ufo/waves/round-29/` (checked_reports=86, 7 LG-SEAT-UNCARRIED, dangling=2).
+
+Scratch `/fast/scratch/hyaku/souji-r30/SwarmReviewer21/` removed after receipts were copied; no tree left on disk.

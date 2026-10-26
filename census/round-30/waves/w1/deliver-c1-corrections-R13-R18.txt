@@ -1,0 +1,103 @@
+# r30 C1 corrections for rows R13-R18 (append-only; for the L1 to append to SCORECARD.md)
+# Seat: SwarmExecutor05. Item: C1RowsC.
+# Measured at lane tip df6afe817d096e4ad71ba2b9cc21a83f126eb658 (SCORECARD.md there is byte-identical
+# to the base blob at 9420341d9a814cb6089c25fb03a4cc9b23dc0d1b, so append-only holds).
+# Counter: tools/souji-capability-agreement.py --base 9420341d9a814cb6089c25fb03a4cc9b23dc0d1b
+#          --list-rev d4928ec86b667e3d1ed0adb07fb088e500cf1631
+# Rows R13 (SCORECARD.md:172) and R17 (SCORECARD.md:313) MATCH at base and tip: no correction.
+# Append the four lines below verbatim (comments in this file are NOT part of the append).
+
+R30-CORRECTION SCORECARD.md:173 R14 rc=0 observed=selftest=15/15
+R30-CORRECTION SCORECARD.md:174 R15 rc=0 observed=cases=12 pass=12 control=FALSE-GREEN-REJECTED lost_found=WRITE-DETECTED
+R30-CORRECTION SCORECARD.md:175 R16 cmd=python3 -B tests/fixtures/r24-coverage-agreement.py --tool tools/souji-coverage-agreement.py rc=0 observed=cases=9 pass=9 control=FALSE-GREEN-REJECTED
+R30-CORRECTION SCORECARD.md:314 R18 rc=0 observed=Usage: bash tools/souji-wave-evidence-capture.sh <lane-abs> <round-N> [--verify [--rev <full40>]]
+
+## Reasons (one per line, same order)
+
+R14 record-agreement fixture: stale count, not a command defect. The r23 row states `9/9`; the fixture
+    was extended in r25 to 15 cases. tests/fixtures/r23-record-agreement.py:41 "Cases 13-15 (round 25,
+    routed residuals R15/R17/R19; the L1-adjudicated W2K1 shapes):". Command unchanged, rc=0, last
+    digit-bearing line `selftest=15/15` (stdout ends `selftest=15/15`, then `control=FALSE-GREEN-REJECTED`,
+    which carries no digit; stderr empty).
+R15 size-census fixture: stale count, not a command defect. The r24 row states `8/8`; the fixture prints
+    `cases=12 pass=12 ...` since r25 added refusal-surface cases 9-12. tests/fixtures/r24-size-census.py:1-2
+    "r24 C1 counter: F2 write-safety size census over the frozen 8-case set, extended by r25 C2". Command
+    unchanged (`python3 -B tests/fixtures/r24-size-census.py --tool tools/souji-size-census.py`), rc=0,
+    stderr empty, last line is the count line verbatim.
+R16 coverage-agreement fixture: the row command as enumerated omits the required argument, so it exits 2
+    with an argparse error (base c1-before.txt: `MISMATCH kind=rc`). tests/fixtures/r24-coverage-agreement.py:331
+    "ap.add_argument("--tool", required=True)". The r24 measurement that produced the stated 9 used the
+    argv recorded in census/round-24/records/c2-fixture-after.tsv:5
+    "cmd=python3 -B tests/fixtures/r24-coverage-agreement.py --tool tools/souji-coverage-agreement.py".
+    `cmd=` keeps script identity (first path token `tests/fixtures/r24-coverage-agreement.py` in both).
+    With `--tool`, rc=0 and the terminal line is `cases=9 pass=9 control=FALSE-GREEN-REJECTED`; the stated
+    literal `9/9` never appears in that output in that form, so the row needs both `cmd=` and `observed=`.
+R18 capture fixture: the stated `15/15` is a shorthand the fixture never prints (it prints
+    `cases=15 pass=15 control=TAMPER-REJECTED`), so the row is MISMATCH at base and at tip.
+    tests/fixtures/r28-wave-evidence-capture.sh:519 runs the fixture's deliberate negative case
+    `bash "$tool" "$lane" 26x`, which the tool answers at tools/souji-wave-evidence-capture.sh:122
+    "usage >&2; exit 1". The fixture's own final print (tests/fixtures/r28-wave-evidence-capture.sh:537)
+    writes the green `cases=15 pass=15 control=TAMPER-REJECTED` to STDOUT, but the counter concatenates
+    stdout+stderr and takes the last digit-bearing line of the COMBINED text, so the stderr usage line
+    printed at case 14 wins.
+    The correction therefore records the true observed terminal line (rc=0, all 15 cases pass, tamper
+    rejected on stdout); the row's stated literal is not the string the command prints and cannot be made so
+    without an in-place edit, which this claim forbids.
+
+## Evidence (raw, both runs identical)
+
+Command (repeatable; --scratch under /fast/scratch/hyaku/souji-r30/C1RowsC/):
+  python3 -B /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-capability-agreement.py \
+    --root <scratch-clone> --rev <REV> --base 9420341d9a814cb6089c25fb03a4cc9b23dc0d1b \
+    --list-rev d4928ec86b667e3d1ed0adb07fb088e500cf1631 --only R13,R14,R15,R16,R17,R18
+
+Before (REV=df6afe817d096e4ad71ba2b9cc21a83f126eb658), run 1 and run 2 byte-identical:
+  ROW	R13	SCORECARD.md:172	stated=8/8	rc=0	observed=selftest=8/8	MATCH
+  ROW	R14	SCORECARD.md:173	stated=9/9	rc=0	observed=selftest=15/15	MISMATCH kind=value
+  ROW	R15	SCORECARD.md:174	stated=8/8	rc=0	observed=cases=12 pass=12 control=FALSE-GREEN-REJECTED lost_found=WRITE-DETECTED	MISMATCH kind=value
+  ROW	R16	SCORECARD.md:175	stated=9/9	rc=2	observed=r24-coverage-agreement.py: error: the following arguments are required: --tool	MISMATCH kind=rc
+  ROW	R17	SCORECARD.md:313	stated=cases=20 pass=20	rc=0	observed=cases=20 pass=20 control=FALSE-GREEN-REJECTED	MATCH
+  ROW	R18	SCORECARD.md:314	stated=cases=15 pass=15	rc=0	observed=Usage: bash tools/souji-wave-evidence-capture.sh <lane-abs> <round-N> [--verify [--rev <full40>]]	MISMATCH kind=value
+  SUMMARY k1=4 k2=0 mismatches=4 rows=6 pointers=10 partial=1 rev=df6afe817d096e4ad71ba2b9cc21a83f126eb658
+
+After (scratch clone commit 835014cf09a6319f911c6c0498623ef757d744c3 = tip + the four lines above),
+run 1 and run 2 identical, exit 0:
+  ROW	R13	SCORECARD.md:172	stated=8/8	rc=0	observed=selftest=8/8	MATCH
+  ROW	R14	SCORECARD.md:173	stated=9/9	rc=0	observed=selftest=15/15	CORRECTED
+  ROW	R15	SCORECARD.md:174	stated=8/8	rc=0	observed=cases=12 pass=12 control=FALSE-GREEN-REJECTED lost_found=WRITE-DETECTED	CORRECTED
+  ROW	R16	SCORECARD.md:175	stated=9/9	rc=0	observed=cases=9 pass=9 control=FALSE-GREEN-REJECTED	CORRECTED
+  ROW	R17	SCORECARD.md:313	stated=cases=20 pass=20	rc=0	observed=cases=20 pass=20 control=FALSE-GREEN-REJECTED	MATCH
+  ROW	R18	SCORECARD.md:314	stated=cases=15 pass=15	rc=0	observed=Usage: bash tools/souji-wave-evidence-capture.sh <lane-abs> <round-N> [--verify [--rev <full40>]]	CORRECTED
+  SUMMARY k1=0 k2=0 mismatches=0 rows=6 pointers=10 partial=1 rev=835014cf09a6319f911c6c0498623ef757d744c3
+
+## Notes for the L1
+
+1. The scratch clone and its commit are throwaway; nothing here was committed to the lane. Only this file
+   and .ufo/waves/round-30/w1/SwarmExecutor05.md were written inside the lane.
+2. Wave-2 risk: R14/R15/R16 observed values bind to the CURRENT fixture case counts (15, 12, 9) and R15 to
+   git >= 2.46 (host git 2.56.0; precondition verified by the fixture itself). If a wave-2 seat extends any
+   of those fixtures, its correction line must be re-derived at the new tip; the counter compares the
+   correction's observed string exactly.
+3. R18's correction records a stderr diagnostic line, not the green count line. That is the honest value of
+   the frozen counter's `S`, and it is also a counter weakness (see the seat report's attack log).
+
+## Appendix — raw acceptance log, verbatim (run 2 of 2; run 1 identical, exit 0 both)
+
+ROW	R13	SCORECARD.md:172	stated=8/8	rc=0	observed=selftest=8/8	MATCH
+ROW	R14	SCORECARD.md:173	stated=9/9	rc=0	observed=selftest=15/15	CORRECTED
+ROW	R15	SCORECARD.md:174	stated=8/8	rc=0	observed=cases=12 pass=12 control=FALSE-GREEN-REJECTED lost_found=WRITE-DETECTED	CORRECTED
+ROW	R16	SCORECARD.md:175	stated=9/9	rc=0	observed=cases=9 pass=9 control=FALSE-GREEN-REJECTED	CORRECTED
+ROW	R17	SCORECARD.md:313	stated=cases=20 pass=20	rc=0	observed=cases=20 pass=20 control=FALSE-GREEN-REJECTED	MATCH
+ROW	R18	SCORECARD.md:314	stated=cases=15 pass=15	rc=0	observed=Usage: bash tools/souji-wave-evidence-capture.sh <lane-abs> <round-N> [--verify [--rev <full40>]]	CORRECTED
+PTR	SHONEN.md:6	SKILL.md	RESOLVES
+PTR	SHONEN.md:6	corpus/SOURCES.md	RESOLVES
+PTR	SHONEN.md:6	corpus/lessons/round-21.md	RESOLVES
+PTR	SHONEN.md:8	LOG.md:362	RESOLVES
+PTR	SHONEN.md:10	census/round-21/run-acceptance.py	RESOLVES
+PTR	SHONEN.md:10	census/round-21/accepted-matrix.json	RESOLVES
+PTR	SHONEN.md:10	census/round-21/remote-source-after.json	RESOLVES
+PTR	SHONEN.md:12	PROVINCE.md	RESOLVES
+PTR	SHONEN.md:12	.ufo/waves/round-21/w1/ConnSiblingOverlap.md	RESOLVES
+PTR	SHONEN.md:12	corpus/lessons/round-21.md	RESOLVES
+SUMMARY k1=0 k2=0 mismatches=0 rows=6 pointers=10 partial=1 rev=835014cf09a6319f911c6c0498623ef757d744c3
+KINDS value=0 shape=0 rc=0 (diagnostic; not part of the target)

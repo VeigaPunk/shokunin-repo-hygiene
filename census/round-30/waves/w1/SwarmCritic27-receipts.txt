@@ -1,0 +1,107 @@
+# SwarmCritic27 receipts — r30 wave 1 (axis attribution / causal separability)
+# Lane base 9420341d9a814cb6089c25fb03a4cc9b23dc0d1b; prereg d4928ec86b667e3d1ed0adb07fb088e500cf1631
+# (sha256sum of the working-tree census/round-30/records/preregistration.txt, and of the git cat-file blob of
+#  d4928ec:...preregistration.txt, are both 40a04eb738a41880062e660e5db007c896235f3d3cba87f33e684defa948adfc)
+# Controls bae103cba91884947a0557940e60c320f5512f75.
+# Scratch: /fast/scratch/hyaku/souji-r30/SwarmCritic27 (clones r.base, r.mut, r.probe; removed at end).
+# Every clone: git clone -q --no-local <lane> <dir>; git -C <dir> remote remove origin;
+#   git -C <dir> checkout -qf --detach 9420341d9a814cb6089c25fb03a4cc9b23dc0d1b.
+# No lane file written, no git/jj mutation in the lane; run only lane Python read-only with python3 -B.
+
+## A. Q59 machine check on the frozen prereg (read-only)
+$ python3 -B tools/souji-axis-check.py --prereg census/round-30/records/preregistration.txt \
+    --scorecard <base SCORECARD.md blob exported from 9420341>
+claims=3 flags=0
+rc=0
+
+## B. The assigned question: C1 rows R05/R06 vs a C2-shaped selftest change
+# r.base (clean base) --selftest: rc=0, 66 lines (65 CASE + summary), last line
+SELFTEST	pass=65	fail=0
+CASE	pass	pointer-placeholder-skip	exit=0 ids=[] paths=[] fleet=[] err=None			(line 11)
+
+# r.mut commit a0d00b49c336aff1d09b5e6465fb91724c387a7c: case body replaced (placeholder fixture ->
+# one concrete dangling path, expectation flipped to 1 finding); case name, order and total count unchanged;
+# append-only line added to SCORECARD.md:
+R30-CORRECTION SCORECARD.md:158 R05 rc=0 observed=SELFTEST pass=65 fail=0
+$ python3 -B tools/souji-landing-gate.py --selftest   # rc=0, same 66 lines
+SELFTEST	pass=65	fail=0
+CASE	pass	pointer-placeholder-skip	exit=1 ids=['LG-DANGLING-PTR'] paths=['census/round-18/missing.json'] fleet=[] err=None
+$ diff -u selftest-base.txt selftest-mut.txt
+--- selftest-base.txt
++++ selftest-mut.txt
+@@ -8,7 +8,7 @@
+-CASE	pass	pointer-placeholder-skip	exit=0 ids=[] paths=[] fleet=[] err=None
++CASE	pass	pointer-placeholder-skip	exit=1 ids=['LG-DANGLING-PTR'] paths=['census/round-18/missing.json'] fleet=[] err=None
+(one changed line; 65 CASE lines both sides)
+
+$ python3 -B tools/souji-capability-agreement.py --root <r.mut> --rev a0d00b49c336aff1d09b5e6465fb91724c387a7c \
+    --base 9420341d9a814cb6089c25fb03a4cc9b23dc0d1b --list-rev d4928ec86b667e3d1ed0adb07fb088e500cf1631 \
+    --only R05,R06 --scratch <scratch>/c1 --timeout 300
+ROW	R05	SCORECARD.md:158	stated=18/18	rc=0	observed=SELFTEST pass=65 fail=0	CORRECTED
+ROW	R06	SCORECARD.md:158	stated=15/15	rc=0	observed=SUMMARY total=15 failed=0	MISMATCH kind=value
+SUMMARY k1=1 k2=0 mismatches=1 rows=2 pointers=10 partial=1 rev=a0d00b49c336aff1d09b5e6465fb91724c387a7c
+
+$ python3 -B census/round-30/c2-counter.py --root <r.mut> --rev a0d00b49c336aff1d09b5e6465fb91724c387a7c \
+    --base 9420341d9a814cb6089c25fb03a4cc9b23dc0d1b --fleet-root /home/vgpnk/Projects/shokunin --scratch <scratch>/c2
+GATE rc=2 reports=0 cne=1 dangling=3 other=0
+FIXTURE absent fail
+REDARM absent fail
+REGRESS tools/souji-landing-gate.py base=(0, 'SELFTEST\tpass=65\tfail=0') rev=(0, 'SELFTEST\tpass=65\tfail=0') same
+REGRESS tests/fixtures/r16-landing-gate.py base=(0, 'SUMMARY\ttotal=15\tfailed=0') rev=(0, 'SUMMARY\ttotal=15\tfailed=0') same
+SUMMARY reports=0 cne=1 dangling=3 other=0 fixture=fail redarm=fail regress=same rev=a0d00b49c336aff1d09b5e6465fb91724c387a7c
+# (the fixture/redarm legs fail only because this mutant does not carry C2's new fixture; the REGRESS legs,
+#  which are the object of the test, print same for both commands.)
+
+## C. C1 cmd= substitution accepts an observation unrelated to the row
+# r.mut commit 2cafa6c1f51bd16565916b5e1fca6b5a78fbf679 appends:
+R30-CORRECTION SCORECARD.md:175 R16 cmd=python3 -B tests/fixtures/r24-coverage-agreement.py --help rc=0 observed=agreement.py, round-24 C2.
+$ python3 -B tools/souji-capability-agreement.py --root <r.mut> --rev 2cafa6c1f51bd16565916b5e1fca6b5a78fbf679 \
+    --base 9420341d9a814cb6089c25fb03a4cc9b23dc0d1b --list-rev d4928ec86b667e3d1ed0adb07fb088e500cf1631 \
+    --only R16 --scratch <scratch>/c1b --timeout 300
+ROW	R16	SCORECARD.md:175	stated=9/9	rc=0	observed=agreement.py, round-24 C2.	CORRECTED
+SUMMARY k1=0 k2=0 mismatches=0 rows=1 pointers=10 partial=1 rev=2cafa6c1f51bd16565916b5e1fca6b5a78fbf679
+rc=0
+# the row's own command still fails:
+$ python3 -B tests/fixtures/r24-coverage-agreement.py ; echo rc=$?
+usage: r24-coverage-agreement.py [-h] --tool TOOL
+r24-coverage-agreement.py: error: the following arguments are required: --tool
+rc=2
+# the legitimate flag repair prints a shape that does not contain the stated 9/9 either:
+$ python3 -B tests/fixtures/r24-coverage-agreement.py --tool tools/souji-coverage-agreement.py ; echo rc=$?
+... nine case= lines ...
+cases=9 pass=9 control=FALSE-GREEN-REJECTED
+rc=0
+
+## D. Pre-freeze "7 newly visible r29 findings" reproduced
+# r.probe commit 1afef95f2074598b2028ff6512f7b5ab1a5f141a = base + census/round-29/waves copied verbatim to
+# .ufo/waves/round-29 and committed (probe only; the lane is untouched).
+$ python3 -B tools/souji-landing-gate.py --root <r.probe> --rev 1afef95f2074598b2028ff6512f7b5ab1a5f141a \
+    --round 29 --fleet-root /home/vgpnk/Projects/shokunin
+LG-SEAT-UNCARRIED	.ufo/waves/round-29/w1/SwarmCritic49.md	line 5: STATUS: PARTIAL — ...
+LG-SEAT-UNCARRIED	.ufo/waves/round-29/w1/SwarmCritic51.md	line 7: STATUS: FAIL — ...
+LG-SEAT-UNCARRIED	.ufo/waves/round-29/w1/SwarmCritic53.md	line 5: STATUS: PARTIAL — ...
+LG-SEAT-UNCARRIED	.ufo/waves/round-29/w1/SwarmExecutor17.md	line 3: STATUS: PARTIAL — ...
+LG-SEAT-UNCARRIED	.ufo/waves/round-29/w1/SwarmReviewer40.md	line 3: STATUS: PARTIAL — ...
+LG-SEAT-UNCARRIED	.ufo/waves/round-29/w1/SwarmReviewer42.md	line 5: STATUS: PARTIAL — ...
+LG-SEAT-UNCARRIED	.ufo/waves/round-29/w1/SwarmReviewer43.md	line 5: STATUS: PARTIAL — ...
+LG-DANGLING-PTR	census/round-	corpus/QUALITY.md:150 cites path absent at 1afef95f2074
+LG-DANGLING-PTR	corpus/lessons/round-	corpus/QUALITY.md:150 cites path absent at 1afef95f2074
+SUMMARY	findings=9	checked_reg=58	checked_changed=0	checked_pins=13	checked_measured=3	checked_markers=7	status_lines=69	carry_heading=0	checked_reports=86
+rc=1
+# i.e. 7 uncarried + 2 dangling = findings=9; the pre-freeze count is exact.
+
+## E. Base gate without the capture (matches records/controls.tsv C2-do-nothing)
+$ python3 -B tools/souji-landing-gate.py --root <r.base> --rev 9420341d9a814cb6089c25fb03a4cc9b23dc0d1b --round 29 \
+    --fleet-root /home/vgpnk/Projects/shokunin
+LG-DANGLING-PTR	.ufo/waves/round-29/	corpus/lessons/round-29-verifier-spotcheck.md:132 cites path absent at 9420341d9a81
+LG-DANGLING-PTR	census/round-	corpus/QUALITY.md:150 cites path absent at 9420341d9a81
+LG-DANGLING-PTR	corpus/lessons/round-	corpus/QUALITY.md:150 cites path absent at 9420341d9a81
+SUMMARY	findings=3	checked_reg=58	... checked_reports=0
+COULD-NOT-EVALUATE	no .md reports under .ufo/waves/round-29/ at 9420341d9a814cb6089c25fb03a4cc9b23dc0d1b
+rc=2
+
+## F. Control revisions are not in the lane object store
+$ for r in 84def39da96c6b089a9f11f28ddafbb0aaf130f4 b148bf9b109179adacc5c2aa4601a2272add01e7 \
+           00673117a2265470dabf82b9e4060889caabb30d 2adeb3c115675126e034fe919546f87e67c3f382 \
+           bfdeeeaaa44b47903f075ac3d01696f6590f50cf; do git cat-file -e "$r^{commit}"; done
+all five absent (git cat-file fatal) — same result as SwarmCritic25.md:26.

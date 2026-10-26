@@ -1,0 +1,91 @@
+# deliver — round 30 C1 corrections, rows R01-R06 (wave 1)
+seat: SwarmExecutor03
+scope: census/round-30/c1-rows.tsv rows R01-R06 only.
+base state: R01 MATCH, R02 MATCH, R03 R04 R05 R06 MISMATCH (census/round-30/records/c1-before.txt).
+instrument: tools/souji-capability-agreement.py, frozen at list-rev d4928ec86b667e3d1ed0adb07fb088e500cf1631.
+base/rev used for the before runs: 9420341d9a814cb6089c25fb03a4cc9b23dc0d1b.
+
+No `cmd=` was used for any of the four rows. For each row the row's stated command is the
+invocation that produced the stated count at the round that wrote it; the mismatch is a stale
+count (R04, R05) or the table's N/N paraphrase of a token-form summary line (R03, R06), not a
+different invocation. Re-running each row twice at base gave byte-identical observed lines.
+
+## 1. Stability — two base runs per MISMATCH row
+
+    R03  run1 rc=0 observed=SUMMARY total=5 failed=0 hung=0    MISMATCH kind=value
+    R03  run2 rc=0 observed=SUMMARY total=5 failed=0 hung=0    MISMATCH kind=value
+    R04  run1 rc=0 observed=selftest=PASS ids=7/7             MISMATCH kind=value
+    R04  run2 rc=0 observed=selftest=PASS ids=7/7             MISMATCH kind=value
+    R05  run1 rc=0 observed=SELFTEST pass=65 fail=0           MISMATCH kind=value
+    R05  run2 rc=0 observed=SELFTEST pass=65 fail=0           MISMATCH kind=value
+    R06  run1 rc=0 observed=SUMMARY total=15 failed=0         MISMATCH kind=value
+    R06  run2 rc=0 observed=SUMMARY total=15 failed=0         MISMATCH kind=value
+
+Stable: every row's observed line is identical across both runs. Full receipt (with per-run
+SUMMARY lines): .ufo/waves/round-30/w1/c1-stability-R03-R06.txt
+
+## 2. Lines to append to SCORECARD.md, verbatim, after its committed base bytes
+
+--- block start ---
+
+### R30 append-only correction (round 30, C1; R01-R06; measured at base 9420341d9a814cb6089c25fb03a4cc9b23dc0d1b)
+
+R30-CORRECTION SCORECARD.md:154 R03 rc=0 observed=SUMMARY total=5 failed=0 hung=0
+The 5/5 the r13 row wrote is the table's N/N notation for this fixture's only summary form, `SUMMARY total=5 failed=0 hung=0` (single SUMMARY printf, unchanged since 23014d4), so the same command still reports 5 cases, 0 failed, 0 hung.
+R30-CORRECTION SCORECARD.md:155 R04 rc=0 observed=selftest=PASS ids=7/7
+The 5/5 was exact at r13 (23014d4 printed `ids=5/5` in --probe mode); commit 728b2ce (r25) added two expected ids, so the identical command now prints `selftest=PASS ids=7/7`.
+R30-CORRECTION SCORECARD.md:158 R05 rc=0 observed=SELFTEST pass=65 fail=0
+The row's 18/18 was the r16 suite size, printed in the same `SELFTEST pass=N fail=M` token form since 7a79dc2; the suite grew to 61 and then 65 checks by r19 (corpus/lessons/round-19.md:20), and the base tool under the identical command prints `SELFTEST pass=65 fail=0`.
+R30-CORRECTION SCORECARD.md:158 R06 rc=0 observed=SUMMARY total=15 failed=0
+The 15/15 is the table's N/N notation for this fixture's only summary form, `SUMMARY total=15 failed=0` (printed in that form since 7a79dc2), and its case total and failure count are unchanged.
+--- block end ---
+
+## 3. Reason per line (sources re-opened this run)
+
+- R03 (SCORECARD.md:154). The fixture's only summary printf at r13 is
+  `printf 'SUMMARY\ttotal=%d\tfailed=%d\thung=%d\n' "$RAN" "$FAILED" "$HANGED"`
+  (tests/fixtures/r13-quarantine-bounds.sh:302 at 23014d4, unchanged to base), so `5/5` was the
+  row's paraphrase of `total=5 failed=0`, and it still holds.
+- R04 (SCORECARD.md:155). At 23014d4 the fixture header read
+  "`selftest=PASS ids=5/5` (--probe mode)"; at base it reads "`selftest=PASS ids=7/7` (--probe
+  mode)" (tests/fixtures/r13-repo-structure.sh:70-71), the growth landed in 728b2ce (r25). Same
+  script, same flags: the count is stale, not the command.
+- R05 (SCORECARD.md:158). The r16 suite printed `SELFTEST\tpass=%d\tfail=%d`
+  (tools/souji-landing-gate.py:976 at 7a79dc2) and the row recorded its then-18 checks; the same
+  token form at base prints 65. corpus/lessons/round-19.md:20 states:
+  "`python3 tools/souji-landing-gate.py --selftest` → `SELFTEST pass=65 fail=0` (61 before;
+  four wrap cases added)."
+- R06 (SCORECARD.md:158). The fixture printed `print("SUMMARY\ttotal=%d\tfailed=%d" % (len(results), failed))`
+  at 7a79dc2 (tests/fixtures/r16-landing-gate.py:528, unchanged to base); `15/15` is the
+  table's N/N notation for `total=15 failed=0`, still exact.
+
+## 4. Acceptance — scratch clone, origin removed, corrections appended and committed
+
+Scratch clone /fast/scratch/hyaku/souji-r30/C1RowsA/r.YHgmfY/c (clone of the lane, `origin`
+removed immediately; identity set with `git -C` inside scratch only), branch r30corr at
+parent 9420341d9a814cb6089c25fb03a4cc9b23dc0d1b, block above appended to SCORECARD.md and
+committed as fb2b937ce87a93c9ab0a817f19232717c1ff4fff (append-only: file still begins with the
+base bytes; verified byte-identical block, 4 correction lines).
+
+    python3 -B /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-capability-agreement.py \
+      --root /fast/scratch/hyaku/souji-r30/C1RowsA/r.YHgmfY/c \
+      --rev fb2b937ce87a93c9ab0a817f19232717c1ff4fff \
+      --base 9420341d9a814cb6089c25fb03a4cc9b23dc0d1b \
+      --list-rev d4928ec86b667e3d1ed0adb07fb088e500cf1631 \
+      --only R03,R04,R05,R06 --scratch /fast/scratch/hyaku/souji-r30/C1RowsA/accept
+
+    ROW	R03	SCORECARD.md:154	stated=5/5	rc=0	observed=SUMMARY total=5 failed=0 hung=0	CORRECTED
+    ROW	R04	SCORECARD.md:155	stated=5/5	rc=0	observed=selftest=PASS ids=7/7	CORRECTED
+    ROW	R05	SCORECARD.md:158	stated=18/18	rc=0	observed=SELFTEST pass=65 fail=0	CORRECTED
+    ROW	R06	SCORECARD.md:158	stated=15/15	rc=0	observed=SUMMARY total=15 failed=0	CORRECTED
+    SUMMARY k1=0 k2=0 mismatches=0 rows=4 pointers=10 partial=1 rev=fb2b937ce87a93c9ab0a817f19232717c1ff4fff
+    KINDS value=0 shape=0 rc=0 (diagnostic; not part of the target)
+
+Ran twice with identical output; counter exit 0 (third run captured exit code 0 under
+`set -o pipefail`). The 10 SHONEN pointer rows stayed RESOLVES throughout, so k2 is untouched
+by these lines. Receipt: .ufo/waves/round-30/w1/c1-corrections-acceptance.txt
+
+Integration note for the L1: SCORECARD.md and SHONEN.md are unchanged between the base and the
+current lane tip (`git diff --stat 9420341d9a814cb6089c25fb03a4cc9b23dc0d1b..HEAD --
+SCORECARD.md SHONEN.md` is empty), so this block appends identically at the tip. Rows R07-R18
+are outside this seat's scope.

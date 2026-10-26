@@ -1,0 +1,33 @@
+# r30 C2 fixture — red-before receipt (base tool must FAIL at least one case)
+#
+# fixture : .ufo/waves/round-30/w1/deliver-r30-landing-gate-discovery.py
+#           sha256 e830339332aa6ae1b1f614e33445327b68f47d0904428a04d6d812e394c66271
+#           (554 lines; byte-identical copy is what tests/fixtures/r30-landing-gate-discovery.py must hold)
+# base tool: git -C <lane> show 9420341d9a814cb6089c25fb03a4cc9b23dc0d1b:tools/souji-landing-gate.py
+#            blob e67810d130817879fddd71c5ceeb5d5fd37e6ea8
+#            sha256 02b58f81c8dab4a7c67fdcfc88f1120892719e906c8117b0122aaf6163f785cd
+#            identical at lane HEAD: git diff --numstat 9420341d..HEAD -- tools/souji-landing-gate.py -> 0 lines
+# command  : TMPDIR=/fast/scratch/hyaku/souji-r30/C2Fixture \
+#            python3 -B .ufo/waves/round-30/w1/deliver-r30-landing-gate-discovery.py \
+#              --tool /fast/scratch/hyaku/souji-r30/C2Fixture/base-gate.py
+# contract : preregistration.txt C2, REDARM — "the base tool must fail at least one case"
+# observed : cases=7 pass=3 control=FALSE-GREEN-REJECTED, exit 1
+#            red on D1 (capture-only round not discovered), D4 (template tokens
+#            `census/round-%s/` and `census/round-{N}/x` flagged LG-DANGLING-PTR),
+#            D6 (capture-mapped .ufo pointer not resolved), D7 (capture-only
+#            uncarried STATUS: FAIL not surfaced). D2/D3/D5 pass on base: D3's
+#            both-present path already prefers .ufo/waves/round-N/, D5's real
+#            dangling pointer is already flagged.
+# scratch  : /fast/scratch/hyaku/souji-r30/C2Fixture (removed after the run; no
+#            /var/tmp/souji-landing-gate-* leftovers observed).
+
+CASE D1 FAIL exit=2 reports=0 status=0 findings=0 FAIL(COULD-NOT-EVALUATE printed; exit=2; checked_reports=0 want 2; status_lines=0 want 2)
+CASE D2 PASS exit=2 reports=0 status=0 findings=0
+CASE D3 PASS exit=1 reports=1 status=1 findings=1
+CASE D4 FAIL exit=1 reports=1 status=1 findings=3 FAIL(template token flagged: round-%s; template token flagged: round-{N})
+CASE D5 PASS exit=1 reports=1 status=1 findings=3
+CASE D6 FAIL exit=1 reports=1 status=1 findings=1 FAIL(mapped: exit=1 want 0; mapped: capture-backed pointer flagged)
+CASE D7 FAIL exit=2 reports=0 status=0 findings=0 FAIL(COULD-NOT-EVALUATE printed; exit=2 want 1; checked_reports=0 want 1; missing LG-SEAT-UNCARRIED)
+CONTROL always-zero-emitter FALSE-GREEN-REJECTED failed=D1,D2,D3,D5,D6,D7
+cases=7 pass=3 control=FALSE-GREEN-REJECTED
+RC=1

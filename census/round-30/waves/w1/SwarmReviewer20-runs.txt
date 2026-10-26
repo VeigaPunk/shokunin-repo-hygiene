@@ -1,0 +1,65 @@
+# SwarmReviewer20 r30w1 — raw run receipts (re-derivation of C1 base rows without the counter)
+# Environment: scratch clone /fast/scratch/hyaku/souji-r30/ReDeriveC1Sample/c (origin removed),
+# detached at 9420341d9a814cb6089c25fb03a4cc9b23dc0d1b; git rev-parse --show-toplevel printed the
+# clone before any run. TMPDIR exported per command under the item dir (fixtures below ignore it,
+# see report finding F6). Two runs per row; RC printed after each run.
+# Frozen counter bytes check: sha256(tools/souji-capability-agreement.py at d4928ec86b667e3d1ed0adb07fb088e500cf1631,
+# checked out into the clone) == sha256(lane working-tree copy) == af71db1e898f00575de1e13d80b73a2ac73fbc15cae9c74cdba9eff9e40be620
+
+== R03  bash tests/fixtures/r13-quarantine-bounds.sh ==
+run1 RC=0  run2 RC=0
+last digit-bearing line (both runs, byte-identical incl. TOOL sha256 line):
+SUMMARY	total=5	failed=0	hung=0
+preceding lines (both runs): TOOL .../c/tools/souji-quarantine.sh sha256=e2f2d083d679f1da165866c6190af1a948c43e080d7ae629e5b08a7199849e4d ; CASE R13Q8-01..05 all PASS
+
+== R04  bash tests/fixtures/r13-repo-structure.sh --selftest --probe tools/souji-repo-structure.sh ==
+run1 RC=0  run2 RC=0
+last digit-bearing line (both runs): selftest=PASS ids=7/7
+nondeterminism (not on the selected line): fixture_repo=/var/tmp/souji-r13-repo-structure.TZx2FD/repo (run1) vs /var/tmp/souji-r13-repo-structure.9qJn8s/repo (run2)
+stable across runs: manifest_entries=41, checks=29, common_entries=53, others_colocated=2, differing_keys=8, git_version=git version 2.56.0
+
+== R05  python3 tools/souji-landing-gate.py --selftest ==
+run1 RC=0  run2 RC=0
+last digit-bearing line (both runs): SELFTEST pass=65 fail=0
+both runs byte-identical (65 CASE pass lines); includes err= strings with 40-hex revs (normalized to <HEX> by the counter; not on the selected line)
+
+== R08  bash tests/fixtures/r17-jj-receipts.sh --tool-dir tools ==
+run1 RC=0  run2 RC=0
+last digit-bearing line (both runs): SUMMARY	total=35	failed=0	skipped=2
+SKIPs (both runs, deterministic at base bytes — fixture skips J6 when --baseline-dir absent, tests/fixtures/r17-jj-receipts.sh:57,963):
+CASE	J6-verify	SKIP	no --baseline-dir with souji-verify.sh
+CASE	J6-vault	SKIP	baseline/selected souji-vault-verify.sh missing
+nondeterminism (not on the selected line): SCENARIO seed tip=d13baccbf3c2 (run1) vs 378d73e4fae3 (run2); keep=3f1cc0b6 (run1) vs 08000f2b (run2); J13 recipe path /var/tmp/r17-jj-receipts.FcePxh (run1) vs /var/tmp/r17-jj-receipts.S5lJ5N (run2)
+JJ line (both runs): /home/vgpnk/.local/bin/jj	jj 0.45.1-7c41cdeb16b6b321c64e789a966b6adf723816a5
+
+== R14  python3 tests/fixtures/r23-record-agreement.py ==
+run1 RC=0  run2 RC=0
+last digit-bearing line (both runs): selftest=15/15
+(the following line "control=FALSE-GREEN-REJECTED" contains no digit and is not selected)
+both runs byte-identical; scratch=/var/tmp/souji-r23-ExecFixtureAgreement (fixed name, shared across seats)
+
+== R15  python3 -B tests/fixtures/r24-size-census.py --tool tools/souji-size-census.py ==
+run1 RC=0  run2 RC=0
+last digit-bearing line (both runs): cases=12 pass=12 control=FALSE-GREEN-REJECTED lost_found=WRITE-DETECTED
+both runs byte-identical (12 CASE lines)
+
+== R16  python3 -B tests/fixtures/r24-coverage-agreement.py ==
+run1 RC=2  run2 RC=2
+full output (both runs, stderr; no line carries a count literal — digit-bearing only via "r24" in the prog name):
+usage: r24-coverage-agreement.py [-h] --tool TOOL
+r24-coverage-agreement.py: error: the following arguments are required: --tool
+
+== R18  bash tests/fixtures/r28-wave-evidence-capture.sh ==
+run1 RC=0  run2 RC=0
+last digit-bearing line of the interleaved stream (both runs): cases=15 pass=15 control=TAMPER-REJECTED
+tail structure (run1; run2 same shape): ... case-14: PASS (bad round usage rc=1 rc=1) ... case-15: PASS (symlinks verbatim and committed-bytes verify rc=0 rc=0) ... cases=15 pass=15 control=TAMPER-REJECTED
+the Usage block (case-14) is emitted by the tool on stderr un-captured (tools/souji-wave-evidence-capture.sh:96 "usage >&2"; fixture line 519 runs the tool un-captured), so in the counter's stdout++stderr concatenation the merged text ends with the Usage block and its first line becomes the last digit-bearing line (digit "40" from <full40>):
+Usage: bash tools/souji-wave-evidence-capture.sh <lane-abs> <round-N> [--verify [--rev <full40>]]
+nondeterminism (not on the selected line): run dir /var/tmp/souji-r29-wave-capture-fixture/run.HH87U1 (run1) vs run.Cob9m1 (run2); case-10 verify-rev 391de83ea730e32e780657d09ab6f39d70cc9cd8 (run1) vs 9c22692af8dc7eab7520f6e016d3d2cedd866f75 (run2); case-11/12/15 revs likewise differ; case-7/8/9 revs are content-stable across runs
+
+== counter diagnostic (frozen bytes, --only R16,R18, base==rev==9420341d, --scratch under item dir) ==
+ROW	R16	SCORECARD.md:175	stated=9/9	rc=2	observed=r24-coverage-agreement.py: error: the following arguments are required: --tool	MISMATCH kind=rc
+ROW	R18	SCORECARD.md:314	stated=cases=15 pass=15	rc=0	observed=Usage: bash tools/souji-wave-evidence-capture.sh <lane-abs> <round-N> [--verify [--rev <full40>]]	MISMATCH kind=value
+SUMMARY k1=2 k2=0 mismatches=2 rows=2 pointers=10 partial=1 rev=9420341d9a814cb6089c25fb03a4cc9b23dc0d1b
+COUNTER_RC=1
+(= c1-before.txt rows R16/R18 verbatim; diagnostic run, partial=1, not claim evidence)

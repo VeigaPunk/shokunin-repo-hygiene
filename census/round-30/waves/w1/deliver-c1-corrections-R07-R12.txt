@@ -1,0 +1,73 @@
+# R30 C1 — append-only corrections for rows R07-R12 (seat SwarmExecutor04, wave 1)
+item: C1RowsB; counter: tools/souji-capability-agreement.py (committed at d4928ec86b667e3d1ed0adb07fb088e500cf1631)
+base: 9420341d9a814cb6089c25fb03a4cc9b23dc0d1b (branch master)
+lane HEAD when measured: df6afe817d096e4ad71ba2b9cc21a83f126eb658; SCORECARD.md and SHONEN.md are byte-identical between base and that HEAD (git diff --quiet), so the appended lines below stay an append-only tail.
+
+## Append block — exactly these five lines at EOF of SCORECARD.md (in this order, nothing else between them)
+R30-CORRECTION SCORECARD.md:160 R07 cmd=python3 tests/fixtures/r17-census-hygiene.py --census tools/souji-census.sh rc=0 observed=SUMMARY total=29 failed=0
+R30-CORRECTION SCORECARD.md:161 R08 cmd=bash tests/fixtures/r17-jj-receipts.sh --tool-dir tools rc=0 observed=SUMMARY total=35 failed=0 skipped=2
+R30-CORRECTION SCORECARD.md:166 R09 cmd=python3 tests/fixtures/r19-carry-wrap.py rc=0 observed=SUMMARY total=4 failed=0 base_discriminating=2
+R30-CORRECTION SCORECARD.md:167 R10 cmd=python3 tools/souji-rev-pin.py --selftest rc=0 observed=SUMMARY total=11 failed=0
+R30-CORRECTION SCORECARD.md:167 R11 cmd=python3 tests/fixtures/r19-rev-pin.py rc=0 observed=SUMMARY total=13 failed=0 base_discriminating=6
+
+## Reason, one sentence per line (documentation only; prefix with '#' if appended to SCORECARD.md so the counter's ^R30-CORRECTION scan stays unaffected)
+R07: the table states the fixture result as 29/0 while the fixture prints SUMMARY total=29 failed=0, so the observed line is recorded instead of restating the literal.
+R08: the table states 35/0 while the fixture prints SUMMARY total=35 failed=0 skipped=2, and its own header (tests/fixtures/r17-jj-receipts.sh:63-65) says skipped cases are never counted as passes.
+R09: the table states 4/0 while the fixture prints SUMMARY total=4 failed=0 base_discriminating=2, the extra field being the base-red discriminator count.
+R10: the table states 11/0 while the tool prints SUMMARY total=11 failed=0 (tools/souji-rev-pin.py:374).
+R11: the table states 13/0 while the fixture prints SUMMARY total=13 failed=0 base_discriminating=6.
+R12: no correction — stated 8/8 is a substring of the printed selftest=8/8 with rc=0, so the row is MATCH and must stay untouched.
+
+## Stability runs (each row run twice at the base revision and twice at lane HEAD, inside one --no-local scratch clone with origin removed; TMPDIR inside the item scratch)
+R07 base   run1 rc=0 SUMMARY total=29 failed=0        run2 rc=0 SUMMARY total=29 failed=0
+R07 HEAD   run1 rc=0 SUMMARY total=29 failed=0        run2 rc=0 SUMMARY total=29 failed=0
+R08 base   run1 rc=0 SUMMARY total=35 failed=0 skipped=2   run2 rc=0 SUMMARY total=35 failed=0 skipped=2
+R08 HEAD   run1 rc=0 SUMMARY total=35 failed=0 skipped=2   run2 rc=0 SUMMARY total=35 failed=0 skipped=2
+R09 base   run1 rc=0 SUMMARY total=4 failed=0 base_discriminating=2   run2 rc=0 SUMMARY total=4 failed=0 base_discriminating=2
+R09 HEAD   run1 rc=0 SUMMARY total=4 failed=0 base_discriminating=2   run2 rc=0 SUMMARY total=4 failed=0 base_discriminating=2
+R10 base   run1 rc=0 SUMMARY total=11 failed=0       run2 rc=0 SUMMARY total=11 failed=0
+R10 HEAD   run1 rc=0 SUMMARY total=11 failed=0       run2 rc=0 SUMMARY total=11 failed=0
+R11 base   run1 rc=0 SUMMARY total=13 failed=0 base_discriminating=6  run2 rc=0 SUMMARY total=13 failed=0 base_discriminating=6
+R11 HEAD   run1 rc=0 SUMMARY total=13 failed=0 base_discriminating=6  run2 rc=0 SUMMARY total=13 failed=0 base_discriminating=6
+R12 base   run1 rc=0 selftest=8/8                    run2 rc=0 selftest=8/8
+R12 HEAD   run1 rc=0 selftest=8/8                    run2 rc=0 selftest=8/8
+(summary lines above are the counter's own normalize()+summary_line() applied to the captured output; command argv is the row's argv, run with cwd = clone root at that revision)
+
+## Acceptance proof — red before (corrections absent, revision = base)
+cmd: python3 -B /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-capability-agreement.py --root <scratch-clone> --rev 9420341d9a814cb6089c25fb03a4cc9b23dc0d1b --base 9420341d9a814cb6089c25fb03a4cc9b23dc0d1b --list-rev d4928ec86b667e3d1ed0adb07fb088e500cf1631 --only R07,R08,R09,R10,R11,R12
+exit 1
+ROW	R07	SCORECARD.md:160	stated=29/0	rc=0	observed=SUMMARY total=29 failed=0	MISMATCH kind=shape
+ROW	R08	SCORECARD.md:161	stated=35/0	rc=0	observed=SUMMARY total=35 failed=0 skipped=2	MISMATCH kind=shape
+ROW	R09	SCORECARD.md:166	stated=4/0	rc=0	observed=SUMMARY total=4 failed=0 base_discriminating=2	MISMATCH kind=shape
+ROW	R10	SCORECARD.md:167	stated=11/0	rc=0	observed=SUMMARY total=11 failed=0	MISMATCH kind=shape
+ROW	R11	SCORECARD.md:167	stated=13/0	rc=0	observed=SUMMARY total=13 failed=0 base_discriminating=6	MISMATCH kind=shape
+ROW	R12	SCORECARD.md:171	stated=8/8	rc=0	observed=selftest=8/8	MATCH
+SUMMARY k1=5 k2=0 mismatches=5 rows=6 pointers=10 partial=1 rev=9420341d9a814cb6089c25fb03a4cc9b23dc0d1b
+KINDS value=0 shape=5 rc=0 (diagnostic; not part of the target)
+
+## Acceptance proof — after (append block committed in the scratch clone as b9a903e3c286dbb341bb93ae30b7a56e8a59ee5d on top of df6afe817d096e4ad71ba2b9cc21a83f126eb658)
+cmd: python3 -B /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-capability-agreement.py --root <scratch-clone> --rev b9a903e3c286dbb341bb93ae30b7a56e8a59ee5d --base 9420341d9a814cb6089c25fb03a4cc9b23dc0d1b --list-rev d4928ec86b667e3d1ed0adb07fb088e500cf1631 --only R07,R08,R09,R10,R11
+exit 0
+ROW	R07	SCORECARD.md:160	stated=29/0	rc=0	observed=SUMMARY total=29 failed=0	CORRECTED
+ROW	R08	SCORECARD.md:161	stated=35/0	rc=0	observed=SUMMARY total=35 failed=0 skipped=2	CORRECTED
+ROW	R09	SCORECARD.md:166	stated=4/0	rc=0	observed=SUMMARY total=4 failed=0 base_discriminating=2	CORRECTED
+ROW	R10	SCORECARD.md:167	stated=11/0	rc=0	observed=SUMMARY total=11 failed=0	CORRECTED
+ROW	R11	SCORECARD.md:167	stated=13/0	rc=0	observed=SUMMARY total=13 failed=0 base_discriminating=6	CORRECTED
+SUMMARY k1=0 k2=0 mismatches=0 rows=5 pointers=10 partial=1 rev=b9a903e3c286dbb341bb93ae30b7a56e8a59ee5d
+KINDS value=0 shape=0 rc=0 (diagnostic; not part of the target)
+
+cmd: same, --only R07,R08,R09,R10,R11,R12
+exit 0
+ROW	R07	SCORECARD.md:160	stated=29/0	rc=0	observed=SUMMARY total=29 failed=0	CORRECTED
+ROW	R08	SCORECARD.md:161	stated=35/0	rc=0	observed=SUMMARY total=35 failed=0 skipped=2	CORRECTED
+ROW	R09	SCORECARD.md:166	stated=4/0	rc=0	observed=SUMMARY total=4 failed=0 base_discriminating=2	CORRECTED
+ROW	R10	SCORECARD.md:167	stated=11/0	rc=0	observed=SUMMARY total=11 failed=0	CORRECTED
+ROW	R11	SCORECARD.md:167	stated=13/0	rc=0	observed=SUMMARY total=13 failed=0 base_discriminating=6	CORRECTED
+ROW	R12	SCORECARD.md:171	stated=8/8	rc=0	observed=selftest=8/8	MATCH
+SUMMARY k1=0 k2=0 mismatches=0 rows=6 pointers=10 partial=1 rev=b9a903e3c286dbb341bb93ae30b7a56e8a59ee5d
+KINDS value=0 shape=0 rc=0 (diagnostic; not part of the target)
+
+## Notes
+- Both after-runs also print the 10 SHONEN.md pointer lines, all RESOLVES (k2=0); SHONEN.md is untouched by this item.
+- The correction lines were kept out of the lane: only this file was written, inside the wave-1 delivery dir. The scratch clone, its commit b9a903e and the output captures lived under /fast/scratch/hyaku/souji-r30/C1RowsB and were removed after this file was written.
+- Junk-control shape (controls.tsv C1-junk1/2/3) matches how this counter discriminates: an invented observed or a substituted cmd leaves the row MISMATCH because rc and the observed line are re-derived.

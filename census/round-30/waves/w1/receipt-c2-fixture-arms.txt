@@ -1,0 +1,76 @@
+# r30 C2 fixture — satisfiability and shortcut arms (SCRATCH PROTOTYPES, not deliveries)
+#
+# Purpose: prove the frozen D1-D7 fixture is not an always-red trap, and that
+# each hardening world inside D6 is load-bearing. All tools below are
+# scratch-only prototypes built in /fast/scratch/hyaku/souji-r30/C2Fixture and
+# deleted with it; none is the C2 implementation and none was committed.
+#
+# Every arm below ran the same fixture bytes as the red-before receipt
+# (sha256 e830339332aa6ae1b1f614e33445327b68f47d0904428a04d6d812e394c66271),
+# with TMPDIR=/fast/scratch/hyaku/souji-r30/C2Fixture.
+#
+# Each prototype loads the base gate by importlib and replaces only these
+# behaviours of tools/souji-landing-gate.py:
+#   check_carry            reports = live .ufo/waves/round-N/**.md if any, else
+#                          committed census/round-N/waves/**.md, else EvalError
+#   _pointer_paths         drop tokens containing `%` or a `{...}` placeholder
+#   _path_exists_in_tree   `.ufo/waves/round-<n>/rest` also tests the committed
+#                          capture path census/round-<n>/waves/rest
+#
+# --- ARM 1: green prototype (fixture is satisfiable) --------------------
+# Also unchanged under this prototype: `--selftest` printed
+# `SELFTEST pass=65 fail=0`, the REGRESS invariant the frozen contract requires.
+
+CASE D1 PASS exit=0 reports=2 status=2 findings=0
+CASE D2 PASS exit=2 reports=0 status=0 findings=0
+CASE D3 PASS exit=1 reports=1 status=1 findings=1
+CASE D4 PASS exit=1 reports=1 status=1 findings=1
+CASE D5 PASS exit=1 reports=1 status=1 findings=1
+CASE D6 PASS exit=0 reports=1 status=1 findings=0
+CASE D7 PASS exit=1 reports=1 status=1 findings=1
+CONTROL always-zero-emitter FALSE-GREEN-REJECTED failed=D1,D2,D3,D5,D6,D7
+cases=7 pass=7 control=FALSE-GREEN-REJECTED
+RC=0
+
+# --- ARM 2: loose mapper (round binding removed) ------------------------
+# Same green prototype, except the capture alias ignores the pointer's own
+# round: `.ufo/waves/round-<n>/rest` matches `census/round-<m>/waves/rest` for
+# ANY m. Only D6 goes red, on its mapped-missing half.
+
+CASE D1 PASS exit=0 reports=2 status=2 findings=0
+CASE D2 PASS exit=2 reports=0 status=0 findings=0
+CASE D3 PASS exit=1 reports=1 status=1 findings=1
+CASE D4 PASS exit=1 reports=1 status=1 findings=1
+CASE D5 PASS exit=1 reports=1 status=1 findings=1
+CASE D6 FAIL exit=0 reports=1 status=1 findings=0 FAIL(mapped-missing: exit=0 want 1; mapped-missing: uncaptured pointer not flagged)
+CASE D7 PASS exit=1 reports=1 status=1 findings=1
+CONTROL always-zero-emitter FALSE-GREEN-REJECTED failed=D1,D2,D3,D5,D6,D7
+cases=7 pass=6 control=FALSE-GREEN-REJECTED
+RC=1
+
+# --- ARM 3: directory-only mapper (file check removed) ------------------
+# Same green prototype, except a capture-mapped pointer resolves when
+# census/round-<n>/waves exists as a directory, without the pointed-at file.
+# Only D6 goes red, on its mapped-dir half.
+
+CASE D1 PASS exit=0 reports=2 status=2 findings=0
+CASE D2 PASS exit=2 reports=0 status=0 findings=0
+CASE D3 PASS exit=1 reports=1 status=1 findings=1
+CASE D4 PASS exit=1 reports=1 status=1 findings=1
+CASE D5 PASS exit=1 reports=1 status=1 findings=1
+CASE D6 FAIL exit=0 reports=1 status=1 findings=0 FAIL(mapped-dir: exit=0 want 1; mapped-dir: capture-directory-only resolution)
+CASE D7 PASS exit=1 reports=1 status=1 findings=1
+CONTROL always-zero-emitter FALSE-GREEN-REJECTED failed=D1,D2,D3,D5,D6,D7
+cases=7 pass=6 control=FALSE-GREEN-REJECTED
+RC=1
+
+# --- guard arms (fixture refusals, run against base-gate.py) ------------
+# 1. TMPDIR unset:
+#    PREREQ FAIL TMPDIR is unset (build synthetic repos under $TMPDIR)
+#    cases=0 pass=0 control=FALSE-GREEN-ACCEPTED   rc=2
+# 2. TMPDIR inside the lane checkout:
+#    PREREQ FAIL TMPDIR /home/vgpnk/Projects/shokunin/souji-shokunin/census is inside the fixture git checkout /home/vgpnk/Projects/shokunin/souji-shokunin
+#    cases=0 pass=0 control=FALSE-GREEN-ACCEPTED   rc=2
+# Both refusals exit before any repository is created; `git status --porcelain`
+# in the lane afterwards showed only a sibling seat's pre-existing
+# `?? corpus/lessons/round-30.md`.
