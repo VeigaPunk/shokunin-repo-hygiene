@@ -1,0 +1,40 @@
+# r33 C1 enumeration (frozen at the preregistration): capability-table currency.
+# Rule: every row of SCORECARD.md at base 6017a482e7068d5afb7617640198fbb0fe743357 inside `## Capabilities` or a
+# `### Round <N> capability rows` section whose evidence cell holds a backticked span that is a lane-relative command
+# (`python3 [-B] <path>`, `bash <path>`, `TMPDIR=<scratch> bash <path>`, or a bare `tools/...` / `tests/fixtures/...`
+# script path with or without arguments) immediately followed by a stated outcome (`->`, an arrow, or a count / backticked
+# output right after the span). One item per (command, stated outcome) pair. Out of the set: spans with an ellipsis or a
+# placeholder argument (`<full40>`, `…`) and no stated outcome (SCORECARD.md:162, :173 first span, :175 first span), and
+# rows that state an outcome without a backticked command (:147-151, :156-157, :159, :163-165, :168-170, :354, :487, :490).
+# Bare script paths run with `python3` (.py) or `bash` (.sh) exactly as written, without added arguments.
+# Columns: id, line (SCORECARD.md line at base), exit (expected exit code; `*` = the row states none and the tool's
+# exit is not a pass claim), predicate (alternatives separated by ` || `, each a conjunction of Python regexes separated
+# by ` && `, matched against whitespace-collapsed stdout+stderr; a conjunct `RESULTS:<path>:<n>` means: the output's `RESULT ` lines
+# equal, in order, the `RESULT ` lines of <path> at the measured revision, and there are <n> of them), files (the
+# committed files the item exercises; a restatement's cause commit must touch one of them), argv (run from the clone root;
+# `{SCRATCH}` = a fresh scratch dir). Ids K09 and K10 are unused: they were drafted for :163 and :164, which the rule excludes.
+id	line	exit	predicate	files	argv
+K01	152	0	\b6/6\b && PASS	tests/fixtures/r12-maintenance-guard.sh	bash tests/fixtures/r12-maintenance-guard.sh --selftest
+K02	153	0	\b36/36\b	tools/souji-cert-evidence.py	python3 tools/souji-cert-evidence.py --selftest
+K03	154	0	\b5/5\b || \btotal=5\b && \bfailed=0\b	tests/fixtures/r13-quarantine-bounds.sh,tools/souji-quarantine.sh	bash tests/fixtures/r13-quarantine-bounds.sh
+K04	155	0	\b5/5\b || \btotal=5\b && \bfailed=0\b	tests/fixtures/r13-repo-structure.sh,tools/souji-repo-structure.sh	bash tests/fixtures/r13-repo-structure.sh --selftest --probe tools/souji-repo-structure.sh
+K05	158	0	\b18/18\b || \bpass=18\b && \bfail=0\b	tools/souji-landing-gate.py	python3 tools/souji-landing-gate.py --selftest
+K06	158	0	\b15/15\b || \btotal=15\b && \bfailed=0\b	tests/fixtures/r16-landing-gate.py,tools/souji-landing-gate.py	python3 tests/fixtures/r16-landing-gate.py
+K07	160	0	\btotal=29\b && \bfailed=0\b || \b29/29\b	tests/fixtures/r17-census-hygiene.py,tools/souji-census.sh	python3 tests/fixtures/r17-census-hygiene.py --census tools/souji-census.sh
+K08	161	0	\btotal=35\b && \bfailed=0\b || \b35/35\b	tests/fixtures/r17-jj-receipts.sh,tools/souji-verify.sh,tools/souji-vault-verify.sh,tools/souji-quarantine.sh	bash tests/fixtures/r17-jj-receipts.sh --tool-dir tools
+K11	166	0	\btotal=4\b && \bfailed=0\b || \b4/4\b	tests/fixtures/r19-carry-wrap.py,tools/souji-landing-gate.py	python3 tests/fixtures/r19-carry-wrap.py
+K12	167	0	\btotal=11\b && \bfailed=0\b || \b11/11\b	tools/souji-rev-pin.py	python3 tools/souji-rev-pin.py --selftest
+K13	167	0	\btotal=13\b && \bfailed=0\b || \b13/13\b	tests/fixtures/r19-rev-pin.py,tools/souji-rev-pin.py	python3 tests/fixtures/r19-rev-pin.py
+K14	171	0	\b8/8\b	tools/souji-declared-evidence.py	python3 tools/souji-declared-evidence.py --selftest
+K15	172	0	\b8/8\b	tests/fixtures/r23-receipt-run.py,tools/souji-receipt-run.py	python3 tests/fixtures/r23-receipt-run.py
+K16	173	0	\b9/9\b && control=FALSE-GREEN-REJECTED	tests/fixtures/r23-record-agreement.py,tools/souji-record-agreement.py	python3 tests/fixtures/r23-record-agreement.py
+K17	174	0	\b8/8\b && control=FALSE-GREEN-REJECTED && lost_found=WRITE-DETECTED || \bcases=8 pass=8\b && control=FALSE-GREEN-REJECTED && lost_found=WRITE-DETECTED	tests/fixtures/r24-size-census.py,tools/souji-size-census.py	python3 -B tests/fixtures/r24-size-census.py --tool tools/souji-size-census.py
+K18	175	0	\b9/9\b || \bcases=9 pass=9\b	tests/fixtures/r24-coverage-agreement.py,tools/souji-coverage-agreement.py	python3 tests/fixtures/r24-coverage-agreement.py
+K19	313	0	cases=20 pass=20 control=FALSE-GREEN-REJECTED	tests/fixtures/r29-registry-agreement.py,tools/souji-registry-agreement.py	python3 -B tests/fixtures/r29-registry-agreement.py
+K20	314	0	cases=15 pass=15 control=TAMPER-REJECTED	tests/fixtures/r28-wave-evidence-capture.sh,tools/souji-wave-evidence-capture.sh	bash tests/fixtures/r28-wave-evidence-capture.sh
+K21	355	0	cases=7 pass=7 control=FALSE-GREEN-REJECTED	tests/fixtures/r30-landing-gate-discovery.py,tools/souji-landing-gate.py	python3 -B tests/fixtures/r30-landing-gate-discovery.py --tool tools/souji-landing-gate.py
+K22	422	*	SUMMARY items=41 bound_run=20 bound_record=20 unbound=1 mismatches=1	tools/souji-capability-cells.py	python3 -B tools/souji-capability-cells.py --root . --rev 24f343c8ffc820c0f89b4252cbdc94ab9a673aab --base 9f17a1ef571f3a510a51ac233d7cf50ac0c871fc --list-rev 1d45496ae0e519b6fa0e9fa3b1f7e16130f4b525
+K23	423	0	cases=10 pass=10 control=FALSE-GREEN-REJECTED	tests/fixtures/r31-landing-gate-precision.py,tools/souji-landing-gate.py	python3 -B tests/fixtures/r31-landing-gate-precision.py --tool tools/souji-landing-gate.py
+K24	424	0	RESULTS:census/round-31/records/jj-object-clock-run.txt:17 && jj-version: jj 0\.45\.1 && git-version: git version 2\.56\.0	tests/fixtures/r31-jj-object-clock.sh	TMPDIR={SCRATCH} bash tests/fixtures/r31-jj-object-clock.sh
+K25	488	0	RESULTS:census/round-32/records/jj-mtime-clock-run.txt:22	tests/fixtures/r32-jj-mtime-clock.sh	TMPDIR={SCRATCH} bash tests/fixtures/r32-jj-mtime-clock.sh
+K26	489	1	lines=17 bad=4	tools/souji-record-contract.py	python3 -B tools/souji-record-contract.py --record census/round-31/records/jj-object-clock-run.txt --contract census/round-32/m1-r31-contract.txt

@@ -1,0 +1,74 @@
+souji round 33 — preregistration (frozen at the commit that adds this file; L1 SoujiR33, 2026-10-26)
+
+Base: lane master 6017a482e7068d5afb7617640198fbb0fe743357 (r32 closure spot-check commit). Fresh-start round (run-9 rule:
+r30, r31 and r32 closures were rejected). The three rejected closures and their spot-checks were read first
+(corpus/lessons/round-30-verifier-spotcheck.md, -31-, -32-). Their common cause: C1/C2 targets that honest work could not
+reach under the frozen rules (r30 C2 dangling=1; r31 C1 L29 unbindable; r32 C1 shared-occurrence and digit unit words,
+r32 C2 moving anchor T18 and T08 pin consumers). This round declares two claims, each with a target that a do-nothing
+control misses and that a feasibility leg reached in scratch before this freeze (QUALITY Q70).
+
+Lowest non-retired axis: calibration (7; coverage 8, operability 8). No stagnation waiver is used.
+
+== C1 calibration — capability-table currency (label C1-CURRENCY)
+Surface moved: SCORECARD.md capability rows (the lane's self-assessment of what its tools do now). Mismatch = a capability
+row whose named command, run at the measured revision, does not produce the outcome the row states.
+Items: census/round-33/c1-items.tsv (24 items K01-K08, K11-K26; enumeration rule in its header).
+Counter: python3 -B census/round-33/c1-counter.py --root <lane> --rev <full40> --list-rev <this commit> --scratch <dir>
+Predicate (same sentence in plan, code and receipt label): C1 verifies iff the counter prints `mismatches=0` (exit 0)
+at the C1 landing commit and at the lane tip.
+Kill rule: `mismatches>0` at either point -> C1 MISSED. No exclusion clause; a COULD-NOT-EVALUATE (exit 2) at either
+point is MISSED.
+Allowed self-assessment change: appended rows in `### Round 33 capability currency` (counter docstring). A restatement
+must quote one complete digit-bearing output line, and its cause commit is executed: value drift needs the original
+outcome to hold at the cause's parent and fail at the cause; an argv correction needs the cause to have written the row
+and the row's own command to fail there. Original rows are never edited (SCORECARD.md append-only; counter refuses
+otherwise).
+Before (feasibility do-nothing control, scratch list-rev b900260 = these bytes): items=24 agree=19 mismatches=5
+(K04 K05 K16 K17 K18). Target: mismatches=0.
+Controls (census/round-33/records/feasibility.txt; re-run at this commit into records/controls.txt):
+  do-nothing at base -> mismatches=5; junk restatements (substring statement; true line with a non-causal commit)
+  -> both MISMATCH (BAD-CAUSE); feasibility leg K05 (value drift, cause ddb73474433977ff54b015ac3e77669ff2537353) and
+  K18 (argv correction, cause 07f83e69979b1032f9de4fe876739a8dccc7242b) -> both AGREE.
+Stability (Q70b): the 24 item commands printed identical verdict columns in three base runs (feasibility.txt, C1 v1
+runs 1-3; K24/K25 then failed on a missing {SCRATCH} dir, fixed before this freeze; v2 do-nothing run agrees).
+Q70c: no item's anchor counts lane files; K22 reads fixed historical revisions only.
+
+== C2 operability — routed scratch-discipline repairs, executed (label C2-SCRATCH)
+Surface moved: the scratch root of five lane tools/fixtures named by the r32 closure (routed defect 2):
+tools/souji-evidence-cache.py (O1), tests/fixtures/r15-census-config.py (O2),
+tests/fixtures/r15-preservation-frozen/regenerate.py (O3), tools/souji-census.sh trailing-slash TMPDIR (O4),
+tools/souji-round9-selftest.sh trailing-slash TMPDIR via tools/souji-verify.sh --selftest (O5).
+Legs: census/round-33/c2-legs.tsv (O1-O5 legs, G1-G6 no-harm guards; kinds and PASS rules in its header).
+Counter: python3 -B census/round-33/c2-counter.py --root <lane> --rev <full40> --base 6017a482e7068d5afb7617640198fbb0fe743357
+  --list-rev <this commit> --scratch <dir>
+Predicate (same sentence in plan, code and receipt label): C2 verifies iff the counter prints
+`legs=11 pass=5 fail=0 harm=0` (exit 0) at the C2 landing commit and at the lane tip.
+C2 landing commit: the commit that completes the C2 landing. If the repairs change bytes pinned by
+tests/fixtures/r15-preservation-frozen (tools/souji-census.sh, tests/fixtures/r15-census-config.py), Q73 requires the
+re-pin by its own committed script, landed as its own commit (r32 routed defect 6) directly after the repair commit;
+the C2 landing commit is then that re-pin commit, and the repair commit's own reading (G4 red) is recorded, not hidden.
+Kill rule: any other reading at either point -> C2 MISSED.
+Before (base, three runs of v1 + v2 --only runs, feasibility.txt): O1-O5 all FAIL (O1 rc2 read-only /var/tmp; O2 and
+O3 cannot create their /var/tmp scratch; O4 trailing slash 10 false failures; O5 trailing slash 2 false failures);
+guards PASS at base by construction. Target: pass=5 fail=0 harm=0.
+Feasibility (Q70a): O2 (sandbox-nt) and O4 (slash) repaired at scratch 6a409e1 -> both PASS; G4 then FAILs
+(snapshot_tampered) until the r15 frozen pin is regenerated, which is the declared re-pin step above.
+Stability (Q70b): three base runs of v1 printed identical LEG lines; O2/O3 base lines re-derived without the strace
+wrapper (nested ptrace defeats r15-census-config's own strace probe; kind sandbox-nt).
+Sourced: C2's mechanism rests on SOURCES rows opened this round (POSIX pathname resolution on repeated slashes;
+proc_pid_fd(5) symlink target; Python tempfile.gettempdir/mkdtemp TMPDIR search), cited in the round lesson Gate and
+the SKILL error-pattern bullet that lands with C2.
+
+== Separability
+C1 changes only SCORECARD.md (appended section); C2 changes only tools/ and tests/fixtures/ (plus the r15 frozen re-pin).
+C1 is measured at its own landing commit and C2 at its own; the tip reading of each runs after both land, so any coupling
+(C2 changing a C1 item's output: K07 uses tools/souji-census.sh, K08 tools/souji-verify.sh) shows up in the C1 tip reading.
+C2's slash legs require the no-slash output to equal base, so a C2 repair that moves a C1 item's output fails C2 first.
+
+== Amendments
+Stricter-only, logged in census/round-33/records/amendments.txt with time and reason, and only before the first wave
+seat scores a claim. A rule changed after any seat has scored is not the claim's rule.
+
+== Not claimed
+Coverage/F1 frontier, assimilation adoption (Assimilation: none unless a sweep finds a fit; reported), the r32 C1
+enumeration (N-items), T18's anchor (r32 C2 item, not part of this round's legs).

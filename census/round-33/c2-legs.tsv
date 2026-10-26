@@ -1,0 +1,34 @@
+# r33 C2 legs (frozen at the preregistration): the r32-closure-routed scratch-discipline defects (corpus/lessons/
+# round-32-verifier-spotcheck.md `## Routed defects` item 2), each measured by executing the tool, plus no-harm guards.
+# Kinds:
+#   sandbox  PASS iff the run at --rev inside bwrap (/tmp, /var/tmp, /dev/shm read-only empty dirs; TMPDIR a scratch dir)
+#            exits with the --base plain run's exit code and prints its last digit-bearing line (normalized), the base
+#            line is not NONE, and the sandboxed run's successful file-creating syscalls (strace) are at least half of
+#            the base run's (a tool that stops its work to dodge the sandbox fails).
+#   sandbox-nt  as sandbox, but without the strace wrapper and without the creation-count condition: the item runs
+#            strace itself (r15-census-config.py's probe_strace), and a nested ptrace attach fails, so under the wrapper
+#            the base run itself cannot evaluate (L1 feasibility, census/round-33/records/feasibility.txt). Its work
+#            proof is its own last line (a full fixture SUMMARY or a regenerated verdict with arm counts).
+#   slash    PASS iff at --rev the run with TMPDIR=<scratch dir>/ (one trailing slash) prints the same exit code and last
+#            digit-bearing line as the run with TMPDIR=<scratch dir> (no slash), AND that no-slash run equals the --base
+#            no-slash run (the repair changes nothing else).
+#   guard    PASS iff the plain run at --rev (TMPDIR a scratch dir) prints the --base plain run's exit code and last
+#            digit-bearing line (a no-harm guard; a FAIL is a harm).
+# `{REV}` in argv is replaced by the full revision the run is checked out at.
+# Item set: O1 the evidence-cache selftest (r32 T08, reverted at r32 tip); O2 and O3 the two literal /var/tmp scripts
+# named by the closure; O4 and O5 the two trailing-slash regressions (tools/souji-census.sh st_worker_tmpdir case
+# pattern; tools/souji-round9-selftest.sh via tools/souji-verify.sh --selftest). Guards: the consumers that turned red
+# when r32 changed tools/souji-evidence-cache.py (G1, G2), the cache's own fixture (G3), the r15 frozen-pin gates that
+# read tools/souji-census.sh bytes (G4, G5), and the census hygiene fixture (G6).
+id	kind	argv
+O1	sandbox	python3 -B tools/souji-evidence-cache.py --selftest
+O2	sandbox-nt	python3 -B tests/fixtures/r15-census-config.py --tool tools/souji-census.sh
+O3	sandbox-nt	python3 -B tests/fixtures/r15-preservation-frozen/regenerate.py --rev {REV}
+O4	slash	bash tools/souji-census.sh --selftest
+O5	slash	bash tools/souji-verify.sh --selftest
+G1	guard	python3 -B tests/fixtures/r22-result-oracle.py --runner census/round-21/run-acceptance.py
+G2	guard	python3 -B census/round-22/mutation-adequacy.py
+G3	guard	python3 -B tests/fixtures/r14-evidence-cache.py
+G4	guard	python3 -B tools/souji-preservation-evidence.py --root . --frozen tests/fixtures/r15-preservation-frozen
+G5	guard	python3 -B tests/fixtures/r15-preservation-evidence.py
+G6	guard	python3 -B tests/fixtures/r17-census-hygiene.py --census tools/souji-census.sh
