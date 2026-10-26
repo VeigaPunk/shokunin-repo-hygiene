@@ -1,0 +1,49 @@
+diff --git c/tests/fixtures/r24-size-census.py w/tests/fixtures/r24-size-census.py
+index cd993fe..44c2bba 100755
+--- c/tests/fixtures/r24-size-census.py
++++ w/tests/fixtures/r24-size-census.py
+@@ -2,7 +2,7 @@
+ """r24 C1 counter: F2 write-safety size census over the frozen 8-case set, extended by r25 C2
+ with the refusal-surface cases 9-12 (bare-nonempty, bare-empty, subdir, partialClone-only).
+ 
+-Every case builds its own repo under a /var/tmp mkdtemp removed in a finally block; nothing here
++Every case builds its own repo under a TMPDIR-rooted mkdtemp removed in a finally block; nothing here
+ reads or writes the lane. Manifest = sorted (relpath, type, mode, size, mtime_ns, sha256 of regular
+ files) over the resolved common git dir, directories included; atime/ctime excluded. Case 5 adds a
+ second manifest over the alternate object dir(s) named by objects/info/alternates (resolved per
+@@ -27,7 +27,7 @@ import tempfile
+ from pathlib import Path
+ 
+ sys.dont_write_bytecode = True
+-SCRATCH_PARENT = '/var/tmp'
++SCRATCH_PARENT = tempfile.gettempdir()
+ TIMEOUT = 120
+ COUNTS = re.compile(r'garbage=(\d+) size_garbage=(\d+) unreachable=(\d+) alternates=(\d+)')
+ STUB = ("#!/usr/bin/env python3\n"
+diff --git c/tests/fixtures/r26-axis-check.py w/tests/fixtures/r26-axis-check.py
+index 2def139..9f88ac2 100755
+--- c/tests/fixtures/r26-axis-check.py
++++ w/tests/fixtures/r26-axis-check.py
+@@ -31,7 +31,7 @@ Output: one `CASE <n> <name> PASS|FAIL <detail>` line per case, then the last
+ line `cases=12 pass=<P> control=FALSE-GREEN-REJECTED|FALSE-GREEN-ACCEPTED`.
+ Exit 0 iff P==12 AND the control spelling is FALSE-GREEN-REJECTED.
+ 
+-Every case owns an isolated world under /var/tmp/souji-r26-ExecAxisFixture/
++Every case owns an isolated world under TMPDIR/souji-r26-ExecAxisFixture/
+ (a fresh run directory per invocation), removed in a finally block. Nothing is
+ executed against the lane's real preregistration or SCORECARD.
+ """
+@@ -43,9 +43,11 @@ import re
+ import shutil
+ import subprocess
+ import sys
++import tempfile
+ 
+-SCRATCH_BASE = "/var/tmp/souji-r26-ExecAxisFixture"
+-SCRATCH_PREFIX = "/var/tmp/souji-r26-"
++SCRATCH_ROOT = tempfile.gettempdir()
++SCRATCH_BASE = os.path.join(SCRATCH_ROOT, "souji-r26-ExecAxisFixture")
++SCRATCH_PREFIX = os.path.join(SCRATCH_ROOT, "souji-r26-")
+ 
+ # Synthetic axes table mirroring the lane's round-26 declarations
+ # (calibration 7 lowest non-retired, operability 8, coverage 8). Case 1 is

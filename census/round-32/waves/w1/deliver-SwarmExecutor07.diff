@@ -1,0 +1,74 @@
+diff --git c/tests/fixtures/r30-landing-gate-discovery.py w/tests/fixtures/r30-landing-gate-discovery.py
+index 099bb74..53e8e80 100755
+--- c/tests/fixtures/r30-landing-gate-discovery.py
++++ w/tests/fixtures/r30-landing-gate-discovery.py
+@@ -40,8 +40,9 @@ Boundary: this fixture only runs the selected gate binary against real git
+ repositories it creates under a private directory inside $TMPDIR (removed in
+ finally). It never writes in a lane checkout, never runs lane scripts, and
+ never touches .ufo/state, MANIFEST.json or a sibling lane. Note: the gate
+-itself pins its parse-snapshot directory to /var/tmp and removes it in
+-finally; that path is the tool's own behaviour, not this fixture's.
++itself creates its parse-snapshot directory through tempfile, so it honours
++the caller's TMPDIR, and removes it in finally; that path is the tool's own
++behaviour, not this fixture's.
+ """
+ 
+ import argparse
+diff --git c/tests/fixtures/r31-landing-gate-precision.py w/tests/fixtures/r31-landing-gate-precision.py
+index 943f42d..13b551d 100755
+--- c/tests/fixtures/r31-landing-gate-precision.py
++++ w/tests/fixtures/r31-landing-gate-precision.py
+@@ -57,8 +57,9 @@ Boundary: this fixture only runs the selected gate binary against real git
+ repositories it creates under a private directory inside $TMPDIR (removed in
+ finally). It never writes in a lane checkout, never runs lane scripts, and
+ never touches .ufo/state, MANIFEST.json or a sibling lane. Note: the gate
+-itself pins its parse-snapshot directory to /var/tmp and removes it in
+-finally; that path is the tool's own behaviour, not this fixture's.
++itself creates its parse-snapshot directory through tempfile, so it honours
++the caller's TMPDIR, and removes it in finally; that path is the tool's own
++behaviour, not this fixture's.
+ """
+ 
+ import argparse
+diff --git c/tools/souji-landing-gate.py w/tools/souji-landing-gate.py
+index 7bfcb9b..10069f5 100755
+--- c/tools/souji-landing-gate.py
++++ w/tools/souji-landing-gate.py
+@@ -22,7 +22,8 @@ Byte provenance: committed bytes are read with `git -C LANE ls-tree -r -z
+ --full-tree REV` and `git cat-file blob <oid>` (never `git archive`, whose
+ export-ignore/export-subst/attributes can alter bytes). Files that need a
+ real path for `bash -n` are written under a private
+-tempfile.mkdtemp(dir='/var/tmp') snapshot removed in `finally`.
++tempfile.mkdtemp() snapshot (honouring the caller's TMPDIR) removed in
++`finally`.
+ 
+ CLI:
+   python3 tools/souji-landing-gate.py --root LANE --rev REV --round N
+@@ -1179,7 +1180,7 @@ def evaluate(root, rev, round_no, base=None, fleet_root=None):
+         "carry_heading": 0,
+         "error": None,
+     }
+-    snapdir = tempfile.mkdtemp(prefix="souji-landing-gate-", dir="/var/tmp")
++    snapdir = tempfile.mkdtemp(prefix="souji-landing-gate-")
+     try:
+         resolved = resolve_commit(root, rev)
+         result["resolved_rev"] = resolved
+@@ -1363,7 +1364,8 @@ def emit(result, json_out=None):
+ 
+ 
+ # ---------------------------------------------------------------------------
+-# Selftest — synthetic repos under /var/tmp, removed afterwards
++# Selftest — synthetic repos under the scratch root (tempfile honours TMPDIR),
++# removed afterwards
+ # ---------------------------------------------------------------------------
+ 
+ GOOD_SH = "#!/bin/sh\necho ok\n"
+@@ -1496,7 +1498,7 @@ def _r14_measured_world(files, measured):
+ 
+ 
+ def run_selftest():
+-    top = tempfile.mkdtemp(prefix="souji-landing-gate-selftest-", dir="/var/tmp")
++    top = tempfile.mkdtemp(prefix="souji-landing-gate-selftest-")
+     passed = failed = 0
+ 
+     def build(case_name, files, extra_commits=()):

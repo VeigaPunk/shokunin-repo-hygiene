@@ -1,0 +1,95 @@
+diff --git c/tools/souji-census.sh w/tools/souji-census.sh
+index 5aa8101..a3fb0a8 100755
+--- c/tools/souji-census.sh
++++ w/tools/souji-census.sh
+@@ -7,7 +7,8 @@
+ # non-regular info/attributes to a per-repo error row.
+ #
+ # One bash tool; Bash, coreutils, git, util-linux `setsid`, Python 3 (--selftest),
+-# and Linux /proc. Never fetches; writes only temporary census output under /var/tmp.
++# and Linux /proc. Never fetches; writes only temporary census output under
++# ${TMPDIR:-/tmp}.
+ # The mtime walk never opens file contents, but `git status` may read or hash
+ # tracked content (this is not a data-loss-prevention classifier), and
+ # .ufo/state or .ufo/watchdog.log are never traversed by the mtime walk.
+@@ -77,7 +78,7 @@
+ #   mixed into the diff.
+ #
+ # --selftest
+-#   Builds fixture fleets under /var/tmp, runs the census twice (byte-
++#   Builds fixture fleets under ${TMPDIR:-/tmp}, runs the census twice (byte-
+ #   identical), mutates one fixture, checks --compare, protected refusals,
+ #   and per-repository watchdog behavior. Removes fixtures on exit. Exit 0
+ #   on pass, 1 on fail.
+@@ -305,7 +306,7 @@ trap 'handle_census_signal TERM' TERM
+ 
+ prepare_census_tmp() {
+   if [ -z "${CENSUS_TMP:-}" ]; then
+-    CENSUS_TMP=$(mktemp -d /var/tmp/souji-census-now.XXXXXX)
++    CENSUS_TMP=$(mktemp -d "${TMPDIR:-/tmp}/souji-census-now.XXXXXX")
+     trap cleanup_census_tmp EXIT
+   fi
+ }
+@@ -1875,7 +1876,7 @@ emit_compare() { # census of $ROOT vs $COMPARE; writes diff TSV; exit 3 if any c
+   root=$(guard_path root "$ROOT") || exit 2
+   [ -d "$root" ] || { printf 'souji-census: root is not a directory: %s\n' "$root" >&2; exit 1; }
+   load_census "$COMPARE" before
+-  CENSUS_TMP=$(mktemp -d /var/tmp/souji-census-now.XXXXXX)
++  CENSUS_TMP=$(mktemp -d "${TMPDIR:-/tmp}/souji-census-now.XXXXXX")
+   trap cleanup_census_tmp EXIT
+   emit_census > "$CENSUS_TMP/now.tsv"
+   load_census "$CENSUS_TMP/now.tsv" after
+@@ -1986,7 +1987,7 @@ st_worker_tmpdir() { # worker PGID -> CENSUS_TMP via its private stdout file
+   local path
+   path=$(readlink -- "/proc/$1/fd/1" 2>/dev/null) || return 1
+   case "$path" in
+-    /var/tmp/souji-census-now.*/*) printf '%s' "${path%/*}" ;;
++    "${TMPDIR:-/tmp}"/souji-census-now.*/*) printf '%s' "${path%/*}" ;;
+     *) return 1 ;;
+   esac
+ }
+@@ -2005,7 +2006,7 @@ run_selftest() {
+     printf 'souji-census: refusing nested --selftest\n' >&2
+     exit 1
+   fi
+-  ST_TMP=$(mktemp -d /var/tmp/souji-census-selftest.XXXXXX)
++  ST_TMP=$(mktemp -d "${TMPDIR:-/tmp}/souji-census-selftest.XXXXXX")
+   trap 'rm -rf -- "$ST_TMP"' EXIT
+   # Round 16: the census honors the XDG excludes/attributes default; pin it
+   # to an absent scratch path so host files cannot change selftest rows.
+@@ -2278,7 +2279,7 @@ run_selftest() {
+   ln -s "$ST_TMP/home/.omp/agent/config.yml" "$ST_TMP/protected-compare.tsv"
+   local prot_rc prot_err
+   set +e
+-  prot_err=$(env -u GIT_DIR HOME="$ST_TMP/home" TMPDIR=/var/tmp \
++  prot_err=$(env -u GIT_DIR HOME="$ST_TMP/home" TMPDIR="${TMPDIR:-/tmp}" \
+     SOUJI_CENSUS_SELFTEST_ACTIVE=1 \
+     "$SELF" --root "$ST_TMP/home/.omp/agent" 2>&1 >/dev/null)
+   prot_rc=$?
+@@ -2289,7 +2290,7 @@ run_selftest() {
+     st_bad "protected root: rc=$prot_rc err=$(printf '%s' "$prot_err" | head -1)"
+   fi
+   set +e
+-  prot_err=$(env -u GIT_DIR HOME="$ST_TMP/home" TMPDIR=/var/tmp \
++  prot_err=$(env -u GIT_DIR HOME="$ST_TMP/home" TMPDIR="${TMPDIR:-/tmp}" \
+     SOUJI_CENSUS_SELFTEST_ACTIVE=1 \
+     "$SELF" --root "$fleet" --compare "$ST_TMP/protected-compare.tsv" 2>&1 >/dev/null)
+   prot_rc=$?
+@@ -2902,7 +2903,7 @@ LAUNCH_CENSUS
+     kill -KILL "$term_census_pid" 2>/dev/null || true
+   fi
+   if [ -e "/proc/$term_launcher_pid" ]; then kill -KILL "$term_launcher_pid" 2>/dev/null || true; fi
+-  case "$term_tmp_dir" in /var/tmp/souji-census-now.*) rm -rf -- "$term_tmp_dir" ;; esac
++  case "$term_tmp_dir" in "${TMPDIR:-/tmp}"/souji-census-now.*) rm -rf -- "$term_tmp_dir" ;; esac
+ 
+   # SIGKILL cannot run a trap; the detached timer must still reap the group.
+   rm -f -- "$RI/.git/info/attributes" "$ST_TMP/kill-git.pid"
+@@ -2966,7 +2967,7 @@ LAUNCH_CENSUS
+     kill -KILL "$kill_census_pid" 2>/dev/null || true
+   fi
+   if [ -e "/proc/$kill_launcher_pid" ]; then kill -KILL "$kill_launcher_pid" 2>/dev/null || true; fi
+-  case "$kill_tmp_dir" in /var/tmp/souji-census-now.*) rm -rf -- "$kill_tmp_dir" ;; esac
++  case "$kill_tmp_dir" in "${TMPDIR:-/tmp}"/souji-census-now.*) rm -rf -- "$kill_tmp_dir" ;; esac
+ 
+ 
+   # An inherited SIG_IGN TERM must not hold a normally-cancelled timer open.

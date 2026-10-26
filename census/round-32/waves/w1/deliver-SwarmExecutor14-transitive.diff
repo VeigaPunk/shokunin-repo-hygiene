@@ -1,0 +1,98 @@
+diff --git a/census/round-13/run-verification.py b/census/round-13/run-verification.py
+index b5107ef..fbc506b 100755
+--- a/census/round-13/run-verification.py
++++ b/census/round-13/run-verification.py
+@@ -51,7 +51,7 @@ PROTECTED_COMPONENTS = frozenset({
+ # their inputs are neither lane-bound nor captured completely as digests.
+ REUSE_EXEMPT = {"sources-contract", "shellcheck-warning", "quarantine-red-before"}
+ ENV = os.environ.copy()
+-ENV.update(TMPDIR="/var/tmp", LC_ALL="C", GIT_CONFIG_NOSYSTEM="1",
++ENV.update(TMPDIR=tempfile.gettempdir(), LC_ALL="C", GIT_CONFIG_NOSYSTEM="1",
+            GIT_CONFIG_GLOBAL="/dev/null", GIT_TERMINAL_PROMPT="0",
+            SOUJI_CLI_BIN="/bin/false", PYTHONDONTWRITEBYTECODE="1")
+ for key in list(ENV):
+@@ -197,7 +197,7 @@ def gate_reuse(prior):
+         "dependencies": dict(prior["dependencies"]),
+     }
+     handle = tempfile.NamedTemporaryFile(
+-        "w", prefix="souji-r13-retention.", suffix=".json", dir="/var/tmp",
++        "w", prefix="souji-r13-retention.", suffix=".json", dir=tempfile.gettempdir(),
+         delete=False, encoding="utf-8")
+     record_path = Path(handle.name)
+     try:
+@@ -461,7 +461,7 @@ def execute(round_number, output, previous):
+     results.append(run("evidence-frozen", ["python3", "tools/souji-cert-evidence.py", "--frozen", "tests/fixtures/r13-cert-frozen"]))
+     results.append(run("evidence-external-fixture", ["python3", "tests/fixtures/r13-cert-evidence.py"]))
+     results.append(run("structure-selftest", ["bash", "tests/fixtures/r13-repo-structure.sh", "--selftest", "--probe", "tools/souji-repo-structure.sh"]))
+-    with tempfile.TemporaryDirectory(prefix="souji-r13-before.", dir="/var/tmp") as scratch:
++    with tempfile.TemporaryDirectory(prefix="souji-r13-before.", dir=tempfile.gettempdir()) as scratch:
+         baseline = Path(scratch) / "souji-quarantine.sh"
+         baseline.write_bytes(subprocess.check_output([
+             "git", "-C", str(ROOT), "show", BASE + ":tools/souji-quarantine.sh"], env=ENV))
+diff --git a/census/round-14/cache-demonstration.py b/census/round-14/cache-demonstration.py
+index b302186..f005e70 100755
+--- a/census/round-14/cache-demonstration.py
++++ b/census/round-14/cache-demonstration.py
+@@ -96,7 +96,7 @@ EXPECTED_LEGACY_FINDINGS = ("dependencies-legacy",)
+ REUSABLE_STATUS = "souji-evidence-cache: reusable"
+ STALE_STATUS = "souji-evidence-cache: stale"
+ COULD_NOT_EVALUATE_STATUS = "souji-evidence-cache: could-not-evaluate"
+-TMP_BASE = "/var/tmp"
++TMP_BASE = tempfile.gettempdir()
+ OUTPUT_LIMIT = 16384
+ GATE_TIMEOUT = 120
+ FINDING_PATTERN = re.compile(r"(?m)^finding ([a-z0-9_-]+):")
+diff --git a/census/round-14/run-targeted.py b/census/round-14/run-targeted.py
+index aec539d..9f53a90 100755
+--- a/census/round-14/run-targeted.py
++++ b/census/round-14/run-targeted.py
+@@ -54,7 +54,7 @@ def main():
+              "census/round-14/cache-demonstration.py", "census/round-13/run-verification.py"]
+     before = {p: module.sha(ROOT/p) for p in paths}
+     historical_before = module.sha(ROOT/"census/round-13/verification.json")
+-    with tempfile.TemporaryDirectory(prefix="souji-r14-targeted-", dir="/var/tmp") as temp:
++    with tempfile.TemporaryDirectory(prefix="souji-r14-targeted-", dir=tempfile.gettempdir()) as temp:
+         baseline = Path(temp)/"souji-census.sh"
+         baseline.write_bytes(subprocess.check_output(["git", "-C", str(ROOT), "show", module.BASE+":tools/souji-census.sh"], env=module.ENV))
+         baseline.chmod(0o700)
+diff --git a/census/round-14/run-verification.py b/census/round-14/run-verification.py
+index 6b2899b..78cd7c1 100755
+--- a/census/round-14/run-verification.py
++++ b/census/round-14/run-verification.py
+@@ -16,7 +16,7 @@ import time
+ ROOT = Path(__file__).resolve().parents[2]
+ BASE = "a31642d14006830ec62edf40b0354c3699728c4a"
+ ENV = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+-ENV.update(TMPDIR="/var/tmp", PYTHONDONTWRITEBYTECODE="1", LC_ALL="C",
++ENV.update(TMPDIR=tempfile.gettempdir(), PYTHONDONTWRITEBYTECODE="1", LC_ALL="C",
+            GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL="/dev/null",
+            GIT_TERMINAL_PROMPT="0", GIT_AUTHOR_NAME="souji-r14-fixture",
+            GIT_AUTHOR_EMAIL="fixture@example.invalid", GIT_COMMITTER_NAME="souji-r14-fixture",
+@@ -133,7 +133,7 @@ def main():
+     before = {p: sha(ROOT/p) for p in paths}
+     historical_before = sha(ROOT/"census/round-13/verification.json")
+     results = []
+-    with tempfile.TemporaryDirectory(prefix="souji-r14-verification-", dir="/var/tmp") as temp:
++    with tempfile.TemporaryDirectory(prefix="souji-r14-verification-", dir=tempfile.gettempdir()) as temp:
+         baseline = Path(temp)/"souji-census.sh"
+         baseline.write_bytes(subprocess.check_output(["git", "-C", str(ROOT), "show", BASE+":tools/souji-census.sh"], env=ENV))
+         baseline.chmod(0o700)
+diff --git a/tools/souji-seat-audit.py b/tools/souji-seat-audit.py
+index 6cf3a85..959f4c5 100755
+--- a/tools/souji-seat-audit.py
++++ b/tools/souji-seat-audit.py
+@@ -125,7 +125,13 @@ PYTHON_TOKEN_RE = re.compile(r"(?:^|[;&|(\s]|&&\s*)python[0-9.]*\b")
+ # Delivery extensions describe supported artifacts, not permission. Every
+ # additional file needs a positive per-item directive naming its exact path.
+ DELIVERY_SUFFIXES = (".patch", ".py", ".json", ".tsv", ".txt")
+-ABS_RE = re.compile(r"/(?:home|var/tmp)/[^\s,`'\"]+")
++# An exact OWN ONLY grant names a bare absolute path in a declared write root:
++# the fleet tree (/home) and scratch, which is /var/tmp plus the caller's
++# TMPDIR (the operator's scratch discipline moved scratch off /var/tmp).
++OWN_ROOTS = tuple(root for root in dict.fromkeys(
++    ("home", "var/tmp", tempfile.gettempdir().strip("/"))) if root)
++ABS_RE = re.compile(r"/(?:" + "|".join(re.escape(root) for root in OWN_ROOTS)
++                    + r")/[^\s,`'\"]+")
+ WRITE_TOOLS = {"write", "edit", "ast_edit"}
+ EXEC_ROLES = {"executor", "mutation-tester"}
+ 

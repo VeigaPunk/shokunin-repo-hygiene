@@ -1,0 +1,132 @@
+diff --git a/tests/fixtures/r23-receipt-run.py b/tests/fixtures/r23-receipt-run.py
+index ba4347c..96308b2 100755
+--- a/tests/fixtures/r23-receipt-run.py
++++ b/tests/fixtures/r23-receipt-run.py
+@@ -1,9 +1,10 @@
+ #!/usr/bin/env python3
+ """r23-receipt-run.py -- selftest fixture for tools/souji-receipt-run.py (souji round 23, C2).
+ 
+-Builds a throw-away git repo under /var/tmp (never /tmp, never the lane tree), drives the
+-receipt runner through eight cases and prints one `case=<n> expect=<...> got=<...>` line per
+-case plus `selftest=<pass>/<total>`. Exit 0 iff every case passes.
++Builds a throw-away git repo under the caller's scratch root (TMPDIR when set, else /var/tmp;
++never the lane tree), drives the receipt runner through eight cases and prints one `case=<n>
++expect=<...> got=<...>` line per case plus `selftest=<pass>/<total>`. Exit 0 iff every case
++passes.
+ 
+ Usage:
+     python3 r23-receipt-run.py [path/to/souji-receipt-run.py]
+@@ -44,7 +45,9 @@ import tempfile
+ import time
+ import traceback
+ 
+-SCRATCH_PARENT = "/var/tmp"
++# The scratch parent is the caller's: TMPDIR when set, else /var/tmp (never a bare /tmp). The
++# receipt runner accepts --out under the same root (tools/souji-receipt-run.py scratch_root()).
++SCRATCH_PARENT = os.path.abspath(tempfile.gettempdir()) if os.environ.get("TMPDIR") else "/var/tmp"
+ FORBIDDEN_OUT_PARENT = "/tmp"
+ TOOL_REL = "tools/tiny-counter.py"
+ # The counter prints the lane's counts line (what `verify` insists a counter receipt carries)
+diff --git a/tests/fixtures/r24-receipt-verify.py b/tests/fixtures/r24-receipt-verify.py
+index 00e686a..b54cec8 100755
+--- a/tests/fixtures/r24-receipt-verify.py
++++ b/tests/fixtures/r24-receipt-verify.py
+@@ -20,8 +20,8 @@ Frozen cases (contract: .ufo/waves/round-24/preregistration.txt, C3):
+                     an absent lane root or receipt is a FAIL, never a skip-to-pass
+ 
+ --lane-root defaults to the git toplevel containing --tool. All synthetic git writes stay in one
+-/var/tmp scratch repo (never /tmp, never the lane), trap-cleaned on exit, error and signal; the
+-lane root is only read (`verify` reads blobs and refs).
++scratch repo under the caller's scratch root (TMPDIR when set, else /var/tmp), trap-cleaned on
++exit, error and signal; the lane root is only read (`verify` reads blobs and refs).
+ 
+ One `case=<id> verdict=PASS|FAIL expect=<...> got=<...>` line per case, then the last line
+     cases=C pass=P refusals=R/2 regress=N/5
+@@ -42,7 +42,9 @@ sys.dont_write_bytecode = True
+ import tempfile
+ import traceback
+ 
+-SCRATCH_PARENT = "/var/tmp"
++# The scratch parent is the caller's: TMPDIR when set, else /var/tmp (never a bare /tmp). The
++# receipt runner accepts --out under the same root (tools/souji-receipt-run.py scratch_root()).
++SCRATCH_PARENT = os.path.abspath(tempfile.gettempdir()) if os.environ.get("TMPDIR") else "/var/tmp"
+ TOOL_REL = "tools/tiny-counter.py"
+ OTHER_REL = "tools/other-counter.py"
+ # a path that is a substring (and suffix) of the TOOL_REL argv element but never an element
+diff --git a/tests/fixtures/r25-receipt-stderr.py b/tests/fixtures/r25-receipt-stderr.py
+index 8f475f4..7278366 100755
+--- a/tests/fixtures/r25-receipt-stderr.py
++++ b/tests/fixtures/r25-receipt-stderr.py
+@@ -16,7 +16,8 @@ OLD_RUNNER_REV = "c872eec"
+ TOOL_PATH = "tools/souji-record-agreement.py"
+ COUNTS = "keys=4 records=3 occurrences=13 mismatches=0"
+ FULL_REV = re.compile(r"[0-9a-fA-F]{40}")
+-SCRATCH = "/var/tmp"
++# the caller's scratch root: TMPDIR when set, else /var/tmp (never a bare /tmp)
++SCRATCH = os.path.abspath(tempfile.gettempdir()) if os.environ.get("TMPDIR") else "/var/tmp"
+ 
+ 
+ def run(argv: list[str], *, cwd: str | None = None) -> subprocess.CompletedProcess[bytes]:
+diff --git a/tools/souji-receipt-run.py b/tools/souji-receipt-run.py
+index 85d5f7b..58a4e5c 100755
+--- a/tools/souji-receipt-run.py
++++ b/tools/souji-receipt-run.py
+@@ -26,7 +26,9 @@ Receipt v1 header, in this order, then the two fences:
+ 
+ Refusals (exit 2, no receipt written): --rev not a full 40-hex id; --rev not reachable from
+ refs/heads, refs/tags or refs/remotes (refs/jj/* never counts — Q37); --tool absent at --rev;
+---out under /tmp (Q4); --out anywhere but /var/tmp/ (OUT-OUTSIDE-VAR-TMP, r24 W2Scope: the old guard let a receipt truncate fleet files); --out inside --root (a receipt is not a repo write); --tool not an exact
++--out under /tmp (Q4); --out outside the caller's scratch root, i.e. TMPDIR when it is set and
++/var/tmp otherwise (OUT-OUTSIDE-SCRATCH, r24 W2Scope: the old guard let a receipt truncate fleet
++files); --out inside --root (a receipt is not a repo write); --tool not an exact
+ element of the command argv (TOOL-NOT-IN-ARGV, the same predicate `verify` applies); a --tool path
+ that redaction would rewrite (TOOL-PATH-REDACTED); a command where a whole-line redaction pass
+ would still change the per-element-redacted line, i.e. a secret spanning argv elements
+@@ -41,7 +43,8 @@ element of shlex.split(cmd); `./tools/x` does not match `tools/x`); a `cmd=` tha
+ as shell words is RECEIPT-MALFORMED. Argv membership binds the label to the recorded text, not to
+ the program that ran: `python3 tools/y.py tools/x.py` still verifies for tool=tools/x.py.
+ 
+-The measured tree is a private `--no-local` clone under /var/tmp, checked out detached at <rev>:
++The measured tree is a private `--no-local` clone under the caller's scratch root (TMPDIR when
++it is set, else /var/tmp), checked out detached at <rev>:
+ the runner never writes the source repository and never fetches from a remote. It is a counter
+ runner, not a sandbox and not a proof that the command is side-effect free — the receipt records
+ what ran.
+@@ -63,7 +66,12 @@ import sys
+ sys.dont_write_bytecode = True
+ import tempfile
+ 
+-SCRATCH_ROOT = "/var/tmp"
++
++def scratch_root() -> str:
++    """The caller's scratch root: TMPDIR when set, else /var/tmp (Q4: a receipt never goes to /tmp)."""
++    return os.path.abspath(tempfile.gettempdir()) if os.environ.get("TMPDIR") else "/var/tmp"
++
++
+ COUNTS_RE = re.compile(
+     r"(?:assertions=\d+ resolved=\d+ skipped=\d+ mismatches=\d+"
+     r"|keys=\d+ records=\d+ occurrences=\d+ mismatches=\d+"
+@@ -181,9 +189,11 @@ def cmd_run(args: argparse.Namespace) -> int:
+     out = os.path.realpath(args.out)
+     if out.startswith("/tmp/") or out == "/tmp":
+         return refuse("OUT-UNDER-TMP", "receipts go outside /tmp (Q4)")
+-    if not out.startswith("/var/tmp/"):
+-        return refuse("OUT-OUTSIDE-VAR-TMP",
+-                      "receipts are written under /var/tmp/ and copied into the lane by its helper")
++    base_scratch = os.path.realpath(scratch_root())
++    if not (out == base_scratch or out.startswith(base_scratch + os.sep)):
++        return refuse("OUT-OUTSIDE-SCRATCH",
++                      f"receipts are written under the caller's scratch root ({base_scratch}) "
++                      "and copied into the lane by its helper")
+     if out == root or out.startswith(root + os.sep):
+         return refuse("OUT-IN-REPO", "the receipt must not be written inside the measured repo")
+     if not args.command:
+@@ -208,7 +218,7 @@ def cmd_run(args: argparse.Namespace) -> int:
+     if re.search(r"/[A-Za-z0-9_-]+-shokunin/", out) and not out.startswith(root + os.sep):
+         return refuse("OUT-SIBLING-LANE", "a receipt is never written into another lane")
+ 
+-    scratch = tempfile.mkdtemp(prefix="souji-receipt-", dir=SCRATCH_ROOT)
++    scratch = tempfile.mkdtemp(prefix="souji-receipt-", dir=scratch_root())
+     tree = os.path.join(scratch, "repo")
+     try:
+         # a private local clone: the measured tree is a real repository at <rev>, so a counter

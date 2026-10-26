@@ -1,0 +1,64 @@
+diff --git a/tests/fixtures/r20-audit-contract.py b/tests/fixtures/r20-audit-contract.py
+index 8c1aad3..dbd79df 100755
+--- a/tests/fixtures/r20-audit-contract.py
++++ b/tests/fixtures/r20-audit-contract.py
+@@ -2,8 +2,9 @@
+ """Independent round-20 oracle for exact auditor write grants and receipts.
+ 
+ Only synthetic specs, transcripts and manifests are created under a fresh
+-/var/tmp directory. The fixture imports the selected auditor and exercises its
+-run() API directly; it never invokes a transcript command or writes a target.
++temporary directory (honouring TMPDIR). The fixture imports the selected
++auditor and exercises its run() API directly; it never invokes a transcript
++command or writes a target.
+ 
+ With --base-tool, the baseline discriminator cases are same-stem suffix
+ over-allowances only. Scratch and other scope cases are preservation or
+@@ -430,7 +431,7 @@ def main(argv=None) -> int:
+         print("r20-audit-contract: prerequisite: %s" % exc, file=sys.stderr)
+         return 2
+ 
+-    top = Path(tempfile.mkdtemp(prefix="souji-r20-audit-contract.", dir="/var/tmp"))
++    top = Path(tempfile.mkdtemp(prefix="souji-r20-audit-contract."))
+     stats = {"total": 0, "passed": 0, "failed": 0, "base_discriminating": 0,
+              "primary_ids": []}
+     worlds = {}
+diff --git a/tests/fixtures/r20-input-binding.py b/tests/fixtures/r20-input-binding.py
+index e7d62e2..76e6a76 100755
+--- a/tests/fixtures/r20-input-binding.py
++++ b/tests/fixtures/r20-input-binding.py
+@@ -2,7 +2,8 @@
+ """R20 caller-level input-binding oracle for the R19 C2 rejection.
+ 
+ The fixture copies only each entrypoint's statically declared measured input
+-closure from --root into isolated synthetic Git repositories under /var/tmp.
++closure from --root into isolated synthetic Git repositories under a fresh
++temporary directory (honouring TMPDIR).
+ It then commits that closure and changes one owned input at a time with an
+ inert comment/whitespace mutation (or one valid added knowledge record). The
+ four production callers must refuse each applicable dirty input with exit 2
+@@ -28,7 +29,7 @@ import sys
+ import tempfile
+ 
+ DEFAULT_ROOT = Path(__file__).resolve().parents[2]
+-TMP_ROOT = Path("/var/tmp")
++TMP_ROOT = Path(tempfile.gettempdir())
+ ROUND13 = "census/round-13/run-verification.py"
+ ROUND14 = "census/round-14/run-verification.py"
+ TARGETED = "census/round-14/run-targeted.py"
+@@ -42,11 +43,12 @@ R13_FROZEN_DIR = "tests/fixtures/r13-cert-frozen"
+ NEW_KNOWLEDGE = "corpus/knowledge/r20-input-binding-added.md"
+ 
+ # Deliberately minimal: do not inherit credentials, Git repository selectors,
+-# user config, service settings or other operator environment values.
++# user config, service settings or other operator environment values; the one
++# carried value is the caller's scratch root (TMPDIR, via TMP_ROOT).
+ CLEAN_ENV = {
+     "PATH": "/usr/bin:/bin",
+-    "HOME": "/var/tmp",
+-    "TMPDIR": "/var/tmp",
++    "HOME": str(TMP_ROOT),
++    "TMPDIR": str(TMP_ROOT),
+     "LC_ALL": "C",
+     "PYTHONDONTWRITEBYTECODE": "1",
+     "GIT_CONFIG_NOSYSTEM": "1",

@@ -1,0 +1,95 @@
+diff --git c/tests/fixtures/r23-record-agreement.py w/tests/fixtures/r23-record-agreement.py
+index f3d2ff0..9707a30 100755
+--- c/tests/fixtures/r23-record-agreement.py
++++ w/tests/fixtures/r23-record-agreement.py
+@@ -8,10 +8,10 @@ Exercises the frozen instrument CLI:
+ Counts line on stdout: keys=K records=R occurrences=O mismatches=M  (exit 0 iff M==0)
+ Mismatch rows:         MISMATCH<TAB><key><TAB><record><TAB><class><TAB><detail>
+ 
+-It builds a synthetic lane repo under /var/tmp (hard-coded; never /tmp), trap-cleaned on exit,
+-runs the instrument against it and prints one `case=<n> expect=<...> got=<...>` line per case,
+-then `selftest=<pass>/<total>`, then the always-zero control verdict. Exit 0 iff every case
+-observes its expectation.
++It builds a synthetic lane repo under the caller's TMPDIR (``tempfile.gettempdir()``, never a
++hard-coded /tmp or /var/tmp), trap-cleaned on exit, runs the instrument against it and prints one
++`case=<n> expect=<...> got=<...>` line per case, then `selftest=<pass>/<total>`, then the
++always-zero control verdict. Exit 0 iff every case observes its expectation.
+ 
+ Frozen paths the synthetic repo carries (preregistration C1):
+   SCORECARD.md                                           K1 record: r22 after 4-tuple + rev token
+@@ -61,10 +61,11 @@ import shutil
+ import signal
+ import subprocess
+ import sys
++import tempfile
+ 
+ sys.dont_write_bytecode = True
+ 
+-SCRATCH_ROOT = "/var/tmp/souji-r23-ExecFixtureAgreement"
++SCRATCH_ROOT = os.path.join(tempfile.gettempdir(), "souji-r23-ExecFixtureAgreement")
+ TOOL_REL = os.path.join("tools", "souji-record-agreement.py")
+ 
+ # Frozen paths (preregistration C1) — code constants, never data.
+@@ -567,7 +568,7 @@ def find_tool(explicit: str | None) -> str | None:
+ def main(argv: list[str]) -> int:
+     ap = argparse.ArgumentParser(description="fixture for tools/souji-record-agreement.py (r23 C1)")
+     ap.add_argument("--tool", default=None, help="instrument path (default: walk up for tools/…)")
+-    ap.add_argument("--keep", action="store_true", help="keep the /var/tmp scratch tree")
++    ap.add_argument("--keep", action="store_true", help="keep the scratch tree (under the caller's TMPDIR)")
+     ap.add_argument("--verbose", action="store_true", help="echo every case's tool stdout")
+     args = ap.parse_args(argv)
+ 
+diff --git c/tests/fixtures/r24-coverage-agreement.py w/tests/fixtures/r24-coverage-agreement.py
+index add3917..296a21b 100755
+--- c/tests/fixtures/r24-coverage-agreement.py
++++ w/tests/fixtures/r24-coverage-agreement.py
+@@ -13,9 +13,10 @@ Usage:
+ 
+     python3 -B tests/fixtures/r24-coverage-agreement.py --tool <path>
+ 
+-Every case is a synthetic git repo under one /var/tmp mkdtemp (never /tmp), removed in `finally`
+-and on SIGINT/SIGTERM/SIGHUP. The instrument runs with cwd = the scratch root (not the repo), so
+-it must honour --root. One `case=` line per case, then the always-zero control run through the
++Every case is a synthetic git repo under one mkdtemp in the caller's TMPDIR
++(``tempfile.gettempdir()``, never a hard-coded /tmp or /var/tmp), removed in `finally` and on
++SIGINT/SIGTERM/SIGHUP. The instrument runs with cwd = the scratch root (not the repo), so it must
++honour --root. One `case=` line per case, then the always-zero control run through the
+ same cases, then the last line:
+ 
+     cases=C pass=P control=FALSE-GREEN-REJECTED|FALSE-GREEN-ACCEPTED
+@@ -47,7 +48,7 @@ from collections import Counter
+ 
+ sys.dont_write_bytecode = True
+ 
+-SCRATCH_PARENT = "/var/tmp"
++SCRATCH_PARENT = tempfile.gettempdir()  # honours TMPDIR; never a hard-coded /tmp or /var/tmp
+ TOOL_TIMEOUT = 60
+ CLASSES = ("MISSING-FROM-MAP", "DANGLING-MAP-PATH")
+ COUNTS = re.compile(r"^grounded=(\d+) mapped=(\d+) dangling=(\d+) mismatches=(\d+)$")
+diff --git c/tests/fixtures/r25-coverage-agreement.py w/tests/fixtures/r25-coverage-agreement.py
+index 235ff27..c3730b3 100755
+--- c/tests/fixtures/r25-coverage-agreement.py
++++ w/tests/fixtures/r25-coverage-agreement.py
+@@ -16,9 +16,10 @@ Usage:
+ 
+     python3 -B tests/fixtures/r25-coverage-agreement.py --tool <path>
+ 
+-Every case is a synthetic git repo under one /var/tmp mkdtemp (never /tmp), removed in `finally`
+-and on SIGINT/SIGTERM/SIGHUP. The instrument runs with cwd = the scratch root (not the repo), so
+-it must honour --root. One `case=` line per case, then the always-zero control run through the
++Every case is a synthetic git repo under one mkdtemp in the caller's TMPDIR
++(``tempfile.gettempdir()``, never a hard-coded /tmp or /var/tmp), removed in `finally` and on
++SIGINT/SIGTERM/SIGHUP. The instrument runs with cwd = the scratch root (not the repo), so it must
++honour --root. One `case=` line per case, then the always-zero control run through the
+ same cases, then the last line:
+ 
+     cases=C pass=P control=FALSE-GREEN-REJECTED|FALSE-GREEN-ACCEPTED
+@@ -62,7 +63,7 @@ from collections import Counter
+ 
+ sys.dont_write_bytecode = True
+ 
+-SCRATCH_PARENT = "/var/tmp"
++SCRATCH_PARENT = tempfile.gettempdir()  # honours TMPDIR; never a hard-coded /tmp or /var/tmp
+ TOOL_TIMEOUT = 60
+ CLASSES = ("MISSING-FROM-MAP", "DANGLING-MAP-PATH")
+ KILL_CLASSES = (*CLASSES, "KILL-RULE")

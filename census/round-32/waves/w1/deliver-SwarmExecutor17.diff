@@ -1,0 +1,35 @@
+diff --git a/tests/fixtures/r27-pre-report-gate.sh b/tests/fixtures/r27-pre-report-gate.sh
+index c512bed..5a1c7bb 100755
+--- a/tests/fixtures/r27-pre-report-gate.sh
++++ b/tests/fixtures/r27-pre-report-gate.sh
+@@ -4,7 +4,7 @@ set -euo pipefail
+ export GIT_OPTIONAL_LOCKS=0
+ ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
+ GATE="$ROOT/tools/souji-pre-report-gate.sh"
+-D=$(mktemp -d /var/tmp/souji-r27-pre-report.XXXXXX)
++D=$(mktemp -d "${TMPDIR:-/tmp}/souji-r27-pre-report.XXXXXX")
+ trap 'rm -rf -- "$D"' EXIT
+ failures=0
+ passes=0
+diff --git a/tests/fixtures/r28-wave-evidence-capture.sh b/tests/fixtures/r28-wave-evidence-capture.sh
+index 2a28429..97ecba1 100755
+--- a/tests/fixtures/r28-wave-evidence-capture.sh
++++ b/tests/fixtures/r28-wave-evidence-capture.sh
+@@ -8,7 +8,7 @@
+ # `--verify --rev <full40>`).
+ #
+ # Every case runs under
+-# ${SOUJI_R29_C2FIXTURE_BASE:-/var/tmp/souji-r29-wave-capture-fixture} (never the real
++# ${SOUJI_R29_C2FIXTURE_BASE:-${TMPDIR:-/tmp}/souji-r29-wave-capture-fixture} (never the real
+ # lane wave dirs). Cases that need committed bytes get their own scratch git
+ # repo, created with `git -C <dir>` and root-verified with
+ # `git -C <dir> rev-parse --show-toplevel` before the first commit. Prints
+@@ -48,7 +48,7 @@ if [[ -z $tool || ! -f $tool ]]; then
+ fi
+ printf 'tool=%s\n' "$tool"
+ 
+-scratch_root=${SOUJI_R29_C2FIXTURE_BASE:-/var/tmp/souji-r29-wave-capture-fixture}
++scratch_root=${SOUJI_R29_C2FIXTURE_BASE:-${TMPDIR:-/tmp}/souji-r29-wave-capture-fixture}
+ mkdir -p -- "$scratch_root" || exit 98
+ base=$(mktemp -d "$scratch_root/run.XXXXXX") || exit 98
+ trap 'rm -rf -- "$base"' EXIT
