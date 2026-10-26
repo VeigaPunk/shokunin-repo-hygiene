@@ -1,0 +1,69 @@
+# r33 L1 feasibility leg for the remaining C2 item shape (sandbox, strace-traced: O1), QUALITY Q70a.
+# Run 2026-10-26 ~13:25 -03 by SoujiR33 after the preregistration and BEFORE wave w1 was dispatched (no seat had scored). Not an amendment: legs, counter and target unchanged.
+# Scratch commit b4ba5ea46c98e8ef59f53de119992993d62ffd95 (throwaway identity, scratch clone only) = lane 3aec290ea5c4f3fe7f12a54e5b18e8072826ff92 + the r32 O1 patch (git diff 7a6667c 98e5203 -- tools/souji-evidence-cache.py) + a runner change in census/round-21/run-acceptance.py that reads the cache tool's sha256 at the payload's own revision instead of the live file.
+# Mechanism (why r32's O1 repair turned G1/G2 red): run-acceptance.py:503 compared the pinned r21 payload's gate.sha256 with sha256(live tools/souji-evidence-cache.py); r22-result-oracle.py regrades the pinned r21 receipt with that runner, so any edit to the live tool failed positive/clean-cache-demonstration and positive/cache-transient-path-and-time (oracle fail=2, observed in scratch).
+
+$ python3 -B census/round-33/c2-counter.py --root <scratch clone> --rev b4ba5ea46c98e8ef59f53de119992993d62ffd95 --base 6017a482e7068d5afb7617640198fbb0fe743357 --list-rev 2d9bca55a9f042a2c9ed60a797a8069e74c41f46 --scratch <scratch> --only O1,G1,G2,G3
+LEG	O1	sandbox	PASS	base=rc0:W302:selftest: 48/48 passed	sbox=rc0:W303:selftest: 48/48 passed
+LEG	G1	guard	PASS	base=rc0:"total": 258	rev=rc0:"total": 258
+LEG	G2	guard	PASS	base=rc0:"survived": 7	rev=rc0:"survived": 7
+LEG	G3	guard	PASS	base=rc0:fixture: 22/22 checks passed	rev=rc0:fixture: 22/22 checks passed
+SUMMARY legs=4 pass=1 fail=0 harm=0 partial=1 rev=b4ba5ea46c98e8ef59f53de119992993d62ffd95
+rc=0
+
+### diff
+diff --git a/census/round-21/run-acceptance.py b/census/round-21/run-acceptance.py
+index a62d67d..9cc01aa 100755
+--- a/census/round-21/run-acceptance.py
++++ b/census/round-21/run-acceptance.py
+@@ -500,7 +500,10 @@ def summarize_result(step: dict, returncode: int | None,
+         gate = payload.get("gate") if isinstance(payload, dict) else None
+         isolation = payload.get("isolation") if isinstance(payload, dict) else None
+         expected = step["expected_summary"]
+-        gate_sha = sha256_bytes(read_regular(root / "tools/souji-evidence-cache.py"))
++        gate_at_rev = subprocess.run(["git", "-c", "core.fsmonitor=false", "-C", str(root), "cat-file", "blob",
++                                      f"{revision}:tools/souji-evidence-cache.py"],
++                                     env=CHILD_ENV, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
++        gate_sha = sha256_bytes(gate_at_rev.stdout) if gate_at_rev.returncode == 0 else None
+         case_phases = ([row.get("phase") if isinstance(row, dict) else None
+                         for row in case_rows] if isinstance(case_rows, list) else None)
+         demo_match = (
+diff --git a/tools/souji-evidence-cache.py b/tools/souji-evidence-cache.py
+index 82de0e0..1578e41 100755
+--- a/tools/souji-evidence-cache.py
++++ b/tools/souji-evidence-cache.py
+@@ -30,9 +30,9 @@ repeatable and fixes a caller-chosen minimum dependency set: a required path
+ that the record does not declare is refused (`dependency-undeclared`) so the
+ record cannot silently narrow what is measured. `--frozen` reads
+ `DIR/expected.json` and re-measures a pinned snapshot. `--selftest` builds
+-isolated fixtures under `/var/tmp`, re-invokes this CLI as a subprocess for
+-every case, asserts the exact finding-id set and exit code literally, and
+-removes its scratch tree.
++isolated fixtures under the caller's `TMPDIR`, re-invokes this CLI as a
++subprocess for every case, asserts the exact finding-id set and exit code
++literally, and removes its scratch tree.
+ 
+ Exit codes (stable)
+ -------------------
+@@ -1292,7 +1292,7 @@ def _frozen_expected(root, record_path="record.json", verdict="reusable",
+ 
+ def _selftest():
+     try:
+-        base = Path(tempfile.mkdtemp(prefix="souji-r14-cache-selftest.", dir="/var/tmp"))
++        base = Path(tempfile.mkdtemp(prefix="souji-r14-cache-selftest."))
+     except OSError as exc:
+         print("selftest-unavailable: %s" % (exc,))
+         return 2
+@@ -1308,10 +1308,11 @@ def _selftest():
+         env = {
+             "PATH": os.environ.get("PATH", "/usr/bin:/bin"),
+             "LC_ALL": "C",
+-            "TMPDIR": "/var/tmp",
+             "HOME": str(home),
+             "PYTHONDONTWRITEBYTECODE": "1",
+         }
++        if os.environ.get("TMPDIR"):
++            env["TMPDIR"] = os.environ["TMPDIR"]
+         cases = []
+ 
+         root = _case_root(base, "positive")
