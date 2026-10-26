@@ -129,12 +129,12 @@ normal manifest evaluation, rooted at DIR, and compare the resulting status
 with `verdict` (`snapshot-verdict-mismatch`). `expected.json` itself is the
 caller-supplied trust anchor: it is not self-authenticated.
 
---selftest builds every fixture with tempfile.mkdtemp(dir="/var/tmp"), invokes
-this CLI as a subprocess for each case, asserts the return code and the exact
-finding-id set, copies the committed frozen snapshot to detect a mutated input,
-and removes its temp tree. Its final line is `selftest: <passed>/<total>
-passed`. It exits 0 only if every case passes, 1 on an assertion failure, 2 if
-its committed fixture is unavailable.
+--selftest builds every fixture with tempfile.mkdtemp() under the caller's
+TMPDIR, invokes this CLI as a subprocess for each case, asserts the return code
+and the exact finding-id set, copies the committed frozen snapshot to detect a
+mutated input, and removes its temp tree. Its final line is `selftest:
+<passed>/<total> passed`. It exits 0 only if every case passes, 1 on an
+assertion failure, 2 if its committed fixture is unavailable.
 
 Limitations (deliberate)
 ------------------------
@@ -988,12 +988,14 @@ def _emit(status, findings, counts):
 # ---------------------------------------------------------------- selftest
 
 def _selftest_env():
-    return {
+    env = {
         "PATH": os.environ.get("PATH", "/usr/bin:/bin"),
         "LC_ALL": "C",
-        "TMPDIR": "/var/tmp",
         "PYTHONDONTWRITEBYTECODE": "1",
     }
+    if os.environ.get("TMPDIR"):
+        env["TMPDIR"] = os.environ["TMPDIR"]
+    return env
 
 
 def _invoke(tool, *, root=None, manifest=None, frozen=None):
@@ -1153,7 +1155,7 @@ def selftest():
         print("finding selftest-unavailable: %s" % frozen_fixture)
         return EXIT_COULD_NOT_EVALUATE
 
-    base = Path(tempfile.mkdtemp(prefix="souji-r13-cert-selftest.", dir="/var/tmp"))
+    base = Path(tempfile.mkdtemp(prefix="souji-r13-cert-selftest."))
     results = []
 
     def case(name, root, want_rc, want_ids=(), want_status=None, manifest=None):
@@ -1489,7 +1491,7 @@ def main(argv=None):
     parser.add_argument("--root", help="evidence root; all fragment paths resolve here")
     parser.add_argument("--manifest", help="manifest JSON with an explicit fragments array")
     parser.add_argument("--frozen", help="frozen snapshot directory containing expected.json")
-    parser.add_argument("--selftest", action="store_true", help="run built-in /var/tmp fixture battery")
+    parser.add_argument("--selftest", action="store_true", help="run built-in temp fixture battery")
     args = parser.parse_args(argv)
 
     if args.selftest:

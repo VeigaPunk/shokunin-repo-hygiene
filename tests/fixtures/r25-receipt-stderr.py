@@ -16,7 +16,8 @@ OLD_RUNNER_REV = "c872eec"
 TOOL_PATH = "tools/souji-record-agreement.py"
 COUNTS = "keys=4 records=3 occurrences=13 mismatches=0"
 FULL_REV = re.compile(r"[0-9a-fA-F]{40}")
-SCRATCH = "/var/tmp"
+# the caller's scratch root: TMPDIR when set, else /var/tmp (never a bare /tmp)
+SCRATCH = os.path.abspath(tempfile.gettempdir()) if os.environ.get("TMPDIR") else "/var/tmp"
 
 
 def run(argv: list[str], *, cwd: str | None = None) -> subprocess.CompletedProcess[bytes]:

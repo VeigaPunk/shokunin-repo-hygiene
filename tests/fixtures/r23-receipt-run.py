@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """r23-receipt-run.py -- selftest fixture for tools/souji-receipt-run.py (souji round 23, C2).
 
-Builds a throw-away git repo under /var/tmp (never /tmp, never the lane tree), drives the
-receipt runner through eight cases and prints one `case=<n> expect=<...> got=<...>` line per
-case plus `selftest=<pass>/<total>`. Exit 0 iff every case passes.
+Builds a throw-away git repo under the caller's scratch root (TMPDIR when set, else /var/tmp;
+never the lane tree), drives the receipt runner through eight cases and prints one `case=<n>
+expect=<...> got=<...>` line per case plus `selftest=<pass>/<total>`. Exit 0 iff every case
+passes.
 
 Usage:
     python3 r23-receipt-run.py [path/to/souji-receipt-run.py]
@@ -44,7 +45,9 @@ import tempfile
 import time
 import traceback
 
-SCRATCH_PARENT = "/var/tmp"
+# The scratch parent is the caller's: TMPDIR when set, else /var/tmp (never a bare /tmp). The
+# receipt runner accepts --out under the same root (tools/souji-receipt-run.py scratch_root()).
+SCRATCH_PARENT = os.path.abspath(tempfile.gettempdir()) if os.environ.get("TMPDIR") else "/var/tmp"
 FORBIDDEN_OUT_PARENT = "/tmp"
 TOOL_REL = "tools/tiny-counter.py"
 # The counter prints the lane's counts line (what `verify` insists a counter receipt carries)

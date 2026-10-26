@@ -15,7 +15,7 @@ re-derives its machine-checkable assertions from the same revision:
             path must equal sha256 of that path's bytes at --rev.
 
 Counts line: assertions=<N> resolved=<R> skipped=<S> mismatches=<M>
-Exit 0 iff M == 0.  Read-only: git plumbing only, scratch under /var/tmp.
+Exit 0 iff M == 0.  Read-only: git plumbing only, scratch under $TMPDIR.
 
 Frozen contract: .ufo/waves/round-22/attempt2/preregistration.txt (C1).
 """
@@ -262,7 +262,8 @@ def _counts(decl: str, repo: str, rev: str) -> tuple[int, str]:
 
 def selftest(out=sys.stdout) -> int:
     checks: list[tuple[str, bool, str]] = []
-    base = tempfile.mkdtemp(prefix="souji-declared-evidence-", dir="/var/tmp")
+    # no dir= : the fixture tree lives under the caller's TMPDIR, never a literal /var/tmp
+    base = tempfile.mkdtemp(prefix="souji-declared-evidence-")
     try:
         repo, early, late = _fixture_repo(base)
         good_sha = hashlib.sha256(open(os.path.join(repo, "tools", "present.sh"), "rb").read()).hexdigest()

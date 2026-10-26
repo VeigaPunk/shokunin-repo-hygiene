@@ -2,7 +2,7 @@
 """r24 C1 counter: F2 write-safety size census over the frozen 8-case set, extended by r25 C2
 with the refusal-surface cases 9-12 (bare-nonempty, bare-empty, subdir, partialClone-only).
 
-Every case builds its own repo under a /var/tmp mkdtemp removed in a finally block; nothing here
+Every case builds its own repo under a TMPDIR-rooted mkdtemp removed in a finally block; nothing here
 reads or writes the lane. Manifest = sorted (relpath, type, mode, size, mtime_ns, sha256 of regular
 files) over the resolved common git dir, directories included; atime/ctime excluded. Case 5 adds a
 second manifest over the alternate object dir(s) named by objects/info/alternates (resolved per
@@ -27,7 +27,7 @@ import tempfile
 from pathlib import Path
 
 sys.dont_write_bytecode = True
-SCRATCH_PARENT = '/var/tmp'
+SCRATCH_PARENT = tempfile.gettempdir()
 TIMEOUT = 120
 COUNTS = re.compile(r'garbage=(\d+) size_garbage=(\d+) unreachable=(\d+) alternates=(\d+)')
 STUB = ("#!/usr/bin/env python3\n"

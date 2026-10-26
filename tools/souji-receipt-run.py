@@ -26,7 +26,9 @@ Receipt v1 header, in this order, then the two fences:
 
 Refusals (exit 2, no receipt written): --rev not a full 40-hex id; --rev not reachable from
 refs/heads, refs/tags or refs/remotes (refs/jj/* never counts — Q37); --tool absent at --rev;
---out under /tmp (Q4); --out anywhere but /var/tmp/ (OUT-OUTSIDE-VAR-TMP, r24 W2Scope: the old guard let a receipt truncate fleet files); --out inside --root (a receipt is not a repo write); --tool not an exact
+--out under /tmp (Q4); --out outside the caller's scratch root, i.e. TMPDIR when it is set and
+/var/tmp otherwise (OUT-OUTSIDE-SCRATCH, r24 W2Scope: the old guard let a receipt truncate fleet
+files); --out inside --root (a receipt is not a repo write); --tool not an exact
 element of the command argv (TOOL-NOT-IN-ARGV, the same predicate `verify` applies); a --tool path
 that redaction would rewrite (TOOL-PATH-REDACTED); a command where a whole-line redaction pass
 would still change the per-element-redacted line, i.e. a secret spanning argv elements
@@ -41,7 +43,8 @@ element of shlex.split(cmd); `./tools/x` does not match `tools/x`); a `cmd=` tha
 as shell words is RECEIPT-MALFORMED. Argv membership binds the label to the recorded text, not to
 the program that ran: `python3 tools/y.py tools/x.py` still verifies for tool=tools/x.py.
 
-The measured tree is a private `--no-local` clone under /var/tmp, checked out detached at <rev>:
+The measured tree is a private `--no-local` clone under the caller's scratch root (TMPDIR when
+it is set, else /var/tmp), checked out detached at <rev>:
 the runner never writes the source repository and never fetches from a remote. It is a counter
 runner, not a sandbox and not a proof that the command is side-effect free — the receipt records
 what ran.
@@ -63,7 +66,12 @@ import sys
 sys.dont_write_bytecode = True
 import tempfile
 
-SCRATCH_ROOT = "/var/tmp"
+
+def scratch_root() -> str:
+    """The caller's scratch root: TMPDIR when set, else /var/tmp (Q4: a receipt never goes to /tmp)."""
+    return os.path.abspath(tempfile.gettempdir()) if os.environ.get("TMPDIR") else "/var/tmp"
+
+
 COUNTS_RE = re.compile(
     r"(?:assertions=\d+ resolved=\d+ skipped=\d+ mismatches=\d+"
     r"|keys=\d+ records=\d+ occurrences=\d+ mismatches=\d+"
@@ -181,9 +189,11 @@ def cmd_run(args: argparse.Namespace) -> int:
     out = os.path.realpath(args.out)
     if out.startswith("/tmp/") or out == "/tmp":
         return refuse("OUT-UNDER-TMP", "receipts go outside /tmp (Q4)")
-    if not out.startswith("/var/tmp/"):
-        return refuse("OUT-OUTSIDE-VAR-TMP",
-                      "receipts are written under /var/tmp/ and copied into the lane by its helper")
+    base_scratch = os.path.realpath(scratch_root())
+    if not (out == base_scratch or out.startswith(base_scratch + os.sep)):
+        return refuse("OUT-OUTSIDE-SCRATCH",
+                      f"receipts are written under the caller's scratch root ({base_scratch}) "
+                      "and copied into the lane by its helper")
     if out == root or out.startswith(root + os.sep):
         return refuse("OUT-IN-REPO", "the receipt must not be written inside the measured repo")
     if not args.command:
@@ -208,7 +218,7 @@ def cmd_run(args: argparse.Namespace) -> int:
     if re.search(r"/[A-Za-z0-9_-]+-shokunin/", out) and not out.startswith(root + os.sep):
         return refuse("OUT-SIBLING-LANE", "a receipt is never written into another lane")
 
-    scratch = tempfile.mkdtemp(prefix="souji-receipt-", dir=SCRATCH_ROOT)
+    scratch = tempfile.mkdtemp(prefix="souji-receipt-", dir=scratch_root())
     tree = os.path.join(scratch, "repo")
     try:
         # a private local clone: the measured tree is a real repository at <rev>, so a counter

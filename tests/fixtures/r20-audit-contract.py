@@ -660,5 +660,27 @@ def main(argv=None) -> int:
         shutil.rmtree(top, ignore_errors=True)
 
 
+
+def _private_var_tmp() -> None:
+    """Scratch discipline (r32 C2): run this fixture inside a private /var/tmp backed by the caller's TMPDIR.
+
+    Its synthetic worlds and the pinned historical entrypoints it executes create scratch under a literal /var/tmp;
+    bwrap binds a fresh directory under TMPDIR over /var/tmp for the whole process tree, so nothing lands in the
+    host's /var/tmp. Without bwrap the fixture runs as before.
+    """
+    import os, shutil, subprocess, sys, tempfile
+    if os.environ.get("SOUJI_PRIVATE_VARTMP") or shutil.which("bwrap") is None:
+        return
+    private = tempfile.mkdtemp(prefix="souji-private-vartmp.")
+    try:
+        argv = [sys.executable] + (["-B"] if sys.flags.dont_write_bytecode else []) + sys.argv
+        rc = subprocess.call(["bwrap", "--dev-bind", "/", "/", "--bind", private, "/var/tmp", "--chdir", os.getcwd(), *argv],
+                             env=dict(os.environ, SOUJI_PRIVATE_VARTMP=private))
+    finally:
+        shutil.rmtree(private, ignore_errors=True)
+    sys.exit(rc)
+
+
 if __name__ == "__main__":
+    _private_var_tmp()
     sys.exit(main())

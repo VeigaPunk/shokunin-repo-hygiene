@@ -30,9 +30,9 @@ repeatable and fixes a caller-chosen minimum dependency set: a required path
 that the record does not declare is refused (`dependency-undeclared`) so the
 record cannot silently narrow what is measured. `--frozen` reads
 `DIR/expected.json` and re-measures a pinned snapshot. `--selftest` builds
-isolated fixtures under `/var/tmp`, re-invokes this CLI as a subprocess for
-every case, asserts the exact finding-id set and exit code literally, and
-removes its scratch tree.
+isolated fixtures under the caller's `TMPDIR`, re-invokes this CLI as a
+subprocess for every case, asserts the exact finding-id set and exit code
+literally, and removes its scratch tree.
 
 Exit codes (stable)
 -------------------
@@ -1292,7 +1292,7 @@ def _frozen_expected(root, record_path="record.json", verdict="reusable",
 
 def _selftest():
     try:
-        base = Path(tempfile.mkdtemp(prefix="souji-r14-cache-selftest.", dir="/var/tmp"))
+        base = Path(tempfile.mkdtemp(prefix="souji-r14-cache-selftest."))
     except OSError as exc:
         print("selftest-unavailable: %s" % (exc,))
         return 2
@@ -1308,10 +1308,11 @@ def _selftest():
         env = {
             "PATH": os.environ.get("PATH", "/usr/bin:/bin"),
             "LC_ALL": "C",
-            "TMPDIR": "/var/tmp",
             "HOME": str(home),
             "PYTHONDONTWRITEBYTECODE": "1",
         }
+        if os.environ.get("TMPDIR"):
+            env["TMPDIR"] = os.environ["TMPDIR"]
         cases = []
 
         root = _case_root(base, "positive")

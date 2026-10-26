@@ -4,14 +4,14 @@ set -euo pipefail
 R9_KIND=${1:?tool kind required}
 R9_SELF=$(readlink -f -- "${2:?tool path required}")
 case "$R9_KIND" in verify|vault|quarantine) : ;; *) exit 2 ;; esac
-R9_TMP=$(mktemp -d -p /var/tmp souji-round9-selftest.XXXXXX)
+R9_TMP=$(mktemp -d "${TMPDIR:-/var/tmp}/souji-round9-selftest.XXXXXX")
 trap 'rm -rf -- "$R9_TMP"' EXIT
 R9_PATH=$PATH
 R9_GIT=$(command -v git)
 R9_SHA=$(command -v sha256sum)
 R9_PASS=0 R9_FAIL=0 R9_OUT="" R9_RC=0
 R9_HEADER=$'source_path\tsource_sha256\tvault_path\tvault_sha256\texported_at\tnote'
-export TMPDIR=/var/tmp GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null
+export TMPDIR="${TMPDIR:-/var/tmp}" GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null
 export GIT_AUTHOR_NAME=souji-selftest GIT_AUTHOR_EMAIL=souji-selftest@fixture.invalid
 export GIT_COMMITTER_NAME=souji-selftest GIT_COMMITTER_EMAIL=souji-selftest@fixture.invalid
 unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_NAMESPACE

@@ -29,9 +29,9 @@ CLI
 file, or a bare filesystem path to a regular JSON file. `--root` is the lane
 checkout the declared fixture/tool paths are re-measured against. `--frozen`
 reads `DIR/expected.json` and re-measures a pinned snapshot. `--selftest`
-builds isolated synthetic roots under `/var/tmp`, re-invokes this CLI as a
-subprocess for every case, asserts the exact finding-id set and exit code
-literally, and removes its scratch tree.
+builds isolated synthetic roots under the caller's `TMPDIR` (tempfile's
+default), re-invokes this CLI as a subprocess for every case, asserts the
+exact finding-id set and exit code literally, and removes its scratch tree.
 
 Exit codes (stable)
 -------------------
@@ -1953,7 +1953,7 @@ def _frozen_expected(record_dir, root, record_path="record.json", verdict="clean
 
 def _selftest():
     try:
-        base = Path(tempfile.mkdtemp(prefix="souji-r15-preservation-selftest.", dir="/var/tmp"))
+        base = Path(tempfile.mkdtemp(prefix="souji-r15-preservation-selftest."))
     except OSError as exc:
         print("selftest-unavailable: %s" % (exc,))
         return 2
@@ -1973,7 +1973,9 @@ def _selftest():
         env = {
             "PATH": os.environ.get("PATH", "/usr/bin:/bin"),
             "LC_ALL": "C",
-            "TMPDIR": "/var/tmp",
+            # The child gets the caller's scratch root; with no TMPDIR of its
+            # own it uses this selftest's tree, never a shared /var/tmp.
+            "TMPDIR": os.environ.get("TMPDIR") or str(base),
             "HOME": str(home),
             "PYTHONDONTWRITEBYTECODE": "1",
         }

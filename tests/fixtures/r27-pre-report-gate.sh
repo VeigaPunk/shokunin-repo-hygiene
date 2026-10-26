@@ -4,7 +4,7 @@ set -euo pipefail
 export GIT_OPTIONAL_LOCKS=0
 ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 GATE="$ROOT/tools/souji-pre-report-gate.sh"
-D=$(mktemp -d /var/tmp/souji-r27-pre-report.XXXXXX)
+D=$(mktemp -d "${TMPDIR:-/tmp}/souji-r27-pre-report.XXXXXX")
 trap 'rm -rf -- "$D"' EXIT
 failures=0
 passes=0

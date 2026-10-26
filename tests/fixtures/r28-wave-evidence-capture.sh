@@ -8,7 +8,7 @@
 # `--verify --rev <full40>`).
 #
 # Every case runs under
-# ${SOUJI_R29_C2FIXTURE_BASE:-/var/tmp/souji-r29-wave-capture-fixture} (never the real
+# ${SOUJI_R29_C2FIXTURE_BASE:-${TMPDIR:-/tmp}/souji-r29-wave-capture-fixture} (never the real
 # lane wave dirs). Cases that need committed bytes get their own scratch git
 # repo, created with `git -C <dir>` and root-verified with
 # `git -C <dir> rev-parse --show-toplevel` before the first commit. Prints
@@ -48,7 +48,7 @@ if [[ -z $tool || ! -f $tool ]]; then
 fi
 printf 'tool=%s\n' "$tool"
 
-scratch_root=${SOUJI_R29_C2FIXTURE_BASE:-/var/tmp/souji-r29-wave-capture-fixture}
+scratch_root=${SOUJI_R29_C2FIXTURE_BASE:-${TMPDIR:-/tmp}/souji-r29-wave-capture-fixture}
 mkdir -p -- "$scratch_root" || exit 98
 base=$(mktemp -d "$scratch_root/run.XXXXXX") || exit 98
 trap 'rm -rf -- "$base"' EXIT

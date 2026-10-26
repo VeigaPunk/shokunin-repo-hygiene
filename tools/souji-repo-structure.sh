@@ -22,7 +22,8 @@
 # an error/incomplete read, not a trustworthy census, so the probe fails
 # closed instead of reporting numbers.
 # This wrapper requests no fetch, maintenance or index operation; Git reads
-# repository objects internally. It creates ONE mktemp directory under /var/tmp
+# repository objects internally. It creates ONE mktemp directory under the
+# caller's TMPDIR (falling back to /var/tmp)
 # only to capture the command's stdout/stderr, removes it on exit, and emits
 # numeric metrics only if the command exited 0 with EMPTY stderr. Ground truth
 # reported by AttackCoverage this wave (not re-run by this seat): the command
@@ -89,8 +90,8 @@
 # format changes are out of scope. The bounded, re-runnable evidence for this
 # host is tests/fixtures/r13-repo-structure.sh: it diffs a full .git
 # path/content/stat manifest (sha256, type, mode, size, mtime; no atime)
-# around one run in one isolated normal /var/tmp repository, after first
-# proving the manifest detects content and metadata deltas. The claim is "no
+# around one run in one isolated normal repository rooted in the caller's
+# TMPDIR, after first proving the manifest detects content and metadata deltas. The claim is "no
 # persistent delta observed for this run", never universal write-safety. A
 # size census authorizes no deletion (PROVINCE.md F2; QUALITY Q18).
 set -euo pipefail
@@ -262,7 +263,7 @@ emit_stderr_file() { # <file>: bounded diagnostics, prefixed, stderr only
 # evaluation: exit 0 AND empty stderr AND a known metric key. Any stderr on
 # exit 0 is treated as could-not-evaluate (the command can exit 0 while
 # skipping unreadable/missing objects); no partial numbers reach stdout.
-probe_tmp="$(mktemp -d /var/tmp/souji-repo-structure.XXXXXX)" || {
+probe_tmp="$(mktemp -d "${TMPDIR:-/var/tmp}/souji-repo-structure.XXXXXX")" || {
   probe_error mktemp-failed >&2
   exit 2
 }

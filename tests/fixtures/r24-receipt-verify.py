@@ -20,8 +20,8 @@ Frozen cases (contract: .ufo/waves/round-24/preregistration.txt, C3):
                     an absent lane root or receipt is a FAIL, never a skip-to-pass
 
 --lane-root defaults to the git toplevel containing --tool. All synthetic git writes stay in one
-/var/tmp scratch repo (never /tmp, never the lane), trap-cleaned on exit, error and signal; the
-lane root is only read (`verify` reads blobs and refs).
+scratch repo under the caller's scratch root (TMPDIR when set, else /var/tmp), trap-cleaned on
+exit, error and signal; the lane root is only read (`verify` reads blobs and refs).
 
 One `case=<id> verdict=PASS|FAIL expect=<...> got=<...>` line per case, then the last line
     cases=C pass=P refusals=R/2 regress=N/5
@@ -42,7 +42,9 @@ sys.dont_write_bytecode = True
 import tempfile
 import traceback
 
-SCRATCH_PARENT = "/var/tmp"
+# The scratch parent is the caller's: TMPDIR when set, else /var/tmp (never a bare /tmp). The
+# receipt runner accepts --out under the same root (tools/souji-receipt-run.py scratch_root()).
+SCRATCH_PARENT = os.path.abspath(tempfile.gettempdir()) if os.environ.get("TMPDIR") else "/var/tmp"
 TOOL_REL = "tools/tiny-counter.py"
 OTHER_REL = "tools/other-counter.py"
 # a path that is a substring (and suffix) of the TOOL_REL argv element but never an element

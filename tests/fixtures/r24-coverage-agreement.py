@@ -13,9 +13,10 @@ Usage:
 
     python3 -B tests/fixtures/r24-coverage-agreement.py --tool <path>
 
-Every case is a synthetic git repo under one /var/tmp mkdtemp (never /tmp), removed in `finally`
-and on SIGINT/SIGTERM/SIGHUP. The instrument runs with cwd = the scratch root (not the repo), so
-it must honour --root. One `case=` line per case, then the always-zero control run through the
+Every case is a synthetic git repo under one mkdtemp in the caller's TMPDIR
+(``tempfile.gettempdir()``, never a hard-coded /tmp or /var/tmp), removed in `finally` and on
+SIGINT/SIGTERM/SIGHUP. The instrument runs with cwd = the scratch root (not the repo), so it must
+honour --root. One `case=` line per case, then the always-zero control run through the
 same cases, then the last line:
 
     cases=C pass=P control=FALSE-GREEN-REJECTED|FALSE-GREEN-ACCEPTED
@@ -47,7 +48,7 @@ from collections import Counter
 
 sys.dont_write_bytecode = True
 
-SCRATCH_PARENT = "/var/tmp"
+SCRATCH_PARENT = tempfile.gettempdir()  # honours TMPDIR; never a hard-coded /tmp or /var/tmp
 TOOL_TIMEOUT = 60
 CLASSES = ("MISSING-FROM-MAP", "DANGLING-MAP-PATH")
 COUNTS = re.compile(r"^grounded=(\d+) mapped=(\d+) dangling=(\d+) mismatches=(\d+)$")

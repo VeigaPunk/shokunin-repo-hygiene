@@ -7,7 +7,8 @@
 # an observed PASS.
 #
 # CLAIM UNDER TEST (bounded): in one isolated normal (non-bare, non-linked)
-# /var/tmp repository, ONE invocation of `git repo structure --format=lines`
+# repository rooted in the caller's TMPDIR, ONE invocation of
+# `git repo structure --format=lines`
 # (or of the lane probe that runs it) produces exit 0 with EMPTY stderr plus
 # the structure metrics, and leaves NO PERSISTENT delta in the compared .git
 # path set, file bytes, types, modes, sizes or mtimes. Transient writes that
@@ -130,8 +131,8 @@
 #                                    precondition: a colocated figure is not
 #                                    interchangeable with a plain baseline.
 #
-# HERMETIC: hard-coded mktemp -d /var/tmp/souji-r13-repo-structure.XXXXXX
-# (TMPDIR ignored; no tmpfs fallback), trap cleanup, no network, no
+# HERMETIC: mktemp -d "${TMPDIR:-/var/tmp}/souji-r13-repo-structure.XXXXXX"
+# (TMPDIR honoured; /var/tmp fallback only when unset), trap cleanup, no network, no
 # live repository touched. The measured command is bounded by `timeout 120`.
 #
 # LIMITS: fresh SHA-1, loose-object, one- or two-commit repositories: one
@@ -185,8 +186,8 @@ command -v timeout >/dev/null 2>&1 || die2 "timeout not found"
 
 GIT_VERSION="$(git --version)"
 
-WORK="$(mktemp -d /var/tmp/souji-r13-repo-structure.XXXXXX)" ||
-  die2 "mktemp failed under /var/tmp"
+WORK="$(mktemp -d "${TMPDIR:-/var/tmp}/souji-r13-repo-structure.XXXXXX")" ||
+  die2 "mktemp failed under TMPDIR"
 rc=0
 trap 'rc=$?; rm -rf "${WORK:?}"; exit "$rc"' EXIT
 trap 'rc=$?; printf "id=SOUJI-R13-STRUCT-SETUP error=unexpected-failure rc=%s\n" "$rc" >&2; exit 2' ERR
@@ -228,6 +229,7 @@ ENV_ALLOW=(
   "GIT_TERMINAL_PROMPT=0"
   "GIT_CONFIG_GLOBAL=/dev/null"
   "GIT_CONFIG_NOSYSTEM=1"
+  "TMPDIR=${TMPDIR:-/var/tmp}"
 )
 
 # ---------------------------------------------------------------- manifests

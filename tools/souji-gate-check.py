@@ -228,7 +228,8 @@ def _gate(quote: str, opened="2026-10-25", snap="census/sources/x.txt",
 
 def selftest(out=sys.stdout) -> int:
     checks: list[tuple[str, bool, str]] = []
-    base = tempfile.mkdtemp(prefix="souji-gate-check-", dir="/var/tmp")
+    # no dir= : the fixture tree lives under the caller's TMPDIR, never a literal /var/tmp
+    base = tempfile.mkdtemp(prefix="souji-gate-check-")
     try:
         _mk(base, "corpus/SOURCES.md",
             "| id | source |\n|---|---|\n| S109 | row |\n| S110 | row |\n")

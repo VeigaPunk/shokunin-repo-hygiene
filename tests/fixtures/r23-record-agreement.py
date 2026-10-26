@@ -8,10 +8,10 @@ Exercises the frozen instrument CLI:
 Counts line on stdout: keys=K records=R occurrences=O mismatches=M  (exit 0 iff M==0)
 Mismatch rows:         MISMATCH<TAB><key><TAB><record><TAB><class><TAB><detail>
 
-It builds a synthetic lane repo under /var/tmp (hard-coded; never /tmp), trap-cleaned on exit,
-runs the instrument against it and prints one `case=<n> expect=<...> got=<...>` line per case,
-then `selftest=<pass>/<total>`, then the always-zero control verdict. Exit 0 iff every case
-observes its expectation.
+It builds a synthetic lane repo under the caller's TMPDIR (``tempfile.gettempdir()``, never a
+hard-coded /tmp or /var/tmp), trap-cleaned on exit, runs the instrument against it and prints one
+`case=<n> expect=<...> got=<...>` line per case, then `selftest=<pass>/<total>`, then the
+always-zero control verdict. Exit 0 iff every case observes its expectation.
 
 Frozen paths the synthetic repo carries (preregistration C1):
   SCORECARD.md                                           K1 record: r22 after 4-tuple + rev token
@@ -61,10 +61,11 @@ import shutil
 import signal
 import subprocess
 import sys
+import tempfile
 
 sys.dont_write_bytecode = True
 
-SCRATCH_ROOT = "/var/tmp/souji-r23-ExecFixtureAgreement"
+SCRATCH_ROOT = os.path.join(tempfile.gettempdir(), "souji-r23-ExecFixtureAgreement")
 TOOL_REL = os.path.join("tools", "souji-record-agreement.py")
 
 # Frozen paths (preregistration C1) — code constants, never data.
@@ -567,7 +568,7 @@ def find_tool(explicit: str | None) -> str | None:
 def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(description="fixture for tools/souji-record-agreement.py (r23 C1)")
     ap.add_argument("--tool", default=None, help="instrument path (default: walk up for tools/…)")
-    ap.add_argument("--keep", action="store_true", help="keep the /var/tmp scratch tree")
+    ap.add_argument("--keep", action="store_true", help="keep the scratch tree (under the caller's TMPDIR)")
     ap.add_argument("--verbose", action="store_true", help="echo every case's tool stdout")
     args = ap.parse_args(argv)
 

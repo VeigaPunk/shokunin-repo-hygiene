@@ -250,7 +250,8 @@ def _commit(path, message):
 
 
 def run_selftest():
-    top = tempfile.mkdtemp(prefix="souji-rev-pin-selftest-", dir="/var/tmp")
+    # no dir= : the fixture repo lives under the caller's TMPDIR, never a literal /var/tmp
+    top = tempfile.mkdtemp(prefix="souji-rev-pin-selftest-")
     passed = failed = 0
 
     def case(name, fn):

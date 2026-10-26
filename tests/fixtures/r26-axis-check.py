@@ -31,7 +31,7 @@ Output: one `CASE <n> <name> PASS|FAIL <detail>` line per case, then the last
 line `cases=12 pass=<P> control=FALSE-GREEN-REJECTED|FALSE-GREEN-ACCEPTED`.
 Exit 0 iff P==12 AND the control spelling is FALSE-GREEN-REJECTED.
 
-Every case owns an isolated world under /var/tmp/souji-r26-ExecAxisFixture/
+Every case owns an isolated world under TMPDIR/souji-r26-ExecAxisFixture/
 (a fresh run directory per invocation), removed in a finally block. Nothing is
 executed against the lane's real preregistration or SCORECARD.
 """
@@ -43,9 +43,11 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 
-SCRATCH_BASE = "/var/tmp/souji-r26-ExecAxisFixture"
-SCRATCH_PREFIX = "/var/tmp/souji-r26-"
+SCRATCH_ROOT = tempfile.gettempdir()
+SCRATCH_BASE = os.path.join(SCRATCH_ROOT, "souji-r26-ExecAxisFixture")
+SCRATCH_PREFIX = os.path.join(SCRATCH_ROOT, "souji-r26-")
 
 # Synthetic axes table mirroring the lane's round-26 declarations
 # (calibration 7 lowest non-retired, operability 8, coverage 8). Case 1 is

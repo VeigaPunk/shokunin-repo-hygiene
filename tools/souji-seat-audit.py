@@ -664,7 +664,7 @@ def selftest() -> int:
         else:
             failed += 1
             print(f"FAIL\t{cid}\tgot={got}\twant={sorted(want)}")
-    with tempfile.TemporaryDirectory(dir="/var/tmp") as td:
+    with tempfile.TemporaryDirectory() as td:
         spec = {"wave": "t", "reportDir": ".ufo/waves/round-9/w1",
                 "items": [{"name": "S", "role": "scribe", "prompt": "x"}, {"name": "Gone", "role": "scout", "prompt": "y"}]}
         sp = Path(td) / "spec.json"
@@ -677,7 +677,7 @@ def selftest() -> int:
         else:
             failed += 1
             print(f"FAIL\twave-summary\t{r['summary']}")
-    with tempfile.TemporaryDirectory(dir="/var/tmp") as td:
+    with tempfile.TemporaryDirectory() as td:
         # M10 (MutateSeatAudit2): run() must wire each seat's scratch dir
         # (spec context `souji-r<N>-` + seat name) into the write-scope check —
         # a seat may write its own scratch, not a neighbour's.
@@ -699,7 +699,7 @@ def selftest() -> int:
             print(f"FAIL\trun-scratch-wiring\t{r['summary']}")
     # The grant oracle is independent of the parser: a single exact patch
     # request cannot authorize any of its four same-stem alternatives.
-    with tempfile.TemporaryDirectory(dir="/var/tmp") as td:
+    with tempfile.TemporaryDirectory() as td:
         root = Path(td)
         sp = root / "grants.json"
         artifact_stem = rep[:-3]

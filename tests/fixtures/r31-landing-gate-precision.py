@@ -57,8 +57,9 @@ Boundary: this fixture only runs the selected gate binary against real git
 repositories it creates under a private directory inside $TMPDIR (removed in
 finally). It never writes in a lane checkout, never runs lane scripts, and
 never touches .ufo/state, MANIFEST.json or a sibling lane. Note: the gate
-itself pins its parse-snapshot directory to /var/tmp and removes it in
-finally; that path is the tool's own behaviour, not this fixture's.
+itself creates its parse-snapshot directory through tempfile, so it honours
+the caller's TMPDIR, and removes it in finally; that path is the tool's own
+behaviour, not this fixture's.
 """
 
 import argparse
