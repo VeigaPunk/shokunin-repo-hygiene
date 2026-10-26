@@ -36,7 +36,7 @@ when the file exists, not before.
 | ground | status | entries |
 |---|---|---|
 | receipts: pushed / moved-to-obsidian / stale | core (SKILL.md, tools/) | `knowledge/obsidian-ledger.tsv` (operator-fed, header-only) |
-| F1 git-native housekeeping vs receipts | frontier, entries held | `knowledge/git-auto-maintenance-prunes-worktrees.md`, `knowledge/git-grace-periods-and-expire-to.md`, `knowledge/git-auto-maintenance-trigger-set.md`, `knowledge/git-auto-maintenance-trigger-set-r23.md`, `knowledge/jj-keep-ref-expiry.md`, `knowledge/jj-dropped-keep-object-lifetime.md` |
+| F1 git-native housekeeping vs receipts | frontier, entries held | `knowledge/git-auto-maintenance-prunes-worktrees.md`, `knowledge/git-grace-periods-and-expire-to.md`, `knowledge/git-auto-maintenance-trigger-set.md`, `knowledge/git-auto-maintenance-trigger-set-r23.md`, `knowledge/jj-keep-ref-expiry.md`, `knowledge/jj-dropped-keep-object-lifetime.md`, `knowledge/jj-abandoned-object-mtime-clock.md` |
 | F2 repository size census | frontier, no entry (r12 candidate deferred, `lessons/round-12.md` `## Gate`; sweep: `ls corpus/knowledge \| grep -ciE 'size\|structure\|sizer'` → 0, 2026-10-19); superseded by Round 24 F2 row (:517) | — |
 | F3 duplicate verdicts | frontier, entries held | `knowledge/dupe-finders-detect-then-act.md`, `knowledge/duplicate-verdict-identity.md`, `knowledge/duplicate-verdict-byte-equality.md` |
 | F4 restorable quarantine, file-system semantics | frontier; layout and staging held; read-side fields admitted r24; reference writer + mechanism set admitted r27 (implementation evidence only) | `knowledge/trash-spec-restorable-quarantine.md`, `knowledge/quarantine-same-filesystem-rename.md`, `knowledge/quarantine-staging-no-copy-r23.md`, `knowledge/quarantine-origin-record-fields-r24.md`, `knowledge/origin-record-writer-r27.md`, `knowledge/origin-record-mechanism-set-r33.md`, `knowledge/origin-record-exclusivity-r28.md`, `knowledge/origin-record-durability-r28.md` |
@@ -699,3 +699,65 @@ frontier ground to Core (PROVINCE `## Round 31 boundary note`).
   `SKILL.md`: a packed keep ref skips the loose-ref age gate, so packedness — not the `--expire`
   threshold — is what the r30 record discriminates.
 - Wave-2 corrections (append-only; `census/round-31/waves/w2/SwarmCritic21.md` findings 2-3): the F1 frontier line at `:46` (r12 section) still reads "remaining: keep-ref expiry unmeasured, fleet exposure numerator re-census" and is superseded by `### Frontier (r30)` and `### Frontier (r31)` above — keep-ref expiry was measured in round 30 and the object lifetime behind it in round 31; the remaining F1 item is the fleet exposure numerator re-census. "Closes the object-prune question" above overstates: the object's own mtime clock (`gc.pruneExpire`) is sourced, not measured, and the round-31 run isolates the descendant keep ref and the reflog entry only.
+
+## Round 32 — F1 the abandoned object's own mtime clock
+
+Appended; the sections above stand. One knowledge entry is admitted for F1, measured this round
+with real jj 0.45.1 and git 2.56.0 in scratch repositories under the round's scratch root, never
+against a lane:
+
+- `knowledge/jj-abandoned-object-mtime-clock.md` — how an abandoned commit's object dies by its
+  own modification time once neither a keep ref nor a reflog entry names it. Five arms of one
+  fixture, each in its own colocated repository, with the `refs/jj/keep/*` refs and the reflog
+  entries naming the object already gone: `recent` (a just-created object), `old` (backdated by
+  `touch -d` on the object's loose files), `mixed` (an old object and a recent one in one
+  repository), `never` (`gc.pruneExpire=never`) and `nocruft` (`gc.cruftPacks=false`). The
+  record's `where` field is what separates an object kept loose from one kept inside a cruft
+  pack, whose `.mtimes` file carries the clock per object — sourced in the entry's Gate, not
+  measured by any arm. The measured lines are
+  `RESULT arm=recent step=gc-default obj=B mtime=recent where=cruft object_present=yes`,
+  `RESULT arm=old step=gc-default obj=B mtime=old where=absent object_present=no`,
+  `RESULT arm=mixed step=gc-default obj=B mtime=old where=absent object_present=no`
+  and `obj=C` in the same step, `RESULT arm=never step=gc-pruneexpire-never obj=B mtime=old where=cruft object_present=yes`
+  and `RESULT arm=nocruft step=gc-cruft-disabled obj=B mtime=old where=absent object_present=no`.
+  Fixture `../tests/fixtures/r32-jj-mtime-clock.sh`; measured record
+  `../census/round-32/records/jj-mtime-clock-run.txt` (`jj-version: jj 0.45.1`,
+  `git-version: git version 2.56.0`, 22 `RESULT` lines, deterministic across runs and held to
+  `../census/round-32/c3-contract.txt` by the C3 counter's L14).
+
+Coverage-map effect: the F1 row at `:39` now names a seventh entry with its status cell unchanged
+(`frontier, entries held`); the six entries it already carried are unchanged. F1 stays frontier —
+a measured edge class does not promote a frontier ground to Core (PROVINCE
+`## Round 32 boundary note (F1 mtime clock)`).
+
+### Frontier (r32)
+
+- F1 — the object's own mtime clock is now measured (the entry above;
+  `../census/round-32/records/jj-mtime-clock-run.txt`), including the question the r31 section
+  left open: whether git's cruft-pack handling changes that keeper's reach. Remaining: the fleet
+  exposure numerator re-census named at `:46`, and the classes the entry's own limits section leaves
+  open — no lane or fleet repository gc'd, the mtime keeper not isolated against a live keep ref or
+  a reflog entry, the `never` asymmetry read from the docs rather than implemented, and the two-week
+  window sourced rather than waited out.
+- F2, F3, F4 — unchanged. F5 stays list-only; the reap protocol and NAMESPACE pin remain
+  operator-held. Certification OFF, K5 HELD.
+
+### Round 32 corrections
+
+- The r12 F1 row at `:39` was replaced in place rather than superseded by a later table: its
+  entries cell gained `knowledge/jj-abandoned-object-mtime-clock.md` and its status cell, already
+  `frontier, entries held`, was not reworded. Map rows are edited in place (r28 the F4 row, r29
+  the F3 row, r30 and r31 this row); the append-only record is this section.
+- The r31 section's `### Frontier (r31)` disclosed "whether git's cruft-pack handling changes the
+  mtime keeper's reach" as unmeasured, and its wave-2 correction said the object's own mtime clock
+  (`gc.pruneExpire`) "is sourced, not measured". Both stand as history and are not rewritten; the
+  r32 entry is that clock's measurement, and `PROVINCE.md` `## Round 32 boundary note (F1 mtime
+  clock)` records the closure.
+- The r31 C3 record printed `arm=reflog-only`, which is outside its frozen contract's two arm
+  values (`solo`, `descendant`), and the deviation was disclosed only after landing (r31 closure
+  routed defect 3, class D1). The record is not rewritten: it stands as landed, and the r31 section
+  above stands with it. What changes is instrumentation — `tools/souji-record-contract.py` now
+  fails that shape over the r31 record and the reconstructed r31 contract (four `BAD` lines 16-19
+  naming `arm=reflog-only`, then `lines=17 bad=4`, exit 1;
+  `../census/round-32/records/m1-red-before.txt`), and the r32 C3 counter's L14 holds this round's
+  record to `../census/round-32/c3-contract.txt` as frozen at the preregistration.

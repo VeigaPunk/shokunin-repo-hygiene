@@ -234,3 +234,27 @@ no receipt class, gate or verdict is added, jj's store GC stays outside this lan
 receipt-root rule is untouched. Certification OFF, K5 HELD. Sources:
 `census/round-31/records/preregistration.txt` claim C3; the entry and its Gate; the run record
 `census/round-31/records/jj-object-clock-run.txt`.
+
+## Round 32 boundary note (F1 mtime clock)
+
+F1 now holds a measured entry — `corpus/knowledge/jj-abandoned-object-mtime-clock.md` — beside the
+six entries its map row at `corpus/README.md:39` already named, and it measures the one holder the
+r30 and r31 notes called sourced rather than measured: the abandoned commit's own modification
+time. With the keep refs and the reflog entries naming the object gone, the fixture's five arms
+isolate that clock — a recent object and an old one in separate repositories and in one, under a
+default `git gc`, under `gc.pruneExpire=never` and under `gc.cruftPacks=false` — and the record's
+`where` field separates an object kept loose from one kept inside a cruft pack, whose `.mtimes`
+file carries the clock per object (sourced in the entry's Gate). Two boundary consequences follow,
+and they are the r31 ones restated: an object that survives a prune is not evidence that a deletion
+completed, because the prune date may simply be older than the object's mtime or `gc.pruneExpire`
+may reach it; and absence is not proved by an object count the lane did not run. What this does not
+record: which reflog file carries the naming entries, the real 90/30-day windows (sourced from
+git-reflog(1) and the `gc.*` config, not waited out), the fleet exposure numerator, and jj's own
+store GC, which stays outside this lane — no `jj op abandon` and no `jj util gc` runs on a lane
+repository and the operator's store is left alone. One entry does not promote F1 to Core: Core stays
+the `## Owns` and `## Work surfaces` list above (`:60`), the F1 row keeps the status
+`frontier, entries held`, and this round adds nothing to either list. The round's one tool change is
+`tools/souji-record-contract.py`, a record-versus-contract check that creates no receipt class, no
+receipt and no deletion verdict; the r17 receipt-root rule is untouched. Certification OFF, K5 HELD.
+Sources: `census/round-32/records/preregistration.txt` claim C3; the entry and its Gate; the run
+record `census/round-32/records/jj-mtime-clock-run.txt`.
