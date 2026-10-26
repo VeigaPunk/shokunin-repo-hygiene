@@ -492,3 +492,15 @@ Owned scores unchanged (calibration 7, coverage 8, operability 8): C1 and C2 mis
 ### Planned (appended at round 32)
 
 - **r33 (planned r32):** calibration: rebuild the capability-count enumeration per count statement with digit-free unit words and shared lines, prove a pre-freeze feasibility leg (QUALITY Q70) before data, and re-derive the 6 unbound and 17 withdrawn r32 items under it; operability: close the C2 predicate gaps (clone-local scratch, zero-case runs, digest-pinned consumers per Q73), restage `census/round-21/run-acceptance.py`'s cache-tool pin so `tools/souji-evidence-cache.py` can take `TMPDIR`, fix the trailing-slash `TMPDIR` regressions, the two remaining literal `/var/tmp` scripts and M1's literal-prefix scope; coverage: F1's unread `.mtimes` contents or the cruft call's argv, or another frontier surface. Certification OFF, K5 HELD.
+
+### Round 33 capability currency (C1, appended; base 6017a482e7068d5afb7617640198fbb0fe743357; items `census/round-33/c1-items.tsv`; rules and cause execution in `census/round-33/c1-counter.py`)
+
+Each row restates one capability row whose named command no longer produces (or never produced) its stated outcome; the original row above stays as written. Drafted and proved by wave-1 seats RestateK04, RestateK05, RestateK16, RestateK17 and RestateK18 (their receipts are part of the round-33 wave capture); all five changes are growth or a documentation defect, none a lost capability.
+
+| id | row | status | exit | run | statement | cause | reason |
+|---|---|---|---|---|---|---|---|
+| K04 | SCORECARD.md:155 | restated | 0 | same | `selftest=PASS ids=7/7` | 728b2ce71acbe574ae3036b456724d0a3d6f8f08 | selftest grew from 5 to 7 cases at 728b2ce: round-25 added the linked-common-dir and colocated-vs-plain probe cases, all PASS |
+| K05 | SCORECARD.md:158 | restated | 0 | same | `SELFTEST pass=65 fail=0` | ddb73474433977ff54b015ac3e77669ff2537353 | selftest grew from 18 to 28 cases at ddb7347 (round-17 D6 gate exact ids and replays; the fenced-and-table-ignored case was renamed benign-status-words with a stricter status_lines count), and to 65 cases by 2d9bca55, all passing |
+| K16 | SCORECARD.md:173 | restated | 0 | same | `selftest=15/15` | 1dd8b1e30a971e662480b49bedf1000667fbddea | selftest grew from 9 to 11 cases at 1dd8b1e (K3 class-missing and K2 tally-stale-log fixtures added; r25 growth took the base run to 15), all 15 pass and the control line still reads FALSE-GREEN-REJECTED |
+| K17 | SCORECARD.md:174 | restated | 0 | same | `cases=12 pass=12 control=FALSE-GREEN-REJECTED lost_found=WRITE-DETECTED` | 679e2d02f46ec06447d679d9395d6592c5e35f5c | selftest grew from 8 to 12 cases at the round-25 bare and refusal edge-case commit: cases 9-12 added, all pass |
+| K18 | SCORECARD.md:175 | restated | 0 | `python3 -B tests/fixtures/r24-coverage-agreement.py --tool tools/souji-coverage-agreement.py` | `cases=9 pass=9 control=FALSE-GREEN-REJECTED` | 07f83e69979b1032f9de4fe876739a8dccc7242b | the r26 row wrote the fixture without its required --tool argument; with the tool the fixture prints its 9/9 summary |
