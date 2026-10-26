@@ -34,6 +34,12 @@ A base-cell run binding uses the base literal and command unchanged (no stem rul
 mismatch: UNBOUND (no binding), RUN-MISMATCH, RECORD-MISMATCH or BAD-ROW (a superseding row that breaks a
 rule above). If SCORECARD.md at REV does not begin with its --base bytes, every item is a mismatch.
 
+AMENDMENT A2 (round 31, after wave-1 SwarmCritic31 bound a `15/15` cell to the non-count text `15-config": LANE /
+"tests/fixtures/r15` (two 15s); stricter-only; the v1 bytes committed at the preregistration
+1d45496ae0e519b6fa0e9fa3b1f7e16130f4b525 still run and must also meet the target): a superseding row's literal, in
+both branches, must have a count shape — `[word=]N/M`, or two `word=N` fields separated by whitespace or the two
+bytes backslash-t (`cases=8 pass=4`, `total=32<TAB>pass=32`, `pass=61\tfail=0`); anything else is BAD-ROW(shape).
+
 Output: one ITEM line per item, then
     SUMMARY items=<n> bound_run=<a> bound_record=<b> unbound=<u> mismatches=<m> rev=<REV>
 Exit 0 iff mismatches=0; 1 otherwise; 2 could-not-evaluate. Read-only on --root; one private clone per
@@ -54,6 +60,7 @@ ROW = re.compile(
     r"^\|\s*(L\d{2})\s*\|\s*SCORECARD\.md:(\d+)\s*\|\s*([^|]+?)\s*\|\s*(run|record):\s*([^|]+?)\s*\|"
 )
 BANNED = ("-c", "-h", "--help", "--version")
+COUNT_FORM = re.compile(r"^(?:[A-Za-z_]+=)?\d+/\d+$|^[A-Za-z_]+=\d+(?:\s+|\\t)[A-Za-z_]+=\d+$")
 
 
 def cne(msg):
@@ -213,6 +220,8 @@ def main():
                 verdict, detail = "MATCH", target
                 if sline != line or len(ints(lit)) < 2:
                     verdict = "BAD-ROW(line-or-literal)"
+                elif not COUNT_FORM.match(lit):
+                    verdict = "BAD-ROW(shape)"  # A2
                 elif kind == "run":
                     try:
                         argv = shlex.split(target)
