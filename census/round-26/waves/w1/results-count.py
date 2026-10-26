@@ -227,11 +227,9 @@ def main(argv: list[str]) -> int:
     if declared_seats is None and declared_dead is None:
         print("agreement=undeclared (no seats/dead fields in the results file)")
     else:
-        seats_shown = declared_seats if declared_seats is not None else "-"
-        dead_shown = declared_dead if declared_dead is not None else "-"
         print(
             f"agreement={'mismatch' if mismatch else 'ok'} "
-            f"declared-seats={seats_shown} declared-dead={dead_shown}"
+            f"declared-seats={declared_seats} declared-dead={declared_dead}"
         )
     for problem in problems:
         print(problem)

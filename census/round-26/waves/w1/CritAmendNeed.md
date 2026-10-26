@@ -16,16 +16,13 @@ relaxed by any clause.
 
 ## Evidence
 
-Lane moved throughout this review (`ba8b54b` -> `0c92c2e` -> `9a6e0f1` -> **`166baa1`**,
-2026-10-25). Every number below was re-measured at `166baa1`; the tool and fixture blobs are
-identical between `9a6e0f1` and `166baa1` (`git diff --stat 9a6e0f1 HEAD -- tools/... tests/...`
-is empty), so the R2 probe outputs carry over unchanged.
+Lane moved three times during this review (`ba8b54b` -> `0c92c2e` -> **`9a6e0f1`**, 2026-10-25).
 Every behavioural claim below was produced from the **committed blob at a named revision**,
 snapshotted to `/var/tmp/souji-r26-CritAmendNeed/`, never from the live worktree: at one point the
 worktree copy of `tools/souji-axis-check.py` was 163 lines and crashed with
 `ValueError: too many values to unpack` mid-edit, and `census/round-26/records/c3-after.tsv`
-changed under me (three-line stdout with no fixture verdict -> `cases=12 ... FALSE-GREEN-REJECTED`
-under a new `rev`). Scratch removed at end; nothing written outside this report.
+changed under me from `cases=11` to `cases=12`. Scratch removed at end; nothing written outside
+this report.
 
 Base derivation, `git show 0eca7c8:SCORECARD.md | wc -l` -> `254`; headings:
 `1:#`, `9:## Axes`, `17:### Round 23 measurements`, `63:## Capabilities`, `95:## Planned`,
@@ -36,7 +33,7 @@ same-landing correction`, `227:` fence close, `229:---`, `231:### Round 25 measu
 
 C1 protected spans, base bytes searched in the tip `SCORECARD.md` as a byte substring:
 
-| base span | what | at tip 166baa1 |
+| base span | what | at tip 9a6e0f1 |
 |---|---|---|
 | 1-16 | title + `## Axes` table | PRESENT verbatim |
 | 17-62 | Round 23 block | PRESENT verbatim |
@@ -49,12 +46,11 @@ Why 63-94 is absent (and only it): base line 92 is a byte-prefix of tip line 153
 `base92_is_prefix_of_head153: True`, tail added = ` *(R3 dated 2026-10-25: the digest binds the
 labelled file's committed bytes and the recorded argv label, not the executed program.)*`. Planned
 bullets: base 2 lines matching `^- \*\*r2[45]` -> tip 4 (exactly the two payload bullets appended).
-C1 counter at tip: `markers=0` / `headings=17 44 78`; C2: `grounded_f1=2` / `registry_rows=132`;
-C3 counter: `axis_check_exit=0`, `cases=12 pass=12 control=FALSE-GREEN-REJECTED`, `fixture_exit=0`
-(all four run live at `166baa1`).
+C1 counter at tip: `markers=0` / `headings=17 44 78`. C2 counter at tip: `grounded_f1=2` /
+`registry_rows=132`.
 
 C2 registry is a pure append at the tip:
-`git diff --numstat 0eca7c8 166baa1 -- corpus/SOURCES.md` -> `5	0`; deleted lines `0`; added ids
+`git diff --numstat 0eca7c8 9a6e0f1 -- corpus/SOURCES.md` -> `5	0`; deleted lines `0`; added ids
 `S128 S129 S130 S131 S132` in that order. The two admitted entries cite only `S128`-`S132`
 (`grep -oE 'S1[0-9]{2}'` over both entry files), so no base row's `used-by` needs to change.
 
@@ -136,11 +132,9 @@ the amendment text, `assimilation/quarantine-slice`, `assimilation/slice-verdict
 9. **Amendment 2 carries no red-arm receipt and is not logged in LOG.md.** `:216-218` requires both.
    The nearest artifact to a red arm is a wave-report table row (`c1-verify.md:69`, literal recipe ->
    `17 50 204` FAIL), which is not a receipt and postdates the first green receipt `4453128`.
-10. **Closure condition, not an amendment defect:** all three after receipts predate the landing tip
-    (`c1-after` `rev=07f83e6`, `c2-after` `rev=e0f8dcd`, `c3-after` `rev=c5949013`, tip `166baa1`).
-    Each must be re-issued at the final landing tip: their outputs are already identical there
-    (`markers=0` / `headings=17 44 78`; `grounded_f1=2` / `registry_rows=132`;
-    `claims=3 flags=0` / `cases=12 pass=12 control=FALSE-GREEN-REJECTED`).
+10. **Closure condition, not an amendment defect:** `c1-after.tsv` is bound to `rev=07f83e6`, not the
+    landing tip; it must be re-issued at the final tip (its output is already identical there:
+    `markers=0`, `headings=17 44 78`).
 
 ## Attack log
 

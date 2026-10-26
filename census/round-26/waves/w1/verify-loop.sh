@@ -175,7 +175,6 @@ if [ "$gate_rc" -eq 0 ] && [ "$gate_e" = 2 ] && [ "$gate_ok" = 2 ] && [ "$gate_f
   emit c2-gate PASS "rc=$gate_rc entries=$gate_e ok=$gate_ok fail=$gate_f"
 else
   gate_detail=$(printf '%s\n' "$gate_out" | grep -m1 '^FAIL' || true)
-  [ -n "$gate_detail" ] || gate_detail=$(printf '%s\n' "$gate_out" | awk 'NF{print; exit}')
   emit c2-gate FAIL "rc=$gate_rc entries=${gate_e:-none} ok=${gate_ok:-none} fail=${gate_f:-none} first=$(clip "$(flat "$gate_detail")" 200)"
 fi
 
@@ -252,7 +251,7 @@ fi
 
 c_tier=$(awk -F'|' '/^\|[[:space:]]*S[0-9][0-9][0-9]+[[:space:]]*\|/ {t=$5; gsub(/[[:space:]]/,"",t); n[t]++} END{for(k in n) printf "%s=%d ", k, n[k]; print ""}' corpus/SOURCES.md 2>&1)
 c_tier_sum=$(printf '%s' "$c_tier" | tr -s '[:space:]' '\n' | awk -F= 'NF==2{n+=$2} END{print n+0}')
-c_tier_bad=$(printf '%s' "$c_tier" | tr -s '[:space:]' '\n' | awk -F= 'NF==2 && $1 !~ /^[ABC]$/{print ($1=="" ? "EMPTY" : $1)}' | tr '\n' ' ')
+c_tier_bad=$(printf '%s' "$c_tier" | tr -s '[:space:]' '\n' | awk -F= 'NF==2 && $1 !~ /^[ABC]$/{print $1}' | tr '\n' ' ')
 c_tier_bad=${c_tier_bad% }
 if [ "$c_tier_sum" = "$EXPECT_ROWS" ] && [ -z "$c_tier_bad" ]; then
   emit census-tier-hist PASS "tier=$c_tier sum=$c_tier_sum"
@@ -262,7 +261,7 @@ fi
 
 c_status=$(awk -F'|' '/^\|[[:space:]]*S[0-9][0-9][0-9]+[[:space:]]*\|/ {s=$9; gsub(/[[:space:]]/,"",s); n[s]++} END{for(k in n) printf "%s=%d ", k, n[k]; print ""}' corpus/SOURCES.md 2>&1)
 c_status_sum=$(printf '%s' "$c_status" | tr -s '[:space:]' '\n' | awk -F= 'NF==2{n+=$2} END{print n+0}')
-c_status_bad=$(printf '%s' "$c_status" | tr -s '[:space:]' '\n' | awk -F= 'NF==2 && $1 !~ /^(queued|mined|rejected)$/{print ($1=="" ? "EMPTY" : $1)}' | tr '\n' ' ')
+c_status_bad=$(printf '%s' "$c_status" | tr -s '[:space:]' '\n' | awk -F= 'NF==2 && $1 !~ /^(queued|mined|rejected)$/{print $1}' | tr '\n' ' ')
 c_status_bad=${c_status_bad% }
 if [ "$c_status_sum" = "$EXPECT_ROWS" ] && [ -z "$c_status_bad" ]; then
   emit census-status-hist PASS "status=$c_status sum=$c_status_sum"
@@ -312,7 +311,7 @@ done
 if [ "$r_fail" -eq 0 ]; then
   emit receipts PASS "verify_ok=$r_ok fail=0"
 else
-  emit receipts FAIL "verify_ok=$r_ok fail=$r_fail unverified=${r_bad# }${r_missing:+ missing=${r_missing# }}"
+  emit receipts FAIL "verify_ok=$r_ok fail=$r_fail unverified=${r_bad# }${r_missing:+ missing=${r_missing# }"
 fi
 
 # ---------------------------------------------------------------- summary ----

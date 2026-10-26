@@ -24,7 +24,7 @@ revision named and are **not** landing-gate evidence; the tip moved during draft
 
 | claim | axis | surface class | frozen counters | declared receipts |
 |---|---|---|---|---|
-| C1 SCORECARD generation-scaffold census + integration | calibration (7) | bookkeeping-file | K1 `grep -cE '^(Insert the table below directly above\|Optional same-landing correction)' SCORECARD.md` = 2 → 0; K2 `awk '/^### Round (23\|24\|25) measurements/{printf "%s ", NR} END{print ""}' SCORECARD.md` base `17 175 231` → exactly three headings ordered n25 < n24 < n23 | `census/round-26/records/c1-before.tsv`, `c1-after.tsv` (prereg requires each `verify=ok`) |
+| C1 SCORECARD generation-scaffold census + integration | calibration (7) | bookkeeping-file | K1 `grep -cE '^(Insert the table below directly above\|Optional same-landing correction)' SCORECARD.md` = 2 → 0; K2 `awk '/^### Round (23\|24\|25) measurements/{printf "%s ", NR} END{print ""}' SCORECARD.md` base `17 175 231` → exactly three headings ordered n25 < n24 < n23 | `census/round-26/records/c1-before.tsv`, `c1-after.tsv` (each `verify=ok`) |
 | C2 F1 auto-maintenance trigger-set assimilation | coverage (8) | knowledge-entry + registry-append | K1 `git grep -l '^ground: F1' 0eca7c8 -- corpus/knowledge/ \| wc -l` 0 → 2; K2 gate `entries=2 ok=2 fail=0` rc 0; K3 `sources-census.sh validate … souji` rc 0, rows 127 → 132; K4 coverage agreement `grounded=7 …` → `grounded=9 mapped=9 dangling=0 mismatches=0 kill_tested=7 kill_violations=0` | `c2-before.tsv`, `c2-k4-base.tsv`, `c2-after.tsv`, `c2-k4-after.tsv`, `c2-gate.tsv` |
 | C3 preregistration axis-of-surface checker | operability (8) | instrument-acquisition | K1 tool absent → present, `claims=3 flags=0` rc 0 on this round's own prereg; K2 fixture `cases=12 pass=12 control=FALSE-GREEN-REJECTED` rc 0 | `c3-before.tsv`, `c3-after.tsv` |
 
@@ -41,15 +41,13 @@ Receipt values read from committed bytes during drafting:
   `axis_check_tool=present`, `claims=3 flags=0`, `axis_check_exit=0`, `cases=12 pass=12
   control=FALSE-GREEN-REJECTED`, `fixture_exit=0`.
 
-> **L1 checklist (claims block):** (a) re-run every frozen counter (C1 K1–K2, C2 K1–K4, C3 K1–K2) at
-> TIP-40 and replace each "after"
+> **L1 checklist (claims block):** (a) re-run all five counters at `TIP-40` and replace each "after"
 > literal; (b) C1: the `c1-after.tsv` receipt is bound to `07f83e6`, **not** the tip — regenerate it at
 > the landing tip per K1's "run at the landing tip in a clean tree"; (c) C2: `c2-k4-after.tsv` and
-> `c2-gate.tsv` landed at `9a6e0f1` (bound to rev `33e6807`), so only the tip re-run remains; (d) C3:
-> `c3-control.tsv` was deleted at `0c92c2e` (control folded into fixture case 12) and the lesson's
-> Receipts block was corrected at `166baa1` — re-check that the corrected text still matches the tree;
-> (e) record each receipt's `verify=` state only after running `tools/souji-receipt-run.py verify` at
-> the tip.
+> `c2-gate.tsv` are **absent** from `census/round-26/records/` — produce both or disclose the gap;
+> (d) C3: `c3-control.tsv` was deleted at `0c92c2e` (control folded into fixture case 12); amend the
+> lesson's Receipts block which still names it; (e) record each receipt's `verify=` state only after
+> running `tools/souji-receipt-run.py verify` at the tip.
 
 ## Work performed
 
@@ -113,10 +111,7 @@ and name the final landing commit**):
 | `ba8b54b85814dd980aa96050fe111c7cbfd4956a` | C1 `c1-after` regenerated at `07f83e6` |
 | `c5949013f89fe0b8289bdb7050ab64a47e08c911` | C3 R4 per frozen contract; wave 12-case fixture adopted; counter adds fixture arm |
 | `0c92c2e6fbe18f2f3009504d87240b6a22ad3d5b` | C3 receipts re-run; `c3-control.tsv` removed (control is fixture case 12) |
-| `33e6807ea54ad5fa295d9138067a9a78f3b0f7ec` | C2 Gate sections on both entries (opened/ADMIT/REJECT/located snapshot quotes); gate `entries=2 ok=2 fail=0` |
-| `9a6e0f1` (`pending full-40 in the final report`) | C2 receipts at tip `33e6807`: `c2-gate.tsv` (`entries=2 ok=2 slice_verdicts=0 slice_total=0 fail=0`), `c2-k4-after.tsv` (`grounded=9 mapped=9 dangling=0 mismatches=0 kill_tested=7 kill_violations=0`) |
-| `166baa1` (`pending full-40 in the final report`) | SCORECARD r26 measurements block + r26 planned bullet, lessons updates, `corpus/QUALITY.md` Q59 + R26-M1 mistakes row, wave w1 seat record; **this draft committed here** |
-| `FINAL-LANDING-COMMIT-40` | `[EVIDENCE-PENDING: final wave-2 fixes, LOG.md Round 26 entry, README Round 26 section]` |
+| `FINAL-LANDING-COMMIT-40` | `[EVIDENCE-PENDING: final wave-2 fixes, LOG.md Round 26 entry, README Round 26 section, QUALITY Q59]` |
 
 Lane branch state at landing: `[EVIDENCE-PENDING: master ahead=/behind= and the ls-remote origin
 refs/heads/master match, or an explicit statement that the fleet report is pushed separately]`.
@@ -131,7 +126,7 @@ yet**), append the final landing commit, and state branch/push state. Do not lis
 | claim | axis | before → after | counting command | measured commit |
 |---|---|---|---|---|
 | C1 | calibration (7) | K1 `2` → `[EVIDENCE-PENDING: 0]`; K2 `17 175 231` → `[EVIDENCE-PENDING: n25 n24 n23 with n25<n24<n23]`; amendment-2 span diffs `[EVIDENCE-PENDING: 7/7 empty]` | `bash census/round-26/c1-counter.sh`; span annex per amendment 2 | before `12fd90b…`, after `TIP-40`; **`c1-after.tsv` currently bound to `07f83e6`, not the tip** |
-| C2 | coverage (8) | K1 `0` → `[EVIDENCE-PENDING at TIP-40: 2]`; K2 gate `[EVIDENCE-PENDING at TIP-40]` (bound at `33e6807`: `entries=2 ok=2 slice_verdicts=0 slice_total=0 fail=0`, rc 0); K3 rows `127` → `[EVIDENCE-PENDING at TIP-40: 132], rc 0`; K4 `grounded=7 mapped=7 … kill_tested=7` → `[EVIDENCE-PENDING at TIP-40]` (bound at `33e6807`: `grounded=9 mapped=9 dangling=0 mismatches=0 kill_tested=7 kill_violations=0`) | `bash census/round-26/c2-counter.sh`; gate command as frozen (K2); `/home/vgpnk/Projects/shokunin/scripts/sources-census.sh validate --root /home/vgpnk/Projects/shokunin souji` (K3); `python3 -B tools/souji-coverage-agreement.py --root . --rev TIP-40 --base-rev 0eca7c8…` (K4) | before `89e0fce…` / `0eca7c8…`; both after-receipts present since `9a6e0f1`, bound to `33e6807` — re-bind at `TIP-40` |
+| C2 | coverage (8) | K1 `0` → `[EVIDENCE-PENDING: 2]`; K2 gate `[EVIDENCE-PENDING: entries=2 ok=2 fail=0, rc 0]`; K3 rows `127` → `[EVIDENCE-PENDING: 132], rc 0`; K4 `grounded=7 mapped=7 … kill_tested=7` → `[EVIDENCE-PENDING: grounded=9 mapped=9 dangling=0 mismatches=0 kill_tested=7 kill_violations=0]` | `bash census/round-26/c2-counter.sh`; gate command as frozen (K2); `/home/vgpnk/Projects/shokunin/scripts/sources-census.sh validate --root /home/vgpnk/Projects/shokunin souji` (K3); `python3 -B tools/souji-coverage-agreement.py --root . --rev TIP-40 --base-rev 0eca7c8…` (K4) | before `89e0fce…` / `0eca7c8…`, after `TIP-40`; **`c2-k4-after.tsv` and `c2-gate.tsv` absent** |
 | C3 | operability (8) | K1 `axis_check_tool=absent` → `[EVIDENCE-PENDING: present, claims=3 flags=0, rc 0]`; K2 fixture `[EVIDENCE-PENDING: cases=12 pass=12 control=FALSE-GREEN-REJECTED, rc 0]` | `bash census/round-26/c3-counter.sh` | before `89e0fce…`, after `TIP-40`; last bound after-receipt: `c5949013…` |
 
 Controls and separability:
@@ -229,37 +224,31 @@ changed (no re-derivable mapping exists; SCORECARD axis-table bytes are a C1-pro
 - Round total: `[EVIDENCE-PENDING: per-seat installs/upgrades with tool, version, channel and reason,
   or "none"]`.
 - Observed hygiene note for the L1 (not this seat's to remove): untracked `tests/fixtures/__pycache__/`
-  and `tools/__pycache__/` exist at `166baa1` (`git status --porcelain` `??` entries).
+  and `tools/__pycache__/` exist at `0c92c2e` (`git status --porcelain` `??` entries).
 - **L1 checklist:** record the round's install ledger honestly; do not claim "none" if a wave seat
   installed anything.
 
 ## Draft findings handed to the L1 (defects found while drafting, not claim verdicts)
 
-Status as of `166baa1` (the commit that landed this draft); each item names the revision where observed.
-
-1. **C2 declared receipts — CLOSED at `9a6e0f1`.** `c2-k4-after.tsv` and `c2-gate.tsv` were absent at
-   `0c92c2e`; both are present at `166baa1`, bound to rev `33e6807` (`c2-gate`: `entries=2 ok=2
-   slice_verdicts=0 slice_total=0 fail=0`; `c2-k4-after`: `grounded=9 mapped=9 dangling=0
-   mismatches=0 kill_tested=7 kill_violations=0`). Only the tip re-bind remains (checklist (c)).
-2. **C1 after-receipt rev ≠ landing tip — OPEN.** `c1-after.tsv` is still `rev=07f83e6` at `166baa1`;
-   the prereg requires the K1 after value "run at the landing tip in a clean tree", and `166baa1`
-   itself edited SCORECARD (r26 measurements block). Regenerate at the tip.
-3. **Lesson named a deleted receipt — CLOSED at `166baa1`.** `corpus/lessons/round-26.md` `## Receipts`
-   no longer names `c3-control.tsv` (removed at `0c92c2e`; the control is fixture case 12). Re-check
-   the corrected bytes against the tree at the tip.
-4. **QUALITY Q59 — CLOSED at `166baa1`.** `corpus/QUALITY.md:143` now carries Q59 (axis/surface-class
-   consistency, instrument-checked), and the R26-M1 mistakes row landed in the same commit.
-5. **Round 26 documentation tail — OPEN (README/LOG).** At `166baa1` the SCORECARD r26 measurements
-   block exists (`SCORECARD.md:264`) and Q59 landed, but `corpus/README.md` still has no Round 26
-   section and `LOG.md` still ends at `1723:## 2026-10-25 — Round 25 honest stop…`.
-6. **This draft was committed mid-draft at `166baa1`.** The working-tree delta after that commit is the
-   drafting seat's wording-only fix (claims-table `verify=ok` phrasing; checklist item (a) names the
-   counters explicitly) — take it as-is, do not revert it, and do not treat the committed skeleton as
-   final.
-7. **Fixture case-count history.** The frozen set is 12 cases; the first landed fixture (`0833de9`) was
+1. **C2 declared receipts missing.** `census/round-26/records/c2-k4-after.tsv` and `c2-gate.tsv` — both
+   named by the prereg's C2 RECEIPTS block — are absent from the tree at `0c92c2e`
+   (`git ls-tree HEAD census/round-26/records/`).
+2. **C1 after-receipt rev ≠ landing tip.** `c1-after.tsv` is bound to `07f83e6`; the prereg requires the
+   K1 after value "run at the landing tip in a clean tree". Later commits touched SCORECARD
+   (`d6fe8a1` note) and the tip moved twice more.
+3. **Lesson names a deleted receipt.** `corpus/lessons/round-26.md` `## Receipts` names
+   `c3-control.tsv` (`FALSE-GREEN-REJECTED, rc=1`), but `0c92c2e` removed that file ("control now
+   integrated as fixture case 12"). An append-only correction is required; the SHA256SUMS/lesson
+   bytes otherwise disagree with the tree.
+4. **QUALITY Q59 is absent.** The C3 routed defect requires "a QUALITY criterion beside Q58 covering
+   axis-of-surface, and a mistakes-table row for the misattribution itself"; `grep -n Q59 corpus/QUALITY.md`
+   returns nothing and the criteria list ends at `## Round 25 criteria` (`corpus/QUALITY.md:137`).
+5. **Round 26 documentation tail missing.** No `## Round 26` section in `corpus/README.md` (last is
+   `## Round 25 …`, `:538`) and no Round 26 entry in `LOG.md` (last `## ` heading `:1723`).
+6. **Fixture case-count history.** The frozen set is 12 cases; the first landed fixture (`0833de9`) was
    11 cases and `c5949013` adopted the 12-case wave fixture. Any wave seat that scored 11/11 before
    that commit scored a narrower set; state this chronology rather than reporting only 12/12.
-8. **Pre-drafted edge case for this document.** The drafting seat's own scratch discipline holds; the
+7. **Pre-drafted edge case for this document.** The drafting seat's own scratch discipline holds; the
    lane's `jj` state and git index were not touched, and no fleet path was written.
 
 ## Attack log

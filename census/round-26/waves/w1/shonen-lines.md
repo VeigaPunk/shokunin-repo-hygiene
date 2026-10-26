@@ -1,6 +1,6 @@
 # Round 26 — paste-ready SHONEN section
 
-Box order follows `SHONEN.md` byte order at the lane tip (`0c92c2e`, re-verified unchanged at `166baa1`), one line per box, all `[~]`
+Box order follows `SHONEN.md` byte order at lane tip (`0c92c2e`), one line per box, all `[~]`
 (promotion is operator-owned; the lane writes no `[x]`). `ScoutShonen` never landed
 (`w1/swarm-registry.json`: `"agentId": null`), so every pointer below was resolved by this seat
 against the tip bytes named in `ExecShonenFile.md` §Evidence.
