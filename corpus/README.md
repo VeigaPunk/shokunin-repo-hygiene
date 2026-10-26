@@ -36,7 +36,7 @@ when the file exists, not before.
 | ground | status | entries |
 |---|---|---|
 | receipts: pushed / moved-to-obsidian / stale | core (SKILL.md, tools/) | `knowledge/obsidian-ledger.tsv` (operator-fed, header-only) |
-| F1 git-native housekeeping vs receipts | frontier, entries held | `knowledge/git-auto-maintenance-prunes-worktrees.md`, `knowledge/git-grace-periods-and-expire-to.md`, `knowledge/git-auto-maintenance-trigger-set.md`, `knowledge/git-auto-maintenance-trigger-set-r23.md`, `knowledge/jj-keep-ref-expiry.md` |
+| F1 git-native housekeeping vs receipts | frontier, entries held | `knowledge/git-auto-maintenance-prunes-worktrees.md`, `knowledge/git-grace-periods-and-expire-to.md`, `knowledge/git-auto-maintenance-trigger-set.md`, `knowledge/git-auto-maintenance-trigger-set-r23.md`, `knowledge/jj-keep-ref-expiry.md`, `knowledge/jj-dropped-keep-object-lifetime.md` |
 | F2 repository size census | frontier, no entry (r12 candidate deferred, `lessons/round-12.md` `## Gate`; sweep: `ls corpus/knowledge \| grep -ciE 'size\|structure\|sizer'` → 0, 2026-10-19); superseded by Round 24 F2 row (:517) | — |
 | F3 duplicate verdicts | frontier, entries held | `knowledge/dupe-finders-detect-then-act.md`, `knowledge/duplicate-verdict-identity.md`, `knowledge/duplicate-verdict-byte-equality.md` |
 | F4 restorable quarantine, file-system semantics | frontier; layout and staging held; read-side fields admitted r24; reference writer + mechanism set admitted r27 (implementation evidence only) | `knowledge/trash-spec-restorable-quarantine.md`, `knowledge/quarantine-same-filesystem-rename.md`, `knowledge/quarantine-staging-no-copy-r23.md`, `knowledge/quarantine-origin-record-fields-r24.md`, `knowledge/origin-record-writer-r27.md`, `knowledge/origin-record-mechanism-set-r33.md`, `knowledge/origin-record-exclusivity-r28.md`, `knowledge/origin-record-durability-r28.md` |
@@ -639,3 +639,62 @@ to Core (PROVINCE `## Round 30 boundary note`).
   the measured timing (ref removed by `jj util gc` with the operation log still naming the
   commit); the r17 text stands as history and is not rewritten. What remains unmeasured is the
   object-prune clock, not the ref's removal.
+
+## Round 31 — F1 object lifetime behind a dropped keep ref
+
+Appended; the sections above stand. One knowledge entry is admitted for F1, measured this round
+with real jj 0.45.1 and git 2.56.0 in scratch repositories under the round's scratch root, never
+against a lane:
+
+- `knowledge/jj-dropped-keep-object-lifetime.md` — what keeps an abandoned commit's object
+  present after its own keep ref is gone, and what removes it. Three arms of a seventeen-step
+  fixture, each in its own colocated repository under the round's scratch root: `solo` (A, then B
+  on A, B abandoned, nothing built on B), `descendant` (A, B, C on B; B abandoned while C stays
+  alive) and `reflog-only` (the keep refs dropped by hand instead of by jj). In every arm B's own
+  keep ref goes and B's object stays. In `solo` and `descendant` the ref goes under
+  `git pack-refs --all` with `jj util gc --expire=now`, and B then survives `git gc --prune=now`,
+  `git reflog expire --expire=now --expire-unreachable=now --all` before another
+  `git gc --prune=now`, and `jj op abandon ..@-` with a third `jj util gc --expire=now`. Each arm
+  isolates one holder: in `solo` B goes only when the keep refs whose commits descend from B are
+  deleted and git is pruned; in `descendant` only when C is abandoned and the operation log
+  dropped; in `reflog-only`, where no keep ref names B or a descendant of B, only when the reflog
+  entries naming B are expired before the prune. So a dropped keep ref leaves the object held by
+  a descendant's keep ref, by a reflog entry naming it, or — sourced from git-gc(1) rather than
+  measured here — by its own modification time inside the two-week `gc.pruneExpire` window.
+  Presence is not a receipt: a `git cat-file -e` that succeeds says no deletion has completed,
+  and a receipt that cannot name both the reflog expiry and the prune date has not established
+  one. Fixture `../tests/fixtures/r31-jj-object-clock.sh`; measured record
+  `../census/round-31/records/jj-object-clock-run.txt` (`jj-version: jj 0.45.1`,
+  `git-version: git version 2.56.0`, seventeen `RESULT` lines, deterministic across runs).
+
+Coverage-map effect: the F1 row at `:39` now names a sixth entry with its status cell unchanged
+(`frontier, entries held`); the five entries it already carried are unchanged. F1 stays frontier
+— the entry closes the object-prune question, and a measured edge class does not promote a
+frontier ground to Core (PROVINCE `## Round 31 boundary note`).
+
+### Frontier (r31)
+
+- F1 — the ref's removal is measured (`knowledge/jj-keep-ref-expiry.md`) and so is the object's
+  lifetime behind it (the entry above; `../census/round-31/records/jj-object-clock-run.txt`).
+  Remaining: the fleet exposure numerator re-census named at `:46`; and, disclosed rather than
+  measured here, which reflog file carries the entry that names B, whether git's cruft-pack
+  handling changes the mtime keeper's reach, and the real 90/30-day windows (sourced from
+  git-reflog(1) and the `gc.*` config, not waited out by any arm).
+- F2, F3, F4 — unchanged. F5 stays list-only; the reap protocol and NAMESPACE pin remain
+  operator-held. Certification OFF, K5 HELD.
+
+### Round 31 corrections
+
+- The r12 F1 row at `:39` was replaced in place rather than superseded by a later table: its
+  entries cell gained `knowledge/jj-dropped-keep-object-lifetime.md` and its status cell, already
+  `frontier, entries held`, was not reworded. Map rows are edited in place (r28 the F4 row, r29
+  the F3 row, r30 this row); the append-only record is this section.
+- The r30 boundary note (`PROVINCE.md` `## Round 30 boundary note`) said "the object-prune clock
+  that follows a dropped keep ref is unmeasured here", and the r30 `### Frontier (r30)` bullet
+  disclosed the same gap. Both stand as history and are not rewritten; the r31 entry is that
+  clock's measurement, and the r31 boundary note records the closure.
+- The r30 keep-ref section's eight-step description of its own record is unchanged here. What r31
+  adds about that record is the packed-ref correction already carried by
+  `knowledge/jj-keep-ref-expiry.md` `## Round 30 wave-2 corrections` and now stated in
+  `SKILL.md`: a packed keep ref skips the loose-ref age gate, so packedness — not the `--expire`
+  threshold — is what the r30 record discriminates.

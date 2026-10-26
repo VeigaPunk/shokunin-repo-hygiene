@@ -209,3 +209,28 @@ alone; the object-prune clock that follows a dropped keep ref is unmeasured here
 receipt tool changes, so the r17 receipt rules stand unchanged. Certification OFF, K5 HELD.
 Sources: `census/round-30/records/preregistration.txt` claim C3; the entry and its Gate; the
 run record `census/round-30/records/jj-keep-expiry-run.txt`.
+
+## Round 31 boundary note (F1 object lifetime)
+
+F1 now holds a measured entry — `corpus/knowledge/jj-dropped-keep-object-lifetime.md` — beside
+the four that carried the ground before it and the r30 keep-ref lifetime entry, all named by its
+map row at `corpus/README.md:39`. The entry answers what the r30 note left open: after a
+`refs/jj/keep/*` ref naming an abandoned commit is removed, that commit's object can still be
+held, and three recordings isolate one holder each — a keep ref naming a descendant (the `solo`
+arm keeps the object until those refs are deleted), a live descendant commit whose refs and
+operation log keep the set alive (the `descendant` arm), and a reflog entry naming the commit
+(the `reflog-only` arm, where the object goes only once every reflog entry naming it is expired
+before the prune). Expiring the reflog is not by itself a removal: in the first two arms it left
+the object present. A fourth holder is sourced, not measured: the object's own modification time
+inside the two-week `gc.pruneExpire` window (`git-gc(1)`). One consequence is boundary, not
+authority: an object that is present is not evidence of a completed deletion, so a receipt must
+name the expiry and the prune date it observed, and the deletion it observed is one the lane ran
+or whose argv it recorded. One entry does not promote F1 to Core: Core stays the `## Owns` and
+`## Work surfaces` list above (`:60`), the F1 row keeps the status `frontier, entries held`, and
+this round adds nothing to either list. What it does not record: which reflog file carries the
+naming entries, git's cruft-pack handling of unreachable objects, and the real 90/30-day windows
+(sourced from git-reflog(1) and the `gc.*` config, not waited out). Nothing in `tools/` changes —
+no receipt class, gate or verdict is added, jj's store GC stays outside this lane, and the r17
+receipt-root rule is untouched. Certification OFF, K5 HELD. Sources:
+`census/round-31/records/preregistration.txt` claim C3; the entry and its Gate; the run record
+`census/round-31/records/jj-object-clock-run.txt`.
