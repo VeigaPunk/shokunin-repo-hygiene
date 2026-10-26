@@ -1,0 +1,46 @@
+# r34 C2 legs (frozen at the preregistration): sandbox-nt measurement hardening — the r33-closure-routed
+# instrument debts (corpus/lessons/round-33-verifier-spotcheck.md `## Routed defects` items 4-6 and lesson residuals:
+# no work attestation on sandbox-nt, no junk control, O3 reaching a NAMESPACE-pinned literal-/var/tmp fixture,
+# O4's census-selftest anchor flipping under host load). Kinds:
+#   witness   PASS iff the run at --rev inside bwrap (--dev-bind / /, --ro-bind <empty> /tmp /dev/shm,
+#             --bind <scratch>/vt /var/tmp, TMPDIR=<scratch>/tmp) exits with the --base run's exit code and prints the
+#             --base run's last digit-bearing line (scratch paths normalized to <TMP>) AND does its work: its
+#             strace-traced file-creating syscalls are at least half the --base plain run's AND at least one create
+#             targets the sandbox TMPDIR or the /var/tmp bind (a stub printing the line without working fails).
+#             W2's fixture straces itself (nested ptrace attach fails under an outer strace), so it carries no
+#             syscall witness; its work proof is the fixture's own per-case assertions — a stub census tool fails
+#             the fixture's strace-check CASE lines — and its final SUMMARY line. N3 is the same self-tracing
+#             pattern; its witness is COUNT `^CASE\t` == 12 plus the pin digest.
+#   nsbind    PASS iff the namespace arm (r15-preservation-frozen/regenerate.py's r14 fixture stage) runs at --rev
+#             inside bwrap with --bind <scratch>/vt /var/tmp, exits 0 and prints `SUMMARY\ttotal=12\tfailed=0`,
+#             tests/fixtures/r14-census-boundary.py bytes at --rev equal the base digest NAMESPACE_SHA256
+#             (e6a984b1daf1f79a6ad613e451cae48c2807fd71639de4c8d92857b9a11d14b2) before and after, and the real
+#             /var/tmp canary file placed before the run is byte-identical after.
+#   anchor    PASS iff, under one flock and with the 1-min load recorded: two adjacent --base runs print identical
+#             last digit-bearing lines AND the --rev run under the same TMPDIR discipline prints that same line with
+#             the same exit code; a reading where the two base runs disagree, or taken at load > 48, is re-taken once
+#             (Q77) and then FAILs — the leg never reports a flaky pass.
+#   junk      PASS iff tests/fixtures/r34-sandbox-junk.py --tool <path> --counter census/round-34/c2-counter.py exits 0
+#             and prints `cases=<n> pass=<n> control=STUB-REJECTED`: the fixture feeds the counter a stub tool that
+#             prints the base run's exit code and last digit-bearing line without doing the work, and the counter
+#             must FAIL each stubbed leg.
+#   guard     PASS iff the named no-harm or anti-forgery condition holds at --rev (each leg names its check below).
+# `{REV}` in argv is replaced by the full revision the run is checked out at; `{SCRATCH}` is a fresh dir under --scratch.
+# Item set: W1-W4 witness legs over the r33 O-class commands; N3 the held-pin-respecting O3 design (bwrap private
+# bind over /var/tmp instead of the read-only ro-bind, leaving the pinned fixture bytes untouched); N4 the
+# load-stable census-selftest anchor; J1 the stub/junk control; guards G1-G6 (r33 files untouched, touched-path
+# list, counter false-green control, bwrap availability, C1/C2 file disjointness, NAMESPACE pin bytes).
+id	kind	argv
+W1	witness	python3 -B tools/souji-evidence-cache.py --selftest
+W2	witness	python3 -B tests/fixtures/r15-census-config.py --tool tools/souji-census.sh
+W3	witness	bash tools/souji-census.sh --selftest
+W4	witness	bash tools/souji-verify.sh --selftest
+N3	nsbind	python3 -B tests/fixtures/r14-census-boundary.py --tool {SCRATCH}/tool.sh
+N4	anchor	bash tools/souji-census.sh --selftest
+J1	junk	python3 -B tests/fixtures/r34-sandbox-junk.py --counter census/round-34/c2-counter.py --scratch {SCRATCH}/j1
+G1	guard	diff census/round-33
+G2	guard	touched-paths
+G3	guard	false-green
+G4	guard	bwrap
+G5	guard	c1-c2-disjoint
+G6	guard	namespace-pin
