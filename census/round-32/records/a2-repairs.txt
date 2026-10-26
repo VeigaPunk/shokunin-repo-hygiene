@@ -1,0 +1,53 @@
+# round 32 attempt 2 — L1 (SoujiR32a2) repairs of harms that wave a2w1 found in landed C2/C3 bytes (2026-10-26)
+# Scratch: /fast/scratch/hyaku/souji-r32/l1/ (clones with origin removed; deleted after landing). All runs python3 -B.
+
+## R1 tools/souji-receipt-run.py out-guard (a2w1 SwarmReviewer13 findings 1-2)
+# C2 (98e5203) replaced the fixed `/var/tmp/` out-root with the caller's TMPDIR, so TMPDIR=<fleet path> re-opened a
+# write scope base refused, and `--out <scratch root>` crashed with IsADirectoryError instead of refusing.
+# Repair: `out == base_scratch` refused (OUT-OUTSIDE-SCRATCH); with TMPDIR set, a scratch root or receipt directory
+# inside a git work tree is refused (OUT-IN-GIT-TREE), checked after every base refusal so base codes are unchanged.
+# old = tool at 4e56c48b8fc828f9aba2746e324dc46aa538bdbf, new = repaired tool, same clone otherwise.
+old set   tests/fixtures/r23-receipt-run.py: selftest=8/8 rc=0
+old unset tests/fixtures/r23-receipt-run.py: selftest=8/8 rc=0
+old set   tests/fixtures/r24-receipt-verify.py --tool tools/souji-receipt-run.py --lane-root .: cases=8 pass=8 refusals=2/2 regress=5/5 rc=0
+old unset tests/fixtures/r24-receipt-verify.py --tool tools/souji-receipt-run.py --lane-root .: cases=8 pass=8 refusals=2/2 regress=5/5 rc=0
+old set   tests/fixtures/r25-receipt-stderr.py --rev 85b61a151923986e7e6b48f7084b9122561b5f3d: cases=1 pass=1
+new set   tests/fixtures/r23-receipt-run.py: selftest=8/8 rc=0
+new unset tests/fixtures/r23-receipt-run.py: selftest=8/8 rc=0
+new set   tests/fixtures/r24-receipt-verify.py --tool tools/souji-receipt-run.py --lane-root .: cases=8 pass=8 refusals=2/2 regress=5/5 rc=0
+new unset tests/fixtures/r24-receipt-verify.py --tool tools/souji-receipt-run.py --lane-root .: cases=8 pass=8 refusals=2/2 regress=5/5 rc=0
+new set   tests/fixtures/r25-receipt-stderr.py --rev 85b61a151923986e7e6b48f7084b9122561b5f3d: cases=1 pass=1
+# attack repro: run --root . --rev 4e56c48b8fc828f9aba2746e324dc46aa538bdbf --tool tools/souji-receipt-run.py --out <OUT> -- python3 -B tools/souji-receipt-run.py --help
+old TMPDIR=/home/vgpnk/Projects/shokunin OUT=/home/vgpnk/Projects/shokunin/zz-probe-souji.receipt: rc=0 (receipt WRITTEN into the fleet root; the L1 deleted it at once — see lesson Mistakes)
+old TMPDIR=/home/vgpnk/Projects          OUT=/home/vgpnk/Projects/shokunin/zz-probe-souji.receipt: rc=0
+old TMPDIR unset                          OUT=/var/tmp: rc=1 Traceback (IsADirectoryError)
+old TMPDIR=<scratch>/t                    OUT=<scratch>/t/ok.receipt: rc=0
+new TMPDIR=/home/vgpnk/Projects/shokunin OUT=/home/vgpnk/Projects/shokunin/zz-probe-souji.receipt: rc=2 OUT-IN-GIT-TREE
+new TMPDIR=/home/vgpnk/Projects          OUT=/home/vgpnk/Projects/shokunin/zz-probe-souji.receipt: rc=2 OUT-IN-GIT-TREE
+new TMPDIR unset                          OUT=/var/tmp: rc=2 OUT-OUTSIDE-SCRATCH
+new TMPDIR=<scratch>/t                    OUT=<scratch>/t/ok.receipt: rc=0
+
+## R2 tools/souji-evidence-cache.py reverted to its base bytes (a2w1 SwarmExecutor16 H1-H2, SwarmExecutor17)
+# census/round-21/run-acceptance.py:503 compares the live tool's sha256 with the frozen cache-demo payload, so C2's
+# edit of this tool turned two registered gates red. A clone at 4e56c48b8fc828f9aba2746e324dc46aa538bdbf with only
+# this file restored to `git show 85b61a151923986e7e6b48f7084b9122561b5f3d:tools/souji-evidence-cache.py`, TMPDIR=<scratch>:
+python3 -B tests/fixtures/r22-result-oracle.py --runner census/round-21/run-acceptance.py -> "total": 258, rc=0 (tip before repair: fail 2 pass 256, rc 1)
+python3 -B census/round-22/mutation-adequacy.py -> "mutants": 59, "survived": 7, rc=0 (tip before repair: rc 1, survived 0, 7 disagreeing)
+# Consequence: C2 item T08 (`python3 -B tools/souji-evidence-cache.py --selftest`) returns to its base behaviour
+# (scratch under /var/tmp), so the C2 counter's T08 is expected to FAIL at the final tip; C2 was already missed.
+
+## R3 tests/fixtures/r15-preservation-frozen/{expected,record}.json regenerated (landing gate LG-FROZEN-PIN; a2w1 SwarmExecutor17 finding 1)
+# C2's edit of tools/souji-census.sh left the frozen pin at the base digest 21c19ff6...; the landing gate at round 32
+# reported LG-FROZEN-PIN and `souji-preservation-evidence --frozen` read snapshot_tampered. Regenerated with the
+# committed script in a clone at 4e56c48b8fc828f9aba2746e324dc46aa538bdbf:
+$ python3 -B tests/fixtures/r15-preservation-frozen/regenerate.py --rev 4e56c48b8fc828f9aba2746e324dc46aa538bdbf
+regenerated at 4e56c48b8fc8: baseline_preharm=8/20 fail, baseline=16/20 fail, changed=0/20 fail, namespace=0/12 fail, verdict=clean
+rc=0
+# expected.json: tools/souji-census.sh 21c19ff620ad92c2... -> c1671f4c5ef9d45cf483cf12787103ecb60aae8a5f4059425dc4da1feb79b114;
+# record.json: rev, scratch paths, tool digests and strace pids only; verdict clean, arm counts unchanged.
+$ TMPDIR=<scratch> python3 -B tests/fixtures/r15-preservation-evidence.py   (lane, after install)
+fixture: 8/8 checks passed
+# Residual: regenerate.py and tests/fixtures/r15-census-config.py still create scratch under a literal /var/tmp.
+
+## R4 SKILL.md:155-156 `../census/...`, `../tests/...` pointers (landing gate LG-DANGLING-PTR; a2w1 SwarmReviewer24 F3, SwarmReviewer27 F2)
+# SKILL.md sits at the lane root; the `../` prefix was dropped.

@@ -761,3 +761,12 @@ a measured edge class does not promote a frontier ground to Core (PROVINCE
   naming `arm=reflog-only`, then `lines=17 bad=4`, exit 1;
   `../census/round-32/records/m1-red-before.txt`), and the r32 C3 counter's L14 holds this round's
   record to `../census/round-32/c3-contract.txt` as frozen at the preregistration.
+- Wave a2w1 (`.ufo/waves/round-32/a2w1/SwarmCritic20.md` F13-F14) corrects the `### Frontier (r32)`
+  list above: the entry's limits section leaves seven classes open, not four — add the unread `.mtimes`
+  contents, the unopened cruft-call argument and `gc.recentObjectsHook`. Both `never` levers are implemented
+  and measured (the `never` arm's `gc-pruneexpire-never` step and the `mixed` arm's `gc-prune-never` step);
+  what stays documentary is why the flag's date reaches the repack call, which a trace shows and this round's
+  record does not carry. The entry's own append-only corrections block lists the remaining sentence fixes.
+- Wave a2w1 (`.ufo/waves/round-32/a2w1/SwarmReviewer27.md` finding 6): the `## Round 32` section's
+  `jj-version: jj 0.45.1` is a truncated quote; the record's first line is
+  `jj-version: jj 0.45.1-7c41cdeb16b6b321c64e789a966b6adf723816a5`.

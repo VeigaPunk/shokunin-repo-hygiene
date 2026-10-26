@@ -224,3 +224,63 @@ gitformat-pack row is a placeholder id for the L1 to renumber by document.
 - ADMIT: `corpus/knowledge/jj-abandoned-object-mtime-clock.md` — reason: it answers the two open items the r31 entry and its frontier line name (the object's own clock, and cruft handling's effect on it) from three tag-verified snapshots plus the round's own record, and leaves the keeper rule and the receipt-root rule untouched.
 - REJECT: reading presence in a cruft pack as proof that an object is reachable — reason: the pack holds unreachable objects whose only claim to life is a per-object mtime inside the grace date, so presence there witnesses age, not reachability.
 - REJECT: reading `Do not prune any loose objects` as scoping `git gc --prune=never` away from the cruft call — reason: the record's mixed arm shows an old object moved into a cruft pack and kept there under that flag, so the flag's reach is not its one-line description and a receipt must record the argv instead.
+
+## Round 32 attempt-2 wave corrections (append-only)
+
+Wave a2w1 attacked every claim sentence above against the record, the fixture and the three snapshots
+(`.ufo/waves/round-32/a2w1/SwarmCritic20.md` findings F1-F19, `SwarmCritic19.md` findings 1-5,
+`SwarmScout23.md` findings 1-6). The lines above stay as written; each bullet supersedes the sentence it names.
+No record line, RESULT span, Gate quote, snapshot or counter changes.
+
+- Claim 1 (line 21), reachability: superseded. The object's own mtime is the criterion applied to the object
+  itself, but an object reachable from a recent object is kept with it (git-gc.adoc:160-161, the quote claim 1
+  already carries). SwarmCritic20 attack A1 reproduced it in plain git: A, then B on A, then C on B, reset to A,
+  every reflog expired, only B's island backdated 30 days, then `git gc`, and B stays in the cruft pack because
+  the recent C reaches it. That is why the fixture backdates B's whole unreachable island.
+- Claim 1 (line 26), method: the fixture backdates every commit of B's unreachable island with its trees and
+  blobs (`island_commits` and `backdate_island` in `tests/fixtures/r32-jj-mtime-clock.sh`), not only B's own
+  commit, tree and blob files. A reproduction that backdates only B's objects can get the opposite outcome:
+  in the jj arms the island includes the working-copy commit jj leaves parented on B, and with only B's own
+  three objects backdated B stays in a cruft pack (`.ufo/waves/round-32/a2w1/SwarmCritic21.md` finding 1).
+- Claims 1-2, novelty (SwarmCritic19 findings 2-3): the recent/old outcome pair was already held and measured
+  at base — `corpus/knowledge/git-grace-periods-and-expire-to.md`:21 over `tests/results/r12-maintenance-guard.txt`
+  (present after default pruning, absent after `--prune=now`) — and claim 2 restates
+  `corpus/knowledge/jj-dropped-keep-object-lifetime.md`:234. This round's increment is the single-variable
+  isolation (one gc argv, only the mtime changed), the survivor's location (loose or cruft) and per-object aging
+  inside a cruft pack; it is not the first measurement of the keeper.
+- jj's role (SwarmCritic19 finding 4): jj builds the abandoned commit and the keep-ref and reflog state that the
+  fixture then erases; no record field reports a jj property, and a plain-git reconstruction of the five arms
+  prints the same 22 RESULT lines. jj is setup, not a variable of the measurement.
+- Lines 46-48: the arms recent and nocruft differ in repository composition (recent holds B only, nocruft holds
+  B and C) as well as in `gc.cruftPacks`; read the sentence as: in the arms that differ in that value, the recent
+  object sits in a cruft pack when cruft packs are on and stays loose when they are off.
+- Lines 64-65: no record line counts packs or places B and C in the same pack; `where` says only that the object
+  is listed in a pack with a `.mtimes` sibling. Read it as one gc invocation, two fates; the pack count is not
+  measured by any arm.
+- Lines 72-73 and 143-145, the removal path: the record has no call-level field, so it localises a removal by
+  location (loose, cruft, absent), not by the internal call that performed it. Which of the repack and the prune
+  removed the packed old object is not measured by this record (SwarmCritic20 finding F4); the limits bullet at
+  lines 167-168 already says so.
+- Claim 7 (lines 85-93) and the third REJECT bullet of the Gate: the quote at git-gc.adoc:89-90 belongs to
+  `--no-prune`, not to `--prune=never`; the measured option is `--prune=<date>` with the value never
+  (git-gc.adoc:81-87). A traced `git gc --prune=never` passes never both to the cruft call
+  (`--cruft-expiration=never`) and to the prune call (SwarmCritic20 attack A2), so the mixed-arm outcome is the
+  documented forwarding of one date, not a reach beyond the flag's description. The tested state is a loose old
+  B packed into cruft and kept, not an already packed object (SwarmCritic19 finding 5). The receipt rule (record
+  the argv and the dates the gc received) stands; its reason is the single date both calls receive.
+- Lines 164-166: only the outcome is measured; the forwarding is inferred from that outcome and from
+  gc.adoc:96-99, and no record line carries an argv.
+- Line 99: determinism rests on the C3 counter's replay leg L9 (two replays equal the record) and on wave a2w1
+  `SwarmExecutor18.md` (two replays from an archive export, byte-identical), not on the fixture's own header.
+- Line 103: the frozen contract (`census/round-32/c3-contract.txt`) also allows `where=pack`, an object listed
+  in a pack without a `.mtimes` sibling; no record line prints it.
+- Lines 178-179: `corpus/README.md`:680-681 names the cruft-handling question this entry answers; the object's own
+  clock is the README wave-2 correction at :701. The span 679-682 names four remaining items, of which this entry
+  answers one.
+- Line 1: the `.mtimes` format table is gitformat-pack.adoc lines 341-358, a section separate from the cruft-pack
+  section at lines 611-689; the S223 anchor cell's SYNOPSIS brace form paraphrases three separate lines 12-14.
+- Line 1 and line 198: the placeholder wording is stale. The gitformat-pack row is S223 (`corpus/SOURCES.md`:168),
+  assigned at the C3 landing commit a92e1aae91dbf46c2d7eff713932cfc820186970.
+- Gate lines for S002: their quotes are bytes of the v2.56.0 Documentation/config/gc.adoc capture, while the
+  S002 row's scope cell still names git 2.55.0; the S002 and S063 Gate lines pair the rendered git-scm.com page
+  with the raw tag capture, and the capture is what was quoted.

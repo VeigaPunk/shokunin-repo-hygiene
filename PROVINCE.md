@@ -258,3 +258,17 @@ the `## Owns` and `## Work surfaces` list above (`:60`), the F1 row keeps the st
 receipt and no deletion verdict; the r17 receipt-root rule is untouched. Certification OFF, K5 HELD.
 Sources: `census/round-32/records/preregistration.txt` claim C3; the entry and its Gate; the run
 record `census/round-32/records/jj-mtime-clock-run.txt`.
+
+Round 32 attempt-2 corrections (append-only; wave a2w1 `.ufo/waves/round-32/a2w1/SwarmCritic20.md` F15-F16):
+the sentence "The round's one tool change is `tools/souji-record-contract.py`" holds for this note's claim C3
+only — round 32's claim C2 (commit 98e5203d45b4e419a9e72801733d93303acc7ebd) changed 12 files under `tools/`
+and 15 fixtures so that their scratch follows `TMPDIR`, and `tools/souji-record-contract.py` was added earlier,
+at the preregistration commit 3ec84fc81b3243429c834a051880b0bcde06291c; attempt 2 then restored the write-scope
+strength of `tools/souji-receipt-run.py` (`OUT-IN-GIT-TREE`, wave a2w1 `SwarmReviewer13.md`) and reverted
+`tools/souji-evidence-cache.py` to its base bytes, because two registered gates pin that file's digest
+(wave a2w1 `SwarmExecutor16.md` H1-H2). None of these
+changes creates a receipt class or a deletion verdict. The clause "absence is not proved by an object count the
+lane did not run" names no count; read it as the r31 rule — a receipt must name the expiry and the prune date it
+observed. The opening clause "the one holder the r30 and r31 notes called sourced rather than
+measured" is the r31 note's wording only; the r30 note called the object-prune clock unmeasured
+(wave a2w1 `.ufo/waves/round-32/a2w1/SwarmReviewer27.md` finding 5).

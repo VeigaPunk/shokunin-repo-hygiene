@@ -72,6 +72,18 @@ def scratch_root() -> str:
     return os.path.abspath(tempfile.gettempdir()) if os.environ.get("TMPDIR") else "/var/tmp"
 
 
+def in_git_tree(path: str) -> bool:
+    """True when `path` or one of its ancestors holds a `.git` entry."""
+    p = path
+    while True:
+        if os.path.lexists(os.path.join(p, ".git")):
+            return True
+        parent = os.path.dirname(p)
+        if parent == p:
+            return False
+        p = parent
+
+
 COUNTS_RE = re.compile(
     r"(?:assertions=\d+ resolved=\d+ skipped=\d+ mismatches=\d+"
     r"|keys=\d+ records=\d+ occurrences=\d+ mismatches=\d+"
@@ -190,7 +202,7 @@ def cmd_run(args: argparse.Namespace) -> int:
     if out.startswith("/tmp/") or out == "/tmp":
         return refuse("OUT-UNDER-TMP", "receipts go outside /tmp (Q4)")
     base_scratch = os.path.realpath(scratch_root())
-    if not (out == base_scratch or out.startswith(base_scratch + os.sep)):
+    if out == base_scratch or not out.startswith(base_scratch + os.sep):
         return refuse("OUT-OUTSIDE-SCRATCH",
                       f"receipts are written under the caller's scratch root ({base_scratch}) "
                       "and copied into the lane by its helper")
@@ -217,6 +229,11 @@ def cmd_run(args: argparse.Namespace) -> int:
             return refuse("OUT-PROTECTED", f"{protected} is operator or orchestrator runtime")
     if re.search(r"/[A-Za-z0-9_-]+-shokunin/", out) and not out.startswith(root + os.sep):
         return refuse("OUT-SIBLING-LANE", "a receipt is never written into another lane")
+    # r32 wave a2w1 SwarmReviewer13: a caller-set TMPDIR must not re-open the write scope that the
+    # fixed /var/tmp root closed, so with TMPDIR set neither the root nor the receipt may sit in a work tree
+    if os.environ.get("TMPDIR") and (in_git_tree(base_scratch) or in_git_tree(os.path.dirname(out))):
+        return refuse("OUT-IN-GIT-TREE",
+                      "with TMPDIR set, neither the scratch root nor the receipt may lie inside a git work tree")
 
     scratch = tempfile.mkdtemp(prefix="souji-receipt-", dir=scratch_root())
     tree = os.path.join(scratch, "repo")
