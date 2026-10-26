@@ -698,3 +698,4 @@ frontier ground to Core (PROVINCE `## Round 31 boundary note`).
   `knowledge/jj-keep-ref-expiry.md` `## Round 30 wave-2 corrections` and now stated in
   `SKILL.md`: a packed keep ref skips the loose-ref age gate, so packedness — not the `--expire`
   threshold — is what the r30 record discriminates.
+- Wave-2 corrections (append-only; `census/round-31/waves/w2/SwarmCritic21.md` findings 2-3): the F1 frontier line at `:46` (r12 section) still reads "remaining: keep-ref expiry unmeasured, fleet exposure numerator re-census" and is superseded by `### Frontier (r30)` and `### Frontier (r31)` above — keep-ref expiry was measured in round 30 and the object lifetime behind it in round 31; the remaining F1 item is the fleet exposure numerator re-census. "Closes the object-prune question" above overstates: the object's own mtime clock (`gc.pruneExpire`) is sourced, not measured, and the round-31 run isolates the descendant keep ref and the reflog entry only.

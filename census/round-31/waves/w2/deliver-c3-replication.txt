@@ -1,0 +1,966 @@
+C3 headline replication WITHOUT the fixture — Souji round 31, wave 2
+seat SwarmExecutor17 | 2026-10-26 | claim under test: C3 coverage, landed 1baf4da02b71b012ee2426ea7c309496c0c3aca0
+
+lane        /home/vgpnk/Projects/shokunin/souji-shokunin @ 2c16d018e40db7c23420a2c3bb546b52957bcc25 (master)
+entry       corpus/knowledge/jj-dropped-keep-object-lifetime.md — git blob f7bd612436bdd78cc4b27240dcf97fb85854d0b6,
+            sha256 2dfba384c84af39d2ba2d20b5187868500c370c4c2010710df8d4230c1087100; `git diff 1baf4da0..HEAD` on the
+            entry, the fixture and the record is empty, so the bytes below are the landed bytes.
+record      census/round-31/records/jj-object-clock-run.txt — sha256 085b87c7…07e5 (matches the entry's own hash claim),
+            19 lines, 17 RESULT lines. The role spans compared against below are whole lines of it.
+tools       jj 0.45.1-7c41cdeb16b6b321c64e789a966b6adf723816a5 (/home/vgpnk/.local/bin/jj, pre-existing)
+            git 2.56.0 (/usr/bin/git), bash, coreutils. Nothing was installed or upgraded for this seat.
+scratch     /fast/scratch/hyaku/souji-r31/w2-ReplicateC3 with TMPDIR=/fast/scratch/hyaku/souji-r31/w2-ReplicateC3/tmp;
+            removed after this file was written. No lane repository was gc'd, no lane ref written, no lane file touched.
+
+METHOD BOUNDARY
+  The lane fixture tests/fixtures/r31-jj-object-clock.sh (sha256 780a6823…) was NOT executed, sourced or copied. It was
+  read once, only to confirm the jj invocation shape (`jj -R <repo> --config user.name/user.email`). Every repository,
+  commit, ref deletion and gc invocation below is my own sequence: four scripts, pasted in full, each followed by its
+  output (bash trace lines removed — the command sequences are the script text itself). Every git call names -C <scratch
+  repo>; every jj call names -R <scratch repo>; no jj or git command was run against the lane.
+
+VERDICT: the C3 headline replicates in full. All four roles of the entry reproduce; no target miss found.
+
+ASSIGNED QUESTIONS
+  Q1 (is B held by a HEAD reflog entry?) — YES. After abandoning B and deleting every keep ref naming B or a strict
+     descendant (repo1: 8 keep refs -> 6; two deleted: the ref naming B and the ref naming the pre-rewrite working-copy
+     commit 6fd4f630), `git reflog --all --format=%H` prints three lines (A, B, A) and exactly one equals B
+     (`reflog_hits=1`). `find .git/logs -type f` lists only `.git/logs/HEAD`. Raw log, the B line:
+       `91b439f4…c7d2 164d9ae0…bbbe r31 <r31@example.invalid> … export from jj`
+     HEAD does not reach B (`merge-base --is-ancestor B HEAD` rc=1) and no ref names B, so the reflog is the only root
+     naming B.
+  Q2 (does `git gc --prune=now` keep it?) — YES. `git cat-file -e B` rc=0 after that gc; `reflog_hits` still 1. The
+     object is seconds old and still survives, because a root reaches it.
+  Q3 (does expire + prune remove it?) — YES, and only in that order. After `git reflog expire --expire=now
+     --expire-unreachable=now --all`: `reflog_hits=0` but `cat-file -e B` rc=0 — expiry alone deletes no object. Then
+     `git gc --prune=now`: `cat-file -e B` rc=1 (absent); `git fsck --unreachable --no-reflogs` prints nothing;
+     `git count-objects -v` = count 0, in-pack 11, garbage 0. The prune also overrode B's own mtime (seconds old): the
+     object was removed by `--prune=now` alone with no 2-week grace.
+  Q4 (second repo: a keep ref names a child of B — does expiry + prune leave B?) — YES, B stays. repo5: after
+     `jj abandon B`, C is the direct child (`git cat-file -p C` shows `parent 9180b1f0…` = B) and one keep ref names C
+     (`refs/jj/keep/072fcf3d…`). Deleting only the keep ref naming B leaves `refs_naming_B=0`, `refs_naming_C=1`;
+     expiring the reflog leaves `reflog_hits=0`; `git gc --prune=now` then leaves `cat-file -e B` rc=0.
+     repo3 repeats it with four refs reaching B (incl. the original C): same result, and B goes to rc=1 only after those
+     refs are deleted and the prune rerun.
+
+COMPARISON WITH THE ENTRY'S ROLES (entry lines 91-112)
+  role 1 "a reflog entry alone holds the object"      REPRODUCED — repo1 Q1+Q2; also repo5 (1 hit -> gc -> present).
+  role 2 "expiring that entry and pruning removes it" REPRODUCED — repo1 Q3.
+  role 3 "the surviving descendant keep ref defeats both levers" REPRODUCED — repo3/repo5 isolate the descendant ref
+        itself (deleted B's own keep ref, then expired the reflog, then pruned): B present; deleting the descendant refs
+        then pruning: B absent. repo6 additionally reproduces the entry's own numbers: `jj util gc` 8 -> 6 keep refs,
+        `target_keep` yes -> no, reflog still 1 hit, B present; `jj op abandon ..@-` + `jj util gc` 6 -> 2 refs, B still
+        present; `git gc --prune=now` still present.
+  role 4 "a live descendant outlasts jj's own levers" REPRODUCED — repo7 and a second run repo8: B present after the
+        assigned steps and after `op-abandon-and-util-gc` (rc 0); absent at `abandon-descendant-and-op-abandon-and-util-gc`
+        (rc 1) and still absent after `git gc --prune=now` (rc 1).
+  role 7 (entry claim 7) "jj's own lever does not shorten the reflog window" — CORROBORATED: in repo6 the HEAD reflog
+        entry naming B survived `jj util gc --expire=now` and a later `git gc --prune=now` (`reflog_hits=1` throughout);
+        only the explicit `git reflog expire … --all` moved it to 0 (repo1/repo3/repo5).
+  claim 6 "expiry alone deletes no object" — CORROBORATED in repo1 (present after expiry, absent only after the prune).
+
+CORROBORATION OF THE RECORD'S FIELD VALUES
+  The record's own step table has `RESULT arm=solo step=abandon keep_refs=8 target_keep=yes` (line 3) and
+  `step=pack-and-util-gc keep_refs=6 target_keep=no` (line 4), `arm=reflog-only step=drop-keep-refs-naming-target
+  keep_refs=6`. My assembly lands on the same numbers without the fixture: repo1 has 8 keep refs after abandon, two of
+  them naming B / the pre-rewrite working-copy commit, leaving 6; repo6 has 8 refs after abandon and 6 after
+  `jj util gc`, and 2 after `jj op abandon ..@-` + `jj util gc`.
+
+ONE PRECISION NOTE ON ROLE 3 (not a target miss)
+  Entry lines 100-101 read "because the working-copy commit that `jj abandon` rewrote still has a keep ref and B is its
+  parent". Measured: immediately after `jj abandon B`, jj ALSO writes a keep ref naming B itself
+  (`refs/jj/keep/<B>`: repo1 8 refs incl. 164d9ae0, repo3 12 refs incl. B, repo6 8 refs incl. e441671e), so `target_keep`
+  reads `yes` at the abandon step — which is exactly what the record's line 3 says. It is `jj util gc` / `git pack-refs`
+  that drops B's own ref and yields `target_keep=no`. The role-3 span is taken at `reflog-expire-then-prune`, so the
+  prose is not contradicted; the caveat is only for a reader who expects `target_keep=no` right after abandon.
+
+FILE LAYOUT BELOW
+  A. repo1 — reflog keeper, gc, expire+prune, fsck (replicate.sh). Its trailing REPO 2 block is a first-pass
+     variant where B's own keep ref was still in place at the expiry step, so it isolates nothing about the
+     descendant; sections B and C supersede it by deleting that ref first.
+  B. repo3/repo4 — isolate the descendant keep ref; jj util gc probe (replicate2.sh, output section B)
+  C. repo5/repo6 — direct-child identity proof; all-ref listing; jj's own levers (replicate3.sh, output section C)
+  D. repo7 (inline run) and repo8 (replicate4.sh, same commands) — role-4 sequence, no manual ref surgery
+     (output section D is the repo8 run)
+
+======================================================================================
+A. repo1 — reflog keeper, gc, expire+prune, fsck
+======================================================================================
+
+script /fast/scratch/hyaku/souji-r31/w2-ReplicateC3/replicate.sh (sha256 6dfabdde…1184)
+
+#!/usr/bin/env bash
+# Independent replication of the C3 headline: object lifetime behind a dropped refs/jj/keep ref.
+# Own command sequence; the lane fixture is not invoked, sourced or imported.
+set -u
+set -x
+D=/fast/scratch/hyaku/souji-r31/w2-ReplicateC3
+export TMPDIR=$D/tmp
+mkdir -p "$TMPDIR"
+R=$D/repos
+rm -rf "$R"
+mkdir -p "$R"
+
+command -v jj
+command -v git
+jj --version
+git --version
+
+# =====================================================================================
+printf '### REPO 1: A then B, abandon B, delete every keep ref naming B or a descendant\n'
+REPO=$R/repo1
+G() { git -C "$REPO" -c maintenance.auto=false -c gc.auto=0 "$@"; }
+J() { ( cd "$REPO" && jj -R "$REPO" --color=never --config ui.paginate=never --config user.name=r31 --config user.email=r31@example.invalid "$@" ); }
+
+jj git init --colocate "$REPO"
+printf 'a\n' >"$REPO/a.txt"
+J commit -m A
+printf 'b\n' >"$REPO/b.txt"
+J commit -m B
+printf '### objects after A,B\n'
+J log --no-graph -r 'all()' -T 'commit_id ++ " " ++ commit_id.short() ++ " | " ++ description.first_line() ++ " | parents=" ++ parents.map(|p| p.commit_id().short()) ++ "\n"'
+B=$(J log --no-graph -r '@-' -T commit_id)
+printf 'B=%s\n' "$B"
+printf '### keep refs before abandon\n'
+G for-each-ref --format='%(refname) %(objectname)' refs/jj/keep
+printf '### abandon B\n'
+J abandon '@-'
+printf '### objects after abandon B\n'
+J log --no-graph -r 'all()' -T 'commit_id ++ " " ++ commit_id.short() ++ " | " ++ description.first_line() ++ " | parents=" ++ parents.map(|p| p.commit_id().short()) ++ "\n"'
+printf '### keep refs after abandon B\n'
+G for-each-ref --format='%(refname) %(objectname)' refs/jj/keep
+printf '### HEAD and reachability of B from HEAD\n'
+G rev-parse HEAD
+G merge-base --is-ancestor "$B" HEAD
+printf 'ancestor_of_HEAD_rc=%s\n' "$?"
+printf '### reflog files present\n'
+find "$REPO/.git/logs" -type f
+printf '### raw .git/logs/HEAD\n'
+cat "$REPO/.git/logs/HEAD"
+printf '### delete keep refs naming B or a strict descendant of B\n'
+for r in $(G for-each-ref --format='%(refname)' refs/jj/keep); do
+  t=$(G rev-parse "$r")
+  if [ "$t" = "$B" ]; then
+    printf 'DELETE %s -> %s (target is B)\n' "$r" "$t"
+    G update-ref -d "$r"
+  elif G merge-base --is-ancestor "$B" "$t"; then
+    printf 'DELETE %s -> %s (target is a strict descendant of B)\n' "$r" "$t"
+    G update-ref -d "$r"
+  else
+    printf 'KEEP   %s -> %s (not B, not a descendant of B)\n' "$r" "$t"
+  fi
+done
+printf '### observed state after keep-ref deletion\n'
+G for-each-ref --format='%(refname) %(objectname)' refs/jj/keep
+printf '### reflog entries naming B (git reflog --all --format=%%H)\n'
+G reflog --all --format=%H
+printf 'reflog_hits=%s\n' "$(G reflog --all --format=%H | grep -c "^$B$")"
+printf '### object reachable from any ref?\n'
+G merge-base --is-ancestor "$B" HEAD
+printf 'ancestor_of_HEAD_rc=%s\n' "$?"
+printf '### object present before any gc (cat-file -e)\n'
+G cat-file -e "$B" 2>/dev/null
+printf 'present_rc=%s\n' "$?"
+printf '### git gc --prune=now\n'
+G gc --prune=now
+printf '### object present after git gc --prune=now\n'
+G cat-file -e "$B" 2>/dev/null
+printf 'present_rc=%s\n' "$?"
+printf '### reflog still names B after that gc?\n'
+printf 'reflog_hits=%s\n' "$(G reflog --all --format=%H | grep -c "^$B$")"
+printf '### git reflog expire --expire=now --expire-unreachable=now --all\n'
+G reflog expire --expire=now --expire-unreachable=now --all
+printf '### reflog entries naming B after expiry\n'
+printf 'reflog_hits=%s\n' "$(G reflog --all --format=%H | grep -c "^$B$")"
+printf '### object present after expiry alone\n'
+G cat-file -e "$B" 2>/dev/null
+printf 'present_rc=%s\n' "$?"
+printf '### git gc --prune=now (after expiry)\n'
+G gc --prune=now
+printf '### object present after expiry + prune\n'
+G cat-file -e "$B" 2>/dev/null
+printf 'present_rc=%s\n' "$?"
+printf '### fsck view of B after expiry + prune\n'
+G fsck --unreachable --no-reflogs
+printf 'fsck_rc=%s\n' "$?"
+printf '### count-objects\n'
+G count-objects -v
+
+# =====================================================================================
+printf '### REPO 2: A then B then C on B, abandon B only, a keep ref names a child of B\n'
+REPO=$R/repo2
+G() { git -C "$REPO" -c maintenance.auto=false -c gc.auto=0 "$@"; }
+J() { ( cd "$REPO" && jj -R "$REPO" --color=never --config ui.paginate=never --config user.name=r31 --config user.email=r31@example.invalid "$@" ); }
+
+jj git init --colocate "$REPO"
+printf 'a\n' >"$REPO/a.txt"
+J commit -m A
+printf 'b\n' >"$REPO/b.txt"
+J commit -m B
+printf 'c\n' >"$REPO/c.txt"
+J commit -m C
+printf '### objects after A,B,C\n'
+J log --no-graph -r 'all()' -T 'commit_id ++ " " ++ commit_id.short() ++ " | " ++ description.first_line() ++ " | parents=" ++ parents.map(|p| p.commit_id().short()) ++ "\n"'
+B=$(J log --no-graph -r '@--' -T commit_id)
+C=$(J log --no-graph -r '@-' -T commit_id)
+printf 'B=%s\nC=%s\n' "$B" "$C"
+printf '### abandon B only (C left alive)\n'
+J abandon '@--'
+printf '### objects after abandon B\n'
+J log --no-graph -r 'all()' -T 'commit_id ++ " " ++ commit_id.short() ++ " | " ++ description.first_line() ++ " | parents=" ++ parents.map(|p| p.commit_id().short()) ++ "\n"'
+printf '### keep refs after abandon B, with target identity\n'
+for r in $(G for-each-ref --format='%(refname)' refs/jj/keep); do
+  t=$(G rev-parse "$r")
+  if [ "$t" = "$B" ]; then rel="TARGET-IS-B"; elif G merge-base --is-ancestor "$B" "$t"; then rel="STRICT-DESCENDANT-OF-B"; else rel="OTHER"; fi
+  printf 'REF %s -> %s %s\n' "$r" "$t" "$rel"
+done
+printf '### HEAD\n'
+G rev-parse HEAD
+G merge-base --is-ancestor "$B" HEAD
+printf 'ancestor_of_HEAD_rc=%s\n' "$?"
+printf '### reflog entries naming B before any action\n'
+G reflog --all --format=%H
+printf 'reflog_hits=%s\n' "$(G reflog --all --format=%H | grep -c "^$B$")"
+printf '### expiry + prune WITH the descendant keep ref still in place\n'
+G reflog expire --expire=now --expire-unreachable=now --all
+printf 'reflog_hits_after_expiry=%s\n' "$(G reflog --all --format=%H | grep -c "^$B$")"
+G gc --prune=now
+printf '### object present after expiry + prune, keep ref still naming a child of B\n'
+G cat-file -e "$B" 2>/dev/null
+printf 'present_rc=%s\n' "$?"
+printf '### which keep refs still name a strict descendant of B\n'
+for r in $(G for-each-ref --format='%(refname)' refs/jj/keep); do
+  t=$(G rev-parse "$r")
+  if G merge-base --is-ancestor "$B" "$t"; then printf 'HOLDS-B %s -> %s\n' "$r" "$t"; fi
+done
+printf '### delete those refs, then git gc --prune=now\n'
+for r in $(G for-each-ref --format='%(refname)' refs/jj/keep); do
+  t=$(G rev-parse "$r")
+  if [ "$t" = "$B" ] || G merge-base --is-ancestor "$B" "$t"; then G update-ref -d "$r"; fi
+done
+G gc --prune=now
+printf '### object present after dropping the descendant keep ref and pruning\n'
+G cat-file -e "$B" 2>/dev/null
+printf 'present_rc=%s\n' "$?"
+
+# =====================================================================================
+printf '### done\n'
+exit 0
+
+output (bash trace lines removed)
+
+/home/vgpnk/.local/bin/jj
+/usr/bin/git
+jj 0.45.1-7c41cdeb16b6b321c64e789a966b6adf723816a5
+git version 2.56.0
+### REPO 1: A then B, abandon B, delete every keep ref naming B or a descendant
+Initialized repo in "repos/repo1"
+Working copy  (@) now at: xuykwxrq d92edcd3 (empty) (no description set)
+Parent commit (@-)      : lpuulnly 91b439f4 A
+Working copy  (@) now at: qyqzwmum 6fd4f630 (empty) (no description set)
+Parent commit (@-)      : xuykwxrq 164d9ae0 B
+### objects after A,B
+6fd4f630f0e597665b1df96b84e342101b67eba9 6fd4f630f0e5 |  | parents=164d9ae06e3c
+164d9ae06e3cd6e36db7a0231deadb09470dbbbe 164d9ae06e3c | B | parents=91b439f4ccd0
+91b439f4ccd0387886264ce51a1ed196f164c7d2 91b439f4ccd0 | A | parents=000000000000
+0000000000000000000000000000000000000000 000000000000 |  | parents=
+B=164d9ae06e3cd6e36db7a0231deadb09470dbbbe
+### keep refs before abandon
+refs/jj/keep/036599d11c1b32e7485976a4179c591e1698f287 036599d11c1b32e7485976a4179c591e1698f287
+refs/jj/keep/164d9ae06e3cd6e36db7a0231deadb09470dbbbe 164d9ae06e3cd6e36db7a0231deadb09470dbbbe
+refs/jj/keep/6fd4f630f0e597665b1df96b84e342101b67eba9 6fd4f630f0e597665b1df96b84e342101b67eba9
+refs/jj/keep/810c147174d455807b4162dc1a9c6d15d996e878 810c147174d455807b4162dc1a9c6d15d996e878
+refs/jj/keep/8b504f4c83d16e6b7a8aae33fa46cca376f36252 8b504f4c83d16e6b7a8aae33fa46cca376f36252
+refs/jj/keep/91b439f4ccd0387886264ce51a1ed196f164c7d2 91b439f4ccd0387886264ce51a1ed196f164c7d2
+refs/jj/keep/d92edcd3cfa27dabca82010819eebd6dea3e6012 d92edcd3cfa27dabca82010819eebd6dea3e6012
+### abandon B
+Abandoned 1 commits:
+  xuykwxrq 164d9ae0 B
+Rebased 1 descendant commits onto parents of abandoned commits.
+Working copy  (@) now at: qyqzwmum 1ab74665 (empty) (no description set)
+Parent commit (@-)      : lpuulnly 91b439f4 A
+Added 0 files, modified 0 files, removed 1 files
+### objects after abandon B
+1ab74665bc302d2856d1d93e360ee89ebe5b499f 1ab74665bc30 |  | parents=91b439f4ccd0
+91b439f4ccd0387886264ce51a1ed196f164c7d2 91b439f4ccd0 | A | parents=000000000000
+0000000000000000000000000000000000000000 000000000000 |  | parents=
+### keep refs after abandon B
+refs/jj/keep/036599d11c1b32e7485976a4179c591e1698f287 036599d11c1b32e7485976a4179c591e1698f287
+refs/jj/keep/164d9ae06e3cd6e36db7a0231deadb09470dbbbe 164d9ae06e3cd6e36db7a0231deadb09470dbbbe
+refs/jj/keep/1ab74665bc302d2856d1d93e360ee89ebe5b499f 1ab74665bc302d2856d1d93e360ee89ebe5b499f
+refs/jj/keep/6fd4f630f0e597665b1df96b84e342101b67eba9 6fd4f630f0e597665b1df96b84e342101b67eba9
+refs/jj/keep/810c147174d455807b4162dc1a9c6d15d996e878 810c147174d455807b4162dc1a9c6d15d996e878
+refs/jj/keep/8b504f4c83d16e6b7a8aae33fa46cca376f36252 8b504f4c83d16e6b7a8aae33fa46cca376f36252
+refs/jj/keep/91b439f4ccd0387886264ce51a1ed196f164c7d2 91b439f4ccd0387886264ce51a1ed196f164c7d2
+refs/jj/keep/d92edcd3cfa27dabca82010819eebd6dea3e6012 d92edcd3cfa27dabca82010819eebd6dea3e6012
+### HEAD and reachability of B from HEAD
+91b439f4ccd0387886264ce51a1ed196f164c7d2
+ancestor_of_HEAD_rc=1
+### reflog files present
+/fast/scratch/hyaku/souji-r31/w2-ReplicateC3/repos/repo1/.git/logs/HEAD
+### raw .git/logs/HEAD
+0000000000000000000000000000000000000000 91b439f4ccd0387886264ce51a1ed196f164c7d2 r31 <r31@example.invalid> 1792999741 -0300	export from jj
+91b439f4ccd0387886264ce51a1ed196f164c7d2 164d9ae06e3cd6e36db7a0231deadb09470dbbbe r31 <r31@example.invalid> 1792999741 -0300	export from jj
+164d9ae06e3cd6e36db7a0231deadb09470dbbbe 91b439f4ccd0387886264ce51a1ed196f164c7d2 r31 <r31@example.invalid> 1792999741 -0300	export from jj
+### delete keep refs naming B or a strict descendant of B
+KEEP   refs/jj/keep/036599d11c1b32e7485976a4179c591e1698f287 -> 036599d11c1b32e7485976a4179c591e1698f287 (not B, not a descendant of B)
+DELETE refs/jj/keep/164d9ae06e3cd6e36db7a0231deadb09470dbbbe -> 164d9ae06e3cd6e36db7a0231deadb09470dbbbe (target is B)
+KEEP   refs/jj/keep/1ab74665bc302d2856d1d93e360ee89ebe5b499f -> 1ab74665bc302d2856d1d93e360ee89ebe5b499f (not B, not a descendant of B)
+DELETE refs/jj/keep/6fd4f630f0e597665b1df96b84e342101b67eba9 -> 6fd4f630f0e597665b1df96b84e342101b67eba9 (target is a strict descendant of B)
+KEEP   refs/jj/keep/810c147174d455807b4162dc1a9c6d15d996e878 -> 810c147174d455807b4162dc1a9c6d15d996e878 (not B, not a descendant of B)
+KEEP   refs/jj/keep/8b504f4c83d16e6b7a8aae33fa46cca376f36252 -> 8b504f4c83d16e6b7a8aae33fa46cca376f36252 (not B, not a descendant of B)
+KEEP   refs/jj/keep/91b439f4ccd0387886264ce51a1ed196f164c7d2 -> 91b439f4ccd0387886264ce51a1ed196f164c7d2 (not B, not a descendant of B)
+KEEP   refs/jj/keep/d92edcd3cfa27dabca82010819eebd6dea3e6012 -> d92edcd3cfa27dabca82010819eebd6dea3e6012 (not B, not a descendant of B)
+### observed state after keep-ref deletion
+refs/jj/keep/036599d11c1b32e7485976a4179c591e1698f287 036599d11c1b32e7485976a4179c591e1698f287
+refs/jj/keep/1ab74665bc302d2856d1d93e360ee89ebe5b499f 1ab74665bc302d2856d1d93e360ee89ebe5b499f
+refs/jj/keep/810c147174d455807b4162dc1a9c6d15d996e878 810c147174d455807b4162dc1a9c6d15d996e878
+refs/jj/keep/8b504f4c83d16e6b7a8aae33fa46cca376f36252 8b504f4c83d16e6b7a8aae33fa46cca376f36252
+refs/jj/keep/91b439f4ccd0387886264ce51a1ed196f164c7d2 91b439f4ccd0387886264ce51a1ed196f164c7d2
+refs/jj/keep/d92edcd3cfa27dabca82010819eebd6dea3e6012 d92edcd3cfa27dabca82010819eebd6dea3e6012
+### reflog entries naming B (git reflog --all --format=%H)
+91b439f4ccd0387886264ce51a1ed196f164c7d2
+164d9ae06e3cd6e36db7a0231deadb09470dbbbe
+91b439f4ccd0387886264ce51a1ed196f164c7d2
+reflog_hits=1
+### object reachable from any ref?
+ancestor_of_HEAD_rc=1
+### object present before any gc (cat-file -e)
+present_rc=0
+### git gc --prune=now
+### object present after git gc --prune=now
+present_rc=0
+### reflog still names B after that gc?
+reflog_hits=1
+### git reflog expire --expire=now --expire-unreachable=now --all
+### reflog entries naming B after expiry
+reflog_hits=0
+### object present after expiry alone
+present_rc=0
+### git gc --prune=now (after expiry)
+### object present after expiry + prune
+present_rc=1
+### fsck view of B after expiry + prune
+fsck_rc=0
+### count-objects
+count: 0
+size: 0
+in-pack: 11
+packs: 1
+size-pack: 2
+prune-packable: 0
+garbage: 0
+size-garbage: 0
+### REPO 2: A then B then C on B, abandon B only, a keep ref names a child of B
+Initialized repo in "repos/repo2"
+Working copy  (@) now at: vmxzmoxn cb4b1d0a (empty) (no description set)
+Parent commit (@-)      : onrxokxs 90a2c950 A
+Working copy  (@) now at: qqwukvlp 6991d5fe (empty) (no description set)
+Parent commit (@-)      : vmxzmoxn 1e6fcd04 B
+Working copy  (@) now at: uloqynuo 08c354c4 (empty) (no description set)
+Parent commit (@-)      : qqwukvlp 9784713a C
+### objects after A,B,C
+08c354c41d925436759cb204d9b78078ccd91d05 08c354c41d92 |  | parents=9784713a973b
+9784713a973bd670c2b658c62d2db9b7ae298f42 9784713a973b | C | parents=1e6fcd04b1a9
+1e6fcd04b1a9ceca866eb7496b05b2d7228aa737 1e6fcd04b1a9 | B | parents=90a2c95007f7
+90a2c95007f7cfdd32c522853c7c5f602c725fbb 90a2c95007f7 | A | parents=000000000000
+0000000000000000000000000000000000000000 000000000000 |  | parents=
+B=1e6fcd04b1a9ceca866eb7496b05b2d7228aa737
+C=9784713a973bd670c2b658c62d2db9b7ae298f42
+### abandon B only (C left alive)
+Abandoned 1 commits:
+  vmxzmoxn 1e6fcd04 B
+Rebased 2 descendant commits onto parents of abandoned commits.
+Working copy  (@) now at: uloqynuo d4466b26 (empty) (no description set)
+Parent commit (@-)      : qqwukvlp 957d1d38 C
+Added 0 files, modified 0 files, removed 1 files
+### objects after abandon B
+d4466b268d19ac643879f90897f716ac1fa87163 d4466b268d19 |  | parents=957d1d38a754
+957d1d38a754ccba6bc5bee532f7e45586f7f8e5 957d1d38a754 | C | parents=90a2c95007f7
+90a2c95007f7cfdd32c522853c7c5f602c725fbb 90a2c95007f7 | A | parents=000000000000
+0000000000000000000000000000000000000000 000000000000 |  | parents=
+### keep refs after abandon B, with target identity
+REF refs/jj/keep/08c354c41d925436759cb204d9b78078ccd91d05 -> 08c354c41d925436759cb204d9b78078ccd91d05 STRICT-DESCENDANT-OF-B
+REF refs/jj/keep/0c1a9ba2446cfe3bfc1776590658ccf3a781f500 -> 0c1a9ba2446cfe3bfc1776590658ccf3a781f500 STRICT-DESCENDANT-OF-B
+REF refs/jj/keep/0fa2d36334b55c586d7cff8500e7c4f89debe45f -> 0fa2d36334b55c586d7cff8500e7c4f89debe45f OTHER
+REF refs/jj/keep/1e6fcd04b1a9ceca866eb7496b05b2d7228aa737 -> 1e6fcd04b1a9ceca866eb7496b05b2d7228aa737 TARGET-IS-B
+REF refs/jj/keep/3d69eb22daae505a48f442c72d36c14a60e25c0f -> 3d69eb22daae505a48f442c72d36c14a60e25c0f OTHER
+REF refs/jj/keep/6991d5fec63d4f001fa9eeffafad90de89262c65 -> 6991d5fec63d4f001fa9eeffafad90de89262c65 STRICT-DESCENDANT-OF-B
+REF refs/jj/keep/90a2c95007f7cfdd32c522853c7c5f602c725fbb -> 90a2c95007f7cfdd32c522853c7c5f602c725fbb OTHER
+REF refs/jj/keep/957d1d38a754ccba6bc5bee532f7e45586f7f8e5 -> 957d1d38a754ccba6bc5bee532f7e45586f7f8e5 OTHER
+REF refs/jj/keep/9784713a973bd670c2b658c62d2db9b7ae298f42 -> 9784713a973bd670c2b658c62d2db9b7ae298f42 STRICT-DESCENDANT-OF-B
+REF refs/jj/keep/b8bce6b5dbcb849f36fd82c4fbf8a1901701d995 -> b8bce6b5dbcb849f36fd82c4fbf8a1901701d995 OTHER
+REF refs/jj/keep/cb4b1d0a88407570f9d953208885ede09c1cd475 -> cb4b1d0a88407570f9d953208885ede09c1cd475 OTHER
+REF refs/jj/keep/d4466b268d19ac643879f90897f716ac1fa87163 -> d4466b268d19ac643879f90897f716ac1fa87163 OTHER
+### HEAD
+957d1d38a754ccba6bc5bee532f7e45586f7f8e5
+ancestor_of_HEAD_rc=1
+### reflog entries naming B before any action
+957d1d38a754ccba6bc5bee532f7e45586f7f8e5
+9784713a973bd670c2b658c62d2db9b7ae298f42
+1e6fcd04b1a9ceca866eb7496b05b2d7228aa737
+90a2c95007f7cfdd32c522853c7c5f602c725fbb
+reflog_hits=1
+### expiry + prune WITH the descendant keep ref still in place
+reflog_hits_after_expiry=0
+### object present after expiry + prune, keep ref still naming a child of B
+present_rc=0
+### which keep refs still name a strict descendant of B
+HOLDS-B refs/jj/keep/08c354c41d925436759cb204d9b78078ccd91d05 -> 08c354c41d925436759cb204d9b78078ccd91d05
+HOLDS-B refs/jj/keep/0c1a9ba2446cfe3bfc1776590658ccf3a781f500 -> 0c1a9ba2446cfe3bfc1776590658ccf3a781f500
+HOLDS-B refs/jj/keep/1e6fcd04b1a9ceca866eb7496b05b2d7228aa737 -> 1e6fcd04b1a9ceca866eb7496b05b2d7228aa737
+HOLDS-B refs/jj/keep/6991d5fec63d4f001fa9eeffafad90de89262c65 -> 6991d5fec63d4f001fa9eeffafad90de89262c65
+HOLDS-B refs/jj/keep/9784713a973bd670c2b658c62d2db9b7ae298f42 -> 9784713a973bd670c2b658c62d2db9b7ae298f42
+### delete those refs, then git gc --prune=now
+### object present after dropping the descendant keep ref and pruning
+present_rc=1
+### done
+
+======================================================================================
+B. repo3 / repo4 — isolate the descendant keep ref; jj util gc probe
+======================================================================================
+
+script /fast/scratch/hyaku/souji-r31/w2-ReplicateC3/replicate2.sh (sha256 8391b9d1…0f66)
+
+#!/usr/bin/env bash
+# Second independent pass: isolate the descendant keep ref as the only root for B.
+# repo3: A -> B -> C, abandon B, delete ONLY the keep ref naming B, keep every ref naming a
+#        strict descendant of B. Then expire reflogs + prune (role 3/4 question), then drop the
+#        descendant refs and prune (role 3 second line).
+# repo4: same isolation, but the lever is jj's own `jj util gc --expire=now` (role 3/7 question).
+set -u
+set -x
+D=/fast/scratch/hyaku/souji-r31/w2-ReplicateC3
+export TMPDIR=$D/tmp
+R=$D/repos2
+rm -rf "$R"
+mkdir -p "$R"
+
+jj --version
+git --version
+
+# =====================================================================================
+printf '### REPO 3: only a keep ref naming a strict descendant of B remains\n'
+REPO=$R/repo3
+G() { git -C "$REPO" -c maintenance.auto=false -c gc.auto=0 "$@"; }
+J() { ( cd "$REPO" && jj -R "$REPO" --color=never --config ui.paginate=never --config user.name=r31 --config user.email=r31@example.invalid "$@" ); }
+
+jj git init --colocate "$REPO"
+printf 'a\n' >"$REPO/a.txt"; J commit -m A
+printf 'b\n' >"$REPO/b.txt"; J commit -m B
+printf 'c\n' >"$REPO/c.txt"; J commit -m C
+B=$(J log --no-graph -r '@--' -T commit_id)
+C=$(J log --no-graph -r '@-' -T commit_id)
+printf 'B=%s\nC=%s\n' "$B" "$C"
+J abandon '@--'
+printf '### every ref after abandon B\n'
+G for-each-ref --format='%(refname) %(objectname)'
+printf '### delete ONLY the keep ref(s) whose target is B itself\n'
+for r in $(G for-each-ref --format='%(refname)' refs/jj/keep); do
+  t=$(G rev-parse "$r")
+  if [ "$t" = "$B" ]; then printf 'DELETE-OWN %s\n' "$r"; G update-ref -d "$r"; fi
+done
+printf '### state: any ref naming B? any ref naming a strict descendant of B?\n'
+G for-each-ref --format='%(refname) %(objectname)'
+printf 'refs_naming_B=%s\n' "$(G for-each-ref --format='%(objectname)' | grep -c "^$B$")"
+printf '### reflog entries naming B\n'
+printf 'reflog_hits=%s\n' "$(G reflog --all --format=%H | grep -c "^$B$")"
+printf '### expire reflogs so the reflog cannot be the keeper\n'
+G reflog expire --expire=now --expire-unreachable=now --all
+printf 'reflog_hits_after_expiry=%s\n' "$(G reflog --all --format=%H | grep -c "^$B$")"
+printf '### B is reachable from HEAD? (must be no)\n'
+G merge-base --is-ancestor "$B" HEAD
+printf 'ancestor_of_HEAD_rc=%s\n' "$?"
+printf '### objects before prune\n'
+G count-objects -v
+printf '### git gc --prune=now, descendant keep ref still present\n'
+G gc --prune=now
+printf '### object_present for B after expiry + prune with a descendant keep ref\n'
+G cat-file -e "$B" 2>/dev/null
+printf 'present_rc=%s\n' "$?"
+printf '### reflog still empty of B\n'
+printf 'reflog_hits=%s\n' "$(G reflog --all --format=%H | grep -c "^$B$")"
+printf '### which refs still reach B\n'
+for r in $(G for-each-ref --format='%(refname)'); do
+  t=$(G rev-parse "$r")
+  if [ "$t" = "$B" ] || G merge-base --is-ancestor "$B" "$t" 2>/dev/null; then printf 'REACHES-B %s -> %s\n' "$r" "$t"; fi
+done
+printf '### B object type and parent line, to prove it is still the object B\n'
+G cat-file -t "$B"
+G cat-file -p "$B" | sed -n '1,4p'
+printf '### delete every ref that names B or a strict descendant of B, then prune\n'
+for r in $(G for-each-ref --format='%(refname)'); do
+  t=$(G rev-parse "$r")
+  if [ "$t" = "$B" ] || G merge-base --is-ancestor "$B" "$t" 2>/dev/null; then printf 'DELETE %s -> %s\n' "$r" "$t"; G update-ref -d "$r"; fi
+done
+G gc --prune=now
+printf '### object_present for B after dropping the descendant refs and pruning\n'
+G cat-file -e "$B" 2>/dev/null
+printf 'present_rc=%s\n' "$?"
+
+# =====================================================================================
+printf '### REPO 4: same isolation, lever = jj util gc --expire=now\n'
+REPO=$R/repo4
+G() { git -C "$REPO" -c maintenance.auto=false -c gc.auto=0 "$@"; }
+J() { ( cd "$REPO" && jj -R "$REPO" --color=never --config ui.paginate=never --config user.name=r31 --config user.email=r31@example.invalid "$@" ); }
+
+jj git init --colocate "$REPO"
+printf 'a\n' >"$REPO/a.txt"; J commit -m A
+printf 'b\n' >"$REPO/b.txt"; J commit -m B
+printf 'c\n' >"$REPO/c.txt"; J commit -m C
+B=$(J log --no-graph -r '@--' -T commit_id)
+printf 'B=%s\n' "$B"
+J abandon '@--'
+printf '### keep refs before own-ref deletion\n'
+G for-each-ref --format='%(refname) %(objectname)' refs/jj/keep
+for r in $(G for-each-ref --format='%(refname)' refs/jj/keep); do
+  t=$(G rev-parse "$r")
+  if [ "$t" = "$B" ]; then printf 'DELETE-OWN %s\n' "$r"; G update-ref -d "$r"; fi
+done
+G reflog expire --expire=now --expire-unreachable=now --all
+printf 'reflog_hits_after_expiry=%s\n' "$(G reflog --all --format=%H | grep -c "^$B$")"
+printf '### keep refs entering jj util gc\n'
+G for-each-ref --format='%(refname) %(objectname)' refs/jj/keep
+printf '### jj util gc --expire=now\n'
+J util gc --expire=now
+printf '### keep refs after jj util gc\n'
+G for-each-ref --format='%(refname) %(objectname)' refs/jj/keep
+printf '### object_present for B after jj util gc\n'
+G cat-file -e "$B" 2>/dev/null
+printf 'present_rc=%s\n' "$?"
+printf '### which refs still reach B after jj util gc\n'
+for r in $(G for-each-ref --format='%(refname)'); do
+  t=$(G rev-parse "$r")
+  if [ "$t" = "$B" ] || G merge-base --is-ancestor "$B" "$t" 2>/dev/null; then printf 'REACHES-B %s -> %s\n' "$r" "$t"; fi
+done
+printf '### git gc --prune=now after jj util gc\n'
+G gc --prune=now
+G cat-file -e "$B" 2>/dev/null
+printf 'present_rc=%s\n' "$?"
+printf '### done\n'
+exit 0
+
+output (bash trace lines removed)
+
+jj 0.45.1-7c41cdeb16b6b321c64e789a966b6adf723816a5
+git version 2.56.0
+### REPO 3: only a keep ref naming a strict descendant of B remains
+Initialized repo in "repos2/repo3"
+Working copy  (@) now at: uyrmmlnx b1a19a59 (empty) (no description set)
+Parent commit (@-)      : yzmrluls 1114ca0a A
+Working copy  (@) now at: sxnprsrq 32ba2038 (empty) (no description set)
+Parent commit (@-)      : uyrmmlnx 63de1d3c B
+Working copy  (@) now at: upxszxwl b3dce6cd (empty) (no description set)
+Parent commit (@-)      : sxnprsrq 50db1f3c C
+B=63de1d3ce089dea830db85a6a7a7c7b501bf369c
+C=50db1f3c9ebdc6734ce873abac8aaaa84a295580
+Abandoned 1 commits:
+  uyrmmlnx 63de1d3c B
+Rebased 2 descendant commits onto parents of abandoned commits.
+Working copy  (@) now at: upxszxwl f65aeb81 (empty) (no description set)
+Parent commit (@-)      : sxnprsrq 34beefc5 C
+Added 0 files, modified 0 files, removed 1 files
+### every ref after abandon B
+refs/jj/keep/098b70057182268c654c3bd1bc5a6fead4e00f77 098b70057182268c654c3bd1bc5a6fead4e00f77
+refs/jj/keep/0d82908ecd3628bc8a89884a6fe837a1525d2e34 0d82908ecd3628bc8a89884a6fe837a1525d2e34
+refs/jj/keep/1114ca0a1e6a15f96a6351022a0ddb7a8ef1634c 1114ca0a1e6a15f96a6351022a0ddb7a8ef1634c
+refs/jj/keep/32ba20386563bf36af25bac27d7a9c980371b8c1 32ba20386563bf36af25bac27d7a9c980371b8c1
+refs/jj/keep/34beefc51deae97269d0f76efaedf610799f8f94 34beefc51deae97269d0f76efaedf610799f8f94
+refs/jj/keep/50db1f3c9ebdc6734ce873abac8aaaa84a295580 50db1f3c9ebdc6734ce873abac8aaaa84a295580
+refs/jj/keep/5633ac8f4e8e5f01ca8c7bd2288bfd8f692eeb08 5633ac8f4e8e5f01ca8c7bd2288bfd8f692eeb08
+refs/jj/keep/63de1d3ce089dea830db85a6a7a7c7b501bf369c 63de1d3ce089dea830db85a6a7a7c7b501bf369c
+refs/jj/keep/6f15cf3a9c2c39d1ca9447c8877952049181a3e9 6f15cf3a9c2c39d1ca9447c8877952049181a3e9
+refs/jj/keep/b1a19a59c5f9fe0769e20b73a911e6ef918ced91 b1a19a59c5f9fe0769e20b73a911e6ef918ced91
+refs/jj/keep/b3dce6cdfd28fab510a1e3d3685ce0e9970be43a b3dce6cdfd28fab510a1e3d3685ce0e9970be43a
+refs/jj/keep/f65aeb811253edc53ca62919d0a1c17523d6c2f6 f65aeb811253edc53ca62919d0a1c17523d6c2f6
+### delete ONLY the keep ref(s) whose target is B itself
+DELETE-OWN refs/jj/keep/63de1d3ce089dea830db85a6a7a7c7b501bf369c
+### state: any ref naming B? any ref naming a strict descendant of B?
+refs/jj/keep/098b70057182268c654c3bd1bc5a6fead4e00f77 098b70057182268c654c3bd1bc5a6fead4e00f77
+refs/jj/keep/0d82908ecd3628bc8a89884a6fe837a1525d2e34 0d82908ecd3628bc8a89884a6fe837a1525d2e34
+refs/jj/keep/1114ca0a1e6a15f96a6351022a0ddb7a8ef1634c 1114ca0a1e6a15f96a6351022a0ddb7a8ef1634c
+refs/jj/keep/32ba20386563bf36af25bac27d7a9c980371b8c1 32ba20386563bf36af25bac27d7a9c980371b8c1
+refs/jj/keep/34beefc51deae97269d0f76efaedf610799f8f94 34beefc51deae97269d0f76efaedf610799f8f94
+refs/jj/keep/50db1f3c9ebdc6734ce873abac8aaaa84a295580 50db1f3c9ebdc6734ce873abac8aaaa84a295580
+refs/jj/keep/5633ac8f4e8e5f01ca8c7bd2288bfd8f692eeb08 5633ac8f4e8e5f01ca8c7bd2288bfd8f692eeb08
+refs/jj/keep/6f15cf3a9c2c39d1ca9447c8877952049181a3e9 6f15cf3a9c2c39d1ca9447c8877952049181a3e9
+refs/jj/keep/b1a19a59c5f9fe0769e20b73a911e6ef918ced91 b1a19a59c5f9fe0769e20b73a911e6ef918ced91
+refs/jj/keep/b3dce6cdfd28fab510a1e3d3685ce0e9970be43a b3dce6cdfd28fab510a1e3d3685ce0e9970be43a
+refs/jj/keep/f65aeb811253edc53ca62919d0a1c17523d6c2f6 f65aeb811253edc53ca62919d0a1c17523d6c2f6
+refs_naming_B=0
+### reflog entries naming B
+reflog_hits=1
+### expire reflogs so the reflog cannot be the keeper
+reflog_hits_after_expiry=0
+### B is reachable from HEAD? (must be no)
+ancestor_of_HEAD_rc=1
+### objects before prune
+count: 21
+size: 84
+in-pack: 0
+packs: 0
+size-pack: 0
+prune-packable: 0
+garbage: 0
+size-garbage: 0
+### git gc --prune=now, descendant keep ref still present
+### object_present for B after expiry + prune with a descendant keep ref
+present_rc=0
+### reflog still empty of B
+reflog_hits=0
+### which refs still reach B
+REACHES-B refs/jj/keep/0d82908ecd3628bc8a89884a6fe837a1525d2e34 -> 0d82908ecd3628bc8a89884a6fe837a1525d2e34
+REACHES-B refs/jj/keep/32ba20386563bf36af25bac27d7a9c980371b8c1 -> 32ba20386563bf36af25bac27d7a9c980371b8c1
+REACHES-B refs/jj/keep/50db1f3c9ebdc6734ce873abac8aaaa84a295580 -> 50db1f3c9ebdc6734ce873abac8aaaa84a295580
+REACHES-B refs/jj/keep/b3dce6cdfd28fab510a1e3d3685ce0e9970be43a -> b3dce6cdfd28fab510a1e3d3685ce0e9970be43a
+### B object type and parent line, to prove it is still the object B
+commit
+tree f4b354863caa9cea99b95422c9dab70465757d87
+parent 1114ca0a1e6a15f96a6351022a0ddb7a8ef1634c
+author r31 <r31@example.invalid> 1792999800 -0300
+committer r31 <r31@example.invalid> 1792999800 -0300
+### delete every ref that names B or a strict descendant of B, then prune
+DELETE refs/jj/keep/0d82908ecd3628bc8a89884a6fe837a1525d2e34 -> 0d82908ecd3628bc8a89884a6fe837a1525d2e34
+DELETE refs/jj/keep/32ba20386563bf36af25bac27d7a9c980371b8c1 -> 32ba20386563bf36af25bac27d7a9c980371b8c1
+DELETE refs/jj/keep/50db1f3c9ebdc6734ce873abac8aaaa84a295580 -> 50db1f3c9ebdc6734ce873abac8aaaa84a295580
+DELETE refs/jj/keep/b3dce6cdfd28fab510a1e3d3685ce0e9970be43a -> b3dce6cdfd28fab510a1e3d3685ce0e9970be43a
+### object_present for B after dropping the descendant refs and pruning
+present_rc=1
+### REPO 4: same isolation, lever = jj util gc --expire=now
+Initialized repo in "repos2/repo4"
+Working copy  (@) now at: kztostlk 5f8f2551 (empty) (no description set)
+Parent commit (@-)      : lktpzuyn dd09b21f A
+Working copy  (@) now at: oqvkwymt 54e5f6ae (empty) (no description set)
+Parent commit (@-)      : kztostlk 6b616ace B
+Working copy  (@) now at: kxrlpwxx f573d1c6 (empty) (no description set)
+Parent commit (@-)      : oqvkwymt 35b397f0 C
+B=6b616ace63dd7057ac1e8d9ae388b4d42e1bd879
+Abandoned 1 commits:
+  kztostlk 6b616ace B
+Rebased 2 descendant commits onto parents of abandoned commits.
+Working copy  (@) now at: kxrlpwxx f2c6a141 (empty) (no description set)
+Parent commit (@-)      : oqvkwymt ba3bb56e C
+Added 0 files, modified 0 files, removed 1 files
+### keep refs before own-ref deletion
+refs/jj/keep/08dda7f8fa88f5b71cfa65e680b9b55c181c20d6 08dda7f8fa88f5b71cfa65e680b9b55c181c20d6
+refs/jj/keep/35b397f08e4e4b40bae6a2f2ceb5f0fdc5c8c2bb 35b397f08e4e4b40bae6a2f2ceb5f0fdc5c8c2bb
+refs/jj/keep/4477de3f0c1ef1a4a9e7fef3c1d72db5a98978de 4477de3f0c1ef1a4a9e7fef3c1d72db5a98978de
+refs/jj/keep/54e5f6aedf63baac2980be975367d841847ec445 54e5f6aedf63baac2980be975367d841847ec445
+refs/jj/keep/598a503cb967f0ffb67659ecbc103abc7a0a4c76 598a503cb967f0ffb67659ecbc103abc7a0a4c76
+refs/jj/keep/5f8f25514502a9e0e8213c3e950976cc161a3b5c 5f8f25514502a9e0e8213c3e950976cc161a3b5c
+refs/jj/keep/6b616ace63dd7057ac1e8d9ae388b4d42e1bd879 6b616ace63dd7057ac1e8d9ae388b4d42e1bd879
+refs/jj/keep/74b2f2377cf0e876fe47dcf2c69387fe9edeb978 74b2f2377cf0e876fe47dcf2c69387fe9edeb978
+refs/jj/keep/ba3bb56e95a11baf706b396872a88695aaec4b17 ba3bb56e95a11baf706b396872a88695aaec4b17
+refs/jj/keep/dd09b21f7b8442cbd472594198270c07dd317987 dd09b21f7b8442cbd472594198270c07dd317987
+refs/jj/keep/f2c6a141ece68fe0d641890184b597130341e451 f2c6a141ece68fe0d641890184b597130341e451
+refs/jj/keep/f573d1c63dbbd50b55e981a46e143c53e6723332 f573d1c63dbbd50b55e981a46e143c53e6723332
+DELETE-OWN refs/jj/keep/6b616ace63dd7057ac1e8d9ae388b4d42e1bd879
+reflog_hits_after_expiry=0
+### keep refs entering jj util gc
+refs/jj/keep/08dda7f8fa88f5b71cfa65e680b9b55c181c20d6 08dda7f8fa88f5b71cfa65e680b9b55c181c20d6
+refs/jj/keep/35b397f08e4e4b40bae6a2f2ceb5f0fdc5c8c2bb 35b397f08e4e4b40bae6a2f2ceb5f0fdc5c8c2bb
+refs/jj/keep/4477de3f0c1ef1a4a9e7fef3c1d72db5a98978de 4477de3f0c1ef1a4a9e7fef3c1d72db5a98978de
+refs/jj/keep/54e5f6aedf63baac2980be975367d841847ec445 54e5f6aedf63baac2980be975367d841847ec445
+refs/jj/keep/598a503cb967f0ffb67659ecbc103abc7a0a4c76 598a503cb967f0ffb67659ecbc103abc7a0a4c76
+refs/jj/keep/5f8f25514502a9e0e8213c3e950976cc161a3b5c 5f8f25514502a9e0e8213c3e950976cc161a3b5c
+refs/jj/keep/74b2f2377cf0e876fe47dcf2c69387fe9edeb978 74b2f2377cf0e876fe47dcf2c69387fe9edeb978
+refs/jj/keep/ba3bb56e95a11baf706b396872a88695aaec4b17 ba3bb56e95a11baf706b396872a88695aaec4b17
+refs/jj/keep/dd09b21f7b8442cbd472594198270c07dd317987 dd09b21f7b8442cbd472594198270c07dd317987
+refs/jj/keep/f2c6a141ece68fe0d641890184b597130341e451 f2c6a141ece68fe0d641890184b597130341e451
+refs/jj/keep/f573d1c63dbbd50b55e981a46e143c53e6723332 f573d1c63dbbd50b55e981a46e143c53e6723332
+### jj util gc --expire=now
+### keep refs after jj util gc
+refs/jj/keep/08dda7f8fa88f5b71cfa65e680b9b55c181c20d6 08dda7f8fa88f5b71cfa65e680b9b55c181c20d6
+refs/jj/keep/4477de3f0c1ef1a4a9e7fef3c1d72db5a98978de 4477de3f0c1ef1a4a9e7fef3c1d72db5a98978de
+refs/jj/keep/54e5f6aedf63baac2980be975367d841847ec445 54e5f6aedf63baac2980be975367d841847ec445
+refs/jj/keep/598a503cb967f0ffb67659ecbc103abc7a0a4c76 598a503cb967f0ffb67659ecbc103abc7a0a4c76
+refs/jj/keep/5f8f25514502a9e0e8213c3e950976cc161a3b5c 5f8f25514502a9e0e8213c3e950976cc161a3b5c
+refs/jj/keep/74b2f2377cf0e876fe47dcf2c69387fe9edeb978 74b2f2377cf0e876fe47dcf2c69387fe9edeb978
+refs/jj/keep/f2c6a141ece68fe0d641890184b597130341e451 f2c6a141ece68fe0d641890184b597130341e451
+refs/jj/keep/f573d1c63dbbd50b55e981a46e143c53e6723332 f573d1c63dbbd50b55e981a46e143c53e6723332
+### object_present for B after jj util gc
+present_rc=0
+### which refs still reach B after jj util gc
+REACHES-B refs/jj/keep/08dda7f8fa88f5b71cfa65e680b9b55c181c20d6 -> 08dda7f8fa88f5b71cfa65e680b9b55c181c20d6
+REACHES-B refs/jj/keep/54e5f6aedf63baac2980be975367d841847ec445 -> 54e5f6aedf63baac2980be975367d841847ec445
+REACHES-B refs/jj/keep/f573d1c63dbbd50b55e981a46e143c53e6723332 -> f573d1c63dbbd50b55e981a46e143c53e6723332
+### git gc --prune=now after jj util gc
+present_rc=0
+### done
+
+======================================================================================
+C. repo5 / repo6 — direct-child identity, all-ref listing, jj own levers
+======================================================================================
+
+script /fast/scratch/hyaku/souji-r31/w2-ReplicateC3/replicate3.sh (sha256 0d503308…23c6)
+
+#!/usr/bin/env bash
+# Third pass: (a) prove the surviving keep ref names the direct child C of B; (b) all-ref listing
+# for the reflog-only shape; (c) jj's own levers (util gc, op abandon) with no manual ref surgery.
+set -u
+set -x
+D=/fast/scratch/hyaku/souji-r31/w2-ReplicateC3
+export TMPDIR=$D/tmp
+R=$D/repos3
+rm -rf "$R"
+mkdir -p "$R"
+
+# =====================================================================================
+printf '### REPO 5: keep ref naming the DIRECT CHILD C of B, identity shown\n'
+REPO=$R/repo5
+G() { git -C "$REPO" -c maintenance.auto=false -c gc.auto=0 "$@"; }
+J() { ( cd "$REPO" && jj -R "$REPO" --color=never --config ui.paginate=never --config user.name=r31 --config user.email=r31@example.invalid "$@" ); }
+jj git init --colocate "$REPO"
+printf 'a\n' >"$REPO/a.txt"; J commit -m A
+printf 'b\n' >"$REPO/b.txt"; J commit -m B
+printf 'c\n' >"$REPO/c.txt"; J commit -m C
+B=$(J log --no-graph -r '@--' -T commit_id)
+C=$(J log --no-graph -r '@-' -T commit_id)
+printf 'B=%s\nC=%s\n' "$B" "$C"
+J abandon '@--'
+printf '### C is a direct child of B (parent line of C)\n'
+G cat-file -p "$C" | sed -n '1,3p'
+printf '### the keep ref naming C\n'
+G for-each-ref --format='%(refname) %(objectname)' refs/jj/keep | grep "$C" || true
+printf '### delete only the keep ref naming B\n'
+for r in $(G for-each-ref --format='%(refname)' refs/jj/keep); do
+  t=$(G rev-parse "$r")
+  if [ "$t" = "$B" ]; then G update-ref -d "$r"; fi
+done
+printf '### every ref now, and which of them reach B\n'
+G for-each-ref --format='%(refname) %(objectname)'
+printf 'refs_naming_B=%s\n' "$(G for-each-ref --format='%(objectname)' | grep -c "^$B$")"
+printf 'refs_naming_C=%s\n' "$(G for-each-ref --format='%(objectname)' | grep -c "^$C$")"
+printf '### reflog hits, then expire, then prune\n'
+printf 'reflog_hits=%s\n' "$(G reflog --all --format=%H | grep -c "^$B$")"
+G reflog expire --expire=now --expire-unreachable=now --all
+printf 'reflog_hits_after_expiry=%s\n' "$(G reflog --all --format=%H | grep -c "^$B$")"
+G gc --prune=now
+G cat-file -e "$B" 2>/dev/null
+printf 'present_rc_with_child_ref=%s\n' "$?"
+
+# =====================================================================================
+printf '### REPO 6: all refs at the critical moment; jj own levers, no manual ref surgery\n'
+REPO=$R/repo6
+G() { git -C "$REPO" -c maintenance.auto=false -c gc.auto=0 "$@"; }
+J() { ( cd "$REPO" && jj -R "$REPO" --color=never --config ui.paginate=never --config user.name=r31 --config user.email=r31@example.invalid "$@" ); }
+jj git init --colocate "$REPO"
+printf 'a\n' >"$REPO/a.txt"; J commit -m A
+printf 'b\n' >"$REPO/b.txt"; J commit -m B
+B=$(J log --no-graph -r '@-' -T commit_id)
+printf 'B=%s\n' "$B"
+J abandon '@-'
+printf '### every ref (all namespaces) after abandon B\n'
+G for-each-ref --format='%(refname) %(objectname)'
+printf '### ref directories on disk\n'
+find "$REPO/.git/refs" -maxdepth 2 -type d
+printf '### packed-refs\n'
+cat "$REPO/.git/packed-refs" 2>/dev/null || printf '(no packed-refs)\n'
+printf '### own keep ref for B present? matches=%s\n' "$(G for-each-ref --format='%(refname)' refs/jj/keep | grep -c "$B")"
+printf '### jj util gc --expire=now, no manual ref surgery\n'
+J util gc --expire=now
+printf '### keep refs after util gc\n'
+G for-each-ref --format='%(refname) %(objectname)' refs/jj/keep
+printf 'own_keep_ref_for_B_after_util_gc=%s\n' "$(G for-each-ref --format='%(refname)' refs/jj/keep | grep -c "$B")"
+printf 'reflog_hits_after_util_gc=%s\n' "$(G reflog --all --format=%H | grep -c "^$B$")"
+G cat-file -e "$B" 2>/dev/null
+printf 'present_rc_after_util_gc=%s\n' "$?"
+printf '### jj op abandon ..@- then util gc again\n'
+J op abandon '..@-'
+J util gc --expire=now
+G for-each-ref --format='%(refname) %(objectname)' refs/jj/keep
+G cat-file -e "$B" 2>/dev/null
+printf 'present_rc_after_op_abandon_and_util_gc=%s\n' "$?"
+printf '### git gc --prune=now after that\n'
+G gc --prune=now
+G cat-file -e "$B" 2>/dev/null
+printf 'present_rc_after_git_gc_prune_now=%s\n' "$?"
+printf 'reflog_hits_final=%s\n' "$(G reflog --all --format=%H | grep -c "^$B$")"
+printf '### done\n'
+exit 0
+
+output (bash trace lines removed)
+
+### REPO 5: keep ref naming the DIRECT CHILD C of B, identity shown
+Initialized repo in "repos3/repo5"
+Working copy  (@) now at: uqzqtrsr 06f71b90 (empty) (no description set)
+Parent commit (@-)      : qnqswzkk 23c0d35e A
+Working copy  (@) now at: ulusltyu 2183b1a0 (empty) (no description set)
+Parent commit (@-)      : uqzqtrsr 9180b1f0 B
+Working copy  (@) now at: vpvnwtum 9f5c6c73 (empty) (no description set)
+Parent commit (@-)      : ulusltyu 072fcf3d C
+B=9180b1f08fb8f8a9e814fb101df326d18cb1308e
+C=072fcf3d5411f297c9c36eb634383bdc376207ae
+Abandoned 1 commits:
+  uqzqtrsr 9180b1f0 B
+Rebased 2 descendant commits onto parents of abandoned commits.
+Working copy  (@) now at: vpvnwtum 45e78f47 (empty) (no description set)
+Parent commit (@-)      : ulusltyu 5d3c298d C
+Added 0 files, modified 0 files, removed 1 files
+### C is a direct child of B (parent line of C)
+tree d11b5fac254c4b7a5a8e078cbad43ba15d6494ff
+parent 9180b1f08fb8f8a9e814fb101df326d18cb1308e
+author r31 <r31@example.invalid> 1792999857 -0300
+### the keep ref naming C
+refs/jj/keep/072fcf3d5411f297c9c36eb634383bdc376207ae 072fcf3d5411f297c9c36eb634383bdc376207ae
+### delete only the keep ref naming B
+### every ref now, and which of them reach B
+refs/jj/keep/06f71b90c68ca224617da61d6fe0dc46b72a6c1b 06f71b90c68ca224617da61d6fe0dc46b72a6c1b
+refs/jj/keep/072fcf3d5411f297c9c36eb634383bdc376207ae 072fcf3d5411f297c9c36eb634383bdc376207ae
+refs/jj/keep/14c8f8ce7179902689290917fbce28ffd7043a06 14c8f8ce7179902689290917fbce28ffd7043a06
+refs/jj/keep/2183b1a0db51b52ef7ffdde57107794092b2c2c1 2183b1a0db51b52ef7ffdde57107794092b2c2c1
+refs/jj/keep/23c0d35ed8d1451674bb8ffa65a7c0edcc53801b 23c0d35ed8d1451674bb8ffa65a7c0edcc53801b
+refs/jj/keep/349113307b5f946fcaef3ddbe2fe652e55be2779 349113307b5f946fcaef3ddbe2fe652e55be2779
+refs/jj/keep/45e78f47e3afb2c8829cc7f11396b9c677ddcd91 45e78f47e3afb2c8829cc7f11396b9c677ddcd91
+refs/jj/keep/5d3c298de50a424e61870011c5a0e28aa855b197 5d3c298de50a424e61870011c5a0e28aa855b197
+refs/jj/keep/65d0c6907796acd45b1faca3805d019bc39eeb69 65d0c6907796acd45b1faca3805d019bc39eeb69
+refs/jj/keep/661cdbf746059426864f5e811e10964774077d02 661cdbf746059426864f5e811e10964774077d02
+refs/jj/keep/9f5c6c73acffcc8b456381a96c8c6d26a7434263 9f5c6c73acffcc8b456381a96c8c6d26a7434263
+refs_naming_B=0
+refs_naming_C=1
+### reflog hits, then expire, then prune
+reflog_hits=1
+reflog_hits_after_expiry=0
+present_rc_with_child_ref=0
+### REPO 6: all refs at the critical moment; jj own levers, no manual ref surgery
+Initialized repo in "repos3/repo6"
+Working copy  (@) now at: lrpxuzsx 82ff4421 (empty) (no description set)
+Parent commit (@-)      : knsxpmlk abd93f34 A
+Working copy  (@) now at: wsqwkyqx 277fa5f0 (empty) (no description set)
+Parent commit (@-)      : lrpxuzsx e441671e B
+B=e441671e83ace06c02575884ffe35eb83459a099
+Abandoned 1 commits:
+  lrpxuzsx e441671e B
+Rebased 1 descendant commits onto parents of abandoned commits.
+Working copy  (@) now at: wsqwkyqx bde9dda7 (empty) (no description set)
+Parent commit (@-)      : knsxpmlk abd93f34 A
+Added 0 files, modified 0 files, removed 1 files
+### every ref (all namespaces) after abandon B
+refs/jj/keep/277fa5f0c41271de554df3d3a7c3ceb9a40a53bd 277fa5f0c41271de554df3d3a7c3ceb9a40a53bd
+refs/jj/keep/538aa9095382db0f985c5dd85d2afe7f43e33d1f 538aa9095382db0f985c5dd85d2afe7f43e33d1f
+refs/jj/keep/82ff4421628a06cb1a3b28da22588692d91407b8 82ff4421628a06cb1a3b28da22588692d91407b8
+refs/jj/keep/95a9547f3f5bf6c90d171b08f7b5f1cd75f970d0 95a9547f3f5bf6c90d171b08f7b5f1cd75f970d0
+refs/jj/keep/a523122fde20758da115fc74c6e991d18efb0240 a523122fde20758da115fc74c6e991d18efb0240
+refs/jj/keep/abd93f3499b386c2d391f6c78121ab6d52e5bdc1 abd93f3499b386c2d391f6c78121ab6d52e5bdc1
+refs/jj/keep/bde9dda71a5fac906a9b92adf26ba3509d3f37a2 bde9dda71a5fac906a9b92adf26ba3509d3f37a2
+refs/jj/keep/e441671e83ace06c02575884ffe35eb83459a099 e441671e83ace06c02575884ffe35eb83459a099
+### ref directories on disk
+/fast/scratch/hyaku/souji-r31/w2-ReplicateC3/repos3/repo6/.git/refs
+/fast/scratch/hyaku/souji-r31/w2-ReplicateC3/repos3/repo6/.git/refs/heads
+/fast/scratch/hyaku/souji-r31/w2-ReplicateC3/repos3/repo6/.git/refs/tags
+/fast/scratch/hyaku/souji-r31/w2-ReplicateC3/repos3/repo6/.git/refs/jj
+/fast/scratch/hyaku/souji-r31/w2-ReplicateC3/repos3/repo6/.git/refs/jj/keep
+### packed-refs
+(no packed-refs)
+### own keep ref for B present? matches=1
+### jj util gc --expire=now, no manual ref surgery
+### keep refs after util gc
+refs/jj/keep/277fa5f0c41271de554df3d3a7c3ceb9a40a53bd 277fa5f0c41271de554df3d3a7c3ceb9a40a53bd
+refs/jj/keep/538aa9095382db0f985c5dd85d2afe7f43e33d1f 538aa9095382db0f985c5dd85d2afe7f43e33d1f
+refs/jj/keep/82ff4421628a06cb1a3b28da22588692d91407b8 82ff4421628a06cb1a3b28da22588692d91407b8
+refs/jj/keep/95a9547f3f5bf6c90d171b08f7b5f1cd75f970d0 95a9547f3f5bf6c90d171b08f7b5f1cd75f970d0
+refs/jj/keep/a523122fde20758da115fc74c6e991d18efb0240 a523122fde20758da115fc74c6e991d18efb0240
+refs/jj/keep/bde9dda71a5fac906a9b92adf26ba3509d3f37a2 bde9dda71a5fac906a9b92adf26ba3509d3f37a2
+own_keep_ref_for_B_after_util_gc=0
+reflog_hits_after_util_gc=1
+present_rc_after_util_gc=0
+### jj op abandon ..@- then util gc again
+Abandoned 5 operations and reparented 1 descendant operations.
+refs/jj/keep/277fa5f0c41271de554df3d3a7c3ceb9a40a53bd 277fa5f0c41271de554df3d3a7c3ceb9a40a53bd
+refs/jj/keep/bde9dda71a5fac906a9b92adf26ba3509d3f37a2 bde9dda71a5fac906a9b92adf26ba3509d3f37a2
+present_rc_after_op_abandon_and_util_gc=0
+### git gc --prune=now after that
+present_rc_after_git_gc_prune_now=0
+reflog_hits_final=1
+### done
+
+======================================================================================
+D. repo7 / repo8 — role-4 sequence, no manual ref surgery
+======================================================================================
+
+script /fast/scratch/hyaku/souji-r31/w2-ReplicateC3/replicate4.sh (sha256 aef47b4f…0ab1)
+
+#!/usr/bin/env bash
+# Role-4 sequence (assigned steps then abandoning the descendant), no manual ref surgery.
+set -u
+set -x
+D=/fast/scratch/hyaku/souji-r31/w2-ReplicateC3
+export TMPDIR=$D/tmp
+R=$D/repos4
+rm -rf "$R"
+mkdir -p "$R"
+REPO=$R/repo8
+G() { git -C "$REPO" -c maintenance.auto=false -c gc.auto=0 "$@"; }
+J() { ( cd "$REPO" && jj -R "$REPO" --color=never --config ui.paginate=never --config user.name=r31 --config user.email=r31@example.invalid "$@" ); }
+jj git init --colocate "$REPO"
+printf 'a\n' >"$REPO/a.txt"; J commit -m A
+printf 'b\n' >"$REPO/b.txt"; J commit -m B
+printf 'c\n' >"$REPO/c.txt"; J commit -m C
+B=$(J log --no-graph -r '@--' -T commit_id)
+printf 'B=%s\n' "$B"
+J abandon '@--'
+printf '### assigned steps\n'
+G pack-refs --all
+J util gc --expire=now
+G for-each-ref --format='%(refname) %(objectname)' refs/jj/keep
+G gc --prune=now
+G cat-file -e "$B" 2>/dev/null; printf 'step_git_gc_prune_now_rc=%s\n' "$?"
+G reflog expire --expire=now --expire-unreachable=now --all
+G gc --prune=now
+G cat-file -e "$B" 2>/dev/null; printf 'step_reflog_expire_then_prune_rc=%s\n' "$?"
+J op abandon '..@-'
+J util gc --expire=now
+G for-each-ref --format='%(refname) %(objectname)' refs/jj/keep
+G cat-file -e "$B" 2>/dev/null; printf 'step_op_abandon_and_util_gc_rc=%s\n' "$?"
+printf '### abandon the descendant, op abandon, util gc\n'
+J abandon '@-'
+J op abandon '..@-'
+J util gc --expire=now
+G cat-file -e "$B" 2>/dev/null; printf 'step_abandon_descendant_rc=%s\n' "$?"
+G gc --prune=now
+G cat-file -e "$B" 2>/dev/null; printf 'step_git_gc_prune_now_again_rc=%s\n' "$?"
+printf '### done\n'
+exit 0
+
+output of the same script, second run (repo8; trace lines removed)
+
+Initialized repo in "repos4/repo8"
+Working copy  (@) now at: pvpmvlys 129a07a6 (empty) (no description set)
+Parent commit (@-)      : pymvkwol 2da5bd17 A
+Working copy  (@) now at: osqyzpqr 4f922b95 (empty) (no description set)
+Parent commit (@-)      : pvpmvlys fe7ce9e7 B
+Working copy  (@) now at: tznupxvq 1769bbcc (empty) (no description set)
+Parent commit (@-)      : osqyzpqr cb52257d C
+B=fe7ce9e7af0deea05b34b3b1f1a08e1d3d063c68
+Abandoned 1 commits:
+  pvpmvlys fe7ce9e7 B
+Rebased 2 descendant commits onto parents of abandoned commits.
+Working copy  (@) now at: tznupxvq 2166ba9d (empty) (no description set)
+Parent commit (@-)      : osqyzpqr 5a3a703d C
+Added 0 files, modified 0 files, removed 1 files
+### assigned steps
+refs/jj/keep/129a07a642997e594eb8a113dcb6662c3450b81e 129a07a642997e594eb8a113dcb6662c3450b81e
+refs/jj/keep/1769bbcc51abb9fac17f34756e8a276f6d52f08b 1769bbcc51abb9fac17f34756e8a276f6d52f08b
+refs/jj/keep/2166ba9d37450af804fad849f673ce4562b47fe2 2166ba9d37450af804fad849f673ce4562b47fe2
+refs/jj/keep/264bdda5f208ecef0b638c623589c697a8288a91 264bdda5f208ecef0b638c623589c697a8288a91
+refs/jj/keep/3450d6cac02248504c4a5dfe75f7855326cb91da 3450d6cac02248504c4a5dfe75f7855326cb91da
+refs/jj/keep/4f922b95842b61475d1579ed542c7cd96a62a29e 4f922b95842b61475d1579ed542c7cd96a62a29e
+refs/jj/keep/91f09d92289b0e27079a9abc8b5518a5d5dc6ba2 91f09d92289b0e27079a9abc8b5518a5d5dc6ba2
+refs/jj/keep/d319c8a8dd61f403727c3657326730d3f0a3ba1e d319c8a8dd61f403727c3657326730d3f0a3ba1e
+step_git_gc_prune_now_rc=0
+step_reflog_expire_then_prune_rc=0
+Abandoned 7 operations and reparented 1 descendant operations.
+refs/jj/keep/1769bbcc51abb9fac17f34756e8a276f6d52f08b 1769bbcc51abb9fac17f34756e8a276f6d52f08b
+refs/jj/keep/2166ba9d37450af804fad849f673ce4562b47fe2 2166ba9d37450af804fad849f673ce4562b47fe2
+step_op_abandon_and_util_gc_rc=0
+### abandon the descendant, op abandon, util gc
+Abandoned 1 commits:
+  osqyzpqr 5a3a703d C
+Rebased 1 descendant commits onto parents of abandoned commits.
+Working copy  (@) now at: tznupxvq 2ea6e065 (empty) (no description set)
+Parent commit (@-)      : pymvkwol 2da5bd17 A
+Added 0 files, modified 0 files, removed 1 files
+Abandoned 1 operations and reparented 1 descendant operations.
+step_abandon_descendant_rc=1
+step_git_gc_prune_now_again_rc=1
+### done

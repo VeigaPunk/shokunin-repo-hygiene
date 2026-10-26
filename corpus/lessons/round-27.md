@@ -80,3 +80,7 @@ disposition (what was tested, and at which revision) is recorded in this round's
 - `census/round-27/waves/w1/ScribeScorecard.md` line 2 — resolved@c973d1a1c2d8aa1679adc61b2c76634d50e0c1c0: STATUS: PARTIAL — paste-ready Round 27 measurement block and planned bullet drafted; all landing-tip values remain [PENDING] for the L1.
 - `census/round-27/waves/w1/SimplExistingTools.md` line 2 — open: STATUS: PARTIAL — identified historical/duplicate candidates, but no removals are safe to recommend from text grep alone; broad historical callouts remain.
 - `census/round-27/waves/w1/SimplWaveSpec.md` line 2 — open: STATUS: PARTIAL — confirmed substantial overlap in the visible spec entries; the 80-item list was not fully enumerated from the truncated read.
+- Round 31 wave-2 audit of this carry (`census/round-31/waves/w2/deliver-m1-audit-r27.md`, appended; the bullets above stand as written and the audit row supersedes their disposition where listed):
+  - audit row 7: `ExecC3Counter.md:2` disposition `resolved@6cb22dc` is WRONG-RESOLVED (hash scope); the audit row names the commit that delivered it, or the defect still live at the round-31 tip.
+  - audit row 21: `ScoutScorecardState.md:4` disposition `resolved@c973d1a` is WRONG-RESOLVED (substantive); the audit row names the commit that delivered it, or the defect still live at the round-31 tip.
+  - audit row 22: `ScribeInvariant.md:2` disposition `resolved@6cb22dc` is WRONG-RESOLVED (hash scope); the audit row names the commit that delivered it, or the defect still live at the round-31 tip.
