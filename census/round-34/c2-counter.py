@@ -135,7 +135,8 @@ def leg_witness(root, base, rev, argv, scratch, timeout):
     bwrap = shutil.which("bwrap")
     if not bwrap:
         return False, "bwrap unavailable"
-    # Each run has a writable private /var/tmp and a separate empty /tmp; bwrap does not see host scratch.
+    canary = None
+    canary_bytes = b"r34 private-bind canary\n"
     results = []
     for check_rev in (base, rev):
         d = tempfile.mkdtemp(prefix="bwrap.", dir=scratch)
@@ -159,13 +160,27 @@ def leg_witness(root, base, rev, argv, scratch, timeout):
                     "--ro-bind", os.path.join(d, "empty"), "/tmp", "--ro-bind", os.path.join(d, "empty"), "/dev/shm",
                     "--bind", os.path.join(d, "vt"), "/var/tmp", "--setenv", "TMPDIR", os.path.join(d, "tmp"),
                     "--chdir", c, "--", "bash", "-c", cmd]
+            if "r14-census-boundary.py" in argv:
+                fd, canary = tempfile.mkstemp(prefix="souji-r34-canary.", dir="/var/tmp")
+                with os.fdopen(fd, "wb") as fh:
+                    fh.write(canary_bytes)
             p = subprocess.run(wrap, capture_output=True, timeout=timeout)
+            if canary and open(canary, "rb").read() != canary_bytes:
+                os.unlink(canary)
+                canary = None
+                return False, "real /var/tmp canary changed"
+            if canary:
+                os.unlink(canary)
+                canary = None
             out = p.stdout.decode("utf-8", "replace"); err = p.stderr.decode("utf-8", "replace")
             trace = open(os.path.join(d, "trace"), errors="replace").read() if os.path.exists(os.path.join(d, "trace")) else ""
             creates = [x for x in trace.splitlines() if re.search(r"(open|creat|mkdir|rename|link|symlink|mknod|truncate)\(", x) and re.search(r"O_CREAT|O_WRONLY|O_RDWR|mkdir|creat", x)]
             witnessed = any(os.path.join(d, "tmp") in x or os.path.join(d, "vt") in x for x in creates)
             results.append((p.returncode, last_digit(out, err), len(creates), witnessed, out, err))
         except (OSError, subprocess.TimeoutExpired) as e:
+            if canary:
+                os.unlink(canary)
+                canary = None
             return False, "sandbox run failed: " + str(e)
         finally:
             # Keep scratch only until comparison; removal is after reading trace.
