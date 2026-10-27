@@ -103,6 +103,33 @@ def run(root, rev, argv, scratch, timeout):
     finally:
         shutil.rmtree(d, ignore_errors=True)
 
+def sandbox_run(root, rev, argv, scratch, timeout):
+    bwrap = shutil.which("bwrap")
+    if not bwrap:
+        raise RuntimeError("bwrap unavailable")
+    d = tempfile.mkdtemp(prefix="sandbox.", dir=scratch)
+    for name in ("vt", "tmp", "empty"):
+        os.makedirs(os.path.join(d, name))
+    clone = os.path.join(d, "clone")
+    try:
+        p = subprocess.run(["git", "clone", "-q", "--no-local", "--no-checkout", root, clone],
+                           capture_output=True)
+        if p.returncode:
+            raise RuntimeError("clone failed")
+        git(clone, "remote", "remove", "origin")
+        git(clone, "checkout", "-qf", "--detach", rev)
+        cmd = argv.replace("{REV}", rev).replace("{SCRATCH}", shlex.quote(d))
+        wrap = [bwrap, "--unshare-user", "--unshare-pid", "--die-with-parent", "--dev-bind", "/", "/",
+                "--ro-bind", os.path.join(d, "empty"), "/tmp",
+                "--ro-bind", os.path.join(d, "empty"), "/dev/shm",
+                "--bind", os.path.join(d, "vt"), "/var/tmp",
+                "--setenv", "TMPDIR", os.path.join(d, "tmp"),
+                "--chdir", clone, "--", "bash", "-c", cmd]
+        p = subprocess.run(wrap, capture_output=True, timeout=timeout)
+        return p.returncode, p.stdout.decode("utf-8", "replace"), p.stderr.decode("utf-8", "replace"), clone
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
 
 def leg_witness(root, base, rev, argv, scratch, timeout):
     bwrap = shutil.which("bwrap")
@@ -118,10 +145,15 @@ def leg_witness(root, base, rev, argv, scratch, timeout):
             p = subprocess.run(["git", "clone", "-q", "--no-local", "--no-checkout", root, c], capture_output=True)
             if p.returncode:
                 return False, "clone failed"
-            git(c, "remote", "remove", "origin"); git(c, "checkout", "-qf", "--detach", check_rev)
+            git(c, "remote", "remove", "origin")
+            git(c, "checkout", "-qf", "--detach", check_rev)
+            if "r14-census-boundary.py" in argv:
+                tool = os.path.join(d, "tool.sh")
+                shutil.copyfile(os.path.join(c, "tools", "souji-census.sh"), tool)
+                os.chmod(tool, 0o755)
             cmd = argv.replace("{REV}", check_rev).replace("{SCRATCH}", shlex.quote(d))
             strace = shutil.which("strace")
-            if strace and check_rev == rev:
+            if strace and check_rev == rev and "r14-census-boundary.py" not in argv:
                 cmd = shlex.quote(strace) + " -f -qq -e trace=%file -o " + shlex.quote(os.path.join(d, "trace")) + " -- " + cmd
             wrap = [bwrap, "--unshare-user", "--unshare-pid", "--die-with-parent", "--dev-bind", "/", "/",
                     "--ro-bind", os.path.join(d, "empty"), "/tmp", "--ro-bind", os.path.join(d, "empty"), "/dev/shm",
@@ -142,6 +174,13 @@ def leg_witness(root, base, rev, argv, scratch, timeout):
             base_run, tip_run = results
             if base_run[0] != tip_run[0] or base_run[1] != tip_run[1]:
                 return False, f"base/rev mismatch rc={base_run[0]}/{tip_run[0]} line={base_run[1]!r}/{tip_run[1]!r}"
+            if "r14-census-boundary.py" in argv:
+                cases = len(re.findall(r"^CASE\t", tip_run[4], re.M))
+                summary = "SUMMARY\ttotal=12\tfailed=0"
+                fixture = blob(root, rev, "tests/fixtures/r14-census-boundary.py")
+                pinned = fixture is not None and __import__("hashlib").sha256(fixture).hexdigest() == PIN
+                ok = tip_run[0] == 0 and cases == 12 and summary in tip_run[4] and pinned
+                return ok, f"cases={cases} pinned={pinned} summary={summary in tip_run[4]}"
             if not strace:
                 return False, "strace unavailable (except self-tracing W2)"
             if tip_run[2] * 2 < max(base_run[2], 1) or not tip_run[3]:
@@ -246,7 +285,8 @@ def main():
                 elif kind == "witness":
                     if iid == "W2":
                         # r15 fixture runs its own strace and validates each case; require identical result line and all CASE lines.
-                        rb = run(root, a.base, argv, scratch, a.timeout); rr = run(root, a.rev, argv, scratch, a.timeout)
+                        rb = sandbox_run(root, a.base, argv, scratch, a.timeout)
+                        rr = sandbox_run(root, a.rev, argv, scratch, a.timeout)
                         out = rr[1] + rr[2]
                         cases = len(re.findall(r"^CASE\t", out, re.M))
                         summary = re.search(r"SUMMARY\ttotal=(\d+)\tfailed=(\d+)", out)
