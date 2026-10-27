@@ -1,0 +1,48 @@
+# r35 C2 legs (frozen at the preregistration): sandbox measurement — carried from the r34
+# legs file with the r34-feasibility repairs named in the preregistration. Kinds and the
+# bwrap envelope are unchanged from r34 (see census/round-35/c2-counter.py docstring R1-R5):
+#   witness   PASS iff the run at --rev inside bwrap (--dev-bind / /, --ro-bind <empty> /tmp /dev/shm,
+#             --bind <scratch>/vt /var/tmp, TMPDIR=<scratch>/tmp) exits with the --base run's exit code and prints the
+#             --base run's last digit-bearing line (each run's own scratch root normalized to <D>) AND does its work:
+#             strace-traced file-creating syscalls >= half the --base run's AND >=1 create under the sandbox TMPDIR or
+#             the /var/tmp bind. W2 self-traces (nested ptrace fails under an outer strace): its work proof is the
+#             fixture's own per-case assertions and final SUMMARY line.
+#   nsbind    PASS iff the r14 fixture stage runs at --rev inside bwrap with --bind <scratch>/vt /var/tmp, exits 0,
+#             prints `SUMMARY\ttotal=12\tfailed=0`, the r14 fixture bytes at --rev equal PIN digest
+#             e6a984b1daf1f79a6ad613e451cae48c2807fd71639de4c8d92857b9a11d14b2, and the real /var/tmp canary placed
+#             before the run is byte-identical after.
+#   anchor    PASS iff, under one flock and with the 1-min load recorded: two adjacent --base runs print identical
+#             normalized last digit-bearing lines AND the --rev run prints that same line with the same exit code;
+#             disagreement or load > 48 is re-taken once (Q77) and then FAILs — the leg never reports a flaky pass.
+#   junk      PASS iff tests/fixtures/r35-sandbox-junk.py --counter census/round-35/c2-counter.py --scratch <dir>
+#             exits 0 and prints `cases=<n> pass=<n> control=STUB-REJECTED` (r35: the fixture stubs W1-W4 and N3 with
+#             echo argvs and calls the counter with --only over exactly those legs, so J1 cannot be eaten by a
+#             full-width run under load; the stub legs file still carries a junk row the counter drops in --only).
+#   guard     PASS iff the named no-harm or anti-forgery condition holds at --rev. r35 guard set:
+#             G1 `git diff --quiet base rev -- census/round-34` (prior-round dir untouched);
+#             G2 touched-paths: every path in `git diff --name-only base rev` falls inside the frozen r35 allowed
+#             set (census/round-35/, tests/fixtures/r35-*, .ufo/waves/round-35/, corpus/knowledge/, SCORECARD.md,
+#             SKILL.md, LOG.md, PROVINCE.md, corpus/lessons/round-35.md, corpus/SOURCES.md, corpus/README.md) —
+#             LOG.md is inside the set per the r34 routed defect 4 (the r34 set omitted it while the diff held it);
+#             G3 counter --selftest; G4 bwrap+strace present; G5 no commit touching both a C1 file
+#             (SCORECARD.md, SKILL.md) and a C2 file (census/round-35/c2-legs.tsv, census/round-35/c2-counter.py);
+#             G6 r14 fixture pin bytes equal PIN.
+# `{REV}` in argv is replaced by the full revision the run is checked out at; `{SCRATCH}` is a fresh dir under
+# --scratch. Optional 4th column `timeout` overrides the counter's --timeout for that leg only (30..7200 s).
+# Item set: W1-W4 witness legs over the r33 O-class commands; N3 the held-pin-respecting O3 design (bwrap private
+# bind over /var/tmp instead of the read-only ro-bind, leaving the pinned fixture bytes untouched); N4 the
+# load-stable census-selftest anchor; J1 the stub/junk control; guards G1-G6 above.
+id	kind	argv	timeout
+W1	witness	python3 -B tools/souji-evidence-cache.py --selftest	900
+W2	witness	python3 -B tests/fixtures/r15-census-config.py --tool tools/souji-census.sh	1500
+W3	witness	bash tools/souji-census.sh --selftest	900
+W4	witness	bash tools/souji-verify.sh --selftest	900
+N3	nsbind	python3 -B tests/fixtures/r14-census-boundary.py --tool {SCRATCH}/tool.sh	2400
+N4	anchor	bash tools/souji-census.sh --selftest	1200
+J1	junk	python3 -B tests/fixtures/r35-sandbox-junk.py --counter census/round-35/c2-counter.py --scratch {SCRATCH}/j1	1500
+G1	guard	diff census/round-34	300
+G2	guard	touched-paths	300
+G3	guard	false-green	300
+G4	guard	bwrap	300
+G5	guard	c1-c2-disjoint	300
+G6	guard	namespace-pin	300
