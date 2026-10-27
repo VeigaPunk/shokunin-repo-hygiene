@@ -1,0 +1,35 @@
+## Predicate/implementation fidelity review
+
+- C1 planned target at `census/round-34/preregistration.txt:59-62` matches `c1-counter.py:396-397`: the counter emits `SUMMARY items=… agree=… mismatches=… restated=… [partial=…] rev=…` and exits 0 iff mismatches are zero. For the full 60-item run, the frozen target and exit condition coincide.
+- C2 planned target at `preregistration.txt:104-106` matches `c2-counter.py:322-324`: `SUMMARY legs=… pass=… fail=… harm=0 rev=…`, exit 0 iff failed is zero. C2 legs are labeled `LEG … PASS|FAIL` and its fixture contract requires `cases=<n> pass=<n> control=STUB-REJECTED` (`c2-legs.tsv:23-26`), matching its code/summary behavior.
+- Frozen C1 predicate grammar and C1 item statements generally map to `frozen_pred` / `judge` (`c1-counter.py:141-167,301-313`), and C2 W/N/J/guard behavior is represented by the leg-kind dispatch (`c2-counter.py:207-234,283-324`).
+
+## Required runs
+
+Commands run under one `flock` in `/fast/scratch/hyaku/souji-r34/PreregFidelity/run.lock`; Python invoked with `-B`. Host load was read immediately before each command:
+
+```text
+LOAD c1-selftest: 20.58 11.53 5.86 23/6736 1161416
+$ python3 -B /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-34/c1-counter.py --selftest
+SELFTEST pass always-zero rejected RESULTS:0 rejected foreign argv rejected
+RC=0
+
+LOAD c2-selftest: 20.58 11.53 5.86 28/6732 1161593
+$ python3 -B /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-34/c2-counter.py --selftest
+SELFTEST pass witness-required rejected junk-only rejected
+RC=0
+
+LOAD c1-junk: 20.58 11.53 5.86 21/6746 1161764
+$ python3 -B /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r34-c1-junk.py --counter /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-34/c1-counter.py --scratch /fast/scratch/hyaku/souji-r34/PreregFidelity/c1junk
+CASE emitter PASS ITEM E18 MISMATCH … statement is not the run's last digit-bearing line
+CASE results0 PASS ITEM E18 MISMATCH … RESULTS count must be >=1
+CASE foreign PASS ITEM E18 MISMATCH … BAD-ROW(argv correction names no row file)
+cases=3 pass=3 control=STUB-REJECTED
+RC=0
+
+LOAD c2-junk: 21.97 12.27 6.20 21/6962 1221398
+$ python3 -B /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r34-sandbox-junk.py --counter /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-34/c2-counter.py --scratch /fast/scratch/hyaku/souji-r34/PreregFidelity/c2junk
+Traceback: subprocess.TimeoutExpired while the fixture waited 900 seconds for its inner C2-counter run; RC=1.
+```
+
+Revision examined: prereg/counters/items from frozen list revision `2b0171e2071fdc9c16a69bed12b0d040e574d8c8`; target/base values per prereg. No main counter target run performed.

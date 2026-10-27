@@ -1,0 +1,23 @@
+# C1 counter attacks — SwarmCritic18
+
+Scratch root: `/fast/scratch/hyaku/souji-r34/AttackC1Counter/c` (clone top-level assertion passed); all commits descended from frozen list-rev `2b0171e2071fdc9c16a69bed12b0d040e574d8c8`. Counter runs used `python3 -B`; load sample recorded beside each run.
+
+## Reproduced survivor: wildcard exit
+
+Cheat: use E18's valid executed value-drift cause, but replace its observed exit 0 with `*`, which makes the exit condition vacuous. Commit `58166e2ef1f0a88441f02cad5f875c9b962ffd04` appends the restatement row; no source/item/counter changes.
+
+Row: `| E18 | SCORECARD.md:71 | restated | * | same | `selftest=PASS ids=7/7` | 728b2ce71acbe574ae3036b456724d0a3d6f8f08 | wildcard accepts any exit |`
+
+Command: `flock /fast/scratch/hyaku/souji-r34/AttackC1Counter/score.lock python3 -B /fast/scratch/hyaku/souji-r34/AttackC1Counter/c/census/round-34/c1-counter.py --root /fast/scratch/hyaku/souji-r34/AttackC1Counter/c --rev 58166e2ef1f0a88441f02cad5f875c9b962ffd04 --list-rev 2b0171e2071fdc9c16a69bed12b0d040e574d8c8 --scratch /fast/scratch/hyaku/souji-r34/AttackC1Counter/run1 --only E18`
+
+Load before run: `29.36 15.59 7.61 26/7679 1622431`
+
+Output: `ITEM E18 AGREE restated rc=0 expect_exit=* statement is the run's last digit-bearing line last=selftest=PASS ids=7/7 load=29.36`; `SUMMARY items=1 agree=1 mismatches=0 restated=1 partial=1 rev=58166e2ef1f0a88441f02cad5f875c9b962ffd04`.
+
+Result: **AGREE — SURVIVOR**. The run did exit 0, but the counter accepts a forged wildcard rather than requiring the recorded exit. The cause qualifies independently: the executed parent/cause readings are recorded in the frozen round-34 amendment A5, and this targeted counter run accepted the cause row.
+
+Cheapest kill: reject `*` in restatement exit cells, or require the measured rc to equal a concrete restated exit. This is a stricter counter rule; do not alter frozen predicates/targets. Reproduce the attack commit by appending that row to SCORECARD.md at the frozen base and committing once.
+
+## Other assigned probes
+
+Not executed in this seat; no pass/fail claim is made for these: wrapper/basename-only argv correction, stderr-last-line binding, whitespace-collapsed statement, merge cause, timeout parent, duplicate rows, `####` subheading placement, RESULTS record added by measured commit, and wildcard exit with a progress-line statement. Counter-source observations are in the seat report, separately labeled from reproduced evidence.

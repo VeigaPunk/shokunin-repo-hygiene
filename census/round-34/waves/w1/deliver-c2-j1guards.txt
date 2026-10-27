@@ -1,0 +1,435 @@
+================================================================================
+C2 leg J1 and guards G1-G6 — base==rev feasibility and per-guard mechanism audit
+Seat: SwarmExecutor17 (read-only). Lane: /home/vgpnk/Projects/shokunin/souji-shokunin
+Base: 9c76c7222a8abff027af42e37f0d160d52526bba
+List-rev (frozen legs/counters): 2b0171e2071fdc9c16a69bed12b0d040e574d8c8
+Counter bytes: census/round-34/c2-counter.py @ 2b0171e (sha256 prefix 19ec3d0bd868969c,
+identical at 60def78 and at tip 51acb5f — the counter has not changed since the freeze)
+Scratch: /fast/scratch/hyaku/souji-r34/LegJ1Guards/ (removed at end of seat)
+Load readings: /proc/loadavg captured beside every reading below.
+================================================================================
+
+--------------------------------------------------------------------------------
+0. THE ASSIGNED COMMAND'S --only FLAG IS NOT IN THE FROZEN C2 CONTRACT
+   (the counter is correct per the prereg; the seat card is what diverges)
+--------------------------------------------------------------------------------
+Command run (assigned, verbatim):
+
+  flock /fast/scratch/hyaku/souji-r34/LegJ1Guards/my.lock python3 -B \
+    /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-34/c2-counter.py \
+    --root /home/vgpnk/Projects/shokunin/souji-shokunin \
+    --rev 9c76c7222a8abff027af42e37f0d160d52526bba \
+    --base 9c76c7222a8abff027af42e37f0d160d52526bba \
+    --list-rev 2b0171e2071fdc9c16a69bed12b0d040e574d8c8 \
+    --scratch /fast/scratch/hyaku/souji-r34/LegJ1Guards/cnt \
+    --only J1,G1,G2,G3,G4,G5,G6
+
+Output:
+
+  usage: c2-counter.py [-h] [--root ROOT] [--rev REV] [--base BASE]
+                       [--list-rev LIST_REV] [--scratch SCRATCH]
+                       [--timeout TIMEOUT] [--selftest]
+  c2-counter.py: error: unrecognized arguments: --only J1,G1,G2,G3,G4,G5,G6
+  EXIT=2
+
+c1-counter.py DOES have --only (census/round-34/c1-counter.py:348
+`ap.add_argument("--only", default="")`); c2-counter.py does not
+(census/round-34/c2-counter.py:262-269, its argparse block has only
+--root/--rev/--base/--list-rev/--scratch/--timeout/--selftest).
+
+The prereg's own frozen C2 invocation (census/round-34/preregistration.txt:90-92)
+carries NO --only:
+  "Counter (frozen): census/round-34/c2-counter.py, run as
+   `python3 -B census/round-34/c2-counter.py --root <lane> --rev <full40>
+   --base 9c76c72... --list-rev <prereg> --scratch <dir>`"
+So the frozen counter is correct per the prereg; the `--only` in the seat card
+is not part of the frozen C2 contract. The full 13-leg run below IS the
+prereg's own invocation and is the only reachable reading of J1 and G1-G6; its
+J1 and G1-G6 LEG lines are the deliverable. No amendment is needed for this;
+but any seat card carrying --only for C2 will always exit 2.
+
+--------------------------------------------------------------------------------
+1. FULL base==rev FEASIBILITY RUN (13 legs, --only unavailable)
+--------------------------------------------------------------------------------
+Command:
+
+  flock /fast/scratch/hyaku/souji-r34/LegJ1Guards/cnt.lock python3 -B \
+    /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-34/c2-counter.py \
+    --root /home/vgpnk/Projects/shokunin/souji-shokunin \
+    --rev 9c76c7222a8abff027af42e37f0d160d52526bba \
+    --base 9c76c7222a8abff027af42e37f0d160d52526bba \
+    --list-rev 2b0171e2071fdc9c16a69bed12b0d040e574d8c8 \
+    --scratch /fast/scratch/hyaku/souji-r34/LegJ1Guards/cnt
+
+COMPLETE LEG lines (verbatim; load column is the counter's own 1-min loadavg
+reading, printed by the counter next to every leg):
+
+  LEG	W1	PASS	rc=0 creates=209/209 line=selftest: 48/48 passed	load=11.08
+  LEG	W2	PASS	CASE=20 summary=SUMMARY	total=20	failed=0	load=49.82
+  LEG	W3	FAIL	base/rev mismatch rc=1/1 line='selftest: 69 checks, 11 failed'/'selftest: 69 checks, 8 failed'	load=32.39
+  LEG	W4	PASS	rc=0 creates=1107/1107 line=selftest: 49 checks, 0 failed	load=31.90
+  LEG	N3	FAIL	cases=12 pinned=True summary=False	load=22.64
+  LEG	N4	PASS	base=selftest: 69 checks, 0 failed base2=selftest: 69 checks, 0 failed rev=selftest: 69 checks, 0 failed load=12.67	load=12.67
+  LEG	J1	FAIL	Command '['/usr/bin/python3', '/home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r34-sandbox-junk.py', '--counter', '/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-34/c2-counter.py', '--scratch', '/fast/scratch/hyaku/souji-r34/LegJ1Guards/cnt']' timed out after 900 seconds	load=5.48
+  LEG	G1	PASS	r33 diff	load=5.48
+  LEG	G2	PASS	unexpected paths=	load=5.48
+  LEG	G3	PASS	SELFTEST pass witness-required rejected junk-only rejected	load=5.48
+  LEG	G4	PASS	bwrap+strace available	load=5.48
+  LEG	G5	PASS	overlap commits=	load=5.48
+  LEG	G6	PASS	namespace fixture pin	load=5.48
+  SUMMARY legs=13 pass=10 fail=3 harm=0 rev=9c76c7222a8abff027af42e37f0d160d52526bba
+  EXIT=1
+
+Host /proc/loadavg at start of the run: 12.02 6.73 3.63 6/6106 311605
+Host /proc/loadavg at end of the run:   5.48 6.49 13.79 13/5509 3386628
+
+The J1 LEG line is the assigned leg: FAIL, "timed out after 900 seconds", with
+the fixture path and --scratch showing it was the WORKING-TREE fixture and the
+counter's own scratch (not {SCRATCH}/j1 from the frozen leg argv). The six
+guards G1-G6 all PASS at base==rev -- but see section 4 for the mechanism audit,
+which shows G1/G2/G5 are vacuous at base==rev and G5 is a false-green even at
+the tip.
+
+Summary at base==rev: legs=13 pass=10 fail=3 (W3, N3, J1), exit 1. The frozen
+target "SUMMARY legs=13 pass=13 fail=0" is not reached at base==rev.
+
+Note on base==rev: at --rev == --base the C2 counter still clones and checks
+out the base tree for the witness/nsbind/anchor legs. census/round-34/c2-legs.tsv
+does not exist at the base revision (verified: `git cat-file -e
+9c76c72:census/round-34/c2-legs.tsv` -> "fatal: path ... exists on disk, but not
+in '9c76c72...'"), but load_legs reads the legs at --list-rev only
+(c2-counter.py:67-68 `blob(root, list_rev, ITEMS)`), so the leg set loads fine.
+The base tree does have tools/souji-evidence-cache.py, tools/souji-census.sh,
+tools/souji-verify.sh and tests/fixtures/r14-census-boundary.py, so the witness
+legs are reachable at base.
+
+--------------------------------------------------------------------------------
+2. J1 — SEPARATE JUNK-FIXTURE RUN (assigned, verbatim)
+--------------------------------------------------------------------------------
+Command (run from the lane root, as the fixture's own docstring expects):
+
+  cd /home/vgpnk/Projects/shokunin/souji-shokunin
+  flock /fast/scratch/hyaku/souji-r34/LegJ1Guards/junk.lock python3 -B \
+    tests/fixtures/r34-sandbox-junk.py \
+    --counter /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-34/c2-counter.py \
+    --scratch /fast/scratch/hyaku/souji-r34/LegJ1Guards/junk
+
+Output (verbatim, complete):
+
+  16.19 9.43 4.96 14/6457 894987
+  Traceback (most recent call last):
+    File "/home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r34-sandbox-junk.py", line 139, in <module>
+      sys.exit(main())
+               ~~~~^^
+    File "/home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r34-sandbox-junk.py", line 117, in main
+      p = subprocess.run([sys.executable, "-B", counter, "--root", clone, "--rev", stub_rev,
+                          "--base", tip, "--list-rev", stub_rev, "--scratch", inner_scratch],
+                         capture_output=True, text=True, timeout=900)
+    File "/usr/lib/python3.14/subprocess.py", line 557, in run
+      stdout, stderr = process.communicate(input, timeout=timeout)
+                       ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+    File "/usr/lib/python3.14/subprocess.py", line 1221, in communicate
+      stdout, stderr = self._communicate(input, endtime, timeout)
+                       ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    File "/usr/lib/python3.14/subprocess.py", line 2154, in _communicate
+      self._check_timeout(endtime, orig_timeout, stdout, stderr)
+      ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    File "/usr/lib/python3.14/subprocess.py", line 1268, in _check_timeout
+      raise TimeoutExpired(
+          ...<2 lines>...
+          stderr=b''.join(stderr_seq) if stderr_seq else None)
+  subprocess.TimeoutExpired: Command '['/usr/bin/python3', '-B', '/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-34/c2-counter.py', '--root', '/fast/scratch/hyaku/souji-r34/LegJ1Guards/junk/r34-junk.beh73ie1/c', '--rev', '464f0348ac8c7d7e5ba580756d86f82b0d1c5989', '--base', '51acb5fb6fa38a6b593b3badb674cec559d7eb2c', '--list-rev', '464f0348ac8c7d7e5ba580756d86f82b0d1c5989', '--scratch', '/fast/scratch/hyaku/souji-r34/LegJ1Guards/junk/r34-junk.beh73ie1/inner']' timed out after 900 seconds
+  EXIT=1
+  36.69 38.04 29.33 21/8349 1979884
+
+The fixture did NOT print "cases=5 pass=5 control=STUB-REJECTED". It raised
+TimeoutExpired after 900 s and exited 1. The frozen target shape
+"cases=<n> pass=<n> control=STUB-REJECTED" was never produced.
+
+--------------------------------------------------------------------------------
+3. THE J1 RECURSION — MECHANISM, REPRODUCED
+--------------------------------------------------------------------------------
+The fixture's own J1 row, at tests/fixtures/r34-sandbox-junk.py:105, is:
+
+  out.append(f"J1\tjunk\tpython3 -B tests/fixtures/r34-junk-noop.py --counter census/round-34/c2-counter.py --scratch {SCRATCH}/inner-junk")
+
+i.e. the fixture's stub legs file names a NO-OP as the J1 argv, so the inner
+counter's J1 leg is supposed to be a leaf. But the frozen counter's junk branch
+never uses the leg argv. census/round-34/c2-counter.py:287-290:
+
+  elif kind == "junk":
+      p = subprocess.run([sys.executable, os.path.join(root, "tests/fixtures/r34-sandbox-junk.py"),
+                          "--counter", os.path.abspath(__file__), "--scratch", scratch],
+                         capture_output=True, timeout=a.timeout)
+
+The junk branch hard-codes the fixture path relative to --root and re-invokes
+THE REAL r34-sandbox-junk.py, ignoring the J1 leg's argv entirely. The real
+fixture then re-enters the counter, whose own J1 leg re-invokes the real fixture
+again: unbounded recursion.
+
+Reproduced two ways.
+
+(a) argv-ignored proof (bounded, marker script). A scratch clone was given a
+stub legs file whose J1 argv named tests/fixtures/r34-junk-marker.py, a script
+that touches a MARKER_RAN file and prints "MARKER leg argv executed". The
+counter was run against that clone:
+
+  LEG	W1	PASS	rc=0 creates=0/209 line=selftest: 48/48 passed	load=30.82
+  LEG	J1	FAIL	Command '['/usr/bin/python3', '/fast/scratch/hyaku/souji-r34/LegJ1Guards/argv/c/tests/fixtures/r34-sandbox-junk.py', '--counter', '/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-34/c2-counter.py', '--scratch', '/fast/scratch/hyaku/souji-r34/LegJ1Guards/argv/s']' timed out after 60 seconds	load=38.86
+  SUMMARY legs=2 pass=1 fail=1 harm=0 rev=0e24707cbab49e76bc7e1c1aca8987ff8a6d3396
+  EXIT=1
+  === MARKER_RAN exists?
+  ls: cannot access '/fast/scratch/hyaku/souji-r34/LegJ1Guards/argv/MARKER_RAN': No such file or directory
+  === recursion dirs: 3
+
+The marker never ran (MARKER_RAN absent) and the counter instead ran the real
+fixture: the leg argv is discarded.
+
+(b) unbounded recursion depth, observed directly. The scratch tree grew a
+nested chain of fixture work dirs, each level under the previous level's
+"inner":
+
+  /fast/scratch/hyaku/souji-r34/LegJ1Guards/junk/r34-junk.beh73ie1
+  /fast/scratch/hyaku/souji-r34/LegJ1Guards/junk/r34-junk.beh73ie1/inner/r34-junk.3ga0e3cv
+  .../inner/r34-junk.ew469a5g
+  .../inner/r34-junk.xohkdz6b
+  .../inner/r34-junk.6w_oap6i
+  .../inner/r34-junk.mnqxke3f
+  .../inner/r34-junk.1q1h1ks1
+  .../inner/r34-junk.odlfnwax
+  .../inner/r34-junk.ncjnap66
+  .../inner/r34-junk.zzsl473r
+  .../inner/r34-junk._zwgzsaw
+  .../inner/r34-junk.dst2xn9i
+  .../inner/r34-junk.jmqal657
+  .../inner/r34-junk.um0of0i9
+  .../inner/r34-junk.itbbl6ja
+  .../inner/r34-junk.d6otojv1
+
+(counted 34 nested levels at one sample; scratch usage for this one run grew
+from 0 to 64 GB before the 900 s timeout killed it and the tree was removed:
+`du -sh` 9.3G -> 12G -> 22G -> 31G -> 38G -> 55G -> 62G -> 64G, and
+`df -h /fast` went 27% -> 65% used. The recursion is a disk-exhaustion hazard,
+not merely a slow path.)
+
+The same recursion was observed independently by other seats in this wave
+(sibling scratch trees /fast/scratch/hyaku/souji-r34/ReviewJunkFixtures/c2/...
+and /fast/scratch/hyaku/souji-r34/PreregFidelity/c2junk/... show the same
+nested r34-junk.*/inner/r34-junk.* chain), so it is a property of the frozen
+counter+fixture bytes, not of this seat's invocation.
+
+The committed record census/round-34/records/junk-c2-final.txt shows the same
+TimeoutExpired traceback, and census/round-34/records/controls.txt states
+"C2 junk control: ... ended with a TimeoutExpired after 900 seconds for an
+inner full-counter run; no pass is claimed." This seat's run reproduces that
+from the same frozen bytes.
+
+Consequence for the frozen C2 target: leg J1 can never PASS as frozen. The
+counter's junk branch re-runs the fixture instead of the leg argv, so J1 always
+ends in TimeoutExpired/FAIL. C2's frozen target "SUMMARY legs=13 pass=13
+fail=0" is unreachable without an amendment to the counter's junk branch (the
+L1's call; frozen bytes, not this seat's).
+
+--------------------------------------------------------------------------------
+4. GUARD MECHANISM AUDIT — G1..G6 FROM THE FROZEN CODE
+--------------------------------------------------------------------------------
+All six guards were executed directly against the frozen counter module
+(importlib load of census/round-34/c2-counter.py; no mutation), at both
+--rev == --base (9c76c72) and --rev == tip (51acb5f):
+
+  --- guards at base==rev (rev=9c76c7222a8a)
+  LEG	G1	PASS	r33 diff
+  LEG	G2	PASS	unexpected paths=
+  LEG	G3	PASS	SELFTEST pass witness-required rejected junk-only rejected
+  LEG	G4	PASS	bwrap+strace available
+  LEG	G5	PASS	overlap commits=
+  LEG	G6	PASS	namespace fixture pin
+  --- guards at tip (rev=51acb5fb6fa3)
+  LEG	G1	PASS	r33 diff
+  LEG	G2	PASS	unexpected paths=
+  LEG	G3	PASS	SELFTEST pass witness-required rejected junk-only rejected
+  LEG	G4	PASS	bwrap+strace available
+  LEG	G5	PASS	overlap commits=
+  LEG	G6	PASS	namespace fixture pin
+
+loadavg at that reading: 26.50 13.71 6.76 33/7211 1327439 (base==rev) and
+42.77 24.93 12.12 37/8288 3202577 (tip).
+
+G1 — census/round-34/c2-counter.py:208-209
+  return git(root, "diff", "--quiet", base, rev, "--", "census/round-33",
+             check=False).returncode == 0, "r33 diff"
+  Mechanism confirmed: `git diff --quiet 9c76c72 51acb5f -- census/round-33`
+  exits 0 (r33 bytes untouched between base and tip).
+
+G2 — c2-counter.py:210-214
+  changed = set(git(root, "diff", "--name-only", base, rev).stdout.decode().split())
+  allowed = lambda p: p.startswith("census/round-34/") or p.startswith("tests/fixtures/r34-") \
+            or p in {"SCORECARD.md", "SKILL.md", "corpus/lessons/round-34.md", "corpus/SOURCES.md"}
+  Mechanism confirmed: `git diff --name-only 9c76c72 51acb5f` yields exactly
+  13 paths, all under census/round-34/ or tests/fixtures/r34-:
+    census/round-34/c1-counter.py, c1-items.tsv, c2-counter.py, c2-legs.tsv,
+    preregistration.txt, records/census-start.txt, records/closure-sweep.txt,
+    records/controls.txt, records/feasibility-final.txt, records/junk-c1.txt,
+    records/junk-c2-final.txt, tests/fixtures/r34-c1-junk.py,
+    tests/fixtures/r34-sandbox-junk.py
+  Note: preregistration.txt's G2 clause says the allowlist is "census/round-34/
+  tests/fixtures/r34-* SCORECARD.md SKILL.md corpus/" — the code allows only two
+  corpus paths (corpus/lessons/round-34.md, corpus/SOURCES.md) rather than the
+  whole corpus/ tree. Tighter than the prereg text; not a hole (a corpus path
+  outside those two would FAIL the guard, not pass it).
+
+G3 — c2-counter.py:215-217
+  p = subprocess.run([sys.executable, os.path.abspath(__file__), "--selftest"], ...)
+  return p.returncode == 0 and b"SELFTEST pass" in p.stdout, ...
+  Mechanism confirmed by executing the selftest's own validator directly:
+    good(witness+junk)     -> ACCEPTED
+    witness-dropped        -> REFUSED: legs file with witness clauses dropped
+    junk-only              -> REFUSED: legs file with witness clauses dropped
+    guard-only             -> REFUSED: legs file with witness clauses dropped
+    selftest() -> SELFTEST pass witness-required rejected junk-only rejected rc= 0
+  Both A2-mandated refusals hold (witness-dropped and junk-only). The
+  guard-only set is also refused (by the witness clause, since guard-only
+  contains no witness kind). The "witness" check is the first test, so a
+  junk-only set is reported under the witness message — cosmetic only; the
+  refusal is correct either way.
+
+G4 — c2-counter.py:218-219
+  return bool(shutil.which("bwrap") and shutil.which("strace")), "bwrap+strace available"
+  Mechanism confirmed on this host: /usr/bin/bwrap and /usr/bin/strace both
+  present; bwrap --unshare-user --unshare-pid --ro-bind / / -- /bin/true exits 0;
+  unshare -Ur -- /bin/true exits 0; /proc/sys/kernel/unprivileged_userns_clone = 1.
+  So unprivileged user namespaces really are available (the prereg's "bwrap and
+  unprivileged user namespaces available"), and the check passes honestly.
+  Caveat: the guard itself only tests binary presence (which bwrap, which
+  strace), not namespace usability. On a host with bwrap present but userns
+  disabled, G4 would PASS while every sandbox leg could-not-evaluate.
+
+G6 — c2-counter.py:230-232
+  data = blob(root, rev, "tests/fixtures/r14-census-boundary.py")
+  return data is not None and hashlib.sha256(data).hexdigest() == PIN, ...
+  Mechanism confirmed: `git show 9c76c72:tests/fixtures/r14-census-boundary.py |
+  sha256sum` -> e6a984b1daf1f79a6ad613e451cae48c2807fd71639de4c8d92857b9a11d14b2
+  and `git show 51acb5f:...` -> the same digest. Equal to the frozen PIN at both
+  base and tip. The pinned fixture is byte-identical across the whole range.
+
+G5 — census/round-34/c2-counter.py:220-229
+  log = git(root, "rev-list", "--reverse", f"{base}..{rev}").stdout.decode().split()
+  c1 = {"SCORECARD.md", "SKILL.md"}; c2 = {"census/round-34/c2-legs.tsv", "census/round-34/c2-counter.py"}
+  bad = []
+  for commit in log:
+      files = set(git(root, "show", "--format=", "--name-only", commit).stdout.decode().split())
+      if files & c1 and files & c2:
+          bad.append(commit[:12])
+  return not bad, "overlap commits=" + ",".join(bad)
+
+  Enumeration of the required range base..2b0171e (three commits):
+    2b591924f607  freeze — preregistration (attempt 2, A1-A4), C1/C2 counters,
+                  60-item set, 13 legs, junk fixtures, closure sweep
+      census/round-34/c1-counter.py
+      census/round-34/c1-items.tsv
+      census/round-34/c2-counter.py
+      census/round-34/c2-legs.tsv
+      census/round-34/preregistration.txt
+      census/round-34/records/census-start.txt
+      census/round-34/records/closure-sweep.txt
+      tests/fixtures/r34-c1-junk.py
+      tests/fixtures/r34-sandbox-junk.py
+    73f029ede488  repair sandbox legs and complete junk control
+      census/round-34/c2-counter.py
+      census/round-34/preregistration.txt
+      tests/fixtures/r34-c1-junk.py
+    2b0171e2071f  verify N3 pin and real var-tmp isolation
+      census/round-34/c2-counter.py
+
+  Under the counter's own sets, no commit in base..2b0171e touches both
+  {SCORECARD.md, SKILL.md} and {c2-legs.tsv, c2-counter.py} — so G5 reports
+  "overlap commits=" (empty) and PASSES. That is the literal reading of the
+  implemented guard.
+
+  HOWEVER the guard's namespace sets are narrower than the claim namespaces
+  the prereg defines. The prereg's C1 surface is
+  "SCORECARD.md ... SKILL.md ... corpus/lessons/round-34.md, census/round-34/**,
+  tests/fixtures/r34-*" and the C2 surface is "census/round-34/c2-*,
+  tests/fixtures/r34-*"; the C1-owned files in the enumerated range are
+  c1-counter.py, c1-items.tsv, r34-c1-junk.py and the C2-owned files are
+  c2-counter.py, c2-legs.tsv, r34-sandbox-junk.py. On THAT reading, TWO of the
+  three commits DO touch both namespaces:
+    2b591924f607  C1-owned=[c1-counter.py, c1-items.tsv, r34-c1-junk.py]
+                  C2-owned=[c2-counter.py, c2-legs.tsv, r34-sandbox-junk.py]  OVERLAP=YES
+    73f029ede488  C1-owned=[r34-c1-junk.py]
+                  C2-owned=[c2-counter.py]                                  OVERLAP=YES
+    2b0171e2071f  C1-owned=[]  C2-owned=[c2-counter.py]                      OVERLAP=no
+
+  Reproduced as a live false-green: three commits were made in a scratch clone
+  (/fast/scratch/hyaku/souji-r34/LegJ1Guards/g5/c, cloned with
+  `git clone -q --no-local`, origin removed immediately,
+  `git rev-parse --show-toplevel` -> /fast/scratch/hyaku/souji-r34/LegJ1Guards/g5/c),
+  each touching one C1-owned and one C2-owned file, and the frozen guard was
+  executed against each:
+    LEG	G5	PASS	overlap commits=   <- repro1 c1-counter.py + c2-counter.py
+    LEG	G5	PASS	overlap commits=   <- repro2 corpus/lessons/round-34.md + c2-counter.py
+    LEG	G5	PASS	overlap commits=   <- repro3 c1-items.tsv + c2-legs.tsv
+  (repro commit SHAs 78f0e499e269, accd13d751f4, 05cce5813c7d; loadavg 56.37
+  37.28 18.65 37/8686 960139.)
+
+  So G5 as implemented is green against a commit that touches both namespaces
+  — it only recognises SCORECARD.md/SKILL.md as the C1 side. The guard is
+  vacuously green on the actual freeze commit 2b59192, which touches C1's
+  counter/items/fixture and C2's counter/legs/fixture in one commit.
+
+  This is reported as an ATTACK against G5 (frozen predicate) for the L1, with
+  a reproduced state; this seat changed nothing.
+
+--------------------------------------------------------------------------------
+5. C2 DO-NOTHING CONTROL (reproduced)
+--------------------------------------------------------------------------------
+  python3 -B census/round-34/c2-counter.py --root <lane> \
+    --rev 9c76c72 --base 9c76c72 --list-rev 9c76c72 --scratch <scratch>
+  COULD-NOT-EVALUATE legs absent at --list-rev
+  EXIT=2
+
+Matches the prereg's do-nothing clause ("the counter at --rev <base> where
+c2-legs.tsv and the r34 fixture do not exist prints COULD-NOT-EVALUATE exit 2").
+
+--------------------------------------------------------------------------------
+6. BASE==rev FEASIBILITY: WHAT IS AND IS NOT ESTABLISHED
+--------------------------------------------------------------------------------
+ESTABLISHED at --rev == --base (9c76c72):
+  - The counter loads the frozen leg set and runs all 13 legs: reachable.
+    SUMMARY legs=13 pass=10 fail=3 harm=0, EXIT=1.
+  - W1 PASS, W2 PASS, W4 PASS, N4 PASS.
+  - W3 FAIL (base/rev mismatch: 'selftest: 69 checks, 11 failed' vs
+    'selftest: 69 checks, 8 failed' — same revision on both sides, so the
+    difference is host-load dependent, not revision dependent; 1-min loadavg
+    32.39 at that reading). This reproduces the r33 O4 residual.
+  - N3 FAIL: cases=12 pinned=True summary=False (the 12 CASE records and the
+    fixture pin hold; the required "SUMMARY total=12 failed=0" line is absent
+    because the fixture prints SUMMARY total={len(ran)} failed={failed} and
+    failed was non-zero on this host).
+  - J1 FAIL: "timed out after 900 seconds" (section 3).
+  - Guards G1..G6 all PASS at base==rev, but G1/G2/G5 are VACUOUS there
+    (empty diff range, empty rev-list) and G5 is a false-green even at the
+    tip (section 4).
+  - The do-nothing control prints COULD-NOT-EVALUATE exit 2.
+  - The J1 leg could not have passed at base under any implementation that
+    measured the base revision: the base tree has no
+    tests/fixtures/r34-sandbox-junk.py at all ("fatal: path ... exists on disk,
+    but not in '9c76c72...'"), and the frozen counter never checks out the rev
+    for this leg either — it runs the working-tree fixture via
+    os.path.join(root, "tests/fixtures/...").
+
+  Disk note for the landing run: this single base==rev run's J1 leg grew the
+  scratch tree to 147 GB (df /fast 27% -> 48% used) before the 900 s timeout
+  fired and the tree was reaped. A wave-wide C2 landing run needs a scratch
+  quota or an amended junk branch, or it will exhaust the host filesystem.
+
+NOT ESTABLISHED (cannot be, from this seat's instrument):
+  - Any J1 PASS — blocked by section 3.
+  - A J1+G1..G6-only reading — the frozen counter has no --only (section 0).
+
+--------------------------------------------------------------------------------
+7. TOOLING
+--------------------------------------------------------------------------------
+No tools installed or upgraded by this seat (none needed: bwrap, strace, git,
+flock and python3 3.14.8 were already present). No pacman transaction.
+================================================================================

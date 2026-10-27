@@ -1,0 +1,33 @@
+# C2 sandbox host reconnaissance — SwarmScout28
+
+Revision inspected: lane HEAD `51acb5fb6fa38a6b593b3badb674cec559d7eb2c`; frozen counter/list contract `2b0171e2071fdc9c16a69bed12b0d040e574d8c8`.
+
+## Host surface
+
+Commands: `bwrap --version; strace --version; python3 --version; git --version; jj --version; sysctl kernel.unprivileged_userns_clone 2>/dev/null; cat /proc/sys/kernel/unprivileged_userns_clone 2>/dev/null; cat /proc/loadavg`
+
+Observed: bubblewrap 0.13.1; strace 7.2; Python 3.14.8; git 2.56.0; jj 0.45.1-7c41cdeb16b6b321c64e789a966b6adf723816a5; sysctl reports `kernel.unprivileged_userns_clone = 1`, proc value `1`; loadavg at this read `18.44 10.14 5.24`.
+
+## `leg_witness` sandbox assumptions checked
+
+Counter source: `census/round-34/c2-counter.py:159-162` — “--unshare-user”, “--unshare-pid”, “--dev-bind”, “--ro-bind”, “--bind”, “--setenv”, “--chdir”. The function builds the full invocation at lines 159-162; details below are host observations, not claims that the C2 legs passed.
+
+1. `bwrap` executable is available: **observed**, `bwrap --version` returned 0.13.1.
+2. Unprivileged user/pid namespaces (`--unshare-user --unshare-pid`) work: **observed**, full envelope returned 0; sysctl and proc values both 1.
+3. `--die-with-parent` and `--dev-bind / /` work: **observed**, full-envelope invocation completed successfully.
+4. Empty scratch directory can be mounted read-only over `/tmp` and `/dev/shm`: **observed**, full-envelope probe reported `TMP_READ_ONLY`, `SHM_READ_ONLY` and rc 0.
+5. Writable scratch bind over an existing non-empty host `/var/tmp` hides the host canary inside, preserves it outside, and redirects writes into the scratch bind: **observed**. A real `/var/tmp` canary read as `host-canary` before and after, was `HIDDEN_INSIDE`, and the write appeared in `$D/vt/r34-create` rather than host `/var/tmp`.
+6. `TMPDIR=<scratch>/tmp` reaches the command and is writable: **observed**, command printed the exact scratch TMPDIR and created a file there.
+7. `--chdir <clone>` and `bash -c <argv>` are present in the counter invocation (`c2-counter.py:162`); **not independently exercised against a cloned revision in this recon**.
+8. On the host, strace can run inside that bwrap envelope and observe file creation: **observed**, strace-in-bwrap returned 0 and recorded 2 creation calls, including the `/var/tmp` bind target. This is a capability probe, not the counter's per-leg create-count comparison.
+9. The counter's N3 canary-survival predicate is supported by the bind probe: **observed** for the same mount behavior; the recon did not execute the N3 fixture or pin-digest check.
+
+## Receipts
+
+- Version/sysctl/load command output: `bwrap 0.13.1`; `strace 7.2`; `Python 3.14.8`; `git 2.56.0`; `jj 0.45.1-7c41cdeb16b6b321c64e789a966b6adf723816a5`; sysctl/proc `1`/`1`; load `18.44 10.14 5.24`.
+- Writable bind canary command: `bwrap --unshare-user --unshare-pid --die-with-parent --dev-bind / / --bind "$D/vt" /var/tmp --setenv TMPDIR "$D/tmp" -- /bin/sh ...`; output `HIDDEN_INSIDE`, `inside-canary`, rc 0, host canary unchanged.
+- Complete envelope command used `--ro-bind "$D/empty" /tmp` and `/dev/shm` alongside bind/TMPDIR; output `TMP_READ_ONLY`, `SHM_READ_ONLY`, `WRITABLE_TARGETS_OK`, rc 0.
+- Traced envelope: same binds and namespace flags with `/usr/bin/strace -f -qq -e trace=%file -o "$D/sandbox.trace" -- /bin/sh ...`; output rc 0, 2 trace creation records, scratch bind contained `x`.
+- Loadavg adjacent to sandbox probes: `19.60 10.52 5.39`; `20.62 11.05 5.62`; `21.32 11.52 5.83`; `20.37 11.64 5.93`; `21.70 12.06 6.09`.
+
+The read-only `/var/tmp` bind probe was not the counter's design; it failed to write as expected and is not evidence against the counter. No C2 counter/fixture leg was run here.

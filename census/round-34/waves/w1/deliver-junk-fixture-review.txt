@@ -1,0 +1,40 @@
+# Junk fixture adversarial review (SwarmReviewer27)
+
+## Scope and method
+Reviewed frozen contract first (`census/round-34/preregistration.txt`, lines 64-66 and amendments A3-A5 at 155-169), then C1/C2 counters and both fixture implementations. Ran both fixtures with frozen counter paths under `/fast/scratch/hyaku/souji-r34/ReviewJunkFixtures/`, serializing runs with `flock` and recording `/proc/loadavg` after each.
+
+## C1: r34-c1-junk.py
+
+### Construct and probe validity
+- `tests/fixtures/r34-c1-junk.py:56-62` supplies three distinct forged restatement shapes: `same` plus a mid-output digit-bearing statement; `same` plus `RESULTS:...:0`; and corrected argv `` `echo 42` ``. The C1 frozen counter rejects each through its intended clauses at `c1-counter.py:301-313`, `114-120`, and `267-268` respectively.
+- The embedded emitter line is a plausible non-final line, but its exact historical emission at the actual cause was not independently executed in this review. The probe cause is real and executable: `census/round-34/records/controls.txt:5` records parent `ids=5/5` and cause `ids=7/7`; fixture line 37 embeds full hash `728b2ce71acbe574ae3036b456724d0a3d6f8f08`. C1 judge enforces parent/cause drift at `c1-counter.py:284-291`, and the fixture's observed MISMATCH detail confirms the emitter got through cause validation and reached last-line rejection, so this was not vacuous.
+- The RESULTS record path is not necessarily the semantic reason under a weakened implementation: the expected clause is matched literally in the emitted MISMATCH detail. Frozen counter itself requires n>=1 (`c1-counter.py:114-120`) and additionally file existence/history/content consistency (`121-138`).
+
+### Assumptions left open
+- It gets `tip` from literal branch `master` (`fixture:81`) and assumes that ref exists and names the desired reviewed tip; no explicit revision argument or assertion that `master` equals the counter's intended `--rev` is present.
+- `root` is inferred from the supplied counter path (`fixture:71-72`); it does not verify that the counter is the frozen file or that the clone root is the expected lane.
+- Git helper commands inherit the caller environment and invoke `git` without disabling system config/hooks (`fixture:47-50`); scratch commits use `-am`, relying on the sole SCORECARD modification being tracked and no staged content (`97-98`).
+- The counter is invoked by absolute path outside the probe clone (`102-104`), so the fixture tests that implementation rather than a counter blob from `--list-rev`; replacement/mutation of the supplied file can change the result. That is appropriate for this fixture's invocation contract but not proof of counter immutability.
+- It only tests one probe item/cause and the three named parser/validation clauses, not arbitrary malformed rows or alternative weakened implementations that produce expected detail strings without validating behavior.
+
+## C2: r34-sandbox-junk.py
+
+### Stub design and assumptions
+- `tests/fixtures/r34-sandbox-junk.py:76-94` uses real captured final lines for W1/W4 but hard-codes documented lines for W2/W3/N3; capture failure silently falls back (`81-87`). These are plausible strings, not verified base outputs in this invocation.
+- The stub argv are shell `echo`/`printf` commands (`88-94`), and legs are rewritten only in a scratch clone (`98-113`); each W/N leg should be rejected by actual work attestation, not merely exit/output comparison.
+- The fixture does not fail closed on every counter error shape: it extracts only reported `LEG` failure rows for the named five ids (`121-125`) and checks nonzero rc. It does not assert each leg was evaluated exactly once, that there are no duplicate/missing leg IDs beyond the set test, or that the failure reason is work-related. A counter could reject all legs for unrelated reasons (or fail early after printing failures) and satisfy the intended assertion.
+- Counter invocation timeout is fixed at 900 seconds (`117-119`), equal to the inner counter default; outer fixture has no exception handling around `subprocess.run`, so a timeout aborts without its promised `cases=...` receipt (`117-120`).
+- It resolves root from the counter path and master from the lane (`61-68`), without explicit frozen counter hash/ref validation. Its committed clone fixture is only a probe of the passed counter, not a tamper-proof attestation of counter bytes.
+- `p.returncode == 0` is rejected; additionally the expression `"control" in text and "STUB-REJECTED" not in text` is weakly scoped because it does not require a control marker at all (`126-127`).
+
+## Executed evidence
+
+Command: `flock /fast/scratch/hyaku/souji-r34/ReviewJunkFixtures/fixture.lock python3 -B /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r34-c1-junk.py --counter /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-34/c1-counter.py --scratch /fast/scratch/hyaku/souji-r34/ReviewJunkFixtures/c1`
+Output excerpt: `cases=3 pass=3 control=STUB-REJECTED`; `EXIT=0`. Per-case output showed E18 MISMATCH with details: `statement is not the run's last digit-bearing line`; `RESULTS count must be >=1`; `BAD-ROW(argv correction names no row file`.
+Revision context: lane HEAD observed as `51acb5fb6fa38a6b593b3badb674cec559d7eb2c`; frozen prereg/list revision is `2b0171e2071fdc9c16a69bed12b0d040e574d8c8`. Load recorded immediately after run: `26.50 13.71 6.76 18/7267 1348692` (prior to run: `21.70 12.06 6.09 14/6929 1208373`).
+
+Command: `flock /fast/scratch/hyaku/souji-r34/ReviewJunkFixtures/fixture.lock python3 -B /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/r34-sandbox-junk.py --counter /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-34/c2-counter.py --scratch /fast/scratch/hyaku/souji-r34/ReviewJunkFixtures/c2`
+Output: `subprocess.TimeoutExpired` in outer fixture at line 117, inner frozen counter exceeded 900 seconds; fixture exit 1, no cases receipt. Load after: `39.80 38.53 30.17 23/7767 2824911`. This agrees with the already committed failure record `census/round-34/records/controls.txt:11` (timeout, no pass claim). C2 junk control therefore remains unverified/failing in this run; do not claim five stub legs rejected from this execution.
+
+## Conclusion
+C1 junk fixture passed all three intended frozen-counter clauses and its probe cause was not vacuous. C2 fixture did not complete; the principal actionable observation is its uncaught timeout yields no structured result, while the C2 counter/fixture run remains unresolved. No counter weakening was actually introduced or tested here; the listed assumptions are review risks, not reproduced bypasses.

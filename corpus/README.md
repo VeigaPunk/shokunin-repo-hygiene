@@ -770,3 +770,7 @@ a measured edge class does not promote a frontier ground to Core (PROVINCE
 - Wave a2w1 (`.ufo/waves/round-32/a2w1/SwarmReviewer27.md` finding 6): the `## Round 32` section's
   `jj-version: jj 0.45.1` is a truncated quote; the record's first line is
   `jj-version: jj 0.45.1-7c41cdeb16b6b321c64e789a966b6adf723816a5`.
+
+## Round 34 frontier update
+
+- C2's `--bind`/`--ro-bind` mechanism is now sourced in S230 and cited in `corpus/lessons/round-34.md` `## Gate`; it does not establish a passing N3 outcome. C1 calibration and C2 operability targets both missed under the frozen counters. The measured failures and remaining work are recorded in the round-34 lesson and `SCORECARD.md`; F1-F5 core/frontier assignments and held safety boundaries are unchanged.

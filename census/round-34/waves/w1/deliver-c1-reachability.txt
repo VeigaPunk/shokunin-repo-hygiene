@@ -1,0 +1,13 @@
+C1 reachability falsifier — SwarmCritic21
+
+Frozen input: preregistration at 2b0171e2071fdc9c16a69bed12b0d040e574d8c8; counter as read at 51acb5fb6fa38a6b593b3badb674cec559d7eb2c.
+
+Executed one-item-pair reading at lane rev 51acb5fb6fa38a6b593b3badb674cec559d7eb2c, list-rev 2b0171e2071fdc9c16a69bed12b0d040e574d8c8:
+`python3 -B /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-34/c1-counter.py --root /home/vgpnk/Projects/shokunin/souji-shokunin --rev 51acb5fb6fa38a6b593b3badb674cec559d7eb2c --list-rev 2b0171e2071fdc9c16a69bed12b0d040e574d8c8 --scratch /fast/scratch/hyaku/souji-r34/AttackC1Reachability --only G01,E18`
+Output: G01 AGREE/original, E18 MISMATCH/original; `SUMMARY items=2 agree=1 mismatches=1 restated=0 partial=1` (exit 1). Load immediately before: `26.77 14.18 6.99 26/7413 1439915`.
+
+Answer: appending a row for an agreeing item does not alter any other item's verdict. It cannot substitute for a stale item's own valid correction, so that substitution cannot attain 60/0. The judge does not require a restated item to have been stale at base; a valid `same` row for an agreeing item would end as AGREE/restated. SUMMARY's restated count and ITEM status expose that a row exists, but neither records whether it repaired a mismatch. Padding is therefore possible but does not satisfy or improve the target; it incurs validation/run work and repairs zero items. Honest stale-row correction uses equivalent cause checks and does repair one mismatch. Cost dominance is an inference, not a timed comparison.
+
+Verification window: the target is independently read at landing and tip. The append-only prefix constraint requires SCORECARD at each measured revision to start with list-rev bytes. A post-landing addition cannot make landing pass; both measured revisions must independently pass, so no row can be added only for those measured points to bypass a failing landing.
+
+Limits: I did not construct commits carrying a valid G01 agreeing-item row and E18 stale-item row; nor did I independently validate E18's cited cause as a row. Evidence is the frozen pair run and static `judge()` control flow, not a full two-path reproduction. Details and exact code locations in `SwarmCritic21.md`.

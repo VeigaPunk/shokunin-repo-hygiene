@@ -1,0 +1,290 @@
+N3 design reconstruction — seat SwarmRevenger38 (round 34, wave w1)
+Lane: /home/vgpnk/Projects/shokunin/souji-shokunin
+Base: 9c76c7222a8abff027af42e37f0d160d52526bba
+Freeze/list rev: 2b0171e2071fdc9c16a69bed12b0d040e574d8c8
+Measured tip at run time: 51acb5fb6fa38a6b593b3badb674cec559d7eb2c (branch master; tracked
+  tree clean; six untracked census/round-34/records files from other seats were present)
+Scratch: /fast/scratch/hyaku/souji-r34/RevN3Design (clone at tip, origin removed immediately;
+  TMPDIR set inside it; receipts copied here before the directory was removed).
+Tools (no installs/upgrades this seat): bubblewrap 0.13.1 (/usr/bin/bwrap), strace 7.2,
+Python 3.14.8, git 2.56.0. Run lane Python as python3 -B; every heavy run under
+flock /fast/scratch/hyaku/souji-r34/RevN3Design/n3.lock with /proc/loadavg recorded.
+
+================================================================================
+0. The frozen leg being reconstructed
+================================================================================
+census/round-34/c2-legs.tsv:
+  N3  nsbind  python3 -B tests/fixtures/r14-census-boundary.py --tool {SCRATCH}/tool.sh
+Leg text (same file, header): nsbind PASS iff the namespace arm (r15-preservation-frozen/
+regenerate.py's r14 fixture stage) runs at --rev inside bwrap with --bind <scratch>/vt
+/var/tmp, exits 0 and prints `SUMMARY\ttotal=12\tfailed=0`, tests/fixtures/
+r14-census-boundary.py bytes at --rev equal the base digest NAMESPACE_SHA256
+(e6a984b1daf1f79a6ad613e451cae48c2807fd71639de4c8d92857b9a11d14b2) before and after, and
+the real /var/tmp canary file placed before the run is byte-identical after.
+
+Pin, two independent committed holders:
+  tools/souji-preservation-evidence.py:307
+    NAMESPACE_SHA256 = "e6a984b1daf1f79a6ad613e451cae48c2807fd71639de4c8d92857b9a11d14b2"
+  tools/souji-preservation-evidence.py:1161-1164 (record validation) adds finding
+    `pinned-mismatch` when namespace_fixture.sha256 differs from that constant;
+  tools/souji-preservation-evidence.py:1921-1923 checks the lane file itself
+    (_sha_bytes(real.read_bytes()) == NAMESPACE_SHA256).
+  census/round-34/c2-counter.py:36 PIN = "e6a984b1…"; :195-197 hashes the --rev blob and
+    requires it to equal PIN; :231-233 is guard G6 over the same blob.
+Measured digests (this run):
+  worktree/clone file, git show base:…, git show 2b0171e:…, git show 51acb5f:…
+  = e6a984b1daf1f79a6ad613e451cae48c2807fd71639de4c8d92857b9a11d14b2 (all four equal).
+
+================================================================================
+1. Q1 — every byte the N3 leg writes; which host paths are writable in the sandbox
+================================================================================
+1a. Mount set actually built by the counter (both sandbox_run and leg_witness):
+  census/round-34/c2-counter.py:122-127
+    wrap = [bwrap, "--unshare-user", "--unshare-pid", "--die-with-parent",
+            "--dev-bind", "/", "/",
+            "--ro-bind", <d>/empty, "/tmp",
+            "--ro-bind", <d>/empty, "/dev/shm",
+            "--bind", <d>/vt, "/var/tmp",
+            "--setenv", "TMPDIR", <d>/tmp,
+            "--chdir", clone, "--", "bash", "-c", cmd]
+  census/round-34/c2-counter.py:159-162 is the same list in leg_witness (N3's executor).
+
+  Semantics, from bytes opened this run:
+  - bubblewrap README § Sandbox security (fetched 2026-10-27,
+    https://raw.githubusercontent.com/containers/bubblewrap/main/README.md):
+    "the level of protection between the sandboxed processes and the host system is
+    entirely determined by the arguments passed to bubblewrap" (21 words, verbatim).
+  - bwrap --help (bubblewrap 0.13.1):
+    "--dev-bind SRC DEST      Bind mount the host path SRC on DEST, allowing device access"
+    "--bind SRC DEST          Bind mount the host path SRC on DEST"
+    "--ro-bind SRC DEST       Bind mount the host path SRC readonly on DEST"
+  Therefore `--dev-bind / /` mounts the whole host root READ-WRITE (with device access);
+  /tmp and /dev/shm are read-only empty dirs; /var/tmp is a read-write private bind to
+  <per-run>/vt. TMPDIR points at <per-run>/tmp under the host scratch. cwd is the
+  per-run clone, which is writable because it lives under the read-write host root.
+
+  Answer to "only the per-run scratch dir bound at /var/tmp?": NO. The leg sees the
+  entire host root writable (lane, clone, home, /proc, …). Only /var/tmp is redirected
+  to a private writable bind, and only /tmp and /dev/shm are forced read-only.
+
+1b. Host-side writes performed by the leg before/around the sandboxed command
+  (census/round-34/c2-counter.py:136-203):
+  - <per-run>/clone: git clone --no-local --no-checkout, remote remove, checkout -qf
+    --detach <rev>;
+  - <per-run>/tool.sh: copyfile(clone/tools/souji-census.sh) + chmod 0755 (:151-153);
+  - <per-run>/vt, <per-run>/tmp, <per-run>/empty (:142-143);
+  - real /var/tmp canary: tempfile.mkstemp(prefix="souji-r34-canary.", dir="/var/tmp"),
+    written, then unlinked after the run unless it changed (:164-174);
+  - no outer strace for N3; the fixture self-traces inside.
+
+1c. Writes from inside the sandbox (fixture + staged tool)
+  The fixture's only scratch root (tests/fixtures/r14-census-boundary.py:691):
+    SCRATCH = Path(tempfile.mkdtemp(prefix="r14-census-boundary.", dir="/var/tmp"))
+  Under the arm, that path is the private vt bind. Every fixture write site derives from
+  SCRATCH (or from SPYDIR/SPYLOG/TRACELOG, all under SCRATCH):
+    :163-166 path.mkdir, kept.txt/.gitignore write_text (init_repo paths under SCRATCH)
+    :185-186 spy.write_text/chmod (SPYDIR)
+    :210-221 AGENT/SESSIONS/GD mkdir and write_text (HOME under SCRATCH)
+    :230-309 SAFE_FLEET … SYMLINK_FLEET/SPYDIR mkdir, write_text, symlink, copytree/copy2
+    :317-319 chmod on SESSIONS/LEAK/AGENT (all under SCRATCH)
+    :362-364 SPYLOG.write_text / TRACELOG.unlink (under SCRATCH)
+    :648-654 cleanup chmod and shutil.rmtree(SCRATCH)
+    :681 __file__ appears exactly once, only as the default read-only TOOL path
+    :687-700 TOOL resolve + read_bytes (digest); no write to __file__
+  run_tool sets cwd=SCRATCH (:394) and passes TMPDIR=/var/tmp to the tool (:368), so the
+  tool's CENSUS_TMP_ROOT (tools/souji-census.sh:197) and its mktemp -d
+  souji-census-now.XXXXXX (:319) also land in the private vt bind. Observed leftovers in
+  <per-run>/vt after runs are exactly these souji-census-now.* dirs (tool scratch on a
+  killed run); no r14-census-boundary.* dir survived cleanup.
+
+1d. Is there any write to the fixture's own path? None.
+  No write_text/write_bytes/mkdir/symlink/chmod/copytree/copy2/open-for-write/unlink/rename
+  targets __file__ or any path outside SCRATCH. The only reads of the fixture path are interpreter load and
+  TOOL.read_bytes() at :700.
+
+================================================================================
+2. Q2 — can the sandboxed run reach the real fixture for writing?
+================================================================================
+Strict answer from the mount set: YES, it can reach it. The real path is inside the
+read-write `--dev-bind / /`. Executed proof inside the exact envelope:
+  $ bwrap --unshare-user --unshare-pid --die-with-parent --dev-bind / / \
+      --ro-bind <d>/empty /tmp --ro-bind <d>/empty /dev/shm --bind <d>/vt /var/tmp \
+      --setenv TMPDIR <d>/tmp --chdir <clone> -- \
+      python3 -c "import os;fd=os.open('<clone>/tests/fixtures/r14-census-boundary.py', os.O_RDWR);os.close(fd);print('OPEN-O_RDWR ok')"
+  OPEN-O_RDWR ok
+The digest was unchanged by the probe. So "cannot reach for writing" is false at the
+mount level; the NAMESPACE hold is not enforced by the bwrap arguments.
+
+What IS true, and what the leg actually verifies: the pinned fixture bytes never write
+outside the private /var/tmp bind. Executed evidence:
+  (i) static write inventory in 1c (all writes derive from SCRATCH=/var/tmp);
+  (ii) run the full 12 cases with the clone additionally mounted read-only
+       (`--ro-bind <clone> <clone>`, experiment only) plus a real-/var/tmp canary:
+       the run's non-timeout cases pass, the fixture never hits EROFS, the pinned file's
+       sha256 is e6a984b1… before and after, and the real canary is byte-identical after
+       (see receipts R3/R5: 11 PASS + CASE R14C2-07 exit=124 under load; case 07 alone
+       PASSes with the read-only clone);
+  (iii) a full 12/12 PASS with the read-only clone plus `--proc /proc` (R10), and the
+       same 12/12 without the read-only clone when `--proc /proc` is present (R9).
+  (iv) real /var/tmp canary: content 'r34 namespace canary' + newline, file-identical
+       after the run; `cmp` clean; the counter's own canary check is at :168-171.
+Conclusion: the pinned bytes are respected behaviorally (and re-verified by digest in the
+counter and by the consumer), but not by mount isolation. A hypothetical different fixture
+would still be rejected by the digest checks; a latent write path in the pinned fixture
+would not be blocked by the mounts. The 12 cases + the lexical inventory are the evidence
+that no such path is exercised on this surface.
+
+================================================================================
+3. Q3 — can regenerate.py adopt this arm without touching the pinned bytes?
+================================================================================
+Yes. r33 O3's blocker is that r14-census-boundary.py:691 keeps the literal dir="/var/tmp"
+and the file is NAMESPACE-pinned, so the scratch root cannot be edited. The N3 arm supplies
+exactly the missing mechanism: private writable /var/tmp bind.
+Current namespace stage (tests/fixtures/r15-preservation-frozen/regenerate.py):
+  :70-72  argv = ["timeout", "300", "python3", "-B", fixture, "--tool", str(tool)]
+          subprocess.run(argv, cwd=str(LANE), ...)
+  :153    namespace = run_arm(NS_FIXTURE, tool, full)
+  :131-137 precheck: committed bytes of TOOL/CONFIG_FIXTURE/NS_FIXTURE must equal the
+          worktree bytes (refuses otherwise); no digest of the pinned file changes.
+Adoption recipe (smallest change, no pinned bytes touched):
+  - wrap only the namespace subprocess (run_arm call at :153 or a ns-only variant) in:
+      bwrap --unshare-user --unshare-pid --die-with-parent --dev-bind / / \
+        --ro-bind <empty> /tmp --ro-bind <empty> /dev/shm \
+        --bind <scratch>/vt /var/tmp --proc /proc --setenv TMPDIR <scratch>/tmp \
+        --chdir <LANE> -- timeout 300 python3 -B tests/fixtures/r14-census-boundary.py \
+        --tool <scratch>/<arm>/tools/souji-census.sh
+    (keep `timeout 300` inside; bwrap propagates the command's exit status);
+  - add the real-/var/tmp canary create/compare around the call and require the fixture
+    sha256 before == after (or simply rely on the existing precheck + record digest);
+  - make no edit to tests/fixtures/r14-census-boundary.py and no edit to the precheck or
+    record schema. The checker only rejects subset-selector tokens in a recorded argv
+    (tools/souji-preservation-evidence.py:1330-1336), so a bwrap wrapper in the recorded
+    argv is schema-safe (the record is regenerated by the same script).
+  - [INFERENCE] `--proc /proc` is required for reliability, not for pin safety; see §4.
+Executed adoption proof: the exact namespace argv shape (relative fixture, cwd=clone,
+`timeout 300`, staged tool) run under this envelope with `--ro-bind <clone> <clone>` and
+`--proc /proc` prints 12/12 CASE PASS and `SUMMARY total=12 failed=0`, exit 0 (R11), with
+the pinned digest unchanged. No pinned byte was modified.
+
+================================================================================
+4. Falsifier found — the arm omits `--proc /proc`, so N3 cannot pass reliably
+================================================================================
+The envelope unshares the PID namespace but keeps the host /proc (`--dev-bind / /`; no
+`--proc /proc`). Namespace pids are therefore resolved against the host procfs:
+  inside the arm, bash $$ = 2, `cat /proc/$$/comm` = kthreadd, /proc/1/comm = systemd,
+  `readlink /proc/self` = host pid 1845908 (R7).
+  With `--proc /proc` added: bash $$ = 2, `cat /proc/$$/comm` = bash,
+  `readlink /proc/self` = 6 (R7).
+  A namespace child pid 3 reads host pid 3's comm = pool_workqueue_release without
+  `--proc`; the same child reads `sleep` with `--proc` (R7b).
+Consequence in the staged tool: tools/souji-census.sh:1547-1556 proc_state() reads
+/proc/<namespace-pid>/stat; :1599 and :1638/1678 use it to decide the worker is dead.
+With host /proc, a colliding pid is a live kernel thread forever, so the loop runs to the
+cap at :1614, REPO_TIMEOUT*10+50 ticks with REPO_TIMEOUT default 600 (:238) — about 605 s —
+while the fixture kills each tool run after 90 s (tests/fixtures/r14-census-boundary.py:399,
+run_tool timeout=90). The fixture then records exit=124 and the case FAILs; N3's witness
+(12 CASE lines + exact SUMMARY) fails even though the pin and canary are intact.
+Reproduced without any load excuse and with load recorded:
+  - full 12-case arm, load 32.04→55.00 (R2): CASE R14C2-07 exit=124, total=12 failed=1;
+  - full 12-case arm + read-only clone, load 51.46→58.66 (R3): CASE 07 exit=124;
+  - 01..07, load 54.75→49.04 (R8a): CASE 07 exit=124;
+  - 04,05,06,07 (R8b): CASE 07 exit=124;
+  - 05,06,07, load 36.93→19.71 (R8c): CASE 06 exit=124 (git-symlink and commondir),
+    CASE 07 PASS — the hang moves between invocations, consistent with pid collisions;
+  - committed feasibility-final.txt at 60def78 already shows the same shape:
+    `LEG N3 FAIL cases=12 pinned=True summary=False`.
+With `--proc /proc` added to the same arm:
+  - full 12 cases, no read-only clone, load 12.00→16.26 (R9): 12/12 PASS, total=12
+    failed=0, exit 0, ~6 s;
+  - full 12 cases + read-only clone, load 13.68→13.22 (R10): 12/12 PASS, 6.49 s;
+  - regenerate-shaped argv (timeout 300, relative fixture), read-only clone (R11):
+    12/12 PASS, exit 0.
+So the counter's current envelope is the cause of the N3 (and plausibly W2/W3/J1) misses,
+not the NAMESPACE hold and not host load alone. This is an implementation defect in the
+frozen counter: adding "--proc /proc" is a counter repair, not a predicate/target/item
+change; the L1 owns that decision. Until it is repaired, `SUMMARY legs=13 pass=13 fail=0`
+is not reachable for N3.
+
+Residual notes:
+  - C2 legs say N3's witness is COUNT ^CASE\t == 12 plus the pin digest; the counter also
+    requires the exact SUMMARY line and base/rev equality (c2-counter.py:188-197), all of
+    which the proc-fixed arm satisfies.
+  - The counter pins the --rev blob, not the executed worktree bytes; they are equal in
+    this clone (no .gitattributes, core.autocrlf unset, clone checkout verified byte-equal
+    to git show at 51acb5f).
+  - corpus/SOURCES.md at 51acb5f has no S230 row (grep -c S230 = 0; the registry ends at
+    S229, line 176). The preregistration cites S230 for this design; the bubblewrap README
+    opened in §1a supplies the same semantics independently, but the promised row is not
+    yet committed — L1 must append it.
+
+================================================================================
+5. Receipts (commands and outputs, absolute paths; load beside each fixture run)
+================================================================================
+R1 setup
+  $ D=/fast/scratch/hyaku/souji-r34/RevN3Design; mkdir -p "$D/tmp"; export TMPDIR="$D/tmp"
+  $ git clone -q --no-local /home/vgpnk/Projects/shokunin/souji-shokunin "$D/c"
+  $ git -C "$D/c" remote remove origin
+  $ git -C "$D/c" rev-parse --show-toplevel
+  /fast/scratch/hyaku/souji-r34/RevN3Design/c
+  $ git -C "$D/c" checkout -qf --detach 51acb5fb6fa38a6b593b3badb674cec559d7eb2c
+  $ install -m755 "$D/c/tools/souji-census.sh" "$D/tool.sh"
+  $ sha256sum "$D/c/tests/fixtures/r14-census-boundary.py" "$D/tool.sh"
+  e6a984b1daf1f79a6ad613e451cae48c2807fd71639de4c8d92857b9a11d14b2  …/c/tests/fixtures/r14-census-boundary.py
+  1eab92fb094701838f1ba04635acd0b617034dbf69b0574813c14ff9fcb07f5a  …/tool.sh
+  $ git -C "$D/c" show 51acb5f:tests/fixtures/r14-census-boundary.py | sha256sum
+  e6a984b1daf1f79a6ad613e451cae48c2807fd71639de4c8d92857b9a11d14b2  -
+  $ git -C "$D/c" show 51acb5f:tools/souji-census.sh | sha256sum
+  1eab92fb094701838f1ba04635acd0b617034dbf69b0574813c14ff9fcb07f5a  -
+  (git show at 9c76c72 and 2b0171e for the fixture: same e6a984b1…; no .gitattributes;
+   core.autocrlf unset.)
+
+R2 full arm as frozen, no --proc (load before/after 32.04/55.00)
+  $ flock "$D/n3.lock" timeout 900 bwrap --unshare-user --unshare-pid --die-with-parent \
+      --dev-bind / / --ro-bind "$D/empty" /tmp --ro-bind "$D/empty" /dev/shm \
+      --bind "$D/vt" /var/tmp --setenv TMPDIR "$D/tmp" --chdir "$D/c" -- \
+      bash -c "python3 -B tests/fixtures/r14-census-boundary.py --tool $D/tool.sh"
+  rc=1
+  CASE R14C2-07 FAIL exit=124 want 0; census header missing; row count 0 for normal-shokunin, want 1
+  SUMMARY	total=12	failed=1
+
+R3 full arm + `--ro-bind "$D/c" "$D/c"`, real canary (load 51.46/58.66)
+  rc=1; same CASE 07 exit=124; SUMMARY total=12 failed=1
+  sha before=after e6a984b1…; real canary /var/tmp/souji-r34-n3-canary.CWMVNr content
+  "r34 namespace canary" after the run; $D/vt contained only souji-census-now.* dirs.
+
+R4 case 07 alone, no --proc (load 55.63/55.82; 6.65 s)
+  CASE R14C2-07 PASS ok; SUMMARY total=1 failed=0; rc=0.
+R5 case 07 alone + read-only clone (load 18.36/18.36; 2.00 s)
+  CASE R14C2-07 PASS ok; SUMMARY total=1 failed=0; rc=0; sha before=after e6a984b1…
+R7 /proc probes inside the arm (single-process probes; adjacent fixture load 12.00–16.26)
+  without --proc: ns_pid=2 /proc/$$/comm=kthreadd /proc/1/comm=systemd
+                  readlink /proc/self=1845908
+  with    --proc: ns_pid=2 /proc/$$/comm=bash      readlink /proc/self=6
+  R7b child probe: namespace child pid 3 ->
+      without --proc: proc_child_comm=pool_workqueue_release
+      with    --proc: proc_child_comm=sleep
+R8 sequence reproductions (each full fixture process, flocked)
+  a) --case 01..07, load 54.75→49.04: CASE 07 exit=124; SUMMARY total=7 failed=1.
+  b) --case 04 --case 05 --case 06 --case 07, load after 36.44 42.31 28.06:
+     CASE 07 exit=124; total=4 failed=1.
+  c) --case 05 --case 06 --case 07, load after 36.17 38.01 29.18 (before unrecorded):
+     CASE 06 FAIL exit=124 (git-symlink, commondir); CASE 07 PASS; SUMMARY total=3 failed=1.
+  d) --case 05 --case 06, load 36.93→19.71: CASE 06 FAIL exit=124; total=2 failed=1.
+  e) controls, load 50.10→47.24: 07 first then 01,02 PASS; 06,07 PASS; 05,07 PASS;
+     01..04,07 PASS.
+R9 arm + `--proc /proc` (no read-only clone), load 12.00→16.26
+  ns_pid=2 proc_comm=bash; CASE 01..12 all PASS; SUMMARY total=12 failed=0; rc=0 (~6 s).
+R10 arm + `--proc /proc` + read-only clone, load 13.68→13.22 (6.49 s)
+  12/12 CASE PASS; SUMMARY total=12 failed=0; rc=0; sha before=after e6a984b1…;
+  real canary byte-identical (`cmp` clean); vt only tool scratch.
+R11 regenerate-shaped argv + `--proc /proc` + read-only clone, load 12.00→16.26
+  bwrap … --proc /proc --chdir "$D/c" -- timeout 300 python3 -B \
+    tests/fixtures/r14-census-boundary.py --tool "$D/tool.sh"
+  12/12 CASE PASS; SUMMARY total=12 failed=0; rc=0; fixture sha e6a984b1… after.
+Host-side N3 observation (R2/R3): without --proc the 12-case run takes 107–206 s and
+fails one case at the 90 s fixture limit; with --proc it takes ~6 s and passes 12/12 at
+comparable or higher load. Load alone does not explain the difference.
+
+Scratch removal: the receipt text above was copied here first; then
+  $ rm -rf /fast/scratch/hyaku/souji-r34/RevN3Design
+was run. Real-/var/tmp canaries created by this seat were unlinked in each run.
