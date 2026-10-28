@@ -2,7 +2,7 @@
 
 author: souji L1 (SoujiR37), hyaku run 11. Lane base `0d974ffcb7dfb70617947531cab2d7e96cd8f9fd`;
 frozen contract `census/round-37/preregistration.txt` (freeze commit
-`d5c6498c5f72a63c9df32b26ee143e8d775eebbd`); landing revision
+`d5c6498c5f72a63c9df32b26ee143e8d775eebbd`); code landing revision
 `e987a27c960baa74c08abe7f7ccbd980d9d88460`. The round repairs three defect classes the round-36
 non-author spot-check routed (`corpus/lessons/round-36-verifier-spotcheck.md`, Routed defects 1,
 3 and 4).
