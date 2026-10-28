@@ -40,11 +40,16 @@ class Refusal(Exception):
 class Repo:
     def __init__(self, root):
         self.root = root
-        self.env = dict(os.environ, LC_ALL="C", GIT_OPTIONAL_LOCKS="0", GIT_TERMINAL_PROMPT="0")
+        # r41 wave-2 hardening (R41w2sentinel01): a whitelisted environment, so a caller-set GIT_DIR or
+        # GIT_* variable cannot change a verdict, and replace refs and mailmap files are not consulted.
+        self.env = {"PATH": os.environ.get("PATH", "/usr/local/bin:/usr/bin:/bin"), "LC_ALL": "C",
+                    "GIT_OPTIONAL_LOCKS": "0", "GIT_TERMINAL_PROMPT": "0", "GIT_CONFIG_NOSYSTEM": "1",
+                    "GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_SYSTEM": os.devnull,
+                    "GIT_NO_REPLACE_OBJECTS": "1"}
 
     def run(self, *args):
         try:
-            return subprocess.run(["git", "-c", "core.quotePath=false", "-C", self.root] + list(args), stdout=subprocess.PIPE,
+            return subprocess.run(["git", "-c", "core.quotePath=false", "-c", "log.mailmap=false", "-C", self.root] + list(args), stdout=subprocess.PIPE,
                                   stderr=subprocess.PIPE, env=self.env, check=False)
         except OSError as exc:
             raise Refusal("cannot run git: %s" % exc)
