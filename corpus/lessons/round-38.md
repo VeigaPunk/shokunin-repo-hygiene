@@ -279,3 +279,11 @@ The filed report is the L1's.
 `git cat-file blob`. Adjacent, not contested: kama binds a citation's **file digest** at a revision,
 souji binds a self-assessment **token** inside a receipt's SUMMARY line at a revision; neither tool
 covers the other's claim. Reported here rather than absorbed, per PROVINCE's adjacency rule.
+
+### R39 append-only corrections (round 39, 2026-10-28)
+
+R39-C1-01 — the `## Frontier` block above reads "162 -> 167" rows, "A x5", "rows touched none" and "44 W04"; the corrected r38 close is SOURCES-rows=170 with SOURCES-added=8 rows (six `mined`: S239, S240, S241, S242, S244, S245; two `rejected`: S243 and S246; three of the eight are supersessions) and W04=47, as the non-author spot-check re-derived at `fcdecaa`; S244–S246 are named by this block and by the r39 Gate.
+
+R39-C1-02 — the r38 report's opening "4 + 0 dead" is unevidenced and its waves table said w2 31/32; on disk the r38 close reads w1-reports=42/42 and w2-reports=32/32, because W2MutBattery settled-after-closure at 14:39 — 19 minutes after the report commit — so dead=0 with one late seat, not four dead seats.
+
+R39-C1-14 — `census/round-38/records/c1-vacuity2.txt` describes its own operation wrongly: it says one row's expected token was replaced by `mismatches=99`, but `mismatches=9` needs every `escapes=9` row (three-rows: R38-C1-1, R38-C1-7 and R38-C1-10), each emitting three classes; a faithful one-row substitution reads vacuity-operation=mismatches=3.

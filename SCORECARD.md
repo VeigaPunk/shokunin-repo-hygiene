@@ -733,3 +733,7 @@ Final tip `99efe0676f439309a52f001b71bf0ba2ed8af47f`: `c1-after8.txt` (`cells=10
 `c3-arms-filed.txt` (`cases=10 pass=10 fail=0`; `mutants=4 killed=4 survived=0 pristine=ok
 base_killed=0`; counter-arms `cases=6 pass=6 fail=0 control=FALSE-GREEN-REJECTED`; rcs 0/0/0).
 Where an earlier block disagrees with this one, this is later and measures the filed instruments.
+
+### R39 finality correction (round 39, appended; the blocks above stand as written)
+
+R39-C1-10 — the r38 pointer blocks carry three finality labels and their last one names `99efe06`; the measured-revision of all three r38 claims and of every consumer is `fcdecaa`, because the instruments are byte-identical from `99efe06` to `fcdecaa` and only the additive SCORECARD/lesson bytes differ. Where a block says "Final tip `99efe06`", read it as two commits behind `fcdecaa`, and read the vacuity and eight-consumer arms as carried by the block that names `cb5737a`.

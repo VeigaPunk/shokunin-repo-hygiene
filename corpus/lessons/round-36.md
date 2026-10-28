@@ -170,3 +170,7 @@ Changed in place, old → new:
 
 R37-C1-7 — the Claims section above quoted a count for the C2 fixture that no receipt ever carried. Settlement: `census/round-36/records/c2-after.txt` at `1e771ed` carries `SUMMARY cases=21 pass=21 fail=0 control=STUB-REJECTED` (amendment A7 refreshed it), and the base control line stays `cases=11 pass=0 fail=11`.
 The Claims line is corrected in place (the prereg's in-place branch for current lesson cells); this block records the settlement and names the receipt. The other never-true citations (SCORECARD rows, SKILL registry, the frozen predicate sentence) are reconciled in `SCORECARD.md` `### Round 37 receipt reconciliation` and in the prereg's `R37-C1-8`/`R37-C1-9` block.
+
+### R39 append-only correction (round 39, 2026-10-28)
+
+R39-C1-16 — correction owed since r37 routed defect 4: line-23 of this lesson was rewritten in-place by a later integration instead of being corrected by an appended block, which is the defect r37 routed and r38 left open. The superseded sentence stays in history; this appended correction records it, and from this round an in-place edit of a lesson is a routed defect rather than a documentation choice.
