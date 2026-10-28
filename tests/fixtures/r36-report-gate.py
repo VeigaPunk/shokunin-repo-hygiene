@@ -179,6 +179,83 @@ def cases():
             "check-report-contract=FAIL",
         ),
         Case(
+            "commit-too-short",
+            CONFORMING.replace("`0123456789abcdef0123456789abcdef01234567`", "`abcdef`"),
+            ["--contract"],
+            1,
+            "check-report-contract=FAIL",
+        ),
+        Case(
+            "command-not-backticked",
+            CONFORMING.replace(
+                "| C1 first | calibration 7 | `f=1` | `f=0` | `python3 -B tools/example.py --rev <rev>` | `0123456789abcdef0123456789abcdef01234567` |",
+                "| C1 first | calibration 7 | f=1 | f=0 | pending | `0123456789abcdef0123456789abcdef01234567` |",
+            ),
+            ["--contract"],
+            1,
+            "check-report-contract=FAIL",
+        ),
+        Case(
+            "sections-all-fenced",
+            "```\n" + CONFORMING + "\n```\n",
+            ["--contract"],
+            1,
+            "check-report-contract=FAIL",
+        ),
+        Case(
+            "fenced-quoted-heading",
+            CONFORMING + "\n```\n## Work performed\n```\n",
+            ["--contract"],
+            0,
+        ),
+        Case(
+            "h3-work-performed",
+            CONFORMING.replace("## Work performed", "### Work performed"),
+            ["--contract"],
+            1,
+            "check-report-contract=FAIL",
+        ),
+        Case(
+            "substring-heading",
+            CONFORMING.replace("## Work performed", "## Not work performed this round"),
+            ["--contract"],
+            1,
+            "check-report-contract=FAIL",
+        ),
+        Case(
+            # measurements stays green (a 7-hex commit and two spans), so the only
+            # failing predicate is `evidence`: it isolates the mutant (A3).
+            "evidence-non-pointer-tokens",
+            CONFORMING.replace("census/round-1/records/c1-after.tsv", "x")
+            .replace("`tools/example.py`", "`x`")
+            .replace("`python3 -B tools/example.py --rev <rev>`", "`run`")
+            .replace("`0123456789abcdef0123456789abcdef01234567`", "`0123456`")
+            .replace("`f=1`", "`a`")
+            .replace("`f=0`", "`b`"),
+            ["--contract"],
+            1,
+            "check-report-contract=FAIL",
+        ),
+        Case(
+            # a slash-shaped token outside the allowlist: kills the "any path" mutant.
+            "evidence-path-outside-allowlist",
+            CONFORMING.replace("census/round-1/records/c1-after.tsv", "x")
+            .replace("`tools/example.py`", "`x`")
+            .replace("`python3 -B tools/example.py --rev <rev>`", "`archive/x.tsv`")
+            .replace("`0123456789abcdef0123456789abcdef01234567`", "`0123456`")
+            .replace("`f=1`", "`a`")
+            .replace("`f=0`", "`b`"),
+            ["--contract"],
+            1,
+            "check-report-contract=FAIL",
+        ),
+        Case(
+            "evidence-seven-hex-commit",
+            CONFORMING.replace("`0123456789abcdef0123456789abcdef01234567`", "`0123456`"),
+            ["--contract"],
+            0,
+        ),
+        Case(
             "claim-ids-four",
             CONFORMING.replace("- C1 the first claim landed", "- C1 C2 C3 C4 the first claim landed"),
             ["--contract"],

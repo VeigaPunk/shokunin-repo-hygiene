@@ -32,7 +32,9 @@ Predicates (each prints one `check-<name>=PASS|FAIL` line):
                 path) or a 40+ hex commit id.
 
 Read-only: the report bytes and SHONEN.md are read, nothing is executed and
-nothing is written. A heading whose text appears twice fails `sections`.
+nothing is written. A heading whose text appears twice fails `sections`. The
+tool judges round reports only: seat notes and lessons are not its surface and
+will fail most predicates by construction.
 
 CLI:
   python3 -B tools/souji-report-contract.py --report ABS --shonen ABS
@@ -47,14 +49,17 @@ import sys
 VERDICT_TOKENS = ("unprovable-but-better", "improved", "harmed", "unchanged")
 TRENDS = ("expansion", "quality", "discernment")
 SECTION_KEYS = (
-    ("work performed", re.compile(r"work performed")),
-    ("landed changes", re.compile(r"landed changes")),
-    ("before->after measurements", re.compile(r"before.*after measurements")),
-    ("sources & frontier", re.compile(r"sources\s*&\s*frontier")),
-    ("trend verdicts", re.compile(r"trend verdicts")),
-    ("stale-lane", re.compile(r"stale[- ]lane")),
+    "work performed",
+    "landed changes",
+    "before -> after measurements",
+    "sources & frontier",
+    "trend verdicts",
+    "stale-lane",
 )
-HEADING = re.compile(r"^#{2,3}\s+(.*\S)\s*$")
+HEADING = re.compile(r"^ {0,3}##\s+(.*\S)\s*$")
+FENCE = re.compile(r"^\s{0,3}(`{3,}|~{3,})")
+COMMENT_OPEN = "<!--"
+COMMENT_CLOSE = "-->"
 BOX = re.compile(r"^\s*[-*]\s*\[[xX~ ]\]")
 COMMIT = re.compile(r"^[0-9a-f]{7,64}$")
 EVIDENCE = re.compile(r"^(census|corpus|tools|tests|\.ufo)/")
@@ -66,8 +71,49 @@ def fail(code, msg):
     return 2
 
 
+def normalize_heading(text):
+    low = " ".join(text.strip().lower().split())
+    return low.replace("\u2192", "->").replace("\u2014", "-").replace("--", "-") if "->" in text else low.replace("\u2192", "->")
+
+
+def mask(lines):
+    """Blank fenced blocks and HTML comments so a quoted heading is not a heading.
+
+    r36 A3 after wave seat SwarmReviewer09: the sections predicate accepted every
+    heading hidden inside a ``` fence or an HTML comment (a fabricated report
+    passed) and rejected a conforming report that merely quoted a heading.
+    """
+    out = []
+    fence = None
+    in_comment = False
+    for line in lines:
+        if in_comment:
+            out.append("")
+            if COMMENT_CLOSE in line:
+                in_comment = False
+            continue
+        stripped = line.lstrip()
+        if stripped.startswith(COMMENT_OPEN):
+            out.append("")
+            if COMMENT_CLOSE not in stripped:
+                in_comment = True
+            continue
+        m = FENCE.match(line)
+        if fence:
+            out.append("")
+            if m and m.group(1)[0] == fence:
+                fence = None
+            continue
+        if m:
+            fence = m.group(1)[0]
+            out.append("")
+            continue
+        out.append(line)
+    return out
+
+
 def split_sections(lines):
-    """Return [(heading_index, heading_text, [(line_index, text)])]."""
+    """Return [(heading_index, heading_text, [(line_index, text)])] over masked lines."""
     heads = []
     for i, line in enumerate(lines):
         m = HEADING.match(line)
@@ -82,8 +128,12 @@ def split_sections(lines):
 
 def check_sections(sections):
     found = []
-    for key, pattern in SECTION_KEYS:
-        hits = [i for i, text, _ in sections if pattern.search(text.lower())]
+    for key in SECTION_KEYS:
+        hits = [
+            i
+            for i, text, _ in sections
+            if normalize_heading(text) == key or (key == "stale-lane" and normalize_heading(text) == "stale lane")
+        ]
         if len(hits) != 1:
             return False, "%s headings=%d expected 1" % (key, len(hits))
         found.append((key, hits[0]))
@@ -144,7 +194,7 @@ def check_trends(sections):
 
 def check_stale_lane(sections, lines):
     for i, text, body in sections:
-        if re.match(r"^stale[- ]lane\b", text.strip().lower()):
+        if normalize_heading(text) in ("stale-lane", "stale lane"):
             if any(l.strip() for _, l in body):
                 return True, "heading_body"
     for line in lines:
@@ -183,7 +233,12 @@ def check_evidence(lines):
     pointers = 0
     for line in lines:
         for span in BACKTICK.findall(line):
-            token = span.strip().split()[0].strip("()[],;")
+            fields = span.strip().split()
+            if not fields:
+                # An empty code span (``) is not an evidence pointer; r36 A1 after a seat
+                # produced one and this line raised IndexError instead of a verdict.
+                continue
+            token = fields[0].strip("()[],;")
             if EVIDENCE.match(token) or re.match(r"^[0-9a-f]{40,64}$", token):
                 pointers += 1
     if not pointers:
@@ -192,7 +247,7 @@ def check_evidence(lines):
 
 
 def evaluate(report_text, shonen_text):
-    lines = report_text.splitlines()
+    lines = mask(report_text.splitlines())
     sections = split_sections(lines)
     results = [
         ("sections", check_sections(sections)),
@@ -268,6 +323,12 @@ def selftest():
         cases.append((name, failed, expect_fail))
 
     case("conforming", SELFTEST_REPORT, SELFTEST_SHONEN, [])
+    case(
+        "empty-code-span",
+        SELFTEST_REPORT.replace("- C1 landed with `census/round-1/records/x.tsv`.", "- C1 landed with `` and `census/round-1/records/x.tsv`."),
+        SELFTEST_SHONEN,
+        [],
+    )
     case("missing-section", SELFTEST_REPORT.replace("## Landed changes", "## Landed"), SELFTEST_SHONEN, ["sections"])
     case(
         "section-order",

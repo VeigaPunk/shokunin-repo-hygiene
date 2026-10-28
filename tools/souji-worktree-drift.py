@@ -56,6 +56,16 @@ SCRUB = (
     "GIT_CONFIG_SYSTEM",
     "GIT_CONFIG_NOSYSTEM",
     "GIT_EXTERNAL_DIFF",
+    "GIT_TRACE",
+    "GIT_TRACE2",
+    "GIT_TRACE2_EVENT",
+    "GIT_TRACE2_PERF",
+    "GIT_TRACE_PACK_ACCESS",
+    "GIT_TRACE_PACKET",
+    "GIT_TRACE_PERFORMANCE",
+    "GIT_TRACE_SETUP",
+    "GIT_TRACE_SHALLOW",
+    "GIT_FLUSH",
 )
 ROW = re.compile(r"^REPO\t(?P<name>[^\t]+)\tregs=(?P<regs>\d+)\tprunable=(?P<prunable>\d+)$")
 TOTAL = re.compile(r"^TOTAL\trepos=(?P<repos>\d+)\tregs=(?P<regs>\d+)\tprunable=(?P<prunable>\d+)$")
@@ -182,9 +192,23 @@ def run(args):
     root = os.path.abspath(args.root)
     if not os.path.isdir(root):
         raise Refusal("USAGE: --root %s is not a directory" % root)
+    if args.json:
+        # r36 A2 (wave seat SwarmSentinel24 F1): an --json path inside the measured
+        # tree truncated a file the run is supposed to observe. Refuse containment.
+        target = os.path.realpath(os.path.abspath(args.json))
+        root_real = os.path.realpath(root)
+        try:
+            inside = os.path.commonpath([target, root_real]) == root_real
+        except ValueError:
+            inside = False
+        if inside:
+            raise Refusal("JSON-INSIDE-MEASURED-TREE: %s is under %s" % (target, root_real))
     rows, total = parse_record(args.record)
     drift = []
     live_regs = live_prunable = unreachable = 0
+    # r36 A4 (wave seat SwarmExecutor22 F1): the old formula len(rows) - absent - unreachable
+    # subtracted discovery-only unreachable rows from the recorded count and could go negative.
+    live_recorded = 0
     recorded = set()
     for row in rows:
         name = row["name"]
@@ -198,6 +222,7 @@ def run(args):
             unreachable += 1
             drift.append(("UNREACHABLE", name, error))
             continue
+        live_recorded += 1
         live_regs += regs
         live_prunable += prunable
         if regs != row["regs"]:
@@ -225,7 +250,7 @@ def run(args):
         "record_repos": len(rows),
         "record_regs": sum(r["regs"] for r in rows),
         "record_prunable": sum(r["prunable"] for r in rows),
-        "live_repos": len(rows) - sum(1 for cls, _, _ in drift if cls == "ABSENT") - unreachable,
+        "live_repos": live_recorded,
         "live_regs": live_regs,
         "live_prunable": live_prunable,
         "drift_rows": len(drift),

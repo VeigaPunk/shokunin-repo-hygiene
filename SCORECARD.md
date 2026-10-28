@@ -554,3 +554,33 @@ Scores unchanged (calibration 7, operability 8, coverage 8): no frozen claim tar
 | C3 F1 fleet exposure numerator | coverage 8 | no r35 entry / prior dated numerator | Frozen counter mechanically reported `SUMMARY entries=1 legs=6 fail=0` at `fedfa4068801164ac2e189029137ebe87a1d94d3`, but W1/W2 falsified its data: direct-root replay gives 22 repos, 23 registrations, 1 prunable; original record has four phantom paths and counts dry-run stdout instead of stderr. L5 accepts mismatched figures by substring. Substantive target **missed**; mechanical PASS is not evidence of the frozen figures. | `python3 -B census/round-35/c3-counter.py --root . --rev fedfa4068801164ac2e189029137ebe87a1d94d3 --list-rev 4e9c295e9339cc2b13f7a0dd5ec9fc8213a9e18e` | `fedfa4068801164ac2e189029137ebe87a1d94d3` |
 
 No round-level admission or score increase is declared while W1/W2 remain unsettled; owned scores remain calibration 7, operability 8, coverage 8 pending non-author closure.
+
+### Round 36 measurements (2026-10-28; base 94b5e96ab72b40622449af2dfe7c5b6d73118176; preregistration + instruments + controls frozen at 42ea92e999cd8f1a01d2c28f5f7c9b884321ef78)
+
+| claim | axis | before | after | counting command | measured commit |
+|---|---|---|---|---|---|
+| C1 coverage-map binding | calibration 7 | `grounded=19 mapped=18 dangling=0 mismatches=1`, rc 1 — MISSING-FROM-MAP `corpus/knowledge/fleet-prune-numerator-r35.md` ground=F1 map_rows_F1=2 (`census/round-36/records/c1-control-base.txt`) | `grounded=19 mapped=19 dangling=0 mismatches=0 kill_tested=19 kill_violations=0`, rc 0 (`census/round-36/records/c1-after.txt`): the F1 map row names the r35 entry and the F1 frontier bullet records the numerator held and re-runnable | `python3 -B tools/souji-coverage-agreement.py --root /home/vgpnk/Projects/shokunin/souji-shokunin --rev <full40> --base-rev 94b5e96ab72b40622449af2dfe7c5b6d73118176` | after `af7d51a180eaf2424e064e8e9f19085beff3637e` |
+| C2 report-contract gate | operability 8 | base revision has no `tools/souji-report-contract.py` (`git cat-file -e` rc 128) and the base gate scores the new fixture `cases=11 pass=0 fail=11`, rc 1 (`census/round-36/records/c2-control-base.txt`) | `SUMMARY cases=11 pass=11 fail=0 control=STUB-REJECTED`, rc 0; r27 regression `cases=4 pass=4 control=FALSE-GREEN-REJECTED`, rc 0; checker selftest `cases=8 pass=8` (`census/round-36/records/c2-after.txt`). The checker flags the r35 filed report 4/7 predicates (sections, trends, stale-lane, measurements) exactly as the r35 spot-check found (`census/round-36/records/c2-filed-reports.txt`) | `python3 -B tests/fixtures/r36-report-gate.py`; `bash tests/fixtures/r27-pre-report-gate.sh` | after `42ea92e999cd8f1a01d2c28f5f7c9b884321ef78` (instruments) |
+| C3 F1 worktree-drift surface | coverage 8 (capability acquisition) | tool absent at base (`git cat-file -e 94b5e96:tools/souji-worktree-drift.py` rc 128, `census/round-36/records/c3-control-base.txt`) | `SUMMARY cases=9 pass=9 fail=0 control=STUB-REJECTED`, rc 0; live run `record_repos=26 record_regs=27 record_prunable=0 live_repos=22 live_regs=23 live_prunable=1 drift_rows=5 unreachable=0`, the ABSENT set exactly `ok,research,scripts,templates` = the r35 spot-check's four phantom paths (`census/round-36/records/c3-after.txt`) | `python3 -B tests/fixtures/r36-worktree-drift.py`; `python3 -B tools/souji-worktree-drift.py --root /home/vgpnk/Projects/shokunin --record census/round-35/records/prune-census.tsv --timeout 20` | after `42ea92e999cd8f1a01d2c28f5f7c9b884321ef78` (instruments) |
+
+Owned score values are unchanged (calibration 7, operability 8, coverage 8): the lane still has no
+reproducible 0–10 mapping from a verdict to a number, so these rows carry the measurements and the
+verdict rather than a number. No axis is harmed: no predicate, counter or record was weakened, the
+r27 gate regression is unchanged, and the r35 census record is left as filed.
+
+### Round 36 capability rows (appended)
+
+| name | what it can now do | evidence pointer | first-working round |
+|---|---|---|---|
+| report-contract gate (r36) | refuse to file a round report that lacks the canonical section order, one SHONEN line per SHONEN.md box, one verdict line per learning trend, a stale-lane line, a measurement row with a counting command and a measured commit, 1–3 claim ids, or an evidence pointer; without `--contract` the run prints `check-report-contract=SKIPPED` so the omission is visible | `python3 -B tools/souji-report-contract.py --report <filed report> --shonen <lane>/SHONEN.md` and `python3 -B tests/fixtures/r36-report-gate.py` -> `SUMMARY cases=11 pass=11 fail=0 control=STUB-REJECTED` (`census/round-36/records/c2-after.txt`); discrimination on filed reports `census/round-36/records/c2-filed-reports.txt` | r36 |
+| F1 worktree-drift detector (r36) | re-measure every repository a committed census record names, read-only (`worktree prune` only with `--dry-run -v`, candidates counted from stderr), and report REGS-CHANGED / PRUNABLE-CHANGED / ABSENT / UNREACHABLE / UNRECORDED drift against the record; refuses a malformed or empty record with a typed exit 2 | `python3 -B tools/souji-worktree-drift.py --root /home/vgpnk/Projects/shokunin --record census/round-35/records/prune-census.tsv` -> `SUMMARY ... drift_rows=5 unreachable=0` (`census/round-36/records/c3-after.txt`); `python3 -B tests/fixtures/r36-worktree-drift.py` 9/9 with a rejected always-equal stub | r36 |
+
+### Planned (appended at round 36)
+
+- **r37 (planned r36):** calibration: give the coverage-map counter a written 0–10 mapping (what
+  each mismatched row costs) before citing a number, then test the four rejected-row `used-by`
+  findings the r36 wave reported; operability: retire or tighten the `--contract` opt-in (the
+  wave tests whether a caller can silently skip it), and repair whatever the wave's predicate and
+  mutation probes falsify; coverage: move the drift tool's live numerator into a dated record of
+  its own so F1 has a current reading rather than a record plus a drift report. Certification OFF,
+  K5 HELD, NAMESPACE hold unchanged.

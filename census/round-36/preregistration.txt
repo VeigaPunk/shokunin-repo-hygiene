@@ -90,3 +90,46 @@ CONTROLS (committed before any after-data)
 AMENDMENTS: an amendment may only tighten a predicate or add a disclosed
 limit; predicate, counter and target are not rewritten after any after-data.
 """
+
+AMENDMENT A1 (2026-10-28, after wave-1 seat SwarmExecutor17): tools/souji-report-contract.py
+  check_evidence raised IndexError on a report containing an empty code span (). A1 guards
+  the empty span (it is not an evidence pointer, so it is skipped) and adds selftest case
+  empty-code-span. The seven predicates, their names and their semantics are unchanged; the
+  r36-report-gate target stays cases=11 pass=11 fail=0 control=STUB-REJECTED and the selftest
+  grows 8 -> 9 cases. Tighter only, disclosed, and re-measured in records/c2-after.txt.
+
+AMENDMENT A2 (2026-10-28, after wave-1 seats SwarmMutationTester13, SwarmCritic19, SwarmSentinel24):
+tighter only; predicate and counter stay, the two fixture targets grow.
+  * tools/souji-pre-report-gate.sh — `check-report-contract` binds on the checker's exit code AND
+    the absence of a printed `=FAIL` line (a checker that prints FAIL but exits 0 was a false green,
+    Critic19 H3); the checker's SUMMARY/ERROR lines are forwarded instead of dropped.
+  * tools/souji-worktree-drift.py — `--json` is refused with JSON-INSIDE-MEASURED-TREE when the
+    resolved path lies inside the measured root (Sentinel24 F1: it truncated a file inside a
+    measured tree), and GIT_TRACE*/GIT_FLUSH are scrubbed from the child environment (F2).
+  * tests/fixtures/r36-report-gate.py 11 -> 13 cases (commit-too-short, command-not-backticked);
+    MutationTester13's M1/M2 mutants survived the 11-case fixture and now die.
+  * tests/fixtures/r36-worktree-drift.py 9 -> 11 cases (json-inside-tree, trace-env).
+  * Replaced targets, same shape: C2 `SUMMARY cases=13 pass=13 fail=0 control=STUB-REJECTED`;
+    C3 `SUMMARY cases=11 pass=11 fail=0 control=STUB-REJECTED`. Every other clause is unchanged;
+    the r27 regression stays `cases=4 pass=4`.
+
+AMENDMENT A3 (2026-10-28, after wave-1 seats SwarmReviewer09 and SwarmMutationTester14): tighter only.
+  * tools/souji-report-contract.py `sections` now reads masked lines: fenced blocks (``` and ~~~)
+    and HTML comments are blanked before headings are scanned, headings must be `##` depth (up to
+    three spaces of indent) and match the canonical section name exactly after whitespace/arrow
+    normalization. SwarmReviewer09 showed the old predicate accepted a report whose six headings
+    all sat inside one fence (rc 0) and rejected a conforming report that merely quoted a heading.
+  * `evidence` keeps its allowlist semantics; the fixture gained isolated cases that kill
+    SwarmMutationTester14's three mutants (any token; 40-hex only; any slash-shaped token) and
+    SwarmMutationTester13's two (6-hex commit; single span), each caught by its own case.
+  * tests/fixtures/r36-report-gate.py 13 -> 20 cases.
+  * Replaced target: C2 `SUMMARY cases=20 pass=20 fail=0 control=STUB-REJECTED`. C3 and every
+    other clause unchanged.
+
+AMENDMENT A4 (2026-10-28, after wave-1 seat SwarmExecutor22 F1): tighter only. `live_repos` was
+len(rows) - ABSENT - unreachable and could go negative because the unreachable total includes
+discovery-only rows the record never named; it now counts the recorded repositories actually
+measured. The fixture gains case `live-repos-non-negative` (one ABSENT recorded repo plus one
+discovered-but-unreachable directory must read live_repos=1, rc 1), so the drift fixture is
+`SUMMARY cases=12 pass=12 fail=0 control=STUB-REJECTED`. No frozen target field changes: the target
+names record_repos/record_regs/record_prunable, drift_rows>=5, the ABSENT set and unreachable=0.

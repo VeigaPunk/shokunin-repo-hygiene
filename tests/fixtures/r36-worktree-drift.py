@@ -108,8 +108,14 @@ def record(root, rows, total=None, name="record.tsv"):
     return path
 
 
-def invoke(tool, fleet, rec):
-    proc = sh(["python3", "-B", tool, "--root", fleet, "--record", rec, "--timeout", "30"])
+def invoke(tool, fleet, rec, extra=None, env_extra=None):
+    env = None
+    if env_extra:
+        env = dict(os.environ)
+        env.update(ENV)
+        env.update(env_extra)
+    cmd = ["python3", "-B", tool, "--root", fleet, "--record", rec, "--timeout", "30"] + list(extra or [])
+    proc = subprocess.run(cmd, env=env or ENV, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False)
     out = proc.stdout + proc.stderr
     summary = [l for l in proc.stdout.splitlines() if l.startswith("SUMMARY")]
     return proc.returncode, out, (summary[-1] if summary else "")
@@ -195,6 +201,48 @@ def main(argv):
         invoke(tool, fleet, rec)
         after = snapshot(fleet)
         check("read-only", before == after, "changed=%d" % len(set(before) ^ set(after)), results)
+
+        # json containment (r36 A2, wave seat SwarmSentinel24 F1)
+        root, fleet = build(scratch, "json-inside")
+        rec = record(root, [("alpha", 1, 0), ("beta", 1, 0)], total=(2, 2, 0))
+        leak = os.path.join(fleet, "alpha", "leak.json")
+        rc, out, summary = invoke(tool, fleet, rec, extra=["--json", leak])
+        check(
+            "json-inside-tree",
+            rc == 2 and "JSON-INSIDE-MEASURED-TREE" in out and not os.path.exists(leak),
+            "rc=%d exists=%s rows=%r" % (rc, os.path.exists(leak), out.splitlines()[:3]),
+            results,
+        )
+
+        # trace-env scrub (r36 A2, wave seat SwarmSentinel24 F2)
+        root, fleet = build(scratch, "trace-env")
+        rec = record(root, [("alpha", 1, 0), ("beta", 1, 0)], total=(2, 2, 0))
+        trace = os.path.join(root, "trace.log")
+        rc, out, summary = invoke(tool, fleet, rec, env_extra={"GIT_TRACE2_EVENT": trace})
+        check(
+            "trace-env",
+            rc == 0 and "drift_rows=0" in summary and not os.path.exists(trace),
+            "rc=%d trace_created=%s %s" % (rc, os.path.exists(trace), summary),
+            results,
+        )
+
+        # live_repos arithmetic (r36 A4, wave seat SwarmExecutor22 F1): an absent
+        # recorded repo plus a discovered-but-unreachable one used to go negative.
+        root, fleet = build(scratch, "live-repos")
+        rec = record(root, [("alpha", 1, 0), ("gone", 1, 0)], total=(2, 2, 0))
+        broken = os.path.join(fleet, "broken")
+        os.makedirs(broken)
+        write(os.path.join(broken, ".git"), "gitdir: /nonexistent/gitdir\n")
+        rc, out, summary = invoke(tool, fleet, rec)
+        value = 0
+        if "live_repos=" in summary:
+            value = int(summary.split("live_repos=")[1].split()[0])
+        check(
+            "live-repos-non-negative",
+            rc == 1 and value == 1 and "ABSENT\tgone" in out and "UNREACHABLE\tbroken" in out,
+            "rc=%d live_repos=%d rows=%r" % (rc, value, out.splitlines()[:4]),
+            results,
+        )
 
         stub_path = os.path.join(scratch, "stub.py")
         write(stub_path, STUB)

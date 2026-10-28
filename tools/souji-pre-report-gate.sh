@@ -49,13 +49,18 @@ if (( contract )); then
   checker=$lane/tools/souji-report-contract.py
   if [[ -f $checker && -s $report ]]; then
     out=$(python3 -B "$checker" --report "$report" --shonen "$shonen_path" 2>&1); rc=$?
+    saw_fail=0
     while IFS= read -r line; do
       case $line in
-        check-*) printf '%s\n' "$line" ;;
-        detail-*) printf '%s\n' "$line" >&2 ;;
+        check-*) printf '%s\n' "$line"; [[ $line != *=FAIL ]] || saw_fail=1 ;;
+        SUMMARY*) printf '%s\n' "$line" ;;
+        detail-*|ERROR*) printf '%s\n' "$line" >&2 ;;
       esac
     done <<< "$out"
-    if (( rc == 0 )); then check report-contract PASS; else check report-contract FAIL; fi
+    # The verdict binds on the exit code AND the printed lines: a checker that
+    # prints FAIL but exits 0 (or a wrapper that swallows a FAIL) is a failure,
+    # never a pass (r36 A2, wave seat SwarmCritic19 H3).
+    if (( rc == 0 )) && (( saw_fail == 0 )); then check report-contract PASS; else check report-contract FAIL; fi
   else
     check report-contract FAIL
     printf 'detail-report-contract: checker missing (%s) or report empty\n' "$checker" >&2
