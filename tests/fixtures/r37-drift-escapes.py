@@ -14,7 +14,7 @@ Each case builds a synthetic fleet in scratch (under `--work` / `TMPDIR`, never
 a hard-coded /tmp or /var/tmp), invokes the candidate tool, and checks the
 refusal and the absence of the escape file. The same cases then run against
 `--base-tool` (the r36 blob: `git show <r36-tip>:tools/souji-worktree-drift.py`)
-so the fixture proves it discriminates: `base_fail` must be >= 3 and the
+so the fixture proves it discriminates: `base_fail` must be >= 8 and `escapes` >= 6 and the
 control must print `ESCAPE-REPRODUCED`.
 
 Cases:
@@ -38,7 +38,7 @@ Cases:
 CLI:
   python3 -B tests/fixtures/r37-drift-escapes.py [--tool PATH] [--base-tool PATH] [--work DIR]
 
-Exit: 0 candidate fail=0 and base_fail >= 3, 1 otherwise, 2 usage.
+Exit: 0 candidate fail=0, base_fail >= 8 and escapes >= 6, 1 otherwise, 2 usage.
 """
 import argparse
 import os
@@ -312,7 +312,7 @@ def main(argv):
     # r37 A2.5 (wave seat W2RevRerunC2): a fail count also rises when the base
     # tool merely errors. The control requires the base to be observed writing
     # the escapes themselves (>=4 of 6 artifacts), plus the case floor.
-    control_ok = base_fail >= 5 and escapes >= 4
+    control_ok = base_fail >= 8 and escapes >= 6
     print("SUMMARY cases=%d pass=%d fail=%d base_fail=%d escapes=%d control=%s" % (
         len(candidate), len(candidate) - failed, failed, base_fail, escapes,
         "ESCAPE-REPRODUCED" if control_ok else "ESCAPE-NOT-REPRODUCED"))
