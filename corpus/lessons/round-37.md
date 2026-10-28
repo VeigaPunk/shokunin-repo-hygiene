@@ -50,9 +50,7 @@ installed man pages at `git 2.56.0-1` and the live git-scm pages):
 |---|---|---|---|---|
 | S236 | git(1) ENVIRONMENT — GIT_TRACE_REFS — https://git-scm.com/docs/git#Documentation/git.txt-GITTRACEREFS | 2026-10-28 | “Enables trace messages for operations on the ref database.” (§ ENVIRONMENT, `MANWIDTH=100 man git` line 1213; heading at 1212) | **admit** — a child that inherits the variable writes a trace file the caller did not request; this is the W2 mechanism the escape fixture reproduces on the r36 blob |
 | S237 | git(1) ENVIRONMENT — GIT_CONFIG_NOSYSTEM — https://git-scm.com/docs/git#Documentation/git.txt-GITCONFIGNOSYSTEM | 2026-10-28 | “Whether to skip reading settings from the system-wide $(prefix)/etc/gitconfig file.” (§ ENVIRONMENT, `MANWIDTH=100 man git` line 1154; heading at 1153) | **admit** — the manual adds it “can be used … to create a predictable environment for a picky script”; that is exactly the child env the C2 repair builds |
-| S238 | git-config(1) § GIT_CONFIG_COUNT — https://git-scm.com/docs/git-config#Documentation/git-config.txt-GITCONFIGCOUNT | 2026-10-28 | “all environment pairs … up to that number will be added to the process’s runtime configuration” | **reject** — a `GIT_CONFIG_COUNT`-injected `trace2.eventTarget` wrote no trace file on git 2.56.0 (`census/round-37/records/c2-after.txt` (`case-env-witness=PASS`) and the independent positive |
-control in `.ufo/waves/round-37/w1/W1ScribeGate.md` (a config-file `trace2.eventTarget` wrote
-9812 bytes; the env-injected one wrote none)), so env config does not reach trace2 initialisation on this surface; flip: a reproducible trace2 write via env config at a named git version |
+| S238 | git-config(1) § GIT_CONFIG_COUNT — https://git-scm.com/docs/git-config#Documentation/git-config.txt-GITCONFIGCOUNT | 2026-10-28 | “all environment pairs … up to that number will be added to the process’s runtime configuration” | **reject** — a `GIT_CONFIG_COUNT`-injected `trace2.eventTarget` wrote no trace file on git 2.56.0 (`census/round-37/records/c2-after.txt`, `case-env-witness=PASS`; the mechanism is that `read_very_early_config` sets `ignore_cmdline=1`/`ignore_repo=1`, so only system/global config files reach trace2 — a wave-2 control measured a config-file target writing 11365 bytes and the env-injected one writing none; the wave report is untracked, so the durable evidence is the counter's env arm plus this mechanism), so env config does not reach trace2 initialisation on this surface; flip: a reproducible trace2 write via env config at a named git version |
 
 Row changes: S236 and S237 are new tier-A `mined` rows, S238 is new and `rejected`; no existing
 row's `status`, `recheck` or `used-by` cell changed. `used-by` for S236/S237 is this lesson (C2
@@ -90,8 +88,10 @@ fixture that printed no SUMMARY).
 **Captured-by:** no committed rule at the time; the battery now requires a `SUMMARY cases=` line
 with `fail>0` before it records a kill, and a manual per-mutant run names the failing case.
 **Fix:** `make_repo(alpha)` before `worktree add`; the battery's summary gate. Both are in the
-landing commit `e987a27`. No claim after-data was taken before the repair; the frozen mutants,
-targets and predicate sentences did not change.
+landing commit `e987a27`. No claim after-data was taken before this repair. The frozen mutants did
+not change; the C1/C2 **targets** were later raised by A1.3/A2.3 (after the first after-receipt) and
+the frozen predicate sentences were superseded append-only — disclosed in the prereg's
+amendment/supersession blocks, and the reason this lesson does not claim a monotone receipt history.
 
 ## Frontier
 
