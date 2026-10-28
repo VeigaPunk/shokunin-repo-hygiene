@@ -3,16 +3,18 @@
 set -u
 unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_OBJECT_DIRECTORY GIT_COMMON_DIR GIT_NAMESPACE GIT_PREFIX GIT_SHALLOW_FILE GIT_ALTERNATE_OBJECT_DIRECTORIES GIT_CONFIG_GLOBAL GIT_CONFIG_SYSTEM GIT_CONFIG_NOSYSTEM GIT_TERMINAL_PROMPT GIT_ASKPASS GIT_SSH GIT_SSH_COMMAND GIT_EDITOR GIT_PAGER GIT_EXTERNAL_DIFF 2>/dev/null || true
 export LC_ALL=C GIT_OPTIONAL_LOCKS=0
-usage() { printf '%s\n' 'Usage: bash tools/souji-pre-report-gate.sh --lane ABS --branch NAME --report ABS --prereg ABS' >&2; }
+usage() { printf '%s\n' 'Usage: bash tools/souji-pre-report-gate.sh --lane ABS --branch NAME --report ABS --prereg ABS [--contract] [--shonen ABS]' >&2; }
 usage_error() { usage; exit 2; }
-lane= branch= report= prereg=
-seen_lane=0 seen_branch=0 seen_report=0 seen_prereg=0
+lane= branch= report= prereg= shonen= contract=0
+seen_lane=0 seen_branch=0 seen_report=0 seen_prereg=0 seen_shonen=0
 while (($#)); do
   case $1 in
     --lane) (( $# >= 2 && !seen_lane )) || usage_error; lane=$2; seen_lane=1; shift 2 ;;
     --branch) (( $# >= 2 && !seen_branch )) || usage_error; branch=$2; seen_branch=1; shift 2 ;;
     --report) (( $# >= 2 && !seen_report )) || usage_error; report=$2; seen_report=1; shift 2 ;;
     --prereg) (( $# >= 2 && !seen_prereg )) || usage_error; prereg=$2; seen_prereg=1; shift 2 ;;
+    --shonen) (( $# >= 2 && !seen_shonen )) || usage_error; shonen=$2; seen_shonen=1; shift 2 ;;
+    --contract) contract=1; shift ;;
     *) usage_error ;;
   esac
 done
@@ -36,4 +38,29 @@ if status=$(git --no-optional-locks -C "$lane" status --porcelain=v1 --untracked
 else check clean FAIL; printf 'detail-clean: git status failed: %s\n' "$status" >&2; fi
 # 5. The preregistration is mandatory; absence is never skipped.
 if [[ -s $prereg ]]; then check prereg PASS; else check prereg FAIL; fi
+# 6. Report-contract predicates (r36): canonical sections, one SHONEN line per
+#    SHONEN.md box, one verdict line per learning trend, the stale-lane line,
+#    a measurement row with a counting command and a measured commit, 1-3
+#    claim ids, and an evidence pointer. Opt-in via --contract so the r27
+#    fixture's predicates 1-5 keep their frozen behaviour; a run that skips it
+#    says so, so the evidence can never mistake silence for a pass.
+if (( contract )); then
+  shonen_path=${shonen:-$lane/SHONEN.md}
+  checker=$lane/tools/souji-report-contract.py
+  if [[ -f $checker && -s $report ]]; then
+    out=$(python3 -B "$checker" --report "$report" --shonen "$shonen_path" 2>&1); rc=$?
+    while IFS= read -r line; do
+      case $line in
+        check-*) printf '%s\n' "$line" ;;
+        detail-*) printf '%s\n' "$line" >&2 ;;
+      esac
+    done <<< "$out"
+    if (( rc == 0 )); then check report-contract PASS; else check report-contract FAIL; fi
+  else
+    check report-contract FAIL
+    printf 'detail-report-contract: checker missing (%s) or report empty\n' "$checker" >&2
+  fi
+else
+  printf 'check-report-contract=SKIPPED (no --contract)\n'
+fi
 exit "$fail"

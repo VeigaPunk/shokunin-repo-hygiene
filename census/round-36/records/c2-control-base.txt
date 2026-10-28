@@ -1,0 +1,28 @@
+# C2 control: instrument absent at base
+$ git cat-file -e 94b5e96ab72b40622449af2dfe7c5b6d73118176:tools/souji-report-contract.py
+fatal: path 'tools/souji-report-contract.py' exists on disk, but not in '94b5e96ab72b40622449af2dfe7c5b6d73118176'
+rc=128
+
+# C2 control: new fixture against the BASE gate bytes
+$ python3 -B tests/fixtures/r36-report-gate.py --gate /fast/scratch/hyaku/souji-r36/l1/base-gate.sh
+Usage: bash tools/souji-pre-report-gate.sh --lane ABS --branch NAME --report ABS --prereg ABS
+
+case-legacy-defective-passes=FAIL expected_rc=0 actual_rc=0 expect_text='check-report-contract=SKIPPED'
+---- output ----
+check-tip=PASS
+check-report=PASS
+check-shonen=PASS
+check-clean=PASS
+check-prereg=PASS
+
+case-dirty-lane=FAIL expected_rc=1 actual_rc=2 expect_text='check-clean=FAIL'
+---- output ----
+Usage: bash tools/souji-pre-report-gate.sh --lane ABS --branch NAME --report ABS --prereg ABS
+
+case-prereg-absent=FAIL expected_rc=1 actual_rc=2 expect_text='check-prereg=FAIL'
+---- output ----
+Usage: bash tools/souji-pre-report-gate.sh --lane ABS --branch NAME --report ABS --prereg ABS
+
+control=STUB-REJECTED
+SUMMARY cases=11 pass=0 fail=11 control=STUB-REJECTED
+rc=1

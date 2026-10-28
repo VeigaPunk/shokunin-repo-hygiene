@@ -1,0 +1,92 @@
+souji — round 36 PREREGISTRATION (frozen before any after-data)
+lane repo: /home/vgpnk/Projects/shokunin/souji-shokunin
+base revision (lane branch master): 94b5e96ab72b40622449af2dfe7c5b6d73118176
+frozen: 2026-10-28 by L1 SoujiR36
+mode: fresh-start (r30-r35 closures rejected; claims are sized so a do-nothing
+      control cannot reach them, and every counter is an instrument this round
+      commits with its control receipt BEFORE the after-measurement)
+
+CLAIMS
+
+C1 — calibration (score 7, the lowest non-retired axis)
+Claim: the coverage map names every `ground: F<k>` knowledge entry, and every
+backticked entries-column path resolves, at the round's landing revision.
+Counter (existing instrument, bytes unchanged this round):
+  python3 -B tools/souji-coverage-agreement.py --root <lane> --rev <landing-40hex>
+Target (frozen): `dangling=0 mismatches=0`, exit code 0.
+Kill rule (frozen): any `MISMATCH` line, any nonzero `dangling`/`mismatches`
+field, or a nonzero exit at the landing revision is a miss; deleting or
+renaming an entry to silence the counter is a miss and is reported as such.
+Before (do-nothing control, files/census/round-36/records/c1-control-base.txt):
+  `grounded=19 mapped=18 dangling=0 mismatches=1`, rc 1 —
+  MISMATCH MISSING-FROM-MAP corpus/knowledge/fleet-prune-numerator-r35.md ground=F1 map_rows_F1=2
+The do-nothing path cannot reach the target: the r35 entry is committed and
+carries `ground: F1`, and no coverage-map row names it.
+
+C2 — operability (score 8)
+Claim: the lane's pre-report gate enforces the round-report contract in six
+new predicates (canonical section order, one SHONEN line per SHONEN.md box,
+one verdict line per learning trend, the stale-lane line, a measurement row
+with a counting command and a measured commit, 1-3 claim ids) plus an
+evidence-pointer predicate, and a fixture proves each predicate discriminates.
+Counter:
+  python3 -B tests/fixtures/r36-report-gate.py
+Target (frozen): `SUMMARY cases=11 pass=11 fail=0 control=STUB-REJECTED`, rc 0,
+together with the frozen regression `bash tests/fixtures/r27-pre-report-gate.sh`
+printing `cases=4 pass=4 control=FALSE-GREEN-REJECTED`, rc 0.
+Kill rule (frozen): any `fail>0`; any `control=STUB-NOT-REJECTED`; a broken
+r27 regression; or a `--contract` run that prints `check-report-contract=PASS`
+while the checker is missing. Adopting the base gate as the after-state is a
+miss: the base gate cannot accept `--contract` at all.
+Before (do-nothing control, files/census/round-36/records/c2-control-base.txt):
+  the base revision carries no tools/souji-report-contract.py (git cat-file -e
+  rc 128) and the base gate run against the same fixture scores
+  `SUMMARY cases=11 pass=0 fail=11`, rc 1 — every case fails because the base
+  argv rejects `--contract` (usage rc 2) and the base predicates never read
+  the report body.
+Sourced: C2's non-empty-report predicate is bash's `-s` test, cited to S233
+(opened this round).
+
+C3 — coverage (score 8; capability acquisition)
+Claim: F1's fleet worktree-registration numerator becomes a re-runnable
+surface: tools/souji-worktree-drift.py re-measures every repository a
+committed census record names, read-only, and reports the drift, with a
+fixture over nine cases and a rejected always-equal control. Its run against
+the committed r35 record reproduces the r35 non-author spot-check's corrected
+numerator and names the record's four phantom paths.
+Counters:
+  python3 -B tests/fixtures/r36-worktree-drift.py
+  python3 -B tools/souji-worktree-drift.py --root /home/vgpnk/Projects/shokunin \
+      --record census/round-35/records/prune-census.tsv --timeout 20
+Target (frozen): fixture `SUMMARY cases=9 pass=9 fail=0 control=STUB-REJECTED`,
+rc 0; live run with record_repos=26 record_regs=27 record_prunable=0,
+drift_rows>=5, the ABSENT set exactly {ok,research,scripts,templates},
+unreachable=0; and the capability row in SCORECARD.md in this round's commit.
+Kill rule (frozen): any fixture `fail>0` or a control that is not rejected;
+`unreachable>0`; an ABSENT set different from the frozen one; or a missing
+SCORECARD capability row. The live_repos/live_regs/live_prunable fields are
+reported as observed and are not the target (other lanes change the fleet
+while this round runs).
+Before (do-nothing control, files/census/round-36/records/c3-control-base.txt):
+  no tools/souji-worktree-drift.py at the base revision (git cat-file -e rc
+  128); no test/fixture exercises a record-vs-live comparison.
+
+FROZEN PREDICATE SENTENCE (identical in this file, in the counters, and in the
+SCORECARD receipt labels):
+  C1 = "coverage-agreement reports dangling=0 mismatches=0 at the landing rev";
+  C2 = "the r36 report-gate fixture reports cases=11 pass=11 fail=0
+        control=STUB-REJECTED and the r27 regression stays 4/4";
+  C3 = "the r36 drift fixture reports cases=9 pass=9 fail=0
+        control=STUB-REJECTED and the live run reproduces the four phantom
+        ABSENT paths with unreachable=0".
+
+CONTROLS (committed before any after-data)
+  census/round-36/records/c1-control-base.txt   coverage-agreement at base
+  census/round-36/records/c2-control-base.txt   base gate vs the new fixture
+  census/round-36/records/c3-control-base.txt   drift tool absent at base
+  census/round-36/records/c2-filed-reports.txt  checker vs filed reports r30-r35
+  census/round-36/records/c3-live-run.txt       first live drift run (2026-10-28)
+
+AMENDMENTS: an amendment may only tighten a predicate or add a disclosed
+limit; predicate, counter and target are not rewritten after any after-data.
+"""
