@@ -544,3 +544,13 @@ Scores unchanged (calibration 7, operability 8, coverage 8): no frozen claim tar
 ### Planned (appended at round 34)
 
 - **r35:** repair the C1 enumerator/counter binding defects before data (tab-aware predicate matching, exact row-line binding, reachable item revisions/files, and a wildcard-exit mutation); re-preregister and dry-run every item to target under the final counter. Rework C2's W2/W3/N3/J1 legs so the actual sandbox contract, fixture case count, scratch normalization, witness and junk timeout are feasible under load, then run the full feasibility and mutation controls before freezing. Carry all unrun/failed W2 attacks and all unresolved r34 C1 mismatches. Certification OFF, K5 HELD, NAMESPACE hold unchanged.
+ 
+### Round 35 measurements (partial; W1 dispatched, W1/W2 closure not received)
+
+| claim | axis | before | after | counting command | measured commit |
+|---|---|---|---|---|---|
+| C1 registry/outcome agreement (60 items) | calibration 7 | `SUMMARY items=60 agree=37 unresolved=23 mismatches=23 withdrawn=0 restated=5` (do-nothing, instrument rev) | Pending final wave integration; no target/pass claimed | `python3 -B census/round-35/c1-counter.py --root . --rev <landing> --list-rev 4e9c295e9339cc2b13f7a0dd5ec9fc8213a9e18e --scratch <dir>` | pending |
+| C2 sandboxed operability (13 legs) | operability 8 | CNE rc 2 at pre-instrument tip | Pending final wave integration; feasibility W1/N4 pass, N3 and W2 fail; no target/pass claimed | `python3 -B census/round-35/c2-counter.py --root . --rev <landing> --base 1e9cad0b553891c41fe5b7ad1686decc147d76d4 --list-rev 4e9c295e9339cc2b13f7a0dd5ec9fc8213a9e18e --scratch <dir>` | pending |
+| C3 F1 fleet exposure numerator | coverage 8 | no r35 entry / prior dated numerator | `SUMMARY entries=1 legs=6 fail=0` at `fedfa4068801164ac2e189029137ebe87a1d94d3`; 26 repos, 27 registrations, 0 immediately prunable | `python3 -B census/round-35/c3-counter.py --root . --rev fedfa4068801164ac2e189029137ebe87a1d94d3 --list-rev 4e9c295e9339cc2b13f7a0dd5ec9fc8213a9e18e` | fedfa4068801164ac2e189029137ebe87a1d94d3 |
+
+No round-level admission or score increase is declared while W1/W2 remain unsettled; owned scores remain calibration 7, operability 8, coverage 8 pending non-author closure.
