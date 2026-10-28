@@ -174,15 +174,15 @@ def check_trends(sections):
     for _, line in body:
         low = line.lower()
         for trend in TRENDS:
-            if not re.match(r"^\s*[-*]?\s*\**%s\**\s*[:—-]" % trend, low):
+            m = re.match(r"^\s*[-*]?\s*\**%s\**\s*[:—]\s*\**([a-z-]+)" % trend, low)
+            if not m:
                 continue
-            verdict = None
-            for token in VERDICT_TOKENS:
-                if token in low:
-                    verdict = token
-                    break
-            if verdict is None:
-                return False, "%s line carries no verdict token" % trend
+            # r36 A7 (wave seat SwarmConnector39 3.4): the verdict is the first token after the
+            # label, not any verdict word anywhere in the line ("expansion: not improved" used to
+            # score as improved).
+            verdict = m.group(1)
+            if verdict not in VERDICT_TOKENS:
+                return False, "%s line opens with %r, not a verdict token" % (trend, verdict)
             if trend in seen:
                 return False, "duplicate %s verdict" % trend
             seen[trend] = verdict

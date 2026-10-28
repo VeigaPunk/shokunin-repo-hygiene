@@ -163,6 +163,13 @@ def cases():
             "check-report-contract=FAIL",
         ),
         Case(
+            "trend-negated-verdict",
+            CONFORMING.replace("- expansion: improved — fixture.", "- expansion: not improved — fixture."),
+            ["--contract"],
+            1,
+            "check-report-contract=FAIL",
+        ),
+        Case(
             "stale-lane-absent",
             without("- respawn-per-round driver; no other mission open."),
             ["--contract"],
