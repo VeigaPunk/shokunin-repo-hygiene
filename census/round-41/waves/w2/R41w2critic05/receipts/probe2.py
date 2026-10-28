@@ -1,0 +1,20 @@
+import os, subprocess, sys
+sys.argv = [sys.argv[0], sys.argv[1]]
+exec(open(os.path.join(os.path.dirname(__file__), "probe.py")).read().split("# --- root variant A")[0])
+# B2: canonical separate-git-dir root (.git FILE -> store inside root)
+b2 = os.path.join(WORK, "seproot")
+os.makedirs(b2)
+sh("git", "init", "-q", "-b", "main", "--separate-git-dir", os.path.join(b2, ".store"), b2)
+with open(os.path.join(b2, "f"), "w") as h: h.write("x\n")
+sh("git", "-C", b2, "add", "f"); sh("git", "-C", b2, "commit", "-qm", "b")
+repo(os.path.join(b2, "alpha"))
+print("git-root-check:", sh("git", "-C", b2, "rev-parse", "--is-inside-work-tree").stdout.strip(), sh("git", "-C", b2, "worktree", "list", "--porcelain").stdout.replace("\n"," | "))
+print("root .git is:", "file" if os.path.isfile(os.path.join(b2, ".git")) else "dir")
+show("B2 sep-git-dir root, unnamed", b2, "REPO\talpha\tregs=1\tprunable=0\n", ("--skip-unrecorded",))
+show("B2 sep-git-dir root, unnamed(scan)", b2, "REPO\talpha\tregs=1\tprunable=0\n")
+show("B2 sep-git-dir root, named", b2, "REPO\tseproot\tregs=1\tprunable=0\nREPO\talpha\tregs=1\tprunable=0\n", ("--skip-unrecorded",))
+# D: child that is a .git FILE (separate-git-dir child) — control for the asymmetry
+ctl = os.path.join(WORK, "ctl2")
+os.makedirs(ctl)
+sh("git", "init", "-q", "-b", "main", "--separate-git-dir", os.path.join(ctl, "alpha.store"), os.path.join(ctl, "alpha"))
+os.makedirs(os.path.join(ctl, "alpha"), exist_ok=True)

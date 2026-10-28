@@ -1,0 +1,149 @@
+CASE A1-clean-linear
+  doc: freeze = oldest add of PATH; clean
+  expect: rc0 findings0 freeze=A freeze
+  observed: rc=0 freeze=A freeze summary=['SUMMARY claims=1 findings=0']
+CASE A2-rev-equals-freeze
+  doc: rev=freeze is allowed
+  expect: rc0 findings0
+  observed: rc=0 freeze=A freeze summary=['SUMMARY claims=1 findings=0']
+CASE A3-rev-before-freeze
+  doc: PATH absent at rev -> refusal
+  expect: rc2 REFUSAL absent
+  observed: rc=2 freeze=None summary=[]
+  stderr: REFUSAL COULD-NOT-EVALUATE: prereg.txt is absent at 0f9566f3a3a9eb322f6493092abeebb85865757f
+CASE B1-base-equals-freeze
+  doc: Base must be STRICT ancestor of freeze
+  expect: BASE-NOT-ANCESTOR
+  observed: rc=1 freeze=B freeze summary=['SUMMARY claims=1 findings=1']
+  FINDING C1 BASE-NOT-ANCESTOR ccd506896ef213ca7907799ea3412ffd849836b7 is not a strict ancestor of freeze ccd506896ef2
+CASE C1-base-edited-post-freeze
+  doc: prereg text not frozen; only Counter/Population blobs checked
+  expect: clean (undetected Base edit)
+  observed: rc=0 freeze=C freeze summary=['SUMMARY claims=1 findings=0']
+CASE D1-target-edited-post-freeze
+  doc: Target not in FROZEN-EDITED scope
+  expect: clean (undetected)
+  observed: rc=0 freeze=D freeze summary=['SUMMARY claims=1 findings=0']
+CASE E1-control-edited-post-freeze
+  doc: Control checked only at FREEZE blob
+  expect: clean (undetected)
+  observed: rc=0 freeze=E freeze summary=['SUMMARY claims=1 findings=0']
+CASE F1-duplicate-counter-key-hides-edit
+  doc: grammar silent on duplicate keys; first wins
+  expect: clean (second Counter line ignored)
+  observed: rc=0 freeze=F1 freeze dup-key summary=['SUMMARY claims=1 findings=0']
+CASE F2-single-counter-line-control
+  doc: FROZEN-EDITED expected
+  expect: FROZEN-EDITED + COUNTER-DIGEST
+  observed: rc=1 freeze=F2 freeze summary=['SUMMARY claims=1 findings=2']
+  FINDING C1 COUNTER-DIGEST census/c.py at freeze hashes 2c6d5af6b6ff0796e6871694e58e71be07858ed75007e10c6b097ab4ae277162, stated 38f3779fd36bb530bdd0ca27360ca100972f3a45ed1c0166cbbe863cdaf5640a
+  FINDING C1 FROZEN-EDITED census/c.py differs between freeze 3d51946a678f and 0d46189dc59e
+CASE G1-added-on-branch-then-merged
+  doc: freeze = branch add commit; clean
+  expect: rc0 freeze=G1 freeze
+  observed: rc=0 freeze=G1 freeze summary=['SUMMARY claims=1 findings=0']
+CASE G2-branch-counter-edit-merged
+  doc: FROZEN-EDITED against branch freeze
+  expect: FROZEN-EDITED
+  observed: rc=1 freeze=G2 freeze summary=['SUMMARY claims=1 findings=1']
+  FINDING C1 FROZEN-EDITED census/c.py differs between freeze 2396c734eb26 and b540bd2ba319
+CASE I1-counter-edited-honest
+  doc: FROZEN-EDITED at original path
+  expect: FROZEN-EDITED
+  observed: rc=1 freeze=I freeze summary=['SUMMARY claims=1 findings=1']
+  FINDING C1 FROZEN-EDITED census/c.py differs between freeze b5f8035ebab8 and 7cb6560a39e7
+CASE I2-renamed-then-restamped
+  doc: --no-renames: new PATH's first add is the freeze
+  expect: clean; freeze = rename commit
+  observed: rc=0 freeze=I git mv prereg + restamp Counter digest summary=['SUMMARY claims=1 findings=0']
+CASE I3-old-path-after-rename
+  doc: PATH absent at rev -> refusal
+  expect: rc2 absent
+  observed: rc=2 freeze=I freeze summary=[]
+  stderr: REFUSAL COULD-NOT-EVALUATE: prereg.txt is absent at 9379701522779d0812078b7bf04f7b3fca1cb48a
+CASE J1-deleted-readded-target-changed
+  doc: freeze = oldest add; prereg text not compared
+  expect: clean; freeze = J freeze
+  observed: rc=0 freeze=J freeze summary=['SUMMARY claims=1 findings=0']
+CASE K1-deleted-readded-counter-edited
+  doc: digest checked against FIRST add's blob
+  expect: COUNTER-DIGEST + FROZEN-EDITED
+  observed: rc=1 freeze=K freeze summary=['SUMMARY claims=1 findings=2']
+  FINDING C1 COUNTER-DIGEST census/c.py at freeze hashes 2c6d5af6b6ff0796e6871694e58e71be07858ed75007e10c6b097ab4ae277162, stated 38f3779fd36bb530bdd0ca27360ca100972f3a45ed1c0166cbbe863cdaf5640a
+  FINDING C1 FROZEN-EDITED census/c.py differs between freeze 18173359325e and 751d5d6a739e
+CASE L1-full-history
+  doc: reference: full history
+  expect: COUNTER-DIGEST + FROZEN-EDITED freeze=L freeze
+  observed: rc=1 freeze=L freeze summary=['SUMMARY claims=1 findings=2']
+  FINDING C1 COUNTER-DIGEST census/c.py at freeze hashes 2c6d5af6b6ff0796e6871694e58e71be07858ed75007e10c6b097ab4ae277162, stated 38f3779fd36bb530bdd0ca27360ca100972f3a45ed1c0166cbbe863cdaf5640a
+  FINDING C1 FROZEN-EDITED census/c.py differs between freeze c03afde840cb and 006919d2e84b
+CASE L-shallow-depth1
+  doc: shallow clone: freeze = boundary commit if add not visible
+  expect: documented: none (no shallow clause); observed freeze/findings differ
+  observed: rc=1 freeze=L 4 summary=['SUMMARY claims=1 findings=1']
+  FINDING C1 BASE-UNRESOLVED c4b5bdd365a76d034360ed7207b1ccf6ab993192
+CASE L-shallow-depth2
+  doc: shallow clone: freeze = boundary commit if add not visible
+  expect: documented: none (no shallow clause); observed freeze/findings differ
+  observed: rc=1 freeze=L counter edited and restamped summary=['SUMMARY claims=1 findings=1']
+  FINDING C1 BASE-UNRESOLVED c4b5bdd365a76d034360ed7207b1ccf6ab993192
+CASE L-shallow-depth3
+  doc: shallow clone: freeze = boundary commit if add not visible
+  expect: documented: none (no shallow clause); observed freeze/findings differ
+  observed: rc=1 freeze=L 2 summary=['SUMMARY claims=1 findings=3']
+  FINDING C1 BASE-UNRESOLVED c4b5bdd365a76d034360ed7207b1ccf6ab993192
+  FINDING C1 COUNTER-DIGEST census/c.py at freeze hashes 2c6d5af6b6ff0796e6871694e58e71be07858ed75007e10c6b097ab4ae277162, stated 38f3779fd36bb530bdd0ca27360ca100972f3a45ed1c0166cbbe863cdaf5640a
+  FINDING C1 FROZEN-EDITED census/c.py differs between freeze 5abdc15ed993 and 006919d2e84b
+CASE L-shallow-depth4
+  doc: shallow clone: freeze = boundary commit if add not visible
+  expect: documented: none (no shallow clause); observed freeze/findings differ
+  observed: rc=1 freeze=L freeze summary=['SUMMARY claims=1 findings=3']
+  FINDING C1 BASE-UNRESOLVED c4b5bdd365a76d034360ed7207b1ccf6ab993192
+  FINDING C1 COUNTER-DIGEST census/c.py at freeze hashes 2c6d5af6b6ff0796e6871694e58e71be07858ed75007e10c6b097ab4ae277162, stated 38f3779fd36bb530bdd0ca27360ca100972f3a45ed1c0166cbbe863cdaf5640a
+  FINDING C1 FROZEN-EDITED census/c.py differs between freeze c03afde840cb and 006919d2e84b
+CASE M1-counter-and-population-are-directories
+  doc: tree blob -> cat-file fails
+  expect: COUNTER-MISSING + POPULATION-MISSING
+  observed: rc=1 freeze=M freeze summary=['SUMMARY claims=1 findings=2']
+  FINDING C1 COUNTER-MISSING census/dir not present at freeze 5ee6723d9211
+  FINDING C1 POPULATION-MISSING census/popdir not present at freeze 5ee6723d9211
+CASE N1-symlink-honest-digest
+  doc: symlink blob = link text, not target content
+  expect: COUNTER-DIGEST (false positive: digest of real content)
+  observed: rc=1 freeze=N1 freeze honest digest of target content summary=['SUMMARY claims=1 findings=1']
+  FINDING C1 COUNTER-DIGEST census/link.py at freeze hashes 39985f5780fff5a8258746822e381e90f18fd1cc1608c49d7b740314c599d9a9, stated 2c6d5af6b6ff0796e6871694e58e71be07858ed75007e10c6b097ab4ae277162
+CASE N2-symlink-link-text-digest-target-edited
+  doc: tool never follows the symlink
+  expect: clean (executed counter changed, undetected)
+  observed: rc=0 freeze=N2 freeze digest of link text summary=['SUMMARY claims=1 findings=0']
+CASE O1-counter-is-gitlink
+  doc: cat-file on tree/commit entry fails
+  expect: COUNTER-MISSING
+  observed: rc=1 freeze=O freeze with gitlink Counter summary=['SUMMARY claims=1 findings=1']
+  FINDING C1 COUNTER-MISSING census/sub not present at freeze e51ccf94f23f
+CASE P1-dispatch-same-commit-as-prereg
+  doc: freeze itself counts (c == freeze)
+  expect: DISPATCH-BEFORE-FREEZE C0 first added at freeze
+  observed: rc=1 freeze=P freeze summary=['SUMMARY claims=1 findings=1']
+  FINDING C0 DISPATCH-BEFORE-FREEZE .ufo/waves/round-41/w1-dispatch.json first added at 76f4647f440e, not after freeze 76f4647f440e
+CASE Q1-dispatch-on-side-branch-merged
+  doc: documented test is strict ancestry; side commit is not
+  expect: clean (ancestry-only test)
+  observed: rc=0 freeze=Q freeze summary=['SUMMARY claims=1 findings=0']
+CASE R1-dispatch-before-freeze-linear
+  doc: positive control
+  expect: DISPATCH-BEFORE-FREEZE
+  observed: rc=1 freeze=R freeze summary=['SUMMARY claims=1 findings=1']
+  FINDING C0 DISPATCH-BEFORE-FREEZE .ufo/waves/round-41/w1-dispatch.json first added at 3c0f4fec9abd, not after freeze 30a1fffd9c4d
+CASE R2-dispatch-nonascii-name
+  doc: git quotes the path (core.quotePath); endswith fails
+  expect: clean (silent miss)
+  observed: rc=0 freeze=R2 freeze summary=['SUMMARY claims=1 findings=0']
+CASE S1-no-round-line
+  doc: dispatch check keyed on Round line; silently skipped
+  expect: clean (silent skip)
+  observed: rc=0 freeze=S freeze summary=['SUMMARY claims=1 findings=0']
+CASE S2-crlf-prereg
+  doc: ROUND regex needs $ before LF; CR breaks it
+  expect: clean (silent skip)
+  observed: rc=0 freeze=S2 freeze summary=['SUMMARY claims=1 findings=0']

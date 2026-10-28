@@ -110,7 +110,7 @@ CORRECTION I4 file=LOG.md filed=error-text-recorded derived=occurrences=0 rev=bf
 - **class:** attribution (a filed cause with no located source in committed bytes).
 - **evidence pointer:** `LOG.md:1909`; zero occurrences under `census/round-40/waves/` (item I4 above); `census/round-40/waves/w2-results.json`
   holds both seats' partial outputs without the text; no `R40w2reviewer01` or `R40w2reviewer04` report file exists in
-  `census/round-40/waves/w2/`; `.ufo/waves/round-40/w2-run.err` is empty and untracked. The only committed Codex error text in the lane
+  `census/round-40/waves/w2/`; the round-40 `w2-run.err` is empty and was never committed. The only committed Codex error text in the lane
   is a different message (`census/round-20/recovery-seat-outcomes.json`).
 - **captured-by:** none. `corpus/QUALITY.md:8` ("a quote its location") should have caught it; the landing gate's seat-carry check reads
   only `STATUS:` lines and `## Seat-reported failures` sections, and round 40 has neither, so it was vacuous for that round
@@ -174,3 +174,66 @@ CORRECTION I4 file=LOG.md filed=error-text-recorded derived=occurrences=0 rev=bf
 - **Routed forward (R41connector02):** M40-12 (the decoder mutant `backslashreplace` survives the r40 fixture), R39-D1/D2 (stale census
   receipt and mismatched receipt-header revision), the count-before-last-append pattern (r38-r40), receipts naming scratch paths, and
   in-place edits of append-only artifacts (r38, r39).
+
+## Wave-2 findings, landing deviation and errata (appended after the C1 landing at 31e4d3e; the CORRECTION lines above are untouched)
+
+Wave 2 (37 seats, `census/round-41/waves/w2/`) re-measured the four landed artifacts and attacked them. The reviewers (`R41w2reviewer01`-`03`, `08`)
+reproduced every receipt: C1 `items=3 ... corrected=3 ... sourced=1`, C2 `cases=21 pass=21 fail=0 ... real=ok retro=red`, C3 `killed=19 survived=0`,
+R1 `killed=11 survived=0`, and found the preregistration, counters, populations, controls and the pinned tool unchanged since the freeze commit.
+
+### E1 — landing deviation: the C2 tool was hardened after wave-2 attacks (counter, population, predicate and kill rule untouched)
+
+The preregistration (rule 3) says the L1 lands the candidate the frozen counter scores best; it fixes no rule for repairing the winner. At the
+first landing (`119c26fa3bbb85e215824de9538bd2eb34e9f874`, `R41executor07` bytes, sha256 `3c3e80ba...`) the frozen counter read 21/21
+(`census/round-41/records/c2-after.txt`). `R41w2critic01` (57 crafted preregistrations: 23 false greens, 3 crashes, 4 false findings),
+`R41w2executor01` (hidden-case audit, strict 79/83), `R41w2executor02` (CRLF `Round:` fail-open) and `R41w2sentinel01` (caller `GIT_DIR` changes a verdict,
+a FIFO `.mailmap` hangs `git log`) showed the tool was not operable on in-grammar input the 21 cases do not hold. The L1 then landed three hardening
+commits to `tools/souji-freeze-check.py` only (`383972ce`, `c98fa5f1`, `72e8a0b6`; changes: empty value of any key is `FIELD-EMPTY`; a missing `Round:` line is
+`FIELD-MISSING C0 Round`; CRLF/BOM `Round:` tolerated; paths may contain spaces; a NUL in a path no longer crashes; git path quoting off so non-ASCII dispatch
+file names are seen; a whitelisted git environment with no `GIT_DIR`, no mailmap, no replace refs). The frozen counter was re-run on the final bytes:
+`census/round-41/records/c2-after-hardened.txt` (`cases=21 pass=21 fail=0 control_clean=REJECTED control_findings=REJECTED real=ok retro=red`, tool sha256
+`8131847b...`, `retro` findings 18 -> 19 because the old-grammar r40 file has no `Round:` line). The hidden-case audit on the final bytes reads strict 80/83
+(`census/round-41/records/hidden-audit-hardened.txt`): the three remaining strict "fails" are the deliberate `FIELD-MISSING Round` choice the audit's
+expectation did not anticipate. This is reported as a deviation: both measurements stand side by side, and a closure that holds the first landing
+as the claim's bytes has the first receipt.
+
+### E2 — corrections to this lesson's own text (R41w2reviewer05, R41w2reviewer06; the reviewers' item tables are in their reports)
+
+- **Q98-Q102** cited in this lesson now exist: they were committed after the lesson (`832b7bbe`), so the text above cited ids that were absent at `31e4d3e`.
+  Q102 (hidden-case audit) is new this round and has no earlier mention.
+- **M41-1** sweep count: `grep -n -iE 'freez|frozen|pre-?data|population|preregist' corpus/QUALITY.md` prints **25** lines, not 27 (at `bffcc0f` and at `1d41c13`).
+  "The tool is absent at the freeze commit": `git cat-file -e e2a7431:tools/souji-freeze-check.py` fails; the receipt `controls/c2-control.txt` records the absence at the
+  instruments commit `6682b98`, not at `e2a7431`.
+- **M41-2** "the only committed Codex error text in the lane is a different message" is false as written: `git grep -n -E 'Codex error|Invalid prompt' bffcc0f` also returns
+  `.ufo/waves/round-21/provider-error-excerpts.json`, `corpus/lessons/round-22.md:187` and copies under `census/round-26/`. The claim that holds: the string `Invalid prompt`
+  occurs in committed lane bytes only at `LOG.md:1909`. The fleet report cited as `.ufo/reports/round-40/souji.md:79` is the **fleet-root** path
+  `/home/vgpnk/Projects/shokunin/.ufo/reports/round-40/souji.md` (tracked in the fleet repo, absent from the lane).
+- **M41-3** `R41critic01` built eight candidates of which **seven** (A1-A6, A8) scored green; A7 is the red control. "A registry row that says NOT OPENED" is A1 only
+  (A8 is a row inside a code fence). `R41critic02` K5 is the junk-check gap (N3), not a quote-less or rewritten row (K2, K4).
+- **N2** "the registry census exits 0" means `scripts/sources-census.sh validate --root /home/vgpnk/Projects/shokunin souji` (exit 0, `census/round-41/records/census-final.txt`);
+  `tools/souji-registry-agreement.py` exits 1 at the tip for the pre-existing `K1 cited-no-row S146` (N11).
+- **I3** the SCORECARD row is `SCORECARD.md:791` ("C1 evidence-bound closures + strict-descendant register"); its before arm is `c1-before.txt` and its after arm is `c1-after-d.txt`
+  (also `register_cells=3` over `census/round-40/cells.tsv`); `c1-after-h.txt` appears at `SCORECARD.md:801` and `:811`. The derived `before=6,after=3` stands. The counter
+  hard-codes `c1-after-h.txt` (c1-counter.py:81).
+- **Gate, S009**: the "pending recheck for v2.56.0" note sits in S009's used-by file `corpus/knowledge/git-auto-maintenance-prunes-worktrees.md:27`, not in the S009 row.
+- **I1** "wrong by any reading" overstates: two readings were tried and neither gives 9. Method fragility (R41w2reviewer05 N-a): the literal `v2\.56\.0/worktree\.c`
+  matches `S258` only if written without `builtin/`, so the count at the tip is 0 although S258 is a v2.56.0 source row; the derived 0 is a statement about `bffcc0f`.
+  The whole-file diff of the two worktree.c tags has 37 hunks; only the :171-266 region differs solely at :229 (R41w2reviewer04 F4).
+
+### Further named limits (wave 2)
+
+- **N13 C2 tool** (landed bytes, after hardening): duplicate keys read first-wins; a malformed `## C` heading is dropped silently; dispatch files named other than `*-dispatch.json` or
+  `*.ready` (the lane tracks `*-dispatch-attempts.txt`) are not checked; a symlink Counter reads the link text; a non-UTF-8 path byte is fail-closed
+  (R41w2critic01 D4/D7/D9-D11, R41w2critic02). Caller env and a FIFO `.mailmap` were closed by E1.
+- **N14 C3 is class-level coverage**: of 29 behavioural (non-label) mutants of the pinned tool, the fixture kills 21 and 8 survive; 17 of the non-equivalent mutants in
+  `R41w2mutationtester03` also escape it. P16 does not prove S16 by condition (R41w2critic03 findings 1, 3, 4). The claim's predicate (label rewrite turns exactly the mapped probes red) holds;
+  a condition-level reading does not.
+- **N15 R1 is not exhaustive**: of 24 further mutants, 15 survive all three drift fixtures (R41w2mutationtester04); a last-position disagreeing TOTAL is killed by r40, r36 and r38-record but never by R1's own cases
+  (R41w2critic05).
+- **N16 C1 counter**: 28 of 60 single-point mutants of the counter are invisible to all three frozen inputs (R41w2mutationtester05); 15 of 46 edits to the landed lesson/registry leave the target
+  met (R41w2mutationtester06): the counter catches every edit to a field it reads and none to prose.
+- **N17 fixtures and harness**: the C3 fixture leaves ~26 entries under `--work` after SIGTERM/SIGKILL (R41w2sentinel02, R41w2critic04); `score-candidate.sh` stays unconfined (N9).
+- **N18 landing gate**: `python3 -B tools/souji-landing-gate.py --round 41` raised `LG-DANGLING-PTR` for the lesson's pointer to an untracked round-40 file and for QUALITY pointers into
+  the ignored `.ufo/waves/round-41/`; the lesson was reworded and the QUALITY pointers repointed to `census/round-41/waves/` (captured at the same commit).
+- **N19 axis-harm audit** (R41w2executor03, R41w2executor04): 59 of 61 gate rows identical at base and tip (one flake, `r18-leak-count`); the six r36-r40 drift fixtures unchanged; the only
+  harm-shaped difference was the dangling pointer in N18.

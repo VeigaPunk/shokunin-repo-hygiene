@@ -1,0 +1,55 @@
+== environment ==
+uid: 1000  python: 3.14.8  git: git version 2.56.0
+pinned tool sha256: b2a603cf42472b458712f2997fe6635c92147b75f5352c005cb7916ab3e34dc6
+pinned tool sha256 matches preregistration: True
+df -T: Filesystem       Type  1K-blocks      Used Available Use% Mounted on | /dev/nvme1n1p2   xfs   842131708 304809176 537322532  37% /fast | /dev/nvme1n1p1   xfs   134117380  27437776 106679604  21% /tmp | /dev/mapper/root btrfs 974646272 355506216 582475288  38% /home
+stat -f: scratch=xfs tmp=xfs lane=btrfs dev_null=tmpfs
+
+== Exp A: raw errno probes on xfs ==
+A0 open(missing, O_RDONLY|O_NONBLOCK)      -> errno=2(ENOENT) No such file or directory
+A1 open(chmod000, O_RDONLY|O_NONBLOCK)     -> errno=13(EACCES) Permission denied
+A2 open(self-symlink, O_RDONLY|O_NONBLOCK) -> errno=40(ELOOP) Too many levels of symbolic links
+A3 open(fifo, O_WRONLY|O_CREAT|O_NOFOLLOW|O_NONBLOCK) -> errno=6(ENXIO) No such device or address
+A4 open(dir, O_RDONLY|O_NONBLOCK)          -> OPENS; S_ISREG=False
+A5 open(dir, O_WRONLY|O_CREAT|O_NOFOLLOW|O_NONBLOCK)  -> errno=21(EISDIR) Is a directory
+A6 open(/dev/null, O_WRONLY|...)           -> OPENS; S_ISREG=False S_ISCHR=True
+A7 st_nlink of hardlinked pair             -> 2
+A8 open(locked/out.json, O_WRONLY|O_CREAT|O_NOFOLLOW|O_NONBLOCK) -> errno=13(EACCES) Permission denied
+A9 realpath(root/../sibling)=/fast/scratch/hyaku/souji-r41/R41scout01/fx/raw/sibling inside=False
+
+== Exp B: pinned tool, one run per probe id (21) + pristine ==
+pristine: git -C root/alpha rev-parse --show-toplevel -> /fast/scratch/hyaku/souji-r41/R41scout01/fx/pristine/root/alpha
+pristine rc=0 refusal=''
+pristine SUMMARY record=/fast/scratch/hyaku/souji-r41/R41scout01/fx/pristine/rec.txt record_repos=1 record_regs=1 record_prunable=0 live_repos=1 live_regs=1 live_prunable=0 drift_rows=0 unreachable=0
+pristine json written: True
+S01  P01   rc=2 MATCH -> REFUSAL RECORD-MALFORMED: /fast/scratch/hyaku/souji-r41/R41scout01/fx/S01/absent.rec is not a regular file substr('is not a regular file')=True
+S02a P02a  rc=2 MATCH -> REFUSAL RECORD-MISSING: [Errno 13] Permission denied: '/fast/scratch/hyaku/souji-r41/R41scout01/fx/S02a/rec.txt' substr('Errno 13')=True
+S02b P02b  rc=2 MATCH -> REFUSAL RECORD-MISSING: [Errno 40] Too many levels of symbolic links: '/fast/scratch/hyaku/souji-r41/R41scout01/fx/S02b/rec.txt' substr('Errno 40')=True
+S03  P03   rc=2 MATCH -> REFUSAL RECORD-MALFORMED: /fast/scratch/hyaku/souji-r41/R41scout01/fx/S03/recdir is not a regular file substr('is not a regular file')=True
+S04  P04   rc=2 MATCH -> REFUSAL RECORD-MALFORMED: line 2 duplicates alpha substr('duplicates')=True
+S05  P05   rc=2 MATCH -> REFUSAL RECORD-MALFORMED: line 3 does not match the census schema substr('schema')=True
+S06  P06   rc=2 MATCH -> REFUSAL RECORD-EMPTY: no REPO rows in /fast/scratch/hyaku/souji-r41/R41scout01/fx/S06/rec.txt substr('no REPO rows')=True
+S07  P07   rc=2 MATCH -> REFUSAL RECORD-MALFORMED: TOTAL repos=2 but 1 REPO rows substr('TOTAL repos=2 but 1 REPO rows')=True
+S08  P08   rc=2 MATCH -> REFUSAL RECORD-MALFORMED: TOTAL regs=99 but REPO rows sum to 1 substr('TOTAL regs=99')=True
+S09  P09   rc=2 MATCH -> REFUSAL RECORD-MALFORMED: TOTAL prunable=7 but REPO rows sum to 0 substr('TOTAL prunable=7')=True
+S10a P10a  rc=2 MATCH -> REFUSAL JSON-NOT-REGULAR: /fast/scratch/hyaku/souji-r41/R41scout01/fx/S10a/outside/pipe.fifo is not a regular file substr('is not a regular file')=True
+      stdout: SUMMARY record=/fast/scratch/hyaku/souji-r41/R41scout01/fx/S10a/rec.txt record_repos=1 record_regs=1 record_prunable=0 live_repos=0 live_regs=0 live_prunable=0 drift_rows=1 unreachable=0
+S10b P10b  rc=2 MATCH -> REFUSAL JSON-NOT-REGULAR: /fast/scratch/hyaku/souji-r41/R41scout01/fx/S10b/outside/adir is not a regular file substr('is not a regular file')=True
+      stdout: SUMMARY record=/fast/scratch/hyaku/souji-r41/R41scout01/fx/S10b/rec.txt record_repos=1 record_regs=1 record_prunable=0 live_repos=0 live_regs=0 live_prunable=0 drift_rows=1 unreachable=0
+S11  P11   rc=2 MATCH -> REFUSAL JSON-NOT-REGULAR: /dev/null is not a regular file substr('is not a regular file')=True
+      stdout: SUMMARY record=/fast/scratch/hyaku/souji-r41/R41scout01/fx/S11/rec.txt record_repos=1 record_regs=1 record_prunable=0 live_repos=0 live_regs=0 live_prunable=0 drift_rows=1 unreachable=0
+S12  P12   rc=2 MATCH -> REFUSAL USAGE: --root /fast/scratch/hyaku/souji-r41/R41scout01/fx/S12/outside/notadir.txt is not a directory substr('is not a directory')=True
+S13  P13   rc=2 MATCH -> REFUSAL RECORD-OUTSIDE-ROOT: ../sibling resolves outside /fast/scratch/hyaku/souji-r41/R41scout01/fx/S13/root substr('resolves outside')=True
+S14 pre-check: git rev-parse --absolute-git-dir rc=0 -> /fast/scratch/hyaku/souji-r41/R41scout01/fx/S14/outside/linked.git
+S14  P14   rc=2 MATCH -> REFUSAL RECORD-OUTSIDE-ROOT: linked gitdir resolves outside /fast/scratch/hyaku/souji-r41/R41scout01/fx/S14/root substr('gitdir resolves outside')=True
+S15  P15   rc=2 MATCH -> REFUSAL JSON-IS-RECORD: /fast/scratch/hyaku/souji-r41/R41scout01/fx/S15/rec.txt is the record file substr('is the record file')=True
+S16  P16   rc=2 MATCH -> REFUSAL JSON-INSIDE-MEASURED-TREE: /fast/scratch/hyaku/souji-r41/R41scout01/fx/S16/root/alpha/inside.json is under /fast/scratch/hyaku/souji-r41/R41scout01/fx/S16/root substr('is under')=True
+S17  P17   rc=2 MATCH -> REFUSAL JSON-HARDLINKED: /fast/scratch/hyaku/souji-r41/R41scout01/fx/S17/outside/shared.txt has 2 links substr('has 2 links')=True
+      stdout: SUMMARY record=/fast/scratch/hyaku/souji-r41/R41scout01/fx/S17/rec.txt record_repos=1 record_regs=1 record_prunable=0 live_repos=0 live_regs=0 live_prunable=0 drift_rows=1 unreachable=0
+S17 post-check: target content preserved='KEEP'
+S18  P18   rc=2 MATCH -> REFUSAL JSON-UNWRITABLE: [Errno 13] Permission denied: 'out.json' substr('Errno 13')=True
+      stdout: SUMMARY record=/fast/scratch/hyaku/souji-r41/R41scout01/fx/S18/rec.txt record_repos=1 record_regs=1 record_prunable=0 live_repos=0 live_regs=0 live_prunable=0 drift_rows=1 unreachable=0
+S19  P19   rc=2 MATCH -> REFUSAL USAGE: --timeout must be >= 1 substr('--timeout must be >= 1')=True
+
+== verdict: all 21 probe classes match the table: True ==
+probes run: 21 of 21 (P01..P19 incl. P02a/P02b, P10a/P10b) + 1 pristine; filesystem: xfs (xfs)

@@ -1,0 +1,49 @@
+--- /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-freeze-check.py	2026-10-28 20:10:54.336301055 -0300
++++ /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-41/w2/R41w2critic01/candidate-minimal-fix.py	2026-10-28 20:21:10.077198612 -0300
+@@ -25,8 +25,8 @@
+ FULL40 = re.compile(r"^[0-9a-f]{40}$")
+ HEADER = re.compile(r"^## C(\d+)(?![0-9A-Za-z_])")
+ KEYLINE = re.compile(r"^(Base|Counter|Population|Control|Target|Kill):[ \t]*(.*?)[ \t]*$")
+-PATH_SHA = re.compile(r"^(\S+)[ \t]+sha256=([0-9a-f]{64})$")
+-ROUND = re.compile(r"^Round:[ \t]*(\d+)[ \t]*$", re.M)
++PATH_SHA = re.compile(r"^(.+?)[ \t]+sha256=([0-9a-f]{64})$")
++ROUND = re.compile(r"^\ufeff?Round:[ \t]*(\d+)[ \t]*\r?$", re.M)
+ EXIT_LINE = re.compile(r"^EXIT=(\d+)$")
+ KEYS = ("Base", "Counter", "Population", "Control", "Target", "Kill")
+ 
+@@ -54,6 +54,8 @@
+         return out if p.returncode == 0 and FULL40.match(out) else None
+ 
+     def blob(self, rev, path):
++        if "\x00" in path:
++            return None
+         p = self.run("cat-file", "blob", "%s:%s" % (rev, path))
+         return p.stdout if p.returncode == 0 else None
+ 
+@@ -88,7 +90,7 @@
+ def dispatch_findings(repo, rev, freeze, text):
+     m = ROUND.search(text)
+     if not m:
+-        return []
++        return [("C0", "ROUND-UNREADABLE", "no 'Round: <N>' line at column 0; dispatch check not evaluated")]
+     tree = ".ufo/waves/round-%s/" % m.group(1)
+     p = repo.run("log", "--diff-filter=A", "--no-renames", "--full-history", "--name-only",
+                  "--format=%x01%H", rev, "--", tree)
+@@ -142,7 +144,7 @@
+         for key in KEYS:
+             if key not in f:
+                 found.append((label, "FIELD-MISSING", key))
+-        for key in ("Target", "Kill"):
++        for key in KEYS:
+             if key in f and not f[key]:
+                 found.append((label, "FIELD-EMPTY", key))
+         if f.get("Base"):
+@@ -165,7 +167,7 @@
+                     found.append((label, "POPULATION-EMPTY", "%s has %d non-blank line(s)"
+                                   % (got[1], len(lines))))
+         if f.get("Control"):
+-            path = f["Control"].split()[0]
++            path = f["Control"]
+             blob = repo.blob(freeze, path)
+             if blob is None:
+                 found.append((label, "CONTROL-MISSING", "%s not present at freeze %s" % (path, freeze[:12])))

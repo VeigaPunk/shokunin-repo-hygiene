@@ -1,0 +1,186 @@
+# Round 40 — lesson (souji)
+
+Round: souji round 40, hyaku run 11, attempt 3. Lane: `/home/vgpnk/Projects/shokunin/souji-shokunin`.
+Base revision (frozen in `census/round-40/preregistration.txt`): `0242085909fb6a4ee041c5443d76316ac6d59d4b`.
+Non-author review read first: `corpus/lessons/round-39-verifier-spotcheck.md`.
+
+## Gate — sources opened this round
+
+Every row below was opened on **2026-10-28** by the L1 (the round's own access date; the campaign
+package's dates prove nothing about this lane). The fetched bytes are pinned under
+`census/round-40/sources/` with their sha256 in `census/round-40/sources/SHA256SUMS`.
+
+| id | url | access date | located quote (<=25 words) | location | admitted for |
+|---|---|---|---|---|---|
+| S251 | https://git-scm.com/docs/git-merge-base | 2026-10-28 | "Check if the first <commit> is an ancestor of the second <commit>, and exit with status 0 if true, or with status 1 if not" | installed man page git 2.56.0-1, `MANWIDTH=100 man git-merge-base` lines 41-43; snapshot `census/round-40/sources/git-merge-base.1.txt` (sha256 `45f91e37e113df8651fb125c93e293bb48d8cc46140e4ac95c553547c9ddb043`) | C1's strict-descendant register arm and `corpus/knowledge/git-strict-descendant-relation-r40.md` |
+| S252 | https://docs.python.org/3/library/inspect.html | 2026-10-28 | "Any whitespace that can be uniformly removed from the second line onwards is removed" | `inspect.cleandoc`, installed interpreter Python 3.14.8; snapshot `census/round-40/sources/inspect-cleandoc.txt` (sha256 `aab0711daa22215875bf559d3ce8d641062646d9946ad232dee70484e7b9a093`) and the page `census/round-40/sources/inspect.html` (sha256 `9e740c60462d2648ecd5b9ae1cf5ee96f2fed5e312fb56cae639385c5415a0d6`) | C2's joined class reading and `corpus/knowledge/docstring-class-continuation-lines-r40.md` |
+| S253 | https://docs.python.org/3/library/codecs.html | 2026-10-28 | "Replace with a replacement marker. On decoding, use U+FFFD, the official REPLACEMENT CHARACTER" | § Error Handlers, the `replace` entry; snapshot `census/round-40/sources/codecs.html` (sha256 `023ec448648e7089efe4b4c25a167e491fa7f93d1cbf116662c6596e71158a4c`) | C3's invalid-UTF-8 record branch and `corpus/knowledge/drift-record-invalid-utf8-r40.md` |
+| S254 | https://raw.githubusercontent.com/GNOME/gvfs/1.62.0/daemon/trashlib/trashitem.c | 2026-10-28 | "trashinfo = g_strdup_printf (\"%s/info/%s.trashinfo\", trashpath, basename);" | `daemon/trashlib/trashitem.c` at tag 1.62.0, line 158 (with lines 173, 180, 182, 193 for the group, the keys and the relative-path branch); snapshot `census/round-40/sources/gvfs-trashitem-1.62.0.c` (sha256 `3a8f8cbb057ac3bb8d4ba4901d43f8fd1abcd89b9ff095ef927999154af3d25b`) | the assimilated F4 entry `corpus/knowledge/origin-record-format-gvfs-r40.md` |
+
+PEP 257 (`https://peps.python.org/pep-0257/`, § Multi-line docstrings) was also fetched and read this
+round; it is screened and NOT cited: the `cleandoc` contract (S252) states the continuation rule
+more precisely, and one row per source keeps the registry honest. The gate records it as a screened
+non-row.
+
+### Gate corrections from wave 2 (source re-open, 2026-10-28)
+
+The independent source audit found that the original short quotes for S252 and S253 were not verbatim at the cited web pages, and that the S254-derived entry overclaimed mandatory fields. The original rows and gate decisions remain as filed; the corrections are new rows S255-S257.
+
+| id | url | access date | exact located quote (<=25 words) | location | correction |
+|---|---|---|---|---|---|
+| S255 | https://docs.python.org/3/library/inspect.html | 2026-10-28 | “Any leading whitespace that can be uniformly removed from the second line onwards is removed.” | `inspect.cleandoc`, `census/round-40/sources/inspect.html:1210-1211` (snapshot sha256 `9e740c60462d2648ecd5b9ae1cf5ee96f2fed5e312fb56cae639385c5415a0d6`) | Supersedes S252 quote attribution; this source documents whitespace normalization, not the lane's entry-join rule. |
+| S256 | https://docs.python.org/3/library/codecs.html | 2026-10-28 | “On decoding, use � (U+FFFD, the official REPLACEMENT CHARACTER).” | `codecs` § Error Handlers, `replace` row, `census/round-40/sources/codecs.html:595-596` (snapshot sha256 `023ec448648e7089efe4b4c25a167e491fa7f93d1cbf116662c6596e71158a4c`) | Supersedes S253's spliced quote; the decoding behavior remains supported. |
+| S257 | https://raw.githubusercontent.com/GNOME/gvfs/1.62.0/daemon/trashlib/trashitem.c | 2026-10-28 | “if (orig == NULL)” | GVFS tag 1.62.0, `census/round-40/sources/gvfs-trashitem-1.62.0.c:176` (snapshot sha256 `3a8f8cbb057ac3bb8d4ba4901d43f8fd1abcd89b9ff095ef927999154af3d25b`) | Supersedes S254's mandatory-field inference: the read path accepts a missing Path value and sets the output to NULL. |
+
+### Assimilation gate (`merge/souji/`)
+
+- **ADMIT — staged entry `origin-record-format-gvfs-r26.md` (staged row id S146), re-pointed to this
+  lane's S254.** The GVFS file was fetched and the quoted lines (158, 173, 180, 182, 193) read at
+  tag 1.62.0; the entry was re-grounded by DOCUMENT, not by arithmetic: the lane's ids for the
+  normative specification (S022) and for POSIX exclusive creation (S212) are named explicitly.
+  Ground: F4, a second reference implementation that only READS the per-item origin record — new
+  ground the lane did not hold.
+- **REJECT — staged entry `near-duplicate-operating-point-r28.md` (staged row id S172, Manku et al.,
+  WWW '07).** A published near-duplicate OPERATING POINT is document-similarity ground; the lane's
+  F3 scope is byte-identical duplicates only, and the r24/r25 rounds refused the same family for the
+  same reason. Flip: a lane ruling that adopts a similarity threshold for the `duplicate` receipt
+  class would make this admissible.
+- **REJECT — staged entry `fleet-prune-safety-r28.md` (staged row id S160, git v2.56.0
+  `worktree.c`).** The lane already holds git's prune gate (`worktree.c` appears in 2 rows of
+  `corpus/SOURCES.md`); adopting it again would be a duplicate, not new ground. Flip: none.
+- **Id collision census (the reason the adoption is one entry and not a bulk append).** The §10
+  command and its receipts are stored under `census/round-40/assimilation/`:
+  `reg-ids` 177 ids, `staged-ids` 134 ids, `collisions` **58** ids (S109-S242), and every collision
+  is a DIFFERENT document: the lane's S109 is its round-2 `RENAME_NOREPLACE` probe while the
+  package's S109 is `git-fetch(1)`; the lane's S110 is `rename(2)` while the package's S110 is git's
+  `builtin/fetch.c`. This is the mass id-drift case §10 sends to an L0 question
+  (`souji | round-40`, filed in `.ufo/l0-questions.md`); only the one entry whose document the lane
+  does not hold was adopted, with a fresh id.
+
+## Mistakes
+
+### M40-1 — the r39 C3 scoring contract could score a DETECTED mutant as SURVIVED
+
+- **class:** instrument / scoring-contract defect (a kill verdict that is not earned).
+- **evidence pointer:** `census/round-40/waves/w1/R40reviewer18.md` (wave-1 seat R40reviewer18,
+  finding F1) — the committed r39 counter scores a kill at `census/round-39/c3-counter.py`
+  (`crash = "Traceback (most recent call last)" in (proc.stdout + proc.stderr)`), while the committed
+  r39 fixture ECHOES the tool's combined stdout+stderr into its OWN stdout
+  (`tests/fixtures/r39-drift-record-rules.py:76`, `:79-80`, `:103-104`). A tool traceback is therefore
+  laundered through the fixture's stdout and trips the crash probe, so a mutant the fixture DID
+  detect is scored `killed=no`. The seat demonstrated the flip with one character of tool defect
+  (`totol` for `total`): `killed=no` with the echo, `killed=yes` with both echo sites neutralised,
+  same fixture bytes, same `fail=4`, same exit 1.
+- **captured-by:** the r38 A5 contract (`census/round-38/preregistration.txt:189-195`): "a kill now
+  requires the fixture's own `SUMMARY … fail=N` with `N > 0` and no `Traceback` on either stream".
+  The rule was written for the FIXTURE's crash, and the r39 implementation applied it to the union of
+  both streams — the criterion was right, the implementation read the wrong stream.
+- **fix:** the r40 counter (`census/round-40/c3-counter.py`, `score()`) reads the crash marker from
+  the fixture's STDERR ONLY — a Python traceback is written there and never to the fixture's stdout —
+  and prints the failing case names so a kill is attributable to the branch case that covers it.
+  **Shown able to fail:** the r40 battery's four mutants are scored `killed=yes` under the repaired
+  contract while the same mutants are `killed=no` under the r39 contract (the seat's K1/K2 pair is
+  reproduced by the r40 counter's own output, `census/round-40/records/c3-after.txt`).
+
+### M40-2 — three calibration defects the round-39 spot-check routed to this lane
+
+- **class:** calibration (self-assessment cells that do not match observed repo state).
+- **evidence pointer:** `corpus/lessons/round-39-verifier-spotcheck.md` § "Routed defects the lane
+  must fix next round" — D1 (the r39 "after" census receipt reads `rows=173` while the filed
+  registry holds 174 rows, so the receipt cannot reproduce the filed number), D2 (the report says all
+  three claims were re-read at the tip `0242085` while the receipt's own header names `5441045`),
+  D3 (`commit_distinct=6` reads as six distinct commits when it is a ROW count over ONE commit
+  hash).
+- **captured-by:** the r37/r38 citation-reconciler contract (`tools/souji-citation-reconcile.py`,
+  the `commit` arm and the receipt arm) — it binds a self-assessment cell to a receipt AND to a
+  revision, which is exactly what D1 and D2 lack; D3 is a naming defect the same contract's register
+  shape can carry (one row per cell, each naming its own expected token).
+- **fix:** the r40 C1 counter (`census/round-40/c1-counter.py`) requires each anchored closure line
+  to carry a resolvable, revision-bound evidence pointer and prints the register's row count and
+  distinct-hash count as SEPARATE fields (`commit_rows=` / `commit_hashes=`); the r40 round re-measures
+  the census after the final registry append and names the revision it measured. The three defects
+  are the round's C1 items, and their closure lines carry their evidence pointers.
+
+
+### M40-3 — the frozen C2 predicate did not freeze its pair set or the join grammar
+
+- **class:** calibration / operability measurement-input defect.
+- **evidence pointer:** `census/round-40/waves/w1/R40sentinel23.md` F1-F4, `R40sentinel11.md` (probe-name/oracle control), `R40executor14.md` (the chmod-0 probe changes class under a privileged runner), and `census/round-40/waves/w1/R40mutationtester08.md`. The r39 one-line analyzer already sees `EACCES` on the first `RECORD-MISSING` line at the frozen base; the preregistration did not freeze the synthetic docstring bytes, complete class/trigger pair list, entry-start/join rule, or a non-root observation precondition. The r40 L4 list was authored after the wave had scored.
+- **captured-by:** the run's own pre-data-freeze rule (§9: “A rule changed after any seat has scored is not the claim's rule”) and the round contract's requirement that the frozen predicate, counter condition, and receipt label match. The r40 prompt required a “frozen list” but no list was in `preregistration.txt`.
+- **fix:** none within this frozen round; do not rewrite the preregistration after scoring. The claim's counter and fixture measure one chosen reading (`census/round-40/records/c2-after-d.txt`), but the frozen claim remains **unprovable** because the observation set and join grammar were not declared before data. Future C2 claims must commit the exact list, probe bytes, entry-boundary grammar, and privilege/environment conditions in the preregistration before dispatch.
+
+### M40-4 — the frozen C3 base-fixture identity is ambiguous and the pristine TOTAL contract disagrees with the tool
+
+- **class:** calibration / coverage claim-definition and baseline identity defect.
+- **evidence pointer:** `census/round-40/waves/w1/R40connector09.md` F1-F3, `R40connector21.md` F1-F2, `R40connector33.md` F1-F3, `R40connector45.md`, and `census/round-40/waves/w1/R40reviewer54.md`. “r39 base fixture” can mean the r39 battery's base input (`r38-drift-record.py`) or the r39 candidate fixture (`r39-drift-record-rules.py`), which already kills M11-M14. The r40 counter chose the latter; the frozen wording does not name that file. Separately, `tools/souji-worktree-drift.py:162-178` overwrites each TOTAL row, so a mismatching TOTAL followed by a matching TOTAL is accepted although the docstring at `:47-48` says a TOTAL row that disagrees is malformed.
+- **captured-by:** the frozen-claim sizing rule (§9: one concrete after-state and one re-derivable counter), plus the fixture-contract rule Q85: each named branch needs a case whose assertion is load-bearing and a base fixture whose identity is pinned.
+- **fix:** none to the frozen claim after data. The measured battery (`census/round-40/records/c3-after-d.txt`) proves its four chosen mutants against the chosen r39 fixture, but does not resolve the alternate baseline reading, retain the four prior mutants as regression controls, or test first-disagreeing/last-agreeing TOTAL order. Report C3 as **unprovable**, not as an admitted coverage move. Future preregistration must name the exact base fixture and include both TOTAL orderings; the tool-contract discrepancy is routed for a separately frozen repair.
+
+### M40-5 — the calibration item population was not enumerated in the preregistration
+
+- **class:** calibration / claim-population binding defect.
+- **evidence pointer:** `census/round-40/preregistration.txt` C1 paragraph names an “each anchored item line” condition but no population or item-table digest; the prior plan in `SCORECARD.md` `Planned (appended at round 39)` refers to “the C1 items,” the round-39 counter's 16-row `census/round-39/c1-items.tsv`. This round measured three rows (D1-D3) in `census/round-40/c1-items.tsv`; `census/round-40/records/c1-after-e.txt` therefore proves those three rows only.
+- **captured-by:** §9 claim-sizing rule: every after-state is one concrete value re-derivable from committed bytes and the frozen target/predicate must not be narrowed after any seat has scored.
+- **fix:** none to the frozen claim in round 40. Report the measured three-row result as bounded work and C1 as **unprovable against the prior 16-item plan**; a future calibration claim must commit its complete item inventory/digest in the preregistration before dispatch and carry all routed rows or explicitly freeze a bounded subset.
+
+### M40-6 — the three-row C1 measurement is coupled to later C2/C3 evidence
+
+- **class:** claim-separability / evidence-provenance defect.
+- **evidence pointer:** wave-2 `census/round-40/waves/w2/R40w2critic02.md` §3d-3e. The three committed C1 item rows close only because D1/D2 cite the receipts commit `6ded1248` (which adds the C2/C3 receipts) and D3 cites `8a5fbdb` (which changes both the C2 and C3 counters). On a revision containing only the C1 counter, fixture and item set, D2/D3 cannot close. The C1 *counter code* is separable; the round's selected item population and evidence dependencies are not.
+- **captured-by:** AXES.md claim rule: each claim must be verifiable without the others having landed; prompt §9 names causal separability as an admission requirement.
+- **fix:** none to the frozen item set after the wave scored. Report C1's measurement as three rows closed at the full round tip but the frozen causal-separability criterion as **unprovable**; future item evidence must be self-contained within that claim's files/receipts, and the frozen item list must state its complete population.
+
+### M40-7 — two source quotes were not verbatim at the cited pages
+
+- **class:** corpus source-provenance / quote-location defect.
+- **evidence pointer:** wave-2 `R40w2critic09.md` §§D-E. S252's quoted “Any whitespace …” is the installed interpreter's `inspect.cleandoc.__doc__`, not the cited docs page, which says “Any leading whitespace …” (`inspect.html:1210-1211`). S253 spliced the codec row's encoding and decoding sentences and omitted punctuation; the exact decoding clause appears at `codecs.html:595-596`.
+- **captured-by:** CORPUS.md SOURCES rule 1 (≤25-word located quote) and the round's §2b requirement that the Gate records the URL/date/location quote for each new row.
+- **fix:** appended corrective rows S255/S256 with exact quotes and correction knowledge entries; the original S252/S253 rows remain as filed and are superseded by document, not rewritten. Census count consequently advanced after the initial D1 measurement; the earlier 178-row receipt is not the final registry count.
+
+### M40-8 — the C3 crash-probe repair was overstated
+
+- **class:** mistake-correction / measurement claim overreach.
+- **evidence pointer:** wave-2 `R40w2critic11.md` and `R40w2critic06.md`; compare with M40-1 above. M40-1's underlying r39 false-survivor mechanism is reproduced for the seat's TOTOL tool-crash mutant, but the claim that the same M15-M18 mutants all read `killed=no` under the r39 contract was not measured and is false; the r39 contract kills those clean-refusal mutants. The stderr-only r40 probe also does not prove “no fixture crash” generally: stdout-only traceback or a post-summary non-traceback crash can still be scored as a kill, and the M15-M18 receipt does not compare both counters on the same mutant.
+- **captured-by:** honest-evidence rule; M40-1's first receipt was a candidate instrument output, not the side-by-side baseline comparison its prose claimed.
+- **fix:** append this correction; retain M40-1's narrow observed mechanism only. Do not claim the r40 scoring repair is universally crash-safe or that M15-M18 distinguish the two counter versions. A future mutation claim must run each frozen mutant under both scoring functions and bind the fixture's complete case/status contract.
+
+
+### M40-11 — revision/path presence alone did not bind an evidence value
+
+- **class:** calibration counter false-positive.
+- **evidence pointer:** wave-2 `R40w2critic03.md` §3.2 and `R40w2simplifier04.md` A6: the initial C1 counter accepted a line claiming `rows=999` when the pointer named an existing ancestor/path whose receipt said `rows=178`; the first fixture also passed a token-only line if its revision token was merely mentioned. The evidence was syntactically resolvable but did not carry the claimed `must` values.
+- **captured-by:** the frozen C1 predicate's evidence-pointer requirement plus the existing SCORECARD citation rule (a value is carried by a receipt, not by a nearby hash). The first counter checked only the revision token and path spelling on the anchored line.
+- **fix:** the final C1 counter reads the evidence blob at the named revision and requires every `must` token in the evidence bytes and no `mustnot` token; it also requires a non-empty forged set. `tests/fixtures/r40-c1-evidence.py` adds wrong-value and empty-forgery controls; `census/round-40/records/c1-after-g.txt` -> `SUMMARY cases=11 pass=11 fail=0`. This hardening landed after wave-2 data, so it is not a retroactive pass for the frozen C1 claim.
+### M40-9 — the assimilated GVFS entry overstated novelty and required fields
+
+- **class:** source-scope / assimilation overclaim.
+- **evidence pointer:** wave-2 `R40w2critic12.md` A3-A7. S254's five source lines are verbatim, but the lane had already held the FreeDesktop spec and F4 read-side fields; the new view is a corroborative implementation, not an uncovered F4 ground. The reader returns NULL for a missing `Path` and does not enforce mandatory `Path`/`DeletionDate`; the initial entry's “must carry” wording is too strong. The id census has 58 overlapping ids but 3 overlaps (S152, S210, S211) are the same document; S146 is free in the lane registry, not itself a colliding id.
+- **captured-by:** PROVINCE.md per-entry scope gate and the §10 per-document collision/re-point rule.
+- **fix:** appended S257 and `origin-record-format-gvfs-read-boundary-r40.md` to narrow the reader's behavior; the original S254 knowledge entry remains as history and is corrected by that entry. Correct the L0 collision description in an append-only follow-up; no package file is edited.
+
+### M40-10 — the C1 census item was measured before the final source corrections
+
+- **class:** calibration / stale after-value.
+- **evidence pointer:** `census/round-40/records/census-after.txt` reports 178 rows and W04=49 before W2 added corrective rows S255-S257; the final census command output is `census/round-40/records/census-final.txt` (exit 0, 181 rows, W04=52). The frozen C1 D1 cell still carries the earlier value and receipt, so it describes that historical revision but not the final registry.
+- **captured-by:** Q89 / the citation-reconciliation rule: a self-assessment cell binds to the value in its named receipt at its named revision, not to a later changed state.
+- **fix:** none to the frozen C1 item or counter after data. This finding makes D1 **unprovable as a final-registry claim**; future rounds re-run the census after the last source correction and freeze the expected count only after that census.
+
+### M40-12 — the invalid-UTF-8 fixture did not assert the decoder result it claimed
+
+- **class:** coverage fixture under-assertion.
+- **evidence pointer:** wave-2 `R40w2critic08.md` §3 and `R40w2critic07.md`; `tests/fixtures/r40-drift-record-branches.py` checks only that the invalid name produces `ABSENT` and the comment case reaches `SUMMARY`. Mutants using `backslashreplace`, `latin-1`, or `ascii` replacement also pass both arms, so the fixture does not distinguish U+FFFD replacement from other nonfatal decoders.
+- **captured-by:** QUALITY Q85 requires each claimed field/class to have a load-bearing assertion that fails under a single-defect mutant.
+- **fix:** no post-data counter/predicate change; record C3 as unprovable. Next round's fixture must assert the exact decoded name/value (or otherwise bind the U+FFFD output), include the surviving decoder mutants, and pin its base fixture and regression battery before dispatch.
+
+### M40-13 — the first C3 counter ignored its `--base-rev` input
+
+- **class:** instrument / control-provenance defect.
+- **evidence pointer:** wave-2 `R40w2critic06.md` (base fixture was read with `git_show(root, args.rev, args.base_fixture)` instead of `args.base_rev`; `--base-rev` was validated but did not select the baseline bytes).
+- **captured-by:** the frozen C3 control clause requires mutant survival on the prior round's base fixture, and the counter's own CLI exposes `--base-rev`; using the candidate revision for both arms makes the base control non-independent.
+- **fix:** final `census/round-40/c3-counter.py` reads the base fixture at `args.base_rev` (commit `dc8bd47c693097a69ccaa39b514ce9689a642edc`) and was re-run into `census/round-40/records/c3-after-g.txt`. This repairs byte selection but does not resolve which exact fixture the frozen prose means by “r39 base fixture”; C3 remains unprovable.
+## Frontier
+
+- The round moved the lane's instruments, not a previously uncovered coverage-map ground. F1/F4 stay frontier; the S254 GVFS reader is corroborative F4 evidence, not an expansion-ground promotion.
+- SOURCES rows S251-S257 were opened this round; S251-S254 were in the first measurement, then S255-S257 corrected quote/scope findings from W2. The first after-census at 178/W04=49 is historical; the final census is re-derived after S255-S257.
+- Claim outcomes remain honest stops: C1's three item rows are not the prior 16-item population and D2 evidence crosses into C2; C2's class/trigger set and probe grammar were not frozen before dispatch; C3's base-fixture identity is ambiguous and the four-mutant set omits regression/edge mutants. Measured outputs are retained, but no claim is admitted.
+- Certification OFF, K5 HELD, NAMESPACE hold unchanged.

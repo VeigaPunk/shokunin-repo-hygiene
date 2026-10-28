@@ -1,0 +1,290 @@
+## M01
+@@ -134,6 +134,8 @@
+     except OSError as exc:
+         if exc.errno == errno.ENOENT:
+             raise Refusal("RECORD-MALFORMED: %s is not a regular file" % path)
++        if exc.errno == errno.EACCES:
++            return [], None
+         raise Refusal("RECORD-MISSING: %s" % exc)
+     try:
+         if not stat.S_ISREG(os.fstat(fd).st_mode):
+## M02
+@@ -132,7 +132,7 @@
+     try:
+         fd = os.open(path, os.O_RDONLY | os.O_NONBLOCK)
+     except OSError as exc:
+-        if exc.errno == errno.ENOENT:
++        if exc.errno == errno.EPERM:
+             raise Refusal("RECORD-MALFORMED: %s is not a regular file" % path)
+         raise Refusal("RECORD-MISSING: %s" % exc)
+     try:
+## M03
+@@ -130,7 +130,7 @@
+     # now O_NONBLOCK and the descriptor is checked with fstat before any read, so no
+     # special file can be waited on; a missing path keeps its RECORD-MALFORMED class.
+     try:
+-        fd = os.open(path, os.O_RDONLY | os.O_NONBLOCK)
++        fd = os.open(path, os.O_RDONLY)
+     except OSError as exc:
+         if exc.errno == errno.ENOENT:
+             raise Refusal("RECORD-MALFORMED: %s is not a regular file" % path)
+## M04
+@@ -136,7 +136,7 @@
+             raise Refusal("RECORD-MALFORMED: %s is not a regular file" % path)
+         raise Refusal("RECORD-MISSING: %s" % exc)
+     try:
+-        if not stat.S_ISREG(os.fstat(fd).st_mode):
++        if stat.S_ISREG(os.fstat(fd).st_mode):
+             raise Refusal("RECORD-MALFORMED: %s is not a regular file" % path)
+         os.set_blocking(fd, True)
+         chunks = []
+## M05
+@@ -136,7 +136,7 @@
+             raise Refusal("RECORD-MALFORMED: %s is not a regular file" % path)
+         raise Refusal("RECORD-MISSING: %s" % exc)
+     try:
+-        if not stat.S_ISREG(os.fstat(fd).st_mode):
++        if False:
+             raise Refusal("RECORD-MALFORMED: %s is not a regular file" % path)
+         os.set_blocking(fd, True)
+         chunks = []
+## M06
+@@ -157,7 +157,7 @@
+         m = ROW.match(line)
+         if m:
+             name = m.group("name")
+-            if name in [r["name"] for r in rows]:
++            if False:
+                 raise Refusal("RECORD-MALFORMED: line %d duplicates %s" % (lineno, name))
+             rows.append({"name": name, "regs": int(m.group("regs")), "prunable": int(m.group("prunable"))})
+             continue
+## M07
+@@ -173,7 +173,7 @@
+         raise Refusal("RECORD-MALFORMED: line %d does not match the census schema" % lineno)
+     if not rows:
+         raise Refusal("RECORD-EMPTY: no REPO rows in %s" % path)
+-    for total in totals:
++    for total in totals[-1:]:
+         if total["repos"] != len(rows):
+             raise Refusal("RECORD-MALFORMED: TOTAL repos=%d but %d REPO rows" % (total["repos"], len(rows)))
+         if total["regs"] != sum(r["regs"] for r in rows):
+## M08
+@@ -176,7 +176,7 @@
+     for total in totals:
+         if total["repos"] != len(rows):
+             raise Refusal("RECORD-MALFORMED: TOTAL repos=%d but %d REPO rows" % (total["repos"], len(rows)))
+-        if total["regs"] != sum(r["regs"] for r in rows):
++        if False and total["regs"] != sum(r["regs"] for r in rows):
+             raise Refusal("RECORD-MALFORMED: TOTAL regs=%d but REPO rows sum to %d" % (total["regs"], sum(r["regs"] for r in rows)))
+         if total["prunable"] != sum(r["prunable"] for r in rows):
+             raise Refusal(
+## M09
+@@ -171,7 +171,7 @@
+             totals.append(total)
+             continue
+         raise Refusal("RECORD-MALFORMED: line %d does not match the census schema" % lineno)
+-    if not rows:
++    if False:
+         raise Refusal("RECORD-EMPTY: no REPO rows in %s" % path)
+     for total in totals:
+         if total["repos"] != len(rows):
+## M10
+@@ -293,7 +293,7 @@
+     for row in rows:
+         resolved = os.path.realpath(os.path.join(root, row["name"]))
+         try:
+-            inside = os.path.commonpath([resolved, root_real]) == root_real
++            inside = resolved.startswith(root_real)
+         except ValueError:
+             inside = False
+         if not inside:
+## M11
+@@ -296,7 +296,7 @@
+             inside = os.path.commonpath([resolved, root_real]) == root_real
+         except ValueError:
+             inside = False
+-        if not inside:
++        if False:
+             raise Refusal("RECORD-OUTSIDE-ROOT: %s resolves outside %s" % (row["name"], root_real))
+         measured.append(resolved)
+         # r37 A2.7 (wave seat W2CritC2): the repository actually measured is the
+## M12
+@@ -310,7 +310,7 @@
+             if got is not None and got.returncode == 0:
+                 gitdir = os.path.realpath(got.stdout.decode("utf-8", "replace").strip())
+                 try:
+-                    gitdir_inside = os.path.commonpath([gitdir, root_real]) == root_real
++                    gitdir_inside = True
+                 except ValueError:
+                     gitdir_inside = False
+                 if not gitdir_inside:
+## M13
+@@ -334,7 +334,7 @@
+             try:
+                 rec_st = os.stat(record_abs)
+                 out_st = os.stat(json_target)
+-                alias = (rec_st.st_dev, rec_st.st_ino) == (out_st.st_dev, out_st.st_ino)
++                alias = False
+             except OSError:
+                 alias = False
+         if alias:
+## M14
+@@ -339,7 +339,7 @@
+                 alias = False
+         if alias:
+             raise Refusal("JSON-IS-RECORD: %s is the record file" % json_target)
+-        for base in measured:
++        for base in measured[1:]:
+             try:
+                 inside = os.path.commonpath([json_target, base]) == base
+             except ValueError:
+## M15
+@@ -339,7 +339,7 @@
+                 alias = False
+         if alias:
+             raise Refusal("JSON-IS-RECORD: %s is the record file" % json_target)
+-        for base in measured:
++        for base in []:
+             try:
+                 inside = os.path.commonpath([json_target, base]) == base
+             except ValueError:
+## M16
+@@ -420,7 +420,7 @@
+         try:
+             fd = open_nofollow(json_target)
+             st = os.fstat(fd)
+-            if st.st_nlink > 1:
++            if st.st_nlink > 2:
+                 os.close(fd)
+                 raise Refusal("JSON-HARDLINKED: %s has %d links" % (json_target, st.st_nlink))
+             # truncate only after the multi-link check: O_TRUNC at open would
+## M17
+@@ -260,7 +260,7 @@
+         try:
+             fd = os.open(
+                 parts[-1],
+-                os.O_WRONLY | os.O_CREAT | os.O_NOFOLLOW | os.O_NONBLOCK,
++                os.O_WRONLY | os.O_CREAT | os.O_NOFOLLOW,
+                 0o644,
+                 dir_fd=dirfd,
+             )
+## M18
+@@ -267,7 +267,7 @@
+         except OSError as exc:
+             # ENXIO: a FIFO with no reader. EISDIR: a directory. Both are "exists
+             # and is not a regular file"; ELOOP/EACCES stay JSON-UNWRITABLE.
+-            if exc.errno in (errno.ENXIO, errno.EISDIR):
++            if exc.errno in (errno.ENXIO,):
+                 raise Refusal("JSON-NOT-REGULAR: %s is not a regular file" % path)
+             raise
+         mode = os.fstat(fd).st_mode
+## M19
+@@ -271,7 +271,7 @@
+                 raise Refusal("JSON-NOT-REGULAR: %s is not a regular file" % path)
+             raise
+         mode = os.fstat(fd).st_mode
+-        if not stat.S_ISREG(mode):
++        if False:
+             os.close(fd)
+             raise Refusal("JSON-NOT-REGULAR: %s is not a regular file" % path)
+         os.set_blocking(fd, True)
+## M20
+@@ -432,6 +432,8 @@
+         except Refusal:
+             raise
+         except OSError as exc:
++            if exc.errno == errno.EACCES:
++                return 0 if not drift else 1
+             raise Refusal("JSON-UNWRITABLE: %s" % exc)
+     return 0 if not drift else 1
+ 
+## M21
+@@ -444,7 +444,7 @@
+     ap.add_argument("--json")
+     ap.add_argument("--skip-unrecorded", action="store_true")
+     args = ap.parse_args(argv)
+-    if args.timeout < 1:
++    if args.timeout < 0:
+         sys.stderr.write("REFUSAL USAGE: --timeout must be >= 1\n")
+         return 2
+     try:
+## M22
+@@ -282,7 +282,7 @@
+ 
+ def run(args):
+     root = os.path.abspath(args.root)
+-    if not os.path.isdir(root):
++    if False:
+         raise Refusal("USAGE: --root %s is not a directory" % root)
+     root_real = os.path.realpath(root)
+     rows, total = parse_record(args.record)
+## M23
+@@ -254,7 +254,7 @@
+     dirfd = os.open("/", os.O_RDONLY | os.O_DIRECTORY)
+     try:
+         for part in parts[:-1]:
+-            nxt = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=dirfd)
++            nxt = os.open(part, os.O_RDONLY | os.O_DIRECTORY, dir_fd=dirfd)
+             os.close(dirfd)
+             dirfd = nxt
+         try:
+## M24
+@@ -420,7 +420,7 @@
+         try:
+             fd = open_nofollow(json_target)
+             st = os.fstat(fd)
+-            if st.st_nlink > 1:
++            if st.st_nlink >= 1:
+                 os.close(fd)
+                 raise Refusal("JSON-HARDLINKED: %s has %d links" % (json_target, st.st_nlink))
+             # truncate only after the multi-link check: O_TRUNC at open would
+## M25
+@@ -399,7 +399,7 @@
+         "live_regs": live_regs,
+         "live_prunable": live_prunable,
+         "drift_rows": len(drift),
+-        "unreachable": unreachable,
++        "unreachable": 0,
+     }
+     print(
+         "SUMMARY record=%s record_repos=%d record_regs=%d record_prunable=%d live_repos=%d live_regs=%d"
+## M26
+@@ -339,7 +339,7 @@
+                 alias = False
+         if alias:
+             raise Refusal("JSON-IS-RECORD: %s is the record file" % json_target)
+-        for base in measured:
++        for base in measured[:1]:
+             try:
+                 inside = os.path.commonpath([json_target, base]) == base
+             except ValueError:
+## M27
+@@ -178,7 +178,7 @@
+             raise Refusal("RECORD-MALFORMED: TOTAL repos=%d but %d REPO rows" % (total["repos"], len(rows)))
+         if total["regs"] != sum(r["regs"] for r in rows):
+             raise Refusal("RECORD-MALFORMED: TOTAL regs=%d but REPO rows sum to %d" % (total["regs"], sum(r["regs"] for r in rows)))
+-        if total["prunable"] != sum(r["prunable"] for r in rows):
++        if False:
+             raise Refusal(
+                 "RECORD-MALFORMED: TOTAL prunable=%d but REPO rows sum to %d"
+                 % (total["prunable"], sum(r["prunable"] for r in rows))
+## M28
+@@ -170,7 +170,7 @@
+             # last-agreeing pair that the docstring calls malformed).
+             totals.append(total)
+             continue
+-        raise Refusal("RECORD-MALFORMED: line %d does not match the census schema" % lineno)
++        continue
+     if not rows:
+         raise Refusal("RECORD-EMPTY: no REPO rows in %s" % path)
+     for total in totals:
+## M29
+@@ -174,7 +174,7 @@
+     if not rows:
+         raise Refusal("RECORD-EMPTY: no REPO rows in %s" % path)
+     for total in totals:
+-        if total["repos"] != len(rows):
++        if False:
+             raise Refusal("RECORD-MALFORMED: TOTAL repos=%d but %d REPO rows" % (total["repos"], len(rows)))
+         if total["regs"] != sum(r["regs"] for r in rows):
+             raise Refusal("RECORD-MALFORMED: TOTAL regs=%d but REPO rows sum to %d" % (total["regs"], sum(r["regs"] for r in rows)))
