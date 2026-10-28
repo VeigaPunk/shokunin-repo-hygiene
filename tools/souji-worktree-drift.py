@@ -41,8 +41,8 @@ CLI:
 Exit: 0 no drift rows, 1 drift rows found, 2 could-not-evaluate. Every
 refusal class the code can raise is named here (r38 C2, r37 routed defect 6):
 
-  RECORD-MISSING         EACCES, ELOOP or EISDIR opening the record path: the
-                         path exists but cannot be opened or read
+  RECORD-MISSING         EACCES or ELOOP opening the record path: the path
+                         exists but cannot be opened or read
   RECORD-MALFORMED       a missing (ENOENT) or non-regular record path, a line
                          that does not match the schema, a duplicated name, or
                          a TOTAL row that disagrees
