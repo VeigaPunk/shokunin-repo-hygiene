@@ -99,19 +99,25 @@ def git_show(root, rev, path):
     return proc.stdout.decode("utf-8", "replace")
 
 
-def summary_tokens(line):
-    """Exact field set of one SUMMARY line; a token after a comment marker is not a field.
+def summary_body(line):
+    """The SUMMARY line up to its first comment marker (r38 A7, seat W1SentCounter S3).
 
-    r38 A7 (wave seat W1SentCounter S3): whole-token search inside a `startswith("SUMMARY")`
-    line accepted `# expected cells=3` as a value; the expected token must now equal a
-    whitespace-separated field of the line.
+    The r37 fixture's expected token is the two-field phrase `cases=21 pass=21`, so exact
+    field-set membership would false-fail it; cutting the line at `#`, `--` or `//` kills the
+    measured exploit (`SUMMARY cells=9 mismatches=0  # expected cells=3`) while keeping
+    contiguous multi-field tokens.
     """
-    fields = set()
-    for tok in line.split():
-        if tok.startswith("#") or tok.startswith("--") or tok.startswith("//"):
-            break
-        fields.add(tok)
-    return fields
+    cut = [i for i in (line.find("#"), line.find("--"), line.find("//")) if i >= 0]
+    return line[: min(cut)] if cut else line
+
+
+def is_summary_line(line):
+    """Only a line that IS the SUMMARY record counts; `SUMMARY-REAL` is not one."""
+    return line == "SUMMARY" or line.startswith("SUMMARY ") or line.startswith("SUMMARY\t")
+
+
+def summary_carries(line, expected):
+    return has_token(summary_body(line), expected)
 
 
 def has_token(text, token):
@@ -206,8 +212,8 @@ def commit_checks(root, rev, row, line):
     if receipt is None:
         out.append("COMMIT-RECEIPT-ABSENT %s at %s" % (row["receipt"], short))
     else:
-        summaries = [l for l in receipt.split("\n") if l.startswith("SUMMARY")]
-        if not any(row["expected"] in summary_tokens(l) for l in summaries):
+        summaries = [l for l in receipt.split("\n") if is_summary_line(l)]
+        if not any(summary_carries(l, row["expected"]) for l in summaries):
             out.append(
                 "COMMIT-RECEIPT-DISAGREES %s expected=%r (no SUMMARY line at %s carries it)"
                 % (row["receipt"], row["expected"], short)
@@ -276,8 +282,8 @@ def run(args):
             print("MISMATCH %s RECEIPT-ABSENT %s at %s" % (row["id"], row["receipt"], row["receipt_rev"]))
             mismatches += 1
         else:
-            summaries = [l for l in receipt.split("\n") if l.startswith("SUMMARY")]
-            if not any(row["expected"] in summary_tokens(l) for l in summaries):
+            summaries = [l for l in receipt.split("\n") if is_summary_line(l)]
+            if not any(summary_carries(l, row["expected"]) for l in summaries):
                 print("MISMATCH %s RECEIPT-DISAGREES %s expected=%r (no SUMMARY line carries it)" % (row["id"], row["receipt"], row["expected"]))
                 mismatches += 1
     print("SUMMARY cells=%d mismatches=%d" % (len(rows), mismatches))
