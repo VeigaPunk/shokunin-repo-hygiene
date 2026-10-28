@@ -134,3 +134,7 @@ R39-GATE-1 — S247's quote stopped at "cannot be dereferenced" and hid the clau
 - **S247 quote (seat `W1CritSources`).** The quote stopped before the clause that states the refusal; S250 supersedes it with the full 25-word sentence and the C2 claim cites S250 (`e9958ee`).
 - **C1-04 token shape (seat `W1ExecC1Anchors`).** Item C1-04's `must` set already appears as a quoted shape in `census/round-29/records/preregistration.txt`, so the item binds a token pattern, not a provenance; the round's receipt carries the real `verify-rev` line and the limit is disclosed rather than repaired after data.
 - **C1 control reach (seat `W1MutC1`).** The base control reads `open=16` through the anchor/file arms, so a mutant that only weakens the predicate arm is invisible to it; the counter's predicate arm needs a landing-revision control, named for r40.
+
+## Seat-reported failures
+
+- W1CritAssimilation (`census/round-39/waves/w1/W1CritAssimilation.md` line 3) carried: "STATUS: PARTIAL — the decision `Assimilation: none` is correct on all three frozen claim ..." — the round adopted its corrections: the report's assimilation line names the id collision, S250 corrects S247's quote, and the Gate sentence now says the three rows are curation, not assimilation-set verdicts.
