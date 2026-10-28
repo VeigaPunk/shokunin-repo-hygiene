@@ -1,0 +1,114 @@
+# souji round 39 — preregistration (frozen before any after-data)
+
+lane: souji-shokunin
+round: 39 (hyaku run 11, attempt 1)
+agent: SoujiR39
+base revision: ed30b7f5b77939c9073348d810730bc4f355708d (lane tip == origin/master at round start)
+lane state: `.ufo/waves/round-39/` absent at round start; no inherited uncommitted work.
+Fresh start: the r38 non-author spot-check (verdict admitted, 16 routed defects R1-R16) and the
+r38 lesson's named limits were read first. Every claim below is one a do-nothing control cannot
+reach: the counter, run at the base revision, reads the before-state (addendum section 9).
+
+## Claims
+
+### C1 — calibration (axis score 7, the lowest non-retired axis)
+
+The r38 spot-check routed 16 defects, and 15 of them are the class calibration exists to police:
+the lane's self-assessment (report, lesson, SCORECARD, LOG, QUALITY, SKILL registry, prereg, gate
+receipts) states a value or a completion the observed repo state contradicts (R1 census numbers,
+R2 an unevidenced dead-seat count, R4 untracked wave evidence, R5 a write-scope breach the ledger
+denied, R6 four counters with no registry row, R7 a receipt naming a reaper-deleted path, R8/R9
+stale and in-place-rewritten prereg bytes, R12 finality labels, R13 stale literals, R14 a receipt
+misdescribing its own operation, R15 an unlanded commit table, R16 an owed correction). R3 and R10
+are conduct/contract defects carried by the same register.
+
+C1 closes each routed defect in lane bytes, and the register cell arm the r38 limit named
+("all ten rows carry commit == receipt_rev, so the live register cannot distinguish the commit arm
+from the receipt arm") now carries rows whose `commit` differs from `receipt_rev`.
+
+PREDICATE (frozen): `python3 -B census/round-39/c1-counter.py --root <lane> --rev <landing-40hex>
+--items census/round-39/c1-items.tsv --register census/round-39/cells.tsv` prints
+`SUMMARY items=16 open=0 register_cells>=6 register_mismatches=0 commit_distinct>=2` and exits 0,
+where each of the 16 item rows is a single anchored line of a named lane file at `--rev` carrying
+all its `must` tokens and none of its `mustnot` tokens, and each register row verifies through the
+frozen `tools/souji-citation-reconcile.py` bytes at `--rev`.
+
+KILL RULE (frozen): missed if any item reads OPEN at the landing revision, if the register leg
+reports any mismatch or fewer than two rows whose `commit` differs from `receipt_rev`, or if the
+base-revision control (same items, same counter bytes, `--rev ed30b7f...`) reads `open=0`.
+
+COUNTER: `census/round-39/c1-counter.py` over committed bytes only (`git show`), items
+`census/round-39/c1-items.tsv`, register `census/round-39/cells.tsv`.
+CONTROL (committed before any after-data): the counter at the base revision reads `open=16`
+(`census/round-39/records/c1-before.txt`).
+
+### C2 — operability (axis score 8)
+
+Two runnable contracts disagree with their documentation, both reproduced on the base bytes:
+(a) R11 — `tools/souji-citation-reconcile.py` never resolves `--rev`: a mistyped or non-commit
+revision collapses to "not an ancestor" and the tool exits 1 with findings instead of the
+could-not-evaluate exit 2 its SKILL registry row promises; and (b) R10 — `tools/souji-worktree-drift.py`
+documents `RECORD-MISSING` as "the record path cannot be read" while a missing path raises
+`RECORD-MALFORMED: ... is not a regular file` and an unreadable (`EACCES`) path raises
+`RECORD-MISSING`.
+
+PREDICATE (frozen): `python3 -B census/round-39/c2-counter.py --root <lane> --rev <landing>
+--base-rev ed30b7f...` prints `SUMMARY legs=6 pass=6 fail=0 harm=0` and exits 0. Legs: L1
+unresolvable `--rev` (base: rc 1 with findings; new: rc 2, `REFUSAL REV-UNRESOLVED`), L2 `--rev`
+naming a blob (same classes), L3 `--register-rev` unresolvable stays rc 2 (harm), L4 the drift
+docstring's RECORD-MISSING/RECORD-MALFORMED mapping matches the classes the tool actually produces
+for a missing and an unreadable record (base: differs), L5 the new fixture
+`tests/fixtures/r39-citation-rev.py` passes 8/8 with the new bytes and fails >=2 with the base
+bytes, L6 six consumer fixtures stay green.
+
+KILL RULE (frozen): missed if any leg fails, if any consumer regresses against its base reading, or
+if the base-arm control prints `pass=6` (a counter the do-nothing state satisfies).
+
+COUNTER: `census/round-39/c2-counter.py`; both tool revisions are extracted from committed bytes
+(`git show <rev>:tools/...`) into `$TMPDIR` scratch and compared.
+CONTROL (committed before any after-data): `census/round-39/records/c2-before.txt`.
+
+### C3 — coverage (axis score 8)
+
+The r38 mutant battery (M7-M10) scores only the four TOTAL/duplicate rules; its fixture and the
+r36/r37 fixtures assert nothing about four documented record-file behaviours: trailing whitespace
+is refused by the `$`-anchored schema, CRLF records are accepted (`str.splitlines`), a record row
+resolving outside `--root` is refused (`RECORD-OUTSIDE-ROOT`), and an indented `#` line is refused
+as a schema violation. Four single-defect mutants of those behaviours survive every existing
+fixture.
+
+PREDICATE (frozen): `python3 -B census/round-39/c3-counter.py --root <lane> --rev <landing>
+--base-rev ed30b7f...` prints `SUMMARY mutants=4 killed=4 survived=0 pristine=ok
+base_killed=0 cases>=6` and exits 0, where the candidates are M11 (trailing-whitespace tolerance
+added), M12 (CRLF splitting broken), M13 (outside-root guard removed), M14 (indented comments
+accepted), the candidate fixture is `tests/fixtures/r39-drift-record-rules.py` and the base
+fixture is `tests/fixtures/r38-drift-record.py` at `--rev`.
+
+KILL RULE (frozen): missed if any mutant survives the candidate fixture, if any mutant is killed by
+the base fixture (`base_killed` must stay 0), if the pristine control fails, or if the candidate
+fixture carries fewer than six cases.
+
+COUNTER: `census/round-39/c3-counter.py` (mutant application reuses the r38 battery's scoring
+contract: a kill needs the fixture's own `fail>0`, no traceback, exit 1).
+CONTROL (committed before any after-data): `census/round-39/records/c3-before.txt`.
+
+## Frozen shape of the round
+
+- Round shape: one v2 wave (`UFO_CONFIG_PATH=scripts/hyaku/ufo-wave-policy-v2.json`, band 64-128),
+  build and attack items together, attack share >= 25 %.
+- The L1 holds the canonical planner seat (validator rejects `planner`); the bounded planning
+  data-walk rides scout/connector items.
+- Scratch root: `$HYAKU_SCRATCH/souji-r39/<seat>/`, default `/fast/scratch/hyaku`; no `/tmp` roots.
+- Write scope: lane repo, `.ufo/reports/round-39/souji.md`, `.ufo/l0-questions.md` appends.
+- Seats never commit, push or run mutating jj/git; only the L1 lands bytes through `jj-lane.sh`.
+- Tooling authorization (operator 2026-10-19) applies with the pacman pause: installs go through
+  `uv tool`/`npx`/an official binary in `~/.local/bin`; no `pacman -S/-Sy/-Syu`.
+
+## Not claimed
+
+- Not the r38 report's own fleet bytes (outside this round's write scope): R2 and R15's report-side
+  halves are carried as errata in the round-39 report and as lane corrections in the lesson.
+- Not the r38 spot-check's routed defects R1-R16 as a group: C1 claims the 16 items its frozen list
+  enumerates, each a single anchored lane line.
+- No receipt class, no deletion verdict, no certification: deletion certification stays OFF and K5
+  HELD.
