@@ -14,7 +14,7 @@ non-author spot-check routed (`corpus/lessons/round-36-verifier-spotcheck.md`, R
   lesson Claims) or superseded by an append-only row (frozen measurement rows and the r36 frozen
   predicate sentence), and each correction carries a value the cited receipt actually holds at a
   commit where it exists. Counter:
-  `python3 -B tools/souji-citation-reconcile.py --root <lane> --rev <landing> --register census/round-37/citation-cells.tsv`
+  `python3 -B tools/souji-citation-reconcile.py --root <lane> --rev <landing> --register census/round-37/citation-cells.tsv --register-rev <full40>`
   → `SUMMARY cells=11 mismatches=0`, rc 0 (amendment A1 added the two `cases=8` selftest cells and
   `--register-rev` pins the register). Base control (`census/round-37/records/c1-before.txt`):
   `cells=11 mismatches=11`, rc 1 (the frozen nine-cell register reads 9 at the base; the two added cells are
@@ -29,7 +29,7 @@ non-author spot-check routed (`corpus/lessons/round-36-verifier-spotcheck.md`, R
   `SUMMARY cases=9 pass=9 fail=0 base_fail=6 control=ESCAPE-REPRODUCED`, rc 0; the r36 regression
   fixture stays `cases=12 pass=12 fail=0 control=STUB-REJECTED`. Base control
   (`census/round-37/records/c2-before.txt`): the same fixture against the r36 tool bytes reads
-  `cases=9 pass=3 fail=6 base_fail=6`, rc 1 — six escapes reproduce (amendment A2 added the
+  `cases=9 pass=3 fail=6 base_fail=6 escapes=6`, rc 1 — six escapes reproduce (amendment A2 added the
   hardlink and measured cases).
 - **C3 coverage (score 8).** The drift tool's fixture surface discriminates its fields: six frozen
   single-defect mutants (the routed survivor `live_repos = len(rows) - unreachable`, a

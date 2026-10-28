@@ -102,17 +102,20 @@ def invoke(tool, fleet, rec, extra=None, env_extra=None):
 
 def cases(tool, scratch):
     out = {}
+    escaped = {}
 
     # record-escape: a record row resolving outside --root must be refused.
     root, fleet, sibling = build(scratch, "record-escape")
     rec = record(root, [("../sibling", 1, 0)], (1, 1, 0))
     rc, text = invoke(tool, fleet, rec)
     out["record-escape"] = rc == 2 and "RECORD-OUTSIDE-ROOT" in text
+    escaped["record"] = rc != 2
 
     # json-write-escape: the same row plus --json aimed into the sibling repo.
     target = os.path.join(sibling, "pwned.json")
     rc, text = invoke(tool, fleet, rec, extra=["--json", target])
     out["json-write-escape"] = rc == 2 and not os.path.exists(target)
+    escaped["json-write"] = os.path.exists(target)
 
     # trace-refs: a path-valued GIT_TRACE_REFS must not be honoured.
     root, fleet, sibling = build(scratch, "trace-refs")
@@ -120,6 +123,7 @@ def cases(tool, scratch):
     trace = os.path.join(root, "trace-refs.log")
     rc, text = invoke(tool, fleet, rec, env_extra={"GIT_TRACE_REFS": trace})
     out["trace-refs"] = not os.path.exists(trace)
+    escaped["trace-refs"] = os.path.exists(trace)
 
     # env-witness: the child git process must see a config-neutralised
     # environment. A PATH shim git records its own env, so the observation is
@@ -165,6 +169,7 @@ def cases(tool, scratch):
             key, value = line.split("=", 1)
             pairs[key] = value
     stray = sorted(k for k in pairs if k.startswith("GIT_") and k not in allowed)
+    escaped["env"] = bool(stray)
     out["env-witness"] = (
         not stray
         and pairs.get("GIT_CONFIG_NOSYSTEM") == "1"
@@ -203,6 +208,7 @@ def cases(tool, scratch):
         rc == 2 and "JSON-HARDLINKED" in text
         and open(victim, "rb").read() == before_bytes
     )
+    escaped["hardlink"] = open(victim, "rb").read() != before_bytes
 
     # record-fifo: a FIFO record must be refused, not block.
     root, fleet, sibling = build(scratch, "record-fifo")
@@ -213,13 +219,14 @@ def cases(tool, scratch):
     except subprocess.TimeoutExpired:
         rc, text = 124, "timeout"
     out["record-fifo"] = rc == 2 and "not a regular file" in text
+    escaped["fifo"] = rc != 2
 
     # measured: a fixed-summary stub must fail the required measured drift.
     root, fleet, sibling = build(scratch, "measured")
     rec = record(root, [("alpha", 2, 0), ("beta", 1, 0)], (2, 3, 0))
     rc, text = invoke(tool, fleet, rec)
     out["measured"] = rc == 1 and "REGS-CHANGED\talpha" in text and "drift_rows=1" in text
-    return out
+    return out, escaped
 
 
 def main(argv):
@@ -238,11 +245,11 @@ def main(argv):
     try:
         cand_scratch = os.path.join(scratch, "candidate")
         os.makedirs(cand_scratch)
-        candidate = cases(tool, cand_scratch)
+        candidate, _ = cases(tool, cand_scratch)
         if args.base_tool:
             base_scratch = os.path.join(scratch, "base")
             os.makedirs(base_scratch)
-            base = cases(args.base_tool, base_scratch)
+            base, base_escaped = cases(args.base_tool, base_scratch)
         else:
             base = None
     finally:
@@ -256,9 +263,13 @@ def main(argv):
         # reproduced control; a control-free run is not a pass.
         return 1
     base_fail = sum(1 for ok in base.values() if not ok)
-    control_ok = base_fail >= 4
-    print("SUMMARY cases=%d pass=%d fail=%d base_fail=%d control=%s" % (
-        len(candidate), len(candidate) - failed, failed, base_fail,
+    escapes = sum(1 for v in base_escaped.values() if v)
+    # r37 A2.5 (wave seat W2RevRerunC2): a fail count also rises when the base
+    # tool merely errors. The control requires the base to be observed writing
+    # the escapes themselves (>=4 of 6 artifacts), plus the case floor.
+    control_ok = base_fail >= 5 and escapes >= 4
+    print("SUMMARY cases=%d pass=%d fail=%d base_fail=%d escapes=%d control=%s" % (
+        len(candidate), len(candidate) - failed, failed, base_fail, escapes,
         "ESCAPE-REPRODUCED" if control_ok else "ESCAPE-NOT-REPRODUCED"))
     return 0 if failed == 0 and control_ok else 1
 
