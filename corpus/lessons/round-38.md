@@ -271,3 +271,11 @@ The filed report is the L1's.
   which were stale.
 - `a7-counter-fixes.txt` was first pinned to a revision whose committed counter predates A7; the
   final receipt is regenerated at the tip and its label names that revision.
+
+### Adjacency note (appended after wave 2)
+
+`W2ScoutOverlap` found a sibling binding expected values to evidence at a revision:
+`kama-shokunin/tools/citation-provenance.py` checks `cite(<rev>, <path>, sha256=…)` with
+`git cat-file blob`. Adjacent, not contested: kama binds a citation's **file digest** at a revision,
+souji binds a self-assessment **token** inside a receipt's SUMMARY line at a revision; neither tool
+covers the other's claim. Reported here rather than absorbed, per PROVINCE's adjacency rule.
