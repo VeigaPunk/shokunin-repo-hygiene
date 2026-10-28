@@ -13,7 +13,9 @@ values are `<repo path> sha256=<64 hex>`. FREEZE-REV is the oldest commit reacha
 PATH. Finding classes: NO-CLAIMS, FIELD-MISSING, FIELD-EMPTY, BASE-UNRESOLVED, BASE-NOT-ANCESTOR,
 COUNTER-MISSING, COUNTER-DIGEST, POPULATION-MISSING, POPULATION-DIGEST, POPULATION-EMPTY,
 CONTROL-MISSING, CONTROL-NOT-RED, FROZEN-EDITED, DISPATCH-BEFORE-FREEZE. Prereg-wide findings carry
-claim label C0. Python stdlib only; read-only on --root.
+claim label C0. A missing `Round:` line is reported as `FIELD-MISSING C0 Round` (the dispatch check cannot run
+without it), an empty value of any key is `FIELD-EMPTY`, and repo paths may contain spaces (r41 wave-2 hardening,
+R41w2critic01). Python stdlib only; read-only on --root.
 """
 import argparse
 import hashlib
@@ -25,8 +27,8 @@ import sys
 FULL40 = re.compile(r"^[0-9a-f]{40}$")
 HEADER = re.compile(r"^## C(\d+)(?![0-9A-Za-z_])")
 KEYLINE = re.compile(r"^(Base|Counter|Population|Control|Target|Kill):[ \t]*(.*?)[ \t]*$")
-PATH_SHA = re.compile(r"^(\S+)[ \t]+sha256=([0-9a-f]{64})$")
-ROUND = re.compile(r"^Round:[ \t]*(\d+)[ \t]*$", re.M)
+PATH_SHA = re.compile(r"^(.+?)[ \t]+sha256=([0-9a-f]{64})$")
+ROUND = re.compile(r"^\ufeff?Round:[ \t]*(\d+)[ \t]*\r?$", re.M)
 EXIT_LINE = re.compile(r"^EXIT=(\d+)$")
 KEYS = ("Base", "Counter", "Population", "Control", "Target", "Kill")
 
@@ -54,6 +56,8 @@ class Repo:
         return out if p.returncode == 0 and FULL40.match(out) else None
 
     def blob(self, rev, path):
+        if "\x00" in path:
+            return None
         p = self.run("cat-file", "blob", "%s:%s" % (rev, path))
         return p.stdout if p.returncode == 0 else None
 
@@ -88,7 +92,9 @@ def freeze_rev(repo, rev, prereg):
 def dispatch_findings(repo, rev, freeze, text):
     m = ROUND.search(text)
     if not m:
-        return []
+        # r41 wave-2 hardening (R41w2critic01 D1/D10): without a Round line the dispatch
+        # check cannot run; say so instead of reading clean.
+        return [("C0", "FIELD-MISSING", "Round")]
     tree = ".ufo/waves/round-%s/" % m.group(1)
     p = repo.run("log", "--diff-filter=A", "--no-renames", "--full-history", "--name-only",
                  "--format=%x01%H", rev, "--", tree)
@@ -142,7 +148,7 @@ def evaluate(repo, rev, prereg, text, freeze):
         for key in KEYS:
             if key not in f:
                 found.append((label, "FIELD-MISSING", key))
-        for key in ("Target", "Kill"):
+        for key in KEYS:
             if key in f and not f[key]:
                 found.append((label, "FIELD-EMPTY", key))
         if f.get("Base"):
@@ -165,7 +171,7 @@ def evaluate(repo, rev, prereg, text, freeze):
                     found.append((label, "POPULATION-EMPTY", "%s has %d non-blank line(s)"
                                   % (got[1], len(lines))))
         if f.get("Control"):
-            path = f["Control"].split()[0]
+            path = f["Control"]
             blob = repo.blob(freeze, path)
             if blob is None:
                 found.append((label, "CONTROL-MISSING", "%s not present at freeze %s" % (path, freeze[:12])))
