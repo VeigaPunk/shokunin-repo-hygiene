@@ -17,7 +17,7 @@ non-author spot-check routed (`corpus/lessons/round-36-verifier-spotcheck.md`, R
   `python3 -B tools/souji-citation-reconcile.py --root <lane> --rev <landing> --register census/round-37/citation-cells.tsv`
   → `SUMMARY cells=11 mismatches=0`, rc 0 (amendment A1 added the two `cases=8` selftest cells and
   `--register-rev` pins the register). Base control (`census/round-37/records/c1-before.txt`):
-  `cells=11 mismatches=9`, rc 1 (the frozen nine-cell register reads 9; the two added cells are
+  `cells=11 mismatches=11`, rc 1 (the frozen nine-cell register reads 9 at the base; the two added cells are
   absent at the base) — the same receipts resolve at the base revision, but no correction
   line exists, so the counter's citation arm is what moves.
 - **C2 operability (score 8).** The F1 drift tool's write envelope matches its docstring: `--root`
@@ -68,7 +68,7 @@ measurement rows and capability rows, the SKILL gate registry, the round lesson'
 quoted after-values that never lived in the named receipt, and their measured-commit cells named a
 commit where the receipt does not exist.
 **Evidence pointer:** `corpus/lessons/round-36-verifier-spotcheck.md` Routed defects 1;
-`census/round-37/records/c1-before.txt` (`cells=9 mismatches=9` at the base revision).
+`census/round-37/records/c1-before.txt` (`cells=11 mismatches=11` at the base revision).
 **Captured-by:** none at r36 — its gate checked that receipts were *named*, never that the quoted
 number matched the receipt bytes, and the prereg's own sentence was exempted from its own rule.
 The capture is now mechanised: `tools/souji-citation-reconcile.py` binds a citation arm (one
@@ -122,3 +122,4 @@ would not serve a frozen claim).
 - The r37 discrimination fixture does not exercise the `TOTAL` cross-checks (W1MutTool M7
   survives the r37 fixture and dies on the r36 fixture); C3's frozen six mutants do not include
   it. Routed to r38.
+- The `env-witness` case asserts the documented child-env contract as a key set; a wave-2 probe showed it can false-kill a stricter spelling and miss a tool-injected `GIT_TRACE2_EVENT` or a first-call-only neutralisation (`.ufo/waves/round-37/w1/W1ExecEscapeCaseC.md`). It discriminates the landed tool against the r36 scrub; it is not a general env-safety proof.
