@@ -112,6 +112,13 @@ non-row.
 - **evidence pointer:** `census/round-40/preregistration.txt` C1 paragraph names an “each anchored item line” condition but no population or item-table digest; the prior plan in `SCORECARD.md` `Planned (appended at round 39)` refers to “the C1 items,” the round-39 counter's 16-row `census/round-39/c1-items.tsv`. This round measured three rows (D1-D3) in `census/round-40/c1-items.tsv`; `census/round-40/records/c1-after-e.txt` therefore proves those three rows only.
 - **captured-by:** §9 claim-sizing rule: every after-state is one concrete value re-derivable from committed bytes and the frozen target/predicate must not be narrowed after any seat has scored.
 - **fix:** none to the frozen claim in round 40. Report the measured three-row result as bounded work and C1 as **unprovable against the prior 16-item plan**; a future calibration claim must commit its complete item inventory/digest in the preregistration before dispatch and carry all routed rows or explicitly freeze a bounded subset.
+
+### M40-6 — the three-row C1 measurement is coupled to later C2/C3 evidence
+
+- **class:** claim-separability / evidence-provenance defect.
+- **evidence pointer:** wave-2 `census/round-40/waves/w2/R40w2critic02.md` §3d-3e. The three committed C1 item rows close only because D1/D2 cite the receipts commit `6ded1248` (which adds the C2/C3 receipts) and D3 cites `8a5fbdb` (which changes both the C2 and C3 counters). On a revision containing only the C1 counter, fixture and item set, D2/D3 cannot close. The C1 *counter code* is separable; the round's selected item population and evidence dependencies are not.
+- **captured-by:** AXES.md claim rule: each claim must be verifiable without the others having landed; prompt §9 names causal separability as an admission requirement.
+- **fix:** none to the frozen item set after the wave scored. Report C1's measurement as three rows closed at the full round tip but the frozen causal-separability criterion as **unprovable**; future item evidence must be self-contained within that claim's files/receipts, and the frozen item list must state its complete population.
 ## Frontier
 
 - The round moved the lane's INSTRUMENTS, not the domain surfaces: F1 and F4 stay frontier, the

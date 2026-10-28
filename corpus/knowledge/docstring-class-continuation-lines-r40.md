@@ -35,7 +35,7 @@ source text.
 - `python3 -B tests/fixtures/r40-docstring-joined.py` → `SUMMARY cases=9 pass=9 fail=0` at the
   audited revision; the same fixture with `--one-line` (the r39 reading) →
   `SUMMARY cases=9 pass=6 fail=3`, so the old reading misses the wrapped trigger
-  (`census/round-40/records/c2-after.txt`, `census/round-40/records/c1-fixture.txt`).
+  (`census/round-40/records/c2-after-d.txt`, `census/round-40/records/fixtures-after.txt`).
 - The C2 counter's L4 leg re-derives the class/trigger pairs at run time — each pair's trigger must
   actually be raised by the audited tool — so a pair the tool no longer raises fails the leg instead
   of passing vacuously.

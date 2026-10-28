@@ -29,7 +29,7 @@ The round-40 C1 register arm (`census/round-40/c1-counter.py`) therefore require
 A row that fails (2) or (3) is a `REGISTER … BACKWARDS` violation and the counter exits 1. The
 counter's own fixture proves the three arms separately:
 `tests/fixtures/r40-c1-evidence.py` → `case-register-equal-rejected` and
-`case-register-backwards-rejected` (`census/round-40/records/c1-fixture.txt`).
+`case-register-backwards-rejected` (`census/round-40/records/c1-after-d.txt`).
 
 ## Limits
 
