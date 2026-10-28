@@ -46,21 +46,11 @@ no existing row's `status`, `recheck` or `used-by` cell changed.
 
 ## Routed-defect closures
 
-R39-C1-05 — R5 / erratum: the r37 ledger row 8 claimed "not repeated — this round committed no
-`.ufo/prompts/` path", but the r38 lane commit `068f75dc` did add `.ufo/prompts/souji-round-38.md`
-(fleet-repo path) under the lane repo. This line is the erratum that row owed; the lane commits no
-`.ufo/prompts/` path this round and the prompt stays integrator-owned.
+R39-C1-05 — R5 / erratum: the r37 ledger row 8 claimed "not repeated — this round committed no `.ufo/prompts/` path", but the r38 lane commit `068f75dc` did add `.ufo/prompts/souji-round-38.md` (a fleet-repo path) under the lane repo. This line is the erratum that row owed; the lane commits no `.ufo/prompts/` path this round and the prompt stays integrator-owned.
 
-R39-C1-07 — R7 / the r38 `consumers-after*.txt` receipts named their base arm as
-`/fast/scratch/hyaku/souji-r38/final/drift-r36.py`, a reaper-deleted scratch file, so the command was
-not re-runnable from committed bytes. The blob it meant is `tools/souji-worktree-drift.py` at
-`5f0dd45`; every r39 receipt cites-a-revision (`--rev`/`--base-rev`) and names no scratch path.
+R39-C1-07 — R7 / the r38 `consumers-after*.txt` receipts named their base arm as a `/fast/scratch/hyaku/souji-r38/final/drift-r36.py` file the driver reaps, so the command was not re-runnable from committed bytes; the blob it meant is `tools/souji-worktree-drift.py` at `5f0dd45`, and every r39 receipt cites-a-revision (`--rev`/`--base-rev`) instead of a scratch path.
 
-R39-C1-15 — R15 / the r38 report's Landed-changes table named 12 of the 21 lane commits in
-`ca4369a..fcdecaa` and ended on the placeholder `<integration>`. Unnamed there:
-`6949319`, `78ea25a`, `f10a3a8`, `20eea73`, `a512efb`, `9b9e2f8`, `cb5737a`, `be66886`,
-`c5050ea`. The r39 report names every r39 lane commit by hash and the r38 report's table is
-fleet bytes this lane may not edit, so the omission is recorded here and in the r39 report's errata.
+R39-C1-15 — R15 / the r38 report's Landed-changes table named 12 of the 21 lane commits in `ca4369a..fcdecaa` and ended on the placeholder `<integration>`; the nine it never named are `6949319`, `78ea25a`, `f10a3a8`, `20eea73`, `a512efb`, `9b9e2f8`, `cb5737a`, `be66886` and `c5050ea`, all of which are in the range and in this record; the r38 report is fleet bytes this lane may not edit, so the omission is recorded here and in the r39 report's errata.
 
 | routed | disposition in this round | C1 item |
 |---|---|---|
