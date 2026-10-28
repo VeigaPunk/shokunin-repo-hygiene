@@ -36,10 +36,10 @@ when the file exists, not before.
 | ground | status | entries |
 |---|---|---|
 | receipts: pushed / moved-to-obsidian / stale | core (SKILL.md, tools/) | `knowledge/obsidian-ledger.tsv` (operator-fed, header-only) |
-| F1 git-native housekeeping vs receipts | frontier, entries held | `knowledge/git-auto-maintenance-prunes-worktrees.md`, `knowledge/git-grace-periods-and-expire-to.md`, `knowledge/git-auto-maintenance-trigger-set.md`, `knowledge/git-auto-maintenance-trigger-set-r23.md`, `knowledge/jj-keep-ref-expiry.md`, `knowledge/jj-dropped-keep-object-lifetime.md`, `knowledge/jj-abandoned-object-mtime-clock.md`, `knowledge/fleet-prune-numerator-r35.md` (r36: the held numerator re-census entry) |
+| F1 git-native housekeeping vs receipts | frontier, entries held | `knowledge/git-auto-maintenance-prunes-worktrees.md`, `knowledge/git-grace-periods-and-expire-to.md`, `knowledge/git-auto-maintenance-trigger-set.md`, `knowledge/git-auto-maintenance-trigger-set-r23.md`, `knowledge/jj-keep-ref-expiry.md`, `knowledge/jj-dropped-keep-object-lifetime.md`, `knowledge/jj-abandoned-object-mtime-clock.md`, `knowledge/fleet-prune-numerator-r35.md` (r36: the held numerator re-census entry), `knowledge/git-strict-descendant-relation-r40.md` (r40: the receipt-revision ordering a register row's commit must have), `knowledge/docstring-class-continuation-lines-r40.md` (r40: the refusal-class continuation-line reading), `knowledge/drift-record-invalid-utf8-r40.md` (r40: the drift record's invalid-UTF-8 branch) |
 | F2 repository size census | frontier, no entry (r12 candidate deferred, `lessons/round-12.md` `## Gate`; sweep: `ls corpus/knowledge \| grep -ciE 'size\|structure\|sizer'` → 0, 2026-10-19); superseded by Round 24 F2 row (:517) | — |
 | F3 duplicate verdicts | frontier, entries held | `knowledge/dupe-finders-detect-then-act.md`, `knowledge/duplicate-verdict-identity.md`, `knowledge/duplicate-verdict-byte-equality.md` |
-| F4 restorable quarantine, file-system semantics | frontier; layout and staging held; read-side fields admitted r24; reference writer + mechanism set admitted r27 (implementation evidence only) | `knowledge/trash-spec-restorable-quarantine.md`, `knowledge/quarantine-same-filesystem-rename.md`, `knowledge/quarantine-staging-no-copy-r23.md`, `knowledge/quarantine-origin-record-fields-r24.md`, `knowledge/origin-record-writer-r27.md`, `knowledge/origin-record-mechanism-set-r33.md`, `knowledge/origin-record-exclusivity-r28.md`, `knowledge/origin-record-durability-r28.md` |
+| F4 restorable quarantine, file-system semantics | frontier; layout and staging held; read-side fields admitted r24; reference writer + mechanism set admitted r27 (implementation evidence only) | `knowledge/trash-spec-restorable-quarantine.md`, `knowledge/quarantine-same-filesystem-rename.md`, `knowledge/quarantine-staging-no-copy-r23.md`, `knowledge/quarantine-origin-record-fields-r24.md`, `knowledge/origin-record-writer-r27.md`, `knowledge/origin-record-mechanism-set-r33.md`, `knowledge/origin-record-exclusivity-r28.md`, `knowledge/origin-record-durability-r28.md`, `knowledge/origin-record-format-gvfs-r40.md` (r40: a second reference implementation reads the per-item record) |
 
 ## Frontier
 
@@ -778,3 +778,23 @@ a measured edge class does not promote a frontier ground to Core (PROVINCE
 ## Round 35 frontier update
 
 - The F1 fleet exposure numerator was re-censused read-only on 2026-10-28: 27 registrations across 26 repositories, 0 immediately prunable (`knowledge/fleet-prune-numerator-r35.md`, S231/S232; `census/round-35/records/prune-census.tsv`). This replaces the current reading, not the historical 2026-10-24 figure. C3's six-leg entry counter passes after A1 fixed its SOURCES status-cell parser; C1 calibration and C2 operability remain under measurement, with feasibility failures retained as residuals. Certification OFF, K5 HELD, NAMESPACE hold unchanged.
+
+## Round 40 frontier update
+
+- The round's three claims are about the lane's own instruments, not the domain surfaces: the C1
+  counter now requires an anchored closure line to carry a RESOLVABLE, REVISION-BOUND evidence
+  pointer (`census/round-40/c1-counter.py`) and rejects a register row whose `commit` is not a strict
+  descendant of its `receipt_rev`; the C2 leg reads the drift tool's refusal classes with the
+  CONTINUATION lines joined (`census/round-40/docstring-classes.py`); the C3 battery adds the record
+  branches no committed fixture asserted (multiple TOTAL rows, `--skip-unrecorded`, invalid UTF-8
+  bytes). The counters and their fixtures are the coverage this round moved.
+- Four knowledge entries were added and mapped: `knowledge/git-strict-descendant-relation-r40.md`,
+  `knowledge/docstring-class-continuation-lines-r40.md` and `knowledge/drift-record-invalid-utf8-r40.md`
+  (F1 row, the three claims' sources S251-S253), and `knowledge/origin-record-format-gvfs-r40.md`
+  (F4 row, the assimilated GVFS reference implementation, S254). All four sit on ground the lane
+  already held, so F1 and F4 stay frontier and no ground is promoted to Core.
+- One theme was assimilated from `/home/vgpnk/Projects/shokuknow/merge/souji/` (the per-item origin
+  record's read side, GVFS `trashlib`); the package's id space collides with the live registry on 58
+  ids, so the adopted row was re-pointed BY DOCUMENT to this lane's id S254 and the collision is
+  filed as an L0 question. Nothing else was adopted.
+- Certification OFF, K5 HELD, NAMESPACE hold unchanged.
