@@ -702,3 +702,15 @@ receipt was re-measured at `78ea25a963f2d2ba93b6049dc2787b7020e2fd80`:
 `consumers-after4.txt` and `a7-counter-fixes.txt`. The earlier receipts (`c1-after2`, `c2-after3`,
 `c3-after2`, `a1-docstring-variants`, `a2-anchor-isolation`) record the pre-amendment bytes and stay
 as filed; none of their values is claimed as the final state.
+
+### Round 38 final receipt pointers (appended after wave 2)
+
+Every claim was re-measured at `4bda5f6759bd4a6c1c965bbd052351fcf69f1bb5` with the post-wave-2
+instruments: `census/round-38/records/c1-after6.txt` (`cells=10 mismatches=0`), `c1-vacuity5.txt`
+(`mismatches=9`), `c2-after5.txt` (`cases=12 pass=12 fail=0 base_cases=12 base_fail=6
+behavioral_fail=3`), `c2-base-composition2.txt` (the composition line, measured at a revision that
+contains it), `c3-after4.txt` (`cases=10 pass=10 fail=0`; `mutants=4 killed=4 survived=0 pristine=ok
+base_killed=0`) and `consumers-after5.txt` (all eight consumer fixtures green). Receipts from
+earlier commits (`c1-after2`…`c2-after4`) stay as filed and describe the pre-amendment bytes; the
+`c2-after3`/`c2-base-composition` labels name a revision that predates the A3 line (`W2RevC2` F5)
+and are superseded by these.
