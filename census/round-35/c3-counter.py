@@ -83,7 +83,7 @@ def registry_rows(root, rev):
         cells = [c.strip() for c in ln.strip().strip("|").split("|")]
         if len(cells) != 11:
             continue
-        rows[m.group(1)] = {"status": cells[8], "usedby": cells[10]}
+        rows[m.group(1)] = {"status": cells[7], "usedby": cells[10]}
     return rows
 
 
