@@ -714,3 +714,14 @@ base_killed=0`) and `consumers-after5.txt` (all eight consumer fixtures green). 
 earlier commits (`c1-after2`…`c2-after4`) stay as filed and describe the pre-amendment bytes; the
 `c2-after3`/`c2-base-composition` labels name a revision that predates the A3 line (`W2RevC2` F5)
 and are superseded by these.
+
+### Round 38 measured-revision block (appended 2026-10-28, final)
+
+All three claims and every consumer are measured at `cb5737a63a704a7a52a1b97dada3fe5634fea32b`:
+`census/round-38/records/c1-after7.txt` (`cells=10 mismatches=0`, rc 0), `c1-vacuity6.txt`
+(`mismatches=9`, rc 1), `c2-after6.txt` (`cases=12 pass=12 fail=0 base_cases=12 base_fail=6
+behavioral_fail=3`, rc 0), `c3-after5.txt` (`cases=10 pass=10 fail=0`; `mutants=4 killed=4
+survived=0 pristine=ok base_killed=0`, rc 0), `consumers-after6.txt` (eight consumers green) and
+`a7-counter-fixes2.txt` (the three counter first-falsifications refused at this revision). The
+earlier pointer blocks stay as filed; where they disagree with this one, this block is later and
+measures the final instruments.
