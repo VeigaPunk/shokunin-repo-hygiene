@@ -599,3 +599,22 @@ produced it) changed what the fixtures carry, never what they require:
 
 Every current target was met at the round landing revision; the earlier rows' numbers remain as
 measured at the freeze. Owned scores unchanged (calibration 7, operability 8, coverage 8).
+
+### Round 37 receipt reconciliation (appended 2026-10-28)
+
+The r36 non-author spot-check routed self-assessment cells whose after-values never lived in a
+committed receipt (`corpus/lessons/round-36-verifier-spotcheck.md`, Routed defects 1). The r36
+measurement rows above stand byte-verbatim (append-only); these rows carry the receipt-backed
+value, its receipt path and a commit at which that receipt exists. No r36 predicate was relaxed.
+
+| row | names | corrected value | receipt (commit) |
+|---|---|---|---|
+| R37-C1-1 | SCORECARD.md:563 (r36 C2 after cell) | `SUMMARY cases=21 pass=21 fail=0 control=STUB-REJECTED` | `census/round-36/records/c2-after.txt` @ `1e771ed59301ed10f68e22d4edf35d5218bacf1a` |
+| R37-C1-2 | SCORECARD.md:564 (r36 C3 after cell) | `SUMMARY cases=12 pass=12 fail=0 control=STUB-REJECTED` | `census/round-36/records/c3-after.txt` @ `1e771ed59301ed10f68e22d4edf35d5218bacf1a` |
+| R37-C1-3 | SCORECARD.md:575 (report-contract capability row) | `SUMMARY cases=21 pass=21 fail=0 control=STUB-REJECTED` | `census/round-36/records/c2-after.txt` @ `1e771ed59301ed10f68e22d4edf35d5218bacf1a` |
+| R37-C1-4 | SCORECARD.md:576 (drift-detector capability row) | `SUMMARY cases=12 pass=12 fail=0 control=STUB-REJECTED` | `census/round-36/records/c3-after.txt` @ `1e771ed59301ed10f68e22d4edf35d5218bacf1a` |
+
+The two measured-commit cells in the r36 C2/C3 rows name `42ea92e` (the freeze commit), where
+neither receipt exists (`git cat-file -e` rc 128 for both). The receipts first exist at `007ab53`
+(20/20 and 12/12) and are current at `1e771ed` (21/21 and 12/12, after amendment A7 refreshed
+C2); the reconciliation rows above name the current one.

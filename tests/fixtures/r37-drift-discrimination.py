@@ -138,6 +138,7 @@ def main(argv):
 
         # prunable-live
         root, path = fleet(scratch, "prunable")
+        make_repo(os.path.join(path, "alpha"))
         wt = os.path.join(root, "alpha-wt")
         sh(["git", "-C", os.path.join(path, "alpha"), "worktree", "add", "-q", wt, "-b", "wt"])
         shutil.rmtree(wt)

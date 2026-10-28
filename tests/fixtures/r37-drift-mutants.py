@@ -84,8 +84,16 @@ def main(argv):
                 ["python3", "-B", args.fixture, "--tool", path, "--work", scratch],
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False,
             )
-            killed = proc.returncode != 0
-            print("MUTANT %s killed=%s rc=%d" % (mid, "yes" if killed else "no", proc.returncode))
+            summary = [l for l in proc.stdout.splitlines() if l.startswith("SUMMARY cases=")]
+            # a fixture crash is a battery defect, not a kill: the fixture must
+            # report its own case summary for the mutant verdict to mean anything.
+            verdict = "ERROR"
+            if summary:
+                fails = int(summary[-1].split("fail=")[1].split()[0])
+                verdict = "yes" if proc.returncode == 1 and fails > 0 else "no"
+            killed = verdict == "yes"
+            print("MUTANT %s killed=%s rc=%d%s" % (mid, verdict, proc.returncode,
+                  "" if summary else " NO-SUMMARY"))
             results.append((mid, killed))
     finally:
         shutil.rmtree(scratch, ignore_errors=True)

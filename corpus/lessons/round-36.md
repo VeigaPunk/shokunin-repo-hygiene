@@ -165,3 +165,8 @@ Changed in place, old → new:
 - Bare repositories are invisible to the drift tool in both directions (reported, not fixed).
 - The lesson truncation's cause is not identified; the file is rebuilt and its bytes are asserted
   before the landing commit.
+
+## Correction (r37, 2026-10-28)
+
+R37-C1-7 — the Claims section above quoted a count for the C2 fixture that no receipt ever carried. Settlement: `census/round-36/records/c2-after.txt` at `1e771ed` carries `SUMMARY cases=21 pass=21 fail=0 control=STUB-REJECTED` (amendment A7 refreshed it), and the base control line stays `cases=11 pass=0 fail=11`.
+The original sentence is left byte-verbatim; this row is the correction. The other never-true citations (SCORECARD rows, SKILL registry, the frozen predicate sentence) are reconciled in `SCORECARD.md` `### Round 37 receipt reconciliation` and in the prereg's `R37-C1-8`/`R37-C1-9` block.

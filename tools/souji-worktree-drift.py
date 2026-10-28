@@ -11,8 +11,13 @@ stderr, not stdout; four phantom paths).
 
 This tool turns that record into a surface: it re-measures every repository the
 record names, read-only, and reports the drift between the recorded numerator
-and the live one. It never prunes, never writes inside the measured tree and
-never consults the network.
+and the live one. `--root` is a containment boundary: a record row that resolves
+outside it is refused (RECORD-OUTSIDE-ROOT), and `--json` is refused when its
+resolved path is inside the root or any measured repository. It never prunes and
+never consults the network. The child git process gets a whitelisted
+environment (no inherited GIT_* variable; config discovery neutralised with
+GIT_CONFIG_NOSYSTEM=1 and GIT_CONFIG_GLOBAL/SYSTEM=/dev/null), so a
+path-valued trace variable or an env-injected config cannot make git write.
 
 Record format (the r35 census TSV):
     REPO<TAB>name<TAB>regs=N<TAB>prunable=N
@@ -42,31 +47,21 @@ import re
 import subprocess
 import sys
 
-SCRUB = (
-    "GIT_DIR",
-    "GIT_WORK_TREE",
-    "GIT_INDEX_FILE",
-    "GIT_OBJECT_DIRECTORY",
-    "GIT_COMMON_DIR",
-    "GIT_NAMESPACE",
-    "GIT_PREFIX",
-    "GIT_SHALLOW_FILE",
-    "GIT_ALTERNATE_OBJECT_DIRECTORIES",
-    "GIT_CONFIG_GLOBAL",
-    "GIT_CONFIG_SYSTEM",
-    "GIT_CONFIG_NOSYSTEM",
-    "GIT_EXTERNAL_DIFF",
-    "GIT_TRACE",
-    "GIT_TRACE2",
-    "GIT_TRACE2_EVENT",
-    "GIT_TRACE2_PERF",
-    "GIT_TRACE_PACK_ACCESS",
-    "GIT_TRACE_PACKET",
-    "GIT_TRACE_PERFORMANCE",
-    "GIT_TRACE_SETUP",
-    "GIT_TRACE_SHALLOW",
-    "GIT_FLUSH",
-)
+# r37 C2 (r36 routed defect 3, W2/W3): a subtractive scrub let every variable
+# not on the list through — GIT_TRACE_REFS wrote a trace file, and because the
+# list *removed* GIT_CONFIG_NOSYSTEM / GIT_CONFIG_GLOBAL / GIT_CONFIG_SYSTEM,
+# real and injected config (including env config) could set a trace2 target.
+# The child environment is now a whitelist: no inherited GIT_* variable reaches
+# git, and config discovery is neutralised explicitly.
+CHILD_ENV = {
+    "LC_ALL": "C",
+    "GIT_CONFIG_NOSYSTEM": "1",
+    "GIT_CONFIG_GLOBAL": os.devnull,
+    "GIT_CONFIG_SYSTEM": os.devnull,
+    "GIT_ATTR_NOSYSTEM": "1",
+    "GIT_OPTIONAL_LOCKS": "0",
+    "GIT_TERMINAL_PROMPT": "0",
+}
 ROW = re.compile(r"^REPO\t(?P<name>[^\t]+)\tregs=(?P<regs>\d+)\tprunable=(?P<prunable>\d+)$")
 TOTAL = re.compile(r"^TOTAL\trepos=(?P<repos>\d+)\tregs=(?P<regs>\d+)\tprunable=(?P<prunable>\d+)$")
 
@@ -76,12 +71,10 @@ class Refusal(Exception):
 
 
 def git_env():
-    env = dict(os.environ)
-    for key in SCRUB:
-        env.pop(key, None)
-    env["LC_ALL"] = "C"
-    env["GIT_OPTIONAL_LOCKS"] = "0"
-    env["GIT_TERMINAL_PROMPT"] = "0"
+    env = {"PATH": os.environ.get("PATH", "/usr/local/bin:/usr/bin:/bin")}
+    env.update(CHILD_ENV)
+    if "TMPDIR" in os.environ:
+        env["TMPDIR"] = os.environ["TMPDIR"]
     return env
 
 
@@ -192,18 +185,35 @@ def run(args):
     root = os.path.abspath(args.root)
     if not os.path.isdir(root):
         raise Refusal("USAGE: --root %s is not a directory" % root)
-    if args.json:
-        # r36 A2 (wave seat SwarmSentinel24 F1): an --json path inside the measured
-        # tree truncated a file the run is supposed to observe. Refuse containment.
-        target = os.path.realpath(os.path.abspath(args.json))
-        root_real = os.path.realpath(root)
+    root_real = os.path.realpath(root)
+    rows, total = parse_record(args.record)
+    # r37 C2 (r36 routed defect 3, W1): --root is a containment boundary. A record
+    # row naming an absolute path or `../sibling` escaped it, so the same run could
+    # observe a repository the caller's root does not govern.
+    measured = [root_real]
+    for row in rows:
+        resolved = os.path.realpath(os.path.join(root, row["name"]))
         try:
-            inside = os.path.commonpath([target, root_real]) == root_real
+            inside = os.path.commonpath([resolved, root_real]) == root_real
         except ValueError:
             inside = False
-        if inside:
-            raise Refusal("JSON-INSIDE-MEASURED-TREE: %s is under %s" % (target, root_real))
-    rows, total = parse_record(args.record)
+        if not inside:
+            raise Refusal("RECORD-OUTSIDE-ROOT: %s resolves outside %s" % (row["name"], root_real))
+        measured.append(resolved)
+    json_target = None
+    if args.json:
+        # r36 A2 + r37 C2 (W1/W4): the guard resolved one path while the writer
+        # opened another, and it compared only the root — not the record's
+        # repositories. Check every measured path, then write the resolved path
+        # through an O_NOFOLLOW descriptor so a symlink swap cannot redirect it.
+        json_target = os.path.realpath(os.path.abspath(args.json))
+        for base in measured:
+            try:
+                inside = os.path.commonpath([json_target, base]) == base
+            except ValueError:
+                inside = False
+            if inside:
+                raise Refusal("JSON-INSIDE-MEASURED-TREE: %s is under %s" % (json_target, base))
     drift = []
     live_regs = live_prunable = unreachable = 0
     # r36 A4 (wave seat SwarmExecutor22 F1): the old formula len(rows) - absent - unreachable
@@ -271,9 +281,10 @@ def run(args):
             summary["unreachable"],
         )
     )
-    if args.json:
+    if json_target is not None:
         try:
-            with open(args.json, "w", encoding="utf-8") as handle:
+            fd = os.open(json_target, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW, 0o644)
+            with os.fdopen(fd, "w", encoding="utf-8") as handle:
                 json.dump({"summary": summary, "drift": [{"class": c, "repo": n, "detail": d} for c, n, d in drift]}, handle, indent=1, sort_keys=True)
                 handle.write("\n")
         except OSError as exc:
