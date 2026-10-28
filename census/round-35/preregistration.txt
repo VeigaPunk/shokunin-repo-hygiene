@@ -1,0 +1,89 @@
+# souji round 35 preregistration (frozen contract)
+
+Lane base (pre-round tip): 1e9cad0b553891c41fe5b7ad1686decc147d76d4
+  (r34 leftover evidence records landed there — before the measured window, so G1's
+  `git diff --quiet base rev -- census/round-34` stays clean inside the round)
+Instrument commit (counters/legs/items/fixture): d1c940414087b606503662e4d115f51cb0fba40c
+Freeze commit (this file + control receipts + C3 record/source snapshot): FROZEN_AT_COMMIT
+Base for do-nothing readings: d1c940414087b606503662e4d115f51cb0fba40c (instrument rev)
+
+Round context: r34 closure was `ok` with five routed defects
+(corpus/lessons/round-34-verifier-spotcheck.md `## Routed defects`); both r34 targets
+missed (C1 agree=35/60, C2 pass=9/13). Scores: calibration 7, operability 8, coverage 8.
+Lowest non-retired axis: calibration -> C1.
+
+## Claims (frozen; one per axis, causally separable)
+
+C1 — calibration (axis: calibration; lowest non-retired).
+  Predicate: `python3 -B census/round-35/c1-counter.py --root <lane> --rev <landing> --list-rev <freeze> --scratch <dir>`
+  prints `SUMMARY items=60 agree=<a> unresolved=0 mismatches=<m> withdrawn=<w> restated=<r>`
+  with `w <= 4` and exits 0. Every residual mismatch is discharged by an AGREE
+  (repaired predicate now matches), a counter-verified restatement under
+  `### Round 34/35 registry restatements`, or a witnessed withdrawal under
+  `### Round 35 registry withdrawals`.
+  Do-nothing control: `census/round-35/records/controls-c1-do-nothing.txt` — same counter
+  at the instrument rev prints unresolved>0 and exits 1. If it had printed
+  unresolved=0 the claim would be vacuous (kill rule K1).
+  Kill rules: K1 do-nothing reaches the target; K2 any counter/predicate edit after the
+  freeze commit is an amendment recorded here, never a frozen-rule change; K3 a withdrawn
+  item beyond WITHDRAW_MAX=4 or with an absent/empty witness file is unresolved.
+  Counter/file: census/round-35/c1-counter.py, census/round-35/c1-items.tsv (60 items
+  carried from r34 with the named G24 re-pin; list read at --list-rev only).
+
+C2 — operability (axis: operability).
+  Predicate: `python3 -B census/round-35/c2-counter.py --root <lane> --rev <landing> --base <lane-base> --list-rev <freeze> --scratch <dir>`
+  prints `SUMMARY legs=13 pass=13 fail=0 harm_measured=0` and exits 0.
+  Before: at --rev 9c76c7222a8abff027af42e37f0d160d52526bba (pre-instrument tip) the legs
+  file is absent -> COULD-NOT-EVALUATE rc 2 (controls-c2-do-nothing.txt); J1's stub control
+  must print control=STUB-REJECTED.
+
+  Kill rules: K1 do-nothing reaches the target; K2 same amendment rule; K3
+  `harm_measured` is derived (failed guard/nsbind legs) — a printer literal is a defect;
+  K4 a leg failing feasibility in wave 1 stays a named residual, never silently dropped.
+  Counter/files: census/round-35/c2-counter.py, census/round-35/c2-legs.tsv,
+  tests/fixtures/r35-sandbox-junk.py (13 legs).
+
+C3 — coverage (axis: coverage; sourced claim).
+  Predicate: `python3 -B census/round-35/c3-counter.py --root <lane> --rev <landing> --list-rev <freeze>`
+  prints `SUMMARY entries=1 legs=6 fail=0` and exits 0.
+  Surface: corpus/knowledge/fleet-prune-numerator-r35.md admitted on F1 (coverage map
+  "fleet exposure numerator re-census"), trio + ground: F1 + mined SOURCES rows citing
+  it, figures equal to census/round-35/records/prune-census.tsv (measured 2026-10-28:
+  repos=26 regs=27 prunable=0).
+  Sources opened this round: S231 (own-work r35 census receipt), S232 (git-worktree(1)
+  LIST OUTPUT FORMAT, prunable attribute; snapshot census/round-35/sources/git-worktree.1.txt).
+  Do-nothing: controls-c3-do-nothing.txt — entry absent at pre-instrument tip 9c76c72, fail=5, rc 1.
+  Kill rules: K1 do-nothing reaches the target; K2 same amendment rule; K5 registry rows
+  appended only for sources the admitted entry cites (CORPUS.md rule 4).
+
+## Guards (frozen)
+
+G2 touched-paths (inside C2 counter): allowed = census/round-35/, tests/fixtures/r35-*, .ufo/waves/round-35/, corpus/ prefix, and SCORECARD.md, SKILL.md, LOG.md, PROVINCE.md, SHONEN.md, AGENTS.md, MINT.md, .gitignore. The corpus prefix includes the round lesson, SOURCES, README and knowledge entry; LOG.md is explicit per r34 routed defect 4.
+
+G5 C1/C2 disjointness: no single commit touches both a C1 file (SCORECARD.md, SKILL.md)
+and a C2 file (census/round-35/c2-*) — restatement/withdrawal rows land in their own
+commit(s), C2 legs/counter land in theirs. Preregistration + controls land together
+(allowed: neither claim's measured bytes are produced by it; it is the freeze commit
+itself, carved out in the G5 implementation).
+
+## Controls committed at the freeze commit
+
+- census/round-35/records/controls-c1-do-nothing.txt (C1 at instrument rev: agree=37/60, unresolved=23, mismatches=23, withdrawn=0, restated=5; red, rc=1)
+- census/round-35/records/controls-c2-do-nothing.txt (C2 at pre-instrument tip: legs absent, COULD-NOT-EVALUATE rc 2)
+- census/round-35/records/controls-c3-do-nothing.txt (C3 at pre-instrument tip: entry absent, fail=5, rc=1)
+- census/round-35/records/prune-census.tsv (C3 record; measured 2026-10-28)
+- census/round-35/sources/git-worktree.1.txt (S232 byte snapshot, sha256 2330c8c8…)
+- census/round-35/records/n3-feas-test.txt (N3 feasibility: `cases=12 pinned=True summary=False`, fail; named residual, not dropped)
+- census/round-35/records/w1n4-feas-test.txt (W1/N4 feasible: W1 pass, N4 pass; W2/W3/W4 remain unmeasured)
+- census/round-35/records/w2-feas-test.txt (empty timed-out attempt; no evidence, not cited)
+- census/round-34/records/{controls-c1-do-nothing,controls-c2-do-nothing,feasibility,
+  feasibility-repaired,junk-c2,junk-c2-repaired}.txt — the six r34 leftovers committed
+  (r34 routed defect 1 resolution; receipts, not targets)
+
+## Amendments
+
+Recorded here, newest last; an amendment may tighten checks or repair instrument
+defects but never loosens a frozen predicate, target, or kill rule, and never lands
+after a claim's final measurement began.
+
+- (none yet)
