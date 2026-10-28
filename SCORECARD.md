@@ -659,3 +659,37 @@ the round-38 report, not claimed here.
 | R38-C1-5 | r37 C1 after cell | `census/round-37/records/c1-fixture-after.txt` @ `b491596` carries `cases=16`, the grown fixture count the row's twelve-case reading predates |
 | R38-C1-6 | r37 C1 after cell | `census/round-37/records/c1-after.txt` @ `02b4339` carries `mismatches=0` |
 
+### Round 38 measurements (2026-10-28; base `ca4369a9296011644636711a624da6a8074e8e2a`; preregistration `4090ee5b04ca3205d61c044b89fd9f318cf9850c`; landing `2843805d4631b040219ed1ba60053035b5a86f07`)
+
+| claim | axis | before | after | counting command | measured commit |
+|---|---|---|---|---|---|
+| C1 commit-arm citation reconciliation | calibration 7 | `SUMMARY cells=10 mismatches=10`, rc 1 — no correction line exists at the base (`census/round-38/records/c1-before.txt`) | `SUMMARY cells=10 mismatches=0`, rc 0: ten anchored lines name their receipt and a commit where the receipt carries the value; the vacuity control reads `mismatches=9`, rc 1 (`c1-vacuity2.txt`) | `python3 -B tools/souji-citation-reconcile.py --root . --rev <full40> --register census/round-38/cells.tsv --register-rev 4090ee5b04ca3205d61c044b89fd9f318cf9850c`; fixture `python3 -B tests/fixtures/r38-citation-commit.py` -> `cases=14 pass=14 fail=0 control=FALSE-GREEN-REJECTED` | `2843805d4631b040219ed1ba60053035b5a86f07` (`c1-after2.txt`) |
+| C2 drift write envelope | operability 8 | the r37 blob hangs on a FIFO `--json` (rc 124 under `timeout 8`), overwrites its own record with JSON and exits 0, and documents four fewer classes; the fixture's base arm itemises the six failing cases (`census/round-38/records/c2-before.txt`) | `SUMMARY cases=12 pass=12 fail=0 base_cases=12 base_fail=6`, rc 0: `O_NONBLOCK` open with an `S_ISREG` refusal, `JSON-IS-RECORD` by path and inode, and a docstring enumeration read through `ast` + comment-stripped code (`c2-after2.txt`) | `python3 -B tests/fixtures/r38-drift-write-envelope.py --base-tool <git show ca4369a:tools/souji-worktree-drift.py>` | `2843805d4631b040219ed1ba60053035b5a86f07` (`c2-after2.txt`) |
+| C3 record-validation discrimination | coverage 8 | the r37 discrimination fixture kills none of the four record mutants: `mutants=4 killed=0 survived=4 pristine=ok` (`c3-before.txt`) | `cases=10 pass=10 fail=0` and `mutants=4 killed=4 survived=0 pristine=ok base_killed=0`, rc 0 (`c3-after2.txt`) | `python3 -B tests/fixtures/r38-drift-mutants.py --fixture tests/fixtures/r38-drift-record.py --base-fixture tests/fixtures/r37-drift-discrimination.py` | `2843805d4631b040219ed1ba60053035b5a86f07` (`c3-after2.txt`) |
+
+Owned score values are unchanged (calibration 7, operability 8, coverage 8): the lane still has no
+reproducible 0-10 mapping, so the rows carry measurements and verdicts rather than numbers. No axis
+is harmed: no predicate was relaxed, the r36/r37 fixtures and the r35 census record are byte-identical,
+and every consumer stayed green (`consumers-after2.txt`: 16/16, 14/14, 12/12, 6/6, 12/12 with
+`base_fail=9 escapes=9`, 21/21, 10/10).
+
+### Round 38 capability rows (appended)
+
+| name | what it can now do | evidence pointer | first-working round |
+|---|---|---|---|
+| measured-commit citation arm (r38) | bind a self-assessment cell to a concrete revision: the commit must resolve, be an ancestor of the audited revision, be named on the anchored line, and the cited receipt blob at that commit must carry the expected token; seven-column registers stay valid | `python3 -B tools/souji-citation-reconcile.py --root <lane> --rev <full40> --register census/round-38/cells.tsv --register-rev <freeze>` -> `cells=10 mismatches=0`; `python3 -B tests/fixtures/r38-citation-commit.py` -> `cases=14 pass=14 fail=0 control=FALSE-GREEN-REJECTED` | r38 |
+| non-blocking output envelope (r38) | refuse a `--json` target that is not a regular file without blocking (FIFO/socket/directory), and refuse an output that is the input by resolved path or inode, so a run can neither hang on nor destroy its input | `python3 -B tests/fixtures/r38-drift-write-envelope.py --base-tool <r37 blob>` -> `cases=12 pass=12 fail=0 base_cases=12 base_fail=6` | r38 |
+| record-validation discrimination (r38) | a ten-case record fixture plus a four-mutant battery with a pristine control that scores the tool's TOTAL cross-checks and duplicate-name refusal, and a base-fixture arm that proves the gap on the previous fixture | `python3 -B tests/fixtures/r38-drift-record.py` -> `cases=10 pass=10 fail=0`; `python3 -B tests/fixtures/r38-drift-mutants.py --fixture tests/fixtures/r38-drift-record.py --base-fixture tests/fixtures/r37-drift-discrimination.py` -> `mutants=4 killed=4 survived=0 pristine=ok base_killed=0` | r38 |
+
+### Planned (appended at round 38)
+
+- **r39 (planned r38):** calibration: give at least two register rows a `commit` different from
+  `receipt_rev` so the live register, not only the fixture, exercises the arm's revision
+  discrimination (this round's ten rows are all `commit == receipt_rev`, disclosed); sweep the
+  remaining stale cells the wave found outside the register. Operability: make the docstring case
+  read the real module docstring through `ast` only (variant b1 is now caught only by the docstring
+  token removal, and the one-way phantom limit is named), and cover `argparse`'s own exit 2.
+  Coverage: mutation-score the fixture's other record rules (comment/blank skipping, optional
+  TOTAL) and the drift classes, which the four frozen mutants do not touch. Certification OFF, K5 HELD.
+
+
