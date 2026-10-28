@@ -143,10 +143,11 @@ def main(argv):
     try:
         source = git_show(args.root, args.rev, args.tool)
         candidate_src = git_show(args.root, args.rev, args.fixture)
-        base_src = git_show(args.root, args.rev, args.base_fixture)
+        base_src = git_show(args.root, args.base_rev, args.base_fixture)
         if source is None or candidate_src is None or base_src is None:
             sys.stderr.write(
-                "REFUSAL COULD-NOT-EVALUATE: tool or fixture absent at %s\n" % args.rev)
+                "REFUSAL COULD-NOT-EVALUATE: tool/candidate fixture absent at %s or base fixture absent at %s\n"
+                % (args.rev, args.base_rev))
             return 2
         tool_sha = hashlib.sha256(source.encode()).hexdigest()[:12]
         fixture_sha = hashlib.sha256(candidate_src.encode()).hexdigest()[:12]
