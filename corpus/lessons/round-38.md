@@ -185,3 +185,46 @@ from `SOURCES.append.md` was appended.
 - The ten reconciled cells are the ones the r37 spot-check routed and the lane owns; the r37
   report's own cells are fleet-repo bytes outside this round's write scope and are carried as an
   errata section in the round-38 report, not claimed.
+
+## Corrections after wave 1 (appended 2026-10-28)
+
+- **C1 composition, disclosed (wave-1 seat W1CritCorrections Q2).** Of the ten reconciliation rows,
+  four bind cells that were stale at the base — the three LOG `R38-C1-7/8/9` lines (the round-37 C2
+  bullet quoted the six-case draft's counts) and `R38-C1-10` (the Q84 evidence cell). The six
+  SCORECARD rows (`R38-C1-1`-`6`) re-cite values the lane already held at the freeze (`escapes=9`,
+  `base_fail=9`, `killed=6`, `survived=0`, `cases=16`, `cells=11 mismatches=0`), which is the r33 M3
+  artifact: they add a commit binding, not a corrected number. The cell class routed defect 2 names
+  — the measured-commit cells (`0be9bd0` in the r37 rows) — is carried by **no** row and survives;
+  the arm is demonstrated by fixture case R6 only, and all ten register rows carry
+  `commit == receipt_rev`. The claim's frozen predicate (`cells=10 mismatches=0`) holds; the
+  calibration *credit* for a cell repair is four rows, not ten.
+- **A4 (record FIFO TOCTOU, seat W1SentEnvelope F1/R3).** `parse_record`'s `isfile`-then-`open` pair
+  hung forever when the path was swapped to a FIFO; the record is now opened `O_RDONLY|O_NONBLOCK`
+  with an `fstat` regular-file check. Every existing case is unchanged (10/10).
+- **A5 (battery kill gate, seat W1RevBattery).** A fixture that printed one `=FAIL` line, a SUMMARY
+  and then crashed scored `killed`; a kill now needs the fixture's own `fail=N` with `N > 0` and no
+  traceback. Four mutants still 4/4.
+- **A6 (record fixture opacity, seat W1RevRecordFixture F1/F2).** The record filename carried the
+  case name, so a name-inferring stub passed 10/10 without reading the file; names are opaque now
+  and the refusal cases assert the exact message values.
+- **A7 (counter envelope and matching, seat W1SentCounter S1/S3/S4).** `receipt_rev` is now bound
+  (resolve + ancestor), the expected token is matched against the SUMMARY line cut at its first
+  comment marker (the `# expected cells=3` tail no longer satisfies it; the r37 fixture's
+  two-field `cases=21 pass=21` still does), and the register is opened `O_NOFOLLOW|O_NONBLOCK` with
+  an `S_ISREG` check (a FIFO register used to hang). Evidence:
+  `census/round-38/records/a7-counter-fixes.txt`.
+
+### Additional named limits (appended after wave 1)
+
+- **Post-guard rename race (`W1ExecAliasMatrix` `info-rename-swap`).** Alias detection is
+  invocation-time; an actor that renames the record onto the `--json` path after the guard still
+  loses it. 52/52 invocation-time spellings are refused; the race is outside the claim.
+- **The measured-tree guard is a path check while the writer re-walks the path**
+  (`W1SentEnvelope` F2/R2: 31 of 60 runs wrote the JSON inside `--root` after a directory swap;
+  F3: a `--json` path in the gitdir of a measured repository is written). F4: a write that fails
+  after `ftruncate` leaves the target empty (data loss on error). These are real residuals of the
+  envelope, not of the three routed defects.
+- **Any blob carrying a SUMMARY line can be a "receipt"** (`W1SentCounter` S2): the counter checks
+  the named blob, not that the blob is a receipt. Author-chosen evidence is the arm's design limit.
+- **`--json ""` is silently ignored** (`W1RevEnvelope` F1) and refusals after the measurement emit
+  the SUMMARY first (F2); both are cosmetic and outside C2.
