@@ -220,3 +220,7 @@ R38-C1-10 the Q84 evidence cell's "`census/round-37/records/c2-before.txt` (4 es
 ### R39 correction (round 39, appended)
 
 R39-C1-13 — QUALITY-line-209's evidence cell (`census/round-37/records/c2-before.txt` (4 escapes) vs `c2-after.txt` (0)) should have carried `escapes=9` on both arms: `census/round-37/records/c2-before.txt` @ `861c2ba268883d271d0b5d0e4884a0948a9c354c` prints `SUMMARY cases=12 pass=3 fail=9 base_fail=9 escapes=9 control=ESCAPE-REPRODUCED`, rc 1, and `c2-after.txt` @ `02b43398ffd295a399c7097ab0d8b2eb70fb490a` prints `SUMMARY cases=12 pass=12 fail=0 base_fail=9 escapes=9 control=ESCAPE-REPRODUCED`, rc 0 — so the `0` the cell quotes is that receipt's `fail` field, not an escape count, and `4` has no carrier at all: no committed receipt anywhere contains `escapes=4` (the only occurrences are the stale column of `census/round-38/cells.tsv`), so R38-C1-10 above already moved the before half to `escapes=9` @ `861c2ba`. The fixture counts base-tool escapes (`tests/fixtures/r37-drift-escapes.py`: `escapes = sum(1 for v in base_escaped.values() if v)`), so 9 on both arms holds by construction and the discriminating fields are `pass` 3→12 and `fail` 9→0. The Q84 criterion text is unchanged; only its evidence pointer is corrected here (append-only, per CORPUS.md rule 2).
+
+### R39 register cell (round 39, appended)
+
+R39-REG-06 — the `open=16` field of `census/round-39/records/c1-before.txt` (receipt_rev f8ba3f3, re-verified at a8e6d75); the stale reading `open=1` belongs to the pre-repair bytes.
