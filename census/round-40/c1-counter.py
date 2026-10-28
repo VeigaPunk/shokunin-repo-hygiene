@@ -255,8 +255,12 @@ def evaluate_item(root, rev, row):
         return False, "EVIDENCE-NOT-ANCESTOR %s" % evidence_rev
     if git_show(root, evidence_rev, row["evidence_path"]) is None:
         return False, "EVIDENCE-PATH-ABSENT %s@%s" % (row["evidence_path"], evidence_rev)
-    if not any(evidence_rev.lower() in line.lower() for line in good):
-        return False, "EVIDENCE-NOT-BOUND %s" % evidence_rev
+    if not any(
+        evidence_rev.lower() in line.lower()
+        and ("`%s`" % row["evidence_path"]) in line
+        for line in good
+    ):
+        return False, "EVIDENCE-NOT-BOUND %s@%s" % (row["evidence_path"], evidence_rev)
     return True, "CLOSED"
 
 

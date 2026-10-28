@@ -39,7 +39,7 @@ non-row.
   `worktree.c`).** The lane already holds git's prune gate (`worktree.c` appears in 9 rows of
   `corpus/SOURCES.md`); adopting it again would be a duplicate, not new ground. Flip: none.
 - **Id collision census (the reason the adoption is one entry and not a bulk append).** The §10
-  command, run in scratch under `.ufo/waves/round-40/assimilation/` and copied into the lane at `census/round-40/assimilation/`:
+  command and its receipts are stored under `census/round-40/assimilation/`:
   `reg-ids` 177 ids, `staged-ids` 134 ids, `collisions` **58** ids (S109-S242), and every collision
   is a DIFFERENT document: the lane's S109 is its round-2 `RENAME_NOREPLACE` probe while the
   package's S109 is `git-fetch(1)`; the lane's S110 is `rename(2)` while the package's S110 is git's
@@ -91,6 +91,20 @@ non-row.
   the census after the final registry append and names the revision it measured. The three defects
   are the round's C1 items, and their closure lines carry their evidence pointers.
 
+
+### M40-3 — the frozen C2 predicate did not freeze its pair set or the join grammar
+
+- **class:** calibration / operability measurement-input defect.
+- **evidence pointer:** `census/round-40/waves/w1/R40sentinel23.md` F1-F4, `R40sentinel11.md` (probe-name/oracle control), `R40executor14.md` (the chmod-0 probe changes class under a privileged runner), and `census/round-40/waves/w1/R40mutationtester08.md`. The r39 one-line analyzer already sees `EACCES` on the first `RECORD-MISSING` line at the frozen base; the preregistration did not freeze the synthetic docstring bytes, complete class/trigger pair list, entry-start/join rule, or a non-root observation precondition. The r40 L4 list was authored after the wave had scored.
+- **captured-by:** the run's own pre-data-freeze rule (§9: “A rule changed after any seat has scored is not the claim's rule”) and the round contract's requirement that the frozen predicate, counter condition, and receipt label match. The r40 prompt required a “frozen list” but no list was in `preregistration.txt`.
+- **fix:** none within this frozen round; do not rewrite the preregistration after scoring. The claim's counter and fixture measure one chosen reading (`census/round-40/records/c2-after-d.txt`), but the frozen claim remains **unprovable** because the observation set and join grammar were not declared before data. Future C2 claims must commit the exact list, probe bytes, entry-boundary grammar, and privilege/environment conditions in the preregistration before dispatch.
+
+### M40-4 — the frozen C3 base-fixture identity is ambiguous and the pristine TOTAL contract disagrees with the tool
+
+- **class:** calibration / coverage claim-definition and baseline identity defect.
+- **evidence pointer:** `census/round-40/waves/w1/R40connector09.md` F1-F3, `R40connector21.md` F1-F2, `R40connector33.md` F1-F3, `R40connector45.md`, and `census/round-40/waves/w1/R40reviewer54.md`. “r39 base fixture” can mean the r39 battery's base input (`r38-drift-record.py`) or the r39 candidate fixture (`r39-drift-record-rules.py`), which already kills M11-M14. The r40 counter chose the latter; the frozen wording does not name that file. Separately, `tools/souji-worktree-drift.py:162-178` overwrites each TOTAL row, so a mismatching TOTAL followed by a matching TOTAL is accepted although the docstring at `:47-48` says a TOTAL row that disagrees is malformed.
+- **captured-by:** the frozen-claim sizing rule (§9: one concrete after-state and one re-derivable counter), plus the fixture-contract rule Q85: each named branch needs a case whose assertion is load-bearing and a base fixture whose identity is pinned.
+- **fix:** none to the frozen claim after data. The measured battery (`census/round-40/records/c3-after-d.txt`) proves its four chosen mutants against the chosen r39 fixture, but does not resolve the alternate baseline reading, retain the four prior mutants as regression controls, or test first-disagreeing/last-agreeing TOTAL order. Report C3 as **unprovable**, not as an admitted coverage move. Future preregistration must name the exact base fixture and include both TOTAL orderings; the tool-contract discrepancy is routed for a separately frozen repair.
 ## Frontier
 
 - The round moved the lane's INSTRUMENTS, not the domain surfaces: F1 and F4 stay frontier, the
