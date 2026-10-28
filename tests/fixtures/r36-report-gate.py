@@ -331,9 +331,31 @@ def main(argv):
             print("control=STUB-NOT-REJECTED replicated=%s" % ",".join(replicated))
         else:
             print("control=STUB-REJECTED")
+        # r36 A5 (wave seat SwarmExecutor15): a checker that prints nothing and exits 0
+        # must not read as a pass. Its gate must FAIL a conforming report.
+        vacuous = os.path.join(scratch, "vacuous-checker.py")
+        write(vacuous, "import sys\nsys.exit(0)\n")
+        gate_copy = os.path.join(scratch, "gate-vacuous.sh")
+        gate_text = open(gate, encoding="utf-8").read()
+        if "checker=$lane/tools/souji-report-contract.py" in gate_text:
+            write(gate_copy, gate_text.replace("checker=$lane/tools/souji-report-contract.py", "checker=%s" % vacuous))
+            root = os.path.join(scratch, "vacuous")
+            os.makedirs(root)
+            lane = build_lane(root, "lane")
+            report = os.path.join(root, "report.md")
+            prereg = os.path.join(root, "prereg.txt")
+            write(report, CONFORMING)
+            write(prereg, "prereg\n")
+            install_shonen(lane, SHONEN)
+            proc = run(["bash", gate_copy, "--lane", lane, "--branch", "master", "--report", report, "--prereg", prereg, "--contract"])
+            if proc.returncode == 0:
+                control_ok = False
+                print("control=VACUOUS-CHECKER-ACCEPTED")
+            else:
+                print("control=VACUOUS-CHECKER-REJECTED")
     finally:
         shutil.rmtree(scratch, ignore_errors=True)
-    print("SUMMARY cases=%d pass=%d fail=%d control=%s" % (passed + failed, passed, failed, "STUB-REJECTED" if control_ok else "STUB-NOT-REJECTED"))
+    print("SUMMARY cases=%d pass=%d fail=%d control=%s" % (passed + failed, passed, failed, "STUB-REJECTED" if control_ok else "CONTROL-LEAK"))
     return 0 if failed == 0 and control_ok else 1
 
 

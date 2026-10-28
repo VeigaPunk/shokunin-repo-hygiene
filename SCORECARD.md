@@ -584,3 +584,18 @@ r27 gate regression is unchanged, and the r35 census record is left as filed.
   mutation probes falsify; coverage: move the drift tool's live numerator into a dated record of
   its own so F1 has a current reading rather than a record plus a drift report. Certification OFF,
   K5 HELD, NAMESPACE hold unchanged.
+
+### Round 36 amendment supersessions (appended 2026-10-28; the rows above stand as written)
+
+The Round 36 measurement rows recorded the targets frozen before wave 1. Four tighter-only
+amendments (A1–A4, each named in `census/round-36/preregistration.txt` with the wave seat that
+produced it) changed what the fixtures carry, never what they require:
+
+| claim | superseded target | current target | why | receipt |
+|---|---|---|---|---|
+| C2 | `cases=11 pass=11 fail=0 control=STUB-REJECTED` | `cases=20 pass=20 fail=0 control=STUB-REJECTED` | A1 guarded an empty code span; A2 bound the gate verdict on rc AND the absence of a printed `=FAIL` and forwarded diagnostics; A3 made `sections` fence/comment-aware and exact-normalized, and added isolated `evidence-*` cases that kill five measured mutants (SwarmMutationTester13/14) | `census/round-36/records/c2-after.txt` |
+| C3 | `cases=9 pass=9 fail=0 control=STUB-REJECTED` | `cases=12 pass=12 fail=0 control=STUB-REJECTED` | A2 refused `--json` inside the measured root and scrubbed `GIT_TRACE*`/`GIT_FLUSH` (SwarmSentinel24); A4 fixed the `live_repos` arithmetic that could go negative (SwarmExecutor22 F1) | `census/round-36/records/c3-after.txt` |
+| C1 | counter alone (`mismatches=0`) | counter **plus** the strict path probe (`distinct=27 missing=0 nested_entries=0`) | SwarmCritic07's W2/W3 showed the counter's resolution check is basename-only; the claim's resolution clause is carried by the probe and the counter's limit is reported (QUALITY Q80) | `census/round-36/records/c1-strict-paths.txt` |
+
+Every current target was met at the round landing revision; the earlier rows' numbers remain as
+measured at the freeze. Owned scores unchanged (calibration 7, operability 8, coverage 8).
