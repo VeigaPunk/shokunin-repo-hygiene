@@ -25,6 +25,11 @@ Cases:
                      GIT_CONFIG_GLOBAL/SYSTEM=/dev/null, no config injection
   json-inside        --json inside the measured root (r36 A2 regression)  -> rc 2, file absent
   trace2-event       GIT_TRACE2_EVENT=<scratch>/trace (r36 A2 regression) -> trace absent
+  json-hardlink      --json names an out-of-root hardlink to an in-root
+                     file                                                -> rc 2, victim unchanged
+  measured           a record that disagrees with the live tree            -> rc 1 REGS-CHANGED
+                                                                             drift_rows=1 (a fixed-
+                                                                             summary stub fails)
 
 CLI:
   python3 -B tests/fixtures/r37-drift-escapes.py [--tool PATH] [--base-tool PATH] [--work DIR]
@@ -145,16 +150,28 @@ def cases(tool, scratch):
     seen = ""
     if os.path.exists(witness):
         seen = open(witness, encoding="utf-8", errors="replace").read()
-    ok = (
-        "GIT_CONFIG_NOSYSTEM=1" in seen
-        and "GIT_CONFIG_GLOBAL=/dev/null" in seen
-        and "GIT_CONFIG_SYSTEM=/dev/null" in seen
-        and "GIT_CONFIG_COUNT=" not in seen
-        and "GIT_CONFIG_PARAMETERS=" not in seen
+    # r37 A2 (wave seat W1CritC2): four literal conjuncts let a blacklist built
+    # from exactly those four names pass. The witness now asserts the property:
+    # no GIT_* key outside the declared allowlist, and the three config keys at
+    # their neutral values.
+    allowed = {
+        "GIT_CONFIG_NOSYSTEM", "GIT_CONFIG_GLOBAL", "GIT_CONFIG_SYSTEM",
+        "GIT_ATTR_NOSYSTEM", "GIT_OPTIONAL_LOCKS", "GIT_TERMINAL_PROMPT",
+    }
+    pairs = {}
+    for line in seen.splitlines():
+        if "=" in line:
+            key, value = line.split("=", 1)
+            pairs[key] = value
+    stray = sorted(k for k in pairs if k.startswith("GIT_") and k not in allowed)
+    out["env-witness"] = (
+        not stray
+        and pairs.get("GIT_CONFIG_NOSYSTEM") == "1"
+        and pairs.get("GIT_CONFIG_GLOBAL") == "/dev/null"
+        and pairs.get("GIT_CONFIG_SYSTEM") == "/dev/null"
         and not os.path.exists(os.path.join(root, "trace2-count"))
         and not os.path.exists(os.path.join(root, "trace2-parameters"))
     )
-    out["env-witness"] = ok
 
     # json-inside: the r36 A2 containment regression (both ends must refuse).
     root, fleet, sibling = build(scratch, "json-inside")
@@ -169,6 +186,28 @@ def cases(tool, scratch):
     trace = os.path.join(root, "trace2-event.log")
     rc, text = invoke(tool, fleet, rec, env_extra={"GIT_TRACE2_EVENT": trace})
     out["trace2-event"] = not os.path.exists(trace)
+
+    # json-hardlink: realpath cannot resolve a hardlink; a multi-link target is
+    # an inode inside a measured repository.
+    root, fleet, sibling = build(scratch, "json-hardlink")
+    rec = record(root, [("alpha", 1, 0), ("beta", 1, 0)], (2, 2, 0))
+    outdir = os.path.join(root, "out")
+    os.makedirs(outdir)
+    link = os.path.join(outdir, "pwned.json")
+    victim = os.path.join(fleet, "alpha", "file.txt")
+    before_bytes = open(victim, "rb").read()
+    os.link(victim, link)
+    rc, text = invoke(tool, fleet, rec, extra=["--json", link])
+    out["json-hardlink"] = (
+        rc == 2 and "JSON-HARDLINKED" in text
+        and open(victim, "rb").read() == before_bytes
+    )
+
+    # measured: a fixed-summary stub must fail the required measured drift.
+    root, fleet, sibling = build(scratch, "measured")
+    rec = record(root, [("alpha", 2, 0), ("beta", 1, 0)], (2, 3, 0))
+    rc, text = invoke(tool, fleet, rec)
+    out["measured"] = rc == 1 and "REGS-CHANGED\talpha" in text and "drift_rows=1" in text
     return out
 
 
@@ -202,9 +241,11 @@ def main(argv):
     failed = sum(1 for ok in candidate.values() if not ok)
     if base is None:
         print("SUMMARY cases=%d pass=%d fail=%d base_fail=0 control=NO-BASE-TOOL" % (len(candidate), len(candidate) - failed, failed))
-        return 0 if failed == 0 else 1
+        # r37 A2 (wave seat W1ExecEscapes F2): the exit contract requires a
+        # reproduced control; a control-free run is not a pass.
+        return 1
     base_fail = sum(1 for ok in base.values() if not ok)
-    control_ok = base_fail >= 3
+    control_ok = base_fail >= 4
     print("SUMMARY cases=%d pass=%d fail=%d base_fail=%d control=%s" % (
         len(candidate), len(candidate) - failed, failed, base_fail,
         "ESCAPE-REPRODUCED" if control_ok else "ESCAPE-NOT-REPRODUCED"))

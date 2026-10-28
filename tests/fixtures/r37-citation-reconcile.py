@@ -12,6 +12,12 @@ counter's exit code and output. Cases:
   stale-present     the anchored line still carries the stale token    -> rc 1 STALE-PRESENT
   receipt-absent    the receipt path is not at receipt_rev             -> rc 1 RECEIPT-ABSENT
   receipt-disagrees the receipt carries a different value              -> rc 1 RECEIPT-DISAGREES
+  receipt-unnamed   the corrected line does not name its receipt        -> rc 1 RECEIPT-UNNAMED
+  register-pinned   a tampered working register is ignored when
+                    --register-rev names the committed one              -> rc 0
+  boundary          `subcases=21 pass=21` is not `cases=21 pass=21`       -> rc 1 EXPECTED-MISSING
+  receipt-is-file   the receipt path equals the citation file            -> rc 2 REFUSAL
+  missing-header    the register has no header line                      -> rc 2 REFUSAL
 
 The control runs the discriminating cases against an always-zero emitter
 (prints `SUMMARY cells=1 mismatches=0`, rc 0 without reading anything): if that
@@ -88,16 +94,18 @@ CASE_ROWS = {
     "stale-present": "C1\tnotes.md\tANCHOR\tcases=21 pass=21\tcases=11 pass=11\treceipt.txt\t@REV@\n",
     "receipt-absent": "C1\tnotes.md\tANCHOR\tcases=21 pass=21\tcases=11 pass=11\tmissing.txt\t@REV@\n",
     "receipt-disagrees": "C1\tnotes.md\tANCHOR\tcases=21 pass=21\tcases=11 pass=11\treceipt.txt\t@REV@\n",
+    "receipt-unnamed": "C1\tnotes.md\tANCHOR\tcases=21 pass=21\tcases=11 pass=11\treceipt.txt\t@REV@\n",
 }
 
 CASE_NOTES = {
     "ok": "ANCHOR cases=21 pass=21 receipt.txt\n",
-    "anchor-missing": "no anchor here cases=21 pass=21\n",
-    "anchor-duplicated": "ANCHOR cases=21 pass=21\nANCHOR cases=21 pass=21\n",
-    "expected-missing": "ANCHOR cases=99\tpass=99\n",
-    "stale-present": "ANCHOR cases=21 pass=21 cases=11 pass=11\n",
+    "anchor-missing": "no anchor here cases=21 pass=21 receipt.txt\n",
+    "anchor-duplicated": "ANCHOR cases=21 pass=21 receipt.txt\nANCHOR cases=21 pass=21 receipt.txt\n",
+    "expected-missing": "ANCHOR cases=99\tpass=99 receipt.txt\n",
+    "stale-present": "ANCHOR cases=21 pass=21 receipt.txt cases=11 pass=11\n",
     "receipt-absent": "ANCHOR cases=21 pass=21 receipt.txt\n",
     "receipt-disagrees": "ANCHOR cases=21 pass=21 receipt.txt\n",
+    "receipt-unnamed": "ANCHOR cases=21 pass=21\n",
 }
 
 WANT = {
@@ -108,6 +116,7 @@ WANT = {
     "stale-present": (1, "MISMATCH C1 STALE-PRESENT"),
     "receipt-absent": (1, "MISMATCH C1 RECEIPT-ABSENT"),
     "receipt-disagrees": (1, "MISMATCH C1 RECEIPT-DISAGREES"),
+    "receipt-unnamed": (1, "MISMATCH C1 RECEIPT-UNNAMED"),
 }
 
 
@@ -158,6 +167,62 @@ def main(argv):
             src, sout = evaluate(stub, stub_dir, label)
             if label != "ok" and src == want_rc and want_text in sout:
                 control_replicated.append(label)
+        # register-pinned: the counter must read the register at --register-rev,
+        # not the (tampered) working file.
+        pinned = os.path.join(scratch, "pinned")
+        repo = make_repo(pinned)
+        write(os.path.join(repo, "notes.md"), "ANCHOR cases=21 pass=21 receipt.txt\n")
+        # the register is committed inside the repo, then the working copy is
+        # tampered; --register-rev must read the committed one.
+        # (rev is not known before the commit, so commit, then amend the register
+        # into the same tree via a second commit and pin that rev.)
+        rev0 = commit(repo, "notes")
+        write(os.path.join(repo, "register.tsv"), REGISTER + CASE_ROWS["ok"].replace("@REV@", rev0))
+        rev = commit(repo, "register")
+        write(os.path.join(repo, "register.tsv"), REGISTER + "C1\tnotes.md\tANCHOR\tcases=99\tcases=11\treceipt.txt\t%s\n" % rev)
+        register = "register.tsv"
+        proc = subprocess.run(
+            ["python3", "-B", tool, "--root", repo, "--rev", rev, "--register", register,
+             "--register-rev", rev],
+            env=ENV, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False)
+        ok = proc.returncode == 0 and "SUMMARY cells=1 mismatches=0" in proc.stdout
+        results.append(("register-pinned", ok, "rc=%d out=%r" % (proc.returncode, proc.stdout.splitlines()[:2])))
+
+        # boundary: a longer token that merely contains `cases=21 pass=21`
+        boundary = os.path.join(scratch, "boundary")
+        repo = make_repo(boundary)
+        write(os.path.join(repo, "notes.md"), "ANCHOR subcases=21 pass=21 receipt.txt\n")
+        rev = commit(repo, "boundary")
+        register = os.path.join(scratch, "boundary.tsv")
+        write(register, REGISTER + CASE_ROWS["ok"].replace("@REV@", rev))
+        proc = subprocess.run(["python3", "-B", tool, "--root", repo, "--rev", rev, "--register", register],
+                              env=ENV, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False)
+        ok = proc.returncode == 1 and "MISMATCH C1 EXPECTED-MISSING" in proc.stdout
+        results.append(("boundary", ok, "rc=%d out=%r" % (proc.returncode, proc.stdout.splitlines()[:2])))
+
+        # receipt-is-file: the register points the receipt at the citation file
+        same = os.path.join(scratch, "receipt-is-file")
+        repo = make_repo(same)
+        write(os.path.join(repo, "notes.md"), "ANCHOR cases=21 pass=21 notes.md\n")
+        rev = commit(repo, "same")
+        register = os.path.join(scratch, "same.tsv")
+        write(register, REGISTER + "C1\tnotes.md\tANCHOR\tcases=21 pass=21\tcases=11 pass=11\tnotes.md\t%s\n" % rev)
+        proc = subprocess.run(["python3", "-B", tool, "--root", repo, "--rev", rev, "--register", register],
+                              env=ENV, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False)
+        ok = proc.returncode == 2 and "REFUSAL USAGE" in proc.stderr
+        results.append(("receipt-is-file", ok, "rc=%d err=%r" % (proc.returncode, proc.stderr.splitlines()[:1])))
+
+        # missing-header: a register without its header line is malformed
+        noheader = os.path.join(scratch, "noheader")
+        repo = make_repo(noheader)
+        write(os.path.join(repo, "notes.md"), "ANCHOR cases=21 pass=21 receipt.txt\n")
+        rev = commit(repo, "noheader")
+        register = os.path.join(scratch, "noheader.tsv")
+        write(register, CASE_ROWS["ok"].replace("@REV@", rev))
+        proc = subprocess.run(["python3", "-B", tool, "--root", repo, "--rev", rev, "--register", register],
+                              env=ENV, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False)
+        ok = proc.returncode == 2 and "REFUSAL USAGE" in proc.stderr
+        results.append(("missing-header", ok, "rc=%d err=%r" % (proc.returncode, proc.stderr.splitlines()[:1])))
     finally:
         shutil.rmtree(scratch, ignore_errors=True)
     for name, ok, detail in results:

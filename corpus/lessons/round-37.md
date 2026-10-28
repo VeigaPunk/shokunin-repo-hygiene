@@ -15,8 +15,10 @@ non-author spot-check routed (`corpus/lessons/round-36-verifier-spotcheck.md`, R
   predicate sentence), and each correction carries a value the cited receipt actually holds at a
   commit where it exists. Counter:
   `python3 -B tools/souji-citation-reconcile.py --root <lane> --rev <landing> --register census/round-37/citation-cells.tsv`
-  → `SUMMARY cells=9 mismatches=0`, rc 0. Base control (`census/round-37/records/c1-before.txt`):
-  `cells=9 mismatches=9`, rc 1 — the same receipts resolve at the base revision, but no correction
+  → `SUMMARY cells=11 mismatches=0`, rc 0 (amendment A1 added the two `cases=8` selftest cells and
+  `--register-rev` pins the register). Base control (`census/round-37/records/c1-before.txt`):
+  `cells=11 mismatches=9`, rc 1 (the frozen nine-cell register reads 9; the two added cells are
+  absent at the base) — the same receipts resolve at the base revision, but no correction
   line exists, so the counter's citation arm is what moves.
 - **C2 operability (score 8).** The F1 drift tool's write envelope matches its docstring: `--root`
   is a containment boundary (RECORD-OUTSIDE-ROOT), the child git process gets a whitelisted
@@ -24,10 +26,11 @@ non-author spot-check routed (`corpus/lessons/round-36-verifier-spotcheck.md`, R
   `GIT_CONFIG_GLOBAL/SYSTEM=/dev/null`), and `--json` is refused inside every measured repository
   and written through an `O_NOFOLLOW` descriptor on the resolved path. Counter:
   `python3 -B tests/fixtures/r37-drift-escapes.py --base-tool <r36 blob>` →
-  `SUMMARY cases=6 pass=6 fail=0 base_fail=4 control=ESCAPE-REPRODUCED`, rc 0; the r36 regression
+  `SUMMARY cases=8 pass=8 fail=0 base_fail=5 control=ESCAPE-REPRODUCED`, rc 0; the r36 regression
   fixture stays `cases=12 pass=12 fail=0 control=STUB-REJECTED`. Base control
   (`census/round-37/records/c2-before.txt`): the same fixture against the r36 tool bytes reads
-  `cases=6 pass=2 fail=4 base_fail=4`, rc 1 — four escapes reproduce.
+  `cases=8 pass=3 fail=5 base_fail=5`, rc 1 — five escapes reproduce (amendment A2 added the
+  hardlink and measured cases).
 - **C3 coverage (score 8).** The drift tool's fixture surface discriminates its fields: six frozen
   single-defect mutants (the routed survivor `live_repos = len(rows) - unreachable`, a
   `drift_rows` counter that drops UNRECORDED, an unrecorded-loop failure that is not counted
@@ -47,7 +50,9 @@ installed man pages at `git 2.56.0-1` and the live git-scm pages):
 |---|---|---|---|---|
 | S236 | git(1) ENVIRONMENT — GIT_TRACE_REFS — https://git-scm.com/docs/git#Documentation/git.txt-GITTRACEREFS | 2026-10-28 | “Enables trace messages for operations on the ref database.” (§ ENVIRONMENT, `man git` line 1212) | **admit** — a child that inherits the variable writes a trace file the caller did not request; this is the W2 mechanism the escape fixture reproduces on the r36 blob |
 | S237 | git(1) ENVIRONMENT — GIT_CONFIG_NOSYSTEM — https://git-scm.com/docs/git#Documentation/git.txt-GITCONFIGNOSYSTEM | 2026-10-28 | “Whether to skip reading settings from the system-wide $(prefix)/etc/gitconfig file.” (§ ENVIRONMENT, `man git` line 1153) | **admit** — the manual adds it “can be used … to create a predictable environment for a picky script”; that is exactly the child env the C2 repair builds |
-| S238 | git-config(1) § GIT_CONFIG_COUNT — https://git-scm.com/docs/git-config#Documentation/git-config.txt-GITCONFIGCOUNT | 2026-10-28 | “all environment pairs … up to that number will be added to the process’s runtime configuration” | **reject** — a `GIT_CONFIG_COUNT`-injected `trace2.eventTarget` wrote no trace file on git 2.56.0 (`census/round-37/records/c2-before.txt`: the config-count arm was green on the *r36* tool), so env config does not reach trace2 initialisation on this surface; flip: a reproducible trace2 write via env config at a named git version |
+| S238 | git-config(1) § GIT_CONFIG_COUNT — https://git-scm.com/docs/git-config#Documentation/git-config.txt-GITCONFIGCOUNT | 2026-10-28 | “all environment pairs … up to that number will be added to the process’s runtime configuration” | **reject** — a `GIT_CONFIG_COUNT`-injected `trace2.eventTarget` wrote no trace file on git 2.56.0 (`census/round-37/records/c2-after.txt` (`case-env-witness=PASS`) and the independent positive
+control in `.ufo/waves/round-37/w1/W1ScribeGate.md` (a config-file `trace2.eventTarget` wrote
+9812 bytes; the env-injected one wrote none)), so env config does not reach trace2 initialisation on this surface; flip: a reproducible trace2 write via env config at a named git version |
 
 Row changes: S236 and S237 are new tier-A `mined` rows, S238 is new and `rejected`; no existing
 row's `status`, `recheck` or `used-by` cell changed. `used-by` for S236/S237 is this lesson (C2
@@ -97,3 +102,22 @@ lines unchanged), so no F row advances: the two admitted rows ground the C2 repa
 frontier ground. Mined mistake: M1. Assimilation: none — no `merge/souji/` theme was adopted this
 round (the package's staged entries do not touch citations or the drift envelope; adopting one
 would not serve a frozen claim).
+
+## Named limits (disclosed, status-neutral)
+
+- The C1 counter's `receipt_rev` arm is not discriminated by the fixture or the live register:
+  all nine original rows cite receipts that are blob-identical at the landing revision, and the
+  fixture commits its receipt at the same revision it registers. A mutant that ignores
+  `receipt_rev` survives (`.ufo/waves/round-37/w1/W1MutCounter.md`); routed to r38 with a
+  base-committed/head-deleted receipt case.
+- The `42ea92e` measured-commit cells are corrected in prose (`SCORECARD.md` reconciliation
+  paragraph), not by a register row: the schema binds an expected token to both a citation line
+  and a receipt blob, and a commit id is in neither. Routed to r38 for a commit arm.
+- `--record X --json X` still overwrites the record when the record lies outside `--root`
+  (`.ufo/waves/round-37/w1/W1ExecConsumers.md` F2); the target is outside every measured tree, so
+  the C2 claim does not cover it. Routed to r38.
+- The `--json` `O_NOFOLLOW` descriptor guards the final component only; a parent-directory swap is
+  outside the fixture's deterministic reach (W1MutTool M9 survives). Named, not claimed.
+- The r37 discrimination fixture does not exercise the `TOTAL` cross-checks (W1MutTool M7
+  survives the r37 fixture and dies on the r36 fixture); C3's frozen six mutants do not include
+  it. Routed to r38.

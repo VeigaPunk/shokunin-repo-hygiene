@@ -124,7 +124,9 @@ def main(argv):
         rc, out, f = invoke(tool, path, rec)
         check("match-exact", rc == 0 and f.get("live_repos") == "2" and f.get("live_regs") == "2"
               and f.get("live_prunable") == "0" and f.get("drift_rows") == "0"
-              and f.get("unreachable") == "0", "rc=%d fields=%r" % (rc, f), results)
+              and f.get("unreachable") == "0" and f.get("record_repos") == "2"
+              and f.get("record_regs") == "2" and f.get("record_prunable") == "0",
+              "rc=%d fields=%r" % (rc, f), results)
 
         # regs-understated: the record overstates, so a one-sided live>record check stays silent
         root, path = fleet(scratch, "regs")
@@ -133,7 +135,7 @@ def main(argv):
         rec = record(root, [("alpha", 3, 0), ("beta", 1, 0)], (2, 4, 0))
         rc, out, f = invoke(tool, path, rec)
         check("regs-understated", rc == 1 and "REGS-CHANGED\talpha" in out
-              and "record=3 live=1" in out and f.get("live_regs") == "2",
+              and "record=3 live=1\n" in out + "\n" and f.get("live_regs") == "2",
               "rc=%d fields=%r rows=%r" % (rc, f, out.splitlines()[:3]), results)
 
         # prunable-live
@@ -146,7 +148,7 @@ def main(argv):
         rec = record(root, [("alpha", 2, 0), ("beta", 1, 0)], (2, 3, 0))
         rc, out, f = invoke(tool, path, rec)
         check("prunable-live", rc == 1 and "PRUNABLE-CHANGED\talpha" in out
-              and "record=0 live=1" in out and f.get("live_prunable") == "1",
+              and "record=0 live=1\n" in out + "\n" and f.get("live_prunable") == "1",
               "rc=%d fields=%r rows=%r" % (rc, f, out.splitlines()[:3]), results)
 
         # absent-vs-unreachable
@@ -160,7 +162,7 @@ def main(argv):
         check("absent-vs-unreachable",
               rc == 1 and "ABSENT\tgone" in out and "UNREACHABLE\tbroken" in out
               and f.get("live_repos") == "1" and f.get("unreachable") == "1"
-              and f.get("drift_rows") == "2",
+              and f.get("drift_rows") == "2" and len([l for l in out.splitlines() if l.startswith("DRIFT\t")]) == 2,
               "rc=%d fields=%r rows=%r" % (rc, f, out.splitlines()[:4]), results)
 
         # unrecorded-exact
@@ -170,7 +172,7 @@ def main(argv):
         make_repo(os.path.join(path, "gamma"))
         rec = record(root, [("alpha", 1, 0), ("beta", 1, 0)], (2, 2, 0))
         rc, out, f = invoke(tool, path, rec)
-        check("unrecorded-exact", rc == 1 and "UNRECORDED\tgamma" in out
+        check("unrecorded-exact", rc == 1 and "UNRECORDED\tgamma\tlive regs=1 prunable=0" in out
               and f.get("live_repos") == "2" and f.get("live_regs") == "2"
               and f.get("drift_rows") == "1",
               "rc=%d fields=%r rows=%r" % (rc, f, out.splitlines()[:3]), results)
@@ -185,7 +187,7 @@ def main(argv):
         rc, out, f = invoke(tool, path, rec)
         check("unrecorded-unreachable", rc == 1 and "UNREACHABLE\tbroken" in out
               and "UNRECORDED\tbroken" not in out and f.get("unreachable") == "1"
-              and f.get("drift_rows") == "1",
+              and f.get("drift_rows") == "1" and f.get("live_repos") == "1",
               "rc=%d fields=%r rows=%r" % (rc, f, out.splitlines()[:3]), results)
     finally:
         shutil.rmtree(scratch, ignore_errors=True)

@@ -13,7 +13,8 @@ This tool turns that record into a surface: it re-measures every repository the
 record names, read-only, and reports the drift between the recorded numerator
 and the live one. `--root` is a containment boundary: a record row that resolves
 outside it is refused (RECORD-OUTSIDE-ROOT), and `--json` is refused when its
-resolved path is inside the root or any measured repository. It never prunes and
+resolved path is inside the root or any measured repository, or when it is a
+multi-link (hardlinked) file. It never prunes and
 never consults the network. The child git process gets a whitelisted
 environment (no inherited GIT_* variable; config discovery neutralised with
 GIT_CONFIG_NOSYSTEM=1 and GIT_CONFIG_GLOBAL/SYSTEM=/dev/null), so a
@@ -181,6 +182,27 @@ def discover(root):
     return names
 
 
+def open_nofollow(path):
+    """Open path for writing with every component resolved O_NOFOLLOW.
+
+    r37 A2 (wave seat W1SentinelContain): O_NOFOLLOW on the leaf still re-followed
+    a parent directory swapped after the guard; a per-component walk refuses any
+    symlinked ancestor (the resolved target has no `..` components).
+    """
+    parts = [p for p in path.split("/") if p not in ("", ".")]
+    if not path.startswith("/") or not parts:
+        raise OSError("path is not absolute")
+    dirfd = os.open("/", os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        for part in parts[:-1]:
+            nxt = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=dirfd)
+            os.close(dirfd)
+            dirfd = nxt
+        return os.open(parts[-1], os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW, 0o644, dir_fd=dirfd)
+    finally:
+        os.close(dirfd)
+
+
 def run(args):
     root = os.path.abspath(args.root)
     if not os.path.isdir(root):
@@ -205,7 +227,8 @@ def run(args):
         # r36 A2 + r37 C2 (W1/W4): the guard resolved one path while the writer
         # opened another, and it compared only the root — not the record's
         # repositories. Check every measured path, then write the resolved path
-        # through an O_NOFOLLOW descriptor so a symlink swap cannot redirect it.
+        # with every component opened O_NOFOLLOW (open_nofollow); a leaf or
+        # ancestor symlink cannot redirect it, and a multi-link fd is refused.
         json_target = os.path.realpath(os.path.abspath(args.json))
         for base in measured:
             try:
@@ -214,6 +237,9 @@ def run(args):
                 inside = False
             if inside:
                 raise Refusal("JSON-INSIDE-MEASURED-TREE: %s is under %s" % (json_target, base))
+        # r37 A2 (wave seat W1CritC2): a hardlink outside --root names an inode
+        # inside a measured repository; realpath cannot see it. The fd-level
+        # check at write time is race-free (see open_nofollow).
     drift = []
     live_regs = live_prunable = unreachable = 0
     # r36 A4 (wave seat SwarmExecutor22 F1): the old formula len(rows) - absent - unreachable
@@ -283,10 +309,16 @@ def run(args):
     )
     if json_target is not None:
         try:
-            fd = os.open(json_target, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW, 0o644)
+            fd = open_nofollow(json_target)
+            st = os.fstat(fd)
+            if st.st_nlink > 1:
+                os.close(fd)
+                raise Refusal("JSON-HARDLINKED: %s has %d links" % (json_target, st.st_nlink))
             with os.fdopen(fd, "w", encoding="utf-8") as handle:
                 json.dump({"summary": summary, "drift": [{"class": c, "repo": n, "detail": d} for c, n, d in drift]}, handle, indent=1, sort_keys=True)
                 handle.write("\n")
+        except Refusal:
+            raise
         except OSError as exc:
             raise Refusal("JSON-UNWRITABLE: %s" % exc)
     return 0 if not drift else 1

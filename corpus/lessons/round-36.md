@@ -20,7 +20,7 @@ before any after-data). Frozen contract: `census/round-36/preregistration.txt` (
 - **C2 operability (score 8).** The pre-report gate enforces the round-report contract in seven
   predicates, proved by a fixture whose cases each isolate one predicate and whose controls are
   rejected. Target (after A1–A3):
-  `python3 -B tests/fixtures/r36-report-gate.py` → `cases=20 pass=20 fail=0 control=STUB-REJECTED`,
+  `python3 -B tests/fixtures/r36-report-gate.py` → `cases=21 pass=21 fail=0 control=STUB-REJECTED`,
   rc 0; `bash tests/fixtures/r27-pre-report-gate.sh` → `cases=4 pass=4
   control=FALSE-GREEN-REJECTED`, rc 0. Base control (`c2-control-base.txt`): no checker at base
   (`git cat-file -e` rc 128) and the base gate scores `cases=11 pass=0 fail=11`.
@@ -169,4 +169,4 @@ Changed in place, old → new:
 ## Correction (r37, 2026-10-28)
 
 R37-C1-7 — the Claims section above quoted a count for the C2 fixture that no receipt ever carried. Settlement: `census/round-36/records/c2-after.txt` at `1e771ed` carries `SUMMARY cases=21 pass=21 fail=0 control=STUB-REJECTED` (amendment A7 refreshed it), and the base control line stays `cases=11 pass=0 fail=11`.
-The original sentence is left byte-verbatim; this row is the correction. The other never-true citations (SCORECARD rows, SKILL registry, the frozen predicate sentence) are reconciled in `SCORECARD.md` `### Round 37 receipt reconciliation` and in the prereg's `R37-C1-8`/`R37-C1-9` block.
+The Claims line is corrected in place (the prereg's in-place branch for current lesson cells); this block records the settlement and names the receipt. The other never-true citations (SCORECARD rows, SKILL registry, the frozen predicate sentence) are reconciled in `SCORECARD.md` `### Round 37 receipt reconciliation` and in the prereg's `R37-C1-8`/`R37-C1-9` block.
