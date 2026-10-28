@@ -725,3 +725,11 @@ survived=0 pristine=ok base_killed=0`, rc 0), `consumers-after6.txt` (eight cons
 `a7-counter-fixes2.txt` (the three counter first-falsifications refused at this revision). The
 earlier pointer blocks stay as filed; where they disagree with this one, this block is later and
 measures the final instruments.
+
+### Round 38 filed-state measurement (appended 2026-10-28)
+
+Final tip `99efe0676f439309a52f001b71bf0ba2ed8af47f`: `c1-after8.txt` (`cells=10 mismatches=0`, rc 0),
+`c2-after7.txt` (`cases=12 pass=12 fail=0 base_cases=12 base_fail=6 behavioral_fail=3`, rc 0) and
+`c3-arms-filed.txt` (`cases=10 pass=10 fail=0`; `mutants=4 killed=4 survived=0 pristine=ok
+base_killed=0`; counter-arms `cases=6 pass=6 fail=0 control=FALSE-GREEN-REJECTED`; rcs 0/0/0).
+Where an earlier block disagrees with this one, this is later and measures the filed instruments.
