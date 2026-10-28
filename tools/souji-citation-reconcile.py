@@ -160,7 +160,7 @@ def run(args):
             elif not has_token(hits[0], row["expected"]):
                 print("MISMATCH %s EXPECTED-MISSING %s expected=%r" % (row["id"], row["file"], row["expected"]))
                 mismatches += 1
-            elif row["receipt"] not in hits[0]:
+            elif ("`%s`" % row["receipt"]) not in hits[0]:
                 # r37 A1.2 (wave seat W1CritC1): a corrected line that does not
                 # name its receipt is prose, not a citation.
                 print("MISMATCH %s RECEIPT-UNNAMED %s receipt=%r" % (row["id"], row["file"], row["receipt"]))
