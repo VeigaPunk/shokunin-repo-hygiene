@@ -5,7 +5,8 @@ The r37 discrimination fixture builds every record with a `record()` helper that
 always writes a consistent TOTAL row and never repeats a name, so four refusal
 classes in `parse_record` were never exercised: a TOTAL/REPO disagreement on
 each of the three counters, and a duplicate REPO name. A tool mutant that drops
-any one of those checks survived the r37 fixture 12/12 (r38 coverage claim C3).
+any one of those checks survived the r37 fixture's six cases (r38 coverage claim C3; the
+six-case count is corrected from an earlier twelve-case reading, wave-1 seat W1ExecC3Battery).
 
 Cases (each builds one synthetic fleet under `--work`):
   total-ok                consistent TOTAL, two rows -> rc 0

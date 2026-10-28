@@ -39,6 +39,8 @@ round repairs.
 Exit: 0 every case passed, 1 otherwise, 2 usage.
 """
 import argparse
+import ast
+import io
 import json
 import os
 import re
@@ -47,6 +49,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import tokenize
 
 ENV = {
     "PATH": os.environ.get("PATH", "/usr/local/bin:/usr/bin:/bin"),
@@ -97,6 +100,20 @@ def invoke(tool, path, rec, extra):
         return proc.returncode, proc.stdout + proc.stderr, time.time() - start, False
     except subprocess.TimeoutExpired:
         return None, "", time.time() - start, True
+
+
+def has_token(text, token):
+    """Whole-token containment: `JSON-HARDLINKED-LEGACY` is not `JSON-HARDLINKED`."""
+    start = 0
+    while True:
+        idx = text.find(token, start)
+        if idx < 0:
+            return False
+        before = text[idx - 1] if idx > 0 else " "
+        after = text[idx + len(token)] if idx + len(token) < len(text) else " "
+        if not before.isalnum() and after not in "-_" and not after.isalnum():
+            return True
+        start = idx + 1
 
 
 def check(name, ok, detail, results):
@@ -150,12 +167,41 @@ def run_cases(tool, work):
               "rc=%r out=%r record_intact=%s" % (rc, out.splitlines()[:2],
                                                 open(rec, encoding="utf-8").read() == before), results)
 
-        # docstring-enum (static)
+        # docstring-enum (static; r38 A1 after wave-1 seat W1RevDocstring). The first draft
+        # read source.split('"""')[1] and matched substrings, so it false-rejected a raise
+        # form inside a comment (a1), accepted a triple-quoted module constant as the
+        # docstring (b1), accepted a doc-only phantom token (d), accepted a class name
+        # degraded to a prefix (d2), and missed the tool's other exit-2 idiom
+        # `REFUSAL <TOKEN>:` on stderr (c2). The case now reads the real module docstring
+        # through ast, strips comments before collecting code tokens, collects both
+        # refusal idioms, and matches whole tokens.
         source = open(tool, encoding="utf-8").read()
-        doc = source.split('"""')[1] if '"""' in source else ""
-        tokens = sorted(set(re.findall(r'raise Refusal\("([A-Z0-9-]+):', source)))
-        missing = [t for t in tokens if t not in doc]
-        check("docstring-enum", not missing, "missing=%r tokens=%r" % (missing, tokens), results)
+        doc = ""
+        doc_raw = ""
+        try:
+            doc_raw = ast.get_docstring(ast.parse(source), clean=False) or ""
+            doc = doc_raw
+        except SyntaxError:
+            doc = ""
+        try:
+            # untokenize keeps the original adjacency, so `Refusal(` stays glued to its
+            # literal; a plain join would break the `raise Refusal("TOKEN:` pattern.
+            code_text = tokenize.untokenize(
+                [tok for tok in tokenize.generate_tokens(io.StringIO(source).readline)
+                 if tok.type != tokenize.COMMENT])
+        except (tokenize.TokenError, ValueError):
+            code_text = "\n".join(line.split("#", 1)[0] for line in source.splitlines())
+        # the docstring is itself a STRING token in code_text: remove it, or a doc-only
+        # phantom class would "exist" in code by being quoted in the documentation.
+        if doc_raw:
+            code_text = code_text.replace(doc_raw, "", 1)
+        tokens = sorted(set(re.findall(r'raise Refusal\("([A-Z0-9-]+):', code_text))
+                        | set(re.findall(r'REFUSAL ([A-Z0-9-]+):', code_text)))
+        missing = [t for t in tokens if not has_token(doc, t)]
+        phantom = sorted(t for t in re.findall(r'\b((?:JSON|RECORD)-[A-Z0-9-]+|USAGE)\b', doc)
+                         if not has_token(code_text, t))
+        check("docstring-enum", not missing and not phantom,
+              "missing=%r phantom=%r tokens=%r" % (missing, phantom, tokens), results)
 
         # json-written-regular
         root, path, rec = fleet(scratch, "regular")

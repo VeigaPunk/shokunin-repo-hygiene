@@ -117,5 +117,41 @@ the base arm (`git show ca4369a:tools/souji-worktree-drift.py`).
 
 ## Amendments
 
-None. Any later amendment is appended below with the seat that produced it and must be
-tighter-only.
+Any amendment below was appended after the wave seat that produced it and is tighter-only unless
+stated otherwise. The frozen predicate sentences, counters and targets are unchanged by A0-A2.
+
+### A0 — C3 prose case count (2026-10-28, wave-1 seat W1ExecC3Battery)
+
+The C3 narrative said a mutant "survives it 12/12". Measured: the r37 discrimination fixture has
+six cases (`SUMMARY cases=6 pass=6 fail=0`, same blob at ca4369a and 409ee5). The gap is six cases,
+not twelve; the sentence in `tests/fixtures/r38-drift-record.py` and this file's C3 paragraph is
+corrected accordingly. No predicate, counter, case or target changed.
+
+### A1 — docstring-enum tightening (2026-10-28, wave-1 seat W1RevDocstring)
+
+The C2 `docstring-enum` case read the first triple-quoted literal (`source.split('"""')[1]`) and
+matched raw substrings, so it false-rejected a raise form inside a comment (variant a1), accepted a
+triple-quoted module constant as the docstring (b1), accepted a doc-only phantom class (d), accepted
+a class name degraded to a prefix (d2), and missed the tool's second exit-2 idiom
+`REFUSAL <TOKEN>:` written to stderr (c2). The case now reads the module docstring through
+`ast.get_docstring`, drops comment tokens before collecting code tokens, collects both refusal
+idioms, removes the docstring token from the code text, and matches whole tokens in both
+directions. Case id and count (`cases=12`) and the frozen predicate are unchanged; the case is
+strictly stronger. Evidence: `census/round-38/records/a1-docstring-variants.txt` (a1 now PASS;
+c2, d and d2 FAIL; landing 12/12; base arm still fails the four routed classes).
+
+### A2 — receipt-at-commit case isolation (2026-10-28, wave-1 seat W1MutCounter)
+
+`commit-receipt-absent` (R5) and `commit-receipt-disagrees` (R6) shared anchor `ANCHOR-ok`, whose
+committed line names `c1`, so each row also emitted `COMMIT-UNNAMED`: their rc was already 1 and the
+kills of the receipt-at-commit mutants rested only on the token assertion. The fixture now commits
+two extra anchors that name `c0` and `c2`, and R5/R6 use them, so each case fails for its own class
+and an rc-only reading still kills the mutant. Case count and predicate unchanged (14). Evidence:
+`census/round-38/records/a2-anchor-isolation.txt`.
+
+### Disclosed limit (not an amendment)
+
+All ten register rows carry `commit == receipt_rev`, so the live register cannot distinguish the
+commit arm from the receipt arm; the arm's revision-distinguishing power is pinned by the fixture's
+R6 case (`commit=c2`, `receipt_rev=c1`) only. Changing the frozen register after data is not
+permitted; routed to round 39 as a register design item.

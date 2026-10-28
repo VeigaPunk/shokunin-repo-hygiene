@@ -90,8 +90,13 @@ def build(scratch):
     sh(["git", "-C", root, "add", "rec/ok.txt"])
     sh(["git", "-C", root, "commit", "-qm", "c2"])
     c2 = sh(["git", "-C", root, "rev-parse", "HEAD"]).stdout.strip()
-    # rewrite the ok anchor line with the real short hash at c3
+    # rewrite the ok anchor line with the real short hash at c3, and add two anchors that
+    # name their own commit (r38 A2 after wave-1 seat W1MutCounter): with ANCHOR-ok the
+    # receipt-at-commit cases also emitted COMMIT-UNNAMED, so their rc was already 1 and the
+    # kill rested only on the token assertion. Isolated anchors make rc the intended signal.
     text = open(os.path.join(root, "cells.md"), encoding="utf-8").read().replace("commit " + "0" * 40, "commit " + c1)
+    text += "ANCHOR-absent | `rec/ok.txt` | cells=3 | commit %s\n" % c0
+    text += "ANCHOR-disagrees | `rec/ok.txt` | cells=3 | commit %s\n" % c2
     write(os.path.join(root, "cells.md"), text)
     sh(["git", "-C", root, "add", "cells.md"])
     sh(["git", "-C", root, "commit", "-qm", "c3"])
@@ -144,8 +149,8 @@ def run_cases(tool, work):
         case("commit-unresolved", [row("R2", "ANCHOR-ok", "a" * 40)], 1, ["COMMIT-UNRESOLVED"])
         case("commit-not-ancestor", [row("R3", "ANCHOR-ok", dangling)], 1, ["COMMIT-NOT-ANCESTOR"])
         case("commit-unnamed", [row("R4", "ANCHOR-unnamed", c1)], 1, ["COMMIT-UNNAMED"])
-        case("commit-receipt-absent", [row("R5", "ANCHOR-ok", c0)], 1, ["COMMIT-RECEIPT-ABSENT"])
-        case("commit-receipt-disagrees", [row("R6", "ANCHOR-ok", c2)], 1, ["COMMIT-RECEIPT-DISAGREES"])
+        case("commit-receipt-absent", [row("R5", "ANCHOR-absent", c0)], 1, ["COMMIT-RECEIPT-ABSENT"])
+        case("commit-receipt-disagrees", [row("R6", "ANCHOR-disagrees", c2)], 1, ["COMMIT-RECEIPT-DISAGREES"])
         case("legacy-7col", [["R7", "cells.md", "ANCHOR-ok", "cells=3", "cells=99", "rec/ok.txt", c1]], 0,
              ["SUMMARY cells=1 mismatches=0"])
         reg = register(os.path.join(root, "register-rev.tsv"), [row("R8", "ANCHOR-ok", c1)])
