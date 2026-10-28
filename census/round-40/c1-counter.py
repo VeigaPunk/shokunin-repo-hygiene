@@ -261,7 +261,13 @@ def evaluate_item(root, rev, row):
         for line in good
     ):
         return False, "EVIDENCE-NOT-BOUND %s@%s" % (row["evidence_path"], evidence_rev)
+    evidence_text = git_show(root, evidence_rev, row["evidence_path"])
+    if not all(has_token(evidence_text, token) for token in row["must"]):
+        return False, "EVIDENCE-DISAGREES expected=%r" % row["must"]
+    if any(has_token(evidence_text, token) for token in row["mustnot"]):
+        return False, "EVIDENCE-STALE present=%r" % row["mustnot"]
     return True, "CLOSED"
+
 
 
 def run(args):
@@ -281,15 +287,25 @@ def run(args):
         sys.stderr.write(
             "REFUSAL COULD-NOT-EVALUATE: --register-rev %s does not resolve\n" % register_rev)
         return 2
+    def read_items_input(root, rev, path):
+        """Relative inventories are read from the committed tree; absolute fixture paths are synthetic
+        inputs owned by the caller's scratch directory."""
+        if os.path.isabs(path):
+            with open(path, encoding="utf-8") as handle:
+                return handle.read()
+        text = git_show(root, rev, path)
+        if text is None:
+            raise ValueError("%s absent at %s" % (path, rev))
+        return text
+
+
     try:
-        with open(args.items, encoding="utf-8") as handle:
-            items_raw = handle.read()
+        items_raw = read_items_input(root, args.rev, args.items)
         items = parse_items(items_raw, args.items)
         forged_raw = ""
         forged = []
         if args.forged:
-            with open(args.forged, encoding="utf-8") as handle:
-                forged_raw = handle.read()
+            forged_raw = read_items_input(root, args.rev, args.forged)
             forged = parse_items(forged_raw, args.forged)
     except (OSError, ValueError) as exc:
         sys.stderr.write("REFUSAL USAGE: %s\n" % exc)
@@ -338,7 +354,9 @@ def run(args):
               cells, mismatches, violations, commit_rows, commit_hashes, items_sha, forged_sha))
     ok = (
         open_count == 0
+        and len(forged) > 0
         and forged_closed == 0
+        and forged_open == len(forged)
         and cells >= args.min_cells
         and mismatches == 0
         and violations == 0

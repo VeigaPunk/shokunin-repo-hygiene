@@ -105,6 +105,13 @@ non-row.
 - **evidence pointer:** `census/round-40/waves/w1/R40connector09.md` F1-F3, `R40connector21.md` F1-F2, `R40connector33.md` F1-F3, `R40connector45.md`, and `census/round-40/waves/w1/R40reviewer54.md`. “r39 base fixture” can mean the r39 battery's base input (`r38-drift-record.py`) or the r39 candidate fixture (`r39-drift-record-rules.py`), which already kills M11-M14. The r40 counter chose the latter; the frozen wording does not name that file. Separately, `tools/souji-worktree-drift.py:162-178` overwrites each TOTAL row, so a mismatching TOTAL followed by a matching TOTAL is accepted although the docstring at `:47-48` says a TOTAL row that disagrees is malformed.
 - **captured-by:** the frozen-claim sizing rule (§9: one concrete after-state and one re-derivable counter), plus the fixture-contract rule Q85: each named branch needs a case whose assertion is load-bearing and a base fixture whose identity is pinned.
 - **fix:** none to the frozen claim after data. The measured battery (`census/round-40/records/c3-after-d.txt`) proves its four chosen mutants against the chosen r39 fixture, but does not resolve the alternate baseline reading, retain the four prior mutants as regression controls, or test first-disagreeing/last-agreeing TOTAL order. Report C3 as **unprovable**, not as an admitted coverage move. Future preregistration must name the exact base fixture and include both TOTAL orderings; the tool-contract discrepancy is routed for a separately frozen repair.
+
+### M40-5 — the calibration item population was not enumerated in the preregistration
+
+- **class:** calibration / claim-population binding defect.
+- **evidence pointer:** `census/round-40/preregistration.txt` C1 paragraph names an “each anchored item line” condition but no population or item-table digest; the prior plan in `SCORECARD.md` `Planned (appended at round 39)` refers to “the C1 items,” the round-39 counter's 16-row `census/round-39/c1-items.tsv`. This round measured three rows (D1-D3) in `census/round-40/c1-items.tsv`; `census/round-40/records/c1-after-e.txt` therefore proves those three rows only.
+- **captured-by:** §9 claim-sizing rule: every after-state is one concrete value re-derivable from committed bytes and the frozen target/predicate must not be narrowed after any seat has scored.
+- **fix:** none to the frozen claim in round 40. Report the measured three-row result as bounded work and C1 as **unprovable against the prior 16-item plan**; a future calibration claim must commit its complete item inventory/digest in the preregistration before dispatch and carry all routed rows or explicitly freeze a bounded subset.
 ## Frontier
 
 - The round moved the lane's INSTRUMENTS, not the domain surfaces: F1 and F4 stay frontier, the

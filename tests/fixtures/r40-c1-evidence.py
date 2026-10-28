@@ -84,7 +84,8 @@ def build_repo(scratch, lane_root):
     write(root, "claims.md",
           "FORGED-CLAIM cases=7\n"
           "FORGED-PATH-CLAIM cases=7 evidence-revision=%s\n"
-          "BOUND-CLAIM cases=7 evidence=`receipts/r0.txt`@%s\n" % (c1, c1))
+          "FORGED-WRONG-VALUE cases=999 evidence=`receipts/r0.txt`@%s\n"
+          "BOUND-CLAIM cases=7 evidence=`receipts/r0.txt`@%s\n" % (c1, c1, c1))
     # The registers live in the committed tree: the counter reads a register at a named revision.
     header = "id\tfile\tanchor\texpected\tstale\treceipt\treceipt_rev\tcommit\n"
     write(root, "cells-clean.tsv", header + (
@@ -147,6 +148,8 @@ def run_cases(counter, base_counter, work, lane_root):
              "receipts/r0.txt@%s" % side),
             ("FORGE-PATH-UNCITED", "claims.md", "FORGED-PATH-CLAIM", "cases=7", "-",
              "receipts/r0.txt@%s" % c1),
+            ("FORGE-WRONG-VALUE", "claims.md", "FORGED-WRONG-VALUE", "cases=999", "-",
+             "receipts/r0.txt@%s" % c1),
         ])
         clean_register = "cells-clean.tsv"
         equal_register = "cells-equal.tsv"
@@ -174,7 +177,15 @@ def run_cases(counter, base_counter, work, lane_root):
         results.append(("forged-path-uncited-open", forged_open("FORGE-PATH-UNCITED"),
                         "the revision is cited but the evidence path is absent from the line; out=%r" %
                         clean.stdout.replace("\n", " ")[:300]))
+        results.append(("forged-wrong-value-open", forged_open("FORGE-WRONG-VALUE"),
+                        "the evidence path does not carry cases=999; out=%r" %
+                        clean.stdout.replace("\n", " ")[:300]))
 
+        empty_forged = run_counter(counter, root, c2, items, None, clean_register)
+        empty_count = summary_field(empty_forged.stdout, "forged")
+        results.append(("empty-forged-control-rejected",
+                        empty_forged.returncode == 1 and empty_count == 0,
+                        "rc=%d forged=%r" % (empty_forged.returncode, empty_count)))
         violations = summary_field(clean.stdout, "register_violations")
         mismatches = summary_field(clean.stdout, "register_mismatches")
         results.append(("register-clean-accepted",
