@@ -1881,3 +1881,9 @@ R39-C1-12 — LOG-line-1862 quotes the pre-amendment letters faithfully (`cells=
 R39-REG-04 — the `killed=4` field of `census/round-39/records/c3-after.txt` (receipt_rev 5230a34, re-verified at a8e6d75); the stale reading `killed=1` belongs to the pre-repair bytes.
 
 R39-REG-05 — the `cases=7` field of `census/round-39/records/c3-after.txt` (receipt_rev 5230a34, re-verified at a8e6d75); the stale reading `cases=9` belongs to the pre-repair bytes.
+
+### R39 register cells, second set (round 39, appended)
+
+R39-REG-10 — `killed=4` in `census/round-39/records/c3-after.txt`, receipt committed at 5230a34 and present at a8e6d75.
+
+R39-REG-11 — `cases=7` in `census/round-39/records/c3-after.txt`, receipt committed at 5230a34 and present at a8e6d75.

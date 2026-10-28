@@ -224,3 +224,7 @@ R39-C1-13 — QUALITY-line-209's evidence cell (`census/round-37/records/c2-befo
 ### R39 register cell (round 39, appended)
 
 R39-REG-06 — the `open=16` field of `census/round-39/records/c1-before.txt` (receipt_rev f8ba3f3, re-verified at a8e6d75); the stale reading `open=1` belongs to the pre-repair bytes.
+
+### R39 register cell, second set (round 39, appended)
+
+R39-REG-12 — `open=16` in `census/round-39/records/c1-before.txt`, receipt committed at f8ba3f3 and present at a8e6d75.

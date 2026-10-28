@@ -745,3 +745,11 @@ R39-REG-01 — the `legs=6` field of `census/round-39/records/c2-after.txt` (rec
 R39-REG-02 — the `harm=0` field of `census/round-39/records/c2-after.txt` (receipt_rev 5230a34, re-verified at a8e6d75); the stale reading `harm=3` belongs to the pre-repair bytes.
 
 R39-REG-03 — the `fail=0` field of `census/round-39/records/c2-after.txt` (receipt_rev 5230a34, re-verified at a8e6d75); the stale reading `fail=4` belongs to the pre-repair bytes.
+
+### Round 39 register cells, second set (appended; the first set names its own stale token and so cannot serve as a register row)
+
+R39-REG-07 — `legs=6` in `census/round-39/records/c2-after.txt`, receipt committed at 5230a34 and present at a8e6d75.
+
+R39-REG-08 — `harm=0` in `census/round-39/records/c2-after.txt`, receipt committed at 5230a34 and present at a8e6d75.
+
+R39-REG-09 — `fail=0` in `census/round-39/records/c2-after.txt`, receipt committed at 5230a34 and present at a8e6d75.

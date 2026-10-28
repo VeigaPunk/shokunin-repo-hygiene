@@ -84,7 +84,14 @@ def git_resolves(root, rev):
 
 
 def has_token(text, token):
-    """Whole-token containment: `subcases=21` and `cases=210` are not `cases=21`."""
+    """Whole-token containment: `subcases=21` and `cases=210` are not `cases=21`.
+
+    r39 A3: the boundary rule applies only to an alphanumeric EDGE of the token. A token that ends
+    in punctuation (`records=`) must match `records=79`; the original rule demanded a non-alnum
+    character after the `=`, so such a token could never match and item C1-04 was unsatisfiable.
+    """
+    edge_before = token[0].isalnum()
+    edge_after = token[-1].isalnum()
     start = 0
     while True:
         idx = text.find(token, start)
@@ -92,7 +99,7 @@ def has_token(text, token):
             return False
         before = text[idx - 1] if idx > 0 else " "
         after = text[idx + len(token)] if idx + len(token) < len(text) else " "
-        if not before.isalnum() and not after.isalnum():
+        if (not edge_before or not before.isalnum()) and (not edge_after or not after.isalnum()):
             return True
         start = idx + 1
 
