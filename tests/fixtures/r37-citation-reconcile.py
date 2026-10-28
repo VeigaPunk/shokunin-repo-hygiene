@@ -18,6 +18,10 @@ counter's exit code and output. Cases:
   boundary          `subcases=21 pass=21` is not `cases=21 pass=21`       -> rc 1 EXPECTED-MISSING
   receipt-is-file   the receipt path equals the citation file            -> rc 2 REFUSAL
   missing-header    the register has no header line                      -> rc 2 REFUSAL
+  worktree-tamper   a tampered working copy loses to committed bytes     -> rc 0
+  empty-register    header only, no rows                                 -> rc 2 REFUSAL
+  duplicate-id      two rows with one id                                 -> rc 2 REFUSAL
+  stale-dash        a row with stale '-'                                 -> rc 2 REFUSAL
 
 The control runs the discriminating cases against an always-zero emitter
 (prints `SUMMARY cells=1 mismatches=0`, rc 0 without reading anything): if that
@@ -211,6 +215,36 @@ def main(argv):
                               env=ENV, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False)
         ok = proc.returncode == 2 and "REFUSAL USAGE" in proc.stderr
         results.append(("receipt-is-file", ok, "rc=%d err=%r" % (proc.returncode, proc.stderr.splitlines()[:1])))
+
+        # worktree-tamper: the cited file is committed clean and tampered in the
+        # working tree; committed bytes must win (A2 survivor, W2MutCounter2).
+        tamper = os.path.join(scratch, "tamper")
+        repo = make_repo(tamper)
+        write(os.path.join(repo, "notes.md"), "ANCHOR cases=21 pass=21 receipt.txt\n")
+        rev = commit(repo, "tamper")
+        register = os.path.join(scratch, "tamper.tsv")
+        write(register, REGISTER + CASE_ROWS["ok"].replace("@REV@", rev))
+        write(os.path.join(repo, "notes.md"), "tampered, no anchor here\n")
+        proc = subprocess.run(["python3", "-B", tool, "--root", repo, "--rev", rev, "--register", register],
+                              env=ENV, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False)
+        ok = proc.returncode == 0 and "SUMMARY cells=1 mismatches=0" in proc.stdout
+        results.append(("worktree-tamper", ok, "rc=%d out=%r" % (proc.returncode, proc.stdout.splitlines()[:2])))
+
+        # malformed registers: empty, duplicate id, stale '-'
+        for label, body in (
+            ("empty-register", REGISTER),
+            ("duplicate-id", REGISTER + CASE_ROWS["ok"].replace("@REV@", "REVPLACE") + CASE_ROWS["ok"].replace("@REV@", "REVPLACE")),
+            ("stale-dash", REGISTER + CASE_ROWS["ok"].replace("@REV@", "REVPLACE").replace("\tcases=11 pass=11\t", "\t-\t")),
+        ):
+            repo = make_repo(os.path.join(scratch, label))
+            write(os.path.join(repo, "notes.md"), "ANCHOR cases=21 pass=21 receipt.txt\n")
+            rev = commit(repo, label)
+            register = os.path.join(scratch, label + ".tsv")
+            write(register, body.replace("REVPLACE", rev))
+            proc = subprocess.run(["python3", "-B", tool, "--root", repo, "--rev", rev, "--register", register],
+                                  env=ENV, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False)
+            ok = proc.returncode == 2 and "REFUSAL USAGE" in proc.stderr
+            results.append((label, ok, "rc=%d err=%r" % (proc.returncode, proc.stderr.splitlines()[:1])))
 
         # missing-header: a register without its header line is malformed
         noheader = os.path.join(scratch, "noheader")
