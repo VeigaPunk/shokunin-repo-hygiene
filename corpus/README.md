@@ -774,3 +774,7 @@ a measured edge class does not promote a frontier ground to Core (PROVINCE
 ## Round 34 frontier update
 
 - C2's `--bind`/`--ro-bind` mechanism is now sourced in S230 and cited in `corpus/lessons/round-34.md` `## Gate`; it does not establish a passing N3 outcome. C1 calibration and C2 operability targets both missed under the frozen counters. The measured failures and remaining work are recorded in the round-34 lesson and `SCORECARD.md`; F1-F5 core/frontier assignments and held safety boundaries are unchanged.
+
+## Round 35 frontier update
+
+- The F1 fleet exposure numerator was re-censused read-only on 2026-10-28: 27 registrations across 26 repositories, 0 immediately prunable (`knowledge/fleet-prune-numerator-r35.md`, S231/S232; `census/round-35/records/prune-census.tsv`). This replaces the current reading, not the historical 2026-10-24 figure. C3's six-leg entry counter passes after A1 fixed its SOURCES status-cell parser; C1 calibration and C2 operability remain under measurement, with feasibility failures retained as residuals. Certification OFF, K5 HELD, NAMESPACE hold unchanged.
