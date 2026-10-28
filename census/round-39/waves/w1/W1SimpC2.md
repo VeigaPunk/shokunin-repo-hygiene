@@ -4,11 +4,18 @@ seat: W1SimpC2 (simplifier, leaf — no subagent dispatch)
 role: advisory. No lane bytes were written; the proposal was measured in scratch only.
 lane: /home/vgpnk/Projects/shokunin/souji-shokunin
 base rev: ed30b7f5b77939c9073348d810730bc4f355708d
-lane HEAD at review time: d4c17557b92fd98044e4c8f0ddc79c6d75701b15
-reviewed bytes: `census/round-39/c2-counter.py`, sha256 `326caa16224605bb0cbfc9a62f0d9ce39f6c9df729b0829a589a1a0bee39a781`,
-286 lines. Verified identical to `git show HEAD:census/round-39/c2-counter.py` and clean in
-`git status --porcelain` (no uncommitted edit by a sibling).
+lane HEAD at review time: 5230a3414d062152aa76f141ab45afb62bcfcc4c
+reviewed bytes: `census/round-39/c2-counter.py`, sha256
+`732b1e425a6ddc37a9632431269c9c679b32cbe18a22cb35b5b4f4cec151ee11`, 290 lines.
 tooling: none installed; no `uv tool`/`npx`/binary install was needed (pacman not touched).
+
+Review chronology (the lane moved under me, once): the review began on
+`326caa16224605bb0cbfc9a62f0d9ce39f6c9df729b0829a589a1a0bee39a781` (286 lines, HEAD `d4c1755`) and
+the L1 then landed `5230a34`, whose only delta in this file is a scratch-root exit-2 guard around
+`tempfile.mkdtemp`. The proposal was re-based onto the new bytes and every arm re-run against them;
+all evidence below is from the current bytes. The guard is preserved untouched by the proposal
+(§4, hunk `@@ -162,12 +167,14 @@`). Later lane commits (`9440270`, `a6fe389`) did not touch
+this file: at HEAD `a6fe389` its sha256 is still `732b1e42…`, so the §4 patch still applies.
 
 ## 1. What I ran, and what it printed
 
@@ -21,22 +28,23 @@ All runs used absolute paths. Every run used an explicit `--scratch`/`TMPDIR` un
 $ git -C /home/vgpnk/Projects/shokunin/souji-shokunin status --porcelain census/round-39/c2-counter.py
 (no output)
 $ sha256sum census/round-39/c2-counter.py
-326caa16224605bb0cbfc9a62f0d9ce39f6c9df729b0829a589a1a0bee39a781  census/round-39/c2-counter.py
-$ git show HEAD:census/round-39/c2-counter.py | sha256sum
-326caa16224605bb0cbfc9a62f0d9ce39f6c9df729b0829a589a1a0bee39a781  -
+732b1e425a6ddc37a9632431269c9c679b32cbe18a22cb35b5b4f4cec151ee11  census/round-39/c2-counter.py
+$ git log --oneline -1 --format='%h %s' -- census/round-39/c2-counter.py
+5230a34 round-39: integrate wave-1 lane edits (LOG/SKILL/QUALITY cells with revision pins), scratch-root exit 2 in the three counters, A2 consumer count, receipts
 ```
 
-Verdict: the bytes I reviewed are the committed bytes; no sibling was mid-edit in this file.
+Verdict: the bytes I reviewed are the committed bytes at HEAD `5230a34`; no sibling was mid-edit
+in this file.
 
 ### 1.2 Base arm — original bytes
 
 ```
 $ cd /home/vgpnk/Projects/shokunin/souji-shokunin && \
-  TMPDIR=/fast/scratch/hyaku/souji-r39/W1SimpC2/base python3 -B census/round-39/c2-counter.py \
+  TMPDIR=/fast/scratch/hyaku/souji-r39/W1SimpC2/w-base python3 -B census/round-39/c2-counter.py \
   --root /home/vgpnk/Projects/shokunin/souji-shokunin \
   --rev ed30b7f5b77939c9073348d810730bc4f355708d \
   --base-rev ed30b7f5b77939c9073348d810730bc4f355708d \
-  --scratch /fast/scratch/hyaku/souji-r39/W1SimpC2/base
+  --scratch /fast/scratch/hyaku/souji-r39/W1SimpC2/w-base
 LEG L1 FAIL new rc=1 class=False old rc=1 class=False
 LEG L2 FAIL new rc=1 class=False old rc=1 class=False
 LEG L3 PASS new rc=2 old rc=2
@@ -54,9 +62,9 @@ tuple differ from that receipt — see §5.1; the leg verdicts are identical.
 ### 1.3 HEAD arm — original bytes
 
 ```
-$ TMPDIR=.../newhead python3 -B census/round-39/c2-counter.py --root <lane> \
-  --rev d4c17557b92fd98044e4c8f0ddc79c6d75701b15 --base-rev ed30b7f5b77939c9073348d810730bc4f355708d \
-  --scratch .../newhead
+$ TMPDIR=.../w-head python3 -B census/round-39/c2-counter.py --root <lane> \
+  --rev 5230a3414d062152aa76f141ab45afb62bcfcc4c --base-rev ed30b7f5b77939c9073348d810730bc4f355708d \
+  --scratch .../w-head
 LEG L1 PASS new rc=2 class=True old rc=1 class=False
 LEG L2 PASS new rc=2 class=True old rc=1 class=False
 LEG L3 PASS new rc=2 old rc=2
@@ -67,22 +75,23 @@ SUMMARY legs=6 pass=6 fail=0 harm=0 tool_sha=59f1e57d7af0/e48ed08e6728 fixture_s
 EXIT=0
 ```
 
-Verdict: the C2 predicate reading `legs=6 pass=6 fail=0 harm=0` holds on the current HEAD, and
-`tool_sha` equals `c2-after.txt`. (The same reading was obtained at the earlier HEAD
-`2201778e7736af82e7d8a42dec2494f115bf3923`.)
+Verdict: the C2 predicate reading `legs=6 pass=6 fail=0 harm=0` holds on HEAD `5230a34`, and
+`tool_sha` equals `c2-after.txt`. (The same reading was obtained at the earlier HEADs
+`d4c1755` and `2201778e7736af82e7d8a42dec2494f115bf3923`.)
 
 ### 1.4 Proposed minimal form — equivalence, byte for byte
 
-Proposal measured as `/fast/scratch/hyaku/souji-r39/W1SimpC2/c2-min.py` (§4). Each arm was run
+Proposal measured as `/fast/scratch/hyaku/souji-r39/W1SimpC2/c2-min.py` (sha256
+`7217c9ddae37b9cbd3f90dfd94235f5da3e05cd844e49f54f321f52b53ec14e3`, 291 lines). Each arm was run
 twice — original then proposal — into files, then compared with `diff -q`:
 
 ```
-$ TMPDIR=.../v-base python3 -B <lane>/census/round-39/c2-counter.py --root <lane> --rev ed30b7f... --base-rev ed30b7f... > v-base/orig.txt 2>&1
-$ TMPDIR=.../v-base python3 -B .../c2-min.py                     --root <lane> --rev ed30b7f... --base-rev ed30b7f... > v-base/min.txt  2>&1
-$ diff -q v-base/orig.txt v-base/min.txt && echo "DIFF: identical"
-DIFF: identical          (both arms exit 1; SUMMARY legs=6 pass=2 fail=4 harm=0 tool_sha=56866ea8f832/14e9c0f77d7e fixture_sha=e555d8281484)
+$ TMPDIR=.../w-base python3 -B <lane>/census/round-39/c2-counter.py --root <lane> --rev ed30b7f... --base-rev ed30b7f... > w-base/orig.txt 2>&1
+$ TMPDIR=.../w-base python3 -B .../c2-min.py                     --root <lane> --rev ed30b7f... --base-rev ed30b7f... > w-base/min.txt  2>&1
+$ diff -q w-base/orig.txt w-base/min.txt && echo "DIFF: identical"
+DIFF: identical          (both exit 1; SUMMARY legs=6 pass=2 fail=4 harm=0 tool_sha=56866ea8f832/14e9c0f77d7e fixture_sha=e555d8281484)
 
-$ ... --rev d4c17557... --base-rev ed30b7f...   (original vs proposal)
+$ ... --rev 5230a341... --base-rev ed30b7f...   (original vs proposal)
 DIFF: identical          (both exit 0; SUMMARY legs=6 pass=6 fail=0 harm=0 tool_sha=59f1e57d7af0/e48ed08e6728 fixture_sha=e555d8281484)
 
 $ ... --root <synthetic harm repo> --rev 047f8f9... --base-rev 651ae10...   (original vs proposal)
@@ -97,12 +106,30 @@ changes no leg verdict.
 
 ```
 $ python3 -B -c "import py_compile; py_compile.compile('.../c2-min.py', cfile='.../c2-min.pyc', doraise=True)"
-COMPILE OK
+COMPILE OK                                   # first pass, before the re-base onto 5230a34
+$ python3 -B -c "import py_compile; py_compile.compile('.../c2-min.py', cfile='.../c2-min.pyc', doraise=True)"
+py_compile rc: 0                             # re-based proposal
 ```
 
-Verdict: the proposal parses/compiles.
+Verdict: the proposal parses/compiles, before and after the re-base.
 
-### 1.6 Synthetic arm that makes `harm` non-zero (built for §3.2)
+### 1.6 The §4 patch applies to the current lane bytes and reproduces the measured proposal
+
+```
+$ python3 -B <<'PY'                          # extract the ```diff block from this report, patch a copy
+... re.findall(r"```diff\n(.*?)```", report) ; patch -s <copy of lane file> <block> ; diff -q <copy> c2-min.py
+PY
+diff blocks in report: 1
+patch rc: 0 |
+report patch reproduces measured proposal: True
+proposal sha: 7217c9ddae37b9cbd3f90dfd94235f5da3e05cd844e49f54f321f52b53ec14e3
+patched  sha: 7217c9ddae37b9cbd3f90dfd94235f5da3e05cd844e49f54f321f52b53ec14e3
+```
+
+Verdict: the patch in §4 is self-contained — applied to `census/round-39/c2-counter.py` at
+`5230a34` it yields byte-identical bytes to the proposal that produced the §1.4 readings.
+
+### 1.7 Synthetic arm that makes `harm` non-zero (built for §3.2)
 
 ```
 $ D=$(mktemp -d) && git -C "$D" init -q        # via tempfile.mkdtemp(dir=/fast/scratch/...)
@@ -190,12 +217,12 @@ semantic risk.
 ### 3.2 REFUSED — replacing the `harm` counter with a constant / deleting the field
 
 `harm` has two increment sites and both are live, and they are two different classes:
-`census/round-39/c2-counter.py:212` (`harm += 1` when L3 fails — the contract harm the leg exists
-for) and `:269` (`harm += 1` when a consumer's passing-case count drops against base, which is a
+`census/round-39/c2-counter.py:223` (`harm += 1` when L3 fails — the contract harm the leg exists
+for) and `:274` (`harm += 1` when a consumer's passing-case count drops against base, which is a
 *strictly narrower* condition than L6 failing, since L6 also fails on `NO-SUMMARY` or non-green).
 It is therefore **not** redundant with the leg verdicts.
 
-Measured, not asserted: the synthetic arm in §1.6 makes L3 fail on both revisions, and the three
+Measured, not asserted: the synthetic arm in §1.7 makes L3 fail on both revisions, and the three
 variants print
 
 ```
@@ -204,16 +231,16 @@ proposal   SUMMARY legs=6 pass=0 fail=6 harm=1 ...
 const-harm SUMMARY legs=6 pass=0 fail=6 harm=0 ...     <- harm deleted / literalised
 ```
 
-(`/fast/scratch/hyaku/souji-r39/W1SimpC2/c2-constharm.py`: `harm = 0` and both increments removed,
-`harm=0` printed as a literal, `and harm == 0` dropped from the return.) The frozen summary field
-would then read `harm=0` on a run that contains a genuine harm class — the one field that
-distinguishes "a consumer lost cases" from "a leg failed for another reason" would become
-non-evidential. REFUSED. The field is 4 lines and it is the only harm signal the counter has.
+(`c2-constharm.py` = the proposal with `harm = 0` and both increments removed, `harm=0` printed as
+a literal, and `and harm == 0` dropped from the return.) The frozen summary field would then read
+`harm=0` on a run that contains a genuine harm class — the one field that distinguishes "a consumer
+lost cases" from "a leg failed for another reason" would become non-evidential. REFUSED. The field
+is 4 lines and it is the only harm signal the counter has.
 
 ### 3.3 REFUSED — dropping `and harm == 0` from the return
 
-The clause is unreachable today: `harm > 0` implies `fail > 0` at both sites (site :212 is guarded
-by `if not ok:` on the leg's own `ok`; site :269 sets `consumer_ok = False`, i.e. L6 fails). So
+The clause is unreachable today: `harm > 0` implies `fail > 0` at both sites (site :223 is guarded
+by `if not ok:` on the leg's own `ok`; site :274 sets `consumer_ok = False`, i.e. L6 fails). So
 `return 0 if passed == len(legs) and harm == 0 else 1` and `return 0 if passed == len(legs) else 1`
 agree on every possible input — no run can distinguish them, which is why no measurement is
 offered for it. Refused on cost/benefit: it saves one clause and removes the only place where a
@@ -230,12 +257,12 @@ convention for the same thing, which is what this seat exists to prevent.
 
 ## 4. Proposed minimal form (verbatim patch)
 
-286 → 287 lines; 28 removed / 31 added non-blank lines (net +1 line is 3 added
+290 → 291 lines; 28 removed / 31 added non-blank lines (the net +1 line is the 3 added
 comment/docstring lines). Removed: one helper, three dead parameters/columns (`extra`, `work`,
 `--tool`), one dead default, one duplicated normalisation, two duplicated class literals.
 
-Verbatim `diff -u census/round-39/c2-counter.py <proposal>` (only the `---`/`+++` header lines are
-dropped):
+Verbatim `diff -u census/round-39/c2-counter.py <proposal>` against the current lane bytes (only
+the `---`/`+++` header lines are dropped):
 
 ```diff
 @@ -51,20 +51,19 @@
@@ -325,10 +352,10 @@ dropped):
      tool_sha = hashlib.sha256((git_show(root, args.rev, CITATION) or "").encode()).hexdigest()[:12] + "/" + hashlib.sha256((git_show(root, args.rev, DRIFT) or "").encode()).hexdigest()[:12]
 -    fixture_sha = hashlib.sha256(open(os.path.join(os.path.abspath(root), "tests/fixtures/r39-citation-rev.py"), encoding="utf-8").read().encode()).hexdigest()[:12]
 +    fixture_sha = hashlib.sha256(open(os.path.join(lane, "tests/fixtures/r39-citation-rev.py"), encoding="utf-8").read().encode()).hexdigest()[:12]
-     base_scratch = tempfile.mkdtemp(
-         prefix="souji-r39-c2.", dir=args.scratch or os.environ.get("TMPDIR") or "/var/tmp")
-     legs = []
-@@ -234,12 +241,10 @@
+     try:
+         base_scratch = tempfile.mkdtemp(
+             prefix="souji-r39-c2.", dir=args.scratch or os.environ.get("TMPDIR") or "/var/tmp")
+@@ -238,12 +245,10 @@
          leg("L4", new_ok and not old_ok, detail + " new_maps=%s old_maps=%s" % (new_ok, old_ok))
  
          # L5 — the new fixture discriminates.
@@ -345,7 +372,7 @@ dropped):
          ok = (
              new_f is not None and new_f[0] == 8 and new_f[2] == 0 and new_f[3] == 0
              and old_f is not None and old_f[2] >= 2
-@@ -249,15 +254,11 @@
+@@ -253,15 +258,11 @@
          # L6 — consumers green, none harmed against base.
          consumer_ok = True
          details = []
@@ -377,7 +404,7 @@ $ git show b769bfb84a264d8b284c09bc211d99f39a3e9126:tests/fixtures/r39-citation-
 c142c1bc28b8      <- c2-before.txt
 $ git show bbd9b97:tests/fixtures/r39-citation-rev.py | sha256sum | cut -c1-12
 7ab7c3d85a81      <- c2-after.txt
-$ git show d4c17557b92fd98044e4c8f0ddc79c6d75701b15:tests/fixtures/r39-citation-rev.py | sha256sum | cut -c1-12   (== worktree)
+$ git show d4c17557b92fd98044e4c8f0ddc79c6d75701b15:tests/fixtures/r39-citation-rev.py | sha256sum | cut -c1-12   (== worktree == 5230a34)
 e555d8281484
 $ git show ed30b7f5b77939c9073348d810730bc4f355708d:tests/fixtures/r39-citation-rev.py
 fatal: path 'tests/fixtures/r39-citation-rev.py' exists on disk, but not in 'ed30b7f5b77939c9073348d810730bc4f355708d'
@@ -403,13 +430,14 @@ on this.
 
 | check | command | verdict |
 |---|---|---|
-| reviewed bytes are committed | `git status --porcelain` / `sha256sum` vs `git show HEAD:` | PASS — identical `326caa16…` |
+| reviewed bytes are committed | `git status --porcelain` / `sha256sum` / `git log -- <file>` | PASS — `732b1e42…` at `5230a34` |
 | base arm unchanged, original bytes | §1.2 | PASS — `legs=6 pass=2 fail=4 harm=0`, exit 1 |
 | HEAD arm unchanged, original bytes | §1.3 | PASS — `legs=6 pass=6 fail=0 harm=0`, exit 0 |
 | proposal at base arm | §1.4 | PASS — `diff -q` identical (legs, summary, exit code) |
 | proposal at HEAD arm | §1.4 | PASS — `diff -q` identical |
-| proposal on the harm-exercising arm | §1.4/§1.6 | PASS — identical, `harm=1` preserved |
-| proposal compiles | §1.5 | PASS |
+| proposal on the harm-exercising arm | §1.4/§1.7 | PASS — identical, `harm=1` preserved |
+| proposal compiles | §1.5 | PASS — `py_compile rc: 0` |
+| §4 patch applies to the current bytes | §1.6 | PASS — `patch rc: 0`, patched sha256 == proposal sha256 `7217c9dd…` |
 | F1–F5 keep | §2 | KEEP — all measured identical |
 | harm constant / delete | §3.2 | REFUSED — measured `harm=1` → `harm=0` |
 | drop `and harm == 0` | §3.3 | REFUSED — dead today, sole future guard |
