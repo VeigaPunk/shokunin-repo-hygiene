@@ -117,8 +117,12 @@ def main(argv):
         if not REV.match(rev) or not resolves(args.root, rev):
             sys.stderr.write("REFUSAL COULD-NOT-EVALUATE: %s %s does not resolve\n" % (flag, rev))
             return 2
-    scratch = tempfile.mkdtemp(prefix="souji-r39-c3.",
-                               dir=args.scratch or os.environ.get("TMPDIR") or "/var/tmp")
+    try:
+        scratch = tempfile.mkdtemp(
+            prefix="souji-r39-c3.", dir=args.scratch or os.environ.get("TMPDIR") or "/var/tmp")
+    except OSError as exc:
+        sys.stderr.write("REFUSAL COULD-NOT-EVALUATE: scratch root unavailable: %s\n" % exc)
+        return 2
     try:
         source = git_show(args.root, args.rev, args.tool)
         candidate_src = open(args.fixture, encoding="utf-8").read()

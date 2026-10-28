@@ -168,8 +168,12 @@ def main(argv):
             return 2
     tool_sha = hashlib.sha256((git_show(root, args.rev, CITATION) or "").encode()).hexdigest()[:12] + "/" + hashlib.sha256((git_show(root, args.rev, DRIFT) or "").encode()).hexdigest()[:12]
     fixture_sha = hashlib.sha256(open(os.path.join(os.path.abspath(root), "tests/fixtures/r39-citation-rev.py"), encoding="utf-8").read().encode()).hexdigest()[:12]
-    base_scratch = tempfile.mkdtemp(
-        prefix="souji-r39-c2.", dir=args.scratch or os.environ.get("TMPDIR") or "/var/tmp")
+    try:
+        base_scratch = tempfile.mkdtemp(
+            prefix="souji-r39-c2.", dir=args.scratch or os.environ.get("TMPDIR") or "/var/tmp")
+    except OSError as exc:
+        sys.stderr.write("REFUSAL COULD-NOT-EVALUATE: scratch root unavailable: %s\n" % exc)
+        return 2
     legs = []
     harm = 0
 

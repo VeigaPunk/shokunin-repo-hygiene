@@ -200,7 +200,12 @@ def run(args):
         sys.stderr.write("REFUSAL USAGE: %s\n" % exc)
         return 2
     items_sha = __import__("hashlib").sha256(items_raw.encode("utf-8")).hexdigest()[:12]
-    scratch = tempfile.mkdtemp(prefix="souji-r39-c1.", dir=args.scratch or os.environ.get("TMPDIR") or "/var/tmp")
+    try:
+        scratch = tempfile.mkdtemp(
+            prefix="souji-r39-c1.", dir=args.scratch or os.environ.get("TMPDIR") or "/var/tmp")
+    except OSError as exc:
+        sys.stderr.write("REFUSAL COULD-NOT-EVALUATE: scratch root unavailable: %s\n" % exc)
+        return 2
     open_count = 0
     try:
         for row in items:
