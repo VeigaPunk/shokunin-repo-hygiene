@@ -41,9 +41,12 @@ CLI:
 Exit: 0 no drift rows, 1 drift rows found, 2 could-not-evaluate. Every
 refusal class the code can raise is named here (r38 C2, r37 routed defect 6):
 
-  RECORD-MISSING         the record path cannot be read
-  RECORD-MALFORMED       a line does not match the schema, duplicates a name,
-                         or disagrees with the TOTAL row
+  RECORD-MISSING         opening the record path failed with an error other
+                         than ENOENT (EACCES, ELOOP, EISDIR): the path exists
+                         but cannot be opened or read
+  RECORD-MALFORMED       the record path is missing (ENOENT) or is not a
+                         regular file, a line does not match the schema, a
+                         name is duplicated, or a TOTAL row disagrees
   RECORD-EMPTY           no REPO rows
   RECORD-OUTSIDE-ROOT    a record row, or the gitdir it resolves to, escapes
                          --root

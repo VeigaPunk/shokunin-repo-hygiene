@@ -43,7 +43,11 @@ CLI:
       [--register-rev REV]
 
 Exit: 0 mismatches=0, 1 any mismatch (one MISMATCH line each), 2 usage /
-malformed register / unresolvable revision. Read-only: git show only, no
+malformed register / unresolvable revision. A revision the counter cannot
+resolve is a could-not-evaluate input, never a finding (r39 C2, r38 routed
+defect R11): `--rev` and `--register-rev` must name a commit that resolves
+(`git cat-file -e <rev>^{commit}`), otherwise the run refuses with
+`REFUSAL REV-UNRESOLVED` and exits 2 before any row is read. Read-only: git show only, no
 working-tree reads of the audited files, no writes; the child git environment
 is a whitelist with config discovery neutralised (r37 A1.4).
 """
@@ -197,12 +201,25 @@ def parse_register(path):
     return parse_register_text(raw, path)
 
 
+def ancestor_status(root, ancestor, descendant):
+    """r39 C2 (r38 routed defect R11): `merge-base --is-ancestor` exits 0 yes, 1 no, else error."""
+    code = git_proc(root, ["merge-base", "--is-ancestor", ancestor, descendant]).returncode
+    if code == 0:
+        return "yes"
+    if code == 1:
+        return "no"
+    return "error"
+
+
 def commit_checks(root, rev, row, line):
     """r38 commit arm: the named measured commit must carry the cited receipt token."""
     commit = row["commit"]
     if git_proc(root, ["cat-file", "-e", commit + "^{commit}"]).returncode != 0:
         return ["COMMIT-UNRESOLVED %s does not resolve to a commit" % commit]
-    if git_proc(root, ["merge-base", "--is-ancestor", commit, rev]).returncode != 0:
+    status = ancestor_status(root, commit, rev)
+    if status == "error":
+        return ["COMMIT-ANCESTOR-ERROR %s ancestry of %s could not be evaluated" % (commit, rev)]
+    if status == "no":
         return ["COMMIT-NOT-ANCESTOR %s is not an ancestor of %s" % (commit, rev)]
     short = commit[:7]
     out = []
@@ -225,6 +242,18 @@ def run(args):
     root = args.root
     if not REV.match(args.rev):
         sys.stderr.write("REFUSAL USAGE: --rev must be 40-hex\n")
+        return 2
+    # r39 C2 (r38 routed defect R11): an unresolved revision is not a finding.
+    if git_proc(root, ["cat-file", "-e", args.rev + "^{commit}"]).returncode != 0:
+        sys.stderr.write(
+            "REFUSAL REV-UNRESOLVED: --rev %s does not resolve to a commit\n" % args.rev)
+        return 2
+    if args.register_rev and (
+        not REV.match(args.register_rev)
+        or git_proc(root, ["cat-file", "-e", args.register_rev + "^{commit}"]).returncode != 0
+    ):
+        sys.stderr.write(
+            "REFUSAL REV-UNRESOLVED: --register-rev %s does not resolve to a commit\n" % args.register_rev)
         return 2
     try:
         # r37 A2.6 (revised, wave seat W1RevPredicate L1): the register is an
@@ -274,7 +303,10 @@ def run(args):
         if git_proc(root, ["cat-file", "-e", row["receipt_rev"] + "^{commit}"]).returncode != 0:
             print("MISMATCH %s RECEIPT-REV-UNRESOLVED %s at %s" % (row["id"], row["receipt"], row["receipt_rev"]))
             mismatches += 1
-        elif git_proc(root, ["merge-base", "--is-ancestor", row["receipt_rev"], args.rev]).returncode != 0:
+        elif ancestor_status(root, row["receipt_rev"], args.rev) == "error":
+            print("MISMATCH %s RECEIPT-REV-ANCESTOR-ERROR %s at %s" % (row["id"], row["receipt"], row["receipt_rev"]))
+            mismatches += 1
+        elif ancestor_status(root, row["receipt_rev"], args.rev) == "no":
             print("MISMATCH %s RECEIPT-REV-NOT-ANCESTOR %s at %s" % (row["id"], row["receipt"], row["receipt_rev"]))
             mismatches += 1
         receipt = git_show(root, row["receipt_rev"], row["receipt"])

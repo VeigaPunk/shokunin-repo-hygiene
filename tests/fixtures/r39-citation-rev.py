@@ -15,7 +15,7 @@ Cases (a synthetic repository per run, one commit carrying the citation and its 
   rev-short          a short hex prefix                               -> rc 2, USAGE
   rev-symbolic       a tag-like name                                  -> rc 2, USAGE
   clean              the real commit                                  -> rc 0, mismatches=0
-  register-rev-gone  an unresolvable --register-rev                    -> rc 2, "not at"
+  register-rev-gone  an unresolvable --register-rev                    -> rc 2, REV-UNRESOLVED
   register-absent    a --register absent at a resolvable revision      -> rc 2, "not at"
 
 CLI:
@@ -110,7 +110,7 @@ def main(argv):
         case(tool, repo, register, "rev-symbolic", ["--rev", "v1"], 2, ["USAGE"], results)
         case(tool, repo, register, "clean", ["--rev", rev], 0, ["mismatches=0"], results)
         case(tool, repo, register, "register-rev-gone",
-             ["--rev", rev, "--register-rev", ABSENT], 2, ["not at"], results)
+             ["--rev", rev, "--register-rev", ABSENT], 2, ["REV-UNRESOLVED"], results)
         case(tool, repo, register, "register-absent",
              ["--rev", rev, "--register-rev", rev, "--register", "no-such-register.tsv"], 2,
              ["not at"], results)
