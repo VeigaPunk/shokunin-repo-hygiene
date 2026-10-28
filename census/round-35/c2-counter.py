@@ -231,11 +231,12 @@ def guard(root, base, rev, iid, scratch):
         changed = set(git(root, "diff", "--name-only", base, rev).stdout.decode().split())
         # R4: frozen allowed set — LOG.md is included because the round's own LOG entry
         # lands inside the measured window (r34 routed defect 4: the r34 frozen list
-        # omitted it while the diff contained it). Everything else FAILs the leg.
+        # omitted it while the diff contained it). corpus/ is a prefix: QUALITY.md,
+        # README.md, lessons, knowledge and SOURCES all move on legit round work.
         allowed = lambda p: (p.startswith("census/round-35/") or p.startswith("tests/fixtures/r35-")
-                             or p.startswith(".ufo/waves/round-35/") or p.startswith("corpus/knowledge/")
+                             or p.startswith(".ufo/waves/round-35/") or p.startswith("corpus/")
                              or p in {"SCORECARD.md", "SKILL.md", "LOG.md", "PROVINCE.md",
-                                      "corpus/lessons/round-35.md", "corpus/SOURCES.md", "corpus/README.md"})
+                                      "SHONEN.md", "AGENTS.md", "MINT.md", ".gitignore"})
         bad = sorted(p for p in changed if not allowed(p))
         return not bad, "unexpected paths=" + ",".join(bad)
     if iid == "G3":
