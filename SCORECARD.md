@@ -618,3 +618,22 @@ The two measured-commit cells in the r36 C2/C3 rows name `42ea92e` (the freeze c
 neither receipt exists (`git cat-file -e` rc 128 for both). The receipts first exist at `007ab53`
 (20/20 and 12/12) and are current at `1e771ed` (21/21 and 12/12, after amendment A7 refreshed
 C2); the reconciliation rows above name the current one.
+
+### Round 37 measurements (2026-10-28; base 0d974ffcb7dfb70617947531cab2d7e96cd8f9fd; preregistration + counters frozen at d5c6498c5f72a63c9df32b26ee143e8d775eebbd)
+
+| claim | axis | before | after | counting command | measured commit |
+|---|---|---|---|---|---|
+| C1 receipt-citation reconciliation | calibration 7 | `SUMMARY cells=9 mismatches=9`, rc 1 — the receipts resolve at the base revision but no correction line exists (`census/round-37/records/c1-before.txt`) | `SUMMARY cells=9 mismatches=0`, rc 0 — each register row's anchored line carries the receipt-backed value and the receipt blob at `1e771ed` carries the same token (`census/round-37/records/c1-after.txt`) | `python3 -B tools/souji-citation-reconcile.py --root /home/vgpnk/Projects/shokunin/souji-shokunin --rev <full40> --register census/round-37/citation-cells.tsv`; fixture `python3 -B tests/fixtures/r37-citation-reconcile.py` -> `cases=7 pass=7 fail=0 control=FALSE-GREEN-REJECTED` | e987a27c960baa74c08abe7f7ccbd980d9d88460 |
+| C2 drift-tool write envelope | operability 8 | the r36 tool bytes reproduce four escapes: `cases=6 pass=2 fail=4 base_fail=4`, rc 1 (`census/round-37/records/c2-before.txt`) | `cases=6 pass=6 fail=0 base_fail=4 control=ESCAPE-REPRODUCED`, rc 0 (`census/round-37/records/c2-after.txt`); consumers stay green: r36 drift fixture 12/12, r36 report-gate fixture 21/21, r27 gate 4/4 (`census/round-37/records/consumers-after.txt`) | `python3 -B tests/fixtures/r37-drift-escapes.py --base-tool <1e771ed blob>`; `python3 -B tools/souji-worktree-drift.py --root /home/vgpnk/Projects/shokunin --record census/round-35/records/prune-census.tsv --timeout 20` | e987a27c960baa74c08abe7f7ccbd980d9d88460 |
+| C3 drift fixture discrimination | coverage 8 | the battery against the r36 fixture blob: `mutants=6 killed=4 survived=2` — the routed `live_repos` survivor and the `drift_rows` mutant pass 12/12 (`census/round-37/records/c3-before.txt`) | `mutants=6 killed=6 survived=0`, rc 0 against `tests/fixtures/r37-drift-discrimination.py` (`census/round-37/records/c3-after.txt`); the r36 fixture stays byte-identical and 12/12 | `python3 -B tests/fixtures/r37-drift-mutants.py --fixture tests/fixtures/r37-drift-discrimination.py` | e987a27c960baa74c08abe7f7ccbd980d9d88460 |
+
+Owned score values are unchanged (calibration 7, operability 8, coverage 8): the lane still has no
+reproducible 0–10 mapping from a verdict to a number, so these rows carry the measurements and the
+verdict rather than a number. No axis is harmed: no predicate, counter or record was weakened, the
+r36 fixture files are byte-identical, and the r35 census record is left as filed.
+
+### Round 37 capability row (appended)
+
+| name | what it can now do | evidence pointer | first-working round |
+|---|---|---|---|
+| self-assessment receipt reconciliation (r37) | read a register of quoted self-assessment cells at a named revision and re-derive both arms — one anchored line carrying the receipt-backed value and not the stale token, and the receipt blob at a commit where it exists carrying the same token; refuses malformed registers and non-40-hex revisions; read-only git plumbing | `python3 -B tools/souji-citation-reconcile.py --root <lane> --rev <full40> --register census/round-37/citation-cells.tsv` -> `cells=9 mismatches=0` (`census/round-37/records/c1-after.txt`); `python3 -B tests/fixtures/r37-citation-reconcile.py` -> `cases=7 pass=7 fail=0 control=FALSE-GREEN-REJECTED` | r37 |
