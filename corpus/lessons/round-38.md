@@ -243,3 +243,14 @@ to the lane, but nothing stops a seat from also writing an absolute fleet path i
 `/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-38/w1/W1ScribeReport-fleetroot-draft.md`,
 verified with `cmp`, and the fleet copy deleted (the one fleet-root deletion this round may make).
 The filed report is the L1's.
+
+### Gate corrections (appended 2026-10-28, after wave 2)
+
+- **S239 anchor section.** Measured on `MANWIDTH=100 man git-merge-base`: `--is-ancestor` sits under
+  § OPERATION MODES (heading line 20; entry 41-43); § OPTIONS (line 52) documents only `-a`/`--all`.
+  The live page agrees (`## OPERATION MODES`). Corrected by **S244** (`supersedes S239`); the URL
+  fragment moves to `#_operation_modes`. The quote and line numbers were already right.
+- **S242 line range.** The ENXIO sentence occupies lines 544-545; 546 is blank. Corrected by
+  **S245** (`supersedes S242`).
+- Both corrections are new rows (contract rule 2); S239 and S242 stay as filed. Registry grep count
+  167 → 169; census exit 0 at both ends is in the report.

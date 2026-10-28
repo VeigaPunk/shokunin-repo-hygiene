@@ -130,7 +130,7 @@ def run_cases(tool, work):
         os.mkfifo(fifo)
         before = open(rec, encoding="utf-8").read()
         rc, out, elapsed, hung = invoke(tool, path, rec, ["--json", fifo])
-        check("fifo-json-refused", (not hung) and rc == 2 and "JSON-NOT-REGULAR" in out
+        check("fifo-json-refused", (not hung) and rc == 2 and has_token(out, "JSON-NOT-REGULAR")
               and open(rec, encoding="utf-8").read() == before,
               "rc=%r hung=%s elapsed=%.1fs out=%r" % (rc, hung, elapsed, out.splitlines()[:2]), results)
 
@@ -144,14 +144,14 @@ def run_cases(tool, work):
         finally:
             reader.kill()
             reader.wait()
-        check("fifo-json-with-reader", (not hung) and rc == 2 and "JSON-NOT-REGULAR" in out,
+        check("fifo-json-with-reader", (not hung) and rc == 2 and has_token(out, "JSON-NOT-REGULAR"),
               "rc=%r hung=%s elapsed=%.1fs out=%r" % (rc, hung, elapsed, out.splitlines()[:2]), results)
 
         # record-alias-refused
         root, path, rec = fleet(scratch, "alias")
         before = open(rec, encoding="utf-8").read()
         rc, out, elapsed, hung = invoke(tool, path, rec, ["--json", rec])
-        check("record-alias-refused", (not hung) and rc == 2 and "JSON-IS-RECORD" in out
+        check("record-alias-refused", (not hung) and rc == 2 and has_token(out, "JSON-IS-RECORD")
               and open(rec, encoding="utf-8").read() == before,
               "rc=%r out=%r record_intact=%s" % (rc, out.splitlines()[:2],
                                                 open(rec, encoding="utf-8").read() == before), results)
@@ -162,39 +162,42 @@ def run_cases(tool, work):
         os.link(rec, link)
         before = open(rec, encoding="utf-8").read()
         rc, out, elapsed, hung = invoke(tool, path, rec, ["--json", link])
-        check("record-hardlink-refused", (not hung) and rc == 2 and "JSON-IS-RECORD" in out
+        check("record-hardlink-refused", (not hung) and rc == 2 and has_token(out, "JSON-IS-RECORD")
               and open(rec, encoding="utf-8").read() == before,
               "rc=%r out=%r record_intact=%s" % (rc, out.splitlines()[:2],
                                                 open(rec, encoding="utf-8").read() == before), results)
 
-        # docstring-enum (static; r38 A1 after wave-1 seat W1RevDocstring). The first draft
-        # read source.split('"""')[1] and matched substrings, so it false-rejected a raise
-        # form inside a comment (a1), accepted a triple-quoted module constant as the
-        # docstring (b1), accepted a doc-only phantom token (d), accepted a class name
-        # degraded to a prefix (d2), and missed the tool's other exit-2 idiom
-        # `REFUSAL <TOKEN>:` on stderr (c2). The case now reads the real module docstring
-        # through ast, strips comments before collecting code tokens, collects both
-        # refusal idioms, and matches whole tokens.
+        # docstring-enum (static; r38 A1, revised after wave-2 seat W2RevC2 F1). The first
+        # revision removed the docstring from code_text with str.replace(doc_raw, ...), but
+        # doc_raw is the DECODED value while code_text is source text, so any escape in the
+        # docstring made the replace a no-op and the phantom arm blind. The docstring token is
+        # now excluded by its AST span. Tighter-only: same case id, same count.
         source = open(tool, encoding="utf-8").read()
         doc = ""
-        doc_raw = ""
+        doc_span = None
         try:
-            doc_raw = ast.get_docstring(ast.parse(source), clean=False) or ""
-            doc = doc_raw
+            tree = ast.parse(source)
+            first = tree.body[0] if tree.body else None
+            if (
+                isinstance(first, ast.Expr)
+                and isinstance(getattr(first, "value", None), ast.Constant)
+                and isinstance(first.value.value, str)
+            ):
+                doc = first.value.value
+                doc_span = (first.lineno, first.col_offset)
         except SyntaxError:
             doc = ""
+        toks = []
         try:
-            # untokenize keeps the original adjacency, so `Refusal(` stays glued to its
-            # literal; a plain join would break the `raise Refusal("TOKEN:` pattern.
-            code_text = tokenize.untokenize(
-                [tok for tok in tokenize.generate_tokens(io.StringIO(source).readline)
-                 if tok.type != tokenize.COMMENT])
+            for tok in tokenize.generate_tokens(io.StringIO(source).readline):
+                if tok.type == tokenize.COMMENT:
+                    continue
+                if doc_span is not None and tok.type == tokenize.STRING and tok.start == doc_span:
+                    continue
+                toks.append(tok)
+            code_text = tokenize.untokenize(toks)
         except (tokenize.TokenError, ValueError):
             code_text = "\n".join(line.split("#", 1)[0] for line in source.splitlines())
-        # the docstring is itself a STRING token in code_text: remove it, or a doc-only
-        # phantom class would "exist" in code by being quoted in the documentation.
-        if doc_raw:
-            code_text = code_text.replace(doc_raw, "", 1)
         tokens = sorted(set(re.findall(r'raise Refusal\("([A-Z0-9-]+):', code_text))
                         | set(re.findall(r'REFUSAL ([A-Z0-9-]+):', code_text)))
         missing = [t for t in tokens if not has_token(doc, t)]
@@ -221,7 +224,7 @@ def run_cases(tool, work):
         root, path, rec = fleet(scratch, "inside")
         target = os.path.join(path, "alpha", "out.json")
         rc, out, elapsed, hung = invoke(tool, path, rec, ["--json", target])
-        check("json-inside-tree", (not hung) and rc == 2 and "JSON-INSIDE-MEASURED-TREE" in out,
+        check("json-inside-tree", (not hung) and rc == 2 and has_token(out, "JSON-INSIDE-MEASURED-TREE"),
               "rc=%r out=%r" % (rc, out.splitlines()[:2]), results)
 
         # json-hardlinked
@@ -231,7 +234,7 @@ def run_cases(tool, work):
         link = os.path.join(scratch, "hardlink-out")
         os.link(victim, link)
         rc, out, elapsed, hung = invoke(tool, path, rec, ["--json", link])
-        check("json-hardlinked", (not hung) and rc == 2 and "JSON-HARDLINKED" in out,
+        check("json-hardlinked", (not hung) and rc == 2 and has_token(out, "JSON-HARDLINKED"),
               "rc=%r out=%r" % (rc, out.splitlines()[:2]), results)
 
         # json-symlink-resolved: the documented contract is "written on the resolved
@@ -251,14 +254,14 @@ def run_cases(tool, work):
         target = os.path.join(scratch, "a-directory")
         os.makedirs(target)
         rc, out, elapsed, hung = invoke(tool, path, rec, ["--json", target])
-        check("json-directory", (not hung) and rc == 2 and "JSON-NOT-REGULAR" in out,
+        check("json-directory", (not hung) and rc == 2 and has_token(out, "JSON-NOT-REGULAR"),
               "rc=%r out=%r" % (rc, out.splitlines()[:2]), results)
 
         # record-outside-root
         root, path, rec = fleet(scratch, "outside")
         write(rec, "REPO\t../escaped\tregs=1\tprunable=0\nTOTAL\trepos=1\tregs=1\tprunable=0\n")
         rc, out, elapsed, hung = invoke(tool, path, rec, [])
-        check("record-outside-root", (not hung) and rc == 2 and "RECORD-OUTSIDE-ROOT" in out,
+        check("record-outside-root", (not hung) and rc == 2 and has_token(out, "RECORD-OUTSIDE-ROOT"),
               "rc=%r out=%r" % (rc, out.splitlines()[:2]), results)
 
         # summary-still-exact
