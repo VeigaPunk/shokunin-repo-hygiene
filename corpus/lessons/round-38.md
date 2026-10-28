@@ -254,3 +254,20 @@ The filed report is the L1's.
   **S245** (`supersedes S242`).
 - Both corrections are new rows (contract rule 2); S239 and S242 stay as filed. Registry grep count
   167 → 169; census exit 0 at both ends is in the report.
+
+## Claims corrections (appended after wave 2)
+
+- "r37 reconciled ten self-assessment cells": r37's register had **eleven** rows
+  (`census/round-37/citation-cells.tsv`); this round's register has ten. Corrected sentence: "r37
+  reconciled eleven self-assessment cells and named the missing commit arm".
+- Every `Counter:` pointer in `## Claims` names a receipt this round later superseded
+  (`c1-after2`, `c2-after3`, `c3-after2`). The final pointers are `c1-after7`, `c2-after6`,
+  `c3-after5` (wave-2 amendments A7rev/A8/A9 changed the instruments); the earlier receipts
+  describe pre-amendment bytes and their numbers are not the final ones.
+- "Ten routed cells are reconciled" is wider than its counter: four rows bind cells that were stale
+  at the base, six re-cite values the lane already held (see `## Corrections after wave 1`).
+- The limit sentence "the ten reconciled cells are the ones the r37 spot-check routed" is
+  corrected: the spot-check routed eight **defects**; the register binds ten **cells**, four of
+  which were stale.
+- `a7-counter-fixes.txt` was first pinned to a revision whose committed counter predates A7; the
+  final receipt is regenerated at the tip and its label names that revision.

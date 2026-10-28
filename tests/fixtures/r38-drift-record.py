@@ -71,13 +71,18 @@ def fleet(scratch, name):
 GOOD = "REPO\talpha\tregs=1\tprunable=0\nREPO\tbeta\tregs=1\tprunable=0\nTOTAL\trepos=2\tregs=2\tprunable=0\n"
 
 
-def run_case(tool, root, path, body, name, want_rc, want_tokens, results, idx):
+def run_case(tool, root, path, body, name, want_rc, want_tokens, results):
     # r38 A6 (wave seat W1RevRecordFixture F1): the record filename carried the case name, so a
     # stub could infer the expected verdict from argv. The name is opaque now; the case id stays
     # in the fixture's own output only.
-    record = os.path.join(root, "record-%02d.tsv" % idx)
+    # r38 A9 (wave-2 seat W2RevC3 F1): `record-%02d.tsv` still encoded the case order, so a stub
+    # could map index to verdict. The name is random and carries no signal.
+    fd, record = tempfile.mkstemp(prefix="record-", suffix=".tsv", dir=root)
+    os.close(fd)
     if body is not None:
         write(record, body)
+    else:
+        os.unlink(record)
     proc = subprocess.run(
         ["python3", "-B", tool, "--root", path, "--record", record, "--timeout", "30"],
         env=ENV, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False,
@@ -93,28 +98,28 @@ def run_cases(tool, work):
     results = []
     try:
         root, path = fleet(scratch, "classes")
-        run_case(tool, root, path, GOOD, "total-ok", 0, ["SUMMARY", "record_repos=2"], results, 1)
+        run_case(tool, root, path, GOOD, "total-ok", 0, ["SUMMARY", "record_repos=2"], results)
         run_case(tool, root, path,
                  "REPO\talpha\tregs=1\tprunable=0\nREPO\tbeta\tregs=1\tprunable=0\nTOTAL\trepos=3\tregs=2\tprunable=0\n",
-                 "total-repos-mismatch", 2, ["RECORD-MALFORMED", "TOTAL repos=3 but 2 REPO rows"], results, 2)
+                 "total-repos-mismatch", 2, ["RECORD-MALFORMED", "TOTAL repos=3 but 2 REPO rows"], results)
         run_case(tool, root, path,
                  "REPO\talpha\tregs=1\tprunable=0\nREPO\tbeta\tregs=1\tprunable=0\nTOTAL\trepos=2\tregs=5\tprunable=0\n",
-                 "total-regs-mismatch", 2, ["RECORD-MALFORMED", "TOTAL regs=5 but REPO rows sum to 2"], results, 3)
+                 "total-regs-mismatch", 2, ["RECORD-MALFORMED", "TOTAL regs=5 but REPO rows sum to 2"], results)
         run_case(tool, root, path,
                  "REPO\talpha\tregs=1\tprunable=0\nREPO\tbeta\tregs=1\tprunable=0\nTOTAL\trepos=2\tregs=2\tprunable=7\n",
-                 "total-prunable-mismatch", 2, ["RECORD-MALFORMED", "TOTAL prunable=7 but REPO rows sum to 0"], results, 4)
+                 "total-prunable-mismatch", 2, ["RECORD-MALFORMED", "TOTAL prunable=7 but REPO rows sum to 0"], results)
         run_case(tool, root, path,
                  "REPO\talpha\tregs=1\tprunable=0\nREPO\talpha\tregs=1\tprunable=0\nTOTAL\trepos=2\tregs=2\tprunable=0\n",
-                 "duplicate-name", 2, ["RECORD-MALFORMED", "line 2 duplicates alpha"], results, 5)
+                 "duplicate-name", 2, ["RECORD-MALFORMED", "line 2 duplicates alpha"], results)
         run_case(tool, root, path, "REPO\talpha\tregs=1\tprunable=0\nREPO\tbeta\tregs=1\tprunable=0\n",
-                 "no-total-row", 0, ["SUMMARY", "record_repos=2"], results, 6)
+                 "no-total-row", 0, ["SUMMARY", "record_repos=2"], results)
         run_case(tool, root, path, "REPO\talpha\tregs=1\tprunable=0\ngarbage line\n",
-                 "bad-line", 2, ["RECORD-MALFORMED", "does not match the census schema"], results, 7)
-        run_case(tool, root, path, "# only a comment\n", "empty-record", 2, ["RECORD-EMPTY"], results, 8)
-        run_case(tool, root, path, None, "missing-record", 2, ["RECORD-MALFORMED", "not a regular file"], results, 9)
+                 "bad-line", 2, ["RECORD-MALFORMED", "does not match the census schema"], results)
+        run_case(tool, root, path, "# only a comment\n", "empty-record", 2, ["RECORD-EMPTY"], results)
+        run_case(tool, root, path, None, "missing-record", 2, ["RECORD-MALFORMED", "not a regular file"], results)
         run_case(tool, root, path,
                  "# a comment\n\nREPO\talpha\tregs=1\tprunable=0\n\nREPO\tbeta\tregs=1\tprunable=0\nTOTAL\trepos=2\tregs=2\tprunable=0\n",
-                 "comments-and-blanks", 0, ["SUMMARY", "record_repos=2"], results, 10)
+                 "comments-and-blanks", 0, ["SUMMARY", "record_repos=2"], results)
     finally:
         shutil.rmtree(scratch, ignore_errors=True)
     return results
