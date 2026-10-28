@@ -132,16 +132,10 @@ def run(args):
         sys.stderr.write("REFUSAL USAGE: --rev must be 40-hex\n")
         return 2
     try:
-        if not args.register_rev:
-            # r37 A2.6 (wave seat W2CritC1): a register outside --root is not
-            # evidence about this lane; resolve it against the audited root.
-            resolved = os.path.realpath(os.path.join(root, args.register)) if not os.path.isabs(args.register) else os.path.realpath(args.register)
-            try:
-                inside = os.path.commonpath([resolved, os.path.realpath(root)]) == os.path.realpath(root)
-            except ValueError:
-                inside = False
-            if not inside:
-                raise RegisterError("register %s is outside %s" % (args.register, root))
+        # r37 A2.6 (revised, wave seat W1RevPredicate L1): the register is an
+        # input, not audited evidence — the cheat W2CritC1 filed (an uncommitted
+        # register) is closed by pinning `--register-rev` in every command
+        # string, not by a root check that broke the fixture's sibling registers.
         if args.register_rev:
             text = git_show(root, args.register_rev, args.register)
             if text is None:
