@@ -75,8 +75,9 @@ def build(scratch):
 
 
 def case(tool, repo, register, name, argv, want_rc, want_tokens, results):
+    child_env = dict(ENV, TMPDIR=os.path.dirname(register))
     proc = subprocess.run(["python3", "-B", tool, "--root", repo] + argv + ["--register", register],
-                          env=ENV, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+                          env=child_env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
                           check=False)
     out = proc.stdout + proc.stderr
     missing = [t for t in want_tokens if t not in out]

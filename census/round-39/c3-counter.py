@@ -59,8 +59,9 @@ MUTANTS = (
 )
 
 
-def child_env(scratch):
-    env = {"PATH": os.environ.get("PATH", "/usr/local/bin:/usr/bin:/bin"), "TMPDIR": scratch}
+def child_env(scratch=None):
+    env = {"PATH": os.environ.get("PATH", "/usr/local/bin:/usr/bin:/bin"),
+           "TMPDIR": scratch or os.environ.get("TMPDIR") or "/var/tmp"}
     env.update(GIT_ENV)
     return env
 
@@ -68,7 +69,7 @@ def child_env(scratch):
 def git_show(root, rev, path):
     proc = subprocess.run(
         ["git", "-C", root, "show", "%s:%s" % (rev, path)],
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=child_env("/var/tmp"), check=False,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=child_env(), check=False,
     )
     if proc.returncode != 0:
         return None
@@ -78,7 +79,7 @@ def git_show(root, rev, path):
 def resolves(root, rev):
     return subprocess.run(
         ["git", "-C", root, "cat-file", "-e", rev + "^{commit}"],
-        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, env=child_env("/var/tmp"),
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, env=child_env(),
         check=False,
     ).returncode == 0
 
