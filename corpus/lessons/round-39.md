@@ -121,3 +121,7 @@ this case (its bytes print `not at`), which is what keeps the case discriminatin
 Census before -> after and the row changes are in the round report; this lesson carries the Gate
 rows and their verdicts. No `ground: F<k>` line moved: the three admitted rows ground the C2 repair
 and two disclosures, not new frontier ground.
+
+## Gate correction (appended after wave 1)
+
+R39-GATE-1 — S247's quote stopped at "cannot be dereferenced" and hid the clause that states the refusal; wave-1 seat `W1CritSources` located the full 25-word sentence ("... anymore (in which case, barf)") and showed that a reader holding only the quote saw the search, not the failure. S250 supersedes S247 with that quote and scopes it against S099; S247 stays as filed, and the C2 claim now cites S250 (S247's fact still holds, so the claim does not move).
