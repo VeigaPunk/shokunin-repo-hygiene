@@ -113,8 +113,8 @@ def score(fixture, tool, work):
         return False, "BAD-SUMMARY %r" % summaries[-1], None
     cases, _passed, fails = (int(match.group(i)) for i in (1, 2, 3))
     crash = "Traceback (most recent call last)" in proc.stderr
-    failing = [l.split("=", 1)[0][5:] for l in proc.stdout.splitlines() if l.startswith("case-")
-               and l.endswith("FAIL")]
+    failing = [l.split("=", 1)[0][5:] for l in proc.stdout.splitlines()
+               if l.startswith("case-") and "=FAIL" in l.split(" ", 1)[0]]
     killed = proc.returncode == 1 and fails > 0 and not crash
     return killed, "rc=%d fails=%d crash=%s failing=%s" % (
         proc.returncode, fails, crash, ",".join(failing) or "-"), cases

@@ -34,6 +34,7 @@ could-not-evaluate input.
 import argparse
 import ast
 import hashlib
+import importlib.util
 import os
 import re
 import shutil
@@ -42,8 +43,7 @@ import subprocess
 import sys
 import tempfile
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import docstring_classes as dc  # noqa: E402  (the joined analyser, same directory)
+ANALYZER = "census/round-40/docstring-classes.py"
 
 REV = re.compile(r"^[0-9a-f]{40}$")
 ZERO = "0" * 40
@@ -125,6 +125,23 @@ def extract(root, rev, path, scratch, name):
     return dest
 
 
+def load_analyzer(root, rev, scratch):
+    """Load the joined analyser from its COMMITTED bytes at `rev` (the file name has a hyphen, so
+    it is loaded by path, never by import)."""
+    src = git_show(root, rev, ANALYZER)
+    if src is None:
+        raise ValueError("%s absent at %s" % (ANALYZER, rev))
+    path = os.path.join(scratch, "docstring_classes.py")
+    with open(path, "w", encoding="utf-8") as handle:
+        handle.write(src)
+    spec = importlib.util.spec_from_file_location("r40_docstring_classes", path)
+    if spec is None or spec.loader is None:
+        raise ValueError("cannot load the analyser from %s" % path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def run_citation(tool, root, rev, scratch, register_rev=ZERO):
     return subprocess.run(
         ["python3", "-B", tool, "--root", root, "--rev", rev,
@@ -175,8 +192,10 @@ def observed_pairs(tool, scratch):
     return observed
 
 
-def run_fixture(fixture, work, extra=None):
-    cmd = ["python3", "-B", fixture] + list(extra or []) + ["--work", work]
+def run_fixture(fixture, work, extra=None, with_work=True):
+    cmd = ["python3", "-B", fixture] + list(extra or [])
+    if with_work:
+        cmd += ["--work", work]
     proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
                           check=False, env=child_env(work))
     match = re.search(r"SUMMARY cases=(\d+) pass=(\d+) fail=(\d+)", proc.stdout)
@@ -190,10 +209,15 @@ def main(argv):
     ap.add_argument("--root", required=True)
     ap.add_argument("--rev", required=True)
     ap.add_argument("--base-rev", required=True)
+    ap.add_argument("--defect-base-rev", default="ed30b7f5b77939c9073348d810730bc4f355708d",
+                    help="the revision where the unresolvable --rev defect was live (the r39 base); "
+                         "the round's own --base-rev is the r39 tip, where that defect is already "
+                         "repaired, so the discriminating arm needs the defect revision")
     ap.add_argument("--scratch")
     args = ap.parse_args(argv)
     root = args.root
-    for flag, rev in (("--rev", args.rev), ("--base-rev", args.base_rev)):
+    for flag, rev in (("--rev", args.rev), ("--base-rev", args.base_rev),
+                      ("--defect-base-rev", args.defect_base_rev)):
         if not REV.match(rev) or not resolves(root, rev):
             sys.stderr.write("REFUSAL COULD-NOT-EVALUATE: %s %s does not resolve\n" % (flag, rev))
             return 2
@@ -215,10 +239,13 @@ def main(argv):
         old_cit = extract(root, args.base_rev, CITATION, scratch, "cit-old.py")
         new_drift = extract(root, args.rev, DRIFT, scratch, "drift-new.py")
         old_drift = extract(root, args.base_rev, DRIFT, scratch, "drift-old.py")
+        analyzer_path = os.path.join(scratch, "docstring_classes.py")
+        analyzer = load_analyzer(root, args.rev, scratch)
 
         # L1 — an unresolvable --rev is a could-not-evaluate, not a finding.
         new_p = run_citation(new_cit, root, ZERO, scratch, register_rev=args.rev)
-        old_p = run_citation(old_cit, root, ZERO, scratch, register_rev=args.base_rev)
+        defect_cit = extract(root, args.defect_base_rev, CITATION, scratch, "cit-defect.py")
+        old_p = run_citation(defect_cit, root, ZERO, scratch, register_rev=args.defect_base_rev)
         new_ok = new_p.returncode == 2 and "REV-UNRESOLVED" in new_p.stderr
         old_has = old_p.returncode == 2 and "REV-UNRESOLVED" in old_p.stderr
         leg("L1", new_ok and not old_has,
@@ -229,7 +256,7 @@ def main(argv):
         # L2 — a blob id as --rev is the same class.
         blob = git(root, ["rev-parse", "%s:corpus/SOURCES.md" % args.base_rev]).stdout.decode().strip()
         new_p = run_citation(new_cit, root, blob, scratch, register_rev=args.rev)
-        old_p = run_citation(old_cit, root, blob, scratch, register_rev=args.base_rev)
+        old_p = run_citation(defect_cit, root, blob, scratch, register_rev=args.defect_base_rev)
         new_ok = new_p.returncode == 2 and "REV-UNRESOLVED" in new_p.stderr
         old_has = old_p.returncode == 2 and "REV-UNRESOLVED" in old_p.stderr
         leg("L2", bool(blob) and new_ok and not old_has,
@@ -250,10 +277,10 @@ def main(argv):
             new_src = handle.read()
         with open(old_drift, encoding="utf-8") as handle:
             old_src = handle.read()
-        new_joined = dc.classes_from_source(new_src)
-        new_first = dc.first_line_entries(dc.docstring_of(new_src))
-        old_joined = dc.classes_from_source(old_src)
-        old_first = dc.first_line_entries(dc.docstring_of(old_src))
+        new_joined = analyzer.classes_from_source(new_src)
+        new_first = analyzer.first_line_entries(analyzer.docstring_of(new_src))
+        old_joined = analyzer.classes_from_source(old_src)
+        old_first = analyzer.first_line_entries(analyzer.docstring_of(old_src))
         pairs = observed_pairs(new_drift, scratch)
         missing_new = []
         missing_old = []
@@ -274,8 +301,8 @@ def main(argv):
                 len(pairs), missing_new, missing_old, missed_by_first))
 
         # L4b — the synthetic wrapped-trigger probe.
-        synth_joined = dc.class_entries(dc.docstring_of(SYNTHETIC_DOC))
-        synth_first = dc.first_line_entries(dc.docstring_of(SYNTHETIC_DOC))
+        synth_joined = analyzer.class_entries(analyzer.docstring_of(SYNTHETIC_DOC))
+        synth_first = analyzer.first_line_entries(analyzer.docstring_of(SYNTHETIC_DOC))
         joined_ok = "SYNTH-CLASS" in synth_joined and "SYNTH-TRIGGER" in synth_joined.get("SYNTH-CLASS", "")
         first_ok = "SYNTH-CLASS" in synth_first and "SYNTH-TRIGGER" in synth_first.get("SYNTH-CLASS", "")
         leg("L4b", joined_ok and not first_ok,
@@ -289,8 +316,10 @@ def main(argv):
             fix = os.path.join(scratch, "r40-docstring-joined.py")
             with open(fix, "w", encoding="utf-8") as handle:
                 handle.write(fix_src)
-            new_f = run_fixture(fix, scratch)
-            old_f = run_fixture(fix, scratch, extra=["--one-line"])
+            new_f = run_fixture(fix, scratch, with_work=False,
+                                extra=["--analyzer", analyzer_path, "--tool", new_drift])
+            old_f = run_fixture(fix, scratch, with_work=False,
+                                extra=["--analyzer", analyzer_path, "--tool", new_drift, "--one-line"])
             ok = (new_f is not None and new_f[2] == 0 and new_f[3] == 0
                   and old_f is not None and old_f[2] >= 1)
             leg("L5", ok, "new=%r old(one-line)=%r" % (new_f, old_f))
