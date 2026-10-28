@@ -639,3 +639,23 @@ r36 fixture files are byte-identical, and the r35 census record is left as filed
 | name | what it can now do | evidence pointer | first-working round |
 |---|---|---|---|
 | self-assessment receipt reconciliation (r37) | read a register of quoted self-assessment cells at a named revision and re-derive both arms — one anchored line carrying the receipt-backed value and not the stale token, and the receipt blob at a commit where it exists carrying the same token; refuses malformed registers and non-40-hex revisions; read-only git plumbing | `python3 -B tools/souji-citation-reconcile.py --root <lane> --rev <full40> --register census/round-37/citation-cells.tsv --register-rev <full40>` -> `cells=11 mismatches=0` (`census/round-37/records/c1-after.txt`); `python3 -B tests/fixtures/r37-citation-reconcile.py` -> `cases=16 pass=16 fail=0 control=FALSE-GREEN-REJECTED` | r37 |
+
+### Round 38 receipt reconciliation (appended 2026-10-28)
+
+The round-37 non-author spot-check routed receipt/revision pairings (defects 2 and 7) and residual
+stale counts (defect 3) in the lane's own self-assessment cells, and the r37 lesson named the missing
+commit arm. The r37 rows above stay byte-verbatim (append-only); each row below names the receipt, a
+commit at which that receipt carries the value, and the r38 counter that now binds both
+(`tools/souji-citation-reconcile.py` with the optional eighth `commit` cell). The r37 report's own
+cells are fleet-repo bytes outside this lane's write scope: they are carried as an errata section in
+the round-38 report, not claimed here.
+
+| row | route | corrected value, receipt at a named commit |
+|---|---|---|
+| R38-C1-1 | r37 C2 after cell | `census/round-37/records/c2-after.txt` @ `02b4339` carries `escapes=9`; the before column's "six escapes" phrasing and the four-case draft are superseded |
+| R38-C1-2 | r37 C2 before cell | `census/round-37/records/c2-after.txt` @ `02b4339` carries `base_fail=9`, the final fixture's base arm rather than the six-case draft's |
+| R38-C1-3 | r37 C3 after cell | `census/round-37/records/c3-after.txt` @ `bbefcee` carries `killed=6` |
+| R38-C1-4 | r37 C3 before cell | `census/round-37/records/c3-after.txt` @ `bbefcee` carries `survived=0`, the after value the before column's pair is read against |
+| R38-C1-5 | r37 C1 after cell | `census/round-37/records/c1-fixture-after.txt` @ `b491596` carries `cases=16`, the grown fixture count the row's twelve-case reading predates |
+| R38-C1-6 | r37 C1 after cell | `census/round-37/records/c1-after.txt` @ `02b4339` carries `mismatches=0` |
+
