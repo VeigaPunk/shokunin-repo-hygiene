@@ -102,13 +102,13 @@ CASE_ROWS = {
 }
 
 CASE_NOTES = {
-    "ok": "ANCHOR cases=21 pass=21 receipt.txt\n",
-    "anchor-missing": "no anchor here cases=21 pass=21 receipt.txt\n",
-    "anchor-duplicated": "ANCHOR cases=21 pass=21 receipt.txt\nANCHOR cases=21 pass=21 receipt.txt\n",
-    "expected-missing": "ANCHOR cases=99\tpass=99 receipt.txt\n",
-    "stale-present": "ANCHOR cases=21 pass=21 receipt.txt cases=11 pass=11\n",
-    "receipt-absent": "ANCHOR cases=21 pass=21 receipt.txt\n",
-    "receipt-disagrees": "ANCHOR cases=21 pass=21 receipt.txt\n",
+    "ok": "ANCHOR cases=21 pass=21 `receipt.txt`\n",
+    "anchor-missing": "no anchor here cases=21 pass=21 `receipt.txt`\n",
+    "anchor-duplicated": "ANCHOR cases=21 pass=21 `receipt.txt`\nANCHOR cases=21 pass=21 `receipt.txt`\n",
+    "expected-missing": "ANCHOR cases=99\tpass=99 `receipt.txt`\n",
+    "stale-present": "ANCHOR cases=21 pass=21 `receipt.txt` cases=11 pass=11\n",
+    "receipt-absent": "ANCHOR cases=21 pass=21 `receipt.txt`\n",
+    "receipt-disagrees": "ANCHOR cases=21 pass=21 `receipt.txt`\n",
     "receipt-unnamed": "ANCHOR cases=21 pass=21\n",
 }
 
@@ -175,7 +175,7 @@ def main(argv):
         # not the (tampered) working file.
         pinned = os.path.join(scratch, "pinned")
         repo = make_repo(pinned)
-        write(os.path.join(repo, "notes.md"), "ANCHOR cases=21 pass=21 receipt.txt\n")
+        write(os.path.join(repo, "notes.md"), "ANCHOR cases=21 pass=21 `receipt.txt`\n")
         # the register is committed inside the repo, then the working copy is
         # tampered; --register-rev must read the committed one.
         # (rev is not known before the commit, so commit, then amend the register
@@ -207,7 +207,7 @@ def main(argv):
         # receipt-is-file: the register points the receipt at the citation file
         same = os.path.join(scratch, "receipt-is-file")
         repo = make_repo(same)
-        write(os.path.join(repo, "notes.md"), "ANCHOR cases=21 pass=21 notes.md\n")
+        write(os.path.join(repo, "notes.md"), "ANCHOR cases=21 pass=21 `notes.md`\n")
         rev = commit(repo, "same")
         register = os.path.join(scratch, "same.tsv")
         write(register, REGISTER + "C1\tnotes.md\tANCHOR\tcases=21 pass=21\tcases=11 pass=11\tnotes.md\t%s\n" % rev)
@@ -220,7 +220,7 @@ def main(argv):
         # working tree; committed bytes must win (A2 survivor, W2MutCounter2).
         tamper = os.path.join(scratch, "tamper")
         repo = make_repo(tamper)
-        write(os.path.join(repo, "notes.md"), "ANCHOR cases=21 pass=21 receipt.txt\n")
+        write(os.path.join(repo, "notes.md"), "ANCHOR cases=21 pass=21 `receipt.txt`\n")
         rev = commit(repo, "tamper")
         register = os.path.join(scratch, "tamper.tsv")
         write(register, REGISTER + CASE_ROWS["ok"].replace("@REV@", rev))
@@ -237,7 +237,7 @@ def main(argv):
             ("stale-dash", REGISTER + CASE_ROWS["ok"].replace("@REV@", "REVPLACE").replace("\tcases=11 pass=11\t", "\t-\t")),
         ):
             repo = make_repo(os.path.join(scratch, label))
-            write(os.path.join(repo, "notes.md"), "ANCHOR cases=21 pass=21 receipt.txt\n")
+            write(os.path.join(repo, "notes.md"), "ANCHOR cases=21 pass=21 `receipt.txt`\n")
             rev = commit(repo, label)
             register = os.path.join(scratch, label + ".tsv")
             write(register, body.replace("REVPLACE", rev))
@@ -249,7 +249,7 @@ def main(argv):
         # missing-header: a register without its header line is malformed
         noheader = os.path.join(scratch, "noheader")
         repo = make_repo(noheader)
-        write(os.path.join(repo, "notes.md"), "ANCHOR cases=21 pass=21 receipt.txt\n")
+        write(os.path.join(repo, "notes.md"), "ANCHOR cases=21 pass=21 `receipt.txt`\n")
         rev = commit(repo, "noheader")
         register = os.path.join(scratch, "noheader.tsv")
         write(register, CASE_ROWS["ok"].replace("@REV@", rev))
