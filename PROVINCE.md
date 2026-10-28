@@ -272,3 +272,18 @@ lane did not run" names no count; read it as the r31 rule — a receipt must nam
 observed. The opening clause "the one holder the r30 and r31 notes called sourced rather than
 measured" is the r31 note's wording only; the r30 note called the object-prune clock unmeasured
 (wave a2w1 `.ufo/waves/round-32/a2w1/SwarmReviewer27.md` finding 5).
+
+## Round 39 boundary note (tool contracts, not receipts)
+
+Round 39 repaired two documented runnable contracts and added three counters plus two fixtures.
+`tools/souji-citation-reconcile.py` now resolves `--rev` and `--register-rev` (`REFUSAL
+REV-UNRESOLVED`, exit 2), so a non-commit or absent revision is could-not-evaluate rather than a set
+of findings; `tools/souji-worktree-drift.py`'s docstring now names each trigger on its class line (a
+missing path is `RECORD-MALFORMED`, an EACCES/ELOOP open is `RECORD-MISSING`). Neither change creates
+a receipt class, a deletion verdict or deletion authority: certification stays OFF and K5 HELD. The
+new `census/round-39/c1-counter.py`, `c2-counter.py` and `c3-counter.py` with
+`tests/fixtures/r39-citation-rev.py` and `tests/fixtures/r39-drift-record-rules.py` are gates over
+committed bytes; C1 binds the lane's own self-assessment to observed repo state and does not certify
+authorship, and C3's mutant set covers four record-parser behaviours, not the parser. Core, Frontier
+and Retired are unchanged. Sources: `census/round-39/preregistration.txt`; the counters' receipts
+under `census/round-39/records/`.
