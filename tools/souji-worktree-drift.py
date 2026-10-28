@@ -101,6 +101,10 @@ def git(args, path, timeout):
 
 
 def parse_record(path):
+    # r37 A2.4 (wave seat W1SentinelEnv S1): a FIFO record blocked forever in
+    # open().read() — the run never terminated and never reported.
+    if not os.path.isfile(path):
+        raise Refusal("RECORD-MALFORMED: %s is not a regular file" % path)
     try:
         raw = open(path, encoding="utf-8", errors="replace").read()
     except OSError as exc:

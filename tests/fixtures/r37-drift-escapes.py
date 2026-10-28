@@ -27,6 +27,7 @@ Cases:
   trace2-event       GIT_TRACE2_EVENT=<scratch>/trace (r36 A2 regression) -> trace absent
   json-hardlink      --json names an out-of-root hardlink to an in-root
                      file                                                -> rc 2, victim unchanged
+  record-fifo        a FIFO record                                         -> rc 2, not a hang
   measured           a record that disagrees with the live tree            -> rc 1 REGS-CHANGED
                                                                              drift_rows=1 (a fixed-
                                                                              summary stub fails)
@@ -95,7 +96,7 @@ def invoke(tool, fleet, rec, extra=None, env_extra=None):
     if env_extra:
         env.update(env_extra)
     cmd = ["python3", "-B", tool, "--root", fleet, "--record", rec, "--timeout", "30"] + list(extra or [])
-    proc = subprocess.run(cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False)
+    proc = subprocess.run(cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False, timeout=20)
     return proc.returncode, proc.stdout + proc.stderr
 
 
@@ -202,6 +203,16 @@ def cases(tool, scratch):
         rc == 2 and "JSON-HARDLINKED" in text
         and open(victim, "rb").read() == before_bytes
     )
+
+    # record-fifo: a FIFO record must be refused, not block.
+    root, fleet, sibling = build(scratch, "record-fifo")
+    fifo = os.path.join(root, "record.fifo")
+    os.mkfifo(fifo)
+    try:
+        rc, text = invoke(tool, fleet, fifo)
+    except subprocess.TimeoutExpired:
+        rc, text = 124, "timeout"
+    out["record-fifo"] = rc == 2 and "not a regular file" in text
 
     # measured: a fixed-summary stub must fail the required measured drift.
     root, fleet, sibling = build(scratch, "measured")

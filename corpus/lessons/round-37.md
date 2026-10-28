@@ -26,10 +26,10 @@ non-author spot-check routed (`corpus/lessons/round-36-verifier-spotcheck.md`, R
   `GIT_CONFIG_GLOBAL/SYSTEM=/dev/null`), and `--json` is refused inside every measured repository
   and written through an `O_NOFOLLOW` descriptor on the resolved path. Counter:
   `python3 -B tests/fixtures/r37-drift-escapes.py --base-tool <r36 blob>` →
-  `SUMMARY cases=8 pass=8 fail=0 base_fail=5 control=ESCAPE-REPRODUCED`, rc 0; the r36 regression
+  `SUMMARY cases=9 pass=9 fail=0 base_fail=6 control=ESCAPE-REPRODUCED`, rc 0; the r36 regression
   fixture stays `cases=12 pass=12 fail=0 control=STUB-REJECTED`. Base control
   (`census/round-37/records/c2-before.txt`): the same fixture against the r36 tool bytes reads
-  `cases=8 pass=3 fail=5 base_fail=5`, rc 1 — five escapes reproduce (amendment A2 added the
+  `cases=9 pass=3 fail=6 base_fail=6`, rc 1 — six escapes reproduce (amendment A2 added the
   hardlink and measured cases).
 - **C3 coverage (score 8).** The drift tool's fixture surface discriminates its fields: six frozen
   single-defect mutants (the routed survivor `live_repos = len(rows) - unreachable`, a
@@ -113,6 +113,7 @@ would not serve a frozen claim).
 - The `42ea92e` measured-commit cells are corrected in prose (`SCORECARD.md` reconciliation
   paragraph), not by a register row: the schema binds an expected token to both a citation line
   and a receipt blob, and a commit id is in neither. Routed to r38 for a commit arm.
+- A FIFO `--record` is now refused (A2.4); other special files are not exercised.
 - `--record X --json X` still overwrites the record when the record lies outside `--root`
   (`.ufo/waves/round-37/w1/W1ExecConsumers.md` F2); the target is outside every measured tree, so
   the C2 claim does not cover it. Routed to r38.
