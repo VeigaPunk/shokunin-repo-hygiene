@@ -1,0 +1,520 @@
+{
+ "wave": "souji-r40-w2",
+ "milestone": "r40 falsify: attack the landed C1/C2/C3 instruments and the round's evidence",
+ "reportDir": ".ufo/waves/round-40/w2",
+ "context": "# Goal\nsouji round 40, wave 2 (FALSIFY). Lane: /home/vgpnk/Projects/shokunin/souji-shokunin. The round's frozen claims are in /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-40/preregistration.txt — read it first; it is frozen and must not be edited. The round's landed instrument commit is 128e412b0ced3c243dc27c3dd3332054a611bc2e (`git -C /home/vgpnk/Projects/shokunin/souji-shokunin show --stat 128e412b0ced3c243dc27c3dd3332054a611bc2e`).\n# Claims under attack\nC1 calibration — `census/round-40/c1-counter.py`: each anchored item line must carry a resolvable, revision-bound evidence pointer (PATH@REVISION) in addition to the r39 token predicate, and a register row whose `commit` is not a STRICT DESCENDANT of its `receipt_rev` must be rejected; the forged token-only item must remain OPEN.\nC2 operability — `census/round-40/docstring-classes.py` + `census/round-40/c2-counter.py`: the refusal-class map must join a class entry's continuation lines, every observed class/trigger pair must be verified, and the r39 one-line analyser must miss a wrapped trigger.\nC3 coverage — `tests/fixtures/r40-drift-record-branches.py` + `census/round-40/c3-counter.py`: the fixture must cover multiple TOTAL rows, `--skip-unrecorded` and invalid UTF-8 record bytes; every declared single-defect mutant must be killed, the pristine must pass, and every mutant must survive the r39 base fixture.\n# Scope and rules\nYour job is to ATTACK the landed bytes: find a concrete falsifier, a vacuous pass, a wrong contract, a case that cannot fail, or a harm the round introduced. Read-only findings: you may READ anything in the lane and run the lane's read-only tools; you may WRITE only inside /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/ (your own report file, and any scratch file you name there). You MUST NOT edit the counters, the fixtures, the preregistration, SCORECARD.md, LOG.md, corpus/, or any committed file. Seats never commit, push, or run a mutating git/jj command anywhere; only the L1 commits, through jj-lane.sh. Never write to the fleet repo, a sibling lane, .ufo/state, the watchdog log, operator config, templates, or the fleet scripts.\nAbsolute paths everywhere: your tools start at the fleet root, so every path you pass must be absolute. Scratch: every clone, mirror, work tree, fixture repo and counter `--work` dir of yours lives under /fast/scratch/hyaku/souji-r40/w2/<your-seat-name>/ (mkdir -p it, pass it explicitly as TMPDIR and --work; never rely on an inherited TMPDIR; /tmp is only for files under 50 MB). Delete your scratch dir before you yield (`trap 'rm -rf -- \"$S\"' EXIT` or shutil.rmtree) and say in your report whether it was removed. Git fixtures: `D=$(mktemp -d) && git -C \"$D\" init -q`, every later git call names `-C \"$D\"` explicitly, and verify `git -C \"$D\" rev-parse --show-toplevel` equals \"$D\" before the first commit. Never run `git commit`/`jj` with a throwaway identity anywhere else.\nTooling: read /home/vgpnk/.omp/agent/RULES.md first; official channels only (uv tool / npx / official binary in ~/.local/bin); record every install with tool, version, channel and reason; ALL pacman transactions are PAUSED host-wide — do not run pacman at all, and if a tool is missing, file it in your report instead of installing it.\nEvery `Report:` trailer path is relative to /home/vgpnk/Projects/shokunin/souji-shokunin — write it at /home/vgpnk/Projects/shokunin/souji-shokunin/<that path>.\n# Acceptance\nName what you attack. Run the real commands (exact command lines and their real output) against the committed bytes at the landed revision. State a verdict: FALSIFIED (with the command that shows it), SAFE (with the command that shows it), or INCONCLUSIVE (with what is missing). A report that only says \"looks fine\" is worthless; a report that cannot be re-run by the L1 is worthless.\n",
+ "items": [
+  {
+   "name": "R40w2reviewer01",
+   "role": "reviewer",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2reviewer01 (role reviewer).\n# Task\nAttack the C1 evidence-binding predicate: construct, in a scratch git fixture, a self-assessment line that carries the r39 tokens AND a resolvable revision-bound pointer but does NOT bind the evidence (the pointer's revision is not cited on the line, or the path is absent at that revision), and prove whether `census/round-40/c1-counter.py` still closes it. Report the exact line, the item row and the counter's verdict.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2reviewer01.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2reviewer02",
+   "role": "reviewer",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2reviewer02 (role reviewer).\n# Task\nAttack the C1 strict-descendant arm: in a scratch git fixture with a planted receipt, commit a register row whose `commit` EQUALS its `receipt_rev`, and another whose `commit` is an ANCESTOR of its `receipt_rev`, and report whether `census/round-40/c1-counter.py` rejects each one (and with which class). Also check the reverse direction: a `commit` that is a strict descendant but NOT an ancestor of `--rev`.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2reviewer02.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2reviewer03",
+   "role": "reviewer",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2reviewer03 (role reviewer).\n# Task\nAttack the C1 counter's exit-code contract: unresolvable `--rev`, a blob `--rev`, a malformed items file, a malformed register, an unknown evidence revision, and a missing evidence path. For each, report the exit code and the refusal class, and say whether a usage error is distinguishable from a could-not-evaluate.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2reviewer03.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2reviewer04",
+   "role": "reviewer",
+   "axes": [
+    "operability"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2reviewer04 (role reviewer).\n# Task\nAttack the joined analyser `census/round-40/docstring-classes.py`: does the join DROP a class the one-line reading finds, or INVENT one it does not? Compare the class sets and the per-class texts over `tools/souji-worktree-drift.py` at the base 0242085909fb6a4ee041c5443d76316ac6d59d4b and at the landed revision, and report any class whose joined text is SHORTER than its first line.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2reviewer04.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2reviewer05",
+   "role": "reviewer",
+   "axes": [
+    "operability"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2reviewer05 (role reviewer).\n# Task\nAttack the C2 L4 leg's vacuity: for each frozen class/trigger pair in `census/round-40/c2-counter.py`, check that the trigger is ACTUALLY raised by the audited tool bytes (the leg re-derives it) and that the pair cannot pass while the trigger is absent from the joined docstring entry. Report the derived pairs and any pair that passes vacuously.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2reviewer05.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2reviewer06",
+   "role": "reviewer",
+   "axes": [
+    "operability"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2reviewer06 (role reviewer).\n# Task\nAttack the C2 fixture `tests/fixtures/r40-docstring-joined.py`: run it in default mode and with `--one-line`, then run it against a STUB analyser that returns an empty map, and against a stub that returns the one-line map. Report whether every case can fail and whether the fixture's cases are load-bearing.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2reviewer06.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2reviewer07",
+   "role": "reviewer",
+   "axes": [
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2reviewer07 (role reviewer).\n# Task\nAttack the C3 battery: run `census/round-40/c3-counter.py` against the landed revision and verify that each of M15-M18 is killed by `tests/fixtures/r40-drift-record-branches.py` and survives `tests/fixtures/r39-drift-record-rules.py`. Then plant a fifth single-defect mutant of the record parser (not one of the four) and report whether the r40 fixture catches it.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2reviewer07.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2reviewer08",
+   "role": "reviewer",
+   "axes": [
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2reviewer08 (role reviewer).\n# Task\nAttack kill attribution: for each of M15-M18, report WHICH fixture case failed (the r40 counter prints the failing case names). A kill attributed to a case that does not cover the mutant's branch is a vacuous kill. Say which mutant each case covers and whether every mutant has a dedicated case.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2reviewer08.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2reviewer09",
+   "role": "reviewer",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2reviewer09 (role reviewer).\n# Task\nAttack the round's REPORT contract: read `tools/souji-report-contract.py` to learn what the round report at /home/vgpnk/Projects/shokunin/.ufo/reports/round-40/souji.md must carry (sections, order, SHONEN lines, trend verdicts, stale-lane line, measurement rows, claim ids, evidence pointers). Report the exact list the L1 must satisfy, and any predicate the current draft (if it exists) would fail.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2reviewer09.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2reviewer10",
+   "role": "reviewer",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2reviewer10 (role reviewer).\n# Task\nAttack the r40 SELF-ASSESSMENT cells: read the round-40 blocks of SCORECARD.md and the round-40 entry of LOG.md (if they exist) and check, cell by cell, that every stated value names the receipt that carries it and the revision it was measured at. Report each cell that would FAIL `census/round-40/c1-counter.py`'s evidence-binding predicate.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2reviewer10.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2reviewer11",
+   "role": "reviewer",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2reviewer11 (role reviewer).\n# Task\nAttack the round's USE of the wave-1 seat reports: read the seat reports under /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w1/ and list every concrete defect a seat reported that the round's landed bytes do NOT answer. Name each one and the file/line that shows it is unanswered (the LG-SEAT-UNCARRIED class).\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2reviewer11.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2reviewer12",
+   "role": "reviewer",
+   "axes": [
+    "operability"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2reviewer12 (role reviewer).\n# Task\nRead the three landed counters line by line (`census/round-40/c1-counter.py`, `c2-counter.py`, `c3-counter.py`, `docstring-classes.py`) and report correctness defects a runtime test would miss: wrong exit codes, unhandled exceptions on odd input, a variable read before assignment, a regex that matches more than intended, a path that can escape the scratch root. Report file:line for each.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2reviewer12.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2critic01",
+   "role": "critic",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2critic01 (role critic).\n# Task\nAttack the FROZEN C1 predicate's satisfiability: the preregistration says the counter must report every item closed AND the forged token-only item OPEN. The r39 SUMMARY shape counts every OPEN row in one `open=` field. Show, by running the landed counter over a two-file item set, whether the frozen sentence is satisfiable in the landed counter's own output, and name the field that carries each half.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2critic01.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2critic02",
+   "role": "critic",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2critic02 (role critic).\n# Task\nAttack CAUSAL SEPARABILITY: C1 must be verifiable without C2 and C3 having landed. Run `census/round-40/c1-counter.py` in a scratch clone of the lane at a revision where ONLY the C1 files exist (the r40 C1 counter, its fixture and the C1 items), and report whether the C1 target is reachable with C2/C3 absent. Say which files the C1 arm reads.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2critic02.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2critic03",
+   "role": "critic",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2critic03 (role critic).\n# Task\nAttack the DO-NOTHING CONTROL: build the cheapest counter that could satisfy the C1 target without doing the claimed work (a stub that prints the expected SUMMARY) and report whether the frozen counter would accept it. The claim is judged on the counter, so the counter's discrimination is the thing under attack.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2critic03.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2critic04",
+   "role": "critic",
+   "axes": [
+    "operability"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2critic04 (role critic).\n# Task\nAttack the FROZEN L4 list's completeness: list every refusal class the audited `tools/souji-worktree-drift.py` can raise (read its docstring AND its `Refusal(` call sites), and compare with the frozen pairs in `census/round-40/c2-counter.py`. Report every class that the frozen list omits and whether the omission makes the leg vacuous for it.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2critic04.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2critic05",
+   "role": "critic",
+   "axes": [
+    "operability"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2critic05 (role critic).\n# Task\nAttack the C2 consumer arm (L6): run each of the seven consumer fixtures at the landed revision and at the base, and report whether any consumer LOSES a passing case against the base bytes. A consumer regression is HARM to the lane's operability axis even if every r40 case passes.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2critic05.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2critic06",
+   "role": "critic",
+   "axes": [
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2critic06 (role critic).\n# Task\nAttack the r40 crash-probe repair in `census/round-40/c3-counter.py` (the marker is read from the fixture's STDERR only). Can a fixture that writes a traceback to its STDOUT, or that crashes after printing its SUMMARY, still mask a kill? Construct the case in a scratch copy and report whether the landed counter scores it correctly.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2critic06.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2critic07",
+   "role": "critic",
+   "axes": [
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2critic07 (role critic).\n# Task\nAttack the r40 C3 fixture's EXPECTATIONS against the tool's actual behaviour: for each of the eight cases in `tests/fixtures/r40-drift-record-branches.py`, run it against the pristine tool and against a mutant, and report whether the case asserts the behaviour the tool actually has or a behaviour the fixture invented. Name any case whose expectation is wrong (and would fail against a correct tool).\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2critic07.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2critic08",
+   "role": "critic",
+   "axes": [
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2critic08 (role critic).\n# Task\nAttack the r40 C3 fixture's PAIRINGS: does each of the three branches (multiple TOTAL rows, `--skip-unrecorded`, invalid UTF-8) have a paired case such that a mutant INVERTING the branch cannot pass both? Report the pairs and any single-defect mutant that survives the whole fixture.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2critic08.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2critic09",
+   "role": "critic",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2critic09 (role critic).\n# Task\nAttack the round's SOURCES rows S251-S254: re-open each cited source (the installed git-merge-base man page, https://docs.python.org/3/library/inspect.html, https://docs.python.org/3/library/codecs.html, the GVFS trashitem.c at tag 1.62.0), check that the registry's quote is VERBATIM and located where the row says, and report any drift (quote, location, URL, access date).\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2critic09.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2critic10",
+   "role": "critic",
+   "axes": [
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2critic10 (role critic).\n# Task\nAttack the new knowledge entries' coverage-map agreement: run `python3 -B tools/souji-coverage-agreement.py --root /home/vgpnk/Projects/shokunin/souji-shokunin --rev <landed> --base-rev <base>` and report the grounded/mapped/dangling/mismatch counts, the kill rows, and whether the four new entries are mapped where their `ground:` line says.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2critic10.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2critic11",
+   "role": "critic",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2critic11 (role critic).\n# Task\nAttack the round's MINED MISTAKE in `corpus/lessons/round-40.md` (M40-1): is the fix shown ABLE TO FAIL? Reproduce the seat's claim that the r39 scoring contract scores a detected mutant as SURVIVED, and that the r40 contract does not. Report the commands and both verdicts; if the fix cannot fail, say so.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2critic11.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2critic12",
+   "role": "critic",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2critic12 (role critic).\n# Task\nAttack the ASSIMILATION (S254 / GVFS): is the registry quote located and verbatim, is the adopted entry's citation re-pointed BY DOCUMENT to this lane's ids, and does the adopted entry add ground the lane did not hold? Report any id arithmetic, any dangling citation, and the map row that names the entry.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2critic12.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2critic14",
+   "role": "critic",
+   "axes": [
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2critic14 (role critic).\n# Task\nAttack the C3 counter's BASE-FIXTURE arm: `base_killed=0` is required. Run the r39 base fixture against the four mutants yourself and report whether any mutant is killed by it (which would make the base arm's floor vacuous) and whether the base fixture's own SUMMARY is present for every mutant.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2critic14.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2mutationtester01",
+   "role": "mutation-tester",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2mutationtester01 (role mutation-tester).\n# Task\nMutation-test the landed C1 counter: apply single-defect mutants to `census/round-40/c1-counter.py` (drop the evidence-ancestor check; accept an EQUAL commit; accept an evidence revision that is any ancestor; skip the `mustnot` tokens; read the evidence path from the worktree instead of the named revision) and score each against `tests/fixtures/r40-c1-evidence.py`. Report `mutants=N killed=N survived=N` with the surviving mutant and why it survived.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2mutationtester01.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2mutationtester02",
+   "role": "mutation-tester",
+   "axes": [
+    "operability"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2mutationtester02 (role mutation-tester).\n# Task\nMutation-test the landed analyser: apply single-defect mutants to `census/round-40/docstring-classes.py` (never join continuation lines; treat a blank line as a continuation; require one space instead of two after the class token; read the source text instead of `ast.get_docstring`; drop the class-entry regex's hyphen group) and score each against `tests/fixtures/r40-docstring-joined.py`. Report the survivors and why each survived.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2mutationtester02.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2mutationtester03",
+   "role": "mutation-tester",
+   "axes": [
+    "operability"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2mutationtester03 (role mutation-tester).\n# Task\nMutation-test the landed C2 counter: apply single-defect mutants to `census/round-40/c2-counter.py` (drop the L4b synthetic probe; accept a pair whose trigger is absent; read the class map with source slicing; skip the consumer arm; drop the harm check) and score each against `tests/fixtures/r40-docstring-joined.py` and the consumer fixtures. Report the survivors.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2mutationtester03.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2mutationtester04",
+   "role": "mutation-tester",
+   "axes": [
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2mutationtester04 (role mutation-tester).\n# Task\nMutation-test the landed C3 counter: apply single-defect mutants to `census/round-40/c3-counter.py` (read the crash marker from stdout again; ignore the anchor-count check; skip the base-fixture arm; accept a kill without the fixture's own failure summary; lower the pristine case floor) and score each against `tests/fixtures/r40-drift-record-branches.py`. Report the survivors and why each survived.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2mutationtester04.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2mutationtester05",
+   "role": "mutation-tester",
+   "axes": [
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2mutationtester05 (role mutation-tester).\n# Task\nMutation-test the landed C3 FIXTURE (not the counter): apply single-defect mutants to `tools/souji-worktree-drift.py` BEYOND the four declared ones (for example: accept a second identical TOTAL row silently; treat `--skip-unrecorded` as unknown; decode with `surrogateescape`; skip the duplicate-name check; ignore the TOTAL prunable sum) and report which of them the r40 fixture KILLS and which SURVIVE. A surviving mutant is an uncovered branch of the r40 fixture.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2mutationtester05.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2mutationtester06",
+   "role": "mutation-tester",
+   "axes": [
+    "operability"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2mutationtester06 (role mutation-tester).\n# Task\nMutation-test the landed C2 FIXTURE: apply single-defect mutants to the ANALYSER the fixture reads (an analyser that returns the one-line map; one that drops the last class; one that returns an empty map) and report whether `tests/fixtures/r40-docstring-joined.py` fails for each. A case that cannot fail is a vacuous case.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2mutationtester06.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2mutationtester07",
+   "role": "mutation-tester",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2mutationtester07 (role mutation-tester).\n# Task\nMutation-test the landed C1 FIXTURE: apply single-defect mutants to `census/round-40/c1-counter.py` (skip the evidence arm entirely; accept a line whose evidence revision is unresolvable; accept an equal commit) and report whether `tests/fixtures/r40-c1-evidence.py` fails for each. Report the case that catches each mutant.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2mutationtester07.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2sentinel01",
+   "role": "sentinel",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2sentinel01 (role sentinel).\n# Task\nSecurity/robustness review of `census/round-40/c1-counter.py`: can a crafted register or items file make it write outside its scratch root, follow a symlink, run git with an inherited environment (GIT_TRACE*, GIT_CONFIG_*), or execute anything from the audited tree? Run the hostile cases in a scratch fixture and report the outcomes and the exit codes.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2sentinel01.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2sentinel02",
+   "role": "sentinel",
+   "axes": [
+    "operability"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2sentinel02 (role sentinel).\n# Task\nSecurity/robustness review of `census/round-40/docstring-classes.py` and the C2 counter: feed the analyser a hostile module (a docstring containing a class-like token in prose; a non-UTF-8 source file; a module with no docstring; a docstring with a very long line) and report whether it refuses, mis-parses, or hangs. Run each case and report the output.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2sentinel02.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2sentinel03",
+   "role": "sentinel",
+   "axes": [
+    "operability"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2sentinel03 (role sentinel).\n# Task\nCheck the scratch discipline of the landed C2 counter: run it with `--scratch` pointing at a fresh directory and report (a) every path it created inside it, (b) whether the directory is empty afterwards, (c) whether anything was written outside it, and (d) the peak size. Use /fast/scratch/hyaku/souji-r40/w2/<your-name>/ as the scratch root.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2sentinel03.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2sentinel04",
+   "role": "sentinel",
+   "axes": [
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2sentinel04 (role sentinel).\n# Task\nSecurity/robustness review of `tests/fixtures/r40-drift-record-branches.py`: does it write outside its `--work` directory, leave git repositories behind, follow a symlink, or leave a FIFO that could block? Run it with `--work` under your scratch root and report every path it created and whether the work dir is empty afterwards.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2sentinel04.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2sentinel05",
+   "role": "sentinel",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2sentinel05 (role sentinel).\n# Task\nPush-scope and write-scope review of the round so far: run `git -C /home/vgpnk/Projects/shokunin status --porcelain` (no pathspec) and `git -C /home/vgpnk/Projects/shokunin/souji-shokunin status --porcelain`, and report every file the round wrote outside the lane repo and outside the one fleet report path. Do NOT move or delete anything; report only.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2sentinel05.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2sentinel06",
+   "role": "sentinel",
+   "axes": [
+    "operability"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2sentinel06 (role sentinel).\n# Task\nScratch-residue review: list /fast/scratch/hyaku/souji-r40 and /tmp for entries created after 2026-10-28 16:45 and report which belong to round-40 seats and whether their process is still alive. Report free space for /tmp and /fast/scratch. Do not delete anything that has a live process; report only.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2sentinel06.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2scout01",
+   "role": "scout",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2scout01 (role scout).\n# Task\nCalibration sweep of the lane's OWN self-assessment: read SCORECARD.md and LOG.md and list every self-assessment line that states a value (a count, a pass/fail, a verdict) WITHOUT naming the receipt or the revision that carries it. Report file:line and the missing pointer. This is the class the round claims to close.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2scout01.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2scout02",
+   "role": "scout",
+   "axes": [
+    "operability"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2scout02 (role scout).\n# Task\nScout the lane's other tools for the same defect the round repaired in the drift tool: does any OTHER lane tool document a refusal class over multiple lines and get read one line at a time? Grep the lane's tools/ and scripts/ and report each hit with file:line and the class it hides.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2scout02.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2scout03",
+   "role": "scout",
+   "axes": [
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2scout03 (role scout).\n# Task\nCoverage sweep of the drift record parser: list every branch of `parse_record` in `tools/souji-worktree-drift.py` (every `if`/`raise`/loop exit) and mark which branches the committed fixtures (r36, r37, r38, r39, r40) assert. Report the branches no fixture asserts — the remaining coverage gap.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2scout03.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2executor01",
+   "role": "executor",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2executor01 (role executor).\n# Task\nRun the landed C1 counter and its fixture at the landed revision and write the exact commands, outputs and exit codes into your report: `python3 -B census/round-40/c1-counter.py --root /home/vgpnk/Projects/shokunin/souji-shokunin --rev <landed> --items <items> --forged <forged> --register <register>` (the items/forged/register files may not exist yet at your run time — if they do not, say so and run the fixture instead) and `python3 -B tests/fixtures/r40-c1-evidence.py --work <scratch>`.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2executor01.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2executor02",
+   "role": "executor",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2executor02 (role executor).\n# Task\nRun the r39 C1 counter over the r40 items/forged set (if it exists) at the landed revision and report whether the OLD counter closes the forged item: that is the do-nothing control's reach. Report the exact SUMMARY line.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2executor02.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2executor03",
+   "role": "executor",
+   "axes": [
+    "operability"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2executor03 (role executor).\n# Task\nRun the landed C2 counter at the landed revision with `--base-rev 0242085909fb6a4ee041c5443d76316ac6d59d4b` and report every LEG line, the SUMMARY line and the exit code. Report the scratch directory you used and that you removed it.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2executor03.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2executor04",
+   "role": "executor",
+   "axes": [
+    "operability"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2executor04 (role executor).\n# Task\nRun `python3 -B tests/fixtures/r40-docstring-joined.py` in default mode and with `--one-line` at the landed revision and report both SUMMARY lines and exit codes.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2executor04.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2executor05",
+   "role": "executor",
+   "axes": [
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2executor05 (role executor).\n# Task\nRun the landed C3 counter at the landed revision with `--base-rev 0242085909fb6a4ee041c5443d76316ac6d59d4b` and report every MUTANT line, the SUMMARY line and the exit code.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2executor05.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2executor06",
+   "role": "executor",
+   "axes": [
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2executor06 (role executor).\n# Task\nRun EVERY committed fixture in /home/vgpnk/Projects/shokunin/souji-shokunin/tests/fixtures/ at the landed revision (r36, r37, r38, r39, r40 families) and report each fixture's SUMMARY line and exit code. A regression in any consumer is HARM.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2executor06.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2executor07",
+   "role": "executor",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2executor07 (role executor).\n# Task\nRun the misroot sweep and the pre-report gate for this round: `git -C /home/vgpnk/Projects/shokunin status --porcelain` (no pathspec) and `git -C /home/vgpnk/Projects/shokunin/souji-shokunin ls-remote origin refs/heads/master` and `/home/vgpnk/Projects/shokunin/scripts/hyaku/jj-lane.sh state /home/vgpnk/Projects/shokunin/souji-shokunin`. Report every line verbatim. Do not modify anything.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2executor07.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2executor09",
+   "role": "executor",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2executor09 (role executor).\n# Task\nRead the shape of the round-39 SCORECARD measurement block and the round-39 LOG entry, and report the EXACT section and table shape the r40 round's SCORECARD/LOG additions should follow (section headings in order, the measurement table's columns, and the capability table's columns), so the L1 appends in the lane's own shape. Quote the headings you copied.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2executor09.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2scribe01",
+   "role": "scribe",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2scribe01 (role scribe).\n# Task\nDraft (as text in your report, do NOT write files) the round report's `## Work performed` and `## Landed changes` sections for souji round 40: the three declared claims (C1 calibration / C2 operability / C3 coverage) with their target axes, one bullet per work item, each carrying an evidence pointer (path:line, command output, or commit hash). Use the landed commit 128e412b0ced3c243dc27c3dd3332054a611bc2e and the counters' names as they are in the tree.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2scribe01.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2scribe02",
+   "role": "scribe",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2scribe02 (role scribe).\n# Task\nDraft (as text in your report) the round report's `## Sources & frontier` section: the SOURCES rows before->after with the counting command (the census command and its exit code), rows added by tier, rows touched old->new, frontier rows advanced, the assimilation line, and the `SOURCES: unchanged` case if it applies. Read `corpus/SOURCES.md` and the r39 report for the shape.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2scribe02.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2scribe03",
+   "role": "scribe",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2scribe03 (role scribe).\n# Task\nDraft (as text in your report) the round report's `## Trend verdicts` section: one verdict each for `expansion`, `quality`, `discernment` (improved / harmed / unchanged / unprovable-but-better), each with an evidence pointer. Read LEARNING.md's three trends and the round's own artefacts for the evidence; do not invent numbers.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2scribe03.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2scribe04",
+   "role": "scribe",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2scribe04 (role scribe).\n# Task\nDraft (as text in your report) the round report's `## SHONEN` section: one line per box of /home/vgpnk/Projects/shokunin/souji-shokunin/SHONEN.md (four boxes), each `[x]` with a named non-author verifier, `[~]` with a resolvable evidence pointer, or `[ ]` if untouched. Name the non-author verifier for each box from the round-39 spot-check (`corpus/lessons/round-39-verifier-spotcheck.md`).\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2scribe04.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2connector01",
+   "role": "connector",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2connector01 (role connector).\n# Task\nCross-claim overlap scan: do C1, C2 and C3 read or mutate shared bytes? List every file each counter and fixture reads, and report the overlap (shared inputs, shared scratch, shared tool bytes). Then say which claim's verification depends on another claim's landing, if any.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2connector01.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2connector02",
+   "role": "connector",
+   "axes": [
+    "operability"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2connector02 (role connector).\n# Task\nCross-source pattern finder: search the OTHER lanes' corpora and lessons (read-only) for a lesson about (a) a docstring/class map read one line at a time, (b) a register row whose commit is not a strict descendant of its receipt revision, (c) a mutation counter that scores a detected mutant as survived. Report the sibling lanes' file:line hits and what the lane could learn from them.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2connector02.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2connector03",
+   "role": "connector",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2connector03 (role connector).\n# Task\nCross-claim separability matrix: for each pair (C1,C2), (C1,C3), (C2,C3) state whether the FIRST claim's target is reachable with the other two's files absent from the tree, and how you would show it (the exact revision to check out into a scratch clone and the exact command). Report the matrix.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2connector03.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2revenger01",
+   "role": "revenger",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2revenger01 (role revenger).\n# Task\nReverse-engineer the r39 counter's `commit_distinct` field: find where it is computed in `census/round-39/c1-counter.py`, what it counted, and whether the r40 rename to `commit_rows=`/`commit_hashes=` is honest (does the r40 counter count what its name says?). Report file:line for both.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2revenger01.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2revenger02",
+   "role": "revenger",
+   "axes": [
+    "operability"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2revenger02 (role revenger).\n# Task\nReverse-engineer what the r39 C2 L4 leg actually PROVED (not what it claimed): read the leg and the r39 lesson's account of it, and report the precise statement the leg supports and the precise statement it did not support. Say what the r40 joined reading changes in the provable statement.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2revenger02.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2revenger03",
+   "role": "revenger",
+   "axes": [
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2revenger03 (role revenger).\n# Task\nReverse-engineer the r39 C3 fixture's seven cases: for each, report the behaviour it actually asserts (from the tool's code, not from the case name). Then report which of the r40's eight cases DUPLICATE an r39 case and which are genuinely new.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2revenger03.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2revenger04",
+   "role": "revenger",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2revenger04 (role revenger).\n# Task\nTake the r39 non-author spot-check's routed defects D1, D2 and D3 (`corpus/lessons/round-39-verifier-spotcheck.md`) one by one and report, against the landed r40 artefacts, whether each is CLOSED, PARTLY CLOSED or OPEN, with the file:line that shows it. Be exact about what is still owed.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2revenger04.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2simplifier01",
+   "role": "simplifier",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2simplifier01 (role simplifier).\n# Task\nYAGNI review of the landed C1 counter: which arms are redundant (never exercised, always true, or duplicated by another arm)? Report each candidate deletion with the reason and what would break. Do not edit anything.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2simplifier01.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2simplifier02",
+   "role": "simplifier",
+   "axes": [
+    "operability"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2simplifier02 (role simplifier).\n# Task\nYAGNI review of the landed analyser and C2 counter: is `first_line_entries` needed outside the fixture's `--one-line` mode, and does the counter carry any arm that cannot fail? Report each candidate deletion with the reason.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2simplifier02.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2simplifier03",
+   "role": "simplifier",
+   "axes": [
+    "coverage"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2simplifier03 (role simplifier).\n# Task\nYAGNI review of the landed C3 fixture and counter: which cases are redundant with an existing case, and which counter arms cannot fail? Report each candidate deletion with the reason and what would break.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2simplifier03.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  },
+  {
+   "name": "R40w2simplifier04",
+   "role": "simplifier",
+   "axes": [
+    "calibration"
+   ],
+   "prompt": "/skill:godspeed\n\nYou are a Godspeed-enabled subagent.\n\n1. **Name the axes.**\n2. **Iterate cheap, in parallel.**\n3. **Keep moves that improve any axis and harm none.**\n4. **Don't aim — let the frontier walk itself.**\n\n## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.\n\n# Target\nsouji round 40 wave 2 (falsify) item R40w2simplifier04 (role simplifier).\n# Task\nDead-weight review of the round's added files (the counters, the analyser, the three fixtures, the four knowledge entries, the lesson): report any file the round added that carries no claim, any duplicated logic between the three counters, and any text that says more than the evidence supports. Do not edit anything.\n# Acceptance\nWrite an evidence report at /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-40/w2/R40w2simplifier04.md with the exact commands you ran, their real output, the file:line of everything you attack, and a verdict (FALSIFIED / SAFE / INCONCLUSIVE). State whether your scratch directory was removed.\n"
+  }
+ ]
+}

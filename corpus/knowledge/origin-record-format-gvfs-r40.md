@@ -52,3 +52,17 @@ lane's own rounds have since opened rows with those ids for DIFFERENT documents)
 re-pointed by document: this lane's id for the GVFS file is S254. The collision census and the L0
 question it raised are in `corpus/lessons/round-40.md` `## Gate` and in
 `.ufo/l0-questions.md` (`souji | round-40`).
+
+## Round 40 wave-2 correction (append-only)
+
+Wave-2 review found three overstatements above; read this block as superseding those sentences:
+
+- The reader QUERIES `Path` and `DeletionDate`; it does not require both to be present. Missing
+  `Path` is accepted and sets the returned original path to NULL (`S257`,
+  `corpus/knowledge/origin-record-format-gvfs-read-boundary-r40.md`).
+- The source is a corroborating implementation view on F4, not “new ground” outside the lane's
+  already-held F4 ground.
+- The package/live registry share 58 IDs, but 3 shared IDs name the same source document; staged
+  S146 is free in the lane's ID set. S254 was selected because IDs are append-only and S254 was the
+  next unused ID, not because S146 collided. The correction and operator question are recorded in
+  `corpus/lessons/round-40.md` and `.ufo/l0-questions.md`.

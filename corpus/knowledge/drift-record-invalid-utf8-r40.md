@@ -47,3 +47,12 @@ audited revision; the two paired cases are `case-invalid-utf8-in-repo-name` (rc 
   still decoded as one stream.
 - No lane record was read or written while this was measured; the fixture wrote its own bytes under
   a scratch root and removed it.
+
+## Round 40 wave-2 source/fixture correction (append-only)
+
+S253's quoted text was spliced and not verbatim at the cited page; S256 gives the exact
+`codecs.replace` decoding clause. The tool's decoded U+FFFD behavior is supported by S256 plus the
+tool's `decode(..., "replace")` implementation, but the r40 fixture only asserted the resulting
+`ABSENT` class, not the U+FFFD character itself. W2 mutation probes showed alternate non-fatal
+decoders can satisfy both invalid-byte cases; see `corpus/lessons/round-40.md` M40-4. This entry's
+behavioral claim is code-inspected and bounded, not fully isolated by the fixture.

@@ -1,0 +1,205 @@
+ROOTS lane=/home/vgpnk/Projects/shokunin/souji-shokunin work=/fast/scratch/hyaku/souji-r40/w2/R40w2simplifier01/repro-run landed=128e412b0ced3c243dc27c3dd3332054a611bc2e tip=549d9ec53a1f5932337ff14438fcd22b0621828d later=994de3b
+
+##### 1. landed fixture (128e412, 8 cases) x each counter
+landed                     rc=0 SUMMARY cases=8 pass=8 fail=0 
+later-HEAD                 rc=0 SUMMARY cases=8 pass=8 fail=0 
+no-L221-equal              rc=1 SUMMARY cases=8 pass=7 fail=1 case-register-equal-rejected=FAIL rc=1 violations=0 out='ITEM BOUND-1 CLOSED REGISTER cells=1 mismatches=1 commit_rows=0
+no-L229-notancestor        rc=0 SUMMARY cases=8 pass=8 fail=0 
+no-L252-evidence-resolve   rc=0 SUMMARY cases=8 pass=8 fail=0 
+no-L217-register-resolve   rc=0 SUMMARY cases=8 pass=8 fail=0 
+
+##### 2. real L1 command at measured tip 549d9ec53a1f5932337ff14438fcd22b0621828d (items/forged/register read from the tip)
+-- landed rc=0
+ITEM R40-CLAIM-D1 CLOSED
+ITEM R40-CLAIM-D2 CLOSED
+ITEM R40-CLAIM-D3 CLOSED
+FORGED R40-FORGE-UNCITED OPEN EVIDENCE-NOT-BOUND 8a5fbdbddaab24c5ba43fc6a133499efb405f214
+FORGED R40-FORGE-UNRESOLVED OPEN EVIDENCE-REV-UNRESOLVED 0000000000000000000000000000000000000000
+FORGED R40-FORGE-NONANCESTOR OPEN EVIDENCE-NOT-ANCESTOR 002d6a2478b271c7f4c9b5ba1a9d4fe16ab49fe0
+REGISTER cells=3 mismatches=0 commit_rows=3 commit_hashes=1 violations=0 ok
+SUMMARY items=3 open=0 forged=3 forged_open=3 forged_closed=0 register_cells=3 register_mismatches=0 register_violations=0 commit_rows=3 commit_hashes=1 items_sha=8f97b0097e09 forged_sha=915b1184e9c6
+-- later-HEAD rc=1
+ITEM R40-CLAIM-D1 CLOSED
+ITEM R40-CLAIM-D2 CLOSED
+ITEM R40-CLAIM-D3 OPEN EVIDENCE-NOT-BOUND census/round-40/c1-counter.py@8a5fbdbddaab24c5ba43fc6a133499efb405f214
+FORGED R40-FORGE-UNCITED OPEN EVIDENCE-NOT-BOUND census/round-40/c1-counter.py@8a5fbdbddaab24c5ba43fc6a133499efb405f214
+FORGED R40-FORGE-UNRESOLVED OPEN EVIDENCE-REV-UNRESOLVED 0000000000000000000000000000000000000000
+FORGED R40-FORGE-NONANCESTOR OPEN EVIDENCE-NOT-ANCESTOR 002d6a2478b271c7f4c9b5ba1a9d4fe16ab49fe0
+REGISTER cells=3 mismatches=0 commit_rows=3 commit_hashes=1 violations=0 ok
+SUMMARY items=3 open=1 forged=3 forged_open=3 forged_closed=0 register_cells=3 register_mismatches=0 register_violations=0 commit_rows=3 commit_hashes=1 items_sha=8f97b0097e09 forged_sha=915b1184e9c6
+
+##### 3. probe fixture repo: c0=4ca7080209da0ce0ee306538e81596f8f58b5c0d c1=4d20badf128e885fa49e0669623694ff7a8f487d c2=569def70c222e4ced6cbb84b995d5e5b978bf6cf side=d5cf0d4b33081876df568248e4a4dbc075827d26
+
+##### 4. probes against the landed counter
+A valid bound item, no --forged                  rc=0
+      ITEM BOUND-1 CLOSED
+      REGISTER cells=1 mismatches=0 commit_rows=1 commit_hashes=1 violations=0 ok
+      SUMMARY items=1 open=0 forged=0 forged_open=0 forged_closed=0 register_cells=1 register_mismatches=0 register_violations=0 commit_rows=1 commit_hashes=1 items_sha=b8eb105b6943 forged_sha=-
+B forged row with misspelt path (--forged)       rc=0
+      ITEM BOUND-1 CLOSED
+      FORGED FORGE-TYPO OPEN FILE-ABSENT
+      REGISTER cells=1 mismatches=0 commit_rows=1 commit_hashes=1 violations=0 ok
+      SUMMARY items=1 open=0 forged=1 forged_open=1 forged_closed=0 register_cells=1 register_mismatches=0 register_violations=0 commit_rows=1 commit_hashes=1 items_sha=b8eb105b6943 forged_sha=95e2099f80fa
+D evidence path not cited on the line            rc=0
+      ITEM PATH-UNCITED CLOSED
+      REGISTER cells=1 mismatches=0 commit_rows=1 commit_hashes=1 violations=0 ok
+      SUMMARY items=1 open=0 forged=0 forged_open=0 forged_closed=0 register_cells=1 register_mismatches=0 register_violations=0 commit_rows=1 commit_hashes=1 items_sha=d029b6385790 forged_sha=-
+C abbreviated receipt_rev, equal commit          rc=2
+      ITEM BOUND-1 CLOSED
+      stderr: REFUSAL COULD-NOT-EVALUATE: register leg produced no SUMMARY (rc=2 stderr='REFUSAL USAGE: register reg-abbr.tsv line 2 receipt_rev is not 40-hex\n')
+S1 equal commit, anchor names it                 rc=1
+      ITEM BOUND-EQ CLOSED
+      REGISTER ROW-EQ BACKWARDS commit-equals-receipt_rev 4ca7080209da0ce0ee306538e81596f8f58b5c0d
+      REGISTER cells=1 mismatches=0 commit_rows=0 commit_hashes=1 violations=1 ok
+      SUMMARY items=1 open=0 forged=0 forged_open=0 forged_closed=0 register_cells=1 register_mismatches=0 register_violations=1 commit_rows=0 commit_hashes=1 items_sha=0a389e300bd3 forged_sha=-
+S2 commit older than receipt_rev, anchor names it rc=1
+      ITEM BOUND-BK CLOSED
+      REGISTER ROW-BK BACKWARDS commit-not-descendant 4ca7080209da0ce0ee306538e81596f8f58b5c0d
+      REGISTER cells=1 mismatches=0 commit_rows=1 commit_hashes=1 violations=1 ok
+      SUMMARY items=1 open=0 forged=0 forged_open=0 forged_closed=0 register_cells=1 register_mismatches=0 register_violations=1 commit_rows=1 commit_hashes=1 items_sha=4c8e17f1e350 forged_sha=-
+S3 commit not ancestor of rev                    rc=1
+      ITEM BOUND-1 CLOSED
+      REGISTER ROW-SIDE NOT-ANCESTOR-OF-REV d5cf0d4b33081876df568248e4a4dbc075827d26
+      REGISTER cells=1 mismatches=1 commit_rows=1 commit_hashes=1 violations=1 ok
+      SUMMARY items=1 open=0 forged=0 forged_open=0 forged_closed=0 register_cells=1 register_mismatches=1 register_violations=1 commit_rows=1 commit_hashes=1 items_sha=b8eb105b6943 forged_sha=-
+S4 unresolvable 40-zero commit                   rc=1
+      ITEM BOUND-1 CLOSED
+      REGISTER ROW-ZERO BACKWARDS commit-unresolvable 0000000000000000000000000000000000000000
+      REGISTER cells=1 mismatches=1 commit_rows=1 commit_hashes=1 violations=1 ok
+      SUMMARY items=1 open=0 forged=0 forged_open=0 forged_closed=0 register_cells=1 register_mismatches=1 register_violations=1 commit_rows=1 commit_hashes=1 items_sha=b8eb105b6943 forged_sha=-
+N  absent anchored file, commit not ancestor     rc=1
+      ITEM BOUND-1 CLOSED
+      REGISTER ROW-NOFILE NOT-ANCESTOR-OF-REV d5cf0d4b33081876df568248e4a4dbc075827d26
+      REGISTER cells=1 mismatches=1 commit_rows=1 commit_hashes=1 violations=1 ok
+      SUMMARY items=1 open=0 forged=0 forged_open=0 forged_closed=0 register_cells=1 register_mismatches=1 register_violations=1 commit_rows=1 commit_hashes=1 items_sha=b8eb105b6943 forged_sha=-
+H  register absent, zero floors                  rc=0
+      ITEM BOUND-1 CLOSED
+      REGISTER cells=0 mismatches=0 commit_rows=0 commit_hashes=0 violations=0 REGISTER-ABSENT
+      SUMMARY items=1 open=0 forged=0 forged_open=0 forged_closed=0 register_cells=0 register_mismatches=0 register_violations=0 commit_rows=0 commit_hashes=0 items_sha=b8eb105b6943 forged_sha=-
+
+##### 5. the same probes against single-arm deletions and the later HEAD counter
+== no-L221-equal
+S1 equal commit                                  rc=1
+      ITEM BOUND-EQ CLOSED
+      REGISTER cells=1 mismatches=0 commit_rows=0 commit_hashes=1 violations=0 ok
+      SUMMARY items=1 open=0 forged=0 forged_open=0 forged_closed=0 register_cells=1 register_mismatches=0 register_violations=0 commit_rows=0 commit_hashes=1 items_sha=0a389e300bd3 forged_sha=-
+S2 backwards commit                              rc=1
+      ITEM BOUND-BK CLOSED
+      REGISTER ROW-BK BACKWARDS commit-not-descendant 4ca7080209da0ce0ee306538e81596f8f58b5c0d
+      REGISTER cells=1 mismatches=0 commit_rows=1 commit_hashes=1 violations=1 ok
+      SUMMARY items=1 open=0 forged=0 forged_open=0 forged_closed=0 register_cells=1 register_mismatches=0 register_violations=1 commit_rows=1 commit_hashes=1 items_sha=4c8e17f1e350 forged_sha=-
+S3 commit not ancestor of rev                    rc=1
+      ITEM BOUND-1 CLOSED
+      REGISTER ROW-SIDE NOT-ANCESTOR-OF-REV d5cf0d4b33081876df568248e4a4dbc075827d26
+      REGISTER cells=1 mismatches=1 commit_rows=1 commit_hashes=1 violations=1 ok
+      SUMMARY items=1 open=0 forged=0 forged_open=0 forged_closed=0 register_cells=1 register_mismatches=1 register_violations=1 commit_rows=1 commit_hashes=1 items_sha=b8eb105b6943 forged_sha=-
+S4 unresolvable 40-zero commit                   rc=1
+      ITEM BOUND-1 CLOSED
+      REGISTER ROW-ZERO BACKWARDS commit-unresolvable 0000000000000000000000000000000000000000
+      REGISTER cells=1 mismatches=1 commit_rows=1 commit_hashes=1 violations=1 ok
+      SUMMARY items=1 open=0 forged=0 forged_open=0 forged_closed=0 register_cells=1 register_mismatches=1 register_violations=1 commit_rows=1 commit_hashes=1 items_sha=b8eb105b6943 forged_sha=-
+D  evidence path not cited on the line           rc=0
+      ITEM PATH-UNCITED CLOSED
+      REGISTER cells=1 mismatches=0 commit_rows=1 commit_hashes=1 violations=0 ok
+      SUMMARY items=1 open=0 forged=0 forged_open=0 forged_closed=0 register_cells=1 register_mismatches=0 register_violations=0 commit_rows=1 commit_hashes=1 items_sha=d029b6385790 forged_sha=-
+K  forged token-only line (must stay OPEN)       rc=0
+      ITEM BOUND-1 CLOSED
+      FORGED FORGE-TOKEN OPEN EVIDENCE-NOT-BOUND 4ca7080209da0ce0ee306538e81596f8f58b5c0d
+      REGISTER cells=1 mismatches=0 commit_rows=1 commit_hashes=1 violations=0 ok
+      SUMMARY items=1 open=0 forged=1 forged_open=1 forged_closed=0 register_cells=1 register_mismatches=0 register_violations=0 commit_rows=1 commit_hashes=1 items_sha=b8eb105b6943 forged_sha=fcc6a298bb5f
+== no-L229-notancestor
+S1 equal commit                                  rc=1
+      ITEM BOUND-EQ CLOSED
+      REGISTER ROW-EQ BACKWARDS commit-equals-receipt_rev 4ca7080209da0ce0ee306538e81596f8f58b5c0d
+      REGISTER cells=1 mismatches=0 commit_rows=0 commit_hashes=1 violations=1 ok
+      SUMMARY items=1 open=0 forged=0 forged_open=0 forged_closed=0 register_cells=1 register_mismatches=0 register_violations=1 commit_rows=0 commit_hashes=1 items_sha=0a389e300bd3 forged_sha=-
+S2 backwards commit                              rc=1
+      ITEM BOUND-BK CLOSED
+      REGISTER ROW-BK BACKWARDS commit-not-descendant 4ca7080209da0ce0ee306538e81596f8f58b5c0d
+      REGISTER cells=1 mismatches=0 commit_rows=1 commit_hashes=1 violations=1 ok
+      SUMMARY items=1 open=0 forged=0 forged_open=0 forged_closed=0 register_cells=1 register_mismatches=0 register_violations=1 commit_rows=1 commit_hashes=1 items_sha=4c8e17f1e350 forged_sha=-
+S3 commit not ancestor of rev                    rc=1
+      ITEM BOUND-1 CLOSED
+      REGISTER cells=1 mismatches=1 commit_rows=1 commit_hashes=1 violations=0 ok
+      SUMMARY items=1 open=0 forged=0 forged_open=0 forged_closed=0 register_cells=1 register_mismatches=1 register_violations=0 commit_rows=1 commit_hashes=1 items_sha=b8eb105b6943 forged_sha=-
+S4 unresolvable 40-zero commit                   rc=1
+      ITEM BOUND-1 CLOSED
+      REGISTER ROW-ZERO BACKWARDS commit-unresolvable 0000000000000000000000000000000000000000
+      REGISTER cells=1 mismatches=1 commit_rows=1 commit_hashes=1 violations=1 ok
+      SUMMARY items=1 open=0 forged=0 forged_open=0 forged_closed=0 register_cells=1 register_mismatches=1 register_violations=1 commit_rows=1 commit_hashes=1 items_sha=b8eb105b6943 forged_sha=-
+D  evidence path not cited on the line           rc=0
+      ITEM PATH-UNCITED CLOSED
+      REGISTER cells=1 mismatches=0 commit_rows=1 commit_hashes=1 violations=0 ok
+      SUMMARY items=1 open=0 forged=0 forged_open=0 forged_closed=0 register_cells=1 register_mismatches=0 register_violations=0 commit_rows=1 commit_hashes=1 items_sha=d029b6385790 forged_sha=-
+K  forged token-only line (must stay OPEN)       rc=0
+      ITEM BOUND-1 CLOSED
+      FORGED FORGE-TOKEN OPEN EVIDENCE-NOT-BOUND 4ca7080209da0ce0ee306538e81596f8f58b5c0d
+      REGISTER cells=1 mismatches=0 commit_rows=1 commit_hashes=1 violations=0 ok
+      SUMMARY items=1 open=0 forged=1 forged_open=1 forged_closed=0 register_cells=1 register_mismatches=0 register_violations=0 commit_rows=1 commit_hashes=1 items_sha=b8eb105b6943 forged_sha=fcc6a298bb5f
+== no-L217-register-resolve
+S1 equal commit                                  rc=1
+      ITEM BOUND-EQ CLOSED
+      REGISTER ROW-EQ BACKWARDS commit-equals-receipt_rev 4ca7080209da0ce0ee306538e81596f8f58b5c0d
+      REGISTER cells=1 mismatches=0 commit_rows=0 commit_hashes=1 violations=1 ok
+      SUMMARY items=1 open=0 forged=0 forged_open=0 forged_closed=0 register_cells=1 register_mismatches=0 register_violations=1 commit_rows=0 commit_hashes=1 items_sha=0a389e300bd3 forged_sha=-
+S2 backwards commit                              rc=1
+      ITEM BOUND-BK CLOSED
+      REGISTER ROW-BK BACKWARDS commit-not-descendant 4ca7080209da0ce0ee306538e81596f8f58b5c0d
+      REGISTER cells=1 mismatches=0 commit_rows=1 commit_hashes=1 violations=1 ok
+      SUMMARY items=1 open=0 forged=0 forged_open=0 forged_closed=0 register_cells=1 register_mismatches=0 register_violations=1 commit_rows=1 commit_hashes=1 items_sha=4c8e17f1e350 forged_sha=-
+S3 commit not ancestor of rev                    rc=1
+      ITEM BOUND-1 CLOSED
+      REGISTER ROW-SIDE NOT-ANCESTOR-OF-REV d5cf0d4b33081876df568248e4a4dbc075827d26
+      REGISTER cells=1 mismatches=1 commit_rows=1 commit_hashes=1 violations=1 ok
+      SUMMARY items=1 open=0 forged=0 forged_open=0 forged_closed=0 register_cells=1 register_mismatches=1 register_violations=1 commit_rows=1 commit_hashes=1 items_sha=b8eb105b6943 forged_sha=-
+S4 unresolvable 40-zero commit                   rc=1
+      ITEM BOUND-1 CLOSED
+      REGISTER ROW-ZERO BACKWARDS commit-not-descendant 0000000000000000000000000000000000000000
+      REGISTER cells=1 mismatches=1 commit_rows=1 commit_hashes=1 violations=1 ok
+      SUMMARY items=1 open=0 forged=0 forged_open=0 forged_closed=0 register_cells=1 register_mismatches=1 register_violations=1 commit_rows=1 commit_hashes=1 items_sha=b8eb105b6943 forged_sha=-
+D  evidence path not cited on the line           rc=0
+      ITEM PATH-UNCITED CLOSED
+      REGISTER cells=1 mismatches=0 commit_rows=1 commit_hashes=1 violations=0 ok
+      SUMMARY items=1 open=0 forged=0 forged_open=0 forged_closed=0 register_cells=1 register_mismatches=0 register_violations=0 commit_rows=1 commit_hashes=1 items_sha=d029b6385790 forged_sha=-
+K  forged token-only line (must stay OPEN)       rc=0
+      ITEM BOUND-1 CLOSED
+      FORGED FORGE-TOKEN OPEN EVIDENCE-NOT-BOUND 4ca7080209da0ce0ee306538e81596f8f58b5c0d
+      REGISTER cells=1 mismatches=0 commit_rows=1 commit_hashes=1 violations=0 ok
+      SUMMARY items=1 open=0 forged=1 forged_open=1 forged_closed=0 register_cells=1 register_mismatches=0 register_violations=0 commit_rows=1 commit_hashes=1 items_sha=b8eb105b6943 forged_sha=fcc6a298bb5f
+== later-HEAD
+S1 equal commit                                  rc=1
+      ITEM BOUND-EQ CLOSED
+      REGISTER ROW-EQ BACKWARDS commit-equals-receipt_rev 4ca7080209da0ce0ee306538e81596f8f58b5c0d
+      REGISTER cells=1 mismatches=0 commit_rows=0 commit_hashes=1 violations=1 ok
+      SUMMARY items=1 open=0 forged=0 forged_open=0 forged_closed=0 register_cells=1 register_mismatches=0 register_violations=1 commit_rows=0 commit_hashes=1 items_sha=0a389e300bd3 forged_sha=-
+S2 backwards commit                              rc=1
+      ITEM BOUND-BK CLOSED
+      REGISTER ROW-BK BACKWARDS commit-not-descendant 4ca7080209da0ce0ee306538e81596f8f58b5c0d
+      REGISTER cells=1 mismatches=0 commit_rows=1 commit_hashes=1 violations=1 ok
+      SUMMARY items=1 open=0 forged=0 forged_open=0 forged_closed=0 register_cells=1 register_mismatches=0 register_violations=1 commit_rows=1 commit_hashes=1 items_sha=4c8e17f1e350 forged_sha=-
+S3 commit not ancestor of rev                    rc=1
+      ITEM BOUND-1 CLOSED
+      REGISTER ROW-SIDE NOT-ANCESTOR-OF-REV d5cf0d4b33081876df568248e4a4dbc075827d26
+      REGISTER cells=1 mismatches=1 commit_rows=1 commit_hashes=1 violations=1 ok
+      SUMMARY items=1 open=0 forged=0 forged_open=0 forged_closed=0 register_cells=1 register_mismatches=1 register_violations=1 commit_rows=1 commit_hashes=1 items_sha=b8eb105b6943 forged_sha=-
+S4 unresolvable 40-zero commit                   rc=1
+      ITEM BOUND-1 CLOSED
+      REGISTER ROW-ZERO BACKWARDS commit-unresolvable 0000000000000000000000000000000000000000
+      REGISTER cells=1 mismatches=1 commit_rows=1 commit_hashes=1 violations=1 ok
+      SUMMARY items=1 open=0 forged=0 forged_open=0 forged_closed=0 register_cells=1 register_mismatches=1 register_violations=1 commit_rows=1 commit_hashes=1 items_sha=b8eb105b6943 forged_sha=-
+D  evidence path not cited on the line           rc=1
+      ITEM PATH-UNCITED OPEN EVIDENCE-NOT-BOUND receipts/r1b.txt@4d20badf128e885fa49e0669623694ff7a8f487d
+      REGISTER cells=1 mismatches=0 commit_rows=1 commit_hashes=1 violations=0 ok
+      SUMMARY items=1 open=1 forged=0 forged_open=0 forged_closed=0 register_cells=1 register_mismatches=0 register_violations=0 commit_rows=1 commit_hashes=1 items_sha=d029b6385790 forged_sha=-
+K  forged token-only line (must stay OPEN)       rc=0
+      ITEM BOUND-1 CLOSED
+      FORGED FORGE-TOKEN OPEN EVIDENCE-NOT-BOUND receipts/r0.txt@4ca7080209da0ce0ee306538e81596f8f58b5c0d
+      REGISTER cells=1 mismatches=0 commit_rows=1 commit_hashes=1 violations=0 ok
+      SUMMARY items=1 open=0 forged=1 forged_open=1 forged_closed=0 register_cells=1 register_mismatches=0 register_violations=0 commit_rows=1 commit_hashes=1 items_sha=b8eb105b6943 forged_sha=fcc6a298bb5f
+
+##### 6. has_token boundary (landed module, direct call)
+has_token('rows=178','rows=17')=False want=False ok
+has_token('cases=79','cases=7')=False want=False ok
+has_token('cases=7,','cases=7')=True want=True ok
+has_token('records=79','records=')=True want=True ok
+has_token('subcases=21','cases=21')=False want=False ok

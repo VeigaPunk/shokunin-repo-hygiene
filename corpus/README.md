@@ -36,10 +36,10 @@ when the file exists, not before.
 | ground | status | entries |
 |---|---|---|
 | receipts: pushed / moved-to-obsidian / stale | core (SKILL.md, tools/) | `knowledge/obsidian-ledger.tsv` (operator-fed, header-only) |
-| F1 git-native housekeeping vs receipts | frontier, entries held | `knowledge/git-auto-maintenance-prunes-worktrees.md`, `knowledge/git-grace-periods-and-expire-to.md`, `knowledge/git-auto-maintenance-trigger-set.md`, `knowledge/git-auto-maintenance-trigger-set-r23.md`, `knowledge/jj-keep-ref-expiry.md`, `knowledge/jj-dropped-keep-object-lifetime.md`, `knowledge/jj-abandoned-object-mtime-clock.md`, `knowledge/fleet-prune-numerator-r35.md` (r36: the held numerator re-census entry), `knowledge/git-strict-descendant-relation-r40.md` (r40: the receipt-revision ordering a register row's commit must have), `knowledge/docstring-class-continuation-lines-r40.md` (r40: the refusal-class continuation-line reading), `knowledge/drift-record-invalid-utf8-r40.md` (r40: the drift record's invalid-UTF-8 branch) |
+| F1 git-native housekeeping vs receipts | frontier, entries held | `knowledge/git-auto-maintenance-prunes-worktrees.md`, `knowledge/git-grace-periods-and-expire-to.md`, `knowledge/git-auto-maintenance-trigger-set.md`, `knowledge/git-auto-maintenance-trigger-set-r23.md`, `knowledge/jj-keep-ref-expiry.md`, `knowledge/jj-dropped-keep-object-lifetime.md`, `knowledge/jj-abandoned-object-mtime-clock.md`, `knowledge/fleet-prune-numerator-r35.md` (r36: the held numerator re-census entry), `knowledge/git-strict-descendant-relation-r40.md` (r40: the receipt-revision ordering a register row's commit must have), `knowledge/docstring-class-continuation-lines-r40.md` (r40: the refusal-class continuation-line reading; source attribution corrected by `docstring-class-continuation-source-correction-r40.md`), `knowledge/drift-record-invalid-utf8-r40.md` (r40: the drift record's invalid-UTF-8 branch; exact quote correction at `drift-record-invalid-utf8-source-correction-r40.md`), `knowledge/docstring-class-continuation-source-correction-r40.md`, `knowledge/drift-record-invalid-utf8-source-correction-r40.md` |
 | F2 repository size census | frontier, no entry (r12 candidate deferred, `lessons/round-12.md` `## Gate`; sweep: `ls corpus/knowledge \| grep -ciE 'size\|structure\|sizer'` → 0, 2026-10-19); superseded by Round 24 F2 row (:517) | — |
 | F3 duplicate verdicts | frontier, entries held | `knowledge/dupe-finders-detect-then-act.md`, `knowledge/duplicate-verdict-identity.md`, `knowledge/duplicate-verdict-byte-equality.md` |
-| F4 restorable quarantine, file-system semantics | frontier; layout and staging held; read-side fields admitted r24; reference writer + mechanism set admitted r27 (implementation evidence only) | `knowledge/trash-spec-restorable-quarantine.md`, `knowledge/quarantine-same-filesystem-rename.md`, `knowledge/quarantine-staging-no-copy-r23.md`, `knowledge/quarantine-origin-record-fields-r24.md`, `knowledge/origin-record-writer-r27.md`, `knowledge/origin-record-mechanism-set-r33.md`, `knowledge/origin-record-exclusivity-r28.md`, `knowledge/origin-record-durability-r28.md`, `knowledge/origin-record-format-gvfs-r40.md` (r40: a second reference implementation reads the per-item record) |
+| F4 restorable quarantine, file-system semantics | frontier; layout and staging held; read-side fields admitted r24; reference writer + mechanism set admitted r27 (implementation evidence only) | `knowledge/trash-spec-restorable-quarantine.md`, `knowledge/quarantine-same-filesystem-rename.md`, `knowledge/quarantine-staging-no-copy-r23.md`, `knowledge/quarantine-origin-record-fields-r24.md`, `knowledge/origin-record-writer-r27.md`, `knowledge/origin-record-mechanism-set-r33.md`, `knowledge/origin-record-exclusivity-r28.md`, `knowledge/origin-record-durability-r28.md`, `knowledge/origin-record-format-gvfs-r40.md` (r40: GVFS reader cross-check; field-presence limits clarified in `origin-record-format-gvfs-read-boundary-r40.md`), `knowledge/origin-record-format-gvfs-read-boundary-r40.md` |
 
 ## Frontier
 
@@ -788,13 +788,17 @@ a measured edge class does not promote a frontier ground to Core (PROVINCE
   CONTINUATION lines joined (`census/round-40/docstring-classes.py`); the C3 battery adds the record
   branches no committed fixture asserted (multiple TOTAL rows, `--skip-unrecorded`, invalid UTF-8
   bytes). The counters and their fixtures are the coverage this round moved.
-- Four knowledge entries were added and mapped: `knowledge/git-strict-descendant-relation-r40.md`,
-  `knowledge/docstring-class-continuation-lines-r40.md` and `knowledge/drift-record-invalid-utf8-r40.md`
-  (F1 row, the three claims' sources S251-S253), and `knowledge/origin-record-format-gvfs-r40.md`
-  (F4 row, the assimilated GVFS reference implementation, S254). All four sit on ground the lane
-  already held, so F1 and F4 stay frontier and no ground is promoted to Core.
-- One theme was assimilated from `/home/vgpnk/Projects/shokuknow/merge/souji/` (the per-item origin
-  record's read side, GVFS `trashlib`); the package's id space collides with the live registry on 58
-  ids, so the adopted row was re-pointed BY DOCUMENT to this lane's id S254 and the collision is
-  filed as an L0 question. Nothing else was adopted.
-- Certification OFF, K5 HELD, NAMESPACE hold unchanged.
+- Seven knowledge entries are mapped in the F1/F4 rows: the four original S251-S254 entries and
+  three W2 source/read-boundary corrections S255-S257. The two source-quote corrections supersede
+  the nonverbatim S252/S253 quotations; the GVFS correction narrows the read-side claim because the
+  reader accepts missing values. F1/F4 remain held ground, so expansion is unchanged and no ground
+  is promoted to Core.
+- One F4 theme was assimilated from `/home/vgpnk/Projects/shokuknow/merge/souji/` (GVFS `trashlib`).
+  The registry overlap sweep found 58 shared IDs, of which 55 name different source documents and
+  3 name the same document; staged S146 was not itself one of the colliding IDs. The adopted lane row
+  is S254 because the lane registry is append-only, not because S146 collided. The initial L0
+  collision wording is corrected by the append-only L0 line committed after it.
+- The initial after-census (178 rows, W04=49) predates W2's S255-S257 corrections. Final command
+  `/home/vgpnk/Projects/shokunin/scripts/sources-census.sh validate --root /home/vgpnk/Projects/shokunin souji`
+  exits 0 at 181 rows, W04=52 (`census/round-40/records/census-final.txt`). The initial C1 D1 receipt remains a historical value, not the final registry count; M40-10 records the resulting honest stop.
+- No ground was promoted to Core. Certification OFF, K5 HELD, NAMESPACE hold unchanged.

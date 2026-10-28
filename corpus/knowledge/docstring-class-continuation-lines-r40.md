@@ -48,3 +48,12 @@ source text.
   trigger has to be searchable inside one entry. The two are complementary, not equivalent.
 - A class entry whose trigger is named nowhere in its text is a documentation defect the analyser
   reports as a missing trigger; it does not guess the trigger from the runtime behaviour.
+
+## Round 40 wave-2 source correction (append-only)
+
+S252's short quote was verbatim only in the installed interpreter docstring, not in the cited
+Python documentation page. S255 carries the exact page wording and its limit: `inspect.cleandoc`
+documents indentation normalization; the lane's class-entry continuation join is an implementation
+choice measured by the fixture, not a rule stated by this source. W2 also found the frozen C2
+pair/probe set was authored after dispatch; see lesson M40-3. This entry remains a record of the
+implementation reading, not proof that the C2 claim was frozen completely.
