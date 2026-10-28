@@ -198,7 +198,7 @@ def open_nofollow(path):
             nxt = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=dirfd)
             os.close(dirfd)
             dirfd = nxt
-        return os.open(parts[-1], os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW, 0o644, dir_fd=dirfd)
+        return os.open(parts[-1], os.O_WRONLY | os.O_CREAT | os.O_NOFOLLOW, 0o644, dir_fd=dirfd)
     finally:
         os.close(dirfd)
 
@@ -314,6 +314,9 @@ def run(args):
             if st.st_nlink > 1:
                 os.close(fd)
                 raise Refusal("JSON-HARDLINKED: %s has %d links" % (json_target, st.st_nlink))
+            # truncate only after the multi-link check: O_TRUNC at open would
+            # destroy the very inode the check is meant to protect.
+            os.ftruncate(fd, 0)
             with os.fdopen(fd, "w", encoding="utf-8") as handle:
                 json.dump({"summary": summary, "drift": [{"class": c, "repo": n, "detail": d} for c, n, d in drift]}, handle, indent=1, sort_keys=True)
                 handle.write("\n")
