@@ -1,0 +1,121 @@
+# souji round 38 — preregistration (frozen before any after-data)
+
+lane: souji-shokunin
+round: 38 (hyaku run 11, attempt 1)
+agent: SoujiR38
+base revision: ca4369a9296011644636711a624da6a8074e8e2a (lane tip == origin/master at round start)
+lane state: `.ufo/waves/round-38/` empty at round start; no inherited uncommitted work.
+fresh-start round: first run-11 round after the r30-r35 rejected closures; the r37 non-author
+spot-check (verdict admitted, 8 routed defects) is read first and every claim below is one a
+do-nothing control cannot reach (addendum section 9).
+
+## Claims
+
+### C1 — calibration (axis score 7, the lowest non-retired axis)
+
+The r37 spot-check routed a defect class the lane keeps re-committing in sibling cells: a
+self-assessment cell quotes a value that never lived in the named receipt, and its
+measured-commit cell names a commit where that receipt does not exist or reads another value
+(routed defects 1, 2, 3 and 7). r37 shipped no commit arm: "the schema binds an expected token
+to both a citation line and a receipt blob, and a commit id is in neither"
+(`corpus/lessons/round-37.md` ## Named limits).
+
+C1 lands the commit arm and reconciles the routed cells that the lane owns (the r37 report is a
+fleet-repo file outside this round's write scope; its corrections are carried as an errata
+section inside the round-38 report instead — disclosed, not claimed).
+
+PREDICATE (frozen): with the counter bytes of `tools/souji-citation-reconcile.py` and the
+register `census/round-38/cells.tsv` (10 rows) at the landing revision, the command
+`python3 -B tools/souji-citation-reconcile.py --root <lane> --rev <landing-40hex> --register
+census/round-38/cells.tsv --register-rev <freeze-40hex>` prints `SUMMARY cells=10 mismatches=0`
+and exits 0; and at the base revision with the same counter and register it prints
+`mismatches>=6` and exits 1. Every row carrying a `commit` cell resolves to an ancestor of the
+audited revision, is named on the anchored line, and the cited receipt at that commit carries
+the expected token.
+
+KILL RULE (frozen): the claim is missed if the landing run prints any mismatch, if the
+base-revision control prints `mismatches=0`, or if the vacuity control (a register row whose
+expected token `mismatches=99` exists in no receipt) does not mismatch.
+
+COUNTER: `tools/souji-citation-reconcile.py` plus the commit arm (`commit` column: 8 fields).
+FIXTURE: `tests/fixtures/r38-citation-commit.py` must read `cases=14 pass=14 fail=0
+control=FALSE-GREEN-REJECTED` at the landing; the r37 fixture stays `cases=16 pass=16`.
+
+CONTROL (do-nothing, committed before any after-data): the register at
+`ca4369a9296011644636711a624da6a8074e8e2a` — none of the ten anchored correction lines exists
+there, so the counter cannot reach 0 without the work. Receipt:
+`census/round-38/records/c1-before.txt`.
+
+### C2 — operability (axis score 8)
+
+The r37 named limits name three defects in `tools/souji-worktree-drift.py`'s output envelope,
+all reproduced on the r37 blob this round before any repair: a `--json` FIFO blocks a blocking
+`O_WRONLY` open forever (`mkfifo` + `timeout 8` → rc 124); `--record X --json X` overwrites the
+record with JSON and exits 0; and the module docstring's exit-2 enumeration omits four refusal
+classes the code raises (`JSON-HARDLINKED`, `JSON-INSIDE-MEASURED-TREE`, `JSON-UNWRITABLE`,
+`USAGE`). Routed defect 6 is the third item.
+
+PREDICATE (frozen): `python3 -B tests/fixtures/r38-drift-write-envelope.py --base-tool <r37
+blob>` prints `SUMMARY cases=12 pass=12 fail=0 base_cases=12 base_fail>=3` and exits 0 at the
+landing; the FIFO cases must complete inside the fixture's 15 s bound; the alias cases must exit
+2 with `JSON-IS-RECORD` and leave the record bytes unchanged.
+
+KILL RULE (frozen): the claim is missed if any landing case fails, if the base arm fails fewer
+than 3 cases (the fixture would not reproduce the routed defects), or if a FIFO case reports a
+hang.
+
+COUNTER: `tests/fixtures/r38-drift-write-envelope.py` (12 cases + base arm).
+
+CONTROL (do-nothing): the same fixture against the r37 blob at the base revision, receipt
+`census/round-38/records/c2-before.txt`.
+
+### C3 — coverage (axis score 8)
+
+The drift tool's record-validation arm — the three TOTAL/REPO cross-checks and the duplicate-name
+refusal in `parse_record` — is never exercised by the r37 discrimination fixture (its `record()`
+helper always writes a consistent TOTAL and never repeats a name), so a tool mutant that drops
+any one of the four checks survives it 12/12 (r37 named limit: "the TOTAL cross-checks and
+duplicate-row refusal are absent from the r37 discrimination fixture"). This is a coverage move
+on the tool's documented refusal surface, not an operability move (the r25 axis-attribution
+lesson).
+
+PREDICATE (frozen): `python3 -B tests/fixtures/r38-drift-mutants.py --fixture
+tests/fixtures/r38-drift-record.py --base-fixture tests/fixtures/r37-drift-discrimination.py`
+prints `SUMMARY mutants=4 killed=4 survived=0 pristine=ok base_killed=0` and exits 0; and
+`python3 -B tests/fixtures/r38-drift-record.py` prints `SUMMARY cases=10 pass=10 fail=0`.
+
+KILL RULE (frozen): the claim is missed if any of the four frozen mutants survives the new
+fixture, if any of them is killed by the r37 fixture (the coverage gap would not have been real),
+or if the pristine control fails.
+
+COUNTER: `tests/fixtures/r38-drift-record.py` (10 record-validation cases) and
+`tests/fixtures/r38-drift-mutants.py` (4 frozen single-defect mutants, pristine control, base-fixture arm).
+
+CONTROL (do-nothing): the identical battery with the r37 fixture as the candidate —
+`killed=0 survived=4 pristine=ok`, receipt `census/round-38/records/c3-before.txt`.
+
+## Frozen instruments
+
+| instrument | role | path |
+|---|---|---|
+| commit-arm reconciler | C1 counter | `tools/souji-citation-reconcile.py` |
+| cell register | C1 input | `census/round-38/cells.tsv` |
+| commit-arm fixture | C1 discriminator | `tests/fixtures/r38-citation-commit.py` |
+| write-envelope fixture | C2 counter | `tests/fixtures/r38-drift-write-envelope.py` |
+| record fixture | C3 counter | `tests/fixtures/r38-drift-record.py` |
+| record mutant battery | C3 discriminator | `tests/fixtures/r38-drift-mutants.py` |
+
+The drift tool (`tools/souji-worktree-drift.py`) is the C2/C3 subject under test; its r37 blob is
+the base arm (`git show ca4369a:tools/souji-worktree-drift.py`).
+
+## Non-claims (disclosed)
+
+- The r37 report's own stale cells are fleet-repo bytes outside this round's write scope; they
+  are corrected by an errata section in the round-38 report and are not in the C1 register.
+- No receipt-class change, no deletion authority, no history rewrite, no credential access.
+  Certification stays OFF, K5 HELD.
+
+## Amendments
+
+None. Any later amendment is appended below with the seat that produced it and must be
+tighter-only.

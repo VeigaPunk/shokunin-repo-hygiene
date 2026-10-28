@@ -20,6 +20,20 @@ only. A row binds when, at the audit revision:
 Register schema (TSV, header line required, ids unique, `stale` mandatory):
 
   id<TAB>file<TAB>anchor<TAB>expected<TAB>stale<TAB>receipt<TAB>receipt_rev
+      [<TAB>commit]
+
+The optional eighth `commit` cell is the r38 commit arm (the r37 named limit:
+"the schema binds an expected token to both a citation line and a receipt
+blob, and a commit id is in neither"). For a row that carries it, on top of the
+two arms above:
+
+  commit     the cell is 40-hex, resolves to a commit, is an ancestor of
+             `--rev`, the anchored citation line names it (full hash or its
+             seven-hex prefix), and the receipt blob AT THAT COMMIT carries
+             `expected` on a SUMMARY line. Mismatch classes: COMMIT-UNRESOLVED,
+             COMMIT-NOT-ANCESTOR, COMMIT-UNNAMED, COMMIT-RECEIPT-ABSENT,
+             COMMIT-RECEIPT-DISAGREES. A seven-column row skips the arm
+             (r37 registers stay valid).
 
 `--register-rev REV` reads the register from the committed tree at REV instead
 of the working file, so the audited register is revision-bound (r37 A1.1).
@@ -54,6 +68,18 @@ GIT_ENV = {
 
 class RegisterError(Exception):
     pass
+
+
+def git_proc(root, args):
+    env = {"PATH": os.environ.get("PATH", "/usr/local/bin:/usr/bin:/bin")}
+    env.update(GIT_ENV)
+    return subprocess.run(
+        ["git", "-C", root] + args,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+        check=False,
+    )
 
 
 def git_show(root, rev, path):
@@ -93,18 +119,24 @@ def parse_register_text(raw, path):
         if not line.strip() or line.startswith("#"):
             continue
         parts = line.split("\t")
-        if parts == list(FIELDS):
+        if parts == list(FIELDS) or parts == list(FIELDS) + ["commit"]:
             header = True
             continue
         if not header:
             raise RegisterError("register %s has no header line before line %d" % (path, lineno))
-        if len(parts) != len(FIELDS):
-            raise RegisterError("register %s line %d has %d fields, expected %d" % (path, lineno, len(parts), len(FIELDS)))
-        row = dict(zip(FIELDS, parts))
+        if len(parts) not in (len(FIELDS), len(FIELDS) + 1):
+            raise RegisterError(
+                "register %s line %d has %d fields, expected %d or %d"
+                % (path, lineno, len(parts), len(FIELDS), len(FIELDS) + 1)
+            )
+        row = dict(zip(FIELDS, parts[: len(FIELDS)]))
+        row["commit"] = parts[len(FIELDS)] if len(parts) == len(FIELDS) + 1 else ""
         if row["id"] in seen:
             raise RegisterError("register %s line %d duplicates id %s" % (path, lineno, row["id"]))
         if not REV.match(row["receipt_rev"]):
             raise RegisterError("register %s line %d receipt_rev is not 40-hex" % (path, lineno))
+        if row["commit"] and not REV.match(row["commit"]):
+            raise RegisterError("register %s line %d commit is not 40-hex" % (path, lineno))
         if row["stale"] in ("", "-"):
             raise RegisterError("register %s line %d has no stale token" % (path, lineno))
         if os.path.normpath(row["receipt"]) == os.path.normpath(row["file"]):
@@ -124,6 +156,30 @@ def parse_register(path):
     except OSError as exc:
         raise RegisterError("unreadable register %s: %s" % (path, exc))
     return parse_register_text(raw, path)
+
+
+def commit_checks(root, rev, row, line):
+    """r38 commit arm: the named measured commit must carry the cited receipt token."""
+    commit = row["commit"]
+    if git_proc(root, ["cat-file", "-e", commit + "^{commit}"]).returncode != 0:
+        return ["COMMIT-UNRESOLVED %s does not resolve to a commit" % commit]
+    if git_proc(root, ["merge-base", "--is-ancestor", commit, rev]).returncode != 0:
+        return ["COMMIT-NOT-ANCESTOR %s is not an ancestor of %s" % (commit, rev)]
+    short = commit[:7]
+    out = []
+    if commit not in line and short not in line:
+        out.append("COMMIT-UNNAMED %s is not named on the anchored line" % short)
+    receipt = git_show(root, commit, row["receipt"])
+    if receipt is None:
+        out.append("COMMIT-RECEIPT-ABSENT %s at %s" % (row["receipt"], short))
+    else:
+        summaries = [l for l in receipt.split("\n") if l.startswith("SUMMARY")]
+        if not any(has_token(l, row["expected"]) for l in summaries):
+            out.append(
+                "COMMIT-RECEIPT-DISAGREES %s expected=%r (no SUMMARY line at %s carries it)"
+                % (row["receipt"], row["expected"], short)
+            )
+    return out
 
 
 def run(args):
@@ -167,6 +223,11 @@ def run(args):
                 mismatches += 1
             elif has_token(hits[0], row["stale"]):
                 print("MISMATCH %s STALE-PRESENT %s stale=%r" % (row["id"], row["file"], row["stale"]))
+                mismatches += 1
+        if row["commit"] and text is not None and len([l for l in text.split("\n") if row["anchor"] in l]) == 1:
+            anchor_line = [l for l in text.split("\n") if row["anchor"] in l][0]
+            for detail in commit_checks(root, args.rev, row, anchor_line):
+                print("MISMATCH %s %s" % (row["id"], detail))
                 mismatches += 1
         receipt = git_show(root, row["receipt_rev"], row["receipt"])
         if receipt is None:

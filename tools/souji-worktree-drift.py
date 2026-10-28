@@ -38,13 +38,32 @@ CLI:
   python3 -B tools/souji-worktree-drift.py --root FLEET --record PATH
       [--timeout SECS] [--json OUT] [--skip-unrecorded]
 
-Exit: 0 no drift rows, 1 drift rows found, 2 could-not-evaluate
-(RECORD-MISSING / RECORD-MALFORMED / RECORD-EMPTY / usage).
+Exit: 0 no drift rows, 1 drift rows found, 2 could-not-evaluate. Every
+refusal class the code can raise is named here (r38 C2, r37 routed defect 6):
+
+  RECORD-MISSING         the record path cannot be read
+  RECORD-MALFORMED       a line does not match the schema, duplicates a name,
+                         or disagrees with the TOTAL row
+  RECORD-EMPTY           no REPO rows
+  RECORD-OUTSIDE-ROOT    a record row, or the gitdir it resolves to, escapes
+                         --root
+  JSON-INSIDE-MEASURED-TREE  the --json target lies under --root or under a
+                         measured repository
+  JSON-IS-RECORD         the --json target is the --record file (same path or
+                         same inode, so the run would overwrite its input)
+  JSON-NOT-REGULAR       the --json target exists and is not a regular file
+                         (a FIFO would block a blocking open forever)
+  JSON-HARDLINKED        the --json target has more than one link
+  JSON-UNWRITABLE        the --json write failed (including a symlinked path
+                         component, refused by the O_NOFOLLOW walk)
+  USAGE                  --root is not a directory, or --timeout < 1
 """
 import argparse
+import errno
 import json
 import os
 import re
+import stat
 import subprocess
 import sys
 
@@ -196,6 +215,12 @@ def open_nofollow(path):
     r37 A2 (wave seat W1SentinelContain): O_NOFOLLOW on the leaf still re-followed
     a parent directory swapped after the guard; a per-component walk refuses any
     symlinked ancestor (the resolved target has no `..` components).
+
+    r38 C2 (r37 named limit: the `--json` FIFO hang): a plain O_WRONLY open of an
+    existing FIFO blocks until a reader appears, so the run never terminates and
+    never reports. O_NONBLOCK makes that open return at once (ENXIO with no
+    reader), and the fstat below refuses any non-regular target, so no special
+    file can be written or waited on.
     """
     parts = [p for p in path.split("/") if p not in ("", ".")]
     if not path.startswith("/") or not parts:
@@ -206,7 +231,25 @@ def open_nofollow(path):
             nxt = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=dirfd)
             os.close(dirfd)
             dirfd = nxt
-        return os.open(parts[-1], os.O_WRONLY | os.O_CREAT | os.O_NOFOLLOW, 0o644, dir_fd=dirfd)
+        try:
+            fd = os.open(
+                parts[-1],
+                os.O_WRONLY | os.O_CREAT | os.O_NOFOLLOW | os.O_NONBLOCK,
+                0o644,
+                dir_fd=dirfd,
+            )
+        except OSError as exc:
+            # ENXIO: a FIFO with no reader. EISDIR: a directory. Both are "exists
+            # and is not a regular file"; ELOOP/EACCES stay JSON-UNWRITABLE.
+            if exc.errno in (errno.ENXIO, errno.EISDIR):
+                raise Refusal("JSON-NOT-REGULAR: %s is not a regular file" % path)
+            raise
+        mode = os.fstat(fd).st_mode
+        if not stat.S_ISREG(mode):
+            os.close(fd)
+            raise Refusal("JSON-NOT-REGULAR: %s is not a regular file" % path)
+        os.set_blocking(fd, True)
+        return fd
     finally:
         os.close(dirfd)
 
@@ -255,6 +298,21 @@ def run(args):
         # with every component opened O_NOFOLLOW (open_nofollow); a leaf or
         # ancestor symlink cannot redirect it, and a multi-link fd is refused.
         json_target = os.path.realpath(os.path.abspath(args.json))
+        # r38 C2 (r37 named limit: `--record X --json X` overwrote the record when
+        # the record lay outside --root): the output must not be the input. Resolved
+        # path equality and inode identity both refuse, so a hardlink alias is
+        # covered as well as the same spelling.
+        record_abs = os.path.realpath(os.path.abspath(args.record))
+        alias = record_abs == json_target
+        if not alias:
+            try:
+                rec_st = os.stat(record_abs)
+                out_st = os.stat(json_target)
+                alias = (rec_st.st_dev, rec_st.st_ino) == (out_st.st_dev, out_st.st_ino)
+            except OSError:
+                alias = False
+        if alias:
+            raise Refusal("JSON-IS-RECORD: %s is the record file" % json_target)
         for base in measured:
             try:
                 inside = os.path.commonpath([json_target, base]) == base
