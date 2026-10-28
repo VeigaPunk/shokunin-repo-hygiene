@@ -122,6 +122,18 @@ Changed in place, old → new:
 - The drift surface reproduces the r35 spot-check's corrected numerator (22 repositories, 23
   registrations, 1 prunable) and localizes both counting defects of the r35 record; wave seat
   SwarmExecutor25 re-derived the same figures by hand.
+- The drift tool's failure classification holds: a gitfile pointing nowhere and a corrupted repo both
+  read `UNREACHABLE:list-rc=128` with rc 1 (no crash, no hang), and a repository config whose
+  `core.fsmonitor` sleeps is bounded by `--timeout` (SwarmExecutor23: the specified hang vector did
+  not reproduce).
+- The round's landing set is secret-free: the seven-file and HTML sweeps found no credential, token,
+  cookie, key, private URL or SSH path (SwarmSentinel38; two apparent hits were recorded as false
+  positives).
+- The F1 frontier edit is accurate against the tree — the r35 record is still filed unfixed, which
+  the frontier bullet says explicitly (SwarmScout05).
+- Wave seats disagreed once, on whether S097's round-20 audit exempts its `used-by` contradiction
+  (SwarmReviewer03: exempt; SwarmScout04: violation). The contract names no exemption, so the L1
+  applied the correction and recorded both readings in `## Registry corrections`.
 - Limits disclosed by the wave: the drift tool is blind to bare repositories in both directions
   (SwarmExecutor22 F2), `live_regs` tracks fleet churn while lanes run (SwarmCritic28: 24 → 23 in
   two minutes), and `drift_rows>=5` has one row of margin over the four phantom paths.

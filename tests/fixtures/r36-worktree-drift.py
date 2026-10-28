@@ -132,7 +132,11 @@ def main(argv):
     args = ap.parse_args(argv)
     lane_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
     tool = args.tool or os.path.join(lane_root, "tools", "souji-worktree-drift.py")
-    scratch = tempfile.mkdtemp(prefix="souji-r36-drift.", dir=args.work or os.environ.get("TMPDIR") or "/var/tmp")
+    work = args.work or os.environ.get("TMPDIR") or "/var/tmp"
+    if not os.path.isdir(work):
+        sys.stderr.write("usage: --work must name an existing directory (%s)\n" % work)
+        return 2
+    scratch = tempfile.mkdtemp(prefix="souji-r36-drift.", dir=work)
     results = []
     try:
         # match
@@ -192,7 +196,15 @@ def main(argv):
         make_repo(os.path.join(fleet, "gamma"))
         rec = record(root, [("alpha", 1, 0), ("beta", 1, 0)], total=(2, 2, 0))
         rc, out, summary = invoke(tool, fleet, rec)
-        check("unrecorded", rc == 1 and "UNRECORDED\tgamma" in out, "rc=%d rows=%r" % (rc, out.splitlines()[:3]), results)
+        check(
+            "unrecorded",
+            rc == 1
+            and "UNRECORDED\tgamma" in out
+            and "live_repos=2" in summary
+            and "live_regs=2 " in summary + " ",
+            "rc=%d rows=%r summary=%r" % (rc, out.splitlines()[:3], summary),
+            results,
+        )
 
         # read-only envelope
         root, fleet = build(scratch, "readonly")

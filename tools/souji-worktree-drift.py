@@ -30,7 +30,7 @@ UNRECORDED (a git work tree under --root the record does not name).
 
 CLI:
   python3 -B tools/souji-worktree-drift.py --root FLEET --record PATH
-      [--record-name NAME] [--timeout SECS] [--json OUT]
+      [--timeout SECS] [--json OUT] [--skip-unrecorded]
 
 Exit: 0 no drift rows, 1 drift rows found, 2 could-not-evaluate
 (RECORD-MISSING / RECORD-MALFORMED / RECORD-EMPTY / usage).
@@ -240,8 +240,8 @@ def run(args):
                     unreachable += 1
                     drift.append(("UNREACHABLE", name, error))
                     continue
-                live_regs += regs
-                live_prunable += prunable
+                # A6: live_regs/live_prunable describe the RECORD's repositories, exactly like
+                # live_repos; an unrecorded repo's figures live on its UNRECORDED row only.
                 drift.append(("UNRECORDED", name, "live regs=%d prunable=%d" % (regs, prunable)))
     for cls, name, detail in sorted(drift):
         print("DRIFT\t%s\t%s\t%s" % (cls, name, detail))
