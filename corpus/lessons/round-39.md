@@ -125,3 +125,12 @@ and two disclosures, not new frontier ground.
 ## Gate correction (appended after wave 1)
 
 R39-GATE-1 — S247's quote stopped at "cannot be dereferenced" and hid the clause that states the refusal; wave-1 seat `W1CritSources` located the full 25-word sentence ("... anymore (in which case, barf)") and showed that a reader holding only the quote saw the search, not the failure. S250 supersedes S247 with that quote and scopes it against S099; S247 stays as filed, and the C2 claim now cites S250 (S247's fact still holds, so the claim does not move).
+
+## Wave-1 repairs (appended 2026-10-28, after the seats that produced them)
+
+- **Docstring `EISDIR` (seat `W1ExecC2Docstring` §5).** The new `RECORD-MISSING` line advertised `EISDIR`, but a directory passed as `--record` never reaches that class: the `O_RDONLY` open succeeds and the `fstat` guard refuses it as `RECORD-MALFORMED`. The word is dropped (`790d16b`); no frozen predicate tests it.
+- **Scratch plumbing (seat `W1ExecScratch` F1/T12).** `census/round-39/c3-counter.py` pinned its git children to `/var/tmp` and `tests/fixtures/r39-citation-rev.py` dropped `TMPDIR` from the tool child's environment; both now honour the caller's root (`d4c1755`). This is the lane's own r32 C2 rule applied to this round's instruments.
+- **Control receipts (seat `W1RevFreeze`).** The three control receipts did not record their command lines, and the C2/C3 controls had been measured on the pre-amendment fixture bytes. All three are re-measured on the final instruments with their commands recorded (`f8ba3f3`); the before values are unchanged (`open=16`, `pass=2 fail=4`, `killed=0`), and `census/round-39/records/prereg-prefix.txt` proves the freeze bytes are an exact 7356-byte prefix of the prereg with 681 bytes appended by A1.
+- **S247 quote (seat `W1CritSources`).** The quote stopped before the clause that states the refusal; S250 supersedes it with the full 25-word sentence and the C2 claim cites S250 (`e9958ee`).
+- **C1-04 token shape (seat `W1ExecC1Anchors`).** Item C1-04's `must` set already appears as a quoted shape in `census/round-29/records/preregistration.txt`, so the item binds a token pattern, not a provenance; the round's receipt carries the real `verify-rev` line and the limit is disclosed rather than repaired after data.
+- **C1 control reach (seat `W1MutC1`).** The base control reads `open=16` through the anchor/file arms, so a mutant that only weakens the predicate arm is invisible to it; the counter's predicate arm needs a landing-revision control, named for r40.
