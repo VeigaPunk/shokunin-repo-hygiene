@@ -17,7 +17,7 @@ non-author spot-check routed (`corpus/lessons/round-36-verifier-spotcheck.md`, R
   `python3 -B tools/souji-citation-reconcile.py --root <lane> --rev <landing> --register census/round-37/citation-cells.tsv --register-rev <full40>`
   → `SUMMARY cells=11 mismatches=0`, rc 0 (amendment A1 added the two `cases=8` selftest cells and
   `--register-rev` pins the register). Base control (`census/round-37/records/c1-before.txt`):
-  `cells=11 mismatches=11`, rc 1 (the frozen nine-cell register reads 9 at the base; the two added cells are
+  `cells=11 mismatches=11`, rc 1 (the frozen nine-cell block of the register reads 9 at the base; the two added cells are
   absent at the base) — the same receipts resolve at the base revision, but no correction
   line exists, so the counter's citation arm is what moves.
 - **C2 operability (score 8).** The F1 drift tool's write envelope matches its docstring: `--root`
@@ -29,7 +29,7 @@ non-author spot-check routed (`corpus/lessons/round-36-verifier-spotcheck.md`, R
   `SUMMARY cases=12 pass=12 fail=0 base_fail=9 escapes=9 control=ESCAPE-REPRODUCED`, rc 0; the r36 regression
   fixture stays `cases=12 pass=12 fail=0 control=STUB-REJECTED`. Base control
   (`census/round-37/records/c2-before.txt`): the same fixture against the r36 tool bytes reads
-  `cases=12 pass=3 fail=9 base_fail=9 escapes=9`, rc 1 — six escapes reproduce (amendment A2 added the
+  `cases=12 pass=3 fail=9 base_fail=9 escapes=9`, rc 1 — nine escapes reproduce (amendment A2 added the
   hardlink and measured cases).
 - **C3 coverage (score 8).** The drift tool's fixture surface discriminates its fields: six frozen
   single-defect mutants (the routed survivor `live_repos = len(rows) - unreachable`, a
@@ -48,9 +48,9 @@ installed man pages at `git 2.56.0-1` and the live git-scm pages):
 
 | id | source (URL) | access | located quote (≤25 words) | verdict |
 |---|---|---|---|---|
-| S236 | git(1) ENVIRONMENT — GIT_TRACE_REFS — https://git-scm.com/docs/git#Documentation/git.txt-GITTRACEREFS | 2026-10-28 | “Enables trace messages for operations on the ref database.” (§ ENVIRONMENT, `man git` line 1212) | **admit** — a child that inherits the variable writes a trace file the caller did not request; this is the W2 mechanism the escape fixture reproduces on the r36 blob |
-| S237 | git(1) ENVIRONMENT — GIT_CONFIG_NOSYSTEM — https://git-scm.com/docs/git#Documentation/git.txt-GITCONFIGNOSYSTEM | 2026-10-28 | “Whether to skip reading settings from the system-wide $(prefix)/etc/gitconfig file.” (§ ENVIRONMENT, `man git` line 1153) | **admit** — the manual adds it “can be used … to create a predictable environment for a picky script”; that is exactly the child env the C2 repair builds |
-| S238 | git-config(1) § GIT_CONFIG_COUNT — https://git-scm.com/docs/git-config#Documentation/git-config.txt-GITCONFIGCOUNT | 2026-10-28 | “all environment pairs … up to that number will be added to the process’s runtime configuration” | **reject** — a `GIT_CONFIG_COUNT`-injected `trace2.eventTarget` wrote no trace file on git 2.56.0 (`census/round-37/records/c2-after.txt` (`case-env-witness=PASS`) and the independent positive
+| S236 | git(1) ENVIRONMENT — GIT_TRACE_REFS — https://git-scm.com/docs/git#Documentation/git.txt-GITTRACEREFS | 2026-10-28 | “Enables trace messages for operations on the ref database.” (§ ENVIRONMENT, `MANWIDTH=100 man git` line 1213; heading at 1212) | **admit** — a child that inherits the variable writes a trace file the caller did not request; this is the W2 mechanism the escape fixture reproduces on the r36 blob |
+| S237 | git(1) ENVIRONMENT — GIT_CONFIG_NOSYSTEM — https://git-scm.com/docs/git#Documentation/git.txt-GITCONFIGNOSYSTEM | 2026-10-28 | “Whether to skip reading settings from the system-wide $(prefix)/etc/gitconfig file.” (§ ENVIRONMENT, `MANWIDTH=100 man git` line 1154; heading at 1153) | **admit** — the manual adds it “can be used … to create a predictable environment for a picky script”; that is exactly the child env the C2 repair builds |
+| S238 | git-config(1) § GIT_CONFIG_COUNT — https://git-scm.com/docs/git-config#Documentation/git-config.txt-GITCONFIGCOUNT | 2026-10-28 | “all environment pairs … up to that number will be added to the process’s runtime configuration” | **reject** — a `GIT_CONFIG_COUNT`-injected `trace2.eventTarget` wrote no trace file on git 2.56.0 (`census/round-37/records/c2-after.txt` (`case-env-witness=PASS`) and the independent positive |
 control in `.ufo/waves/round-37/w1/W1ScribeGate.md` (a config-file `trace2.eventTarget` wrote
 9812 bytes; the env-injected one wrote none)), so env config does not reach trace2 initialisation on this surface; flip: a reproducible trace2 write via env config at a named git version |
 
