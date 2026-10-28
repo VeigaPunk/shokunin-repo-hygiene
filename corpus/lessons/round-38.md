@@ -228,3 +228,18 @@ from `SOURCES.append.md` was appended.
   the named blob, not that the blob is a receipt. Author-chosen evidence is the arm's design limit.
 - **`--json ""` is silently ignored** (`W1RevEnvelope` F1) and refusals after the measurement emit
   the SUMMARY first (F2); both are cosmetic and outside C2.
+
+### M7 — a seat wrote its draft at the filed report's path (scope)
+
+**Class:** scope. Wave-1 seat `W1ScribeReport` wrote a 21 907-byte draft to
+`/home/vgpnk/Projects/shokunin/.ufo/reports/round-38/souji.md` (the fleet repo's filed-report path)
+instead of its wave directory, while its wave-dir report is a different 7 417-byte file.
+**Evidence pointer:** the fleet repo's `git status --porcelain` showed
+`?? .ufo/reports/round-38/souji.md`; `md5sum` of the two files differs
+(`8b5892b4…` vs `136b2ccc…`).
+**Captured-by:** none during the wave — the wave `context` says every `Report:` trailer is relative
+to the lane, but nothing stops a seat from also writing an absolute fleet path it was told about.
+**Fix:** the draft was copied byte-exact into
+`/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-38/w1/W1ScribeReport-fleetroot-draft.md`,
+verified with `cmp`, and the fleet copy deleted (the one fleet-root deletion this round may make).
+The filed report is the L1's.
