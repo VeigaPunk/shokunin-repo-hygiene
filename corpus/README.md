@@ -802,3 +802,9 @@ a measured edge class does not promote a frontier ground to Core (PROVINCE
   `/home/vgpnk/Projects/shokunin/scripts/sources-census.sh validate --root /home/vgpnk/Projects/shokunin souji`
   exits 0 at 181 rows, W04=52 (`census/round-40/records/census-final.txt`). The initial C1 D1 receipt remains a historical value, not the final registry count; M40-10 records the resulting honest stop.
 - No ground was promoted to Core. Certification OFF, K5 HELD, NAMESPACE hold unchanged.
+
+## Round 41 frontier update
+
+- The round's claims moved the lane's own instruments: corrections of three filed r40 statements (S258 re-pins the builtin half of S009 at git v2.56.0), a runnable freeze check (`tools/souji-freeze-check.py`), a 19-site refusal battery for `tools/souji-worktree-drift.py` (`tests/fixtures/r41-refusal-sites.py`), and the R40-D-TOTAL repair with a record-order fixture. No coverage-map ground moved to Core; F1 stays frontier (the library `worktree.c` recheck of S009 is still open).
+- Registry: 181 -> 182 rows (`grep -cE '^\|[[:space:]]*S[0-9]{3,}[[:space:]]*\|' corpus/SOURCES.md`, `census/round-41/records/census-final.txt`), census exit 0. Assimilation: none; no `considerthese/` directory exists in this lane.
+- Open routed items: M40-12 decoder mutant, R39-D1/D2, tool `--json` leaf-symlink defect (lesson N10), registry K1 `cited-no-row S146` (N11). Certification OFF, K5 HELD, NAMESPACE hold unchanged.

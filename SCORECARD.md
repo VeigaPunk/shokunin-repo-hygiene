@@ -813,3 +813,27 @@ The C1 instrument was tightened after the first counter receipt: an evidence poi
 ### Round 40 final SOURCES census (after W2 source corrections)
 
 `/home/vgpnk/Projects/shokunin/scripts/sources-census.sh validate --root /home/vgpnk/Projects/shokunin souji` -> `souji ok`, exit 0; final registry `rows=181`, `W04=52` (`census/round-40/records/census-final.txt`). The C1 D1 cell still names the earlier 178-row/49-warning receipt at its measured revision; because S255-S257 were appended after that measurement, D1 is not a measurement of the final registry and remains unprovable (lesson M40-10).
+
+### Round 41 measurements (2026-10-28; base `7eebc183f2685d1ea9b004b4de22c09a8a4035a7`; preregistration `e2a74312af4233963e44e4dbb38838ece07b8bd2`; instruments `6682b98175b995ee4646ffd1ea6bd8a12cd353dd`)
+
+| claim | axis | before | after | counting command | measured commit |
+|---|---|---|---|---|---|
+| C1 corrections of three filed r40 statements | calibration 7 | `items=3 mismatched=3 corrected=0 uncorrected=3 junk=0` (do-nothing), junk lesson `junk=3` (`controls/c1-control.txt`) | `items=3 mismatched=3 corrected=3 uncorrected=0 junk=0 rewritten=0 sourced=1` rc 0 | `python3 -B census/round-41/c1-counter.py --root . --rev <full40>` | `31e4d3e758bb903808a9270018d7e5be99ce38a4`; tip `716eaa9e35ffc2643b5cb28981ee474b81b58bf8` |
+| C2 runnable freeze check | operability 8 | tool absent: `pass=0`; always-clean stub `pass=2` of 21 (`controls/c2-control.txt`) | `cases=21 pass=21 fail=0 control_clean=REJECTED control_findings=REJECTED real=ok retro=red` rc 0 (first landing `119c26f`, hardened final `72e8a0b`) | `python3 -B census/round-41/c2-counter.py --root . --rev <full40> --scratch <dir>` | `119c26fa3bbb85e215824de9538bd2eb34e9f874`, `72e8a0b637ca6243857571d0433fcf7329fe4615` |
+| C3 refusal-site battery | coverage 8 | fixture absent; all-PASS stub survives 19/19 (`controls/c3-control.txt`) | `sites=19 probes=21 pristine=ok killed=19 survived=0 misattributed=0 docclasses=10` rc 0 | `python3 -B census/round-41/c3-counter.py --root . --rev <full40> --scratch <dir>` | `a1144120611b00091ac4839559d8ebf38aa9a83a` |
+| R1 residual (not a claim) | coverage | fixture absent; stub kills 8, new 0/3 | `mutants=11 killed=11 survived=0 pristine=ok regress=8/8 new_killed=3/3 old_fixtures_killed_new=0 prior=6/6` | `python3 -B census/round-41/r1-counter.py --root . --rev <full40> --scratch <dir>` | `97eeb01e73a9baa3e4191b9052fed9e505c70215` |
+
+Owned scores unchanged (calibration 7, operability 8, coverage 8); no reproducible score mapping. Wave-2 attacks (lesson N1-N19, E1) show the counters score shape; C3 is class-level coverage; the C2 tool was hardened after landing (E1). No admission is claimed by the lane.
+
+### Round 41 capability rows (appended)
+
+| name | what it can now do | evidence pointer | first-working round |
+|---|---|---|---|
+| freeze check | read a preregistration at a revision and report missing keys, digest mismatches, a non-red control, frozen-file edits and pre-freeze dispatch files | `census/round-41/records/c2-after-hardened.txt`; `tip-remeasure.txt` | r41 |
+| refusal-site battery | probe each of the drift tool's 19 refusal sites with a class-asserting probe, scored by per-site label mutation | `census/round-41/records/c3-after.txt` | r41 |
+| record-order fixture | refuse a first-disagreeing TOTAL and cover root-repository discovery | `census/round-41/records/r1-after.txt` | r41 |
+| corrections counter | bind CORRECTION lines to values re-derived at a measured revision | `census/round-41/records/c1-after.txt` | r41 |
+
+### Planned (appended at round 41)
+
+- **r42:** calibration: a counter that reads correction prose and rejects fenced, duplicate and retracting lines (N1-N4); operability: freeze-check duplicate keys, malformed headings and unlisted dispatch names (N13) with the hidden-case audit as a frozen leg; coverage: condition-level mutants of the refusal sites (N14), M40-12 decoder mutant, R39-D1/D2 receipts; tool defect N10 (`--json` leaf symlink). Certification OFF, K5 HELD.
