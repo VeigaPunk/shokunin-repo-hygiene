@@ -26,10 +26,10 @@ non-author spot-check routed (`corpus/lessons/round-36-verifier-spotcheck.md`, R
   `GIT_CONFIG_GLOBAL/SYSTEM=/dev/null`), and `--json` is refused inside every measured repository
   and written through an `O_NOFOLLOW` descriptor on the resolved path. Counter:
   `python3 -B tests/fixtures/r37-drift-escapes.py --base-tool <r36 blob>` →
-  `SUMMARY cases=9 pass=9 fail=0 base_fail=6 control=ESCAPE-REPRODUCED`, rc 0; the r36 regression
+  `SUMMARY cases=12 pass=12 fail=0 base_fail=9 escapes=9 control=ESCAPE-REPRODUCED`, rc 0; the r36 regression
   fixture stays `cases=12 pass=12 fail=0 control=STUB-REJECTED`. Base control
   (`census/round-37/records/c2-before.txt`): the same fixture against the r36 tool bytes reads
-  `cases=9 pass=3 fail=6 base_fail=6 escapes=6`, rc 1 — six escapes reproduce (amendment A2 added the
+  `cases=12 pass=3 fail=9 base_fail=9 escapes=9`, rc 1 — six escapes reproduce (amendment A2 added the
   hardlink and measured cases).
 - **C3 coverage (score 8).** The drift tool's fixture surface discriminates its fields: six frozen
   single-defect mutants (the routed survivor `live_repos = len(rows) - unreachable`, a

@@ -28,6 +28,9 @@ Cases:
   json-hardlink      --json names an out-of-root hardlink to an in-root
                      file                                                -> rc 2, victim unchanged
   record-fifo        a FIFO record                                         -> rc 2, not a hang
+  json-gitfile-write a row whose .git file points outside --root           -> rc 2, victim unchanged
+  json-symlink-child an unrecorded symlinked child is not measured          -> victim unchanged
+  record-symlink     a record row that is a symlink out of --root          -> rc 2, no file
   measured           a record that disagrees with the live tree            -> rc 1 REGS-CHANGED
                                                                              drift_rows=1 (a fixed-
                                                                              summary stub fails)
@@ -220,6 +223,48 @@ def cases(tool, scratch):
         rc, text = 124, "timeout"
     out["record-fifo"] = rc == 2 and "not a regular file" in text
     escaped["fifo"] = rc != 2
+
+    # json-gitfile-write: a record row whose .git FILE points outside --root is
+    # measured there, so --json into that gitdir must be refused.
+    root, fleet, sibling = build(scratch, "json-gitfile")
+    outside = make_repo(os.path.join(root, "outside-repo"))
+    victim = os.path.join(outside, "file.txt")
+    before_bytes = open(victim, "rb").read()
+    alpha = os.path.join(fleet, "alpha")
+    shutil.rmtree(alpha)
+    os.makedirs(alpha)
+    write(os.path.join(alpha, ".git"), "gitdir: %s\n" % os.path.join(outside, ".git"))
+    rec = record(root, [("alpha", 1, 0)], (1, 1, 0))
+    rc, text = invoke(tool, fleet, rec, extra=["--json", victim])
+    out["json-gitfile-write"] = (
+        rc == 2 and "RECORD-OUTSIDE-ROOT" in text
+        and open(victim, "rb").read() == before_bytes
+    )
+    escaped["gitfile"] = open(victim, "rb").read() != before_bytes
+
+    # json-symlink-child: an unrecorded symlinked child must not be measured, so
+    # --json into its target is outside every measured repository.
+    root, fleet, sibling = build(scratch, "json-symlink-child")
+    target_repo = make_repo(os.path.join(root, "target-repo"))
+    victim = os.path.join(target_repo, "file.txt")
+    before_bytes = open(victim, "rb").read()
+    os.symlink(target_repo, os.path.join(fleet, "zlink"))
+    rec = record(root, [("alpha", 1, 0), ("beta", 1, 0)], (2, 2, 0))
+    rc, text = invoke(tool, fleet, rec, extra=["--json", victim])
+    # the point is that zlink is not *measured* (so the --json target is outside
+    # every measured repository); the explicit outside path is allowed by design.
+    out["json-symlink-child"] = "zlink" not in text
+    escaped["symlink-child"] = "zlink" in text
+
+    # record-symlink: a record row that is a symlink to an out-of-root repository
+    # must be refused (abspath-only containment re-opens the r36 W1 write).
+    root, fleet, sibling = build(scratch, "record-symlink")
+    os.symlink(sibling, os.path.join(fleet, "gamma"))
+    target = os.path.join(sibling, "pwned2.json")
+    rec = record(root, [("gamma", 1, 0)], (1, 1, 0))
+    rc, text = invoke(tool, fleet, rec, extra=["--json", target])
+    out["record-symlink"] = rc == 2 and "RECORD-OUTSIDE-ROOT" in text and not os.path.exists(target)
+    escaped["row-symlink"] = os.path.exists(target)
 
     # measured: a fixed-summary stub must fail the required measured drift.
     root, fleet, sibling = build(scratch, "measured")

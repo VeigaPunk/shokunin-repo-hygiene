@@ -177,6 +177,10 @@ def discover(root):
         return names
     for entry in entries:
         path = os.path.join(root, entry)
+        if os.path.islink(path):
+            # r37 A2.7: a symlinked child would be measured (and could be the
+            # --json target's repository) without residing under --root.
+            continue
         if not os.path.isdir(path):
             continue
         if os.path.isdir(os.path.join(path, ".git")) or os.path.isfile(os.path.join(path, ".git")):
@@ -226,6 +230,23 @@ def run(args):
         if not inside:
             raise Refusal("RECORD-OUTSIDE-ROOT: %s resolves outside %s" % (row["name"], root_real))
         measured.append(resolved)
+        # r37 A2.7 (wave seat W2CritC2): the repository actually measured is the
+        # one the gitdir resolves to (a `.git` *file* can point outside --root);
+        # feed that realpath to the --json guard too.
+        if os.path.isdir(resolved) and (os.path.isdir(os.path.join(resolved, ".git")) or os.path.isfile(os.path.join(resolved, ".git"))):
+            try:
+                got = git(["rev-parse", "--absolute-git-dir"], resolved, args.timeout)
+            except subprocess.TimeoutExpired:
+                got = None
+            if got is not None and got.returncode == 0:
+                gitdir = os.path.realpath(got.stdout.decode("utf-8", "replace").strip())
+                try:
+                    gitdir_inside = os.path.commonpath([gitdir, root_real]) == root_real
+                except ValueError:
+                    gitdir_inside = False
+                if not gitdir_inside:
+                    raise Refusal("RECORD-OUTSIDE-ROOT: %s gitdir resolves outside %s" % (row["name"], root_real))
+                measured.append(gitdir)
     json_target = None
     if args.json:
         # r36 A2 + r37 C2 (W1/W4): the guard resolved one path while the writer
