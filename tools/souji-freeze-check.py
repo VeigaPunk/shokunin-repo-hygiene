@@ -44,7 +44,7 @@ class Repo:
 
     def run(self, *args):
         try:
-            return subprocess.run(["git", "-C", self.root] + list(args), stdout=subprocess.PIPE,
+            return subprocess.run(["git", "-c", "core.quotePath=false", "-C", self.root] + list(args), stdout=subprocess.PIPE,
                                   stderr=subprocess.PIPE, env=self.env, check=False)
         except OSError as exc:
             raise Refusal("cannot run git: %s" % exc)
