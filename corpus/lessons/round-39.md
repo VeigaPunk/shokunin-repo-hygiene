@@ -137,4 +137,4 @@ R39-GATE-1 — S247's quote stopped at "cannot be dereferenced" and hid the clau
 
 ## Seat-reported failures
 
-- W1CritAssimilation (`census/round-39/waves/w1/W1CritAssimilation.md` line 3) carried: "STATUS: PARTIAL — the decision `Assimilation: none` is correct on all three frozen claim ..." — the round adopted its corrections: the report's assimilation line names the id collision, S250 corrects S247's quote, and the Gate sentence now says the three rows are curation, not assimilation-set verdicts.
+- W1CritAssimilation (`census/round-39/waves/w1/W1CritAssimilation.md` line 3) carried: "STATUS: PARTIAL — the decision `Assimilation: none` is correct on all three frozen claim ..." — resolved@c2dcd62: the report's assimilation line names the id collision, S250 corrects S247's quote, and the Gate rows are curation, not assimilation-set verdicts; no open item remains.
