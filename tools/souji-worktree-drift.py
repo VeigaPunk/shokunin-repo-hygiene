@@ -45,7 +45,8 @@ refusal class the code can raise is named here (r38 C2, r37 routed defect 6):
                          exists but cannot be opened or read
   RECORD-MALFORMED       a missing (ENOENT) or non-regular record path, a line
                          that does not match the schema, a duplicated name, or
-                         a TOTAL row that disagrees
+                         a TOTAL row that disagrees (any TOTAL row, in any
+                         position: every one is checked against the REPO rows)
   RECORD-EMPTY           no REPO rows
   RECORD-OUTSIDE-ROOT    a record row, or the gitdir it resolves to, escapes
                          --root
@@ -149,6 +150,7 @@ def parse_record(path):
         os.close(fd)
     rows = []
     total = None
+    totals = []
     for lineno, line in enumerate(raw.splitlines(), 1):
         if not line.strip() or line.startswith("#"):
             continue
@@ -162,11 +164,16 @@ def parse_record(path):
         m = TOTAL.match(line)
         if m:
             total = {"repos": int(m.group("repos")), "regs": int(m.group("regs")), "prunable": int(m.group("prunable"))}
+            # r41 (R40-D-TOTAL): every TOTAL row is kept and checked below, so a
+            # disagreeing TOTAL is refused wherever it sits (r40 M40-4: the loop
+            # used to keep only the last row, accepting a first-disagreeing,
+            # last-agreeing pair that the docstring calls malformed).
+            totals.append(total)
             continue
         raise Refusal("RECORD-MALFORMED: line %d does not match the census schema" % lineno)
     if not rows:
         raise Refusal("RECORD-EMPTY: no REPO rows in %s" % path)
-    if total is not None:
+    for total in totals:
         if total["repos"] != len(rows):
             raise Refusal("RECORD-MALFORMED: TOTAL repos=%d but %d REPO rows" % (total["repos"], len(rows)))
         if total["regs"] != sum(r["regs"] for r in rows):
