@@ -297,7 +297,14 @@ def main(argv):
         for name, ok, detail in base:
             if not ok:
                 print("base-%s=FAIL%s" % (name, " " + detail))
-        line += " base_cases=%d base_fail=%d" % (len(base), base_fail)
+        # r38 A3 (wave-1 seat W1CritC2): base_fail alone does not say whether the base failed
+        # behaviourally or only on a class name. These three cases are behavioural by
+        # construction (a hang, a destroyed input, a missing documentation token); the other
+        # base failures at ca4369a are class-name differences on behaviour the base already had.
+        behavioural = {"fifo-json-refused", "record-alias-refused", "docstring-enum"}
+        b_fail = sorted(name for name, ok, _ in base if not ok and name in behavioural)
+        print("BASE-BEHAVIORAL failed=%d cases=%s" % (len(b_fail), ",".join(b_fail)))
+        line += " base_cases=%d base_fail=%d behavioral_fail=%d" % (len(base), base_fail, len(b_fail))
     print(line)
     return 0 if failed == 0 else 1
 
