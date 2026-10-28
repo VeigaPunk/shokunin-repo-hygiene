@@ -1,0 +1,84 @@
+souji round 37 — preregistration (FROZEN before any after-data)
+lane base: 0d974ff (round-36 verifier spot-check commit)
+campaign: hyaku run 11, lane axes calibration + operability + coverage
+season: fresh-start round; the r36 non-author spot-check routed the defects these claims repair.
+
+CLAIMS (three, distinct axes; C1 works the lowest non-retired axis, calibration 7)
+
+C1 calibration — self-assessment receipt citations.
+  The r36 spot-check (corpus/lessons/round-36-verifier-spotcheck.md, Routed defects 1)
+  routed cells whose after-values never lived in a committed receipt:
+  SCORECARD.md:563-564 and capability rows :575-576 quote cases=11/cases=9 against
+  receipts reading 21/12; SKILL.md gate-registry rows quote 11/11 and 9/9; the r36
+  lesson's Claims section quotes cases=20 against 21; the frozen prereg predicate
+  sentence carries 11/9; and the measured-commit cells name 42ea92e, where neither
+  receipt exists (git cat-file -e rc 128).
+  Counter: tools/souji-citation-reconcile.py --root <lane> --rev <landing>
+           --register census/round-37/citation-cells.tsv
+  Target (frozen): `SUMMARY cells=9 mismatches=0`, rc 0, where each register row's
+           receipt blob at receipt_rev 1e771ed59301ed10f68e22d4edf35d5218bacf1a
+           contains its expected token and the corrected line carries that token
+           and not the stale token.
+  Kill rule (frozen): any MISMATCH line, or a register row whose receipt does not
+           carry the expected token. Stale measurement rows stay byte-verbatim;
+           corrections are append-only lines anchored R37-C1-<n> (SCORECARD,
+           prereg) or in-place current-registry cells (SKILL, lesson Claims).
+  Before (do-nothing control): the same command at 0d974ff, where no correction
+           line exists -> cells=9 mismatches=9.
+  Feasibility: each expected token is already present in its receipt at 1e771ed
+           (verified before the freeze: grep SUMMARY census/round-36/records).
+
+C2 operability — the drift tool's write envelope.
+  The r36 spot-check (Routed defects 3) showed tools/souji-worktree-drift.py
+  writes outside its documented read-only envelope: W1 a record row escaping
+  --root plus --json overwrites a file in a repository the record names; W2
+  GIT_TRACE_REFS is not scrubbed; W3 the scrub removes GIT_CONFIG_NOSYSTEM and
+  GIT_CONFIG_GLOBAL/SYSTEM so config-injected trace2 targets are honoured; W4
+  the --json guard resolves one path while the writer opens another.
+  Counter: tests/fixtures/r37-drift-escapes.py --base-tool <r36 tool blob>
+  Target (frozen): `SUMMARY cases=6 pass=6 fail=0 base_fail>=3
+           control=ESCAPE-REPRODUCED`, rc 0; and the r36 regression fixture
+           `tests/fixtures/r36-worktree-drift.py` still prints
+           `SUMMARY cases=12 pass=12 fail=0 control=STUB-REJECTED`, rc 0.
+  Kill rule (frozen): any candidate case FAIL, base_fail < 3, a control that is
+           not ESCAPE-REPRODUCED, or an r36 regression fail>0.
+  Repair: --json removed (no consumer in the lane; the summary is stdout), the
+           child environment becomes a whitelist (config neutralised with
+           GIT_CONFIG_NOSYSTEM=1 and GIT_CONFIG_GLOBAL/SYSTEM=/dev/null, no
+           GIT_* inherited), and every record row is refused when it resolves
+           outside --root (RECORD-OUTSIDE-ROOT, exit 2).
+  Before (do-nothing control): candidate = current tool, base = the 1e771ed blob
+           -> cases=6 pass=2 fail=4 base_fail=4 control=ESCAPE-REPRODUCED.
+  Sourced: the whitelist's config-neutralisation rests on this round's SOURCES row
+           for the Git environment variables (see corpus/lessons/round-37.md Gate).
+
+C3 coverage — fixture discrimination surface.
+  The r36 spot-check (Routed defects 4) named a survivor mutant
+  `live_repos = len(rows) - unreachable` that passed the 12/12 fixture and four
+  undiscriminated predicates (summary counters read by no case).
+  Counter: tests/fixtures/r37-drift-mutants.py --fixture <fixture>
+  Target (frozen): with `tests/fixtures/r37-drift-discrimination.py` ->
+           `SUMMARY mutants=6 killed=6 survived=0`, rc 0; the six mutants and
+           their single-defect replacements are frozen in the battery.
+  Kill rule (frozen): any survivor, or a mutant anchor that does not occur
+           exactly once (a battery defect, not a pass).
+  Before (do-nothing control): the same battery against the r36 fixture blob
+           (`git show 1e771ed...:tests/fixtures/r36-worktree-drift.py`).
+  The r36 fixture file itself stays byte-identical (Q73 consumer).
+
+FROZEN PREDICATE SENTENCES (identical in this file, in the counters, in the
+SCORECARD receipt labels):
+  C1 = "souji-citation-reconcile prints cells=9 mismatches=0 at the landing
+        revision, and every register receipt carries its expected token";
+  C2 = "the r37 escape fixture prints cases=6 pass=6 fail=0 base_fail>=3
+        control=ESCAPE-REPRODUCED and the r36 drift fixture stays 12/12";
+  C3 = "the r37 mutant battery prints mutants=6 killed=6 survived=0 against the
+        r37 discrimination fixture".
+
+CONTROLS (committed before any after-data)
+  census/round-37/records/c1-before.txt   counter at the lane base (9 mismatches)
+  census/round-37/records/c2-before.txt   escape fixture, current tool + r36 blob
+  census/round-37/records/c3-before.txt   mutant battery against the r36 fixture
+
+AMENDMENT RULE: an amendment may only tighten a predicate or add a disclosed
+limit; predicate, counter and target are not rewritten after any after-data.
