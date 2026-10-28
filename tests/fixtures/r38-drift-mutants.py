@@ -30,6 +30,7 @@ Exit: 0 all four killed and pristine ok, 1 any survivor or pristine failure, 2 u
 """
 import argparse
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -52,10 +53,16 @@ def score(fixture, tool, work):
         stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False,
     )
     summaries = [l for l in proc.stdout.splitlines() if l.startswith("SUMMARY cases=")]
-    fails = sum(1 for l in proc.stdout.splitlines() if l.endswith("=FAIL") or "=FAIL " in l)
     if not summaries:
         return False, "NO-SUMMARY rc=%d" % proc.returncode
-    return (proc.returncode == 1 and fails > 0), "rc=%d fails=%d" % (proc.returncode, fails)
+    # r38 A5 (wave seat W1RevBattery): a literal `=FAIL` line plus any SUMMARY was enough to
+    # score a kill, so a crashing fixture could report `killed`. A kill now needs the
+    # fixture's own `fail=` field > 0 and no traceback on either stream.
+    m = re.search(r"fail=(\d+)", summaries[-1])
+    fails = int(m.group(1)) if m else -1
+    crash = "Traceback (most recent call last)" in (proc.stdout + proc.stderr)
+    return (proc.returncode == 1 and fails > 0 and not crash), "rc=%d fails=%d crash=%s" % (
+        proc.returncode, fails, crash)
 
 
 def main(argv):

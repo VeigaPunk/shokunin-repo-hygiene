@@ -121,13 +121,30 @@ def git(args, path, timeout):
 
 def parse_record(path):
     # r37 A2.4 (wave seat W1SentinelEnv S1): a FIFO record blocked forever in
-    # open().read() — the run never terminated and never reported.
-    if not os.path.isfile(path):
-        raise Refusal("RECORD-MALFORMED: %s is not a regular file" % path)
+    # open().read() — the run never terminated and never reported. r38 A4 (wave seat
+    # W1SentEnvelope F1/R3): the isfile-then-open pair was still a TOCTOU — a path
+    # swapped to a FIFO between the check and the open blocked forever. The open is
+    # now O_NONBLOCK and the descriptor is checked with fstat before any read, so no
+    # special file can be waited on; a missing path keeps its RECORD-MALFORMED class.
     try:
-        raw = open(path, encoding="utf-8", errors="replace").read()
+        fd = os.open(path, os.O_RDONLY | os.O_NONBLOCK)
     except OSError as exc:
+        if exc.errno == errno.ENOENT:
+            raise Refusal("RECORD-MALFORMED: %s is not a regular file" % path)
         raise Refusal("RECORD-MISSING: %s" % exc)
+    try:
+        if not stat.S_ISREG(os.fstat(fd).st_mode):
+            raise Refusal("RECORD-MALFORMED: %s is not a regular file" % path)
+        os.set_blocking(fd, True)
+        chunks = []
+        while True:
+            chunk = os.read(fd, 65536)
+            if not chunk:
+                break
+            chunks.append(chunk)
+        raw = b"".join(chunks).decode("utf-8", "replace")
+    finally:
+        os.close(fd)
     rows = []
     total = None
     for lineno, line in enumerate(raw.splitlines(), 1):

@@ -161,6 +161,43 @@ predicate still reads `cases=12 ... base_fail=6 behavioral_fail=3`. No target ch
 publishes the distinction the kill rule needs. Evidence:
 `census/round-38/records/c2-base-composition.txt`.
 
+### A4 — record open is non-blocking (2026-10-28, wave-1 seat W1SentEnvelope F1/R3)
+
+`parse_record` checked `os.path.isfile` and then called a blocking `open()`; a path swapped to a
+FIFO between the two hung the run forever (the seat reproduced rc 124 at 20 s on run 0 and run 7 of
+two variants). The record is now opened `O_RDONLY|O_NONBLOCK` and the descriptor is checked with
+`fstat` before any read; a missing path keeps its `RECORD-MALFORMED` class and every existing case
+is unchanged (`cases=10 pass=10 fail=0`).
+
+### A5 — a kill needs the fixture's own failure field (2026-10-28, wave-1 seat W1RevBattery)
+
+The battery counted any literal `=FAIL` line plus any SUMMARY as a kill, so a fixture that printed
+one `=FAIL` line and a SUMMARY and then crashed scored `killed` (the seat's probe:
+`killed=4 ... pristine=FAIL`). A kill now requires the fixture's own `SUMMARY ... fail=N` with
+`N > 0` and no `Traceback` on either stream; the four mutants still read
+`killed=4 survived=0 pristine=ok`.
+
+### A6 — opaque record filenames and value-exact expectations (2026-10-28, wave-1 seat W1RevRecordFixture F1/F2)
+
+The record fixture wrote each case's record to `<case-name>.tsv`, so a stub could infer the expected
+verdict from `--record` alone and pass 10/10 without reading the file; the messages were also
+matched by class name only. Record names are now `record-NN.tsv`, and the refusal cases assert the
+exact message values (`TOTAL repos=3 but 2 REPO rows`, `TOTAL regs=5 but REPO rows sum to 2`,
+`TOTAL prunable=7 but REPO rows sum to 0`, `line 2 duplicates alpha`, `does not match the census
+schema`, `not a regular file`). Case ids and count are unchanged (10).
+
+### A7 — receipt exact fields, the receipt_rev arm, and the register envelope (2026-10-28, wave-1 seat W1SentCounter S1/S3/S4)
+
+Three first-falsifications: `receipt_rev` was unbound (a side or non-ancestor revision passed on
+both the seven- and eight-column arms); a comment tail in a `SUMMARY` line satisfied the expected
+token (`SUMMARY cells=9 mismatches=0  # expected cells=3`); and the register was read with a
+blocking, symlink-following open, so a FIFO (or a symlink) hung or escaped. The counter now matches
+the expected token as an exact whitespace-separated field of the SUMMARY line, refuses a
+`receipt_rev` that does not resolve or is not an ancestor (`RECEIPT-REV-UNRESOLVED`,
+`RECEIPT-REV-NOT-ANCESTOR`), and reads the register `O_NOFOLLOW|O_NONBLOCK` with an `S_ISREG` check.
+The live register still reads `cells=10 mismatches=0`; the fixture still reads 14/14. Evidence:
+`census/round-38/records/a7-counter-fixes.txt`.
+
 ### Disclosed limit (not an amendment)
 
 All ten register rows carry `commit == receipt_rev`, so the live register cannot distinguish the

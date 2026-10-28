@@ -48,8 +48,10 @@ working-tree reads of the audited files, no writes; the child git environment
 is a whitelist with config discovery neutralised (r37 A1.4).
 """
 import argparse
+import errno
 import os
 import re
+import stat
 import subprocess
 import sys
 
@@ -95,6 +97,21 @@ def git_show(root, rev, path):
     if proc.returncode != 0:
         return None
     return proc.stdout.decode("utf-8", "replace")
+
+
+def summary_tokens(line):
+    """Exact field set of one SUMMARY line; a token after a comment marker is not a field.
+
+    r38 A7 (wave seat W1SentCounter S3): whole-token search inside a `startswith("SUMMARY")`
+    line accepted `# expected cells=3` as a value; the expected token must now equal a
+    whitespace-separated field of the line.
+    """
+    fields = set()
+    for tok in line.split():
+        if tok.startswith("#") or tok.startswith("--") or tok.startswith("//"):
+            break
+        fields.add(tok)
+    return fields
 
 
 def has_token(text, token):
@@ -151,10 +168,26 @@ def parse_register_text(raw, path):
 
 
 def parse_register(path):
+    # r38 A7 (wave seat W1SentCounter S4): the register was read with a blocking, symlink-
+    # following open, so a FIFO (or a symlink to one) hung the counter and a symlink could read
+    # bytes outside --root. The same envelope the drift tool applies to --json applies here.
     try:
-        raw = open(path, encoding="utf-8", errors="replace").read()
+        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
     except OSError as exc:
         raise RegisterError("unreadable register %s: %s" % (path, exc))
+    try:
+        if not stat.S_ISREG(os.fstat(fd).st_mode):
+            raise RegisterError("register %s is not a regular file" % path)
+        os.set_blocking(fd, True)
+        chunks = []
+        while True:
+            chunk = os.read(fd, 65536)
+            if not chunk:
+                break
+            chunks.append(chunk)
+        raw = b"".join(chunks).decode("utf-8", "replace")
+    finally:
+        os.close(fd)
     return parse_register_text(raw, path)
 
 
@@ -174,7 +207,7 @@ def commit_checks(root, rev, row, line):
         out.append("COMMIT-RECEIPT-ABSENT %s at %s" % (row["receipt"], short))
     else:
         summaries = [l for l in receipt.split("\n") if l.startswith("SUMMARY")]
-        if not any(has_token(l, row["expected"]) for l in summaries):
+        if not any(row["expected"] in summary_tokens(l) for l in summaries):
             out.append(
                 "COMMIT-RECEIPT-DISAGREES %s expected=%r (no SUMMARY line at %s carries it)"
                 % (row["receipt"], row["expected"], short)
@@ -229,13 +262,22 @@ def run(args):
             for detail in commit_checks(root, args.rev, row, anchor_line):
                 print("MISMATCH %s %s" % (row["id"], detail))
                 mismatches += 1
+        # r38 A7 (wave seat W1SentCounter S1): `receipt_rev` was unbound — a row could name a
+        # revision that is not an ancestor of (or does not resolve at) the audited revision and
+        # still pass. Both checks are the same shape as the commit arm's.
+        if git_proc(root, ["cat-file", "-e", row["receipt_rev"] + "^{commit}"]).returncode != 0:
+            print("MISMATCH %s RECEIPT-REV-UNRESOLVED %s at %s" % (row["id"], row["receipt"], row["receipt_rev"]))
+            mismatches += 1
+        elif git_proc(root, ["merge-base", "--is-ancestor", row["receipt_rev"], args.rev]).returncode != 0:
+            print("MISMATCH %s RECEIPT-REV-NOT-ANCESTOR %s at %s" % (row["id"], row["receipt"], row["receipt_rev"]))
+            mismatches += 1
         receipt = git_show(root, row["receipt_rev"], row["receipt"])
         if receipt is None:
             print("MISMATCH %s RECEIPT-ABSENT %s at %s" % (row["id"], row["receipt"], row["receipt_rev"]))
             mismatches += 1
         else:
             summaries = [l for l in receipt.split("\n") if l.startswith("SUMMARY")]
-            if not any(has_token(l, row["expected"]) for l in summaries):
+            if not any(row["expected"] in summary_tokens(l) for l in summaries):
                 print("MISMATCH %s RECEIPT-DISAGREES %s expected=%r (no SUMMARY line carries it)" % (row["id"], row["receipt"], row["expected"]))
                 mismatches += 1
     print("SUMMARY cells=%d mismatches=%d" % (len(rows), mismatches))
