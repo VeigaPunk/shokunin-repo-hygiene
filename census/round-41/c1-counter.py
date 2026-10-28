@@ -111,6 +111,7 @@ def main(argv):
     ap = argparse.ArgumentParser(add_help=True)
     ap.add_argument("--root", required=True)
     ap.add_argument("--rev", required=True)
+    ap.add_argument("--scratch")  # accepted for the shared scoring harness; the counter writes nothing
     args = ap.parse_args(argv)
     ok_rev = REV.match(args.rev) and subprocess.run(
         ["git", "-C", args.root, "cat-file", "-e", args.rev + "^{commit}"], stdout=subprocess.DEVNULL,
