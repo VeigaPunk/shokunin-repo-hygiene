@@ -1,0 +1,59 @@
+# souji round 42 preregistration — frozen before any wave file exists
+Round: 42
+Lane: /home/vgpnk/Projects/shokunin/souji-shokunin
+Written by the L1 (SoujiR42) before dispatch. Freeze commit = the commit that first adds this file.
+Instruments commit (counters, c1/c3 populations, pinned tool): b7408095543579ac71b33ecf7b80b0cb8ef45036. `c2-cases.tsv` and the five control receipts are added by the freeze commit itself. Every Counter and Population below is the blob at its adding commit and must be byte-identical at the freeze commit and at the report tip. Non-author review read first: corpus/lessons/round-41-verifier-spotcheck.md (R41-D-REJECT-REASON, R41-D-C3-CONDITION, R41-D-C2-SELFTEST, R41-D-LG-DANGLING and routed N1-N19).
+
+Frozen rules (a miss is reported, never narrowed, never amended):
+1. No Counter, Population, Control, pinned tool, or this file changes after the freeze commit. A defect an attack finds is a named limit in the report and the round lesson, never an edit to a frozen file. tools/souji-worktree-drift.py is pinned at sha256 b2a603cf42472b458712f2997fe6635c92147b75f5352c005cb7916ab3e34dc6 and must stay byte-identical (C3 mutates it; it is never edited).
+2. Only the L1 measures a claim, through jj-lane.sh-landed commits. Seats write candidates and findings under .ufo/waves/round-42/ only and may score a candidate in a scratch clone with census/round-42/score-candidate.sh; a seat score is advice, not the measurement.
+3. Candidates compete: the L1 lands the candidate the frozen counter scores best (all-target first, then smaller bytes). No candidate reaching the target means the claim misses. A candidate that reads the counter, the mutant table or a label to reach the target is disqualified by the L1 before landing (the r41 execution-count shim audit is repeated and reported).
+4. Axes are named by the surface changed: C1 calibration (declared evidence in SCORECARD.md vs re-derived state), C2 operability (a runnable tool grows four grammar rules and a self-test), C3 coverage (condition-level behaviours of the drift tool a fixture observes). R1 is a routed-defect repair, not a claim; a red R1 is reported.
+5. No claim is exploratory.
+6. The three claims are causally separable: C1 touches SCORECARD-side records only, C2 touches tools/souji-freeze-check.py only, C3 touches tests/fixtures/r42-drift-conditions.py only.
+
+## C1 — calibration (lowest non-retired axis, score 7)
+Base: bf618f6c5c09d302994871c94903abbea2deb60d
+Counter: census/round-42/c1-counter.py sha256=0ab07cd3c99e6bbe26220d9e36672b6a7acd45150b96fff1868d0e082dcd46aa
+Population: census/round-42/c1-items.tsv sha256=b2601340eb20f70b0298542806acd47ef6e60586eacac92efdf94b1b231a8d39
+Control: census/round-42/controls/c1-control.txt
+Target: SUMMARY items=70 population=ok registered=70 class_ok=70 unresolved=5 corrected=5 junk=0 rewritten=0 new_mismatches=0 over the landed lane tip
+Kill: population drift, any item unregistered or registered against the counter's derivation, any unresolved item uncorrected, any junk CORRECTION-DE line, any rewritten base SCORECARD line, or any mismatch on a SCORECARD line added after the base
+Predicate: at the base the lane's own instrument tools/souji-declared-evidence.py reads 70 unresolvable declared-evidence tokens in SCORECARD.md (assertions=474 resolved=404 skipped=780 mismatches=70; the 70 rows are the population); after the round census/round-42/c1-register.tsv accounts for every one of the 70 by the counter's derivation rules (65 resolve to one committed path, 5 do not), corpus/lessons/round-42.md carries one CORRECTION-DE line per unresolved item bound to the value the counter derives, SCORECARD.md keeps every base line byte-identical, and the instrument finds no mismatch on a line added this round.
+Do-nothing control: controls/c1-control.txt (no register: registered=0; a forged all-resolved register: class_ok=42).
+
+## C2 — operability (score 8)
+Base: bf618f6c5c09d302994871c94903abbea2deb60d
+Counter: census/round-42/c2-counter.py sha256=fa44392d11338daa73b3b4b9b2fc8f89879c099e9bf278d7b45fa55dea5d0ac1
+Population: census/round-42/c2-cases.tsv sha256=148b7b87411eb282e0207cf5471d55be81e03d4a26ffafd96df37b4db4fd4511
+Control: census/round-42/controls/c2-control.txt
+Target: SUMMARY cases=37 pass=37 fail=0 control_clean=REJECTED control_findings=REJECTED real=ok retro=red retro_clean=ok selftest=ok patches=3/3 over the landed lane tip
+Kill: any case fail, either built-in stub accepted, real not ok, retro not red, retro_clean not ok, selftest not ok, or fewer than 3 patches rejected
+Predicate: tools/souji-freeze-check.py reads a preregistration at a revision and, beyond the r41 grammar, reports KEY-DUPLICATE, HEADING-MALFORMED, COUNTER-SYMLINK/POPULATION-SYMLINK and the widened DISPATCH-BEFORE-FREEZE names exactly as the docstring of c2-counter.py defines them (16 new cases; 21 r41 cases retained); it reads this very file clean (claims=3 findings=0) and the r41 preregistration clean (claims=3 findings=0); and `--selftest` runs its own cases (SELFTEST cases>=12) and exits non-zero when the digest, freeze-detection or ancestry logic it exercises is patched at runtime.
+Do-nothing control: controls/c2-control.txt (the r41 tool: pass=24 of 37 and no selftest; the r41 tool plus an always-green --selftest: patches=0/3).
+Sourced: the patches leg injects its runtime patches through a `sitecustomize` module on PYTHONPATH; the knowledge it rests on is S259 (Python `site` documentation, opened 2026-10-28 by the L1).
+
+## C3 — coverage (score 8)
+Base: bf618f6c5c09d302994871c94903abbea2deb60d
+Counter: census/round-42/c3-counter.py sha256=bf0ebf4fef0cf0070daf2dd89184e83575bfabe4e4e82fa50511b3c6c8585d76
+Population: census/round-42/c3-mutants.tsv sha256=2f6f8df39ed6dd66cda22806012b68db9e12712e5572931286daed60a4bab205
+Control: census/round-42/controls/c3-control.txt
+Target: SUMMARY mutants=13 killed=13 survived=0 pristine=ok prior=8/8 old_killed=0 equiv=6 equiv_killed=0 anchors=ok (exit 0) over the landed lane tip
+Kill: fixture absent, pristine failure, any survivor, any population mutant killed by a prior fixture, any equivalent mutant killed, or an anchor/population mismatch
+Predicate: tests/fixtures/r42-drift-conditions.py kills each of the 13 single-defect condition-level mutants of tools/souji-worktree-drift.py in the population (B1 E2 E4 G2 G3 G4 G5 H1 H2 I1 J9 M1 D4), each of which survives all eight prior committed drift fixtures at the pinned tool, and kills none of the 6 behaviour-equivalent mutants (B3 B4 E5 E7 E9 H4), so it observes tool behaviour rather than bytes.
+Do-nothing control: controls/c3-control.txt (fixture absent: survived=13; an always-pass stub: survived=13; a byte-sniffing stub: equiv_killed=6).
+Note: the mutant survey run before this freeze found six mutants of the r41 wave-2 list (D3 F2 H3 J5 N1, and the spot-check's T2) killed by an older drift fixture; they are not in the population. F1, called equivalent by the r41 mutation tester, is killed by r36 and is in neither list.
+
+## R1 — residual repair of routed defect R41-D-LG-DANGLING (not a claim)
+Base: bf618f6c5c09d302994871c94903abbea2deb60d
+Counter: census/round-42/r1-counter.py sha256=f2dcbd06eecdb864e5ca215154aa82e564f7dbba586f617ad5543c0a811cc1bb
+Control: census/round-42/controls/r1-control.txt
+Target: SUMMARY findings=0 deleted=0 rows_added=3 stale=0 (exit 0)
+Kill: any finding, any deleted line, a row count other than 3, or a stale exemption
+Predicate: tools/souji-landing-gate.py --round 41 without --fleet-root reads the three r41 LG-DANGLING-PTR findings as three append-only corpus/pointer-exemptions.tsv rows.
+
+## Frontier step (not a claim)
+Census command (start and end): /home/vgpnk/Projects/shokunin/scripts/sources-census.sh validate --root /home/vgpnk/Projects/shokunin souji — start receipt census/round-42/records/census-before.txt (exit 0, rows=182, W04=52, committed at the instruments commit).
+Mistake to mine: the r41 N18 / spot-check disagreement about which landing-gate mode measured a pointer defect, and the SCORECARD's 70 unresolvable declared-evidence tokens accumulated r22-r41 because no round ran the r22 instrument at its tip.
+Sourced claim: C2 (S259, Python `site`).
+Assimilation: none planned; considerthese/ does not exist in this lane.
