@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+cd "/fast/scratch/hyaku/souji-r42/R42sentinel02/cwdprobe" || exit 2
+( PYTHONPATH="/fast/scratch/hyaku/souji-r42/R42sentinel02/callerpp" bash "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-42/score-candidate.sh" c2 "/fast/scratch/hyaku/souji-r42/R42sentinel02" "tools/souji-freeze-check.py=/fast/scratch/hyaku/souji-r42/R42sentinel02/cands/v0-honest.py" > "/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-42/w1/R42sentinel02/receipts/env-caller-pythonpath-v0.txt" 2>&1; echo "exit=$?" >> "/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-42/w1/R42sentinel02/receipts/env-caller-pythonpath-v0.txt" ) &
+( PATH="/fast/scratch/hyaku/souji-r42/R42sentinel02/shim:$PATH" bash "/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-42/score-candidate.sh" c2 "/fast/scratch/hyaku/souji-r42/R42sentinel02" "tools/souji-freeze-check.py=/fast/scratch/hyaku/souji-r42/R42sentinel02/cands/v0-honest.py" > "/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-42/w1/R42sentinel02/receipts/env-path-shim-v0.txt" 2>&1; echo "exit=$?" >> "/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-42/w1/R42sentinel02/receipts/env-path-shim-v0.txt" ) &
+wait
+echo ENV-DONE > "/fast/scratch/hyaku/souji-r42/R42sentinel02/receipts/env-done.txt"

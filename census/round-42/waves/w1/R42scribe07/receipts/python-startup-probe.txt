@@ -1,0 +1,27 @@
+# R42scribe07 receipt — which interpreter flags run an injected sitecustomize (Q105 leg)
+# Observed 2026-10-28 by R42scribe07 in scratch /fast/scratch/hyaku/souji-r42/R42scribe07/sc-probe (deleted after this receipt).
+# Interpreter: Python 3.14.8 (`python3 --version`).
+# Probe: sitecustomize.py containing one print line, PYTHONPATH set to its directory, then a child body printing `child-body`.
+
+$ PYTHONPATH=<dir> python3 -B -c 'print("child-body")'
+SITECUSTOMIZE-RAN child-body
+
+$ PYTHONPATH=<dir> python3 -B -I -c 'print("child-body")'
+child-body
+
+$ PYTHONPATH=<dir> python3 -B -S -c 'print("child-body")'
+child-body
+
+$ PYTHONPATH=<dir> python3 -B -E -c 'print("child-body")'
+child-body
+
+$ PYTHONPATH=<dir> python3 -B -s -c 'print("child-body")'
+SITECUSTOMIZE-RAN child-body
+
+# parent process started with PYTHONPATH, child started with -I (inherits the environment):
+$ PYTHONPATH=<dir> python3 -B -c 'import subprocess,sys; subprocess.run([sys.executable,"-I","-c","print(1)"])'
+SITECUSTOMIZE-RAN 1
+
+# Reading: -I (implies -E -s -P) and -E ignore PYTHONPATH, -S skips `site` (so no sitecustomize import at all);
+# the plain and -s forms import it. A child started with -I is unpatched although its parent was patched.
+# This is a probe of CPython startup, not of freeze-check; it says nothing about how the r42 tool's self-test spawns its children.

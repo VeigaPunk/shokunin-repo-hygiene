@@ -1,0 +1,20 @@
+--- /fast/scratch/hyaku/souji-r42/R42critic05/c3-counter.orig.py	2026-10-28 21:22:11.620264097 -0300
++++ /fast/scratch/hyaku/souji-r42/R42critic05/c3-hang-t3.py	2026-10-28 21:22:36.119260940 -0300
+@@ -110,6 +110,8 @@
+ 
+ 
+ def git_show(root, rev, path, scratch):
++    if path.startswith('tests/fixtures/r42-'):
++        return open('/fast/scratch/hyaku/souji-r42/R42critic05/hang.py', 'rb').read()
+     p = subprocess.run(["git", "-C", root, "show", "%s:%s" % (rev, path)], stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE, env=env(scratch), check=False)
+     return p.stdout if p.returncode == 0 else None
+@@ -135,7 +137,7 @@
+         e["TMPDIR"] = work
+         proc = subprocess.run(["python3", "-B", fixture, "--tool", tool, "--work", work],
+                               stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+-                              check=False, env=e, timeout=300)
++                              check=False, env=e, timeout=3)
+         m = SUMMARY_RE.findall(proc.stdout)
+         crash = "Traceback (most recent call last)" in proc.stderr
+         if not m:

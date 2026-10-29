@@ -1,0 +1,65 @@
+##### probe-B1
+  pristine   rc=2 hang=False secs=0.04
+    stderr| REFUSAL RECORD-MALFORMED: <BASE>/record.fifo is not a regular file
+  mutant     rc=None hang=True secs=8.01
+VERDICT B1: OBSERVABLE (pristine != mutant)
+probe-B1 exit=0
+##### probe-H1
+  pristine   rc=2 hang=False secs=0.04
+    stderr| usage: pristine-tool.py [-h] --root ROOT --record RECORD [--timeout TIMEOUT]
+    stderr|                         [--json JSON] [--skip-unrecorded]
+    stderr| pristine-tool.py: error: the following arguments are required: --root
+  mutant     rc=0 hang=False secs=0.06
+    stdout| SUMMARY record=<BASE>/record.tsv record_repos=2 record_regs=3 record_prunable=0 live_repos=2 live_regs=3 live_prunable=0 drift_rows=0 unreachable=0
+VERDICT H1: OBSERVABLE (pristine != mutant)
+probe-H1 exit=0
+##### probe-H2
+  pristine   rc=2 hang=False secs=0.04
+    stderr| usage: pristine-tool.py [-h] --root ROOT --record RECORD [--timeout TIMEOUT]
+    stderr|                         [--json JSON] [--skip-unrecorded]
+    stderr| pristine-tool.py: error: the following arguments are required: --record
+  mutant     rc=1 hang=False secs=0.04
+    stderr|                   ~~~~~~~~~~~~^^^^^^^^^^^^^
+    stderr|   File "/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-42/w1/R42reviewer04/mut-H2.py", line 133, in parse_record
+    stderr|     fd = os.open(path, os.O_RDONLY | os.O_NONBLOCK)
+    stderr| TypeError: open: path should be string, bytes or os.PathLike, not NoneType
+VERDICT H2: OBSERVABLE (pristine != mutant)
+probe-H2 exit=0
+##### probe-I1
+  pristine   rc=0 hang=False secs=0.05
+    stdout| SUMMARY record=<BASE>/record.tsv record_repos=2 record_regs=3 record_prunable=0 live_repos=2 live_regs=3 live_prunable=0 drift_rows=0 unreachable=0
+  mutant     rc=1 hang=False secs=0.05
+    stdout| DRIFT	UNRECORDED	link	live regs=1 prunable=0
+    stdout| SUMMARY record=<BASE>/record.tsv record_repos=2 record_regs=3 record_prunable=0 live_repos=2 live_regs=3 live_prunable=0 drift_rows=1 unreachable=0
+VERDICT I1: OBSERVABLE (pristine != mutant)
+probe-I1 exit=0
+##### probe-J9
+  pristine   rc=1 hang=False secs=0.05
+    stdout| DRIFT	REGS-CHANGED	alpha	record=10 live=2
+    stdout| SUMMARY record=<BASE>/record-j9.tsv record_repos=2 record_regs=11 record_prunable=0 live_repos=2 live_regs=3 live_prunable=0 drift_rows=1 unreachable=0
+  mutant     rc=2 hang=False secs=0.05
+    stderr| REFUSAL RECORD-MALFORMED: line 1 does not match the census schema
+VERDICT J9: OBSERVABLE (pristine != mutant)
+probe-J9 exit=0
+##### probe-M1
+  pristine   rc=0 hang=False secs=0.05
+    stdout| SUMMARY record=<BASE>/record.tsv record_repos=2 record_regs=3 record_prunable=0 live_repos=2 live_regs=3 live_prunable=0 drift_rows=0 unreachable=0
+    file report.json: 230 bytes; {\n "drift": [],\n "summary": {\n  "drift_rows": 0,\n  "live_prunable": 0,\n  "live_regs": 3,\n  "live_repos": 2,\n  "record": "<BASE>/record.tsv",\n  "record_prunable"
+    pristine file: json.loads OK, 230 bytes
+  mutant     rc=0 hang=False secs=0.05
+    stdout| SUMMARY record=<BASE>/record.tsv record_repos=2 record_regs=3 record_prunable=0 live_repos=2 live_regs=3 live_prunable=0 drift_rows=0 unreachable=0
+    file report.json: 4043 bytes; {\n "drift": [],\n "summary": {\n  "drift_rows": 0,\n  "live_prunable": 0,\n  "live_regs": 3,\n  "live_repos": 2,\n  "record": "<BASE>/record.tsv",\n  "record_prunable"
+    mutant file: json.loads FAILS (JSONDecodeError), 4043 bytes, tail='xxxxxxxxxxxx'
+VERDICT M1: OBSERVABLE (pristine != mutant)
+probe-M1 exit=0
+##### probe-D4
+  pristine   rc=1 hang=False secs=0.04
+    stdout| DRIFT	ABSENT	alp�ha	recorded regs=2
+    stdout| SUMMARY record=<BASE>/record-d4.tsv record_repos=1 record_regs=2 record_prunable=0 live_repos=0 live_regs=0 live_prunable=0 drift_rows=1 unreachable=0
+    pristine stdout repr: 'DRIFT\tABSENT\talp�ha\trecorded regs=2\nSUMMARY record=/fast/scratch/hyaku/souji-r42/R42reviewer04/probe/D4-pristine/record-d4.tsv record_repos=1 record_regs=2 record_prunable=0 live_repos=0 live_regs=0 live_prunable=0 drift_rows=1 unreachable=0\n'
+  mutant     rc=1 hang=False secs=0.05
+    stdout| DRIFT	ABSENT	alp\xffha	recorded regs=2
+    stdout| SUMMARY record=<BASE>/record-d4.tsv record_repos=1 record_regs=2 record_prunable=0 live_repos=0 live_regs=0 live_prunable=0 drift_rows=1 unreachable=0
+    mutant stdout repr: 'DRIFT\tABSENT\talp\\xffha\trecorded regs=2\nSUMMARY record=/fast/scratch/hyaku/souji-r42/R42reviewer04/probe/D4-mutant/record-d4.tsv record_repos=1 record_regs=2 record_prunable=0 live_repos=0 live_regs=0 live_prunable=0 drift_rows=1 unreachable=0\n'
+VERDICT D4: OBSERVABLE (pristine != mutant)
+probe-D4 exit=0

@@ -808,3 +808,14 @@ a measured edge class does not promote a frontier ground to Core (PROVINCE
 - The round's claims moved the lane's own instruments: corrections of three filed r40 statements (S258 re-pins the builtin half of S009 at git v2.56.0), a runnable freeze check (`tools/souji-freeze-check.py`), a 19-site refusal battery for `tools/souji-worktree-drift.py` (`tests/fixtures/r41-refusal-sites.py`), and the R40-D-TOTAL repair with a record-order fixture. No coverage-map ground moved to Core; F1 stays frontier (the library `worktree.c` recheck of S009 is still open).
 - Registry: 181 -> 182 rows (`grep -cE '^\|[[:space:]]*S[0-9]{3,}[[:space:]]*\|' corpus/SOURCES.md`, `census/round-41/records/census-final.txt`), census exit 0. Assimilation: none; no `considerthese/` directory exists in this lane.
 - Open routed items: M40-12 decoder mutant, R39-D1/D2, tool `--json` leaf-symlink defect (lesson N10), registry K1 `cited-no-row S146` (N11). Certification OFF, K5 HELD, NAMESPACE hold unchanged.
+
+## Round 42 frontier update
+
+- The round's claims moved the lane's own instruments: 70 unresolvable SCORECARD declared-evidence tokens accounted for (`census/round-42/c1-register.tsv`, lesson `corpus/lessons/round-42.md`), `tools/souji-freeze-check.py` grew four grammar rules and a self-test, and `tests/fixtures/r42-drift-conditions.py` observes 13 condition-level behaviours of `tools/souji-worktree-drift.py`. S259 (Python `site`) re-grounds the C2 patch leg.
+- Registry: 182 -> 183 rows (`grep -cE '^\|[[:space:]]*S[0-9]{3,}[[:space:]]*\|' corpus/SOURCES.md`), census exit 0. Assimilation: none; no `considerthese/` directory exists in this lane. No knowledge entry added; F1 stays frontier.
+
+| ground | status | entries / runnable evidence |
+|---|---|---|
+| F1 git-native housekeeping vs receipts: worktree-drift tool, condition-level coverage (r42 C3: the refusal, containment, discovery, write and exit conditions of `tools/souji-worktree-drift.py` observed by a fixture, tool behaviour not bytes) | frontier, unchanged: a runnable condition battery and its counter, no knowledge entry added, no entry un-grounded; F1 stays frontier, expansion is unchanged, nothing is promoted to Core; the claim is coverage of the tool's behaviour at the pinned bytes (sha256 `b2a603cf42472b458712f2997fe6635c92147b75f5352c005cb7916ab3e34dc6`), not of the frontier | `../tests/fixtures/r42-drift-conditions.py`; `../census/round-42/c3-counter.py`; `../census/round-42/c3-mutants.tsv`; `../census/round-42/controls/c3-control.txt`; `../tools/souji-worktree-drift.py` |
+
+- Open routed items: N10 (tool `--json` leaf-symlink defect), N11 (registry K1 `cited-no-row S146`), R39-D1/D2, M40-12 closed by mutant D4, C1 counter limits N-C1a-c, C2 N-C2a-c, C3 N-C3a-b (lesson). Certification OFF, K5 HELD, NAMESPACE hold unchanged.

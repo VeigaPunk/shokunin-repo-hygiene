@@ -25,6 +25,13 @@ C="$D/clone"
 [ "$(git -C "$C" rev-parse --show-toplevel)" = "$C" ] || { echo "score-candidate: clone root mismatch" >&2; exit 2; }
 for pair in "$@"; do
   dest="${pair%%=*}"; src="${pair#*=}"
+  # r42 sentinel finding N9a-c (R42sentinel01): dest is allowlisted; traversal, absolute paths, symlinked
+  # destinations and counter/population/control/preregistration paths are refused.
+  case "$dest" in
+    tools/souji-freeze-check.py|tests/fixtures/r42-drift-conditions.py|census/round-42/c1-register.tsv|corpus/lessons/round-42.md|SCORECARD.md|corpus/SOURCES.md|corpus/pointer-exemptions.tsv|corpus/README.md|corpus/knowledge/jj-colocation-receipts.md) ;;
+    *) echo "score-candidate: dest $dest is not on the allowlist" >&2; exit 2;;
+  esac
+  [ ! -L "$C/$dest" ] || { echo "score-candidate: dest $dest is a symlink in the clone" >&2; exit 2; }
   [ -f "$src" ] || { echo "score-candidate: $src is not a file" >&2; exit 2; }
   mkdir -p "$C/$(dirname "$dest")"
   cp "$src" "$C/$dest"
