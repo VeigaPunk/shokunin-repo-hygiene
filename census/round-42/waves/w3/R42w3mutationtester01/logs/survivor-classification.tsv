@@ -1,0 +1,42 @@
+W08	GAP	logs/probe-out.txt	FULL40 accepts \w: an upper-case Base hex resolves (pristine BASE-UNRESOLVED, mutant clean)
+W11	GAP	logs/probe2-out.txt	KEYLINE accepts only a space after the colon: a TAB after the colon makes the key line unread (pristine clean, mutant FIELD-MISSING x4)
+W12	GAP	logs/probe2-out.txt	PATH_SHA accepts a 32-hex digest: the Counter digest check runs on a truncated digest (pristine COUNTER-DIGEST "no sha256", mutant COUNTER-DIGEST with a hash comparison)
+W13	GAP	logs/probe-out.txt	ROUND's (\d*) accepts 'Round:' with no digits: the dispatch tree becomes '.ufo/waves/round-/' (pristine FIELD-MISSING Round, mutant clean)
+W14	EQUIVALENT	logs/probe2-out.txt	EXIT_LINE's \s*$ is redundant: the control lines are already stripped by the [x.strip() for x in ...] comprehension before the match
+W15	EQUIVALENT	logs/probe2-out.txt,logs/probe5-out.txt	KEYS order is unobservable: main() sorts the FINDING lines before printing them
+W16	EQUIVALENT	logs/probe-out.txt,logs/probe5-out.txt	GIT_CONFIG_SYSTEM is redundant: GIT_CONFIG_NOSYSTEM=1 is still in the whitelist, so the system config stays unread
+W17	EQUIVALENT	logs/probe2-out.txt,logs/probe5-out.txt	GIT_TERMINAL_PROMPT only affects interactive credential prompts; the tool runs no network command
+W18	EQUIVALENT	logs/probe2-out.txt,logs/probe4-out.txt,logs/probe5-out.txt	LC_ALL affects git's locale, not its object ids; a non-ASCII path is symlink-detected identically (probe4)
+W19	EQUIVALENT	logs/probe2-out.txt,logs/probe4-out.txt,logs/probe5-out.txt	core.quotePath=false only affects how git PRINTS a path; ls-tree's mode prefix (the only field the tool reads) is unchanged (probe4)
+W21	GAP	logs/probe-out.txt	env=None: the tool inherits the caller's environment, so a caller-set GIT_DIR redirects it to another repository (pristine rc=0, mutant rc=2 COULD-NOT-EVALUATE)
+W22	EQUIVALENT	logs/probe-out.txt,logs/probe5-out.txt	the tool reads git's stdout and returncode only; git's stderr is never parsed
+W26	EQUIVALENT	logs/probe2-out.txt,logs/probe3-out.txt,logs/probe5-out.txt	--full-tree only affects how git prints the path; the tool reads the 120000 mode prefix
+W28	GAP	logs/probe2-out.txt,logs/probe5-out.txt	the HEADING-MALFORMED line numbers shift by one (pristine line=11, mutant line=10)
+W29	GAP	logs/probe-out.txt	text.split("\n") keeps the CR of a CRLF file: five findings appear that the pristine does not raise
+W30	GAP	logs/probe2-out.txt	a '### ' sub-heading also closes the claim block, so the keys after it are lost (pristine 4 FIELD-MISSING, mutant 5)
+W32	GAP	logs/probe7-out.txt	--full-history dropped: git's history simplification prunes the side branch, so the freeze moves to a different commit (probe7: 2 'A' commits vs 1) and the digest verdict changes (pristine FROZEN-EDITED, mutant COUNTER-DIGEST)
+W33	EQUIVALENT	logs/probe2-out.txt,logs/probe4-out.txt,logs/probe6-out.txt,logs/probe7-out.txt	--no-renames dropped: for a single-FILE pathspec git does not detect the rename, so the freeze log is byte-identical (probe7: both 2 commits). The only case where it differs is a DIRECTORY pathspec (probe6: 2 commits vs 1), and the tool refuses a directory before freeze_rev runs (rc=2, probe6) -- an unreachable difference
+W35	GAP	logs/probe2-out.txt	every .json under the wave tree counts as a dispatch file (pristine clean, mutant DISPATCH-BEFORE-FREEZE)
+W36	EQUIVALENT	logs/probe2-out.txt,logs/probe5-out.txt	the 12-hex truncation is invisible: the finding detail already prints c[:12] and the ancestry test accepts an abbreviated id
+W37	GAP	logs/probe-out.txt	the PATH_SHA fallback yields an empty path: a Counter value with no sha256 is not checked at all (pristine COUNTER-DIGEST, mutant clean)
+W38	EQUIVALENT	logs/probe5-out.txt	the 'if not path' guard is unreachable: a Counter value of only spaces is already caught by KEYLINE's strip as an empty value
+W40	GAP	logs/probe4-out.txt	an EMPTY blob at the freeze counts as missing (pristine clean, mutant COUNTER-MISSING)
+W41	GAP	logs/probe-out.txt	the symlink test runs at REV, not at FREEZE (pristine COUNTER-SYMLINK, mutant COUNTER-DIGEST + FROZEN-EDITED)
+W45	EQUIVALENT	logs/probe5-out.txt	the CRLF normalisation is redundant: splitlines() already splits on \r\n and KEYLINE's trailing [ \t]*$ strips the \r
+W46	GAP	logs/probe-out.txt	only the FIRST malformed heading is reported (pristine line=11 and line=12, mutant line=11)
+W49	EQUIVALENT	logs/probe2-out.txt,logs/probe5-out.txt	the duplicated keys' order is unobservable: main() sorts the FINDING lines before printing them
+W53	EQUIVALENT	logs/probe-out.txt,logs/probe3-out.txt,logs/probe5-out.txt	Refusal as BaseException: the tool catches `except Refusal` explicitly, so the base class does not matter
+W54	EQUIVALENT	logs/probe-out.txt,logs/probe3-out.txt,logs/probe5-out.txt	--root with a '/.' suffix: git -C accepts it and the tool never prints the root path in a finding
+W55	EQUIVALENT	logs/probe5-out.txt,logs/probe6-out.txt	PATH hardcoded to /usr/bin:/bin: on this host git IS at /usr/bin/git, so both tools find it (probe6 with git only in a non-standard directory: both agree)
+W56	EQUIVALENT	logs/probe-out.txt,logs/probe3-out.txt,logs/probe5-out.txt	rev-parse without -q: -q only suppresses git's error text on stderr; stdout and the return code are the same
+W57	GAP	logs/probe4-out.txt,logs/probe6-out.txt	ls-tree without the '--' separator: a path that starts with '-' is taken as an option (pristine COUNTER-SYMLINK, mutant COUNTER-DIGEST)
+W58	EQUIVALENT	logs/probe-out.txt,logs/probe3-out.txt,logs/probe5-out.txt	HEADER.search: the pattern is anchored with ^, so search and match agree on a line
+W59	EQUIVALENT	logs/probe2-out.txt,logs/probe5-out.txt	BADHEAD.search: the pattern is anchored with ^, so search and match agree on a line
+W62	EQUIVALENT	logs/probe-out.txt,logs/probe3-out.txt,logs/probe5-out.txt	the freeze ids are not filtered by FULL40: git log --format=%H prints full 40-hex ids only
+W63	EQUIVALENT	logs/probe2-out.txt,logs/probe5-out.txt	the dispatch log split on '\n' rather than splitlines(): git's --name-only output has no other line terminator
+W64	EQUIVALENT	logs/probe2-out.txt,logs/probe5-out.txt	a name line before any commit header: git always prints the %x01%H header before the names of that commit
+W66	EQUIVALENT	logs/probe-out.txt,logs/probe3-out.txt,logs/probe5-out.txt	PATH_SHA.match(value.strip()): the value comes from KEYLINE, which already stripped it
+W67	EQUIVALENT	logs/probe2-out.txt,logs/probe3-out.txt,logs/probe5-out.txt	the missing-class name is upper-cased: "COUNTER-MISSING" and "POPULATION-MISSING" are already upper case
+W68	EQUIVALENT	logs/probe-out.txt,logs/probe3-out.txt,logs/probe5-out.txt	want.lower(): PATH_SHA's group is [0-9a-f]{64}, already lower case
+W70	GAP	logs/probe2-out.txt	the NO-CLAIMS detail text changes (the class is unchanged, but the printed finding differs)
+W71	GAP	logs/probe2-out.txt,logs/probe5-out.txt	the duplicated key is reported in upper case (KEY-DUPLICATE TARGET instead of KEY-DUPLICATE Target)
