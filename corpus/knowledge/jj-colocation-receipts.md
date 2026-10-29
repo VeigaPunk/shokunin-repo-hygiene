@@ -145,7 +145,7 @@ A jj-colocated repository (`.jj/` and `.git/` at one root) is jj's default for `
 - **S062** — `fifo(7)` / `open(2)`. Not cited by any claim in this entry.
 - **S063** — git-gc — `Documentation/git-gc.adoc@v2.56.0` (`:18` unreachable removal; `:81-83` `--prune` default two weeks). Used in §10.
 
-Lane reports (cited inline by file and line, not S-rows): JjAuditSouji.md (byte-exact lane copy `census/round-42/jj-w1-reports/`; original in the fleet repo at fleet path `.ufo/waves/hyaku/jj-w1/reports/`, fleet commit f47ad6ba8d30), JjTrialSouji.md (same), fixture outputs `census/round-17/jj-receipts-{base5fa6017,4f48343}.txt`.
+Lane reports (cited inline by file and line, not S-rows): JjAuditSouji.md (byte-exact lane copy `census/round-42/jj-w1-reports/`; original in the fleet repo, hyaku jj-w1 reports directory, fleet commit f47ad6ba8d30), JjTrialSouji.md (same), fixture outputs `census/round-17/jj-receipts-{base5fa6017,4f48343}.txt`.
 
 ## Admission status
 
