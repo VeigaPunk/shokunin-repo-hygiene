@@ -1,0 +1,21 @@
+# r43 C3 population - the non-equivalent condition-level survivors of all nine committed drift
+# fixtures (source: census/round-42/waves/w2/R42w2critic04.md section 4, Named coverage limits,
+# measured against tools/souji-worktree-drift.py sha256 b2a603cf42472b458712f2997fe6635c92147b75f5352c005cb7916ab3e34dc6).
+# 16 deterministic mutants; S42 is race-only and is a NAMED LIMIT, not a population row. Columns:
+# id TAB old_sha256 TAB new_sha256 TAB probe TAB description
+S03	ef3afca2d5b62512f72f8eaf3b02e179cdce88a2d07025a024d1a0e0e30c75ef	6fb59503613c686ee38e383cfdadd2fe0843f842afb6a03978542c78e89631c8	big-3000	record read stops after the first 64 KiB chunk (rows beyond it are lost)
+S11	46fb33c9ee47d87d8ed047be024b3cb830952224b2632a02778125fcd998ee3a	016ae3828e6b2a44163e7fc0d16c112f40cd5559f87282c1041df1d53e4259b7	total-junk	TOTAL regex loses its end anchor (trailing junk accepted)
+S12	005dd1d6d843e81e7f0b37313c7a7e9b626712d3d2c1b8280f6580ed454bed05	d2af51c5a5115224c60b6ea5eb02b479e8cc1dab3d6731a41d99e350759b9429	space-name	REPO name excludes spaces (a repo dir with a space becomes MALFORMED)
+S13	2d3a782e2cce08bdd9ff9857be07cad4e9a283ebacd4f1c33b43cb6559f51658	f923da5af9d68742ff835d9685bb629c5d510486a7a6cda573e5b842a536326d	empty-regs	REPO regs accepts an empty field (regs= parses as empty)
+S17	ee4f373d51f368b54387f0106a61a7c7f79669d03afc4249f2f04164a828b31b	dc762ebf0d2c8be851332ea354aa7c7f4e750b079cabf11868da2553d2868ae8	total-prunable-small	TOTAL prunable compared one-sidedly (> instead of !=)
+S22	c34839a79f664f4911dd406ee4b6252f54a317518a91f4ae4bd5efd124eeb4e8	f9692fe9f7adc28f7a5508a0a13181d66cf687305b8bf76b08bd1d1e095cef3a	root-not-repo-named	root-as-repo match skips the root .git test
+S25	5a2fd10427a49ac341efd229e3e5fe8e41b7444cb6c384ecfa19ba2e1f0fd120	77671a70cedbd5f497c38b9e09235a862e4cf593ee69210868f3987177292889	root-unreadable	unreadable root raises instead of returning no names
+S33	983c1a5a30855a3603f22b72ebf7a2806119057d411cfa4bb9685e756e6e96f9	6e4cc9bf7c45938ce08c2d00f589966e76266dbbd51f7a55296d17ac5b764f38	root-symlink	root_real not realpath-resolved (a symlinked --root refuses)
+S34	2da9fbd172ece9389252e9c5dd7155077366e9b06151e0273686b802c978da7b	a4c069cfb7e8b500d24f00e153614cabc7e5ece92099e57067ebe46c9ffe1b77	rel-root-named	--root not abspath-resolved (relative --root mis-scopes)
+S35	f8ae44d079ccf27f60feb1c4e19e47d3405561a0a5dd9c5b5782b60b6866069a	44a07334db3497c2fcd4aef35bfee4759d7e8064425da4bc39c94a8ff4035c1d	timeout-fifo-head	gitdir probe ignores --timeout (fixed 20 s)
+S43	826f0c801296df8ed956d3b601a6317b9a419854d8ec63c69d702c365a0b3e39	174b2a95668fffafabedb10dc244adbddf4b6a3e24e632ed512f130c12615afd	regs-up	REGS-CHANGED one-sided (< instead of !=; a rising count is silent)
+S44	5e09cc7689b0019eca8c222933f41fd9a3945a19278f8c735f308e012300431a	c4aa658f5c5f79d552802222020e24f866b15f834b2416adb3c3195372304eb4	prunable-down	PRUNABLE-CHANGED one-sided (> instead of !=; a falling count is silent)
+S53	eff01efedbeb5ad3579f1af47da9c0a011843ad7eea21272f8bf07bfcd7fd1af	57cc4043c6329920418facd5ad8358a78035f9ce61de5e93b4d193c8babaec0a	json-sibling-prefix	--json containment uses commonprefix (sibling sharing a prefix is inside)
+S58	fbb9cc20ff32675786651dfb20a558f2559c0bfe3aa63102ec6f321a0b6aeef1	5e5deb1666186db58ede3b13b88cd58d049eced410f9c920bee79bdd41a164b0	json-mode	--json created mode 0600 instead of 0644
+S63	04a3508ccc937b3ba148a3d5edab656aa528bc8b6c16ca00a2b4c79894aa551e	f18f0106253e2bdd5cc980fd67d9e0f19aba6b22625f1b01020927b9a377238d	json-empty	--json '' treated as set (empty string tries to write the cwd)
+S73	eba57ecfc45dcd5d33af27a078e6598e6777243bf9864dac15ab4d1638614980	4f5a4eec9dc19428b2be102d0255d89c3d63282fdf1e0c8ab61f23da21147c7f	timeout-float	--timeout parsed as float (1.5 accepted, argparse refusal gone)
