@@ -1,0 +1,44 @@
+
+=== A1: repo-local .git/config -> gpg.program code execution ===
+  tool rc=1 time=0.11s
+  tool stdout: FINDING C1 FIELD-MISSING Base | FINDING C1 FIELD-MISSING Control | FINDING C1 FIELD-MISSING Counter | FINDING C1 FIELD-MISSING Kill | FINDING C1 FIELD-MISSING Population | FINDING C1 FIELD-MISSING Target | SUMMARY claims=1 findings=6
+  repo-controlled program executed: True
+  marker: EXEC gpg --keyid-format=long --status-fd=1 --verify /tmp/.git_vtag_tmpNc7Ayv -
+
+=== A2: isolate which tool git invocation triggers the exec ===
+  rev-parse      rc=0 executed=False
+  cat-file       rc=0 executed=False
+  ls-tree        rc=0 executed=False
+  merge-base     rc=0 executed=False
+  log-freeze     rc=0 executed=True
+  log-dispatch   rc=0 executed=False
+
+=== B: hostile .git/config surface, full sweep ===
+  tool rc=1 time=0.33s stdout=FINDING C1 FIELD-MISSING Base | FINDING C1 FIELD-MISSING Control | FINDING C1 FIELD-MISSING Counter | FINDING C1 FIELD-MISSING Kill | FINDING C1 FIELD-MISSING Population | FINDING C1 FIELD-MISSING Target | SUMMARY claims=1 findings=6
+  any repo-controlled program executed: False
+  note: Repo.env sets GIT_CONFIG_GLOBAL/SYSTEM to devnull and NOSYSTEM=1,
+        but repository-local .git/config is always read by git.
+
+=== C1: --rev hostile forms ===
+  --rev 'HEAD'                                        rc=2 stderr=REFUSAL COULD-NOT-EVALUATE: --rev must be a full 40-hex commit id
+  --rev 'HEAD~1'                                      rc=2 stderr=REFUSAL COULD-NOT-EVALUATE: --rev must be a full 40-hex commit id
+  --rev 'main'                                        rc=2 stderr=REFUSAL COULD-NOT-EVALUATE: --rev must be a full 40-hex commit id
+  --rev 'refs/heads/main'                             rc=2 stderr=REFUSAL COULD-NOT-EVALUATE: --rev must be a full 40-hex commit id
+  --rev '--help'                                      rc=2 stderr=souji-freeze-check.py: error: argument --rev: expected one argument
+  --rev '-p'                                          rc=2 stderr=souji-freeze-check.py: error: argument --rev: expected one argument
+  --rev '--root'                                      rc=2 stderr=souji-freeze-check.py: error: argument --rev: expected one argument
+  --rev '3105a63b23481fccf7df58e74d14a6681e0ea0c8'    rc=2 stderr=REFUSAL COULD-NOT-EVALUATE: --rev 3105a63b23481fccf7df58e74d14a6681e0ea0c8 does not resolv
+  --rev '0000000000000000000000000000000000000000'    rc=2 stderr=REFUSAL COULD-NOT-EVALUATE: --rev 0000000000000000000000000000000000000000 does not resolv
+  --rev 'not-a-rev'                                   rc=2 stderr=REFUSAL COULD-NOT-EVALUATE: --rev must be a full 40-hex commit id
+  --rev '--prereg=/etc/passwd'                        rc=2 stderr=souji-freeze-check.py: error: argument --rev: expected one argument
+  --rev '-x'                                          rc=2 stderr=souji-freeze-check.py: error: argument --rev: expected one argument
+  --rev '--root=/tmp'                                 rc=2 stderr=souji-freeze-check.py: error: argument --rev: expected one argument
+
+=== C2: --root hostile forms ===
+  --root symlink-to-repo    rc=1 out=FINDING C1 FIELD-MISSING Base | FINDING C1 FIELD-MISSING Control | FINDING C1 FIELD-MISSING Counter | FINDING  err=
+  --root bare-repo          rc=1 out=FINDING C1 FIELD-MISSING Base | FINDING C1 FIELD-MISSING Control | FINDING C1 FIELD-MISSING Counter | FINDING  err=
+  --root linked-worktree    rc=1 out=FINDING C1 FIELD-MISSING Base | FINDING C1 FIELD-MISSING Control | FINDING C1 FIELD-MISSING Counter | FINDING  err=
+  --root subdir-of-repo     rc=2 out= err=REFUSAL COULD-NOT-EVALUATE: no commit reachable from 16aefaf2f7704c30d7dca6b8e1ce517cc8284511 adds pre.txt
+  --root plain-file         rc=2 out= err=REFUSAL COULD-NOT-EVALUATE: --root /fast/scratch/hyaku/souji-r42/R42w2sentinel01/atk/c_root_file is not a dire
+  --root nonexistent        rc=2 out= err=REFUSAL COULD-NOT-EVALUATE: --root /fast/scratch/hyaku/souji-r42/R42w2sentinel01/atk/c_root_none is not a dire
+  --root /tmp               rc=2 out= err=REFUSAL COULD-NOT-EVALUATE: --rev 16aefaf2f7704c30d7dca6b8e1ce517cc8284511 does not resolve to a commit in /tm

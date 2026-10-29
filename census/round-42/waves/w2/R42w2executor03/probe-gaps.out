@@ -1,0 +1,28 @@
+== population variants (control red, counter ok)
+zero bytes                   exit=1 ['C1 POPULATION-EMPTY census/p.tsv has 0 non-blank line(s)']
+only newline                 exit=1 ['C1 POPULATION-EMPTY census/p.tsv has 0 non-blank line(s)']
+header only                  exit=1 ['C1 POPULATION-EMPTY census/p.tsv has 1 non-blank line(s)']
+header + blank lines         exit=1 ['C1 POPULATION-EMPTY census/p.tsv has 1 non-blank line(s)']
+header + 1 row               exit=0 (clean)
+header + blank + 1 row       exit=0 (clean)
+1 row CRLF + header          exit=0 (clean)
+no trailing newline 2 rows   exit=0 (clean)
+== control variants (population ok)
+EXIT=1                       exit=0 (clean)
+EXIT=1 no newline            exit=0 (clean)
+EXIT=1 + blank lines         exit=0 (clean)
+EXIT=0                       exit=1 ["C1 CONTROL-NOT-RED census/k.txt last line 'EXIT=0' is not EXIT=<nonzero>"]
+no EXIT line                 exit=1 ["C1 CONTROL-NOT-RED census/k.txt last line 'SUMMARY x' is not EXIT=<nonzero>"]
+EXIT=1 then prose            exit=1 ["C1 CONTROL-NOT-RED census/k.txt last line 'note' is not EXIT=<nonzero>"]
+EXIT=0 then EXIT=1           exit=0 (clean)
+EXIT=1 then EXIT=0           exit=1 ["C1 CONTROL-NOT-RED census/k.txt last line 'EXIT=0' is not EXIT=<nonzero>"]
+EXIT=1 CRLF                  exit=0 (clean)
+EXIT=01                      exit=0 (clean)
+EXIT=-1                      exit=1 ["C1 CONTROL-NOT-RED census/k.txt last line 'EXIT=-1' is not EXIT=<nonzero>"]
+leading space ' EXIT=1'      exit=0 (clean)
+EXIT=1 trailing space        exit=0 (clean)
+exit=1 lowercase             exit=1 ["C1 CONTROL-NOT-RED census/k.txt last line 'exit=1' is not EXIT=<nonzero>"]
+empty file                   exit=1 ["C1 CONTROL-NOT-RED census/k.txt last line '' is not EXIT=<nonzero>"]
+== control edited AFTER freeze (frozen rule: Control must not change)
+red -> green                 exit=0 (clean)
+red -> different red         exit=0 (clean)

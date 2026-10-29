@@ -1,0 +1,18 @@
+--- landed/souji-freeze-check.py
++++ cand-T4-popen-honest.py
+@@ -65,11 +65,13 @@
+                     "GIT_NO_REPLACE_OBJECTS": "1"}
+ 
+     def run(self, *args):
++        argv = ["git", "-c", "core.quotePath=false", "-c", "log.mailmap=false", "-C", self.root] + list(args)
+         try:
+-            return subprocess.run(["git", "-c", "core.quotePath=false", "-c", "log.mailmap=false", "-C", self.root] + list(args), stdout=subprocess.PIPE,
+-                                  stderr=subprocess.PIPE, env=self.env, check=False)
++            proc = subprocess.Popen(argv, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=self.env)
+         except OSError as exc:
+             raise Refusal("cannot run git: %s" % exc)
++        out, err = proc.communicate()
++        return subprocess.CompletedProcess(argv, proc.returncode, out, err)
+ 
+     def commit(self, rev):
+         """Full commit id for rev, or None."""

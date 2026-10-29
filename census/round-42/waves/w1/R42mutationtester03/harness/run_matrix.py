@@ -13,6 +13,7 @@ import shutil
 import subprocess
 import sys
 import threading
+import tempfile
 
 SEAT = "/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-42/w1/R42mutationtester03"
 SCRATCH = "/fast/scratch/hyaku/souji-r42/R42mutationtester03"
@@ -21,8 +22,7 @@ LOCK = threading.Lock()
 
 
 def one(mid, name, inp, env_tmp, tag):
-    scratch = os.path.join(SCRATCH, "work", "%s__%s__%s" % (mid, name, tag))
-    os.makedirs(scratch, exist_ok=True)
+    scratch = tempfile.mkdtemp(prefix="%s-%s-" % (mid, tag), dir=os.path.join(SCRATCH, "work"))
     env = {"PATH": os.environ.get("PATH", "/usr/bin:/bin"), "LC_ALL": "C", "TMPDIR": env_tmp}
     cmd = ["python3", "-B", os.path.join(SCRATCH, "mutants", mid + ".py"), "--root", inp["clone"],
            "--rev", inp["rev"], "--scratch", scratch]

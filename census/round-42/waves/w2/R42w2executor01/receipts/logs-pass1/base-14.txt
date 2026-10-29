@@ -1,0 +1,55 @@
+$ cd /fast/scratch/hyaku/souji-r42/R42w2executor01/base && TMPDIR=/fast/scratch/hyaku/souji-r42/R42w2executor01/tmp/base-14 bash tests/fixtures/r17-jj-receipts.sh --tool-dir tools
+# rc=0 wall=11.4s
+TOOL-DIR	/fast/scratch/hyaku/souji-r42/R42w2executor01/base/tools
+GIT	git version 2.56.0
+JJ	/home/vgpnk/.local/bin/jj	jj 0.45.1-7c41cdeb16b6b321c64e789a966b6adf723816a5
+TOOL	/fast/scratch/hyaku/souji-r42/R42w2executor01/base/tools/souji-verify.sh	sha256=f88fed23e2c80fdfea13775659f2dfc157f33a5540772059c7e3ab5dd6c7ff1c
+TOOL	/fast/scratch/hyaku/souji-r42/R42w2executor01/base/tools/souji-vault-verify.sh	sha256=5cb0fb13fc9b0fc306e3841e5857f028610f1698bee8e8cf69d51575ae2810bb
+TOOL	/fast/scratch/hyaku/souji-r42/R42w2executor01/base/tools/souji-quarantine.sh	sha256=e2f2d083d679f1da165866c6190af1a948c43e080d7ae629e5b08a7199849e4d
+SCENARIO	seed	tip=f534de247af4	meta_v1=626799f0	meta_v2=8c1384d8
+SCENARIO	plain	unref=151d427928ec	wts=absent
+CASE	J6-verify	SKIP	no --baseline-dir with souji-verify.sh
+CASE	J6-vault	SKIP	baseline/selected souji-vault-verify.sh missing
+CASE	J8-verify	PASS	targets=f.txt,wt-plain identical=yes
+CASE	J8-vault	PASS	targets=f.txt,wt-plain identical=yes
+CASE	J7	PASS	exit=0 verdict=SAFE receipt=metadata-prune evidence=dir=absent unique=0 head=c9bb8eb4290b owner=plainrepo durable-refs-only=yes
+SCENARIO	keeprepo	keep_head=663f5cb2	keep_novel=857eba1f	keep_meta=7c3867cb	keep_del=95d1b2da	wts=absent
+CASE	J1	PASS	exit=0 verdict=NOT-SAFE receipt=none evidence=dir=absent unique=1 head=663f5cb254fb owner=keeprepo durable-refs-only=yes
+CASE	J1-vault	PASS	exit=0 verdict=NOT-SAFE receipt=none r4=NOT-VERIFIED(none)
+CASE	J2	PASS	exit=0 verdict=SAFE receipt=metadata-prune evidence=dir=absent unique=0 head=663f5cb254fb owner=keeprepo durable-refs-only=yes
+CASE	J2-vault	PASS	exit=0 verdict=SAFE receipt=metadata-prune r4=VERIFIED(metadata-prune)
+CASE	J3	PASS	exit=0 verdict=NOT-SAFE receipt=none evidence=pushed=unpushed-commits-touching intro=541c2366d92d jj-keep-novel; obsidian=no-matching-ledger-row; stale=not-scratch-type
+CASE	J3-vault	PASS	exit=0 verdict=NOT-SAFE receipt=none r4=NOT-VERIFIED(none)
+CASE	J3-quarantine	PASS	exit=3 result=DRY-RUN-BLOCKED receipt=none evidence=stage1=NOT-SAFE(none)
+CASE	J4	PASS	exit=0 verdict=SAFE receipt=pushed evidence=intro=541c2366d92d ref=refs/remotes/origin/main ancestor=yes snapshot=equal clean=yes
+CASE	J4-vault	PASS	exit=0 verdict=SAFE receipt=pushed r4=VERIFIED(pushed)
+CASE	J4-quarantine	PASS	exit=0 result=DRY-RUN-PASS receipt=pushed evidence=stage1=intro=541c2366d92d ref=refs/remotes/origin/main ancestor=yes snapshot=equal clean=yes
+CASE	J5	PASS	exit=0 verdict=SAFE receipt=pushed evidence=intro=541c2366d92d ref=refs/remotes/origin/main ancestor=yes snapshot=equal clean=yes
+CASE	J5-vault	PASS	exit=0 verdict=SAFE receipt=pushed r4=VERIFIED(pushed)
+CASE	J5-quarantine	PASS	exit=0 result=DRY-RUN-PASS receipt=pushed evidence=stage1=intro=541c2366d92d ref=refs/remotes/origin/main ancestor=yes snapshot=equal clean=yes
+CASE	J9-file	PASS	jj=jj keep=d8d7726c verdict=NOT-SAFE receipt=none
+CASE	J9-worktree	PASS	jj=jj keep=d8d7726c verdict=NOT-SAFE receipt=none evidence=dir=absent unique=1 head=d8d7726cf5ab owner=jjrepo durable-refs-only=yes
+SCENARIO	keeprepo-dirs	keep_dirid=0122d19b	keep_dirswap=c0dbc2bd
+CASE	J10-verify	PASS	exit=0 verdict=SAFE receipt=pushed evidence=intro=541c2366d92d ref=refs/remotes/origin/main ancestor=yes snapshot=equal clean=yes
+CASE	J10-vault	PASS	exit=0 verdict=SAFE receipt=pushed r4=VERIFIED(pushed) evidence=intro=541c2366d92d ref=refs/remotes/origin/main ancestor=yes snapshot=equal clean=yes cli=unavailable
+CASE	J10-quarantine	PASS	exit=0 result=DRY-RUN-PASS receipt=pushed evidence=stage1=intro=541c2366d92d ref=refs/remotes/origin/main ancestor=yes snapshot=equal clean=yes
+SCENARIO	keeprepo-dirnovel	keep=58afa2be
+CASE	J11-verify	PASS	exit=0 verdict=NOT-SAFE receipt=none evidence=pushed=unpushed-commits-touching intro=541c2366d92d jj-keep-novel; obsidian=no-matching-ledger-row; stale=not-scratch-type
+CASE	J11-vault	PASS	exit=0 verdict=NOT-SAFE receipt=none r4=NOT-VERIFIED(none) evidence=pushed=unpushed-commits-touching intro=541c2366d92d jj-keep-novel; stale=not-scratch-type cli=unavailable
+CASE	J11-quarantine	PASS	exit=3 result=DRY-RUN-BLOCKED receipt=none evidence=stage1=NOT-SAFE(none)
+SCENARIO	brokenrepo	keep_missing=ffffffff
+CASE	J12-verify	PASS	exit=0 verdict=NOT-SAFE receipt=none evidence=pushed=history-unverifiable; obsidian=no-matching-ledger-row; stale=not-scratch-type
+CASE	J12-vault	PASS	exit=0 verdict=NOT-SAFE receipt=none r4=NOT-VERIFIED(none) evidence=pushed=history-unverifiable; stale=not-scratch-type cli=unavailable
+CASE	J12-quarantine	PASS	exit=3 result=DRY-RUN-BLOCKED receipt=none evidence=stage1=NOT-SAFE(none)
+SCENARIO	noncommitrepo	tree=055df04f	blob=626799f0
+CASE	J13-verify	PASS	exit=0 verdict=SAFE receipt=pushed evidence=intro=541c2366d92d ref=refs/remotes/origin/main ancestor=yes snapshot=equal clean=yes
+CASE	J13-vault	PASS	exit=0 verdict=SAFE receipt=pushed r4=VERIFIED(pushed) evidence=intro=541c2366d92d ref=refs/remotes/origin/main ancestor=yes snapshot=equal clean=yes cli=unavailable
+CASE	J13	PASS	mode=jj-0.45.1 exit=0 result=DRY-RUN-PASS recipe=jj-lane.sh commit /var/tmp/r17-jj-receipts.RCDnyG/fleet/kama-shokunin --as kama -m souji-quarantine:\ stage\ f.txt\ into\ quarantine -- f.txt .ufo-quarantine/2026-10-29/f.txt   # jj owns the index; commit the move through the lane helper naming BOT...
+CASE	J13-own	PASS	mode=jj-0.45.1 exit=0 result=DRY-RUN-PASS recipe=jj-lane.sh commit /var/tmp/r17-jj-receipts.RCDnyG/fleet/souji-shokunin --as souji -m souji-quarantine:\ stage\ f.txt\ into\ quarantine -- f.txt .ufo-quarantine/2026-10-29/f.txt   # jj owns the index; commit the move through the lane helper naming B...
+SCENARIO	bigrepo	known=3600	keep=7515501c	blob=81fa0ec9
+CASE	J14-verify	PASS	exit=0 verdict=SAFE receipt=pushed evidence=intro=9b6e6a706957 ref=refs/remotes/origin/main ancestor=yes snapshot=equal clean=yes
+CASE	J14-vault	PASS	exit=0 verdict=SAFE receipt=pushed r4=VERIFIED(pushed) evidence=intro=9b6e6a706957 ref=refs/remotes/origin/main ancestor=yes snapshot=equal clean=yes cli=unavailable
+SCENARIO	keeprepo-side	fork=a95c95b1	keep=ab52aac3	blob=e2b16378
+CASE	J15-verify	PASS	exit=0 verdict=SAFE receipt=pushed evidence=intro=541c2366d92d ref=refs/remotes/origin/main ancestor=yes snapshot=equal clean=yes
+CASE	J15-vault	PASS	exit=0 verdict=SAFE receipt=pushed r4=VERIFIED(pushed) evidence=intro=541c2366d92d ref=refs/remotes/origin/main ancestor=yes snapshot=equal clean=yes cli=unavailable
+SUMMARY	total=35	failed=0	skipped=2

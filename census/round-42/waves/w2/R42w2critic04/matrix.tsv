@@ -1,0 +1,78 @@
+mutant	landed	prior_killers	landed_fails	timeouts	crashes	description
+S01	survived	r38-drift-record,r41-refusal-sites	-	0	0	record ENOENT class inverted (missing record reported as RECORD-MISSING)
+S02	KILLED	r41-refusal-sites	case-fifo-record-is-refused-not-blocked	0	0	regular-file guard on the record removed (fstat check dead)
+S03	survived	-	-	0	0	record read stops after the first 64 KiB chunk
+S04	survived	r38-drift-record,r39-drift-record-rules,r40-drift-record-branches,r41-refusal-sites	-	0	0	comment lines (leading #) no longer skipped
+S05	survived	r38-drift-record,r41-refusal-sites	-	0	0	blank lines no longer skipped
+S06	survived	r39-drift-record-rules	-	0	0	record split on newline only (CR kept on each line)
+S07	survived	r38-drift-record,r41-refusal-sites	-	0	0	duplicate REPO name check removed
+S08	survived	r36-worktree-drift,r38-drift-record,r39-drift-record-rules,r41-refusal-sites	-	0	0	RECORD-EMPTY check removed (zero REPO rows accepted)
+S09	survived	r36-worktree-drift,r38-drift-record,r39-drift-record-rules,r41-refusal-sites	-	0	0	non-schema record line skipped instead of refused
+S10	survived	r39-drift-record-rules	-	0	0	REPO row regex: end anchor removed (trailing junk accepted)
+S11	survived	-	-	0	0	TOTAL regex: end anchor removed (trailing junk accepted)
+S12	survived	-	-	0	0	REPO name excludes spaces (names with a space refused as malformed)
+S13	survived	-	-	0	0	REPO regs accepts an empty field (int of empty string)
+S14	survived	r36-worktree-drift,r38-drift-record,r40-drift-record-branches,r41-drift-record-order,r41-refusal-sites	-	0	0	TOTAL rows collected but never checked
+S15	survived	r40-drift-record-branches,r41-drift-record-order	-	0	0	TOTAL repos compared with > (a TOTAL smaller than the row count accepted)
+S16	survived	r38-drift-record,r41-drift-record-order,r41-refusal-sites	-	0	0	TOTAL regs compared with < (a TOTAL larger than the row sum accepted)
+S17	survived	-	-	0	0	TOTAL prunable compared with > (a TOTAL smaller than the row sum accepted)
+S18	survived	-	-	0	0	parse_record returns None for the TOTAL (run never reads it)
+S19	survived	-	-	0	0	record read chunk size 1 byte (performance only)
+S20	survived	r36-worktree-drift,r37-drift-discrimination	-	0	0	repo_path ignores .git files (linked worktrees)
+S21	survived	r41-drift-record-order	-	0	0	repo_path root-name match inverted
+S22	survived	-	-	0	0	repo_path root-name match skips the root .git test
+S23	survived	r36-worktree-drift,r37-drift-discrimination	-	0	0	discovery: .git files not discovered (linked worktrees invisible to UNRECORDED)
+S24	survived	r41-drift-record-order	-	0	0	discovery: the root itself is never reported as a repository
+S25	survived	-	-	0	0	discovery: unreadable root raises instead of returning no names
+S26	survived	r36-worktree-drift,r37-drift-discrimination,r38-drift-record,r38-drift-write-envelope,r39-drift-record-rules,r41-drift-record-order	-	0	0	discovery: recorded repositories also reported UNRECORDED
+S27	KILLED	r36-worktree-drift,r37-drift-discrimination,r40-drift-record-branches,r41-drift-record-order	case-invalid-utf8-in-record-becomes-replacement-char,case-symlinked-child-is-not-discovered	0	0	skip-unrecorded flag inverted (discovery skipped by default)
+S28	survived	-	-	0	0	discovery order unsorted (drift is re-sorted on output: equivalent)
+S29	survived	-	-	0	0	root repository name appended, not inserted first (drift re-sorted: equivalent)
+S30	survived	-	-	0	0	discovered repository check for an existing .git: the isdir guard dropped (equivalent)
+S31	KILLED	r36-worktree-drift,r37-drift-discrimination,r40-drift-record-branches	case-symlinked-child-is-not-discovered	0	0	discovery: directories filter inverted (only non-directories considered)
+S32	KILLED	r38-drift-write-envelope,r39-drift-record-rules,r41-refusal-sites	case-root-sibling-prefix-is-outside	0	0	row path resolved without realpath (symlinked row escapes --root by name)
+S33	survived	-	-	0	0	root_real without realpath (a symlinked --root refuses every row)
+S34	survived	-	-	0	0	relative --root treated as absolute-safe (equivalent: all paths resolve against the same cwd)
+S35	survived	-	-	0	0	gitdir probe ignores --timeout (fixed 20 s)
+S36	KILLED	r37-drift-discrimination,r41-refusal-sites	case-gitdir-sibling-prefix-is-outside,case-list-nonzero-rc-is-reported-unreachable	0	0	gitdir return code test inverted (gitdir only read when rev-parse fails)
+S37	KILLED	r37-drift-discrimination	case-list-nonzero-rc-is-reported-unreachable	0	0	gitdir return code test dropped (failed rev-parse still containment-tested)
+S38	KILLED	r41-refusal-sites	case-gitdir-sibling-prefix-is-outside	0	0	gitdir containment not enforced
+S39	survived	-	-	0	0	gitdir not realpath-resolved (symlinked gitdir escapes --root unseen)
+S40	survived	r36-worktree-drift,r37-drift-discrimination	-	0	0	measure: prune stdout counted instead of stderr
+S41	survived	-	-	0	0	measure: worktree line test without the trailing space (equivalent on porcelain grammar)
+S42	survived	-	-	0	0	measure: prune-timeout re-raised instead of reported UNREACHABLE
+S43	survived	-	-	0	0	drift: REGS-CHANGED only when live count is lower
+S44	survived	-	-	0	0	drift: PRUNABLE-CHANGED only when live count is higher
+S45	survived	r36-worktree-drift,r37-drift-discrimination,r41-drift-record-order	-	0	0	drift class token misspelt (REGS-CHANGD)
+S46	survived	r36-worktree-drift,r37-drift-discrimination,r38-drift-write-envelope,r41-drift-record-order	-	0	0	summary: live_repos never incremented
+S47	survived	r36-worktree-drift,r37-drift-discrimination	-	0	0	summary: live_regs overwritten, not accumulated
+S48	survived	r37-drift-discrimination	-	0	0	summary: unreachable count not incremented
+S49	KILLED	r36-worktree-drift,r38-drift-write-envelope,r41-refusal-sites	case-invalid-utf8-in-record-becomes-replacement-char	0	0	the record-alias check: stat failure treated as alias (new --json files refused)
+S50	survived	r38-drift-write-envelope	-	0	0	the record-alias inode check dropped (hardlink to the record allowed)
+S51	survived	-	-	0	0	record path not realpath-resolved in the alias check (equivalent: inode check still fires)
+S52	survived	r38-drift-write-envelope,r41-refusal-sites	-	0	0	JSON-IS-RECORD refusal removed
+S53	survived	-	-	0	0	json guard: commonprefix instead of commonpath (sibling prefix counted inside)
+S54	survived	r36-worktree-drift,r38-drift-write-envelope,r41-refusal-sites	-	0	0	JSON-INSIDE-MEASURED-TREE refusal removed
+S55	survived	r41-refusal-sites	-	0	0	measured list without the root (JSON under --root but outside any repository allowed)
+S56	survived	r38-drift-write-envelope	-	0	0	--json target not realpath-resolved (symlink to a measured path accepted)
+S57	survived	r38-drift-write-envelope,r41-refusal-sites	-	0	0	hardlink refusal threshold: more than two links allowed
+S58	survived	-	-	0	0	--json file created mode 0600 instead of 0644
+S59	survived	r38-drift-write-envelope,r41-refusal-sites	-	0	0	--json open without O_NONBLOCK (a FIFO with no reader blocks)
+S60	survived	r38-drift-write-envelope,r41-refusal-sites	-	0	0	--json fstat regular-file test removed
+S61	survived	r38-drift-write-envelope,r41-refusal-sites	-	0	0	EISDIR not mapped to JSON-NOT-REGULAR
+S62	survived	r38-drift-write-envelope,r41-refusal-sites	-	0	0	JSON write OSError re-raised unwrapped (traceback, no REFUSAL)
+S63	survived	-	-	0	0	--json empty string treated as set
+S64	KILLED	-	case-longer-old-json-is-truncated-on-write	0	1	--json envelope loses its summary key
+S65	survived	-	-	0	0	--json write encoding ascii (ensure_ascii output: equivalent)
+S66	survived	-	-	0	0	--json truncate to one byte before write (write restores the length: equivalent)
+S67	survived	-	-	0	0	--json written without trailing newline (bytes only: equivalent)
+S68	survived	-	-	0	0	--json indent removed (bytes only: equivalent)
+S69	survived	-	-	0	0	open_nofollow: absolute-path guard weakened (equivalent: json target is always realpath)
+S70	survived	r41-refusal-sites	-	0	0	--timeout accepts zero
+S71	survived	r41-refusal-sites	-	0	0	USAGE refusal exits 1, not 2
+S72	KILLED	r36-worktree-drift,r38-drift-record,r38-drift-write-envelope,r39-drift-record-rules,r40-drift-record-branches,r41-drift-record-order,r41-refusal-sites	case-fifo-record-is-refused-not-blocked,case-gitdir-sibling-prefix-is-outside,case-root-sibling-prefix-is-outside	0	0	refusal exits 0, not 2
+S73	survived	-	-	0	0	--timeout parsed as float (1.5 accepted)
+S74	survived	-	-	0	0	REFUSAL line without newline (text only: equivalent)
+S75	survived	-	-	0	0	child git environment: GIT_CONFIG_GLOBAL dropped (equivalent under the whitelist: no HOME)
+S76	survived	-	-	0	0	child git environment: GIT_OPTIONAL_LOCKS dropped (equivalent: --no-optional-locks is also passed)
+S77	survived	-	-	0	0	child git environment: GIT_ATTR_NOSYSTEM dropped (equivalent on a host with no system gitattributes)

@@ -1,0 +1,163 @@
+R42w2sentinel01 - commands actually run and their observed output (verbatim where marked, lightly trimmed where noted)
+Scratch (not evidence): /fast/scratch/hyaku/souji-r42/R42w2sentinel01  (deleted before yield)
+Tool under test: tools/souji-freeze-check.py sha256 9ddd596b98fbf41b67f98a389c488b1e84d2ef4a7b5fdb0c8711451a007acec6
+  (== `git show 3105a63b23481fccf7df58e74d14a6681e0ea0c8:tools/souji-freeze-check.py | sha256sum`; worktree equal)
+
+--- toolchain
+$ git --version            -> git version 2.56.0
+$ python3 -V               -> Python 3.14.8
+$ which gpg gpg2           -> /usr/bin/gpg  /usr/bin/gpg2
+(no tool installed or upgraded by this seat; no pacman; nothing written to ~/.local/bin)
+
+--- A1  repo-local .git/config -> gpg.program executed by the landed tool (driver.py attack_gpg_exec)
+  commit with a gpgsig header, prereg committed, then:
+    git config gpg.program <repo>/evil.sh ; git config log.showSignature true
+    python3 -B tools/souji-freeze-check.py --root D --prereg pre.txt --rev REV
+  tool rc=1 time=0.11s
+  marker: EXEC gpg --keyid-format=long --status-fd=1 --verify /tmp/.git_vtag_tmp...
+  repo-controlled program executed: True
+
+--- A2  which git call in the tool fires it (driver.py attack_gpg_isolation), same repo
+  rev-parse      rc=0 executed=False
+  cat-file       rc=0 executed=False
+  ls-tree        rc=0 executed=False
+  merge-base     rc=0 executed=False
+  log-freeze     rc=0 executed=True      <- freeze_rev(): git log --diff-filter=A ... -- pre.txt
+  log-dispatch   rc=0 executed=False
+
+--- A1-patched (scratch copy with --no-show-signature on both `log` calls)
+  SUMMARY claims=1 findings=6 ; exec_fired=no      (unpatched control: exec_fired=yes)
+
+--- B  hostile .git/config sweep (core.pager, core.fsmonitor, diff.external, diff.c.textconv, alias.log,
+      core.sshCommand, core.gitProxy, credential.helper, uploadpack.packObjectsHook, core.hooksPath, gpg.program,
+      log.showSignature, .gitattributes diff=c), plain (non-signed, non-partial) repo
+  tool rc=1 time=0.33s ... SUMMARY claims=1 findings=6
+  any repo-controlled program executed: False
+
+--- C1 --rev forms (driver.py attack_rev_forms)
+  'HEAD' rc=2 "REFUSAL COULD-NOT-EVALUATE: --rev must be a full 40-hex commit id"
+  'HEAD~1' rc=2 (same) ; 'main' rc=2 ; 'refs/heads/main' rc=2 ; 'not-a-rev' rc=2
+  '--help' rc=2 "souji-freeze-check.py: error: argument --rev: expected one argument"
+  '-p' rc=2 (argparse) ; '--root' rc=2 (argparse) ; '--prereg=/etc/passwd' rc=2 (argparse) ; '-x' rc=2 ; '--root=/tmp' rc=2
+  '3105a63b...' (tip sha, but --root was the attack repo, which lacks it) rc=2 "does not resolve to a commit in <root>"
+  '000...0' rc=2 "does not resolve to a commit"
+
+--- C2 --root forms (driver.py attack_root_forms)
+  symlink-to-repo   rc=1  (follows link; read-only)
+  bare-repo         rc=1  (object store read works; read-only)
+  linked-worktree   rc=1
+  subdir-of-repo    rc=2 "no commit reachable from <rev> adds pre.txt"
+  plain-file        rc=2 "--root ... is not a directory"
+  nonexistent       rc=2 "--root ... is not a directory"
+  /tmp              rc=2 "--rev ... does not resolve to a commit in /tmp"
+
+--- D1 --prereg hostile paths (driver.py attack_prereg_paths; FIFOs present in the worktree)
+  'fifo.txt'  rc=2 "fifo.txt is absent at <rev>"        (FIFO never opened: object-store read only, no hang)
+  'deeper/f2.txt' rc=2 absent ; '../../etc/passwd' rc=2 absent ; '/etc/passwd' rc=2 absent
+  'a\nb.txt' rc=2 "...b.txt is absent" (argv newline echoed unescaped into the refusal: low, operator-supplied argv)
+  '--help' '-p' rc=2 argparse ; '' rc=2 "--root, --prereg and --rev are required"
+  'pre.txt/' '.' 'census/../pre.txt' ':(glob)**' '*' ':(exclude)pre.txt' rc=2 absent
+
+--- D2 Counter/Population/Control hostile values (driver.py attack_counter_paths; prereg committed each time)
+  traversal '../../etc/passwd sha256=0..0'  rc=1 FINDING C1 COUNTER-MISSING ../../etc/passwd not present at freeze
+  absolute '/etc/passwd' rc=1 COUNTER-MISSING ; newline 'census/c1\n.py' rc=1 COUNTER-MISSING census/c1
+  option-like '--help' rc=1 COUNTER-MISSING ; 'census/../census/c1.py' rc=1 COUNTER-MISSING ; trailing slash rc=1 COUNTER-MISSING
+  control-traversal / control-absolute / control-newline / control-option-like / control-dotdot rc=1 CONTROL-MISSING
+  empty-path ' sha256=..' rc=1 COUNTER-MISSING sha256=503fd7... (value parsed as a path; cosmetic)
+  => no path escapes the object store; no read outside the repository.
+
+--- D3 Control path = git SYMLINK whose target text is "EXIT=1"   (driver.py attack_control_symlink; unpatched)
+  real-green   (census/green.txt, EXIT=0)  rc=1 FINDING C1 CONTROL-NOT-RED census/green.txt last line 'EXIT=0' is not EXIT=<nonzero>
+  symlink-EXIT1 (census/link.txt -> "EXIT=1") rc=0 SUMMARY claims=1 findings=0      <- spoofed red control accepted
+  D3-patched (scratch copy adds an is_symlink check for Control):
+  symlink-EXIT1 rc=1 FINDING C1 CONTROL-SYMLINK census/link.txt is a symlink at freeze 0a433648fd98
+
+--- E  environment influence (driver.py attack_env; baseline + one variable per run)
+  baseline rc=0 SUMMARY claims=1 findings=0
+  GIT_DIR=decoy / GIT_WORK_TREE=decoy / GIT_OBJECT_DIRECTORY / GIT_ALTERNATE_OBJECT_DIRECTORIES / GIT_INDEX_FILE /
+  GIT_CONFIG_COUNT=1 (core.pager) / GIT_EXTERNAL_DIFF=/bin/false / PAGER=/bin/false / GIT_PAGER=/bin/false /
+  GIT_TRACE=1 / GIT_CEILING_DIRECTORIES=/ / GIT_NAMESPACE=evil  -> every run rc=0 SUMMARY claims=1 findings=0
+  (Repo.env whitelist: no GIT_* or PAGER variable reaches a git child)
+
+--- E2 PYTHONPATH -> sitecustomize in the tool process
+  tool rc=1 sitecustomize-in-tool-process=True
+  (operator-supplied environment, not repository-controlled; the C2 'patches' mechanism, S259)
+
+--- F1 write manifest, fixture repo + cwd (driver.py attack_no_writes)
+  repo changes: NONE ; cwd changes: NONE
+
+--- F2 live lane manifest (driver.py attack_lane_no_writes) -- NOT attributable
+  lane changes: .ufo/waves/round-42/w2/R42w2mutationtester03/grid.jsonl (a sibling seat's live file, sha changed)
+  => measurement of a live, sibling-written tree; not used as evidence of tool writes.
+
+--- F2b lane snapshot (cp -a preserves mtimes; /fast/scratch/.../atk/lane_snap)  (snapwrite.py, verbatim)
+  tool rc=0 out=SUMMARY claims=3 findings=0 time=3.45s
+  entries before=45142 after=45142
+  changes: NONE
+
+--- F3 partial clone (blob:none) -> lazy fetch writes objects (driver.py attack_partial_clone)
+  clone rc=0 ; tool rc=1 time=0.18s
+  partial-clone changes: .git/objects/pack/pack-ae92...{idx,pack,promisor,rev} (new pack written by the tool)
+  cat-file -e pre.txt after run rc=0 (0 = blob was fetched)
+
+--- I1 partial clone -> remote.origin.uploadpack program executed (driver.py attack_lazy_fetch_exec; fresh clone)
+  UNPATCHED: tool rc=1 time=0.33s out=SUMMARY claims=1 findings=6
+             repo-controlled uploadpack program executed: True
+             marker: EXEC uploadpack /fast/scratch/.../atk/i1_src
+  PATCHED (GIT_NO_LAZY_FETCH=1 in Repo.env): tool rc=2 time=0.14s
+             "REFUSAL COULD-NOT-EVALUATE: pre.txt is absent at <rev>"  executed: False
+
+--- I2 partial clone -> core.sshCommand executed (final.py ssh_exec; fresh clone, remote.origin.url=ssh://attacker.invalid/x)
+  UNPATCHED: tool rc=2 ; sshCommand program executed: True
+             marker: EXEC sshCommand -G -o SendEnv=GIT_PROTOCOL attacker.invalid | EXEC sshCommand attacker.invalid git-upload-pack '/x'
+  PATCHED:   tool rc=2 ; sshCommand program executed: False
+
+--- G1 huge population (200 MB, driver.py attack_huge_blob)
+  size=~200 MB rc=1 time=1.35s
+--- G1b 400 MB population, peak RSS (rss.py = resource.getrusage(RUSAGE_CHILDREN))
+  elapsed=6.03s maxrss_MB=2011.9 rc=1  SUMMARY claims=1 findings=2
+  (findings=2 is from the fixture's own Base line, written before the commit existed: BASE-UNRESOLVED; not a tool defect)
+
+--- G2 claim fan-out (driver.py attack_many_claims; G2N = claims)
+  claims=100 rc=1 time=1.5s out=SUMMARY claims=100 findings=400
+  claims=300 rc=1 time=4.0s out=SUMMARY claims=300 findings=1200
+  claims=900 rc=1 time=10.5s out=SUMMARY claims=900 findings=3600
+  (no internal deadline: grep 'timeout' in tool source = 0 matches; subprocess.run call sites = 2)
+
+--- G3  `grep -c -i timeout tools/souji-freeze-check.py` = 0 ; subprocess.run calls = 2
+
+--- H1 --selftest normal run, TMPDIR fresh
+  SELFTEST cases=31 pass=31 fail=0 ; rc=0 ; leftovers in TMPDIR: NONE
+--- H4 --selftest write scope (final.py selftest_scope; HOME, cwd, TMPDIR and /tmp manifested)
+  rc=0 stdout=SELFTEST cases=31 pass=31 fail=0
+  home changes: NONE ; cwd changes: NONE ; tmp changes: NONE ; new entries in /tmp: NONE
+
+--- H-SIGTERM (driver.py attack_selftest_signal SIGTERM; signal sent once the first case directory exists)
+  alive-at-signal=True entries-at-signal=['freeze-selftest-663o010a']
+  rc=-15
+  residue under TMPDIR after signal: ['freeze-selftest-663o010a']   (19 files)
+--- H-SIGINT
+  alive-at-signal=True ; rc=-2 ; residue under TMPDIR after signal: NONE
+--- H-SIGTERM, scratch patched copy (SIGTERM -> sys.exit(143) inside selftest) vs unpatched, same method
+  patched:   sigterm rc=143 ; residue after SIGTERM (patched): 0 entries
+  unpatched: sigterm rc=143 ; residue after SIGTERM (unpatched, same method): 1 entries
+
+--- K1 oversize / NUL (final.py oversize_and_nul)
+  70 KB Counter path: rc=1 no crash; COUNTER-MISSING aaaa...
+  NUL in Counter value: rc=1 crash=False; COUNTER-MISSING census/c1.py not present ...
+
+--- K2 real-lane run (read-only, rev 3105a63)
+  rc=0 wall=0.32s out=SUMMARY claims=3 findings=0
+
+--- N1 committed prereg that is a SYMLINK
+  blob at HEAD:pre.txt (what the tool reads): 'real.txt'
+  tool rc=1 FINDING C0 FIELD-MISSING Round ; FINDING C0 NO-CLAIMS ... SUMMARY claims=0 findings=2   (fails closed for a plain link)
+  symlink whose LINK TEXT is a complete clean prereg, target absent:
+  SUMMARY claims=1 findings=0   rc=0      <- clean verdict; `test -e pre.txt` => link target absent (ENOENT)
+
+--- Patched candidate scored by the FROZEN C2 counter (scratch clone, commit 470f63f6 on top of tip 3105a63; not landed)
+  c2-counter.py --root <clone> --rev 470f63f6... --scratch <dir>
+  SUMMARY cases=37 pass=37 fail=0 control_clean=REJECTED control_findings=REJECTED real=ok retro=red retro_clean=ok selftest=ok patches=3/3 tool_sha=bcc752e86bc7
+--- Control: frozen C2 counter on the unmodified tip 3105a63 (same clone, rev 3105a63b23481fccf7df58e74d14a6681e0ea0c8)
+  SUMMARY cases=37 pass=37 fail=0 control_clean=REJECTED control_findings=REJECTED real=ok retro=red retro_clean=ok selftest=ok patches=3/3 tool_sha=9ddd596b98fb
+  => the frozen C2 target is green both with and without the exec / fetch / symlink / signal defects above.

@@ -1,0 +1,73 @@
+--- landed/souji-freeze-check.py
++++ cand-T1-kat-stdlib.py
+@@ -316,22 +316,58 @@
+ 
+ 
+ def selftest():
++    import subprocess as sp
+     tmp = tempfile.mkdtemp(prefix="freeze-selftest-")
+-    passed = 0
++    env = {"PATH": os.environ.get("PATH", "/usr/bin:/bin"), "HOME": tmp, "GIT_CONFIG_NOSYSTEM": "1",
++           "GIT_CONFIG_GLOBAL": os.devnull, "GIT_AUTHOR_NAME": "st", "GIT_AUTHOR_EMAIL": "st@example.invalid",
++           "GIT_COMMITTER_NAME": "st", "GIT_COMMITTER_EMAIL": "st@example.invalid"}
++    kat = []
+     try:
+-        for n, (name, code, want, text, opts) in enumerate(CASES):
+-            try:
+-                ok = selftest_case(tmp, n, code, want, text, **opts)
+-            except Exception as exc:  # a case that cannot run is a failed case
+-                ok = False
+-                sys.stderr.write("selftest %s: %s: %s\n" % (name, type(exc).__name__, exc))
+-            if not ok:
+-                sys.stderr.write("selftest FAIL %s\n" % name)
+-            passed += ok
++        for data, want in ((b"abc", "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"),
++                           (b"", "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"),
++                           (b"c\n", SHA_C), (b"h\nr\n", SHA_P)):
++            kat.append(hashlib.sha256(data).hexdigest() == want)
++        d = os.path.join(tmp, "kat")
++        os.mkdir(d)
++
++        def git(*a):
++            return sp.run(["git", "-C", d] + list(a), stdout=sp.PIPE, stderr=sp.PIPE, env=env,
++                          check=True).stdout.decode().strip()
++
++        def log_added(*paths):
++            p = sp.run(["git", "-C", d, "log", "--diff-filter=A", "--format=%H", "--"] + list(paths),
++                       stdout=sp.PIPE, stderr=sp.PIPE, env=env, check=False)
++            return p.stdout.decode().split()
++
++        def ancestor_rc(a, b):
++            return sp.run(["git", "-C", d, "merge-base", "--is-ancestor", a, b], stdout=sp.PIPE,
++                          stderr=sp.PIPE, env=env, check=False).returncode
++
++        git("init", "-q")
++        with open(os.path.join(d, "f.txt"), "w") as fh:
++            fh.write("x\n")
++        git("add", "-A")
++        git("commit", "-q", "-m", "one")
++        first = git("rev-parse", "HEAD")
++        with open(os.path.join(d, "f.txt"), "w") as fh:
++            fh.write("x\ny\n")
++        with open(os.path.join(d, "g.txt"), "w") as fh:
++            fh.write("g\n")
++        git("add", "-A")
++        git("commit", "-q", "-m", "two")
++        second = git("rev-parse", "HEAD")
++        kat.append(log_added("f.txt") == [first])
++        kat.append(log_added("g.txt") == [second])
++        kat.append(log_added("never.txt") == [])
++        kat.append(sorted(log_added()) == sorted([first, second]))
++        kat.append(ancestor_rc(first, second) == 0)
++        kat.append(ancestor_rc(second, first) == 1)
++        kat.append(ancestor_rc(first, first) == 0)
++        kat.append(ancestor_rc(second, second) == 0)
+     finally:
+         shutil.rmtree(tmp, ignore_errors=True)
+-    print("SELFTEST cases=%d pass=%d fail=%d" % (len(CASES), passed, len(CASES) - passed))
+-    return 0 if passed == len(CASES) else 1
++    print("SELFTEST cases=%d pass=%d fail=%d" % (len(kat), sum(kat), len(kat) - sum(kat)))
++    return 0 if all(kat) else 1
+ 
+ 
+ def main(argv):

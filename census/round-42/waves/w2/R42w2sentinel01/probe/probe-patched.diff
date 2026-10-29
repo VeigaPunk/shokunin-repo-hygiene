@@ -1,0 +1,47 @@
+--- /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-freeze-check.py	2026-10-28 21:52:46.101827608 -0300
++++ /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-42/w2/R42w2sentinel01/probe/probe-patched-freeze-check.py	2026-10-28 23:14:53.268720514 -0300
+@@ -62,7 +62,7 @@
+         self.env = {"PATH": os.environ.get("PATH", "/usr/local/bin:/usr/bin:/bin"), "LC_ALL": "C",
+                     "GIT_OPTIONAL_LOCKS": "0", "GIT_TERMINAL_PROMPT": "0", "GIT_CONFIG_NOSYSTEM": "1",
+                     "GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_SYSTEM": os.devnull,
+-                    "GIT_NO_REPLACE_OBJECTS": "1"}
++                    "GIT_NO_REPLACE_OBJECTS": "1", "GIT_NO_LAZY_FETCH": "1"}
+ 
+     def run(self, *args):
+         try:
+@@ -114,7 +114,7 @@
+ 
+ 
+ def freeze_rev(repo, rev, prereg):
+-    p = repo.run("log", "--diff-filter=A", "--no-renames", "--full-history", "--reverse",
++    p = repo.run("log", "--no-show-signature", "--diff-filter=A", "--no-renames", "--full-history", "--reverse",
+                  "--format=%H", rev, "--", prereg)
+     ids = [x for x in p.stdout.decode("utf-8", "replace").split() if FULL40.match(x)]
+     return ids[0] if p.returncode == 0 and ids else None
+@@ -127,7 +127,7 @@
+         # check cannot run; say so instead of reading clean.
+         return [("C0", "FIELD-MISSING", "Round")]
+     tree = ".ufo/waves/round-%s/" % m.group(1)
+-    p = repo.run("log", "--diff-filter=A", "--no-renames", "--full-history", "--name-only",
++    p = repo.run("log", "--no-show-signature", "--diff-filter=A", "--no-renames", "--full-history", "--name-only",
+                  "--format=%x01%H", rev, "--", tree)
+     if p.returncode != 0:
+         return []
+@@ -213,6 +213,8 @@
+             blob = repo.blob(freeze, path)
+             if blob is None:
+                 found.append((label, "CONTROL-MISSING", "%s not present at freeze %s" % (path, freeze[:12])))
++            elif repo.is_symlink(freeze, path):
++                found.append((label, "CONTROL-SYMLINK", "%s is a symlink at freeze %s" % (path, freeze[:12])))
+             else:
+                 lines = [x.strip() for x in blob.decode("utf-8", "replace").splitlines() if x.strip()]
+                 m = EXIT_LINE.match(lines[-1]) if lines else None
+@@ -342,6 +344,8 @@
+     ap.add_argument("--selftest", action="store_true")
+     args = ap.parse_args(argv)
+     if args.selftest:
++        import signal as _sig
++        _sig.signal(_sig.SIGTERM, lambda s, f: sys.exit(143))
+         return selftest()
+     if not (args.root and args.prereg and args.rev):
+         ap.error("--root, --prereg and --rev are required (or --selftest)")

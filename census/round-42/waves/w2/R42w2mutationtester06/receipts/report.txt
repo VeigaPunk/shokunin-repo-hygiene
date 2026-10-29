@@ -1,0 +1,58 @@
+| function | mutants | killed | survived (non-equivalent / equivalent) |
+|---|---|---|---|
+| measure | 10 | 3 | 7 (5 / 2) |
+| discover | 10 | 3 | 7 (4 / 3) |
+| repo_path | 6 | 3 | 3 (2 / 1) |
+| open_nofollow | 12 | 5 | 7 (2 / 5) |
+| json-writer | 14 | 5 | 9 (0 / 9) |
+| drift-accounting | 13 | 10 | 3 (3 / 0) |
+| exit-code-mapping | 10 | 7 | 3 (0 / 3) |
+| **total** | 75 | 36 | 39 (16 / 23) |
+
+SURVIVORS (function | id | line | class | behaviour | reason)
+measure | MM01 | 197 | EQ | worktree-record prefix without trailing space | git porcelain has no other line starting 'worktree'
+measure | MM03 | 202 | NE | prune nonzero rc not reported: a failed prune is read as zero prunable | stdout DRIFT rows differ (s_prune_rc_nonzero)
+measure | MM04 | 204 | NE | blank/whitespace stderr lines counted as prunable candidates | rc and stdout differ (s_prune_whitespace_line)
+measure | MM05 | 201 | NE | prune timeout reported under the list-timeout class string | stdout class differs (s_prune_hangs)
+measure | MM06 | 200 | NE | prune TimeoutExpired not caught: the run crashes instead of reporting UNREACHABLE | traceback vs DRIFT row (s_prune_hangs)
+measure | MM09 | 205 | EQ | success path returns "" instead of None for the error slot | `if error:` treats "" and None alike
+measure | MM10 | 197 | NE | worktree-list output decoded strictly: non-UTF-8 path crashes the run | rc 0 vs traceback rc 1 (s_list_output_invalid_utf8)
+discover | MD01 | 220 | NE | root listing unsorted: --json drift array follows filesystem order | --json document differs (s_json_many_unrecorded); fs-order dependent
+discover | MD02 | 229 | EQ | child 'is a directory' guard dropped | a regular-file child has no .git dir/file, so the .git test already rejects it
+discover | MD04 | 234 | NE | root basename appended instead of inserted: --json drift array order changes | --json document differs (s_json_root_repo_unrecorded_child)
+discover | MD05 | 221 | NE | listing OSError swallowed: NameError crash instead of an empty discovery | stdout and traceback differ (s_unreadable_root)
+discover | MD06 | 234 | EQ | root basename without rstrip('/') | root is os.path.abspath()'d, which already strips a trailing slash
+discover | MD07 | 234 | EQP | nameless-root fallback 'root' dropped | reachable only for --root / with a /.git directory; host has no /.git
+discover | MD10 | 233 | NE | root with a .git FILE also contributes its basename to discovery (duplicate measurement) | stdout differs (s_root_gitfile_child_same_name)
+repo_path | MR02 | 212 | NE | root self-name branch no longer requires --root to hold a .git: a non-repo root is measured | stdout differs (s_root_basename_row_other)
+repo_path | MR04 | 212 | EQ | root self-name comparison without rstrip('/') | root is abspath()'d before repo_path() is called
+repo_path | MR05 | 212 | NE | root self-name branch accepts a .git FILE (linked worktree root) as its repository | stdout differs (s_root_git_is_a_file_self_named)
+open_nofollow | MO01 | 252 | NE | relative-path guard removed; reachable only by --json / (empty component list): JSON-UNWRITABLE becomes an IndexError traceback | rc 2 vs rc 1 + traceback (s_json_root_slash)
+open_nofollow | MO02 | 251 | EQ | '.' components kept in the walked path | --json target is realpath()'d, so '.' never reaches the walk
+open_nofollow | MO03 | 257 | EQP | ancestor directory opened without O_NOFOLLOW | --json target is realpath()'d; only a symlink swapped in between realpath and open reaches it (race, not constructed)
+open_nofollow | MO04 | 263 | EQP | leaf opened without O_NOFOLLOW | --json target is realpath()'d, so the leaf is never a symlink; only a race reaches it (not constructed)
+open_nofollow | MO09 | 254 | EQ | root directory fd opened without O_DIRECTORY | '/' is a directory; the flag is redundant
+open_nofollow | MO11 | 264 | NE | created --json file mode 0600 instead of 0644 | file mode differs (s_json_plain and five more)
+open_nofollow | MO12 | 276 | EQ | comment appended to the JSON-NOT-REGULAR refusal line | comment only: no code change
+json-writer | MJ02 | 430 | EQ | JSON written without sort_keys | format only: bytes differ, the parsed document is identical
+json-writer | MJ03 | 430 | EQ | JSON written with indent=None | format only: bytes differ, the parsed document is identical
+json-writer | MJ04 | 431 | EQ | trailing newline after the JSON document dropped | format only: bytes differ, the parsed document is identical
+json-writer | MJ07 | 425 | EQ | JSON-HARDLINKED message drops the link count | label only: the REFUSAL class token is unchanged
+json-writer | MJ08 | 344 | EQ | --json containment loop compares commonpath to root instead of each base | the root iteration (measured[0]) refuses every path the per-base test would refuse, with the same message
+json-writer | MJ10 | 337 | EQP | alias check compares inode only | the two paths must sit on different devices with equal inode numbers; not constructed
+json-writer | MJ11 | 332 | EQ | path-equality alias check dropped (inode check remains) | a same-path target has the same inode, so the inode check catches it
+json-writer | MJ12 | 341 | EQ | JSON-IS-RECORD message reworded | label only: the REFUSAL class token is unchanged
+json-writer | MJ13 | 348 | EQ | JSON-INSIDE-MEASURED-TREE message reworded | label only: the REFUSAL class token is unchanged
+drift-accounting | MA02 | 375 | NE | PRUNABLE-CHANGED emitted only when live exceeds the record | a record that over-counts prunables gets no drift row (s_prunable_changed)
+drift-accounting | MA10 | 391 | NE | drift rows printed in record order, not sorted | stdout order differs (s_two_drift_rows_reversed)
+drift-accounting | MA11 | 363 | NE | ABSENT row loses its recorded-figure detail | stdout differs (s_absent)
+exit-code-mapping | MX04 | 448 | EQ | USAGE refusal message reworded | label only: the REFUSAL USAGE class token is unchanged
+exit-code-mapping | MX07 | 326 | EQ | --json realpath without abspath | realpath() of a relative path already resolves against the cwd
+exit-code-mapping | MX08 | 331 | EQ | record path compared without realpath in the alias check | os.stat follows the symlink, so the inode check catches the alias
+
+KILLED ONLY BY THE LANDED r42 FIXTURE: MJ05 (line 430)
+SURVIVE ALL EIGHT PRIOR FIXTURES (the r42 fixture may or may not kill them; ids listed): MM01, MM03, MM04, MM05, MM06, MM09, MM10, MD01, MD02, MD04, MD05, MD06, MD07, MD10, MR02, MR04, MR05, MO01, MO02, MO03, MO04, MO09, MO11, MO12, MJ02, MJ03, MJ04, MJ05, MJ07, MJ08, MJ10, MJ11, MJ12, MJ13, MA02, MA10, MA11, MX04, MX07, MX08
+
+ORACLE: shards=39 survivors_evaluated=39 scenarios=68
+NE=16 EQ=19 EQP=4
+CLASS-vs-ORACLE mismatches: none

@@ -1,0 +1,56 @@
+
+=== D1: --prereg hostile paths ===
+  --prereg 'pre.txt'                rc=1 err=
+  --prereg 'fifo.txt'               rc=2 err=REFUSAL COULD-NOT-EVALUATE: fifo.txt is absent at 1c9306ffe1e414c526a518e89241a78ec10b91ab
+  --prereg 'deeper/f2.txt'          rc=2 err=REFUSAL COULD-NOT-EVALUATE: deeper/f2.txt is absent at 1c9306ffe1e414c526a518e89241a78ec10
+  --prereg '../../etc/passwd'       rc=2 err=REFUSAL COULD-NOT-EVALUATE: ../../etc/passwd is absent at 1c9306ffe1e414c526a518e89241a78e
+  --prereg '/etc/passwd'            rc=2 err=REFUSAL COULD-NOT-EVALUATE: /etc/passwd is absent at 1c9306ffe1e414c526a518e89241a78ec10b9
+  --prereg 'a\nb.txt'               rc=2 err=b.txt is absent at 1c9306ffe1e414c526a518e89241a78ec10b91ab
+  --prereg '--help'                 rc=2 err=souji-freeze-check.py: error: argument --prereg: expected one argument
+  --prereg '-p'                     rc=2 err=souji-freeze-check.py: error: argument --prereg: expected one argument
+  --prereg ''                       rc=2 err=souji-freeze-check.py: error: --root, --prereg and --rev are required (or --selftest)
+  --prereg 'pre.txt/'               rc=2 err=REFUSAL COULD-NOT-EVALUATE: pre.txt/ is absent at 1c9306ffe1e414c526a518e89241a78ec10b91ab
+  --prereg '.'                      rc=2 err=REFUSAL COULD-NOT-EVALUATE: . is absent at 1c9306ffe1e414c526a518e89241a78ec10b91ab
+  --prereg 'census/../pre.txt'      rc=2 err=REFUSAL COULD-NOT-EVALUATE: census/../pre.txt is absent at 1c9306ffe1e414c526a518e89241a78
+  --prereg ':(glob)**'              rc=2 err=REFUSAL COULD-NOT-EVALUATE: :(glob)** is absent at 1c9306ffe1e414c526a518e89241a78ec10b91a
+  --prereg '*'                      rc=2 err=REFUSAL COULD-NOT-EVALUATE: * is absent at 1c9306ffe1e414c526a518e89241a78ec10b91ab
+  --prereg ':(exclude)pre.txt'      rc=2 err=REFUSAL COULD-NOT-EVALUATE: :(exclude)pre.txt is absent at 1c9306ffe1e414c526a518e89241a78
+
+=== D2: Counter/Population/Control hostile path values ===
+  traversal            rc=1 FINDING C1 COUNTER-MISSING ../../etc/passwd not present at freeze 82881557529b
+  absolute             rc=1 FINDING C1 COUNTER-MISSING /etc/passwd not present at freeze 82881557529b
+  newline              rc=1 FINDING C1 COUNTER-MISSING census/c1 not present at freeze 82881557529b
+  option-like          rc=1 FINDING C1 COUNTER-MISSING --help not present at freeze 82881557529b
+  dotdot-inside        rc=1 FINDING C1 COUNTER-MISSING census/../census/c1.py not present at freeze 82881557529b
+  trailing-slash       rc=1 FINDING C1 COUNTER-MISSING census/c1.py/ not present at freeze 82881557529b
+  control-traversal    rc=1 FINDING C1 CONTROL-MISSING ../../etc/passwd not present at freeze 82881557529b
+  control-absolute     rc=1 FINDING C1 CONTROL-MISSING /etc/passwd not present at freeze 82881557529b
+  control-newline      rc=1 FINDING C1 CONTROL-MISSING census/ctl not present at freeze 82881557529b
+  control-option-like  rc=1 FINDING C1 CONTROL-MISSING --help not present at freeze 82881557529b
+  control-dotdot       rc=1 FINDING C1 CONTROL-MISSING census/../census/ctl.txt not present at freeze 82881557529b
+  empty-path           rc=1 FINDING C1 COUNTER-MISSING sha256=503fd72399326f90ecddf5660b4d2c90d6c3da0d2bbc2dead1f0ca926d9f8f3d not present at freeze 82881557529b
+
+=== D3: Control path that is a symlink whose target text is 'EXIT=1' ===
+  real-green       rc=1 FINDING C1 CONTROL-NOT-RED census/green.txt last line 'EXIT=0' is not EXIT=<nonzero>
+  symlink-EXIT1    rc=0 
+  (a green control must raise CONTROL-NOT-RED; the symlink path does not)
+
+=== E: environment-variable influence ===
+  baseline                               rc=0 summary=SUMMARY claims=1 findings=0
+  GIT_DIR=decoy                          rc=0 summary=SUMMARY claims=1 findings=0
+  GIT_WORK_TREE=decoy                    rc=0 summary=SUMMARY claims=1 findings=0
+  GIT_OBJECT_DIRECTORY=decoy/.git/objects rc=0 summary=SUMMARY claims=1 findings=0
+  GIT_ALTERNATE_OBJECT_DIRECTORIES=decoy rc=0 summary=SUMMARY claims=1 findings=0
+  GIT_INDEX_FILE=decoy/.git/index        rc=0 summary=SUMMARY claims=1 findings=0
+  GIT_CONFIG_COUNT=1                     rc=0 summary=SUMMARY claims=1 findings=0
+  GIT_EXTERNAL_DIFF=/bin/false           rc=0 summary=SUMMARY claims=1 findings=0
+  PAGER=/bin/false                       rc=0 summary=SUMMARY claims=1 findings=0
+  GIT_PAGER=/bin/false                   rc=0 summary=SUMMARY claims=1 findings=0
+  GIT_TRACE=1                            rc=0 summary=SUMMARY claims=1 findings=0
+  GIT_CEILING_DIRECTORIES=/              rc=0 summary=SUMMARY claims=1 findings=0
+  GIT_NAMESPACE=evil                     rc=0 summary=SUMMARY claims=1 findings=0
+
+=== E2: PYTHONPATH / sitecustomize into the tool process ===
+  tool rc=1 sitecustomize-in-tool-process=True
+  (known: this is the C2 'patches' mechanism (S259); reported as a limit, not new)
+  Repo.env is an explicit whitelist -> GIT_*/PYTHONPATH do not reach the git child
