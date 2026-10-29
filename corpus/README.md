@@ -214,7 +214,7 @@ frontier.
 | ground | status | entries / runnable evidence |
 |---|---|---|
 | F1-jj jj-colocated lane repos (edge class of F1) | Core (candidate, admission pending closure): bounded receipt-root rule — durable roots exclude exactly `refs/jj/*`; keep-only novel-content refusal; plain repos byte-identical. F1 itself stays frontier; keep-ref expiry unmeasured | `knowledge/jj-colocation-receipts.md`; `../tests/fixtures/r17-jj-receipts.sh`; `../census/round-17/jj-receipts-base5fa6017.txt`, `../census/round-17/jj-receipts-4f48343.txt` (changed arm 0 failed; r18 correction: was a `ddb7347` record name never committed) |
-| F2 caveat, disclosed only: colocated repos inflate structure counts versus a plain clone (`references.others.count` 15 from `refs/jj/keep/*`; `objects.commits.count` 55 vs 44, sandbox) — no F2 capability claimed | observed, not claimed | `../../.ufo/waves/hyaku/jj-w1/reports/JjTrialSouji.md` step 5; `../../.ufo/waves/hyaku/jj-w1/reports/JjAuditSouji.md` F3 |
+| F2 caveat, disclosed only: colocated repos inflate structure counts versus a plain clone (`references.others.count` 15 from `refs/jj/keep/*`; `objects.commits.count` 55 vs 44, sandbox) — no F2 capability claimed | observed, not claimed | `../census/round-42/jj-w1-reports/JjTrialSouji.md` step 5; `../census/round-42/jj-w1-reports/JjAuditSouji.md` F3 (r42 repoint, R41-D-LG-DANGLING: byte-exact copies of the fleet-repo reports, sha256 in `../census/round-42/jj-w1-reports/SHA256SUMS`; fleet path `.ufo/waves/hyaku/jj-w1/reports/` at fleet commit f47ad6ba8d30) |
 
 Disclosure carried with the row, not in a footnote: the census `unpushed`
 column is branch-based and reads 0 while this lane holds keep-only commits
