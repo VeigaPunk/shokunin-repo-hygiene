@@ -9,7 +9,7 @@ holds those 70 rows (line, token, class, result, detail). The claim is that afte
 of the 70 is ACCOUNTED FOR and the genuinely wrong ones are CORRECTED, append-only:
 
   register   `census/round-42/c1-register.tsv` (tab separated, header `line token class resolved_to`)
-             holds exactly one row per item. `class` is `resolved` (the token is a shorthand for a
+             holds exactly one row per item (a token cited twice on one line is two items and two identical rows). `class` is `resolved` (the token is a shorthand for a
              committed path; `resolved_to` names it) or `unresolved` (`resolved_to` is `-`).
   derivation the counter derives each item's class itself, from the BASE tree and the BASE
              SCORECARD.md, with the fixed rules below, and the register row must agree exactly.
@@ -194,6 +194,9 @@ def main(argv):
                 register.setdefault((f[0], f[1]), []).append((f[2], f[3]))
         registered = class_ok = unresolved = 0
         wants = {}
+        multiplicity = {}
+        for item in items:
+            multiplicity[(str(item[0]), item[1])] = multiplicity.get((str(item[0]), item[1]), 0) + 1
         for item in items:
             key = (str(item[0]), item[1])
             cls, path = derive(item, tree, context)
@@ -201,12 +204,13 @@ def main(argv):
                 unresolved += 1
                 wants[(item[0], item[1])] = wanted_correction(item)
             got = register.get(key, [])
-            if len(got) == 1:
+            # one register row per item: a token cited twice on one line is two items and two identical rows
+            if len(got) == multiplicity[key]:
                 registered += 1
                 gc, gp = got[0]
-                if gc == cls and gp == path and (cls == "unresolved" or
-                                                 git(args.root, scratch_root, "cat-file", "-e",
-                                                     "%s:%s" % (args.rev, path)).returncode == 0):
+                if all(g == (cls, path) for g in got) and (
+                        cls == "unresolved" or git(args.root, scratch_root, "cat-file", "-e",
+                                                   "%s:%s" % (args.rev, path)).returncode == 0):
                     class_ok += 1
         lesson_b = show(args.root, args.rev, LESSON, scratch_root)
         seen, junk, fenced = {}, 0, False
