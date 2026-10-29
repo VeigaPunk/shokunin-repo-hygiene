@@ -194,7 +194,7 @@ Source reports: `census/round-42/waves/w1/R42critic01.md` (C1), `R42reviewer01.m
 - **N-H the harness.** `score-candidate.sh` accepted any destination (`R42sentinel01` N9a-d: traversal, symlink write-through, a counter as destination, an unconfined hook/tool with an origin push). The L1 closed the destination:
   the script now has an allowlist and refuses symlinked destinations (landed with the wave evidence); candidate execution inside the clone stays unconfined. The counters leave entries under `--scratch` after KILL/TERM
   (the lane's scratch root is accepted as the scratch).
-- **N-adj** (R42connector01): the name `freeze-check` also exists as chousa's `tools/freeze-check.py` (no code or finding-class collision); souji's FROZEN-EDITED compares blobs at FREEZE and REV only, so edit-then-restore passes (kaidoku's round-45
+- **N-adj** (R42connector01): the name `freeze-check` also exists as a chousa lane tool (in that lane's repository; no code or finding-class collision); souji's FROZEN-EDITED compares blobs at FREEZE and REV only, so edit-then-restore passes (kaidoku's round-45
   preflight has a `restored` arm); the empty-pin family (kaidoku M31-2) matches FIELD-EMPTY/FIELD-MISSING; tameshi's mutate-and-run is the fleet's generic mutation method and has no EQUIV scoring.
 
 ## Wave 1 outcome

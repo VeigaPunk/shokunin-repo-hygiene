@@ -837,3 +837,29 @@ Owned scores unchanged (calibration 7, operability 8, coverage 8); no reproducib
 ### Planned (appended at round 41)
 
 - **r42:** calibration: a counter that reads correction prose and rejects fenced, duplicate and retracting lines (N1-N4); operability: freeze-check duplicate keys, malformed headings and unlisted dispatch names (N13) with the hidden-case audit as a frozen leg; coverage: condition-level mutants of the refusal sites (N14), M40-12 decoder mutant, R39-D1/D2 receipts; tool defect N10 (`--json` leaf symlink). Certification OFF, K5 HELD.
+
+### Round 42 measurements (2026-10-28; base `bf618f6c5c09d302994871c94903abbea2deb60d`; instruments `b7408095543579ac71b33ecf7b80b0cb8ef45036`; freeze `afe17f416eec04dcf3f480b580a8f928de61d19d`)
+
+| claim | axis | before | after | counting command | measured commit |
+|---|---|---|---|---|---|
+| C1 declared-evidence accounting | calibration 7 | the instrument reads `assertions=474 resolved=404 skipped=780 mismatches=70` over `SCORECARD.md` at the base; do-nothing control `registered=0 class_ok=0 corrected=0`, forged all-resolved register `class_ok=42` (`census/round-42/controls/c1-control.txt`) | `SUMMARY items=70 population=ok registered=70 class_ok=70 unresolved=5 corrected=5 junk=0 rewritten=0 new_mismatches=0` rc 0 (`census/round-42/records/c1-after.txt`); 65 items resolve to one committed path, 5 do not and carry a scoped correction line (`corpus/lessons/round-42.md`) | `python3 -B census/round-42/c1-counter.py --root . --rev <full40> --scratch <dir>`; instrument `python3 -B tools/souji-declared-evidence.py --root . --rev <full40> --file SCORECARD.md --format counts` | `34e33a662cd0d6931e5aa006bd90364e7852c0d5` |
+| C2 freeze check hardened | operability 8 | r41 tool: `cases=37 pass=24 fail=13 ... selftest=FAIL patches=0/3` (`census/round-42/controls/c2-control.txt`) | `cases=37 pass=37 fail=0 control_clean=REJECTED control_findings=REJECTED real=ok retro=red retro_clean=ok selftest=ok patches=3/3` rc 0 (`census/round-42/records/c2-after.txt`); self-test 31 cases | `python3 -B census/round-42/c2-counter.py --root . --rev <full40> --scratch <dir>` | `5ad7046d44c3be81ffdb5b2b448cb95a6b03fc96` (tool landed at `133206705f32d785277c1fdf69abd4c73066ba7c`) |
+| C3 condition-level drift fixture | coverage 8 | fixture absent: `survived=13`; always-pass stub `survived=13`; byte-sniffing stub `equiv_killed=6` (`census/round-42/controls/c3-control.txt`) | `mutants=13 killed=13 survived=0 pristine=ok prior=8/8 old_killed=0 equiv=6 equiv_killed=0 anchors=ok` rc 0 (`census/round-42/records/c3-after.txt`) | `python3 -B census/round-42/c3-counter.py --root . --rev <full40> --scratch <dir>` | `5ad7046d44c3be81ffdb5b2b448cb95a6b03fc96` |
+| R1 landing-gate pointers (residual, not a claim) | calibration | plain-mode gate `findings=3`, fleet-root mode `findings=0` at the base | frozen counter `findings=0 deleted=2 rows_added=0 stale=0` = red by its letter; both gate modes `findings=0` after the repoint (`census/round-42/records/gate-both-modes.txt`); the frozen exemption repair was found to trade modes (lesson M42-2) | `python3 -B census/round-42/r1-counter.py --root . --rev <full40> --scratch <dir>`; `python3 -B tools/souji-landing-gate.py --root . --rev <full40> --round 41 [--fleet-root <fleet>]` | `51f204fb7c633b691a3ca9cd8c0bf025f6e0a093` |
+
+Owned scores unchanged (calibration 7, operability 8, coverage 8); no reproducible 0-10 mapping exists, so no score delta is claimed. The frozen counters score shape: the C1 triple, C2 case table and C3 fixture
+reach their targets by wrong artifacts the wave built (lesson N-C1a, N-C2a/b, N-C3a); the lane's compensating checks (five-reader register verification, independent re-derivation, execution-count audit of the landed fixture, static audit of the landed tool) are listed there.
+Frontier: `corpus/SOURCES.md` 182 -> 183 rows (S259, tier A, Python `site`, sourced claim C2), census exit 0 both ends (`census/round-42/records/census-before.txt`). Plan-vs-actual against the r41 plan sentence: three of nine planned items done as written (lesson, CORRECTION-SC at line 839).
+No axis is claimed harmed; none of the three claims was verified by a non-author on its own substance yet (the round's closure is the non-author check).
+
+### Round 42 capability rows (appended)
+
+| name | what it can now do | evidence pointer | first-working round |
+|---|---|---|---|
+| declared-evidence register | account for every unresolvable declared-evidence token of a self-assessment file at a base revision by fixed derivation rules and fail a SCORECARD append that adds a new mismatch or rewrites a base line | `census/round-42/records/c1-after.txt` | r42 |
+| freeze-check self-test | build synthetic repositories and exercise the freeze checker's own digest, freeze-detection and ancestry logic, exiting non-zero when any is patched at runtime | `census/round-42/records/c2-after.txt` | r42 |
+| condition-level drift battery | observe thirteen single-defect condition mutants of the drift tool that no earlier fixture kills, while killing none of six behaviour-equivalent mutants | `census/round-42/records/c3-after.txt` | r42 |
+
+### Planned (appended at round 42)
+
+- **r43:** calibration: a counter that reads correction prose and rejects fenced, duplicate and retracting lines (the r41 plan sentence, N1-N4, not done in r42), plus the r42 C1 counter's own defects (blank-line sentinel, `> 840` threshold, extra register rows, tilde and four-backtick fences); operability: the hidden-case audit as a frozen leg and the C2 expectation readings (first-wins duplicate key, malformed heading closing a block, a missing `Round:` line, dispatch names at depth); coverage: R39-D1/D2 receipts, N10 (`--json` leaf-symlink tool defect) and a fixture that forwards the tool's traceback without a false red (N-C3b). Certification OFF, K5 HELD.
