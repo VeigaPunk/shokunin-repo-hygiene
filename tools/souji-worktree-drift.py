@@ -57,6 +57,7 @@ refusal class the code can raise is named here (r38 C2, r37 routed defect 6):
   JSON-NOT-REGULAR       the --json target exists and is not a regular file
                          (a FIFO would block a blocking open forever)
   JSON-HARDLINKED        the --json target has more than one link
+  JSON-TARGET-SYMLINK    the final --json path component is a symlink
   JSON-UNWRITABLE        the --json write failed (including a symlinked path
                          component, refused by the O_NOFOLLOW walk)
   USAGE                  --root is not a directory, or --timeout < 1
@@ -318,12 +319,23 @@ def run(args):
                 measured.append(gitdir)
     json_target = None
     if args.json:
+        # r44 cutover (r43 M43-2/N10 contract): a `--json` leaf symlink is
+        # refused outright (JSON-TARGET-SYMLINK) instead of resolved-and-written;
+        # the leaf component is lstat-checked before any realpath so a dangling
+        # link is refused identically. Parent components still resolve (r37 A2).
+        json_path = os.path.abspath(args.json)
+        try:
+            json_st = os.lstat(json_path)
+        except FileNotFoundError:
+            json_st = None
+        if json_st is not None and stat.S_ISLNK(json_st.st_mode):
+            raise Refusal("JSON-TARGET-SYMLINK: %s names a symlink" % json_path)
         # r36 A2 + r37 C2 (W1/W4): the guard resolved one path while the writer
         # opened another, and it compared only the root — not the record's
         # repositories. Check every measured path, then write the resolved path
         # with every component opened O_NOFOLLOW (open_nofollow); a leaf or
         # ancestor symlink cannot redirect it, and a multi-link fd is refused.
-        json_target = os.path.realpath(os.path.abspath(args.json))
+        json_target = os.path.realpath(json_path)
         # r38 C2 (r37 named limit: `--record X --json X` overwrote the record when
         # the record lay outside --root): the output must not be the input. Resolved
         # path equality and inode identity both refuse, so a hardlink alias is

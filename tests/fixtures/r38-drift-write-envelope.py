@@ -23,7 +23,8 @@ Cases (each builds its own synthetic fleet under `--work`):
   json-written-regular     a regular `--json` outside every measured tree is written
   json-inside-tree         a `--json` inside `--root` is refused (regression)
   json-hardlinked          an existing multi-link `--json` is refused (regression)
-  json-symlink-resolved    a `--json` leaf symlink is written at its resolved path
+  json-symlink-refused     a `--json` leaf symlink is refused (r44 cutover;
+                           supersedes r38's json-symlink-resolved)
   json-directory           a `--json` naming a directory is refused
   record-outside-root      a record row escaping `--root` is refused (regression)
   summary-still-exact      the plain run still prints its SUMMARY line
@@ -33,8 +34,9 @@ CLI:
       [--base-tool PATH] [--work DIR]
 
 `--base-tool` scores the same cases against another tool blob and prints the
-`base_fail=` arm; the base tool is expected to fail at least the three cases the
-round repairs.
+`base_fail=` arm; the base tool is expected to fail at least the four cases the
+rounds repair (the r38 three plus json-symlink-refused, behavioural under the
+r44 leaf-symlink refusal contract).
 
 Exit: 0 every case passed, 1 otherwise, 2 usage.
 """
@@ -237,17 +239,21 @@ def run_cases(tool, work):
         check("json-hardlinked", (not hung) and rc == 2 and has_token(out, "JSON-HARDLINKED"),
               "rc=%r out=%r" % (rc, out.splitlines()[:2]), results)
 
-        # json-symlink-resolved: the documented contract is "written on the resolved
-        # path", so a leaf symlink is followed by realpath and the JSON lands at the
-        # resolved target -- the case asserts that contract, not a refusal.
+        # json-symlink-refused (r44 cutover): the leaf-symlink contract is
+        # refusal (JSON-TARGET-SYMLINK), superseding the r38 "written on the
+        # resolved path" contract. Neither the link path nor its target may
+        # receive the JSON, and a dangling link is refused identically.
         root, path, rec = fleet(scratch, "symlink")
         target = os.path.join(scratch, "symlink-out")
         resolved = os.path.join(scratch, "symlink-target.json")
         os.symlink(resolved, target)
         rc, out, elapsed, hung = invoke(tool, path, rec, ["--json", target])
-        check("json-symlink-resolved", (not hung) and rc == 0 and os.path.isfile(resolved)
-              and not os.path.islink(resolved),
-              "rc=%r resolved_written=%s" % (rc, os.path.isfile(resolved)), results)
+        check("json-symlink-refused", (not hung) and rc == 2
+              and has_token(out, "JSON-TARGET-SYMLINK")
+              and not os.path.isfile(resolved) and not os.path.exists(target)
+              and os.path.islink(target),
+              "rc=%r resolved_written=%s exists=%s" % (rc, os.path.isfile(resolved),
+                                                       os.path.exists(target)), results)
 
         # json-directory
         root, path, rec = fleet(scratch, "directory")
@@ -301,10 +307,13 @@ def main(argv):
             if not ok:
                 print("base-%s=FAIL%s" % (name, " " + detail))
         # r38 A3 (wave-1 seat W1CritC2): base_fail alone does not say whether the base failed
-        # behaviourally or only on a class name. These three cases are behavioural by
-        # construction (a hang, a destroyed input, a missing documentation token); the other
-        # base failures at ca4369a are class-name differences on behaviour the base already had.
-        behavioural = {"fifo-json-refused", "record-alias-refused", "docstring-enum"}
+        # behaviourally or only on a class name. These cases are behavioural by
+        # construction (a hang, a destroyed input, a missing documentation token, and —
+        # under the r44 leaf-symlink refusal contract — a resolved-and-written link the
+        # contract now refuses); the other base failures at ca4369a are class-name
+        # differences on behaviour the base already had.
+        behavioural = {"fifo-json-refused", "record-alias-refused", "docstring-enum",
+                       "json-symlink-refused"}
         b_fail = sorted(name for name, ok, _ in base if not ok and name in behavioural)
         print("BASE-BEHAVIORAL failed=%d cases=%s" % (len(b_fail), ",".join(b_fail)))
         line += " base_cases=%d base_fail=%d behavioral_fail=%d" % (len(base), base_fail, len(b_fail))
