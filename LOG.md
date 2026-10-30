@@ -1964,3 +1964,34 @@ R39-REG-11 — `cases=7` in `census/round-39/records/c3-after.txt`, receipt comm
 - Required fleet misroot sweep found no souji-owned untracked file: operator `.scratch` and mori-r61 coverage files left untouched (`records/wave-summary.json`). Cross-lane mechanisms were documented, not absorbed (three connector reports). Report follows after final lane push verification.
 
 - Round-43 landing correction: committed capture verification at `db1f1e89738cabd30276dd46acf4ac3860a44718` read records=228 failed=2 (exit 4): the directory helper omitted two connector evidence files over 1 MiB. They are explicitly named in the corrective helper commit; source/manifest bytes unchanged (lesson M43-3, `census/round-43/records/capture-committed-red.txt`).
+
+## 2026-10-30 — Round 44 attempt 2: inherited contracts, honest registration miss
+
+- Reused inherited instrument/cutover commits `4641e14671e60bf6cdc62ba8045c02a387a0d72c`
+  and `6538a1538102b8b2e82311044681de005441c53b`. Formal preregistration landed at
+  `d314fd6e85d62565344fa6c4b102f52f62297884` before w1.ready; freeze checker
+  `claims=3 findings=0` (`census/round-44/records/freeze.txt`). No inherited
+  implementation is recast as post-freeze discovery.
+- C1 calibration registration, C2 operational oracle repair, C3 coverage of
+  leaf-symlink refusal are the three distinct-axis claims. All frozen instruments,
+  populations and targets remain unchanged after scoring.
+- Orchestrator WAVE-DONE received for one validated v2 wave of 66 seats;
+  `.ufo/waves/round-44/w1-results.json` and seat reports retain evidence.
+  L1 holds planner; no residual, replacement or direct task dispatch.
+- C1's 70 occurrences are already accounted for by r42 (Q76); reviewer61
+  re-derives 0 newly unaccounted facts. The emitted 66-key register is not a
+  calibration gain; critic45/46/47/48 identify incompatible key tuples and
+  the latent derivation lookup exception. Frozen target retained, honest red.
+- C2 repaired expected multisets and retained historical red; first counter
+  reaches its frozen target (`census/round-44/records/c2-first.txt`).
+  Mutationtester51's branching audit impersonator survives: no authenticated
+  execution or universal oracle correctness is inferred.
+- C3 reviewer57 found two unintended parent-path tracebacks. The tool now
+  retains JSON-UNWRITABLE for other lstat errors; identical extended fixture
+  reads 6/8 before and 8/8 after (`census/round-44/records/c3-parent-*.txt`).
+  This defensive output repair creates no removal/deletion authority.
+- Opened Python Counter source personally; S264 admitted for multiplicity,
+  S265 rejected as oracle authority. Gate quotations and mistakes in
+  `corpus/lessons/round-44.md`. Assimilation none; no Core promotion.
+- No installs, pacman transaction, credential operation or deletion. Numeric
+  scores unchanged; C1 miss prevents admission. Certification OFF, K5 HELD.

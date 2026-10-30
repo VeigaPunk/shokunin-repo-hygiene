@@ -328,6 +328,8 @@ def run(args):
             json_st = os.lstat(json_path)
         except FileNotFoundError:
             json_st = None
+        except OSError as exc:
+            raise Refusal("JSON-UNWRITABLE: %s" % exc) from exc
         if json_st is not None and stat.S_ISLNK(json_st.st_mode):
             raise Refusal("JSON-TARGET-SYMLINK: %s names a symlink" % json_path)
         # r36 A2 + r37 C2 (W1/W4): the guard resolved one path while the writer

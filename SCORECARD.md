@@ -901,3 +901,33 @@ verification is not supplied by lane seats. Certification OFF, K5 HELD, NAMESPAC
 - Calibration: resolve remaining S259 discovery-channel overstatement using the primary cmdline source and a scoped correction; retain historical append-only records.
 - Operability: a newly frozen hidden-audit version must expand class multiplicities and account for post-freeze preregistration edits before any scoring.
 - Coverage: explicitly decide the leaf-symlink contract, updating its legacy consumer and new fixture together under a new freeze; do not reinterpret this round's missed target.
+
+### Round 44 frozen attribution and admission limits
+
+Base `55d7af6f5a22340f7a3de1c386e514ababfaa75f`; formal freeze
+`d314fd6e85d62565344fa6c4b102f52f62297884`, before ready handoff. Inherited
+implementation commits precede that formal freeze, as disclosed in the lesson.
+Counter commands are `python3 -B census/round-44/c1-counter.py --root LANE --rev FULL40 --scratch DIR`,
+with `c2-counter.py` and `c3-counter.py` substituted for the other claims.
+
+- C1 calibration: before missing=70 means missing r44-format registrations, not
+  outstanding factual corrections. The Q76 audit finds 70/70 already accounted
+  for, 0 newly unaccounted self-assessment mismatches (`.ufo/waves/round-44/w1/S44reviewer61/report.md`).
+  A natural 66-key register stays red because tuple identities disagree in the
+  frozen counter; target unmet. No new calibration score or capability claimed.
+- C2 operability: repaired hidden oracle 10/10 at freeze, retention preserves the
+  old oracle's red; exact first reading in `census/round-44/records/c2-first.txt`.
+  This is an oracle repair over unchanged production checker behavior, not a
+  new checker capability. Source S264 grounds multiplicity, not oracle truth.
+  A size-branching fake audit survives the counter; substance reviews are
+  separate evidence, never authentication.
+- C3 coverage: joint leaf-symlink cutover and r38 consumer were inherited.
+  The finite target covers five prior fixture invocations, not every historical
+  suite. Reviewer-found parent-path traceback regressions were repaired;
+  `census/round-44/records/c3-parent-before.txt` is 6/8 red and
+  `census/round-44/records/c3-parent-after.txt` is 8/8 green.
+
+Scores remain calibration 7, operability 8, coverage 8; delta 0, no reproducible
+0–10 mapping. No capability row is entered on these limited results. C1's frozen
+miss bars whole-round admission; do not relax its target or repair its counter
+after scoring. Certification OFF, K5 HELD, NAMESPACE hold unchanged.

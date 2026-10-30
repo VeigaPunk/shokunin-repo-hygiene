@@ -836,3 +836,17 @@ a measured edge class does not promote a frontier ground to Core (PROVINCE
 - Final source addendum: S263 grounds PYTHONPATH discovery independently of S259's import fact.
   The final census is 187 rows, W04=54, exit 0 (`../census/round-43/records/census-final.txt`);
   the 186-row reading above is intermediate.
+
+## Round 44 bounded contract update
+
+- Supersedes the round-43 “older symlink-resolution behavior remains current”
+  sentence above: the drift tool now refuses a symlink output leaf, including
+  dangling links; its r38 consumer changed jointly. Parent-symlink outputs still
+  resolve; inaccessible parents retain structured JSON-UNWRITABLE refusal.
+  No deletion authorization, race-proof containment or new receipt class follows.
+- `lessons/round-44.md` records the sourced oracle repair (S264), rejected oracle
+  authority inference (S265), frozen C1 target miss and wave-derived limitations.
+  No knowledge entry or new Core ground is added; C1 re-registers previously
+  accounted-for historical tokens, not 70 newly corrected facts.
+- R43 operator-disposition request for the symlink contract remains open.
+  Certification OFF, K5 HELD, NAMESPACE hold unchanged; assimilation none.

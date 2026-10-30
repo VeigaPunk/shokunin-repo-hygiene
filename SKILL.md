@@ -473,3 +473,25 @@ compares the Control and preregistration blobs. `--selftest` includes the r43 ca
 These are the lane's own hygiene-evidence checks, not fleet dispatch authority or deletion
 certification. The r43 frozen hidden audit has two oracle defects (lesson M43-1); no passing
 whole-claim verdict is inferred from the repaired tool's newtable=9/9 or self-test alone.
+
+## Round 44 defensive output and audit contracts
+
+The drift census now refuses a `--json` final-component symlink with
+`JSON-TARGET-SYMLINK` before resolving it, including dangling links. A symlinked
+parent still resolves; parent traversal errors retain `JSON-UNWRITABLE`, not
+tracebacks. This caller-output restriction is not preservation proof or deletion
+authority. The r38 consumer was cut over jointly; the r43 failed target remains
+historical. Certification OFF, K5 HELD and NAMESPACE hold are unchanged.
+
+| name | kind | entry command | verdict map | self-test | pinned-value path | write scope | owner |
+|---|---|---|---|---|---|---|---|
+| leaf-symlink refusal battery | gate | `python3 -B tests/fixtures/r44-drift-symlink-refusal.py --tool tools/souji-worktree-drift.py --work DIR` | 0 clean; 1 failed; 2 could-not-evaluate | entry command constructs isolated fixtures, including positive outputs and parent-error cases | `census/round-44/c3-surface.tsv`; assertions in fixture | explicit scratch DIR only | souji |
+| repaired hidden audit | gate | `python3 -B census/round-44/c2-hidden-audit.py --tool tools/souji-freeze-check.py --work DIR` | 0 clean; 1 failed; 2 could-not-evaluate | isolated ten-scenario audit; controls through frozen C2 counter | `census/round-44/c2-scenarios.tsv` | explicit scratch DIR only | souji |
+
+The repaired audit retains repeated finding-class multiplicities and the
+post-freeze FROZEN-EDITED expectation (S264; round-44 lesson). Its fixed-case
+output is not execution authentication: the wave's size-branching memorizer
+survives the counter. C1's new registration counter has incompatible internal
+key tuples and cannot establish token-binding success; do not treat its
+`corrections=66` display as accepted corrections. See the round-44 lesson and
+the frozen red receipts before reusing either instrument.

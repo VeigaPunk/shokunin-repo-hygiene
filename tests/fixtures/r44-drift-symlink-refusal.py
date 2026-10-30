@@ -176,6 +176,23 @@ def run_cases(tool, work):
         check("parent-symlink-ok",
               (not hung) and rc in (0, 1) and os.path.isfile(os.path.join(realdir, "out.json")),
               "rc=%r written=%s" % (rc, os.path.isfile(os.path.join(realdir, "out.json"))), results)
+
+        # Parent traversal failures retain the structured output-refusal map.
+        for kind in ("file", "loop"):
+            root, path, rec = fleet(scratch, "bad-parent-" + kind)
+            parent = os.path.join(root, "bad")
+            if kind == "file":
+                write(parent, "keep\n")
+            else:
+                os.symlink(parent, parent)
+            rc, out, elapsed, hung = invoke(
+                tool, path, rec, ["--json", os.path.join(parent, "out.json")])
+            preserved = (os.path.islink(parent) if kind == "loop"
+                         else open(parent, encoding="utf-8").read() == "keep\n")
+            check("parent-" + kind + "-refused",
+                  not hung and rc == 2 and has_token(out, "JSON-UNWRITABLE")
+                  and "Traceback" not in out and preserved,
+                  "rc=%r out=%r" % (rc, out.splitlines()[:2]), results)
     finally:
         shutil.rmtree(scratch, ignore_errors=True)
     return results
