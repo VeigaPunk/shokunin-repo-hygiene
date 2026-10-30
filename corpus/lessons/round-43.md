@@ -113,3 +113,12 @@ Cross-domain scan (`waves/w1/R43connector01.md`, `R43connectorA.md`, `R43connect
 adjacent freeze-check, correction-reader and symlink mechanisms, not a proven ownership
 collision. Chousa's research/evidence checker, kaidoku's replacement policy and kumitate's
 input-link policies are not unified with souji's output-leaf hygiene contract.
+
+### M43-3 — capture on disk is not committed capture
+
+Class landing; captured-by the evidence-capture committed-revision verifier. The directory commit
+at `db1f1e89738cabd30276dd46acf4ac3860a44718` skipped two new files over 1 MiB, so its manifest
+verified on disk but `--verify --rev` read records=228 failed=2, exit 4
+(`census/round-43/records/capture-committed-red.txt`). Fix: explicitly name the two existing
+connector evidence files in the helper commit, without altering either file or manifest.
+The red committed-tree reading is the failability proof, not a disk-only assertion.
