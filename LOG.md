@@ -1995,3 +1995,25 @@ R39-REG-11 — `cases=7` in `census/round-39/records/c3-after.txt`, receipt comm
   `corpus/lessons/round-44.md`. Assimilation none; no Core promotion.
 - No installs, pacman transaction, credential operation or deletion. Numeric
   scores unchanged; C1 miss prevents admission. Certification OFF, K5 HELD.
+
+### Round 44 durable measurements and criteria
+
+- Integration `395552194348873622b39651c971fa909af0d939`: C2 and C3 frozen
+  targets met, both exit 0 (`census/round-44/records/c2-after.txt`,
+  `census/round-44/records/c3-after.txt`). C3 legacy 12/12 and prior5/5
+  are finite fixture coverage, not every historical consumer.
+- Capture `c14d20a679bf8edd6dd796c303272f7f14da4145`: ignored wave source
+  durably copied to `census/round-44/waves/`; committed capture 405 records,
+  failed0/uncovered0. Six dead provider seats' exact errors and answering
+  models retained in `census/round-44/records/seat-terminal-errors.json`
+  and `seat-models.json`; no replacements.
+- C1 at that capture commit remains honest red, registered0/missing70,
+  new_mismatches0 (`census/round-44/records/c1-final.txt`), not a target
+  relaxation. Three temporary SCORECARD pointer mistakes in the integration
+  were corrected before this measurement; capture resolves the ignored path.
+- Q107/Q108 convert reproduced parent-error and frozen-counter feasibility
+  mistakes into admission criteria (`corpus/lessons/round-44.md`).
+- Sources187→189, source-census exit0 at both ends, no knowledge/Core growth.
+  Fleet misroot sweep leaves unrelated operator state and daemon error log
+  untouched. The L0 symlink-contract disposition remains open; technical
+  cutover success is not operator approval. Whole-round admission blocked.

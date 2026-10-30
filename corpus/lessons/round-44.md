@@ -151,3 +151,39 @@ historical and are not used as new coverage evidence; no old frozen target is
 rewritten. Routed 5: joint defensive contract cutover technically implemented;
 operator disposition remains open. Routed 6: preregistration precedes ready
 this time. Routed 7: no previously denied provider seat was bypassed.
+
+## Durable settlement and final measurements
+
+The ignored `.ufo/waves/round-44/` source is captured byte-exact into
+`census/round-44/waves/`; every wave pointer above resolves there by replacing
+that prefix. Capture reports 405 records, no renames/exclusions/symlinks;
+committed verification at `c14d20a679bf8edd6dd796c303272f7f14da4145` reports
+failed=0 uncovered=0 (`census/round-44/records/capture-committed.txt`).
+The initial integration commit did not include ignored wave files; durable
+capture fixed that before the report. Three temporary new SCORECARD pointer
+mismatches were corrected before final measurement; C1 new_mismatches=0.
+
+Actual targets: C1 remains red, registered=0 missing=70; C2 target met; C3
+technical target met with prior=5/5. Measured commits and exact commands are
+in SCORECARD's Round 44 committed measurements and `records/c1-final.txt`,
+`records/c2-after.txt`, `records/c3-after.txt` under `census/round-44/`.
+No target changed after scoring. No whole-round admission claimed.
+
+Six terminal errors are retained exactly in
+`census/round-44/records/seat-terminal-errors.json`: critics41–44 hit MiniMax
+Token Plan limits, mutationtester53 ended on Devin permission_denied after
+provider-rate-limit fallback, scribe64 hit Cursor USAGE_PRICING_REQUIRED.
+They supply no verification and were not replaced. Actual answering models
+are in `census/round-44/records/seat-models.json`, not inferred from labels.
+
+Source census rows 187→189, A178→180/B6/C3 unchanged, mined156→157,
+queued14 unchanged/rejected17→18 (`census/round-44/records/source-counts.json`).
+Both source-census commands exit 0, complete outputs in before/after receipts.
+Q107 and Q108 are grounded in the reproduced parent-error and honest-register
+failures above. No knowledge entry or frontier ground is promoted. Outside
+spot-check remains pending, so no new outside discernment verdict is asserted.
+
+Fleet misroot sweep found only operator run-state modification and unrelated
+`rerun-daemons.log` (“command not found: ./rerun-daemons.sh”); neither names
+this wave or was written by its seats. Both left untouched. Full sweep:
+`census/round-44/records/fleet-misroot-sweep.txt`.

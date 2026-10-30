@@ -931,3 +931,27 @@ Scores remain calibration 7, operability 8, coverage 8; delta 0, no reproducible
 0–10 mapping. No capability row is entered on these limited results. C1's frozen
 miss bars whole-round admission; do not relax its target or repair its counter
 after scoring. Certification OFF, K5 HELD, NAMESPACE hold unchanged.
+
+### Round 44 committed measurements
+
+| claim | before | after | measured commit | evidence |
+|---|---|---|---|---|
+| C1 calibration registration | missing=70, lesson absent, exit 1 at formal freeze | population=70 corrections=66 registered=0 missing=70 new_mismatches=0, exit 1; target unmet, already-accounted population | `c14d20a679bf8edd6dd796c303272f7f14da4145` | `census/round-44/records/c1-final.txt`; before `census/round-44/records/c1-before.txt` |
+| C2 operability oracle repair | historical r43 audit 8/10, exit 1; distinct oracle baseline | population=ok retention=ok hidden_v2=10/10 clean_stub=REJECTED findings_stub=REJECTED controls_ran=ok selftest=ok tmpdir=ok, exit 0 | `395552194348873622b39651c971fa909af0d939` | `census/round-44/records/c2-after.txt`; control `census/round-44/controls/c2-donothing.txt` |
+| C3 defensive coverage cutover | surface=RED tool_class=RED legacy_case=RED battery=RED, exit 1 at base | surface=ok tool_class=ok legacy=ok legacy_case=ok legacy_base=ok battery=ok both stubs REJECTED prior=5/5, exit 0; operator provenance open | `395552194348873622b39651c971fa909af0d939` | `census/round-44/records/c3-after.txt`; base `census/round-44/waves/w1/S44executor65/missing-fixture.stdout.txt` |
+
+Commands are the three explicit round-44 counter commands above; `--rev` is
+the measured commit and `--scratch` an explicit private directory. Source census
+exit 0 before/after: `census/round-44/records/census-before.txt`,
+`census/round-44/records/census-after.txt`. Captured wave evidence verifies
+405 records, failed=0 uncovered=0 at the C1 measured commit
+(`census/round-44/records/capture-committed.txt`).
+
+### Planned (appended at round 44)
+
+- Calibration: a newly frozen feasible honest-register counter with consistent
+  tuple identities and a Q76-honouring population; do not double-credit r42.
+- Operability: execution-bound audit attribution and a non-memorizer substance
+  check; fixed output alone remains insufficient.
+- Coverage: preserve the finite five-suite scope and route the operator's
+  symlink-contract disposition without treating technical green as approval.
