@@ -36,8 +36,9 @@ visible cases from their preregistration bytes and must FAIL the hidden audit.
 
 Legs over the lane's committed bytes at --rev:
   newtable     the nine frozen cases on the candidate (all pass required)
-  r42table     census/round-42/c2-counter.py over a clone of the lane at the r42 freeze revision
-               (frozen constant R42_FREEZE) with the candidate swapped in: 37/37 and every leg the
+  r42table     census/round-42/c2-counter.py over a clone of the lane at the r42 measured tip
+               (frozen constant R42_TIP, where the landed r42 tool reads 37/37) with the
+               candidate swapped in: 37/37 and every leg the
                r42 counter declares must still read green (behaviour retention)
   hidden       census/round-43/c2-hidden-audit.py over the candidate: all held-out scenarios pass
   hidden_ctrl  the memorizer stub must FAIL the hidden audit
@@ -66,7 +67,7 @@ TABLE = "census/round-43/c2-cases.tsv"
 HIDDEN_AUDIT = "census/round-43/c2-hidden-audit.py"
 PREREG_PATH = "census/round-43/preregistration.txt"
 R42_COUNTER = "census/round-42/c2-counter.py"
-R42_FREEZE = "afe17f416eec04dcf3f480b580a8f928de61d19d"
+R42_TIP = "34343a39ffab8029b06e8e6c9ac699ebcbd65f8a"
 GIT_ENV = {"LC_ALL": "C", "GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": os.devnull,
            "GIT_CONFIG_SYSTEM": os.devnull, "GIT_TERMINAL_PROMPT": "0",
            "GIT_AUTHOR_NAME": "fixture", "GIT_AUTHOR_EMAIL": "fixture@example.invalid",
@@ -350,15 +351,16 @@ def main(argv):
     # r42 table leg
     r42_ok = False
     r42_detail = "clone-failed"
-    clone = clone_at(root, R42_FREEZE, work, "r42freeze")
+    clone = clone_at(root, R42_TIP, work, "r42tip")
     if clone:
         dest = os.path.join(clone, TOOL_PATH)
         if not os.path.islink(dest):
             with open(dest, "wb") as fh:
                 fh.write(tool_b)
             git(clone, work, "add", "-A")
-            git(clone, work, "commit", "-qm", "candidate tool")
+            git(clone, work, "commit", "-q", "--allow-empty", "-m", "candidate tool")
             ctip = git(clone, work, "rev-parse", "HEAD")
+            os.makedirs(os.path.join(work, "r42scratch"), exist_ok=True)
             p, to = run_script([sys.executable, "-B", os.path.join(clone, R42_COUNTER),
                                 "--root", clone, "--rev", ctip,
                                 "--scratch", os.path.join(work, "r42scratch")],

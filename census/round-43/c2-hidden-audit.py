@@ -48,7 +48,7 @@ def build(work, name, round_line="Round: 1729", tail="", control_symlink=None, b
           crlf=False):
     d = os.path.join(work, name)
     os.makedirs(d)
-    git(d, work, "init", "-q", "-b", "main", d)
+    git(d, work, "init", "-q", "-b", "main")
 
     def write(rel, data):
         full = os.path.join(d, rel)
@@ -85,7 +85,7 @@ def build(work, name, round_line="Round: 1729", tail="", control_symlink=None, b
         write("census/control.txt", CONTROL_RED)
     write("prereg.txt", text.replace("\n", "\r\n") if crlf else text)
     commit("freeze")
-    return d, git(d, "rev-parse", "HEAD")
+    return d, git(d, work, "rev-parse", "HEAD")
 
 
 def run(tool, args, cwd, work):

@@ -106,14 +106,16 @@ CASES = (
     ("blankless-good-append", GOOD43, "\n".join(HONEST42), "", "",
      "see `tools/souji-verify.sh` for the verdict tool.\n",
      [g43("blankless", 0, new_mismatches=0),
-      g42("blankless", 1, rewritten=1, new_mismatches=0)]),
+      g42("blankless", 1, rewritten=1, new_mismatches=0)],
+     "34e33a662cd0d6931e5aa006bd90364e7852c0d5"),
     ("boundary-mismatch", GOOD43, "\n".join(HONEST42), "", "",
      "see `census/round-43/definitely-absent-receipt.txt` for the count.\n",
      [g43("boundary", 1, new_mismatches=1),
-      g42("boundary", 1, rewritten=1, new_mismatches=0)]),
+      g42("boundary", 1, rewritten=1, new_mismatches=0)],
+     "34e33a662cd0d6931e5aa006bd90364e7852c0d5"),
     ("crlf-register", GOOD43, "\n".join(HONEST42), "CRLF", "", "",
      [g43("crlf", 0, required=3, registered=3, missing=0, junk=0, rederived=3),
-      g42("crlf", 1, class_ok=69)]),
+      g42("crlf", 0, class_ok=70, junk=0)]),
 )
 
 
@@ -140,6 +142,7 @@ def commit_clone(d, msg):
 
 
 def run_counter(path, d, rev, scratchdir):
+    os.makedirs(scratchdir, exist_ok=True)
     try:
         p = subprocess.run([sys.executable, "-B", path, "--root", d, "--rev", rev,
                             "--scratch", scratchdir], stdout=subprocess.PIPE,
@@ -167,10 +170,12 @@ def main(argv):
         ns.rev43 = subprocess.run(["git", "-C", lane, "rev-parse", "refs/heads/master"],
                                   stdout=subprocess.PIPE).stdout.decode().strip()
     p43n = p43p = p42n = p42p = 0
-    for (name, lesson43, lesson42, reg43, reg42, sc_append, expects) in CASES:
+    for case_row in CASES:
+        (name, lesson43, lesson42, reg43, reg42, sc_append, expects) = case_row[:7]
+        rev42_case = case_row[7] if len(case_row) > 7 else None
         outs = {}
         for tag, rev, lesson_path, lesson_text, reg_path, reg_text in (
-                ("r42", ns.rev42, "corpus/lessons/round-42.md", lesson42,
+                ("r42", rev42_case or ns.rev42, "corpus/lessons/round-42.md", lesson42,
                  "census/round-42/c1-register.tsv", reg42),
                 ("r43", ns.rev43, "corpus/lessons/round-43.md", lesson43,
                  "census/round-43/c1-required.tsv", reg43)):
@@ -211,8 +216,8 @@ def main(argv):
                 outs[tag] = None
                 continue
             keys = R42_KEYS if tag == "r42" else R43_KEYS
-            fields = dict(zip(keys, (x if k == "population" else int(x))
-                              for k, x in zip(keys, m.groups())))
+            pairs = [(k, (x if k == "population" else int(x))) for k, x in zip(keys, m.groups())]
+            fields = dict(pairs)
             outs[tag] = (p.returncode, fields, out)
         for (cid, tag, rc, want) in expects:
             got = outs.get(tag)
