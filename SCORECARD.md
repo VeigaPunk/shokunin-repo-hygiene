@@ -955,3 +955,34 @@ exit 0 before/after: `census/round-44/records/census-before.txt`,
   check; fixed output alone remains insufficient.
 - Coverage: preserve the finite five-suite scope and route the operator's
   symlink-contract disposition without treating technical green as approval.
+
+### Round 45 bounded measurement repair
+
+One declared claim C1, calibration capability: feasible historical register verification.
+Freeze and measured instrument revision `019bccc9ac97f3cec1a1dea574cc2f81f57fc967`.
+The old counter on base `ddccb2000e9d6e7963da723cc0548750bb0d6c15` reads
+registered=0, missing=70, instrument_mismatches=66, exit 1
+(`census/round-45/controls/before.txt`). The new instrument reads population=70,
+unique=66, registered=66, missing=0, derived_mismatches=0, historical_credit=0,
+exit 0 (`census/round-45/records/c1-after.txt`). This compares different instruments,
+not a before/after reduction in false historical beliefs. Numeric delta 0;
+calibration 7, operability 8, coverage 8 unchanged. Axis-fit admission remains
+the independent closure's decision; no new factual correction credit asserted.
+
+Counting command: `python3 -B census/round-45/c1-counter.py --root LANE --rev FULL40 --scratch EXTERNAL_DIR`.
+External discrimination: `python3 -B tests/fixtures/r45-register-feasibility.py --root LANE --rev FULL40 --scratch EXTERNAL_DIR`
+reads cases=12 pass=12 fail=0 (`census/round-45/records/fixture-after.txt`).
+Honest pre-freeze register passes three times; a single false token reads
+derived_mismatches=1, missing=0, exit 1 (`census/round-45/controls/wrong.txt`).
+The already-accounted 70 occurrences are not re-credited (Q76).
+
+| name | what it can now do | evidence pointer | first-working round |
+|---|---|---|---|
+| feasible historical register verification | re-derive the filed 66-key R44 register against declared historical blobs using consistent identities, with single-wrong-token discrimination; no historical correction or execution credit | census/round-45/records/c1-after.txt; census/round-45/records/fixture-after.txt; command above | r45 |
+
+### Planned after round 45
+
+- Retain independent closure's axis-fit decision. Execution-bound audit attribution
+  remains open; it was not declared as a second claim. The operator symlink-contract
+  disposition remains open. Do not enlarge the historical five-suite scope or infer
+  approval from technical green. Certification OFF, K5 HELD, NAMESPACE unchanged.

@@ -19,3 +19,30 @@ The before arm is the immutable R44 counter, which accepts zero occurrences of t
 ## Scope and routed items
 
 R44 routed item 1 addressed by the new instrument, not a retrospective repair. R44 item 2 (execution-bound audit attribution) remains open and is not claimed here. R44 item 3 (operator symlink-contract disposition) remains open; technical green is not approval. Existing finite five-suite scope is preserved because production tools and prior fixtures are untouched. R44 item 4 SHONEN remains author assertions only. Certification OFF, K5 HELD, NAMESPACE and reap holds unchanged.
+
+## Receipt and quotation errata
+
+The Gate's parenthetical “15 words” is a counting error: the quoted fragment
+has nine whitespace-delimited words; its preceding context identifies tuples.
+Both fragment and complete contextual sentence remain below the 25-word limit.
+Count command: `len("and lists are compared lexicographically by comparing corresponding elements.".split())`.
+
+`census/round-45/records/census-before.txt` is NOT the successful round-start
+live gate: it is an auxiliary scratch --file replay that exited 1 because its
+used-by files had not been copied. It stays unchanged as failure evidence.
+The original live `sources-census.sh validate --root /home/vgpnk/Projects/shokunin souji`
+at round start printed `souji ok`, exit 0, with W04 warnings.
+The faithful independent baseline mirror replay, with actual committed used-by
+blobs copied too, exits 0: `census/round-45/records/census-before-mirror.txt`.
+The current live after gate exits 0: `census/round-45/records/census-after.txt`.
+Never quote the failed auxiliary replay as the successful live gate.
+
+| class | evidence | captured-by | fix |
+|---|---|---|---|
+| reference-drift / incomplete baseline mirror | census/round-45/records/census-before.txt, E11 and EXIT=1 | CORPUS used-by existence rule | Copy the actual base-revision used-by blobs alongside its registry; identical validator then EXIT=0 in census-before-mirror.txt. |
+
+Limits: basename/suffix derivation names declared referents, not runtime truth.
+The new counter has no authenticated-execution or universal adversarial-parser
+claim. Its discrimination is the finite external fixture, not a built-in
+self-invocation mode; that Gate-standard interface debt is explicit. No claim
+that outstanding historical factual mismatches decreased is made.

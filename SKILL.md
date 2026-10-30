@@ -495,3 +495,19 @@ survives the counter. C1's new registration counter has incompatible internal
 key tuples and cannot establish token-binding success; do not treat its
 `corrections=66` display as accepted corrections. See the round-44 lesson and
 the frozen red receipts before reusing either instrument.
+
+## Round 45 historical register verifier
+
+`python3 -B census/round-45/c1-counter.py --root LANE --rev FULL40 --scratch EXTERNAL_DIR`
+checks the filed R44 register using one `(line, token, class)` identity and derives
+referents from its declared historical revision. Exit 0 means the finite 66-key
+register agrees; 1 means findings; 2 means unavailable or malformed inputs.
+`--register-file` is a caller-owned discrimination fixture, not committed claim evidence.
+External fixture: `python3 -B tests/fixtures/r45-register-feasibility.py --root LANE --rev FULL40 --scratch EXTERNAL_DIR`.
+The R44 counter and its red verdict are unchanged. Historical factual credit is zero:
+this repairs measurement, not the already-accounted facts. It does not authenticate
+execution, prove universal correction-language coverage or authorize cleanup.
+
+| name | kind | entry command | verdict map | self-test | pinned-value path | write scope | owner |
+|---|---|---|---|---|---|---|---|
+| r45-register-verifier | gate | `python3 -B census/round-45/c1-counter.py --root LANE --rev FULL40 --scratch EXTERNAL_DIR` | 0 finite register agreement; 1 findings; 2 could-not-evaluate | external fixture command above; no built-in self-invocation, disclosed interface debt | census/round-45/preregistration.txt; immutable census/round-44/c1-population.tsv digest in code | committed git blobs read-only; temporary extracted instrument in caller scratch | souji |

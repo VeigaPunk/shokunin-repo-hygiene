@@ -2017,3 +2017,22 @@ R39-REG-11 — `cases=7` in `census/round-39/records/c3-after.txt`, receipt comm
   Fleet misroot sweep leaves unrelated operator state and daemon error log
   untouched. The L0 symlink-contract disposition remains open; technical
   cutover success is not operator approval. Whole-round admission blocked.
+
+## 2026-10-30 — Round 45: feasible historical register measurement
+
+- One declared calibration capability, frozen at `019bccc9ac97f3cec1a1dea574cc2f81f57fc967`.
+  It repairs verification of the existing R44 register, not historical facts:
+  Q76 correction credit remains zero. The R44 counter stays byte-identical and red
+  (`census/round-45/controls/before.txt`); new counter accepts 66 unique identities
+  spanning the same 70 occurrences (`census/round-45/records/c1-after.txt`).
+- Q108 feasibility before freeze: honest register three stable green runs,
+  single false token specifically derived_mismatches=1 with missing=0, and
+  external 12-case fixture green (`census/round-45/controls/feasibility.txt`).
+  Measurements are frozen-instrument readings, not authenticated execution.
+- S266 admits tuple-comparison semantics only; S267 rejects factual-authority
+  inference, both personally opened this round. Gate quotes and mistake repair
+  are in `corpus/lessons/round-45.md`. Prior C2 execution-attribution work remains
+  open and unclaimed; symlink-contract L0 disposition remains operator-owned.
+- No production receipt-tool changes, cleanup action, credential operation or
+  installs. Axis labels unchanged; capability acquisition does not imply a
+  numeric calibration gain or retrospective R44 admission.

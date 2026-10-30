@@ -850,3 +850,12 @@ a measured edge class does not promote a frontier ground to Core (PROVINCE
   accounted-for historical tokens, not 70 newly corrected facts.
 - R43 operator-disposition request for the symlink contract remains open.
   Certification OFF, K5 HELD, NAMESPACE hold unchanged; assimilation none.
+
+## Round 45 register measurement capability
+
+- `lessons/round-45.md` records S266 tuple identity and S267's rejected
+  factual-authority inference. `../census/round-45/c1-counter.py` measures
+  the filed historical register with consistent key order/arity.
+- This is a bounded instrument acquisition, not new historical correction
+  credit, new knowledge ground or Core promotion. R44's target stays red.
+  The audit-attribution and operator symlink-disposition items remain open.
