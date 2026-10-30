@@ -9,7 +9,7 @@ carry a `derived=` value that exactly equals the value this counter re-derives
 itself from committed bytes at --rev (r43 routed defect 1: "C1 counter does not
 compare its captured derived token").
 
-Derivation rules, all over committed bytes at --rev (the report tip):
+Derivation rules, all over committed bytes at BASE_REV (the population revision):
 
   class mismatch:path-absent (A)
       candidates = tracked files at --rev whose basename equals basename(token),
@@ -30,17 +30,16 @@ Derivation rules, all over committed bytes at --rev (the report tip):
 
 The instrument used for tip facts is tools/souji-declared-evidence.py run in
 blob mode at --rev (never the work tree). new_mismatches counts tip mismatch
-records whose (line, token, class) is absent from the pinned population — the
+records (measured at --rev) whose (line, token, class) is absent from the population — the
 round's own appends must not add stale pointers.
 
-Correction grammar (column-0 lines in corpus/lessons/round-44.md):
+Correction grammar (column-0 lines in corpus/lessons/round-44.md, read at --rev):
 
-  CORRECTION-R44 id=R44-NN file=SCORECARD.md line=<n> class=<c> stale=<token> derived=<v> rev=<full40> scope=<nonempty-token>[ capture=<path>][ register=<path>][ disposition=<token>]
+  CORRECTION-R44 id=R44-NN file=SCORECARD.md line=<n> class=<c> stale=<token> derived=<v> rev=BASE_REV scope=<nonempty-token>[ capture=<path>][ register=<path>][ disposition=<token>]
 
 Rules: id unique (R44-01 .. R44-NN, zero-padded 2+ digits); one correction per
 population row, matched by (line, class, stale); `derived` must equal the
-counter's re-derived value byte-for-byte (token binding); `rev` must be the
-full40 --rev; `scope` must be a nonempty single token (Q101 scope discipline);
+counter's re-derived value byte-for-byte (token binding); `rev` must be BASE_REV; `scope` must be a nonempty single token (Q101 scope discipline);
 `capture=`/`register=` paths, when present, must exist at --rev; lines inside
 markdown fences or with leading whitespace are fenced (rejected); a
 `RETRACTED-R44 id=...` line retracts its id (rejected while the id is still
@@ -62,6 +61,7 @@ import subprocess
 import sys
 
 POPULATION = "census/round-44/c1-population.tsv"
+BASE_REV = "55d7af6f5a22340f7a3de1c386e514ababfaa75f"  # population revision; derivations run here
 LESSON = "corpus/lessons/round-44.md"
 SCORECARD = "SCORECARD.md"
 INSTRUMENT = "tools/souji-declared-evidence.py"
@@ -82,7 +82,7 @@ def blob(root, rev, path):
 
 
 def tracked(root, rev):
-    p = subprocess.run(["git", "ls-tree", "-r", "--name-only", rev],
+    p = subprocess.run(["git", "-C", root, "ls-tree", "-r", "--name-only", rev],
                        stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                        env={"PATH": os.environ.get("PATH", "/usr/bin:/bin"),
                             "GIT_CONFIG_NOSYSTEM": "1", "LC_ALL": "C"})
@@ -172,17 +172,23 @@ def main(argv):
         if not rows:
             sys.stderr.write("REFUSAL POPULATION-EMPTY\n")
             return 2
-        rc, out = run_instrument(root, rev, scratch)
-        tip_rows = instrument_rows(out)
-        sc_b = blob(root, rev, SCORECARD)
+        # referents are derived at the population revision (BASE_REV), never at
+        # the report tip: a correction names rev=BASE_REV and must sit in a tree
+        # that is later than BASE_REV, so deriving at --rev would make the lesson
+        # name its own commit. The tip is measured separately for new mismatches.
+        rc0, base_out = run_instrument(root, BASE_REV, scratch)
+        base_rows = instrument_rows(base_out)
+        sc_b = blob(root, BASE_REV, SCORECARD)
         sc_lines = sc_b.decode("utf-8", "replace").splitlines() if sc_b else []
-        files = tracked(root, rev)
+        files = tracked(root, BASE_REV)
         if files is None:
             sys.stderr.write("REFUSAL LS-TREE-FAILED\n")
             return 2
+        tip_rc, tip_out = run_instrument(root, rev, scratch)
+        tip_rows = instrument_rows(tip_out)
         derived = {}
         for row in rows:
-            derived[row] = derive(row, tip_rows, sc_lines, files)
+            derived[row] = derive(row, base_rows, sc_lines, files)
         if ns.emit:
             seen = set()
             idx = 0
@@ -251,7 +257,7 @@ def main(argv):
             cid = cids[0]
             (sline, scls, stale, sderived, srev, sscope, extra) = corrections[cid]
             dval = derived[(key[0], key[1], key[2])]
-            ok = (sderived == dval and srev == rev and sscope)
+            ok = (sderived == dval and srev == BASE_REV and sscope)
             for _k, val in extra.items():
                 if val.startswith("multi:"):
                     continue
