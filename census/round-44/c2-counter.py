@@ -10,6 +10,9 @@ never read):
                 hidden=RED hidden_ctrl=REJECTED real=ok selftest=ok tmpdir=ok
                 control_clean=REJECTED control_findings=REJECTED` with exit 1
                 (the r43 audit is retained red, never appeased — Q106)
+  population    census/round-44/c2-scenarios.tsv holds exactly the audit's ten
+                frozen scenario rows (id, want exit, sorted want classes) and
+                matches the audit's SCENARIOS table (ids and counts)
   hidden_v2     census/round-44/c2-hidden-audit.py over the tool: scenarios=10
                 pass=10 fail=0, exit 0
   clean_stub    an always-clean stub (same bytes as the r43 counter's) over the
@@ -27,7 +30,7 @@ never read):
 CLI:
   python3 -B census/round-44/c2-counter.py --root LANE --rev FULL40 [--scratch DIR]
 Exit: 0 target met; 1 target unmet; 2 could-not-evaluate.
-Target: `SUMMARY tool=present retention=ok hidden_v2=10/10 clean_stub=REJECTED findings_stub=REJECTED controls_ran=ok selftest=ok tmpdir=ok`
+Target: `SUMMARY tool=present population=ok retention=ok hidden_v2=10/10 clean_stub=REJECTED findings_stub=REJECTED controls_ran=ok selftest=ok tmpdir=ok`
 """
 import argparse
 import hashlib
@@ -40,6 +43,7 @@ import sys
 FULL40 = re.compile(r"^[0-9a-f]{40}$")
 TOOL = "tools/souji-freeze-check.py"
 V2_AUDIT = "census/round-44/c2-hidden-audit.py"
+SCENARIOS_TSV = "census/round-44/c2-scenarios.tsv"
 R43_COUNTER = "census/round-43/c2-counter.py"
 RETENTION_FIELDS = {
     "newtable": "9/9", "r42table": "ok", "hidden": "RED",
@@ -125,6 +129,20 @@ def main(argv):
             aud = os.path.join(work, "v2audit.py")
             with open(aud, "wb") as fh:
                 fh.write(aud_b)
+        # population leg: the frozen scenario table matches the audit's table
+        pop_ok = False
+        pop_b = blob(root, rev, SCENARIOS_TSV)
+        aud_src = (aud_b or b"").decode("utf-8", "replace")
+        if pop_b and aud_b:
+            prows = [ln.split("\t") for ln in pop_b.decode("utf-8", "replace").splitlines()[1:] if ln.strip()]
+            ids_ok = all(('("%s"' % r[0]) in aud_src for r in prows)
+            exits_ok = all((", %d, " % int(r[1])) in aud_src for r in prows)
+            count_ok = len(re.findall(r'\("h\d+-[a-z0-9-]+", ', aud_src)) == 10
+            pop_ok = (len(prows) == 10
+                      and all(len(r) == 3 for r in prows)
+                      and len(set(r[0] for r in prows)) == 10
+                      and ids_ok and exits_ok and count_ok)
+        fields["population"] = "ok" if pop_ok else "RED"
         hv = None
         if aud and tool_b:
             hv = audit_verdict(run([sys.executable, "-B", aud, "--tool", tool,
@@ -168,14 +186,15 @@ def main(argv):
             tmp_ok = tm is not None and tm.returncode == 0
         fields["selftest"] = "ok" if st_ok else "RED"
         fields["tmpdir"] = "ok" if tmp_ok else "RED"
-        target = (fields["tool"] == "present" and fields["retention"] == "ok"
+        target = (fields["tool"] == "present" and fields.get("population") == "ok"
+                  and fields["retention"] == "ok"
                   and fields["hidden_v2"] == "10/10"
                   and stub_res["clean_stub"] and stub_res["findings_stub"]
                   and ran_ok and st_ok and tmp_ok)
-        print("SUMMARY tool=%s retention=%s hidden_v2=%s clean_stub=%s "
-              "findings_stub=%s controls_ran=%s selftest=%s tmpdir=%s"
-              % (fields["tool"], fields["retention"], fields["hidden_v2"],
-                 fields["clean_stub"], fields["findings_stub"],
+        print("SUMMARY tool=%s population=%s retention=%s hidden_v2=%s "
+              "clean_stub=%s findings_stub=%s controls_ran=%s selftest=%s tmpdir=%s"
+              % (fields["tool"], fields.get("population"), fields["retention"],
+                 fields["hidden_v2"], fields["clean_stub"], fields["findings_stub"],
                  fields["controls_ran"], fields["selftest"], fields["tmpdir"]))
         if fields["tool"] != "present" or aud is None:
             return 2 if (aud is None and tool_b) else 1

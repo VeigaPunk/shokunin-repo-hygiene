@@ -40,7 +40,8 @@ Legs:
 
 CLI:
   python3 -B census/round-44/c3-counter.py --root LANE --rev FULL40 [--scratch DIR]
-Exit: 0 target met; 1 target unmet; 2 could-not-evaluate.
+Exit: 0 target met; 1 target unmet (including instruments absent at --rev,
+as at the do-nothing base); 2 could-not-evaluate (rev not full40).
 Target: `SUMMARY surface=ok tool_class=ok legacy=ok legacy_case=ok legacy_base=ok battery=ok battery_clean=REJECTED battery_refuse=REJECTED prior=5/5`
 """
 import argparse
@@ -54,14 +55,18 @@ FULL40 = re.compile(r"^[0-9a-f]{40}$")
 TOOL = "tools/souji-worktree-drift.py"
 SURFACE = "census/round-44/c3-surface.tsv"
 R37_REV = "4c257b7b5d205a57deed687582ac6f25d9e02d37"
+R36_REV = "1e771ed59301ed10f68e22d4edf35d5218bacf1a"  # escapes control base (registry row)
 FIX_R38 = "tests/fixtures/r38-drift-write-envelope.py"
 FIX_BATTERY = "tests/fixtures/r44-drift-symlink-refusal.py"
 PRIOR = (
-    ("tests/fixtures/r36-worktree-drift.py", None),
-    ("tests/fixtures/r37-drift-discrimination.py", None),
-    ("tests/fixtures/r37-drift-escapes.py", None),
-    ("tests/fixtures/r41-refusal-sites.py", ("probes=21", "pass=21", "fail=0")),
-    ("tests/fixtures/r42-drift-conditions.py", None),
+    ("tests/fixtures/r36-worktree-drift.py", None, None),
+    ("tests/fixtures/r37-drift-discrimination.py", None, None),
+    # the escapes fixture refuses a control-free run (exit 1, NO-BASE-TOOL);
+    # its registered control base is the r36-era blob (registry row), and the
+    # arm must print control=ESCAPE-REPRODUCED
+    ("tests/fixtures/r37-drift-escapes.py", ("control=ESCAPE-REPRODUCED",), R36_REV),
+    ("tests/fixtures/r41-refusal-sites.py", ("probes=21", "pass=21", "fail=0"), None),
+    ("tests/fixtures/r42-drift-conditions.py", None, None),
 )
 STUB_CLEAN = "import sys\nprint('SUMMARY claims=1 findings=0')\nsys.exit(0)\n"
 STUB_REFUSE = ("import sys\nprint('REFUSAL JSON-TARGET-SYMLINK: stub refuses everything')\n"
@@ -153,6 +158,8 @@ def main(argv):
         bat = files.get("battery_path")
         bat_sum = {}
         if tool and bat:
+            for d in ("batw", "stubw_clean", "stubw_refuse", "legw", "lbw"):
+                os.makedirs(os.path.join(work, d), exist_ok=True)
             p = run([sys.executable, "-B", bat, "--tool", tool,
                      "--work", os.path.join(work, "batw")], work, scratch)
             bat_sum = summary_of(p)
@@ -164,6 +171,7 @@ def main(argv):
                 sp = os.path.join(work, "stub_%s.py" % name)
                 with open(sp, "wb") as fh:
                     fh.write(src.encode())
+                os.makedirs(os.path.join(work, "stubw_" + name), exist_ok=True)
                 q = run([sys.executable, "-B", bat, "--tool", sp,
                          "--work", os.path.join(work, "stubw_" + name)], work, scratch)
                 qsum = summary_of(q)
@@ -185,6 +193,7 @@ def main(argv):
             r38_text = files["r38"].decode("utf-8", "replace")
             leg_case_ok = ('"json-symlink-refused"' in r38_text
                            and 'check("json-symlink-resolved"' not in r38_text)
+            os.makedirs(os.path.join(work, "legw"), exist_ok=True)
             p = run([sys.executable, "-B", r38, "--tool", tool,
                      "--work", os.path.join(work, "legw")], work, scratch)
             s = summary_of(p)
@@ -201,6 +210,7 @@ def main(argv):
             if b37:
                 with open(r37, "wb") as fh:
                     fh.write(b37)
+                os.makedirs(os.path.join(work, "lbw"), exist_ok=True)
                 p = run([sys.executable, "-B", r38, "--tool", tool or r38,
                          "--base-tool", r37,
                          "--work", os.path.join(work, "lbw")], work, scratch)
@@ -212,21 +222,43 @@ def main(argv):
                          and int(s.get("behavioral_fail", "0")) >= 4
                          and bool(behav) and "json-symlink-refused" in behav.group(2))
         fields["legacy_base"] = "ok" if lb_ok else "RED"
-        # prior
+        # prior — each fixture runs from its lane path after its bytes are
+        # digest-verified equal to the blob at --rev (fixtures such as
+        # r41-refusal-sites load sibling resources relative to __file__, so
+        # they must run in place; a digest mismatch is a post-freeze edit and
+        # reads RED, never silently tolerated)
+        import hashlib
         prior_ok = 0
-        for path, want in PRIOR:
+        for path, want, base_rev in PRIOR:
             fb = blob(root, rev, path)
-            if fb is None or tool is None:
+            live = os.path.join(root, path)
+            if fb is None or tool is None or not os.path.isfile(live):
                 continue
-            fp = os.path.join(work, "prior_" + os.path.basename(path))
-            with open(fp, "wb") as fh:
-                fh.write(fb)
-            p = run([sys.executable, "-B", fp, "--tool", tool,
-                     "--work", os.path.join(work, "pw_" + os.path.basename(path))],
-                    work, scratch)
+            if hashlib.sha256(fb).hexdigest() != hashlib.sha256(
+                    open(live, "rb").read()).hexdigest():
+                continue
+            os.makedirs(os.path.join(work, "pw_" + os.path.basename(path)),
+                        exist_ok=True)
+            argv = [sys.executable, "-B", live, "--tool", tool]
+            if base_rev is not None:
+                bbase = blob(root, base_rev, TOOL)
+                if bbase is None:
+                    continue
+                bp = os.path.join(work, "base_" + os.path.basename(path) + ".py")
+                with open(bp, "wb") as fh:
+                    fh.write(bbase)
+                argv += ["--base-tool", bp]
+            argv += ["--work", os.path.join(work, "pw_" + os.path.basename(path))]
+            p = run(argv, root, scratch)
             s = summary_of(p)
+            sumline = ""
+            if p is not None and p.stdout:
+                for line in p.stdout.decode("utf-8", "replace").splitlines():
+                    if line.startswith("SUMMARY "):
+                        sumline = line
             if p is not None and p.returncode == 0:
-                if want and not all(w in s for w in want):
+                # want entries are `key=value` substrings of the SUMMARY line
+                if want and not all(w in sumline for w in want):
                     continue
                 prior_ok += 1
         fields["prior"] = "%d/5" % prior_ok
@@ -242,9 +274,6 @@ def main(argv):
                  fields["legacy_case"], fields["legacy_base"], fields["battery"],
                  fields.get("battery_clean"), fields.get("battery_refuse"),
                  fields["prior"]))
-        missing = [p for p in (TOOL, SURFACE) if blob(root, rev, p) is None]
-        if missing:
-            return 2
         return 0 if target else 1
     finally:
         shutil.rmtree(os.path.join(scratch, "r44c3-work"), ignore_errors=True)

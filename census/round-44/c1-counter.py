@@ -51,7 +51,7 @@ Usage:
   python3 -B census/round-44/c1-counter.py --root LANE --rev FULL40 --emit   (dry: print derivations)
 
 Exit: 0 target met; 1 target unmet; 2 could-not-evaluate.
-Target: `SUMMARY population=70 registered=70 missing=0 junk=0 fenced=0 duplicate=0 retracted=0 rederive=70 rederive_failed=0 new_mismatches=0`
+Target: `SUMMARY population=70 corrections=66 registered=70 missing=0 junk=0 fenced=0 duplicate=0 retracted=0 rederive=70 rederive_failed=0 new_mismatches=0`
 """
 import argparse
 import hashlib
@@ -184,18 +184,26 @@ def main(argv):
         for row in rows:
             derived[row] = derive(row, tip_rows, sc_lines, files)
         if ns.emit:
-            for idx, row in enumerate(rows, 1):
+            seen = set()
+            idx = 0
+            for row in rows:
+                key = (row[0], row[1], row[2])
+                if key in seen:
+                    continue
+                seen.add(key)
+                idx += 1
                 print("R44-%02d\tline=%d\tclass=%s\tstale=%s\tderived=%s"
                       % (idx, row[0], row[2], row[1], derived[row]))
             return 0
         lesson_b = blob(root, rev, LESSON)
         if lesson_b is None:
-            print("SUMMARY population=%d registered=0 missing=%d junk=0 fenced=0 "
-                  "duplicate=0 retracted=0 rederive=0 rederive_failed=%d "
-                  "new_mismatches=%d instrument_mismatches=%d lesson=absent"
-                  % (len(rows), len(rows), len(rows),
-                     len([k for k in tip_rows if k not in {(r[0], r[1], r[2]) for r in rows}]),
-                     len(tip_rows)))
+            unmatched = len([k for k in tip_rows
+                             if k not in {(r[0], r[1], r[2]) for r in rows}])
+            print("SUMMARY population=%d corrections=0 registered=0 missing=%d "
+                  "junk=0 fenced=0 duplicate=0 retracted=0 rederive=0 "
+                  "rederive_failed=%d new_mismatches=%d instrument_mismatches=%d "
+                  "lesson=absent"
+                  % (len(rows), len(rows), len(rows), unmatched, len(tip_rows)))
             return 1
         ltext = lesson_b.decode("utf-8", "replace")
         fence = False
@@ -228,33 +236,42 @@ def main(argv):
         byrow = {}
         for cid, (sline, scls, stale, sderived, srev, sscope, extra) in corrections.items():
             byrow.setdefault((sline, scls, stale), []).append(cid)
+        # corrections are keyed by (line, class, stale); one correction covers
+        # every population row sharing that key (the base instrument reported
+        # 70 occurrences over 66 unique keys — 4 rows duplicate their key)
         registered = missing = rederive_failed = 0
         keys = {(r[0], r[1], r[2]) for r in rows}
         unmatched_tip = [k for k in tip_rows if k not in keys]
-        for row in rows:
-            key = (row[0], row[1], row[2])
+        key_ok = {}
+        for key in keys:
             cids = byrow.get(key, [])
             if len(cids) != 1:
-                missing += 1
+                key_ok[key] = False
                 continue
             cid = cids[0]
             (sline, scls, stale, sderived, srev, sscope, extra) = corrections[cid]
-            ok = (sderived == derived[row] and srev == rev and sscope)
+            dval = derived[(key[0], key[1], key[2])]
+            ok = (sderived == dval and srev == rev and sscope)
             for _k, val in extra.items():
-                p = val
-                if p.startswith("multi:"):
+                if val.startswith("multi:"):
                     continue
-                if p not in files:
+                if val not in files:
                     ok = False
-            if ok:
-                registered += 1
-            else:
-                rederive_failed += 1
-        print("SUMMARY population=%d registered=%d missing=%d junk=%d fenced=%d "
-              "duplicate=%d retracted=%d rederive=%d rederive_failed=%d "
-              "new_mismatches=%d instrument_mismatches=%d"
-              % (len(rows), registered, missing, junk, fenced, dup, len(retracted),
-                 registered, rederive_failed, len(unmatched_tip), len(tip_rows)))
+            key_ok[key] = ok
+        for row in rows:
+            key = (row[0], row[1], row[2])
+            if key not in key_ok or not key_ok[key]:
+                missing += 1
+                continue
+            registered += 1
+        used = sum(1 for k, v in key_ok.items() if v)
+        rederive_failed = len(keys) - used - sum(1 for k in keys if k not in byrow)
+        print("SUMMARY population=%d corrections=%d registered=%d missing=%d "
+              "junk=%d fenced=%d duplicate=%d retracted=%d rederive=%d "
+              "rederive_failed=%d new_mismatches=%d instrument_mismatches=%d"
+              % (len(rows), len(key_ok), registered, missing, junk, fenced, dup,
+                 len(retracted), registered, rederive_failed,
+                 len(unmatched_tip), len(tip_rows)))
         target = (registered == len(rows) and missing == 0 and junk == 0
                   and fenced == 0 and dup == 0 and retracted == 0
                   and rederive_failed == 0 and len(unmatched_tip) == 0)
