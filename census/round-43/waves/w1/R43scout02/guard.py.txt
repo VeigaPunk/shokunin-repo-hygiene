@@ -1,0 +1,27 @@
+import os
+import subprocess
+
+_original_run = subprocess.run
+_scratch = '/fast/scratch/hyaku/souji-r43/R43scout02'
+
+def _guarded_run(cmd, *args, **kwargs):
+    if isinstance(cmd, (list, tuple)) and cmd and os.path.basename(str(cmd[0])) == 'git':
+        argv = list(cmd)
+        if len(argv) > 1 and argv[1] == 'init':
+            target = os.path.realpath(argv[-1])
+            assert os.path.commonpath([target, _scratch]) == _scratch, target
+            os.makedirs(target, exist_ok=True)
+            argv = [argv[0], '-C', target, 'init'] + argv[2:-1]
+            cmd = argv
+        elif '-C' in argv:
+            target = os.path.realpath(argv[argv.index('-C') + 1])
+            operation = argv[argv.index('-C') + 2]
+            if operation in ('add', 'commit', 'config', 'checkout', 'branch') or (operation == 'worktree' and argv[-1] != '--porcelain' and 'list' not in argv):
+                assert os.path.commonpath([target, _scratch]) == _scratch, target
+                p = _original_run([argv[0], '-C', target, 'rev-parse', '--show-toplevel'],
+                                  env=kwargs.get('env'), stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE, text=True, check=True)
+                assert p.stdout.strip() == target, (target, p.stdout)
+    return _original_run(cmd, *args, **kwargs)
+
+subprocess.run = _guarded_run

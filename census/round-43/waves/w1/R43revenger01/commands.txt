@@ -1,0 +1,69 @@
+All commands executed read-only with respect to the lane, except creation of this seat's outputs. No target runtime executed.
+
+Bash (exit 0, no stdout):
+mkdir -p /fast/scratch/hyaku/souji-r43/R43revenger01 /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-43/w1/R43revenger01
+
+Eval Python cell 1 (failed while parsing survey literals; no writes):
+import ast, hashlib, subprocess
+from pathlib import Path
+lane = '/home/vgpnk/Projects/shokunin/souji-shokunin'
+frozen = 'f8c805dbfa7f45814cf9a7270fa8bbffb41a8373'
+tip = '13de0e84b45efd1113f077d58fc1e89bc586a013'
+def blob(rev, path):
+    return subprocess.run(['git', '-C', lane, 'show', f'{rev}:{path}'], check=True, capture_output=True).stdout
+
+def literal(data, name):
+    module = ast.parse(data)
+    return next(ast.literal_eval(n.value) for n in module.body if isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id == name for t in n.targets))
+equiv = literal(blob(frozen, 'census/round-43/c3-counter.py'), 'EQUIV')
+survey = literal(blob(tip, 'census/round-42/waves/w2/R42w2critic04/mutants.py'), 'MUTANTS')
+ids = 'S18 S19 S28 S29 S30 S39 S41 S51 S65 S66 S67 S68 S69 S74 S75 S76 S77'.split()
+oldpairs = {(o,n): i for i,desc,o,n in survey if i in ids}
+lines=[]
+for rev in (frozen, tip):
+    tool = blob(rev, 'tools/souji-worktree-drift.py')
+    text = tool.decode()
+    lines.append(f'rev={rev} tool_sha256={hashlib.sha256(tool).hexdigest()}')
+    lines.append('EQUIV old counts: ' + ' '.join(f'{i}={text.count(o)}' for i,o,n in equiv))
+    lines.append('survey-equivalent old counts: ' + ' '.join(f'{i}={text.count(o)}' for i,d,o,n in survey if i in ids))
+    lines.append('exact EQUIV pairs in 17 survey equivalents: ' + repr([(i, oldpairs.get((o,n))) for i,o,n in equiv]))
+current=Path(lane+'/tools/souji-worktree-drift.py').read_bytes()
+lines.append('working tool equals pinned tip: '+str(current == blob(tip,'tools/souji-worktree-drift.py')))
+lines.append('frozen c3 instrument equals tip: '+str(blob(frozen,'census/round-43/c3-counter.py') == blob(tip,'census/round-43/c3-counter.py')))
+receipt='\n'.join(lines)+'\n'
+print(receipt)
+Observed: ValueError: malformed node or string on line 169: Constant(value='sys.stderr.write("REFUSAL USAGE: --timeout must be >= 1\\n")', kind=None). ast.literal_eval does not handle the survey's string-addition expression. Not a repository defect.
+
+Eval Python cell 2 (success, using established state from cell 1):
+class FoldStringAdds(ast.NodeTransformer):
+    def visit_BinOp(self, node):
+        node = self.generic_visit(node)
+        if isinstance(node.op, ast.Add) and isinstance(node.left, ast.Constant) and isinstance(node.right, ast.Constant) and isinstance(node.left.value, str) and isinstance(node.right.value, str):
+            return ast.copy_location(ast.Constant(node.left.value + node.right.value), node)
+        return node
+survey = literal(ast.unparse(FoldStringAdds().visit(ast.parse(blob(tip, 'census/round-42/waves/w2/R42w2critic04/mutants.py')))), 'MUTANTS')
+ids = 'S18 S19 S28 S29 S30 S39 S41 S51 S65 S66 S67 S68 S69 S74 S75 S76 S77'.split()
+oldpairs = {(o,n): i for i,desc,o,n in survey if i in ids}
+lines=[]
+for rev in (frozen, tip):
+    tool = blob(rev, 'tools/souji-worktree-drift.py')
+    text = tool.decode()
+    lines.append(f'rev={rev} tool_sha256={hashlib.sha256(tool).hexdigest()}')
+    lines.append('EQUIV old counts: ' + ' '.join(f'{i}={text.count(o)}' for i,o,n in equiv))
+    lines.append('survey-equivalent old counts: ' + ' '.join(f'{i}={text.count(o)}' for i,d,o,n in survey if i in ids))
+    lines.append('exact EQUIV pairs in 17 survey equivalents: ' + repr([(i, oldpairs.get((o,n))) for i,o,n in equiv]))
+current=Path(lane+'/tools/souji-worktree-drift.py').read_bytes()
+lines.append('working tool equals pinned tip: '+str(current == blob(tip,'tools/souji-worktree-drift.py')))
+lines.append('frozen c3 instrument equals tip: '+str(blob(frozen,'census/round-43/c3-counter.py') == blob(tip,'census/round-43/c3-counter.py')))
+receipt='\n'.join(lines)+'\n'
+print(receipt)
+Observed: see anchor-count.txt (copied verbatim output).
+
+Tool dependency lookup:
+read xd://lsp -> "No such tool: xd://lsp". No LSP device mounted; literal grep and direct source reading used, not semantic-reference proof.
+
+Primary-source lookup:
+read https://docs.python.org/3/using/cmdline.html -> Python 3.15.2 documentation; section PYTHONPATH: "Augment the default search path for module files." Section -E: "Ignore all PYTHON* environment variables"; section -I: "All PYTHON* environment variables are ignored, too."
+
+Scratch cleanup command (executed after writing report):
+rm -rf -- /fast/scratch/hyaku/souji-r43/R43revenger01

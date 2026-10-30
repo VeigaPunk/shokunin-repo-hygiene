@@ -78,3 +78,38 @@ self-invocation modes remain conformance debts, not new passing gates.
 
 The full 30-survivor r42 part-A inventory, general load stability, and the race-only S42 class
 are not claimed closed. Existing reports explicitly marked incomplete remain incomplete.
+
+## Settled wave and provenance
+
+WAVE-DONE from the orchestrator confirmed all 68 w1 seats settled before this final integration.
+One v2 wave; no residual call or replacement. Roles: executor 11, critic 8, mutation-tester 20,
+scout 12, reviewer 6, sentinel 2, revenger 2, connector 3, simplifier 2, scribe 2. The L1 held the
+planner seat. Attack share reviewer+critic+mutation-tester = 34/68. Validated spec, dispatch,
+ready marker, 68-row results and reports are captured under `census/round-43/waves/`;
+capture verified records=228, renames=0, excluded=0, symlinks=0.
+
+The dispatcher result omits status/id fields, so terminal events were read from each owned
+seat's session and saved as `census/round-43/records/seat-terminal-evidence.json`.
+35 seats ended with provider errors (21 MiniMax quota, 11 Cursor pricing, 2 hardware-key
+authentication/cyber-policy denials, 1 Devin account permission); 33 returned nonempty outputs,
+some explicitly incomplete. Per-seat exact final error and answering model are preserved.
+No denial was routed around and none supplies independent review clearance.
+
+The C1 discrimination-fixture mutation seat reports 19 variants: 10 killed, 9 survived, none
+inconclusive (`waves/w1/R43mutationtester01.md`); therefore 20/20 case-table PASS is not exhaustive
+correction-language coverage. `R43reviewer05.md` further notes its r42 CRLF case never actually
+writes CRLF, so that historical-signature attribution is not proved by the green column.
+`R43executor11.md` falsifies the proposed S35 FIFO witness: pristine and mutant both time out
+at the earlier list operation, so the proposed witness does not reach the mutated gitdir probe.
+These findings remain limits, not completed fixes.
+
+Required misroot sweep: `git -C /home/vgpnk/Projects/shokunin status --porcelain` showed only
+the operator's `.scratch/goal-20261029-hyaku-run12.md` and two untracked `count-c1.cover` /
+`count-c2.cover` files. `strings` attributes both binaries to mori round 61; they and the operator
+file were left untouched. No souji-owned misroot found in this sweep. Receipt:
+`census/round-43/records/wave-summary.json`.
+
+Cross-domain scan (`waves/w1/R43connector01.md`, `R43connectorA.md`, `R43connectorB.md`) finds
+adjacent freeze-check, correction-reader and symlink mechanisms, not a proven ownership
+collision. Chousa's research/evidence checker, kaidoku's replacement policy and kumitate's
+input-link policies are not unified with souji's output-leaf hygiene contract.

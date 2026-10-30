@@ -833,3 +833,6 @@ a measured edge class does not promote a frontier ground to Core (PROVINCE
   authority. No knowledge entry added, no frontier ground moved into Core. Assimilation: none.
 - The older symlink-resolution behavior remains current in `tools/souji-worktree-drift.py`.
   N10 is explicitly not closed. Certification OFF, K5 HELD, NAMESPACE hold unchanged.
+- Final source addendum: S263 grounds PYTHONPATH discovery independently of S259's import fact.
+  The final census is 187 rows, W04=54, exit 0 (`../census/round-43/records/census-final.txt`);
+  the 186-row reading above is intermediate.
