@@ -1,0 +1,15 @@
+# S44executor09 — C1 partition 9/16
+
+Axes: calibration (assigned); operability/coverage not measured. Result: four counter-emitted records assigned to zero-based indices 8, 24, 40, 56 (equivalently 1-based records 9, 25, 41, 57) registered in `S44executor09/corrections.txt`.
+
+## Evidence and commands
+
+- Read `census/round-44/preregistration.txt`; it pins base `55d7af6f5a22340f7a3de1c386e514ababfaa75f`, counter/population hashes, and describes C1 as token-bound registration rather than a count of newly corrected facts.
+- Ran exactly: `python3 -B /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-44/c1-counter.py --root /home/vgpnk/Projects/shokunin/souji-shokunin --rev d314fd6e85d62565344fa6c4b102f52f62297884 --scratch /fast/scratch/hyaku/souji-r44/S44executor09 --emit` (exit 0). Emitted records 09,25,41,57 were respectively digest at SCORECARD line 68 deriving `sha256:bb506469be860f994f74f4c7d6eb1c949a4931b676cdb60f9f79de041d12f27f`; `SwarmCritic34.md` at line 487 deriving `census/round-32/waves/w1/SwarmCritic34.md`; `a7-counter-fixes.txt` at line 702 deriving `census/round-38/records/a7-counter-fixes.txt`; and `c3-after.txt` at line 773 deriving the seven-path `multi:` value captured exactly in corrections.txt.
+- Independently ran `tools/souji-declared-evidence.py --root <lane> --rev 55d7af6f5a22340f7a3de1c386e514ababfaa75f --format tsv` (exit 1, expected at pinned base with known mismatches): emitted line-68 digest row gave exactly `sha256 is bb506469be860f994f74f4c7d6eb1c949a4931b676cdb60f9f79de041d12f27f`; line 487 gave basename mismatch. `git ls-tree -r --name-only <base>` showed the three derived paths: `census/round-32/waves/w1/SwarmCritic34.md`, `census/round-38/records/a7-counter-fixes.txt`, and c3 receipts at rounds 36,37,38,39,40,41,42. The instrument also directly reported the digest for the second token at line 68 as the same exact sha256.
+- Historical-line evidence: `git show <base>:SCORECARD.md` shows the old line texts, including line 68's C2 evidence and line 487's explicitly named report. Line numbers are historical; SCORECARD was not edited.
+- Prior correction status (Q76): round-44 lesson says prior supersession/correction entries remain authoritative and registration is bookkeeping. The pinned round-42 evidence says its C1 accounts for all 70 base tokens (`corpus/lessons/round-42.md`, SCORECARD line 841 states all 70 tokens at lines 14–832 are superseded). Therefore all four selected facts are already covered by the prior all-token correction; none should be claimed as a new factual correction or calibration gain. The r43 correction-counter result is not used to claim new facts.
+
+## Limits
+
+This confirms the four selected token referents/derivations and preserves exact grammar with no optional fields. It does not establish an improvement in historical runtime behavior, numeric axis delta, admission, or any counter result beyond the bounded emission and independent instrument probe. No tools installed. Scratch was explicitly created for the bounded run and removed before completion.

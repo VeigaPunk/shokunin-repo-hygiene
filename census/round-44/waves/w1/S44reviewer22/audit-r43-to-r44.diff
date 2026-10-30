@@ -1,0 +1,32 @@
+--- frozen-r43-audit
++++ frozen-r44-audit
+@@ -1,10 +1,11 @@
+ #!/usr/bin/env python3
+-"""census/round-43/c2-hidden-audit.py — the frozen hidden-case audit for the freeze check (Q102).
++"""census/round-44/c2-hidden-audit.py — the repaired hidden-case audit for the freeze check (Q102/Q106).
+ 
+-Nine held-out scenarios plus one refusal scenario the visible case table does not hold, each with an expectation derived from
+-the r43 grammar (census/round-43/c2-counter.py docstring): opaque names, fresh salts, CRLF, a
+-malformed Round spelling, three-occurrence duplicates, a symlinked Control with the opposite link
+-text, and nested dispatch names. A tool that memorised the visible table fails here.
++The r43 instrument is retained and reported red (its h4 expectation carries a literal
++`C2:FIELD-MISSING*4` and its h6 expectation omits the audit's own post-freeze FROZEN-EDITED
++finding; lesson M43-1). This repaired version expands repetition notation into repeated entries
++and accounts for the post-freeze edit, per Q106. Scenario construction is byte-identical to the
++r43 audit; only the two wrong expectations and this docstring changed.
+ 
+ Usage:
+   python3 -B census/round-43/c2-hidden-audit.py --tool PATH --work DIR
+@@ -113,9 +114,10 @@
+     ("h3-two-unattached-keys", {"tail": "##C2 bad\nPopulation: census/pop.tsv sha256=%s\nControl: census/control.txt\n" % sha(POPULATION)},
+      1, ["C0:HEADING-MALFORMED", "C0:UNATTACHED-KEY", "C0:UNATTACHED-KEY"]),
+     ("h4-unattached-before-valid-claim", {"tail": "##C2 bad\nTarget: t\n## C2 — second\nTarget: t2\nKill: k2\n"},
+-     1, ["C0:HEADING-MALFORMED", "C0:UNATTACHED-KEY", "C2:FIELD-MISSING*4"]),
++     1, ["C0:HEADING-MALFORMED", "C0:UNATTACHED-KEY",
++      "C2:FIELD-MISSING", "C2:FIELD-MISSING", "C2:FIELD-MISSING", "C2:FIELD-MISSING"]),
+     ("h5-control-symlink-exit0-text", {"control_symlink": "EXIT=0"}, 1, ["C1:CONTROL-SYMLINK"]),
+-    ("h6-duplicate-three-occurrences", None, 1, ["C1:KEY-DUPLICATE", "C1:KEY-DUPLICATE"]),
++    ("h6-duplicate-three-occurrences", None, 1, ["C0:FROZEN-EDITED", "C1:KEY-DUPLICATE", "C1:KEY-DUPLICATE"]),
+     ("h7-dispatch-notes-ready", {"before": ["notes.ready"]}, 1, ["C0:DISPATCH-BEFORE-FREEZE"]),
+     ("h8-crlf-prereg", {"crlf": True}, 0, []),
+     ("h9-dispatch-depth-three", {"before": ["w9/w8/deep-spec.json"]}, 1, ["C0:DISPATCH-BEFORE-FREEZE"]),

@@ -908,11 +908,11 @@ Base `55d7af6f5a22340f7a3de1c386e514ababfaa75f`; formal freeze
 `d314fd6e85d62565344fa6c4b102f52f62297884`, before ready handoff. Inherited
 implementation commits precede that formal freeze, as disclosed in the lesson.
 Counter commands are `python3 -B census/round-44/c1-counter.py --root LANE --rev FULL40 --scratch DIR`,
-with `c2-counter.py` and `c3-counter.py` substituted for the other claims.
+with `census/round-44/c2-counter.py` and `census/round-44/c3-counter.py` substituted for the other claims.
 
 - C1 calibration: before missing=70 means missing r44-format registrations, not
   outstanding factual corrections. The Q76 audit finds 70/70 already accounted
-  for, 0 newly unaccounted self-assessment mismatches (`.ufo/waves/round-44/w1/S44reviewer61/report.md`).
+  for, 0 newly unaccounted self-assessment mismatches (`census/round-44/waves/w1/S44reviewer61/report.md`).
   A natural 66-key register stays red because tuple identities disagree in the
   frozen counter; target unmet. No new calibration score or capability claimed.
 - C2 operability: repaired hidden oracle 10/10 at freeze, retention preserves the

@@ -1,0 +1,51 @@
+S44mutationtester51 C2 discrimination probe — run transcript
+frozen rev: d314fd6e85d62565344fa6c4b102f52f62297884 (lane HEAD == frozen rev, verified)
+lane c2-counter.py sha256=0cb6ce80a23b460d1a03e0530ca2ef0866af773bdb7f5b88f6dc84bd0f525252 (== prereg pin)
+lane/clone c2-hidden-audit.py sha256=50872b0da7a36d377ced9cf0e51579ef00f0f0ae402eebad8c579fce6e5e843e
+tools/souji-freeze-check.py blob size at frozen rev: 20506 bytes
+host tools: python3 3.14.8, git 2.56.0 (no installs; pacman paused per directive)
+
+Detector: python3 -B census/round-44/c2-counter.py --root ROOT --rev REV40 --scratch SCR
+(mutant-D detector: /fast/scratch/hyaku/souji-r44/S44mutationtester51/c2-counter-mutD.py)
+
+=== BASELINE root=/home/vgpnk/Projects/shokunin/souji-shokunin rev=d314fd6e85d62565344fa6c4b102f52f62297884
+SUMMARY tool=present population=ok retention=ok hidden_v2=10/10 clean_stub=REJECTED findings_stub=REJECTED controls_ran=ok selftest=ok tmpdir=ok
+EXIT=0   (18.0 s)
+
+=== MUTANT A rev=c8d9c5b639984635be839559ff7c61e039f1a386 (audit L162: ok=True)
+audit blob sha256=d10ae147d9923e34b91ca854e56b7af6ee02165b72411f93014d37192e9a7243
+SUMMARY tool=present population=ok retention=ok hidden_v2=10/10 clean_stub=REJECTED findings_stub=REJECTED controls_ran=ok selftest=ok tmpdir=ok
+EXIT=0   SURVIVED (26.9 s)
+
+=== MUTANT A2 rev=2c9339908e26b7634eb72a5daa9e1c3a5b79c636 (+h10 ok=p is not None)
+audit blob sha256=f10edffa661c1c4ff10dd8af97bbd062920299be9d824ec01c25af49dca04f80
+SUMMARY tool=present population=ok retention=ok hidden_v2=10/10 clean_stub=ACCEPTED findings_stub=ACCEPTED controls_ran=ok selftest=ok tmpdir=ok
+EXIT=1   KILLED (24.3 s)
+
+=== MUTANT B2 rev=1d089f47cd8084c6751b0b0a0befe438b8aa82bb (pure memorizer, 1595 B)
+audit blob sha256=26b8904108054bd7d2a2c0f67d85fa7022fd5423be5e88033e0ab54913cdfad1
+SUMMARY tool=present population=RED retention=ok hidden_v2=10/10 clean_stub=ACCEPTED findings_stub=ACCEPTED controls_ran=ok selftest=ok tmpdir=ok
+EXIT=1   KILLED (18.3 s)
+  note: population=RED solely because IDS tuple made an 11th ("h…", match;
+        all ids/exits greps passed (verified by replaying the leg in Python).
+
+=== MUTANT B3 rev=c437a10bf127d44f5bd248d74c283e4bf4285e24 (branching memorizer, 2123 B)
+audit blob sha256=4dea9823d15db83189d3e727337c47c934ae281b089d13456a7aa386212d82f2
+SUMMARY tool=present population=ok retention=ok hidden_v2=10/10 clean_stub=REJECTED findings_stub=REJECTED controls_ran=ok selftest=ok tmpdir=ok
+EXIT=0   SURVIVED (19.1 s) — tool never invoked; size>2000B branch decided verdict
+
+=== MUTANT C rev=0798ff0fd91054518cbced94feaf1bec940da505 (h6 drops C0:FROZEN-EDITED)
+audit blob sha256=8dab96b225c8357fb331ce1352ecd65ab51c56d406a6957ebfe1c83819f68040
+SUMMARY tool=present population=ok retention=ok hidden_v2=RED clean_stub=REJECTED findings_stub=REJECTED controls_ran=ok selftest=ok tmpdir=ok
+EXIT=1   KILLED (19.0 s) — population stayed ok: want_classes column unchecked
+
+=== MUTANT D counter-mutD.py sha256=6455ca41e8f0094540208bb99557b5036d1cae4cd8cc15e5d95dc03b07019483
+  (stub verdict -> ok = v is not None)
+  over frozen rev:          same target line, EXIT=0
+  over mutant A2 rev 2c9339908e26b7634eb72a5daa9e1c3a5b79c636:
+  SUMMARY tool=present population=ok retention=ok hidden_v2=10/10 clean_stub=REJECTED findings_stub=REJECTED controls_ran=ok selftest=ok tmpdir=ok
+  EXIT=0  (pristine emitted ACCEPTED/EXIT=1) — surrogate kill of A2 confirmed
+
+Restoration: clone reset --hard to d314fd6e…; audit sha256 back to 50872b0d…;
+lane worktree `git status --porcelain` identical to session start
+( M corpus/SOURCES.md; ?? census/round-44/records/, sources/, corpus/lessons/round-44.md).

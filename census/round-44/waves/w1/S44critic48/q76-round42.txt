@@ -1,0 +1,244 @@
+# Round 42 — lesson (souji)
+
+Round: souji round 42, hyaku run 11, attempt 1. Lane: `/home/vgpnk/Projects/shokunin/souji-shokunin`.
+Base revision: `bf618f6c5c09d302994871c94903abbea2deb60d` (the round-41 non-author spot-check). Instruments commit
+`b7408095543579ac71b33ecf7b80b0cb8ef45036`; freeze commit `afe17f416eec04dcf3f480b580a8f928de61d19d` (first commit to add
+`census/round-42/preregistration.txt`; no wave file existed before it; `python3 -B tools/souji-freeze-check.py --prereg
+census/round-42/preregistration.txt --rev afe17f4…` read `claims=3 findings=0` with the r41 tool, and the landed r42 tool reads the same).
+Non-author review read first: `corpus/lessons/round-41-verifier-spotcheck.md`. Its routed defects are answered below:
+
+| routed defect | disposition |
+|---|---|
+| R41-D-REJECT-REASON | positive ground appended in `## Gate` (staged figure superseded) |
+| R41-D-C3-CONDITION | answered by the C3 survey: `total["repos"] != len(rows)` → `>` (mutant T2) IS killed by the older drift fixtures `r40-drift-record-branches.py` and `r41-drift-record-order.py` (`census/round-42/controls/c3-control.txt`, `MUTANT T2` is absent from the population because it is killed; the survey output that found it is `census/round-42/records/survey-prior.txt`) |
+| R41-D-C2-SELFTEST | C2: `tools/souji-freeze-check.py --selftest` (31 cases at the landed bytes) |
+| R41-D-LG-DANGLING | R1: repointed, not exempted — see `## Mistakes` M42-2 |
+| N1-N4 (C1 correction prose) | routed forward: the r41 plan sentence for r42 C1 ("a counter that reads correction prose") was NOT what r42 claimed; see M42-4 |
+| N10 (`--json` leaf symlink tool defect), N11 (`K1 cited-no-row S146`), M40-12 R39-D1/D2 | N10, N11, R39-D1/D2 routed forward (not claimed); M40-12 is the C3 mutant D4 |
+
+## Gate — sources opened this round
+
+One row, opened on **2026-10-28** by the L1 from the live URL (the access date is this round's own) and re-opened by seats
+`R42scribe06` (live bytes equal the L1 snapshot, sha256 `620581fe…`) and `R42sentinel02`. Fetched bytes: `census/round-42/sources/python-3-library-site.html`
+(sha256 in `census/round-42/sources/SHA256SUMS`).
+
+| id | url | access date | located quote (<=25 words) | location | admitted for |
+|---|---|---|---|---|---|
+| S259 | https://docs.python.org/3/library/site.html | 2026-10-28 | "an attempt is made to import a module named sitecustomize, which can perform arbitrary site-specific customizations" | § `sitecustomize`, snapshot lines 418-419 (the sentence splits across two lines of the served HTML); the suppression sentence "The automatic import can be suppressed using the interpreter's -S option." is in the § `site` introduction (lines 227-228); page as served: "Python 3.15.2 documentation"; host Python is 3.14.8 | C2's `patches=3/3` leg: runtime patches are injected through a `sitecustomize` module on PYTHONPATH. Scope caveat (Q105): the injection does not reach a child started with `-I`, `-E` or `-S` (measured by `R42sentinel02` and `R42scribe07` on 3.14.8) |
+
+The registry append is one row (S259, tier A, `mined`, `recheck on-release`, `used-by` this lesson); `SOURCES` 182 -> 183 rows.
+No older row's `status`, `recheck` or `used-by` changed. Sourced claim: **C2** (the `patches` leg rests on S259).
+
+### Rejection with a positive ground (R41-D-REJECT-REASON, appended; the r41 Gate is not rewritten)
+
+The staged package item `fleet-prune-safety-r28.md` (shokuknow `merge/souji/`, staged S160) stays unadopted. The r41 reason ("`worktree.c` appears in 9 rows")
+was falsified in r41 (I1). The positive ground, read from the two entries: the staged entry's fleet figure is "26 prunable registrations" from a run
+dated 2026-10-24; the lane's own entry `corpus/knowledge/fleet-prune-numerator-r35.md` records **27 registrations across 26 repositories and 0 prunable**
+from the 2026-10-28 census (`census/round-35/records/prune-census.tsv`), and the staged conclusion ("every prunable registration is safe to prune") is
+about a population the later measurement shows empty. Adopting the staged entry would put a superseded numerator back into the corpus.
+Assimilation: none this round (`/home/vgpnk/Projects/shokuknow` not read). `considerthese/` does not exist in this lane.
+
+## Corrections to filed statements (C1)
+
+C1's population is the `mismatches=70` of `python3 -B tools/souji-declared-evidence.py --root . --rev bf618f6… --file SCORECARD.md --format tsv`
+(`census/round-42/c1-items.tsv`). The register `census/round-42/c1-register.tsv` accounts for each of the 70: 65 resolve to one committed path by the counter's
+fixed rules (R42scribe01-05 each read 13 rows against the SCORECARD cell and the file: 65 agree, 0 disagree; R42reviewer01 re-derived all 70 rows independently:
+0 register disagreements), and 5 do not. The five are corrected below, each with the **scope of its derived value** (QUALITY Q101: a derived value states
+what it was measured over). The lines below are the counter's `corrected=` population; the prose around each says what the value does and does not mean.
+
+### SCORECARD.md:14 — `65817d0d`
+
+The instrument read the token as a revision (class B) and `git cat-file -e 65817d0d^{commit}` fails at the base. The value derived is a statement about that
+command only. Cause (R42scout01, R42critic01 N11, both reproduced the sweep): `65817d0d` is the first eight hex digits of the sha256 of a
+`tools/souji-declared-evidence.py` blob (full value `65817d0d0d4874e8fab83ef11ae29297a865a8359f554e2ff7d2a753f21448f4`), a truncated tool digest, not a revision. The SCORECARD cell was
+not wrong about the tool; the instrument's class-B scanner mistook a digest prefix for a revision.
+
+CORRECTION-DE line=14 token=65817d0d derived=rev-unresolved rev=bf618f6c5c09d302994871c94903abbea2deb60d
+
+### SCORECARD.md:68 — two sha256 values paired with one path
+
+The instrument's class C pairs a 64-hex digest with the only backticked path of the same cell and read `bb506469be860f994f74f4c7d6eb1c949a4931b676cdb60f9f79de041d12f27f`
+for `tools/souji-coverage-agreement.py` at the base. The two items differ in cause (R42scout02):
+
+- `42259756…` is the sha256 of `tests/fixtures/r24-coverage-agreement.py` at `1efe406e7f39b8fe736be2a566053703a571ffc0`. The fixture is named in the sibling counting-command cell,
+  so this is an instrument false positive (cross-cell pairing); the cell text was true when written.
+
+CORRECTION-DE line=68 token=42259756a06538a5dfb81cb82fba20737eacdcfd5c06b9b36594071b26f9da44 derived=sha256=bb506469be860f994f74f4c7d6eb1c949a4931b676cdb60f9f79de041d12f27f rev=bf618f6c5c09d302994871c94903abbea2deb60d
+
+- `71b89eb3…` is the sha256 of `tools/souji-coverage-agreement.py` as it was at `1efe406…` (r24 bytes). The tool was edited later (first `bb506469…` revision `604cd441`); the declared
+  digest is a historical measurement that no longer equals the current file. The cell was true when written and stale at the base; the instrument faithfully reported the disagreement.
+
+CORRECTION-DE line=68 token=71b89eb3c7ce417979c5fce2c759dafe023af21d6310fde49197c766b8f28897 derived=sha256=bb506469be860f994f74f4c7d6eb1c949a4931b676cdb60f9f79de041d12f27f rev=bf618f6c5c09d302994871c94903abbea2deb60d
+
+### SCORECARD.md:92 — `09bb8e0d`
+
+Same class as line 14. `09bb8e0d` is the first eight digits of the sha256 of `tools/souji-size-census.py` at `778747eb671f8e85ef5387bc3d7023337b30467c`
+(full `09bb8e0d9906b0dfef44775a9e5cd7c8f8a27d9bcdf559e2d371a3ef7ff1ed6d`, re-derived with `git show 778747eb…:tools/souji-size-census.py | sha256sum` by R42scout01); not a git object at any revision
+(`git cat-file -t 09bb8e0d` fails; fleet pickaxe finds no commit). The current worktree file hashes differently (the tool changed after r24).
+
+CORRECTION-DE line=92 token=09bb8e0d derived=rev-unresolved rev=bf618f6c5c09d302994871c94903abbea2deb60d
+
+### SCORECARD.md:175 — `c2-after.tsv`
+
+A bare basename that matches five committed paths (`census/round-24..28/records/c2-after.tsv`). The row sits in the Capabilities table whose nearest `Round N` heading is
+`Round 23`, so the counter's heading-context rule selects none. R42scout02: the cell means the r24 artifact `census/round-24/records/c2-after.tsv`. The derived value
+`path-absent` is a statement about the token as written (no tree path equals it), not about the file the row means.
+
+CORRECTION-DE line=175 token=c2-after.tsv derived=path-absent rev=bf618f6c5c09d302994871c94903abbea2deb60d
+
+### Further SCORECARD statements found false or overstated (not counter items)
+
+Found by seats while checking C1; appended, nothing rewritten. These lines use a different tag (`CORRECTION-SC`), which the C1 counter does not read.
+
+CORRECTION-SC file=SCORECARD.md line=697 filed="every final receipt was re-measured at 78ea25a963f2d2ba93b6049dc2787b7020e2fd80" derived=receipt headers say 6949319e (c2-after4.txt, c3-after3.txt) and 9b443200 (a7-counter-fixes.txt) rev=bf618f6c5c09d302994871c94903abbea2deb60d source=R42scribe03
+
+Scope: three of the five receipts that sentence lists carry a header revision other than the one the sentence states
+(`git show bf618f6…:census/round-38/records/c2-after4.txt | head -1` reads "C2 after at 6949319e…"; `c3-after3.txt` the same; `a7-counter-fixes.txt` "A7 evidence at 9b443200…").
+The numbers in those receipts match their cells; only the revision sentence is false. The other two receipts of the list were not checked this round.
+
+CORRECTION-SC file=SCORECARD.md line=839 filed="r42: calibration: a counter that reads correction prose and rejects fenced, duplicate and retracting lines (N1-N4)" derived=the r42 C1 is a declared-evidence accounting claim; no counter in r42 reads correction prose rev=bf618f6c5c09d302994871c94903abbea2deb60d source=R42critic01
+
+Scope: the r41 plan sentence at `SCORECARD.md:839`. Plan-vs-actual for the three r42 lines it names: calibration — NOT done as planned (replaced by the 70-item accounting;
+N1-N4 routed to r43); operability — done in part (KEY-DUPLICATE, HEADING-MALFORMED, widened dispatch names, `--selftest`; the "hidden-case audit as a frozen leg" was
+NOT frozen: `census/round-42/c2-counter.py` carries `retro_clean` instead and the audit stayed informational, run once by `R42executor05`); coverage — done in part
+(condition-level mutants and M40-12 as D4; R39-D1/D2 receipts and N10 not done). Three planned items out of nine were done as written.
+
+## Mistakes
+
+### M42-1 — the declared-evidence instrument was recorded, never run at a round tip
+
+- **class:** stale-instrument (a calibration instrument existed and was not applied to the file it audits).
+- **evidence pointer:** `python3 -B tools/souji-declared-evidence.py --root . --rev bf618f6c5c09d302994871c94903abbea2deb60d --file SCORECARD.md --format counts` →
+  `assertions=474 resolved=404 skipped=780 mismatches=70`; r22 attempt 2 recorded `assertions=63 resolved=63 mismatches=0`. R42scout04's sweep of the round tips
+  (`census/round-42/waves/w1/R42scout04.md`) puts the first nonzero count at the r23 tip and the count rising after it with no round re-running the instrument.
+- **captured-by:** none. QUALITY Q55/Q75/Q101 cover other surfaces; no rule required the instrument at the tip.
+- **fix:** C1 (register + the counter's `new_mismatches=0` leg over lines added after the base) and QUALITY Q104. Shown able to fail: the do-nothing control reads
+  `registered=0 class_ok=0` and the forged all-resolved register `class_ok=42` (`census/round-42/controls/c1-control.txt`); a SCORECARD row that cites an unresolvable path turns
+  `new_mismatches` red (R42critic01 k4/k5, which also show the leg does not read meaning, N-limits below).
+
+### M42-2 — a gate count quoted without its mode, and a repair that trades one mode for the other
+
+- **class:** scope (a derived value with no mode, the r41 N18 / closure disagreement) and a frozen-predicate defect found after the freeze.
+- **evidence pointer:** `python3 -B tools/souji-landing-gate.py --root . --rev bf618f6… --round 41` prints `findings=3` (`corpus/README.md:217` twice,
+  `corpus/knowledge/jj-colocation-receipts.md:148`); the same command with `--fleet-root /home/vgpnk/Projects/shokunin` prints `findings=0`. The r41 lesson N18 text names no mode.
+  R42scout03 measured the frozen R1 repair (three `corpus/pointer-exemptions.tsv` rows): green without `--fleet-root` and `findings=2` (`LG-DANGLING-PTR-EXEMPT-STALE`) with it, because
+  staleness is a set difference and the reason column is never read (`tools/souji-landing-gate.py:1269-1275`).
+- **captured-by:** none; the gate prints its `SUMMARY` without echoing its flags.
+- **fix:** the frozen R1 predicate was wrong (it trades the fleet-root mode for the plain mode). The L1 landed the repair that reads green in BOTH modes instead: the two
+  citations were repointed to byte-exact lane copies of the fleet reports (`census/round-42/jj-w1-reports/`, sha256 in `SHA256SUMS`, source fleet commit `f47ad6ba8d30`) at `51f204fb7c63…`.
+  Both modes now print `findings=0` (`census/round-42/records/gate-both-modes.txt`). The frozen R1 counter reads `findings=0 deleted=2 rows_added=0 stale=0` = **red by its letter**
+  (R1 is not a claim; reported, not narrowed). QUALITY Q103.
+
+### M42-3 — the target was proved reachable without the round's own bookkeeping
+
+- **class:** vacuous-reachability (a counter's target was shown reachable by a scratch triple that left SCORECARD.md untouched).
+- **evidence pointer:** `R42reviewer01` F1 and `R42critic01` N12: the C1 counter splits the base file on newline, so base line index 839 is the empty sentinel and an
+  honest append WITHOUT a leading blank line reads `rewritten=1` (a red). My pre-freeze reachability run (`score-candidate.sh c1` with an unchanged SCORECARD) could not see it.
+  A blank-prefixed append reads `rewritten=0`.
+- **captured-by:** none; the claim-sizing rule asks for a do-nothing control, not for a reachability run that includes the round's own append.
+- **fix:** the round's SCORECARD/LOG appends were landed blank-prefixed and measured (`census/round-42/records/c1-after.txt`); the counter is not edited (named limit N-C1c below).
+  The pre-landing check is a QUALITY Q104 clause: a frozen counter's reachability run includes every file the round appends to.
+
+### M42-4 — a survivor list measured against one fixture and stated against the battery
+
+- **class:** scope (R41w2mutationtester03's 17 "survivors" and the F1 "equivalent" were measured against `tests/fixtures/r41-refusal-sites.py` only).
+- **evidence pointer:** the C3 survey (`census/round-42/controls/c3-control.txt`, control A prints a `prior=` column per mutant over all eight committed drift fixtures): of the 17 G-class mutants,
+  D3 and F2 are killed by `r38-drift-write-envelope.py`; H3 and N1 by r36, r37-discrimination, r40 and r41-record-order; J5 by `r41-drift-record-order.py`; and the spot-check's own T2 by r40 and r41-record-order. The 13 left survive all eight. F1,
+  listed "equivalent" by the r41 tester, was killed by `r36-worktree-drift.py` in the L1's first survey run (under a loaded host) and by no fixture in the re-run
+  (`census/round-42/records/survey-prior.txt`); the preregistration's sentence "F1 is killed by r36" is therefore unreliable (a flake of the r36 fixture, or a load-sensitive kill) and F1, being in neither list, changed no verdict.
+  The six killed mutants read identically in both runs.
+- **captured-by:** none. **fix:** C3's counter requires `prior=8/8 old_killed=0` and `equiv_killed=0`; its population is the survivors of the whole battery. Shown able to fail: the byte-sniffing control kills the six equivalents
+  and reads `equiv_killed=6`; the absent fixture reads `survived=13`.
+
+### M42-5 — the preregistration and controls carried six small misstatements
+
+- **class:** attribution (R42critic06, R42connector02 P4/P8 — the frozen text cannot change; errata appended).
+- **evidence pointer:** `census/round-42/preregistration.txt`: "added by the freeze commit itself … the five control receipts" (four receipts were added; `controls/c1-control.txt` was
+  committed at `410316c` and rewritten in place at `b740809` after the duplicate-token fix, its `class_ok` reading 34 then and 42 now — `git show 410316c:census/round-42/controls/c1-control.txt`);
+  "Every Counter … is the blob at its adding commit" is false for `c1-counter.py` (added `410316c`, edited `b740809`; the frozen blob is `b740809`'s); the C2 Target omits `tool_sha`.
+- **captured-by:** `tools/souji-freeze-check.py` reads digests at the FREEZE commit, so the false sentence did not change any verdict; **fix:** this erratum (append-only).
+
+### M42-6 — a runtime-patch count read as a claim about the whole reach
+
+- **class:** scope (`patches=3/3` says three injected patches turned a self-test red; it does not say which tool classes the patch cannot reach).
+- **evidence pointer:** `census/round-42/waves/w1/R42scribe07/receipts/python-startup-probe.txt` and `census/round-42/waves/w1/R42sentinel02.md` (an injected `sitecustomize` runs under `python3 -B`,
+  `-s`, `-P`; not under `-I`, `-E`, `-S`; Python 3.14.8, docs 3.15.2, S259); `census/round-42/c2-counter.py` SITECUSTOMIZE and `run_selftest`.
+- **captured-by:** none; the C2 preregistration's `Sourced:` line cites the mechanism and states no unreached class.
+- **fix:** QUALITY Q105 (the unreached-class sentence rides beside the count); N-C2b above names the environment-aware stub that reaches `patches=3/3`.
+
+## Named limits of the frozen instruments (found in wave 1; none edited, none narrows a target)
+
+Source reports: `census/round-42/waves/w1/R42critic01.md` (C1), `R42reviewer01.md`, `R42critic02.md`, `R42critic03.md`, `R42reviewer02.md`, `R42sentinel02.md` (C2),
+`R42critic04.md`, `R42critic05.md`, `R42reviewer03.md`, `R42reviewer04.md` (C3), `R42critic06.md` (package), `R42sentinel01.md` (harness).
+
+- **N-C1a the counter cannot tell substance from shape.** `R42critic01` built 11 substantively wrong triples the counter scores at target (a row retracting the base lines, a row citing a path that
+  does not exist in the claimed sense, a self-citation, a lesson line with trailing text…). The honest triple and the wrong triples score the same; the lane's compensating checks are
+  the five-reader verification of the register (65/65 agree), the independent re-derivation (0 disagreements), and the L1's instrument re-run at the landed revision (`records/c1-after.txt`).
+- **N-C1b** the instrument is not re-run for base rows at REV by the counter (a committed file can make a base-unresolved token resolve: 70 → 68 in R42critic01 k4); `skipped=780` hex and digest spans never reach the
+  population (`e13d0c83…` and `9df0738c…` on line 69 and a date-like `20261018` on line 184 are not resolved commits and are not in the population).
+- **N-C1c** `rewritten` has the blank-line sentinel defect (M42-3); `new_mismatches` thresholds at `> 840` where the docstring says "beyond the BASE line count" (`> 839`); extra register rows are not rejected;
+  tilde and four-backtick fences are not recognised as fences; the marker match is ASCII-exact; a CRLF register is a false red; the header row's content is unread; a prose line containing the marker is `junk`.
+- **N-C2a the 37 cases are a closed public set.** `R42critic02` K5 (directory-name table) and K5b (commit-subject and shape table) reach `cases=37 pass=37` with no grammar; held-out cases read 6/11 each.
+  The honest reference K1 reads 37/37 and 11/11. The landed tool was audited (`.ufo/waves/round-42/audit-candidates.py`, static scan for the counter's names and environment variable) and by the held-out audit in wave 2.
+- **N-C2b the patches leg is a leg-level proof only.** An environment-aware stub (exit 1 if `PYTHONPATH`/`sitecustomize` is visible, otherwise print a fixed SELFTEST line) reaches `selftest=ok patches=3/3`
+  (`R42sentinel02` row 1; the frozen control B, an unconditional stub, is rejected but does not test this). A crash counts as a rejection; P1 is observed only through the name `hashlib.sha256`
+  (`hashlib.new('sha256', …)` lowers the leg to 2/3, an honest API choice); the patch does not reach `-I`, `-E`, `-S` children (Q105). The environment the counter passes names the patch
+  (`SOUJI_R42_PATCH`), and the children resolve `python3` through the caller's `PATH`.
+- **N-C2c expectation readings.** `dup-base-differs` requires the tool to evaluate the FIRST occurrence of a duplicated key (last-wins reads 36/37; `R42critic02` K7); `population-symlink` requires `POPULATION-EMPTY`
+  suppression (K8 36/37); a malformed heading's effect on the open block, the dispatch check at depth and a missing `Round:` line are not exercised (`R42reviewer02` A1/A2/N1, `R42critic03` D1-D5).
+  `run_tool` has no timeout handler (`R42sentinel02` row 17); a candidate can write the caller's cwd and absolute paths (TMPDIR is a convention); a hostile `GIT_DIR` in the scorer's environment reaches the scoring clone's decoy.
+- **N-C3a the counter admits a byte-presence fixture.** `R42critic04` K2 (reads the tool source for exactly the 13 defects, surviving the six equivalents) reaches the target; the equivalence guard only stops generic byte-sniffing.
+  The landed fixture passes the L1 audit (`.ufo/waves/round-42/audit-candidates.py c3`: logging wrapper green, one tool invocation per case, no anchor, hash or tool read).
+- **N-C3b** `killed()` reads stderr for a traceback only: an honest fixture that forwards the tool's stderr is a false red (K6); the `old_killed` leg is timing-sensitive under load (`R42executor09`'s fixture read `equiv_killed=1` in the L1's run and
+  `0` in the seat's); `EQUIV` was not re-proven beyond counting (29 + 15 varied scenarios found no observable difference, `R42reviewer04`, `R42critic05`).
+- **N-H the harness.** `score-candidate.sh` accepted any destination (`R42sentinel01` N9a-d: traversal, symlink write-through, a counter as destination, an unconfined hook/tool with an origin push). The L1 closed the destination:
+  the script now has an allowlist and refuses symlinked destinations (landed with the wave evidence); candidate execution inside the clone stays unconfined. The counters leave entries under `--scratch` after KILL/TERM
+  (the lane's scratch root is accepted as the scratch).
+- **N-adj** (R42connector01): the name `freeze-check` also exists as a chousa lane tool (in that lane's repository; no code or finding-class collision); souji's FROZEN-EDITED compares blobs at FREEZE and REV only, so edit-then-restore passes (kaidoku's round-45
+  preflight has a `restored` arm); the empty-pin family (kaidoku M31-2) matches FIELD-EMPTY/FIELD-MISSING; tameshi's mutate-and-run is the fleet's generic mutation method and has no EQUIV scoring.
+
+## Wave 1 outcome
+
+Wave 1 (`census/round-42/waves/w1-spec.json`, 40 seats). Six C2 candidates (`R42executor01`-`06`) all scored `cases=37 pass=37 … selftest=ok patches=3/3` at the L1's scoring; five of six C3
+candidates scored the target (`R42executor07`, `08`, `10`, `11`, `12`); `R42executor09` read `equiv_killed=1` in the L1's run. Selection by the preregistered rule (all-target first, then smaller bytes), after the L1 audit:
+C2 `R42executor06` (18 550 bytes; `audit-candidates.py c2` findings 0), C3 `R42executor10` (8 741 bytes; wrapper audit green, 13 invocations for 13 cases). Landed at
+`133206705f32d785277c1fdf69abd4c73066ba7c` (C2) and `5ad7046d44c3be81ffdb5b2b448cb95a6b03fc96` (C3); measurements `census/round-42/records/c2-after.txt`, `c3-after.txt`.
+
+## Wave 2 errata and honest-stop record (appended after the C1/C2/C3 landings; nothing above is rewritten)
+
+Wave 2 (34 seats, `census/round-42/waves/w2-spec.json`) was cut short by the operator's wrap-up (run 11). 32 seats left a report (`census/round-42/waves/w2/`);
+`R42w2critic08` and `R42w2mutationtester03` left none and were stopped (a stopped seat is not a finding); wave 1's `R42mutationtester02`/`03` (planned 40) were also unfinished at capture
+(`R42mutationtester02` has a report, `R42mutationtester03` only a harness directory). The wave-2 `results.json` handoff does not exist; this record is from the reports. What the reports show against the text above:
+
+- **E-1 C3 is load-sensitive on identical bytes** (R42w2critic07, R42w2reviewer05, R42w2reviewer10): three tip runs of the counter read `killed=13` twice and `killed=9` once; under 16 busy processes one run read `killed=5 survived=8`, and
+  another `old_killed=1`. A timeout inside the fixture run reads as a survivor because `killed()` needs a SUMMARY. The landed C3 reading `13/13` is therefore a reading on an idle host, not a stable value (new named limit N-C3c; M42-4's "flake" attribution of F1 is likewise unevidenced).
+  The wave-1 text "five of six C3 candidates scored the target" is a single-run reading: the committed seat score files read target for all six (R42w2critic07 row 1); the `equiv_killed=1` read I cite for `R42executor09` has no committed receipt.
+- **E-2 the R1 diagnosis above (M42-2, "the frozen predicate trades modes") is wrong as stated.** R42scout03's "green without `--fleet-root`" was vacuous: the gate printed a zeroed SUMMARY and `COULD-NOT-EVALUATE ... malformed exemption row` (exit 2), reproduced by the L1 after wave 2
+  (`corpus/pointer-exemptions.tsv:5` rejected). The exemption grammar (`load_pointer_exemptions`) cannot name `../` pointers, so the frozen R1 predicate (three exemption rows, `findings=0`) is unsatisfiable by the gate's own grammar in the plain mode;
+  the frozen `r1-counter.py` does not read the gate's exit status (new limits N-R1a, N-R1b). The landed repoint is unaffected: both gate modes read `findings=0` at the tip for rounds 40, 41 and 42 (R42w2critic07 row 4, R42w2reviewer08).
+- **E-3 SCORECARD.md:697 lists six receipts, not five** (R42w2reviewer01): three mismatch as stated; the three others were read and match. The sentence "the other two of the five were not checked" above is superseded. The fixture digest `42259756` is the r24 fixture at `1efe406` (base digest `65d2d681`); the staged entry reads "26 registrations across 10 lane repos", not "26 prunable"; the live fleet now shows 30 registrations across 29 repositories (prunable 0), the dated 27/26 census stays the cited measurement.
+- **E-4 counts and attributions** (R42w2critic07 rows 11, 12, 15; R42w2reviewer02 E1-E13): "three of nine planned items" is four; "the 13 left" is 12 of the 17 listed plus D4; `controls/c1-control.txt` was first added at `b740809` (`class_ok=34`) and rewritten at `afe17f4`, not added at `410316c`; the census-before receipt is the only census receipt (no end-of-round receipt landed before the stop, see the report);
+  `c1-after.txt` was measured at `34e33a6`, before the appends, and the tip reading (`rewritten=0 new_mismatches=0`) is in R42w2reviewer01 and R42w2critic07; the counter's `new_mismatches` skips line 840, the first appended line.
+- **E-5 S259 scope** (R42w2reviewer07, verdict NARROW SCOPE): the `-S` sentence on the page concerns the `site` module's import, one step from the `sitecustomize` attempt; the `PYTHONPATH` discovery channel the C2 patches leg uses is on a different page (`using/cmdline`), which has no registry row. S259 stays as filed (a superseding row was not landed this round); the claim "C2 rests on S259" holds for the `sitecustomize` import only. The straight apostrophe in the S259 Gate quote of this lesson is U+2019 in the snapshot.
+- **E-6 C2 tool** (R42w2critic02, R42w2critic03, R42w2reviewer04, R42w2critic06): the landed tool reads `37/37`, `--selftest` 31/31, held-out audit 11/11 against the r41 tool's 7/11; 152 crafted scenarios found no crash or hang and three false greens plus three false findings the counter's 37 cases do not hold: zero-padded or fullwidth `Round:` digits do not trigger DISPATCH-BEFORE-FREEZE; a Control symlink whose link text is `EXIT=1` is read as red;
+  FROZEN-EDITED does not cover the Control and a post-freeze edit of the preregistration itself is invisible; the HEADING-MALFORMED block-boundary clause is undefined in the docstring (named limits N-C2d). Patch-leg limits: `hashlib.new('sha256', ...)` and a `subprocess.Popen` tool read `patches=2/3` or `1/3` while honest (R42w2critic06 T4-T6).
+- **E-7 C3 coverage beyond the 13** (R42w2critic04): of 70+ further condition mutants, 17 non-equivalent survive all nine drift fixtures (16 with deterministic probes, one race-only) — the r43 coverage population; 17 equivalent. No sniffing found in the landed fixture (R42w2critic05: root process opens the tool 0 times, logging wrapper green, renamed/read-only/trailing-comment copies 13/13); one usage-level brittleness (missing `--work` directory is a traceback).
+- **E-8 history sweep** (R42w2scout01): M42-1's sentence holds at tip granularity (first nonzero count at the r23 tip `a65fac98`, rising to 70 with one intra-r40 repair of 4); `R42scout04` mislabelled the r23 tip as `d3666c3` (a round-24 commit) and its "no record names the instrument" sentence is false in the letter (r31 receipts run its `--selftest`).
+- **E-9 register and C1** (R42w2reviewer09, R42w2reviewer01): the 65 resolved rows are confirmed mechanically (0 mis-resolutions under three scopes); the five correction lines' derived values reproduce. The C1 counter still reads shape (N-C1a-c); the 28-edit/prose blind spots of wave 1 stand.
+- **E-10 sentinel** (wave 1, `R42sentinel01`): the `score-candidate.sh` allowlist landed in `34e33a6`; R42w2sentinel01/02 and R42w2reviewer06/10 reports are in `census/round-42/waves/w2/`; the self-test's write-scope claim fails when `TMPDIR` is unset or missing (R42w2reviewer10 F1); `--survey` in the C3 counter is not a no-verdict option (F3).
+
+Not run to completion this round (stopped): the wave-2 mutation testers on the C2 tool (`R42w2mutationtester01`: no report), the fixture mutation (`R42w2mutationtester03`), the axis-harm audit `R42w2critic08`, `R42w2reviewer03`'s verdict was read (faithfulness findings E-1, E-4) but its routed-table fixes (the T2 receipt pointer `controls/c3-control.txt` should read `records/survey-prior.txt`; "see M42-4" should read M42-3's neighbour) are noted here, not edited above.
+
+## Wave 3 (run-12 resume): the stopped items completed; report errata E-11..E-13 (appended 2026-10-29; nothing above is rewritten)
+
+The round was re-dispatched on 2026-10-29 (hyaku run 12; the run-11 wrap-up had released the claim without a closure). The inherited landed work was re-verified at the final tip `6a3f75941d3604e3459011d599c2c16f3a97b44c` and a residual wave of 4 attack seats (`census/round-42/waves/w3/`, dispatched 17:21:17, all 4 settled) completed the genuinely stopped items.
+
+- **E-11 the honest-stop list overstated the stopped set.** The paragraph above and the filed report say `R42w2mutationtester01` left no report; its report landed at 22:57:14 on 2026-10-28 — before the 23:45 filing — and is captured at `census/round-42/waves/w2/R42w2mutationtester01.md` (64 mutants: 39 killed, 13 uncaught gaps, "`--selftest` adds no kill the counter table misses" on that set). Only `R42w2critic08` (axis-harm audit) and `R42w2mutationtester03` (fixture mutation) truly lacked reports. Correction recorded here, not edited above; both missing items are re-issued in wave 3 below.
+- **E-12 routed pointer fixes, recorded not edited (append-only discipline):** the routed row "the r41 plan sentence for r42 C1 ... see M42-4" should point at the plan-vs-actual mistake (M42-5's preregistration misstatements / M42-3's bookkeeping), not at M42-4 (the survivor-list mistake); M42-4's primary evidence pointer (`controls/c3-control.txt`) is complemented by the survey receipt `census/round-42/records/survey-prior.txt`, which the neighbouring line already cites.
+- **E-13 kama-r64 pkill caveat** (open L0 line `kama | round-64`, 2026-10-28 ~22:03 -03): the kama L1's `pkill -f mut-.*\.py` also matched three souji seats' scratch mutant processes (R42w2critic07, R42w2reviewer05, R42mutationtester03), so some run-11 mutant runs may have died and been scored as dead mutants near that time. The run-11 numbers that rest on those seats (E-1's load readings, E-7's survivor census) are closed history and are not recounted; every wave-3 mutation run is fresh (2026-10-29) and unaffected.
+- **Axis-harm audit (R42w3critic01, re-issues R42w2critic08): no durable calibration, operability or coverage regression found** at base `bf618f6c…` vs tip `6a3f7594…`. Declared-evidence mismatches stayed 70; C2's r41 behaviour retained (21/21) alongside the new 37/37 and selftest 31/31; C3 read 13/13; the six new r42 SKILL gate rows are tip-only as expected; three pre-r42 rows read differently and each is explained (the r41 C2 row's expected tool_sha, the registry row's echoed revision, and the landing-gate 3→0 of the favourable R1 repoint); one differing leak-count pair passed on three serial reruns per revision. Table: `census/round-42/waves/w3/R42w3critic01.md`.
+- **Fixture mutation (R42w3mutationtester02, re-issues R42w2mutationtester03): the landed fixture is mutation-robust for its frozen target.** 1050 grid cells (75 fixture mutants × 14 tools, none missing, no crash/timeout); the wave-2 partial grid reused as a cross-check with 0 disagreements over 634 shared cells; harness verdicts cross-validated against the frozen counter on 8 mutants (exact match); the load-sensitive G3 column re-run serially (68 cells, load 16–290) — all reproduce, so the G3 kill is not a load artefact. 11 of 13 cases individually load-bearing, 2 mutually necessary; findings F1–F4 are coverage observations, not defects (F4: the kill channel is the SUMMARY `fail` field alone — pinning it to 0 kills nothing). Report: `census/round-42/waves/w3/R42w3mutationtester02.md`.
+- **Tool part-A mutation, extended (R42w3mutationtester01, corroborates and extends the inherited R42w2mutationtester01 report):** 136 single-point mutants of lines 1–187 (64 inherited M re-verified + 72 new W), scored against the tool bytes `9ddd596b…` (identical at the landing and the tip). Counter cases kill 65/136; `--selftest` kills 4 more (W-set; on the M-set alone the inherited seat's "adds no kill" reading stands); 63 killed by both, 2 by the counter only (M31, M34). The 67 survivors = 35 equivalent + 30 gaps no leg observes + 2 gaps only the counter's `real` leg observes; all 67 re-verified one mutant at a time (agree=67). The 30 gaps are C2's named part-A coverage limits, extending the inherited 13-gap list. Report: `census/round-42/waves/w3/R42w3mutationtester01.md`.
+- **Independent tip re-measurement (R42w3reviewer01): all three claims reach their frozen targets at `6a3f7594…`; every SUMMARY field identical to the committed receipts** (`c1-after.txt`, `c2-after.txt` incl. `tool_sha=9ddd596b98fb`, `c3-after.txt` incl. `tool_sha=b2a603cf4247`); landing gate `findings=0` both modes with `--round 42`. Caveat recorded: the shared host never dropped below load1 8 during a 24-minute gate, so its C3 run went out at load 23.74 — it corroborates the idle-host receipt without replacing it (the canonical idle-host receipt remains `c3-after.txt`). The L1's own re-run agrees field-for-field (recorded at `census/round-42/records/resume-remeasure-l1.txt`, taken at load1 40.21). Report: `census/round-42/waves/w3/R42w3reviewer01.md`.
+
+Wave shape: residual call, 4 seats (critic 1, mutation-tester 2, reviewer 1; attack 4/4), round total 74 + 4 = 78 (band 64–128). No seat died; scratch roots removed by all four seats.
