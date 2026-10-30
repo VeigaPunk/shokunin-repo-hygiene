@@ -1,0 +1,25 @@
+# S45reviewer03 command log (bounded probes; all read-only git/plumbing; cwd = lane unless noted)
+
+git rev-parse HEAD                                                    # 18e6ec5f1d470afc50992abf8ab4dc5539ad8bd2
+git cat-file -t 55d7af6f5a22340f7a3de1c386e514ababfaa75f             # commit
+git cat-file -t 019bccc9ac97f3cec1a1dea574cc2f81f57fc967             # commit
+git merge-base --is-ancestor 019bccc9… HEAD                          # exit 0 (freeze is ancestor)
+git show 019bccc9…:census/round-44/c1-population.tsv | sha256sum     # 422875449468ae146ef029a4622d8f521f05f570a9b79f90286be03b7b0c1e2c
+git show 019bccc9…:census/round-45/c1-counter.py | sha256sum         # 46d5fc68497d7d289b43f55f9c808d6da1d309900d357ebc608542436ee34125
+sha256sum census/round-45/c1-counter.py census/round-44/c1-population.tsv   # same pins on disk
+git show 019bccc9…:corpus/lessons/round-44.md | grep -n 'line=22 '   # line 27: CORRECTION-R44 id=R44-03 …
+git show 019bccc9…:corpus/lessons/round-44.md | grep -c 'CORRECTION-R44 '   # 66
+git ls-tree -r --name-only 55d7af6f… | awk -F/ '$NF=="c2-after.tsv"' | LC_ALL=C sort   # 6 paths
+printf 'multi:'; paste -sd';' derived-c2.txt  > expected-derived.txt
+diff expected-derived.txt filed-derived.txt                          # clean → DERIVED-EXACT-MATCH
+git show 55d7af6f…:SCORECARD.md | sed -n '22p'                       # cell names c2-before.tsv, c2-after.tsv, measured at ed270c42…
+git show 55d7af6f…:tools/souji-declared-evidence.py > instrument.py
+TMPDIR=<seat-scratch> python3 -B instrument.py --root <lane> --rev 55d7af6f… --file SCORECARD.md --format tsv   # rc=1; line 22: c2-after.tsv A mismatch:path-absent "not in tree at 55d7af6f…"
+git ls-tree -r --name-only ed270c42161cd62829783a5e5d2ef4e27089331c census/round-28/records/   # c2-before.tsv only; c2-after.tsv ABSENT at runtime rev
+git ls-tree -r --name-only ed270c42… | awk -F/ '$NF=="c2-after.tsv"' | LC_ALL=C sort           # only 4 paths (r24–r27)
+git rev-parse ed270c42…:census/round-28/records/c2-after.tsv         # fatal: absent at that rev
+git merge-base --is-ancestor ed270c42… 55d7af6f…                    # exit 0
+git log --diff-filter=A --format='%H %ci %s' -- census/round-28/records/c2-after.tsv  # fec846dd … 2026-10-25 "round-28: pin after measurements…"
+head -5 census/round-42/c1-register.tsv; grep -nP '(^|\t)22(\t| )' census/round-42/c1-register.tsv   # 22 c2-after.tsv resolved census/round-28/records/c2-after.tsv
+git show 019bccc9…:corpus/lessons/round-44.md | awk 'NR<27 && /^ {0,3}(`{3,}|~{3,})/{f=!f} END{print f}'   # empty → no fence before entry
+python3 -B (population key ordering; rows=70 unique=66 index2=(22,'c2-after.tsv','mismatch:path-absent'))

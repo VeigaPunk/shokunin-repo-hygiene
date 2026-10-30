@@ -46,3 +46,27 @@ The new counter has no authenticated-execution or universal adversarial-parser
 claim. Its discrimination is the finite external fixture, not a built-in
 self-invocation mode; that Gate-standard interface debt is explicit. No claim
 that outstanding historical factual mismatches decreased is made.
+
+## Admission distinction — frozen claim unchanged
+
+The pre-freeze new-instrument feasibility runs already accept the base register
+(`controls/honest1.txt` through honest3.txt). Therefore the zero-to-66 comparison
+between two different instruments is not a same-instrument calibration
+improvement. The work acquires runnable verification, but changes zero outstanding
+self-assessment facts. On calibration axis fit the lane records **unprovable**,
+not verified or admitted. The capability demonstration and exact target remain
+measured; neither author opinion nor 64 seat votes can convert this into a new
+factual gap reduction. The old-instrument red control is a regression witness,
+not proof that the new-instrument target was unreachable by the base content.
+No post-freeze relabeling to operability or target amendment is made.
+
+## Operator wrap-up
+
+Main's run12 operator wrap-up explicitly releases w1 without dispatch and
+orders immediate honest-stop filing. Validated plan 64 seats; actual dispatched,
+completed and dead all zero. No WAVE-DONE or outside verification is claimed.
+Wave files captured in census/round-45/waves (24 records). No report from this
+unlaunched wave is evidence of verification. L2 floor unmet; no closure this
+run, next round unchanged. Remaining: independent identity/substance audits,
+axis-fit judgment, execution-bound hidden audit, operator symlink disposition.
+Fleet misroot sweep found only unrelated operator/sibling files; none moved.

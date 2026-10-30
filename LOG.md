@@ -2036,3 +2036,12 @@ R39-REG-11 — `cases=7` in `census/round-39/records/c3-after.txt`, receipt comm
 - No production receipt-tool changes, cleanup action, credential operation or
   installs. Axis labels unchanged; capability acquisition does not imply a
   numeric calibration gain or retrospective R44 admission.
+
+- Operator run12 wrap-up: validated 64-seat plan released without dispatch;
+  dispatched0/completed0/dead0, no WAVE-DONE and no L2 verification credit.
+  Evidence `census/round-45/records/operator-stop.json`; wave-plan capture
+  `census/round-45/records/wave-capture.txt`, 24 files captured.
+- C1 calibration improvement explicitly unprovable: honest new instrument
+  already passes on base content; different-instrument comparison is not
+  factual gap reduction. No target relaxation/relabeling or admission claimed.
+  Next round unchanged pending operator resumption; no closure this run.

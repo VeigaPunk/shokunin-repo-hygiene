@@ -986,3 +986,15 @@ The already-accounted 70 occurrences are not re-credited (Q76).
   remains open; it was not declared as a second claim. The operator symlink-contract
   disposition remains open. Do not enlarge the historical five-suite scope or infer
   approval from technical green. Certification OFF, K5 HELD, NAMESPACE unchanged.
+
+### Round 45 operator honest-stop disposition
+
+C1 exact finite target met, but calibration axis improvement is unprovable:
+the new counter already accepts the base register, so different-instrument
+0-to-66 is not a reduction in outstanding false beliefs. The capability row
+above records first working execution only, not admission or a score gain.
+Operator wrap-up releases the validated 64-seat plan WITHOUT dispatch:
+dispatched=0, completed=0, dead=0. No WAVE-DONE is fabricated; L2 floor
+was not met. No closure this run; next round unchanged.
+Evidence: census/round-45/records/operator-stop.json and the lesson's
+Admission distinction section. Certification and all holds unchanged.
