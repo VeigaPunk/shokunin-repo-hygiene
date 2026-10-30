@@ -18,11 +18,13 @@ CONTROL-NOT-RED, FROZEN-EDITED, DISPATCH-BEFORE-FREEZE. Prereg-wide findings car
 A missing `Round:` line is `FIELD-MISSING C0 Round`; an empty key value is FIELD-EMPTY; repo paths may
 contain spaces (r41 wave-2 hardening).
 
-r42: a key repeated in one claim is KEY-DUPLICATE (once per key; the key is then not evaluated); a column-0
-`##` (not `###`) line reading as a claim heading (`C`/`c`, optional spaces, digit) but not `## C<digits>`
-+ space/EOL is HEADING-MALFORMED (line=<n>) and opens no claim; a Counter/Population path that is a git
-symlink at FREEZE-REV is COUNTER-/POPULATION-SYMLINK and is not digest-compared; DISPATCH-BEFORE-FREEZE
-covers any file under .ufo/waves/round-<N>/ named `*-dispatch*`, `*.ready*`, `*-spec.json`, `*-results.json`.
+r43: duplicated keys are first-wins; every further occurrence is KEY-DUPLICATE. A malformed
+claim heading closes the current block; following keys are C0 UNATTACHED-KEY until a valid
+claim heading. ROUND-MALFORMED rejects present Round values outside ASCII [1-9][0-9]* and
+suppresses dispatch scanning. CONTROL-SYMLINK refuses a Control symlink at FREEZE without
+reading its link text as a control. FROZEN-EDITED covers Control and preregistration blobs too.
+CRLF lines parse through splitlines(). DISPATCH-BEFORE-FREEZE covers any file under
+.ufo/waves/round-<N>/ named `*-dispatch*`, `*.ready*`, `*-spec.json`, `*-results.json`.
 
 --selftest builds synthetic git repositories under $TMPDIR, runs this tool's own digest, freeze-detection
 (`git log --diff-filter=A`) and ancestry (`git merge-base --is-ancestor`) code over them in-process and
@@ -45,7 +47,7 @@ HEADER = re.compile(r"^## C(\d+)(?: |$)")
 BADHEAD = re.compile(r"^##(?!#) *[Cc] *\d")
 KEYLINE = re.compile(r"^(Base|Counter|Population|Control|Target|Kill):[ \t]*(.*?)[ \t]*$")
 PATH_SHA = re.compile(r"^(.+?)[ \t]+sha256=([0-9a-f]{64})$")
-ROUND = re.compile(r"^\ufeff?Round:[ \t]*(\d+)[ \t]*\r?$", re.M)
+ROUND = re.compile(r"^\ufeff?Round:[ \t]*([1-9][0-9]*)[ \t]*$")
 EXIT_LINE = re.compile(r"^EXIT=(\d+)$")
 KEYS = ("Base", "Counter", "Population", "Control", "Target", "Kill")
 
@@ -92,25 +94,30 @@ class Repo:
 
 
 def parse_claims(text):
-    """-> ([(label, {key: first value}, {duplicated keys})], [line numbers of malformed headings])."""
-    claims, bad, cur = [], [], None
+    """Return claim blocks, malformed heading lines and unattached key lines."""
+    claims, bad, unattached, cur = [], [], [], None
+    malformed_block = False
     for n, line in enumerate(text.splitlines(), 1):
         m = HEADER.match(line)
         if m:
-            cur = ("C" + m.group(1), {}, set())
+            cur = ("C" + m.group(1), {}, [])
             claims.append(cur)
+            malformed_block = False
         elif line.startswith("## ") or BADHEAD.match(line):
             cur = None
-            if BADHEAD.match(line):
+            malformed_block = bool(BADHEAD.match(line))
+            if malformed_block:
                 bad.append(n)
-        elif cur is not None:
+        else:
             m = KEYLINE.match(line)
-            if m:
+            if m and cur is not None:
                 if m.group(1) in cur[1]:
-                    cur[2].add(m.group(1))
+                    cur[2].append(m.group(1))
                 else:
                     cur[1][m.group(1)] = m.group(2)
-    return claims, bad
+            elif m and malformed_block:
+                unattached.append(n)
+    return claims, bad, unattached
 
 
 def freeze_rev(repo, rev, prereg):
@@ -121,11 +128,13 @@ def freeze_rev(repo, rev, prereg):
 
 
 def dispatch_findings(repo, rev, freeze, text):
-    m = ROUND.search(text)
-    if not m:
-        # r41 wave-2 hardening (R41w2critic01 D1/D10): without a Round line the dispatch
-        # check cannot run; say so instead of reading clean.
+    lines = [line for line in text.splitlines() if line.lstrip("\ufeff").startswith("Round:")]
+    if not lines:
         return [("C0", "FIELD-MISSING", "Round")]
+    malformed = [line for line in lines if not ROUND.fullmatch(line)]
+    if malformed:
+        return [("C0", "ROUND-MALFORMED", "detail=%s" % line) for line in malformed]
+    m = ROUND.fullmatch(lines[0])
     tree = ".ufo/waves/round-%s/" % m.group(1)
     p = repo.run("log", "--diff-filter=A", "--no-renames", "--full-history", "--name-only",
                  "--format=%x01%H", rev, "--", tree)
@@ -175,8 +184,13 @@ def check_path_sha(repo, rev, freeze, label, key, value, missing, digest, found)
 
 def evaluate(repo, rev, prereg, text, freeze):
     found = []
-    claims, bad = parse_claims(text)
+    claims, bad, unattached = parse_claims(text)
     found.extend(("C0", "HEADING-MALFORMED", "line=%d" % n) for n in bad)
+    found.extend(("C0", "UNATTACHED-KEY", "line=%d" % n) for n in unattached)
+    at_freeze = repo.blob(freeze, prereg)
+    at_rev = repo.blob(rev, prereg)
+    if at_freeze != at_rev:
+        found.append(("C0", "FROZEN-EDITED", "%s differs between freeze and revision" % prereg))
     if not claims:
         found.append(("C0", "NO-CLAIMS", "no '## C<digits>' block in %s" % prereg))
     for label, f, dups in claims:
@@ -184,8 +198,6 @@ def evaluate(repo, rev, prereg, text, freeze):
         for key in KEYS:
             if key not in f:
                 found.append((label, "FIELD-MISSING", key))
-        for key in dups:
-            del f[key]  # ambiguous: reported above, not evaluated
         for key in KEYS:
             if key in f and not f[key]:
                 found.append((label, "FIELD-EMPTY", key))
@@ -213,12 +225,16 @@ def evaluate(repo, rev, prereg, text, freeze):
             blob = repo.blob(freeze, path)
             if blob is None:
                 found.append((label, "CONTROL-MISSING", "%s not present at freeze %s" % (path, freeze[:12])))
+            elif repo.is_symlink(freeze, path):
+                found.append((label, "CONTROL-SYMLINK", "%s is a symlink at freeze" % path))
             else:
                 lines = [x.strip() for x in blob.decode("utf-8", "replace").splitlines() if x.strip()]
                 m = EXIT_LINE.match(lines[-1]) if lines else None
                 if not (m and int(m.group(1)) != 0):
                     found.append((label, "CONTROL-NOT-RED", "%s last line %r is not EXIT=<nonzero>"
                                   % (path, lines[-1] if lines else "")))
+            if repo.blob(rev, path) != blob:
+                found.append((label, "FROZEN-EDITED", "%s differs between freeze and revision" % path))
     found.extend(dispatch_findings(repo, rev, freeze, text))
     return len(claims), found
 
@@ -273,6 +289,25 @@ CASES = [  # (name, exit, "C1:CLASS,...", prereg text, options)
     ("counter-symlink", 1, "C1:COUNTER-SYMLINK", prereg(), {"fz": {"c.py": ("x",)}}),
     ("population-symlink", 1, "C1:POPULATION-SYMLINK", prereg(), {"fz": {"p.tsv": ("x",)}}),
     ("rev-unresolved", 2, "", prereg(), {"rev": "1" * 40}),
+    ("duplicate-first-bad", 1, "C1:BASE-UNRESOLVED,C1:KEY-DUPLICATE",
+     prereg(Base="0" * 40, tail="Base: @\n"), {}),
+    ("duplicate-three", 1, "C1:KEY-DUPLICATE,C1:KEY-DUPLICATE",
+     prereg(tail="Target: u\nTarget: v\n"), {}),
+    ("unattached-key", 1, "C0:HEADING-MALFORMED,C0:UNATTACHED-KEY",
+     prereg(tail="##C2\nTarget: unattached\n"), {}),
+    ("round-zero-padded", 1, "C0:ROUND-MALFORMED",
+     prereg().replace("Round: 7", "Round: 07"), {}),
+    ("round-fullwidth", 1, "C0:ROUND-MALFORMED",
+     prereg().replace("Round: 7", "Round: ７"), {}),
+    ("control-symlink", 1, "C1:CONTROL-SYMLINK",
+     prereg(), {"fz": {"ctl.txt": ("EXIT=1",)}}),
+    ("control-edited", 1, "C1:FROZEN-EDITED",
+     prereg(), {"post": {"ctl.txt": "different\nEXIT=1\n"}}),
+    ("prereg-edited", 1, "C0:FROZEN-EDITED,C0:NO-CLAIMS",
+     prereg(), {"post": {"pre.txt": "Round: 7\n"}}),
+    ("round-missing", 1, "C0:FIELD-MISSING",
+     prereg().replace("Round: 7\n", ""), {}),
+    ("crlf-prereg", 0, "", prereg().replace("\n", "\r\n"), {}),
     ("prereg-absent", 2, "", prereg(), {"path": "nope.txt"}),
 ]
 

@@ -198,6 +198,9 @@ for the legacy selftests; their historical fallback is not Q4-conformant.
 
 | name | kind | entry command | verdict map (code → class) | self-test command | pinned-value path | write scope | owner |
 |---|---|---|---|---|---|---|---|
+| r43-c1-counter | gate | `python3 -B census/round-43/c1-counter.py --root LANE --rev FULL40 --scratch DIR` | 0 exact frozen Target; 1 unmet; 2 could-not-evaluate | `python3 -B tests/fixtures/r43-correction-prose.py --lane-root LANE --rev43 FULL40 --work DIR` (external discrimination fixture, not a counter self-invocation; conformance debt disclosed) | `census/round-43/c1-required.tsv`, `census/round-43/preregistration.txt` | read-only git blobs; caller scratch | souji |
+| r43-c2-counter | gate | `python3 -B census/round-43/c2-counter.py --root LANE --rev FULL40 --scratch DIR` | 0 exact frozen Target; 1 unmet; 2 could-not-evaluate; current target honestly red due to hidden-audit oracle conflict | built-in always-clean/findings/memorizer controls; no self-invocation mode (conformance debt) | `census/round-43/c2-cases.tsv`, `census/round-43/c2-hidden-audit.py`, `census/round-43/preregistration.txt` | isolated git fixtures and shared clone in caller scratch | souji |
+| r43-c3-counter | gate | `python3 -B census/round-43/c3-counter.py --root LANE --rev FULL40 --scratch DIR` | 0 exact frozen Target; 1 unmet; 2 could-not-evaluate; no fixture installed this round because prior symlink behavior conflicts with new target | embedded stderr-discrimination pair and sniffing control; no self-invocation mode (conformance debt) | `census/round-43/c3-survivors.tsv`, `census/round-43/preregistration.txt` | read-only lane blobs; isolated caller scratch | souji |
 | souji-verify | probe | `bash tools/souji-verify.sh <path>...` | 0 clean, SAFE/NOT-SAFE data; 1 failed selftest or could-not-evaluate setup (legacy debt); 2 could-not-evaluate usage | `TMPDIR=/var/tmp bash tools/souji-verify.sh --selftest` | none; no pinned complete id set | read-only targets; isolated selftest under TMPDIR | souji |
 | souji-vault-verify | probe | `bash tools/souji-vault-verify.sh --fallback <path>...` | 0 clean, VERIFIED/NOT-VERIFIED data; 1 failed selftest or could-not-evaluate setup (legacy debt); 2 could-not-evaluate usage | `TMPDIR=/var/tmp SOUJI_CLI_BIN=/bin/false bash tools/souji-vault-verify.sh --selftest` | none; no pinned complete id set | read-only source/vault; isolated selftest under TMPDIR | souji |
 | souji-census | probe | `bash tools/souji-census.sh --root DIR [--compare PREV.tsv] [--repo-timeout N]` | 0 census emitted, including degraded `error`/`status-unverifiable`/`not-a-repo` placeholders, never clean measurements; dirty uses explicit `--untracked-files=normal`; hardlinked/non-regular info/attributes degrades one repo (D2). After enumeration, preflight content guards and `census_one` run separately in their worker groups under the timeout (integer 1..86400, default 600, last option wins; invalid → 2). Timeout emits `error` plus `repo-timeout`; unreaped group emits `repo-timeout-unreaped`; other repos continue. Root/compare resolution and discovery are not filesystem sandboxes; descendants escaping their group are not contained. 3 differential drift; 1 selftest/setup failure; 2 usage/malformed baseline/detected protected metadata refusal. Early closed stdout may return SIGPIPE 141. | `TMPDIR=/var/tmp bash tools/souji-census.sh --selftest` (69/0 at 4800fd7) | `census/round-18/c1-matrix-4800fd7.json`; historical r17 `census/round-17/c1-matrix-4f48343.json`; final batch `census/round-18/final-verification-4800fd7.json` | read-only targets; temporary capture/selftest under /var/tmp; signals only its spawned workers/timer, including parent-interruption cleanup | souji |
@@ -459,3 +462,14 @@ result-contract calibration, not malicious-producer attestation, pass-line
 identity, duplicate-key rejection or execution authentication. Historical r21
 source/receipts remain available at their recorded revisions; never run current
 source while labeling it as the historical implementation.
+
+## Round 43 freeze-check contract
+
+The current `souji-freeze-check` entry keeps its CLI and 0/1/2 map. Beyond the historical r42
+class list, it reports ROUND-MALFORMED for a present non-positive-ASCII Round value,
+UNATTACHED-KEY after a malformed claim heading, and CONTROL-SYMLINK without reading link text.
+Repeated keys are first-wins with one KEY-DUPLICATE per further occurrence; FROZEN-EDITED also
+compares the Control and preregistration blobs. `--selftest` includes the r43 cases.
+These are the lane's own hygiene-evidence checks, not fleet dispatch authority or deletion
+certification. The r43 frozen hidden audit has two oracle defects (lesson M43-1); no passing
+whole-claim verdict is inferred from the repaired tool's newtable=9/9 or self-test alone.
