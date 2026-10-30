@@ -878,3 +878,26 @@ The honest-stop state above is superseded by completion: the round was re-dispat
 - **Independent re-measurement (R42w3reviewer01 + the L1's own run, `census/round-42/records/resume-remeasure-l1.txt`): every SUMMARY field of c1/c2/c3 identical to the committed receipts at the tip**; landing gate `findings=0` both modes with `--round 42`; census `souji ok` rc 0 (rows=183, W04=52).
 
 Owned scores unchanged (calibration 7, operability 8, coverage 8); no reproducible 0-10 mapping, no score delta claimed. No claim is admitted by the lane; the verdicts are the closure's.
+
+### Round 43 measurements (attempt 2, 2026-10-30)
+
+Base `619a75034dd6324e1a725f73034c59f7bf9558ef`; inherited instrument revision
+`f8c805dbfa7f45814cf9a7270fa8bbffb41a8373`; formal registration
+`8dfad888d7b7673de41cdcd92f30244c16e38519` (late relative to handoff, disclosed).
+Measurements below are at `d1954ced70eca671e63684386452cf99fdabea87`.
+
+| claim | axis | before | after | counting command | verdict |
+|---|---|---|---|---|---|
+| C1 three historical self-assessment corrections | calibration 7 | required=3 registered=0 missing=3, exit 1 (`census/round-43/controls/c1-resume-before.txt`, measured revision in receipt) | required=3 registered=3 missing=0 rederived=3 rederive_failed=0 new_mismatches=0, exit 0 (`census/round-43/records/c1-landed.txt`) | `python3 -B census/round-43/c1-counter.py --root LANE --rev FULL40 --scratch DIR` | counter target met; timing conformance defect remains |
+| C2 defensive freeze-check grammar | operability 8 | newtable=2/9 r42table=ok hidden=RED real=RED, exit 1 (`census/round-43/controls/c2-resume-before.txt`) | newtable=9/9 r42table=ok hidden=RED real=ok selftest=ok tmpdir=ok, exit 1 (`census/round-43/records/c2-landed.txt`); self-test 41/41 | `python3 -B census/round-43/c2-counter.py --root LANE --rev FULL40 --scratch DIR` | target unmet: hidden audit h4/h6 contradict the grammar (lesson M43-1); no relaxed target |
+| C3 drift-survivor coverage plus leaf-symlink refusal | coverage 8 | killed=0 survived=16 cases=0, exit 1 (`census/round-43/controls/c3-resume-before.txt`) | killed=0 survived=16 cases=0, exit 1 (`census/round-43/records/c3-landed.txt`); production drift tool unchanged | `python3 -B census/round-43/c3-counter.py --root LANE --rev FULL40 --scratch DIR` | target unmet: legacy fixture requires symlink resolution while the new contract requires refusal; candidate not installed (lesson M43-2) |
+
+No numeric score increase: the existing 0–10 labels lack a reproducible mapping. No new capability
+row is entered on partial work. Whole-round admission is not claimed: C2/C3 miss and outside
+verification is not supplied by lane seats. Certification OFF, K5 HELD, NAMESPACE hold unchanged.
+
+### Planned (appended at round 43)
+
+- Calibration: resolve remaining S259 discovery-channel overstatement using the primary cmdline source and a scoped correction; retain historical append-only records.
+- Operability: a newly frozen hidden-audit version must expand class multiplicities and account for post-freeze preregistration edits before any scoring.
+- Coverage: explicitly decide the leaf-symlink contract, updating its legacy consumer and new fixture together under a new freeze; do not reinterpret this round's missed target.

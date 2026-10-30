@@ -819,3 +819,17 @@ a measured edge class does not promote a frontier ground to Core (PROVINCE
 | F1 git-native housekeeping vs receipts: worktree-drift tool, condition-level coverage (r42 C3: the refusal, containment, discovery, write and exit conditions of `tools/souji-worktree-drift.py` observed by a fixture, tool behaviour not bytes) | frontier, unchanged: a runnable condition battery and its counter, no knowledge entry added, no entry un-grounded; F1 stays frontier, expansion is unchanged, nothing is promoted to Core; the claim is coverage of the tool's behaviour at the pinned bytes (sha256 `b2a603cf42472b458712f2997fe6635c92147b75f5352c005cb7916ab3e34dc6`), not of the frontier | `../tests/fixtures/r42-drift-conditions.py`; `../census/round-42/c3-counter.py`; `../census/round-42/c3-mutants.tsv`; `../census/round-42/controls/c3-control.txt`; `../tools/souji-worktree-drift.py` |
 
 - Open routed items: N10 (tool `--json` leaf-symlink defect), N11 (registry K1 `cited-no-row S146`), R39-D1/D2, M40-12 closed by mutant D4, C1 counter limits N-C1a-c, C2 N-C2a-c, C3 N-C3a-b (lesson). Certification OFF, K5 HELD, NAMESPACE hold unchanged.
+
+## Round 43 frontier update
+
+- The round corrects three historical self-assessment readings and strengthens the lane's own
+  freeze checker. C2's frozen hidden audit stays red on two oracle conflicts; C3's new refusal
+  contract conflicts with a legacy green consumer, so no drift-tool cutover or new fixture was
+  installed. Evidence: `../census/round-43/records/c1-landed.txt`,
+  `../census/round-43/records/c2-landed.txt`, `../census/round-43/records/c3-contract-conflict.txt`;
+  details in `lessons/round-43.md`.
+- SOURCES 183 -> 186 rows, census exit 0 (`../census/round-43/records/census-resume-after.txt`).
+  S260/S261 ground documentary link/stderr semantics; S262 rejects link existence as preservation
+  authority. No knowledge entry added, no frontier ground moved into Core. Assimilation: none.
+- The older symlink-resolution behavior remains current in `tools/souji-worktree-drift.py`.
+  N10 is explicitly not closed. Certification OFF, K5 HELD, NAMESPACE hold unchanged.

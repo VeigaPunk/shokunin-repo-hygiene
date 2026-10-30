@@ -39,3 +39,42 @@ The r42 outside review was opened before dispatch (`corpus/lessons/round-42-veri
 - **C2 reached work:** the L1 completed a straightforward defensive checker repair after provider-failed candidates: first-wins duplicate evaluation (one finding per further occurrence), explicit unattached-key events, strict positive ASCII Round values, Control symlink refusal and Control/preregistration blob comparisons. Existing 31 self-test cases plus ten new cases pass (`census/round-43/records/c2-selftest.txt`, SELFTEST cases=41 pass=41 fail=0, EXIT=0). The candidate counter reads newtable=9/9, r42table=ok, real=ok, selftest=ok, tmpdir=ok; hidden=RED remains an honest target miss. No hardcoded hidden case or fake finding class is added.
 - **M43-2 (scope/contract conflict)** — C3 requires both leaf-symlink refusal and nine prior fixtures green. `tests/fixtures/r38-drift-write-envelope.py` asserts that the same leaf symlink is resolved and its target written. R43executor05's candidate implements the requested refusal while retaining all 22 mutant/equivalent anchors; the L1's independent run reads cases=12 pass=11 fail=1, solely case-json-symlink-resolved (rc=2, resolved_written=False), in `census/round-43/records/c3-contract-conflict.txt`. Captured-by: Q73/Q78; these forbid landing a favorable new behavior while silently discarding an old green consumer. Fix this round is refusal to cut over the tool under the inconsistent frozen target; this is not claimed as a passing C3 repair. Candidate bytes remain evidence, not an installed tool. A later explicitly re-frozen contract must decide which symlink behavior is intended and update its consumer together.
 - No third-party target, credential surface, history rewrite or live artifact deletion was exercised. Provider-denied work is unverified; a terminal seat status is not independent review clearance.
+
+## Gate addendum — routed S259 scope corrected
+
+SoujiR43a2 opened https://docs.python.org/3/using/cmdline.html#envvar-PYTHONPATH on 2026-10-30,
+served Python 3.15.2. **Admit S263**: PYTHONPATH entry, “Augment the default search path for module
+files.” The -E entry says “Ignore all `PYTHON*` environment variables”. These ground the discovery
+channel separately from the sitecustomize-import attempt documented by S259. This supersedes
+the open-item status for r42 review §6 item 5 in the earlier paragraph, not S259's correct import
+fact. No runtime injection or security-control bypass was attempted. No old registry cell changed.
+Search addendum: 1 additional primary page identified/screened/included, 0 excluded; stop at the
+discovery-versus-import distinction. Final row count is 187, superseding the intermediate 186.
+
+## Wave documentary findings integrated (not outside admission)
+
+`census/round-43/waves/w1/R43reviewer01.md` reviews exact instrument blobs, with bounded probes
+and explicit static/injected-evidence limits. `R43critic03.md` independently identifies the
+captured-but-uncompared C1 derived token, C2 memorizer's missing `os` import, C3 n10-before label
+without a candidate-specific before run, dropped old/equivalent timeout accounting, and the
+nine-versus-eight old-fixture scope discrepancy. These frozen instrument defects are retained;
+no counter is repaired after scoring. They bar treating a SUMMARY as substantive clearance.
+
+C1's actual three landed correction values are independently checked in
+`R43rederiveR43D1.md` (174 rows), `R43rederiveR43D2.md` (48 warning rows) and
+`R43rederiveR43D3.md` (literal header revision and scope-limited diff). D3 explicitly observes
+that the receipt itself never printed the claimed stale revision: its correction is only a
+clarification of later-carrier versus measured revision, not repair of a false receipt header.
+The C1 counter also does not enforce arbitrary natural-language retractions or whole-file
+append-only preservation; those are not acquired capabilities.
+
+Additional C3 blockers from the exact frozen-source review: WRAPPER contains uninterpolated
+doubled percent operators and fails compilation; the sniff control watches MUTANTS anchors
+that all six EQUIV substitutions preserve, so its own required positive kill control is zero.
+These findings reinforce the missed target independently of the legacy symlink contradiction.
+C2's negative memorizer control crashes on its missing import; REJECTED is not proof that a
+functioning memorizer was discriminated. Counter infrastructure failures/cleanup and absent
+self-invocation modes remain conformance debts, not new passing gates.
+
+The full 30-survivor r42 part-A inventory, general load stability, and the race-only S42 class
+are not claimed closed. Existing reports explicitly marked incomplete remain incomplete.
