@@ -1187,3 +1187,42 @@ shokuknow unreachable).
 - Whole-suite tip receipt again (calibration); if the operator rules on
   the r48/r50 census-form questions, adapt the standing receipt flow to the
   ratified form in the same round.
+
+### Round 51 landing (r50-closure routed items + the live workspace census; base d1b8734d835171c7329225fdaab249c5c6799de8 = the r50 non-author spot-check commit, verdict ok/admitted; freeze 851093b670e3fd1416df326d0479168222959ed1 before any claim receipt; preregistration census/round-51/preregistration.txt, freeze-check claims=2 findings=0 exit 0 at the freeze)
+
+| claim | axis | before -> after | counting command | measured commit |
+|---|---|---|---|---|
+| C1 the r50-closure routed record-accuracy corrections land append-only + the standing landing-suite receipt green at the final tip | calibration 7 | at base B both corrections are absent: the counter is red, exit 1 (`SUMMARY corr=FAIL dup=ok ntfs=FAIL listing=ok corr_lines=0`, control census/round-51/controls/c1-control-donothing.txt) -> at the content tip T the frozen counter prints `SUMMARY corr=ok dup=ok ntfs=ok listing=ok corr_lines=1 dup_base=2 dup_tip=2`, exit 0: the duplicated "Reject sample" bullet stays verbatim twice at BOTH revs (append-only proven) beside exactly one `R51-CORRECTION` line naming it, and the r50 NTFS tip receipt gains exactly one `quoted_d_rows=6` line with its six-path listing byte-identical to base; PLUS the standing suite receipt: the r50 tip-state receipt read `COULD-NOT-EVALUATE dirty worktree … 31 unexpected rows` exit 2 (census/round-50/records/c1-suite-tip-50.txt, the r50 closure's directed ordering fix) -> the r46 frozen counter green (exit 0, `unfiled=0`) at the content tip and at the FINAL tip after the terminal idx-repair (receipts in the end receipts; the final-tip receipt quoted in the round report) | `python -B census/round-51/c1-counter.py --root LANE --rev FULL40 --base-rev d1b8734d835171c7329225fdaab249c5c6799de8 --scratch DIR`; suite: `python -B census/round-46/c1-counter.py --root LANE --rev FULL40 --work SCRATCH` | content tip of this round (see LOG.md round-51); SCORECARD bytes unchanged after the content commit |
+| C2 the session-workspace live census refresh with per-artifact receipts and a derivable r46->r51 drift receipt (sourced on S274) | coverage 8 | at base B the r51 census blobs do not exist: `PRISTINE FAIL WORKSPACE-CENSUS-ABSENT`, exit 1 (control census/round-51/controls/c2-control-donothing.txt) -> at T the frozen counter prints `SUMMARY shape=ok drift=ok receipts=ok limit=ok rows=126 added=79 removed=2`, exit 0 over the committed capture census/round-51/workspace-census.tsv (the live 2026-11-01 dry-run census: 17 lane clones = 14 pushed + the same 3 no-origin-master as r46; 89 active-foreign-scratch rows vs r46's 19; new top-level candidate scratch-r80v), the drift receipt census/round-51/records/ws-drift-vs-r46.tsv (every COUNT line and ADDED/REMOVED key row re-derives from the two committed captures, header rows excluded), per-artifact receipts census/round-51/records/per-artifact-receipts.tsv (helpers-r74: NOT-SAFE, disposition unchanged pending operator approval; scratch-r80v: NOT-SAFE secrets-refusal — foreign, active, untouched; nothing moved, nothing deleted, no removal proposed), and the S274-grounded pushed-receipt limit named in census/round-51/workspace-census.txt (no r51 lane row is in the copied-history state; disclosed, not exercised) | `python -B census/round-51/c2-counter.py --root LANE --rev FULL40 --base-rev d1b8734d835171c7329225fdaab249c5c6799de8 --scratch DIR`; `grep -c -P "\tin-use/pushed\t" census/round-51/workspace-census.tsv` (14); `grep -c "^ADDED" census/round-51/records/ws-drift-vs-r46.tsv` (78); `grep -c "^| S274 |" corpus/SOURCES.md` (1) | content tip of this round (see LOG.md round-51) |
+
+Numeric axis scores unchanged (calibration 7, operability 8, coverage 8): C1
+repairs the two routed record defects append-only and restores the standing
+receipt ordering the closure directed (no new corrected beliefs about the
+corpus); C2 re-censuses the round contract's census surface on the live
+workspace — installed tools over live targets (the r47 precedent, no
+capability row), dry-run, no removal proposed, no authority taken. SOURCES
+197 -> 198 (S274, opened live 2026-11-01, the sourced claim is C2). Three
+counter defects caught pre-freeze by the feasibility/receipt review and mined
+(corpus/lessons/round-51.md ## Mistakes); the discarded first census take
+(`.zcode` scope) disclosed there too. L2 floor: no dispatch surface on this
+host; dispatched=0 (standing L0 questions routed around; nothing assumed
+answered). Assimilation: none (no considerthese/ directory; shokuknow
+unreachable).
+
+### Planned (r52, appended 2026-11-01)
+
+- Carry any r51-closure routed defects as claims; the census conf-form
+  question stays operator-owned (r50 consolidated L0 proposal; routed around
+  until ruled).
+- Standing receipts again (calibration, standing): the landing-suite receipt
+  at the r52 tip after the terminal repair; census before→after in the v1
+  receipt form at both ends; NTFS exclusion re-check at both ends (6 paths,
+  not widened).
+- Workspace census cadence: if the operator rules on a standing cadence for
+  the session-workspace census (r51 was a 5-round refresh after r46), adopt
+  the ruled cadence; otherwise refresh again when the workspace surface
+  drifts (new top-level entries or clone-state changes vs the r51 capture),
+  keeping the dry-run/no-removal discipline.
+- helpers-r74 and scratch-r80v keep their NOT-SAFE receipts and
+  operator-owned dispositions (quarantine-before-delete; no removal
+  proposed); re-receipt them only if their state changes.

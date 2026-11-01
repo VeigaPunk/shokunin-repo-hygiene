@@ -622,3 +622,39 @@ disclosed, never masked.
 |---|---|---|---|---|---|---|---|
 | souji-page-token-count | evidence | `python -B tools/souji-page-token-count.py --url URL --token STR [--out PATH] [--timeout N]` / `--capture FILE --token STR` | 0 record emitted (`# page-token-count v1` header; SOURCE-MODE; URL/FINAL-URL/HTTP-STATUS or CAPTURE-PATH; BYTES; SHA256; TOKEN; SCOPE-RAW-MATCHES; SCOPE-CONTENT-MATCHES; METHOD; PAGE-TOKEN-COUNT-EXIT=0); 2 could-not-evaluate (exactly one of --url/--capture, --token required, fetch/HTTP failure, capture missing, selftest environment refusal) | `TMPDIR=<scratch> python -B tools/souji-page-token-count.py --selftest` → `SELFTEST cases=8 pass=8 fail=0` (fixtures: body-text, footer-class-only, script-only, absent, case-insensitive, charref-decoded, footer-tag-only, content-resumes-after-footer; the footer arms are the anti-always-zero discriminators) | `census/round-50/sources/s267-reopen-count-receipt.txt` (content histor=0 / raw histor=1 / factual 0-0 over the committed capture `s267-stdtypes-capture.html`, sha256 0a9474e3…f5d3); S273 capture + located quote beside it | stdout + caller-named `--out` only; the page is held in memory; selftest fixtures under TMPDIR (refused unset/empty or at/inside the lane root), removed | souji |
 | souji-census-receipt | evidence | `python -B tools/souji-census-receipt.py capture --fleet-root DIR --lane souji --out PATH` / `verify --receipt PATH [--fleet-root DIR]` | capture: 0 receipt written with the census dir form exit 0 (else the census's code; 2 environment/grammar); verify: 0 `VERIFY ok …` listing every check (grammar,digest,raw-section,rc,w04,result,adapter-sha,fleet-script-sha), 1 a named refusal (RECEIPT-MALFORMED / RECEIPT-DIGEST-MISMATCH / RECEIPT-RC-INCONSISTENT / RECEIPT-COUNT-MISMATCH / RECEIPT-SCRIPT-DRIFT / RECEIPT-ADAPTER-DRIFT), 2 could-not-evaluate | `TMPDIR=<scratch> python -B tools/souji-census-receipt.py --selftest` → `SELFTEST cases=6 pass=6 fail=0` (capture+verify over a synthetic adapter; five tamper/malform arms each asserting its exact refusal class) | `census/round-50/records/census-before-receipt.txt` (FLEET-SCRIPT-SHA256 3fb72615…4e30, ADAPTER-SHA256 a159f2db…f74b, CONF-RC=2, DIR-RC=0, DIR-RESULT=ok, DIR-WARN-W04=59; verified ok over all checks) | runs the r48 adapter read-only; the only write is the caller-named `--out`, refused at/inside the lane root (receipt-staging discipline enforced) | souji |
+
+## Round 51 contracts
+
+Workspace-census captures are point-in-time facts (coverage surface). The
+session-workspace census (the r46 method, re-run r51) commits its capture as
+the frozen state: a census row records what existed at capture time, never a
+live guarantee (the live workspace grew 86 -> 89 foreign scratch dirs between
+two r51 takes of the same round). A drift receipt against an earlier capture
+derives every COUNT line and its ADDED/REMOVED key rows from the two
+COMMITTED captures — never from a re-run — and its key derivation excludes
+table header rows on both sides (a two-sided derivation that filters a header
+on one side only reads the format artifact as workspace drift — r51 mistake
+1). The pushed receipt inside the census compares HEAD with the LOCAL
+refs/remotes/origin/master (offline metadata) and names its copied-history
+limit (S274: a rebased/cherry-picked/am'd-then-pushed lane reads unpushed to
+the sha comparison; git-cherry(1) resolves it) — the limit is disclosed even
+in rounds where no lane row is in that state. The census scope is
+r46-comparable non-hidden top-level entries, disclosed in the method note;
+every named candidate gets a per-artifact receipt (souji-verify.sh,
+advisory, certification OFF) and nothing is moved, deleted, or proposed for
+removal without operator approval.
+
+Record corrections to prior rounds' artifacts are append-only with the
+untouched bytes proven (calibration surface). When a closure routes a defect
+in a prior round's lesson or receipt, the fix is an appended correction line
+naming the defect (the R51-CORRECTION shape) or an appended receipt field
+with a provenance note — and the frozen counter of the round that lands it
+proves the original bytes unchanged (byte-occurrence counts at both the base
+and the tip revs; an in-place edit fails). A missing receipt field is added
+beside a note naming the sibling receipt that carries it; the listing the
+numbers were counted from is never rewritten.
+
+| name | kind | entry command | verdict map | self-test | pinned-value path | write scope | owner |
+|---|---|---|---|---|---|---|---|
+| r51 routed-corrections gate | gate | `python -B census/round-51/c1-counter.py --root LANE --rev FULL40 --base-rev d1b8734d835171c7329225fdaab249c5c6799de8 --scratch DIR` | 0 `SUMMARY corr=ok dup=ok ntfs=ok listing=ok corr_lines=1 dup_base=2 dup_tip=2`; 1 target unmet (at the pre-r51 base this is the expected red: corr/ntfs FAIL); 2 could-not-evaluate | the committed do-nothing control is the discrimination of record (red at the base, EXIT=1); pre-freeze synthetic feasibility red/green receipts under census/round-51/records/ | census/round-51/c1-arms.tsv; counter digest in census/round-51/preregistration.txt | explicit scratch DIR only (diagnostics; nothing written inside the repo) | souji |
+| r51 workspace-census gate | gate | `python -B census/round-51/c2-counter.py --root LANE --rev FULL40 --base-rev d1b8734d835171c7329225fdaab249c5c6799de8 --scratch DIR` | 0 `SUMMARY shape=ok drift=ok receipts=ok limit=ok rows=126 added=79 removed=2`; 1 target unmet (PRISTINE FAIL WORKSPACE-CENSUS-ABSENT at the pre-r51 base — the expected red); 2 could-not-evaluate | the committed do-nothing control is the discrimination of record (red at the base, EXIT=1); pre-freeze synthetic feasibility red/green receipts under census/round-51/records/ (three counter defects caught and fixed there, mined in the r51 lesson) | census/round-51/c2-arms.tsv; counter digest in census/round-51/preregistration.txt | explicit scratch DIR only (diagnostics; nothing written inside the repo) | souji |

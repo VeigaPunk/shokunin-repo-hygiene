@@ -2408,3 +2408,89 @@ addendum, appended to the prereg, commits 8a793e7ae9131578bdec393982760217f62095
   routing); nothing assumed answered.
 - Holds unchanged: certification OFF, K5 HELD, NAMESPACE/reap holds,
   execution-audit attribution open.
+
+## Round 51 (2026-11-01, Windows host; base d1b8734d835171c7329225fdaab249c5c6799de8 = the r50 non-author spot-check, verdict ok/admitted; freeze 851093b670e3fd1416df326d0479168222959ed1 before any claim receipt — prereg + counters + populations + controls + pre-flight receipts in that one commit; freeze-check claims=2 findings=0 exit 0 at the freeze)
+
+- Carried the r50 non-author closure's two lane-owned routed items as claim
+  C1 (calibration 7, the lowest non-retired axis): item 1 — the duplicated
+  `## Gate` "Reject sample" bullet in corpus/lessons/round-50.md — fixed by
+  the appended `R51-CORRECTION` line naming the duplication, the duplicated
+  bytes preserved verbatim (the frozen counter's dup leg proves exactly two
+  occurrences at BOTH the base and the tip, so the fix is append-only);
+  item 3 — the r50 NTFS tip receipt's missing `quoted_d_rows` field — fixed
+  by the appended field with a provenance note, the six-path listing proven
+  byte-identical to base by the listing leg. Item 2 (census conf-form rc-2
+  host state) stays operator-owned (r50 consolidated L0 proposal; routed
+  around, nothing assumed answered). The closure's directed suite ordering
+  is C1's second leg: the r50 tip-state suite receipt read COULD-NOT-EVALUATE
+  (exit 2, committed r50 evidence); this round runs the r46 frozen counter
+  green at the content tip (clean window) and at the FINAL tip after the
+  terminal idx-repair.
+- Claim C2 (coverage 8): the round contract's census surface — this session
+  workspace — re-censused live (metadata only, dry-run, r46 method,
+  r46-comparable non-hidden scope): census/round-51/workspace-census.tsv
+  (126 rows; 17 lane clones = 14 pushed + the same 3 no-origin-master names
+  as r46, now S270-grounded labels; 89 active-foreign-scratch rows vs r46's
+  19; the new top-level candidate scratch-r80v), the drift receipt
+  census/round-51/records/ws-drift-vs-r46.tsv (every COUNT line and
+  ADDED/REMOVED key row re-derived by the frozen counter from the two
+  committed captures), per-artifact receipts (helpers-r74 NOT-SAFE,
+  disposition unchanged pending operator approval; scratch-r80v NOT-SAFE
+  secrets-refusal — foreign, active, untouched). Nothing moved, nothing
+  deleted, no removal proposed; certification OFF, receipts advisory. The
+  pushed receipt's copied-history limit (sha comparison cannot see
+  rebase/cherry-pick/am; git-cherry(1) would resolve) is named in the method
+  note and grounded on the newly opened S274 (the sourced claim; the row was
+  opened from the standing Leads list). No r51 lane row is in that state —
+  disclosed, not exercised.
+- Frozen instruments: census/round-51/c1-counter.py sha256 f0db3dcc…91be9,
+  census/round-51/c2-counter.py sha256 ae12203d…33af, populations
+  c1-arms.tsv/c2-arms.tsv, do-nothing controls red at the base (both EXIT=1),
+  committed control-first in the freeze. Pre-freeze feasibility against a
+  synthetic two-commit repo caught THREE counter defects before the freeze
+  (header-row drift artifact; container-row count definition; the CRLF-vs-LF
+  vacuous listing leg — the committed r50 receipts are CRLF and the quoted
+  -path regex assumed LF, a green leg that proved nothing); all fixed in the
+  counter bytes before the freeze and mined in corpus/lessons/round-51.md
+  ## Mistakes. Receipts: records/feasibility-{c1,c2}-{red,green}-synth.txt +
+  feasibility-defects-note.txt.
+- Carry-in bookkeeping: the round-50 lesson Gate duplication correction line
+  (R51-CORRECTION, append-only) and the NTFS tip receipt field (above) are
+  the r50 closure's routed items 1 and 3, addressed first as directed.
+- Frontier step: SOURCES rows 197 -> 198 (S274 appended: git-cherry(1)
+  DESCRIPTION patch-equivalence contract, opened live 2026-11-01, curl -sSL
+  HTTP 200 no redirect 27219 bytes, sha256 abe22306…77e3, capture
+  census/round-51/sources/s274-git-cherry-page.html + located quote
+  s274-git-cherry-located-quote.txt, 15 words counted by the pasted command;
+  used-by corpus/lessons/round-51.md; opened from the standing Leads list;
+  no existing row's status/recheck/used-by cell changed; zero new reject
+  rows — one candidate fetched, admitted, the fetch bound stated in the
+  lesson Gate). Census before raw + v1 receipt at round start (conf rc-2
+  disclosed inside; DIR-RC=0, 59 W04); end census raw + v1 receipt lands
+  with the end receipts (exit 0 required).
+- Mistakes mined (lesson round-51 ## Mistakes): the three feasibility/review
+  -caught counter defects (two-sided header filtering reading a table header
+  as a REMOVED workspace row; the container-row definition of
+  new-top-level-candidates; the CRLF receipt vacuating the LF-assuming
+  quoted-path regex so the listing leg compared two empty sets) plus the
+  disclosed first-take census scope slip (`.zcode` included, 124 vs 126
+  rows) and the live-workspace growth note (86 -> 89 dirs between takes; a
+  census row is a point-in-time fact).
+- Fresh-start sweep re-done (r43/r44/r45 rejected closures re-read and
+  spot-checked): the ruling table is in the round report; the r43 timing
+  shape is excluded by the one-commit freeze; the r44 unmeetable-predicate
+  shape by base-exhibited targets + pre-freeze feasibility over a synthetic
+  tip carrying exactly the claimed byte shapes; the r45 different-instrument
+  shape by same-counter-bytes-both-arms.
+- Host work, disclosed: base integrator-landing drift repaired at round
+  start this round (r50's refusal happened because in-progress round files
+  were unexpected rows; this round the repair ran BEFORE round files were
+  created — receipt records/idx-repair-base-51.txt, 8 -> 6 tolerated, exit
+  0); repairs after every landing; the terminal repair receipt is quoted in
+  the round report; the six-path tolerance is not widened.
+- L2 floor: no dispatch surface on this host; dispatched=0, completed=0,
+  dead=0; standing L0 questions routed around (round-44 symlink contract,
+  round-46 L2 floor, round-46 staged package, round-48/50 census-form
+  routing); nothing assumed answered.
+- Holds unchanged: certification OFF, K5 HELD, NAMESPACE/reap holds,
+  execution-audit attribution open.

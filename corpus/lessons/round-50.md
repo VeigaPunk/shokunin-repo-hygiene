@@ -120,3 +120,5 @@ round contract mandates every round; its row enters the SCORECARD
 capabilities table this round. Numeric axis scores unchanged (calibration
 7, operability 8, coverage 8): no reproducible 0–10 mapping exists, no new
 province surface, no Core promotion.
+
+R51-CORRECTION corpus/lessons/round-50.md ## Gate: the "Reject sample (stated explicitly, r48-closure carry-in practice)" bullet appears TWICE verbatim, consecutively (the second and third Gate paragraphs are byte-identical duplications; the r50 non-author closure's routed item 1); this line is the appended r51 correction naming the duplication — the duplicated bytes above are preserved as written, append-only, history not rewritten; both instances carry identical text, so any citation of the bullet is a citation of both.
