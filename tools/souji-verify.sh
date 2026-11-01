@@ -147,8 +147,14 @@ find_repo_for() {
   fi
   while :; do
     [ -e "$d/.git" ] && { printf '%s\n' "$d"; return 0; }
-    [ "$d" = "/" ] && break
+    case $d in /|//|''|.) break ;; esac
+    p=$d
     d=$(dirname -- "$d")
+    # r47 (Windows/MSYS): dirname bottoms out at "." (never "/"), so the
+    # old `= "/"` break spun forever for an artifact outside any repo and
+    # no verdict was ever printed. Break when dirname stops shrinking;
+    # on Linux the first stop is "/" (identical behavior).
+    [ "$d" = "$p" ] && break
   done
   return 1
 }

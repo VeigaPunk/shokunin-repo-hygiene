@@ -2114,3 +2114,76 @@ addendum, appended to the prereg, commits 8a793e7ae9131578bdec393982760217f62095
   receipted at the final tip as `records/c1-suite-index.txt`.
 - Holds unchanged: certification OFF, K5 HELD, NAMESPACE/reap holds,
   r44 symlink-contract L0 and execution-audit attribution open.
+
+## 2026-10-31 — Round 47: r46 carry-in corrections, standing suite receipt, per-artifact receipts
+
+- Fresh-start round. The three rejected closures (r43, r44, r45) were read
+  from MANIFEST + reports and spot-checked before anything was declared; two
+  claims frozen at 0027c977452e06d041a750a5a8c33b1fd5de57db before any
+  after-data existed (tools/souji-freeze-check.py: claims=2 findings=0,
+  exit 0; both do-nothing controls committed in the freeze commit).
+  Rulings-out are in the round-47 report; preregistration
+  census/round-47/preregistration.txt.
+- Pre-flight mistake mined (lesson round-47 ## Mistakes row 1): the e469084
+  spot-check landing left corpus/lessons/round-46-verifier-spotcheck.md
+  outside this host's frozen index (staged D + untracked), fatal to the r46
+  counter's Amendment-1 tolerance at every revision. Fixed by targeted
+  plumbing after sha256-verifying the worktree bytes identical to HEAD
+  (update-index --cacheinfo, one named path); porcelain restored to exactly
+  the six tolerated rows; counter then green at the base
+  (census/round-47/records/c1-base-green.txt, assertions=533 unfiled=0).
+- Pre-flight mistake mined (lesson round-47 ## Mistakes row 2):
+  tools/souji-verify.sh find_repo_for spins forever on this host for an
+  artifact outside any git repository (MSYS dirname bottoms out at ".",
+  the loop's break tests only "/"); two bounded T4 probes produced no
+  verdict and a worker burned 200+ s CPU (records/t4-spin-probe.txt).
+  Minimal termination guard landed in tools/souji-verify.sh, committed
+  before the T4 receipt it enables; consumer checks: bash -n OK; the tool
+  selftest base-vs-candidate is identical (exit 1, 47 checks, the same 8
+  pre-existing host failures — records/verify-selftest-base.txt vs
+  verify-selftest-repaired.txt, differing only in scratch paths and random
+  fixture hashes); the registered r17-jj-receipts gate is
+  could-not-evaluate on this host because the fixture hard-codes /var/tmp
+  and /var is not creatable here (records/r17-jj-receipts-repaired.txt) —
+  named limit, environment-level, same for base bytes.
+- C1 (calibration 7): three append-only correction rows landed in
+  SCORECARD.md — (a) the r46 cell literal assertions=522 superseded by the
+  measured 533 (census/round-46/records/c1-tip-green.txt at
+  32f48da04846489aeb8f6c5662e9bacd742bf245; verifier §3; own re-run
+  c1-base-green.txt); (b) the r46 report prose "56 W04" superseded by 57
+  (grep -c W04 census/round-46/records/census-after.txt = 57); (c) the r46
+  before-census citation corrected to the host-valid base
+  (records/census-conf-name-host.txt rc 2 plus this round's
+  explicit-lane-directory receipt records/census-before.txt rc 0, 57 W04).
+  Standing receipt: the frozen r46 counter re-derived green at the round-47
+  content tip (unfiled=0); the tip receipt lands in this round's final
+  end-receipts commit, immediately after this one, and the round-47 report
+  carries the shas. Counting command: grep -c "^R46-CORRECTIO[N]"
+  SCORECARD.md (0 at base -> 3 at tip).
+- C2 (coverage 8): per-artifact receipts for the four r46 workspace-census
+  candidates (three no-origin-master lane clones and the foreign
+  helpers-r74 root): census/round-47/records/per-artifact-receipts.tsv —
+  4 VERDICT rows, every verdict NOT-SAFE (kotodama secrets-refusal;
+  binary-forensics dirty unpushed=0 dirty=153, live unpushed work confirmed
+  by real diffs; reverse-engineering secrets-refusal; helpers-r74 none).
+  Nothing moved or deleted; no removal proposed (receipts advisory,
+  certification OFF; secret-shaped descendant findings belong to
+  kagi/operator — paths cited, content never read). Frozen counter at the
+  tip: RECEIPTS rows=4 targets=4 findings=0, exit 0; the counter receipt
+  lands in this round's final end-receipts commit. Provenance index:
+  records/receipt-commands.txt.
+- Frontier step: SOURCES rows 193 -> 194 (S270 appended, git-clone(1)
+  DESCRIPTION remote-tracking naming, opened live 2026-10-31, capture
+  census/round-47/sources/git-clone-located-quote.txt; used-by
+  corpus/lessons/round-47.md); before-census rc 0 (57 W04,
+  explicit-lane-directory form — the host-valid base citation the r46
+  report lacked; records/census-before.txt); the end-census receipt and
+  the tip NTFS re-check land in this round's final end-receipts commit
+  (exit 0 required; report carries the shas). Amendment-1 NTFS set
+  re-derived at base: exactly the six pinned paths, not widened
+  (records/ntfs-exclusion-check-base.txt).
+- L2 floor: no dispatch surface on this host; dispatched=0, completed=0,
+  dead=0; standing L0 questions routed around (round-44 symlink contract,
+  round-46 L2 floor, round-46 staged package); nothing assumed answered.
+- Holds unchanged: certification OFF, K5 HELD, NAMESPACE/reap holds,
+  execution-audit attribution open.

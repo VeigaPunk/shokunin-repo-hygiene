@@ -1035,3 +1035,50 @@ dispatched=0 (lesson L2 note; L0 question filed).
   rules: dispatch surface or standing waiver) (operability).
 - Re-run the whole-suite tip receipt at the next round's tip (calibration;
   keeps the landing-suite claim a standing instrument, not a one-off).
+
+### R46 carry-in corrections (round 47, appended 2026-10-31; the base bytes above stand as written)
+
+R46-CORRECTION SCORECARD.md:1012 C1 cell: the stale literal assertions=522 is superseded by the measured value assertions=533. census/round-46/records/c1-tip-green.txt prints SUMMARY assertions=533 mismatches=70 registered=70 corrected=0 exempted=0 unfiled=0 at the round-46 final tip 32f48da04846489aeb8f6c5662e9bacd742bf245, the round-46 non-author verifier re-derived 533 independently (corpus/lessons/round-46-verifier-spotcheck.md section 3, C1), and this lane re-ran the same frozen counter at e469084b6b5630d0c248574fdd980775deeb1efd with the identical SUMMARY, exit 0 (census/round-47/records/c1-base-green.txt). The cell above stays as written.
+
+R46-CORRECTION round-46 report prose: "56 W04 duplicate-url warnings" is superseded by 57. grep -c W04 over census/round-46/records/census-after.txt reads 57, and the round-47 before-census re-run of the explicit-lane-directory validator reproduces 57 (census/round-47/records/census-before.txt, rc 0). Erratum recorded here, in the round-47 LOG entry and in the round-47 report.
+
+R46-CORRECTION round-46 report before-census citation: naming records/census-before.txt as the new-host before state is imprecise — that file is the old-host conf-name receipt (its last line reads souji ok /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/SOURCES.md, unchanged since the freeze base). The host-valid new-host before evidence is records/census-conf-name-host.txt (conf-name form, rc 2, souji missing) plus an explicit-lane-directory receipt; this round commits one at census/round-47/records/census-before.txt (rc 0, 57 W04), which the round-47 report cites as the base.
+
+### Round 47 measurements (2026-10-31; base e469084b6b5630d0c248574fdd980775deeb1efd; freeze 0027c977452e06d041a750a5a8c33b1fd5de57db; preregistration census/round-47/preregistration.txt, freeze-check claims=2 findings=0 exit 0)
+
+| claim | axis | before -> after | counting command | measured commit |
+|---|---|---|---|---|
+| C1 r46 carry-in corrections + standing landing-suite receipt | calibration 7 | append-only correction rows 0 -> 3 (each row starts with the correction marker); at base all three defects live with no committed correction (census/round-47/controls/c1-control-donothing.txt, EXIT=1) -> each carried by an append-only row citing a receipt blob and a resolvable revision; frozen r46 counter green at base (assertions=533 unfiled=0, records/c1-base-green.txt) -> green re-derived at the round-47 tip (unfiled=0; the tip receipt lands in the round's final end-receipts commit) | grep -c "^R46-CORRECTIO[N]" SCORECARD.md (0 at base -> 3 at tip; the [N] class keeps the command pasteable without embedding the marker literal in this file); python -B census/round-46/c1-counter.py --root . --rev TIP --work SCRATCH; python -B tools/souji-freeze-check.py --root . --prereg census/round-47/preregistration.txt --rev 0027c977452e06d041a750a5a8c33b1fd5de57db -> claims=2 findings=0 | content tip of this round (see LOG.md round-47); SCORECARD bytes unchanged after the content commit, so the same SUMMARY re-derives at the final tip |
+| C2 per-artifact receipts for the four r46 census candidates | coverage 8 | receipt rows for the 4 targets: absent at base (control rc=128) -> 4 VERDICT rows, every verdict NOT-SAFE (kotodama secrets-refusal; binary-forensics dirty unpushed=0 dirty=153; reverse-engineering secrets-refusal; helpers-r74 none) ; frozen counter at the tip: RECEIPTS rows=4 targets=4 findings=0, exit 0 | python -B census/round-47/c2-counter.py --root . --rev TIP; raw invocation receipt census/round-47/records/per-artifact-receipts.tsv with provenance index records/receipt-commands.txt | content tip of this round (see LOG.md round-47) |
+
+Numeric axis scores unchanged (calibration 7, operability 8, coverage 8): C1
+lands the bookkeeping corrections the r46 closure routed (calibration of the
+record — the verifier had already re-derived both values; no new corrected
+beliefs). C2 converts census classifications into per-artifact receipts on
+live/protected targets — every verdict NOT-SAFE, nothing moved, deleted, or
+proposed for removal (receipts advisory, certification OFF). No capability
+row: no new capability is demonstrated; C2 runs the installed tool over new
+targets. Enabling host work this round, disclosed and mined: (1) targeted
+index repair after the e469084 landing drift (lesson round-47 ## Mistakes
+row 1); (2) tools/souji-verify.sh find_repo_for termination repair for
+artifacts outside any repository on this host — base-vs-candidate selftest
+identical (exit 1, 47 checks, same 8 pre-existing host failures;
+records/verify-selftest-base.txt vs -repaired.txt), the registered
+r17-jj-receipts gate is could-not-evaluate here because the fixture
+hard-codes /var/tmp and this host cannot create it
+(records/r17-jj-receipts-repaired.txt). L2 floor: no dispatch surface on
+this host; dispatched=0 (standing L0 question, routed around; nothing
+assumed answered).
+
+### Planned (r48, appended 2026-10-31)
+
+- Carry the C2 receipts to dispositions the operator owns: binary-forensics
+  has live unpushed work (do nothing), kotodama/reverse-engineering carry
+  secret-shaped descendants (route findings to kagi/operator, never read
+  them), helpers-r74 stays a stale-candidate pending operator approval
+  (quarantine-before-delete; no removal proposed this round).
+- Re-run the standing landing-suite receipt at the r48 tip and the r46
+  counter's Amendment-1 precondition check (porcelain == exactly the six
+  tolerated rows) after every landing, per the round-47 lesson practice.
+- Whole-suite tip receipt again (calibration, standing); sources-census
+  before/after with the explicit-lane-directory form on this host.

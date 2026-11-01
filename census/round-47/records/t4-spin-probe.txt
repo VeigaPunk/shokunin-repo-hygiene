@@ -1,0 +1,34 @@
+# T4 spin evidence (souji round 47) — findings that isolated the
+# find_repo_for infinite loop for artifacts outside any git repository.
+# Times are local 2026-10-31; all commands run by the L1 from the lane repo.
+
+1) Two bounded receipt probes of T4 (helpers-r74) produced no verdict line:
+   - `bash tools/souji-verify.sh <workspace>/helpers-r74` (base bytes,
+     pre-freeze feasibility): moved to background after 120 s, no output;
+     stopped by the L1.
+   - same command post-freeze, second run: backgrounded after 120 s, no
+     output; stopped by the L1. A bash worker from these runs accumulated
+     209 s CPU (Get-Process sample) with no progress.
+
+2) The ancestor walk terminates per level; no `.git` exists up the chain:
+   `C:/Users/jpvei/.zcode/workspace/95b1ba4d-5089-47a4-9fd8-54adebbce2ae/.git` test rc=1
+   `C:/Users/jpvei/.zcode/workspace/.git`   test rc=1
+   `C:/Users/jpvei/.zcode/.git`             test rc=1
+   `C:/Users/jpvei/.git`                    test rc=1
+   `C:/Users/.git`                          test rc=1
+   `C:/.git`                                test rc=1
+   (each `timeout 8 test -e "$d/.git"` returned rc 1 in milliseconds, so
+   the hang is not filesystem blocking at any level)
+
+3) MSYS dirname bottoms out at "." and never reaches "/":
+   $ dirname "C:/"  -> C:
+   $ dirname "C:"   -> .
+   $ dirname "."    -> .
+   tools/souji-verify.sh find_repo_for's loop breaks only at "=" "/" and
+   therefore spins between "." and "." forever. On POSIX dirname "/" = "/"
+   so the loop always terminated there — the defect is invisible off-Windows.
+
+4) With the repair, the same T4 command returns in bounded time:
+   VERDICT .../helpers-r74	NOT-SAFE	none	obsidian=no-matching-ledger-row; stale=not-scratch-type
+   (first bounded post-repair run; the claim receipt re-takes all four
+   targets with the repaired bytes in one invocation)
