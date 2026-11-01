@@ -2278,3 +2278,51 @@ addendum, appended to the prereg, commits 8a793e7ae9131578bdec393982760217f62095
   counter re-derived green and the six-row tolerance; the terminal repair
   receipt (after the last landing) stages in session scratch and is quoted
   in the round report.
+
+## Round 49 (2026-11-01, Windows host; base 5a26fbfd5b0f94b0d8283908a0f4b876b2857bfc = the r48 non-author spot-check; freeze attempt 1 ebebc44c0ccd8941dd4cc1fc4dd71452ab9027fa superseded, attempt 2 445321aa61cfafb95b623a5fe1c0126c0a60186f operative — both before any claim receipt)
+
+- Carried the r48 non-author closure's three routed defects: item 1 = claim
+  C1 (calibration 7, the lowest non-retired axis): the committed freeze-check
+  selftest read SELFTEST cases=41 pass=4 fail=37 EXIT=1 on this host (raw
+  receipt census/round-49/controls/freeze-selftest-base-red.txt; the r49
+  counter over the same bytes: selftest=FAIL (41, 4, 37) patches=0/3,
+  controls/c1-control-donothing-r2.txt) — the r42 registry gate
+  r42-freeze-check-selftest had no obtainable green here. Repair: the
+  selftest's fixture writer ported to binary mode (diff receipt
+  records/tool-diff-base-to-fix.txt: exactly the writer hunk + docstring
+  line; verdict code byte-identical); raw selftest on the fixed bytes 41/41
+  EXIT=0 (records/freeze-selftest-fixed-green.txt); the binary-clean r49
+  counter (sys.executable, no digest-bound fixture writes) re-derives the
+  gate at the tip — receipts land with the end receipts. Items 2 and 3 are
+  lesson rows (S271 quote 16-words-not-17 erratum; the Gate's reject sample
+  stated explicitly: one new admit S272, zero new rejects, standing reject
+  S267 re-opened and holding).
+- Standing practice executed again: the r48 verifier's landing had re-created
+  the index drift (third consecutive round, exactly as the r47/r48 lessons
+  predicted); restored by the committed fail-closed tool only
+  (records/idx-repair-base-49.txt: repairable-paths=1 → AFTER rows=6
+  unexpected=0; mid-round refusal receipt idx-repair-freeze2-49.txt preserved
+  — it refused fail-closed on the in-progress tool edit, as designed).
+- Frontier step: SOURCES rows 195 -> 196 (S272 appended, Python open()
+  newline-parameter description, opened live 2026-11-01, curl -sSL HTTP 200
+  330862 bytes, capture census/round-49/sources/s272-python-open-
+  located-quote.txt; used-by corpus/lessons/round-49.md; 23-word located
+  quote counted by command against the captured bytes; no existing row's
+  status, recheck or used-by cell changed); S267 standing reject re-opened
+  against its recorded reason (receipt s267-reopen-receipt.txt; rejection
+  holds). Before-census rc 0 (58 W04, rows 195, census-before.txt; the conf
+  form's rc-2 verdict recorded inside — the documented host state); the
+  end-census receipt and the NTFS tip re-check land with the end receipts
+  (exit 0 required).
+- Mistakes mined (lesson round-49 ## Mistakes): (1) the text-mode
+  digest-bound fixture class — swept, fixed where live (one tools-layer
+  writer), named limits where frozen; (2) the Control-receipt grammar class —
+  attempt-1 freeze superseded by attempt 2 before any after-data, the
+  instrument itself flagged it; (3) the exit-after-a-pipe receipt class —
+  caught in pre-landing review, re-taken.
+- L2 floor: no dispatch surface on this host; dispatched=0, completed=0,
+  dead=0; standing L0 questions routed around (round-44 symlink contract,
+  round-46 L2 floor, round-46 staged package, round-48 census-form routing);
+  nothing assumed answered.
+- Holds unchanged: certification OFF, K5 HELD, NAMESPACE/reap holds,
+  execution-audit attribution open.

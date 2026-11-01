@@ -549,3 +549,35 @@ never masked — then runs the documented explicit-lane-directory form against
 this checkout and exits with its code, printing the fleet script's sha256
 for provenance. The fleet instrument stays read-only to this lane; the
 contract-vs-host mismatch is routed to the operator (L0 round-48).
+
+## Round 49 selftest-fixture contract
+
+One r48-closure routed defect became a committed contract this round (r49).
+
+Digest-bound fixture bytes (calibration surface). A fixture written through a
+text-mode handle (`open(..., "w")`) lets the platform choose the bytes: on
+this Windows host every `\n` becomes CRLF, so a literal LF digest
+(`SHA_C/SHA_P/SHA_P1` in `tools/souji-freeze-check.py`) can never match and
+the r42 registry gate `r42-freeze-check-selftest` had no obtainable green
+here (raw red receipt `census/round-49/controls/
+freeze-selftest-base-red.txt`, cases=41 pass=4 fail=37; grounded on S272 —
+text mode translates `\n` to `os.linesep` on writing, binary mode does not
+translate). The standing rules are now: (1) digest-bound fixture bytes are
+written binary (`open(..., "wb")` + explicit UTF-8 encode) — fixed in
+`tools/souji-freeze-check.py` r49, verdict code byte-identical (diff receipt
+`census/round-49/records/tool-diff-base-to-fix.txt`); (2) a counter that
+stands over such an instrument writes no digest-bound fixtures itself and
+launches children with `sys.executable`, never the `python3` name (this host
+has none — the r42 counter's own named limit here); (3) a receipt destined
+for a grammar-parsing field is written in that grammar and the freeze-check
+verdict is run against a freeze commit BEFORE building on it (the r49
+attempt-1 CONTROL-NOT-RED catch; superseded by attempt 2 before any
+after-data); (4) receipts embed an instrument's exit code only as
+`cmd > file; rc=$?` — never after a pipe. Frozen census counters that carry
+the text-mode class (r41 c3, r42 c2, r43 c2/c3) are named limits: their bytes
+are pinned, they are never edited, and their green verdicts were produced on
+the old Linux host, not here.
+
+| name | kind | entry command | verdict map | self-test | pinned-value path | write scope | owner |
+|---|---|---|---|---|---|---|---|
+| r49 freeze-selftest fixture gate | gate | `python -B census/round-49/c1-counter.py --root LANE --rev FULL40 --scratch DIR` | 0 `SUMMARY selftest=ok patches=3/3 real=ok retro=red retro_clean=ok tool_sha=<12hex>`; 1 target unmet (at the pre-r49 base this is the expected red: `selftest=FAIL (41, 4, 37)`); 2 could-not-evaluate | the counter's patches leg is the self-test of record: P1 reversed digests, P2 empty `--diff-filter=A`, P3 failing `merge-base` must each flip the tool's selftest to non-zero (3/3) | `census/round-49/c1-arms.tsv` (leg -> expected verdict at tip/base); counter digest in `census/round-49/preregistration-r2.txt` | explicit scratch DIR only (tool extracted there; TMPDIR under it) | souji |

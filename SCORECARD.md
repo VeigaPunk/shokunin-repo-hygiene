@@ -1121,3 +1121,31 @@ routed around; nothing assumed answered).
 - Whole-suite tip receipt again (calibration); sources-census before/after
   via the r48 adapter (the conf-form receipt travels with the dir-form
   verdict).
+
+### Round 49 landing (r48-closure routed defects; base 5a26fbfd5b0f94b0d8283908a0f4b876b2857bfc; freeze attempt 1 ebebc44c0ccd8941dd4cc1fc4dd71452ab9027fa superseded before any after-data, attempt 2 445321aa61cfafb95b623a5fe1c0126c0a60186f operative; prereg blob byte-unchanged, freeze-check claims=1 findings=0 exit 0 at the attempt-2 freeze)
+
+| claim | axis | before -> after | counting command | measured commit |
+|---|---|---|---|---|
+| C1 the freeze-check selftest re-derivable on this host (r48 routed defect 1; instrument repair, not a capability) | calibration 7 | at base B the committed tool bytes read SELFTEST cases=41 pass=4 fail=37 EXIT=1 (census/round-49/controls/freeze-selftest-base-red.txt) and the digest-pinned r49 counter over the same bytes reads selftest=FAIL (41, 4, 37) patches=0/3 real=ok retro=red retro_clean=ok, exit 1 (controls/c1-control-donothing-r2.txt) — the r42 registry gate r42-freeze-check-selftest had no obtainable green on this host -> after the fixture writer is ported to binary mode (verdict code byte-identical; diff receipt census/round-49/records/tool-diff-base-to-fix.txt: exactly the writer hunk + its docstring line), the raw selftest at the content tip T reads cases=41 pass=41 fail=0 EXIT=0 (records/freeze-selftest-fixed-green.txt, taken on the fixed bytes pre-landing) and the SAME counter at T re-derives the gate green: selftest=ok patches=3/3 real=ok retro=red retro_clean=ok, exit 0 (the committed-bytes receipt lands with the end receipts; patches=3/3 proves the repaired selftest still discriminates) | python -B tools/souji-freeze-check.py --selftest (raw; base vs fixed receipts above); python -B census/round-49/c1-counter.py --root . --rev <full40> --scratch DIR (base receipt committed at freeze; tip receipt in the end receipts); the legs real/retro/retro_clean are identical at B and T — the verdict path is unchanged | content tip of this round (see LOG.md round-49); the end receipts re-derive the counter at the final tip |
+
+Numeric axis scores unchanged (calibration 7, operability 8, coverage 8): C1
+repairs one inherited instrument's fixture harness to its own registered
+semantics — a self-assessment gate now matches observed host state; no new
+surface, no new capability row, no corrected corpus belief. The sweep receipt
+(census/round-49/records/fixture-hazard-sweep.txt) classifies the rest of the
+inventory: one digest-bound writer in tools/ (repaired), frozen census
+counters carry the class as named limits, never edited.
+
+### Planned (r50, appended 2026-11-01)
+
+- Re-run the standing landing-suite receipt at the r50 tip with the r48/r49
+  repair practice after every landing (calibration, standing); the r48 census
+  adapter as the census form (operability, standing).
+- Carry any r49-closure routed defects as claims; if none, a coverage move
+  from the PROVINCE frontier (F1/F2/F4) with a committed counter, or the
+  frozen-counter named limits (r42 c2 counter unrunnable here: no python3
+  interpreter name + its own text-mode fixture class) turned into a
+  documented host-execution contract if the operator asks for one.
+- Whole-suite tip receipt again (calibration); sources-census before/after
+  via the r48 adapter (the conf-form receipt travels with the dir-form
+  verdict).

@@ -1,0 +1,35 @@
+# base->fixed diff of tools/souji-freeze-check.py (base blob at 5a26fbfd… vs the round's content-commit bytes)
+# expected: exactly the fixture-writer hunk (+comment) and the docstring line it annotates — verdict code untouched
+TOOL-BASE-SHA256: f7f54e8f0a71aa952a66f53abb12dcd96f2805d8a8ef141c4b741a7865d87999
+TOOL-FIXED-SHA256: d1ca06fd0fb21d4c7a8452dbbc879f2ecf63ffaaf65378efa3c512e4dbfca364
+--- unified diff ---
+diff --git a/C:/Users/jpvei/.zcode/workspace/95b1ba4d-5089-47a4-9fd8-54adebbce2ae/scratch/souji-r49/work/tool-base.py b/tools/souji-freeze-check.py
+index 8a73a1d..4a837ff 100644
+--- a/C:/Users/jpvei/.zcode/workspace/95b1ba4d-5089-47a4-9fd8-54adebbce2ae/scratch/souji-r49/work/tool-base.py
++++ b/tools/souji-freeze-check.py
+@@ -28,7 +28,9 @@ CRLF lines parse through splitlines(). DISPATCH-BEFORE-FREEZE covers any file un
+ 
+ --selftest builds synthetic git repositories under $TMPDIR, runs this tool's own digest, freeze-detection
+ (`git log --diff-filter=A`) and ancestry (`git merge-base --is-ancestor`) code over them in-process and
+-prints `SELFTEST cases=<n> pass=<p> fail=<f>`; exit 0 iff fail=0. Python stdlib only; read-only on --root.
++prints `SELFTEST cases=<n> pass=<p> fail=<f>`; exit 0 iff fail=0. Fixture bytes are written in binary
++mode (r49: text mode translates \n to the platform newline on writing, so the literal LF digests
++mismatch off-POSIX). Python stdlib only; read-only on --root.
+ """
+ import argparse
+ import contextlib
+@@ -330,8 +332,11 @@ def selftest_case(tmp, n, code, want, text, pre=None, fz=None, post=None, rev=No
+             if isinstance(c, tuple):
+                 os.symlink(c[0], fp)
+             else:
+-                with open(fp, "w") as fh:
+-                    fh.write(c)
++                # r49: binary write — the fixture digests are literals over LF bytes
++                # (SHA_C/SHA_P/SHA_P1); text mode lets the platform newline
++                # translation corrupt them off-POSIX (37/41 selftest failures here)
++                with open(fp, "wb") as fh:
++                    fh.write(c.encode("utf-8"))
+         git("add", "-A")
+         git("commit", "-q", "-m", "c")
+         return git("rev-parse", "HEAD")
+DIFF-EXIT=1 (1 = differences exist, as expected)

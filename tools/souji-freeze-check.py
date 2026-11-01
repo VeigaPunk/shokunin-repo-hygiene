@@ -28,7 +28,9 @@ CRLF lines parse through splitlines(). DISPATCH-BEFORE-FREEZE covers any file un
 
 --selftest builds synthetic git repositories under $TMPDIR, runs this tool's own digest, freeze-detection
 (`git log --diff-filter=A`) and ancestry (`git merge-base --is-ancestor`) code over them in-process and
-prints `SELFTEST cases=<n> pass=<p> fail=<f>`; exit 0 iff fail=0. Python stdlib only; read-only on --root.
+prints `SELFTEST cases=<n> pass=<p> fail=<f>`; exit 0 iff fail=0. Fixture bytes are written in binary
+mode (r49: text mode translates \n to the platform newline on writing, so the literal LF digests
+mismatch off-POSIX). Python stdlib only; read-only on --root.
 """
 import argparse
 import contextlib
@@ -330,8 +332,11 @@ def selftest_case(tmp, n, code, want, text, pre=None, fz=None, post=None, rev=No
             if isinstance(c, tuple):
                 os.symlink(c[0], fp)
             else:
-                with open(fp, "w") as fh:
-                    fh.write(c)
+                # r49: binary write — the fixture digests are literals over LF bytes
+                # (SHA_C/SHA_P/SHA_P1); text mode lets the platform newline
+                # translation corrupt them off-POSIX (37/41 selftest failures here)
+                with open(fp, "wb") as fh:
+                    fh.write(c.encode("utf-8"))
         git("add", "-A")
         git("commit", "-q", "-m", "c")
         return git("rev-parse", "HEAD")
