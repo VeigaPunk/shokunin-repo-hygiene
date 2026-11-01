@@ -581,3 +581,44 @@ the old Linux host, not here.
 | name | kind | entry command | verdict map | self-test | pinned-value path | write scope | owner |
 |---|---|---|---|---|---|---|---|
 | r49 freeze-selftest fixture gate | gate | `python -B census/round-49/c1-counter.py --root LANE --rev FULL40 --scratch DIR` | 0 `SUMMARY selftest=ok patches=3/3 real=ok retro=red retro_clean=ok tool_sha=<12hex>`; 1 target unmet (at the pre-r49 base this is the expected red: `selftest=FAIL (41, 4, 37)`); 2 could-not-evaluate | the counter's patches leg is the self-test of record: P1 reversed digests, P2 empty `--diff-filter=A`, P3 failing `merge-base` must each flip the tool's selftest to non-zero (3/3) | `census/round-49/c1-arms.tsv` (leg -> expected verdict at tip/base); counter digest in `census/round-49/preregistration-r2.txt` | explicit scratch DIR only (tool extracted there; TMPDIR under it) | souji |
+
+## Round 50 contracts
+
+Two r49-closure routed items became committed instruments this round (r50).
+
+Token readings name their scope (calibration surface). A page-token reading
+in any receipt or record names both scopes and how they are counted:
+`tools/souji-page-token-count.py` counts a case-insensitive token prefix at
+RAW-BYTES scope (case-insensitive byte-prefix count over the exact response
+bytes) and at CONTENT scope (HTML text content via `html.parser` with
+character references decoded per S273; script/style/header/nav/footer
+elements and elements whose class list contains `footer` are excluded —
+site chrome), and every record carries the METHOD line stating exactly
+that. A content-scope zero and a raw-scope nonzero are different facts and
+can never again be stated as one number (the r49 S267 receipt's "zero
+occurrences of 'histor*'" was the content fact only; the erratum line
+`S267-COUNT-ERRATUM` in `corpus/lessons/round-50.md` records it
+append-only). A quote-count command strips tags display-faithfully (empty
+replacement, never a space) — a space substitution turns a verbatim
+displayed quote into a non-substring (r50 mistake 1, fourth occurrence of
+the quote-counting class).
+
+Census receipts are digest-bound and verifiable (operability surface). The
+contract's census before→after receipts are captured through
+`tools/souji-census-receipt.py capture` into a v1 receipt: header keys
+(LANE, FLEET-ROOT, FLEET-SCRIPT-SHA256, ADAPTER-SHA256, CONF-RC, DIR-RC,
+DIR-RESULT, DIR-WARN-W04, ADAPTER-EXIT), a RECEIPT-SHA256 line digesting
+every byte above it, and the adapter's raw output embedded verbatim.
+`verify` re-derives every header value from the embedded raw output and
+re-hashes both scripts; each refusal names its class (RECEIPT-MALFORMED,
+RECEIPT-DIGEST-MISMATCH, RECEIPT-RC-INCONSISTENT, RECEIPT-COUNT-MISMATCH,
+RECEIPT-SCRIPT-DRIFT, RECEIPT-ADAPTER-DRIFT). Receipts are staged outside
+the repo (the tool refuses an `--out` at/inside the lane root) and copied
+in before a commit (the r48 receipt-staging discipline, now enforced by the
+tool). The conf form's raw rc-2 verdict stays inside every receipt —
+disclosed, never masked.
+
+| name | kind | entry command | verdict map | self-test | pinned-value path | write scope | owner |
+|---|---|---|---|---|---|---|---|
+| souji-page-token-count | evidence | `python -B tools/souji-page-token-count.py --url URL --token STR [--out PATH] [--timeout N]` / `--capture FILE --token STR` | 0 record emitted (`# page-token-count v1` header; SOURCE-MODE; URL/FINAL-URL/HTTP-STATUS or CAPTURE-PATH; BYTES; SHA256; TOKEN; SCOPE-RAW-MATCHES; SCOPE-CONTENT-MATCHES; METHOD; PAGE-TOKEN-COUNT-EXIT=0); 2 could-not-evaluate (exactly one of --url/--capture, --token required, fetch/HTTP failure, capture missing, selftest environment refusal) | `TMPDIR=<scratch> python -B tools/souji-page-token-count.py --selftest` → `SELFTEST cases=8 pass=8 fail=0` (fixtures: body-text, footer-class-only, script-only, absent, case-insensitive, charref-decoded, footer-tag-only, content-resumes-after-footer; the footer arms are the anti-always-zero discriminators) | `census/round-50/sources/s267-reopen-count-receipt.txt` (content histor=0 / raw histor=1 / factual 0-0 over the committed capture `s267-stdtypes-capture.html`, sha256 0a9474e3…f5d3); S273 capture + located quote beside it | stdout + caller-named `--out` only; the page is held in memory; selftest fixtures under TMPDIR (refused unset/empty or at/inside the lane root), removed | souji |
+| souji-census-receipt | evidence | `python -B tools/souji-census-receipt.py capture --fleet-root DIR --lane souji --out PATH` / `verify --receipt PATH [--fleet-root DIR]` | capture: 0 receipt written with the census dir form exit 0 (else the census's code; 2 environment/grammar); verify: 0 `VERIFY ok …` listing every check (grammar,digest,raw-section,rc,w04,result,adapter-sha,fleet-script-sha), 1 a named refusal (RECEIPT-MALFORMED / RECEIPT-DIGEST-MISMATCH / RECEIPT-RC-INCONSISTENT / RECEIPT-COUNT-MISMATCH / RECEIPT-SCRIPT-DRIFT / RECEIPT-ADAPTER-DRIFT), 2 could-not-evaluate | `TMPDIR=<scratch> python -B tools/souji-census-receipt.py --selftest` → `SELFTEST cases=6 pass=6 fail=0` (capture+verify over a synthetic adapter; five tamper/malform arms each asserting its exact refusal class) | `census/round-50/records/census-before-receipt.txt` (FLEET-SCRIPT-SHA256 3fb72615…4e30, ADAPTER-SHA256 a159f2db…f74b, CONF-RC=2, DIR-RC=0, DIR-RESULT=ok, DIR-WARN-W04=59; verified ok over all checks) | runs the r48 adapter read-only; the only write is the caller-named `--out`, refused at/inside the lane root (receipt-staging discipline enforced) | souji |

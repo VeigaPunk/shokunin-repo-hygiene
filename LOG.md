@@ -2326,3 +2326,85 @@ addendum, appended to the prereg, commits 8a793e7ae9131578bdec393982760217f62095
   nothing assumed answered.
 - Holds unchanged: certification OFF, K5 HELD, NAMESPACE/reap holds,
   execution-audit attribution open.
+
+## Round 50 (2026-11-01, Windows host; base 5f921fe261770b68266793c767d35a56758536c5 = the r49 non-author spot-check, verdict ok/admitted; freeze 3cc69c455d000c4d6fc71031e081f15882a97ffd before any claim receipt — prereg + counters + populations + controls + pre-flight receipts in that one commit; freeze-check claims=2 findings=0 exit 0 at the freeze BEFORE building)
+
+- Carried the r49 non-author closure's two routed items as the round's two
+  claims. Item 2 = C1 (calibration 7, the lowest non-retired axis): the r49
+  S267 re-open receipt's "zero occurrences of 'factual' and zero of
+  'histor*'" was exact at the content scope and not at the raw-byte scope
+  (one footer occurrence, "History and License" inside the docs-page
+  site-chrome footer div), and no committed command could re-derive either
+  reading. C1 lands: the counting instrument tools/souji-page-token-count.py
+  (raw = case-insensitive byte-prefix count over the exact page bytes;
+  content = HTML text content via html.parser with character references
+  decoded per S273, script/style/header/nav/footer and class~=footer
+  elements excluded — site chrome; both scopes + METHOD line in every
+  record; selftest 8/8), the committed page capture
+  census/round-50/sources/s267-stdtypes-capture.html (814236 bytes,
+  sha256 0a9474e3…f5d3, byte-identical to the r49 live fetch), the
+  counting receipt census/round-50/sources/s267-reopen-count-receipt.txt,
+  and the append-only S267-COUNT-ERRATUM line in
+  corpus/lessons/round-50.md. Counting commands: `python -B
+  tools/souji-page-token-count.py --capture
+  census/round-50/sources/s267-stdtypes-capture.html --token histor` →
+  SCOPE-CONTENT-MATCHES=0, SCOPE-RAW-MATCHES=1; `--token factual` → 0/0.
+  Frozen counter census/round-50/c1-counter.py: red at base (TOOL-ABSENT,
+  exit 1, control committed at the freeze), green at the tip (receipts land
+  with the end receipts).
+- Item 1 = C2 (operability, capability acquisition): census receipts that
+  verify — tools/souji-census-receipt.py captures the r48 adapter's run
+  into a digest-bound v1 receipt (header keys + RECEIPT-SHA256 over every
+  byte above it + the adapter's raw output embedded verbatim; the conf
+  form's rc-2 verdict disclosed inside, never masked) and verifies one
+  later by re-deriving every header value from the embedded raw output and
+  re-hashing both scripts; refusals name their class (MALFORMED,
+  DIGEST-MISMATCH, RC-INCONSISTENT, COUNT-MISMATCH, SCRIPT-DRIFT,
+  ADAPTER-DRIFT); selftest 6/6 with five tamper/malform arms; receipts are
+  staged outside the repo (the tool refuses an --out at/inside the lane
+  root — the r48 receipt-staging discipline, now enforced). First v1
+  receipt: census/round-50/records/census-before-receipt.txt (verify ok
+  incl. adapter-sha and fleet-script-sha). Frozen counter
+  census/round-50/c2-counter.py: red at base, green at the content tip
+  (receipts=1) and at the final tip (receipts=2). The L0 side channel gets
+  an appended, append-only proposal line consolidating the r48 census-form
+  question with the cross-lane lineage (revenger r79 same shape) and a
+  concrete option set — operator-owned, routed around, nothing assumed
+  answered.
+- Frontier step: SOURCES rows 196 -> 197 (S273 appended: Python
+  html.parser HTMLParser(convert_charrefs=True) contract, opened live
+  2026-11-01, curl -sSL HTTP 200 no redirect 55260 bytes, sha256
+  13ba271c…77f4, capture census/round-50/sources/s273-htmlparser-page.html
+  + located quote s273-htmlparser-located-quote.txt, 20 words counted by
+  the pasted command; used-by corpus/lessons/round-50.md; no existing
+  row's status/recheck/used-by cell changed); standing reject S267
+  re-opened again WITH the counting method named (the r49 verifier's
+  routed fix); rejection holds. Before-census rc 0 (59 W04, rows 196,
+  records/census-before.txt + the v1 receipt); end-census raw + v1 receipt
+  and the NTFS tip re-check land with the end receipts (exit 0 required).
+- Mistakes mined (lesson round-50 ## Mistakes): (1) the phantom-space
+  quote-count class — a tag-strip with a space substitution turned the
+  located quote into a non-substring (False 20); display-faithful stripping
+  (empty replacement) is the standing command shape (fourth occurrence of
+  the quote-counting class, first where the method was wrong); (2) the
+  shared-file tamper-arm pollution class — selftest arms mutated one
+  shared receipt in sequence so classes fired for the wrong reason; fixed
+  by restoring the clean bytes before every arm; (3) the
+  numbers-without-listing receipt class — the first NTFS take carried bare
+  counts (7, then 0 from a non-matching pattern) instead of the six quoted
+  paths; re-taken as listing + count with the command recorded. Also
+  disclosed, not mined as new: the counters' pre-freeze feasibility round
+  exposed the extracted-tool TMPDIR-layout refusal and the erratum-leg
+  column-0 requirement — both fixed in the counter/lesson bytes before the
+  freeze.
+- Fresh-start sweep re-done (r43/r44/r45 rejected closures re-read and
+  spot-checked): the ruling table is in the round report; the r43 timing
+  shape is excluded by the one-commit freeze; the r44 unmeetable-predicate
+  shape by base-exhibited targets; the r45 different-instrument shape by
+  same-counter-bytes-both-arms.
+- L2 floor: no dispatch surface on this host; dispatched=0, completed=0,
+  dead=0; standing L0 questions routed around (round-44 symlink contract,
+  round-46 L2 floor, round-46 staged package, round-48 census-form
+  routing); nothing assumed answered.
+- Holds unchanged: certification OFF, K5 HELD, NAMESPACE/reap holds,
+  execution-audit attribution open.

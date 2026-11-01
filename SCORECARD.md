@@ -1149,3 +1149,41 @@ counters carry the class as named limits, never edited.
 - Whole-suite tip receipt again (calibration); sources-census before/after
   via the r48 adapter (the conf-form receipt travels with the dir-form
   verdict).
+
+### Round 50 landing (r49-closure routed items; base 5f921fe261770b68266793c767d35a56758536c5 = the r49 non-author spot-check commit, verdict ok/admitted; freeze 3cc69c455d000c4d6fc71031e081f15882a97ffd before any claim receipt; preregistration census/round-50/preregistration.txt, freeze-check claims=2 findings=0 exit 0 at the freeze)
+
+| claim | axis | before -> after | counting command | measured commit |
+|---|---|---|---|---|
+| C1 the S267 token readings re-derivable by committed command | calibration 7 | at base B none of the claim's blobs exist: PRISTINE FAIL TOOL-ABSENT, exit 1 (control census/round-50/controls/c1-control-donothing.txt) -> at the content tip T the frozen counter prints `SUMMARY reading=ok footer=ok body=ok erratum=ok sourced=ok selftest=ok content_histor=0 raw_histor=1 content_factual=0 raw_factual=0 tool_sha=5923b315fe6f`, exit 0: the r49 record's "zero occurrences of histor*" is re-derived as a content-scope zero with the raw-scope footer occurrence (1) disclosed beside it; the append-only `S267-COUNT-ERRATUM` line lands in corpus/lessons/round-50.md; the SAME counter bytes measure both ends (r45 limit structurally avoided; feasibility receipts: the counters' synthetic-tip green runs and the two counter defects they exposed are in the lesson's Mistakes) | `python -B census/round-50/c1-counter.py --root LANE --rev FULL40 --scratch DIR` | content tip of this round (see LOG.md round-50) |
+| C2 census receipts that verify (capability acquisition) | operability 8 | at base B the tool is absent: PRISTINE FAIL TOOL-ABSENT, exit 1 (control census/round-50/controls/c2-control-donothing.txt) -> at T the frozen counter prints `SUMMARY receipts=1 verified=1 selftest=ok before=ok tool_sha=1d092142eb73`, exit 0 over the before-receipt alone; at the round's FINAL tip `receipts=2 verified=2` (the after-receipt lands with the end receipts) — every verify check green including adapter-sha and fleet-script-sha; the tool's selftest refuses five tamper/malform arms each at its named class | `python -B census/round-50/c2-counter.py --root LANE --rev FULL40 --scratch DIR`; `python -B tools/souji-census-receipt.py verify --receipt census/round-50/records/census-before-receipt.txt --fleet-root FLEET` | content tip (before-receipt leg) and the final tip (both receipts; see LOG.md round-50) |
+
+Numeric axis scores unchanged (calibration 7, operability 8, coverage 8): C1
+re-derives readings the record already stated (a record-accuracy instrument —
+no new factual correction credit; the underlying S267 rejection was already
+right and stays right); C2 upgrades the artifact class the round contract
+mandates every round — no new census verdicts, no widening (the conf form's
+rc-2 host state stays disclosed inside every receipt). No knowledge entry, no
+Core promotion. The sourced claim is C1 (S273, html.parser
+convert_charrefs contract, opened live 2026-11-01). L2 floor: no dispatch
+surface on this host; dispatched=0 (standing L0 questions routed around;
+nothing assumed answered). Assimilation: none (no considerthese/ directory;
+shokuknow unreachable).
+
+### Round 50 capability row (appended)
+
+| name | what it can now do | evidence pointer | first-working round |
+|---|---|---|---|
+| verifiable census receipts (r50) | capture the r48 census adapter's run into a digest-bound v1 receipt (the adapter's raw output embedded verbatim; fleet-script and adapter sha256 recorded; the conf form's raw rc-2 verdict disclosed inside) and verify one later by re-deriving every header value from the embedded raw output and re-hashing both scripts; five tamper/malform shapes each refused at a named class | `TMPDIR=<scratch> python -B tools/souji-census-receipt.py --selftest` (cases=6 pass=6 fail=0, census/round-50 records receipts at the landing); `python -B tools/souji-census-receipt.py verify --receipt census/round-50/records/census-before-receipt.txt --fleet-root <fleet>` (VERIFY ok, checks=grammar,digest,raw-section,rc,w04,result,adapter-sha,fleet-script-sha); frozen counter `python -B census/round-50/c2-counter.py --root LANE --rev FULL40 --scratch DIR` | r50 |
+
+### Planned (r51, appended 2026-11-01)
+
+- Re-run the standing landing-suite receipt at the r51 tip with the
+  r48-r50 repair practice after every landing (calibration, standing); the
+  census before→after lands in the v1 receipt form at both ends
+  (operability, standing now that the r50 receipts made it verifiable).
+- Carry any r50-closure routed defects as claims; the census conf-form
+  question stays operator-owned (the r50 consolidated L0 proposal line is
+  on file; routed around until ruled).
+- Whole-suite tip receipt again (calibration); if the operator rules on
+  the r48/r50 census-form questions, adapt the standing receipt flow to the
+  ratified form in the same round.
