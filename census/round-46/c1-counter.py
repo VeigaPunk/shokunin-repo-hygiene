@@ -12,6 +12,11 @@ INSTRUMENT = 'tools/souji-declared-evidence.py'
 REGISTER_LESSON = 'corpus/lessons/round-44.md'
 EXEMPTIONS = 'census/round-46/records/c1-exemptions.tsv'
 SCORECARD = 'SCORECARD.md'
+# sha256 of INSTRUMENT at the round base 5540250155ea75210dab474e1158193ad0609e4b
+# (Amendment 1: the frozen sentence's "r22-attempt2 bytes" is stale — r32 commit
+# 98e5203 changed the instrument's scratch discipline — so the pin binds the
+# bytes this round inherited; any drift at the measured rev kills.)
+INSTRUMENT_PIN = 'a332491607129195f59d289b431cc29fb4c8dc21e10859d552700697a3b09831'
 
 def git(root, *args):
     e = {'PATH': os.environ.get('PATH', '/usr/bin:/bin'), 'LC_ALL': 'C',
@@ -70,6 +75,8 @@ def main():
         # instrument pin (bytes at the NAMED revision, not the worktree)
         ib = git(root, 'show', ns.rev + ':' + INSTRUMENT)
         pin = hashlib.sha256(ib).hexdigest()
+        if pin != INSTRUMENT_PIN:
+            raise ValueError('instrument sha256 %s != pinned %s' % (pin, INSTRUMENT_PIN))
         # run the pinned instrument from committed bytes in a private scratch
         import tempfile
         if ns.work:
