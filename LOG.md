@@ -2261,3 +2261,20 @@ addendum, appended to the prereg, commits 8a793e7ae9131578bdec393982760217f62095
   routing); nothing assumed answered.
 - Holds unchanged: certification OFF, K5 HELD, NAMESPACE/reap holds,
   execution-audit attribution open.
+
+### Round 48 landing addendum (appended before the round's final commit)
+
+- The first end-receipts commit 5fd125bdae678b94c24f01fd6bcac66afdc60f74
+  landed EMPTY: the helper commits disk bytes, and the five receipt paths it
+  was named were still staged in session scratch (`git diff-tree -r 5fd125bd`
+  is empty; the command exited 0 and pushed). Mined as lesson round-48
+  ## Mistakes row 3; the receipts re-landed on top as
+  6231642c94dc91bf1381cc59564ed3f4479cbc34 (diff-tree shows exactly the five
+  files). Standing rule recorded: after every helper landing, verify the
+  named paths with `git diff-tree -r --name-only <new>` before moving on.
+- The end landing's drift was repaired by the C1 tool
+  (records/idx-repair-end.txt: BEFORE 16 rows tolerated=6 repairable-paths=5
+  -> AFTER rows=6 unexpected=0). The round's final tip carries the standing
+  counter re-derived green and the six-row tolerance; the terminal repair
+  receipt (after the last landing) stages in session scratch and is quoted
+  in the round report.
