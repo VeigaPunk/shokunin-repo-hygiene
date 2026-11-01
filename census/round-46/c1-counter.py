@@ -33,12 +33,28 @@ def main():
         if not re.fullmatch(r'[0-9a-f]{40}', ns.rev):
             raise ValueError('full revision required')
         root = Path(ns.root).resolve()
-        # dirty-tree kill rule
+        # dirty-tree kill rule. Amendment 1 (preregistration.txt, 2026-10-31):
+        # this host cannot checkout HEAD paths whose names contain control
+        # characters, so their staged deletions are permanent here and the
+        # naive empty-status check is unsatisfiable. Tolerate ONLY staged
+        # deletions of control-character-named HEAD paths at the measured
+        # rev; every other porcelain row is still fatal.
         st = subprocess.run(['git', '-C', str(root), 'status', '--porcelain'],
                             capture_output=True, env={'PATH': os.environ.get('PATH', '/usr/bin:/bin'), 'LC_ALL': 'C'},
                             timeout=60)
-        if st.returncode or st.stdout.strip():
-            raise ValueError('dirty worktree at run time')
+        if st.returncode:
+            raise ValueError('status unavailable')
+        if st.stdout.strip():
+            tree = git(root, 'ls-tree', '-r', '--name-only', '-z', ns.rev)
+            tolerated = set()
+            for raw in tree.split(b'\x00'):
+                if raw and any(c < 0x20 for c in raw):
+                    q = raw.replace(b'\\', b'\\\\').replace(b'"', b'\\"')
+                    q = re.sub(rb'[\x00-\x1f]', lambda m: b'\\%03o' % m.group()[0], q)
+                    tolerated.add(b'D  "' + q + b'"')
+            unexpected = [l for l in st.stdout.splitlines() if l not in tolerated]
+            if unexpected:
+                raise ValueError('dirty worktree at run time: %d unexpected rows' % len(unexpected))
         # instrument pin (bytes at the NAMED revision, not the worktree)
         ib = git(root, 'show', ns.rev + ':' + INSTRUMENT)
         pin = hashlib.sha256(ib).hexdigest()
