@@ -2187,3 +2187,77 @@ addendum, appended to the prereg, commits 8a793e7ae9131578bdec393982760217f62095
   round-46 L2 floor, round-46 staged package); nothing assumed answered.
 - Holds unchanged: certification OFF, K5 HELD, NAMESPACE/reap holds,
   execution-audit attribution open.
+
+## 2026-11-01 — Round 48: carry-in closures — the index-drift class automated, the census conf-name form made runnable
+
+- Fresh-start round. The three rejected closures (r43, r44, r45) were read
+  from MANIFEST + reports and spot-checked before anything was declared;
+  rulings-out in the round-48 report. Preregistration frozen at
+  21ec27361c1ded8d93842b2e89239e874e30f875 before any claim receipt existed
+  (tools/souji-freeze-check.py: claims=2 findings=0, exit 0; both
+  do-nothing controls committed in the freeze commit, control-first).
+  Amendment 1 (census/round-48/amendment-1.txt) landed at
+  5ca5001b358eca55b70f1da63f8c0c5c3b27b945, also before any claim receipt:
+  plain porcelain collapses wholly-untracked directories into one `?? dir/`
+  row, so the frozen C1 tool bytes could not classify the freeze landing's
+  own drift (first execution refused fail-closed, receipt preserved:
+  census/round-48/records/idx-repair-base-refused-plain-porcelain.txt,
+  EXIT=1). The amendment (authorized by the r47-closure carry-in item 2,
+  r46 Amendment-1 precedent) keeps the prereg blob byte-unchanged — the
+  freeze-check reads findings=0 at freeze, amendment, and tip — enumerates
+  porcelain with -uall, keeps the after-check on the plain form, adds a
+  collapse selftest arm (cases=5 pass=5 fail=0), and supersedes the C1 tool
+  pin 3c6803da… -> fd66d4f1…. The frozen Amendment-1 six-path tolerance is
+  NOT widened.
+- C1 (calibration 7, capability acquisition): the standing landing-suite
+  receipt restored without manual repair. The r47 mistake-1 class recurred
+  exactly as predicted: the 8e17a4b1 integrator landing left
+  corpus/lessons/round-47-verifier-spotcheck.md outside the host index —
+  the frozen r46 counter exited 2 at the round base pre-repair (control
+  receipt, EXIT=2). The committed fail-closed tool
+  tools/souji-idx-repair.py performed every host-index restoration this
+  round with per-path sha256 proofs (base drift: BEFORE 38 rows tolerated=6
+  repairable-paths=16 -> AFTER rows=6 unexpected=0,
+  census/round-48/records/idx-repair-base.txt; again after this round's own
+  landings: -content.txt, -end.txt; the terminal landing's repair receipt
+  stages in session scratch and is quoted in the round report — the final
+  tip porcelain is the six tolerated rows). The frozen r46 counter
+  (byte-unchanged, sha-pinned 5455fb46…) then reads green at the base
+  (SUMMARY assertions=538 mismatches=70 registered=70 corrected=0
+  exempted=0 unfiled=0, exit 0; census/round-48/records/c1-base-green.txt)
+  and at the round's content tip (records/c1-tip-48.txt, landed with the
+  end receipts; SCORECARD bytes byte-identical content->final tip,
+  re-derivable). No manual update-index outside the tool this round.
+- C2 (operability 8): the contract census conf-name form made runnable on
+  this host. tools/souji-census-run.sh records the conf form's raw rc-2
+  `souji missing` verdict (disclosed, never masked) beside the
+  explicit-lane-directory form's rc-0 `shokunin-repo-hygiene ok` verdict
+  and exits with the latter's code, printing the fleet script's sha256.
+  Claim receipt: census/round-48/records/census-runner-output.txt
+  (CENSUS-RUN lane=souji conf_rc=2 dir_rc=0; the frozen r48 counter at the
+  content tip reads CENSUS-RUN forms=2 findings=0, exit 0 —
+  records/c2-tip.txt, landed with the end receipts). Selftest cases=3
+  pass=3 fail=0 (arm A1 reproduces the host condition synthetically with
+  the real fleet script; census-runner-selftest.txt). PROVINCE host
+  correction names the adapter; the contract-vs-host mismatch is routed to
+  the operator (L0 round-48; the fleet instrument is read-only to this
+  lane).
+- Frontier step: SOURCES rows 194 -> 195 (S271 appended, git-update-index(1)
+  USING --CACHEINFO, opened live 2026-11-01, curl HTTP 200 84442 bytes,
+  capture census/round-48/sources/s271-git-update-index-located-quote.txt;
+  used-by corpus/lessons/round-48.md; no existing row's status, recheck or
+  used-by cell changed); before-census rc 0 (58 W04, rows 194,
+  census-before.txt; the conf-name rc-2 receipt beside it,
+  census-confname-before.txt — carry-in item 1's documented state); the
+  end-census receipt and the NTFS tip re-check land with the end receipts
+  (exit 0 required). Amendment-1 NTFS set re-derived at base: exactly the
+  six pinned paths, not widened (records/ntfs-exclusion-check-base.txt).
+- Mistake mined (lesson round-48 ## Mistakes): (1) the predicted recurrence
+  of the r47 index-drift class, fixed by C1's committed tool (no manual
+  repair); (2) the porcelain collapse-row class and its amendment (above).
+- L2 floor: no dispatch surface on this host; dispatched=0, completed=0,
+  dead=0; standing L0 questions routed around (round-44 symlink contract,
+  round-46 L2 floor, round-46 staged package; new round-48 census-form
+  routing); nothing assumed answered.
+- Holds unchanged: certification OFF, K5 HELD, NAMESPACE/reap holds,
+  execution-audit attribution open.

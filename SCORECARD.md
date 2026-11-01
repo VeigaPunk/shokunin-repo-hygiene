@@ -1082,3 +1082,42 @@ assumed answered).
   tolerated rows) after every landing, per the round-47 lesson practice.
 - Whole-suite tip receipt again (calibration, standing); sources-census
   before/after with the explicit-lane-directory form on this host.
+
+### Round 48 landing (carry-in closures; base 8e17a4b1a8f8bd81dd5a978e698e447bd4253b3e; freeze 21ec27361c1ded8d93842b2e89239e874e30f875; Amendment 1 5ca5001b358eca55b70f1da63f8c0c5c3b27b945 — both before any claim receipt; prereg blob byte-unchanged, freeze-check claims=2 findings=0 exit 0 at freeze, amendment, and tip)
+
+| claim | axis | before -> after | counting command | measured commit |
+|---|---|---|---|---|
+| C1 standing landing-suite receipt restored without manual repair (capability acquisition) | calibration 7 | the frozen r46 counter at the round base B: exit 2 could-not-evaluate, "dirty worktree at run time: 2 unexpected rows" (the r47 mistake-1 class recurring; control census/round-48/controls/c1-control-donothing.txt, EXIT=2) -> exit 0 at B AND at the round's content tip T: SUMMARY assertions=538 mismatches=70 registered=70 corrected=0 exempted=0 unfiled=0; every host-index restoration performed by the committed fail-closed tool (base drift receipt: BEFORE 38 rows tolerated=6 repairable-paths=16 -> AFTER rows=6 unexpected=0; the tool's own landings repaired by itself in -content.txt and -end.txt; the terminal landing's repair receipt stages in session scratch and is quoted in the round report); Amendment-1 six-path set not widened (NTFS base/tip re-checks read exactly 6); selftest cases=5 pass=5 fail=0 | python -B census/round-46/c1-counter.py --root . --rev 8e17a4b1a8f8bd81dd5a978e698e447bd4253b3e --work SCRATCH (base, after the receipted repair: census/round-48/records/c1-base-green.txt); python -B tools/souji-idx-repair.py --root . --rev <full40> --receipt <path outside the repo>; python -B tools/souji-idx-repair.py --selftest (census/round-48/records/idx-repair-selftest.txt) | content tip of this round (see LOG.md round-48); SCORECARD bytes unchanged after the content commit, so the same SUMMARY re-derives at the final tip |
+| C2 census conf-name host adapter (the contract's census command, runnable on this host) | operability 8 | at base B the adapter is absent (control: git cat-file -e rc 128) and the contract conf-name census form exits 2 "souji missing" (census/round-48/records/census-confname-before.txt) -> the committed adapter runs the contract command end-to-end: its raw receipt records the conf form's rc-2 verdict verbatim beside the explicit-lane-directory form's rc-0 shokunin-repo-hygiene ok line and exits 0 (CENSUS-RUN lane=souji conf_rc=2 dir_rc=0); the frozen r48 counter at T reads CENSUS-RUN forms=2 findings=0, exit 0; selftest cases=3 pass=3 fail=0 (arm A1 reproduces the host condition synthetically with the real fleet script) | bash tools/souji-census-run.sh --fleet-root FLEET --lane souji (receipt census/round-48/records/census-runner-output.txt); python -B census/round-48/c2-counter.py --root . --rev TIP; bash tools/souji-census-run.sh --selftest | content tip of this round (see LOG.md round-48) |
+
+Numeric axis scores unchanged (calibration 7, operability 8, coverage 8): C1
+re-derives the standing receipt with the same frozen instrument and adds a
+repair capability — no corrected beliefs about the corpus; C2 makes a
+documented host correction runnable without changing the census verdicts
+(before 58 W04 / rows 194; after receipt lands with the end receipts, exit 0
+required). No knowledge entry, no Core promotion. Enabling host work this
+round, disclosed and mined: the Amendment-1-prereg blob stays byte-identical
+(the amendment lives beside it, so freeze-check reads findings=0 at every
+revision); the receipt-staging discipline (a receipt written into the repo
+pollutes the next run's porcelain) is named in SKILL.md and the lesson. L2
+floor: no dispatch surface on this host; dispatched=0 (standing L0 question,
+routed around; nothing assumed answered).
+
+### Round 48 capability rows (appended)
+
+| host-index repair (receipted, fail-closed) | restore the worktree to the frozen Amendment-1 tolerance after any index-free-helper or integrator landing, without a manual step; repair only sha256-proven stale-landing paths with the rev's own mode+blob (S271); refuse — repairing nothing — any row it cannot prove; never widen the six-path set | `python -B tools/souji-idx-repair.py --selftest` (census/round-48/records/idx-repair-selftest.txt, cases=5 pass=5 fail=0); real drift receipt `census/round-48/records/idx-repair-base.txt`; the pre-amendment refusal it supersedes: `census/round-48/records/idx-repair-base-refused-plain-porcelain.txt` | r48 |
+| census conf-name host adapter | run the round contract's census command on this host end-to-end (exit 0) while recording the conf form's raw rc-2 `souji missing` verdict — disclosed, never masked — with the fleet script's sha256 for provenance | `bash tools/souji-census-run.sh --selftest` (census/round-48/records/census-runner-selftest.txt, cases=3 pass=3 fail=0); real receipt `census/round-48/records/census-runner-output.txt` (CENSUS-RUN lane=souji conf_rc=2 dir_rc=0); frozen counter `python -B census/round-48/c2-counter.py --root . --rev <tip>` | r48 |
+
+### Planned (r49, appended 2026-11-01)
+
+- Carry the r48 receipts to their operator-owned dispositions: the four r47
+  per-artifact receipt targets keep their r47 dispositions (binary-forensics
+  live unpushed work: do nothing; kotodama/reverse-engineering
+  secret-shaped descendants: route to kagi/operator, never read;
+  helpers-r74: stale-candidate pending operator approval).
+- Re-run the standing landing-suite receipt at the r49 tip with the r48
+  repair practice after every landing (calibration, standing); the r48
+  adapter as the census form (operability, standing).
+- Whole-suite tip receipt again (calibration); sources-census before/after
+  via the r48 adapter (the conf-form receipt travels with the dir-form
+  verdict).

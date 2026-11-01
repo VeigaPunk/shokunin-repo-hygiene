@@ -294,6 +294,9 @@ for the legacy selftests; their historical fallback is not Q4-conformant.
 | r42-drift-conditions | gate | `python3 -B tests/fixtures/r42-drift-conditions.py --tool tools/souji-worktree-drift.py --work DIR` | 0 `SUMMARY cases=<n> pass=<p> fail=0` (exit 0 iff fail=0); 1 any case FAIL. Scored by `python3 -B census/round-42/c3-counter.py` (the counter reads this fixture as the candidate; `pristine=ok` needs cases >= 13). Codes other than 0 and 1 are not named by the counter docstring. | the thirteen condition-level mutants of `census/round-42/c3-mutants.tsv` (B1 E2 E4 G2 G3 G4 G5 H1 H2 I1 J9 M1 D4) and the six equivalents that the fixture must NOT kill (B3 B4 E5 E7 E9 H4) | `tests/fixtures/r42-drift-conditions.py` sha256 (recorded at landing; the counter scores the landed bytes) | `--work DIR` only; the fixture's mutant copies live under `--work` | souji |
 | r42-r1-counter | gate | `python3 -B census/round-42/r1-counter.py --root LANE --rev FULL40 [--base FULL40] [--scratch DIR]` | 0 `SUMMARY findings=0 deleted=0 rows_added=3 stale=0`; 1 target unmet; 2 could-not-evaluate (scratch not a directory, bad revision, `git archive` failure). The gate it runs is `python3 -B tools/souji-landing-gate.py --root LANE --rev REV --round 41` with NO `--fleet-root` (Q103). Frozen predicate found wrong in r42 (lesson M42-2): three exemption rows read green without `--fleet-root` and `findings=2` (`LG-DANGLING-PTR-EXEMPT-STALE`) with it; the landed repair is a repoint (README and the jj-colocation entry cite `census/round-42/jj-w1-reports/`), which this counter reads `findings=0 deleted=2 rows_added=0 stale=0` = red by its letter; both gate modes read `findings=0` (`census/round-42/records/gate-both-modes.txt`) | `census/round-42/controls/r1-control.txt` (`SUMMARY findings=3 deleted=0 rows_added=0 stale=0`, `rc=1`) | `census/round-42/r1-counter.py` sha256 `f2dcbd06eecdb864e5ca215154aa82e564f7dbba586f617ad5543c0a811cc1bb`; base `bf618f6c5c09d302994871c94903abbea2deb60d` | scratch export under `--scratch` / `TMPDIR` (the gate runs from a `git archive` of `tools` and `corpus` at REV); lane read-only | souji |
 
+| souji-idx-repair | gate | `python -B tools/souji-idx-repair.py --root LANE --rev FULL40 [--receipt PATH] [--dry-run]` / `--selftest` | 0 worktree restored to the frozen Amendment-1 tolerance (or already inside it; selftest `SELFTEST cases=5 pass=5 fail=0`); 1 fail-closed refusal — any unexpected porcelain row (renames, conflicts, missing disk files, byte mismatches, control-char names outside the tolerated set, unpaired untracked) and NOTHING is repaired; 2 could-not-evaluate. Repairs only paths whose disk bytes sha256-match the rev's blob bytes, via `update-index --add --cacheinfo` with the rev's own mode+blob; never touches commits, refs, worktree bytes or remotes; never widens the six-path tolerance. Enumerates with `-uall` (plain porcelain collapses wholly-untracked directories into one `?? dir/` row — r48 Amendment 1) and re-checks the after-state on the plain form the r46 counter reads. Named limit: a receipt written into the repo during a run pollutes the next run's porcelain — stage receipts outside the repo until they land | `census/round-48/records/idx-repair-selftest.txt` (cases=5 pass=5 fail=0); real drift receipts `census/round-48/records/idx-repair-base.txt` (BEFORE 38 rows tolerated=6 → AFTER rows=6 unexpected=0), `-refused-plain-porcelain.txt` (the pre-amendment bytes' fail-closed refusal — the failing arm) | r48 preregistration `census/round-48/preregistration.txt` + `census/round-48/amendment-1.txt` (tool pin fd66d4f1…; the r46 standing counter stays digest-pinned byte-unchanged) | receipt via `--receipt` (stage outside the repo); selftest repos under `TMPDIR` (removed) | souji |
+| souji-census-run | probe | `bash tools/souji-census-run.sh --fleet-root DIR --lane souji [--out PATH]` / `--selftest` | exits with the explicit-lane-directory form's code (0 clean/warnings; 1 E-findings; 2 usage/environment) and prints CONF-FORM and DIR-FORM sections plus the final `CENSUS-RUN lane=… conf_rc=… dir_rc=…` line; selftest 0 iff `SELFTEST cases=3 pass=3 fail=0`. Records the conf form's raw rc-2 `souji missing` verdict on this host — disclosed, never masked — beside the working dir-form verdict, with the fleet script's sha256 for provenance; read-only on the fleet root | `census/round-48/records/census-runner-selftest.txt` (cases=3 pass=3 fail=0; arm A1 reproduces the host condition synthetically with the REAL fleet script copied into the fixture); real receipt `census/round-48/records/census-runner-output.txt` (`CENSUS-RUN lane=souji conf_rc=2 dir_rc=0`) | fleet script bytes recorded per-run via the receipt's `# fleet-script sha256=` line (the fleet root is read-only to this lane; the script is never edited) | none (read-only; `--out` writes where the caller points) | souji |
+
 R39-C1-06 — four r38 gate fixtures had no registry row (r38 routed defect R6): `r38-citation-commit`, `r38-drift-write-envelope`, `r38-drift-record` and `r38-drift-mutants` now carry `gate` rows above, beside the five r39 rows this round adds (`c1-counter`, `c2-counter`, `c3-counter`, `r39-citation-rev`, `r39-drift-record-rules`); every one of the nine names a failing arm in its self-test cell, so none is a `probe`.
 
 Sources for this skill: `corpus/SOURCES.md`; admission bar: `corpus/QUALITY.md`.
@@ -511,3 +514,38 @@ execution, prove universal correction-language coverage or authorize cleanup.
 | name | kind | entry command | verdict map | self-test | pinned-value path | write scope | owner |
 |---|---|---|---|---|---|---|---|
 | r45-register-verifier | gate | `python3 -B census/round-45/c1-counter.py --root LANE --rev FULL40 --scratch EXTERNAL_DIR` | 0 finite register agreement; 1 findings; 2 could-not-evaluate | `python3 -B census/round-45/c1-counter.py --selftest --scratch DIR` (r46 C2: 11 cases over isolated synthetic repos in caller scratch; expected table `census/round-46/records/c2-selftest-expected.tsv`; external r45 fixture retained; default path proven byte-identical by `census/round-46/records/c2-repro-after.txt` and `c2-repro-wrong.txt`) | census/round-45/preregistration.txt; immutable census/round-44/c1-population.tsv digest in code; r46 expected table | committed git blobs read-only; temporary extracted instrument and selftest fixtures in caller scratch | souji |
+
+## Round 48 host-index and census-runner contracts
+
+Two r47-closure carry-in items became committed contracts this round (r48).
+
+Host index drift (calibration surface). Landings made through the index-free
+plumbing helper — or integrator commits landed elsewhere and fetched here —
+enter HEAD without this host's index gaining the entries, so the worktree
+drifts outside the frozen Amendment-1 tolerance and the standing r46
+landing-suite counter exits 2 could-not-evaluate at EVERY revision. This
+recurred at the r48 pre-flight exactly as the r47 lesson's mistake 1
+predicted (the r47 spot-check commit 8e17a4b1; control receipt
+`census/round-48/controls/c1-control-donothing.txt`, EXIT=2). The standing
+practice is now: after every landing, run
+`python -B tools/souji-idx-repair.py --root <lane> --rev <full40>` — it
+repairs only paths whose disk bytes sha256-match the rev's blob bytes, via
+`git update-index --add --cacheinfo` with the rev's own mode+blob (S271),
+fail-closes on anything it cannot prove, and never widens the six-path
+control-char tolerance. Plain porcelain collapses a wholly-untracked
+directory into one `?? dir/` row; the tool enumerates `-uall` and re-checks
+the after-state on the plain form (r48 Amendment 1,
+`census/round-48/amendment-1.txt`). Stage its receipts OUTSIDE the repo
+until they land — a receipt written into the repo pollutes the next run's
+porcelain.
+
+Census conf-name form (operability surface). The round contract's census
+command names the conf form, which exits rc 2 `souji missing` on this host
+(the conf resolves `souji-shokunin/`; the real checkout here is
+`shokunin-repo-hygiene/`). The committed adapter
+`bash tools/souji-census-run.sh --fleet-root <fleet> --lane souji` runs the
+conf form first and records its raw verdict — the disclosure is the point,
+never masked — then runs the documented explicit-lane-directory form against
+this checkout and exits with its code, printing the fleet script's sha256
+for provenance. The fleet instrument stays read-only to this lane; the
+contract-vs-host mismatch is routed to the operator (L0 round-48).

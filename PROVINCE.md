@@ -41,7 +41,7 @@ removal of stale, duplicate, and already-preserved artifacts.
 - Publishing, vault approval, remote creation — operator-owned.
 - Live lane work products (current-round drafts, uncommitted reports).
 
-### Host correction (2026-10-31, Windows host, r46)
+### Host correction (2026-10-31, Windows host, r46; extended r48)
 
 - The fleet conf resolves lane `souji` to `$SHOKUNIN_ROOT/souji-shokunin/`,
   which does not exist on this host. The lane repo's real path here is
@@ -49,6 +49,14 @@ removal of stale, duplicate, and already-preserved artifacts.
   dir). Tools that resolve lane directories from the conf (e.g.
   `sources-census.sh validate --root <fleet-root> souji`) report the registry
   missing on this host; use the documented explicit lane directory form.
+  Since r48 the runnable form is the committed adapter
+  `bash tools/souji-census-run.sh --fleet-root <fleet-root> --lane souji`
+  (tools/souji-census-run.sh): it records the conf form's raw rc-2
+  `souji missing` verdict — disclosed, never masked — beside the
+  explicit-lane-directory form's verdict and exits with the latter's code;
+  receipts `census/round-48/records/census-runner-output.txt`. The
+  contract-vs-host mismatch is routed to the operator (L0, round-48); the
+  fleet instrument itself stays read-only to this lane.
 - This host's git (2.55.0.windows.3) cannot checkout HEAD paths whose names
   contain control characters ("invalid path"; file creation fails with
   "Invalid argument" even with core.protectNTFS=false), so six such paths in
@@ -56,6 +64,16 @@ removal of stale, duplicate, and already-preserved artifacts.
   `git status --porcelain` never empties. Commits go through the index-free
   plumbing helper; receipts
   `census/round-46/records/c1-host-uncheckoutable.txt`.
+- Landings made through the index-free helper (or integrator commits fetched
+  here) leave the landed paths outside the host index, so the worktree
+  drifts outside the frozen Amendment-1 tolerance after every landing. The
+  restoration is the committed fail-closed tool
+  `python -B tools/souji-idx-repair.py --root <lane> --rev <full40>`
+  (r48): it repairs only paths whose disk bytes sha256-match the rev's blob
+  bytes, uses the rev's own mode+blob via `update-index --add --cacheinfo`
+  (S271), fail-closes on anything it cannot prove, and never widens the
+  six-path tolerance. Run it after every landing; receipts under
+  `census/round-48/records/idx-repair-*.txt`.
 - Signalling inherited or unrelated processes. Census watchdogs, selftests
   and fixtures may signal only workers they spawned, using their recorded
   identity/group/session; a listed residue process requires operator
