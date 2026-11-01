@@ -142,8 +142,13 @@ def tolerated_rows(root, rev):
     return tol
 
 
-def porcelain(root):
-    p = git(root, 'status', '--porcelain', timeout=60)
+def porcelain(root, untracked_all=False):
+    args = ['status', '--porcelain']
+    if untracked_all:
+        # plain porcelain collapses a wholly-untracked directory into one
+        # `?? dir/` row, which is not a path; enumeration needs per-file rows
+        args += ['-uall']
+    p = git(root, *args, timeout=60)
     if p.returncode:
         raise ValueError('status unavailable')
     return p.stdout.splitlines()
@@ -245,9 +250,10 @@ def repair_path(root, path, mode, blob, emit):
 
 
 def run(root, rev, receipt_path, dry_run, emit):
-    rows = porcelain(root)
+    rows = porcelain(root, untracked_all=True)
     emit('REVT    %s' % rev)
-    emit('BEFORE  rows=%d' % len(rows))
+    emit('BEFORE  rows=%d (porcelain -uall enumeration; the after-check below'
+         ' reruns the plain form the frozen counter reads)' % len(rows))
     for r in rows:
         emit('BEFORE-ROW %s' % r.decode(errors='replace'))
     ntol, repair, unexpected = classify(root, rev, rows, emit)
@@ -307,24 +313,44 @@ def selftest(emit):
         """Index-free commit: disk is truth, index is NOT updated."""
         tree = sh(repo, 'rev-parse', parent + '^{tree}').decode().strip() if parent \
             else '4b825dc642cb6eb9a060e54bf8d69288fbee4904'
+
+        def load(sha):
+            entries = {}
+            for rec in sh(repo, 'ls-tree', '-z', sha).split(b'\x00'):
+                if not rec:
+                    continue
+                meta, name = rec.split(b'\t', 1)
+                entries[name] = (meta, name)
+            return entries
+
+        def store(entries):
+            inp = b'\x00'.join(m + b'\t' + n for n, (m, n) in entries.items()) + b'\x00'
+            p = subprocess.run(['git', '-C', str(repo), 'mktree', '-z'],
+                               input=inp, capture_output=True, env=base_env)
+            assert p.returncode == 0, p.stderr
+            return p.stdout.decode().strip()
+
+        def insert(ents, comps, blob):
+            head, rest = comps[0].encode(), comps[1:]
+            if rest:
+                if head in ents:
+                    sub_sha = ents[head][0].split(b' ')[2].decode()
+                    sub = load(sub_sha)
+                else:
+                    sub = {}
+                insert(sub, rest, blob)
+                ents[head] = (b'040000 tree ' + store(sub).encode(), head)
+            else:
+                ents[head] = (b'100644 blob ' + blob.encode(), head)
+
         for rel, data in files.items():
             p = subprocess.run(['git', '-C', str(repo), 'hash-object', '-w', '--stdin'],
                                input=data, capture_output=True, env=base_env)
             assert p.returncode == 0
             blob = p.stdout.decode().strip()
-            entries = {}
-            out = sh(repo, 'ls-tree', '-z', tree)
-            for rec in out.split(b'\x00'):
-                if not rec:
-                    continue
-                meta, name = rec.split(b'\t', 1)
-                entries[name] = meta + b'\t' + name
-            entries[rel.encode()] = b'100644 blob ' + blob.encode() + b'\t' + rel.encode()
-            inp = b'\x00'.join(entries.values()) + b'\x00'
-            p = subprocess.run(['git', '-C', str(repo), 'mktree', '-z'],
-                               input=inp, capture_output=True, env=base_env)
-            assert p.returncode == 0, p.stderr
-            tree = p.stdout.decode().strip()
+            ents = load(tree)
+            insert(ents, rel.split('/'), blob)
+            tree = store(ents)
         args = ['commit-tree', tree, '-m', message]
         if parent:
             args += ['-p', parent]
@@ -405,6 +431,33 @@ def selftest(emit):
         check('rev-bound-refusal', rc == 1, 'rc=%d (new.txt absent at c0)' % rc)
     except Exception as exn:  # noqa: BLE001
         check('rev-bound-refusal', False, 'exception %s' % exn)
+    finally:
+        td.cleanup()
+
+    # Arm 5 (Amendment 1): a wholly-untracked landing directory — plain
+    # porcelain collapses it to one `?? dir/` row, so enumeration runs -uall;
+    # the landing must repair to clean.
+    td, repo = mkrepo()
+    try:
+        (repo / 'keep.txt').write_bytes(b'base\n')
+        c0 = commit_plumbing(repo, {'keep.txt': b'base\n'}, None, 'base')
+        d = repo / 'newdir' / 'sub'
+        d.mkdir(parents=True)
+        (d / 'a.txt').write_bytes(b'aaa\n')
+        (d / 'b.txt').write_bytes(b'bbb\n')
+        c1 = commit_plumbing(repo, {'keep.txt': b'base\n',
+                                    'newdir/sub/a.txt': b'aaa\n',
+                                    'newdir/sub/b.txt': b'bbb\n'},
+                             c0, 'landing')
+        plain = sh(repo, 'status', '--porcelain')
+        rc = run(str(repo), c1, None, False, lambda s: None)
+        st = sh(repo, 'status', '--porcelain')
+        check('collapsed-untracked-dir-repaired',
+              rc == 0 and st.strip() == b'' and b'newdir' in plain,
+              'rc=%d plain-had-collapse-row=%s after=%r'
+              % (rc, b'newdir' in plain, st[:40]))
+    except Exception as exn:  # noqa: BLE001
+        check('collapsed-untracked-dir-repaired', False, 'exception %s' % exn)
     finally:
         td.cleanup()
 

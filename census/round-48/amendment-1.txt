@@ -1,0 +1,56 @@
+# souji round 48 — Amendment 1 (append-only; the preregistration blob at the
+# freeze 21ec27361c1ded8d93842b2e89239e874e30f875 is unchanged — this file
+# amends it beside it, so tools/souji-freeze-check.py keeps reading
+# findings=0 at every revision).
+#
+# Committed BEFORE any claim receipt exists. The only post-freeze artifacts
+# at amendment time are the refused first-execution attempt's receipt
+# (census/round-48/records/idx-repair-base-refused-plain-porcelain.txt) and
+# the selftest development runs — both disclosed here. Every claim receipt
+# is taken after this amendment commit.
+#
+# Defect found (captured-by: the first post-freeze execution of C1's tool,
+# 2026-11-01): plain `git status --porcelain` — the exact form the frozen
+# census/round-46/c1-counter.py reads — collapses a wholly-untracked
+# directory into one `?? dir/` row. The freeze commit landed 13 new files
+# under census/round-48/, so the tool's first real run faced `??
+# census/round-48/` — a row whose "path" is a directory, never in any tree —
+# and the frozen classifier refused fail-closed (UNEXPECTED-NOT-IN-REV,
+# nothing repaired; receipt
+# census/round-48/records/idx-repair-base-refused-plain-porcelain.txt,
+# ending EXIT=1). The preregistration's C1 tool bytes could not restore the
+# frozen tolerance for exactly the drift the freeze landing itself created.
+#
+# Authorization: the r47-closure carry-in item 2 routed to this round —
+# "your instruments should tolerate it per the frozen Amendment-1 class
+# without re-manual-repair, or widen the freeze amendment properly if
+# needed" — and the r46 precedent (Amendment 1 there was a prereg-appended
+# host adaptation committed before the after-measurements). This amendment
+# widens the round-48 instrument only; the frozen Amendment-1 tolerance set
+# (the six control-char-named staged deletions) is NOT widened and no
+# tolerance class of the r46 counter is touched.
+#
+# Change: tools/souji-idx-repair.py enumerates porcelain rows with `-uall`
+# (per-file rows; the collapse is a presentation of the plain form), while
+# the post-repair AFTER check keeps rerunning the PLAIN form for parity with
+# the frozen counter. One selftest arm added (collapsed-untracked-dir-repaired:
+# a wholly-untracked landing directory repairs to clean; the plain form's
+# collapse row is asserted present before the repair). Strictly additive row
+# handling — the new bytes accept every state the old bytes accepted, plus
+# the collapse class the old bytes refused without repairing anything.
+#
+# Supersedes: the C1 Target's tool pin sha256=3c6803da4d448cf7fc97156af2bc3a6eec1600fcb52a2dad86299ce2d842f06a
+# (freeze bytes) is superseded by sha256=fd66d4f139931177d576eb38abe9d146bbda2073cae91792c5182de632a73897.
+# The selftest expectation is likewise superseded: SELFTEST cases=5 pass=5
+# fail=0. The preregistration's Kill line ("any edit after the freeze to the
+# tool bytes named above") is amended to "any edit after the amendment
+# commit to the amendment's tool bytes" — the edit this amendment records is
+# the amendment itself, disclosed before any after-data.
+#
+# Consumer checks bound at this amendment: the tool selftest receipt
+# census/round-48/records/idx-repair-selftest.txt must read
+# SELFTEST cases=5 pass=5 fail=0 with tool-self sha256 equal to the
+# superseding pin; the real repair receipt
+# census/round-48/records/idx-repair-base.txt must show the BEFORE state
+# including the collapsed row's expansion (porcelain -uall enumeration) and
+# AFTER rows=6 unexpected=0 on the plain form.
