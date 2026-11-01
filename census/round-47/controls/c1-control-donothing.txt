@@ -1,0 +1,28 @@
+# C1 do-nothing control (souji round 47) — committed at the freeze commit,
+# before any correction row or after-receipt exists. Raw greps at the round
+# base e469084b6b5630d0c248574fdd980775deeb1efd:
+
+$ grep -c "R46-CORRECTION" SCORECARD.md
+0
+rc=1   (grep -c: 0 matches -> exit 1)
+
+$ grep -c "assertions=522" SCORECARD.md
+1
+rc=0   (the stale r46 literal is present and uncorrected)
+
+$ grep -c "W04" census/round-46/records/census-after.txt
+57
+rc=0   (receipt value is 57; the r46 report prose says 56, uncorrected)
+
+$ tail -1 census/round-46/records/census-before.txt
+census-before rc=0
+       (old-host receipt: souji ok /home/vgpnk/... — the r46 report cites
+        this file as the NEW-host before state; uncorrected)
+
+$ git cat-file -e e469084b6b5630d0c248574fdd980775deeb1efd:census/round-47/records/census-before.txt
+fatal: path 'census/round-47/records/census-before.txt' exists on disk, but not in 'e469084b6b5630d0c248574fdd980775deeb1efd'
+rc=128  (no host-valid explicit-lane-dir before receipt exists at base)
+
+# Every carry-in defect is live at the base and none is corrected; the
+# do-nothing state fails the C1 target. Overall control verdict:
+EXIT=1

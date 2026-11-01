@@ -1,0 +1,28 @@
+# C2 do-nothing + junk controls (souji round 47) — committed at the freeze
+# commit, before any claim receipt exists. Control arms run the frozen
+# counter in its --file mode (control mode, never claim evidence).
+
+$ python -B census/round-47/c2-counter.py --root . --file census/round-47/controls/c2-junk-safe.tsv
+RECEIPTS rows=4 targets=4 findings=2
+FINDING NOT-NOT-SAFE T1 SAFE
+FINDING UNKNOWN-CLASS T1 pushed
+rc=1
+
+$ python -B census/round-47/c2-counter.py --root . --file census/round-47/controls/c2-partial.tsv
+RECEIPTS rows=2 targets=4 findings=2
+FINDING MISSING-ROW T1 C:/Users/jpvei/.zcode/workspace/95b1ba4d-5089-47a4-9fd8-54adebbce2ae/fleet/kotodama-shokunin
+FINDING MISSING-ROW T3 C:/Users/jpvei/.zcode/workspace/95b1ba4d-5089-47a4-9fd8-54adebbce2ae/fleet/shokunin-reverse-engineering
+rc=1
+
+$ python -B census/round-47/c2-counter.py --root .
+COULD-NOT-EVALUATE full 40-hex --rev required without --file
+rc=2
+
+# Do-nothing arm: the receipts path does not exist at the round base.
+$ git cat-file -e e469084b6b5630d0c248574fdd980775deeb1efd:census/round-47/records/per-artifact-receipts.tsv
+fatal: path 'census/round-47/records/per-artifact-receipts.tsv' does not exist in 'e469084b6b5630d0c248574fdd980775deeb1efd'
+rc=128
+
+# A do-nothing lane produces no receipts (absent at base) and any partial or
+# SAFE-bearing receipts file fails the frozen counter. Overall control verdict:
+EXIT=1
