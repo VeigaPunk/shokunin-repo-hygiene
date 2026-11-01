@@ -46,12 +46,24 @@ def main():
             raise ValueError('status unavailable')
         if st.stdout.strip():
             tree = git(root, 'ls-tree', '-r', '--name-only', '-z', ns.rev)
+            short = {0x07: b'\\a', 0x08: b'\\b', 0x0c: b'\\f', 0x0a: b'\\n',
+                     0x0d: b'\\r', 0x09: b'\\t', 0x0b: b'\\v', 0x5c: b'\\\\',
+                     0x22: b'\\"'}
+            def quote(raw):
+                out = bytearray(b'"')
+                for c in raw:
+                    if c in short:
+                        out += short[c]
+                    elif c < 0x20 or c == 0x7f:
+                        out += b'\\%03o' % c
+                    else:
+                        out.append(c)
+                out += b'"'
+                return bytes(out)
             tolerated = set()
             for raw in tree.split(b'\x00'):
-                if raw and any(c < 0x20 for c in raw):
-                    q = raw.replace(b'\\', b'\\\\').replace(b'"', b'\\"')
-                    q = re.sub(rb'[\x00-\x1f]', lambda m: b'\\%03o' % m.group()[0], q)
-                    tolerated.add(b'D  "' + q + b'"')
+                if raw and any(c < 0x20 or c == 0x7f for c in raw):
+                    tolerated.add(b'D  ' + quote(raw))
             unexpected = [l for l in st.stdout.splitlines() if l not in tolerated]
             if unexpected:
                 raise ValueError('dirty worktree at run time: %d unexpected rows' % len(unexpected))
