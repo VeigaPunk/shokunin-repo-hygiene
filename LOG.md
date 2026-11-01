@@ -2494,3 +2494,25 @@ addendum, appended to the prereg, commits 8a793e7ae9131578bdec393982760217f62095
   routing); nothing assumed answered.
 - Holds unchanged: certification OFF, K5 HELD, NAMESPACE/reap holds,
   execution-audit attribution open.
+
+### Round 51 end-receipts addendum (appended with the end receipts)
+
+- The round-end census gate caught a real defect in this round's own landing:
+  the content commit had appended the S274 row at end-of-file, outside the
+  Registry section (`E12 S274 row outside Registry section`, dir_rc=1,
+  DIR-RESULT=failed — the first take is disclosed at
+  census/round-51/records/census-after-first-take-disclosed.txt, never
+  deleted). The row moved inside the Registry table directly after S273 in
+  this end commit (the lesson's Mistakes row 4; the c2-counter's limit leg is
+  position-independent and stays green at the final tip). The re-taken end
+  census reads adapter exit 0 (conf_rc=2 disclosed inside, dir_rc=0,
+  DIR-RESULT=ok, 59 W04, receipt verify ok) — the contract's exit-0-at-round
+  -end requirement is met by the committed census-after.txt and its v1
+  receipt.
+- Suite receipt staging discipline, disclosed: the first suite take at the
+  content tip read COULD-NOT-EVALUATE on its own untracked receipt bytes
+  (the r48 lesson recurring; the take was staged inside the repo) and a
+  second take refused on a missing --work dir (the r46 counter requires an
+  existing work dir); the green receipt is the third take with receipts
+  staged outside the repo and the work dir pre-created — both discarded
+  takes are named in the committed receipt's header.
