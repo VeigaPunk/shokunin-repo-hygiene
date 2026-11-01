@@ -40,6 +40,22 @@ removal of stale, duplicate, and already-preserved artifacts.
 - Any artifact whose owning lane has dirty or unpushed work touching it.
 - Publishing, vault approval, remote creation — operator-owned.
 - Live lane work products (current-round drafts, uncommitted reports).
+
+### Host correction (2026-10-31, Windows host, r46)
+
+- The fleet conf resolves lane `souji` to `$SHOKUNIN_ROOT/souji-shokunin/`,
+  which does not exist on this host. The lane repo's real path here is
+  `$SHOKUNIN_ROOT/shokunin-repo-hygiene/` (symlink into the session fleet
+  dir). Tools that resolve lane directories from the conf (e.g.
+  `sources-census.sh validate --root <fleet-root> souji`) report the registry
+  missing on this host; use the documented explicit lane directory form.
+- This host's git (2.55.0.windows.3) cannot checkout HEAD paths whose names
+  contain control characters ("invalid path"; file creation fails with
+  "Invalid argument" even with core.protectNTFS=false), so six such paths in
+  this lane's tree are permanently staged-deleted in any worktree here and
+  `git status --porcelain` never empties. Commits go through the index-free
+  plumbing helper; receipts
+  `census/round-46/records/c1-host-uncheckoutable.txt`.
 - Signalling inherited or unrelated processes. Census watchdogs, selftests
   and fixtures may signal only workers they spawned, using their recorded
   identity/group/session; a listed residue process requires operator

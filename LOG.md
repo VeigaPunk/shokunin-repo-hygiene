@@ -2045,3 +2045,72 @@ R39-REG-11 — `cases=7` in `census/round-39/records/c3-after.txt`, receipt comm
   already passes on base content; different-instrument comparison is not
   factual gap reduction. No target relaxation/relabeling or admission claimed.
   Next round unchanged pending operator resumption; no closure this run.
+
+
+## 2026-10-31 — Round 46 (Windows-host landing of the frozen r46 claims)
+
+Base 7f8fa3cad0685a8822198b04f2a424bae44b140b (freeze tip; the freeze session
+died before after-data). Claims per the frozen preregistration
+`census/round-46/preregistration.txt`; one disclosed host adaptation and one
+implemented kill rule landed BEFORE the after-measurements (Amendment 1 +
+addendum, appended to the prereg, commits 8a793e7ae9131578bdec393982760217f620952f,
+42d86abf75a7b5cfa63d950db9f5761f73e05651,
+3144c16bde21380bcbedcb783897d01bc2ee3602).
+
+- Host facts, receipted: six HEAD paths with control-character names cannot be
+  checked out here (`census/round-46/records/c1-host-uncheckoutable.txt`), so
+  the naive clean-tree precondition was unsatisfiable and the frozen counter
+  exited 2 (`records/c1-host-before.txt`); the conf-declared lane path
+  `souji-shokunin/` is absent here (`records/census-conf-name-host.txt`,
+  rc=2) and the documented explicit-lane-directory form validates the real
+  registry, exit 0. Amendment 1 tolerates exactly the six staged deletions;
+  every other porcelain row still kills.
+- C1: counter green at the tip after the amendment — 70 mismatches, all
+  REGISTERED against the 66-key R44 register, unfiled=0, exit 0. The pin kill
+  rule promised by the frozen sentence was missing (the counter only printed
+  the digest) and its r22 pin target was stale (r32 98e5203 changed the
+  instrument): the counter now hard-pins the round-base digest a3324916...
+  (addendum commit 3144c16); mutation witness at r28 rev ed270c4 exits 2 on
+  the pin (receipt re-taken at the final tip). Do-nothing control (freeze,
+  committed before any after-data): unfiled=70, FAILS the target
+  (`records/c1-control-donothing.txt`).
+- C2: `census/round-45/c1-counter.py` gains `--selftest` (commit
+  8eabfba3924778e903537b46ae0c20979b1391a2, normalized at
+  bc50661fc72522356625c53043959e7df915f56f): 11 cases over isolated synthetic
+  git repos in caller scratch (population/SCORECARD/stub-instrument/register
+  fixtures; subprocess refusals through the real main), expected values pinned
+  in `records/c2-selftest-expected.tsv`; run receipt `records/c2-selftest.txt`
+  = cases=11 pass=11 fail=0, exit 0. Default path proven byte-behavior-
+  identical to the frozen r45 bytes: `records/c2-repro-after.txt` and
+  `records/c2-repro-wrong.txt` reproduce the frozen r45 SUMMARY+exit exactly
+  at rev 019bccc9. SKILL.md registry row's self-test cell updated; the r45
+  disclosed interface debt is closed.
+- C3: knowledge entry `corpus/knowledge/quarantine-restore-path-reoccupied.md`
+  (ground F4, restore-side collision semantics; commit
+  4b316f22ef0f9a43cee46ff8fd88b65c4e7d64c4). S268 opened 2026-10-30 (capture
+  `census/round-46/sources/renameat2-located-quote.txt`), re-opened live
+  2026-10-31 by this session; S269 rejected (trash-spec 404); S110 re-opened,
+  row unchanged. grounded-F4 count 8 -> 9; gate-check entries=1 ok=1 fail=0
+  (`records/c3-gate-check.txt`); SOURCES rows 191 -> 193, validate exit 0.
+  README F4 map row names the entry (append-only note at README end). No tool
+  change, no receipt class, no deletion or restore authority.
+- Mistake mined this round: text-mode read/write on this host churned four
+  files to CRLF (commit 4b316f2 diff); normalized back to LF at
+  bc50661 with the net diff vs round base exactly the intended lines;
+  C2 receipts re-measured at the normalized bytes. Lesson:
+  `corpus/lessons/round-46.md` (three mistakes: CRLF churn; unimplemented
+  prereg kill rule + stale pin; unanchored filter loop turned a 6-path repair
+  into a whole-tree per-file restore, no content change, disclosed).
+- Session-workspace dry-run census landed read-only
+  (`census/round-46/workspace-census.tsv`, `.txt`): 17 lane clones (14
+  pushed, 3 no-origin-master), 15 foreign live scratch dirs untouched,
+  helpers-r74 noted as a stale-candidate for a future round; nothing moved
+  or deleted. PROVINCE.md carries the host corrections (lane path;
+  uncheckoutable paths).
+- L2 floor: no wave dispatch surface exists for this session on this host;
+  the frozen 32-seat w1 plan was never dispatched (dispatched=0,
+  completed=0, dead=0); no WAVE-DONE claimed; L0 question filed for the
+  floor's disposition here. Whole-suite tip validation (r45 routed defect 3)
+  receipted at the final tip as `records/c1-suite-index.txt`.
+- Holds unchanged: certification OFF, K5 HELD, NAMESPACE/reap holds,
+  r44 symlink-contract L0 and execution-audit attribution open.

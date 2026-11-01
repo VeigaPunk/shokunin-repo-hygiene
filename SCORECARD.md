@@ -998,3 +998,40 @@ dispatched=0, completed=0, dead=0. No WAVE-DONE is fabricated; L2 floor
 was not met. No closure this run; next round unchanged.
 Evidence: census/round-45/records/operator-stop.json and the lesson's
 Admission distinction section. Certification and all holds unchanged.
+
+
+### Round 46 landing (frozen claims executed on the Windows host; base 7f8fa3cad0685a8822198b04f2a424bae44b140b)
+
+Frozen preregistration `census/round-46/preregistration.txt` (2026-10-30,
+before any wave dispatch; the freeze session died before after-data). This
+session lands the claims with one disclosed host adaptation (Amendment 1,
+prereg-appended) committed before the after-measurements.
+
+| claim | axis | before -> after | counting command | measured commit |
+|---|---|---|---|---|
+| C1 tip landing-suite receipt | calibration 7 | frozen counter on this host: exit 2 could-not-evaluate (`census/round-46/records/c1-host-before.txt`; Amendment 1) -> `SUMMARY assertions=522 mismatches=70 registered=70 corrected=0 exempted=0 unfiled=0`, exit 0; do-nothing control (freeze, committed pre-after): unfiled=70 FAILS; pin kill-rule mutation witness exit 2 on r28 rev ed270c4 | `python -B census/round-46/c1-counter.py --root LANE --rev FULL40 --work SCRATCH` (recorded in the receipt) | receipts committed this round; counter bytes 3144c16bde21380bcbedcb783897d01bc2ee3602, green run re-taken at the round's final tip (see LOG.md round-46) |
+| C2 register-verifier selftest | operability 8 | base: `--selftest` exits 2 unrecognized-argument (frozen r45 bytes) -> `SUMMARY cases=11 pass=11 fail=0`, exit 0; default path byte-identical to frozen r45 bytes: after-receipt and wrong-token receipts reproduce SUMMARY+exit exactly | `python -B census/round-45/c1-counter.py --selftest --scratch SCRATCH`; `python -B census/round-45/c1-counter.py --root LANE --rev 019bccc9ac97f3cec1a1dea574cc2f81f57fc967 --scratch SCRATCH [--register-file WRONG]` | bytes bc50661fc72522356625c53043959e7df915f56f; receipts `census/round-46/records/c2-selftest.txt`, `c2-repro-after.txt`, `c2-repro-wrong.txt`, expected table `c2-selftest-expected.tsv` |
+| C3 F4 restore-collision entry | coverage 8 | grounded F4 `8` -> `9`; gate-check `entries=1 ok=1 fail=0`; sources-census exit 0 rows 191 -> 193; coverage-agreement at the measured rev (see LOG) | `grep -lE '^ground: F4' corpus/knowledge/*.md | wc -l`; `python -B tools/souji-gate-check.py --root . --round-date 2026-10-30 --entries corpus/knowledge/quarantine-restore-path-reoccupied.md --snapshot-dir census/round-46/sources` | entry + S268/S269 landed; measured at the round's final content tip (see LOG.md round-46) |
+
+Numeric axis scores unchanged (calibration 7, operability 8, coverage 8): C1
+re-derives already-committed dispositions (no new corrected beliefs); C2
+closes a disclosed interface debt (capability-adjacent, recorded in the r45
+registry row's self-test cell, not a new capability row); C3 adds one entry
+on existing frontier ground (no Core promotion). Host corrections recorded:
+lane conf path absent on this host (PROVINCE.md, lesson); six
+control-char-named HEAD paths uncheckoutable here (Amendment 1 tolerance;
+probe receipt `c1-host-uncheckoutable.txt`). Session-workspace dry-run
+census landed read-only (`census/round-46/workspace-census.tsv`): 17 lane
+clones (14 pushed, 3 no-origin-master), 15 foreign live scratch dirs
+untouched, no removal proposed. L2 floor: no wave surface on this host;
+dispatched=0 (lesson L2 note; L0 question filed).
+
+### Planned (r47, appended 2026-10-31)
+
+- Convert the r46 workspace dry-run census into per-artifact receipts for the
+  three `no-origin-master` lane clones and the foreign `helpers-r74/` root
+  (coverage; quarantine-before-delete discipline, operator approval first).
+- Close the L0 question on the L2 floor for this host (whatever the operator
+  rules: dispatch surface or standing waiver) (operability).
+- Re-run the whole-suite tip receipt at the next round's tip (calibration;
+  keeps the landing-suite claim a standing instrument, not a one-off).
