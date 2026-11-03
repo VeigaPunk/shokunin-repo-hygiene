@@ -2516,3 +2516,20 @@ addendum, appended to the prereg, commits 8a793e7ae9131578bdec393982760217f62095
   existing work dir); the green receipt is the third take with receipts
   staged outside the repo and the work dir pre-created — both discarded
   takes are named in the committed receipt's header.
+
+## Round 52 (2026-11-03, Linux omp host; base f778b9d131574d3ff09c0cc8a077643c0fc84bb4 = the r51 non-author spot-check commit, verdict ok/admitted; freeze df7d1300cbc5443b748682598e35b29347bfa930 before any claim receipt — prereg + both counters + both do-nothing controls + pre-flight receipts in that one commit)
+
+- Claims: C1 calibration 7 (declared-count annotations at enumerated sites S1/S2, filed by append-only R52-CORRECTION lines); C2 coverage 8 (capability acquisition: tools/souji-fleet-root-census.py, a read-only census of the fleet root's top-level entries with a committed capture verified by census/round-52/c2-counter.py). No exploratory claim; no assimilation.
+- Wave w1: one v1 wave, 13 seats (scout x2, connector x1, executor x3, scribe x2, reviewer x2, critic x1, mutation-tester x1, sentinel x1); attack seats 4 of 13; band 8-16; WAVE-DONE received for all 13. Results: census/round-52 wave dir (ignored by .gitignore; the findings are copied into corpus/lessons/round-52.md `## Wave findings`).
+- Tool: the candidate was hardened into tools/souji-fleet-root-census.py after the sentinel review (S1 fsmonitor executed; S2 include.path read outside; S3 no protected refusal; S4 protected subtree walk; S6 timeout orphans; S7/S8 --out inside, subdirectory root). Discrimination control: census/round-52/records/discrimination-s1.txt. Selftest 39/39, fixture 8/8.
+- First real capture refused on a top-level `.omp` (credential-shaped rule overbroad; the fleet root's `.omp` is a tracked project directory); rule narrowed; the root-namespace check still refuses ~/.omp roots.
+- Capture: census/round-52/records/fleet-root-census.tsv (ENTRIES=49, tracked 22, ignored 22, untracked-stray 5, symlink 0), run receipt fleet-root-census-run.txt; counter at 8ec412c6: SUMMARY entries=49 rows=49 unclassified=0 class_mismatch=0 counts=ok tool_sha=ok removal_proposed=0 receipt=ok, exit 0.
+- S275 admitted (git(1) GIT_OPTIONAL_LOCKS, located quote 25 words, capture census/round-52/sources/); knowledge entry corpus/knowledge/fleet-root-stray-census.md. corpus/SOURCES.md 274 -> 275 rows.
+- C1: the two enumerated sites read 78 against the recomputed 79; the frozen counter was red at base (unfiled=2) and is filed by the R52-CORRECTION lines in SCORECARD.md (appended; the stale text stays).
+- Standing checks: landing-suite counter census/round-46/c1-counter.py at the clean tip ab8c1fcf: SUMMARY assertions=552 mismatches=70 registered=70 corrected=0 exempted=0 unfiled=0, exit 0. Conf-form census on this host: rc 0 (census/round-52/records/census-before-receipt.txt, verify ok).
+- Mistakes mined (corpus/lessons/round-52.md `## Mistakes`): the 78/79 annotation class; the freeze-message overclaim (not counted as fixed); the candidate's git-config execution path (fixed; discrimination shown); the over-broad .omp name rule (fixed; dedicated control open); the prereg inert-correction kill rule the counter does not implement (checked by hand; amendment next round).
+
+## Round 52 corrections (appended after the end-of-round checks)
+
+- The r51 ADDED-count annotations at SCORECARD.md:1196 and census/round-51/preregistration.txt:125 are filed by R52-CORRECTION lines in SCORECARD.md (C1). The r51 prose is unchanged.
+

@@ -863,3 +863,10 @@ a measured edge class does not promote a frontier ground to Core (PROVINCE
 ### Round 46 F4 map-row addition (2026-10-31, appended)
 
 - The F4 map row above now also names `knowledge/quarantine-restore-path-reoccupied.md` (S268/S110; restore-side collision semantics). Edited in place per the r28/r29 convention; this note is the append-only record. No other map row changed; F4 stays frontier, no Core promotion.
+
+## Round 52 frontier update
+
+- One knowledge entry admitted on the Core surface the lane already owns (fleet root hygiene, PROVINCE Owns): corpus/knowledge/fleet-root-stray-census.md, source S275. No ground line added; no frontier row moved; no Core promotion.
+- SOURCES 274 -> 275 rows (`grep -cE '^\|[[:space:]]*S[0-9]{3,}[[:space:]]*\|' corpus/SOURCES.md`); census exit 0 (conf form, this host). Assimilation: none (open L0 on mass id drift, r46). considerthese/: no such directory.
+- The fleet-root census's refusal surfaces (repo config execution, credential namespaces, credential-shaped names, in-root output) are the named boundary of the capability; the credential-name policy awaits an operator ruling.
+

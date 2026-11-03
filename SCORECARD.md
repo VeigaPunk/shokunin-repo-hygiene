@@ -1226,3 +1226,33 @@ unreachable).
 - helpers-r74 and scratch-r80v keep their NOT-SAFE receipts and
   operator-owned dispositions (quarantine-before-delete; no removal
   proposed); re-receipt them only if their state changes.
+
+### Round 52 measurements (2026-11-03; base f778b9d131574d3ff09c0cc8a077643c0fc84bb4; freeze df7d1300cbc5443b748682598e35b29347bfa930; prereg census/round-52/preregistration.txt)
+
+| claim | axis | before | after | counting command | measured commit |
+|---|---|---|---|---|---|
+| C1 declared-count annotations agree (enumerated sites S1 = SCORECARD.md:1196, S2 = census/round-51/preregistration.txt:125; the r51 ADDED-count command states 78, recomputes 79) | calibration 7 | `SUMMARY sites=2 mismatches=2 filed=0 unfiled=2`, exit 1 (census/round-52/controls/c1-control-donothing.txt) | `SUMMARY sites=2 mismatches=2 filed=2 unfiled=0`, exit 0 at the commit whose subject begins "round-52: C1 corrections" (both sites filed; the stale text stays in place, append-only) | `python3 -B census/round-52/c1-counter.py --root LANE --rev FULL40 --scratch DIR` | base f778b9d1; after = the "round-52: C1 corrections" commit (named in the round report) |
+| C2 fleet-root census capture verifies (capability acquisition) | coverage 8 | `PRISTINE FAIL FLEET-CENSUS-ABSENT`, exit 1 (census/round-52/controls/c2-control-donothing.txt) | `SUMMARY entries=49 rows=49 unclassified=0 class_mismatch=0 counts=ok tool_sha=ok removal_proposed=0 receipt=ok`, exit 0 | `python3 -B census/round-52/c2-counter.py --root LANE --rev FULL40 --scratch DIR` | measured at 8ec412c64d73d8c5e339f1d15d11cfc5b6e702d0 (the capture commit) |
+
+C1 verifies by the frozen counter. Its named limits (first-annotation reading, unpinned recompute source, fenced corrections accepted, in-place rewrite accepted at one revision, an inert correction exits 0 where the prereg text says it kills) are recorded in corpus/lessons/round-52.md `## Wave findings`; each was checked by hand at the tip, with the commands in the round report. C2 verifies by the frozen counter. Its named limits (a hand-written capture with the right tool bytes verifies; sort order and `#`-leading names are not instrumented; the derivation of `ignored` is not pinned by the predicate) are recorded in the knowledge entry and the lesson. No owned axis score changed (calibration 7, coverage 8, operability 8): C1 is a record-accuracy instrument and C2 a capability on an owned surface; no reproducible 0-10 mapping is asserted. The lane claims no round admission; the non-author closure decides.
+
+### Round 52 corrections (append-only; C1 filing)
+
+The stale annotations at the two enumerated sites stay in place. Each is filed by one line:
+
+R52-CORRECTION SCORECARD.md:1196 stale=78 recomputed=79
+
+R52-CORRECTION census/round-51/preregistration.txt:125 stale=78 recomputed=79
+
+### Round 52 capability row (appended)
+
+| name | what it can now do | evidence pointer | first-working round |
+|---|---|---|---|
+| fleet-root census (read-only) | list the fleet root's top-level entries with kind, tracked, ignored, class and report-only disposition into a capture outside the root; refuses repo configs that could execute or read outside the root, credential-shaped names, credential namespaces and in-root output | `python3 -B tools/souji-fleet-root-census.py --selftest` (census/round-52/records/tool-selftest.txt: checks=39 failures=0); `python3 -B census/round-52/c2-counter.py --root LANE --rev FULL40 --scratch DIR` (SUMMARY ... receipt=ok) | r52 |
+
+### Planned (r53, appended)
+
+- C1 counter amendment as a new frozen version: exactly one annotation per site line; the recompute source pinned by sha256 in the prereg; an inert correction kills; an append-only check across base→tip (zero deleted lines); fenced corrections refused. Axis: calibration.
+- C2 counter amendment: rows sorted by name are checked; `#`-leading names resolved by an escaping rule or refused; a capture verifies only against its run receipt. Axis: coverage.
+- Operator rulings routed (l0-questions.md): credential-shaped names (refuse vs redact); the derivation of `ignored` (check-ignore vs listing).
+- Standing: the landing-suite receipt (census/round-46/c1-counter.py) at the r53 tip; the census before→after in the v1 receipt form.
