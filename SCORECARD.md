@@ -1424,3 +1424,37 @@ and `census/round-56/wave/w1-results.json`.
 - Operability/security: linear line-number calculation, escaped diagnostic strings,
   symlink-safe scratch roots; finite reproductions in the sentinel report.
 - Carry the revenger's 41-row disposition table; unresolved items remain explicit.
+
+### Round 57 measurements (2026-11-03; base b4ef0bc84ada3fb3aefd6a0b1a841a6517b84acd; freeze d749f7ee081ec1b382b2f92577eb22bfba1c7761; preregistration census/round-57/preregistration.txt)
+
+| claim | axis | before | after | counting command | measured commit |
+|---|---|---|---|---|---|
+| C1 correction-filing counter v6 (inline HTML-comment class + all-findings selftest) | calibration 7 | v5 arm over the 36-fixture set: exit-0 count 10; B4-INLINE-NBSP-OPENER and C4-INLINE-CLOSED-COMMENT exit 0 (the r56 harm: hidden filings counted as filed) | v6 arm: exit-0 count 8; B4 and C4 exit 1 with `CORRECTION-IN-FENCE,CORRECTION-IN-FENCE` and `hidden_by=inline` in both details; C6-INLINE-SAME-LINE, F29, F17, F18, F19 exit 0 under both arms; all 33 carry-over rows identical in exit and full finding list; selftest `pass cases=36`; real lane exit 0 `unfiled=0 … fenced=0` | `awk -F'\t' 'NR>1 && $5==0{n++} END{print n+0}' census/round-57/records/c1-matrix-v5.tsv census/round-57/records/c1-matrix-v6.tsv` (10, 8); full argv in the prereg C1 section | `census/round-57/records/c1-matrix-v5.tsv`, `c1-matrix-v6.tsv`, `c1-selftest.txt`, `c1-tip.txt` (rev d749f7ee) |
+| C2 receipt revision binding (gate + recorder) | operability 8 | over `manifests/before.tsv` the gate exits 1 with `findings=1 RECEIPT-REV-MISSING` (the r56 standing receipt names no revision) | over `manifests/after.tsv` the gate exits 0 with `SUMMARY receipts=3 findings=0`; each receipt carries `rev=<full40>`, `instrument_sha256=` matching the committed blob and an `EXIT=` line; selftest `pass cases=8`, `control=FALSE-GREEN-REJECTED` | `python3 -B census/round-57/c2-counter.py --root . --manifest census/round-57/manifests/{before,after}.tsv`; `TMPDIR=DIR python3 -B census/round-57/c2-counter.py --selftest --work DIR` | `census/round-57/records/c2-before.txt`, `c2-tip.txt`, `c2-after.txt`, `c2-selftest.txt`, `standing.txt` |
+
+No owned score value changed (calibration 7, coverage 8, operability 8): the lane still has no
+reproducible 0–10 mapping and the closure rules. C1 is an instrument amendment; C2 is a capability
+acquisition whose row is in the capabilities table only if the closure confirms its demonstration.
+Named limits are in `corpus/lessons/round-57.md`; no round admission is claimed.
+
+### Capabilities (round 57 candidate row)
+
+| name | what it can now do | evidence pointer | first-working round |
+|---|---|---|---|
+| receipt revision binding | refuse a measurement receipt that does not name the durable full-40 revision it was measured at, with an instrument digest bound to that revision's committed bytes; produce such receipts | `python3 -B census/round-57/c2-counter.py --root . --manifest census/round-57/manifests/after.tsv` → `findings=0`; selftest 8/8 `control=FALSE-GREEN-REJECTED`; `census/round-57/records/c2-after.txt` | r57 (closure-gated) |
+
+### Planned (r58, appended)
+
+- Calibration: close the r57 named limits that a fixture can reach — WHATWG-invalid comment text with
+  a later closer (renderer vs authoring grammar), `<!-->`/`<!--->` adjacency, and a partially covered
+  line; keep both directions pinned in one frozen set (Q115). Carry the N3 capture-counter row-set
+  meta-test the r56 closure routed.
+- Operability: apply the r57 receipt gate to the remaining standing receipts (r53/r54 name no
+  revision); decide with the operator whether `record-receipt.sh` is the only writer of
+  `census/**/records` receipts (L0), and close the r56 sentinel MEDIUM/LOW items (correction-line
+  quadratic lookup, control-byte escaping in diagnostics, symlink scratch roots).
+- Coverage: an entry for the HTML block types the counter does not model (CDATA, processing
+  instructions, declarations) only if a round's claim needs them; otherwise leave the frontier note.
+- Operator rulings still open (routed around, never assumed): credential-shaped names refuse-vs-redact
+  (r52); the `ignored`-column derivation (r52); r46 mass id drift (assimilation held); r48 census
+  conf-form; whether the recorder should replace ad-hoc receipt writing.

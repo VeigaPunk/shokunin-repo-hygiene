@@ -1,0 +1,28 @@
+# Scale measurements: v6 real-lane argv, single --root run (round 57, sentinel)
+$S=/fast/scratch/hyaku/souji-r57/S57sentinel01
+Command shape for every row (identical to the prereg real-lane recompute):
+  (cd $L && timeout 300 python3 -B census/round-57/c1-counter.py --root <DIR> --rev <TIP> --base <TIP> \
+      --record-sha256 <SHA> --sources-rev-before <TIP> --sources-rev-after <TIP>)
+Wall time measured with date +%s.%N around the call. Fixtures: SCORECARD.md = site line + N prose lines.
+
+N lines, 1 opener per line, ALL UNCLOSED (F29-style prose mentions):
+  N=5,000   0.737 s
+  N=10,000  3.123 s
+  N=20,000 12.396 s      <- asked case
+v5 (round-56) arm over the same N=20,000 fixture: 0.098 s
+N lines, 1 CLOSED same-line opener per line (control):
+  N=20,000  0.119 s
+N honest correction lines in SCORECARD (quadratic line-number accounting):
+  N=1,000   0.150 s
+  N=2,000   0.311 s
+  N=4,000   0.949 s
+
+microbenchmark of hidden_lines() alone (importlib on the module in an eval cell):
+  unclosed: 1,000 0.026 s | 2,000 0.111 s | 4,000 0.439 s | 8,000 1.712 s   (4.0x per doubling -> O(N^2))
+  closed:   1,000 0.001 s | 4,000 0.002 s | 8,000 0.005 s | 20,000 0.012 s (linear)
+=> the unclosed-opener branch rescans to end-of-file for every line that carries a mid-line opener: quadratic.
+   20,000 lines with many openers costs 12.4 s; the v5 shape costs 0.098 s (126x).
+
+1 MiB single correction line (R52-CORRECTION + 1 MiB path token + :2 stale=...):
+  wall 0.081 s (baseline 0.060 s); stdout 1 MiB+ because the whole token is echoed in the INERT detail.
+1 MiB receipt with a 1 MiB rev token (c2): wall 0.066 s; stdout 1,048,662 bytes (token echoed in full).

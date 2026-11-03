@@ -1,0 +1,29 @@
+# Verification-gap probes for the two selftests (round 57, sentinel)
+$S=/fast/scratch/hyaku/souji-r57/S57sentinel01  $L=/home/vgpnk/Projects/shokunin/souji-shokunin
+
+## 1. C1 hidden_by label is not asserted by the selftest
+copy: cp -a $L/census/round-57 $S/copy2/round-57
+mutate the detail expression only (line 513-514):  hidden[corr_no]  ->  'block'
+  finding('CORRECTION-IN-FENCE', 'correction at %s:%d (site %s:%d) hidden_by=%s'
+          % (CORR_FILE, corr_no, cpath, cline, 'block'))
+run: (cd $S/copy2 && python3 -B round-57/c1-counter.py --selftest --work $S/c1mut3)
+rc=0   SELFTEST pass cases=36
+=> a mutant that mislabels every inline finding as hidden_by=block survives; T1's detail clause is outside
+   the machine assertion (the expected TSV carries finding ids only).
+
+## 2. C2 control line is derived from the expected TSV, not from executing the committed stub
+gate source: only stub_meets = count(want == []) ; threshold > 1 ; no import/subprocess of controls/c2-stub.py
+  $ grep -n stub census/round-57/c2-counter.py   -> 44 (docstring), 245, 253, 258, 260, 262, 264-265 only
+committed expected has exactly one clean case (REV-OK), so stub_meets == 1 and the control is FALSE-GREEN-REJECTED
+by arithmetic, not by a differential run.
+tampered expected with two rows set to '-':
+  rc=1   SELFTEST control=FALSE-GREEN-ACCEPTED stub_meets=3
+=> the control reports on the expected file, not on a stub's behaviour.
+
+## 3. Rerun in the same --work
+c1: two runs with --work $S/c1twice -> rc=0, rc=0, SELFTEST pass cases=36 (init_repo rmtree's each fixture)
+c2: first rc=0; second rc=1 "fixture build failed: ('git', 'commit', '-q', '-m', 'fixture base')"
+    (repo.mkdir(exist_ok=True) reuses the repo; the base commit is empty on the second run)
+c2 --work pointing at a regular file: NotADirectoryError traceback, rc=1 (both counters)
+c1 --expected /nonexistent/exp.tsv: FileNotFoundError traceback, rc=1
+c2 --manifest <FIFO>: blocks; timeout 5 -> rc=124

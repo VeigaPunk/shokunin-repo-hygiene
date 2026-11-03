@@ -1,0 +1,69 @@
+## r56 standing receipt rev= count at HEAD (Q109 surface)
+$ git -C . show HEAD:census/round-56/records/landing-suite-final.txt | grep -cE '^rev=[0-9a-f]{40}$'
+0
+[rc=1]
+## r57 wave plan (routed defect 2)
+$ grep -n '12 seats' census/round-57/preregistration.txt
+113:12 seats: scout 1, connector 1, executor 3, scribe 1, reviewer 2, critic 1, mutation-tester 1, sentinel 1, revenger 1. Attack roles 4 of 12 (33%). The canonical planner seat is held by the L1 and is not a swarm role (the wave validator refuses `planner`).
+[rc=0]
+## actual w1 seat dirs (gitignored, not committed)
+$ ls -1 .ufo/waves/round-57/w1/ | grep -v '\.md$'
+S57connector01
+S57critic01
+S57executor01
+S57executor02
+S57executor03
+S57mutation01
+S57revenger01
+S57reviewer01
+S57reviewer02
+S57scout01
+S57scribe01
+S57sentinel01
+swarm-registry.json
+[rc=0]
+## r56 pyc removed from disk (routed defect 3)
+$ find census/round-56 -name '*.pyc' | wc -l
+0
+[rc=0]
+## r57 drivers pass -B (routed defect 3)
+$ grep -c 'python3 -B' census/round-57/fixtures/run-matrix.sh census/round-57/preregistration.txt
+census/round-57/fixtures/run-matrix.sh:2
+census/round-57/preregistration.txt:5
+[rc=0]
+## v6 selftest comparison line (routed defect 5)
+$ grep -n 'passed = ' census/round-57/c1-counter.py
+665:        passed = (rc == want_rc) and (got_find == want_find)
+[rc=0]
+## c2 selftest comparison line (routed defect 5)
+$ grep -n 'passed = \|stub_meets' census/round-57/c2-counter.py
+245:    stub_meets = 0
+251:        passed = (got == want)
+253:        stub_meets += 1 if want == [] else 0
+260:    if stub_meets > 1:
+262:        out.append('SELFTEST control=FALSE-GREEN-ACCEPTED stub_meets=%d' % stub_meets)
+264:        out.append('SELFTEST control=FALSE-GREEN-REJECTED stub_meets=%d cases=%d'
+265:                   % (stub_meets, len(cases)))
+[rc=0]
+## r57 has no summary-field assertion word (routed defect 5)
+$ grep -c 'SUMMARY' census/round-57/records/c1-selftest-expected.tsv census/round-57/records/c2-selftest-expected.tsv
+census/round-57/records/c1-selftest-expected.tsv:0
+census/round-57/records/c2-selftest-expected.tsv:0
+[rc=1]
+## line_zones changed v5->v6? (routed defect 6)
+$ diff -u <(git show b4ef0bc84ada3fb3aefd6a0b1a841a6517b84acd:census/round-56/c1-counter.py) census/round-57/c1-counter.py | grep -c 'line_zones'
+1
+[rc=0]
+## r56 lesson routed defects present
+$ grep -c '^[1-6]\. ' corpus/lessons/round-56-verifier-spotcheck.md
+6
+[rc=0]
+## prereg-cited corpus/lessons/round-57.md
+$ test -e corpus/lessons/round-57.md; echo exists_rc=$?
+exists_rc=1
+[rc=0]
+## C2 after manifest
+$ test -e census/round-57/manifests/after.tsv; echo exists_rc=$?; git ls-files census/round-57/manifests/
+exists_rc=1
+census/round-57/manifests/before.tsv
+[rc=0]

@@ -1,0 +1,27 @@
+# C2 gate: symlink, FIFO, path containment (round 57, seat S57sentinel01)
+Root: $S/c2attacks/repo   (git repo I created in scratch; toplevel verified)
+Command shape: (cd $L && timeout 10 python3 -B census/round-57/c2-counter.py --root $S/c2attacks/repo --manifest <MF>)
+$L=/home/vgpnk/Projects/shokunin/souji-shokunin  $S=/fast/scratch/hyaku/souji-r57/S57sentinel01
+
+honest               rc=0  0.056s  SUMMARY receipts=1 findings=0
+symlink (to valid)   rc=1  0.053s  FINDING RECEIPT-SYMLINK receipts/link.txt
+broken symlink       rc=1  0.056s  FINDING RECEIPT-SYMLINK receipts/broken.txt
+FIFO receipt         rc=1  0.053s  FINDING RECEIPT-MISSING receipts/fifo      (no hang)
+directory receipt    rc=1  0.051s  FINDING RECEIPT-MISSING receipts/dir
+/dev/null (absolute) rc=1  0.051s  FINDING RECEIPT-MISSING /dev/null
+parent symlink row   rc=0  0.057s  SUMMARY receipts=1 findings=0   <- reads outside root
+`../outside-valid.txt` rc=0 0.058s  SUMMARY receipts=1 findings=0   <- escapes root
+absolute outside row rc=0  0.054s  SUMMARY receipts=1 findings=0   <- escapes root
+
+strace of symlink+FIFO manifest (trace=openat,open,statx,newfstatat,lstat,readlink):
+  newfstatat(..., ".../receipts/link.txt", {st_mode=S_IFLNK|0777, ...}, AT_SYMLINK_NOFOLLOW) = 0
+  newfstatat(..., ".../receipts/fifo", {st_mode=S_IFIFO|0644, ...}, AT_SYMLINK_NOFOLLOW) = 0
+  newfstatat(..., ".../receipts/fifo", {st_mode=S_IFIFO|0644, ...}, 0) = 0
+  openat calls naming the symlink target outside-valid.txt: 0
+  openat calls naming the FIFO: 0
+=> final-component symlink is refused without reading through it; FIFO is refused via S_ISREG before any open (no hang).
+
+--root through a symlink: c2 with --root $S/c2rootlink -> repo gives SUMMARY receipts=1 findings=0 rc=0
+--root symlink loop: rc=2 CANNOT-EVALUATE --root is not a directory: .../loop
+
+Manifest that is a FIFO: timeout 5 -> rc=124 (blocks in manifest.read_text(); caller-supplied trusted arg)

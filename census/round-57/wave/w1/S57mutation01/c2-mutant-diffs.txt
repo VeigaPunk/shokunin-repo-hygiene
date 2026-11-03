@@ -1,0 +1,248 @@
+--- frozen/c2-counter.py
++++ M1-drop-exit-check/c2-counter.py
+@@ -122,7 +122,7 @@
+         findings.append('RECEIPT-REV-SHORT %s rev=%s' % (rel, tok))
+     else:
+         findings.append('RECEIPT-REV-NOT-FULL40 %s rev=%s' % (rel, tok))
+-    if not EXIT_RE.search(text):
++    if False:  # MUTANT M1: EXIT= line requirement dropped
+         findings.append('RECEIPT-EXIT-MISSING %s' % rel)
+     if instrument and instrument != '-' and FULL40.fullmatch(tok):
+         pm = PIN_RE.search(text)
+--- frozen/c2-counter.py
++++ M10-accept-symbolic-rev/c2-counter.py
+@@ -121,7 +121,7 @@
+     elif HEXISH.fullmatch(tok) and re.fullmatch(r'[0-9a-f]{1,39}', tok):
+         findings.append('RECEIPT-REV-SHORT %s rev=%s' % (rel, tok))
+     else:
+-        findings.append('RECEIPT-REV-NOT-FULL40 %s rev=%s' % (rel, tok))
++        pass  # MUTANT M10: symbolic/non-hex rev silently accepted
+     if not EXIT_RE.search(text):
+         findings.append('RECEIPT-EXIT-MISSING %s' % rel)
+     if instrument and instrument != '-' and FULL40.fullmatch(tok):
+--- frozen/c2-counter.py
++++ M11-skip-rev-missing/c2-counter.py
+@@ -110,7 +110,7 @@
+     text = p.read_bytes().decode('utf-8', 'replace')
+     m = REV_RE.search(text)
+     if not m:
+-        return ['RECEIPT-REV-MISSING %s' % rel]
++        return []  # MUTANT M11: a receipt with no rev= is treated as clean
+     tok = m.group(1)
+     if FULL40.fullmatch(tok):
+         kind = durable_kind(root, tok)
+--- frozen/c2-counter.py
++++ M12-rc-never-fails/c2-counter.py
+@@ -169,7 +169,7 @@
+             total += 1
+             out.append('FINDING ' + f)
+     out.append('SUMMARY receipts=%d findings=%d' % (len(rows), total))
+-    return 0 if total == 0 else 1
++    return 0  # MUTANT M12: findings never affect the exit code
+ 
+ 
+ def build_fixtures(work: Path):
+--- frozen/c2-counter.py
++++ M13-heads-only-durability/c2-counter.py
+@@ -89,7 +89,7 @@
+     if git(root, 'cat-file', '-e', rev + '^{commit}').returncode:
+         return 'absent'
+     refs = git(root, 'for-each-ref', '--format=%(refname)',
+-               'refs/heads', 'refs/tags', 'refs/remotes').stdout.decode().split()
++               'refs/heads').stdout.decode().split()  # MUTANT M13: tags/remotes ignored
+     for r in refs:
+         if git(root, 'merge-base', '--is-ancestor', rev, r).returncode == 0:
+             return 'branch'
+--- frozen/c2-counter.py
++++ M14-file-name-keyed/c2-counter.py
+@@ -102,6 +102,15 @@
+ 
+ def check_receipt(root: Path, rel: str, instrument: str):
+     findings = []
++    # MUTANT M14: filename-keyed fake (reads neither the receipt nor git)
++    fake = {'ok.txt': [], 'missing.txt': ['RECEIPT-REV-MISSING'],
++            'short.txt': ['RECEIPT-REV-SHORT'], 'head.txt': ['RECEIPT-REV-NOT-FULL40'],
++            'absent.txt': ['RECEIPT-REV-ABSENT'], 'keep.txt': ['RECEIPT-REV-KEEP-ONLY'],
++            'digest.txt': ['RECEIPT-INSTRUMENT-DIGEST-MISMATCH'],
++            'noexit.txt': ['RECEIPT-EXIT-MISSING']}
++    base_name = rel.rsplit('/', 1)[-1]
++    if base_name in fake:
++        return ['%s %s' % (fid, rel) for fid in fake[base_name]]
+     p = root / rel
+     if p.is_symlink():
+         return ['RECEIPT-SYMLINK %s' % rel]
+--- frozen/c2-counter.py
++++ M15-drop-keep-only-case/c2-counter.py
+@@ -223,8 +223,7 @@
+     cases['NOT-FULL40'] = receipt('head.txt', honest.replace('rev=%s' % tip, 'rev=HEAD'))
+     cases['ABSENT'] = receipt('absent.txt', honest.replace('rev=%s' % tip, 'rev=%s' % absent),
+                               instrument=False)
+-    cases['KEEP-ONLY'] = receipt('keep.txt', honest.replace('rev=%s' % tip, 'rev=%s' % keep),
+-                                 instrument=False)
++    # MUTANT M15: the KEEP-ONLY fixture case is never built
+     cases['DIGEST-MISMATCH'] = receipt('digest.txt',
+                                        honest.replace('instrument_sha256=%s' % instr_sha,
+                                                       'instrument_sha256=%s' % ('f' * 64)))
+--- frozen/c2-counter.py
++++ M16-rev-no-boundary/c2-counter.py
+@@ -55,7 +55,7 @@
+ 
+ HERE = Path(__file__).resolve().parent
+ DEFAULT_EXPECTED = HERE / 'records' / 'c2-selftest-expected.tsv'
+-REV_RE = re.compile(r'(?:^|\s)rev=([^\s]+)(?=\s|$)')
++REV_RE = re.compile(r'rev=([^\s]+)(?=\s|$)')  # MUTANT M16: no left boundary
+ PIN_RE = re.compile(r'(?:^|\s)instrument_sha256=([0-9a-f]{64})(?=\s|$)')
+ INSTR_RE = re.compile(r'(?:^|\s)instrument=([^\s]+)(?=\s|$)')
+ EXIT_RE = re.compile(r'(?m)^EXIT=(\d+)\s*$')
+--- frozen/c2-counter.py
++++ M17-gate-first-finding-only/c2-counter.py
+@@ -142,7 +142,7 @@
+             if im and im.group(1) != instrument:
+                 findings.append('RECEIPT-INSTRUMENT-NAME-MISMATCH %s receipt=%s manifest=%s'
+                                 % (rel, im.group(1), instrument))
+-    return findings
++    return findings[:1]  # MUTANT M17: only the first finding per receipt
+ 
+ 
+ def run_manifest(root: Path, manifest: Path, out):
+--- frozen/c2-counter.py
++++ M18-drop-name-mismatch/c2-counter.py
+@@ -139,7 +139,7 @@
+                     findings.append('RECEIPT-INSTRUMENT-DIGEST-MISMATCH %s instrument=%s '
+                                     'pin=%s committed=%s' % (rel, instrument, pm.group(1), got))
+             im = INSTR_RE.search(text)
+-            if im and im.group(1) != instrument:
++            if False:  # MUTANT M18: receipt instrument= may disagree with the manifest
+                 findings.append('RECEIPT-INSTRUMENT-NAME-MISMATCH %s receipt=%s manifest=%s'
+                                 % (rel, im.group(1), instrument))
+     return findings
+--- frozen/c2-counter.py
++++ M19-pin-working-tree/c2-counter.py
+@@ -129,7 +129,10 @@
+         if not pm:
+             findings.append('RECEIPT-INSTRUMENT-PIN-MISSING %s instrument=%s' % (rel, instrument))
+         else:
+-            blocked = git(root, 'show', '%s:%s' % (tok, instrument))
++            # MUTANT M19: working-tree bytes instead of rev:path
++            _wt = root / instrument
++            blocked = subprocess.CompletedProcess(
++                [], 0 if _wt.is_file() else 1, _wt.read_bytes() if _wt.is_file() else b'')
+             if blocked is None or blocked.returncode:
+                 findings.append('RECEIPT-INSTRUMENT-PIN-MISSING %s instrument=%s absent at rev'
+                                 % (rel, instrument))
+--- frozen/c2-counter.py
++++ M2-accept-short-rev/c2-counter.py
+@@ -119,7 +119,7 @@
+         elif kind == 'keep-only':
+             findings.append('RECEIPT-REV-KEEP-ONLY %s rev=%s' % (rel, tok))
+     elif HEXISH.fullmatch(tok) and re.fullmatch(r'[0-9a-f]{1,39}', tok):
+-        findings.append('RECEIPT-REV-SHORT %s rev=%s' % (rel, tok))
++        pass  # MUTANT M2: a short hex rev is silently accepted
+     else:
+         findings.append('RECEIPT-REV-NOT-FULL40 %s rev=%s' % (rel, tok))
+     if not EXIT_RE.search(text):
+--- frozen/c2-counter.py
++++ M20-ref-tip-equality/c2-counter.py
+@@ -91,8 +91,8 @@
+     refs = git(root, 'for-each-ref', '--format=%(refname)',
+                'refs/heads', 'refs/tags', 'refs/remotes').stdout.decode().split()
+     for r in refs:
+-        if git(root, 'merge-base', '--is-ancestor', rev, r).returncode == 0:
+-            return 'branch'
++        if git(root, 'rev-parse', r).stdout.decode().strip() == rev:
++            return 'branch'  # MUTANT M20: ref-tip equality, not reachability
+     keeps = git(root, 'for-each-ref', '--format=%(refname)', 'refs/jj/keep').stdout.decode().split()
+     for r in keeps:
+         if git(root, 'merge-base', '--is-ancestor', rev, r).returncode == 0:
+--- frozen/c2-counter.py
++++ M21-always-refuse/c2-counter.py
+@@ -101,7 +101,7 @@
+ 
+ 
+ def check_receipt(root: Path, rel: str, instrument: str):
+-    findings = []
++    findings = ['RECEIPT-ALWAYS-REFUSE %s' % rel]  # MUTANT M21: always-refuse gate
+     p = root / rel
+     if p.is_symlink():
+         return ['RECEIPT-SYMLINK %s' % rel]
+--- frozen/c2-counter.py
++++ M3-skip-durability/c2-counter.py
+@@ -113,11 +113,7 @@
+         return ['RECEIPT-REV-MISSING %s' % rel]
+     tok = m.group(1)
+     if FULL40.fullmatch(tok):
+-        kind = durable_kind(root, tok)
+-        if kind == 'absent':
+-            findings.append('RECEIPT-REV-ABSENT %s rev=%s' % (rel, tok))
+-        elif kind == 'keep-only':
+-            findings.append('RECEIPT-REV-KEEP-ONLY %s rev=%s' % (rel, tok))
++        pass  # MUTANT M3: durability of a full40 token never checked
+     elif HEXISH.fullmatch(tok) and re.fullmatch(r'[0-9a-f]{1,39}', tok):
+         findings.append('RECEIPT-REV-SHORT %s rev=%s' % (rel, tok))
+     else:
+--- frozen/c2-counter.py
++++ M4-skip-keep-only/c2-counter.py
+@@ -117,7 +117,7 @@
+         if kind == 'absent':
+             findings.append('RECEIPT-REV-ABSENT %s rev=%s' % (rel, tok))
+         elif kind == 'keep-only':
+-            findings.append('RECEIPT-REV-KEEP-ONLY %s rev=%s' % (rel, tok))
++            pass  # MUTANT M4: jj keep-only reachability accepted as durable
+     elif HEXISH.fullmatch(tok) and re.fullmatch(r'[0-9a-f]{1,39}', tok):
+         findings.append('RECEIPT-REV-SHORT %s rev=%s' % (rel, tok))
+     else:
+--- frozen/c2-counter.py
++++ M5-skip-instrument-pin/c2-counter.py
+@@ -124,7 +124,7 @@
+         findings.append('RECEIPT-REV-NOT-FULL40 %s rev=%s' % (rel, tok))
+     if not EXIT_RE.search(text):
+         findings.append('RECEIPT-EXIT-MISSING %s' % rel)
+-    if instrument and instrument != '-' and FULL40.fullmatch(tok):
++    if False:  # MUTANT M5: instrument pin check removed
+         pm = PIN_RE.search(text)
+         if not pm:
+             findings.append('RECEIPT-INSTRUMENT-PIN-MISSING %s instrument=%s' % (rel, instrument))
+--- frozen/c2-counter.py
++++ M6-skip-digest-compare/c2-counter.py
+@@ -135,7 +135,7 @@
+                                 % (rel, instrument))
+             else:
+                 got = sha256(blocked.stdout)
+-                if got != pm.group(1):
++                if False:  # MUTANT M6: pin taken on faith, blob not compared
+                     findings.append('RECEIPT-INSTRUMENT-DIGEST-MISMATCH %s instrument=%s '
+                                     'pin=%s committed=%s' % (rel, instrument, pm.group(1), got))
+             im = INSTR_RE.search(text)
+--- frozen/c2-counter.py
++++ M7-first-finding-only/c2-counter.py
+@@ -248,7 +248,7 @@
+         rc = run_manifest(repo, cases[name], buf)
+         got = [ln.split(' ')[1] for ln in buf if ln.startswith('FINDING ')]
+         want = exp.get(name, ['<missing-expected>'])
+-        passed = (got == want)
++        passed = (got[:1] == want[:1])  # MUTANT M7: first finding only
+         ok = ok and passed
+         stub_meets += 1 if want == [] else 0
+         out.append('SELFTEST-CASE %s %s rc=%d want_rc=%s findings=%s want_findings=%s'
+--- frozen/c2-counter.py
++++ M8-accept-symlink/c2-counter.py
+@@ -104,7 +104,7 @@
+     findings = []
+     p = root / rel
+     if p.is_symlink():
+-        return ['RECEIPT-SYMLINK %s' % rel]
++        pass  # MUTANT M8: symlinked receipt read through the link
+     if not p.is_file():
+         return ['RECEIPT-MISSING %s' % rel]
+     text = p.read_bytes().decode('utf-8', 'replace')
+--- frozen/c2-counter.py
++++ M9-skip-column-check/c2-counter.py
+@@ -159,7 +159,7 @@
+         if not ln.strip():
+             continue
+         f = ln.split('\t')
+-        if len(f) != 2:
++        if len(f) > 2:  # MUTANT M9: a 1-column manifest row tolerated
+             out.append('CANNOT-EVALUATE manifest line %d: %d columns' % (n, len(f)))
+             return 2
+         rows.append((f[0].strip(), f[1].strip()))

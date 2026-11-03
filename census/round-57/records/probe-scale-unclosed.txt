@@ -1,0 +1,13 @@
+# L1 scale probe: hidden_lines() cost when many inline openers never close (v6 frozen bytes).
+# Each unclosed opener scans to end of document, so the cost is superlinear in (openers x lines).
+# fixture: scratch git repo with the standard SCORECARD head + N unclosed `<!--` prose lines
+# command: /usr/bin/time -f 'wall=%es maxrss=%MKB' python3 -B census/round-57/c1-counter.py \
+#          --root <fixture> --rev <tip> --base <tip> --record-sha256 <record> \
+#          --sources-rev-before <tip> --sources-rev-after <tip> --scratch <scratch>
+# measured (this host, python3 -B):
+   5005 lines,  5000 unclosed openers -> wall=0.85s  maxrss=22108KB
+  20005 lines, 20000 unclosed openers -> wall=11.17s maxrss=25740KB   (~13x for 4x the openers: quadratic)
+# also measured: 2005 lines with 1000 CLOSED one-line comments -> wall=0.05s (linear, benign)
+# consequence: a hostile or malformed SCORECARD with many unclosed openers stalls the counter.
+# Named limit, not a r57 claim; routed to r58 (bound the inline scan or pre-compute closer offsets).
+EXIT=0

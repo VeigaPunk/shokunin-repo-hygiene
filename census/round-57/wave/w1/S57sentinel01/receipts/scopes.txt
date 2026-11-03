@@ -1,0 +1,69 @@
+# Scratch / write-scope audit (round 57, sentinel)
+$S=/fast/scratch/hyaku/souji-r57/S57sentinel01  $L=/home/vgpnk/Projects/shokunin/souji-shokunin
+
+## code inventory (grep -nE '/tmp|TMPDIR|tempfile|mkstemp|mkdtemp|TemporaryDirectory' over the five instruments)
+c1-counter.py:            (no match)
+c2-counter.py:38:         (selftest only). No network. Scratch honours TMPDIR/--scratch.
+fixtures/build-fixtures.py:150,827:  "Writes nothing outside --work. ... never /tmp"
+fixtures/run-matrix.sh:23: out=$(cd "$LANE" && TMPDIR="$S" python3 -B "$2" ...)
+record-receipt.sh:        (no match)
+=> no hardcoded /tmp, no tempfile module, no mkdtemp; TMPDIR is never read by either counter.
+
+## TMPDIR is not consulted
+TMPDIR=/nonexistent python3 -B c1-counter.py --selftest --scratch $S/c1alias   -> rc=0 SELFTEST pass cases=36
+TMPDIR=/nonexistent python3 -B c2-counter.py --selftest --scratch $S/c2alias   -> rc=0 SELFTEST pass cases=8
+--scratch alias writes under the named dir (c1-fixtures/, c2-fixtures/); --work behaves the same.
+Canary dir $S/tmpcanary stayed empty across all selftests.
+
+## C1 selftest write trace (strace -f -y, 36 fixtures)
+write-ish events inside $S: 6419; outside $S: 0; /dev/null config opens: 870
+=> --work/--scratch steers every write of c1-counter.py + build-fixtures.py.
+
+## C2 selftest write trace (clean env)
+all O_CREAT/O_TRUNC paths under $S/c2trace/c2-fixtures; rc=0 pass.
+Counterpty: with GIT_DIR set, the builder writes the fixture commit into that repo (see c2-env-recorder.txt).
+
+## Real-lane modes are read-only
+c1 real-mode --root <fixture>: write-ish events = 8, all "/dev/null"
+c2 real-mode --root <repo> --manifest <honest>: write-ish events = 4, all "/dev/null"
+=> counters read committed bytes only.
+
+## run-matrix.sh trace (strace -f -y, includes chdir)
+inside $S: 4; outside $S: 5 = mkdir() attempts on existing ancestors of $S returning EEXIST (/fast, /fast/scratch,
+/fast/scratch/hyaku, /fast/scratch/hyaku/souji-r57) + one openat("/dev/tty") ENXIO (bash job control).
+Successful mkdirs in the whole trace: mkdir("mxout2") = 0 (inside $S). Writes: the two TSVs under $OUT only.
+No stray dirs at the fleet root: ls: cannot access '.../scratch|hyaku|souji-r57|S57sentinel01|mxout': No such file or directory
+=> $OUT is the only write target; TMPDIR=$S is passed but unused.
+
+## matrix reproducibility (my run vs committed dry-run)
+diff -q $S/mxout/c1-matrix-v5.tsv $L/census/round-57/records/matrix-dryrun/c1-matrix-v5.tsv -> identical
+diff -q $S/mxout/c1-matrix-v6.tsv $L/census/round-57/records/matrix-dryrun/c1-matrix-v6.tsv -> identical
+rows=36; exit0 v5=10, v6=8; changed rows = B4, C4 only.
+C6, F29, F17, F18, F19 = exit 0 under both arms.
+
+## record-receipt.sh write target
+strace: the only O_TRUNC/O_CREAT is $OUT (plus /dev/null); normal run digest = frozen pin e18872d6...
+(verified: instrument_sha256=e18872d6584bdf... matches the prereg pin for c1-counter.py)
+
+## lane write outside all seat dirs: __pycache__ in the frozen round directory
+$ find $L/census/round-57 -name '__pycache__' -o -name '*.pyc'
+census/round-57/__pycache__/c1-counter.cpython-314.pyc   mtime 20:31
+census/round-57/__pycache__/c2-counter.cpython-314.pyc   mtime 20:34
+Both are untracked (git status shows '?? census/round-57/...' for receipts but pycache dir is not listed because
+git status --porcelain lists directories once; `find` shows them).
+DISCLOSURE: the 20:31 c1-counter.pyc is mine -- an eval-cell microbenchmark did
+  importlib.util.spec_from_file_location('c1v6', LANE/census/round-57/c1-counter.py); spec.loader.exec_module(m)
+without -B.  The 20:34 c2-counter.pyc has no matching import of mine (all my counter runs used python3 -B).
+No frozen byte changed (five pins re-derived equal). Recommend the L1 remove census/round-57/__pycache__
+before the final receipt; I did not (lane edits are outside my scope).
+
+## wave directory audit
+$ find $L/.ufo/waves/round-57 -type f | sort   (204 files at audit time)
+Every file whose name begins with a seat id (S57*) is under w1/<that seat>/ (or w1/<seat>.md):
+  S57executor01, S57executor02, S57executor03, S57reviewer01, S57reviewer02, S57scribe01, S57scout01,
+  S57mutation01, S57connector01, S57revenger01, S57critic01, S57sentinel01 ...
+No seat-named file appears in another seat's directory or at w1/ or round-57/ root.
+The five non-seat files at the round root are wave infrastructure written by the driver/L1:
+  round-57/w1-spec.json, w1.ready, w1.ready.dispatched, w1-dispatch.json, w1/swarm-registry.json
+=> no seat wrote outside its own directory inside .ufo/waves/round-57. The only outside-seat write found
+   this session is the census/round-57/__pycache__ pair above (lane tree, not .ufo).

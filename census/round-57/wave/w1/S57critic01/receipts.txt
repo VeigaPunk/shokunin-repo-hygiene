@@ -1,0 +1,147 @@
+# S57critic01 raw receipts (round 57 w1) — commands and observed output, 2026-11-03T23:37Z
+# Lane tip 80548212; freeze d749f7ee; scratch /fast/scratch/hyaku/souji-r57/S57critic01 (deleted before yield).
+
+## 0. pins re-derived from the working tree (frozen bytes intact)
+$ sha256sum census/round-57/c1-counter.py census/round-57/c2-counter.py \
+    census/round-57/fixtures/build-fixtures.py census/round-57/fixtures/run-matrix.sh \
+    census/round-57/record-receipt.sh census/round-57/controls/c2-stub.py \
+    census/round-57/records/c1-selftest-expected.tsv census/round-57/records/c2-selftest-expected.tsv \
+    census/round-57/manifests/before.tsv census/round-56/c1-counter.py
+e18872d6584bdf7252a695a7ba19da875e2d7b53f1c5b46e5b524c70fcdf78d4  census/round-57/c1-counter.py
+174d7b8a3c105875f1757f9137f26ed54e38ac11c963a134015bce8a9dd16ec2  census/round-57/c2-counter.py
+2b8b657b8d86541d4a6f38345cd8d67f1a520603a7cda08f0a5bc3038924633b  census/round-57/fixtures/build-fixtures.py
+72adf821938713b74a3b2cfab93f72981374b3c4d98ac7c8939a0f4ffe34a4d5  census/round-57/fixtures/run-matrix.sh
+84148011abc9574048fc77e02427bee9010850418beeeaaa1babe59185109aa9  census/round-57/record-receipt.sh
+6d7f7534dbfe4d4a7c49b3b603cf11400ea6a8fb852d7a056bcc753ae56555c1  census/round-57/controls/c2-stub.py
+538d902e2f65ddc26bc0c532f4f7de67f89c08020f69151563a982d923d8e105  census/round-57/records/c1-selftest-expected.tsv
+a2bc835ffa4e2ce3d822a28a344770b3bd106a770918483854669e4238ae1d24  census/round-57/records/c2-selftest-expected.tsv
+1c63e755948e3025186c61897847832856e7a96110fb5c94a0f7cb738facd991  census/round-57/manifests/before.tsv
+975d35201075b71affcd106b46341c7300e87e200b04c6c44864d636bcbbf179  census/round-56/c1-counter.py
+# 13/13 match the preregistration pins; base record sha 2b90a262... matches; master=d749f7ee's descendant 80548212.
+$ git merge-base --is-ancestor d749f7ee... master -> yes (durable 'branch')
+$ git for-each-ref refs/jj/keep | wc -l -> 1589
+$ git diff --name-status d749f7ee 80548212 -- census/round-57 -> (empty; no frozen byte changed)
+
+## 1/2. fixtures + matrix (independent build, then both arms)
+$ mkdir -p $S/selftest $S/matrix
+$ TMPDIR=$S python3 -B census/round-57/fixtures/build-fixtures.py --work $S/selftest --manifest $S/selftest/fixture-manifest.tsv
+BUILDER_RC=0  (52 fixture repos = 36 C1 + 16 C2; 53 manifest lines)
+$ bash census/round-57/fixtures/run-matrix.sh $S $S/matrix
+c1-v5 arm written / c1-v6 arm written ; MATRIX_RC=0 (3.2s)
+$ cmp -s $S/matrix/c1-matrix-v5.tsv census/round-57/records/matrix-dryrun/c1-matrix-v5.tsv -> v5 IDENTICAL
+$ cmp -s $S/matrix/c1-matrix-v6.tsv census/round-57/records/matrix-dryrun/c1-matrix-v6.tsv -> v6 IDENTICAL
+$ awk -F'\t' 'NR>1 && $5==0' $S/matrix/c1-matrix-v5.tsv | wc -l -> 10
+$ awk -F'\t' 'NR>1 && $5==0' $S/matrix/c1-matrix-v6.tsv | wc -l -> 8
+$ paste <(v5 name,rc,findings) <(v6 ...) | awk changed -> only:
+B4-INLINE-NBSP-OPENER      v5_rc=0 v6_rc=1  v5_find=- v6_find=CORRECTION-IN-FENCE,CORRECTION-IN-FENCE
+C4-INLINE-CLOSED-COMMENT   v5_rc=0 v6_rc=1  v5_find=- v6_find=CORRECTION-IN-FENCE,CORRECTION-IN-FENCE
+# all other 34 rows byte-identical in exit and full finding list (T3 operative condition 34/34)
+# T2 fixtures both arms exit 0: C6, F29, F17, F18, F19 (SUMMARY filed=2 unfiled=0 each)
+
+## 3. direct arm runs on B4/C4 (details incl hidden_by)
+$ python3 -B census/round-57/c1-counter.py --root <B4> --rev 5f0f232d... --base same --record-sha256 <pin> ...
+FINDING CORRECTION-IN-FENCE correction at SCORECARD.md:8 (site SCORECARD.md:5) hidden_by=inline
+FINDING CORRECTION-IN-FENCE correction at SCORECARD.md:9 (site census/round-51/preregistration.txt:3) hidden_by=inline
+SUMMARY sites=2 mismatches=2 filed=0 unfiled=2 ... fenced=2 ... ; rc=1
+(C4 93cae1bb...: same two hidden_by=inline findings, rc=1, filed=0 unfiled=2)
+$ python3 -B census/round-56/c1-counter.py (v5) on B4 -> rc=0 filed=2 unfiled=0 ; on C4 -> rc=0 filed=2 unfiled=0
+
+## 4. v6 selftest with pins
+$ TMPDIR=$S python3 -B census/round-57/c1-counter.py --selftest --work $S/c1st \
+    --builder-sha256 2b8b657b... --expected-sha256 538d902e...
+SELFTEST pass cases=36 ; SELFTEST_RC=0 ; 36 SELFTEST-CASE lines
+
+## 5. v6 real lane at the freeze revision (preregistration command)
+$ python3 -B census/round-57/c1-counter.py --root LANE --rev d749f7ee081ec1b382b2f92577eb22bfba1c7761 \
+    --base b4ef0bc84ada3fb3aefd6a0b1a841a6517b84acd --record-sha256 2b90a262... \
+    --sources-rev-before f778b9d1... --sources-rev-after 9bf9234a... --scratch $S/lane
+SITE path=SCORECARD.md line=1196 stated=78 recomputed=79 status=mismatch filed=yes
+SITE path=census/round-51/preregistration.txt line=125 stated=78 recomputed=79 status=mismatch filed=yes
+SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok ... fenced=0 ... rev=d749f7ee081e base=b4ef0bc84ada
+LANE_RC=0
+
+## 6. do-nothing artifacts scored by the frozen counters
+# (a) C1: v6 with the whole `if indent <= 3:` inline-scan block removed (change undone; 1143 bytes removed)
+$ python3 -B $S/mutant-v5-inline-undone.py ... on B4 -> rc=0 SUMMARY filed=2 unfiled=0
+$ ... on C4 -> rc=0 filed=2 ; C6 -> rc=0 filed=2 ; F29 -> rc=0 filed=2   => T1 fails by construction
+# absent-instrument control:
+$ python3 -B census/round-57/does-not-exist.py -> rc=2, "can't open file", 0 SUMMARY lines
+# (b) C2: stub that counts rows and prints findings=0
+$ python3 -B $S/stub-findings0.py --manifest census/round-57/manifests/before.tsv
+SUMMARY receipts=1 findings=0 ; STUB_RC=0            => T1 fails
+$ python3 -B census/round-57/controls/c2-stub.py --manifest .../before.tsv
+SUMMARY receipts=0 findings=0 ; CONTROL_RC=0         => T1 fails
+
+## 7. M1 red-before/green-after re-derived (my scratch mutants, builder copied as sibling)
+# all-findings assertion (frozen shape):
+SELFTEST-CASE F24-PAIR-HIDDEN-FILING fail rc=1 want_rc=1 findings=UNFILED-SOURCES-ANNOTATION want_findings=UNFILED-SOURCES-ANNOTATION,PAIR-FILING-HIDDEN
+SELFTEST fail cases=36 ; rc=1
+# first-finding-only comparison:
+SELFTEST pass cases=36 ; rc=0
+
+## 8. visibility judgement — markdown-it-py 4.2.0 in a scratch venv (uv 0.13.0, uv pip)
+$ uv venv $S/venv && uv pip install --python $S/venv/bin/python markdown-it-py==4.2.0
+markdown-it-py 4.2.0
+# md = MarkdownIt('commonmark'); html=md.render(git show <tip>:SCORECARD.md); strip r'<!--.*?-->' DOTALL; count 'R52-CORRECTION'
+B4-INLINE-NBSP-OPENER     raw=2 spans=1 visible=0
+C4-INLINE-CLOSED-COMMENT  raw=2 spans=1 visible=0
+C6-INLINE-SAME-LINE       raw=2 spans=1 visible=2
+F29-PROSE-COMMENT-MENTION raw=2 spans=0 visible=2
+LANE@d749f7ee             raw=2 spans=0 visible=2
+
+## 9. C2 gate: before, selftest, receipts
+$ python3 -B census/round-57/c2-counter.py --root LANE --manifest census/round-57/manifests/before.tsv
+FINDING RECEIPT-REV-MISSING census/round-56/records/landing-suite-final.txt
+SUMMARY receipts=1 findings=1 ; BEFORE_RC=1
+$ TMPDIR=$S python3 -B census/round-57/c2-counter.py --selftest --work $S/c2st
+8 SELFTEST-CASE lines all pass; SELFTEST control=FALSE-GREEN-REJECTED stub_meets=1 cases=8
+SELFTEST pass cases=8 ; rc=0
+$ grep -cE '^rev=[0-9a-f]{40}$' <(git show b4ef0bc8:census/round-56/records/landing-suite-final.txt) -> 0 (grep exit 1)
+# executor02 seat receipts (read-only): r-c1.txt rev=d749f7ee... pin=e18872...; r-c2-after.txt rev=d749f7ee... pin=174d7b8...
+# r-standing.txt rev=d749f7ee... pin=5455fb46084d081a6d48de39fb8a89bba4de0ce48e002d95f65eec0e6f893bf6 EXIT=2 COULD-NOT-EVALUATE dirty worktree
+# git show d749f7ee:census/round-46/c1-counter.py | sha256sum -> 5455fb46... (matches the pin)
+$ python3 -B census/round-57/c2-counter.py --root LANE --manifest $S/after-probe.tsv   # 3 rows: r-c1, r-c2-after, r-standing
+SUMMARY receipts=3 findings=0 ; AFTER_PROBE_RC=0
+$ python3 -B census/round-57/c2-counter.py --root LANE --manifest .ufo/waves/round-57/w1/S57executor02/after.tsv  # 2 rows
+SUMMARY receipts=2 findings=0 ; SEAT_AFTER_RC=0
+$ ls census/round-57/manifests/ -> before.tsv only (after.tsv ABSENT at 23:37Z)
+$ for f in r-c1 r-c2-after r-standing: grep -cE '^rev=[0-9a-f]{40}$' -> 1 1 1
+
+## 10. C2 shape probes in a scratch repo I created (git init verified)
+# annotated tag object id:
+tagobj 3d06fbf3... peeled 5be5db5e... ; durable_kind(tagobj) -> branch
+check_receipt(receipt rev=<tagobj>, pin=<blob>) -> findings=[]  (accepted; docstring says "names no commit object" -> ABSENT)
+# EXIT= line embedded in command output (no trailing EXIT):
+check_receipt(exitembedded.txt) -> findings=[]  (accepted)
+# rev= mentioned only in prose:
+check_receipt(revprose.txt) -> findings=[]  (accepted)
+# manifest path outside --root:
+$ python3 -B census/round-57/c2-counter.py --root <scratch repo> --manifest <abs receipt outside root>
+SUMMARY receipts=1 findings=0 ; OUTSIDE_RC=0
+$ ... --root <scratch repo>/tools --manifest <row "../receipts/commit.txt">
+SUMMARY receipts=1 findings=0 ; DOTDOT2_RC=0
+
+## 11. two residual C1 shapes, end-to-end in my scratch repos (B4 tree copied, fresh commit)
+# X1: "- prose <!-- a --> <!-- b" / two filings / "-->"   (second opener after the first closer)
+v5 rc=0 filed=2 unfiled=0 ; v6 rc=0 filed=2 unfiled=0 ; render spans=2 visible=0
+# X4: "- prose: type `<!--` here" / filings / "and a stray closer later -->"   (opener inside a code span)
+v5 rc=0 filed=2 unfiled=0 ; v6 rc=1 findings=2 x CORRECTION-IN-FENCE hidden_by=inline filed=0 unfiled=2 ; render spans=0 visible=2
+# L1 probes for the same two classes: records/probe-second-opener-harm.txt, records/probe-code-span-overhide.txt
+
+## 12. after-manifest sequencing observed while the wave settled
+# 23:37Z: manifests/ contained before.tsv only.
+# 23:38Z: manifests/after.tsv appeared (3 rows) + after-pre.tsv (2 rows):
+$ cat census/round-57/manifests/after.tsv
+receipt	instrument
+census/round-57/records/c1-tip.txt	census/round-57/c1-counter.py
+census/round-57/records/c2-tip.txt	census/round-57/c2-counter.py
+census/round-57/records/standing.txt	census/round-46/c1-counter.py
+$ ls census/round-57/records/{c2-tip.txt,standing.txt} -> No such file or directory (both)
+$ python3 -B census/round-57/c2-counter.py --root LANE --manifest census/round-57/manifests/after.tsv
+FINDING RECEIPT-MISSING census/round-57/records/c2-tip.txt
+FINDING RECEIPT-MISSING census/round-57/records/standing.txt
+SUMMARY receipts=3 findings=2
+EXIT=1
+# 23:39Z re-check after 30s: still missing (L1: final manifest is produced only after the wave settles;
+# the standing receipt needs a clean tree, which the wave's uncommitted evidence prevents).
+

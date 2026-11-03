@@ -2718,3 +2718,44 @@ addendum, appended to the prereg, commits 8a793e7ae9131578bdec393982760217f62095
   registered=76 unfiled=0, EXIT=0; r53/r54 C1/C2 all EXIT=0. Distinct staged
   receipts are in census/round-56/records/landing-suite-final.txt and r53/r54 files.
   Final source census receipt verifies conf_rc=0 dir_rc=0, 61 W04; rows=202.
+
+## Round 57 (2026-11-03, Linux omp host)
+
+- Claims: C1 calibration 7 (the correction-filing counter amended to **v6**: the inline HTML-comment
+  class — a `<!--` that does not start a line opens a comment ending at the first later `-->`, so
+  B4-INLINE-NBSP-OPENER and C4-INLINE-CLOSED-COMMENT are refused where v5 filed them; F29 and the new
+  C6-INLINE-SAME-LINE stay visible; the finding detail carries `hidden_by=fence|block|inline`; the
+  selftest asserts the FULL ordered finding list); C2 operability 8 (a NEW receipt revision-binding
+  gate plus a recorder — a receipt must name a durable full40 `rev=`, an `EXIT=` line and an
+  `instrument_sha256=` equal to the instrument's committed blob at that revision; this is the Q109
+  repair the r56 closure routed). No exploratory claim. Assimilation: none (no considerthese/; the
+  shokuknow merge package stays held by the open r46 L0 question on mass id drift).
+- Freeze `d749f7ee081ec1b382b2f92577eb22bfba1c7761` before any post-freeze claim receipt: the two
+  counters, the extended builder (36 C1 fixtures), the expected TSVs, the recorder, the stub control,
+  the before manifest, the pre-freeze matrices, the M1 red-before/after pair and the three source
+  captures.
+- Sources `805482129d022b13db672654f5478952def607a6`: S279 (WHATWG HTML §13.1.6 Comments, spec, A),
+  S280 (CommonMark 0.31.2 §6.6 Raw HTML, docs, A) admitted through
+  `corpus/knowledge/inline-html-comment-visibility-r57.md`; S281 (MDN Using HTML comments, docs, B)
+  rejected — silent on the renderer grammar and dominated by S279. Registry 202 -> 205 rows; census
+  exit 0 (62 pre-existing W04 duplicate-URL warnings, one of them new because S280 shares S277's URL
+  under a different scope). QUALITY Q115/Q116, SKILL registry rows and the inline-comment error
+  pattern, README `### Frontier (r57)`.
+- Measured (commands in SCORECARD `### Round 57 measurements`): the v5 arm exits 0 on B4 and C4 while
+  v6 refuses both with two CORRECTION-IN-FENCE findings (`hidden_by=inline`); the v6 matrix exit-0
+  count is 8 of 36 against v5's 10; every carry-over row is identical in exit and full finding list;
+  C6/F29/F17/F18/F19 stay exit 0 under both arms. Selftests: `SELFTEST pass cases=36` and
+  `SELFTEST pass cases=8` with `control=FALSE-GREEN-REJECTED`. The real lane at the freeze revision
+  exits 0 with `unfiled=0 … fenced=0` (`census/round-57/records/c1-tip.txt`, `rev=d749f7ee`).
+- Controls committed before the official matrices: the v5 arm (records/matrix-dryrun/c1-matrix-v5.tsv)
+  fails the B4/C4 target by construction; the always-clean gate stub
+  (controls/c2-stub.py) meets the after half and fails the before half; the M1 mutant survives a
+  first-finding-only comparison and is killed by the all-findings one (records/m1-red-before.txt).
+- Routed r56 items: 1 closed by the recorder + gate (the standing receipt is re-produced with `rev=`
+  at the round's final content revision); 2 fielded as three executor seats; 3 the
+  `census/round-56/__pycache__` artifact removed (`git ls-files` shows nothing); 4 the main claim;
+  5 closed for M1 (all-findings assertion), **N3 remains OPEN** — the capture counter's row-set guard
+  is untouched this round; 6 sentinel MEDIUM/LOW items remain OPEN by disclosure (the correction-line
+  lookup is unchanged).
+- Holds unchanged: certification OFF, K5 HELD, NAMESPACE/reap holds; L0 rulings still open and routed
+  around (credential-shaped names, `ignored` derivation, r46 mass id drift, r48 census conf-form).

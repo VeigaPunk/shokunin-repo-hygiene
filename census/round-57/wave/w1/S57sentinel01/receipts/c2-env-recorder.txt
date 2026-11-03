@@ -1,0 +1,37 @@
+# C2 recorder + selftest: inherited environment is trusted for git (round 57, sentinel)
+$S=/fast/scratch/hyaku/souji-r57/S57sentinel01
+
+## record-receipt.sh under GIT_DIR=<foreign>/.git
+victim repo $S/c2attacks/victim has census/round-57/c1-counter.py = "# foreign counter bytes\n"
+victim tip cdd629219525b0a5d4dc3be2fa4999ab7e41481f
+$ (cd $L && GIT_DIR=$S/c2attacks/victim/.git bash census/round-57/record-receipt.sh $L cdd629... census/round-57/c1-counter.py $S/c2attacks/rr/foreign-env.txt -- true)
+RECORD /fast/.../rr/foreign-env.txt rev=cdd629219525b0a5d4dc3be2fa4999ab7e41481f instrument=census/round-57/c1-counter.py rc=0
+receipt: instrument_sha256=67e947e2aff4f2fd697a04bcb1292bd337652fa3d83e6bf38184655f0bafc3cc
+victim file digest = 67e947e2aff4f2fd697a04bcb1292bd337652fa3d83e6bf38184655f0bafc3cc  (same)
+lane: git -C $L cat-file -e cdd629...:census/round-57/c1-counter.py
+      fatal: path 'census/round-57/c1-counter.py' exists on disk, but not in 'cdd629...'
+=> the recorded instrument_sha256 is NOT the lane's committed blob; recorder reported rc=0.
+Gate later (clean env) refuses: FINDING RECEIPT-REV-ABSENT + RECEIPT-INSTRUMENT-PIN-MISSING, SUMMARY receipts=1 findings=2 rc=1.
+
+## c2-counter.py --selftest under GIT_DIR=<foreign>/.git
+before: foreign HEAD=8642b53c27107b026f5403ef617f20b13b4a522f log=1 status=clean
+$ (cd $L && GIT_DIR=$S/c2attacks/foreign/.git python3 -B census/round-57/c2-counter.py --selftest --work $S/c2gitdir2)
+rc=1  SELFTEST fail cases=8 (cases fail: fixture repo has no .git under --work)
+after:  foreign HEAD=21b1a99d10304fa3a575cc4dbca04eb969f1f9c6 log=2 status=1
+=> the selftest builder ran `git init/add/commit` inside the foreign repo, OUTSIDE --work.
+
+Clean env control: same command with no GIT_DIR -> rc=0, SELFTEST pass cases=8, writes only $S/c2trace/c2-fixtures (strace).
+
+## record-receipt.sh output-path failures
+missing OUT parent (dir does not exist):
+  census/round-57/record-receipt.sh: line 33: .../nodir/out.txt: No such file or directory
+  RECORD .../nodir/out.txt rev=d749f7ee... instrument=... rc=0
+  rc=0 exists=no            <- RECORD line + success with no receipt
+OUT is a symlink to target.txt:
+  RECORD .../link-out.txt ... rc=0
+  target.txt now begins: instrument=census/round-57/c1-counter.py ...  <- wrote through the symlink
+OUT parent dir unwritable: same shape (redirection error, RECORD printed, rc=0)
+short rev d749f7ee: refused rc=2, no file
+instrument = census/round-57 (a tree):
+  RECORD ... rev=d749f7ee... rc=0; instrument_sha256=b7fa9d1e...
+  gate over that receipt: SUMMARY receipts=1 findings=0 rc=0   <- a tree digest satisfies the pin

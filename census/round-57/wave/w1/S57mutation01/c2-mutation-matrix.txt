@@ -1,0 +1,71 @@
+# base sha256 174d7b8a3c105875f1757f9137f26ed54e38ac11c963a134015bce8a9dd16ec2 /fast/scratch/hyaku/souji-r57/S57mutation01/base/c2-counter.py
+# expected   a2bc835ffa4e2ce3d822a28a344770b3bd106a770918483854669e4238ae1d24 /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-57/records/c2-selftest-expected.tsv
+M1-drop-exit-check	KILLED	rc=1	NO-EXIT	failed=	SELFTEST control=FALSE-GREEN-REJECTED stub_meets=1 cases=8
+M2-accept-short-rev	KILLED	rc=1	SHORT-REV	failed=	SELFTEST control=FALSE-GREEN-REJECTED stub_meets=1 cases=8
+M3-skip-durability	KILLED	rc=1	ABSENT,KEEP-ONLY	failed=	SELFTEST control=FALSE-GREEN-REJECTED stub_meets=1 cases=8
+M4-skip-keep-only	KILLED	rc=1	KEEP-ONLY	failed=	SELFTEST control=FALSE-GREEN-REJECTED stub_meets=1 cases=8
+M5-skip-instrument-pin	KILLED	rc=1	DIGEST-MISMATCH	failed=	SELFTEST control=FALSE-GREEN-REJECTED stub_meets=1 cases=8
+M6-skip-digest-compare	KILLED	rc=1	DIGEST-MISMATCH	failed=	SELFTEST control=FALSE-GREEN-REJECTED stub_meets=1 cases=8
+M7-first-finding-only	SURVIVED	rc=0	-	failed=	SELFTEST control=FALSE-GREEN-REJECTED stub_meets=1 cases=8
+M8-accept-symlink	SURVIVED	rc=0	-	failed=	SELFTEST control=FALSE-GREEN-REJECTED stub_meets=1 cases=8
+M9-skip-column-check	SURVIVED	rc=0	-	failed=	SELFTEST control=FALSE-GREEN-REJECTED stub_meets=1 cases=8
+M10-accept-symbolic-rev	KILLED	rc=1	NOT-FULL40	failed=	SELFTEST control=FALSE-GREEN-REJECTED stub_meets=1 cases=8
+M11-skip-rev-missing	KILLED	rc=1	MISSING-REV	failed=	SELFTEST control=FALSE-GREEN-REJECTED stub_meets=1 cases=8
+M12-rc-never-fails	SURVIVED	rc=0	-	failed=	SELFTEST control=FALSE-GREEN-REJECTED stub_meets=1 cases=8
+M13-heads-only-durability	SURVIVED	rc=0	-	failed=	SELFTEST control=FALSE-GREEN-REJECTED stub_meets=1 cases=8
+M14-file-name-keyed	SURVIVED	rc=0	-	failed=	SELFTEST control=FALSE-GREEN-REJECTED stub_meets=1 cases=8
+M15-drop-keep-only-case	SURVIVED	rc=0	-	failed=	SELFTEST control=FALSE-GREEN-REJECTED stub_meets=1 cases=7
+M16-rev-no-boundary	SURVIVED	rc=0	-	failed=	SELFTEST control=FALSE-GREEN-REJECTED stub_meets=1 cases=8
+M17-gate-first-finding-only	SURVIVED	rc=0	-	failed=	SELFTEST control=FALSE-GREEN-REJECTED stub_meets=1 cases=8
+M18-drop-name-mismatch	SURVIVED	rc=0	-	failed=	SELFTEST control=FALSE-GREEN-REJECTED stub_meets=1 cases=8
+M19-pin-working-tree	SURVIVED	rc=0	-	failed=	SELFTEST control=FALSE-GREEN-REJECTED stub_meets=1 cases=8
+M20-ref-tip-equality	SURVIVED	rc=0	-	failed=	SELFTEST control=FALSE-GREEN-REJECTED stub_meets=1 cases=8
+M21-always-refuse	KILLED	rc=1	ABSENT,DIGEST-MISMATCH,KEEP-ONLY,NO-EXIT,NOT-FULL40,REV-OK,SHORT-REV	failed=	SELFTEST control=FALSE-GREEN-REJECTED stub_meets=1 cases=8
+
+| mutant | edit | verdict | failing selftest cases |
+| M1-drop-exit-check | drop the EXIT= line requirement | KILLED | NO-EXIT |
+| M2-accept-short-rev | silently accept a short hex rev | KILLED | SHORT-REV |
+| M3-skip-durability | skip the durability classification of a full40 rev | KILLED | ABSENT, KEEP-ONLY |
+| M4-skip-keep-only | skip only the jj keep-only branch | KILLED | KEEP-ONLY |
+| M5-skip-instrument-pin | skip the instrument pin / digest block entirely | KILLED | DIGEST-MISMATCH |
+| M6-skip-digest-compare | keep pin presence, drop the committed-blob comparison | KILLED | DIGEST-MISMATCH |
+| M7-first-finding-only | selftest asserts only the first finding | SURVIVED | - |
+| M8-accept-symlink | read through a symlinked receipt instead of refusing it | SURVIVED | - |
+| M9-skip-column-check | tolerate a 1-column manifest row | SURVIVED | - |
+| M10-accept-symbolic-rev | silently accept a non-hex/symbolic rev token | KILLED | NOT-FULL40 |
+| M11-skip-rev-missing | treat a receipt with no rev= token as clean | KILLED | MISSING-REV |
+| M12-rc-never-fails | findings never affect the gate exit code | SURVIVED | - |
+| M13-heads-only-durability | durability considers refs/heads only (tags/remotes ignored) | SURVIVED | - |
+| M14-file-name-keyed | fake gate: finding chosen from the receipt basename, receipt never read | SURVIVED | - |
+| M15-drop-keep-only-case | fixture builder stops building the KEEP-ONLY case | SURVIVED | - |
+| M16-rev-no-boundary | rev= token matched without a word boundary before it | SURVIVED | - |
+| M17-gate-first-finding-only | gate emits only the first finding per receipt | SURVIVED | - |
+| M18-drop-name-mismatch | drop the receipt-vs-manifest instrument name mismatch | SURVIVED | - |
+| M19-pin-working-tree | pin compared against working-tree bytes, not the blob at rev | SURVIVED | - |
+| M20-ref-tip-equality | durability = rev equals a ref tip, not reachability | SURVIVED | - |
+| M21-always-refuse | mirror control: every receipt refuses, including the honest one | KILLED | ABSENT, DIGEST-MISMATCH, KEEP-ONLY, NO-EXIT, NOT-FULL40, REV-OK, SHORT-REV |
+
+# survivors=12 killed=9 errors=0
+
+mutant sha256 / diff size (frozen gate 174d7b8a3c105875f1757f9137f26ed54e38ac11c963a134015bce8a9dd16ec2)
+ff60ea6b4d08a93e972bd879fd9026d6cfc27d6660c550970a00a67bda893160  M1-drop-exit-check         diff-lines=11
+6d47b0bfb90a7960e229f06c94214bb0774449d0f84035e7db783d045cc214c1  M10-accept-symbolic-rev    diff-lines=11
+5fa9dbfce922c62b9f9d98d07c92dcec012b0f4ee7c3fef1cf5dda514e8c4751  M11-skip-rev-missing       diff-lines=11
+c9c008266a5e823564a5ddbe1e5bcb5fe2db836b366f1b739460295c41f030ea  M12-rc-never-fails         diff-lines=11
+236763e26a3195c80d6b642e3e98cf98f0e959bec411a8f5c5233c22960ba6c0  M13-heads-only-durability  diff-lines=11
+a56172ca85f38cba30927dcfdd1ac695b3254a06b4e6eb88bcdbe59ce43655cd  M14-file-name-keyed        diff-lines=18
+4c30f68432627f8f0c2ebc3d463fac6066431b9a0b7888d1dc882fc985344c48  M15-drop-keep-only-case    diff-lines=12
+ffdc73e927fe0b39e4dab551c3007ba455c18a57f3171c207a490f58bdbf0f55  M16-rev-no-boundary        diff-lines=11
+1077ed46df82ea23506fcff565d01f86eb4c24f759cd21eac5542cf7052adf13  M17-gate-first-finding-only diff-lines=11
+0ca53a7b1c15c5ca1bb0d0355f185b334520ce79f7cb5e61897f587a65976203  M18-drop-name-mismatch     diff-lines=11
+1bebc4ca0ce6c7ff248f4dae0ef1e755a24cc5ad975ce788d20d610b444a2215  M19-pin-working-tree       diff-lines=14
+0c05d2cf8ef90bfc7fc6271530e7bdb00eb579ec08db6bb8bfbd90ad37e5a21c  M2-accept-short-rev        diff-lines=11
+ad3826ff679cdd493c2edea882d93e6439d10b04f52b262ff7f49251eb897af5  M20-ref-tip-equality       diff-lines=13
+2e3c2687bc6bec7e1732583356f3f646aae7cfa2ab032c33599529fa3c63465f  M21-always-refuse          diff-lines=11
+8fabab83c7953bca469984edfaab409435cb29e8c6657cdc83ca6cddcffd2c54  M3-skip-durability         diff-lines=15
+974dcc26028bb5da218cefa43e176c93e8cbc7406499cd5e1104010820d2a3bd  M4-skip-keep-only          diff-lines=11
+b7c52c138c2ed89dd4293f2512b99cf8e82145aeed03106a00fc26d24af78c1f  M5-skip-instrument-pin     diff-lines=11
+cfda79788076dc0a7ac50534daabe5d1fa154d6163f270184ddeadb9e342e1ac  M6-skip-digest-compare     diff-lines=11
+bbab097f9de476c64c5fe6bf1640af5db071b843fa5a98a83f29ece49a0c5277  M7-first-finding-only      diff-lines=11
+77737ad20915d96881d061f8544ba71681a8144062691aa1df03734e917a0248  M8-accept-symlink          diff-lines=11
+72074e030ac8f1a4d807590a0fca7ab9573615ae72a0b619110ad356347147c4  M9-skip-column-check       diff-lines=11

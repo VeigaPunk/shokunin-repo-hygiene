@@ -1,0 +1,30 @@
+# probe repo /fast/scratch/hyaku/souji-r57/S57mutation01/probe-repo HEAD=96ed30e03e89 tag-only rev B=8a60b3ffd1b3 refs:
+#   ref refs/heads/main
+#   ref refs/tags/v1
+
+PROBE P1 tag-only rev durable          arm=pristine                   rc=0 SUMMARY receipts=1 findings=0
+PROBE P1 tag-only rev durable          arm=M13-heads-only-durability  rc=1 FINDING RECEIPT-REV-ABSENT receipts/tag-only.txt rev=8a60b3ffd1b38cf3402d95a69e2b81e15188b8d6 | SUMMARY receipts=1 findings=1
+PROBE P2 decoy sourcerev= token        arm=pristine                   rc=1 FINDING RECEIPT-REV-MISSING receipts/decoy.txt | SUMMARY receipts=1 findings=1
+PROBE P2 decoy sourcerev= token        arm=M16-rev-no-boundary        rc=0 SUMMARY receipts=1 findings=0
+PROBE P3 symlinked receipt             arm=pristine                   rc=1 FINDING RECEIPT-SYMLINK receipts/link.txt | SUMMARY receipts=1 findings=1
+PROBE P3 symlinked receipt             arm=M8-accept-symlink          rc=0 SUMMARY receipts=1 findings=0
+PROBE P4 two findings in one receipt   arm=pristine                   rc=1 FINDING RECEIPT-REV-SHORT receipts/two.txt rev=96ed30e03e89 | FINDING RECEIPT-EXIT-MISSING receipts/two.txt | SUMMARY receipts=1 findings=2
+PROBE P4 two findings in one receipt   arm=M17-gate-first-finding-only rc=1 FINDING RECEIPT-REV-SHORT receipts/two.txt rev=96ed30e03e89 | SUMMARY receipts=1 findings=1
+PROBE P5 instrument name mismatch      arm=pristine                   rc=1 FINDING RECEIPT-INSTRUMENT-NAME-MISMATCH receipts/name.txt receipt=tools/other.py manifest=tools/instr.py | SUMMARY receipts=1 findings=1
+PROBE P5 instrument name mismatch      arm=M18-drop-name-mismatch     rc=0 SUMMARY receipts=1 findings=0
+PROBE P6 one-column manifest row       arm=pristine                   rc=2 CANNOT-EVALUATE manifest line 2: 1 columns
+PROBE P6 one-column manifest row       arm=M9-skip-column-check       rc=1 (no lines)
+        tail: IndexError: list index out of range
+
+PROBE P7 before.tsv (frozen manifest)      arm=pristine                   rc=1 FINDING RECEIPT-REV-MISSING census/round-56/records/landing-suite-final.txt | SUMMARY receipts=1 findings=1
+PROBE P7 before.tsv (frozen manifest)      arm=M12-rc-never-fails         rc=0 FINDING RECEIPT-REV-MISSING census/round-56/records/landing-suite-final.txt | SUMMARY receipts=1 findings=1
+
+CONTROL-MUT one-nonclean-row-marked-clean    expected=expected-one-row-clean.tsv rc=1
+        SELFTEST control=FALSE-GREEN-ACCEPTED stub_meets=2
+        SELFTEST fail cases=8
+CONTROL-MUT all-rows-marked-clean            expected=expected-all-clean.tsv rc=1
+        SELFTEST control=FALSE-GREEN-ACCEPTED stub_meets=8
+        SELFTEST fail cases=8
+
+# frozen expected sha256 now a2bc835ffa4e2ce3d822a28a344770b3bd106a770918483854669e4238ae1d24
+# frozen gate     sha256 now 174d7b8a3c105875f1757f9137f26ed54e38ac11c963a134015bce8a9dd16ec2

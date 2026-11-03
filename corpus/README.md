@@ -947,5 +947,7 @@ a measured edge class does not promote a frontier ground to Core (PROVINCE
   red arm. Next: apply the gate to every standing receipt the lane keeps (the r53/r54 historical
   receipts still name no revision, routed to r58), and decide with the operator whether the recorder
   should be the only writer of `census/**/records` receipts.
-- Registry: 202 -> 205 rows (`S279`, `S280` mined; `S281` rejected). Census command:
+- Registry: 202 -> 207 rows (`S279`/`S280` mined, superseded in the same round by `S282`/`S283`
+  because their `teaches` cells misquoted the page and swallowed the quote in a rendered table;
+  `S281` rejected). Census command:
   `/home/vgpnk/Projects/shokunin/scripts/sources-census.sh validate --root /home/vgpnk/Projects/shokunin souji` at r57 end.
