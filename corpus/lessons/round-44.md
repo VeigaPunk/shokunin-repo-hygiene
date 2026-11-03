@@ -187,3 +187,12 @@ Fleet misroot sweep found only operator run-state modification and unrelated
 `rerun-daemons.log` (“command not found: ./rerun-daemons.sh”); neither names
 this wave or was written by its seats. Both left untouched. Full sweep:
 `census/round-44/records/fleet-misroot-sweep.txt`.
+
+# r53 append (souji round 53): the r53 measurement table's bare tokens at SCORECARD.md
+# lines 1276-1277 — the after-column cites the matrix/tip receipts by bare filename where
+# the full path is census/round-53/records/<name>. The r44 header's base-55d7af6f scope
+# above is unchanged; these rows carry their own scope and rev.
+CORRECTION-R44 id=R53-01 file=SCORECARD.md line=1276 class=mismatch:path-absent stale=c1-matrix-v2.tsv derived=census/round-53/records/c1-matrix-v2.tsv rev=52b98434f68050e8d24e8e15ccf4aaf960cef70b scope=r53-measurement-table-bare-tokens
+CORRECTION-R44 id=R53-02 file=SCORECARD.md line=1276 class=mismatch:path-absent stale=c1-tip.txt derived=census/round-53/records/c1-tip.txt rev=52b98434f68050e8d24e8e15ccf4aaf960cef70b scope=r53-measurement-table-bare-tokens
+CORRECTION-R44 id=R53-03 file=SCORECARD.md line=1277 class=mismatch:path-absent stale=c2-matrix-v2.tsv derived=census/round-53/records/c2-matrix-v2.tsv rev=52b98434f68050e8d24e8e15ccf4aaf960cef70b scope=r53-measurement-table-bare-tokens
+CORRECTION-R44 id=R53-04 file=SCORECARD.md line=1277 class=mismatch:path-absent stale=c2-tip.txt derived=census/round-53/records/c2-tip.txt rev=52b98434f68050e8d24e8e15ccf4aaf960cef70b scope=r53-measurement-table-bare-tokens
