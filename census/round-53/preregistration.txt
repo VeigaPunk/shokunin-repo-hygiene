@@ -1,0 +1,175 @@
+# souji round 53 preregistration — frozen before any claim receipt exists
+Round: 53 (attempt 1). Lane: souji, repo /home/vgpnk/Projects/shokunin/souji-shokunin.
+Host: Linux omp host (run 15). Base revision 9bf9234ae4d11c7b31706354302a9e95ad0d1f81
+(the round-52 non-author verifier spot-check commit; lane tip, local=remote ahead=0 at
+round start).
+Written by the L1 (SoujiR53). Freeze = the commit that first adds this file.
+
+Frozen rules: no Counter, Population, Control, or this file changes after the freeze
+commit. A defect an attack finds is a named limit, never an edit. Corrections land
+append-only in lane records (CORPUS.md: corrections are new entries, never rewrites).
+
+Axes (fleet AXES.md): calibration 7 (lowest non-retired axis), coverage 8, operability 8.
+Declared claims: 2 (one per distinct axis). No exploratory claim. No assimilation claim
+(shokuknow's merge/souji package stays held by the open r46 L0 question on mass id drift;
+considerthese/ does not exist in this lane).
+
+## Claims
+
+### C1 — calibration 7 (lowest-scoring axis): the annotation-agreement counter is amended to close the five named r52 limits
+Surface moved: the lane's calibration instrument (the counter that re-derives the
+lane's declared pasteable counts and checks their filing), not the annotations
+themselves — those were filed in round 52 and stay filed.
+Round 52's non-author verifier (corpus/lessons/round-52-verifier-spotcheck.md §6 item 1)
+and the round-52 wave findings (corpus/lessons/round-52.md `## Wave findings`,
+`## Mistakes`) name five limits of the frozen v1 counter
+(census/round-52/c1-counter.py, sha256 pinned in census/round-52/preregistration.txt):
+  L1 first-annotation reading (a planted `→ 79` before the stale `(78)` is accepted),
+  L2 the recompute source is not pinned by the counter's own digest,
+  L3 an inert correction (naming a line that no longer reads its stale value) exits 0,
+  L4 a correction inside a fenced code block is accepted,
+  L5 an in-place rewrite of a stale annotation is accepted (no append-only check).
+Amended instrument: census/round-53/c1-counter.py (v2; sha256 pinned below). It keeps
+the v1 enumerated surface (S1 SCORECARD.md, S2 census/round-51/preregistration.txt,
+anchor `grep -c "^ADDED" census/round-51/records/ws-drift-vs-r46.tsv`, record
+census/round-51/records/ws-drift-vs-r46.tsv, filing grammar
+`R52-CORRECTION <path>:<line> stale=<N> recomputed=<M>` in SCORECARD.md) and adds the
+five checks with finding-ids MULTIPLE-ANNOTATIONS, RECORD-SHA-MISMATCH,
+INERT-CORRECTION, CORRECTION-IN-FENCE, DELETED-LINES. The annotation zone is the first
+32 characters after the anchor (frozen; the real S1 line's later `(1)` sits outside it;
+the planted r52 attack lands inside it). The recompute source is pinned by
+`--record-sha256`; the pin for the real lane is frozen below. The append-only check
+runs `git diff --numstat --no-renames <base>..<rev>` over the record, both sites and
+the correction file and requires zero deleted lines.
+Fixtures: census/round-53/fixtures/build-fixtures.py builds six synthetic repos
+(F1-HONEST-TIP, F2-MULTI-ANNOT, F3-INERT, F4-FENCE, F5-REWRITE, F6-RECORD-DRIFT) whose
+bytes replay each attack state; expected verdicts are committed in
+census/round-53/records/c1-selftest-expected.tsv and the selftest asserts them.
+Predicate (one sentence, same in the plan, the counter and the receipt labels):
+  at the measured revision, the v2 counter kills every attack fixture with its named
+  finding (F2→MULTIPLE-ANNOTATIONS, F3→INERT-CORRECTION, F4→CORRECTION-IN-FENCE,
+  F5→DELETED-LINES, F6→RECORD-SHA-MISMATCH; each exit 1) while the honest fixture F1
+  and the real lane state stay green (exit 0, unfiled=0, record_sha=ok, appended=ok,
+  multi=0 inert=0 fenced=0), and the frozen v1 counter accepts every attack fixture
+  (exit 0) — the v1 arm is the do-nothing control.
+Before (v1 arm, do-nothing control instrument): v1 exit 0 on F2–F6 (five accepts),
+receipts census/round-53/records/c1-matrix-v1.tsv (taken after this freeze).
+After (v2 arm): v2 exit 1 with the named finding on F2–F6; v2 exit 0 on F1 and on the
+real lane at the content tip with --base 9bf9234ae4d11c7b31706354302a9e95ad0d1f81,
+receipts census/round-53/records/c1-matrix-v2.tsv and c1-tip.txt.
+Do-nothing control (committed with this freeze): census/round-53/controls/
+c1-control-donothing.txt — PRISTINE FAIL C1V2-COUNTER-ABSENT at the base revision
+(the amended instrument does not exist without this round's work). Disclosed inside:
+the honest state is already green under v2 at base (the r52 filing predates this
+round); the claim's work is the instrument's kill-power, measured by the matrix.
+Kill rule: any attack fixture v2 fails to kill with its named finding; any v2 exit 1
+on F1 or on the real lane state; any v1 arm result that already kills an attack
+fixture (the claimed closure would be vacuous); any finding the wave attacks raise
+that the counter does not name, recorded as a named limit and routed to the next
+round — never an edit of the frozen bytes.
+Recompute command (real lane): `python3 -B census/round-53/c1-counter.py --root LANE
+--rev FULL40 --base 9bf9234ae4d11c7b31706354302a9e95ad0d1f81 --record-sha256
+2b90a262c29772d4a9a7bd5ab29ce06b9d8f350832f0d0cd5114d52b0f6dad30 --scratch DIR`.
+
+### C2 — coverage 8: the capture counter is amended to instrument sort order, `#`-leading names, and run-receipt binding
+Surface moved: the lane's capture-verification instrument for the fleet-root census
+(the r52 capability's counter), plus a fresh round-53 capture taken with the committed
+tool and verified under the amended grammar.
+Round 52's named limits (corpus/lessons/round-52.md `## Wave findings`, Reviewer02 and
+Critic01; confirmed by the verifier §6 item 1): sort order is uninstrumented (a
+reversed capture verifies); a `#`-leading data row is read as a comment (no escaping
+defined); a hand-written capture with the right tool bytes verifies (the counter binds
+grammar and tool bytes, not a run).
+Amended instrument: census/round-53/c2-counter.py (v2; sha256 pinned below). It keeps
+every r52 check (header grammar, tool-bytes digest, enumerations, frozen class rule,
+disposition rule, COUNT recount, ENTRIES >= 1) with capture/tool/receipt paths as
+explicit arguments, and adds:
+  ROWS-UNSORTED — data rows must be in ascending byte order of name;
+  COMMENT-AMBIGUOUS-NAME — a comment line shaped like a 6-field data row is refused
+  (the grammar defines no escaping for a `#`-leading name, so the capture cannot
+  carry one; fail-closed);
+  RECEIPT-MALFORMED / CAPTURE-RECEIPT-MISMATCH — the capture verifies only against
+  its RECEIPT_VERSION=1 run receipt (keys RECEIPT_VERSION/TOOL_SHA256/FLEET_HEAD/
+  CAPTURE_SHA256/ENTRIES; TOOL_SHA256 must equal the tool bytes and the capture
+  header; CAPTURE_SHA256 must equal sha256 of the capture's committed bytes;
+  FLEET_HEAD and ENTRIES must agree with the capture header).
+Fresh capture (committed after this freeze): census/round-53/records/
+fleet-root-census.tsv with its run receipt census/round-53/records/
+fleet-root-census-run.txt in the RECEIPT_VERSION=1 grammar, taken by the committed
+tool tools/souji-fleet-root-census.py (bytes at the freeze commit) against the fleet
+root, staged outside the fleet root, copied in byte-exact (cmp-equal).
+Fixtures: the same builder builds FH-HONEST, FA1-UNSORTED, FA2-COMMENT, FA3-TAMPER
+(capture at the v1-counter path census/round-52/records/fleet-root-census.tsv so the
+frozen v1 counter reads it); expected verdicts in
+census/round-53/records/c2-selftest-expected.tsv.
+Predicate (one sentence, same in the plan, the counter and the receipt labels):
+  at the measured revision, the v2 counter kills every attack capture with its named
+  finding (FA1→ROWS-UNSORTED, FA2→COMMENT-AMBIGUOUS-NAME, FA3→CAPTURE-RECEIPT-MISMATCH;
+  each exit 1) while the honest fixture FH and the committed round-53 capture verify
+  (exit 0, receipt=ok sorted=ok), and the frozen v1 counter accepts every attack
+  capture (exit 0) — the v1 arm is the do-nothing control.
+Before (v1 arm): v1 exit 0 on FA1–FA3, receipts census/round-53/records/
+c2-matrix-v1.tsv (taken after this freeze).
+After (v2 arm): v2 exit 1 with the named finding on FA1–FA3; v2 exit 0 on FH and on
+the committed round-53 capture + receipt at the content tip, receipts
+census/round-53/records/c2-matrix-v2.tsv and c2-tip.txt.
+Do-nothing control (committed with this freeze): census/round-53/controls/
+c2-control-donothing.txt — `PRISTINE FAIL FLEET-CENSUS-ABSENT` at the base revision
+(the round-53 capture does not exist without this round's work).
+Kill rule: any attack capture v2 fails to kill with its named finding; any v2 exit 1
+on FH or on the committed round-53 capture; any v1 arm result that already kills an
+attack capture; any finding the wave attacks raise that the counter does not name,
+recorded as a named limit and routed to the next round — never an edit of the frozen
+bytes.
+Named limits carried into v2 (disclosed, not fixed): ENTRIES remains the tool's own
+count (a capture that silently omits an entry and lowers ENTRIES/COUNT accordingly is
+undetectable from committed bytes alone — the r52 limit stands); the receipt binds
+capture↔receipt consistency, not execution (a hand-written receipt with matching
+digests verifies — the same trust level as r52's committed-bytes rule); FLEET_HEAD
+remains format-checked, not resolved (an optional live check stays out of the
+counter). The r52 capture stays verifiable by the frozen r52 counter at the r53 tip
+(standing check; v2 is not retrofitted to it).
+Recompute command (real lane): `python3 -B census/round-53/c2-counter.py --root LANE
+--rev FULL40 --capture census/round-53/records/fleet-root-census.tsv --receipt
+census/round-53/records/fleet-root-census-run.txt --scratch DIR`.
+
+## Standing checks (no-harm; reported, not claimed)
+- The r52 counters (census/round-52/c1-counter.py, c2-counter.py) unchanged at the
+  r53 tip: c1 exit 0 (filed=2 unfiled=0), c2 exit 0 on the r52 capture.
+- The r51 routed-corrections and workspace counters unchanged at the tip.
+- Standing landing-suite counter census/round-46/c1-counter.py at the content tip.
+- Census round-start (this freeze's pre-flight receipts) and round-end census gate
+  exit 0 (adapter form; conf form rc 0 on this host).
+- NTFS exclusion (r51 base receipt): re-derived at base and tip; tolerance not widened.
+
+## Pre-flight receipts (committed with this freeze)
+- census/round-53/records/base-note.txt; porcelain-at-base.txt (1 line: this round's
+  own census/round-53/ dir); census-before.txt + census-before-receipt.txt (adapter
+  output conf_rc=0 dir_rc=0 w04=60 result=ok; receipt verify ok).
+- census/round-53/records/c1-selftest.txt (SELFTEST pass cases=6) and c2-selftest.txt
+  (SELFTEST pass cases=4) — capability evidence for the amended instruments, taken
+  before the freeze; the claim matrices are taken after it.
+- census/round-53/records/fixture-manifest.tsv (build provenance; the fixture dirs
+  are scratch paths rebuilt deterministically by the selftests, never cited as
+  evidence).
+
+## Counter pins (sha256 of the bytes frozen with this file)
+- census/round-53/c1-counter.py  a7928d05df794f14d5d0213ddb78d042f62819b52f5c49b3c838a1b96da1ed15
+- census/round-53/c2-counter.py  6515b97553dd6f6d207d638de2520c4367a56a1a37ff7329b9d914c329a349b7
+- census/round-53/fixtures/build-fixtures.py  d5ce557ebdc715a0e2ec2cb8c8ae4c726dbd78e123eb11fedc4892f27a68339b
+- record pin (census/round-51/records/ws-drift-vs-r46.tsv at base)
+  2b90a262c29772d4a9a7bd5ab29ce06b9d8f350832f0d0cd5114d52b0f6dad30
+
+## Method and scope
+- Frontier step: at least one new SOURCES row opened live this round; the planned
+  source for C2 is the gitignore documentation (a `#` line in a .gitignore is a
+  comment — the same comment-ambiguity the capture grammar refuses), located quote in
+  the round lesson's Gate block. C1 rests on the round-52 receipts (own-work).
+- Assimilation: none. shokuknow's merge/souji package is held by the open r46 L0
+  question on mass id drift; this round adopts nothing from it.
+- L2 floor: one v1 wave, 12 seats (planner held by the L1, not a swarm seat); attack
+  seats 4 of 12 (two reviewers, one critic, one mutation-tester; 33% >= 25%);
+  connectors 1 (<= 2). Routing: never a model argument; the seats' routes come from
+  the global table (run-15 map).
+- Scratch discipline: every seat works under /fast/scratch/hyaku/souji-r53/<seat>/
+  and deletes it before yielding; no hardcoded /tmp in any committed tool.
