@@ -870,3 +870,21 @@ a measured edge class does not promote a frontier ground to Core (PROVINCE
 - SOURCES 274 -> 275 rows (`grep -cE '^\|[[:space:]]*S[0-9]{3,}[[:space:]]*\|' corpus/SOURCES.md`); census exit 0 (conf form, this host). Assimilation: none (open L0 on mass id drift, r46). considerthese/: no such directory.
 - The fleet-root census's refusal surfaces (repo config execution, credential namespaces, credential-shaped names, in-root output) are the named boundary of the capability; the credential-name policy awaits an operator ruling.
 
+
+## Round 53 frontier update
+
+- One knowledge entry admitted on the Core surface the lane already owns (fleet root
+  hygiene, PROVINCE Owns): corpus/knowledge/fleet-root-capture-receipt-grammar.md,
+  source S276. No ground line added; no frontier row moved; no Core promotion.
+- SOURCES 199 -> 200 rows (`grep -cE '^\|[[:space:]]*S[0-9]{3,}[[:space:]]*\|' corpus/SOURCES.md`;
+  census exit 0, conf form, this host). Assimilation: none (open L0 on mass id drift,
+  r46). considerthese/: no such directory.
+- The round-53 work is instrument amendment, not new ground: the capture counter (v2)
+  instruments sort order, `#`-leading names and RECEIPT_VERSION=1 receipt binding over
+  committed fixtures; the annotation counter (v2) closes five named r52 limits. The
+  routed defects (fence grammar, `#`-shape width, zone edge, receipt extras, tool pin,
+  fixture coverage) are consolidated in corpus/lessons/round-53.md.
+- Correction (append-only): the r52 note above says "SOURCES 274 -> 275 rows"; the census
+  command recomputes 198 -> 199 at the r52 revisions (200 with S276). The 274/275
+  figures are the last row's S-ids misread as a count; filed by an R53-CORRECTION line in
+  SCORECARD.md. The stale text stays.

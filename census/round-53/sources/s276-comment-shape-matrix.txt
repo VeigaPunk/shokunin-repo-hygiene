@@ -1,0 +1,55 @@
+# S276 comment-shape matrix — probe receipts (seat S53scribe01, souji round 53)
+# Purpose: measure what the frozen v2 counter (census/round-53/c2-counter.py) and the frozen
+# v1 control (census/round-52/c2-counter.py) do with a '#'-leading DATA row, as a function of
+# (i) whether the row's name contains whitespace and (ii) whether ENTRIES/COUNT are struck.
+# Fixtures: one throwaway git repo per case, created under the seat scratch with
+#   D=$(mktemp -d /fast/scratch/hyaku/souji-r53/S53scribe01/XXXX) && git -C "$D" init -q
+#   (git -C "$D" rev-parse --show-toplevel == $D asserted before the first commit;
+#   identity only inside the fixture). The lane's committed bytes were never written.
+# Counter bytes: sha256 6515b97553dd6f6d207d638de2520c4367a56a1a37ff7329b9d914c329a349b7 (v2)
+#                sha256 (v1, from census/round-52/preregistration.txt pin) — v1 untouched.
+
+===== case A-hash-nospace-struck (fixture repo /fast/scratch/hyaku/souji-r53/S53scribe01/T4Oh, rev b546e48e4b70634e1ba53a2a5f000c32fd3e378f) =====
+-- v2 (r53) --
+FINDING COMMENT-AMBIGUOUS-NAME comment shaped like a data row: '#odd\tfile\tno\tno\tuntracked-stray\treport-only'
+SUMMARY entries=1 rows=1 unclassified=0 class_mismatch=0 counts=ok tool_sha=ok removal_proposed=0 receipt=ok sorted=ok rev=b546e48e4b70
+EXIT_v2=1
+-- v1 (r52 control) --
+SUMMARY entries=1 rows=1 unclassified=0 class_mismatch=0 counts=ok tool_sha=ok removal_proposed=0 receipt=ok rev=b546e48e4b70
+EXIT_v1=0
+
+===== case B-hash-nospace-honest (fixture repo /fast/scratch/hyaku/souji-r53/S53scribe01/SqsF, rev 0f4ff2fddc8e88399a75634b94594f38701b91f2) =====
+-- v2 (r53) --
+FINDING COMMENT-AMBIGUOUS-NAME comment shaped like a data row: '#odd\tfile\tno\tno\tuntracked-stray\treport-only'
+FINDING CAPTURE-RECEIPT-MISMATCH ENTRIES receipt=2 capture=2 rows=1
+FINDING ENTRIES 2 != rows 1
+FINDING COUNT untracked-stray declared 1 recomputed 0
+SUMMARY entries=1 rows=1 unclassified=0 class_mismatch=0 counts=FAIL tool_sha=ok removal_proposed=0 receipt=FAIL sorted=ok rev=0f4ff2fddc8e
+EXIT_v2=1
+-- v1 (r52 control) --
+FINDING ENTRIES 2 != rows 1
+FINDING COUNT untracked-stray declared 1 recomputed 0
+SUMMARY entries=1 rows=1 unclassified=0 class_mismatch=0 counts=FAIL tool_sha=ok removal_proposed=0 receipt=FAIL rev=0f4ff2fddc8e
+EXIT_v1=1
+
+===== case C-hash-space-struck (fixture repo /fast/scratch/hyaku/souji-r53/S53scribe01/uPKe, rev b2ec0ec81e349b771daeb4ddafeca5e5159fa509) =====
+-- v2 (r53) --
+SUMMARY entries=1 rows=1 unclassified=0 class_mismatch=0 counts=ok tool_sha=ok removal_proposed=0 receipt=ok sorted=ok rev=b2ec0ec81e34
+EXIT_v2=0
+-- v1 (r52 control) --
+SUMMARY entries=1 rows=1 unclassified=0 class_mismatch=0 counts=ok tool_sha=ok removal_proposed=0 receipt=ok rev=b2ec0ec81e34
+EXIT_v1=0
+
+===== case D-hash-space-honest (fixture repo /fast/scratch/hyaku/souji-r53/S53scribe01/Jv5w, rev 2dc657e59baaee79ca28a973081fede3c2a3f365) =====
+-- v2 (r53) --
+FINDING CAPTURE-RECEIPT-MISMATCH ENTRIES receipt=2 capture=2 rows=1
+FINDING ENTRIES 2 != rows 1
+FINDING COUNT untracked-stray declared 1 recomputed 0
+SUMMARY entries=1 rows=1 unclassified=0 class_mismatch=0 counts=FAIL tool_sha=ok removal_proposed=0 receipt=FAIL sorted=ok rev=2dc657e59baa
+EXIT_v2=1
+-- v1 (r52 control) --
+FINDING ENTRIES 2 != rows 1
+FINDING COUNT untracked-stray declared 1 recomputed 0
+SUMMARY entries=1 rows=1 unclassified=0 class_mismatch=0 counts=FAIL tool_sha=ok removal_proposed=0 receipt=FAIL rev=2dc657e59baa
+EXIT_v1=1
+

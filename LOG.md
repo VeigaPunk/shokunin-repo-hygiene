@@ -2533,3 +2533,57 @@ addendum, appended to the prereg, commits 8a793e7ae9131578bdec393982760217f62095
 
 - The r51 ADDED-count annotations at SCORECARD.md:1196 and census/round-51/preregistration.txt:125 are filed by R52-CORRECTION lines in SCORECARD.md (C1). The r51 prose is unchanged.
 
+
+## Round 53 (2026-11-03, Linux omp host; base 9bf9234ae4d11c7b31706354302a9e95ad0d1f81 = the r52 non-author verifier spot-check commit, verdict ok/admitted; freeze 61838b54112354acae5ae0534425f366c14e658c before any claim receipt — prereg + both v2 counters + fixture builder + both do-nothing controls + pre-flight receipts in that one commit)
+
+- Claims: C1 calibration 7 (the annotation-agreement counter amended to v2 — the five
+  named r52 limits become five checks with finding ids, shown able to fail over six
+  committed fixtures; the frozen v1 counter is the do-nothing control arm); C2 coverage 8
+  (the capture counter amended to v2 — sort order, `#`-leading names and RECEIPT_VERSION=1
+  run-receipt binding, over four committed fixtures plus a fresh committed round-53
+  capture). No exploratory claim; no assimilation; considerthese/ absent.
+- Wave w1: one v1 wave, 12 seats (scout x1, executor x3, scribe x1, reviewer x2, critic
+  x1, mutation-tester x1, sentinel x1, connector x1, revenger x1); attack seats 4 of 12
+  (33%); connectors 1; band 8-16; WAVE-DONE received for all 12; no dead seats. Results:
+  .ufo/waves/round-53/w1-results.json (wave dir gitignored; findings copied into
+  corpus/lessons/round-53.md `## Wave findings`).
+- Independent reproduction inside the round: executor01 AGREE 12/12 C1 matrix cells;
+  executor02 PASS on every C2 predicate line; mutation01 8/10 mutants killed (2 survivors
+  = fixture-coverage gaps, routed); critic: both claims SURVIVE the frozen predicate (the
+  titles' "closes" wording is partially falsified — named limits routed, not kill-rule
+  fires).
+- Capture: census/round-53/records/fleet-root-census.tsv (ENTRIES=49, tracked 22 /
+  ignored 22 / untracked-stray 5 / symlink 0) with RECEIPT_VERSION=1 run receipt binding
+  CAPTURE_SHA256 922112361cdd257451e2f62820815ce19493c7d94d06c73c1b40f5dc9756f904 at
+  fleet HEAD 6e312f2e; tool bytes unchanged (pinned by the r52 capture). Committed at
+  1a53bcabc91d97b1a930abeb0d9d23ffbae19b81.
+- S276 admitted (gitignore(1) PATTERN FORMAT comment rule, located quote 9 words, capture
+  census/round-53/sources/); knowledge entry corpus/knowledge/
+  fleet-root-capture-receipt-grammar.md (RECEIPT_VERSION=1 grammar + the three v2 checks
+  + named limits). corpus/SOURCES.md 199 -> 200 rows (census command recomputed at both
+  revisions).
+- Routed defects to r54 (named limits of the frozen bytes, never edited): R1 fence
+  grammar backtick-only; R2 zone-edge truncation; R3 correction recomputed= never
+  validated; R4 `#`-shape no-whitespace-only; R5 receipt extra keys / CRLF unnamed; R6
+  tool pin absent; R7 fixture coverage (receipt-ENTRIES + symlink branches); R8 builder
+  hardening; R9 oracle pinning; R10 fixture rev determinism; R11 receipt binds bytes not
+  path; R12 exit-code ambiguity (inherited); R13 wording drifts. Full list with evidence
+  in corpus/lessons/round-53.md.
+- Closed r52 items: the `.omp` name-rule dedicated control landed (tracked `.omp`
+  accepted rc 0, credential-shaped `.env` refused rc 2 — the r52 fix shown able to fail);
+  freeze-message discipline verified PASS; dated-observation census: 12 expired dated
+  observations, none transcription defects, no correction proposed; the two r52 routed
+  dated observations reproduce at the r53 tip.
+- Correction (append-only; found after the wave): two r52 annotations state
+  "corpus/SOURCES.md 274 -> 275 rows" — LOG.md:2527 (the r52 entry) and
+  corpus/README.md:870 (the r52 frontier note); the census command recomputes 198 at
+  f778b9d1 and 199 at 9bf9234a (200 with S276). The 274/275 figures are the last row's
+  S-ids (S274/S275) misread as a row count. The stale texts stay; the R53-CORRECTION
+  lines in SCORECARD.md are the filing.
+- Standing checks: r52 c1/c2 counters green at the tip; r51 counters green; landing suite
+  assertions=556 mismatches=70 registered=70 corrected=0 exempted=0 unfiled=0 rc 0 (clean
+  clone; the dirty-tree guard refuses a live lane mid-wave — named limit); NTFS
+  exclusion tolerance not widened (6 at base, 6 at tip).
+- Holds unchanged: certification OFF, K5 HELD, NAMESPACE/reap holds, execution-audit
+  attribution open; L0 routed around (credential-name rule, ignored-derivation, r46 mass
+  id drift, r48 census conf-form).
