@@ -2677,3 +2677,37 @@ addendum, appended to the prereg, commits 8a793e7ae9131578bdec393982760217f62095
   control labels, a wrong pre-flight base, the receipt exit codes).
 - Holds unchanged: certification OFF, K5 HELD, NAMESPACE/reap holds; L0 rulings open (credential-shaped
   names; the `ignored` derivation; r46 mass id drift; RD-A ruling filed this round).
+
+## Round 56 (2026-11-03)
+
+- Claims: C1 calibration 7, correction-filing counter v5; C2 coverage 8, receipt-key counter v5.
+  Motivating evidence: `corpus/lessons/round-55-verifier-spotcheck.md` rejected-harmed,
+  S55-S2 and RD-A. Both old counters remain unchanged.
+- Freeze: `cce21b555a617cadda782613ec1e9d3a0c12ac83`, carrying preregistration,
+  counter/fixture/expected bytes, pre-freeze matrices, controls, S277 source capture,
+  knowledge entry, Gate and mistakes. Official measurements at that revision:
+  `census/round-56/records/c1-tip.txt` and `c2-tip.txt`, both EXIT=0.
+- Post-freeze evidence: `148f39a6c902b27e997ac36d395735406d3ad9de`, official
+  matrices byte-identical to development matrices; selftests 33/33 and 18/18;
+  QUALITY Q111–Q113, README, SKILL registry, wave spec/dispatch copies.
+- Counts: C1 matrix exit-0 9→7 (three silent-pass repairs, one honest over-hide repair);
+  C2 5→2 (three unknown-key repairs). Commands are in SCORECARD Round 56.
+  S277 re-open verified HTTP 200; registry 202→202; used-by gains one entry.
+- R55 routed LOG attribution correction: `f9da665e` carried wave evidence and S2
+  regression findings; `51551399` carried SKILL contract corrections; `6d8bfb8e`
+  repointed SCORECARD citations to committed copies. These three r55 hashes were
+  missing from the r55 LOG entry; this append supplies the missing tie-ins.
+- Receipt correction: the first committed `landing-suite-standing.txt` records a
+  usage error (`--scratch` unsupported). A later working-tree run overwrote it with
+  a dirty-tree refusal; this was an evidence-handling mistake, not a pass.
+  The final standing run will use a distinct receipt path and stage outside the lane.
+- Sourced-entry correction: the scribe verified S277 but found the entry's
+  “mid-line opener hides its own line” sentence wrong. An appended correction
+  in the entry states that mid-line mentions hide nothing under v5.
+- One v1 wave, 12 seats; attack roles five (two reviewers, critic, two mutation-testers),
+  one connector; L1 holds planner. Handoff: `census/round-56/wave/w1-dispatch.json`.
+  No cleanup action, deletion authority or new capability is claimed.
+- Wave settled: Main's WAVE-DONE, 12/12 outputs. C1 finite predicate reproduced but
+  HIGH B4/C4 hidden-inline regressions harm calibration; C2 75-shape differential
+  has no narrowing harm. Whole round rejected-harmed. Detailed dispositions and
+  Q114 in corpus/lessons/round-56.md; no frozen counter changes after cce21b55.

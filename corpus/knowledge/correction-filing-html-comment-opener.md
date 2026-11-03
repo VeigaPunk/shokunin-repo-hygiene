@@ -41,3 +41,14 @@ HTML block types 1, 3, 4, 5, 6 and 7 are not modelled: the counter only reads ty
 - Fixtures: census/round-56/fixtures/build-fixtures.py F26-INDENT4-COMMENT-OPENER and F29-PROSE-COMMENT-MENTION
 - Dry-run receipts: census/round-56/records/matrix-dryrun/c1-matrix-v4.tsv and c1-matrix-v5.tsv
 - Frozen predicate: census/round-56/preregistration.txt, C1 T1 and T4
+
+## Round-56 source-review correction (append-only)
+
+S56scribe01 verified the source and recheck command, but found the sentence at
+lines 35–36 wrong: a genuine mid-line mention hides **nothing** under v5.
+Only a line-begin self-closing comment hides its own line. The original sentence
+remains above as the corrected record. “Non-space text” means stripping at most
+three ASCII spaces, not arbitrary whitespace. The “four spaces is code” description
+requires the surrounding block context; the sourced negative rule here is only
+that four leading spaces do not satisfy this HTML-block start condition.
+Evidence: `census/round-56/wave/w1/S56scribe01/S56scribe01-report.md`.

@@ -1,0 +1,11 @@
+# S56critic01 — scoped findings (full report: S56critic01/S56critic01-report.md)
+
+VERDICT: SURVIVED (bounds mapping: no DISAGREE, no ATTACK-FOUND)
+
+- Pins: 12/12 verified at freeze cce21b55 (8 assignment pins + ws-drift record, census tool, r55 capture, r55 run receipt); working tree byte-identical, no drift. Dry-run == official matrices byte-for-byte (4/4), and my own frozen-runner rerun reproduced all four TSVs byte-identically.
+- Do-nothing stub (always SUMMARY + exit 0, scratch-only) over the committed runner's arm logic: fails every detection clause — C1 T1–T6 (T1 flip set ∅ vs required {F24,F26,F28}; T4 narrowing set 24 vs required {F29}; T5 21/27 rows differ) and C2 T1–T4, T6 (T1 set ∅ vs {FC1,FC2,FC3}; T2 narrowing set 11 vs required ∅). It passes exactly the two always-zero real-lane clauses as written (C1-T7, C2-T5) — named, conjunction-guarded, and the prereg's own do-nothing sentence ("would fail T1–T3") is accurate and conservative.
+- Holds-by-construction: C1 T3 (F7-FF2) has zero v5-discriminating content — its expectation equals the committed v4 row; it is a fixture-set pin (the prereg labels it carry-over). C1-T8/C2-T7 are receipt-hygiene clauses, not instrument predicates (verified separately: cited receipts end EXIT=0).
+- Row-set check is real: FA9-arm-removed scratch mutant → SELFTEST-ROW-MISMATCH, cases=17, EXIT=1. Pin verification is live: wrong builder/expected pins → CANNOT-EVALUATE PIN-MISMATCH, EXIT=2 on both counters.
+- Real-lane legs at the measured revision reproduce the claims: C1 rc0 unfiled=0 … recomputed=79; C2 rc0 receipt=ok sorted=ok tool_pin=ok — identical to committed c1-tip.txt / c2-tip.txt.
+- Wording findings (documentation fixes, not falsifications): (1) prereg "ERRATUM-R55-1 closed" should read "pinned (carry-over)"; (2) committed landing-suite-standing.txt shows EXIT=2 (r46 counter rejects --scratch) while the prereg says "(exit 0)" — standing check, routed item; (3) "with the pins verified" is silent on success — suggest a pins=ok SELFTEST field; (4) "defect was live" is trigger-live, verdict-neutral at cce21b55 (before-arm receipt rc0); (5) controls print observed-rc: 128 without the EXIT= trailer form.
+- Residual unfalsified surface: per-row SUMMARY field values are pinned only via matrix byte-identity (verified twice), not by a target clause.

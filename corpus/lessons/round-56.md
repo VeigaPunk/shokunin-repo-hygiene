@@ -70,3 +70,93 @@ No exploratory claim. No assimilation (`considerthese/` does not exist in this l
 - F27 pins the finding name, not a silent pass; the binary numstat branch has no silent shape of its own beyond F28.
 - The receipt grammar still reports only the FIRST unknown key (r55 named limit, inherited).
 - The numstat parse is LF-only (hardening, not a reachable lane verdict).
+
+## Wave findings (after WAVE-DONE)
+
+Main delivered WAVE-DONE for w1: twelve seats settled, twelve result payloads, no dead
+seat reported. Evidence is committed at `census/round-56/wave/` (not the ignored live
+`.ufo/waves/` paths). Shape: scout 1, connector 1, executor 2, scribe 1, reviewer 2,
+critic 1, mutation-tester 2, sentinel 1, revenger 1; attack share 5/12, connector 1.
+The L1 holds planner. The prereg's prose role list totals eleven rather than twelve;
+the validated dispatch and results are authoritative. No replacement seats.
+
+- **scout01:** all pins match; fixture determinism verified; source census rc 0.
+  Full routed-item inventory remains explicit (open list in report).
+- **connector01:** seven overlapping numstat/append-only surfaces across kaidoku and
+  kama, one exact binary-refusal disposition; no C2 grammar overlap. Existing kaidoku
+  and chousa splitlines mechanisms are latent on measured inputs. This is lane-local
+  work, not fleet-first. Sibling files were not edited.
+- **executor01:** AGREE on C1 selftest 33/33, wrong pin rc 2, official/dry-run matrices,
+  T1–T5 TSV-only derivation and real-lane receipt. All four TSVs reproduce byte-exactly.
+- **executor02:** AGREE on C2 selftest 18/18, wrong tool pin rc 1, matrices, T1–T3,
+  real-lane receipt. Thirteen carry-over C2 rows unchanged.
+- **scribe01:** S277 VERIFIED (two live fetches, identical digest, quotes 19/8 words,
+  recheck True True, single used-by append). Found the entry's mid-line wording wrong;
+  an append-only correction now states that genuine mid-line mentions hide nothing.
+- **reviewer01:** ATTACK-FOUND. Twenty-nine attacks: five mechanical narrowing rows,
+  of which two demonstrate actual hidden-filing harms, eight shared limits, thirteen
+  named refusals, three controls. B4 (NBSP prefix) and C4 (closed multiline inline
+  comment) hide both correction tokens in an independent CommonMark render, while v4
+  exits 1 CORRECTION-IN-FENCE and v5 exits 0 filed=2. This is a **HIGH no-harm failure**.
+  The thirty-three frozen matrix controls still reproduce; no frozen byte is edited.
+- **reviewer02:** ATTACK-SURVIVED. Seventy-five receipt shapes: zero narrowing harms,
+  eight intended repair-direction results, three relabels. Punctuation/non-ASCII key
+  attempts, non-KV NUL and leading BOM remain shared limits, explicitly listed.
+- **critic01:** SURVIVED on the finite predicates. An always-zero stub fails detection
+  clauses; both real-lane zero-result clauses alone accept it, guarded by the other
+  clauses. F7-FF2 is carry-over pinning, not new v5 discrimination. Controls lack the
+  exact EXIT trailer convention; original observed-rc:128 bytes remain frozen.
+- **mutation01:** 8/10 C1 mutants killed. M1 (secondary PAIR-FILING-HIDDEN emission)
+  survives first-finding-only assertions; direct pristine output verifies it, but
+  selftest kill power needs all-findings/summary assertions. M7 LF parser survives,
+  already de-claimed because the monitored paths are fixed ASCII constants.
+- **mutation02:** N1/N2 key regressions killed; FA9/FB4 omission killed by row-set check.
+  N3 (removing the row-set loops) survives the ordinary selftest; N3+arm omission
+  prints cases=17 exit 0. T6 holds on pristine frozen bytes, but guard self-coverage
+  remains a gap. Dotfile over-refusal is caught by the real capture, not selftest.
+- **sentinel01:** two MEDIUM findings (quadratic line-number work, unescaped terminal
+  control bytes in diagnostics), LOW scratch-symlink/.pyc/memory/attribute limits;
+  timeout exception mapping is explicitly INFERENCE, unexecuted. No code-execution
+  escape found in tested Git config/attributes shapes. Report contains exact receipts.
+- **revenger01:** 41-row r55-item map, every item classified; open work remains routed
+  to r57, not silently closed. Frozen r55 counter bytes unchanged.
+
+### Admission / no-harm verdict
+
+C1: finite predicate met, calibration **harmed** by B4/C4. C2: finite predicate met,
+coverage improved on the declared finite key surface; no narrowing harm found in its
+75-shape differential. Operability unchanged. Whole round: **rejected-harmed**, honest
+stop. No operator ruling is assumed and no continuation round is started here.
+
+### Further mistake and criterion
+
+| class | evidence | captured-by | fix |
+|---|---|---|---|
+| block-start condition mistaken for complete visibility semantics: narrowing to line-start comments repairs F29 but admits real multiline inline comments | reviewer01 B4/C4 paired v4/v5 receipts and CommonMark renders in census/round-56/wave/w1/S56reviewer01/reproduction/ | Q112 differential caught it only after freeze; fixture population had no closed inline-comment control | Q114 below; new counter generation must pin both hidden inline and visible prose cases before scoring. Frozen v5 remains unchanged, and the round reports harmed |
+| measurement receipt overwritten after landing | committed landing-suite-standing.txt was a usage-error record, then overwritten by a dirty-tree refusal | executor01 comparison of committed and working bytes | restore original byte-exact; preserve dirty refusal at landing-suite-dirty-refusal.txt; final suite uses a distinct staged receipt |
+| context forbade all git mutation while asking seats to build committed fixtures | reviewer01 asked for clarification before probing | seat boundary review | explicit scratch-only builder init/config/add/commit authorization sent to all twelve seats; lane/fleet/sibling mutations stay forbidden |
+
+### Errata to frozen prose (no frozen files changed)
+
+- C1 docstring still claims a prose comment-token mention opens a region: stale v4 text,
+  contradicted by implementation and F29. The true v5 behavior is line-start-only.
+- Prereg C2 mentions T9, but has T1–T7; this means T6 (row omission).
+- Prereg C1 calls F7-FF2 “closed”; read “exact-byte carry-over pinned”, not a new kill.
+- C2 matrix has sixteen repository fixtures plus two selftest-only arms (eighteen
+  selftest rows). The SCORECARD's “18 receipt rows” before value names selftest scope,
+  not the matrix row count.
+- The claim receipts at cce21b55 have EXIT=0. Matrix data uses its explicit exit column;
+  it is TSV, not a command receipt with an appended EXIT line.
+
+### Tools and self-evaluation
+
+Reviewer01 installed markdown-it-py 4.2.0 and mdurl 0.1.2 via official PyPI/uv into a
+scratch venv for independent CommonMark rendering; that venv was deleted. No host
+package transaction, service restart or permanent install occurred.
+
+Self-evaluation: accuracy 2/5 (real hidden-filing regression), completeness 4/5 (end-to-end
+round and attack evidence, finite scope disclosed), clarity 3/5 (stale frozen docstring
+and mismatched T9 label), actionability 4/5 (paired receipts and concrete next predicate),
+conciseness 3/5 (large protocol/evidence overhead); mean 3.2. Highest-impact next move:
+closed inline-comment negative controls before freezing; then all-findings mutation
+assertions. User should see this as a documented rejected round, not an admitted repair.

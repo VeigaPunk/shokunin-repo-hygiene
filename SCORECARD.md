@@ -1388,3 +1388,39 @@ R55-CORRECTION C2 row: the RD-A regression stands as recorded above; the operato
   selftest harness assertion of every expected row (mutation01 C2-17/18); ERRATUM-R55-1 form-feed fixture.
 - Sibling routing (not edited here): kaidoku-shokunin's tools/round-59/annotation-audit.py and
   chousa-shokunin's tools/corpus/evidence/round50/stale-count-check.py use splitlines on the S1 defect class (connector01).
+
+### Round 56 measurements (2026-11-03; base fafe371694fea41c5d23f63083865d5ccf3f1d36; freeze cce21b555a617cadda782613ec1e9d3a0c12ac83; preregistration census/round-56/preregistration.txt; real-lane measured revision cce21b555a617cadda782613ec1e9d3a0c12ac83)
+
+| claim | axis | before | after | counting command | measured commit |
+|---|---|---|---|---|---|
+| C1 correction-filing counter v5 (annotation agreement) | calibration 7 | v4 over the 33 frozen fixtures: `exit 0` on F24-PAIR-HIDDEN-FILING, F26-INDENT4-COMMENT-OPENER, F28-NUL-CORRECTION-UNCHANGED (three silent-pass shapes); 9 exit-0 rows in the matrix (`census/round-56/records/c1-matrix-v4.tsv`); v4 hides SCORECARD.md lines 1378–1391 (`records/probe-real-scorecard-hidden-tail.txt`) | v5: the three rows exit 1 with UNFILED-SOURCES-ANNOTATION, UNFILED-SOURCES-ANNOTATION, CORRECTION-FILE-BINARY; F27 exit 1 DELETIONS-UNREADABLE-BINARY; F7-FF2 exit 1 CORRECTION-IN-FENCE; F29 exit 0 (v4 exit 1); exit-0 count 9 → 7 (`records/c1-matrix-v5.tsv`); real lane `records/c1-tip.txt` EXIT=0 `unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79`; hidden lines of the real SCORECARD.md 14 (v4) → 0 (v5) | `awk -F'\t' 'NR>1 && $5==0{n++} END{print n+0}' census/round-56/records/c1-matrix-v{4,5}.tsv`; `python3 -B census/round-56/c1-counter.py --root . --rev cce21b555a617cadda782613ec1e9d3a0c12ac83 --base fafe371694fea41c5d23f63083865d5ccf3f1d36 --record-sha256 2b90a262c29772d4a9a7bd5ab29ce06b9d8f350832f0d0cd5114d52b0f6dad30 --sources-rev-before f778b9d131574d3ff09c0cc8a077643c0fc84bb4 --sources-rev-after 9bf9234ae4d11c7b31706354302a9e95ad0d1f81 --scratch <dir>` | cce21b555a617cadda782613ec1e9d3a0c12ac83 (`census/round-56/records/c1-tip.txt`, `c1-selftest.txt` `SELFTEST pass cases=33`) |
+| C2 capture counter v5 (receipt-key grammar) | coverage 8 | v4 over the 18 receipt rows: FC1-UNDERSCORE-KEY, FC2-DIGIT-KEY, FC3-EMPTY-VALUE-KEY exit 0 (silent passes); exit-0 count 5 (`census/round-56/records/c2-matrix-v4.tsv`) | v5: FC1–FC3 exit 1 RECEIPT-UNKNOWN-KEY; no row changes exit from v4 except those three; exit-0 count 5 → 2; real lane `records/c2-tip.txt` EXIT=0 `receipt=ok sorted=ok tool_pin=ok`; selftest `SELFTEST pass cases=18` (`records/c2-selftest.txt`) | `awk -F'\t' 'NR>1 && $5==0{n++} END{print n+0}' census/round-56/records/c2-matrix-v{4,5}.tsv`; `python3 -B census/round-56/c2-counter.py --root . --rev cce21b555a617cadda782613ec1e9d3a0c12ac83 --capture census/round-55/records/fleet-root-census.tsv --receipt census/round-55/records/fleet-root-census-run.txt --tool-sha256 e7e79952f7830d75c5b0eee35c2369716053f40121c7d3be370f7abdda067a5b --scratch <dir>` | cce21b555a617cadda782613ec1e9d3a0c12ac83 (`census/round-56/records/c2-tip.txt`) |
+
+Both post-freeze matrices are byte-identical to the pre-freeze dry-run matrices
+(`census/round-56/records/matrix-dryrun/`). The official receipts' EXIT lines are recorded at the bottom of each file.
+Owned score values unchanged (calibration 7, coverage 8, operability 8): the lane still has no reproducible 0-10 mapping. No capability row enters the table (instrument amendments, no new repertoire). No round admission is claimed; the non-author closure rules.
+
+### Round 56 wave-attack disposition (appended after WAVE-DONE; detail in corpus/lessons/round-56.md ## Wave findings)
+
+WAVE-DONE received from Main: 12/12 seats settled, all returned results, no dead seat reported.
+C1's finite predicate holds, but calibration is **harmed**: reviewer01 B4 (NBSP prefix)
+and C4 (closed multiline inline comment) hide real filings in CommonMark while v5
+passes them and v4 refuses. C1 is not admitted; whole-round verdict is rejected-harmed.
+C2's finite predicate holds; reviewer02's 75-shape differential found zero narrowing
+harms, eight repair-direction cases and three relabels. Coverage improved on this
+finite receipt surface; score 8 unchanged. Operability unchanged.
+Evidence: `census/round-56/wave/w1/S56reviewer01/S56reviewer01-report.md`,
+`census/round-56/wave/w1/S56reviewer02/S56reviewer02-report.md`,
+and `census/round-56/wave/w1-results.json`.
+
+### Planned (r57)
+
+- Calibration first: distinguish raw inline comments from HTML-block starts. Pin B4/C4
+  and benign F29 before data; a block-only parser is not a visibility parser.
+- Retain every r55/r56 accepted/refused shape as a differential, including the
+  five mechanical narrowing rows. Do not relax the frozen r56 predicate.
+- Selftest coverage: assert all finding ids or summary fields, not only the first
+  finding (M1); mutation-test the row-set assertion itself (N3).
+- Operability/security: linear line-number calculation, escaped diagnostic strings,
+  symlink-safe scratch roots; finite reproductions in the sentinel report.
+- Carry the revenger's 41-row disposition table; unresolved items remain explicit.

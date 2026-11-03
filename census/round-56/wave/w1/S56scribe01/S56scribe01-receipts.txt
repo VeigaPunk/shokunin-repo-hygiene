@@ -1,0 +1,113 @@
+# S56scribe01 receipts — S277 re-open verification, souji round 56 w1
+# host date 2026-11-03; lane /home/vgpnk/Projects/shokunin/souji-shokunin
+# measured revision cce21b555a617cadda782613ec1e9d3a0c12ac83 (base fafe371694fea41c5d23f63083865d5ccf3f1d36)
+
+## R1 — frozen pins (sha256sum, lane root)
+975d35201075b71affcd106b46341c7300e87e200b04c6c44864d636bcbbf179  census/round-56/c1-counter.py
+5608201124fa4df9f378a95dda6472077bca249bf8bdf51a4a24e0d59c259cb8  census/round-56/c2-counter.py
+2f26d6aa68ce44cfd9e4afdeaa4ef04837db7622c5ed5213429d8bda1c30b85a  census/round-56/fixtures/build-fixtures.py
+a7e1a8924b9e3fd636f9882e368306faad8908638677e83fa395878211962de3  census/round-56/fixtures/run-matrix.sh
+48a7cc0e869773b493b0b5f01446f70b9016595f1c307602912317aa3f7c5bfb  census/round-56/records/c1-selftest-expected.tsv
+90517c4d4c6b7542229d1df85287bbfdf3fef631e2e18e279ad62c4c926841b3  census/round-56/records/c2-selftest-expected.tsv
+944feafa94c2cbd9cb71f13b35bfd719eaeb34c91c4f2a541761e38cedd921a2  census/round-55/c1-counter.py
+e4eb34e6375d16a8c7a8842ac43ef26f262167d85eb4615c1ab07e1c994a568c  census/round-55/c2-counter.py
+# all 8 equal the frozen pin list
+EXIT=0
+
+## R2 — live fetch #1 (scratch=/fast/scratch/hyaku/souji-r56/S56scribe01)
+$ curl -sSL -o cm.html -w 'HTTP=%{http_code} EFFECTIVE=%{url_effective} SIZE=%{size_download}\n' https://spec.commonmark.org/0.31.2/
+HTTP=200 EFFECTIVE=https://spec.commonmark.org/0.31.2/ SIZE=514698
+curl_rc=0
+$ sha256sum cm.html
+c85f56cc2101f761cc94215c677cd2c7c1ecca9c47be016479fdfe718af60f0d  cm.html
+EXIT=0
+
+## R3 — live fetch #2 with redirect count, + cmp against committed capture
+$ curl -sSL -o cm2.html -w 'HTTP=%{http_code} EFFECTIVE=%{url_effective} REDIRECTS=%{num_redirects} TYPE=%{content_type} SIZE=%{size_download}\n' https://spec.commonmark.org/0.31.2/
+HTTP=200 EFFECTIVE=https://spec.commonmark.org/0.31.2/ REDIRECTS=0 TYPE=text/html; charset=utf-8 SIZE=514698
+rc=0
+$ sha256sum cm2.html
+c85f56cc2101f761cc94215c677cd2c7c1ecca9c47be016479fdfe718af60f0d  cm2.html
+$ cmp cm2.html committed-capture.html && echo "second-fetch CMP=IDENTICAL"
+second-fetch CMP=IDENTICAL
+EXIT=0
+
+## R4 — committed capture at rev cce21b55
+$ git -C /home/vgpnk/Projects/shokunin/souji-shokunin show cce21b555a617cadda782613ec1e9d3a0c12ac83:census/round-56/sources/s277-commonmark-0.31.2.html > committed-capture.html
+git_show_rc=0
+-rw-r--r-- 1 vgpnk vgpnk 514698 ... committed-capture.html
+c85f56cc2101f761cc94215c677cd2c7c1ecca9c47be016479fdfe718af60f0d  committed-capture.html
+$ cmp capture.html committed-capture.html && echo "CMP=IDENTICAL"
+CMP=IDENTICAL
+cmp_rc=0
+EXIT=0
+
+## R5 — quote location: strip script/style, strip tags, html.unescape, collapse whitespace
+bytes 514698 sha256 c85f56cc2101f761cc94215c677cd2c7c1ecca9c47be016479fdfe718af60f0d
+Q1 substring= True words= 19 stated= 19 match= True
+  context: e are seven kinds of HTML block , which can be defined by their start and end conditions. The block begins with a line that meets a start condition (after up to three optional spaces of indentation). It ends with the first subsequent line that meets a matching end condition , or the last
+Q2 substring= True words= 8 stated= 8 match= True
+  context: /script> , </style> , or </textarea> (case-insensitive; it need not match the start tag). Start condition: line begins with the string <!-- . End condition: line contains the string --> . Start condition: line begins with the str
+version-string "Version 0.31.2 (2024-01-28)": True
+EXIT=0
+
+## R6 — knowledge entry recheck line, run verbatim from the lane root
+$ cd /home/vgpnk/Projects/shokunin/souji-shokunin && python3 -B -c "import re,html;t=re.sub(r'<[^>]+>',' ',open('census/round-56/sources/s277-commonmark-0.31.2.html',encoding='utf-8').read());t=re.sub(r'\s+',' ',html.unescape(t));print('Start condition: line begins with the string <!--' in t, 'after up to three optional spaces of indentation' in t)"
+True True
+recheck_rc=0
+EXIT=0
+
+## R7 — S277 registry row, character diff base fafe3716 -> freeze cce21b55
+rows@base 1 rows@freeze 1
+LEN base 1144 freeze 1203
+  insert: base[1142:1142]='' -> freeze[1142:1201]=', corpus/knowledge/correction-filing-html-comment-opener.md'
+  base tail: ... | mined | 2026-11-03 | on-release | corpus/knowledge/correction-filing-fence-grammar.md |
+  frz  tail: ... | mined | 2026-11-03 | on-release | corpus/knowledge/correction-filing-fence-grammar.md, corpus/knowledge/correction-filing-html-comment-opener.md |
+rc=0
+# only the used-by cell changed; no other opcode
+EXIT=0
+
+## R8 — registry column mapping (header line 34 of corpus/SOURCES.md)
+| id | source | kind | tier | scope | anchor | teaches | status | opened | recheck | used-by |
+n_cells 11
+  [0] S277
+  [1] CommonMark spec 0.31.2 — fenced code blocks + HTML blocks — https://spec.commonmark.org/0.31.2/
+  [2] docs
+  [3] A
+  [7] mined
+  [8] 2026-11-03
+  [9] on-release
+  [10] corpus/knowledge/correction-filing-fence-grammar.md, corpus/knowledge/correction-filing-html-comment-opener.md
+rc=0
+EXIT=0
+
+## R9 — entry pointer claims vs frozen bytes
+fixture names in frozen builder: line 180 ('F7-FF2', 'F24-PAIR-HIDDEN-FILING', 'F26-INDENT4-COMMENT-OPENER', ... 'F29-PROSE-COMMENT-MENTION'), 591 F26 branch, 610 F29 branch
+at cce21b55 present: census/round-56/records/matrix-dryrun/{c1-matrix-v4.tsv,c1-matrix-v5.tsv,c2-matrix-v4.tsv,c2-matrix-v5.tsv}, census/round-56/sources/s277-commonmark-0.31.2.html, census/round-56/fixtures/{build-fixtures.py,run-matrix.sh}
+rc=0
+EXIT=0
+
+## R10 — working tree vs HEAD for the four claim files (read-only git diff --stat)
+$ git -C /home/vgpnk/Projects/shokunin/souji-shokunin diff --stat cce21b555a617cadda782613ec1e9d3a0c12ac83 -- census/round-56/sources/s277-commonmark-0.31.2.html corpus/SOURCES.md corpus/knowledge/correction-filing-html-comment-opener.md corpus/lessons/round-56.md
+(no output)
+diffstat_rc=0
+EXIT=0
+
+## R11 — frozen counter opener implementation (lines 237-240 of census/round-56/c1-counter.py at cce21b55)
+        if indent <= 3 and stripped.startswith('<!--'):
+            hidden.add(i)
+            if '-->' not in ln.split('<!--', 1)[1]:
+                in_html = True
+# indent = len(raw) - len(raw.lstrip(' '))  (line 218; literal spaces only)
+rc=0
+EXIT=0
+
+## R12 — disk guard before the pass
+/fast/scratch/hyaku  use% 50  free 405.1G
+/tmp                 use% 25  free  95.9G
+guard_rc=0
+EXIT=0
+
+## R13 — tools installed/updated this seat
+none
+EXIT=0
