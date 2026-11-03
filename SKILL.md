@@ -712,3 +712,4 @@ CommonMark 0.31.2; R6 pair scan does not hide-fenced lines; NL-1 to NL-5 (captur
 with four tabs, prose comments with five, uppercase-only unknown keys, whitespace-variant
 keys, pin shapes); M2, M7, M11 coverage gaps (fixtures F8b, F12c and selftest arm FA9 named).
 The `--tool-sha256` branch is demonstrated on the real lane, not in the selftest (ERRATUM-R54-1).
+The C1 gate is defeatable by exotic line separators (sentinel01 S1, HIGH: two form-feed lines above a `~~~` fence turn the committed F7 shape into exit 0; reproduction `census/round-54/records/s1-formfeed-reproduction.txt`); the pair scan is ASCII-only (S2) and the pointer exemption is path-unscoped (connector01 PTR). Counter v4 is the first r55 item (L0 pending on C1's admission).

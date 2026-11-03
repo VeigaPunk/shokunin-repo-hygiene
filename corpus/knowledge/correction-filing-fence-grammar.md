@@ -40,8 +40,9 @@ An HTML comment is a region between a `<!--` start and a `-->` end. CommonMark 0
 
 > Start condition: line begins with the string <!--. End condition: line contains the string -->.
 
-The v3 counter's `hidden_lines()` in `census/round-54/c1-counter.py` implements exactly
-these three classes over the correction file (`SCORECARD.md`):
+The v3 counter's `hidden_lines()` in `census/round-54/c1-counter.py` implements these three
+classes over the correction file (`SCORECARD.md`) — and is defeatable by exotic line separators
+(named limit S1, HIGH, below; reproduced by the L1 in `census/round-54/records/s1-formfeed-reproduction.txt`):
 
 - a fence opens on a line whose stripped form begins with `` `{3,} `` or `~{3,}`; the fence
   remembers its character and its opening length;
@@ -175,6 +176,23 @@ difference is disclosed here rather than edited into the frozen bytes.
   lane's own frozen predicate (`census/round-54/preregistration.txt`, claim C1) is the
   authority for what the counter does.
 - It does not claim the v3 counters are complete. The five routed r53 surfaces are
-  instrumented; the named limits above are the disclosed remainder.
+  instrumented; the named limits above are the disclosed remainder, and the three below are
+  found by the round's attacks and are NOT disclosed by the frozen prereg.
+
+**S1 (HIGH, sentinel01; reproduced by the L1).** `hidden_lines()` numbers the file with
+`str.splitlines()`, which also breaks on `\x0b \x0c \x1c \x1d \x1e \x85 \u2028 \u2029`, while the
+correction's own line number counts only `\n`. Two form-feed lines directly above a `~~~` fence
+turn the committed F7 shape from exit 1 (`fenced=2`) into exit 0 (`filed=2 unfiled=0 fenced=0`).
+The fence refusal is therefore not robust against exotic separators. Routed to r55 as counter v4
+(one line model) with a red-before fixture committed first.
+
+**S2 (MEDIUM, sentinel01; reproduced by inspection).** The pair scan matches only the ASCII `->`
+form. LOG.md:1845 and LOG.md:1858 carry `corpus/SOURCES.md N → M rows` lines written with the
+Unicode arrow (the same idiom; both pairs are below the registry count, so this is a coverage
+gap, not a live misread), which the scan never reads.
+
+**PTR (MEDIUM, connector01; measured).** `PTR_RE` exempts any `<token>:<digit>`, not only a
+path-like pointer, so a timestamp (`10:15`) on an overstating pair line evades
+`UNFILED-SOURCES-ANNOTATION`. The disclosed limit names a `path:line` pointer; the regex is broader.
 - It does not claim any acceptance run. The counters' acceptance is the L1's, at the
   measured revision; this entry records the grammar and its grounding only.

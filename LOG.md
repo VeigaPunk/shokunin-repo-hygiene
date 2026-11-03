@@ -2630,3 +2630,18 @@ addendum, appended to the prereg, commits 8a793e7ae9131578bdec393982760217f62095
   corrected=0 exempted=0 unfiled=0` (rc 0); NTFS exclusion tolerance not widened.
 - Holds unchanged: certification OFF, K5 HELD, NAMESPACE/reap holds, execution-audit attribution open; L0
   routed around (credential-name rule, ignored-derivation, r46 mass id drift, r48 census conf-form).
+- Addendum (appended after the wave closed; the entry above stays as written): WAVE-DONE received, all 12
+  seats settled with output and reports (no dead seats; `census/round-54/wave/w1-results.json`). Sentinel01
+  (write-scope review) found **S1 HIGH**: `hidden_lines()` numbers lines with `splitlines()` while the
+  correction line number counts `\n`, so two form-feed lines above a `~~~` fence turn the committed F7 shape
+  from exit 1 into exit 0 (`filed=2 unfiled=0 fenced=0`). The L1 reproduced it
+  (`census/round-54/records/s1-formfeed-reproduction.txt`). The frozen kill rule names committed fixtures only,
+  so C1 verifies on its predicate and the defect is a HIGH named limit; operator ruling requested
+  (`.ufo/l0-questions.md`, souji | round-54). Sentinel also: S2 MEDIUM (ASCII-only pair scan), S3 MEDIUM
+  (uppercase-only receipt key), S4–S6 LOW (builder relative `--work`; stale `PRISTINE FAIL` docstring;
+  ignored `--scratch`). Connector01: NO-OVERLAP on all three surfaces; PTR — the pointer exemption is
+  path-unscoped (a timestamp hides an overstating pair line).
+- Content tip `0fada8b33988e9de377566798b4f5a8fd4d10060` re-checked: C1 recompute exit 0 (`c1-content-tip.txt`),
+  C2 recompute exit 0 (`c2-content-tip.txt`), landing suite `assertions=579 mismatches=76 registered=76
+  corrected=0 exempted=0 unfiled=0` rc 0 (`landing-suite-content-tip.txt`); round-end census CONF-RC=0,
+  DIR-RC=0, VERIFY ok (`census-after-receipt.txt`).

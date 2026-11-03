@@ -1,0 +1,25 @@
+# L1 reproduction of sentinel01 S1 (HIGH) — the C1 v3 fence refusal is defeated by two form-feed lines
+# frozen instrument: census/round-54/c1-counter.py (sha256 f45d3d8f4eced147b7e2c4127bf5fefe6d080f2f0fd0c637cfd44f8d41fccf7e), not edited
+# fixture: F7-TILDE-FENCE rebuilt with census/round-54/fixtures/build-fixtures.py (scratch, /fast/scratch/hyaku/souji-r54/s1-p16)
+# attack: insert two lines containing only U+000C (form feed) directly above the `~~~` fence line of SCORECARD.md; nothing else changes
+# commit diff (base..attack): 2 insertions, 0 deletions  (git diff --numstat 2daa874557c208faf054b29b53a8c0bb8a1d4653 fa7c5faf22cc -- SCORECARD.md → "2	0	SCORECARD.md")
+# recompute: python3 -B census/round-54/c1-counter.py --root <fixture> --rev <rev> --base 2daa874557c208faf054b29b53a8c0bb8a1d4653 --record-sha256 d55ffd7f99ad4c0aaabc1ea4c7fc40e7aabf7e702aa2b9f79c2a8b419f98edbf
+
+## honest F7 (committed shape, base == tip 2daa874557c2) — the counter kills it as designed
+exit=1
+SUMMARY sites=2 mismatches=2 filed=0 unfiled=2 record_sha=ok appended=ok multi=0 inert=0 fenced=2 straddle=0 bogus=0 logunfiled=0 logrecomp=0 recomputed=79 rev=2daa874557c2 base=2daa874557c2
+
+## P16 attack (same corrections, two form-feed lines above the fence)
+exit=0
+SITE path=SCORECARD.md line=5 stated=78 recomputed=79 status=mismatch filed=yes
+SITE path=census/round-51/preregistration.txt line=3 stated=78 recomputed=79 status=mismatch filed=yes
+SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 recomputed=79 rev=fa7c5faf22cc base=2daa874557c2
+
+## single form feed on its own line (control arm, same attack family)
+exit=1 — fenced=1: one correction escapes the fence and is read as an INERT correction (`INERT-CORRECTION SCORECARD.md:5 ... carries no anchor`); the exit is 1 only through that side effect.
+
+## cause (read from the frozen bytes)
+c1-counter.py: hidden_lines() numbers the lines of the correction file with str.splitlines() (which also breaks on \x0b \x0c \x1c \x1d \x1e \x85 \u2028 \u2029); the correction's own line number is a plain '\n' count (corr.count('\n', 0, m.start()) + 1). The two schemes disagree by the number of exotic separators above the correction.
+
+## status
+Reproduced by the L1 (this receipt). Not fixed: the frozen bytes are never edited in-round; the fix is a counter v4 in r55 with a red-before fixture F7-FF (the P16 shape) committed first. Routed as the first r55 item. Operator ruling requested (L0) on whether C1 is admitted with this named limit or held.

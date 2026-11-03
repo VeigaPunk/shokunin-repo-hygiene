@@ -185,7 +185,31 @@ Seat-by-seat (verdict · what it attacked · what it changed):
   zone is ignored: exit 2 CANNOT-EVALUATE, not acceptance). Carry-over and the v2-arm control
   are clean. One observation corrected the seat's own prediction: `rstrip()` strips trailing
   tabs, so a close with a trailing tab is CommonMark-correct and accepted.
-- **sentinel01** and **connector01**: findings incorporated below when they land.
+- **sentinel01** (write-scope and hardening review; verdict CONDITIONAL PASS, 1 HIGH, 2 MEDIUM, 1 LOW
+  and 2 named-limit observations; host trust boundary intact: no repo-config execution, no scratch
+  escape, no network, no secret read, no fleet write). **S1 HIGH — the C1 fence refusal is defeated by
+  exotic line separators.** `hidden_lines()` numbers the file with `str.splitlines()` (which also
+  breaks on `\x0b \x0c \x1c \x1d \x1e \x85 \u2028 \u2029`); the correction's own line number counts
+  only `\n`. The L1 reproduced it independently: the committed F7 shape with two form-feed lines
+  directly above the `~~~` fence goes from exit 1 (`fenced=2`) to exit 0 (`filed=2 unfiled=0
+  fenced=0`); receipt `census/round-54/records/s1-formfeed-reproduction.txt`. The frozen prereg's
+  kill rule does not name this shape, so under the protocol it is a named limit; it is nonetheless the
+  claim's central refusal, so it is reported as the round's HIGH finding and put to the operator (L0).
+  **S2 MEDIUM — the pair scan is ASCII-only** (`->`); LOG.md:1845 and :1858 use `→` in the same idiom
+  and are not scanned (both pairs below the registry count, so a coverage gap, not a live misread).
+  **S3 MEDIUM — the unknown-receipt-key regex is uppercase-only** (the same class as reviewer02 NL-3).
+  **S4 LOW** — the builder's `--work` guard accepts a relative path and nests fixtures (hardening; no
+  escape). **S5 LOW / named limit** — the C1 docstring promises a `PRISTINE FAIL` class the C1 counter
+  never emits (the docstring is stale; exit codes are what the prereg uses). **S6 LOW / named limit** —
+  `--scratch` is accepted and ignored by both counters; only `--work` steers writes (the prereg's
+  recompute commands pass `--scratch DIR` with no effect).
+- **connector01** (sibling-overlap scan on the three declared surfaces: NO-OVERLAP on all three; 20
+  sibling lanes counted, the three hits opened and classed as non-overlapping; the fleet root moved
+  after the capture with no new top-level entry, so ENTRIES=49 stands). **PTR — the pointer exemption
+  is broader than disclosed.** `PTR_RE = [A-Za-z0-9_.\-]+:\d` is not path-scoped, so a timestamp on an
+  overstating pair line (`10:15`) evades `UNFILED-SOURCES-ANNOTATION`; the connector measured it on the
+  F12 fixture and proposes narrowing the token to a path-like form (the r55 proposal; not applied here).
+  Receipts: `.ufo/waves/round-54/w1/S54connector01/receipts/`.
 
 Named-limit findings from the attacks (routed to r55 — none edits the frozen bytes):
 
@@ -245,6 +269,8 @@ cannot be edited):
 | the r53 report's Mistakes count: the report says "six rows"; the table has seven. The naive count `grep -c '^| '` returns eight because it counts the header row | `.ufo/reports/round-53/souji.md:193` ("six rows"); `corpus/lessons/round-53.md` `## Mistakes`: header + separator + 7 body rows; `awk '/^## Mistakes/{f=1;next} /^## /{f=0} f && /^\| /' corpus/lessons/round-53.md \| tail -n +2 \| wc -l` → `7`; `grep -c '^| '` → `8` (revenger01 item 1; r53 verifier §6.1) | none — the r53 verifier recomputed the SOURCES count but not the Mistakes count | the counting command above (header excluded by `tail -n +2`), with a red arm shown: the naive command gives 8, the claimed 6, the true 7. This round's report counts its own table the same way. |
 | the first v3 selftest failed 1 of 13 cases on F12b (exit 1, expected 0): the registry-row regex used POSIX classes `[[:space:]]` inside a Python `re` pattern, which reads as a nested set | selftest run before the freeze: `FutureWarning: Possible nested set` then `SELFTEST fail cases=13` with `F12b-LOG-FILED fail rc=1 want_rc=0` | the selftest (the fixture caught it) | regex corrected to `[ \t]`; selftest green 13/13. Red-before shown (the F12b case), so the fix counts as shown able to fail |
 | a reviewer-seat fixture run used the fixture's capture path where the round's capture path was required (a seat-side mispairing; the receipt binding flagged the mismatch as `CAPTURE_SHA256` and `FLEET_HEAD` differences) | reviewer02 §9 ("disclosed runner defect"); the three invalid outputs are preserved in that seat's `runs/` | the receipt binding (`CAPTURE-RECEIPT-MISMATCH`) — it did what it is for | corrected runs are the results; the seat's three invalid runs are kept, not deleted |
+| the C1 fence refusal was declared to implement the three fence classes over the correction file, but its line model mixes two numberings: the hidden set uses `str.splitlines()` (breaks on form feed, vertical tab, the C1/C2 separators and the Unicode line separators) while the correction's own line number counts only `\n`. Two form-feed lines above a `~~~` fence turn an F7-shaped attack from exit 1 into exit 0 | `census/round-54/records/s1-formfeed-reproduction.txt` (L1 reproduction, scratch fixture); sentinel01 S1 (HIGH) `census/round-54/wave/S54sentinel01.md` | none — the frozen predicate names committed fixtures only; no committed fixture carries an exotic separator, and the honest-state and fixture checks were all ASCII | routed to r55 as counter v4 (one line model for hidden set and correction numbering) with a red-before fixture F7-FF committed first; the fix is **not yet shown able to fail**, so it does not count as fixed this round; operator ruling requested (L0) on C1's admission meanwhile |
+| the pointer exemption `PTR_RE = [A-Za-z0-9_.\-]+:\d` is broader than the disclosed `path:line` pointer: any token followed by a colon and a digit exempts the line, so a timestamp on an overstating pair line hides it from `UNFILED-SOURCES-ANNOTATION` | `census/round-54/c1-counter.py` line 80; connector01 measured proposal `census/round-54/wave/S54connector01.md` §5; the disclosure in `census/round-54/preregistration.txt` ("exempts lines carrying a path:line pointer") | none — the exemption was written as a shape check and not checked against the disclosure it carries | routed to r55 (narrow to a path-like token, fixture `F12c-LOG-POINTER-EXEMPT` plus a timestamp arm); not applied this round |
 
 ## Named limits carried into r55 (consolidated)
 
@@ -255,6 +281,15 @@ cannot be edited):
   tool's own count; the receipt binds bytes and consistency, not execution or path; FLEET_HEAD
   is format-checked, not resolved; the fence class is line-level, not full CommonMark.
 - N1, N5, N6 (critic) and NL-1 to NL-5 (reviewer02) above. N2–N4 are errata, not limits.
+- **HIGH, routed first to r55:** S1 (sentinel01) — the fence refusal is defeated by exotic line
+  separators (two form-feed lines above a `~~~` fence: exit 0). Fix: counter v4 with one line model,
+  red-before fixture F7-FF committed first. Operator ruling on C1's admission meanwhile (L0).
+- **MEDIUM, routed to r55:** S2 (ASCII-only pair scan; LOG.md:1845 and :1858 use `→`); S3 (uppercase-only
+  unknown-receipt-key regex, as NL-3); PTR (connector01; the pointer exemption is path-unscoped, so a
+  timestamp hides an overstating pair line); reviewer01 R1–R6 (above).
+- **LOW / named limit, routed:** S4 (the builder's `--work` guard accepts a relative path); S5 (the C1
+  docstring promises a `PRISTINE FAIL` the C1 counter never emits); S6 (`--scratch` is accepted and
+  ignored by both counters; the prereg's recompute commands pass it with no effect).
 - The mutation survivors M2, M7 and M11 (coverage gaps) — the r55 fixtures they name: `F8b-BT4-SHORT-RUN`
   (a ```` ```` ```` fence with a bare ` ``` ` content line; v3 must hide the corrections), `F12c-LOG-POINTER-EXEMPT`
   (a LOG pair line with a `path:line` pointer, no filing, must stay green), and `FA9-WRONG-TOOL-PIN`
