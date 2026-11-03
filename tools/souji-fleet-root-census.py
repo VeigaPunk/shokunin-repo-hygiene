@@ -55,7 +55,7 @@ GIT_TIMEOUT = 600
 CRED_DIRS = ('.omp', '.ssh', '.gnupg', '.aws', '.kube', '.docker', '.config/gh')
 CRED_NAME = re.compile(
     r'(?i)(\A\.env(\Z|\.)|\bcreds?\b|credential|secret|password|token|\.pem\Z|\.key\Z|\.p12\Z|\.pfx\Z'
-    r'|\.kdbx\Z|\Aid_(rsa|dsa|ecdsa|ed25519)|\A\.(ssh|gnupg|aws|netrc|kube|docker|omp)\Z)')
+    r'|\.kdbx\Z|\Aid_(rsa|dsa|ecdsa|ed25519)|\A\.(ssh|gnupg|aws|netrc|kube|docker)\Z)')
 
 
 class Refused(Exception):
