@@ -325,6 +325,13 @@ package's F3 set plus those four locators.
 
 - **Round-55 bounded source search for the C1 v4 one line model (2026-11-03).** Question: what primary text grounds the line-boundary set that the frozen C1 v4 counter's hidden-line numbering must agree with, and therefore shows why a `str.splitlines()`-based line numbering diverges from an LF-only one (the r54 HIGH sentinel S1 mechanism)? Where: `https://docs.python.org/3.12/library/stdtypes.html#str.splitlines` only (curl -sSL HTTP 200, no redirect, 648964 bytes, sha256 `0b10fb9e7e5b8db1d1283835b98b6a9c167871bf6475937aa5d0e1467956a352`; pinned under `census/round-55/sources/`). Identified 1 document, screened 1, included 1 (S278, section `str.splitlines(keepends=False)`), excluded 0. The C2 `#`-row grounding is the already-landed S276, reused without a new search. Stop: the four located quotes are verbatim substrings of the pinned capture (`census/round-55/sources/s278-located-quote.txt`) and the page heading `Python 3.12.` is present; one page fetched, nothing rejected.
 
+- Round56 bounded re-open, 2026-11-03: question—when does an HTML comment block
+  begin? Searched CommonMark 0.31.2 §4.6 only; identified 1, screened 1,
+  included 1 (existing S277), excluded 0. Stop: start condition and indentation
+  quote located; capture and Gate in round-56 lesson. The subsequent reviewer
+  found inline comments are a different visibility surface; no whole-Markdown
+  equivalence is inferred. S277 used-by gains the round-56 entry; no new id.
+
 ## Leads (unopened)
 
 - Git mailing list, "[PATCH 0/8] builtin/maintenance: use "geometric" strategy by default" — https://ratatoskr.run/git/2026/02/8029429/t

@@ -160,3 +160,20 @@ and mismatched T9 label), actionability 4/5 (paired receipts and concrete next p
 conciseness 3/5 (large protocol/evidence overhead); mean 3.2. Highest-impact next move:
 closed inline-comment negative controls before freezing; then all-findings mutation
 assertions. User should see this as a documented rejected round, not an admitted repair.
+
+### Terminal standing measurements
+
+At content revision ff2a3c76a63f14e922817900fb2534a2d392d0bc the clean-tree
+standing suite prints assertions=609 mismatches=76 registered=76 unfiled=0,
+EXIT=0 (census/round-56/records/landing-suite-final.txt, staged outside the
+lane before copying). The r53/r54 C1/C2 historical commands at that same
+revision all exit 0 (r53-c1.txt, r53-c2.txt, r54-c1.txt, r54-c2.txt in the
+records directory). No standing pass is inferred from the earlier usage/dirty
+receipts. Final source census receipt CONF-RC=0 DIR-RC=0, verifier rc 0,
+61 pre-existing W04 warnings, 202 rows. Fleet misroot sweep showed only
+operator-owned .scratch run-state files and shared L0 changes; no seat misroot.
+
+The quotePath differential receipt's raw bytes were synthetic, fed to the
+actual parser functions through a stubbed Git return. Its “captured from a
+scratch repo” wording is imprecise; the earlier r55 receipt contains the real
+Git capture. This is de-claimed parser hardening, not live execution evidence.

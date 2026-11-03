@@ -2713,3 +2713,8 @@ addendum, appended to the prereg, commits 8a793e7ae9131578bdec393982760217f62095
   Q114 in corpus/lessons/round-56.md; no frozen counter changes after cce21b55.
 
 - Integration commit `31ef3388a9ab855018c6a5c5ddf8729ffb182300` carried settled wave evidence and harm dispositions. Its standing suite read unfiled=6: six abbreviated receipt pointers in new SCORECARD rows. Those pointers are now full lane-relative paths; the red receipt is retained in census/round-56/records/landing-suite-pointer-red.txt.
+- Pointer repair and final census commit: `ff2a3c76a63f14e922817900fb2534a2d392d0bc`.
+  Measured there, the standing suite is green: assertions=609 mismatches=76
+  registered=76 unfiled=0, EXIT=0; r53/r54 C1/C2 all EXIT=0. Distinct staged
+  receipts are in census/round-56/records/landing-suite-final.txt and r53/r54 files.
+  Final source census receipt verifies conf_rc=0 dir_rc=0, 61 W04; rows=202.
