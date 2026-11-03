@@ -1300,3 +1300,36 @@ and routed to r54.
   (assimilation held); r48 census conf-form.
 - Standing: the landing-suite receipt (census/round-46/c1-counter.py) at the r54 tip;
   the census before→after in the v1 receipt form.
+
+### Round 54 measurements (2026-11-03; base fe12daad2549f534650d406ebdbac9113d59313f; freeze 3c394cab0cd406bbab72b8d365e0f3deed4ef98a; prereg census/round-54/preregistration.txt; real-lane measured commit bfdbb336329e6afba3ab1ca83cbd6d9759271062)
+
+| claim | axis | before | after | counting command | measured commit |
+|---|---|---|---|---|---|
+| C1 the annotation-agreement counter v3 instruments the r53 routed filing surfaces (tilde/parity/HTML-comment hidden lines, zone-edge straddle, bogus-recomputed, LOG/README SOURCES-pair scan) | calibration 7 | v2 arm kills 5 of 13 matrix rows (F2–F6); F7–F12 exit 0 (`census/round-54/records/c1-matrix-v2.tsv`) | v3 kills 11 of 13 rows, each with its named finding (F7–F9 CORRECTION-IN-FENCE, F10 ZONE-TOKEN-STRADDLES-EDGE, F11 BOGUS-RECOMPUTED, F12 UNFILED-SOURCES-ANNOTATION); F1 and F12b green; real lane exit 0 `unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0` (`census/round-54/records/c1-matrix-v3.tsv`, `c1-tip.txt`) | `awk -F'\t' 'NR>1 && $5==1{n++} END{print n+0}' census/round-54/records/c1-matrix-v2.tsv` → 5; the same on c1-matrix-v3.tsv → 11; `python3 -B census/round-54/c1-counter.py --root . --rev bfdbb336329e6afba3ab1ca83cbd6d9759271062 --base fe12daad2549f534650d406ebdbac9113d59313f --record-sha256 2b90a262c29772d4a9a7bd5ab29ce06b9d8f350832f0d0cd5114d52b0f6dad30 --sources-rev-before f778b9d131574d3ff09c0cc8a077643c0fc84bb4 --sources-rev-after 9bf9234ae4d11c7b31706354302a9e95ad0d1f81` → exit 0 | real lane bfdbb336; fixture matrix from the deterministic builder (revs pinned) |
+| C2 the capture counter v3 instruments the widened `#`-row shape, unknown receipt keys, CAPTURE-CRLF, the `--tool-sha256` pin, and the FA7/FA8/FH2 branch fixtures | coverage 8 | v2 arm kills 6 of 10 (FA1, FA2, FA3, FA6, FA7, FA8); FA4 and FA5 exit 0; FA6's first finding is a spurious CAPTURE-RECEIPT-MISMATCH (`census/round-54/records/c2-matrix-v2.tsv`); the pin argument does not exist | v3 kills 8 of 10 (FA4 COMMENT-AMBIGUOUS-NAME, FA5 RECEIPT-UNKNOWN-KEY, FA6 CAPTURE-CRLF first); FH and FH2 green; real lane exit 0 `receipt=ok sorted=ok tool_pin=ok` over the fresh capture; wrong pin → TOOL-SHA-ARG-MISMATCH rc 1 (`census/round-54/records/c2-matrix-v3.tsv`, `c2-tip.txt`) | `awk -F'\t' 'NR>1 && $5==1{n++} END{print n+0}' census/round-54/records/c2-matrix-v2.tsv` → 6; the same on c2-matrix-v3.tsv → 8; `python3 -B census/round-54/c2-counter.py --root . --rev bfdbb336329e6afba3ab1ca83cbd6d9759271062 --capture census/round-54/records/fleet-root-census.tsv --receipt census/round-54/records/fleet-root-census-run.txt --tool-sha256 e7e79952f7830d75c5b0eee35c2369716053f40121c7d3be370f7abdda067a5b` → exit 0 | real lane bfdbb336; base fe12daad has no capture (control rc 128) |
+
+C1 and C2 both verify by their frozen predicates over the committed bytes (the critic seat's
+falsification: both SURVIVE; the v2 arm is not vacuous on the new fixtures; the real lanes are
+green at the measured commits). Named limits and routed defects are in corpus/lessons/round-54.md
+`## Wave findings` and `## Named limits carried into r55`: reviewer01 R1–R6 (hidden-correction
+swallow, dual-anchor aliasing, pair-filing stale drop, rows-word dodge, fence over-hide, pair-scan
+fence false positive); reviewer02 NL-1–NL-5; critic N1, N5, N6; mutation01 M2, M7, M11. No owned
+score changed (calibration 7, coverage 8, operability 8): both claims are instrument amendments,
+and the kill-power over committed attack fixtures is the measured move. No capability row enters
+the table: both claims amend existing instruments and no new repertoire is demonstrated.
+
+### Round 54 corrections (append-only; see corpus/lessons/round-54.md ERRATUM-R54-1 to -3)
+
+R54-CORRECTION census/round-54/preregistration.txt C2 kill rule: the wrong-pin refusal is shown on the real lane, not in the selftest (no `--tool-sha256` selftest arm; routed FA9).
+
+R54-CORRECTION census/round-54/preregistration.txt C1 F11 mechanism clause: v2 prints `mismatches=1 filed=1 unfiled=0`, not `mismatches=0/unfiled=0`.
+
+R54-CORRECTION census/round-54/controls/c1-control-donothing.txt "filed=no is not printed": the v2 arm on F11 prints `filed=no` on the SCORECARD SITE line.
+
+### Planned (r55, appended)
+
+- C1 candidate (calibration): counter v4 — prefix-tolerant correction lexing audited against hidden lines (R1); every anchor occurrence on a site line judged (R2); pair-form filings with a stale pair differing from the annotation refused (R3); the unit word `rows` optional in the pair scan (R4); fence start conditions per CommonMark 0.31.2 (R5); PAIR_SITES hide-fenced lines (R6); fixtures reproducing each as a red-before, shown able to fail, plus F8b-BT4-SHORT-RUN (M2), F12c-LOG-POINTER-EXEMPT (M7) and the SOURCES-RECOMPUTE-MISMATCH arm (N5). Prereg amendments quote summary lines verbatim (ERRATUM-R54-2 class).
+- C2 candidate (coverage): counter v4 — `#`-leading rows with four tabs refused (NL-1); unknown-key detection case- and whitespace-insensitive (NL-3, NL-4); pin-shape errors refused by name (NL-5); FA9-WRONG-TOOL-PIN selftest arm so the pin branch is covered by the selftest (M11), with the prereg's citation corrected to the arm that runs.
+- Operator rulings still open (routed around, never assumed): credential-shaped names refuse-vs-redact (r52); `ignored`-column derivation (r52); r46 mass id drift (assimilation held); r48 census conf-form (recorded, this host rc 0).
+- Standing: the landing-suite receipt (census/round-46/c1-counter.py) at the r55 tip; the census before→after in the v1 receipt form; the r52/r53 counters unchanged at the r55 tip.
+- Integrator (not this lane): the r53 verifier §6.2 wave-results pointer (fleet-side wave artifacts not durable).

@@ -689,3 +689,26 @@ extra keys / CRLF unnamed; R6 tool pin absent; R7 fixture coverage (receipt-ENTR
 symlink branches); R8 builder hardening; R9 oracle pinning; R10 fixture rev
 determinism; R11 receipt binds bytes not path; R12 exit-code ambiguity; R13 wording
 drifts.
+
+## Round 54 contracts
+
+Both r53 counters are amended as NEW frozen versions (the r53 bytes are never edited and stay
+the standing v2 acceptance-control arm). Fixtures are built by
+census/round-54/fixtures/build-fixtures.py with pinned GIT_AUTHOR_DATE/GIT_COMMITTER_DATE
+(fixture revs reproduce across builds; verified by two builds). The selftests verify the
+builder and expected-TSV sha256 pins BEFORE exec (`--builder-sha256`, `--expected-sha256`).
+Expected verdicts: census/round-54/records/c1-selftest-expected.tsv (13 rows) and
+c2-selftest-expected.tsv (10 rows).
+
+| name | kind | entry command | verdict map | self-test | pinned-value path | write scope | owner |
+|---|---|---|---|---|---|---|---|
+| r54 C1 gate (annotation counter v3) | gate | `python3 -B census/round-54/c1-counter.py --root LANE --rev FULL40 --base fe12daad2549f534650d406ebdbac9113d59313f --record-sha256 2b90a262c29772d4a9a7bd5ab29ce06b9d8f350832f0d0cd5114d52b0f6dad30 --sources-rev-before f778b9d131574d3ff09c0cc8a077643c0fc84bb4 --sources-rev-after 9bf9234ae4d11c7b31706354302a9e95ad0d1f81 --scratch DIR` | 0 `SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0`; 1 any finding (MULTIPLE-ANNOTATIONS, RECORD-SHA-MISMATCH, INERT-CORRECTION, CORRECTION-IN-FENCE, DELETED-LINES, ZONE-TOKEN-STRADDLES-EDGE, BOGUS-RECOMPUTED, UNFILED-SOURCES-ANNOTATION, SOURCES-RECOMPUTE-MISMATCH) or unfiled mismatch; 2 could-not-evaluate (incl. a flagged pair filing without --sources-rev-before/after) | `python3 -B census/round-54/c1-counter.py --selftest --work DIR --builder-sha256 ae5881f850ba5f5895fc27e6e3185658af372535ae7ccf971476175be118b1ba --expected-sha256 4e73c495b6a7d1db1ef8dc5506ac874a167720a48e7618d2a41ccec55af2a1c7` (census/round-54/records/c1-selftest.txt: SELFTEST pass cases=13); do-nothing control census/round-54/controls/c1-control-donothing.txt (red: C1V3-COUNTER-ABSENT at base) | census/round-54/c1-counter.py sha256 f45d3d8f4eced147b7e2c4127bf5fefe6d080f2f0fd0c637cfd44f8d41fccf7e; census/round-54/records/c1-selftest-expected.tsv sha256 4e73c495b6a7d1db1ef8dc5506ac874a167720a48e7618d2a41ccec55af2a1c7 | scratch DIR only; reads committed bytes | souji |
+| r54 C2 gate (capture counter v3) | gate | `python3 -B census/round-54/c2-counter.py --root LANE --rev FULL40 --capture census/round-54/records/fleet-root-census.tsv --receipt census/round-54/records/fleet-root-census-run.txt --tool-sha256 e7e79952f7830d75c5b0eee35c2369716053f40121c7d3be370f7abdda067a5b --scratch DIR` | 0 `SUMMARY entries=49 rows=49 unclassified=0 class_mismatch=0 counts=ok tool_sha=ok removal_proposed=0 receipt=ok sorted=ok tool_pin=ok`; 1 any finding (ROWS-UNSORTED, COMMENT-AMBIGUOUS-NAME, CAPTURE-RECEIPT-MISMATCH, RECEIPT-MALFORMED, RECEIPT-UNKNOWN-KEY, CAPTURE-CRLF, RECEIPT-CRLF, TOOL-SHA-ARG-MISMATCH) or PRISTINE FAIL FLEET-CENSUS-ABSENT; 2 could-not-evaluate (incl. a malformed --tool-sha256) | `python3 -B census/round-54/c2-counter.py --selftest --work DIR --builder-sha256 ae5881f850ba5f5895fc27e6e3185658af372535ae7ccf971476175be118b1ba --expected-sha256 e32f793468cf370781a860f8b642b6a42e1d589f70c0b7f575ded130263fc00d` (census/round-54/records/c2-selftest.txt: SELFTEST pass cases=10); do-nothing control census/round-54/controls/c2-control-donothing.txt (red: C2V3-COUNTER-ABSENT at base) | census/round-54/c2-counter.py sha256 84b05295d5b84af23079c8fade6f7e640454ac25c56c842fb0233ea779735e09; census/round-54/records/c2-selftest-expected.tsv sha256 e32f793468cf370781a860f8b642b6a42e1d589f70c0b7f575ded130263fc00d | scratch DIR only; reads committed bytes | souji |
+
+Named limits of the frozen v3 bytes (routed to r55, consolidated in corpus/lessons/round-54.md):
+R1 hidden-correction swallow behind a wrapper or with leading spaces; R2 dual-anchor aliasing;
+R3 pair-filing stale drop; R4 rows-word dodge in the pair scan; R5 fence over-hide against
+CommonMark 0.31.2; R6 pair scan does not hide-fenced lines; NL-1 to NL-5 (capture `#` rows
+with four tabs, prose comments with five, uppercase-only unknown keys, whitespace-variant
+keys, pin shapes); M2, M7, M11 coverage gaps (fixtures F8b, F12c and selftest arm FA9 named).
+The `--tool-sha256` branch is demonstrated on the real lane, not in the selftest (ERRATUM-R54-1).

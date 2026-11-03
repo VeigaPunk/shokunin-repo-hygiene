@@ -2587,3 +2587,46 @@ addendum, appended to the prereg, commits 8a793e7ae9131578bdec393982760217f62095
 - Holds unchanged: certification OFF, K5 HELD, NAMESPACE/reap holds, execution-audit
   attribution open; L0 routed around (credential-name rule, ignored-derivation, r46 mass
   id drift, r48 census conf-form).
+
+## Round 54 (2026-11-03, Linux omp host; base fe12daad2549f534650d406ebdbac9113d59313f = the r53 non-author verifier spot-check commit, verdict ok/admitted; freeze 3c394cab0cd406bbab72b8d365e0f3deed4ef98a before any claim receipt — prereg + both v3 counters + extended fixture builder + expected TSVs + both do-nothing controls + pre-flight receipts in that one commit)
+
+- Claims: C1 calibration 7 (the annotation-agreement counter amended to v3 — the r53 routed filing
+  surfaces instrumented as finding ids over thirteen committed fixtures; the frozen v2 counter is the
+  v2-arm acceptance control); C2 coverage 8 (the capture counter amended to v3 — widened `#`-row shape,
+  unknown receipt keys, the CAPTURE-CRLF class, the `--tool-sha256` argument pin, branch fixtures
+  FA7/FA8/FH2, over ten committed fixtures plus the fresh round-54 capture). No exploratory claim; no
+  assimilation; considerthese/ absent. Critic seat: both claims SURVIVE the frozen predicates and kill
+  rules (`.ufo/waves/round-54/w1/S54critic01.md`).
+- Wave w1: one v1 wave, 12 seats (scout 1, executor 3, scribe 1, reviewer 2, critic 1, mutation-tester 1,
+  sentinel 1, connector 1, revenger 1); attack roles 4 of 12 (33%); connectors 1; band 8–16; the L1 holds
+  the canonical planner seat. Seat reports copied to `census/round-54/wave/`; findings in
+  corpus/lessons/round-54.md `## Wave findings`.
+- Independent reproduction inside the round: executor01 AGREE 13/13 (C1 matrix and real lane
+  byte-identical); executor02 AGREE 10/10 (C2 matrix, FA6 pair, pin behaviour, real lane).
+- Measurements: C1 kills 5 → 11 of 13 matrix rows (v2 → v3), real lane exit 0 at bfdbb336; C2 kills
+  6 → 8 of 10 rows, real lane exit 0 with `tool_pin=ok` at bfdbb336. Counting commands in SCORECARD.md
+  `### Round 54 measurements`.
+- Capture: census/round-54/records/fleet-root-census.tsv with its RECEIPT_VERSION=1 run receipt, committed
+  at bfdbb336329e6afba3ab1ca83cbd6d9759271062 against fleet HEAD 3b0d5329147d3b05d3aec5e908c75405ae3bc05a
+  (49 entries; tracked 22, ignored 22, untracked-stray 5, symlink 0); tool bytes e7e79952 pinned.
+- S277 opened live this round by the scribe seat (CommonMark 0.31.2 §4.5 Fenced code blocks and §4.6 HTML
+  blocks; curl HTTP 200, no redirect, 514698 bytes, sha256 c85f56cc…f0d; five located quotes, each a
+  verbatim substring of the pinned capture, re-checked by the L1). Admitted through the knowledge entry
+  corpus/knowledge/correction-filing-fence-grammar.md. S276 reused for the C2 `#`-row grounding; its
+  used-by cell changed old→new (logged in corpus/lessons/round-54.md `## Gate`).
+- Registry: 200 rows at the capture commit and 201 with S277; census command in corpus/README.md
+  `## Round 54 frontier update`; census exit 0 (conf form, this host).
+- Errata (append-only, in the lesson, because the prereg and the control files are frozen):
+  ERRATUM-R54-1 (the wrong-pin refusal is shown on the real lane, not in the selftest), ERRATUM-R54-2 (the
+  F11 mechanism clause), ERRATUM-R54-3 (the control's "filed=no is not printed" line).
+- Routed defects to r55 (named limits of the frozen bytes; none edited): reviewer01 R1 (hidden-correction
+  swallow behind a wrapper or with leading spaces), R2 (dual-anchor aliasing), R3 (pair-filing stale
+  drop), R4 (rows-word dodge), R5 (fence over-hide vs CommonMark), R6 (pair scan not hide-fenced); reviewer02
+  NL-1 to NL-5; critic N1, N5, N6; mutation01 M2, M7, M11 (coverage gaps with named fixtures).
+- Closed r53 items: §6.1 (report count, mistake row recorded), §6.3 (prereg wording), §6.4 (oracle/builder
+  pins). §6.2 (wave-results pointer) stays with the protocol integrator.
+- Standing checks: r53 c1/c2 green at the measured commit; r52 c1/c2 green; r51 c1/c2 green; landing suite
+  `census/round-46/c1-counter.py` on a clean clone at bfdbb336 `assertions=570 mismatches=74 registered=74
+  corrected=0 exempted=0 unfiled=0` (rc 0); NTFS exclusion tolerance not widened.
+- Holds unchanged: certification OFF, K5 HELD, NAMESPACE/reap holds, execution-audit attribution open; L0
+  routed around (credential-name rule, ignored-derivation, r46 mass id drift, r48 census conf-form).
