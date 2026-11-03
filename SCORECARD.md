@@ -1363,3 +1363,28 @@ receipt `census/round-55/records/probe-numstat-quotepath.txt`). Both are in the 
   before→after in the v1 receipt form; the r53/r54 counters at the r56 tip.
 - Operator rulings still open (routed around, never assumed answered): credential-shaped names refuse-vs-
   redact (r52); the `ignored`-column derivation (r52); r46 mass id drift (assimilation held).
+
+### Round 55 no-harm findings (appended after the wave; the frozen predicates are unchanged)
+
+| claim | finding | evidence | verdict consequence |
+|---|---|---|---|
+| C2 coverage 8 | RD-A: a shape the frozen v3 counter refuses as an unknown receipt key (leading digit or underscore: `1KEY=x`, `_KEY=x`, `2=x`) now exits 0 under v4, because the v4 key pattern requires a letter first. The cause is a regex narrowing without a differential against v3's shapes. The frozen kill list does not name these shapes. | `.ufo/waves/round-55/w1/S55reviewer02/receipt-key-differential.txt`; `receipts/A28.txt`; lesson `## Mistakes` row 1 | the predicate holds; the no-harm rule is not met on this shape; the admission is the operator's ruling (L0 line filed); r56 first-character class `[A-Za-z0-9_]` |
+| C1 calibration 7 | no frozen-verdict harm found: the carry-over rows keep exit and finding; N11 changes the F10 SUMMARY counts only. N1 (a pair filing inside a fence or a comment counts as filed, carried from v3) is a named limit, not a regression. | `.ufo/waves/round-55/w1/S55critic01/S55critic01-report.md` §2–§4; `S55reviewer01/S55reviewer01-report.md` D14/D15 | verifies on its literal predicate; N1 is the first r56 item |
+
+Both verdicts stand on the committed bytes; no frozen byte was edited to change them.
+
+### Round 55 corrections (append-only; the no-harm table above is corrected here)
+
+R55-CORRECTION SCORECARD.md "C1 calibration 7" row, no-harm column: the statement "no frozen-verdict harm found" is superseded. Sentinel01 S55-S2 (MEDIUM, confirmed by the L1: `census/round-55/records/probe-s2-pair-indent-comment.txt`, v3 exit 1 UNFILED-SOURCES-ANNOTATION, v4 exit 0) is a v3→v4 regression: a four-space-indented `<!--` line hides a real overstatement from the pair scan, introduced by the R6 change. C1 verifies on its frozen predicate; the no-harm rule is not met on this shape.
+
+R55-CORRECTION C2 row: the RD-A regression stands as recorded above; the operator's ruling on both harms (C1 S55-S2, C2 RD-A) is the admission decision. Neither claim is admitted by the lane.
+
+### Round 55 wave dispositions (appended after WAVE-DONE; all 12 seats returned output; none dead)
+
+- Routed to r56 (counter v5 candidates, each red-before with a v3 differential): RD-A key first-character class;
+  S55-S2 comment-branch indent rule; N1/D14/D15 pair filings in fences and comments; S55-S1 binary-numstat refusal;
+  A09–A13 closer exotic whitespace; E09/E10 list-item fences; C04/C07 first-anchor INERT; N4 ratio exemption;
+  S55-S3 unlexed corrections as a named limit; S55-S5 empty-value receipt keys; P1 hyphenated receipt keys;
+  selftest harness assertion of every expected row (mutation01 C2-17/18); ERRATUM-R55-1 form-feed fixture.
+- Sibling routing (not edited here): kaidoku `tools/round-59/annotation-audit.py` and chousa
+  `tools/corpus/evidence/round50/stale-count-check.py` use splitlines on the S1 defect class (connector01).

@@ -1,0 +1,25 @@
+# S55-S2 probe (sentinel01, MEDIUM; confirmed by the L1 at landing time). NOT claim evidence; it is the
+# evidence for a v3 -> v4 regression that the frozen kill rule does not name.
+# Method: the committed F12-LOG-UNFILED fixture tip, archived into a scratch repo as a single commit
+# (rev == base, so DELETED-LINES cannot fire). Attack: one line "    <!--" (four spaces) inserted before
+# the overstatement line in LOG.md, committed as a second single commit; the counters read that rev.
+# Scratch repos removed after this receipt.
+
+== control: F12 as built (overstatement, no comment opener)
+  census/round-54/c1-counter.py exit=1
+  census/round-55/c1-counter.py exit=1
+
+== attack: four-space indented HTML-comment opener line before the overstatement
+  census/round-54/c1-counter.py  (frozen v3)
+FINDING UNFILED-SOURCES-ANNOTATION LOG.md:3 claims 274 -> 275 rows but the registry holds 3; no pair-form filing names it
+SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=1 logrecomp=0 ...
+  exit=1
+  census/round-55/c1-counter.py  (v4)
+SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 ...
+  exit=0
+
+Reading: v3 refuses the overstatement; v4 passes it. The cause is the R6 change (the pair scan now
+skips lines hidden by hidden_lines()), and hidden_lines() opens an HTML comment at any indent
+because its comment branch does not apply the CommonMark <=3-space start rule. A four-space line is
+an indented code block in CommonMark 0.31.2, so the overstatement stays visible in the rendered
+document. This is a regression of the r53 Mistakes row 5 class on v4 (no committed fixture covers it).

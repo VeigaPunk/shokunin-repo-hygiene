@@ -1,0 +1,51 @@
+=== write primitives in the committed tools ===
+census/round-55/c1-counter.py:472:    fdir.mkdir(parents=True, exist_ok=True)
+census/round-55/c2-counter.py:344:    fdir.mkdir(parents=True, exist_ok=True)
+census/round-55/fixtures/build-fixtures.py:232:    path.parent.mkdir(parents=True, exist_ok=True)
+census/round-55/fixtures/build-fixtures.py:235:    path.write_bytes(data)
+census/round-55/fixtures/build-fixtures.py:250:        import shutil
+census/round-55/fixtures/build-fixtures.py:251:        shutil.rmtree(d)
+census/round-55/fixtures/build-fixtures.py:252:    d.mkdir(parents=True, exist_ok=False)
+census/round-55/fixtures/build-fixtures.py:724:    Path(out).write_text('\n'.join(lines) + '\n')
+
+=== network surface (expect none) ===
+(none)
+
+=== subprocess call sites (arg-list, no shell=True) ===
+census/round-55/c1-counter.py:129:    p = subprocess.run(['git', '-C', str(root),
+census/round-55/c2-counter.py:106:    p = subprocess.run(['git', '-C', str(root),
+census/round-55/fixtures/build-fixtures.py:210:    p = subprocess.run(cmd, cwd=cwd, env=e, capture_output=True, timeout=120)
+
+=== C1 selftest with ONLY --scratch ===
+SELFTEST-CASE F23-SOURCES-RECOMP pass rc=1 want_rc=1 finding=SOURCES-RECOMPUTE-MISMATCH want_finding=SOURCES-RECOMPUTE-MISMATCH
+SELFTEST pass cases=27
+rc=0
+tree:
+c1-fixtures
+
+=== C2 selftest with ONLY --scratch ===
+SELFTEST-CASE FB4-PIN-SHAPE pass rc=2 want_rc=2 finding=TOOL-SHA-ARG-MALFORMED want_finding=TOOL-SHA-ARG-MALFORMED
+SELFTEST pass cases=15
+rc=0
+tree:
+c2-fixtures
+
+=== pin refusal rc (must be 2, before exec) ===
+CANNOT-EVALUATE PIN-MISMATCH builder sha256 e629a2e993b043bfc32904bc46612f5bdbc13909351cfe68f151b3f604fa8d62 != pinned 0000000000000000000000000000000000000000000000000000000000000000
+C1 rc=2
+C2 rc=2
+
+=== real lane legs at measured rev 4b10ddd1 (cwd = scratch) ===
+SITE path=SCORECARD.md line=1196 stated=78 recomputed=79 status=mismatch filed=yes
+SITE path=census/round-51/preregistration.txt line=125 stated=78 recomputed=79 status=mismatch filed=yes
+SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 recomputed=79 rev=4b10ddd1741a base=f056aaa031bb
+C1 rc=0
+SUMMARY entries=49 rows=49 unclassified=0 class_mismatch=0 counts=ok tool_sha=ok removal_proposed=0 receipt=ok sorted=ok tool_pin=ok rev=4b10ddd1741a
+C2 rc=0
+files created in cwd (expect none):
+
+=== pycache written outside --work when run WITHOUT -B (lane copy) ===
+total 36
+drwxr-xr-x 2 vgpnk vgpnk    44 Nov  3 18:54 .
+drwxr-xr-x 3 vgpnk vgpnk    71 Nov  3 18:54 ..
+-rw-r--r-- 1 vgpnk vgpnk 33309 Nov  3 18:54 build-fixtures.cpython-314.pyc

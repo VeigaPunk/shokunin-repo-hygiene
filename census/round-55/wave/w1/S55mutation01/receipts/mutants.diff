@@ -1,0 +1,244 @@
+=== C1-01-splitlines ===
+--- census/round-55/c1-counter.py
++++ mutant/C1-01-splitlines
+@@ -158,5 +158,5 @@
+     in_html = False
+     fence = None  # (char, min_length)
+-    for i, raw in enumerate(text.split('\n'), 1):
++    for i, raw in enumerate(text.splitlines(), 1):
+         indent = len(raw) - len(raw.lstrip(' '))
+         ln = raw.lstrip(' ')
+
+=== C1-02a-indent-prefix ===
+--- census/round-55/c1-counter.py
++++ mutant/C1-02a-indent-prefix
+@@ -104,6 +104,6 @@
+ CORR_FILE = 'SCORECARD.md'
+ ZONE = 32
+-CORR_RE = re.compile(r'^ {0,3}(?:<!--\s*)?R52-CORRECTION (\S+):(\d+) stale=(\d+) recomputed=(\d+)(?:\s*-->)?\s*$', re.M)
+-CORR2_RE = re.compile(r'^ {0,3}(?:<!--\s*)?R53-CORRECTION (\S+):(\d+) stale=(\d+)->(\d+) recomputed=(\d+)->(\d+)(?:\s*-->)?\s*$', re.M)
++CORR_RE = re.compile(r'^(?:<!--\s*)?R52-CORRECTION (\S+):(\d+) stale=(\d+) recomputed=(\d+)(?:\s*-->)?\s*$', re.M)
++CORR2_RE = re.compile(r'^(?:<!--\s*)?R53-CORRECTION (\S+):(\d+) stale=(\d+)->(\d+) recomputed=(\d+)->(\d+)(?:\s*-->)?\s*$', re.M)
+ ANNOT_RE = re.compile(r'(?:→|\()\s*(\d+)')
+ PAIR_ANNOT_RE = re.compile(r'(\d+)\s*(?:->|→)\s*(\d+)(?:\s+rows?\b)?')
+
+=== C1-02b-comment-prefix ===
+--- census/round-55/c1-counter.py
++++ mutant/C1-02b-comment-prefix
+@@ -104,6 +104,6 @@
+ CORR_FILE = 'SCORECARD.md'
+ ZONE = 32
+-CORR_RE = re.compile(r'^ {0,3}(?:<!--\s*)?R52-CORRECTION (\S+):(\d+) stale=(\d+) recomputed=(\d+)(?:\s*-->)?\s*$', re.M)
+-CORR2_RE = re.compile(r'^ {0,3}(?:<!--\s*)?R53-CORRECTION (\S+):(\d+) stale=(\d+)->(\d+) recomputed=(\d+)->(\d+)(?:\s*-->)?\s*$', re.M)
++CORR_RE = re.compile(r'^ {0,3}R52-CORRECTION (\S+):(\d+) stale=(\d+) recomputed=(\d+)(?:\s*-->)?\s*$', re.M)
++CORR2_RE = re.compile(r'^ {0,3}R53-CORRECTION (\S+):(\d+) stale=(\d+)->(\d+) recomputed=(\d+)->(\d+)(?:\s*-->)?\s*$', re.M)
+ ANNOT_RE = re.compile(r'(?:→|\()\s*(\d+)')
+ PAIR_ANNOT_RE = re.compile(r'(\d+)\s*(?:->|→)\s*(\d+)(?:\s+rows?\b)?')
+
+=== C1-03-alias-first-only ===
+--- census/round-55/c1-counter.py
++++ mutant/C1-03-alias-first-only
+@@ -288,5 +288,5 @@
+         stated = None
+         alias_fired = False
+-        for k, (ok_tokens, straddle) in enumerate(zones):
++        for k, (ok_tokens, straddle) in enumerate(zones[:1]):
+             if straddle:
+                 finding('ZONE-TOKEN-STRADDLES-EDGE',
+
+=== C1-04-pairinert-removed ===
+--- census/round-55/c1-counter.py
++++ mutant/C1-04-pairinert-removed
+@@ -385,10 +385,5 @@
+             fil = pair_filings.get((path, i))
+             match = [f for f in (fil or []) if (f[0], f[1]) == (a, b)]
+-            for f in (fil or []):
+-                if (f[0], f[1]) != (a, b):
+-                    pairinert += 1
+-                    finding('PAIR-FILING-INERT',
+-                            '%s:%d filing stale=%d->%d does not match the annotated pair %d->%d'
+-                            % (path, i, f[0], f[1], a, b))
++            pass
+             if not fil or not match:
+                 log_unfiled += 1
+
+=== C1-05-rows-required ===
+--- census/round-55/c1-counter.py
++++ mutant/C1-05-rows-required
+@@ -107,5 +107,5 @@
+ CORR2_RE = re.compile(r'^ {0,3}(?:<!--\s*)?R53-CORRECTION (\S+):(\d+) stale=(\d+)->(\d+) recomputed=(\d+)->(\d+)(?:\s*-->)?\s*$', re.M)
+ ANNOT_RE = re.compile(r'(?:→|\()\s*(\d+)')
+-PAIR_ANNOT_RE = re.compile(r'(\d+)\s*(?:->|→)\s*(\d+)(?:\s+rows?\b)?')
++PAIR_ANNOT_RE = re.compile(r'(\d+)\s*(?:->|→)\s*(\d+)\s+rows?\b')
+ PTR_RE = re.compile(r'(?:[A-Za-z0-9_.\-]+/)*[A-Za-z0-9_.\-]+\.[A-Za-z0-9]{1,5}:\d')
+ REG_ROW_RE = re.compile(r'^\|[ \t]*S[0-9]{3,}[ \t]*\|', re.M)
+
+=== C1-06-ascii-only-arrow ===
+--- census/round-55/c1-counter.py
++++ mutant/C1-06-ascii-only-arrow
+@@ -107,5 +107,5 @@
+ CORR2_RE = re.compile(r'^ {0,3}(?:<!--\s*)?R53-CORRECTION (\S+):(\d+) stale=(\d+)->(\d+) recomputed=(\d+)->(\d+)(?:\s*-->)?\s*$', re.M)
+ ANNOT_RE = re.compile(r'(?:→|\()\s*(\d+)')
+-PAIR_ANNOT_RE = re.compile(r'(\d+)\s*(?:->|→)\s*(\d+)(?:\s+rows?\b)?')
++PAIR_ANNOT_RE = re.compile(r'(\d+)\s*(?:->)\s*(\d+)(?:\s+rows?\b)?')
+ PTR_RE = re.compile(r'(?:[A-Za-z0-9_.\-]+/)*[A-Za-z0-9_.\-]+\.[A-Za-z0-9]{1,5}:\d')
+ REG_ROW_RE = re.compile(r'^\|[ \t]*S[0-9]{3,}[ \t]*\|', re.M)
+
+=== C1-07-fence-indent ===
+--- census/round-55/c1-counter.py
++++ mutant/C1-07-fence-indent
+@@ -176,5 +176,5 @@
+             hidden.add(i)
+             continue
+-        if indent <= 3:
++        if True:
+             m = re.match(r'(`{3,}|~{3,})(.*)$', stripped)
+             if m and not (m.group(1)[0] == '`' and '`' in m.group(2)):
+
+=== C1-08-backtick-info ===
+--- census/round-55/c1-counter.py
++++ mutant/C1-08-backtick-info
+@@ -178,5 +178,5 @@
+         if indent <= 3:
+             m = re.match(r'(`{3,}|~{3,})(.*)$', stripped)
+-            if m and not (m.group(1)[0] == '`' and '`' in m.group(2)):
++            if m:
+                 fence = (m.group(1)[0], len(m.group(1)))
+                 continue
+
+=== C1-09-pair-hidefence ===
+--- census/round-55/c1-counter.py
++++ mutant/C1-09-pair-hidefence
+@@ -373,6 +373,4 @@
+         phidden = hidden_lines(ptext)
+         for i, ln in enumerate(ptext.split('\n'), 1):
+-            if i in phidden:
+-                continue  # r54 reviewer R6 routed fix: fenced examples are not annotations
+             if 'corpus/SOURCES.md' not in ln or PTR_RE.search(ln):
+                 continue
+
+=== C1-10-ptr-widened ===
+--- census/round-55/c1-counter.py
++++ mutant/C1-10-ptr-widened
+@@ -108,5 +108,5 @@
+ ANNOT_RE = re.compile(r'(?:→|\()\s*(\d+)')
+ PAIR_ANNOT_RE = re.compile(r'(\d+)\s*(?:->|→)\s*(\d+)(?:\s+rows?\b)?')
+-PTR_RE = re.compile(r'(?:[A-Za-z0-9_.\-]+/)*[A-Za-z0-9_.\-]+\.[A-Za-z0-9]{1,5}:\d')
++PTR_RE = re.compile(r'[A-Za-z0-9_.\-]+:\d')
+ REG_ROW_RE = re.compile(r'^\|[ \t]*S[0-9]{3,}[ \t]*\|', re.M)
+ PAIR_SITES = ['LOG.md', 'corpus/README.md']
+
+=== C1-11-closing-length ===
+--- census/round-55/c1-counter.py
++++ mutant/C1-11-closing-length
+@@ -171,5 +171,5 @@
+             if indent <= 3:
+                 body = stripped.rstrip(' ')
+-                if body and set(body) == {ch} and len(body) >= n:
++                if body and set(body) == {ch}:
+                     fence = None  # closing fence line itself is not hidden content
+                     continue
+
+=== C1-12-recompute-branch ===
+--- census/round-55/c1-counter.py
++++ mutant/C1-12-recompute-branch
+@@ -408,10 +408,5 @@
+                     return 2
+                 want.append(registry_count(rb))
+-            for f in match:
+-                if (f[2], f[3]) != (want[0], want[1]):
+-                    log_recomp += 1
+-                    finding('SOURCES-RECOMPUTE-MISMATCH',
+-                            '%s:%d filing recomputed=%d->%d but the census grep recomputes %d->%d'
+-                            % (path, i, f[2], f[3], want[0], want[1]))
++            pass
+ 
+     mism, filed = 0, 0
+
+=== C1-13-exemption-removed ===
+--- census/round-55/c1-counter.py
++++ mutant/C1-13-exemption-removed
+@@ -375,5 +375,5 @@
+             if i in phidden:
+                 continue  # r54 reviewer R6 routed fix: fenced examples are not annotations
+-            if 'corpus/SOURCES.md' not in ln or PTR_RE.search(ln):
++            if 'corpus/SOURCES.md' not in ln:
+                 continue
+             m = PAIR_ANNOT_RE.search(ln)
+
+=== C2-14-tab-rule-narrow ===
+--- census/round-55/c2-counter.py
++++ mutant/C2-14-tab-rule-narrow
+@@ -171,5 +171,5 @@
+     for ln in lines:
+         if ln.startswith('#'):
+-            if '\t' in ln:
++            if ln.count('\t') >= 5:
+                 finding('COMMENT-AMBIGUOUS-NAME', 'comment shaped like a data row (carries tabs): %r'
+                         % ln[:60])
+
+=== C2-15a-key-case ===
+--- census/round-55/c2-counter.py
++++ mutant/C2-15a-key-case
+@@ -88,5 +88,5 @@
+ HEX40 = re.compile(r'[0-9a-f]{40}')
+ RECEIPT_KEYS = ['RECEIPT_VERSION', 'TOOL_SHA256', 'FLEET_HEAD', 'CAPTURE_SHA256', 'ENTRIES']
+-RECEIPT_KV = re.compile(r'\s*#\s*([A-Za-z][A-Za-z0-9_]*)\s*=\s*(\S+?)\s*')
++RECEIPT_KV = re.compile(r'\s*#\s*([A-Z0-9_]+)\s*=\s*(\S+?)\s*')
+ DEFAULT_EXPECTED = HERE / 'records' / 'c2-selftest-expected.tsv'
+ BUILDER = HERE / 'fixtures' / 'build-fixtures.py'
+
+=== C2-15b-key-upper ===
+--- census/round-55/c2-counter.py
++++ mutant/C2-15b-key-upper
+@@ -262,5 +262,5 @@
+         kv = RECEIPT_KV.fullmatch(ln)
+         if kv:
+-            key = kv.group(1).upper()
++            key = kv.group(1)
+             if key in RECEIPT_KEYS:
+                 if key in recv:
+
+=== C2-16-space-tolerance ===
+--- census/round-55/c2-counter.py
++++ mutant/C2-16-space-tolerance
+@@ -88,5 +88,5 @@
+ HEX40 = re.compile(r'[0-9a-f]{40}')
+ RECEIPT_KEYS = ['RECEIPT_VERSION', 'TOOL_SHA256', 'FLEET_HEAD', 'CAPTURE_SHA256', 'ENTRIES']
+-RECEIPT_KV = re.compile(r'\s*#\s*([A-Za-z][A-Za-z0-9_]*)\s*=\s*(\S+?)\s*')
++RECEIPT_KV = re.compile(r'# ([A-Za-z][A-Za-z0-9_]*)\s*=\s*(\S+?)\s*')
+ DEFAULT_EXPECTED = HERE / 'records' / 'c2-selftest-expected.tsv'
+ BUILDER = HERE / 'fixtures' / 'build-fixtures.py'
+
+=== C2-17-fa9-arm-removed ===
+--- census/round-55/c2-counter.py
++++ mutant/C2-17-fa9-arm-removed
+@@ -349,5 +349,5 @@
+         f = row.split('\t')
+         exp[f[0]] = (int(f[1]), f[2] if len(f) > 2 else '')
+-    names = list(mod.C2_FIXTURES) + ['FA9-WRONG-TOOL-PIN', 'FB4-PIN-SHAPE']
++    names = list(mod.C2_FIXTURES) + ['FB4-PIN-SHAPE']
+     ok = True
+     for name in names:
+
+=== C2-18-fb4-arm-removed ===
+--- census/round-55/c2-counter.py
++++ mutant/C2-18-fb4-arm-removed
+@@ -349,5 +349,5 @@
+         f = row.split('\t')
+         exp[f[0]] = (int(f[1]), f[2] if len(f) > 2 else '')
+-    names = list(mod.C2_FIXTURES) + ['FA9-WRONG-TOOL-PIN', 'FB4-PIN-SHAPE']
++    names = list(mod.C2_FIXTURES) + ['FA9-WRONG-TOOL-PIN']
+     ok = True
+     for name in names:
+
+=== C2-19-classmismatch-id ===
+--- census/round-55/c2-counter.py
++++ mutant/C2-19-classmismatch-id
+@@ -223,5 +223,5 @@
+         if cls != want:
+             class_mismatch += 1
+-            problems_pre.append('CLASS-MISMATCH class %r want %r for %r' % (cls, want, name))
++            problems_pre.append('class %r want %r for %r' % (cls, want, name))
+         want_disp = 'report-only' if want == 'untracked-stray' else 'none'
+         if disp != want_disp:

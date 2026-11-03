@@ -2645,3 +2645,35 @@ addendum, appended to the prereg, commits 8a793e7ae9131578bdec393982760217f62095
   C2 recompute exit 0 (`c2-content-tip.txt`), landing suite `assertions=579 mismatches=76 registered=76
   corrected=0 exempted=0 unfiled=0` rc 0 (`landing-suite-content-tip.txt`); round-end census CONF-RC=0,
   DIR-RC=0, VERIFY ok (`census-after-receipt.txt`).
+
+## Round 55 (2026-11-03, Linux omp host; base f056aaa031bb65de27e7fa5daa38b0d4a443aedc = the r54 non-author verifier spot-check commit, verdict ok/admitted; freeze e8f338674dea386c186aa7657ef2142cbb4b6d48 before any claim receipt — prereg + both v4 counters + extended builder + expected TSVs + both do-nothing controls + pre-flight receipts in that one commit)
+
+- Claims: C1 calibration 7 (the annotation-agreement counter amended to v4 — the r54 routed surfaces
+  instrumented over 27 committed fixtures: one LF line model (the HIGH sentinel S1), prefix-tolerant
+  correction lexing, every anchor occurrence judged, PAIR-FILING-INERT, the pair grammar widened, the
+  CommonMark fence start conditions, hidden-line skip in the pair scan, a path-like pointer exemption,
+  and committed kill-power for the M2/M7/N5 survivors); C2 coverage 8 (the capture counter amended to v4 —
+  any tab-bearing `#` capture line refused, receipt keys tolerant of case and whitespace, named
+  TOOL-SHA-ARG-MALFORMED, the selftest pin arms FA9 and FB4, and the FA8 unnamed-kill-row named
+  CLASS-MISMATCH). No exploratory claim; the frontier step cites S278 (new, opened live 2026-11-03,
+  `corpus/knowledge/splitlines-line-model.md`).
+- Landed (lane commits, in order): freeze `e8f33867`; capture `9a1eaaa2`; receipt correction `4b10ddd1`
+  (the real-lane measured revision); real-lane legs and S278 sources `3ce0ba03`; registry row, knowledge
+  entry, lesson, QUALITY Q109/Q110, SKILL round-55 contracts, probe receipts `913fa479`; search-log entry,
+  README frontier, SCORECARD measurements `b6c6a93a`; wave evidence and closure as recorded in the
+  lesson `## Wave findings` and the report.
+- Measured (counting commands in SCORECARD `### Round 55 measurements`): C1 — the eight acceptance attacks
+  exit 0 under v3 and exit 1 under v4; the three honest over-hide states exit 1 under v3 and exit 0 under v4;
+  the 27-row exit-0 count 11 → 6; the carry-over 13 rows identical; real lane `c1-tip.txt` exit 0.
+  C2 — FB1/FB2/FB3 exit 0 under v3 and exit 1 under v4; the 13-row exit-0 count 5 → 2; real lane
+  `c2-tip.txt` exit 0; the wrong pin rc 1 and the malformed pin rc 2 by name.
+- Wave w1: one v1 wave, 12 seats (scout 1, executor 3, scribe 1, reviewer 2, critic 1, mutation-tester 1,
+  sentinel 1, connector 1, revenger 1); attack roles 4 of 12 (33%); band 8–16. Findings in
+  corpus/lessons/round-55.md `## Wave findings`; evidence in census/round-55/wave/w1/.
+- Findings that bind the verdicts: RD-A (reviewer02) — v4 passes receipt keys that begin with a digit or an
+  underscore, which v3 refused (a no-harm failure on C2, reported to the operator); N1 (critic, reviewer01
+  D14/D15) — a pair filing inside a fence or an HTML comment counts as filed (carried from v3; the highest
+  named limit; r56 first item). ERRATUM-R55-1..5 in the lesson (the F7-FF byte label, the PTR wording, two
+  control labels, a wrong pre-flight base, the receipt exit codes).
+- Holds unchanged: certification OFF, K5 HELD, NAMESPACE/reap holds; L0 rulings open (credential-shaped
+  names; the `ignored` derivation; r46 mass id drift; RD-A ruling filed this round).
