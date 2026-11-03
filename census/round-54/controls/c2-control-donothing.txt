@@ -1,0 +1,20 @@
+# souji round-54 C2 controls (absent-instrument + v2-arm acceptance)
+# (1) absent-instrument control: the amended counter does not exist at base
+base: fe12daad2549f534650d406ebdbac9113d59313f
+check: git cat-file -e fe12daad2549f534650d406ebdbac9113d59313f:census/round-54/c2-counter.py
+PRISTINE FAIL C2V3-COUNTER-ABSENT (a do-nothing control cannot reach the claimed v3 kills)
+# (2) the r53 sentinel-S4 routed fix shown able to fail: a wrong expected pin refuses
+# command: python3 -B census/round-54/c2-counter.py --selftest --work DIR --builder-sha256 ae5881f850ba5f5895fc27e6e3185658af372535ae7ccf971476175be118b1ba --expected-sha256 000...0
+negpin-rc=2 (want 2)
+CANNOT-EVALUATE PIN-MISMATCH (from negpin2.out): CANNOT-EVALUATE PIN-MISMATCH expected sha256 e32f793468cf370781a860f8b642b6a42e1d589f70c0b7f575ded130263fc00d != pinned 
+# (3) v2-arm acceptance control: the frozen r53 counter accepts the two new-acceptance attacks
+# source: census/round-54/records/c2-matrix-v2.tsv rows FA4/FA5 (dry-run receipts, revs deterministic)
+FA4-SPACE-NAME	v2-r53	e0aabc60013d	-	0	-	SUMMARY entries=3 rows=3 unclassified=0 class_mismatch=0 counts=ok tool_sha=ok removal_proposed=0 receipt=ok sorted=ok rev=e0aabc60013d
+FA5-EXTRA-KEY	v2-r53	2a6fdc6df02b	-	0	-	SUMMARY entries=3 rows=3 unclassified=0 class_mismatch=0 counts=ok tool_sha=ok removal_proposed=0 receipt=ok sorted=ok rev=2a6fdc6df02b
+# (4) FA6-CRLF: v2 exits 1 but drowns the cause in six misleading findings (column header
+# mismatch, disposition '\r', missing headers) — the named-class improvement is v3's; the
+# first v2 finding on FA6 is a spurious CAPTURE-RECEIPT-MISMATCH (header keys unreadable),
+# not the CR root cause. v3 prints FINDING CAPTURE-CRLF first.
+# (5) disclosure: FA7/FA8/FH2 exercise branches v2 already had (branch-coverage fixtures for
+# the r53 mutation survivors M-F1/M-F2); v2 kills them and so does v3 — not claimed as new kills.
+EXIT=1

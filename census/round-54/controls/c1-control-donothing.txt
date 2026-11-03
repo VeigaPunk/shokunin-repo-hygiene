@@ -1,0 +1,24 @@
+# souji round-54 C1 controls (absent-instrument + v2-arm acceptance)
+# (1) absent-instrument control: the amended counter does not exist at base
+base: fe12daad2549f534650d406ebdbac9113d59313f
+check: git cat-file -e fe12daad2549f534650d406ebdbac9113d59313f:census/round-54/c1-counter.py
+PRISTINE FAIL C1V3-COUNTER-ABSENT (a do-nothing control cannot reach the claimed v3 kills)
+# (2) the r53 sentinel-S4 routed fix shown able to fail: a wrong builder pin refuses
+# command: python3 -B census/round-54/c1-counter.py --selftest --work DIR --builder-sha256 000...0 --expected-sha256 4e73c495b6a7d1db1ef8dc5506ac874a167720a48e7618d2a41ccec55af2a1c7
+negpin-rc=2 (want 2)
+CANNOT-EVALUATE PIN-MISMATCH (from negpin.out): CANNOT-EVALUATE PIN-MISMATCH builder sha256 ae5881f850ba5f5895fc27e6e3185658af372535ae7ccf971476175be118b1ba != pinned 0
+# (3) v2-arm acceptance control: the frozen r53 counter accepts every NEW attack fixture
+# source: census/round-54/records/c1-matrix-v2.tsv rows F7-F12 (the v2 arm of the round matrix)
+(matrix not yet taken at control time — dry-run receipts below)
+F7-TILDE-FENCE	v2-r53	2daa874557c2	2daa874557c2	0	-	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 recomputed=79 rev=2daa874557c2 base=2daa874557c2
+F8-BT4-PARITY	v2-r53	5a0fafb73fe6	5a0fafb73fe6	0	-	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 recomputed=79 rev=5a0fafb73fe6 base=5a0fafb73fe6
+F9-HTML-COMMENT	v2-r53	fafd3a2e582f	fafd3a2e582f	0	-	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 recomputed=79 rev=fafd3a2e582f base=fafd3a2e582f
+F10-STRADDLE	v2-r53	aa36dab9c2ca	aa36dab9c2ca	0	-	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 recomputed=79 rev=aa36dab9c2ca base=aa36dab9c2ca
+F11-BOGUS-RECOMP	v2-r53	7325d506da78	7325d506da78	0	-	SUMMARY sites=2 mismatches=1 filed=1 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 recomputed=79 rev=7325d506da78 base=7325d506da78
+F12-LOG-UNFILED	v2-r53	ea328890f5c1	ea328890f5c1	0	-	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 recomputed=79 rev=ea328890f5c1 base=ea328890f5c1
+F12b-LOG-FILED	v2-r53	2f6ce4b930a0	2f6ce4b930a0	0	-	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 recomputed=79 rev=2f6ce4b930a0 base=2f6ce4b930a0
+# (4) disclosure: v2 already kills F2-F6 (carry-over v2 kills are not this round's claim);
+# F12b (honest pair filing) is green under both arms.
+# the v2 arm on F11 exits 0 with an unnamed silent acceptance (filed=no is not printed;
+# the site match masks the bogus recomputed) — the matrix row above shows exit 0, finding -.
+EXIT=1
