@@ -734,8 +734,11 @@ R1 (prefix-tolerant correction lexing), R2 (every anchor occurrence on a site li
 R3 (PAIR-FILING-INERT), R4/S2 (pair annotation with or without `rows`, with `->` or `→`), R5
 (CommonMark 0.31.2 fence start conditions: at most three spaces of indent, no backtick in a
 backtick fence's info string), R6 (pair scan hides fenced lines), the connector PTR narrowing
-(path-like pointer only), M2/M7/N5 committed fixtures, NL-1 (any tab-bearing `#` capture line
-is refused), NL-3/NL-4 (receipt keys tolerant of case and whitespace), NL-5 (named
-TOOL-SHA-ARG-MALFORMED), M11 (selftest pin arm FA9), and the FA8 unnamed-kill-row defect (the
-class mismatch is named CLASS-MISMATCH). Named limits of the frozen v4 bytes are listed in
-census/round-55/preregistration.txt "Named limits carried into v4". Certification stays OFF.
+(a dot before the colon and a digit after; a ratio such as `2.5:1` still exempts a line, ERRATUM-R55-2),
+M2/M7/N5 committed fixtures, NL-1 (any tab-bearing `#` capture line is refused), NL-3/NL-4 (receipt
+keys tolerant of case and whitespace; the first-character class is narrower than v3's, a no-harm
+failure reported as RD-A, corpus/lessons/round-55.md), NL-5 (named TOOL-SHA-ARG-MALFORMED), M11
+(selftest pin arm FA9), and the FA8 unnamed-kill-row defect (the class mismatch is named
+CLASS-MISMATCH). Named limits of the frozen v4 bytes are in census/round-55/preregistration.txt
+"Named limits carried into v4" and in corpus/lessons/round-55.md "Wave findings" (routed list for r56,
+including the pair-filing-in-fence false pass N1, the highest-severity limit). Certification stays OFF.
