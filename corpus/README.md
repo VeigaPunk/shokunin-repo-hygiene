@@ -933,3 +933,19 @@ a measured edge class does not promote a frontier ground to Core (PROVINCE
 - The round-56 work is instrument amendment on existing ground: the correction-filing counter (v5)
   and the capture counter (v5). Assimilation: none (no considerthese/; shokuknow merge/souji held by
   the open r46 L0 question).
+
+### Frontier (r57)
+
+- **F1 / correction-filing visibility (Core, extended).** The inline comment class is now held as
+  knowledge: `knowledge/inline-html-comment-visibility-r57.md` (S279 WHATWG §13.1.6, S280 CommonMark
+  §6.6; S281 MDN rejected as a secondary restatement that is silent on the renderer grammar). The
+  entry records the measured visibility table (B4/C4 hidden, C6/F29 visible) and the line-level limits.
+  Next: a source for the renderer's behaviour on WHATWG-invalid comment text if a future round grades
+  raw HTML authoring instead of markdown source; the HTML block types other than 2 stay unmodelled.
+- **Operability / evidence receipts.** `census/round-57/c2-counter.py` binds a receipt to the full40
+  revision it was measured at plus its instrument's committed digest; the r56 standing receipt is the
+  red arm. Next: apply the gate to every standing receipt the lane keeps (the r53/r54 historical
+  receipts still name no revision, routed to r58), and decide with the operator whether the recorder
+  should be the only writer of `census/**/records` receipts.
+- Registry: 202 -> 205 rows (`S279`, `S280` mined; `S281` rejected). Census command:
+  `/home/vgpnk/Projects/shokunin/scripts/sources-census.sh validate --root /home/vgpnk/Projects/shokunin souji` at r57 end.
