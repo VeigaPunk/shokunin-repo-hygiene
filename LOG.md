@@ -2759,3 +2759,15 @@ addendum, appended to the prereg, commits 8a793e7ae9131578bdec393982760217f62095
   lookup is unchanged).
 - Holds unchanged: certification OFF, K5 HELD, NAMESPACE/reap holds; L0 rulings still open and routed
   around (credential-shaped names, `ignored` derivation, r46 mass id drift, r48 census conf-form).
+
+- Round-57 addendum (after the wave settled): the standing suite, run by `record-receipt.sh` at the
+  content revision, first printed `unfiled=8` and then `unfiled=4` — eight, then four, abbreviated or
+  bare evidence pointers in the new SCORECARD rows that the declared-evidence instrument resolves
+  root-relative (`c1-matrix-v6.tsv`, `c1-selftest.txt`, `c1-tip.txt`, `manifests/*.tsv`, a
+  `{before,after}` brace and a bare `record-receipt.sh`). Each was rewritten as a full lane-relative
+  path (`8d8f0463` → `bb11421` → `44a983a3`) and the suite is green at `44a983a3`:
+  `assertions=627 mismatches=76 registered=76 corrected=0 exempted=0 unfiled=0`, EXIT=0
+  (`census/round-57/records/standing.txt`, `rev=44a983a3`). C2 then closes its after half:
+  `c2-tip.txt` (two-row manifest) `receipts=2 findings=0` and `c2-after.txt` (three-row manifest,
+  `manifests/after.tsv`) `receipts=3 findings=0`, both EXIT=0 at the same revision. Evidence commit
+  `9d61c0a8`. This is the Q109 repair applied to the lane's own receipts, not only to the gate.

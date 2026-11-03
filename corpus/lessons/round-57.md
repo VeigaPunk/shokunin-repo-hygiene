@@ -76,6 +76,19 @@ Claims (frozen in `census/round-57/preregistration.txt`, freeze commit
 - Discernment sample: one admit pair and one reject are on record; the non-author closure decides
   whether it agrees (`## Wave findings` records the seats' verdicts, not the closure's).
 
+## Round-57 close-out (after the wave settled)
+
+- The standing suite refused the dirty tree during the wave and then, run by the recorder at the
+  content revision, printed `unfiled=8` and `unfiled=4` before it printed `unfiled=0` — the round's own
+  SCORECARD rows carried eight, then four, pointers the declared-evidence instrument resolves
+  root-relative. Repaired by full lane-relative paths at `bb11421`/`44a983a3`; green receipt
+  `census/round-57/records/standing.txt` (`rev=44a983a3`, `assertions=627 … unfiled=0`, EXIT=0).
+  Lesson: a new SCORECARD section must be run through the standing suite *before* it is committed, not
+  after.
+- C2's after half was produced at that same clean revision: `c2-tip.txt` (two rows) `receipts=2
+  findings=0`, `c2-after.txt` (three rows) `receipts=3 findings=0`, both EXIT=0. The wave's critic
+  measured the after half as uninstantiated because it ran earlier — sequencing, not a defect.
+
 ## Mistakes
 
 | class | evidence | captured-by | fix |
