@@ -1,0 +1,22 @@
+# souji round-55 C2 controls (absent-instrument + v3-arm acceptance)
+# (1) absent-instrument control: the amended counter does not exist at base
+base: f056aaa031bb65de27e7fa5daa38b0d4a443aedc
+check: git cat-file -e f056aaa031bb65de27e7fa5daa38b0d4a443aedc:census/round-55/c2-counter.py
+cat-file-rc=128 (nonzero = absent, as required)
+PRISTINE FAIL C2V4-COUNTER-ABSENT (a do-nothing control cannot reach the claimed v4 kills)
+# (2) the r53 sentinel-S4 routed fix shown able to fail: a wrong expected pin refuses
+# command: python3 -B census/round-55/c2-counter.py --selftest --work DIR --builder-sha256 e629a2e993b043bfc32904bc46612f5bdbc13909351cfe68f151b3f604fa8d62 --expected-sha256 000...0
+negpin-rc=2 (want 2)
+CANNOT-EVALUATE PIN-MISMATCH expected sha256 63391afab07930193df686b9b9a4b9f3d6b9074e7bd3ed3479ede8f05a8bd2bc != pinned 0000000000000000000000000000000000000000000000000000000000000000
+# (3) v3-arm acceptance control: the frozen r54 counter accepts every NEW attack fixture
+# source: pre-freeze dry-run matrix (deterministic pinned-date revs) at census/round-55/records/matrix-dryrun/
+FB1-TAB4-ROW	v3-r54	25f4d0f38dab	-	0	-	SUMMARY entries=3 rows=3 unclassified=0 class_mismatch=0 counts=ok tool_sha=ok removal_proposed=0 receipt=ok sorted=ok tool_pin=n/a rev=25f4d0f38dab
+FB2-LOWER-KEY	v3-r54	ddab0ad7bd90	-	0	-	SUMMARY entries=3 rows=3 unclassified=0 class_mismatch=0 counts=ok tool_sha=ok removal_proposed=0 receipt=ok sorted=ok tool_pin=n/a rev=ddab0ad7bd90
+FB3-NOSPACE-KEY	v3-r54	2530c7b6b8a9	-	0	-	SUMMARY entries=3 rows=3 unclassified=0 class_mismatch=0 counts=ok tool_sha=ok removal_proposed=0 receipt=ok sorted=ok tool_pin=n/a rev=2530c7b6b8a9
+# (4) the FA8 unnamed-kill-row defect (r54 verifier spot-check §5.2): v3's row carries finding
+# 'class' only via the fixed extraction (the FINDING text had no id); v4 names CLASS-MISMATCH:
+v3.tsv:FA8-SYMLINK-CLASS	v3-r54	1	class
+v4.tsv:FA8-SYMLINK-CLASS	v4-r55	1	CLASS-MISMATCH
+# (5) disclosure: FH/FA1-FA8/FH2 keep their r54 verdicts under v4 (carry-over, not this round's
+# claim); the FA9/FB4 pin arms run in the selftest (census/round-55/records/c2-selftest.txt).
+EXIT=1
