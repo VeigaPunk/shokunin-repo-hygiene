@@ -920,3 +920,16 @@ a measured edge class does not promote a frontier ground to Core (PROVINCE
   capture counter (v4). The named limit the round measured by construction (repository-local
   `core.quotePath=false` splitting a numstat record under `splitlines()`) and the form-feed erratum
   (ERRATUM-R55-1) are routed to r56 with their receipts; they are not claimed as frontier.
+
+## Round 56 frontier update
+
+- One knowledge entry admitted on the Core surface the lane already owns (the correction-filing
+  comment grammar): corpus/knowledge/correction-filing-html-comment-opener.md, source S277 (re-opened
+  live 2026-11-03; CommonMark 0.31.2 §4.6 start condition 2). S277's `used-by` cell changed old → new
+  (adds the new entry); `status` mined and `recheck` on-release are unchanged. No ground line added;
+  no frontier row moved; no Core promotion.
+- Registry: 202 rows at the r56 freeze (`grep -cE '^ {0,3}\|[[:space:]]*S[0-9]{3,}[[:space:]]*\|' corpus/SOURCES.md`);
+  census exit 0 before and after (census/round-56/records/sources-census-before.txt, sources-census-after.txt).
+- The round-56 work is instrument amendment on existing ground: the correction-filing counter (v5)
+  and the capture counter (v5). Assimilation: none (no considerthese/; shokuknow merge/souji held by
+  the open r46 L0 question).

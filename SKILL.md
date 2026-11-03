@@ -742,3 +742,15 @@ failure reported as RD-A, corpus/lessons/round-55.md), NL-5 (named TOOL-SHA-ARG-
 CLASS-MISMATCH). Named limits of the frozen v4 bytes are in census/round-55/preregistration.txt
 "Named limits carried into v4" and in corpus/lessons/round-55.md "Wave findings" (routed list for r56,
 including the pair-filing-in-fence false pass N1, the highest-severity limit). Certification stays OFF.
+
+## Round 56 contracts
+
+The round-56 frozen counters are the current instruments; the round-55 counters stay as the
+before arms and their bytes are unchanged. Frozen predicate and pins: census/round-56/preregistration.txt
+(freeze cce21b555a617cadda782613ec1e9d3a0c12ac83).
+
+| gate | kind | entry command | verdict map (code → class) | self-test command | pinned-value path | write scope | owner |
+|---|---|---|---|---|---|---|---|
+| r56 C1 correction-filing counter (v5) | gate | `python3 -B census/round-56/c1-counter.py --root LANE --rev FULL40 --base fafe371694fea41c5d23f63083865d5ccf3f1d36 --record-sha256 2b90a262c29772d4a9a7bd5ab29ce06b9d8f350832f0d0cd5114d52b0f6dad30 --sources-rev-before f778b9d131574d3ff09c0cc8a077643c0fc84bb4 --sources-rev-after 9bf9234ae4d11c7b31706354302a9e95ad0d1f81 --scratch DIR` | 0 every check holds (`unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0`); 1 any finding (named); 2 could-not-evaluate | `python3 -B census/round-56/c1-counter.py --selftest --work DIR --builder-sha256 2f26d6aa68ce44cfd9e4afdeaa4ef04837db7622c5ed5213429d8bda1c30b85a --expected-sha256 48a7cc0e869773b493b0b5f01446f70b9016595f1c307602912317aa3f7c5bfb` → `SELFTEST pass cases=33` | census/round-56/records/c1-selftest-expected.tsv (pinned) | read-only git blobs at the revision; scratch under --work | souji |
+| r56 C2 capture counter (v5) | gate | `python3 -B census/round-56/c2-counter.py --root LANE --rev FULL40 --capture census/round-55/records/fleet-root-census.tsv --receipt census/round-55/records/fleet-root-census-run.txt --tool-sha256 e7e79952f7830d75c5b0eee35c2369716053f40121c7d3be370f7abdda067a5b --scratch DIR` | 0 `receipt=ok sorted=ok tool_pin=ok`; 1 any finding (named, e.g. RECEIPT-UNKNOWN-KEY, TOOL-SHA-ARG-MISMATCH); 2 could-not-evaluate (bad CLI or `--tool-sha256` not lowercase 64-hex) | `python3 -B census/round-56/c2-counter.py --selftest --work DIR --builder-sha256 2f26d6aa68ce44cfd9e4afdeaa4ef04837db7622c5ed5213429d8bda1c30b85a --expected-sha256 90517c4d4c6b7542229d1df85287bbfdf3fef631e2e18e279ad62c4c926841b3` → `SELFTEST pass cases=18` | census/round-56/records/c2-selftest-expected.tsv (pinned) | read-only git blobs at the revision; scratch under --work | souji |
+| r56 matrix runner | evidence | `bash census/round-56/fixtures/run-matrix.sh <scratch> <outdir>` after `python3 -B census/round-56/fixtures/build-fixtures.py --work <scratch>/selftest` | writes four TSVs; each row carries exit and first finding | — | census/round-56/records/matrix-dryrun/ (pre-freeze), c1/c2-matrix-v{4,5}.tsv (post-freeze, byte-identical) | scratch only | souji |
