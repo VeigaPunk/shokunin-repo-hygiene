@@ -2711,3 +2711,5 @@ addendum, appended to the prereg, commits 8a793e7ae9131578bdec393982760217f62095
   HIGH B4/C4 hidden-inline regressions harm calibration; C2 75-shape differential
   has no narrowing harm. Whole round rejected-harmed. Detailed dispositions and
   Q114 in corpus/lessons/round-56.md; no frozen counter changes after cce21b55.
+
+- Integration commit `31ef3388a9ab855018c6a5c5ddf8729ffb182300` carried settled wave evidence and harm dispositions. Its standing suite read unfiled=6: six abbreviated receipt pointers in new SCORECARD rows. Those pointers are now full lane-relative paths; the red receipt is retained in census/round-56/records/landing-suite-pointer-red.txt.
