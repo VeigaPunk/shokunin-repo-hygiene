@@ -905,3 +905,18 @@ a measured edge class does not promote a frontier ground to Core (PROVINCE
   keys, the CAPTURE-CRLF class and the `--tool-sha256` pin over ten. Named limits that remain
   (reviewer01 R1–R6, reviewer02 NL-1–NL-5, mutation01 M2, M7, M11) are consolidated in
   corpus/lessons/round-54.md; they are the r55 frontier, not claimed here.
+
+## Round 55 frontier update
+
+- One knowledge entry admitted on the Core surface the lane already owns (the correction-filing
+  line model, PROVINCE Owns): corpus/knowledge/splitlines-line-model.md, source S278 (new; Python
+  3.12 `str.splitlines`, opened live 2026-11-03). It extends the S277 fence-grammar entry to one line
+  model; the S277 `used-by` cell is unchanged (the new entry cites S278 in its `source:` line only).
+  No ground line added; no frontier row moved; no Core promotion.
+- Registry: 201 rows at the r55 freeze and 202 with S278. Count command:
+  `grep -cE '^\|[[:space:]]*S[0-9]{3,}[[:space:]]*\|' corpus/SOURCES.md`. Census exit 0 (conf form
+  on this host, rc 0). Assimilation: none (open L0 on mass id drift, r46). considerthese/: no such directory.
+- The round-55 work is instrument amendment on existing ground: the annotation counter (v4) and the
+  capture counter (v4). The named limit the round measured by construction (repository-local
+  `core.quotePath=false` splitting a numstat record under `splitlines()`) and the form-feed erratum
+  (ERRATUM-R55-1) are routed to r56 with their receipts; they are not claimed as frontier.
