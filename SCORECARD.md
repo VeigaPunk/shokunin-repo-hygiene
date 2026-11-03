@@ -1256,3 +1256,47 @@ R52-CORRECTION census/round-51/preregistration.txt:125 stale=78 recomputed=79
 - C2 counter amendment: rows sorted by name are checked; `#`-leading names resolved by an escaping rule or refused; a capture verifies only against its run receipt. Axis: coverage.
 - Operator rulings routed (l0-questions.md): credential-shaped names (refuse vs redact); the derivation of `ignored` (check-ignore vs listing).
 - Standing: the landing-suite receipt (census/round-46/c1-counter.py) at the r53 tip; the census before→after in the v1 receipt form.
+
+### Round 53 corrections (append-only; found after the wave)
+
+Two r52 annotations state a SOURCES row count of "274 -> 275"; the census command
+`grep -cE '^\|[[:space:]]*S[0-9]{3,}[[:space:]]*\|' corpus/SOURCES.md` recomputes 198 at
+f778b9d1 and 199 at 9bf9234a (200 with S276, landed r53). The 274/275 figures are the
+last row's S-ids (S274/S275) misread as a row count. Each site is filed by one line (the
+pair form: the annotation stated a before→after pair; both of its numbers are S-ids):
+
+R53-CORRECTION LOG.md:2527 stale=274->275 recomputed=198->199
+
+R53-CORRECTION corpus/README.md:870 stale=274->275 recomputed=198->199
+
+### Round 53 measurements (2026-11-03; base 9bf9234ae4d11c7b31706354302a9e95ad0d1f81; freeze 61838b54112354acae5ae0534425f366c14e658c; prereg census/round-53/preregistration.txt)
+
+| claim | axis | before | after | counting command | measured commit |
+|---|---|---|---|---|---|
+| C1 the annotation-agreement counter is amended to v2 (five named r52 limits become five checks, shown able to fail) | calibration 7 | v1 arm exit 0 on ALL SIX fixtures including the five attack states (`census/round-53/records/c1-matrix-v1.tsv`); do-nothing control `PRISTINE FAIL C1V2-COUNTER-ABSENT` exit 1 (census/round-53/controls/c1-control-donothing.txt) | v2 arm exit 1 with the named finding on F2–F6 (MULTIPLE-ANNOTATIONS / INERT-CORRECTION / CORRECTION-IN-FENCE / DELETED-LINES / RECORD-SHA-MISMATCH) and exit 0 on F1 (`c1-matrix-v2.tsv`); real lane exit 0 `unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0` (`c1-tip.txt`); independent reproduction AGREE 12/12 (seat S53executor01) | `python3 -B census/round-53/c1-counter.py --root LANE --rev FULL40 --base 9bf9234ae4d11c7b31706354302a9e95ad0d1f81 --record-sha256 2b90a262c29772d4a9a7bd5ab29ce06b9d8f350832f0d0cd5114d52b0f6dad30 --scratch DIR`; fixtures `python3 -B census/round-53/fixtures/build-fixtures.py --work DIR` | instruments frozen at 61838b54112354acae5ae0534425f366c14e658c; tip receipts at a1156d8579847dccc9185cc677c4e23e277e7123 |
+| C2 the capture counter is amended to v2 (sort order, `#`-leading names, RECEIPT_VERSION=1 receipt binding, shown able to fail) | coverage 8 | v1 arm exit 0 on ALL FOUR fixtures including the three attack captures (`census/round-53/records/c2-matrix-v1.tsv`); do-nothing control `PRISTINE FAIL FLEET-CENSUS-ABSENT` exit 1 (census/round-53/controls/c2-control-donothing.txt) | v2 arm exit 1 with the named finding on FA1–FA3 (ROWS-UNSORTED / COMMENT-AMBIGUOUS-NAME / CAPTURE-RECEIPT-MISMATCH) and exit 0 on FH (`c2-matrix-v2.tsv`); committed round-53 capture exit 0 `receipt=ok sorted=ok` (`c2-tip.txt`); independent reproduction PASS (seat S53executor02) | `python3 -B census/round-53/c2-counter.py --root LANE --rev FULL40 --capture census/round-53/records/fleet-root-census.tsv --receipt census/round-53/records/fleet-root-census-run.txt --scratch DIR` | capture at 1a53bcabc91d97b1a930abeb0d9d23ffbae19b81; tip receipts at a1156d8579847dccc9185cc677c4e23e277e7123 |
+
+No owned score changed (calibration 7, coverage 8, operability 8): both claims are
+instrument amendments — the kill-power over committed attack fixtures is the measured
+move; the honest states (the r52 filing, the r53 capture) were already green and stay
+green (no-harm). The routed defects R1–R13 (fence grammar, zone edge, recomputed
+validation, `#`-shape width, receipt extras, tool pin, fixture coverage, builder
+hardening, oracle pinning, rev determinism, path binding, exit-code ambiguity, wording
+drifts) are named limits of the frozen bytes, consolidated in corpus/lessons/round-53.md
+and routed to r54.
+
+### Planned (r54, appended)
+
+- C1 candidate (calibration): counter v3 — tilde/HTML fence grammar; zone-edge grammar
+  (refuse a token that straddles the zone edge instead of truncating it); validate a
+  correction's `recomputed=` against the record count; enumerate LOG/README count
+  annotations (the 274→275 class) as sites.
+- C2 candidate (coverage): counter v3 — widen the `#`-shape refusal (space-in-name rows);
+  refuse unknown receipt keys; name the CRLF finding; add `--tool-sha256`; add fixtures
+  for the receipt-ENTRIES and symlink branches (M-F1/M-F2); pin GIT_*_DATE in the
+  builder; digest-pin the selftest oracle/builder in the prereg.
+- Operator rulings still open (routed around, never assumed answered): credential-shaped
+  names refuse-vs-redact (r52); `ignored`-column derivation (r52); r46 mass id drift
+  (assimilation held); r48 census conf-form.
+- Standing: the landing-suite receipt (census/round-46/c1-counter.py) at the r54 tip;
+  the census before→after in the v1 receipt form.
