@@ -713,3 +713,29 @@ with four tabs, prose comments with five, uppercase-only unknown keys, whitespac
 keys, pin shapes); M2, M7, M11 coverage gaps (fixtures F8b, F12c and selftest arm FA9 named).
 The `--tool-sha256` branch is demonstrated on the real lane, not in the selftest (ERRATUM-R54-1).
 The C1 gate is defeatable by exotic line separators (sentinel01 S1, HIGH: two form-feed lines above a `~~~` fence turn the committed F7 shape into exit 0; reproduction `census/round-54/records/s1-formfeed-reproduction.txt`); the pair scan is ASCII-only (S2) and the pointer exemption is path-unscoped (connector01 PTR). Counter v4 is the first r55 item (L0 pending on C1's admission).
+
+## Round 55 contracts
+
+The r54 counters are amended as NEW frozen versions (the r54 bytes are never edited and
+stay the standing v3 acceptance-control arm). Fixtures come from
+census/round-55/fixtures/build-fixtures.py (pinned GIT_AUTHOR_DATE/GIT_COMMITTER_DATE; the
+selftests verify builder and expected-TSV sha256 pins BEFORE exec). Expected verdicts:
+census/round-55/records/c1-selftest-expected.tsv (27 rows) and c2-selftest-expected.tsv
+(15 rows, including the two selftest-only pin arms FA9-WRONG-TOOL-PIN and FB4-PIN-SHAPE).
+
+| name | kind | entry command | verdict map | self-test | pinned-value path | write scope | owner |
+|---|---|---|---|---|---|---|---|
+| r55 C1 gate (annotation counter v4) | gate | `python3 -B census/round-55/c1-counter.py --root LANE --rev FULL40 --base f056aaa031bb65de27e7fa5daa38b0d4a443aedc --record-sha256 2b90a262c29772d4a9a7bd5ab29ce06b9d8f350832f0d0cd5114d52b0f6dad30 --sources-rev-before f778b9d131574d3ff09c0cc8a077643c0fc84bb4 --sources-rev-after 9bf9234ae4d11c7b31706354302a9e95ad0d1f81 --scratch DIR` | 0 every check holds (`unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0`); 1 any finding; 2 could-not-evaluate (bad CLI, missing file, zero or duplicate anchor line, no annotation in the zone, a flagged filing without pinned source revs) | `python3 -B census/round-55/c1-counter.py --selftest --work DIR --builder-sha256 e629a2e993b043bfc32904bc46612f5bdbc13909351cfe68f151b3f604fa8d62 --expected-sha256 ca096117204a7262aaba908f1e913aee876e70b8167e6d596028f8f475e7b76e` → `SELFTEST pass cases=27`, exit 0 | census/round-55/preregistration.txt; `census/round-55/records/c1-selftest-expected.tsv` sha256 ca096117204a7262aaba908f1e913aee876e70b8167e6d596028f8f475e7b76e | committed git blobs read-only; selftest fixtures under --work (--scratch is an alias) | souji |
+| r55 C2 gate (capture counter v4) | gate | `python3 -B census/round-55/c2-counter.py --root LANE --rev FULL40 --capture census/round-55/records/fleet-root-census.tsv --receipt census/round-55/records/fleet-root-census-run.txt --tool-sha256 e7e79952f7830d75c5b0eee35c2369716053f40121c7d3be370f7abdda067a5b --scratch DIR` | 0 `receipt=ok sorted=ok tool_pin=ok` with no finding; 1 any finding; 2 could-not-evaluate (bad CLI, bad revision, tool absent at rev, `--tool-sha256` not lowercase 64-hex: `TOOL-SHA-ARG-MALFORMED`) | `python3 -B census/round-55/c2-counter.py --selftest --work DIR --builder-sha256 e629a2e993b043bfc32904bc46612f5bdbc13909351cfe68f151b3f604fa8d62 --expected-sha256 63391afab07930193df686b9b9a4b9f3d6b9074e7bd3ed3479ede8f05a8bd2bc` → `SELFTEST pass cases=15`, exit 0 | census/round-55/preregistration.txt; `census/round-55/records/c2-selftest-expected.tsv` sha256 63391afab07930193df686b9b9a4b9f3d6b9074e7bd3ed3479ede8f05a8bd2bc | committed git blobs read-only; selftest fixtures under --work | souji |
+
+The v4 counters amend the r54 surfaces named in corpus/lessons/round-54.md ("Named limits
+carried into r55"): S1 (one LF line model for every line count in the C1 filing counter),
+R1 (prefix-tolerant correction lexing), R2 (every anchor occurrence on a site line is judged),
+R3 (PAIR-FILING-INERT), R4/S2 (pair annotation with or without `rows`, with `->` or `→`), R5
+(CommonMark 0.31.2 fence start conditions: at most three spaces of indent, no backtick in a
+backtick fence's info string), R6 (pair scan hides fenced lines), the connector PTR narrowing
+(path-like pointer only), M2/M7/N5 committed fixtures, NL-1 (any tab-bearing `#` capture line
+is refused), NL-3/NL-4 (receipt keys tolerant of case and whitespace), NL-5 (named
+TOOL-SHA-ARG-MALFORMED), M11 (selftest pin arm FA9), and the FA8 unnamed-kill-row defect (the
+class mismatch is named CLASS-MISMATCH). Named limits of the frozen v4 bytes are listed in
+census/round-55/preregistration.txt "Named limits carried into v4". Certification stays OFF.
