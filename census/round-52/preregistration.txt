@@ -1,0 +1,123 @@
+# souji round 52 preregistration — frozen before any claim receipt exists
+Round: 52 (attempt 1). Lane: souji, repo /home/vgpnk/Projects/shokunin/souji-shokunin.
+Host: Linux omp host (run 15). Base revision f778b9d131574d3ff09c0cc8a077643c0fc84bb4
+(r51 non-author spot-check commit, lane tip, pushed; verdict ok/admitted).
+Written by the L1 (SoujiR52). Freeze = the commit that first adds this file.
+
+Frozen rules: no Counter, Population, Control, or this file changes after the freeze
+commit. A defect an attack finds is a named limit, never an edit. Corrections land
+append-only in lane records (CORPUS.md: corrections are new entries, never rewrites).
+
+Axes (fleet AXES.md): calibration 7 (lowest non-retired axis), coverage 8, operability 8.
+Declared claims: 2 (one per distinct axis). No exploratory claim. No assimilation claim.
+
+## Claims
+
+### C1 — calibration 7 (lowest-scoring axis): declared-count annotations agree with the observed state
+Surface moved: the lane's own self-assessment records. Round 51's non-author spot-check
+(corpus/lessons/round-51-verifier-spotcheck.md §8, routed defect 1) found the pasteable
+count `grep -c "^ADDED" census/round-51/records/ws-drift-vs-r46.tsv` annotated as 78 in
+two lane records; the committed file yields 79 (the r51 SUMMARY `added=79` was always
+correct). A calibration claim counts mismatches between declared numbers and recomputed
+numbers.
+Enumerated sites (frozen list; this is NOT an omission-discovery claim — Q57 wording):
+  S1 SCORECARD.md, the r51 C2 row, annotation `(78)` after the counting command.
+  S2 census/round-51/preregistration.txt line 125, annotation `(78)` (frozen file;
+     it cannot be edited, so it is corrected by a filed line in SCORECARD.md).
+Counter: census/round-52/c1-counter.py (sha256 pinned below).
+Filing rule: a mismatch is FILED only by an append-only line in SCORECARD.md at the
+measured revision of the form `R52-CORRECTION <path>:<line> stale=<N> recomputed=<M>`
+where <path>:<line> is the site's exact line, <N> the value that line states, and <M>
+the value the frozen command recomputes. Any other mismatch is unfiled.
+Predicate (one sentence, same in the plan, the counter and the receipt label):
+  at the measured revision, every enumerated site's stated annotation equals the
+  frozen command's recomputed value, or is filed by an R52-CORRECTION line matching
+  that site's path, line, stated value and recomputed value; SUMMARY unfiled=0.
+Before (base f778b9d1): `SUMMARY sites=2 mismatches=2 filed=0 unfiled=2`, exit 1
+  (census/round-52/controls/c1-control-donothing.txt — the do-nothing control, red).
+After (content tip): target `SUMMARY sites=2 mismatches=2 filed=2 unfiled=0`, exit 0.
+  The stale text stays in place (append-only); the correction is the filed record.
+Kill rule: any unfiled mismatch at the measured tip, any correction whose stated or
+  recomputed value differs from the site or the command, or any correction naming a
+  line that does not read the stale value, kills C1.
+Recompute command: `python3 -B census/round-52/c1-counter.py --root LANE --rev FULL40 --scratch DIR`.
+Named limits: the site list is enumerated, not discovered (a discovery scan by scout
+seat `S52scout02` reports other pasteable annotations in SCORECARD/LOG/lessons; they are
+routed, not counted here). The fleet report `.ufo/reports/round-51/souji.md` line 108
+carries the same 78 and is outside the lane; it is corrected by an erratum in this
+round's report, not counted by the counter.
+
+### C2 — coverage 8: fleet-root hygiene census, read-only, with a verifiable capture (capability acquisition)
+Surface moved (new Core-owned surface measured): PROVINCE.md Owns — "the fleet root
+repo's hygiene surfaces: stray checkpoint/scratch files". No census of this host's fleet
+root exists at base (the r51 census covered a different session workspace layout;
+PROVINCE host correction r46 applies).
+Capability: tools/souji-fleet-root-census.py (new; to be landed this round). Read-only:
+it lists top-level entries of the fleet root (lstat, never following symlinks), reads
+tracked/ignored/untracked state from `git -C ROOT ls-files` with GIT_OPTIONAL_LOCKS=0,
+writes only the --out path, and never removes, moves or proposes removal.
+Sourced: the GIT_OPTIONAL_LOCKS=0 choice rests on git(1) ENVIRONMENT documentation
+(corpus/SOURCES.md row S275, opened live this round; the Gate block carries its access
+date and located quote).
+Capture (committed after this freeze): census/round-52/records/fleet-root-census.tsv.
+Format (frozen):
+  # souji round-52 fleet-root census (read-only; dry-run)
+  # SCOPE=top-level entries of the fleet root, dotfiles included, .git excluded
+  # TOOL_SHA256=<sha256 of tools/souji-fleet-root-census.py bytes>
+  # FLEET_HEAD=<40-hex fleet HEAD at capture>
+  # ENTRIES=<n>
+  # COUNT tracked=<n>  / # COUNT ignored=<n>  / # COUNT untracked-stray=<n>  / # COUNT symlink=<n>
+  name<TAB>kind<TAB>tracked<TAB>ignored<TAB>class<TAB>disposition
+  one row per top-level entry, sorted by name.
+Enumerations: kind in {file,dir,symlink,other}; tracked, ignored in {yes,no}.
+Frozen class rule (first match wins): kind=symlink -> symlink; tracked=yes -> tracked;
+ignored=yes -> ignored; otherwise untracked-stray. Disposition: report-only for
+untracked-stray; none otherwise. No other disposition is permitted.
+Counter: census/round-52/c2-counter.py (sha256 pinned below). It reads committed bytes
+only: the capture and the tool at the measured revision.
+Predicate (one sentence, same in the plan, the counter and the receipt label):
+  at the measured revision the committed fleet-root capture verifies: TOOL_SHA256 equals
+  the committed tool's bytes, ENTRIES equals the row count and is at least 1, every row
+  follows the frozen enumerations, class rule and disposition rule, each COUNT line equals
+  its recomputed count, and no row proposes removal; SUMMARY unclassified=0
+  class_mismatch=0 removal_proposed=0 receipt=ok, exit 0.
+Before (base f778b9d1): `PRISTINE FAIL FLEET-CENSUS-ABSENT`, exit 1
+  (census/round-52/controls/c2-control-donothing.txt — the do-nothing control, red).
+Additional controls (committed as fixtures by the executor seat, frozen here): an empty
+  capture (ENTRIES=0) must fail; a capture whose class contradicts the rule must fail;
+  a capture whose disposition is 'remove' must fail; a capture with a tampered
+  TOOL_SHA256 must fail. Each is a counter-level mutant of the honest capture.
+Kill rule: any failing check at the measured tip; or a capture whose tool bytes differ
+  from the committed tool; or any row whose disposition is not the frozen one.
+Named limits: ENTRIES is the tool's own ls count at capture; the counter cannot verify
+  it against the live directory (no live read is allowed in a counter). The fleet repo
+  is outside the lane; FLEET_HEAD is format-checked, not resolved (an optional
+  --fleet-root argument resolves it when a reviewer supplies one). Scope is top-level
+  only; nested stray files are not enumerated.
+
+## Standing checks (no-harm; reported, not claimed)
+- NTFS exclusion (r51 base receipt, six control-character paths): re-derived at base and
+  tip; the tolerance is not widened.
+- Porcelain at base: 0 rows (census/round-52/records/porcelain-at-base.txt).
+- Standing landing-suite counter census/round-46/c1-counter.py at the content tip.
+- Census round-start (conf form and adapter) and round-end census gate exit 0.
+
+## Pre-flight receipts (committed with this freeze)
+- census/round-52/records/base-note.txt; porcelain-at-base.txt; census-before.txt (adapter
+  output; CONF-RC=0 and DIR-RC=0 on this Linux host, recorded verbatim).
+  Host difference recorded: the conf-form census resolves lane souji on this host
+  (rc 0), unlike the Windows layout (rc 2, L0 open since r48). The L0 question is not
+  closed by this observation; the operator decides.
+
+## Counter pins (sha256 of the bytes frozen with this file)
+- census/round-52/c1-counter.py  f5cd614c006dfd4d02f5575bde0d4bf22183daa7759114187b2c6789b90ef24d
+- census/round-52/c2-counter.py  863a551dcbbc2896ca7752362615d19c6be0112e56c8714b1e01df3d4a1c0444
+
+## Method and scope
+- Frontier step: one new SOURCES row (S275, git(1) environment documentation) opened live
+  this round; the Gate block carries URL, access date and a ≤25-word located quote.
+- Assimilation: none. shokuknow's merge/souji package is held by the open L0 question on
+  mass id drift (r46) and this round adopts nothing from it.
+- L2 floor: one v1 wave, 13 seats (planner held by the L1, not a swarm seat); attack
+  seats 4 of 13 (two reviewers, one critic, one mutation-tester; ≥25%); connectors 1.
+- Routing: never a model argument; the seats' routes come from the global table.
