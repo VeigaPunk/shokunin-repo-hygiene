@@ -1,0 +1,77 @@
+{
+  "scan_scope": {
+    "kaidoku": {
+      "path": "/home/vgpnk/Projects/shokunin/kaidoku-shokunin/tools",
+      "exists": true,
+      "scanned_patterns": [
+        {
+          "tool": "tools/round-83/source-bind.py",
+          "features": [
+            "subprocess CLI invocation via sys.executable -I -B",
+            "private tempfile.mkdtemp isolation",
+            "double-execution stability verification (len(findings)==2 and findings[0]==findings[1])",
+            "working_root_preserved assertion (os.getcwd() == root)",
+            "finally cleanup"
+          ]
+        },
+        {
+          "tool": "tools/round-83/attribution-audit.py",
+          "features": [
+            "mandatory --work directory enforcement (fail-closed exit 2 / ValueError if omitted)",
+            "subprocess.run over own Path(__file__).resolve()",
+            "multi-criteria assertion: child.returncode == expected_rc AND expected_id in receipt.mismatches"
+          ]
+        },
+        {
+          "tool": "tools/round-82/conjunction-gate.py",
+          "features": [
+            "dual mode: in-memory unit cases + --cli-selftest over isolated scratch fixtures",
+            "false-green / stub rejection control"
+          ]
+        },
+        {
+          "tool": "tools/round-80/guard-battery.py",
+          "features": [
+            "gate clause mutation: proves mutant fails its own selftest (clause exercised but not pinned is not covered)"
+          ]
+        }
+      ]
+    },
+    "kumitate": {
+      "path": "/home/vgpnk/Projects/shokunin/kumitate-shokunin/tools",
+      "exists": false,
+      "actual_gate_path": "/home/vgpnk/Projects/shokunin/kumitate-shokunin/scripts",
+      "scanned_patterns": [
+        {
+          "tool": "scripts/control-replay.mjs",
+          "features": [
+            "self-invocation via spawnSync(process.execPath, [process.argv[1], ...a])",
+            "hermetic temporary directory per case",
+            "strict exit code mapping (0, 1, 3, 4, 64)",
+            "receipt digest verification and tamper rejection"
+          ]
+        },
+        {
+          "tool": "scripts/counter-rerun.mjs",
+          "features": [
+            "mutation control seams (AGREE_ALWAYS, PASS_STUB)",
+            "copies source, flips seams, requires mutant to fail its own selftest"
+          ]
+        },
+        {
+          "tool": "scripts/cite-check.mjs",
+          "features": [
+            "hermetic fixture suite (--selftest) touching zero live trees",
+            "child self-observation: spawns child --selftest with injected failure, asserting VERDICT: FAIL"
+          ]
+        },
+        {
+          "tool": "scripts/gate-mutants.mjs",
+          "features": [
+            "K43 mutant kill standard: non-zero exit, VERDICT: FAIL, and reproducible sorted failure case names"
+          ]
+        }
+      ]
+    }
+  }
+}

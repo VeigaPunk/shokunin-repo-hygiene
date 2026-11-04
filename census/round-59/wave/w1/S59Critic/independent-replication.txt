@@ -1,0 +1,43 @@
+# S59Critic receipt — independent replications (read-only over committed lane bytes; scratch fixtures under own scratch root)
+
+## 1. frozen claim counter at base and at the freeze commit
+rev=da5af55b5ea0a2a38edea05635a13416c698e6e7
+FINDING REGISTRY-KIND-MISMATCH
+SUMMARY assertions=1 mismatches=1 rev=da5af55b5ea0a2a38edea05635a13416c698e6e7
+EXIT=1
+
+rev=19f44552378d333f401ff2f0864c4e8b9c59ab1f
+FINDING REGISTRY-KIND-MISMATCH
+SUMMARY assertions=1 mismatches=1 rev=19f44552378d333f401ff2f0864c4e8b9c59ab1f
+EXIT=1
+
+## 2. frozen counter public self-invocation (counter bytes unmodified)
+cases=4 passed=4
+  unchanged          expected_rc=1 rc=1 passed=True findings=['REGISTRY-KIND-MISMATCH']
+  prose-forgery      expected_rc=1 rc=1 passed=True findings=['REGISTRY-KIND-MISMATCH']
+  duplicate-forgery  expected_rc=2 rc=2 passed=True findings=['REGISTRY-ROW-SHAPE']
+  positive           expected_rc=0 rc=0 passed=True findings=[]
+
+## 3. delivered r59 assessment gate: clean-path parity with census/round-58/c1-counter.py
+rev=da5af55b5ea0a2a38edea05635a13416c698e6e7 r58_rc=0 new_rc=0 stdout=IDENTICAL
+rev=19f44552378d333f401ff2f0864c4e8b9c59ab1f r58_rc=0 new_rc=0 stdout=IDENTICAL
+
+## 4. delivered r59 assessment gate public self-invocation (reproduced by this seat)
+SELFTEST-EXPECTED-SET cases=5 expected=5 extra=- missing=-
+SELFTEST-CASE BOTH-MISSING pass rc=1 want_rc=1 findings=ASSESSMENT-MISMATCH want_findings=ASSESSMENT-MISMATCH mismatches=2 want_mismatches=2 detail=-
+SELFTEST-CASE HONEST pass rc=0 want_rc=0 findings=- want_findings=- mismatches=0 want_mismatches=0 detail=-
+SELFTEST-CASE OMIT-FIRST pass rc=1 want_rc=1 findings=ASSESSMENT-MISMATCH want_findings=ASSESSMENT-MISMATCH mismatches=1 want_mismatches=1 detail=-
+SELFTEST-CASE OMIT-SECOND pass rc=1 want_rc=1 findings=ASSESSMENT-MISMATCH want_findings=ASSESSMENT-MISMATCH mismatches=1 want_mismatches=1 detail=-
+SELFTEST-CASE WRONG-VALUE pass rc=1 want_rc=1 findings=ASSESSMENT-MISMATCH want_findings=ASSESSMENT-MISMATCH mismatches=1 want_mismatches=1 detail=-
+SELFTEST control=FALSE-GREEN-REJECTED stub_meets=1 discriminated=4 cases=5
+SELFTEST pass cases=5
+EXIT=0
+
+## 5. gate WITHOUT its expected TSV beside it (copy only the .py into an isolated scratch dir)
+CANNOT-EVALUATE expected unreadable: [Errno 2] No such file or directory: '/fast/scratch/hyaku/souji-r59/S59Critic/nogate/assessment-selftest-expected.tsv'
+EXIT=2
+
+## 6. committed-history state of the delivered gate and its expected TSV (both uncommitted)
+(empty = not present in any commit)
+0
+(0 = wave dir is gitignored, so the delivered gate is not in lane history)

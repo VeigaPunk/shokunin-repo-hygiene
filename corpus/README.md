@@ -957,3 +957,9 @@ a measured edge class does not promote a frontier ground to Core (PROVINCE
 - No visibility-parser promotion. The r57 inline-comment entry remains bounded by its rejected-harmed closure: second-opener, inline-code and other renderer mismatches remain open. The r58 assessment correction is not a parser repair.
 - Receipt identity research distinguishes raw object type (`corpus/SOURCES.md` S284, cat-file -t) from recursive type peeling (S285 rejects the inference that peeling proves raw identity). The round lesson is `corpus/lessons/round-58.md`. No new knowledge entry, ground line, or Core promotion.
 - Assimilation: none; mass-id-drift hold unchanged. No considerthese/ directory. Existing cleanup/operator holds remain unchanged.
+
+### Frontier (r59 bounded registry repair)
+
+- Current work is the assessment-comparator gate registration and public isolated self-invocation, on existing Core assessment/receipt ground. One calibration classification claim only; no visibility-parser promotion, no new repertoire or uncovered-ground knowledge entry.
+- S286 records Python's independent child exit status; S287 rejects inferring success from default check=False. Gate decisions and inherited debts are in corpus/lessons/round-59.md. No earlier rejected admission is retroactively repaired.
+- Parser, recorder dirty-tree/overwrite, capture row-set meta-test, old receipt bindings, diagnostics and atomic-read/resource debts remain open. Certification OFF; K5 HELD. Assimilation: none; mass-id-drift hold remains and no considerthese/ directory was observed.

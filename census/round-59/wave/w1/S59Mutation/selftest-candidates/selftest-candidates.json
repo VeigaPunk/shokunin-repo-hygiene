@@ -1,0 +1,122 @@
+{
+  "base": "da5af55b5ea0a2a38edea05635a13416c698e6e7",
+  "controls_rev": "74455b7209e04a2375c2084738a7b6fea59bf6d5",
+  "target": "census/round-59/controls.py",
+  "target_sha256": "ba8af5cc5404eb4108ab15ee6386d15907c73abf04cda3b780e592b5d7d452b8",
+  "frozen_counter_sha256": "2c4d45aab440ef713f22a8d3b210e651d6e7047451cab26f9d4316f5a6451a6d",
+  "candidates": [
+    {
+      "candidate": "rc-ignored",
+      "target": "census/round-59/controls.py",
+      "target_sha256": "ba8af5cc5404eb4108ab15ee6386d15907c73abf04cda3b780e592b5d7d452b8",
+      "anchor": "passed=r.returncode==expected_rc and actual==expected",
+      "replacement": "passed=actual==expected",
+      "description": "selftest drops the exit-code equality; only the finding list is compared",
+      "sha256": "aeb1c8f78d59c7c9f927901dbc7c90e34f018d72b90278558e5f4051c9e898af",
+      "bytes_equal_target": false,
+      "diff": "--- selftest-pristine/controls.py\n+++ candidates/rc-ignored.py\n@@ -21,7 +21,7 @@\n             cmd=['python3','-B',str(pathlib.Path(a.counter).resolve()),'--root',str(work),'--rev',rev]\n             r=subprocess.run(cmd,text=True,capture_output=True)\n             actual=[line.removeprefix('FINDING ') for line in r.stdout.splitlines() if line.startswith('FINDING ')]\n-            results.append(dict(case=name,input_rev=rev,input_skill=row,command=cmd,expected_rc=expected_rc,expected_findings=expected,rc=r.returncode,stdout=r.stdout,stderr=r.stderr,passed=r.returncode==expected_rc and actual==expected))\n+            results.append(dict(case=name,input_rev=rev,input_skill=row,command=cmd,expected_rc=expected_rc,expected_findings=expected,rc=r.returncode,stdout=r.stdout,stderr=r.stderr,passed=actual==expected))\n         print(json.dumps(dict(base=a.rev,instrument_sha256=hashlib.sha256(pathlib.Path(a.counter).read_bytes()).hexdigest(),cases=results,passed=sum(x['passed'] for x in results)),indent=2))\n         return int(not all(x['passed'] for x in results))\n     finally: shutil.rmtree(work)\n",
+      "status": "unrun",
+      "verdict_claimed": null,
+      "escape_witness": "rc-wrong-findings-right",
+      "witness_sha256": "98d95067263b298212b6fade674d8dd4e74e4a3af906b9469e2d7ce22073e1dd",
+      "witness_status": "unrun",
+      "runner": [
+        "python3",
+        "-B",
+        "candidates/rc-ignored.py",
+        "--root",
+        "/home/vgpnk/Projects/shokunin/souji-shokunin",
+        "--rev",
+        "da5af55b5ea0a2a38edea05635a13416c698e6e7",
+        "--counter",
+        "witnesses/rc-wrong-findings-right.py",
+        "--work",
+        "<scratch>/candidate-rc-ignored/work"
+      ]
+    },
+    {
+      "candidate": "finding-ignored",
+      "target": "census/round-59/controls.py",
+      "target_sha256": "ba8af5cc5404eb4108ab15ee6386d15907c73abf04cda3b780e592b5d7d452b8",
+      "anchor": "passed=r.returncode==expected_rc and actual==expected",
+      "replacement": "passed=r.returncode==expected_rc",
+      "description": "selftest drops the finding equality; only the exit code is compared",
+      "sha256": "af507fe601dfd1727f6cc0919fa5cf87e2fe089e65551a79857232ed9ee5a307",
+      "bytes_equal_target": false,
+      "diff": "--- selftest-pristine/controls.py\n+++ candidates/finding-ignored.py\n@@ -21,7 +21,7 @@\n             cmd=['python3','-B',str(pathlib.Path(a.counter).resolve()),'--root',str(work),'--rev',rev]\n             r=subprocess.run(cmd,text=True,capture_output=True)\n             actual=[line.removeprefix('FINDING ') for line in r.stdout.splitlines() if line.startswith('FINDING ')]\n-            results.append(dict(case=name,input_rev=rev,input_skill=row,command=cmd,expected_rc=expected_rc,expected_findings=expected,rc=r.returncode,stdout=r.stdout,stderr=r.stderr,passed=r.returncode==expected_rc and actual==expected))\n+            results.append(dict(case=name,input_rev=rev,input_skill=row,command=cmd,expected_rc=expected_rc,expected_findings=expected,rc=r.returncode,stdout=r.stdout,stderr=r.stderr,passed=r.returncode==expected_rc))\n         print(json.dumps(dict(base=a.rev,instrument_sha256=hashlib.sha256(pathlib.Path(a.counter).read_bytes()).hexdigest(),cases=results,passed=sum(x['passed'] for x in results)),indent=2))\n         return int(not all(x['passed'] for x in results))\n     finally: shutil.rmtree(work)\n",
+      "status": "unrun",
+      "verdict_claimed": null,
+      "escape_witness": "findings-suppressed",
+      "witness_sha256": "576ad5719ef979389e34740959e5410def4df5b8ad137b49e88f09b5e4bd1bc6",
+      "witness_status": "unrun",
+      "runner": [
+        "python3",
+        "-B",
+        "candidates/finding-ignored.py",
+        "--root",
+        "/home/vgpnk/Projects/shokunin/souji-shokunin",
+        "--rev",
+        "da5af55b5ea0a2a38edea05635a13416c698e6e7",
+        "--counter",
+        "witnesses/findings-suppressed.py",
+        "--work",
+        "<scratch>/candidate-finding-ignored/work"
+      ]
+    },
+    {
+      "candidate": "omitted-expected-row",
+      "target": "census/round-59/controls.py",
+      "target_sha256": "ba8af5cc5404eb4108ab15ee6386d15907c73abf04cda3b780e592b5d7d452b8",
+      "anchor": "            ('duplicate-forgery',original+'\\n'+original.replace('| evidence |','| gate |'),2,['REGISTRY-ROW-SHAPE']),\n",
+      "replacement": "",
+      "description": "selftest inventory omits the only case that exercises the row-shape guard",
+      "sha256": "051a1193f9a0d70c89265dc11911122daf01bf5fa4e13ecef47702902c921036",
+      "bytes_equal_target": false,
+      "diff": "--- selftest-pristine/controls.py\n+++ candidates/omitted-expected-row.py\n@@ -15,7 +15,6 @@\n         for name,row,expected_rc,expected in [\n             ('unchanged',original,1,['REGISTRY-KIND-MISMATCH']),\n             ('prose-forgery',original+'\\nThis comparator is a gate.',1,['REGISTRY-KIND-MISMATCH']),\n-            ('duplicate-forgery',original+'\\n'+original.replace('| evidence |','| gate |'),2,['REGISTRY-ROW-SHAPE']),\n             ('positive',original.replace('| evidence |','| gate |'),0,[])]:\n             (work/'SKILL.md').write_text(row+'\\n'); git('add','SKILL.md'); git('commit','-qm',name); rev=git('rev-parse','HEAD')\n             cmd=['python3','-B',str(pathlib.Path(a.counter).resolve()),'--root',str(work),'--rev',rev]\n",
+      "status": "unrun",
+      "verdict_claimed": null,
+      "escape_witness": "ignore-duplicate-guard",
+      "witness_sha256": "3abf9604f805584a9188b5415625354141b67355e490cf658b68c20cbf4ff7f6",
+      "witness_status": "executed",
+      "runner": [
+        "python3",
+        "-B",
+        "candidates/omitted-expected-row.py",
+        "--root",
+        "/home/vgpnk/Projects/shokunin/souji-shokunin",
+        "--rev",
+        "da5af55b5ea0a2a38edea05635a13416c698e6e7",
+        "--counter",
+        "witnesses/ignore-duplicate-guard.py",
+        "--work",
+        "<scratch>/candidate-omitted-expected-row/work"
+      ]
+    }
+  ],
+  "witnesses": {
+    "rc-wrong-findings-right": {
+      "status": "unrun",
+      "sha256": "98d95067263b298212b6fade674d8dd4e74e4a3af906b9469e2d7ce22073e1dd",
+      "description": "frozen counter with a correct finding list but an always-zero exit code",
+      "anchor": "    return int(bool(findings))\n",
+      "replacement": "    return 0\n",
+      "diff": "--- pristine/c1-counter.py\n+++ witnesses/rc-wrong-findings-right.py\n@@ -17,7 +17,7 @@\n     if row[2] != 'gate': findings.append('REGISTRY-KIND-MISMATCH')\n     for finding in findings: print('FINDING '+finding)\n     print('SUMMARY assertions=1 mismatches='+str(len(findings))+' rev='+rev)\n-    return int(bool(findings))\n+    return 0\n \n if __name__ == '__main__':\n     parser=argparse.ArgumentParser(description=__doc__)\n"
+    },
+    "findings-suppressed": {
+      "status": "unrun",
+      "sha256": "576ad5719ef979389e34740959e5410def4df5b8ad137b49e88f09b5e4bd1bc6",
+      "description": "frozen counter with correct exit codes but no FINDING lines",
+      "anchor": "    for finding in findings: print('FINDING '+finding)\n",
+      "replacement": "",
+      "diff": "--- pristine/c1-counter.py\n+++ witnesses/findings-suppressed.py\n@@ -15,7 +15,6 @@\n     row = [c.strip() for c in rows[0]]\n     findings = []\n     if row[2] != 'gate': findings.append('REGISTRY-KIND-MISMATCH')\n-    for finding in findings: print('FINDING '+finding)\n     print('SUMMARY assertions=1 mismatches='+str(len(findings))+' rev='+rev)\n     return int(bool(findings))\n \n"
+    },
+    "ignore-duplicate-guard": {
+      "status": "executed",
+      "sha256": "3abf9604f805584a9188b5415625354141b67355e490cf658b68c20cbf4ff7f6",
+      "description": "executed S59Mutation mutant: first-row decision, row-shape guard lost",
+      "discriminating_cases_observed": [
+        "duplicate-forgery"
+      ]
+    }
+  }
+}

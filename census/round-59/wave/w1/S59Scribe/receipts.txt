@@ -1,0 +1,125 @@
+S59Scribe — round-59 source-row delivery, command receipts
+Seat scratch: /fast/scratch/hyaku/souji-r59/S59Scribe/  (removed at end of seat)
+Lane: /home/vgpnk/Projects/shokunin/souji-shokunin
+Delivery: .ufo/waves/round-59/w1/S59Scribe/
+
+[R1] Source acquisition
+command:
+  cd /fast/scratch/hyaku/souji-r59/S59Scribe && curl -sSL --max-filesize 950000 \
+    -w 'subprocess http=%{http_code} bytes=%{size_download} url=%{url_effective}\n' \
+    -o subprocess.html 'https://docs.python.org/3/library/subprocess.html'; rc=$?; printf 'EXIT=%s\n' "$rc"
+output:
+  subprocess http=200 bytes=208648 url=https://docs.python.org/3/library/subprocess.html
+  EXIT=0
+note: url_effective equals the requested URL, so no redirect was followed.
+sha256sum subprocess.html -> 31f573c59a215fbad7e12dd81b41715f38b600eed240b84b9a42bd4e4a1685b1
+
+[R2] Tool-reader evidence (independent open of the same URL)
+command: read https://docs.python.org/3/library/subprocess.html
+output: page title "subprocess — Subprocess management — Python 3.15.2 documentation";
+  body contains "Exit status of the child process. Typically, an exit status of 0 indicates
+  that it ran successfully." and "If check is true, and the process exits with a non-zero
+  exit code, a CalledProcessError exception will be raised."
+note: the reader returned the same 3.15.2 text as the captured bytes, so the two
+  located quotes are confirmed by two independent acquisition paths.
+
+[R3] Located-quote extraction and word counts
+command: python3 (inline) over subprocess.html; normalizer = strip tags, decode HTML
+  entities, collapse whitespace; locate the minimal contiguous raw-line window whose
+  normalized text contains the quote; count whitespace-separated words.
+output:
+  S286 word_count_whitespace=17  verbatim=True  capture_line_span=362-363
+  S287 word_count_whitespace=19  verbatim=True  capture_line_span=301-302
+  page version stamp "Python 3.15.2 documentation" = True
+  run() signature default "check=False" present = True
+  full receipt: quotes.txt
+
+[R4] Row-draft checker, honest arm
+command:
+  cd .ufo/waves/round-59/w1/S59Scribe && python3 -B verify-quotes.py \
+    --capture subprocess.html --rows rows.tsv; echo "VERIFY-EXIT=$?"
+output:
+  ROW S286 words=17 verbatim=True
+  ROW S287 words=19 verbatim=True
+  QUOTE S286 Exit status of the child process. Typically, an exit status of 0 indicates that it ran successfully.
+  QUOTE S287 If check is true, and the process exits with a non-zero exit code, a CalledProcessError exception will be raised.
+  SUMMARY checks=2 findings=0
+  VERIFY-EXIT=0
+
+[R5] Row-draft checker, four negative controls (each must fail)
+command: python3 driver writing four mutated rows.tsv variants into neg/ and running
+  verify-quotes.py against each.
+output:
+  NEG corrupt-quote    rc=1 findings=['FINDING QUOTE-NOT-VERBATIM S286']
+  NEG over-long-quote  rc=1 findings=['FINDING QUOTE-TOO-LONG S286 words=30', 'FINDING QUOTE-NOT-VERBATIM S286']
+  NEG same-scope       rc=1 findings=['FINDING SCOPES-NOT-DISTINCT public child-process return-code assertions in the assessment gate selftest | public child-process return-code assertions in the assessment gate selftest']
+  NEG different-url    rc=1 findings=['FINDING URLS-DIFFER https://docs.python.org/3/library/os.html https://docs.python.org/3/library/subprocess.html']
+note: these four test the row-draft checker only. They are not lane gate, counter or
+  control executions.
+
+[R6] Fleet sources census, read-only validate over the LIVE lane working tree
+command:
+  cd /home/vgpnk/Projects/shokunin && bash scripts/sources-census.sh validate \
+    --today 2026-11-04 /home/vgpnk/Projects/shokunin/souji-shokunin
+output (S286/S287 and lane verdict lines):
+  souji-shokunin	W04	S286 duplicate url docs.python.org/3/library/subprocess.html across scopes
+  souji-shokunin	W04	S287 duplicate url docs.python.org/3/library/subprocess.html across scopes
+  souji-shokunin	ok	/home/vgpnk/Projects/shokunin/souji-shokunin/corpus/SOURCES.md
+  exit=0
+note: the fleet script's validate mode reads the lane file and prints; it wrote nothing.
+
+[R7] Lane-local SOURCES shape census (read-only)
+command: cd /home/vgpnk/Projects/shokunin/souji-shokunin && bash census/round-12/sources-census.sh
+output:
+  211            (rows)
+  0              (malformed rows)
+  A=201 B=7 C=3
+  mined=174 queued=14 rejected=23
+  exit=0
+
+[R8] Draft rows validated against the fleet census in an ISOLATED scratch lane copy
+command:
+  cp -r corpus SKILL.md into $W/fixture-lane; replace the S286/S287 rows with this
+  seat's rows.tsv; then
+  bash /home/vgpnk/Projects/shokunin/scripts/sources-census.sh validate \
+    --today 2026-11-04 $W/fixture-lane
+output:
+  fixture-lane	ok	$W/fixture-lane/corpus/SOURCES.md
+  exit=0
+  (only W04 same-URL/different-scope lines, filtered from the transcript)
+note: the fixture lane is a scratch copy; the live lane file was not modified. The
+  two tools/souji-size-census.py used-by paths referenced by S120/S122 were copied
+  into the fixture so that E11 reflects the real lane rather than the copy's gaps.
+  An earlier fixture attempt without those files reported E11 for every used-by
+  path; that was a fixture artifact, not a lane finding, and the complete fixture
+  above is the one that counts.
+
+[R9] Census E04 semantics, confirmed empirically on the fixture
+  - S287 scope set equal to S286's scope, status=rejected: only W04; no E04.
+    (the census E04 arm exempts status=rejected rows)
+  - S287 scope set equal to S286's scope, status flipped to mined:
+      fixture-lane	E04	S287 duplicate url docs.python.org/3/library/subprocess.html
+      within scope public child-process return-code assertions in the assessment gate selftest
+    exit=1
+note: this is why the two draft rows keep distinct scopes: it keeps the pair in the
+  W04 warning class and out of the E04 finding class.
+
+[R10] Preserved state read at the time of this seat's work
+  git -C /home/vgpnk/Projects/shokunin/souji-shokunin status --porcelain ->
+     M corpus/QUALITY.md
+     M corpus/SOURCES.md
+    ?? corpus/lessons/round-59.md
+  These are L1's uncommitted round-59 edits, present before this seat wrote
+  anything. This seat did not create, modify or revert them. The same status was
+  re-read after delivery and was unchanged.
+
+[R11] Cleanup
+command: rm -rf /fast/scratch/hyaku/souji-r59/S59Scribe
+output: scratch removal EXIT=0; the path no longer exists.
+note: the owned scratch child was the only thing removed; the fixture lane and the
+  negative-control fixtures were removed with it. Receipts and the capture are
+  preserved in the delivery directory.
+
+Not run by this seat: the r59 assessment gate, the frozen counter, the pre-freeze
+controls, the c1-counter selftest, any build, lint, formatter, non-author
+verification, or any mutation battery against lane code.
