@@ -1486,3 +1486,18 @@ The finite predicates verify; independent non-author closure still decides admis
 - Address the still-open visibility-parser harms only with independently rendered controls in both directions; never interpret this round's two assessment notes as that repair.
 - Preserve Q117 raw identity/path/header boundaries. Scope any atomic-read/resource-bound or recorder dirty-tree/overwrite repair as a separate falsifiable claim; do not infer it from eight static cases.
 - Keep historical receipt-binding debt, capture row-set meta-test, control-byte diagnostics, and operator holds explicit.
+
+### Round 59 bounded calibration measurement
+
+| claim | axis | before | after | counting command | measured commit |
+|---|---|---|---|---|---|
+| C1 R58-KIND assessment registry classification | calibration7, numeric delta0 (legacy scale unmapped) | assertions=1 mismatches=1 REGISTRY-KIND-MISMATCH EXIT1 | assertions=1 mismatches=0 EXIT0; direct stable r58 row kind=gate, rows=1, shadow r59 rows=0; actual public assessment selftest5/5 and independent production acceptance4/4 | `python3 -B census/round-59/c1-counter.py --root LANE --rev FULL40`; separate production commands in census/round-59/assessment-production.txt, assessment-selftest.txt and acceptance-final.txt | before da5af55b5ea0a2a38edea05635a13416c698e6e7; after18c82b5302a398065e55539e73648c1fc329c4d4; before.txt, after.txt, direct-registry.txt |
+
+Finite classification target holds, but the whole admission predicate remains **unprovable / honest-stop**: frozen classification controls do not reject kind-only/no-substance states, fenced decoys or nonexistent instruments. The separate actual gate/selftest is now working, but cannot retroactively supply a prefreeze relevant substance-forgery control. Q99 freeze checker also remains red FIELD-MISSING Round (census/round-59/freeze-check.txt). No frozen byte/predicate changed and no earlier rejected admission is repaired. Counter limitations are explicit in SKILL.md and corpus/lessons/round-59.md.
+
+Classification is corrected on the SAME frozen R58-KIND row; no population-shadow substitution was landed. Public successor preserves exact r58 note derivations (production assertions=2 mismatches=0 carry_identical=34 exit_zero=10,8), with stable refusal id and actual isolated self-invocation. No new capability or frontier promotion. Coverage8 and operability8 unchanged.
+
+### Planned (r60, only if operator authorizes progression)
+
+- Do not re-declare this bounded classification repair or infer broader correctness. Before any new freeze, exercise and commit actual public-path substance-forgery controls, not merely kind/summary labels; include readable Round header and replayable fixed-date fixture identities.
+- Carry all parser visibility, recorder dirty-tree/overwrite, receipt atomicity/resource bounds, diagnostics, historical receipt binding and capture row-set meta-test debts OPEN. Existing safety and operator holds remain.
