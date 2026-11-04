@@ -1,0 +1,288 @@
+$ git -C /home/vgpnk/Projects/shokunin/souji-shokunin show e7f64f30324e8ddb3f2266302daa9066054cdbb3:census/round-58/c1-counter.py
+#!/usr/bin/env python3
+"""Revision-scoped calibration of two r57 SCORECARD assertions; no Markdown visibility claim."""
+import argparse
+import csv
+import io
+import subprocess
+
+def measure(root, rev):
+    def blob(path):
+        return subprocess.check_output(['git', '-C', root, 'show', rev + ':' + path], text=True)
+    tables = []
+    for arm in ('5', '6'):
+        rows = list(csv.DictReader(io.StringIO(blob('census/round-57/records/c1-matrix-v' + arm + '.tsv')), delimiter='\t'))
+        tables.append(rows)
+    # Positional columns match the committed matrix header, not prose claims.
+    values = []
+    for rows in tables:
+        values.append(sum(list(row.values())[4] == '0' for row in rows))
+    identical = sum(a['exit'] == b['exit'] and a['findings_all'] == b['findings_all'] for a, b in zip(*tables))
+    text = blob('SCORECARD.md')
+    notes = [
+        'R58-CALIBRATION carry_identical=' + str(identical) + ' supersedes the r57 SCORECARD claim "all 33 carry-over rows".',
+        'R58-CALIBRATION exit_zero=' + ','.join(map(str, values)) + ' counted separately per matrix; the r57 two-file awk command emits the combined total ' + str(sum(values)) + ', not the pair.',
+    ]
+    mismatches = sum(note not in text for note in notes)
+    for note in notes:
+        print(('MATCH ' if note in text else 'MISSING ') + note)
+    print('SUMMARY assertions=2 mismatches=%d carry_identical=%d exit_zero=%s' % (mismatches, identical, ','.join(map(str, values))))
+    return int(bool(mismatches))
+
+if __name__ == '__main__':
+    p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument('--root', required=True)
+    p.add_argument('--rev', required=True)
+    a = p.parse_args()
+    raise SystemExit(measure(a.root, a.rev))
+EXIT=0
+
+$ git -C /home/vgpnk/Projects/shokunin/souji-shokunin show e7f64f30324e8ddb3f2266302daa9066054cdbb3:census/round-57/records/c1-matrix-v5.tsv
+fixture	counter	rev	base	exit	finding	findings_all	SUMMARY
+F1-HONEST-TIP	v5-r56	55b56e65f805	55b56e65f805	0	-	-	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=55b56e65f805 base=55b56e65f805
+F2-MULTI-ANNOT	v5-r56	16de1aecb466	16de1aecb466	1	MULTIPLE-ANNOTATIONS	MULTIPLE-ANNOTATIONS,INERT-CORRECTION	SUMMARY sites=2 mismatches=1 filed=1 unfiled=0 record_sha=ok appended=ok multi=1 inert=1 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=16de1aecb466 base=16de1aecb466
+F3-INERT	v5-r56	1d0104152f26	1d0104152f26	1	INERT-CORRECTION	INERT-CORRECTION	SUMMARY sites=2 mismatches=1 filed=1 unfiled=0 record_sha=ok appended=ok multi=0 inert=1 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=1d0104152f26 base=1d0104152f26
+F4-FENCE	v5-r56	9763f1368ac7	9763f1368ac7	1	CORRECTION-IN-FENCE	CORRECTION-IN-FENCE,CORRECTION-IN-FENCE	SUMMARY sites=2 mismatches=2 filed=0 unfiled=2 record_sha=ok appended=ok multi=0 inert=0 fenced=2 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=9763f1368ac7 base=9763f1368ac7
+F5-REWRITE	v5-r56	569a11518505	e869d6ab4fa2	1	DELETED-LINES	DELETED-LINES	SUMMARY sites=2 mismatches=1 filed=1 unfiled=0 record_sha=ok appended=DELETED multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=569a11518505 base=e869d6ab4fa2
+F6-RECORD-DRIFT	v5-r56	0c991a5c51cb	37aff1008a33	1	RECORD-SHA-MISMATCH	RECORD-SHA-MISMATCH,DELETED-LINES,DELETED-LINES	SUMMARY sites=2 mismatches=0 filed=0 unfiled=0 record_sha=MISMATCH appended=DELETED multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=80 rev=0c991a5c51cb base=37aff1008a33
+F7-TILDE-FENCE	v5-r56	2daa874557c2	2daa874557c2	1	CORRECTION-IN-FENCE	CORRECTION-IN-FENCE,CORRECTION-IN-FENCE	SUMMARY sites=2 mismatches=2 filed=0 unfiled=2 record_sha=ok appended=ok multi=0 inert=0 fenced=2 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=2daa874557c2 base=2daa874557c2
+F8-BT4-PARITY	v5-r56	5a0fafb73fe6	5a0fafb73fe6	1	CORRECTION-IN-FENCE	CORRECTION-IN-FENCE,CORRECTION-IN-FENCE	SUMMARY sites=2 mismatches=2 filed=0 unfiled=2 record_sha=ok appended=ok multi=0 inert=0 fenced=2 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=5a0fafb73fe6 base=5a0fafb73fe6
+F9-HTML-COMMENT	v5-r56	fafd3a2e582f	fafd3a2e582f	1	CORRECTION-IN-FENCE	CORRECTION-IN-FENCE,CORRECTION-IN-FENCE	SUMMARY sites=2 mismatches=2 filed=0 unfiled=2 record_sha=ok appended=ok multi=0 inert=0 fenced=2 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=fafd3a2e582f base=fafd3a2e582f
+F10-STRADDLE	v5-r56	aa36dab9c2ca	aa36dab9c2ca	1	ZONE-TOKEN-STRADDLES-EDGE	ZONE-TOKEN-STRADDLES-EDGE,INERT-CORRECTION	SUMMARY sites=2 mismatches=1 filed=1 unfiled=0 record_sha=ok appended=ok multi=0 inert=1 fenced=0 straddle=1 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=aa36dab9c2ca base=aa36dab9c2ca
+F11-BOGUS-RECOMP	v5-r56	7325d506da78	7325d506da78	1	BOGUS-RECOMPUTED	BOGUS-RECOMPUTED	SUMMARY sites=2 mismatches=1 filed=1 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=1 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=7325d506da78 base=7325d506da78
+F12-LOG-UNFILED	v5-r56	ea328890f5c1	ea328890f5c1	1	UNFILED-SOURCES-ANNOTATION	UNFILED-SOURCES-ANNOTATION	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=1 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=ea328890f5c1 base=ea328890f5c1
+F12b-LOG-FILED	v5-r56	2f6ce4b930a0	2f6ce4b930a0	0	-	-	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=2f6ce4b930a0 base=2f6ce4b930a0
+F7-FF	v5-r56	e163e0fa6689	e163e0fa6689	1	CORRECTION-IN-FENCE	CORRECTION-IN-FENCE,CORRECTION-IN-FENCE	SUMMARY sites=2 mismatches=2 filed=0 unfiled=2 record_sha=ok appended=ok multi=0 inert=0 fenced=2 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=e163e0fa6689 base=e163e0fa6689
+F12c-LOG-POINTER-EXEMPT	v5-r56	5941cdc162f2	5941cdc162f2	0	-	-	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=5941cdc162f2 base=5941cdc162f2
+F8b-BT4-SHORT-RUN	v5-r56	d20080374f11	d20080374f11	1	CORRECTION-IN-FENCE	CORRECTION-IN-FENCE,CORRECTION-IN-FENCE	SUMMARY sites=2 mismatches=2 filed=0 unfiled=2 record_sha=ok appended=ok multi=0 inert=0 fenced=2 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=d20080374f11 base=d20080374f11
+F13-DUAL-ANCHOR	v5-r56	097b943e80d8	097b943e80d8	1	ANCHOR-ALIAS-MISMATCH	ANCHOR-ALIAS-MISMATCH	SUMMARY sites=2 mismatches=0 filed=0 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=1 pairinert=0 pairhidden=0 recomputed=79 rev=097b943e80d8 base=097b943e80d8
+F14-PAIR-STALE-FILING	v5-r56	ea325018bf15	ea325018bf15	1	PAIR-FILING-INERT	PAIR-FILING-INERT	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=1 pairhidden=0 recomputed=79 rev=ea325018bf15 base=ea325018bf15
+F15-PAIR-NOROWS	v5-r56	4c3b1ec3c89f	4c3b1ec3c89f	1	UNFILED-SOURCES-ANNOTATION	UNFILED-SOURCES-ANNOTATION	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=1 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=4c3b1ec3c89f base=4c3b1ec3c89f
+F16-PAIR-ARROW	v5-r56	cc0d0bd80574	cc0d0bd80574	1	UNFILED-SOURCES-ANNOTATION	UNFILED-SOURCES-ANNOTATION	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=1 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=cc0d0bd80574 base=cc0d0bd80574
+F17-INDENT4-FENCE	v5-r56	9349495e9a5b	9349495e9a5b	0	-	-	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=9349495e9a5b base=9349495e9a5b
+F18-BTINFO-FENCE	v5-r56	408e57094039	408e57094039	0	-	-	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=408e57094039 base=408e57094039
+F19-PAIR-IN-FENCE	v5-r56	283763825b69	283763825b69	0	-	-	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=283763825b69 base=283763825b69
+F20-R1-INDENT-SWALLOW	v5-r56	b3c3a1311961	b3c3a1311961	1	BOGUS-RECOMPUTED	BOGUS-RECOMPUTED,BOGUS-RECOMPUTED	SUMMARY sites=2 mismatches=0 filed=0 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=2 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=b3c3a1311961 base=b3c3a1311961
+F21-R1-ONELINE-SWALLOW	v5-r56	1fde33451e78	1fde33451e78	1	BOGUS-RECOMPUTED	BOGUS-RECOMPUTED,CORRECTION-IN-FENCE,BOGUS-RECOMPUTED,CORRECTION-IN-FENCE	SUMMARY sites=2 mismatches=0 filed=0 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=2 straddle=0 bogus=2 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=1fde33451e78 base=1fde33451e78
+F22-PTR-TIMESTAMP	v5-r56	48d7892d9dfa	48d7892d9dfa	1	UNFILED-SOURCES-ANNOTATION	UNFILED-SOURCES-ANNOTATION	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=1 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=48d7892d9dfa base=48d7892d9dfa
+F23-SOURCES-RECOMP	v5-r56	116864e88a4c	116864e88a4c	1	SOURCES-RECOMPUTE-MISMATCH	SOURCES-RECOMPUTE-MISMATCH	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=1 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=116864e88a4c base=116864e88a4c
+F7-FF2	v5-r56	b4a1675bf10a	b4a1675bf10a	1	CORRECTION-IN-FENCE	CORRECTION-IN-FENCE,CORRECTION-IN-FENCE	SUMMARY sites=2 mismatches=2 filed=0 unfiled=2 record_sha=ok appended=ok multi=0 inert=0 fenced=2 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=b4a1675bf10a base=b4a1675bf10a
+F24-PAIR-HIDDEN-FILING	v5-r56	3b7923f3af56	3b7923f3af56	1	UNFILED-SOURCES-ANNOTATION	UNFILED-SOURCES-ANNOTATION,PAIR-FILING-HIDDEN	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=1 logrecomp=0 alias=0 pairinert=0 pairhidden=1 recomputed=79 rev=3b7923f3af56 base=3b7923f3af56
+F26-INDENT4-COMMENT-OPENER	v5-r56	aed35e4cff78	aed35e4cff78	1	UNFILED-SOURCES-ANNOTATION	UNFILED-SOURCES-ANNOTATION	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=1 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=aed35e4cff78 base=aed35e4cff78
+F27-BINARY-NUMSTAT	v5-r56	16c08d97816b	e56028b65d02	1	DELETIONS-UNREADABLE-BINARY	DELETIONS-UNREADABLE-BINARY	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=DELETED multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=16c08d97816b base=e56028b65d02
+F28-NUL-CORRECTION-UNCHANGED	v5-r56	33f40a5c12fa	33f40a5c12fa	1	CORRECTION-FILE-BINARY	CORRECTION-FILE-BINARY	SUMMARY sites=2 mismatches=0 filed=0 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=33f40a5c12fa base=33f40a5c12fa
+F29-PROSE-COMMENT-MENTION	v5-r56	bf0488f93345	bf0488f93345	0	-	-	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=bf0488f93345 base=bf0488f93345
+B4-INLINE-NBSP-OPENER	v5-r56	5f0f232d0d96	5f0f232d0d96	0	-	-	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=5f0f232d0d96 base=5f0f232d0d96
+C4-INLINE-CLOSED-COMMENT	v5-r56	93cae1bba977	93cae1bba977	0	-	-	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=93cae1bba977 base=93cae1bba977
+C6-INLINE-SAME-LINE	v5-r56	14467af06234	14467af06234	0	-	-	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=14467af06234 base=14467af06234
+EXIT=0
+
+$ git -C /home/vgpnk/Projects/shokunin/souji-shokunin show e7f64f30324e8ddb3f2266302daa9066054cdbb3:census/round-57/records/c1-matrix-v6.tsv
+fixture	counter	rev	base	exit	finding	findings_all	SUMMARY
+F1-HONEST-TIP	v6-r57	55b56e65f805	55b56e65f805	0	-	-	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=55b56e65f805 base=55b56e65f805
+F2-MULTI-ANNOT	v6-r57	16de1aecb466	16de1aecb466	1	MULTIPLE-ANNOTATIONS	MULTIPLE-ANNOTATIONS,INERT-CORRECTION	SUMMARY sites=2 mismatches=1 filed=1 unfiled=0 record_sha=ok appended=ok multi=1 inert=1 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=16de1aecb466 base=16de1aecb466
+F3-INERT	v6-r57	1d0104152f26	1d0104152f26	1	INERT-CORRECTION	INERT-CORRECTION	SUMMARY sites=2 mismatches=1 filed=1 unfiled=0 record_sha=ok appended=ok multi=0 inert=1 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=1d0104152f26 base=1d0104152f26
+F4-FENCE	v6-r57	9763f1368ac7	9763f1368ac7	1	CORRECTION-IN-FENCE	CORRECTION-IN-FENCE,CORRECTION-IN-FENCE	SUMMARY sites=2 mismatches=2 filed=0 unfiled=2 record_sha=ok appended=ok multi=0 inert=0 fenced=2 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=9763f1368ac7 base=9763f1368ac7
+F5-REWRITE	v6-r57	569a11518505	e869d6ab4fa2	1	DELETED-LINES	DELETED-LINES	SUMMARY sites=2 mismatches=1 filed=1 unfiled=0 record_sha=ok appended=DELETED multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=569a11518505 base=e869d6ab4fa2
+F6-RECORD-DRIFT	v6-r57	0c991a5c51cb	37aff1008a33	1	RECORD-SHA-MISMATCH	RECORD-SHA-MISMATCH,DELETED-LINES,DELETED-LINES	SUMMARY sites=2 mismatches=0 filed=0 unfiled=0 record_sha=MISMATCH appended=DELETED multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=80 rev=0c991a5c51cb base=37aff1008a33
+F7-TILDE-FENCE	v6-r57	2daa874557c2	2daa874557c2	1	CORRECTION-IN-FENCE	CORRECTION-IN-FENCE,CORRECTION-IN-FENCE	SUMMARY sites=2 mismatches=2 filed=0 unfiled=2 record_sha=ok appended=ok multi=0 inert=0 fenced=2 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=2daa874557c2 base=2daa874557c2
+F8-BT4-PARITY	v6-r57	5a0fafb73fe6	5a0fafb73fe6	1	CORRECTION-IN-FENCE	CORRECTION-IN-FENCE,CORRECTION-IN-FENCE	SUMMARY sites=2 mismatches=2 filed=0 unfiled=2 record_sha=ok appended=ok multi=0 inert=0 fenced=2 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=5a0fafb73fe6 base=5a0fafb73fe6
+F9-HTML-COMMENT	v6-r57	fafd3a2e582f	fafd3a2e582f	1	CORRECTION-IN-FENCE	CORRECTION-IN-FENCE,CORRECTION-IN-FENCE	SUMMARY sites=2 mismatches=2 filed=0 unfiled=2 record_sha=ok appended=ok multi=0 inert=0 fenced=2 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=fafd3a2e582f base=fafd3a2e582f
+F10-STRADDLE	v6-r57	aa36dab9c2ca	aa36dab9c2ca	1	ZONE-TOKEN-STRADDLES-EDGE	ZONE-TOKEN-STRADDLES-EDGE,INERT-CORRECTION	SUMMARY sites=2 mismatches=1 filed=1 unfiled=0 record_sha=ok appended=ok multi=0 inert=1 fenced=0 straddle=1 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=aa36dab9c2ca base=aa36dab9c2ca
+F11-BOGUS-RECOMP	v6-r57	7325d506da78	7325d506da78	1	BOGUS-RECOMPUTED	BOGUS-RECOMPUTED	SUMMARY sites=2 mismatches=1 filed=1 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=1 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=7325d506da78 base=7325d506da78
+F12-LOG-UNFILED	v6-r57	ea328890f5c1	ea328890f5c1	1	UNFILED-SOURCES-ANNOTATION	UNFILED-SOURCES-ANNOTATION	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=1 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=ea328890f5c1 base=ea328890f5c1
+F12b-LOG-FILED	v6-r57	2f6ce4b930a0	2f6ce4b930a0	0	-	-	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=2f6ce4b930a0 base=2f6ce4b930a0
+F7-FF	v6-r57	e163e0fa6689	e163e0fa6689	1	CORRECTION-IN-FENCE	CORRECTION-IN-FENCE,CORRECTION-IN-FENCE	SUMMARY sites=2 mismatches=2 filed=0 unfiled=2 record_sha=ok appended=ok multi=0 inert=0 fenced=2 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=e163e0fa6689 base=e163e0fa6689
+F12c-LOG-POINTER-EXEMPT	v6-r57	5941cdc162f2	5941cdc162f2	0	-	-	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=5941cdc162f2 base=5941cdc162f2
+F8b-BT4-SHORT-RUN	v6-r57	d20080374f11	d20080374f11	1	CORRECTION-IN-FENCE	CORRECTION-IN-FENCE,CORRECTION-IN-FENCE	SUMMARY sites=2 mismatches=2 filed=0 unfiled=2 record_sha=ok appended=ok multi=0 inert=0 fenced=2 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=d20080374f11 base=d20080374f11
+F13-DUAL-ANCHOR	v6-r57	097b943e80d8	097b943e80d8	1	ANCHOR-ALIAS-MISMATCH	ANCHOR-ALIAS-MISMATCH	SUMMARY sites=2 mismatches=0 filed=0 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=1 pairinert=0 pairhidden=0 recomputed=79 rev=097b943e80d8 base=097b943e80d8
+F14-PAIR-STALE-FILING	v6-r57	ea325018bf15	ea325018bf15	1	PAIR-FILING-INERT	PAIR-FILING-INERT	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=1 pairhidden=0 recomputed=79 rev=ea325018bf15 base=ea325018bf15
+F15-PAIR-NOROWS	v6-r57	4c3b1ec3c89f	4c3b1ec3c89f	1	UNFILED-SOURCES-ANNOTATION	UNFILED-SOURCES-ANNOTATION	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=1 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=4c3b1ec3c89f base=4c3b1ec3c89f
+F16-PAIR-ARROW	v6-r57	cc0d0bd80574	cc0d0bd80574	1	UNFILED-SOURCES-ANNOTATION	UNFILED-SOURCES-ANNOTATION	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=1 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=cc0d0bd80574 base=cc0d0bd80574
+F17-INDENT4-FENCE	v6-r57	9349495e9a5b	9349495e9a5b	0	-	-	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=9349495e9a5b base=9349495e9a5b
+F18-BTINFO-FENCE	v6-r57	408e57094039	408e57094039	0	-	-	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=408e57094039 base=408e57094039
+F19-PAIR-IN-FENCE	v6-r57	283763825b69	283763825b69	0	-	-	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=283763825b69 base=283763825b69
+F20-R1-INDENT-SWALLOW	v6-r57	b3c3a1311961	b3c3a1311961	1	BOGUS-RECOMPUTED	BOGUS-RECOMPUTED,BOGUS-RECOMPUTED	SUMMARY sites=2 mismatches=0 filed=0 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=2 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=b3c3a1311961 base=b3c3a1311961
+F21-R1-ONELINE-SWALLOW	v6-r57	1fde33451e78	1fde33451e78	1	BOGUS-RECOMPUTED	BOGUS-RECOMPUTED,CORRECTION-IN-FENCE,BOGUS-RECOMPUTED,CORRECTION-IN-FENCE	SUMMARY sites=2 mismatches=0 filed=0 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=2 straddle=0 bogus=2 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=1fde33451e78 base=1fde33451e78
+F22-PTR-TIMESTAMP	v6-r57	48d7892d9dfa	48d7892d9dfa	1	UNFILED-SOURCES-ANNOTATION	UNFILED-SOURCES-ANNOTATION	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=1 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=48d7892d9dfa base=48d7892d9dfa
+F23-SOURCES-RECOMP	v6-r57	116864e88a4c	116864e88a4c	1	SOURCES-RECOMPUTE-MISMATCH	SOURCES-RECOMPUTE-MISMATCH	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=1 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=116864e88a4c base=116864e88a4c
+F7-FF2	v6-r57	b4a1675bf10a	b4a1675bf10a	1	CORRECTION-IN-FENCE	CORRECTION-IN-FENCE,CORRECTION-IN-FENCE	SUMMARY sites=2 mismatches=2 filed=0 unfiled=2 record_sha=ok appended=ok multi=0 inert=0 fenced=2 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=b4a1675bf10a base=b4a1675bf10a
+F24-PAIR-HIDDEN-FILING	v6-r57	3b7923f3af56	3b7923f3af56	1	UNFILED-SOURCES-ANNOTATION	UNFILED-SOURCES-ANNOTATION,PAIR-FILING-HIDDEN	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=1 logrecomp=0 alias=0 pairinert=0 pairhidden=1 recomputed=79 rev=3b7923f3af56 base=3b7923f3af56
+F26-INDENT4-COMMENT-OPENER	v6-r57	aed35e4cff78	aed35e4cff78	1	UNFILED-SOURCES-ANNOTATION	UNFILED-SOURCES-ANNOTATION	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=1 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=aed35e4cff78 base=aed35e4cff78
+F27-BINARY-NUMSTAT	v6-r57	16c08d97816b	e56028b65d02	1	DELETIONS-UNREADABLE-BINARY	DELETIONS-UNREADABLE-BINARY	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=DELETED multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=16c08d97816b base=e56028b65d02
+F28-NUL-CORRECTION-UNCHANGED	v6-r57	33f40a5c12fa	33f40a5c12fa	1	CORRECTION-FILE-BINARY	CORRECTION-FILE-BINARY	SUMMARY sites=2 mismatches=0 filed=0 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=33f40a5c12fa base=33f40a5c12fa
+F29-PROSE-COMMENT-MENTION	v6-r57	bf0488f93345	bf0488f93345	0	-	-	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=bf0488f93345 base=bf0488f93345
+B4-INLINE-NBSP-OPENER	v6-r57	5f0f232d0d96	5f0f232d0d96	1	CORRECTION-IN-FENCE	CORRECTION-IN-FENCE,CORRECTION-IN-FENCE	SUMMARY sites=2 mismatches=2 filed=0 unfiled=2 record_sha=ok appended=ok multi=0 inert=0 fenced=2 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=5f0f232d0d96 base=5f0f232d0d96
+C4-INLINE-CLOSED-COMMENT	v6-r57	93cae1bba977	93cae1bba977	1	CORRECTION-IN-FENCE	CORRECTION-IN-FENCE,CORRECTION-IN-FENCE	SUMMARY sites=2 mismatches=2 filed=0 unfiled=2 record_sha=ok appended=ok multi=0 inert=0 fenced=2 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=93cae1bba977 base=93cae1bba977
+C6-INLINE-SAME-LINE	v6-r57	14467af06234	14467af06234	0	-	-	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=14467af06234 base=14467af06234
+EXIT=0
+
+$ python3 -B - --root /home/vgpnk/Projects/shokunin/souji-shokunin --rev e7f64f30324e8ddb3f2266302daa9066054cdbb3
+MISSING R58-CALIBRATION carry_identical=34 supersedes the r57 SCORECARD claim "all 33 carry-over rows".
+MISSING R58-CALIBRATION exit_zero=10,8 counted separately per matrix; the r57 two-file awk command emits the combined total 18, not the pair.
+SUMMARY assertions=2 mismatches=2 carry_identical=34 exit_zero=10,8
+EXIT=1
+
+$ git -C /home/vgpnk/Projects/shokunin/souji-shokunin show e7f64f30324e8ddb3f2266302daa9066054cdbb3:census/round-58/c1-counter.py
+#!/usr/bin/env python3
+"""Revision-scoped calibration of two r57 SCORECARD assertions; no Markdown visibility claim."""
+import argparse
+import csv
+import io
+import subprocess
+
+def measure(root, rev):
+    def blob(path):
+        return subprocess.check_output(['git', '-C', root, 'show', rev + ':' + path], text=True)
+    tables = []
+    for arm in ('5', '6'):
+        rows = list(csv.DictReader(io.StringIO(blob('census/round-57/records/c1-matrix-v' + arm + '.tsv')), delimiter='\t'))
+        tables.append(rows)
+    # Positional columns match the committed matrix header, not prose claims.
+    values = []
+    for rows in tables:
+        values.append(sum(list(row.values())[4] == '0' for row in rows))
+    identical = sum(a['exit'] == b['exit'] and a['findings_all'] == b['findings_all'] for a, b in zip(*tables))
+    text = blob('SCORECARD.md')
+    notes = [
+        'R58-CALIBRATION carry_identical=' + str(identical) + ' supersedes the r57 SCORECARD claim "all 33 carry-over rows".',
+        'R58-CALIBRATION exit_zero=' + ','.join(map(str, values)) + ' counted separately per matrix; the r57 two-file awk command emits the combined total ' + str(sum(values)) + ', not the pair.',
+    ]
+    mismatches = sum(note not in text for note in notes)
+    for note in notes:
+        print(('MATCH ' if note in text else 'MISSING ') + note)
+    print('SUMMARY assertions=2 mismatches=%d carry_identical=%d exit_zero=%s' % (mismatches, identical, ','.join(map(str, values))))
+    return int(bool(mismatches))
+
+if __name__ == '__main__':
+    p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument('--root', required=True)
+    p.add_argument('--rev', required=True)
+    a = p.parse_args()
+    raise SystemExit(measure(a.root, a.rev))
+EXIT=0
+
+$ git -C /home/vgpnk/Projects/shokunin/souji-shokunin show dccdc469f4c2e0415e1a1dcc317364e1b4d3191e:census/round-57/records/c1-matrix-v5.tsv
+fixture	counter	rev	base	exit	finding	findings_all	SUMMARY
+F1-HONEST-TIP	v5-r56	55b56e65f805	55b56e65f805	0	-	-	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=55b56e65f805 base=55b56e65f805
+F2-MULTI-ANNOT	v5-r56	16de1aecb466	16de1aecb466	1	MULTIPLE-ANNOTATIONS	MULTIPLE-ANNOTATIONS,INERT-CORRECTION	SUMMARY sites=2 mismatches=1 filed=1 unfiled=0 record_sha=ok appended=ok multi=1 inert=1 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=16de1aecb466 base=16de1aecb466
+F3-INERT	v5-r56	1d0104152f26	1d0104152f26	1	INERT-CORRECTION	INERT-CORRECTION	SUMMARY sites=2 mismatches=1 filed=1 unfiled=0 record_sha=ok appended=ok multi=0 inert=1 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=1d0104152f26 base=1d0104152f26
+F4-FENCE	v5-r56	9763f1368ac7	9763f1368ac7	1	CORRECTION-IN-FENCE	CORRECTION-IN-FENCE,CORRECTION-IN-FENCE	SUMMARY sites=2 mismatches=2 filed=0 unfiled=2 record_sha=ok appended=ok multi=0 inert=0 fenced=2 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=9763f1368ac7 base=9763f1368ac7
+F5-REWRITE	v5-r56	569a11518505	e869d6ab4fa2	1	DELETED-LINES	DELETED-LINES	SUMMARY sites=2 mismatches=1 filed=1 unfiled=0 record_sha=ok appended=DELETED multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=569a11518505 base=e869d6ab4fa2
+F6-RECORD-DRIFT	v5-r56	0c991a5c51cb	37aff1008a33	1	RECORD-SHA-MISMATCH	RECORD-SHA-MISMATCH,DELETED-LINES,DELETED-LINES	SUMMARY sites=2 mismatches=0 filed=0 unfiled=0 record_sha=MISMATCH appended=DELETED multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=80 rev=0c991a5c51cb base=37aff1008a33
+F7-TILDE-FENCE	v5-r56	2daa874557c2	2daa874557c2	1	CORRECTION-IN-FENCE	CORRECTION-IN-FENCE,CORRECTION-IN-FENCE	SUMMARY sites=2 mismatches=2 filed=0 unfiled=2 record_sha=ok appended=ok multi=0 inert=0 fenced=2 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=2daa874557c2 base=2daa874557c2
+F8-BT4-PARITY	v5-r56	5a0fafb73fe6	5a0fafb73fe6	1	CORRECTION-IN-FENCE	CORRECTION-IN-FENCE,CORRECTION-IN-FENCE	SUMMARY sites=2 mismatches=2 filed=0 unfiled=2 record_sha=ok appended=ok multi=0 inert=0 fenced=2 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=5a0fafb73fe6 base=5a0fafb73fe6
+F9-HTML-COMMENT	v5-r56	fafd3a2e582f	fafd3a2e582f	1	CORRECTION-IN-FENCE	CORRECTION-IN-FENCE,CORRECTION-IN-FENCE	SUMMARY sites=2 mismatches=2 filed=0 unfiled=2 record_sha=ok appended=ok multi=0 inert=0 fenced=2 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=fafd3a2e582f base=fafd3a2e582f
+F10-STRADDLE	v5-r56	aa36dab9c2ca	aa36dab9c2ca	1	ZONE-TOKEN-STRADDLES-EDGE	ZONE-TOKEN-STRADDLES-EDGE,INERT-CORRECTION	SUMMARY sites=2 mismatches=1 filed=1 unfiled=0 record_sha=ok appended=ok multi=0 inert=1 fenced=0 straddle=1 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=aa36dab9c2ca base=aa36dab9c2ca
+F11-BOGUS-RECOMP	v5-r56	7325d506da78	7325d506da78	1	BOGUS-RECOMPUTED	BOGUS-RECOMPUTED	SUMMARY sites=2 mismatches=1 filed=1 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=1 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=7325d506da78 base=7325d506da78
+F12-LOG-UNFILED	v5-r56	ea328890f5c1	ea328890f5c1	1	UNFILED-SOURCES-ANNOTATION	UNFILED-SOURCES-ANNOTATION	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=1 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=ea328890f5c1 base=ea328890f5c1
+F12b-LOG-FILED	v5-r56	2f6ce4b930a0	2f6ce4b930a0	0	-	-	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=2f6ce4b930a0 base=2f6ce4b930a0
+F7-FF	v5-r56	e163e0fa6689	e163e0fa6689	1	CORRECTION-IN-FENCE	CORRECTION-IN-FENCE,CORRECTION-IN-FENCE	SUMMARY sites=2 mismatches=2 filed=0 unfiled=2 record_sha=ok appended=ok multi=0 inert=0 fenced=2 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=e163e0fa6689 base=e163e0fa6689
+F12c-LOG-POINTER-EXEMPT	v5-r56	5941cdc162f2	5941cdc162f2	0	-	-	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=5941cdc162f2 base=5941cdc162f2
+F8b-BT4-SHORT-RUN	v5-r56	d20080374f11	d20080374f11	1	CORRECTION-IN-FENCE	CORRECTION-IN-FENCE,CORRECTION-IN-FENCE	SUMMARY sites=2 mismatches=2 filed=0 unfiled=2 record_sha=ok appended=ok multi=0 inert=0 fenced=2 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=d20080374f11 base=d20080374f11
+F13-DUAL-ANCHOR	v5-r56	097b943e80d8	097b943e80d8	1	ANCHOR-ALIAS-MISMATCH	ANCHOR-ALIAS-MISMATCH	SUMMARY sites=2 mismatches=0 filed=0 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=1 pairinert=0 pairhidden=0 recomputed=79 rev=097b943e80d8 base=097b943e80d8
+F14-PAIR-STALE-FILING	v5-r56	ea325018bf15	ea325018bf15	1	PAIR-FILING-INERT	PAIR-FILING-INERT	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=1 pairhidden=0 recomputed=79 rev=ea325018bf15 base=ea325018bf15
+F15-PAIR-NOROWS	v5-r56	4c3b1ec3c89f	4c3b1ec3c89f	1	UNFILED-SOURCES-ANNOTATION	UNFILED-SOURCES-ANNOTATION	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=1 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=4c3b1ec3c89f base=4c3b1ec3c89f
+F16-PAIR-ARROW	v5-r56	cc0d0bd80574	cc0d0bd80574	1	UNFILED-SOURCES-ANNOTATION	UNFILED-SOURCES-ANNOTATION	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=1 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=cc0d0bd80574 base=cc0d0bd80574
+F17-INDENT4-FENCE	v5-r56	9349495e9a5b	9349495e9a5b	0	-	-	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=9349495e9a5b base=9349495e9a5b
+F18-BTINFO-FENCE	v5-r56	408e57094039	408e57094039	0	-	-	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=408e57094039 base=408e57094039
+F19-PAIR-IN-FENCE	v5-r56	283763825b69	283763825b69	0	-	-	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=283763825b69 base=283763825b69
+F20-R1-INDENT-SWALLOW	v5-r56	b3c3a1311961	b3c3a1311961	1	BOGUS-RECOMPUTED	BOGUS-RECOMPUTED,BOGUS-RECOMPUTED	SUMMARY sites=2 mismatches=0 filed=0 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=2 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=b3c3a1311961 base=b3c3a1311961
+F21-R1-ONELINE-SWALLOW	v5-r56	1fde33451e78	1fde33451e78	1	BOGUS-RECOMPUTED	BOGUS-RECOMPUTED,CORRECTION-IN-FENCE,BOGUS-RECOMPUTED,CORRECTION-IN-FENCE	SUMMARY sites=2 mismatches=0 filed=0 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=2 straddle=0 bogus=2 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=1fde33451e78 base=1fde33451e78
+F22-PTR-TIMESTAMP	v5-r56	48d7892d9dfa	48d7892d9dfa	1	UNFILED-SOURCES-ANNOTATION	UNFILED-SOURCES-ANNOTATION	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=1 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=48d7892d9dfa base=48d7892d9dfa
+F23-SOURCES-RECOMP	v5-r56	116864e88a4c	116864e88a4c	1	SOURCES-RECOMPUTE-MISMATCH	SOURCES-RECOMPUTE-MISMATCH	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=1 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=116864e88a4c base=116864e88a4c
+F7-FF2	v5-r56	b4a1675bf10a	b4a1675bf10a	1	CORRECTION-IN-FENCE	CORRECTION-IN-FENCE,CORRECTION-IN-FENCE	SUMMARY sites=2 mismatches=2 filed=0 unfiled=2 record_sha=ok appended=ok multi=0 inert=0 fenced=2 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=b4a1675bf10a base=b4a1675bf10a
+F24-PAIR-HIDDEN-FILING	v5-r56	3b7923f3af56	3b7923f3af56	1	UNFILED-SOURCES-ANNOTATION	UNFILED-SOURCES-ANNOTATION,PAIR-FILING-HIDDEN	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=1 logrecomp=0 alias=0 pairinert=0 pairhidden=1 recomputed=79 rev=3b7923f3af56 base=3b7923f3af56
+F26-INDENT4-COMMENT-OPENER	v5-r56	aed35e4cff78	aed35e4cff78	1	UNFILED-SOURCES-ANNOTATION	UNFILED-SOURCES-ANNOTATION	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=1 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=aed35e4cff78 base=aed35e4cff78
+F27-BINARY-NUMSTAT	v5-r56	16c08d97816b	e56028b65d02	1	DELETIONS-UNREADABLE-BINARY	DELETIONS-UNREADABLE-BINARY	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=DELETED multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=16c08d97816b base=e56028b65d02
+F28-NUL-CORRECTION-UNCHANGED	v5-r56	33f40a5c12fa	33f40a5c12fa	1	CORRECTION-FILE-BINARY	CORRECTION-FILE-BINARY	SUMMARY sites=2 mismatches=0 filed=0 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=33f40a5c12fa base=33f40a5c12fa
+F29-PROSE-COMMENT-MENTION	v5-r56	bf0488f93345	bf0488f93345	0	-	-	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=bf0488f93345 base=bf0488f93345
+B4-INLINE-NBSP-OPENER	v5-r56	5f0f232d0d96	5f0f232d0d96	0	-	-	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=5f0f232d0d96 base=5f0f232d0d96
+C4-INLINE-CLOSED-COMMENT	v5-r56	93cae1bba977	93cae1bba977	0	-	-	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=93cae1bba977 base=93cae1bba977
+C6-INLINE-SAME-LINE	v5-r56	14467af06234	14467af06234	0	-	-	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=14467af06234 base=14467af06234
+EXIT=0
+
+$ git -C /home/vgpnk/Projects/shokunin/souji-shokunin show dccdc469f4c2e0415e1a1dcc317364e1b4d3191e:census/round-57/records/c1-matrix-v6.tsv
+fixture	counter	rev	base	exit	finding	findings_all	SUMMARY
+F1-HONEST-TIP	v6-r57	55b56e65f805	55b56e65f805	0	-	-	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=55b56e65f805 base=55b56e65f805
+F2-MULTI-ANNOT	v6-r57	16de1aecb466	16de1aecb466	1	MULTIPLE-ANNOTATIONS	MULTIPLE-ANNOTATIONS,INERT-CORRECTION	SUMMARY sites=2 mismatches=1 filed=1 unfiled=0 record_sha=ok appended=ok multi=1 inert=1 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=16de1aecb466 base=16de1aecb466
+F3-INERT	v6-r57	1d0104152f26	1d0104152f26	1	INERT-CORRECTION	INERT-CORRECTION	SUMMARY sites=2 mismatches=1 filed=1 unfiled=0 record_sha=ok appended=ok multi=0 inert=1 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=1d0104152f26 base=1d0104152f26
+F4-FENCE	v6-r57	9763f1368ac7	9763f1368ac7	1	CORRECTION-IN-FENCE	CORRECTION-IN-FENCE,CORRECTION-IN-FENCE	SUMMARY sites=2 mismatches=2 filed=0 unfiled=2 record_sha=ok appended=ok multi=0 inert=0 fenced=2 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=9763f1368ac7 base=9763f1368ac7
+F5-REWRITE	v6-r57	569a11518505	e869d6ab4fa2	1	DELETED-LINES	DELETED-LINES	SUMMARY sites=2 mismatches=1 filed=1 unfiled=0 record_sha=ok appended=DELETED multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=569a11518505 base=e869d6ab4fa2
+F6-RECORD-DRIFT	v6-r57	0c991a5c51cb	37aff1008a33	1	RECORD-SHA-MISMATCH	RECORD-SHA-MISMATCH,DELETED-LINES,DELETED-LINES	SUMMARY sites=2 mismatches=0 filed=0 unfiled=0 record_sha=MISMATCH appended=DELETED multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=80 rev=0c991a5c51cb base=37aff1008a33
+F7-TILDE-FENCE	v6-r57	2daa874557c2	2daa874557c2	1	CORRECTION-IN-FENCE	CORRECTION-IN-FENCE,CORRECTION-IN-FENCE	SUMMARY sites=2 mismatches=2 filed=0 unfiled=2 record_sha=ok appended=ok multi=0 inert=0 fenced=2 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=2daa874557c2 base=2daa874557c2
+F8-BT4-PARITY	v6-r57	5a0fafb73fe6	5a0fafb73fe6	1	CORRECTION-IN-FENCE	CORRECTION-IN-FENCE,CORRECTION-IN-FENCE	SUMMARY sites=2 mismatches=2 filed=0 unfiled=2 record_sha=ok appended=ok multi=0 inert=0 fenced=2 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=5a0fafb73fe6 base=5a0fafb73fe6
+F9-HTML-COMMENT	v6-r57	fafd3a2e582f	fafd3a2e582f	1	CORRECTION-IN-FENCE	CORRECTION-IN-FENCE,CORRECTION-IN-FENCE	SUMMARY sites=2 mismatches=2 filed=0 unfiled=2 record_sha=ok appended=ok multi=0 inert=0 fenced=2 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=fafd3a2e582f base=fafd3a2e582f
+F10-STRADDLE	v6-r57	aa36dab9c2ca	aa36dab9c2ca	1	ZONE-TOKEN-STRADDLES-EDGE	ZONE-TOKEN-STRADDLES-EDGE,INERT-CORRECTION	SUMMARY sites=2 mismatches=1 filed=1 unfiled=0 record_sha=ok appended=ok multi=0 inert=1 fenced=0 straddle=1 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=aa36dab9c2ca base=aa36dab9c2ca
+F11-BOGUS-RECOMP	v6-r57	7325d506da78	7325d506da78	1	BOGUS-RECOMPUTED	BOGUS-RECOMPUTED	SUMMARY sites=2 mismatches=1 filed=1 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=1 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=7325d506da78 base=7325d506da78
+F12-LOG-UNFILED	v6-r57	ea328890f5c1	ea328890f5c1	1	UNFILED-SOURCES-ANNOTATION	UNFILED-SOURCES-ANNOTATION	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=1 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=ea328890f5c1 base=ea328890f5c1
+F12b-LOG-FILED	v6-r57	2f6ce4b930a0	2f6ce4b930a0	0	-	-	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=2f6ce4b930a0 base=2f6ce4b930a0
+F7-FF	v6-r57	e163e0fa6689	e163e0fa6689	1	CORRECTION-IN-FENCE	CORRECTION-IN-FENCE,CORRECTION-IN-FENCE	SUMMARY sites=2 mismatches=2 filed=0 unfiled=2 record_sha=ok appended=ok multi=0 inert=0 fenced=2 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=e163e0fa6689 base=e163e0fa6689
+F12c-LOG-POINTER-EXEMPT	v6-r57	5941cdc162f2	5941cdc162f2	0	-	-	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=5941cdc162f2 base=5941cdc162f2
+F8b-BT4-SHORT-RUN	v6-r57	d20080374f11	d20080374f11	1	CORRECTION-IN-FENCE	CORRECTION-IN-FENCE,CORRECTION-IN-FENCE	SUMMARY sites=2 mismatches=2 filed=0 unfiled=2 record_sha=ok appended=ok multi=0 inert=0 fenced=2 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=d20080374f11 base=d20080374f11
+F13-DUAL-ANCHOR	v6-r57	097b943e80d8	097b943e80d8	1	ANCHOR-ALIAS-MISMATCH	ANCHOR-ALIAS-MISMATCH	SUMMARY sites=2 mismatches=0 filed=0 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=1 pairinert=0 pairhidden=0 recomputed=79 rev=097b943e80d8 base=097b943e80d8
+F14-PAIR-STALE-FILING	v6-r57	ea325018bf15	ea325018bf15	1	PAIR-FILING-INERT	PAIR-FILING-INERT	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=1 pairhidden=0 recomputed=79 rev=ea325018bf15 base=ea325018bf15
+F15-PAIR-NOROWS	v6-r57	4c3b1ec3c89f	4c3b1ec3c89f	1	UNFILED-SOURCES-ANNOTATION	UNFILED-SOURCES-ANNOTATION	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=1 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=4c3b1ec3c89f base=4c3b1ec3c89f
+F16-PAIR-ARROW	v6-r57	cc0d0bd80574	cc0d0bd80574	1	UNFILED-SOURCES-ANNOTATION	UNFILED-SOURCES-ANNOTATION	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=1 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=cc0d0bd80574 base=cc0d0bd80574
+F17-INDENT4-FENCE	v6-r57	9349495e9a5b	9349495e9a5b	0	-	-	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=9349495e9a5b base=9349495e9a5b
+F18-BTINFO-FENCE	v6-r57	408e57094039	408e57094039	0	-	-	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=408e57094039 base=408e57094039
+F19-PAIR-IN-FENCE	v6-r57	283763825b69	283763825b69	0	-	-	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=283763825b69 base=283763825b69
+F20-R1-INDENT-SWALLOW	v6-r57	b3c3a1311961	b3c3a1311961	1	BOGUS-RECOMPUTED	BOGUS-RECOMPUTED,BOGUS-RECOMPUTED	SUMMARY sites=2 mismatches=0 filed=0 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=2 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=b3c3a1311961 base=b3c3a1311961
+F21-R1-ONELINE-SWALLOW	v6-r57	1fde33451e78	1fde33451e78	1	BOGUS-RECOMPUTED	BOGUS-RECOMPUTED,CORRECTION-IN-FENCE,BOGUS-RECOMPUTED,CORRECTION-IN-FENCE	SUMMARY sites=2 mismatches=0 filed=0 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=2 straddle=0 bogus=2 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=1fde33451e78 base=1fde33451e78
+F22-PTR-TIMESTAMP	v6-r57	48d7892d9dfa	48d7892d9dfa	1	UNFILED-SOURCES-ANNOTATION	UNFILED-SOURCES-ANNOTATION	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=1 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=48d7892d9dfa base=48d7892d9dfa
+F23-SOURCES-RECOMP	v6-r57	116864e88a4c	116864e88a4c	1	SOURCES-RECOMPUTE-MISMATCH	SOURCES-RECOMPUTE-MISMATCH	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=1 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=116864e88a4c base=116864e88a4c
+F7-FF2	v6-r57	b4a1675bf10a	b4a1675bf10a	1	CORRECTION-IN-FENCE	CORRECTION-IN-FENCE,CORRECTION-IN-FENCE	SUMMARY sites=2 mismatches=2 filed=0 unfiled=2 record_sha=ok appended=ok multi=0 inert=0 fenced=2 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=b4a1675bf10a base=b4a1675bf10a
+F24-PAIR-HIDDEN-FILING	v6-r57	3b7923f3af56	3b7923f3af56	1	UNFILED-SOURCES-ANNOTATION	UNFILED-SOURCES-ANNOTATION,PAIR-FILING-HIDDEN	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=1 logrecomp=0 alias=0 pairinert=0 pairhidden=1 recomputed=79 rev=3b7923f3af56 base=3b7923f3af56
+F26-INDENT4-COMMENT-OPENER	v6-r57	aed35e4cff78	aed35e4cff78	1	UNFILED-SOURCES-ANNOTATION	UNFILED-SOURCES-ANNOTATION	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=1 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=aed35e4cff78 base=aed35e4cff78
+F27-BINARY-NUMSTAT	v6-r57	16c08d97816b	e56028b65d02	1	DELETIONS-UNREADABLE-BINARY	DELETIONS-UNREADABLE-BINARY	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=DELETED multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=16c08d97816b base=e56028b65d02
+F28-NUL-CORRECTION-UNCHANGED	v6-r57	33f40a5c12fa	33f40a5c12fa	1	CORRECTION-FILE-BINARY	CORRECTION-FILE-BINARY	SUMMARY sites=2 mismatches=0 filed=0 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=33f40a5c12fa base=33f40a5c12fa
+F29-PROSE-COMMENT-MENTION	v6-r57	bf0488f93345	bf0488f93345	0	-	-	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=bf0488f93345 base=bf0488f93345
+B4-INLINE-NBSP-OPENER	v6-r57	5f0f232d0d96	5f0f232d0d96	1	CORRECTION-IN-FENCE	CORRECTION-IN-FENCE,CORRECTION-IN-FENCE	SUMMARY sites=2 mismatches=2 filed=0 unfiled=2 record_sha=ok appended=ok multi=0 inert=0 fenced=2 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=5f0f232d0d96 base=5f0f232d0d96
+C4-INLINE-CLOSED-COMMENT	v6-r57	93cae1bba977	93cae1bba977	1	CORRECTION-IN-FENCE	CORRECTION-IN-FENCE,CORRECTION-IN-FENCE	SUMMARY sites=2 mismatches=2 filed=0 unfiled=2 record_sha=ok appended=ok multi=0 inert=0 fenced=2 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=93cae1bba977 base=93cae1bba977
+C6-INLINE-SAME-LINE	v6-r57	14467af06234	14467af06234	0	-	-	SUMMARY sites=2 mismatches=2 filed=2 unfiled=0 record_sha=ok appended=ok multi=0 inert=0 fenced=0 straddle=0 bogus=0 logunfiled=0 logrecomp=0 alias=0 pairinert=0 pairhidden=0 recomputed=79 rev=14467af06234 base=14467af06234
+EXIT=0
+
+$ python3 -B - --root /home/vgpnk/Projects/shokunin/souji-shokunin --rev dccdc469f4c2e0415e1a1dcc317364e1b4d3191e
+MATCH R58-CALIBRATION carry_identical=34 supersedes the r57 SCORECARD claim "all 33 carry-over rows".
+MATCH R58-CALIBRATION exit_zero=10,8 counted separately per matrix; the r57 two-file awk command emits the combined total 18, not the pair.
+SUMMARY assertions=2 mismatches=0 carry_identical=34 exit_zero=10,8
+EXIT=0
+
+$ git -C /home/vgpnk/Projects/shokunin/souji-shokunin show dccdc469f4c2e0415e1a1dcc317364e1b4d3191e:census/round-58/c1-counter.py
+#!/usr/bin/env python3
+"""Revision-scoped calibration of two r57 SCORECARD assertions; no Markdown visibility claim."""
+import argparse
+import csv
+import io
+import subprocess
+
+def measure(root, rev):
+    def blob(path):
+        return subprocess.check_output(['git', '-C', root, 'show', rev + ':' + path], text=True)
+    tables = []
+    for arm in ('5', '6'):
+        rows = list(csv.DictReader(io.StringIO(blob('census/round-57/records/c1-matrix-v' + arm + '.tsv')), delimiter='\t'))
+        tables.append(rows)
+    # Positional columns match the committed matrix header, not prose claims.
+    values = []
+    for rows in tables:
+        values.append(sum(list(row.values())[4] == '0' for row in rows))
+    identical = sum(a['exit'] == b['exit'] and a['findings_all'] == b['findings_all'] for a, b in zip(*tables))
+    text = blob('SCORECARD.md')
+    notes = [
+        'R58-CALIBRATION carry_identical=' + str(identical) + ' supersedes the r57 SCORECARD claim "all 33 carry-over rows".',
+        'R58-CALIBRATION exit_zero=' + ','.join(map(str, values)) + ' counted separately per matrix; the r57 two-file awk command emits the combined total ' + str(sum(values)) + ', not the pair.',
+    ]
+    mismatches = sum(note not in text for note in notes)
+    for note in notes:
+        print(('MATCH ' if note in text else 'MISSING ') + note)
+    print('SUMMARY assertions=2 mismatches=%d carry_identical=%d exit_zero=%s' % (mismatches, identical, ','.join(map(str, values))))
+    return int(bool(mismatches))
+
+if __name__ == '__main__':
+    p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument('--root', required=True)
+    p.add_argument('--rev', required=True)
+    a = p.parse_args()
+    raise SystemExit(measure(a.root, a.rev))
+EXIT=0
