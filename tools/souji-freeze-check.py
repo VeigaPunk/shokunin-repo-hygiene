@@ -2,7 +2,8 @@
 """tools/souji-freeze-check.py - the pre-dispatch freeze checklist as one command.
 
   python3 -B tools/souji-freeze-check.py --root LANE --prereg PATH --rev FULL40
-  python3 -B tools/souji-freeze-check.py --selftest
+  python3 -B tools/souji-freeze-check.py --root LANE --prereg PATH --rev FULL40 --substance
+  python3 -B tools/souji-freeze-check.py --selftest [--substance]
 
 Reads the preregistration PATH as the blob at --rev (git object store only, never the work tree) and
 prints `FINDING <claim> <CLASS> <detail>` per finding, sorted, then `SUMMARY claims=<n> findings=<m>`.
@@ -31,6 +32,19 @@ CRLF lines parse through splitlines(). DISPATCH-BEFORE-FREEZE covers any file un
 prints `SELFTEST cases=<n> pass=<p> fail=<f>`; exit 0 iff fail=0. Fixture bytes are written in binary
 mode (r49: text mode translates \n to the platform newline on writing, so the literal LF digests
 mismatch off-POSIX). Python stdlib only; read-only on --root.
+
+r60 --substance (opt-in) additionally binds each claim's Control receipt, read as the blob at FREEZE,
+to the declared Counter and a pre-freeze revision: as column-0 lines the receipt must carry
+`instrument=<Counter path>`, `instrument_sha256=<64 hex>` equal to the Counter blob's digest at
+FREEZE, `rev=<full40>` resolving to a strict ancestor of the freeze commit, and `command=` whose text
+mentions the Counter path. New classes: CONTROL-INSTRUMENT-MISSING, CONTROL-INSTRUMENT-MISMATCH (a
+wrong path or a wrong digest), CONTROL-REV-MISSING, CONTROL-REV-INVALID, CONTROL-REV-NOT-BEFORE-FREEZE,
+CONTROL-COMMAND-MISSING, CONTROL-COMMAND-MISMATCH; every detail starts with the receipt path and the
+first column-0 occurrence of each key wins. Substance checks are skipped when the claim has no
+declared Counter, when the Counter blob is absent at FREEZE (COUNTER-MISSING already reports it), and
+when the Control blob is absent or a symlink at FREEZE. Without --substance the output is
+byte-identical to the pre-substance tool. --selftest runs the base cases; --selftest --substance runs
+the substance cases.
 """
 import argparse
 import contextlib
@@ -39,6 +53,7 @@ import io
 import os
 import posixpath
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -162,7 +177,8 @@ def dispatch_findings(repo, rev, freeze, text):
 def check_path_sha(repo, rev, freeze, label, key, value, missing, digest, found):
     """Counter/Population: returns (freeze blob, path) or None."""
     m = PATH_SHA.match(value)
-    path, want = (m.group(1), m.group(2)) if m else (value.split()[0] if value.split() else "", None)
+    path = declared_path(value) or ""
+    want = m.group(2) if m else None
     if not path:
         return None
     at_freeze = repo.blob(freeze, path)
@@ -184,7 +200,86 @@ def check_path_sha(repo, rev, freeze, label, key, value, missing, digest, found)
     return at_freeze, path
 
 
-def evaluate(repo, rev, prereg, text, freeze):
+def declared_path(value):
+    """The repo-path half of a `<path> sha256=<64 hex>` value, or None."""
+    m = PATH_SHA.match(value)
+    return (m.group(1) if m else (value.split()[0] if value.split() else "")) or None
+
+
+def command_names(command, counter_path):
+    """r60 amendment 2: the command must NAME the counter as an argv token, not as a substring.
+
+    `python3 -B decoy.py` does not name `c.py`; `python3 -B c.py` does. A path that is a suffix
+    of a longer token (`x/c.py` vs `c.py`) counts only when it is the whole token or follows a
+    `/`, so a decoy `notc.py` never satisfies a `c.py` counter.
+    """
+    try:
+        toks = shlex.split(command)
+    except ValueError:
+        toks = command.split()
+    for tok in toks:
+        if tok == counter_path or tok.endswith("/" + counter_path):
+            return True
+    return False
+
+
+def control_substance(repo, freeze, label, path, blob, counter_path, counter_blob):
+    """--substance: bind the Control receipt to the declared Counter and a pre-freeze revision."""
+    out = []
+    lines = blob.decode("utf-8", "replace").splitlines()
+
+    def vals(prefix):
+        # column 0: any leading space already breaks the match
+        return [line[len(prefix):].rstrip(" \t") for line in lines if line.startswith(prefix)]
+
+    def first(prefix):
+        got = vals(prefix)
+        return got[0] if got else None
+
+    def duplicates(prefix, cls):
+        """r60 amendment 2: a receipt that names two different values for one binding is not bound."""
+        got = vals(prefix)
+        if len(set(got)) > 1:
+            out.append((label, cls, "%s carries %d conflicting %s lines" % (path, len(set(got)), prefix[:-1])))
+
+    duplicates("instrument=", "CONTROL-INSTRUMENT-DUPLICATE")
+    duplicates("instrument_sha256=", "CONTROL-INSTRUMENT-DUPLICATE")
+    inst = first("instrument=")
+    if inst is None:
+        out.append((label, "CONTROL-INSTRUMENT-MISSING", "%s has no instrument= line" % path))
+    elif inst != counter_path:
+        out.append((label, "CONTROL-INSTRUMENT-MISMATCH",
+                    "%s instrument=%r is not the declared Counter %r" % (path, inst, counter_path)))
+    if counter_blob is not None:
+        isum = first("instrument_sha256=")
+        want = hashlib.sha256(counter_blob).hexdigest()
+        if isum is None:
+            out.append((label, "CONTROL-INSTRUMENT-MISSING", "%s has no instrument_sha256= line" % path))
+        elif isum != want:
+            out.append((label, "CONTROL-INSTRUMENT-MISMATCH",
+                        "%s instrument_sha256=%r is not the Counter digest %s" % (path, isum, want)))
+    duplicates("rev=", "CONTROL-REV-DUPLICATE")
+    rv = first("rev=")
+    if rv is None:
+        out.append((label, "CONTROL-REV-MISSING", "%s has no rev= line" % path))
+    else:
+        cid = repo.commit(rv) if FULL40.match(rv) else None
+        if cid is None:
+            out.append((label, "CONTROL-REV-INVALID", "%s rev=%r does not resolve to a commit" % (path, rv)))
+        elif cid == freeze or not repo.is_ancestor(cid, freeze):
+            out.append((label, "CONTROL-REV-NOT-BEFORE-FREEZE",
+                        "%s rev %s is not a strict ancestor of freeze %s" % (path, rv, freeze[:12])))
+    duplicates("command=", "CONTROL-COMMAND-DUPLICATE")
+    cmd = first("command=")
+    if cmd is None:
+        out.append((label, "CONTROL-COMMAND-MISSING", "%s has no command= line" % path))
+    elif not command_names(cmd, counter_path):
+        out.append((label, "CONTROL-COMMAND-MISMATCH",
+                    "%s command=%r does not mention Counter %r" % (path, cmd, counter_path)))
+    return out
+
+
+def evaluate(repo, rev, prereg, text, freeze, substance=False):
     found = []
     claims, bad, unattached = parse_claims(text)
     found.extend(("C0", "HEADING-MALFORMED", "line=%d" % n) for n in bad)
@@ -211,9 +306,12 @@ def evaluate(repo, rev, prereg, text, freeze):
             elif resolved == freeze or not repo.is_ancestor(resolved, freeze):
                 found.append((label, "BASE-NOT-ANCESTOR", "%s is not a strict ancestor of freeze %s"
                               % (base, freeze[:12])))
+        counter = None
+        counter_path = None
         if f.get("Counter"):
-            check_path_sha(repo, rev, freeze, label, "Counter", f["Counter"],
-                           "COUNTER-MISSING", "COUNTER-DIGEST", found)
+            counter = check_path_sha(repo, rev, freeze, label, "Counter", f["Counter"],
+                                     "COUNTER-MISSING", "COUNTER-DIGEST", found)
+            counter_path = declared_path(f["Counter"])
         if f.get("Population"):
             got = check_path_sha(repo, rev, freeze, label, "Population", f["Population"],
                                  "POPULATION-MISSING", "POPULATION-DIGEST", found)
@@ -237,6 +335,9 @@ def evaluate(repo, rev, prereg, text, freeze):
                                   % (path, lines[-1] if lines else "")))
             if repo.blob(rev, path) != blob:
                 found.append((label, "FROZEN-EDITED", "%s differs between freeze and revision" % path))
+            if substance and blob is not None and not repo.is_symlink(freeze, path) and counter_path:
+                found.extend(control_substance(repo, freeze, label, path, blob, counter_path,
+                                               counter[0] if counter else None))
     found.extend(dispatch_findings(repo, rev, freeze, text))
     return len(claims), found
 
@@ -314,7 +415,43 @@ CASES = [  # (name, exit, "C1:CLASS,...", prereg text, options)
 ]
 
 
-def selftest_case(tmp, n, code, want, text, pre=None, fz=None, post=None, rev=None, path="pre.txt"):
+def substance_receipt(instrument="instrument=c.py", digest="instrument_sha256=" + SHA_C,
+                      rev="rev=@", command="command=python3 c.py"):
+    """A red receipt carrying valid substance lines; `@` = base commit, `%` = a non-ancestor commit."""
+    lines = [x for x in (instrument, digest, rev, command) if x is not None]
+    lines.append("EXIT=1")
+    return "".join(x + "\n" for x in lines)
+
+
+SUBSTANCE_CASES = [  # --selftest --substance runs these; plain --selftest keeps the base cases above
+    ("substance-clean", 0, "", prereg(), {"fz": {"ctl.txt": substance_receipt()}}),
+    ("substance-extra-lines", 0, "", prereg(),
+     {"fz": {"ctl.txt": "note: hello\n" + substance_receipt()}}),
+    ("substance-instrument-missing", 1, "C1:CONTROL-INSTRUMENT-MISSING", prereg(),
+     {"fz": {"ctl.txt": substance_receipt(instrument=None)}}),
+    ("substance-instrument-indented", 1, "C1:CONTROL-INSTRUMENT-MISSING", prereg(),
+     {"fz": {"ctl.txt": substance_receipt(instrument="  instrument=c.py")}}),
+    ("substance-instrument-mismatch", 1, "C1:CONTROL-INSTRUMENT-MISMATCH", prereg(),
+     {"fz": {"ctl.txt": substance_receipt(instrument="instrument=d.py")}}),
+    ("substance-digest-missing", 1, "C1:CONTROL-INSTRUMENT-MISSING", prereg(),
+     {"fz": {"ctl.txt": substance_receipt(digest=None)}}),
+    ("substance-digest-mismatch", 1, "C1:CONTROL-INSTRUMENT-MISMATCH", prereg(),
+     {"fz": {"ctl.txt": substance_receipt(digest="instrument_sha256=" + SHA_P)}}),
+    ("substance-rev-missing", 1, "C1:CONTROL-REV-MISSING", prereg(),
+     {"fz": {"ctl.txt": substance_receipt(rev=None)}}),
+    ("substance-rev-invalid", 1, "C1:CONTROL-REV-INVALID", prereg(),
+     {"fz": {"ctl.txt": substance_receipt(rev="rev=" + "0" * 40)}}),
+    ("substance-rev-not-before", 1, "C1:CONTROL-REV-NOT-BEFORE-FREEZE", prereg(),
+     {"fz": {"ctl.txt": substance_receipt(rev="rev=%")}}),
+    ("substance-command-missing", 1, "C1:CONTROL-COMMAND-MISSING", prereg(),
+     {"fz": {"ctl.txt": substance_receipt(command=None)}}),
+    ("substance-command-mismatch", 1, "C1:CONTROL-COMMAND-MISMATCH", prereg(),
+     {"fz": {"ctl.txt": substance_receipt(command="command=python3 d.py")}}),
+]
+
+
+def selftest_case(tmp, n, code, want, text, pre=None, fz=None, post=None, rev=None, path="pre.txt",
+                  substance=False):
     d = os.path.join(tmp, "r%d" % n)
     os.mkdir(d)
     env = {"PATH": os.environ.get("PATH", "/usr/bin:/bin"), "HOME": tmp, "GIT_CONFIG_NOSYSTEM": "1",
@@ -344,24 +481,29 @@ def selftest_case(tmp, n, code, want, text, pre=None, fz=None, post=None, rev=No
     git("init", "-q")
     base = commit({"a": "a", **(pre or {})})
     orphan = git("commit-tree", "HEAD^{tree}", "-m", "o")
+    # r60 substance: fixture file contents may reference the base (`@`) and the orphan (`%`) too
     text = text.replace("@", base).replace("%", orphan)
-    commit({"pre.txt": text, "c.py": "c\n", "p.tsv": "h\nr\n", "ctl.txt": "x\nEXIT=1\n", **(fz or {})})
+    fz = {k: v.replace("@", base).replace("%", orphan) if isinstance(v, str) else v
+          for k, v in (fz or {}).items()}
+    commit({"pre.txt": text, "c.py": "c\n", "p.tsv": "h\nr\n", "ctl.txt": "x\nEXIT=1\n", **fz})
     if post:
         commit(post)
     out = io.StringIO()
     with contextlib.redirect_stdout(out), contextlib.redirect_stderr(io.StringIO()):
-        rc = main(["--root", d, "--prereg", path, "--rev", rev or git("rev-parse", "HEAD")])
+        rc = main(["--root", d, "--prereg", path, "--rev", rev or git("rev-parse", "HEAD")]
+                  + (["--substance"] if substance else []))
     got = sorted("%s:%s" % tuple(x.split()[1:3]) for x in out.getvalue().splitlines() if x.startswith("FINDING "))
     return rc == code and got == sorted(want.split(",") if want else [])
 
 
-def selftest():
+def selftest(substance=False):
+    cases = SUBSTANCE_CASES if substance else CASES
     tmp = tempfile.mkdtemp(prefix="freeze-selftest-")
     passed = 0
     try:
-        for n, (name, code, want, text, opts) in enumerate(CASES):
+        for n, (name, code, want, text, opts) in enumerate(cases):
             try:
-                ok = selftest_case(tmp, n, code, want, text, **opts)
+                ok = selftest_case(tmp, n, code, want, text, substance=substance, **opts)
             except Exception as exc:  # a case that cannot run is a failed case
                 ok = False
                 sys.stderr.write("selftest %s: %s: %s\n" % (name, type(exc).__name__, exc))
@@ -370,8 +512,8 @@ def selftest():
             passed += ok
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
-    print("SELFTEST cases=%d pass=%d fail=%d" % (len(CASES), passed, len(CASES) - passed))
-    return 0 if passed == len(CASES) else 1
+    print("SELFTEST cases=%d pass=%d fail=%d" % (len(cases), passed, len(cases) - passed))
+    return 0 if passed == len(cases) else 1
 
 
 def main(argv):
@@ -380,9 +522,11 @@ def main(argv):
     ap.add_argument("--prereg")
     ap.add_argument("--rev")
     ap.add_argument("--selftest", action="store_true")
+    ap.add_argument("--substance", action="store_true",
+                    help="also bind each Control receipt to the declared Counter and a pre-freeze revision")
     args = ap.parse_args(argv)
     if args.selftest:
-        return selftest()
+        return selftest(args.substance)
     if not (args.root and args.prereg and args.rev):
         ap.error("--root, --prereg and --rev are required (or --selftest)")
     try:
@@ -400,7 +544,8 @@ def main(argv):
         freeze = freeze_rev(repo, rev, args.prereg)
         if freeze is None:
             raise Refusal("no commit reachable from %s adds %s" % (rev, args.prereg))
-        n, found = evaluate(repo, rev, args.prereg, raw.decode("utf-8", "replace"), freeze)
+        n, found = evaluate(repo, rev, args.prereg, raw.decode("utf-8", "replace"), freeze,
+                            args.substance)
     except Refusal as exc:
         sys.stderr.write("REFUSAL COULD-NOT-EVALUATE: %s\n" % exc)
         return 2
