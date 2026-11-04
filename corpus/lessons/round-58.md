@@ -59,3 +59,13 @@ Main delivered WAVE-DONE: all 12 seats settled; no dead output. Committed-copy h
 ## Non-author boundary
 
 The twelve seats are lane-dispatched and cannot confer non-author admission or promotion. Source admits/rejects and both bounded claims await the independent closure. Numeric axis scores remain unchanged; no [x] promotion marks written.
+
+## Integrated final measurement
+
+L1 measured committed revision 5e4b8f14572d7051537b167dece4541bed7d2bab after all twelve seats settled. `census/round-58/c2-after.json` binds that revision, oracle digest and exact argv: five refusal cases and three real receipts pass, target 8/8, EXIT=0; both trivial stub controls are rejected. Gate selftest `census/round-58/c2-selftest.txt` is 17/17, EXIT=0. C1 at the same revision (`census/round-58/c1-final.txt`) is assertions=2 mismatches=0 carry_identical=34 exit_zero=10,8, EXIT=0. These records measure code revision, not a later evidence-only commit.
+
+Source census end `census/round-58/sources-after.txt`: EXIT=0, 209 rows versus 207 before; W04 warnings 64 versus 62 (two opened same-URL/different-scope rows). No source schema error; existing status/recheck/used-by unchanged. No new knowledge entry, no frontier advancement, expansion unchanged. No tool installs or updates by L1 or seats.
+
+Misroot sweep: fleet `git status --porcelain` showed orchestrator-owned .scratch state plus preexisting `after` (24 bytes, 2026-11-03 20:05:14 -0300), already named in r57 closure; no round58 seat misroot identified. None moved or deleted. No inherited round58 attempt to resolve; starting lane tree was clean at base.
+
+Self-evaluation (not a learning-trend scalar): accuracy 4 (eight static receipt cases, not races/resources); completeness 4 (two frozen targets met, historical visibility/recorder debts explicitly remain outside them); clarity 4 (exact candidate digests and superseding evidence, seat alias confusion corrected); actionability 4 (committed commands/oracle/receipts); conciseness 3 (multiple candidate histories need separate receipts). Average 3.8. Highest-impact improvement: freeze exact named seat ownership in prompts before dispatch, and keep new helper output/deletion authority out of proposed implementations. The deliverable is a bounded repair, not general safety certification.

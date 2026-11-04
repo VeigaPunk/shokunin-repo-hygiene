@@ -1471,3 +1471,18 @@ Authority: `census/round-57/records/c1-matrix-v5.tsv` and `census/round-57/recor
 | claim | axis | before | after | counting command | measured commit |
 |---|---|---|---|---|---|
 | C1 two r57 assessment statements | calibration 7, delta 0 (legacy scale unmapped) | assertions=2 mismatches=2, unchanged base control fails | assertions=2 mismatches=0 carry_identical=34 exit_zero=10,8; bounded record accuracy, not visibility-parser repair | `python3 -B census/round-58/c1-counter.py --root LANE --rev FULL40` | before input 83d3813257648e99fb4ab2ddef217124f39cf324; after dccdc469f4c2e0415e1a1dcc317364e1b4d3191e; receipts `census/round-58/c1-control-binding.txt`, `census/round-58/c1-after.txt` |
+
+### Round 58 measurements — C2 and final remeasurement
+
+| claim | axis | before | after | counting command | measured commit |
+|---|---|---|---|---|---|
+| C2 bounded receipt interface | operability 8, delta 0 (legacy scale unmapped) | unchanged r57 scores 3/8: five incorrect clean results, three honest passes | 8/8: five named refusals, three honest passes; always-clean and always-refuse controls rejected; gate selftest 17/17 | `python3 -B census/round-58/c2-acceptance.py --tool census/round-58/c2-gate.py --root LANE --work DIR --selftest` | 5e4b8f14572d7051537b167dece4541bed7d2bab; `census/round-58/c2-after.json`, `census/round-58/c2-selftest.txt`; before `census/round-58/before-arm.json` at oracle freeze 1880343ed04337379c5478f91408c30c8fbd4b77 |
+| C1 final code-revision replay | calibration 7, delta 0 | mismatches=2 unchanged base | assertions=2 mismatches=0 carry_identical=34 exit_zero=10,8, EXIT=0 | `python3 -B census/round-58/c1-counter.py --root LANE --rev 5e4b8f14572d7051537b167dece4541bed7d2bab` | 5e4b8f14572d7051537b167dece4541bed7d2bab; `census/round-58/c1-final.txt` |
+
+The finite predicates verify; independent non-author closure still decides admission. No new capability acquisition or frontier promotion; existing receipt capability repaired on the eight-case surface. Prior rejected claims remain rejected, historical counters untouched, certification OFF.
+
+### Planned (r59)
+
+- Address the still-open visibility-parser harms only with independently rendered controls in both directions; never interpret this round's two assessment notes as that repair.
+- Preserve Q117 raw identity/path/header boundaries. Scope any atomic-read/resource-bound or recorder dirty-tree/overwrite repair as a separate falsifiable claim; do not infer it from eight static cases.
+- Keep historical receipt-binding debt, capture row-set meta-test, control-byte diagnostics, and operator holds explicit.
