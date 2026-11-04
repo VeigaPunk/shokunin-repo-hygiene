@@ -1465,3 +1465,9 @@ R58-CALIBRATION carry_identical=34 supersedes the r57 SCORECARD claim "all 33 ca
 R58-CALIBRATION exit_zero=10,8 counted separately per matrix; the r57 two-file awk command emits the combined total 18, not the pair.
 
 Authority: `census/round-57/records/c1-matrix-v5.tsv` and `census/round-57/records/c1-matrix-v6.tsv`; instrument `census/round-58/c1-counter.py`. These corrections repair two assessment statements, not the rejected visibility counter. Numeric scores remain calibration 7 / coverage 8 / operability 8.
+
+### Round 58 measurements — C1
+
+| claim | axis | before | after | counting command | measured commit |
+|---|---|---|---|---|---|
+| C1 two r57 assessment statements | calibration 7, delta 0 (legacy scale unmapped) | assertions=2 mismatches=2, unchanged base control fails | assertions=2 mismatches=0 carry_identical=34 exit_zero=10,8; bounded record accuracy, not visibility-parser repair | `python3 -B census/round-58/c1-counter.py --root LANE --rev FULL40` | before input 83d3813257648e99fb4ab2ddef217124f39cf324; after dccdc469f4c2e0415e1a1dcc317364e1b4d3191e; receipts `census/round-58/c1-control-binding.txt`, `census/round-58/c1-after.txt` |

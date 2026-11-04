@@ -951,3 +951,9 @@ a measured edge class does not promote a frontier ground to Core (PROVINCE
   because their `teaches` cells misquoted the page and swallowed the quote in a rendered table;
   `S281` rejected). Census command:
   `/home/vgpnk/Projects/shokunin/scripts/sources-census.sh validate --root /home/vgpnk/Projects/shokunin souji` at r57 end.
+
+### Frontier (r58 fresh start)
+
+- No visibility-parser promotion. The r57 inline-comment entry remains bounded by its rejected-harmed closure: second-opener, inline-code and other renderer mismatches remain open. The r58 assessment correction is not a parser repair.
+- Receipt identity research distinguishes raw object type (`corpus/SOURCES.md` S284, cat-file -t) from recursive type peeling (S285 rejects the inference that peeling proves raw identity). The round lesson is `corpus/lessons/round-58.md`. No new knowledge entry, ground line, or Core promotion.
+- Assimilation: none; mass-id-drift hold unchanged. No considerthese/ directory. Existing cleanup/operator holds remain unchanged.
