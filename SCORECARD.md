@@ -1458,3 +1458,10 @@ Named limits are in `corpus/lessons/round-57.md`; no round admission is claimed.
 - Operator rulings still open (routed around, never assumed): credential-shaped names refuse-vs-redact
   (r52); the `ignored`-column derivation (r52); r46 mass id drift (assimilation held); r48 census
   conf-form; whether the recorder should replace ad-hoc receipt writing.
+
+### Round 58 calibration corrections (append-only)
+
+R58-CALIBRATION carry_identical=34 supersedes the r57 SCORECARD claim "all 33 carry-over rows".
+R58-CALIBRATION exit_zero=10,8 counted separately per matrix; the r57 two-file awk command emits the combined total 18, not the pair.
+
+Authority: `census/round-57/records/c1-matrix-v5.tsv` and `census/round-57/records/c1-matrix-v6.tsv`; instrument `census/round-58/c1-counter.py`. These corrections repair two assessment statements, not the rejected visibility counter. Numeric scores remain calibration 7 / coverage 8 / operability 8.

@@ -2771,3 +2771,9 @@ addendum, appended to the prereg, commits 8a793e7ae9131578bdec393982760217f62095
   `c2-tip.txt` (two-row manifest) `receipts=2 findings=0` and `c2-after.txt` (three-row manifest,
   `manifests/after.tsv`) `receipts=3 findings=0`, both EXIT=0 at the same revision. Evidence commit
   `9d61c0a8`. This is the Q109 repair applied to the lane's own receipts, not only to the gate.
+
+## Round 58 (2026-11-04, Linux omp host; authorized fresh start)
+
+- Read rejected r55/r56/r57 closures and spot-checks. Rather than another unsupported Markdown grammar narrowing, declare two bounded separable claims: C1 calibration of two r57 SCORECARD assertions; C2 operability of five receipt-interface refusal cases while preserving three honest receipts. Frozen predicates and C1 do-nothing control landed in `e7f64f30324e8ddb3f2266302daa9066054cdbb3`; paths `census/round-58/preregistration.txt`, `census/round-58/c1-before.txt`.
+- C1 base `83d3813257648e99fb4ab2ddef217124f39cf324`: `assertions=2 mismatches=2 carry_identical=34 exit_zero=10,8`. SCORECARD receives append-only measured corrections. Count separately per file; the old two-file awk command emits 18, not the pair.
+- Prior rejected claims remain rejected. Visibility-parser harms, recorder dirty-tree/overwrite debt, capture-counter row-set meta-test, correction-line scale/control-byte issues remain open. Certification OFF, K5 HELD, no removal or process signalling authority acquired.
