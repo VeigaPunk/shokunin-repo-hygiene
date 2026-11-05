@@ -90,3 +90,14 @@ One validated v1 wave, 14 seats (band 8–16): executor 5, scout 2, scribe 1, co
 critic 1, mutation-tester 1, sentinel 1. Attack share 4/14. The L1 held the canonical planner seat.
 Seat findings drove six pre-freeze repairs (SCORECARD round-60 amendments 1–3); no seat wrote a
 production file, committed, or pushed.
+
+## Round-end census
+
+`/home/vgpnk/Projects/shokunin/scripts/sources-census.sh validate --root /home/vgpnk/Projects/shokunin souji`
+→ EXIT 0 at round end (`census/round-60/records/sources-after.txt`); registry rows 211 → 213 by
+`grep -cE '^ {0,3}\|[[:space:]]*S[0-9]{3,}' corpus/SOURCES.md`. The round-start run was EXIT 0 with 211
+rows and the same W04 duplicate-URL warning family. One E11 was found and fixed before the end: the
+`used-by` cell is split on commas, not semicolons (my S288 cell used `; `, which the census read as one
+path). That is a second mined mistake of this round: *a registry cell's separator is part of its
+grammar, and a warning-free row can still be dangling* — captured by the census's own E11 rule, fixed by
+using the separator the census documents.
