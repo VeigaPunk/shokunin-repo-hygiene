@@ -1,0 +1,101 @@
+souji round 70 — preregistration (frozen before any candidate-writer bytes exist and before the
+C2 after-arm is scored)
+
+Lane base: e063a2fcb3f5f3fb8fb19d2ae1592b1f22e6a333 (lane tip at round start; r69 admitted,
+corpus/lessons/round-69-verifier-spotcheck.md). Not a fresh-start round (r67, r68, r69 admitted).
+Writer at base: tools/souji-receipt-write.py, sha256 b811ee2a7a67d8d3ea6d00fb3a44780ccb807113b9eeaf28f09e01448715a725
+(unchanged since r66). Host: Linux, git 2.56.0.
+
+Instruments (frozen bytes, this commit):
+  census/round-70/c1-counter.py   successor of the r69 counter: the 47 r69 rows carried; 12 rows
+                                  appended (LA LD LN4 LU1 LG1 LA9 GA GD NGA NGD ICA ICD), each with
+                                  a caller pathspec variable; selftest section (7) (C2); battery
+                                  member binding against SHA256SUMS (C2); clean_env drops the four
+                                  pathspec variables and GIT_TEMPLATE_DIR/GIT_ATTR_SOURCE/
+                                  GIT_EXEC_PATH/GIT_DEFAULT_HASH from the AMBIENT env (a row's own
+                                  caller env is applied after the scrub).
+  census/round-70/c1-matrix.tsv   59 rows (header + 59).
+  census/round-70/c2-harness.py   scores one counter file: positives P-SELFTEST and P-BATTERY must
+                                  pass; mutants CM1-CM4 (regex, each must match exactly once);
+                                  tamper T1 (D01.py bytes := D05.py bytes, SHA256SUMS untouched).
+  census/round-70/make-controls.py  deterministic control variants (F1, F2, CF1, CF2).
+
+Pre-freeze probes and controls (committed in this commit, all EXECUTED before this freeze):
+  probes/lp-ls-files-probe.txt  `git ls-files -v -z ':(top)'` over a skip-worktree entry prints the
+      entry with no variable and under GLOB/NOGLOB/ICASE, and prints NOTHING under
+      GIT_LITERAL_PATHSPECS=1; `ls-tree -- <path>` fails under GLOB and ICASE ("pathspec magic not
+      supported by this command"). (The `rc=` field there is the rc of the `tr` pipe stage, not of
+      git; it is not evidence and no claim uses it.)
+  controls/c1-do-nothing.txt   r70 counter, --new-tool = the base writer bytes
+      (controls/base-writer-e063a2fc.py = git show e063a2fc:tools/souji-receipt-write.py):
+      SUMMARY matrix=59 base_forgeries=4 base_honest=13 new_forgeries=4 new_honest=13
+      class_mismatches=5 new_echo=0 errors=0 regress=PASS, EXIT=1.
+      Forgeries: LD LN4 LG1 LA9 (receipt written over skip-worktree / subdirectory-scope /
+      gitlink / absent rows). LU1: refused, wrong class (dirty-check backstop). GA, ICA: honest
+      clean rows OVER-REFUSED ("cannot read tree ... pathspec magic not supported").
+  controls/c1-F1-refuse-on-presence.txt  blanket refusal on any pathspec variable: new_forgeries=0
+      new_honest=11 class_mismatches=8, EXIT=1 (LA/GA/NGA/ICA over-refused). Blanket refusal is
+      not a gain.
+  controls/c1-F2-literal-only-scrub.txt  scrubs GIT_LITERAL_PATHSPECS only: new_forgeries=0
+      new_honest=13 class_mismatches=0, EXIT=1 (GA/ICA still over-refused). A partial fix fails.
+  controls/c2-before-r69.txt   harness over the FROZEN r69 counter (census/round-69/c1-counter.py,
+      its base-rev 3639087917eaeb28719d7603110a6ec22782100e, its 47-row matrix): P-SELFTEST PASS
+      (16/16), P-BATTERY PASS; CM1 CM2 CM3 CM4 all survived; T1 undetected (rc 0, D05 bytes
+      classified forgery = D01's expectation); SUMMARY ... killed=0 survived=4 tamper=undetected
+      score=5, EXIT=1. This is also the do-nothing control: a round that ships the r69 counter
+      unchanged scores 5.
+  controls/c2-CF1-selftest-always-fails.txt  r70 counter with selftest rc forced to 1: positive
+      P-SELFTEST FAIL, EXIT=2 (INVALID) — a counter that "kills" every mutant by failing always is
+      refused, not scored 0.
+  controls/c2-CF2-battery-always-fatal.txt  r70 counter whose member check always refuses: positive
+      P-BATTERY FAIL, EXIT=2 (INVALID).
+  Disclosures: (i) the r70 counter's --selftest was run once as a sanity check before this freeze
+  (SELFTEST cases=29 pass=29 fail=0); (ii) the CF1/CF2 control runs apply CM1-CM4 to their own
+  bytes, which differ from the r70 counter only at the control edit, so their mutant lines
+  (killed 4/4, T1 detected) foreshadow the C2 after-arm; the C2 target below was set at design
+  time, before those runs, and is not changed by them; (iii) no candidate writer bytes exist at
+  this commit.
+
+Claims (causally separable: C1 is the writer's matrix verdict and reads no selftest or battery
+code; C2 is the counter's self-check and reads no writer change):
+
+C1 — operability (the writer surface changes: tools/souji-receipt-write.py). Pathspec-variable
+  hermeticity of every writer git call. Sourced: S304 (git(1) OPTIONS --literal-pathspecs, "no
+  globbing, no pathspec magic", equivalent to GIT_LITERAL_PATHSPECS=1), opened this round.
+  Frozen predicate: one run of the frozen r70 counter at the landing tip, candidate =
+  `--rev <landing tip> --tool tools/souji-receipt-write.py`, base-rev e063a2fc, prints
+  SUMMARY matrix=59 base_forgeries=4 base_honest=13 new_forgeries=0 new_honest=15
+  class_mismatches=0 new_echo=0 errors=0 regress=PASS and EXIT=0.
+  Counting command (receipt records/c1-after.txt):
+    grep -E '^(SUMMARY|EXIT=)' census/round-70/records/c1-after.txt
+  Before: controls/c1-do-nothing.txt (new_forgeries=4 new_honest=13 class_mismatches=5 EXIT=1).
+  Targets: forgeries 4 -> 0; honest 13/15 -> 15/15; class mismatches 5 -> 0; the 47 carried rows
+  keep their expected verdict and class (part of class_mismatches=0 and new_honest=15); r60
+  regress fixture PASS on both slots.
+
+C2 — calibration (the counter's self-assessment surface: census/round-70/c1-counter.py). Does the
+  instrument's own self-check catch the instrument defects the r69 wave found (S69MutTester,
+  S69CriticClaims, S69Sentinel F-3)?
+  Frozen predicate: one run of the frozen c2-harness over census/round-70/c1-counter.py (label
+  c2-after-r70, matrix census/round-70/c1-matrix.tsv, base-rev e063a2fc, battery-dir
+  census/round-69/battery, manifest census/round-69/battery-manifest.tsv) prints
+  SUMMARY label=c2-after-r70 positive_selftest=PASS positive_battery=PASS mutants=4 killed=4
+  survived=0 tamper=detected score=0 and EXIT=0.
+  Counting command (receipt records/c2-after.txt):
+    grep -E '^(SUMMARY|EXIT=)' census/round-70/records/c2-after.txt
+  Before: controls/c2-before-r69.txt (score=5, EXIT=1).
+
+Kill rule (frozen): a claim fails if its receipt at the landing tip does not reproduce its frozen
+SUMMARY and EXIT lines byte for byte (label and score fields included). A miss is an honest stop,
+never a narrowed target. The instruments above are not edited after this commit; if a defect is
+found, it is reported and routed, and the claim is judged on these bytes.
+
+Named limits (frozen with the claims):
+  * C1 covers the four documented pathspec variables over the frozen 59-row matrix on git 2.56.0;
+    it says nothing about other pathspec routes (e.g. a `:(attr)` pathspec reading
+    GIT_ATTR_SOURCE, or core.* config already pinned by earlier rounds).
+  * C1's fix is a scrub inside the writer's git() helper; the WRAPPED command still sees the
+    caller's environment (by design: the writer records what the caller ran).
+  * C2 scores four named mutants and one tamper; it is not a general mutation score of the counter.
+  * The r69 battery members are mutants of the base writer and do not carry the C1 change; the
+    battery is not regenerated this round.
