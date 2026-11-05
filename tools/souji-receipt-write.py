@@ -58,6 +58,13 @@ Both are presence checks and print names only. Every git call pins GIT_CONFIG_GL
 device, sets GIT_CONFIG_NOSYSTEM=1 and GIT_NO_REPLACE_OBJECTS=1, and keeps GIT_OPTIONAL_LOCKS=0. The snapshot mode byte
 carries the full permission bits (setuid, setgid and sticky included). Ignore routes (.git/info/exclude, a tracked
 .gitignore, a repository-local core.excludesFile) remain named limits outside C1.
+
+round 67 (C1): a caller-injected GIT_COMMON_DIR is value-checked. When the variable is set at all (an empty value
+included), the writer resolves the repository's own common dir (git rev-parse --git-common-dir, with GIT_COMMON_DIR
+scrubbed), canonicalizes both sides with os.path.realpath (a relative caller value resolves against the writer's cwd),
+and refuses RECEIPT-ENV-COMMONDIR-MISMATCH on a mismatch, an empty value or an unresolvable repository, before any git
+call reads the caller's value; only the variable name is printed. An equal value proceeds. Every git call scrubs
+GIT_COMMON_DIR together with GIT_DIR and GIT_WORK_TREE.
 """
 from __future__ import annotations
 
@@ -88,8 +95,8 @@ _TEMP: dict[str, "str | None"] = {TEMP_MARK: None}
 
 
 def git(root: str, *args: str) -> subprocess.CompletedProcess:
-    """Read-only git plumbing against root; scrub GIT_DIR/GIT_WORK_TREE so -C is authoritative."""
-    env = {k: v for k, v in os.environ.items() if k not in ("GIT_DIR", "GIT_WORK_TREE")}
+    """Read-only git plumbing against root; scrub GIT_DIR/GIT_WORK_TREE/GIT_COMMON_DIR so -C is authoritative."""
+    env = {k: v for k, v in os.environ.items() if k not in ("GIT_DIR", "GIT_WORK_TREE", "GIT_COMMON_DIR")}
     env["GIT_OPTIONAL_LOCKS"] = "0"
     # r66 C1: no host config file, system config or replace ref reaches a read; the excludes file is the null device.
     env["GIT_CONFIG_GLOBAL"] = os.devnull
@@ -280,6 +287,28 @@ def instrument_relpath(root: str, instr: str) -> str:
     return p
 
 
+def _check_env_commondir(root: str) -> None:
+    """r67 C1 (env): a caller-injected GIT_COMMON_DIR must name this repository's own common dir, or refuse.
+
+    Presence is the test (an empty value refuses). The resolution call runs through git(), which scrubs the variable,
+    so no writer git call reads the caller's value. Both sides are canonicalized with os.path.realpath; a relative
+    caller value resolves against the writer's cwd. Only the variable name is printed.
+    """
+    if "GIT_COMMON_DIR" not in os.environ:
+        return
+    value = os.environ["GIT_COMMON_DIR"]
+    mismatch = ("RECEIPT-ENV-COMMONDIR-MISMATCH: GIT_COMMON_DIR is set in the writer's environment and does not "
+                "resolve to this repository's common dir (value not shown); unset it and retry")
+    if value == "":
+        refuse(mismatch)
+    r = git(root, "rev-parse", "--git-common-dir")
+    if r.returncode != 0:
+        refuse(mismatch)
+    common = os.path.realpath(os.path.join(root, os.fsdecode(r.stdout).rstrip("\n")))
+    if os.path.realpath(value) != common:
+        refuse(mismatch)
+
+
 def write_receipt(ns: argparse.Namespace) -> int:
     root = os.path.abspath(ns.root)
     out = os.path.abspath(ns.out)
@@ -304,6 +333,9 @@ def write_receipt(ns: argparse.Namespace) -> int:
     if "GIT_INDEX_FILE" in os.environ:
         refuse(f"RECEIPT-INDEX-ENV-SET: GIT_INDEX_FILE is set in the writer's environment "
                "(value not shown); unset it and retry")
+
+    # r67 C1 (env): a caller-injected GIT_COMMON_DIR must resolve to this repository's own common dir, or refuse.
+    _check_env_commondir(root)
 
     # behaviour 2: full-40-hex rev only
     if not REV_RE.match(rev):
@@ -1375,6 +1407,83 @@ def case_33_mode_setuid_refused(work: str) -> None:
     _no_stray(outdir)
 
 
+def case_34_env_commondir_mismatch_refused(work: str) -> None:
+    # r67 C1 (W1/W2): a caller-injected GIT_COMMON_DIR naming a copy of .git (not this repository's common dir) refuses
+    # before any git call reads the caller value; the value is not echoed and no receipt is written.
+    d = _fixture(work, "c34")
+    rev = _head(d)
+    outdir = _outdir(work)
+    copy = os.path.join(work, "c34-commondir-copy")
+    shutil.copytree(os.path.join(d, ".git"), copy, symlinks=True)
+    out = os.path.join(outdir, "mismatch.txt")
+    env = dict(os.environ)
+    env["GIT_COMMON_DIR"] = copy
+    r = _run([*_base_args(d, rev, out), "--command", "/bin/echo hi"], env=env)
+    if r.returncode != 2 or os.path.exists(out):
+        raise AssertionError(f"mismatched GIT_COMMON_DIR rc={r.returncode}: {r.stderr.strip()}")
+    if "RECEIPT-ENV-COMMONDIR-MISMATCH" not in r.stderr or "GIT_COMMON_DIR" not in r.stderr:
+        raise AssertionError(f"wrong common-dir refusal: {r.stderr.strip()}")
+    if copy in r.stderr:
+        raise AssertionError("GIT_COMMON_DIR value echoed")
+    _no_stray(outdir)
+
+
+def case_35_env_commondir_match_accepted(work: str) -> None:
+    # r67 C1 (W3): a GIT_COMMON_DIR equal to this repository's own common dir is accepted, absolute or relative
+    # (a relative value resolves against the writer's cwd: the repository is run from d).
+    d = _fixture(work, "c35")
+    rev = _head(d)
+    outdir = _outdir(work)
+    cases = (
+        (os.path.realpath(os.path.join(d, ".git")), d),
+        (".git", d),
+    )
+    for i, (value, cwd) in enumerate(cases):
+        out = os.path.join(outdir, f"match{i}.txt")
+        env = dict(os.environ)
+        env["GIT_COMMON_DIR"] = value
+        r = subprocess.run([sys.executable, WRITER_PATH, *_base_args(d, rev, out), "--command", "/bin/echo hi"],
+                           capture_output=True, text=True, timeout=300, env=env, cwd=cwd)
+        if r.returncode != 0 or not os.path.exists(out):
+            raise AssertionError(f"equal GIT_COMMON_DIR={value!r} rc={r.returncode}: {r.stderr.strip()}")
+    _no_stray(outdir)
+
+
+def case_36_env_commondir_empty_refused(work: str) -> None:
+    # r67 C1: an empty GIT_COMMON_DIR is still "set" and refuses; presence is the test.
+    d = _fixture(work, "c36")
+    rev = _head(d)
+    outdir = _outdir(work)
+    out = os.path.join(outdir, "empty.txt")
+    env = dict(os.environ)
+    env["GIT_COMMON_DIR"] = ""
+    r = _run([*_base_args(d, rev, out), "--command", "/bin/echo hi"], env=env)
+    if r.returncode != 2 or os.path.exists(out):
+        raise AssertionError(f"empty GIT_COMMON_DIR rc={r.returncode}: {r.stderr.strip()}")
+    if "RECEIPT-ENV-COMMONDIR-MISMATCH" not in r.stderr:
+        raise AssertionError(f"wrong empty common-dir refusal: {r.stderr.strip()}")
+    _no_stray(outdir)
+
+
+def case_37_env_commondir_unresolvable_refused(work: str) -> None:
+    # r67 C1: GIT_COMMON_DIR set while --root is not inside any repository refuses (resolution failure). The
+    # ceiling keeps repository discovery from climbing out of the scratch directory.
+    nr = tempfile.mkdtemp(prefix="c37-norepo.", dir=work)
+    d = _fixture(work, "c37")
+    rev = _head(d)
+    outdir = _outdir(work)
+    out = os.path.join(outdir, "unresolvable.txt")
+    env = dict(os.environ)
+    env["GIT_COMMON_DIR"] = os.path.join(nr, ".git")
+    env["GIT_CEILING_DIRECTORIES"] = work
+    r = _run([*_base_args(nr, rev, out), "--command", "/bin/echo hi"], env=env)
+    if r.returncode != 2 or os.path.exists(out):
+        raise AssertionError(f"unresolvable GIT_COMMON_DIR rc={r.returncode}: {r.stderr.strip()}")
+    if "RECEIPT-ENV-COMMONDIR-MISMATCH" not in r.stderr:
+        raise AssertionError(f"wrong unresolvable refusal: {r.stderr.strip()}")
+    _no_stray(outdir)
+
+
 CASES = (
     ("arg-forms: --command and post--- argv both accepted, identical receipts; both at once refused", case_01_arg_forms),
     ("rev-format: short/branch/uppercase rev refused with nothing written", case_02_rev_format),
@@ -1409,6 +1518,10 @@ CASES = (
     ("env-config: caller-injected GIT_CONFIG_* refused by name, empty value included (r66 E1/E2)", case_31_env_config_refused),
     ("env-redirect: GIT_OBJECT_DIRECTORY/ALTERNATE/REPLACE_REF_BASE refused by name; GIT_INDEX_FILE value not echoed (r66 E4-E6)", case_32_env_redirect_refused),
     ("mode-bits: setuid in-run flip refused via the full-mode snapshot byte (r66 MOD2)", case_33_mode_setuid_refused),
+    ("env-commondir-mismatch: caller GIT_COMMON_DIR naming another common dir refused by name, value not echoed (r67 W1/W2)", case_34_env_commondir_mismatch_refused),
+    ("env-commondir-match: GIT_COMMON_DIR equal to the repository's own common dir accepted, absolute and relative (r67 W3)", case_35_env_commondir_match_accepted),
+    ("env-commondir-empty: empty GIT_COMMON_DIR refused, presence is the test (r67)", case_36_env_commondir_empty_refused),
+    ("env-commondir-unresolvable: GIT_COMMON_DIR set with --root outside any repository refused (r67)", case_37_env_commondir_unresolvable_refused),
 )
 
 
