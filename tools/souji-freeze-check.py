@@ -45,6 +45,12 @@ declared Counter, when the Counter blob is absent at FREEZE (COUNTER-MISSING alr
 when the Control blob is absent or a symlink at FREEZE. Without --substance the output is
 byte-identical to the pre-substance tool. --selftest runs the base cases; --selftest --substance runs
 the substance cases.
+
+r61 --substance (opt-in) also runs the control-chronology arm: for each claim whose Control receipt is
+present at FREEZE, not a symlink, and red there (last line EXIT=<nonzero>), the receipt's exact bytes
+must already exist at a strict ancestor of FREEZE (a commit reachable from a parent of FREEZE that touches
+the path, with the same blob). Otherwise the class is CONTROL-ADDED-NOT-BEFORE-FREEZE. A receipt absent
+at FREEZE is reported as CONTROL-MISSING only.
 """
 import argparse
 import contextlib
@@ -279,6 +285,38 @@ def control_substance(repo, freeze, label, path, blob, counter_path, counter_blo
     return out
 
 
+def control_red(blob):
+    """True when the receipt's last non-blank line is EXIT=<nonzero>."""
+    lines = [x.strip() for x in blob.decode("utf-8", "replace").splitlines() if x.strip()]
+    m = EXIT_LINE.match(lines[-1]) if lines else None
+    return bool(m and int(m.group(1)) != 0)
+
+
+def control_chronology(repo, freeze, label, path, blob):
+    """r61 --substance: the Control receipt's exact bytes must already exist at a strict ancestor of FREEZE.
+
+    Content-bound, not add-bound: an add-commit rule cannot see a receipt added green in an ancestor and
+    rewritten red at the freeze commit (critic F2), or deleted and re-added there (F3). Here the blob
+    at FREEZE must equal the blob at some commit reachable from a parent of FREEZE that touches PATH.
+    A receipt whose bytes first exist at FREEZE is refused, whatever commit added it.
+    """
+    parents = repo.run("rev-list", "--parents", "-n", "1", freeze)
+    fields = parents.stdout.decode("utf-8", "replace").split() if parents.returncode == 0 else []
+    heads = fields[1:]
+    refuse = [(label, "CONTROL-ADDED-NOT-BEFORE-FREEZE",
+               "%s bytes are not present at any strict ancestor of freeze %s" % (path, freeze[:12]))]
+    if not heads:
+        return refuse
+    p = repo.run("rev-list", "--no-renames", "--full-history", *(heads + ["--", path]))
+    ids = p.stdout.decode("utf-8", "replace").split() if p.returncode == 0 else []
+    for cid in ids:
+        if FULL40.match(cid) and repo.blob(cid, path) == blob:
+            return []
+    return refuse
+
+
+
+
 def evaluate(repo, rev, prereg, text, freeze, substance=False):
     found = []
     claims, bad, unattached = parse_claims(text)
@@ -329,8 +367,7 @@ def evaluate(repo, rev, prereg, text, freeze, substance=False):
                 found.append((label, "CONTROL-SYMLINK", "%s is a symlink at freeze" % path))
             else:
                 lines = [x.strip() for x in blob.decode("utf-8", "replace").splitlines() if x.strip()]
-                m = EXIT_LINE.match(lines[-1]) if lines else None
-                if not (m and int(m.group(1)) != 0):
+                if not control_red(blob):
                     found.append((label, "CONTROL-NOT-RED", "%s last line %r is not EXIT=<nonzero>"
                                   % (path, lines[-1] if lines else "")))
             if repo.blob(rev, path) != blob:
@@ -338,6 +375,8 @@ def evaluate(repo, rev, prereg, text, freeze, substance=False):
             if substance and blob is not None and not repo.is_symlink(freeze, path) and counter_path:
                 found.extend(control_substance(repo, freeze, label, path, blob, counter_path,
                                                counter[0] if counter else None))
+            if substance and blob is not None and not repo.is_symlink(freeze, path) and control_red(blob):
+                found.extend(control_chronology(repo, freeze, label, path, blob))
     found.extend(dispatch_findings(repo, rev, freeze, text))
     return len(claims), found
 
@@ -447,11 +486,17 @@ SUBSTANCE_CASES = [  # --selftest --substance runs these; plain --selftest keeps
      {"fz": {"ctl.txt": substance_receipt(command=None)}}),
     ("substance-command-mismatch", 1, "C1:CONTROL-COMMAND-MISMATCH", prereg(),
      {"fz": {"ctl.txt": substance_receipt(command="command=python3 d.py")}}),
+    ("substance-chrono-at-freeze", 1, "C1:CONTROL-ADDED-NOT-BEFORE-FREEZE", prereg(),
+     {"fz": {"ctl.txt": substance_receipt()}, "ctl_commit": "freeze"}),
+    ("substance-chrono-after-freeze", 1, "C1:CONTROL-MISSING", prereg(),
+     {"fz": {"ctl.txt": substance_receipt()}, "ctl_commit": "child"}),
+    ("substance-chrono-ancestor", 0, "", prereg(),
+     {"fz": {"ctl.txt": substance_receipt()}, "ctl_commit": "ancestor"}),
 ]
 
 
 def selftest_case(tmp, n, code, want, text, pre=None, fz=None, post=None, rev=None, path="pre.txt",
-                  substance=False):
+                  substance=False, ctl_commit=None):
     d = os.path.join(tmp, "r%d" % n)
     os.mkdir(d)
     env = {"PATH": os.environ.get("PATH", "/usr/bin:/bin"), "HOME": tmp, "GIT_CONFIG_NOSYSTEM": "1",
@@ -485,12 +530,25 @@ def selftest_case(tmp, n, code, want, text, pre=None, fz=None, post=None, rev=No
     text = text.replace("@", base).replace("%", orphan)
     fz = {k: v.replace("@", base).replace("%", orphan) if isinstance(v, str) else v
           for k, v in (fz or {}).items()}
-    commit({"pre.txt": text, "c.py": "c\n", "p.tsv": "h\nr\n", "ctl.txt": "x\nEXIT=1\n", **fz})
+    # r61: where the Control receipt is committed. "freeze" = in the freeze commit (the plain selftest,
+    # unchanged); "ancestor" = in a strict-ancestor commit before FREEZE (the substance default, the
+    # honest chronology); "child" = in a commit after FREEZE (absent at FREEZE).
+    if ctl_commit is None:
+        ctl_commit = "ancestor" if substance else "freeze"
+    ctl = fz.pop("ctl.txt", "x\nEXIT=1\n")
+    files = {"pre.txt": text, "c.py": "c\n", "p.tsv": "h\nr\n", **fz}
+    if ctl_commit == "freeze":
+        files["ctl.txt"] = ctl
+    elif ctl_commit == "ancestor":
+        commit({"ctl.txt": ctl})
+    freeze = commit(files)
+    if ctl_commit == "child":
+        commit({"ctl.txt": ctl})
     if post:
         commit(post)
     out = io.StringIO()
     with contextlib.redirect_stdout(out), contextlib.redirect_stderr(io.StringIO()):
-        rc = main(["--root", d, "--prereg", path, "--rev", rev or git("rev-parse", "HEAD")]
+        rc = main(["--root", d, "--prereg", path, "--rev", rev or (freeze if ctl_commit == "child" else git("rev-parse", "HEAD"))]
                   + (["--substance"] if substance else []))
     got = sorted("%s:%s" % tuple(x.split()[1:3]) for x in out.getvalue().splitlines() if x.startswith("FINDING "))
     return rc == code and got == sorted(want.split(",") if want else [])
