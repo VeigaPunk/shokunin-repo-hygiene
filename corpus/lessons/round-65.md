@@ -173,3 +173,30 @@ Kill, counter or matrix line depends on the arm. Recorded as M7. The same correc
 - **C1 regress fixture is taken from the lane clone's HEAD (critic L1).** Divergence from the base blob is reported, not fatal; currently `match`.
 - **N4/N2 probe output incomplete (critic L5).** Some `n4-R`/`n4-C` lines have empty stderr (the `head` read a path that did not exist at the time); rc and output existence are recorded.
 - **Sentinel F1–F7** (see `## Named limits` above and `## Routed to round 66`).
+
+## Named limits from the reviewer seats (wave close)
+
+- **Instrument resolution is seed-shaped (reviewer design #2, MEDIUM).** The frozen N4 dual-seed fixture makes the
+  writer's instrument read succeed only because the counter supplies byte-identical root and `tools/` copies. In a
+  real subdirectory-rooted repo without the seed, both writers refuse at `instr.sh absent`; with differing dual copies
+  the flag gate fires before the instrument-divergence check, so the divergence is never observed. The counter does not
+  see either shape. Recorded; routed round 66 with a non-dual deployment-shaped row.
+- **TSV pin is digest-strong, not anti-launder (reviewer C2 F3, MEDIUM).** A repin that moves a sentence to another
+  file scores PASS on the counter; only the population digest change is the visible re-freeze gate.
+- **s2 under-inclusion (reviewer C2 F4, LOW).** The writer carries six index-adjacent classes; s2 names three. The
+  four-marker scoped reading matches the frozen prereg; an exhaustive reading of "closed" would be wrong.
+- **Dead-token routing confirmed cross-counter (reviewer C2 F6).** The `if False:` mutant passes C2 (`findings=0`) and
+  fails C1 (`class_mismatches=14`, P13 and N3 error). Comment-carried needles fail C2 (`findings=4`). The routing in the
+  frozen named limits matches the measured behaviour.
+- **Docstring single-line co-location (reviewer C2 F1 HIGH, critic M1).** Same mechanism as M10: a one-line docstring
+  carrying a needle and `refuse(` counts live. The writer's docstrings are checked by hand (`F2`); no mechanical guard.
+- **Env-config pair does not defeat the per-call override (reviewer design #5, LOW).** A caller-injected
+  `GIT_CONFIG_COUNT` pair for `status.showUntrackedFiles` is overridden by the writer's `-c`, measured; the ignore
+  routes and other keys remain as stated above.
+- **Nested repositories under an untracked directory are invisible by design (reviewer design #6, LOW).** Disclosed in
+  the writer docstring.
+- **Honest-run false refusals (reviewer design #10).** No false refusal of any honest shape probed (ignored file, normal
+  visibility with untracked files, stable and dangling symlinks, mtime churn, restore-before-read). Recorded as a
+  positive control for the refusal side.
+- **Probe plumbing (reviewer design #8).** `census/round-65/probes/n4-n2-dispute-results.txt` stderr columns for N4 rows
+  are empty because the probe's stderr copy used a path that did not exist; the rc and output-existence values are correct.

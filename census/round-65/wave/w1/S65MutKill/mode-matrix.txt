@@ -1,0 +1,66 @@
+# S65MutKill mode-matrix.txt: LANDED writer (16da2445088ccca15aa32c66841d878ee57a8706 -> 40a371d8 blob be344a7d), run with --allow-dirty, in-run chmod of a DIRTY tracked file (tools/notes.txt, tracked, appended 'dirty').
+# Hypothesis under test: the mode payload catches EVERY in-run mode change on a snapshotted dirty file.
+# Predicted for all four targets: rc=2, refuse RECEIPT-STATE-CHANGED-DURING-RUN with a 'mode tools/notes.txt' row.
+
+## Dirty-file target arms (hypothesis)
+label=t600-from644 start_mode=644 rc=2 out_exists=no
+--- stderr:
+refused: RECEIPT-STATE-CHANGED-DURING-RUN: mode tools/notes.txt changed during the wrapped command; no receipt written
+--- stdout:
+--- final notes mode: 600
+
+label=t444-from644 start_mode=644 rc=2 out_exists=no
+--- stderr:
+refused: RECEIPT-STATE-CHANGED-DURING-RUN: mode tools/notes.txt changed during the wrapped command; no receipt written
+--- stdout:
+--- final notes mode: 444
+
+label=t755-from644 start_mode=644 rc=2 out_exists=no
+--- stderr:
+refused: RECEIPT-STATE-CHANGED-DURING-RUN: mode tools/notes.txt changed during the wrapped command; no receipt written
+--- stdout:
+--- final notes mode: 755
+
+label=t4755-from644 start_mode=644 rc=2 out_exists=no
+--- stderr:
+refused: RECEIPT-STATE-CHANGED-DURING-RUN: mode tools/notes.txt changed during the wrapped command; no receipt written
+--- stdout:
+--- final notes mode: 4755
+
+## Setuid-only arms (boundary: mode bits beyond 0o777 are not recorded)
+label=setuid-from755-to4755 start_mode=755 rc=0 out_exists=yes
+--- stderr:
+--- stdout:
+RECORD /fast/scratch/hyaku/souji-r65/S65MutKill/mm/setuid-from755/out-setuid-from755-to4755.txt rev=5be2fa2c04b15e5a62d798cbb5b539f81315baaf instrument=tools/instr.sh rc=0
+--- final notes mode: 4755
+
+label=setuid-from644-to4644 start_mode=644 rc=0 out_exists=yes
+--- stderr:
+--- stdout:
+RECORD /fast/scratch/hyaku/souji-r65/S65MutKill/mm/setuid-from644/out-setuid-from644-to4644.txt rev=7dca163afdffb4f3787f1ad0efc9128afb094d5e instrument=tools/instr.sh rc=0
+--- final notes mode: 4644
+
+## In-run chown of the dirty tracked file (non-root, uid 1000; no sudo)
+label=chown-dirty-to-root start_mode=644 rc=1 out_exists=yes
+--- stderr:
+--- stdout:
+RECORD /fast/scratch/hyaku/souji-r65/S65MutKill/mm/chown-dirty/out-chown-dirty-to-root.txt rev=7dca163afdffb4f3787f1ad0efc9128afb094d5e instrument=tools/instr.sh rc=1
+--- final notes mode: 644
+
+## Boundary: NON-snapshotted clean tracked file chmod in-run
+--- clean600-noallow
+RECORD /fast/scratch/hyaku/souji-r65/S65MutKill/mm/clean-noallow-600/out-600.txt rev=0edf9e20dd2c61a0997e4e29a26c6f5fad5687ee instrument=tools/instr.sh rc=0
+boundary-clean600-noallow rc=0 clean_status_after=[?? out-600.txt] mode=600
+
+--- clean755-noallow
+refused: RECEIPT-STATE-CHANGED-DURING-RUN: worktree status (git status --porcelain) changed during the wrapped command; no receipt written
+boundary-clean755-noallow rc=2 clean_status_after=[ M tools/clean.txt] mode=755
+
+--- clean600-allowdirty
+RECORD /fast/scratch/hyaku/souji-r65/S65MutKill/mm/clean-chmod-600-allow/out-clean600-allow.txt rev=7dca163afdffb4f3787f1ad0efc9128afb094d5e instrument=tools/instr.sh rc=0
+boundary-clean600-allowdirty rc=0
+
+--- clean755-allowdirty
+refused: RECEIPT-STATE-CHANGED-DURING-RUN: worktree status (git status --porcelain) and content tools/clean.txt changed during the wrapped command; no receipt written
+boundary-clean755-allowdirty rc=2
+

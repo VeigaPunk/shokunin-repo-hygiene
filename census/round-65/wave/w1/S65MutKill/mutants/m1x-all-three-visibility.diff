@@ -1,0 +1,29 @@
+--- a/tools/souji-receipt-write.py (landed 16da2445)
++++ m1x-all-three-visibility.py
+@@ -133,7 +133,7 @@
+     """r64 C1: machine-readable porcelain (NUL-separated, unquoted paths) for the content snapshot.
+     r65 C1: status.showUntrackedFiles is overridden to `all` on every status read, so an
+     operator-injected config cannot hide untracked entries from the dirty check or the snapshot."""
+-    return git(root, "-c", "status.showUntrackedFiles=all", "status", "--porcelain", "-z")
++    return git(root, "status", "--porcelain", "-z")
+ 
+ 
+ def _snapshot_entry(full: bytes) -> bytes:
+@@ -330,7 +330,7 @@
+ 
+     # behaviour 7: clean lane tree unless --allow-dirty (r65 C1: the status reads override
+     # status.showUntrackedFiles to `all`, so operator config cannot hide untracked entries)
+-    st = git(root, "-c", "status.showUntrackedFiles=all", "status", "--porcelain")
++    st = git(root, "status", "--porcelain")
+     if st.returncode != 0:
+         detail = st.stderr.decode("utf-8", "replace").strip()
+         refuse(f"cannot read worktree status of {root}: {detail}")
+@@ -432,7 +432,7 @@
+     # r63 C1 (operability): re-read the pre-run snapshot after the wrapped command and before any receipt
+     # byte is composed. A difference refuses unconditionally (--allow-dirty does not override it).
+     post_fl = git(top, "ls-files", "-v", "-z", ":(top)")
+-    post_st = git(root, "-c", "status.showUntrackedFiles=all", "status", "--porcelain")
++    post_st = git(root, "status", "--porcelain")
+     changed = []
+     if post_fl.returncode != 0 or post_fl.stdout != pre_flags:
+         changed.append("index flags (git ls-files -v -z)")

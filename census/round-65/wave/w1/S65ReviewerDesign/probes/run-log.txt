@@ -1,0 +1,143 @@
+# probe-run log S65ReviewerDesign 2026-11-05T14:12:24Z
+== repro6.py ==
+V1   slot=new  verdict=refuse  stderr=refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+V1   slot=base verdict=accept  stderr=
+V2   slot=new  verdict=accept  stderr=
+V2   slot=base verdict=accept  stderr=
+MOD  slot=new  verdict=refuse  stderr=refused: RECEIPT-STATE-CHANGED-DURING-RUN: mode tools/notes.txt changed during the wrapped command; no receipt written
+MOD  slot=base verdict=accept  stderr=
+SY1  slot=new  verdict=accept  stderr=
+SY1  slot=base verdict=accept  stderr=
+SY2  slot=new  verdict=refuse  stderr=refused: RECEIPT-STATE-CHANGED-DURING-RUN: content tools/extra/link changed during the wrapped command; no receipt written
+SY2  slot=base verdict=accept  stderr=
+P13  slot=new  verdict=refuse  stderr=refused: RECEIPT-INDEX-ENV-SET: GIT_INDEX_FILE is set in the writer's environment ('/fast/scratch/hyaku/souji-r65/S65ReviewerDesign/repro6/P13/new/rep
+P13  slot=base verdict=accept  stderr=
+N2   slot=new  verdict=refuse  stderr=refused: RECEIPT-STATE-CHANGED-DURING-RUN: worktree status (git status --porcelain) and content tools/extra/new.txt changed during the wrapped command
+N2   slot=base verdict=accept  stderr=
+A    slot=new  verdict=accept  stderr=
+A    slot=base verdict=accept  stderr=
+B    slot=new  verdict=accept  stderr=
+B    slot=base verdict=accept  stderr=
+T4   slot=new  verdict=accept  stderr=
+T4   slot=base verdict=accept  stderr=
+N4   slot=new  verdict=refuse  stderr=refused: RECEIPT-INDEX-FLAG-CONCEALED: README.md carries index flag S; skip-worktree or assume-unchanged hides worktree divergence from git status; cl
+N4   slot=base verdict=refuse  stderr=refused: RECEIPT-INDEX-FLAG-CONCEALED: README.md carries index flag S; skip-worktree or assume-unchanged hides worktree divergence from git status; cl
+== n4n2.py ==
+N4 slot=base accept  :: 
+N4 slot=new  refuse  :: refused: RECEIPT-INDEX-FLAG-CONCEALED: README.md carries index flag S; skip-worktree or assume-unchanged hides worktree
+N2 slot=base accept  :: 
+N2 slot=new  refuse  :: refused: RECEIPT-STATE-CHANGED-DURING-RUN: worktree status (git status --porcelain) and content tools/extra/new.txt chan
+== n4vary.py ==
+== dual copy, tools copy == the root copy (frozen shape) ==
+base                 accept  :: 
+new                  refuse  :: refused: RECEIPT-INDEX-FLAG-CONCEALED: README.md carries index flag S; skip-worktree or assume-unchanged hides worktree
+== dual copy, tools copy DIFFERS from root copy (two NONEQUAL blobs at rev) ==
+base                 refuse  :: refused: worktree instr.sh differs from committed bytes at c2afdbef08d9cffc2731db6b7bad20760f0323b1
+new                  refuse  :: refused: RECEIPT-INDEX-FLAG-CONCEALED: README.md carries index flag S; skip-worktree or assume-unchanged hides worktree
+== dual copy with DIFFERENT bytes per copy, --root repo root, --instrument tools/instr.sh ==
+base                 refuse  :: refused: RECEIPT-INDEX-FLAG-CONCEALED: README.md carries index flag S; skip-worktree or assume-unchanged hides worktree
+new                  refuse  :: refused: RECEIPT-INDEX-FLAG-CONCEALED: README.md carries index flag S; skip-worktree or assume-unchanged hides worktree
+== no dual copy (reviewer shape R) ==
+base                 refuse  :: refused: instr.sh absent at 71c4159ec1729bd50b755182067d1be3415d42a0
+new                  refuse  :: refused: RECEIPT-INDEX-FLAG-CONCEALED: README.md carries index flag S; skip-worktree or assume-unchanged hides worktree
+== attack.py ==
+[V-normal-attr] accept :: 
+[V-normal-att2] refuse :: refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+[V-normal-cfg cfg=normal] refuse :: refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+[V-no-dir-cfg cfg=no] refuse :: refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+[V-envcfg-hidden env-cfg status.showUntrackedFiles=no] refuse :: refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+[V-envcfg-dir env-cfg status.showUntrackedFiles=no] refuse :: refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+[MOD-setuid-flip] accept :: 
+[MOD-sticky-flip] accept :: 
+[MOD-untracked-flip] refuse :: refused: RECEIPT-STATE-CHANGED-DURING-RUN: mode tools/extra/keep.txt changed during the wrapped command; no receipt written
+[MOD-stable-setuid] accept :: 
+[SY-outside outside] accept :: 
+[SY-dangling dangling] accept :: 
+[SY-to-dir swapdir] accept :: 
+[SY-swap-regular swapregular] refuse :: refused: RECEIPT-STATE-CHANGED-DURING-RUN: content tools/extra/link changed during the wrapped command; no receipt written
+[IG-ignore-nested] accept :: 
+[IG-ignore-flat] accept :: 
+[IG-clean-both base] refuse :: refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+[IG-clean-both new] refuse :: refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+== attack2.py ==
+[IG-clean-v2 base] accept :: 
+[IG-clean-v2 new] accept :: 
+[Vnormal2 BASE] refuse :: refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+[MOD-su-on seed=0o755 post=0o4755] accept :: 
+[MOD-su-off seed=0o4755 post=0o755] accept :: 
+[MOD-sg-on seed=0o755 post=0o2755] accept :: 
+[MOD-same-perms-rechown seed=0o755 post=0o755] accept :: 
+== attack3.py ==
+[ENVcfg-dir/new] accept  :: 
+[SYM-dir-untracked/new] accept  :: 
+[SYM-dir-swap-inrun/new] accept  :: 
+[OUT-in-untracked/base] accept  :: 
+[OUT-in-untracked/base/rerun] refuse :: refused: out already exists (/fast/scratch/hyaku/souji-r65/S65ReviewerDesign/atk3/OUT-in-untracked/o
+[OUT2-in-untracked/new] accept  :: 
+[OUT2-in-untracked/new/rerun] refuse :: refused: out already exists (/fast/scratch/hyaku/souji-r65/S65ReviewerDesign/atk3/OUT2-in-untracked/
+== attack5.py ==
+[ENVno-inrun                   /new] refuse  :: refused: RECEIPT-STATE-CHANGED-DURING-RUN: worktree status (git status --porcelain) and content tools/extra/planted.txt changed
+[ENVno-inrun-base              /base] accept  :: 
+[PLAIN-inrun                   /new] refuse  :: refused: RECEIPT-STATE-CHANGED-DURING-RUN: worktree status (git status --porcelain) and content tools/extra/planted.txt changed
+== attack6.py ==
+[SY-outside-swap                   /new] refuse  :: refused: RECEIPT-STATE-CHANGED-DURING-RUN: content tools/extra/link changed during the wrapped command; no receipt written
+[SY-swap-to-regular-out            /new] refuse  :: refused: RECEIPT-STATE-CHANGED-DURING-RUN: content tools/extra/link changed during the wrapped command; no receipt written
+[SY-target-content-tamper          /new] refuse  :: refused: RECEIPT-STATE-CHANGED-DURING-RUN: content tools/notes.txt changed during the wrapped command; no receipt written
+[SY-target-content-base            /base] accept  :: 
+[SY-dirlink-swap-to-dir            /new] refuse  :: refused: RECEIPT-STATE-CHANGED-DURING-RUN: worktree status (git status --porcelain) and content tools/extra/dirlink and conten
+[SY-dirlink-stable                 /new] accept  :: 
+== attack7.py ==
+[MOD-instrument-mode-flip            /new] refuse  :: refused: RECEIPT-STATE-CHANGED-DURING-RUN: worktree status (git status --porcelain) and content tools/instr.sh changed during the wrapp
+[MOD-instrument-mode-flipB           /base] accept  :: 
+[T2-instrument-content-flipC         /new] refuse  :: refused: RECEIPT-STATE-CHANGED-DURING-RUN: worktree status (git status --porcelain) changed during the wrapped command; no receipt writ
+[MOD-untracked-FILE-mode-flip        /new] refuse  :: refused: RECEIPT-STATE-CHANGED-DURING-RUN: mode tools/untracked.txt changed during the wrapped command; no receipt written
+[MOD-untracked-FILE-mode-flipB       /base] accept  :: 
+[MOD-rm-recreate-mode                /new] refuse  :: refused: RECEIPT-STATE-CHANGED-DURING-RUN: mode tools/notes.txt changed during the wrapped command; no receipt written
+== attack9.py ==
+[priv-suid-add-755-4755    /new] accept  :: 
+[priv-suid-add-755-4755B   /base] accept  :: 
+[priv-sticky-add-755-1755  /new] accept  :: 
+[priv-setgid-add-755-2755  /new] accept  :: 
+[priv-suid-drop-4755-755   /new] accept  :: 
+[priv-all-flip-1775-0775   /new] accept  :: 
+== attack13.py ==
+[NG-pre    ] accept  :: 
+[NG-churn  ] accept  :: 
+== attack14.py ==
+[untracked-restore-in-run                /new] accept  :: 
+[untracked-RENAME-in-run                 /new] refuse  :: refused: RECEIPT-STATE-CHANGED-DURING-RUN: worktree status (git status --porcelain) and content tools/extra/keep.txt a
+[untracked-DIR-deleted-in-run            /new] refuse  :: refused: RECEIPT-STATE-CHANGED-DURING-RUN: worktree status (git status --porcelain) and content tools/extra/keep.txt c
+[mtime-churn-only                        /new] accept  :: 
+[MOD-instrument-blobmode-flip            /new] refuse  :: refused: RECEIPT-STATE-CHANGED-DURING-RUN: worktree status (git status --porcelain) changed during the wrapped command
+[MOD-instrument-blobmode-flipB           /base] accept  :: 
+== attack15.py ==
+[OBJDIR-nonexistent                /new] refuse  :: refused: rev is not a commit object (8c6b75b2432a3891a656ebafc1ae15284c83d858: fatal: not a git repository (or any parent up t
+[OBJDIR-nonexistentB               /base] refuse  :: refused: rev is not a commit object (8c6b75b2432a3891a656ebafc1ae15284c83d858: fatal: not a git repository (or any parent up t
+[ALT-nodir                         /new] accept  :: 
+[RRB-fake                          /new] refuse  :: refused: rev is not a commit object (8c6b75b2432a3891a656ebafc1ae15284c83d858: BUG: refs.c:1908: ref pattern must end in a tra
+[RRB-fakeB                         /base] refuse  :: refused: rev is not a commit object (8c6b75b2432a3891a656ebafc1ae15284c83d858: BUG: refs.c:1908: ref pattern must end in a tra
+== attack16.py ==
+[COMMONDIR-fake                /new] refuse  :: refused: rev is not a commit object (8c6b75b2432a3891a656ebafc1ae15284c83d858: fatal: not a git repository (or any parent up t
+[COMMONDIR-fakeB               /base] refuse  :: refused: rev is not a commit object (8c6b75b2432a3891a656ebafc1ae15284c83d858: fatal: not a git repository (or any parent up t
+[COMMONDIR-config-leak         /new] refuse  :: refused: rev is not a commit object (8c6b75b2432a3891a656ebafc1ae15284c83d858: fatal: git cat-file: could not get object info)
+[COMMONDIR-config-leakB        /base] refuse  :: refused: rev is not a commit object (8c6b75b2432a3891a656ebafc1ae15284c83d858: fatal: git cat-file: could not get object info)
+== attack17.py ==
+[OUT-symlink-escape allow-outside] accept  :: 
+== attack18.py ==
+[OUT-symlink-escape NO-outside/base] refuse  :: refused: out directory /fast/scratch/hyaku/souji-r65/S65ReviewerDesign/atk18/OE-base/one/outside is outside the lane root /fast/scratch
+[OUT-symlink-escape NO-outside/new] refuse  :: refused: out directory /fast/scratch/hyaku/souji-r65/S65ReviewerDesign/atk18/OE-new/one/outside is outside the lane root /fast/scratch/
+== c2kill2.py ==
+tip: 0f2fefb175f2d931cea7dc1fd7af3654d38a9401
+-- control Clone tip: rc=0
+    MARKERS flag=1 inrun=1 env=1 unmerged=1
+    SUMMARY rows=4 findings=0 verdict=PASS rev=0f2fefb175f2d931cea7dc1fd7af3654d38a9401
+-- mutant a dead-token: rc=1
+    FINDING SCOPE-OVERREACH s1: stable wording: claim stable_flag needs writer markers flag; writer blob lacks them
+    FINDING SCOPE-OVERREACH s2: after wording: claim closed_full needs writer markers flag, inrun, env; writer blob lacks them
+    FINDING SCOPE-OVERREACH s3: after wording: claim inrun_landed needs writer markers inrun; writer blob lacks them
+    FINDING SCOPE-OVERREACH s4: stable wording: claim unmerged_refused needs writer markers unmerged; writer blob lacks them
+    MARKERS flag=0 inrun=0 env=0 unmerged=0
+    SUMMARY rows=4 findings=4 verdict=FAIL rev=260a3ed94b4b9e7cd8c41b2a4ff9fd190dd5aaeb
+-- mutant b if-False-gated: rc=0
+    MARKERS flag=1 inrun=1 env=1 unmerged=1
+    SUMMARY rows=4 findings=0 verdict=PASS rev=cc4c55f4040034b6a7a5491cb9e28c5e32011b33
