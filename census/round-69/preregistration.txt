@@ -1,0 +1,131 @@
+souji round 69 — preregistration (frozen before any after-arm scoring)
+
+Lane base for measurement: 893b8ef4e73b3fde45f712df3437a032b1d92d42 (lane tip at round start;
+r68 admitted by the non-author verifier, corpus/lessons/round-68-verifier-spotcheck.md).
+Writer under test: tools/souji-receipt-write.py — UNCHANGED this round (blob at base =
+blob at tip; sha256 b811ee2a7a67d8d3ea6d00fb3a44780ccb807113b9eeaf28f09e01448715a725).
+Base writer for counter slots: 3639087917eaeb28719d7603110a6ec22782100e (the r68 counter's base,
+the round-66 landed candidate), unchanged from r68.
+
+Instruments (frozen bytes, committed before any after-arm receipt):
+  census/round-69/c1-counter.py        the successor counter (r68 42 rows carried; W4 rebuilt per
+                                       Q132; clean_env scrubs HOME/XDG_CONFIG_HOME/GIT_TRACE* and
+                                       pins GIT_CONFIG_GLOBAL/GIT_CONFIG_NOSYSTEM; no-echo judge
+                                       for the caller-value rows; battery arm with the Q131
+                                       outcome split; selftest runs main() on a two-row matrix)
+  census/round-69/c1-matrix.tsv        47 rows = 42 carried + U1, G1, A9, F1, W7 (L1 was designed,
+                                       probed, and removed before this freeze: git status attempts
+                                       no optional index-write lock under a held index.lock, so
+                                       D18 has no honest single-edit row — a named limit)
+  census/round-69/mutate-writer.py     28 mutants: the 14 r68 members + D01–D30 (D18 present in
+                                       the generator but not in the battery manifest; its battery
+                                       run is the named-limit receipt)
+  census/round-69/battery/             the 28 member files COMMITTED beside SHA256SUMS (closes
+                                       round-68 routed defect D2: the members exist as bytes)
+  census/round-69/battery-manifest.tsv 27 mutants -> expected outcome (Q131 vocabulary)
+  census/round-69/records/declared-coverage.tsv   the C3 population and disposition rows (filled
+                                       from the battery's observed outcomes; the population column
+                                       is frozen now)
+
+Pre-freeze probes (committed under census/round-69/probes/ and controls/):
+  P1  candidate run at the tip, EXIT=0, SUMMARY matrix=47 base_forgeries=3 base_honest=11
+      new_forgeries=0 new_honest=11 class_mismatches=0 new_echo=0 errors=0 regress=PASS.
+  P2  six-mutant partial battery (D18, D19, D21, D30, M-CD-SCRUB, K1): D18 survived (the L1 row
+      cannot observe the pin), D19 survived on the first silent hook (fixed: the hook must print a
+      timestamp line; re-probed in P4), D21 forgery via W7, M-CD-SCRUB forgery via W1/W2 with the
+      rebuilt W4 flipping to a class mismatch, D30 first echoed into invalid Python (fixed: the
+      replacement is now a valid string concatenation) — every fix happened BEFORE this freeze.
+  P3  the D19 fsmonitor probe (probe/fsm): git status --porcelain with the timestamp hook prints
+      nothing and with -c core.fsmonitor=false prints ` M tracked.txt`.
+  P4  full 27-mutant battery probe (probe/full-battery-out.txt): outcomes recorded below.
+  P5  the C2 before probe (probe/c2-ambient): the frozen r68 counter, clean vs the ambient tuple,
+      6 differing CASE/SUMMARY/REGRESS/EXIT lines, ambient EXIT=1 with regress=FAIL.
+
+Claims (each verifiable without the others; no axis score moves — the writer does not change):
+
+C1 — calibration (lowest owned axis, score 7). The Q131 outcome split over the writer battery.
+  Frozen predicate: one battery run of the frozen counter over the 26-mutant manifest at the
+  landing tip emits `BATTERY mutants=26 kills=18 label_only=5 over_refusal=2 echo_violation=1
+  survived=0 error=0` with EXIT=0, and every MUTANT line's observed outcome equals its manifest
+  expectation (forgery: K2 K3 K4 K5 K6 K7 K8 M-CD-CALL M-CD-EMPTY M-CD-SCRUB D01 D05 D06 D07 D08
+  D10 D19 D21; label-only: K1 M-CD-ROOTREL D02 D03 D04; over-refusal: M-CD-NCABS M-CD-NCRAW;
+  echo-violation: D30). Only forgery-based refutations count as declared-protection kills.
+  Counting command: the committed battery receipt (records/c1-after-battery.txt) —
+  `grep -c '^MUTANT .* outcome=forgery' <receipt>` = 18, `grep -c 'outcome=label-only'` = 5,
+  `grep -c 'outcome=over-refusal'` = 2, `grep -c 'outcome=echo-violation'` = 1,
+  `grep '^BATTERY' <receipt>`, `grep '^EXIT=' <receipt>` = EXIT=0.
+  Do-nothing control (committed BEFORE this freeze ran its candidate scoring): the same counter
+  with --new-tool <writer bytes at 36390879> must stay red: EXIT=1 with new_forgeries=3
+  (W1, W2, W4 — the base honours GIT_COMMON_DIR redirects) — controls/c1-do-nothing.txt.
+  Before arm (committed): the frozen r68 counter has no battery arm — its battery-era records
+  (census/round-68/records/c1-after/) carry no MUTANT/BATTERY outcome lines
+  (`grep -rc '^MUTANT \|^BATTERY ' census/round-68/records/c1-after/` total 0) — the outcome
+  split is this round's measured delta, not reachable by doing nothing. The r68 hand
+  classification (10 forgery / 2 over-refusal / 2 label-only, round-68 lesson Measured) is the
+  prose this round mechanizes; its numbers must re-appear as the counter's own output.
+  W4 item (Q132, rides inside C1): the rebuilt fixture's measurable delta is on the BASE arm.
+  r68 records (census/round-68/records/c1-after/*.txt): every W4 CASE line reads `base=refuse`
+  with detail `base_stderr=refused: rev is not a commit object ...` — the broken fixture's
+  unrelated rev-check failure, so the base's redirect-honoring was unmeasured on the relative
+  shape. r69 target: every W4 CASE line in the battery receipt and in the honest candidate run
+  reads `base=accept` (a counted base forgery; SUMMARY base_forgeries=3), while the honest new
+  slot's W4 verdict stays `refuse` with findings `lane worktree is dirty` in both rounds, and the
+  mutant W4 label flips are unchanged r68->r69 (M-CD-SCRUB, M-CD-ROOTREL, M-CD-NCRAW — pinned by
+  the committed r68 records and the r69 battery receipt). Counting command:
+  `grep -c '^CASE W4 .* base=accept' records/c1-after-battery.txt` = 26 (one per battery member run)
+  and `grep '^CASE W4 ' probes/candidate-run-p1.txt` = `base=accept ... new=refuse
+  new_findings=lane worktree is dirty`; before: `grep -c '^CASE W4 .* base=refuse'
+  census/round-68/records/c1-after/CAND.txt` = 1.
+
+C2 — operability (bookkeeping file; the counter is the surface this round changes). Ambient
+  immunity of the counter and the main() emit path.
+  Frozen predicate: two runs of the frozen r69 counter at the landing tip — clean, and under the
+  frozen ambient tuple (HOME=<dir with .gitconfig `[status] showUntrackedFiles = no`,
+  XDG_CONFIG_HOME=<dir with git/config mirror>, GIT_TRACE=1, GIT_TRACE2_EVENT=<file>,
+  GIT_TRACE2_PERF=<file>, env -i) — differ in ZERO of their ^(CASE|SUMMARY|REGRESS|EXIT=) lines,
+  both EXIT=0; and the selftest receipt shows `SELFTEST cases=16 pass=16 fail=0` with EXIT=0
+  (the main() two-row emit check is check 16). Counting command:
+  `diff <(grep -E '^(CASE|SUMMARY|REGRESS|EXIT=)' records/c2-clean.txt) <(... records/c2-ambient.txt)
+  | grep -c '^[<>]'` = 0.
+  Do-nothing control: the r69 counter over the base writer under the same ambient stays EXIT=1
+  (controls/c2-do-nothing-ambient.txt). Before arm: P5 — the frozen r68 counter under the same
+  tuple flips 6 lines, ambient EXIT=1 (probe/c2-ambient committed).
+
+C3 — coverage. The 14 unbattered declared protections (S68ScoutDeclared U-rows).
+  Frozen predicate: census/round-69/records/declared-coverage.tsv carries all 14 U-rows
+  (D01 D02 D03 D04 D05 D06 D07 D08 D10 D18 D19 D21 D29 D30); each row's disposition is either
+  `mutant=<name>` with the battery's observed outcome in {forgery, label-only, over-refusal,
+  echo-violation} (a refutation — recorded per Q131, never re-labelled), or `limit=` with a
+  one-line reason and an evidence pointer. Target: covered=12 limits=2 (D18: git status attempts
+  no optional index-write lock under a held index.lock — controls/d18-limit-battery.txt,
+  outcome=survived; D29: the :(top) pathspec is unobservable by a single-edit row because every
+  writer ls-files runs with -C <toplevel>, so cwd is already the toplevel and cwd-limiting never
+  binds — controls/d29-limit-battery.txt, outcome=survived). Counting command:
+  `awk -F'\t' 'NR>1{print $5}' records/declared-coverage.tsv | sort | uniq -c` = 12 mutant and 2 limit
+  (columns: id, protection-short, battery-mutant, observed-outcome, disposition, evidence).
+  Do-nothing control: the same awk over the committed r68 inventory mirror
+  (census/round-68/records/wave-w1/seats/S68ScoutDeclared/declared-protections.tsv) — all 14
+  U-rows carry `none` in the mutant column (controls/c3-do-nothing.txt).
+
+Named limits frozen with the claims:
+  * D18 (GIT_OPTIONAL_LOCKS=0): no honest single-edit row exists; the battery receipt for the D18
+    mutant shows outcome=survived over all 47 rows; the index.lock probe (P2) shows git status
+    rc 0 with empty stderr with and without the pin.
+  * D29 (:(top) pathspec): no honest single-edit row exists — every writer ls-files runs with
+    -C <toplevel>, so cwd is already the toplevel and dropping :(top) changes no verdict; the
+    battery receipt for the D29 mutant shows outcome=survived (controls/d29-limit-battery.txt).
+  * The battery is 26 single-edit mutants of one candidate blob; a declared-protection kill is a
+    forgery-based refutation only (Q131); label-only, over-refusal and echo-violation refutations
+    are reported on their own lines and do not count as kills.
+  * The relative-value trade (L0 souji | round-67) and the writer-verifier question
+    (L0 souji | round-68) remain the operator's; nothing here presumes an answer, and the frozen
+    r68 predicate is not amended (Q131).
+  * W7's base refusal is honest (the r66 writer already scrubs GIT_DIR/GIT_WORK_TREE); the base
+    forgery set of the r69 counter is exactly W1, W2, W4.
+  * The probe battery (27 mutants, probe/full-battery-out.txt) ran before the PK7 caller-env fix
+    and the tools/notes-copy.txt seed fix; its three survivors (K7, D10, D29) are explained above
+    and fixed (K7, D10) or limit-ed (D29) before this freeze.
+
+Kill rule (frozen before data): a claim fails its target if any frozen number above is not
+reproduced byte-for-byte by the committed receipt at the landing tip; a miss is an honest stop,
+never a narrowed target. No claim's population includes rows this file does not name.
