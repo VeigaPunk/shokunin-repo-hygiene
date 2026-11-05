@@ -1,0 +1,32 @@
+Round: 62
+
+Frozen claim predicates for souji round 62, freeze 2. Base 16fa821fdce00e709d6895ccfc7aaffa465af195.
+Controls (both do-nothing receipts in freeze-record format, and the C2 population file) were committed at
+71471699fc31ff30e396305537a6a6afe7eb6711, strictly before this freeze commit. Freeze 1
+(census/round-62/preregistration.txt, committed at 31bb318ddbae586e1c7287f700b004b4cde6b2f6) is retained
+unedited: `tools/souji-freeze-check.py --substance` refused it (CONTROL-COMMAND-MISSING,
+CONTROL-INSTRUMENT-MISSING, CONTROL-REV-MISSING, CONTROL-NOT-RED on the C1 receipt, POPULATION-MISSING on C2's
+prose population). Freeze 2 changes only the receipt grammar of the controls and turns C2's population into a
+pinned file; every target, kill rule and counter is unchanged from freeze 1.
+
+Declared claims: two claims. C1 operability (the receipt writer refuses index-flagged entries; surface class:
+runnable fixture on an input edge class, per Q59). C2 calibration (the lane's live self-assessment statements
+about index-flag behaviour; surface class: self-assessment file, per Q59). The lowest-owned-axis obligation is
+met by C2 (calibration, score 7). Frontier step: S292 (git-ls-files(1) `-v`, opened 2026-11-05 this round) is
+cited by the knowledge entry this round lands. Named limits are in corpus/lessons/round-62.md.
+
+## C1
+Base: 16fa821fdce00e709d6895ccfc7aaffa465af195
+Counter: census/round-62/c1-counter.py sha256=c6a3159d32b099ba1730a2cc23ffe6eafce40a2c264f6f019fa3e8f468a2150a
+Population: census/round-62/c1-matrix.tsv sha256=89abc018ad0715e306de66982fbdbb5d973824f3170ff7c37d647b2ab8ba0b23
+Control: census/round-62/controls/c1-do-nothing.txt
+Target: `python3 -B census/round-62/c1-counter.py --root LANE --matrix census/round-62/c1-matrix.tsv --base-rev 16fa821fdce00e709d6895ccfc7aaffa465af195 --rev <measured full40> --tool tools/souji-receipt-write.py --work DIR` prints `SUMMARY matrix=7 base_forgeries=3 base_honest=2 new_forgeries=0 new_honest=2 class_mismatches=0 regress=PASS` and `EXIT=0`, with the candidate tool at tools/souji-receipt-write.py at the measured revision and the r60 fixture reporting `pass=8 fail=0`.
+Kill: any of new_forgeries>0, new_honest<2, class_mismatches>0, regress=FAIL, or a nonzero exit. The do-nothing arm is the same counter with `--arm plain` (base bytes in the new slot), which must print new_forgeries=3 and exit 1.
+
+## C2
+Base: 16fa821fdce00e709d6895ccfc7aaffa465af195
+Counter: census/round-62/c2-counter.py sha256=92c0b3851ef94a197d3a7be7d640886974866446078bfd5606600b6fcb4bd982
+Population: census/round-62/c2-population.txt sha256=5a9e5dc77452987bbe05a4c0bbab8df45d027f1386b2d4f729f8146de733bc25
+Control: census/round-62/controls/c2-do-nothing.txt
+Target: `python3 -B census/round-62/c2-counter.py --root LANE --rev <measured full40>` prints `SUMMARY files=4 stale_open=0 landed=N verdict=PASS` with N >= 3 and `EXIT=0`. The four files are the Population list.
+Kill: stale_open>0, landed<3, or a nonzero exit. The do-nothing arm is the same counter at the base revision, which must print `stale_open=4 landed=0 verdict=FAIL` and `EXIT=1`.
