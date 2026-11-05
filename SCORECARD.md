@@ -1627,3 +1627,27 @@ Frontier: S295 (git(1) `GIT_INDEX_FILE`) and S296 (gitglossary(7) PATHSEC `top`)
 - Untracked visibility (`status.showUntrackedFiles`) as its own claim with a do-nothing control (named limit, sentinel S64-F1).
 - Carried: SKILL.md:830 overreach (R1), knowledge-entry `verified-at` refresh (R3), operator L0 lines (MACHINE BLOCK, numeric mapping, edge-class tie-break, planner seat).
 - Code-kind registry row for `pathspec.c` `parse_long_magic` (S296 named limit), if the operator accepts code rows.
+
+### Round 65 measurements (2026-11-05, Linux; base `4a43a4d919c5b51ae9be859a1266ce4b11337b0b`; instruments `2761f0aa4d2431b4b9abb4aa997dd3116b0b25b8`; controls `3c5bfdc0db50785cb7b2ec60e509facf2d7e9f25`; freeze `d2850b3eb160ae65c1c65b93753dfec7f4153b45`; prereg `census/round-65/preregistration.txt`; measured revision `40a371d8232e89e4f50d3ece4ff8779f44c0ee4c`)
+
+| claim | axis | before (do-nothing, base bytes, controls `3c5bfdc0`) | after (landed bytes, measured rev `40a371d8`) | counting command | measured commit |
+|---|---|---|---|---|---|
+| C1 writer concealment refusals, 19-row matrix | operability 8, numeric delta 0 (no reproducible 0–10 mapping) | `new_forgeries=12 new_honest=5 class_mismatches=12`, EXIT 1 (`census/round-65/controls/c1-do-nothing.txt`) | `new_forgeries=0 new_honest=5 class_mismatches=0 regress=PASS`, EXIT 0 (`census/round-65/records/c1-after.txt`) | `python3 -B census/round-65/c1-counter.py --root . --matrix census/round-65/c1-matrix.tsv --base-rev 4a43a4d919c5b51ae9be859a1266ce4b11337b0b --rev 40a371d8232e89e4f50d3ece4ff8779f44c0ee4c --tool tools/souji-receipt-write.py --work DIR` | `40a371d8232e89e4f50d3ece4ff8779f44c0ee4c` |
+| C2 live-marker statement agreement, 4 statements | calibration 7, numeric delta 0 (no reproducible 0–10 mapping) | `findings=2 verdict=FAIL` (s2 SCOPE-OVERREACH, s4 GOVERNED-STATEMENT-UNRESOLVED), EXIT 1 (`census/round-65/controls/c2-do-nothing.txt`) | `findings=0 verdict=PASS`, EXIT 0 (`census/round-65/records/c2-after.txt`); dead-token second-polarity mutant produces findings (selftest 13/13) | `python3 -B census/round-65/c2-counter.py --root . --tsv census/round-65/c2-statements.tsv --tsv-rev 2761f0aa4d2431b4b9abb4aa997dd3116b0b25b8 --rev 40a371d8232e89e4f50d3ece4ff8779f44c0ee4c` | `40a371d8232e89e4f50d3ece4ff8779f44c0ee4c` |
+
+Freeze chronology: freeze-check `--substance` at the freeze commit → `SUMMARY claims=2 findings=0`
+(`census/round-65/records/freeze-check-substance-at-freeze.txt`). Realizability probes committed pre-freeze
+(`census/round-65/probes/`): the r64 M1 N4 dispute resolved mechanically (dual-seed fixture is the realizable
+shape: base=accept, candidate refuses; the no-dual-seed shape fails instrument resolution for BOTH slots), the
+r64 M5 N2 shapes probed (empty and non-empty pre-run dirs both realizable in-run; pre-run-file polarity arms
+accept on both slots). Named limits frozen in the prereg: env redirects beyond `GIT_INDEX_FILE` unread; the C2
+live read is lexical and does not prove reachability (an `if False:` refusal is the C1 matrix's kill); N4
+depends on the dual-seed fixture shape. The chronology arm landed post-freeze (`16da2445`) — the intended
+pre-freeze working-tree copy was missed; disclosed, closure rules. Owned score values unchanged (calibration 7,
+coverage 8, operability 8); the lane still has no reproducible 0–10 mapping and the closure rules admission.
+
+### Capabilities (round 65 row)
+
+| name | what it can now do | evidence pointer | first-working round |
+|---|---|---|---|
+| freeze chronology binding | refuse a preregistration whose control receipts' `rev=` is not a strict ancestor of the freeze commit or whose `After:` measurement receipts do not bind strict descendants (`--chronology`, composing with `--substance`); default output byte-identical over 33 committed preregistrations | `python3 -B tools/souji-freeze-check.py --selftest --chronology` → `cases=52 pass=52` (`census/round-65/records/freeze-check-selftest-chronology.txt`); landed `16da2445088ccca15aa32c66841d878ee57a8706` | r65 (closure-gated) |

@@ -1,0 +1,175 @@
+s297 probe-log.txt — S297 source opening (scout seat S65ScoutSources)
+date of all fetches: 2026-11-05
+host: linux 7.2.11-arch1-1 (Arch), git version 2.56.0
+scratch root for this seat: /fast/scratch/hyaku/souji-r65/S65ScoutSources/
+
+================================================================================
+P1 — FETCH (curl), canonical URL
+================================================================================
+command:
+  curl -sS -L --max-time 60 \
+    -w '\n__HTTP_STATUS__:%{http_code}\n__URL_EFF__:%{url_effective}\n__SIZE__:%{size_download}\n__CT__:%{content_type}\n' \
+    -o s297-git-config.html https://git-scm.com/docs/git-config
+output:
+  __HTTP_STATUS__:200
+  __URL_EFF__:https://git-scm.com/docs/git-config
+  __SIZE__:830605
+  __CT__:text/html; charset=utf-8
+exit: 0
+curl version: curl 8.23.0 (x86_64-pc-linux-gnu) libcurl/8.23.0 OpenSSL/3.6.5
+bytes written: 830605
+sha256(s297-git-config.html) = 37aa8407b12e377a38f523d5012835d0515cc82f2249c942b9e5cff656019226
+
+================================================================================
+P2 — FETCH (wget), independent client, same URL  [provenance cross-check]
+================================================================================
+command:
+  wget -q --server-response -O s297-git-config.wget.html https://git-scm.com/docs/git-config
+output (filtered):
+  HTTP/1.1 200 OK
+exit: 0
+bytes written: 830605
+sha256(s297-git-config.wget.html) = 37aa8407b12e377a38f523d5012835d0515cc82f2249c942b9e5cff656019226
+VERDICT: the two independent clients returned byte-identical bodies (same sha256),
+so the capture is the page's bytes, not a client artefact.
+
+================================================================================
+P3 — TAG STRIP (recipe -> tag-stripped TEXT capture)
+================================================================================
+command:
+  python3 s297-tagstrip.py s297-git-config.html s297-git-config.txt
+exit: 0
+bytes written: 333099
+sha256(s297-git-config.txt) = a692dbcb82a4abfa798dd717ef7d7cf76b14e0fa63ca16187bcfc28c44537c3f
+The recipe is delivered beside this log as s297-tagstrip.py (an HTMLParser that
+keeps inline text exactly, treats <pre> verbatim, drops script/style, and
+collapses each block's whitespace runs to single spaces).
+
+================================================================================
+P4 — SECOND INDEPENDENT CARRIER (installed man page)
+================================================================================
+command:
+  pacman -Qo /usr/share/man/man1/git-config.1.gz   ->  /usr/share/man/man1/git-config.1.gz is owned by git 2.56.0-1
+  MANWIDTH=200 man 1 git-config > s297-git-config.man.txt
+bytes written: 367822
+sha256(s297-git-config.man.txt) = 2fec59cef6b83583ad86bced0e37774d99331e80ac0aa34a0f47dd27ae3af8f8
+NOTE: the man renderer inserts a double space at the source wrap ("the  untracked"),
+so the 11-word primary sentence is NOT byte-contiguous in the man output (find = -1);
+the three value-list sentences ARE byte-contiguous there. Offsets in
+s297-located-quote.txt.
+
+================================================================================
+P5..P11 — SEMANTIC PROBES OF status.showUntrackedFiles (git 2.56.0)
+Fixture: D=<scratch>/fx1 ; git -C "$D" init -q ; git -C "$D" rev-parse --show-toplevel
+printed the fixture dir exactly (asserted before the first commit).
+Fixture content: tracked.txt committed; root_untracked.txt at the top level;
+untracked_dir/hidden.txt inside an untracked directory.
+
+P5  default (no config)
+    $ git -C "$D" status --porcelain
+    ?? root_untracked.txt
+    ?? untracked_dir/
+    exit=0
+    OBSERVED: an untracked DIRECTORY is shown by NAME only, its member file is not listed.
+
+P6  repo config status.showUntrackedFiles=no
+    $ git -C "$D" config status.showUntrackedFiles no
+    $ git -C "$D" status --porcelain
+    <no output>
+    exit=0
+    OBSERVED: with value `no` the untracked entries are INVISIBLE — the porcelain
+    status is empty while untracked files exist. This is the concealment the C1
+    V1/V2 rows are about.
+
+P7  command-line override -c all
+    $ git -C "$D" -c status.showUntrackedFiles=all status --porcelain
+    ?? root_untracked.txt
+    ?? untracked_dir/hidden.txt
+    exit=0
+    OBSERVED: `-c status.showUntrackedFiles=all` shows the INDIVIDUAL file inside the
+    untracked directory, and it wins over the repo-local `no` set in P6.
+
+P8  command-line override -c normal
+    $ git -C "$D" -c status.showUntrackedFiles=normal status --porcelain
+    ?? root_untracked.txt
+    ?? untracked_dir/
+    exit=0
+    OBSERVED: `normal` (the default) shows the directory by name only.
+
+P9  repo config = normal, then = all
+    $ git -C "$D" config status.showUntrackedFiles normal ; git -C "$D" status --porcelain
+    ?? root_untracked.txt
+    ?? untracked_dir/
+    $ git -C "$D" config status.showUntrackedFiles all ; git -C "$D" status --porcelain
+    ?? root_untracked.txt
+    ?? untracked_dir/hidden.txt
+    exit=0
+    OBSERVED: the repo-local config value behaves exactly as the command-line value
+    does — the three documented values are interchangeable across the two sources.
+
+P10 environment injection via GIT_CONFIG_COUNT
+    $ GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=status.showUntrackedFiles GIT_CONFIG_VALUE_0=no \
+        git -C "$D" status --porcelain
+    <no output>
+    exit=0
+    OBSERVED: an env-injected pair ALSO conceals the untracked entries — the
+    concealment is not confined to the repo-local config file.
+
+P11 env injection vs command-line override
+    $ GIT_CONFIG_COUNT=1 ... VALUE_0=no git -C "$D" -c status.showUntrackedFiles=all status --porcelain
+    ?? root_untracked.txt
+    ?? untracked_dir/hidden.txt
+    exit=0
+    $ GIT_CONFIG_COUNT=1 ... VALUE_0=all git -C "$D" -c status.showUntrackedFiles=no status --porcelain
+    <no output>
+    exit=0
+    OBSERVED: the `-c` command-line value takes precedence over the env-injected
+    pair in BOTH directions. This is why the landed writer's
+    `-c status.showUntrackedFiles=all` on every status read defeats an
+    operator-injected `no` from either the config file or the environment.
+
+P12 env injection vs repo-local config
+    $ git -C "$D" config status.showUntrackedFiles no
+    $ GIT_CONFIG_COUNT=1 ... VALUE_0=all git -C "$D" status --porcelain
+    ?? root_untracked.txt
+    ?? untracked_dir/hidden.txt
+    exit=0
+    OBSERVED: the env-injected pair also overrides the repo-local config file.
+
+NOTE ON SCOPE: P5-P12 are PROBE FACTS on git 2.56.0 on this host. The page
+documents the three values and the default; it does NOT document the precedence
+between `-c`, GIT_CONFIG_COUNT and the repo-local file, nor the porcelain output
+shape. Those are observations, not documented guarantees.
+
+================================================================================
+P13 — THE WRITER'S OVERRIDE, READ FROM THE LANDED SOURCE
+================================================================================
+tools/souji-receipt-write.py at the lane tip:
+  line 136:  git(root, "-c", "status.showUntrackedFiles=all", "status", "--porcelain", "-z")
+  line 333:  st = git(root, "-c", "status.showUntrackedFiles=all", "status", "--porcelain")
+  line 435:  post_st = git(root, "-c", "status.showUntrackedFiles=all", "status", "--porcelain")
+  line 46 (docstring): "round 65 (C1): every status read overrides status.showUntrackedFiles to `all`, so an operator-injected …"
+  selftest case_28_untracked_visibility (line ~1207): injects `git config status.showUntrackedFiles no`, asserts the
+  writer REFUSES with "lane worktree is dirty", then removes the untracked file and
+  asserts the same config under a CLEAN tree still writes.
+OBSERVED: every status read the writer performs carries the `-c …=all` override,
+which per P11/P12 outranks both a repo-local and an env-injected value.
+
+================================================================================
+TOOLING / INSTALL RECORD
+================================================================================
+No tool was installed, upgraded or removed by this seat. Everything used was
+already present: curl 8.23.0, wget 1.25.0, git 2.56.0 (package git 2.56.0-1),
+GNU make/python3 from the base system. No pacman transaction, no uv/npx
+install, no binary dropped into ~/.local/bin.
+
+================================================================================
+BOUNDS
+================================================================================
+Written only under:
+  /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-65/w1/S65ScoutSources/   (deliver dir)
+  /fast/scratch/hyaku/souji-r65/S65ScoutSources/                                       (scratch root)
+No file in the lane tree outside the deliver directory was created or modified.
+No mutating git or jj command was run anywhere (the fixture under the scratch root
+was created with `git init` + `git add` + `git commit` inside the SCRATCH fixture
+only, and no lane or fleet repository was touched).

@@ -2850,3 +2850,42 @@ addendum, appended to the prereg, commits 8a793e7ae9131578bdec393982760217f62095
 - **Lane:** `census/round-64/` (counters, matrices, population `c2-statements.tsv`, probes ledger, sources captures, controls). Production writer, `tools/`, SKILL.md and knowledge entries unchanged. Wave evidence `.ufo/waves/round-64/` (gitignored; the candidate writer, selftest, mutation kills and reviewer attacks live there).
 - **Tools:** none installed or updated. No pacman transaction. No host sysctl touched.
 - **Scratch:** `/fast/scratch/hyaku/souji-r64/` (seat scratch, removed by seats) and `/fast/scratch/hyaku/souji-r64/l1/`; removed at landing.
+
+## Round 65 (2026-11-05, Linux; attempt 1) — frozen claims, post-freeze wave
+
+- **Claims (two, distinct axes; frozen at `census/round-65/preregistration.txt`, freeze `d2850b3eb160ae65c1c65b93753dfec7f4153b45`):**
+  C1 operability — `tools/souji-receipt-write.py` refuses untracked-visibility concealment (every status read
+  overrides `status.showUntrackedFiles=all`), an in-run mode-only flip under `--allow-dirty` (the snapshot
+  payload records each regular file's mode beside its digest), an in-run symlink retarget inside an untracked
+  directory (recorded by name and target string, never followed — the r64 M5 rule), and a caller-set
+  `GIT_INDEX_FILE` naming a nonexistent path (P13); frozen 19-row matrix, target `SUMMARY matrix=19
+  base_forgeries=12 base_honest=5 new_forgeries=0 new_honest=5 class_mismatches=0 regress=PASS`, `EXIT=0`.
+  C2 calibration (lowest owned axis, 7) — the SKILL.md statements agree with the writer bytes in both
+  directions under the live-marker (anchored) read, and the dead-token second-polarity mutant produces
+  findings; target `SUMMARY rows=4 findings=0 verdict=PASS`, `EXIT=0`.
+- **Freeze chronology (all on this Linux host):** instruments `2761f0aa4d2431b4b9abb4aa997dd3116b0b25b8`
+  (counters, matrix, population, M1/M5 dispute probes; r63-lesson rule "probe before declaration" exercised),
+  controls `3c5bfdc0db50785cb7b2ec60e509facf2d7e9f25` (do-nothing receipts in-lane, strictly pre-freeze — the
+  r64 M3/M4 fix), freeze `d2850b3eb160ae65c1c65b93753dfec7f4153b45` (freeze-check `--substance` → `SUMMARY
+  claims=2 findings=0` at the freeze commit, `census/round-65/records/freeze-check-substance-at-freeze.txt`),
+  landing `022cf9791ec83ca6c854733c66c84705016f4d67` → S2-literal wrap fix `40a371d8232e89e4f50d3ece4ff8779f44c0ee4c`,
+  chronology arm `16da2445088ccca15aa32c66841d878ee57a8706`.
+- **Do-nothing controls (red, committed before freeze):** `census/round-65/controls/c1-do-nothing.txt`
+  (`new_forgeries=12`, `EXIT=1` — the base writer forges 12 of 14 refuse rows) and
+  `census/round-65/controls/c2-do-nothing.txt` (`findings=2`: s2 SCOPE-OVERREACH + s4 GOVERNED-STATEMENT-UNRESOLVED,
+  `EXIT=1`).
+- **Measured (after receipts binding `40a371d8`):** `census/round-65/records/c1-after.txt` — `SUMMARY matrix=19
+  base_forgeries=12 base_honest=5 new_forgeries=0 new_honest=5 class_mismatches=0 regress=PASS`, `EXIT=0`;
+  `census/round-65/records/c2-after.txt` — `SUMMARY rows=4 findings=0 verdict=PASS`, `EXIT=0`. Writer selftest
+  `cases=30 pass=30` (`records/writer-selftest.txt`); C2 selftest `cases=13 pass=13` (dead-token falsifier
+  included); C1 selftest `cases=8 pass=8`; freeze-check selftests 41/15/52.
+- **SKILL.md corrections landed (R1 + s2/s3/s4):** the r62 spotcheck R1 overreach ("closed in round 62 by C1")
+  replaced by the refusal-token wording; the in-run gap sentence replaced by the landed-refusal sentence; the
+  unmerged-refusal clause added (`RECEIPT-INDEX-UNMERGED`); Round 65 registry rows added (both counters + the
+  chronology arm).
+- **Frontier:** S297 opened this round (git-config `status.showUntrackedFiles`) — row lands in
+  `corpus/SOURCES.md` with the round's knowledge entry `corpus/knowledge/untracked-visibility-concealment.md`;
+  the `:(top)` code-kind registry row stays routed (operator L0 open). Assimilation: none (`considerthese/`
+  absent; merge/souji theme check in the wave connector item).
+- **Tools:** none installed or updated. No pacman transaction. No host sysctl touched.
+- **Scratch:** `/fast/scratch/hyaku/souji-r65/` (L1 probes; removed at landing).
