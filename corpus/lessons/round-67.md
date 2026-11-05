@@ -1,0 +1,97 @@
+# Round 67 — value-checked GIT_COMMON_DIR (C1 operability) and the redirect-claim marker check (C2 calibration)
+
+Attempt 1. Base `3639087917eaeb28719d7603110a6ec22782100e` (lane master at round start, clean, pushed; carries the round-66
+landed writer). Freeze `4c61efcbe8c4e7586590c76965e5b1b29a1fa9a7` (`census/round-67/preregistration-attempt4.txt`; attempts 1–3
+kept in history). Landed writer `f70da577eb1e1624cc63ab8fd0468565927d9b6a` (`tools/souji-receipt-write.py` sha256
+`b811ee2a7a67d8d3ea6d00fb3a44780ccb807113b9eeaf28f09e01448715a725`). Measured records: `census/round-67/records/`.
+
+## Claims
+
+Frozen at `census/round-67/preregistration-attempt4.txt`; predicates are not amended here.
+
+- **C1, operability (receipt-binding; Q59 neutral).** The writer value-checks a caller-injected `GIT_COMMON_DIR` against the
+  repository's own common directory, refuses a mismatch or empty value with `RECEIPT-ENV-COMMONDIR-MISMATCH` and accepts an
+  equal value (W3). Target `SUMMARY matrix=31 base_forgeries=2 base_honest=6 new_forgeries=0 new_honest=6 class_mismatches=0
+  regress=PASS`, `EXIT=0`. Do-nothing: `new_forgeries=2`, `EXIT=1`.
+- **C2, calibration (lowest owned axis, score 7; bookkeeping file).** The corrected statement counter, read at the pinned
+  historical state `c13fbb4e` with the r67 population, reports exactly `FINDING SCOPE-OVERREACH s5` (`findings=1`, `EXIT=1`), where
+  the round-66 counter reports `findings=0`. Kill power: the reverted-rule mutant fails the M10-bound selftest case; the
+  enum-weakened mutant scores clean at the pinned state.
+
+## Gate
+
+- **Sources opened this round.** S300 — git `setup.c`, `environment.c`, `worktree.c` and `Documentation/git.adoc` at tag
+  `v2.56.0` (`https://raw.githubusercontent.com/git/git/v2.56.0/setup.c`, `…/Documentation/git.adoc`; accessed 2026-11-05;
+  HTTP 200). Captures `.ufo/waves/round-67/w1/S67ScoutSources/` (`setup.txt` sha256 `8316b1ad…`, `doc-git.txt` sha256
+  `050c5330…`). Located quotes, verified by whitespace-normalized match against the captures (line breaks and tabs in the capture
+  defeat the scout's byte offsets; the match is the check):
+  - `setup.c`, function `get_common_dir` (13 words): `const char *git_env_common_dir = getenv(GIT_COMMON_DIR_ENVIRONMENT); if (git_env_common_dir) { strbuf_addstr(sb, git_env_common_dir); return 1; }`
+  - `Documentation/git.adoc`, § ENVIRONMENT VARIABLES (22 words): `If this variable is set to a path, non-worktree files that are normally in $GIT_DIR will be taken from this path instead.`
+  - `environment.c` `local_repo_env[]` (list membership only): `GIT_COMMON_DIR_ENVIRONMENT, NULL };`
+- **Admitted (S300, tier A, scope common-dir resolution).** Knowledge entry `corpus/knowledge/common-dir-route-receipt-writer.md`
+  cites it with the provenance trio; registry row S300 appended (`used-by` the entry; status `mined`).
+- **Rejected inside the entry.** "git scrubs `GIT_COMMON_DIR` for every child process" (not established: `local_repo_env[]` shows
+  membership, not a universal child scrub; probe P1 found the variable in some child contexts only). "A relative value is
+  canonicalized against the writer cwd, the same rule git applies" (the prereg L2 wording; git applies `-C <root>` to its own calls,
+  probe P2h and the candidate trial; see M4).
+- **Census.** Before (round start): `scripts/sources-census.sh validate --root /home/vgpnk/Projects/shokunin souji` rc 0, 222 registry
+  rows (`grep -cE '^ {0,3}\|[[:space:]]*S[0-9]{3,}' corpus/SOURCES.md`). After (S300 appended): rc 0, 223 rows, malformed `awk` count 0;
+  the `W04` duplicate-URL warnings are pre-existing and status-neutral.
+- **Sourced claim (frontier step, CORPUS.md §2b item 4).** C1's rule rests on S300 through the knowledge entry it lands (the setup.c
+  quote and the git(1) contract quote above).
+- **Assimilation: none.** `considerthese/` is absent (`test -d`). The connector scanned `shokuknow/merge/souji/MERGE-REPORT.md` and
+  its package read-only: no staged theme names receipt-writer env routes, `GIT_COMMON_DIR`, `core.fileMode` or statement-agreement
+  counters (`.ufo/waves/round-67/w1/S67ConnectorOverlap/shokuknow-scan.md`, verdict "none matches"; the package's id range S109–S236
+  collides with this registry and is not appended).
+- **Probes (scratch, host git 2.56.0; not claim evidence, recorded for the Gate):**
+  - PK3 (repo-local `core.excludesFile` hides an untracked file): plain `git status` shows the file hidden; base and candidate writers
+    refuse dirty (the `-c core.excludesFile=<devnull>` pin on every call). Confirms the r66 named-limit L1 wording is wrong for this route.
+  - Relative value, writer cwd ≠ root: base `GIT_COMMON_DIR=.git` from a parent directory accepts (rc 0); candidate refuses
+    `RECEIPT-ENV-COMMONDIR-MISMATCH` (rc 2). Fail closed; no accepted redirect (see Named limits).
+  - W2 mechanism (round-66 W2 re-run at this base): base accepts with the redirected copy's `core.fileMode=false` hiding a tracked mode
+    change; the same tree without the redirect refuses dirty.
+
+## Mistakes
+
+| # | class | evidence pointer | captured-by | fix |
+|---|---|---|---|---|
+| M1 | number-drift: the frozen population digest was transcribed by hand and mis-typed twice (attempt 2: 63 hex; attempt 3: 62 hex; measured by `git show <attempt commit>:census/round-67/preregistration-attempt{2,3}.txt \| grep '^Population: census/round-67/c1-matrix'`). | `tools/souji-freeze-check.py --substance` on attempts 2 and 3: `POPULATION-DIGEST census/round-67/c1-matrix.tsv has no sha256=<64 hex>` (commits `b3aa70fe`, `d874bf0d`). | the freeze checker, on attempts 2 and 3 (the L1 did not derive digests) | attempt 4 derives the digest from the committed blob with a program (`sha256` of `git show <instruments>:census/round-67/c1-matrix.tsv`); the freeze check then passes (`SUMMARY claims=2 findings=0`). Superseded attempts kept, not edited. |
+| M2 | vacuous kill-power guard: the first draft of the M10-bound selftest case used claim `redirects_closed` on a writer stub with no `cdred` marker, so its finding fired whether or not the token rule was reverted. The round-66 M4 shape, reproduced by the lane's own new case. | `census/round-67/probes/l1-w2-repro.md` P4; the reverted-rule mutant selftest on the draft stayed 17/17. | none in the lane; caught by running the `c2-mutate.py reverted-rule` recipe before any commit | the frozen case binds `env_closed` (needs only the two markers the stub bears). Shown able to fail: the repaired counter selftest is 17/17; the reverted-rule mutant fails that case (`findings=0 want=1 MISMATCH`, `EXIT=1`; `census/round-67/records/c2-mutant-reverted-selftest.txt`). |
+| M3 | false named limit: the round-66 prereg L1 and the round-66 lesson's ignore-route list say a repository-local `core.excludesFile` "still hides untracked content on both slots". The writer's `-c core.excludesFile=<devnull>` pin closes it (probe PK3; mutant seat `S67MutKill`, fixture PK3). | `census/round-66/preregistration-attempt2.txt` L1 (frozen, not amended); `corpus/lessons/round-66.md` Named limits; PK3 above. | none | corrected here in the knowledge entry and SKILL (r67 section) as an append; the frozen prereg text is left as filed. The proposed fixture PK3 is routed to the next frozen counter. |
+| M4 | prereg wording overclaims the relative-value rule: "canonicalized against the writer process's cwd, the same rule git applies" (round-67 prereg L2). Git applies `-C <root>` to its own calls; the candidate compares cwd-canonical with root-relative output, so a cwd ≠ root relative value that base accepts is refused (fail closed). | `S67RevengerProbe/probes.tsv` P2h; the L1 measurement above (base rc 0, candidate rc 2, `GIT_COMMON_DIR=.git` from a parent). | the revenger seat (P2h), not the prereg author | disclosed as a named limit and an operator L0 question; not an accepted redirect (no forgery). The prereg text stays frozen; the successor counter carries a relative-value row. |
+| M5 | seat-report misstatement: the sentinel's report gave the candidate sha256 as `62ca61e9…`; the bytes and `SHA256SUMS` are `b811ee2a…`. | `S67SentinelScope/scope.md` header vs `S67ExecWriter/candidate/SHA256SUMS`; L1 `sha256sum -c SHA256SUMS` → OK. | the L1 (recomputed the digest before landing) | the L1 landed the bytes it had verified against `SHA256SUMS`. The sentinel's instrument findings (M1, M2) are carried into Named limits; its misreported digest is not repeated anywhere. |
+| M6 | controls and the attempt-1 preregistration committed together (`832a4d43`), so the C2 controls were not strictly ancestral to that attempt's freeze. | `git show --stat 832a4d43` (controls and `census/round-67/preregistration.txt` in one commit); superseded by attempt 4, whose controls (`d544e75a`, `832a4d43`) are strict ancestors of `4c61efcb`. | the L1, on re-reading the commit before attempt 2 | attempt 4 binds ancestral controls; the attempt-1 file is kept, not rewritten. |
+| M7 | overstated enumeration: `REDIRECT_ENUM` (the four route names) is defined in the frozen counter and is never iterated; `redirects_closed` checks only the two markers named in the claim token. The round-67 prereg, the counter docstring, the Q130 row, the SKILL section and the SCORECARD row said "enumeration-bound". | critic `S67CriticClaims/report.md` §3d (`grep REDIRECT_ENUM` shows the definition and comments only) | the critic seat (the L1 had written the wording before checking the code path) | wording corrected in Q130, SKILL, SCORECARD and LOG (append-only, the frozen counter is not edited); the successor counter must iterate the enumeration. |
+| M8 | prereg target literal not printed: the C2 target says the selftest prints `cases=17 pass=17`; the counter prints `SELFTEST pass cases=17 fail=0`, `EXIT=0`. The semantic check (17 cases, all pass, stub rejected) holds; the literal does not. | critic `S67CriticClaims/report.md` §7; `census/round-67/records/c2-selftest.txt` | the critic seat | disclosed; the frozen literal is left as filed. The reports and SKILL print the observed line. |
+| M9 | frozen target does not measure two clauses of the C1 claim: "every git call scrubs the variable" and "an empty value refuses". A value-check candidate with no scrub meets the frozen target (critic `no-scrub` probe, `SUMMARY ... new_forgeries=0 ... EXIT=0`). The scrub is load-bearing for a relative value: critic probe W4 (poisoned `main/main/.git` copy, `GIT_COMMON_DIR=main/.git`, cwd = parent): base writes a receipt over the dirty tree (rc 0); the no-scrub value check writes it too; the landed candidate refuses (rc 2, dirty class, no receipt) — reproduced by this lane (`/fast/scratch/hyaku/souji-r67/l1/w4/`). | critic `S67CriticClaims/report.md` §4, §5; L1 W4 reproduction (not claim evidence) | the critic seat | the landed candidate scrubs (W4 refuses); the two clauses are named as unmeasured by the frozen matrix and are not counted as passes; a successor row for W4 and an empty-value row is routed. |
+| M10 | regress fixture read from the lane clone's HEAD, not from `--rev` or `--base-rev`: `fixture_from_clone` clones the lane at HEAD and the base-blob cross-check is printed but not part of the verdict (Q37 defect). | critic `S67CriticClaims/report.md` §1b; `census/round-67/records/c1-after.txt` line `# regress fixture ... cross-check=match`; the fixture blob sha256 `d5291501…c114` is identical at base and HEAD (L1 check). | the critic seat | named, not triggered this round (the fixture did not change); a successor counter reads the fixture from the `--base-rev` blob. |
+
+Sweep for mistakes that found none, on the frozen rows: `git -C souji-shokunin log --oneline 4c61efcbe8c4e7586590c76965e5b1b29a1fa9a7..HEAD -- census/round-67/c1-counter.py census/round-67/c1-matrix.tsv census/round-67/c2-counter.py census/round-67/c2-statements.tsv census/round-67/c2-mutate.py census/round-67/controls census/round-67/preregistration-attempt4.txt` prints nothing, and the HEAD blob of each frozen instrument equals its freeze-time blob (`git rev-parse HEAD:<f>` against `git rev-parse 4c61efcb:<f>`, all four equal).
+
+## Routed to round 68 (dispositions of the round-66 routed list)
+
+1. New frozen counter fixing M4 and M6 (round 66): **done** in the frozen r67 counter and its docstring; the M6 base-verdict sentence was corrected to the measured control.
+2. Route sweep of git's environment surface as a frozen enumeration, with `GIT_COMMON_DIR` and repository-local `core.fileMode`: **partly done**. `GIT_COMMON_DIR` is a frozen row (W1–W3). Repository-local `core.fileMode` is measured only as proposed fixture PK4-family (routed). `GIT_NAMESPACE` and `GIT_CEILING_DIRECTORIES` have probes (P4, P5: no observable change on the writer's reads) but no frozen row.
+3. Population row that can fail on scope (M5), and the s4 note (M7): **done** (`redirects_closed`; the s4 note is corrected in the population row's note cell, not machine-checked).
+4. Kill-power fixtures for K3, K4, K6, K7: **fixture-proposed** (`S67MutKill/k67-decision.md`: PK3, PK4, PK6, PK7 — each flips on its mutant and is refused on base and candidate). Not frozen rows this round; routed to the successor counter.
+5. Operator rulings: L0 360 (honest-run refusal under `git -c`) unanswered and not changed here; L0 361 (repository-local key scope) partly answered by the measurement (PK3 is closed by the pin); L0 362 (wording of `GIT_CONFIG_GLOBAL`) unchanged, the prereg is frozen.
+6. Receipt grammar (`c1-after.txt` first line named the base): **done** in the r67 counters (`rev=` is the measured revision in both arms); the r66 receipts stay as filed historical evidence.
+7. QUALITY.md Q129 correction: **done** as a superseding row Q130 (Q129 text not edited).
+
+## Named limits (not counted as passes)
+
+- **Relative values with the writer cwd different from the root** (M4): fail closed on a value git resolves equal, rc 2 where base rc 0. Operator ruling needed: (a) keep fail-closed; (b) resolve the value root-relative (then the wrapped command's cwd view must be checked too); or (c) a frozen row for this shape next round.
+- **Counter does not scrub `GIT_COMMON_DIR` from the operator's shell** (sentinel M1; reviewer MEDIUM-2): the operator run uses `env -u GIT_COMMON_DIR -u GIT_NO_REPLACE_OBJECTS`. A frozen-counter change next round.
+- **C2 counter reads historical bytes without `GIT_NO_REPLACE_OBJECTS`** (sentinel M2): the pinned verdict changes with a repo-local replace ref (measured by the sentinel: `findings=5` without the env, `findings=1` with it). The lane checked `git replace -l` empty (0 lines) before the official run. Next round's C2 receipt records it.
+- **Submodule contexts** (scout S300, `worktree.c` `submodule_uses_worktrees`): not measured.
+- **Start-of-run only**; `GIT_NAMESPACE` and `GIT_CEILING_DIRECTORIES` unrefused; ignore routes other than repository-local `core.excludesFile` remain as round 66 states them (prereg L1, see M3).
+- **C2 lexical; M5 bound to needles**: the scope check binds refusal needles, not reached code paths; the W rows are the behavioral kill.
+- **C1 scrub and empty-value clauses unmeasured by the frozen matrix** (M9): the claim text says every git call scrubs `GIT_COMMON_DIR` and an empty value refuses. Neither is a frozen row; a no-scrub value-check candidate meets the frozen target (critic probe). The landed candidate does both, and the W4 shape (relative value, cwd = parent, poisoned copy) is refused by this lane's reproduction (base rc 0 with a receipt, candidate rc 2 with none). Not counted as passes; successor rows routed.
+- **C2 do-nothing arm** (critic §2): the committed `census/round-67/controls/c2-do-nothing.txt` is the r67 counter at `045e1034` (s5 absent there, a different finding kind), not at the prereg's C2 base `3639087917`. The real no-work arm at the pinned state is the round-66 counter, `census/round-67/controls/c2-do-nothing-r66.txt` (`findings=0`, `EXIT=0`), and this lane cites it as the do-nothing comparison in the report.
+- **C2 selftest literal** (M8): the prereg target's `cases=17 pass=17` is not the printed format; the counter prints `SELFTEST pass cases=17 fail=0`. The semantic check holds; the literal is left as filed.
+- **Honest-run refusal under `git -c`** (round-66 trade; L0 360): unchanged and still awaiting the operator's ruling.
+
+## Verdicts
+
+- **C1 (operability):** frozen target met at `f70da577` (`census/round-67/records/c1-after.txt`, `SUMMARY matrix=31 base_forgeries=2 base_honest=6 new_forgeries=0 new_honest=6 class_mismatches=0 regress=PASS`, `EXIT=0`). The named trade (the relative-value fail-closed refusal, M4) is recorded and routed for the operator, not hidden inside the verdict.
+- **C2 (calibration):** frozen target met at the pinned state (`census/round-67/records/c2-after.txt`, `FINDING SCOPE-OVERREACH s5`, `findings=1`, `EXIT=1`); the round-66 counter scores 0 there (`census/round-67/controls/c2-do-nothing-r66.txt`). Kill power (`census/round-67/records/c2-mutant-*.txt`) verified. Score 7 unchanged: the flag detects the r66 overreach, it is not a 0–10 movement.

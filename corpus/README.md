@@ -983,3 +983,9 @@ a measured edge class does not promote a frontier ground to Core (PROVINCE
 - **F1 / index-flag concealment (frontier, not Core).** `knowledge/skip-worktree-concealment.md` now records the start-of-run refusal (r62 C1) and its named in-run limits; S292 (git-ls-files `-v`/`-t` tags) is opened and cited. F1 stays `frontier, entries held`.
 - Sources: S292 added (`scripts/sources-census.sh validate --root /home/vgpnk/Projects/shokunin souji`); S291 unchanged (re-opened 2026-11-05; its `recheck` stays `180d` so the row is not overdue on the day it was re-read).
 - Assimilation: none (connector report `.ufo/waves/round-62/w1/S62ConnectorOverlap/`: the staged souji package holds no index-flag, skip-worktree or clean-tree theme).
+
+### Frontier (r67 GIT_COMMON_DIR route)
+
+- **F4 / common-dir route (frontier, not Core).** `knowledge/common-dir-route-receipt-writer.md` records the `GIT_COMMON_DIR` environment route the round-66 writer left open (round-66 W2): git consumes a caller-set value as the repository's common directory (S300, `setup.c`), and the round-67 writer value-checks it. Named limits (relative values with the writer cwd different from the root, a fail-closed trade pending the operator; submodule contexts; start-of-run scope; `GIT_NAMESPACE` and `GIT_CEILING_DIRECTORIES` unrefused) stay in the entry.
+- Sources: S300 added (`scripts/sources-census.sh validate --root /home/vgpnk/Projects/shokunin souji`, rc 0, 223 rows). S298/S299 unchanged.
+- Assimilation: none (`considerthese/` absent; the shokuknow souji merge package holds no receipt-writer env-route, common-dir, mode-bit or statement-agreement theme, see `.ufo/waves/round-67/w1/S67ConnectorOverlap/shokuknow-scan.md`).
