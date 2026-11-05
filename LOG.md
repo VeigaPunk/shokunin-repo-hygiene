@@ -2824,3 +2824,20 @@ addendum, appended to the prereg, commits 8a793e7ae9131578bdec393982760217f62095
 - **Lane:** `corpus/QUALITY.md` Q123 (`## Round 62 criteria`); `SKILL.md` `## Round 62`; `corpus/README.md` `### Frontier (r62 index-flag refusal)`; `SCORECARD.md` capability row (r62) and measurements; L0 questions at fleet `.ufo/l0-questions.md` lines 324–325.
 - **Tools:** none installed or updated. No pacman transaction.
 - **Scratch:** `/fast/scratch/hyaku/souji-r62/` (L1 probes, seat scratch); removed at landing.
+
+## Round 63 (2026-11-05, Linux; attempt 1) — honest stop
+
+- **Claims (two, distinct axes; neither admitted):** C1 operability — the receipt writer refuses in-run changes and classes
+  unmerged, gitlink and absent index entries (candidate `eba4f7e0`; diagnostic `new_forgeries 4→0`, `class_mismatches 3→0`
+  on the edge-class matrix). C2 calibration — SKILL.md statements agree with writer bytes (diagnostic `findings 1`, kind-only
+  forgery `findings 4`). Not admitted: the candidate was scored before any preregistration froze; the C1 H4 row was dropped
+  after the sentinel's measurement; the C2 population was narrowed after a scored run. Lesson `corpus/lessons/round-63.md`.
+- **Frontier:** S294 (git-fast-import(1) gitlink mode 160000) added at `corpus/SOURCES.md`; S292 used-by widened for the `M`
+  tag (already in the S292 capture). Assimilation: none (no `considerthese/`).
+- **Mistakes mined:** M1 unrealizable frozen matrix row (H4); M2 candidate scored before freeze; M3 population narrowed after a
+  scored run; M4 round-62 quote-location misstatement (appended correction in `corpus/lessons/round-62.md`).
+- **Lane:** `census/round-63/` (counters, matrices, population, pre-freeze controls at `d7bd4ff2`), `.ufo/waves/round-63/`
+  (wave evidence; the candidate writer is `.ufo/waves/round-63/w1/S63ExecWriter/souji-receipt-write.py`). Production writer,
+  SKILL.md and knowledge entries unchanged.
+- **Tools:** none installed or updated. No pacman transaction. No host sysctl touched.
+- **Scratch:** `/fast/scratch/hyaku/souji-r63/` and `/fast/scratch/hyaku/tmp-souji63/`; removed at landing.

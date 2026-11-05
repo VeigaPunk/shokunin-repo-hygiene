@@ -134,3 +134,10 @@ Wave: one v1 wave, 10 seats (`census/round-62/wave/`): executor 2, scout 1, scri
 - Concealment rows beyond the seven (unmerged, gitlink, deleted-worktree, sparse-checkout), with mutants.
 - The class check as a structured field rather than a stderr substring.
 - `## MACHINE BLOCK` and numeric-mapping questions, pending the operator.
+
+## Post-review correction (round 63, append-only; R2 of `round-62-verifier-spotcheck.md`)
+
+The `## Gate` sentence "Verbatim in the raw capture (offset 8351)" is wrong. The S292 quote is located only after
+HTML markup stripping (tag-stripped offset 7629, the `-v` definition; the raw HTML splits it around `</code>`). The
+S291 quote is likewise located after stripping. Located-after-stripping is the claim the row supports.
+Recorded in `corpus/lessons/round-63.md` M4. The original sentence is not rewritten.

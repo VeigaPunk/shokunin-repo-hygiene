@@ -1582,3 +1582,27 @@ Lane index non-`H` count is recorded in the report. No owned score changed: the 
 - Concealment rows beyond the seven: unmerged, gitlink, deleted-worktree and sparse-checkout paths, with mutants; the r60 fixture's dirty-block kill-power gap (M4, M6).
 - Class check as a structured field, not a stderr substring.
 - Operator rulings still open: `## MACHINE BLOCK` for preregistrations; numeric axis mapping.
+
+### Round 63 measurements (2026-11-05; base 728ab685617e412172a8e5cb6260f7098b486aec; NO PREREGISTRATION FROZEN; both claims NOT ADMITTED)
+
+Diagnostic only: the candidate writer was scored before any predicate froze (lesson `corpus/lessons/round-63.md` M2), and
+the C1 H4 row and the C2 population were changed after seat-scored runs (M1, M3). Owned scores unchanged (calibration 7,
+coverage 8, operability 8). No round admission is claimed.
+
+| claim | axis | before (do-nothing, base bytes) | after (candidate `eba4f7e0`, diagnostic) | counting command | measured commit |
+|---|---|---|---|---|---|
+| C1 in-run refusal and edge classes, 9-row matrix | operability 8 (not moved) | `new_forgeries=4 class_mismatches=4`, EXIT 1 (`census/round-63/controls/c1-do-nothing.txt`) | `new_forgeries=0 new_honest=3 class_mismatches=0 regress=PASS`, EXIT 0 (`census/round-63/records/c1-after-candidate-eba4f7e0.txt`) | `python3 -B census/round-63/c1-counter.py --root . --matrix census/round-63/c1-matrix.tsv --base-rev 728ab685617e412172a8e5cb6260f7098b486aec --new-tool .ufo/waves/round-63/w1/S63ExecWriter/souji-receipt-write.py --work <dir>` | candidate `eba4f7e0`; controls `d7bd4ff2` |
+| C2 edge-class refusals (H1 H2 H3), 5-row matrix | (same claim as C1; not separately scored) | `base_class_mismatches=3`, EXIT 1 (`census/round-63/controls/c2-do-nothing.txt`) | `new_class_mismatches=0`, EXIT 0 (`census/round-63/records/c2-after-candidate-eba4f7e0.txt`) | `python3 -B census/round-63/c2-counter.py --root . --matrix census/round-63/c2-matrix.tsv --base-rev 728ab685617e412172a8e5cb6260f7098b486aec --rev 728ab685617e412172a8e5cb6260f7098b486aec --tool .ufo/waves/round-63/w1/S63ExecWriter/souji-receipt-write.py --work <dir>` | candidate `eba4f7e0`; controls `d7bd4ff2` |
+| C3 statement/writer agreement (SKILL-only, 3 rows) | calibration 7 (not moved) | `findings=1` (`s2` overreach), EXIT 1 (`census/round-63/controls/c3-do-nothing.txt`); kind-only forgery `findings=4` EXIT 1 (`census/round-63/controls/c3-kind-only-forgery.txt`) | not measured (no after-wording landed) | `python3 -B census/round-63/c3-counter.py --root . --rev 728ab685617e412172a8e5cb6260f7098b486aec --tsv-rev d7bd4ff2743b4e1cb84217301c95340ebfda7634` | controls `d7bd4ff2` and the forgery control built from `728ab685` |
+
+### Round 63 capability rows
+
+None entered: the candidate writer is not landed and its behaviour is not admitted.
+
+### Planned (appended at round 63)
+
+- **r64 (planned r63):** freeze first (preregistration committed before any candidate commit or score); probe each frozen
+  matrix row's fixture against base and candidate before declaration (M1); content-bearing snapshot for `--allow-dirty`
+  and its matrix row (F1); `:(top)` pathspec and `GIT_INDEX_FILE` scrub (reviewer H4, H5); correct SKILL.md:830 overreach
+  (round-62 spot-check R1, calibration); refresh knowledge-entry `verified-at` (R3). Operator L0 questions open: MACHINE
+  BLOCK, numeric axis mapping, edge-class axis tie-break. Certification OFF, K5 HELD.
