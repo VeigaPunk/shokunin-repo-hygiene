@@ -4,6 +4,8 @@
   python3 -B tools/souji-freeze-check.py --root LANE --prereg PATH --rev FULL40
   python3 -B tools/souji-freeze-check.py --root LANE --prereg PATH --rev FULL40 --substance
   python3 -B tools/souji-freeze-check.py --selftest [--substance]
+  python3 -B tools/souji-freeze-check.py --root LANE --prereg PATH --rev FULL40 --chronology
+  python3 -B tools/souji-freeze-check.py --selftest --chronology
 
 Reads the preregistration PATH as the blob at --rev (git object store only, never the work tree) and
 prints `FINDING <claim> <CLASS> <detail>` per finding, sorted, then `SUMMARY claims=<n> findings=<m>`.
@@ -51,6 +53,16 @@ present at FREEZE, not a symlink, and red there (last line EXIT=<nonzero>), the 
 must already exist at a strict ancestor of FREEZE (a commit reachable from a parent of FREEZE that touches
 the path, with the same blob). Otherwise the class is CONTROL-ADDED-NOT-BEFORE-FREEZE. A receipt absent
 at FREEZE is reported as CONTROL-MISSING only.
+
+r64 --chronology (opt-in; composes with --substance and --selftest): the round-63 M2 arm. A Control receipt whose
+first column-0 `rev=` resolves must resolve to a strict ancestor of FREEZE (`CONTROL-REV-NOT-BEFORE-FREEZE`). A
+missing or unresolvable `rev=` is left to --substance (CONTROL-REV-MISSING, CONTROL-REV-INVALID): the frozen
+historical receipts (rounds 41-51, for example) carry no rev= line, and refusing them here would false-positive the
+history. Each `After: <repo path>` line inside a claim block names a measurement receipt, read as the blob at --rev
+(it is committed after FREEZE, so it is absent at FREEZE); its first column-0 `rev=` must resolve to a strict
+DESCENDANT of FREEZE, else `RECEIPT-MEASURED-BEFORE-FREEZE`. Further classes: AFTER-MISSING, AFTER-SYMLINK,
+AFTER-REV-MISSING, AFTER-REV-INVALID, AFTER-EMPTY. `After:` is not one of the six KEYS and is read only under
+--chronology.
 """
 import argparse
 import contextlib
@@ -72,6 +84,7 @@ KEYLINE = re.compile(r"^(Base|Counter|Population|Control|Target|Kill):[ \t]*(.*?
 PATH_SHA = re.compile(r"^(.+?)[ \t]+sha256=([0-9a-f]{64})$")
 ROUND = re.compile(r"^\ufeff?Round:[ \t]*([1-9][0-9]*)[ \t]*$")
 EXIT_LINE = re.compile(r"^EXIT=(\d+)$")
+AFTERLINE = re.compile(r"^After:[ \t]*(.*?)[ \t]*$")
 KEYS = ("Base", "Counter", "Population", "Control", "Target", "Kill")
 
 
@@ -315,9 +328,68 @@ def control_chronology(repo, freeze, label, path, blob):
     return refuse
 
 
+def column0_first(blob, prefix):
+    """First column-0 line starting with prefix, value rstripped (the --substance first-wins rule)."""
+    for line in blob.decode("utf-8", "replace").splitlines():
+        if line.startswith(prefix):
+            return line[len(prefix):].rstrip(" \t")
+    return None
 
 
-def evaluate(repo, rev, prereg, text, freeze, substance=False):
+def control_rev_order(repo, freeze, label, path, blob):
+    """r64 --chronology: a Control receipt's rev= that resolves must be a strict ancestor of FREEZE.
+
+    A missing or unresolvable rev= returns nothing here: --substance owns CONTROL-REV-MISSING and
+    CONTROL-REV-INVALID, and the frozen historical receipts carry no rev= line at all.
+    """
+    rv = column0_first(blob, "rev=")
+    cid = repo.commit(rv) if rv is not None and FULL40.match(rv) else None
+    if cid is None:
+        return []
+    if cid == freeze or not repo.is_ancestor(cid, freeze):
+        return [(label, "CONTROL-REV-NOT-BEFORE-FREEZE",
+                 "%s rev %s is not a strict ancestor of freeze %s" % (path, rv, freeze[:12]))]
+    return []
+
+
+def after_paths(text):
+    """r64 --chronology: (claim label, path) for each `After:` line inside a claim block."""
+    out, cur = [], None
+    for line in text.splitlines():
+        m = HEADER.match(line)
+        if m:
+            cur = "C" + m.group(1)
+        elif line.startswith("## ") or BADHEAD.match(line):
+            cur = None
+        elif cur is not None:
+            m = AFTERLINE.match(line)
+            if m:
+                out.append((cur, m.group(1)))
+    return out
+
+
+def after_findings(repo, rev, freeze, label, path):
+    """r64 --chronology: a measurement receipt declared by `After:` must bind a rev after FREEZE."""
+    if not path:
+        return [(label, "AFTER-EMPTY", "After: names no path")]
+    blob = repo.blob(rev, path)
+    if blob is None:
+        return [(label, "AFTER-MISSING", "%s not present at revision %s" % (path, rev[:12]))]
+    if repo.is_symlink(rev, path):
+        return [(label, "AFTER-SYMLINK", "%s is a symlink at revision %s" % (path, rev[:12]))]
+    rv = column0_first(blob, "rev=")
+    if rv is None:
+        return [(label, "AFTER-REV-MISSING", "%s has no rev= line" % path)]
+    cid = repo.commit(rv) if FULL40.match(rv) else None
+    if cid is None:
+        return [(label, "AFTER-REV-INVALID", "%s rev=%r does not resolve to a commit" % (path, rv))]
+    if cid == freeze or not repo.is_ancestor(freeze, cid):
+        return [(label, "RECEIPT-MEASURED-BEFORE-FREEZE",
+                 "%s rev %s is not a strict descendant of freeze %s" % (path, rv, freeze[:12]))]
+    return []
+
+
+def evaluate(repo, rev, prereg, text, freeze, substance=False, chronology=False):
     found = []
     claims, bad, unattached = parse_claims(text)
     found.extend(("C0", "HEADING-MALFORMED", "line=%d" % n) for n in bad)
@@ -377,6 +449,15 @@ def evaluate(repo, rev, prereg, text, freeze, substance=False):
                                                counter[0] if counter else None))
             if substance and blob is not None and not repo.is_symlink(freeze, path) and control_red(blob):
                 found.extend(control_chronology(repo, freeze, label, path, blob))
+            if chronology and blob is not None and not repo.is_symlink(freeze, path):
+                for x in control_rev_order(repo, freeze, label, path, blob):
+                    if x not in found:
+                        found.append(x)
+    if chronology:
+        for label, path in after_paths(text):
+            for x in after_findings(repo, rev, freeze, label, path):
+                if x not in found:
+                    found.append(x)
     found.extend(dispatch_findings(repo, rev, freeze, text))
     return len(claims), found
 
@@ -495,8 +576,33 @@ SUBSTANCE_CASES = [  # --selftest --substance runs these; plain --selftest keeps
 ]
 
 
+CHRONO_CASES = [  # r64 --selftest --chronology runs these after the base or substance cases, substance off
+    ("chrono-clean", 0, "", prereg(), {"fz": {"ctl.txt": substance_receipt()}}),
+    ("chrono-control-rev-not-before", 1, "C1:CONTROL-REV-NOT-BEFORE-FREEZE", prereg(),
+     {"fz": {"ctl.txt": substance_receipt(rev="rev=%")}}),
+    ("chrono-control-rev-invalid-deferred", 0, "", prereg(),
+     {"fz": {"ctl.txt": substance_receipt(rev="rev=" + "0" * 40)}}),
+    ("chrono-control-rev-missing-deferred", 0, "", prereg(),
+     {"fz": {"ctl.txt": substance_receipt(rev=None)}}),
+    ("chrono-after-well-ordered", 0, "", prereg(tail="After: rec.txt\n"),
+     {"fz": {"ctl.txt": substance_receipt()}, "posts": [{"junk.txt": "j\n"}, {"rec.txt": "rev=$H\n"}]}),
+    ("chrono-after-at-freeze", 1, "C1:RECEIPT-MEASURED-BEFORE-FREEZE", prereg(tail="After: rec.txt\n"),
+     {"fz": {"ctl.txt": substance_receipt()}, "posts": [{"rec.txt": "rev=$F\n"}]}),
+    ("chrono-after-before-freeze", 1, "C1:RECEIPT-MEASURED-BEFORE-FREEZE", prereg(tail="After: rec.txt\n"),
+     {"fz": {"ctl.txt": substance_receipt()}, "posts": [{"rec.txt": "rev=$B\n"}]}),
+    ("chrono-after-non-descendant", 1, "C1:RECEIPT-MEASURED-BEFORE-FREEZE", prereg(tail="After: rec.txt\n"),
+     {"fz": {"ctl.txt": substance_receipt()}, "posts": [{"rec.txt": "rev=$O\n"}]}),
+    ("chrono-after-missing", 1, "C1:AFTER-MISSING", prereg(tail="After: rec.txt\n"),
+     {"fz": {"ctl.txt": substance_receipt()}}),
+    ("chrono-after-rev-missing", 1, "C1:AFTER-REV-MISSING", prereg(tail="After: rec.txt\n"),
+     {"fz": {"ctl.txt": substance_receipt()}, "posts": [{"rec.txt": "x\n"}]}),
+    ("chrono-after-empty", 1, "C1:AFTER-EMPTY", prereg(tail="After:\n"),
+     {"fz": {"ctl.txt": substance_receipt()}}),
+]
+
+
 def selftest_case(tmp, n, code, want, text, pre=None, fz=None, post=None, rev=None, path="pre.txt",
-                  substance=False, ctl_commit=None):
+                  substance=False, ctl_commit=None, posts=None, chronology=False):
     d = os.path.join(tmp, "r%d" % n)
     os.mkdir(d)
     env = {"PATH": os.environ.get("PATH", "/usr/bin:/bin"), "HOME": tmp, "GIT_CONFIG_NOSYSTEM": "1",
@@ -546,22 +652,29 @@ def selftest_case(tmp, n, code, want, text, pre=None, fz=None, post=None, rev=No
         commit({"ctl.txt": ctl})
     if post:
         commit(post)
+    for step in posts or []:  # r64: each step is one commit after FREEZE; $B base, $F freeze, $H HEAD, $O orphan
+        head = git("rev-parse", "HEAD")
+        commit({p: c.replace("$B", base).replace("$F", freeze).replace("$H", head).replace("$O", orphan)
+                for p, c in step.items()})
     out = io.StringIO()
     with contextlib.redirect_stdout(out), contextlib.redirect_stderr(io.StringIO()):
         rc = main(["--root", d, "--prereg", path, "--rev", rev or (freeze if ctl_commit == "child" else git("rev-parse", "HEAD"))]
-                  + (["--substance"] if substance else []))
+                  + (["--substance"] if substance else []) + (["--chronology"] if chronology else []))
     got = sorted("%s:%s" % tuple(x.split()[1:3]) for x in out.getvalue().splitlines() if x.startswith("FINDING "))
     return rc == code and got == sorted(want.split(",") if want else [])
 
 
-def selftest(substance=False):
-    cases = SUBSTANCE_CASES if substance else CASES
+def selftest(substance=False, chronology=False):
+    # r64: --chronology appends CHRONO_CASES (substance off) after the unchanged base or substance cases
+    runs = [(c, substance, False) for c in (SUBSTANCE_CASES if substance else CASES)]
+    if chronology:
+        runs += [(c, False, True) for c in CHRONO_CASES]
     tmp = tempfile.mkdtemp(prefix="freeze-selftest-")
     passed = 0
     try:
-        for n, (name, code, want, text, opts) in enumerate(cases):
+        for n, ((name, code, want, text, opts), sub, chrono) in enumerate(runs):
             try:
-                ok = selftest_case(tmp, n, code, want, text, substance=substance, **opts)
+                ok = selftest_case(tmp, n, code, want, text, substance=sub, chronology=chrono, **opts)
             except Exception as exc:  # a case that cannot run is a failed case
                 ok = False
                 sys.stderr.write("selftest %s: %s: %s\n" % (name, type(exc).__name__, exc))
@@ -570,8 +683,8 @@ def selftest(substance=False):
             passed += ok
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
-    print("SELFTEST cases=%d pass=%d fail=%d" % (len(cases), passed, len(cases) - passed))
-    return 0 if passed == len(cases) else 1
+    print("SELFTEST cases=%d pass=%d fail=%d" % (len(runs), passed, len(runs) - passed))
+    return 0 if passed == len(runs) else 1
 
 
 def main(argv):
@@ -582,9 +695,11 @@ def main(argv):
     ap.add_argument("--selftest", action="store_true")
     ap.add_argument("--substance", action="store_true",
                     help="also bind each Control receipt to the declared Counter and a pre-freeze revision")
+    ap.add_argument("--chronology", action="store_true",
+                    help="r64: a Control rev= must precede FREEZE and each After: receipt must follow it")
     args = ap.parse_args(argv)
     if args.selftest:
-        return selftest(args.substance)
+        return selftest(args.substance, args.chronology)
     if not (args.root and args.prereg and args.rev):
         ap.error("--root, --prereg and --rev are required (or --selftest)")
     try:
@@ -603,7 +718,7 @@ def main(argv):
         if freeze is None:
             raise Refusal("no commit reachable from %s adds %s" % (rev, args.prereg))
         n, found = evaluate(repo, rev, args.prereg, raw.decode("utf-8", "replace"), freeze,
-                            args.substance)
+                            args.substance, args.chronology)
     except Refusal as exc:
         sys.stderr.write("REFUSAL COULD-NOT-EVALUATE: %s\n" % exc)
         return 2
