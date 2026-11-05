@@ -1,0 +1,38 @@
+### Host git probe: GIT_REPLACE_REF_BASE semantics (host git git version 2.56.0)
+### probe repo: fresh `git init`, one commit, cwd=/fast/scratch/hyaku/souji-r66/S66ScoutSources/probe/r66
+
+$ git rev-parse HEAD
+  rc=0
+  | 22d4c137d2c2670246e3c1e10813e0ff246d71e7
+
+$ git log --oneline
+  rc=0
+  | 22d4c13 one
+
+$ git log --oneline
+  env: {"GIT_REPLACE_REF_BASE": "refs/replace-forged-r66/"}
+  rc=0
+  | 22d4c13 one
+
+$ git log --oneline
+  env: {"GIT_REPLACE_REF_BASE": "refs/replace-forged-r66"}
+  rc=-6
+  | BUG: refs.c:1908: ref pattern must end in a trailing slash when trimming
+
+$ git log --oneline
+  env: {"GIT_NO_REPLACE_OBJECTS": "1"}
+  rc=0
+  | 22d4c13 one
+
+$ git replace --graft HEAD HEAD
+  rc=0
+
+$ git log --oneline
+  env: {"GIT_REPLACE_REF_BASE": "refs/replace-forged-r66/"}
+  rc=0
+  | 22d4c13 one
+
+### note: the C1 counter's E6 fixture value is 'refs/replace-forged-r66/' (trailing slash),
+### which is the form upstream accepts; the form WITHOUT the trailing slash makes git
+### abort with 'BUG: refs.c ... ref pattern must end in a trailing slash when trimming'.
+### GIT_REPLACE_REF_BASE has NO prose definition in git(1) or git-config(1); see absences.tsv.

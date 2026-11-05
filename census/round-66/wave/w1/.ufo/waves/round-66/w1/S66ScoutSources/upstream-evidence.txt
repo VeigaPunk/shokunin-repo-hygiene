@@ -1,0 +1,49 @@
+### GIT_REPLACE_REF_BASE -- release note 2.6.0 (the ONLY prose definition upstream)
+### source file: Documentation/RelNotes/2.6.0.adoc (upstream git/git @ 0ffa3e35c7c82ab8d0de226149fb03b3f7674d05)
+
+ * An environment variable GIT_REPLACE_REF_BASE tells Git to look into
+   refs hierarchy other than refs/replace/ for the object replacement
+   data.
+
+ * Allow untracked cache (experimental) to be used when sparse
+
+### GIT_REPLACE_REF_BASE -- source comment (refs.c)
+### source file: refs.c (upstream git/git @ 0ffa3e35c7c82ab8d0de226149fb03b3f7674d05)
+	[NAMESPACE_REPLACE] = {
+		/*
+		 * This namespace allows Git to act as if one object ID
+		 * points to the content of another. Unlike the other
+		 * ref namespaces, this one can be changed by the
+		 * GIT_REPLACE_REF_BASE environment variable. This
+		 * .namespace value will be overwritten during repository
+		 * setup.
+		 */
+		.ref = "refs/replace/",
+		.decoration = DECORATION_GRAFTED,
+	},
+	[NAMESPACE_NOTES] = {
+		/*
+
+### env var name constants
+### source file: environment.h (upstream git/git @ 0ffa3e35c7c82ab8d0de226149fb03b3f7674d05)
+#define DB_ENVIRONMENT "GIT_OBJECT_DIRECTORY"
+#define CONFIG_ENVIRONMENT "GIT_CONFIG"
+#define CONFIG_DATA_ENVIRONMENT "GIT_CONFIG_PARAMETERS"
+#define CONFIG_COUNT_ENVIRONMENT "GIT_CONFIG_COUNT"
+#define NO_REPLACE_OBJECTS_ENVIRONMENT "GIT_NO_REPLACE_OBJECTS"
+#define GIT_REPLACE_REF_BASE_ENVIRONMENT "GIT_REPLACE_REF_BASE"
+#define ALTERNATE_DB_ENVIRONMENT "GIT_ALTERNATE_OBJECT_DIRECTORIES"
+
+### GIT_CONFIG_PARAMETERS -- source comment
+### source file: config.h (upstream git/git @ 0ffa3e35c7c82ab8d0de226149fb03b3f7674d05)
+/*
+ * Append a config option to the buffer that can be exported via the
+ * GIT_CONFIG_PARAMETERS environment variable, which allows us to
+ * propagate configuration across Git processes. The format of the
+ * variable is a space-separated list of quoted "'<key>'='<value>'"
+ * pairs. With a NULL `value`, only 'key'= is appended, which git reads
+ * back as a boolean true, like "-c key" on the command line.
+ */
+void git_config_append_parameter(struct strbuf *env, const char *key,
+				 const char *value);
+int git_config_from_parameters(config_fn_t fn, void *data);

@@ -1,0 +1,34 @@
+### Host git probe: config env-route semantics + -c precedence
+### host git: git version 2.56.0
+### probe repo: /fast/scratch/hyaku/souji-r66/S66ScoutSources/probe/r66
+
+$ git config --get core.excludesFile
+  env: {"GIT_CONFIG_PARAMETERS": "'core.excludesFile=/tmp/xx'"}
+  rc=0
+  | /tmp/xx
+
+$ git config --get core.excludesFile
+  env: {"GIT_CONFIG_COUNT": "1", "GIT_CONFIG_KEY_0": "core.excludesFile", "GIT_CONFIG_VALUE_0": "/tmp/xx"}
+  rc=0
+  | /tmp/xx
+
+$ git config --get core.excludesFile
+  env: {"GIT_CONFIG_COUNT": "1", "GIT_CONFIG_GLOBAL": "/tmp/nonexistent-global-config", "GIT_CONFIG_KEY_0": "core.excludesFile", "GIT_CONFIG_VALUE_0": "/tmp/xx"}
+  rc=0
+  | /tmp/xx
+
+$ git -c core.excludesFile=/tmp/yy config --get core.excludesFile
+  env: {"GIT_CONFIG_COUNT": "1", "GIT_CONFIG_KEY_0": "core.excludesFile", "GIT_CONFIG_VALUE_0": "/tmp/xx"}
+  rc=0
+  | /tmp/yy
+
+$ git config --get core.excludesFile
+  env: {"GIT_CONFIG_NOSYSTEM": "1"}
+  rc=1
+
+### GIT_CONFIG_PARAMETERS and GIT_CONFIG_COUNT are BOTH honoured by the host git,
+### even though GIT_CONFIG_PARAMETERS has NO prose definition in git(1) or
+### git-config(1) (absences.tsv).
+### git-config(1) ENVIRONMENT (quotes.tsv rows for lines 784-786) states these env
+### pairs 'will be overridden by any explicit options passed via git -c .';
+### the 4th probe above confirms -c wins over GIT_CONFIG_COUNT on the host git.
