@@ -43,8 +43,10 @@ snapshot (sha256 per worktree-modified tracked file, every file under untracked 
 re-compared after the wrapped command, so an in-run change that leaves both porcelain reads
 byte-identical still refuses (RECEIPT-STATE-CHANGED-DURING-RUN with content rows).
 
-round 65 (C1): every status read overrides status.showUntrackedFiles to `all`, so an operator-injected
-config cannot hide untracked entries from the dirty check or the content snapshot; the snapshot payload
+round 65 (C1): every status read overrides the status.showUntrackedFiles config KEY to `all`, so that key
+cannot hide untracked entries from the dirty check or the content snapshot. This is key-scoped: routes that make
+a path IGNORED rather than untracked (core.excludesFile, .git/info/exclude, a tracked .gitignore) and
+GIT_CONFIG_* passthrough for other keys are NOT closed by this override (round-65 named limits; round 66 routes); the snapshot payload
 records each regular file's mode beside its digest, so a mode-only in-run flip refuses (RECEIPT-STATE-CHANGED-DURING-RUN
 with a `mode <path>` row); and the M5 symlink rule is frozen design: a symlink inside an untracked
 directory is recorded by name and target string, never followed.
