@@ -1,0 +1,30 @@
+round-67 L1 probes: relative GIT_COMMON_DIR (writer cwd != root). Host git 2.56.0. Base writer = tools/souji-receipt-write.py at 3639087917eaeb28719d7603110a6ec22782100e (sha256 a8c47d36...97fc). Candidate = landed tools/souji-receipt-write.py at f70da577eb1e1624cc63ab8fd0468565927d9b6a (sha256 b811ee2a...5a725). Scratch under /fast/scratch/hyaku/souji-r67/l1/ (removed at landing; the commands below re-derive every fixture).
+These are feasibility probes, not claim evidence. The frozen claim evidence is census/round-67/records/.
+
+## P-rel1: caller value resolves differently from the writer cwd and from the root
+
+Fixture: R = a repository with one tracked file instr.sh (commit base). S = the parent of R, cwd for the writer. REV = HEAD of R.
+Command, from cwd S, value ".git" (root-relative resolution is R/.git, the real repository):
+
+  GIT_COMMON_DIR=.git git -C "$R" rev-parse --git-common-dir      -> prints .git (git resolves it against -C R)
+  base:      GIT_COMMON_DIR=.git python3 -B base.py --root "$R" --rev "$REV" --instrument instr.sh --out "$S/o5.txt" --allow-outside -- /bin/echo hi
+             -> RECORD ... rc=0 (receipt written)
+  candidate: GIT_COMMON_DIR=.git python3 -B tools/souji-receipt-write.py --root "$R" --rev "$REV" --instrument instr.sh --out "$S/o4.txt" --allow-outside -- /bin/echo hi
+             -> refused: RECEIPT-ENV-COMMONDIR-MISMATCH: GIT_COMMON_DIR is set in the writer's environment and does not resolve to this repository's common dir (value not shown); unset it and retry   (rc 2, no receipt)
+
+Reading: the candidate compares realpath(caller value) from the writer cwd (S/.git, nonexistent) with git's root-relative resolution (R/.git). The two frames disagree, so the candidate refuses an honest run that base accepts. It fails closed: the candidate never accepts a redirect that git itself would honour, because the dirty check and the receipt's own git calls run with the value scrubbed.
+
+Control (both frames agree, equal absolute value): from cwd S, GIT_COMMON_DIR="$R/.git" -> candidate rc 0 (RECORD).
+Control (relative value that agrees in both frames: "../R/.git" from cwd S/cwd, a sibling directory of R): candidate rc 0 (RECORD); base rc 0.
+
+## P-rel2: critic W4 shape (relative value, cwd = parent, poisoned copy of .git inside the worktree)
+
+Fixture: main/ = repository; instr.sh mode 755 committed, then chmod 644 (tracked mode change). main/.git/info/exclude lists "main/". main/main/.git = copy of main/.git with core.fileMode=false (the poison). cwd = parent of main; GIT_COMMON_DIR=main/.git (relative to cwd and to -C main: git -C main resolves it to main/main/.git, the poison).
+
+  git -C main status --porcelain                                  -> " M instr.sh"  (visible without the redirect)
+  base:      GIT_COMMON_DIR=main/.git python3 -B base.py --root main --rev REV --instrument instr.sh --out b.txt --allow-outside -- /bin/echo hi
+             -> RECORD ... rc=0 (receipt over a dirty tree: forgery)
+  candidate: GIT_COMMON_DIR=main/.git python3 -B tools/souji-receipt-write.py --root main --rev REV --instrument instr.sh --out n.txt --allow-outside -- /bin/echo hi
+             -> refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override   (rc 2, no receipt)
+
+Reading: the candidate's value check passes here (the candidate's own resolution, with the value scrubbed, is the real R/.git; the cwd-canonical value is the same real path), and the scrub keeps every later writer git call on the real repository, so the dirty check sees the real change. The scrub is the load-bearing protection in this shape. Critic's no-scrub mutant (value check without scrub) writes the receipt (critic receipts.txt). The frozen matrix measures neither (named limit M9).
