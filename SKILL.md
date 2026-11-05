@@ -827,5 +827,14 @@ without `--substance` is unchanged (lane sweep over 37 preregistrations: zero pl
 Binding limits: bytes, not execution; a fabricated receipt committed before freeze passes; history-bounded
 (fail closed on hidden ancestors). Rounds 41–55 records gain the same class on their control receipts; they
 are historical and unrewritten. Not in this round: the receipt writer's skip-worktree blindness
-(`corpus/knowledge/skip-worktree-concealment.md`, routed to round 62), the r61 fixture for C2 (not claimed),
+(`corpus/knowledge/skip-worktree-concealment.md`; closed in round 62 by C1, see `## Round 62`), the r61 fixture for C2 (not claimed),
 and the preregistration `## MACHINE BLOCK` (critic F13). Certification OFF, K5 HELD.
+
+## Round 62 — index-flag refusal (C1 operability) and stale-statement count (C2 calibration)
+
+Frozen claims: `census/round-62/preregistration-freeze3.txt` (freeze commit c5af0e0a; controls commit 57a85817; the two earlier freeze attempts stay in history, refused by the checker for receipt grammar). Candidate writer commit a0b396cd.
+
+- C1 counter: `python3 -B census/round-62/c1-counter.py --root . --matrix census/round-62/c1-matrix.tsv --base-rev 16fa821fdce00e709d6895ccfc7aaffa465af195 --rev <full40> --tool tools/souji-receipt-write.py --work DIR` (DIR must not live under /tmp). Frozen target: `SUMMARY matrix=7 base_forgeries=3 base_honest=2 new_forgeries=0 new_honest=2 class_mismatches=0 regress=PASS` and `EXIT=0`. Measured at a0b396cd: `census/round-62/records/c1-after.txt`. Do-nothing (base bytes in the new slot): `census/round-62/controls/c1-do-nothing.txt`, `new_forgeries=3`, `EXIT=1`.
+- C2 counter: `python3 -B census/round-62/c2-counter.py --root . --rev <full40>`. Frozen target: `stale_open=0 landed>=3 verdict=PASS`, `EXIT=0`. Do-nothing at the base revision: `census/round-62/controls/c2-do-nothing.txt`, `stale_open=4 landed=0`, `EXIT=1`.
+- Writer rule: `tools/souji-receipt-write.py` refuses, before its dirty check and regardless of `--allow-dirty`, any tracked index entry whose `git ls-files -v` tag is not `H`, with a message beginning `RECEIPT-INDEX-FLAG-CONCEALED:` (S292 defines the tags, S291 the manual caveat).
+- Named limits, not claimed: a flag set, or a file edited, while the wrapped command runs is not checked (sentinel probes 27–29, `census/round-62/wave/S62SentinelScope/`); the check is whole-index; an unmerged path reports as concealment; the class check is a stderr substring; the r60 fixture is non-regression only.

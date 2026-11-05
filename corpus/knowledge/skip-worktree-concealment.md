@@ -1,4 +1,4 @@
-source: S291 — git-update-index(1) `--skip-worktree` (https://git-scm.com/docs/git-update-index, NOTES; accessed 2026-11-05; located quote in `corpus/SOURCES.md` S291 row); probe on git 2.56.0 (round 61, `.ufo/waves/round-61/w1/S61ReviewerC2.md`)
+source: S291 — git-update-index(1) `--skip-worktree` (https://git-scm.com/docs/git-update-index, NOTES; accessed 2026-11-05; located quote in `corpus/SOURCES.md` S291 row); S292 — git-ls-files(1) `-v`/`-t` tags (https://git-scm.com/docs/git-ls-files, OPTIONS; accessed 2026-11-05; located quote in the S292 row); probe on git 2.56.0 (round 61, `.ufo/waves/round-61/w1/S61ReviewerC2.md`; round 62, `.ufo/waves/round-62/w1/S62SentinelScope/`)
 verified-at: 2026-11-05 (round 61; host git 2.56.0)
 recheck: `git -C <scratch-repo> update-index --skip-worktree <file>` after editing that file, then `git -C <scratch-repo> status --porcelain` — the probe output must still show the file as clean, and `git ls-files -v <file>` must show `S`
 
@@ -30,10 +30,7 @@ performing certain operations." (S291 NOTES). The manual therefore gives no guar
 
 ## Consequence
 
-A dirty-tree refusal based on `git status` is not evidence that the committed bytes were measured. A stronger
-writer compares the worktree bytes of every file it reads with `git cat-file blob <rev>:<path>`, or refuses
-any skip-worktree or assume-unchanged entry (`git ls-files -v` lowercase or `S`). Neither is implemented in
-round 61: this is named and routed to round 62, not claimed.
+A dirty-tree refusal based on `git status` is not evidence that the committed bytes were measured. Round 62 (C1) closes the start-of-run form of this: `tools/souji-receipt-write.py` refuses, before its dirty check and regardless of `--allow-dirty`, any tracked index entry whose `git ls-files -v` tag is not `H` (S292: lowercase for assume-unchanged, `S` for skip-worktree; S291: the manual caveat), with the class `RECEIPT-INDEX-FLAG-CONCEALED`. Named limits, not claimed: a flag set, or a file edited, while the wrapped command runs is not checked (sentinel probes 27–29); the check is whole-index; an unmerged path reports as concealment; the class check is a stderr substring; the writer still does not compare every file it reads with `git cat-file blob`.
 
 ## What this does not prove
 

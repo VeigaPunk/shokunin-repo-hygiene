@@ -970,10 +970,16 @@ a measured edge class does not promote a frontier ground to Core (PROVINCE
   `knowledge/freeze-record-substance-binding.md` (r60, the revision a receipt names; previously unindexed, indexed here
   per the r60 spot-check), `knowledge/control-chronology-binding.md` (r61, the content rule: a control's bytes must exist
   at a strict ancestor of the freeze), and `knowledge/skip-worktree-concealment.md` (r61, a clean `git status` is not
-  evidence about worktree bytes; the receipt writer's dirty check is blind to skip-worktree paths, routed to r62).
+  evidence about worktree bytes; the receipt writer's dirty check was blind to skip-worktree paths until r62, when C1 began refusing them with `RECEIPT-INDEX-FLAG-CONCEALED`, cited as S292).
   F1 stays `frontier, entries held`; `tools/souji-receipt-write.py` is not extended by this round.
 - Sources: S290 (git-log path-limited history) and S291 (git-update-index skip-worktree, NOTES caveat) admitted as `mined`.
   Registry 213 -> 215 rows (`scripts/sources-census.sh validate --root /home/vgpnk/Projects/shokunin souji`).
 - Chronology finding: ten older freeze records (rounds 41–55, plus round 60) carry the same class on their control receipts; their
   verdicts are historical. Certification OFF; K5 HELD. Assimilation: none (no `considerthese/` directory; no `merge/souji/`
   theme taken this round).
+
+### Frontier (r62 index-flag refusal)
+
+- **F1 / index-flag concealment (frontier, not Core).** `knowledge/skip-worktree-concealment.md` now records the start-of-run refusal (r62 C1) and its named in-run limits; S292 (git-ls-files `-v`/`-t` tags) is opened and cited. F1 stays `frontier, entries held`.
+- Sources: S292 added (`scripts/sources-census.sh validate --root /home/vgpnk/Projects/shokunin souji`); S291 unchanged (re-opened 2026-11-05; its `recheck` stays `180d` so the row is not overdue on the day it was re-read).
+- Assimilation: none (connector report `.ufo/waves/round-62/w1/S62ConnectorOverlap/`: the staged souji package holds no index-flag, skip-worktree or clean-tree theme).
