@@ -33,15 +33,25 @@ echo-violation outcomes, with 0 survived.
   is one. The docs describe contention for background `git status`: S302 says "Scripts running status
   in the background should consider using git --no-optional-locks status (see git[1] for details)", and
   S303 says `--no-optional-locks` "require locks. This is equivalent to setting the GIT_OPTIONAL_LOCKS
-  to 0". By default `git status` refreshes the index and writes it out, and the page says the lock held during
-  that write may conflict with other processes (S302). The round's probe found git status rc 0 with the
-  same output under a held `.git/index.lock`, with or without the pin
-  (`census/round-69/probes/lock-and-commondir-probe.txt`). That output cannot tell a skipped lock from
-  no attempt, and the docs do not say what happens when `index.lock` already exists. So the held-lock
-  behaviour is undocumented on this host, not shown absent. A row that depends on contention therefore
-  cannot refute the pin here; the pin remains declared, and its battery outcome is `survived`.
-- D29 (`:(top)` pathspec) is a named limit for a different reason: every writer `ls-files` runs with
-  `-C <toplevel>`, so dropping the pathspec changes no verdict.
+  to 0". Two grounds, and both are required to read the `survived` outcome:
+
+  1. **Harness artefact (S69Scribe, HIGH).** The counter's `clean_env()` pins `GIT_OPTIONAL_LOCKS=0`
+  into every writer slot, so the D18 mutant inherits the counter's pin and hands git exactly the
+  environment the honest writer hands it. No row in this harness could observe a lock-contingent
+  verdict for D18, contention or not; a successor row needs a PK7-style caller-env override plus a
+  contention-observable design.
+  2. **Git behaviour on this host.** By default `git status` refreshes the index and writes it out,
+  and the page says the lock held during that write may conflict with other processes (S302). The
+  round's probe found git status rc 0 with the same output under a held `.git/index.lock`, with or
+  without the pin (`census/round-69/probes/lock-and-commondir-probe.txt`); a GIT_TRACE2 probe shows
+  the index write is skipped, not attempted-and-failed (`do_write_index` 0 vs 2). The docs do not
+  say what happens when `index.lock` already exists, so the held-lock behaviour is undocumented on
+  this host.
+
+  The pin remains declared; its battery outcome is `survived`.
+- D29 (`:(top)` pathspec) is a named limit for a different reason: the mutant drops `:(top)` from
+  the flag-check `ls-files` only, and that call runs with `-C <toplevel>`, so its working directory is
+  already the toplevel and the pathspec changes no verdict (S69Scribe verified the narrower scope).
 - A battery is single-edit mutants of one candidate blob. It measures the protections the rows reach,
   not the protections declared in prose. The declared-coverage table (census/round-69/records/
   declared-coverage.tsv) names which declared protections have a battery row and which are limits.
