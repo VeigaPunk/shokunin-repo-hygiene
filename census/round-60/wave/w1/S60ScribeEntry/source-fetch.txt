@@ -1,0 +1,106 @@
+# Source fetch receipts — S60ScribeEntry, round 60, access date 2026-11-04
+# cwd for every fetch: /fast/scratch/hyaku/souji-r60/S60ScribeEntry
+
+## exact commands
+curl -sSL --max-time 40 -w "%{http_code} %{size_download}\n" https://man7.org/linux/man-pages/man2/rename.2.html -o man2-rename.2.html
+curl -sSL --max-time 40 -w "%{http_code} %{size_download}\n" https://man7.org/linux/man-pages/man2/fsync.2.html -o man2-fsync.2.html
+curl -sSL --max-time 40 -w "%{http_code} %{size_download}\n" https://man7.org/linux/man-pages/man2/open.2.html -o man2-open.2.html
+curl -sSL --max-time 40 -w "HTTP=%{http_code} SIZE=%{size_download}\n" https://git-scm.com/docs/git-merge-base -o git-merge-base.html
+curl -sSL --max-time 40 https://docs.python.org/3/library/os.html -o os.html   # (rc=0)
+
+## observed http_code + size_download (alphabetical `cat man2-*.http`: fsync, open, rename)
+200 15152   man2-fsync.2.http
+200 76506   man2-open.2.http
+200 23571   man2-rename.2.http
+git-merge-base: HTTP=200 SIZE=41397
+docs.python.org os.html: curl rc=0, 791358 bytes on disk
+
+## sha256 and byte size of each fetched page
+8772946a809a0db54f4854f200908f10bee758ea452e8df5efd955bc3b8e6e57  man2-rename.2.html
+f0a986d21500222ecb69580fc7a910f346c6b1ff1005ca515501fb05bb5d91f5  man2-fsync.2.html
+d665489cadb85624d98fae03a8d8d06209030f32735cff8aeba949ad8491c789  man2-open.2.html
+46d106b777754f7ec3072813ace57d2c5385d110181b8db1c56b7136cfb49644  git-merge-base.html
+ece1ab71f281f72bbaaa318f6e376adeceed40466f086861eb1edfbb79f68079  os.html
+23571 man2-rename.2.html
+15152 man2-fsync.2.html
+76506 man2-open.2.html
+41397 git-merge-base.html
+791358 os.html
+
+## document versions observed in the served bytes
+man-pages 6.19, page dated 2026-09-09  (rename.2, fsync.2, open.2)
+git-scm web manual "last updated in 2.43.0"  (git-merge-base)
+docs.python.org serving Python 3.15.2  (os.html)
+
+## located-quote verification (tags stripped, whitespace normalised, exact substring test + word count)
+man2-rename.2.html     FOUND   words=23 | it will be atomically replaced, so that there is no point at which another process attempting to access newpath will find it missing
+man2-open.2.html       FOUND   words= 7 | it will be truncated to length 0
+man2-fsync.2.html      FOUND   words=16 | so that all changed information can be retrieved even if the system crashes or is rebooted
+git-merge-base.html    FOUND   words=25 | Check if the first <commit> is an ancestor of the second <commit>, and exit with status 0 if true, or with status 1 if not.
+os.html                FOUND   words=12 | the renaming will be an atomic operation (this is a POSIX requirement)
+os.html                FOUND   words=17 | If dst exists and is a file, it will be replaced silently if the user has permission.
+
+## page bodies are NOT copied into the lane; the scout holds full-page snapshots. This file is text-only evidence.
+
+## re-fetch (2026-11-04, after the scout's opened.txt appeared) and cross-check of S60ScoutSources' filed quotes
+curl -sSL --max-time 40 https://man7.org/linux/man-pages/man2/fsync.2.html -o fsync.html
+curl -sSL --max-time 40 https://man7.org/linux/man-pages/man2/open.2.html  -o open.html
+sha256(fsync.html)=f0a986d21500222ecb69580fc7a910f346c6b1ff1005ca515501fb05bb5d91f5   (matches the first fetch and candidate S289)
+sha256(open.html) =d665489cadb85624d98fae03a8d8d06209030f32735cff8aeba949ad8491c789   (matches the first fetch and candidate S292)
+
+fsync.html  FOUND  words=19 | Calling fsync() does not necessarily ensure that the entry in the directory containing the file has also reached disk
+fsync.html  FOUND  words=16 | so that all changed information can be retrieved even if the system crashes or is rebooted
+open.html   FOUND  words=17 | Write operations on the file will complete according to the requirements of synchronized I/O data integrity completion.
+open.html   FOUND  words= 7 | it will be truncated to length 0
+
+## reading of the cross-check
+- candidate S289 (fsync) files the 19-word directory-entry quote; the 16-word data quote is a second fact on the same page and is the one the writer's file fsync rests on.
+- candidate S292 (open) files the 17-word O_DSYNC quote, which does NOT cover the 7-word O_TRUNC clause this round's atomic-write entry cites. Widened anchor or a separate row required; routed to the L1 in the lesson Gate and in both entries' source lines.
+- the scout's opened.txt (20:51) lists S288-S292 admits and no reject row; the round's reject row is therefore still TODO-REJECT.
+
+## registry cross-check (read 2026-11-04, lane WORKTREE, uncommitted `M corpus/SOURCES.md`)
+git diff corpus/SOURCES.md -> appends S288 (Python os.replace atomic publication, admitted) and S289
+(os.replace cross-filesystem inference, REJECTED); re-opens S110/S213/S214/S251 with unchanged cells.
+Consequence: the S60ScoutSources scratch numbering (S288 rename, S289 fsync, S290 merge-base, S291
+os.replace, S292 open) is SUPERSEDED and must not be copied into any artifact. S288 is os.replace.
+
+## os.replace page byte-stability probe (same URL, same day)
+20:47 fetch  bytes=791358  sha256=ece1ab71f281f72bbaaa318f6e376adeceed40466f086861eb1edfbb79f68079   (matches S60ScoutSources/opened.txt)
+21:0x fetch  bytes=791358  sha256=cdf486e8533a8d88649acae57a03b6df89f048ffb78d6df744937cce1b394f51
+21:0x fetch  bytes=791358  sha256=cdf486e8533a8d88649acae57a03b6df89f048ffb78d6df744937cce1b394f51
+21:0x fetch  bytes=791358  sha256=cdf486e8533a8d88649acae57a03b6df89f048ffb78d6df744937cce1b394f51
+cmp os.html os2.html -> 0 ; cmp os2.html os3.html -> 0   (the three later fetches are identical to each other)
+Quotes verified verbatim in the later bytes: 14 words `If successful, the renaming will be an atomic operation (this is a POSIX requirement).` ;
+17 words `If dst exists and is a file, it will be replaced silently if the user has permission.` ;
+12 words `The operation may fail if src and dst are on different filesystems.`
+Reading: same length, different bytes, identical quoted sentences -> quoted text stable, page bytes not; the capture path is the pin.
+
+## committed-artifact cross-check (read via git show, nothing re-run)
+git log --oneline -2 -- corpus/SOURCES.md
+  3b552509 round-60: substance arm, atomic receipt writer and their frozen fixtures
+  18c82b53 round-59: correct stable assessment registry and add public selftest
+git show --stat 3b552509 | grep -E 'SOURCES|knowledge|lessons|tools/'
+  corpus/SOURCES.md                                  |    4 +
+  corpus/knowledge/freeze-record-substance-binding.md |   57 +
+  corpus/lessons/round-60.md                          |   42 +
+  tools/souji-freeze-check.py                         |  175 +-
+  tools/souji-receipt-write.py                        |  694 ++
+git show HEAD:corpus/SOURCES.md | grep -c '^| S288 \|^| S289 '   -> 2
+=> S288/S289 and a 57-line entry plus 42-line lesson at THIS seat's filenames were already committed in
+   3b552509, before this seat's drafts. The L1 must choose which draft lands; this seat did not touch them.
+
+census/round-60/preregistration.txt (committed 2670e96a): Base 1e8bfd87; C1 Control
+  census/round-60/controls/c1-do-nothing.txt, C2 Control census/round-60/controls/c2-do-nothing.txt.
+census/round-60/controls/c1-do-nothing.txt (committed 3b552509, EXIT=1) — bound shape confirmed:
+  instrument=census/round-60/c1-counter.py
+  instrument_sha256=76f35c2f33e4f87f120fc0675b8502c47db335c993c8b8c68ea04ae860106d9b
+  rev=3b5525099356e15ff9d17b7fbd2835c2d3512eee
+  command=python3 -B census/round-60/c1-counter.py ... --new-arm plain
+  CASE forgery-* expect=refuse base=accept new=accept   (all five)
+  SUMMARY matrix=8 forgeries_accepted=5 honest_accepted=3 new_forgeries=5 new_honest=3 stubs=REJECTED
+census/round-60/controls/c2-do-nothing.txt (committed 3b552509, EXIT=1):
+  CASE 1 fail, 2 fail, 3 pass, 4 pass, 5 fail (tool rc=127), 6 pass, 7 pass, 8 fail
+  SUMMARY cases=8 pass=4 fail=4 control=ALWAYS-WRITE-REJECTED,ALWAYS-REFUSE-REJECTED
+CONFLICT recorded verbatim for the L1: the wave claim text says the base recorder is 3/8; the frozen
+preregistration C2 Kill says the do-nothing arm "prints pass=4"; the committed receipt prints pass=4.
+This seat re-ran neither and asserts neither number.

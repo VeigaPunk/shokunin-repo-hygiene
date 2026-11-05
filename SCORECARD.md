@@ -1501,3 +1501,45 @@ Classification is corrected on the SAME frozen R58-KIND row; no population-shado
 
 - Do not re-declare this bounded classification repair or infer broader correctness. Before any new freeze, exercise and commit actual public-path substance-forgery controls, not merely kind/summary labels; include readable Round header and replayable fixed-date fixture identities.
 - Carry all parser visibility, recorder dirty-tree/overwrite, receipt atomicity/resource bounds, diagnostics, historical receipt binding and capture row-set meta-test debts OPEN. Existing safety and operator holds remain.
+
+### Round 60 measurements (2026-11-04, Linux; base `1e8bfd87a9f6ea9a1db4ad34f6e4cdd2b218bcd4`; controls committed `3b5525099356e15ff9d17b7fbd2835c2d3512eee`; freeze `2670e96af1b81c7aa793acc34d40361b4beecff8`; prereg `census/round-60/preregistration.txt`)
+
+| claim | axis | before | after | counting command | measured commit |
+|---|---|---|---|---|---|
+| C1 freeze-record substance arm (capability acquisition) | calibration 7 | `new_forgeries=5 new_honest=3`, `EXIT=1` on the same counter with `--new-arm plain` (base tool bytes; accepts all five forgery controls) | `new_forgeries=0 new_honest=3 stubs=REJECTED`, `EXIT=0`; the arm is byte-identical without `--substance` (three-revision diff, selftest 41/41 unchanged) and the round's own freeze record scores `SUMMARY claims=2 findings=0` under it | `python3 -B census/round-60/c1-counter.py --root . --matrix census/round-60/c1-matrix.tsv --base-tool-rev 1e8bfd87a9f6ea9a1db4ad34f6e4cdd2b218bcd4 --rev <full40> --work DIR --new-tool tools/souji-freeze-check.py` | `census/round-60/records/c1-after.txt` at `2670e96af1b81c7aa793acc34d40361b4beecff8`; before `census/round-60/controls/c1-do-nothing.txt` at `3b5525099356e15ff9d17b7fbd2835c2d3512eee` |
+| C2 atomic receipt writer (operability) | operability 8 | base recorder `census/round-57/record-receipt.sh`: `pass=4 fail=4` (`atomic-in-flight`, `kill-residue`, `rev-short`, `instrument-absent`), `EXIT=1` | `pass=8 fail=0 control=ALWAYS-WRITE-REJECTED,ALWAYS-REFUSE-REJECTED`, `EXIT=0`; writer selftest 12/12 | `python3 -B tests/fixtures/r60-receipt-write.py --tool tools/souji-receipt-write.py --work DIR` | `census/round-60/records/c2-after.txt` at `2670e96af1b81c7aa793acc34d40361b4beecff8`; before `census/round-60/controls/c2-do-nothing.txt` at `3b5525099356e15ff9d17b7fbd2835c2d3512eee` |
+
+Both frozen predicates hold on the frozen bytes. Numeric axis scores are unchanged (calibration 7,
+operability 8, coverage 8): the lane still has no reproducible 0–10 mapping, and the closure rules
+admission. C2 is a successor to the rejected r57 C2 *on a different surface*: r57 bound a receipt's
+revision text and checked receipts; this claim writes them (atomic publish, overwrite refusal, capture
+bound, worktree and commit-object refusal), and its base recorder passes 4/8, not the 3/8 the wave
+prompt assumed (critic finding 1; the frozen prereg uses the measured 4).
+
+Pre-freeze amendments, each made before any after-data and recorded here: (1) the counter summary now
+prints both arms (`new_forgeries`/`new_honest`) so the claim's after-state is readable on the same line
+as the control; (2) the substance arm refuses conflicting duplicate `instrument=`/`instrument_sha256=`/
+`rev=`/`command=` lines and matches the counter as an argv token rather than a substring (reviewer
+S60ReviewerFreeze g2/g3/g4/f); (3) the writer publishes with `link(2)` instead of `os.replace` after an
+existence check (TOCTOU clobber), refuses an `--out` directory resolving outside `--root` unless
+`--allow-outside`, requires `rev` to name a commit object (a tag OID is refused), and sweeps its own
+stale `<out>.*.tmp` siblings (reviewer S60ReviewerRecorder a1/a2, b1, i1, c-c1).
+
+### Capabilities (round 60 row)
+
+| name | what it can now do | evidence pointer | first-working round |
+|---|---|---|---|
+| freeze-record substance binding | refuse a freeze record whose control receipt is not bound to the declared counter's committed bytes, a strict-ancestor full-40 revision and a command naming that counter, while leaving the default checker output byte-identical | `python3 -B tools/souji-freeze-check.py --root . --prereg census/round-60/preregistration.txt --rev 2670e96af1b81c7aa793acc34d40361b4beecff8 --substance` → `SUMMARY claims=2 findings=0`; `--selftest --substance` 12/12; `census/round-60/records/c1-after.txt` | r60 |
+| atomic receipt writing | publish a receipt through a same-directory temp file, `fsync` and `link(2)`, refusing an existing output, a racing creator, a dirty worktree, an over-bound capture, a short or non-commit revision, an absent instrument and an out-of-root target | `python3 -B tests/fixtures/r60-receipt-write.py --tool tools/souji-receipt-write.py` → `pass=8 fail=0`; writer `--selftest` 12/12; `census/round-60/records/c2-after.txt` | r60 |
+
+### Planned (r61)
+
+- C1's matrix does not assert the *finding class* it expects and its `forgery-rev-at-freeze` case names
+  the freeze commit through a tag (a receipt inside the freeze commit cannot name that commit); a
+  successor round can pin classes and add an orphan-commit non-ancestor arm.
+- C2's fixture does not observe the atomic publish directly (it observes in-flight absence and kill
+  residue) and cannot kill a mutant that hashes the worktree file instead of the committed blob; the
+  writer's own selftest covers the latter.
+- Carry every r56–r59 debt open: visibility-parser second-opener/code-span/escape/link/TAB, capture
+  row-set meta-test, historical receipt binding, diagnostic escaping, recorder dirty-tree semantics for
+  ignored files. Certification OFF, K5 HELD.

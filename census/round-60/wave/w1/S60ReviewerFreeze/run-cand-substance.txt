@@ -1,0 +1,52 @@
+# tool=/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-60/w1/S60ExecFreezeArm/souji-freeze-check.py substance=True base=4d9e1cda9929e6820f2a55d0557d5b80385f77cc freeze=c3a4a950d50e0cf5d99ffefcc1c690d69fd40161 freeze2=eb8826727850eac118403042d53df2633476487a
+# shaC=3c9b9c70c8417bbafa0e144aa41daf50206d7c513df439965540d882a3055c43 shaC2=92106b892a975859cba9684607c12378a313777d70d83cc69fe7bc868ea8330a shaD=f8a5583f356f3cd1629e949aa564c6ca7eabe8c4f02abed84df9e6d02dcec4cc shaP=bc0405cffdbb957b8790ce8d5ced0091b4d0b2f32bee8f8a5ffc143032bda4f8
+CASE a-kindonly expect=refuse observed=refuse rc=1 classes=[CONTROL-INSTRUMENT-MISSING,CONTROL-REV-MISSING]
+  FINDING C1 CONTROL-COMMAND-MISSING ctl-a.txt has no command= line
+  FINDING C1 CONTROL-INSTRUMENT-MISSING ctl-a.txt has no instrument= line
+  FINDING C1 CONTROL-INSTRUMENT-MISSING ctl-a.txt has no instrument_sha256= line
+  FINDING C1 CONTROL-REV-MISSING ctl-a.txt has no rev= line
+  SUMMARY claims=1 findings=4
+CASE b-crossclaim expect=refuse observed=refuse rc=1 classes=[CONTROL-INSTRUMENT-MISMATCH]
+  FINDING C1 CONTROL-COMMAND-MISMATCH ctl-b1.txt command='python3 -B c2.py' does not mention Counter 'c.py'
+  FINDING C1 CONTROL-INSTRUMENT-MISMATCH ctl-b1.txt instrument='c2.py' is not the declared Counter 'c.py'
+  FINDING C1 CONTROL-INSTRUMENT-MISMATCH ctl-b1.txt instrument_sha256='92106b892a975859cba9684607c12378a313777d70d83cc69fe7bc868ea8330a' is not the Counter digest 3c9b9c70c8417bbafa0e144aa41daf50206d7c513df439965540d882a3055c43
+  SUMMARY claims=2 findings=3
+CASE c-never-executed expect=accept-or-refuse-not-repaired observed=accept rc=0 classes=[none (contract says bytes only)]
+  SUMMARY claims=1 findings=0
+CASE d-rename-identical expect=refuse observed=refuse rc=1 classes=[CONTROL-INSTRUMENT-MISMATCH (path must equal Counter path)]
+  FINDING C1 CONTROL-INSTRUMENT-MISMATCH ctl-d.txt instrument='copy_of_c.py' is not the declared Counter 'c.py'
+  SUMMARY claims=1 findings=1
+CASE e1-fence-decoy-after expect=refuse observed=refuse rc=1 classes=[KEY-DUPLICATE (base)]
+  FINDING C1 KEY-DUPLICATE Counter
+  SUMMARY claims=1 findings=1
+CASE e2-fence-decoy-only expect=refuse observed=refuse rc=1 classes=[FIELD-MISSING-hidden (decoy must not bind)]
+  FINDING C1 CONTROL-COMMAND-MISMATCH ctl-e2.txt command='python3 -B c.py' does not mention Counter 'decoy.py'
+  FINDING C1 CONTROL-INSTRUMENT-MISMATCH ctl-e2.txt instrument='c.py' is not the declared Counter 'decoy.py'
+  FINDING C1 CONTROL-INSTRUMENT-MISMATCH ctl-e2.txt instrument_sha256='3c9b9c70c8417bbafa0e144aa41daf50206d7c513df439965540d882a3055c43' is not the Counter digest f8a5583f356f3cd1629e949aa564c6ca7eabe8c4f02abed84df9e6d02dcec4cc
+  SUMMARY claims=1 findings=3
+CASE e3-fence-decoy-matched expect=refuse observed=accept rc=0 classes=[must refuse: decoy line is not a real key]
+  SUMMARY claims=1 findings=0
+CASE e4-indent-decoy expect=accept observed=accept rc=0 classes=[none]
+  SUMMARY claims=1 findings=0
+CASE f-command-substring expect=refuse-or-not-repaired observed=accept rc=0 classes=[CONTROL-COMMAND-MISMATCH only if exact-token]
+  SUMMARY claims=1 findings=0
+CASE g-duplicate-rev expect=refuse observed=refuse rc=1 classes=[CONTROL-REV-INVALID (any duplicate rev= refuses)]
+  FINDING C1 CONTROL-REV-NOT-BEFORE-FREEZE ctl-g.txt rev f8391873e762ee1e57cbe816d7d24b02f5319c15 is not a strict ancestor of freeze 11d5453a7358
+  SUMMARY claims=1 findings=1
+CASE h-orphan-rev expect=refuse observed=refuse rc=1 classes=[CONTROL-REV-INVALID]
+  FINDING C1 CONTROL-REV-NOT-BEFORE-FREEZE ctl-h.txt rev f8391873e762ee1e57cbe816d7d24b02f5319c15 is not a strict ancestor of freeze a34c0d2b2502
+  SUMMARY claims=1 findings=1
+CASE g2-second-rev-conflict expect=refuse observed=accept rc=0 classes=[CONTROL-REV-NOT-BEFORE-FREEZE (any conflicting duplicate refuses)]
+  SUMMARY claims=1 findings=0
+CASE g3-second-instrument-conflict expect=refuse observed=accept rc=0 classes=[CONTROL-INSTRUMENT-MISMATCH (any conflicting duplicate refuses)]
+  SUMMARY claims=1 findings=0
+CASE g4-second-digest-conflict expect=refuse observed=accept rc=0 classes=[CONTROL-INSTRUMENT-MISMATCH (any conflicting duplicate refuses)]
+  SUMMARY claims=1 findings=0
+CASE i-short-rev expect=refuse observed=refuse rc=1 classes=[CONTROL-REV-INVALID or MISSING]
+  FINDING C1 CONTROL-REV-INVALID ctl-i.txt rev='fffffffffffffffffffffffffffffffffffffff' does not resolve to a commit
+  SUMMARY claims=1 findings=1
+CASE k-honest expect=accept observed=accept rc=0 classes=[none]
+  SUMMARY claims=1 findings=0
+CASE j-rev-at-freeze expect=n/a-unconstructible observed=accept rc=0 classes=[CONTROL-REV-NOT-BEFORE-FREEZE (unreachable: a receipt cannot name the commit that contains it)]
+  SUMMARY claims=1 findings=0
+DONE rc=0

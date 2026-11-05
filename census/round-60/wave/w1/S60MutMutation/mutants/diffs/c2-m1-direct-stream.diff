@@ -1,0 +1,45 @@
+--- pristine/tools/souji-receipt-write.py
++++ mutant/c2-m1-direct-stream.py
+@@ -175,6 +175,9 @@
+         refuse(f"out directory does not exist ({outdir})")
+ 
+     # behaviours 6+8: bounded combined capture, exit-code passthrough
++    _live = open(out, "wb")
++    _live.write(b"instrument=" + rel.encode() + b"\n")
++    _live.flush()
+     proc = subprocess.Popen(argv, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+     chunks: list[bytes] = []
+     total = 0
+@@ -217,26 +220,12 @@
+         f"EXIT={rc}\n".encode("utf-8"),
+     ])
+ 
+-    # behaviour 5: atomic write; the temp file exists only from here on
+-    try:
+-        fd, tmp = tempfile.mkstemp(prefix=os.path.basename(out) + ".", suffix=".tmp", dir=outdir)
+-        _TEMP[TEMP_MARK] = tmp
+-        with os.fdopen(fd, "wb") as f:
+-            f.write(receipt)
+-            f.flush()
+-            os.fsync(f.fileno())
+-        if os.path.lexists(out):
+-            refuse(f"out appeared while the command ran ({out})")
+-        os.replace(tmp, out)
+-        _TEMP[TEMP_MARK] = None
+-    finally:
+-        leftover = _TEMP[TEMP_MARK]
+-        if leftover:
+-            _TEMP[TEMP_MARK] = None
+-            try:
+-                os.unlink(leftover)
+-            except OSError:
+-                pass
++    # MUTANT c2-m1: no temp file; the live handle already owns OUT
++    with open(out, "ab") as f:
++        f.write(receipt.split(b"\n", 1)[1])
++        f.flush()
++        os.fsync(f.fileno())
++    _live.close()
+     try:
+         dfd = os.open(outdir, os.O_RDONLY)
+     except OSError:

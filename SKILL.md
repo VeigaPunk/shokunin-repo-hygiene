@@ -788,3 +788,26 @@ Normal derivation remains the predecessor's exact note-presence predicate, with 
 | r59 registry-kind calibration | gate | `python3 -B census/round-59/c1-counter.py --root LANE --rev FULL40` | 0 selected row kind gate; 1 REGISTRY-KIND-MISMATCH (legacy unstructured Git errors also exit 1); 2 REGISTRY-ROW-SHAPE or CLI usage | `python3 -B census/round-59/c1-counter.py --selftest --work DIR` | census/round-59/population.tsv and preregistration.txt; controls.py literal rc/finding expectations | normal read-only Git blobs; selftest unique owned caller-work child; requires lane path and pinned base | souji |
 
 The frozen calibration counter is raw-line, classification-only and prefers a shadow r59 prefix if present; it does not validate Markdown visibility, instrument existence or selftest support. Thus its count alone never proves the round's kill-rule conjunction. The actual stable r58 row, committed gate and public selftest require separate substance checks. Known frozen limits and the Q99 missing Round-header defect are retained in corpus/lessons/round-59.md; certification OFF.
+
+## Round 60 — freeze-record substance binding and atomic receipt writing
+
+The `tools/souji-freeze-check.py` row above is the base grammar; the r60 change is an **opt-in**
+`--substance` arm on the same tool. Without the flag its stdout, stderr and exit are byte-identical to
+the base bytes at `1e8bfd87a9f6ea9a1db4ad34f6e4cdd2b218bcd4` (`census/round-60/w1/S60ExecFreezeArm/byte-identical.txt`
+reproduces this over the selftest and three real preregistrations). The r57 recorder
+(`census/round-57/record-receipt.sh`) stays as filed for historical replay; `tools/souji-receipt-write.py`
+supersedes it for new receipts, and the r57 dirty-tree/overwrite/atomicity debt is what it closes — its
+own selftest and the r60 fixture are the only authority for that, not this prose.
+
+| name | kind | entry command | verdict map | self-test command | pinned-value path | write scope | owner |
+|---|---|---|---|---|---|---|---|
+| r60 freeze-record substance arm | gate | `python3 -B tools/souji-freeze-check.py --root LANE --prereg PATH --rev FULL40 --substance` | 0 every claim's control receipt is bound; 1 CONTROL-INSTRUMENT-MISSING/MISMATCH/DUPLICATE, CONTROL-REV-MISSING/INVALID/NOT-BEFORE-FREEZE/DUPLICATE, CONTROL-COMMAND-MISSING/MISMATCH/DUPLICATE; 2 could-not-evaluate (base classes unchanged) | `python3 -B tools/souji-freeze-check.py --selftest --substance` → `cases=12 pass=12`; default `--selftest` stays `cases=41 pass=41` | `census/round-60/preregistration.txt`; matrix `census/round-60/c1-matrix.tsv` + `census/round-60/matrix/`; counter `census/round-60/c1-counter.py` | read-only git object store; selftest scratch under `$TMPDIR` | souji |
+| r60 atomic receipt writer | gate | `python3 -B tools/souji-receipt-write.py --root LANE --rev FULL40 --instrument PATH --out FILE [--max-bytes N] [--allow-dirty] [--allow-outside] (--command CMD \| -- ARGV...)` | exit = wrapped command's rc; 2 refuses: non-full-40 or non-commit rev, instrument absent/symlink/non-regular at rev, worktree differing from the committed blob, existing or racing `out`, dirty worktree without `--allow-dirty`, capture over `--max-bytes`, out directory resolving outside `--root` without `--allow-outside`, missing out directory | `python3 -B tools/souji-receipt-write.py --selftest --work DIR` → `cases=12 pass=12`; fixture `python3 -B tests/fixtures/r60-receipt-write.py --tool tools/souji-receipt-write.py --work DIR` → `pass=8 fail=0` | `census/round-60/c2-cases.tsv`; receipts `census/round-60/records/c{1,2}-after.txt`, controls `census/round-60/controls/` | writes only `out` and its temp sibling; reads the lane read-only | souji |
+
+Binding semantics and their limits are in `corpus/knowledge/freeze-record-substance-binding.md`: the arm
+binds bytes, a graph relation and an argv token — never execution, never wall-clock chronology, and a
+truthful forgery still passes. The writer's dirty-tree guard is `git status --porcelain`, so an ignored
+file does not make the tree dirty and a file modified *during* the run is not caught (named limits,
+`corpus/lessons/round-60.md`). The C1 matrix pins each case's expected verdict but not its finding class,
+and `forgery-rev-at-freeze` names the freeze commit through a tag because a receipt inside that commit
+cannot name it. Certification OFF, K5 HELD.

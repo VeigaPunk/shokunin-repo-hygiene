@@ -1,0 +1,20 @@
+--- pristine/tools/souji-receipt-write.py
++++ mutant/c2-m6-digest-worktree.py
+@@ -153,7 +153,7 @@
+     blob = git(root, "cat-file", "blob", f"{rev}:{rel}")
+     if blob.returncode != 0:
+         refuse(f"{rel} absent at {rev}")
+-    digest = hashlib.sha256(blob.stdout).hexdigest()
++    digest = hashlib.sha256(open(os.path.join(root, *rel.split("/")), "rb").read()).hexdigest()
+ 
+     # stub rejection: the worktree instrument must be the committed bytes
+     wt = os.path.join(root, *rel.split("/"))
+@@ -164,8 +164,6 @@
+             wt_bytes = f.read()
+     except OSError as exc:
+         refuse(f"cannot read worktree instrument {rel}: {exc}")
+-    if wt_bytes != blob.stdout:
+-        refuse(f"worktree {rel} differs from committed bytes at {rev}")
+ 
+     # behaviour 4: OUT must not exist; refuse before any side effect
+     if os.path.lexists(out):
