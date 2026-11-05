@@ -93,6 +93,8 @@ at base; routed, not edited). `grep -c 'a flag set, or a file edited, while the 
 - **`:(top)` binding is code, not page (S296 named limit).** Probes covered `git ls-files` from a subdirectory; sparse
   checkout, submodules and worktrees were not probed.
 - **Pre-freeze diagnostic runs** (M2) are not admission evidence for any claim.
+- **Mode-only in-run flips are invisible (reviewer final, S64ReviewerCandidate, named limit).** A content-dirty baseline under `--allow-dirty` plus an in-run `chmod +x` on the same tracked file is accepted: the content digest and the porcelain bytes stay the same. The candidate's snapshot payload does not carry the mode byte. A one-line extension would close the class; it is not in the three frozen deltas.
+- **Wrapped child inherits the caller's git environment (reviewer M2, named limit).** The writer's own `git()` calls scrub `GIT_DIR` and `GIT_WORK_TREE`, but the wrapped command's `Popen` inherits them. A child that calls git under a caller-set environment may read an alternate view. Live probes did not turn this into an accept (an in-run flag forgery through a child git was refused), so it is a limit, not a blocker.
 - **C2 population is three SKILL.md sentences.** A kind-only forger editing only `corpus/knowledge/` is outside it by design
   (round-63 M3 rationale). Green and decoy controls exist only as out-of-lane revisions (M4).
 - **Axis tie-break and MACHINE BLOCK (operator L0 open).** `.ufo/l0-questions.md` lines 324–325 and 335–336. Routed
@@ -115,6 +117,9 @@ at base; routed, not edited). `grep -c 'a flag set, or a file edited, while the 
 6. Carried from round 62 and 63: R1 (SKILL.md:830 overreach), R3 (knowledge-entry `verified-at` refresh), the operator L0 lines,
    and the round-63 spot-check D3 (planner seat).
 7. A code-kind registry row for pathspec.c `parse_long_magic` (S296 named limit), tier A, if the operator accepts code rows.
+8. C2 dead-token falsifier (connector, tabi round-62 polarity class): bytes can carry all three needles while the refusal is dead (token inside a comment or behind `if False`). The C2 counter reads needle presence only. Add a second-polarity mutant (refusal lines disabled, tokens kept) that must produce a C2 finding, and anchor the needle read to the refusal-emitting line.
+9. Named-limit line for env redirects (connector, kumitate round-90 A9/A10): the writer refuses `GIT_INDEX_FILE` only; `GIT_OBJECT_DIRECTORY`, `GIT_ALTERNATE_OBJECT_DIRECTORIES` and the refs-replace redirect (`GIT_REPLACE_REF_BASE`) are unread. Record as a named limit next to the C1 env row before any freeze.
+10. Mode-only snapshot row (reviewer named limit above): a matrix row with an in-run `chmod +x` under `--allow-dirty` and the mode byte in the snapshot payload, with a do-nothing control.
 
 ## Integrated verification
 
