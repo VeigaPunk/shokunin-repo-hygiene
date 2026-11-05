@@ -482,7 +482,7 @@ def case_env(spec: dict, repo: str) -> Optional[dict]:
         return {"GIT_ALTERNATE_OBJECT_DIRECTORIES": os.path.join(repo, ".git", "alternates-empty")}
     if kind == "replace-base":
         # E6: a forged replace-ref namespace base.
-        return {"GIT_REPLACE_REF_BASE": "refs/replace-forged-r66"}
+        return {"GIT_REPLACE_REF_BASE": "refs/replace-forged-r66/"}
     return None
 
 
