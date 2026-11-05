@@ -793,7 +793,7 @@ The frozen calibration counter is raw-line, classification-only and prefers a sh
 
 The `tools/souji-freeze-check.py` row above is the base grammar; the r60 change is an **opt-in**
 `--substance` arm on the same tool. Without the flag its stdout, stderr and exit are byte-identical to
-the base bytes at `1e8bfd87a9f6ea9a1db4ad34f6e4cdd2b218bcd4` (`census/round-60/w1/S60ExecFreezeArm/byte-identical.txt`
+the base bytes at `1e8bfd87a9f6ea9a1db4ad34f6e4cdd2b218bcd4` (`census/round-60/wave/w1/S60ExecFreezeArm/byte-identical.txt`
 reproduces this over the selftest and three real preregistrations). The r57 recorder
 (`census/round-57/record-receipt.sh`) stays as filed for historical replay; `tools/souji-receipt-write.py`
 supersedes it for new receipts, and the r57 dirty-tree/overwrite/atomicity debt is what it closes — its
@@ -811,3 +811,21 @@ file does not make the tree dirty and a file modified *during* the run is not ca
 `corpus/lessons/round-60.md`). The C1 matrix pins each case's expected verdict but not its finding class,
 and `forgery-rev-at-freeze` names the freeze commit through a tag because a receipt inside that commit
 cannot name it. Certification OFF, K5 HELD.
+
+## Round 61 — control-chronology binding by content
+
+The `--substance` arm of `tools/souji-freeze-check.py` gains one check: a claim's red `Control:` receipt must
+have its exact bytes at a strict ancestor of the freeze commit (`CONTROL-ADDED-NOT-BEFORE-FREEZE`). The rule
+is content-bound (blob equality over `git rev-list -- <path>` from the freeze's parents), not add-commit bound,
+so a receipt added green in an ancestor and rewritten red at the freeze commit is refused. Default output
+without `--substance` is unchanged (lane sweep over 37 preregistrations: zero plain differences).
+
+| name | kind | entry command | verdict map | self-test command | pinned-value path | write scope | owner |
+|---|---|---|---|---|---|---|---|
+| r61 control-chronology arm | gate | `python3 -B tools/souji-freeze-check.py --root LANE --prereg PATH --rev FULL40 --substance` | 0 every control's bytes exist at a strict ancestor of freeze; 1 also CONTROL-ADDED-NOT-BEFORE-FREEZE | `python3 -B tools/souji-freeze-check.py --selftest --substance` → `cases=15 pass=15`; `--selftest` → `cases=41 pass=41` | `census/round-61/preregistration.txt`; counter `census/round-61/c1-counter.py`; matrix `census/round-61/c1-matrix.tsv` + `census/round-61/matrix/` | read-only git object store | souji |
+
+Binding limits: bytes, not execution; a fabricated receipt committed before freeze passes; history-bounded
+(fail closed on hidden ancestors). Rounds 41–55 records gain the same class on their control receipts; they
+are historical and unrewritten. Not in this round: the receipt writer's skip-worktree blindness
+(`corpus/knowledge/skip-worktree-concealment.md`, routed to round 62), the r61 fixture for C2 (not claimed),
+and the preregistration `## MACHINE BLOCK` (critic F13). Certification OFF, K5 HELD.

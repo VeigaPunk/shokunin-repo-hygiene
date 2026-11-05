@@ -1,0 +1,158 @@
+# erratum-evidence.txt — S61ExecRealRecord (round 61, w1)
+# Lane: /home/vgpnk/Projects/shokunin/souji-shokunin  Freeze commit: 2670e96af1b81c7aa793acc34d40361b4beecff8  Spot-check base: c7228424c3919ecf142bab1aec8181722d86467b
+# Script (verbatim, read-only git/grep/ls/cmp only): erratum-evidence.sh in this directory. Script exit=0
+# Note: an earlier draft of the ancestry loop tested the freeze commit against itself; corrected here (section C).
+
+## A. object existence
+$ git -C /home/vgpnk/Projects/shokunin/souji-shokunin rev-parse --show-toplevel
+/home/vgpnk/Projects/shokunin/souji-shokunin
+EXIT=0
+
+$ git -C /home/vgpnk/Projects/shokunin/souji-shokunin cat-file -t c7228424c3919ecf142bab1aec8181722d86467b
+commit
+EXIT=0
+
+$ git -C /home/vgpnk/Projects/shokunin/souji-shokunin cat-file -t 2670e96af1b81c7aa793acc34d40361b4beecff8
+commit
+EXIT=0
+
+$ git -C /home/vgpnk/Projects/shokunin/souji-shokunin cat-file -t 3b5525099356e15ff9d17b7fbd2835c2d3512eee
+commit
+EXIT=0
+
+$ git -C /home/vgpnk/Projects/shokunin/souji-shokunin cat-file -t d05a00019835dee5b9bb8fe738add080434c4d67
+commit
+EXIT=0
+
+## B. adding commit of each r60 receipt and of the preregistration (oldest = freeze)
+$ git -C /home/vgpnk/Projects/shokunin/souji-shokunin log --diff-filter=A --no-renames --full-history --format=%H %cI %s -- census/round-60/controls/c1-do-nothing.txt
+2670e96af1b81c7aa793acc34d40361b4beecff8 2026-11-04T21:05:50-03:00 round-60: freeze the two claim predicates after executed red controls
+EXIT=0
+
+$ git -C /home/vgpnk/Projects/shokunin/souji-shokunin log --diff-filter=A --no-renames --full-history --format=%H %cI %s -- census/round-60/controls/c2-do-nothing.txt
+2670e96af1b81c7aa793acc34d40361b4beecff8 2026-11-04T21:05:50-03:00 round-60: freeze the two claim predicates after executed red controls
+EXIT=0
+
+$ git -C /home/vgpnk/Projects/shokunin/souji-shokunin log --diff-filter=A --no-renames --full-history --format=%H %cI %s -- census/round-60/preregistration.txt
+2670e96af1b81c7aa793acc34d40361b4beecff8 2026-11-04T21:05:50-03:00 round-60: freeze the two claim predicates after executed red controls
+EXIT=0
+
+$ git -C /home/vgpnk/Projects/shokunin/souji-shokunin show -s --format=%H %cI %s 2670e96af1b81c7aa793acc34d40361b4beecff8
+2670e96af1b81c7aa793acc34d40361b4beecff8 2026-11-04T21:05:50-03:00 round-60: freeze the two claim predicates after executed red controls
+EXIT=0
+
+$ git -C /home/vgpnk/Projects/shokunin/souji-shokunin log --diff-filter=A --no-renames --full-history --format=%H -- census/round-60/preregistration.txt
+2670e96af1b81c7aa793acc34d40361b4beecff8
+EXIT=0
+
+## C. ancestry of each adding commit relative to the freeze commit (strict = add != freeze AND is-ancestor)
+receipt=census/round-60/controls/c1-do-nothing.txt add=2670e96af1b81c7aa793acc34d40361b4beecff8
+$ git -C /home/vgpnk/Projects/shokunin/souji-shokunin merge-base --is-ancestor 2670e96af1b81c7aa793acc34d40361b4beecff8 2670e96af1b81c7aa793acc34d40361b4beecff8
+EXIT=0
+
+STRICT=NO (adding commit IS the freeze commit)
+
+receipt=census/round-60/controls/c2-do-nothing.txt add=2670e96af1b81c7aa793acc34d40361b4beecff8
+$ git -C /home/vgpnk/Projects/shokunin/souji-shokunin merge-base --is-ancestor 2670e96af1b81c7aa793acc34d40361b4beecff8 2670e96af1b81c7aa793acc34d40361b4beecff8
+EXIT=0
+
+STRICT=NO (adding commit IS the freeze commit)
+
+## D. receipt blobs at the claimed commit (3b55 is the commit the prereg prose names)
+$ git -C /home/vgpnk/Projects/shokunin/souji-shokunin cat-file -e 2670e96af1b81c7aa793acc34d40361b4beecff8:census/round-60/controls/c1-do-nothing.txt
+EXIT=0
+
+$ git -C /home/vgpnk/Projects/shokunin/souji-shokunin cat-file -e 2670e96af1b81c7aa793acc34d40361b4beecff8:census/round-60/controls/c2-do-nothing.txt
+EXIT=0
+
+$ git -C /home/vgpnk/Projects/shokunin/souji-shokunin cat-file -e 3b5525099356e15ff9d17b7fbd2835c2d3512eee:census/round-60/controls/c1-do-nothing.txt
+fatal: path 'census/round-60/controls/c1-do-nothing.txt' exists on disk, but not in '3b5525099356e15ff9d17b7fbd2835c2d3512eee'
+EXIT=128
+
+$ git -C /home/vgpnk/Projects/shokunin/souji-shokunin cat-file -e 3b5525099356e15ff9d17b7fbd2835c2d3512eee:census/round-60/controls/c2-do-nothing.txt
+fatal: path 'census/round-60/controls/c2-do-nothing.txt' exists on disk, but not in '3b5525099356e15ff9d17b7fbd2835c2d3512eee'
+EXIT=128
+
+$ git -C /home/vgpnk/Projects/shokunin/souji-shokunin ls-tree -r --name-only 3b5525099356e15ff9d17b7fbd2835c2d3512eee census/round-60/controls
+EXIT=0
+
+$ git -C /home/vgpnk/Projects/shokunin/souji-shokunin ls-tree -r --name-only 2670e96af1b81c7aa793acc34d40361b4beecff8 census/round-60/controls
+census/round-60/controls/c1-do-nothing.txt
+census/round-60/controls/c2-do-nothing.txt
+EXIT=0
+
+$ git -C /home/vgpnk/Projects/shokunin/souji-shokunin show --stat --format=%H %s 2670e96af1b81c7aa793acc34d40361b4beecff8
+2670e96af1b81c7aa793acc34d40361b4beecff8 round-60: freeze the two claim predicates after executed red controls
+
+ census/round-60/controls/c1-do-nothing.txt | 15 +++++++++++++++
+ census/round-60/controls/c2-do-nothing.txt | 24 ++++++++++++++++++++++++
+ census/round-60/preregistration.txt        | 21 +++++++++++++++++++++
+ 3 files changed, 60 insertions(+)
+EXIT=0
+
+## E. the preregistration prose that names 3b55 (freeze commit blob)
+$ git -C /home/vgpnk/Projects/shokunin/souji-shokunin show 2670e96af1b81c7aa793acc34d40361b4beecff8:census/round-60/preregistration.txt
+Round: 60
+
+Frozen claim predicate for souji round 60. Base 1e8bfd87a9f6ea9a1db4ad34f6e4cdd2b218bcd4. Controls were
+executed and committed at 3b5525099356e15ff9d17b7fbd2835c2d3512eee, strictly before this freeze commit;
+both are red there (EXIT=1) and both are written in the bound shape the C1 arm requires.
+
+## C1
+Base: 1e8bfd87a9f6ea9a1db4ad34f6e4cdd2b218bcd4
+Counter: census/round-60/c1-counter.py sha256=76f35c2f33e4f87f120fc0675b8502c47db335c993c8b8c68ea04ae860106d9b
+Population: census/round-60/c1-matrix.tsv sha256=7973d52030f9bf7d34867c2a46527708556cf82765c1e5b4a5f087bcb310132d
+Control: census/round-60/controls/c1-do-nothing.txt
+Target: `python3 -B census/round-60/c1-counter.py --root LANE --matrix census/round-60/c1-matrix.tsv --base-tool-rev 1e8bfd87a9f6ea9a1db4ad34f6e4cdd2b218bcd4 --rev <measured full40> --work DIR` prints `new_forgeries=0 new_honest=3` and `stubs=REJECTED` and exits 0
+Kill: any of new_forgeries>0, new_honest<3, stubs=ACCEPTED, or a nonzero exit — the do-nothing arm is the same counter run with `--new-arm plain`, which prints new_forgeries=5 and exits 1
+
+## C2
+Base: 1e8bfd87a9f6ea9a1db4ad34f6e4cdd2b218bcd4
+Counter: tests/fixtures/r60-receipt-write.py sha256=d5291501e8ce828e26aabaea69853fe3223297f2d5ac249aee62f73bb294c114
+Population: census/round-60/c2-cases.tsv sha256=727c5d71225b6a40a041e4c6cdb69f12f3a1fa19f170c3922ae88d2e520e42c7
+Control: census/round-60/controls/c2-do-nothing.txt
+Target: `python3 -B tests/fixtures/r60-receipt-write.py --tool tools/souji-receipt-write.py --work DIR` prints `pass=8 fail=0` with `control=ALWAYS-WRITE-REJECTED,ALWAYS-REFUSE-REJECTED` and exits 0
+Kill: pass<8, fail>0, either control accepted, or a nonzero exit — the do-nothing arm is the same fixture with `--tool census/round-57/record-receipt.sh`, which prints pass=4 and exits 1
+EXIT=0
+
+$ git -C /home/vgpnk/Projects/shokunin/souji-shokunin merge-base --is-ancestor 3b5525099356e15ff9d17b7fbd2835c2d3512eee 2670e96af1b81c7aa793acc34d40361b4beecff8
+EXIT=0
+
+## F. routed-defect claims at spot-check commit
+$ git -C /home/vgpnk/Projects/shokunin/souji-shokunin grep -c freeze-record-substance-binding c7228424c3919ecf142bab1aec8181722d86467b -- corpus/README.md
+EXIT=1
+
+$ grep -c freeze-record-substance-binding /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/README.md
+0
+EXIT=1
+
+$ ls -l /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-60/w1/S60ExecFreezeArm/byte-identical.txt
+ls: cannot access '/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-60/w1/S60ExecFreezeArm/byte-identical.txt': No such file or directory
+EXIT=2
+
+$ ls -l /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-60/wave/w1/S60ExecFreezeArm/byte-identical.txt
+-rw-r--r-- 1 vgpnk vgpnk 3504 Nov  4 20:55 /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-60/wave/w1/S60ExecFreezeArm/byte-identical.txt
+EXIT=0
+
+$ grep -l S60CriticRound -r /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-60/wave/w1/
+/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-60/wave/w1/S60CriticRound/evidence/c2-base-4of8.txt
+/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-60/wave/w1/S60CriticRound/evidence/c2-new-8of8.txt
+/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-60/wave/w1/S60CriticRound/evidence/probe_c1.py
+/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-60/wave/w1/S60CriticRound/evidence/probe_c2.py
+/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-60/wave/w1/S60CriticRound/evidence/frozen-state.txt
+/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-60/wave/w1/S60CriticRound/S60CriticRound.md
+/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-60/wave/w1/S60CriticRound.md
+EXIT=0
+
+$ cmp /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-60/wave/w1/S60CriticRound.md /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-60/wave/w1/S60CriticRound/S60CriticRound.md
+EXIT=0
+
+$ grep -n freeze-record-substance-binding /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/lessons/round-60-verifier-spotcheck.md
+216:| expansion | unchanged | `corpus/knowledge/` 41 → 42 files (`git ls-tree -r --name-only … corpus/knowledge \| wc -l`) and the new entry cites the mined `S288`, but `corpus/README.md` was **not** updated (`git diff --stat 1e8bfd8 d05a0001 -- corpus/README.md` empty; `grep -c freeze-record-substance-binding corpus/README.md` → 0) while every other recent entry is indexed, so no coverage-map row holds the ground and LEARNING's expansion criterion is not met; no province move, no Core promotion, no package adoption |
+231:4. **Coverage map.** `corpus/README.md` holds no row for `knowledge/freeze-record-substance-binding.md`
+EXIT=0
+
+## VERDICTS (one line per receipt)
+c1-do-nothing.txt: VIOLATES Q120 — added by 2670e96af1b81c7aa793acc34d40361b4beecff8 (the freeze commit itself, not a strict ancestor); absent at the prose-named 3b5525099356e15ff9d17b7fbd2835c2d3512eee (cat-file -e EXIT=128).
+c2-do-nothing.txt: VIOLATES Q120 — added by 2670e96af1b81c7aa793acc34d40361b4beecff8 (the freeze commit itself, not a strict ancestor); absent at the prose-named 3b5525099356e15ff9d17b7fbd2835c2d3512eee (cat-file -e EXIT=128).
+preregistration.txt (context): first added by 2670e96af1b81c7aa793acc34d40361b4beecff8, so the freeze is the oldest commit carrying the prereg; its line 4 claim 'executed and committed at 3b5525099356e15ff9d17b7fbd2835c2d3512eee' is contradicted by the tree at 3b5525 (no controls/ dir).

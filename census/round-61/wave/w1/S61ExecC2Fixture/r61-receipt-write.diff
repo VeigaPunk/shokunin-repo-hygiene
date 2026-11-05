@@ -1,0 +1,212 @@
+--- r60:r61-receipt-write
++++ r61:r61-receipt-write
+@@ -1,9 +1,9 @@
+ #!/usr/bin/env python3
+-"""r60 C2 fixture: 8-case matrix for a hardened receipt writer (souji-receipt-write.py)
++"""r61 C2 fixture: 10-case matrix for a hardened receipt writer (souji-receipt-write.py)
+ with census/round-57/record-receipt.sh as the base comparator (frozen claim: base = 3/8).
+ 
+ Usage:
+-  python3 -B r60-receipt-write.py --tool PATH --work DIR [--style auto]
++  python3 -B r61-receipt-write.py --tool PATH --work DIR [--style auto]
+ 
+ The fixture builds one throwaway git repo per case under DIR. Fixture rule honoured:
+ `git -C D init -q`, `git -C D rev-parse --show-toplevel` must equal D before the first
+@@ -35,15 +35,23 @@
+   6 rev-short           12-hex rev -> exit 2, OUT absent
+   7 instrument-absent   instrument not in rev -> exit 2, OUT absent
+   8 dirty-tree          untracked file in repo -> exit 2, OUT absent
++  9 concealed-divergence
++                        skip-worktree conceals a modified tracked instrument;
++                        git status looks clean but worktree bytes differ from
++                        the committed blob -> exit 2, OUT absent
++  10 partial-visibility  command emits 5x200KB chunks over ~2s; a 20ms poller
++                        sampling OUT from before the tool starts must never
++                        observe a size other than the final size
+ 
+ Controls: an always-write stub must fail cases {2,4,5,6,7,8} (ALWAYS-WRITE-REJECTED);
+ an always-refuse stub must fail case 1 (ALWAYS-REFUSE-REJECTED).
+-Exit 0 iff all 8 cases pass and both controls are rejected.
++Exit 0 iff all 10 cases pass and both controls are rejected.
+ """
+ 
+ import argparse
+ import fnmatch
+ import hashlib
++import json
+ import os
+ import shlex
+ import shutil
+@@ -59,6 +67,33 @@
+ KNOWN_BYTES = b"R60-KNOWN-BYTES-DO-NOT-OVERWRITE\n"
+ GIT_IDENTITY = [("user.name", "R60 C2 Fixture"), ("user.email", "r60-fixture@invalid")]
+ TEMP_PATTERNS = ("*.tmp*", "*.partial*")
++
++# ---- r61 additions (cases 9-10) ----
++# different bytes AND different length vs INSTRUMENT_BODY
++CONCEALED_BODY = "#!/bin/sh\necho instrument-concealed\n"
++# 5 x 200000 body bytes must not trip the bound
++CASE_10_MAX_BYTES = "2097152"
++CASE_10_CMD = "for i in 1 2 3 4 5; do head -c 200000 /dev/zero; sleep 0.4; done"
++# Continuous OUT poller: samples (time, size, exists) every ~20ms from
++# before the tool starts (ready file handshake) until the stop file exists.
++READER_SRC = """\
++import json, os, sys, time
++out_path, samples_path, stop_path, ready_path = sys.argv[1:5]
++samples = []
++with open(ready_path, "wb") as f:
++    f.write(b"ready")
++while True:
++    try:
++        st = os.stat(out_path)
++        samples.append([time.time(), st.st_size, True])
++    except OSError:
++        samples.append([time.time(), -1, False])
++    if os.path.exists(stop_path):
++        break
++    time.sleep(0.02)
++with open(samples_path, "wb") as f:
++    f.write(json.dumps(samples).encode("ascii"))
++"""
+ 
+ CASE_NAMES = {
+     1: "clean-write",
+@@ -69,6 +104,8 @@
+     6: "rev-short",
+     7: "instrument-absent",
+     8: "dirty-tree",
++    9: "concealed-divergence",
++    10: "partial-visibility",
+ }
+ 
+ 
+@@ -310,15 +347,84 @@
+     return True, "ok"
+ 
+ 
++def case_9(m, ctx):
++    instr_path = os.path.join(ctx["repo"], *INSTRUMENT_REL.split("/"))
++    run_git(ctx["repo"], ["update-index", "--skip-worktree", INSTRUMENT_REL])
++    with open(instr_path, "w") as f:
++        f.write(CONCEALED_BODY)
++    status = run_git(ctx["repo"], ["status", "--porcelain"])
++    if status.strip():
++        return False, "fixture setup: skip-worktree failed to conceal the modification"
++    proc = run_tool(m.argv(ctx))
++    if proc.returncode != 2:
++        return False, "tool rc=%d (want 2)" % proc.returncode
++    problem = no_out_and_no_temp(ctx)
++    if problem:
++        return False, problem
++    return True, "ok"
++
++
++def case_10(m, ctx, _retry=True):
++    out = ctx["out"]
++    argv = m.launch + ["--root", ctx["repo"], "--rev", ctx["rev"],
++                       "--instrument", ctx["instr"], "--out", out,
++                       "--max-bytes", CASE_10_MAX_BYTES, "--",
++                       "sh", "-c", CASE_10_CMD]
++    samples_path = os.path.join(ctx["case_dir"], "reader-samples.json")
++    stop_path = os.path.join(ctx["case_dir"], "reader-stop")
++    ready_path = os.path.join(ctx["case_dir"], "reader-ready")
++    reader = subprocess.Popen([sys.executable, "-B", "-c", READER_SRC,
++                               out, samples_path, stop_path, ready_path],
++                              stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
++    deadline = time.time() + 5
++    while not os.path.exists(ready_path) and time.time() < deadline:
++        time.sleep(0.005)
++    if not os.path.exists(ready_path):
++        reader.kill()
++        reader.wait(timeout=10)
++        return False, "reader never became ready (no samples)"
++    proc = run_tool(argv, timeout=30)
++    with open(stop_path, "wb") as f:
++        f.write(b"stop")
++    try:
++        reader.wait(timeout=10)
++    except subprocess.TimeoutExpired:
++        reader.kill()
++        return False, "reader did not stop after the tool exited"
++    try:
++        with open(samples_path, "rb") as f:
++            samples = json.loads(f.read().decode("ascii"))
++    except Exception:
++        samples = []
++    if not samples:
++        if _retry:
++            fresh = m.build_case(10)
++            return case_10(m, fresh, _retry=False)
++        return False, "reader observed no samples; cannot demonstrate atomic publish"
++    if proc.returncode != 0:
++        return False, "tool rc=%d out=%r" % (proc.returncode, tail(proc.stdout))
++    if not os.path.exists(out):
++        return False, "OUT missing after completion"
++    if last_nonempty_line(out) != "EXIT=0":
++        return False, "last line != EXIT=0"
++    final_size = os.stat(out).st_size
++    partial = [s for s in samples if s[2] and s[1] != final_size]
++    if partial:
++        return False, ("OUT observed in partial state: %d/%d samples non-final "
++                       "(e.g. size=%d)" % (len(partial), len(samples), partial[0][1]))
++    return True, "ok (samples=%d final_size=%d)" % (len(samples), final_size)
++
++
+ CASE_FUNCS = {1: case_1, 2: case_2, 3: case_3, 4: case_4,
+-              5: case_5, 6: case_6, 7: case_7, 8: case_8}
++              5: case_5, 6: case_6, 7: case_7, 8: case_8,
++              9: case_9, 10: case_10}
+ 
+ 
+ def run_matrix(tool_path, style, work):
+-    """Run all 8 cases against tool_path; returns dict n -> (passed, detail)."""
++    """Run all 10 cases against tool_path; returns dict n -> (passed, detail)."""
+     m = Matrix(tool_path, style, work)
+     out = {}
+-    for n in range(1, 9):
++    for n in range(1, 11):
+         ctx = m.build_case(n)
+         try:
+             passed, detail = CASE_FUNCS[n](m, ctx)
+@@ -362,7 +468,7 @@
+ 
+ 
+ def main():
+-    ap = argparse.ArgumentParser(description="r60 C2 receipt-writer 8-case fixture")
++    ap = argparse.ArgumentParser(description="r61 C2 receipt-writer 10-case fixture")
+     ap.add_argument("--tool", required=True, help="tool under test (PATH)")
+     ap.add_argument("--work", required=True, help="directory for fixture repos (created)")
+     ap.add_argument("--style", default="auto", choices=["auto", "positional", "options"],
+@@ -382,13 +488,13 @@
+     if style == "positional" and not os.access(tool, os.X_OK):
+         die("positional style needs an executable tool: %s" % tool)
+ 
+-    print("# r60-receipt-write C2 fixture")
++    print("# r61-receipt-write C2 fixture")
+     print("# tool=%s" % tool)
+     print("# style=%s" % style)
+     print("# work=%s" % work)
+ 
+     results = run_matrix(tool, style, work)
+-    for n in range(1, 9):
++    for n in range(1, 11):
+         passed, detail = results[n]
+         print("CASE %d %s %s" % (n, CASE_NAMES[n], "pass" if passed else "fail"))
+         if not passed:
+@@ -413,12 +519,12 @@
+     print("# control always-refuse failed cases %s -> ALWAYS-REFUSE-%s"
+           % (sorted(ar_failed), "REJECTED" if ar_rejected else "ACCEPTED"))
+ 
+-    p = sum(1 for n in range(1, 9) if results[n][0])
+-    f = 8 - p
+-    print("SUMMARY cases=8 pass=%d fail=%d control=ALWAYS-WRITE-%s,ALWAYS-REFUSE-%s"
++    p = sum(1 for n in range(1, 11) if results[n][0])
++    f = 10 - p
++    print("SUMMARY cases=10 pass=%d fail=%d control=ALWAYS-WRITE-%s,ALWAYS-REFUSE-%s"
+           % (p, f, "REJECTED" if aw_rejected else "ACCEPTED",
+              "REJECTED" if ar_rejected else "ACCEPTED"))
+-    return 0 if (p == 8 and aw_rejected and ar_rejected) else 1
++    return 0 if (p == 10 and aw_rejected and ar_rejected) else 1
+ 
+ 
+ if __name__ == "__main__":

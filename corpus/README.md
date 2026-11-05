@@ -963,3 +963,17 @@ a measured edge class does not promote a frontier ground to Core (PROVINCE
 - Current work is the assessment-comparator gate registration and public isolated self-invocation, on existing Core assessment/receipt ground. One calibration classification claim only; no visibility-parser promotion, no new repertoire or uncovered-ground knowledge entry.
 - S286 records Python's independent child exit status; S287 rejects inferring success from default check=False. Gate decisions and inherited debts are in corpus/lessons/round-59.md. No earlier rejected admission is retroactively repaired.
 - Parser, recorder dirty-tree/overwrite, capture row-set meta-test, old receipt bindings, diagnostics and atomic-read/resource debts remain open. Certification OFF; K5 HELD. Assimilation: none; mass-id-drift hold remains and no considerthese/ directory was observed.
+
+### Frontier (r61 control-chronology binding)
+
+- **F1 / receipt chronology (frontier entries, not Core).** Three held entries now name the receipt-chronology ground:
+  `knowledge/freeze-record-substance-binding.md` (r60, the revision a receipt names; previously unindexed, indexed here
+  per the r60 spot-check), `knowledge/control-chronology-binding.md` (r61, the content rule: a control's bytes must exist
+  at a strict ancestor of the freeze), and `knowledge/skip-worktree-concealment.md` (r61, a clean `git status` is not
+  evidence about worktree bytes; the receipt writer's dirty check is blind to skip-worktree paths, routed to r62).
+  F1 stays `frontier, entries held`; `tools/souji-receipt-write.py` is not extended by this round.
+- Sources: S290 (git-log path-limited history) and S291 (git-update-index skip-worktree, NOTES caveat) admitted as `mined`.
+  Registry 213 -> 215 rows (`scripts/sources-census.sh validate --root /home/vgpnk/Projects/shokunin souji`).
+- Chronology finding: ten older freeze records (rounds 41–55, plus round 60) carry the same class on their control receipts; their
+  verdicts are historical. Certification OFF; K5 HELD. Assimilation: none (no `considerthese/` directory; no `merge/souji/`
+  theme taken this round).

@@ -1543,3 +1543,24 @@ stale `<out>.*.tmp` siblings (reviewer S60ReviewerRecorder a1/a2, b1, i1, c-c1).
 - Carry every r56–r59 debt open: visibility-parser second-opener/code-span/escape/link/TAB, capture
   row-set meta-test, historical receipt binding, diagnostic escaping, recorder dirty-tree semantics for
   ignored files. Certification OFF, K5 HELD.
+
+### Round 61 measurements (2026-11-05; base `c7228424c3919ecf142bab1aec8181722d86467b`; instruments and do-nothing control `da7ceba3950fc3ac946a611791f56e12174272bd`; freeze `9849e71851e28d5f1e88ef658418d3c136f94692`; predicate `census/round-61/preregistration.txt`)
+
+| claim | axis | before | after | counting command | measured commit |
+|---|---|---|---|---|---|
+| C1 content-bound control chronology (`--substance`) | calibration 7, numeric delta 0 (no reproducible 0–10 mapping) | do-nothing (base bytes, new slot): `new_forgeries=2 class_mismatches=2 stubs=REJECTED EXIT=1` on the 12-case matrix (`census/round-61/controls/c1-do-nothing.txt`); real r60 freeze record: `findings=0` EXIT=0 | `new_forgeries=0 new_honest=4 class_mismatches=0 stubs=REJECTED EXIT=0` (`census/round-61/records/c1-after.txt`); real r60 freeze record under the candidate: two `CONTROL-ADDED-NOT-BEFORE-FREEZE` EXIT=1 (`real-r60-prereg-candidate.txt`); real r61 freeze record: `findings=0` EXIT=0 | `python3 -B census/round-61/c1-counter.py --root . --matrix census/round-61/c1-matrix.tsv --base-tool-rev c7228424c3919ecf142bab1aec8181722d86467b --rev 9849e71851e28d5f1e88ef658418d3c136f94692 --work DIR --new-tool tools/souji-freeze-check.py` | candidate `da7ceba3950fc3ac946a611791f56e12174272bd` (tool sha256 `5794ab27…1c5`); freeze `9849e718` |
+
+Harm check: the base-vs-candidate sweep over all 37 lane preregistrations (`census/round-61/records/substance-sweep.txt`) finds zero plain-path differences and zero base findings removed; the substance differences are added `CONTROL-ADDED-NOT-BEFORE-FREEZE` findings on eleven records (rounds 41–55 and 60; round 60 flips pass to fail, rounds 41–55 were already red). The axis score is unchanged because the lane has no reproducible 0–10 mapping; the closure rules admission.
+
+Named limits and routed debts are in `corpus/lessons/round-61.md`. C2 (receipt-writer fixture and mutant kill-power) was **not declared**: the critic classed its axis as coverage, and the reviewer's HIGH-1 (skip-worktree concealment accepted by the honest writer) is routed to round 62 with `corpus/knowledge/skip-worktree-concealment.md`.
+
+### Round 60 erratum (append-only, round 61 report)
+
+R61-ERRATUM-R60: the r60 preregistration's prose "Controls were executed and committed at `3b5525099356e15ff9d17b7fbd2835c2d3512eee`" is wrong. Both control receipts are added by the freeze commit `2670e96af1b81c7aa793acc34d40361b4beecff8` (`git log --diff-filter=A --no-renames --full-history --format=%H -- census/round-60/controls/c1-do-nothing.txt` → `2670e96a`); `git cat-file -e 3b552509…:census/round-60/controls/c1-do-nothing.txt` fails (EXIT=128). Evidence: `.ufo/waves/round-61/w1/S61ExecRealRecord/erratum-evidence.txt`. The frozen bytes are unchanged; the r60 SCORECARD measurement row is not rewritten.
+
+### Planned (r62)
+
+- Receipt writer: refuse any worktree file whose bytes differ from the committed blob at `rev`, and refuse skip-worktree or assume-unchanged entries (`git ls-files -v`), per `corpus/knowledge/skip-worktree-concealment.md` (reviewer HIGH-1). Declare only with a red-before control committed strictly before freeze (Q120, Q122).
+- Freeze checker: add a `## MACHINE BLOCK` requirement for new preregistrations (critic F13 item 2) once `souji-axis-check.py` is confirmed to run on the lane's preregistrations.
+- Q121 sweep: carry the r61 wave's critic/reviewer C/H findings into the r62 lesson before the report lands (the r61 lesson carries F2, F3, F5, F7, F8, F9, F10, F12 by number).
+- Carry every r56–r60 debt open: visibility-parser, capture row-set meta-test, historical receipt binding, diagnostic escaping, recorder dirty-tree semantics for ignored files. Certification OFF, K5 HELD.

@@ -1,0 +1,146 @@
+#!/usr/bin/env python3
+"""S61RevTagDegeneracy: rebuild the frozen r60 matrix case `forgery-rev-at-freeze`
+byte-faithfully per census/round-60/build-matrix.py and measure tool generations
+over it. Read-only on the lane; all writes under S61SCRATCH."""
+import hashlib, json, os, shutil, subprocess, sys
+
+LANE = "/home/vgpnk/Projects/shokunin/souji-shokunin"
+BASE_COMMIT = "c7228424c3919ecf142bab1aec8181722d86467b"   # r61 claim base bytes
+OLD_COMMIT = "1e8bfd87a9f6ea9a1db4ad34f6e4cdd2b218bcd4"    # r60 matrix base bytes
+S = os.environ["S61SCRATCH"]
+EXPECT_ANC = "14ab27ee557cddce1c2735a7ed1e5a960d6ec342"
+EXPECT_FREEZE = "dc1f00d9a098e2cb424f7baeb3a456afb3284977"
+
+# ---- verbatim constants from census/round-60/build-matrix.py ----
+FIX_DATE = "2026-11-04T00:00:00+00:00"
+IDENT_NAME = "S60ExecMatrix Fixture"
+IDENT_EMAIL = "s60execmatrix.fixture@example.invalid"
+COMMIT_MSG = "fixture"
+PREREG = "pre.txt"; COUNTER = "counter.py"; POP = "pop.tsv"; TAG = "freezemark"
+COUNTER_BYTES = (
+    b"#!/usr/bin/env python3\n"
+    b'"""round-60 C1 fixture counter (synthetic instrument, not a lane tool)."""\n'
+    b"import sys\n"
+    b'print("SUMMARY counter=1 rows=2 findings=0")\n'
+    b"sys.exit(0)\n"
+)
+POP_BYTES = b"row-a\tvalue-a\nrow-b\tvalue-b\n"
+COUNTER_CMD = b"python3 -B counter.py --selfcheck"
+HONEST_OUT = b"SUMMARY counter=1 rows=2 findings=0"
+
+def build_env(home):
+    return {
+        "PATH": os.environ.get("PATH", "/usr/local/bin:/usr/bin:/bin"),
+        "LC_ALL": "C",
+        "HOME": home,
+        "GIT_CONFIG_NOSYSTEM": "1",
+        "GIT_CONFIG_GLOBAL": os.devnull,
+        "GIT_CONFIG_SYSTEM": os.devnull,
+        "GIT_TERMINAL_PROMPT": "0",
+        "GIT_OPTIONAL_LOCKS": "0",
+        "GIT_NO_REPLACE_OBJECTS": "1",
+        "GIT_AUTHOR_NAME": IDENT_NAME,
+        "GIT_AUTHOR_EMAIL": IDENT_EMAIL,
+        "GIT_COMMITTER_NAME": IDENT_NAME,
+        "GIT_COMMITTER_EMAIL": IDENT_EMAIL,
+        "GIT_AUTHOR_DATE": FIX_DATE,
+        "GIT_COMMITTER_DATE": FIX_DATE,
+    }
+
+def _git(dest, env, *args):
+    p = subprocess.run(["git", "-C", dest] + list(args), stdout=subprocess.PIPE,
+                       stderr=subprocess.PIPE, env=env, check=False)
+    if p.returncode != 0:
+        raise RuntimeError("git %s failed: %s" % (args[0], p.stderr.decode("utf-8", "replace").strip()))
+    return p.stdout
+
+def receipt_bytes(instrument, sha, rev, command, out, exitcode=1):
+    lines = []
+    if instrument is not None: lines.append(b"instrument=" + instrument)
+    if sha is not None: lines.append(b"instrument_sha256=" + sha)
+    if rev is not None: lines.append(b"rev=" + rev)
+    if command is not None: lines.append(b"command=" + command)
+    lines.append(out)
+    lines.append(b"EXIT=%d" % exitcode)
+    return b"\n".join(lines) + b"\n"
+
+def prereg_bytes(base40, shaC, shaP, ctl_names):
+    parts = ["Round: 60\n"]
+    for i, ctl in enumerate(ctl_names, 1):
+        parts.append("## C%d\n" % i)
+        parts.append("Base: %s\n" % base40)
+        parts.append("Counter: counter.py sha256=%s\n" % shaC)
+        parts.append("Population: pop.tsv sha256=%s\n" % shaP)
+        parts.append("Control: %s\n" % ctl)
+        parts.append("Target: t%d\n" % i)
+        parts.append("Kill: k%d\n" % i)
+    return "".join(parts).encode("utf-8")
+
+def _commit_group(dest, env, payload):
+    for name, data in payload:
+        fp = os.path.join(dest, name)
+        with open(fp, "wb") as fh: fh.write(data)
+        os.chmod(fp, 0o644)
+    _git(dest, env, "add", "-A")
+    _git(dest, env, "-c", "commit.gpgsign=false", "commit", "-q", "-m", COMMIT_MSG)
+    return _git(dest, env, "rev-parse", "HEAD").decode("utf-8", "replace").strip()
+
+def run_tool(tool, argv, cwd):
+    env = build_env(cwd)
+    p = subprocess.run(["python3", "-B", tool] + argv, stdout=subprocess.PIPE,
+                       stderr=subprocess.PIPE, env=env, cwd=cwd, check=False)
+    return {"rc": p.returncode,
+            "stdout": p.stdout.decode("utf-8", "replace"),
+            "stderr": p.stderr.decode("utf-8", "replace")}
+
+def main():
+    env = build_env(S)
+    D = os.path.join(S, "forgery-rev-at-freeze")
+    if os.path.exists(D): shutil.rmtree(D)
+    os.makedirs(D)
+    _git(D, env, "init", "-q", "-b", "matrix")
+    top = _git(D, env, "rev-parse", "--show-toplevel").decode().strip()
+    assert os.path.realpath(top) == os.path.realpath(D), "toplevel guard failed: %r" % top
+
+    anc = _commit_group(D, env, [(COUNTER, COUNTER_BYTES), (POP, POP_BYTES)])
+    shaC = hashlib.sha256(COUNTER_BYTES).hexdigest()
+    shaP = hashlib.sha256(POP_BYTES).hexdigest()
+    ctl = receipt_bytes(b"counter.py", shaC.encode(), TAG.encode(), COUNTER_CMD, HONEST_OUT)
+    preb = prereg_bytes(anc, shaC, shaP, ["ctl.txt"])
+    freeze = _commit_group(D, env, [(PREREG, preb), ("ctl.txt", ctl)])
+    _git(D, env, "tag", TAG, freeze)
+
+    res = {}
+    res["rebuilt_ancestor"] = anc
+    res["rebuilt_freeze"] = freeze
+    res["pinned_ancestor"] = EXPECT_ANC
+    res["pinned_freeze"] = EXPECT_FREEZE
+    res["hash_match"] = (anc == EXPECT_ANC and freeze == EXPECT_FREEZE)
+    res["sha256_counter_bytes"] = shaC
+    res["sha256_pop_bytes"] = shaP
+    res["sha256_generated_ctl"] = hashlib.sha256(ctl).hexdigest()
+    res["prereg_bytes_repr"] = preb.decode("utf-8", "replace")
+
+    # tag peel behavior (Repo.commit semantics: rev-parse --verify -q <rev>^{commit})
+    peel = _git(D, env, "rev-parse", "--verify", "-q", TAG + "^{commit}").decode().strip()
+    res["peel_freezemark_commit"] = peel
+    res["peel_equals_freeze"] = (peel == freeze)
+
+    base_tool = os.path.join(S, "base-tool.py")   # c7228424 bytes (r61 claim base)
+    old_tool = os.path.join(S, "old-tool.py")     # 1e8bfd87 bytes (r60 matrix base)
+    argv = ["--root", D, "--prereg", PREREG, "--rev", freeze]
+    res["base_c7228424_substance"] = run_tool(base_tool, argv + ["--substance"], S)
+    res["base_c7228424_default"] = run_tool(base_tool, argv, S)
+    res["old_1e8bfd87_default"] = run_tool(old_tool, argv, S)
+    res["old_1e8bfd87_substance_flag"] = run_tool(old_tool, argv + ["--substance"], S)
+    res["current_lane_substance"] = run_tool(os.path.join(LANE, "tools", "souji-freeze-check.py"),
+                                             argv + ["--substance"], S)
+    res["base_c7228424_rev_tag"] = run_tool(base_tool,
+                                            ["--root", D, "--prereg", PREREG, "--rev", TAG,
+                                             "--substance"], S)
+    print(json.dumps(res, indent=1, sort_keys=True))
+    with open(os.path.join(S, "repro-output.json"), "w") as fh:
+        json.dump(res, fh, indent=1, sort_keys=True)
+
+if __name__ == "__main__":
+    main()

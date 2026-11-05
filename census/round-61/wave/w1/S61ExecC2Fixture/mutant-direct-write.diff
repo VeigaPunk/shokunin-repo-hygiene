@@ -1,0 +1,111 @@
+--- r60:mutant-direct-write
++++ r61:mutant-direct-write
+@@ -189,6 +189,13 @@
+         refuse(f"out directory {real_outdir} is outside the lane root {real_root}")
+ 
+     # behaviours 6+8: bounded combined capture, exit-code passthrough
++    header = b"".join([
++        f"instrument={rel}\n".encode("utf-8"),
++        f"instrument_sha256={digest}\n".encode("utf-8"),
++        f"rev={rev}\n".encode("utf-8"),
++        ("command=" + shlex.join(argv) + "\n").encode("utf-8"),
++    ])
++    out_stream = None  # mutant-direct-write: opened on the first chunk
+     proc = subprocess.Popen(argv, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+     chunks: list[bytes] = []
+     total = 0
+@@ -200,6 +207,11 @@
+                 break
+             total += len(chunk)
+             chunks.append(chunk)
++            if out_stream is None:
++                out_stream = open(out, "wb")
++                out_stream.write(header)
++            out_stream.write(chunk)
++            out_stream.flush()
+             if total > ns.max_bytes:
+                 overflow = True
+                 proc.kill()
+@@ -216,68 +228,25 @@
+             proc.stdout.close()
+     proc.wait()
+     if overflow:
++        if out_stream is not None:
++            out_stream.close()
++            try:
++                os.unlink(out)
++            except OSError:
++                pass
+         refuse(f"captured output exceeds --max-bytes ({ns.max_bytes} bytes)")
+     rc = proc.returncode
+     if rc < 0:
+         rc = 128 - rc
+     body = b"".join(chunks).rstrip(b"\n") + b"\n"
+-
+-    receipt = b"".join([
+-        f"instrument={rel}\n".encode("utf-8"),
+-        f"instrument_sha256={digest}\n".encode("utf-8"),
+-        f"rev={rev}\n".encode("utf-8"),
+-        ("command=" + shlex.join(argv) + "\n").encode("utf-8"),
+-        body,
+-        f"EXIT={rc}\n".encode("utf-8"),
+-    ])
+-
+-    # behaviour 5: atomic write; the temp file exists only from here on
+-    # r60 amendment 3 (S60ReviewerRecorder c-c1): SIGKILL cannot be trapped, so a killed run can
+-    # leave `<out>.<rand>.tmp`. Only this writer creates that pattern for this OUT and a temp is
+-    # never a receipt, so the next write of the same OUT sweeps it first.
+-    for stale in glob.glob(os.path.join(glob.escape(outdir), glob.escape(os.path.basename(out)) + ".*.tmp")):
+-        try:
+-            os.unlink(stale)
+-        except OSError:
+-            pass
+-    try:
+-        fd, tmp = tempfile.mkstemp(prefix=os.path.basename(out) + ".", suffix=".tmp", dir=outdir)
+-        _TEMP[TEMP_MARK] = tmp
+-        with os.fdopen(fd, "wb") as f:
+-            f.write(receipt)
+-            f.flush()
+-            os.fsync(f.fileno())
+-        # r60 amendment 3 (S60ReviewerRecorder a1/a2): `os.replace` after an existence check is a
+-        # TOCTOU that clobbers a file another process created during the run. `os.link` publishes
+-        # atomically and fails with EEXIST, so the loser of a race never destroys the winner's bytes.
+-        try:
+-            os.link(tmp, out)
+-        except FileExistsError:
+-            refuse(f"out appeared while the command ran ({out})")
+-        _TEMP[TEMP_MARK] = None
+-        try:
+-            os.unlink(tmp)
+-        except OSError:
+-            pass
+-    finally:
+-        leftover = _TEMP[TEMP_MARK]
+-        if leftover:
+-            _TEMP[TEMP_MARK] = None
+-            try:
+-                os.unlink(leftover)
+-            except OSError:
+-                pass
+-    try:
+-        dfd = os.open(outdir, os.O_RDONLY)
+-    except OSError:
+-        dfd = None
+-    if dfd is not None:
+-        try:
+-            os.fsync(dfd)
+-        except OSError:
+-            pass
+-        finally:
+-            os.close(dfd)
++    if out_stream is None:
++        out_stream = open(out, "wb")
++        out_stream.write(header)
++    out_stream.write(body)
++    out_stream.write(f"EXIT={rc}\n".encode("utf-8"))
++    out_stream.flush()
++    os.fsync(out_stream.fileno())
++    out_stream.close()
+ 
+     print(f"RECORD {out} rev={rev} instrument={rel} rc={rc}")
+     return rc

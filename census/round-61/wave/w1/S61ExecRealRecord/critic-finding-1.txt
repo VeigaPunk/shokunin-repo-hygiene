@@ -1,0 +1,44 @@
+# critic-finding-1.txt — verbatim
+# source: census/round-60/wave/w1/S60CriticRound/S60CriticRound.md lines 44-84 (identical to census/round-60/wave/w1/S60CriticRound.md)
+# finding heading at line 44; quoted prereg sentence at lines 48-50; verdict 'VIOLATES' at line 44
+### 1. Q120 chronology: the control receipts are added at the freeze commit, and the frozen prereg says they were committed earlier — VIOLATES
+
+The frozen prereg opens with:
+
+> Controls were executed and committed at `3b5525099356e15ff9d17b7fbd2835c2d3512eee`, strictly before
+> this freeze commit; both are red there (EXIT=1) and both are written in the bound shape the C1 arm
+> requires.
+
+The commit graph contradicts the first clause:
+
+```
+$ git ls-tree -r --name-only 3b552509 census/round-60
+census/round-60/build-matrix.py
+census/round-60/c1-counter.py
+census/round-60/c1-matrix.tsv
+census/round-60/c2-cases.tsv
+census/round-60/matrix/...        (no controls/ directory)
+$ git log --oneline -- census/round-60/controls/
+2670e96a round-60: freeze the two claim predicates after executed red controls
+$ git show --stat --oneline 2670e96a
+ census/round-60/controls/c1-do-nothing.txt | 15 ++++++++++
+ census/round-60/controls/c2-do-nothing.txt | 24 ++++++++++++++
+ census/round-60/preregistration.txt        | 21 +++++++++++++++
+```
+
+Both control receipts are **added by the freeze commit itself**. Q120 requires the executed controls
+"in a commit strictly preceding predicate freeze"; the freeze commit is the oldest commit that adds the
+prereg (Q99), i.e. `2670e96a`. The receipts' `rev=3b552509…` is the revision they were *measured at*
+(a strict ancestor, so the C1 arm's own `rev=` check passes), not the commit that added them. The
+prereg's provenance sentence is therefore false, and this is the r59 chronology defect repeated in a new
+form — r59's verifier tested exactly this with `git ls-tree -r 74455b72 census/round-59` and found the
+controls there; the same test on `3b552509` finds none.
+
+The new arm does not catch it: `--substance` on the frozen record returns `SUMMARY claims=2 findings=0`,
+`EXIT=0`, because it validates the receipt's `rev=` line and never asks which commit added the receipt.
+So the round lands an instrument that cannot enforce the rule the round claims to be about.
+
+Rule: Q120 ("retain executed … controls … in a commit strictly preceding predicate freeze"; "a later
+replay never repairs the chronology"). The freeze is pushed (`git rev-parse HEAD` ==
+`git rev-parse origin/master` == `2670e96a`), so the commit cannot be split without rewriting a pushed
+freeze, and the frozen bytes cannot be edited.

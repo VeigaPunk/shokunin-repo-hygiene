@@ -1,0 +1,20 @@
+--- r60:mutant-worktree-hash
++++ r61:mutant-worktree-hash
+@@ -159,7 +159,6 @@
+     blob = git(root, "cat-file", "blob", f"{rev}:{rel}")
+     if blob.returncode != 0:
+         refuse(f"{rel} absent at {rev}")
+-    digest = hashlib.sha256(blob.stdout).hexdigest()
+ 
+     # stub rejection: the worktree instrument must be the committed bytes
+     wt = os.path.join(root, *rel.split("/"))
+@@ -170,8 +169,7 @@
+             wt_bytes = f.read()
+     except OSError as exc:
+         refuse(f"cannot read worktree instrument {rel}: {exc}")
+-    if wt_bytes != blob.stdout:
+-        refuse(f"worktree {rel} differs from committed bytes at {rev}")
++    digest = hashlib.sha256(wt_bytes).hexdigest()
+ 
+     # behaviour 4: OUT must not exist; refuse before any side effect
+     if os.path.lexists(out):
