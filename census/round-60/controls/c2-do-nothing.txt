@@ -1,0 +1,24 @@
+instrument=tests/fixtures/r60-receipt-write.py
+instrument_sha256=d5291501e8ce828e26aabaea69853fe3223297f2d5ac249aee62f73bb294c114
+rev=3b5525099356e15ff9d17b7fbd2835c2d3512eee
+command=python3 -B tests/fixtures/r60-receipt-write.py --tool census/round-57/record-receipt.sh --work /fast/scratch/hyaku/souji-r60/ctl/w2
+# r60-receipt-write C2 fixture
+# tool=/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-57/record-receipt.sh
+# style=positional
+# work=/fast/scratch/hyaku/souji-r60/ctl/w2
+CASE 1 clean-write fail
+#   case 1 detail: command= line missing/wrong
+CASE 2 overwrite fail
+#   case 2 detail: tool rc=0 (want 2)
+CASE 3 atomic-in-flight pass
+CASE 4 kill-residue pass
+CASE 5 bound fail
+#   case 5 detail: tool rc=127 (want 2)
+CASE 6 rev-short pass
+CASE 7 instrument-absent pass
+CASE 8 dirty-tree fail
+#   case 8 detail: tool rc=0 (want 2)
+# control always-write failed cases [1, 2, 3, 4, 5, 6, 7, 8] -> ALWAYS-WRITE-REJECTED
+# control always-refuse failed cases [1, 3] -> ALWAYS-REFUSE-REJECTED
+SUMMARY cases=8 pass=4 fail=4 control=ALWAYS-WRITE-REJECTED,ALWAYS-REFUSE-REJECTED
+EXIT=1

@@ -1,0 +1,21 @@
+Round: 60
+
+Frozen claim predicate for souji round 60. Base 1e8bfd87a9f6ea9a1db4ad34f6e4cdd2b218bcd4. Controls were
+executed and committed at 3b5525099356e15ff9d17b7fbd2835c2d3512eee, strictly before this freeze commit;
+both are red there (EXIT=1) and both are written in the bound shape the C1 arm requires.
+
+## C1
+Base: 1e8bfd87a9f6ea9a1db4ad34f6e4cdd2b218bcd4
+Counter: census/round-60/c1-counter.py sha256=76f35c2f33e4f87f120fc0675b8502c47db335c993c8b8c68ea04ae860106d9b
+Population: census/round-60/c1-matrix.tsv sha256=7973d52030f9bf7d34867c2a46527708556cf82765c1e5b4a5f087bcb310132d
+Control: census/round-60/controls/c1-do-nothing.txt
+Target: `python3 -B census/round-60/c1-counter.py --root LANE --matrix census/round-60/c1-matrix.tsv --base-tool-rev 1e8bfd87a9f6ea9a1db4ad34f6e4cdd2b218bcd4 --rev <measured full40> --work DIR` prints `new_forgeries=0 new_honest=3` and `stubs=REJECTED` and exits 0
+Kill: any of new_forgeries>0, new_honest<3, stubs=ACCEPTED, or a nonzero exit — the do-nothing arm is the same counter run with `--new-arm plain`, which prints new_forgeries=5 and exits 1
+
+## C2
+Base: 1e8bfd87a9f6ea9a1db4ad34f6e4cdd2b218bcd4
+Counter: tests/fixtures/r60-receipt-write.py sha256=d5291501e8ce828e26aabaea69853fe3223297f2d5ac249aee62f73bb294c114
+Population: census/round-60/c2-cases.tsv sha256=727c5d71225b6a40a041e4c6cdb69f12f3a1fa19f170c3922ae88d2e520e42c7
+Control: census/round-60/controls/c2-do-nothing.txt
+Target: `python3 -B tests/fixtures/r60-receipt-write.py --tool tools/souji-receipt-write.py --work DIR` prints `pass=8 fail=0` with `control=ALWAYS-WRITE-REJECTED,ALWAYS-REFUSE-REJECTED` and exits 0
+Kill: pass<8, fail>0, either control accepted, or a nonzero exit — the do-nothing arm is the same fixture with `--tool census/round-57/record-receipt.sh`, which prints pass=4 and exits 1
