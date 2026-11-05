@@ -2814,3 +2814,13 @@ addendum, appended to the prereg, commits 8a793e7ae9131578bdec393982760217f62095
 - QUALITY Q121 (surface every C/H wave finding in the lesson) and Q122 (content-bound control chronology) added. SKILL broken r60 evidence path corrected (`census/round-60/wave/w1/...`).
 - Mistakes mined (`corpus/lessons/round-61.md`): M1 unsurfaced critic finding (r60), M2 predicted-not-measured do-nothing count, M3 C2 axis misattribution, M4 L1 `/tmp` writes (sentinel), all four with captured-by and fix.
 - Tools: none installed or updated. No pacman transaction. Scratch under `/fast/scratch/hyaku/souji-r61/` only; removed at landing.
+
+## Round 62 (2026-11-05, Linux; attempt 1)
+
+- **Claims (two, distinct axes):** C1 operability 8 — the receipt writer refuses any tracked index entry whose `git ls-files -v` tag is not `H` (`RECEIPT-INDEX-FLAG-CONCEALED`), before the dirty check and regardless of `--allow-dirty`: `new_forgeries=0 new_honest=2 class_mismatches=0 regress=PASS` EXIT 0 at `a0b396cd` (base `new_forgeries=3` EXIT 1). C2 calibration 7 (lowest axis) — live self-assessment statements about the flag behaviour: `stale_open=0 landed=3` EXIT 0 at `918bb423` (base `stale_open=4 landed=0` EXIT 1). Named-limit dependency: C2 is text-only and its `landed` statements are true only if C1 holds.
+- **Frontier:** S292 (git-ls-files(1) `-v`/`-t` tags, opened 2026-11-05, located quote verbatim) added to `corpus/SOURCES.md` (`:252`); S291 re-opened, recheck unchanged. `corpus/knowledge/skip-worktree-concealment.md` now cites S292 and records the refusal and its named limits. Assimilation: none.
+- **Mistakes mined** (`corpus/lessons/round-62.md`): M1 concealment trusted as clean-tree evidence (fixed by C1; shown able to fail by the do-nothing receipt); M2 freeze record submitted without running the freeze checker on its controls (freeze 1 `31bb318`, freeze 2 `a1b2000f` refused; freeze 3 `c5af0e0a` passes `findings=0`); M3 self-assessment kept open status after the fact (fixed by C2).
+- **Calibration of the round's own shape:** the first declaration was one calibration claim on the writer; the critic refused it as a Q59 misattribution, so it was re-split into C1 operability and C2 calibration before any after-data was taken.
+- **Lane:** `corpus/QUALITY.md` Q123 (`## Round 62 criteria`); `SKILL.md` `## Round 62`; `corpus/README.md` `### Frontier (r62 index-flag refusal)`; `SCORECARD.md` capability row (r62) and measurements; L0 questions at fleet `.ufo/l0-questions.md` lines 324–325.
+- **Tools:** none installed or updated. No pacman transaction.
+- **Scratch:** `/fast/scratch/hyaku/souji-r62/` (L1 probes, seat scratch); removed at landing.

@@ -1,0 +1,26 @@
+rev=a0b396cdd4f9c75bc2f0e117399916a2279cddd1
+instrument=census/round-62/c1-counter.py
+instrument_sha256=c6a3159d32b099ba1730a2cc23ffe6eafce40a2c264f6f019fa3e8f468a2150a
+command=python3 -B census/round-62/c1-counter.py --root . --matrix census/round-62/c1-matrix.tsv --base-rev 16fa821fdce00e709d6895ccfc7aaffa465af195 --rev a0b396cdd4f9c75bc2f0e117399916a2279cddd1 --tool tools/souji-receipt-write.py --work /fast/scratch/hyaku/souji-r62/l1/work-after --arm tool
+# c1-counter root=/home/vgpnk/Projects/shokunin/souji-shokunin base-rev=16fa821fdce00e709d6895ccfc7aaffa465af195 rev=a0b396cdd4f9c75bc2f0e117399916a2279cddd1 arm=tool
+# slot base=/fast/scratch/hyaku/souji-r62/l1/work-after/slots/base.py sha256=367a0ca3bdea35714f1c1dba7bca407f05e8ec8d8f6e9c16f071d6e20e503d2c
+# slot new=/fast/scratch/hyaku/souji-r62/l1/work-after/slots/new.py sha256=9fb55f356aa256475d08f4b82d7132b1ce200a30f0dc26fec17eae969df0ec9b
+CASE A expect=accept base=accept base_findings=- new=accept new_findings=-
+# detail A name=honest-clean rev=b407d504c33a base_rc=0 new_rc=0 base_stderr= new_stderr=
+CASE B expect=accept base=accept base_findings=- new=accept new_findings=-
+# detail B name=honest-allow-dirty rev=b407d504c33a base_rc=0 new_rc=0 base_stderr= new_stderr=
+CASE C expect=refuse base=refuse base_findings=lane worktree is dirty new=refuse new_findings=lane worktree is dirty
+# detail C name=dirty-visible rev=b407d504c33a base_rc=2 new_rc=2 base_stderr=refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override new_stderr=refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+CASE D expect=refuse base=accept base_findings=- new=refuse new_findings=RECEIPT-INDEX-FLAG-CONCEALED
+# detail D name=skip-worktree-forged rev=b407d504c33a base_rc=0 new_rc=2 base_stderr= new_stderr=refused: RECEIPT-INDEX-FLAG-CONCEALED: tools/counter.py carries index flag S; skip-worktree or assume-unchanged hides worktree divergence from git status; cl...
+CASE E expect=refuse base=accept base_findings=- new=refuse new_findings=RECEIPT-INDEX-FLAG-CONCEALED
+# detail E name=assume-unchanged-forged rev=b407d504c33a base_rc=0 new_rc=2 base_stderr= new_stderr=refused: RECEIPT-INDEX-FLAG-CONCEALED: tools/counter.py carries index flag h; skip-worktree or assume-unchanged hides worktree divergence from git status; cl...
+CASE F expect=refuse base=accept base_findings=- new=refuse new_findings=RECEIPT-INDEX-FLAG-CONCEALED
+# detail F name=skip-worktree-unmodified rev=b407d504c33a base_rc=0 new_rc=2 base_stderr= new_stderr=refused: RECEIPT-INDEX-FLAG-CONCEALED: tools/counter.py carries index flag S; skip-worktree or assume-unchanged hides worktree divergence from git status; cl...
+CASE G expect=refuse base=refuse base_findings=- new=refuse new_findings=RECEIPT-INDEX-FLAG-CONCEALED
+# detail G name=instrument-skip-worktree-forged rev=b407d504c33a base_rc=2 new_rc=2 base_stderr=refused: worktree tools/instr.sh differs from committed bytes at b407d504c33aa7fb0bb5962b9173cc848c6f2988 new_stderr=refused: RECEIPT-INDEX-FLAG-CONCEALED: tools/instr.sh carries index flag S; skip-worktree or assume-unchanged hides worktree divergence from git status; clea...
+REGRESS base=PASS new=PASS
+# regress-detail base rc=0 last=SUMMARY cases=8 pass=8 fail=0 control=ALWAYS-WRITE-REJECTED,ALWAYS-REFUSE-REJECTED
+# regress-detail new rc=0 last=SUMMARY cases=8 pass=8 fail=0 control=ALWAYS-WRITE-REJECTED,ALWAYS-REFUSE-REJECTED
+SUMMARY matrix=7 base_forgeries=3 base_honest=2 new_forgeries=0 new_honest=2 class_mismatches=0 regress=PASS
+EXIT=0
