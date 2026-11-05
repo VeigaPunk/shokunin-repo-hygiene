@@ -1,0 +1,38 @@
+case ok: arg-forms: --command and post--- argv both accepted, identical receipts; both at once refused
+case ok: rev-format: short/branch/uppercase rev refused with nothing written
+case ok: instrument-at-rev: absent refused, symlink-at-rev refused, regular passes
+case ok: overwrite: existing OUT byte-identical, no temp file
+case ok: atomic-signal: SIGTERM/SIGINT during the command leave no OUT and no temp
+case ok: max-bytes: over-cap refused (flag and default), exact cap passes
+case ok: dirty-tree: modified and untracked refused, --allow-dirty overrides
+case ok: exit-code: wrapped rc passed through, receipt written with EXIT=<rc>
+case ok: no-scratch-literal: temp beside OUT only, TMPDIR untouched, source clean
+case ok: readonly-root: fixture file set and porcelain unchanged by a run
+case ok: always-write stub rejected: worktree instrument swapped for a forger
+case ok: always-refuse stub rejected: worktree instrument swapped for a refuser
+case ok: in-run-flag: skip-worktree set by the wrapped command refused, --allow-dirty included
+case ok: in-run-edit: tracked edit made by the wrapped command refused, --allow-dirty included
+case ok: in-run-restore: edit reverted before the post-run read accepted (named limit)
+case ok: fsmonitor-off: core.fsmonitor hook plus fsmonitor-valid bit cannot hide a dirty tree
+case ok: unmerged-class: stage 1+2 entry refused as RECEIPT-INDEX-UNMERGED
+case ok: gitlink-class: skip-worktree gitlink refused as RECEIPT-GITLINK-CONCEALED
+case ok: absent-class: skip-worktree file absent from worktree refused as RECEIPT-INDEX-CONCEALED-ABSENT
+case ok: generic-class: present S and h entries keep the r62 message byte for byte
+case ok: in-run-append-to-dirty: --allow-dirty append to an already-dirty tracked file refused (r64 N1)
+case ok: in-run-untracked-dir: new or deleted file in a pre-existing untracked directory refused (r64 N2)
+case ok: in-run-restore-dirty: exact restore of the dirty baseline bytes before the post-run read accepted
+case ok: index-env: GIT_INDEX_FILE set in the writer environment refused before any git call (r64 N3)
+case ok: subdir-root: --root inside a subdirectory still refuses an out-of-subtree concealed flag (r64 N4)
+case ok: in-run-append-to-untracked: --allow-dirty append to an untracked file refused
+case ok: mode-flip: mode-only in-run chmod under --allow-dirty refused via the snapshot mode byte (r65)
+case ok: untracked-visibility: status.showUntrackedFiles=no cannot hide untracked entries; clean tree still writes (r65)
+case ok: symlink-record: stable symlink accepted, in-run retarget refused, never followed (r65)
+case ok: index-env-missing: GIT_INDEX_FILE naming a nonexistent path refused (r65 P13)
+case ok: env-config: caller-injected GIT_CONFIG_* refused by name, empty value included (r66 E1/E2)
+case ok: env-redirect: GIT_OBJECT_DIRECTORY/ALTERNATE/REPLACE_REF_BASE refused by name; GIT_INDEX_FILE value not echoed (r66 E4-E6)
+case ok: mode-bits: setuid in-run flip refused via the full-mode snapshot byte (r66 MOD2)
+case FAIL: env-commondir-mismatch: caller GIT_COMMON_DIR naming another common dir refused by name, value not echoed (r67 W1/W2) | AssertionError: mismatched GIT_COMMON_DIR rc=0: 
+case ok: env-commondir-match: GIT_COMMON_DIR equal to the repository's own common dir accepted, absolute and relative (r67 W3)
+case FAIL: env-commondir-empty: empty GIT_COMMON_DIR refused, presence is the test (r67) | AssertionError: empty GIT_COMMON_DIR rc=0: 
+case FAIL: env-commondir-unresolvable: GIT_COMMON_DIR set with --root outside any repository refused (r67) | AssertionError: wrong unresolvable refusal: refused: rev is not a commit object (993e21f8b9bf6f0753c09b58286b4a2c3a45f585: fatal: not a git repository (or any of the parent directories): .git)
+SELFTEST cases=37 pass=34 fail=3

@@ -1,0 +1,43 @@
+# git version
+git version 2.56.0
+
+# fixture: repo /fast/scratch/hyaku/souji-r67/S67ScoutSources/probe-run2/probe.eOHGLz/main, tracked file mode 644 in the index, worktree 755
+
+# A) baseline (no injection): the 755->644 tracked mode change IS reported
+ M f
+   rc=0
+
+# B) injected GIT_COMMON_DIR = a copy of .git whose config sets core.fileMode=false
+   rc=0 (empty output above = mode change hidden)
+
+# C) empty GIT_COMMON_DIR: git takes the env branch and then finds no repository
+fatal: not a git repository (or any parent up to mount point /)
+Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set).
+   rc=128
+fatal: not a git repository (or any parent up to mount point /)
+Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set).
+   rc=0
+
+# D) mismatching GIT_COMMON_DIR with no config: git reports not a git repository
+fatal: not a git repository (or any parent up to mount point /)
+Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set).
+   rc=128
+
+# E) the injected value is what git reports as the common dir (no canonicalization of the text)
+/fast/scratch/hyaku/souji-r67/S67ScoutSources/probe-run2/probe.eOHGLz/copygit
+/fast/scratch/hyaku/souji-r67/S67ScoutSources/probe-run2/probe.eOHGLz/gitlink
+/fast/scratch/hyaku/souji-r67/S67ScoutSources/probe-run2/probe.eOHGLz/main/.git
+
+# F) relative env value is interpreted from the worktree top level, not the writer cwd
+/fast/scratch/hyaku/souji-r67/S67ScoutSources/probe-run2/probe.eOHGLz/.git
+   (expected base: /fast/scratch/hyaku/souji-r67/S67ScoutSources/probe-run2/probe.eOHGLz/main -> ../.git == /fast/scratch/hyaku/souji-r67/S67ScoutSources/probe-run2/probe.eOHGLz/.git ; writer-cwd base would be /fast/scratch/hyaku/souji-r67/S67ScoutSources/probe-run2/probe.eOHGLz/main/sub/../.git)
+
+# G) worktree child env: git exports GIT_DIR and GIT_WORK_TREE, never GIT_COMMON_DIR
+   hook env inside the new worktree (no GIT_COMMON_DIR line expected):
+GIT_DIR=/fast/scratch/hyaku/souji-r67/S67ScoutSources/probe-run2/probe.eOHGLz/main/.git/worktrees/wt
+   with GIT_COMMON_DIR exported in the parent, the child inherits it verbatim:
+GIT_COMMON_DIR=/fast/scratch/hyaku/souji-r67/S67ScoutSources/probe-run2/probe.eOHGLz/main/.git
+GIT_DIR=/fast/scratch/hyaku/souji-r67/S67ScoutSources/probe-run2/probe.eOHGLz/main/.git/worktrees/wt
+
+# H) submodule path in git's own source bypasses the env (worktree.c:553-556)
+   (source evidence; see quotes.tsv rows for worktree.txt offsets 14166)

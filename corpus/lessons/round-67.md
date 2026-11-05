@@ -22,7 +22,7 @@ Frozen at `census/round-67/preregistration-attempt4.txt`; predicates are not ame
 
 - **Sources opened this round.** S300 — git `setup.c`, `environment.c`, `worktree.c` and `Documentation/git.adoc` at tag
   `v2.56.0` (`https://raw.githubusercontent.com/git/git/v2.56.0/setup.c`, `…/Documentation/git.adoc`; accessed 2026-11-05;
-  HTTP 200). Captures `.ufo/waves/round-67/w1/S67ScoutSources/` (`setup.txt` sha256 `8316b1ad…`, `doc-git.txt` sha256
+  HTTP 200). Captures `census/round-67/wave/w1/S67ScoutSources/` (`setup.txt` sha256 `8316b1ad…`, `doc-git.txt` sha256
   `050c5330…`). Located quotes, verified by whitespace-normalized match against the captures (line breaks and tabs in the capture
   defeat the scout's byte offsets; the match is the check):
   - `setup.c`, function `get_common_dir` (13 words): `const char *git_env_common_dir = getenv(GIT_COMMON_DIR_ENVIRONMENT); if (git_env_common_dir) { strbuf_addstr(sb, git_env_common_dir); return 1; }`
@@ -41,7 +41,7 @@ Frozen at `census/round-67/preregistration-attempt4.txt`; predicates are not ame
   quote and the git(1) contract quote above).
 - **Assimilation: none.** `considerthese/` is absent (`test -d`). The connector scanned `shokuknow/merge/souji/MERGE-REPORT.md` and
   its package read-only: no staged theme names receipt-writer env routes, `GIT_COMMON_DIR`, `core.fileMode` or statement-agreement
-  counters (`.ufo/waves/round-67/w1/S67ConnectorOverlap/shokuknow-scan.md`, verdict "none matches"; the package's id range S109–S236
+  counters (`census/round-67/wave/w1/S67ConnectorOverlap/shokuknow-scan.md`, verdict "none matches"; the package's id range S109–S236
   collides with this registry and is not appended).
 - **Probes (scratch, host git 2.56.0; not claim evidence, recorded for the Gate):**
   - PK3 (repo-local `core.excludesFile` hides an untracked file): plain `git status` shows the file hidden; base and candidate writers
