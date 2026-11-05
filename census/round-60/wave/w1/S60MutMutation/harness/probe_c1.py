@@ -37,6 +37,14 @@ def edit_ctl(path, kind):
         lines = [l for l in text.splitlines() if not l.startswith("command=")]
         assert len(lines) != len(text.splitlines()), "anchor"
         text = "\n".join(lines) + "\n"
+    elif kind == "command-decoy":
+        assert text.count("command=python3 -B counter.py --selfcheck") == 1, "anchor"
+        text = text.replace("command=python3 -B counter.py --selfcheck",
+                            "command=python3 -B xcounter.py --selfcheck")
+    elif kind == "duplicate-rev":
+        lines = text.splitlines()
+        assert lines[-1].startswith("EXIT="), "anchor: last line must be EXIT="
+        text = "\n".join(lines[:-1] + ["rev=" + "0" * 40, lines[-1]]) + "\n"
     else:
         raise SystemExit("unknown edit %r" % kind)
     with open(path, "wb") as f:

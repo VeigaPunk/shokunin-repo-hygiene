@@ -27,7 +27,7 @@ INSTR_NAME = '''    elif inst != counter_path:
                     "%s instrument=%r is not the declared Counter %r" % (path, inst, counter_path)))
 '''
 
-CMD_MISMATCH = '''    elif counter_path not in cmd:
+CMD_MISMATCH = '''    elif not command_names(cmd, counter_path):
         out.append((label, "CONTROL-COMMAND-MISMATCH",
                     "%s command=%r does not mention Counter %r" % (path, cmd, counter_path)))
 '''
@@ -69,8 +69,8 @@ mutant("c1-m6-command-missing-skipped",
        "does not refuse a receipt that lacks a command= line entirely",
        ('''    if cmd is None:
         out.append((label, "CONTROL-COMMAND-MISSING", "%s has no command= line" % path))
-    elif counter_path not in cmd:
-''', '''    if cmd is not None and counter_path not in cmd:
+    elif not command_names(cmd, counter_path):
+''', '''    if cmd is not None and not command_names(cmd, counter_path):
 '''))
 
 mutant("c1-m7-rev-missing-skipped",
@@ -92,6 +92,27 @@ mutant("c1-m8-rev-invalid-skipped",
             pass
         elif cid == freeze or not repo.is_ancestor(cid, freeze):
 '''))
+
+mutant("c1-m9-command-substring",
+       "reverts amendment 2: command= only has to CONTAIN the Counter path, so a decoy "
+       "token such as `xcounter.py` satisfies it",
+       ('''    try:
+        toks = shlex.split(command)
+    except ValueError:
+        toks = command.split()
+    for tok in toks:
+        if tok == counter_path or tok.endswith("/" + counter_path):
+            return True
+    return False
+''', '''    return counter_path in command
+'''))
+
+mutant("c1-m10-duplicates-ignored",
+       "reverts amendment 2: conflicting duplicate binding lines are not refused",
+       ('    duplicates("instrument=", "CONTROL-INSTRUMENT-DUPLICATE")\n', ''),
+       ('    duplicates("instrument_sha256=", "CONTROL-INSTRUMENT-DUPLICATE")\n', ''),
+       ('    duplicates("rev=", "CONTROL-REV-DUPLICATE")\n', ''),
+       ('    duplicates("command=", "CONTROL-COMMAND-DUPLICATE")\n', ''))
 
 
 def main():

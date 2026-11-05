@@ -1,0 +1,41 @@
+=== C1 frozen counter, new arm at freeze rev 2670e96a ===
+matrix lane=/home/vgpnk/Projects/shokunin/souji-shokunin base-tool=tools/souji-freeze-check.py@1e8bfd87a9f6 new-tool=/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-freeze-check.py rev=2670e96af1b8 new-arm=substance
+CASE honest-1 expect=accept base=accept new=accept
+CASE honest-2 expect=accept base=accept new=accept
+CASE honest-3 expect=accept base=accept new=accept
+CASE forgery-kind-only expect=refuse base=accept new=refuse
+CASE forgery-digest expect=refuse base=accept new=refuse
+CASE forgery-rev-at-freeze expect=refuse base=accept new=refuse
+CASE forgery-rev-missing expect=refuse base=accept new=refuse
+CASE forgery-command-other expect=refuse base=accept new=refuse
+SUMMARY matrix=8 forgeries_accepted=5 honest_accepted=3 new_forgeries=0 new_honest=3 stubs=REJECTED
+EXIT=0
+
+=== C2 frozen fixture, new arm ===
+# r60-receipt-write C2 fixture
+# tool=/home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-receipt-write.py
+# style=options
+# work=/fast/scratch/hyaku/souji-r60/S60CriticRound/w2
+CASE 1 clean-write pass
+CASE 2 overwrite pass
+CASE 3 atomic-in-flight pass
+CASE 4 kill-residue pass
+CASE 5 bound pass
+CASE 6 rev-short pass
+CASE 7 instrument-absent pass
+CASE 8 dirty-tree pass
+# control always-write failed cases [1, 2, 3, 4, 5, 6, 7, 8] -> ALWAYS-WRITE-REJECTED
+# control always-refuse failed cases [1, 3] -> ALWAYS-REFUSE-REJECTED
+SUMMARY cases=8 pass=8 fail=0 control=ALWAYS-WRITE-REJECTED,ALWAYS-REFUSE-REJECTED
+EXIT=0
+
+=== frozen record under both checkers ===
+SUMMARY claims=2 findings=0
+EXIT=0
+SUMMARY claims=2 findings=0
+EXIT=0
+
+=== frozen rev-at-freeze case class ===
+FINDING C1 CONTROL-REV-INVALID ctl.txt rev='freezemark' does not resolve to a commit
+SUMMARY claims=1 findings=1
+EXIT=1

@@ -53,6 +53,7 @@ import io
 import os
 import posixpath
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -205,17 +206,44 @@ def declared_path(value):
     return (m.group(1) if m else (value.split()[0] if value.split() else "")) or None
 
 
+def command_names(command, counter_path):
+    """r60 amendment 2: the command must NAME the counter as an argv token, not as a substring.
+
+    `python3 -B decoy.py` does not name `c.py`; `python3 -B c.py` does. A path that is a suffix
+    of a longer token (`x/c.py` vs `c.py`) counts only when it is the whole token or follows a
+    `/`, so a decoy `notc.py` never satisfies a `c.py` counter.
+    """
+    try:
+        toks = shlex.split(command)
+    except ValueError:
+        toks = command.split()
+    for tok in toks:
+        if tok == counter_path or tok.endswith("/" + counter_path):
+            return True
+    return False
+
+
 def control_substance(repo, freeze, label, path, blob, counter_path, counter_blob):
     """--substance: bind the Control receipt to the declared Counter and a pre-freeze revision."""
     out = []
     lines = blob.decode("utf-8", "replace").splitlines()
 
-    def first(prefix):
-        for line in lines:
-            if line.startswith(prefix):  # column 0: any leading space already breaks the match
-                return line[len(prefix):].rstrip(" \t")
-        return None
+    def vals(prefix):
+        # column 0: any leading space already breaks the match
+        return [line[len(prefix):].rstrip(" \t") for line in lines if line.startswith(prefix)]
 
+    def first(prefix):
+        got = vals(prefix)
+        return got[0] if got else None
+
+    def duplicates(prefix, cls):
+        """r60 amendment 2: a receipt that names two different values for one binding is not bound."""
+        got = vals(prefix)
+        if len(set(got)) > 1:
+            out.append((label, cls, "%s carries %d conflicting %s lines" % (path, len(set(got)), prefix[:-1])))
+
+    duplicates("instrument=", "CONTROL-INSTRUMENT-DUPLICATE")
+    duplicates("instrument_sha256=", "CONTROL-INSTRUMENT-DUPLICATE")
     inst = first("instrument=")
     if inst is None:
         out.append((label, "CONTROL-INSTRUMENT-MISSING", "%s has no instrument= line" % path))
@@ -230,6 +258,7 @@ def control_substance(repo, freeze, label, path, blob, counter_path, counter_blo
         elif isum != want:
             out.append((label, "CONTROL-INSTRUMENT-MISMATCH",
                         "%s instrument_sha256=%r is not the Counter digest %s" % (path, isum, want)))
+    duplicates("rev=", "CONTROL-REV-DUPLICATE")
     rv = first("rev=")
     if rv is None:
         out.append((label, "CONTROL-REV-MISSING", "%s has no rev= line" % path))
@@ -240,10 +269,11 @@ def control_substance(repo, freeze, label, path, blob, counter_path, counter_blo
         elif cid == freeze or not repo.is_ancestor(cid, freeze):
             out.append((label, "CONTROL-REV-NOT-BEFORE-FREEZE",
                         "%s rev %s is not a strict ancestor of freeze %s" % (path, rv, freeze[:12])))
+    duplicates("command=", "CONTROL-COMMAND-DUPLICATE")
     cmd = first("command=")
     if cmd is None:
         out.append((label, "CONTROL-COMMAND-MISSING", "%s has no command= line" % path))
-    elif counter_path not in cmd:
+    elif not command_names(cmd, counter_path):
         out.append((label, "CONTROL-COMMAND-MISMATCH",
                     "%s command=%r does not mention Counter %r" % (path, cmd, counter_path)))
     return out

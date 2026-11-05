@@ -1,6 +1,6 @@
 --- pristine/tools/souji-receipt-write.py
 +++ mutant/c2-m2-overwrite-skip.py
-@@ -167,9 +167,6 @@
+@@ -173,9 +173,6 @@
      if wt_bytes != blob.stdout:
          refuse(f"worktree {rel} differs from committed bytes at {rev}")
  
@@ -10,12 +10,15 @@
      outdir = os.path.dirname(out) or "."
      if not os.path.isdir(outdir):
          refuse(f"out directory does not exist ({outdir})")
-@@ -225,8 +222,6 @@
-             f.write(receipt)
-             f.flush()
-             os.fsync(f.fileno())
--        if os.path.lexists(out):
+@@ -250,10 +247,7 @@
+         # r60 amendment 3 (S60ReviewerRecorder a1/a2): `os.replace` after an existence check is a
+         # TOCTOU that clobbers a file another process created during the run. `os.link` publishes
+         # atomically and fails with EEXIST, so the loser of a race never destroys the winner's bytes.
+-        try:
+-            os.link(tmp, out)
+-        except FileExistsError:
 -            refuse(f"out appeared while the command ran ({out})")
-         os.replace(tmp, out)
++        os.replace(tmp, out)
          _TEMP[TEMP_MARK] = None
-     finally:
+         try:
+             os.unlink(tmp)

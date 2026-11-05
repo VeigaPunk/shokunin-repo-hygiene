@@ -6,7 +6,8 @@ revision strictly before the freeze, measured on a frozen 8-case matrix (3 hones
 against the base tool bytes at 1e8bfd87a9f6ea9a1db4ad34f6e4cdd2b218bcd4. C2 operability: a hardened receipt
 writer `tools/souji-receipt-write.py` (atomic temp+rename, refuse overwrite, refuse dirty tree, bounded
 output, rev/instrument checks) measured by an 8-case fixture, base recorder
-`census/round-57/record-receipt.sh` = 3/8.
+`census/round-57/record-receipt.sh` = 3/8 (the claim text's figure — the committed control receipt prints
+`pass=4`; the disagreement is a `## Mistakes` row, and this skeleton asserts neither).
 
 C1 result: do-nothing arm `new_forgeries=TODO-C1-donothing-new-forgeries` with base
 `forgeries_accepted=TODO-C1-base-forgeries`; target run `new_forgeries=TODO-C1-new-forgeries

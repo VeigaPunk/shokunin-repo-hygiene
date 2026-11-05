@@ -34,6 +34,7 @@ import sys
 sys.dont_write_bytecode = True
 
 import argparse
+import glob
 import hashlib
 import os
 import posixpath
@@ -102,6 +103,11 @@ def write_receipt(ns: argparse.Namespace) -> int:
         refuse(f"rev is not full 40-hex ({rev})")
     if not os.path.isdir(root):
         refuse(f"root is not a directory ({root})")
+    # r60 amendment 3 (S60ReviewerRecorder i1): a tag OID peels to a commit but is not a revision
+    # of record; the receipt's rev= must name the commit object itself.
+    kind = git(root, "cat-file", "-t", rev)
+    if kind.returncode != 0 or kind.stdout.strip() != b"commit":
+        refuse(f"rev is not a commit object ({rev}: {kind.stdout.decode('utf-8', 'replace').strip() or kind.stderr.decode('utf-8', 'replace').strip()})")
 
     # behaviour 1: command argv from --command or after --
     if ns.command is not None and ns.args:
@@ -173,6 +179,14 @@ def write_receipt(ns: argparse.Namespace) -> int:
     outdir = os.path.dirname(out) or "."
     if not os.path.isdir(outdir):
         refuse(f"out directory does not exist ({outdir})")
+    # r60 amendment 3 (S60ReviewerRecorder b1): a symlinked out directory must not aim the receipt
+    # outside the lane root. The check is on the resolved directory, so a symlink inside the root
+    # that resolves inside the root still writes.
+    real_outdir = os.path.realpath(outdir)
+    real_root = os.path.realpath(root)
+    if (real_outdir != real_root and not real_outdir.startswith(real_root + os.sep)
+            and not getattr(ns, "allow_outside", False)):
+        refuse(f"out directory {real_outdir} is outside the lane root {real_root}")
 
     # behaviours 6+8: bounded combined capture, exit-code passthrough
     _live = open(out, "wb")
@@ -220,7 +234,15 @@ def write_receipt(ns: argparse.Namespace) -> int:
         f"EXIT={rc}\n".encode("utf-8"),
     ])
 
-    # MUTANT c2-m1: no temp file; the live handle already owns OUT
+    # behaviour 5: atomic write; the temp file exists only from here on
+    # r60 amendment 3 (S60ReviewerRecorder c-c1): SIGKILL cannot be trapped, so a killed run can
+    # leave `<out>.<rand>.tmp`. Only this writer creates that pattern for this OUT and a temp is
+    # never a receipt, so the next write of the same OUT sweeps it first.
+    for stale in glob.glob(os.path.join(glob.escape(outdir), glob.escape(os.path.basename(out)) + ".*.tmp")):
+        try:
+            os.unlink(stale)
+        except OSError:
+            pass
     with open(out, "ab") as f:
         f.write(receipt.split(b"\n", 1)[1])
         f.flush()
@@ -290,7 +312,10 @@ def _outdir(work: str) -> str:
 
 
 def _base_args(d: str, rev: str, out: str) -> "list[str]":
-    return ["--root", d, "--rev", rev, "--instrument", "instrument.sh", "--out", out]
+    # r60 amendment 3: the selftest's OUT lives in scratch, outside the fixture repo, which is
+    # exactly the case --allow-outside exists for.
+    return ["--root", d, "--rev", rev, "--instrument", "instrument.sh", "--out", out,
+            "--allow-outside"]
 
 
 def _no_stray(outdir: str) -> None:
@@ -618,6 +643,8 @@ def main(argv: "list[str]") -> int:
         description="hardened atomic receipt writer (round 60, C2)",
     )
     ap.add_argument("--root", help="lane root (read-only)")
+    ap.add_argument("--allow-outside", action="store_true",
+                    help="permit an --out whose resolved directory is outside --root")
     ap.add_argument("--rev", help="full 40-hex revision the receipt binds")
     ap.add_argument("--instrument", help="instrument path relative to --root")
     ap.add_argument("--out", help="receipt file to create (must not exist)")

@@ -22,6 +22,7 @@ import os
 import shutil
 import subprocess
 import sys
+import time
 
 IDENT = ["-c", "user.name=probe", "-c", "user.email=probe@example.invalid"]
 KNOWN = b"KNOWN-BYTES-DO-NOT-OVERWRITE\n"
@@ -67,12 +68,14 @@ def main():
     a = ap.parse_args()
     os.makedirs(a.outdir, exist_ok=True)
     repo, rev, blob = build(a.outdir)
-    if a.mode == "overwrite-outside":
-        outdir = os.path.join(a.outdir, "out")
-        os.makedirs(outdir, exist_ok=True)
-        out = os.path.join(outdir, "receipt.txt")
+    if a.mode == "overwrite-committed":
+        # OUT lives INSIDE the root and is COMMITTED, so the tree stays clean and the
+        # overwrite guard (not the dirty guard, not the outdir guard) is the only refusal.
+        out = os.path.join(repo, "receipt.txt")
         with open(out, "wb") as f:
             f.write(KNOWN)
+        git(repo, "add", "receipt.txt")
+        git(repo, "commit", "-q", "-m", "receipt")
         args = ["--root", repo, "--rev", rev, "--instrument", "tools/instrument.sh",
                 "--out", out, "--max-bytes", "65536", "--", "echo", "ok"]
         rc, _ = run(a.tool, args, a.outdir, "run")
@@ -87,7 +90,7 @@ def main():
         body_b = b"#!/bin/sh\necho INSTRUMENT-REWRITTEN-IN-WORKTREE\n"
         with open(wt, "wb") as f:
             f.write(body_b)
-        out = os.path.join(a.outdir, "receipt.txt")
+        out = os.path.join(repo, "receipt.txt")
         args = ["--root", repo, "--rev", rev, "--instrument", "tools/instrument.sh",
                 "--out", out, "--max-bytes", "65536", "--allow-dirty", "--", "echo", "ok"]
         rc, _ = run(a.tool, args, a.outdir, "run")
@@ -101,6 +104,49 @@ def main():
               % (a.mode, rc, committed, got))
         print("DIVERGENCE" if (rc == 2 and got is None) else
               ("MUTANT-WRONG-DIGEST" if (rc == 0 and got and got != committed) else "OTHER"))
+    elif a.mode == "race-create":
+        out = os.path.join(repo, "receipt.txt")
+        outdir = os.path.dirname(out)
+        args = ["--root", repo, "--rev", rev, "--instrument", "tools/instrument.sh",
+                "--out", out, "--max-bytes", "65536", "--", "sleep", "1"]
+        argv = [sys.executable, "-B", a.tool] + args
+        p = subprocess.Popen(argv, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        time.sleep(0.4)
+        racer = b"RACER-BYTES-MUST-SURVIVE\n"
+        with open(out, "wb") as f:
+            f.write(racer)
+        sout = p.communicate()[0].decode("utf-8", "replace")
+        with open(out, "rb") as f:
+            now = f.read()
+        with open(os.path.join(a.outdir, "run.txt"), "w", encoding="utf-8") as f:
+            f.write("ARGV %s\n%sEXIT=%d\n" % (json.dumps(argv), sout, p.returncode))
+        print("mode=%s rc=%d racer_bytes_survived=%s" % (a.mode, p.returncode, now == racer))
+        print("DIVERGENCE" if (p.returncode == 2 and now == racer) else
+              ("MUTANT-CLOBBERED" if now != racer else "OTHER"))
+    elif a.mode == "stale-temp":
+        out = os.path.join(repo, "receipt.txt")
+        outdir = os.path.dirname(out)
+        stale = os.path.join(outdir, "receipt.txt.deadbeef.tmp")
+        with open(stale, "wb") as f:
+            f.write(b"STALE-RESIDUE\n")
+        args = ["--root", repo, "--rev", rev, "--instrument", "tools/instrument.sh",
+                "--out", out, "--max-bytes", "65536", "--allow-dirty", "--", "echo", "ok"]
+        rc, _ = run(a.tool, args, a.outdir, "run")
+        residue = [f for f in os.listdir(outdir) if f not in ("receipt.txt", "tools", ".git")]
+        print("mode=%s rc=%d residue=%s out_written=%s"
+              % (a.mode, rc, residue, os.path.exists(out)))
+        print("DIVERGENCE" if (rc == 0 and not residue) else
+              ("MUTANT-LEFT-RESIDUE" if residue else "OTHER"))
+    elif a.mode == "outside-outdir":
+        outside = os.path.join(a.outdir, "outside")
+        os.makedirs(outside, exist_ok=True)
+        out = os.path.join(outside, "receipt.txt")
+        args = ["--root", repo, "--rev", rev, "--instrument", "tools/instrument.sh",
+                "--out", out, "--max-bytes", "65536", "--", "echo", "ok"]
+        rc, _ = run(a.tool, args, a.outdir, "run")
+        print("mode=%s rc=%d out_exists=%s" % (a.mode, rc, os.path.exists(out)))
+        print("DIVERGENCE" if (rc == 2 and not os.path.exists(out)) else
+              ("MUTANT-WROTE-OUTSIDE" if os.path.exists(out) else "OTHER"))
     else:
         raise SystemExit("unknown mode")
     return 0

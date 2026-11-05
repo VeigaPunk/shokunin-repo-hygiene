@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate C2 mutants (full files) from the pristine receipt-writer bytes.
+"""Generate C2 mutants (full files) from the production receipt-writer bytes.
 
 Each mutation is an exact single-occurrence replacement; the generator aborts
 if any anchor is not found exactly once, so a mutant can never silently be a
@@ -13,6 +13,35 @@ import sys
 PRISTINE = sys.argv[1]
 OUTDIR = sys.argv[2]
 
+ATOMIC = '''    try:
+        fd, tmp = tempfile.mkstemp(prefix=os.path.basename(out) + ".", suffix=".tmp", dir=outdir)
+        _TEMP[TEMP_MARK] = tmp
+        with os.fdopen(fd, "wb") as f:
+            f.write(receipt)
+            f.flush()
+            os.fsync(f.fileno())
+        # r60 amendment 3 (S60ReviewerRecorder a1/a2): `os.replace` after an existence check is a
+        # TOCTOU that clobbers a file another process created during the run. `os.link` publishes
+        # atomically and fails with EEXIST, so the loser of a race never destroys the winner's bytes.
+        try:
+            os.link(tmp, out)
+        except FileExistsError:
+            refuse(f"out appeared while the command ran ({out})")
+        _TEMP[TEMP_MARK] = None
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+    finally:
+        leftover = _TEMP[TEMP_MARK]
+        if leftover:
+            _TEMP[TEMP_MARK] = None
+            try:
+                os.unlink(leftover)
+            except OSError:
+                pass
+'''
+
 MUTANTS = []
 
 
@@ -24,52 +53,36 @@ def mutant(name, why, *repls):
 mutant(
     "c2-m1-direct-stream",
     "writes OUT directly and opens it before the wrapped command runs "
-    "(no temp+rename), so a partial receipt is visible in flight",
+    "(no temp+link publication), so a partial receipt is visible in flight",
     ("    proc = subprocess.Popen(argv, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)",
      "    _live = open(out, \"wb\")\n"
      "    _live.write(b\"instrument=\" + rel.encode() + b\"\\n\")\n"
      "    _live.flush()\n"
      "    proc = subprocess.Popen(argv, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)"),
-    ("""    # behaviour 5: atomic write; the temp file exists only from here on
-    try:
-        fd, tmp = tempfile.mkstemp(prefix=os.path.basename(out) + ".", suffix=".tmp", dir=outdir)
-        _TEMP[TEMP_MARK] = tmp
-        with os.fdopen(fd, "wb") as f:
-            f.write(receipt)
-            f.flush()
-            os.fsync(f.fileno())
-        if os.path.lexists(out):
-            refuse(f"out appeared while the command ran ({out})")
-        os.replace(tmp, out)
-        _TEMP[TEMP_MARK] = None
-    finally:
-        leftover = _TEMP[TEMP_MARK]
-        if leftover:
-            _TEMP[TEMP_MARK] = None
-            try:
-                os.unlink(leftover)
-            except OSError:
-                pass""",
-     """    # MUTANT c2-m1: no temp file; the live handle already owns OUT
-    with open(out, "ab") as f:
+    (ATOMIC,
+     """    with open(out, "ab") as f:
         f.write(receipt.split(b"\\n", 1)[1])
         f.flush()
         os.fsync(f.fileno())
-    _live.close()"""),
+    _live.close()
+"""),
 )
 
-# --- M2: overwrite check removed (both the pre-check and the in-flight check)
+# --- M2: overwrite check removed (pre-check and in-flight publication check)
 mutant(
     "c2-m2-overwrite-skip",
-    "drops the OUT-exists refusal before and after the command, so an "
-    "existing receipt is silently replaced",
+    "drops the OUT-exists refusal before the command and publishes with "
+    "os.replace, so an existing receipt is silently replaced",
     ("""    # behaviour 4: OUT must not exist; refuse before any side effect
     if os.path.lexists(out):
         refuse(f"out already exists ({out})")
 """, ""),
-    ("""        if os.path.lexists(out):
+    ("""        try:
+            os.link(tmp, out)
+        except FileExistsError:
             refuse(f"out appeared while the command ran ({out})")
-""", ""),
+""", """        os.replace(tmp, out)
+"""),
 )
 
 # --- M3: --max-bytes ignored ------------------------------------------------
@@ -122,6 +135,41 @@ mutant(
     "omits the command= field, so a receipt no longer names the command it "
     "measured",
     ('        ("command=" + shlex.join(argv) + "\\n").encode("utf-8"),\n', ""),
+)
+
+# --- M8: publication reverts to os.replace (TOCTOU) -------------------------
+mutant(
+    "c2-m8-link-to-replace",
+    "publishes with os.replace instead of the EEXIST-safe os.link, so a file "
+    "created during the run is clobbered",
+    ("""        try:
+            os.link(tmp, out)
+        except FileExistsError:
+            refuse(f"out appeared while the command ran ({out})")
+""", """        os.replace(tmp, out)
+"""),
+)
+
+# --- M9: stale-temp sweep removed ------------------------------------------
+mutant(
+    "c2-m9-no-stale-sweep",
+    "no longer sweeps a *.tmp left by an earlier SIGKILL, so residue survives "
+    "the next write",
+    ("""    for stale in glob.glob(os.path.join(glob.escape(outdir), glob.escape(os.path.basename(out)) + ".*.tmp")):
+        try:
+            os.unlink(stale)
+        except OSError:
+            pass
+""", ""),
+)
+
+# --- M10: OUT-directory confinement removed --------------------------------
+mutant(
+    "c2-m10-outside-outdir-allowed",
+    "never refuses an OUT directory outside the lane root",
+    ("""    if (real_outdir != real_root and not real_outdir.startswith(real_root + os.sep)
+            and not getattr(ns, "allow_outside", False)):""",
+     """    if False:"""),
 )
 
 

@@ -1,7 +1,7 @@
 --- pristine/tools/souji-receipt-write.py
 +++ mutant/c2-m1-direct-stream.py
-@@ -175,6 +175,9 @@
-         refuse(f"out directory does not exist ({outdir})")
+@@ -189,6 +189,9 @@
+         refuse(f"out directory {real_outdir} is outside the lane root {real_root}")
  
      # behaviours 6+8: bounded combined capture, exit-code passthrough
 +    _live = open(out, "wb")
@@ -10,11 +10,10 @@
      proc = subprocess.Popen(argv, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
      chunks: list[bytes] = []
      total = 0
-@@ -217,26 +220,12 @@
-         f"EXIT={rc}\n".encode("utf-8"),
-     ])
- 
--    # behaviour 5: atomic write; the temp file exists only from here on
+@@ -240,33 +243,11 @@
+             os.unlink(stale)
+         except OSError:
+             pass
 -    try:
 -        fd, tmp = tempfile.mkstemp(prefix=os.path.basename(out) + ".", suffix=".tmp", dir=outdir)
 -        _TEMP[TEMP_MARK] = tmp
@@ -22,10 +21,18 @@
 -            f.write(receipt)
 -            f.flush()
 -            os.fsync(f.fileno())
--        if os.path.lexists(out):
+-        # r60 amendment 3 (S60ReviewerRecorder a1/a2): `os.replace` after an existence check is a
+-        # TOCTOU that clobbers a file another process created during the run. `os.link` publishes
+-        # atomically and fails with EEXIST, so the loser of a race never destroys the winner's bytes.
+-        try:
+-            os.link(tmp, out)
+-        except FileExistsError:
 -            refuse(f"out appeared while the command ran ({out})")
--        os.replace(tmp, out)
 -        _TEMP[TEMP_MARK] = None
+-        try:
+-            os.unlink(tmp)
+-        except OSError:
+-            pass
 -    finally:
 -        leftover = _TEMP[TEMP_MARK]
 -        if leftover:
@@ -34,7 +41,6 @@
 -                os.unlink(leftover)
 -            except OSError:
 -                pass
-+    # MUTANT c2-m1: no temp file; the live handle already owns OUT
 +    with open(out, "ab") as f:
 +        f.write(receipt.split(b"\n", 1)[1])
 +        f.flush()
