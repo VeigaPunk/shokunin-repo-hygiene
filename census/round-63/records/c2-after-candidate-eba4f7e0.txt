@@ -1,0 +1,19 @@
+# c2-counter root=/home/vgpnk/Projects/shokunin/souji-shokunin base-rev=728ab685617e412172a8e5cb6260f7098b486aec rev=728ab685617e412172a8e5cb6260f7098b486aec arm=tool
+# slot base=/fast/scratch/hyaku/souji-r63/l1/cand2/slots/base.py sha256=9fb55f356aa256475d08f4b82d7132b1ce200a30f0dc26fec17eae969df0ec9b
+# slot new=/fast/scratch/hyaku/souji-r63/l1/cand2/slots/new.py sha256=eba4f7e0d1218d88158459426de3ad505e7401201af7ad006415daed31f9586f
+CASE P1 expect=accept base=accept base_findings=- new=accept new_findings=-
+# detail P1 name=honest-clean rev=50593c248a3e base_rc=0 new_rc=0 fixture_tags=- status_lines=0 base_stderr= new_stderr=
+CASE P2 expect=refuse base=refuse base_findings=lane worktree is dirty new=refuse new_findings=lane worktree is dirty
+# detail P2 name=dirty-visible rev=50593c248a3e base_rc=2 new_rc=2 fixture_tags=- status_lines=1 base_stderr=refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override new_stderr=refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+CASE H1 expect=refuse base=refuse base_findings=- new=refuse new_findings=RECEIPT-INDEX-UNMERGED
+# detail H1 name=unmerged-conflict rev=50593c248a3e base_rc=2 new_rc=2 fixture_tags=M tools/counter.py;M tools/counter.py;M tools/counter.py status_lines=1 base_stderr=refused: RECEIPT-INDEX-FLAG-CONCEALED: tools/counter.py carries index flag M; skip-worktree or assume-unchanged hides worktree divergence from git status; cl... new_stderr=refused: RECEIPT-INDEX-UNMERGED: tools/counter.py is unmerged (index stages 1 2 3) and carries index flag M; a conflicted path is not a clean tree; resolve i...
+CASE H2 expect=refuse base=refuse base_findings=- new=refuse new_findings=RECEIPT-GITLINK-CONCEALED
+# detail H2 name=gitlink-flagged rev=50593c248a3e base_rc=2 new_rc=2 fixture_tags=S tools/sub status_lines=1 base_stderr=refused: RECEIPT-INDEX-FLAG-CONCEALED: tools/sub carries index flag S; skip-worktree or assume-unchanged hides worktree divergence from git status; clear it ... new_stderr=refused: RECEIPT-GITLINK-CONCEALED: tools/sub is a gitlink (mode 160000) carrying index flag S; the writer does not read submodule state and skip-worktree or...
+CASE H3 expect=refuse base=refuse base_findings=- new=refuse new_findings=RECEIPT-INDEX-CONCEALED-ABSENT
+# detail H3 name=flagged-absent rev=50593c248a3e base_rc=2 new_rc=2 fixture_tags=S tools/counter.py status_lines=0 base_stderr=refused: RECEIPT-INDEX-FLAG-CONCEALED: tools/counter.py carries index flag S; skip-worktree or assume-unchanged hides worktree divergence from git status; cl... new_stderr=refused: RECEIPT-INDEX-CONCEALED-ABSENT: tools/counter.py carries index flag S and is absent from the worktree; skip-worktree or assume-unchanged hides the d...
+REGRESS base=PASS new=PASS
+# regress-detail base rc=0 last=SUMMARY cases=8 pass=8 fail=0 control=ALWAYS-WRITE-REJECTED,ALWAYS-REFUSE-REJECTED
+# regress-detail new rc=0 last=SUMMARY cases=8 pass=8 fail=0 control=ALWAYS-WRITE-REJECTED,ALWAYS-REFUSE-REJECTED
+SUMMARY matrix=5 honest=1 refusals=4 base_class_mismatches=3 new_class_mismatches=0
+FORGERIES base=0 new=0
+EXIT=0

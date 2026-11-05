@@ -1,0 +1,27 @@
+# c1-counter root=/home/vgpnk/Projects/shokunin/souji-shokunin base-rev=728ab685617e412172a8e5cb6260f7098b486aec new=file:/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-63/w1/S63ExecWriter/souji-receipt-write.py
+# slot base=/fast/scratch/hyaku/souji-r63/l1/cand/slots/base.py sha256=9fb55f356aa256475d08f4b82d7132b1ce200a30f0dc26fec17eae969df0ec9b src=728ab685617e412172a8e5cb6260f7098b486aec:tools/souji-receipt-write.py
+# slot new=/fast/scratch/hyaku/souji-r63/l1/cand/slots/new.py sha256=eba4f7e0d1218d88158459426de3ad505e7401201af7ad006415daed31f9586f src=file:/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-63/w1/S63ExecWriter/souji-receipt-write.py
+# matrix=/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-63/c1-matrix.tsv sha256=c6aaab7ee9639e4051369ebdc551726750d05de5b8bc825b67ad24712d4d8c3b
+CASE A expect=accept base=accept base_findings=- new=accept new_findings=-
+# detail A name=honest-clean rev=b407d504c33a base_rc=0 new_rc=0 base_stderr= new_stderr=
+CASE B expect=accept base=accept base_findings=- new=accept new_findings=-
+# detail B name=honest-allow-dirty rev=b407d504c33a base_rc=0 new_rc=0 base_stderr= new_stderr=
+CASE C expect=refuse base=refuse base_findings=lane worktree is dirty new=refuse new_findings=lane worktree is dirty
+# detail C name=dirty-visible rev=b407d504c33a base_rc=2 new_rc=2 base_stderr=refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override new_stderr=refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+CASE D expect=refuse base=refuse base_findings=RECEIPT-INDEX-FLAG-CONCEALED new=refuse new_findings=RECEIPT-INDEX-FLAG-CONCEALED
+# detail D name=skip-worktree-forged rev=b407d504c33a base_rc=2 new_rc=2 base_stderr=refused: RECEIPT-INDEX-FLAG-CONCEALED: tools/counter.py carries index flag S; skip-worktree or assume-unchanged hides worktree divergence from git status; cl... new_stderr=refused: RECEIPT-INDEX-FLAG-CONCEALED: tools/counter.py carries index flag S; skip-worktree or assume-unchanged hides worktree divergence from git status; cl...
+CASE T1 expect=refuse base=accept base_findings=- new=refuse new_findings=RECEIPT-STATE-CHANGED-DURING-RUN
+# detail T1 name=inrun-flag rev=b407d504c33a base_rc=0 new_rc=2 base_stderr= new_stderr=refused: RECEIPT-STATE-CHANGED-DURING-RUN: index flags (git ls-files -v -z) changed during the wrapped command; no receipt written
+CASE T2 expect=refuse base=accept base_findings=- new=refuse new_findings=RECEIPT-STATE-CHANGED-DURING-RUN
+# detail T2 name=inrun-edit-instrument rev=b407d504c33a base_rc=0 new_rc=2 base_stderr= new_stderr=refused: RECEIPT-STATE-CHANGED-DURING-RUN: worktree status (git status --porcelain) changed during the wrapped command; no receipt written
+CASE T3 expect=refuse base=accept base_findings=- new=refuse new_findings=RECEIPT-STATE-CHANGED-DURING-RUN
+# detail T3 name=inrun-edit-noninstrument rev=b407d504c33a base_rc=0 new_rc=2 base_stderr= new_stderr=refused: RECEIPT-STATE-CHANGED-DURING-RUN: worktree status (git status --porcelain) changed during the wrapped command; no receipt written
+CASE T4 expect=accept base=accept base_findings=- new=accept new_findings=-
+# detail T4 name=inrun-transient-restore rev=b407d504c33a base_rc=0 new_rc=0 base_stderr= new_stderr=
+CASE T5 expect=refuse base=accept base_findings=- new=refuse new_findings=RECEIPT-STATE-CHANGED-DURING-RUN
+# detail T5 name=inrun-untracked rev=b407d504c33a base_rc=0 new_rc=2 base_stderr= new_stderr=refused: RECEIPT-STATE-CHANGED-DURING-RUN: worktree status (git status --porcelain) changed during the wrapped command; no receipt written
+# regress-detail base rc=0 last=SUMMARY cases=8 pass=8 fail=0 control=ALWAYS-WRITE-REJECTED,ALWAYS-REFUSE-REJECTED
+# regress-detail new rc=0 last=SUMMARY cases=8 pass=8 fail=0 control=ALWAYS-WRITE-REJECTED,ALWAYS-REFUSE-REJECTED
+REGRESS base=PASS new=PASS
+SUMMARY matrix=9 base_forgeries=4 base_honest=3 new_forgeries=0 new_honest=3 class_mismatches=0 regress=PASS
+EXIT=0
