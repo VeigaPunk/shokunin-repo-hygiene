@@ -46,10 +46,18 @@ byte-identical still refuses (RECEIPT-STATE-CHANGED-DURING-RUN with content rows
 round 65 (C1): every status read overrides the status.showUntrackedFiles config KEY to `all`, so that key
 cannot hide untracked entries from the dirty check or the content snapshot. This is key-scoped: routes that make
 a path IGNORED rather than untracked (core.excludesFile, .git/info/exclude, a tracked .gitignore) and
-GIT_CONFIG_* passthrough for other keys are NOT closed by this override (round-65 named limits; round 66 routes); the snapshot payload
+GIT_CONFIG_* passthrough is closed by the round-66 env gate (see below); the snapshot payload
 records each regular file's mode beside its digest, so a mode-only in-run flip refuses (RECEIPT-STATE-CHANGED-DURING-RUN
 with a `mode <path>` row); and the M5 symlink rule is frozen design: a symlink inside an untracked
 directory is recorded by name and target string, never followed.
+
+round 66 (C1): caller-injected config and object-redirect env routes are refused before any git call. GIT_CONFIG_COUNT,
+GIT_CONFIG_PARAMETERS, and any GIT_CONFIG_KEY_* / GIT_CONFIG_VALUE_* name refuse with RECEIPT-ENV-CONFIG-SET;
+GIT_OBJECT_DIRECTORY, GIT_ALTERNATE_OBJECT_DIRECTORIES, and GIT_REPLACE_REF_BASE refuse with RECEIPT-ENV-REDIRECT-SET.
+Both are presence checks and print names only. Every git call pins GIT_CONFIG_GLOBAL and core.excludesFile to the null
+device, sets GIT_CONFIG_NOSYSTEM=1 and GIT_NO_REPLACE_OBJECTS=1, and keeps GIT_OPTIONAL_LOCKS=0. The snapshot mode byte
+carries the full permission bits (setuid, setgid and sticky included). Ignore routes (.git/info/exclude, a tracked
+.gitignore, a repository-local core.excludesFile) remain named limits outside C1.
 """
 from __future__ import annotations
 
@@ -83,7 +91,12 @@ def git(root: str, *args: str) -> subprocess.CompletedProcess:
     """Read-only git plumbing against root; scrub GIT_DIR/GIT_WORK_TREE so -C is authoritative."""
     env = {k: v for k, v in os.environ.items() if k not in ("GIT_DIR", "GIT_WORK_TREE")}
     env["GIT_OPTIONAL_LOCKS"] = "0"
-    return subprocess.run(["git", "-C", root, "-c", "core.fsmonitor=false", *args], capture_output=True, env=env)
+    # r66 C1: no host config file, system config or replace ref reaches a read; the excludes file is the null device.
+    env["GIT_CONFIG_GLOBAL"] = os.devnull
+    env["GIT_CONFIG_NOSYSTEM"] = "1"
+    env["GIT_NO_REPLACE_OBJECTS"] = "1"
+    return subprocess.run(["git", "-C", root, "-c", "core.fsmonitor=false",
+                           "-c", f"core.excludesFile={os.devnull}", *args], capture_output=True, env=env)
 
 
 def refuse(msg: str) -> None:
@@ -140,7 +153,7 @@ def _status_z(root: str) -> subprocess.CompletedProcess:
 
 def _snapshot_entry(full: bytes) -> bytes:
     """Digest payload for one snapshotted path. Regular files record `<mode>:<sha256 hex>` — the
-    executable bit is part of the fingerprint (r65 C1: a mode-only in-run flip is invisible to both
+    full permission bits (setuid, setgid and sticky included) are part of the fingerprint (r65 C1: a mode-only in-run flip is invisible to both
     porcelain reads and to a content-only digest); symlinks record their target bytes (record name
     and target, never follow, r65-frozen M5 rule); anything else records a marker. Races degrade to
     markers, so a pre/post mismatch still refuses."""
@@ -160,7 +173,7 @@ def _snapshot_entry(full: bytes) -> bytes:
                     break
                 h.update(chunk)
         try:
-            mode = oct(os.stat(full).st_mode & 0o777).encode("ascii") + b":"
+            mode = oct(os.stat(full).st_mode & 0o7777).encode("ascii") + b":"
         except OSError:
             mode = b"mode-unreadable:"
         return mode + h.hexdigest().encode("ascii")
@@ -272,12 +285,25 @@ def write_receipt(ns: argparse.Namespace) -> int:
     out = os.path.abspath(ns.out)
     rev = ns.rev
 
+    # r66 C1 (env): caller-injected config and object-redirect env routes refuse before any git call.
+    # Presence is the test (an empty value still refuses); only the variable NAMES are printed.
+    cfg_env = sorted(k for k in os.environ if k in ("GIT_CONFIG_COUNT", "GIT_CONFIG_PARAMETERS")
+                     or k.startswith(("GIT_CONFIG_KEY_", "GIT_CONFIG_VALUE_")))
+    if cfg_env:
+        refuse(f"RECEIPT-ENV-CONFIG-SET: {', '.join(cfg_env)} set in the writer's environment; "
+               "unset them and retry")
+    redirect_env = sorted(k for k in os.environ
+                          if k in ("GIT_OBJECT_DIRECTORY", "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_REPLACE_REF_BASE"))
+    if redirect_env:
+        refuse(f"RECEIPT-ENV-REDIRECT-SET: {', '.join(redirect_env)} set in the writer's environment; "
+               "unset them and retry")
+
     # r64 C1 (env): a caller-set GIT_INDEX_FILE would silently repoint every index read in this
     # writer at a caller-chosen index view. Refuse before any git call; scrubbing would pick the
     # index view for the caller, refusing leaves that choice with the caller.
     if "GIT_INDEX_FILE" in os.environ:
         refuse(f"RECEIPT-INDEX-ENV-SET: GIT_INDEX_FILE is set in the writer's environment "
-               f"({os.environ['GIT_INDEX_FILE']!r}); unset it and retry")
+               "(value not shown); unset it and retry")
 
     # behaviour 2: full-40-hex rev only
     if not REV_RE.match(rev):
@@ -1274,6 +1300,81 @@ def case_30_index_env_nonexistent(work: str) -> None:
     _no_stray(outdir)
 
 
+def case_31_env_config_refused(work: str) -> None:
+    # r66 C1 (E1/E2): caller-injected config env routes refuse on presence, before any git call; names only.
+    d = _fixture(work, "c31")
+    rev = _head(d)
+    outdir = _outdir(work)
+    cases = (
+        ({"GIT_CONFIG_COUNT": "1", "GIT_CONFIG_KEY_0": "core.excludesFile",
+          "GIT_CONFIG_VALUE_0": "/nonexistent-r66-secret"}, "GIT_CONFIG_COUNT, GIT_CONFIG_KEY_0, GIT_CONFIG_VALUE_0"),
+        ({"GIT_CONFIG_PARAMETERS": ""}, "GIT_CONFIG_PARAMETERS"),
+    )
+    for i, (extra, names) in enumerate(cases):
+        out = os.path.join(outdir, f"cfg{i}.txt")
+        env = dict(os.environ)
+        env.update(extra)
+        r = _run([*_base_args(d, rev, out), "--allow-dirty", "--command", "/bin/echo hi"], env=env)
+        if r.returncode != 2 or os.path.exists(out):
+            raise AssertionError(f"config env {names} rc={r.returncode}: {r.stderr.strip()}")
+        if "RECEIPT-ENV-CONFIG-SET" not in r.stderr or names not in r.stderr:
+            raise AssertionError(f"wrong config-env refusal: {r.stderr.strip()}")
+        if "/nonexistent-r66-secret" in r.stderr:
+            raise AssertionError("config env value echoed")
+    _no_stray(outdir)
+
+
+def case_32_env_redirect_refused(work: str) -> None:
+    # r66 C1 (E4-E6): object-redirect env routes refuse on presence, names only; the index env value is not echoed.
+    d = _fixture(work, "c32")
+    rev = _head(d)
+    outdir = _outdir(work)
+    cases = (
+        ({"GIT_OBJECT_DIRECTORY": os.path.join(d, ".git", "objects")}, "GIT_OBJECT_DIRECTORY"),
+        ({"GIT_ALTERNATE_OBJECT_DIRECTORIES": ""}, "GIT_ALTERNATE_OBJECT_DIRECTORIES"),
+        ({"GIT_REPLACE_REF_BASE": "refs/replace-r66/"}, "GIT_REPLACE_REF_BASE"),
+        ({"GIT_INDEX_FILE": "/nonexistent-r66-index"}, "RECEIPT-INDEX-ENV-SET"),
+    )
+    for i, (extra, token) in enumerate(cases):
+        out = os.path.join(outdir, f"red{i}.txt")
+        env = dict(os.environ)
+        env.update(extra)
+        r = _run([*_base_args(d, rev, out), "--allow-dirty", "--command", "/bin/echo hi"], env=env)
+        if r.returncode != 2 or os.path.exists(out):
+            raise AssertionError(f"redirect env {token} rc={r.returncode}: {r.stderr.strip()}")
+        klass = "RECEIPT-INDEX-ENV-SET" if token == "RECEIPT-INDEX-ENV-SET" else "RECEIPT-ENV-REDIRECT-SET"
+        if klass not in r.stderr or token not in r.stderr:
+            raise AssertionError(f"wrong redirect-env refusal: {r.stderr.strip()}")
+        if "/nonexistent-r66-index" in r.stderr:
+            raise AssertionError("GIT_INDEX_FILE value echoed")
+    _no_stray(outdir)
+
+
+def case_33_mode_setuid_refused(work: str) -> None:
+    # r66 C1 (MOD2): the snapshot mode byte keeps setuid; a mode-only in-run flip under --allow-dirty refuses.
+    d = _fixture(work, "c33")
+    rev = _head(d)
+    outdir = _outdir(work)
+    target = os.path.join(d, "tracked.txt")
+    with open(target, "ab") as f:
+        f.write(b"dirty\n")
+    out = os.path.join(outdir, "control.txt")
+    r = _run([*_base_args(d, rev, out), "--allow-dirty", "--command", "/bin/echo hi"])
+    if r.returncode != 0 or not os.path.exists(out):
+        raise AssertionError(f"dirty baseline control rc={r.returncode}: {r.stderr.strip()}")
+    out2 = os.path.join(outdir, "setuid.txt")
+    code = f"import os\nos.chmod({target!r}, 0o4644)"
+    r = _run([*_base_args(d, rev, out2), "--allow-dirty", "--command", _py(code)])
+    if r.returncode != 2 or os.path.exists(out2):
+        raise AssertionError(f"in-run setuid flip rc={r.returncode}: {r.stderr.strip()}")
+    if "RECEIPT-STATE-CHANGED-DURING-RUN: mode tracked.txt" not in r.stderr:
+        raise AssertionError(f"wrong setuid-flip refusal: {r.stderr.strip()}")
+    os.chmod(target, 0o644)
+    with open(target, "wb") as f:
+        f.write(b"clean\n")
+    _no_stray(outdir)
+
+
 CASES = (
     ("arg-forms: --command and post--- argv both accepted, identical receipts; both at once refused", case_01_arg_forms),
     ("rev-format: short/branch/uppercase rev refused with nothing written", case_02_rev_format),
@@ -1305,6 +1406,9 @@ CASES = (
     ("untracked-visibility: status.showUntrackedFiles=no cannot hide untracked entries; clean tree still writes (r65)", case_28_untracked_visibility),
     ("symlink-record: stable symlink accepted, in-run retarget refused, never followed (r65)", case_29_symlink_record_rule),
     ("index-env-missing: GIT_INDEX_FILE naming a nonexistent path refused (r65 P13)", case_30_index_env_nonexistent),
+    ("env-config: caller-injected GIT_CONFIG_* refused by name, empty value included (r66 E1/E2)", case_31_env_config_refused),
+    ("env-redirect: GIT_OBJECT_DIRECTORY/ALTERNATE/REPLACE_REF_BASE refused by name; GIT_INDEX_FILE value not echoed (r66 E4-E6)", case_32_env_redirect_refused),
+    ("mode-bits: setuid in-run flip refused via the full-mode snapshot byte (r66 MOD2)", case_33_mode_setuid_refused),
 )
 
 
