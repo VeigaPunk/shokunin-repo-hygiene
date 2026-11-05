@@ -1651,3 +1651,12 @@ coverage 8, operability 8); the lane still has no reproducible 0–10 mapping an
 | name | what it can now do | evidence pointer | first-working round |
 |---|---|---|---|
 | freeze chronology binding | refuse a preregistration whose control receipts' `rev=` is not a strict ancestor of the freeze commit or whose `After:` measurement receipts do not bind strict descendants (`--chronology`, composing with `--substance`); default output byte-identical over 33 committed preregistrations | `python3 -B tools/souji-freeze-check.py --selftest --chronology` → `cases=52 pass=52` (`census/round-65/records/freeze-check-selftest-chronology.txt`); landed `16da2445088ccca15aa32c66841d878ee57a8706` | r65 (closure-gated) |
+
+### Round 65 corrections and wave-close dispositions (append-only)
+
+R65-ERRATUM-PREREG (SCORECARD, round 65): `census/round-65/preregistration.txt` says `tools/souji-freeze-check.py --chronology` "landed pre-freeze" and its selftest "stays 52/52 with --chronology". Both are false at the freeze `d2850b3e` (the arm first exists at `16da2445`; the freeze-check selftest there is 41/41). The prereg is frozen and is not amended. Recorded as lesson M7.
+
+R65-KILL-POWER (wave close; the frozen predicates are unchanged, the counts are as measured):
+- C1 kill-power: a same-content symlink retarget is not a matrix row and survives a read-through symlink mutant (M11); setuid, setgid and sticky bits are masked (M12).
+- C2 kill-power: the emission token `return` matches `returncode`; a deleted env refusal (mutant m4) gives `findings=0` (M10).
+- Both claims verify on their frozen predicates and are reported with these HIGH gaps; the closure judge rules on admission. No owned score changed.
