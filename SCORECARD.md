@@ -1606,3 +1606,24 @@ None entered: the candidate writer is not landed and its behaviour is not admitt
   and its matrix row (F1); `:(top)` pathspec and `GIT_INDEX_FILE` scrub (reviewer H4, H5); correct SKILL.md:830 overreach
   (round-62 spot-check R1, calibration); refresh knowledge-entry `verified-at` (R3). Operator L0 questions open: MACHINE
   BLOCK, numeric axis mapping, edge-class axis tie-break. Certification OFF, K5 HELD.
+
+### Round 64 measurements (2026-11-05, Linux; base `ae2f4ece2c936ecd8c4260632ad7330c84f7882d`; NO PREREGISTRATION FROZEN; both claims NOT ADMITTED)
+
+Honest stop, no freeze. Scores unchanged (calibration 7, coverage 8, operability 8). Diagnostic numbers below were produced by seats on pre-freeze bytes and are not admission evidence (lesson `corpus/lessons/round-64.md` M2). The one reproducible base-side measurement is the C2 do-nothing control, bound to the committed population `04bc2769`.
+
+| claim | axis | before (do-nothing, base bytes) | after (candidate `46a9388b`, diagnostic, pre-freeze) | counting command | measured commit |
+|---|---|---|---|---|---|
+| C1 in-run snapshot, env refusal, toplevel scope (operability) | operability 8 (not moved; not admitted) | `census/round-64/controls/c1-do-nothing.txt`: `base_forgeries=8 base_honest=3 new_forgeries=8 class_mismatches=8 regress=PASS`, EXIT 1 (N4 base=accept in the counter's fixture; disputed row, M1) | seat-run only: selftest 26/26; `new_forgeries=0 new_honest=3 class_mismatches=0 regress=PASS` (seat `S64ExecWriter`, not a freeze-bound receipt) | `python3 -B census/round-64/c1-counter.py --root . --matrix census/round-64/c1-matrix.tsv --base-rev ae2f4ece2c936ecd8c4260632ad7330c84f7882d --new-tool <candidate> --work <dir> --receipt <file>` | base `ae2f4ece`; candidate not landed |
+| C2 SKILL.md statement/writer agreement (calibration) | calibration 7 (not moved; not admitted) | `census/round-64/controls/c2-do-nothing.txt`: `findings=1 verdict=FAIL` (`SCOPE-OVERREACH s2`), EXIT 1, bound to population `04bc2769` | not measured (after-wording not landed) | `python3 -B census/round-64/c2-counter.py --root . --tsv census/round-64/c2-statements.tsv --tsv-rev 04bc2769e14c5c5050a0c8b93a439e13adb8b69b --rev <full40>` | base `ae2f4ece`; population `04bc2769` |
+
+Frontier: S295 (git(1) `GIT_INDEX_FILE`) and S296 (gitglossary(7) PATHSEC `top`) added, tier A, `mined` (`corpus/SOURCES.md`). Registry 217 → 219 rows; S294 `used-by` duplicate removed (D2). Round-63 S294 offsets corrected by appended section (D1). Capability rows: none entered (no demonstrated capability). Assimilation: none.
+
+### Planned (r65)
+
+- Re-probe the N4 fixture against both writers before any declaration (lesson M1); drop or re-shape the row, and settle N2's empty-directory fixture (M5) and the symlink-in-untracked rule.
+- Land `tools/souji-freeze-check.py --chronology` (candidate `.ufo/waves/round-64/w1/S64ExecFreeze/`) with its historical sweep before any freeze (M2).
+- Build every control as a lane commit strictly before the freeze; regenerate the C1 stub receipts from the fixed command builder (M3, M4).
+- C2: add a green/decoy control and a row-presence pin; cover the s3 unmerged clause; after-literals `S2_AFTER`, `S3_AFTER` in `census/round-64/c2-counter.py`.
+- Untracked visibility (`status.showUntrackedFiles`) as its own claim with a do-nothing control (named limit, sentinel S64-F1).
+- Carried: SKILL.md:830 overreach (R1), knowledge-entry `verified-at` refresh (R3), operator L0 lines (MACHINE BLOCK, numeric mapping, edge-class tie-break, planner seat).
+- Code-kind registry row for `pathspec.c` `parse_long_magic` (S296 named limit), if the operator accepts code rows.

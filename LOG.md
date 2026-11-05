@@ -2841,3 +2841,12 @@ addendum, appended to the prereg, commits 8a793e7ae9131578bdec393982760217f62095
   SKILL.md and knowledge entries unchanged.
 - **Tools:** none installed or updated. No pacman transaction. No host sysctl touched.
 - **Scratch:** `/fast/scratch/hyaku/souji-r63/` and `/fast/scratch/hyaku/tmp-souji63/`; removed at landing.
+
+## Round 64 (2026-11-05, Linux; attempt 1) — honest stop
+
+- **Claims (two, distinct axes; neither admitted, neither frozen):** C1 operability — in-run content snapshot under `--allow-dirty`, a `GIT_INDEX_FILE` refusal, and toplevel `:(top)`-scoped index reads (candidate `46a9388b`, seat-run selftest 26/26, not landed). C2 calibration — three SKILL.md statements against writer bytes (base do-nothing `findings=1`, `census/round-64/controls/c2-do-nothing.txt`). Not frozen: the N4 fixture is disputed (design reviewer H1 says base refuses, the counter's fixture gives base=accept); the candidate and counters were scored by seats before any predicate existed; the C1 counter's `command=` header was mangled and is fixed in `census/round-64/c1-counter.py`. Lesson `corpus/lessons/round-64.md`.
+- **Frontier:** S295 (git(1) `GIT_INDEX_FILE`, tier A, located quote, mechanical offset proof) and S296 (gitglossary(7) PATHSEC `top`, tier A, located quote; the literal `:(top)` is a named limit) added at `corpus/SOURCES.md`. S294 `used-by` duplicate removed (D2, logged old→new in the round-64 lesson). Round-63 S294 offsets corrected by an appended section (D1; original text not rewritten, `corpus/lessons/round-63.md`). Assimilation: none (no `considerthese/`).
+- **Mistakes mined:** M1 N4 fixture dispute; M2 pre-freeze scoring by seats (same class as r63 M2); M3 mangled counter receipt header; M4 out-of-lane control revisions; M5 N2 empty-directory and symlink fixture gaps (reviewer); M6 S296 teaches overclaim caught before append; M7 round-63 quote-offset recurrence (D1).
+- **Lane:** `census/round-64/` (counters, matrices, population `c2-statements.tsv`, probes ledger, sources captures, controls). Production writer, `tools/`, SKILL.md and knowledge entries unchanged. Wave evidence `.ufo/waves/round-64/` (gitignored; the candidate writer, selftest, mutation kills and reviewer attacks live there).
+- **Tools:** none installed or updated. No pacman transaction. No host sysctl touched.
+- **Scratch:** `/fast/scratch/hyaku/souji-r64/` (seat scratch, removed by seats) and `/fast/scratch/hyaku/souji-r64/l1/`; removed at landing.
