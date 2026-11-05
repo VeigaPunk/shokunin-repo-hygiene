@@ -989,3 +989,9 @@ a measured edge class does not promote a frontier ground to Core (PROVINCE
 - **F4 / common-dir route (frontier, not Core).** `knowledge/common-dir-route-receipt-writer.md` records the `GIT_COMMON_DIR` environment route the round-66 writer left open (round-66 W2): git consumes a caller-set value as the repository's common directory (S300, `setup.c`), and the round-67 writer value-checks it. Named limits (relative values with the writer cwd different from the root, a fail-closed trade pending the operator; submodule contexts; start-of-run scope; `GIT_NAMESPACE` and `GIT_CEILING_DIRECTORIES` unrefused) stay in the entry.
 - Sources: S300 added (`scripts/sources-census.sh validate --root /home/vgpnk/Projects/shokunin souji`, rc 0, 223 rows). S298 `used-by` extended by one path (old→new logged in `corpus/lessons/round-67.md` M11); S299 unchanged.
 - Assimilation: none (`considerthese/` absent; the shokuknow souji merge package holds no receipt-writer env-route, common-dir, mode-bit or statement-agreement theme, see `census/round-67/wave/w1/S67ConnectorOverlap/shokuknow-scan.md`).
+
+### Frontier (r68 replace-ref route)
+
+- **F4-adjacent / replace-ref route (frontier, not Core).** `knowledge/replace-ref-receipt-writer.md` records the repository-state route the clean-tree check can be steered by: a `refs/replace/` ref changes what git reads by default (S301, git-replace(1) § DESCRIPTION), and the writer pins `GIT_NO_REPLACE_OBJECTS=1` on every git call. The fixture is row PK6 of `census/round-68/c1-matrix.tsv`. Named limits (no per-command behaviour claim, no submodule claim, no `GIT_REPLACE_REF_BASE` doc basis) stay in the entry.
+- Sources: S301 added (`scripts/sources-census.sh validate --root /home/vgpnk/Projects/shokunin souji`, rc 0, 224 rows). No existing row's cells changed.
+- Assimilation: none (`considerthese/` absent; connector `S68Connector/connector.md`).
