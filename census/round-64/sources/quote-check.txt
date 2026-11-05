@@ -1,0 +1,188 @@
+quote-check — S64ScoutSources — round 64 C1 source frontier
+
+offsets are BYTE offsets into the named file; "line" is 1-based (1 = first line)
+captures/<name>.html = raw bytes exactly as fetched by curl (not re-rendered)
+captures/<name>.txt  = tag-stripped text of the same bytes
+captures/<name>-located-quote.txt = the single documented entry excerpted from the SAME fetched bytes
+stripping rule for *.txt: <script>/<style> and HTML comments removed; every remaining tag -> a single space;
+  HTML entities unescaped; NBSP (U+00A0) -> space; runs of spaces/tabs/CR collapsed to one space; blank-line runs collapsed.
+  In-sentence line breaks therefore remain as newlines in the .txt file; a quote is located by a whitespace-tolerant
+  match and the reported offset is the offset of the FIRST matched word.
+located-quote recipe: the entry's own HTML element is cut out of the SAME fetched bytes (by its anchor id),
+  then every tag -> nothing, entities unescaped, NBSP -> space, all whitespace runs -> one space, trimmed.
+  The result is a byte-contiguous copy of the documented sentence: the offsets below are asserted mechanically
+  by slicing the capture bytes and comparing to the quote bytes (assert output pasted under each entry).
+
+host: git version 2.56.0 (git 2.56.0-1), Arch linux 7.2.11-arch1-1
+
+====================================================================================================
+MECHANICAL OFFSET VERIFICATION — every offset below was produced by slicing the capture bytes
+====================================================================================================
+
+[S295 PRIMARY] git(1)
+  url        : https://git-scm.com/docs/git
+  quote      : This environment variable specifies an alternate index file. If not specified, the default of $GIT_DIR/index is used.
+  word count : 17   (limit 25) -> OK
+  s295-located-quote.txt        : offset=113  line=1  contiguous=True  sha256=07fa8baa7327d3b8ade1f92c4423e1e73433a927510651f1c2c5bce09a3ffff3
+                                  PROOF: assert capture[113:230] == quote_bytes  -> PASSED
+                                  slice = b'This environment variable specifies an alternate index file. If not specified, the default of $GIT_DIR/index is used.'
+  s295-git-man.txt              : offset=30767  line=865  contiguous=True  sha256=51e31eaa2e2e4cb07feb9af8c6a0d19e1e54498e2fb61005c2bf839a8146c33b
+                                  PROOF: assert capture[30767:30884] == quote_bytes  -> PASSED
+                                  slice = b'This environment variable specifies an alternate index file. If not specified, the default of $GIT_DIR/index is used.'
+  s295-git-page.html            : NOT PRESENT (bytes 244227, sha256 534c674f9929280db76c6f32bb3da5c6711b9475cb9dbb324cd88d2a2769f9d1)
+  s295-git-page.txt             : offset=40301  line=5182  contiguous=False  sha256=e7a0a9360b6f66c1c92f0cc9bcde1b3098b4a30ecae6465a3000c843cf51e213
+  note       : the git(1) WEB page renders this entry with markup between the words, so the quote is NOT byte-contiguous in the
+  note       : web bytes; the byte-contiguous copy is the located-quote excerpt built from the SAME fetched bytes.
+  note       : The installed man page git 2.56.0-1 carries the identical sentence (offset 30767, line 865).
+
+[S296 FULL DOCUMENTED SENTENCE] gitglossary(7)
+  url        : https://git-scm.com/docs/gitglossary
+  quote      : The magic word top (magic signature: /) makes the pattern match from the root of the working tree, even when you are running the command from inside a subdirectory.
+  word count : 29   (limit 25) -> OVER LIMIT
+  s296-located-quote.txt        : offset=43  line=1  contiguous=True  sha256=cba509a55a940bd6401c6f61dde1f772bfa1b53fec2d9ec6a03c6cc99987366c
+                                  PROOF: assert capture[43:207] == quote_bytes  -> PASSED
+                                  slice = b'The magic word top (magic signature: /) makes the pattern match from the root of the working tree, even when you are running the command from inside a subdirectory.'
+  s296-gitglossary-man.txt      : offset=15869  line=231  contiguous=True  sha256=10b8988bd93230e8bf295d7a06994a79ec7bd891d1e1a69690cfe75fb83a2e6d
+                                  PROOF: assert capture[15869:16033] == quote_bytes  -> PASSED
+                                  slice = b'The magic word top (magic signature: /) makes the pattern match from the root of the working tree, even when you are running the command from inside a subdirectory.'
+  s296-gitglossary.html         : NOT PRESENT (bytes 109997, sha256 216bc0df7f50dc17d331ea2a9873daf65a08a2afddd797f73a300cc2e15f0129)
+  s296-gitglossary.txt          : NOT PRESENT (bytes 35712, sha256 d8cb27328dd194ce8d63ae2fdb4621cae6c4a65107ac07193ce3ddfddd71ee6a)
+  note       : 29 words -> OVER the 25-word registry limit. This is the whole PATHSEC 'top' entry as the page prints it;
+  note       : the row's REGISTERED quote is the 18-word form below (same entry, same offset).
+
+[S296 REGISTERED QUOTE (the row's quote cell)] gitglossary(7)
+  url        : https://git-scm.com/docs/gitglossary
+  quote      : The magic word top (magic signature: /) makes the pattern match from the root of the working tree
+  word count : 18   (limit 25) -> OK
+  s296-located-quote.txt        : offset=43  line=1  contiguous=True  sha256=cba509a55a940bd6401c6f61dde1f772bfa1b53fec2d9ec6a03c6cc99987366c
+                                  PROOF: assert capture[43:140] == quote_bytes  -> PASSED
+                                  slice = b'The magic word top (magic signature: /) makes the pattern match from the root of the working tree'
+  s296-gitglossary-man.txt      : offset=15869  line=231  contiguous=True  sha256=10b8988bd93230e8bf295d7a06994a79ec7bd891d1e1a69690cfe75fb83a2e6d
+                                  PROOF: assert capture[15869:15966] == quote_bytes  -> PASSED
+                                  slice = b'The magic word top (magic signature: /) makes the pattern match from the root of the working tree'
+  note       : 18 words, same entry, same first-word offset as the full sentence.
+
+[S296 SECONDARY — the long-form spelling rule] gitglossary(7)
+  url        : https://git-scm.com/docs/gitglossary
+  quote      : the leading colon : is followed by an open parenthesis (, a comma-separated list of zero or more "magic words", and a close parentheses )
+  word count : 25   (limit 25) -> OK
+  s296-gitglossary-man.txt      : offset=15510  line=225  contiguous=True  sha256=10b8988bd93230e8bf295d7a06994a79ec7bd891d1e1a69690cfe75fb83a2e6d
+                                  PROOF: assert capture[15510:15647] == quote_bytes  -> PASSED
+                                  slice = b'the leading colon : is followed by an open parenthesis (, a comma-separated list of zero or more "magic words", and a close parentheses )'
+  note       : This is the sentence that makes '(:(top))' a legal spelling: the long form is ':(' + comma-separated magic words + ')'.
+  note       : It does NOT itself contain the literal ':(top)'.
+====================================================================================================
+D1 RE-LOCATION — the round-63 S294 quote offsets (committed capture census/round-63/sources/)
+====================================================================================================
+
+quote       : A gitlink, SHA-1 of the object refers to a commit in another repository.
+word count  : 13   (limit 25) -> OK
+raw  .html  : census/round-63/sources/s294-git-fast-import.html  bytes=171432  sha256=4830e69cf2f4bb8971361a6b8b9b7f13e9c6f252b11afc3702dff866b70d72e9
+strip .txt  : census/round-63/sources/s294-git-fast-import.txt   bytes=66048  sha256=6e7c0fb3d7fd4bd02363541a44efdaf5aa0b2c8ec9c14df360b7be5594a9ba8b
+
+RECORDED in corpus/lessons/round-63.md '## Gate': 'offset 31053 of the tag-stripped text, raw offset 109019'
+
+TRUE raw byte offset of the FIRST matched word 'A gitlink' in the committed .html:
+  offset = 109094   (line 3598)
+  PROOF  : assert raw[109094:109103] == b'A gitlink'  -> PASSED
+  slice  : b'A gitlink'
+  the recorded 109019 lands on: b'rget.</p>\n</li>\n<li>\n<p><span '  <- the tail of the 120000 symlink line, NOT the quote
+  the full 13-word quote is NOT byte-contiguous in the raw .html (source line-wrap between 'commit in' and 'another'):
+    raw[109094:109174] = b'A gitlink, SHA-1 of the object refers to a commit in\nanother repository. Git lin'
+    find(full_quote_bytes) = -1  (-1 => not contiguous)
+
+TRUE offset of the FIRST matched word in the COMMITTED strip .txt (same quoted .txt the Gate cites):
+  offset = 31190   (line 796)
+  PROOF  : assert txt[31190:31199] == b'A gitlink'  -> PASSED
+  slice  : b'A gitlink'
+  the recorded 31053 lands on: b'ant. \n 100755 or 755 : A normal, but exe'  <- the 100755 mode line, NOT the quote
+  delta recorded->true in the .txt: 31190 - 31053 = 137
+  the full 13-word quote is NOT byte-contiguous in the committed .txt either: find = -1
+
+THE FOUR TAG-STRIP NORMALIZATIONS (the D1 measure), computed on the committed .html by FIRST-WORD offset:
+  naive strip (tag -> nothing, raw bytes kept) first-word offset = 54935   full quote contiguous = False
+  newline -> space                             first-word offset = 54935   full quote contiguous = True
+  collapse-newlines (' \n ' -> '\n')           first-word offset = 34462   full quote contiguous = False
+  collapse-whitespace (all \s+ -> ' ')         first-word offset = 31600   full quote contiguous = True
+
+  NONE of the four reproduces the recorded 31053, and none reproduces 109019 in raw. The recorded numbers are
+  unreproducible from the committed capture by any of the four normalizations.
+
+CAPTURE PROVENANCE (the r63 seat-local capture is byte-identical to the committed census capture,
+so the offsets were wrong against the very bytes the seat measured — the error is in the measurement,
+not in a later re-copy):
+  seat-local .html == committed .html : True   sha256 4830e69cf2f4bb89...
+  seat-local .txt  == committed .txt  : True   sha256 6e7c0fb3d7fd4bd0...
+
+=> D1 CORRECTION the L1 must land as a NEW correction entry in corpus/lessons/round-63.md (append-only,
+   naming the text it supersedes; the lesson text is NOT to be rewritten):
+     supersedes: 'offset 31053 of the tag-stripped text, raw offset 109019'
+     corrected:  tag-stripped .txt offset 31190 (line 796); raw .html offset 109094 (line 3598),
+                  the first matched word 'A gitlink'; the 13-word sentence is NOT byte-contiguous in either capture
+                  (a source line-wrap sits between 'commit in' and 'another'), so only a whitespace-tolerant
+                  first-word offset is well-defined; none of the four tag-strip normalizations reproduces 31053
+                  (54935 / 54935 / 34462 / 31600) nor 109019.
+
+D2 (row hygiene, the duplicate used-by cell) — logged old -> new, to be applied by the L1:
+  row        : S294 (corpus/SOURCES.md, the only row whose used-by cell repeats a path)
+  old (as committed at ae2f4ece) : 'corpus/lessons/round-63.md, corpus/lessons/round-63.md'
+  new                            : 'corpus/lessons/round-63.md'
+  effect                         : the duplicate path is removed; the row's cited set is unchanged.
+  note                          : corpus/lessons/round-63.md must also CITE S294 for the K1 used-by-no-cite check to pass.
+  verified                      : grep -c 'S294' corpus/lessons/round-63.md -> 2 (cites present)
+====================================================================================================
+SOURCE AVAILABILITY AND THE 'NO PAGE PRINTS :(top)' SWEEP
+====================================================================================================
+
+https://git-scm.com/docs/git           HTTP 200, 244227 bytes, sha256 534c674f9929280db76c6f32bb3da5c6711b9475cb9dbb324cd88d2a2769f9d1
+https://git-scm.com/docs/gitglossary   HTTP 200, 109997 bytes, sha256 216bc0df7f50dc17d331ea2a9873daf65a08a2afddd797f73a300cc2e15f0129
+
+installed man page: /usr/share/man/man1/git.1.gz  (package git 2.56.0-1)
+installed man page: /usr/share/man/man7/gitglossary.7.gz  (package git 2.56.0-1)
+git source tree: https://github.com/git/git/archive/refs/tags/v2.56.0.tar.gz  HTTP 200, 12789076 bytes
+
+':(top)' LITERAL — SEARCHED AND NOT FOUND:
+  grep -rn -- ':(top)' <git v2.56.0 tree>            -> exit 1, 0 hits (whole tree: *.c, *.h, Documentation/)
+  grep -c ':(top)' over 60 fetched git-scm.com pages  -> 0 hits on every page
+  the ONLY long-form magic literals on any fetched git-scm.com page are ':(glob)' and ':(literal)',
+  both in git(1) § OPTIONS --glob-pathspecs / --noglob-pathspecs
+     ':(literal)'  raw offset 104195  line 4077  (captures/s295-git-page.html)
+     ':(glob)'     raw offset 104668  line 4084  (captures/s295-git-page.html)
+
+WHAT DOES BIND ':(top)': git v2.56.0 pathspec.c
+  line 106: { PATHSPEC_FROMTOP,  '/', "top" },
+  line 333: parse_long_magic() — for each long-form word, match pathspec_magic[i].name;
+            die("Invalid pathspec magic '%.*s' in '%s'") on an unknown word (line 378)
+  copy: probes/git-2.56.0-pathspec.c  (23341 bytes, sha256 5f839150bbbf4806...)
+  => the long form is accepted because 'top' is in the magic table; the DOCUMENTED source (S296) says
+     what the magic word MEANS, and the CODE source says why the spelling parses. The page does not
+     print ':(top)'.
+
+PROBE SUMMARY (full commands/outputs/exit codes: probes/probe-log.txt)
+  P1-P7  GIT_INDEX_FILE selects WHICH index is read:
+         a skip-worktree flag set on the ALT COPY ONLY leaves the main index 'H' and shows 'S' on the alt read
+         (P4-P6); the two index files have different sha256 (P7).
+  P8     N3 shape: the flag is in the REAL index, GIT_INDEX_FILE points at a FLAG-FREE copy
+         -> the alt read shows 'H' for a file the real index marks 'S'. This is the forgery the
+         candidate's GIT_INDEX_FILE refusal must catch, and it is why the refusal must be a REFUSAL:
+         scrubbing GIT_INDEX_FILE would restore the real index and change the caller's index view.
+  P9     git -C <subdir> ls-files sees only the subtree ('counter.py'); git -C <toplevel> ls-files sees
+         the whole index ('secret.txt' + 'tools/counter.py'). This is the H4 subdirectory-scope defect:
+         a --root inside a subdirectory observes only that subtree's index entries.
+  P10    ':(top)' from the SUBDIR reaches the whole index ('../secret.txt' + 'counter.py'); the output
+         paths are cwd-relative and so carry '../' prefixes.
+  P11    ':(top)' from the TOPLEVEL with an empty pattern lists every index entry.
+  P12    ':(top)**' lists every entry; ':(top)/**' lists NONE (the leading slash is not the magic).
+  P13    GIT_INDEX_FILE naming a NONEXISTENT file -> ls-files prints 0 bytes, exit 0 (silent empty index).
+  P14    GIT_INDEX_FILE naming an EMPTY file -> 'index file smaller than expected', exit 128.
+
+BASE-WRITER SOURCE FACTS (read-only, at ae2f4ece2c936ecd8c4260632ad7330c84f7882d)
+  tools/souji-receipt-write.py line 62: env = {k: v for k, v in os.environ.items() if k not in ('GIT_DIR', 'GIT_WORK_TREE')}
+    -> GIT_INDEX_FILE is NOT scrubbed: the writer inherits a caller-set value and every git() call reads
+       the caller's alternate index. grep -c GIT_INDEX_FILE on that blob -> 0 (never mentioned).
+  tools/souji-receipt-write.py line 136: fl = git(root, 'ls-files', '-v', '-z')  -> no ':(top)', no toplevel resolve.
+    grep -c ':(top)' on that blob -> 0.
+
+D1/D2 correction text the L1 must land (append-only in corpus/lessons/round-63.md; the registry cell
+edit is logged old -> new). See the D1 RE-LOCATION section above for the full measurement.
+

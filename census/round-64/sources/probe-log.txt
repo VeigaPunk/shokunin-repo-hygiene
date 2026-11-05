@@ -1,0 +1,65 @@
+TOPLEVEL=/fast/scratch/hyaku/souji-r64/S64ScoutSources/tmp.1VD1RzLpXh  (must equal /fast/scratch/hyaku/souji-r64/S64ScoutSources/tmp.1VD1RzLpXh)
+git version: git version 2.56.0
+### P1 main index ls-files -v -z (expect H)
+H secret.txt
+H tools/counter.py
+exit=0
+### P2 cp .git/index alt-index
+exit=0
+### P3 GIT_INDEX_FILE=alt-index ls-files -v -z (reads the ALT copy)
+H secret.txt
+H tools/counter.py
+exit=0
+### P4 set skip-worktree on the ALT COPY ONLY
+exit=0
+### P5 main index ls-files -v -z (must still be H)
+H secret.txt
+H tools/counter.py
+exit=0
+### P6 GIT_INDEX_FILE=alt-index ls-files -v -z (must be S)
+H secret.txt
+S tools/counter.py
+exit=0
+### P7 index file digests (differ => the alt copy carries its own flags)
+dfc8e2fb8b22393407e43b8c25aa0c2b384d6aab64779dc2a2bedb9680921975  /fast/scratch/hyaku/souji-r64/S64ScoutSources/tmp.1VD1RzLpXh/.git/index
+6517bef7432f5a1ebcd44ee1075d56d7eae26a1dff868ea986dbc633415d6aac  /fast/scratch/hyaku/souji-r64/S64ScoutSources/tmp.1VD1RzLpXh/alt-index
+exit=0
+### P8 N3 shape: flag in the REAL index, GIT_INDEX_FILE points at a FLAG-FREE copy
+-- real index:
+H secret.txt
+S tools/counter.py
+exit=0
+-- GIT_INDEX_FILE=flagfree-index:
+H secret.txt
+H tools/counter.py
+exit=0
+### P9 subdirectory scope: git -C <subdir> ls-files vs git -C <toplevel> ls-files
+-- from tools/:
+S counter.py
+exit=0
+-- from toplevel:
+H secret.txt
+S tools/counter.py
+exit=0
+### P10 :(top) from the SUBDIR reaches the whole index
+-- git -C tools/ ls-files -v -z -- ':(top)':
+H ../secret.txt
+S counter.py
+exit=0
+### P11 :(top) from the TOPLEVEL, plain pathspec
+-- git -C toplevel ls-files -v -z -- ':(top)':
+H secret.txt
+S tools/counter.py
+exit=0
+### P12 :(top)** and :(top)/** from TOPLEVEL
+-- ':(top)**':
+secret.txt
+tools/counter.py
+exit=0
+-- ':(top)/**':
+exit=0
+### P13 GIT_INDEX_FILE pointing at a NONEXISTENT file
+exit=0
+### P14 GIT_INDEX_FILE pointing at an EMPTY file
+fatal: /fast/scratch/hyaku/souji-r64/S64ScoutSources/tmp.1VD1RzLpXh/empty-index: index file smaller than expected
+exit=128

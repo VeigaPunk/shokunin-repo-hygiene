@@ -116,3 +116,15 @@ Sources opened 2026-11-05 (scout seat `S63ScoutSources`; captures and probes und
 5. Knowledge-entry `verified-at` refresh (round-62 spot-check R3) — routed.
 6. Operator decisions still open: `## MACHINE BLOCK` for preregistrations and numeric axis mapping (`.ufo/l0-questions.md`
    lines 324–325, round 62); the edge-class axis tie-break (new L0 line this round).
+## Post-review correction (round 64, append-only; D1 of `corpus/lessons/round-63-verifier-spotcheck.md` §5)
+
+The `## Gate` entry for S294 above (`offset 31053 of the tag-stripped text, raw offset 109019`) is wrong and is superseded
+by this section. The scout seat of round 64 re-measured the committed capture bytes with an assertion per offset:
+`census/round-63/sources/s294-git-fast-import.html` raw offset **109094** (line 3598) and the committed tag-stripped text
+offset **31190** (line 796) both hold the first word of the quote, asserted by slicing (`raw[109094:109103]` is `A gitlink`;
+`txt[31190:31199]` is `A gitlink`). The recorded 31053 falls on the `100755` mode line; 109019 falls on the tail of the
+`120000` symlink line. The 13-word sentence is not byte-contiguous in either capture (a source line-wrap sits between
+"commit in" and "another"), so only a whitespace-tolerant first-word offset is well-defined. Evidence: the scout's report
+at `census/round-64/sources/S64ScoutSources.md` and `census/round-64/sources/quote-check.txt`. The S294 row itself carries no
+offsets and is unchanged except for the logged D2 fix (duplicate `used-by` path removed; `corpus/lessons/round-64.md`
+Gate). The original text above is not rewritten.

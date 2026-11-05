@@ -1,0 +1,40 @@
+rev=ae2f4ece2c936ecd8c4260632ad7330c84f7882d
+instrument=census/round-64/c1-counter.py
+instrument_sha256=aaaaa9882162c41bfa9e92ae6f3c8ff20797f2948dbae2aa151e2c2274709aed
+command=python3 -B census/round-64/c1-counter.py --root . --matrix census/round-64/c1-matrix.tsv --base-rev ae2f4ece2c936ecd8c4260632ad7330c84f7882d --new-tool /fast/scratch/hyaku/souji-r64/l1/base-writer.py --work /fast/scratch/hyaku/souji-r64/l1/work-dn --receipt census/round-64/controls/c1-do-nothing.txt
+# c1-counter root=/home/vgpnk/Projects/shokunin/souji-shokunin base-rev=ae2f4ece2c936ecd8c4260632ad7330c84f7882d new=file:/fast/scratch/hyaku/souji-r64/l1/base-writer.py
+# slot base=/fast/scratch/hyaku/souji-r64/l1/work-dn/slots/base.py sha256=9fb55f356aa256475d08f4b82d7132b1ce200a30f0dc26fec17eae969df0ec9b src=ae2f4ece2c936ecd8c4260632ad7330c84f7882d:tools/souji-receipt-write.py
+# slot new=/fast/scratch/hyaku/souji-r64/l1/work-dn/slots/new.py sha256=9fb55f356aa256475d08f4b82d7132b1ce200a30f0dc26fec17eae969df0ec9b src=file:/fast/scratch/hyaku/souji-r64/l1/base-writer.py
+# matrix=/home/vgpnk/Projects/shokunin/souji-shokunin/census/round-64/c1-matrix.tsv sha256=a298df44086be59dc30fac6249be3b773e4ab3aeee7e577f12c54a292febf3a1
+# regress fixture=/fast/scratch/hyaku/souji-r64/l1/work-dn/laneref/tests/fixtures/r60-receipt-write.py (lane clone) cross-check=match
+CASE A expect=accept base=accept base_findings=- new=accept new_findings=-
+# detail A name=honest-clean rev=8c6b75b2432a base_rc=0 new_rc=0 base_stderr= new_stderr=
+CASE B expect=accept base=accept base_findings=- new=accept new_findings=-
+# detail B name=honest-allow-dirty rev=8c6b75b2432a base_rc=0 new_rc=0 base_stderr= new_stderr=
+CASE C expect=refuse base=refuse base_findings=lane worktree is dirty new=refuse new_findings=lane worktree is dirty
+# detail C name=dirty-visible rev=8c6b75b2432a base_rc=2 new_rc=2 base_stderr=refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override new_stderr=refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+CASE D expect=refuse base=refuse base_findings=RECEIPT-INDEX-FLAG-CONCEALED new=refuse new_findings=RECEIPT-INDEX-FLAG-CONCEALED
+# detail D name=skip-worktree-forged rev=8c6b75b2432a base_rc=2 new_rc=2 base_stderr=refused: RECEIPT-INDEX-FLAG-CONCEALED: tools/counter.py carries index flag S; skip-worktree or assume-unchanged hides worktree divergence from git status; cl... new_stderr=refused: RECEIPT-INDEX-FLAG-CONCEALED: tools/counter.py carries index flag S; skip-worktree or assume-unchanged hides worktree divergence from git status; cl...
+CASE T1 expect=refuse base=accept base_findings=- new=accept new_findings=-
+# detail T1 name=inrun-flag rev=8c6b75b2432a base_rc=0 new_rc=0 base_stderr= new_stderr=
+CASE T2 expect=refuse base=accept base_findings=- new=accept new_findings=-
+# detail T2 name=inrun-edit-instrument rev=8c6b75b2432a base_rc=0 new_rc=0 base_stderr= new_stderr=
+CASE T3 expect=refuse base=accept base_findings=- new=accept new_findings=-
+# detail T3 name=inrun-edit-noninstrument rev=8c6b75b2432a base_rc=0 new_rc=0 base_stderr= new_stderr=
+CASE T4 expect=accept base=accept base_findings=- new=accept new_findings=-
+# detail T4 name=inrun-transient-restore rev=8c6b75b2432a base_rc=0 new_rc=0 base_stderr= new_stderr=
+CASE T5 expect=refuse base=accept base_findings=- new=accept new_findings=-
+# detail T5 name=inrun-untracked rev=8c6b75b2432a base_rc=0 new_rc=0 base_stderr= new_stderr=
+CASE N1 expect=refuse base=accept base_findings=- new=accept new_findings=-
+# detail N1 name=allow-dirty-inrun-append-to-dirty rev=8c6b75b2432a base_rc=0 new_rc=0 base_stderr= new_stderr=
+CASE N2 expect=refuse base=accept base_findings=- new=accept new_findings=-
+# detail N2 name=allow-dirty-inrun-file-in-untracked-dir rev=8c6b75b2432a base_rc=0 new_rc=0 base_stderr= new_stderr=
+CASE N3 expect=refuse base=accept base_findings=- new=accept new_findings=-
+# detail N3 name=git-index-file-env rev=8c6b75b2432a base_rc=0 new_rc=0 base_stderr= new_stderr=
+CASE N4 expect=refuse base=accept base_findings=- new=accept new_findings=-
+# detail N4 name=subdirectory-root-scope rev=8c6b75b2432a base_rc=0 new_rc=0 base_stderr= new_stderr=
+# regress-detail base rc=0 last=SUMMARY cases=8 pass=8 fail=0 control=ALWAYS-WRITE-REJECTED,ALWAYS-REFUSE-REJECTED
+# regress-detail new rc=0 last=SUMMARY cases=8 pass=8 fail=0 control=ALWAYS-WRITE-REJECTED,ALWAYS-REFUSE-REJECTED
+REGRESS base=PASS new=PASS
+SUMMARY matrix=13 base_forgeries=8 base_honest=3 new_forgeries=8 new_honest=3 class_mismatches=8 regress=PASS
+EXIT=1

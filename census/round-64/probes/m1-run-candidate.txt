@@ -1,0 +1,40 @@
+rev=ae2f4ece2c936ecd8c4260632ad7330c84f7882d
+instrument=census/round-64/c1-counter.py
+instrument_sha256=bbb24e60f622438c6c2659ae730a4c786a8f73667db4495c46d2d34d55c96c8b
+command=python3 -B /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-64/w1/S64ExecCounterC1/census-ready/census/round-64/c1-counter.py /home/vgpnk/Projects/shokunin/--root /home/vgpnk/Projects/shokunin/souji-shokunin /home/vgpnk/Projects/shokunin/--matrix /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-64/w1/S64ExecCounterC1/c1-matrix.tsv /home/vgpnk/Projects/shokunin/--base-rev /home/vgpnk/Projects/shokunin/ae2f4ece2c936ecd8c4260632ad7330c84f7882d /home/vgpnk/Projects/shokunin/--new-tool /fast/scratch/hyaku/souji-r64/S64ExecCounterC1/candidate-souji-receipt-write.py /home/vgpnk/Projects/shokunin/--work /fast/scratch/hyaku/souji-r64/S64ExecCounterC1/work/m1-candidate-m /home/vgpnk/Projects/shokunin/--receipt /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-64/w1/S64ExecCounterC1/probes/m1-run-candidate.txt
+# c1-counter root=/home/vgpnk/Projects/shokunin/souji-shokunin base-rev=ae2f4ece2c936ecd8c4260632ad7330c84f7882d new=file:/fast/scratch/hyaku/souji-r64/S64ExecCounterC1/candidate-souji-receipt-write.py
+# slot base=/fast/scratch/hyaku/souji-r64/S64ExecCounterC1/work/m1-candidate-m/slots/base.py sha256=9fb55f356aa256475d08f4b82d7132b1ce200a30f0dc26fec17eae969df0ec9b src=ae2f4ece2c936ecd8c4260632ad7330c84f7882d:tools/souji-receipt-write.py
+# slot new=/fast/scratch/hyaku/souji-r64/S64ExecCounterC1/work/m1-candidate-m/slots/new.py sha256=46a9388b50c771707603b287a3f6948c88add322578267a0212efcccb619a63b src=file:/fast/scratch/hyaku/souji-r64/S64ExecCounterC1/candidate-souji-receipt-write.py
+# matrix=/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-64/w1/S64ExecCounterC1/c1-matrix.tsv sha256=a298df44086be59dc30fac6249be3b773e4ab3aeee7e577f12c54a292febf3a1
+# regress fixture=/fast/scratch/hyaku/souji-r64/S64ExecCounterC1/work/m1-candidate-m/laneref/tests/fixtures/r60-receipt-write.py (lane clone) cross-check=match
+CASE A expect=accept base=accept base_findings=- new=accept new_findings=-
+# detail A name=honest-clean rev=8c6b75b2432a base_rc=0 new_rc=0 base_stderr= new_stderr=
+CASE B expect=accept base=accept base_findings=- new=accept new_findings=-
+# detail B name=honest-allow-dirty rev=8c6b75b2432a base_rc=0 new_rc=0 base_stderr= new_stderr=
+CASE C expect=refuse base=refuse base_findings=lane worktree is dirty new=refuse new_findings=lane worktree is dirty
+# detail C name=dirty-visible rev=8c6b75b2432a base_rc=2 new_rc=2 base_stderr=refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override new_stderr=refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+CASE D expect=refuse base=refuse base_findings=RECEIPT-INDEX-FLAG-CONCEALED new=refuse new_findings=RECEIPT-INDEX-FLAG-CONCEALED
+# detail D name=skip-worktree-forged rev=8c6b75b2432a base_rc=2 new_rc=2 base_stderr=refused: RECEIPT-INDEX-FLAG-CONCEALED: tools/counter.py carries index flag S; skip-worktree or assume-unchanged hides worktree divergence from git status; cl... new_stderr=refused: RECEIPT-INDEX-FLAG-CONCEALED: tools/counter.py carries index flag S; skip-worktree or assume-unchanged hides worktree divergence from git status; cl...
+CASE T1 expect=refuse base=accept base_findings=- new=refuse new_findings=RECEIPT-STATE-CHANGED-DURING-RUN
+# detail T1 name=inrun-flag rev=8c6b75b2432a base_rc=0 new_rc=2 base_stderr= new_stderr=refused: RECEIPT-STATE-CHANGED-DURING-RUN: index flags (git ls-files -v -z) changed during the wrapped command; no receipt written
+CASE T2 expect=refuse base=accept base_findings=- new=refuse new_findings=RECEIPT-STATE-CHANGED-DURING-RUN
+# detail T2 name=inrun-edit-instrument rev=8c6b75b2432a base_rc=0 new_rc=2 base_stderr= new_stderr=refused: RECEIPT-STATE-CHANGED-DURING-RUN: worktree status (git status --porcelain) changed during the wrapped command; no receipt written
+CASE T3 expect=refuse base=accept base_findings=- new=refuse new_findings=RECEIPT-STATE-CHANGED-DURING-RUN
+# detail T3 name=inrun-edit-noninstrument rev=8c6b75b2432a base_rc=0 new_rc=2 base_stderr= new_stderr=refused: RECEIPT-STATE-CHANGED-DURING-RUN: worktree status (git status --porcelain) changed during the wrapped command; no receipt written
+CASE T4 expect=accept base=accept base_findings=- new=accept new_findings=-
+# detail T4 name=inrun-transient-restore rev=8c6b75b2432a base_rc=0 new_rc=0 base_stderr= new_stderr=
+CASE T5 expect=refuse base=accept base_findings=- new=refuse new_findings=RECEIPT-STATE-CHANGED-DURING-RUN
+# detail T5 name=inrun-untracked rev=8c6b75b2432a base_rc=0 new_rc=2 base_stderr= new_stderr=refused: RECEIPT-STATE-CHANGED-DURING-RUN: worktree status (git status --porcelain) changed during the wrapped command; no receipt written
+CASE N1 expect=refuse base=accept base_findings=- new=refuse new_findings=RECEIPT-STATE-CHANGED-DURING-RUN
+# detail N1 name=allow-dirty-inrun-append-to-dirty rev=8c6b75b2432a base_rc=0 new_rc=2 base_stderr= new_stderr=refused: RECEIPT-STATE-CHANGED-DURING-RUN: content tools/notes.txt changed during the wrapped command; no receipt written
+CASE N2 expect=refuse base=accept base_findings=- new=refuse new_findings=RECEIPT-STATE-CHANGED-DURING-RUN
+# detail N2 name=allow-dirty-inrun-file-in-untracked-dir rev=8c6b75b2432a base_rc=0 new_rc=2 base_stderr= new_stderr=refused: RECEIPT-STATE-CHANGED-DURING-RUN: content tools/extra/new.txt changed during the wrapped command; no receipt written
+CASE N3 expect=refuse base=accept base_findings=- new=refuse new_findings=RECEIPT-INDEX-ENV-SET
+# detail N3 name=git-index-file-env rev=8c6b75b2432a base_rc=0 new_rc=2 base_stderr= new_stderr=refused: RECEIPT-INDEX-ENV-SET: GIT_INDEX_FILE is set in the writer's environment ('/fast/scratch/hyaku/souji-r64/S64ExecCounterC1/work/m1-candidate-m/N3/new...
+CASE N4 expect=refuse base=accept base_findings=- new=refuse new_findings=RECEIPT-INDEX-FLAG-CONCEALED
+# detail N4 name=subdirectory-root-scope rev=8c6b75b2432a base_rc=0 new_rc=2 base_stderr= new_stderr=refused: RECEIPT-INDEX-FLAG-CONCEALED: README.md carries index flag S; skip-worktree or assume-unchanged hides worktree divergence from git status; clear it ...
+# regress-detail base rc=0 last=SUMMARY cases=8 pass=8 fail=0 control=ALWAYS-WRITE-REJECTED,ALWAYS-REFUSE-REJECTED
+# regress-detail new rc=0 last=SUMMARY cases=8 pass=8 fail=0 control=ALWAYS-WRITE-REJECTED,ALWAYS-REFUSE-REJECTED
+REGRESS base=PASS new=PASS
+SUMMARY matrix=13 base_forgeries=8 base_honest=3 new_forgeries=0 new_honest=3 class_mismatches=0 regress=PASS
+EXIT=0
