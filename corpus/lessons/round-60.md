@@ -101,3 +101,11 @@ rows and the same W04 duplicate-URL warning family. One E11 was found and fixed 
 path). That is a second mined mistake of this round: *a registry cell's separator is part of its
 grammar, and a warning-free row can still be dangling* — captured by the census's own E11 rule, fixed by
 using the separator the census documents.
+
+## Refused seat drafts
+
+`S60ScribeEntry` drafted a second entry, `atomic-receipt-write.md`, on the POSIX rename/fsync
+publication path. It was **not** adopted: F4 already holds that ground in
+`corpus/knowledge/origin-record-exclusivity-r28.md` (S212/S213/S214), and CORPUS rule 4 makes expansion
+knowledge, not rows. The scribe's `freeze-record-substance-binding.md` draft was superseded by the L1's
+version, which cites the rows actually re-opened this round.
