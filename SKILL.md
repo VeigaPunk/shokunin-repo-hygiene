@@ -827,8 +827,7 @@ without `--substance` is unchanged (lane sweep over 37 preregistrations: zero pl
 Binding limits: bytes, not execution; a fabricated receipt committed before freeze passes; history-bounded
 (fail closed on hidden ancestors). Rounds 41–55 records gain the same class on their control receipts; they
 are historical and unrewritten. Not in this round: the receipt writer's skip-worktree blindness
-(`corpus/knowledge/skip-worktree-concealment.md`; closed by the `tools/souji-receipt-write.py` refusals `RECEIPT-INDEX-FLAG-CONCEALED`,
-`RECEIPT-STATE-CHANGED-DURING-RUN` and `RECEIPT-INDEX-ENV-SET`, see `## Round 62` and `## Round 65`), the r61 fixture for C2 (not claimed),
+(`corpus/knowledge/skip-worktree-concealment.md`; closed by the `tools/souji-receipt-write.py` refusals `RECEIPT-INDEX-FLAG-CONCEALED`, `RECEIPT-STATE-CHANGED-DURING-RUN` and `RECEIPT-INDEX-ENV-SET`; see `## Round 62` and `## Round 65`), the r61 fixture for C2 (not claimed),
 and the preregistration `## MACHINE BLOCK` (critic F13). Certification OFF, K5 HELD.
 
 ## Round 62 — index-flag refusal (C1 operability) and stale-statement count (C2 calibration)
