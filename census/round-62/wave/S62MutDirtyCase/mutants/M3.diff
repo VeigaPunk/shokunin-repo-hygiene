@@ -1,0 +1,19 @@
+--- /fast/scratch/hyaku/souji-r62/S62MutDirtyCase/base-writer.py	2026-11-05 05:51:14.380528421 -0300
++++ /fast/scratch/hyaku/souji-r62/S62MutDirtyCase/mut/M3.py	2026-11-05 05:52:10.360684041 -0300
+@@ -128,12 +128,12 @@
+         refuse(f"--max-bytes must be >= 0 ({ns.max_bytes})")
+ 
+     # behaviour 7: clean lane tree unless --allow-dirty
+-    st = git(root, "status", "--porcelain")
+-    if st.returncode != 0:
++    st = git(root, "diff", "--quiet")
++    if st.returncode not in (0, 1):
+         detail = st.stderr.decode("utf-8", "replace").strip()
+         refuse(f"cannot read worktree status of {root}: {detail}")
+-    if st.stdout and not ns.allow_dirty:
+-        refuse("lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override")
++    if st.returncode == 1 and not ns.allow_dirty:
++        refuse("lane worktree is dirty (git diff --quiet reports changes); pass --allow-dirty to override")
+ 
+     # behaviour 3: instrument present and regular at rev
+     rel = instrument_relpath(root, ns.instrument)

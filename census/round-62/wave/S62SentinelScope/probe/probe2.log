@@ -1,0 +1,97 @@
+== F1 fsmonitor-valid index bit (not shown by ls-files -v)
+  ls-files -v:
+H notes.md
+H tools/counter.py
+H tools/instr.sh
+  ls-files -f:
+H notes.md
+H tools/counter.py
+H tools/instr.sh
+  ls-files -f -v -z:
+H notes.md|H tools/counter.py|H tools/instr.sh|
+  control status no hook (bit set, no core.fsmonitor):
+ M tools/counter.py
+  rc=0
+  control writer no hook:
+  REFUSE  rc=2 writer=souji-receipt-write.py root=F1.qxsa args=[] :: refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+  REFUSE  rc=2 writer=cand.py root=F1.qxsa args=[] :: refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+  status WITH fsmonitor hook (bit set):
+ M tools/counter.py
+  rc=0
+  ls-files -v under hook:
+H notes.md
+H tools/counter.py
+H tools/instr.sh
+  writer base under hook:
+  REFUSE  rc=2 writer=souji-receipt-write.py root=F1.qxsa args=[] :: refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+  writer cand under hook:
+  REFUSE  rc=2 writer=cand.py root=F1.qxsa args=[] :: refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+  control: same fixture, hook, bit cleared -> expect M visible:
+ M tools/counter.py
+  rc=0
+  REFUSE  rc=2 writer=cand.py root=F1.qxsa args=[] :: refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+== F2 TOCTOU fresh fixtures: flags set during run (cand only, fresh state)
+  ACCEPT  rc=0 writer=cand.py root=F2a.GKgS args=[] :: RECORD /fast/scratch/hyaku/souji-r62/S62SentinelScope/out.22G1/r.txt rev=69d19a7ca02dc455abea76bd6dcb2ba0edcdca6f instrument=tools/instr.sh rc=0
+  post-run state:
+H notes.md
+S tools/counter.py
+H tools/instr.sh
+  dirty during run (cand only, fresh):
+  ACCEPT  rc=0 writer=cand.py root=F2b.oFtF args=[] :: RECORD /fast/scratch/hyaku/souji-r62/S62SentinelScope/out.yC9j/r.txt rev=69d19a7ca02dc455abea76bd6dcb2ba0edcdca6f instrument=tools/instr.sh rc=0
+  dirty during run (base only, fresh):
+  ACCEPT  rc=0 writer=souji-receipt-write.py root=F2c.OuaM args=[] :: RECORD /fast/scratch/hyaku/souji-r62/S62SentinelScope/out.54dR/r.txt rev=69d19a7ca02dc455abea76bd6dcb2ba0edcdca6f instrument=tools/instr.sh rc=0
+== F3 GIT_DIR / GIT_WORK_TREE discriminating (env points at FLAGGED clean repo; fixture is clean)
+  ACCEPT  rc=0 writer=cand.py root=F3clean2.oUTV args=[] :: RECORD /fast/scratch/hyaku/souji-r62/S62SentinelScope/out.zs1U/r.txt rev=69d19a7ca02dc455abea76bd6dcb2ba0edcdca6f instrument=tools/instr.sh rc=0
+  ACCEPT  rc=0 writer=souji-receipt-write.py root=F3clean2.oUTV args=[] :: RECORD /fast/scratch/hyaku/souji-r62/S62SentinelScope/out.T07S/r.txt rev=69d19a7ca02dc455abea76bd6dcb2ba0edcdca6f instrument=tools/instr.sh rc=0
+  ACCEPT  rc=0 writer=cand.py root=F3clean2.oUTV args=[] :: RECORD /fast/scratch/hyaku/souji-r62/S62SentinelScope/out.mCoD/r.txt rev=69d19a7ca02dc455abea76bd6dcb2ba0edcdca6f instrument=tools/instr.sh rc=0
+  control: unscrubbed git sees CLEAN index:
+H notes.md
+S tools/counter.py
+H tools/instr.sh
+== F4 filename with newline (flagged, forged)
+H notes.md|H tools/counter.py|H tools/instr.sh|S tools/we
+ird.py|
+  REFUSE  rc=2 writer=cand.py root=F4.LcZx args=[] :: refused: RECEIPT-INDEX-FLAG-CONCEALED: tools/we ird.py carries index tag S; worktree state is not verifiable
+  ACCEPT  rc=0 writer=souji-receipt-write.py root=F4.LcZx args=[] :: RECORD /fast/scratch/hyaku/souji-r62/S62SentinelScope/out.2uCo/r.txt rev=d5c5f0cb44da3df0db30341fb4d71e758c5c3995 instrument=tools/instr.sh rc=0
+== F5 honest sparse-checkout (cone) false-positive check
+  init rc=0
+  set rc=0
+  sparse list:
+tools
+  worktree:
+.git
+notes.md
+tools
+  ls-files -v:
+H notes.md
+H tools/counter.py
+H tools/instr.sh
+  status:
+  rc=0
+  ACCEPT  rc=0 writer=souji-receipt-write.py root=F5.JaNF args=[] :: RECORD /fast/scratch/hyaku/souji-r62/S62SentinelScope/out.3tw6/r.txt rev=8ee29fe49f389cb0b7a328fc6b7dd8d66074e5d0 instrument=tools/instr.sh rc=0
+  ACCEPT  rc=0 writer=cand.py root=F5.JaNF args=[] :: RECORD /fast/scratch/hyaku/souji-r62/S62SentinelScope/out.0xLW/r.txt rev=8ee29fe49f389cb0b7a328fc6b7dd8d66074e5d0 instrument=tools/instr.sh rc=0
+== F6 subdirectory root: ls-files scope vs status scope
+  cwd=tools ls-files -v -z:
+H counter.py|H instr.sh|
+  cwd=tools ls-files -v -z -- ':(top)':
+S ../notes.md|H counter.py|H instr.sh|
+  cwd=tools status --porcelain:
+  rc=0
+  cwd=tools rev-parse --show-toplevel:
+/fast/scratch/hyaku/souji-r62/S62SentinelScope/F6.2yFL
+  writer subdir root (instrument resolution is cwd/top ambiguous; recorded as-is):
+  REFUSE  rc=2 writer=cand.py root=tools args=[] :: refused: instr.sh absent at 8ee29fe49f389cb0b7a328fc6b7dd8d66074e5d0
+  REFUSE  rc=2 writer=souji-receipt-write.py root=tools args=[] :: refused: instr.sh absent at 8ee29fe49f389cb0b7a328fc6b7dd8d66074e5d0
+== F7 stat-spoof: same size + touch -r (ctime cannot be reset)
+size=20 forged-size=20
+ M tools/counter.py
+  status rc=0
+  REFUSE  rc=2 writer=cand.py root=F7.V0er args=[] :: refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+== F8 scratch-only: sweep /tmp artefacts' mtimes (no deletion)
+2026-11-05 05:55:34.333908996 -0300 /tmp/alma.log
+2026-11-05 05:54:26.673277725 -0300 /tmp/mori-r17-ctxcheck-pnxsnhyb
+== F9 lane .git entries newer than swarm-registry marker (read-only)
+/home/vgpnk/Projects/shokunin/souji-shokunin/.git
+2026-11-05 05:37:11.680118971 -0300 /home/vgpnk/Projects/shokunin/souji-shokunin/.git/index
+2026-11-05 05:54:51.710131150 -0300 /home/vgpnk/Projects/shokunin/souji-shokunin/.git
+PROBES2 DONE

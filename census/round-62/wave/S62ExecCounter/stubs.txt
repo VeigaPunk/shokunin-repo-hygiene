@@ -1,0 +1,49 @@
+=== stub-accept (always writes OUT, exit 0) ===
+# c1-counter root=/home/vgpnk/Projects/shokunin/souji-shokunin base-rev=16fa821fdce00e709d6895ccfc7aaffa465af195 rev=none arm=tool
+# slot base=/fast/scratch/hyaku/souji-r62/S62ExecCounter/work-stub-accept/slots/base.py sha256=367a0ca3bdea35714f1c1dba7bca407f05e8ec8d8f6e9c16f071d6e20e503d2c
+# slot new=/fast/scratch/hyaku/souji-r62/S62ExecCounter/work-stub-accept/slots/new.py sha256=99b4470cf54a13163bb9d478dffec73e4739a1997fe3b29234cd112c3e2ede57
+CASE A expect=accept base=accept base_findings=- new=accept new_findings=-
+# detail A name=honest-clean rev=b407d504c33a base_rc=0 new_rc=0 base_stderr= new_stderr=
+CASE B expect=accept base=accept base_findings=- new=accept new_findings=-
+# detail B name=honest-allow-dirty rev=b407d504c33a base_rc=0 new_rc=0 base_stderr= new_stderr=
+CASE C expect=refuse base=refuse base_findings=lane worktree is dirty new=accept new_findings=-
+# detail C name=dirty-visible rev=b407d504c33a base_rc=2 new_rc=0 base_stderr=refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override new_stderr=
+CASE D expect=refuse base=accept base_findings=- new=accept new_findings=-
+# detail D name=skip-worktree-forged rev=b407d504c33a base_rc=0 new_rc=0 base_stderr= new_stderr=
+CASE E expect=refuse base=accept base_findings=- new=accept new_findings=-
+# detail E name=assume-unchanged-forged rev=b407d504c33a base_rc=0 new_rc=0 base_stderr= new_stderr=
+CASE F expect=refuse base=accept base_findings=- new=accept new_findings=-
+# detail F name=skip-worktree-unmodified rev=b407d504c33a base_rc=0 new_rc=0 base_stderr= new_stderr=
+CASE G expect=refuse base=refuse base_findings=- new=accept new_findings=-
+# detail G name=instrument-skip-worktree-forged rev=b407d504c33a base_rc=2 new_rc=0 base_stderr=refused: worktree tools/instr.sh differs from committed bytes at b407d504c33aa7fb0bb5962b9173cc848c6f2988 new_stderr=
+REGRESS base=PASS new=FAIL
+# regress-detail base rc=0 last=SUMMARY cases=8 pass=8 fail=0 control=ALWAYS-WRITE-REJECTED,ALWAYS-REFUSE-REJECTED
+# regress-detail new rc=1 last=SUMMARY cases=8 pass=0 fail=8 control=ALWAYS-WRITE-REJECTED,ALWAYS-REFUSE-REJECTED
+SUMMARY matrix=7 base_forgeries=3 base_honest=2 new_forgeries=5 new_honest=2 class_mismatches=5 regress=FAIL
+EXIT=1
+shell_exit=1
+
+=== stub-refuse (always exit 2, never writes OUT) ===
+# c1-counter root=/home/vgpnk/Projects/shokunin/souji-shokunin base-rev=16fa821fdce00e709d6895ccfc7aaffa465af195 rev=none arm=tool
+# slot base=/fast/scratch/hyaku/souji-r62/S62ExecCounter/work-stub-refuse/slots/base.py sha256=367a0ca3bdea35714f1c1dba7bca407f05e8ec8d8f6e9c16f071d6e20e503d2c
+# slot new=/fast/scratch/hyaku/souji-r62/S62ExecCounter/work-stub-refuse/slots/new.py sha256=7c557320ed90b5f356b89db78c138bf3a61b930ae154808537e1952a04f15748
+CASE A expect=accept base=accept base_findings=- new=refuse new_findings=-
+# detail A name=honest-clean rev=b407d504c33a base_rc=0 new_rc=2 base_stderr= new_stderr=
+CASE B expect=accept base=accept base_findings=- new=refuse new_findings=-
+# detail B name=honest-allow-dirty rev=b407d504c33a base_rc=0 new_rc=2 base_stderr= new_stderr=
+CASE C expect=refuse base=refuse base_findings=lane worktree is dirty new=refuse new_findings=-
+# detail C name=dirty-visible rev=b407d504c33a base_rc=2 new_rc=2 base_stderr=refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override new_stderr=
+CASE D expect=refuse base=accept base_findings=- new=refuse new_findings=-
+# detail D name=skip-worktree-forged rev=b407d504c33a base_rc=0 new_rc=2 base_stderr= new_stderr=
+CASE E expect=refuse base=accept base_findings=- new=refuse new_findings=-
+# detail E name=assume-unchanged-forged rev=b407d504c33a base_rc=0 new_rc=2 base_stderr= new_stderr=
+CASE F expect=refuse base=accept base_findings=- new=refuse new_findings=-
+# detail F name=skip-worktree-unmodified rev=b407d504c33a base_rc=0 new_rc=2 base_stderr= new_stderr=
+CASE G expect=refuse base=refuse base_findings=- new=refuse new_findings=-
+# detail G name=instrument-skip-worktree-forged rev=b407d504c33a base_rc=2 new_rc=2 base_stderr=refused: worktree tools/instr.sh differs from committed bytes at b407d504c33aa7fb0bb5962b9173cc848c6f2988 new_stderr=
+REGRESS base=PASS new=FAIL
+# regress-detail base rc=0 last=SUMMARY cases=8 pass=8 fail=0 control=ALWAYS-WRITE-REJECTED,ALWAYS-REFUSE-REJECTED
+# regress-detail new rc=1 last=SUMMARY cases=8 pass=6 fail=2 control=ALWAYS-WRITE-REJECTED,ALWAYS-REFUSE-REJECTED
+SUMMARY matrix=7 base_forgeries=3 base_honest=2 new_forgeries=0 new_honest=0 class_mismatches=5 regress=FAIL
+EXIT=1
+shell_exit=1

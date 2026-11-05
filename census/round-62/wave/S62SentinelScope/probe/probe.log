@@ -1,0 +1,261 @@
+== T0 candidate build and parse
+cand built
+build rc=0
+parse ok
+parse rc=0
+base sha: 367a0ca3bdea3571  cand sha: 72ab7110e017563b
+== M matrix (frozen A-G)
+A honest-clean
+  ACCEPT  rc=0 writer=souji-receipt-write.py root=A.sYuo args=[] :: RECORD /fast/scratch/hyaku/souji-r62/S62SentinelScope/out.lzPP/r.txt rev=7a8fa6f0768ffec2b5dc128370a14720604ddd9d instrument=tools/instr.sh rc=0
+  ACCEPT  rc=0 writer=cand.py root=A.sYuo args=[] :: RECORD /fast/scratch/hyaku/souji-r62/S62SentinelScope/out.x2s1/r.txt rev=7a8fa6f0768ffec2b5dc128370a14720604ddd9d instrument=tools/instr.sh rc=0
+B honest-allow-dirty
+  ACCEPT  rc=0 writer=souji-receipt-write.py root=B.1Mge args=[--allow-dirty] :: RECORD /fast/scratch/hyaku/souji-r62/S62SentinelScope/out.HbCs/r.txt rev=7a8fa6f0768ffec2b5dc128370a14720604ddd9d instrument=tools/instr.sh rc=0
+  ACCEPT  rc=0 writer=cand.py root=B.1Mge args=[--allow-dirty] :: RECORD /fast/scratch/hyaku/souji-r62/S62SentinelScope/out.TE7i/r.txt rev=7a8fa6f0768ffec2b5dc128370a14720604ddd9d instrument=tools/instr.sh rc=0
+C dirty-visible
+  REFUSE  rc=2 writer=souji-receipt-write.py root=C.S3iD args=[] :: refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+  REFUSE  rc=2 writer=cand.py root=C.S3iD args=[] :: refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+D skip-worktree-forged
+  ACCEPT  rc=0 writer=souji-receipt-write.py root=D.BqPl args=[] :: RECORD /fast/scratch/hyaku/souji-r62/S62SentinelScope/out.Hl6g/r.txt rev=7a8fa6f0768ffec2b5dc128370a14720604ddd9d instrument=tools/instr.sh rc=0
+  REFUSE  rc=2 writer=cand.py root=D.BqPl args=[] :: refused: RECEIPT-INDEX-FLAG-CONCEALED: tools/counter.py carries index tag S; worktree state is not verifiable
+E assume-unchanged-forged
+  ACCEPT  rc=0 writer=souji-receipt-write.py root=E.j3i0 args=[] :: RECORD /fast/scratch/hyaku/souji-r62/S62SentinelScope/out.VV1x/r.txt rev=7a8fa6f0768ffec2b5dc128370a14720604ddd9d instrument=tools/instr.sh rc=0
+  REFUSE  rc=2 writer=cand.py root=E.j3i0 args=[] :: refused: RECEIPT-INDEX-FLAG-CONCEALED: tools/counter.py carries index tag h; worktree state is not verifiable
+F skip-worktree-unmodified
+  ACCEPT  rc=0 writer=souji-receipt-write.py root=F.zGKW args=[] :: RECORD /fast/scratch/hyaku/souji-r62/S62SentinelScope/out.EMjv/r.txt rev=7a8fa6f0768ffec2b5dc128370a14720604ddd9d instrument=tools/instr.sh rc=0
+  REFUSE  rc=2 writer=cand.py root=F.zGKW args=[] :: refused: RECEIPT-INDEX-FLAG-CONCEALED: tools/counter.py carries index tag S; worktree state is not verifiable
+G instrument-skip-worktree-forged
+  REFUSE  rc=2 writer=souji-receipt-write.py root=G.Qzpp args=[] :: refused: worktree tools/instr.sh differs from committed bytes at 7a8fa6f0768ffec2b5dc128370a14720604ddd9d
+  REFUSE  rc=2 writer=cand.py root=G.Qzpp args=[] :: refused: RECEIPT-INDEX-FLAG-CONCEALED: tools/instr.sh carries index tag S; worktree state is not verifiable
+== R60 fixture (candidate, then base)
+r60 cand rc=0
+# control always-write failed cases [1, 2, 3, 4, 5, 6, 7, 8] -> ALWAYS-WRITE-REJECTED
+# control always-refuse failed cases [1, 3] -> ALWAYS-REFUSE-REJECTED
+SUMMARY cases=8 pass=8 fail=0 control=ALWAYS-WRITE-REJECTED,ALWAYS-REFUSE-REJECTED
+r60 base rc=0
+# control always-write failed cases [1, 2, 3, 4, 5, 6, 7, 8] -> ALWAYS-WRITE-REJECTED
+# control always-refuse failed cases [1, 3] -> ALWAYS-REFUSE-REJECTED
+SUMMARY cases=8 pass=8 fail=0 control=ALWAYS-WRITE-REJECTED,ALWAYS-REFUSE-REJECTED
+== P1 --allow-dirty + flag
+  REFUSE  rc=2 writer=cand.py root=P1a.v1rG args=[--allow-dirty] :: refused: RECEIPT-INDEX-FLAG-CONCEALED: tools/counter.py carries index tag S; worktree state is not verifiable
+  REFUSE  rc=2 writer=cand.py root=P1b.lGFe args=[--allow-dirty] :: refused: RECEIPT-INDEX-FLAG-CONCEALED: tools/instr.sh carries index tag h; worktree state is not verifiable
+  REFUSE  rc=2 writer=cand.py root=P1c.abOJ args=[--allow-dirty] :: refused: RECEIPT-INDEX-FLAG-CONCEALED: notes.md carries index tag S; worktree state is not verifiable
+  ACCEPT  rc=0 writer=souji-receipt-write.py root=P1c.abOJ args=[--allow-dirty] :: RECORD /fast/scratch/hyaku/souji-r62/S62SentinelScope/out.lSLO/r.txt rev=f6c1786529a54c11a89ce466d05dd56d8fde317d instrument=tools/instr.sh rc=0
+== P2 GIT_DIR / GIT_WORK_TREE in env (scrub coverage)
+  REFUSE  rc=2 writer=cand.py root=P2dirty.zkh3 args=[] :: refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+  REFUSE  rc=2 writer=souji-receipt-write.py root=P2dirty.zkh3 args=[] :: refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+  REFUSE  rc=2 writer=cand.py root=P2dirty.zkh3 args=[] :: refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+  REFUSE  rc=2 writer=cand.py root=P2b.lHHB args=[] :: refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+  REFUSE  rc=2 writer=souji-receipt-write.py root=P2b.lHHB args=[] :: refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+  control: git -C D2 ls-files -v with GIT_DIR set to CLEAN (should be H, status M):
+H notes.md
+S tools/counter.py
+H tools/instr.sh
+  status-rc=0
+== P3 GIT_INDEX_FILE (index identity; both calls honour the same index?)
+  REFUSE  rc=2 writer=cand.py root=P3a.45wd args=[] :: refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+  REFUSE  rc=2 writer=souji-receipt-write.py root=P3a.45wd args=[] :: refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+  REFUSE  rc=2 writer=cand.py root=P3a.45wd args=[] :: refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+  REFUSE  rc=2 writer=souji-receipt-write.py root=P3a.45wd args=[] :: refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+  REFUSE  rc=2 writer=cand.py root=P3b.BSIr args=[] :: refused: RECEIPT-INDEX-FLAG-CONCEALED: tools/counter.py carries index tag S; worktree state is not verifiable
+  ACCEPT  rc=0 writer=souji-receipt-write.py root=P3b.BSIr args=[] :: RECORD /fast/scratch/hyaku/souji-r62/S62SentinelScope/out.S4JA/r.txt rev=f6c1786529a54c11a89ce466d05dd56d8fde317d instrument=tools/instr.sh rc=0
+== P4 config via env: core.fsmonitor hook hides a visible change (pre-existing surface)
+  control no-env:
+  REFUSE  rc=2 writer=cand.py root=P4.yZ47 args=[] :: refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+  status with fsmonitor hook:
+ M tools/counter.py
+  status-rc=0
+  status with fsmonitor off:
+ M tools/counter.py
+  status-rc=0
+  REFUSE  rc=2 writer=souji-receipt-write.py root=P4.yZ47 args=[] :: refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+  REFUSE  rc=2 writer=cand.py root=P4.yZ47 args=[] :: refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+== P5 core.fileMode=false hides mode-only change
+  control no-env:
+  REFUSE  rc=2 writer=cand.py root=P5.hppA args=[] :: refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+  ACCEPT  rc=0 writer=souji-receipt-write.py root=P5.hppA args=[] :: RECORD /fast/scratch/hyaku/souji-r62/S62SentinelScope/out.uFOa/r.txt rev=f6c1786529a54c11a89ce466d05dd56d8fde317d instrument=tools/instr.sh rc=0
+  ACCEPT  rc=0 writer=cand.py root=P5.hppA args=[] :: RECORD /fast/scratch/hyaku/souji-r62/S62SentinelScope/out.OqQm/r.txt rev=f6c1786529a54c11a89ce466d05dd56d8fde317d instrument=tools/instr.sh rc=0
+== P6 status.showUntrackedFiles=no hides untracked file
+  control no-env:
+  REFUSE  rc=2 writer=cand.py root=P6.hp17 args=[] :: refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+  ACCEPT  rc=0 writer=souji-receipt-write.py root=P6.hp17 args=[] :: RECORD /fast/scratch/hyaku/souji-r62/S62SentinelScope/out.PQEr/r.txt rev=ddf0a2d330369ec4529e120cb8eb7fa72bbf60e1 instrument=tools/instr.sh rc=0
+  ACCEPT  rc=0 writer=cand.py root=P6.hp17 args=[] :: RECORD /fast/scratch/hyaku/souji-r62/S62SentinelScope/out.4YDv/r.txt rev=ddf0a2d330369ec4529e120cb8eb7fa72bbf60e1 instrument=tools/instr.sh rc=0
+== P7 honest sparse-checkout (false-positive check) and config-only sparse
+  sparse-checkout rc=0
+H notes.md
+H tools/counter.py
+H tools/instr.sh
+  status-rc=0
+  ACCEPT  rc=0 writer=souji-receipt-write.py root=P7.6VX1 args=[] :: RECORD /fast/scratch/hyaku/souji-r62/S62SentinelScope/out.yplo/r.txt rev=ddf0a2d330369ec4529e120cb8eb7fa72bbf60e1 instrument=tools/instr.sh rc=0
+  ACCEPT  rc=0 writer=cand.py root=P7.6VX1 args=[] :: RECORD /fast/scratch/hyaku/souji-r62/S62SentinelScope/out.l5xX/r.txt rev=ddf0a2d330369ec4529e120cb8eb7fa72bbf60e1 instrument=tools/instr.sh rc=0
+  config-only sparse + forged counter:
+  REFUSE  rc=2 writer=souji-receipt-write.py root=P7b.3Xd9 args=[] :: refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+  REFUSE  rc=2 writer=cand.py root=P7b.3Xd9 args=[] :: refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+== P8 subdirectory root (candidate scope = cwd-scoped ls-files)
+  git -C tools status (repo-wide view):
+  status-rc=0
+  REFUSE  rc=2 writer=souji-receipt-write.py root=tools args=[] :: refused: instr.sh absent at ddf0a2d330369ec4529e120cb8eb7fa72bbf60e1
+  REFUSE  rc=2 writer=cand.py root=tools args=[] :: refused: instr.sh absent at ddf0a2d330369ec4529e120cb8eb7fa72bbf60e1
+  control: same flagged file with repo top as root:
+  REFUSE  rc=2 writer=cand.py root=P8.0ENn args=[] :: refused: RECEIPT-INDEX-FLAG-CONCEALED: notes.md carries index tag S; worktree state is not verifiable
+== P9 symlinks in path
+  ACCEPT  rc=0 writer=souji-receipt-write.py root=P9a.mD20 args=[] :: RECORD /fast/scratch/hyaku/souji-r62/S62SentinelScope/out.NKHW/r.txt rev=ddf0a2d330369ec4529e120cb8eb7fa72bbf60e1 instrument=tools/instr.sh rc=0
+  REFUSE  rc=2 writer=cand.py root=P9a.mD20 args=[] :: refused: RECEIPT-INDEX-FLAG-CONCEALED: tools/counter.py carries index tag S; worktree state is not verifiable
+  dir-symlink, no flags:
+  REFUSE  rc=2 writer=souji-receipt-write.py root=P9b.c9wM args=[] :: refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+  REFUSE  rc=2 writer=cand.py root=P9b.c9wM args=[] :: refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+  instr leaf symlink + flag:
+  REFUSE  rc=2 writer=souji-receipt-write.py root=P9c.8tjh args=[] :: refused: tools/instr.sh is a symlink in the worktree
+  REFUSE  rc=2 writer=cand.py root=P9c.8tjh args=[] :: refused: RECEIPT-INDEX-FLAG-CONCEALED: tools/instr.sh carries index tag S; worktree state is not verifiable
+  dir-symlink + flagged instr with forged bytes:
+  REFUSE  rc=2 writer=souji-receipt-write.py root=P9d.9YZC args=[] :: refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+  REFUSE  rc=2 writer=cand.py root=P9d.9YZC args=[] :: refused: RECEIPT-INDEX-FLAG-CONCEALED: tools/instr.sh carries index tag S; worktree state is not verifiable
+== P10 TOCTOU: change state DURING the command (after check, before write)
+  flags set during run:
+  ACCEPT  rc=0 writer=souji-receipt-write.py root=P10a.vY9f args=[] :: RECORD /fast/scratch/hyaku/souji-r62/S62SentinelScope/out.c8Be/r.txt rev=ddf0a2d330369ec4529e120cb8eb7fa72bbf60e1 instrument=tools/instr.sh rc=0
+  REFUSE  rc=2 writer=cand.py root=P10a.vY9f args=[] :: refused: RECEIPT-INDEX-FLAG-CONCEALED: tools/counter.py carries index tag S; worktree state is not verifiable
+  visible dirt during run:
+  ACCEPT  rc=0 writer=souji-receipt-write.py root=P10b.hYgJ args=[] :: RECORD /fast/scratch/hyaku/souji-r62/S62SentinelScope/out.XzU1/r.txt rev=ddf0a2d330369ec4529e120cb8eb7fa72bbf60e1 instrument=tools/instr.sh rc=0
+  REFUSE  rc=2 writer=cand.py root=P10b.hYgJ args=[] :: refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+  instrument forged during run:
+  ACCEPT  rc=0 writer=cand.py root=P10c.BHOj args=[] :: RECORD /fast/scratch/hyaku/souji-r62/S62SentinelScope/out.zFOi/r.txt rev=ddf0a2d330369ec4529e120cb8eb7fa72bbf60e1 instrument=tools/instr.sh rc=0
+  receipt P10c.BHOj-cand.py.11550.txt:
+instrument=tools/instr.sh
+instrument_sha256=f1cc5577072e31732f57ca468ae4377d0105b0de2830dba21128dc4c3703dffa
+rev=ddf0a2d330369ec4529e120cb8eb7fa72bbf60e1
+command=sh /fast/scratch/hyaku/souji-r62/S62SentinelScope/flip.sh /fast/scratch/hyaku/souji-r62/S62SentinelScope/P10c.BHOj instr
+cmd-done
+EXIT=0
+  committed instr sha: f1cc5577072e3173
+== P11 env that could change ls-files -v output or silence the refusal (D has S on counter)
+  env[GIT_TRACE=1]:
+05:54:36.026043 git.c:506               trace: built-in: git ls-files -v -z
+H notes.md|S tools/counter.py|H tools/instr.sh|
+05:54:36.026956 git.c:506               trace: built-in: git rev-parse HEAD
+  REFUSE  rc=2 writer=cand.py root=P11.Pj5I args=[] :: refused: RECEIPT-INDEX-FLAG-CONCEALED: tools/counter.py carries index tag S; worktree state is not verifiable
+  env[GIT_TRACE2_PERF=/fast/scratch/hyaku/souji-r62/S62SentinelScope/t2.log]:
+H notes.md|S tools/counter.py|H tools/instr.sh|
+  REFUSE  rc=2 writer=cand.py root=P11.Pj5I args=[] :: refused: RECEIPT-INDEX-FLAG-CONCEALED: tools/counter.py carries index tag S; worktree state is not verifiable
+  env[GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.quotePath GIT_CONFIG_VALUE_0=false]:
+H notes.md|S tools/counter.py|H tools/instr.sh|
+  REFUSE  rc=2 writer=cand.py root=P11.Pj5I args=[] :: refused: RECEIPT-INDEX-FLAG-CONCEALED: tools/counter.py carries index tag S; worktree state is not verifiable
+  env[GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.sparseCheckout GIT_CONFIG_VALUE_0=false]:
+H notes.md|S tools/counter.py|H tools/instr.sh|
+  REFUSE  rc=2 writer=cand.py root=P11.Pj5I args=[] :: refused: RECEIPT-INDEX-FLAG-CONCEALED: tools/counter.py carries index tag S; worktree state is not verifiable
+  env[GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.fsmonitor GIT_CONFIG_VALUE_0=/fast/scratch/hyaku/souji-r62/S62SentinelScope/fsm.sh]:
+H notes.md|S tools/counter.py|H tools/instr.sh|
+  REFUSE  rc=2 writer=cand.py root=P11.Pj5I args=[] :: refused: RECEIPT-INDEX-FLAG-CONCEALED: tools/counter.py carries index tag S; worktree state is not verifiable
+  env[GIT_LITERAL_PATHSPECS=1]:
+H notes.md|S tools/counter.py|H tools/instr.sh|
+  REFUSE  rc=2 writer=cand.py root=P11.Pj5I args=[] :: refused: RECEIPT-INDEX-FLAG-CONCEALED: tools/counter.py carries index tag S; worktree state is not verifiable
+  env[GIT_NO_REPLACE_OBJECTS=1]:
+H notes.md|S tools/counter.py|H tools/instr.sh|
+  REFUSE  rc=2 writer=cand.py root=P11.Pj5I args=[] :: refused: RECEIPT-INDEX-FLAG-CONCEALED: tools/counter.py carries index tag S; worktree state is not verifiable
+  env[GIT_OPTIONAL_LOCKS=1]:
+H notes.md|S tools/counter.py|H tools/instr.sh|
+  REFUSE  rc=2 writer=cand.py root=P11.Pj5I args=[] :: refused: RECEIPT-INDEX-FLAG-CONCEALED: tools/counter.py carries index tag S; worktree state is not verifiable
+  unflagged untracked + cand:
+  REFUSE  rc=2 writer=cand.py root=P11b.CvRJ args=[] :: refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+  filename with newline (renamed, flagged):
+  REFUSE  rc=2 writer=cand.py root=P11c.OUoB args=[] :: refused: RECEIPT-INDEX-FLAG-CONCEALED: tools/counter.py carries index tag S; worktree state is not verifiable
+== P12 unmerged (stage>0) entry: tag M
+H notes.md|H tools/counter.py|M tools/counter.py|M tools/counter.py|H tools/instr.sh|
+  REFUSE  rc=2 writer=souji-receipt-write.py root=P12.n3yl args=[] :: refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+  REFUSE  rc=2 writer=cand.py root=P12.n3yl args=[] :: refused: RECEIPT-INDEX-FLAG-CONCEALED: tools/counter.py carries index tag M; worktree state is not verifiable
+== P13 intent-to-add
+H notes.md
+H tools/counter.py
+H tools/instr.sh
+H tools/new.py
+  REFUSE  rc=2 writer=souji-receipt-write.py root=P13.9pP9 args=[] :: refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+  REFUSE  rc=2 writer=cand.py root=P13.9pP9 args=[] :: refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+== P14 skip+assume on same path
+H notes.md
+s tools/counter.py
+H tools/instr.sh
+  REFUSE  rc=2 writer=cand.py root=P14.70tE args=[] :: refused: RECEIPT-INDEX-FLAG-CONCEALED: tools/counter.py carries index tag s; worktree state is not verifiable
+== SWEEP
+lane HEAD: 16fa821fdce00e709d6895ccfc7aaffa465af195
+lane ls-files -v tags:
+  17350 H
+lane status:
+status-rc=0
+wave dir:
+total 8
+drwxr-xr-x 1 vgpnk vgpnk  332 Nov  5 05:53 .
+drwxr-xr-x 1 vgpnk vgpnk  162 Nov  5 05:50 ..
+drwxr-xr-x 1 vgpnk vgpnk    0 Nov  5 05:53 S62ConnectorOverlap
+drwxr-xr-x 1 vgpnk vgpnk   90 Nov  5 05:54 S62CriticClaim
+drwxr-xr-x 1 vgpnk vgpnk  106 Nov  5 05:53 S62MutDirtyCase
+drwxr-xr-x 1 vgpnk vgpnk    0 Nov  5 05:51 S62ReviewerCandidate
+drwxr-xr-x 1 vgpnk vgpnk    0 Nov  5 05:53 S62ReviewerDesign
+drwxr-xr-x 1 vgpnk vgpnk   16 Nov  5 05:50 S62ScoutSources
+drwxr-xr-x 1 vgpnk vgpnk  334 Nov  5 05:52 S62ScribeDraft
+-rw-r--r-- 1 vgpnk vgpnk 1023 Nov  5 05:52 S62ScribeDraft.md
+drwxr-xr-x 1 vgpnk vgpnk    0 Nov  5 05:51 S62SentinelScope
+-rw------- 1 vgpnk vgpnk 2693 Nov  5 05:49 swarm-registry.json
+lane files newer than w1 (excl .git):
+/home/vgpnk/Projects/shokunin/souji-shokunin/.git
+/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-62
+/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-62/w1-dispatch.json
+/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-62/w1
+/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-62/w1/S62ScoutSources
+/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-62/w1/S62ScoutSources/captures
+/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-62/w1/S62SentinelScope
+/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-62/w1/S62MutDirtyCase
+/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-62/w1/S62MutDirtyCase/mutants
+/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-62/w1/S62MutDirtyCase/mutants/M0-base.py
+/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-62/w1/S62MutDirtyCase/mutants/r60-fixture-copy-of-lane.py
+/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-62/w1/S62MutDirtyCase/mutants/M1.py
+/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-62/w1/S62MutDirtyCase/mutants/M1.diff
+/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-62/w1/S62MutDirtyCase/mutants/M2.py
+/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-62/w1/S62MutDirtyCase/mutants/M2.diff
+/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-62/w1/S62MutDirtyCase/mutants/M3.py
+/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-62/w1/S62MutDirtyCase/mutants/M3.diff
+/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-62/w1/S62MutDirtyCase/mutants/M4.py
+/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-62/w1/S62MutDirtyCase/mutants/M4.diff
+/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-62/w1/S62MutDirtyCase/mutants/M5.py
+/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-62/w1/S62MutDirtyCase/mutants/M5.diff
+/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-62/w1/S62MutDirtyCase/mutants/M6.py
+/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-62/w1/S62MutDirtyCase/mutants/M6.diff
+/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-62/w1/S62MutDirtyCase/fixture-logs
+/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-62/w1/S62MutDirtyCase/fixture-logs/fixture-M1.log
+/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-62/w1/S62MutDirtyCase/fixture-logs/fixture-M2.log
+/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-62/w1/S62MutDirtyCase/fixture-logs/fixture-M3.log
+/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-62/w1/S62MutDirtyCase/fixture-logs/fixture-M4.log
+/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-62/w1/S62MutDirtyCase/fixture-logs/fixture-M5.log
+/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-62/w1/S62MutDirtyCase/fixture-logs/fixture-M6.log
+/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-62/w1/S62MutDirtyCase/fixture-logs/fixture-base.log
+/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-62/w1/S62MutDirtyCase/concealment
+/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-62/w1/S62MutDirtyCase/concealment/conceal.sh
+/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-62/w1/S62MutDirtyCase/concealment/conceal-rows.log
+/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-62/w1/S62MutDirtyCase/SHA256SUMS.txt
+/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-62/w1/S62MutDirtyCase/report.md
+/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-62/w1/S62ReviewerCandidate
+/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-62/w1/S62ScribeDraft
+/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-62/w1/S62ScribeDraft/lesson-round-62.draft.md
+/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-62/w1/S62ScribeDraft/log-round-62.draft.md
+find /tmp (task spec sweep):
+/tmp/alma.log
+/tmp/mori-r17-ctxcheck-pnxsnhyb
+/tmp/mori-r17-ctxcheck-pnxsnhyb/positive.json
+/tmp/mori-r17-ctxcheck-pnxsnhyb/positive-taskcall.json
+/tmp/mori-r17-ctxcheck-pnxsnhyb/positive-string-doc.json
+/tmp/mori-r17-ctxcheck-pnxsnhyb/drop-no_broadcast_exact_id.json
+/tmp/mori-r17-ctxcheck-pnxsnhyb/drop-lane_report_resolution.json
+/tmp/mori-r17-ctxcheck-pnxsnhyb/drop-no_verification_permission.json
+/tmp/mori-r17-ctxcheck-pnxsnhyb/drop-pacman_pause.json
+/tmp/mori-r17-ctxcheck-pnxsnhyb/drop-credential_prohibition.json
+find-rc=1
+scratch root:
+total 16
+drwxr-xr-x  10 vgpnk vgpnk  187 Nov  5 05:53 .
+drwxr-xr-x  24 vgpnk vgpnk 4096 Nov  5 05:53 ..
+drwxr-xr-x   2 vgpnk vgpnk    6 Nov  5 05:50 l1-freeze
+drwxr-xr-x   3 vgpnk vgpnk   37 Nov  5 05:46 l1probe
+drwxr-xr-x   2 vgpnk vgpnk    6 Nov  5 05:53 S62ConnectorOverlap
+drwxr-xr-x  33 vgpnk vgpnk 4096 Nov  5 05:54 S62CriticClaim
+drwxr-xr-x   8 vgpnk vgpnk 4096 Nov  5 05:54 S62ReviewerCandidate
+drwxr-xr-x   2 vgpnk vgpnk    6 Nov  5 05:53 S62ReviewerDesign
+drwxr-xr-x   4 vgpnk vgpnk  164 Nov  5 05:54 S62ScoutSources
+drwxr-xr-x 111 vgpnk vgpnk 4096 Nov  5 05:54 S62SentinelScope
+PROBES DONE

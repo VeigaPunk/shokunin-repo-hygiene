@@ -1,0 +1,36 @@
+diff --git i/tools/souji-receipt-write.py w/tools/souji-receipt-write.py
+index 6bc33b22..07a138be 100755
+--- i/tools/souji-receipt-write.py
++++ w/tools/souji-receipt-write.py
+@@ -26,6 +26,9 @@ Usage:
+   souji-receipt-write.py --root LANE --rev FULL40 --instrument RELPATH \
+       --out FILE [--max-bytes N] [--allow-dirty] (--command "CMD" | -- ARGV...)
+   souji-receipt-write.py --selftest --work DIR [--report FILE]
++
++round 62 (C1): refuses any index entry whose
++`git ls-files -v` tag is not H, before the dirty check.
+ """
+ from __future__ import annotations
+ 
+@@ -127,6 +130,21 @@ def write_receipt(ns: argparse.Namespace) -> int:
+     if ns.max_bytes < 0:
+         refuse(f"--max-bytes must be >= 0 ({ns.max_bytes})")
+ 
++    # r62 C1 (calibration): a skip-worktree (S) or assume-unchanged (h) index entry hides worktree
++    # divergence from `git status`, so a clean porcelain status proves nothing about that path.
++    # Refuse unconditionally; --allow-dirty does not override this.
++    fl = git(root, "ls-files", "-v", "-z")
++    if fl.returncode != 0:
++        refuse(f"cannot read index flags of {root}: {fl.stderr.decode('utf-8', 'replace').strip()}")
++    for rec in fl.stdout.split(b"\0"):
++        if not rec:
++            continue
++        tag, _, path = rec.partition(b" ")
++        if tag != b"H":
++            refuse(f"RECEIPT-INDEX-FLAG-CONCEALED: {path.decode('utf-8', 'replace')} carries index flag "
++                   f"{tag.decode('utf-8', 'replace')}; skip-worktree or assume-unchanged hides worktree divergence "
++                   f"from git status; clear it with git update-index --no-skip-worktree or --no-assume-unchanged, then retry")
++
+     # behaviour 7: clean lane tree unless --allow-dirty
+     st = git(root, "status", "--porcelain")
+     if st.returncode != 0:

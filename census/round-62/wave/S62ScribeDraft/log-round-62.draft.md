@@ -1,0 +1,9 @@
+## Round 62 (2026-11-05, Linux; attempt 1)
+
+- One claim, C1 calibration (the lowest owned axis, score 7; numeric score unchanged): the receipt writer `tools/souji-receipt-write.py` refuses an index-flagged entry (skip-worktree `S`, assume-unchanged `h`) before its clean-tree check, with `RECEIPT-INDEX-FLAG-CONCEALED:`, unconditionally under `--allow-dirty`. Motivating defect: r61 reviewer HIGH-1 (`corpus/knowledge/skip-worktree-concealment.md`). Lane base `16fa821fdce00e709d6895ccfc7aaffa465af195`. Reads for the round: `corpus/lessons/round-62.md`.
+- Landed commits: claim and tool `{{COMMIT_CLAIM}}`; control receipts `{{COMMIT_CONTROLS}}`; predicate freeze `{{COMMIT_FREEZE}}` (`census/round-62/preregistration.txt`); after-measurement at `{{COMMIT_MEASURED}}`.
+- Frontier: S292 (git-ls-files(1) `-v` tag definitions, opened 2026-11-05 by the scout seat) `{{S292_DISPOSITION}}`; S291 (git-update-index(1) NOTES) re-opened, recheck `{{S291_RECHECK_RESULT}}`. Rejected inference: "a silent `git status --porcelain` certifies a flagged path's worktree bytes" (S291 NOTES).
+- Measured: do-nothing (base bytes in the candidate slot) `new_forgeries={{DO_NOTHING_FORGERIES}} EXIT={{DO_NOTHING_EXIT}}`; candidate `new_forgeries={{AFTER_FORGERIES}} new_honest={{AFTER_HONEST}} class_mismatches={{CLASS_MISMATCHES}} EXIT={{AFTER_EXIT}}`; r60 fixture `{{R60_FIXTURE_TALLY}}`.
+- Mistakes (`corpus/lessons/round-62.md`): M1 concealment trusted as clean-tree evidence (dirty check at `tools/souji-receipt-write.py` line 131 is `git status --porcelain` alone); captured by none; fix is the C1 refusal, shown able to fail by the do-nothing control.
+- Routed, not claimed: MACHINE BLOCK (L0 question appended), numeric axis mapping (L0 question appended), F3 matrix row (named limit), historical records (carried).
+- Tools: none installed or updated. No pacman transaction. Scratch under `/fast/scratch/hyaku/souji-r62/` only; removed at landing (`{{SCRATCH_REMOVED}}`).

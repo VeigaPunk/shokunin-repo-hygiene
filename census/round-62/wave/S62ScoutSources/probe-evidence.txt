@@ -1,0 +1,66 @@
+=== git version ===
+git version 2.56.0
+
+=== fixture A: one skip-worktree path, one assume-unchanged path ===
+fixture=/fast/scratch/hyaku/souji-r62/S62ScoutSources/tmp.DiUMG2TL0O (toplevel asserted == D)
+-- baseline (no flags) --
+H tools/counter.py
+H tools/instr.sh
+rc=0
+-- after update-index --skip-worktree / --assume-unchanged --
+S tools/counter.py
+h tools/instr.sh
+rc=0
+skip-worktree: ls-files -v -- tools/counter.py -> [S] rc=0 expected=[S]
+assume-unchanged: ls-files -v -- tools/instr.sh -> [h] rc=0 expected=[h]
+-- ls-files -t (no -v: lowercase marking absent) --
+S tools/counter.py
+H tools/instr.sh
+rc=0
+-- ls-files -v -z (record layout: tag byte, space, path, NUL) --
+0000000   S       t   o   o   l   s   /   c   o   u   n   t   e   r   .
+0000020   p   y  \0   h       t   o   o   l   s   /   i   n   s   t   r
+0000040   .   s   h  \0
+0000044
+rc=0
+-- git status --porcelain with forged worktree bytes --
+rc=0 (empty output above = porcelain stays silent)
+-- git status --porcelain after the flags are removed --
+ M tools/counter.py
+ M tools/instr.sh
+rc=0
+
+=== fixture B: both bits set on one path ===
+s tools/both.py
+rc=0 (lowercase s = skip-worktree letter lowercased by the -v rule)
+S tools/both.py
+rc=0 (uppercase S without -v)
+
+=== fixture C: unmerged path (tag M) and non-flag tags ===
+merge rc=1 (1 = conflict produced)
+-- ls-files -v on a conflicted index --
+M tools/mer.py
+M tools/mer.py
+M tools/mer.py
+rc=0
+
+=== fixture D: dirty worktree, NO index flags (tags stay H) ===
+-- ls-files -v (no flags set, worktree dirty) --
+H tools/other.py
+H tools/plain.py
+rc=0
+-- git status --porcelain (non-empty = the base writer's dirty check still fires) --
+ D tools/other.py
+ M tools/plain.py
+rc=0
+
+=== fixture E: ls-files -v -z failure mode outside a repository ===
+rc=128 (nonzero = the candidate's refusal path for a failed read)
+
+=== LANE index read (read-only): tag histogram at lane base ===
+17350
+rc=0 (entries)
+  17350 H
+rc=0 (tag histogram)
+
+PROBE: all observed tag letters matched expectations
