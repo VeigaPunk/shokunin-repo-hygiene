@@ -1,0 +1,66 @@
+Round: 68
+
+Frozen claim predicates for souji round 68 (attempt 1). Lane base: master at round start, e3c174a807e76859a89b49ff276beacf5484cd57
+(clean, pushed). The landed receipt writer tools/souji-receipt-write.py is unchanged this round: blob
+f70da577eb1e1624cc63ab8fd0468565927d9b6a, sha256 b811ee2a7a67d8d3ea6d00fb3a44780ccb807113b9eeaf28f09e01448715a725.
+THIS ROUND CHANGES NO WRITER BYTE. Both claims measure the counter (the instrument) against the writer as it stands.
+The candidate slot for every measurement below is f70da577. The base slot is the r67 base 3639087917eaeb28719d7603110a6ec22782100e
+(writer blob a8c47d36…), kept identical to the r67 counters so the base column is comparable.
+
+Instruments and controls were committed before this freeze in commit 8e4e84cc4a01b8c9b6b387954b2b05b7605896a7
+(census/round-68/c1-counter.py, c1-matrix.tsv, mutate-writer.py, battery/SHA256SUMS, controls/). This file is the freeze.
+Selftest of the frozen counter, committed as control evidence: census/round-68/controls/r68-selftest.txt (`SELFTEST cases=8 pass=8 fail=0`, EXIT=0).
+
+Declared claims: two. They share one counter file (census/round-68/c1-counter.py). C1 reads the mutant battery and the
+matrix; C2 reads only the environment-scrub tuple of that file and the matrix on the candidate. The report states the
+shared file and the r67-to-r68 diff.
+
+Sourced claim: C1's PK6 row (replace-ref forgery) rests on git-replace(1), registry row S301, opened 2026-11-05 this round.
+
+Named limits frozen with this file and not counted as passes: (L1) the base-slot W4 refusal is for an unrelated reason
+(the base writer's rev check runs from the parent cwd: "not a git repository"), so base-side W4 is not a forgery measurement;
+(L2) the honest relative value (GIT_COMMON_DIR=.git from a parent cwd, probe P-rel1) is refused fail-closed by the candidate
+and is NOT a matrix row, because adding it would make the frozen target unmeetable; it stays the operator L0 question of
+round 67; (L3) GIT_NAMESPACE and GIT_CEILING_DIRECTORIES have no writer row (the r67 L3 named limit stands).
+
+## C1
+Axis: calibration (lowest owned axis, score 7). Surface class: bookkeeping-file (the counter's own declared discrimination).
+Declared protections: the writer pins and checks that the r67 C1 claim presents as enforced. Each of the 14 battery mutants removes exactly one of them (census/round-68/battery/SHA256SUMS). A mutant the frozen counter does not refute is a declared-protection mismatch: the lane's self-assessment disagrees with the observed behavior. The count is the number of such mismatches.
+Base: 3639087917eaeb28719d7603110a6ec22782100e
+Counter: census/round-68/c1-counter.py sha256=ab3ac5c78a623c145e768ffb0c233e9f65a892a78431de44790187da3fdb37f0
+Population: census/round-68/c1-matrix.tsv sha256=bb56e69a1c6cff948e4b706756305324654745a9605fd21c309f4ac2a792b2c7
+Control: census/round-68/controls/c1-do-nothing.txt
+Control note: the declared round-68 counter with the base writer (a8c47d36, no f70da577 protections) in the new slot, clean environment: EXIT=1, SUMMARY new_forgeries=2. Before arm (frozen round-67 counter over the candidate and the 14 mutants, a comparison arm, not the control): census/round-68/controls/r67-counter-battery/index.txt; it refutes 7 of 14.
+Target: candidate run `python3 -B census/round-68/c1-counter.py --root . --matrix census/round-68/c1-matrix.tsv --base-rev 3639087917eaeb28719d7603110a6ec22782100e --rev f70da577eb1e1624cc63ab8fd0468565927d9b6a --tool tools/souji-receipt-write.py --work DIR --receipt FILE` prints `SUMMARY matrix=42 base_forgeries=2 base_honest=11 new_forgeries=0 new_honest=11 class_mismatches=0 regress=PASS` with `EXIT=0` and zero `new=error` rows; AND each of the 14 battery mutants run through the same command with `--new-tool <mutant>` in place of --rev/--tool exits 1 with zero `new=error` rows; declared-protection mismatches after = 0; and before (the do-nothing control, 7 refuted) is at least 1, so the claim is not already met by no work.
+Kill: any mutant exits 0 (survives) or 2 (not evaluated), any `new=error` row, the candidate run exits non-zero or prints a different SUMMARY, or the do-nothing count is 0.
+After: census/round-68/records/c1-after/ (candidate and 14 mutant receipts, measured post-freeze).
+
+## C2
+Axis: operability (the counter as a runnable artifact whose verdict must not depend on the operator shell's environment). Surface class: bookkeeping-file.
+Ambient environment, applied to the counter process: GIT_COMMON_DIR=/nonexistent-r68-probe GIT_NAMESPACE=r68probe GIT_CEILING_DIRECTORIES=/nonexistent-r68-probe.
+Flips = number of differing lines between the clean-environment run and the ambient run of the same counter with the candidate f70da577, over the lines matching `^(CASE|SUMMARY|REGRESS|EXIT=)`: `diff <(grep -E '^(CASE|SUMMARY|REGRESS|EXIT=)' CLEAN) <(grep -E '^(CASE|SUMMARY|REGRESS|EXIT=)' AMBIENT) | grep -c '^[<>]'`.
+Base: 3639087917eaeb28719d7603110a6ec22782100e
+Counter: census/round-68/c1-counter.py sha256=ab3ac5c78a623c145e768ffb0c233e9f65a892a78431de44790187da3fdb37f0
+Population: census/round-68/c1-matrix.tsv sha256=bb56e69a1c6cff948e4b706756305324654745a9605fd21c309f4ac2a792b2c7
+Control: census/round-68/controls/c2-do-nothing-ambient.txt
+Control note: the declared round-68 counter with the base writer under the ambient environment: EXIT=1, still refuses (non-silent under ambient env). Before arm (frozen round-67 counter, clean vs ambient; a comparison arm): census/round-68/controls/ambient/r67-clean.txt and r67-ambient.txt; flips = 35.
+Target: the frozen round-68 counter under the clean and the ambient environment, with the candidate, flips = 0, and both runs exit 0 with the C1 candidate SUMMARY; and before flips (r67 counter) is at least 1.
+Kill: flips after greater than 0, either run exits non-zero, or the before flips count is 0.
+After: census/round-68/records/c2-after/ (clean and ambient receipts, measured post-freeze).
+
+## Verdict rule
+Each claim verifies or is unmet on its own predicate, measured by the commands above. Neither claim is exploratory. Neither verdict
+changes a 0–10 axis score in SCORECARD.md; each is recorded as a measured move on the counter. Axis harm: a claim is harmed
+if the other claim's measurement breaks (the 31 r67 rows must keep their verdicts on the candidate; the clean-run SUMMARY is the
+same reference).
+
+## MACHINE BLOCK
+CLAIM C1
+axis: calibration
+surface-class: bookkeeping-file
+enumerate: battery mutants K1 K2 K3 K4 K5 K6 K7 K8 M-CD-CALL M-CD-EMPTY M-CD-NCABS M-CD-NCRAW M-CD-ROOTREL M-CD-SCRUB in census/round-68/battery/SHA256SUMS; matrix rows A..PK7h in census/round-68/c1-matrix.tsv
+CLAIM C2
+axis: operability
+surface-class: bookkeeping-file
+enumerate: ambient variables GIT_COMMON_DIR GIT_NAMESPACE GIT_CEILING_DIRECTORIES; matrix rows A..PK7h in census/round-68/c1-matrix.tsv
+END
