@@ -987,5 +987,5 @@ a measured edge class does not promote a frontier ground to Core (PROVINCE
 ### Frontier (r67 GIT_COMMON_DIR route)
 
 - **F4 / common-dir route (frontier, not Core).** `knowledge/common-dir-route-receipt-writer.md` records the `GIT_COMMON_DIR` environment route the round-66 writer left open (round-66 W2): git consumes a caller-set value as the repository's common directory (S300, `setup.c`), and the round-67 writer value-checks it. Named limits (relative values with the writer cwd different from the root, a fail-closed trade pending the operator; submodule contexts; start-of-run scope; `GIT_NAMESPACE` and `GIT_CEILING_DIRECTORIES` unrefused) stay in the entry.
-- Sources: S300 added (`scripts/sources-census.sh validate --root /home/vgpnk/Projects/shokunin souji`, rc 0, 223 rows). S298/S299 unchanged.
+- Sources: S300 added (`scripts/sources-census.sh validate --root /home/vgpnk/Projects/shokunin souji`, rc 0, 223 rows). S298 `used-by` extended by one path (old→new logged in `corpus/lessons/round-67.md` M11); S299 unchanged.
 - Assimilation: none (`considerthese/` absent; the shokuknow souji merge package holds no receipt-writer env-route, common-dir, mode-bit or statement-agreement theme, see `census/round-67/wave/w1/S67ConnectorOverlap/shokuknow-scan.md`).
