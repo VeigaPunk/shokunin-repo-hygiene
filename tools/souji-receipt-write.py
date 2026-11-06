@@ -72,6 +72,19 @@ magic"; source S304). Under GIT_LITERAL_PATHSPECS=1 the `:(top)` flag reads matc
 check passed vacuously (receipts written over skip-worktree, gitlink and absent rows); under GLOB/ICASE the
 instrument `ls-tree -- <rel>` read failed and honest clean trees were refused. The scrub is silent (the variables
 are pathspec semantics, not repository redirects); the wrapped command still receives the caller's environment.
+
+round 71 (C1): the clean-tree witness is not forgeable through a clean filter driver or a repository-local
+core.fileMode=false. A filter attribute whose `filter.<driver>.clean` (or `.process`) is configured converts the
+worktree bytes before `git status` compares them (gitattributes(5) "filter": the clean command converts worktree
+content upon checkin; source S306), so a size-preserving edit the driver maps back reads as clean. Every git call
+now scrubs GIT_ATTR_SOURCE (git(1) --attr-source, S307: attributes read from a caller-named tree instead of the
+worktree) and pins `-c core.fileMode=true` (git-config(1) core.fileMode, S308: whether the executable bit is
+honored). Before the status read and again after the wrapped command, every tracked path's `filter` attribute is
+resolved (`git check-attr --stdin -z filter` over `ls-files -z :(top)`); any value naming a driver with a
+configured clean or process command refuses RECEIPT-FILTER-DRIVER-SET, unconditionally (--allow-dirty does not
+override it). A filter attribute with no configured driver, and a configured driver no tracked path carries, are
+accepted. Named limits: smudge-only drivers (no effect on the witness) and a driver configured outside the
+writer's pinned config scopes (global/system are pinned off) are not read.
 """
 from __future__ import annotations
 
@@ -105,17 +118,50 @@ _TEMP: dict[str, "str | None"] = {TEMP_MARK: None}
 PATHSPEC_ENV = ("GIT_LITERAL_PATHSPECS", "GIT_GLOB_PATHSPECS", "GIT_NOGLOB_PATHSPECS", "GIT_ICASE_PATHSPECS")
 
 
-def git(root: str, *args: str) -> subprocess.CompletedProcess:
+def git(root: str, *args: str, input: "bytes | None" = None) -> subprocess.CompletedProcess:
     """Read-only git plumbing against root; scrub GIT_DIR/GIT_WORK_TREE/GIT_COMMON_DIR so -C is authoritative."""
     env = {k: v for k, v in os.environ.items()
-           if k not in ("GIT_DIR", "GIT_WORK_TREE", "GIT_COMMON_DIR") and k not in PATHSPEC_ENV}
+           if k not in ("GIT_DIR", "GIT_WORK_TREE", "GIT_COMMON_DIR", "GIT_ATTR_SOURCE") and k not in PATHSPEC_ENV}
     env["GIT_OPTIONAL_LOCKS"] = "0"
     # r66 C1: no host config file, system config or replace ref reaches a read; the excludes file is the null device.
     env["GIT_CONFIG_GLOBAL"] = os.devnull
     env["GIT_CONFIG_NOSYSTEM"] = "1"
     env["GIT_NO_REPLACE_OBJECTS"] = "1"
+    # r71 C1: GIT_ATTR_SOURCE is scrubbed above (S307); the executable bit is always honored (S308).
     return subprocess.run(["git", "-C", root, "-c", "core.fsmonitor=false",
-                           "-c", f"core.excludesFile={os.devnull}", *args], capture_output=True, env=env)
+                           "-c", f"core.excludesFile={os.devnull}", "-c", "core.fileMode=true", *args],
+                          capture_output=True, env=env, input=input)
+
+
+FILTER_CLASS = "RECEIPT-FILTER-DRIVER-SET"
+
+
+def _filter_drivers(top: str) -> "list[str]":
+    """r71 C1: sorted driver names that a tracked path's `filter` attribute selects and whose clean or
+    process command is configured. Refuses (exit 2) when the reads themselves fail."""
+    ls = git(top, "ls-files", "-z", ":(top)")
+    if ls.returncode != 0:
+        refuse(f"cannot list tracked paths of {top}: {ls.stderr.decode('utf-8', 'replace').strip()}")
+    if not ls.stdout:
+        return []
+    ca = git(top, "check-attr", "--stdin", "-z", "filter", input=ls.stdout)
+    if ca.returncode != 0:
+        refuse(f"cannot read filter attributes of {top}: {ca.stderr.decode('utf-8', 'replace').strip()}")
+    fields = ca.stdout.split(b"\0")
+    values = {fields[i + 2] for i in range(0, len(fields) - 2, 3)}
+    drivers = []
+    for val in sorted(values - {b"unspecified", b"unset", b"set"}):
+        name = os.fsdecode(val)
+        for key in ("clean", "process"):
+            if git(top, "config", "--get", f"filter.{name}.{key}").returncode == 0:
+                drivers.append(name)
+                break
+    return drivers
+
+
+def _filter_refusal(drivers: "list[str]") -> str:
+    return (f"{FILTER_CLASS}: tracked paths carry a filter attribute whose clean/process driver is configured "
+            f"({', '.join(drivers)}); a clean filter can hide worktree changes from git status; no receipt written")
 
 
 def refuse(msg: str) -> None:
@@ -399,6 +445,10 @@ def write_receipt(ns: argparse.Namespace) -> int:
         tag, _, path = rec.partition(b" ")
         if tag != b"H":
             refuse(_flag_refusal(top, tag, path))
+    # r71 C1: a configured clean/process filter on any tracked path makes the status witness untrustworthy.
+    pre_drivers = _filter_drivers(top)
+    if pre_drivers:
+        refuse(_filter_refusal(pre_drivers))
 
     # behaviour 7: clean lane tree unless --allow-dirty (r65 C1: the status reads override
     # status.showUntrackedFiles to `all`, so operator config cannot hide untracked entries)
@@ -505,6 +555,10 @@ def write_receipt(ns: argparse.Namespace) -> int:
     # byte is composed. A difference refuses unconditionally (--allow-dirty does not override it).
     post_fl = git(top, "ls-files", "-v", "-z", ":(top)")
     post_st = git(root, "-c", "status.showUntrackedFiles=all", "status", "--porcelain")
+    # r71 C1: a driver configured (or a filter attribute added) by the wrapped command also refuses.
+    post_drivers = _filter_drivers(top)
+    if post_drivers:
+        refuse(_filter_refusal(post_drivers))
     changed = []
     if post_fl.returncode != 0 or post_fl.stdout != pre_flags:
         changed.append("index flags (git ls-files -v -z)")
@@ -1524,6 +1578,82 @@ def case_38_pathspec_env_scrubbed(work: str) -> None:
         _no_stray(outdir)
 
 
+def case_39_filter_driver_refused(work: str) -> None:
+    # r71 C1: a configured clean filter on a tracked path refuses (committed attribute under --allow-dirty, and
+    # info/attributes); a filter attribute with no configured driver is accepted; a caller GIT_ATTR_SOURCE naming a
+    # filter tree is scrubbed, so the size-preserving edit is seen as dirty.
+    outdir = _outdir(work)
+    d = _fixture(work, "c39-committed")
+    with open(os.path.join(d, ".gitattributes"), "wb") as f:
+        f.write(b"tracked.txt filter=t\n")
+    _commit_all(d, "attributes")
+    _git_ok(d, "config", "filter.t.clean", "sed s/dirty/clean/")
+    with open(os.path.join(d, "tracked.txt"), "wb") as f:
+        f.write(b"dirty\n")
+    out = os.path.join(outdir, "committed.txt")
+    r = _run([*_base_args(d, _head(d), out), "--allow-dirty", "--command", "/bin/echo hi"])
+    if r.returncode != 2 or os.path.exists(out) or FILTER_CLASS not in r.stderr:
+        raise AssertionError(f"committed filter rc={r.returncode}: {r.stderr.strip()}")
+    d2 = _fixture(work, "c39-info")
+    os.makedirs(os.path.join(d2, ".git", "info"), exist_ok=True)
+    with open(os.path.join(d2, ".git", "info", "attributes"), "wb") as f:
+        f.write(b"tracked.txt filter=t\n")
+    _git_ok(d2, "config", "filter.t.clean", "cat")
+    out2 = os.path.join(outdir, "info.txt")
+    r = _run([*_base_args(d2, _head(d2), out2), "--command", "/bin/echo hi"])
+    if r.returncode != 2 or os.path.exists(out2) or FILTER_CLASS not in r.stderr:
+        raise AssertionError(f"info/attributes filter rc={r.returncode}: {r.stderr.strip()}")
+    d3 = _fixture(work, "c39-nodriver")
+    with open(os.path.join(d3, ".gitattributes"), "wb") as f:
+        f.write(b"tracked.txt filter=t\n")
+    _commit_all(d3, "attributes")
+    out3 = os.path.join(outdir, "nodriver.txt")
+    r = _run([*_base_args(d3, _head(d3), out3), "--command", "/bin/echo hi"])
+    if r.returncode != 0 or not os.path.isfile(out3):
+        raise AssertionError(f"filter attribute without driver rc={r.returncode}: {r.stderr.strip()}")
+    d4 = _fixture(work, "c39-attrsource")
+    _git_ok(d4, "config", "filter.t.clean", "sed s/dirty/clean/")
+    blob = _git_ok(d4, "hash-object", "-w", "--stdin", input_bytes=b"tracked.txt filter=t\n").decode().strip()
+    tree = _git_ok(d4, "mktree", input_bytes=f"100644 blob {blob}\t.gitattributes\n".encode()).decode().strip()
+    src = _git_ok(d4, *GIT_ID, "commit-tree", "-m", "attrs", tree).decode().strip()
+    with open(os.path.join(d4, "tracked.txt"), "wb") as f:
+        f.write(b"dirty\n")
+    env = dict(os.environ)
+    env["GIT_ATTR_SOURCE"] = src
+    out4 = os.path.join(outdir, "attrsource.txt")
+    r = _run([*_base_args(d4, _head(d4), out4), "--command", "/bin/echo hi"], env=env)
+    if r.returncode != 2 or os.path.exists(out4) or "lane worktree is dirty" not in r.stderr:
+        raise AssertionError(f"GIT_ATTR_SOURCE filter tree rc={r.returncode}: {r.stderr.strip()}")
+    _no_stray(outdir)
+
+
+def case_40_local_filemode_pinned(work: str) -> None:
+    # r71 C1: repository-local core.fileMode=false cannot hide a mode flip (pre-run or in-run); a clean tree under
+    # the same config is accepted.
+    outdir = _outdir(work)
+    d = _fixture(work, "c40-prerun")
+    _git_ok(d, "config", "core.fileMode", "false")
+    os.chmod(os.path.join(d, "tracked.txt"), 0o755)
+    out = os.path.join(outdir, "prerun.txt")
+    r = _run([*_base_args(d, _head(d), out), "--command", "/bin/echo hi"])
+    if r.returncode != 2 or os.path.exists(out) or "lane worktree is dirty" not in r.stderr:
+        raise AssertionError(f"pre-run mode flip rc={r.returncode}: {r.stderr.strip()}")
+    d2 = _fixture(work, "c40-inrun")
+    _git_ok(d2, "config", "core.fileMode", "false")
+    out2 = os.path.join(outdir, "inrun.txt")
+    r = _run([*_base_args(d2, _head(d2), out2), "--", sys.executable, "-c",
+              "import os, sys; os.chmod(sys.argv[1], 0o755)", os.path.join(d2, "tracked.txt")])
+    if r.returncode != 2 or os.path.exists(out2) or "RECEIPT-STATE-CHANGED-DURING-RUN" not in r.stderr:
+        raise AssertionError(f"in-run mode flip rc={r.returncode}: {r.stderr.strip()}")
+    d3 = _fixture(work, "c40-honest")
+    _git_ok(d3, "config", "core.fileMode", "false")
+    out3 = os.path.join(outdir, "honest.txt")
+    r = _run([*_base_args(d3, _head(d3), out3), "--command", "/bin/echo hi"])
+    if r.returncode != 0 or not os.path.isfile(out3):
+        raise AssertionError(f"core.fileMode=false clean tree rc={r.returncode}: {r.stderr.strip()}")
+    _no_stray(outdir)
+
+
 CASES = (
     ("arg-forms: --command and post--- argv both accepted, identical receipts; both at once refused", case_01_arg_forms),
     ("rev-format: short/branch/uppercase rev refused with nothing written", case_02_rev_format),
@@ -1563,6 +1693,8 @@ CASES = (
     ("env-commondir-empty: empty GIT_COMMON_DIR refused, presence is the test (r67)", case_36_env_commondir_empty_refused),
     ("env-commondir-unresolvable: GIT_COMMON_DIR set with --root outside any repository refused (r67)", case_37_env_commondir_unresolvable_refused),
     ("pathspec-env: GIT_LITERAL/GLOB/NOGLOB/ICASE_PATHSPECS scrubbed from writer git calls; flag row refused, honest tree accepted, wrapped command still sees the variable (r70 C1)", case_38_pathspec_env_scrubbed),
+    ("filter-driver: configured clean filter on a tracked path refused (committed, info/attributes); no-driver attribute accepted; GIT_ATTR_SOURCE filter tree scrubbed (r71 C1)", case_39_filter_driver_refused),
+    ("filemode-pin: repository-local core.fileMode=false cannot hide a pre-run or in-run mode flip; clean tree accepted (r71 C1)", case_40_local_filemode_pinned),
 )
 
 
