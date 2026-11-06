@@ -1,0 +1,36 @@
+# S70ScoutSources — independent re-derivation of the round-70 pathspec probe (git 2.56.0)
+# fixture: mktemp -d under my scratch; 'git rev-parse --show-toplevel' asserted == fixture dir
+
+toplevel asserted: /fast/scratch/hyaku/souji-r70/S70ScoutSources/tmp.zSVmbHrQjT
+
+## git ls-files -v -z ':(top)'  (out | PIPE rc | GIT rc)
+  NONE out=[S f ] pipe_rc=0 git_rc=0
+  GIT_LITERAL_PATHSPECS=1 out=[] pipe_rc=0 git_rc=0
+  GIT_GLOB_PATHSPECS=1 out=[S f ] pipe_rc=0 git_rc=0
+  GIT_NOGLOB_PATHSPECS=1 out=[S f ] pipe_rc=0 git_rc=0
+  GIT_ICASE_PATHSPECS=1 out=[S f ] pipe_rc=0 git_rc=0
+
+## git ls-tree HEAD -- f  (the writer's form: ls-tree -r -z rev -- rel)
+  NONE rc=0 out=[100644 blob 587be6b4c3f93f93c489c0111bba5596147a26cb	f]
+  GIT_LITERAL_PATHSPECS=1 rc=0 out=[100644 blob 587be6b4c3f93f93c489c0111bba5596147a26cb	f]
+  GIT_GLOB_PATHSPECS=1 rc=128 out=[fatal: f: pathspec magic not supported by this command: 'glob']
+  GIT_NOGLOB_PATHSPECS=1 rc=0 out=[100644 blob 587be6b4c3f93f93c489c0111bba5596147a26cb	f]
+  GIT_ICASE_PATHSPECS=1 rc=128 out=[fatal: f: pathspec magic not supported by this command: 'icase']
+
+## cross-check vs the committed probe census/round-70/probes/lp-ls-files-probe.txt
+--- /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-70/probes/lp-ls-files-probe.txt	2026-11-06 15:48:59.422342772 -0300
++++ /dev/null	2026-11-02 12:07:17.974226129 -0300
+@@ -1,9 +0,0 @@
+-# probe 2026-11-06 git 2.56.0: skip-worktree entry f, git ls-files -v -z ':(top)' under each pathspec variable
+-toplevel=/fast/scratch/hyaku/souji-r70/L1/probe-lp2
+-env=NONE ls-files-out=[S f ] rc=0
+-env=GIT_LITERAL_PATHSPECS=1 ls-files-out=[] rc=0
+-env=GIT_GLOB_PATHSPECS=1 ls-files-out=[S f ] rc=0
+-env=GIT_NOGLOB_PATHSPECS=1 ls-files-out=[S f ] rc=0
+-env=GIT_ICASE_PATHSPECS=1 ls-files-out=[S f ] rc=0
+-env=GIT_GLOB_PATHSPECS=1 ls-tree-out=[fatal: f: pathspec magic not supported by this command: 'glob']
+-env=GIT_ICASE_PATHSPECS=1 ls-tree-out=[fatal: f: pathspec magic not supported by this command: 'icase']
+
+NOTE: the committed probe's 'rc=' field is the rc of the 'tr' pipe stage (per the r70
+preregistration), not git's rc; this receipt reports both separately. The GIT_LITERAL
+empty-output / GIT_GLOB+ICASE ls-tree-failure behaviour reproduces exactly.

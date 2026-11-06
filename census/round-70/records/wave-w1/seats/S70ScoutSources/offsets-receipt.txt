@@ -1,0 +1,42 @@
+# S70ScoutSources — offset derivation + quote location receipts
+
+## A. The ONE recipe that reproduces BOTH recorded offsets (12133, 47046)
+recipe: read census/round-70/srcs/git-manual.html; regex-strip all tags to a space
+        (script/style content RETAINED); html.unescape; collapse all whitespace to one space;
+        NO leading/trailing strip.  Result: 59452 chars.
+text chars 59452
+GIT_LITERAL_PATHSPECS char offsets: [12133, 47046, 47218]
+12133 in set: True  47046 in set: True
+dt --literal-pathspecs char offset: 12014
+12133 - dt_offset = 119
+context @12133: ' is equivalent to setting the GIT_LITERAL_PATHSPECS environment variab'
+context @47046: 'd do not replace Git objects. GIT_LITERAL_PATHSPECS Setting this Boole'
+
+## B. Under that recipe, what 12133 and 47046 actually point at
+  dt term "--literal-pathspecs"      -> 12014
+  located quote S304 start           -> 12034
+  "GIT_LITERAL_PATHSPECS" occurrences -> [12133, 47046, 47218]
+  dt term GIT_LITERAL_PATHSPECS (ENV) -> 47046
+  S305 quote start                    -> 47118
+
+  => 12133 is the GIT_LITERAL_PATHSPECS token INSIDE the --literal-pathspecs <dd>,
+     119 chars after the dt term at 12014: it is the offset of the SECOND dt label
+     the S304 row names ("--literal-pathspecs") is NOT at 12133.
+
+## C. Lane-committed canonical recipes applied to the same capture
+  round-66 recipe.py: chars=58729 bytes=58863 sha256=624e85efcf2f2eb7…
+     dt "--literal-pathspecs"    char [11291] byte [11393]
+     GIT_LITERAL_PATHSPECS       char [11410, 46323, 46495]  byte [11512, 46451, 46623]
+     quote S304 start            char 11311 byte 11413
+     quote S305 start            char -1 byte -1
+  round-65 s297-tagstrip.py: chars=58622 bytes=58756 sha256=58b48bf45d758f22…
+     dt "--literal-pathspecs"    char [11284] byte [11386]
+     GIT_LITERAL_PATHSPECS       char [11403, 46260, 46432]  byte [11505, 46388, 46560]
+     quote S304 start            char 11304 byte 11406
+     quote S305 start            char 46332 byte 46460
+
+## D. Gap argument: the two anchors are a FIXED distance apart in the page
+recorded: 47046 - 12133 = 34913
+the only recipe family reproducing 47046 gives dt-lit=12014, so dt-lit -> env-dt gap = 47046-12014 = 35032 != 34913.
+No extraction can put BOTH recorded offsets on the tokens the rows name (swept >500 recipe variants;
+zero produced --literal-pathspecs at 12133).

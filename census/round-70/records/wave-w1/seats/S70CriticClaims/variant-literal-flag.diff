@@ -1,0 +1,18 @@
+--- /dev/fd/63	2026-11-06 16:10:14.357395384 -0300
++++ vlit.py	2026-11-06 16:05:31.327007970 -0300
+@@ -108,13 +108,13 @@
+ def git(root: str, *args: str) -> subprocess.CompletedProcess:
+     """Read-only git plumbing against root; scrub GIT_DIR/GIT_WORK_TREE/GIT_COMMON_DIR so -C is authoritative."""
+     env = {k: v for k, v in os.environ.items()
+-           if k not in ("GIT_DIR", "GIT_WORK_TREE", "GIT_COMMON_DIR") and k not in PATHSPEC_ENV}
++           if k not in ("GIT_DIR", "GIT_WORK_TREE", "GIT_COMMON_DIR")}
+     env["GIT_OPTIONAL_LOCKS"] = "0"
+     # r66 C1: no host config file, system config or replace ref reaches a read; the excludes file is the null device.
+     env["GIT_CONFIG_GLOBAL"] = os.devnull
+     env["GIT_CONFIG_NOSYSTEM"] = "1"
+     env["GIT_NO_REPLACE_OBJECTS"] = "1"
+-    return subprocess.run(["git", "-C", root, "-c", "core.fsmonitor=false",
++    return subprocess.run(["git", "-C", root, "--literal-pathspecs", "-c", "core.fsmonitor=false",
+                            "-c", f"core.excludesFile={os.devnull}", *args], capture_output=True, env=env)
+ 
+ 

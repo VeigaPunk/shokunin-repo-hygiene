@@ -1,0 +1,225 @@
+2c2,27
+< """c1-counter.py — souji round-69 C1/C2/C3 counter (L1-built, pre-freeze).
+---
+> """c1-counter.py — souji round-70 C1/C2 counter (L1-built, pre-freeze).
+> 
+> Round 70 (successor of census/round-69/c1-counter.py; the frozen r69 counter is NOT amended — Q131):
+> 
+>   * C1 operability (writer surface): the 47 r69 rows are carried unchanged and 12 pathspec-env rows
+>     are appended. Each new row carries a caller env (`pathspec_env` in CASE_SPECS) setting one of
+>     GIT_LITERAL_PATHSPECS / GIT_GLOB_PATHSPECS / GIT_NOGLOB_PATHSPECS / GIT_ICASE_PATHSPECS to 1.
+>     git(1) OPTIONS: `--literal-pathspecs` = "no globbing, no pathspec magic", equivalent to
+>     GIT_LITERAL_PATHSPECS=1 (S304). Under it the writer's `:(top)` reads become a literal path that
+>     matches nothing, `ls-files -v` prints nothing with rc 0, and every flag check passes vacuously
+>     (probed 2026-11-06, census/round-70/probes/lp-ls-files-probe.txt). Rows LD LN4 LU1 LG1 LA9
+>     re-run D N4 U1 G1 A9 under GIT_LITERAL_PATHSPECS=1 (expected class unchanged); LA is the honest
+>     clean row under it (accept: a refuse-on-presence writer is over-refusal, not a fix); GA/GD,
+>     NGA/NGD and ICA/ICD are the honest and skip-worktree rows under the other three variables.
+>   * C2 calibration (instrument self-check): the selftest gains section (7) — full Q131 precedence
+>     (forgery outranks over-refusal and echo; error outranks forgery), the D30 echo judge on
+>     synthetic inputs, and the pure battery verdict (an expectation mismatch and a survived mutant
+>     each make rc 1). The battery arm verifies every selected member against `SHA256SUMS` in the
+>     battery dir before any run (missing, unlisted or mismatched member: rc 2) and binds each
+>     member's sha256 into its MUTANT line (r69 routed F-3).
+>   * clean_env additionally drops the four pathspec variables, GIT_TEMPLATE_DIR, GIT_ATTR_SOURCE,
+>     GIT_EXEC_PATH and GIT_DEFAULT_HASH from the ambient environment (r69 routed: S69Sentinel F-1/F-2,
+>     S69ExecAmbient); a row's own caller env is applied after the scrub, so the C1 rows still reach
+>     the writer slots.
+> 
+> Round 69 text (carried; describes the r69 duties this file still performs):
+115c140
+< COUNTER_REL = "census/round-69/c1-counter.py"
+---
+> COUNTER_REL = "census/round-70/c1-counter.py"
+150c175,181
+<               "U1", "G1", "A9", "F1", "W7"]
+---
+>               "U1", "G1", "A9", "F1", "W7",
+>               "LA", "LD", "LN4", "LU1", "LG1", "LA9", "GA", "GD", "NGA", "NGD", "ICA", "ICD"]
+> 
+> # r70 C1: the four pathspec variables of git(1) OPTIONS/ENVIRONMENT (S304); each new row sets one.
+> PATHSPEC_VARS = ("GIT_LITERAL_PATHSPECS", "GIT_GLOB_PATHSPECS", "GIT_NOGLOB_PATHSPECS",
+>                  "GIT_ICASE_PATHSPECS")
+> LP_ENV = {"GIT_LITERAL_PATHSPECS": "1"}
+240a272,298
+>     # r70 C1 rows: the carried D/N4/U1/G1/A9 fixtures and the honest clean row re-run with a caller
+>     # pathspec variable (`pathspec_env`, merged by case_env after any row env). Expected classes are
+>     # the carried rows' classes: the variable must change no verdict.
+>     "LA":  {"name": "honest-clean-literal-pathspecs", "pathspec_env": LP_ENV},
+>     "LD":  {"name": "skip-worktree-forged-literal-pathspecs", "flag": "skip-worktree",
+>             "target": "tools/counter.py", "forged": FORGED_COUNTER, "pathspec_env": LP_ENV},
+>     "LN4": {"name": "subdirectory-root-scope-literal-pathspecs", "flag": "skip-worktree",
+>             "target": "README.md", "forged": FORGED_README, "rootsub": "tools",
+>             "pathspec_env": LP_ENV},
+>     "LU1": {"name": "unmerged-index-literal-pathspecs", "env_kind": "unmerged-index",
+>             "pathspec_env": LP_ENV},
+>     "LG1": {"name": "gitlink-concealed-literal-pathspecs", "env_kind": "gitlink-flag",
+>             "pathspec_env": LP_ENV},
+>     "LA9": {"name": "concealed-absent-literal-pathspecs", "env_kind": "absent-flag",
+>             "pathspec_env": LP_ENV},
+>     "GA":  {"name": "honest-clean-glob-pathspecs", "pathspec_env": {"GIT_GLOB_PATHSPECS": "1"}},
+>     "GD":  {"name": "skip-worktree-forged-glob-pathspecs", "flag": "skip-worktree",
+>             "target": "tools/counter.py", "forged": FORGED_COUNTER,
+>             "pathspec_env": {"GIT_GLOB_PATHSPECS": "1"}},
+>     "NGA": {"name": "honest-clean-noglob-pathspecs", "pathspec_env": {"GIT_NOGLOB_PATHSPECS": "1"}},
+>     "NGD": {"name": "skip-worktree-forged-noglob-pathspecs", "flag": "skip-worktree",
+>             "target": "tools/counter.py", "forged": FORGED_COUNTER,
+>             "pathspec_env": {"GIT_NOGLOB_PATHSPECS": "1"}},
+>     "ICA": {"name": "honest-clean-icase-pathspecs", "pathspec_env": {"GIT_ICASE_PATHSPECS": "1"}},
+>     "ICD": {"name": "skip-worktree-forged-icase-pathspecs", "flag": "skip-worktree",
+>             "target": "tools/counter.py", "forged": FORGED_COUNTER,
+>             "pathspec_env": {"GIT_ICASE_PATHSPECS": "1"}},
+333c391,394
+<          and not k.startswith("GIT_TRACE")}
+---
+>          and not k.startswith("GIT_TRACE")
+>          # r70: ambient pathspec variables and the r69-routed template/attr/exec-path/hash routes
+>          and k not in PATHSPEC_VARS
+>          and k not in ("GIT_TEMPLATE_DIR", "GIT_ATTR_SOURCE", "GIT_EXEC_PATH", "GIT_DEFAULT_HASH")}
+665a727,737
+>     """r70: the carried row env (r69 rules, unchanged) with the row's `pathspec_env` merged last."""
+>     base = _row_env(spec, repo)
+>     ps = spec.get("pathspec_env")
+>     if not ps:
+>         return base
+>     merged = dict(base or {})
+>     merged.update(ps)
+>     return merged
+> 
+> 
+> def _row_env(spec: dict, repo: str) -> Optional[dict]:
+1052a1125,1175
+> def battery_verdict(results: list[tuple[str, str, str]]) -> tuple[dict, bool, int]:
+>     """r70 C2: the battery's pure verdict over (name, observed, expected) triples. rc 0 iff every
+>     observed outcome equals its expectation and no mutant survived or errored."""
+>     tally = {"forgery": 0, "echo-violation": 0, "over-refusal": 0,
+>              "label-only": 0, "survived": 0, "error": 0}
+>     all_match = True
+>     for name, obs, exp in results:
+>         tally[obs] += 1
+>         if obs != exp:
+>             all_match = False
+>     rc = 0 if (all_match and tally["survived"] == 0 and tally["error"] == 0) else 1
+>     return tally, all_match, rc
+> 
+> 
+> def verify_members(battery_dir: str, names: list[str]) -> tuple[Optional[dict], str]:
+>     """r70 C2 (r69 routed F-3): read <battery_dir>/SHA256SUMS (`<64hex>  <file>` lines) and require
+>     every named member `<name>.py` to be listed once and to hash to its listed digest. Returns
+>     ({name: sha256, '__sums__': sha256 of the sums file}, '') or (None, reason)."""
+>     sums_path = os.path.join(battery_dir, "SHA256SUMS")
+>     try:
+>         with open(sums_path, "rb") as f:
+>             sums_raw = f.read()
+>     except OSError as exc:
+>         return None, f"cannot read {sums_path}: {exc}"
+>     listed: dict[str, str] = {}
+>     for i, line in enumerate(sums_raw.decode("utf-8", "replace").splitlines(), 1):
+>         if not line.strip():
+>             continue
+>         m = re.match(r"^([0-9a-f]{64}) [ *](.+)$", line)
+>         if not m:
+>             return None, f"SHA256SUMS line {i} malformed"
+>         if m.group(2) in listed:
+>             return None, f"SHA256SUMS line {i} lists {m.group(2)} twice"
+>         listed[m.group(2)] = m.group(1)
+>     out: dict[str, str] = {"__sums__": hashlib.sha256(sums_raw).hexdigest()}
+>     for name in names:
+>         fname = f"{name}.py"
+>         path = os.path.join(battery_dir, fname)
+>         if fname not in listed:
+>             return None, f"member {fname} is not listed in SHA256SUMS"
+>         try:
+>             with open(path, "rb") as f:
+>                 digest = hashlib.sha256(f.read()).hexdigest()
+>         except OSError as exc:
+>             return None, f"member {fname} unreadable: {exc}"
+>         if digest != listed[fname]:
+>             return None, f"member {fname} sha256 {digest[:12]} != listed {listed[fname][:12]}"
+>         out[name] = digest
+>     return out, ""
+> 
+> 
+1235a1359,1405
+>     # (7) r70 C2: instrument self-checks the r69 selftest lacked (S69MutTester / S69CriticClaims).
+>     # (7a) full Q131 precedence: forgery outranks over-refusal and echo; error outranks forgery.
+>     synth = {"row_fate": [fate("A", "accept", "refuse"), fate("D", "refuse", "accept")]}
+>     check("precedence: forgery outranks over-refusal", classify_outcome(synth) == "forgery")
+>     synth = {"row_fate": [fate("P13", "refuse", "refuse", echo=True), fate("D", "refuse", "accept")]}
+>     check("precedence: forgery outranks echo-violation", classify_outcome(synth) == "forgery")
+>     synth = {"row_fate": [fate("A", "accept", "refuse"), fate("P13", "refuse", "refuse", echo=True)]}
+>     check("precedence: echo-violation outranks over-refusal", classify_outcome(synth) == "echo-violation")
+>     synth = {"row_fate": [fate("D", "refuse", "accept"), fate("A", "accept", "error")]}
+>     check("precedence: error outranks forgery", classify_outcome(synth) == "error")
+>     # (7b) D30 echo judge on synthetic inputs (never exercised by the r69 selftest).
+>     secret = "/nonexistent-r70-echo-probe"
+>     spec_e = {"noecho_env": ["GIT_COMMON_DIR"]}
+>     check("echo judge: a refusal printing the frozen caller value is a violation",
+>           echo_violation(spec_e, {"GIT_COMMON_DIR": secret}, f"refused: bad {secret}\n") is True)
+>     check("echo judge: a refusal naming only the variable is not a violation",
+>           echo_violation(spec_e, {"GIT_COMMON_DIR": secret}, "refused: GIT_COMMON_DIR set\n") is False)
+>     check("echo judge: a value outside noecho_env is not judged",
+>           echo_violation({"noecho_env": []}, {"GIT_COMMON_DIR": secret}, secret) is False)
+>     # (7c) pure battery verdict: an expectation mismatch and a survived mutant each fail the arm.
+>     _, m_ok, m_rc = battery_verdict([("X1", "forgery", "forgery"), ("X2", "label-only", "forgery")])
+>     check("battery verdict: an outcome different from its expectation makes rc 1",
+>           m_ok is False and m_rc == 1, f"all_match={m_ok} rc={m_rc}")
+>     _, s_ok, s_rc = battery_verdict([("X1", "survived", "survived")])
+>     check("battery verdict: a survived mutant makes rc 1 even when expected", s_rc == 1,
+>           f"all_match={s_ok} rc={s_rc}")
+>     _, g_ok, g_rc = battery_verdict([("X1", "forgery", "forgery"), ("X2", "echo-violation", "echo-violation")])
+>     check("battery verdict: an all-matching battery is rc 0", g_ok is True and g_rc == 0,
+>           f"all_match={g_ok} rc={g_rc}")
+>     # (7d) member binding: a member whose bytes differ from SHA256SUMS is refused; a listed,
+>     # matching member is accepted; an unlisted member is refused.
+>     bdir = os.path.join(st, "battery-bind")
+>     os.makedirs(bdir)
+>     with open(os.path.join(bdir, "M1.py"), "wb") as f:
+>         f.write(b"print('m1')\n")
+>     with open(os.path.join(bdir, "M2.py"), "wb") as f:
+>         f.write(b"print('m2')\n")
+>     good = hashlib.sha256(b"print('m1')\n").hexdigest()
+>     with open(os.path.join(bdir, "SHA256SUMS"), "w", encoding="utf-8") as f:
+>         f.write(f"{good}  M1.py\n{hashlib.sha256(b'print(0)').hexdigest()}  M2.py\n")
+>     ok1, e_ok = verify_members(bdir, ["M1"])
+>     check("member binding: a listed matching member is accepted", ok1 is not None and ok1.get("M1") == good, e_ok)
+>     bad, e_bad = verify_members(bdir, ["M2"])
+>     check("member binding: a tampered member is refused", bad is None and "sha256" in e_bad, e_bad)
+>     unl, e_unl = verify_members(bdir, ["M3"])
+>     check("member binding: an unlisted member is refused", unl is None and "not listed" in e_unl, e_unl)
+> 
+1343a1514,1518
+>         # r70 C2 (r69 routed F-3): every selected member must be listed in <battery-dir>/SHA256SUMS
+>         # and match it byte for byte BEFORE any member runs; each MUTANT line binds the member hash.
+>         member_sha, err = verify_members(battery_dir, [n for n, _ in selected])
+>         if member_sha is None:
+>             return fatal(f"battery members unverified: {err}")
+1345,1348c1520,1522
+<              f"dir={battery_dir} selected={[n for n, _ in selected]}")
+<         tally = {"forgery": 0, "echo-violation": 0, "over-refusal": 0,
+<                  "label-only": 0, "survived": 0, "error": 0}
+<         all_match = True
+---
+>              f"dir={battery_dir} selected={[n for n, _ in selected]} "
+>              f"sums_sha256={member_sha['__sums__']}")
+>         results: list[tuple[str, str, str]] = []
+1351,1352d1524
+<             if not os.path.isfile(mpath):
+<                 return fatal(f"battery member missing: {mpath}")
+1358,1360c1530
+<             tally[obs] += 1
+<             if obs != exp:
+<                 all_match = False
+---
+>             results.append((name, obs, exp))
+1365c1535,1537
+<                  f"label={oc['label']} errors={oc['errors']} regress={res['regress']}")
+---
+>                  f"label={oc['label']} errors={oc['errors']} regress={res['regress']} "
+>                  f"sha256={member_sha[name]}")
+>         tally, all_match, rc = battery_verdict(results)
+1369,1370c1541
+<              f"error={tally['error']}")
+<         rc = 0 if (all_match and tally["survived"] == 0 and tally["error"] == 0) else 1
+---
+>              f"error={tally['error']} all_match={str(all_match).lower()}")

@@ -1,0 +1,47 @@
+--- /dev/fd/63	2026-11-06 16:10:14.359792353 -0300
++++ vpsfree.py	2026-11-06 16:09:26.608133009 -0300
+@@ -108,7 +108,7 @@
+ def git(root: str, *args: str) -> subprocess.CompletedProcess:
+     """Read-only git plumbing against root; scrub GIT_DIR/GIT_WORK_TREE/GIT_COMMON_DIR so -C is authoritative."""
+     env = {k: v for k, v in os.environ.items()
+-           if k not in ("GIT_DIR", "GIT_WORK_TREE", "GIT_COMMON_DIR") and k not in PATHSPEC_ENV}
++           if k not in ("GIT_DIR", "GIT_WORK_TREE", "GIT_COMMON_DIR")}
+     env["GIT_OPTIONAL_LOCKS"] = "0"
+     # r66 C1: no host config file, system config or replace ref reaches a read; the excludes file is the null device.
+     env["GIT_CONFIG_GLOBAL"] = os.devnull
+@@ -128,7 +128,7 @@
+     """Index records keyed by raw path bytes: (mode, stage) per record. Read only on a refusal path.
+     r64 C1 (scope): read from the repository toplevel with a :(top) pathspec, so the whole index is
+     observed even when --root sits inside a subdirectory."""
+-    r = git(top, "ls-files", "-s", "-z", ":(top)")
++    r = git(top, "ls-files", "-s", "-z")
+     if r.returncode != 0:
+         refuse(f"cannot read index entries of {top}: {r.stderr.decode('utf-8', 'replace').strip()}")
+     table: "dict[bytes, list[tuple[bytes, int]]]" = {}
+@@ -390,7 +390,7 @@
+     # Refuse unconditionally; --allow-dirty does not override this.
+     # r63 C2 (coverage): the first non-H record is classed (unmerged, gitlink, absent) before refusal;
+     # any other path keeps the r62 class token and message.
+-    fl = git(top, "ls-files", "-v", "-z", ":(top)")
++    fl = git(top, "ls-files", "-v", "-z")
+     if fl.returncode != 0:
+         refuse(f"cannot read index flags of {top}: {fl.stderr.decode('utf-8', 'replace').strip()}")
+     for rec in fl.stdout.split(b"\0"):
+@@ -423,7 +423,7 @@
+ 
+     # behaviour 3: instrument present and regular at rev
+     rel = instrument_relpath(root, ns.instrument)
+-    lt = git(root, "ls-tree", "-r", "-z", rev, "--", rel)
++    lt = git(root, "ls-tree", "-r", "-z", rev)
+     if lt.returncode != 0:
+         detail = lt.stderr.decode("utf-8", "replace").strip()
+         refuse(f"cannot read tree {rev}: {detail}")
+@@ -503,7 +503,7 @@
+     proc.wait()
+     # r63 C1 (operability): re-read the pre-run snapshot after the wrapped command and before any receipt
+     # byte is composed. A difference refuses unconditionally (--allow-dirty does not override it).
+-    post_fl = git(top, "ls-files", "-v", "-z", ":(top)")
++    post_fl = git(top, "ls-files", "-v", "-z")
+     post_st = git(root, "-c", "status.showUntrackedFiles=all", "status", "--porcelain")
+     changed = []
+     if post_fl.returncode != 0 or post_fl.stdout != pre_flags:
