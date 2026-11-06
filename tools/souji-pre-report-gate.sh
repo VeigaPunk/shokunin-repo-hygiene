@@ -33,8 +33,27 @@ if [[ -s $report ]]; then check report PASS; else check report FAIL; fi
 shonen_count=$(grep -c '^## SHONEN' "$report" 2>/dev/null || true)
 if [[ $shonen_count == 1 ]]; then check shonen PASS; else check shonen FAIL; printf 'detail-shonen: found %s headings, expected 1\n' "${shonen_count:-0}" >&2; fi
 # 4. No lane changes may remain before report filing.
+#    r74 C1: an empty `git status` is a stat-cache verdict (racy-git S315): an index entry carries stat(2)
+#    data beside the object name (gitformat-index S317), so a rewritten stat entry over changed bytes reads
+#    clean. Every tracked path status reports clean is therefore re-hashed against the object id its index
+#    entry records, through the receipt writer's own byte-truth check (_truth_refusal in the
+#    souji-receipt-write.py beside this gate; hash-object applies check-in conversion, S316). A missing
+#    writer, a failed read or any mismatch fails `clean`.
+gate_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd) || gate_dir=
 if status=$(git --no-optional-locks -C "$lane" status --porcelain=v1 --untracked-files=all 2>&1); then
-  if [[ -z $status ]]; then check clean PASS; else check clean FAIL; printf 'detail-clean: %s\n' "$status" >&2; fi
+  if [[ -n $status ]]; then check clean FAIL; printf 'detail-clean: %s\n' "$status" >&2
+  elif truth=$(python3 -B - "$gate_dir/souji-receipt-write.py" "$lane" 2>&1 <<'PY'
+import importlib.util, sys
+spec = importlib.util.spec_from_file_location("souji_receipt_write", sys.argv[1])
+mod = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(mod)
+msg = mod._truth_refusal(sys.argv[2])
+if msg:
+    print(msg)
+    sys.exit(1)
+PY
+  ); then check clean PASS
+  else check clean FAIL; printf 'detail-clean: byte truth: %s\n' "${truth:-no output}" >&2; fi
 else check clean FAIL; printf 'detail-clean: git status failed: %s\n' "$status" >&2; fi
 # 5. The preregistration is mandatory; absence is never skipped.
 if [[ -s $prereg ]]; then check prereg PASS; else check prereg FAIL; fi
