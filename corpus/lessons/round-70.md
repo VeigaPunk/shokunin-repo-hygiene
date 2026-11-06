@@ -80,3 +80,5 @@ validate` exit 0 at round start (`census/round-70/records/census-before.txt`) an
 **Discernment.** All seats are this lane's dispatched seats; no non-author discernment verdict is recorded by the lane. The discernment trend is left to the closure's spot-check.
 
 **M3 refusal, verbatim (the first counter-selftest receipt attempt):** `refused: RECEIPT-STATE-CHANGED-DURING-RUN: worktree status (git status --porcelain) and content census/round-70/records/c1-after.txt and content census/round-70/records/writer-selftest.txt changed during the wrapped command; no receipt written`.
+
+**R70-D2 erratum (appended round 71, 2026-11-06; routed by the r70 spot-check D2).** Line 55 of this file ("No existing row's `status`, `recheck` or `used-by` cell changed") is false: S296's `used-by` changed from `corpus/lessons/round-64.md` to `corpus/lessons/round-64.md, corpus/knowledge/pathspec-env-scrub.md` this round, as the Gate text further down and the r70 report say. Line 55 is not edited; this line supersedes it.
