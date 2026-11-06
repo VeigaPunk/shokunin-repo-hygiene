@@ -908,3 +908,22 @@ Certification OFF, K5 HELD.
 | r68 ambient-environment check (C2) | gate | the C1 candidate command prefixed by `env GIT_COMMON_DIR=/nonexistent-r68-probe GIT_NAMESPACE=r68probe GIT_CEILING_DIRECTORIES=/nonexistent-r68-probe`; flips by `diff` of the `^(CASE\|SUMMARY\|REGRESS\|EXIT=)` lines against the clean run | flips 0 and both `EXIT=0` | the C1 selftest above | `census/round-68/records/c2-after/` | `--work` and `--receipt` only | souji |
 
 Certification OFF, K5 HELD.
+
+## Round 69 — battery outcome split (registry row added in round 70, routed defect D3)
+
+| name | kind | entry command | verdict map | self-test command | pinned-value path | write scope | owner |
+|---|---|---|---|---|---|---|---|
+| r69 battery outcome split (C1 calibration) | gate | `python3 -B census/round-69/c1-counter.py --root LANE --matrix census/round-69/c1-matrix.tsv --base-rev 3639087917eaeb28719d7603110a6ec22782100e --work DIR --battery-manifest census/round-69/battery-manifest.tsv --battery-dir census/round-69/battery` | 0 = every MUTANT outcome equals its manifest expectation, survived=0, error=0; 1 = otherwise; 2 = could not evaluate | `python3 -B census/round-69/c1-counter.py --selftest --root LANE --matrix census/round-69/c1-matrix.tsv --base-rev 3639087917eaeb28719d7603110a6ec22782100e --work DIR` (16 checks; its blind spots are the round-70 C2 before-arm) | `census/round-69/records/c1-after-battery.txt` | `--work` and `--receipt` only | souji |
+
+## Round 70 — pathspec-variable scrub (C1 operability) and counter self-check calibration (C2 calibration)
+
+- **Writer rule.** Every writer git call scrubs `GIT_LITERAL_PATHSPECS`, `GIT_GLOB_PATHSPECS`, `GIT_NOGLOB_PATHSPECS` and `GIT_ICASE_PATHSPECS` (`PATHSPEC_ENV`; source S304). The wrapped command still sees them. Selftest case 38.
+- **Error pattern.** Under `GIT_LITERAL_PATHSPECS=1` a `:(top)` pathspec is a literal path: `git ls-files -v -z ':(top)'` prints nothing with rc 0, so any per-entry check over its output passes vacuously. Under GLOB/ICASE, `git ls-tree -- <path>` fails ("pathspec magic not supported by this command"). Never trust an empty pathspec-limited read as "no entries" when the caller controls the environment.
+- **Counter (round 70).** `census/round-70/c1-counter.py`: 59 rows (r69's 47 + LA LD LN4 LU1 LG1 LA9 GA GD NGA NGD ICA ICD), selftest section (7) (Q131 precedence, echo judge, pure battery verdict, member binding), battery members verified against `SHA256SUMS` before any run.
+
+| name | kind | entry command | verdict map | self-test command | pinned-value path | write scope | owner |
+|---|---|---|---|---|---|---|---|
+| r70 pathspec-env matrix (C1) | gate | `python3 -B census/round-70/c1-counter.py --root LANE --matrix census/round-70/c1-matrix.tsv --base-rev e063a2fcb3f5f3fb8fb19d2ae1592b1f22e6a333 --rev FULL40 --tool tools/souji-receipt-write.py --work DIR` | 0 = `new_forgeries=0 new_honest=15 class_mismatches=0 new_echo=0 errors=0 regress=PASS`; 1 = otherwise; 2 = could not evaluate | `python3 -B census/round-70/c1-counter.py --selftest --root LANE --matrix census/round-70/c1-matrix.tsv --base-rev e063a2fcb3f5f3fb8fb19d2ae1592b1f22e6a333 --work DIR` (29 checks) | `census/round-70/records/c1-after.txt` | `--work` and `--receipt` only | souji |
+| r70 counter self-check harness (C2) | gate | `python3 -B census/round-70/c2-harness.py --label L --counter FILE --matrix FILE --root LANE --base-rev FULL40 --battery-dir census/round-69/battery --battery-manifest census/round-69/battery-manifest.tsv --work DIR` | 0 = positives PASS and score=0; 1 = positives PASS and score>0; 2 = a positive arm failed or a mutant pattern did not match once (invalid) | controls `census/round-70/controls/c2-CF1-*.txt`, `c2-CF2-*.txt` (both EXIT=2) | `census/round-70/records/c2-after.txt` | `--work` and `--receipt` only | souji |
+
+Certification OFF, K5 HELD.

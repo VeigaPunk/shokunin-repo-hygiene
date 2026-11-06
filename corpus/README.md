@@ -999,3 +999,7 @@ a measured edge class does not promote a frontier ground to Core (PROVINCE
 ### Frontier (r69 battery outcome split)
 
 - **Writer battery classification (frontier, not Core).** `knowledge/battery-outcome-split.md` records how a battery refutation is classified: forgery, echo-violation, over-refusal, label-only, survived or error, with only forgery counted as a declared-protection kill (QUALITY Q131, mechanized by `census/round-69/c1-counter.py`). Sources S302 (git-status(1), BACKGROUND REFRESH) and S303 (git(1), `--no-optional-locks`). The protections this entry does not cover are named limits: D18 (`GIT_OPTIONAL_LOCKS=0`, no honest single-edit row) and D29 (`:(top)` pathspec, no verdict-changing edit). The writer is unchanged; the declared-protection coverage table is `census/round-69/records/declared-coverage.tsv`. No promotion to Core.
+
+### Frontier (r70 pathspec-variable hermeticity)
+
+- **Pathspec variables in read-only safety checks (frontier, not Core).** `knowledge/pathspec-env-scrub.md` records how the four global pathspec variables of git(1) (S304; S305 rejected for the magic scope) change a pathspec-limited index read: `GIT_LITERAL_PATHSPECS=1` empties `:(top)` reads and turned four refused rows into forgeries; GLOB/ICASE broke the instrument `ls-tree` read and over-refused honest trees. The writer scrubs all four (r70 C1, `census/round-70/records/c1-after.txt`). New ground: no earlier entry covers pathspec semantics as a concealment route.
