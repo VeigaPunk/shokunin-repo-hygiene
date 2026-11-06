@@ -56,3 +56,29 @@ stat settings, and run the attribute check before any status read that would exe
   counter. AS1/AS2 cannot distinguish a GIT_ATTR_SOURCE scrub from an unfiltered dirty tree
   (S71MutCounter F2).
 - Smudge-only drivers (they act on checkout); git releases other than 2.56.0.
+
+## r72: the filter-witness protections as frozen matrix rows (appended 2026-11-06)
+
+The r71 table above lists repairs measured only by writer selftest cases and wave probes. Round 72
+puts five of them under the frozen counter (`census/round-72/c1-counter.py`, 75 rows; base slot =
+the pre-r71 writer at 8b9345b1, which has no filter witness). Each row forges that base writer and
+exactly one single-edit mutant of the current writer, and the current writer refuses all five
+with `RECEIPT-FILTER-DRIVER-SET` (`census/round-72/probes/fw-shapes-probe.txt`,
+`records/c2-after-battery.txt`, `records/c2-honest-writer.txt`):
+
+| row | route | which writer check alone sees it | mutant that forges |
+|---|---|---|---|
+| FWr | forged bytes under a configured driver; the wrapped command restores the committed bytes and unsets the driver | the pre-run witness (post-run there is no driver and a clean tree) | WM3, pre-run refusal deleted |
+| FWi | honest tree; the wrapped command forges same-size bytes and creates `info/attributes` plus the clean driver | the post-run witness | WM4, post-run refusal deleted |
+| FWp | `filter.p.process` long-running driver, no `clean` key (S313) | the `process` key lookup | WM5, `clean` looked up alone |
+| FWw | committed empty `.gitattributes`; the worktree copy filters itself back to empty and assigns the forging driver to a tracked path | a worktree attribute read; the index copy assigns nothing (S312 `--cached` reads the index only; S314 the worktree file comes first) | WM8, `check-attr --cached` |
+| FWs | a driver literally named `set` | no value exemption | WM6, boolean values exempted |
+
+FWw needs the committed `.gitattributes` to be empty: git re-hashes a size-0 index entry through
+its filter on every status read, so the self-erasing `filter=e` (`cat >/dev/null`) makes the
+edited attribute file itself read as unmodified. A non-empty committed copy with a different-size
+worktree edit is reported as modified (stat size check) and needs no attribute witness.
+
+Still not covered by any row: a `check-attr` failure that the writer would treat as fail-open
+(no reachable failure was found, r71 S71MutWriter W7); an honest repository with a configured
+driver on a tracked path (over-refused); smudge-only drivers; git releases other than 2.56.0.
