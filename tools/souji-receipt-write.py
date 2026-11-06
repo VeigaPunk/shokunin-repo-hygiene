@@ -85,6 +85,16 @@ configured clean or process command refuses RECEIPT-FILTER-DRIVER-SET, unconditi
 override it). A filter attribute with no configured driver, and a configured driver no tracked path carries, are
 accepted. Named limits: smudge-only drivers (no effect on the witness) and a driver configured outside the
 writer's pinned config scopes (global/system are pinned off) are not read.
+
+round 71 wave repairs (after the frozen C1 measurement at a1db6c85; the frozen predicate is unchanged): no filter
+attribute value is exempt from the driver lookup (`filter=set|unset|unspecified` print the same as the boolean
+states; S71Reviewer F1); the post-run driver check runs before the post-run status read, because that read executes
+the clean filter and a filter can delete its own attribute (S71Sentinel HIGH-1); every git call also pins
+`-c core.checkStat=default -c core.trustctime=true`, so repository-local core.checkStat=minimal cannot hide an
+inode replace and core.trustctime=false cannot hide a later-second edit with its mtime restored (S71Sentinel
+HIGH-2). Named limit, measured (census/round-71/probes/stat-granularity-probe.txt): a size-preserving in-place edit
+in the same whole second as the last index refresh, mtime restored, is invisible to `git status` under any config
+on this git build; the clean path takes no content snapshot.
 """
 from __future__ import annotations
 
@@ -128,8 +138,11 @@ def git(root: str, *args: str, input: "bytes | None" = None) -> subprocess.Compl
     env["GIT_CONFIG_NOSYSTEM"] = "1"
     env["GIT_NO_REPLACE_OBJECTS"] = "1"
     # r71 C1: GIT_ATTR_SOURCE is scrubbed above (S307); the executable bit is always honored (S308).
+    # r71 wave repair (S71Sentinel HIGH-2): repository-local core.checkStat=minimal or core.trustctime=false
+    # hid a size-preserving edit whose mtime was restored; the full stat comparison is pinned on.
     return subprocess.run(["git", "-C", root, "-c", "core.fsmonitor=false",
-                           "-c", f"core.excludesFile={os.devnull}", "-c", "core.fileMode=true", *args],
+                           "-c", f"core.excludesFile={os.devnull}", "-c", "core.fileMode=true",
+                           "-c", "core.checkStat=default", "-c", "core.trustctime=true", *args],
                           capture_output=True, env=env, input=input)
 
 
@@ -150,7 +163,10 @@ def _filter_drivers(top: str) -> "list[str]":
     fields = ca.stdout.split(b"\0")
     values = {fields[i + 2] for i in range(0, len(fields) - 2, 3)}
     drivers = []
-    for val in sorted(values - {b"unspecified", b"unset", b"set"}):
+    # r71 wave repair (S71Reviewer F1): check-attr prints the same text for `filter=set|unset|unspecified` as
+    # for the boolean states, and git applies a configured driver of that name, so no value is exempt; a
+    # boolean state only refuses if a driver literally named after it is configured.
+    for val in sorted(values):
         name = os.fsdecode(val)
         for key in ("clean", "process"):
             if git(top, "config", "--get", f"filter.{name}.{key}").returncode == 0:
@@ -553,12 +569,14 @@ def write_receipt(ns: argparse.Namespace) -> int:
     proc.wait()
     # r63 C1 (operability): re-read the pre-run snapshot after the wrapped command and before any receipt
     # byte is composed. A difference refuses unconditionally (--allow-dirty does not override it).
-    post_fl = git(top, "ls-files", "-v", "-z", ":(top)")
-    post_st = git(root, "-c", "status.showUntrackedFiles=all", "status", "--porcelain")
-    # r71 C1: a driver configured (or a filter attribute added) by the wrapped command also refuses.
+    # r71 C1: a driver configured (or a filter attribute added) by the wrapped command also refuses. r71 wave
+    # repair (S71Sentinel HIGH-1): this check runs BEFORE the post-run status read, because that read executes
+    # the clean filter, and a filter can delete its own attribute while it runs.
     post_drivers = _filter_drivers(top)
     if post_drivers:
         refuse(_filter_refusal(post_drivers))
+    post_fl = git(top, "ls-files", "-v", "-z", ":(top)")
+    post_st = git(root, "-c", "status.showUntrackedFiles=all", "status", "--porcelain")
     changed = []
     if post_fl.returncode != 0 or post_fl.stdout != pre_flags:
         changed.append("index flags (git ls-files -v -z)")
@@ -1654,6 +1672,73 @@ def case_40_local_filemode_pinned(work: str) -> None:
     _no_stray(outdir)
 
 
+def case_41_wave_repairs(work: str) -> None:
+    # r71 wave repairs: (a) a driver literally named `set` is not exempt (S71Reviewer F1); (b) an in-run clean
+    # filter that deletes its own attribute while the post-run status read runs it is refused (S71Sentinel
+    # HIGH-1); (c) repository-local core.checkStat=minimal cannot hide a same-second, size-preserving replace of
+    # the file by a new inode with its mtime restored, and core.trustctime=false cannot hide a size-preserving
+    # in-place edit made in a later second with its mtime restored (S71Sentinel HIGH-2). Named limit, measured: an
+    # in-place size-preserving edit in the SAME whole second as the last index refresh, mtime restored, is
+    # invisible to `git status` under any config on this build (whole-second stat comparison).
+    outdir = _outdir(work)
+    d = _fixture(work, "c41-set")
+    with open(os.path.join(d, ".gitattributes"), "wb") as f:
+        f.write(b"tracked.txt filter=set\n")
+    _commit_all(d, "attributes")
+    _git_ok(d, "config", "filter.set.clean", "sed s/dirty/clean/")
+    with open(os.path.join(d, "tracked.txt"), "wb") as f:
+        f.write(b"dirty\n")
+    out = os.path.join(outdir, "set.txt")
+    r = _run([*_base_args(d, _head(d), out), "--command", "/bin/echo hi"])
+    if r.returncode != 2 or os.path.exists(out) or FILTER_CLASS not in r.stderr:
+        raise AssertionError(f"driver named set rc={r.returncode}: {r.stderr.strip()}")
+    d2 = _fixture(work, "c41-selfunlink")
+    attrs = os.path.join(d2, ".git", "info", "attributes")
+    flt = os.path.join(work, "c41-selfunlink-filter.py")
+    with open(flt, "w", encoding="utf-8") as f:
+        f.write("import os, sys\n"
+                "data = sys.stdin.buffer.read()\n"
+                "sys.stdout.buffer.write(data.replace(b'dirty', b'clean'))\n"
+                f"p = {attrs!r}\n"
+                "if os.path.exists(p):\n"
+                "    os.unlink(p)\n")
+    inrun = ("import os, subprocess, sys\n"
+             "d, attrs, flt = sys.argv[1], sys.argv[2], sys.argv[3]\n"
+             "os.makedirs(os.path.dirname(attrs), exist_ok=True)\n"
+             "open(attrs, 'wb').write(b'tracked.txt filter=u\\n')\n"
+             "subprocess.run(['git', '-C', d, 'config', 'filter.u.clean', sys.executable + ' ' + flt], check=True)\n"
+             "open(os.path.join(d, 'tracked.txt'), 'wb').write(b'dirty\\n')\n")
+    out2 = os.path.join(outdir, "selfunlink.txt")
+    r = _run([*_base_args(d2, _head(d2), out2), "--", sys.executable, "-c", inrun, d2, attrs, flt])
+    if r.returncode != 2 or os.path.exists(out2) or FILTER_CLASS not in r.stderr:
+        raise AssertionError(f"self-unlinking in-run filter rc={r.returncode}: {r.stderr.strip()}")
+    for key, val in (("core.checkStat", "minimal"), ("core.trustctime", "false")):
+        d3 = _fixture(work, "c41-stat")
+        _git_ok(d3, "config", key, val)
+        p = os.path.join(d3, "tracked.txt")
+        past = time.time_ns() - 60 * 10**9
+        # The mtime is set 60 s into the past before the refresh, so the entry is not racily clean.
+        time.sleep(1.02 - (time.time() % 1.0))
+        os.utime(p, ns=(past, past))
+        _git_ok(d3, "update-index", "--really-refresh")
+        if key == "core.checkStat":
+            time.sleep(0.05)
+            with open(p + ".new", "wb") as f:
+                f.write(b"dirty\n")
+            os.utime(p + ".new", ns=(past, past))
+            os.replace(p + ".new", p)
+        else:
+            time.sleep(1.02 - (time.time() % 1.0))
+            with open(p, "wb") as f:
+                f.write(b"dirty\n")
+            os.utime(p, ns=(past, past))
+        out3 = os.path.join(outdir, f"stat-{val}.txt")
+        r = _run([*_base_args(d3, _head(d3), out3), "--command", "/bin/echo hi"])
+        if r.returncode != 2 or os.path.exists(out3) or "lane worktree is dirty" not in r.stderr:
+            raise AssertionError(f"{key}={val} pre-run size-preserving edit rc={r.returncode}: {r.stderr.strip()}")
+    _no_stray(outdir)
+
+
 CASES = (
     ("arg-forms: --command and post--- argv both accepted, identical receipts; both at once refused", case_01_arg_forms),
     ("rev-format: short/branch/uppercase rev refused with nothing written", case_02_rev_format),
@@ -1695,6 +1780,7 @@ CASES = (
     ("pathspec-env: GIT_LITERAL/GLOB/NOGLOB/ICASE_PATHSPECS scrubbed from writer git calls; flag row refused, honest tree accepted, wrapped command still sees the variable (r70 C1)", case_38_pathspec_env_scrubbed),
     ("filter-driver: configured clean filter on a tracked path refused (committed, info/attributes); no-driver attribute accepted; GIT_ATTR_SOURCE filter tree scrubbed (r71 C1)", case_39_filter_driver_refused),
     ("filemode-pin: repository-local core.fileMode=false cannot hide a pre-run or in-run mode flip; clean tree accepted (r71 C1)", case_40_local_filemode_pinned),
+    ("wave-repairs: driver named set refused; in-run self-unlinking clean filter refused; checkStat=minimal cannot hide a same-second inode replace, trustctime=false cannot hide a later-second in-place edit, size-preserving with mtime restored (r71 wave)", case_41_wave_repairs),
 )
 
 
