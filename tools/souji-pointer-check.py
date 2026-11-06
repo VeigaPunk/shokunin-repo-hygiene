@@ -8,8 +8,10 @@ worktree), extracts every token that starts with census/, corpus/, tests/, .ufo/
 checks `git cat-file -e <rev>:<path>` (files and directories both count). Tokens starting with
 probe/, probes/, records/, controls/ or battery/ are resolved against census/round-N/ when the file
 is census/round-N/... or corpus/lessons/round-N[-*].md, and are counted as skipped elsewhere.
-Tokens holding a placeholder (`<`, `*`, `{`, `$`, `…`) are skipped.
-  SUMMARY files=<n> checked=<n> missing=<n> skipped=<n>
+Tokens holding a placeholder (`<`, `*`, `{`, `$`, `…`, `round-N`) are skipped. A token immediately
+followed by `(dead` (after an optional closing backtick) is a DECLARED-dead mention: it counts as
+dead_declared when the path is absent and as MISSTATED-DEAD (a missing finding) when it exists.
+  SUMMARY files=<n> checked=<n> missing=<n> skipped=<n> dead_declared=<n>
   EXIT=0 iff missing=0; 1 iff missing>0; 2 = could not evaluate
 
 Read-only; stdlib only.
@@ -26,7 +28,8 @@ TOKEN = re.compile(r"(?<![A-Za-z0-9_./-])((?:census|corpus|tests|\.ufo)/[^\s`'\"
                    r"|(?:probe|probes|records|controls|battery)/[^\s`'\"()\[\]|,;]+)")
 LOCAL_PREFIXES = ("probe/", "probes/", "records/", "controls/", "battery/")
 ROUND_OF = re.compile(r"^(?:census/round-([0-9]+)/|corpus/lessons/round-([0-9]+)(?:-[^/]*)?\.md$)")
-PLACEHOLDER = ("<", "*", "{", "$", "…")
+PLACEHOLDER = ("<", "*", "{", "$", "…", "round-N")
+DEAD_MARK = re.compile(r"^`?\s*\(dead\b")
 
 
 def git(root, *args):
@@ -44,7 +47,7 @@ def main(argv):
         print("POINTER-CHECK-FATAL: --rev must be full 40-hex", file=sys.stderr)
         print("EXIT=2")
         return 2
-    checked = missing = skipped = 0
+    checked = missing = skipped = dead_declared = 0
     for rel in ns.files:
         r = git(ns.root, "show", f"{ns.rev}:{rel}")
         if r.returncode != 0:
@@ -68,10 +71,18 @@ def main(argv):
                     continue
                 seen.add((path, lineno))
                 checked += 1
-                if git(ns.root, "cat-file", "-e", f"{ns.rev}:{path}").returncode != 0:
+                exists = git(ns.root, "cat-file", "-e", f"{ns.rev}:{path}").returncode == 0
+                if DEAD_MARK.match(line[m.end():]):
+                    if exists:
+                        missing += 1
+                        print(f"MISSTATED-DEAD {rel}:{lineno} {path}")
+                    else:
+                        dead_declared += 1
+                elif not exists:
                     missing += 1
                     print(f"MISSING {rel}:{lineno} {path}")
-    print(f"SUMMARY files={len(ns.files)} checked={checked} missing={missing} skipped={skipped}")
+    print(f"SUMMARY files={len(ns.files)} checked={checked} missing={missing} skipped={skipped} "
+          f"dead_declared={dead_declared}")
     rc = 0 if missing == 0 else 1
     print(f"EXIT={rc}")
     return rc
