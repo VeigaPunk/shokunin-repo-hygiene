@@ -94,7 +94,9 @@ the clean filter and a filter can delete its own attribute (S71Sentinel HIGH-1);
 inode replace and core.trustctime=false cannot hide a later-second edit with its mtime restored (S71Sentinel
 HIGH-2). Named limit, measured (census/round-71/probes/stat-granularity-probe.txt): a size-preserving in-place edit
 in the same whole second as the last index refresh, mtime restored, is invisible to `git status` under any config
-on this git build; the clean path takes no content snapshot.
+on this git build; the clean path takes no content snapshot. A tracked path carrying `ident` or a
+`working-tree-encoding` value refuses RECEIPT-CHECKIN-CONVERSION-SET at the same two points (S71CriticClaims:
+`ident` collapses `$Id: ... $` on check-in, so a size-preserving edit inside the span reads as clean).
 """
 from __future__ import annotations
 
@@ -147,21 +149,33 @@ def git(root: str, *args: str, input: "bytes | None" = None) -> subprocess.Compl
 
 
 FILTER_CLASS = "RECEIPT-FILTER-DRIVER-SET"
+# r71 wave repair (S71CriticClaims HIGH, S71Sentinel LOW): `ident` replaces `$Id:...$` with `$Id$` on check-in
+# (gitattributes(5)), and `working-tree-encoding` re-encodes on check-in, so a size-preserving edit inside an
+# `$Id: ... $` span or an encoding-preserving byte swap reads as unmodified with no driver configured at all.
+CONVERSION_CLASS = "RECEIPT-CHECKIN-CONVERSION-SET"
+WITNESS_ATTRS = ("filter", "ident", "working-tree-encoding")
 
 
-def _filter_drivers(top: str) -> "list[str]":
-    """r71 C1: sorted driver names that a tracked path's `filter` attribute selects and whose clean or
-    process command is configured. Refuses (exit 2) when the reads themselves fail."""
+def _witness_attrs(top: str) -> "dict[bytes, set[bytes]]":
+    """r71 C1: the set of values each witness attribute takes over the tracked paths (resolved under the
+    writer's pinned environment). Refuses (exit 2) when the reads themselves fail."""
+    out: "dict[bytes, set[bytes]]" = {a.encode(): set() for a in WITNESS_ATTRS}
     ls = git(top, "ls-files", "-z", ":(top)")
     if ls.returncode != 0:
         refuse(f"cannot list tracked paths of {top}: {ls.stderr.decode('utf-8', 'replace').strip()}")
     if not ls.stdout:
-        return []
-    ca = git(top, "check-attr", "--stdin", "-z", "filter", input=ls.stdout)
+        return out
+    ca = git(top, "check-attr", "--stdin", "-z", *WITNESS_ATTRS, input=ls.stdout)
     if ca.returncode != 0:
         refuse(f"cannot read filter attributes of {top}: {ca.stderr.decode('utf-8', 'replace').strip()}")
     fields = ca.stdout.split(b"\0")
-    values = {fields[i + 2] for i in range(0, len(fields) - 2, 3)}
+    for i in range(0, len(fields) - 2, 3):
+        out.setdefault(fields[i + 1], set()).add(fields[i + 2])
+    return out
+
+
+def _filter_drivers(top: str, values: "set[bytes]") -> "list[str]":
+    """r71 C1: sorted driver names among the `filter` values whose clean or process command is configured."""
     drivers = []
     # r71 wave repair (S71Reviewer F1): check-attr prints the same text for `filter=set|unset|unspecified` as
     # for the boolean states, and git applies a configured driver of that name, so no value is exempt; a
@@ -175,9 +189,22 @@ def _filter_drivers(top: str) -> "list[str]":
     return drivers
 
 
-def _filter_refusal(drivers: "list[str]") -> str:
-    return (f"{FILTER_CLASS}: tracked paths carry a filter attribute whose clean/process driver is configured "
-            f"({', '.join(drivers)}); a clean filter can hide worktree changes from git status; no receipt written")
+def _witness_refusal(top: str) -> "str | None":
+    """r71 C1: the refusal message when a tracked path's attributes make the status witness untrustworthy."""
+    attrs = _witness_attrs(top)
+    drivers = _filter_drivers(top, attrs[b"filter"])
+    if drivers:
+        return (f"{FILTER_CLASS}: tracked paths carry a filter attribute whose clean/process driver is configured "
+                f"({', '.join(drivers)}); a clean filter can hide worktree changes from git status; no receipt written")
+    conv = []
+    if b"set" in attrs[b"ident"]:
+        conv.append("ident")
+    if attrs[b"working-tree-encoding"] - {b"unspecified", b"unset"}:
+        conv.append("working-tree-encoding")
+    if conv:
+        return (f"{CONVERSION_CLASS}: tracked paths carry {' and '.join(conv)}; a lossy check-in conversion can "
+                f"hide worktree changes from git status; no receipt written")
+    return None
 
 
 def refuse(msg: str) -> None:
@@ -462,9 +489,9 @@ def write_receipt(ns: argparse.Namespace) -> int:
         if tag != b"H":
             refuse(_flag_refusal(top, tag, path))
     # r71 C1: a configured clean/process filter on any tracked path makes the status witness untrustworthy.
-    pre_drivers = _filter_drivers(top)
-    if pre_drivers:
-        refuse(_filter_refusal(pre_drivers))
+    pre_msg = _witness_refusal(top)
+    if pre_msg:
+        refuse(pre_msg)
 
     # behaviour 7: clean lane tree unless --allow-dirty (r65 C1: the status reads override
     # status.showUntrackedFiles to `all`, so operator config cannot hide untracked entries)
@@ -572,9 +599,9 @@ def write_receipt(ns: argparse.Namespace) -> int:
     # r71 C1: a driver configured (or a filter attribute added) by the wrapped command also refuses. r71 wave
     # repair (S71Sentinel HIGH-1): this check runs BEFORE the post-run status read, because that read executes
     # the clean filter, and a filter can delete its own attribute while it runs.
-    post_drivers = _filter_drivers(top)
-    if post_drivers:
-        refuse(_filter_refusal(post_drivers))
+    post_msg = _witness_refusal(top)
+    if post_msg:
+        refuse(post_msg)
     post_fl = git(top, "ls-files", "-v", "-z", ":(top)")
     post_st = git(root, "-c", "status.showUntrackedFiles=all", "status", "--porcelain")
     changed = []
@@ -1739,6 +1766,40 @@ def case_41_wave_repairs(work: str) -> None:
     _no_stray(outdir)
 
 
+def case_42_checkin_conversions_refused(work: str) -> None:
+    # r71 wave repair (S71CriticClaims HIGH): a committed `ident` attribute or a `working-tree-encoding` value on a
+    # tracked path refuses RECEIPT-CHECKIN-CONVERSION-SET; a `text` attribute alone is accepted.
+    outdir = _outdir(work)
+    d = _fixture(work, "c42-ident")
+    with open(os.path.join(d, ".gitattributes"), "wb") as f:
+        f.write(b"tracked.txt ident\n")
+    with open(os.path.join(d, "tracked.txt"), "wb") as f:
+        f.write(b"$Id: v1 $\n")
+    _commit_all(d, "ident")
+    with open(os.path.join(d, "tracked.txt"), "wb") as f:
+        f.write(b"$Id: v2 $\n")
+    out = os.path.join(outdir, "ident.txt")
+    r = _run([*_base_args(d, _head(d), out), "--command", "/bin/echo hi"])
+    if r.returncode != 2 or os.path.exists(out) or CONVERSION_CLASS not in r.stderr:
+        raise AssertionError(f"ident size-preserving edit rc={r.returncode}: {r.stderr.strip()}")
+    d2 = _fixture(work, "c42-wte")
+    with open(os.path.join(d2, ".git", "info", "attributes"), "wb") as f:
+        f.write(b"tracked.txt working-tree-encoding=UTF-8\n")
+    out2 = os.path.join(outdir, "wte.txt")
+    r = _run([*_base_args(d2, _head(d2), out2), "--command", "/bin/echo hi"])
+    if r.returncode != 2 or os.path.exists(out2) or CONVERSION_CLASS not in r.stderr:
+        raise AssertionError(f"working-tree-encoding rc={r.returncode}: {r.stderr.strip()}")
+    d3 = _fixture(work, "c42-text")
+    with open(os.path.join(d3, ".gitattributes"), "wb") as f:
+        f.write(b"tracked.txt text\n")
+    _commit_all(d3, "text")
+    out3 = os.path.join(outdir, "text.txt")
+    r = _run([*_base_args(d3, _head(d3), out3), "--command", "/bin/echo hi"])
+    if r.returncode != 0 or not os.path.isfile(out3):
+        raise AssertionError(f"text attribute clean tree rc={r.returncode}: {r.stderr.strip()}")
+    _no_stray(outdir)
+
+
 CASES = (
     ("arg-forms: --command and post--- argv both accepted, identical receipts; both at once refused", case_01_arg_forms),
     ("rev-format: short/branch/uppercase rev refused with nothing written", case_02_rev_format),
@@ -1781,6 +1842,7 @@ CASES = (
     ("filter-driver: configured clean filter on a tracked path refused (committed, info/attributes); no-driver attribute accepted; GIT_ATTR_SOURCE filter tree scrubbed (r71 C1)", case_39_filter_driver_refused),
     ("filemode-pin: repository-local core.fileMode=false cannot hide a pre-run or in-run mode flip; clean tree accepted (r71 C1)", case_40_local_filemode_pinned),
     ("wave-repairs: driver named set refused; in-run self-unlinking clean filter refused; checkStat=minimal cannot hide a same-second inode replace, trustctime=false cannot hide a later-second in-place edit, size-preserving with mtime restored (r71 wave)", case_41_wave_repairs),
+    ("checkin-conversions: ident and working-tree-encoding on a tracked path refused; text attribute accepted (r71 wave)", case_42_checkin_conversions_refused),
 )
 
 
