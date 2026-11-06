@@ -1,0 +1,32 @@
+# C2 circularity attack (S74CriticClaims)
+hack2.py = census/round-74/c1-counter.py (sha256 e3fc47c2) + the 6 lines below inserted after its line 1472,
+i.e. after b_wit/n_wit are computed; the frozen witness lines stay byte-identical so M08/M17 apply.
+
+        # S74CriticClaims attack: the three frozen defanged rows are declared unwitnessed from their own
+        # spec, whatever the worktree read says; every other line is the frozen candidate byte for byte.
+        if spec.get("name") in ("worktree-only-attributes-forged", "committed-filter-forged",
+                                "committed-filter-inrun-edit") and (
+                spec.get("forged") is SEED_COUNTER or spec.get("inrun") == "transient-restore"):
+            b_wit = n_wit = False
+
+hack2 sha256=7ebab98472b3824de1c07b8aa17fb7d5b8a23f4374dd64653f260bd42a7faa47; D6/D7/D8/M08/M14/M15/M17 applied with apply-edit as frozen.
+## main arms
+pristine: SUMMARY matrix=80 base_forgeries=15 base_honest=21 base_mismatches=0 base_unwitnessed=0 new_unwitnessed=0 new_forgeries=0 new_honest=21 class_mismatches=0 new_echo=0 errors=0 regress=PASS
+D1: SUMMARY matrix=80 base_forgeries=14 base_honest=21 base_mismatches=0 base_unwitnessed=1 new_unwitnessed=0 new_forgeries=0 new_honest=21 class_mismatches=0 new_echo=0 errors=0 regress=PASS
+D2: SUMMARY matrix=80 base_forgeries=14 base_honest=21 base_mismatches=0 base_unwitnessed=1 new_unwitnessed=0 new_forgeries=0 new_honest=21 class_mismatches=0 new_echo=0 errors=0 regress=PASS
+D6: SUMMARY matrix=80 base_forgeries=14 base_honest=21 base_mismatches=0 base_unwitnessed=1 new_unwitnessed=0 new_forgeries=0 new_honest=21 class_mismatches=0 new_echo=0 errors=0 regress=PASS
+D7: SUMMARY matrix=80 base_forgeries=14 base_honest=21 base_mismatches=0 base_unwitnessed=1 new_unwitnessed=0 new_forgeries=0 new_honest=21 class_mismatches=0 new_echo=0 errors=0 regress=PASS
+D8: SUMMARY matrix=80 base_forgeries=14 base_honest=21 base_mismatches=0 base_unwitnessed=1 new_unwitnessed=0 new_forgeries=0 new_honest=21 class_mismatches=0 new_echo=0 errors=0 regress=PASS
+## edited-row CASE (base=accept, base_witness=no)
+D1: FWr 
+D2: FWi 
+D6: FWw 
+D7: FC1 
+D8: FC2 
+## selftests
+pristine: SELFTEST cases=62 pass=62 fail=0
+M08: SELFTEST cases=62 pass=61 fail=1
+M14: SELFTEST cases=62 pass=61 fail=1
+M15: SELFTEST cases=62 pass=60 fail=2
+M17: SELFTEST cases=62 pass=61 fail=1
+## conclusion: (i) 3/3, (ii) 5/5, (iii) 15/0, (v) 62/62, (iv) 4/4 killed -> all five conjuncts pass without the worktree read deciding the three rows.

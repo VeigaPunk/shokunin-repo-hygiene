@@ -2,6 +2,11 @@
 # Read-only round pre-report checks. Exit: 0 pass, 1 failed check, 2 usage.
 set -u
 unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_OBJECT_DIRECTORY GIT_COMMON_DIR GIT_NAMESPACE GIT_PREFIX GIT_SHALLOW_FILE GIT_ALTERNATE_OBJECT_DIRECTORIES GIT_CONFIG_GLOBAL GIT_CONFIG_SYSTEM GIT_CONFIG_NOSYSTEM GIT_TERMINAL_PROMPT GIT_ASKPASS GIT_SSH GIT_SSH_COMMAND GIT_EDITOR GIT_PAGER GIT_EXTERNAL_DIFF 2>/dev/null || true
+# r74 wave repair (S74ExecEvade HIGH h1/h2): caller-environment config (GIT_CONFIG_COUNT/KEY_n/VALUE_n,
+# GIT_CONFIG_PARAMETERS) and GIT_ATTR_SOURCE can install a clean filter that hides edits from status and
+# from hash-object alike; none of them may reach the gate's git calls.
+unset GIT_CONFIG_COUNT GIT_CONFIG_PARAMETERS GIT_ATTR_SOURCE 2>/dev/null || true
+for v in $(compgen -e); do case $v in GIT_CONFIG_KEY_*|GIT_CONFIG_VALUE_*) unset "$v" ;; esac; done
 export LC_ALL=C GIT_OPTIONAL_LOCKS=0
 usage() { printf '%s\n' 'Usage: bash tools/souji-pre-report-gate.sh --lane ABS --branch NAME --report ABS --prereg ABS [--contract] [--shonen ABS]' >&2; }
 usage_error() { usage; exit 2; }
@@ -27,10 +32,12 @@ local_tip=$(git --no-optional-locks -C "$lane" rev-parse --verify "refs/heads/$b
 remote_data=$(git --no-optional-locks -C "$lane" ls-remote --exit-code origin "refs/heads/$branch" 2>/dev/null) || remote_data=
 remote_tip=$(printf '%s\n' "$remote_data" | awk 'NR==1 {print $1}')
 if [[ $local_tip =~ ^[0-9a-f]{40,64}$ && $remote_tip == "$local_tip" ]]; then check tip PASS; else check tip FAIL; printf 'detail-tip: local=%s remote=%s\n' "${local_tip:-<none>}" "${remote_tip:-<none>}" >&2; fi
-# 2. Report must exist and contain bytes.
-if [[ -s $report ]]; then check report PASS; else check report FAIL; fi
+# 2. Report must be a regular file with bytes (r74 wave repair, S74Sentinel MEDIUM-2: a FIFO or a device
+#    named as the report made the heading grep below block forever).
+if [[ -f $report && -s $report ]]; then check report PASS; else check report FAIL; fi
 # 3. Exactly one canonical heading.
-shonen_count=$(grep -c '^## SHONEN' "$report" 2>/dev/null || true)
+shonen_count=0
+[[ -f $report ]] && shonen_count=$(grep -c '^## SHONEN' "$report" 2>/dev/null || true)
 if [[ $shonen_count == 1 ]]; then check shonen PASS; else check shonen FAIL; printf 'detail-shonen: found %s headings, expected 1\n' "${shonen_count:-0}" >&2; fi
 # 4. No lane changes may remain before report filing.
 #    r74 C1: an empty `git status` is a stat-cache verdict (racy-git S315): an index entry carries stat(2)
@@ -39,21 +46,45 @@ if [[ $shonen_count == 1 ]]; then check shonen PASS; else check shonen FAIL; pri
 #    entry records, through the receipt writer's own byte-truth check (_truth_refusal in the
 #    souji-receipt-write.py beside this gate; hash-object applies check-in conversion, S316). A missing
 #    writer, a failed read or any mismatch fails `clean`.
-gate_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd) || gate_dir=
+#    r74 wave repairs (after measurement; census/round-74/records/wave-repair/): the writer is resolved
+#    beside the gate's real path (S74Reviewer: a symlinked gate could load a stub); it is compiled from its
+#    source bytes in an isolated interpreter (`-I`: no caller PYTHON* variables, no CWD on sys.path; no
+#    __pycache__ read; S74Sentinel HIGH-1); the writer's own pinned status (core.fsmonitor=false,
+#    core.fileMode=true, full stat) must also be empty, because the truth check skips every path that
+#    status lists (S74Sentinel HIGH-2, S74ExecEvade n-filemode); its filter/conversion witness
+#    (_witness_refusal, r71) runs before the hash, because hash-object applies a configured clean filter
+#    (S74ExecEvade HIGH h3); and only the refusal class and count are printed, never a path (D30 no-echo,
+#    S74Sentinel MEDIUM-1).
+gate_src=$(readlink -f -- "${BASH_SOURCE[0]}" 2>/dev/null) || gate_src=
+gate_dir=
+[[ -n $gate_src ]] && gate_dir=$(cd "$(dirname "$gate_src")" && pwd) || gate_dir=
 if status=$(git --no-optional-locks -C "$lane" status --porcelain=v1 --untracked-files=all 2>&1); then
   if [[ -n $status ]]; then check clean FAIL; printf 'detail-clean: %s\n' "$status" >&2
-  elif truth=$(python3 -B - "$gate_dir/souji-receipt-write.py" "$lane" 2>&1 <<'PY'
-import importlib.util, sys
-spec = importlib.util.spec_from_file_location("souji_receipt_write", sys.argv[1])
-mod = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(mod)
-msg = mod._truth_refusal(sys.argv[2])
-if msg:
-    print(msg)
+  elif truth=$(python3 -I -B - "$gate_dir/souji-receipt-write.py" "$lane" 2>&1 <<'PY'
+import sys, types
+path, lane = sys.argv[1], sys.argv[2]
+with open(path, "rb") as f:
+    src = f.read()
+mod = types.ModuleType("souji_receipt_write")
+mod.__file__ = path
+sys.modules[mod.__name__] = mod
+exec(compile(src, path, "exec"), mod.__dict__)
+sz = mod._status_z(lane)
+if sz.returncode != 0:
+    print("pinned git status failed")
     sys.exit(1)
+if sz.stdout:
+    print("pinned git status (core.fsmonitor=false, core.fileMode=true) lists %d record(s)"
+          % sz.stdout.count(b"\0"))
+    sys.exit(1)
+for fn in (mod._witness_refusal, mod._truth_refusal):
+    msg = fn(lane)
+    if msg:
+        print(msg.split(" (", 1)[0])
+        sys.exit(1)
 PY
   ); then check clean PASS
-  else check clean FAIL; printf 'detail-clean: byte truth: %s\n' "${truth:-no output}" >&2; fi
+  else check clean FAIL; printf 'detail-clean: byte truth: %s\n' "$(printf '%s' "${truth:-no output}" | head -c 400 | LC_ALL=C tr -c '[:print:]' '?')" >&2; fi
 else check clean FAIL; printf 'detail-clean: git status failed: %s\n' "$status" >&2; fi
 # 5. The preregistration is mandatory; absence is never skipped.
 if [[ -s $prereg ]]; then check prereg PASS; else check prereg FAIL; fi

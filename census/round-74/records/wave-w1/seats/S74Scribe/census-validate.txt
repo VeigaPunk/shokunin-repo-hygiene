@@ -1,0 +1,27 @@
+# S74Scribe — census validation for the S317 append
+# 2026-11-06; lane /home/vgpnk/Projects/shokunin/souji-shokunin, base 43cd74bba84bb498b57a74377ccb0567d10864d5
+# Scratch: /fast/scratch/hyaku/souji-r74/S74Scribe (removed after copying this file)
+
+# Method: read-only mirror. `git show 43cd74bb:corpus/SOURCES.md` (no S317) plus a copy of corpus/.
+# used-by paths resolve from the parent of corpus/, so the lane's tools/ and SKILL.md (the only
+# non-corpus used-by targets, S120/S122/S224-S226) were symlinked in from the lane read-only.
+
+# 1. append the draft row after S316 (python assertion: 11 cells, 12 pipes, no `|` inside a cell,
+#    exactly one S316 line, no pre-existing S317); result: S316 at line 275, S317 at line 276.
+# 2. command:
+bash /home/vgpnk/Projects/shokunin/scripts/sources-census.sh validate --file /fast/scratch/hyaku/souji-r74/S74Scribe/corpus/SOURCES.md
+# exit=0
+# stdout: 86 W04 warnings (duplicate URL across scopes, all pre-existing rows), 0 E-codes,
+# final line: file	ok	/fast/scratch/hyaku/souji-r74/S74Scribe/corpus/SOURCES.md
+
+# 3. control, same mirror with the S317 line removed:
+bash /home/vgpnk/Projects/shokunin/scripts/sources-census.sh validate --file /fast/scratch/hyaku/souji-r74/S74Scribe/corpus-base/SOURCES.md
+# exit=0
+# diff(control stdout, appended stdout) = the final `ok <path>` line only; the row adds no E/W code.
+
+# Notes
+# - First attempt returned exit=1 with 5 E11 (S120/S122 tools/souji-size-census.py; S224-S226 SKILL.md):
+#   those used-by paths were outside the partial corpus-only mirror. After symlinking the lane's tools/
+#   and SKILL.md (read-only) the E11 set cleared to zero. Not a row defect.
+# - W04 warnings do not affect exit status (sources-census.sh header: "W-codes ... never change status").
+# Verdict: appended file validates clean, exit code 0.

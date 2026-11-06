@@ -1,0 +1,30 @@
+# command=bash census/round-74/records/wave-repair/probes/probe-exec.sh /fast/scratch/hyaku/souji-r74/L1/rep/sxW /fast/scratch/hyaku/souji-r74/L1/rep/W
+# cwd=lane root; lane master=8fe48c863d353da8e26140b132afba00de71ba61; host=Linux 7.2.11-arch1-1; git=2.56.0
+# bind /fast/scratch/hyaku/souji-r74/L1/rep/W/gate-w.sh sha256=3162de98fb3433c7a4268114cd29cd1b1e1ff9aecbfafff3d1d0982012ec7c48
+# bind census/round-74/records/wave-repair/probes/probe-exec.sh sha256=efc691734504b3d57fcc41b70ea954d65f51f5abcf0e8630e2117fad3868d706
+########## baseline: forged lane, no injection ##########
+status=0 lines
+exit=1
+check-clean=FAIL
+
+########## V-A: .git/info/exclude + subprocess.py in the gate CWD ##########
+status=0 lines (exclude hides it)
+exit=0
+check-clean=PASS
+marker: V-A executed inside the gate's check-4 python
+pwned_lines=0
+
+########## V-B: planted __pycache__/*.pyc beside the gate's writer ##########
+pyc=/fast/scratch/hyaku/souji-r74/L1/rep/sxW/eB/gate/__pycache__/souji-receipt-write.cpython-314.pyc magic=b'+\x0e\r\n'
+planted 451 bytes; source mtime=1794009952 size=111895
+exit=0
+check-clean=PASS
+marker: V-B executed from cached bytecode
+pwned_lines=0
+
+########## V-C: PYTHONPATH carries a subprocess.py shim ##########
+exit=0
+check-clean=PASS
+marker: V-C executed via PYTHONPATH
+pwned_lines=0
+EXIT=0

@@ -1,0 +1,44 @@
+# C1 gate runs (S74CriticClaims)
+## candidate = committed stage-W gate ec13ba7, sha256 3162de98, writer 70bbf1c2 beside it
+ROW GF1 expect=FAIL clean=FAIL rc=1 match=yes
+ROW GF2 expect=FAIL clean=FAIL rc=1 match=yes
+ROW GF3 expect=FAIL clean=FAIL rc=1 match=yes
+ROW GD1 expect=FAIL clean=FAIL rc=1 match=yes
+ROW GU1 expect=FAIL clean=FAIL rc=1 match=yes
+ROW GH1 expect=PASS clean=PASS rc=0 match=yes
+ROW GH2 expect=PASS clean=PASS rc=0 match=yes
+ROW GH3 expect=PASS clean=PASS rc=0 match=yes
+ROW GH4 expect=PASS clean=PASS rc=0 match=yes
+SUMMARY rows=9 mismatches=0 errors=0
+EXIT=0
+## lane-base gate (sha256 acdb8816)
+ROW GF1 expect=FAIL clean=PASS rc=0 match=no
+ROW GF2 expect=FAIL clean=PASS rc=0 match=no
+ROW GF3 expect=FAIL clean=PASS rc=0 match=no
+ROW GD1 expect=FAIL clean=FAIL rc=1 match=yes
+ROW GU1 expect=FAIL clean=FAIL rc=1 match=yes
+ROW GH1 expect=PASS clean=PASS rc=0 match=yes
+ROW GH2 expect=PASS clean=PASS rc=0 match=yes
+ROW GH3 expect=PASS clean=PASS rc=0 match=yes
+ROW GH4 expect=PASS clean=PASS rc=0 match=yes
+SUMMARY rows=9 mismatches=3 errors=0
+EXIT=1
+## K-b blanket
+SUMMARY rows=9 mismatches=4 errors=0
+EXIT=1
+## K-c regular-only
+SUMMARY rows=9 mismatches=1 errors=0
+EXIT=1
+## committed gate copied without its writer
+ROW GH1 expect=PASS clean=FAIL rc=1 match=no
+ROW GH2 expect=PASS clean=FAIL rc=1 match=no
+SUMMARY rows=2 mismatches=2 errors=0
+EXIT=1
+## omitted-shape probe (base vs committed cand; c1-shapes.py)
+SHAPE E1-exec-bit-flip-index-mode-forged status_clean=False status=b'M  run.sh\n' | base:clean=FAIL rc=1 detail=['detail-clean: M  run.sh'] | cand:clean=FAIL rc=1 detail=['detail-clean: M  run.sh']
+SHAPE E2-symlink-to-regular-same-bytes-mode-forged status_clean=False status=b'T  ln\n' | base:clean=FAIL rc=1 detail=['detail-clean: T  ln'] | cand:clean=FAIL rc=1 detail=['detail-clean: T  ln']
+SHAPE E3-exec-bit-flip-core.fileMode-false-config status_clean=True status=b'' | base:clean=PASS rc=0 detail=[] | cand:clean=PASS rc=0 detail=[]
+SHAPE E4-deleted-file-stat-forged status_clean=True status=b' D a.txt\n' | base:clean=FAIL rc=1 detail=['detail-clean:  D a.txt'] | cand:clean=FAIL rc=1 detail=['detail-clean:  D a.txt']
+## domain trial on lane at HEAD 8fe48c8 (dirty: sibling in-flight)
+check-clean=FAIL; detail-clean:  M SCORECARD.md ... (9 in-flight paths)
+# note: tools/souji-pre-report-gate.sh in the worktree changed after this run (now 062b6d39, in-flight wave repair); all C1 numbers above are the committed ec13ba7 bytes.

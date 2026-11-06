@@ -1,0 +1,17 @@
+# S74ExecC1 — C1 byte-truth falsification (r74 w1)
+
+Lane tip 8fe48c86 = remote master at start; gate sha256 3162de98…c7c48, writer 70bbf1c2…defa, counter ac28f7d1…d1e equal the committed binds. Scratch /fast/scratch/hyaku/souji-r74/S74ExecC1 removed.
+
+## Verdicts
+1. C1(i) REPRODUCED. `python3 -B census/round-74/c1-gate-counter.py --gate tools/souji-pre-report-gate.sh --work <S>/rc-cand` → `SUMMARY rows=9 mismatches=0 errors=0` / `EXIT=0` (S74ExecC1/r-cand.txt). Lane-base gate `git show 43cd74bb:tools/souji-pre-report-gate.sh` (sha acdb8816…, matches K-a bind) → `mismatches=3 errors=0` `EXIT=1`, ROW GF1/GF2/GF3 expect=FAIL clean=PASS (r-base.txt). Both bodies byte-identical to records/c1-after.txt and controls/c1-K-a-do-nothing.txt outside run-receipt.sh:27's appended EXIT line.
+2. Controls REPRODUCED. K-b `--gate census/round-74/controls/variants/gate-K-b-blanket.sh` → `mismatches=4` (GH1-GH4 clean=FAIL) `EXIT=1` (r-kb.txt); K-c → `mismatches=1` (GF2 clean=PASS) `EXIT=1` (r-kc.txt); the only diff vs the committed receipts is the wrapper EXIT line; gate bind hashes re-verified (42bd98…, 6c0071…).
+3. Domain trial (gate on lane, `--report/--prereg census/round-74/preregistration.txt`): rc=1, 0.54 s (`/usr/bin/time -v`); check-tip=PASS check-report=PASS check-shonen=FAIL check-clean=FAIL check-prereg=PASS; detail-clean = ` M corpus/SOURCES.md` + ` M corpus/knowledge/filter-filemode-witness.md` (domain.out, domain-wrapped.err). check-clean FAIL names real lane changes written after stage A (commit 20:52:04; mtimes 20:53:13 / 20:53:42; later ` M corpus/QUALITY.md`, ` M SCORECARD.md`, `?? corpus/lessons/round-74.md`) → per the prereg escape a real lane change, not a miss, but PASS is NOT reproducible on the live lane now. check-shonen=FAIL is preregistration.txt carrying 0 `## SHONEN` headings (invocation artifact; predicate iii binds check-clean only).
+   Supplementary: same gate+writer over a fresh clone of 8fe48c86 (19144 tracked files) → check-clean=PASS, 1.86 s (domain-clone.out); clone status after the run 0 lines → the gate writes nothing.
+4. Fail-closed REPRODUCED. Stage-W gate copied ALONE to scratch (no writer beside it): GH1-GH4 expect=PASS clean=FAIL rc=1, `mismatches=4` `EXIT=1` (failclosed.out); full stderr `FileNotFoundError: …/nowriter/souji-receipt-write.py` (nowriter-clone.err); writer copied beside it → `mismatches=0` `EXIT=0` (pair.out).
+
+## Findings
+- MEDIUM: frozen conjunct (iii) cannot print check-clean=PASS at the observed tip while the L1's corpus/SCORECARD edits stay uncommitted; the L1 must land them before filing. Untracked `.ufo/waves/` reports are gitignored (`.gitignore:1`), so seats never dirtied the lane.
+- LOW: on a dirty lane the gate skips the byte-truth re-hash entirely (tools/souji-pre-report-gate.sh:44-45 status branch); the declared "status-listed paths are not re-hashed" limit is the whole clean check then. On a clean lane it hashes all 19144 files and passes.
+- LOW: the gate loads a writer beside itself (gate:41); absence fails closed, but no hash pins the writer — an altered writer is caught only because it is tracked and would surface as dirty.
+
+Files written under /home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-74/w1/: S74ExecC1.md; S74ExecC1/{r-cand.txt,r-base.txt,r-kb.txt,r-kc.txt,cand.out,base.out,kb.out,kc.out,pair.out,failclosed.out,domain.out,domain-wrapped.err,domain-clone.out,domain-clone-wrapped.err,nowriter-clone.err,nowriter-clone.out}. No tools installed; disk-guard /fast/scratch/hyaku 51% used, 400.4G free before/after.

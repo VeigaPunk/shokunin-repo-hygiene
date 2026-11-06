@@ -2981,3 +2981,13 @@ addendum, appended to the prereg, commits 8a793e7ae9131578bdec393982760217f62095
 - **Wave w1 (12 seats, 7 report files):** writer mutants M01/M05 survived the frozen detectors (S73MutWriter) → repaired: case 43 pre-run marker, case 45 symlink stat forgery; M01/M05 now 44/45 EXIT=1, writer 45/45, C1 main arm unchanged EXIT=0 (`census/round-73/records/wave-repair/`). Witness is tree-global (S73ExecC2: FWw/FC1/FC2) and four counter survivors (S73MutCounter) are routed to r74. S73Connector: the lane's own pre-report and verify gates trust `git status` (routed r74).
 - **Domain trial:** the stage-W writer over the lane itself (18987 tracked files) wrote a receipt in ~2 s; S73Reviewer's replica measured 0.81 s per truth pass, 0 false refusals.
 - **Tools:** none installed. **Scratch:** `/fast/scratch/hyaku/souji-r73/` removed at landing.
+
+## Round 74 (2026-11-06, Linux; attempt 1) — pre-report gate byte truth against the index stat cache (C1 operability), row-specific counter witness and r73 survivor kills (C2 calibration)
+
+- **Motivation (evidence):** r73 spot-check routed defects 1-4 (`corpus/lessons/round-73-verifier-spotcheck.md`): Q133 overstates the tree-global witness (S73ExecC2), counter survivors M08/M14/M15/M17 (S73MutCounter), the lane's own gates trust `git status` (S73Connector HIGH), `base_forgeries` not witness-gated.
+- **Frozen at `bcdf2d16`** with executed controls: C1 lane-base gate mismatches=3, blanket refusal 4, regular-only 1 (all EXIT=1); C2 r73 counter D6-D8 0 of 3, survivors 52/52 (0 of 4), blanket-unwitnessed forger `base_unwitnessed=15` EXIT=1; feasibility probe 15/15 row-witnessed, defangs row_witness=no.
+- **Candidates `ac573032` (counter), `ec13ba7f` (gate); after-arms `8fe48c86`:** C1 mismatches=0 EXIT=0; C2 3 of 3, D1..D5 5/5, pristine 15/0 EXIT=0, survivors 4 of 4, selftest 62/62.
+- **Wave w1:** 12 seats, 0 dead, all numbers reproduced. Gate forged outside the frozen rows (env config, repo filter, fileMode split status, interpreter injection, report FIFO hang) → repaired after measurement, each route shown able to fail (`census/round-74/records/wave-repair/`, lesson M4). C2 qualifications routed (lesson M3).
+- **Frontier:** S317 mined (re-anchored per S74ScoutSources); QUALITY Q134 (supersedes Q133's observation clause), Q135; knowledge `filter-filemode-witness.md` r74; README frontier r74; SKILL gate rows r74.
+- **Domain trial:** the repaired gate over the lane at its final tip (`census/round-74/records/c1-domain-trial.txt`).
+- **Tools:** none installed; no pacman, sysctl, sudo or kernel change. **Scratch:** `/fast/scratch/hyaku/souji-r74/` removed at landing.
