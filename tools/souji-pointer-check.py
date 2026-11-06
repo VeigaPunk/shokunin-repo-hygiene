@@ -52,7 +52,7 @@ def main(argv):
         seen = set()
         for lineno, line in enumerate(r.stdout.decode("utf-8", "replace").splitlines(), 1):
             for m in TOKEN.finditer(line):
-                path = m.group(1).rstrip(".:/")
+                path = re.sub(r":[0-9][0-9,\-]*$", "", m.group(1).rstrip(".:/")).rstrip("/")
                 if path.startswith(LOCAL_PREFIXES):
                     if not rel.startswith("census/round-"):
                         continue
