@@ -1,0 +1,114 @@
+# S73MutCounter evidence — r73 counter forgery-witness mutation probe (2026-11-06)
+# lane base a789486d8d5d5e0f91145ad70282956f2cb6fda0; lane HEAD at start/end 312e8f29d42eac0fd91327d65a6b43a0ba9cc64e
+# counter census/round-73/c1-counter.py sha256(before)=3809ee7d726ad64dbd9018da83f84fcd88632c255d4412fe50845e71c64eaed3 sha256(after)=3809ee7d726ad64dbd9018da83f84fcd88632c255d4412fe50845e71c64eaed3
+# git status --porcelain -- <counter> <matrix> <writer> in lane: empty (rc=0)
+# counter copies: pristine.py sha==lane file; mutants live only in /fast/scratch/hyaku/souji-r73/S73MutCounter (deleted at end)
+
+## mutant sha256
+e6dd555c230785ae02d69102275995eee01fd921ee2d9a4de9d9a734290bc165  mutants/M01_treediv_empty.py
+0d50164513de2b765494381e027be535672a778cef282a9be7fed7711d3658a0  mutants/M02_treediv_nonempty.py
+fc37db9775b0d6f99855e76dde41fd867ac99c099779c8b13afbf3d23ee15047  mutants/M03_ignore_untracked.py
+4893c8ab92b1c01ed95e968af368b258bee4d23a3952574a681c4253b9aeec33  mutants/M04_ignore_mode.py
+55d19fd105525e0dd5ff8d9f2f9eabdadede6f3f8f2902943ba1b5948f49a126  mutants/M05_ignore_bytes.py
+d2a7b1c218764e1616d693406170804a32960356ada480e95b31900644eeeb47  mutants/M06_witness_pre_only.py
+bf3c681d0f3d4fa1bad4350e1194f31bd5978170d32f6c488d86a5d59b48d114  mutants/M07_witness_post_only.py
+d6a269ee47eaf90740aaf3bf548b14cb80e5c5c552d268dcbeea467016184e27  mutants/M08_witness_fail_open.py
+7a15fdfaed6333e4bd6bd53c4de601cbcf0259bc05530ee3e30f9a50a3bae9f8  mutants/M09_claim_drop_unwitnessed.py
+efab52d8c34bc0995a9c2c804dbc4fc5c884a8514c736c68b0dfa8747b3f0787  mutants/M10_unwitnessed_on_refused_rows.py
+88ca7af91dfbd810990f1f318e776789b795515e7f5ec0a16aa8a64ddd10f858  mutants/M11_classifier_errors_ignore_witness.py
+a20d3e5f0b84532f02b3b397ba5235a53dc8311483a2ca87960844533f0b35a6  mutants/M12_classifier_forgeries_ignore_witness.py
+15f54ff189190dc85e8cd56151575932964f59a6e5f28e199ab0bcf1ec06f5df  mutants/M13_git_exclusion_removed.py
+9c6c0850dc6a5bbc2ad9af21f7898ad653e7ce4c97fe9ccb63da23342ee76bdf  mutants/M14_symlink_target_ignored.py
+41ed87db8f0c6c86c1137554e25a77cc83d6e0546366a1bbfc95420407f5348b  mutants/M15_gitlink_skip_removed.py
+212b6987fc8d978e05a1bfd2f8d84e3854a65ad0261746c8ad68628865a77c25  mutants/M16_summary_unwitnessed_zero.py
+fd56fe5b7218f510471cc1f91ce78a3dc8993e81f3652e5709d9d085827185f4  mutants/M17_newwitness_pre_only.py
+
+## selftest pristine control: SELFTEST cases=52 pass=52 fail=0 EXIT=0
+
+## selftest outcomes per mutant
+M01_treediv_empty: SELFTEST cases=52 pass=48 fail=4 EXIT=1
+    selftest FAIL: witness: an exec-bit flip is a mode divergence | []
+    selftest FAIL: witness: a new worktree file is an untracked divergence | []
+    selftest FAIL: witness: a deleted tracked file is a missing divergence | []
+    selftest FAIL: witness: a stat-concealed forgery (git status clean) is a bytes divergence | rc=0 status=b'' []
+M02_treediv_nonempty: SELFTEST cases=52 pass=51 fail=1 EXIT=1
+    selftest FAIL: witness: a clean fixture has no divergence | [('', 'bytes')]
+M03_ignore_untracked: SELFTEST cases=52 pass=51 fail=1 EXIT=1
+    selftest FAIL: witness: a new worktree file is an untracked divergence | []
+M04_ignore_mode: SELFTEST cases=52 pass=51 fail=1 EXIT=1
+    selftest FAIL: witness: an exec-bit flip is a mode divergence | []
+M05_ignore_bytes: SELFTEST cases=52 pass=51 fail=1 EXIT=1
+    selftest FAIL: witness: a stat-concealed forgery (git status clean) is a bytes divergence | rc=0 status=b'' []
+M06_witness_pre_only: SELFTEST cases=52 pass=52 fail=0 EXIT=0
+M07_witness_post_only: SELFTEST cases=52 pass=52 fail=0 EXIT=0
+M08_witness_fail_open: SELFTEST cases=52 pass=52 fail=0 EXIT=0
+M09_claim_drop_unwitnessed: SELFTEST cases=52 pass=51 fail=1 EXIT=1
+    selftest FAIL: claim verdict: one unwitnessed base forgery fails the claim
+M10_unwitnessed_on_refused_rows: SELFTEST cases=52 pass=52 fail=0 EXIT=0
+M11_classifier_errors_ignore_witness: SELFTEST cases=52 pass=51 fail=1 EXIT=1
+    selftest FAIL: classifier: an accepted refuse row without a witness is error, not a forgery
+M12_classifier_forgeries_ignore_witness: SELFTEST cases=52 pass=52 fail=0 EXIT=0
+M13_git_exclusion_removed: SELFTEST cases=52 pass=47 fail=5 EXIT=1
+    selftest FAIL: witness: a clean fixture has no divergence | [('.git/description', 'untracked'), ('.git/config', 'untrack
+    selftest FAIL: witness: an exec-bit flip is a mode divergence | [('tools/notes.txt', 'mode'), ('.git/description', 'untr
+    selftest FAIL: witness: a new worktree file is an untracked divergence | [('.git/description', 'untracked'), ('.git/conf
+    selftest FAIL: witness: a deleted tracked file is a missing divergence | [('README.md', 'missing'), ('.git/description',
+    selftest FAIL: witness: a stat-concealed forgery (git status clean) is a bytes divergence | rc=0 status=b'' [('tools/cou
+M14_symlink_target_ignored: SELFTEST cases=52 pass=52 fail=0 EXIT=0
+M15_gitlink_skip_removed: SELFTEST cases=52 pass=52 fail=0 EXIT=0
+M16_summary_unwitnessed_zero: SELFTEST cases=52 pass=52 fail=0 EXIT=0
+M17_newwitness_pre_only: SELFTEST cases=52 pass=52 fail=0 EXIT=0
+
+## main arm (--rev a789486d... lane-base writer) SUMMARY/EXIT
+M06_witness_pre_only: SUMMARY matrix=80 base_forgeries=15 base_honest=21 base_mismatches=0 base_unwitnessed=5 new_unwitnessed=0 new_forgeries=3 new_honest=21 class_mismatches=3 new_echo=0 errors=0 regress=PASS | EXIT=1
+M07_witness_post_only: SUMMARY matrix=80 base_forgeries=15 base_honest=21 base_mismatches=0 base_unwitnessed=1 new_unwitnessed=0 new_forgeries=3 new_honest=21 class_mismatches=3 new_echo=0 errors=0 regress=PASS | EXIT=1
+M08_witness_fail_open: SUMMARY matrix=80 base_forgeries=15 base_honest=21 base_mismatches=0 base_unwitnessed=0 new_unwitnessed=0 new_forgeries=3 new_honest=21 class_mismatches=3 new_echo=0 errors=0 regress=PASS | EXIT=1
+M10_unwitnessed_on_refused_rows: SUMMARY matrix=80 base_forgeries=15 base_honest=21 base_mismatches=0 base_unwitnessed=11 new_unwitnessed=0 new_forgeries=3 new_honest=21 class_mismatches=3 new_echo=0 errors=0 regress=PASS | EXIT=1
+M12_classifier_forgeries_ignore_witness: SUMMARY matrix=80 base_forgeries=15 base_honest=21 base_mismatches=0 base_unwitnessed=0 new_unwitnessed=0 new_forgeries=3 new_honest=21 class_mismatches=3 new_echo=0 errors=0 regress=PASS | EXIT=1
+M14_symlink_target_ignored: SUMMARY matrix=80 base_forgeries=15 base_honest=21 base_mismatches=0 base_unwitnessed=0 new_unwitnessed=0 new_forgeries=3 new_honest=21 class_mismatches=3 new_echo=0 errors=0 regress=PASS | EXIT=1
+M15_gitlink_skip_removed: SUMMARY matrix=80 base_forgeries=15 base_honest=21 base_mismatches=0 base_unwitnessed=0 new_unwitnessed=0 new_forgeries=3 new_honest=21 class_mismatches=3 new_echo=0 errors=0 regress=PASS | EXIT=1
+M16_summary_unwitnessed_zero: SUMMARY matrix=80 base_forgeries=15 base_honest=21 base_mismatches=0 base_unwitnessed=0 new_unwitnessed=0 new_forgeries=3 new_honest=21 class_mismatches=3 new_echo=0 errors=0 regress=PASS | EXIT=1
+M17_newwitness_pre_only: SUMMARY matrix=80 base_forgeries=15 base_honest=21 base_mismatches=0 base_unwitnessed=0 new_unwitnessed=2 new_forgeries=3 new_honest=21 class_mismatches=3 new_echo=0 errors=0 regress=PASS | EXIT=1
+pristine: SUMMARY matrix=80 base_forgeries=15 base_honest=21 base_mismatches=0 base_unwitnessed=0 new_unwitnessed=0 new_forgeries=3 new_honest=21 class_mismatches=3 new_echo=0 errors=0 regress=PASS | EXIT=1
+
+## D1 defang arm (apply-edit D1, main arm) SUMMARY/EXIT + FWr CASE
+M08_witness_fail_open: SUMMARY matrix=80 base_forgeries=15 base_honest=21 base_mismatches=0 base_unwitnessed=1 new_unwitnessed=0 new_forgeries=3 new_honest=21 class_mismatches=3 new_echo=0 errors=0 regress=PASS | EXIT=1
+    CASE FWr expect=refuse base=accept base_findings=- new=refuse new_findings=RECEIPT-FILTER-DRIVER-SET new_echo=false base_expect=accept base_witness=no new_witness=no
+M12_classifier_forgeries_ignore_witness: SUMMARY matrix=80 base_forgeries=15 base_honest=21 base_mismatches=0 base_unwitnessed=1 new_unwitnessed=0 new_forgeries=3 new_honest=21 class_mismatches=3 new_echo=0 errors=0 regress=PASS | EXIT=1
+    CASE FWr expect=refuse base=accept base_findings=- new=refuse new_findings=RECEIPT-FILTER-DRIVER-SET new_echo=false base_expect=accept base_witness=no new_witness=no
+M14_symlink_target_ignored: SUMMARY matrix=80 base_forgeries=15 base_honest=21 base_mismatches=0 base_unwitnessed=1 new_unwitnessed=0 new_forgeries=3 new_honest=21 class_mismatches=3 new_echo=0 errors=0 regress=PASS | EXIT=1
+    CASE FWr expect=refuse base=accept base_findings=- new=refuse new_findings=RECEIPT-FILTER-DRIVER-SET new_echo=false base_expect=accept base_witness=no new_witness=no
+M15_gitlink_skip_removed: SUMMARY matrix=80 base_forgeries=15 base_honest=21 base_mismatches=0 base_unwitnessed=1 new_unwitnessed=0 new_forgeries=3 new_honest=21 class_mismatches=3 new_echo=0 errors=0 regress=PASS | EXIT=1
+    CASE FWr expect=refuse base=accept base_findings=- new=refuse new_findings=RECEIPT-FILTER-DRIVER-SET new_echo=false base_expect=accept base_witness=no new_witness=no
+M16_summary_unwitnessed_zero: SUMMARY matrix=80 base_forgeries=15 base_honest=21 base_mismatches=0 base_unwitnessed=0 new_unwitnessed=0 new_forgeries=3 new_honest=21 class_mismatches=3 new_echo=0 errors=0 regress=PASS | EXIT=1
+    CASE FWr expect=refuse base=accept base_findings=- new=refuse new_findings=RECEIPT-FILTER-DRIVER-SET new_echo=false base_expect=accept base_witness=no new_witness=no
+M17_newwitness_pre_only: SUMMARY matrix=80 base_forgeries=15 base_honest=21 base_mismatches=0 base_unwitnessed=1 new_unwitnessed=2 new_forgeries=3 new_honest=21 class_mismatches=3 new_echo=0 errors=0 regress=PASS | EXIT=1
+    CASE FWr expect=refuse base=accept base_findings=- new=refuse new_findings=RECEIPT-FILTER-DRIVER-SET new_echo=false base_expect=accept base_witness=no new_witness=no
+pristine: SUMMARY matrix=80 base_forgeries=15 base_honest=21 base_mismatches=0 base_unwitnessed=1 new_unwitnessed=0 new_forgeries=3 new_honest=21 class_mismatches=3 new_echo=0 errors=0 regress=PASS | EXIT=1
+    CASE FWr expect=refuse base=accept base_findings=- new=refuse new_findings=RECEIPT-FILTER-DRIVER-SET new_echo=false base_expect=accept base_witness=no new_witness=no
+
+## unwitnessed base rows (expect=refuse base=accept base_witness=no)
+M06_witness_pre_only: AS2 FM2 FWi FX1 FX3 
+M07_witness_post_only: FWr 
+M10_unwitnessed_on_refused_rows: 
+
+## new-slot witness rows (expect=refuse new=accept new_witness=no)
+M17_newwitness_pre_only: FX1 FX3 
+
+## behavior probes (probe.py)
+M12 equivalence: combos=48 differing=0
+M14 symlink retarget: pristine=[('tools/link', 'target')] mutant=[]
+M15 gitlink: pristine=[('tools/link', 'target'), ('vendor/sub', 'missing')] mutant=[('tools/link', 'target'), ('vendor/sub', 'missing')]
+M08 formula on (None,None): pristine=False mutant=True
+M15 present-dir gitlink: pristine= [('tools/link', 'target'), ('vendor/sub', 'missing')]
+M15 present-dir gitlink: mutant  = [('tools/link', 'target'), ('vendor/sub', 'missing')]
+M15 empty-dir at gitlink path: pristine= [('tools/link', 'target')]
+M15 empty-dir at gitlink path: mutant  = [('tools/link', 'target'), ('vendor/sub', 'type')]
+
+## apply-edit D1 lines (src sha binds each mutant)
+M08_witness_fail_open D1-applied sha256=92059935d33688f0952f84b6aca741f958ff22971c04db7cb1b185024a19d6ac
+M12_classifier_forgeries_ignore_witness D1-applied sha256=0ed217e885c63d6c0e10ea13da99a79afc3b7febf72caa400d7aa27ab527f6e2
+M14_symlink_target_ignored D1-applied sha256=771a75505f587de715f6b8edae75c379954cb040a0fc89143fe3ae176c33dd4f
+M15_gitlink_skip_removed D1-applied sha256=5347ce983b6fdba91c71c33e191d91ccbeae7ca06cf8cb724a24a5ba6a4c2a44
+M16_summary_unwitnessed_zero D1-applied sha256=f09415934acce1e29b981b7b7eb149caa22685d1c7d7940b20841c63cfb4a0c4
+M17_newwitness_pre_only D1-applied sha256=dd4eac90b73ade041dfb0bd07851ff84317a1f6bc62a6271814eba29f4ffc966

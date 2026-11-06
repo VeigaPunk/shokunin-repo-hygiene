@@ -1,0 +1,72 @@
+# S73Scribe — census validation of the S315/S316 draft rows
+
+All runs from the lane root `/home/vgpnk/Projects/shokunin/souji-shokunin`; scratch root
+`/fast/scratch/hyaku/souji-r73/S73Scribe`. The lane's tracked files were not modified.
+
+## 1. Row shape and quote locators (self-check)
+
+```
+python3 - <<'EOF'   # splits each row on '|' and re-locates every quote in the capture
+EOF
+S315 q1: offset=1435 expected=1435 words=25 verbatim=True pass=True
+S315 q2: offset=3539 expected=3539 words=16 verbatim=True pass=True
+S316 q1: offset=2258 expected=2258 words=18 verbatim=True pass=True
+S316 q2: offset=3056 expected=3056 words=15 verbatim=True pass=True
+ALL_OK True
+```
+
+Each row splits into exactly 11 cells (so no `|` inside a cell); both are `status=mined`,
+`recheck=180d`, `used-by=corpus/knowledge/filter-filemode-witness.md`.
+
+## 2. Validate against the committed registry (primary)
+
+Base file = `git show 312e8f29d42eac0fd91327d65a6b43a0ba9cc64e:corpus/SOURCES.md` (the committed
+registry; the lane working tree carries an uncommitted S315/S316 pair that is not mine, see §3).
+Scratch root also holds `tools/souji-size-census.py` and `SKILL.md` so the pre-existing E11 used-by
+targets resolve.
+
+```
+bash /home/vgpnk/Projects/shokunin/scripts/sources-census.sh validate \
+  --file /fast/scratch/hyaku/souji-r73/S73Scribe/corpus/SOURCES.md --today 2026-11-06
+EXIT=0
+file	ok	/fast/scratch/hyaku/souji-r73/S73Scribe/corpus/SOURCES.md
+```
+
+86 `W04` lines (pre-existing duplicate URL across scopes, S035 … S314; warnings do not change the
+exit status). Zero `E` codes: no E01 (NF!=13), no E02/E03/E04/E05/E06/E07/E08/E09/E10/E11/E12 on
+S315 or S316.
+
+First attempt, before `tools/souji-size-census.py` and `SKILL.md` were placed in the scratch root,
+returned `EXIT=1` with only scratch-root artifacts — `E11 S120/S122 missing used-by
+tools/souji-size-census.py` and `E11 S224/S225/S226 missing used-by SKILL.md` — and no finding on
+S315/S316. Those E11 lines are not properties of the registry.
+
+## 3. Collision with the lane working tree (finding, not a draft defect)
+
+The working tree's `corpus/SOURCES.md` (mtime 2026-11-06 19:15:51, not written by this seat) already
+contains an S315/S316 pair. Appending this draft's rows to that file:
+
+```
+bash /home/vgpnk/Projects/shokunin/scripts/sources-census.sh validate \
+  --file /fast/scratch/hyaku/souji-r73/S73Scribe/collide/corpus/SOURCES.md --today 2026-11-06
+EXIT=1
+file	E03	S315 duplicate id
+file	E03	S316 duplicate id
+```
+
+Only one pair can land. The L1 must pick one S316 scope (`DESCRIPTION`, this draft, per the seat
+spec) or the in-tree one (OPTIONS `--no-filters`) and update the `source:` header line to match.
+
+## 4. Source re-fetch (provenance of the two captures)
+
+```
+curl -sS -m 20 -o <scratch>/racy-git.adoc https://raw.githubusercontent.com/git/git/v2.56.0/Documentation/technical/racy-git.adoc
+HTTP 200 bytes 9121
+f661ed2d4751096257be24fdf7f9c91e6eb00493e413116189ef166496eb84ad  racy-git.adoc   (= census/round-73/srcs/racy-git.adoc)
+
+curl -sS -m 25 -o <scratch>/git-hash-object.html https://git-scm.com/docs/git-hash-object
+HTTP 200 bytes 29933
+b7e8f95355c38df94c9355d31b0ed985d5c22cb5ca7c4d640364c801100eb798  git-hash-object.html   (= census/round-73/srcs/git-hash-object.html)
+```
+
+Both byte-identical to the committed captures on 2026-11-06.

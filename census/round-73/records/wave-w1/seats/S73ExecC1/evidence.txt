@@ -1,0 +1,91 @@
+S73ExecC1 — raw evidence index (seat dir copies; scratch /fast/scratch/hyaku/souji-r73/S73ExecC1 removed at exit)
+Lane: /home/vgpnk/Projects/shokunin/souji-shokunin  HEAD 312e8f29d42eac0fd91327d65a6b43a0ba9cc64e
+Counter sha256 3809ee7d726ad64dbd9018da83f84fcd88632c255d4412fe50845e71c64eaed3 (HEAD, 1eac307f, b84ff90b)
+Matrix  sha256 f2ced97633cd532410d8229038da87d81a9673d7066a966e2aca10b4086f8080 (HEAD, 1eac307f, b84ff90b)
+
+1) main arm stage-W: python3 -B census/round-73/c1-counter.py --root <lane> --matrix census/round-73/c1-matrix.tsv
+   --base-rev 8b9345b1f2c4bb908ae418588d4cbde6a34a5bd0 --rev b84ff90bff05fb057c5a8c4b0661a9ec41d9e4a2
+   --tool tools/souji-receipt-write.py --work $S/main        (21.4 s)
+   evidence/main-stageW.out (171 lines; committed c1-after body after the 4 run-receipt header lines = 172
+   lines = same 171 + the runner-appended EXIT=0; diff rc=0)
+   SUMMARY matrix=80 base_forgeries=15 base_honest=21 base_mismatches=0 base_unwitnessed=0 new_unwitnessed=0
+           new_forgeries=0 new_honest=21 class_mismatches=0 new_echo=0 errors=0 regress=PASS
+   EXIT=0
+   CASE FX1 expect=refuse base=accept base_findings=- new=refuse new_findings=RECEIPT-WORKTREE-STAT-CONCEALED
+        new_echo=false base_expect=accept base_witness=yes new_witness=yes
+   CASE FX2 ... same fields, new=refuse new_findings=RECEIPT-WORKTREE-STAT-CONCEALED
+   CASE FX3 ... same fields, new=refuse new_findings=RECEIPT-WORKTREE-STAT-CONCEALED
+   CASE FXh expect=accept base=accept new=accept base_witness=no new_witness=no
+   CASE FXc expect=accept base=accept new=accept base_witness=yes new_witness=yes
+   detail FX1 name=inrun-forge-index-stat-rewritten base_rc=0 new_rc=2 new_stderr=refused:
+     RECEIPT-WORKTREE-STAT-CONCEALED: 1 tracked path(s) ... (tools/counter.py) ...
+   detail FX2 name=prerun-forge-index-stat-rewritten base_rc=0 new_rc=2 (tools/counter.py)
+   detail FX3 name=inrun-instrument-forge-index-stat-rewritten base_rc=0 new_rc=2 (tools/instr.sh)
+
+2) main arm lane-base: same command --rev a789486d8d5d5e0f91145ad70282956f2cb6fda0
+   evidence/base-lane-base.out
+   SUMMARY matrix=80 base_forgeries=15 base_honest=21 base_mismatches=0 base_unwitnessed=0 new_unwitnessed=0
+           new_forgeries=3 new_honest=21 class_mismatches=3 new_echo=0 errors=0 regress=PASS
+   EXIT=1 ; FX1/FX2/FX3 CASE lines new=accept ; body diff vs controls/c1-K-a-do-nothing.txt rc=0.
+
+3) literal receipt replays (only the scratch prefix substituted):
+   - c1-after: line=$(sed -n 's/^# command=//p' census/round-73/records/c1-after.txt); bash -c "${line//L1\/a\/c1/$S/ra}"
+     evidence/replay-c1-after.out ; SUMMARY identical, EXIT=0 ; body diff vs committed after dropping the 4
+     run-receipt header lines: rc=0 (172 = 172 lines).
+   - K-a: evidence/replay-K-a.out ; SUMMARY new_forgeries=3 class_mismatches=3, EXIT=1 ; body diff rc=0.
+   - K-b: evidence/replay-K-b.norm (path-normalized full output incl. appended EXIT=1)
+     SUMMARY ... new_forgeries=0 new_honest=0 class_mismatches=59 ... regress=FAIL ; EXIT=1
+     diff vs controls/c1-K-b-blanket-refusal.txt: only the 2 runner lines `# command=`/`# cwd=` differ (my
+     replay is not wrapped by run-receipt.sh); every `# bind`, `# c1-counter`, CASE, detail, SUMMARY and EXIT
+     line matches byte for byte after path normalization.
+   - K-c: evidence/replay-K-c.norm ; SUMMARY ... new_forgeries=15 new_honest=21 class_mismatches=15 ...
+     regress=PASS ; EXIT=1 ; same byte-for-byte body match (80/80 CASE lines).
+
+4) writer selftest from committed bytes: git show b84ff90b:tools/souji-receipt-write.py > $S/writer-stageW.py
+   sha256 d1ad5c797110429f4edc67cce6eb45a94686490c09d25a5693950bf3a50f7c39 (= c1-after slot-new bind).
+   python3 -B $S/writer-stageW.py --selftest --work $S/ws -> evidence/writer-selftest-stageW.out
+   SELFTEST cases=44 pass=44 fail=0
+   lane-base writer (a789486d, b77900010ce96dce86f1e580e2544ffa09631204d72658dde0587060f919244d):
+   evidence/writer-selftest-lane-base.out -> SELFTEST cases=42 pass=42 fail=0.
+
+5) counter selftest (supporting C2 boundary): python3 -B census/round-73/c1-counter.py --selftest ...
+   evidence/counter-selftest.out -> SELFTEST cases=52 pass=52 fail=0 ; EXIT=0.
+
+6) mk-counter replay: git archive 1eac307f | tar -x -C $S/tree ; cd $S/tree ; python3 -B census/round-73/mk-counter.py
+   -> "wrote census/round-73/c1-counter.py sha256 3809ee7d... and c1-matrix.tsv sha256 f2ced976..."
+   cmp: counter IDENTICAL, matrix IDENTICAL. r72 counter sha 7578447d37068b0ed833adc970f6aadc2f760561996266ba5cb4ff1a1f23a912
+   (matches mk-counter's 7578447d guard). First 75 matrix rows byte-identical to census/round-72/c1-matrix.tsv.
+
+7) matrix re-derivation (python csv over census/round-73/c1-matrix.tsv):
+   n_rows=80, expect accept=21 / refuse=59, base_expect=accept 36 = 21 honest + 15 expected base
+   forgeries; of those 15, 12 non-FX carried + FX1/FX2/FX3. Matches SUMMARY base_forgeries=15/base_honest=21.
+
+8) freeze chronology:
+   git cat-file -e 23ecd070:census/round-73/c1-counter.py -> fatal: path ... exists on disk, but not in
+     '23ecd0700be05a78b71ad88ae6fca2d2d8f5468b' (rc=128; counter is stage I, deliberately absent at F)
+   git cat-file -e 23ecd070:census/round-73/c1-matrix.tsv -> same fatal (rc=128)
+   writer blob sha: 23ecd070 b7790001...244d ; aaacba33 b7790001...244d ; a789486d b7790001...244d ;
+     b84ff90b d1ad5c79...f39 (K must equal lane base: yes; W differs: yes)
+   ancestry (merge-base --is-ancestor, all rc=0): a789486d < 23ecd070 < 1eac307f < aaacba33 < b84ff90b < 312e8f29
+   commit ct: F 1794002711 < I 1794002891 < K 1794002930 < W 1794003118 < A 1794003159 (lane base 1794002023)
+
+9) independent stat-cache probe (fresh fixtures under scratch, INDEX_STAT_CODE extracted verbatim from
+   census/round-73/c1-counter.py:315-350; every git call -C <fixture> with toplevel asserted):
+   fixture fx.VrTQpP HEAD 13c5f6ff7a0d74827cc09709219dd9c88fac70fa
+   - honest: stage-W writer -> rc=0, receipt written
+   - forge pre-run: write "forge\n" over "honest\n" (same size) + rewrite index stat entry (blob oid kept,
+     checksum recomputed, index mtime +5 s) -> git status --porcelain EMPTY, index oid unchanged
+     (100644 cf4c1d74... 0 tracked.txt), worktree bytes 66 6f 72 67 65 0a
+     -> stage-W writer rc=2, stderr "refused: RECEIPT-WORKTREE-STAT-CONCEALED: 1 tracked path(s) ...", no out
+     -> lane-base writer rc=0, RECORD ... written; receipt body contains command=/bin/echo forged and the
+        forged bytes are what the receipt covers
+   - forge in-run (wrapped command runs the same code): stage-W rc=2 RECEIPT-WORKTREE-STAT-CONCEALED;
+     lane-base rc=0 receipt written
+   - forge in-run of the instrument (FX3 shape): stage-W rc=2 (same class, instrument.sh)
+   - honest stale stat (mtime +10 s, bytes unchanged): stage-W rc=0
+   => the D3/S72Sentinel defect is real on the lane-base writer and closed on the stage-W writer on routes
+      I built myself (3 forgery shapes refused, 1 honest shape kept).
+
+Lane hygiene: no command of mine wrote inside the lane; the dirty entries observed at the end
+(SCORECARD.md 19:16:53, SKILL.md, corpus/*, records/m2-guard-canfail.txt 19:18:41, corpus/lessons/round-73.md
+19:19:46) are sibling seats' writes. All arms reproduced committed bytes while the lane worktree was dirty.
