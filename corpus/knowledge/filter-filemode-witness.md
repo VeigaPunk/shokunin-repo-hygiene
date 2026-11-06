@@ -1,6 +1,6 @@
-source: S306 (gitattributes(5), https://git-scm.com/docs/gitattributes, `filter` clean command, sha256 0a1e8015…6aee, accessed 2026-11-06); S307 (git(1) OPTIONS `--attr-source`, equivalent to GIT_ATTR_SOURCE, accessed 2026-11-06); S308 (git-config(1) `core.fileMode`, accessed 2026-11-06); S310 (git-config(1) `attr.tree`, outranked by GIT_ATTR_SOURCE); S311 (gitattributes(5) `ident`); host probes census/round-71/probes/attr-filemode-probe-base.txt, attr-filemode-probe-sizechange.txt, stat-granularity-probe.txt (git 2.56.0); controls census/round-71/controls/c1-*.txt; wave evidence census/round-71/records/wave-w1/ (S71Sentinel, S71CriticClaims, S71Reviewer, S71CriticDiscern); counter census/round-71/c1-counter.py frozen at aa91d1cad89200ec733edd3475461010a372923d
-verified-at: a1db6c8514771c0a0321c29741831606d09cc2a5 (frozen C1 candidate) and f13d575e2e33cc98ae2c2e72e61557cb5a224591 (wave repairs; frozen counter re-run census/round-71/records/c1-at-repair.txt, writer selftest records/writer-selftest-repair.txt); 2026-11-06, git 2.56.0 on this host
-recheck: `python3 -B census/round-71/c1-counter.py --root . --matrix census/round-71/c1-matrix.tsv --base-rev 8b9345b1f2c4bb908ae418588d4cbde6a34a5bd0 --rev <tip> --tool tools/souji-receipt-write.py --work <scratch>` must print `SUMMARY matrix=70 base_forgeries=7 base_honest=19 new_forgeries=0 new_honest=19 class_mismatches=0 new_echo=0 errors=0 regress=PASS` and `EXIT=0`; `python3 -B tools/souji-receipt-write.py --selftest --work <scratch>` cases 39-42 pass; on every git release, re-run the three probes and re-fetch S306-S311 against their sha256
+source: S306 (gitattributes(5), https://git-scm.com/docs/gitattributes, `filter` clean command, sha256 0a1e8015…6aee, accessed 2026-11-06); S307 (git(1) OPTIONS `--attr-source`, equivalent to GIT_ATTR_SOURCE, accessed 2026-11-06); S308 (git-config(1) `core.fileMode`, accessed 2026-11-06); S310 (git-config(1) `attr.tree`, outranked by GIT_ATTR_SOURCE); S311 (gitattributes(5) `ident`); host probes census/round-71/probes/attr-filemode-probe-base.txt, attr-filemode-probe-sizechange.txt, stat-granularity-probe.txt (git 2.56.0); controls census/round-71/controls/c1-*.txt; wave evidence census/round-71/records/wave-w1/ (S71Sentinel, S71CriticClaims, S71Reviewer, S71CriticDiscern); counter census/round-71/c1-counter.py frozen at aa91d1cad89200ec733edd3475461010a372923d; S312 (git-check-attr(1) `--cached`, r72); S313 (gitattributes(5) long running process filter, r72); S314 (gitattributes(5) attribute-file fall-back, r72); S315 (racy-git.adoc v2.56.0, cached stat information, accessed 2026-11-06, r73); S316 (git-hash-object(1) `--no-filters`, accessed 2026-11-06, r73); r72 counter census/round-72/c1-counter.py and r73 counter census/round-73/c1-counter.py (r72 spot-check D1: the header named only the r71 sources)
+verified-at: a1db6c8514771c0a0321c29741831606d09cc2a5 (frozen C1 candidate) and f13d575e2e33cc98ae2c2e72e61557cb5a224591 (wave repairs; frozen counter re-run census/round-71/records/c1-at-repair.txt, writer selftest records/writer-selftest-repair.txt); 2026-11-06, git 2.56.0 on this host; r72: counter 06df4f97c531a05ff2139368f70660c3044f71a6, after-arms 2ec8b63dfda8fdf88cd240487c5d1325de13b501 (census/round-72/records/c2-after-battery.txt, c2-honest-writer.txt); r73: writer b84ff90bff05fb057c5a8c4b0661a9ec41d9e4a2, after-arms 312e8f29d42eac0fd91327d65a6b43a0ba9cc64e (census/round-73/records/c1-after.txt, c2-after-D1..D5.txt), 2026-11-06, git 2.56.0
+recheck: `python3 -B census/round-71/c1-counter.py --root . --matrix census/round-71/c1-matrix.tsv --base-rev 8b9345b1f2c4bb908ae418588d4cbde6a34a5bd0 --rev <tip> --tool tools/souji-receipt-write.py --work <scratch>` must print `SUMMARY matrix=70 base_forgeries=7 base_honest=19 new_forgeries=0 new_honest=19 class_mismatches=0 new_echo=0 errors=0 regress=PASS` and `EXIT=0`; `python3 -B tools/souji-receipt-write.py --selftest --work <scratch>` cases 39-42 pass; on every git release, re-run the three probes and re-fetch S306-S311 against their sha256; r73: `python3 -B census/round-73/c1-counter.py --root . --matrix census/round-73/c1-matrix.tsv --base-rev 8b9345b1f2c4bb908ae418588d4cbde6a34a5bd0 --rev <tip> --tool tools/souji-receipt-write.py --work <scratch>` must print `SUMMARY matrix=80 base_forgeries=15 base_honest=21 base_mismatches=0 base_unwitnessed=0 new_unwitnessed=0 new_forgeries=0 new_honest=21 class_mismatches=0 new_echo=0 errors=0 regress=PASS` and `EXIT=0`; writer selftest cases 43-44 pass; re-fetch S312-S316 against their sha256 on every git release
 
 # A clean `git status` is not a clean tree when attributes or stat settings say so
 
@@ -88,3 +88,52 @@ needs no attribute witness.
 Still not covered by any row: a `check-attr` failure that the writer would treat as fail-open
 (no reachable failure was found, r71 S71MutWriter W7); an honest repository with a configured
 driver on a tracked path (over-refused); smudge-only drivers; git releases other than 2.56.0.
+
+## r73: the index stat cache, and a counter that checks its own forgeries (appended 2026-11-06)
+
+**A clean `git status` is a stat-cache verdict.** git compares each tracked file's `lstat` result with
+the stat information cached in its index entry and reads the contents only when they differ; the
+technical note says the shortcut means "Git can incorrectly think files in the working tree are
+unmodified even though they actually are" (racy-git.adoc at v2.56.0, S315). So anyone who can write
+`.git/index` can make forged bytes read clean: write the forged file, rewrite that entry's stat
+fields from the new `lstat` (the blob id stays the committed one), recompute the index checksum and
+move the index mtime past the entry so git does not treat it as racily clean
+(`census/round-73/probes/fx/idxcraft-run.py`, found by r72 seat S72Sentinel). Before this round both
+the reference-weak writer (8b9345b1) and the lane-base writer (a789486d) wrote receipts over that state
+before the run, during the run, and on the instrument (`census/round-73/probes/fx-index-stat.txt`,
+all three routes FORGERY on both).
+
+**What the writer now checks.** Before the run (after its status read) and after it (after the
+post-run reads), every stage-0 tracked regular file that `git status --porcelain -z` does not list is
+re-hashed with `git hash-object --stdin-paths`, and every tracked symlink's target is hashed as a
+blob, and the result is compared with the object id `git ls-files -s` records. `hash-object` without
+`--no-filters` hashes after the attribute-selected check-in conversion (git-hash-object(1): `--no-filters`
+means "ignoring any input filter that would have been chosen by the attributes mechanism, including
+the end-of-line conversion", S316), so an honest `core.autocrlf=true` file whose worktree bytes are CRLF
+still matches (row FXc), where a raw byte comparison would refuse it. Clean/process drivers, `ident`
+and `working-tree-encoding` are refused before this point (r71), so the conversion left is end-of-line
+only. A difference refuses `RECEIPT-WORKTREE-STAT-CONCEALED`; the instrument is also re-compared with
+`rev:path` after the run. Measured with the frozen r73 counter (80 rows): the lane-base writer
+`new_forgeries=3` EXIT=1 (`census/round-73/controls/c1-K-a-do-nothing.txt`), the r73 writer
+`new_forgeries=0 new_honest=21` EXIT=0 (`records/c1-after.txt`). Paths are fed C-quoted (a line
+starting with `"` is unquoted), which writer selftest case 44 exercises with a newline in a file name.
+
+**What the counter now checks about itself.** A counter that scores "the base writer accepted a
+refuse row" as a forgery trusts its own fixture to forge. Round 72's S72MutCounter showed that trust
+was unchecked: with FWi's forged bytes replaced by the committed ones, the row was still counted. The
+r73 counter computes, for each row and slot, the divergence of the fixture worktree from the row's
+revision — from `git ls-tree -r` and the raw files, not from git status (which the stat cache can
+fool) — before and after the slot runs; an accepted refuse row with no divergence is `unwitnessed`,
+enters the verdict (`base_unwitnessed`), and in the battery classifies as `error`, never a kill
+(QUALITY Q133). Five defanged rows (`census/round-73/c2-defang.json`) pass the r72 counter (EXIT=0) and
+each prints `base_unwitnessed=1` under the r73 counter (`records/c2-after-D1..D5.txt`); the unmutated
+matrix prints `base_unwitnessed=0`.
+
+The first bullet of "What this does not cover" above (same-second size-preserving edit with mtime
+restored, invisible to git status) no longer holds for the writer's clean path: the bytes are
+re-hashed regardless of stat. It still holds for git status itself.
+
+Still not covered: gitlinks and paths git status lists are not re-hashed (the `--allow-dirty` content
+snapshot covers listed paths); an in-run change restored before the post-run reads (r63 limit); the
+witness reads the worktree only (index, config and other `.git` state are not compared) at two points;
+git releases other than 2.56.0.

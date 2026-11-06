@@ -1921,13 +1921,17 @@ def case_42_checkin_conversions_refused(work: str) -> None:
     _no_stray(outdir)
 
 
-def _stat_forge_code(d: str, rel: str, forged: bytes) -> str:
-    """r73: python source that writes `forged` to d/rel and rewrites that index entry's stat fields to the
-    forged file's lstat (blob id kept, checksum recomputed, index mtime moved 5 s past the entry)."""
+def _stat_forge_code(d: str, rel: str, forged: bytes, link: bool = False) -> str:
+    """r73: python source that writes `forged` to d/rel (with link=True: re-points the symlink d/rel at `forged`)
+    and rewrites that index entry's stat fields to the new lstat (blob id, mode field and flags kept, checksum
+    recomputed, index mtime moved 5 s past the entry)."""
     return ("import hashlib, os, struct\n"
-            f"repo, rel, forged = {d!r}, {rel!r}, {forged!r}\n"
+            f"repo, rel, forged, link = {d!r}, {rel!r}, {forged!r}, {link!r}\n"
             "full = os.path.join(repo, rel)\n"
-            "open(full, 'wb').write(forged)\n"
+            "if link:\n"
+            "    os.unlink(full); os.symlink(forged, full)\n"
+            "else:\n"
+            "    open(full, 'wb').write(forged)\n"
             "st = os.lstat(full)\n"
             "p = os.path.join(repo, '.git', 'index')\n"
             "data = open(p, 'rb').read()\n"
@@ -1937,9 +1941,10 @@ def _stat_forge_code(d: str, rel: str, forged: bytes) -> str:
             "    start = off; ns = off + 62; z = data.index(b'\\0', ns)\n"
             "    end = z + 1 + ((8 - ((z + 1 - start) % 8)) % 8)\n"
             "    if data[ns:z] == rel.encode():\n"
+            "        mode = struct.unpack('>I', data[off+24:off+28])[0]\n"
             "        out += struct.pack('>10I', int(st.st_ctime), st.st_ctime_ns % 10**9, int(st.st_mtime),\n"
             "                           st.st_mtime_ns % 10**9, st.st_dev & 0xFFFFFFFF, st.st_ino & 0xFFFFFFFF,\n"
-            "                           st.st_mode, st.st_uid, st.st_gid, st.st_size) + data[off+40:off+62] + data[ns:end]\n"
+            "                           mode, st.st_uid, st.st_gid, st.st_size) + data[off+40:off+62] + data[ns:end]\n"
             "    else:\n"
             "        out += data[start:end]\n"
             "    off = end\n"
@@ -1958,9 +1963,12 @@ def case_43_stat_cache_forgery_refused(work: str) -> None:
     if _git_ok(d, "status", "--porcelain") != b"":
         raise AssertionError("pre-run stat forge did not read clean; fixture invalid")
     out = os.path.join(outdir, "pre.txt")
-    r = _run([*_base_args(d, _head(d), out), "--command", "/bin/echo hi"])
+    marker = os.path.join(work, "c43-pre-ran")
+    r = _run([*_base_args(d, _head(d), out), "--command", _py(f"open({marker!r}, 'w').close()")])
     if r.returncode != 2 or os.path.exists(out) or TRUTH_CLASS not in r.stderr:
         raise AssertionError(f"pre-run stat forge rc={r.returncode}: {r.stderr.strip()}")
+    if os.path.exists(marker):
+        raise AssertionError("pre-run stat forge: the wrapped command ran before the refusal")
     for rel, forged, extra in (("tracked.txt", b"forge\n", []), ("tracked.txt", b"forge\n", ["--allow-dirty"]),
                                ("instrument.sh", b"#!/bin/sh\necho F\n", [])):
         d = _fixture(work, "c43-in")
@@ -1995,6 +2003,28 @@ def case_44_byte_truth_honest_accepted(work: str) -> None:
     r = _run([*_base_args(d, _head(d), out), "--command", "/bin/echo hi"])
     if r.returncode != 0 or not os.path.isfile(out):
         raise AssertionError(f"honest byte-truth tree rc={r.returncode}: {r.stderr.strip()}")
+    _no_stray(outdir)
+
+
+def case_45_symlink_stat_forgery_refused(work: str) -> None:
+    # r73 wave (S73MutWriter HIGH): a tracked symlink re-pointed behind a rewritten index stat entry reads clean
+    # to git status; the link-target comparison refuses it before the run and during the run.
+    outdir = _outdir(work)
+    for when in ("pre", "in"):
+        d = _fixture(work, f"c45-{when}")
+        os.symlink("tracked.txt", os.path.join(d, "link"))
+        _commit_all(d, "symlink")
+        code = _stat_forge_code(d, "link", b"instrument.sh", link=True)
+        out = os.path.join(outdir, f"{when}.txt")
+        if when == "pre":
+            exec(code, {})
+            r = _run([*_base_args(d, _head(d), out), "--command", "/bin/echo hi"])
+        else:
+            r = _run([*_base_args(d, _head(d), out), "--command", _py(code)])
+        if os.readlink(os.path.join(d, "link")) != "instrument.sh" or _git_ok(d, "status", "--porcelain") != b"":
+            raise AssertionError(f"{when}-run symlink stat forge did not read clean; fixture invalid")
+        if r.returncode != 2 or os.path.exists(out) or TRUTH_CLASS not in r.stderr:
+            raise AssertionError(f"{when}-run symlink stat forge rc={r.returncode}: {r.stderr.strip()}")
     _no_stray(outdir)
 
 
@@ -2044,6 +2074,7 @@ CASES = (
     ("checkin-conversions: ident and working-tree-encoding on a tracked path refused; text attribute accepted (r71 wave)", case_42_checkin_conversions_refused),
     ("stat-cache-forgery: forged bytes behind a rewritten index stat entry refused pre-run, in-run (--allow-dirty included) and on the instrument (r73 C1)", case_43_stat_cache_forgery_refused),
     ("byte-truth-honest: stale stat over unchanged bytes, autocrlf CRLF re-staged, tracked symlink and a newline file name accepted (r73 C1)", case_44_byte_truth_honest_accepted),
+    ("symlink-stat-forgery: a tracked symlink re-pointed behind a rewritten index stat entry refused pre-run and in-run (r73 wave)", case_45_symlink_stat_forgery_refused),
 )
 
 
