@@ -1,0 +1,103 @@
+souji round 71 — preregistration (frozen before any candidate-writer bytes exist)
+
+Lane base: 8b9345b1f2c4bb908ae418588d4cbde6a34a5bd0 (lane tip at round start; r70 admitted,
+corpus/lessons/round-70-verifier-spotcheck.md). Not a fresh-start round (r68, r69, r70 admitted).
+Writer at base: tools/souji-receipt-write.py, sha256 118597e0b537d104a54ac5206f038a364905f65ff8267725457d06ff8952e71f
+(= census/round-71/controls/base-writer-8b9345b1.py). Host: Linux, git 2.56.0, python3 3.14.
+
+Routed inputs this round acts on (r70 spot-check "Routed defects" D4; lesson round-70.md:78):
+  S70Sentinel F1 (HIGH: a clean filter driver plus a filter attribute — via GIT_ATTR_SOURCE or a
+  committed .gitattributes — hides a modified tracked file; the writer writes the receipt),
+  F2 (MEDIUM: repository-local core.fileMode=false hides a mode flip), F3/F4/F5 (battery member
+  names and the harness label escape --work); S70MutCounter X6-X10 (five counter mutants that
+  survive the r70 counter's selftest).
+
+Instruments (frozen bytes, this commit):
+  census/round-71/c1-counter.py   successor of the r70 counter: the 59 r70 rows carried; 11 rows
+                                  appended (AS1 AS2 ASh FC1 FC2 FC3 FCh FCh2 FM1 FM2 FMh); selftest
+                                  section (8) (C2); battery member names validated (F3/F4).
+  census/round-71/c1-matrix.tsv   70 rows (header + 70). New refuse rows and their frozen classes:
+                                  AS1 `lane worktree is dirty`; AS2 RECEIPT-STATE-CHANGED-DURING-RUN;
+                                  FC1/FC2/FC3 RECEIPT-FILTER-DRIVER-SET; FM1 `lane worktree is dirty`;
+                                  FM2 RECEIPT-STATE-CHANGED-DURING-RUN. New accept rows: ASh FCh FCh2 FMh.
+  census/round-71/c2-mutants.json X6-X10 as exact single-occurrence string edits; each reproduces
+                                  the committed S70MutCounter mutant file byte for byte when applied
+                                  to census/round-70/c1-counter.py (checked before this freeze: 5/5
+                                  equal, each matching once in the r70 and the r71 counter).
+  census/round-71/c2-harness.py   scores one counter file: positive P-SELFTEST (rc 0 and fail=0);
+                                  X6-X10 plus carried CM1-CM4; killed iff mutated selftest rc != 0
+                                  and its SELFTEST line has fail >= 1; label validated (F5); run dir
+                                  removed unless --keep (F6).
+  census/round-71/make-controls.py  deterministic control variants F1, F2, F3, CF1.
+
+Pre-freeze probes and controls (committed in this commit, all EXECUTED before this freeze):
+  probes/attr-filemode-probe.sh + attr-filemode-probe-base.txt  the base writer over 11 fixture
+      shapes. The probe's first run used size-changing forged bytes (`counter FORGED`): every filter
+      row then showed ` M` (the stat size check fires before any clean filter); that output was
+      overwritten by the size-preserving run recorded here. Base writer writes a receipt over P2
+      (GIT_ATTR_SOURCE filter, forged), P3 (committed filter, forged), P4 (committed filter, in-run
+      edit), P6 (local core.fileMode=false, pre-run chmod), P7 (same, in-run chmod), P10
+      (GIT_ATTR_SOURCE filter, in-run edit); honest P5/P8/P11 written. A GIT_ATTR_SOURCE `text`
+      attribute with CRLF bytes (P1) is NOT hidden (size change) — no row is built on it.
+  controls/c1-do-nothing.txt   r71 counter, --new-tool = base writer bytes:
+      SUMMARY matrix=70 base_forgeries=7 base_honest=19 new_forgeries=7 new_honest=19
+      class_mismatches=7 new_echo=0 errors=0 regress=PASS, EXIT=1.
+  controls/c1-F1-refuse-on-presence.txt  blanket presence refusal: new_forgeries=0 new_honest=16
+      class_mismatches=11, EXIT=1 (ASh, FCh2, FMh over-refused). Blanket refusal is not a gain.
+  controls/c1-F2-attr-source-scrub-only.txt  new_forgeries=5 (FC1 FC2 FC3 FM1 FM2), EXIT=1.
+  controls/c1-F3-filemode-pin-only.txt       new_forgeries=5 (AS1 AS2 FC1 FC2 FC3), EXIT=1.
+  controls/c2-before-r70.txt   harness over the FROZEN r70 counter (its matrix, its base-rev
+      e063a2fcb3f5f3fb8fb19d2ae1592b1f22e6a333): P-SELFTEST PASS (29/29); X6-X10 all survived;
+      CM1-CM4 killed (mutant shas equal to the r70 c2-after receipt); SUMMARY ... x_killed=0
+      x_survived=5 cm_killed=4 cm_survived=0 score=5, EXIT=1. This is the C2 do-nothing control:
+      a round that ships the r70 counter unchanged scores 5.
+  controls/c2-CF1-selftest-always-fails.txt  r71 counter with selftest rc forced to 1: P-SELFTEST
+      FAIL, EXIT=2 (INVALID) — a counter that "kills" every mutant by failing always is refused.
+  Disclosures: (i) the r71 counter's --selftest was run once before this freeze (SELFTEST cases=39
+  pass=39 fail=0); (ii) CF1 differs from the r71 counter only at the rc line, so its mutant lines
+  (x_killed=5, cm_killed=4) foreshadow the C2 after-arm; the C2 target below was set at design
+  time and is not changed by them; (iii) the C2 "candidate" is the r71 counter itself, frozen in
+  this commit, so its after-arm is a measurement of frozen bytes, not of later work (r70 precedent,
+  qualified by the r70 closure); unlike r70, the five mutants were authored by a non-L1 seat in the
+  previous round (S70MutCounter) and are frozen here unchanged; (iv) no candidate writer bytes exist
+  at this commit.
+
+Claims (causally separable: C1 is the writer's matrix verdict and reads no selftest code; C2 is the
+counter's self-check and reads no writer change):
+
+C1 — operability (the writer surface changes: tools/souji-receipt-write.py). The writer's
+  clean-tree witness is not forgeable through a clean filter driver or repository-local
+  core.fileMode=false. Sourced (opened this round, census/round-71/srcs/): gitattributes(5)
+  `filter` ("the clean command is used to convert the contents of worktree file upon checkin"),
+  git(1) `--attr-source` (equivalent to GIT_ATTR_SOURCE), git-config(1) `core.fileMode`.
+  Frozen predicate: one run of the frozen r71 counter, candidate = `--rev <candidate commit>
+  --tool tools/souji-receipt-write.py`, base-rev 8b9345b1f2c4bb908ae418588d4cbde6a34a5bd0, prints
+  SUMMARY matrix=70 base_forgeries=7 base_honest=19 new_forgeries=0 new_honest=19
+  class_mismatches=0 new_echo=0 errors=0 regress=PASS and EXIT=0.
+  Counting command (receipt records/c1-after.txt):
+    grep -E '^(SUMMARY|EXIT=)' census/round-71/records/c1-after.txt
+  Before: controls/c1-do-nothing.txt (new_forgeries=7 class_mismatches=7, EXIT=1).
+  Targets: forgeries 7 -> 0; honest 19/19 kept (F1 shows 16/19 for blanket refusal); class
+  mismatches 7 -> 0; the 59 carried rows keep verdict and class; r60 regress PASS on both slots.
+  Kill rule: any other SUMMARY or EXIT != 0 is a miss; no row, class or target changes after this
+  commit.
+
+C2 — calibration (the counter's self-assessment surface: census/round-71/c1-counter.py; lowest
+  owned axis, 7). Does the instrument's own selftest catch the five instrument defects the r70 wave
+  found and its selftest missed (S70MutCounter X6-X10)?
+  Frozen predicate: one run of the frozen c2-harness over census/round-71/c1-counter.py (label
+  c2-after-r71, matrix census/round-71/c1-matrix.tsv, base-rev 8b9345b1…, mutants
+  census/round-71/c2-mutants.json) prints
+  SUMMARY label=c2-after-r71 positive_selftest=PASS x_mutants=5 x_killed=5 x_survived=0
+  cm_mutants=4 cm_killed=4 cm_survived=0 score=0 and EXIT=0.
+  Counting command (receipt records/c2-after.txt):
+    grep -E '^(SUMMARY|EXIT=)' census/round-71/records/c2-after.txt
+  Before: controls/c2-before-r70.txt (x_killed=0 x_survived=5 score=5, EXIT=1).
+  Kill rule: any other SUMMARY or EXIT != 0 is a miss.
+
+Named limits (declared before data): C1 covers the clean side of filter drivers configured in
+repository config (local, info/attributes, committed .gitattributes, GIT_ATTR_SOURCE); the
+`attr.tree` config route, `core.attributesFile`, a `filter.<d>.process` long-running driver and
+in-run creation of a driver have no matrix row. A smudge-only driver is out of scope (it does not
+affect the status witness). C2's mutants are the five r70 survivors only; it says nothing about
+mutants of the new section (8) or the new rows (wave mutation-testers attack those).
