@@ -97,6 +97,20 @@ in the same whole second as the last index refresh, mtime restored, is invisible
 on this git build; the clean path takes no content snapshot. A tracked path carrying `ident` or a
 `working-tree-encoding` value refuses RECEIPT-CHECKIN-CONVERSION-SET at the same two points (S71CriticClaims:
 `ident` collapses `$Id: ... $` on check-in, so a size-preserving edit inside the span reads as clean).
+
+round 73 (C1, operability; r72 routed D3 / S72Sentinel HIGH): `git status` decides "unmodified" from the index's
+cached stat information (racy-git.adoc, S315), so a caller or wrapped command that writes forged bytes and then
+rewrites that path's index stat entry (blob id kept, checksum recomputed) leaves both status reads clean. Before
+the run (after the status read) and again after it (after the post-run reads), every stage-0 tracked regular file
+and symlink that `git status --porcelain -z` does not list is re-hashed — regular files with `git hash-object
+--stdin-paths` (git-hash-object(1), S316: the object id of the file's contents after the check-in conversion its
+path selects, i.e. the conversion git status applies; clean/process drivers, ident and working-tree-encoding are
+already refused above), symlinks by hashing the link target as a blob in the repository's object format — and
+compared with the object id `git ls-files -s` records; any difference refuses RECEIPT-WORKTREE-STAT-CONCEALED,
+unconditionally. After the run the instrument's worktree bytes are also re-compared with rev:path
+(RECEIPT-STATE-CHANGED-DURING-RUN). This closes the same-second size-preserving named limit above for the clean
+path. Named limits: gitlinks and paths git status lists are not re-hashed (the --allow-dirty content snapshot
+covers the listed ones); an in-run change restored before the post-run reads stays invisible (r63 limit).
 """
 from __future__ import annotations
 
@@ -204,6 +218,97 @@ def _witness_refusal(top: str) -> "str | None":
     if conv:
         return (f"{CONVERSION_CLASS}: tracked paths carry {' and '.join(conv)}; a lossy check-in conversion can "
                 f"hide worktree changes from git status; no receipt written")
+    return None
+
+
+TRUTH_CLASS = "RECEIPT-WORKTREE-STAT-CONCEALED"
+
+
+def _cquote(path: bytes) -> bytes:
+    """r73 C1: C-style quote a path for `git hash-object --stdin-paths` (one path per line; a line starting
+    with a double quote is unquoted C-style), so newline, CR, quote and backslash paths hash correctly."""
+    if not any(b < 0x20 or b == 0x7F or b in (0x22, 0x5C) for b in path):
+        return path
+    out = bytearray(b'"')
+    for b in path:
+        if b in (0x22, 0x5C):
+            out += b"\\" + bytes([b])
+        elif b < 0x20 or b == 0x7F:
+            out += b"\\%03o" % b
+        else:
+            out.append(b)
+    out += b'"'
+    return bytes(out)
+
+
+def _porcelain_paths(z: bytes) -> "set[bytes]":
+    """r73 C1: every path named by `git status --porcelain -z` records (`XY path`, and for a rename or copy the
+    following NUL-separated source path)."""
+    paths: "set[bytes]" = set()
+    fields = z.split(b"\0")
+    i = 0
+    while i < len(fields):
+        f = fields[i]
+        i += 1
+        if len(f) < 4:
+            continue
+        paths.add(f[3:])
+        if f[:1] in (b"R", b"C") and i < len(fields):
+            paths.add(fields[i])
+            i += 1
+    return paths
+
+
+def _truth_refusal(top: str) -> "str | None":
+    """r73 C1: the refusal message when a tracked path git status reports clean does not hash to the object id
+    the index records (the index stat cache concealed a change). Refuses (exit 2) when a read fails."""
+    sz = _status_z(top)
+    if sz.returncode != 0:
+        refuse(f"cannot read worktree status of {top}: {sz.stderr.decode('utf-8', 'replace').strip()}")
+    listed = _porcelain_paths(sz.stdout)
+    fmt = git(top, "rev-parse", "--show-object-format")
+    algo = fmt.stdout.decode("ascii", "replace").strip()
+    if fmt.returncode != 0 or algo not in ("sha1", "sha256"):
+        refuse(f"cannot read the object format of {top}: {fmt.stderr.decode('utf-8', 'replace').strip()}")
+    ls = git(top, "ls-files", "-s", "-z", ":(top)")
+    if ls.returncode != 0:
+        refuse(f"cannot read index entries of {top}: {ls.stderr.decode('utf-8', 'replace').strip()}")
+    files: "list[tuple[bytes, bytes]]" = []
+    bad: "list[bytes]" = []
+    for rec in ls.stdout.split(b"\0"):
+        if not rec:
+            continue
+        meta, _, path = rec.partition(b"\t")
+        mode, oid, stage = meta.split(b" ")
+        if stage != b"0" or mode == b"160000" or path in listed:
+            continue
+        full = os.path.join(os.fsencode(top), path)
+        if not os.path.lexists(full):
+            bad.append(path)
+            continue
+        if mode == b"120000":
+            if not os.path.islink(full):
+                bad.append(path)
+                continue
+            target = os.readlink(full)
+            h = hashlib.new(algo, b"blob %d\0" % len(target) + target).hexdigest().encode()
+            if h != oid:
+                bad.append(path)
+        elif os.path.islink(full) or not os.path.isfile(full):
+            bad.append(path)
+        else:
+            files.append((path, oid))
+    if files:
+        ho = git(top, "-c", "core.safecrlf=false", "hash-object", "--stdin-paths",
+                 input=b"".join(_cquote(p) + b"\n" for p, _ in files))
+        got = ho.stdout.split()
+        if ho.returncode != 0 or len(got) != len(files):
+            refuse(f"cannot hash worktree files of {top}: {ho.stderr.decode('utf-8', 'replace').strip()}")
+        bad.extend(p for (p, oid), h in zip(files, got) if h != oid)
+    if bad:
+        names = ", ".join(os.fsdecode(p) for p in sorted(bad)[:5]) + (" …" if len(bad) > 5 else "")
+        return (f"{TRUTH_CLASS}: {len(bad)} tracked path(s) git status reports clean do not hash to the object id the "
+                f"index records ({names}); the index stat cache conceals a worktree change; no receipt written")
     return None
 
 
@@ -501,6 +606,10 @@ def write_receipt(ns: argparse.Namespace) -> int:
         refuse(f"cannot read worktree status of {root}: {detail}")
     if st.stdout and not ns.allow_dirty:
         refuse("lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override")
+    # r73 C1: git status trusts the index stat cache; re-hash what it calls clean before the run.
+    pre_truth = _truth_refusal(top)
+    if pre_truth:
+        refuse(pre_truth)
     # r63 C1 (operability): the pre-run snapshot. The wrapped command may change either read; both are
     # re-read after it completes and compared byte for byte before any receipt byte is composed.
     pre_flags, pre_status = fl.stdout, st.stdout
@@ -621,6 +730,18 @@ def write_receipt(ns: argparse.Namespace) -> int:
                                    + " " + path.decode("utf-8", "replace"))
     if changed:
         refuse("RECEIPT-STATE-CHANGED-DURING-RUN: " + " and ".join(changed) + " changed during the wrapped command; no receipt written")
+    # r73 C1: the same byte truth after the run (a stat-rewritten in-run forgery leaves both reads clean), and the
+    # instrument's worktree bytes against rev:path (they were compared before the run only).
+    post_truth = _truth_refusal(top)
+    if post_truth:
+        refuse(post_truth)
+    try:
+        with open(wt, "rb") as f:
+            wt_after = f.read()
+    except OSError as exc:
+        refuse(f"RECEIPT-STATE-CHANGED-DURING-RUN: cannot re-read worktree instrument {rel}: {exc}; no receipt written")
+    if os.path.islink(wt) or wt_after != blob.stdout:
+        refuse(f"RECEIPT-STATE-CHANGED-DURING-RUN: instrument {rel} bytes changed during the wrapped command; no receipt written")
     if overflow:
         refuse(f"captured output exceeds --max-bytes ({ns.max_bytes} bytes)")
     rc = proc.returncode
@@ -1800,6 +1921,84 @@ def case_42_checkin_conversions_refused(work: str) -> None:
     _no_stray(outdir)
 
 
+def _stat_forge_code(d: str, rel: str, forged: bytes) -> str:
+    """r73: python source that writes `forged` to d/rel and rewrites that index entry's stat fields to the
+    forged file's lstat (blob id kept, checksum recomputed, index mtime moved 5 s past the entry)."""
+    return ("import hashlib, os, struct\n"
+            f"repo, rel, forged = {d!r}, {rel!r}, {forged!r}\n"
+            "full = os.path.join(repo, rel)\n"
+            "open(full, 'wb').write(forged)\n"
+            "st = os.lstat(full)\n"
+            "p = os.path.join(repo, '.git', 'index')\n"
+            "data = open(p, 'rb').read()\n"
+            "n = struct.unpack('>I', data[8:12])[0]\n"
+            "off, out = 12, bytearray(data[:12])\n"
+            "for _ in range(n):\n"
+            "    start = off; ns = off + 62; z = data.index(b'\\0', ns)\n"
+            "    end = z + 1 + ((8 - ((z + 1 - start) % 8)) % 8)\n"
+            "    if data[ns:z] == rel.encode():\n"
+            "        out += struct.pack('>10I', int(st.st_ctime), st.st_ctime_ns % 10**9, int(st.st_mtime),\n"
+            "                           st.st_mtime_ns % 10**9, st.st_dev & 0xFFFFFFFF, st.st_ino & 0xFFFFFFFF,\n"
+            "                           st.st_mode, st.st_uid, st.st_gid, st.st_size) + data[off+40:off+62] + data[ns:end]\n"
+            "    else:\n"
+            "        out += data[start:end]\n"
+            "    off = end\n"
+            "out += data[off:-20]\n"
+            "out += hashlib.sha1(bytes(out)).digest()\n"
+            "open(p, 'wb').write(bytes(out))\n"
+            "os.utime(p, (st.st_mtime + 5, st.st_mtime + 5))\n")
+
+
+def case_43_stat_cache_forgery_refused(work: str) -> None:
+    # r73 C1 (S72Sentinel HIGH): forged bytes behind a rewritten index stat entry read clean to git status; the
+    # byte-truth check refuses them before the run, during the run, and on the instrument.
+    outdir = _outdir(work)
+    d = _fixture(work, "c43-pre")
+    exec(_stat_forge_code(d, "tracked.txt", b"forge\n"), {})
+    if _git_ok(d, "status", "--porcelain") != b"":
+        raise AssertionError("pre-run stat forge did not read clean; fixture invalid")
+    out = os.path.join(outdir, "pre.txt")
+    r = _run([*_base_args(d, _head(d), out), "--command", "/bin/echo hi"])
+    if r.returncode != 2 or os.path.exists(out) or TRUTH_CLASS not in r.stderr:
+        raise AssertionError(f"pre-run stat forge rc={r.returncode}: {r.stderr.strip()}")
+    for rel, forged, extra in (("tracked.txt", b"forge\n", []), ("tracked.txt", b"forge\n", ["--allow-dirty"]),
+                               ("instrument.sh", b"#!/bin/sh\necho F\n", [])):
+        d = _fixture(work, "c43-in")
+        out = os.path.join(outdir, f"in-{rel}-{len(extra)}.txt")
+        r = _run([*_base_args(d, _head(d), out), *extra, "--command", _py(_stat_forge_code(d, rel, forged))])
+        if _git_ok(d, "status", "--porcelain") != b"":
+            raise AssertionError(f"in-run stat forge of {rel} did not read clean; fixture invalid")
+        if r.returncode != 2 or os.path.exists(out) or TRUTH_CLASS not in r.stderr:
+            raise AssertionError(f"in-run stat forge {rel} {extra} rc={r.returncode}: {r.stderr.strip()}")
+    _no_stray(outdir)
+
+
+def case_44_byte_truth_honest_accepted(work: str) -> None:
+    # r73 C1: no over-refusal — a stale stat cache over unchanged bytes, an autocrlf CRLF file whose converted
+    # blob is the committed one, a tracked symlink, and a newline in a tracked file name all write a receipt.
+    outdir = _outdir(work)
+    d = _fixture(work, "c44")
+    os.symlink("tracked.txt", os.path.join(d, "link"))
+    with open(os.path.join(d, "odd\nname.txt"), "wb") as f:
+        f.write(b"odd\n")
+    _commit_all(d, "symlink and odd name")
+    _git_ok(d, "config", "core.autocrlf", "true")
+    with open(os.path.join(d, "tracked.txt"), "wb") as f:
+        f.write(b"clean\r\n")
+    _git_ok(d, "add", "tracked.txt")
+    p = os.path.join(d, "odd\nname.txt")
+    s = os.stat(p)
+    os.utime(p, ns=(s.st_atime_ns, s.st_mtime_ns + 10_000_000_000))
+    if _git_ok(d, "status", "--porcelain") != b"":
+        raise AssertionError("honest fixture is not clean; fixture invalid")
+    out = os.path.join(outdir, "honest.txt")
+    r = _run([*_base_args(d, _head(d), out), "--command", "/bin/echo hi"])
+    if r.returncode != 0 or not os.path.isfile(out):
+        raise AssertionError(f"honest byte-truth tree rc={r.returncode}: {r.stderr.strip()}")
+    _no_stray(outdir)
+
+
+
 CASES = (
     ("arg-forms: --command and post--- argv both accepted, identical receipts; both at once refused", case_01_arg_forms),
     ("rev-format: short/branch/uppercase rev refused with nothing written", case_02_rev_format),
@@ -1843,6 +2042,8 @@ CASES = (
     ("filemode-pin: repository-local core.fileMode=false cannot hide a pre-run or in-run mode flip; clean tree accepted (r71 C1)", case_40_local_filemode_pinned),
     ("wave-repairs: driver named set refused; in-run self-unlinking clean filter refused; checkStat=minimal cannot hide a same-second inode replace, trustctime=false cannot hide a later-second in-place edit, size-preserving with mtime restored (r71 wave)", case_41_wave_repairs),
     ("checkin-conversions: ident and working-tree-encoding on a tracked path refused; text attribute accepted (r71 wave)", case_42_checkin_conversions_refused),
+    ("stat-cache-forgery: forged bytes behind a rewritten index stat entry refused pre-run, in-run (--allow-dirty included) and on the instrument (r73 C1)", case_43_stat_cache_forgery_refused),
+    ("byte-truth-honest: stale stat over unchanged bytes, autocrlf CRLF re-staged, tracked symlink and a newline file name accepted (r73 C1)", case_44_byte_truth_honest_accepted),
 )
 
 
