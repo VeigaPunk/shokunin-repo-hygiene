@@ -2964,3 +2964,12 @@ addendum, appended to the prereg, commits 8a793e7ae9131578bdec393982760217f62095
 - **Frontier:** S306-S308, S310, S311 mined; S309 rejected (duplicate anchor); `corpus/knowledge/filter-filemode-witness.md`; README frontier r71; false r67 sentence corrected (`common-dir-route-receipt-writer.md`, M1).
 - **Tools:** none installed; no pacman, sysctl, sudo or kernel change. **Scratch:** `/fast/scratch/hyaku/souji-r71/` removed at landing.
 
+
+## Round 72 (2026-11-06, Linux; attempt 1) — counter self-check of the r71 survivors and base-slot binding (C1 calibration), filter-witness protections as matrix rows (C2 coverage)
+
+- **Motivation (evidence):** r71 spot-check D2/D3/D4 and lesson `corpus/lessons/round-71.md` "Routed to round 72": S71MutCounter F1 (`claim_upheld` ignores the base slot; Y6/Y10 drop `base_forgeries` 7 → 2 with EXIT=0 — re-measured as control (d), `census/round-72/controls/c1-Y6-main-arm-r71.txt`), F2/F4 (Y4, Y1, Y9 survive), S71CriticClaims (clean_env GIT_DIR, Z1), S71MutWriter W3/W4/W5/W6/W8 (writer protections no row measures).
+- **Frozen at `23372f362c71931494e170efdceb28e3b1735e84`** with executed controls: C1 r71 counter `score=6` EXIT=1, CF1 EXIT=2, Y6 main arm EXIT=0; C2 r71 counter battery `survived=5` EXIT=1; pre-freeze probe (each FW shape forges the weak base and exactly one member). No candidate byte at the freeze.
+- **Candidate `06df4f97` (counter + 75-row matrix), after-arms `2ec8b63d`:** C1 harness `x_killed=11 score=0` EXIT=0, Y6 main arm `base_mismatches=10` EXIT=1; C2 battery `kills=5 survived=0 all_match=true` EXIT=0, honest writer EXIT=0. All four equal the frozen predicates. No writer byte changed.
+- **Wave w1:** 12 seats; reproductions byte-identical (S72ExecC1, S72ExecC2, S72Connector, S72CriticClaims, S72MutCounter). Findings routed (lesson): FWi fixture validity unchecked (S72MutCounter MF), harness kill metric gameable (S72CriticClaims), WITNESS_ROWS self-referential, WM7 reachable through a crafted `../` index path (S72ExecFailOpen), writer index stat-cache forgery (S72Sentinel HIGH), W9 pre-run ordering and five selftest-only protections (S72MutWriter). In-round corpus corrections: S313 re-anchored, S314 narrowed, knowledge size-0 sentence corrected (M5).
+- **Frontier:** S312-S314 mined; `corpus/knowledge/filter-filemode-witness.md` r72 section; README frontier r72; SKILL registry rows r72.
+- **Tools:** none installed; no pacman, sysctl, sudo or kernel change. **Scratch:** `/fast/scratch/hyaku/souji-r72/` removed at landing.

@@ -1,0 +1,44 @@
+case ok: arg-forms: --command and post--- argv both accepted, identical receipts; both at once refused
+case ok: rev-format: short/branch/uppercase rev refused with nothing written
+case ok: instrument-at-rev: absent refused, symlink-at-rev refused, regular passes
+case ok: overwrite: existing OUT byte-identical, no temp file
+case ok: atomic-signal: SIGTERM/SIGINT during the command leave no OUT and no temp
+case ok: max-bytes: over-cap refused (flag and default), exact cap passes
+case ok: dirty-tree: modified and untracked refused, --allow-dirty overrides
+case ok: exit-code: wrapped rc passed through, receipt written with EXIT=<rc>
+case ok: no-scratch-literal: temp beside OUT only, TMPDIR untouched, source clean
+case ok: readonly-root: fixture file set and porcelain unchanged by a run
+case ok: always-write stub rejected: worktree instrument swapped for a forger
+case ok: always-refuse stub rejected: worktree instrument swapped for a refuser
+case ok: in-run-flag: skip-worktree set by the wrapped command refused, --allow-dirty included
+case ok: in-run-edit: tracked edit made by the wrapped command refused, --allow-dirty included
+case ok: in-run-restore: edit reverted before the post-run read accepted (named limit)
+case ok: fsmonitor-off: core.fsmonitor hook plus fsmonitor-valid bit cannot hide a dirty tree
+case ok: unmerged-class: stage 1+2 entry refused as RECEIPT-INDEX-UNMERGED
+case ok: gitlink-class: skip-worktree gitlink refused as RECEIPT-GITLINK-CONCEALED
+case ok: absent-class: skip-worktree file absent from worktree refused as RECEIPT-INDEX-CONCEALED-ABSENT
+case ok: generic-class: present S and h entries keep the r62 message byte for byte
+case ok: in-run-append-to-dirty: --allow-dirty append to an already-dirty tracked file refused (r64 N1)
+case ok: in-run-untracked-dir: new or deleted file in a pre-existing untracked directory refused (r64 N2)
+case ok: in-run-restore-dirty: exact restore of the dirty baseline bytes before the post-run read accepted
+case ok: index-env: GIT_INDEX_FILE set in the writer environment refused before any git call (r64 N3)
+case ok: subdir-root: --root inside a subdirectory still refuses an out-of-subtree concealed flag (r64 N4)
+case ok: in-run-append-to-untracked: --allow-dirty append to an untracked file refused
+case ok: mode-flip: mode-only in-run chmod under --allow-dirty refused via the snapshot mode byte (r65)
+case ok: untracked-visibility: status.showUntrackedFiles=no cannot hide untracked entries; clean tree still writes (r65)
+case ok: symlink-record: stable symlink accepted, in-run retarget refused, never followed (r65)
+case ok: index-env-missing: GIT_INDEX_FILE naming a nonexistent path refused (r65 P13)
+case ok: env-config: caller-injected GIT_CONFIG_* refused by name, empty value included (r66 E1/E2)
+case ok: env-redirect: GIT_OBJECT_DIRECTORY/ALTERNATE/REPLACE_REF_BASE refused by name; GIT_INDEX_FILE value not echoed (r66 E4-E6)
+case ok: mode-bits: setuid in-run flip refused via the full-mode snapshot byte (r66 MOD2)
+case ok: env-commondir-mismatch: caller GIT_COMMON_DIR naming another common dir refused by name, value not echoed (r67 W1/W2)
+case ok: env-commondir-match: GIT_COMMON_DIR equal to the repository's own common dir accepted, absolute and relative (r67 W3)
+case ok: env-commondir-empty: empty GIT_COMMON_DIR refused, presence is the test (r67)
+case ok: env-commondir-unresolvable: GIT_COMMON_DIR set with --root outside any repository refused (r67)
+case ok: pathspec-env: GIT_LITERAL/GLOB/NOGLOB/ICASE_PATHSPECS scrubbed from writer git calls; flag row refused, honest tree accepted, wrapped command still sees the variable (r70 C1)
+case FAIL: filter-driver: configured clean filter on a tracked path refused (committed, info/attributes); no-driver attribute accepted; GIT_ATTR_SOURCE filter tree scrubbed (r71 C1) | AssertionError: committed filter rc=0: 
+case ok: filemode-pin: repository-local core.fileMode=false cannot hide a pre-run or in-run mode flip; clean tree accepted (r71 C1)
+case FAIL: wave-repairs: driver named set refused; in-run self-unlinking clean filter refused; checkStat=minimal cannot hide a same-second inode replace, trustctime=false cannot hide a later-second in-place edit, size-preserving with mtime restored (r71 wave) | AssertionError: driver named set rc=0: 
+case ok: checkin-conversions: ident and working-tree-encoding on a tracked path refused; text attribute accepted (r71 wave)
+SELFTEST cases=42 pass=40 fail=2
+RC=1

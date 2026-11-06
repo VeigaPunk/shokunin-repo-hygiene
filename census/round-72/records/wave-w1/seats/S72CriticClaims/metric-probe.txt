@@ -1,0 +1,39 @@
+S72CriticClaims — metric probe: the C1(i) predicate without the six defect checks
+Purpose: the frozen C1(i) predicate is the r71 harness's SUMMARY (score=0, EXIT=0). The harness
+kills a mutant iff the mutated counter's selftest exits nonzero with fail >= 1
+(census/round-71/c2-harness.py: fate_of / score_one). It does not require the defect-specific
+check to be the one that fires.
+
+Construction (scratch copy; lane bytes untouched):
+- start from census/round-72/c1-counter.py (sha256 7578447d…a912)
+- DELETE the whole selftest section (9) block: from
+  '    # (9) r72 C1: the defects the r71 wave found in this instrument' to
+  '    npass = sum(1 for _, ok, _ in results if ok)'
+  (this removes 9a base witness, 9b claim verdict, 9c member separator, 9d SHA256SUMS dot-file,
+   9e clean_env tuple — the five checks that kill Y1 Y4 Y6 Y9 Y10 Z1)
+- INSERT one generic check before npass:
+      _lines = open(__file__, "rb").read().splitlines(True)
+      _want = [l.split()[2].strip() for l in _lines if l.startswith(b"# SELFDIGEST ")][0]
+      _self = b"".join(l for l in _lines if not l.startswith(b"# SELFDIGEST "))
+      check("source integrity", hashlib.sha256(_self).hexdigest().encode() == _want)
+  plus a trailing '# SELFDIGEST <digest>' marker line (digest over the file minus that line).
+  The check knows nothing about any defect; it fails on ANY byte edit of the file.
+
+Results (scratch /fast/scratch/hyaku/souji-r72/S72CriticClaims):
+- selftest of the probe counter: SELFTEST cases=40 pass=40 fail=0 / EXIT=0
+- harness (same invocation as the candidate, label c1-metric-probe):
+    POSITIVE P-SELFTEST rc=0 SELFTEST cases=40 pass=40 fail=0 verdict=PASS
+    SUMMARY label=c1-metric-probe positive_selftest=PASS x_mutants=11 x_killed=11 x_survived=0
+            cm_mutants=4 cm_killed=4 cm_survived=0 score=0
+    EXIT=0
+- the same probe counter with the frozen Y6 edit, main arm (--rev 0bf098dd --tool
+  tools/souji-receipt-write.py):
+    SUMMARY matrix=75 base_forgeries=2 base_honest=19 base_mismatches=10 new_forgeries=0
+            new_honest=19 class_mismatches=0 new_echo=0 errors=0 regress=PASS
+    EXIT=1
+
+Meaning: both C1 conjuncts are satisfied by a counter whose selftest contains none of the six
+defect checks. The candidate's own kills ARE defect-specific (see neighbour-defects.txt), so the
+frozen number is true for the candidate; the predicate does not establish the claim's stated
+meaning ("the instrument detects the six defects in itself"). This is the metric-gaming limit the
+prereg does not name.

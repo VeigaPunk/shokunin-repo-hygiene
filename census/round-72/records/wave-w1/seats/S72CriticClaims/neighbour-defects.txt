@@ -1,0 +1,64 @@
+S72CriticClaims — neighbouring defects outside the frozen r72 mutant set
+Source bytes: census/round-72/c1-counter.py (sha256 7578447d37068b0ed833adc970f6aadc2f760561996266ba5cb4ff1a1f23a912)
+Each edit asserted count==1; copies under /fast/scratch/hyaku/souji-r72/S72CriticClaims/mut/
+Selftest command (per mutant):
+  python3 -B <mutant> --selftest --root /home/vgpnk/Projects/shokunin/souji-shokunin \
+    --matrix census/round-72/c1-matrix.tsv --base-rev 8b9345b1f2c4bb908ae418588d4cbde6a34a5bd0 --work <fresh dir>
+
+D1 clean_env: GIT_TRACE prefix -> two exact names
+  old:         and not k.startswith("GIT_TRACE")
+  new:         and k not in ("GIT_TRACE", "GIT_TRACE2_EVENT")
+  result: SELFTEST cases=44 pass=44 fail=0 / EXIT=0   (SURVIVES)
+  leak probe (import the mutant, ambient GIT_TRACE2_PERF=/nonexistent-r72-trace2perf):
+    GIT_TRACE2_PERF present '/nonexistent-r72-trace2perf'
+    GIT_TRACE2_EVENT scrubbed None; GIT_TRACE scrubbed None
+  note: 9e's tuple contains GIT_TRACE and GIT_TRACE2_EVENT only; the prefix duty is not checked.
+
+D2 clean_env: remove both hermeticity pins
+  old:    e["GIT_CONFIG_GLOBAL"] = os.devnull
+          e["GIT_CONFIG_NOSYSTEM"] = "1"
+  new:    pass
+  result: SELFTEST cases=44 pass=44 fail=0 / EXIT=0   (SURVIVES)
+  note: latent on this host — HOME/XDG are scrubbed and /etc/gitconfig does not exist; git with
+  HOME unset does not read the passwd-home global config (probe: no global lines in
+  `git config --list --show-origin`). A host with a system config would be steered; 9e checks the
+  ambient names, never the pins.
+
+D3 base witness population narrowed
+  old: WITNESS_ROWS = ("AS1", "AS2", "FC1", "FC2", "FC3", "FM1", "FM2")
+  new: WITNESS_ROWS = ("FM1",)
+  result: SELFTEST cases=44 pass=44 fail=0 / EXIT=0   (SURVIVES)
+  line:   selftest ok: base witness ... | rows=1 mismatches=[]
+
+D3+Y6 (D3 plus the frozen Y6 edit FORGED_SAMESIZE = b"counter FORGED\n")
+  result: SELFTEST cases=44 pass=44 fail=0 / EXIT=0   (Y6 SURVIVES)
+  line:   selftest ok: base witness ... | rows=1 mismatches=[]
+  meaning: the r72 selftest's Y6 kill is produced only while WITNESS_ROWS holds the five
+  FORGED_SAMESIZE rows; 9a compares len(wrows) to len(WITNESS_ROWS), both from the same constant.
+
+V1 verify_members symlink check resolved away
+  old:         if os.path.islink(path):
+  new:         if os.path.islink(os.path.realpath(path)):
+  result: SELFTEST cases=44 pass=43 fail=1 / EXIT=1   (CAUGHT)
+  line:   selftest FAIL: member binding: a symlinked member is refused
+
+V2 AS rows' env: GIT_ATTR_SOURCE value + "0"
+  old:                 return {"GIT_ATTR_SOURCE": f.read().strip()}
+  new:                 return {"GIT_ATTR_SOURCE": f.read().strip() + "0"}
+  result: SELFTEST cases=44 pass=44 fail=0 / EXIT=0   (survives, but INERT)
+  probe: git accepts 40-, 41- and 39-char object ids for GIT_ATTR_SOURCE (41 is truncated, 39 is
+  an unambiguous prefix); only a trailing space fails: `fatal: bad --attr-source or
+  GIT_ATTR_SOURCE`, rc 128. So the appended "0" is not a defect.
+
+Y6 alone (the frozen mutant, for the killing-check record)
+  result: SELFTEST cases=44 pass=43 fail=1 / EXIT=1
+  line:   selftest FAIL: base witness ... | rows=7 mismatches=['AS1:refuse!=accept',
+          'AS2:refuse!=accept','FC1:refuse!=accept','FC2:refuse!=accept','FC3:refuse!=accept']
+
+Frozen Y/Z mutant killing checks (all rc=1, fail=1):
+  Y1  member binding: a member name with a path separator is refused as not plain |
+      member sub/M1.py is not listed in SHA256SUMS
+  Y4  base witness ... | rows=7 mismatches=['AS1:refuse!=accept','AS2:refuse!=accept']
+  Y9  member binding: a SHA256SUMS line naming a dot-file is refused as non-plain
+  Y10 base witness ... | rows=7 mismatches=[AS1, AS2, FC1, FC2, FC3]
+  Z1  clean_env: every scrub-tuple name is removed from the ambient environment | kept=['GIT_DIR']

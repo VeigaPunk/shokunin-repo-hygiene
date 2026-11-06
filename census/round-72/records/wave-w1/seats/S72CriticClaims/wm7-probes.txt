@@ -1,0 +1,38 @@
+S72CriticClaims — WM7 (check-attr failure fail-open) reachability probes
+Host: git 2.56.0, linux. Fixtures under /fast/scratch/hyaku/souji-r72/S72CriticClaims/wm7 and /fx2.
+Question: can a fixture make `git check-attr --stdin -z filter` return rc != 0 while
+`git ls-files -z :(top)` succeeds? The writer's _witness_attrs refuses on rc != 0
+(tools/souji-receipt-write.py:168-170); a WM7-style mutant would treat it as no attributes.
+
+Shapes probed (all rc 0 unless stated):
+1. worktree .gitattributes replaced by a directory
+   -> `warning: unable to access '.gitattributes': Permission denied`-class warning absent here;
+      output: .gitattributes filter unspecified / tools/a.txt filter unspecified; rc=0
+2. worktree .gitattributes chmod 000
+   -> warning "unable to access '.gitattributes': Permission denied"; rc=0
+3. worktree .gitattributes as a dangling symlink
+   -> warning "Too many levels of symbolic links"; rc=0
+4. core.attributesFile pointing at a directory
+   -> rc=0 (attributes from the repo .gitattributes still resolved)
+5. $GIT_DIR/info/attributes as a directory
+   -> rc=0
+6. GIT_ATTR_SOURCE naming a blob (not a tree)
+   -> rc=0, attributes unspecified
+7. GIT_ATTR_SOURCE naming a missing object
+   -> rc=0, attributes unspecified
+8. attr.tree config: valid tree -> filter=t (honored); missing object -> rc=0, unspecified
+   (git silently ignores a bad attr tree)
+9. GIT_ATTR_SOURCE="<40hex> " (trailing space)
+   -> `fatal: bad --attr-source or GIT_ATTR_SOURCE`, rc=128  <-- the only rc != 0 found
+   BUT the writer scrubs GIT_ATTR_SOURCE (clean_env), so a caller cannot deliver it to the
+   writer's check-attr call; a row's own env could, and then the honest writer refuses
+   (fail-closed) while a WM7 mutant would accept — i.e. the scrub is what keeps WM7 unreachable,
+   not the absence of a failing shape.
+
+Object-id parsing probe (fx2): GIT_ATTR_SOURCE accepts 40-char, 41-char (truncated) and 39-char
+(unambiguous prefix) ids; only the trailing space fails. So a corrupted-but-valid id is not a
+defect.
+
+Conclusion: no reachable check-attr failure for the writer under test; the prereg's named limit
+("WM7 ... no reachable failure was found in r71") stands. The trailing-space route is closed by
+the GIT_ATTR_SOURCE scrub, which is load-bearing for this limit.

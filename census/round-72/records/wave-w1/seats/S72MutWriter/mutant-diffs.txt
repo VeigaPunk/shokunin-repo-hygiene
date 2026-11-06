@@ -1,0 +1,149 @@
+=== W1 vs base ===
+--- /fast/scratch/hyaku/souji-r72/S72MutWriter/base.py	2026-11-06 18:04:51.606419820 -0300
++++ /fast/scratch/hyaku/souji-r72/S72MutWriter/W1.py	2026-11-06 18:05:50.471345450 -0300
+@@ -192,7 +192,7 @@
+ def _witness_refusal(top: str) -> "str | None":
+     """r71 C1: the refusal message when a tracked path's attributes make the status witness untrustworthy."""
+     attrs = _witness_attrs(top)
+-    drivers = _filter_drivers(top, attrs[b"filter"])
++    drivers = _filter_drivers(top, set())
+     if drivers:
+         return (f"{FILTER_CLASS}: tracked paths carry a filter attribute whose clean/process driver is configured "
+                 f"({', '.join(drivers)}); a clean filter can hide worktree changes from git status; no receipt written")
+=== W2 vs base ===
+--- /fast/scratch/hyaku/souji-r72/S72MutWriter/base.py	2026-11-06 18:04:51.606419820 -0300
++++ /fast/scratch/hyaku/souji-r72/S72MutWriter/W2.py	2026-11-06 18:05:50.488041345 -0300
+@@ -197,7 +197,7 @@
+         return (f"{FILTER_CLASS}: tracked paths carry a filter attribute whose clean/process driver is configured "
+                 f"({', '.join(drivers)}); a clean filter can hide worktree changes from git status; no receipt written")
+     conv = []
+-    if b"set" in attrs[b"ident"]:
++    if b"unset" in attrs[b"ident"]:
+         conv.append("ident")
+     if attrs[b"working-tree-encoding"] - {b"unspecified", b"unset"}:
+         conv.append("working-tree-encoding")
+=== W3 vs base ===
+--- /fast/scratch/hyaku/souji-r72/S72MutWriter/base.py	2026-11-06 18:04:51.606419820 -0300
++++ /fast/scratch/hyaku/souji-r72/S72MutWriter/W3.py	2026-11-06 18:05:50.500644883 -0300
+@@ -199,7 +199,7 @@
+     conv = []
+     if b"set" in attrs[b"ident"]:
+         conv.append("ident")
+-    if attrs[b"working-tree-encoding"] - {b"unspecified", b"unset"}:
++    if b"set" in attrs[b"working-tree-encoding"]:
+         conv.append("working-tree-encoding")
+     if conv:
+         return (f"{CONVERSION_CLASS}: tracked paths carry {' and '.join(conv)}; a lossy check-in conversion can "
+=== W4 vs base ===
+--- /fast/scratch/hyaku/souji-r72/S72MutWriter/base.py	2026-11-06 18:04:51.606419820 -0300
++++ /fast/scratch/hyaku/souji-r72/S72MutWriter/W4.py	2026-11-06 18:05:50.513929722 -0300
+@@ -144,7 +144,7 @@
+     # hid a size-preserving edit whose mtime was restored; the full stat comparison is pinned on.
+     return subprocess.run(["git", "-C", root, "-c", "core.fsmonitor=false",
+                            "-c", f"core.excludesFile={os.devnull}", "-c", "core.fileMode=true",
+-                           "-c", "core.checkStat=default", "-c", "core.trustctime=true", *args],
++                           "-c", "core.trustctime=true", *args],
+                           capture_output=True, env=env, input=input)
+ 
+ 
+=== W5 vs base ===
+--- /fast/scratch/hyaku/souji-r72/S72MutWriter/base.py	2026-11-06 18:04:51.606419820 -0300
++++ /fast/scratch/hyaku/souji-r72/S72MutWriter/W5.py	2026-11-06 18:05:50.526954701 -0300
+@@ -144,7 +144,7 @@
+     # hid a size-preserving edit whose mtime was restored; the full stat comparison is pinned on.
+     return subprocess.run(["git", "-C", root, "-c", "core.fsmonitor=false",
+                            "-c", f"core.excludesFile={os.devnull}", "-c", "core.fileMode=true",
+-                           "-c", "core.checkStat=default", "-c", "core.trustctime=true", *args],
++                           "-c", "core.checkStat=default", *args],
+                           capture_output=True, env=env, input=input)
+ 
+ 
+=== W6 vs base ===
+--- /fast/scratch/hyaku/souji-r72/S72MutWriter/base.py	2026-11-06 18:04:51.606419820 -0300
++++ /fast/scratch/hyaku/souji-r72/S72MutWriter/W6.py	2026-11-06 18:05:50.539955260 -0300
+@@ -143,7 +143,7 @@
+     # r71 wave repair (S71Sentinel HIGH-2): repository-local core.checkStat=minimal or core.trustctime=false
+     # hid a size-preserving edit whose mtime was restored; the full stat comparison is pinned on.
+     return subprocess.run(["git", "-C", root, "-c", "core.fsmonitor=false",
+-                           "-c", f"core.excludesFile={os.devnull}", "-c", "core.fileMode=true",
++                           "-c", f"core.excludesFile={os.devnull}",
+                            "-c", "core.checkStat=default", "-c", "core.trustctime=true", *args],
+                           capture_output=True, env=env, input=input)
+ 
+=== W7 vs base ===
+--- /fast/scratch/hyaku/souji-r72/S72MutWriter/base.py	2026-11-06 18:04:51.606419820 -0300
++++ /fast/scratch/hyaku/souji-r72/S72MutWriter/W7.py	2026-11-06 18:05:50.553302910 -0300
+@@ -133,7 +133,7 @@
+ def git(root: str, *args: str, input: "bytes | None" = None) -> subprocess.CompletedProcess:
+     """Read-only git plumbing against root; scrub GIT_DIR/GIT_WORK_TREE/GIT_COMMON_DIR so -C is authoritative."""
+     env = {k: v for k, v in os.environ.items()
+-           if k not in ("GIT_DIR", "GIT_WORK_TREE", "GIT_COMMON_DIR", "GIT_ATTR_SOURCE") and k not in PATHSPEC_ENV}
++           if k not in ("GIT_DIR", "GIT_WORK_TREE", "GIT_COMMON_DIR") and k not in PATHSPEC_ENV}
+     env["GIT_OPTIONAL_LOCKS"] = "0"
+     # r66 C1: no host config file, system config or replace ref reaches a read; the excludes file is the null device.
+     env["GIT_CONFIG_GLOBAL"] = os.devnull
+=== W8 vs base ===
+--- /fast/scratch/hyaku/souji-r72/S72MutWriter/base.py	2026-11-06 18:04:51.606419820 -0300
++++ /fast/scratch/hyaku/souji-r72/S72MutWriter/W8.py	2026-11-06 18:05:50.568174951 -0300
+@@ -599,11 +599,11 @@
+     # r71 C1: a driver configured (or a filter attribute added) by the wrapped command also refuses. r71 wave
+     # repair (S71Sentinel HIGH-1): this check runs BEFORE the post-run status read, because that read executes
+     # the clean filter, and a filter can delete its own attribute while it runs.
++    post_fl = git(top, "ls-files", "-v", "-z", ":(top)")
++    post_st = git(root, "-c", "status.showUntrackedFiles=all", "status", "--porcelain")
+     post_msg = _witness_refusal(top)
+     if post_msg:
+         refuse(post_msg)
+-    post_fl = git(top, "ls-files", "-v", "-z", ":(top)")
+-    post_st = git(root, "-c", "status.showUntrackedFiles=all", "status", "--porcelain")
+     changed = []
+     if post_fl.returncode != 0 or post_fl.stdout != pre_flags:
+         changed.append("index flags (git ls-files -v -z)")
+=== W9 vs base ===
+--- /fast/scratch/hyaku/souji-r72/S72MutWriter/base.py	2026-11-06 18:04:51.606419820 -0300
++++ /fast/scratch/hyaku/souji-r72/S72MutWriter/W9.py	2026-11-06 18:05:50.581915871 -0300
+@@ -489,10 +489,6 @@
+         if tag != b"H":
+             refuse(_flag_refusal(top, tag, path))
+     # r71 C1: a configured clean/process filter on any tracked path makes the status witness untrustworthy.
+-    pre_msg = _witness_refusal(top)
+-    if pre_msg:
+-        refuse(pre_msg)
+-
+     # behaviour 7: clean lane tree unless --allow-dirty (r65 C1: the status reads override
+     # status.showUntrackedFiles to `all`, so operator config cannot hide untracked entries)
+     st = git(root, "-c", "status.showUntrackedFiles=all", "status", "--porcelain")
+@@ -501,6 +497,9 @@
+         refuse(f"cannot read worktree status of {root}: {detail}")
+     if st.stdout and not ns.allow_dirty:
+         refuse("lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override")
++    pre_msg = _witness_refusal(top)
++    if pre_msg:
++        refuse(pre_msg)
+     # r63 C1 (operability): the pre-run snapshot. The wrapped command may change either read; both are
+     # re-read after it completes and compared byte for byte before any receipt byte is composed.
+     pre_flags, pre_status = fl.stdout, st.stdout
+=== W10 vs base ===
+--- /fast/scratch/hyaku/souji-r72/S72MutWriter/base.py	2026-11-06 18:04:51.606419820 -0300
++++ /fast/scratch/hyaku/souji-r72/S72MutWriter/W10.py	2026-11-06 18:05:50.596983533 -0300
+@@ -495,7 +495,7 @@
+ 
+     # behaviour 7: clean lane tree unless --allow-dirty (r65 C1: the status reads override
+     # status.showUntrackedFiles to `all`, so operator config cannot hide untracked entries)
+-    st = git(root, "-c", "status.showUntrackedFiles=all", "status", "--porcelain")
++    st = git(root, "status", "--porcelain")
+     if st.returncode != 0:
+         detail = st.stderr.decode("utf-8", "replace").strip()
+         refuse(f"cannot read worktree status of {root}: {detail}")
+=== W11 vs base ===
+--- /fast/scratch/hyaku/souji-r72/S72MutWriter/base.py	2026-11-06 18:04:51.606419820 -0300
++++ /fast/scratch/hyaku/souji-r72/S72MutWriter/W11.py	2026-11-06 18:05:50.610135212 -0300
+@@ -607,7 +607,7 @@
+     changed = []
+     if post_fl.returncode != 0 or post_fl.stdout != pre_flags:
+         changed.append("index flags (git ls-files -v -z)")
+-    if post_st.returncode != 0 or post_st.stdout != pre_status:
++    if post_st.returncode != 0:
+         changed.append("worktree status (git status --porcelain)")
+     if pre_content is not None:
+         post_z = _status_z(top)

@@ -64,20 +64,26 @@ puts five of them under the frozen counter (`census/round-72/c1-counter.py`, 75 
 the pre-r71 writer at 8b9345b1, which has no filter witness). Each row forges that base writer and
 exactly one single-edit mutant of the current writer, and the current writer refuses all five
 with `RECEIPT-FILTER-DRIVER-SET` (`census/round-72/probes/fw-shapes-probe.txt`,
-`records/c2-after-battery.txt`, `records/c2-honest-writer.txt`):
+`records/c2-after-battery.txt`; the honest-writer arm `records/c2-honest-writer.txt` shows the
+current writer is not over-refused by the 75 rows):
 
 | row | route | which writer check alone sees it | mutant that forges |
 |---|---|---|---|
 | FWr | forged bytes under a configured driver; the wrapped command restores the committed bytes and unsets the driver | the pre-run witness (post-run there is no driver and a clean tree) | WM3, pre-run refusal deleted |
 | FWi | honest tree; the wrapped command forges same-size bytes and creates `info/attributes` plus the clean driver | the post-run witness | WM4, post-run refusal deleted |
 | FWp | `filter.p.process` long-running driver, no `clean` key (S313) | the `process` key lookup | WM5, `clean` looked up alone |
-| FWw | committed empty `.gitattributes`; the worktree copy filters itself back to empty and assigns the forging driver to a tracked path | a worktree attribute read; the index copy assigns nothing (S312 `--cached` reads the index only; S314 the worktree file comes first) | WM8, `check-attr --cached` |
+| FWw | committed empty `.gitattributes`; the worktree copy filters itself back to empty and assigns the forging driver to a tracked path | a worktree attribute read; the index copy assigns nothing (S312 `--cached` reads the index only; S314 the index copy is a fall-back when the worktree file is missing — outside checkout) | WM8, `check-attr --cached` |
 | FWs | a driver literally named `set` | no value exemption | WM6, boolean values exempted |
 
-FWw needs the committed `.gitattributes` to be empty: git re-hashes a size-0 index entry through
-its filter on every status read, so the self-erasing `filter=e` (`cat >/dev/null`) makes the
-edited attribute file itself read as unmodified. A non-empty committed copy with a different-size
-worktree edit is reported as modified (stat size check) and needs no attribute witness.
+FWw needs the committed `.gitattributes` to be empty: when the stat data of a size-0 index entry
+no longer matches, git checks the content through its filter instead of short-circuiting on the
+size (git `read-cache.c` at v2.56.0, located by S72CriticDiscern, not a SOURCES row), so the
+self-erasing `filter=e` (`cat >/dev/null`) makes the edited attribute file read as unmodified on
+the read that observes the change. Corrected in round 72 after S72CriticDiscern: the first draft
+said "on every status read"; a fixture shows filter runs 1/0/0 over three reads 2.2 s apart (later
+reads trust the refreshed stat), `census/round-72/records/wave-w1/seats/S72CriticDiscern/size0-receipt.txt`. A non-empty committed copy with a
+different-size worktree edit is reported as modified (stat size check, same receipt, shape C) and
+needs no attribute witness.
 
 Still not covered by any row: a `check-attr` failure that the writer would treat as fail-open
 (no reachable failure was found, r71 S71MutWriter W7); an honest repository with a configured
