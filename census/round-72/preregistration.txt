@@ -1,0 +1,121 @@
+souji round 72 — preregistration (frozen before any r72 counter or r72 matrix bytes exist)
+
+Lane base: 0bf098dde7e6eafb62a9ce62b7c16a6291ee1e8e (lane tip at round start; r71 admitted,
+corpus/lessons/round-71-verifier-spotcheck.md). Not a fresh-start round (r69, r70, r71 admitted).
+Writer at the lane base: tools/souji-receipt-write.py sha256
+b77900010ce96dce86f1e580e2544ffa09631204d72658dde0587060f919244d (unchanged since f13d575e; this round
+changes NO writer byte). Reference-weak base for the counter's base slot (declared, not the lane
+base): 8b9345b1f2c4bb908ae418588d4cbde6a34a5bd0, writer sha256 118597e0…e71f (the pre-r71 writer, no
+filter or core.fileMode witness). Host: Linux, git 2.56.0, python3 3.14.
+
+Routed inputs this round acts on (r71 spot-check "Routed defects"; lesson round-71.md "Routed to
+round 72"):
+  D2 / (a) S71MutCounter F1: claim_upheld ignores the base slot; counter mutants Y6/Y10 drop
+     base_forgeries 7 -> 2 with EXIT=0 (re-measured below, control (d)).
+  (b) S71MutCounter F2: AS1/AS2 cannot tell a GIT_ATTR_SOURCE scrub from an unfiltered dirty tree
+     (Y4 survives).
+  (c) S71MutCounter F3/F4: Y1/Y9 (half of the member-name check) survive the selftest.
+  D4 S71CriticClaims: the neighbouring clean_env defect (ambient GIT_DIR kept) passes the selftest.
+  D3 / (d) S71MutWriter W3 W4 W5 W6 W8: writer filter-witness protections no matrix row measures
+     (pre-run ordering, post-run check, process drivers, boolean-named drivers, worktree-only
+     attribute source).
+  D1 (report wording): this round's candidate (the r72 counter and matrix) does NOT exist at this
+     commit; it is committed after it.
+
+Frozen inputs (this commit):
+  census/round-72/c1-mutants.json   11 counter mutants as exact single-occurrence string edits of
+      census/round-71/c1-counter.py: X6-X10 (the r71 C2 set, regression) and the six r71 seat
+      mutants that survived the r71 selftest — S71MutCounter Y1 Y4 Y6 Y9 Y10 and S71CriticClaims
+      counter-Y1.py as Z1. Checked before this freeze: each applied to the r71 counter reproduces
+      the committed seat file byte for byte (6/6). sha256 cfc40608…a754.
+  census/round-72/battery/{WM3,WM4,WM5,WM6,WM8}.py + SHA256SUMS (cfd51315…0437) and
+      census/round-72/battery-manifest.tsv (99c9a55f…204e): five writer mutants, each ONE
+      single-occurrence edit of the lane-base writer (census/round-72/make-battery.py):
+      WM3 pre-run witness refusal deleted; WM4 post-run witness refusal deleted; WM5 process
+      drivers not looked up; WM6 boolean-state filter values exempted again; WM8 check-attr
+      --cached. Every manifest expectation is `forgery`. WM7 (check-attr failure fail-open) is not
+      in the battery: no reachable failure was found in r71 (S71MutWriter W7) — named limit.
+  The C1 instrument is the r71 harness, unchanged: census/round-71/c2-harness.py sha256
+      6c7bf41d…75fb (frozen at aa91d1ca; not authored this round).
+
+Pre-freeze probe (QUALITY Q70 feasibility leg; committed in this commit, EXECUTED before it):
+  probes/fw-shapes-probe.py + probes/fw-shapes-probe.txt — five shapes over seven writers. Every
+  shape forges the reference-weak base writer (accept) and exactly ONE battery member (FWr->WM3,
+  FWi->WM4, FWp->WM5, FWw->WM8, FWs->WM6); the lane-base writer refuses all five with
+  RECEIPT-FILTER-DRIVER-SET (10 accept lines in 35, EXIT=0). The r72 matrix rows FWr FWi FWp FWw
+  FWs will rebuild these shapes inside the counter; their frozen expectation is
+  `refuse RECEIPT-FILTER-DRIVER-SET`, base_expect `accept`.
+
+Controls (committed in this commit, all EXECUTED before it):
+  (a) controls/c1-before-r71.txt — the frozen r71 harness over the FROZEN r71 counter with the r72
+      mutant set (matrix census/round-71/c1-matrix.tsv, base-rev 8b9345b1…):
+      SUMMARY label=c1-before-r71 positive_selftest=PASS x_mutants=11 x_killed=5 x_survived=6
+      cm_mutants=4 cm_killed=4 cm_survived=0 score=6, EXIT=1. This is the C1 do-nothing control:
+      a round that ships the r71 counter unchanged scores 6 (Y1 Y4 Y6 Y9 Y10 Z1 survive).
+  (b) controls/c1-CF1-selftest-always-fails.txt — the same harness over the committed r71 CF1
+      variant (selftest rc forced to 1): positive_selftest=FAIL, EXIT=2 (INVALID). A counter that
+      "kills" by failing always is refused.
+  (c) controls/c2-before-r71-battery.txt — the FROZEN r71 counter's battery arm over the five
+      members: BATTERY mutants=5 kills=0 label_only=0 over_refusal=0 echo_violation=0 survived=5
+      error=0 all_match=false, EXIT=1. C2 do-nothing control: the r71 rows see none of the five.
+  (d) controls/c1-Y6-main-arm-r71.txt — the r71 counter with mutant Y6 applied
+      (controls/variants/r71-Y6-counter.py, sha256 2e38ca9d…92f4 = the S71MutCounter Y6 file), main
+      arm over the lane-base writer: SUMMARY matrix=70 base_forgeries=2 … class_mismatches=0 …
+      regress=PASS, EXIT=0 — the base-slot drift (7 -> 2) is not in the r71 verdict.
+
+Claims (causally separable: C1 is the counter's self-check and its base-slot verdict, scored by
+mutants of the counter, and reads no new row; C2 is the matrix's reach over writer mutants, scored
+by the battery arm, whose MUTANT/BATTERY verdict does not read the base slot):
+
+C1 — calibration (the counter's self-assessment surface: census/round-72/c1-counter.py; lowest
+  owned axis, 7). Does the instrument detect the six defects in itself that the r71 wave found and
+  its selftest missed, and does its own verdict bind the base slot?
+  Frozen predicate, two conjuncts, both required:
+  (i) one run of the frozen r71 harness census/round-71/c2-harness.py over
+      census/round-72/c1-counter.py (label c1-after-r72, matrix census/round-72/c1-matrix.tsv,
+      base-rev 8b9345b1f2c4bb908ae418588d4cbde6a34a5bd0, mutants census/round-72/c1-mutants.json)
+      prints
+      SUMMARY label=c1-after-r72 positive_selftest=PASS x_mutants=11 x_killed=11 x_survived=0
+      cm_mutants=4 cm_killed=4 cm_survived=0 score=0
+      and EXIT=0 (receipt records/c1-after.txt);
+  (ii) the r72 counter with the Y6 edit applied (same single-occurrence edit), main arm
+      `--rev 0bf098dde7e6eafb62a9ce62b7c16a6291ee1e8e --tool tools/souji-receipt-write.py`,
+      base-rev 8b9345b1…, prints a SUMMARY line carrying `base_mismatches=N` with N > 0 and EXIT=1
+      (receipt records/c1-Y6-main-arm.txt). Before: control (d), EXIT=0, no such field.
+  Counting commands:
+    grep -E '^(SUMMARY|EXIT=)' census/round-72/records/c1-after.txt
+    grep -E '^(SUMMARY|EXIT=)' census/round-72/records/c1-Y6-main-arm.txt
+  Targets: x_killed 5 -> 11 of 11 (score 6 -> 0), CM1-CM4 stay killed; Y6 main arm EXIT 0 -> 1.
+  Kill rule: any other SUMMARY or EXIT on either receipt is a miss; no mutant, target or predicate
+  changes after this commit.
+
+C2 — coverage (surface: the counter matrix's measured writer-protection set; five edge classes it
+  does not hold at this commit: pre-run witness ordering, in-run driver creation, process drivers,
+  boolean-named drivers, a worktree-only attribute source). Sourced (opened this round,
+  census/round-72/srcs/): git-check-attr(1) `--cached` "Consider .gitattributes in the index only,
+  ignoring the working tree." and gitattributes(5) "Long Running Filter Process" and its
+  index-fallback sentence (rows S312-S314).
+  Frozen predicate, two conjuncts, both required:
+  (i) one battery run of the r72 counter (`--battery-manifest census/round-72/battery-manifest.tsv
+      --battery-dir census/round-72/battery`, matrix census/round-72/c1-matrix.tsv, base-rev
+      8b9345b1…) prints
+      BATTERY mutants=5 kills=5 label_only=0 over_refusal=0 echo_violation=0 survived=0 error=0 all_match=true
+      and EXIT=0 (receipt records/c2-after-battery.txt);
+  (ii) positive control (blanket refusal is not a gain): the r72 counter's main arm over the
+      lane-base writer (`--rev 0bf098dd… --tool tools/souji-receipt-write.py`) prints
+      new_forgeries=0, new_honest equal to the matrix's accept-row count, class_mismatches=0,
+      new_echo=0, errors=0, regress=PASS and EXIT=0 (receipt records/c2-honest-writer.txt).
+  Counting commands:
+    grep -E '^(BATTERY|EXIT=)' census/round-72/records/c2-after-battery.txt
+    grep -E '^(SUMMARY|EXIT=)' census/round-72/records/c2-honest-writer.txt
+  Before: control (c), kills=0 survived=5, EXIT=1.
+  Target: writer filter-witness protections refuted by forgery 0 of 5 -> 5 of 5, honest writer
+  still EXIT=0. Kill rule: any other BATTERY line or EXIT on either receipt is a miss.
+
+Named limits (declared before data): base_expect values bind only the declared reference-weak base
+8b9345b1 (they are its observed verdicts: the 70 carried rows from census/round-71/records/c1-after.txt
+CASE lines, the five FW rows from the probe); the selftest base witness binds the seven r71
+forging rows (AS1 AS2 FC1 FC2 FC3 FM1 FM2), not every row; C1's kills are specific to this mutant
+set (a neighbouring defect may survive, as Z1 did in r71); C2 measures five protections — WM7
+(fail-open on a check-attr failure), over-refusal of an honest repository with a configured driver
+on a tracked path, and smudge-only drivers stay unmeasured; git 2.56.0 only.
