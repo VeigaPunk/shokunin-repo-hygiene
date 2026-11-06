@@ -1,0 +1,32 @@
+attr.tree probe — git 2.56.0, host probe by seat S71ScoutSources
+Fixture: fresh repo under /fast/scratch/hyaku/souji-r71/S71ScoutSources, `git init -b main`,
+committed tools/instr.py (instrument) and data.txt (v1); a side branch `attrb` commits
+.gitattributes containing `data.txt filter=xx`; main checked out again (NO worktree
+.gitattributes); `git config attr.tree <tree of attrb>`; `git config filter.xx.clean "sed s/v2/v1/"`;
+worktree data.txt rewritten to `v2` (size-preserving).
+
+Observed:
+  git check-attr filter -- data.txt   ->  data.txt: filter: xx        (attr.tree IS honoured by check-attr)
+  git status --porcelain              ->  (EMPTY)                      (the v1->v2 edit is INVISIBLE to status)
+  base writer (census/round-71/controls/base-writer-8b9345b1.py), --out inside fixture:
+      RECORD <fixture>/receipt.txt rev=ff2025626a049350f1d775ebe151b4579a6121d4 instrument=tools/instr.py rc=0
+      receipt WRITTEN ; receipt line: EXIT=0
+      -> the ROUND-START writer writes a receipt over a worktree whose tracked file was changed.
+  candidate writer (tools/souji-receipt-write.py at a1db6c8514771c0a0321c29741831606d09cc2a5):
+      refused: RECEIPT-FILTER-DRIVER-SET: tracked paths carry a filter attribute whose
+      clean/process driver is configured (xx); a clean filter can hide worktree changes
+      from git status; no receipt written
+      -> the r71 CANDIDATE refuses this route (its check-attr read honours attr.tree too).
+
+Two related routes measured the same way (candidate writer refuses both):
+  core.attributesFile=<file containing `tools/counter.py filter=zz`> + filter.zz.clean
+      check-attr -> filter: zz ; status --porcelain EMPTY ; candidate refuses RECEIPT-FILTER-DRIVER-SET
+  core.fileMode=false (repository-local)
+      status --porcelain EMPTY ; with -c core.fileMode=true -> " M f.txt"  (the pin overrides)
+
+Conclusion carried into the report: `attr.tree` is a LIVE forgery route of the same class as
+GIT_ATTR_SOURCE (S306/S307), it is NOT covered by any r71 matrix row and NOT by the r71 probe
+(census/round-71/preregistration.txt:100 names it a named limit), and S310's teaches cell
+("the writer's check-attr reads honor it (unmeasured)") is falsified: the behaviour is
+measurable and measured here. The r71 candidate refuses it, so C1's frozen claim is not
+falsified by this probe.

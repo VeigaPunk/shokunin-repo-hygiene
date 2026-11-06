@@ -1,0 +1,98 @@
+### 2026-11-06T17:09:56-03:00  git git version 2.56.0  Python 3.14.8
+### candidate writer sha256: 56b6be0331d2590909984733524436ce70dd5dc699c26d7599821c956fc85207  cand-writer.py
+### all fixtures under /fast/scratch/hyaku/souji-r71/S71Sentinel ; receipts (--out) in scratch with --allow-outside
+
+=== selfunlink.py  (HIGH-1 deterministic in-run filter) ===
+T1 self-unlinking clean filter: writer rc=0 receipt=WRITTEN
+   refusal=''
+   receipt EXIT line=['EXIT=0']
+   attr exists after run=False
+   FINAL git status='M tools/counter.py'   (worktree vs index)
+   file bytes=b'counter v2\n' head blob=b'counter v1\n'
+
+=== wprobe.py  (route matrix) ===
+### W-series: candidate writer (a1db6c85) routes
+W1 checkStat=minimal pre-run forge           writer rc=0 receipt=WRITTEN err=''
+W2 checkStat=minimal in-run forge            writer rc=0 receipt=WRITTEN err=''
+W3 trustctime=false pre-run forge            writer rc=0 receipt=WRITTEN err=''
+W4 control pre-run forge (no config)         writer rc=2 receipt=none err='refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override'
+W5 attr.tree filter + driver                 writer rc=2 receipt=none err='refused: RECEIPT-FILTER-DRIVER-SET: tracked paths carry a filter attribute whose clean/process driver is configured (t); a clean filter can hide worktree changes from git'
+W6 core.attributesFile filter + driver       writer rc=2 receipt=none err='refused: RECEIPT-FILTER-DRIVER-SET: tracked paths carry a filter attribute whose clean/process driver is configured (t); a clean filter can hide worktree changes from git'
+W7 driver name 'T'                           writer rc=2 receipt=none err='refused: RECEIPT-FILTER-DRIVER-SET: tracked paths carry a filter attribute whose clean/process driver is configured (T); a clean filter can hide worktree changes from git'
+W7 driver name 'a.b'                         writer rc=2 receipt=none err='refused: RECEIPT-FILTER-DRIVER-SET: tracked paths carry a filter attribute whose clean/process driver is configured (a.b); a clean filter can hide worktree changes from g'
+W8 in-run driver+attr+edit (attr kept)       writer rc=2 receipt=none err='refused: RECEIPT-FILTER-DRIVER-SET: tracked paths carry a filter attribute whose clean/process driver is configured (t); a clean filter can hide worktree changes from git'
+W9 in-run driver+attr, no edit               writer rc=2 receipt=none err='refused: RECEIPT-FILTER-DRIVER-SET: tracked paths carry a filter attribute whose clean/process driver is configured (t); a clean filter can hide worktree changes from git'
+
+=== statcfg.py  (status-level stat config) ===
+E1 checkStat=minimal               mtime_restored=True status='(clean)'
+E2 trustctime=false                mtime_restored=True status='(clean)'
+E3 ignoreStat=true                 mtime_restored=True status='M tools/counter.py'
+E0 control (no config)             mtime_restored=True status='M tools/counter.py'
+E1b checkStat=minimal+trustctime   mtime_restored=True status='(clean)'
+E4 untrackedCache                  status='?? sub/hidden.txt ?? sub/keep.txt' dir_mtime_restored=True
+E4b untrackedCache no-restore      status='?? sub/hidden.txt ?? sub/keep.txt'
+
+=== misc.py  (filter.t.process refusal, in-run checkStat) ===
+M1 filter.t.process configured: (2, False, 'refused: RECEIPT-FILTER-DRIVER-SET: tracked paths carry a filter attribute whose clean/process driver is configured (t); a clean filter can hide workt')
+M3 in-run checkStat=minimal forge: (0, True, '')
+   final status (default cfg? repo now minimal): b''
+   pinned-checkStat status: b' M tools/counter.py\n'
+
+=== misc2.py  (in-run attr kept; info/exclude) ===
+D1 in-run driver+attr+edit (attr kept): (2, False, 'refused: RECEIPT-FILTER-DRIVER-SET: tracked paths carry a filter attribute whose clean/process driver is configured (t); a clean f')
+D2 info/exclude hides untracked; plain status = (clean)
+   writer: (0, True, '')
+D3 in-run info/exclude + untracked file: (0, True, '')  final status= (clean)
+D4 exclude on tracked path (control): (2, False, 'refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override')
+
+=== edge3.py  (ident / eol+autocrlf / working-tree-encoding / untrackedCache) ===
+D2 text+eol: attribute BEFORE commit; committed LF blob, worktree variants
+   blob: b'aaaaaaaa\n'
+   status LH: (clean)
+   status CRLF: M tools/counter.py
+   d2b blob: b'aaaaaaaa\n'
+   d2b status: (clean)
+   d2b forged 8B CRLF: M tools/counter.py
+   d2b forged 8B+LF : M tools/counter.py
+D3 working-tree-encoding=UTF-16, attribute BEFORE commit
+   blob (want UTF-8): b'counter v1\n'
+   status LE: (clean)
+   status BE (same text, same size): (clean)
+   status other text: M tools/counter.py
+D4 untrackedCache: new file inside a cached tracked dir, dir mtime restored
+   restored dir mtime: ?? sub/hidden.txt
+   no restore        : ?? sub/hidden.txt
+
+=== ctr.py  (F3/F4 verify_members) ===
+F3/F4 member-name traversal against verify_members:
+  name='../M1'              -> REJECTED: member name '../M1' is not a plain file name
+  name='M1/../M2'           -> REJECTED: member name 'M1/../M2' is not a plain file name
+  name='/etc/passwd'        -> REJECTED: member name '/etc/passwd' is not a plain file name
+  name='a/b'                -> REJECTED: member name 'a/b' is not a plain file name
+  name=''                   -> REJECTED: member name '' is not a plain file name
+  name='.M1'                -> REJECTED: member name '.M1' is not a plain file name
+  name='..'                 -> REJECTED: member name '..' is not a plain file name
+  name='.'                  -> REJECTED: member name '.' is not a plain file name
+  name='M1 '                -> REJECTED: member name 'M1 ' is not a plain file name
+  name='M1\n'               -> REJECTED: member M1
+.py is not listed in SHA256SUMS
+  name='M1'                 -> ACCEPTED ['__sums__', 'M1']
+  name='M1.py/../../x'      -> REJECTED: member name 'M1.py/../../x' is not a plain file name
+SHA256SUMS traversal entries:
+  sums entry='../M1.py'     -> REJECTED: SHA256SUMS line 1 names a non-plain file
+  sums entry='./M1.py'      -> REJECTED: SHA256SUMS line 1 names a non-plain file
+  sums entry='a/M1.py'      -> REJECTED: SHA256SUMS line 1 names a non-plain file
+  sums entry='.hidden.py'   -> REJECTED: SHA256SUMS line 1 names a non-plain file
+  sums entry='M1.py'        -> ACCEPTED
+  sums entry='M1.py.py'     -> REJECTED: member M1.py is not listed in SHA256SUMS
+
+=== t1-receipt.txt (the forged clean receipt) ===
+instrument=tools/instr.sh
+instrument_sha256=b4d644d4279594903f1a9911956432d9473041f2984fc6014c14d7402c7d126c
+rev=d0f189bdfd5092219c5d713996d6800cf1c4b0da
+command=/usr/bin/python3 -c 'import os
+open('"'"'/fast/scratch/hyaku/souji-r71/S71Sentinel/t1cap.wk17u9ac/.git/info/attributes'"'"','"'"'w'"'"').write('"'"'tools/counter.py filter=t\n'"'"')
+open('"'"'/fast/scratch/hyaku/souji-r71/S71Sentinel/t1cap.wk17u9ac/tools/counter.py'"'"','"'"'wb'"'"').write(b'"'"'counter v2\n'"'"')
+'
+
+EXIT=0

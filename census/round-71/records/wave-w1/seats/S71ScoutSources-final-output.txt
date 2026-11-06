@@ -1,0 +1,87 @@
+{
+  "verdicts": {
+    "fetch_receipts": "AGREE - all three pages HTTP 200, byte counts and sha256 identical to the committed captures (0a1e8015…6aee, 534c674f…f9d1, 37aa8407…9226); cmp against census/round-71/srcs/*.html byte-identical, twice fetched",
+    "S306": "AGREE on quote/offset/words(15)/section; LOW: teaches cell asserts a status-comparison mechanism gitattributes(5) never states (0 hits compare/compares/applied) - the witness is the probe, not the page",
+    "S307": "AGREE - quote exact at 13322, 20 words, OPTIONS dt --attr-source; page supports teaches cell",
+    "S308": "AGREE - quote exact at 82016, 17 words, Variables/core.fileMode; -c pin override verified behaviourally (repo-local core.fileMode=false -> status empty; -c core.fileMode=true -> ' M f.txt')",
+    "S309": "DISAGREE (MEDIUM) - reject reason and flip are wrong; the same page (git(1) OPTIONS --attr-source) already says 'instead of the worktree' + 'equivalent to setting the GIT_ATTR_SOURCE environment variable'. S309 is a duplicate anchor of S307, not a page lacking the sentence",
+    "S310": "DISAGREE (HIGH x2 + wrong teaches cell) - used-by path absent at revision; used-by omits the citing entry; teaches 'unmeasured' is falsified by my measurement",
+    "row_shape_status_usedby": "11 columns each; statuses mined/mined/mined/rejected/queued and recheck 180d/180d/180d/on-release/90d all in vocabulary; base 228 rows -> 233 rows with 0 changed cells in pre-existing rows; used-by exists for S306/S307/S308 (and names each), fails for S309 (n/a, dash) and S310",
+    "C1": "REPRODUCES - independent run: SUMMARY matrix=70 base_forgeries=7 base_honest=19 new_forgeries=0 new_honest=19 class_mismatches=0 new_echo=0 errors=0 regress=PASS, EXIT=0; do-nothing arm new_forgeries=7 class_mismatches=7 EXIT=1",
+    "C2": "REPRODUCES - c2-after-r71 x_killed=5 x_survived=0 cm_killed=4 cm_survived=0 score=0 EXIT=0; c2-before-r70 x_killed=0 x_survived=5 score=5 EXIT=1; counter selftest 39/39, writer selftest 40/40"
+  },
+  "commands": [
+    "curl -sS -L -o <n>.html -w '%{http_code}' https://git-scm.com/docs/{gitattributes,git,git-config} (x2) + cmp vs census/round-71/srcs/*.html",
+    "python3 -B census/round-71/c1-counter.py --root <lane> --matrix census/round-71/c1-matrix.tsv --base-rev 8b9345b1f2c4bb908ae418588d4cbde6a34a5bd0 --rev a1db6c8514771c0a0321c29741831606d09cc2a5 --tool tools/souji-receipt-write.py --work $S/c1",
+    "same counter with --new-tool census/round-71/controls/base-writer-8b9345b1.py (do-nothing arm)",
+    "python3 -B census/round-71/c1-counter.py --selftest --root <lane> --matrix … --base-rev 8b9345b1… --work $S/st",
+    "python3 -B tools/souji-receipt-write.py --selftest --work $S/wst",
+    "python3 -B census/round-71/c2-harness.py --label c2-after-r71 --counter census/round-71/c1-counter.py --matrix census/round-71/c1-matrix.tsv --root <lane> --base-rev 8b9345b1… --mutants census/round-71/c2-mutants.json --work $S/c2",
+    "python3 -B census/round-71/c2-harness.py --label c2-before-r70 --counter census/round-70/c1-counter.py --matrix census/round-70/c1-matrix.tsv --root <lane> --base-rev e063a2fcb3f5f3fb8fb19d2ae1592b1f22e6a333 --mutants census/round-71/c2-mutants.json --work $S/c2b",
+    "python3 -B tools/souji-registry-agreement.py (k1 function) at revs 52e8c3f… and 8b9345b1…",
+    "git cat-file -e <rev>:corpus/lessons/round-71.md for 52e8c3f, 1c2239cd, 8b9345b1",
+    "fresh git fixture with repo-local attr.tree + filter.<d>.clean; check-attr / status --porcelain; base writer vs candidate writer"
+  ],
+  "observed_output_lines": [
+    "S306 quote at 17513 exact, 15 words",
+    "S307 quote at 13322 exact, 20 words",
+    "S308 quote at 82016 exact, 17 words",
+    "S309 quote at 40119 exact, 10 words",
+    "S310 quote at 53875 exact, 23 words",
+    "C1: SUMMARY matrix=70 base_forgeries=7 base_honest=19 new_forgeries=0 new_honest=19 class_mismatches=0 new_echo=0 errors=0 regress=PASS / EXIT=0",
+    "C1 do-nothing: new_forgeries=7 class_mismatches=7 / EXIT=1",
+    "C2 after: SUMMARY label=c2-after-r71 positive_selftest=PASS x_mutants=5 x_killed=5 x_survived=0 cm_mutants=4 cm_killed=4 cm_survived=0 score=0 / EXIT=0",
+    "C2 before: label=c2-before-r70 x_killed=0 x_survived=5 score=5 / EXIT=1",
+    "SELFTEST cases=39 pass=39 fail=0 ; SELFTEST cases=40 pass=40 fail=0",
+    "k1 new: K1 used-by-missing S310 corpus/lessons/round-71.md ; K1 cited-not-in-used-by S310 corpus/knowledge/filter-filemode-witness.md",
+    "attr.tree fixture: check-attr -> filter: xx ; status --porcelain EMPTY ; base writer RECORD ... rc=0 receipt WRITTEN EXIT=0 ; candidate writer refused RECEIPT-FILTER-DRIVER-SET"
+  ],
+  "findings": [
+    {
+      "severity": "HIGH",
+      "where": "corpus/SOURCES.md:269 (S310 used-by cell)",
+      "finding": "used-by path corpus/lessons/round-71.md does not exist at 52e8c3f (absent at 1c2239cd and at base 8b9345b1; worktree file is untracked). tools/souji-registry-agreement.py k1 -> K1 used-by-missing S310 corpus/lessons/round-71.md, a NEW finding at r71 (base k1 has 5 findings, none S310). Violates QUALITY Q62."
+    },
+    {
+      "severity": "HIGH",
+      "where": "corpus/SOURCES.md:269 vs corpus/knowledge/filter-filemode-witness.md:1",
+      "finding": "S310 used-by omits the entry that cites it (filter-filemode-witness.md lists S310 in its source: front matter). k1 -> K1 cited-not-in-used-by S310 corpus/knowledge/filter-filemode-witness.md, also NEW at r71. Q62 bidirectionality violated."
+    },
+    {
+      "severity": "HIGH",
+      "where": "corpus/SOURCES.md:269 (S310 teaches cell); census/round-71/preregistration.txt:100",
+      "finding": "teaches says the writer's check-attr honouring attr.tree is '(unmeasured)'. Falsified: on git 2.56.0 a repo-local attr.tree naming a tree with 'data.txt filter=xx' plus filter.xx.clean makes git status --porcelain EMPTY over a size-preserving v1->v2 edit, and the ROUND-START writer writes a receipt over it (EXIT=0). The r71 candidate refuses (RECEIPT-FILTER-DRIVER-SET) so C1 is not falsified, but no matrix row and no r71 probe measure attr.tree - it is a named limit. S310 should be mined, not queued."
+    },
+    {
+      "severity": "MEDIUM",
+      "where": "corpus/SOURCES.md:268 (S309 teaches/flip)",
+      "finding": "Reject reason and flip are wrong. The ENVIRONMENT entry text indeed lacks the replacement sentence, but git(1) OPTIONS --attr-source on the same capture carries it ('Read gitattributes from <tree-ish> instead of the worktree ... equivalent to setting the GIT_ATTR_SOURCE environment variable'), which is exactly S307's quote. Correct reason: duplicate anchor of S307 on the same capture; flip 'a release adds that sentence here' is wrong - the sentence already exists on the page."
+    },
+    {
+      "severity": "MEDIUM",
+      "where": "corpus/SOURCES.md:269 (S310 scope vs anchor)",
+      "finding": "scope promises 'the variable's precedence against GIT_ATTR_SOURCE' but the quoted anchor carries none; the sentence exists at census/round-71/srcs/git-config.txt offset 54097 (18 words): 'When the GIT_ATTR_SOURCE environment variable or --attr-source command line option are used, this configuration variable has no effect.' Consequence for r71: the writer's GIT_ATTR_SOURCE scrub RE-ENABLES attr.tree rather than neutralising it."
+    },
+    {
+      "severity": "LOW",
+      "where": "corpus/SOURCES.md:265 (S306 teaches) and corpus/knowledge/filter-filemode-witness.md:12",
+      "finding": "teaches asserts 'rewrites worktree bytes before git compares them'; gitattributes(5) never states a comparison behaviour (0 hits for compare/compares/clean filter is applied; only 'upon checkin'). The status-comparison witness is the probe census/round-71/probes/attr-filemode-probe-base.txt P2/P3, not the cited page."
+    },
+    {
+      "severity": "LOW",
+      "where": "corpus/SOURCES.md:265-269",
+      "finding": "Cited offsets are CHARACTER offsets into census/round-71/srcs/*.txt; byte offsets differ by +60..+132 (non-ASCII). Rows do not state the convention; a byte-offset reader mis-locates every quote (the S304 precedent said 'byte offset')."
+    }
+  ],
+  "reproduction_note": "html.unescape(re.sub(r'<[^>]+>',' ',t)) then re.sub(r'\\s+',' ',t) with NO strip reproduces census/round-71/srcs/{gitattributes,git,git-config}.txt byte-for-byte (49087/59452/335077 bytes, equality True), which is how every cited offset was confirmed.",
+  "files_written": [
+    "/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-71/w1/S71ScoutSources.md",
+    "/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-71/w1/S71ScoutSources/fetch-receipts.tsv",
+    "/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-71/w1/S71ScoutSources/quote-locations.tsv",
+    "/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-71/w1/S71ScoutSources/runs.tsv",
+    "/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-71/w1/S71ScoutSources/registry-k1.txt",
+    "/home/vgpnk/Projects/shokunin/souji-shokunin/.ufo/waves/round-71/w1/S71ScoutSources/attr-tree-probe.txt"
+  ],
+  "scratch": "/fast/scratch/hyaku/souji-r71/S71ScoutSources created and removed before yield; no lane tracked file edited (git status shows only sibling-owned untracked files)",
+  "tooling": "No tool installed or upgraded; none needed (curl, python3 3.14, git 2.56.0)"
+}

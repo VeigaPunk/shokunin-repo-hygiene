@@ -2954,3 +2954,13 @@ addendum, appended to the prereg, commits 8a793e7ae9131578bdec393982760217f62095
 - **Incident:** seat S70MutWriter's fixture committed to the fleet repo (`cff0b4cb`, already pushed); reported to the orchestrator and filed as an L0 question; lesson M6.
 - **Tools:** none installed or upgraded; no pacman transaction; no sysctl, sudo or kernel change.
 - **Scratch:** `/fast/scratch/hyaku/souji-r70/` (removed at landing).
+
+## Round 71 (2026-11-06, Linux; attempt 1) — filter-driver / core.fileMode witness hardening in the receipt writer (C1 operability), counter selftest vs the r70 survivors (C2 calibration)
+
+- **Motivation (evidence):** r70 S70Sentinel F1 (HIGH: a configured clean filter, via GIT_ATTR_SOURCE or committed attributes, hides a modified file and the writer writes the receipt) and F2 (repository-local core.fileMode=false); S70MutCounter X6-X10 survive the r70 counter's selftest (`corpus/lessons/round-70.md:78`). Probe `census/round-71/probes/attr-filemode-probe-base.txt`: the round-start writer writes receipts over P2/P3/P4/P6/P7/P10.
+- **Frozen at `aa91d1cad89200ec733edd3475461010a372923d`** with executed controls: C1 do-nothing `new_forgeries=7` EXIT=1, F1 blanket refusal `new_honest=16` EXIT=1, F2/F3 partial fixes `new_forgeries=5` EXIT=1; C2 r70 counter `score=5` EXIT=1; CF1 EXIT=2.
+- **Candidate `a1db6c85`, after-arms `52e8c3fa`:** C1 `new_forgeries=0 new_honest=19 class_mismatches=0` EXIT=0; C2 `x_killed=5 score=0` EXIT=0. Both equal the frozen predicates.
+- **Wave w1:** 12 seats, 0 dead; all reproductions byte-identical. Four HIGH routes found against the candidate and repaired (`45a94c83`, `f13d575e`; selftest 42/42; each repair shown able to fail, `records/repair-canfail.txt`); frozen counter at the repaired tip unchanged (`records/c1-at-repair.txt`). D3 pointer-check self-test adopted.
+- **Frontier:** S306-S308, S310, S311 mined; S309 rejected (duplicate anchor); `corpus/knowledge/filter-filemode-witness.md`; README frontier r71; false r67 sentence corrected (`common-dir-route-receipt-writer.md`, M1).
+- **Tools:** none installed; no pacman, sysctl, sudo or kernel change. **Scratch:** `/fast/scratch/hyaku/souji-r71/` removed at landing.
+
