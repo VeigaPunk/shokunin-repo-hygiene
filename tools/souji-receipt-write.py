@@ -65,6 +65,13 @@ scrubbed), canonicalizes both sides with os.path.realpath (a relative caller val
 and refuses RECEIPT-ENV-COMMONDIR-MISMATCH on a mismatch, an empty value or an unresolvable repository, before any git
 call reads the caller's value; only the variable name is printed. An equal value proceeds. Every git call scrubs
 GIT_COMMON_DIR together with GIT_DIR and GIT_WORK_TREE.
+
+round 70 (C1): every git call scrubs the four pathspec variables GIT_LITERAL_PATHSPECS, GIT_GLOB_PATHSPECS,
+GIT_NOGLOB_PATHSPECS and GIT_ICASE_PATHSPECS (git(1) OPTIONS: --literal-pathspecs means "no globbing, no pathspec
+magic"; source S304). Under GIT_LITERAL_PATHSPECS=1 the `:(top)` flag reads matched nothing and every index-flag
+check passed vacuously (receipts written over skip-worktree, gitlink and absent rows); under GLOB/ICASE the
+instrument `ls-tree -- <rel>` read failed and honest clean trees were refused. The scrub is silent (the variables
+are pathspec semantics, not repository redirects); the wrapped command still receives the caller's environment.
 """
 from __future__ import annotations
 
@@ -94,9 +101,14 @@ TEMP_MARK = "path"
 _TEMP: dict[str, "str | None"] = {TEMP_MARK: None}
 
 
+# r70 C1: pathspec semantics variables (git(1) OPTIONS/ENVIRONMENT); scrubbed from every writer git call.
+PATHSPEC_ENV = ("GIT_LITERAL_PATHSPECS", "GIT_GLOB_PATHSPECS", "GIT_NOGLOB_PATHSPECS", "GIT_ICASE_PATHSPECS")
+
+
 def git(root: str, *args: str) -> subprocess.CompletedProcess:
     """Read-only git plumbing against root; scrub GIT_DIR/GIT_WORK_TREE/GIT_COMMON_DIR so -C is authoritative."""
-    env = {k: v for k, v in os.environ.items() if k not in ("GIT_DIR", "GIT_WORK_TREE", "GIT_COMMON_DIR")}
+    env = {k: v for k, v in os.environ.items()
+           if k not in ("GIT_DIR", "GIT_WORK_TREE", "GIT_COMMON_DIR") and k not in PATHSPEC_ENV}
     env["GIT_OPTIONAL_LOCKS"] = "0"
     # r66 C1: no host config file, system config or replace ref reaches a read; the excludes file is the null device.
     env["GIT_CONFIG_GLOBAL"] = os.devnull
@@ -1484,6 +1496,34 @@ def case_37_env_commondir_unresolvable_refused(work: str) -> None:
     _no_stray(outdir)
 
 
+def case_38_pathspec_env_scrubbed(work: str) -> None:
+    # r70 C1: each pathspec variable leaves the writer's verdicts unchanged — a skip-worktree row still refuses
+    # with RECEIPT-INDEX-FLAG-CONCEALED (the base writer forged it under GIT_LITERAL_PATHSPECS=1) and an honest
+    # clean tree is still accepted (the base writer refused it under GLOB/ICASE); the wrapped command still sees
+    # the caller's variable.
+    for var in PATHSPEC_ENV:
+        env = dict(os.environ)
+        env[var] = "1"
+        d = _fixture(work, "c38-honest")
+        rev = _head(d)
+        outdir = _outdir(work)
+        out = os.path.join(outdir, "honest.txt")
+        r = _run([*_base_args(d, rev, out), "--", "/bin/sh", "-c", f'printf "seen=%s\\n" "${var}"'], env=env)
+        if r.returncode != 0 or not os.path.isfile(out):
+            raise AssertionError(f"{var}=1 honest clean tree rc={r.returncode}: {r.stderr.strip()}")
+        with open(out, "rb") as f:
+            if b"seen=1\n" not in f.read():
+                raise AssertionError(f"{var}=1 did not reach the wrapped command")
+        d2 = _fixture(work, "c38-flag")
+        rev2 = _head(d2)
+        _git_ok(d2, "update-index", "--skip-worktree", "tracked.txt")
+        out2 = os.path.join(outdir, "flag.txt")
+        r = _run([*_base_args(d2, rev2, out2), "--command", "/bin/echo hi"], env=env)
+        if r.returncode != 2 or os.path.exists(out2) or "RECEIPT-INDEX-FLAG-CONCEALED" not in r.stderr:
+            raise AssertionError(f"{var}=1 skip-worktree rc={r.returncode}: {r.stderr.strip()}")
+        _no_stray(outdir)
+
+
 CASES = (
     ("arg-forms: --command and post--- argv both accepted, identical receipts; both at once refused", case_01_arg_forms),
     ("rev-format: short/branch/uppercase rev refused with nothing written", case_02_rev_format),
@@ -1522,6 +1562,7 @@ CASES = (
     ("env-commondir-match: GIT_COMMON_DIR equal to the repository's own common dir accepted, absolute and relative (r67 W3)", case_35_env_commondir_match_accepted),
     ("env-commondir-empty: empty GIT_COMMON_DIR refused, presence is the test (r67)", case_36_env_commondir_empty_refused),
     ("env-commondir-unresolvable: GIT_COMMON_DIR set with --root outside any repository refused (r67)", case_37_env_commondir_unresolvable_refused),
+    ("pathspec-env: GIT_LITERAL/GLOB/NOGLOB/ICASE_PATHSPECS scrubbed from writer git calls; flag row refused, honest tree accepted, wrapped command still sees the variable (r70 C1)", case_38_pathspec_env_scrubbed),
 )
 
 
