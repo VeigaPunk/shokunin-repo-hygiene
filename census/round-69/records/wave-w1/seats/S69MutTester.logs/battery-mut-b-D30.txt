@@ -1,0 +1,103 @@
+# c1-counter root=/home/vgpnk/Projects/shokunin/souji-shokunin base-rev=3639087917eaeb28719d7603110a6ec22782100e matrix-sha256=b173c9c93561b491a89d41c021d54ed0999753d414a2522097a0cf9764830b8b
+# battery manifest=/fast/scratch/hyaku/souji-r69/S69MutTester/m-1978295/man-b-short.tsv dir=/fast/scratch/hyaku/souji-r69/S69MutTester/m-1978295/battery selected=['D30']
+CASE A expect=accept base=accept base_findings=- new=accept new_findings=- new_echo=false
+# detail A name=honest-clean rev=b4d7ad8d3e78 base_rc=0 new_rc=0 base_stderr= new_stderr=
+CASE B expect=accept base=accept base_findings=- new=accept new_findings=- new_echo=false
+# detail B name=honest-allow-dirty rev=b4d7ad8d3e78 base_rc=0 new_rc=0 base_stderr= new_stderr=
+CASE C expect=refuse base=refuse base_findings=lane worktree is dirty new=refuse new_findings=lane worktree is dirty new_echo=false
+# detail C name=dirty-visible rev=b4d7ad8d3e78 base_rc=2 new_rc=2 base_stderr=refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override new_stderr=refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+CASE D expect=refuse base=refuse base_findings=RECEIPT-INDEX-FLAG-CONCEALED new=refuse new_findings=RECEIPT-INDEX-FLAG-CONCEALED new_echo=false
+# detail D name=skip-worktree-forged rev=b4d7ad8d3e78 base_rc=2 new_rc=2 base_stderr=refused: RECEIPT-INDEX-FLAG-CONCEALED: tools/counter.py carries index flag S; skip-worktree or assume-unchanged hides worktree divergence from git status; cl... new_stderr=refused: RECEIPT-INDEX-FLAG-CONCEALED: tools/counter.py carries index flag S; skip-worktree or assume-unchanged hides worktree divergence from git status; cl...
+CASE T1 expect=refuse base=refuse base_findings=RECEIPT-STATE-CHANGED-DURING-RUN new=refuse new_findings=RECEIPT-STATE-CHANGED-DURING-RUN new_echo=false
+# detail T1 name=inrun-flag rev=b4d7ad8d3e78 base_rc=2 new_rc=2 base_stderr=refused: RECEIPT-STATE-CHANGED-DURING-RUN: index flags (git ls-files -v -z) changed during the wrapped command; no receipt written new_stderr=refused: RECEIPT-STATE-CHANGED-DURING-RUN: index flags (git ls-files -v -z) changed during the wrapped command; no receipt written
+CASE T2 expect=refuse base=refuse base_findings=RECEIPT-STATE-CHANGED-DURING-RUN new=refuse new_findings=RECEIPT-STATE-CHANGED-DURING-RUN new_echo=false
+# detail T2 name=inrun-edit-instrument rev=b4d7ad8d3e78 base_rc=2 new_rc=2 base_stderr=refused: RECEIPT-STATE-CHANGED-DURING-RUN: worktree status (git status --porcelain) changed during the wrapped command; no receipt written new_stderr=refused: RECEIPT-STATE-CHANGED-DURING-RUN: worktree status (git status --porcelain) changed during the wrapped command; no receipt written
+CASE T3 expect=refuse base=refuse base_findings=RECEIPT-STATE-CHANGED-DURING-RUN new=refuse new_findings=RECEIPT-STATE-CHANGED-DURING-RUN new_echo=false
+# detail T3 name=inrun-edit-noninstrument rev=b4d7ad8d3e78 base_rc=2 new_rc=2 base_stderr=refused: RECEIPT-STATE-CHANGED-DURING-RUN: worktree status (git status --porcelain) changed during the wrapped command; no receipt written new_stderr=refused: RECEIPT-STATE-CHANGED-DURING-RUN: worktree status (git status --porcelain) changed during the wrapped command; no receipt written
+CASE T4 expect=accept base=accept base_findings=- new=accept new_findings=- new_echo=false
+# detail T4 name=inrun-transient-restore rev=b4d7ad8d3e78 base_rc=0 new_rc=0 base_stderr= new_stderr=
+CASE T5 expect=refuse base=refuse base_findings=RECEIPT-STATE-CHANGED-DURING-RUN new=refuse new_findings=RECEIPT-STATE-CHANGED-DURING-RUN new_echo=false
+# detail T5 name=inrun-untracked rev=b4d7ad8d3e78 base_rc=2 new_rc=2 base_stderr=refused: RECEIPT-STATE-CHANGED-DURING-RUN: worktree status (git status --porcelain) changed during the wrapped command; no receipt written new_stderr=refused: RECEIPT-STATE-CHANGED-DURING-RUN: worktree status (git status --porcelain) changed during the wrapped command; no receipt written
+CASE N1 expect=refuse base=refuse base_findings=RECEIPT-STATE-CHANGED-DURING-RUN new=refuse new_findings=RECEIPT-STATE-CHANGED-DURING-RUN new_echo=false
+# detail N1 name=allow-dirty-inrun-append-to-dirty rev=b4d7ad8d3e78 base_rc=2 new_rc=2 base_stderr=refused: RECEIPT-STATE-CHANGED-DURING-RUN: content tools/notes.txt changed during the wrapped command; no receipt written new_stderr=refused: RECEIPT-STATE-CHANGED-DURING-RUN: content tools/notes.txt changed during the wrapped command; no receipt written
+CASE N2 expect=refuse base=refuse base_findings=RECEIPT-STATE-CHANGED-DURING-RUN new=refuse new_findings=RECEIPT-STATE-CHANGED-DURING-RUN new_echo=false
+# detail N2 name=allow-dirty-inrun-file-in-untracked-dir rev=b4d7ad8d3e78 base_rc=2 new_rc=2 base_stderr=refused: RECEIPT-STATE-CHANGED-DURING-RUN: worktree status (git status --porcelain) and content tools/extra/new.txt changed during the wrapped command; no re... new_stderr=refused: RECEIPT-STATE-CHANGED-DURING-RUN: worktree status (git status --porcelain) and content tools/extra/new.txt changed during the wrapped command; no re...
+CASE N3 expect=refuse base=refuse base_findings=RECEIPT-INDEX-ENV-SET new=refuse new_findings=RECEIPT-INDEX-ENV-SET new_echo=false
+# detail N3 name=git-index-file-env rev=b4d7ad8d3e78 base_rc=2 new_rc=2 base_stderr=refused: RECEIPT-INDEX-ENV-SET: GIT_INDEX_FILE is set in the writer's environment (value not shown); unset it and retry new_stderr=refused: RECEIPT-INDEX-ENV-SET: GIT_INDEX_FILE is set in the writer's environment : /fast/scratch/hyaku/souji-r69/S69MutTester/m-1978295/bat/mut-b-D30/batter...
+CASE N4 expect=refuse base=refuse base_findings=RECEIPT-INDEX-FLAG-CONCEALED new=refuse new_findings=RECEIPT-INDEX-FLAG-CONCEALED new_echo=false
+# detail N4 name=subdirectory-root-scope rev=b4d7ad8d3e78 base_rc=2 new_rc=2 base_stderr=refused: RECEIPT-INDEX-FLAG-CONCEALED: README.md carries index flag S; skip-worktree or assume-unchanged hides worktree divergence from git status; clear it ... new_stderr=refused: RECEIPT-INDEX-FLAG-CONCEALED: README.md carries index flag S; skip-worktree or assume-unchanged hides worktree divergence from git status; clear it ...
+CASE V1 expect=refuse base=refuse base_findings=lane worktree is dirty new=refuse new_findings=lane worktree is dirty new_echo=false
+# detail V1 name=untracked-visibility-concealed rev=b4d7ad8d3e78 base_rc=2 new_rc=2 base_stderr=refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override new_stderr=refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+CASE V2 expect=accept base=accept base_findings=- new=accept new_findings=- new_echo=false
+# detail V2 name=untracked-visibility-honest rev=b4d7ad8d3e78 base_rc=0 new_rc=0 base_stderr= new_stderr=
+CASE MOD expect=refuse base=refuse base_findings=RECEIPT-STATE-CHANGED-DURING-RUN new=refuse new_findings=RECEIPT-STATE-CHANGED-DURING-RUN new_echo=false
+# detail MOD name=allow-dirty-inrun-mode-flip rev=b4d7ad8d3e78 base_rc=2 new_rc=2 base_stderr=refused: RECEIPT-STATE-CHANGED-DURING-RUN: mode tools/notes.txt changed during the wrapped command; no receipt written new_stderr=refused: RECEIPT-STATE-CHANGED-DURING-RUN: mode tools/notes.txt changed during the wrapped command; no receipt written
+CASE SY1 expect=accept base=accept base_findings=- new=accept new_findings=- new_echo=false
+# detail SY1 name=allow-dirty-symlink-stable rev=b4d7ad8d3e78 base_rc=0 new_rc=0 base_stderr= new_stderr=
+CASE SY2 expect=refuse base=refuse base_findings=RECEIPT-STATE-CHANGED-DURING-RUN new=refuse new_findings=RECEIPT-STATE-CHANGED-DURING-RUN new_echo=false
+# detail SY2 name=allow-dirty-inrun-symlink-retarget rev=b4d7ad8d3e78 base_rc=2 new_rc=2 base_stderr=refused: RECEIPT-STATE-CHANGED-DURING-RUN: content tools/extra/link changed during the wrapped command; no receipt written new_stderr=refused: RECEIPT-STATE-CHANGED-DURING-RUN: content tools/extra/link changed during the wrapped command; no receipt written
+CASE P13 expect=refuse base=refuse base_findings=RECEIPT-INDEX-ENV-SET new=refuse new_findings=RECEIPT-INDEX-ENV-SET new_echo=false
+# detail P13 name=git-index-file-nonexistent rev=b4d7ad8d3e78 base_rc=2 new_rc=2 base_stderr=refused: RECEIPT-INDEX-ENV-SET: GIT_INDEX_FILE is set in the writer's environment (value not shown); unset it and retry new_stderr=refused: RECEIPT-INDEX-ENV-SET: GIT_INDEX_FILE is set in the writer's environment : /fast/scratch/hyaku/souji-r69/S69MutTester/m-1978295/bat/mut-b-D30/batter...
+CASE E1 expect=refuse base=refuse base_findings=RECEIPT-ENV-CONFIG-SET new=refuse new_findings=RECEIPT-ENV-CONFIG-SET new_echo=false
+# detail E1 name=env-config-count-excludes rev=b4d7ad8d3e78 base_rc=2 new_rc=2 base_stderr=refused: RECEIPT-ENV-CONFIG-SET: GIT_CONFIG_COUNT, GIT_CONFIG_KEY_0, GIT_CONFIG_VALUE_0 set in the writer's environment; unset them and retry new_stderr=refused: RECEIPT-ENV-CONFIG-SET: GIT_CONFIG_COUNT, GIT_CONFIG_KEY_0, GIT_CONFIG_VALUE_0 set in the writer's environment; unset them and retry
+CASE E2 expect=refuse base=refuse base_findings=RECEIPT-ENV-CONFIG-SET new=refuse new_findings=RECEIPT-ENV-CONFIG-SET new_echo=false
+# detail E2 name=env-config-parameters-excludes rev=b4d7ad8d3e78 base_rc=2 new_rc=2 base_stderr=refused: RECEIPT-ENV-CONFIG-SET: GIT_CONFIG_PARAMETERS set in the writer's environment; unset them and retry new_stderr=refused: RECEIPT-ENV-CONFIG-SET: GIT_CONFIG_PARAMETERS set in the writer's environment; unset them and retry
+CASE E3 expect=refuse base=refuse base_findings=lane worktree is dirty new=refuse new_findings=lane worktree is dirty new_echo=false
+# detail E3 name=env-config-global-excludes rev=b4d7ad8d3e78 base_rc=2 new_rc=2 base_stderr=refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override new_stderr=refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+CASE E4 expect=refuse base=refuse base_findings=RECEIPT-ENV-REDIRECT-SET new=refuse new_findings=RECEIPT-ENV-REDIRECT-SET new_echo=false
+# detail E4 name=env-object-dir-redirect rev=b4d7ad8d3e78 base_rc=2 new_rc=2 base_stderr=refused: RECEIPT-ENV-REDIRECT-SET: GIT_OBJECT_DIRECTORY set in the writer's environment; unset them and retry new_stderr=refused: RECEIPT-ENV-REDIRECT-SET: GIT_OBJECT_DIRECTORY set in the writer's environment; unset them and retry
+CASE E5 expect=refuse base=refuse base_findings=RECEIPT-ENV-REDIRECT-SET new=refuse new_findings=RECEIPT-ENV-REDIRECT-SET new_echo=false
+# detail E5 name=env-alternates-redirect rev=b4d7ad8d3e78 base_rc=2 new_rc=2 base_stderr=refused: RECEIPT-ENV-REDIRECT-SET: GIT_ALTERNATE_OBJECT_DIRECTORIES set in the writer's environment; unset them and retry new_stderr=refused: RECEIPT-ENV-REDIRECT-SET: GIT_ALTERNATE_OBJECT_DIRECTORIES set in the writer's environment; unset them and retry
+CASE E6 expect=refuse base=refuse base_findings=RECEIPT-ENV-REDIRECT-SET new=refuse new_findings=RECEIPT-ENV-REDIRECT-SET new_echo=false
+# detail E6 name=env-replace-ref-base rev=b4d7ad8d3e78 base_rc=2 new_rc=2 base_stderr=refused: RECEIPT-ENV-REDIRECT-SET: GIT_REPLACE_REF_BASE set in the writer's environment; unset them and retry new_stderr=refused: RECEIPT-ENV-REDIRECT-SET: GIT_REPLACE_REF_BASE set in the writer's environment; unset them and retry
+CASE MOD2 expect=refuse base=refuse base_findings=RECEIPT-STATE-CHANGED-DURING-RUN new=refuse new_findings=RECEIPT-STATE-CHANGED-DURING-RUN new_echo=false
+# detail MOD2 name=allow-dirty-inrun-setuid-flip rev=b4d7ad8d3e78 base_rc=2 new_rc=2 base_stderr=refused: RECEIPT-STATE-CHANGED-DURING-RUN: mode tools/notes.txt changed during the wrapped command; no receipt written new_stderr=refused: RECEIPT-STATE-CHANGED-DURING-RUN: mode tools/notes.txt changed during the wrapped command; no receipt written
+CASE MOD3 expect=refuse base=refuse base_findings=RECEIPT-STATE-CHANGED-DURING-RUN new=refuse new_findings=RECEIPT-STATE-CHANGED-DURING-RUN new_echo=false
+# detail MOD3 name=allow-dirty-inrun-sticky-flip rev=b4d7ad8d3e78 base_rc=2 new_rc=2 base_stderr=refused: RECEIPT-STATE-CHANGED-DURING-RUN: mode tools/notes.txt changed during the wrapped command; no receipt written new_stderr=refused: RECEIPT-STATE-CHANGED-DURING-RUN: mode tools/notes.txt changed during the wrapped command; no receipt written
+CASE SY3 expect=refuse base=refuse base_findings=RECEIPT-STATE-CHANGED-DURING-RUN new=refuse new_findings=RECEIPT-STATE-CHANGED-DURING-RUN new_echo=false
+# detail SY3 name=allow-dirty-inrun-symlink-same-content-retarget rev=b4d7ad8d3e78 base_rc=2 new_rc=2 base_stderr=refused: RECEIPT-STATE-CHANGED-DURING-RUN: content tools/extra/link changed during the wrapped command; no receipt written new_stderr=refused: RECEIPT-STATE-CHANGED-DURING-RUN: content tools/extra/link changed during the wrapped command; no receipt written
+CASE W1 expect=refuse base=accept base_findings=- new=refuse new_findings=RECEIPT-ENV-COMMONDIR-MISMATCH new_echo=false
+# detail W1 name=env-common-dir-mismatch-hides-mode rev=b4d7ad8d3e78 base_rc=0 new_rc=2 base_stderr= new_stderr=refused: RECEIPT-ENV-COMMONDIR-MISMATCH: GIT_COMMON_DIR is set in the writer's environment and does not resolve to this repository's common dir (value not sh...
+CASE W2 expect=refuse base=accept base_findings=- new=refuse new_findings=RECEIPT-ENV-COMMONDIR-MISMATCH new_echo=false
+# detail W2 name=env-common-dir-mismatch-clean rev=b4d7ad8d3e78 base_rc=0 new_rc=2 base_stderr= new_stderr=refused: RECEIPT-ENV-COMMONDIR-MISMATCH: GIT_COMMON_DIR is set in the writer's environment and does not resolve to this repository's common dir (value not sh...
+CASE W3 expect=accept base=accept base_findings=- new=accept new_findings=- new_echo=false
+# detail W3 name=env-common-dir-match-honest rev=b4d7ad8d3e78 base_rc=0 new_rc=0 base_stderr= new_stderr=
+CASE W4 expect=refuse base=accept base_findings=- new=refuse new_findings=lane worktree is dirty new_echo=false
+# detail W4 name=env-common-dir-relative-poison rev=b4d7ad8d3e78 base_rc=0 new_rc=2 base_stderr= new_stderr=refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+CASE W5 expect=refuse base=refuse base_findings=- new=refuse new_findings=RECEIPT-ENV-COMMONDIR-MISMATCH new_echo=false
+# detail W5 name=env-common-dir-empty rev=b4d7ad8d3e78 base_rc=2 new_rc=2 base_stderr=refused: rev is not a commit object (b4d7ad8d3e78098f6909cc834d977b8df44cbecc: fatal: not a git repository (or any parent up to mount point /) Stopping at fi... new_stderr=refused: RECEIPT-ENV-COMMONDIR-MISMATCH: GIT_COMMON_DIR is set in the writer's environment and does not resolve to this repository's common dir (value not sh...
+CASE W6 expect=accept base=accept base_findings=- new=accept new_findings=- new_echo=false
+# detail W6 name=env-common-dir-symlink-alias-honest rev=b4d7ad8d3e78 base_rc=0 new_rc=0 base_stderr= new_stderr=
+CASE PK3 expect=refuse base=refuse base_findings=lane worktree is dirty new=refuse new_findings=lane worktree is dirty new_echo=false
+# detail PK3 name=exclude-repo-local rev=b4d7ad8d3e78 base_rc=2 new_rc=2 base_stderr=refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override new_stderr=refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+CASE PK3h expect=accept base=accept base_findings=- new=accept new_findings=- new_echo=false
+# detail PK3h name=exclude-repo-local-honest rev=b4d7ad8d3e78 base_rc=0 new_rc=0 base_stderr= new_stderr=
+CASE PK4 expect=refuse base=refuse base_findings=lane worktree is dirty new=refuse new_findings=lane worktree is dirty new_echo=false
+# detail PK4 name=global-filemode rev=b4d7ad8d3e78 base_rc=2 new_rc=2 base_stderr=refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override new_stderr=refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+CASE PK4h expect=accept base=accept base_findings=- new=accept new_findings=- new_echo=false
+# detail PK4h name=global-filemode-honest rev=b4d7ad8d3e78 base_rc=0 new_rc=0 base_stderr= new_stderr=
+CASE PK6 expect=refuse base=refuse base_findings=lane worktree is dirty new=refuse new_findings=lane worktree is dirty new_echo=false
+# detail PK6 name=replace-ref-head rev=b4d7ad8d3e78 base_rc=2 new_rc=2 base_stderr=refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override new_stderr=refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+CASE PK6h expect=accept base=accept base_findings=- new=accept new_findings=- new_echo=false
+# detail PK6h name=replace-ref-head-honest rev=b4d7ad8d3e78 base_rc=0 new_rc=0 base_stderr= new_stderr=
+CASE PK7 expect=refuse base=refuse base_findings=lane worktree is dirty new=refuse new_findings=lane worktree is dirty new_echo=false
+# detail PK7 name=system-filemode rev=b4d7ad8d3e78 base_rc=2 new_rc=2 base_stderr=refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override new_stderr=refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+CASE PK7h expect=accept base=accept base_findings=- new=accept new_findings=- new_echo=false
+# detail PK7h name=system-filemode-honest rev=b4d7ad8d3e78 base_rc=0 new_rc=0 base_stderr= new_stderr=
+CASE U1 expect=refuse base=refuse base_findings=RECEIPT-INDEX-UNMERGED new=refuse new_findings=RECEIPT-INDEX-UNMERGED new_echo=false
+# detail U1 name=unmerged-index-forged rev=b4d7ad8d3e78 base_rc=2 new_rc=2 base_stderr=refused: RECEIPT-INDEX-UNMERGED: tools/notes.txt is unmerged (index stages 0 1 2) and carries index flag M; a conflicted path is not a clean tree; resolve it... new_stderr=refused: RECEIPT-INDEX-UNMERGED: tools/notes.txt is unmerged (index stages 0 1 2) and carries index flag M; a conflicted path is not a clean tree; resolve it...
+CASE G1 expect=refuse base=refuse base_findings=RECEIPT-GITLINK-CONCEALED new=refuse new_findings=RECEIPT-GITLINK-CONCEALED new_echo=false
+# detail G1 name=gitlink-concealed rev=b4d7ad8d3e78 base_rc=2 new_rc=2 base_stderr=refused: RECEIPT-GITLINK-CONCEALED: tools/sub is a gitlink (mode 160000) carrying index flag S; the writer does not read submodule state and skip-worktree or... new_stderr=refused: RECEIPT-GITLINK-CONCEALED: tools/sub is a gitlink (mode 160000) carrying index flag S; the writer does not read submodule state and skip-worktree or...
+CASE A9 expect=refuse base=refuse base_findings=RECEIPT-INDEX-CONCEALED-ABSENT new=refuse new_findings=RECEIPT-INDEX-CONCEALED-ABSENT new_echo=false
+# detail A9 name=concealed-absent rev=b4d7ad8d3e78 base_rc=2 new_rc=2 base_stderr=refused: RECEIPT-INDEX-CONCEALED-ABSENT: tools/notes.txt carries index flag S and is absent from the worktree; skip-worktree or assume-unchanged hides the de... new_stderr=refused: RECEIPT-INDEX-CONCEALED-ABSENT: tools/notes.txt carries index flag S and is absent from the worktree; skip-worktree or assume-unchanged hides the de...
+CASE F1 expect=refuse base=refuse base_findings=lane worktree is dirty new=refuse new_findings=lane worktree is dirty new_echo=false
+# detail F1 name=fsmonitor-silenced-dirty rev=b4d7ad8d3e78 base_rc=2 new_rc=2 base_stderr=refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override new_stderr=refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+CASE W7 expect=refuse base=refuse base_findings=lane worktree is dirty new=refuse new_findings=lane worktree is dirty new_echo=false
+# detail W7 name=git-dir-redirect-hides-mode rev=b4d7ad8d3e78 base_rc=2 new_rc=2 base_stderr=refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override new_stderr=refused: lane worktree is dirty (git status --porcelain non-empty); pass --allow-dirty to override
+# regress-detail base rc=0 last=SUMMARY cases=8 pass=8 fail=0 control=ALWAYS-WRITE-REJECTED,ALWAYS-REFUSE-REJECTED
+# regress-detail new rc=0 last=SUMMARY cases=8 pass=8 fail=0 control=ALWAYS-WRITE-REJECTED,ALWAYS-REFUSE-REJECTED
+MUTANT D30 outcome=survived expected=echo-violation forgeries=0 echo=0 honest=0 label=0 errors=0 regress=PASS
+BATTERY mutants=1 kills=0 label_only=0 over_refusal=0 echo_violation=0 survived=1 error=0
+EXIT=1
+
+--stderr--
