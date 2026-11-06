@@ -5,9 +5,10 @@ Round 70 (lesson fix for r69 routed D1 and M14: cited evidence under the gitigno
 and prereg pointers to files that never existed). Reads each FILE from the revision (not the
 worktree), extracts every token that starts with census/, corpus/, tests/, .ufo/ or tools/souji-
 (bare tools/<x> tokens are fixture-internal paths in this lane's prose and are not checked) and
-checks `git cat-file -e <rev>:<path>` (files and directories both count). In a file under
-census/round-N/, tokens starting with probe/, probes/, records/, controls/ or battery/ are resolved
-against that file's directory. Tokens holding a placeholder (`<`, `*`, `{`, `$`, `…`) are skipped.
+checks `git cat-file -e <rev>:<path>` (files and directories both count). Tokens starting with
+probe/, probes/, records/, controls/ or battery/ are resolved against census/round-N/ when the file
+is census/round-N/... or corpus/lessons/round-N[-*].md, and are counted as skipped elsewhere.
+Tokens holding a placeholder (`<`, `*`, `{`, `$`, `…`) are skipped.
   SUMMARY files=<n> checked=<n> missing=<n> skipped=<n>
   EXIT=0 iff missing=0; 1 iff missing>0; 2 = could not evaluate
 
@@ -24,6 +25,7 @@ TOKEN = re.compile(r"(?<![A-Za-z0-9_./-])((?:census|corpus|tests|\.ufo)/[^\s`'\"
                    r"|tools/souji-[^\s`'\"()\[\]|,;]+"
                    r"|(?:probe|probes|records|controls|battery)/[^\s`'\"()\[\]|,;]+)")
 LOCAL_PREFIXES = ("probe/", "probes/", "records/", "controls/", "battery/")
+ROUND_OF = re.compile(r"^(?:census/round-([0-9]+)/|corpus/lessons/round-([0-9]+)(?:-[^/]*)?\.md$)")
 PLACEHOLDER = ("<", "*", "{", "$", "…")
 
 
@@ -54,9 +56,11 @@ def main(argv):
             for m in TOKEN.finditer(line):
                 path = re.sub(r":[0-9][0-9,\-]*$", "", m.group(1).rstrip(".:/")).rstrip("/")
                 if path.startswith(LOCAL_PREFIXES):
-                    if not rel.startswith("census/round-"):
+                    rm = ROUND_OF.match(rel)
+                    if not rm:
+                        skipped += 1
                         continue
-                    path = rel.rsplit("/", 1)[0] + "/" + path
+                    path = f"census/round-{rm.group(1) or rm.group(2)}/{path}"
                 if any(p in path for p in PLACEHOLDER):
                     skipped += 1
                     continue
