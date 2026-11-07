@@ -2991,3 +2991,13 @@ addendum, appended to the prereg, commits 8a793e7ae9131578bdec393982760217f62095
 - **Frontier:** S317 mined (re-anchored per S74ScoutSources); QUALITY Q134 (supersedes Q133's observation clause), Q135; knowledge `filter-filemode-witness.md` r74; README frontier r74; SKILL gate rows r74.
 - **Domain trial:** the repaired gate over the lane at its final tip (`census/round-74/records/c1-domain-trial.txt`).
 - **Tools:** none installed; no pacman, sysctl, sudo or kernel change. **Scratch:** `/fast/scratch/hyaku/souji-r74/` removed at landing.
+
+## Round 75 (2026-11-06, Linux; attempt 1) — the pre-report gate refuses untracked content hidden by a local ignore rule (C1 operability), the witness counter's selftest kills X09 and X15∘M17 (C2 calibration)
+
+- **Motivation (evidence):** r74 spot-check routed defects 1-4 (`corpus/lessons/round-74-verifier-spotcheck.md`): the domain trial bound an unnamed gate revision; the r74 probe's bytes-only labels (n-filemode OVER-REFUSAL, f2 FORGERY); routed items incl. S74MutCounter X09/X15 and the Q99 grammar; ignored-untracked forgeries (`f-info-exclude`) a stated limit.
+- **Controls `7ba5217d`, freeze `be599cbb`** (Q99 grammar; `records/freeze-check.txt` findings=0 with `--substance --chronology`): C1 lane-base gate mismatches=2, blanket ignored-refusal 3 (both EXIT=1); C2 r74 counter killed=4/6 (X09, P1 survive), blanket pristine=FAIL (both EXIT=1).
+- **Candidates `f6ec0d71` (counter), `1ad737b4` (gate); after-arms `5d10e09e`:** C1 mismatches=0 EXIT=0; C2 killed=6/6, pristine 64/64, EXIT=0.
+- **Wave w1:** 12 seats; numbers reproduced (S75ExecC1, S75ExecC2, S75Reviewer, S75CriticClaims, S75CriticDiscern). Forged/regressed outside the frozen rows: repository-local core.worktree (base and W gate PASS), r36 fixture 18/21 at W → repaired after measurement (`census/round-75/records/wave-repair/`, lesson M5).
+- **Frontier:** S318, S319 mined; QUALITY Q136 (supersedes Q135's ignored-files limit); knowledge `filter-filemode-witness.md` r75; README frontier r75; SKILL gate rows r75; SCORECARD capability rows r75.
+- **Domain trial:** the repaired gate over the lane itself at the final tip (`census/round-75/records/c1-domain-trial.txt`).
+- **Tools:** none installed; no pacman, sysctl, sudo or kernel change. **Scratch:** `/fast/scratch/hyaku/souji-r75/` removed at landing.

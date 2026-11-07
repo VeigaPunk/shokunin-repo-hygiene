@@ -1,0 +1,76 @@
+# S75Sentinel probe log — W gate 1ad737b4a9ac71bd44b6ac849f73387fdc3ab9c5 (r75 w1)
+# Scratch: /fast/scratch/hyaku/souji-r75/S75Sentinel ; fixtures fx.XXXXXX via mktemp -d -p <scratch>/fx,
+# toplevel asserted == fixture before every commit; no lane file written; read-only git on the lane.
+# Gate+writer blobs: git show <rev>:tools/... into $S/gateW and $S/c1/{base,w,kb}; sha256 both.
+#   620ed97ea464d4afccf3f5fa46cbdacd7a37d5a8bf00f012d1875529e8502b96  gateW/souji-pre-report-gate.sh  (W)
+#   70bbf1c2a92e9ea6ab163289a8312ac600a3e2dab6576d48e349503b61bcdefa  writer (identical base and W)
+#   062b6d39c9d887686a9a887e707f8d2e906423e10454148ea9d628322876d341  base 52d3f07d gate
+#   e0d2e149e19b35c3c615447dc3ff1eacf9f84ea3935fd89e207998f87557c0bb  K-b blanket variant
+
+## C1 counter re-derivation (cwd=lane root; work dirs fresh under scratch)
+command=python3 -B census/round-75/c1-evade-counter.py --gate-dir <base|w|kb> --work <fresh>
+base  SUMMARY rows=25 mismatches=2 errors=0 rc=1   rows f-info-exclude, f5-info-exclude-dir (clean=PASS)
+W     SUMMARY rows=25 mismatches=0 errors=0 rc=0
+kb    SUMMARY rows=25 mismatches=3 errors=0 rc=1   rows f2-gitignore, f6-committed-pyc, f7-selfignore-dir
+# f3-repo-excludesfile: FAIL at base AND at W -> the block's core.excludesFile case was already refused
+# by the r74 writer's pinned status (-c core.excludesFile=/dev/null); novel coverage = info/exclude only.
+
+## Lane ignore delta (committed 5d10e09e), gate's two listings with -c core.fsmonitor=false
+std=25993 per=25993 hidden=0  (21:36) ; std=26032 per=26032 hidden=0  (21:44, seats writing under .ufo/waves/)
+timing on lane: std=477ms per=310ms
+git check-ignore -v .jj/.gitignore -> .jj/.gitignore:1:/*   (self-ignoring, the stated limit shape)
+
+## probe-core.sh (fresh fixture per probe; gate run with timeout 90, --branch main, report has one ## SHONEN)
+A-honest                     rc=0 check-clean=PASS
+B-info-exclude               rc=1 RECEIPT-UNTRACKED-LOCAL-EXCLUDE: 1 untracked path(s) ...      clean-refuse
+C-committed-gitignore        rc=0 check-clean=PASS                                            ok
+D-HOME-xdg-ignore (*.swp)    rc=1 pinned git status ... lists 1 record(s)   [base gate identical] clean-refuse
+E (default HOME, visible)    rc=1 detail ?? note.swp
+F-GIT_CONFIG_GLOBAL          rc=1 detail ?? new.txt      (scrub -> visible, cannot hide)
+G-env-count                  rc=1 detail ?? new.txt      (GIT_CONFIG_COUNT/KEY_0/VALUE_0 scrubbed)
+H-env-params                 rc=1 detail ?? new.txt      (GIT_CONFIG_PARAMETERS scrubbed)
+I-repo-excludesFile          rc=1 pinned git status ... lists 1 record(s)   (already FAIL at base)
+J-core-worktree(empty)       rc=1 detail  D a.txt         (missing tracked file, clean-refuse)
+K-PATH-shim                  rc=1; 4 ls-files lines logged, e.g.
+   -C <lane> -c core.fsmonitor=false ls-files -z --others --ignored --exclude-standard   (via PATH) EXEC
+L-PATH-forged-empty          rc=0 check-clean=PASS   (shim exits 0 for ls-files)           forged PASS
+M-selfignore-payload         rc=0 check-clean=PASS   (toolcache/.gitignore = "*")           declared limit
+N-infoexclude+gitignore      rc=1 RECEIPT... 1       (non-self-ignoring .gitignore leaks)   clean-refuse
+
+## probe2.sh
+O-ansi-newline               rc=1 esc_bytes=0 injected_check_lines=0; count-only line          ok (D30)
+SET global+repo+info         std=[i.txt r.txt] per=[] hidden=[i.txt r.txt]  (per-dir omits both)
+J2-worktree-pristine-payload rc=0 check-clean=PASS   <-- untracked payload, forged PASS        F1
+P-alias-ls-files             rc=1 RECEIPT... 1       (alias did not execute; builtin used)     SKIP
+Q-hookspath                  rc=0; Q-hook-ran=no                                              SKIP
+S-status-config-no           rc=1 detail ?? new.txt   (cmdline --untracked-files=all wins)
+W-excludesfile-dir           rc=1 git status failed: fatal: cannot use ... as an exclude file clean-refuse
+X-shim-lsfiles-error         rc=1 refused: cannot list tracked paths ...                      clean-refuse
+FIFO a-ignored-dir-fifo      std_rc=0 perdir_rc=0 status_rc=0                                  ok
+FIFO b-root-fifo             std_rc=124 perdir_rc=124 status_rc=124                            HANG
+FIFO c-plain-dir-fifo        std_rc=124 perdir_rc=124 status_rc=124                            HANG
+Y-gate-fifo-ignored-dir      rc=0 check-clean=PASS   (gate 90s cap not hit)
+
+## probe3.sh (200k ignored files under bulk/, committed .gitignore bulk/ deep/)
+created 200000 files in 4.6s ; deep depth=2000 pathlen~4068
+gate: check-clean=PASS  GATE wall=0.87 maxrss_kb=82100  rc=0
+raw: --exclude-standard wall=0.24 maxrss 39704 ; --exclude-per-directory=.gitignore wall=0.33 maxrss 39644
+block replica: hidden=0 wall=0.71 maxrss 65536
+
+## probe4.sh
+Z1-newblock-git-error        rc=1 detail: ignored-file listing failed                       clean-refuse
+SET-HOME                     std=[note.swp] per=[] hidden=[note.swp]  (difference catches HOME ignore)
+Z3-gate-root-fifo            rc=124 (15s cap)  [base gate rc=124 too]                       HANG
+LANE hidden=0, std=per=26032, timing 477/310 ms
+
+## attribution / fix checks
+base gate, HOME global ignore      rc=1 pinned status message   (over-refusal pre-exists W)
+base gate, core.worktree forge     rc=0 check-clean=PASS        (forge pre-exists W)
+core.fsmonitor hook: plain ls-files ran=yes; -c core.fsmonitor=false ran=no; plain/pinned status ran=yes/no
+git -C d -c core.worktree="$d" rev-parse --show-toplevel -> still the configured worktree (no override)
+git -C d --work-tree="$d" status --porcelain -uall -> "?? payload.txt"   (pin works; smallest fix)
+
+## read-time lane state (peers' in-flight work, not mine)
+worktree tools/souji-pre-report-gate.sh sha256=ef3b04e4c9c91956c9ac6f1c9e891df0187479a322b0b40115f260ce4a19356a (9+/1- vs W)
+git status: M corpus/SOURCES.md, M corpus/knowledge/filter-filemode-witness.md, M tools/souji-pre-report-gate.sh
+-> the domain trial cannot be re-run from this worktree; bind the committed blob 620ed97e / 5d10e09e.

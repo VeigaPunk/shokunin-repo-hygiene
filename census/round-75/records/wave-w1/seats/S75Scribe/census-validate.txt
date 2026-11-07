@@ -1,0 +1,34 @@
+S75Scribe — census validation of the drafted S318/S319 rows (2026-11-06)
+
+EVIDENCE, not a lane edit. Committed registry extracted with
+  git -C /home/vgpnk/Projects/shokunin/souji-shokunin archive HEAD corpus | tar -x -C /fast/scratch/hyaku/souji-r75/S75Scribe/corpus-head
+(HEAD = 5d10e09ed7749f5706eade39ac9a0ae2355aa1f3; 240 registry rows, no gitignore.adoc or git-ls-files.adoc raw URL).
+
+Rows appended after the S317 row (line 276 of corpus/SOURCES.md):
+  awk '1; /^\| S317 \|/{while((getline line < rows.txt)>0) print line}' ... > SOURCES-appended.md
+  inserted at lines 277-278: | S318 | gitignore(5) ... , | S319 | git-ls-files(1) ...
+Both rows: awk -F'|' NF = 13 (11 columns), no '|' inside a cell.
+
+RUN 1 — isolated corpus copy (root = scratch/corpus-head, corpus only):
+  /home/vgpnk/Projects/shokunin/scripts/sources-census.sh validate --file <scratch>/corpus-head/corpus/SOURCES.md
+  EXIT=1
+  findings: W04 x86 (pre-existing same-URL-different-scope warnings) plus E11 x5 for pre-existing rows
+  S120, S122 (used-by tools/souji-size-census.py) and S224-S226 (used-by SKILL.md). Those paths resolve
+  against the lane root; the isolated copy carried only corpus/. NOT a finding against S318/S319.
+
+RUN 2 — same corpus with the lane layout mirrored (root = scratch/root; corpus/ copied, tools/ and
+SKILL.md symlinked to the lane's):
+  /home/vgpnk/Projects/shokunin/scripts/sources-census.sh validate --file <scratch>/root/corpus/SOURCES.md
+  EXIT=0
+  last line: file	ok	/fast/scratch/hyaku/souji-r75/S75Scribe/root/corpus/SOURCES.md
+  E findings: 0    W04 warnings: 86    (full output: validate-mirror.out beside this file)
+  No E02/E03/E04/E05/E06/E07/E08/E09/E10/E11/E12 is emitted for S318 or S319.
+
+RUN 3 — the lane worktree registry as another seat left it (uncommitted S318/S319 rows present):
+  cd /home/vgpnk/Projects/shokunin/souji-shokunin && sources-census.sh validate --file corpus/SOURCES.md
+  EXIT=0, file	ok	.../souji-shokunin/corpus/SOURCES.md ; 86 W04, 0 E.
+  So the in-flight rows also validate clean; the lane's corpus/SOURCES.md still shows M in git status
+  (not committed by this seat, not mine to commit).
+
+Census exit code for the deliverable: 0 (RUN 2, the copy that carries the drafted rows with the lane's
+used-by targets present).

@@ -177,3 +177,61 @@ conversion `hash-object` applies (a lying clean filter fools it — the writer r
 not); gitlinks and listed paths are not re-hashed; the lane's other clean-tree tools
 (`tools/souji-verify.sh`, `tools/souji-vault-verify.sh`, `tools/cand-*-verify.sh`,
 `tools/souji-record-agreement.py`, `tools/souji-guard.r9-s18.sh`) still trust status; git 2.56.0 only.
+
+## r75: what an ignore rule may hide from the gate, and a second detector for the counter's witness (appended 2026-11-06)
+
+**Status reads every exclude source alike.** `git status` leaves out an untracked file that any exclude
+source matches, but the three sources are not the same kind of rule. gitignore(5) distributes `.gitignore`
+files with the repository and names the other two as "Patterns read from exclude sources that are outside
+the working tree, such as $GIT_COMMON_DIR/info/exclude and core.excludesFile" (S318): neither is ever
+committed. Only the committed `.gitignore` files are the lane's declared
+policy for untracked artifacts (its own `__pycache__/` rule). Measured with the frozen r75 counter
+(`census/round-75/c1-evade-counter.py`, 25 rows: the 20 r74 evasion routes plus five ignore-surface rows,
+each with a frozen expected verdict in `census/round-75/c1-population.tsv`): the lane-base gate passed an
+untracked file hidden by info/exclude and a whole directory hidden the same way
+(`census/round-75/controls/c1-K-a-do-nothing.txt`, mismatches=2 EXIT=1).
+
+**What the gate now does.** Inside the same isolated interpreter, after the byte-truth check, it lists
+untracked ignored paths twice: under `--exclude-standard` and under `--exclude-per-directory=.gitignore`
+alone. git-ls-files(1) defines the first as the second plus those two sources ("give
+`--exclude-per-directory=.gitignore`, and then specify: 1. The file specified by the `core.excludesfile`
+configuration variable, if exists, or the `$XDG_CONFIG_HOME/git/ignore` file. 2. The
+`$GIT_COMMON_DIR/info/exclude` file.", S319), so the set difference is the untracked content hidden only by a local source; a
+non-empty difference fails `clean` (count only, no path). Measured: `census/round-75/records/c1-after.txt`
+mismatches=0 EXIT=0 at the gate blob of `1ad737b4`. Refusing every ignored file instead
+(`controls/c1-K-b-blanket-ignored.txt`) breaks three honest rows — a committed `.gitignore` rule, a
+committed `*.pyc` rule and a self-ignoring tool directory — mismatches=3 EXIT=1. On the lane itself the
+two listings are equal (difference 0 at every reading; about 26k paths, growing as ignored wave files land, all under committed rules or `.jj/`), so the lane's own
+pre-report run stays green.
+
+**Rulings the counter freezes.** The r74 evasion probe labelled routes by worktree bytes alone, which got
+two of them wrong (r74 spot-check routed defect 2): an executable-bit change under `core.fileMode=false`
+is a lane change git records in the tree (expected FAIL), and an untracked file hidden by a committed
+`.gitignore` line is declared policy (expected PASS).
+
+**Stated limit.** An untracked `.gitignore` that ignores itself (`*`) hides its whole directory as
+per-directory policy — the shape jj and ruff write (`.jj/.gitignore`, `.ruff_cache/.gitignore`; about half
+of the lane's ignored paths sit under these two, S75CriticDiscern), and the shape a forger could copy. The
+gate cannot tell the two apart; row f7 freezes the honest label. The limit is wider than a directory: an
+untracked root `.gitignore` listing itself and a payload also leaves status and the difference empty
+(S75ScoutSources). A broad committed rule likewise hides whatever it matches (S75CriticClaims).
+
+**The witness counter's selftest has a second detector.** S74MutCounter showed two survivors of the r74
+counter: X09 (the new slot's divergences not narrowed to the row's forged paths) and X15 (the (9a)
+witness-run check without its `new_unwitnessed` term), and that X15 removes the only kill of M17 (new slot
+reads its pre-run divergence only). The r75 counter (`census/round-75/c1-counter.py`, selftest only, no
+verdict code changed) adds: a witness read that reports only a set-up path outside FM1's forged paths
+must leave both slots unwitnessed; and the (9a) run's per-row new-slot witness must be yes for every
+forging row. Kills: r74 counter 4 of 6 (X09 and X15∘M17 survive, `controls/c2-K-do-nothing-r74.txt`),
+r75 counter 6 of 6 with its own selftest 64/64 (`records/c2-after.txt`). X15 alone still survives by
+design: it removes one of two detectors.
+
+**Wave repair: the work tree itself.** A repository-local `core.worktree` makes `git -C <lane>` run status
+and both listings against another tree, so the lane's own hidden content never enters the difference;
+both the lane-base and the W gate printed `check-clean=PASS` on that fixture (S75ExecEvade HIGH-1,
+S75Sentinel F1, S75CriticClaims; `census/round-75/records/wave-repair/coreworktree-W.txt`). The repaired
+gate first requires `git rev-parse --show-toplevel` to resolve to the lane directory
+(`RECEIPT-WORKTREE-REDIRECTED`, `coreworktree-R.txt`); the frozen counter still reads mismatches=0 at the
+repair (`c1-at-repair.txt`). The r36 report-gate fixture hid its own harness symlink with info/exclude and
+read 18/21 on the W gate (`regress-r36-original-at-W.txt`); it now declares that symlink in a committed
+`.gitignore` and reads 21/21 on the base and the repaired gate.

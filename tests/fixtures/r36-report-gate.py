@@ -104,7 +104,10 @@ def build_lane(root, name, dirty=False):
 
     g("checkout", "-q", "-b", "master")
     open(os.path.join(lane, "base.txt"), "w").write("base\n")
-    g("add", "base.txt")
+    # r75 (S75MutGate HIGH F1): the planted `tools` symlink (link_tools) is declared by a committed rule;
+    # the r75 gate refuses untracked content hidden only by info/exclude (a repository-local rule, S318).
+    open(os.path.join(lane, ".gitignore"), "w").write("/tools\n")
+    g("add", "base.txt", ".gitignore")
     g("commit", "-qm", "base")
     g("push", "-q", "-u", "origin", "master")
     if dirty:

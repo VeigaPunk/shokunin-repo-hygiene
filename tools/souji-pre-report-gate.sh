@@ -87,7 +87,15 @@ for fn in (mod._witness_refusal, mod._truth_refusal):
 # core.excludesFile are local and unversioned. Untracked paths ignored under --exclude-standard but not
 # under --exclude-per-directory=.gitignore alone fail clean (count only, no path echo). Stated limit: an
 # untracked .gitignore that ignores itself (the .jj/ and .ruff_cache/ shape) is per-directory policy here.
-import subprocess
+# r75 wave repair (S75ExecEvade HIGH-1): a repository-local core.worktree points status and both listings
+# at another tree, so the difference reads empty while the lane's own tree carries hidden content; the
+# work tree git resolves must be the lane itself.
+import os, subprocess
+top = subprocess.run(["git", "--no-optional-locks", "-C", lane, "rev-parse", "--show-toplevel"],
+                     stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+if top.returncode != 0 or os.path.realpath(top.stdout.rstrip(b"\n")) != os.path.realpath(os.fsencode(lane)):
+    print("RECEIPT-WORKTREE-REDIRECTED: git's work tree is not the lane directory")
+    sys.exit(1)
 def _ignored(*rule):
     p = subprocess.run(["git", "--no-optional-locks", "-C", lane, "-c", "core.fsmonitor=false", "ls-files",
                         "-z", "--others", "--ignored", *rule], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
