@@ -126,3 +126,11 @@ WAVE-DONE received; 0 dead seats.
 - (c) carried: r76 C2 binding counter K03/K04 and name-swapped cases; `tools/souji-verify.sh:550,594`,
   `souji-census.sh`, `souji-receipt-write.py` status/ls-files calls without guard or timeout (S77Connector);
   S064 line anchors; empty-quarantine digests P15/P16.
+
+## Correction (appended in round 78; the text above is not edited)
+
+- `## Gate`, S321: "the fstat type read follows at line 1169" is wrong. The fstat at line 1169 of the capture runs
+  after open(2) returns and feeds only the size and stat data; add_patterns never tests the file type
+  (S77ScoutSources' accepted correction, not swept into this line or the S321 row at the time; routed by the r77
+  closure as defect 1). The S321 row's anchor cell is reworded in round 78; see `corpus/lessons/round-78.md`
+  `## Inherited`.
