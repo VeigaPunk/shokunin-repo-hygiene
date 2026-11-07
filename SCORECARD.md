@@ -298,6 +298,22 @@ No owned axis score changed (calibration 7, coverage 8, operability 8): C1 fails
 | signal-safe gate children | stop the pre-report gate on a caller's TERM/INT/HUP within 5 s with every child group killed and the gate's scratch removed, verified by a survivor census | `census/round-79/records/foreground/c1-at-W1-fg-run1.txt` (11/11, 0 orphans) | r79 (closure-gated) |
 | false-ledger-row harness | score any pointer-resolution counter against the previous wave's false ledger rows in a reproducible fixture (rev 6436db6a) | `census/round-79/records/c2-after.txt`, `census/round-79/controls/c2-K-a-r78-counter.txt` | r79 (closure-gated) |
 
+### Round 81 measurements (2026-11-07, Linux; lane base `b15279bbc3f11ec10fc375a05a08b19cac460d0c`; controls `804f132ef717d96157c107e219a254286644b706`; freeze `0b1aeaf1c1bb11605bb9e139116323f5680b1a1c`; C1 counter `308bc77bddc725aa8f302e4f62746bde3f843f56`; C2 tool `7076ed2d12faf82e9c762f49d627b84ae549fbd1`; after-arms `cb14eae71c02d51d2e071628ac4c882f01daf844`)
+
+| claim | axis | before | after | counting command | measured commit |
+|---|---|---|---|---|---|
+| C1 census decoys refused, true captures kept | calibration 7 | `census/round-81/controls/c1-K-a-r80-counter.txt` `SUMMARY rows=25 mismatches=3 accepted=3 refused_true=0 errors=0` EXIT=1 (NF12, NF12c, NF12d) | `census/round-81/records/c1-after.txt` `rows=25 mismatches=0 accepted=0 refused_true=0 errors=0` EXIT=0; K-b refuse-all refused_true=3, K-c without-suffix accepted=1; r78 22/22 12/12, r77 35/35 7/7, r79 harness 9/9, r80 harness 18/18 | `python3 -B census/round-81/c1-false-row-harness.py --counter census/round-81/c1-pointer-counter.py --lane LANE --fleet-root FLEET --work WORK` | `308bc77bddc725aa8f302e4f62746bde3f843f56` |
+| C2 vault CLI signal handling | operability 8 | `census/round-81/controls/c2-K-a-do-nothing.txt` `SUMMARY rows=12 mismatches=8 errors=0 orphans=8` EXIT=1 | `census/round-81/records/c2-after.txt` `rows=12 mismatches=0 errors=0 orphans=0` EXIT=0; K-b 8/8, K-c p3 red; selftest 57/0 (committed file), r17 37/0/0, domain trial identical 3/3 | `python3 -B census/round-81/c2-vault-signal-counter.py --tool FILE --work WORK` | `7076ed2d12faf82e9c762f49d627b84ae549fbd1` (tool blob sha256 `ba61e912…aa13`) |
+
+No owned axis score changed (calibration 7, coverage 8, operability 8): both claims are instrument- and tool-level moves the closure rules on. Registry agreement (not a claim): K1 7 → 1 by five used-by repairs; K1 S146 and K2 SCORECARD recorded accepted-red with reasons (`corpus/lessons/round-81.md` `## Registry agreement`).
+
+### Capabilities (round 81 rows)
+
+| name | what it can now do | evidence pointer | first-working round |
+|---|---|---|---|
+| signal-safe vault CLI call | stop `tools/souji-vault-verify.sh`'s advisory CLI call on a caller's TERM/INT/HUP (to its pid or its process group) within 5 s with timeout's group killed and its private output file removed, the CLI keeping the caller's stdin | `census/round-81/records/c2-after.txt` (12/12, 0 orphans) | r81 (closure-gated) |
+| location-bound census capture check | refuse a MOVED pointer whose target sits under `census/round-<N>` outside a wave capture subtree or without the token's own path suffix, while keeping flattened and records/wave-<w>/ captures | `census/round-81/records/c1-after.txt` (25/25, refused_true 0) | r81 (closure-gated) |
+
 ### Round 80 measurements (2026-11-07, Linux; lane base `f80f9368a8a20679438b1dffd72d0faab0ccf194`; controls `515d57c8c559d64d0c071cc25b07df0b815bd77a`; freeze `aaad410f4de2c1b0e98f1a7f305736dfcee5c5ab`; C1 counter `bd263c3f7d376e617c2fde5b99793622b0908b53`; C2 tool `836dac3e336863c57d9d7125837ed22b22d8d044`; after-arms `a4aa888037922b7b5ccfac7150f156f92af5916e`)
 
 | claim | axis | before | after | counting command | measured commit |

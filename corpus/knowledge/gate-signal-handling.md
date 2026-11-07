@@ -120,7 +120,9 @@ caused.
 - Measured (`census/round-81/records/c2-after.txt`): 12 rows, 0 mismatches, 0 orphans, pid and group delivery, a
   CLI that forks a grandchild, and four no-signal rows (agree, bounded timeout, stdin, `--fallback`); a trap-only
   tool stays at 8 orphan rows (`controls/c2-K-b-trap-only.txt`).
-- Limits: SIGKILL to the tool; a CLI descendant that leaves timeout's group; a SIGINT ignored on entry (S325);
-  signals while the tool runs its other short children (sha256sum, git, find) wait for that child; if no private
-  file can be made the call runs in the foreground as before.
+- Limits: SIGKILL to the tool; a CLI descendant that leaves timeout's group, by itself or because job control put
+  it in a group of its own (an exported `SHELLOPTS=monitor` reaches a bash CLI: v7/v8 leave one survivor each,
+  `census/round-81/records/launch/c2-at-W2-monitor.txt`, where the base leaves 3-5); a SIGINT ignored on entry
+  (S325); signals while the tool runs its other short children (sha256sum, git, find) wait for that child; if no
+  private file can be made the call runs in the foreground as before.
 
