@@ -105,7 +105,7 @@ WAVE-DONE received; 0 dead seats.
   `config.worktree` hang check 1 before the pre-check (S77ExecEvade, S77Sentinel MEDIUM-2); SIGTERM leaves
   check-4 children alive (S77Sentinel MEDIUM-3).
 - Seat mishap (self-reported, S77Sentinel): one probe script briefly landed at the fleet root under
-  `.ufo/waves/round-77/w1/S77Sentinel/` and was removed the same minute; the misroot sweep finds nothing.
+  `.ufo/waves/round-77/w1/S77Sentinel/` (dead: removed by the seat) and was removed the same minute; the misroot sweep finds nothing.
 - Sibling overlap (S77Connector, report only): kaidoku and tabi pre-report gates call `git status` with neither
   guard nor timeout; every sampled sibling self-assessment cites uncommitted `.ufo/waves` paths.
 

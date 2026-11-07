@@ -29,8 +29,8 @@ can verify on its own:
 | MOVED | the bytes were already committed under another path (wave captures under `census/round-N/wave[s]/`) | the named target at the revision has the frozen digest |
 | LOCAL-POLICY | bytes deliberately kept local (quarantine, operator sweeps) | the path sits under a frozen policy prefix and the lane disk still holds equal bytes |
 | QUARANTINED | the cited path was moved into quarantine | absent at the revision and on disk; the quarantine target exists on the lane disk |
-| FLEET | the path is fleet runtime the lane never owns (`.ufo/state`, `watchdog.log`, `l0-questions.md`, operator scopes) | absent from the lane; present under the fleet root |
-| TOKEN | the extracted string is a parse artefact (`path>` inside `<git show …>`, a regex `\|`, `"census/round-"+rd`, a `D1..D5` range) | the artefact is present; every named target exists and continues the token |
+| FLEET | the path is fleet runtime the lane never owns (the orchestrator state directory and watchdog log, the L0 question file, operator scope files) | absent from the lane; present under the fleet root |
+| TOKEN | the extracted string is a parse artefact (a path followed by `>` inside a `git show` placeholder, a regex alternation, a Python string concatenation that builds a round path, a `D1..D5` range) | the artefact is present; every named target exists and continues the token |
 | ABSENT | the sentence cites the path as an example of something absent | absent at the revision, on disk, under the fleet root and in every lane ref's history; no parse artefact |
 
 Capture the local-only items at the exact path the row cites, not at a new path: the rows are
