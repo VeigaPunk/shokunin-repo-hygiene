@@ -201,21 +201,67 @@ cli_label() {
   if [ -n "$(cli_resolve)" ]; then printf 'available'; else printf 'unavailable'; fi
 }
 
-# Advisory only. stdout: "<state>" or "<state>\n<claimed-hash>".
+# Advisory only. Sets CLI_CLAIM to "<state>" or "<state>\n<claimed-hash>" (r81: no longer printed from a
+# `$(...)` subshell, so the caller's trap can act while the CLI runs).
 # States: unavailable, unbounded-skip, timeout, error(rc=N), empty,
 #         unparseable, answer.
+# r81 (C2): the CLI runs under `timeout`, which moves itself and the CLI into a process group of their own
+# (S326), so a caller's TERM/HUP to this shell -- or to its whole process group -- left that group running, and a
+# trapped signal waits until a foreground child ends (S325). The call is therefore an asynchronous job whose
+# output goes to a private file; this shell `wait`s for it with TERM/INT/HUP trapped, and the trap kills the
+# timeout group, removes the file, prints `souji-vault-verify: SIG<name> ...` on stderr and exits 128 + n.
+# The job keeps the caller's stdin through an explicit `<&0` (an asynchronous command's stdin is otherwise
+# /dev/null when job control is off, S329). If no private file can be made the call runs in the foreground as
+# before (no trap). Outside this call the tool's signal behaviour is unchanged.
+CLI_CLAIM=""
+CLI_PID=""
+CLI_OUT=""
+cli_on_signal() { # $1 signal name, $2 signal number
+  trap '' TERM INT HUP
+  local pid=${CLI_PID:-${!:-}} i
+  if [ -n "$pid" ]; then
+    kill -TERM -- "-$pid" 2>/dev/null || kill -TERM "$pid" 2>/dev/null || true
+    for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
+      kill -0 -- "-$pid" 2>/dev/null || kill -0 "$pid" 2>/dev/null || break
+      sleep 0.1
+    done
+    kill -KILL -- "-$pid" 2>/dev/null || kill -KILL "$pid" 2>/dev/null || true
+    wait "$pid" 2>/dev/null || true
+  fi
+  [ -n "$CLI_OUT" ] && rm -f -- "$CLI_OUT"
+  printf 'souji-vault-verify: SIG%s received during the advisory CLI call; stopped it, no verdict\n' "$1" >&2
+  exit $((128 + $2))
+}
+
 cli_claim() { # $1 vault path
   local vp=$1 bin out rc claim=""
+  CLI_CLAIM=""
   bin=$(cli_resolve)
-  [ -n "$bin" ] || { printf 'unavailable'; return 0; }
-  command -v timeout >/dev/null 2>&1 || { printf 'unbounded-skip'; return 0; }
+  [ -n "$bin" ] || { CLI_CLAIM='unavailable'; return 0; }
+  command -v timeout >/dev/null 2>&1 || { CLI_CLAIM='unbounded-skip'; return 0; }
   set +e
-  out=$(timeout "$CLI_TIMEOUT" "$bin" vault:hash "$vp" 2>/dev/null)
-  rc=$?
+  CLI_OUT=$(mktemp "${TMPDIR:-/tmp}/souji-vault-cli.XXXXXX" 2>/dev/null)
+  if [ -n "$CLI_OUT" ]; then
+    trap 'cli_on_signal TERM 15' TERM
+    trap 'cli_on_signal INT 2' INT
+    trap 'cli_on_signal HUP 1' HUP
+    timeout "$CLI_TIMEOUT" "$bin" vault:hash "$vp" <&0 >"$CLI_OUT" 2>/dev/null &
+    CLI_PID=$!
+    wait "$CLI_PID"
+    rc=$?
+    CLI_PID=""
+    trap - TERM INT HUP
+    out=$(cat -- "$CLI_OUT")
+    rm -f -- "$CLI_OUT"
+    CLI_OUT=""
+  else
+    out=$(timeout "$CLI_TIMEOUT" "$bin" vault:hash "$vp" 2>/dev/null)
+    rc=$?
+  fi
   set -e
-  if [ "$rc" = 124 ] || [ "$rc" = 137 ]; then printf 'timeout'; return 0; fi
-  if [ "$rc" -ne 0 ]; then printf 'error(rc=%s)' "$rc"; return 0; fi
-  [ -n "$out" ] || { printf 'empty'; return 0; }
+  if [ "$rc" = 124 ] || [ "$rc" = 137 ]; then CLI_CLAIM='timeout'; return 0; fi
+  if [ "$rc" -ne 0 ]; then CLI_CLAIM="error(rc=$rc)"; return 0; fi
+  [ -n "$out" ] || { CLI_CLAIM='empty'; return 0; }
   claim=$(printf '%s\n' "$out" | sed -n 's/.*"sha256"[[:space:]]*:[[:space:]]*"\([0-9a-fA-F]\{64\}\)".*/\1/p' | head -1)
   if [ -z "$claim" ]; then
     claim=$(printf '%s\n' "$out" | awk '$1=="sha256" && NF>=3 {print $NF}' | head -1)
@@ -223,8 +269,8 @@ cli_claim() { # $1 vault path
   if [ -z "$claim" ]; then
     claim=$(printf '%s\n' "$out" | grep -oE '[0-9a-fA-F]{64}' | head -1 || true)
   fi
-  [ -n "$claim" ] || { printf 'unparseable'; return 0; }
-  printf 'answer\n%s' "$claim"
+  [ -n "$claim" ] || { CLI_CLAIM='unparseable'; return 0; }
+  CLI_CLAIM=$(printf 'answer\n%s' "$claim")
   return 0
 }
 
@@ -356,7 +402,7 @@ s18_try_ledger() { # $1 target (canonical), $2 isdir 0/1, $3 raw arg
     if [ "$CLI_MODE" = fallback ]; then
       cli_note="cli=skipped(fallback)"
     else
-      claim=$(cli_claim "$vp")
+      cli_claim "$vp"; claim=$CLI_CLAIM
       state=${claim%%$'\n'*}
       claim=${claim#*$'\n'}
       case "$state" in
