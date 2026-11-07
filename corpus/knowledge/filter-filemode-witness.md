@@ -249,7 +249,10 @@ therefore lists untracked ignored paths (`ls-files -o -i --exclude-standard`), f
 away so a path it alone hides reads as unmatched — and accepts a path only when its deciding pattern is
 non-negated and its source is a TRACKED `.gitignore` in one of the path's ancestor directories
 (`RECEIPT-UNTRACKED-UNDECLARED-IGNORE` otherwise, count only). A per-directory `.gitignore` is
-declared policy only when the repository tracks it.
+declared policy only when the repository tracks it. A path inside a directory that a pattern excludes is decided by that
+parent pattern: git does not descend into an excluded directory to read a deeper `.gitignore` (gitignore(5)'s
+parent-directory rule, S318; `dir.c:1731-1746` at v2.56.0 and a fixture, S76ScoutSources), which is why a
+committed rule naming a tool directory (f11, the lane's `/.jj/`) is declared policy.
 
 **Labels the r76 counter freezes.** `f7-selfignore-dir` is FAIL, relabelled from the r75 stated-limit
 PASS: an untracked `.gitignore` that ignores itself decides its directory's matches from unversioned

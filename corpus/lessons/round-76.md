@@ -66,9 +66,17 @@ shokuknow theme taken (Assimilation: none).
   is paraphrased in the knowledge entry, not quoted.
 - **Rejected anchor (L1, over the bar)** — "<source> will be an absolute path when referring to the file configured by
   `core.excludesFile`, or relative to the repository root when referring to `.git/info/exclude` or a per-directory
-  exclude file." (30 words); paraphrased only.
-- No existing row's status, recheck or used-by cell changed. `grep -n 'check-ignore' corpus/SOURCES.md` before the
-  append: no row (S320 is not a within-scope duplicate).
+  exclude file." (30 words; S76ScoutSources counts 29 under its own split); paraphrased only.
+- **S76ScoutSources (non-L1 re-open):** sha256 match on its own fetch (also byte-identical to v2.52.0; git-scm.com banner
+  "last updated in 2.52.0"); anchor ADMIT at normalized offset 2355, 18 words, offset convention reproduced on S317-S319;
+  `-n` behaviour measured (`^@^@^@nope`, `builtin/check-ignore.c:68`); parent-pattern attribution for a path under an
+  excluded directory confirmed from `dir.c:1731-1746` and a fixture. **HIGH h1, accepted as a qualification:** the
+  one-sentence anchor grounds attribution (which file decided), not the whole rule — the source-form sentence (29-30
+  words, over the bar) and gitignore(5)'s parent-directory rule (S318's capture, normalized offset 752, 48 words) carry
+  the rest. The knowledge entry paraphrases both and S318 is already a lane row; the prereg's "Sourced on S320" sentence
+  is frozen and stays as written. LOW l2: the `!`-prefix sentence (normalized offset 2462) is in the row's OUTPUT scope.
+- No existing row's status, recheck or used-by cell changed. `git show ee59aa4d:corpus/SOURCES.md | grep -c
+  'check-ignore'` = 0 (S320 is not a within-scope duplicate; S76ScoutSources agrees).
 
 ## Wave
 

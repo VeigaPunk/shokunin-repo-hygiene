@@ -1,0 +1,58 @@
+S76CriticDiscern evidence (lane HEAD eef6f30c7be607d7590898da53496408f5fa9545 at review time)
+
+# C1 re-derivation, gate blob 18587bd2ff103f8ee136a3b6e59e96039f3202e06c688a8ecb7c8f4bf76623ad (W)
+$ python3 -B census/round-76/c1-evade-counter.py --gate-dir <S>/w --work <S>/c1
+f7-selfignore-dir FAIL / f9-selfignore-nested FAIL / f10-selfignore-named FAIL
+f14-selfignore-in-tracked-dir FAIL / f11-committed-dir-rule PASS / f12-committed-nested-gitignore PASS
+SUMMARY rows=30 mismatches=0 errors=0   EXIT=0
+
+# C1 base gate ef3b04e4c9c91956c9ac6f1c9e891df0187479a322b0b40115f260ce4a19356a (ee59aa4)
+ROW f7-selfignore-dir expect=FAIL clean=PASS rc=0 match=no
+ROW f9-selfignore-nested expect=FAIL clean=PASS rc=0 match=no
+ROW f10-selfignore-named expect=FAIL clean=PASS rc=0 match=no
+ROW f14-selfignore-in-tracked-dir expect=FAIL clean=PASS rc=0 match=no
+SUMMARY rows=30 mismatches=4 errors=0
+
+# domain trial (missing as a committed receipt at HEAD), W gate vs live lane
+check-tip=PASS check-report=PASS check-shonen=PASS check-clean=PASS check-prereg=PASS  EXIT=0 (4.7 s)
+
+# core.worktree probe, unbound gate in records/probe-coreworktree-at-r75W.txt; my bound re-runs
+620ed97e (r75 W 1ad737b4): gate rc=0 check-clean=PASS / VERDICT=FORGERY / EXIT=1
+062b6d39 (r75 base 52d3f07d): gate rc=0 check-clean=PASS / VERDICT=FORGERY / EXIT=1
+ef3b04e4 (base ee59aa4 = r75 repair): gate rc=1 check-clean=FAIL / VERDICT=REFUSED / EXIT=0
+18587bd2 (r76 W): gate rc=1 check-clean=FAIL / VERDICT=REFUSED / EXIT=0
+
+# C2 re-derivation
+c2-binding-counter --tally census/round-76/c2-kill-tally.py -> SUMMARY cases=10 mismatches=0 errors=0 EXIT=0
+  (h-honest SUMMARY mutants=6 killed=6 survived=0 unread=0 unbound=0 pristine=PASS)
+--tally census/round-75/c2-kill-counter.py -> SUMMARY cases=10 mismatches=5 errors=0 EXIT=1
+--tally controls/variants/tally-K-b-reject-all.py -> SUMMARY cases=10 mismatches=2 errors=0 EXIT=1
+# header-level binding limit (prereg "Stated limit" made concrete): forged body, correct instrument sha
+X15 honest receipt: instrument_sha256=54573344145a0a1c53a409b076b1f1da7d2eaf3c75a2dcc1dbb97bba479b93e9,
+  SELFTEST cases=64 pass=64 fail=0, EXIT=0
+forged same header + SELFTEST cases=64 pass=63 fail=1 + EXIT=1 ->
+  MUTANT X15 fail=1 exit=1 bind=ok verdict=KILLED; SUMMARY mutants=7 killed=7 survived=0 unbound=0 EXIT=0
+
+# regressions
+r27: cases=4 pass=4 control=FALSE-GREEN-REJECTED EXIT=0
+r36: SUMMARY cases=21 pass=21 fail=0 control=STUB-REJECTED EXIT=0
+
+# freeze literals
+git rev-parse 2ed6b179^ = 6c9c2a8eaad2ee570e4f43517d1f437567bb9873 ; ee59aa4 ancestor of F
+blobs at F: c1-counter 618e4f9a c1-population 937e4a9b c2-counter e22f634e c2-population c46ea8ff (all = prereg)
+git diff --name-only 2ed6b179..eef6f30c -- <the four> = empty
+freeze-check --rev 2ed6b179 -> SUMMARY claims=2 findings=0 EXIT=0 ; same at eef6f30c
+control receipts bind: gate ef3b04e4 (K-a), 36f06903 (K-b variant), 43ebc213 (K-c variant), tally fdb75c09, tally variant 7d780b60
+
+# S320 provenance
+grep -rn 'S320' corpus/ SKILL.md SCORECARD.md LOG.md  -> no match at HEAD
+capture census/round-76/srcs/git-check-ignore.adoc sha256 940177c7385eb3cf0ffb1f22ffba35661d16800f8ce787ac676e9a8c89d68208
+  4159 bytes, byte-identical to https://raw.githubusercontent.com/git/git/v2.56.0/Documentation/git-check-ignore.adoc (HTTP 200)
+lane .jj/.gitignore = "/*", .ruff_cache/.gitignore = "# Automatically created by ruff.\n*\n"
+git check-ignore -v -n -z for .jj/.gitignore -> ".gitignore\0" "4\0" ".jj/\0" ".jj/.gitignore\0" (tracked rule decides: the
+  untracked .gitignore inside the excluded directory is never read)
+
+# proposed rows
+| Q137 | Supersedes Q136's untracked-.gitignore limit clause (the rest of Q136 stands). Every ignored untracked path's deciding pattern must come from a tracked .gitignore in an ancestor dir (check-ignore -v, core.excludesFile attributed away, S320); otherwise the gate refuses, counting only. Limits: a committed rule broad enough to hide a forged file still passes; .jj/ and .ruff_cache/ pass only because .gitignore names them. |  (60 words, at the ceiling)
+
+| S320 | git-check-ignore(1) at tag v2.56.0, OUTPUT, https://raw.githubusercontent.com/git/git/v2.56.0/Documentation/git-check-ignore.adoc (sha256 940177c7385eb3cf0ffb1f22ffba35661d16800f8ce787ac676e9a8c89d68208, fetched 2026-11-06, HTTP 200, 4159 bytes; capture census/round-76/srcs/git-check-ignore.adoc) | docs | A | which file a deciding exclude pattern comes from (scope: the -v/-z output fields; pattern syntax and index interaction not used) | OUTPUT, --verbose; quote at lines 81-82 of the capture: "<source> is the pattern's source file" |
