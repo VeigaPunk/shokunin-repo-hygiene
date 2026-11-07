@@ -65,25 +65,38 @@ if [[ $shonen_count == 1 ]]; then check shonen PASS; else check shonen FAIL; pri
 #    before any git call below reads it; a work-tree one is refused whatever git would do with it (the gate
 #    does not model whether git descends into an ignored directory). Count only, no path echo (D30).
 #    Backstop: check 4's git and python calls run under `timeout`; expiry fails clean.
+#    r77 wave repair (after measurement; census/round-77/records/wave-repair/): git reads info/exclude and
+#    info/attributes from the COMMON dir in a linked worktree, so every git-dir path is resolved with
+#    `rev-parse --git-path` (S77Reviewer MEDIUM-1, S77Sentinel MEDIUM-1); the index and info/sparse-checkout,
+#    which `git status` also opens, are held to the same rule (S77ExecEvade f3/sp1); the work-tree scan
+#    follows a symlink to its target (`-xtype f`, the stated rule; S77CriticClaims) and starts at the
+#    work-tree top; a failed scan fails closed (`find` status, not `wc`'s; S77MutGate F5, S77Sentinel LOW-2);
+#    /dev/null as core.excludesFile/core.attributesFile is the documented way to disable them and passes
+#    (S77Reviewer LOW-3); the pre-check's own git calls run under the same timeout (S77Sentinel MEDIUM-2).
+gate_timeout=300
 nonreg_sources() {
-  local gd f n=0 v
-  gd=$(git --no-optional-locks -C "$lane" rev-parse --absolute-git-dir 2>/dev/null) || { echo -1; return; }
-  for f in "$gd/info/exclude" "$gd/info/attributes"; do
+  local f n=0 v top hits
+  top=$(timeout -k 5 "$gate_timeout" git --no-optional-locks -C "$lane" rev-parse --show-toplevel 2>/dev/null) \
+    || { echo -1; return; }
+  for v in info/exclude info/attributes index info/sparse-checkout; do
+    f=$(timeout -k 5 "$gate_timeout" git --no-optional-locks -C "$lane" rev-parse --path-format=absolute \
+          --git-path "$v" 2>/dev/null) || { echo -1; return; }
     [[ -e $f && ! -f $f ]] && n=$((n + 1))
   done
   local xdg=${XDG_CONFIG_HOME:-${HOME:+$HOME/.config}}
   for v in core.excludesFile:ignore core.attributesFile:attributes; do
-    f=$(git --no-optional-locks -C "$lane" config --path --get "${v%%:*}" 2>/dev/null) || f=
+    f=$(timeout -k 5 "$gate_timeout" git --no-optional-locks -C "$lane" config --path --get "${v%%:*}" 2>/dev/null)
+    case $? in 0|1) ;; *) echo -1; return ;; esac
     # unset: git falls back to $XDG_CONFIG_HOME/git/<name> (or $HOME/.config/git/<name>)
     [[ -z $f && -n $xdg ]] && f=$xdg/git/${v#*:}
     [[ -n $f && $f != /* ]] && f=$lane/$f
+    [[ $f == /dev/null ]] && continue
     [[ -n $f && -e $f && ! -f $f ]] && n=$((n + 1))
   done
-  f=$(find "$lane" -path "$lane/.git" -prune -o \( -name .gitignore -o -name .gitattributes \) \
-        ! -type f -print 2>/dev/null | wc -l) || { echo -1; return; }
-  echo $((n + f))
+  hits=$(find "$top" -path "$top/.git" -prune -o \( -name .gitignore -o -name .gitattributes \) \
+           ! -xtype f -printf x 2>/dev/null) || { echo -1; return; }
+  echo $((n + ${#hits}))
 }
-gate_timeout=300
 gate_src=$(readlink -f -- "${BASH_SOURCE[0]}" 2>/dev/null) || gate_src=
 gate_dir=
 [[ -n $gate_src ]] && gate_dir=$(cd "$(dirname "$gate_src")" && pwd) || gate_dir=
@@ -92,7 +105,7 @@ if [[ $nonreg != 0 ]]; then
   check clean FAIL
   if [[ $nonreg == -1 ]]; then printf 'detail-clean: RECEIPT-NONREGULAR-SOURCE: source scan failed\n' >&2
   else printf 'detail-clean: RECEIPT-NONREGULAR-SOURCE: %s exclude/attribute source(s) are not regular files\n' "$nonreg" >&2; fi
-elif status=$(timeout -k 5 "$gate_timeout" git --no-optional-locks -C "$lane" status --porcelain=v1 --untracked-files=all 2>&1); then
+elif status=$(timeout -k 5 "$gate_timeout" git --no-optional-locks -C "$lane" -c core.fsmonitor=false status --porcelain=v1 --untracked-files=all 2>&1); then
   if [[ -n $status ]]; then check clean FAIL; printf 'detail-clean: %s\n' "$status" >&2
   elif truth=$(timeout -k 5 "$gate_timeout" python3 -I -B - "$gate_dir/souji-receipt-write.py" "$lane" 2>&1 <<'PY'
 import sys, types
