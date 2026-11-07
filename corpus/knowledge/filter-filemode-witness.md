@@ -1,6 +1,6 @@
-source: S306 (gitattributes(5), https://git-scm.com/docs/gitattributes, `filter` clean command, sha256 0a1e8015…6aee, accessed 2026-11-06); S307 (git(1) OPTIONS `--attr-source`, equivalent to GIT_ATTR_SOURCE, accessed 2026-11-06); S308 (git-config(1) `core.fileMode`, accessed 2026-11-06); S310 (git-config(1) `attr.tree`, outranked by GIT_ATTR_SOURCE); S311 (gitattributes(5) `ident`); host probes census/round-71/probes/attr-filemode-probe-base.txt, attr-filemode-probe-sizechange.txt, stat-granularity-probe.txt (git 2.56.0); controls census/round-71/controls/c1-*.txt; wave evidence census/round-71/records/wave-w1/ (S71Sentinel, S71CriticClaims, S71Reviewer, S71CriticDiscern); counter census/round-71/c1-counter.py frozen at aa91d1cad89200ec733edd3475461010a372923d; S312 (git-check-attr(1) `--cached`, r72); S313 (gitattributes(5) long running process filter, r72); S314 (gitattributes(5) attribute-file fall-back, r72); S315 (racy-git.adoc v2.56.0, cached stat information, accessed 2026-11-06, r73); S316 (git-hash-object(1) `--no-filters`, accessed 2026-11-06, r73); r72 counter census/round-72/c1-counter.py and r73 counter census/round-73/c1-counter.py (r72 spot-check D1: the header named only the r71 sources); r74: S317 (gitformat-index(5) at v2.56.0, Index entry, sha256 c8aca940…baa93, accessed 2026-11-06)
-verified-at: a1db6c8514771c0a0321c29741831606d09cc2a5 (frozen C1 candidate) and f13d575e2e33cc98ae2c2e72e61557cb5a224591 (wave repairs; frozen counter re-run census/round-71/records/c1-at-repair.txt, writer selftest records/writer-selftest-repair.txt); 2026-11-06, git 2.56.0 on this host; r72: counter 06df4f97c531a05ff2139368f70660c3044f71a6, after-arms 2ec8b63dfda8fdf88cd240487c5d1325de13b501 (census/round-72/records/c2-after-battery.txt, c2-honest-writer.txt); r73: writer b84ff90bff05fb057c5a8c4b0661a9ec41d9e4a2, after-arms 312e8f29d42eac0fd91327d65a6b43a0ba9cc64e (census/round-73/records/c1-after.txt, c2-after-D1..D5.txt), 2026-11-06, git 2.56.0; r74: counter ac57303295371f34befc36d34f78c6715f7341a0, gate ec13ba7fac9085005dca2e69ee12a2933d2c22a5, after-arms 8fe48c863d353da8e26140b132afba00de71ba61, 2026-11-06, git 2.56.0
-recheck: `python3 -B census/round-71/c1-counter.py --root . --matrix census/round-71/c1-matrix.tsv --base-rev 8b9345b1f2c4bb908ae418588d4cbde6a34a5bd0 --rev <tip> --tool tools/souji-receipt-write.py --work <scratch>` must print `SUMMARY matrix=70 base_forgeries=7 base_honest=19 new_forgeries=0 new_honest=19 class_mismatches=0 new_echo=0 errors=0 regress=PASS` and `EXIT=0`; `python3 -B tools/souji-receipt-write.py --selftest --work <scratch>` cases 39-42 pass; on every git release, re-run the three probes and re-fetch S306-S311 against their sha256; r73: `python3 -B census/round-73/c1-counter.py --root . --matrix census/round-73/c1-matrix.tsv --base-rev 8b9345b1f2c4bb908ae418588d4cbde6a34a5bd0 --rev <tip> --tool tools/souji-receipt-write.py --work <scratch>` must print `SUMMARY matrix=80 base_forgeries=15 base_honest=21 base_mismatches=0 base_unwitnessed=0 new_unwitnessed=0 new_forgeries=0 new_honest=21 class_mismatches=0 new_echo=0 errors=0 regress=PASS` and `EXIT=0`; writer selftest cases 43-44 pass; re-fetch S312-S316 against their sha256 on every git release; r74: `python3 -B census/round-74/c1-gate-counter.py --gate tools/souji-pre-report-gate.sh --work <empty scratch>` must print `SUMMARY rows=9 mismatches=0 errors=0` and `EXIT=0`; `python3 -B census/round-74/c1-counter.py --selftest --root . --matrix census/round-73/c1-matrix.tsv --base-rev 8b9345b1f2c4bb908ae418588d4cbde6a34a5bd0 --work <scratch>` must print `fail=0`
+source: S306 (gitattributes(5), https://git-scm.com/docs/gitattributes, `filter` clean command, sha256 0a1e8015…6aee, accessed 2026-11-06); S307 (git(1) OPTIONS `--attr-source`, equivalent to GIT_ATTR_SOURCE, accessed 2026-11-06); S308 (git-config(1) `core.fileMode`, accessed 2026-11-06); S310 (git-config(1) `attr.tree`, outranked by GIT_ATTR_SOURCE); S311 (gitattributes(5) `ident`); host probes census/round-71/probes/attr-filemode-probe-base.txt, attr-filemode-probe-sizechange.txt, stat-granularity-probe.txt (git 2.56.0); controls census/round-71/controls/c1-*.txt; wave evidence census/round-71/records/wave-w1/ (S71Sentinel, S71CriticClaims, S71Reviewer, S71CriticDiscern); counter census/round-71/c1-counter.py frozen at aa91d1cad89200ec733edd3475461010a372923d; S312 (git-check-attr(1) `--cached`, r72); S313 (gitattributes(5) long running process filter, r72); S314 (gitattributes(5) attribute-file fall-back, r72); S315 (racy-git.adoc v2.56.0, cached stat information, accessed 2026-11-06, r73); S316 (git-hash-object(1) `--no-filters`, accessed 2026-11-06, r73); r72 counter census/round-72/c1-counter.py and r73 counter census/round-73/c1-counter.py (r72 spot-check D1: the header named only the r71 sources); r74: S317 (gitformat-index(5) at v2.56.0, Index entry, sha256 c8aca940…baa93, accessed 2026-11-06); r76: S320 (git-check-ignore(1) v2.56.0 OUTPUT, sha256 940177c7…8208, accessed 2026-11-06; capture census/round-76/srcs/git-check-ignore.adoc); counters census/round-76/c1-evade-counter.py and c2-binding-counter.py frozen at 2ed6b179ef4aeb106488806b9f3dcacca29e2e60
+verified-at: a1db6c8514771c0a0321c29741831606d09cc2a5 (frozen C1 candidate) and f13d575e2e33cc98ae2c2e72e61557cb5a224591 (wave repairs; frozen counter re-run census/round-71/records/c1-at-repair.txt, writer selftest records/writer-selftest-repair.txt); 2026-11-06, git 2.56.0 on this host; r72: counter 06df4f97c531a05ff2139368f70660c3044f71a6, after-arms 2ec8b63dfda8fdf88cd240487c5d1325de13b501 (census/round-72/records/c2-after-battery.txt, c2-honest-writer.txt); r73: writer b84ff90bff05fb057c5a8c4b0661a9ec41d9e4a2, after-arms 312e8f29d42eac0fd91327d65a6b43a0ba9cc64e (census/round-73/records/c1-after.txt, c2-after-D1..D5.txt), 2026-11-06, git 2.56.0; r74: counter ac57303295371f34befc36d34f78c6715f7341a0, gate ec13ba7fac9085005dca2e69ee12a2933d2c22a5, after-arms 8fe48c863d353da8e26140b132afba00de71ba61, 2026-11-06, git 2.56.0; r76: gate e827d2bf53f71470bfc1fce6aa4633549b018270 and tally 2c7c1ce6f91062f497ffbbc7fcc9e9c19e2511ce (after-arms 113b007202d79275ca2debaaaa719551eaa35198), wave repair 9cbfd29630f04799cb72b17a53df860c1f503275 (receipts 1a6eaea8acc14c23e13269429ab2699dde8e112f), 2026-11-06, git 2.56.0
+recheck: `python3 -B census/round-71/c1-counter.py --root . --matrix census/round-71/c1-matrix.tsv --base-rev 8b9345b1f2c4bb908ae418588d4cbde6a34a5bd0 --rev <tip> --tool tools/souji-receipt-write.py --work <scratch>` must print `SUMMARY matrix=70 base_forgeries=7 base_honest=19 new_forgeries=0 new_honest=19 class_mismatches=0 new_echo=0 errors=0 regress=PASS` and `EXIT=0`; `python3 -B tools/souji-receipt-write.py --selftest --work <scratch>` cases 39-42 pass; on every git release, re-run the three probes and re-fetch S306-S311 against their sha256; r73: `python3 -B census/round-73/c1-counter.py --root . --matrix census/round-73/c1-matrix.tsv --base-rev 8b9345b1f2c4bb908ae418588d4cbde6a34a5bd0 --rev <tip> --tool tools/souji-receipt-write.py --work <scratch>` must print `SUMMARY matrix=80 base_forgeries=15 base_honest=21 base_mismatches=0 base_unwitnessed=0 new_unwitnessed=0 new_forgeries=0 new_honest=21 class_mismatches=0 new_echo=0 errors=0 regress=PASS` and `EXIT=0`; writer selftest cases 43-44 pass; re-fetch S312-S316 against their sha256 on every git release; r74: `python3 -B census/round-74/c1-gate-counter.py --gate tools/souji-pre-report-gate.sh --work <empty scratch>` must print `SUMMARY rows=9 mismatches=0 errors=0` and `EXIT=0`; `python3 -B census/round-74/c1-counter.py --selftest --root . --matrix census/round-73/c1-matrix.tsv --base-rev 8b9345b1f2c4bb908ae418588d4cbde6a34a5bd0 --work <scratch>` must print `fail=0`; r76: `python3 -B census/round-76/c1-evade-counter.py --gate-dir <gate+writer of tip> --work <scratch>` must print `SUMMARY rows=30 mismatches=0 errors=0`, EXIT=0; `python3 -B census/round-76/c2-binding-counter.py --tally census/round-76/c2-kill-tally.py` must print `SUMMARY cases=10 mismatches=0 errors=0`, EXIT=0; on every git release re-fetch S320 against its sha256
 
 # A clean `git status` is not a clean tree when attributes or stat settings say so
 
@@ -235,3 +235,79 @@ gate first requires `git rev-parse --show-toplevel` to resolve to the lane direc
 repair (`c1-at-repair.txt`). The r36 report-gate fixture hid its own harness symlink with info/exclude and
 read 18/21 on the W gate (`regress-r36-original-at-W.txt`); it now declares that symlink in a committed
 `.gitignore` and reads 21/21 on the base and the repaired gate.
+
+## r76: which file decides an ignore match, and a tally that binds a receipt to its mutant (appended 2026-11-06)
+
+**The gate can ask which rule decided a match.** An ignored path is not declared policy merely because
+some exclude source matches it: git-check-ignore(1) reports the deciding rule per path. With `--verbose`
+the record is `<source> <COLON> <linenum> <COLON> <pattern> <HT> <pathname>`, and "<source> is the
+pattern's source file, and <linenum> is the line number of the pattern within that source." (S320, offset
+2355 of the whitespace-normalized capture). The source field is absolute for `core.excludesFile` and
+repository-relative for `.git/info/exclude` or a per-directory exclude file (same page, OUTPUT). The gate
+therefore lists untracked ignored paths (`ls-files -o -i --exclude-standard`), feeds each to
+`git -c core.excludesFile=/dev/null check-ignore -v -n -z --stdin` — `/dev/null` attributes that source
+away so a path it alone hides reads as unmatched — and accepts a path only when its deciding pattern is
+non-negated and its source is a TRACKED `.gitignore` in one of the path's ancestor directories
+(`RECEIPT-UNTRACKED-UNDECLARED-IGNORE` otherwise, count only). A per-directory `.gitignore` is
+declared policy only when the repository tracks it.
+
+**Labels the r76 counter freezes.** `f7-selfignore-dir` is FAIL, relabelled from the r75 stated-limit
+PASS: an untracked `.gitignore` that ignores itself decides its directory's matches from unversioned
+bytes, exactly as info/exclude does. `f11-committed-dir-rule` is PASS (a committed rule naming the tool
+directory — the `.jj/` shape) and `f12-committed-nested-gitignore` is PASS (a tracked `sub/.gitignore`).
+The other 24 imported r75 rows keep the verdicts they held at the lane base. Measured with the frozen
+30-row population (`census/round-76/c1-population.tsv`): the lane-base gate blob `ef3b04e4` reads
+mismatches=4 [f7 f9 f10 f14] EXIT=1 (`census/round-76/controls/c1-K-a-do-nothing.txt`); the candidate
+gate blob `18587bd2` reads `SUMMARY rows=30 mismatches=0 errors=0` EXIT=0
+(`census/round-76/records/c1-after.txt`).
+
+**Two controls stay red.** Refusing every ignored file (`controls/c1-K-b-blanket-ignored.txt`) breaks the
+four honest rows f2, f6, f11, f12 — mismatches=4 EXIT=1; refusing any untracked `.gitignore`
+(`controls/c1-K-c-naive-untracked-gitignore.txt`) breaks f11 — mismatches=1 EXIT=1. Regression at the
+candidate gate: r36 `SUMMARY cases=21 pass=21 fail=0` and r27 `cases=4 pass=4`
+(`census/round-76/records/c1-regress-r36.txt`, `c1-regress-r27.txt`).
+
+**The lane declares its own two tool directories.** Commit `e827d2b` adds `.jj/` and `.ruff_cache/` to the
+lane's committed `.gitignore` (`.gitignore:4-5`), so the matches inside those directories are decided by a
+tracked rule instead of the self-ignoring `.gitignore` each tool writes. The wave showed the unanchored
+form also declares a nested `sub/.jj/` anywhere in the tree (S76CriticClaims); the repair `9cbfd296`
+anchors both (`/.jj/`, `/.ruff_cache/`), and a fixture carrying the lane's committed `.gitignore` reads
+PASS with the W bytes and FAIL with the repaired bytes on a `sub/.jj/payload`
+(`census/round-76/records/wave-repair/repair-probes.txt`, arm nested-jj). Live attribution on the lane
+returns `.gitignore:4:/.jj/` for `.jj/repo`; the lane itself reads `check-clean=PASS`.
+
+**A receipt must name the instrument it ran.** The r76 tally (`census/round-76/c2-kill-tally.py`) derives
+the expected bytes of every mutant itself — the pristine `census/round-75/c1-counter.py` with the frozen
+single-occurrence edits of `census/round-75/c2-mutants.json` and `census/round-74/c2-survivors.json`
+applied in order — and requires the receipt's column-0 `instrument_sha256=` to equal that sha256, its
+`command=` to carry `--selftest` and the `instrument=` path as whole argv tokens (repair `9cbfd296`; the
+candidate's substring test also accepted `--selftest-off`, S76Reviewer), and no two slots to share a receipt digest; an id with no derivation is
+UNBOUND. Every `EXIT=` line is read, and the r75 unread classes hold: one `SELFTEST` line with fail>=1
+plus every `EXIT=1` is KILLED, fail=0 plus every `EXIT=0` is SURVIVED, anything else is UNREAD. Measured
+against the frozen 10-case population (`census/round-76/c2-population.tsv`): the do-nothing tally (the r75
+counter, sha256 `fdb75c09`) reads mismatches=5 [b-swap-x09-gets-m08 b-swap-p1-gets-x09 b-pristine-r74
+b-unknown-id b-exit-disagree] EXIT=1 (`controls/c2-K-do-nothing-r75.txt`); the r76 tally reads
+`SUMMARY cases=10 mismatches=0 errors=0` EXIT=0 (`records/c2-after.txt`), with the honest r75 set still
+`mutants=6 killed=6 survived=0`. The blanket control that rejects every set
+(`controls/c2-K-b-blanket-reject-all.txt`) stays red at mismatches=2 [h-honest h-honest-reordered].
+
+**Stated limit.** The tally reads bytes: binding proves which instrument a receipt names, not that the
+instrument ran — a hand-written receipt carrying the right header and EXIT lines is out of reach without
+re-running the counter. The gate's attribution has its own limit, unchanged from r75: a broad committed
+rule (f2) still hides whatever it matches, and that is declared, versioned policy.
+
+**Wave repairs (after measurement).** The W gate read its tracked set with `git ls-files --cached`, the one
+git call in the block without `-c core.fsmonitor=false`: a repository-local fsmonitor hook ran there,
+after the byte-truth check, appended a rule to the tracked root `.gitignore`, and the gate printed
+`check-clean=PASS` on a self-ignoring payload (S76Sentinel HIGH-1). The repaired gate reads the tracked set
+from HEAD's tree (`git ls-tree -r -z --name-only --full-tree HEAD`), which runs no hook and admits no
+staged-only `.gitignore` (S76Sentinel LOW-1), and unsets a caller `GIT_EXEC_PATH` that made `ls-remote` run
+a planted remote helper (MEDIUM-1). Receipts: `census/round-76/records/wave-repair/repair-probes.txt`
+(8 of 8 arms as expected, W forged and R refused each route); the frozen counters still read 0 at the
+repair (`wave-repair/c1-at-repair.txt` rows=30 mismatches=0, `c2-at-repair.txt` cases=10 mismatches=0;
+r36 21/21, r27 4/4). Kill-power: every forging row of the frozen population carries exactly two
+undeclared paths, so a gate refusing only above one survives it (S76MutGate M09); a one-path fixture
+(a lone `/.gitignore` that ignores itself) kills it (`repair-probes.txt`, arm single). The frozen C2
+population is separable by file name alone (S76CriticClaims' filename-cheat tally scores 0); the tally
+itself binds bytes, not names: M08's bytes under X09's file name are UNBOUND
+(`wave-repair/tally-probes.txt`, arm by-name).

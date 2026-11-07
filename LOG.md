@@ -3001,3 +3001,15 @@ addendum, appended to the prereg, commits 8a793e7ae9131578bdec393982760217f62095
 - **Frontier:** S318, S319 mined; QUALITY Q136 (supersedes Q135's ignored-files limit); knowledge `filter-filemode-witness.md` r75; README frontier r75; SKILL gate rows r75; SCORECARD capability rows r75.
 - **Domain trial:** the repaired gate over the lane itself at the final tip (`census/round-75/records/c1-domain-trial.txt`).
 - **Tools:** none installed; no pacman, sysctl, sudo or kernel change. **Scratch:** `/fast/scratch/hyaku/souji-r75/` removed at landing.
+
+## Round 76 (2026-11-06, Linux; attempt 1) — the pre-report gate attributes each ignored path to its deciding rule (C1 operability), the kill tally binds every receipt to its mutant (C2 calibration)
+
+- **Motivation (evidence):** r75 spot-check routed defects 1 and 5 (`corpus/lessons/round-75-verifier-spotcheck.md`): a probe that could not fail, and the stated limit that a self-ignoring untracked `.gitignore` hides content (Q136); r75 lesson routed (b): the kill tally neither binds a receipt to its mutant (S75Reviewer O2) nor has committed receipts for its UNREAD classes (S75MutCounter M1/M2).
+- **Controls `6c9c2a8e`, freeze `2ed6b179`** (Q99 grammar; freeze-check `--substance --chronology` findings=0): C1 lane-base gate mismatches=4, blanket ignored-refusal 4, naive untracked-`.gitignore` refusal 1 (all EXIT=1); C2 r75 tally mismatches=5, blanket reject-all 2 (both EXIT=1).
+- **Candidates `2c7c1ce6` (tally), `e827d2bf` (gate + `.gitignore` declaring `.jj/` `.ruff_cache/`); after-arms `113b0072`:** C1 mismatches=0 EXIT=0, r36 21/21, r27 4/4; C2 mismatches=0 EXIT=0, honest set killed=6.
+- **Lesson fixes `eef6f30c`:** computed-verdict core.worktree probe (r75 routed defect 1; FORGERY exit 1 on the r75 W gate, REFUSED exit 0 on r76); `rec.sh` refuses a missing BIND path (M1).
+- **Wave w1:** 12 seats; every frozen number reproduced (S76ExecC1, S76ExecC2, S76Reviewer, S76Connector, S76CriticClaims, S76CriticDiscern, S76Scribe). Repaired after measurement (`9cbfd296`, receipts `1a6eaea8`): fsmonitor hook forgery through the index read (S76Sentinel HIGH-1), caller `GIT_EXEC_PATH` (MEDIUM-1), unanchored `.jj/` (S76CriticClaims), substring `--selftest` test (S76Reviewer LOW). Recorded, not repaired: M09 one-path threshold survives the frozen rows; the C2 population is filename-separable; the binding counter compares exit codes only (S76MutTally K03/K04).
+- **Frontier:** S320 mined; QUALITY Q137 (supersedes Q136's untracked-`.gitignore` limit); knowledge `filter-filemode-witness.md` r76; README frontier r76; SKILL gate rows r76; SCORECARD capability rows r76.
+- **Domain trial:** the repaired gate over the lane itself at the final tip (`census/round-76/records/c1-domain-trial.txt`).
+- **Tools:** none installed; no pacman, sysctl, sudo or kernel change. **Scratch:** `/fast/scratch/hyaku/souji-r76/` removed at landing.
+
