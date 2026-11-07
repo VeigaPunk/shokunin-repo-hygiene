@@ -42,35 +42,51 @@ check() { printf 'check-%s=%s\n' "$1" "$2"; [[ $2 != FAIL ]] || fail=1; }
 #    refusal checks 1 and 4, which run git in the lane, are skipped as FAIL. Count only, no path echo (D30).
 #    Check 1's git calls (rev-parse, and ls-remote, which runs upload-pack in the remote repository whose
 #    config the gate cannot pre-check) run under `timeout`; expiry fails tip with RECEIPT-GIT-TIMEOUT.
+#    r78 wave repair (after measurement; census/round-78/records/wave-repair/): include records are read
+#    NUL-delimited (`-z`: key, newline, value) so a subsection with a space or a value with a newline cannot
+#    split a record (S78Reviewer HIGH, S78Sentinel MEDIUM-1); values go through `--type=path`, so git's own
+#    `~/`, `~user/` and `%(prefix)/` expansion decides the path (S78Reviewer, S78CriticDiscern); the seen-set
+#    keys on the canonical path (an associative array, not a `|`-joined string) and the walk stops at 64
+#    config files, so a fan-out tree cannot fork without bound (S78Sentinel HIGH-1, LOW-2); a depth or count
+#    overrun, an unreadable config or a failed read is its own class, RECEIPT-GITSOURCE-SCAN, never counted as
+#    a non-regular file (S78Sentinel MEDIUM-2); the gitfile and commondir are read under a timeout (S78Reviewer
+#    LOW TOCTOU); the branch's loose ref is held to the same rule (S78CriticClaims evidence 6).
 gate_git_timeout=45
-gitsrc_n=0 gitsrc_seen=
+gitsrc_n=0 gitsrc_err=0 gitsrc_nodes=0
+declare -A gitsrc_seen=()
 gitsrc_one() {  # $1 path, $2 depth (config files only; -1 = not a config file)
-  local p=$1 depth=$2 out line v
+  local p=$1 depth=$2 rc canon rec v
+  local -a recs=()
   [[ -e $p || -L $p ]] || return 0
   if [[ ! -f $p ]]; then gitsrc_n=$((gitsrc_n + 1)); return 0; fi
   (( depth >= 0 )) || return 0
-  case "|$gitsrc_seen|" in *"|$p|"*) return 0 ;; esac
-  gitsrc_seen+="|$p"
-  (( depth <= 10 )) || { gitsrc_n=$((gitsrc_n + 1)); return 0; }
-  out=$(cd / && GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1 timeout -k 5 "$gate_git_timeout" \
-          git --no-optional-locks config --no-includes --file "$p" \
+  canon=$(realpath -m -- "$p" 2>/dev/null) || { gitsrc_err=1; return 0; }
+  [[ -n ${gitsrc_seen[$canon]+x} ]] && return 0
+  gitsrc_seen[$canon]=1
+  gitsrc_nodes=$((gitsrc_nodes + 1))
+  (( depth <= 10 && gitsrc_nodes <= 64 )) || { gitsrc_err=1; return 0; }
+  mapfile -d '' recs < <(cd / && GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1 timeout -k 5 "$gate_git_timeout" \
+          git --no-optional-locks config -z --no-includes --type=path --file "$p" \
           --get-regexp '^include(if\..*)?\.path$' 2>/dev/null)
-  case $? in 0|1) ;; *) gitsrc_n=$((gitsrc_n + 1)); return 0 ;; esac
-  while IFS= read -r line; do
-    [[ -n $line ]] || continue
-    v=${line#* }
-    [[ $line == *' '* ]] || continue
-    case $v in '~/'*) [[ -n ${HOME:-} ]] || continue; v=$HOME/${v#\~/} ;; esac
+  wait $! 2>/dev/null; rc=$?
+  case $rc in 0|1) ;; *) gitsrc_err=1; return 0 ;; esac
+  for rec in "${recs[@]}"; do
+    [[ $rec == *$'\n'* ]] || { gitsrc_err=1; continue; }
+    v=${rec#*$'\n'}
+    [[ -n $v ]] || continue
     [[ $v == /* ]] || v=$(dirname -- "$p")/$v
     gitsrc_one "$v" $((depth + 1))
-  done <<< "$out"
+  done
+}
+gitsrc_read1() {  # first line of a small regular file, bounded in time (the -f test races a swap)
+  timeout -k 2 5 head -n 1 -c 4096 -- "$1" 2>/dev/null
 }
 gitsrc_scan() {
   local gd cd v
   if [[ -e $lane/.git && ! -d $lane/.git && ! -f $lane/.git ]]; then gitsrc_n=$((gitsrc_n + 1)); return; fi
   if [[ -d $lane/.git ]]; then gd=$lane/.git
   elif [[ -f $lane/.git ]]; then
-    IFS= read -r v < "$lane/.git" || true
+    v=$(gitsrc_read1 "$lane/.git") || { gitsrc_err=1; return; }
     v=${v#gitdir: }
     [[ $v == /* ]] || v=$lane/$v
     gd=$v
@@ -79,12 +95,13 @@ gitsrc_scan() {
   cd=$gd
   gitsrc_one "$gd/commondir" -1
   if [[ -f $gd/commondir ]]; then
-    IFS= read -r v < "$gd/commondir" || true
+    v=$(gitsrc_read1 "$gd/commondir") || { gitsrc_err=1; return; }
     [[ $v == /* ]] || v=$gd/$v
     cd=$v
   fi
   gitsrc_one "$gd/HEAD" -1
   gitsrc_one "$cd/packed-refs" -1
+  gitsrc_one "$cd/refs/heads/$branch" -1
   gitsrc_one "/etc/gitconfig" 0
   [[ -n ${HOME:-} ]] && gitsrc_one "$HOME/.gitconfig" 0
   local xdg=${XDG_CONFIG_HOME:-${HOME:+$HOME/.config}}
@@ -93,15 +110,16 @@ gitsrc_scan() {
   gitsrc_one "$gd/config.worktree" 0
 }
 gitsrc_scan
-if (( gitsrc_n )); then
+if (( gitsrc_n || gitsrc_err )); then
   check gitsource FAIL
-  printf 'detail-gitsource: RECEIPT-NONREGULAR-GITSOURCE: %s git configuration/ref source(s) are not regular files\n' "$gitsrc_n" >&2
+  (( gitsrc_n )) && printf 'detail-gitsource: RECEIPT-NONREGULAR-GITSOURCE: %s git configuration/ref source(s) are not regular files\n' "$gitsrc_n" >&2
+  (( gitsrc_err )) && printf 'detail-gitsource: RECEIPT-GITSOURCE-SCAN: the discovery-source scan failed or exceeded its bound (depth 10, 64 config files)\n' >&2
 else
   check gitsource PASS
 fi
 # 1. Branch name is constrained above; compare full SHA of local branch to remote ref.
-if (( gitsrc_n )); then
-  check tip FAIL; printf 'detail-tip: skipped: RECEIPT-NONREGULAR-GITSOURCE\n' >&2
+if (( gitsrc_n || gitsrc_err )); then
+  check tip FAIL; printf 'detail-tip: skipped: discovery-source refusal\n' >&2
 else
   local_rc=0 remote_rc=0
   local_tip=$(timeout -k 5 "$gate_git_timeout" git --no-optional-locks -C "$lane" rev-parse --verify "refs/heads/$branch^{commit}" 2>/dev/null) || { local_rc=$?; local_tip=; }
@@ -178,8 +196,8 @@ nonreg_sources() {
 gate_src=$(readlink -f -- "${BASH_SOURCE[0]}" 2>/dev/null) || gate_src=
 gate_dir=
 [[ -n $gate_src ]] && gate_dir=$(cd "$(dirname "$gate_src")" && pwd) || gate_dir=
-if (( gitsrc_n )); then
-  check clean FAIL; printf 'detail-clean: skipped: RECEIPT-NONREGULAR-GITSOURCE\n' >&2
+if (( gitsrc_n || gitsrc_err )); then
+  check clean FAIL; printf 'detail-clean: skipped: discovery-source refusal\n' >&2
 elif nonreg=$(nonreg_sources); [[ $nonreg != 0 ]]; then
   check clean FAIL
   if [[ $nonreg == -1 ]]; then printf 'detail-clean: RECEIPT-NONREGULAR-SOURCE: source scan failed\n' >&2
