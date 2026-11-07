@@ -234,7 +234,7 @@ elif [ -n "${SOUJI_Q_SESSION:-}" ] && q_proc_sid "$$" && [ "$Q_SID" = "$SOUJI_Q_
     # session leader must be this tool (r80 wave S80ExecEvade F2: a caller exporting its own sid skipped the front)
 else
   q_front_tmp=$(mktemp -d "${TMPDIR:-/tmp}/souji-quarantine.XXXXXXXX") || {
-    printf 'souji-quarantine: mktemp failed\n' >&2; exit 2; }
+    printf 'souji-quarantine: mktemp failed\n' >&2; exit 1; }  # the base tool's ERRTMP class (r80 S80ExecEvade F4)
   q_front_worker=
   q_front_on_signal() { # $1 name, $2 number
     trap '' TERM INT HUP
@@ -263,6 +263,12 @@ else
   # the worker has ended: a signal from here on has nothing left to kill and must not rewrite its status
   # (r80 wave S80ExecC2 F1)
   trap '' TERM INT HUP
+  if [ "$q_front_rc" -gt 128 ]; then
+    # the worker itself died by a signal (SIGKILL, OOM) without this trap: its `$(...)` subshells and timeout
+    # groups are still in its session (r80 wave S80Sentinel F3); sweep them, keep the worker's status
+    q_kill_session "$q_front_worker" || true
+    printf 'souji-quarantine: worker ended by signal %s; its session was swept\n' "$((q_front_rc - 128))" >&2
+  fi
   exit "$q_front_rc"
 fi
 
