@@ -85,8 +85,8 @@ for fn in (mod._witness_refusal, mod._truth_refusal):
 # r75 C1 (S318 gitignore(5), S319 git-ls-files(1)): status hides untracked files that any exclude source
 # matches, but only the per-directory .gitignore files are the lane's declared policy; info/exclude and
 # core.excludesFile are local and unversioned. Untracked paths ignored under --exclude-standard but not
-# under --exclude-per-directory=.gitignore alone fail clean (count only, no path echo). Stated limit: an
-# untracked .gitignore that ignores itself (the .jj/ and .ruff_cache/ shape) is per-directory policy here.
+# under --exclude-per-directory=.gitignore alone fail clean (count only, no path echo). The r75 stated
+# limit (an untracked .gitignore that ignores itself) is closed by the r76 attribution block below.
 # r75 wave repair (S75ExecEvade HIGH-1): a repository-local core.worktree points status and both listings
 # at another tree, so the difference reads empty while the lane's own tree carries hidden content; the
 # work tree git resolves must be the lane itself.
@@ -108,6 +108,40 @@ if hidden:
     print("RECEIPT-UNTRACKED-LOCAL-EXCLUDE: %d untracked path(s) are hidden only by info/exclude or "
           "core.excludesFile" % len(hidden))
     sys.exit(1)
+# r76 C1 (S320 git-check-ignore(1): -v names each matching pattern's source file): a per-directory
+# .gitignore is declared policy only when it is tracked. An untracked .gitignore that ignores itself (the
+# r75 stated limit f7) hides content behind an unversioned rule exactly as info/exclude does. Every ignored
+# untracked path must be decided by a pattern from a tracked .gitignore in one of its ancestor directories;
+# core.excludesFile is attributed away (/dev/null) so a path only it hides reads as unmatched. Count only.
+_ls = subprocess.run(["git", "--no-optional-locks", "-C", lane, "ls-files", "-z", "--cached"],
+                     stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+if _ls.returncode != 0:
+    print("tracked-file listing failed")
+    sys.exit(1)
+tracked = set(_ls.stdout.split(b"\0")) - {b""}
+ign = sorted(_ignored("--exclude-standard"))
+if ign:
+    ci = subprocess.run(["git", "--no-optional-locks", "-C", lane, "-c", "core.fsmonitor=false",
+                         "-c", "core.excludesFile=/dev/null", "check-ignore", "-v", "-n", "-z", "--stdin"],
+                        input=b"\0".join(ign) + b"\0", stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+    rec = ci.stdout.split(b"\0")
+    if ci.returncode not in (0, 1) or len(rec) != 4 * len(ign) + 1 or rec[-1] != b"":
+        print("ignore-source attribution failed")
+        sys.exit(1)
+    undeclared = 0
+    for i, path in enumerate(ign):
+        src, _ln, pat, echoed = rec[4 * i:4 * i + 4]
+        if echoed != path:
+            print("ignore-source attribution failed")
+            sys.exit(1)
+        d = os.path.dirname(src)
+        if not (src in tracked and os.path.basename(src) == b".gitignore" and not pat.startswith(b"!")
+                and (d == b"" or path.startswith(d + b"/"))):
+            undeclared += 1
+    if undeclared:
+        print("RECEIPT-UNTRACKED-UNDECLARED-IGNORE: %d untracked path(s) are hidden by a rule that is not a "
+              "tracked .gitignore" % undeclared)
+        sys.exit(1)
 PY
   ); then check clean PASS
   else check clean FAIL; printf 'detail-clean: byte truth: %s\n' "$(printf '%s' "${truth:-no output}" | head -c 400 | LC_ALL=C tr -c '[:print:]' '?')" >&2; fi
