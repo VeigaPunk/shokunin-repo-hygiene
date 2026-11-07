@@ -1,7 +1,7 @@
 # Gate signal handling — why a killed shell script leaves its `timeout` children running
 
-source: S325, S326, S328, S075
-round: 79, 80
+source: S325, S326, S328, S075, S329
+round: 79, 80, 81
 status: mined (lane-verified on this host, bash 5.3.20, coreutils 9.12)
 
 ## Claim
@@ -94,4 +94,33 @@ caused.
   the launch and `$!`; a SIGINT the caller ignored before starting the tool (S325, above); the stage-2 move and
   later stages of a non-dry-run invocation (a signal there leaves the source moved with no RESULT line,
   S80ExecEvade F3) use the same mechanism but no row measures them.
+
+## An asynchronous job for one bounded external call (r81, `tools/souji-vault-verify.sh`)
+
+- When a tool has ONE bounded child that can block for long — here the advisory Obsidian CLI call
+  `timeout "$CLI_TIMEOUT" "$bin" vault:hash "$vp"`, run inside `out=$(...)` inside `claim=$(cli_claim ...)` —
+  the r80 session front is more than the fix needs. At base a TERM or HUP to the tool's pid killed the shell and
+  left the substitution subshell, timeout and the CLI running; the same signal to the tool's whole process group
+  still left timeout's own group (S326); INT waited for the CLI (S325)
+  (`census/round-81/controls/c2-K-a-do-nothing.txt`: 8 of 8 signal rows orphaned at `SOUJI_CLI_TIMEOUT=300`).
+- r81 runs that one call as an asynchronous job whose output goes to a private `mktemp` file, and the shell `wait`s
+  on it with TERM/INT/HUP trapped only for the duration of the call. The trap kills timeout's group (`kill --
+  -$pid`, falling back to the pid when the group is not set up yet), gives it up to 2 s, sends KILL, removes the
+  file, writes `souji-vault-verify: SIG<name> ...` on stderr and exits 128 + n. The result comes back through a
+  global (`CLI_CLAIM`), because a function called in `$(...)` runs in a subshell the trap cannot reach.
+- The job's stdin must be named: "the standard input for asynchronous commands, in the absence of any explicit
+  redirections, is redirected from ‘/dev/null’" (S329, bash Lists of Commands, decompressed lines 758-760). The
+  foreground `$(timeout …)` inherited the caller's stdin; a job without `<&0` silently gave the CLI /dev/null
+  (`census/round-81/controls/c2-K-c-no-stdin.txt`: p3, a stdin-reading CLI, answers `cli=empty` instead of
+  `cli=agree`).
+- timeout forwards a signal it receives to its own group (S326, cleanup()), so killing timeout's pid alone already
+  ends the CLI in every measured row (`census/round-81/records/prefreeze/c2-pid-only-kill-draft.txt`, 12/0); the group
+  kill is kept for a signal that lands before timeout has installed its handlers and for a CLI that ignores TERM,
+  which no row measures.
+- Measured (`census/round-81/records/c2-after.txt`): 12 rows, 0 mismatches, 0 orphans, pid and group delivery, a
+  CLI that forks a grandchild, and four no-signal rows (agree, bounded timeout, stdin, `--fallback`); a trap-only
+  tool stays at 8 orphan rows (`controls/c2-K-b-trap-only.txt`).
+- Limits: SIGKILL to the tool; a CLI descendant that leaves timeout's group; a SIGINT ignored on entry (S325);
+  signals while the tool runs its other short children (sha256sum, git, find) wait for that child; if no private
+  file can be made the call runs in the foreground as before.
 
