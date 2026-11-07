@@ -100,8 +100,8 @@ no shokuknow theme taken (Assimilation: none).
   counter. The preregistration is frozen and not amended.
 - **Discernment check (S78CriticDiscern):** 19/19 ledger classes agree. Admit recorded: the `~user/` and
   `%(prefix)/` include forms S323 names are a real gap of the W gate (repaired, `--type=path`). Reject recorded:
-  "L04 should be FLEET" — the `.ufo/waves/round-16/build` directories under the fleet root belong to other
-  lanes' repositories, not this lane's token.
+  "L04 should be FLEET" — the round-16 build directories found under the fleet root belong to other lanes'
+  repositories (kama, tsukuroi, mori), not this lane's token.
 
 ## Wave
 
