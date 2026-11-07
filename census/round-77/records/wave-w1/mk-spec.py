@@ -1,0 +1,189 @@
+#!/usr/bin/env python3
+"""souji r77 wave w1 spec builder (L1 SoujiR77). Writes .ufo/waves/round-77/w1-spec.json.
+The `# Write scope and bounds` .. `# Report format` context tail is the r76 builder's text with round-76 -> round-77."""
+import json
+import os
+
+LANE = "/home/vgpnk/Projects/shokunin/souji-shokunin"
+SCR = "/fast/scratch/hyaku/souji-r77"
+GS = open(os.path.expanduser("~/.agents/skills/godspeed/directive.md")).read()
+HEAD = "/skill:godspeed\n" + GS + "\n\n"
+BASE = "d4f515637884695b3aa016da169d859d3ece6ac4"
+P = "43822328ec27b429b68c21d9c3a995e0a09b9d77"
+F = "a9979807fd5d9f80851c0f1fc6481e9bf0334644"
+W = "9b496b0883b255573175726f1463ce5634960a04"
+K = "6690cb5ad96d11a7b528a62a98ba42fad7783d35"
+L = "8bf42fc6233cc4fee28c170d57e5d38a80f6d2bc"
+A = "ef04ca6c66af02b98bc061290b8028c6c0654a4b"
+R = f"{LANE}/census/round-77"
+TAIL = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "ctx-tail.txt")).read().replace("{LANE}", LANE).replace("{SCR}", SCR)
+
+context = f"""# Goal
+souji round 77 (lane repo {LANE}, lane id souji). The L1 (SoujiR77) holds the planner seat and is the ONLY integration owner: it commits through the lane helper and writes the report. You are one seat of ONE wave of 12 seats. Seats deliver files and findings only. Your mandate is to FALSIFY the frozen round-77 claims and the round's landed changes: re-derive every number yourself from committed bytes; a number you cannot reproduce is a finding. Do not trust the L1's counts.
+
+# Evidence durability
+FIRST action: create your report file (the `Report:` trailer path) with a one-line skeleton, and append to it as you go. Your final yield must repeat the same content. A seat that ends without that file counts as no verdict.
+
+# Chronology (binding; read {R}/preregistration.txt first — it is the frozen contract, Q99 grammar)
+- Lane base (r76 admitted): {BASE}.
+- P {P}: census/round-77/c1-nonreg-counter.py (C1 counter, 16 routes: n1-n8 n10 non-regular exclude/attribute sources, o1-o3 one-path forgeries, p1-p4 positive controls; runs the gate in its own session with a 30 s bound and kills the process group -> clean=HANG), c1-population.tsv, c2-pointer-counter.py (C2 counter: 35 MISSING findings of tools/souji-pointer-check.py over SCORECARD.md SKILL.md SHONEN.md corpus/QUALITY.md corpus/README.md PROVINCE.md at the base; rules R0/R1 + ledger classes MOVED LOCAL-POLICY QUARANTINED FLEET TOKEN ABSENT, see its docstring), c2-population.tsv (frozen lane-disk digests), rec.sh, controls/ (C1: K-a lane-base gate mismatches=9 hangs=8; K-b refuse-all 7; K-c M09 one-path survivor 11; K-d blanket any-non-regular/any-excludesFile 7. C2: K-a no ledger unresolved=35; K-b blanket ABSENT refused=31; K-c local-only instead of capture refused=4; K-d empty-stub capture mismatched=4; K-e name-only MOVED refused=3), controls/variants/, srcs/ (S321 git dir.c v2.56.0, S322 git-add.adoc v2.56.0), records/census-before.txt.
+- F {F}: census/round-77/preregistration.txt (records/freeze-check-at-F.txt: `SUMMARY claims=2 findings=0`).
+- W {W}: C1 candidate — tools/souji-pre-report-gate.sh: nonreg_sources() (info/exclude, info/attributes, core.excludesFile/core.attributesFile or their XDG defaults, every work-tree .gitignore/.gitattributes via find) refuses RECEIPT-NONREGULAR-SOURCE before `git status`; `timeout -k 5 300` around check 4's git status and python block.
+- K {K}: C2 candidate part 1 — force-added .ufo/waves/round-63/w1/S63ExecWriter/souji-receipt-write.py and .ufo/waves/round-64/w1/S64ExecFreeze/ (14 files) at their own paths.
+- L {L}: C2 candidate part 2 — census/round-77/c2-pointer-ledger.tsv (31 rows).
+- A {A}: records/c1-after.txt (16/16, hangs=0), c1-regress-r76.txt (30/30), c1-regress-r36.txt (21/21), c1-regress-r27.txt (4/4), c2-after.txt (resolved=35), c2-pointer-check-after.txt (missing=31), freeze-check-at-F.txt.
+
+# Claims (frozen predicates are in the preregistration; never change them)
+C1 operability (sourced on S321 git dir.c add_patterns, opened this round): the pre-report gate refuses non-regular exclude/attribute sources instead of hanging; 16 rows mismatches 9 -> 0 and hangs 8 -> 0; K-b/K-c/K-d stay red; r76 30/30, r36 21/21, r27 4/4; a domain trial on the lane at the report tip (run by the L1 later).
+C2 calibration (lowest owned axis, 7): every pointer the self-assessment files make that the lane's pointer check reports MISSING at the base resolves to bytes the counter verifies; resolved 0 -> 35; the four forgery controls stay red; pointer-check missing 35 -> 31.
+
+# Frozen invocations (run from {LANE}; never alter counters, populations, ledgers or controls)
+- C1: copy the gate and tools/souji-receipt-write.py at a revision into ONE dir (`git show <rev>:tools/souji-pre-report-gate.sh > D/souji-pre-report-gate.sh`, same for the writer); python3 -B census/round-77/c1-nonreg-counter.py --gate-dir D --work <SCRATCH>/c1 (work absent or empty; ~5 s on the W gate, ~4 min on the base gate because 8 rows hit the 30 s bound).
+- C2: python3 -B census/round-77/c2-pointer-counter.py --root {LANE} --rev <rev> --fleet-root /home/vgpnk/Projects/shokunin [--ledger <ledger tsv>] (~3 s; the LOCAL-POLICY/QUARANTINED rules read the lane disk, so --root must be the lane checkout except for the K-d stub clone).
+- Pointer check: python3 -B tools/souji-pointer-check.py --root . --rev <rev> SCORECARD.md SKILL.md SHONEN.md corpus/QUALITY.md corpus/README.md PROVINCE.md (~15 s).
+- Every receipt starts with `command=<literal command>` (rec.sh); replaying that line with your scratch prefix is a valid check.
+<SCRATCH> must be a fresh directory under {SCR}/<your seat name>/ (mkdir -p it). Counters refuse --work under /tmp, /var/tmp or /dev/shm. FIFO fixtures: never open a FIFO without a timeout; run anything that may block under `timeout -k 5 <s>` in its own session (setsid) so the whole process group dies; never leave a blocked process behind.
+
+{TAIL}"""
+
+items = [
+ ("S77Connector", "connector", f"""# Target
+Cross-claim separation and sibling-overlap scan for round 77. Read-only.
+
+# Change
+1. Causal separation: confirm from receipt `# bind`/`instrument=` lines and commit contents (`git show --name-only` for W {W}, K {K}, L {L}) that no C1 receipt reads a C2 byte (ledger, pointer counter, captured files) and no C2 receipt reads a gate byte. Would C1 verify with K and L absent, and C2 with W absent? Verdict SEPARABLE/COUPLED.
+2. Other lane tools that read exclude/attribute sources and could block on a FIFO the same way (any tool under {LANE}/tools calling git status/ls-files/check-ignore/check-attr/hash-object without a timeout): file:line, and whether the r77 pre-check covers them (it covers only the gate).
+3. Sibling overlap (read-only; other *-shokunin repos under /home/vgpnk/Projects/shokunin): which sibling pre-report gates call `git status` with no non-regular-source guard or timeout; which siblings' SCORECARD/SKILL files cite `.ufo/waves/...` paths that are not committed (count per lane with `git ls-tree`). Table: lane, file:line or count, exposed yes/no.
+
+# Acceptance
+Tables with verdicts and file:line; findings by severity."""),
+ ("S77ScoutSources", "scout", f"""# Target
+Re-open the round's two new sources and test the sentences the claims rest on. Read-only on the lane.
+
+# Change
+1. Fetch https://raw.githubusercontent.com/git/git/v2.56.0/dir.c and https://raw.githubusercontent.com/git/git/v2.56.0/Documentation/git-add.adoc yourself (curl -sSL); compare sha256 with {R}/srcs/git-dir.c-v2.56.0 (53e5ed2b…20a6) and {R}/srcs/git-add.adoc-v2.56.0 (42089b80…5db).
+2. dir.c add_patterns (around lines 1154-1200): quote the open/fstat lines; does open_nofollow (wrapper.c / compat at v2.56.0) also block on a FIFO (O_NOFOLLOW affects only symlinks)? Which callers pass PATTERN_NOFOLLOW (per-directory .gitignore) and which do not (info/exclude, core.excludesFile)? file:line. Is the gate's claim "git opens every exclude source with a blocking open(2) and checks its type only afterwards" true for all of them?
+3. attr.c at v2.56.0: same question for .gitattributes, info/attributes and core.attributesFile (read_attr_from_file): blocking open before type check? file:line. Compare with lane row S064 in {LANE}/corpus/SOURCES.md.
+4. git-add.adoc: locate "Allow adding otherwise ignored files." (word count <=25, line number). Does it ground the capture of files under the ignored .ufo/waves/? Also check whether git-scm.com/docs/git-add serves the same sentence and version.
+5. corpus/SOURCES.md: is a new row for dir.c (S321) or git-add (S322) a within-scope duplicate of an existing row (grep dir.c, git-add)?
+
+# Acceptance
+sha256 match/mismatch; quotes with line numbers and word counts; per-question HOLDS/DISAGREE with file:line; admit/reject per row."""),
+ ("S77ExecC1", "executor", f"""# Target
+Reproduce C1 from committed bytes.
+
+# Change
+1. Run the C1 counter over the W gate ({W}) and over the lane-base gate ({BASE}), each with its own revision's writer beside it; compare SUMMARY/EXIT/ROW lines with records/c1-after.txt and controls/c1-K-a-do-nothing.txt (the base run takes ~4 min).
+2. Replay controls/c1-K-b-refuse-all.txt, c1-K-c-m09-one-path.txt, c1-K-d-blanket-nonregular.txt from their command= lines (gate dir: the variant from controls/variants/ copied as souji-pre-report-gate.sh beside the base writer); confirm each variant's sha256 equals the receipt's `# gate` line.
+3. Replay records/c1-regress-r76.txt, c1-regress-r36.txt (create its --work dir first), c1-regress-r27.txt with the W gate.
+4. After every base-gate run, check that no process from your scratch dir is left (ps -eo pid,args | grep <your scratch>); a leftover blocked git is a HIGH finding against the counter.
+5. Timing: the W gate on the lane itself (read-only run: bash {LANE}/tools/souji-pre-report-gate.sh --lane {LANE} --branch master --report {R}/preregistration.txt --prereg {R}/preregistration.txt); record check lines, rc and wall time. check-clean may FAIL while the lane has seat files under .ufo/waves (ignored) — name the cause if it fails.
+
+# Acceptance
+Each item REPRODUCED / MISMATCH with observed lines; orphan check; timing."""),
+ ("S77ExecC2", "executor", f"""# Target
+Reproduce C2 from committed bytes and the lane disk.
+
+# Change
+1. Run the C2 counter at A ({A}) with census/round-77/c2-pointer-ledger.tsv and at the base without a ledger; compare with records/c2-after.txt and controls/c2-K-a-no-ledger.txt.
+2. Replay controls c2-K-b, K-c, K-e (ledgers in controls/variants/) and K-d (run controls/variants/c2-K-d-stub-build.sh into a fresh dir under your scratch, then the counter with --root that clone --rev HEAD).
+3. Independently recompute, without the counter's code: for P09/P10 and P11/P18 the sha256 of every file under the lane-disk path and under the committed path at K ({K}) (`git ls-tree -r`, `git cat-file blob`); for every MOVED row of the ledger, cmp the lane-disk file(s) with the committed target. Any difference is a finding.
+4. Run the pointer check at the base and at A; confirm missing 35 -> 31 and that the four items no longer listed are exactly P09 P10 P11 P18.
+5. For every FLEET row confirm the path exists under /home/vgpnk/Projects/shokunin (ls -ld, read-only; never open .ufo/state contents beyond a listing of the top directory).
+
+# Acceptance
+REPRODUCED/MISMATCH per item with observed lines; digest table; findings by severity."""),
+ ("S77ExecEvade", "executor", f"""# Target
+Try to make the W gate ({W}, with its writer beside it) HANG or print check-clean=PASS on a fixture that carries a non-regular exclude/attribute source or hidden untracked content. Model fixtures on census/round-77/c1-nonreg-counter.py (build() from census/round-74/records/wave-repair/probes/evade-probe.py) in your own scripts; run every gate call in its own session under a timeout and kill the group.
+
+# Change
+Attempt at least: (a) core.excludesFile set with a relative path, with `~/` (point HOME at your scratch), and via $GIT_DIR/config.worktree with extensions.worktreeConfig; (b) a FIFO at $XDG_CONFIG_HOME/git/ignore when core.excludesFile is unset (set XDG_CONFIG_HOME for the gate call); (c) a .gitignore that is a symlink to a FIFO, a socket, a character device (symlink to /dev/zero or /dev/tty) and a directory named .gitignore; (d) a FIFO .gitattributes or .gitignore inside a nested repository or submodule work tree; (e) a FIFO $GIT_DIR/info/sparse-checkout or a FIFO named by core.hooksPath/includeIf files; (f) a FIFO under .git that check 4 might read (packed-refs, HEAD, index) — say which hang before check 4 (out of the claim) and which inside it; (g) a source that is regular when the pre-check runs and replaced by a FIFO before git status (race; is it reachable in practice?).
+For each: gate rc, check-clean, the detail line, wall time, and your label (FORGERY = PASS on hidden content; HANG = no exit within your bound; REFUSED; OUT-OF-SURFACE = blocks before check 4).
+
+# Acceptance
+Route table with verdicts; every FORGERY/HANG with a minimal reproduction script in your seat directory."""),
+ ("S77MutGate", "mutation-tester", f"""# Target
+Mutation-test the W gate change (the `r77 C1` block and the timeout wrapping in tools/souji-pre-report-gate.sh at {W}) against the frozen C1 counter.
+
+# Change
+1. Copy the gate and tools/souji-receipt-write.py into one scratch dir. Build at least twelve single-edit mutants of the new code, e.g.: drop the info/exclude check; drop info/attributes; drop the core.excludesFile check; drop core.attributesFile; drop the XDG default; drop the relative-path join; change `! -f` to `! -e`; drop -name .gitattributes from find; drop the find; `-quit` after the first hit; ignore the -1 scan-failure value; print a different class; remove `timeout`; timeout 1 s.
+2. For each mutant run the C1 counter (fresh --work each). A mutant with SUMMARY mismatches=0 EXIT=0 is a survivor (finding): name the protection the counter does not measure and, if you can, a fixture route that would kill it.
+3. Run the r76 counter (census/round-76/c1-evade-counter.py) and tests/fixtures/r36-report-gate.py against two of your survivors.
+
+# Acceptance
+Mutant table: id, edit, SUMMARY, verdict; survivors as findings with severity and a proposed killing route."""),
+ ("S77MutCounter", "mutation-tester", f"""# Target
+Mutation-test the C2 instrument (census/round-77/c2-pointer-counter.py) and forge ledgers against it.
+
+# Change
+1. At least ten single-edit mutants of the counter (drop R0; accept CAPTURED without a frozen digest; drop the digest compare in MOVED; drop the POLICY_LOCAL prefix test; FLEET without the `.ufo/` test; TOKEN without the continuation test; ABSENT without the history test; ABSENT without the parse-artefact test; count REFUSED as resolved; ignore unknown ledger ids). For each: do the five committed controls still read red and the honest ledger at A still 35/35? A mutant that leaves every control red is a survivor: name the forgery it would let through.
+2. Forge ledgers the frozen counter ACCEPTS although a row misdescribes reality, e.g.: TOKEN rows whose targets merely start with the stripped token but are unrelated to the sentence (P22/P23); FLEET for a fleet path that is not runtime; MOVED to a byte-equal copy in an unrelated round; QUARANTINED for any path under .ufo/quarantine/. Report each with the counter's output and your judgement of how serious the misdescription is.
+
+# Acceptance
+Mutant table with verdicts; forged-ledger table (rows, counter verdict, misdescription yes/no, severity)."""),
+ ("S77Reviewer", "reviewer", f"""# Target
+Review the round-77 diff {BASE}..{A} for correctness.
+
+# Change
+1. `git diff {F} {W} -- tools/souji-pre-report-gate.sh`: nonreg_sources() (-e/-f semantics on symlinks and dangling links; `git config --path --get` output for unset, relative and ~ values; XDG/HOME fallback when both unset; the find expression precedence with -prune/-o and `! -type f`; the `|| echo -1` path since `wc` masks find's status), the timeout wrapping of the command substitution and the heredoc (does stdin still reach python under timeout?), rc 124 handling, D30 no-path-echo.
+2. census/round-77/c1-nonreg-counter.py: process-group kill, communicate after kill, row builders produce the intended trees (run two and inspect), population cross-check.
+3. census/round-77/c2-pointer-counter.py: rev_digest vs disk_digest shape equality (file vs dir vs symlink, empty dir), R1 precedence over the ledger, TOKEN range rule, ledger parsing (duplicate ids, short rows).
+4. Check preregistration.txt against every receipt in census/round-77 (controls/, records/): list mismatches (zero is valid). Run python3 -B tools/souji-freeze-check.py --root {LANE} --prereg census/round-77/preregistration.txt --rev {F} --substance --chronology and at --rev {A}.
+
+# Acceptance
+Per item SOUND / DEFECT with file:line; findings by severity."""),
+ ("S77CriticClaims", "critic", f"""# Target
+Attack the two claims as claims (axis, predicate, controls, separability, do-nothing reachability, label rulings).
+
+# Change
+1. C1: n8 is FAIL by ruling although git never opens that FIFO (the base gate passes it in 0.1 s). Is the before count (9) inflated by policy? Would the claim hold on the 8 hang rows alone? Is a whole-gate `timeout` (fail closed after N seconds) a cheaper honest fix the population fails to credit, and is the class requirement fair? Are o1-o3 rows the base already passes evidence or decoration?
+2. C2: is "calibration" the right axis (self-assessment pointers vs observed repo state)? Ten MOVED rows resolve with a ledger and no new bytes: is the claim mostly bookkeeping (the operator calls bookkeeping-only rounds thin)? Can a do-nothing or trivial ledger reach 35/35 (try: a ledger generated mechanically by a script that guesses classes from path prefixes — does the counter accept it, and does that matter if the classification is then true)?
+3. Sourced-claim check: does C1's code rest on S321 or only cite it? Does C2 rest on S322?
+4. Universal clauses in the preregistration not enumerated by a counter.
+
+# Acceptance
+Per question: HOLDS / QUALIFIED / FALLS with evidence; findings by severity."""),
+ ("S77CriticDiscern", "critic", f"""# Target
+Discernment attack on the ledger classifications and on the routed r76 defects.
+
+# Change
+1. For each of the 31 rows of {R}/c2-pointer-ledger.tsv, open the cited base line (`git show {BASE}:<file> | sed -n <line>p`) and the evidence (MOVED target, fleet path, TOKEN targets, quarantine path) and judge whether the class describes what the sentence meant. Table: id, class, AGREE/DISAGREE, reason. Pay special attention to P14 (ABSENT vs QUARANTINED), P21-P23 (TOKEN targets), P15/P16 (empty quarantine dirs as LOCAL-POLICY), P01/P08 (fleet files cited as lane evidence).
+2. Read {LANE}/corpus/lessons/round-76-verifier-spotcheck.md (Routed defects 1-5) and {LANE}/corpus/lessons/round-76.md `## Routed to round 77` (a)-(c). For each, say whether round 77's committed bytes address it, partly address it, or leave it.
+3. Mission fit: souji = stale/duplicate/preserved artifact census with per-artifact pushed/moved/stale receipts; quarantine before delete; never history or credentials. Does capturing ignored wave evidence by force-add fit (was .ufo/waves/ ignored for a reason)? Should the lane instead have rewritten the dangling sentences (it cannot: SCORECARD rows are append-only)?
+
+# Acceptance
+Classification table; per routed item ADDRESSED / PARTIAL / OPEN with evidence; findings by severity."""),
+ ("S77Sentinel", "sentinel", f"""# Target
+Fail-closed / security / resource review of the W gate change ({W}) and of the K capture ({K}).
+
+# Change
+1. The new pre-check runs `git rev-parse --absolute-git-dir` and `git config --path --get` before any guard: can a repo-local config (include.path to a FIFO, includeIf, core.hooksPath, alias) make those calls block or run code? Probe in scratch with a timeout and setsid.
+2. find over the lane: symlink loops, a 200k-entry ignored tree, a directory without read permission, a path with a newline in its name (does `wc -l` miscount so a refusal reads 0?); wall time and memory.
+3. `timeout -k 5 300` on a command substitution: is any child left after a kill (check with ps)? Does SIGTERM to the gate leave the python/git children running?
+4. Output: no path echo for the new class (D30)?
+5. The K capture: scan the 15 committed files for credential shapes (keys, tokens, auth headers, private paths under ~/.omp or ~/.ssh) and for host-identifying data beyond what other committed wave evidence already carries.
+
+# Acceptance
+Route table with verdicts (EXEC / HANG / ok / leak); findings by severity with reproduction scripts in your seat dir."""),
+ ("S77Scribe", "scribe", f"""# Target
+Draft the round's corpus text for the L1 to integrate (drafts only in your seat dir).
+
+# Change
+1. Draft SOURCES rows S321 (git dir.c add_patterns at v2.56.0, https://raw.githubusercontent.com/git/git/v2.56.0/dir.c, capture census/round-77/srcs/git-dir.c-v2.56.0, sha256 53e5ed2b3b65409331021ec0075d9405fdd690598ba96cc5ec8077c03b6220a6, 115474 bytes, HTTP 200) and S322 (git-add(1) at v2.56.0, https://raw.githubusercontent.com/git/git/v2.56.0/Documentation/git-add.adoc, capture census/round-77/srcs/git-add.adoc-v2.56.0, sha256 42089b80b378a7e9711dde024b7ec94a6863378164ea434a34c6af07632e65db, 16586 bytes). Match the column shape of the last rows of {LANE}/corpus/SOURCES.md (S319, S320) exactly; quotes <=25 words, located by line number in the capture; re-fetch both yourself and compare sha256.
+2. Draft two short knowledge sections (read {LANE}/corpus/knowledge/filter-filemode-witness.md r76 section and the newest pointer-related knowledge entry under {LANE}/corpus/knowledge/ first): (a) non-regular exclude/attribute sources and the gate's refusal rule with its stated limits; (b) the pointer-resolution ledger: classes, the verification rule each class carries, the capture-at-own-path rule for local-only evidence, stated limits. Cite receipt paths under census/round-77/records and controls.
+3. Validate: copy {LANE}/corpus into scratch, append your rows after S320 in the Registry table, run /home/vgpnk/Projects/shokunin/scripts/sources-census.sh validate --file <scratch>/corpus/SOURCES.md; report exit code and findings.
+
+# Acceptance
+Files: S77Scribe/sources-rows.md, S77Scribe/knowledge-r77.md, S77Scribe/census-validate.txt; the census exit code."""),
+]
+
+spec = {
+    "wave": "souji-r77-w1",
+    "milestone": "souji r77: falsification of C1 gate non-regular-source refusal and C2 self-assessment pointer resolution",
+    "reportDir": ".ufo/waves/round-77/w1",
+    "context": context,
+    "items": [{"name": n, "role": r, "prompt": HEAD + p} for n, r, p in items],
+}
+with open(f"{LANE}/.ufo/waves/round-77/w1-spec.json", "w") as f:
+    json.dump(spec, f, indent=1)
+print(len(items), "items")

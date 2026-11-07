@@ -1,0 +1,100 @@
+=== M01-r0-drop  sha256=4942e00ba1c07126fb815cdf04f54be0dbabb2316a54ab7d100215ce41e425d1
+@@ -199,7 +199,7 @@
+         frozen = None if frozen == "-" else frozen
+         where = f"{file}:{line}"
+         blob = git(root, "show", f"{BASE}:{file}", check=False).stdout.decode("utf-8", "replace").split("\n")
+-        if not (line.isdigit() and 0 < int(line) <= len(blob) and token in blob[int(line) - 1]):
++        if False and not (line.isdigit() and 0 < int(line) <= len(blob) and token in blob[int(line) - 1]):
+             counts["errors"] += 1
+             print(f"ITEM {iid} {where} status=ERROR why=token not on the base line")
+             continue
+=== M02-captured-no-digest  sha256=b063dc882b35bc9f2c2418a8a4e3d64e6a8e1f707f3bb2272608b22ab49de0ea
+@@ -205,7 +205,7 @@
+             continue
+         at_rev = rev_digest(root, rev, token)
+         if at_rev is not None:
+-            if frozen is not None and at_rev == frozen:
++            if frozen is None or at_rev == frozen:
+                 counts["resolved"] += 1
+                 print(f"ITEM {iid} {where} status=CAPTURED")
+             else:
+=== M03-moved-no-digest-compare  sha256=f53fbdddb9ac707741c26d066702c893937230cdc4112f4c877bc07963c50f68
+@@ -225,7 +225,7 @@
+         elif cls == "MOVED":
+             if frozen is None:
+                 why = "no frozen bytes to move"
+-            elif rev_digest(root, rev, target) != frozen:
++            elif rev_digest(root, rev, target) is None:
+                 why = "target absent at rev or digest differs"
+         elif cls == "LOCAL-POLICY":
+             if frozen is None:
+=== M04-policy-local-no-prefix  sha256=80ae098fb5e78d430bb54ef30fe8257c5acbd5b455a47e79e4a1554b855f637b
+@@ -230,7 +230,7 @@
+         elif cls == "LOCAL-POLICY":
+             if frozen is None:
+                 why = "no frozen bytes"
+-            elif not token.startswith(POLICY_LOCAL):
++            elif False:
+                 why = "not under a policy-local prefix"
+             elif on_disk != frozen:
+                 why = "lane disk bytes absent or changed"
+=== M05-fleet-no-ufo-test  sha256=75d5608f120b80ae640ce7733e39eb699a135826d0114f0cebbb45c7ac8591e7
+@@ -242,7 +242,7 @@
+             if not target.startswith(".ufo/quarantine/") or not os.path.lexists(os.path.join(root, target)):
+                 why = "quarantine target absent on the lane disk"
+         elif cls == "FLEET":
+-            if not token.startswith(".ufo/") or not os.path.lexists(os.path.join(fleet, token)):
++            if not os.path.lexists(os.path.join(fleet, token)):
+                 why = "not under the fleet root"
+         elif cls == "TOKEN":
+             why = token_ok(root, rev, fleet, token, [t for t in target.split(";") if t])
+=== M06-token-no-continuation  sha256=1ea86327b81e9e019676f11773627f9b89d4bb1577e9e51ee2e79a34350a6ee8
+@@ -135,7 +135,7 @@
+             return f"target absent at rev: {t}"
+         if trailing:
+             stem = token.rstrip(">\\")
+-            if not t.startswith(stem):
++            if False:
+                 return f"target does not continue the token: {t}"
+         else:
+             d, b = os.path.split(t)
+=== M07-absent-no-history  sha256=fa4b4d597ee4ab63c10448c2ea1436516ab5727a99762ae819dbfc6f8b62988b
+@@ -251,7 +251,7 @@
+                 why = "token carries a parse artefact (TOKEN, not ABSENT)"
+             elif os.path.lexists(os.path.join(fleet, token)):
+                 why = "exists under the fleet root"
+-            elif git(root, "log", "--all", "--format=%H", "-1", "--", token).stdout.strip():
++            elif False:
+                 why = "present in lane history"
+         if why:
+             counts["refused"] += 1
+=== M08-absent-no-parse-artefact  sha256=788a7374f98f5e8a5157ed3b47d10843c35f5615be973c8c62da6ee484ae42b2
+@@ -247,7 +247,7 @@
+         elif cls == "TOKEN":
+             why = token_ok(root, rev, fleet, token, [t for t in target.split(";") if t])
+         elif cls == "ABSENT":
+-            if token[-1] in ">\\-" or ".." in token.rsplit("/", 1)[-1]:
++            if False:
+                 why = "token carries a parse artefact (TOKEN, not ABSENT)"
+             elif os.path.lexists(os.path.join(fleet, token)):
+                 why = "exists under the fleet root"
+=== M09-refused-as-resolved  sha256=d43a29a49547d6ad37c05b9d100e843148f35cfd2f6f12271e34714a3ce253e8
+@@ -254,7 +254,7 @@
+             elif git(root, "log", "--all", "--format=%H", "-1", "--", token).stdout.strip():
+                 why = "present in lane history"
+         if why:
+-            counts["refused"] += 1
++            counts["resolved"] += 1
+             print(f"ITEM {iid} {where} status=REFUSED class={cls} why={why}")
+         else:
+             counts["resolved"] += 1
+=== M10-ignore-unknown-ids  sha256=ca0f3e559c1868f5b250853abb2f21f7f9145e908cce87a3496d60109b141ade
+@@ -193,7 +193,7 @@
+     else:
+         print("# ledger none")
+     ids = {r[0] for r in pop}
+-    unknown = sorted(set(ledger) - ids) + bad_ledger
++    unknown = []
+     counts = dict(resolved=0, unresolved=0, refused=0, mismatched=0, errors=0)
+     for iid, file, line, token, frozen in pop:
+         frozen = None if frozen == "-" else frozen

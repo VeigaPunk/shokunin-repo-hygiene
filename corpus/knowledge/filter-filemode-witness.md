@@ -314,3 +314,44 @@ undeclared paths, so a gate refusing only above one survives it (S76MutGate M09)
 population is separable by file name alone (S76CriticClaims' filename-cheat tally scores 0); the tally
 itself binds bytes, not names: M08's bytes under X09's file name are UNBOUND
 (`wave-repair/tally-probes.txt`, arm by-name).
+
+## r77: an exclude source that is not a file (appended 2026-11-07)
+
+**Rule.** Before check 4 runs any git call that reads exclude or attribute sources, the gate requires every
+such source that exists to be a regular file (a symlink counts by its target): `$GIT_DIR/info/exclude`,
+`$GIT_DIR/info/attributes`, `core.excludesFile` and `core.attributesFile` (or, when unset, their
+`$XDG_CONFIG_HOME/git/ignore` and `…/attributes` defaults), and every `.gitignore`/`.gitattributes` in the
+work tree outside `.git`. Any other kind fails `clean` with `RECEIPT-NONREGULAR-SOURCE` and a count, never a
+path. Check 4's `git status` and python block also run under `timeout -k 5 300` (backstop; expiry fails
+`clean`).
+
+**Why.** git opens an exclude file with a blocking open(2) and calls fstat only afterwards, for the size (it never tests the type)
+(S321, dir.c add_patterns lines 1164-1169; attr.c does the same for attributes, S064), and opening a FIFO
+blocks until a writer appears (fifo(7), S062). A FIFO in any of those places held the lane-base gate inside
+`git status` forever (S76Sentinel MEDIUM-2): 8 of the 16 frozen r77 rows read `HANG` at the 30 s bound
+(`census/round-77/controls/c1-K-a-do-nothing.txt`, mismatches=9 hangs=8, EXIT=1). The W gate reads
+`SUMMARY rows=16 mismatches=0 errors=0 hangs=0`, each refusal in about 0.1 s
+(`census/round-77/records/c1-after.txt`); r76's 30 rows, r36 21/21 and r27 4/4 hold
+(`records/c1-regress-*.txt`).
+
+**Rulings and controls.** n8 (a FIFO `.gitignore` inside a directory a tracked rule ignores) is refused
+although git never opens it: the gate fails closed and does not model git's descent — a policy row, not a
+hang row. The one-path rows o1-o3 kill the r76 survivor M09 (`controls/c1-K-c-m09-one-path.txt`, 11
+mismatches); a refuse-all gate fails the four positive controls (`c1-K-b`, 7) and a blanket refusal of every
+non-regular entry or any configured `core.excludesFile` fails p2/p3 (`c1-K-d`, 7).
+
+**Stated limits.** A FIFO `$GIT_DIR/config` or `~/.gitconfig` blocks git in checks 1-3, before this
+surface; the timeout bounds check 4 only; a caller's `XDG_CONFIG_HOME`/`HOME` decides which default file is
+examined; a source swapped for a FIFO between the pre-check and `git status` is caught only by the
+backstop.
+
+**Wave repairs (after measurement, `844b2d70`).** Seats found the W pre-check checked the per-worktree git
+dir while git reads `info/exclude`/`info/attributes` from the common dir (S77Reviewer MEDIUM-1, S77Sentinel
+MEDIUM-1), refused a symlinked `.gitignore` whose target is regular although the rule counts a symlink by its
+target (S77CriticClaims), could not fail on a scan error (`wc`'s status; S77MutGate F5), refused
+`core.excludesFile=/dev/null` (S77Reviewer LOW-3), left the index and `info/sparse-checkout` to the 300 s
+backstop (S77ExecEvade f3/sp1), and ran a repository fsmonitor hook in `git status` (S77Sentinel LOW-4). The
+repaired gate resolves every git-dir path with `rev-parse --git-path`, scans from the work-tree top with
+`-xtype f`, fails closed on a scan error, passes `/dev/null`, times its own git calls and pins
+`core.fsmonitor=false`. `census/round-77/records/wave-repair/repair-probes.txt`: 10 of 10 arms as expected
+(W vs R); the frozen counters at the repair: 16/16, r76 30/30, r36 21/21, r27 4/4.

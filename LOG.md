@@ -3013,3 +3013,13 @@ addendum, appended to the prereg, commits 8a793e7ae9131578bdec393982760217f62095
 - **Domain trial:** the repaired gate over the lane itself at the final tip (`census/round-76/records/c1-domain-trial.txt`).
 - **Tools:** none installed; no pacman, sysctl, sudo or kernel change. **Scratch:** `/fast/scratch/hyaku/souji-r76/` removed at landing.
 
+
+## Round 77 (2026-11-07, Linux; attempt 1) — the pre-report gate refuses non-regular exclude sources instead of hanging (C1 operability), every self-assessment evidence pointer resolves to a verified class (C2 calibration)
+
+- **Motivation (evidence):** S76Sentinel MEDIUM-2 (a FIFO `.gitignore`/`core.excludesFile` hangs the gate; r76 lesson routed (a)); `tools/souji-pointer-check.py` over SCORECARD/SKILL/QUALITY/README/PROVINCE at base `d4f51563` printed `missing=35`, 14 of them wave evidence only on this host's disk (lesson M1).
+- **Controls `43822328`, freeze `a9979807`** (freeze-check findings=0): C1 lane-base gate 9 mismatches / 8 hangs, refuse-all 7, M09 11, blanket 7; C2 no ledger 35 unresolved, blanket ABSENT 31 refused, local-only 4, stub capture 4 mismatched, name-only MOVED 3 — all EXIT=1.
+- **Candidates:** gate `9b496b08`; capture `6690cb5a` (14 files at their cited paths); ledger `8bf42fc6`. **After-arms `ef04ca6c`:** C1 0/0 (r76 30/30, r36 21/21, r27 4/4); C2 35/35; pointer check missing 31.
+- **Wave w1:** 12 seats, 0 dead, every frozen number reproduced. Repaired after measurement `844b2d70` (common dir, symlink by target, fail-closed scan, `/dev/null`, index/sparse-checkout, timed pre-check, fsmonitor off); repair probes 10/10, frozen counters 0 at the repair.
+- **Frontier:** S321, S322 mined; QUALITY Q138, Q139; knowledge `filter-filemode-witness.md` r77 and new `self-assessment-pointer-resolution.md`; README frontier r77; SKILL gate rows r77; SCORECARD capability rows r77.
+- **Domain trial:** the repaired gate over the lane at the report tip through the committed `census/round-77/probes/domain-trial.sh` (`census/round-77/records/c1-domain-trial.txt`); the C2 census itself is a domain task on the lane's own artifacts.
+- **Tools:** none installed; no pacman, sysctl, sudo or kernel change.
