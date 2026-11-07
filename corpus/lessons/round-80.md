@@ -27,6 +27,39 @@ No inherited lane leftovers (`jj-lane.sh state` at start: `local=remote=f80f9368
 watchdog log has no `lane-dead-no-report souji round=80`). No `considerthese/` directory exists in this lane; no
 shokuknow theme taken (Assimilation: none).
 
+## Measured
+
+Staged commits in the order the preregistration binds: P `515d57c8c559d64d0c071cc25b07df0b815bd77a` (counters,
+populations, control variants and every control receipt, rec.sh, S327/S328 captures and rows, census-before,
+pre-freeze feasibility); F `aaad410f4de2c1b0e98f1a7f305736dfcee5c5ab` (preregistration; freeze-check `--substance
+--chronology` `SUMMARY claims=2 findings=0`, `census/round-80/records/freeze-check-at-F.txt`); W1
+`bd263c3f7d376e617c2fde5b99793622b0908b53` (C1 counter); W2 `836dac3e336863c57d9d7125837ed22b22d8d044` (C2 tool);
+A `a4aa888037922b7b5ccfac7150f156f92af5916e` (after-arms, regressions, diagnosis receipts).
+
+- C1 (frozen harness `census/round-80/c1-false-row-harness.py`, 18 rows): K-a r79 counter mismatches=3 accepted=3
+  (NF6b, NF8, NF10; `controls/c1-K-a-r79-counter.txt`) → `records/c1-after.txt` mismatches=0 accepted=0 EXIT=0. K-b
+  refuse-all 18/18 on the harness but 3/22 on the r78 regression (`controls/c1-K-b-refuse-all-regress-r78.txt`);
+  ablations without-regular NF8, without-capture-root NF10, without-whole NF6b, 1 accepted each. Regressions at W1:
+  r78 22/22 + 12/12, r77 35/35 + 7/7, r79 harness 9/9 (`records/c1-regress-*.txt`).
+- C2 (frozen counter `census/round-80/c2-signal-counter.py`, 15 rows): K-a base tool mismatches=12 orphans=12, p1-p3
+  match (`controls/c2-K-a-do-nothing.txt`); K-b trap-only 12/12, K-c no-session-kill 12/12 → `records/c2-after.txt`
+  mismatches=0 errors=0 orphans=0 EXIT=0 (every signal row exits within the 5 s settle with 128 + n: 0.8-3.9 s, the slowest rows ran while the C1 after-arms ran beside the counter). The receipt was launched
+  with `&` from a subshell (`launch=` line: SigIgn 0x1000004 = SIGQUIT and SIGXFSZ ignored, SigBlk 0x2 = SIGINT
+  blocked); every signal row's `ign=` at delivery is `0000000000000004` (SIGQUIT only, which bash ignores itself),
+  so the INT rows measured a trappable INT whatever the launch. Regressions at W2: r13 5/5
+  (`records/c2-regress-r13.txt`), r17 total=35 failed=0 skipped=2 (`records/c2-regress-r17.txt`), selftest 108 checks
+  0 failed on the committed file (`records/c2-regress-selftest-committed-mode.txt`; see M1 for the first, red run on a
+  mode-0644 copy, `records/c2-regress-selftest.txt` 81/51), domain trial v3 identical=yes with 3 RESULT lines per arm
+  (`records/c2-domain-trial.txt`; see M2 for v1/v2).
+
+## Mistakes
+
+| # | class | evidence pointer | captured-by | fix |
+|---|---|---|---|---|
+| M1 | measurement environment: the C2 selftest conjunct was replayed on a `git show` copy (mode 0644); the selftest runs `"$SELF"` directly, so 51 of 81 checks failed with rc 126 for the base tool and the candidate alike — the first A receipt of that conjunct is red for a reason that is not the candidate | `census/round-80/records/c2-regress-selftest.txt` (81/51, candidate copy); `census/round-80/records/diagnosis/selftest-base-mode0644-copy.txt` (81/51, BASE copy); `census/round-80/records/c2-regress-selftest-committed-mode.txt` (108/0, the committed 100755 file) | none: pre-freeze feasibility (Q70) ran the C2 counter only, not the regression conjuncts (`records/prefreeze-feasibility.txt` lists no selftest run) | QUALITY Q145 (replay the committed object, mode included; feasibility runs every conjunct before F). The diagnosis receipt is the failing case: the same command on the base copy fails, so the defect is the copy, and the rule fails whenever a mode-dropping copy is replayed |
+| M2 | vacuous equivalence: domain trial v1 compared two empty outputs (both copies, outside the lane, looked for `<copy>/../tools/souji-verify.sh` and exited 1) and printed identical=yes; v2 ran the arms from different locations, and only the lane-located arm printed the live-fleet GUARD note (the tool derives roots from its own path) | `census/round-80/records/diagnosis/c2-domain-trial-v1-vacuous.txt`, `c2-domain-trial-v2-location.txt`; probes `census/round-80/probes/domain-trial-v1-vacuous.sh`, `-v2-location.sh` | none (the r79 domain trial checked check lines, not an expected verdict count) | v3 (`census/round-80/probes/domain-trial.sh`) installs both arms in the same layout, pins the engine and ledger, and requires one RESULT line per target in both arms; shown able to fail: two empty arms now print identical=no, EXIT=1 (`census/round-80/records/diagnosis/domain-trial-v3-refuses-empty.txt`); QUALITY Q145 |
+| M3 | rule over-fit caught before freeze: the first NF10 draft ("the target keeps the token's whole path below round-<N>") refused the legitimate captures r78 L15 and r77 P31, which flatten the wave subdirectory | `census/round-80/records/prefreeze-feasibility.txt` | the regression conjunct (r78 22/22, r77 35/35) in pre-freeze feasibility — it worked | replaced by the capture-root rule before P; recorded so the closure can see the rule was shaped by the regression, not by the target rows |
+
 ## Gate
 
 - **S327 admit (A, mined)** — git-ls-tree(1) as installed: `/usr/share/man/man1/git-ls-tree.1.gz` owned by git

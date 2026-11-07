@@ -3046,3 +3046,14 @@ addendum, appended to the prereg, commits 8a793e7ae9131578bdec393982760217f62095
 - **Frontier:** S325, S326 mined; QUALITY Q142, Q143; knowledge `corpus/knowledge/gate-signal-handling.md`; README frontier r79; SKILL gate rows r79; SCORECARD r79 rows.
 - **Domain trial:** the W1 gate over the lane itself at the report tip (`census/round-79/records/c1-domain-trial.txt`).
 - **Tools:** none installed; no pacman, sysctl, sudo or kernel change.
+
+## Round 80 (2026-11-07, Linux; attempt 1) — the pointer counter refuses the r79 wave's false ledger rows (C1 calibration), the quarantine tool answers a caller's signal (C2 operability)
+
+- **Motivation (evidence):** r79 spot-check routed defect 6: the r79 counter accepts NF6b, NF8 and NF10 (`census/round-79/records/wave-w1/seats/S79MutCounter.md`; at base the frozen r80 harness confirms accepted=3, `census/round-80/controls/c1-K-a-r79-counter.txt`). r79 route (c) / S79Connector: `tools/souji-quarantine.sh` runs its bounded children in `$(...)` with no trap; at base the frozen r80 counter shows 12 of 12 signal rows orphaned (`census/round-80/controls/c2-K-a-do-nothing.txt`).
+- **Controls `515d57c8`, freeze `aaad410f`** (freeze-check findings=0): C1 K-a 3 accepted, K-b refuse-all 18/18 but 3/22 on the r78 regression, ablations 1/1/1; C2 K-a 12, K-b trap-only 12, K-c no-session-kill 12. Every receipt carries a `launch=` line (r79 routed defect 1).
+- **Candidates:** counter `bd263c3f` (S327); tool `836dac3e` (S325, S326, S328, S068). **After-arms `a4aa8880`:** C1 accepted 0, r78 22/22 + 12/12, r77 35/35 + 7/7, r79 harness 9/9; C2 mismatches 0, orphans 0, r13 5/5, r17 35/0.
+- **Defective replays at A (lesson M1, M2):** the selftest conjunct was first replayed on a mode-0644 `git show` copy (81 checks, 51 failed; the base copy fails identically, `census/round-80/records/diagnosis/selftest-base-mode0644-copy.txt`) and then on the committed file (108/0); the domain trial v1 compared two empty outputs and v2 ran the arms from different locations; v3 runs both in one layout and requires 3 RESULT lines per arm (identical=yes; shown able to fail, `census/round-80/records/diagnosis/domain-trial-v3-refuses-empty.txt`).
+- **Frontier:** S327, S328 mined (a draft S329 withdrawn as a duplicate of S068); QUALITY Q144, Q145; knowledge `corpus/knowledge/gate-signal-handling.md` r80 section; README frontier r80; SKILL rows r80 and the quarantine exit codes; SCORECARD r80 rows.
+- **Domain trial:** base and candidate `--dry-run` over three real lane targets (`census/round-80/records/c2-domain-trial.txt`).
+- **Tools:** none installed; no pacman, sysctl, sudo or kernel change.
+
