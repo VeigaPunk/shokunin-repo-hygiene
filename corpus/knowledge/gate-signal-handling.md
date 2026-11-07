@@ -1,6 +1,6 @@
 # Gate signal handling — why a killed shell script leaves its `timeout` children running
 
-source: S325, S326, S328, S068
+source: S325, S326, S328, S075
 round: 79, 80
 status: mined (lane-verified on this host, bash 5.3.20, coreutils 9.12)
 
@@ -69,7 +69,8 @@ caused.
   not call setsid itself stays in that session, timeout's new groups included (S326 changes the group, not the
   session). The worker refuses to run if it is not its own session leader.
 - On TERM/INT/HUP the front's trap fires at once (it is in `wait`, S325) and scans `/proc/*/stat` for field 6, the
-  session id (S068), after the last `) ` (the comm field may hold spaces and parentheses), with no fork per process;
+  session id (S075, which supersedes S068), after the last `) ` (the comm field may hold spaces and parentheses; the whole file is read, because a comm may also hold a newline —
+  S80ScoutSources MEDIUM-3, repaired at R3 `4a499e9a`), with no fork per process;
   it SIGSTOPs every member (so none can fork during the kill) and SIGKILLs them, repeating the scan; after 8 kill
   passes a ninth scan that still lists a member makes the front print a stderr note (the SIGNAL line is not proof
   of a kill — the survivor census is; S80Scribe MEDIUM-2), then it removes the worker's private TMPDIR (the worker's own scratch, selftest fixtures and error files live
