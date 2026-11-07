@@ -29,6 +29,58 @@ done
 [[ $lane = /* && $report = /* && $prereg = /* && -n $branch && $branch != -* && $branch != *..* && $branch != */* ]] || usage_error
 fail=0
 check() { printf 'check-%s=%s\n' "$1" "$2"; [[ $2 != FAIL ]] || fail=1; }
+# r79 C1 (S325 bash 5.3 manual "Signals"; S326 coreutils timeout.c): every git, find and python child runs under
+#    `timeout`, which moves itself and the command into a NEW process group (S326: `if (!foreground) setpgid
+#    (0, 0);`). A caller's TERM/HUP to the gate killed the shell and left that group running (the blocked child
+#    outlived the gate by up to the 300 s bound), and bash defers a trapped signal while it waits for a
+#    foreground command (S325: "it will not execute the trap until the command completes"), so a trap alone
+#    cannot act. Children therefore run as asynchronous jobs through gate_run, which `wait`s on them: S325
+#    "the `wait` builtin will return immediately with an exit status greater than 128, immediately after which
+#    the shell executes the trap". The trap kills the running child's process group (and the child itself, in
+#    case it has not yet called setpgid), removes the gate's private scratch dir, prints check-signal=FAIL and
+#    the class RECEIPT-GATE-SIGNALED, and exits 128 + the signal number. Output reaches the shell through files
+#    in that scratch dir (mktemp -d under $TMPDIR), never through `$(...)` or `<(...)`, which bash also waits
+#    for in the foreground.
+gate_tmp= gate_child=
+gate_cleanup() { [[ -n $gate_tmp ]] && rm -rf -- "$gate_tmp"; gate_tmp=; }
+gate_on_signal() {  # $1 name, $2 number
+  trap '' TERM INT HUP
+  if [[ -n $gate_child ]]; then
+    kill -KILL -- "-$gate_child" 2>/dev/null
+    kill -KILL "$gate_child" 2>/dev/null
+  fi
+  gate_cleanup
+  printf 'check-signal=FAIL\n'
+  printf 'detail-signal: RECEIPT-GATE-SIGNALED: SIG%s received; the running child group was killed\n' "$1" >&2
+  exit $((128 + $2))
+}
+trap 'gate_on_signal TERM 15' TERM
+trap 'gate_on_signal INT 2' INT
+trap 'gate_on_signal HUP 1' HUP
+trap gate_cleanup EXIT
+gate_tmp=$(mktemp -d -t souji-gate.XXXXXXXX) || { printf 'gate: mktemp failed\n' >&2; exit 2; }
+gate_run_file() {  # [-c] SECS CMD...: stdout (and stderr with -c) in $gate_tmp/o; returns the command's status
+  local merge=0 rc
+  [[ $1 == -c ]] && { merge=1; shift; }
+  local secs=$1; shift
+  if (( merge )); then timeout -k 5 "$secs" "$@" <&0 >"$gate_tmp/o" 2>&1 &
+  else timeout -k 5 "$secs" "$@" <&0 >"$gate_tmp/o" 2>/dev/null &
+  fi
+  gate_child=$!
+  wait "$gate_child"; rc=$?
+  gate_child=
+  return "$rc"
+}
+gate_run() {  # [-c] VAR SECS CMD...: like `VAR=$(CMD)` (trailing newlines stripped), bounded and interruptible
+  local merge=() var rc data=
+  [[ $1 == -c ]] && { merge=(-c); shift; }
+  var=$1; shift
+  gate_run_file "${merge[@]}" "$@"; rc=$?
+  IFS= read -r -d '' data < "$gate_tmp/o"
+  while [[ $data == *$'\n' ]]; do data=${data%$'\n'}; done
+  printf -v "$var" '%s' "$data"
+  return "$rc"
+}
 # 0. r78 C1 (S324 git setup.c get_common_dir_noenv; S323 git config.adoc "Includes"; S062 fifo(7)): every git
 #    command first discovers the repository — it reads $GIT_DIR/HEAD and $GIT_DIR/commondir with a plain
 #    blocking open, then the system, global ($HOME/.gitconfig, $XDG_CONFIG_HOME/git/config), repository and
@@ -52,7 +104,7 @@ check() { printf 'check-%s=%s\n' "$1" "$2"; [[ $2 != FAIL ]] || fail=1; }
 #    a non-regular file (S78Sentinel MEDIUM-2); the gitfile and commondir are read under a timeout (S78Reviewer
 #    LOW TOCTOU); the branch's loose ref is held to the same rule (S78CriticClaims evidence 6).
 gate_git_timeout=45
-gitsrc_n=0 gitsrc_err=0 gitsrc_nodes=0
+gitsrc_n=0 gitsrc_err=0 gitsrc_nodes=0 gitsrc_line=
 declare -A gitsrc_seen=()
 gitsrc_one() {  # $1 path, $2 depth (config files only; -1 = not a config file)
   local p=$1 depth=$2 rc canon rec v
@@ -65,11 +117,12 @@ gitsrc_one() {  # $1 path, $2 depth (config files only; -1 = not a config file)
   gitsrc_seen[$canon]=1
   gitsrc_nodes=$((gitsrc_nodes + 1))
   (( depth <= 10 && gitsrc_nodes <= 64 )) || { gitsrc_err=1; return 0; }
-  mapfile -d '' recs < <(cd / && GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1 timeout -k 5 "$gate_git_timeout" \
+  gate_run_file "$gate_git_timeout" env -C / GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1 \
           git --no-optional-locks config -z --no-includes --type=path --file "$p" \
-          --get-regexp '^include(if\..*)?\.path$' 2>/dev/null)
-  wait $! 2>/dev/null; rc=$?
+          --get-regexp '^include(if\..*)?\.path$'
+  rc=$?
   case $rc in 0|1) ;; *) gitsrc_err=1; return 0 ;; esac
+  mapfile -d '' recs < "$gate_tmp/o"
   for rec in "${recs[@]}"; do
     [[ $rec == *$'\n'* ]] || { gitsrc_err=1; continue; }
     v=${rec#*$'\n'}
@@ -78,15 +131,16 @@ gitsrc_one() {  # $1 path, $2 depth (config files only; -1 = not a config file)
     gitsrc_one "$v" $((depth + 1))
   done
 }
-gitsrc_read1() {  # first line of a small regular file, bounded in time (the -f test races a swap)
-  timeout -k 2 5 head -n 1 -c 4096 -- "$1" 2>/dev/null
+gitsrc_read1() {  # first line of a small regular file into $gitsrc_line, bounded in time (the -f test races a swap)
+  gate_run gitsrc_line 5 head -n 1 -c 4096 -- "$1"
 }
 gitsrc_scan() {
   local gd cd v
   if [[ -e $lane/.git && ! -d $lane/.git && ! -f $lane/.git ]]; then gitsrc_n=$((gitsrc_n + 1)); return; fi
   if [[ -d $lane/.git ]]; then gd=$lane/.git
   elif [[ -f $lane/.git ]]; then
-    v=$(gitsrc_read1 "$lane/.git") || { gitsrc_err=1; return; }
+    gitsrc_read1 "$lane/.git" || { gitsrc_err=1; return; }
+    v=$gitsrc_line
     v=${v#gitdir: }
     [[ $v == /* ]] || v=$lane/$v
     gd=$v
@@ -95,7 +149,8 @@ gitsrc_scan() {
   cd=$gd
   gitsrc_one "$gd/commondir" -1
   if [[ -f $gd/commondir ]]; then
-    v=$(gitsrc_read1 "$gd/commondir") || { gitsrc_err=1; return; }
+    gitsrc_read1 "$gd/commondir" || { gitsrc_err=1; return; }
+    v=$gitsrc_line
     [[ $v == /* ]] || v=$gd/$v
     cd=$v
   fi
@@ -122,8 +177,8 @@ if (( gitsrc_n || gitsrc_err )); then
   check tip FAIL; printf 'detail-tip: skipped: discovery-source refusal\n' >&2
 else
   local_rc=0 remote_rc=0
-  local_tip=$(timeout -k 5 "$gate_git_timeout" git --no-optional-locks -C "$lane" rev-parse --verify "refs/heads/$branch^{commit}" 2>/dev/null) || { local_rc=$?; local_tip=; }
-  remote_data=$(timeout -k 5 "$gate_git_timeout" git --no-optional-locks -C "$lane" ls-remote --exit-code origin "refs/heads/$branch" 2>/dev/null) || { remote_rc=$?; remote_data=; }
+  gate_run local_tip "$gate_git_timeout" git --no-optional-locks -C "$lane" rev-parse --verify "refs/heads/$branch^{commit}" || { local_rc=$?; local_tip=; }
+  gate_run remote_data "$gate_git_timeout" git --no-optional-locks -C "$lane" ls-remote --exit-code origin "refs/heads/$branch" || { remote_rc=$?; remote_data=; }
   remote_tip=$(printf '%s\n' "$remote_data" | awk 'NR==1 {print $1}')
   if [[ $local_tip =~ ^[0-9a-f]{40,64}$ && $remote_tip == "$local_tip" ]]; then check tip PASS; else check tip FAIL; printf 'detail-tip: local=%s remote=%s\n' "${local_tip:-<none>}" "${remote_tip:-<none>}" >&2; fi
   if (( local_rc == 124 || local_rc == 137 || remote_rc == 124 || remote_rc == 137 )); then
@@ -170,41 +225,41 @@ if [[ $shonen_count == 1 ]]; then check shonen PASS; else check shonen FAIL; pri
 #    /dev/null as core.excludesFile/core.attributesFile is the documented way to disable them and passes
 #    (S77Reviewer LOW-3); the pre-check's own git calls run under the same timeout (S77Sentinel MEDIUM-2).
 gate_timeout=300
-nonreg_sources() {
+nonreg_sources() {  # sets $nonreg: the count of non-regular sources, -1 when the scan failed
   local f n=0 v top hits
-  top=$(timeout -k 5 "$gate_timeout" git --no-optional-locks -C "$lane" rev-parse --show-toplevel 2>/dev/null) \
-    || { echo -1; return; }
+  nonreg=-1
+  gate_run top "$gate_timeout" git --no-optional-locks -C "$lane" rev-parse --show-toplevel || return
   for v in info/exclude info/attributes index info/sparse-checkout; do
-    f=$(timeout -k 5 "$gate_timeout" git --no-optional-locks -C "$lane" rev-parse --path-format=absolute \
-          --git-path "$v" 2>/dev/null) || { echo -1; return; }
+    gate_run f "$gate_timeout" git --no-optional-locks -C "$lane" rev-parse --path-format=absolute \
+          --git-path "$v" || return
     [[ -e $f && ! -f $f ]] && n=$((n + 1))
   done
   local xdg=${XDG_CONFIG_HOME:-${HOME:+$HOME/.config}}
   for v in core.excludesFile:ignore core.attributesFile:attributes; do
-    f=$(timeout -k 5 "$gate_timeout" git --no-optional-locks -C "$lane" config --path --get "${v%%:*}" 2>/dev/null)
-    case $? in 0|1) ;; *) echo -1; return ;; esac
+    gate_run f "$gate_timeout" git --no-optional-locks -C "$lane" config --path --get "${v%%:*}"
+    case $? in 0|1) ;; *) return ;; esac
     # unset: git falls back to $XDG_CONFIG_HOME/git/<name> (or $HOME/.config/git/<name>)
     [[ -z $f && -n $xdg ]] && f=$xdg/git/${v#*:}
     [[ -n $f && $f != /* ]] && f=$lane/$f
     [[ $f == /dev/null ]] && continue
     [[ -n $f && -e $f && ! -f $f ]] && n=$((n + 1))
   done
-  hits=$(find "$top" -path "$top/.git" -prune -o \( -name .gitignore -o -name .gitattributes \) \
-           ! -xtype f -printf x 2>/dev/null) || { echo -1; return; }
-  echo $((n + ${#hits}))
+  gate_run hits "$gate_timeout" find "$top" -path "$top/.git" -prune -o \( -name .gitignore -o -name .gitattributes \) \
+           ! -xtype f -printf x || return
+  nonreg=$((n + ${#hits}))
 }
 gate_src=$(readlink -f -- "${BASH_SOURCE[0]}" 2>/dev/null) || gate_src=
 gate_dir=
 [[ -n $gate_src ]] && gate_dir=$(cd "$(dirname "$gate_src")" && pwd) || gate_dir=
 if (( gitsrc_n || gitsrc_err )); then
   check clean FAIL; printf 'detail-clean: skipped: discovery-source refusal\n' >&2
-elif nonreg=$(nonreg_sources); [[ $nonreg != 0 ]]; then
+elif nonreg_sources; [[ $nonreg != 0 ]]; then
   check clean FAIL
   if [[ $nonreg == -1 ]]; then printf 'detail-clean: RECEIPT-NONREGULAR-SOURCE: source scan failed\n' >&2
   else printf 'detail-clean: RECEIPT-NONREGULAR-SOURCE: %s exclude/attribute source(s) are not regular files\n' "$nonreg" >&2; fi
-elif status=$(timeout -k 5 "$gate_timeout" git --no-optional-locks -C "$lane" -c core.fsmonitor=false status --porcelain=v1 --untracked-files=all 2>&1); then
+elif gate_run -c status "$gate_timeout" git --no-optional-locks -C "$lane" -c core.fsmonitor=false status --porcelain=v1 --untracked-files=all; then
   if [[ -n $status ]]; then check clean FAIL; printf 'detail-clean: %s\n' "$status" >&2
-  elif truth=$(timeout -k 5 "$gate_timeout" python3 -I -B - "$gate_dir/souji-receipt-write.py" "$lane" 2>&1 <<'PY'
+  elif gate_run -c truth "$gate_timeout" python3 -I -B - "$gate_dir/souji-receipt-write.py" "$lane" <<'PY'
 import sys, types
 path, lane = sys.argv[1], sys.argv[2]
 with open(path, "rb") as f:
@@ -290,7 +345,7 @@ if ign:
               "tracked .gitignore" % undeclared)
         sys.exit(1)
 PY
-  ); then check clean PASS
+  then check clean PASS
   else check clean FAIL; printf 'detail-clean: byte truth: %s\n' "$(printf '%s' "${truth:-no output}" | head -c 400 | LC_ALL=C tr -c '[:print:]' '?')" >&2; fi
 else check clean FAIL; printf 'detail-clean: git status failed or timed out: %s\n' "$status" >&2; fi
 # 5. The preregistration is mandatory; absence is never skipped.
@@ -305,7 +360,7 @@ if (( contract )); then
   shonen_path=${shonen:-$lane/SHONEN.md}
   checker=$lane/tools/souji-report-contract.py
   if [[ -f $checker && -s $report ]]; then
-    out=$(python3 -B "$checker" --report "$report" --shonen "$shonen_path" 2>&1); rc=$?
+    gate_run -c out "$gate_timeout" python3 -B "$checker" --report "$report" --shonen "$shonen_path"; rc=$?
     saw_fail=0 saw_check=0
     while IFS= read -r line; do
       case $line in
