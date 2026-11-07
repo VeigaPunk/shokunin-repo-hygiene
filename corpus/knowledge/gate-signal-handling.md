@@ -60,25 +60,37 @@ caused.
   `tools/souji-quarantine.sh` captures its bounded children (receipt engine 120 s, file digest 120 s, special scan
   60 s, directory digest 300 s, staging mv 60 s) in `$(...)`, often inside functions that are themselves called in
   `$(...)`: rewriting every depth is a large change, and a trap in the outer shell still waits for the innermost
-  substitution. At base a TERM or HUP to the tool's pid killed the shell and left timeout's group running; INT was
-  held until the child ended (`census/round-80/controls/c2-K-a-do-nothing.txt`: 12 of 12 signal rows orphaned).
+  substitution. At base a TERM or HUP to the tool's pid killed the shell and left timeout's group running; after an
+  INT the tool was still running at the 5 s settle (K-a INT rows `exited=n`; S325 says why) (`census/round-80/controls/c2-K-a-do-nothing.txt`: 12 of 12 signal rows orphaned).
 - r80 splits the tool in two processes instead. The front shell starts the worker — the same file — as
   `setsid "$BASH" "$SELF" "$@" <&0 &` and only `wait`s on it. A background job of a non-interactive shell is not
-  a process-group leader, so setsid execs in place ("setsid runs a program in a new session. The command calls
-  fork(2) if already a process group leader.", S328): `$!` is the new session's id, and every descendant that does
+  a process-group leader, so setsid execs in place ("The command calls fork(2) if already a process group leader.
+  Otherwise, it executes a program in the current process.", S328): `$!` is the new session's id, and every descendant that does
   not call setsid itself stays in that session, timeout's new groups included (S326 changes the group, not the
   session). The worker refuses to run if it is not its own session leader.
 - On TERM/INT/HUP the front's trap fires at once (it is in `wait`, S325) and scans `/proc/*/stat` for field 6, the
   session id (S068), after the last `) ` (the comm field may hold spaces and parentheses), with no fork per process;
-  it SIGSTOPs every member (so none can fork during the kill), SIGKILLs them, repeats until none is left (at most 8
-  passes), removes the worker's private TMPDIR (the worker's own scratch, selftest fixtures and error files live
+  it SIGSTOPs every member (so none can fork during the kill) and SIGKILLs them, repeating the scan; after 8 kill
+  passes a ninth scan that still lists a member makes the front print a stderr note (the SIGNAL line is not proof
+  of a kill — the survivor census is; S80Scribe MEDIUM-2), then it removes the worker's private TMPDIR (the worker's own scratch, selftest fixtures and error files live
   there), prints `SIGNAL<TAB>SIG<name><TAB>RECEIPT-QUARANTINE-SIGNALED` and exits 128 + n. A first draft that
   forked a `$(...)` per /proc entry took more than the 5 s settle on 9 of 15 rows
   (`census/round-80/records/prefreeze-feasibility.txt`).
 - Measured (`census/round-80/records/c2-after.txt`): 15 rows, 0 mismatches, 0 orphans; a trap-only tool and a front
   that kills only the worker pid both stay at 12 orphan rows (`controls/c2-K-b-trap-only.txt`,
   `controls/c2-K-c-no-session-kill.txt`) — killing the worker leaves its `$(...)` subshells and timeout groups.
-- Limits: SIGKILL to the front; a descendant that calls setsid itself or double-forks into another session; a SIGINT
-  the caller ignored before starting the tool (S325, above: both processes then ignore it); the stage-2 move and
-  later stages of a non-dry-run invocation use the same mechanism but no row measures them.
+- The precondition is real and the wave broke it (S80CriticDiscern F1 HIGH, S80CriticClaims, S80Sentinel F1): with
+  job control on in the tool's shell (an exported `SHELLOPTS=monitor`, `bash -m`), the job IS a group leader,
+  setsid forks, `$!` is setsid's exiting parent, `wait` returns 0 at once and the worker dies on its deleted TMPDIR
+  — the tool exited 0 with no verdict. Repaired after the wave (R `8ba93218`): the front runs `set +m` before the
+  launch, the worker refuses unless it leads its own session AND its parent is the front, a nested call runs
+  inline only when the session leader's argv names the tool (a caller exporting `SOUJI_Q_SESSION` skipped the
+  front), and signals after the worker ended are ignored; R2 `97289f81` sweeps the session when the worker itself
+  died by a signal (S80Sentinel F3). Probes `census/round-80/probes/front-launch-modes.py` and
+  `front-worker-death.py` fail on the earlier bytes (`census/round-80/records/repair/*-at-W2.txt`, `*-at-R.txt`).
+- Limits: SIGKILL to the front (the worker session then runs on; S80Sentinel F2); a descendant that calls setsid
+  itself (a double fork or setpgid stays in the session and is killed, S80ExecEvade); a signal in the instant between
+  the launch and `$!`; a SIGINT the caller ignored before starting the tool (S325, above); the stage-2 move and
+  later stages of a non-dry-run invocation (a signal there leaves the source moved with no RESULT line,
+  S80ExecEvade F3) use the same mechanism but no row measures them.
 
