@@ -3034,3 +3034,15 @@ addendum, appended to the prereg, commits 8a793e7ae9131578bdec393982760217f62095
 - **Frontier:** S323, S324 mined; S321 anchor corrected (r77 routed defect 1); QUALITY Q140, Q141; knowledge `corpus/knowledge/git-discovery-sources.md`; README frontier r78; SKILL gate rows r78; SCORECARD r78 rows.
 - **Domain trial:** the r78 gate over the lane at the report tip through the committed `census/round-78/probes/domain-trial.sh` (`census/round-78/records/c1-domain-trial.txt`); the LOG census itself is a domain task on the lane's own artifacts.
 - **Tools:** none installed; no pacman, sysctl, sudo or kernel change.
+
+## Round 79 (2026-11-07, Linux; attempt 1) — the pre-report gate answers a caller's signal by killing its running child (C1 operability), the pointer counter refuses the r78 wave's false ledger rows (C2 calibration)
+
+- **Motivation (evidence):** r78 routed (b) and S77Sentinel MEDIUM-3: a TERM to the gate while a git child runs leaves the child alive; at base `e65538e7` the frozen r79 counter shows 10 of 10 signal rows orphaned (`census/round-79/controls/c1-K-a-do-nothing.txt`). r78 routed defect 3: the r78 counter accepts five false ledger rows (`census/round-78/records/wave-w1/seats/S78MutCounter/false-rows.tsv`; harness `census/round-79/controls/c2-K-a-r78-counter.txt` accepted=5).
+- **Controls `d7f40f76`, freeze `e98cd0c5`** (freeze-check findings=0): C1 K-a 10, K-b trap-only 10, K-c no-kill 10; C2 K-a 5 accepted, K-b refuse-all 9/9 but 3/22 on the r78 regression, ablations 2/1/1/1.
+- **Candidates:** gate `c8c3fbca` (S325, S326); counter `17009fa1`. **After-arms `b8d09429`:** C1 mismatches 1 (row s4 INT; the receipt was launched with `&`, so SIGINT was ignored on entry — lesson M2/M3), regressions r78 17/17, r77 16/16, r76 30/30, r36 21/21, r27 4/4; C2 accepted 0, r78 22/22 + 12/12, r77 35/35 + 7/7.
+- **Misdiagnosed repair:** R1 `4a9bbb30` (ticker + `wait -n` for a supposed race) failed s4 3/3 (`census/round-79/records/repair/`); reverted at R2 `feebf2ba`. Diagnosis `92cab9c7`: `census/round-79/probes/sigint-inherit.sh`; the frozen counter in the foreground at the W1 bytes 11/11, 0 orphans, 3 of 3 runs (`census/round-79/records/foreground/`).
+- **r78 pointer (routed defect 1):** the class counts of the r78 C2 ledger are those of `corpus/lessons/round-78.md` M3 and `census/round-78/c2-pointer-ledger.tsv` (FLEET 5, ABSENT 6), not the r78 L commit message `a0f3b91f`.
+- **Wave w1:** 12 seats under policy v1 (band 8-16); verdicts and dispositions in `corpus/lessons/round-79.md` `## Wave`.
+- **Frontier:** S325, S326 mined; QUALITY Q142, Q143; knowledge `corpus/knowledge/gate-signal-handling.md`; README frontier r79; SKILL gate rows r79; SCORECARD r79 rows.
+- **Domain trial:** the W1 gate over the lane itself at the report tip (`census/round-79/records/c1-domain-trial.txt`).
+- **Tools:** none installed; no pacman, sysctl, sudo or kernel change.
