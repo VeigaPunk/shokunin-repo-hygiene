@@ -167,14 +167,14 @@ SELF="$SCRIPT_DIR/$(basename -- "$SCRIPT_PATH")"
 REPO_ROOT="$(cd -- "$SCRIPT_DIR/.." && pwd -P)"
 LIVE_FLEET_ROOT="$(dirname -- "$REPO_ROOT")"
 
-# r80 (operability; S325 bash 5.3 manual "Signals", S326 coreutils timeout.c, S328 setsid(1), S068
-# proc_pid_stat(5)): every bounded child (receipt engine, file/dir digest, special scan, staging mv) runs under
+# r80 (operability; S325 bash 5.3 manual "Signals", S326 coreutils timeout.c, S328 setsid(1), S075
+# proc_pid_stat(5), which supersedes S068): every bounded child (receipt engine, file/dir digest, special scan, staging mv) runs under
 # `timeout`, which moves itself into a NEW process group (S326), and is started from `$(...)`, which bash waits
 # for in the foreground, deferring a trapped signal until the child ends (S325). Up to r79 a caller's TERM/HUP
 # killed this shell and left the timeout group running (up to the 300 s bound), and INT was held until the child
 # ended. The tool therefore runs in two processes: this front shell starts the worker (this same file) with
 # `setsid` as an asynchronous job, so the worker and every descendant share one new session whose id is the
-# worker's pid (S328: setsid runs a program in a new session; S068: field 6 of /proc/<pid>/stat is the session
+# worker's pid (S328: setsid runs a program in a new session; S075: field 6 of /proc/<pid>/stat is the session
 # id). The front shell only `wait`s, which a trapped signal interrupts at once (S325), so its trap can stop
 # and kill every process of the worker's session (timeout's new group stays in the session), remove the
 # worker's private TMPDIR, print `SIGNAL<TAB>SIG<name><TAB>RECEIPT-QUARANTINE-SIGNALED` and exit 128 + the
@@ -187,9 +187,12 @@ LIVE_FLEET_ROOT="$(dirname -- "$REPO_ROOT")"
 # leads its own session AND its parent is the front (SOUJI_Q_FRONT); a nested call runs inline only when its
 # session leader's argv names this file; a signal after the worker has ended is ignored.
 q_proc_sid() { # $1 pid -> Q_SID = session id (field 6 of /proc/<pid>/stat, after the parenthesised comm); no fork
-  local st f
+  # The whole file is read: a comm may hold a newline, which splits stat over two lines (r80 wave S80ScoutSources
+  # MEDIUM-3); the comm ends at the LAST `) ` (a comm may also hold `) `), so the longest-prefix strip is right.
+  local st= f
   Q_SID=
-  { read -r st < "/proc/$1/stat"; } 2>/dev/null || return 1
+  { IFS= read -r -d '' st < "/proc/$1/stat"; } 2>/dev/null || :
+  [ -n "$st" ] || return 1
   st=${st##*) }
   read -r -a f <<< "$st"
   Q_SID=${f[3]:-}
