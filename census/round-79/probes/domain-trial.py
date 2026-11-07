@@ -5,8 +5,9 @@ Usage: python3 -B census/round-79/probes/domain-trial.py --report REPORT --prere
 Runs the lane's committed gate over the lane itself, twice, and writes OUT outside the lane:
   arm 1 (no signal): the gate's check lines and exit code; the conjunct is check-gitsource=PASS, check-tip=PASS,
         check-clean=PASS and no check-signal line;
-  arm 2 (real signal, no shim): the gate is started in its own session with a marker env var, receives SIGTERM
-        on its pid after DELAY seconds (it is then inside one of its own children on the real lane), and the
+  arm 2 (real signal, no shim): the gate is started in its own session with a marker env var and receives
+        SIGTERM on its pid as soon as a second marked process exists (a child of the gate on the real lane; polled
+        every 20 ms for up to WAIT_CHILD s — S79Reviewer MEDIUM-2: a fixed 3 s delay missed a fast gate), and the
         trial records the exit code, the check-signal line and every process still carrying the marker 5 s later
         (they are SIGKILLed after being counted).
 The receipt binds the trial script's bytes and blob at master, the gate bytes run and the candidate blob of W1
@@ -25,7 +26,7 @@ import time
 
 sys.dont_write_bytecode = True
 W1 = "c8c3fbca5ac44184feac3a01ee964139f86c02a4"
-DELAY = 3.0
+WAIT_CHILD = 30.0
 SETTLE = 5.0
 LANE = os.path.realpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", ".."))
 SELF = "census/round-79/probes/domain-trial.py"
@@ -110,8 +111,14 @@ def main(argv):
     g = subprocess.Popen(argvg, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
                          env=env, start_new_session=True,
                          preexec_fn=lambda: signal.signal(signal.SIGINT, signal.SIG_DFL))
-    time.sleep(DELAY)
-    before = len(marked(nonce))
+    t0 = time.monotonic()
+    before = 0
+    while g.poll() is None and time.monotonic() - t0 < WAIT_CHILD:
+        before = len(marked(nonce))
+        if before > 1:
+            break
+        time.sleep(0.02)
+    delay = time.monotonic() - t0
     exited = False
     if g.poll() is None:
         os.kill(g.pid, signal.SIGTERM)
@@ -134,7 +141,7 @@ def main(argv):
     a2 = g.communicate()[0].decode("utf-8", "replace").splitlines()
     for l in a2:
         p("ARM2 " + l)
-    p(f"ARM2 delay={DELAY}s marked_before_signal={before} exited_within_{SETTLE:.0f}s={'y' if exited else 'n'} "
+    p(f"ARM2 delay={delay:.3f}s marked_before_signal={before} exited_within_{SETTLE:.0f}s={'y' if exited else 'n'} "
       f"rc={g.returncode} survivors={len(surv)}")
     ok2 = exited and g.returncode == 143 and "check-signal=FAIL" in a2 and not surv and before > 1
     p(f"ARM2 conjunct={'PASS' if ok2 else 'FAIL'}")

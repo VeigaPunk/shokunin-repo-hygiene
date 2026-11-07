@@ -1,0 +1,128 @@
+--- a/tools/souji-pre-report-gate.sh (M01-drop-group-kill)
++++ b/tools/souji-pre-report-gate.sh (M01-drop-group-kill)
+@@ -46,7 +46,6 @@
+ gate_on_signal() {  # $1 name, $2 number
+   trap '' TERM INT HUP
+   if [[ -n $gate_child ]]; then
+-    kill -KILL -- "-$gate_child" 2>/dev/null
+     kill -KILL "$gate_child" 2>/dev/null
+   fi
+   gate_cleanup
+--- a/tools/souji-pre-report-gate.sh (M02-drop-pid-kill)
++++ b/tools/souji-pre-report-gate.sh (M02-drop-pid-kill)
+@@ -47,7 +47,6 @@
+   trap '' TERM INT HUP
+   if [[ -n $gate_child ]]; then
+     kill -KILL -- "-$gate_child" 2>/dev/null
+-    kill -KILL "$gate_child" 2>/dev/null
+   fi
+   gate_cleanup
+   printf 'check-signal=FAIL\n'
+--- a/tools/souji-pre-report-gate.sh (M03-exit-code-128)
++++ b/tools/souji-pre-report-gate.sh (M03-exit-code-128)
+@@ -52,7 +52,7 @@
+   gate_cleanup
+   printf 'check-signal=FAIL\n'
+   printf 'detail-signal: RECEIPT-GATE-SIGNALED: SIG%s received; the running child group was killed\n' "$1" >&2
+-  exit $((128 + $2))
++  exit 128
+ }
+ trap 'gate_on_signal TERM 15' TERM
+ trap 'gate_on_signal INT 2' INT
+--- a/tools/souji-pre-report-gate.sh (M04-no-cleanup-in-handler)
++++ b/tools/souji-pre-report-gate.sh (M04-no-cleanup-in-handler)
+@@ -49,7 +49,6 @@
+     kill -KILL -- "-$gate_child" 2>/dev/null
+     kill -KILL "$gate_child" 2>/dev/null
+   fi
+-  gate_cleanup
+   printf 'check-signal=FAIL\n'
+   printf 'detail-signal: RECEIPT-GATE-SIGNALED: SIG%s received; the running child group was killed\n' "$1" >&2
+   exit $((128 + $2))
+--- a/tools/souji-pre-report-gate.sh (M05-trap-only-TERM)
++++ b/tools/souji-pre-report-gate.sh (M05-trap-only-TERM)
+@@ -55,8 +55,6 @@
+   exit $((128 + $2))
+ }
+ trap 'gate_on_signal TERM 15' TERM
+-trap 'gate_on_signal INT 2' INT
+-trap 'gate_on_signal HUP 1' HUP
+ trap gate_cleanup EXIT
+ gate_tmp=$(mktemp -d -t souji-gate.XXXXXXXX) || { printf 'gate: mktemp failed\n' >&2; exit 2; }
+ gate_run_file() {  # [-c] SECS CMD...: stdout (and stderr with -c) in $gate_tmp/o; returns the command's status
+--- a/tools/souji-pre-report-gate.sh (M06-gate-child-never-set)
++++ b/tools/souji-pre-report-gate.sh (M06-gate-child-never-set)
+@@ -66,7 +66,6 @@
+   if (( merge )); then timeout -k 5 "$secs" "$@" <&0 >"$gate_tmp/o" 2>&1 &
+   else timeout -k 5 "$secs" "$@" <&0 >"$gate_tmp/o" 2>/dev/null &
+   fi
+-  gate_child=$!
+   wait "$gate_child"; rc=$?
+   gate_child=
+   return "$rc"
+--- a/tools/souji-pre-report-gate.sh (M07-signal-line-PASS)
++++ b/tools/souji-pre-report-gate.sh (M07-signal-line-PASS)
+@@ -50,7 +50,7 @@
+     kill -KILL "$gate_child" 2>/dev/null
+   fi
+   gate_cleanup
+-  printf 'check-signal=FAIL\n'
++  printf 'check-signal=PASS\n'
+   printf 'detail-signal: RECEIPT-GATE-SIGNALED: SIG%s received; the running child group was killed\n' "$1" >&2
+   exit $((128 + $2))
+ }
+--- a/tools/souji-pre-report-gate.sh (M08-find-foreground)
++++ b/tools/souji-pre-report-gate.sh (M08-find-foreground)
+@@ -244,8 +244,7 @@
+     [[ $f == /dev/null ]] && continue
+     [[ -n $f && -e $f && ! -f $f ]] && n=$((n + 1))
+   done
+-  gate_run hits "$gate_timeout" find "$top" -path "$top/.git" -prune -o \( -name .gitignore -o -name .gitattributes \) \
+-           ! -xtype f -printf x || return
++  hits=$(find "$top" -path "$top/.git" -prune -o \( -name .gitignore -o -name .gitattributes \) ! -xtype f -printf x) || return
+   nonreg=$((n + ${#hits}))
+ }
+ gate_src=$(readlink -f -- "${BASH_SOURCE[0]}" 2>/dev/null) || gate_src=
+--- a/tools/souji-pre-report-gate.sh (M09-no-stdin-restore)
++++ b/tools/souji-pre-report-gate.sh (M09-no-stdin-restore)
+@@ -63,8 +63,8 @@
+   local merge=0 rc
+   [[ $1 == -c ]] && { merge=1; shift; }
+   local secs=$1; shift
+-  if (( merge )); then timeout -k 5 "$secs" "$@" <&0 >"$gate_tmp/o" 2>&1 &
+-  else timeout -k 5 "$secs" "$@" <&0 >"$gate_tmp/o" 2>/dev/null &
++  if (( merge )); then timeout -k 5 "$secs" "$@" >"$gate_tmp/o" 2>&1 &
++  else timeout -k 5 "$secs" "$@" >"$gate_tmp/o" 2>/dev/null &
+   fi
+   gate_child=$!
+   wait "$gate_child"; rc=$?
+--- a/tools/souji-pre-report-gate.sh (M10-no-newline-strip)
++++ b/tools/souji-pre-report-gate.sh (M10-no-newline-strip)
+@@ -77,7 +77,6 @@
+   var=$1; shift
+   gate_run_file "${merge[@]}" "$@"; rc=$?
+   IFS= read -r -d '' data < "$gate_tmp/o"
+-  while [[ $data == *$'\n' ]]; do data=${data%$'\n'}; done
+   printf -v "$var" '%s' "$data"
+   return "$rc"
+ }
+--- a/tools/souji-pre-report-gate.sh (M11-no-reentrancy-guard)
++++ b/tools/souji-pre-report-gate.sh (M11-no-reentrancy-guard)
+@@ -44,7 +44,6 @@
+ gate_tmp= gate_child=
+ gate_cleanup() { [[ -n $gate_tmp ]] && rm -rf -- "$gate_tmp"; gate_tmp=; }
+ gate_on_signal() {  # $1 name, $2 number
+-  trap '' TERM INT HUP
+   if [[ -n $gate_child ]]; then
+     kill -KILL -- "-$gate_child" 2>/dev/null
+     kill -KILL "$gate_child" 2>/dev/null
+--- a/tools/souji-pre-report-gate.sh (M12-no-exit-trap)
++++ b/tools/souji-pre-report-gate.sh (M12-no-exit-trap)
+@@ -57,7 +57,6 @@
+ trap 'gate_on_signal TERM 15' TERM
+ trap 'gate_on_signal INT 2' INT
+ trap 'gate_on_signal HUP 1' HUP
+-trap gate_cleanup EXIT
+ gate_tmp=$(mktemp -d -t souji-gate.XXXXXXXX) || { printf 'gate: mktemp failed\n' >&2; exit 2; }
+ gate_run_file() {  # [-c] SECS CMD...: stdout (and stderr with -c) in $gate_tmp/o; returns the command's status
+   local merge=0 rc

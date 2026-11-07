@@ -1,0 +1,16 @@
+== L1 probe replay ==
+ARM foreground-bash trap=trap -- 'echo trapped' SIGINT
+ARM background-bash trap=trap -- '' SIGINT
+ARM foreground-python sigint_ignored=False
+ARM background-python sigint_ignored=True
+probe_rc=0
+== background python ==
+bg-python-ignores-INT True
+== trap immunity under inherited SIG_IGN (send INT; observe) ==
+trap -- '' SIGINT
+AFTER-SLEEP
+inner_rc=0
+== nohup HUP (nohup sets HUP ignored on entry; bash cannot trap) ==
+trap -- '' SIGHUP
+AFTER
+rc=0

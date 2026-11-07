@@ -1,0 +1,19 @@
+# S79MutCounter mutant table. Counter under test: 17009fa1:census/round-79/c2-pointer-counter.py
+# sha256=f597909b2bd4c06bd435c284b580deacdd82c5cfe335c1c8ba578ab9fe5ed703. Each mutant = ONE hunk
+# (verified: hunks=1 for all 13), built by build-mutants.py with an anchor-count==1 assertion.
+# Artifacts scored: harness census/round-79/c2-false-row-harness.py (9 rows), r78 regression (22 items +
+# 12 forgeries), r77 regression (35 items + 7 forgeries), all at --rev e65538e7.
+# Columns: mutant  rule/helper  change  harness  r78  r77  verdict  killed-by
+M01	range exact expansion	"if got != want or len(targets) != len(want)" -> "if not (got & want) or len(targets) != len(want)"	mismatches=0 accepted=0	resolved=22		resolved=35	SURVIVED	- (DM01 kills it)
+M02	range span bound	"if int(hi) < int(lo) or int(hi) - int(lo) > 999:" -> "if False:"	mismatches=0	resolved=22	resolved=35	SURVIVED	- (no population range spans >999)
+M03	range zero padding	"w = len(lo) if lo.startswith('0') and len(lo) > 1 else 0" -> "w = 0"	mismatches=0	resolved=22	resolved=35	SURVIVED	- (no zero-padded range token)
+M04	whole next-line run	"(rest and rest == run)" -> "(rest and run.startswith(rest))"	mismatches=1 accepted=1 (NF5)	resolved=22	resolved=35	KILLED	NF5
+M05	whole next-line run	condition -> "if not (rest == \"\" or _template_ok(...))" (run clause deleted)	mismatches=0	resolved=21 refused=1	resolved=35	KILLED	r78 L13 LOG.md:2308
+M06	MOVED needs round-<N>	"elif not kr: why = ..." block deleted	mismatches=1 accepted=1 (NF3)	resolved=22	resolved=35	KILLED	NF3
+M07	MOVED round binding	"tr.group(1) != kr.group(1)" -> "not tr.group(1).startswith(kr.group(1))"	mismatches=0	resolved=22	resolved=35	SURVIVED	- (DM07 kills it)
+M08	QUARANTINED declaration	"elif not _declared(...)" block deleted	mismatches=1 accepted=1 (NF4)	resolved=22	resolved=35	KILLED	NF4
+M09	_declared token-in-line	"return any(token.encode() in l ...)" -> "return bool(p.stdout.strip())"	mismatches=0	resolved=22	resolved=35	SURVIVED	- (NF6c kills it)
+M10	_declared AUTHORITY	AUTHORITY ("SKILL.md","LOG.md","SCORECARD.md","corpus") -> ("LOG.md",)	mismatches=0	resolved=21 refused=1	resolved=34 refused=1	KILLED	r78 L06 + r77 P14
+M11	range duplicate guard	"if got != want or len(targets) != len(want)" -> "if got != want"	mismatches=0	resolved=22	resolved=35	SURVIVED	- (DM11 kills it)
+M12	_declared AUTHORITY	AUTHORITY + "README.md"	mismatches=0	resolved=22	resolved=35	SURVIVED	- (NF6d kills it)
+M13	_declared rev binding	git grep "-e target, rev" -> "-e target, \"HEAD\""	mismatches=0	resolved=22	resolved=35	SURVIVED	- (NF6e kills it)

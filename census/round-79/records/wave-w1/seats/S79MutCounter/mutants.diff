@@ -1,0 +1,147 @@
+[M01] --- c2-pointer-counter-W2.py	2026-11-07 03:14:39.823627004 -0300
+[M01] +++ mut/M01.py	2026-11-07 03:18:37.116326892 -0300
+@@ -222,7 +222,7 @@
+         want = {os.path.join(os.path.dirname(token), f"{stem}{i:0{w}d}{sfx}")
+                 for i in range(int(lo), int(hi) + 1)}
+         got = {t[len("fleet:"):] if t.startswith("fleet:") else t for t in targets}
+-        if got != want or len(targets) != len(want):
++        if not (got & want) or len(targets) != len(want):
+             return f"targets are not exactly the range's expansion ({len(got & want)}/{len(want)} members)"
+     return ""
+ 
+[M02] --- c2-pointer-counter-W2.py	2026-11-07 03:14:39.823627004 -0300
+[M02] +++ mut/M02.py	2026-11-07 03:18:37.116432782 -0300
+@@ -217,7 +217,7 @@
+         hi, sfx = m.group(1), m.group(2)
+         stem = pre[:len(pre) - len(lo)]
+         w = len(lo) if lo.startswith("0") and len(lo) > 1 else 0
+-        if int(hi) < int(lo) or int(hi) - int(lo) > 999:
++        if False:
+             return "range span is empty or unbounded"
+         want = {os.path.join(os.path.dirname(token), f"{stem}{i:0{w}d}{sfx}")
+                 for i in range(int(lo), int(hi) + 1)}
+[M03] --- c2-pointer-counter-W2.py	2026-11-07 03:14:39.823627004 -0300
+[M03] +++ mut/M03.py	2026-11-07 03:18:37.116498142 -0300
+@@ -216,7 +216,7 @@
+         m = re.match(r"^[A-Za-z_-]*([0-9]+)(.*)$", suf)
+         hi, sfx = m.group(1), m.group(2)
+         stem = pre[:len(pre) - len(lo)]
+-        w = len(lo) if lo.startswith("0") and len(lo) > 1 else 0
++        w = 0
+         if int(hi) < int(lo) or int(hi) - int(lo) > 999:
+             return "range span is empty or unbounded"
+         want = {os.path.join(os.path.dirname(token), f"{stem}{i:0{w}d}{sfx}")
+[M04] --- c2-pointer-counter-W2.py	2026-11-07 03:14:39.823627004 -0300
+[M04] +++ mut/M04.py	2026-11-07 03:18:37.116601882 -0300
+@@ -194,7 +194,7 @@
+             # r79 (S78MutCounter NF5): a wrapped continuation is the WHOLE path run that opens the next line,
+             # never a prefix of it (a one-character `-l` file resolved `...-located-quote.txt`).
+             run = re.match(r"[A-Za-z0-9._/@+~-]*", wrapped).group(0)
+-            if not (rest == "" or (rest and rest == run) or _template_ok(token, rest, line)):
++            if not (rest == "" or (rest and run.startswith(rest)) or _template_ok(token, rest, line)):
+                 return f"target continuation is not in the source text: {t}"
+         else:
+             d, b = os.path.split(t)
+[M05] --- c2-pointer-counter-W2.py	2026-11-07 03:14:39.823627004 -0300
+[M05] +++ mut/M05.py	2026-11-07 03:18:37.116747822 -0300
+@@ -194,7 +194,7 @@
+             # r79 (S78MutCounter NF5): a wrapped continuation is the WHOLE path run that opens the next line,
+             # never a prefix of it (a one-character `-l` file resolved `...-located-quote.txt`).
+             run = re.match(r"[A-Za-z0-9._/@+~-]*", wrapped).group(0)
+-            if not (rest == "" or (rest and rest == run) or _template_ok(token, rest, line)):
++            if not (rest == "" or _template_ok(token, rest, line)):
+                 return f"target continuation is not in the source text: {t}"
+         else:
+             d, b = os.path.split(t)
+[M06] --- c2-pointer-counter-W2.py	2026-11-07 03:14:39.823627004 -0300
+[M06] +++ mut/M06.py	2026-11-07 03:18:37.116831572 -0300
+@@ -258,10 +258,6 @@
+             why = "target's last component differs from the token's"
+         elif kr and (not tr or tr.group(1) != kr.group(1)):
+             why = "target names a different round than the token"
+-        elif not kr:
+-            # r79 (S78MutCounter NF3): with no round-<N> in the token the location binding is the last
+-            # component alone, so a byte-equal copy in any directory would resolve the item.
+-            why = "token names no round-<N>: a moved location cannot be bound"
+     elif cls == "LOCAL-POLICY":
+         if frozen is None:
+             why = "no frozen bytes"
+[M07] --- c2-pointer-counter-W2.py	2026-11-07 03:14:39.823627004 -0300
+[M07] +++ mut/M07.py	2026-11-07 03:18:37.116895033 -0300
+@@ -256,7 +256,7 @@
+             why = "target absent at rev or digest differs"
+         elif os.path.basename(target.rstrip("/")) != os.path.basename(token.rstrip("/")):
+             why = "target's last component differs from the token's"
+-        elif kr and (not tr or tr.group(1) != kr.group(1)):
++        elif kr and (not tr or not tr.group(1).startswith(kr.group(1))):
+             why = "target names a different round than the token"
+         elif not kr:
+             # r79 (S78MutCounter NF3): with no round-<N> in the token the location binding is the last
+[M08] --- c2-pointer-counter-W2.py	2026-11-07 03:14:39.823627004 -0300
+[M08] +++ mut/M08.py	2026-11-07 03:18:37.116950313 -0300
+@@ -283,10 +283,6 @@
+             why = "quarantine target does not sit where the token sat"
+         elif os.path.lexists(os.path.join(fleet, token)):
+             why = "token exists under the fleet root"
+-        elif not _declared(root, rev, token, target):
+-            # r79 (S78MutCounter NF4): the quarantine leaf is bound to a committed declaration — one line of
+-            # the lane's authority files at --rev names both the token and this quarantine path.
+-            why = "no committed line declares this quarantine path for the token"
+     elif cls == "FLEET":
+         if not token.startswith(".ufo/") or not os.path.lexists(os.path.join(fleet, token)):
+             why = "not under the fleet root"
+[M09] --- c2-pointer-counter-W2.py	2026-11-07 03:14:39.823627004 -0300
+[M09] +++ mut/M09.py	2026-11-07 03:18:37.117002483 -0300
+@@ -169,7 +169,7 @@
+     p = git(root, "grep", "-h", "-F", "-I", "-e", target, rev, "--", *AUTHORITY, check=False)
+     if p.returncode not in (0, 1):
+         raise RuntimeError(f"git grep rc={p.returncode}")
+-    return any(token.encode() in l for l in p.stdout.split(b"\n"))
++    return bool(p.stdout.strip())
+ 
+ 
+ def token_ok(root, rev, fleet, token, targets, line, nextline):
+[M10] --- c2-pointer-counter-W2.py	2026-11-07 03:14:39.823627004 -0300
+[M10] +++ mut/M10.py	2026-11-07 03:18:37.117048443 -0300
+@@ -161,7 +161,7 @@
+     return re.search(r"(?<![A-Za-z0-9])r" + n + r"(?![0-9])", line) is not None
+ 
+ 
+-AUTHORITY = ("SKILL.md", "LOG.md", "SCORECARD.md", "corpus")
++AUTHORITY = ("LOG.md",)
+ 
+ 
+ def _declared(root, rev, token, target):
+[M11] --- c2-pointer-counter-W2.py	2026-11-07 03:14:39.823627004 -0300
+[M11] +++ mut/M11.py	2026-11-07 03:18:37.117098493 -0300
+@@ -222,7 +222,7 @@
+         want = {os.path.join(os.path.dirname(token), f"{stem}{i:0{w}d}{sfx}")
+                 for i in range(int(lo), int(hi) + 1)}
+         got = {t[len("fleet:"):] if t.startswith("fleet:") else t for t in targets}
+-        if got != want or len(targets) != len(want):
++        if got != want:
+             return f"targets are not exactly the range's expansion ({len(got & want)}/{len(want)} members)"
+     return ""
+ 
+[M12] --- c2-pointer-counter-W2.py	2026-11-07 03:14:39.823627004 -0300
+[M12] +++ mut/M12.py	2026-11-07 03:18:37.117157623 -0300
+@@ -161,7 +161,7 @@
+     return re.search(r"(?<![A-Za-z0-9])r" + n + r"(?![0-9])", line) is not None
+ 
+ 
+-AUTHORITY = ("SKILL.md", "LOG.md", "SCORECARD.md", "corpus")
++AUTHORITY = ("SKILL.md", "LOG.md", "SCORECARD.md", "corpus", "README.md")
+ 
+ 
+ def _declared(root, rev, token, target):
+[M13] --- c2-pointer-counter-W2.py	2026-11-07 03:14:39.823627004 -0300
+[M13] +++ mut/M13.py	2026-11-07 03:18:37.117183863 -0300
+@@ -166,7 +166,7 @@
+ 
+ def _declared(root, rev, token, target):
+     """True iff one line of a committed authority file at <rev> names both <target> and <token>."""
+-    p = git(root, "grep", "-h", "-F", "-I", "-e", target, rev, "--", *AUTHORITY, check=False)
++    p = git(root, "grep", "-h", "-F", "-I", "-e", target, "HEAD", "--", *AUTHORITY, check=False)
+     if p.returncode not in (0, 1):
+         raise RuntimeError(f"git grep rc={p.returncode}")
+     return any(token.encode() in l for l in p.stdout.split(b"\n"))

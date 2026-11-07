@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Parametric git shim for S79ExecEvade probes (scratch fixtures only).
+# Knobs: SHIM_LOG SHIM_PRE_SLEEP SHIM_ESCAPE(setsid|dfork|dforkplain) SHIM_MARK SHIM_PAYLOAD(x|nul)
+L="${SHIM_LOG:-/dev/null}"
+printf '%s git %s\n' "$(date +%s.%N)" "$*" >>"$L"
+[[ -n ${SHIM_PRE_SLEEP:-} ]] && sleep "$SHIM_PRE_SLEEP"
+M="${SHIM_MARK:-}"
+if [[ -n $M && -n ${SHIM_ESCAPE:-} && ! -e $M/.escaped-$SHIM_ESCAPE ]]; then
+  : > "$M/.escaped-$SHIM_ESCAPE" 2>/dev/null
+  case $SHIM_ESCAPE in
+    setsid)     setsid sleep 300 >/dev/null 2>&1 & ;;
+    dfork)      ( setsid sleep 300 >/dev/null 2>&1 & ) >/dev/null 2>&1 ;;
+    dforkplain) ( sleep 300 >/dev/null 2>&1 & ) >/dev/null 2>&1 ;;
+  esac
+fi
+if [[ -n ${SHIM_PAYLOAD:-} && " $* " == *" status "* ]]; then
+  case $SHIM_PAYLOAD in
+    nul) head -c 104857600 /dev/zero ;;
+    x)   head -c 104857600 /dev/zero | tr '\0' 'x' ;;
+  esac
+fi
+exec /usr/bin/git "$@"

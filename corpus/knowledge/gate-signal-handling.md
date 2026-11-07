@@ -24,14 +24,20 @@ group the caller never signalled, for up to the timeout.
   pattern is: start each child with `&`, record `$!`, `wait` on it, and in the trap kill the child's group
   (`kill -KILL -- -<pid>`: timeout made the child pid its group id) and the child itself, then clean up and
   exit 128 + the signal number. Output goes to a private file, since `$(...)` is itself a foreground wait.
-- Killing the group is the part that matters: a gate that traps and exits but does not kill the group still
-  orphans the child (r79 K-c, `census/round-79/controls/c1-K-c-no-kill.txt`).
+- Killing is the part that matters: a gate that traps and exits but kills nothing still orphans the child (r79
+  K-c, `census/round-79/controls/c1-K-c-no-kill.txt`). Which kill is enough depends on depth: timeout's own child
+  is also covered by `prctl (PR_SET_PDEATHSIG, term_signal)` (S326, lines 608-610), so killing timeout alone ends
+  it, and a trap that kills only the pid scores 11/11 on the r79 rows (S79MutGate M01/M02, S79CriticClaims); a
+  grandchild (git's own helpers, a shell that forks) is reached only by the group kill, and no r79 row tests
+  that (routed to round 80).
 
 ## A launch trap for whoever measures this
 
 A process started with `&` by a non-interactive shell starts with SIGINT and SIGQUIT ignored (S325: "When job
 control is not in effect, asynchronous commands ignore ‘SIGINT’ and ‘SIGQUIT’"), the ignore survives exec,
-and bash cannot trap a signal that was ignored on entry. A signal-sending counter launched with `&` therefore
+and bash cannot trap a signal that was ignored on entry (S325, node Bourne Shell Builtins: "signals ignored upon
+entry to a non-interactive shell cannot be trapped or reset"). `timeout` does not forward a signal whose
+disposition it inherited as ignored either (S326 `sig_needs_handling`, lines 422-433; S79ScoutSources F3). A signal-sending counter launched with `&` therefore
 hands every gate it starts an untrappable INT, and every INT row reads as a gate failure
 (`census/round-79/probes/sigint-inherit.sh`, `census/round-79/records/foreground/sigint-inherit.txt`). Such a
 counter must reset the dispositions it passes on (Python: `signal.signal(signal.SIGINT, signal.SIG_DFL)` in
@@ -43,6 +49,7 @@ caused.
 - Every git, find, head and python child of `tools/souji-pre-report-gate.sh` runs through `gate_run`; on TERM,
   INT or HUP the gate kills the running child's group, removes its scratch dir, prints `check-signal=FAIL` and
   `RECEIPT-GATE-SIGNALED`, and exits 128 + n (`census/round-79/records/foreground/c1-at-W1-fg-run1.txt`).
-- Not covered: SIGKILL (untrappable); a child that leaves timeout's group (`setsid`, a double fork); a signal
-  ignored on entry; the few milliseconds of the short `$(...)` forks that remain (realpath, dirname, awk,
+- Not covered: SIGKILL (untrappable); a child that leaves timeout's group (`setsid`, a double fork), and a
+  grandchild left behind by a child that already finished (S79ExecEvade MEDIUM-1: the trap targets only the
+  running child's group); a signal ignored on entry; the few milliseconds of the short `$(...)` forks that remain (realpath, dirname, awk,
   mktemp), during which the trap waits for the fork to end.
