@@ -1,0 +1,19 @@
+## Registry continuation
+
+| id | source | kind | tier | scope | anchor | teaches | status | opened | recheck | used-by |
+|---|---|---|---|---|---|---|---|---|---|---|
+| S152 | GLib g_local_file_trash(), gio/glocalfile.c at tag 2.84.0 — https://raw.githubusercontent.com/GNOME/glib/2.84.0/gio/glocalfile.c | code | A | who writes a per-item origin record: the writer's create / unique-name / content / ordering / rollback sequence; not the record's shape (S146 holds the reader) | tag 2.84.0, gio/glocalfile.c:2261 (create with O_CREAT / O_EXCL), :2256 (unique-name loop), :2340 (URI-escape), :2354 (record content), :2359 (content write), :2383 (payload rename), :2288 / :2363 / :2387 (rollback) | GLib's local-file trash writes the record exclusively, never overwrites, writes before payload move, removes record on every failure path | mined | 2026-10-25 | 365d | corpus/knowledge/origin-record-writer-r27.md |
+| S210 | GLib gio/glocalfile.c at tag 2.84.0 — https://raw.githubusercontent.com/GNOME/glib/2.84.0/gio/glocalfile.c | code | A | the ORDER and ROLE of the three mechanisms a per-item origin record could use — exclusive create, content write, rollback — in GLib's reference writer; EXTENDS S152, does not restate its basic sequence | gio/glocalfile.c, g_local_file_trash(), create-then-probe-then-fill at lines 2261, 2282, 2284, 2359, rollback at 2387; git tag 2.84.0, 83 391 bytes fetched 2026-10-24 | the three mechanisms are complementary: exclusive create reserves the name, the descriptor stays unwritten, content follows by path, rollback removes the reservation | mined | 2026-10-25 | 365d | corpus/knowledge/origin-record-mechanism-set-r33.md |
+| S211 | GLib glib/gfileutils.c at tag 2.84.0 — https://raw.githubusercontent.com/GNOME/glib/2.84.0/glib/gfileutils.c | code | A | WHERE GLIB'S O_EXCL ACTUALLY SITS — the content writer's own mechanism (uniquely named temporary file, then atomic rename) and the flag forbidding creation of a missing target; NOT the trash writer's sequence (S210) | glib/gfileutils.c, g_mkstemp_full()'s flags and O_CREAT and O_EXCL at line 1697, write_to_temp_file()'s g_mkstemp_full (tmp_filename...) at 1369 with XXXXXX template at 1367, rename_file()'s g_rename (old_name, new_name) at 1041, G_FILE_SET_CONTENTS_ONLY_EXISTING handling at 1108; git tag 2.84.0, 86 909 bytes fetched 2026-10-24 | GLib's O_EXCL belongs to the temporary file, not the destination; temp plus atomic rename publishes content; ONLY_EXISTING guards a missing target; needed together, not substitutes | mined | 2026-10-25 | 365d | corpus/knowledge/origin-record-mechanism-set-r33.md |
+
+## Paths
+
+- F4 origin-record — S022 → S152 → S210 → S211: start with the normative restorable-record format; then study GLib's reference trash writer and its create/order/rollback sequence; S210 sharpens which role the exclusive-create descriptor serves; finish with S211's separate content writer and temporary-file/rename mechanism.
+
+## Search log
+
+- **F4 origin-record re-grounding (GLib tag 2.84.0; 2026-10-25).** Question: which GLib bytes define who writes a per-item origin record, and with which mechanisms? Opened raw.githubusercontent.com GNOME/glib tag 2.84.0 files `gio/glocalfile.c` and `glib/gfileutils.c`. Identified 2, screened 2, included 2 (S210, S211), excluded 0. `g_local_file_trash` (:1993–2360; interface binding :3147) writes the record; at :2352: `data = g_strdup_printf ("[Trash Info]\nPath=%s\nDeletionDate=%s\n", original_name_escaped, delete_time);` The content primitive `g_file_set_contents_full` is at :1327; its documented consistent mode at :1341 is `*  - %G_FILE_SET_CONTENTS_CONSISTENT: write to temp file, fsync() it, rename()`. Stop: normative format is already covered by S022; the writer and mechanism are located.
+
+## Existing-row change log
+
+No status, recheck, or used-by changes to existing registry rows this round.

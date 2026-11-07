@@ -1,0 +1,1 @@
+- F4 origin-record — S022 → S152 → S210 → S211: start with the normative restorable-record format; then study GLib's reference trash writer and its create/order/rollback sequence; S210 sharpens which role the exclusive-create descriptor serves; finish with S211's separate content writer and temporary-file/rename mechanism.
