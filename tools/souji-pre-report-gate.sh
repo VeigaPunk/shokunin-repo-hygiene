@@ -82,6 +82,24 @@ for fn in (mod._witness_refusal, mod._truth_refusal):
     if msg:
         print(msg.split(" (", 1)[0])
         sys.exit(1)
+# r75 C1 (S318 gitignore(5), S319 git-ls-files(1)): status hides untracked files that any exclude source
+# matches, but only the per-directory .gitignore files are the lane's declared policy; info/exclude and
+# core.excludesFile are local and unversioned. Untracked paths ignored under --exclude-standard but not
+# under --exclude-per-directory=.gitignore alone fail clean (count only, no path echo). Stated limit: an
+# untracked .gitignore that ignores itself (the .jj/ and .ruff_cache/ shape) is per-directory policy here.
+import subprocess
+def _ignored(*rule):
+    p = subprocess.run(["git", "--no-optional-locks", "-C", lane, "-c", "core.fsmonitor=false", "ls-files",
+                        "-z", "--others", "--ignored", *rule], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+    if p.returncode != 0:
+        print("ignored-file listing failed")
+        sys.exit(1)
+    return set(p.stdout.split(b"\0")) - {b""}
+hidden = _ignored("--exclude-standard") - _ignored("--exclude-per-directory=.gitignore")
+if hidden:
+    print("RECEIPT-UNTRACKED-LOCAL-EXCLUDE: %d untracked path(s) are hidden only by info/exclude or "
+          "core.excludesFile" % len(hidden))
+    sys.exit(1)
 PY
   ); then check clean PASS
   else check clean FAIL; printf 'detail-clean: byte truth: %s\n' "$(printf '%s' "${truth:-no output}" | head -c 400 | LC_ALL=C tr -c '[:print:]' '?')" >&2; fi
