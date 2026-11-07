@@ -1,0 +1,96 @@
+souji round 79 preregistration (L1 SoujiR79, attempt 1). Written before any candidate byte is committed.
+Round: 79
+Chronology: commit P d7f40f764e6b25e32662384761d82d3032714eb1 (counters, populations, control variants, every control receipt, rec.sh, S325/S326
+captures, census-before, pre-freeze feasibility receipt) strictly precedes commit F (this file); the candidates
+follow F (W1 the gate, W2 the C2 counter). Every control receipt carries command=/rev=/instrument=/
+instrument_sha256= column-0 lines (Q99 --substance) and its rev= is the lane base below. Pre-freeze
+feasibility (Q70) ran in scratch only (/fast/scratch/hyaku/souji-r79/L1/) against draft candidates whose
+digests are recorded in records/prefreeze-feasibility.txt; the committed candidates are judged on their own
+bytes. Prior-round debts read before declaring: corpus/lessons/round-78-verifier-spotcheck.md routed defects
+1-6 and corpus/lessons/round-78.md `## Routed to round 79` (a)-(d): this round takes (b) SIGTERM in C1 and the
+S78MutCounter part of (c)/defect 3 in C2; defects 1, 2, 4, 6 are handled in integration or carried and named in
+the report; (a), (d) and the check-4 300 s backstop row are carried.
+
+## C1 operability — the pre-report gate answers a caller's signal by killing its running child and exiting
+Base: e65538e73c7f1a8f7570bc24a2215da8a90043f3
+Counter: census/round-79/c1-signal-counter.py sha256=0d0ec67c5be3dba4d246c4b75001b8af40c85bf890d1275ddfbdc13a999cc0ae
+Population: census/round-79/c1-population.tsv sha256=8a34f7720c8c1660f2429a10eeaa4c014fb3f914e5f71d2f86696281948968ca
+Control: census/round-79/controls/c1-K-a-do-nothing.txt
+Surface: tools/souji-pre-report-gate.sh, every child it starts (git in checks 0, 1 and 4, find and the byte-truth
+  python in check 4, the contract checker in check 6). Each runs under `timeout`, which moves itself and the
+  command into a new process group (S326 coreutils timeout.c at v9.12, opened this round:
+  `if (!foreground) setpgid (0, 0);` under "Ensure we're in our own group so all subprocesses can be
+  killed."); bash defers a trapped signal while it waits for a foreground command (S325 bash 5.3 manual,
+  "Signals", installed bash 5.3.20-1, opened this round: "it will not execute the trap until the command
+  completes"), and only `wait` on an asynchronous command returns at once ("the `wait` builtin will return
+  immediately with an exit status greater than 128, immediately after which the shell executes the trap").
+  At Base a caller's TERM, INT or HUP kills the gate's shell and the blocked child survives it in timeout's
+  group (K-a: 10 orphan rows).
+  Rule (the claim): on TERM, INT or HUP while any child runs the gate kills that child's process group, removes
+  its private scratch dir, prints `check-signal=FAIL` and the class RECEIPT-GATE-SIGNALED, and exits 128 + the
+  signal number, within 5 s; with no signal its verdicts are unchanged (p1, regressions).
+Command: python3 -B census/round-79/c1-signal-counter.py --gate-dir <dir holding the gate and the writer copied
+  from the measured lane revision> --work <empty scratch dir>
+Target: with the gate and writer blobs of the C1 candidate commit, `SUMMARY rows=11 mismatches=0 errors=0
+  orphans=0` and EXIT=0 (before, K-a at Base, gate blob sha256
+  5f5cb865c83db848a6c58444d6545940efd1ee29ab18b7f99ae8f5c2cc9ba853: mismatches=10 [s1-s10], orphans=10, p1
+  PASS, EXIT=1); AND the controls stay red: K-b trap only, children still in the foreground
+  (controls/c1-K-b-trap-only.txt: mismatches=10 orphans=10, EXIT=1), K-c background children and trap but no
+  group kill (controls/c1-K-c-no-kill.txt: mismatches=10 orphans=10, EXIT=1); AND the regression conjuncts
+  with the candidate gate: `python3 -B census/round-78/c1-gitsrc-counter.py --gate-dir <D> --work <dir>`
+  prints `SUMMARY rows=17 mismatches=0 errors=0 hangs=0`, `python3 -B census/round-77/c1-nonreg-counter.py
+  --gate-dir <D> --work <dir>` prints `SUMMARY rows=16 mismatches=0 errors=0 hangs=0`,
+  `python3 -B census/round-76/c1-evade-counter.py --gate-dir <D> --work <dir>` prints `SUMMARY rows=30
+  mismatches=0 errors=0`, `python3 -B tests/fixtures/r36-report-gate.py --work <dir> --gate <candidate gate>`
+  prints `SUMMARY cases=21 pass=21 fail=0`, and `bash tests/fixtures/r27-pre-report-gate.sh` (lane gate at the
+  candidate commit) prints `cases=4 pass=4`; AND the candidate gate, same blob, run on the lane itself at the
+  report tip prints check-gitsource=PASS, check-tip=PASS, check-clean=PASS and no check-signal line (domain
+  trial; receipt binds the gate blob digest).
+Kill: any mismatch, error or orphan on the 11 rows; any control green; r78 below 17/17, r77 below 16/16, r76
+  below 30/30, r36 below 21/21 or r27 below 4/4; the domain trial not PASS on gitsource, tip and clean.
+Labels ruled here: the hang points are produced by PATH shims that exec `sleep 600` when the row's argv pattern
+  occurs (a stand-in for a blocked git/find/python; the r78 FIFO rows prove real blocking exists); the signal
+  goes to the gate's pid only, as `kill <pid>` from a caller would; INT is sent the same way (no terminal).
+Stated limits: SIGKILL to the gate cannot be trapped and is not a row; a signal that arrives during the few
+  milliseconds of a short `$(...)` fork (realpath, dirname, awk, mktemp) is deferred until it ends; the check-4
+  300 s backstop row (a hang with no signal) is not a row this round.
+
+## C2 calibration — the pointer-resolution counter refuses the false ledger rows the r78 wave found
+Base: e65538e73c7f1a8f7570bc24a2215da8a90043f3
+Counter: census/round-79/c2-false-row-harness.py sha256=5d5bd2364713582b714155a10b63ec930e2354c2ac9783be029eeb1a290adeea
+Population: census/round-79/c2-false-rows.tsv sha256=7c108820a47467507e52af38f960726c032dba68dba818708730f7d2f826afdb
+Control: census/round-79/controls/c2-K-a-r78-counter.txt
+Surface: the instrument that decides whether the lane's self-assessment pointers (SCORECARD/SKILL/QUALITY/
+  README/PROVINCE at r77, LOG.md at r78) resolve to real bytes. The r78 wave's mutation seat S78MutCounter (a
+  non-author seat; census/round-78/records/wave-w1/seats/S78MutCounter.md, false-rows.tsv) showed the r78
+  counter accepts five false ledger rows: NF1/NF2 a `..` range resolved by one member or by a member outside
+  the span, NF3 a MOVED row for a token with no round-<N> (any byte-equal copy anywhere), NF4 a QUARANTINED
+  row whose leaf is unbound, NF5 a wrapped TOKEN resolved by a prefix of the next line's path. The population
+  freezes those five plus that seat's four mutant-detector rows (FP2, FP8, LP2, LP3), which the r78 counter
+  already refuses.
+  The claimed work: a successor counter census/round-79/c2-pointer-counter.py (the r78 counter stays frozen)
+  that binds a range to exactly its expansion, a wrapped continuation to the whole path run opening the next
+  line, MOVED to a round-<N> token, and a QUARANTINED path to a committed line naming token and path.
+Command: python3 -B census/round-79/c2-false-row-harness.py --counter <counter under test> --lane
+  /home/vgpnk/Projects/shokunin/souji-shokunin --fleet-root /home/vgpnk/Projects/shokunin --work <empty scratch
+  dir> (run from the lane checkout)
+Target: with --counter census/round-79/c2-pointer-counter.py at the candidate commit `SUMMARY rows=9
+  mismatches=0 accepted=0 errors=0` and EXIT=0 (before, K-a with the r78 counter: mismatches=5 accepted=5
+  [NF1-NF5], EXIT=1); AND the controls stay red: K-b refuse-all (controls/c2-K-b-refuse-all.txt scores 9/9 on
+  the harness, EXIT=0, but controls/c2-K-b-refuse-all-regress-r78.txt resolves 3 of 22, EXIT=1 — it fails the
+  regression conjunct), K-c ablations each missing one r79 rule (controls/c2-K-c-without-range.txt
+  mismatches=2, -nextline 1, -moved 1, -quarantine 1, all EXIT=1); AND the regression conjuncts with the
+  candidate counter at the after revision: `--population census/round-78/c2-population.tsv --ledger
+  census/round-78/c2-pointer-ledger.tsv --forge census/round-78/c2-forge-r78.tsv` prints `SUMMARY items=22
+  resolved=22` and `FORGE-SUMMARY forged=12 matched=12 accepted=0`, EXIT=0, and `--population
+  census/round-77/c2-population.tsv --ledger census/round-77/c2-pointer-ledger.tsv --forge
+  census/round-78/c2-forge-r77.tsv` prints `SUMMARY items=35 resolved=35` and `FORGE-SUMMARY forged=7
+  matched=7 accepted=0`, EXIT=0.
+Kill: any mismatch, accepted row or error on the 9 rows; K-a not 5; any K-c ablation at 0; the r78 regression
+  below 22/22 or 12/12; the r77 regression below 35/35 or 7/7.
+Labels ruled here: LP3's expectation is got=REFUSED with the counter's exit 1 (an expect=MISMATCH row the
+  counter refuses must fail the run; the r78 mutant M09 exits 0); the fixture's commit identity and dates are
+  fixed so its revision is reproducible.
+Stated limits: the QUARANTINED declaration rule binds a quarantine path to committed text that names it, not to
+  its bytes; a lane author can still declare a false quarantine in prose. The range rule caps a span at 1000
+  members. The population is the r78 wave's set; other false rows may exist (the wave of this round attacks).
