@@ -8,6 +8,11 @@ out=$1 binds=$2; shift 2
 shift
 lane=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 [[ -e $out ]] && { echo "rec.sh: $out exists" >&2; exit 2; }
+# r76 lesson M1: a BIND path that is not a regular file wrote an empty instrument_sha256= (census-before,
+# first attempt); refuse before writing anything.
+IFS=, read -r -a _bl <<< "$binds"
+(( ${#_bl[@]} )) || { echo "rec.sh: no BIND path" >&2; exit 2; }
+for _b in "${_bl[@]}"; do [[ -n $_b && -f $lane/$_b ]] || { echo "rec.sh: BIND path not a file: $_b" >&2; exit 2; }; done
 mkdir -p "$(dirname "$out")"
 {
   first=${binds%%,*}
