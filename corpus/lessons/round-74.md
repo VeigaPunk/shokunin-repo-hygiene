@@ -15,8 +15,8 @@ The r73 spot-check routed six defects (`corpus/lessons/round-73-verifier-spotche
 3 (lane gates trusting git status) → C1 for `tools/souji-pre-report-gate.sh` and QUALITY Q135, the other tools
 stay routed; 4 (`base_forgeries` not witness-gated) → folded into the r74 counter (not a separate conjunct);
 5 (r73 lesson pointer-check `missing=4`; the lesson opens "Attempt 1") → not edited (a closed round's lesson);
-this lesson is written so the pointer check exits 0 (no range spellings, no fleet-root paths), receipt
-`census/round-74/records/pointer-check.txt`; 6 (seat findings not in files) → the wave context now makes the
+this lesson is written so the pointer check exits 0 (no range spellings, no fleet-root paths; the run is
+quoted in the round report); 6 (seat findings not in files) → the wave context now makes the
 report file the seat's first action. Writer survivor M03 stays routed (no writer byte changed this round).
 No `considerthese/` directory exists in this lane; no shokuknow theme taken.
 
