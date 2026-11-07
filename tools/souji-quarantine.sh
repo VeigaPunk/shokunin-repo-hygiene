@@ -181,7 +181,11 @@ LIVE_FLEET_ROOT="$(dirname -- "$REPO_ROOT")"
 # signal number. With no signal the worker's stdout, stderr and exit status pass through unchanged. Stated
 # limits: SIGKILL to the front shell cannot be trapped; a descendant that calls setsid itself leaves the
 # session; a SIGINT the caller's shell ignored before starting this tool (an `&` launch without job control)
-# cannot be trapped by bash, so INT is then ignored by both processes.
+# cannot be trapped by bash, so INT is then ignored by both processes. r80 repair after the wave: setsid execs in
+# place only when the job is not a process-group leader (S328 "Otherwise, it executes a program in the current
+# process."), so the front turns job control off (`set +m`) before the launch, and the worker refuses unless it
+# leads its own session AND its parent is the front (SOUJI_Q_FRONT); a nested call runs inline only when its
+# session leader's argv names this file; a signal after the worker has ended is ignored.
 q_proc_sid() { # $1 pid -> Q_SID = session id (field 6 of /proc/<pid>/stat, after the parenthesised comm); no fork
   local st f
   Q_SID=
@@ -191,54 +195,74 @@ q_proc_sid() { # $1 pid -> Q_SID = session id (field 6 of /proc/<pid>/stat, afte
   Q_SID=${f[3]:-}
   [ -n "$Q_SID" ]
 }
-q_kill_session() { # $1 session id: SIGSTOP, then SIGKILL, every process in it; repeat until none is left
+q_kill_session() { # $1 session id: SIGSTOP, then SIGKILL, every process in it; repeat until none is left.
+  # Returns 1 when processes of the session are still listed after the last pass (r80 wave: S80Scribe MEDIUM-2).
   local sid=$1 p pass pids
-  for pass in 1 2 3 4 5 6 7 8; do
+  for pass in 1 2 3 4 5 6 7 8 9; do
     pids=()
     for p in /proc/[0-9]*; do
       p=${p#/proc/}
       q_proc_sid "$p" && [ "$Q_SID" = "$sid" ] && pids+=("$p")
     done
     [ "${#pids[@]}" -gt 0 ] || return 0
+    [ "$pass" -lt 9 ] || return 1
     kill -STOP "${pids[@]}" 2>/dev/null || true
     kill -KILL "${pids[@]}" 2>/dev/null || true
   done
-  return 0
+  return 1
+}
+q_proc_runs_self() { # $1 pid -> 0 when one argv word of /proc/<pid>/cmdline is this file's path
+  local a args=()
+  { mapfile -d '' -t args < "/proc/$1/cmdline"; } 2>/dev/null || return 1
+  for a in "${args[@]}"; do [ "$a" = "$SELF" ] && return 0; done
+  return 1
 }
 if [ "${SOUJI_Q_WORKER:-}" = 1 ]; then
-  # the worker: it must lead its own session (setsid exec'd in place), else the front cannot reach its children
+  # the worker: it must lead its own session (setsid exec'd in place) AND be the front's direct child, else the
+  # front cannot reach its children (r80 wave S80CriticClaims/S80CriticDiscern F1: with job control on, setsid
+  # forks, the front's `$!` is setsid's parent, and the worker would run on alone)
   unset SOUJI_Q_WORKER
-  if ! q_proc_sid "$$" || [ "$Q_SID" != "$$" ]; then
-    printf 'souji-quarantine: worker is not a session leader (pid %s); refusing\n' "$$" >&2
+  if ! q_proc_sid "$$" || [ "$Q_SID" != "$$" ] || [ "$PPID" != "${SOUJI_Q_FRONT:-}" ]; then
+    printf 'souji-quarantine: worker is not a session leader started by its front (pid %s); refusing\n' "$$" >&2
     exit 2
   fi
+  unset SOUJI_Q_FRONT
   export SOUJI_Q_SESSION=$$
-elif [ -n "${SOUJI_Q_SESSION:-}" ] && q_proc_sid "$$" && [ "$Q_SID" = "$SOUJI_Q_SESSION" ]; then
-  : # a nested call inside a worker's session (selftest children): the session front already covers it
+elif [ -n "${SOUJI_Q_SESSION:-}" ] && q_proc_sid "$$" && [ "$Q_SID" = "$SOUJI_Q_SESSION" ] \
+    && q_proc_runs_self "$SOUJI_Q_SESSION"; then
+  : # a nested call inside a worker's session (selftest children): the session front already covers it; the
+    # session leader must be this tool (r80 wave S80ExecEvade F2: a caller exporting its own sid skipped the front)
 else
   q_front_tmp=$(mktemp -d "${TMPDIR:-/tmp}/souji-quarantine.XXXXXXXX") || {
     printf 'souji-quarantine: mktemp failed\n' >&2; exit 2; }
   q_front_worker=
   q_front_on_signal() { # $1 name, $2 number
     trap '' TERM INT HUP
+    local left=0
     if [ -n "$q_front_worker" ]; then
       kill -STOP "$q_front_worker" 2>/dev/null || true
-      q_kill_session "$q_front_worker"
+      q_kill_session "$q_front_worker" || left=1
       kill -KILL "$q_front_worker" 2>/dev/null || true
     fi
     rm -rf -- "$q_front_tmp"
     printf 'SIGNAL\tSIG%s\tRECEIPT-QUARANTINE-SIGNALED\n' "$1"
     printf 'souji-quarantine: SIG%s received; the worker session was killed\n' "$1" >&2
+    [ "$left" = 0 ] || printf 'souji-quarantine: worker session still listed processes after the last kill pass\n' >&2
     exit $((128 + $2))
   }
   trap 'q_front_on_signal TERM 15' TERM
   trap 'q_front_on_signal INT 2' INT
   trap 'q_front_on_signal HUP 1' HUP
   trap 'rm -rf -- "$q_front_tmp"' EXIT
-  SOUJI_Q_WORKER=1 TMPDIR=$q_front_tmp setsid "$BASH" "$SELF" "$@" <&0 &
+  # Job control off (an inherited SHELLOPTS=monitor or bash -m would make the job a group leader and setsid fork)
+  set +m
+  SOUJI_Q_WORKER=1 SOUJI_Q_FRONT=$$ TMPDIR=$q_front_tmp setsid "$BASH" "$SELF" "$@" <&0 &
   q_front_worker=$!
   q_front_rc=0
   wait "$q_front_worker" || q_front_rc=$?
+  # the worker has ended: a signal from here on has nothing left to kill and must not rewrite its status
+  # (r80 wave S80ExecC2 F1)
+  trap '' TERM INT HUP
   exit "$q_front_rc"
 fi
 
