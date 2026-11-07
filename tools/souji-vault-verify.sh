@@ -213,6 +213,9 @@ cli_label() {
 # The job keeps the caller's stdin through an explicit `<&0` (an asynchronous command's stdin is otherwise
 # /dev/null when job control is off, S329). If no private file can be made the call runs in the foreground as
 # before (no trap). Outside this call the tool's signal behaviour is unchanged.
+# r81 repair (S81Sentinel LOW-1; probe census/round-81/probes/tmpdir-in-vault.py): the private file must never sit
+# under a vault path ("Nothing is ever written under a vault path", header). When TMPDIR is inside, equal to, or an
+# ancestor of the row's vault directory or the --vault/SOUJI_VAULT hint, the call runs in the foreground as before.
 CLI_CLAIM=""
 CLI_PID=""
 CLI_OUT=""
@@ -233,6 +236,20 @@ cli_on_signal() { # $1 signal name, $2 signal number
   exit $((128 + $2))
 }
 
+cli_tmp_ok() { # $1 vault path; true iff ${TMPDIR:-/tmp} and every vault directory are disjoint
+  local base vdir v
+  base=$(readlink -m -- "${TMPDIR:-/tmp}" 2>/dev/null) || return 1
+  [ -n "$base" ] || return 1
+  if [ -d "$1" ]; then vdir=$1; else vdir=$(dirname -- "$1"); fi
+  for v in "$vdir" ${VAULT_HINT:+"$VAULT_HINT"}; do
+    v=$(readlink -m -- "$v" 2>/dev/null) || return 1
+    [ -n "$v" ] || return 1
+    case "$base/" in "$v"/*) return 1 ;; esac
+    case "$v/" in "$base"/*) return 1 ;; esac
+  done
+  return 0
+}
+
 cli_claim() { # $1 vault path
   local vp=$1 bin out rc claim=""
   CLI_CLAIM=""
@@ -240,7 +257,8 @@ cli_claim() { # $1 vault path
   [ -n "$bin" ] || { CLI_CLAIM='unavailable'; return 0; }
   command -v timeout >/dev/null 2>&1 || { CLI_CLAIM='unbounded-skip'; return 0; }
   set +e
-  CLI_OUT=$(mktemp "${TMPDIR:-/tmp}/souji-vault-cli.XXXXXX" 2>/dev/null)
+  CLI_OUT=""
+  cli_tmp_ok "$vp" && CLI_OUT=$(mktemp "${TMPDIR:-/tmp}/souji-vault-cli.XXXXXX" 2>/dev/null)
   if [ -n "$CLI_OUT" ]; then
     trap 'cli_on_signal TERM 15' TERM
     trap 'cli_on_signal INT 2' INT
