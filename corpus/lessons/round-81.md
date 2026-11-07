@@ -117,3 +117,55 @@ position, or an operator ruling on K2.
 | M2 | instrument parse defect: the first C2 counter read the `cli=` state from the `VERIFIED(...)` line, but the tool prints it in the `VERDICT` record's evidence; all four no-signal rows were red on the base tool | reconstructed after freeze as a diagnosis copy `census/round-81/probes/c2-counter-m2-first-parse.py` (the frozen counter with the first parse restored): `census/round-81/records/diagnosis-m2-first-parse-at-base.txt` p1-p4 `state=- match=no`, `mismatches=12`, EXIT=1 | the positive rows run against the base tool before freeze (a positive control that fails on the do-nothing tool is an instrument defect, Q70) — it fired | parse the single `VERDICT` record's evidence field; p1-p4 match at base in `controls/c2-K-a-do-nothing.txt` |
 | M3 | untested branch shipped with the claim: the trap's group kill and its KILL fallback have no row that needs them — a pid-only draft scores 12/0 because timeout forwards the signal to its group (S326) | `census/round-81/records/prefreeze/c2-pid-only-kill-draft.txt` | none before freeze (Q70 measures the target, not each branch's necessity) | disclosed in the preregistration Stated limits and the knowledge entry; routed to the wave's mutation seat and r82 (a TERM-ignoring CLI row, a signal before timeout's handlers) |
 | M4 | a launch mode the frozen rows never vary, found by the L1 after A (r80 M4's class again): with `SHELLOPTS=monitor` exported by the caller, the tool's environment carries job control into the CLI, whose own `sleep 600 &` then runs in a process group of its own, outside timeout's group; the W2 trap's group kill misses it | `census/round-81/records/launch/c2-at-W2-monitor.txt` (v7, v8 `survivors=1`, `mismatches=2 orphans=2`, EXIT=1); the same counter launched with `&` is 12/0 (`c2-at-W2-bg.txt`); the base under the same launch leaves 3-5 survivors on those rows and 8 orphan rows in all (`launch/c2-K-a-base-monitor.txt`), so this is a residual limit, not a harm against the base | the r80 lesson's M4 rule ("vary the launch") was applied to the counter's own launch in the r80 instrument, not written into this round's frozen rows; it is the prereg's stated limit "a CLI descendant that leaves timeout's group itself", reached through an inherited SHELLOPTS | not repaired inside the claim (the frozen rows and predicate are unchanged); routed to r82: a launch-mode row (SHELLOPTS=monitor, `bash -m`) for the vault tool, and a kill by membership that a job-controlled CLI cannot leave (the r80 session front, or the nonce-free equivalent: the CLI's session) |
+
+## Wave
+
+One v1 wave `w1`, 13 seats (connector 1, scout 1, executor 4, mutation-tester 2, reviewer 1, critic 2, sentinel 1,
+scribe 1; attack seats reviewer + critics + mutation-testers = 5 of 13, 38 %), validated under
+`scripts/hyaku/ufo-wave-policy.json` (band 8-16, `ufo-swarm-wave-dispatch-v1`, spawn 13) and dispatched through the
+inline handoff (`w1.ready.dispatched` 06:29:32; queued ~8 min for fleet slots). WAVE-DONE received; 13 of 13 reports
+written, 0 dead seats. Seat files are under `.ufo/waves/round-81/w1/` (committed as wave evidence).
+
+| seat | verdict | disposition |
+|---|---|---|
+| S81Connector | C1/C2 SEPARABLE; MEDIUM `tests/fixtures/r17-jj-receipts.sh` 240 s `$(timeout …)` runners orphan on signal; LOW the W2 mktemp-failure foreground fallback; `souji-verify.sh`/`souji-census.sh` hold no `$(timeout)` (the r80 hypothesis falsified); 15 sibling rows | fallback is a stated limit; r17 runner routed r82; sibling rows documented only |
+| S81ScoutSources | S329 HOLDS (byte-equal excerpt, host behaviour matches), admit; S326 forwards TERM to child and group; F1 MEDIUM: a background timeout inherits SIGINT ignored and installs no INT handler — group-INT leaves timeout and the CLI alive; the C2 INT rows pass because the tool's trap turns INT into a group TERM; F2 quote count 17 not 19; F3 anchor drops the job-control precondition (the scope cell states it); S294 grounds the mode whitelist | F1 recorded in Q147 and the knowledge entry's mechanism; F2 corrected in the Gate (I2); F3 accepted (scope cell carries it) |
+| S81ExecC1 | C1 reproduced in full; fixture revs identical across runs; no r77/r78 ITEM moves r80 → r81; 14/14 real MOVED rows pass `_capture_ok` | none needed |
+| S81ExecC2 | C2 reproduces (fg, `&`); controls, selftest, r17, domain trial reproduce; an extra real-bytes trial reaching cli_claim is byte-identical over 5 CLI states; HIGH: under `SHELLOPTS=monitor` v7/v8 leave 1 survivor (the stub's job-controlled grandchild) | same finding as the L1's M4 (found independently); disclosed, not repaired; routed r82 (kill by descendant tree, frozen before timeout's group can be left) |
+| S81ExecEvade | no claim violation: early signal, double signals, signal during the 2 s poll, TERM-ignoring CLI (KILL at 2.7 s), --json, two targets, 8 MB output, TMPDIR odd names — all inside the contract; CLI setsid = stated limit; found the vault-path write (already repaired at R); at R: frozen counter 12/0/0 and its probes green; LOW windows before the traps arm and after `wait` (nothing left running) | R confirmed by a non-author seat; windows recorded |
+| S81ExecV1 | V1 HOLDS 4 of 5 replays; MEDIUM: one monitor replay of the frozen r80 counter failed once (q4 not exited at the 5 s settle, 1 survivor), the rerun was green — a tail event (1 in 7 observed); LOW pty wrapper SIGKILLs the front (stated SIGKILL limit, TMPDIR litter); LOW nohup/HUP ignored on entry; the r80 front beats the pre-r80 tool under every varied shape | V1's monitor expectation is not stable: recorded as a V1 finding, routed r82 (settle tail of the session sweep under job control) |
+| S81MutTool | W2: 11 mutants, 7 killed; M02 pid-only kill equivalent (S326); M03 (no KILL fallback) and M05 (traps not reset after the call) survive — not equivalent, rows missing (`v9-term-ignoring-cli`, `p5-late-term` proposed, M03 reproduced); M09 equivalent; at R: cli_tmp_ok mutants N2/N4 killed by probe D, N1 (inside-vault subdir) and N3 (hint loop) survive — two arms proposed, both pass on R | missing rows routed r82; the closure sees that the KILL fallback and the trap reset are unmeasured branches (M3) |
+| S81MutCounter | C1 holds; mutants M1/M3/M4/M5 killed, M2 killed only by regressions, M6a/M6b equivalent, M7 (census-token guard) and M8 (`records/wave-` → `records/`) survive; MEDIUM: a decoy in the token's OWN round tree (`.ufo/waves/round-32/decoy/…`, NF-F/NF-G/PF-4) is accepted — the r81 rule never runs there; LOW: the prereg's stated-limit example `waves/x/a2w1/…` is REFUSED (the rule is stronger than the limit says), its true instance is a partial-suffix decoy (PF-1) | the own-tree decoy class and M8's missing killer row routed r82; the stated-limit wording error recorded here (prereg not edited) |
+| S81Reviewer | C1 and C2 HONOURED as frozen; no frozen file changes after F; every receipt digest matches; trailing-newline semantics unchanged; LOW stale `$!` fallback in the trap; LOW foreground fallback unrowed; LOW the stated limit names only INT as untrappable-on-entry (TERM/HUP too) | stale `$!` routed r82 (needs a deterministic probe); others recorded |
+| S81CriticClaims | C1 HOLDS, QUALIFIED (the suffix binding's only pressure is NF12c, a decoy the L1 built; NF12c/NF12d falseness is stipulated); C2 HOLDS for the default launch, QUALIFIED on launch mode; no harm; no-signal stdout byte-identical incl. mktemp-failure and closed stdin; LOW SKILL "removed on every exit" overstated | qualifications carried to the report; SKILL wording corrected |
+| S81Sentinel | P on file mode, kill target, `<&0`, safety rails; LOW-1 the private file lands under a vault path when TMPDIR is inside the vault (rail "Nothing is ever written under a vault path" broken at W2); LOW-2 other terminating signals leak the file; LOW-3 reopen-by-name (no cross-user impact); LOW-4 stale `$!` | LOW-1 repaired at R behind probe D (3/3 fail at W2, 3/3 pass at R); LOW-2..4 routed r82 |
+| S81CriticDiscern | sources agree (S329 admit, not a dup of S325); defects 1, 2, 4, 7 discharged, 3/5/6 partly; F1 cited receipts not yet committed (committed at I2 `c25f000f`); F2 `_regular`/intro-blob/fork-tail had no disposition; F3-F6 LOW | F1 closed by I2; F2 carried lines added; F3/F4/F5/F6 applied in the Gate and limits |
+| S81Scribe | drafts; Q147 lacked cwd and overstated rowed properties; Q146 "per allowed shape" unmet (no built wave/ row); knowledge section over 25 lines | Q146/Q147 rewritten; section length kept (it carries the M4 limit) |
+
+## Repairs after the wave (not the claim's measurement)
+
+C2's claim is judged at A on the W2 bytes. The wave and the L1 found one harm at W2 outside the frozen rows:
+
+- D `398e568c` probe `census/round-81/probes/tmpdir-in-vault.py` (TMPDIR equal to, inside or an ancestor of the vault
+  directory, with and without the `SOUJI_VAULT` hint; a sibling TMPDIR as positive control): 3 of 4 arms fail at W2
+  in 3 of 3 runs (`records/repair/tmpdir-in-vault-at-W2-run{1,2,3}.txt`; the CLI saw `souji-vault-cli.XXXXXX` under
+  the vault), 4/4 pass at base (`tmpdir-in-vault-at-base.txt`). A harm against the base: the tool's own rail.
+- R `ef76a14f` (tool blob `89a2ed8c…`): `cli_tmp_ok` — when TMPDIR and the row's vault directory or the hint are not
+  disjoint, the CLI call runs in the foreground as at base. At R: probe D 4/4 in 3 of 3 runs, frozen C2 counter
+  12/0/0, selftest 57/0 on the committed file, r17 37/0/0, domain trial identical 3/3 (`records/repair/*-at-R*`).
+  Non-author: S81ExecEvade re-ran the frozen counter and its probes at R (12/0/0); S81MutTool's mutants N2/N4 die on
+  probe D, N1/N3 survive (two arms missing, routed). Cost: in the refused configuration a signal during the call
+  leaves the CLI group as at base (S81ExecEvade: 3 survivors).
+
+## Routed to round 82
+
+- (a) C2 rows the frozen population lacks: a launch-mode row (`SHELLOPTS=monitor`; M4, S81ExecC2 HIGH) with a kill
+  by descendant tree taken before the CLI can leave timeout's group; `v9-term-ignoring-cli` (KILL fallback, M03) and
+  `p5-late-term` (trap reset, M05); probe D's two missing arms (inside-vault subdir, hint root); the stale `$!`
+  fallback; other terminating signals leaking the private file; the windows before the traps arm.
+- (b) C1: a decoy in the token's own round tree (NF-F/NF-G/PF-4, S81MutCounter MEDIUM), a killer row for M8
+  (`census/round-<N>/records/<non-wave>/`), the partial-suffix instance of the stated limit (PF-1).
+- (c) V1: the r80 front's monitor-mode settle tail (S81ExecV1 MEDIUM, 1 in 7); `tests/fixtures/r17-jj-receipts.sh`
+  240 s runners (S81Connector).
+- (d) carried: the `_regular` pathspec, the quarantine intro-blob digest row, the fork-tail row, the r79 gate
+  re-measurement, the check-4 300 s backstop row, r76 K03/K04, the status-trusting lane tools.

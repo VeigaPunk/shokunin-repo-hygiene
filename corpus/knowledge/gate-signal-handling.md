@@ -126,3 +126,8 @@ caused.
   (S325); signals while the tool runs its other short children (sha256sum, git, find) wait for that child; if no
   private file can be made the call runs in the foreground as before.
 
+- A file the job writes must keep the tool's own write rails. At W2 the private file went to `${TMPDIR:-/tmp}`,
+  so a caller whose TMPDIR sat inside a vault made the tool write under the vault during the call (S81Sentinel
+  LOW-1; probe `census/round-81/probes/tmpdir-in-vault.py` fails 3 of 4 arms at W2). Repair R `ef76a14f`: the
+  asynchronous path runs only when TMPDIR and every vault directory (the row's, the `--vault` hint) are disjoint;
+  otherwise the call runs in the foreground as before (`census/round-81/records/repair/`, 4/4, counter still 12/0).
