@@ -41,7 +41,7 @@ check() { printf 'check-%s=%s\n' "$1" "$2"; [[ $2 != FAIL ]] || fail=1; }
 #    the class RECEIPT-GATE-SIGNALED, and exits 128 + the signal number. Output reaches the shell through files
 #    in that scratch dir (mktemp -d under $TMPDIR), never through `$(...)` or `<(...)`, which bash also waits
 #    for in the foreground.
-gate_tmp= gate_child=
+gate_tmp= gate_child= gate_tick=
 gate_cleanup() { [[ -n $gate_tmp ]] && rm -rf -- "$gate_tmp"; gate_tmp=; }
 gate_on_signal() {  # $1 name, $2 number
   trap '' TERM INT HUP
@@ -49,6 +49,7 @@ gate_on_signal() {  # $1 name, $2 number
     kill -KILL -- "-$gate_child" 2>/dev/null
     kill -KILL "$gate_child" 2>/dev/null
   fi
+  [[ -n $gate_tick ]] && kill -KILL "$gate_tick" 2>/dev/null
   gate_cleanup
   printf 'check-signal=FAIL\n'
   printf 'detail-signal: RECEIPT-GATE-SIGNALED: SIG%s received; the running child group was killed\n' "$1" >&2
@@ -67,7 +68,24 @@ gate_run_file() {  # [-c] SECS CMD...: stdout (and stderr with -c) in $gate_tmp/
   else timeout -k 5 "$secs" "$@" <&0 >"$gate_tmp/o" 2>/dev/null &
   fi
   gate_child=$!
-  wait "$gate_child"; rc=$?
+  # r79 repair (after measurement; census/round-79/records/c1-after.txt s4): a signal that lands after the
+  # child starts but before `wait` blocks is only pending, and a blocking `wait` would hold it until the child
+  # ends (s4 INT, gate alive at +5 s). `wait -n` on the child AND a 1 s ticker returns at least once a second,
+  # so a pending trap runs at the next command boundary; the loop ends when the child itself is reaped.
+  local id
+  while :; do
+    sleep 1 & gate_tick=$!
+    id=
+    wait -n -p id "$gate_child" "$gate_tick"; rc=$?
+    if [[ $id == "$gate_child" ]]; then
+      kill -KILL "$gate_tick" 2>/dev/null; wait "$gate_tick" 2>/dev/null; gate_tick=
+      break
+    fi
+    [[ $id == "$gate_tick" ]] && { gate_tick=; continue; }
+    # no job reaped (wait error, e.g. 127): stop instead of spinning
+    kill -KILL "$gate_tick" 2>/dev/null; gate_tick=
+    break
+  done
   gate_child=
   return "$rc"
 }
