@@ -1,0 +1,208 @@
+#!/usr/bin/env python3
+"""souji r80 C1 counter: how many false ledger rows a pointer-resolution counter accepts, over the frozen r80
+population census/round-80/c1-false-rows.tsv (pinned by sha256 below).
+
+Successor of census/round-79/c2-false-row-harness.py (frozen and unchanged). The population is the r79 population
+(9 rows, byte-equal columns, plus a rev column) and the r79 wave's non-author attack on the r79 counter
+(census/round-79/records/wave-w1/seats/S79MutCounter.md, fixture.txt, probes.txt): the three false ledger rows the
+r79 counter accepts (NF6b a QUARANTINED declaration whose token and target match only as substrings of other
+paths; NF8 a `..` range member that is a directory; NF10 a MOVED target that is a byte-equal copy in an unrelated
+subtree of the same round number) and the six detector rows that seat used to kill the r79 counter's surviving
+mutants (DM01 M01, DM07 M07, DM11 M11, NF6c M09, NF6d M12, NF6e M13; each already refused by the r79 counter).
+
+Each row is judged by running the counter under test (--counter) once, with a one-row forgery file, the row's
+population and that population's frozen ledger:
+  rev=BASE  --root <lane> --rev <BASE> (the r79 lane base, unchanged)
+  rev=F0    --root <fixture> --rev <F0>: F0 is the r79 harness fixture commit, rebuilt byte-for-byte (same
+            parent, files, identity and dates, so the same commit id 6436db6a...)
+  rev=R1    F0 + census/round-73/records/c2-after-D3.txt replaced by a directory (D3.txt/inner.txt),
+            c2-after-D9.txt kept, byte-equal copies of census/round-32/waves/a2w1/SwarmExecutor08.md at
+            corpus/round-32/decoy/ and corpus/round-321/decoy/ (S79MutCounter REV1)
+  rev=R2    R1 + corpus/lessons/round-79-collision.md (the other-stub.bak / .gitignore-p6repo line and the
+            ghost-stub line) and a README.md note for readme-stub (S79MutCounter REV3 minus the late line)
+  rev=R3    R2 + the late-stub declaration line appended to corpus/lessons/round-79-collision.md
+            (fixture HEAD = R3, so a counter that greps HEAD instead of --rev finds it; NF6e is judged at R2)
+  The fixture disk also carries a copy of the lane disk's .ufo/quarantine/ with NOT-THE-STUB, NOT-THE-L0 and the
+  quarantine leaves other-stub, ghost-stub, readme-stub and late-stub added (untracked).
+A row matches iff the counter's `FORGE <fid>` line reports got=<expect_got> and, when expect_rc is not '-', the
+counter's exit code equals expect_rc. A row is ACCEPTED when got is a resolving class (anything but REFUSED,
+MISMATCH, UNRESOLVED, ERROR).
+Output: `ROW <id> where=<w> rev=<label> item=<i> class=<c> expect=<g>/<rc> got=<s> rc=<n> match=<yes|no>` per
+row, then `SUMMARY rows=<N> mismatches=<M> accepted=<A> errors=<E>`. Exit 0 iff M == 0 and E == 0; 1 otherwise;
+2 usage.
+"""
+import argparse
+import hashlib
+import os
+import re
+import shutil
+import subprocess
+import sys
+
+sys.dont_write_bytecode = True
+HERE = os.path.dirname(os.path.abspath(__file__))
+BASE = "e65538e73c7f1a8f7570bc24a2215da8a90043f3"
+POP_PIN = "5cce41468aa08f69f5fc474ebcad59b7d002303e5d369275813e448e0b4015be"
+POPS = {"r77": ("census/round-77/c2-population.tsv", "census/round-77/c2-pointer-ledger.tsv"),
+        "r78": ("census/round-78/c2-population.tsv", "census/round-78/c2-pointer-ledger.tsv")}
+RESOLVING_NOT = ("REFUSED", "MISMATCH", "UNRESOLVED", "ERROR")
+ENV = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+ENV.update({"GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": os.devnull, "LC_ALL": "C",
+            "GIT_AUTHOR_NAME": "r79 fixture", "GIT_AUTHOR_EMAIL": "fixture@r79.invalid",
+            "GIT_COMMITTER_NAME": "r79 fixture", "GIT_COMMITTER_EMAIL": "fixture@r79.invalid",
+            "GIT_AUTHOR_DATE": "2026-11-07T00:00:00Z", "GIT_COMMITTER_DATE": "2026-11-07T00:00:00Z"})
+
+
+class FixtureError(Exception):
+    pass
+
+
+def git(repo, *args):
+    if not repo or not os.path.isabs(repo):
+        raise FixtureError(f"refusing git -C with {repo!r}")
+    p = subprocess.run(["git", "-C", repo, "-c", "core.hooksPath=/dev/null", *args], stdout=subprocess.PIPE,
+                       stderr=subprocess.PIPE, env=ENV)
+    if p.returncode != 0:
+        raise FixtureError(f"git {' '.join(args)} rc={p.returncode}: {p.stderr.decode()[:200]}")
+    return p.stdout.decode().strip()
+
+
+def sha(path):
+    with open(path, "rb") as f:
+        return hashlib.sha256(f.read()).hexdigest()
+
+
+def build_fixture(lane, work):
+    fx = os.path.join(work, "fixture")
+    subprocess.run(["git", "clone", "-q", "--shared", "--no-checkout", lane, fx], check=True, env=ENV,
+                   stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+    if os.path.realpath(git(fx, "rev-parse", "--show-toplevel")) != os.path.realpath(fx):
+        raise FixtureError("fixture toplevel is not the fixture dir")
+    git(fx, "checkout", "-q", "--detach", BASE)
+
+    def put(rel, data):
+        p = os.path.join(fx, rel)
+        os.makedirs(os.path.dirname(p), exist_ok=True)
+        with open(p, "wb") as f:
+            f.write(data)
+
+    with open(os.path.join(lane, "census/round-32/waves/a2w1/SwarmExecutor08.md"), "rb") as f:
+        put("census/round-32/waves/a2w1/renamed-SwarmExecutor08.md", f.read())
+    put("census/round-73/records/c2-after-D9.txt", b"r79 fixture: outside the D1..D5 span\n")
+    put("census/round-49/sources/s272-python-open-l", b"r79 fixture: one-character continuation\n")
+    sweep = os.path.join(lane, "census/operator-sweep-20261019")
+    if not os.path.isdir(sweep):
+        raise FixtureError("lane disk lacks census/operator-sweep-20261019")
+    shutil.copytree(sweep, os.path.join(fx, "census/round-02/operator-sweep-20261019"), symlinks=True)
+    git(fx, "add", "-f", "--", "census/round-32/waves/a2w1/renamed-SwarmExecutor08.md",
+        "census/round-73/records/c2-after-D9.txt", "census/round-49/sources/s272-python-open-l",
+        "census/round-02/operator-sweep-20261019")
+    git(fx, "commit", "-q", "--no-verify", "-m", "r79 C2 fixture (S78MutCounter repro step 6)")
+    revs = {"F0": git(fx, "rev-parse", "HEAD")}
+    # R1 (S79MutCounter REV1): D3.txt becomes a directory; byte-equal decoys in unrelated subtrees
+    git(fx, "rm", "-q", "--", "census/round-73/records/c2-after-D3.txt")
+    put("census/round-73/records/c2-after-D3.txt/inner.txt", b"r80 fixture: D3.txt is a directory here\n")
+    with open(os.path.join(lane, "census/round-32/waves/a2w1/SwarmExecutor08.md"), "rb") as f:
+        se = f.read()
+    put("corpus/round-32/decoy/SwarmExecutor08.md", se)
+    put("corpus/round-321/decoy/SwarmExecutor08.md", se)
+    git(fx, "add", "-f", "--", "census/round-73/records/c2-after-D3.txt/inner.txt",
+        "corpus/round-32/decoy/SwarmExecutor08.md", "corpus/round-321/decoy/SwarmExecutor08.md")
+    git(fx, "commit", "-q", "--no-verify", "-m", "r80 C1 fixture R1 (S79MutCounter REV1)")
+    revs["R1"] = git(fx, "rev-parse", "HEAD")
+    # R2: substring collision and unbound slot in an authority file; a declaration outside AUTHORITY
+    q6 = ".ufo/quarantine/round-17/tests/vault/vadv54-run/p/p6repo/"
+    coll = ("# fixture lesson (r80 C1, S79MutCounter REV3)\n\n"
+            f"- quarantined `{q6}other-stub.bak` (the pre-r17 copy) -- pointer "
+            "`tests/vault/vadv54-run/p/p6repo/.gitignore-p6repo` retargeted there.\n"
+            f"- quarantine slot {q6}ghost-stub left unbound (no pointer recorded).\n")
+    put("corpus/lessons/round-79-collision.md", coll.encode())
+    with open(os.path.join(fx, "README.md"), "ab") as f:
+        f.write(f"\n- readme note: {q6}readme-stub for tests/vault/vadv54-run/p/p6repo/.git\n".encode())
+    git(fx, "add", "-f", "--", "corpus/lessons/round-79-collision.md", "README.md")
+    git(fx, "commit", "-q", "--no-verify", "-m", "r80 C1 fixture R2")
+    revs["R2"] = git(fx, "rev-parse", "HEAD")
+    # R3: a late declaration (judged at R2 by NF6e)
+    with open(os.path.join(fx, "corpus/lessons/round-79-collision.md"), "ab") as f:
+        f.write(f"- late declaration: {q6}late-stub for tests/vault/vadv54-run/p/p6repo/.git\n".encode())
+    git(fx, "add", "-f", "--", "corpus/lessons/round-79-collision.md")
+    git(fx, "commit", "-q", "--no-verify", "-m", "r80 C1 fixture R3")
+    revs["R3"] = git(fx, "rev-parse", "HEAD")
+    q = os.path.join(lane, ".ufo/quarantine")
+    if not os.path.isdir(q):
+        raise FixtureError("lane disk lacks .ufo/quarantine")
+    shutil.copytree(q, os.path.join(fx, ".ufo/quarantine"), symlinks=True)
+    put(".ufo/quarantine/round-17/tests/vault/vadv54-run/p/p6repo/NOT-THE-STUB", b"not the stub\n")
+    put(".ufo/quarantine/round-17/.ufo/NOT-THE-L0", b"not the L0 file\n")
+    for leaf in ("other-stub", "ghost-stub", "readme-stub", "late-stub"):
+        put(".ufo/quarantine/round-17/tests/vault/vadv54-run/p/p6repo/" + leaf, f"r80 fixture {leaf}\n".encode())
+    return fx, revs
+
+
+def main(argv):
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--counter", required=True, help="pointer-resolution counter under test")
+    ap.add_argument("--lane", required=True)
+    ap.add_argument("--fleet-root", required=True)
+    ap.add_argument("--work", required=True, help="empty scratch dir (never under /tmp)")
+    ns = ap.parse_args(argv)
+    lane, fleet, work = (os.path.abspath(x) for x in (ns.lane, ns.fleet_root, ns.work))
+    counter = os.path.abspath(ns.counter)
+    pop = os.path.join(HERE, "c1-false-rows.tsv")
+    if sha(pop) != POP_PIN:
+        print(f"C1-HARNESS-FATAL: population sha256 {sha(pop)} is not the pinned {POP_PIN}", file=sys.stderr)
+        return 2
+    if os.path.realpath(work).startswith(("/tmp/", "/var/tmp/", "/dev/shm/")):
+        print("C1-HARNESS-FATAL: --work under /tmp, /var/tmp or /dev/shm", file=sys.stderr)
+        return 2
+    if os.path.exists(work) and os.listdir(work):
+        print(f"C1-HARNESS-FATAL: --work {work} is not empty", file=sys.stderr)
+        return 2
+    os.makedirs(work, exist_ok=True)
+    with open(pop, encoding="utf-8") as f:
+        rows = [l.rstrip("\n").split("\t") for l in f if l.strip() and not l.startswith("#")]
+    if len(rows) != 18 or any(len(r) != 10 for r in rows) or len({r[0] for r in rows}) != 18 \
+            or any(r[2] not in ("BASE", "F0", "R1", "R2", "R3") for r in rows):
+        print("C1-HARNESS-FATAL: population is not 18 well-formed rows", file=sys.stderr)
+        return 2
+    print(f"# harness sha256={sha(os.path.abspath(__file__))} base={BASE}")
+    print(f"# population path={pop} sha256={sha(pop)}")
+    print(f"# counter path={counter} sha256={sha(counter)}")
+    try:
+        fx, revs = build_fixture(lane, work)
+    except (FixtureError, OSError, subprocess.SubprocessError) as exc:
+        print(f"C1-HARNESS-FATAL: fixture: {type(exc).__name__}: {exc}", file=sys.stderr)
+        return 2
+    print("# fixture " + " ".join(f"{k}={v}" for k, v in revs.items()))
+    mism = acc = errs = 0
+    for rid, where, rlabel, popl, item, cls, target, exp_got, exp_rc, _src in rows:
+        if (where == "lane") != (rlabel == "BASE"):
+            print("C1-HARNESS-FATAL: lane rows are judged at BASE and fixture rows at a fixture rev", file=sys.stderr)
+            return 2
+        root, rev = (lane, BASE) if where == "lane" else (fx, revs[rlabel])
+        pfile, lfile = POPS[popl]
+        forge = os.path.join(work, f"forge-{rid}.tsv")
+        with open(forge, "w", encoding="utf-8") as f:
+            f.write(f"{rid}\t{item}\t{cls}\t{target}\t{'MISMATCH' if exp_rc != '-' else 'REFUSED'}\n")
+        p = subprocess.run([sys.executable, "-B", counter, "--root", root, "--rev", rev, "--fleet-root", fleet,
+                            "--population", os.path.join(lane, pfile), "--ledger", os.path.join(lane, lfile),
+                            "--forge", forge], stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=lane)
+        out = p.stdout.decode("utf-8", "replace")
+        m = re.search(rf"^FORGE {re.escape(rid)} item={re.escape(item)} .*?got=(\S+)", out, re.M)
+        if not m:
+            errs += 1
+            print(f"ROW {rid} where={where} rev={rlabel} item={item} class={cls} expect={exp_got}/{exp_rc} got=- "
+                  f"rc={p.returncode} match=error detail={p.stderr.decode()[:200]!r}")
+            continue
+        got = m.group(1)
+        ok = got == exp_got and (exp_rc == "-" or p.returncode == int(exp_rc))
+        acc += got not in RESOLVING_NOT
+        mism += 0 if ok else 1
+        print(f"ROW {rid} where={where} rev={rlabel} item={item} class={cls} expect={exp_got}/{exp_rc} got={got} "
+              f"rc={p.returncode} match={'yes' if ok else 'no'}")
+    print(f"SUMMARY rows={len(rows)} mismatches={mism} accepted={acc} errors={errs}")
+    return 0 if mism == 0 and errs == 0 else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
