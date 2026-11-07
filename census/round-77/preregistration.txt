@@ -1,0 +1,87 @@
+souji round 77 preregistration (L1 SoujiR77, attempt 1). Written before any candidate byte is committed.
+Round: 77
+Chronology: commit P 43822328ec27b429b68c21d9c3a995e0a09b9d77 (counters, populations, control variants,
+controls, rec.sh, S321/S322 captures, census-before) strictly precedes commit F (this file); the candidates
+follow F. Every control receipt carries command=/rev=/instrument=/instrument_sha256= column-0 lines (Q99
+--substance) and its rev= is the lane base below. Pre-freeze feasibility (Q70) ran in scratch only
+(/fast/scratch/hyaku/souji-r77/L1/); no candidate byte is in P. Two instrument bugs were found by that
+feasibility run and fixed before P: the C2 range rule (a `D1..D5` endpoint repeating the letter stem) and
+the C2 ABSENT rule (it accepted parse-artefact tokens; ABSENT now refuses them, they are TOKEN items).
+
+## C1 operability — the pre-report gate refuses non-regular exclude and attribute sources instead of hanging
+Base: d4f515637884695b3aa016da169d859d3ece6ac4
+Counter: census/round-77/c1-nonreg-counter.py sha256=e511bd57153a462407ea84855c0fe41561e4953dca490bc6f2415e49151da115
+Population: census/round-77/c1-population.tsv sha256=b4d50bef0b8e48721fda34a3b900d82a353284f5192685d03d4612477d86bab4
+Control: census/round-77/controls/c1-K-a-do-nothing.txt
+Surface: tools/souji-pre-report-gate.sh check 4 (clean). git opens every exclude source with a plain
+  blocking open(2) and checks its type only afterwards (S321 git dir.c add_patterns at v2.56.0, opened this
+  round: `fd = open(fname, O_RDONLY);` then `if (fd < 0 || fstat(fd, &st) < 0)`; S064 attr.c; S062 fifo(7)).
+  A FIFO as a per-directory .gitignore or .gitattributes, as $GIT_DIR/info/exclude or info/attributes, or as
+  core.excludesFile/core.attributesFile blocks the lane-base gate forever (S76Sentinel MEDIUM-2).
+  Rule (the claim): every such source that exists must be a regular file (a symlink counts by its target)
+  before check 4 runs any git call that reads it; a work-tree one is refused wherever it sits; refusal class
+  RECEIPT-NONREGULAR-SOURCE in detail-clean. The population also carries one-path forgeries (o1-o3, r76
+  lesson M2: the M09 mutant passed every frozen r76 row) and four positive controls (p1-p4).
+Command: python3 -B census/round-77/c1-nonreg-counter.py --gate-dir <dir holding the gate and the writer
+  copied from the measured lane revision> --work <empty scratch dir>
+Target: with the gate and writer blobs of the C1 candidate commit, `SUMMARY rows=16 mismatches=0 errors=0
+  hangs=0` and EXIT=0 (before, K-a at Base, gate blob sha256
+  90bdd8c74e38c525f2ef75b7c22fb95667035515f44724fbd3a2b1addfcc47f3: mismatches=9 [n1 n2 n3 n4 n5 n6 n7 n10
+  HANG at the 30 s row bound; n8 PASS], hangs=8, EXIT=1); AND the controls stay red: K-b refuse-all
+  (controls/c1-K-b-refuse-all.txt: mismatches=7 [o1 o2 o3 wrong class; p1-p4], EXIT=1), K-c M09 one-path
+  survivor (controls/c1-K-c-m09-one-path.txt: mismatches=11 [n1-n8 n10; o1 o2 PASS], EXIT=1), K-d blanket
+  any-non-regular-entry or any-configured-excludesFile (controls/c1-K-d-blanket-nonregular.txt:
+  mismatches=7 [n3 n6 n7 n10 HANG; o3 class; p2 p3], EXIT=1); AND the regression conjuncts with the
+  candidate gate: the frozen r76 counter `python3 -B census/round-76/c1-evade-counter.py --gate-dir <D>
+  --work <dir>` prints `SUMMARY rows=30 mismatches=0 errors=0`, `python3 -B tests/fixtures/r36-report-gate.py
+  --work <dir> --gate <candidate gate>` prints `SUMMARY cases=21 pass=21 fail=0`, and `bash
+  tests/fixtures/r27-pre-report-gate.sh` (lane gate at the candidate commit) prints `cases=4 pass=4`; AND the
+  candidate gate, same blob, run on the lane itself at the report tip prints check-clean=PASS (domain
+  trial; the receipt binds the trial script's committed path and digest and the report's digest — r76
+  routed defects 1 and 2). Any later gate blob is recorded as an amendment with both digests.
+Kill: any mismatch, error or hang on the 16 rows; any control green; r76 below 30/30, r36 below 21/21 or
+  r27 below 4/4; the domain trial not check-clean=PASS.
+Labels ruled here: n8 (a FIFO .gitignore inside a directory a tracked rule ignores) is FAIL although git
+  does not open it (the lane-base gate passes it in 0.1 s): the gate fails closed on any non-regular
+  exclude/attribute source in the work tree and does not model git's descent. It is a policy row, not a
+  hang row; the report counts hang rows (8) and the policy row (1) separately. o3 (a regular
+  core.excludesFile hiding one path) carries the class the writer's pinned status prints first
+  ("pinned git status"), the base behaviour.
+Stated limits: a FIFO $GIT_DIR/config or ~/.gitconfig blocks git before check 4 (outside this surface);
+  the `timeout` backstop (300 s) bounds check 4's git and python calls but not checks 1-3; a caller that
+  points XDG_CONFIG_HOME or HOME elsewhere changes which default exclude/attribute file is examined.
+
+## C2 calibration — every evidence pointer the self-assessment files make resolves to verified bytes
+Base: d4f515637884695b3aa016da169d859d3ece6ac4
+Counter: census/round-77/c2-pointer-counter.py sha256=8904de8505e4dd554f07516585c2ffeeb2e9da62c59fe65bc78249d45ec5b54b
+Population: census/round-77/c2-population.tsv sha256=bbc19ac66e543b0f974b5524b678985a2a755664294804dab4773953d14e889e
+Control: census/round-77/controls/c2-K-a-no-ledger.txt
+Surface: the lane's self-assessment files (SCORECARD.md, SKILL.md, SHONEN.md, corpus/QUALITY.md,
+  corpus/README.md, PROVINCE.md) against observed repo state. At Base the lane's own pointer check
+  (`python3 -B tools/souji-pointer-check.py --root . --rev <Base> <those six files>`) reports
+  `missing=35`: wave evidence kept only on this host's disk under the ignored .ufo/waves/, fleet runtime
+  paths, quarantined and operator-owned local trees, parse artefacts and deliberately absent examples. The
+  population freezes each finding with the digest of the lane-disk bytes at its path. The claimed work: a
+  committed pointer ledger (census/round-77/c2-pointer-ledger.tsv) giving each item a class the counter
+  verifies against git objects, the lane disk and the fleet root, and a capture commit putting the local-only
+  wave evidence that has no committed copy (P09/P10 .ufo/waves/round-63/w1/S63ExecWriter/souji-receipt-write.py,
+  P11/P18 .ufo/waves/round-64/w1/S64ExecFreeze/) at its own path with byte-equal content (git-add(1) --force,
+  S322 opened this round: "Allow adding otherwise ignored files.").
+Command: python3 -B census/round-77/c2-pointer-counter.py --root /home/vgpnk/Projects/shokunin/souji-shokunin
+  --rev <measured lane revision> --fleet-root /home/vgpnk/Projects/shokunin --ledger
+  census/round-77/c2-pointer-ledger.tsv (run from the lane checkout: the LOCAL-POLICY and QUARANTINED rules
+  read the lane disk)
+Target: at the after revision `SUMMARY items=35 resolved=35 unresolved=0 refused=0 mismatched=0 errors=0`
+  and EXIT=0 (before, K-a no ledger at Base: resolved=0 unresolved=35, EXIT=1); AND the controls stay red:
+  K-b blanket ABSENT (controls/c2-K-b-blanket-absent.txt: resolved=4 refused=31, EXIT=1), K-c local-only
+  instead of capture (controls/c2-K-c-no-capture.txt: refused=4 unresolved=31, EXIT=1), K-d empty-stub
+  capture (controls/c2-K-d-stub-capture.txt: mismatched=4 unresolved=31, EXIT=1), K-e name-only MOVED
+  (controls/c2-K-e-name-only-moved.txt: refused=3 unresolved=32, EXIT=1); AND the lane's own pointer check
+  over the six files at the after revision prints `missing=31` (35 minus the four captured items).
+Kill: resolved below 35 or any refused/mismatched/error item; any control green; the pointer check not
+  missing=31 at the after revision.
+Stated limits: MOVED and CAPTURED prove byte identity with the bytes this host held at freeze, not that
+  those bytes are what the seat originally wrote; FLEET proves the path exists under the fleet root, not its
+  content; ABSENT and QUARANTINED both describe P14 truthfully (the stub was removed and its quarantine
+  directory holds the replacement), so the class choice there is not discriminated; the four ABSENT
+  resolutions K-b reaches (P02 P03 P14 P24) are true statements of absence.
