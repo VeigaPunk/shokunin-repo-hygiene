@@ -1,0 +1,108 @@
+souji round 78 preregistration (L1 SoujiR78, attempt 1). Written before any candidate byte is committed.
+Round: 78
+Chronology: commit P a0dcfa8d7da794e821b22a421584ac2a03c611c0 (counters, populations, forgery sets, control
+variants, controls, prefreeze forgery battery, rec.sh, S323/S324 captures, census-before) strictly precedes
+commit F (this file); the candidates follow F. Every control receipt carries command=/rev=/instrument=/
+instrument_sha256= column-0 lines (Q99 --substance) and its rev= is the lane base below. Pre-freeze
+feasibility (Q70) ran in scratch only (/fast/scratch/hyaku/souji-r78/L1/): the C1 counter over the lane-base
+gate (12 HANG rows, 5 positive rows PASS) and over a scratch draft of the candidate (17/17); one draft defect
+found there and kept out of P: the draft's include scan let `git config --file` read the caller's global config,
+so a FIFO $HOME/.gitconfig cost the full 45 s timeout before failing closed. Prior-round debts read before
+declaring: corpus/lessons/round-77-verifier-spotcheck.md routed defects 1-5 (r78 handles 1 in integration, 2 in
+C2, 3 in C1; 4 and 5 are carried and named in the report).
+
+## C1 operability — the pre-report gate refuses non-regular git discovery sources and bounds check 1
+Base: a8558d410e9855a9d990d6542a24a9a3a365ab6c
+Counter: census/round-78/c1-gitsrc-counter.py sha256=e53dd0cac040281595380c40c126fd4b09eba49239e286a34f176c79b916bf92
+Population: census/round-78/c1-population.tsv sha256=0d3c66ff3f709393340a1a3982dc42bec3809daa9c039764bba4afb76b16f7d3
+Control: census/round-78/controls/c1-K-a-do-nothing.txt
+Surface: tools/souji-pre-report-gate.sh before and inside check 1 (tip). Every git command discovers the
+  repository first: it reads $GIT_DIR/HEAD and $GIT_DIR/commondir (S324 git setup.c get_common_dir_noenv at
+  v2.56.0, opened this round: `if (file_exists(path.buf)) { if (strbuf_read_file(&data, path.buf, 0) <= 0)`),
+  and the system, global, repository and worktree config files with every file an include.path or
+  includeIf.*.path names (S323 git config.adoc "Includes" at v2.56.0, opened this round: "The contents of the
+  included file are inserted immediately, as if they had been found at the location of the include
+  directive."); S062 fifo(7): opening a FIFO blocks. A FIFO at any of those paths blocks the lane-base gate's
+  first git call (check 1 rev-parse) forever, before check 4's r77 pre-check runs (r77 routed defect 3:
+  S77ExecEvade, S77Sentinel MEDIUM-2). `ls-remote origin` runs upload-pack in the remote repository, whose
+  config the gate cannot pre-check.
+  Rule (the claim): before any git call that discovers the lane, every such source that exists must be a
+  regular file (a symlink counts by its target), include targets followed; a refusal prints class
+  RECEIPT-NONREGULAR-GITSOURCE and skips checks 1 and 4 as FAIL; check 1's git calls are time-bounded and
+  an expiry prints RECEIPT-GIT-TIMEOUT. Positive controls q1-q5 (regular, missing and caller-home includes,
+  a FIFO git never reads at discovery) keep a blanket refusal from counting as a gain.
+Command: python3 -B census/round-78/c1-gitsrc-counter.py --gate-dir <dir holding the gate and the writer
+  copied from the measured lane revision> --work <empty scratch dir>
+Target: with the gate and writer blobs of the C1 candidate commit, `SUMMARY rows=17 mismatches=0 errors=0
+  hangs=0` and EXIT=0 (before, K-a at Base, gate blob sha256
+  5d08f5474abad57936777f885b1cb69e9feac4eaf55f3fd3d1252c35e92df55a: mismatches=12 [g1-g11 and t1 HANG at the
+  75 s row bound; q1-q5 PASS], hangs=12, EXIT=1); AND the controls stay red: K-b refuse-any-include
+  (controls/c1-K-b-refuse-any-include.txt: mismatches=14 [g1-g11 t1 HANG; q2 q3 refused], EXIT=1), K-c
+  config-only (controls/c1-K-c-config-only.txt: mismatches=10 [g2-g10 t1 HANG], EXIT=1), K-d timeout-only
+  (controls/c1-K-d-timeout-only.txt: mismatches=11 [g1-g11 HANG], EXIT=1); AND the regression conjuncts with
+  the candidate gate: the frozen r77 counter `python3 -B census/round-77/c1-nonreg-counter.py --gate-dir <D>
+  --work <dir>` prints `SUMMARY rows=16 mismatches=0 errors=0 hangs=0`, the frozen r76 counter
+  `python3 -B census/round-76/c1-evade-counter.py --gate-dir <D> --work <dir>` prints `SUMMARY rows=30
+  mismatches=0 errors=0`, `python3 -B tests/fixtures/r36-report-gate.py --work <dir> --gate <candidate gate>`
+  prints `SUMMARY cases=21 pass=21 fail=0`, and `bash tests/fixtures/r27-pre-report-gate.sh` (lane gate at the
+  candidate commit) prints `cases=4 pass=4`; AND the candidate gate, same blob, run on the lane itself at the
+  report tip prints check-gitsource=PASS, check-tip=PASS and check-clean=PASS (domain trial; the receipt binds
+  the trial script's committed path and digest, the gate blob digest and the report's digest). Any later gate
+  blob is recorded as an amendment with both digests in the trial receipt itself (r77 routed defect 4).
+Kill: any mismatch, error or hang on the 17 rows; any control green; r77 below 16/16, r76 below 30/30, r36 below
+  21/21 or r27 below 4/4; the domain trial not PASS on gitsource, tip and clean.
+Labels ruled here: g8 (a FIFO config.worktree) is FAIL with extensions.worktreeConfig enabled in the fixture;
+  the candidate may refuse it without reading that extension (fail closed). An include whose condition git
+  would not meet is not a row; the gate is allowed to refuse it (policy, not measured). t1 expects
+  RECEIPT-GIT-TIMEOUT from check 1, whatever check 4 then prints.
+Stated limits: SIGTERM to the gate while a git child runs (S77Sentinel MEDIUM-3) is not a row; GIT_DIR and the
+  other environment redirects are unset by the gate (r74) and not rows; the system config path is the
+  build's /etc/gitconfig; refs, objects/info/alternates and shallow are not discovery sources and not rows.
+
+## C2 calibration — the LOG.md evidence pointers resolve to verified bytes under a location-bound counter
+Base: a8558d410e9855a9d990d6542a24a9a3a365ab6c
+Counter: census/round-78/c2-pointer-counter.py sha256=9a6a34fd4f35df391015944c49f93d0c7fe2a7faaff4b78ed1cb9e285ba9ae96
+Population: census/round-78/c2-population.tsv sha256=7c04cdaf8b5935cca8f715b601bff4de1cbf0cbcd2627086925d5d2ac74ae4b5
+Control: census/round-78/controls/c2-K-a-no-ledger.txt
+Surface: LOG.md, the lane's running self-assessment record, against observed repo state. At Base the lane's
+  pointer check (`python3 -B tools/souji-pointer-check.py --root . --rev <Base> LOG.md`) reports `missing=22`
+  (records/c2-pointer-check-before.txt): host-local wave evidence under the ignored .ufo/waves/, fleet runtime
+  and L0 paths, an operator sweep, a quarantined stub, a wrapped path, prose tokens and evidence that no
+  longer exists anywhere. The population freezes each finding with the lane-disk digest at its path. The
+  instrument is the r77 counter's successor (r77 routed defect 2): populations pinned by sha256 (a shifted
+  population exits 2, K-d), MOVED bound to the token's round and last component (K-e: the G6 byte-equal copy
+  at round-02 the r77 counter accepts is refused), QUARANTINED bound to the token's directory and refused
+  when the token exists under the fleet root, TOKEN bound to the source text (wrapped next line, or a
+  string-literal template plus `r<N>` on the line). Pre-freeze forgery battery
+  (records/c2-prefreeze-r77-forge.txt, records/c2-prefreeze-r78-forge.txt): the 7 r77-population forgeries
+  the frozen r77 counter accepts (K-c: accepted=7) and 12 LOG-population forgeries are all refused; the r77
+  shipped ledger still resolves 35/35. The claimed work: a committed ledger
+  (census/round-78/c2-pointer-ledger.tsv) and a capture commit putting the host-local evidence with no
+  committed copy at its own path with byte-equal content (L10 .ufo/waves/round-27/, L14
+  .ufo/waves/round-53/w1-results.json, L20 .ufo/waves/round-68/w1/; git-add(1) --force, S322), plus an
+  append-only LOG.md correction naming each item's class.
+Command: python3 -B census/round-78/c2-pointer-counter.py --root /home/vgpnk/Projects/shokunin/souji-shokunin
+  --rev <measured lane revision> --fleet-root /home/vgpnk/Projects/shokunin --population
+  census/round-78/c2-population.tsv --ledger census/round-78/c2-pointer-ledger.tsv --forge
+  census/round-78/c2-forge-r78.tsv (run from the lane checkout: LOCAL-POLICY and QUARANTINED read the lane
+  disk)
+Target: at the after revision `SUMMARY items=22 resolved=22 unresolved=0 refused=0 mismatched=0 errors=0`,
+  `FORGE-SUMMARY forged=12 matched=12 accepted=0` and EXIT=0 (before, K-a no ledger at Base: resolved=0
+  unresolved=22, EXIT=1); AND the controls stay red: K-b mechanical ledger, existence tests only, no capture
+  (controls/c2-K-b-mechanical.txt: resolved=19 refused=3 [L10 L14 L20], EXIT=1), K-c frozen r77 counter on the
+  r77 forgeries (controls/c2-K-c-forge-r77-counter.txt: accepted=7, EXIT=1 — the r77 instrument, kept as the
+  before of the instrument upgrade), K-d shifted population (controls/c2-K-d-shifted-population.txt: FATAL,
+  EXIT=2), K-e G6 collision (controls/c2-K-e-g6-collision.txt: r77 accepts, r78 refuses, EXIT=0 — a probe
+  whose EXIT=0 means the r78 counter refused); AND regression: the r78 counter over the r77 population with
+  the r77 ledger and the r77 forgeries at the after revision prints `SUMMARY items=35 resolved=35` and
+  `FORGE-SUMMARY forged=7 matched=7 accepted=0`, EXIT=0; AND the lane's pointer check over LOG.md at the after
+  revision prints `missing=19` (22 minus the three captured items).
+Kill: resolved below 22, any refused/mismatched/error item, any forgery accepted or unmatched; K-b at 22; K-c
+  not accepted=7; K-d not EXIT=2; K-e not refusing; the r77 regression below 35/35 or 7/7; the pointer check
+  not missing=19 at the after revision.
+Labels ruled here: ABSENT covers both prose tokens (L07 L08 L19) and evidence lost from every location (L04
+  L05 L17); the append-only LOG.md correction names which is which; the counter does not discriminate them.
+Stated limits: CAPTURED proves byte identity with the bytes this host held at freeze, not that those bytes are
+  what the seats originally wrote; FLEET proves existence under the fleet root, not content; the TOKEN
+  template rule binds the round number by an `r<N>` word on the same line, not by meaning; the G6 collision is
+  a probe outside the frozen forge set (no natural byte-equal copy at a wrong round exists in the tree).
