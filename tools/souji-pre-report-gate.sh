@@ -29,11 +29,89 @@ done
 [[ $lane = /* && $report = /* && $prereg = /* && -n $branch && $branch != -* && $branch != *..* && $branch != */* ]] || usage_error
 fail=0
 check() { printf 'check-%s=%s\n' "$1" "$2"; [[ $2 != FAIL ]] || fail=1; }
+# 0. r78 C1 (S324 git setup.c get_common_dir_noenv; S323 git config.adoc "Includes"; S062 fifo(7)): every git
+#    command first discovers the repository — it reads $GIT_DIR/HEAD and $GIT_DIR/commondir with a plain
+#    blocking open, then the system, global ($HOME/.gitconfig, $XDG_CONFIG_HOME/git/config), repository and
+#    worktree config files and every file their include.path / includeIf.*.path names. A FIFO at any of those
+#    paths blocked the gate's FIRST git call (check 1) forever, before check 4's r77 source pre-check could
+#    run (S77ExecEvade, S77Sentinel MEDIUM-2). Each such source that exists must be a regular file (a symlink
+#    counts by its target) before any git call that discovers the lane; include targets are followed
+#    (relative to the including file, `~/` expanded, at most 10 deep, the depth git itself allows) with
+#    `git config --file` run from `/`, which reads only the named, already-checked file. An include whose
+#    condition git would not meet is held to the same rule (the gate does not evaluate conditions). On
+#    refusal checks 1 and 4, which run git in the lane, are skipped as FAIL. Count only, no path echo (D30).
+#    Check 1's git calls (rev-parse, and ls-remote, which runs upload-pack in the remote repository whose
+#    config the gate cannot pre-check) run under `timeout`; expiry fails tip with RECEIPT-GIT-TIMEOUT.
+gate_git_timeout=45
+gitsrc_n=0 gitsrc_seen=
+gitsrc_one() {  # $1 path, $2 depth (config files only; -1 = not a config file)
+  local p=$1 depth=$2 out line v
+  [[ -e $p || -L $p ]] || return 0
+  if [[ ! -f $p ]]; then gitsrc_n=$((gitsrc_n + 1)); return 0; fi
+  (( depth >= 0 )) || return 0
+  case "|$gitsrc_seen|" in *"|$p|"*) return 0 ;; esac
+  gitsrc_seen+="|$p"
+  (( depth <= 10 )) || { gitsrc_n=$((gitsrc_n + 1)); return 0; }
+  out=$(cd / && GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1 timeout -k 5 "$gate_git_timeout" \
+          git --no-optional-locks config --no-includes --file "$p" \
+          --get-regexp '^include(if\..*)?\.path$' 2>/dev/null)
+  case $? in 0|1) ;; *) gitsrc_n=$((gitsrc_n + 1)); return 0 ;; esac
+  while IFS= read -r line; do
+    [[ -n $line ]] || continue
+    v=${line#* }
+    [[ $line == *' '* ]] || continue
+    case $v in '~/'*) [[ -n ${HOME:-} ]] || continue; v=$HOME/${v#\~/} ;; esac
+    [[ $v == /* ]] || v=$(dirname -- "$p")/$v
+    gitsrc_one "$v" $((depth + 1))
+  done <<< "$out"
+}
+gitsrc_scan() {
+  local gd cd v
+  if [[ -e $lane/.git && ! -d $lane/.git && ! -f $lane/.git ]]; then gitsrc_n=$((gitsrc_n + 1)); return; fi
+  if [[ -d $lane/.git ]]; then gd=$lane/.git
+  elif [[ -f $lane/.git ]]; then
+    IFS= read -r v < "$lane/.git" || true
+    v=${v#gitdir: }
+    [[ $v == /* ]] || v=$lane/$v
+    gd=$v
+  else return
+  fi
+  cd=$gd
+  gitsrc_one "$gd/commondir" -1
+  if [[ -f $gd/commondir ]]; then
+    IFS= read -r v < "$gd/commondir" || true
+    [[ $v == /* ]] || v=$gd/$v
+    cd=$v
+  fi
+  gitsrc_one "$gd/HEAD" -1
+  gitsrc_one "$cd/packed-refs" -1
+  gitsrc_one "/etc/gitconfig" 0
+  [[ -n ${HOME:-} ]] && gitsrc_one "$HOME/.gitconfig" 0
+  local xdg=${XDG_CONFIG_HOME:-${HOME:+$HOME/.config}}
+  [[ -n $xdg ]] && gitsrc_one "$xdg/git/config" 0
+  gitsrc_one "$cd/config" 0
+  gitsrc_one "$gd/config.worktree" 0
+}
+gitsrc_scan
+if (( gitsrc_n )); then
+  check gitsource FAIL
+  printf 'detail-gitsource: RECEIPT-NONREGULAR-GITSOURCE: %s git configuration/ref source(s) are not regular files\n' "$gitsrc_n" >&2
+else
+  check gitsource PASS
+fi
 # 1. Branch name is constrained above; compare full SHA of local branch to remote ref.
-local_tip=$(git --no-optional-locks -C "$lane" rev-parse --verify "refs/heads/$branch^{commit}" 2>/dev/null) || local_tip=
-remote_data=$(git --no-optional-locks -C "$lane" ls-remote --exit-code origin "refs/heads/$branch" 2>/dev/null) || remote_data=
-remote_tip=$(printf '%s\n' "$remote_data" | awk 'NR==1 {print $1}')
-if [[ $local_tip =~ ^[0-9a-f]{40,64}$ && $remote_tip == "$local_tip" ]]; then check tip PASS; else check tip FAIL; printf 'detail-tip: local=%s remote=%s\n' "${local_tip:-<none>}" "${remote_tip:-<none>}" >&2; fi
+if (( gitsrc_n )); then
+  check tip FAIL; printf 'detail-tip: skipped: RECEIPT-NONREGULAR-GITSOURCE\n' >&2
+else
+  local_rc=0 remote_rc=0
+  local_tip=$(timeout -k 5 "$gate_git_timeout" git --no-optional-locks -C "$lane" rev-parse --verify "refs/heads/$branch^{commit}" 2>/dev/null) || { local_rc=$?; local_tip=; }
+  remote_data=$(timeout -k 5 "$gate_git_timeout" git --no-optional-locks -C "$lane" ls-remote --exit-code origin "refs/heads/$branch" 2>/dev/null) || { remote_rc=$?; remote_data=; }
+  remote_tip=$(printf '%s\n' "$remote_data" | awk 'NR==1 {print $1}')
+  if [[ $local_tip =~ ^[0-9a-f]{40,64}$ && $remote_tip == "$local_tip" ]]; then check tip PASS; else check tip FAIL; printf 'detail-tip: local=%s remote=%s\n' "${local_tip:-<none>}" "${remote_tip:-<none>}" >&2; fi
+  if (( local_rc == 124 || local_rc == 137 || remote_rc == 124 || remote_rc == 137 )); then
+    printf 'detail-tip: RECEIPT-GIT-TIMEOUT: a check-1 git call exceeded %ss\n' "$gate_git_timeout" >&2
+  fi
+fi
 # 2. Report must be a regular file with bytes (r74 wave repair, S74Sentinel MEDIUM-2: a FIFO or a device
 #    named as the report made the heading grep below block forever).
 if [[ -f $report && -s $report ]]; then check report PASS; else check report FAIL; fi
@@ -100,8 +178,9 @@ nonreg_sources() {
 gate_src=$(readlink -f -- "${BASH_SOURCE[0]}" 2>/dev/null) || gate_src=
 gate_dir=
 [[ -n $gate_src ]] && gate_dir=$(cd "$(dirname "$gate_src")" && pwd) || gate_dir=
-nonreg=$(nonreg_sources)
-if [[ $nonreg != 0 ]]; then
+if (( gitsrc_n )); then
+  check clean FAIL; printf 'detail-clean: skipped: RECEIPT-NONREGULAR-GITSOURCE\n' >&2
+elif nonreg=$(nonreg_sources); [[ $nonreg != 0 ]]; then
   check clean FAIL
   if [[ $nonreg == -1 ]]; then printf 'detail-clean: RECEIPT-NONREGULAR-SOURCE: source scan failed\n' >&2
   else printf 'detail-clean: RECEIPT-NONREGULAR-SOURCE: %s exclude/attribute source(s) are not regular files\n' "$nonreg" >&2; fi
