@@ -72,7 +72,8 @@ no shokuknow theme taken (Assimilation: none).
 - **S324 admit (A, mined)** — https://raw.githubusercontent.com/git/git/v2.56.0/setup.c, sha256
   `8316b1ad961ac6b1fa29dfdf1094a344aec8673f6637e6c00ba913a6668fc589`, 83214 bytes, HTTP 200, accessed 2026-11-07 by
   the L1 (capture `census/round-78/srcs/git-setup.c-v2.56.0`). Lines 327-329 (get_common_dir_noenv): the commondir
-  path is built, tested with file_exists and read with strbuf_read_file (14 words quoted in the row). Cited by
+  path is built, tested with file_exists and read with strbuf_read_file (12 whitespace tokens quoted in the
+  row; first drafted here as "14 words", corrected per S78ScoutSources). Cited by
   `corpus/knowledge/git-discovery-sources.md` and Q140.
 - **Rejected (L1): gitrepository-layout(5) at v2.56.0 as the commondir/config.worktree source** — fetched
   (`Documentation/gitrepository-layout.adoc`, sha256 `39ce8d13…9439`, 11890 bytes, HTTP 200) and read at lines
@@ -83,7 +84,88 @@ no shokuknow theme taken (Assimilation: none).
   config.adoc); nothing to admit.
 - **S321 row corrected** (status unchanged `mined`, recheck unchanged `on-release`, used-by unchanged): anchor
   cell old "(the fstat type read follows at line 1169)" → new "(the fstat at line 1169 runs after open returns and
-  feeds only the size and stat data, never a file-type test; …)".
+  feeds only the size and stat data, never a file-type test; …)"; scope cell old "add_patterns() open and type
+  check" → new "add_patterns() open and the fstat size read that follows it" (swept after S78ScoutSources found
+  the scope cell still carried the old wording).
 - No other row's status, recheck or used-by cell changed. Within-scope duplicates: `git show
-  a8558d41:corpus/SOURCES.md | grep -c 'config.adoc'` and `… | grep -c 'setup.c'` checked before append (see
-  `## Wave`, S78ScoutSources).
+  a8558d41:corpus/SOURCES.md | grep -c 'config.adoc'` = 0 and `… | grep -c 'setup\.c'` = 0 before append; the
+  same-proposition overlaps S78ScoutSources found (S323 with S042, S324 with S300's URL and capture) are
+  different scopes, declared in the SOURCES `Round-78 provenance` line.
+- **Non-L1 re-open (S78ScoutSources):** both captures re-fetched sha256-identical; S323's quote verbatim at lines
+  99-100 (22 words); S324's at 327-329; both admitted. Its git-code reading (config.c handle_path_include skips a
+  missing include silently; a FIFO passes access(R_OK) and is opened by a blocking fopen; validate_headref opens
+  HEAD with O_RDONLY at setup.c:373; commondir is read only when it exists) corrected the knowledge entry.
+  Accepted correction: the preregistration's Surface attributes the HEAD read to S324, whose quoted lines cover
+  commondir only; HEAD rests on setup.c:373 read by the seat (not a row) and on rows g2/g11 measured by the
+  counter. The preregistration is frozen and not amended.
+- **Discernment check (S78CriticDiscern):** 19/19 ledger classes agree. Admit recorded: the `~user/` and
+  `%(prefix)/` include forms S323 names are a real gap of the W gate (repaired, `--type=path`). Reject recorded:
+  "L04 should be FLEET" — the `.ufo/waves/round-16/build` directories under the fleet root belong to other
+  lanes' repositories, not this lane's token.
+
+## Wave
+
+One v1 wave, 12 seats (connector 1, scout 1, executor 3, mutation-tester 2, reviewer 1, critic 2, sentinel 1,
+scribe 1; attack seats 5 of 12). Spec, dispatch, results and every seat report are mirrored byte-exact under
+`census/round-78/records/wave-w1/` (seat files under `seats/`, `__pycache__` excluded). WAVE-DONE received; 0 dead
+seats.
+
+- Reproduced from committed bytes: C1 17/17 at W and the four regressions (S78ExecC1, S78Reviewer, S78MutGate,
+  S78CriticClaims, S78CriticDiscern, S78Scribe); K-a 12/12 hangs on a solo serial run (S78ExecC1; a 4-way
+  parallel run turned two HANG rows per run into ODD rc=-9 rows under load, mismatches unchanged); C2 22/22, 12/12,
+  35/35, 7/7, K-a..K-e and the pointer check 22 → 19 (S78ExecC2, S78MutCounter, S78CriticClaims); the K captures are
+  exact (disk-only 0, committed-only 0; S78ExecC2); causal separation SEPARABLE (S78Connector).
+- Repaired after measurement (R `3221566c`, receipts `census/round-78/records/wave-repair/`): an includeIf
+  condition with a space split the W gate's record parse and let a FIFO through (S78Reviewer HIGH); a value with a
+  newline did the same (S78Sentinel MEDIUM-1); `~user/` and `%(prefix)/` include values were never checked
+  (S78Reviewer, S78CriticDiscern); the include walk had no total bound and a string-keyed seen-set, so a fan-out
+  tree forked without limit (S78Sentinel HIGH-1, LOW-2); scan errors were counted as non-regular files (S78Sentinel
+  MEDIUM-2); the gitfile and commondir reads raced their `-f` test (S78Reviewer LOW); a FIFO loose ref hung
+  check 1 and check 4 (S78CriticClaims evidence 6, S78ExecEvade route b). `repair-probes.txt` 10/10 (run 1 kept,
+  `attempts/repair-probes-run1.txt`, 8/9); frozen C1 still 17/17 at R, r77 16/16, r76 30/30, r36 21/21, r27 4/4.
+  The run-1 R gate (sha256 `07784129…`) was an uncommitted draft erased by a seat (M7); R was re-applied and
+  committed before its receipts.
+- Accepted as qualifications (not repaired): C1's hang-to-zero move is also reached by bounding every git call
+  with no pre-check (S78CriticClaims variant B: hangs=0, mismatches=11 on the class token only), so what separates
+  the candidate is the refusal ordering and class; K-d's hangs come from check 4's 300 s bound, not from the absent
+  pre-check, and the honest control (candidate minus the check-1 timeout) reads 16/17 with t1 HANG (S78CriticClaims
+  MEDIUM-3); the counter has no duration predicate, so the m13 mutant (walk without global-config isolation) passes
+  17/17 while three rows take 45 s (S78MutGate HIGH; pinned outside the frozen rows by probe arm a6); the counter's
+  killpg misses `timeout`'s own process group, so HANG rows leak the blocked git (S78MutGate, S78ExecC1; the L1
+  reaped three such processes); a lying `check-gitsource` line passes (S78Reviewer LOW). C2: the claimed delta over
+  the mechanical control is the three captures — at the after revision the generator reaches 22/22 because the
+  captures exist (S78CriticClaims MEDIUM-1; the prereg's K-b is the base receipt); 9 of 22 items are byte-verified,
+  the rest existence, absence or source text (S78CriticClaims MEDIUM-2); four counter mutants survive every frozen
+  artifact (MOVED basename, QUARANTINED fleet refusal, template literal, forge match rule; S78MutCounter) and five
+  false single rows pass (one TOKEN target of a range, a range endpoint outside the span, MOVED for a token with
+  no round, a wrong quarantine leaf, a TOKEN prefix of the wrapped continuation; S78MutCounter NF1-NF5).
+- The append-only LOG.md correction the preregistration names as claimed work landed at I `bbd199da`, after the
+  after-arm A (S78CriticClaims HIGH-1 and S78CriticDiscern HIGH read LOG.md at A); no counted number depends on it
+  (R0 reads the base blob).
+- Out of surface (stated limits, now evidenced): FIFO `objects/info/alternates` and `shallow` hang W (S78ExecEvade
+  routes a, c; R does not check them either, untested on R); remote-side FIFOs (HEAD, packed-refs, loose ref, include) are bounded by check 1's
+  timeout to about 45 s (S78ExecEvade k-k5); SIGTERM leaves the git child for at most its own timeout (S78Sentinel
+  MEDIUM-3); other lane tools that run git (receipt writer, pointer and freeze checks, landing gate) carry no scan
+  (S78Connector HIGH/MEDIUM).
+- Sibling overlap (S78Connector, report only; `census/round-78/records/wave-w1/seats/S78Connector/sibling-overlap.tsv`):
+  10 sibling gates run git with no discovery-source guard (6 of them with no timeout either); 17 siblings' LOG.md
+  files cite `.ufo/waves` paths that are not committed.
+
+## Mistakes (wave)
+
+| # | class | evidence pointer | captured-by | fix |
+|---|---|---|---|---|
+| M5 | a repair-probe expectation written before observing the W arm (this round, repeat of r77 M5): the diamond arm expected W HANG; W passed in 13.3 s because its depth cap bounds that size | `census/round-78/records/wave-repair/attempts/repair-probes-run1.txt` (8 of 9, EXIT=1) | the probe's computed verdict | relabelled to the observed W verdict with a comment pointing at run 1; the fan-out bound is pinned by the separate wide arm (W PASS, R SCAN) |
+| M6 | a frozen counter without a duration predicate (pre-freeze, this round): a refusal that takes 45 s instead of 0 s matches the same row | S78MutGate survivor m13 | none (Q70 feasibility saw the 45 s draft but the population carries no time bound) | probe arm a6 requires R to refuse within 5 s; a frozen time bound is routed to r79 |
+| M7 | a seat wrote a lane tracked file (this round): S78ExecC1 ran `git restore` on the gate, erasing the L1's uncommitted repair; the L1's first repair receipts were recorded from the restored W bytes and discarded | `census/round-78/records/wave-w1/seats/S78ExecC1.md` item 7 | the L1's digest check before trusting a receipt (the gate copy hashed to the W blob) | receipts deleted before commit; the L1 messaged the seat; the repair was re-applied and committed (R) before any receipt; rule kept: commit a repair before recording against it |
+
+## Routed to round 79
+
+- (a) C1 instrument successor: a per-row duration bound (m13), process-group cleanup that also kills `timeout`'s
+  group, an exact `check-gitsource` line assertion, rows for the repair arms (space subsection, newline value,
+  `~user/`, loose ref, fan-out) and for `objects/info/alternates` and `shallow`.
+- (b) SIGTERM: a TERM/EXIT trap with git calls run as background jobs so `wait` is interruptible.
+- (c) C2 instrument successor: MOVED binding for tokens without a round, range span binding, every-target TOKEN,
+  quarantine leaf binding, an expect=MISMATCH forgery row (S78MutCounter M02/M04/M07/M09, NF1-NF5).
+- (d) carried: r76 K03/K04; the status-trusting and unguarded lane tools (receipt writer, pointer and freeze
+  checks, landing gate, `souji-verify.sh:550,594`, `souji-census.sh`).

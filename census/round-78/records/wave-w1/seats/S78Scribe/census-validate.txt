@@ -1,0 +1,45 @@
+# S78Scribe — sources-census.sh validate runs for the two draft rows
+
+Instrument: `bash /home/vgpnk/Projects/shokunin/scripts/sources-census.sh validate --file <registry> --today 2026-11-07`
+(run as-is; no edits to the script). Host: Linux 7.2.11-arch1-1.
+
+## Run A — the ticket's check: pre-integration registry + my two rows (exit 0)
+
+Registry = `git show 319109b0ddc836c6cf3364fdde3ab99796f21f32:corpus/SOURCES.md` (the after-arms commit,
+before the L1's integration commit bbd199da) copied to
+`/fast/scratch/hyaku/souji-r78/S78Scribe/vroot/corpus/SOURCES.md`, with the two rows from
+`S78Scribe/sources-rows.md` inserted after the `| S322 |` row (row count 247 -> 249). The mirror root
+(`.../S78Scribe/vroot`) holds a real `corpus/` copy plus symlinks to the lane's other entries, so the E11
+used-by check sees `corpus/knowledge/git-discovery-sources.md` and `corpus/QUALITY.md`.
+
+    $ bash /home/vgpnk/Projects/shokunin/scripts/sources-census.sh validate \
+        --file /fast/scratch/hyaku/souji-r78/S78Scribe/vroot/corpus/SOURCES.md --today 2026-11-07
+    file	ok	/fast/scratch/hyaku/souji-r78/S78Scribe/vroot/corpus/SOURCES.md
+    file	W04	S324 duplicate url raw.githubusercontent.com/git/git/v2.56.0/setup.c across scopes
+    [86 further W04 lines on pre-existing rows; 87 W04 lines in total, 88 lines of output]
+    EXIT=0
+
+E-code count: `grep -cE '\tE[0-9]+\t'` -> 0. The single new warning is W04 for S324: `setup.c` is already
+cited by S300 under a different scope; W04 does not change lane status (sources-census.sh header).
+
+## Run B — the landed registry (exit 0)
+
+    $ cd /home/vgpnk/Projects/shokunin/souji-shokunin
+    $ bash /home/vgpnk/Projects/shokunin/scripts/sources-census.sh validate \
+        --file corpus/SOURCES.md --today 2026-11-07
+    file	ok	/home/vgpnk/Projects/shokunin/souji-shokunin/corpus/SOURCES.md
+    file	W04	S324 duplicate url raw.githubusercontent.com/git/git/v2.56.0/setup.c across scopes
+    EXIT=0
+
+E-code count 0; this is the lane's own committed `corpus/SOURCES.md` at bbd199da (integration part 1, which
+landed S323/S324 while this seat was drafting).
+
+## Run C — appending the same rows again (refused, as it should be)
+
+After bbd199da the registry already holds S323/S324, so the same insertion produces duplicates:
+
+    file	E03	S323 duplicate id
+    file	E03	S324 duplicate id
+    EXIT=1
+
+Recorded to show the rows are now present rather than merely drafted.

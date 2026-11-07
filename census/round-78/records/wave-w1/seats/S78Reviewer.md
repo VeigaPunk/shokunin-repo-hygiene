@@ -1,0 +1,23 @@
+# S78Reviewer — r78 falsification review: W gate diff (C1) + r78 C1/C2 counters
+
+VERDICT — C1: the frozen numbers re-derive (17/17 hangs 0; before 12 mismatches/12 hangs; r77 16/16, r76 30/30, r36 21/21, r27 4/4) but the RULE is falsified: discovery sources git reads are not followed (HIGH/MEDIUM below), so "refuses ... before any git call" holds only for the frozen 17 rows. C2: every claim re-derives (22/22, 12/12, 35/35, 7/7, 0/22, 19/3, accepted=7, K-d EXIT=2, K-e); no rule weaker than r77; R0 and forge isolation sound.
+
+## Commands, observed lines, evidence (lane root; S=/fast/scratch/hyaku/souji-r78/S78Reviewer)
+- `git show a8558d4:tools/souji-pre-report-gate.sh` sha256=5d08f5474abad57936777f885b1cb69e9feac4eaf55f3fd3d1252c35e92df55a (prereg, match); W ed22dc9 -> b746bd9d...; tip bbd199da gate blob 5795d655 == W blob (integration untouched).
+- `python3 -B census/round-78/c1-gitsrc-counter.py --gate-dir $S/dW --work $S/workW2` -> `SUMMARY rows=17 mismatches=0 errors=0 hangs=0` rc=0; t1 `verdict=FAIL class=RECEIPT-GIT-TIMEOUT secs=45.1`; g1-g11 `class=RECEIPT-NONREGULAR-GITSOURCE`; one earlier run t1 `rc=-9 secs=39.3` = external SIGKILL (reruns clean).
+- `... --gate-dir $S/dBase --work $S/workBase` -> `SUMMARY rows=17 mismatches=12 errors=0 hangs=12` rc=1 (906 s).
+- r77 counter `rows=16 mismatches=0`; r76 counter `rows=30 mismatches=0`; `r36-report-gate.py --gate $S/dW/...` `cases=21 pass=21 fail=0`; `bash tests/fixtures/r27-pre-report-gate.sh` `cases=4 pass=4`.
+- `c2-pointer-counter.py --root . --rev 319109b0 --fleet-root ... --population census/round-78/c2-population.tsv --ledger census/round-78/c2-pointer-ledger.tsv --forge census/round-78/c2-forge-r78.tsv` -> `items=22 resolved=22 ... errors=0` + `forged=12 matched=12 accepted=0` EXIT=0; r77 population+ledger+`c2-forge-r77.tsv` -> `items=35 resolved=35` + `forged=7 matched=7 accepted=0`; no-ledger 0/22 EXIT=1; K-b 19/3 EXIT=1; `c2-forge-legacy.py` accepted=7; K-d `C2-COUNTER-FATAL ... not pinned` EXIT=2; K-e `r78_refuses=yes`.
+- population == the 22 `MISSING` lines of `tools/souji-pointer-check.py --rev a8558d4 LOG.md` (sorted diff empty); pointer check base `missing=22`, A `missing=19`; `--rev d4f5156` + r78 population: no ERROR -> R0 reads the population's base, not --rev; the forge loop passes exactly one forged entry per item -> isolation holds.
+
+## Findings
+HIGH (gate): `tools/souji-pre-report-gate.sh:61-64` splits `git config --get-regexp` at the KEY's first space, so an `includeIf` condition containing a space is never followed (`includeif.hasconfig:remote.*.url:https://example.com/a b.path` -> v="b.path <target>", relative, unchecked). git reads the FIFO (`git -C clone rev-parse` rc=124 under `timeout 5`); W gate on that fixture: `check-gitsource=PASS`, `detail-tip: RECEIPT-GIT-TIMEOUT`, `detail-clean: ... source scan failed`, rc=1 after 390.1 s (>75 s = HANG). Same shape with a gitdir condition in a repo path with a space (>160 s block, check-gitsource=PASS).
+MEDIUM (gate): CR in gitfile/commondir — git strips trailing `\n`/`\r` (S324 setup.c:1045-1047, 331-334) while `read -r` (lines 73/82) keeps `\r`, so `gitdir: <gd>\r\n` makes the scan probe `<gd>\r/...`; measured: git accepts the CR (rc=0), `<gd>/config` FIFO -> `rev-parse` rc=124, W gate `check-gitsource=PASS` rc=1 after 390.1 s.
+MEDIUM (gate): `~user/` and `%(prefix)/` includes not expanded (line 63 only `~/`; S323 pathname section lists all three); `git config --path` -> /home/vgpnk/inc-d, /usr/share/x; the gate probes `<config dir>/~vgpnk/inc-d`, `<config dir>/%(prefix)/share/x`.
+MEDIUM (counter): `c1-gitsrc-counter.py:219` killpg cannot reach `timeout`'s own process group (measured: timeout+sleep survive `killpg(leader,SIGKILL)`), so a HANG row leaves the blocked git to its own bound (K-d gate_timeout=300 s).
+LOW (counter): a gate misreporting its evidence is accepted — W mutant `check gitsource FAIL`->`PASS` scored 17/17 (lines 225-231,288: rc=1 + ANY check-*=FAIL + class token anywhere; q rows never require it absent).
+LOW (gate): value with an embedded newline prints as a raw LF (`od -c`) and the line loop drops it; `read < "$lane/.git"`/`commondir` open after the `-f` test (TOCTOU); `$lane/.git` absent returns at line 77 while git walks up to an enclosing repo.
+GAP: domain trial deferred to L1 (script committed, binds W blob); C1 K-b/c/d variants not re-run here (11-12 HANG rows each; committed; S78ExecC1 runs them), their receipts match their variant code.
+
+## Files written
+- .ufo/waves/round-78/w1/S78Reviewer.md; receipts in .ufo/waves/round-78/w1/S78Reviewer/{c1-w,c1-w2,c1-base,c1-mutant,c2-r78,c2-r77,hasconfig-gate,cr-gate}.txt; scratch S/ removed. No tool installed or upgraded.

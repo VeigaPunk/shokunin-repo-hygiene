@@ -1,0 +1,9 @@
+# Does `git config --file X` still open the caller's global config? (why m13's flags are load-bearing)
+$ git init -q r; mkfifo f1; printf '[user]\n\tname = x\n' > good.cfg
+$ /usr/bin/time -f 'elapsed=%e rc=%x' setsid timeout -k 2 6 env GIT_CONFIG_GLOBAL=$PWD/f1 \
+    git config --file $PWD/good.cfg --no-includes --get user.name
+Command exited with non-zero status 124
+elapsed=6.00 rc=124
+# control, same call with GIT_CONFIG_GLOBAL=/dev/null: returns the value at once (used by the frozen counter)
+# => a scan that drops the inline GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1 (gate:55) reads a FIFO
+#    global and burns the full 45 s bound; the 17 frozen rows still score 17/17 (mutant m13 survives).

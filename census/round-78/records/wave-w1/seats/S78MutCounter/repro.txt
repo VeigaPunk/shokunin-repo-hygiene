@@ -1,0 +1,45 @@
+S78MutCounter replay notes (round 78 wave 1). Scratch S=/fast/scratch/hyaku/souji-r78/S78MutCounter (removed before yield);
+lane L=/home/vgpnk/Projects/shokunin/souji-shokunin; fleet F=/home/vgpnk/Projects/shokunin; A=319109b0ddc836c6cf3364fdde3ab99796f21f32;
+base a8558d410e9855a9d990d6542a24a9a3a365ab6c; after-receipt rev 87d456179668738ca59e607c3176de056e6a9991.
+Pristine copy of census/round-78/c2-pointer-counter.py at A/HEAD sha256=9a6a34fd4f35df391015944c49f93d0c7fe2a7faaff4b78ed1cb9e285ba9ae96 (pin matched).
+
+1) baseline (a)/(b):
+cd $L && python3 -B $S/pristine/c2-pointer-counter.py --root $L --rev $A --fleet-root $F \
+  --population census/round-78/c2-population.tsv --ledger census/round-78/c2-pointer-ledger.tsv --forge census/round-78/c2-forge-r78.tsv
+  -> SUMMARY items=22 resolved=22 unresolved=0 refused=0 mismatched=0 errors=0 / FORGE-SUMMARY forged=12 matched=12 accepted=0 / EXIT=0
+... --population census/round-77/c2-population.tsv --ledger census/round-77/c2-pointer-ledger.tsv --forge census/round-78/c2-forge-r77.tsv
+  -> SUMMARY items=35 resolved=35 ... / FORGE-SUMMARY forged=7 matched=7 accepted=0 / EXIT=0
+same at --rev 87d4561: 22/22 12/12 and 35/35 7/7, EXIT=0.
+
+2) prefreeze/base and controls (matrix-base.tsv):
+--rev base --population census/round-78/c2-population.tsv  -> resolved=0 unresolved=22, EXIT=1 (K-a)
+--rev base --population ... --ledger census/round-78/controls/variants/c2-K-b-mechanical-ledger.tsv -> resolved=19 refused=3, EXIT=1 (K-b)
+--rev base --population census/round-78/controls/variants/c2-K-d-shifted-population.tsv -> FATAL not pinned, EXIT=2 (K-d)
+--rev base --population r78 --forge c2-forge-r78.tsv -> resolved=0, forged=12 matched=12 accepted=0, EXIT=1 (prefreeze)
+K-c: python3 -B census/round-78/c2-forge-legacy.py --root $L --rev base --fleet-root $F --work $S/wk/legacy
+  -> FORGE-SUMMARY forged=7 matched=0 accepted=7 / EXIT=1
+pointer check: python3 -B tools/souji-pointer-check.py --root . --rev base LOG.md -> missing=22 (set == the 22 population rows);
+  --rev 87d4561 and --rev A -> missing=19.
+
+3) mutants: $S/mut/M01..M10 .py, built by $S/build-mutants.py (each replacement asserted to hit exactly once);
+   raw runs matrix-at-A.tsv (A/B/K-a/K-b/K-d at A) and controls-at-base.tsv (K-a/K-b/K-d at base).
+4) adapted g6: sed on census/round-78/probes/g6-collision.sh replaces
+   "$lane/census/round-78/c2-pointer-counter.py" with "$mut" and adds mut=${4:?mutant counter} (file $S/fx/g6-mutant.sh);
+   bash $S/fx/g6-mutant.sh $L a8558d... $S/wk/g6-<mutant> $S/mut/<mutant>.py  -> g6-mutants.tsv.
+   pristine: r77 status=MOVED, r78 status=REFUSED, EXIT=0 (K-e reproduced); M01 r78 status=MOVED.
+5) new detectors (probes-raw-1.tsv / probes-raw-2.tsv):
+   FP2: --population r77 --ledger <r77 ledger with P04 row = MOVED census/round-32/waves/a2w1/renamed-SwarmExecutor08.md>
+        on scratch clone with a byte-equal renamed copy -> P04 status=MOVED (pristine REFUSED: last component differs).
+   FP8: --rev 6f44938f --forge row L16 QUARANTINED .ufo/quarantine/round-17/.ufo/NOT-THE-L0
+        -> pristine REFUSED why=token exists under the fleet root; M04 status=QUARANTINED.
+   LP2: --population r77 --forge row P22 TOKEN census/round-29/records/amendments.txt
+        -> pristine REFUSED; M07 got=TOKEN (r29 word present, next literal not matched).
+   LP3: --population r77 --forge row P01 QUARANTINED .ufo/quarantine/round-17/tests expect=MISMATCH
+        -> pristine got=REFUSED match=no EXIT=1; M09 EXIT=0 (accepted==0), row unmatched.
+6) scratch-clone fixture (not lane bytes): D=$S/wk/fx-main, clone --shared from $L, checkout A, then commit
+   (1) census/round-02/waves/a2w1/SwarmExecutor08.md copy, (2) census/round-32/waves/a2w1/renamed-SwarmExecutor08.md,
+   (3) census/round-73/records/c2-after-D9.txt, (4) census/round-49/sources/s272-python-open-zzz,
+   (5) census/round-49/sources/s272-python-open-l, (6) census/round-02/operator-sweep-20261019 (cp -a of the lane
+   untracked dir; rev digest == frozen d:3367d3ce...), (7) .ufo/quarantine/round-17/tests/vault/vadv54-run/p/p6repo/NOT-THE-STUB,
+   (8) .ufo/quarantine/round-17/.ufo/NOT-THE-L0. rev ecc6ec0d (1-7), then 6f44938f (8). No lane file was written.
+7) false rows (false-rows.tsv): NF1 on lane A; NF2..NF5 on the scratch clone rev 6f44938f.

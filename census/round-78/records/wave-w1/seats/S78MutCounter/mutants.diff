@@ -1,0 +1,95 @@
+--- pristine/c2-pointer-counter.py
++++ M01-moved-round-binding-removed.py
+@@ -222,6 +222,4 @@
+         elif os.path.basename(target.rstrip("/")) != os.path.basename(token.rstrip("/")):
+             why = "target's last component differs from the token's"
+-        elif kr and (not tr or tr.group(1) != kr.group(1)):
+-            why = "target names a different round than the token"
+     elif cls == "LOCAL-POLICY":
+         if frozen is None:
+--- pristine/c2-pointer-counter.py
++++ M02-moved-basename-binding-removed.py
+@@ -220,6 +220,4 @@
+         elif rev_digest(root, rev, target) != frozen:
+             why = "target absent at rev or digest differs"
+-        elif os.path.basename(target.rstrip("/")) != os.path.basename(token.rstrip("/")):
+-            why = "target's last component differs from the token's"
+         elif kr and (not tr or tr.group(1) != kr.group(1)):
+             why = "target names a different round than the token"
+--- pristine/c2-pointer-counter.py
++++ M03-quarantine-dirname-binding-removed.py
+@@ -241,6 +241,4 @@
+                 or not os.path.lexists(os.path.join(root, target)):
+             why = "quarantine target absent on the lane disk"
+-        elif os.path.dirname(rest) != os.path.dirname(token.rstrip("/")):
+-            why = "quarantine target does not sit where the token sat"
+         elif os.path.lexists(os.path.join(fleet, token)):
+             why = "token exists under the fleet root"
+--- pristine/c2-pointer-counter.py
++++ M04-quarantine-fleet-check-removed.py
+@@ -243,6 +243,4 @@
+         elif os.path.dirname(rest) != os.path.dirname(token.rstrip("/")):
+             why = "quarantine target does not sit where the token sat"
+-        elif os.path.lexists(os.path.join(fleet, token)):
+-            why = "token exists under the fleet root"
+     elif cls == "FLEET":
+         if not token.startswith(".ufo/") or not os.path.lexists(os.path.join(fleet, token)):
+--- pristine/c2-pointer-counter.py
++++ M05-token-nextline-any-rest.py
+@@ -176,5 +176,5 @@
+             rest = t[len(stem):]
+             wrapped = nextline.lstrip(" \t`")
+-            if not (rest == "" or (rest and wrapped.startswith(rest)) or _template_ok(token, rest, line)):
++            if not (rest == "" or (rest and True) or _template_ok(token, rest, line)):
+                 return f"target continuation is not in the source text: {t}"
+         else:
+--- pristine/c2-pointer-counter.py
++++ M06-token-template-rN-dropped.py
+@@ -154,5 +154,5 @@
+     if not lit or lit.group(1) != s:
+         return False
+-    return re.search(r"(?<![A-Za-z0-9])r" + n + r"(?![0-9])", line) is not None
++    return True
+ 
+ 
+--- pristine/c2-pointer-counter.py
++++ M07-template-literal-check-removed.py
+@@ -152,5 +152,5 @@
+     n, s = m.group(1), m.group(2)
+     lit = re.search(re.escape('"' + token + '"') + r'\s*\+[^"]*\+\s*"([^"]*)"', line)
+-    if not lit or lit.group(1) != s:
++    if False:
+         return False
+     return re.search(r"(?<![A-Za-z0-9])r" + n + r"(?![0-9])", line) is not None
+--- pristine/c2-pointer-counter.py
++++ M08-population-pin-bypassed.py
+@@ -294,7 +294,8 @@
+         pop_sha = hashlib.sha256(f.read()).hexdigest()
+     if pop_sha not in POPS:
+-        print(f"C2-COUNTER-FATAL: population sha256 {pop_sha} is not pinned", file=sys.stderr)
+-        return 2
+-    label, base, n = POPS[pop_sha]
++        label, base = "unpinned", rev
++        n = len([l for l in open(ns.population, encoding="utf-8") if l.strip() and not l.startswith("#")])
++    else:
++        label, base, n = POPS[pop_sha]
+     with open(ns.population, encoding="utf-8") as f:
+         pop = [l.rstrip("\n").split("\t") for l in f if l.strip() and not l.startswith("#")]
+--- pristine/c2-pointer-counter.py
++++ M09-forge-match-replaced-by-accepted-zero.py
+@@ -351,5 +351,5 @@
+                       + (f" {why}" if why and not hit else ""))
+         print(f"FORGE-SUMMARY forged={forged} matched={matched} accepted={accepted}")
+-        ok = ok and forged > 0 and matched == forged
++        ok = ok and forged > 0 and accepted == 0
+     return 0 if ok else 1
+ 
+--- pristine/c2-pointer-counter.py
++++ M10-forge-judged-with-ledger-row.py
+@@ -343,5 +343,5 @@
+                     return 2
+                 fid, iid, cls, target, expect = r
+-                st, why = judge(root, rev, fleet, byid[iid], (cls, target), blobs[byid[iid][1]])
++                st, why = judge(root, rev, fleet, byid[iid], ledger.get(iid), blobs[byid[iid][1]])
+                 forged += 1
+                 hit = st == expect
