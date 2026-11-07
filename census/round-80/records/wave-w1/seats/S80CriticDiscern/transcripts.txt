@@ -1,0 +1,46 @@
+S80CriticDiscern — observed lines (verbatim excerpts from the runs whose commands are in the report)
+
+[F1 job-control launch, tools/souji-quarantine.sh at 836dac3e, engine=exec sleep 600, target=$LANE/PROVINCE.md]
+--- nofix front_alive_after_1s=0 out_lines=1
+--- nofix front_rc=0
+mktemp: failed to create file via template '/fast/scratch/hyaku/souji-r80/S80CriticDiscern/fix/tmp/souji-quarantine.nvT6NPP2/souji-quarantine.err.XXXXXX': No such file or directory
+--- setplusm front_alive_after_1s=1 out_lines=0
+--- setplusm front_rc=143
+SIGNAL	SIGTERM	RECEIPT-QUARANTINE-SIGNALED
+souji-quarantine: SIGTERM received; the worker session was killed
+cleanup_killed=none
+
+[F1 mechanism isolation: set -m probe, same file]
+A: env SHELLOPTS=monitor bash probe.sh -> ` 722276  722276  721979 sleep 0.3` (pgid==pid: group leader)
+B: bash probe.sh                      -> ` 723700  721979  721979 sleep 0.3` (pgid==script pid)
+forkdemo under SHELLOPTS=monitor: wait_rc=0 and the script exits 0 while `sleep 600` runs with sid==pid
+(ps: ` 832834    1487  832834  832834 sleep 600`, killed by me)
+
+[F3 selftest, W2 candidate copy in scratch, cwd=lane]
+mode=755: selftest: 81 checks, 47 failed   (rc126 lines=0)
+mode=644: selftest: 81 checks, 51 failed   (rc126 lines=20)
+committed c2-regress-selftest.txt:91: selftest: 81 checks, 51 failed
+committed c2-regress-selftest-committed-mode.txt:117: selftest: 108 checks, 0 failed
+L1 scratch executed by the BASE diagnosis receipt: td/base/souji-quarantine.sh = e2f2d083d679f1da…9849e4d (0644)
+diagnosis/selftest-base-mode0644-copy.txt:4: instrument_sha256=67ec160b97b4fea7…a7181  (the lane's candidate)
+
+[F4 v3 domain trial, committed probe 60c7f50e, targets = three untracked scratch files]
+RESULT	<scratch>/untracked-a.txt	DRY-RUN-BLOCKED	quarantine-containment	symlink-or-noncanonical-quarantine-path
+RESULT	<scratch>/untracked-b.txt	DRY-RUN-BLOCKED	quarantine-containment	symlink-or-noncanonical-quarantine-path
+RESULT	<scratch>/untracked-c.txt	DRY-RUN-BLOCKED	quarantine-containment	symlink-or-noncanonical-quarantine-path
+SUMMARY	total=3	deleted=0	aborted=0	unauthorized=0	skipped=0	stage2failed=0	dryrun-pass=0	dryrun-blocked=3
+base_rc=3 cand_rc=3; result_lines_base=3 result_lines_cand=3; TRIAL identical=yes; shell rc 0
+
+[Sources, re-opened 2026-11-07]
+sha256sum /usr/share/man/man1/git-ls-tree.1.gz = c0e10ef543481ac2569e665eca314067c394b10d4965f78e96e85ce79a1a7e86
+sha256sum /usr/share/man/man1/setsid.1.gz      = 614ae07f37d95c2e250b32c812835dba09e91144f9cbf520efa586cac7385243
+sha256sum /usr/share/man/man5/proc_pid_stat.5.gz = d2b5d09d6d30072682949475e88a90444f71529667e24a62e3812127cc002b51
+pacman -Qo: git 2.56.0-1, util-linux 2.42.4-1, man-pages 6.19-1
+zcat git-ls-tree: 204 `%(objectmode) %(objecttype) %(objectname)%x09%(path)`; 252-255 the objecttype sentence
+zcat setsid: 37 `setsid runs a program in a new session. The command calls fork(2) if already a process group leader. Otherwise, it executes a program in the current process.`
+zcat proc_pid_stat: 107-108 `(6) session %d` / `The session ID of the process.`
+
+[Working tree]
+git status --porcelain at 04:40 = ` M corpus/knowledge/gate-signal-handling.md`; at tip 60c7f50e = empty.
+git log --oneline -1 = 60c7f50e (I), a4aa8880 (A) is its parent; the frozen counters/tool are unchanged
+by I (`git diff --stat 836dac3e..60c7f50e -- tools/` and `bd263c3f..60c7f50e -- census/round-80/*counter*` empty).

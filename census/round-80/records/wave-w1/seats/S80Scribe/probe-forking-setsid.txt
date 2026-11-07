@@ -1,0 +1,13 @@
+# S80Scribe probe: the front's exec-in-place assumption (read-only lane bytes, scratch copies)
+rev=836dac3e336863c57d9d7125837ed22b22d8d044 tool=tools/souji-quarantine.sh sha256=67ec160b97b4fea7e93fdf74afcf1bd904171cf25062fef1a602fe28de3a7181
+# layout: $S/td/cand/tools/souji-quarantine.sh (REPO_ROOT derives from its own path; Q145)
+# env: SOUJI_VERIFY_BIN=<lane>/tools/souji-verify.sh SOUJI_Q_LEDGER=<lane>/corpus/knowledge/obsidian-ledger.tsv
+command=bash $S/td/cand/tools/souji-quarantine.sh --dry-run <lane> <lane>/PROVINCE.md
+A: rc=0 lines=9 RESULT=1 elapsed=6.54s
+command=PATH=$S/bin:$PATH bash $S/td/cand/tools/souji-quarantine.sh --dry-run <lane> <lane>/PROVINCE.md
+# $S/bin/setsid = '#!/bin/bash' + 'exec /usr/bin/setsid -f -- "$@"' (S328: setsid forks when already a group leader)
+C: rc=0 lines=0 RESULT=0 elapsed=140ms (at exit and after 10 s)
+C stderr: mktemp: failed to create file via template '/tmp/souji-quarantine.OQXemT3x/souji-quarantine.err.XXXXXX': No such file or directory
+# mechanism: front's wait returns when setsid's parent exits; its EXIT trap removes $q_front_tmp; the worker dies on ERRTMP
+# bash -m could not be exercised: pty unavailable in this environment ('no job control in this shell')
+strays after run: none (ps -eo pid,args | grep S80Scribe)

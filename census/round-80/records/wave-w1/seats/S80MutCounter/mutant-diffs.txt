@@ -1,0 +1,102 @@
+# mutant panel: sha256 and one-hunk diff against base.py (sha256 90ed9031d9b7d393e7d85b7b9c3ba603d9303eb194a541071bb0612d066069f1)
+
+== M01-modes.py 0fef63dfd028c284a2580df4a06fc65fcc37520c89c6d3cac087401493a7ecd3
+@@ -216,7 +216,7 @@
+         return False
+     meta, _, name = out.rstrip(b"\0").partition(b"\t")
+     mode, typ, _oid = meta.split(b" ")
+-    return name == t.encode() and typ == b"blob" and mode in (b"100644", b"100755")
++    return name == t.encode() and typ == b"blob" and mode in (b"100644", b"100755", b"120000", b"160000")
+ 
+ 
+ def token_ok(root, rev, fleet, token, targets, line, nextline):
+
+== M02-anyblob.py 3f746d9138e44469771082b70fea2082451bad21c757b91d37a6dc4b9e9777bf
+@@ -216,7 +216,7 @@
+         return False
+     meta, _, name = out.rstrip(b"\0").partition(b"\t")
+     mode, typ, _oid = meta.split(b" ")
+-    return name == t.encode() and typ == b"blob" and mode in (b"100644", b"100755")
++    return name == t.encode() and typ == b"blob"
+ 
+ 
+ def token_ok(root, rev, fleet, token, targets, line, nextline):
+
+== M03-fleet-skip.py 113929991e4bd76c722c9c5654460386879cffa02dfdf68cdc17e28511773d14
+@@ -209,8 +209,7 @@
+     """True iff <t> is a regular file: a blob of mode 100644/100755 at <rev>, or (written `fleet:<path>`) a regular
+     non-symlink file under <fleet>."""
+     if t.startswith("fleet:"):
+-        p = os.path.join(fleet, t[len("fleet:"):])
+-        return os.path.isfile(p) and not os.path.islink(p)
++        return True
+     out = git(root, "ls-tree", "-z", rev, "--", t, check=False).stdout
+     if not out:
+         return False
+
+== M04-root-corpus.py e1f2127048f03d4f812bab074ab77d881ad5628788785a4ffabe4447ce6d98fc
+@@ -309,7 +309,7 @@
+             why = "target's last component differs from the token's"
+         elif kr and (not tr or tr.group(1) != kr.group(1)):
+             why = "target names a different round than the token"
+-        elif kr and target[:tr.start(0)] not in (token[:kr.start(0)], "census"):
++        elif kr and target[:tr.start(0)] not in (token[:kr.start(0)], "census", "corpus"):
+             # r80 (S79MutCounter NF10): a moved file lands where the token sat or in the lane's capture root
+             why = "target's round-<N> directory is neither the token's nor census/round-<N>"
+         elif not kr:
+
+== M05-root-prefix.py 1af4cdcfdaca87adf84b302dea6ea9e058e9d194ad410b3961901492126acd5a
+@@ -309,7 +309,7 @@
+             why = "target's last component differs from the token's"
+         elif kr and (not tr or tr.group(1) != kr.group(1)):
+             why = "target names a different round than the token"
+-        elif kr and target[:tr.start(0)] not in (token[:kr.start(0)], "census"):
++        elif kr and not any(target[:tr.start(0)].startswith(x) for x in (token[:kr.start(0)], "census")):
+             # r80 (S79MutCounter NF10): a moved file lands where the token sat or in the lane's capture root
+             why = "target's round-<N> directory is neither the token's nor census/round-<N>"
+         elif not kr:
+
+== M06-nobefore.py aecabeff2db2fc633a0480e4432f0b7bb314ff68cf9a3d586f036513413d39ff
+@@ -195,7 +195,7 @@
+     i = line.find(needle)
+     while i >= 0:
+         j = i + len(needle)
+-        before_ok = i == 0 or line[i - 1] not in PATHCH
++        before_ok = True
+         after = line[j:j + 2]
+         after_ok = (not after or after[0] not in PATHCH
+                     or (after[:1] in (b".", b",", b";", b":") and (len(after) < 2 or after[1] not in PATHCH)))
+
+== M07-noafter.py 333b9d103cab58eb93e0d7d4b30b21f6eb54a88829fab95daa5d85ece57c191d
+@@ -197,8 +197,7 @@
+         j = i + len(needle)
+         before_ok = i == 0 or line[i - 1] not in PATHCH
+         after = line[j:j + 2]
+-        after_ok = (not after or after[0] not in PATHCH
+-                    or (after[:1] in (b".", b",", b";", b":") and (len(after) < 2 or after[1] not in PATHCH)))
++        after_ok = True
+         if before_ok and after_ok:
+             return True
+         i = line.find(needle, i + 1)
+
+== M08-punct.py 704fd8c0552f625bae2d4d13801a9e4d99cd8ed3f40aae86ccf313b7a0ea137a
+@@ -198,7 +198,7 @@
+         before_ok = i == 0 or line[i - 1] not in PATHCH
+         after = line[j:j + 2]
+         after_ok = (not after or after[0] not in PATHCH
+-                    or (after[:1] in (b".", b",", b";", b":") and (len(after) < 2 or after[1] not in PATHCH)))
++                    or after[:1] in b".,;:!?-+@~_'\"()[]")
+         if before_ok and after_ok:
+             return True
+         i = line.find(needle, i + 1)
+
+== M09-target-only.py 881c9b509499ec032e06fab161c026f38f7a28b249ae89674948794224c5dafa
+@@ -183,7 +183,7 @@
+         raise RuntimeError(f"git grep rc={p.returncode}")
+     lines = p.stdout.split(b"\n")
+     # r80 (S79MutCounter NF6b): both paths must occur as whole paths on the SAME line
+-    return any(_whole(target.encode(), l) and _whole(token.encode(), l) for l in lines)
++    return any(_whole(target.encode(), l) for l in lines)
+ 
+ 
+ PATHCH = frozenset(b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._/@+~-")

@@ -1,0 +1,34 @@
+# S80Reviewer — souji r80 falsification: C1 calibration, C2 operability (vs census/round-80/preregistration.txt)
+
+VERDICT: C1 predicate HONOURED. C2 predicate HONOURED as frozen and measured; 1 MEDIUM + 4 LOW findings on its surface, none reachable by a frozen row.
+CHRONOLOGY/PINS: `git rev-list --parents -6 HEAD`: P 515d57c8 < F aaad410f < W1 bd263c3f < W2 836dac3e < A a4aa8880 (04:27:19/32/46/49, 04:34:42; parents verified). Freeze-check replay `python3 -B tools/souji-freeze-check.py --root . --prereg census/round-80/preregistration.txt --rev aaad410f --substance --chronology` → `SUMMARY claims=2 findings=0` EXIT=0. prereg@F == tip (a72ded82); sha256 at the tip == prereg lines: harness 6f22b68a, c1-rows 5cce4146, c2-counter 32cf0c72, c2-rows ca5e2387; W1 counter 90ed9031 == HEAD; W2 diff = +75 lines, one hunk; usage stdout identical to base (138 lines, rc 2); control receipts rev=f80f936 (10), A records rev=836dac3 (10); F0 rebuilt 6436db6a; the 9 r79 rows unchanged in id/where/population/item/class/target/expected.
+STATE: HEAD advanced to I 60c7f50 (04:43; knowledge/receipts only, pins unchanged) and tools/souji-quarantine.sh now carries an UNCOMMITTED worktree repair; every measurement below is on the committed W1/W2 blobs (counter 90ed9031, tool 67ec160b).
+
+C1 (calibration) — commands / deciding output
+- `python3 -B census/round-80/c1-false-row-harness.py --counter census/round-80/c1-pointer-counter.py --lane LANE --fleet-root FLEET --work W` → `SUMMARY rows=18 mismatches=0 accepted=0 errors=0`, EXIT=0.
+- K-a, same harness `--counter census/round-79/c2-pointer-counter.py` → `mismatches=3 accepted=3` EXIT=1 (NF6b/NF8/NF10 got=QUARANTINED/TOKEN/MOVED).
+- r78 regression `census/round-80/c1-pointer-counter.py --root LANE --rev e65538e7… --population census/round-78/… --ledger … --forge …` → `items=22 resolved=22`, `FORGE-SUMMARY forged=12 matched=12 accepted=0` EXIT=0; r77 → `items=35 resolved=35`, `7 matched=7` EXIT=0; r79 harness → `rows=9 mismatches=0 accepted=0 errors=0` EXIT=0.
+- Controls: K-b 18/18 EXIT=0 but r78 `resolved=3 refused=19` EXIT=1; K-c without-regular/-capture-root/-whole → `mismatches=1 accepted=1` EXIT=1 each, and only that rule's row flips (NF8 / NF10 / NF6b).
+
+C2 (operability) — commands / deciding output
+- `python3 -B census/round-80/c2-signal-counter.py --tool-dir <W2 dir> --work W` → `SUMMARY rows=15 mismatches=0 errors=0 orphans=0` EXIT=0; rows rc 143/130/129, signal_line=y, survivors=0, tmpleft=0, secs 0.7–2.4.
+- `--tool-dir <base>` → `mismatches=12 errors=0 orphans=12` EXIT=1 (INT rows exited=n; TERM/HUP rc=-15/-1); K-b and K-c variants → `mismatches=12 … orphans=12` EXIT=1 each.
+- `bash tests/fixtures/r13-quarantine-bounds.sh --tool <W2>` → `SUMMARY total=5 failed=0 hung=0` EXIT=0; `env TMPDIR=W bash tools/souji-quarantine.sh --selftest` → `selftest: 108 checks, 0 failed` EXIT=0; `bash tests/fixtures/r17-jj-receipts.sh --tool-dir <W2+verify+vault>` → `SUMMARY total=35 failed=0 skipped=2` EXIT=0.
+- `bash census/round-80/probes/domain-trial.sh <base> tools/souji-quarantine.sh W` → base/cand sha e2f2d083/67ec160b, base_rc=cand_rc=0, stdout sha 14fbcd5a both, signal_lines=0, result_lines 3/3, `TRIAL identical=yes`.
+- Independent probe `.ufo/waves/round-80/w1/S80Reviewer/jc-probe.sh` (tool extracted from W2): A TERM at the engine hang → `rc=143 signal_line=1 survivors=0`; B `bash -m` no tty → `no job control`, blocks, outer timeout → `signal_line=1 survivors=0`; C exposé below.
+
+A-arm defects (selftest on a 0644 copy; v1 vacuous, v2 location-skewed): re-measurements of the FROZEN predicate, not a changed rule.
+- 0644 copy: rc=126 at the selftest's own `"$SELF"` re-execs (tools/souji-quarantine.sh:1561,1718,1848,1910-1918); the base 0644 copy fails identically (records/diagnosis/selftest-base-mode0644-copy.txt) → copy-mode loss, not the r80 diff. The frozen object is the committed 100755 candidate → 108/0 (my replay).
+- v1 vacuous: no engine resolved for either copy → both empty stdout/rc 1 compared equal. v2 location-skewed: base from a scratch copy, candidate from tools/, and the tool derives roots from its own location, so only cand printed the live-fleet guard. v3 installs both at `<W>/<arm>/tools` with the same mode and pins SOUJI_VERIFY_BIN/SOUJI_Q_LEDGER → arms differ only in tool bytes; the added 3-RESULT requirement tightens. I-commit Q145 codifies this; the predicate wording is unchanged.
+
+FINDINGS
+MEDIUM tools/souji-quarantine.sh:216 (W2 67ec160b) — a caller exporting `SOUJI_Q_SESSION=<its own sid>` takes the inline branch (its own sid matches), so no front/trap exists; TERM kills the shell, no SIGNAL line, children survive. Repro (jc-probe.sh case C): `SOUJI_Q_SESSION=$(ps -o sid= -p $$) bash tools/souji-quarantine.sh --dry-run REPO FILE`, TERM the pid at the engine hang → `C rc=143 tool_alive_after_term=n signal_line=0 survivors=3`. Not reachable by the frozen counter: census/round-80/c2-signal-counter.py:267 scrubs every inherited SOUJI_* variable.
+LOW tools/souji-quarantine.sh:211 — the worker checks only sid==pid; S328's fork case also yields a session leader while the front's `$!` (:239) is the exited setsid parent, so the front would exit 0 with the worker detached. Requires job control (tty + `bash -m`); here `bash -m` prints "no job control" and the contract held (probe B).
+LOW tools/souji-quarantine.sh:238-239 — a signal between the `&` launch and `q_front_worker=$!` runs the handler with an empty pid: SIGNAL + 128+n, and the just-started worker is not killed. The 15 rows signal only after the mark, so none reaches it.
+LOW census/round-80/c1-pointer-counter.py:214 — `_regular` passes the member path to `git ls-tree --` as a pathspec (`*`/`?`/`[`/`:`-magic interpreted; cat-file is literal), so a literal filename with those bytes is refused. No row exercises it.
+LOW census/round-80/c1-pointer-counter.py:312 — NF10 compares only the text before `round-<N>`, so a byte-equal decoy under the token's own pre-round prefix (or anywhere under `census/round-<N>/`) still resolves; this matches the frozen wording, a residual acceptance gap.
+NOTE census/round-80/c1-pointer-counter.py is mode 100644 vs the r79 counter's 100755; no effect (all frozen invocations use `python3 -B`).
+
+RESIDUAL RISK / GAPS: the uncommitted tool repair (adds SOUJI_Q_FRONT, q_proc_runs_self, a 9th pass, `left`) is not reviewed and is not this round's landed bytes; NF6a/NF9 and an ellipsis after a path are stated/implied limits; the 5 s bound held with ~2x margin (3023 /proc entries; the kill loop can exit after one member-free pass in 328 ms, `.ufo/waves/round-80/w1/S80Reviewer/killloop-probe.sh`) but is host-size dependent; no tty here, so the S328 fork path was not reproduced.
+
+Files written: .ufo/waves/round-80/w1/S80Reviewer.md; .ufo/waves/round-80/w1/S80Reviewer/jc-probe.sh; .ufo/waves/round-80/w1/S80Reviewer/killloop-probe.sh
