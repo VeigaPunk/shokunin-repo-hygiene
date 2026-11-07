@@ -80,8 +80,12 @@ def read(path):
     cmds = [l for l in lines if l.startswith("command=")]
     f = fails[0] if len(fails) == 1 else None
     e = exits[0] if exits and len(set(exits)) == 1 else ("?" if not exits else "/".join(exits))
+    # r76 wave repair (S76ExecC2 F3): `--selftest` must be a whole argv token of the one command= line, and
+    # the instrument= path must be one too (a substring test passed ` --selftest` inside a --work path).
+    toks = cmds[0][len("command="):].split() if len(cmds) == 1 else []
+    insts = [l[len("instrument="):] for l in lines if l.startswith("instrument=")]
     return {"fail": f, "exit": e, "sha": shas[0] if len(shas) == 1 else None,
-            "selftest": len(cmds) == 1 and " --selftest" in cmds[0],
+            "selftest": "--selftest" in toks and len(insts) == 1 and insts[0] in toks,
             "digest": hashlib.sha256(raw).hexdigest()}
 
 

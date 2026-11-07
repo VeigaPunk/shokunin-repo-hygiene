@@ -6,6 +6,8 @@ unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_OBJECT_DIRECTORY GIT_COMMON_DIR G
 # GIT_CONFIG_PARAMETERS) and GIT_ATTR_SOURCE can install a clean filter that hides edits from status and
 # from hash-object alike; none of them may reach the gate's git calls.
 unset GIT_CONFIG_COUNT GIT_CONFIG_PARAMETERS GIT_ATTR_SOURCE 2>/dev/null || true
+# r76 wave repair (S76Sentinel MEDIUM-1): a caller GIT_EXEC_PATH made `git ls-remote` run its helper.
+unset GIT_EXEC_PATH 2>/dev/null || true
 for v in $(compgen -e); do case $v in GIT_CONFIG_KEY_*|GIT_CONFIG_VALUE_*) unset "$v" ;; esac; done
 export LC_ALL=C GIT_OPTIONAL_LOCKS=0
 usage() { printf '%s\n' 'Usage: bash tools/souji-pre-report-gate.sh --lane ABS --branch NAME --report ABS --prereg ABS [--contract] [--shonen ABS]' >&2; }
@@ -113,8 +115,11 @@ if hidden:
 # r75 stated limit f7) hides content behind an unversioned rule exactly as info/exclude does. Every ignored
 # untracked path must be decided by a pattern from a tracked .gitignore in one of its ancestor directories;
 # core.excludesFile is attributed away (/dev/null) so a path only it hides reads as unmatched. Count only.
-_ls = subprocess.run(["git", "--no-optional-locks", "-C", lane, "ls-files", "-z", "--cached"],
-                     stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+# r76 wave repair (S76Sentinel HIGH-1, LOW-1): the tracked set is read from HEAD's tree, not the index:
+# `ls-files --cached` ran a repo-local core.fsmonitor after the byte-truth check (the hook appended a rule
+# to the tracked .gitignore and the gate passed), and index membership also admits a staged .gitignore.
+_ls = subprocess.run(["git", "--no-optional-locks", "-C", lane, "ls-tree", "-r", "-z", "--name-only",
+                      "--full-tree", "HEAD"], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
 if _ls.returncode != 0:
     print("tracked-file listing failed")
     sys.exit(1)
