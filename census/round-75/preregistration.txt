@@ -1,0 +1,51 @@
+souji round 75 preregistration (L1 SoujiR75, attempt 1). Written before any candidate byte.
+Round: 75
+Chronology: commit P (instruments, populations, controls, variants, source captures) strictly precedes
+commit F (this file); the candidates follow F. Every control receipt carries command=/rev=/instrument=/
+instrument_sha256= column-0 lines (Q99 --substance) and its rev= is the lane base below.
+
+## C1 operability — the pre-report gate refuses untracked content hidden by a repository-local ignore rule
+Base: 52d3f07d08422689464598f8be7e2c957fcf0805
+Counter: census/round-75/c1-evade-counter.py sha256=9ed4a97be0290434c3aa9a1788aa37f442138365f3572c3f39cfc892065a9a17
+Population: census/round-75/c1-population.tsv sha256=85257260ccda6987e9e9338863f3b6612d2deb94544d446019277aa8880c0343
+Control: census/round-75/controls/c1-K-a-do-nothing.txt
+Surface: tools/souji-pre-report-gate.sh check 4 (clean). Today an untracked file hidden by
+  $GIT_COMMON_DIR/info/exclude (a repository-local, unversioned rule; gitignore(5), S318) reads clean.
+  Sourced on S318 (gitignore(5) v2.56.0) and S319 (git-ls-files(1) v2.56.0: --exclude-per-directory
+  without --exclude-standard leaves out info/exclude and core.excludesFile), both opened this round.
+Command: python3 -B census/round-75/c1-evade-counter.py --gate-dir <dir holding the gate and the writer
+  copied from the measured lane revision> --work <empty scratch dir>
+Target: with the gate and writer blobs of the C1 candidate commit, `SUMMARY rows=25 mismatches=0 errors=0`
+  and EXIT=0 (before, K-a at Base: mismatches=2 [f-info-exclude f5-info-exclude-dir], EXIT=1); AND the
+  blanket control K-b (controls/c1-K-b-blanket-ignored.txt: mismatches=3 [f2 f6 f7], EXIT=1) stays red;
+  AND the candidate gate, same blob, run on the lane itself at the report tip prints check-clean=PASS
+  (domain trial; the lane carries ignored untracked files under committed .gitignore rules only). The
+  gate revision the domain trial binds is the C1 candidate commit's gate blob; any later gate blob is
+  recorded as an amendment with both digests.
+Kill: any mismatch or error on the 25 rows; K-b green; the domain trial not check-clean=PASS; the gate's
+  r74 rows (the 20 imported routes) losing a FAIL they had at Base.
+Labels ruled here (not by the r74 probe's bytes-only truth): n-filemode-config FAIL (a mode change is a
+  lane change), f2-gitignore PASS (committed rule = declared policy). Stated limit, labelled PASS:
+  f7-selfignore-dir (an untracked directory whose own .gitignore ignores itself — the .jj/ and
+  .ruff_cache/ shape the lane carries; a forger can use the same shape and the gate cannot tell them apart).
+
+## C2 calibration — the witness counter's selftest kills the r74 survivors X09 and X15∘M17
+Base: 52d3f07d08422689464598f8be7e2c957fcf0805
+Counter: census/round-75/c2-kill-counter.py sha256=fdb75c096fae406ee06c5a2b8e3d27119fa4e1550332f33d49885c64fd481c35
+Population: census/round-75/c2-mutants.json sha256=612e89e274bf1cf82dd007a3c46826cdd99697884f6e8e42d3da195ed05db533
+Control: census/round-75/controls/c2-K-do-nothing-r74.txt
+Surface: the r75 successor counter census/round-75/c1-counter.py (the r74 counter plus selftest checks;
+  no change to evaluate()/verdict code). Mutants: X09 and X15 from c2-mutants.json; P1 = X15 then M17;
+  M08 M14 M15 M17 from census/round-74/c2-survivors.json, each applied by census/round-73/apply-edit.py.
+Command: python3 -B census/round-75/c2-kill-counter.py --pristine <r75 counter selftest receipt>
+  --mutant X09=<receipt> --mutant P1=<receipt> --mutant M08=<receipt> --mutant M14=<receipt>
+  --mutant M15=<receipt> --mutant M17=<receipt>; every receipt is rec.sh output of
+  `<counter> --selftest --root . --matrix census/round-73/c1-matrix.tsv --base-rev
+  8b9345b1f2c4bb908ae418588d4cbde6a34a5bd0 --work <existing empty scratch dir>`.
+Target: `SUMMARY mutants=6 killed=6 survived=0 unread=0 pristine=PASS`, EXIT=0 (before, do-nothing = the r74
+  counter: killed=4, X09 and P1 SURVIVED, EXIT=1; the blanket control c2-K-blanket-pristine-red.txt —
+  a counter whose own selftest fails — reads pristine=FAIL, EXIT=1).
+Kill: any of the six mutants not KILLED; the pristine r75 selftest fail>=1; an edit that does not apply
+  exactly once to the r75 counter.
+Not a target (informational): X15 alone weakens one assertion; it is expected to survive on the r75
+  counter too (its harm is the lost detector, which P1 measures).
