@@ -167,6 +167,81 @@ SELF="$SCRIPT_DIR/$(basename -- "$SCRIPT_PATH")"
 REPO_ROOT="$(cd -- "$SCRIPT_DIR/.." && pwd -P)"
 LIVE_FLEET_ROOT="$(dirname -- "$REPO_ROOT")"
 
+# r80 (operability; S325 bash 5.3 manual "Signals", S326 coreutils timeout.c, S328 setsid(1), S068
+# proc_pid_stat(5)): every bounded child (receipt engine, file/dir digest, special scan, staging mv) runs under
+# `timeout`, which moves itself into a NEW process group (S326), and is started from `$(...)`, which bash waits
+# for in the foreground, deferring a trapped signal until the child ends (S325). Up to r79 a caller's TERM/HUP
+# killed this shell and left the timeout group running (up to the 300 s bound), and INT was held until the child
+# ended. The tool therefore runs in two processes: this front shell starts the worker (this same file) with
+# `setsid` as an asynchronous job, so the worker and every descendant share one new session whose id is the
+# worker's pid (S328: setsid runs a program in a new session; S068: field 6 of /proc/<pid>/stat is the session
+# id). The front shell only `wait`s, which a trapped signal interrupts at once (S325), so its trap can stop
+# and kill every process of the worker's session (timeout's new group stays in the session), remove the
+# worker's private TMPDIR, print `SIGNAL<TAB>SIG<name><TAB>RECEIPT-QUARANTINE-SIGNALED` and exit 128 + the
+# signal number. With no signal the worker's stdout, stderr and exit status pass through unchanged. Stated
+# limits: SIGKILL to the front shell cannot be trapped; a descendant that calls setsid itself leaves the
+# session; a SIGINT the caller's shell ignored before starting this tool (an `&` launch without job control)
+# cannot be trapped by bash, so INT is then ignored by both processes.
+q_proc_sid() { # $1 pid -> Q_SID = session id (field 6 of /proc/<pid>/stat, after the parenthesised comm); no fork
+  local st f
+  Q_SID=
+  { read -r st < "/proc/$1/stat"; } 2>/dev/null || return 1
+  st=${st##*) }
+  read -r -a f <<< "$st"
+  Q_SID=${f[3]:-}
+  [ -n "$Q_SID" ]
+}
+q_kill_session() { # $1 session id: SIGSTOP, then SIGKILL, every process in it; repeat until none is left
+  local sid=$1 p pass pids
+  for pass in 1 2 3 4 5 6 7 8; do
+    pids=()
+    for p in /proc/[0-9]*; do
+      p=${p#/proc/}
+      q_proc_sid "$p" && [ "$Q_SID" = "$sid" ] && pids+=("$p")
+    done
+    [ "${#pids[@]}" -gt 0 ] || return 0
+    kill -STOP "${pids[@]}" 2>/dev/null || true
+    kill -KILL "${pids[@]}" 2>/dev/null || true
+  done
+  return 0
+}
+if [ "${SOUJI_Q_WORKER:-}" = 1 ]; then
+  # the worker: it must lead its own session (setsid exec'd in place), else the front cannot reach its children
+  unset SOUJI_Q_WORKER
+  if ! q_proc_sid "$$" || [ "$Q_SID" != "$$" ]; then
+    printf 'souji-quarantine: worker is not a session leader (pid %s); refusing\n' "$$" >&2
+    exit 2
+  fi
+  export SOUJI_Q_SESSION=$$
+elif [ -n "${SOUJI_Q_SESSION:-}" ] && q_proc_sid "$$" && [ "$Q_SID" = "$SOUJI_Q_SESSION" ]; then
+  : # a nested call inside a worker's session (selftest children): the session front already covers it
+else
+  q_front_tmp=$(mktemp -d "${TMPDIR:-/tmp}/souji-quarantine.XXXXXXXX") || {
+    printf 'souji-quarantine: mktemp failed\n' >&2; exit 2; }
+  q_front_worker=
+  q_front_on_signal() { # $1 name, $2 number
+    trap '' TERM INT HUP
+    if [ -n "$q_front_worker" ]; then
+      kill -STOP "$q_front_worker" 2>/dev/null || true
+      q_kill_session "$q_front_worker"
+      kill -KILL "$q_front_worker" 2>/dev/null || true
+    fi
+    rm -rf -- "$q_front_tmp"
+    printf 'SIGNAL\tSIG%s\tRECEIPT-QUARANTINE-SIGNALED\n' "$1"
+    printf 'souji-quarantine: SIG%s received; the worker session was killed\n' "$1" >&2
+    exit $((128 + $2))
+  }
+  trap 'q_front_on_signal TERM 15' TERM
+  trap 'q_front_on_signal INT 2' INT
+  trap 'q_front_on_signal HUP 1' HUP
+  trap 'rm -rf -- "$q_front_tmp"' EXIT
+  SOUJI_Q_WORKER=1 TMPDIR=$q_front_tmp setsid "$BASH" "$SELF" "$@" <&0 &
+  q_front_worker=$!
+  q_front_rc=0
+  wait "$q_front_worker" || q_front_rc=$?
+  exit "$q_front_rc"
+fi
+
 # Q6 (r13): the receipt engine is ALWAYS the installed tree's
 # tools/souji-verify.sh unless the operator pins SOUJI_VERIFY_BIN (fixtures
 # do). The r10-era automatic cand-merge-verify.sh fallback is removed: it
