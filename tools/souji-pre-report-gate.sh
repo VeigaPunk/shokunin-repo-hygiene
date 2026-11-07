@@ -57,12 +57,44 @@ if [[ $shonen_count == 1 ]]; then check shonen PASS; else check shonen FAIL; pri
 #    (_witness_refusal, r71) runs before the hash, because hash-object applies a configured clean filter
 #    (S74ExecEvade HIGH h3); and only the refusal class and count are printed, never a path (D30 no-echo,
 #    S74Sentinel MEDIUM-1).
+# r77 C1 (S321 git dir.c add_patterns, S064 attr.c, S062 fifo(7)): git opens every exclude and attribute
+#    source with a plain blocking open(2) and checks the file type only after it, so a FIFO named as a
+#    per-directory .gitignore/.gitattributes, as $GIT_DIR/info/exclude or info/attributes, or as
+#    core.excludesFile/core.attributesFile blocked the gate inside `git status` forever (S76Sentinel
+#    MEDIUM-2). Every such source that exists must be a regular file (a symlink counts by its target)
+#    before any git call below reads it; a work-tree one is refused whatever git would do with it (the gate
+#    does not model whether git descends into an ignored directory). Count only, no path echo (D30).
+#    Backstop: check 4's git and python calls run under `timeout`; expiry fails clean.
+nonreg_sources() {
+  local gd f n=0 v
+  gd=$(git --no-optional-locks -C "$lane" rev-parse --absolute-git-dir 2>/dev/null) || { echo -1; return; }
+  for f in "$gd/info/exclude" "$gd/info/attributes"; do
+    [[ -e $f && ! -f $f ]] && n=$((n + 1))
+  done
+  local xdg=${XDG_CONFIG_HOME:-${HOME:+$HOME/.config}}
+  for v in core.excludesFile:ignore core.attributesFile:attributes; do
+    f=$(git --no-optional-locks -C "$lane" config --path --get "${v%%:*}" 2>/dev/null) || f=
+    # unset: git falls back to $XDG_CONFIG_HOME/git/<name> (or $HOME/.config/git/<name>)
+    [[ -z $f && -n $xdg ]] && f=$xdg/git/${v#*:}
+    [[ -n $f && $f != /* ]] && f=$lane/$f
+    [[ -n $f && -e $f && ! -f $f ]] && n=$((n + 1))
+  done
+  f=$(find "$lane" -path "$lane/.git" -prune -o \( -name .gitignore -o -name .gitattributes \) \
+        ! -type f -print 2>/dev/null | wc -l) || { echo -1; return; }
+  echo $((n + f))
+}
+gate_timeout=300
 gate_src=$(readlink -f -- "${BASH_SOURCE[0]}" 2>/dev/null) || gate_src=
 gate_dir=
 [[ -n $gate_src ]] && gate_dir=$(cd "$(dirname "$gate_src")" && pwd) || gate_dir=
-if status=$(git --no-optional-locks -C "$lane" status --porcelain=v1 --untracked-files=all 2>&1); then
+nonreg=$(nonreg_sources)
+if [[ $nonreg != 0 ]]; then
+  check clean FAIL
+  if [[ $nonreg == -1 ]]; then printf 'detail-clean: RECEIPT-NONREGULAR-SOURCE: source scan failed\n' >&2
+  else printf 'detail-clean: RECEIPT-NONREGULAR-SOURCE: %s exclude/attribute source(s) are not regular files\n' "$nonreg" >&2; fi
+elif status=$(timeout -k 5 "$gate_timeout" git --no-optional-locks -C "$lane" status --porcelain=v1 --untracked-files=all 2>&1); then
   if [[ -n $status ]]; then check clean FAIL; printf 'detail-clean: %s\n' "$status" >&2
-  elif truth=$(python3 -I -B - "$gate_dir/souji-receipt-write.py" "$lane" 2>&1 <<'PY'
+  elif truth=$(timeout -k 5 "$gate_timeout" python3 -I -B - "$gate_dir/souji-receipt-write.py" "$lane" 2>&1 <<'PY'
 import sys, types
 path, lane = sys.argv[1], sys.argv[2]
 with open(path, "rb") as f:
@@ -150,7 +182,7 @@ if ign:
 PY
   ); then check clean PASS
   else check clean FAIL; printf 'detail-clean: byte truth: %s\n' "$(printf '%s' "${truth:-no output}" | head -c 400 | LC_ALL=C tr -c '[:print:]' '?')" >&2; fi
-else check clean FAIL; printf 'detail-clean: git status failed: %s\n' "$status" >&2; fi
+else check clean FAIL; printf 'detail-clean: git status failed or timed out: %s\n' "$status" >&2; fi
 # 5. The preregistration is mandatory; absence is never skipped.
 if [[ -s $prereg ]]; then check prereg PASS; else check prereg FAIL; fi
 # 6. Report-contract predicates (r36): canonical sections, one SHONEN line per
