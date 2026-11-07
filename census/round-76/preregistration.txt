@@ -1,0 +1,62 @@
+souji round 76 preregistration (L1 SoujiR76, attempt 1). Written before any candidate byte is committed.
+Round: 76
+Chronology: commit P 6c9c2a8eaad2ee570e4f43517d1f437567bb9873 (counters, populations, forged C2 cases,
+controls, S320 capture, census-before) strictly precedes commit F (this file); the candidates follow F.
+Every control receipt carries command=/rev=/instrument=/instrument_sha256= column-0 lines (Q99
+--substance) and its rev= is the lane base below. Pre-freeze feasibility (Q70) was run in scratch only
+(/fast/scratch/hyaku/souji-r76/L1/); no candidate byte is in P.
+
+## C1 operability — the pre-report gate refuses untracked content hidden by an untracked .gitignore
+Base: ee59aa4da358d38850ccace194f7cd558ee45ce9
+Counter: census/round-76/c1-evade-counter.py sha256=618e4f9ad8252d42b81d20d6a143c4b9203305efd0abece2f4968894b054ab0e
+Population: census/round-76/c1-population.tsv sha256=937e4a9beda21295757c4dc812a4e4119c117f3ed92b356ac694a3f950aec8f5
+Control: census/round-76/controls/c1-K-a-do-nothing.txt
+Surface: tools/souji-pre-report-gate.sh check 4 (clean). Today an untracked directory whose own untracked
+  .gitignore ignores itself and a payload reads clean (the r75 stated limit f7; Q136). Sourced on S320
+  (git-check-ignore(1) v2.56.0, opened this round: with --verbose "<source> is the pattern's source
+  file"), which lets the gate attribute every ignored untracked path to the file whose pattern decides it.
+  Rule (the claim): an ignored untracked path is declared policy only when its deciding pattern comes from
+  a TRACKED .gitignore in one of its ancestor directories (core.excludesFile attributed away).
+Command: python3 -B census/round-76/c1-evade-counter.py --gate-dir <dir holding the gate and the writer
+  copied from the measured lane revision> --work <empty scratch dir>
+Target: with the gate and writer blobs of the C1 candidate commit, `SUMMARY rows=30 mismatches=0 errors=0`
+  and EXIT=0 (before, K-a at Base, gate blob sha256 ef3b04e4c9c91956c9ac6f1c9e891df0187479a322b0b40115f260ce4a19356a:
+  mismatches=4 [f7-selfignore-dir f9-selfignore-nested f10-selfignore-named f14-selfignore-in-tracked-dir],
+  EXIT=1); AND the blanket control K-b (controls/c1-K-b-blanket-ignored.txt: mismatches=4 [f2 f6 f11 f12],
+  EXIT=1) and the naive control K-c (controls/c1-K-c-naive-untracked-gitignore.txt: any untracked
+  .gitignore fails; mismatches=1 [f11], EXIT=1) stay red; AND the regression conjunct (r75 M5): with the
+  candidate gate, `python3 -B tests/fixtures/r36-report-gate.py --work <dir> --gate <candidate gate>` prints
+  `SUMMARY cases=21 pass=21 fail=0` and `bash tests/fixtures/r27-pre-report-gate.sh` (lane gate at the
+  candidate commit) prints `cases=4 pass=4`; AND the candidate gate, same blob, run on the lane itself at
+  the report tip prints check-clean=PASS (domain trial; the C1 candidate commit also adds `.jj/` and
+  `.ruff_cache/` to the lane's committed .gitignore, declaring the two tool directories that carry their
+  own self-ignoring .gitignore). The gate revision the domain trial binds is the C1 candidate commit's gate
+  blob; any later gate blob is recorded as an amendment with both digests.
+Kill: any mismatch or error on the 30 rows; K-b or K-c green; r36 below 21/21 or r27 below 4/4; the domain
+  trial not check-clean=PASS; any of the 25 r75 rows other than f7 changing its verdict from Base.
+Labels ruled here: f7-selfignore-dir FAIL (relabelled from the r75 stated-limit PASS: the deciding rule's
+  source is an untracked file); f11-committed-dir-rule PASS (the .jj/ shape under a committed rule naming
+  the directory = declared policy); f12-committed-nested-gitignore PASS (tracked sub/.gitignore). Stated
+  limit kept: a broad committed rule (f2) still hides content; that is declared, versioned policy.
+
+## C2 calibration — the mutant-kill tally binds every receipt to the mutant it is filed under
+Base: ee59aa4da358d38850ccace194f7cd558ee45ce9
+Counter: census/round-76/c2-binding-counter.py sha256=e22f634e053003ad45b507dcda3703f536088541bbebcc266503d9d1b01d6ca9
+Population: census/round-76/c2-population.tsv sha256=c46ea8ffe71a011ccb7616f6917639de23d416c6d43ca6542cb2a6b8607cb25c
+Control: census/round-76/controls/c2-K-do-nothing-r75.txt
+Surface: the lane's kill-power self-assessment instrument. Successor tally census/round-76/c2-kill-tally.py
+  (same CLI as census/round-75/c2-kill-counter.py) derives each mutant's expected counter bytes from the
+  frozen edit sets (census/round-75/c2-mutants.json, census/round-74/c2-survivors.json) applied to
+  census/round-75/c1-counter.py and requires each receipt's instrument_sha256= to equal them; reads every
+  EXIT= line (r75 S75MutCounter M1/M2, S75Reviewer O2). Forged cases: census/round-76/c2-cases/ (sha256
+  exit-disagree-X09.txt dcc28f06afd6550214fc9d1fdb712639070ad43254a314d1f2a8f1519e16dbee, exit2-fail1-X09.txt
+  ae80a80f6b893625c1adba62f71612c638623c7c85bd06965db10c5e6686ccaf, fail0-exit1-X15.txt
+  ac0b1b5c75d7e2e2081ed12f362a93f9022bd376db3a7797cd763228cbf5cca6, all committed in P).
+Command: python3 -B census/round-76/c2-binding-counter.py --tally census/round-76/c2-kill-tally.py
+Target: `SUMMARY cases=10 mismatches=0 errors=0`, EXIT=0 (before, do-nothing = the r75 tally:
+  mismatches=5 [b-swap-x09-gets-m08 b-swap-p1-gets-x09 b-pristine-r74 b-unknown-id b-exit-disagree],
+  EXIT=1); AND the blanket control c2-K-b-blanket-reject-all.txt (a tally that rejects every set:
+  mismatches=2 [h-honest h-honest-reordered], EXIT=1) stays red; AND the r76 tally over the r75 honest set
+  (h-honest) prints `killed=6` (the r75 C2 result is reproduced, not lost).
+Kill: any mismatch or error on the 10 cases; the blanket control green; h-honest not killed=6.
+Stated limit: the tally reads bytes; binding proves which instrument a receipt names, not that it ran.
