@@ -1,0 +1,20 @@
+# souji r84 S84Scribe: the two /proc/<pid>/stat read shapes, measured on this host (bash 5.3.20).
+# bash manual, node `read` (capture census/round-79/srcs/bash.info.gz-5.3, sha256
+# cde1a3366897684b0a86fe553687e31d070b7839b19ca98186ffc6e0e105588f): "The exit status is zero, unless
+# end-of-file is encountered" — so a NUL-delimited read of a file with no NUL reports EOF as a failure.
+#
+# NEWLINE-COMM pid (comm set to "x\ny" via prctl(PR_SET_NAME)):
+#   FIRSTLINE status=0 bytes=10  fields_after_strip=2    <- no closing ')' on the line; the strip finds
+#                                                             nothing and the field-count guard (>=20) fails
+#   WHOLEFILE status=1 bytes=319 fields_after_strip=50   <- the strip works, but the READ reports failure
+# NORMAL pid:
+#   FIRSTLINE status=0 bytes=321 fields_after_strip=50   <- reads fine
+#   WHOLEFILE status=1 bytes=322 fields_after_strip=50   <- the READ STILL reports failure
+#
+# The two error modes are opposite, and both are silent:
+#   - a FIRST-LINE read skips a descendant whose comm carries a newline (r83 spot-check D5);
+#   - a WHOLE-FILE read guarded on the read's EXIT STATUS skips EVERY descendant, on every pid.
+# Only the second one disables the freeze entirely: with `|| continue` on the whole-file read, no descendant
+# is ever SIGSTOPped and none is ever SIGKILLed by the tree walk.
+# Correct guard: `{ IFS= read -r -d '' now < "/proc/$k/stat"; } 2>/dev/null || true` plus a separate
+# content test `[ -n "$now" ] || continue`.

@@ -1,0 +1,276 @@
+sources-receipt — souji round 84, seat S84ScoutSources
+Lane: souji (souji-shokunin).  Opened 2026-11-08.  Claim axes: C1 (calibration 7), C2 (operability 8).
+Scratch root: /fast/scratch/hyaku/souji-r84/S84ScoutSources/  (removed on exit; receipts copied here first).
+Draft rows: .ufo/waves/round-84/w1/S84ScoutSources/sources-draft.tsv (PROPOSED, not admitted).
+corpus/SOURCES.md was NOT modified by this seat.  MANIFEST.json, .ufo/state/*, .scratch/*, .ufo/watchdog.log untouched.
+No git or jj mutation was performed anywhere.  No sibling-lane or fleet file was written.
+
+================================================================================
+1. REGISTRY ID SEQUENCE AND COLLISION CHECK
+================================================================================
+Command (the one named in the assignment), run 2026-11-08 from the lane root:
+
+  grep -oE '^ {0,3}\|[[:space:]]*S[0-9]{3,}' corpus/SOURCES.md | sort -u | wc -l
+      -> 259   (259 distinct ids)
+
+  grep -oE '^ {0,3}\|[[:space:]]*S[0-9]{3,}' corpus/SOURCES.md | sort -u | tail -5
+      -> | S329  | S330  | S331  | S332  | S333      (first run, 03:20)
+
+  awk -F'|' '/^\|[[:space:]]*S[0-9][0-9][0-9]+[[:space:]]*\|/ {i=$2; gsub(/[[:space:]]/,"",i); print i}' \
+      corpus/SOURCES.md | sort -u | wc -l
+      -> 259   (the census script's own row regex agrees: 259 distinct ids, no duplicate id)
+
+  For n in 334..350: grep -qE "^ {0,3}\|[[:space:]]*S${n}([^0-9]|$)" corpus/SOURCES.md
+      -> S334/S335/S336 TAKEN (appeared between 03:20 and 03:41, filed by another seat this round);
+         S337..S350 FREE.
+
+  Collision check (duplicate id):
+      awk -F'|' '/^\|[[:space:]]*S[0-9][0-9][0-9]+[[:space:]]*\|/ {i=$2; gsub(/[[:space:]]/,"",i); print i}' \
+          corpus/SOURCES.md | sort | uniq -d
+      -> (no output: no duplicate id)
+
+  Registry census before this draft (read-only, scripts/sources-census.sh at the fleet root):
+      bash scripts/sources-census.sh --file souji-shokunin/corpus/SOURCES.md --today 2026-11-08
+      -> file rows 259 | tier.A 248 | tier.B 8 | tier.C 3 | status.queued 14 | status.mined 217 | status.rejected 28
+      -> FLEET tier.invalid 0 | status.invalid 0 | missing 0 ; E-code lines: 0
+      (note: scripts/sources-census.sh lives at the FLEET root /home/vgpnk/Projects/shokunin/scripts/, not in the lane.)
+
+NEXT FREE IDS AT 2026-11-08 03:41:  S337, S338, S339, S340, S341, S342, S343, S344, S345
+This draft claims S337-S340.  It does NOT claim S334-S336, which another seat filed concurrently this round:
+  S334 signal(7) as installed (man-pages 6.19-1)  — scope: SIGSTOP delivery semantics
+  S335 the r84 clause-kill battery receipts (own-work)
+  S336 arXiv 1808.04849 — REJECTED (wrong paper for the mutation-testing survey)
+My row S340 is the replacement for the source S336's own flip condition asks for ("a retrievable abstract states the
+mutation-testing proposition the entry needs"), but it is a DIFFERENT URL and a different document, so it is a new row
+and not a supersede of S336.  If the L1 prefers, S340 can instead be written as a correction row opening
+"supersedes S336 —" with the same URL set; the two forms differ only in the teaches cell's leading clause.
+
+================================================================================
+2. CANDIDATE SOURCES OPENED THIS ROUND (each: URL, HTTP status, bytes, sha256, locator, quote)
+================================================================================
+All fetches: curl -sSL, saved to scratch, HTTP status and size read back from curl's own report (-w).
+Each quote was checked to be a CONTIGUOUS substring of the whitespace-normalized fetched bytes, and its word
+count was computed by the same word-counting rule the lane uses (wc -w semantics on the quoted string).
+
+--------------------------------------------------------------------------------
+C2-A  setsid(2)  ->  DRAFT ROW S337  ->  ADMIT
+--------------------------------------------------------------------------------
+URL         : https://man7.org/linux/man-pages/man2/setsid.2.html
+HTTP        : 200
+bytes       : 11555
+sha256      : 52cbc1904742df69556104f71d3279f93581756579881c85cee8e37be37c7f30
+revision    : man-pages 6.19 (2026-06-05)  (stated in the page's own colophon block)
+locator     : § DESCRIPTION, rendered lines 80-88;  § NOTES, rendered line 111
+              (rendering: HTML tags stripped, entities unescaped, lines numbered over the rendered text)
+corroboration: https://www.man7.org/linux/man-pages/man2/setsid.2.html fetched separately ->
+                HTTP 200, 11555 bytes, sha256 52cbc190...370f  -> BYTE-IDENTICAL to the man7.org fetch (cmp: no difference)
+              host's installed man page /usr/share/man/man2/setsid.2.gz
+                sha256 cf33e3d8ec282d9df4bfcc2d5a582b346e1f16501edaba46d1c51fdae23895b4
+                (col -b rendered: the same two sentences are present at lines 38-42 and the NOTES line at 53-55)
+QUOTE (17 words, <=25):
+  "The calling process also becomes the process group leader of a new process group in the session"
+  Contiguity: OK (whitespace-normalized substring of the fetched bytes).
+SECOND QUOTE (18 words, <=25), same page, § DESCRIPTION rendered lines 86-88:
+  "The calling process will be the only process in the new process group and in the new session."
+  Contiguity: OK.
+THIRD QUOTE (10 words, <=25), § NOTES rendered line 111:
+  "A child created via fork(2) inherits its parent's session ID."
+  Contiguity: OK in the web fetch; the installed man page carries the same sentence split across roff lines
+  (installed rendered lines 53-55: "A child created via" / "fork (2)" / "inherits its parent's session ID.").
+WHY IT IS THE C2 SOURCE: the r84 latefork stub starts a setsid'd `sleep 600` from its signal trap.  This page states
+  what setsid does to the caller's session and process group: the caller becomes leader of a NEW session and a NEW
+  process group and is the only process in it.  That is precisely why a group- or session-directed signal aimed at the
+  tool's group cannot reach the escaped child.  S328 (setsid(1) as installed, util-linux 2.42.4) covers the util-linux
+  UTILITY's fork-versus-exec behaviour; this is the SYSCALL's contract, a different URL and a different scope.
+FLIP / LIMIT: the page states no signal-delivery policy, no process-group inheritance rule beyond the fork note, and
+  nothing about /proc reads or pid reuse; the entry must say so.
+
+--------------------------------------------------------------------------------
+C2-B  proc_pid_stat(5)  ->  DRAFT ROW S338  ->  ADMIT
+--------------------------------------------------------------------------------
+URL         : https://man7.org/linux/man-pages/man5/proc_pid_stat.5.html
+HTTP        : 200
+bytes       : 20647
+sha256      : 0f04d78946538fd84db1536845abeb236da51a04844989f34ea7ee7cb0b6700f
+revision    : man-pages 6.19 (2026-02-08)
+locator     : § DESCRIPTION, rendered lines 77-84 (field-list preamble + ptrace access-mode caveat)
+              § DESCRIPTION field (4) ppid, rendered lines 126-128
+QUOTE A (13 words, <=25), rendered lines 77-78:
+  "The fields, in order, with their proper scanf(3) format specifiers, are listed below."
+  Contiguity: OK.
+QUOTE B (11 words, <=25), rendered lines 126-128:
+  "(4) ppid %d The PID of the parent of this process."
+  Contiguity: OK.
+QUOTE C (12 words, <=25), rendered lines 81-83:
+  "If the check denies access, then the field value is displayed as 0."
+  Contiguity: OK.
+WHY IT IS THE C2 SOURCE: the C2 repair's map is keyed on the ppid field of /proc/<pid>/stat.  This page is the
+  documentation of that field's order and format and of which fields are ptrace-gated (a gated field reads 0, which
+  is a trap for a walk that reads a 0 as a real ppid).  Distinct scope from S075 (field 6 session / field 22 starttime
+  attribution) and from S332 (the kernel's emission of the same fields in fs/proc/array.c).
+FLIP / LIMIT: the page documents the field list only; it says nothing about atomicity of a /proc read, about pid
+  reuse, or about SIGSTOP; S075's "the page does not establish an atomic /proc snapshot" still stands and this row
+  does not soften it.  W04 duplicate-URL warning is expected (same URL as S075/S068 under a distinct scope).
+
+--------------------------------------------------------------------------------
+C2-C  GNU timeout(1)  ->  DRAFT ROW S339  ->  REJECT
+--------------------------------------------------------------------------------
+URL         : https://man.archlinux.org/man/timeout.1.en   (a mirror that answers; the canonical
+               https://www.gnu.org/software/coreutils/manual/html_node/timeout-invocation.html was tried first
+               and FAILED from this host: curl exit 28, HTTP 000, 0 bytes after a 40 s cap — the same gnu.org
+               unreachability S043 and S065 already record.  The installed man page is the same text and is what
+               the tool actually runs against.)
+HTTP        : 200
+bytes       : 11852
+sha256      : 1f10e224bb41f505b24ed32dba315ea9a71c66e8f62dbda1c81ab8014de3f91e
+revision    : GNU coreutils 9.12, September 2026 (page's own footer)
+locator     : § OPTIONS --foreground, rendered lines 90-93
+              § DESCRIPTION "Exit status", rendered line 118
+corroboration: host's installed /usr/share/man/man1/timeout.1.gz
+                sha256 05302d7ac28744747e57c356097866131278d4c4cf6e840334a1665b688d275f
+                (GNU coreutils 9.12, "September 2026" per its roff header)
+QUOTE (11 words, <=25), rendered lines 92-93:
+  "in this mode, children of COMMAND will not be timed out"
+  Contiguity: OK.
+QUOTE (16 words, <=25), rendered line 118:
+  "It may be necessary to use the KILL signal, since this signal can't be caught."
+  Contiguity: OK.
+REASON FOR REJECT: the page mentions no process group and no session at all.  Measured on the rendered text:
+      grep -ci 'group' archtimeout.txt  -> 0
+      grep -ci 'session' archtimeout.txt -> 0
+  (the same zero counts hold for the installed timeout.1.gz, whose whole text has no "group" and no "session").
+  So timeout(1) as shipped cannot ground the group semantics the C2 repair rests on; the group creation is
+  implementation behaviour, already carried by S326 (coreutils src/timeout.c at v9.12, `setpgid (0, 0)`).
+FLIP: a coreutils manual revision whose timeout(1) section states that the command is run in a new process group.
+  This row stays a row (rejected) so the next round does not re-fetch the same page for the same scope.
+
+--------------------------------------------------------------------------------
+C1-A  Mutation Testing Advances (survey preprint)  ->  DRAFT ROW S340  ->  ADMIT
+--------------------------------------------------------------------------------
+URL         : https://mutationtesting.uni.lu/survey.pdf
+HTTP        : 200
+bytes       : 1129278
+sha256      : 63b7bfca877cd4661cb24e93fbfe1757a2740b39fb65ee3a79eb17e36215f023
+document    : "Mutation Testing Advances: An Analysis and Survey", Mike Papadakis, Marinos Kintis, Jie Zhang,
+              Yue Jia, Yves Le Traon, Mark Harman.  Preprint dated December 14, 2017 (page 1 footer).
+              Published as Advances in Computers vol. 112 (2019), pp. 275-378,
+              DOI 10.1016/bs.adcom.2018.03.015 (doi.org resolution checked: HTTP 200 to
+              linkinghub.elsevier.com/retrieve/pii/S0065245818300305, a JS redirect stub, 2665 bytes).
+locator     : § 2 Background, PDF page 6 (printed page 6) and PDF page 8 (printed page 8).
+              Text extraction: pdftotext -layout fetch-survey.pdf -> fetch-survey.txt (sha256
+              4994dce822bd5be4057410f1b707ad86549b89bd6ea61ed5c13a82e8d5f9ff9b); quote contiguity checked against
+              the per-page text, not against a hand-typed string.
+QUOTE A (20 words, <=25), PDF page 8:
+  "We can define as 'mutation score' or mutation coverage the ratio of mutants that are killed by our test cases."
+  Contiguity: OK.  (The PDF's own quotes are typographic: 'mutation score' with U+2018/U+2019; the transcript
+  above uses the same glyphs.)
+QUOTE B (12 words, <=25), PDF page 6:
+  "In the testing context, mutants form the objectives of the test process."
+  Contiguity: OK.
+QUOTE C (23 words, <=25), PDF page 6:
+  "When a test distinguishes the behaviour of a mutant (from that of the original program) we say that the mutant is 'killed '"
+  Contiguity: OK (the PDF's own trailing space inside the quotation marks is reproduced above).
+WHY IT IS THE C1 SOURCE: C1's instrument is a clause-kill battery over five single-edit mutants, reported as
+  killed_r84=5 and killed_r83=0 (S335).  This document is where the "killed"/"not killed" distinction and the
+  "kill ratio as the score" convention come from, so the r84 numbers are readable as what they are: a population
+  that kills no mutant certifies no clause.  It is the source S336's flip condition asked for, and it corrects the
+  arXiv-id confusion S336 recorded (arXiv 1906.06117 is a pseudo-code generation paper; arXiv 1607.05512 is
+  "Assessing and Comparing Mutation-based Fault Localization Techniques" — neither is the survey).
+FLIP / LIMIT: it is a survey (tier B by the contract's own tiering, which places surveys under B), and it documents
+  the METHOD's conventions, not this lane's populations; the lane's own counts stay S335.
+
+--------------------------------------------------------------------------------
+C1-B  lane's own census/round-83/records/wave-dirs.txt  ->  NO NEW ROW (already covered)
+--------------------------------------------------------------------------------
+Path        : census/round-83/records/wave-dirs.txt
+sha256      : 996507e8d8b90bcda68e26a2bd9980570db63892003941503542e77bb06a9620  (514 bytes)
+              git show 1014143d:census/round-83/records/wave-dirs.txt | sha256sum -> the same digest
+              (the working-tree copy is unmodified against the commit that introduced it)
+Locators    : line 1 (header), line 2 (the exact command), lines 3-16 (the counts)
+QUOTE (10 words, <=25), line 1:
+  "the real directory shapes under .ufo/waves/round-*/, at branch tip 1e870403c5d806a5cf9ac93b00da7a928359608f"
+  Contiguity: OK.
+VERDICT: NO NEW ROW.  This file is already in the registry twice, as S331 (shape vocabulary: w1/ 65, w2/ 19,
+  assimilation/ 4, records/ 3, residual/ 2, w3/ 1, a2w1/ 1) and as S333 (its corrected provenance, superseding
+  S331).  The C1 text that wants "a2w1/ and assimilation/ are shapes the lane really uses" cites this file, and both
+  existing rows already carry that scope; a third row for the same file under the same scope would trip the
+  registry's own duplicate-URL/scope rule.  The r84 population's TF9/TF10 rows use a2w1/ and assimilation/, and both
+  are covered by S331's teaches cell.  No id is spent here.
+
+--------------------------------------------------------------------------------
+C2-D  signal(7)  ->  NO NEW ROW (already covered this round by S334)
+--------------------------------------------------------------------------------
+URL         : https://man7.org/linux/man-pages/man7/signal.7.html
+HTTP        : 200 ; bytes 56519 ; sha256 6ab11c524ae2c90beb2dc121ce345e2b54fcca2c008e96672e73e0e933f538db
+revision    : man-pages 6.19 (2026-02-08)
+locator     : § Standard Signals, rendered lines 351-352 (SIGSTOP row) and 370-371
+QUOTE (11 words, <=25), rendered lines 370-371:
+  "The signals SIGKILL and SIGSTOP cannot be caught, blocked, or ignored."
+  Contiguity: OK.
+VERDICT: NO NEW ROW.  Another seat filed S334 this round with exactly this scope (SIGSTOP's delivery semantics),
+  from the installed man-pages 6.19-1 capture sha256 177f2734f8b057880fac3208ca9a6c658b57ac863112a060926b690d649e3b4b
+  — which is byte-identical to this host's /usr/share/man/man7/signal.7.gz, i.e. the same text I fetched).  The
+  fetch therefore CORROBORATES S334's quote rather than opening new ground; a second row for the same sentence
+  would be a duplicate.
+
+================================================================================
+3. WHAT I DID NOT CLAIM, AND WHY
+================================================================================
+- I did not write to corpus/SOURCES.md, MANIFEST.json, .ufo/state/*, .scratch/*, .ufo/watchdog.log, or any
+  sibling-lane file.  My only writes are under .ufo/waves/round-84/w1/S84ScoutSources/ and this seat's report file
+  .ufo/waves/round-84/w1/S84ScoutSources.md.
+- No git or jj command that mutates state was run anywhere; git was used read-only (status/ls-files/show/rev-parse)
+  inside the lane for the wave-dirs.txt digest comparison.
+- No tool was installed or upgraded: pacman transactions are paused host-wide per the assignment, and nothing this
+  seat needed was missing (curl, pdftotext, col, sha256sum, awk, grep are all present).  No pacman, uv, npx or
+  cargo install was run.
+- Nothing was written under /tmp; the scratch root was /fast/scratch/hyaku/souji-r84/S84ScoutSources/ and was
+  removed on exit after these receipts were copied here.
+
+================================================================================
+4. CAPTURE MANIFEST (the fetched bytes, so every quote above can be re-verified offline)
+================================================================================
+Copied into .ufo/waves/round-84/w1/S84ScoutSources/captures/ before the scratch was removed.
+SHA256SUMS in that directory is the manifest:
+
+  52cbc1904742df69556104f71d3279f93581756579881c85cee8e37be37c7f30  setsid.2.man7.html
+  0f04d78946538fd84db1536845abeb236da51a04844989f34ea7ee7cb0b6700f  proc_pid_stat.5.man7.html
+  6ab11c524ae2c90beb2dc121ce345e2b54fcca2c008e96672e73e0e933f538db  signal.7.man7.html
+  1f10e224bb41f505b24ed32dba315ea9a71c66e8f62dbda1c81ab8014de3f91e  timeout.1.archlinux.html
+  63b7bfca877cd4661cb24e93fbfe1757a2740b39fb65ee3a79eb17e36215f023  mutation-testing-survey.pdf
+  4994dce822bd5be4057410f1b707ad86549b89bd6ea61ed5c13a82e8d5f9ff9b  mutation-testing-survey.pdftotext.txt
+  db6707e953cbe588928de6d51030342a656b463d356efdcd15ce6afce218445d  setsid.2.rendered.txt
+  6d449590edf73fd25438f4d82a0ab455c087f3fc69ad322edf3eab7ebc3dfbf5  proc_pid_stat.5.rendered.txt
+  0923cefdbbdaf7c2257669ad6be6e71000b67ca09f3c96c655ebbfe40c7093df  signal.7.rendered.txt
+  34ad9131ec9170c2e4d3b58c2debe70588bb27591623bc4a4b75dbee5f0132cc  timeout.1.rendered.txt
+
+The *.rendered.txt files are the HTML-stripped, entity-unescaped renderings the locator line numbers in this
+receipt refer to; the .pdftotext.txt is the -layout extraction of the PDF whose per-page text the survey quote
+contiguity was checked against.  Re-verify any quote with, e.g.:
+
+  grep -c "The calling process also becomes the process group leader of a new process group in the session" \
+      captures/setsid.2.rendered.txt
+  pdftotext -layout captures/mutation-testing-survey.pdf - | grep -c "the ratio of mutants that are killed by"
+
+Note for the L1: these captures live under .ufo/waves/, which is gitignored in this lane (S333 records that
+provenance point), so they are wave-local evidence, not committed bytes.  Copy any byte the L1 wants to keep
+permanent into census/round-84/sources/ (the round's other seat used census/round-84/srcs/ for its signal.7.gz
+capture) before the wave directory is swept.
+
+================================================================================
+5. CROSS-CHECK OF THE DRAFT ROWS AGAINST THE REGISTRY'S OWN RULES
+================================================================================
+Kind enum      : docs | paper  -> both valid (kind enum includes docs and paper).
+Tier enum      : A | B        -> valid; A for the two man pages (primary documentation for their scope), B for the
+                  survey (the contract places surveys under tier B; the lane's S336 is likewise a tier-B paper).
+Status enum    : queued | rejected -> valid.  All three admitted rows are `queued`, because no corpus/knowledge/ or
+                  corpus/lessons/ path in the lane cites them yet; the L1 flips them to `mined` when it wires the
+                  round's lesson, as it did for S334/S335.
+Recheck enum   : on-release (man pages), 365d (a fixed 2019 chapter) -> both valid cadences.
+used-by        : "—" for every row, which is why no row is filed as `mined`.
+URL duplicates : the census reports W04 (same URL across scopes) for S337? no.  For S338 the URL is shared with
+                  S075/S068 under a distinct scope -> a W04 warning, which the lane's own census records as a
+                  warning and not a finding (see S251's note in the r40 provenance).  S339's URL (man.archlinux.org
+                  mirror) and S340's URL (mutationtesting.uni.lu) appear nowhere in the registry.
+Id duplicates  : S337-S340 are free and unique at 2026-11-08 03:41 (checked in section 1).
+Cell hygiene   : no cell in the draft contains a "|"; no cell contains an unescaped newline.

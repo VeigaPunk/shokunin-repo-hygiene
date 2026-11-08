@@ -1,0 +1,20 @@
+--- cand.sh	2026-11-08 03:29:11.086040838 -0300
++++ cand_fix.sh	2026-11-08 03:31:12.734977444 -0300
+@@ -268,7 +268,7 @@
+         [ "$k" = "$pid" ] && continue
+         [ -n "${seen[$k]:-}" ] && continue
+         now=""
+-        { IFS= read -r -d '' now < "/proc/$k/stat"; } 2>/dev/null || continue
++        { IFS= read -r -d '' now < "/proc/$k/stat"; } 2>/dev/null; [ -n "$now" ] || continue
+         crestart=${now##*) }
+         set -- $crestart
+         [ "$#" -ge 20 ] || continue
+@@ -285,7 +285,7 @@
+     # r83 routed defect D5 (r83 spot-check): the TERM/KILL re-reads read the first line only, so a comm carrying a
+     # newline truncated them. Every stat read here is whole-file with the last `)` strip, as the map pass is.
+     now=""
+-    { IFS= read -r -d '' now < "/proc/$k/stat"; } 2>/dev/null || continue
++    { IFS= read -r -d '' now < "/proc/$k/stat"; } 2>/dev/null; [ -n "$now" ] || continue
+     [ -n "$now" ] || continue
+     crestart=${now##*) }
+     set -- $crestart

@@ -1,0 +1,454 @@
+S84ScoutDirs — souji r84 w1 seat receipt: lane directory shapes and the R7 fixture's relation to them
+Seat: S84ScoutDirs (scout). Lane: /home/vgpnk/Projects/shokunin/souji-shokunin
+Lane base (preregistration): 35d87842efd966bfc326eff92fb534ab3e56b79e  (r83 closed admitted)
+Working tree at receipt time = lane base + untracked plans/round-84.md (git status: "?? plans/round-84.md")
+Read-only on the lane. Every claim below is a command output. No lane tracked file was modified.
+
+================================================================================
+SECTION 0 — TOOLING
+================================================================================
+No tool was installed, upgraded or removed. No pacman/uv/npm/cargo transaction was run.
+Reason: the seat needed only coreutils (find/ls/awk/sed/grep), git (read-only) and python3 (stdlib).
+Per the host guard, pacman transactions are PAUSED host-wide; nothing was needed from an install channel.
+
+================================================================================
+SECTION 1 — THE EXACT CENSUS COMMAND AND ITS OUTPUT
+================================================================================
+The command is the one recorded in census/round-83/records/wave-dirs.txt (its own header names it):
+
+  for d in .ufo/waves/round-*/*/; do printf "%s\n" "${d#.ufo/waves/round-*}"; done \
+    | sed -E "s#^[0-9]+/##" | sort | uniq -c | sort -rn
+
+Run in the lane working tree at the lane base (cwd = lane):
+
+     67 w1/
+     19 w2/
+      4 assimilation/
+      3 records/
+      2 residual/
+      1 w3/
+      1 transcripts/
+      1 recovery/
+      1 l1/
+      1 final/
+      1 build/
+      1 attempt2/
+      1 a2w1/
+      1 __pycache__/
+
+Diff against the r83 record (census/round-83/records/wave-dirs.txt, counts only):
+
+  $ diff <(for d in .ufo/waves/round-*/*/; do printf "%s\n" "${d#.ufo/waves/round-*}"; done \
+        | sed -E "s#^[0-9]+/##" | sort | uniq -c | sort -rn) \
+         <(grep -v '^#' census/round-83/records/wave-dirs.txt)
+  1c1
+  <      67 w1/
+  ---
+  >      65 w1/
+  diff-rc=1
+
+  -> The ONLY difference is w1/ 67 vs 65. Every other shape count is identical.
+
+Excluding the two rounds that were created after the r83 census (round-83 and round-84):
+
+  $ for d in .ufo/waves/round-*/*/; do n=$(basename "$d"); [ "$n" = "w1" ] && echo "$d"; done \
+      | grep -v -E 'round-(83|84)/' | wc -l
+  65
+
+  -> The delta is EXACTLY .ufo/waves/round-83/w1/ and .ufo/waves/round-84/w1/. The r83 record's
+     65 w1/ is reproduced exactly. The record is a WORKING-TREE census of an UNTRACKED tree
+     (.ufo/waves/ is gitignored: `.gitignore` line 1 is `.ufo/waves/`), so it counts directories
+     that no commit carries. This is a census of the lane's real on-disk shape, not of its
+     committed shape.
+
+The census/round-83/records/wave-dirs.txt record's own provenance header says
+"at branch tip 1e870403c5d806a5cf9ac93b00da7a928359608f". At that commit the TRACKED wave dirs
+(`git ls-tree -d -r --name-only <rev> -- .ufo/waves/`, filtered to `.ufo/waves/round-N/<one component>`) are:
+
+     20 w1
+      8 w2
+      3 assimilation
+      2 residual
+      2 records
+      1 transcripts
+      1 recovery
+      1 final
+      1 attempt2
+
+  -> i.e. at that commit the tracked tree has 20 w1 and 8 w2, NOT 65/19. The record's 65/19 counts
+     therefore CANNOT come from the tracked tree at the named commit; they come from the working
+     tree. Reading the record's header as "the committed shape census at that commit" is wrong.
+     [INFERENCE, high confidence] The record is a working-tree census labelled with a commit id.
+
+TRACKED vs WORKING-TREE at the LANE BASE 35d87842, per shape class:
+
+  $ for c in w1 w2 w3 a2w1 assimilation records; do
+      n=$(git ls-tree -d -r --name-only 35d87842... -- .ufo/waves/ | grep -cE "^\.ufo/waves/round-[0-9]+/$c$")
+      w=$(for d in .ufo/waves/round-*/*/; do n=$(basename "$d"); [ "$n" = "$c" ] && echo x; done | wc -l)
+      echo "  $c: tracked=$n  working-tree=$w"; done
+    w1: tracked=20  working-tree=67
+    w2: tracked=8  working-tree=19
+    w3: tracked=0  working-tree=1
+    a2w1: tracked=0  working-tree=1
+    assimilation: tracked=3  working-tree=4
+    records: tracked=2  working-tree=3
+
+  -> w3/ and a2w1/ are ENTIRELY untracked at the lane base. The tracked tree at the lane base and
+     at the r83 tip are byte-identical in this respect (20 w1 / 8 w2 / 3 assimilation / 2 records
+     / 2 residual / 1 transcripts / 1 recovery / 1 final / 1 attempt2).
+
+census/round-<N>/ capture shapes (the census-side tree), working tree:
+
+  $ ls -d census/round-*/waves/  | wc -l      ->  16
+  $ ls -d census/round-*/wave/   | wc -l      ->  12
+  $ ls -d census/round-*/records/wave-*/ | wc -l -> 21
+       wave-w1/ x14, wave-repair/ x6, wave-responses/ x1
+  $ ls -d census/round-*/w[0-9]/ census/round-*/a2w1/ 2>/dev/null   -> (none)
+
+  -> Under census/ the capture shapes are exactly the three the counter's CAPTURE regex names
+     (waves/, wave/, records/wave-<w>/). There is NO census/round-N/wN/ and NO census/round-N/a2w1/.
+     census/round-N/assimilation/ exists for rounds 27, 40, 46 (3 rounds).
+
+================================================================================
+SECTION 2 — DOES EVERY SHAPE THE r84 POPULATION USES EXIST IN THE REAL TREE?
+================================================================================
+Command (seat-local probe .ufo/waves/round-84/w1/S84ScoutDirs/shape-existence.py, read-only):
+for every MOVED row of census/round-84/c1-false-rows.tsv, report (a) the directory-name class the
+target uses, (b) whether that class exists anywhere in the real tree, (c) whether the EXACT parent
+directory of the target exists on the lane disk.
+
+TRUE rows (expect=MOVED) and the shape class each uses:
+
+  TF1  census/round-32/waves/SwarmExecutor08.md          class='waves'       | census/waves/ x16 | exact census/round-32/waves/ PRESENT
+  TF2  census/round-32/records/wave-a2w1/SwarmExecutor08.md class='records'  | own-tree/records x3 | exact census/round-32/records/wave-a2w1/ ABSENT
+  TF3  census/round-32/waves/a2w1/SwarmExecutor08.md      class='waves'       | census/waves/ x16 | exact PRESENT
+  PF-1 census/round-61/wave/S61ExecRealRecord/erratum-evidence.txt class='wave' | census/wave/ x12 | exact census/round-61/wave/ PRESENT
+  TF4  .ufo/waves/round-32/waves/a2w1/SwarmExecutor08.md  class='waves'       | census/waves/ x16 | exact .ufo/waves/round-32/waves/ ABSENT
+  TF5  census/round-32/records/wave-9/SwarmExecutor08.md  class='records'     | own-tree/records x3 | exact census/round-32/records/wave-9/ ABSENT
+  TF6  .ufo/waves/round-32/w2/SwarmExecutor08.md          class='w2'          | own-tree/w2 x19 | exact PRESENT
+  TF7  .ufo/waves/round-32/w1/SwarmExecutor08.md          class='w1'          | own-tree/w1 x67 | exact PRESENT
+  TF8  .ufo/waves/round-61/w2/S61ExecRealRecord/erratum-evidence.txt class='w2' | own-tree/w2 x19 | exact .ufo/waves/round-61/w2/ ABSENT
+  TF9  .ufo/waves/round-61/a2w1/S61ExecRealRecord/erratum-evidence.txt class='a2w1' | own-tree/a2w1 x1 | exact .ufo/waves/round-61/a2w1/ ABSENT
+  TF10 .ufo/waves/round-61/assimilation/S61ExecRealRecord/erratum-evidence.txt class='assimilation' | own-tree/assimilation x4 | exact .ufo/waves/round-61/assimilation/ ABSENT
+
+  VERDICT ON TRUE SHAPES: every shape CLASS the r84 population uses as TRUE exists in the lane's
+  real tree with a non-zero count (waves 16, wave 12, records 3 own-tree + 21 census-side
+  records/wave-*/, w1 67, w2 19, w3 1, a2w1 1, assimilation 4). NO TRUE row names a shape that is
+  absent from the real tree. (The classes are real even where the exact round-scoped path is not;
+  the exact-path column is reported for completeness and is NOT a defect: the R7 fixture builds
+  those paths inside its own fixture repo, not on the lane disk.)
+
+  Depth check — the "deep two-component suffix" shape TF8 relies on:
+  $ find .ufo/waves -mindepth 3 -maxdepth 3 -type d | grep -E '/(w[0-9]+|a2w1|assimilation)/[^/]+$' | wc -l
+  599
+  -> 599 own-tree wave dirs hold a two-component-deep child; the shape is plentiful in the real tree.
+
+  The deep token itself is real and byte-exact:
+  $ sha256sum .ufo/waves/round-61/w1/S61ExecRealRecord/erratum-evidence.txt
+  5212878dc0e8156e5cf27bd639a732a51d33473547b7e03ddf1a17ad6baddaaa
+  (harness P07_PIN = 5212878dc0e8156e5cf27bd639a732a51d33473547b7e03ddf1a17ad6baddaaa) MATCH
+  $ sha256sum .ufo/waves/round-32/a2w1/SwarmExecutor08.md
+  d0693448c0895860ebe7ece2549d3f70f694247ddb717d1fa2c66a4518d5aa89
+  (harness P04_PIN = d0693448c0895860ebe7ece2549d3f70f694247ddb717d1fa2c66a4518d5aa89) MATCH
+  -> Both population tokens are the REAL lane bytes at their real paths; the R7 fixture copies them
+     byte-for-byte (the harness itself refuses to build unless the sha256 equals the pin).
+
+FALSE rows (expect=REFUSED) and the shape class each uses:
+
+  NF-F  .ufo/waves/round-32/decoy/SwarmExecutor08.md        class='decoy'  | NOT PRESENT IN REAL TREE
+  NF-G  .ufo/waves/round-32/decoy/deeper/...                class='decoy'  | NOT PRESENT IN REAL TREE
+  NF-H  census/round-32/records/decoy/...                   class='records'| own-tree/records x3
+  NF-I  census/round-32/waves/a2w1/a2w1/...                 class='waves'  | census/waves/ x16
+  NF-J  .ufo/waves/round-32/w1/a2w1/...                     class='w1'     | own-tree/w1 x67
+  NF-K  .ufo/waves/round-32/SwarmExecutor08.md               class='<file>' | NOT PRESENT (a file, not a shape class)
+  NF-L  .ufo/waves/round-32/w3/SwarmExecutor08.md            class='w3'     | own-tree/w3 x1
+  NF-L2 .ufo/waves/round-33/w2/SwarmExecutor08.md            class='w2'     | own-tree/w2 x19
+  NF-M  .ufo/waves/round-32/records/SwarmExecutor08.md       class='records'| own-tree/records x3
+  NF-Q  .ufo/waves/round-32/w2/decoy/SwarmExecutor08.md      class='w2'     | own-tree/w2 x19
+  NF12  census/round-32/decoy/...                            class='decoy'  | NOT PRESENT
+  NF12b census-archive/round-32/decoy/...                    class='decoy'  | NOT PRESENT
+  NF12c census/round-32/waves/decoy/...                      class='waves'  | census/waves/ x16
+  NF12d census/round-32/records/...                          class='records'| own-tree/records x3
+  FP2   census/round-32/waves/a2w1/renamed-...               class='waves'  | census/waves/ x16
+  NF10  corpus/round-32/decoy/...                            class='decoy'  | NOT PRESENT
+  DM07  corpus/round-321/decoy/...                           class='decoy'  | NOT PRESENT
+
+  VERDICT ON REFUSED SHAPES: the three shapes the round's own wording says the population REFUSES
+  all exist in the lane's real tree:
+    (a) "a non-wave records/ directory under the own tree" -> own-tree records/ x3
+        (.ufo/waves/round-23/records/, round-27/records/, round-60/records/; contents are receipt
+        files, e.g. round-27/records/c1-before.tsv, round-60/records/sources-before.txt).
+    (b) "a real wN/ prefix that drops the token's suffix" -> own-tree w2/ x19 (and w1/ x67, w3/ x1).
+    (c) "a byte-equal copy in another round's tree" -> the tree has 67 round dirs under .ufo/waves
+        ($ ls -d .ufo/waves/round-*/ | wc -l -> 67), each carrying exactly one w1/.
+  The 'decoy' class used by NF-F/NF-G/NF12/NF12b/NF10/DM07 does NOT exist anywhere in the real tree
+  ($ find .ufo/waves -type d -name decoy | wc -l -> 0). Those rows are SYNTHETIC decoys by
+  construction — the whole point of a decoy is that it is a shape the lane never had — so their
+  absence from the real tree is expected, not a finding. They are not among the three shapes the
+  round's wording claims to refuse from the real tree.
+
+  Every REAL own-tree wave-dir name the lane has, and whether the counter's OWNTREE_WAVE accepts it:
+    w1/ x67 ACCEPTED (w[0-9]+)
+    w2/ x19 ACCEPTED (w[0-9]+)
+    w3/ x1  ACCEPTED (w[0-9]+)
+    a2w1/ x1 ACCEPTED (a2w1)
+    assimilation/ x4 ACCEPTED (assimilation)
+    records/ x3 REFUSED  (not in the regex — this is exactly the NF-M row)
+    residual/ x2 REFUSED, transcripts/ x1 REFUSED, recovery/ x1 REFUSED, l1/ x1 REFUSED,
+    final/ x1 REFUSED, build/ x1 REFUSED, attempt2/ x1 REFUSED, __pycache__/ x1 REFUSED
+  -> 5 of the 14 real own-tree names are wave shapes; 9 are not. The counter accepts exactly the
+     5 and refuses the other 9. NF-M is the only population row that exercises the refusal of a
+     non-wave own-tree directory, and it uses records/ — the class with the most files (3).
+
+================================================================================
+SECTION 3 — THE R83 ROUTED ITEM: "ground or delete the census-in-tree branch"
+================================================================================
+Source of the routed item: corpus/lessons/round-83.md line 138, section "## Routed to round 84",
+item 1: "... true rows for `a2w1/` and `assimilation/`; ground or delete the census-in-tree branch."
+
+The branch under examination is census/round-84/c1-pointer-counter.py lines 387-395 (the counter
+is byte-identical to census/round-83/c1-pointer-counter.py; both sha256 052c4f3f...):
+
+        elif kr and target[:tr.start(0)] == "census" and token[:kr.start(0)] == "census" \
+                and not _capture_ok(token, kr, target, tr):
+            ...
+            why = "census-in-tree target is not a wave capture keeping the token's full path suffix"
+
+Its preconditions, from judge()'s own code:
+  (i)   the TOKEN path begins "census/round-<N>/" (token[:kr.start(0)] == "census" and kr found);
+  (ii)  the item has a NON-'-' frozen digest (else the earlier `if frozen is None` fires with
+        "no frozen bytes to move");
+  (iii) the TARGET path also begins "census/round-<same N>/" (same round, else the earlier
+        `tr.group(1) != kr.group(1)` fires with "target names a different round than the token");
+  (iv)  the target is not a census-side wave capture keeping the token's suffix.
+
+--------------------------------------------------------------------------------
+3a. THE BRANCH IS HIT BY ZERO ROWS OF EITHER PINNED POPULATION
+--------------------------------------------------------------------------------
+Command (seat-local probe .ufo/waves/round-84/w1/S84ScoutDirs/branch-histogram.py; it imports the
+counter, calls the counter's own judge() per population row against the R7 fixture the harness
+builds, and buckets rows by the counter's own `why` string):
+
+  $ python3 -B .../branch-histogram.py --population census/round-84/c1-false-rows.tsv --work <scratch>
+  POPULATION .../census/round-84/c1-false-rows.tsv
+  BRANCH n=11  MOVED-accepted
+        rows: TF1 TF2 TF3 PF-1 TF4 TF5 TF6 TF7 TF8 TF9 TF10
+  BRANCH n= 7  why=own-round-tree target is neither the token's own path nor a wave capture keeping the token's suffix
+        rows: NF-F NF-G NF-J NF-K NF-P NF-M NF-Q
+  BRANCH n= 5  why=census/round-<N> target is not a wave capture keeping the token's own path suffix
+        rows: NF12 NF12c NF12d NF-H NF-I
+  BRANCH n= 5  why=no committed line declares this quarantine path for the token
+        rows: NF4 NF6b NF6c NF6d NF6e
+  BRANCH n= 3  why=range member is not a regular file: census/round-73/records/c2-after-D3.txt
+        rows: NF8 DM01 DM11
+  BRANCH n= 2  why=target names a different round than the token
+        rows: DM07 NF-L2
+  BRANCH n= 2  why=target's round-<N> directory is neither the token's nor census/round-<N>
+        rows: NF10 NF12b
+  BRANCH n= 1  why=quarantine target does not sit where the token sat          rows: LP3
+  BRANCH n= 1  why=target absent at rev or digest differs                      rows: NF-L
+  BRANCH n= 1  why=target continuation is not in the source text: census/round-29/records/amendments.txt   rows: LP2
+  BRANCH n= 1  why=target continuation is not in the source text: census/round-49/sources/s272-python-open-l rows: NF5
+  BRANCH n= 1  why=target's last component differs from the token              rows: FP2
+  BRANCH n= 1  why=targets are not exactly the range's expansion (0/5 members)  rows: NF1
+  BRANCH n= 1  why=targets are not exactly the range's expansion (1/5 members)  rows: NF2
+  BRANCH n= 1  why=token exists under the fleet root                          rows: FP8
+  BRANCH n= 1  why=token names no round-<N>: a moved location cannot be bound  rows: NF3
+
+  -> NO row of the 44-row r84 population reaches the census-in-tree branch. The census-side rows
+     that DO fire (NF12, NF12c, NF12d, NF-H, NF-I) all fire the NEIGHBOURING branch
+     "census/round-<N> target is not a wave capture keeping the token's OWN PATH SUFFIX" (line 383),
+     which requires token[:kr.start(0)] != "census" — their tokens are under .ufo/waves/, not census/.
+
+  Same probe on the r83 36-row population:
+  $ python3 -B .../branch-histogram.py --population census/round-83/c1-false-rows.tsv --work <scratch>
+  -> same branch list, no "census-in-tree" branch present. Zero rows there too.
+
+--------------------------------------------------------------------------------
+3b. DELETING THE BRANCH IS NOT KILLED BY EITHER POPULATION  (the decisive measurement)
+--------------------------------------------------------------------------------
+Mutant m11-no-census-in-tree: the 902-byte block (the elif + its 6 comment lines + its `why` line)
+deleted verbatim from the filed counter. Built by
+.ufo/waves/round-84/w1/S84ScoutDirs/mutants-census-in-tree.json (the "old" string occurs exactly
+once in the counter, as the battery requires).
+
+  $ python3 -B census/round-84/c1-clause-battery.py --counter census/round-84/c1-pointer-counter.py \
+      --work <scratch> --only r83,r84 --mutants .ufo/waves/round-84/w1/S84ScoutDirs/mutants-census-in-tree.json
+  # counter path=.../census/round-84/c1-pointer-counter.py sha256=052c4f3fdb3f902971b70f80653b4e84dc9a6b1c8deed355f067b3ff7d131d79
+  # harness path=.../census/round-84/c1-false-row-harness.py sha256=51b30dbd15c4c47173e9c29808f3b647f1ef932df7553dc8f5f3bd5b716b4e01
+  # population r83 ... sha256=c9a6d58c1cf84a40a02a85a7342df2f2bd37301ba02e8f61ac91eded624e02eb rows=36
+  # population r84 ... sha256=4795f009d6c873e733a2992bc86405d509dfb105b5f9950b3b9f82b2596e8f6f rows=44
+  ARM pristine pop=r83 rows=36 mismatches=0 errors=0 exit=0
+  ARM pristine pop=r84 rows=44 mismatches=0 errors=0 exit=0
+  MUTANT m11-no-census-in-tree pop=r83 killed=no mismatches=0 errors=0 exit=0
+  MUTANT m11-no-census-in-tree pop=r84 killed=no mismatches=0 errors=0 exit=0
+  MUTANT-PAIR m11-no-census-in-tree pop=r83 killed=no mismatches=0 errors=0 exit=0 | pop=r84 killed=no mismatches=0 errors=0 exit=0
+  SUMMARY mutants=1 sets=r83,r84 pristine_r83=ok pristine_r84=ok killed_r83=0 killed_r84=0 killed_total=0
+
+  -> The census-in-tree branch is a SIXTH unbound clause, exactly like m6-m10 were before r84.
+     The r84 population does NOT discriminate it: deleting it leaves both populations green
+     (killed_r83=0, killed_r84=0). The preregistration's claim that r84 binds "the five clauses
+     the r83 population left unbound" is TRUE for m6-m10 and does not extend to this branch.
+
+--------------------------------------------------------------------------------
+3c. NO EXISTING POPULATION ITEM CAN REACH IT (exhaustive sweep)
+--------------------------------------------------------------------------------
+Command (seat-local probe .ufo/waves/round-84/w1/S84ScoutDirs/census-in-tree-probe.py, which calls
+the counter's own judge()):
+
+  === A) every item of both pinned populations: can it reach the census-in-tree branch? ===
+      round-77 P19: token=census/round-73/records/c2-after-D1..D5.txt frozen=- ledger_class=TOKEN   -> False
+      round-77 P27: token=census/round-73/records/c2-after-D1..D5.txt frozen=- ledger_class=TOKEN   -> False
+      round-78 L05: token=census/round-17/gate-replays-ddb7347.json frozen=- ledger_class=ABSENT     -> False
+      round-78 L13: token=census/round-49/sources/s272-python-open- frozen=- ledger_class=TOKEN       -> False
+      round-78 L17: token=census/round-56/__pycache__ frozen=- ledger_class=ABSENT                   -> False
+
+  Every population item in the whole lane whose token is under census/round-<N>/:
+  $ for pop in census/round-*/c2-population.tsv; do awk -F'\t' -v F="$pop" \
+      '$4 ~ /^census\/round-[0-9]+\// && $5 != "-" {print F"\t"$1"\t"$4}' "$pop"; done
+  (empty — NO item in the lane has a census/round-<N>/ token AND a non-'-' frozen digest.)
+
+  Exhaustive sweep (every census-token item x 16 candidate census targets each):
+  === EXHAUSTIVE: can ANY existing r77/r78 population item, with ANY census target, reach branch 387? ===
+    items reaching branch 387: 0;  blocked earlier: 96
+
+  And why they are all blocked (the counter's own `why`):
+      round-77 P19: ... -> REFUSED  class=MOVED why=no frozen bytes to move
+      round-77 P27: ... -> REFUSED  class=MOVED why=no frozen bytes to move
+      round-78 L05: ... -> REFUSED  class=MOVED why=no frozen bytes to move
+      round-78 L13: ... -> REFUSED  class=MOVED why=no frozen bytes to move
+      round-78 L17: ... -> REFUSED  class=MOVED why=no frozen bytes to move
+      round-78 L02: token=census/operator-sweep-20261019 (no round-<N> in the token)
+                     -> REFUSED  class=MOVED why=target absent at rev or digest differs
+
+  -> The branch is unreachable from the CURRENT populations because the only census/round-<N>/
+     tokens in the lane (P19, P27, L05, L13, L17) all carry frozen='-', and the only census-token
+     item WITH a frozen digest (L02/L03/P28, census/operator-sweep-20261019) has no round-<N> in
+     its token at all, so it dies on the round check.
+
+--------------------------------------------------------------------------------
+3d. NO REAL LEDGER ROW OR REAL LAYOUT MAKES IT LOAD-BEARING
+--------------------------------------------------------------------------------
+  === A) all ledger files in the lane: any MOVED row whose POPULATION TOKEN is under census/round-N/? ===
+      total such ledger rows in the lane: 0
+
+  (For reference, every MOVED row in the two pinned ledgers has an own-tree token:
+     r77 P04/P05/P07/P25/P26/P29/P30/P31/P34/P35 -> token under .ufo/waves/round-N/... ; target under census/
+     r78 L11/L12/L15/L21                            -> token under .ufo/waves/round-N/... ; target under census/
+   e.g. P04 token=.ufo/waves/round-32/a2w1/SwarmExecutor08.md target=census/round-32/waves/a2w1/SwarmExecutor08.md
+        P07 token=.ufo/waves/round-61/w1/S61ExecRealRecord/erratum-evidence.txt
+             target=census/round-61/wave/w1/S61ExecRealRecord/erratum-evidence.txt)
+
+  === B) real census/round-N/ dirs whose own-tree-like child names a real wave dir ===
+      census/round-27: ['assimilation']
+      census/round-40: ['assimilation']
+      census/round-46: ['assimilation']
+
+  === C) real-layout probe: does the counter reach the census-in-tree branch for ANY real pair? ===
+      real (token,target) pairs tested with equal digest+basename: 0
+      pairs that reach the census-in-tree branch: 0
+
+  (census/round-27 has records/ and assimilation/ but no shared basename:
+       records/ only: c1-after.tsv c1-before.tsv c2-after.tsv c3-after.tsv preregistration.txt
+                       quarantine-slice.tsv rows-append.tsv slice-verdicts.tsv sources-census-after.out
+       assimilation/ only: README.txt collisions quarantine-slice reg-ids renumber-map.tsv staged-ids
+       OVERLAP (same basename -> same suffix shape): []
+   so no real census/round-27 pair has the same basename on both sides, and the counter's basename
+   test kills the rest before the branch.)
+
+--------------------------------------------------------------------------------
+3e. BUT THE BRANCH IS LIVE CODE, NOT DEAD CODE  (the branch is not redundant)
+--------------------------------------------------------------------------------
+A hand-built pair that satisfies all four preconditions DOES reach it, and DELETING the branch
+changes that pair's verdict from REFUSED to MOVED:
+
+  === D) SYNTHETIC proof the branch is live code (not dead) ===
+      token=census/round-27/records/reg-ids
+      target=census/round-27/assimilation/reg-ids
+      -> status=REFUSED  why=class=MOVED why=census-in-tree target is not a wave capture keeping the token's full path suffix
+
+  Mutant comparison (counter text with the branch deleted, loaded and run through the counter's own
+  judge() on the same pair):
+      PRISTINE : ('REFUSED', "class=MOVED why=census-in-tree target is not a wave capture keeping the token's full path suffix")
+      DELETED  : ('MOVED', '')
+      branch occurrences in the filed counter: 1
+
+  -> Deleting the branch turns that census-tree MOVED pair into an ACCEPTED "MOVED". The branch is
+     the ONLY thing refusing it. It is therefore NOT safe to delete: the population would stay green
+     on both sides (3b) while the rule silently changes for a whole class of census-tree moves.
+
+================================================================================
+SECTION 4 — FINDINGS, RANKED
+================================================================================
+F1 (ROUTE, HIGH confidence). The census-in-tree branch is a SIXTH unbound clause: zero rows of the
+   44-row population reach it, and the deletion mutant m11-no-census-in-tree survives BOTH
+   populations (killed_r83=0, killed_r84=0, pristine both ok — Section 3b). The r83 routed item
+   "ground or delete the census-in-tree branch" is therefore NOT discharged by r84's population:
+   the round's wording says the population binds "the five clauses the r83 population left
+   unbound" (m6-m10) and that is true, but the branch is a further clause the population leaves
+   unbound. ROUTE TO r85: either add a population row whose item has a census/round-<N>/ token WITH
+   a frozen digest and a MOVED class (no such item exists in the lane today — Section 3c), or
+   ground the branch in a real census-tree layout (Section 3d finds none), or delete the branch
+   AND state the deletion's effect explicitly (Section 3e: the branch is what refuses a
+   census-tree move whose target is not a wave capture keeping the token's full path suffix).
+   DO NOT delete it silently: the population would not notice.
+
+F2 (NO FINDING / CONFIRMED). Every shape the r84 population uses as TRUE exists in the lane's real
+   tree with a non-zero count — w2/ 19, w3/ 1, a2w1/ 1, assimilation/ 4, w1/ 67, records/ 3
+   (own-tree), waves/ 16, wave/ 12, records/wave-*/ 21 (census-side) — and the deep two-component
+   suffix shape occurs 599 times in the real own tree (Section 2). The two population tokens are
+   the real lane bytes at their real paths (sha256 == P04_PIN / P07_PIN). NO TRUE row names a
+   shape absent from the real tree.
+
+F3 (NO FINDING / CONFIRMED). Every shape the r84 population REFUSES as a real shape also exists:
+   own-tree records/ x3 (the NF-M class), a real wN/ prefix (w2/ x19, w1/ x67, w3/ x1), and
+   another round's tree (72 round dirs under .ufo/waves). The 'decoy' class used by
+   NF-F/NF-G/NF12/NF12b/NF10/DM07 does NOT exist in the real tree (0 hits) — expected, since a
+   decoy is by construction a shape the lane never had; it is not one of the three shapes the
+   round's wording claims to refuse from the real tree.
+
+F4 (DISCLOSURE, MEDIUM confidence). census/round-83/records/wave-dirs.txt's header says its census
+   is "at branch tip 1e870403..." but the counts it records (65 w1, 19 w2) are the WORKING-TREE
+   counts; the TRACKED tree at that commit has 20 w1 and 8 w2 (Section 1). .ufo/waves/ is
+   gitignored, so the "real" wave shapes the counter's rule is calibrated against are, in their
+   majority, UNTRACKED directories that no commit carries — w3/ and a2w1/ are 100% untracked
+   (tracked=0, working-tree=1 each). The population's TRUE rows are therefore grounded in the
+   lane's on-disk shape, not in its committed shape. The r84 population reproduces the r83 record
+   exactly (w1 67 vs 65 = round-83/w1 + round-84/w1, every other count identical), so the record
+   itself is sound as a working-tree census. Worth an explicit sentence in the r84 report so the
+   calibration is not read as a claim about committed bytes.
+
+F5 (SCOPE NOTE, no action). The population's rows live at fixture revision R7 inside the harness's
+   own fixture repo (built by build_fixture from census/round-84/c1-false-row-harness.py). The
+   "exact parent directory PRESENT/ABSENT" column in Section 2 is therefore about the LANE disk,
+   not about where the row is judged. No row's verdict depends on the lane disk's directory
+   contents: the fixture carries the bytes. The shape-class column is the load-bearing one.
+
+================================================================================
+SECTION 5 — REPRODUCTION
+================================================================================
+Seat-local probes (all under .ufo/waves/round-84/w1/S84ScoutDirs/, all read-only on the lane):
+
+  branch-histogram.py      --population <pinned tsv> --work <empty dir outside /tmp>
+        Which counter branch each population row takes (bucketed by the counter's own `why`).
+        Section 3a. Reproduces "census-in-tree: 0 rows" on both populations.
+  census-in-tree-probe.py  (no args)
+        Whether any population item / ledger row / real layout can reach the branch; and the
+        synthetic proof that the branch is live and that deleting it flips REFUSED -> MOVED.
+        Sections 3c, 3d, 3e.
+  shape-existence.py       (no args)
+        Per-row shape-class table: class present in the real tree? exact parent dir present?
+        Section 2.
+  mutants-census-in-tree.json
+        The m11 deletion mutant (old string = the 902-byte branch block, occurs exactly once).
+        Section 3b.
+
+The Section 3b battery run used the frozen command form with only --mutants and --only replaced:
+  python3 -B census/round-84/c1-clause-battery.py \
+      --counter census/round-84/c1-pointer-counter.py --work <scratch> --only r83,r84 \
+      --mutants .ufo/waves/round-84/w1/S84ScoutDirs/mutants-census-in-tree.json
+The frozen instruments were not modified: counter sha256=052c4f3f..., harness sha256=51b30dbd...,
+r83 population sha256=c9a6d58c..., r84 population sha256=4795f009..., all as printed by the battery.
+
+Scratch: /fast/scratch/hyaku/souji-r84/S84ScoutDirs/ (removed before yield).
+No git mutation was performed anywhere in the lane or in any fixture.

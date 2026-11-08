@@ -1,0 +1,73 @@
+S84Sentinel receipts (souji r84). All reproduced from the lane at F (35d87842); nothing in the lane was modified.
+
+C1 battery, r84 arm (pristine 44/0, 5/5 mutants killed):
+  ARM pristine pop=r84 rows=44 mismatches=0 errors=0 exit=0
+  MUTANT m6-digest-blind    killed=yes mismatches=1
+  MUTANT m7-round-blind     killed=yes mismatches=1
+  MUTANT m8-w-only-shapes   killed=yes mismatches=2
+  MUTANT m9-basename-only   killed=yes mismatches=4
+  MUTANT m10-records-as-wave killed=yes mismatches=1
+  SUMMARY mutants=5 sets=r84 pristine_r84=ok killed_r84=5 killed_total=5        EXIT=0
+
+C1 battery, r83 arm (do-nothing control): pristine 36/0, all five mutants survive
+  SUMMARY mutants=5 sets=r83 pristine_r83=ok killed_r83=0 killed_total=0        EXIT=0
+
+C1 clause coverage (c1_clause_coverage.py) - which counter clauses the populations bind:
+  c1-digest             bound   (r84 mismatches=1)
+  c2-last-component     UNBOUND (r83 0, r84 0)
+  c3-round              bound   (r84 mismatches=1)
+  c4-own-tree-shape     bound   (r84 mismatches=7)
+  c5-capture-root       bound   (r84 mismatches=2)
+  c6-census-capture     bound   (r84 mismatches=5)
+  c7-census-in-census   UNBOUND (r83 0, r84 0)
+  c8-token-has-no-round bound   (r84 mismatches=1)
+
+C1 wrong-file proof (c1_wrong_file_demo.py):
+  FILED counter -> REFUSED  why=census-in-tree target is not a wave capture keeping the token's full path suffix
+  C7-DROPPED    -> MOVED
+  => the population (green on the mutant in BOTH populations) certifies a rule that resolves a wrong file.
+
+C1 row flips per frozen mutant (44-row population):
+  m6 -> NF-L ; m7 -> NF-L2 ; m8 -> TF9,TF10 ; m9 -> NF-P,TF8,TF9,TF10 ; m10 -> NF-M
+  NF-Q flips under NO frozen mutant.
+
+C2 frozen counter:
+  cand-execC2.sh (a33038e9)        SUMMARY rows=22 mismatches=0 errors=0 orphans=0   EXIT=0
+  cand-execC2-fixed.sh (2741057f)  SUMMARY rows=22 mismatches=0 errors=0 orphans=0   EXIT=0
+  cand-refc2.sh (a810acaf)         SUMMARY rows=22 mismatches=4 errors=0 orphans=4   EXIT=1
+  cand-r83.sh (72a405f2, control)  SUMMARY rows=22 mismatches=2 errors=0 orphans=2   EXIT=1
+
+C2 newline-comm reproducer (CLI comm = "a\nb)c"):
+  cand-execC2.sh        survivors=1  RESULT: LEAK
+  cand-execC2-fixed.sh  survivors=0  RESULT: no leak
+  cand-r83.sh           survivors=1  RESULT: LEAK (pre-existing)
+
+C2 group-join (canary joins the CLI's process group): canary receives SIGTERM
+  cand-execC2.sh  and  cand-r83.sh  identical  => pre-existing r81 group-kill behaviour
+
+C2 private file: mode 0600, removed on the signal path; SOUJI_VAULT spoof and a TMPDIR symlink into the vault
+  change nothing; TMPDIR *inside* the vault => no trap at all (rc=-15, no SIG line, 3 CLI processes survive).
+
+Gates on the candidate: selftest 57/0 failed; probe D arms=4 failed=0; r17 total=35 failed=0 skipped=2.
+
+--- re-measured against the INTEGRATED tool at HEAD 4557fc71 (tools/souji-vault-verify.sh) ---
+  sha256 030fa10d5b7d312c4bc2ef759495c124616b9130f6cd0a52da7be2bdbb6ef41d
+  per-node stat reads: whole-file (`IFS= read -r -d '' ...`) with `[ -n "$now" ] || continue`
+  newline-comm reproducer : survivors=0   RESULT: no leak          <-- the F6 fix IS in HEAD
+  scope probe             : nlcomm_trap survivors=0 ; canary_hits=[] ; churn survivors=0
+                            setsid2 survivors=0 ; reparent survivors=1 (stated limit: setsids AND parent died)
+                            tmpvault rc=-15 sig_line=n survivors=3    (F9, unchanged)
+                            privmode priv=[('souji-vault-cli.uyUs9Z','0o600')] tmpleft=[] 
+  group-join canary       : canary joined the CLI's group -> received sig15 => SIGNAL TO A NON-DESCENDANT (F7, unchanged)
+  selftest                : 57 checks, 0 failed
+  frozen C2 counter       : SUMMARY rows=22 mismatches=0 errors=0 orphans=0  EXIT=0  (l1/l2 survivors=0)
+
+Status: F1 (C1), F7 and F9 (C2) are OPEN against HEAD. F6/F8 are candidate-byte findings now moot at HEAD.
+
+--- the decisive end-to-end C1 measurement: the BATTERY certifies a wrong rule ---
+  counter under test = filed counter with the c7-census-in-census clause dropped (single edit)
+  python3 -B census/round-84/c1-clause-battery.py --counter <c7-dropped> --work <dir> --only r84 --expect-killed 5
+    SUMMARY mutants=5 sets=r84 pristine_r84=ok killed_r84=5 killed_total=5        EXIT=0
+  python3 -B census/round-84/c1-clause-battery.py --counter <c7-dropped> --work <dir> --only r83 --expect-killed 0
+    SUMMARY mutants=5 sets=r83 pristine_r83=ok killed_r83=0 killed_total=0        EXIT=0
+  => every number of the frozen claim's counting sentence reproduces on a counter that resolves a wrong file.

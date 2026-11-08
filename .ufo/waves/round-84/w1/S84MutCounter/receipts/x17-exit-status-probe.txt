@@ -1,0 +1,28 @@
+# fixture=/fast/scratch/hyaku/souji-r84/S84MutCounter/battery-r84/run-r84-c1-pointer-counter/fixture fleet-root=/home/vgpnk/Projects/shokunin
+# x17 = the LOCAL-POLICY disk-check removal. The counter's own exit status flips 1 -> 0 where the only
+# refused population items are the LOCAL-POLICY ones whose fixture-disk bytes differ from the frozen digest
+# (r77 pop at F0: P16, P28; r78 pop at R1: L02, L03). The harness scores those rows green: they pin exp_rc='-'.
+
+== population=census/round-77/c2-population.tsv ledger=census/round-77/c2-pointer-ledger.tsv rev=F0=6436db6a8ea2d9d0deea6f57cbc160fafa4c6c23 forge=forge-nf2.tsv
+-- c1-pointer-counter.py
+ITEM P16 SKILL.md:229 status=REFUSED class=LOCAL-POLICY why=lane disk bytes absent or changed
+ITEM P28 corpus/README.md:81 status=REFUSED class=LOCAL-POLICY why=lane disk bytes absent or changed
+SUMMARY items=35 resolved=33 unresolved=0 refused=2 mismatched=0 errors=0
+FORGE NF2 item=P19 class=TOKEN expect=REFUSED got=REFUSED match=yes
+counter_rc=1
+-- x17-localpolicy-disk-blind.py
+SUMMARY items=35 resolved=35 unresolved=0 refused=0 mismatched=0 errors=0
+FORGE NF2 item=P19 class=TOKEN expect=REFUSED got=REFUSED match=yes
+counter_rc=0
+
+== population=census/round-78/c2-population.tsv ledger=census/round-78/c2-pointer-ledger.tsv rev=R1=f28736a936699bdbb3653630a130648512ead31a forge=forge-nf6b.tsv
+-- c1-pointer-counter.py
+ITEM L02 LOG.md:556 status=REFUSED class=LOCAL-POLICY why=lane disk bytes absent or changed
+ITEM L03 LOG.md:745 status=REFUSED class=LOCAL-POLICY why=lane disk bytes absent or changed
+SUMMARY items=22 resolved=20 unresolved=0 refused=2 mismatched=0 errors=0
+FORGE NF6b item=L06 class=QUARANTINED expect=REFUSED got=REFUSED match=yes
+counter_rc=1
+-- x17-localpolicy-disk-blind.py
+SUMMARY items=22 resolved=22 unresolved=0 refused=0 mismatched=0 errors=0
+FORGE NF6b item=L06 class=QUARANTINED expect=REFUSED got=REFUSED match=yes
+counter_rc=0

@@ -1,0 +1,64 @@
+S84ExecEvade evade-receipt
+==========================
+candidate under test: RefC2/souji-vault-verify.sh sha256 a810acaf438cd6deee83a98f0db5b9697a5b5029f3126c207929c391f1130b25
+  (S84ExecC2/souji-vault-verify.sh was 72a405f2c634712fb0211afb79f0462bf052b0b7c5fb8b663988017d2f1a8a18 = r83 bytes,
+   empty diff vs tools/souji-vault-verify.sh at probe time)
+counter: census/round-84/c2-late-fork-counter.py sha256 43078272c03321dd500dea18337ca9686029b31b6b4cb931fd82d67197f6aa36
+population: census/round-84/c2-population.tsv sha256 314224777425159c1fae0b7de44dec9f3fb2def83044dab32735758e87fdec58
+
+FROZEN POPULATION SCORE (candidate a810acaf)
+SUMMARY rows=22 mismatches=5 errors=0 orphans=5
+exit=1
+red: m1-monitor-term-fork survivors=1 | m2-monitor-hup-fork survivors=1 | d24-monitor-group survivors=24
+     l1-late-setsid-pid survivors=1 | l2-late-setsid-group survivors=1
+green: v1..v10, p1..p4, d12-term-pid, d12-term-group, d24-term-pid, all tmpleft=0, all sig_line=y where signalled
+
+EVASION MATRIX (own stubs, own nonce, own fixtures; 14 cells; exit-within-5s / rc / SIG line / survivors / tmpleft)
+a2sig    pid   default exited=True rc=143 2.68s sigline=True  survivors=2   tmpleft=0
+a2sig    group monitor exited=True rc=143 2.68s sigline=True  survivors=2   tmpleft=0
+bdaemon  pid   default exited=True rc=0   0.05s sigline=False survivors=1   tmpleft=0
+bdaemon  group monitor exited=True rc=0   0.10s sigline=False survivors=1   tmpleft=0
+cfanout  pid   default exited=True rc=143 2.68s sigline=True  survivors=2   tmpleft=0
+cfanout  group monitor exited=True rc=143 2.69s sigline=True  survivors=26  tmpleft=0
+dparen   pid   default exited=True rc=143 0.77s sigline=True  survivors=0   tmpleft=0
+dparen2  group monitor exited=True rc=143 0.77s sigline=True  survivors=0   tmpleft=0
+ereuse   pid   default exited=True rc=143 0.77s sigline=True  survivors=0   tmpleft=0
+ftermign pid   default exited=True rc=143 2.69s sigline=True  survivors=0   tmpleft=0
+ftermign group monitor exited=True rc=143 2.69s sigline=True  survivors=0   tmpleft=0
+gfast    pid   default exited=True rc=0   0.11s sigline=False survivors=0   tmpleft=0
+latefork pid   default exited=True rc=143 2.75s sigline=True  survivors=1   tmpleft=0
+latefork group monitor exited=True rc=143 2.69s sigline=True  survivors=1   tmpleft=0
+
+INVARIANTS CHECKED
+- no signal to a non-descendant pid: external canary `sleep 600` (own start_new_session) alive before and after a full
+  latefork run; killed only by my own SIGKILL. PASS
+- private TMPDIR empty at settle on all well-formed rows: PASS (tmpleft=0 in all 14 cells and all 22 rows)
+- sig line present whenever a signal was delivered and the tool exited on it: PASS
+- exit within the frozen 5 s settle: PASS on every cell except the two malformed-harness runs recorded nowhere (finite)
+
+reproducer files in this dir: probe.py (7b6cb0e2bef615454f4ed45cb9fefd8773692f10b3c5118637a6799f5a3c5ea5), matrix.txt (1d69d0fd0a392ec94339ab3859d310d4c507887556c655e5b840a4ad8a47244f)
+
+POST-REPAIR MEASUREMENT (two-site read-status edit; fix.patch, cand_fix bb39b8e7c2aaec41873f28d071b8b434c17bec9048d32f2b2d8bb691701f6875)
+frozen population run 1: SUMMARY rows=22 mismatches=0 errors=0 orphans=0
+frozen population run 2: SUMMARY rows=22 mismatches=0 errors=0 orphans=0 (fresh --work)
+cells: latefork 0/0, monfork 0/0, deepmon(24) 0/0, a2sig 0/0, bdaemon 1/1 (rc=0, no SIG line)  [delivery pid/default, group/monitor]
+
+ROOT CAUSE (proven)
+  { IFS= read -r -d '' now < "/proc/$k/stat"; } 2>/dev/null || continue   (candidate lines 271, 288)
+  read -d '' hits EOF without a NUL delimiter -> rc=1 -> `continue` always taken, in the STOP pass and the KILL
+  sweep, so the freeze is dead code. bash proof: rc=1 with the variable filled (len=326). Instrumented run on a
+  24-child monitor row logs pass=1 pass=2 with kids_root=[CLI] and ZERO STOP/KILL lines.
+  r83 control uses `read -r now` (rc=0 on a successful line read), so its `|| continue` is correct.
+
+CONTROL COMPARISON (my own run, unmodified counter)
+  census/round-84/controls/c2-K-a-r83-tool.sh -> rows=22 mismatches=2 errors=0 orphans=2 (only l1/l2 red)
+  candidate a810acaf                          -> rows=22 mismatches=5 errors=0 orphans=5 (m1, m2, d24-monitor-group, l1, l2)
+  => a810acaf REGRESSES three rows the r83 tool passed.
+
+RESIDUAL NOT FIXED BY THE REPAIR
+  shape (b) daemonizing CLI: tool exits rc=0 with no SIG line; one nonce-carrying `sleep 600` survives. `wait`
+  returns when the CLI exits, so cli_kill_tree is never called. No frozen row covers this shape.
+
+DRIVER NOTE (self-correction): an intermediate run of mine reported 1-2 survivors for the "fixed" copy; the driver
+used there hardcodes cand.sh and ignored PROBE_TOOL, so it re-measured the unfixed bytes. Every number above comes
+from a driver that prints the resolved tool path (probe_post.py here; probe3 with PROBE_TOOL during the work).
