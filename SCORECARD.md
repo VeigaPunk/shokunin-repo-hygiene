@@ -2057,3 +2057,38 @@ still carries the inherited K3 tally row; and the `FLAGFAIL` branch is not the c
 - Carried: the r85 list's C2 items (pid-reuse row, parent-before-child, termign-fork/p5-late-term, strace-robust
   settle), `_regular` pathspec framing, the quarantine intro-blob digest row, the r79 gate re-measurement, check-4
   300 s backstop, r76 K03/K04, the r17 240 s runners, the inherited K3 tally row (A4).
+
+### Round 87 measurements (2026-11-08, Linux; lane base `5e288bb3152328f371325d0bf4fee7309d629991`; instruments P `77ccef7c`, freeze F `6ed2d368`, C2 repair `6e502c5c`)
+
+| claim | axis | before | after | counting command | measured commit |
+|---|---|---|---|---|---|
+| C1 the two r86-measured reachable-and-unrowed clauses get their rows; a third candidate is measured already bound | calibration 7 | `census/round-87/controls/c1-before.txt` (same counter, same ten mutants, the r86 49-row population) `ARM pristine pop=r86 rows=49 mismatches=0 errors=0 exit=0`, `m12-token-on-line killed=no`, `m16-nf6b-punct killed=no`, `SUMMARY mutants=10 sets=r86 pristine_r86=ok killed_r86=8 killed_total=8`, EXIT 0 | `census/round-87/records/c1-after.txt` `ARM pristine pop=r86 rows=49 mismatches=0 errors=0 exit=0`, `ARM pristine pop=r87 rows=51 mismatches=0 errors=0 exit=0`, ten `killed=yes` on r87, `SUMMARY mutants=10 sets=r86,r87 pristine_r86=ok pristine_r87=ok killed_r86=8 killed_r87=10 killed_total=18`, EXIT 0 | `python3 -B census/round-87/c1-clause-battery.py --counter census/round-87/c1-pointer-counter.py --work WORK --only r86,r87 --expect-killed 18` (after) and `--only r86 --expect-killed 8` (before) | C1 instruments P `77ccef7c5de2ad015f28da70fd58e1156c0f5b73`; population sha256 `b066fa0f…` (51 rows), mutants `9368b342…` (10 members) |
+| C2 K4 reads NUL status records, names its writer delegation and keeps the exception line | operability 8 | `census/round-87/controls/c2-before.txt` on the lane-base tool bytes `cf875367…` with its byte-identical writer `70bbf1c2…`: `SUMMARY rows=12 mismatches=3 errors=0`, KN1/KN2/KN3 `named=no` (KN3's record `"bad\nname2.txt"` in git's quoted spelling), EXIT 1 | `census/round-87/records/c2-after.txt` on the filed tool sha256 `0ad9e3bf…` (header names writer `70bbf1c2…`, one appended comment byte changes the printed digest to `1b8ecf32…`): `SUMMARY rows=12 mismatches=0 errors=0`, KN1 `named=yes` (AttributeError line), KN2 `named=yes`, KN3 record exactly `bad\nname2.txt`/`uncommitted-path`/`??`, the nine r85/r86 rows unchanged, EXIT 0 | `python3 -B census/round-87/c2-k4-counter.py --tool tools/souji-record-agreement.py --work WORK` (before: `--tool census/round-87/controls/c2-before-base-tool.py`) | C2 repair `6e502c5c05fd3ca4193883921ef0c9b79a7d36a7`; counter sha256 `4e2b7c06…` |
+
+No owned axis score changed (calibration 7, coverage 8, operability 8 — the lane still has no reproducible 0–10
+mapping); both rows carry the verdict, the counting command and the measured commit instead. A third planned row
+(`_capture_ok`'s suffix comparison) was measured **already bound** by the r86 row NF12c and was not added
+(`census/round-87/records/c1-c8-measured.txt`): the population carries 51 rows, not 52, and the mutant set ten
+members, not eleven. The wave then measured that each new row binds ONE spelling of its clause: `S87MutCounter`'s p2
+(basename granularity) and p3 (the punctuation lookahead half) survive both populations, so they stay
+reachable-and-unrowed and are carried (`plans/round-87.md` A4).
+
+### Round 87 capability rows
+
+| name | what it can now do | evidence pointer | first-working round |
+|---|---|---|---|
+| diagnostic-class rows that bind a guard without a resolution row | bind a diagnostic guard (`ERROR` for an item whose token is off its declared line) by expecting the diagnostic class in a forged row, instead of asserting it | `python3 -B census/round-87/c1-clause-battery.py --counter census/round-87/c1-pointer-counter.py --work WORK --only r86,r87 --expect-killed 18` → NE1 kills m12 on r87 and not on r86 (`records/c1-after.txt`, control `controls/c1-before.txt`) | r87 |
+| NUL-record status arm with a named delegation | read `git status --porcelain -z`, escape the record path for the reader, and print the writer's path+sha256 header plus the last stderr line on a failed delegation | `python3 -B census/round-87/c2-k4-counter.py --tool tools/souji-record-agreement.py --work WORK` → `rows=12 mismatches=0`, KN1/KN2/KN3 `named=yes` (`records/c2-after.txt`; before arm `mismatches=3`) | r87 |
+
+### Planned (r88)
+
+- C1 (calibration): the clauses the r87 population still leaves unrowed — m17 (`_ledger` duplicate id, which needs a
+  population-arm ledger detector rather than a forged row), the `_whole` before-byte half, and
+  `_capture_ok`'s `len(want) <= len(have)` half — with the r87 `S87Simplifier`/`S87MutCounter` dead-arm findings
+  landed as deletions or documented belts.
+- C2 (operability): the r86 routed debt the wave leaves open (the writer's 200-character `FLAGFAIL` cut in the
+  embedded bootstrap, a pinned writer digest if the reviewer still wants it load-bearing), plus any sentinel finding
+  from `S87Sentinel` that names a reader-misleading path.
+- Carried: the r85/r86 C2 list (pid-reuse row, parent-before-child, termign-fork/p5-late-term, strace-robust
+  settle), `_regular` pathspec framing, the quarantine intro-blob digest row, the r79 gate re-measurement, check-4
+  300 s backstop, r76 K03/K04, the r17 240 s runners, the inherited K3 tally row (r86 A4).

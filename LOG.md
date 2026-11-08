@@ -3273,6 +3273,46 @@ receipts in P `5bd5a0ce`. Amendments in `plans/round-85.md` (A0-A1 so far); the 
   `plans/round-85.md`, `corpus/lessons/round-85.md`, `SCORECARD.md` r85 rows + two capability rows + planned r86.
 - **Tool installs: none.** No pacman (paused host-wide), no uv/npx/binary fetch, no sysctl, sudo or kernel change.
 
+## Round 87 (2026-11-08) — two clauses r86 measured reachable-but-unrowed get their rows (C1 calibration); record-agreement K4 reads NUL status records, names its writer delegation and keeps the exception line (C2 operability)
+
+- **Claims.** C1 (calibration 7, the lane's lowest owned non-retired axis): the false-row population certifies a
+  clause only when a frozen row turns a clause-dropping mutant red. r85/r86 measured two clauses reachable and
+  unrowed (S85MutCounter m12 token-on-line, m16 the `_whole` sentence-end punctuation disjunct). This round adds
+  NE1 (new item I87E: `LOG.md:3166` declares a line its token is NOT on — the token is on 3165 — so the only
+  reachable verdict is the R0 diagnostic `ERROR`; the row therefore expects `ERROR`, and the r87 counter's forged
+  expectation set accepts it) and TQ1 (item L06 at fixture revision R10, a TRUE `QUARANTINED` row whose committed
+  declaration ends `.git.` — only the punctuation disjunct makes that token whole), plus the two mutants
+  `m12-token-on-line` and `m16-nf6b-punct`. C2 (operability 8): the r86 wave measured three residual defects in K4
+  (S86ExecK4 2b/2e/3b2) — the no-verdict detail truncates the writer's stderr from the front and hides the
+  exception; the status arm reads the line form, so a newline path is recorded in git's C-quoted spelling; the
+  delegation to the receipt writer is unnamed. K4 now reads `git status --porcelain -z` and escapes the record path
+  itself, prints `# writer path=… sha256=…`, and reports the delegated writer's last non-empty stderr line.
+- **Measured.** C1: `census/round-87/controls/c1-before.txt` (the same counter and the same ten mutants on the r86
+  49-row population) reads `SUMMARY mutants=10 sets=r86 pristine_r86=ok killed_r86=8 killed_total=8`, with
+  `m12-token-on-line killed=no` and `m16-nf6b-punct killed=no`, EXIT 0; `census/round-87/records/c1-after.txt` reads
+  `pristine pop=r86 rows=49 mismatches=0 errors=0`, `pristine pop=r87 rows=51 mismatches=0 errors=0`, ten
+  `killed=yes` on r87 and `SUMMARY killed_r86=8 killed_r87=10 killed_total=18`, EXIT 0. C2:
+  `census/round-87/controls/c2-before.txt` on the lane-base tool bytes `cf875367…` (byte-identical writer
+  `70bbf1c2…` beside it) reads `SUMMARY rows=12 mismatches=3 errors=0`, KN1/KN2/KN3 `named=no`, EXIT 1; the after
+  receipt on tool `0ad9e3bf…` reads `SUMMARY rows=12 mismatches=0 errors=0`, KN2's header naming its writer
+  `70bbf1c2…` and changing to `1b8ecf32…` when one comment byte is appended, EXIT 0, with the nine r85/r86 rows
+  unchanged.
+- **Negative result recorded, not claimed (Q162).** The planned third C1 row for `_capture_ok`'s suffix comparison
+  was dropped before the freeze: its candidate mutant `c8-capture-suffix` is **already killed** by the r86 row
+  NF12c (`census/round-87/records/c1-c8-measured.txt`: `rows=49 mismatches=1`, the mismatching row NF12c). The
+  population therefore carries 51 rows and the mutant set ten members, not 52/eleven; the prereg records the
+  negative result in its C1 paragraph.
+- **Chronology (disclosed).** Both after arms were first executed while the freeze was being written (C1 06:47,
+  C2 06:44; F landed 06:58); those runs are kept at `census/round-87/controls/prefreeze/` and are **not** claim
+  evidence. The filed receipts are post-F re-runs with the same numbers (plans/round-87.md A0.2).
+- **Sources.** S346 (git-status(1) `-z`, roff line 698) and S347 (git-grep(1) `-F`, roff line 212) opened this
+  round from the installed git 2.56.0-1 pages, captured under `census/round-87/srcs/`; both admitted `mined` and
+  cited by `corpus/knowledge/machine-parsed-path-spelling.md`. One duplicate-scope candidate (git-config(1)
+  `core.quotePath`) rejected with its flip condition. Registry 268 → 270; `sources-census.sh validate` EXIT 0 both
+  ends (`census/round-87/records/sources-census-{before,after}.txt`).
+- **QUALITY.** Q161 (a delegated failure is reported from the tail of stderr, never the front) and Q162 (score the
+  candidate mutant before adding the row) added.
+
 ## Round 86 (2026-11-08) — two clauses r85 measured reachable-but-unrowed get their rows (C1 calibration); record-agreement K4 carries the writer's index-flag sweep and keeps record paths on one line (C2 operability)
 
 - **Claims.** C1 (calibration 7, the lane's lowest owned non-retired axis): the false-row population certifies a

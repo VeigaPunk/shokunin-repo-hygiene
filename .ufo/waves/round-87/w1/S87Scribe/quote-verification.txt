@@ -1,0 +1,342 @@
+# S87Scribe — quote-verification receipt (S346, S347)
+
+Seat: S87Scribe (scribe). Lane `souji-shokunin`, round 87, wave 1. Read-only verification of the two new
+SOURCES rows' located quotes against the captured pages, byte for byte. Nothing committed; no lane file edited.
+
+Host: arch x86_64, `git version 2.56.0`. Installed pages:
+  /usr/share/man/man1/git-status.1.gz  sha256 ed2ef058a1f0232b49d3b24f344b546de06971b58c4a6abd791630321c4fbd46
+  /usr/share/man/man1/git-grep.1.gz    sha256 ab2c8762115193484c86835ab1762d0ab4075914b21fe06f0ee051a2c4011ed7
+
+## 1. The captures ARE the installed pages (decompressed)
+
+    $ sha256sum census/round-87/srcs/git-status.1 census/round-87/srcs/git-grep.1
+    52d34e3a41e59a1683ac36ab7013a63e8701bfd687ab98c7630419676a2b2d95  census/round-87/srcs/git-status.1
+    52603128b427d0cd8d2bfdc10790958a9d34b8762abc3a3d870504ac3b5b14a6  census/round-87/srcs/git-grep.1
+
+    $ gzip -dc /usr/share/man/man1/git-status.1.gz | cmp - census/round-87/srcs/git-status.1 && echo identical
+    git-status: identical
+    $ gzip -dc /usr/share/man/man1/git-grep.1.gz | cmp - census/round-87/srcs/git-grep.1 && echo identical
+    git-grep: identical
+
+    $ gzip -dc /usr/share/man/man1/git-status.1.gz | sha256sum
+    52d34e3a41e59a1683ac36ab7013a63e8701bfd687ab98c7630419676a2b2d95  -
+    $ gzip -dc /usr/share/man/man1/git-grep.1.gz | sha256sum
+    52603128b427d0cd8d2bfdc10790958a9d34b8762abc3a3d870504ac3b5b14a6  -
+
+Both capture digests equal the sha256 of the DECOMPRESSED installed page. The captures carry no digest of their
+own in the row text other than these; the `.gz` digests above are recorded here so a re-reader can re-derive the
+decompressed ones.
+
+## 2. S346 — git-status(1) `-z`
+
+Located quote (as filed in `corpus/SOURCES.md` row S346, anchor cell):
+
+    "filenames containing special characters are not specially formatted; no quoting or backslash-escaping is performed"
+
+Capture line: `census/round-87/srcs/git-status.1` roff line 698.
+
+The capture line 698 is ONE roff line (627 bytes) that carries the whole `-z` paragraph. The quoted sentence is its
+THIRD clause, at byte offset 509 of that line. Verified by fixed-string grep on the raw capture bytes:
+
+    $ grep -nF 'filenames containing special characters are not specially formatted; no quoting or backslash\-escaping is performed' census/round-87/srcs/git-status.1
+    698:There is also an alternate \fB\-z\fR format recommended for machine parsing\&. ... Third, filenames containing special characters are not specially formatted; no quoting or backslash\-escaping is performed\&.
+
+Raw capture bytes of the quoted sentence (the roff source, `\-` is the roff escaped hyphen):
+
+    filenames containing special characters are not specially formatted; no quoting or backslash\-escaping is performed\&.
+
+Roff-rendered (groff -Tutf8 -man, overstrike stripped) reads exactly:
+
+    Third, filenames containing special characters are  not  specially
+    formatted; no quoting or backslash-escaping is performed.
+
+So the filed quote is byte-for-byte the capture's sentence after the standard roff unescaping (`\-` -> `-`,
+`\&.` -> `.`); the row's quote text stops before the trailing full stop, which the row's own convention elsewhere
+(S341 "tracked file that is not either unmerged or skip-worktree", S345) also does. The filed quote's characters are
+plain ASCII (no U+2019), matching the capture's own rendered output.
+
+Word count of the filed quote: 15 words ("filenames containing special characters are not specially formatted; no
+quoting or backslash-escaping is performed") — inside the <=25-word contract.
+
+Corroborating line in the SAME capture, the `--untracked-files` section's "Pathname Format Notes and -z" section,
+`census/round-87/srcs/git-status.1` roff lines 1099-1104:
+
+    1099:.SS "Pathname Format Notes and -z"
+    1102:When the \fB\-z\fR option is given, pathnames are printed as is and without any quoting and lines are terminated with a \fINUL\fR (ASCII 0x00) byte\&.
+    1104:Without the \fB\-z\fR option, pathnames with "unusual" characters are quoted as explained for the configuration variable \fBcore\&.quotePath\fR (see \fBgit-config\fR(1))\&.
+
+Line 1102 states the `-z` guarantee in the positive ("printed as is and without any quoting") and line 1104 states
+what the LINE form guarantees instead ("pathnames with \"unusual\" characters are quoted as explained for the
+configuration variable core.quotePath"). The S346 anchor cell names the `-z` paragraph only; the Pathname Format
+Notes restate the same rule and are inside S346's declared scope, so they corroborate rather than widen it. (The
+`core.quotePath` sentence points at git-config(1), which is the candidate the Gate rejects as a duplicate scope.)
+
+## 3. S347 — git-grep(1) `-F`
+
+Located quote (as filed in `corpus/SOURCES.md` row S347, anchor cell):
+
+    "Use fixed strings for patterns (don't interpret pattern as a regex)."
+
+Capture line: `census/round-87/srcs/git-grep.1` roff line 212.
+
+    $ grep -nF 'Use fixed strings for patterns (don\(cqt interpret pattern as a regex)\&.' census/round-87/srcs/git-grep.1
+    212:Use fixed strings for patterns (don\(cqt interpret pattern as a regex)\&.
+
+Raw capture bytes of line 212 (73 bytes, the whole line):
+
+    Use fixed strings for patterns (don\(cqt interpret pattern as a regex)\&.
+
+Roff-rendered (groff -Tutf8 -man, overstrike stripped) reads exactly:
+
+    Use fixed strings for patterns (don’t interpret pattern as a regex).
+
+The capture's raw bytes carry the roff escapes `\(cqt` (a typographic apostrophe) and `\&.`. The filed quote uses
+the plain ASCII apostrophe `'` (U+0027) and the plain ASCII full stop, i.e. the ASCII-folded spelling of the
+rendered line. This is the same normalisation the lane's own SOURCES rows already use for a rendered quote: S343
+files the git-grep/git-config sibling row S342 with the typographic `’` preserved ("the submodule’s working
+directory"), so the lane's precedent is MIXED — S342/S343 keep U+2019 where the page renders it, while this row
+folds it to ASCII.
+
+FINDING F1 (low, wording/consistency — for the L1 to decide, not a claim falsifier): the filed S347 quote is not
+byte-identical to the capture under ANY single reading:
+  * raw capture bytes contain `don\(cqt` and `\&.` — the filed ASCII apostrophe is not in the capture at all;
+  * the rendered page contains U+2019 (`don’t`), while the filed quote has U+0027 (`don't`).
+So the quote is an ASCII fold of the rendered line. The claim C1/C2 does not depend on it, and the row's
+`teaches` cell is true of the page either way, so this does NOT falsify anything; but the Gate row should say the
+quote is "rendered, ASCII-folded" (as S345's row says "the sentence wraps; justified spacing normalised") rather
+than imply a byte-exact capture substring. The S346 quote IS a byte-exact capture substring after the standard
+roff unescaping (`\-`, `\&.`) and needs no such note.
+
+Word count of the filed quote: 11 words — inside the <=25-word contract.
+
+## 4. Row-shape check of the two filed rows (SOURCES-CONTRACT-v1: 11 columns)
+
+Both rows carry all 11 columns populated, `kind=docs`, `tier=A`, `status=mined`, `recheck=90d`, `opened=2026-11-08`,
+and a `used-by` cell naming `corpus/knowledge/machine-parsed-path-spelling.md`. `90d` is a value other rows already
+use (12 rows carry it), so the recheck cell is not out of the lane's vocabulary.
+
+Duplicate-URL check (the census's W04 class): `git-status(1)` is already cited by S044 (web manual), S302 (web
+manual) and S338 (installed page, REJECTED as a duplicate scope); `git-grep(1)` is cited by no other row. S346's
+scope is one clause of the installed page that S044/S302 (web manual, other scopes) and S338 (rejected) do not
+carry, so S346 adds a scope rather than repeating one; S347 is the first row for `git-grep(1)`.
+
+## 5. Instrument-hash re-measure (the round's stated instrument list)
+
+All eleven hashes in the assignment's instrument list re-measure EQUAL on the lane's committed bytes:
+
+    b066fa0fc686efdf96c8ebf21a32764070661796c3b4d6e5e99f8aad18669220  census/round-87/c1-false-rows.tsv        (51 rows)
+    ce80195de8b978e5ed00a03c22c3f9911d841c9f277a2a736c730c455178d2e9  census/round-87/c1-items.tsv              (5 items)
+    9368b34234bf3f56f6c5f3913979ad891a35ac048a54e4ec749895900338d132  census/round-87/c1-mutants.json           (10 members)
+    fd0a8e244a5e0afe58f9e8bfa85d314722b77a1bcbe6837298683f74a755220b  census/round-87/c1-pointer-counter.py
+    d6f4e612f08fe2aaf2b789e4fe3a2a8a965318161bab2a4dae39363c86fabaef  census/round-87/c1-false-row-harness.py
+    b0c1472be3d0d957b5b88a92d6d622d895cdd693de5ce491329a6cf3d3c1aaeb  census/round-87/c1-clause-battery.py
+    4e2b7c060625d3f4b77a26c05d93c167f0e42ea03b8828e8868afb4c8f1baf9e  census/round-87/c2-k4-counter.py
+    cf8753673b566da1e9a634d790dda70e93efef396f33bb3e42d4fad1425cbddc  census/round-87/controls/c2-before-base-tool.py
+    70bbf1c2a92e9ea6ab163289a8312ac600a3e2dab6576d48e349503b61bcdefa  census/round-87/controls/souji-receipt-write.py
+
+The two source captures this seat was asked to quote are also at their stated digests:
+    52d34e3a41e59a1683ac36ab7013a63e8701bfd687ab98c7630419676a2b2d95  census/round-87/srcs/git-status.1
+    52603128b427d0cd8d2bfdc10790958a9d34b8762abc3a3d870504ac3b5b14a6  census/round-87/srcs/git-grep.1
+
+No hash mismatch. No finding on the instrument set.
+
+## 6. Independent re-derivation of the C2 after arm (this seat's own run)
+
+The C2 after arm was re-run on the lane's committed bytes as a cross-check of the frozen instrument, in a scratch
+work dir outside /tmp (the seat's scratch root, removed on yield):
+
+    $ python3 -B census/round-87/c2-k4-counter.py --tool tools/souji-record-agreement.py --work <scratch>
+    ROW KH1 expect=clean k4=0 named=- rc=1 match=yes
+    ROW KH2 expect=clean k4=0 named=- rc=1 match=yes
+    ROW KU1 expect=flag k4=1 named=yes rc=1 match=yes k4rows=['a.txt|uncommitted-path']
+    ROW KU2 expect=flag k4=1 named=yes rc=1 match=yes k4rows=['untracked-scratch.txt|uncommitted-path']
+    ROW KF1 expect=flag k4=1 named=yes rc=1 match=yes k4rows=['.|stat-cache-concealed']
+    ROW KF2 expect=flag k4=1 named=yes rc=1 match=yes k4rows=['.|stat-cache-concealed']
+    ROW KF3 expect=flag k4=1 named=yes rc=1 match=yes k4rows=['.|stat-cache-concealed']
+    ROW KG1 expect=flag k4=1 named=yes rc=1 match=yes k4rows=['.|index-flag-concealed']
+    ROW KG2 expect=flag k4=1 named=yes rc=1 match=yes k4rows=['.|stat-cache-concealed']
+    ROW KN1 expect=flag k4=1 named=yes rc=1 match=yes k4rows=['.|stat-cache-concealed']
+    ROW KN2 expect=header k4=0 named=yes rc=1 match=yes writer_sha=70bbf1c2a92e9 appended_sha=1b8ecf328ed3
+    ROW KN3 expect=flag k4=1 named=yes rc=1 match=yes k4rows=['bad\\nname2.txt|uncommitted-path']
+    SUMMARY rows=12 mismatches=0 errors=0
+    EXIT=0
+
+This run read the tool's WORKTREE bytes (sha256 c2b0784e…), which at the time of this run already carried
+S87ExecC2's repair (see F2 below) — NOT the committed tip bytes (0ad9e3bf…, the bytes the C2 after arm was filed
+against). The twelve-row instrument reads green on the worktree bytes; the L1 must re-file the after arm against
+whatever tool bytes it commits. This seat does NOT re-file and does NOT decide that question.
+
+## 7. FINDING F2 — the COMMITTED tip bytes mis-parse a rename's second NUL field (HIGH, C2 wording)
+
+The claim C2's stated wording says (preregistration.txt:78-79, verbatim):
+
+    "(the -z form's second NUL field of a rename is skipped; the rename record itself already reaches the key)"
+
+and the frozen stated limit at preregistration.txt:111-112 says:
+
+    "the -z arm skips a rename's second NUL field, so a renamed destination is named only through its rename record"
+
+The COMMITTED tool at refs/heads/master (6e502c5c, `tools/souji-record-agreement.py` blob 4244ac26, sha256
+0ad9e3bf…) skips that field by a CONTENT test, at its line 476:
+
+    if len(rec) < 4 or rec[2:3] != " ":
+        continue
+    path = rec[3:].replace("\n", "\\n") ...
+
+`rec[2:3] != " "` asks "does the third byte look like the separator after a status pair?". For a rename's SECOND
+field the third byte is just the third byte of the OLD path. When the old path's third character is a space, the
+test passes and the old path is mis-read as a status record.
+
+Reproducer (hermetic fixture, no lane byte read or written; `git -C "$D" rev-parse --show-toplevel` asserted
+equal to $D before the first commit; D under the seat's scratch root, not /tmp):
+
+    $ git -C "$D" init -q
+    $ printf 'hello\n' > "$D/my file.txt"; git -C "$D" add -A; git -C "$D" commit -q -m seed
+    $ git -C "$D" mv "my file.txt" "new.txt"
+    $ git -C "$D" status --porcelain -z | od -c
+    0000000   R           n   e   w   .   t   x   t  \0   m   y       f   i
+    0000020   l   e   .   t   x   t  \0
+
+    $ python3 -B <tip tool bytes> --root "$D" --rev "$(git -C "$D" rev-parse HEAD)" | grep '^MISMATCH\tK4'
+    MISMATCH	K4	new.txt	uncommitted-path	R
+    MISMATCH	K4	file.txt	uncommitted-path	my
+
+The second row is SPURIOUS: the record `file.txt` does not exist in the tree, and its detail `my` is the first two
+bytes of the old path read as a status pair. The old path is `my file.txt`; the record names `file.txt` (the tail
+after three bytes) and the detail names `my`.
+
+Control (same fixture shape, old path with no space at byte 2 — `oldname.txt`): the tip tool emits ONE K4 row
+(`new.txt`), so the defect is specific to an old path whose third byte is a space, not to renames in general.
+
+Compare the lane-base tool bytes (the C2 before-arm control, cf875367…): on the same fixture it emits ONE row,
+`MISMATCH	K4	"my file.txt" -> new.txt	uncommitted-path	R` — the line form's git-quoted spelling, which is the
+defect r87 set out to fix (C2 §2e). So on this fixture the committed tip is not better than the base: it trades one
+wrong spelling for a different wrong spelling PLUS a spurious extra row.
+
+The WORKTREE bytes (S87ExecC2's repair, sha256 c2b0784e…) skip the field by STATUS LETTER instead of by content,
+and emit ONE correct row on the same fixture:
+
+    MISMATCH	K4	new.txt	uncommitted-path	R
+
+This seat did not write that repair; it is S87ExecC2's, already in the lane worktree. It is recorded here because the
+L1 must decide what the C2 after arm is filed against (the committed tip bytes mis-parse renames; the worktree
+bytes do not) and because the claim's STATED WORDING about skipping the rename's second field is TRUE of the
+worktree bytes and FALSE of the committed tip bytes for an old path whose third byte is a space.
+
+Scope of the finding: it is a class of the lane's own instrument's reach, measured on the lane's own committed
+bytes with a synthetic fixture; it is not a claim falsifier (C2's stated wording is about the tool's behaviour, and
+the tool's behaviour is what the repair changes) — but the C2 after receipt MUST be re-filed against the committed
+repair bytes, and the Gate's "the -z arm skips a rename's second NUL field" sentence must name the skip's RULE
+(status letter), not a content test.
+
+Fixture hygiene note: every fixture repo in this seat's evidence was created with `git -C "$D" init -q`, every
+later git call names `-C "$D"` explicitly, `git -C "$D" rev-parse --show-toplevel` was asserted equal to $D before
+the first commit, and the identity was set through GIT_AUTHOR_*/GIT_COMMITTER_* environment variables inside the
+fixture only (no throwaway global identity, no `git commit` outside $D). No `git fetch`/`push` was run anywhere.
+
+## 8. FINDING F8 (HIGH, the L1's COMMITTED bytes) — the FORGED-detail branch's escape is NOT injective, so one
+##    concealment row can name two different paths with one spelling
+
+The lane's tip moved while this seat worked: `refs/heads/master` is now `b0a64c94` ("round-87: reviewer
+corrections - the no-verdict detail prefers stderr, the rename-field comment names the original, the c8 mutant is
+filed byte-bound; receipts re-filed on the final tool bytes"), whose tool blob is sha256 `821e3703…` (the worktree
+matches it; the C2 after receipt `census/round-87/records/c2-after.txt` names the same digest, and that digest IS
+at a commit — so F7 is closed).
+
+That repair made the STATUS arm's escape injective: `_escape_record()` (`tools/souji-record-agreement.py:142-162`)
+doubles the backslash FIRST and maps every byte outside printable ASCII to `\xNN`. Measured on the committed
+bytes, the STATUS arm distinguishes the two names:
+
+    $ python3 -B <821e3703 bytes> --root "$D" --rev <HEAD> | grep '^MISMATCH\tK4\t'
+    MISMATCH	K4	x\ny.txt	uncommitted-path	??
+    MISMATCH	K4	x\\ny.txt	uncommitted-path	??
+
+Two distinct names, two distinct records — correct.
+
+But the FORGED-detail branch (the `stat-cache-concealed` row) still uses the OLD escape at
+`tools/souji-record-agreement.py:305`:
+
+    return (out[len("FORGED "):].replace("\n", "\\n").replace("\t", "\\t").replace("\r", "\\r"))
+
+That escape does NOT double the backslash, so the writer's own two distinct names collapse onto ONE spelling in the
+record. Measured on the SAME committed bytes, with the two names TRACKED and forged under the index stat cache
+(the counter's own `forge_index_stat` helper, used read-only):
+
+    $ python3 -B <821e3703 bytes> --root "$D" --rev <HEAD> | grep '^MISMATCH\tK4\t'
+    MISMATCH	K4	.	stat-cache-concealed	RECEIPT-WORKTREE-STAT-CONCEALED: 2 tracked path(s) git status reports
+    clean do not hash to the object id the index records (x\ny.txt, x\ny.txt); the index stat cache conceals a
+    worktree change; no receipt written
+
+The row names TWO DIFFERENT PATHS as `x\ny.txt, x\ny.txt` — one spelling for two files. The writer's own detail
+before the tool's escape is unambiguous (it prints the literal backslash):
+
+    '... the index records (x\ny.txt, x\\ny.txt); ...'
+
+So the collision is introduced by the tool's line-305 escape, not by the writer. The detail therefore names a file
+that does not exist (`x\ny.txt` is the LF name's spelling) and cannot distinguish the two concealed paths.
+
+This is exactly the class A3 says it closed ("the record escape doubles the backslash first … so the record is
+injective and a reader can recover the exact bytes" — `plans/round-87.md` A3) — the repair reached the STATUS arm
+(`_escape_record`) and NOT the FORGED-detail arm (line 305), which is the arm that carries the concealment
+class the lane's C2 claim is about (KF1/KF2/KF3, the stat-cache concealment).
+
+Coverage gap that let it through: `census/round-87/c2-byte-arm.py` KB5 ("two UNTRACKED names, one holding a real
+LF and one holding the two bytes `\` `n`") exercises the STATUS arm only — it creates two UNTRACKED files. No
+frozen row and no KB row carries a control byte in a TRACKED name reaching the FORGED-detail branch. The probe
+reads `SUMMARY rows=7 mismatches=0` on the committed bytes (this seat re-ran it), so the gap is invisible to it.
+
+Reproducer summary (hermetic, scratch root, no lane byte written): two tracked files `x<LF>y.txt` and
+`x\<n>y.txt`, both forged under the index stat cache with the counter's own helper -> the K4 `stat-cache-concealed`
+detail prints `(x\ny.txt, x\ny.txt)`.
+
+## 9. FINDING F9 (MEDIUM, the L1's COMMITTED bytes) — the same arm escapes a raw control byte, so the record can be
+##    split by a line-oriented consumer
+
+The FORGED-detail arm's escape at line 305 covers only `\n`, `\t`, `\r`. A VT (0x0b) in a TRACKED path's name
+therefore lands RAW in the record. Measured on the committed bytes with a tracked `vt<VT>name.txt` forged under the
+index stat cache, the detail's bytes carry the raw 0x0b:
+
+    0000240   t  \v   n   a   m   e   .   t   x   t   )   ;       t   h   e
+
+A raw 0x0b is a `str.splitlines()` separator, so a consumer that splits the record on line boundaries reads this
+row as two lines — the same defect class Q159 names ("joining those to spaces both splits a line-oriented record
+and loses the name a reader must act on"), reached through the byte the escape does not cover. The STATUS arm does
+not have it: the same name in the STATUS arm reads `vt\x0bname.txt` (escaped, one record). So the two arms of ONE
+row set still spell one path two ways, which is what A3's "one path has one spelling in both arms" names as closed.
+
+## 10. FINDING F10 (info, the prereg's frozen stated limit is now narrower than the tool) — the landing repair moved
+##     the escape rule under the frozen wording
+
+The prereg's stated limit (frozen, `census/round-87/preregistration.txt:112`) says "only newline, tab and CR are
+C-escaped, so another control byte still lands raw in the record". That was TRUE of the `6e502c5c` bytes and TRUE of
+`578cbf2c` (measured: `vt\x0b` only after the second repair). It is now TRUE of neither arm of the committed bytes
+in the same form: the STATUS arm escapes every non-printable byte as `\xNN`, and the FORGED arm escapes none of
+them. `plans/round-87.md` A1's "Named limit (unchanged by the repair)" sentence and A3's "the record is a byte
+spelling" sentence describe the NEW rule, but the PREREG's frozen sentence is not amended — by design (the prereg
+is frozen and may not be edited; a wave falsification is narrowed in `plans/round-87.md`). The L1 should therefore
+carry the narrowed limit sentence in the plan's amendments (A1/A3) and in the lesson, since the prereg's own words
+no longer describe the filed tool. This is a wording matter for the planner, not a claim falsifier: the claim's
+SENTENCE (the `-z` read, the C-escaped record cell, the header, the last stderr line) is unaffected.
+
+## 11. Re-derivation of the C2 after arm on the L1's FINAL committed bytes
+
+    $ git rev-parse refs/heads/master
+    b0a64c943e22acc70da46ec8c9e688e842a42be4
+    $ sha256sum tools/souji-record-agreement.py
+    821e37033bf244916f047431387eb65a165442ef1d92c5219a19214d48fb3023
+
+    $ python3 -B census/round-87/c2-k4-counter.py --tool tools/souji-record-agreement.py --work <scratch>
+    ROW KH1..KG2   match=yes (nine r85/r86 rows unchanged)
+    ROW KN1 expect=flag k4=1 named=yes rc=1 match=yes k4rows=['.|stat-cache-concealed']
+    ROW KN2 expect=header k4=0 named=yes rc=1 match=yes writer_sha=70bbf1c2a92e9 appended_sha=1b8ecf328ed3
+    ROW KN3 expect=flag k4=1 named=yes rc=1 match=yes k4rows=['bad\\nname2.txt|uncommitted-path']
+    SUMMARY rows=12 mismatches=0 errors=0
+    EXIT=0
+
+    $ python3 -B census/round-87/c2-byte-arm.py --tool tools/souji-record-agreement.py --work <scratch>
+    ROW KB1..KB7   match=yes (all seven)
+    SUMMARY rows=7 mismatches=0
+    EXIT=0
+
+Both frozen instruments re-derive green on the L1's final committed bytes. F8/F9 are NOT caught by either, because
+no row of either instrument carries a control byte in a TRACKED name reaching the FORGED-detail branch.

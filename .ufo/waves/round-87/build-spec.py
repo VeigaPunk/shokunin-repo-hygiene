@@ -1,0 +1,314 @@
+#!/usr/bin/env python3
+"""Build the souji r87 wave-1 spec. Run: python3 .ufo/waves/round-87/build-spec.py > .ufo/waves/round-87/w1-spec.json
+P and F hashes are read from the lane's git branch (P = instruments + controls + before receipts, F = prereg alone)."""
+import json
+import subprocess
+
+LANE = "/home/vgpnk/Projects/shokunin/souji-shokunin"
+FLEET = "/home/vgpnk/Projects/shokunin"
+BASE = "5e288bb3152328f371325d0bf4fee7309d629991"
+
+GOD = """/skill:godspeed
+You are a Godspeed-enabled subagent.
+
+1. **Name the axes.**
+2. **Iterate cheap, in parallel.**
+3. **Keep moves that improve any axis and harm none.**
+4. **Don't aim \u2014 let the frontier walk itself.**
+
+## IMMEDIATELY STOP ASKING CLARIFYING QUESTIONS. Execute tool calls concurrently in large batches. Do not serialize what can run in parallel. Do not output philosophical reasoning or verbose plans. Act directly via tool calls.
+
+"""
+
+
+def git(*a):
+    return subprocess.run(["git", "-C", LANE, *a], stdout=subprocess.PIPE, text=True,
+                          check=True).stdout.strip()
+
+
+log = git("log", "--format=%H %s", "-10", "master").splitlines()
+
+
+def find(prefix):
+    for l in log:
+        h, _, s = l.partition(" ")
+        if s.startswith(prefix):
+            return h
+    return "<" + prefix + ": not found yet>"
+
+
+CTX = f"""# Goal
+souji round 87 (lane repo {LANE}, lane id souji). The L1 (SoujiR87) holds the planner seat and is the ONLY
+integration owner: it froze the claims, integrates your findings, commits through the lane helper, measures and
+writes the report. You are one seat of ONE v1 wave of 12 seats. Seats deliver files and findings only: never commit,
+never push, never mutate git/jj state, never edit fleet or sibling-lane files, never edit MANIFEST.json,
+.ufo/state/*, .scratch/* or .ufo/watchdog.log. A finding with a reproducer beats an opinion.
+
+# Evidence durability
+FIRST action: create your report file (the `Report:` trailer path) with a one-line skeleton and append to it as you
+go. Your final yield must repeat the same content. A seat that ends without that file counts as no verdict.
+Every `Report:` trailer path is relative to {LANE} \u2014 write it at {LANE}/<that path>.
+
+# Write scope and scratch
+Write ONLY under {LANE}/.ufo/waves/round-87/w1/<YourSeatName>/ and your report file. Everything else in the lane is
+read-only to you. All clones, mirrors, fixtures and counter `--work` dirs live under
+/fast/scratch/hyaku/souji-r87/<YourSeatName>/ (mkdir -p; never /tmp). Delete your scratch dir before you yield
+(`trap 'rm -rf -- "$S"' EXIT`), copying receipts into your seat dir first. Disclose any scratch you left behind.
+
+# Frozen round (read {LANE}/census/round-87/preregistration.txt FIRST \u2014 it is the contract)
+Lane base {BASE} (r86 closed admitted; spot-check corpus/lessons/round-86-verifier-spotcheck.md). P {find('round-87: instruments')}:
+instruments, populations, mutants, controls and both before receipts. F {find('round-87: preregistration')}: the
+preregistration alone (frozen before any after-data). Nothing in the claim wording may be widened by this wave; the
+wave's job is to FALSIFY it (Amendment 59: a claim verifies only if no artifact produced by this round's own wave
+falsifies its STATED WORDING; numbers re-deriving is necessary, not sufficient).
+
+Claims (verbatim targets; read the prereg for the full predicate, kill rule and stated limits):
+- C1 calibration 7: on the frozen 51-row population census/round-87/c1-false-rows.tsv the r87 clause battery reports
+  census/round-87/c1-pointer-counter.py green on both pinned populations and kills all TEN mutants
+  (census/round-87/c1-mutants.json) — killed_r86=8, killed_r87=10, killed_total=18 — while the same battery and
+  mutants on the r86 49-row population leave m12-token-on-line and m16-nf6b-punct alive (killed_r86=8).
+  Command (after): python3 -B census/round-87/c1-clause-battery.py --counter census/round-87/c1-pointer-counter.py
+  --work DIR --only r86,r87 --expect-killed 18 ; (before): the same with --only r86 --expect-killed 8.
+- C2 operability 8: tools/souji-record-agreement.py key K4 (a) reads `git status --porcelain -z` and C-escapes the
+  record path, (b) prints `# writer path=… sha256=…` naming the receipt-writer bytes it delegates to, (c) reports the
+  writer's LAST non-empty stderr line in its no-verdict detail. The frozen 12-row counter
+  census/round-87/c2-k4-counter.py reports rows=12 mismatches=0 errors=0 EXIT 0 on the filed tool and mismatches=3 on
+  the lane-base tool bytes census/round-87/controls/c2-before-base-tool.py.
+  Command: python3 -B census/round-87/c2-k4-counter.py --tool tools/souji-record-agreement.py --work DIR
+  (before: --tool census/round-87/controls/c2-before-base-tool.py).
+
+Instrument hashes (re-measure them; a mismatch is a finding):
+  c1-false-rows.tsv  b066fa0fc686efdf96c8ebf21a32764070661796c3b4d6e5e99f8aad18669220 (51 rows)
+  c1-items.tsv       ce80195de8b978e5ed00a03c22c3f9911d841c9f277a2a736c730c455178d2e9 (5 items, base 705fa138)
+  c1-mutants.json    9368b34234bf3f56f6c5f3913979ad891a35ac048a54e4ec749895900338d132 (10 members)
+  c1-pointer-counter.py fd0a8e244a5e0afe58f9e8bfa85d314722b77a1bcbe6837298683f74a755220b
+  c1-false-row-harness.py d6f4e612f08fe2aaf2b789e4fe3a2a8a965318161bab2a4dae39363c86fabaef
+  c1-clause-battery.py b0c1472be3d0d957b5b88a92d6d622d895cdd693de5ce491329a6cf3d3c1aaeb
+  c2-k4-counter.py   4e2b7c060625d3f4b77a26c05d93c167f0e42ea03b8828e8868afb4c8f1baf9e
+  controls/c2-before-base-tool.py cf8753673b566da1e9a634d790dda70e93efef396f33bb3e42d4fad1425cbddc
+  controls/souji-receipt-write.py 70bbf1c2a92e9ea6ab163289a8312ac600a3e2dab6576d48e349503b61bcdefa
+
+# Round-86 routed debts this round answers (do not re-declare them as new)
+- (C1) S85MutCounter m12 token-on-line and m16 punctuation were reachable-and-unrowed; NE1 and TQ1 are their rows.
+- (C2) S86ExecK4 2b/2e/3b2: stderr-prefix truncation, the quoted status arm, the unbound writer delegation.
+- A candidate `_capture_ok` suffix row was measured ALREADY BOUND by the r86 row NF12c
+  (census/round-87/records/c1-c8-measured.txt) and was NOT added; do not propose it back as new coverage.
+
+# Tooling authorization (operator, 2026-10-19)
+You and every seat may install or upgrade tools that help the task; read /home/vgpnk/.omp/agent/RULES.md first
+(official channels, update-safety gate, record tool/version/channel/reason). PACMAN GUARD (orchestrator ruling,
+2026-10-20): all pacman transactions are PAUSED host-wide; install via `uv tool`/`npx`/an official binary in
+~/.local/bin, and never -Sy/-Syu/-U/-R or restart a host service. Never mutate host sysctls.
+
+# Fixture hygiene (run-6 incident)
+Any fixture repo: D=$(mktemp -d) && git -C "$D" init -q, and every later git/jj call names -C "$D" explicitly; assert
+`git -C "$D" rev-parse --show-toplevel` equals $D before the first commit. Never pass an empty variable to git -C.
+Never run `git commit`/`jj` with a throwaway identity outside $D. A seat that writes no code may skip this.
+
+# Fleet rules
+Never message agent://all (it reaches every lane's seats) \u2014 message the L1 by id: SoujiR87. Do not signal, kill or
+reap processes you did not start. Do not run `git fetch`/`push` anywhere. Read-only git in the lane is fine, but
+under jj colocation HEAD is detached: read the tip with `git rev-parse refs/heads/master`, never @{{u}} or HEAD.
+"""
+
+
+def seat(name, role, target, change, accept, report):
+    return {"name": name, "role": role,
+            "prompt": GOD + f"# Target\n{target}\n\n# Change\n{change}\n\n# Acceptance\n{accept}\n\n"
+                            f"Report: {report}\n"}
+
+
+ITEMS = [
+    seat("S87ExecC1", "executor",
+         "Re-derive BOTH C1 arms end to end on committed bytes, independently of the L1. OWN ONLY "
+         f"{LANE}/.ufo/waves/round-87/w1/S87ExecC1/.",
+         "1. Run `python3 -B census/round-87/c1-clause-battery.py --counter census/round-87/c1-pointer-counter.py "
+         "--work <your scratch> --only r86 --expect-killed 8` and `--only r86,r87 --expect-killed 18`; save both\n"
+         "   receipts. Confirm the SUMMARY lines, the ten per-mutant lines and that only m12/m16 survive on r86.\n"
+         "2. For EACH of the two new rows (TQ1, NE1) drive the pristine counter and the corresponding mutant by hand "
+         "on your own fixture clone (the harness's build_fixture is importable) and record got/why for both, so the "
+         "kill is attributable to that row and no other.\n"
+         "3. Re-derive the instrument delta: diff census/round-87/c1-pointer-counter.py, c1-false-row-harness.py, "
+         "c1-clause-battery.py against their r86 predecessors and list every changed line; flag any changed line "
+         "that is NOT a pin, the R10 fixture block, the ERROR expectation or a docstring.\n"
+         "4. Write receipts under your seat dir (txt, named by command).",
+         "Verdict per arm with the exact SUMMARY line, plus a per-row attribution table (row -> clause -> mutant -> "
+         "sole killer yes/no) and the instrument-diff list with any unexpected line flagged.",
+         ".ufo/waves/round-87/w1/S87ExecC1.md"),
+    seat("S87ExecC2", "executor",
+         "Re-derive BOTH C2 arms and attack the -z arm for regressions. OWN ONLY "
+         f"{LANE}/.ufo/waves/round-87/w1/S87ExecC2/.",
+         "1. Run `python3 -B census/round-87/c2-k4-counter.py --tool tools/souji-record-agreement.py --work <scratch>` "
+         "and the same with `--tool census/round-87/controls/c2-before-base-tool.py`; save both receipts.\n"
+         "2. Extend the fixture in YOUR OWN scratch copy of the counter (never edit the lane's): build rows for a "
+         "rename (both ends), an ignored path, a submodule whose nested HEAD did not move, a path carrying CR, and a "
+         "deleted tracked file; report whether the -z arm still records what the line arm recorded, and where it "
+         "differs. Any difference that makes a genuine uncommitted change INVISIBLE is a HIGH finding.\n"
+         "3. Check the escaping: a path carrying only a tab, and a path carrying a CR, must still be one physical "
+         "record.\n"
+         "4. Check the writer header on a copy: an absent writer must print sha256=absent and K4 must fail closed.",
+         "Verdict per arm with exact SUMMARY lines; a table of the six extra shapes (line-arm verdict vs -z-arm "
+         "verdict, invisible-change yes/no); the escaping and absent-writer results.",
+         ".ufo/waves/round-87/w1/S87ExecC2.md"),
+    seat("S87ExecEvade", "executor",
+         "Try to make both frozen counters green while the rule is wrong (the false-green hunt). OWN ONLY "
+         f"{LANE}/.ufo/waves/round-87/w1/S87ExecEvade/.",
+         "1. C1: construct a counter edit that DROPS a clause the population should certify and still scores "
+         "pristine=green and killed=10 (a survived mutant is the finding); try at least: the `_whole` before-byte "
+         "half, the `len(want) <= len(have)` half, the ERROR expectation itself (a counter that never returns ERROR), "
+         "and a counter that special-cases the two new rows.\n"
+         "2. C2: construct a tool edit that passes all 12 rows while the property is absent — e.g. a header printed "
+         "with a constant digest, a no-verdict detail with a hard-coded 'AttributeError', a status arm that drops "
+         "the newline record entirely. Run the frozen counter on each and report match/EXIT.\n"
+         "3. Anything that passes all 12 rows / all 10 mutants while the property is gone is a HIGH finding.",
+         "Per-edit table: edit, counter command, exit, matching rows, whether the property is actually present, and "
+         "the false-green verdict. Name what each passing edit would let through.",
+         ".ufo/waves/round-87/w1/S87ExecEvade.md"),
+    seat("S87MutCounter", "mutation-tester",
+         "Attack the C1 mutant set and population: are the two new rows load-bearing, and what else is reachable but "
+         f"unrowed? OWN ONLY {LANE}/.ufo/waves/round-87/w1/S87MutCounter/.",
+         "1. Reproduce the before/after arms (see the context commands).\n"
+         "2. For m12 and m16, write a DIFFERENT single edit of the same clause (not the filed text) and score it on "
+         "both populations; a second edit that survives both means the row binds only one spelling of the clause.\n"
+         "3. Probe at least four further single-edit drops (candidates from r85's survivor list: m17 duplicate "
+         "`_ledger` id, the `bool(want)` half, the `_regular` mode test, the `token_ok` trailing marker test) and "
+         "classify each survivor as dead / reachable-unrowed with a differential probe.\n"
+         "4. Report whether TQ1's row could also be satisfied by a declaration the counter should refuse.",
+         "Table: edit, killed on r86, killed on r87, classification, and what row (if any) would bind it. Name every "
+         "survivor that is NOT already carried in the prereg's limits.",
+         ".ufo/waves/round-87/w1/S87MutCounter.md"),
+    seat("S87Scribe", "scribe",
+         "Drafts for the L1 to integrate. OWN ONLY "
+         f"{LANE}/.ufo/waves/round-87/w1/S87Scribe/.",
+         "1. Draft the `## Gate` rows for the round lesson: for each of S346 (git-status(1) `-z`, capture "
+         "census/round-87/srcs/git-status.1) and S347 (git-grep(1) `-F`, capture census/round-87/srcs/git-grep.1) "
+         "give the registry row (tier, class, status `mined`, used-by) and a <=25-word located quote with its roff "
+         "line number; verify each quote against the capture byte for byte.\n"
+         "2. Draft one new knowledge section (<=40 lines) for corpus/knowledge/: 'a machine-parsed status stream "
+         "carries raw names' — what `-z` guarantees, what the line form guarantees instead, and the record-format "
+         "rule that follows (escape for the reader, never for the parser). Cite S346 and the lane's own r86 entry.\n"
+         "3. Draft one QUALITY.md criterion (Q-line) in the lane's existing numbering style: a diagnostic that "
+         "truncates from the front of a traceback is a defect; the last line names the exception.\n"
+         "4. Do not edit any committed file; deliver the drafts as files in your seat dir.",
+         "Three draft files + a quote-verification receipt (capture line number, quote, grep of the capture).",
+         ".ufo/waves/round-87/w1/S87Scribe.md"),
+    seat("S87ScoutSources", "scout",
+         "Open the sources both claims rest on, this round, with URL + access date + a located quote of <=25 words. "
+         f"OWN ONLY {LANE}/.ufo/waves/round-87/w1/S87ScoutSources/.",
+         "1. Read /home/vgpnk/Projects/shokunin/souji-shokunin/corpus/SOURCES.md for the contract shape and the highest existing id (the round-86 lesson says "
+         "S345 was the last admit).\n"
+         "2. Open, THIS ROUND, the installed pages: /usr/share/man/man1/git-status.1.gz and "
+         "/usr/share/man/man1/git-grep.1.gz (record `git --version`). For git-status(1) the `-z` paragraph and the "
+         "\"Pathname Format Notes and -z\" section; for git-grep(1) `-F/--fixed-strings`. Give the roff line number, "
+         "the rendered text and a <=25-word quote.\n"
+         "3. Open one more page you judge load-bearing for C1's `_whole` sentence-end rule or C2's escaping "
+         "(candidates: gitattributes(5) core.quotePath via git-config(1); git-status(1) `--untracked-files`; "
+         "git-ls-files(1) `-z`) and give the same treatment. Propose exactly TWO admits and ONE reject with its flip "
+         "condition.\n"
+         "4. Check duplicate URLs against the registry (grep the capture's URL) and say whether each row collides.",
+         "A candidates file in your seat dir with, per row: id, title, url, access date, tier, class, status, "
+         "used-by, roff line, quote (<=25 words), admit/reject + reason, duplicate-URL check.",
+         ".ufo/waves/round-87/w1/S87ScoutSources.md"),
+    seat("S87ScoutShapes", "scout",
+         "Reconnaissance: are the two new rows' shapes real in this lane's history, or synthetic-only? OWN ONLY "
+         f"{LANE}/.ufo/waves/round-87/w1/S87ScoutShapes/.",
+         "1. For TQ1: find committed lines in SKILL.md/LOG.md/SCORECARD.md/corpus/ that name a quarantine leaf at a "
+         "sentence end (a period immediately after the leaf) — `git grep -n -E '\\.ufo/quarantine/[^ `]*\\.($| )'`. "
+         "Count them and quote three.\n"
+         "2. For NE1: find committed items/rows in census/round-*/ where a token sits on a different line than the "
+         "row declares (or where a row's declared line does not carry its token) — search the pointer/item "
+         "populations for entries whose line does not contain their token at their base revision. Count them.\n"
+         "3. For C2: find any real lane path whose name contains a newline or a tab (`git ls-files -z | tr '\\0' "
+         "'\\n' | grep -c $'\\n'`-style checks are fine, but state the exact command) and any real untracked path "
+         "git status quotes in the lane right now.\n"
+         "4. State plainly for each shape: real-at-least-once (with paths) or synthetic-only.",
+         "Per shape: the command, the count, three quoted instances where they exist, and a real/synthetic verdict.",
+         ".ufo/waves/round-87/w1/S87ScoutShapes.md"),
+    seat("S87Simplifier", "simplifier",
+         "Dead-arm audit and a verified deletion patch for the C1 counter. OWN ONLY "
+         f"{LANE}/.ufo/waves/round-87/w1/S87Simplifier/.",
+         "1. Candidate dead arms to test by deletion (each in your OWN scratch copy, never the lane file): the "
+         "`len(got) < 2` half of the own-tree short-shape guard (r86 A3 measured it dead), the `bool(want)` half of "
+         "`_capture_ok`, the `_whole` before-byte half, the `tt == tk` remnants, and the `P04`/`P07` pins if unused.\n"
+         "2. For each deletion, score the r87 counter on both pinned populations with all ten mutants and report "
+         "pristine green/red and killed_r86/killed_r87. A deletion that keeps pristine green and both kill counts "
+         "unchanged is provably behaviour-preserving on the population.\n"
+         "3. Say which deletions you would land, which you would keep as belts, and why; supply the exact diff for "
+         "the ones you recommend. Do not apply anything to the lane.",
+         "Table: deletion, both pristine arms, killed_r86, killed_r87, verdict (dead / belt / load-bearing) and the "
+         "recommended diff for the dead ones.",
+         ".ufo/waves/round-87/w1/S87Simplifier.md"),
+    seat("S87Connector", "connector",
+         "Sibling-overlap, separability and carry audit for round 87. OWN ONLY "
+         f"{LANE}/.ufo/waves/round-87/w1/S87Connector/.",
+         "1. Separability: prove or falsify that C1 (census/round-87/c1-*, the population and its instruments) and "
+         "C2 (tools/souji-record-agreement.py + census/round-87/c2-k4-counter.py + the controls) are each verifiable "
+         "without the other having landed — run each after-arm with the other's changes absent from a scratch clone.\n"
+         "2. Sibling overlap: do the kagi/mori/tsukuroi provinces touch either surface (writer delegation, status "
+         "parsing, stderr diagnostics)? Cite the sibling files you read; absorb nothing, report it.\n"
+         "3. Carry audit: take the r86 spot-check's routed items 5-10 (corpus/lessons/round-86-verifier-spotcheck.md) "
+         "and the r86 lesson's `## Mistakes` M1-M7, and say for each: answered this round (with pointer), carried "
+         "(with where it is recorded), or missed (a finding).\n"
+         "4. Prior-art: grep the lane's tools/ and census/ for an existing implementation of each of the three C2 "
+         "properties; a duplicate implementation is a finding.",
+         "Three sections (separability with receipts, overlap with citations, carry table one row per routed item) "
+         "plus the prior-art grep table.",
+         ".ufo/waves/round-87/w1/S87Connector.md"),
+    seat("S87Reviewer", "reviewer",
+         "Independent re-derivation of both claims on committed bytes, plus chronology and instrument binding. OWN "
+         f"ONLY {LANE}/.ufo/waves/round-87/w1/S87Reviewer/.",
+         "1. Re-run both frozen commands yourself (the battery on r86 and r86,r87; the C2 counter on the filed tool "
+         "and on the control) from a --shared clone at the P and F revisions, not from the L1's receipts.\n"
+         "2. Chronology: prove the before receipts were committed at/before F and that the after receipts were "
+         "produced after F, from git history alone (`git log --diff-filter=A`, `git cat-file -e`).\n"
+         "3. Instrument binding: confirm every sha256 in the prereg matches the committed bytes at F; re-derive the "
+         "counter/harness/battery diffs against r86 and assert no rule line changed.\n"
+         "4. Check every number in the prereg's two claim sentences against the receipts; a number the receipts do "
+         "not carry is a finding.",
+         "Verdict per claim (AGREE/DISAGREE + reason), the chronology table with commits, the binding table, and a "
+         "number-by-number reconciliation.",
+         ".ufo/waves/round-87/w1/S87Reviewer.md"),
+    seat("S87Critic", "critic",
+         f"Falsify the WORDING of both claims before the round files them. OWN ONLY "
+         f"{LANE}/.ufo/waves/round-87/w1/S87Critic/.",
+         "1. C1: the sentence says two clauses \"get rows\" and ten mutants die. Attack it: (a) does NE1's row bind the "
+         "R0 guard or the wider malformed-item path? (b) would a strictly weaker counter (e.g. one that returns ERROR "
+         "for every unresolvable item) score 10/10? build it and say so. (c) is TQ1's TRUE row actually load-bearing "
+         "for `_whole`'s punctuation disjunct, or would NF6e-style rows do? (d) does the population's growth from 49 "
+         "to 51 by itself move any kill?\n"
+         "2. C2: attack each property: (a) is the header binding anything, or is it a constant a reader must trust? "
+         "(b) is the last-line rule enough when the exception line is longer than 200 characters? (c) does the -z arm "
+         "change any of the nine inherited rows' verdicts in a way the claim does not mention?\n"
+         "3. For every sentence the receipts cannot carry, name the narrowing the L1 must record (an amendment id) "
+         "or the honest stop.",
+         "A numbered list of wording attacks, each with the artifact that decides it and a PASS/NARROW/WITHDRAW "
+         "recommendation. Be specific enough that an amendment can be written from your text alone.",
+         ".ufo/waves/round-87/w1/S87Critic.md"),
+    seat("S87Sentinel", "sentinel",
+         "Adversarial security review of the C2 repair as a privilege boundary. OWN ONLY "
+         f"{LANE}/.ufo/waves/round-87/w1/S87Sentinel/.",
+         "1. Read the repaired truth_refusal/writer_binding/_stderr_tail and K4 in tools/souji-record-agreement.py. "
+         "Enumerate every input that reaches the new code: the writer's bytes, its stderr, the status stream, the "
+         "paths inside it.\n"
+         "2. Probe: a writer whose stderr carries a forged `MISMATCH\\tK4\\t...` line (does the detail get injected "
+         "into the record stream?), a path containing a tab/NUL-ish byte (>0x7f, a raw 0x01) inside the status "
+         "stream, a status record whose first two bytes are not a status pair, a rename pair, and a writer whose file "
+         "is swapped between the header read and the compile.\n"
+         "3. Say which of these a reader of the receipt could be misled by, with the exact bytes.",
+         "Probe table (input -> observed output -> reader-misleading yes/no), plus any HIGH/MEDIUM findings with a "
+         "one-command reproducer. Do not edit the lane's tools.",
+         ".ufo/waves/round-87/w1/S87Sentinel.md"),
+]
+
+SPEC = {
+    "wave": "souji-r87-w1",
+    "milestone": "souji r87: C1 the two r86-measured reachable-and-unrowed clauses get their rows (calibration) and a "
+                 "third candidate is measured already bound; C2 K4 reads NUL records, names its writer delegation and "
+                 "keeps the exception line (operability)",
+    "reportDir": ".ufo/waves/round-87/w1",
+    "context": CTX,
+    "items": ITEMS,
+}
+
+if __name__ == "__main__":
+    print(json.dumps(SPEC, indent=1))

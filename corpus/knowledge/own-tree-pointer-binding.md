@@ -188,3 +188,14 @@ the mutant), UNBOUND-and-reachable (a hand-built row decides and a row is missin
 verdict). The basename clause at `:387` is a fourth case with a different verdict: a row CAN make it the first
 refusal (a renamed target), but no row can make its removal flip a verdict while the suffix comparisons stand, so it
 is shadowed-for-verdict and a row would count coverage it does not give.
+
+## Correction (round 87, append-only): the R8/R9 target paths are fixture-only
+
+The landing gate reads `census/round-84/w1/`, `census/round-84/w1/c1-after.txt` and
+`census/round-83/waves/c1-pointer-counter.py` as lane paths and flags them as dangling
+(`tools/souji-landing-gate.py`, LG-DANGLING-PTR, 31 findings at `6ed2d368`). They are not lane paths and never were:
+each is created *inside the harness fixture* by `census/round-86/c1-false-row-harness.py` at revision R9 (and the
+`census/round-84/waves/recs/` sibling by the r87 successor), so the row's evidence is the fixture builder and the
+receipt, not a lane file. The sentence in the r86 row above ("target (fixture rev R9)") already says so; this
+paragraph names the consequence for a pointer reader. The r87 population reuses the same convention for TQ1
+(`.ufo/quarantine/round-17/tests/vault/vadv54-run/p/p6repo/lemma-stub`, written disk-only by the fixture builder).

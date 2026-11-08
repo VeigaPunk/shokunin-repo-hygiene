@@ -321,3 +321,17 @@ committed bytes; C1 binds the lane's own self-assessment to observed repo state 
 authorship, and C3's mutant set covers four record-parser behaviours, not the parser. Core, Frontier
 and Retired are unchanged. Sources: `census/round-39/preregistration.txt`; the counters' receipts
 under `census/round-39/records/`.
+
+## Round 87 boundary note (the status stream's spelling and the writer delegation)
+
+Two properties enter Core as instrument behaviour, not as new authority. K4 of
+`tools/souji-record-agreement.py` parses `git status --porcelain -z`, so the path it records is the raw name, and it
+escapes that name for the reader (S346); a rename's second NUL field is skipped and the rename record itself carries
+the change. The tool also prints the path and sha256 of the receipt writer it delegates its byte-truth and index-flag
+checks to, and reports that writer's last stderr line when it produces no verdict. None of this creates a receipt
+class, a deletion verdict or a new receipt root, and none of it changes `## Refuses`: the delegation is still resolved
+from beside the tool, a forged writer inside the audited tree stays outside the claim (S85Sentinel F5), and a copy
+without a writer beside it still fails closed. C1's two new population rows (TQ1, NE1) are fixture-only: the lane
+does not quarantine a `lemma-stub`, so nothing here promotes F4 or the quarantine surface. Core stays the `## Owns`
+and `## Work surfaces` list above; F1-F5 keep the statuses the earlier notes left (F5's observation surface is Core
+since the r19 note, its reap half stays HELD). Certification OFF, K5 HELD.
