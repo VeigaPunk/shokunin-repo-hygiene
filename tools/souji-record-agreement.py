@@ -20,7 +20,7 @@ Four frozen keys (the round-23 preregistration is the contract; the key set is c
      corpus/lessons/round-22.md must equal the tally derived from
      census/round-22/attempt2/slice-verdicts.tsv, and the record set must carry >=1 occurrence of
      each class.
-  K4 uncommitted round work (spot-check D1). Each `git status --porcelain` path in the working
+  K4 uncommitted round work (spot-check D1). Each `git status --porcelain -z` path in the working
      tree that no row of census/round-23/records/uncommitted-exemptions.tsv names is one
      mismatch (a dedicated file: corpus/pointer-exemptions.tsv is parsed by the landing gate,
      which refuses a row shape it does not know).
