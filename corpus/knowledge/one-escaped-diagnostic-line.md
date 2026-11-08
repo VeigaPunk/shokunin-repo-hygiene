@@ -59,7 +59,7 @@ audited tree can still print a forged `WRITER`/`FLAGFAIL` payload (S85Sentinel F
   only.
 - **Rejected — Python 3.14 `base64`** (https://docs.python.org/3.14/library/base64.html, HTTP 200, 61731 bytes,
   sha256 `09b0682d…`, capture `census/round-88/srcs/base64.html`, opened 2026-11-08). Quote, `b64decode` entry:
-  "Decode the Base64 encoded bytes-like object or ASCII string s and return the decoded bytes." (16 words).
+  "Decode the Base64 encoded bytes-like object or ASCII string s and return the decoded bytes." (15 words).
   **REJECTED** on scope: the frame is the lane's own transport choice; the page states the encoding and its
   `validate` parameter, not a record-format rule the lane reuses, and S348 carries the enforceable property.
   **Flip:** a round that must decide padding or validation semantics for an untrusted *external* base64 payload.

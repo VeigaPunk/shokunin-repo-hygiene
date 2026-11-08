@@ -1,0 +1,26 @@
+--- a/census/round-88/c1-clause-battery.py	2026-11-08 07:47:48.354175068 -0300
++++ b/battery-required-expect.py	2026-11-08 08:31:26.003401398 -0300
+@@ -94,9 +94,9 @@
+     ap.add_argument("--lane", default="/home/vgpnk/Projects/shokunin/souji-shokunin")
+     ap.add_argument("--work", required=True, help="empty scratch dir (never under /tmp)")
+     ap.add_argument("--mutants", default=os.path.join(HERE, "c1-mutants.json"))
+-    ap.add_argument("--only", default="r85,r86",
+-                    help="comma list of the pinned population labels to score (r83, r84, r85, r86, r87)")
+-    ap.add_argument("--expect-killed", type=int, default=None,
++    ap.add_argument("--only", required=True,
++                    help="comma list of the pinned population labels to score (r83, r84, r85, r86, r87, r88)")
++    ap.add_argument("--expect-killed", type=int, required=True,
+                     help="exit 1 unless this many mutants are killed on the scored population set")
+     ns = ap.parse_args(argv)
+     lane, work = os.path.abspath(ns.lane), os.path.abspath(ns.work)
+@@ -151,9 +151,7 @@
+     kl = " ".join(f"killed_{l}={killed[l]}" for l in sets)
+     tot = sum(killed[l] for l in sets)
+     print(f"SUMMARY mutants={len(members)} sets={','.join(sets)} {pr} {kl} killed_total={tot}")
+-    if ns.expect_killed is not None:
+-        return 0 if tot == ns.expect_killed else 1
+-    return 0
++    return 0 if tot == ns.expect_killed else 1
+ 
+ 
+ if __name__ == "__main__":

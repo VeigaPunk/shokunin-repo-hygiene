@@ -2092,3 +2092,35 @@ reachable-and-unrowed and are carried (`plans/round-87.md` A4).
 - Carried: the r85/r86 C2 list (pid-reuse row, parent-before-child, termign-fork/p5-late-term, strace-robust
   settle), `_regular` pathspec framing, the quarantine intro-blob digest row, the r79 gate re-measurement, check-4
   300 s backstop, r76 K03/K04, the r17 240 s runners, the inherited K3 tally row (r86 A4).
+
+### Round 88 measurements (2026-11-08; lane base `7defe9c5`; instruments/controls P `e60ea25f`; prereg alone F `f74092b2`)
+
+| claim | axis | before | after | counting command | measured commit |
+|---|---|---|---|---|---|
+| C1 the two r87-carried reachable-and-unrowed clauses get one binding each; the third is measured dead and recorded as a belt | calibration 7 | `census/round-88/controls/c1-before.txt` (same battery, same twelve mutants, the r87 51-row population) `ARM pristine pop=r87 rows=51 mismatches=0 errors=0 exit=0`, `m17-duplicate-id killed=no`, `m18-whole-before killed=no`, `SUMMARY mutants=12 sets=r87 pristine_r87=ok killed_r87=10 killed_total=10`, EXIT 0 | `census/round-88/records/c1-after.txt` `ARM pristine pop=r87 rows=51 mismatches=0 errors=0 exit=0`, `ARM pristine pop=r88 rows=53 mismatches=0 errors=0 exit=0`, twelve `killed=yes` on r88, `SUMMARY mutants=12 sets=r87,r88 pristine_r87=ok pristine_r88=ok killed_r87=10 killed_r88=12 killed_total=22`, EXIT 0; belt `records/c1-dead-belt.txt` `SUMMARY mutants=13 … killed_total=22` with `m19-len-half killed=no` on both sets, EXIT 0 | `python3 -B census/round-88/c1-clause-battery.py --counter census/round-87/c1-pointer-counter.py --work WORK --only r87,r88 --expect-killed 22` (before `--only r87 --expect-killed 10`; belt `--mutants census/round-88/c1-mutants-dead.json --expect-killed 22`) | `486826df9da614bb6619e90748b7e9014bf266b1` (records); instruments at `e60ea25f` |
+| C2 the K4 delegation's index-flag failure detail is one escaped physical line that keeps both ends of the writer's stderr | operability 8 | `census/round-88/controls/c2-before.txt` on the r87 tool bytes `e1b00e8a…` as both arms: `SUMMARY cases=7 tool_pass=3 before_pass=3`, KFF2/KFF3/KFF4/KFF5 fail, EXIT 1 | `census/round-88/records/c2-after.txt` on the filed tool sha256 `c0604b4a…` with the before bytes as the control: seven `CASE … tool=pass`, `SUMMARY cases=7 tool_pass=7 before_pass=3`, EXIT 0; the r87 12-row counter on the same tool reads `SUMMARY rows=12 mismatches=0 errors=0`, EXIT 0 (`records/c2-k4-regression.txt`) | `python3 -B tests/fixtures/r88-k4-flagfail.py --tool tools/souji-record-agreement.py --before census/round-88/controls/c2-before-tool.py --work WORK` | `01a2fa559a0d900e28b4b3dda8a504ca935b584c` (tool + after/regression receipts) |
+
+No owned axis score changed (calibration 7, coverage 8, operability 8 — the lane still has no reproducible 0–10
+mapping); both rows carry the verdict, the counting command and the measured commit instead. The C1 counter's bytes
+are unchanged from r87 (only the population, mutants and harness changed); the `_capture_ok` `len(want) <= len(have)`
+arm is a belt by measurement (m19 survives both sets), not a row, and the four clauses the r87 wave named as
+reachable-and-unrowed with other spellings (p2 basename granularity, p3 the punctuation lookahead, p7 `_regular`'s
+symlink leg, p8 `token_ok`'s hyphen marker) stay carried.
+
+### Round 88 capability rows
+
+| name | what it can now do | evidence pointer | first-working round |
+|---|---|---|---|
+| a ledger-level refusal bound as a population row | bind a clause that lives in the ledger reader (a duplicate id) by adding a row type that builds the duplicate-ledger input and parses the counter's own `LEDGER-REFUSED` line, instead of editing the counter | `python3 -B census/round-88/c1-clause-battery.py --counter census/round-87/c1-pointer-counter.py --work WORK --only r87,r88 --expect-killed 22` → `m17-duplicate-id killed=yes` on r88 and `killed=no` on r87 (`records/c1-after.txt`, control `controls/c1-before.txt`) | r88 |
+| a delegated failure channel framed, escaped and bounded in one place | ship a child's raw stderr base64-framed and render it through the parent's single escaping rule, so the detail is one physical line and a long exception keeps both its type name and its message | `python3 -B tests/fixtures/r88-k4-flagfail.py --tool tools/souji-record-agreement.py --before census/round-88/controls/c2-before-tool.py --work WORK` → `cases=7 tool_pass=7 before_pass=3` (`records/c2-after.txt`; before arm `tool_pass=3`) | r88 |
+
+### Planned (r89)
+
+- C1 (calibration): the four carried single-spelling survivors (p2 basename granularity, p3 the punctuation
+  lookahead, p7 `_regular`'s symlink leg, p8 `token_ok`'s hyphen marker), the `_whole` after-byte lookahead's other
+  spelling, and the quarantine intro-blob digest row; each candidate mutant is scored before its row is added (Q162).
+- C2 (operability): the wave residuals the r88 seats leave open (S88ExecC2's attack cases, S88Sentinel's probes,
+  S88Simplifier's deletion patches) plus the r85/r86 C2 carry list.
+- Carried: the r85/r86 C2 list (pid-reuse row, parent-before-child, termign-fork/p5-late-term, strace-robust
+  settle), `_regular` pathspec framing, the quarantine intro-blob digest row, the r79 gate re-measurement, check-4
+  300 s backstop, r76 K03/K04, the r17 240 s runners, the inherited K3 tally row (r86 A4).

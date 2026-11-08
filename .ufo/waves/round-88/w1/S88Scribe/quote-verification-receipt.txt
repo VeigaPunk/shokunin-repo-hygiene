@@ -1,0 +1,88 @@
+# S348 / S349 located-quote verification receipt — S88Scribe (souji r88 w1)
+
+Captures measured on this host, 2026-11-08. Recipe = the lane's own r55 recipe
+(`census/round-55/sources/s278-located-quote.txt`), pasted in full below:
+strip `script`/`style`, strip tags, `html.unescape`, collapse whitespace runs.
+
+## S348 — Python 3.14 `str.splitlines` line boundaries
+
+capture:  census/round-88/srcs/str-splitlines.html
+sha256:   5abdd8b9ceeda2c3e94d8f95e32d9853d6f35d35844514727aa440cac98eda42
+bytes:    774910
+live re-fetch 2026-11-08: `curl -sSL -o live-stdtypes.html https://docs.python.org/3.14/library/stdtypes.html`
+           -> HTTP 200, 774910 bytes, sha256 5abdd8b9…eda42 — BYTE-IDENTICAL to the filed capture
+           (one 301 to https://docs.python.org/3.14/builtins/stdtypes.html), same as the filed row's `source` cell.
+
+capture lines (the quote's own paragraph): **2806-2807**
+
+    2806  <p>This method splits on the following line boundaries.  In particular, the
+    2807  boundaries are a superset of <a class="reference internal" href="../glossary.html#term-universal-newlines"><span class="xref std std-term">universal newlines</span></a>.</p>
+
+anchor: `id="str.splitlines"` present in the capture (exactly 1 occurrence, line 2801).
+boundary table: `<table class="docutils align-default">` at line 2808, `</table>` at line 2849.
+
+filed quote:
+    This method splits on the following line boundaries. In particular, the boundaries are a superset of universal newlines.
+
+word count command (lane convention, `len(s.split())`), pasted verbatim with its output:
+
+    python3 -B -c "import re,io;t=re.sub(r'<[^>]+>','',io.open('census/round-88/srcs/str-splitlines.html',encoding='utf-8').read());t=re.sub(r'\s+',' ',t);s='This method splits on the following line boundaries. In particular, the boundaries are a superset of universal newlines.';print(s in t, len(s.split()))"
+    -> True 18
+
+**18 words — the filed row's `(18 words)` is CORRECT.**
+
+byte check (raw capture, not the rendered text):
+
+    python3 -B -c "import io;q='This method splits on the following line boundaries. In particular, the boundaries are a superset of universal newlines.';print(q.encode() in io.open('census/round-88/srcs/str-splitlines.html','rb').read())"
+    -> False
+
+The quote is **NOT** a byte-substring of the raw capture: the capture is HTML and carries the sentence
+across two physical lines (2806/2807) with the anchor markup inline, so the rendered form is the
+verifiable one. See FINDING F1 below — `corpus/SOURCES.md:316` claims the quote "was checked
+byte-for-byte against the capture", and that phrase is not true of these bytes.
+
+## S349 — Python 3.14 `base64` (the round's rejected row)
+
+capture:  census/round-88/srcs/base64.html
+sha256:   09b0682de6052bc8a77eb14655add2f2a80e286b08a60a51050da750ea43f984
+bytes:    61731
+anchor:   `id="base64.b64decode"` present (exactly 1 occurrence, line 17794).
+quote paragraph at capture line 18592.
+
+filed quote:
+    Decode the Base64 encoded bytes-like object or ASCII string s and return the decoded bytes.
+
+word count command (same recipe, same convention), pasted verbatim with its output:
+
+    python3 -B -c "import re,io;t=re.sub(r'<[^>]+>','',io.open('census/round-88/srcs/base64.html',encoding='utf-8').read());t=re.sub(r'\s+',' ',t);s='Decode the Base64 encoded bytes-like object or ASCII string s and return the decoded bytes.';print(s in t, len(s.split()))"
+    -> True 15
+
+**15 words, not the 16 the row and the lesson claim.** See FINDING F2.
+
+## Boundary-list cross-check (the claim's actual load-bearing list)
+
+The claim's wording names VT, FF, FS/GS/RS, NEL, LS/PS. The capture's table rows, rendered:
+
+    \n  Line Feed | \r  Carriage Return | \r\n  Carriage Return + Line Feed |
+    \v or \x0b  Line Tabulation | \f or \x0c  Form Feed | \x1c  File Separator |
+    \x1d  Group Separator | \x1e  Record Separator | \x85  Next Line (C1 Control Code) |
+    \u2028  Line Separator | \u2029  Paragraph Separator
+
+A 25-word quote that DOES carry the extra boundaries (the r55 model), verified against the r88 capture:
+
+    python3 -B -c "import re,io;t=re.sub(r'<[^>]+>','',io.open('census/round-88/srcs/str-splitlines.html',encoding='utf-8').read());t=re.sub(r'\s+',' ',t);s='\\v or \\x0b Line Tabulation \\f or \\x0c Form Feed \\x1c File Separator \\x1d Group Separator \\x1e Record Separator \\x85 Next Line (C1 Control Code)';print(s in t, len(s.split()))"
+    -> True 25
+
+This is the candidate quote for the L1's S349-style reject/flip decision (F3): the FILED S348 quote
+names no boundary beyond universal newlines, so the row's `teaches` cell ("the boundary list adds
+VT, FF, FS/GS/RS, NEL and LS/PS to LF/CR/CRLF") is not carried by the row's own quote.
+
+## Method notes (the r50 lineage the lane already knows)
+
+- Tag-stripping with a SPACE substitution (`re.sub(r'<[^>]+>',' ',…)`) would give `False 18` here,
+  because the inline `<a>`/`<span>` markup around "universal newlines" would gain a phantom space.
+  The lane's r50 mistake row records exactly this; the corrected command strips to the EMPTY string.
+- The r55 recipe also strips `script`/`style` first. Applying it to the r88 captures leaves both
+  quotes present (True 18 / True 15) — the strip is not load-bearing for either quote here.
+- The r55 (3.12) capture contains the SAME 18-word sentence and the same 25-word table quote, so
+  the quote is a page fact, not a 3.14-specific wording.

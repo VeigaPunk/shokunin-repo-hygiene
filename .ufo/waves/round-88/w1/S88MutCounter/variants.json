@@ -1,0 +1,79 @@
+{
+ "members": [
+  {
+   "id": "pristine",
+   "old": "    trailing = token[-1] in \">\\\\-\"",
+   "new": "    trailing = token[-1] in \">\\\\-\""
+  },
+  {
+   "id": "m17-filed",
+   "old": "            if len(r) < 3 or r[0] in ledger:",
+   "new": "            if len(r) < 3:  # m17: the duplicate-id refusal is dropped"
+  },
+  {
+   "id": "m17b-same-target",
+   "old": "            if len(r) < 3 or r[0] in ledger:",
+   "new": "            if len(r) < 3 or (r[0] in ledger and ledger[r[0]][1] == r[2]):  # m17b: same-target-only duplicate refusal"
+  },
+  {
+   "id": "m17c-drop-malformed-half",
+   "old": "            if len(r) < 3 or r[0] in ledger:",
+   "new": "            if r[0] in ledger:  # m17c: the len(r)<3 malformed guard is dropped"
+  },
+  {
+   "id": "m17d-duplicate-row",
+   "old": "            if len(r) < 3 or r[0] in ledger:",
+   "new": "            if len(r) < 3 or (r[0] in ledger and ledger[r[0]] == (r[1], r[2])):  # m17d: duplicate CLASS+TARGET, not id-only"
+  },
+  {
+   "id": "m18-filed",
+   "old": "        before_ok = i == 0 or line[i - 1] not in PATHCH",
+   "new": "        before_ok = True  # m18: the before-byte half is dropped"
+  },
+  {
+   "id": "m18b-alnum-only",
+   "old": "        before_ok = i == 0 or line[i - 1] not in PATHCH",
+   "new": "        before_ok = i == 0 or not line[i - 1:i].isalnum()  # m18b: word-boundary spelling"
+  },
+  {
+   "id": "m18c-slash-only",
+   "old": "        before_ok = i == 0 or line[i - 1] not in PATHCH",
+   "new": "        before_ok = i == 0 or line[i - 1] != b\"/\"  # m18c: component-boundary spelling"
+  },
+  {
+   "id": "m18d-first-occurrence",
+   "old": "        i = line.find(needle, i + 1)",
+   "new": "        i = -1  # m18d: only the first occurrence is ever examined"
+  },
+  {
+   "id": "p2-basename-guard",
+   "old": "    if not (line.isdigit() and 0 < int(line) <= len(blob) and token in blob[int(line) - 1]):",
+   "new": "    if not (line.isdigit() and 0 < int(line) <= len(blob) and token.rsplit(\"/\", 1)[-1] in blob[int(line) - 1]):  # p2"
+  },
+  {
+   "id": "p3-lookahead-dropped",
+   "old": "        after_ok = (not after or after[0] not in PATHCH\n                    or (after[:1] in (b\".\", b\",\", b\";\", b\":\") and (len(after) < 2 or after[1] not in PATHCH)))",
+   "new": "        after_ok = (not after or after[0] not in PATHCH or after[:1] in (b\".\", b\",\", b\";\", b\":\"))  # p3"
+  },
+  {
+   "id": "p7-mode-whitelist-dropped",
+   "old": "    return name == t.encode() and typ == b\"blob\" and mode in (b\"100644\", b\"100755\")",
+   "new": "    return name == t.encode() and typ == b\"blob\"  # p7"
+  },
+  {
+   "id": "p8-hyphen-marker-dropped",
+   "old": "    trailing = token[-1] in \">\\\\-\"",
+   "new": "    trailing = token[-1] in \">\\\\\"  # p8: the hyphen marker is dropped"
+  },
+  {
+   "id": "x9-class-enum-ledger-blind",
+   "old": "    if cls not in CLASSES:\n        why = f\"unknown class {cls}\"",
+   "new": "    if False:  # x9: unknown ledger class resolved as its own name\n        why = f\"unknown class {cls}\""
+  },
+  {
+   "id": "x1-punct-members-narrowed",
+   "old": "        after_ok = (not after or after[0] not in PATHCH\n                    or (after[:1] in (b\".\", b\",\", b\";\", b\":\") and (len(after) < 2 or after[1] not in PATHCH)))",
+   "new": "        after_ok = (not after or after[0] not in PATHCH\n                    or (after[:1] in (b\".\",) and (len(after) < 2 or after[1] not in PATHCH)))  # x1: only the period member kept"
+  }
+ ]
+}

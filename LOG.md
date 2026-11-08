@@ -3358,3 +3358,40 @@ receipts in P `5bd5a0ce`. Amendments in `plans/round-85.md` (A0-A1 so far); the 
   Q158/Q159, `plans/round-86.md`, `corpus/lessons/round-86.md`, `SCORECARD.md` r86 rows, two capability rows and the
   r87 planned block.
 - **Tool installs: none.** No pacman (paused host-wide), no uv/npx/binary fetch, no sysctl, sudo or kernel change.
+
+## Round 88 (2026-11-08) — the two r87-carried clauses get one binding each, the third is a measured belt (C1 calibration); the K4 FLAGFAIL detail becomes one escaped line that keeps both ends of the writer's stderr (C2 operability)
+
+- **Claims.** C1 (calibration 7, the lane's lowest owned non-retired axis): r87 carried three named clauses as
+  reachable-and-unrowed. This round binds the first two with one frozen row and one mutant each — NF6g (item L06 at
+  fixture revision R11, a declaration that names the token only as the suffix of `xtests/vault/.../.git`, so only
+  `_whole`'s before-byte half refuses it; mutant `m18-whole-before`) and LD1 (a new `where=ledger` row type that
+  appends a second `P01` row to the frozen r77 ledger and expects `LEDGER-REFUSED id=P01` plus exit 1; mutant
+  `m17-duplicate-id`) — and measures the third DEAD (`_capture_ok`'s `len(want) <= len(have)`: 13-member
+  `census/round-88/c1-mutants-dead.json` adds `m19-len-half`, which survives both pinned sets) so it is recorded as a
+  belt, not a row. The counter under test is the frozen r87 counter (unchanged bytes); the population, mutants and
+  harness changed. C2 (operability 8): the r87 repair fixed the no-verdict branch but left the embedded bootstrap's
+  `FLAGFAIL` branch printing `.strip()[-200:]` of raw stderr — a 400-character exception line lost its type name at
+  the head and a multi-line or U+2028-carrying stderr split one K4 record into several (S86ExecK4 §2b, S86Sentinel
+  probe C4). The bootstrap now ships the raw stderr base64-framed and the parent renders it through `_one_line`
+  (`_escape_text` first, then head-100/…/tail-99 at a 200-character excerpt bound), so the detail is ONE escaped
+  physical line that names a long exception at both ends and reads `no stderr` for empty input.
+- **Measured.** C1: `census/round-88/controls/c1-before.txt` (same battery, same twelve mutants, the r87 51-row
+  population) `m17-duplicate-id killed=no`, `m18-whole-before killed=no`, `SUMMARY mutants=12 sets=r87
+  pristine_r87=ok killed_r87=10 killed_total=10`, EXIT 0; `census/round-88/records/c1-after.txt` pristine 51/0 and
+  53/0, twelve `killed=yes` on r88, `SUMMARY mutants=12 sets=r87,r88 pristine_r87=ok pristine_r88=ok killed_r87=10
+  killed_r88=12 killed_total=22`, EXIT 0; `records/c1-dead-belt.txt` `SUMMARY mutants=13 … killed_total=22` with
+  `m19-len-half killed=no` on both sets, EXIT 0. C2: `census/round-88/controls/c2-before.txt` on the r87 tool bytes
+  `e1b00e8a…` (both arms) `SUMMARY cases=7 tool_pass=3 before_pass=3`, EXIT 1; `census/round-88/records/c2-after.txt`
+  on the filed tool `c0604b4a…` `SUMMARY cases=7 tool_pass=7 before_pass=3`, EXIT 0; the r87 12-row counter on the
+  same tool `SUMMARY rows=12 mismatches=0 errors=0`, EXIT 0 (`records/c2-k4-regression.txt`).
+- **Chronology (disclosed).** Both after arms were first run before F landed (battery 07:52, killed at its 300 s
+  deadline; C2 fixture 07:53; F 08:02). Those runs are not claim evidence; the filed receipts are post-F re-runs at
+  08:05 (plans/round-88.md A0.1).
+- **Sources.** S348 (Python 3.14 `str.splitlines` boundary list, 18-word quote, capture
+  `census/round-88/srcs/str-splitlines.html`) admitted `mined`, cited by
+  `corpus/knowledge/one-escaped-diagnostic-line.md`; S349 (Python 3.14 `base64`, 16-word quote) rejected with its
+  flip. Registry 270 → 272; `sources-census.sh validate` EXIT 0 both ends (before reconstructed at the lane base,
+  A0.4). QUALITY Q163 added.
+- **Docs.** `corpus/knowledge/one-escaped-diagnostic-line.md`, `corpus/QUALITY.md` Q163, `plans/round-88.md`,
+  `corpus/lessons/round-88.md`, `SCORECARD.md` r88 rows, two capability rows and the r89 planned block.
+- **Tool installs: none.** No pacman (paused host-wide), no uv/npx/binary fetch, no sysctl, sudo or kernel change.

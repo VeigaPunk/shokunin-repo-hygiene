@@ -1,0 +1,23 @@
+--- census/round-87/c1-mutants.json	2026-11-08 06:38:48.193180782 -0300
++++ census/round-88/c1-mutants.json	2026-11-08 07:47:58.330214305 -0300
+@@ -66,6 +66,20 @@
+    "old": "        after_ok = (not after or after[0] not in PATHCH\n                    or (after[:1] in (b\".\", b\",\", b\";\", b\":\") and (len(after) < 2 or after[1] not in PATHCH)))\n",
+    "new": "        after_ok = (not after or after[0] not in PATHCH)  # m16: punctuation disjunct dropped\n",
+    "note": "S85MutCounter m16 (reachable, unexercised). TQ1 is its row: the R10 declaration names the L06 token followed by a sentence-final period, so only this disjunct makes the token whole."
++  },
++  {
++   "id": "m17-duplicate-id",
++   "clause": "the ledger reader refuses a duplicate id instead of letting the last row win",
++   "old": "            if len(r) < 3 or r[0] in ledger:\n",
++   "new": "            if len(r) < 3:  # m17: the duplicate-id refusal is dropped\n",
++   "note": "S88 row LD1: the harness appends a second P01 row to the frozen r77 ledger. Pristine prints LEDGER-REFUSED id=P01 and exits 1; with the duplicate check dropped the last row wins and the counter exits 0, so the row goes red. The edit applies once, in `_ledger`."
++  },
++  {
++   "id": "m18-whole-before",
++   "clause": "a declared path is whole only when the byte before it is not a path character (the `_whole` before-byte half)",
++   "old": "        before_ok = i == 0 or line[i - 1] not in PATHCH\n",
++   "new": "        before_ok = True  # m18: the before-byte half is dropped\n",
++   "note": "S88 row NF6g: the R11 declaration names the L06 token only as the suffix of `xtests/vault/.../.git`, so the byte before it is `x`. Pristine refuses the row; with the before-byte half dropped the token is whole and the row resolves QUARANTINED."
+   }
+  ]
+ }

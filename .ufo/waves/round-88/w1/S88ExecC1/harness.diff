@@ -1,0 +1,105 @@
+--- census/round-87/c1-false-row-harness.py	2026-11-08 06:39:05.290356654 -0300
++++ census/round-88/c1-false-row-harness.py	2026-11-08 07:48:57.369967806 -0300
+@@ -1,5 +1,12 @@
+ #!/usr/bin/env python3
+-"""souji r87 C1 counter: the r86 harness plus ONE pinned population (census/round-87/c1-false-rows.tsv, 51 rows =
++"""souji r88 C1 counter: the r87 harness plus ONE pinned population (census/round-88/c1-false-rows.tsv, 53 rows =
++the r87 51 byte-for-byte plus NF6g at fixture revision R11 and LD1) and two mechanical extensions. NF6g needs R11,
++a declaration that names the L06 token only as the suffix of a longer path (the `_whole` before-byte half), so R11
++joins the accepted rev labels and the fixture builder. LD1 is a new row TYPE: `where=ledger` appends a second row
++for the named item to the population's frozen ledger and expects the counter's `LEDGER-REFUSED id=<item>` plus the
++exit code in the row. No judgement code changed: the counter under test is unchanged.
++
++souji r87 C1 counter: the r86 harness plus ONE pinned population (census/round-87/c1-false-rows.tsv, 51 rows =
+ the r86 49 byte-for-byte plus TQ1 and NE1) and one fixture revision R10 that carries TQ1's sentence-final
+ quarantine declaration (the quarantine leaf itself is written beside the other fixture leaves, disk-only). Two
+ mechanical extensions: the forged-expectation cell can carry ERROR (only NE1 uses it: the row expects the R0
+@@ -101,7 +108,8 @@
+             "4795f009d6c873e733a2992bc86405d509dfb105b5f9950b3b9f82b2596e8f6f": 44,
+             "1468236cfc3c8f65e7fa9bb07884324ee8ae8b7f62d6d5ca984b9dfa04698d42": 47,
+             "79db70f6740de41a326dc4193bf80c5394fe126d636cc98d4e26e4b5e140f561": 49,
+-            "b066fa0fc686efdf96c8ebf21a32764070661796c3b4d6e5e99f8aad18669220": 51}
++            "b066fa0fc686efdf96c8ebf21a32764070661796c3b4d6e5e99f8aad18669220": 51,
++            "b710e368de862a72bc430610003d3cdf1499bea1b6e4ff2325417a1d388a68c3": 53}
+ P04_PIN = "d0693448c0895860ebe7ece2549d3f70f694247ddb717d1fa2c66a4518d5aa89"
+ P07_PIN = "5212878dc0e8156e5cf27bd639a732a51d33473547b7e03ddf1a17ad6baddaaa"
+ # r86: the r83 counter's bytes are the NF-Y row's content source (a round-root token moved into a capture)
+@@ -285,13 +293,22 @@
+     git(fx, "add", "-f", "--", "corpus/lessons/round-79-collision.md")
+     git(fx, "commit", "-q", "--no-verify", "-m", "r87 C1 fixture R10 (sentence-final quarantine declaration)")
+     revs["R10"] = git(fx, "rev-parse", "HEAD")
++    # R11 (r88): NF6g's declaration. The line names the L06 token only as the SUFFIX of a longer path
++    # (`xtests/vault/.../.git`): the byte before the token is a path character, so only `_whole`'s before-byte half
++    # refuses the row. The target is a fresh leaf (`git-stub`) so this line is the only one `git grep -e <target>`
++    # returns; the leaf is written beside the other fixture leaves below (disk-only, as they are).
++    with open(os.path.join(fx, "corpus/lessons/round-79-collision.md"), "ab") as f:
++        f.write(f"\n- retired copy: xtests/vault/vadv54-run/p/p6repo/.git; quarantine slot `{q6}git-stub`.\n".encode())
++    git(fx, "add", "-f", "--", "corpus/lessons/round-79-collision.md")
++    git(fx, "commit", "-q", "--no-verify", "-m", "r88 C1 fixture R11 (longer-path before-byte declaration)")
++    revs["R11"] = git(fx, "rev-parse", "HEAD")
+     q = os.path.join(lane, ".ufo/quarantine")
+     if not os.path.isdir(q):
+         raise FixtureError("lane disk lacks .ufo/quarantine")
+     shutil.copytree(q, os.path.join(fx, ".ufo/quarantine"), symlinks=True)
+     put(".ufo/quarantine/round-17/tests/vault/vadv54-run/p/p6repo/NOT-THE-STUB", b"not the stub\n")
+     put(".ufo/quarantine/round-17/.ufo/NOT-THE-L0", b"not the L0 file\n")
+-    for leaf in ("other-stub", "ghost-stub", "readme-stub", "late-stub", "lemma-stub"):
++    for leaf in ("other-stub", "ghost-stub", "readme-stub", "late-stub", "lemma-stub", "git-stub"):
+         put(".ufo/quarantine/round-17/tests/vault/vadv54-run/p/p6repo/" + leaf, f"r80 fixture {leaf}\n".encode())
+     return fx, revs
+ 
+@@ -323,7 +340,7 @@
+     with open(pop, encoding="utf-8") as f:
+         rows = [l.rstrip("\n").split("\t") for l in f if l.strip() and not l.startswith("#")]
+     if len(rows) != nrows or any(len(r) != 10 for r in rows) or len({r[0] for r in rows}) != nrows \
+-            or any(r[2] not in ("BASE", "F0", "R1", "R2", "R3", "R5", "R6", "R7", "R8", "R9", "R10")
++            or any(r[2] not in ("BASE", "F0", "R1", "R2", "R3", "R5", "R6", "R7", "R8", "R9", "R10", "R11")
+                    for r in rows):
+         print(f"C1-HARNESS-FATAL: population is not {nrows} well-formed rows", file=sys.stderr)
+         return 2
+@@ -338,11 +355,42 @@
+     print("# fixture " + " ".join(f"{k}={v}" for k, v in revs.items()))
+     mism = acc = reft = errs = 0
+     for rid, where, rlabel, popl, item, cls, target, exp_got, exp_rc, _src in rows:
+-        if (where == "lane") != (rlabel == "BASE"):
+-            print("C1-HARNESS-FATAL: lane rows are judged at BASE and fixture rows at a fixture rev", file=sys.stderr)
++        if where not in ("lane", "fixture", "ledger"):
++            print(f"C1-HARNESS-FATAL: unknown row where={where}", file=sys.stderr)
++            return 2
++        if (where in ("lane", "ledger")) != (rlabel == "BASE"):
++            print("C1-HARNESS-FATAL: lane/ledger rows are judged at BASE and fixture rows at a fixture rev",
++                  file=sys.stderr)
+             return 2
+-        root, rev = (lane, BASE) if where == "lane" else (fx, revs[rlabel])
++        root, rev = (lane, BASE) if where in ("lane", "ledger") else (fx, revs[rlabel])
+         pfile, lfile = POPS[popl]
++        if where == "ledger":
++            # r88 (LD1): append a duplicate row for <item> to the population's frozen ledger. The counter's
++            # `_ledger` must refuse the duplicate id and fail closed (LEDGER-REFUSED + the row's exit code); a rule
++            # that lets the last row win prints no marker, so the row goes red.
++            dup = os.path.join(work, f"ledger-{rid}.tsv")
++            with open(os.path.join(lane, lfile), "rb") as f:
++                base = f.read()
++            if base and not base.endswith(b"\n"):
++                base += b"\n"
++            with open(dup, "wb") as f:
++                f.write(base + f"{item}\tABSENT\t-\tr88 {rid} duplicate-id control\n".encode())
++            p = subprocess.run([sys.executable, "-B", counter, "--root", root, "--rev", rev, "--fleet-root", fleet,
++                                "--population", os.path.join(lane, pfile), "--ledger", dup],
++                               stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=lane)
++            out = p.stdout.decode("utf-8", "replace")
++            marker = f"LEDGER-REFUSED id={item}"
++            got = "LEDGER-REFUSED" if any(l.startswith(marker) for l in out.splitlines()) else "-"
++            if p.returncode == 2:
++                errs += 1
++                print(f"ROW {rid} where={where} rev={rlabel} item={item} class={cls} expect={exp_got}/{exp_rc} got=- "
++                      f"rc=2 match=error detail={p.stderr.decode()[:200]!r}")
++                continue
++            ok = got == exp_got and (exp_rc == "-" or p.returncode == int(exp_rc))
++            mism += 0 if ok else 1
++            print(f"ROW {rid} where={where} rev={rlabel} item={item} class={cls} expect={exp_got}/{exp_rc} got={got} "
++                  f"rc={p.returncode} match={'yes' if ok else 'no'}")
++            continue
+         forge = os.path.join(work, f"forge-{rid}.tsv")
+         with open(forge, "w", encoding="utf-8") as f:
+             f.write(f"{rid}\t{item}\t{cls}\t{target}\t"
