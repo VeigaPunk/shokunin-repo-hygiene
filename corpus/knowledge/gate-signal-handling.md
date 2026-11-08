@@ -201,3 +201,35 @@ recheck: python3 -B census/round-83/c2-tree-walk-counter.py --tool tools/souji-v
   (`IFS= read -r -d ''`) and a strip after the LAST `)` of the whole content, with an arity guard as a belt; the
   read→signal window is then measured at 16–126 µs per pid (S83Sentinel F3), and the walk is rooted at the
   `timeout` wrapper's pid, which is never signalled (F4).
+
+## Freezing the tree before signalling it (r84, `tools/souji-vault-verify.sh`)
+
+source: S075 (proc_pid_stat(5)), S325 (bash trap deferral), S326 (timeout's process group), S328 (setsid's fork),
+S334 (signal(7): SIGSTOP cannot be caught, blocked or ignored)
+verified-at: 1f49b3a7824e7f4e65c33358ee24a6afaf8ca50d (2026-11-08)
+recheck: python3 -B census/round-84/c2-late-fork-counter.py --tool tools/souji-vault-verify.sh --work <empty dir outside /tmp>
+
+- **The escape.** The r83 walk read `/proc` once and then TERMed each descendant it had found. A CLI that installs a
+  TERM/INT/HUP trap runs that trap when the signal arrives — after the map pass — so a child it forks is never in the
+  map, and a `setsid` in the trap also leaves `timeout`'s process group (S326/S328), where the group TERM and the
+  group KILL fallback cannot reach it. `setsid sleep 600 &` also forks (S328) and the survivor is reparented, so a
+  second map pass after the TERM finds nothing: the child is no longer a descendant.
+- **The repair.** `cli_kill_tree` now FREEZES before it signals: every descendant discovered by a fork-free
+  `/proc/<pid>/stat` pass is SIGSTOPped (a stopped process cannot run a trap or fork — S334), a second map pass
+  covers the read→STOP window, and the frozen set is SIGKILLed with the starttime re-checked immediately before
+  each KILL. The r83 shape is kept: one fork-free map pass per iteration (bash builtins; no `pgrep`/`ps`/`cat` per
+  node), the whole-file stat read with the last-`)` strip (S332 in the r83 section), the field-count guard, the
+  root pid never signalled, and the caller's group-kill fallback.
+- **Measured.** The frozen 22-row population (`census/round-84/c2-population.tsv`: the r83 20 rows unchanged plus
+  `l1-late-setsid-pid` default launch and `l2-late-setsid-group` job-control launch, whose `latefork` stub forks a
+  `setsid`'d `sleep 600` from its signal trap) reads `rows=22 mismatches=0 errors=0 orphans=0`, late rows 0
+  survivors and 0.6-0.7 s (`census/round-84/records/c2-after.txt`, EXIT 0). The r83 tool bytes are red on exactly
+  the two late rows with one surviving `setsid` child each (`SUMMARY rows=22 mismatches=2 orphans=2`, EXIT 1,
+  `census/round-84/controls/c2-before-r83-tool.txt`). Selftest 57/0, r17 37/0/0 and probe D 4/0 on the filed bytes.
+- **What the population does NOT bind (measured).** Of the repair's clauses only the freeze and the KILL sweep are
+  load-bearing on these rows: replacing `kill -STOP` with `kill -TERM` (the r83 order) leaves both late rows red,
+  and dropping the KILL sweep leaves two red; a single-pass variant (`for pass in 1 1`) and a first-line
+  re-check variant both score 22/22 green (`census/round-84/records/c2-mutants-on-filed.txt`). The second pass is
+  a belt for the read→STOP window, and the whole-file re-check closes the r83 D5 hazard on a comm carrying a
+  newline; neither has a row. A CLI that daemonizes and exits before the caller's signal is not a signal row at
+  all (the tool legitimately returns a verdict), and a CLI that forks on every signal is a stated limit.

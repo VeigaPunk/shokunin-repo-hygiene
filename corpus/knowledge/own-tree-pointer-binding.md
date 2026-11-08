@@ -58,3 +58,37 @@ population carries both poles and two refused decoys: NF-J (a duplicated middle 
 `census/round-83/records/c1-after.txt` (`SUMMARY rows=36 mismatches=0 accepted=0 refused_true=0 errors=0`,
 EXIT 0) against the control `census/round-83/controls/c1-K-a-r82-counter.txt` (`mismatches=2 refused_true=2`,
 EXIT 1); regressions r77 35/35 + 7/7, r78 22/22 + 12/12, r79 9/9, r80 18/18, r81 25/25, r82 harness 32/32.
+
+## Bounding a population, not just a rule (r84)
+
+source: S335 (own-work clause-kill receipts), S331/S333 (the wave-directory census and its provenance); census/round-84/c1-false-rows.tsv,
+census/round-84/c1-mutants.json, census/round-84/c1-clause-battery.py
+verified-at: 1f49b3a7824e7f4e65c33358ee24a6afaf8ca50d (2026-11-08)
+recheck: python3 -B census/round-84/c1-clause-battery.py --counter census/round-84/c1-pointer-counter.py --work <empty dir outside /tmp> --only r84 --expect-killed 5
+
+A rule says what a verdict must be; a population says what the rule must **distinguish**. A clause of the rule is
+bound only when some frozen row would go red under a rule that drops that clause. The r83 population (36 rows, the
+r83 section above) left five clauses unbound: it certified a rule it did not discriminate.
+
+Measured with the frozen five single-edit mutants (`census/round-84/c1-mutants.json`) over two pinned populations
+(`c1-false-row-harness.py` `POP_PINS`: r83 `c9a6d58c…` 36 rows, r84 `4795f009…` 44 rows):
+
+| mutant | clause it drops | r83 (36) | r84 (44) | rows that kill it |
+|---|---|---|---|---|
+| `m6-digest-blind` | target bytes must equal the token's frozen digest | survives | killed | NF-L |
+| `m7-round-blind` | target must name the token's own `round-<N>` | survives | killed | NF-L2 |
+| `m8-w-only-shapes` | wave set is `w[0-9]+/` alone, without `a2w1/`/`assimilation/` | survives | killed | TF9, TF10 |
+| `m9-basename-only` | the remainder is the whole path, not a two-component shape ending in its last component | survives | killed | TF8, TF9, TF10 (refused_true=3), NF-P (accepted=1) |
+| `m10-records-as-wave` | a non-wave own-tree dir (`records/`) is not a capture shape | survives | killed | NF-M |
+
+Both arms keep the unmutated counter green (`rows=36 mismatches=0`, `rows=44 mismatches=0`, `accepted=0
+refused_true=0`): the r84 arm reads `killed_r84=5` (`census/round-84/records/c1-after.txt`, EXIT 0), the r83 arm
+reads `killed_r83=0` (`census/round-84/controls/c1-before-r83-population.txt`, EXIT 0) — same counter, same battery,
+same mutants, so the delta is the population, not the rule.
+
+The criterion: one FALSE row per clause the rule enforces (digest, round, shape set, suffix depth, non-wave dir)
+and one TRUE row per real shape the rule names (`a2w1/`, `assimilation/`, a deep two-component remainder under a
+real `wN/`). Limits: a population proves discrimination on its own rows, not correctness on the world; the NF rows
+are byte-equal copies by construction (location binding, not content identity); the five mutants are hand-written
+single edits, not a generated battery; a "kill" is a non-zero harness exit, which does not by itself separate a row
+mismatch from a harness error (every observed kill was a real `match=no`, `errors=0`).

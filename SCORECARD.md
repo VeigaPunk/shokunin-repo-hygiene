@@ -1952,3 +1952,37 @@ pid); no pidfd; setsid escape; the foreground fallback keeps no traps; `pgrep` c
   tools, r17 240 s runners.
 - Report/registry hygiene: the r82 spot-check's LOG correction is in the r83 LOG entry; S330 now exists as a row;
   the r82 report's missing `51a5e7fa` row is named in the r83 report.
+
+### Round 84 measurements (2026-11-08, Linux; lane base `54709d0db92d9dcd95504a34173c1f6a3fd88ec1`; instruments P `bd2bbb12`, freeze F `35d87842`; C2 repair `1f49b3a7`)
+
+| claim | axis | before | after | counting command | measured commit |
+|---|---|---|---|---|---|
+| C1 the false-row population binds five counter clauses | calibration 7 (no reproducible 0–10 mapping; verdict calibration improved) | the same counter (`052c4f3f…`) and the same five mutants on the r83 36-row population: pristine `rows=36 mismatches=0`, every mutant `killed=no`, `SUMMARY mutants=5 sets=r83 pristine_r83=ok killed_r83=0 killed_total=0`, EXIT 0 (`census/round-84/controls/c1-before-r83-population.txt`) | r84 44-row population: pristine `rows=44 mismatches=0 errors=0`, `killed_r84=5` (m6↔NF-L, m7↔NF-L2, m8↔TF9/TF10, m9↔TF8/TF9/TF10/NF-P, m10↔NF-M), EXIT 0 (`census/round-84/records/c1-after.txt`); r83 36-row regression stays green | `python3 -B census/round-84/c1-clause-battery.py --counter census/round-84/c1-pointer-counter.py --work <empty dir outside /tmp> --only r84 --expect-killed 5` (after) / `--only r83` (before) | after measured on `1f49b3a7`; before on `bd2bbb12` |
+| C2 the vault CLI's signal path freezes the tree before terminating it | operability 8 (no reproducible 0–10 mapping; verdict operability improved) | r83 tool bytes `72a405f2…` (control `census/round-84/controls/c2-K-a-r83-tool.sh`): `rows=22 mismatches=2 errors=0 orphans=2`, one surviving `setsid sleep 600` per late row, EXIT 1 (`census/round-84/controls/c2-before-r83-tool.txt`) | filed tool `030fa10d…`: `rows=22 mismatches=0 errors=0 orphans=0`, l1 0.7 s / l2 0.6 s, 0 survivors, EXIT 0 (`census/round-84/records/c2-after.txt`); selftest 57/0, r17 37/0/0, probe D 4/0; clause mutants on the filed bytes: STOP→TERM killed, no-KILL-sweep killed, single-pass and first-line-recheck survive (unrowed belts, A1/A2) | `python3 -B census/round-84/c2-late-fork-counter.py --tool tools/souji-vault-verify.sh --work <empty dir outside /tmp>` | after measured on `1f49b3a7`; before on `bd2bbb12` |
+
+No owned axis score changed (calibration 7, coverage 8, operability 8): the lane still has no reproducible 0–10
+mapping. Both claims meet their frozen predicates on the filed bytes. The wave narrowed two sentences before filing
+(`plans/round-84.md` A1/A2: the second map pass and the whole-file re-check carry no row) and recorded the substrate
+of two seats' findings (A5). Named limits carried: the population proves discrimination on its own rows; NF rows are
+byte-equal copies by construction; five hand-written mutants are not a generated battery; a kill is a non-zero harness
+exit; a child forked in the read→STOP window, a comm-with-newline row, a re-forking CLI and a daemonizing CLI are
+unrowed; the STOP→KILL pair widens the pid-reuse window the r83 tool disclosed.
+
+### Round 84 capability rows
+
+| name | what it can now do | evidence pointer | first-working round |
+|---|---|---|---|
+| clause-kill battery over two pinned populations | measure which clauses of a pointer counter a population actually binds: five frozen single-edit mutants scored on the r83 36-row and the r84 44-row population, with a pristine arm on each and an INVALID verdict when an edit does not apply exactly once | `python3 -B census/round-84/c1-clause-battery.py --counter census/round-84/c1-pointer-counter.py --work <empty> --only r84 --expect-killed 5` → `killed_r84=5` (`census/round-84/records/c1-after.txt`) | r84 |
+| freeze-then-kill for a descendant tree | stop a CLI descendant tree before any trappable signal reaches it (SIGSTOP on discovery, second map pass, SIGKILL sweep with a starttime re-check), so a CLI that traps the caller's signal and forks a `setsid`'d child leaves nothing behind | `python3 -B census/round-84/c2-late-fork-counter.py --tool tools/souji-vault-verify.sh --work <empty>` → `rows=22 mismatches=0 errors=0 orphans=0` (`census/round-84/records/c2-after.txt`); control `census/round-84/controls/c2-before-r83-tool.txt` red | r84 |
+
+### Planned (r85)
+
+- C1: `NF-L3` (a token whose first below-round component is not a wave dir), a `census/round-<N>/`-token item to
+  ground or delete the census-in-tree branch, and rows for the token-on-line/unknown-class refusals
+  (S84MutCounter survivors).
+- C2: a row for the second map pass (an observable read→STOP-window fork), a comm-with-newline row for the
+  whole-file re-check (r83 D5), a pid-reuse row, a parent-before-child row, `termign-fork`/`p5-late-term`, and a
+  `strace`-robust settle.
+- Carried unchanged: the r81 list (`_regular` pathspec framing, quarantine intro-blob digest row, fork-tail row, r79
+  gate re-measurement, check-4 300 s backstop, r76 K03/K04, status-trusting lane tools, r17 240 s runners) and the
+  r83 list's C2 items not built this round.
