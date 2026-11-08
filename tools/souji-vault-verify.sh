@@ -219,10 +219,34 @@ cli_label() {
 CLI_CLAIM=""
 CLI_PID=""
 CLI_OUT=""
+# r82 (C2): a callback into the CLI subtree, not only its process group. With job control on (SHELLOPTS=monitor),
+# the CLI's own `sleep &` can start in a group of its own, outside timeout's group, and the group kill misses it
+# (r81 M4, S81ExecC2 HIGH: v7/v8 leave one survivor each with claims 2/2, and the shipped candidates leave the same
+# one survivor each too). Before timeout's group can be left, snapshot the descendant tree of the CLI pid and kill
+# those pids too; keep the group kill for the case where the tree cannot be read.
+cli_kill_tree() {
+  local pid=$1
+  local child=${pid} kids i
+  local -a stack=() tree=()
+  for c in "$pid"; do [ -n "$c" ] && stack+=("$c"); done
+  while [ ${#stack[@]} -gt 0 ]; do
+    child=${stack[$((${#stack[@]}-1))]}
+    stack=("${stack[@]:0:$((${#stack[@]}-1))}")
+    tree+=("$child")
+    kids=$(pgrep -P "$child" 2>/dev/null) || kids=""
+    for k in $kids; do [ -n "$k" ] && [ "$k" != "$pid" ] && stack+=("$k"); done
+  done
+  for k in "${tree[@]}"; do kill -TERM "$k" 2>/dev/null || true; done
+  sleep 0.1
+  for k in "${tree[@]}"; do kill -KILL "$k" 2>/dev/null || true; done
+}
 cli_on_signal() { # $1 signal name, $2 signal number
   trap '' TERM INT HUP
-  local pid=${CLI_PID:-${!:-}} i
+  local pid=${CLI_PID:-} i
   if [ -n "$pid" ]; then
+    # r82: kill the CLI subtree FIRST (the descendant snapshot is taken before the job-controlled grandchild can
+    # leave the group), then the group kill, then the KILL fallback.
+    cli_kill_tree "$pid"
     kill -TERM -- "-$pid" 2>/dev/null || kill -TERM "$pid" 2>/dev/null || true
     for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
       kill -0 -- "-$pid" 2>/dev/null || kill -0 "$pid" 2>/dev/null || break
