@@ -38,8 +38,10 @@ Wave evidence root: `.ufo/waves/round-90/w1/`.
 
 ## A1 — C2: the fixture's kill rule does not bind the word "injective"; the claim is narrowed, the tool's wording stands
 
-- **Artifact:** `.ufo/waves/round-90/w1/S90Sentinel.md` §4 (H1, probe8/probe10, reproducer
-  `S90Sentinel/mut/mutant.py` sha256 `5ec2e925…74a6`) and §5 (H2a–H2d); `.ufo/waves/round-90/w1/S90Reviewer.md` §4.3
+- **Artifact:** `.ufo/waves/round-90/w1/S90Sentinel.md` §4 (H1, probe8/probe10) and §5 (H2a–H2d); the
+  reproducer is durable at `.ufo/waves/round-90/w1/S90Reviewer2/receipts/variant-doublebackslash-tool.py` sha256
+  `5ec2e925…74a6` (byte-identical to the Sentinel's scratch copy, which its seat deleted; S90Reviewer2 F7);
+  `.ufo/waves/round-90/w1/S90Reviewer.md` §4.3
   (independent mutants: 11/12 failing exactly KFF9 and 11/12 failing exactly KFF10); `.ufo/waves/round-90/w1/
   S90Critic.md` § C2-b/C2-c.
 - **Frozen wording falsified (the certification clause):** the prereg's KILL RULE says KFF9 "requires exactly one

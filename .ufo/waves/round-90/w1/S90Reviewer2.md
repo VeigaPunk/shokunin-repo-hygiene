@@ -15,21 +15,24 @@ byte-unchanged; the target reads `killed_r89=15 killed_r90=16 killed_total=31` w
 arms green and EXIT 0; the do-nothing control reads `killed_r89=15`, m17c alive, EXIT 0; the
 mechanism is reproduced directly (`LEDGER-REFUSED id=ZZ9` + rc 1 for pristine; IndexError with no
 marker for m17c; LD2b green for m17 and m17b). Two C1 wording-precision notes are neutral
-(members-vs-file identity; "population and its harness" when the battery also changed).
+(members-vs-file identity; "population and its harness" when the battery also changed). One
+further C1 narrowing exists (A3): LD2b binds the `len(r) < 3` guard as the frozen m17c edit drops
+it; an alternative `len(r) != 3` rewrite of the same guard is not exercised by any row
+(S90MutCounter; `plans/round-90.md A3`). The frozen claim is true for the frozen mutant set; the
+row does not bind every spelling of the guard.
 
-**C2's numbers verify, and one sentence is falsified at its cell-level reading.** The fixture reads
-`SUMMARY cases=12 tool_pass=12 before_pass=10` (EXIT 0); the control reads `tool_pass=10
+**C2's numbers verify, and two wording clauses are falsified (both now recorded).** The fixture
+reads `SUMMARY cases=12 tool_pass=12 before_pass=10` (EXIT 0); the control reads `tool_pass=10
 before_pass=10` (EXIT 1); the r87 12-row K4 counter reads `rows=12 mismatches=0 errors=0`
 (EXIT 0); `_one_line` is gone (0 definitions/calls; the r89 before tool had exactly one
 occurrence, the definition). But "the CHARACTER U+0085 (NEL) ... now takes the `\u0085`
 spelling" is false for a >200-byte stderr whose U+0085 UTF-8 encoding straddles the raw-window
 tail cut: the leading `0xC2` is elided and the trailing `0x85` renders `\x85`, and a raw-byte twin
-that differs only inside the elided middle renders the **identical** cell (F1). Limit (ii)
-discloses the identical-cell consequence of the elided middle but does not narrow the spelling
-sentence; r89 A2 (`plans/round-89.md`) is the precedent for narrowing this class. Two
-instrument-strength gaps are neutral: the pair check's "each one physical line" is not enforced
-(F2), and KFF9's spelling check is substring-based so a `\\u0085` spelling also passes (F3). The
-filed tool is correct on both; the after numbers are unaffected.
+that differs only inside the elided middle renders the **identical** cell (F1; recorded as A4).
+The KFF9 certification clause "requires ... exactly one `\u0085` spelling" is also false as
+written: the substring count accepts a doubled-backslash `\\u0085` (F3; recorded as A1). The
+filed tool is correct on both; the fixture cannot certify either (the one-line pair-check gap is
+F2, folded into A4). The after numbers are unaffected.
 
 Recommendation to the L1: file C1 as verified. File C2 as verified-as-narrowed: the L1's plan now
 records A1 (the KFF9 substring count does not certify "injective"; the sentinel's `5ec2e925…`
@@ -76,7 +79,8 @@ SUMMARY rows=12 mismatches=0 errors=0; EXIT=0       (c2-k4-regression.txt; count
 
 `plans/round-90.md` now records A1 (the KFF9 substring certification; the sentinel mutant
 `5ec2e925…` is the same one-line doubled-backslash edit this seat's
-`receipts/variant-doublebackslash-tool.py` reproduces byte-identically), A4 (the raw-window
+`receipts/variant-doublebackslash-tool.py` reproduces byte-identically; the sentinel's cited
+`mut/mutant.py` is missing from the wave dir, so this seat's copy is the durable one — F7), A4 (the raw-window
 boundary spelling, citing this seat's `receipts/c2-edge-probe.txt`; it also folds in the one-line
 pair-check gap), A5 (the members-vs-file clause and the battery self-pin/dead-code predicate notes,
 citing this seat's `receipts/measurements.txt`), plus A0.4 (battery pin/path change) and A2/A3.
@@ -112,7 +116,7 @@ stated wording.
 | 16 | 80-84 | C2: the K4 FLAGFAIL escaping rule is injective on the byte/character pair; raw 0x85 keeps `\x85`; character U+0085 takes `\u0085`; dead `_one_line` deleted | `_escape_text(_decode_record(x))`: `\udc85`->`\x85`, U+0085->`\u0085`; edge probe short/head/tail/repeat; greps; import | rule-level pair holds; raw byte holds; **character spelling falsified at the window cut (F1)**; `_one_line` holds |
 | 17 | 84-92 | fixture sha d4417213; tool sha d095b52f; before sha f6fce6d1 (= r89 filed bytes); SUMMARY 12/12/10; EXIT 0 | shas match; before tool equals `git show bd760432:tools/souji-record-agreement.py`; my run | holds |
 | 18 | 94-98 | counter command target | my run; exit 0 | holds |
-| 19 | 100-107 | kill rule: the ten r89 cases unchanged; KFF9/KFF10 spellings; pair check requires DIFFERENT cells and each one physical line; both arms; AND semantics | diff of r89/r90 fixture (10 case functions unchanged); KFF9/KFF10 code; pair loop on both kits; **newline variant passes 12/12** (F2); **`\\u0085` variant passes 12/12** (F3) | spellings enforced as substrings; "each one physical line" NOT enforced (F2); distinctness/AND holds |
+| 19 | 100-107 | kill rule: the ten r89 cases unchanged; KFF9/KFF10 spellings; pair check requires DIFFERENT cells and each one physical line; both arms; AND semantics | diff of r89/r90 fixture (10 case functions unchanged); KFF9/KFF10 code; pair loop on both kits; **newline variant passes 12/12** (F2); **`\\u0085` variant passes 12/12** (F3) | the certification clause is falsified by the substring check (F3/A1); "each one physical line" NOT enforced (F2/A4); distinctness/AND holds |
 | 20 | 109-112 | control: 10/10, KFF9/KFF10 fail both arms (identical details), EXIT 1; cannot reach 12 | my control run | holds |
 | 21 | 114-117 | regression: r87 12-row K4 counter 12/0/0 EXIT 0; ten r89 cases pass on the filed tool | my runs; receipt counter sha 4e2b7c06 = `census/round-87/c2-k4-counter.py`; writer sha 70bbf1c2 unchanged | holds (the prereg does not name the counter path; receipt names the sha) |
 | 22 | 119-122 | dead code: `grep -c 'def _one_line('` = 0; no `_one_line(` call; imports; dynamic caller outside the grep, none claimed | grep 0/0; before tool 1 occurrence = the def; module imports; fixture loads it 24 times | holds (static scope; F-note) |
@@ -226,7 +230,8 @@ direct answer to (c): the pair check enforces "contains `\u0085`, no `\x85`" for
 not the exact spelling and not injectivity as a property. The L1 recorded this as
 `plans/round-90.md A1`; A1's artifact is the sentinel's `S90Sentinel/mut/mutant.py` sha
 `5ec2e925…`, the same one-line doubled-backslash edit this seat's variant reproduces
-byte-identically (same sha), so the finding is independently corroborated. The missing
+byte-identically (same sha), so the finding is independently corroborated. The sentinel's cited
+path, however, is absent at my final check (its seat dir is empty); see F7 for the durable copy. The missing
 doubled-spelling conjunct (`count(bs*2+"u0085")==0`) is routed to r91.
 
 ### F4 — C1 "the r89 sixteen byte-identical" is member-scoped (low; `neutral`)
@@ -251,6 +256,21 @@ self-pin gap. The header's instrument-commit list (P1/P2) does not name `4cb3a06
 tool-repair commit whose bytes the C2 after/control arms use; the bytes are in the P/F tree
 (4cb3a06f is an ancestor of P1), so the freeze holds, but an auditor following the header would
 miss the commit. The 4cb3a06f omission remains a report note.
+
+### F7 — A1's cited sentinel artifact is missing from the wave dir (medium evidence-durability; `neutral`)
+
+A1 (and `S90Sentinel.md` §H1) cites `.ufo/waves/round-90/w1/S90Sentinel/mut/mutant.py` sha
+`5ec2e925…`. That path does not exist at my final check: the sentinel's seat dir
+`.ufo/waves/round-90/w1/S90Sentinel/` is empty, and the auxiliary files its report cites
+(`mut/mutant.py`, `mut2/mutant.py` sha `a4922014…`, `inject.py`, `inject2.py`, their `.out`
+receipts) are absent from the wave dir; only `S90Sentinel.md` is present. The finding is not lost
+(the report quotes the runs; this seat's `receipts/variant-doublebackslash-tool.py` is the
+byte-identical copy of the `5ec2e925…` mutant: same sha), but A0.6's durability rule (every report
+and receipt committed by name) is not met for the sentinel's auxiliary artifacts, and the pre-file
+gate's `artifact-missing` would fire if A1's sentinel path were copied into a ledger row. The L1
+should point A1/the ledger's artifact at this seat's durable copy (or recover the sentinel's files)
+and record the missing mirror mutant `a4922014…`, `inject.py`/`inject2.py` and `.out` receipts as
+routed evidence.
 
 ### F6 — S353 "HTTP 200"/"opened 2026-11-08" not carried by the capture (info; `neutral`)
 
@@ -277,6 +297,7 @@ C1	.ufo/waves/round-90/w1/S90Reviewer2/receipts/measurements.txt	neutral	plans/r
 C2	.ufo/waves/round-90/w1/S90Reviewer2/receipts/c2-edge-probe.txt	falsifies-wording	plans/round-90.md A4	The character-spelling sentence fails at the 200-byte raw-window tail cut: 101p + C2 85 + 98s (201 B) renders ...\x85sss... with no \u0085; a 0x86+0x85 twin differing only inside the elided middle renders the identical cell. Limit (ii) covers the identical rendering, not the spelling sentence. S90Critic's c2-collision-sweep.txt records the same cut and reads it as limit-(ii)-covered; see the report's F1. Recorded by the L1 as plans/round-90.md A4.
 C2	.ufo/waves/round-90/w1/S90Reviewer2/receipts/c2-variant-newline-fixture.txt	neutral	plans/round-90.md A4	The KILL RULE's 'each one physical line' is not enforced: a variant appending a raw newline inside the K4 detail passes 12/12 (tool_pass=12 before_pass=10, EXIT 0); len(_r9)==1 counts MISMATCH rows and the cell is truncated. Filed tool's own detail is one physical line. Fixture-strength gap, not a tool defect. Recorded in A4's second instrument gap.
 C2	.ufo/waves/round-90/w1/S90Reviewer2/receipts/c2-variant-doublebackslash-fixture.txt	falsifies-wording	plans/round-90.md A1	KFF9's check is substring-based: a variant spelling U+0085 as \\u0085 (the literal text's spelling) passes 12/12; the check enforces 'contains \u0085, no \x85' for the two payloads, not the exact spelling and not injectivity as a property. Recorded by the L1 as A1; the sentinel's mutant sha 5ec2e925 is the same one-line edit as this seat's variant. Filed tool emits the single-backslash \u0085; the fixture cannot certify it.
+C2	.ufo/waves/round-90/w1/S90Reviewer2/receipts/variant-doublebackslash-tool.py	neutral	plans/round-90.md A1	A1/S90Sentinel.md cite S90Sentinel/mut/mutant.py sha 5ec2e925; that path is absent from the wave dir (S90Sentinel seat dir empty). This copy is byte-identical (same sha) and durable; the L1 should repoint A1/the ledger to a durable path. The sentinel's mirror mutant a4922014, inject.py/inject2.py and .out receipts are also absent. Evidence-durability gap, not a claim number change.
 C2	.ufo/waves/round-90/w1/S90Reviewer2/receipts/c2-after.txt	neutral	-	After target reproduces exactly: SUMMARY cases=12 tool_pass=12 before_pass=10, exit 0; control c2-control.txt 10/10, exit 1; KFF9/KFF10 pass only on the filed tool. No falsification.
 C2	.ufo/waves/round-90/w1/S90Reviewer2/receipts/c2-k4-regression.txt	neutral	-	The r87 12-row K4 counter reproduces rows=12 mismatches=0 errors=0, EXIT 0; the counter is census/round-87/c2-k4-counter.py (sha 4e2b7c06), which the prereg and receipt name only by sha. No falsification.
 C2	.ufo/waves/round-90/w1/S90Reviewer2/receipts/measurements.txt	neutral	-	S353 capture verified (226166 B, sha 296df533, Unicode 18.0.0, Date 2026-09-01, tr14-57.html, class row 2873-2879, quote 18 words at strip+unescape prefix offset 82360, occurrence 1). The capture alone does not carry the HTTP status or open time; S90ScoutSources/receipts/verify.out records a live re-fetch http=200 bytes=226166 with sha equal to the capture. Provenance note only.
@@ -341,7 +362,13 @@ and `resume_continuity_v1` was not exercised.
 No tool was installed or upgraded. No pacman/host mutation. No mutating git/jj command was issued
 against the lane or any shared repository; the lane's own read-only harnesses created their
 throwaway fixture repositories under my scratch (clone/commit inside the fixture), and those were
-deleted with the scratch. Scratch `/fast/scratch/hyaku/souji-r90/S90Reviewer2/` was deleted after copying
+deleted with the scratch. Deviation disclosed: my own `edge_driver.py` created its hermetic fixture
+with `git init` at `<scratch>/r-edge/kit/repo` (not the `mktemp -d .../S90Reviewer2/tmp.XXXXXX`
+template) and its `git()` checked `os.path.isabs(repo)` but did not run `rev-parse --show-toplevel`
+before the first commit; the path was a fresh directory outside any git repository (verified:
+`/fast/scratch/hyaku` is not a git repo) and every call named `git -C <abs repo>`. The lane's C1
+harness did assert its fixture toplevel; the lane's C2 fixture checks absolute paths. No shared git
+state was touched. Scratch `/fast/scratch/hyaku/souji-r90/S90Reviewer2/` was deleted after copying
 `edge_driver.py`, both variant tools, the per-row logs and the receipts into this seat; nothing
 was left behind. Writes were confined to `.ufo/waves/round-90/w1/S90Reviewer2.md` and
 `.ufo/waves/round-90/w1/S90Reviewer2/`.

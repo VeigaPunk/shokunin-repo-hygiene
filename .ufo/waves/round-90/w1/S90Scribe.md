@@ -24,7 +24,7 @@ durability) that the L1's landed M1 covers.
 | # | draft | file | state vs the L1's landed work |
 |---|---|---|---|
 | 1 | the 11-cell SOURCES row + the quote verification command and its output | `.ufo/waves/round-90/w1/S90Scribe/draft-sources-row-S353.md` | **the L1 has landed the row**; this seat's file is now a cell-by-cell comparison + the offset reconciliation (the recommendation: keep the landed row, optionally add the S348 pointer to `teaches`) |
-| 2 | `corpus/knowledge/nel-byte-character-pair.md` | `.ufo/waves/round-90/w1/S90Scribe/draft-knowledge-nel-byte-character-pair.md` | **the L1 has landed an entry** (66 lines); this seat's is the 35-line version the brief bounds |
+| 2 | `corpus/knowledge/nel-byte-character-pair.md` | `.ufo/waves/round-90/w1/S90Scribe/draft-knowledge-nel-byte-character-pair.md` | **the L1 has landed an entry** (66 lines); this seat's is the 35-line version the brief bounds (verified: the fenced block extracts to exactly 35 lines) |
 | 3 | the Q165 QUALITY criterion + the `## Round 90 criteria` section header | `.ufo/waves/round-90/w1/S90Scribe/draft-quality-Q165.md` | **the L1 has LANDED it** — `## Round 90 criteria` at `corpus/QUALITY.md:412`, the Q165 row at `:416`, and the landed row is this seat's rewritten draft **verbatim** (the A1 clause, the discriminating-measurement requirement, the doubled-spelling conjunct, the cell-not-row-count clause, the direct cell comparison as the evidence, and the limits including the raw-window cut and the grep-and-load dead-code clause) |
 | 4 | `## Mistakes` for `corpus/lessons/round-90.md` | `.ufo/waves/round-90/w1/S90Scribe/draft-lesson-mistakes.md` | **the L1 has landed an M1** covering the same defect; this seat's file is now the comparison, and it records where the L1's row is more accurate than this seat's draft (the six-file count, the jj-colocated fix) and where this seat's draft adds the exact reproducer |
 
@@ -241,12 +241,18 @@ python3 -B tests/fixtures/r90-k4-flagfail.py --tool census/round-90/controls/c2-
 `census/round-90/records/prefreeze-c2-control.txt` cell for cell. **The control cannot reach `tool_pass=12`** — so
 this is **not** a no-work control that passes the target, and it is not a HIGH finding of that kind.
 
-**Size note for the L1:** the landed entry (untracked) is **66 lines**; my draft is **35** (the brief's bound).
-The landed version carries two things mine does not: the `LineBreak.txt` corroboration inside the Gate bullet, and
-the S87Sentinel F4 citation for the U+2028/U+2029 precedent. **Recommendation: keep the landed entry** (it is the
-L1's own file and it is richer), and treat the ≤35-line bound as the brief's guidance for a NEW draft rather than a
-hard gate on the L1's richer entry — I am flagging the 66 vs 35 difference rather than silently rewriting the L1's
-file. My 35-line version is on file as the fallback if the L1 wants the bound honoured verbatim.
+**Size note for the L1:** the landed entry (untracked) is **66 lines**; my draft is **35** (the brief's bound,
+verified by extraction). The landed version carries two things mine does not: the `LineBreak.txt` corroboration
+inside the Gate bullet, and the S87Sentinel F4 citation for the U+2028/U+2029 precedent. **Recommendation: keep the
+landed entry** (it is the L1's own file and it is richer), and treat the ≤35-line bound as the brief's guidance for
+a NEW draft rather than a hard gate on the L1's richer entry — I am flagging the 66 vs 35 difference rather than
+silently rewriting the L1's file. My 35-line version is on file as the fallback if the bound must be honoured
+verbatim.
+
+**Note on the 35-line version's line width:** to fit the brief's line bound this draft uses wider lines than the
+lane's usual ~116-column wrap (max 249 chars in the header block). The lane's own entries wrap at ~116, so a
+35-line entry at the lane's wrap width cannot carry this much content. **This is another reason to prefer the L1's
+landed 66-line entry.**
 
 **One thing the L1's landed entry should not carry over from my draft:** nothing. My draft cites the offset 82360
 in two places (the `verified-at:` line and the Gate bullet). **Given the offset ambiguity documented above, the
@@ -466,6 +472,52 @@ the counter is unchanged across r87→r89→r90 as the prereg's STATED LIMIT (i)
    rendered cells) rather than asserting that the fixture certifies injectivity. **This seat added no narrowing
    amendment of its own:** the L1's A1-A5 already cover the falsifications this wave produced, and Amendment 59
    forbids widening the frozen wording — it only requires that a falsification be recorded, which the L1 has done.
+
+## Final state of the four deliverables — ALL LANDED BY THE L1
+
+Verified against the lane at tip `fd25bfc5` with the landed (uncommitted) working tree:
+
+| # | deliverable | landed at | landed form |
+|---|---|---|---|
+| 1 | the S353 SOURCES row | `corpus/SOURCES.md:292` | the 11-cell row; the anchor cell quotes **no offset** (the resolution of the ambiguity this seat documented), keeps the class-table row at capture lines 2873-2876 and the quoted paragraph at 2878-2879, the occurrence count 1, the 18-word count and the `LineBreak.txt` corroboration; `teaches` names the pair `\u0085` vs `\x85`; `recheck` `365d`; `used-by` `corpus/knowledge/nel-byte-character-pair.md` |
+| 2 | the knowledge entry | `corpus/knowledge/nel-byte-character-pair.md` (untracked, 66 lines) | the L1's richer entry; **recommendation: keep it** (this seat's 35-line version is the fallback) |
+| 3 | the Q165 criterion | `corpus/QUALITY.md:412` (`## Round 90 criteria`) and `:416` (the row) | **this seat's rewritten draft, verbatim** — the A1 clause, the discriminating-measurement requirement, the doubled-spelling conjunct, the cell-not-row-count clause, the direct cell comparison as the evidence, and the limits (raw-window cut, `_escape_record` unchanged, grep-and-load dead-code, no universal injectivity) |
+| 4 | the `## Mistakes` row | `corpus/lessons/round-90.md:61` (M1) | the L1's row, which this seat's comparison shows is **more accurate than this seat's draft on three of the four cells** (the six-file count at `4864129b`, the jj-colocated fix, the sharper `captured-by` rule); this seat's contribution is the exact reproducer, carried in this report and in `draft-lesson-mistakes.md` |
+
+**Nothing of this seat's is left in the lane.** Every file this seat created is under
+`.ufo/waves/round-90/w1/S90Scribe/` (four draft files + `verify_quote.py`) plus this report file at
+`.ufo/waves/round-90/w1/S90Scribe.md`.
+
+## Action item for the L1: RE-STAGE this seat's files (the L1 committed a mid-flight snapshot)
+
+The L1 committed this seat's files **while this seat was still finalising them** — commit
+`8eba0131` ("round-90: C1 LD2b binds m17c (15/16/31), C2 U+0085 pair (12/12 vs 10/12), S353+entry+Q165, wave
+evidence (12 seats, 134 files), falsification ledger") captured them mid-draft. `git ls-files
+.ufo/waves/round-90/w1/S90Scribe/` now lists six files, and the working tree differs from that commit in two ways:
+
+```
+ M .ufo/waves/round-90/w1/S90Scribe/draft-knowledge-nel-byte-character-pair.md
+ D .ufo/waves/round-90/w1/S90Scribe/tmp/entry-body.md
+```
+
+1. **`.ufo/waves/round-90/w1/S90Scribe/tmp/entry-body.md` is a THROWAWAY scaffold this seat created and then
+   deleted.** It was a scratch intermediate (the entry body being trimmed to the 35-line bound) that happened to
+   exist on disk when the L1's commit swept the seat dir. **It is already gone from the working tree** — the `D` above
+   is the correct end state, and the L1's next commit records the deletion. **It should NOT be restored.** If the
+   L1 prefers a clean tree, the alternative is to amend the commit to drop the path; either way, do not re-add it.
+   This seat's brief requires that scratch scaffolds not survive; the deletion is the intended state.
+2. **`draft-knowledge-nel-byte-character-pair.md` changed after the commit**: the committed version has a **55-line**
+   fenced entry block (and its header claims "34 lines" — an inconsistency this seat had not yet fixed at commit
+   time); the working-tree version has a **verified 35-line** block (extraction check: `awk '/^````markdown$/{f=1;next}
+   /^````$/{f=0} f' … | wc -l` → 35) and a corrected header, plus the **status section** recording the L1's landed
+   66-line entry and the **no-offset recommendation**. **The L1 should re-stage the working-tree version.**
+3. This report file also grew after the commit: the committed version is 484 lines, the working-tree version is
+   **505** lines (the added sections are the "Final state of the four deliverables — ALL LANDED BY THE L1" table and
+   this action item). **The L1 should re-stage it** — and the report is the seat's only verdict artifact.
+
+**Why this matters:** the report file is this seat's durable verdict, and a stale copy is a stale verdict. The
+changes in question are additive (a landed-state table and this action item) and change no measurement, but the
+L1 should commit the current bytes.
 
 ## Scratch, disclosed
 
