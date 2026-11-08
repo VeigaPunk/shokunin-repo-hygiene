@@ -91,3 +91,44 @@ Wave evidence root: `.ufo/waves/round-84/w1/`.
 - **Amended sentence:** *no counter byte changed this round; the population changed. The claim is that the lane's
   self-assessment instrument now discriminates five clauses it previously certified blind, measured as a kill rate
   over two pinned populations (0/5 -> 5/5) with both pristine arms green.*
+
+## A7 — C1: NF-Q carries no kill attribution
+
+- **Artifact:** `S84ExecC1.md` §4 and `S84Scribe.md` F4: m9 also refuses NF-Q (its `len(got)==2` guard), but no
+  frozen mutant is killed *only* by NF-Q, and no mutant is designated for it.
+- **Amended sentence:** *NF-Q is a population row that binds a shape-only rule not among the frozen five: it is
+  stated as a row, not as a kill; the five named kills are m6↔NF-L, m7↔NF-L2, m8↔TF9/TF10, m9↔TF8/TF9/TF10/NF-P,
+  m10↔NF-M.*
+
+## A8 — C1: the 44 rows are not a minimal population
+
+- **Artifact:** `agent://S84Critic` (interim, and its final report): per-mutant kill-sets measured row by row — a
+  40-row subset (the 36 old rows plus NF-L, NF-L2, NF-M, TF9) kills the same 5/5, so TF8, TF10, NF-P and NF-Q are
+  redundant *as a minimum*.
+- **Amended sentence:** *the 44-row population binds the five clauses — one false row per clause and a true row per
+  real shape; it is not minimal (a 40-row subset kills the same five, measured by the critic), and the round claims
+  the binding, not that each added row is necessary.*
+
+## A9 — C2: the claim's subject is the after-state at the repair commit, not the bytes at F
+
+- **Artifact:** `agent://S84Critic`: at F, `tools/souji-vault-verify.sh` was still the r83 bytes (`72a405f2…`), so the
+  prereg's sentence "In tools/souji-vault-verify.sh, cli_kill_tree freezes …" is false of the bytes at F.
+- **Amended sentence:** *the claim is about the bytes filed at the repair commit `1f49b3a7` (tool sha256
+  `030fa10d…`): `cli_kill_tree` freezes the descendant tree before signalling it, and the after receipt binds that
+  hash. At F the file still held the r83 bytes; F froze the target, not the outcome.*
+
+## A10 — C1: the population does not certify the counter's whole rule (two clauses unbound)
+
+- **Artifact:** `S84Sentinel.md` F1/F2 and its `c1_clause_coverage.py` (eight clause-dropping mutants, both pinned
+  populations): the **census-in-census** clause (`c7`) and the **last-component** clause (`c2`) score green on both
+  populations when dropped; the `c7` mutant resolves a wrong file (two enumerated `census/round-61/…` targets)
+  while both populations still read 0 mismatches, because no population item's token lives under
+  `census/round-<N>/` (the census-token items name no round and are refused by the `not kr` clause first).
+- **Frozen wording falsified:** the preregistration's frame sentence — "the lane's false-row population is the
+  instrument that certifies the pointer counter's rule" — and the knowledge section's "one false row per clause the
+  rule enforces".
+- **Amended sentence:** *the r84 population certifies the five named clauses (digest, round, shape set, suffix depth,
+  non-wave dir), measured 0/5 → 5/5; it does not certify the counter's whole rule: the census-in-census clause and
+  the last-component clause are unbound by both pinned populations, and a census-in-census-dropping mutant resolves
+  a wrong file while both stay green (S84Sentinel F1/F2). A row whose token is a `census/round-<N>/` path with a
+  frozen digest is the remediation, routed to r85 (it also grounds or replaces the census-in-tree branch, r83 D-list).*

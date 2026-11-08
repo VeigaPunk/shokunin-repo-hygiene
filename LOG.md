@@ -3148,3 +3148,63 @@ stale `$!`).
   Landed-changes chain omits `51a5e7fa` (`round-82: freeze receipt and lesson M1/M2`, which carries
   `census/round-82/records/freeze-check-at-P.txt`); the omission is named here (r82 spot-check routed defect 3).
 - **Tool installs: none.** No pacman (paused host-wide), no uv/npx/binary fetch, no sysctl, sudo or kernel change.
+## Round 84 (2026-11-08) — the false-row population binds five counter clauses (C1 calibration); the vault CLI's signal path freezes the tree before terminating it (C2 operability)
+
+- **Shape.** One v1 wave, 12 seats, policy `scripts/hyaku/ufo-wave-policy.json` (band 8-16): executor×3, scribe,
+  scout×2, connector, reviewer, critic, mutation-tester×2, sentinel. Attack seats 5/12 (42 %, over the 25 % floor);
+  connectors 1 (≤2). The seats' reports and the pre-file ledger are force-added with the round
+  (`.ufo/waves/round-84/w1/`, `claim-falsification.tsv`), which also answers the r83 spot-check's D6. Seats never
+  committed; the L1 integrated. Staged commits: P `bd2bbb12` (instruments, populations, mutant set, controls, before
+  receipts, the `## Round 23 criteria` heading restored), F `35d87842` (preregistration alone), repair `1f49b3a7`
+  (tool + receipts), docs `4557fc71`.
+- **C1 (calibration 7) — the population is the instrument.** `census/round-84/c1-false-rows.tsv` (44 rows: the r83 36
+  byte-for-byte + TF8, TF9, TF10 true and NF-P, NF-L, NF-L2, NF-M, NF-Q false at fixture R7), harness
+  `c1-false-row-harness.py` with two pinned populations, five single-edit mutants in `c1-mutants.json`, battery
+  `c1-clause-battery.py`. The counter is byte-identical to r83's (`052c4f3f…`): the round moved the instrument, not
+  the rule. After: `rows=44 mismatches=0 errors=0`, `killed_r84=5` (m6↔NF-L, m7↔NF-L2, m8↔TF9/TF10,
+  m9↔TF8/TF9/TF10/NF-P, m10↔NF-M), EXIT 0 (`census/round-84/records/c1-after.txt`). Before (same counter, battery
+  and mutants on the 36-row population): pristine `36/0`, five `killed=no`, `killed_r83=0`, EXIT 0
+  (`census/round-84/controls/c1-before-r83-population.txt`). Per-mutant rows: `records/c1-m9-rows.txt`
+  (`refused_true=3 accepted=1`). The critic measured that a 40-row subset (36 + NF-L, NF-L2, NF-M, TF9) kills the
+  same five — the round claims the binding, not a minimal population (A8); NF-Q carries no kill of the frozen five
+  (A7).
+- **C2 (operability 8) — freeze, then terminate.** `tools/souji-vault-verify.sh` `cli_kill_tree` SIGSTOPs every
+  descendant discovered by a fork-free `/proc` pass before any trappable signal reaches it (a stopped process cannot
+  run a trap or fork, S334), covers the read→STOP window with a second map pass, then SIGKILLs the frozen set with
+  the starttime re-checked; every stat read is whole-file with the last-`)` strip (r83 D5 closed on the re-check
+  path). Population `census/round-84/c2-population.tsv` (22 rows: the r83 20 unchanged + `l1-late-setsid-pid` +
+  `l2-late-setsid-group`, whose `latefork` stub forks a `setsid`'d `sleep 600` from its signal trap), counter
+  `c2-late-fork-counter.py`. After (filed tool `030fa10d…` at `1f49b3a7`): `rows=22 mismatches=0 errors=0 orphans=0`,
+  l1 0.7 s / l2 0.6 s, EXIT 0 (`records/c2-after.txt`); re-derived independently by S84Scribe and S84Reviewer.
+  Before (r83 tool `72a405f2…`, control `controls/c2-K-a-r83-tool.sh`): `mismatches=2 orphans=2`, one surviving
+  `setsid sleep 600` per late row, EXIT 1 (`controls/c2-before-r83-tool.txt`). Regressions: selftest 57/0, r17
+  `total=37 failed=0 skipped=0`, probe D `arms=4 failed=0`. Clause mutants of the filed bytes: STOP→TERM killed,
+  no-KILL-sweep killed, single-pass and first-line-recheck **survive** — the second pass and the whole-file
+  re-check are unrowed belts, stated as such (A1/A2).
+- **Sources/registry.** S334 (signal(7) as installed, man-pages 6.19-1, quote "SIGSTOP ... cannot be caught,
+  blocked, or ignored.") admitted (`docs`, A, capture `census/round-84/srcs/`); S335 (own-work clause-kill receipts)
+  admitted (`own-work`, A); S336 (arXiv 1808.04849 as a mutation-testing survey) **rejected** — the fetched paper is
+  a healthcare data-science paper, flip recorded. Registry `256 → 259` (`grep -cE '^\| *S[0-9]{3,}'
+  corpus/SOURCES.md`); census before and after `souji ok`, EXIT 0 (`census/round-84/records/sources-census-*.txt`).
+  `setsid(1)` re-opened for the round turned out to be S328 (r80); no duplicate row written.
+- **Docs.** `corpus/knowledge/own-tree-pointer-binding.md` r84 section (the kill table and the criterion),
+  `corpus/knowledge/gate-signal-handling.md` r84 section (the escape, the freeze, what the population does not
+  bind), `corpus/QUALITY.md` Q154/Q155 under `## Round 84 criteria`, `corpus/README.md` r84 frontier block,
+  `plans/round-84.md` A0-A9, `corpus/lessons/round-84.md`, `SCORECARD.md` r84 rows + two capability rows + planned
+  r85.
+- **r83 spot-check defects answered.** D1: SOURCES `252 → 255` corrected to `252 → 256` here (r83 tip) and
+  `→ 259` after this round. D2: `## Round 23 criteria` restored in P; the deletion at `802a41e7` is named. D3:
+  `records/c2-after.txt`'s digest binding is `72a405f2…`; the `b0a5b662…` in the r83 LOG entry and lesson is
+  superseded by that. D4: the r83 wave delivered 12 substantive outputs, not "9 with 3 skeletons". D5: the
+  whole-file stat read is now in every `cli_kill_tree` re-check (unrowed — A2). D6: the r84 wave's seat reports are
+  force-added with the round.
+- **Amendments** (`plans/round-84.md` A0-A9) and the pre-file ledger (`.ufo/waves/round-84/claim-falsification.tsv`,
+  11 rows over 2 claims and every attack seat) were written before filing. A0.1 (the `latefork` stub deferred its
+  own trap), A0.2 (a second TERM pass races a `setsid` child that is reparented — the freeze replaced it), A0.3 (the
+  first m9 was already killed by the r83 population), A1/A2 (two unrowed belts), A3 (re-forking and daemonizing
+  CLIs are limits), A4 (m9's four rows), A5 (two seats scored a mid-write reference), A6 (no counter byte changed),
+  A7 (NF-Q has no kill), A8 (the population is not minimal), A9 (the claim's subject is the repair commit's bytes),
+  A10 (the sentinel's per-clause battery: the census-in-census and last-component clauses are unbound by both
+  populations, and a census-in-census-dropping mutant resolves a wrong file while both stay green — the round
+  certifies five named clauses and says so).
+- **Tool installs: none.** No pacman (paused host-wide), no uv/npx/binary fetch, no sysctl, sudo or kernel change.

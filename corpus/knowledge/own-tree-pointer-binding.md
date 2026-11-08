@@ -86,9 +86,14 @@ refused_true=0`): the r84 arm reads `killed_r84=5` (`census/round-84/records/c1-
 reads `killed_r83=0` (`census/round-84/controls/c1-before-r83-population.txt`, EXIT 0) — same counter, same battery,
 same mutants, so the delta is the population, not the rule.
 
-The criterion: one FALSE row per clause the rule enforces (digest, round, shape set, suffix depth, non-wave dir)
-and one TRUE row per real shape the rule names (`a2w1/`, `assimilation/`, a deep two-component remainder under a
-real `wN/`). Limits: a population proves discrimination on its own rows, not correctness on the world; the NF rows
-are byte-equal copies by construction (location binding, not content identity); the five mutants are hand-written
-single edits, not a generated battery; a "kill" is a non-zero harness exit, which does not by itself separate a row
-mismatch from a harness error (every observed kill was a real `match=no`, `errors=0`).
+The criterion: one FALSE row per clause **the population claims to bind** (digest, round, shape set, suffix depth,
+non-wave dir) and one TRUE row per real shape the rule names (`a2w1/`, `assimilation/`, a deep two-component
+remainder under a real `wN/`). What the population does NOT bind, measured (S84Sentinel F1/F2, its
+`c1_clause_coverage.py`): the census-in-census clause (a `census/round-<N>/` target must be a wave capture keeping
+the token's full suffix) and the last-component clause are green under a dropped-clause mutant on both pinned
+populations; the census-in-census one is the dangerous gap — the mutant resolves a wrong file (two enumerated
+targets) and both populations still pass, because no population item has a token under `census/round-<N>/` (the
+only census-token items name no round). Limits: a population proves discrimination on its own rows, not the rule's
+correctness; the NF rows are byte-equal copies by construction (location binding, not content identity); the five
+mutants are hand-written single edits, not a generated battery; a "kill" is a non-zero harness exit, which does not
+by itself separate a row mismatch from a harness error (every observed kill was a real `match=no`, `errors=0`).
