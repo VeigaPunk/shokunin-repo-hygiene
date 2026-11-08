@@ -2114,6 +2114,42 @@ symlink leg, p8 `token_ok`'s hyphen marker) stay carried.
 | a ledger-level refusal bound as a population row | bind a clause that lives in the ledger reader (a duplicate id) by adding a row type that builds the duplicate-ledger input and parses the counter's own `LEDGER-REFUSED` line, instead of editing the counter | `python3 -B census/round-88/c1-clause-battery.py --counter census/round-87/c1-pointer-counter.py --work WORK --only r87,r88 --expect-killed 22` → `m17-duplicate-id killed=yes` on r88 and `killed=no` on r87 (`records/c1-after.txt`, control `controls/c1-before.txt`) | r88 |
 | a delegated failure channel framed, escaped and bounded in one place | ship a child's raw stderr base64-framed and render it through the parent's single escaping rule, so the detail is one physical line and a long exception keeps both its type name and its message | `python3 -B tests/fixtures/r88-k4-flagfail.py --tool tools/souji-record-agreement.py --before census/round-88/controls/c2-before-tool.py --work WORK` → `cases=7 tool_pass=7 before_pass=3` (`records/c2-after.txt`; before arm `tool_pass=3`) | r88 |
 
+### Round 89 measurements (2026-11-08; lane base `a2cef94a`; instruments P `c9329534`, freeze F `d8bc7484`, harness fix `a3c7cb1f`)
+
+| claim | axis | before | after | counting command | measured commit |
+|---|---|---|---|---|---|
+| C1 four F1–F4 bindings (NF6h/NF6i/LD1b/LD2) | calibration 7 | `controls/c1-before.txt` (same battery, same sixteen mutants, the r88 53-row population) `m18b/m17b/m17c/m18d killed=no`, `SUMMARY mutants=16 sets=r88 pristine_r88=ok killed_r88=12 killed_total=12`, EXIT 0 | `records/c1-after.txt` `ARM pristine pop=r88 rows=53 mismatches=0 errors=0 exit=0`, `ARM pristine pop=r89 rows=57 mismatches=0 errors=0 exit=0`, `m17c-no-malformed killed=no` on r89, `SUMMARY mutants=16 sets=r88,r89 pristine_r88=ok pristine_r89=ok killed_r88=12 killed_r89=15 killed_total=27`, battery EXIT 1 | `python3 -B census/round-89/c1-clause-battery.py --counter census/round-87/c1-pointer-counter.py --work WORK --only r88,r89 --expect-killed 28` | `755a46cbdf0525d2bded60f211d4483c0903bdfe` |
+| C2 FLAGFAIL injective decode + raw-first bound | operability 8 | `controls/c2-before.txt` on the r88 tool bytes `4042218f…` (both arms) `SUMMARY cases=10 tool_pass=8 before_pass=8`, KFF6/KFF8 fail, EXIT 1 | `records/c2-after.txt` on the filed tool sha256 `f6fce6d1…` `SUMMARY cases=10 tool_pass=10 before_pass=8`, EXIT 0; r87 12-row counter `rows=12 mismatches=0 errors=0` (`S89ExecC2` §2) | `python3 -B tests/fixtures/r89-k4-flagfail.py --tool tools/souji-record-agreement.py --before census/round-89/controls/c2-before-tool.py --work WORK` | `755a46cbdf0525d2bded60f211d4483c0903bdfe` |
+
+C1's frozen target (**16/28/EXIT 0**) was **not met**: three of its four bindings verify (`NF6h` kills `m18b`,
+`LD1b` kills `m17b`, `NF6i` kills `m18d`), and the fourth (`LD2` for `m17c`) is falsified by the round's own
+artifacts — LD2's appended `P02` is already in the frozen r77 ledger, so `m17c` refuses it on the duplicate leg
+and survives (`S89MutCounter` F1, `S89Sentinel` F-1, `S89Reviewer` §1, `S89Simplifier` F1). The narrowed true
+sentence, the measured binding row `LD2b` (append `ZZ9\tABSENT`) and the carry list are in `plans/round-89.md`
+A1; the four new mutants deliver three kills, not four. C2's enumerated kill rule passes (10/10/8, EXIT 0) but
+its headline "injective on the bytes" is narrowed: raw `0x85` and the UTF-8 NEL render identically, and the
+truncated raw window is 202 bytes, not 200 (`plans/round-89.md` A2, `S89ExecC2` §6, `S89Scribe` F1). No owned
+axis score changed (calibration 7, coverage 8, operability 8 — the lane still has no reproducible 0–10 mapping);
+C1 carries the falsification verdict and C2 the kill-rule pass with a narrowed headline.
+
+### Round 89 capability rows
+
+| name | what it can now do | evidence pointer | first-working round |
+|---|---|---|---|
+| a malformed-row binding whose id is absent from the ledger (measured, not landed) | bind the `_ledger` `len(r) < 3` guard by appending a 2-column row under a NEW id (`ZZ9`), so the guard is the only leg that can refuse it | `python3 -B .ufo/waves/round-89/w1/S89Sentinel/probe_ld1.py --work WORK` (ZZ9 control: pristine marker rc 1, `m17c` IndexError) + `S89MutCounter.md` F1 | r89 (design) |
+| a raw-first excerpt that keeps the type name on control-heavy input | bound the raw bytes before escaping so 25 leading control bytes no longer consume the head | `python3 -B tests/fixtures/r89-k4-flagfail.py --tool tools/souji-record-agreement.py --before census/round-89/controls/c2-before-tool.py --work WORK` → KFF8 pass, tool_pass=10 (`records/c2-after.txt`; before arm KFF8 fail) | r89 |
+
+### Planned (r90)
+
+- C1 (calibration): `LD2b` (append `ZZ9\tABSENT`) binds `m17c`; `LD1c` (same-class duplicate) and `LD1d` (identical
+  duplicate) bind the class-conflict readers; `NF6i2` binds the other occurrence order; `NF6j` binds the six
+  remaining PATHCH predecessors.
+- C2 (operability): spell U+0085 as `\u0085` in `_escape_text` (the 0x85/NEL collision) or add a KFF9 row;
+  delete the dead `_one_line` (zero-risk, S89Simplifier #5); the forged-`CLEAN` fail-open (S88Sentinel F3)
+  stays carried.
+- Carried: p2 basename granularity, p3 the punctuation lookahead, p7 `_regular`'s symlink leg, p8 `token_ok`'s
+  hyphen marker, the `fleet:` symlink leg, the battery `--only`/`--expect-killed` stale defaults.
+
 ### Planned (r89)
 
 - C1 (calibration): the four carried single-spelling survivors (p2 basename granularity, p3 the punctuation

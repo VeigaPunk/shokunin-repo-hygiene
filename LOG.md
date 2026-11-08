@@ -3395,3 +3395,34 @@ receipts in P `5bd5a0ce`. Amendments in `plans/round-85.md` (A0-A1 so far); the 
 - **Docs.** `corpus/knowledge/one-escaped-diagnostic-line.md`, `corpus/QUALITY.md` Q163, `plans/round-88.md`,
   `corpus/lessons/round-88.md`, `SCORECARD.md` r88 rows, two capability rows and the r89 planned block.
 - **Tool installs: none.** No pacman (paused host-wide), no uv/npx/binary fetch, no sysctl, sudo or kernel change.
+
+## Round 89 (2026-11-08) — three of four C1 bindings verify and the fourth is falsified (C1 calibration, target not met); the C2 kill rule passes with a narrowed headline (C2 operability)
+
+- **Claims.** C1 (calibration 7, the lane's lowest owned non-retired axis): the four S88MutCounter F1–F4 survivors
+  each get one binding row and one binding mutant — NF6h (the `_whole` before-byte half with a `/` predecessor,
+  R12) kills `m18b`; LD1b (a duplicate with a DIFFERENT target) kills `m17b`; NF6i (the `_whole` loop over every
+  occurrence, R12's twice-token line) kills `m18d`; LD2 (a 2-column ledger append) was to kill `m17c`. The frozen
+  target was `killed_r88=12 killed_r89=16 killed_total=28`, EXIT 0. C2 (operability 8): the FLAGFAIL branch decodes
+  base64 with `surrogateescape` and bounds RAW bytes first (head-100/`…`/tail-99) before escaping, so the detail
+  is injective on the bytes and the head carries content.
+- **Measured.** C1: `controls/c1-before.txt` (same battery, same sixteen mutants, the r88 53-row population)
+  the four new mutants alive, `SUMMARY killed_r88=12`, EXIT 0; `records/c1-after.txt` pristine 53/0 and 57/0,
+  `m17c-no-malformed killed=no` on r89, `SUMMARY killed_r88=12 killed_r89=15 killed_total=27`, battery EXIT 1 —
+  the frozen target is **not met**. LD2's appended `P02` is already in the frozen r77 ledger, so `m17c` refuses it
+  on the duplicate leg and survives; the binding row for that guard is `LD2b` (append `ZZ9\tABSENT`), measured
+  and carried. C2: `controls/c2-before.txt` on the r88 tool `4042218f…` (both arms) `SUMMARY cases=10
+  tool_pass=8 before_pass=8`, EXIT 1; `records/c2-after.txt` on the filed tool `f6fce6d1…` `SUMMARY cases=10
+  tool_pass=10 before_pass=8`, EXIT 0 (re-run after F because the first run predated the freeze; identical
+  numbers). The r87 12-row K4 counter on the filed tool reads `rows=12 mismatches=0 errors=0`.
+- **Narrowed before filing (plans/round-89.md A1–A3, A0.6).** A1: C1's "four bindings" is three (LD2's row design
+  is defective; the measured `LD2b` design is carried). A2: C2's "injective on the bytes" holds for the
+  KFF6/KFF7 pair but raw `0x85` and the UTF-8 NEL render identically, and the raw window is 202 bytes (head-100 +
+  a three-byte `…` + tail-99), not 200. A3: S352 is redundant with the standing S349 reject (not filed); the
+  captures carry the 3.15.2 book while the host is 3.14.8, and both quoted sentences agree byte-for-byte.
+- **Sources.** S351 (`surrogateescape`, 13-word quote, capture `census/round-89/srcs/codecs.html`) admitted
+  `mined`, cited by `corpus/knowledge/decode-escape-order.md`; S352 (base64) is the reject sample re-using the
+  standing S349 reject. Registry 273 → 274 (`grep -cE '^\|[[:space:]]*S[0-9]{3,}[[:space:]]*\|' corpus/SOURCES.md`);
+  census before `souji ok` EXIT 0, after re-run at landing. QUALITY Q164 added.
+- **Docs.** `corpus/knowledge/decode-escape-order.md`, `corpus/QUALITY.md` Q164, `plans/round-89.md`,
+  `corpus/lessons/round-89.md`, `SCORECARD.md` r89 rows, two capability rows and the r90 planned block.
+- **Tool installs: none.** No pacman (paused host-wide), no uv/npx/binary fetch, no sysctl, sudo or kernel change.
