@@ -179,6 +179,32 @@ def tally_of(text: str) -> dict[str, int]:
     return tally
 
 
+def _stderr_tail(text: str, limit: int = 200) -> str:
+    """r87: the reader's only handle on a failed delegation is the LAST non-empty stderr line, where an exception
+    names itself; a 200-character prefix can end inside the traceback frame list and show
+    `Traceback (most recent call last):` alone (S86ExecK4 §2b). The bound is kept, the position is reversed: an
+    over-long line keeps its tail and is marked with a leading ellipsis."""
+    lines = [l.strip() for l in (text or "").splitlines() if l.strip()]
+    if not lines:
+        return ""
+    tail = lines[-1]
+    if len(tail) > limit:
+        tail = "\u2026" + tail[-(limit - 1):]
+    return tail
+
+
+def writer_binding() -> str:
+    """r87: one header line naming the writer this run delegates to — path and the sha256 of the bytes it will
+    compile. A K4 verdict is then bound to the delegation it used instead of leaving a reader to guess which
+    writer sat beside the tool (S86ExecK4 §3b2). Absent writer prints `sha256=absent`, which truth_refusal refuses."""
+    try:
+        with open(K4_TRUTH_WRITER, "rb") as f:
+            digest = hashlib.sha256(f.read()).hexdigest()
+    except OSError:
+        digest = "absent"
+    return f"# writer path={K4_TRUTH_WRITER} sha256={digest}"
+
+
 def truth_refusal(root: str) -> "str | None":
     """r85: the refusal message when a tracked path git status reports clean does not hash to the object id the
     index records. The check is the receipt writer's `_truth_refusal`, run in an isolated interpreter from the
@@ -210,7 +236,7 @@ def truth_refusal(root: str) -> "str | None":
         "if not msg:\n"
         "    fl = mod.git(root, '-c', 'core.sparseCheckout=false', 'ls-files', '-v', '-z', ':(top)')\n"
         "    if fl.returncode != 0:\n"
-        "        print('FLAGFAIL ' + fl.stderr.decode('utf-8', 'replace').strip()[:200])\n"
+        "        print('FLAGFAIL ' + fl.stderr.decode('utf-8', 'replace').strip()[-200:])\n"
         "        raise SystemExit(0)\n"
         "    for rec in fl.stdout.split(bytes([0])):\n"
         "        if not rec:\n"
@@ -240,7 +266,7 @@ def truth_refusal(root: str) -> "str | None":
     if out == "CLEAN":
         return None
     return (f"the receipt writer produced no verdict (exit {proc.returncode}: "
-            f"{(out or proc.stderr.strip())[:200]}); tracked bytes are unverified")
+            f"{_stderr_tail(out or proc.stderr)}); tracked bytes are unverified")
 
 
 class Report:
@@ -437,17 +463,22 @@ class Report:
                          "not a frozen operator-owned path")
                 continue
             exempt.append(path)
-        proc = git(self.root, "status", "--porcelain")
+        # r87: `--porcelain -z` (S86ExecK4 §2e). The line form C-quotes a path that carries a newline or a tab, so
+        # the record named git's quoted spelling instead of the path a reader must act on. The NUL form carries the
+        # raw bytes: each record is "XY <path>", and a rename's second NUL field (the new name, no status pair) is
+        # skipped - the rename record itself already reaches this key. Each path is C-escaped here so one K4 record
+        # stays one physical line.
+        proc = git(self.root, "status", "--porcelain", "-z")
         if proc.returncode != 0:
-            self.bad("K4", ".", "status-failed", proc.stderr.strip())
+            self.bad("K4", ".", "status-failed", _stderr_tail(proc.stderr))
             return
-        for line in proc.stdout.splitlines():
-            path = line[3:].strip() if len(line) > 3 else ""
-            if not path:
+        for rec in proc.stdout.split("\0"):
+            if len(rec) < 4 or rec[2:3] != " ":
                 continue
+            path = rec[3:].replace("\n", "\\n").replace("\t", "\\t").replace("\r", "\\r")
             if any(path == e or path.startswith(e if e.endswith("/") else e + "/") for e in exempt):
                 continue
-            self.bad("K4", path, "uncommitted-path", line[:2].strip() or "??")
+            self.bad("K4", path, "uncommitted-path", rec[:2].strip() or "??")
         msg = truth_refusal(self.root)
         if msg:
             flag = msg.startswith(("RECEIPT-GITLINK-CONCEALED", "RECEIPT-INDEX-"))
@@ -489,6 +520,7 @@ def main(argv: list[str]) -> int:
     args = ap.parse_args(argv)
     root = os.path.abspath(args.root)
     rev = resolve_rev(root, args.rev)
+    print(writer_binding())
     rep = Report(root, rev, not args.no_worktree)
     rep.k1()
     tally = rep.k2()
