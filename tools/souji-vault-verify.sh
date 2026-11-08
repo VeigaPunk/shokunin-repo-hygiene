@@ -224,21 +224,57 @@ CLI_OUT=""
 # (r81 M4, S81ExecC2 HIGH: v7/v8 leave one survivor each with claims 2/2, and the shipped candidates leave the same
 # one survivor each too). Before timeout's group can be left, snapshot the descendant tree of the CLI pid and kill
 # those pids too; keep the group kill for the case where the tree cannot be read.
+# r83 (C2): the r82 walk forked one `pgrep -P` per tree node, each a full /proc scan (F-2: 0.53-2.15 s per call;
+# >=12 descendants exceeded the counter's 5 s settle, N=12 5.74 s, N=24 9.64 s, S82Sentinel) and snapshotted the
+# whole tree before TERM then KILL 0.1 s later (F-3: a snapshot->KILL gap up to 6.11 s, so a recycled pid could be
+# killed). The walk is now ONE fork-free pass over /proc/<pid>/stat (field 4 ppid after the last `)` of the
+# parenthesized comm, field 22 starttime, S332), then a DFS that signals each descendant as it is DISCOVERED and
+# re-reads its starttime before every TERM and KILL. Limit, stated: /proc reads are not atomic, so a pid reused
+# between one read and its signal can still be signalled; pidfd is not available to a bash tool.
 cli_kill_tree() {
   local pid=$1
-  local child=${pid} kids i
+  local -A ppid_of=() start_of=() kids_of=()
+  local d line rest p st i cur k now crestart
   local -a stack=() tree=()
-  for c in "$pid"; do [ -n "$c" ] && stack+=("$c"); done
-  while [ ${#stack[@]} -gt 0 ]; do
-    child=${stack[$((${#stack[@]}-1))]}
-    stack=("${stack[@]:0:$((${#stack[@]}-1))}")
-    tree+=("$child")
-    kids=$(pgrep -P "$child" 2>/dev/null) || kids=""
-    for k in $kids; do [ -n "$k" ] && [ "$k" != "$pid" ] && stack+=("$k"); done
+  for d in /proc/[0-9]*; do
+    line=""
+    { read -r line < "$d/stat"; } 2>/dev/null || continue
+    [ -n "$line" ] || continue
+    rest=${line##*) }
+    set -- $rest
+    p=${d#/proc/}
+    ppid_of[$p]=$2
+    start_of[$p]=${20}
   done
-  for k in "${tree[@]}"; do kill -TERM "$k" 2>/dev/null || true; done
+  for p in "${!ppid_of[@]}"; do
+    kids_of[${ppid_of[$p]}]+=" $p"
+  done
+  stack=("$pid")
+  while [ ${#stack[@]} -gt 0 ]; do
+    cur=${stack[-1]}
+    unset 'stack[-1]'
+    for k in ${kids_of[$cur]:-}; do
+      [ "$k" = "$pid" ] && continue
+      now=""
+      { read -r now < "/proc/$k/stat"; } 2>/dev/null || continue
+      crestart=${now##*) }
+      set -- $crestart
+      [ "${20}" = "${start_of[$k]:-}" ] || continue
+      kill -TERM "$k" 2>/dev/null || true
+      tree+=("$k")
+      stack+=("$k")
+    done
+  done
   sleep 0.1
-  for k in "${tree[@]}"; do kill -KILL "$k" 2>/dev/null || true; done
+  for k in "${tree[@]}"; do
+    now=""
+    { read -r now < "/proc/$k/stat"; } 2>/dev/null || continue
+    [ -n "$now" ] || continue
+    crestart=${now##*) }
+    set -- $crestart
+    [ "${20}" = "${start_of[$k]:-}" ] || continue
+    kill -KILL "$k" 2>/dev/null || true
+  done
 }
 cli_on_signal() { # $1 signal name, $2 signal number
   trap '' TERM INT HUP
