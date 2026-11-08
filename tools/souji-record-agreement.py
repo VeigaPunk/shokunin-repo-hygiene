@@ -75,7 +75,8 @@ K4_ALLOWED = frozenset({"census/operator-sweep-20261019/"})
 # the object name, so rewritten bytes over a rewritten stat entry read clean in `git status`. K4 therefore re-hashes
 # every status-clean stage-0 tracked path against the object id its index entry records, through the receipt
 # writer's own byte-truth check (the r73/r74 rule this lane already runs in the writer and the pre-report gate).
-K4_TRUTH_WRITER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "souji-receipt-write.py")
+K4_TRUTH_WRITER = os.path.join(os.path.dirname(os.path.realpath(os.path.abspath(__file__))),
+                                 "souji-receipt-write.py")
 REV_TOKEN_RE = re.compile(r"\b[0-9a-f]{40}\b")
 K2_FILED = ("assertions=56 resolved=53 skipped=33 mismatches=3", "1 present", "1 refused")
 
@@ -109,10 +110,18 @@ def paragraphs(lines: list[str], offset: int) -> list[tuple[int, str]]:
 
 
 def git(root: str, *args: str, check: bool = False) -> subprocess.CompletedProcess:
-    env = {k: v for k, v in os.environ.items() if k not in ("GIT_DIR", "GIT_WORK_TREE")}
-    env["GIT_CONFIG_COUNT"] = "1"
-    env["GIT_CONFIG_KEY_0"] = "core.fsmonitor"
-    env["GIT_CONFIG_VALUE_0"] = "false"
+    env = {k: v for k, v in os.environ.items()
+           if k not in ("GIT_DIR", "GIT_WORK_TREE") and not k.startswith("GIT_CONFIG_")}
+    # r85 (S85Sentinel F1/F6): K4's status read and the writer's pinned status must agree, or a path clean to
+    # one and listed by the other is neither reported nor re-hashed. Same pins the writer's helper uses.
+    pins = [("core.fsmonitor", "false"), ("core.fileMode", "true"), ("core.checkStat", "default"),
+            ("core.trustctime", "true"), ("core.excludesFile", os.devnull),
+            ("status.showUntrackedFiles", "all")]
+    env["GIT_CONFIG_COUNT"] = str(len(pins))
+    for i, (k, v) in enumerate(pins):
+        env[f"GIT_CONFIG_KEY_{i}"], env[f"GIT_CONFIG_VALUE_{i}"] = k, v
+    env["GIT_CONFIG_GLOBAL"] = os.devnull
+    env["GIT_CONFIG_NOSYSTEM"] = "1"
     # a read-only instrument must not refresh the lane's index on `git status`
     env["GIT_OPTIONAL_LOCKS"] = "0"
     cmd = ["git", "-C", root, "-c", "maintenance.auto=false", *args]
@@ -161,24 +170,48 @@ def tally_of(text: str) -> dict[str, int]:
 
 def truth_refusal(root: str) -> "str | None":
     """r85: the refusal message when a tracked path git status reports clean does not hash to the object id the
-    index records. The check is the receipt writer's `_truth_refusal`, compiled from its source bytes beside this
-    tool (one rule, one implementation; the r74 gate does the same). Fails closed: a missing writer, a compile error
-    or the writer's own refusal (it exits 2 on an unreadable tree) returns a message, never a clean verdict."""
+    index records. The check is the receipt writer's `_truth_refusal`, run in an isolated interpreter from the
+    writer's source bytes beside this tool's REAL path (one rule, one implementation; the r74 gate does the same).
+
+    r85 wave repair (S85Sentinel F2): the writer is resolved with `realpath` (a symlinked or copied tool no longer
+    loads whatever sits beside the link), and it is compiled in a `-I -B` subprocess (`-I`: no PYTHONPATH, no user
+    site, no caller CWD on sys.path; `-B`: no __pycache__), so nothing imports attacker-named modules into this
+    process. Fails closed: a missing writer, a subprocess failure, or a nonzero exit becomes a message, never a
+    clean verdict."""
     if not os.path.isfile(K4_TRUTH_WRITER):
         return f"the receipt writer is not beside this tool ({K4_TRUTH_WRITER}); tracked bytes are unverified"
-    import types
-    mod = types.ModuleType("souji_receipt_write")
-    mod.__file__ = K4_TRUTH_WRITER
-    sys.modules[mod.__name__] = mod
+    bootstrap = (
+        "import sys, types\n"
+        "path, root = sys.argv[1], sys.argv[2]\n"
+        "src = open(path, 'rb').read()\n"
+        "mod = types.ModuleType('souji_receipt_write')\n"
+        "mod.__file__ = path\n"
+        "sys.modules[mod.__name__] = mod\n"
+        "sys.argv = [path]\n"
+        "try:\n"
+        "    exec(compile(src, path, 'exec'), mod.__dict__)\n"
+        "except SystemExit as exc:\n"
+        "    print('REFUSED %s' % exc.code); raise SystemExit(0)\n"
+        "try:\n"
+        "    msg = mod._truth_refusal(root)\n"
+        "except SystemExit as exc:\n"
+        "    print('REFUSED %s' % exc.code); raise SystemExit(0)\n"
+        "print('CLEAN' if not msg else 'FORGED ' + msg.replace(chr(10), ' '))\n"
+    )
     try:
-        with open(K4_TRUTH_WRITER, "rb") as f:
-            src = f.read()
-        exec(compile(src, K4_TRUTH_WRITER, "exec"), mod.__dict__)
-        return mod._truth_refusal(root)
-    except SystemExit as exc:
-        return f"the receipt writer refused the tree (exit {exc.code}); tracked bytes are unverified"
-    except Exception as exc:  # noqa: BLE001 — any failure here is a fail-closed verdict, named
+        proc = subprocess.run([sys.executable, "-I", "-B", "-c", bootstrap, K4_TRUTH_WRITER, root],
+                              capture_output=True, text=True, timeout=600)
+    except (OSError, subprocess.SubprocessError) as exc:
         return f"the receipt writer could not be run ({type(exc).__name__}: {exc}); tracked bytes are unverified"
+    out = proc.stdout.strip()
+    if out.startswith("REFUSED"):
+        return f"the receipt writer refused the tree (exit {out.split(' ', 1)[-1]}); tracked bytes are unverified"
+    if out.startswith("FORGED "):
+        return out[len("FORGED "):]
+    if out == "CLEAN":
+        return None
+    return (f"the receipt writer produced no verdict (exit {proc.returncode}: "
+            f"{(out or proc.stderr.strip())[:200]}); tracked bytes are unverified")
 
 
 class Report:

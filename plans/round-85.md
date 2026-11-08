@@ -129,3 +129,33 @@ Wave evidence root: `.ufo/waves/round-85/w1/`.
 - **Class:** landing/evidence-binding, the same class as r84's A5 substrate finding. The rule that would have caught
   it at write time is "a receipt is filed only after the instrument it names is committed"; Q157 does not cover it,
   so it is recorded here and carried as a r86 process item, not as a new criterion this round.
+
+## A6 — C2: the wave found two fail-open escapes in the repair; both are fixed, and the claim's sentence is narrowed (S85Sentinel F1/F2)
+
+- **Artifacts:** `.ufo/waves/round-85/w1/S85Sentinel.md` § 2.3-2.6 and § 3 F1/F2.
+  - **F2 (write side, HIGH):** `truth_refusal` resolved the writer beside the tool's *path* (`abspath(__file__)`),
+    not its real path, and `exec`ed its source in-process. A stub writer beside a symlink or a copy of the tool
+    returned `None` (K4 clean), and `PYTHONPATH`/module shadowing could run attacker code.
+  - **F1 (read side, HIGH):** the tool's `git status` and the writer's `_status_z` were pinned differently, and
+    `_truth_refusal` skips every path the writer's status lists. A mode change concealed by a repository
+    `core.fileMode=false` plus a same-size byte change and a rewritten stat entry was neither reported by the
+    tool's status nor re-hashed by the writer's.
+- **Repair (landed, `tools/souji-record-agreement.py` sha256 `0ade0751…8fb7`):** the writer is resolved with
+  `realpath` and compiled in a `-I -B` subprocess (no PYTHONPATH, no user site, no caller CWD on `sys.path`, no
+  `__pycache__`), with `REFUSED`/`FORGED`/`CLEAN` as the only accepted answers and everything else failing closed;
+  the tool's `git()` now pins the writer's config set (`core.fileMode=true`, `core.checkStat=default`,
+  `core.trustctime=true`, `core.excludesFile` and `GIT_CONFIG_GLOBAL` to the null device, `GIT_CONFIG_NOSYSTEM=1`,
+  `status.showUntrackedFiles=all`, `GIT_CONFIG_*` scrubbed), so both status reads agree.
+- **Probes after the repair:** the lying-stub-beside-a-symlink tool scores `rows=7 mismatches=0` (the real writer
+  is used, F2's symlink hijack closed); a copy with no writer fails closed (5 rows, `named=no` — the message names
+  the writer, not the file); the F1 shape (`core.fileMode=false`, mode change + same-size forge + stat rewrite) now
+  reports `MISMATCH K4 run.sh uncommitted-path M` where the unpinned status was empty. The frozen population stays
+  `rows=7 mismatches=0 errors=0` (`census/round-85/records/c2-after.txt`, re-filed on `0ade0751`).
+- **Amended sentence (C2):** *K4 re-hashes every status-clean stage-0 tracked REGULAR FILE and SYMLINK against the
+  index object id, with its own status read pinned to the writer's config set, and runs the writer's
+  `_truth_refusal` from the writer's source beside the tool's real path in an isolated interpreter. It does not
+  carry the writer's flag sweep (A2), so a gitlink or non-zero-stage concealment still passes; a copy of the tool
+  without a writer beside it fails closed rather than measuring; and a forged writer inside the audited tree remains
+  outside the claim (S85Sentinel F5).*
+- **Not repaired this round (routed):** the flag sweep (A2), `stat-cache-concealed` naming at most five paths (F7),
+  and the counter's inability to score a scratch copy (F3 — the mutant must carry its writer).
