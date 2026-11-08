@@ -139,6 +139,16 @@ def git(root: str, *args: str, check: bool = False) -> subprocess.CompletedProce
     return subprocess.run(cmd, capture_output=True, text=True, env=git_env(), check=check)
 
 
+def git_bytes(root: str, *args: str) -> subprocess.CompletedProcess:
+    """r87 wave repair (S87ExecC2 HIGH-1): the same pinned environment and argv as git(), with the stream left as
+    bytes. A path name is not UTF-8 by contract, so a text-mode read of the NUL status stream raises
+    UnicodeDecodeError on a path that is not valid UTF-8 — and a crashed read emits no record at all, which is worse
+    than the quoted spelling the line form produced. The bytes are decoded with `backslashreplace` at the record
+    boundary, where a lossy spelling is still a name a reader can act on."""
+    cmd = ["git", "-C", root, "-c", "maintenance.auto=false", *args]
+    return subprocess.run(cmd, capture_output=True, env=git_env())
+
+
 def read_at(root: str, rev: str, path: str) -> str | None:
     proc = git(root, "show", f"{rev}:{path}")
     if proc.returncode != 0:
@@ -468,17 +478,32 @@ class Report:
         # raw bytes: each record is "XY <path>", and a rename's second NUL field (the new name, no status pair) is
         # skipped - the rename record itself already reaches this key. Each path is C-escaped here so one K4 record
         # stays one physical line.
-        proc = git(self.root, "status", "--porcelain", "-z")
+        proc = git_bytes(self.root, "status", "--porcelain", "-z")
         if proc.returncode != 0:
-            self.bad("K4", ".", "status-failed", _stderr_tail(proc.stderr))
+            self.bad("K4", ".", "status-failed",
+                     _stderr_tail(proc.stderr.decode("utf-8", "backslashreplace")))
             return
-        for rec in proc.stdout.split("\0"):
-            if len(rec) < 4 or rec[2:3] != " ":
+        # r87 wave repair (S87ExecC2 MEDIUM-1): a rename or copy record is followed by exactly one field with no
+        # status pair, and a *content* test for "looks like a status pair" misreads a destination whose own name
+        # starts with two characters and a space (`ab cd.txt`). The status letters decide the skip, not the shape.
+        skip_next = False
+        for rec in proc.stdout.split(b"\0"):
+            if skip_next:
+                skip_next = False
                 continue
-            path = rec[3:].replace("\n", "\\n").replace("\t", "\\t").replace("\r", "\\r")
+            if len(rec) < 4 or rec[2:3] != b" ":
+                continue
+            status = rec[:2]
+            if b"R" in status or b"C" in status:
+                skip_next = True
+            # r87 wave repair (S87ExecC2 MEDIUM-2): decoded as bytes, so a CR in the name is still a CR here and is
+            # escaped as such; the text-mode read translated it to LF first and the record said `\n`.
+            path = (rec[3:].decode("utf-8", "backslashreplace")
+                    .replace("\n", "\\n").replace("\t", "\\t").replace("\r", "\\r"))
             if any(path == e or path.startswith(e if e.endswith("/") else e + "/") for e in exempt):
                 continue
-            self.bad("K4", path, "uncommitted-path", rec[:2].strip() or "??")
+            self.bad("K4", path, "uncommitted-path",
+                     status.decode("utf-8", "backslashreplace").strip() or "??")
         msg = truth_refusal(self.root)
         if msg:
             flag = msg.startswith(("RECEIPT-GITLINK-CONCEALED", "RECEIPT-INDEX-"))
