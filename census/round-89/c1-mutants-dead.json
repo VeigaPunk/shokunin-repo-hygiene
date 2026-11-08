@@ -1,0 +1,92 @@
+{
+ "note": "souji r87 C1: the eight r86 mutants byte-identical, in order, plus two that drop clauses r86 measured reachable and unrowed (m12 token-on-line, m16 punctuation). Each edit must apply exactly once to census/round-87/c1-pointer-counter.py. Kills are counted by census/round-87/c1-clause-battery.py over the pinned false-row populations: r86 (49 rows, the do-nothing control: the two new mutants must survive there, the eight must be killed) and r87 (51 rows: all ten must be killed). A third candidate (the `_capture_ok` suffix comparison) was measured already bound by NF12c and is not in this set.",
+ "members": [
+  {
+   "id": "m6-digest-blind",
+   "clause": "the MOVED target's bytes must equal the token's frozen digest",
+   "old": "        elif rev_digest(root, rev, target) != frozen:\n            why = \"target absent at rev or digest differs\"\n",
+   "new": "        elif False:\n            why = \"digest-blind mutant (m6)\"\n"
+  },
+  {
+   "id": "m7-round-blind",
+   "clause": "the MOVED target must name the token's own round-<N>",
+   "old": "        elif kr and (not tr or tr.group(1) != kr.group(1)):\n            why = \"target names a different round than the token\"\n",
+   "new": "        elif False:\n            why = \"round-blind mutant (m7)\"\n"
+  },
+  {
+   "id": "m8-w-only-shapes",
+   "clause": "the own-tree wave directory set includes a2w1/ and assimilation/, not w[0-9]+/ alone",
+   "old": "OWNTREE_WAVE = re.compile(r\"^(?:w[0-9]+|a2w1|assimilation)/\")",
+   "new": "OWNTREE_WAVE = re.compile(r\"^(?:w[0-9]+)/\")"
+  },
+  {
+   "id": "m9-basename-only",
+   "clause": "the own-tree comparison keeps the token's whole remaining path, not a two-component shape ending in its last component",
+   "old": "    return bool(m) and got[1:] == want[1:]",
+   "new": "    return bool(m) and len(got) == 2 and got[1] == want[-1]",
+   "note": "the r83 critic's A2 basename rule; killed by TF8 and NF-P on the r84 population."
+  },
+  {
+   "id": "m10-records-as-wave",
+   "clause": "a non-wave own-tree directory (records/) is not a capture shape",
+   "old": "OWNTREE_WAVE = re.compile(r\"^(?:w[0-9]+|a2w1|assimilation)/\")",
+   "new": "OWNTREE_WAVE = re.compile(r\"^(?:w[0-9]+|a2w1|assimilation|records)/\")"
+  },
+  {
+   "id": "m11-class-enum",
+   "clause": "a ledger class outside the frozen enum is refused, never resolved as its own class name",
+   "old": "    if cls not in CLASSES:\n        why = f\"unknown class {cls}\"\n",
+   "new": "    if False:  # m11: the class-enum guard is dropped\n        why = f\"unknown class {cls}\"\n",
+   "note": "S84MutCounter survivor class (token-on-line / unknown-class refusals). On item I85T (no frozen digest, token absent) a dropped guard returns the bogus class name as the resolved status, so NF-S goes red; on the r84 population no row reaches the guard with a non-enum class, so m11 survives there."
+  },
+  {
+   "id": "c7-census-in-tree",
+   "clause": "a census-rooted token moved into census/round-<N>/ must be a wave capture keeping the token's full path suffix",
+   "old": "        elif kr and target[:tr.start(0)] == \"census\" and token[:kr.start(0)] == \"census\" \\\n                and not _capture_ok(token, kr, target, tr):\n",
+   "new": "        elif False:  # c7: the census-in-tree branch is dropped\n",
+   "note": "r85 A1 / S85Scribe F1: reachable and discriminating, but no r85 row reached it (NF-R is refused by the own-tree belt first, TF11 is accepted as a capture). NF-W (I85R, target census/round-84/w1/c1-after.txt) is its row; on the r85 population this mutant survives, on r86 NF-W turns it red."
+  },
+  {
+   "id": "m14-short-shape",
+   "clause": "an own-tree comparison needs a token and a target each at least two components below their round",
+   "old": "    if len(want) < 2 or len(got) < 2:\n",
+   "new": "    if False:  # m14: the short-shape guard is dropped\n",
+   "note": "r85 A4 / S85MutCounter m14: both r85 MOVED tokens have >=2 components below their round, so the guard never fires there. NF-Y (I86S, a round-root token moved into a wave capture under its own round) is its row; dropping the guard lets _capture_ok accept the one-component remainder, so NF-Y resolves as MOVED."
+  },
+  {
+   "id": "m12-token-on-line",
+   "clause": "the R0 guard refuses an item whose token is not on its declared base line (the token-on-line half)",
+   "old": "    if not (line.isdigit() and 0 < int(line) <= len(blob) and token in blob[int(line) - 1]):\n",
+   "new": "    if not (line.isdigit() and 0 < int(line) <= len(blob)):  # m12: token-on-line half dropped\n",
+   "note": "S85MutCounter m12 (reachable, unexercised). NE1 is its row: item I87E declares line 3166 of LOG.md at base 705fa138, where its token is absent (it is on 3165), so pristine reports ERROR and this mutant falls through to UNRESOLVED."
+  },
+  {
+   "id": "m16-nf6b-punct",
+   "clause": "a path at a sentence end is whole when the following byte is one of . , ; : and the byte after it is not a path character",
+   "old": "        after_ok = (not after or after[0] not in PATHCH\n                    or (after[:1] in (b\".\", b\",\", b\";\", b\":\") and (len(after) < 2 or after[1] not in PATHCH)))\n",
+   "new": "        after_ok = (not after or after[0] not in PATHCH)  # m16: punctuation disjunct dropped\n",
+   "note": "S85MutCounter m16 (reachable, unexercised). TQ1 is its row: the R10 declaration names the L06 token followed by a sentence-final period, so only this disjunct makes the token whole."
+  },
+  {
+   "id": "m17-duplicate-id",
+   "clause": "the ledger reader refuses a duplicate id instead of letting the last row win",
+   "old": "            if len(r) < 3 or r[0] in ledger:\n",
+   "new": "            if len(r) < 3:  # m17: the duplicate-id refusal is dropped\n",
+   "note": "S88 row LD1: the harness appends a second P01 row to the frozen r77 ledger. Pristine prints LEDGER-REFUSED id=P01 and exits 1; with the duplicate check dropped the last row wins and the counter exits 0, so the row goes red. The edit applies once, in `_ledger`."
+  },
+  {
+   "id": "m18-whole-before",
+   "clause": "a declared path is whole only when the byte before it is not a path character (the `_whole` before-byte half)",
+   "old": "        before_ok = i == 0 or line[i - 1] not in PATHCH\n",
+   "new": "        before_ok = True  # m18: the before-byte half is dropped\n",
+   "note": "S88 row NF6g: the R11 declaration names the L06 token only as the suffix of `xtests/vault/.../.git`, so the byte before it is `x`. Pristine refuses the row; with the before-byte half dropped the token is whole and the row resolves QUARANTINED."
+  },
+  {
+   "id": "m19-len-half",
+   "clause": "the `_capture_ok` suffix comparison requires the capture suffix no longer than the token's remaining path (`len(want) <= len(have)`)",
+   "old": "    return bool(want) and len(want) <= len(have) and have[-len(want):] == want\n",
+   "new": "    return bool(want) and have[-len(want):] == want  # m19: the len half is dropped\n",
+   "note": "The r87 simplifier measured this arm DEAD (A10 D2b: both arms clean, same kill vector); this 13th member re-measures it on the r88 instruments. It is expected to SURVIVE both sets (killed=no), which is why it is not in c1-mutants.json: a survivor here documents the belt, it does not enter the kill target."
+  }
+ ]
+}

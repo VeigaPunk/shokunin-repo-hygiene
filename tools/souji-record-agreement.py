@@ -192,9 +192,38 @@ def _escape_text(text: str) -> str:
             # r87 wave repair (S87Sentinel F4): Python's str.splitlines() splits on these too, so a path holding one
             # would tear a line-oriented record in half even though no C control byte is present.
             out.append("\\u%04x" % o)
+        elif 0xDC80 <= o <= 0xDCFF:
+            # r89 (S88Sentinel F1): a byte that was not valid UTF-8, carried through `surrogateescape`. Print its
+            # original byte value so a bad byte and its literal spelling stay distinct.
+            out.append("\\x%02x" % (o - 0xDC00))
         else:
             out.append(ch)
     return "".join(out)
+
+
+def _decode_record(raw: bytes) -> str:
+    """r89: decode delegated bytes so an undecodable byte and its literal spelling stay distinct (S88Sentinel F1).
+    `surrogateescape` maps each undecodable byte to a lone surrogate U+DC80..U+DCFF; `_escape_text` then prints
+    each surrogate as `\\xNN` with its original byte value, while a literal backslash-x sequence gets its
+    backslash doubled. `backslashreplace` collapsed the two into the same spelling; this cannot."""
+    return raw.decode("utf-8", "surrogateescape")
+
+
+def _one_line_bytes(raw: bytes, limit: int = 200) -> str:
+    """r89: bound the RAW bytes first, then escape the window (S88Sentinel F2). The r88 `_one_line` escaped first
+    and then kept head-100/tail-99 of the escaped text, so 25 leading control bytes (`\\x01` each, four chars)
+    consumed the whole head and an exception's type name fell outside both ends. The excerpt is measured in raw
+    bytes here: keep the first and last N raw bytes, then escape. A raw window that cuts a UTF-8 continuation is
+    decoded with `surrogateescape` and each cut byte escapes separately."""
+    if not raw:
+        return "no stderr"
+    if len(raw) > limit:
+        head = limit // 2
+        keep = limit - head - 1
+        window = raw[:head] + "\u2026".encode("utf-8") + raw[-keep:]
+    else:
+        window = raw
+    return _escape_text(_decode_record(window))
 
 
 def git_bytes(root: str, *args: str) -> subprocess.CompletedProcess:
@@ -385,7 +414,7 @@ def truth_refusal(root: str) -> "str | None":
             raw = base64.b64decode(out[len("FLAGFAIL "):].strip(), validate=True)
         except (binascii.Error, ValueError):
             return "the index-flag read failed (undecodable detail); tracked bytes are unverified"
-        return (f"the index-flag read failed ({_one_line(raw.decode('utf-8', 'backslashreplace'))}); "
+        return (f"the index-flag read failed ({_one_line_bytes(raw)}); "
                 f"tracked bytes are unverified")
     if out.startswith("FORGED "):
         # r86: a path may carry a newline or a tab (S85ExecK4 §2e); r87 (S87Scribe F8/F9): the escape is the same
