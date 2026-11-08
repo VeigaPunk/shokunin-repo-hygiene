@@ -196,7 +196,19 @@ def truth_refusal(root: str) -> "str | None":
         "    msg = mod._truth_refusal(root)\n"
         "except SystemExit as exc:\n"
         "    print('REFUSED %s' % exc.code); raise SystemExit(0)\n"
-        "print('CLEAN' if not msg else 'FORGED ' + msg.replace(chr(10), ' '))\n"
+        "if not msg:\n"
+        "    fl = mod.git(root, 'ls-files', '-v', '-z', ':(top)')\n"
+        "    if fl.returncode != 0:\n"
+        "        print('FLAGFAIL ' + fl.stderr.decode('utf-8', 'replace').strip()[:200])\n"
+        "        raise SystemExit(0)\n"
+        "    for rec in fl.stdout.split(bytes([0])):\n"
+        "        if not rec:\n"
+        "            continue\n"
+        "        tag, _, p = rec.partition(bytes([32]))\n"
+        "        if tag != bytes([72]):\n"
+        "            msg = mod._flag_refusal(root, tag, p)\n"
+        "            break\n"
+        "print('CLEAN' if not msg else 'FORGED ' + msg)\n"
     )
     try:
         proc = subprocess.run([sys.executable, "-I", "-B", "-c", bootstrap, K4_TRUTH_WRITER, root],
@@ -206,8 +218,12 @@ def truth_refusal(root: str) -> "str | None":
     out = proc.stdout.strip()
     if out.startswith("REFUSED"):
         return f"the receipt writer refused the tree (exit {out.split(' ', 1)[-1]}); tracked bytes are unverified"
+    if out.startswith("FLAGFAIL"):
+        return (f"the index-flag read failed ({out[len('FLAGFAIL '):].strip()}); tracked bytes are unverified")
     if out.startswith("FORGED "):
-        return out[len("FORGED "):]
+        # r86: a path may carry a newline or a tab (S85ExecK4 §2e). C-escape them so one K4 record stays one
+        # physical line and still names the path a reader must act on.
+        return (out[len("FORGED "):].replace("\n", "\\n").replace("\t", "\\t").replace("\r", "\\r"))
     if out == "CLEAN":
         return None
     return (f"the receipt writer produced no verdict (exit {proc.returncode}: "
@@ -421,7 +437,8 @@ class Report:
             self.bad("K4", path, "uncommitted-path", line[:2].strip() or "??")
         msg = truth_refusal(self.root)
         if msg:
-            self.bad("K4", ".", "stat-cache-concealed", msg)
+            flag = msg.startswith(("RECEIPT-GITLINK-CONCEALED", "RECEIPT-INDEX-"))
+            self.bad("K4", ".", "index-flag-concealed" if flag else "stat-cache-concealed", msg)
 
     def emit(self, as_json: str | None) -> int:
         for key, record, cls, detail in self.rows:
