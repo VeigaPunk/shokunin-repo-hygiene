@@ -100,37 +100,40 @@ by itself separate a row mismatch from a harness error (every observed kill was 
 
 ## A shadowed clause is not an unbound clause (r85)
 
-r84 read the sentinel's per-clause battery as "the census-in-census and last-component clauses are unbound by the
-population" and routed a row for each. r85 measured that the sentence is wrong in a way that matters: an UNBOUND
-clause is one a row could bind; a SHADOWED clause is one no row can bind, because another belt refuses every input
-the clause would refuse.
+A rule with more than one guard per decision can leave a clause with no row for two different reasons, and the
+difference decides what to do: an UNBOUND clause is one a row could bind and the population lacks that row; a
+SHADOWED clause is one no row can bind, because another guard refuses every input the clause would refuse. r84
+called the census-in-tree and last-component clauses "unbound by the population"; r85 measured them and found the
+first unbound (it needs a row) and the second bound (a row already exercises it, indirectly, on every row).
 
-The census-in-tree branch of `judge()` in `census/round-85/c1-pointer-counter.py` (the branch
-`elif kr and target[:tr.start(0)] == "census" and token[:kr.start(0)] == "census" and not _capture_ok(...)`) is
-shadowed, not unbound. To reach it a call must have `target[:tr.start(0)] == "census"` and
-`token[:kr.start(0)] == "census"`; the branch immediately above it fires on `target[:tr.start(0)] ==
-token[:kr.start(0)]` and refuses the same input through `_owntree_ok`. When the token's root is not `census`, the
-branch's second condition is false and the `target[:tr] == "census" and token[:kr] != "census"` belt above it
-applies. The branch therefore cannot be the first refusing branch for any pair.
+How to tell them apart, measured rather than argued (S337/S340: a suite is judged by the mutants it kills):
 
-How to tell the two apart, measured rather than argued: author a single-edit mutant that drops ONLY the clause in
-question and score it on every pinned population (S337: a suite is judged by the mutants it kills, not by the rows
-it carries; S340 is the paper-backed form of the same criterion).
+1. Author a single-edit mutant that drops ONLY the clause in question, and score it on every pinned population.
+2. If it is killed, the clause is **bound** — the killing row is its row (the last-component basename check at
+   `census/round-85/c1-pointer-counter.py:387` is bound this way: dropping it makes every row error).
+3. If it survives everywhere, ask whether the branch is REACHABLE: drive the branch directly through the counter's
+   own `--forge` path with a hand-built row (r85: item I85R, target under `census/round-84/w1/`). If the pristine
+   counter refuses with that branch's own reason and the mutant resolves the row, the clause is reachable and the
+   population is missing its row → **unbound**. Build the row.
+4. If no input reaches the branch — a guard above it refuses every pair the branch's guard admits — the clause is
+   **shadowed**: a row cannot bind it, and it is either deleted or documented as a belt, never counted as coverage.
 
-- Survives everywhere, and the branch order shows a belt above catches every input it would catch → **shadowed**:
-  delete it (dead code that reads like protection) or leave it as a documented belt; a row cannot bind it.
-  `census/round-85/records/a1-c7-shadow.txt` reads `killed_r84=0 killed_r85=0` with both pristine arms green.
-- Survives everywhere but the branch IS reachable → **unbound**: a row is missing (r84's five clauses, closed by the
-  44-row population).
-- Killed by some population → bound; the killing row is the clause's row.
+The census-in-tree branch is the r85 case of (3), and this section's first version got it wrong: it read the
+prefix-equal own-tree belt as refusing every pair that reaches the branch. It does not — `_owntree_ok` returns True
+when the target sits under a real wave directory (`OWNTREE_WAVE`), so a census-rooted token whose target is
+`census/round-<N>/w1/…` passes the belt and reaches the branch, which refuses it with its own reason. The lesson is
+the order of the two measurements: a mutant surviving every population is evidence about the POPULATION; only a
+direct drive of the branch is evidence about reachability. `census/round-85/records/a1-c7-shadow.txt` is the
+survival; `.ufo/waves/round-85/w1/S85Scribe.md` § F1 is the reachability, with a 48-row probe population in which
+one added row (NF-W) kills the dropped branch.
 
-Consequences for the claim language. "The population certifies five clauses" is a claim about rows; "the counter's
-rule is certified" is a claim about the rule, and it is false whenever a branch is shadowed — the belt is what
-protects, and the dead branch is a reader trap. The r85 round therefore reports the census-in-tree branch as
-shadowed with its probe, adopts r84's routed "ground it or delete it" as "delete" (landed in a later round; a
-claim's rule is never changed after a seat has scored), and does not count it as coverage.
+Consequences for the claim language: "the population certifies these clauses" is a rows claim; a clause with no row
+is not certified whether or not it is reachable, and a claim that counts a clause as coverage must carry its row.
+r84's routed "ground it or delete it" for this branch answers "ground it" — the row is an r86 item, and nothing was
+deleted on a reading that a seat falsified.
 
-Limits: the shadow argument is branch-order reasoning over one function, checked by one mutant pair, not a proof
-over all inputs; a second belt can be shadowed by a third (this round only shows the first-order pair); the
-last-component basename check is shadowed in the same way for every MOVED row measured (a basename change fails the
-suffix comparisons that follow), and no probe was run for it.
+Limits: reachability was shown for one shape (a census-rooted token landing in a wave directory under its own
+round), not for every shape the branch admits; the basename and own-tree-belt results come from mutants that make
+the counter raise or go red on the existing populations, which shows they are load-bearing without producing the
+standalone row a reader can point at; and "shadowed" for the writer-side stage-0 filter rests on a separate probe
+(`.ufo/waves/round-85/w1/S85MutK4.md` m4, conflict stages always listed by porcelain).

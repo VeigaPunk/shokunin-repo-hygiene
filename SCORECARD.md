@@ -1996,7 +1996,9 @@ unrowed; the STOP→KILL pair widens the pid-reuse window the r83 tool disclosed
 
 No owned axis score changed (calibration 7, coverage 8, operability 8 — the lane has no reproducible 0–10 mapping);
 both rows carry the verdict, the counting command and the measured commit instead. The census-in-tree branch is
-reported as SHADOWED with its probe (`records/a1-c7-shadow.txt`), not as coverage; its deletion is routed to r86.
+reported as REACHABLE and unbound: its mutant survives both populations (`records/a1-c7-shadow.txt`) but the branch
+refuses a directly driven row and one added row (NF-W) kills it (`.ufo/waves/round-85/w1/S85Scribe.md` F1); the row
+and the 48-row population are routed to r86 and nothing was deleted.
 
 ### Capabilities (round 85 rows)
 

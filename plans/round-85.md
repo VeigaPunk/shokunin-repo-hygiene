@@ -25,28 +25,36 @@ Wave evidence root: `.ufo/waves/round-85/w1/`.
   after receipt existed when m11 was replaced). The wrong first target and its measurement are kept in A1 as the
   round's finding, not deleted.
 
-## A1 — C1: the census-in-tree branch is SHADOWED, not unbound (the routed r84 A10 item)
+## A1 — C1: the census-in-tree branch is REACHABLE and UNBOUND (first reading withdrawn; S85Scribe F1)
 
-- **Artifact:** `census/round-85/records/a1-c7-shadow.txt` — the single-edit mutant `c7-census-in-tree-drop`
-  (drops only the branch at `census/round-85/c1-pointer-counter.py` `judge()`, `elif kr and target[:tr.start(0)] ==
-  "census" and token[:kr.start(0)] == "census"`) is **not killed** by either pinned population: both pristine arms
-  green (44/0 and 47/0), `killed_r84=0 killed_r85=0`, EXIT 0. The same mutant also survived the r83 population in
-  r84. Rows NF-R/TF11 (the census-token move, non-capture and capture) do not change that.
-- **Why (branch order, read directly):** for the branch to be reached, `target[:tr.start(0)] == "census"` and
-  `token[:kr.start(0)] == "census"`; but the branch immediately above it is
-  `elif kr and target[:tr.start(0)] == token[:kr.start(0)] and not _owntree_ok(...)`, and those two conditions make
-  its guard TRUE, so the own-tree belt refuses first. When the token's root is NOT `census`, the branch's second
-  condition is false and the `token[:kr.start(0)] != "census"` belt above it applies instead. So the branch cannot
-  be the first refusing branch for any (token, target) pair.
-- **Frozen wording falsified:** r84's A10 sentence and the r84 knowledge section's framing that the
-  "census-in-census clause" was *unbound by the population* — an unbound clause is one a row could bind; this one is
-  shadowed, and no row can bind it. r84's own routed item asked to "ground it or delete it"; the measurement answers:
-  it cannot be grounded.
-- **Amended sentence:** *the r85 round measures that the census-in-tree branch is unreachable behind the own-tree and
-  cross-root belts (a single-edit drop survives both pinned populations, 0/2), and adopts the routed decision
-  "delete"; the deletion lands as the r86 item rather than this round's claim, because the claim slot this round is
-  the class-enum guard (P's m11) and a claim's rule is not changed after any seat has scored.* This is a finding,
-  not a claim; the pre-file ledger records it as `falsifies-wording` with this pointer.
+- **Artifact:** `.ufo/waves/round-85/w1/S85Scribe.md` § F1 and its reproducer
+  `.ufo/waves/round-85/w1/S85Scribe/probe-census-in-tree-reachable.py`, run through the counter's own public
+  `--forge` path on the committed bytes (`91b4ffde…`): for item I85R with a target under `census/round-84/w1/`, the
+  pristine counter refuses with `why=census-in-tree target is not a wave capture keeping the token's full path
+  suffix`, while the mutant that drops that branch resolves the same row as MOVED. The Scribe then added the missing
+  row (NF-W, target `census/round-84/w1/c1-after.txt`) to a scratch copy of the harness and a 48-row population: the
+  pristine counter scores `rows=48 mismatches=0` and the c7 mutant goes red on NF-W alone. One row binds the clause.
+- **What the first reading got wrong (this file's own A1 text before this amendment):** it said the prefix-equal
+  own-tree belt refuses every pair that could reach the branch. It does not: `_owntree_ok` returns True when the
+  target sits under a real wave directory (`OWNTREE_WAVE`, `^(?:w[0-9]+|a2w1|assimilation)/`), so for a
+  census-rooted token whose target is `census/round-<N>/w1/…` the belt is satisfied and control reaches the
+  census-in-tree branch. The shadow probe's `killed_r84=0 killed_r85=0` (`records/a1-c7-shadow.txt`) is explained by
+  the POPULATION, not by unreachability: no pinned row carries that shape — NF-R's `records/copy/` target is refused
+  by the belt first, TF11's `waves/` target is accepted as a capture.
+- **Same bytes, two more clauses measured (S85Scribe F4):** dropping the last-component basename check
+  (`c1-pointer-counter.py:387`) makes every row error on both populations — it is bound, and it is the only clause
+  between the population and an exception; dropping the own-tree belt (`:391`) is killed 7 of 7 rows on both
+  populations — bound, and it is what refuses NF-R. Neither is shadowed.
+- **Frozen wording falsified:** the preregistration's round non-claim ("the branch is shadowed by the prefix-equal
+  own-tree belt … the routed decision … is answered as 'delete'") and the r85 knowledge section's shadow
+  paragraph — both were written from the first reading. The two frozen CLAIMS are untouched: C1 is about the
+  class-enum guard and its kill, C2 about K4.
+- **Amended sentence:** *the census-in-tree branch is reachable and discriminating and has no row; a MOVED row whose
+  census-rooted token lands in a wave directory under its own round (`census/round-<N>/w1/<basename>`) is refused by
+  that branch alone. The r85 population is one row short of binding it. r84's routed "ground it or delete it"
+  therefore answers "ground it", and the row (NF-W) with the 48-row population — plus the Scribe's c7 kill — is
+  routed to r86. Nothing is deleted, and Q156's test stands: it asked for the measurement, and the measurement said
+  the opposite of the first reading.*
 
 ## A2 — C2: a gitlink concealed by skip-worktree passes K4 (wording narrowed; the repair does not carry the flag sweep)
 
@@ -83,3 +91,19 @@ Wave evidence root: `.ufo/waves/round-85/w1/`.
   rows. Both arms were re-run on the filed counter (`census/round-85/records/c2-after.txt` 7/0,
   `census/round-85/controls/c2-before-base-tool.txt` 3). Seat findings scored against `ae482f07…` are recorded as
   findings about those bytes; the class the m5 mutant belongs to is now killed by a row, not by a crash.
+
+## A4 — C1: five more guards are unbound (measured by the wave); the claim covers only the six it names
+
+- **Artifact:** `.ufo/waves/round-85/w1/S85MutCounter.md` (table at its §3, receipts `receipts/ext-*`): six new
+  single-edit mutants scored on BOTH pinned populations — `m12-r0-line` (R0's token-on-base-line half) survives
+  44/0 and 47/0; `m14-short-shape` (`len(want) < 2 or len(got) < 2`) survives both; `m15-empty-want` (`bool(want)`
+  in `_capture_ok`) survives both and the seat shows **0 of 32 inputs flip** (dead clause); `m16-nf6b-punct` (the
+  sentence-end punctuation disjunct in `_whole`) survives both; `m17-dup-id` (duplicate-id refusal in `_ledger`)
+  survives both and silently overwrites. `m13-no-round-guard` is killed by NF3 on both — already bound, not new
+  coverage.
+- **Frozen wording falsified:** none. The preregistration claims "kills all six frozen single-edit mutants" and
+  says the population "does not certify the counter's whole rule". The seat's survivors are exactly that limit, and
+  the C1 claim's stated limits already say the population proves discrimination on its own rows only.
+- **Disposition:** `neutral` in the ledger with this pointer; the five unbound guards and the dead clause are
+  routed to r86 (a row each, or a deletion for m15). Q156 now requires the shadow-vs-unbound test before a clause is
+  named, so m15 (dead) is filed as dead rather than "unbound".

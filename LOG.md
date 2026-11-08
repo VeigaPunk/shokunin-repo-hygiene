@@ -3248,6 +3248,16 @@ receipts in P `5bd5a0ce`. Amendments in `plans/round-85.md` (A0-A1 so far); the 
   A0.2: the r85 row pin was 48 for a 47-row file and was corrected before any battery used it (the sha never
   changed). A0.3: the first C1 target (bind the census-in-tree clause) was not bindable and moved to the class-enum
   guard before F; the measurement of the wrong target is kept as A1.
+- **Correction (S85Scribe F1/F4, appended to this round's entry; the round's own first reading is withdrawn).** A1
+  first said the census-in-tree branch was SHADOWED because the prefix-equal own-tree belt refuses every pair that
+  reaches it. That is false: `_owntree_ok` returns True for a target under a real wave directory, so a census-rooted
+  token landing in `census/round-<N>/w1/…` passes the belt and the branch refuses it with its own reason (driven
+  through the counter's `--forge` path on `91b4ffde`), and one added row (NF-W) in a 48-row probe population kills
+  the dropped branch. The branch is REACHABLE and UNBOUND, r84's "ground it or delete it" answers "ground it", and
+  NF-W plus the 48-row population are routed to r86; nothing was deleted. The same seat measured the last-component
+  basename check and the own-tree belt: both are bound (the first makes every row error when dropped, the second is
+  killed 7/7), so the section's "shadowed in the same way" sentence was corrected too. The two frozen claims are
+  untouched: C1 is the class-enum guard and its kill, C2 is K4.
 - **Sources/registry.** S337 (PIT, pitest.org, quote "mutation testing is the gold standard against which all other
   types of coverage are measured", capture `census/round-85/srcs/pitest-org.html`) admitted (`docs`, B, mined,
   used-by the r85 knowledge section). S315 (racy-git), S316 (git-hash-object), S317 (gitformat-index) and S335
