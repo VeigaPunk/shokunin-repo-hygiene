@@ -231,49 +231,71 @@ CLI_OUT=""
 # parenthesized comm, field 22 starttime, S332), then a DFS that signals each descendant as it is DISCOVERED and
 # re-reads its starttime before every TERM and KILL. Limit, stated: /proc reads are not atomic, so a pid reused
 # between one read and its signal can still be signalled; pidfd is not available to a bash tool.
+# r84 (C2): the r83 walk TERMed each descendant as discovered, so a CLI that traps the caller's signal ran that
+# trap during the read->TERM window and forked a setsid'd child the read had never seen — outside the tree, and
+# outside timeout's group too, so the group TERM/KILL could not reach it either (l1/l2: one survivor each).
+# The walk now FREEZES before it signals: every descendant found by a fork-free /proc pass is SIGSTOPped (with
+# its starttime re-read right before the STOP), so it can neither run a trap nor fork — a TERM delivered to a
+# stopped pid pends until CONT, so the freeze is what removes the trap from the path; a second pass catches a
+# child forked in the first pass's read->STOP window (its keep-running parent is stopped there, so it stays a
+# child of the frozen tree and is seen); then the frozen set is SIGKILLed, starttime re-read before each KILL.
+# Keeps r83's shape: one fork-free map pass per iteration (bash builtins only, no pgrep/ps/cat per pid), the
+# whole-file stat read with the last-`)` strip, the field-count guard, the root pid never signalled, the 0.1 s
+# pause and the caller's group-kill fallback. `/proc` is not an atomic snapshot, so a child whose parent dies in
+# the read->STOP window is not a descendant any pass could see (stated limit, unchanged).
 cli_kill_tree() {
   local pid=$1
-  local -A ppid_of=() start_of=() kids_of=()
-  local d line rest p st i cur k now crestart
+  local -A ppid_of=() start_of=() kids_of=() seen=()
+  local d line rest p st i cur k now crestart pass
   local -a stack=() tree=()
-  for d in /proc/[0-9]*; do
-    # r83 (S83Sentinel F1): read the WHOLE stat file, not its first line: comm is emitted unescaped
-    # (S332), so a newline inside comm would truncate a line-read and (pre-guard) abort the handler.
-    # The strip then takes the text after the LAST `)` of the whole content, which is the closing paren.
-    line=""
-    { IFS= read -r -d '' line < "$d/stat"; } 2>/dev/null
-    [ -n "$line" ] || continue
-    rest=${line##*)}
-    set -- $rest
-    [ "$#" -ge 20 ] || continue
-    p=${d#/proc/}
-    ppid_of[$p]=$2
-    start_of[$p]=${20}
-  done
-  for p in "${!ppid_of[@]}"; do
-    kids_of[${ppid_of[$p]}]+=" $p"
-  done
-  stack=("$pid")
-  while [ ${#stack[@]} -gt 0 ]; do
-    cur=${stack[-1]}
-    unset 'stack[-1]'
-    for k in ${kids_of[$cur]:-}; do
-      [ "$k" = "$pid" ] && continue
-      now=""
-      { read -r now < "/proc/$k/stat"; } 2>/dev/null || continue
-      crestart=${now##*) }
-      set -- $crestart
+  for pass in 1 2; do
+    ppid_of=(); kids_of=()
+    for d in /proc/[0-9]*; do
+      # r83 (S83Sentinel F1): read the WHOLE stat file, not its first line: comm is emitted unescaped
+      # (S332), so a newline inside comm would truncate a line-read and (pre-guard) abort the handler.
+      # The strip then takes the text after the LAST `)` of the whole content, which is the closing paren.
+      line=""
+      { IFS= read -r -d '' line < "$d/stat"; } 2>/dev/null
+      [ -n "$line" ] || continue
+      rest=${line##*)}
+      set -- $rest
       [ "$#" -ge 20 ] || continue
-      [ "${20}" = "${start_of[$k]:-}" ] || continue
-      kill -TERM "$k" 2>/dev/null || true
-      tree+=("$k")
-      stack+=("$k")
+      p=${d#/proc/}
+      ppid_of[$p]=$2
+      # r84: first write wins across both passes, so a pid recycled between the passes keeps the
+      # starttime it was discovered with and never passes the re-check below.
+      [ -n "${start_of[$p]:-}" ] || start_of[$p]=${20}
+    done
+    for p in "${!ppid_of[@]}"; do
+      kids_of[${ppid_of[$p]}]+=" $p"
+    done
+    stack=("$pid")
+    while [ ${#stack[@]} -gt 0 ]; do
+      cur=${stack[-1]}
+      unset 'stack[-1]'
+      for k in ${kids_of[$cur]:-}; do
+        [ "$k" = "$pid" ] && continue
+        now=""
+        # r83 routed defect D5 (r83 spot-check): every stat read here is whole-file with the last `)` strip,
+        # as the map pass is, so a comm carrying a newline cannot truncate the re-check.
+        now=""
+        { IFS= read -r -d '' now < "/proc/$k/stat"; } 2>/dev/null
+        [ -n "$now" ] || continue
+        crestart=${now##*) }
+        set -- $crestart
+        [ "$#" -ge 20 ] || continue
+        [ "${20}" = "${start_of[$k]:-}" ] || continue
+        kill -STOP "$k" 2>/dev/null || true
+        [ -n "${seen[$k]:-}" ] || { seen[$k]=1; tree+=("$k"); }
+        stack+=("$k")
+      done
     done
   done
   sleep 0.1
   for k in "${tree[@]}"; do
     now=""
-    { read -r now < "/proc/$k/stat"; } 2>/dev/null || continue
+    now=""
+    { IFS= read -r -d '' now < "/proc/$k/stat"; } 2>/dev/null
     [ -n "$now" ] || continue
     crestart=${now##*) }
     set -- $crestart
