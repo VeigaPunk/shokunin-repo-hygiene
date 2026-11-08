@@ -44,10 +44,10 @@ def find(prefix):
     return "<" + prefix + ": not found yet>"
 
 
-P = find("round-88: instruments")
-F = find("round-88: preregistration")
+P = find("round-89: instruments")
+F = find("round-89: preregistration")
 CTX = f"""# Goal
-souji round 88 (lane repo {LANE}, lane id souji). The L1 (SoujiR89) holds the planner seat and is the ONLY
+souji round 89 (lane repo {LANE}, lane id souji). The L1 (SoujiR89) holds the planner seat and is the ONLY
 integration owner: it froze the claims, integrates your findings, commits through the lane helper, measures and
 writes the report. You are one seat of ONE v1 wave of 12 seats. Seats deliver files and findings only: never commit,
 never push, never mutate git/jj state, never edit fleet or sibling-lane files, never edit MANIFEST.json,
@@ -65,55 +65,51 @@ read-only to you. All clones, mirrors, fixtures and counter `--work` dirs live u
 (`trap 'rm -rf -- "$S"' EXIT`), copying receipts into your seat dir first. Disclose any scratch you left behind.
 
 # Frozen round (read {LANE}/census/round-89/preregistration.txt FIRST — it is the contract)
-Lane base {BASE} (r87 closed; spot-check corpus/lessons/round-87-verifier-spotcheck.md). P {P}: instruments,
+Lane base a2cef94a (r88 closed; spot-check corpus/lessons/round-88-verifier-spotcheck.md). P {P}: instruments,
 populations, mutants, controls and the before receipts. F {F}: the preregistration alone (frozen before any
 after-data). Nothing in the claim wording may be widened by this wave; the wave's job is to FALSIFY it (Amendment 59:
 a claim verifies only if no artifact produced by this round's own wave falsifies its STATED WORDING; numbers
 re-deriving is necessary, not sufficient).
 
 Claims (verbatim targets; read the prereg for the full predicate, kill rule and stated limits):
-- C1 calibration 7: on the frozen 53-row population census/round-89/c1-false-rows.tsv (the r87 51 rows
-  byte-for-byte plus NF6g at fixture revision R11 and LD1), the r88 clause battery reports the UNCHANGED r87 counter
-  green on both pinned populations and kills all TWELVE mutants (census/round-89/c1-mutants.json):
-  killed_r87=10, killed_r88=12, killed_total=22, EXIT 0; the do-nothing control on the r87 51-row population alone
-  kills ten and leaves m17-duplicate-id and m18-whole-before alive; the 13th member m19-len-half survives both sets,
-  recording the `_capture_ok` len half as a BELT, not a row.
+- C1 calibration 7: on the frozen 57-row population census/round-89/c1-false-rows.tsv (the r88 53 rows byte-for-byte
+  plus NF6h/NF6i at fixture revision R12 and LD1b/LD2), the r89 clause battery reports the UNCHANGED r87 counter
+  green on both pinned populations and kills all SIXTEEN mutants (census/round-89/c1-mutants.json):
+  killed_r88=12, killed_r89=16, killed_total=28, EXIT 0; the do-nothing control on the r88 53-row population alone
+  kills twelve and leaves m18b-alnum-before, m17b-target-keyed, m17c-no-malformed and m18d-first-only alive.
   Command (after): python3 -B census/round-89/c1-clause-battery.py --counter census/round-87/c1-pointer-counter.py
-  --work DIR --only r87,r88 --expect-killed 22 ; (before): the same with --only r87 --expect-killed 10 ;
-  (belt): the same after command with --mutants census/round-89/c1-mutants-dead.json --expect-killed 22.
-- C2 operability 8: tools/souji-record-agreement.py's FLAGFAIL branch ships the raw stderr base64-framed and the
-  parent renders it through `_one_line` (escape first, then head-100/…/tail-99 at a 200-character excerpt bound), so
-  the K4 detail is ONE escaped physical line that names a 400-character `AttributeError:` line, does not split a
-  three-line traceback, escapes control/NEL/U+2028, and reads `no stderr` for empty input. The frozen 7-case fixture
-  tests/fixtures/r89-k4-flagfail.py reports cases=7 tool_pass=7 before_pass=3, EXIT 0; the r87 tool bytes
-  census/round-89/controls/c2-before-tool.py pass three and fail KFF2/KFF3/KFF4/KFF5.
+  --work DIR --only r88,r89 --expect-killed 28 ; (before): the same with --only r88 --expect-killed 12.
+- C2 operability 8: tools/souji-record-agreement.py's FLAGFAIL branch decodes base64 with surrogateescape and bounds
+  RAW bytes first (head-100 / tail-99) before escaping, so the detail is injective on the bytes and the head carries
+  content. The frozen 10-case fixture tests/fixtures/r89-k4-flagfail.py reports cases=10 tool_pass=10 before_pass=8,
+  EXIT 0; the r88 tool bytes census/round-89/controls/c2-before-tool.py pass eight (failing KFF6/KFF8).
   Command: python3 -B tests/fixtures/r89-k4-flagfail.py --tool tools/souji-record-agreement.py \
   --before census/round-89/controls/c2-before-tool.py --work DIR
-  (before arm: the same fixture with the r87 tool as BOTH --tool and --before).
+  (before arm: the same fixture with the r88 tool as BOTH --tool and --before).
 
 Instrument hashes (re-measure them; a mismatch is a finding):
-  c1-false-rows.tsv        {sha('census/round-89/c1-false-rows.tsv')} (53 rows)
-  c1-mutants.json          {sha('census/round-89/c1-mutants.json')} (12 members)
+  c1-false-rows.tsv        {sha('census/round-89/c1-false-rows.tsv')} (57 rows)
+  c1-mutants.json          {sha('census/round-89/c1-mutants.json')} (16 members)
   c1-mutants-dead.json     {sha('census/round-89/c1-mutants-dead.json')} (13 members, m19 is the belt)
   c1-false-row-harness.py  {sha('census/round-89/c1-false-row-harness.py')}
   c1-clause-battery.py     {sha('census/round-89/c1-clause-battery.py')}
   c1-pointer-counter.py    {sha('census/round-87/c1-pointer-counter.py')} (UNCHANGED r87 bytes)
   c1-items.tsv             {sha('census/round-87/c1-items.tsv')} (UNCHANGED r87 bytes)
-  r88-k4-flagfail.py       {sha('tests/fixtures/r89-k4-flagfail.py')}
+  r89-k4-flagfail.py       {sha('tests/fixtures/r89-k4-flagfail.py')}
   tools/souji-record-agreement.py {sha('tools/souji-record-agreement.py')}
-  controls/c2-before-tool.py {sha('census/round-89/controls/c2-before-tool.py')} (r87 tool bytes)
-  controls/c2-before.txt   {sha('census/round-89/controls/c2-before.txt')}
-  controls/c1-before.txt   {sha('census/round-89/controls/c1-before.txt')}
+  controls/c2-before-tool.py {sha('census/round-89/controls/c2-before-tool.py')} (r88 tool bytes)
 
-# Round-87 debts this round answers (do not re-declare them as new)
-- (C1) r87 A4/A10 carried three named clauses for r88: m17 duplicate ledger id, the `_whole` before-byte half, and
-  `_capture_ok`'s `len(want) <= len(have)` half. This round row-binds the first two and re-measures the third DEAD
-  (m19-len-half, expected survivor). Four clauses stay carried: p2 basename granularity, p3 the punctuation
-  lookahead, p7 `_regular`'s symlink leg, p8 `token_ok`'s hyphen marker.
-- (C2) S86ExecK4 2b + S86Sentinel probe C4: the FLAGFAIL branch truncated the stderr head and embedded multi-line
-  stderr raw. r87 fixed the no-verdict branch only; this round fixes FLAGFAIL.
-- r87 spot-check routed defects D4 (a rejected Gate row not written) and D6 (a roff line mis-citation) are candidate
-  carry items; check them, do not absorb them.
+# Round-88 debts this round answers (do not re-declare them as new)
+- (C1) S88MutCounter F1-F4 carried four named clause families with the exact row each would bind them by (NF6h, LD1b,
+  LD2, NF6i). This round row-binds all four and names the spelling each covers. Five spellings stay carried:
+  p2 basename granularity, p3 the punctuation lookahead, p7 `_regular`'s symlink leg, p8 `token_ok`'s hyphen
+  marker, and the `fleet:` symlink leg.
+- (C2) S88Sentinel F1 (injectivity lost on the composed decode+escape pipeline, MEDIUM) and F2 (25 leading control
+  bytes consume the escaped head, LOW–MEDIUM). This round bounds raw bytes first and decodes with `surrogateescape`.
+  F3 (forged-`CLEAN` fail-open, inherited) and F4 (`_stderr_tail` sibling branches, inherited) stay carried.
+- r88 spot-check routed defects: fleet report attribution (kagi-shokunin 5c10e33d) — the lane should land its report
+  through a lane-attributed path; S349 word-count self-correction (documentation, verified, no action); launch-
+  workdir convention (receipts do not name the workdir — cosmetic).
 
 # Tooling authorization (operator, 2026-10-19)
 You and every seat may install or upgrade tools that help the task; read /home/vgpnk/.omp/agent/RULES.md first
