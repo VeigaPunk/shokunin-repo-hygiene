@@ -44,7 +44,7 @@
    "instrument": "tools/souji-vault-verify.sh (candidate; W2)",
    "counting_command": "python3 -B census/round-83/c2-tree-walk-counter.py --tool <candidate> --work <empty dir outside /tmp>",
    "before": "load-dependent race: census/round-83/controls/c2-K-a-r82-tool.txt mismatches=4 (load1~250); census/round-83/records/c2-before-pgrep.txt mismatches=1 (load1~56); reviewer five executions 0,2,2,2,4 (idle run green, deep rows 1.8/2.0/3.8/4.6 s); structural before: pgrep 106-108, N=24 3.8-5.0 s",
-   "after": "target SUMMARY rows=20 mismatches=0 errors=0 orphans=0 EXIT=0",
+   "after": "records/c2-after.txt / c2-after-run2.txt / c2-after-pgrep.txt: rows=20 mismatches=0 errors=0 orphans=0 EXIT=0 at tool sha256 72a405f2 (deep rows 1.2-1.6 s); selftest 57/0, r17 37/0, probe D 4/4",
    "receipts": [
     "census/round-83/controls/c2-K-a-r82-tool.txt",
     "census/round-83/records/c2-after.txt",
@@ -61,10 +61,11 @@
     "a child forked after the one /proc pass is never signalled (snapshot; reviewer F8)",
     "the tool runs set -euo pipefail and every stat parse is arity-guarded ([ \"$#\" -ge 20 ]); an unguarded ${20} aborted the handler on a short line (reviewer F3, repaired)",
     "records/wave-<w>/ in the C1 sentence is a label: the inherited CAPTURE literal is records/wave-[^/]+ (reviewer F7)",
-    "the prereg is prose, not the freeze-check key-line shape: 13 FIELD-MISSING findings, no machine-checkable freeze (reviewer F4)"
+    "the prereg is prose, not the freeze-check key-line shape: 13 FIELD-MISSING findings, no machine-checkable freeze (reviewer F4)",
+    "comm is emitted unescaped; the parse reads the whole stat file and strips after the LAST `)`, so a newline cannot truncate it (S83Sentinel F1, repaired)"
    ],
-   "amended_wording": "In tools/souji-vault-verify.sh, cli_kill_tree builds the CLI descendant map from ONE fork-free pass over /proc/<pid>/stat (field 4 ppid after the last `)` of comm, with an arity guard on every parse) and signals each descendant as it is discovered (TERM then the KILL sweep), re-reading starttime (field 22) before each signal; the frozen 20-row population reports SUMMARY rows=20 mismatches=0 errors=0 orphans=0 EXIT=0 (12- and 24-descendant CLIs exit in 0.3-0.4 s, no survivor, no leftover private file, default and monitor launches). The r82 control is a load-dependent race, not a fixed red: five executions of the byte-identical tool give mismatches 0, 2, 2, 2, 4 (idle deep rows 1.8/2.0/3.8/4.6 s; under load >=5 s at 24 descendants), so the round claims no fixed before-count. The separating measurements are structural: the pgrep invocation count (106-108 before, 0 after, external PATH shim variable R83PGREP_LOG) and the deep-row seconds. The starttime re-check and the as-discovered order carry no row that separates them; a child forked after the pass is never signalled (snapshot); the foreground fallback keeps no traps. Amendments A5-A9 in plans/round-83.md.",
-   "instrument_sha256": "b0a5b662de070071c9bcbb2c885f9a09f6528469f35e04d2d114bbbce81276ac"
+   "amended_wording": "In tools/souji-vault-verify.sh, cli_kill_tree builds the descendant map from ONE fork-free whole-file read of every /proc/<pid>/stat (text after the last `)`, field 4 ppid, field 22 starttime, arity-guarded), rooted at the `timeout` wrapper's pid (never signalled), and signals each descendant as it is discovered (TERM then the KILL sweep), re-reading starttime before each signal; the frozen 20-row population reports SUMMARY rows=20 mismatches=0 errors=0 orphans=0 EXIT=0 (12- and 24-descendant CLIs exit in 1.2-1.6 s, no survivor, no leftover private file, default and monitor launches). The r82 control is a load-dependent race, not a fixed red: five executions of the byte-identical tool give mismatches 0, 2, 2, 2, 4 (idle deep rows 1.8/2.0/3.8/4.6 s; under load >=5 s at 24 descendants), so the round claims no fixed before-count. The separating measurements are structural: the pgrep invocation count (106-108 before, 0 after, external PATH shim variable R83PGREP_LOG) and the deep-row seconds. The residual read->signal window is 16-126 us per pid (pidfd not used); a descendant forked after the pass is not signalled; the foreground fallback keeps no traps. Amendments A5-A10 in plans/round-83.md.",
+   "instrument_sha256": "72a405f2c634712fb0211afb79f0462bf052b0b7c5fb8b663988017d2f1a8a18"
   }
  }
 }

@@ -237,10 +237,13 @@ cli_kill_tree() {
   local d line rest p st i cur k now crestart
   local -a stack=() tree=()
   for d in /proc/[0-9]*; do
+    # r83 (S83Sentinel F1): read the WHOLE stat file, not its first line: comm is emitted unescaped
+    # (S332), so a newline inside comm would truncate a line-read and (pre-guard) abort the handler.
+    # The strip then takes the text after the LAST `)` of the whole content, which is the closing paren.
     line=""
-    { read -r line < "$d/stat"; } 2>/dev/null || continue
+    { IFS= read -r -d '' line < "$d/stat"; } 2>/dev/null
     [ -n "$line" ] || continue
-    rest=${line##*) }
+    rest=${line##*)}
     set -- $rest
     [ "$#" -ge 20 ] || continue
     p=${d#/proc/}

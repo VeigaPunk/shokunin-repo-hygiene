@@ -112,7 +112,7 @@ S83ExecC1's sibling work, S83MutTool, S83ExecEvade, S83CriticClaims and S83Revie
 | S83ScoutSources | S332 admit (anchor corrected to a named line concatenation + the unescaped-comm branch), S331 admit (scope narrowed to `.ufo/waves/`), S330 admit as rejected (flip corrected off `NSpid`); comm-newline hazard noted (F-6) |
 | S83Scribe | drafts for both knowledge sections, Q152/Q153, the three SOURCES rows; measured the pgrep topology (N+2 nodes; 108 = 6×2 + 4×3 + 2×2 + 2×14 + 2×26) and caught the stale `.new` receipts (F-1) |
 | S83ExecC2 | delivered after the first read: its own candidate `ed946acb…` (one hunk, `cli_kill_tree` only) scores 20/0/0/0 at 0.9-1.3 s with 0 pgrep; **F1 HIGH: the lane's `9994af61` bytes (`d4826cce…`) score `mismatches=2 orphans=2` on `v2-int-pid`/`v3-hup-pid` (`line 247: 20: unbound variable`), with a live-host reproducer (3 of 3080 pids carry a short post-`)` remainder) and a non-author run of the guarded bytes green (`c2-lane-b0a5b66.txt`)**; F2 the K-a control is green at 4.9 s on an idle host; F3 the pgrep shim is not the counter's; F4 a copied tool needs the r9 selftest runner beside it |
-| S83Sentinel | skeleton only — no verdict |
+| S83Sentinel | delivered after the first read: **F1 CRITICAL — a newline in any process's comm truncates the first-line stat read; pre-guard the handler aborted under `set -u` (exit 1, no SIG line, subtree + private file left) and post-guard a hostile CLI could hide itself and its children by carrying a newline in its own comm** (repaired: whole-file read + last-`)` strip, A10); F2 the first-line anchor is not the counter's last-`)` rule; F3 the read→signal window is 16–126 µs, wider than the wording (amended); F4 the walk roots at the `timeout` wrapper, never signalled (amended); F5 the post-pass fork escape (disclosed); F6 the private file is 0600 and removed after the signal |
 | S83ScoutDirs | delivered after the first read: the census re-derives byte-identically except `w1/ 65`→`66` (the r83 wave dir post-dates the census); the header's "at branch tip" is NOT re-derivable from git (`.ufo/waves/` is gitignored; git holds 39 depth-2 dirs at `1e870403`, the census counts 102 over 65 rounds) → S333 correction row; **no real own-tree move exists at any rev, working tree or ledger (15 MOVED rows, all census-rooted)**; the widened shape set is wider than the real capture locations but a false row still needs byte+digest+round+basename (latent, not present); **§3.4 the token's first below-round component is dropped unconditionally** (`fx6`: r83 MOVED where r82 refused) → A9 + NF-L3 routed |
 
 ## Repairs after the wave (not the claim's measurements)
@@ -124,8 +124,12 @@ S83ExecC1's sibling work, S83MutTool, S83ExecEvade, S83CriticClaims and S83Revie
   before each TERM and KILL, so a short stat line cannot abort the trap handler under `set -euo pipefail`
   (S83Reviewer F3; observed `v2-int-pid` `survivors=2` on the pre-integration draft). Re-measured on the final
   bytes (`b0a5b662…`): 20/0/0/0, selftest 57/0, r17 37/0, probe D 4/4.
-- Both repairs are disclosed in `plans/round-83.md` A1-A3/A9; the receipts cited in the report are the regenerated
-  ones, and the older receipts are superseded in place (no receipt is edited to hide a red run).
+- C2 total parse (after the first score, before filing): every `/proc/<pid>/stat` is read whole
+  (`IFS= read -r -d ''`) and stripped after the last `)` of the whole content, because the untrusted CLI controls its
+  own comm and a newline there could hide it and its children from a first-line parse (S83Sentinel F1 CRITICAL).
+  Re-measured on the final bytes (`72a405f2…`): 20/0/0/0, deep rows 1.2-1.6 s, selftest 57/0, r17 37/0, probe D 4/4.
+- All three repairs are disclosed in `plans/round-83.md` A1-A3/A9/A10; the receipts cited in the report are the
+  regenerated ones, and the older receipts are superseded in place (no receipt is edited to hide a red run).
 
 ## Routed to round 84
 

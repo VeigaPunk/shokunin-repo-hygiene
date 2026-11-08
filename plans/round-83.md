@@ -150,3 +150,19 @@ Wave evidence root: `.ufo/waves/round-83/w1/`.
   `FIELD-MISSING` findings and verifies nothing about this round; the numbers are pinned instead by the harness
   `POP_PIN` (`c9a6d58c…`), the counter's ROUTES table and the receipts' instrument digests. Restoring the key lines
   is routed to round 84; the prereg is frozen and is not rewritten.
+
+## A10 — C2: the stat parse is total (whole-file read, last `)`) — the sentinel's CRITICAL
+
+- **Artifacts:** `.ufo/waves/round-83/w1/S83Sentinel.md` F1 (CRITICAL: the first-line `read` truncates at a newline
+  in any process's comm — the untrusted CLI controls its own comm, so it can hide itself and its children from the
+  map; before the arity guard the handler also aborted under `set -u`, leaving the subtree and the private file),
+  F2 (the `${line##*) }` first-line anchor is not the counter's last-`)` rule), F3 (the read→signal window measured
+  at 16–126 µs, wider than the "one read-then-signal pair" wording), F4 (the walk roots at the `timeout` wrapper's
+  pid, not at the CLI's).
+- **Correction landed after the first score, before filing:** every `/proc/<pid>/stat` is read WHOLE
+  (`IFS= read -r -d ''`), the strip takes the text after the LAST `)` of the whole content, the arity guard stays as
+  a belt, and the walk's root is stated as the timeout wrapper (the root is never signalled; its descendants are).
+- **Amended sentence:** *the map is built from one whole-file read of every /proc/<pid>/stat (text after the last
+  `)`, field 4 ppid, field 22 starttime, arity-guarded) and is rooted at the `timeout` wrapper's pid, which is never
+  signalled; the residual read→signal window is measured at 16–126 µs per pid (pidfd is not used), and a descendant
+  forked after the pass is not signalled.*

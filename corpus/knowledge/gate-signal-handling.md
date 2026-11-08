@@ -194,8 +194,10 @@ recheck: python3 -B census/round-83/c2-tree-walk-counter.py --tool tools/souji-v
 - Limits: `/proc` reads are not atomic (one read-then-signal window per pid remains), pidfd is not used (bash
   only), a descendant that creates children after the pass reads the map is missed, the deep stub is a flat
   fan-out, and a `pgrep` invoked by absolute path would bypass the probe shim. The stat path emits comm unescaped
-  (S332, `proc_task_name(..., false)`), so a comm containing a newline splits the file: the first-line `read`
-  yields fewer than 20 fields, the arity guard skips that pid and its children — safe (nothing is signalled) but a
-  way for a hostile CLI to keep a descendant out of the map; and the tool runs `set -euo pipefail`, so every parse
-  must be arity-guarded (`[ "$#" -ge 20 ] || continue`) or `${20}` aborts the trap handler (measured: the tool
-  exited 1 with no `SIG` line and the subtree alive).
+  (S332, `proc_task_name(..., false)`), so a comm may contain a newline: a first-line `read` truncates there and
+  (without a guard) `${20}` aborts the trap handler under `set -euo pipefail` — measured on the pre-fix bytes: exit
+  1, no `SIG` line, the CLI subtree and the private file left behind (S83ExecC2 F1 / S83Reviewer F3), and a hostile
+  CLI controls its own comm, so a skip would let it hide (S83Sentinel F1). The fix is a WHOLE-FILE read
+  (`IFS= read -r -d ''`) and a strip after the LAST `)` of the whole content, with an arity guard as a belt; the
+  read→signal window is then measured at 16–126 µs per pid (S83Sentinel F3), and the walk is rooted at the
+  `timeout` wrapper's pid, which is never signalled (F4).
