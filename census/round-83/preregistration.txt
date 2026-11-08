@@ -1,0 +1,111 @@
+souji round 83 — preregistration (frozen at commit F; this file lands ALONE in F; P holds instruments and controls)
+Lane base: 1e870403c5d806a5cf9ac93b00da7a928359608f (r82 closed admitted; spot-check corpus/lessons/round-82-verifier-spotcheck.md).
+Round shape: one v1 wave of 12 seats, policy scripts/hyaku/ufo-wave-policy.json (band 8-16).
+Amendment 59: every claim's STATED WORDING is reconciled against the wave's artifacts in .ufo/waves/round-83/claim-falsification.tsv before filing.
+
+## C1 — calibration 7 (the lane's lowest owned non-retired axis): the pointer counter binds a MOVED token's own-round-tree target to a real wave shape and the token's remaining path
+
+Stated wording (the sentence the round answers for):
+  On the frozen 36-row population census/round-83/c1-false-rows.tsv, the r83 pointer counter
+  (census/round-83/c1-pointer-counter.py) binds a MOVED ledger target inside the token's own round tree
+  only when the target's path below its round-<N> is a real wave directory of this lane — w1/, w2/, w3/
+  (w[0-9]+/), a2w1/, assimilation/, plus the r82 capture shapes waves/, wave/ and records/wave-<w>/ —
+  followed by the token's remaining path below its own wave directory (the full suffix, in order). It
+  keeps TF6 (w2/) and TF7 (w1/), keeps TF1-TF5 and PF-1, still refuses NF-J (a duplicated middle directory
+  under w1/), NF-K (a flattened copy at the round-tree root) and the r82 decoys NF-F/NF-G/NF-H/NF-I;
+  it reports `SUMMARY rows=36 mismatches=0 accepted=0 refused_true=0 errors=0` and exits 0, while the
+  do-nothing control K-a (the r82 counter, census/round-82/c1-pointer-counter.py, unchanged bytes)
+  reports the same population as `mismatches=2 accepted=0 refused_true=2` and exits 1, its two refusals
+  being TF6 and TF7.
+
+Axis: calibration. What moves: the lane's own ledger rule (the counter is the lane's self-assessment of
+which moved artifacts it can resolve) now agrees with the real directory layouts the lane has
+(census/round-83/records/wave-dirs.txt: w1/ 65, w2/ 19, assimilation/ 4, w3/ 1, a2w1/ 1, and records/ 3
+which the rule deliberately does NOT treat as a capture shape). Before, the rule refused a genuine move
+into a `wN/` directory (r82 A2 stated limit, S82Connector2 F1).
+
+Counting command (one, both ends):
+  python3 -B census/round-83/c1-false-row-harness.py --counter <counter-under-test> \
+    --lane /home/vgpnk/Projects/shokunin/souji-shokunin --fleet-root /home/vgpnk/Projects/shokunin \
+    --work <an empty dir outside /tmp>
+  after: --counter census/round-83/c1-pointer-counter.py  -> target rows=36 mismatches=0 accepted=0 refused_true=0 errors=0, EXIT=0
+  before: --counter census/round-82/c1-pointer-counter.py -> census/round-83/controls/c1-K-a-r82-counter.txt, EXIT=1
+
+Frozen population: 36 rows = the r82 32 rows byte-for-byte (same order) + TF6, TF7, NF-J, NF-K at fixture
+revision R6. The harness pins the population sha256; the fixture is built by the harness itself from
+census/round-83/c1-false-row-harness.py (BASE e65538e73c7f1a8f7570bc24a2215da8a90043f3 is the unmodified
+r79 fixture base; R1-R5 rebuild the r82 fixture byte-for-byte; R6 adds own-tree copies of the P04 byte
+source, sha256 d0693448c0895860ebe7ece2549d3f70f694247ddb717d1fa2c66a4518d5aa89).
+Rows TF6/TF7 are TRUE rows (expect MOVED); NF-J/NF-K are false rows (expect REFUSED). A true row the
+counter refuses is counted in refused_true, a false row it accepts in accepted.
+
+Kill rule (frozen): the claim fails on any ROW match=no, any errors>0, or a K-a/after run whose SUMMARY
+differs from the sentence above. The counter is killed by accepted>0 (it accepts a false row),
+refused_true>0 (it refuses a true row), any of the five r77/r78/r79/r80/r81/r82 regression harnesses
+going red, or by any row of the frozen population being edited (the harness pins the population sha256).
+
+Stated limits (frozen): the rule still refuses a move into `.ufo/waves/round-<N>/records/` and into the
+other non-wave directories the lane has (residual/, transcripts/, recovery/, l1/, final/, build/,
+attempt2/), because those are not wave captures; it accepts any `w[0-9]+/` name, existing or not; the
+token's first component below its round-<N> is assumed to be its wave directory, so a token with no wave
+directory has no own-tree move case; the identity clause (tt == tk) is unchanged from r82; fixtures are
+synthetic, so a row proves the rule's verdict, not that the lane really moved the file in that round.
+
+## C2 — operability 8: the vault tool's signal kill walks the descendant tree once, fork-free, and re-checks each pid's starttime before signalling it
+
+Stated wording:
+  In tools/souji-vault-verify.sh, cli_kill_tree builds the CLI's descendant map from ONE fork-free pass
+  over /proc/<pid>/stat (field 4, ppid, read after the last `)` of the comm field) and signals each
+  descendant as it is discovered (TERM, then the KILL sweep), re-reading that pid's starttime (field 22)
+  before each signal; the frozen 20-row population census/round-83/c2-population.tsv (the r82 16 rows +
+  d12-term-pid, d12-term-group, d24-term-pid, d24-monitor-group) reports
+  `SUMMARY rows=20 mismatches=0 errors=0 orphans=0` and exits 0 — a 12- and a 24-descendant CLI exit
+  within the frozen 5 s SETTLE under the default and the monitor launch, with no survivor and no private
+  file left — while the do-nothing control K-a (census/round-83/controls/c2-K-a-r82-tool.sh, byte-identical
+  to the r82 tool sha256 dd6d440eaf205570d5e23d5ef3ad614e34c281667075f9bf5f519ddb75855e1a) reports
+  `mismatches=4` on exactly the four deep rows and exits 1. A `pgrep` shim on PATH counts zero pgrep
+  invocations per walk (the r82 tool makes one per tree node: N=12 -> 12, N=24 -> 24).
+
+Axis: operability. What moves: the tool's signal path now completes inside the counter's settle for the
+descendant counts the r82 wave measured it failing (F-2: per-node `pgrep -P`, one full /proc scan each;
+F-3: a snapshot->KILL gap up to 6.11 s). Before, N=12 took 5.74 s and N=24 9.64 s (S82Sentinel), so the
+counter's 5 s row bound was exceeded; the tool printed nothing and left the subtree alive.
+
+Counting command (one, both ends):
+  python3 -B census/round-83/c2-tree-walk-counter.py --tool <tool-under-test> --work <an empty dir outside /tmp>
+  after: --tool tools/souji-vault-verify.sh -> target rows=20 mismatches=0 errors=0 orphans=0, EXIT=0
+  before: --tool census/round-83/controls/c2-K-a-r82-tool.sh -> census/round-83/controls/c2-K-a-r82-tool.txt, EXIT=1
+  pgrep count: the counter's shim (PATH=<scratch>/shim) appends one line per pgrep invocation to
+  $SOUJI_R83_PGREP_LOG; the receipt reports the per-row count.
+
+Frozen population: 20 rows; the 16 r82 rows keep their ids, signals, deliveries, stubs, timeouts and
+expectations, with the monitor as a per-row property (m1/m2 = monitor; r82 A7's dead `m-` prefix is gone)
+and a children column; the four deep rows use the `deep` stub (N background `sleep 600` children before
+the hang point). A signal row matches iff the tool exits within SETTLE=5.0 s of the signal with status
+128+signal, writes the `souji-vault-verify: SIG<name>` line, no nonce-carrying process is alive at the
+settle sweep and the row TMPDIR is empty.
+
+Kill rule (frozen): the claim fails on any ROW match=no, any errors>0, or a K-a/after SUMMARY differing
+from the sentence above. The tool is killed by any deep row that does not exit within SETTLE, any
+survivor, any leftover private file, a lost `souji-vault-verify: SIG` line, the tool's own selftest going
+red, r17 going red (tests/fixtures/r17-jj-receipts.sh), probe D (census/round-81/probes/tmpdir-in-vault.py)
+going red, or a walk that still forks a pgrep per node.
+
+Stated limits (frozen): /proc reads are not an atomic snapshot, so a pid reused between the starttime read
+and the signal can still be signalled (the window is one read-then-signal pair per pid, not 0); pidfd is
+not used (bash only); a descendant that setsid/setpgid before the pass reads its ppid is still missed as
+at r82; the deep stub is a flat fan-out, not a mixed tree; the counter's own `pgrep` shim does not
+intercept a pgrep invoked by an absolute path (the tool calls it by name).
+
+## Controls (committed in P, before this file; both are the r82 bytes, no candidate work)
+- K-a C1: census/round-82/c1-pointer-counter.py — the r82 rule unchanged; receipt census/round-83/controls/c1-K-a-r82-counter.txt.
+- K-a C2: census/round-83/controls/c2-K-a-r82-tool.sh — byte-identical to the r82 tool (sha256 dd6d440e...); receipt census/round-83/controls/c2-K-a-r82-tool.txt.
+Both controls are red for the right reason: C1 refuses the two real-shaped true rows, C2 times out the
+four deep rows and leaves 17-29 nonce-carrying survivors. No cheaper rule meets either after target: a
+rules-only entry (C1) cannot keep TF6/TF7 while refusing NF-J/NF-K without the shape+full-suffix
+predicate, and a pid-only or group-only kill (C2) cannot reach a job-controlled 24-child tree.
+
+## Round non-claims (not counted, still reported)
+- SOURCES/form: the r82 spot-check routed defect 1 (a rejected candidate never became a row) is repaired
+  by opening S330 as a rejected row; the new sources ground the two claims' knowledge entries.
+- plans/round-83.md records the Amendment-59 amendments after the wave; it never edits this file.
