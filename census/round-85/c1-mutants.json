@@ -1,0 +1,43 @@
+{
+ "note": "souji r85 C1: the five r84 single-edit mutants (m6-m10, byte-identical edits) plus m11-class-enum, which drops the ledger-class enum guard. Each edit must apply exactly once to census/round-85/c1-pointer-counter.py. Kills are counted by census/round-85/c1-clause-battery.py over two pinned populations: r84 (44 rows, the do-nothing control: m11 must survive there, the five must be killed) and r85 (48 rows: m11 must be killed by NF-S, the five must stay killed). The r85 population's NF-R/TF11 rows carry a separate finding: the census-in-tree branch is shadowed, not unbound - no single-edit mutant of it is killed by any population, and the branch cannot fire (see plans/round-85.md A1).",
+ "members": [
+  {
+   "id": "m6-digest-blind",
+   "clause": "the MOVED target's bytes must equal the token's frozen digest",
+   "old": "        elif rev_digest(root, rev, target) != frozen:\n            why = \"target absent at rev or digest differs\"\n",
+   "new": "        elif False:\n            why = \"digest-blind mutant (m6)\"\n"
+  },
+  {
+   "id": "m7-round-blind",
+   "clause": "the MOVED target must name the token's own round-<N>",
+   "old": "        elif kr and (not tr or tr.group(1) != kr.group(1)):\n            why = \"target names a different round than the token\"\n",
+   "new": "        elif False:\n            why = \"round-blind mutant (m7)\"\n"
+  },
+  {
+   "id": "m8-w-only-shapes",
+   "clause": "the own-tree wave directory set includes a2w1/ and assimilation/, not w[0-9]+/ alone",
+   "old": "OWNTREE_WAVE = re.compile(r\"^(?:w[0-9]+|a2w1|assimilation)/\")",
+   "new": "OWNTREE_WAVE = re.compile(r\"^(?:w[0-9]+)/\")"
+  },
+  {
+   "id": "m9-basename-only",
+   "clause": "the own-tree comparison keeps the token's whole remaining path, not a two-component shape ending in its last component",
+   "old": "    return bool(m) and got[1:] == want[1:]",
+   "new": "    return bool(m) and len(got) == 2 and got[1] == want[-1]",
+   "note": "the r83 critic's A2 basename rule; killed by TF8 and NF-P on the r84 population."
+  },
+  {
+   "id": "m10-records-as-wave",
+   "clause": "a non-wave own-tree directory (records/) is not a capture shape",
+   "old": "OWNTREE_WAVE = re.compile(r\"^(?:w[0-9]+|a2w1|assimilation)/\")",
+   "new": "OWNTREE_WAVE = re.compile(r\"^(?:w[0-9]+|a2w1|assimilation|records)/\")"
+  },
+  {
+   "id": "m11-class-enum",
+   "clause": "a ledger class outside the frozen enum is refused, never resolved as its own class name",
+   "old": "    if cls not in CLASSES:\n        why = f\"unknown class {cls}\"\n",
+   "new": "    if False:  # m11: the class-enum guard is dropped\n        why = f\"unknown class {cls}\"\n",
+   "note": "S84MutCounter survivor class (token-on-line / unknown-class refusals). On item I85T (no frozen digest, token absent) a dropped guard returns the bogus class name as the resolved status, so NF-S goes red; on the r84 population no row reaches the guard with a non-enum class, so m11 survives there."
+  }
+ ]
+}
