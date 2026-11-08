@@ -221,14 +221,14 @@ def main(argv):
                            stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=work, env=ENV, timeout=600)
         out = p.stdout.decode("utf-8", "replace")
         hits = K4.findall(out)
-        named = any(FORGED[row] in (a + "\t" + b + "\t" + c) for a, b, c in hits)
         expect = "clean" if row in ("KH1", "KH2") else "flag"
         if expect == "clean":
             ok = not hits
             named = "-"
         else:
-            ok = bool(hits) and named
-            named = "yes" if named else "no"
+            named_ok = any(FORGED[row] in (a + "\t" + b + "\t" + c) for a, b, c in hits)
+            ok = bool(hits) and named_ok
+            named = "yes" if named_ok else "no"
         mism += 0 if ok else 1
         print(f"ROW {row} expect={expect} k4={len(hits)} named={named} rc={p.returncode} "
               f"match={'yes' if ok else 'no'}"
