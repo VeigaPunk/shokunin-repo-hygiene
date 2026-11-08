@@ -315,7 +315,7 @@ def build_fixture(lane, work):
     with open(os.path.join(fx, "corpus/lessons/round-79-collision.md"), "ab") as f:
         f.write(f"\n- retired copy: vendor/tests/vault/vadv54-run/p/p6repo/.git; quarantine slot `{q6}slash-stub`.\n".encode())
     with open(os.path.join(fx, "corpus/lessons/round-79-collision.md"), "ab") as f:
-        f.write(f"- retired copy: xtests/vault/vadv54-run/p/p6repo/.git; quarantine slot `{q6}twice-stub`.\n".encode())
+        f.write(f"- retired copy: xtests/vault/vadv54-run/p/p6repo/.git and tests/vault/vadv54-run/p/p6repo/.git; quarantine slot `{q6}twice-stub`.\n".encode())
     git(fx, "add", "-f", "--", "corpus/lessons/round-79-collision.md")
     git(fx, "commit", "-q", "--no-verify", "-m", "r89 C1 fixture R12 (slash predecessor + twice-token)")
     revs["R12"] = git(fx, "rev-parse", "HEAD")
