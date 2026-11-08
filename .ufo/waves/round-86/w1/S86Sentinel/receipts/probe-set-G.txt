@@ -1,0 +1,20 @@
+=== G1 a forged MISMATCH row inside a K4 detail field ===
+stdout bytes: b'MISMATCH\tK4\t.\tstat-cache-concealed\tthe receipt writer refused the tree (exit 1); tracked bytes are unverified\nkeys=4 records=3 occurrences=0 mismatches=8\n'
+physical MISMATCH lines: ['MISMATCH\tK1\tcensus/round-23/records/declared-evidence-after.tsv\treceipt-absent\tnot in tree at 7258c9212808cfa5007effddf9be492b6ff8b488', 'MISMATCH\tK2\tcensus/round-22/attempt2/declared-evidence-before-final.tsv\treceipt-absent\tnot in tree at 7258c9212808cfa5007effddf9be492b6ff8b488', 'MISMATCH\tK2\tcensus/round-22/attempt2/slice-verdicts.tsv\treceipt-absent\tnot in tree at 7258c9212808cfa5007effddf9be492b6ff8b488', 'MISMATCH\tK2\tcensus/round-22/attempt2/declared-evidence-before-final.tsv\treceipt-malformed\tno counts line', 'MISMATCH\tK2\tLOG.md\trecord-absent\tnot in tree at 7258c9212808cfa5007effddf9be492b6ff8b488', 'MISMATCH\tK3\tcorpus/README.md\trecord-absent\tnot in tree at 7258c9212808cfa5007effddf9be492b6ff8b488', 'MISMATCH\tK3\tcorpus/lessons/round-22.md\trecord-absent\tnot in tree at 7258c9212808cfa5007effddf9be492b6ff8b488', 'MISMATCH\tK4\t.\tstat-cache-concealed\tthe receipt writer refused the tree (exit 1); tracked bytes are unverified']
+VERDICT G1: no forged row
+NOTE: this needs a substituted writer, which the preregistration's stated limits put outside the claim; it is reported as a mechanism K4 does not measure.
+=== G2 the writer beside the tool is a symlink to an outside file ===
+isfile(writer path) is what the tool checks; a symlink to a file passes it
+rc=1 k4_rows=0
+VERDICT G2: FAIL OPEN (the symlinked writer was loaded and K4 reported CLEAN)
+=== G3 the class each new r86 failure mode is reported under ===
+writer has no _flag_refusal              -> class='stat-cache-concealed' record='.'
+   detail: 'the receipt writer produced no verdict (exit 1: Traceback (most recent call last):'
+the index-flag read fails (FLAGFAIL)     -> class='stat-cache-concealed' record='.'
+   detail: 'the index-flag read failed (fatal: bad index); tracked bytes are unverified'
+VERDICT G3: the index-flag read failure and the missing _flag_refusal are both reported as class 'stat-cache-concealed', a class name that names the WRONG mechanism; only a message that literally begins with 'RECEIPT-GITLINK-CONCEALED' or 'RECEIPT-INDEX-' reaches the new 'index-flag-concealed' class.
+=== G4 GIT_INDEX_FILE reaches the writer's git() inside the new sweep ===
+rc=1 k4_rows=1
+K4ROW 'MISMATCH\tK4\tnest\tuncommitted-path\tM'
+VERDICT G4: a row is emitted, but the class names a different mechanism than the concealment
+NOTE: the receipt writer's own entry point refuses GIT_INDEX_FILE (RECEIPT-INDEX-ENV-SET); the K4 bootstrap calls mod.git() directly and never reaches that refusal.

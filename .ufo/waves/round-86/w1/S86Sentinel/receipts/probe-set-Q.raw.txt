@@ -1,0 +1,25 @@
+=== Q1 a fake 'git' earlier in PATH ===
+rc=1 k4_rows=0
+VERDICT Q1: FAIL OPEN (no K4 row: a substituted git reports a clean tree and an empty index)
+NOTE: both git() helpers exec a bare 'git' resolved through PATH, and neither
+scrubs PATH. A substituted git is outside the claim (the tree's own bytes are not
+the audited surface), but it is a named mechanism K4 does not measure.
+=== Q2 which unpinned config keys mask the index flag from `ls-files -v`? ===
+  core.sparseCheckout          -> [b'H a.txt'] MASKED
+  core.fsmonitor               -> [b'S a.txt'] 
+  core.fileMode                -> [b'S a.txt'] 
+  core.checkStat               -> [] 
+  core.trustctime              -> [b'S a.txt'] 
+
+  -> core.sparseCheckout (and core.sparseCheckoutCone) mask the skip-worktree tag;
+     neither helper pins them, so GIT_CONFIG_PARAMETERS reaches them.
+=== Q3 the config pins of each helper ===
+TOOL git() pins   : ['GIT_DIR', 'K1', 'K2', 'K3', 'K4', 'accepted', 'core.checkStat', 'core.excludesFile', 'core.fileMode', 'core.fsmonitor', 'core.trustctime', 'status.showUntrackedFiles']
+WRITER git() pins : ['core.checkStat', 'core.fileMode', 'core.trustctime']
+both               : ['core.checkStat', 'core.fileMode', 'core.trustctime']
+neither            : core.sparseCheckout, core.sparseCheckoutCone, index.sparse, core.quotepath, core.ignorecase, ...
+
+  -> core.sparseCheckout is in NEITHER set: it is unpinned on both sides, so the
+     writer's ls-files -v can be made to render a skip-worktree entry as 'H'.
+
+[receipt] /fast/scratch/hyaku/souji-r86/S86Sentinel/receipts/probe-set-Q.txt

@@ -1,0 +1,37 @@
+=== K1 the two status views ===
+  TOOL view (GIT_CONFIG_* scrubbed)              rc=0 out=b''
+  WRITER view (GIT_CONFIG_PARAMETERS kept)       rc=0 out=b' M a.txt\n'
+-> _truth_refusal SKIPS every path the writer's own status lists, so a path the
+   tool's status calls clean but the writer's status calls modified is neither
+   reported by K4 nor re-hashed by the truth check.
+=== K2 index bytes across a run under the env route ===
+index sha256 before: a765962016916c413b0a7155409185e10ec69391884d324bd02d7f40784a40a3
+index sha256 after : a765962016916c413b0a7155409185e10ec69391884d324bd02d7f40784a40a3
+unchanged: True
+-> the tag difference is a READING difference, not index damage: the index still
+   carries the skip-worktree bit (flags 40004000 in the default view), the writer's
+   git() just renders the same entry as 'H' under core.sparseCheckout=true.
+=== K3 ls-files --debug, default view ===
+  nest
+    ctime: 1794128853:75019501
+    mtime: 1794128853:75019501
+    dev: 66306	ino: 303370126
+    uid: 1000	gid: 1000
+    size: 31	flags: 40004000
+  run.sh
+    ctime: 1794128853:84977752
+    mtime: 1750000000:0
+=== K3 ls-files --debug, writer view (sparseCheckout=true) ===
+  nest
+    ctime: 1794128853:75019501
+    mtime: 1794128853:75019501
+    dev: 66306	ino: 303370126
+    uid: 1000	gid: 1000
+    size: 31	flags: 4000
+  run.sh
+    ctime: 1794128853:84977752
+    mtime: 1750000000:0
+=== K4 route summary ===
+no env override (control)                            k4_rows=1 MISMATCH	K4	.	index-flag-concealed	RECEIPT-GITLINK-CONCEALED: nest is a gitlink (mode 160000) carrying index flag S; the
+GIT_CONFIG_PARAMETERS='core.sparseCheckout=true'     k4_rows=0 (SILENT)
+GIT_CONFIG_COUNT core.sparseCheckout=true            k4_rows=0 (SILENT)

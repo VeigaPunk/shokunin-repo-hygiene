@@ -1,0 +1,23 @@
+=== F1 GIT_CONFIG_PARAMETERS masks the index flag the sweep reads ===
+repo index: a.txt carries skip-worktree; worktree bytes changed
+rc=1 k4_rows=0
+VERDICT F1: FAIL OPEN (K4 emitted no row; the concealment is unreported)
+=== F2 the same route against the KG1 gitlink concealment ===
+rc=1 k4_rows=0
+VERDICT F2: FAIL OPEN (KG1 concealment unreported)
+control (no env override): k4_rows=1
+K4ROW 'MISMATCH\tK4\t.\tindex-flag-concealed\tRECEIPT-GITLINK-CONCEALED: nest is a gitlink (mode 160000) carrying index flag S; the writer does not read submodule state and skip-worktree or assume-unchanged hides it from git status; clear it with git update-index --no-skip-worktree or --no-assume-unchanged, then retry'
+=== F3 the writer's own entry point refuses the same environment ===
+rc=2
+stderr: "refused: RECEIPT-ENV-CONFIG-SET: GIT_CONFIG_PARAMETERS set in the writer's environment; unset them and retry"
+receipt written: False
+VERDICT F3: the writer REFUSES this env (RECEIPT-ENV-CONFIG-SET)
+=== F4 two config views inside one K4 measurement ===
+TOOL view   (GIT_CONFIG_* scrubbed): [b'S a.txt']
+WRITER view (GIT_CONFIG_* kept)    : [b'H a.txt']
+VERDICT F4: the two halves of the K4 measurement do not share one config view
+=== F5 the same route via GIT_CONFIG_COUNT ===
+rc=1 k4_rows=0
+VERDICT F5: FAIL OPEN
+
+[receipt] /fast/scratch/hyaku/souji-r86/S86Sentinel/receipts/probe-set-F.txt

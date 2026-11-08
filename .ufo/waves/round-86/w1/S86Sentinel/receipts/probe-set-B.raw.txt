@@ -1,0 +1,147 @@
+=== B1 GIT_INDEX_FILE redirects the whole K4 measurement ===
+repository's own index  a.txt entry: [b'S a.txt']
+doctored index view    a.txt entry: [b'H a.txt']
+status --porcelain (own index): rc=0 out=b''
+status --porcelain (doctored) : rc=0 out=b'M  a.txt\n'
+--- tool WITHOUT GIT_INDEX_FILE ---
+=== B1a own index ===
+rc=1
+stdout:
+MISMATCH	K1	census/round-23/records/declared-evidence-after.tsv	receipt-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K2	census/round-22/attempt2/declared-evidence-before-final.tsv	receipt-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K2	census/round-22/attempt2/slice-verdicts.tsv	receipt-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K2	census/round-22/attempt2/declared-evidence-before-final.tsv	receipt-malformed	no counts line
+MISMATCH	K2	LOG.md	record-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K3	corpus/README.md	record-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K3	corpus/lessons/round-22.md	record-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K4	.	stat-cache-concealed	RECEIPT-WORKTREE-STAT-CONCEALED: 1 tracked path(s) git status reports clean do not hash to the object id the index records (a.txt); the index stat cache conceals a worktree change; no receipt written
+keys=4 records=3 occurrences=0 mismatches=8
+k4_rows=1
+K4ROW 'MISMATCH\tK4\t.\tstat-cache-concealed\tRECEIPT-WORKTREE-STAT-CONCEALED: 1 tracked path(s) git status reports clean do not hash to the object id the index records (a.txt); the index stat cache conceals a worktree change; no receipt written'
+
+--- tool WITH GIT_INDEX_FILE=alt-index ---
+=== B1b doctored index ===
+rc=1
+stdout:
+MISMATCH	K1	census/round-23/records/declared-evidence-after.tsv	receipt-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K2	census/round-22/attempt2/declared-evidence-before-final.tsv	receipt-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K2	census/round-22/attempt2/slice-verdicts.tsv	receipt-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K2	census/round-22/attempt2/declared-evidence-before-final.tsv	receipt-malformed	no counts line
+MISMATCH	K2	LOG.md	record-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K3	corpus/README.md	record-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K3	corpus/lessons/round-22.md	record-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K4	a.txt	uncommitted-path	M
+keys=4 records=3 occurrences=0 mismatches=8
+k4_rows=1
+K4ROW 'MISMATCH\tK4\ta.txt\tuncommitted-path\tM'
+
+VERDICT B1: fail closed
+NOTE: the writer's own entry point refuses GIT_INDEX_FILE (RECEIPT-INDEX-ENV-SET); the K4 bootstrap calls the writer's helpers directly and never reaches that refusal.
+=== B2 --root points inside a subdirectory ===
+repo=/fast/scratch/hyaku/souji-r86/S86Sentinel/fx/b2/clone sub=/fast/scratch/hyaku/souji-r86/S86Sentinel/fx/b2/clone/sub
+=== B2 tool ===
+rc=1
+stdout:
+MISMATCH	K1	census/round-23/records/declared-evidence-after.tsv	receipt-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K2	census/round-22/attempt2/declared-evidence-before-final.tsv	receipt-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K2	census/round-22/attempt2/slice-verdicts.tsv	receipt-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K2	census/round-22/attempt2/declared-evidence-before-final.tsv	receipt-malformed	no counts line
+MISMATCH	K2	LOG.md	record-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K3	corpus/README.md	record-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K3	corpus/lessons/round-22.md	record-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K4	.	stat-cache-concealed	the receipt writer refused the tree (exit 2); tracked bytes are unverified
+keys=4 records=3 occurrences=0 mismatches=8
+k4_rows=1
+K4ROW 'MISMATCH\tK4\t.\tstat-cache-concealed\tthe receipt writer refused the tree (exit 2); tracked bytes are unverified'
+
+VERDICT B2: FAIL CLOSED (a row is emitted)
+=== B3 record escaping for control-byte path names ===
+path names planted: ['badÿþname.txt', 'cr\rname.txt', 'esc\x1b[31mname.txt', 'lit\\nname.txt', 'nl\nname.txt', 'tab\tname.txt']
+k4 rows emitted: 1
+K4ROW 'MISMATCH\tK4\t.\tindex-flag-concealed\tRECEIPT-INDEX-FLAG-CONCEALED: badÿþname.txt carries index flag S; skip-worktree or assume-unchanged hides worktree divergence from git status; clear it with git update-index --no-skip-worktree or --no-assume-unchanged, then retry'
+total physical lines starting with MISMATCH: 8
+raw bytes of the MISMATCH block: b'MISMATCH\tK1\tcensus/round-23/records/declared-evidence-after.tsv\treceipt-absent\tnot in tree at bdf01c9e7f272b73db8f844aa4282a4e9cab1951\nMISMATCH\tK2\tcensus/round-22/attempt2/declared-evidence-before-final.tsv\treceipt-absent\tnot in tree at bdf01c9e7f272b73db8f844aa4282a4e9cab1951\nMISMATCH\tK2\tcensus/round-22/attempt2/slice-verdicts.tsv\treceipt-absent\tnot in tree at bdf01c9e7f272b73db8f844aa4282a4e9cab1951\nMISMATCH\tK2\tcensus/round-22/attempt2/declared-evidence-before-final.tsv\treceipt-malformed\tno counts line\nMISMATCH\tK2\tLOG.md\trecord-absent\tnot in tree at bdf01c9e7f272b73db8f844aa4282a4e9cab1951\nM'
+VERDICT B3: fail closed
+=== B3b a newline in the path name ===
+stdout bytes: b'MISMATCH\tK1\tcensus/round-23/records/declared-evidence-after.tsv\treceipt-absent\tnot in tree at e45f1bcea302d0fcd7399f011864adc9dec33483\nMISMATCH\tK2\tcensus/round-22/attempt2/declared-evidence-before-final.tsv\treceipt-absent\tnot in tree at e45f1bcea302d0fcd7399f011864adc9dec33483\nMISMATCH\tK2\tcensus/round-22/attempt2/slice-verdicts.tsv\treceipt-absent\tnot in tree at e45f1bcea302d0fcd7399f011864adc9dec33483\nMISMATCH\tK2\tcensus/round-22/attempt2/declared-evidence-before-final.tsv\treceipt-malformed\tno co'
+physical lines: ['MISMATCH\tK1\tcensus/round-23/records/declared-evidence-after.tsv\treceipt-absent\tnot in tree at e45f1bcea302d0fcd7399f011864adc9dec33483', 'MISMATCH\tK2\tcensus/round-22/attempt2/declared-evidence-before-final.tsv\treceipt-absent\tnot in tree at e45f1bcea302d0fcd7399f011864adc9dec33483', 'MISMATCH\tK2\tcensus/round-22/attempt2/slice-verdicts.tsv\treceipt-absent\tnot in tree at e45f1bcea302d0fcd7399f011864adc9dec33483', 'MISMATCH\tK2\tcensus/round-22/attempt2/declared-evidence-before-final.tsv\treceipt-malformed\tno counts line', 'MISMATCH\tK2\tLOG.md\trecord-absent\tnot in tree at e45f1bcea302d0fcd7399f011864adc9dec33483', 'MISMATCH\tK3\tcorpus/README.md\trecord-absent\tnot in tree at e45f1bcea302d0fcd7399f011864adc9dec33483', 'MISMATCH\tK3\tcorpus/lessons/round-22.md\trecord-absent\tnot in tree at e45f1bcea302d0fcd7399f011864adc9dec33483', 'MISMATCH\tK4\t.\tindex-flag-concealed\tRECEIPT-INDEX-FLAG-CONCEALED: bad\\nname.txt carries index flag S; skip-worktree or assume-unchanged hides worktree divergence from git status; clear it with git update-index --no-skip-worktree or --no-assume-unchanged, then retry', 'keys=4 records=3 occurrences=0 mismatches=8', '']
+K4 rows: ['MISMATCH\tK4\t.\tindex-flag-concealed\tRECEIPT-INDEX-FLAG-CONCEALED: bad\\nname.txt carries index flag S; skip-worktree or assume-unchanged hides worktree divergence from git status; clear it with git update-index --no-skip-worktree or --no-assume-unchanged, then retry']
+VERDICT B3b: fail closed
+=== B4 a writer that prints CLEAN on stdout when imported ===
+=== B4 tool ===
+rc=1
+stdout:
+MISMATCH	K1	census/round-23/records/declared-evidence-after.tsv	receipt-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K2	census/round-22/attempt2/declared-evidence-before-final.tsv	receipt-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K2	census/round-22/attempt2/slice-verdicts.tsv	receipt-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K2	census/round-22/attempt2/declared-evidence-before-final.tsv	receipt-malformed	no counts line
+MISMATCH	K2	LOG.md	record-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K3	corpus/README.md	record-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K3	corpus/lessons/round-22.md	record-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K4	.	stat-cache-concealed	the receipt writer produced no verdict (exit 1: Traceback (most recent call last):
+  File "<string>", line 9, in <module>
+    exec(compile(src, path, 'exec'), mod.__dict__)
+         ~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/fast/scratch/hyaku/souji-r86/S); tracked bytes are unverified
+keys=4 records=3 occurrences=0 mismatches=8
+k4_rows=1
+K4ROW 'MISMATCH\tK4\t.\tstat-cache-concealed\tthe receipt writer produced no verdict (exit 1: Traceback (most recent call last):'
+
+VERDICT B4: fail closed
+=== B5 a writer that hangs (tool copy with timeout=3; filed bytes use timeout=600) ===
+=== B5 tool ===
+rc=1
+stdout:
+MISMATCH	K1	census/round-23/records/declared-evidence-after.tsv	receipt-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K2	census/round-22/attempt2/declared-evidence-before-final.tsv	receipt-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K2	census/round-22/attempt2/slice-verdicts.tsv	receipt-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K2	census/round-22/attempt2/declared-evidence-before-final.tsv	receipt-malformed	no counts line
+MISMATCH	K2	LOG.md	record-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K3	corpus/README.md	record-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K3	corpus/lessons/round-22.md	record-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K4	.	stat-cache-concealed	the receipt writer produced no verdict (exit 1: Traceback (most recent call last):
+  File "<string>", line 9, in <module>
+    exec(compile(src, path, 'exec'), mod.__dict__)
+         ~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/fast/scratch/hyaku/souji-r86/S); tracked bytes are unverified
+keys=4 records=3 occurrences=0 mismatches=8
+k4_rows=1
+K4ROW 'MISMATCH\tK4\t.\tstat-cache-concealed\tthe receipt writer produced no verdict (exit 1: Traceback (most recent call last):'
+
+VERDICT B5: FAIL CLOSED (a row naming the timeout)
+=== B6 GIT_COMMON_DIR redirected to a foreign common dir ===
+=== B6 tool ===
+rc=1
+stdout:
+MISMATCH	K1	census/round-23/records/declared-evidence-after.tsv	receipt-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K2	census/round-22/attempt2/declared-evidence-before-final.tsv	receipt-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K2	census/round-22/attempt2/slice-verdicts.tsv	receipt-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K2	census/round-22/attempt2/declared-evidence-before-final.tsv	receipt-malformed	no counts line
+MISMATCH	K2	LOG.md	record-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K3	corpus/README.md	record-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K3	corpus/lessons/round-22.md	record-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K4	.	status-failed	fatal: bad object HEAD
+keys=4 records=3 occurrences=0 mismatches=8
+k4_rows=1
+K4ROW 'MISMATCH\tK4\t.\tstatus-failed\tfatal: bad object HEAD'
+
+VERDICT B6: FAIL CLOSED (a row)
+=== B7 GIT_CONFIG_PARAMETERS injected ===
+=== B7 tool ===
+rc=1
+stdout:
+MISMATCH	K1	census/round-23/records/declared-evidence-after.tsv	receipt-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K2	census/round-22/attempt2/declared-evidence-before-final.tsv	receipt-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K2	census/round-22/attempt2/slice-verdicts.tsv	receipt-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K2	census/round-22/attempt2/declared-evidence-before-final.tsv	receipt-malformed	no counts line
+MISMATCH	K2	LOG.md	record-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K3	corpus/README.md	record-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K3	corpus/lessons/round-22.md	record-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K4	.	stat-cache-concealed	RECEIPT-WORKTREE-STAT-CONCEALED: 1 tracked path(s) git status reports clean do not hash to the object id the index records (a.txt); the index stat cache conceals a worktree change; no receipt written
+keys=4 records=3 occurrences=0 mismatches=8
+k4_rows=1
+K4ROW 'MISMATCH\tK4\t.\tstat-cache-concealed\tRECEIPT-WORKTREE-STAT-CONCEALED: 1 tracked path(s) git status reports clean do not hash to the object id the index records (a.txt); the index stat cache conceals a worktree change; no receipt written'
+
+VERDICT B7: FAIL CLOSED (a row)
+
+[receipt] /fast/scratch/hyaku/souji-r86/S86Sentinel/receipts/probe-set-B.txt

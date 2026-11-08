@@ -1,0 +1,17 @@
+=== O1 a corrupt index makes the tool's own status read fail ===
+git status --porcelain rc=128 stderr=b'error: bad index version 9\nfatal: index file corrupt\n'
+tool stdout bytes around the K4 row: b'MISMATCH\tK4\t.\tstatus-failed\terror: bad index version 9\nfatal: index file corrupt\nkeys=4 records=3 occurrences=0 mismatches=8\n'
+physical lines starting with MISMATCH: ['MISMATCH\tK1\tcensus/round-23/records/declared-evidence-after.tsv\treceipt-absent\tnot in tree at 7258c9212808cfa5007effddf9be492b6ff8b488', 'MISMATCH\tK2\tcensus/round-22/attempt2/declared-evidence-before-final.tsv\treceipt-absent\tnot in tree at 7258c9212808cfa5007effddf9be492b6ff8b488', 'MISMATCH\tK2\tcensus/round-22/attempt2/slice-verdicts.tsv\treceipt-absent\tnot in tree at 7258c9212808cfa5007effddf9be492b6ff8b488', 'MISMATCH\tK2\tcensus/round-22/attempt2/declared-evidence-before-final.tsv\treceipt-malformed\tno counts line', 'MISMATCH\tK2\tLOG.md\trecord-absent\tnot in tree at 7258c9212808cfa5007effddf9be492b6ff8b488', 'MISMATCH\tK3\tcorpus/README.md\trecord-absent\tnot in tree at 7258c9212808cfa5007effddf9be492b6ff8b488', 'MISMATCH\tK3\tcorpus/lessons/round-22.md\trecord-absent\tnot in tree at 7258c9212808cfa5007effddf9be492b6ff8b488', 'MISMATCH\tK4\t.\tstatus-failed\terror: bad index version 9']
+physical lines NOT starting with MISMATCH but inside the K4 detail: ['fatal: index file corrupt']
+RECORD SPLIT: True
+=== O2 where the r86 escaping is applied ===
+  truth_refusal: return (out[len("FORGED "):].replace("\n", "\\n").replace("\t", "\\t").replace("\r", "\\r"))
+  k4():        self.bad("K4", ".", "status-failed", proc.stderr.strip())
+  k4():        self.bad("K4", path, "exemption-not-allowed",
+  k4():        self.bad("K4", path, "uncommitted-path", line[:2].strip() or "??")
+
+  -> only the FORGED branch inside truth_refusal() is escaped; the status-failed
+     branch (and the exemption-not-allowed branch) are not.
+=== O3 multi-line git stderr on the status read ===
+  bad index version 9    rc=128 stderr=b'error: bad index version 9\nfatal: index file corrupt\n'
+  bad signature          rc=128 stderr=b'error: bad signature 0x58585858\nfatal: index file corrupt\n'

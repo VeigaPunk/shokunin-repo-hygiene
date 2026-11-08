@@ -1,0 +1,63 @@
+# quote receipt — byte-exactness + word counts, seat S86ScoutSources, 2026-11-08
+# method: (1) whitespace-collapsed match against the RENDERED capture at the row's stated rendered line;
+#         (2) raw .gz match with roff escapes normalised (\(cqs -> ', \- -> -, \& -> '')
+#         (3) hexdump of the matched line for the hyphen / apostrophe bytes
+
+S341  git-ls-files.1.gz    rendered line 119  OPTIONS -t
+      "tracked file that is not either unmerged or skip-worktree"
+      VERBATIM(rendered, ws-collapsed) = True ; VERBATIM(raw gz, roff-normalised) = True
+      words = 9   ; hyphen byte 0x2d (ASCII) in both capture and quote
+      roff source line 193 ("H" at 191, "S" at 196, "tracked file that is skip-worktree" at 198)
+
+S342  git-update-index.1.gz rendered lines 325-326  "Skip-worktree bit" section
+      "Tell git to avoid writing the file to the working directory when reasonably possible, and treat the file as unchanged when it is not"
+      VERBATIM(rendered, ws-collapsed) = True ; VERBATIM(raw gz, roff-normalised) = True
+      words = 24  (sentence continues "present in the working directory." in the same paragraph)
+      roff source line 504
+
+S343  gitsubmodules.7.gz   rendered lines 26-27  DESCRIPTION, first section
+      "The gitlink entry contains the object name of the commit that the superproject expects the submodule’s working directory to be at."
+      VERBATIM(rendered, ws-collapsed) = True ; VERBATIM(raw gz, roff-normalised) = True
+      words = 21  ; apostrophe byte e2 80 99 (U+2019) in BOTH capture and quote (0x27 ASCII absent)
+      roff source line 51 ; upstream Documentation/gitsubmodules.adoc v2.56.0 lines 36-37 (ASCII apostrophe there)
+      NOTE: rendered line 26 also carries a literal TAB inside "that  the<TAB> superproject  expects<TAB>the"
+
+S344  git-ls-files.1.gz    rendered lines 51-52  OPTIONS -s/--stage   [REJECTED row]
+      "Show staged contents' mode bits, object name and stage number in the output."
+      VERBATIM(rendered, ws-collapsed) = True ; VERBATIM(raw gz, roff-normalised) = True
+      words = 13
+
+--- unrowed sibling clause, checked but NOT filed by this seat ---
+assume-unchanged description, git-update-index.1.gz rendered lines 77-78 (roff source line 121):
+      "the user promises not to change the file and allows Git to assume that the working tree file matches what is recorded in the index"
+      VERBATIM(rendered, ws-collapsed) = True ; words = 25
+      registry coverage: grep -c "user promises not to change the file" corpus/SOURCES.md = 0
+bit-difference paragraph, git-update-index.1.gz rendered lines 346-352 (roff source line 512):
+      "Although this bit looks similar to assume-unchanged bit, its goal is different."
+      VERBATIM = True ; words = 12
+      registry coverage: grep -c "its goal is different" corpus/SOURCES.md = 0
+
+--- served-page cross-checks (HTTP 200, 2026-11-08) ---
+S341 quote present in served git-ls-files.html (tags stripped): True
+S342 quote present in served git-update-index.html (tags stripped): True
+S343 quote present in served gitsubmodules.html (tags stripped): True
+S344 quote present in served git-ls-files.html (tags stripped): True
+S292 quote present in served git-ls-files.html: True
+S291 quote present in served git-update-index.html: True
+
+--- rejected candidates for source (c) ---
+gitmodules(5) rendered page: grep -c -i gitlink = 0 ; grep -c -i 'commit id' = 0
+gitformat-index(5) rendered page: grep -c -i 'commit id' = 0 ; gitlink named only as the object-type
+      bit value "1110 (gitlink)" (roff 296 / rendered 82) and "Symbolic links and gitlinks have value 0 in
+      this field." (roff 317 / rendered 87) — the page never says what a gitlink's name denotes.
+
+--- reachability ---
+man git-submodules / git-submodules.5 / git-submodules.7 -> "No manual entry"
+man -w gitsubmodules -> /usr/share/man/man7/gitsubmodules.7.gz
+man -w gitmodules    -> /usr/share/man/man5/gitmodules.5.gz
+https://git-scm.com/docs/git-submodules -> HTTP 404 (6697 bytes)
+https://git-scm.com/docs/gitsubmodules  -> HTTP 200 (47526 bytes)
+Documentation/git-submodules.adoc and .txt upstream -> 404 at v1.7.0 v1.8.0 v2.0.0 v2.5.0 v2.10.0 v2.13.0
+  v2.14.0 v2.20.0 v2.25.0 v2.30.0 v2.40.0 v2.50.0 v2.55.0 v2.56.0 (14 tags, both filenames)
+Documentation/gitsubmodules.adoc -> 404 at v1.7.0..v2.13.7, 200 at v2.25.0+
+upstream Makefile / meson.build v2.56.0 list gitsubmodules.adoc under MAN7_TXT (section 7, not 5)

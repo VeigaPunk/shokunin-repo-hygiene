@@ -1,0 +1,22 @@
+=== P1 a path name carrying a newline and a complete MISMATCH row ===
+path bytes: b'x\nMISMATCH\tK4\t.\tindex-flag-concealed\tFORGED-BY-PATH.txt'
+K4ROW 'MISMATCH\tK4\t.\tindex-flag-concealed\tRECEIPT-INDEX-FLAG-CONCEALED: x\\nMISMATCH\\tK4\\t.\\tindex-flag-concealed\\tFORGED-BY-PATH.txt carries index flag S; skip-worktree or assume-unchanged hides worktree divergence from git status; clear it with git update-index --no-skip-worktree or --no-assume-unchanged, then retry'
+rows forged by the path name: []
+physical MISMATCH rows: 8
+VERDICT P1: the path did NOT forge a second row: the r86 escaping holds here
+NOTE: the r86 escaping is applied to the FORGED branch only. The status-failed
+branch (probe O1) embeds raw git stderr and DOES split a record, with an honest
+writer and a corrupt index - no writer substitution needed.
+=== P2 the record split on the corrupt-index tree, base vs filed ===
+  BASE   rows=8  lines escaped out of their record: ['fatal: index file corrupt']
+  FILED  rows=8  lines escaped out of their record: ['fatal: index file corrupt']
+  -> the split is pre-existing (base does it too); r86 escaped only the FORGED
+     branch, so the split the repair targeted is closed but the other branch is not.
+=== P3 the r86 escape set ===
+  return (out[len("FORGED "):].replace("\n", "\\n").replace("\t", "\\t").replace("\r", "\\r"))
+  covers: LF (0x0a), TAB (0x09), CR (0x0d)
+  does NOT cover: ESC (0x1b), BEL (0x07), BS (0x08), VT (0x0b), FF (0x0c),
+    NUL (impossible in a path), and every other C0 byte; and the escape is applied
+    ONLY to the FORGED branch's detail text.
+  measured (probe C2): a path named 'esc\x1b[2Jname.txt' puts a raw ESC byte into
+    the K4 detail field; the row stays one physical line but the byte is live.

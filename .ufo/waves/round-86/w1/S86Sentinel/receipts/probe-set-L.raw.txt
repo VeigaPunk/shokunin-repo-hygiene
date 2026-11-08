@@ -1,0 +1,74 @@
+=== L1 KF-like: tracked file changed under skip-worktree ===
+  BASE (r86 lane-base bytes)     no env route                 k4_rows=1 stat-cache-concealed
+  BASE (r86 lane-base bytes)     env route (sparseCheckout)   k4_rows=0 (SILENT)
+  FILED (r86 repair)             no env route                 k4_rows=1 stat-cache-concealed
+  FILED (r86 repair)             env route (sparseCheckout)   k4_rows=0 (SILENT)
+
+=== L1 KG1: nested repo commit moved under skip-worktree ===
+  BASE (r86 lane-base bytes)     no env route                 k4_rows=0 (SILENT)
+  BASE (r86 lane-base bytes)     env route (sparseCheckout)   k4_rows=0 (SILENT)
+  FILED (r86 repair)             no env route                 k4_rows=1 index-flag-concealed
+  FILED (r86 repair)             env route (sparseCheckout)   k4_rows=0 (SILENT)
+
+=== L2 a doctored writer beside a copy of each tool ===
+  BASE (r86 lane-base bytes)     doctored writer -> k4_rows=0 (SILENT)
+  FILED (r86 repair)             doctored writer -> k4_rows=0 (SILENT)
+
+  -> the base tool never consults _flag_refusal at all, so a doctored writer changes
+     nothing for it; the r86 repair ROUTES the sweep's verdict through the writer, so
+     a doctored (or merely renamed) writer now decides whether the index-flag class
+     is reported. That widens the blast radius of the unpinned-writer defect (r85 F5).
+=== L3 what the bootstrap asks of the writer, base vs filed ===
+--- BASE bootstrap ---
+
+        "import sys, types\n"
+        "path, root = sys.argv[1], sys.argv[2]\n"
+        "src = open(path, 'rb').read()\n"
+        "mod = types.ModuleType('souji_receipt_write')\n"
+        "mod.__file__ = path\n"
+        "sys.modules[mod.__name__] = mod\n"
+        "sys.argv = [path]\n"
+        "try:\n"
+        "    exec(compile(src, path, 'exec'), mod.__dict__)\n"
+        "except SystemExit as exc:\n"
+        "    print('REFUSED %s' % exc.code); raise SystemExit(0)\n"
+        "try:\n"
+        "    msg = mod._truth_refusal(root)\n"
+        "except SystemExit as exc:\n"
+        "    print('REFUSED %s' % exc.code); raise SystemExit(0)\n"
+        "print('CLEAN' if not msg else 'FORGED ' + msg.replace(chr(10), ' '))\n"
+--- FILED bootstrap ---
+
+        "import sys, types\n"
+        "path, root = sys.argv[1], sys.argv[2]\n"
+        "src = open(path, 'rb').read()\n"
+        "mod = types.ModuleType('souji_receipt_write')\n"
+        "mod.__file__ = path\n"
+        "sys.modules[mod.__name__] = mod\n"
+        "sys.argv = [path]\n"
+        "try:\n"
+        "    exec(compile(src, path, 'exec'), mod.__dict__)\n"
+        "except SystemExit as exc:\n"
+        "    print('REFUSED %s' % exc.code); raise SystemExit(0)\n"
+        "try:\n"
+        "    msg = mod._truth_refusal(root)\n"
+        "except SystemExit as exc:\n"
+        "    print('REFUSED %s' % exc.code); raise SystemExit(0)\n"
+        "if not msg:\n"
+        "    fl = mod.git(root, 'ls-files', '-v', '-z', ':(top)')\n"
+        "    if fl.returncode != 0:\n"
+        "        print('FLAGFAIL ' + fl.stderr.decode('utf-8', 'replace').strip()[:200])\n"
+        "        raise SystemExit(0)\n"
+        "    for rec in fl.stdout.split(bytes([0])):\n"
+        "        if not rec:\n"
+        "            continue\n"
+        "        tag, _, p = rec.partition(bytes([32]))\n"
+        "        if tag != bytes([72]):\n"
+        "            msg = mod._flag_refusal(root, tag, p)\n"
+        "            break\n"
+        "print('CLEAN' if not msg else 'FORGED ' + msg)\n"
+
+base asks the writer for: _truth_refusal only.
+filed asks the writer for: _truth_refusal, git(), AND _flag_refusal.
+
+[receipt] /fast/scratch/hyaku/souji-r86/S86Sentinel/receipts/probe-set-L.txt

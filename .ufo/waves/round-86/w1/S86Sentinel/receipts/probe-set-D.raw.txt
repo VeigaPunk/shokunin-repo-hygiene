@@ -1,0 +1,115 @@
+=== D1 a writer that hangs (tool copy: timeout=3 instead of 600) ===
+=== D1 tool ===
+rc=1
+stdout:
+MISMATCH	K1	census/round-23/records/declared-evidence-after.tsv	receipt-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K2	census/round-22/attempt2/declared-evidence-before-final.tsv	receipt-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K2	census/round-22/attempt2/slice-verdicts.tsv	receipt-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K2	census/round-22/attempt2/declared-evidence-before-final.tsv	receipt-malformed	no counts line
+MISMATCH	K2	LOG.md	record-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K3	corpus/README.md	record-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K3	corpus/lessons/round-22.md	record-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K4	.	stat-cache-concealed	the receipt writer could not be run (TimeoutExpired: Command '['/usr/bin/python3', '-I', '-B', '-c', "import sys, types\npath, root = sys.argv[1], sys.argv[2]\nsrc = open(path, 'rb').read()\nmod = types.ModuleType('souji_receipt_write')\nmod.__file__ = path\nsys.modules[mod.__name__] = mod\nsys.argv = [path]\ntry:\n    exec(compile(src, path, 'exec'), mod.__dict__)\nexcept SystemExit as exc:\n    print('REFUSED %s' % exc.code); raise SystemExit(0)\ntry:\n    msg = mod._truth_refusal(root)\nexcept SystemExit as exc:\n    print('REFUSED %s' % exc.code); raise SystemExit(0)\nif not msg:\n    fl = mod.git(root, 'ls-files', '-v', '-z', ':(top)')\n    if fl.returncode != 0:\n        print('FLAGFAIL ' + fl.stderr.decode('utf-8', 'replace').strip()[:200])\n        raise SystemExit(0)\n    for rec in fl.stdout.split(bytes([0])):\n        if not rec:\n            continue\n        tag, _, p = rec.partition(bytes([32]))\n        if tag != bytes([72]):\n            msg = mod._flag_refusal(root, tag, p)\n            break\nprint('CLEAN' if not msg else 'FORGED ' + msg)\n", '/fast/scratch/hyaku/souji-r86/S86Sentinel/fx/d1/tool/souji-receipt-write.py', '/fast/scratch/hyaku/souji-r86/S86Sentinel/fx/d1/clone']' timed out after 3 seconds); tracked bytes are unverified
+keys=4 records=3 occurrences=0 mismatches=8
+k4_rows=1
+K4ROW 'MISMATCH\tK4\t.\tstat-cache-concealed\tthe receipt writer could not be run (TimeoutExpired: Command \'[\'/usr/bin/python3\', \'-I\', \'-B\', \'-c\', "import sys, types\\npath, root = sys.argv[1], sys.argv[2]\\nsrc = open(path, \'rb\').read()\\nmod = types.ModuleType(\'souji_receipt_write\')\\nmod.__file__ = path\\nsys.modules[mod.__name__] = mod\\nsys.argv = [path]\\ntry:\\n    exec(compile(src, path, \'exec\'), mod.__dict__)\\nexcept SystemExit as exc:\\n    print(\'REFUSED %s\' % exc.code); raise SystemExit(0)\\ntry:\\n    msg = mod._truth_refusal(root)\\nexcept SystemExit as exc:\\n    print(\'REFUSED %s\' % exc.code); raise SystemExit(0)\\nif not msg:\\n    fl = mod.git(root, \'ls-files\', \'-v\', \'-z\', \':(top)\')\\n    if fl.returncode != 0:\\n        print(\'FLAGFAIL \' + fl.stderr.decode(\'utf-8\', \'replace\').strip()[:200])\\n        raise SystemExit(0)\\n    for rec in fl.stdout.split(bytes([0])):\\n        if not rec:\\n            continue\\n        tag, _, p = rec.partition(bytes([32]))\\n        if tag != bytes([72]):\\n            msg = mod._flag_refusal(root, tag, p)\\n            break\\nprint(\'CLEAN\' if not msg else \'FORGED \' + msg)\\n", \'/fast/scratch/hyaku/souji-r86/S86Sentinel/fx/d1/tool/souji-receipt-write.py\', \'/fast/scratch/hyaku/souji-r86/S86Sentinel/fx/d1/clone\']\' timed out after 3 seconds); tracked bytes are unverified'
+
+VERDICT D1: FAIL CLOSED (a row names the timeout)
+NOTE: the filed bytes carry timeout=600; TimeoutExpired is a subprocess.SubprocessError subclass, so the same branch fires at 600 s. The only difference is the constant.
+case realnewline            path bytes=b'a\nb.txt'
+  K4 row: 'MISMATCH\tK4\t.\tindex-flag-concealed\tRECEIPT-INDEX-FLAG-CONCEALED: a\\nb.txt carries index flag S; skip-worktree or assume-unchanged hides worktree divergence from git status; clear it with git update-index --no-skip-worktree or --no-assume-unchanged, then retry'
+  detail: 'RECEIPT-INDEX-FLAG-CONCEALED: a\\nb.txt carries index flag S; skip-worktree or assume-unchanged hides worktree divergence from git status; clear it with git update-index --no-skip-worktree or --no-assume-unchanged, then retry'
+case literalbackslashn      path bytes=b'a\\nb.txt'
+  K4 row: 'MISMATCH\tK4\t.\tindex-flag-concealed\tRECEIPT-INDEX-FLAG-CONCEALED: a\\nb.txt carries index flag S; skip-worktree or assume-unchanged hides worktree divergence from git status; clear it with git update-index --no-skip-worktree or --no-assume-unchanged, then retry'
+  detail: 'RECEIPT-INDEX-FLAG-CONCEALED: a\\nb.txt carries index flag S; skip-worktree or assume-unchanged hides worktree divergence from git status; clear it with git update-index --no-skip-worktree or --no-assume-unchanged, then retry'
+=== D2 escaping injectivity ===
+detail(real newline)      = 'RECEIPT-INDEX-FLAG-CONCEALED: a\\nb.txt carries index flag S; skip-worktree or assume-unchanged hides worktree divergence from git status; clear it with git update-index --no-skip-worktree or --no-assume-unchanged, then retry'
+detail(literal backslash-n)= 'RECEIPT-INDEX-FLAG-CONCEALED: a\\nb.txt carries index flag S; skip-worktree or assume-unchanged hides worktree divergence from git status; clear it with git update-index --no-skip-worktree or --no-assume-unchanged, then retry'
+COLLISION: True
+VERDICT D2: the record cannot distinguish a newline path from a literal backslash-n path: the escaped form is not injective
+case invalid80              path bytes=b'amb\x80one.txt'
+  K4 row: 'MISMATCH\tK4\t.\tindex-flag-concealed\tRECEIPT-INDEX-FLAG-CONCEALED: amb�one.txt carries index flag S; skip-worktree or assume-unchanged hides worktree divergence from git status; clear it with git update-index --no-skip-worktree or --no-assume-unchanged, then retry'
+  detail: 'RECEIPT-INDEX-FLAG-CONCEALED: amb�one.txt carries index flag S; skip-worktree or assume-unchanged hides worktree divergence from git status; clear it with git update-index --no-skip-worktree or --no-assume-unchanged, then retry'
+case invalid81              path bytes=b'amb\x81one.txt'
+  K4 row: 'MISMATCH\tK4\t.\tindex-flag-concealed\tRECEIPT-INDEX-FLAG-CONCEALED: amb�one.txt carries index flag S; skip-worktree or assume-unchanged hides worktree divergence from git status; clear it with git update-index --no-skip-worktree or --no-assume-unchanged, then retry'
+  detail: 'RECEIPT-INDEX-FLAG-CONCEALED: amb�one.txt carries index flag S; skip-worktree or assume-unchanged hides worktree divergence from git status; clear it with git update-index --no-skip-worktree or --no-assume-unchanged, then retry'
+=== D3 invalid-UTF-8 path names ===
+detail(bad\x80) = 'RECEIPT-INDEX-FLAG-CONCEALED: amb�one.txt carries index flag S; skip-worktree or assume-unchanged hides worktree divergence from git status; clear it with git update-index --no-skip-worktree or --no-assume-unchanged, then retry'
+detail(bad\x81) = 'RECEIPT-INDEX-FLAG-CONCEALED: amb�one.txt carries index flag S; skip-worktree or assume-unchanged hides worktree divergence from git status; clear it with git update-index --no-skip-worktree or --no-assume-unchanged, then retry'
+COLLISION: True
+VERDICT D3: two different files render the same record text: the path is not unambiguously named
+=== D4 --no-worktree on a tree with a concealed change ===
+=== D4 tool ===
+rc=1
+stdout:
+MISMATCH	K1	census/round-23/records/declared-evidence-after.tsv	receipt-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K2	census/round-22/attempt2/declared-evidence-before-final.tsv	receipt-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K2	census/round-22/attempt2/slice-verdicts.tsv	receipt-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K2	census/round-22/attempt2/declared-evidence-before-final.tsv	receipt-malformed	no counts line
+MISMATCH	K2	LOG.md	record-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K3	corpus/README.md	record-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K3	corpus/lessons/round-22.md	record-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+keys=4 records=3 occurrences=0 mismatches=7
+k4_rows=0
+
+VERDICT D4: FAIL OPEN (K4 skipped entirely; no K4 row)
+=== D5 GIT_OBJECT_DIRECTORY redirected ===
+=== D5 tool (GIT_OBJECT_DIRECTORY) ===
+rc=1
+stdout:
+MISMATCH	K1	census/round-23/records/declared-evidence-after.tsv	receipt-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K2	census/round-22/attempt2/declared-evidence-before-final.tsv	receipt-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K2	census/round-22/attempt2/slice-verdicts.tsv	receipt-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K2	census/round-22/attempt2/declared-evidence-before-final.tsv	receipt-malformed	no counts line
+MISMATCH	K2	LOG.md	record-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K3	corpus/README.md	record-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K3	corpus/lessons/round-22.md	record-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K4	.	status-failed	fatal: bad object HEAD
+keys=4 records=3 occurrences=0 mismatches=8
+k4_rows=1
+K4ROW 'MISMATCH\tK4\t.\tstatus-failed\tfatal: bad object HEAD'
+
+VERDICT D5 GIT_OBJECT_DIRECTORY: fail closed (a row is emitted)
+=== D5 GIT_ALTERNATE_OBJECT_DIRECTORIES redirected ===
+=== D5 tool (GIT_ALTERNATE_OBJECT_DIRECTORIES) ===
+rc=1
+stdout:
+MISMATCH	K1	census/round-23/records/declared-evidence-after.tsv	receipt-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K2	census/round-22/attempt2/declared-evidence-before-final.tsv	receipt-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K2	census/round-22/attempt2/slice-verdicts.tsv	receipt-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K2	census/round-22/attempt2/declared-evidence-before-final.tsv	receipt-malformed	no counts line
+MISMATCH	K2	LOG.md	record-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K3	corpus/README.md	record-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K3	corpus/lessons/round-22.md	record-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K4	.	index-flag-concealed	RECEIPT-INDEX-FLAG-CONCEALED: a.txt carries index flag S; skip-worktree or assume-unchanged hides worktree divergence from git status; clear it with git update-index --no-skip-worktree or --no-assume-unchanged, then retry
+keys=4 records=3 occurrences=0 mismatches=8
+k4_rows=1
+K4ROW 'MISMATCH\tK4\t.\tindex-flag-concealed\tRECEIPT-INDEX-FLAG-CONCEALED: a.txt carries index flag S; skip-worktree or assume-unchanged hides worktree divergence from git status; clear it with git update-index --no-skip-worktree or --no-assume-unchanged, then retry'
+
+VERDICT D5 GIT_ALTERNATE_OBJECT_DIRECTORIES: fail closed (a row is emitted)
+=== D6 --root inside a subdirectory: the exact refusal ===
+=== D6 tool ===
+rc=1
+stdout:
+MISMATCH	K1	census/round-23/records/declared-evidence-after.tsv	receipt-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K2	census/round-22/attempt2/declared-evidence-before-final.tsv	receipt-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K2	census/round-22/attempt2/slice-verdicts.tsv	receipt-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K2	census/round-22/attempt2/declared-evidence-before-final.tsv	receipt-malformed	no counts line
+MISMATCH	K2	LOG.md	record-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K3	corpus/README.md	record-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K3	corpus/lessons/round-22.md	record-absent	not in tree at 7258c9212808cfa5007effddf9be492b6ff8b488
+MISMATCH	K4	.	stat-cache-concealed	the receipt writer refused the tree (exit 2); tracked bytes are unverified
+keys=4 records=3 occurrences=0 mismatches=8
+k4_rows=1
+K4ROW 'MISMATCH\tK4\t.\tstat-cache-concealed\tthe receipt writer refused the tree (exit 2); tracked bytes are unverified'
+
+VERDICT D6: FAIL CLOSED (a row is emitted)
+NOTE: the writer's own entry point resolves the repository toplevel before calling _truth_refusal; the K4 bootstrap calls it with --root, so a subdirectory root changes the measurement (here: a refusal), never a clean verdict.
+=== D7 a stat-cache concealment and a gitlink concealment together ===
+K4ROW 'MISMATCH\tK4\t.\tstat-cache-concealed\tRECEIPT-WORKTREE-STAT-CONCEALED: 1 tracked path(s) git status reports clean do not hash to the object id the index records (a.txt); the index stat cache conceals a worktree change; no receipt written'
+VERDICT D7: only the stat-cache row is reported: the gitlink flag is masked (the sweep runs only when the truth check is clean)
+=== D8 scope of 'git ls-files -v -z :(top)' from a subdirectory ===
+entries seen from repo/sub: [b'S ../a.txt', b'H ../ln', b'H ../nest', b'H ../run.sh', b'H b.txt', b'H ../tgt-one', b'H ../tgt-two', b'']
+VERDICT D8: the :(top) pathspec widens the sweep to the whole index
+
+[receipt] /fast/scratch/hyaku/souji-r86/S86Sentinel/receipts/probe-set-D.txt

@@ -1,0 +1,20 @@
+=== N1 can the flag read fail while the status read succeeds? ===
+  index extension checksum broken    status rc=0  ls-files rc=0  ls stderr=b''
+  index header count inflated        status rc=128  ls-files rc=128  ls stderr=b'fatal: Out of memory, malloc failed (tried to allocate 171798687301 bytes)\n'
+  index version 9                    status rc=128  ls-files rc=128  ls stderr=b'error: bad index version 9\nfatal: index file corrupt\n'
+  -> with an honest writer the FLAGFAIL branch needs ls-files to fail while status
+     succeeds; the corruption modes above fail both, so the tool's own status read
+     reports 'status-failed' first.
+=== N2 the REFUSED branch and the writer's reason ===
+tool stderr: b''
+K4ROW 'MISMATCH\tK4\t.\tstatus-failed\terror: bad signature 0x58585858'
+
+-> the writer prints 'refused: <reason>' on ITS stderr; the bootstrap catches the
+   SystemExit and prints only 'REFUSED <exit code>' on stdout; the tool's REFUSED
+   branch keeps only the code. The reason never reaches the record.
+=== N3 the paths the sweep would name under a subdirectory root ===
+git -C repo/sub ls-files -v -z :(top) -> [b'S ../a.txt', b'H ../ln', b'H ../nest', b'H ../run.sh', b'H b.txt', b'H ../tgt-one', b'H ../tgt-two']
+-> the paths carry '../' prefixes, i.e. they are relative to the CWD, not the repo
+   top; the writer's own entry point resolves the toplevel first (r64 C1) and the
+   K4 bootstrap does not, so it passes --root where the writer expects the toplevel.
+tool with --root=repo/sub: ['MISMATCH\tK4\t.\tstat-cache-concealed\tthe receipt writer refused the tree (exit 2); tracked bytes are unverified']

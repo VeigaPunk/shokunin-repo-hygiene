@@ -1,0 +1,64 @@
+default                                  -> [b'S a.txt']
+-c core.sparseCheckout=true              -> [b'H a.txt']
+-c core.sparseCheckout=1                 -> [b'H a.txt']
+-c index.sparse=true                     -> [b'S a.txt']
+-c core.sparseCheckout=true -c core.sparseCheckoutCone=true -> [b'H a.txt']
+
+--- is the skip-worktree bit still in the index? (ls-files --debug) ---
+default:
+a.txt
+  ctime: 1794128765:76457234
+  mtime: 1750000000:0
+  dev: 66306	ino: 743168002
+  uid: 1000	gid: 1000
+  size: 9	flags: 40004000
+ln
+  ctime: 1794128765:76457234
+  mtime: 1750000000:0
+  dev: 66306	ino: 743168008
+  uid: 1000	gid: 1000
+  size: 7	flags: 0
+nest
+  ctime: 1794128765:62753514
+  mtime: 1794128765:62753514
+  dev: 66306	ino: 1481292497
+  uid: 1000	gid: 1000
+  size: 31	flags: 0
+run.sh
+  c
+sparseCheckout=true:
+a.txt
+  ctime: 1794128765:76457234
+  mtime: 1750000000:0
+  dev: 66306	ino: 743168002
+  uid: 1000	gid: 1000
+  size: 9	flags: 4000
+ln
+  ctime: 1794128765:76457234
+  mtime: 1750000000:0
+  dev: 66306	ino: 743168008
+  uid: 1000	gid: 1000
+  size: 7	flags: 0
+nest
+  ctime: 1794128765:62753514
+  mtime: 1794128765:62753514
+  dev: 66306	ino: 1481292497
+  uid: 1000	gid: 1000
+  size: 31	flags: 0
+run.sh
+  ctime
+=== H2 core.sparseCheckout=true in the repository's own .git/config ===
+the gitlink concealment (KG1 shape) is present; the repo config masks the index flag
+rc=1 k4_rows=1
+K4ROW 'MISMATCH\tK4\tnest\tuncommitted-path\tM'
+VERDICT H2: fail closed
+control (no repo config): k4_rows=1
+K4ROW 'MISMATCH\tK4\t.\tindex-flag-concealed\tRECEIPT-GITLINK-CONCEALED: nest is a gitlink (mode 160000) carrying index flag S; the writer does not read submodule state and skip-worktree or assume-unchanged hides it from git status; clear it with git update-index --no-skip-worktree or --no-assume-unchanged, then retry'
+env route                k4_rows=0 []
+in-tree config route     k4_rows=1 ['MISMATCH\tK4\ta.txt\tuncommitted-path\tM']
+=== H4 a corrupt index makes the flag read fail ===
+git ls-files -v rc=128 stderr=b'error: bad signature 0x58585858\nfatal: index file corrupt\n'
+rc=1 k4_rows=1
+K4ROW 'MISMATCH\tK4\t.\tstatus-failed\terror: bad signature 0x58585858'
+physically-split detail: False
+VERDICT H4: a row is emitted (fail closed) but the detail field is not escaped

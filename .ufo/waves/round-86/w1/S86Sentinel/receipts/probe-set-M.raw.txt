@@ -1,0 +1,32 @@
+=== M1 the discriminating tree ===
+a.txt: same-size byte forge with the index stat rewritten (KF1 class)
+nest: gitlink whose nested repo commit moved, index entry skip-worktree (KG1 class)
+
+  BASE (r86 lane-base bytes)     honest writer                                  k4_rows=1 stat-cache-concealed
+  BASE (r86 lane-base bytes)     writer whose _flag_refusal returns ""          k4_rows=1 stat-cache-concealed
+  BASE (r86 lane-base bytes)     writer whose git() hides the index from the sweep k4_rows=0 (SILENT)
+  FILED (r86 repair)             honest writer                                  k4_rows=1 stat-cache-concealed
+  FILED (r86 repair)             writer whose _flag_refusal returns ""          k4_rows=1 stat-cache-concealed
+  FILED (r86 repair)             writer whose git() hides the index from the sweep k4_rows=0 (SILENT)
+
+VERDICT M1: the FILED tool's index-flag verdict is routed through the writer, so a
+writer that declines to refuse (or hides the index from the sweep) silences the NEW
+check while the BASE tool's independent check still fires. The repair widens the
+blast radius of an unpinned writer from one function to three.
+=== M2 the code shape that turns a refusal into CLEAN ===
+PROBE m2_empty_message_is_read_as_clean ERROR: AttributeError: 'NoneType' object has no attribute 'group'
+=== M3 the sweep's own control flow ===
+      for rec in fl.stdout.split(bytes([0])):\n"
+          "        if not rec:\n"
+          "            continue\n"
+          "        tag, _, p = rec.partition(bytes([32]))\n"
+          "        if tag != bytes([72]):\n"
+          "            msg = mod._flag_refusal(root, tag, p)\n"
+          "            break\n"
+          "print('CLEAN' if not msg else 'FORGED ' + msg)\n"
+  
+
+  -> the loop BREAKS on the first non-H record and assigns msg = refusal; if the
+     refusal is falsy the loop's finding is discarded and CLEAN is printed.
+
+[receipt] /fast/scratch/hyaku/souji-r86/S86Sentinel/receipts/probe-set-M.txt

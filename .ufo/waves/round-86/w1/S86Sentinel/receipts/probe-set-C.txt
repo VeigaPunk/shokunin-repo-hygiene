@@ -1,0 +1,35 @@
+=== C1 a stub writer that answers CLEAN itself ===
+VERDICT C1: FAIL OPEN (K4 emitted no row at all despite skip-worktree on a.txt)
+=== C2 a path name carrying an ESC byte ===
+stdout bytes of the K4 block: b'MISMATCH\tK4\t.\tindex-flag-concealed\tRECEIPT-INDEX-FLAG-CONCEALED: esc\x1b[2Jname.txt carries index flag S; skip-worktree or assume-unchanged hides worktree divergence from git status; clear it with git update-index --no-skip-worktree or --no-assume-unchanged, then retry\nkeys=4 records=3 occurrences=0 mismatches=8\n'
+raw ESC present in the record: True
+K4 rows: ['MISMATCH\tK4\t.\tindex-flag-concealed\tRECEIPT-INDEX-FLAG-CONCEALED: esc\x1b[2Jname.txt carries index flag S; skip-worktree or assume-unchanged hides worktree divergence from git status; clear it with git update-index --no-skip-worktree or --no-assume-unchanged, then retry']
+VERDICT C2: fail closed (a row is emitted) but the record carries an unescaped ESC byte
+=== C2b a path name whose bytes are not valid UTF-8 ===
+stdout bytes: b'MISMATCH\tK1\tcensus/round-23/records/declared-evidence-after.tsv\treceipt-absent\tnot in tree at 7258c9212808cfa5007effddf9be492b6ff8b488\nMISMATCH\tK2\tcensus/round-22/attempt2/declared-evidence-before-final.tsv\treceipt-absent\tnot in tree at 7258c9212808cfa5007effddf9be492b6ff8b488\nMISMATCH\tK2\tcensus/round-22/attempt2/slice-verdicts.tsv\treceipt-absent\tnot in tree at 7258c9212808cfa5007effddf9be492b6ff8b488\nMISMATCH\tK2\tcensus/round-22/attempt2/declared-evidence-before-final.tsv\treceipt-malformed\tno counts line\nMISMATCH\tK2\tLOG.md\trecord-absent\tnot in tree at 7258c9212808cfa5007effddf9be492b6ff8b488\nMISMATCH\tK3\tcorpus/README.md\trecord-absent\tnot in tree at 7258c9212808cfa5007effddf9be492b6ff8b488\nMISMATCH\tK3\tcorpus/lessons/round-22.md\trecord-absent\tnot in tree at 7258c9212808cfa5007effddf9be492b6ff8b488\nMISMATCH\tK4\t.\tindex-flag-concealed\tRECEIPT-INDEX-FLAG-CONCEALED: bad\xef\xbf\xbd\xef\xbf\xbdname.txt carries in'
+stderr bytes: b''
+rc=1
+K4 rows: ['MISMATCH\tK4\t.\tindex-flag-concealed\tRECEIPT-INDEX-FLAG-CONCEALED: bad��name.txt carries index flag S; skip-worktree or assume-unchanged hides worktree divergence from git status; clear it with git update-index --no-skip-worktree or --no-assume-unchanged, then retry']
+VERDICT C2b: a row is emitted
+=== C2c two different invalid-UTF-8 path names ===
+stdout bytes: b'MISMATCH\tK4\t.\tindex-flag-concealed\tRECEIPT-INDEX-FLAG-CONCEALED: amb\xef\xbf\xbdone.txt carries index flag S; skip-worktree or assume-unchanged hides worktree divergence from git status; clear it with git update-index --no-skip-worktree or --no-assume-unchanged, then retry\nkeys=4 records=3 occurrences=0 mismatches=8\n'
+K4 rows: ['MISMATCH\tK4\t.\tindex-flag-concealed\tRECEIPT-INDEX-FLAG-CONCEALED: amb�one.txt carries index flag S; skip-worktree or assume-unchanged hides worktree divergence from git status; clear it with git update-index --no-skip-worktree or --no-assume-unchanged, then retry']
+VERDICT C2c: a row is emitted
+=== C3 one K4 record split across physical lines by unescaped stderr ===
+stdout bytes: b'MISMATCH\tK4\t.\tstat-cache-concealed\tthe receipt writer produced no verdict (exit 1: Traceback (most recent call last):\n  File "<string>", line 9, in <module>\n    exec(compile(src, path, \'exec\'), mod.__dict__)\n         ~~~~~~~^^^^^^^^^^^^^^^^^^^\n  File "/fast/scratch/hyaku/souji-r86/S); tracked bytes are unverified\nkeys=4 records=3 occurrences=0 mismatches=8\n'
+physical lines: ['MISMATCH\tK1\tcensus/round-23/records/declared-evidence-after.tsv\treceipt-absent\tnot in tree at 7258c9212808cfa5007effddf9be492b6ff8b488', 'MISMATCH\tK2\tcensus/round-22/attempt2/declared-evidence-before-final.tsv\treceipt-absent\tnot in tree at 7258c9212808cfa5007effddf9be492b6ff8b488', 'MISMATCH\tK2\tcensus/round-22/attempt2/slice-verdicts.tsv\treceipt-absent\tnot in tree at 7258c9212808cfa5007effddf9be492b6ff8b488', 'MISMATCH\tK2\tcensus/round-22/attempt2/declared-evidence-before-final.tsv\treceipt-malformed\tno counts line', 'MISMATCH\tK2\tLOG.md\trecord-absent\tnot in tree at 7258c9212808cfa5007effddf9be492b6ff8b488', 'MISMATCH\tK3\tcorpus/README.md\trecord-absent\tnot in tree at 7258c9212808cfa5007effddf9be492b6ff8b488', 'MISMATCH\tK3\tcorpus/lessons/round-22.md\trecord-absent\tnot in tree at 7258c9212808cfa5007effddf9be492b6ff8b488', 'MISMATCH\tK4\t.\tstat-cache-concealed\tthe receipt writer produced no verdict (exit 1: Traceback (most recent call last):']
+VERDICT C3: RECORD SPLIT: the detail field carries a raw newline
+=== C4 FLAGFAIL branch embeds raw multi-line git stderr ===
+stdout bytes: b'MISMATCH\tK4\t.\tstat-cache-concealed\tthe index-flag read failed (fatal: bad index\nsecond line); tracked bytes are unverified\nkeys=4 records=3 occurrences=0 mismatches=8\n'
+physical MISMATCH lines: ['MISMATCH\tK1\tcensus/round-23/records/declared-evidence-after.tsv\treceipt-absent\tnot in tree at 7258c9212808cfa5007effddf9be492b6ff8b488', 'MISMATCH\tK2\tcensus/round-22/attempt2/declared-evidence-before-final.tsv\treceipt-absent\tnot in tree at 7258c9212808cfa5007effddf9be492b6ff8b488', 'MISMATCH\tK2\tcensus/round-22/attempt2/slice-verdicts.tsv\treceipt-absent\tnot in tree at 7258c9212808cfa5007effddf9be492b6ff8b488', 'MISMATCH\tK2\tcensus/round-22/attempt2/declared-evidence-before-final.tsv\treceipt-malformed\tno counts line', 'MISMATCH\tK2\tLOG.md\trecord-absent\tnot in tree at 7258c9212808cfa5007effddf9be492b6ff8b488', 'MISMATCH\tK3\tcorpus/README.md\trecord-absent\tnot in tree at 7258c9212808cfa5007effddf9be492b6ff8b488', 'MISMATCH\tK3\tcorpus/lessons/round-22.md\trecord-absent\tnot in tree at 7258c9212808cfa5007effddf9be492b6ff8b488', 'MISMATCH\tK4\t.\tstat-cache-concealed\tthe index-flag read failed (fatal: bad index']
+VERDICT C4: RECORD SPLIT
+=== C5 GIT_INDEX_FILE aimed at the gitlink concealment ===
+own index  nest entry: [b'S nest']
+doctored   nest entry: [b'H nest']
+status under the doctored view: rc=0 out=b'M  nest\n'
+VERDICT C5: fail closed (a row is emitted, but for a different reason than the concealment)
+=== C6 GIT_REPLACE_REF_BASE reaches the tool's own git() ===
+rc=1
+K4 rows: []
+stderr: b''
+VERDICT C6: FAIL OPEN

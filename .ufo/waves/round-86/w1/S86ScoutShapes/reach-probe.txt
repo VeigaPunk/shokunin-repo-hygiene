@@ -1,0 +1,51 @@
+### counter under test: /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-86/c1-pointer-counter.py
+### sha256: 8278ea4d41d0975b748419ba79de44d3eefc924d8f415071660def83f9fba1f3
+
+== p1 (basename clause, r85 S85Scribe F4) : is it outcome-differentiating for ANY (token,target) pair? ==
+  pairs where basename differs AND a downstream accept-clause holds (basename is the ONLY refuser): 0
+  exhaustive component sweep (3 roots x 2 rounds x 8 x 8 x 3 x 3): pairs where a downstream accept-clause
+  holds while the basenames differ: 0
+
+== m12 (R0 token-on-base-line half) : what does the clause need? ==
+  filed counter line: [378]
+  r86 pinned items: [('I85R', 'LOG.md', '3165', 'census/round-84/records/c1-after.txt'), ('I85C', 'corpus/lessons/round-84.md', '80', 'census/round-84/records/c2-after.txt'), ('I85T', 'LOG.md', '2308', 'census/round-49/sources/s272-python-open-'), ('I86S', 'SCORECARD.md', '1924', 'census/round-83/c1-pointer-counter.py')]
+  -> a row cannot change an item's (file,line,token); the harness forge only replaces (class,target).
+  -> the item set census/round-86/c1-items.tsv is sha-pinned in the counter's POPS table:
+      ("r85", "705fa1385c4ccec23811cfa57104046ec6587258", 3),
+      ("r86", "705fa1385c4ccec23811cfa57104046ec6587258", 4),
+
+== m16 (sentence-end punctuation disjunct in _whole) ==
+  _whole(b'other-stub', b'...p/p6repo/other-stub.') = False
+  _whole(b'other-stub', b'...p/p6repo/other-stub')  = False
+  -> the disjunct only matters when the path is followed IMMEDIATELY by . , ; :  (a closing quote/space does not need it)
+  -> the clause is reachable only via _declared(), which is called ONLY for cls==QUARANTINED,
+  -> and only for a row that RESOLVES (a REFUSED row cannot see a stricter rule).
+  QUARANTINED rows in the r86 population:
+      NF4 item=L06 target=.ufo/quarantine/round-17/tests/vault/vadv54-run/p/p6repo/NOT-THE-STUB expect=REFUSED
+      FP8 item=L16 target=.ufo/quarantine/round-17/.ufo/NOT-THE-L0 expect=REFUSED
+      LP3 item=P01 target=.ufo/quarantine/round-17/tests expect=REFUSED
+      NF6b item=L06 target=.ufo/quarantine/round-17/tests/vault/vadv54-run/p/p6repo/other-stub expect=REFUSED
+      NF6c item=L06 target=.ufo/quarantine/round-17/tests/vault/vadv54-run/p/p6repo/ghost-stub expect=REFUSED
+      NF6d item=L06 target=.ufo/quarantine/round-17/tests/vault/vadv54-run/p/p6repo/readme-stub expect=REFUSED
+      NF6e item=L06 target=.ufo/quarantine/round-17/tests/vault/vadv54-run/p/p6repo/late-stub expect=REFUSED
+  QUARANTINED rows expecting a RESOLUTION (needed for m16): []
+  distinct exp_got over the whole population: ['MOVED', 'REFUSED']
+
+== m17 (duplicate-id refusal in _ledger) ==
+  r86 ledger sha256: 7cbb28c9805c959925805b9e06dfdf5d9f8d01e57b1ad2645269e06cf782abce
+  r86 ledger rows: [['I85R', 'MOVED', 'census/round-84/waves/c1-after.txt', 'a capture-shaped move under the token own census round'], ['I85T', 'TOKEN', 'census/round-49/sources/s272-python-open-located-quote.txt', 'path wrapped onto the next LOG line']]
+  _ledger on a duplicated-id file -> {'I85R': ('MOVED', 'census/round-84/records/c1-after.txt')} bad= ['I85R']  (duplicate silently overwrites; the 'bad' list is what
+     makes the counter print LEDGER-REFUSED and exit 1 -- i.e. EVERY row of the arm goes red at once)
+  the harness never passes a per-row ledger: it passes --ledger once per run and --forge per row;
+  the forge row replaces (class,target) only, never the ledger file.
+
+== shape reachability in the counter's own terms ==
+  NF-W row  : token census/round-84/records/c1-after.txt -> census/round-84/w1/c1-after.txt
+    _capture_ok = False
+    _owntree_ok = True
+    -> own-tree belt ACCEPTS (w1/ is OWNTREE_WAVE and the tails match) so the census-in-tree clause is the first refuser
+  NF-Y row  : token census/round-83/c1-pointer-counter.py -> census/round-83/waves/c1-pointer-counter.py
+    _capture_ok = True
+    _owntree_ok = False
+    want(got) component counts: token below round = 1, target below round = 2 -> the len(want)<2 guard fires
+    with the m14 guard dropped: _capture_ok would accept (last component equal) -> resolves MOVED

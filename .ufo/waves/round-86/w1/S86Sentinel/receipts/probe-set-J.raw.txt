@@ -1,0 +1,24 @@
+=== J1 git status --porcelain quoting of control-byte paths ===
+porcelain: b'?? "nl\\nname.txt"\n?? "sp ace.txt"\n?? "tab\\tname.txt"\n'
+K4 rows: ['MISMATCH\tK4\t"nl\\nname.txt"\tuncommitted-path\t??', 'MISMATCH\tK4\t"sp ace.txt"\tuncommitted-path\t??', 'MISMATCH\tK4\t"tab\\tname.txt"\tuncommitted-path\t??']
+  fields=5  record='"nl\\nname.txt"'
+  fields=5  record='"sp ace.txt"'
+  fields=5  record='"tab\\tname.txt"'
+VERDICT J1: every K4 row keeps exactly 5 tab-separated fields
+=== J2 the class paired with the refusal text ===
+class='index-flag-concealed'
+detail='RECEIPT-GITLINK-CONCEALED: nest is a gitlink (mode 160000) carrying index flag S; the writer does not read submodule state and skip-worktree or assume-unchanged'
+the class is chosen by msg.startswith(('RECEIPT-GITLINK-CONCEALED','RECEIPT-INDEX-')) - i.e. by the MESSAGE PREFIX, not by which check fired
+=== J3 the counter's environment ===
+counter ENV line: ['ENV = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}']
+-> the counter cannot carry GIT_CONFIG_PARAMETERS, so the env route is invisible to it
+
+in-tree core.sparseCheckout=true, KG1 shape: k4_rows=1
+K4ROW 'MISMATCH\tK4\tnest\tuncommitted-path\tM'
+the counter's KG1 check looks for 'nest' in the row: True
+=== J4 claim-wording checks (machine-checked) ===
+tag of the flagged entry, tool's config view : [b'S nest']
+tag of the flagged entry, writer's config view: [b'H nest']
+-> the sweep's input is a TAG, and the tag the sweep reads is not the tag the index holds, because the two halves read different config views
+
+[receipt] /fast/scratch/hyaku/souji-r86/S86Sentinel/receipts/probe-set-J.txt

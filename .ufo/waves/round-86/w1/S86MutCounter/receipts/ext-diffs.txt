@@ -1,0 +1,165 @@
+=== c7-census-in-tree.py
+@@ -414,8 +414,7 @@
+                 and not _capture_ok(token, kr, target, tr):
+             # r81 (S80MutCounter NF12): under the capture root only a wave capture subtree holds the moved file
+             why = "census/round-<N> target is not a wave capture keeping the token's own path suffix"
+-        elif kr and target[:tr.start(0)] == "census" and token[:kr.start(0)] == "census" \
+-                and not _capture_ok(token, kr, target, tr):
++        elif False:  # c7: the census-in-tree branch is dropped
+             # r82 (S81MutCounter PF-1): the suffix is the token's FULL path below its round-<N>, not its last
+             # component, so a partial suffix dropping the token's middle dir (census/round-61/wave/S61ExecRealRecord/...)
+             # is not the moved file. _capture_ok already checks the whole suffix; the defect is the moved-last-component rule
+=== m10-records-as-wave.py
+@@ -348,7 +348,7 @@
+     return bool(want) and len(want) <= len(have) and have[-len(want):] == want
+ 
+ 
+-OWNTREE_WAVE = re.compile(r"^(?:w[0-9]+|a2w1|assimilation)/")
++OWNTREE_WAVE = re.compile(r"^(?:w[0-9]+|a2w1|assimilation|records)/")
+ 
+ 
+ def _owntree_ok(token, kr, target, tr):
+=== m11-class-enum.py
+@@ -390,7 +390,7 @@
+     cls, target = entry
+     on_disk = disk_digest(os.path.join(root, token))
+     why = ""
+-    if cls not in CLASSES:
++    if False:  # m11: the class-enum guard is dropped
+         why = f"unknown class {cls}"
+     elif cls == "MOVED":
+         tr, kr = ROUND.search(target), ROUND.search(token)
+=== m14-short-shape.py
+@@ -363,7 +363,7 @@
+     tk = token[kr.end(0):].rstrip("/")
+     want = [c for c in tk.split("/") if c]
+     got = [c for c in tt.split("/") if c]
+-    if len(want) < 2 or len(got) < 2:
++    if False:  # m14: the short-shape guard is dropped
+         return False
+     if _capture_ok(token, kr, target, tr):
+         return True
+=== m6-digest-blind.py
+@@ -396,8 +396,8 @@
+         tr, kr = ROUND.search(target), ROUND.search(token)
+         if frozen is None:
+             why = "no frozen bytes to move"
+-        elif rev_digest(root, rev, target) != frozen:
+-            why = "target absent at rev or digest differs"
++        elif False:
++            why = "digest-blind mutant (m6)"
+         elif os.path.basename(target.rstrip("/")) != os.path.basename(token.rstrip("/")):
+             why = "target's last component differs from the token's"
+         elif kr and (not tr or tr.group(1) != kr.group(1)):
+=== m7-round-blind.py
+@@ -400,8 +400,8 @@
+             why = "target absent at rev or digest differs"
+         elif os.path.basename(target.rstrip("/")) != os.path.basename(token.rstrip("/")):
+             why = "target's last component differs from the token's"
+-        elif kr and (not tr or tr.group(1) != kr.group(1)):
+-            why = "target names a different round than the token"
++        elif False:
++            why = "round-blind mutant (m7)"
+         elif kr and target[:tr.start(0)] == token[:kr.start(0)] and not _owntree_ok(token, kr, target, tr):
+             # r82 (S81MutCounter NF-F/NF-G): the token-prefixed branch also requires a true capture shape; only
+             # the identical token path (the true move) or a wave subtree passes, so byte-equal own-tree decoys
+=== m8-w-only-shapes.py
+@@ -348,7 +348,7 @@
+     return bool(want) and len(want) <= len(have) and have[-len(want):] == want
+ 
+ 
+-OWNTREE_WAVE = re.compile(r"^(?:w[0-9]+|a2w1|assimilation)/")
++OWNTREE_WAVE = re.compile(r"^(?:w[0-9]+)/")
+ 
+ 
+ def _owntree_ok(token, kr, target, tr):
+=== m9-basename-only.py
+@@ -368,7 +368,7 @@
+     if _capture_ok(token, kr, target, tr):
+         return True
+     m = OWNTREE_WAVE.match(tt + "/")
+-    return bool(m) and got[1:] == want[1:]
++    return bool(m) and len(got) == 2 and got[1] == want[-1]
+ 
+ 
+ def judge(root, rev, fleet, item, entry, blob):
+=== x1-c7-not-only.py
+@@ -415,7 +415,7 @@
+             # r81 (S80MutCounter NF12): under the capture root only a wave capture subtree holds the moved file
+             why = "census/round-<N> target is not a wave capture keeping the token's own path suffix"
+         elif kr and target[:tr.start(0)] == "census" and token[:kr.start(0)] == "census" \
+-                and not _capture_ok(token, kr, target, tr):
++                and _capture_ok(token, kr, target, tr):
+             # r82 (S81MutCounter PF-1): the suffix is the token's FULL path below its round-<N>, not its last
+             # component, so a partial suffix dropping the token's middle dir (census/round-61/wave/S61ExecRealRecord/...)
+             # is not the moved file. _capture_ok already checks the whole suffix; the defect is the moved-last-component rule
+=== x2-c7-capture-to-owntree.py
+@@ -415,7 +415,7 @@
+             # r81 (S80MutCounter NF12): under the capture root only a wave capture subtree holds the moved file
+             why = "census/round-<N> target is not a wave capture keeping the token's own path suffix"
+         elif kr and target[:tr.start(0)] == "census" and token[:kr.start(0)] == "census" \
+-                and not _capture_ok(token, kr, target, tr):
++                and not _owntree_ok(token, kr, target, tr):
+             # r82 (S81MutCounter PF-1): the suffix is the token's FULL path below its round-<N>, not its last
+             # component, so a partial suffix dropping the token's middle dir (census/round-61/wave/S61ExecRealRecord/...)
+             # is not the moved file. _capture_ok already checks the whole suffix; the defect is the moved-last-component rule
+=== x3-c7-shape-only.py
+@@ -415,7 +415,7 @@
+             # r81 (S80MutCounter NF12): under the capture root only a wave capture subtree holds the moved file
+             why = "census/round-<N> target is not a wave capture keeping the token's own path suffix"
+         elif kr and target[:tr.start(0)] == "census" and token[:kr.start(0)] == "census" \
+-                and not _capture_ok(token, kr, target, tr):
++                and not CAPTURE.match(target[tr.end(0):].rstrip("/")):
+             # r82 (S81MutCounter PF-1): the suffix is the token's FULL path below its round-<N>, not its last
+             # component, so a partial suffix dropping the token's middle dir (census/round-61/wave/S61ExecRealRecord/...)
+             # is not the moved file. _capture_ok already checks the whole suffix; the defect is the moved-last-component rule
+=== x4-m14-guard-lt-1.py
+@@ -363,7 +363,7 @@
+     tk = token[kr.end(0):].rstrip("/")
+     want = [c for c in tk.split("/") if c]
+     got = [c for c in tt.split("/") if c]
+-    if len(want) < 2 or len(got) < 2:
++    if len(want) < 1 or len(got) < 1:
+         return False
+     if _capture_ok(token, kr, target, tr):
+         return True
+=== x5-m14-guard-want-only.py
+@@ -363,7 +363,7 @@
+     tk = token[kr.end(0):].rstrip("/")
+     want = [c for c in tk.split("/") if c]
+     got = [c for c in tt.split("/") if c]
+-    if len(want) < 2 or len(got) < 2:
++    if len(want) < 2:
+         return False
+     if _capture_ok(token, kr, target, tr):
+         return True
+=== x6-m14-guard-lt-3.py
+@@ -363,7 +363,7 @@
+     tk = token[kr.end(0):].rstrip("/")
+     want = [c for c in tk.split("/") if c]
+     got = [c for c in tt.split("/") if c]
+-    if len(want) < 2 or len(got) < 2:
++    if len(want) < 3 or len(got) < 3:
+         return False
+     if _capture_ok(token, kr, target, tr):
+         return True
+=== x7-m14-guard-and.py
+@@ -363,7 +363,7 @@
+     tk = token[kr.end(0):].rstrip("/")
+     want = [c for c in tk.split("/") if c]
+     got = [c for c in tt.split("/") if c]
+-    if len(want) < 2 or len(got) < 2:
++    if len(want) < 2 and len(got) < 2:
+         return False
+     if _capture_ok(token, kr, target, tr):
+         return True
+=== x8-owntree-no-assimilation.py
+@@ -348,7 +348,7 @@
+     return bool(want) and len(want) <= len(have) and have[-len(want):] == want
+ 
+ 
+-OWNTREE_WAVE = re.compile(r"^(?:w[0-9]+|a2w1|assimilation)/")
++OWNTREE_WAVE = re.compile(r"^(?:w[0-9]+|a2w1)/")
+ 
+ 
+ def _owntree_ok(token, kr, target, tr):
