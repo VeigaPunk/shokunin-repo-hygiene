@@ -159,3 +159,17 @@ Wave evidence root: `.ufo/waves/round-85/w1/`.
   outside the claim (S85Sentinel F5).*
 - **Not repaired this round (routed):** the flag sweep (A2), `stat-cache-concealed` naming at most five paths (F7),
   and the counter's inability to score a scratch copy (F3 — the mutant must carry its writer).
+
+## A7 — instrument notes that are wrong and stay byte-stable (S85ExecEvade F6, S85Critic falsifies_number_locus)
+
+- `census/round-85/c1-mutants.json`'s `note` says "r85 (48 rows)" and "the branch cannot fire". Both sentences are
+  wrong (47 data rows / 48 lines; the branch fires — A1). They are **deliberately not edited**: every C1 receipt
+  prints that file's sha256 (`bb788c0e…`), and editing the note would break the binding the round's own A5 rule
+  requires. The correction lives in this file, the lesson and the report; the note is corrected in r86 together
+  with the population change that re-pins it anyway.
+- `census/round-85/preregistration.txt` C1 Axis says the round "measures the census-in-tree branch as SHADOWED" —
+  frozen at F and not edited; A1's amendment is the correction of record, per the snapshot rule.
+- ExecEvade F2 (a wrapped-continuation TOKEN resolving a directory), F3 (QUARANTINED certified by a line that
+  *denies* the quarantine), F4 (`POLICY_LOCAL` is a raw string prefix) and Sentinel F4 (LOCAL-POLICY/FLEET never
+  read the ledger `target`; the fleet join is not contained) are counter-rule defects outside this round's claims,
+  all routed to r86 with their receipts.
