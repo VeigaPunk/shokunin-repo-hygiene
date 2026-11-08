@@ -1,0 +1,17 @@
+# population delta proof (lane, 2026-11-08T16:33:43Z)
+r90_size=14628 r91_size=16134
+cmp -n 14628 r90 r91 -> rc=0
+PREFIX-IDENTICAL
+
+# diff -u r90 r91
+--- census/round-90/c1-false-rows.tsv	2026-11-08 11:36:23.352360215 -0300
++++ census/round-91/c1-false-rows.tsv	2026-11-08 12:38:44.283624764 -0300
+@@ -58,3 +58,8 @@
+ LD1b	ledger	BASE	r77	P01	-	-	LEDGER-REFUSED	1	r89 C1: the `_ledger` duplicate-id refusal with a DIFFERENT target (S88MutCounter F2 kills m17b). Same row type as LD1, only the appended target differs (`census/nowhere/ld1b`).
+ LD2	ledger	BASE	r77	P02	-	-	LEDGER-REFUSED	1	r89 C1: the `_ledger` malformed-row guard `len(r) < 3` (S88MutCounter F3 kills m17c). The harness appends a 2-column row; pristine refuses it, the mutant raises IndexError.
+ LD2b	ledger	BASE	r77	ZZ9	-	-	LEDGER-REFUSED	1	r90 C1: the SAME malformed-row guard reached under an id ABSENT from the frozen r77 ledger. The appended row is `ZZ9<TAB>ABSENT` (2 columns); pristine refuses it on len(r)<3 and prints `LEDGER-REFUSED id=ZZ9`, while m17c (len guard dropped) writes ledger[ZZ9]=(r[1], r[2]) and raises IndexError with no marker. LD2 could not bind this guard because its id P02 is already in the ledger (r89 A1).
++LD1c	ledger	BASE	r77	P01	-	-	LEDGER-REFUSED	1	r91 C1: the `_ledger` duplicate-id refusal for an IDENTICAL duplicate (same class and target). A rule keyed on a class conflict (`ld1c`) or on a class-or-target conflict (`ld1d`) accepts it and prints no marker; pristine refuses on the duplicate id alone.
++LD3	ledger	BASE	r77	ZY8	-	-	LEDGER-REFUSED	1	r91 C1: the malformed guard's ONE-COLUMN reach: the appended row is `ZY8` alone. Pristine refuses on len(r)<3; a reader spelling the guard `len(r)==2` stores r[1]/r[2] and crashes (IndexError, no marker).
++LD4	ledger-resolve	BASE	r77	P04	-	-	MOVED	-	r91 C1: the ledger WIDTH-ACCEPTANCE clause: with the frozen 4-column ledger unchanged, item P04 resolves MOVED only if a recorded 4-column entry is accepted; a reader that refuses every non-3-column row finds no entry and reports UNRESOLVED.
++NF6i2	fixture	R13	r78	L06	QUARANTINED	.ufo/quarantine/round-17/tests/vault/vadv54-run/p/p6repo/last-stub	QUARANTINED	-	r91 C1: `_whole` examines occurrences left to right. R13 carries the token WHOLE first and as a suffix later; pristine resolves it, a reader that starts at `line.rfind` sees only the suffix and refuses.
++NF6j	fixture	R13	r78	L06	QUARANTINED	.ufo/quarantine/round-17/tests/vault/vadv54-run/p/p6repo/pathch-stub	REFUSED	-	r91 C1: the six PATHCH punctuation predecessors `. _ @ + ~ -`: R13 names the token after each in one line; pristine refuses (all six are path bytes), a PATHCH narrowed to alnum+`/` sees the first occurrence as whole and resolves.

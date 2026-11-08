@@ -1,0 +1,43 @@
+# cut-edge probe — R91Scribe, 2026-11-08
+# tool: /home/vgpnk/Projects/shokunin/souji-shokunin/tools/souji-record-agreement.py
+# sha256: 21e5c7408fef10f20b503cc1dcb8ee9cd288f87da13b402655b0f0532acfea2c
+# _one_line_bytes(raw, limit=200): head=100, keep=99, tail start = len(raw)-99
+
+== case 1 (KFF11 shape, valid C2 85 at the cut) ==
+lead 0xC2 at 101 is elided; the tail starts at 103, past the whole sequence
+  len: 201 tail requested: 102 byte at cut: 0x85
+  _cut_tail -> 103 (moved)
+  cell: 'fatal: nel xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss'
+  cell count \x85: 0  \u0085: 0
+
+== case 2 (invalid E0 lead then valid C2 85 at the cut) ==
+indices 101=0xE0 102=0x85 103=0xC2 104=0x85; the advance for E0 ends at 104, the continuation of C2 85
+  len: 201 tail requested: 102 byte at cut: 0x85
+  _cut_tail -> 104 (moved)
+  cell: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA…\\x85BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
+  cell count \x85: 1  \u0085: 0
+
+== case 3 (invalid E0 lead, next octet 0x42 is not a continuation) ==
+indices 101=0xE0 102=0x85 103=0x42 ('B'); the advance to 104 elides a non-continuation
+  len: 201 tail requested: 102 byte at cut: 0x85
+  _cut_tail -> 104 (moved)
+  cell: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA…BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
+  cell count \x85: 0  \u0085: 0
+
+  case 3 B count in cell: 97 (payload has 98)
+
+== case 4 (overlong 0xC0 as the lead of 0x85) ==
+indices 101=0xC0 102=0x85; 0xC0 0x85 is not valid UTF-8 (overlong), yet the pair is elided as one sequence
+  len: 201 tail requested: 102 byte at cut: 0x85
+  _cut_tail -> 103 (moved)
+  cell: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA…BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
+  cell count \x85: 0  \u0085: 0
+
+== case 5 (head cut at overlong C0 85) ==
+  len: 202 head requested: 100; raw[99]=0xc0 raw[100]=0x85
+  _cut_head -> 99 (the head ends before 0xC0, dropping both octets)
+  cell: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA…BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
+
+# verdict: case 2 violates the KFF11 clause the r91 claim states for the tail cut: a 201-byte stderr whose
+# U+0085 straddles the cut renders the raw-byte spelling \x85 (the lead 0xC2 is elided by the advance for the
+# invalid 0xE0 lead). case 3 shows the same advance elides a non-continuation octet.

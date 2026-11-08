@@ -3457,3 +3457,50 @@ receipts in P `5bd5a0ce`. Amendments in `plans/round-85.md` (A0-A1 so far); the 
   Attack share 7/12; connector 1; residual 0. All twelve seat reports are committed under `.ufo/waves/round-90/w1/`
   (named explicitly, so the pushed tip resolves them — the r89 durability defect).
 - **Tool installs: none.** No pacman (paused host-wide), no uv/npx/binary fetch, no sysctl, sudo or kernel change.
+
+## Round 91 (2026-11-08) — five rows bind the six surviving clauses (C1 calibration); the excerpt cut learns UTF-8 sequence boundaries and names its invalid-lead residue (C2 operability)
+
+- **Claims.** C1 (calibration 7, the lane's lowest owned non-retired axis): six single-edit mutants survived every
+  pinned population — `ld1c-class-keyed`, `ld1d-conflict-keyed`, `nf6i2-last-occurrence`, `nf6j-pathch-narrow`,
+  `s1-exact-width`, `s3-equal-two`. Five new rows bind them: LD1c (an identical duplicate appended to the frozen r77
+  ledger — kills both duplicate-keyed spellings), LD3 (a one-column ledger row — kills `len(r) == 2`), LD4 (a
+  `where=ledger-resolve` row: item P04 must resolve MOVED through its unchanged 4-column entry — kills
+  `len(r) != 3`), NF6i2 (R13: the token whole first and a suffix later — kills `line.rfind`) and NF6j (R13: the token
+  after each of `. _ @ + ~ -` — kills the narrowed PATHCH). Frozen target
+  `killed_r90=16 killed_r91=22 killed_total=38`, EXIT 0; control on r90 `killed_r90=16` with the six alive, EXIT 0.
+  C2 (operability 8): the r90 tool's raw 200-octet window cut ignored UTF-8 sequence boundaries, so a 201-byte
+  stderr whose U+0085 straddles the tail cut printed the orphan 0x85 as the raw byte's spelling. The filed tool
+  moves both cuts to sequence boundaries (S354) and the r91 fixture adds the four clauses the r90 wording claimed
+  (doubled spellings, boundary case, one physical line, `_one_line` scan). Frozen target `cases=15 tool_pass=15
+  before_pass=14`, `variants=3 detected=3` against the r90-fixture control `detected=0`, and the r87 K4 regression
+  `rows=12 mismatches=0 errors=0`.
+- **Measured.** C1: control `census/round-91/controls/c1-control-r90.txt` `SUMMARY mutants=22 sets=r90
+  pristine_r90=ok killed_r90=16 killed_total=16`, six new members `killed=no`, EXIT 0; after
+  `census/round-91/records/c1-after.txt` both pristine arms green (58/63 rows, 0 mismatches), `killed_r90=16
+  killed_r91=22 killed_total=38`, EXIT 0, each new member `killed=no` on r90 and `killed=yes` on r91. C2:
+  `records/c2-after.txt` `cases=15 tool_pass=15 before_pass=14`, EXIT 0; `records/c2-variants-r91.txt`
+  `detected=3`, EXIT 0 (`controls/c2-variants-r90-control.txt` `detected=0`); `records/c2-k4-regression.txt`
+  `rows=12 mismatches=0 errors=0`, EXIT 0; the r90 tool on the r91 fixture `tool_pass=14`, KFF11 red on both arms.
+- **Narrowed before filing (plans/round-91.md A1, A2).** A1: C1 STATED LIMITS (iii)'s premise is false — the LD4
+  base run is all-resolved (35/35, rc 0), so the missing rc assertion was a choice, not an impossibility (the
+  status assertion still kills `s1`). A2: C2's "both cuts to sequence boundaries" holds on valid UTF-8 payloads but
+  `_cut_tail` over-advances on a truncated/invalid lead before the tail cut and can re-create the byte/character
+  collision (`R91ExecC2Tool/repro-cut-tail-split.txt`; independently `R91Scribe/cut-edge-probe.txt`; the
+  sequence-length test is structural, not RFC-valid); KFF13 enforces only the literal substrings (a spaced
+  `def _one_line (` and call score 15/15, `R91ReviewerC2/kff13-spaced-name-tool.py`; a docstring mention false-fails,
+  `R91ExecC2Fixture` §5c).
+- **Sources.** S354 (RFC 3629 §3, 25-word quote, capture lines 183-185 LF-numbered, occurrence 1, capture
+  `census/round-91/srcs/rfc3629.txt`) admitted `mined`, cited by `corpus/knowledge/utf8-window-sequence-boundary.md`;
+  RFC 3629 §10 is the reject sample (16-word quote at line 525, flip condition in the lesson). Registry 275 → 276;
+  `sources-census.sh validate` EXIT 0 both ends. QUALITY Q166 added.
+- **Docs.** `corpus/knowledge/utf8-window-sequence-boundary.md`, `corpus/QUALITY.md` Q166, `plans/round-91.md`,
+  `corpus/lessons/round-91.md`, `SCORECARD.md` r91 rows, two capability rows, the r89 design-only row annotated
+  SUPERSEDED, the r92 planned block.
+- **Wave.** One v1 wave, 13 seats (4 executor, 2 reviewer, critic, mutation-tester, sentinel, connector, scout,
+  scribe, revenger; the L1 holds the planner seat). Attack share under the addendum's four roles 4/13 = 30.8 %; the
+  prefile gate's broader set 7/13. Nine seats filed reports, committed under `.ufo/waves/round-91/w1/` by explicit
+  path; four attack seats died on provider limits with no artifact (R91Critic and R91Revenger opencode-go 429,
+  R91Sentinel minimax 429 token-plan limit, R91MutCounter amr 400 tier_limit then devin permission_denied), recorded
+  under `w1/dead-seats/` and never replaced, so the live attack share is 2/13 (two reviewers). Attempt 1's L1 died
+  after the after receipts (`lane-dead-no-report`); attempt 2 (SoujiR91a2) re-verified and landed the rest.
+- **Tool installs: none.** No pacman (paused host-wide), no uv/npx/binary fetch, no sysctl, sudo or kernel change.
