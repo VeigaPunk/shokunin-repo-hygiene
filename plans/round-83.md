@@ -121,7 +121,7 @@ Wave evidence root: `.ufo/waves/round-83/w1/`.
   behaviour: no traps, no tree walk, a caller's signal during that call leaves the CLI group as at base; no frozen
   row exercises it (probe D covers the refusal, not a signal inside it).*
 
-## A9 — C2/C1: three further narrowings the reviewer and the mutator measured
+## A9 — C2/C1: four further narrowings the wave measured
 
 - **Arity guard on the /proc parse (reviewer F3, MEDIUM).** The tool runs `set -euo pipefail`; a `/proc/<pid>/stat`
   read whose remainder has fewer than 20 words made `${20}` an unbound-variable fatal inside the trap handler, so
@@ -136,6 +136,12 @@ Wave evidence root: `.ufo/waves/round-83/w1/`.
 - **Late forks are not signalled (reviewer F8, LOW, disclosed).** The map is a snapshot; a child forked after the
   pass is never in it. The corrected `deep` stub fans out before its mark, so no frozen row can see this; it is a
   stated limit, not a claim.
+- **The token's own first component is dropped unconditionally (S83ScoutDirs §3.4, MEDIUM).** `_owntree_ok` treats
+  the token's first component below its round as its wave directory whether or not it is one, so a token under
+  `.ufo/waves/round-<N>/records/…` or `…/decoy/…` also gets an own-tree move case (probe `fx6`: r83 returns MOVED,
+  r82 REFUSED). No frozen row carries such a token, so the SUMMARY is unchanged; the prereg's limit ("a token with
+  no wave directory has no own-tree move case") is corrected to "is treated as if it had one", and an `NF-L3` row is
+  routed to round 84.
 - **`records/wave-<anything>` (reviewer F7, LOW).** The r81/r82 `CAPTURE` literal is `records/wave-[^/]+`, so the
   sentence's `records/wave-<w>/` is a label, not a numeric requirement; tightening it to `wave-[0-9]+` would refuse
   the r78 regression row TF2 (`records/wave-a2w1/`). The sentence is amended; the rule is unchanged.

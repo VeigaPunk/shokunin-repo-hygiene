@@ -43,10 +43,15 @@ population carries both poles and two refused decoys: NF-J (a duplicated middle 
   `l1/`, `final/`, `build/`, `attempt2/`, `transcripts/`) is still refused; `records/` is a record of a wave, not
   a capture of a moved artifact; the choice is conservative and reformable next round.
 - Any `w[0-9]+/` is accepted, existing or not; the rule does not consult the census at run time.
-- The token's first component below its round is assumed to be its wave directory; a token with no wave directory
-  has no own-tree move case.
+- The token's first component below its round is treated as its wave directory whether or not it is one, so a token
+  under `records/` or `decoy/` also gets an own-tree move case (`S83ScoutDirs` §3.4 probe `fx6`: the r83 rule returns
+  MOVED where r82 refused; no row carries such a token). A token with no wave directory is therefore *not* excluded —
+  the prereg's first wording said it was, and this is the corrected statement.
 - Fixtures are synthetic: a row proves the rule's verdict, not that the lane really moved the file that round.
-- `S331` is the lane's own directory census at `1e870403`; it is evidence of the layout, not of a move.
+- `S331` is the lane's own directory census; `S333` corrects its provenance: `.ufo/waves/` is gitignored, so the
+  counts are a working-tree census (102 dirs over 65 rounds), not a revision count (git holds 39 at `1e870403`).
+- No real own-tree move of this shape exists in the lane at any rev or in any ledger row (`S83ScoutDirs` §2.3-2.4);
+  TF6/TF7 prove the rule's verdict over a real layout, not a lane fact.
 
 ## Evidence
 
