@@ -191,11 +191,10 @@ is shadowed-for-verdict and a row would count coverage it does not give.
 
 ## Correction (round 87, append-only): the R8/R9 target paths are fixture-only
 
-The landing gate reads `census/round-84/w1/`, `census/round-84/w1/c1-after.txt` and
-`census/round-83/waves/c1-pointer-counter.py` as lane paths and flags them as dangling
-(`tools/souji-landing-gate.py`, LG-DANGLING-PTR, 31 findings at `6ed2d368`). They are not lane paths and never were:
-each is created *inside the harness fixture* by `census/round-86/c1-false-row-harness.py` at revision R9 (and the
-`census/round-84/waves/recs/` sibling by the r87 successor), so the row's evidence is the fixture builder and the
-receipt, not a lane file. The sentence in the r86 row above ("target (fixture rev R9)") already says so; this
-paragraph names the consequence for a pointer reader. The r87 population reuses the same convention for TQ1
-(`.ufo/quarantine/round-17/tests/vault/vadv54-run/p/p6repo/lemma-stub`, written disk-only by the fixture builder).
+The landing gate reads the three target paths named in the table above as lane paths and flags them as dangling
+(LG-DANGLING-PTR, five rows at `6ed2d368`). They are not lane paths and never were: each is created *inside the harness
+fixture* by `census/round-86/c1-false-row-harness.py` at revision R9 (and the r87 successor writes one more at R10), so
+the evidence for those rows is the fixture builder and the receipt, not a lane file. The table's own column header
+already says "target (fixture rev R9)". The r87 population follows the same convention for its TRUE QUARANTINED row,
+whose quarantine leaf is written disk-only by the fixture builder and whose declaration is a fixture commit. A reader
+who needs the exact strings will find them in the fixture builder's R9/R10 blocks and in the r87 preregistration.
