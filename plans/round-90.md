@@ -130,4 +130,7 @@ spawn; an L0 line asks the orchestrator to settle/adopt the wave. To keep the ro
 seat output, the L1 wrote the results record from the dispatch task list and the presence/content of each seat's
 report, with top-level `_source: l1-constructed` and a note. The pre-file gate reads it; every attack seat's report
 is named in the ledger. This is the TameshiR96 class (a lane writing a driver artifact) and is recorded as a defect
-of the settlement path; if the driver later writes its own results, that record supersedes this one.
+of the settlement path. **Outcome:** three seats finalised their reports at 12:13–12:14 and the driver wrote its own
+`w1-results.json`; the WAVE-DONE handoff at 12:16 -03 named it and it superseded the provisional L1 record. The final
+wave bytes are committed at `47bd575b`. The provisional record is kept only as the LF disclosure; it is not evidence.
+The L0 line asking for settlement was appended and needs no answer.
