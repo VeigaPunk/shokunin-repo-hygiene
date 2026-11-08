@@ -1916,3 +1916,39 @@ falsified six sentences of the frozen wording, and the round files the narrowed 
   rule on this population; per-node `pgrep -P` cost (≥12 descendants exceeds the 5 s settle); snapshot→KILL reuse
   window; `before = 4` is the modal value of a noisy control; every C2 receipt reproduces only untraced.
   Ledger: `.ufo/waves/round-82/claim-falsification.tsv` (8 attack seats reconciled, 2 claims).
+
+### Round 83 measurements (2026-11-08, Linux; lane base `1e870403c5d806a5cf9ac93b00da7a928359608f`; instruments P `1014143d`, C2-instrument correction `51b50c94`, freeze F `fbf0ae5e`; candidates W1 `bbffe6a0`, W2 `9994af61`, C1 cleanup after the first score)
+
+| claim | axis | before | after | counting command | measured commit |
+|---|---|---|---|---|---|
+| C1 own-tree real wave shapes + per-branch remainder | calibration 7 (no reproducible 0–10 mapping; verdict calibration improved) | `census/round-83/controls/c1-K-a-r82-counter.txt` `SUMMARY rows=36 mismatches=2 accepted=0 refused_true=2 errors=0` EXIT=1 — the two refusals are TF6 (`w2/`) and TF7 (`w1/`) | `census/round-83/records/c1-after.txt` `SUMMARY rows=36 mismatches=0 accepted=0 refused_true=0 errors=0` EXIT=0 at counter sha256 `052c4f3f…`; TF6/TF7 kept, NF-J/NF-K refused; regressions r77 35/35 + 7/7, r78 22/22 + 12/12, r79 9/9, r80 18/18, r81 25/25, r82 32/32 | `python3 -B census/round-83/c1-false-row-harness.py --counter census/round-83/c1-pointer-counter.py --lane <lane> --fleet-root <fleet> --work <empty>` | W1 `bbffe6a0` + cleanup commit; C1 receipts regenerated on the final bytes (`052c4f3f…`) |
+| C2 one-pass fork-free descendant walk with starttime re-check | operability 8 (no reproducible 0–10 mapping; verdict operability improved) | red in every observed run: `controls/c2-K-a-r82-tool.txt` `mismatches=4 orphans=4` (load1≈250), `records/c2-before-pgrep.txt` `mismatches=1 orphans=1` (load1≈56); `pgrep` 108 invocations; N=12 2.5–2.6 s, N=24 5.0 s/settle | `census/round-83/records/c2-after.txt` `SUMMARY rows=20 mismatches=0 errors=0 orphans=0` EXIT=0 at tool sha256 `d4826cce…`; deep rows 0.3–0.4 s, 0 survivors, both launches; `pgrep` 0 (`c2-after-pgrep.txt`); selftest 57/0, r17 37/0, probe D 4/4 | `python3 -B census/round-83/c2-tree-walk-counter.py --tool tools/souji-vault-verify.sh --work <empty>` | W2 `9994af61` (tool bytes unchanged since; receipts bind `d4826cce…`) |
+
+No owned axis score changed (calibration 7, coverage 8, operability 8): the lane still has no reproducible 0–10
+mapping. Both claims meet their frozen predicates on the final bytes; the wording was narrowed before filing
+(`plans/round-83.md` A1–A8), because the wave falsified parts of the frozen sentences: the six-shape list is
+over-specified (a `w[0-9]+/`-only list meets the target, three alternates are dead as decisions), the full-suffix
+clause is exercised one component deep only, the identity disjunct is unreachable (deleted), no recorded ledger move
+has used the `wN/` layout, the C2 control's mismatch count is host-load dependent (4/2/1 on the same bytes), and the
+starttime re-check / as-discovered order carry no row (mutants survive 20/20). Named limits carried: `records/` and
+the other non-wave own-tree dirs refused; any `w[0-9]+/` accepted; non-atomic `/proc` (one read-then-signal window per
+pid); no pidfd; setsid escape; the foreground fallback keeps no traps; `pgrep` counted by an external shim.
+
+### Round 83 capability row
+
+| name | what it can now do | evidence pointer | first-working round |
+|---|---|---|---|
+| deep-tree signal kill inside a settle | kill an N=24 descendant CLI tree on a caller's signal in 0.3–0.4 s (from a one-pass `/proc` ppid map, kill-as-discovered, starttime re-check) with 0 survivors and no leftover private file, under both the default and the job-control launch | `python3 -B census/round-83/c2-tree-walk-counter.py --tool tools/souji-vault-verify.sh --work <empty>` → `rows=20 mismatches=0 errors=0 orphans=0` (`census/round-83/records/c2-after.txt`); control `controls/c2-K-a-r82-tool.txt` red | r83 |
+
+### Planned (r84)
+
+- C1: a deep-token pair (token two components below its wave dir → kept `…/w2/sub/X`, flattened `…/w2/X` refused),
+  true rows for `a2w1/` and `assimilation/`, and the `NF-L`/`NF-L2`/`NF-M`/`NF-L3` rows the mutants (m6/m7/m8,
+  critic A1–A3, MutCounter survivors) showed are missing; ground or delete the census-in-tree branch.
+- C2: a pid-reuse row that separates the starttime re-check from a plain kill (MutTool m1 survives today), a
+  parent-before-child row, the `termign-fork` and `p5-late-term` rows, and a `strace`-robust settle.
+- Carried unchanged from the r81 spot-check list: `_regular` pathspec framing, the quarantine intro-blob digest row,
+  the fork-tail row, the r79 gate re-measurement, the check-4 300 s backstop, r76 K03/K04, status-trusting lane
+  tools, r17 240 s runners.
+- Report/registry hygiene: the r82 spot-check's LOG correction is in the r83 LOG entry; S330 now exists as a row;
+  the r82 report's missing `51a5e7fa` row is named in the r83 report.

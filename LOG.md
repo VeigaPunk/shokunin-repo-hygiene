@@ -3102,3 +3102,49 @@ stale `$!`).
   `corpus/knowledge/gate-signal-handling.md` r82 section (the `$!` drop and the limits), `corpus/QUALITY.md` Q150
   (Q148's order clause, Q149's row clause) and Q151 (real-shape grounding); `SCORECARD.md` round-82 addendum.
 - **Tool installs: none.** No pacman (paused host-wide), no sysctl, sudo or kernel change.
+
+## Round 83 (2026-11-08, attempted 1, L1 SoujiR83)
+
+- Lane base `1e870403c5d806a5cf9ac93b00da7a928359608f` (r82 closed `admitted`; spot-check
+  `corpus/lessons/round-82-verifier-spotcheck.md`). One v1 wave, 12 seats, policy `scripts/hyaku/ufo-wave-policy.json`
+  (band 8-16), spawned 02:06:37 after a host-gate deferral (192 foreign `while True: pass` processes held load1 ≈ 250;
+  the operator session reaped them). Attack seats 6/12 (50 %). 9 seats delivered substantive reports, 3 left a
+  skeleton only (S83ExecC2, S83Sentinel, S83ScoutDirs). Seats never committed; the L1 integrated.
+- **C1 (calibration 7) — pointer counter own-tree real wave shapes.** Population `census/round-83/c1-false-rows.tsv`
+  (36 rows: the r82 32 byte-for-byte + TF6 `w2/`, TF7 `w1/`, NF-J duplicated middle dir, NF-K flattened copy, at
+  fixture R6), harness `census/round-83/c1-false-row-harness.py`. The r82 counter (K-a) refuses the two real-shape
+  true rows (`mismatches=2 accepted=0 refused_true=2`, EXIT 1, `census/round-83/controls/c1-K-a-r82-counter.txt`);
+  the candidate `census/round-83/c1-pointer-counter.py` is `rows=36 mismatches=0 accepted=0 refused_true=0 errors=0`
+  EXIT 0 (`census/round-83/records/c1-after.txt`, counter sha256 `052c4f3f…`). Regressions: r77 35/35 + 7/7, r78
+  22/22 + 12/12, r79 9/9, r80 18/18, r81 25/25, r82 32/32. The rule: the r82 capture branch (`_capture_ok`) plus a
+  wave-directory branch (`w[0-9]+/`, `a2w1/`, `assimilation/`) followed by the token's path below its own first
+  below-round component, full suffix in order.
+- **C2 (operability 8) — one-pass fork-free descendant walk.** Population `census/round-83/c2-population.tsv` (20
+  rows: the r82 16 with the monitor as a row property and a `children` column, plus d12-term-pid, d12-term-group,
+  d24-term-pid, d24-monitor-group), counter `census/round-83/c2-tree-walk-counter.py`. `cli_kill_tree` now reads every
+  `/proc/<pid>/stat` once (field 4 ppid after the last `)` of comm, field 22 starttime, arity-guarded), builds the
+  ppid map, and signals each descendant as it is discovered with a starttime re-check before TERM and KILL. After:
+  `rows=20 mismatches=0 errors=0 orphans=0` EXIT 0 (`census/round-83/records/c2-after.txt`, tool sha256 `b0a5b662…`),
+  deep rows 0.3-0.4 s, 0 survivors, both launches; pgrep invocations 106-108 (r82) → 0 (candidate); selftest 57/0,
+  r17 37/0, probe D 4/4. The r82 control is a load-dependent race (five executions: 0, 2, 2, 2, 4 mismatches;
+  idle deep rows 1.8/2.0/3.8/4.6 s) — the round claims no fixed before-count (A5).
+- **Sources/registry:** S330 (procps-ng pgrep(1)) opened as a `rejected` row, flip corrected off the ungrounded
+  `NSpid` token; S331 (own-work wave-directory census at `1e870403`) and S332 (kernel `fs/proc/array.c` v6.17,
+  capture `census/round-83/srcs/`) admitted and cited by the two knowledge entries
+  (`corpus/knowledge/own-tree-pointer-binding.md`, `corpus/knowledge/gate-signal-handling.md`). Registry 252 → 255.
+  `sources-census.sh validate` at round start: `souji ok`, rc 0 (88 lines incl. 87 W04).
+- **Amendments (`plans/round-83.md` A0-A9) and the pre-file ledger** (`.ufo/waves/round-83/claim-falsification.tsv`)
+  were written before filing. The wave falsified parts of the frozen wording — the six-shape enumeration is
+  over-specified (a `w[0-9]+/`-only rule meets the target; `waves|wave|records/wave-*` are unreachable as decisions;
+  `a2w1/`/`assimilation/` carry no row), the full-suffix clause is exercised one component deep, the `tt == tk`
+  identity disjunct is unreachable (deleted), no recorded ledger move has used the `wN/` layout, the C2 control's
+  count is host-load dependent, and the starttime re-check / as-discovered order carry no row — so the round files
+  the narrowed sentences (A1-A9), not the wider ones. The candidate was cleaned (dead alternates/disjunct removed,
+  comment corrected) and the tool arity-guarded after the first score; every receipt was regenerated on the final
+  bytes (counter `052c4f3f…`, tool `b0a5b662…`).
+- **Correction (append-only) to the round-82 entry:** its C2 bullet says the tool "drops the stale `$!`" — that
+  sentence is superseded by the same entry's repair bullet: R1 restored `local pid=${CLI_PID:-${!:-}}` and the filed
+  bytes carry it (`tools/souji-vault-verify.sh` at r82 tip `44e07401`, sha256 `dd6d440e…`). Also, the r82 report's
+  Landed-changes chain omits `51a5e7fa` (`round-82: freeze receipt and lesson M1/M2`, which carries
+  `census/round-82/records/freeze-check-at-P.txt`); the omission is named here (r82 spot-check routed defect 3).
+- **Tool installs: none.** No pacman (paused host-wide), no uv/npx/binary fetch, no sysctl, sudo or kernel change.

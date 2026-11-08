@@ -161,3 +161,41 @@ caused.
   the counter's 5 s settle), the snapshot→KILL gap reaches 6.11 s so a recycled pid in the snapshot can be KILLed,
   `pgrep` is called unguarded (a `pgrep` that fails degrades silently to the group kill), and with no caller
   `TMPDIR` the private CLI file lands in shared `/var/tmp` (S82Sentinel F-2/F-3/F-4/F-5, S82Connector2 F3).
+
+## A one-pass descendant walk for the vault CLI's signal path (r83)
+
+source: S332 (kernel fs/proc/array.c v6.17), S075, S326; census/round-83/c2-tree-walk-counter.py
+verified-at: 9994af61565ec87913152cf1102c61ac9a75b04d (2026-11-08)
+recheck: python3 -B census/round-83/c2-tree-walk-counter.py --tool tools/souji-vault-verify.sh --work <empty dir outside /tmp>
+
+- **The r82 walk was O(nodes × all processes).** `cli_kill_tree` forked one `pgrep -P` per tree node, each a full
+  `/proc` scan (0.53–2.15 s per call at 4–7 k processes): signal→exit was 5.74 s at 12 descendants and 9.64 s at
+  24, past the counter's 5 s settle (S82Sentinel F-2). The snapshot-then-TERM-then-KILL shape also left a
+  snapshot→KILL gap up to 6.11 s, so a recycled pid could be KILLed (F-3).
+- **One fork-free pass builds the map.** Read every `/proc/<pid>/stat` with the `read` builtin, take the substring
+  after the LAST `)` (comm is emitted inside parentheses and may itself contain `)` and spaces, S332 lines
+  590–594), then field 2 of the remainder is ppid and field 20 is starttime (S332 line 612). No external command
+  runs inside the pass; the reverse map `ppid → " pid pid …"` is built in the same pass.
+- **Kill as discovered, re-checking identity.** A DFS from the timeout pid signals each descendant the moment it is
+  found, re-reading that pid's starttime before the TERM and again before the KILL sweep, so a reused pid is not
+  signalled. Measured: `rows=20 mismatches=0 errors=0 orphans=0` (deep rows 0.3–0.4 s at 12 and 24 descendants,
+  default and monitor launches; `census/round-83/records/c2-after.txt`), 0 `pgrep` invocations against 108 for the
+  r82 tool on the same population (`census/round-83/records/c2-before-pgrep.txt`), selftest 57/0, r17 37/0, probe D
+  4/4.
+- **Shell trap that cost a draft: `$20` is `${2}` + `0`.** The first draft compared `[ "$20" = … ]`; the positional
+  parameter is two digits, so that reads field 2 (ppid) with a literal `0` appended. The guard silently became a
+  "the parent did not change" test; when the DFS killed the parent first, every child was re-parented and the
+  re-read mismatched, so 7–20 of 24 children were skipped while the tool printed "stopped it, no verdict". Write
+  `${20}` for any positional above 9, and assert the field's meaning on one known pid before trusting the guard.
+- **Settle is host-dependent; the fork count is not.** On the same bytes the r82 walk took 2.5 s at 12 descendants
+  on an idle host (passing) and > 5 s at 24, while on a loaded host (load1 ≈ 250) it failed all four deep rows —
+  so a claim about a signal path states the descendant count, the settle AND the load, and uses the per-node fork
+  count as the load-independent discriminator.
+- Limits: `/proc` reads are not atomic (one read-then-signal window per pid remains), pidfd is not used (bash
+  only), a descendant that creates children after the pass reads the map is missed, the deep stub is a flat
+  fan-out, and a `pgrep` invoked by absolute path would bypass the probe shim. The stat path emits comm unescaped
+  (S332, `proc_task_name(..., false)`), so a comm containing a newline splits the file: the first-line `read`
+  yields fewer than 20 fields, the arity guard skips that pid and its children — safe (nothing is signalled) but a
+  way for a hostile CLI to keep a descendant out of the map; and the tool runs `set -euo pipefail`, so every parse
+  must be arity-guarded (`[ "$#" -ge 20 ] || continue`) or `${20}` aborts the trap handler (measured: the tool
+  exited 1 with no `SIG` line and the subtree alive).

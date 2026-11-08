@@ -318,19 +318,19 @@ def _capture_ok(token, kr, target, tr):
     return bool(want) and len(want) <= len(have) and have[-len(want):] == want
 
 
-OWNTREE_WAVE = re.compile(r"^(?:w[0-9]+|a2w1|assimilation|waves|wave|records/wave-[^/]+)/")
+OWNTREE_WAVE = re.compile(r"^(?:w[0-9]+|a2w1|assimilation)/")
 
 
 def _owntree_ok(token, kr, target, tr):
-    """r83: True iff a MOVED target in the token's own round tree is the token path itself (unchanged) or a real
-    wave directory of this lane (w[0-9]+/, a2w1/, assimilation/, or the r82 shapes waves/, wave/,
-    records/wave-<w>/) followed by the token's remaining path below its own wave directory — a full suffix in
-    order. This keeps the own-tree decoys out (NF-F/NF-G decoy/, NF-J a duplicated middle dir, NF-K a flattened
+    """r83: True iff a MOVED target in the token's own round tree is an r82 capture shape (the `_capture_ok`
+    fallback, kept unchanged) or a real wave directory of this lane (w[0-9]+/, a2w1/, assimilation/) followed by
+    the token's remaining path below its own wave directory — a full suffix in order. The `tt == tk` disjunct r82
+    carried is deleted: it is unreachable from a MOVED row (target == token implies the token is present at the
+    revision, so `judge` returns CAPTURED/MISMATCH before this branch), and the three r82 capture alternates are
+    gone from this regex because `_capture_ok` already accepts everything they could (r83 critic A1/A3/A7). This keeps the own-tree decoys out (NF-F/NF-G decoy/, NF-J a duplicated middle dir, NF-K a flattened
     copy at the round root) while keeping a genuine move `.ufo/waves/round-<N>/a2w1/X -> .../w2/X` (r82 A2)."""
     tt = target[tr.end(0):].rstrip("/")
     tk = token[kr.end(0):].rstrip("/")
-    if tt == tk:
-        return True
     want = [c for c in tk.split("/") if c]
     got = [c for c in tt.split("/") if c]
     if len(want) < 2 or len(got) < 2:
@@ -389,7 +389,9 @@ def judge(root, rev, fleet, item, entry, blob):
             # r82 (S81MutCounter PF-1): the suffix is the token's FULL path below its round-<N>, not its last
             # component, so a partial suffix dropping the token's middle dir (census/round-61/wave/S61ExecRealRecord/...)
             # is not the moved file. _capture_ok already checks the whole suffix; the defect is the moved-last-component rule
-            # asked only for the basename. The order carries: owntree/PF-1 before the last-component basename test.
+            # asked only for the basename. Order (r82 A1, corrected here): the last-component basename test runs
+            # FIRST (this function's caller), then _owntree_ok, then these location-class tests; the order is
+            # outcome-equivalent on every frozen and regression row.
             why = "census-in-tree target is not a wave capture keeping the token's full path suffix"
         elif not kr:
             # r79 (S78MutCounter NF3): with no round-<N> in the token the location binding is the last

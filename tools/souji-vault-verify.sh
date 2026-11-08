@@ -242,6 +242,7 @@ cli_kill_tree() {
     [ -n "$line" ] || continue
     rest=${line##*) }
     set -- $rest
+    [ "$#" -ge 20 ] || continue
     p=${d#/proc/}
     ppid_of[$p]=$2
     start_of[$p]=${20}
@@ -259,6 +260,7 @@ cli_kill_tree() {
       { read -r now < "/proc/$k/stat"; } 2>/dev/null || continue
       crestart=${now##*) }
       set -- $crestart
+      [ "$#" -ge 20 ] || continue
       [ "${20}" = "${start_of[$k]:-}" ] || continue
       kill -TERM "$k" 2>/dev/null || true
       tree+=("$k")
@@ -272,6 +274,7 @@ cli_kill_tree() {
     [ -n "$now" ] || continue
     crestart=${now##*) }
     set -- $crestart
+    [ "$#" -ge 20 ] || continue
     [ "${20}" = "${start_of[$k]:-}" ] || continue
     kill -KILL "$k" 2>/dev/null || true
   done
