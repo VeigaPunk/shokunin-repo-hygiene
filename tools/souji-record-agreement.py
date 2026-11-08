@@ -42,6 +42,8 @@ Frozen contract: .ufo/waves/round-23/preregistration.txt (C1).
 from __future__ import annotations
 
 import argparse
+import base64
+import binascii
 import hashlib
 import json
 import os
@@ -263,6 +265,21 @@ def _stderr_tail(text: str, limit: int = 200) -> str:
     return tail
 
 
+def _one_line(text: str, limit: int = 200) -> str:
+    """r88: one escaped line for a delegated failure detail. `_escape_text` first, so a CR/LF, a C0/C1 control byte,
+    NEL or U+2028 cannot split the MISMATCH record a reader parses (Q159/Q163); then the same both-ends bound
+    `_stderr_tail` uses, so a long exception line keeps its type name and its message. Empty input prints `no
+    stderr`, never an empty parenthesis."""
+    boxed = _escape_text(text or "")
+    if not boxed:
+        return "no stderr"
+    if len(boxed) > limit:
+        head = limit // 2
+        keep = limit - head - 1
+        boxed = boxed[:head] + "\u2026" + boxed[-keep:]
+    return boxed
+
+
 _HEADER_DIGEST: "str | None" = None
 
 
@@ -314,7 +331,8 @@ def truth_refusal(root: str) -> "str | None":
         "if not msg:\n"
         "    fl = mod.git(root, '-c', 'core.sparseCheckout=false', 'ls-files', '-v', '-z', ':(top)')\n"
         "    if fl.returncode != 0:\n"
-        "        print('FLAGFAIL ' + fl.stderr.decode('utf-8', 'replace').strip()[-200:])\n"
+        "        import base64\n"
+        "        print('FLAGFAIL ' + base64.b64encode(fl.stderr).decode('ascii'))\n"
         "        raise SystemExit(0)\n"
         "    for rec in fl.stdout.split(bytes([0])):\n"
         "        if not rec:\n"
@@ -359,7 +377,15 @@ def truth_refusal(root: str) -> "str | None":
         return (f"the receipt writer refused the tree (exit {_escape_text(out.split(' ', 1)[-1].splitlines()[0])}); "
                 f"tracked bytes are unverified")
     if out.startswith("FLAGFAIL"):
-        return (f"the index-flag read failed ({out[len('FLAGFAIL '):].strip()}); tracked bytes are unverified")
+        # r88: the bootstrap ships the raw stderr base64-framed, so the parent owns the only escaping rule. Before
+        # this, the bootstrap printed `.strip()[-200:]` raw: a 400-character exception line lost the type name at
+        # its head, and a multi-line or U+2028-carrying stderr split one MISMATCH record into several.
+        try:
+            raw = base64.b64decode(out[len("FLAGFAIL "):].strip(), validate=True)
+        except (binascii.Error, ValueError):
+            return "the index-flag read failed (undecodable detail); tracked bytes are unverified"
+        return (f"the index-flag read failed ({_one_line(raw.decode('utf-8', 'backslashreplace'))}); "
+                f"tracked bytes are unverified")
     if out.startswith("FORGED "):
         # r86: a path may carry a newline or a tab (S85ExecK4 §2e); r87 (S87Scribe F8/F9): the escape is the same
         # injective one the status arm uses, so two names cannot share a spelling and no control byte splits the row.
