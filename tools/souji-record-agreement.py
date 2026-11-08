@@ -186,11 +186,15 @@ def _escape_text(text: str) -> str:
             out.append("\\t")
         elif ch == "\r":
             out.append("\\r")
-        elif o < 0x20 or o == 0x7F or o == 0x85:
+        elif o < 0x20 or o == 0x7F:
             out.append("\\x%02x" % o)
-        elif o in (0x2028, 0x2029):
+        elif o in (0x85, 0x2028, 0x2029):
             # r87 wave repair (S87Sentinel F4): Python's str.splitlines() splits on these too, so a path holding one
             # would tear a line-oriented record in half even though no C control byte is present.
+            # r90 (r89 A2): U+0085 is a CHARACTER, and the raw byte 0x85 above arrives as the surrogate U+DC85; both
+            # used to print `\x85`, so two materially different delegated failures shared one cell. The character now
+            # takes the `\uNNNN` spelling (Unicode UAX #14 classes U+0085 as NL, a mandatory break after NEL, S353) and
+            # the byte keeps its `\xNN` spelling, so the pair is injective.
             out.append("\\u%04x" % o)
         elif 0xDC80 <= o <= 0xDCFF:
             # r89 (S88Sentinel F1): a byte that was not valid UTF-8, carried through `surrogateescape`. Print its
@@ -210,9 +214,10 @@ def _decode_record(raw: bytes) -> str:
 
 
 def _one_line_bytes(raw: bytes, limit: int = 200) -> str:
-    """r89: bound the RAW bytes first, then escape the window (S88Sentinel F2). The r88 `_one_line` escaped first
-    and then kept head-100/tail-99 of the escaped text, so 25 leading control bytes (`\\x01` each, four chars)
-    consumed the whole head and an exception's type name fell outside both ends. The excerpt is measured in raw
+    """r89: bound the RAW bytes first, then escape the window (S88Sentinel F2). The r88 escape-first helper
+    (`_one_line`, deleted in r90 as dead code) kept head-100/tail-99 of the ESCAPED text, so 25 leading control
+    bytes (`\\x01` each, four chars) consumed the whole head and an exception's type name fell outside both ends.
+    The excerpt is measured in raw
     bytes here: keep the first and last N raw bytes, then escape. A raw window that cuts a UTF-8 continuation is
     decoded with `surrogateescape` and each cut byte escapes separately."""
     if not raw:
@@ -292,22 +297,6 @@ def _stderr_tail(text: str, limit: int = 200) -> str:
         keep = limit - head - 1
         tail = tail[:head] + "\u2026" + tail[-keep:]
     return tail
-
-
-def _one_line(text: str, limit: int = 200) -> str:
-    """r88: one escaped line for a delegated failure detail. `_escape_text` first, so an LF/TAB/CR, a C0 control
-    byte, DEL, NEL or U+2028/U+2029 cannot split the MISMATCH record a reader parses (Q159/Q163; the C1 block
-    beyond NEL is not escaped, and the round limits say so); then the same both-ends bound `_stderr_tail` uses, so a
-    long exception line keeps its type name and its message. Empty input prints `no stderr`, never an empty
-    parenthesis."""
-    boxed = _escape_text(text or "")
-    if not boxed:
-        return "no stderr"
-    if len(boxed) > limit:
-        head = limit // 2
-        keep = limit - head - 1
-        boxed = boxed[:head] + "\u2026" + boxed[-keep:]
-    return boxed
 
 
 _HEADER_DIGEST: "str | None" = None
