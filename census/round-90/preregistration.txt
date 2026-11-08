@@ -1,0 +1,150 @@
+souji round 90 — PREREGISTRATION (frozen before any after-data)
+Lane: souji-shokunin (id souji). Lane base bd760432df2cc3ba6c5f1ccc540b050fe2ac09e2 (r89 closed,
+spot-check corpus/lessons/round-89-verifier-spotcheck.md). Date: 2026-11-08.
+Author: L1 SoujiR90 (souji-shokunin). Instruments commits: P1 1952c1c7 (population, harness, battery,
+mutants, r90 fixture, before-tool control, S353 captures, C2 pre-freeze receipts) and P2 e2a11c73 (the C1
+do-nothing control receipt on the r89 population). This file is commit F: it is the only file in F.
+No sentence below may be widened after this point. A wave artifact that falsifies a sentence is
+recorded in plans/round-90.md as a narrowing amendment or an honest stop — never repaired silently
+(Amendment 59).
+
+ROUND SHAPE. One v1 wave, 12 seats (policy band 8-16). Attack seats 6/12 = 50 % (2 reviewer,
+critic, mutation-tester, labrat, sentinel); 1 connector; 3 executors; 1 scribe; 1 scout. The L1
+holds the canonical planner seat (the validator rejects `planner`); the bounded planning data-walk
+rides the connector seat. Residual calls: none.
+
+================================================================================
+C1 — axis calibration 7 (the lane's lowest owned, non-retired axis)
+================================================================================
+CLAIM. The r89 16-member mutant set's SOLE surviving clause — the `_ledger` malformed-row guard
+`len(r) < 3`, dropped by `m17c-no-malformed` — is bound by one new population row, LD2b, which
+appends the 2-column ledger row `ZZ9<TAB>ABSENT` under an id ABSENT from the frozen r77 ledger. On
+the r90 population `census/round-90/c1-false-rows.tsv` (58 rows = the r89 57 rows byte-for-byte in
+order plus LD2b; sha256 d64d76954daea7da5d36e6f5eda96ae343bdd37db5071ea50bd55b30a1844b45), scored by
+the unchanged r87 counter `census/round-87/c1-pointer-counter.py` (sha256
+fd0a8e244a5e0afe58f9e8bfa85d314722b77a1bcbe6837298683f74a755220b) through
+`census/round-90/c1-clause-battery.py` (sha256
+e7265335e4458e68d2277dd0ad4f36e68999a7ba70363d60dc2155bd9cfa2d39) and
+`census/round-90/c1-false-row-harness.py` (sha256
+c3664747ffe712fde8f61c34562df2f0e92f2a0378b151bd0b4d74e91d629cbe) with the 16 mutants of
+`census/round-90/c1-mutants.json` (sha256
+392522489bc6f22a9747f64d311dbde7528dd0e8b481159db15d3eb038066dd5; the r89 sixteen byte-identical),
+the battery reports EXACTLY:
+
+  ARM pristine pop=r89 rows=57 mismatches=0 errors=0 exit=0
+  ARM pristine pop=r90 rows=58 mismatches=0 errors=0 exit=0
+  MUTANT-PAIR m17c-no-malformed pop=r89 killed=no ... | pop=r90 killed=yes ...
+  SUMMARY mutants=16 sets=r89,r90 pristine_r89=ok pristine_r90=ok killed_r89=15 killed_r90=16 killed_total=31
+  EXIT 0
+
+COUNTER (one command, committed bytes; after-state is one value):
+  python3 -B census/round-90/c1-clause-battery.py \
+    --counter census/round-87/c1-pointer-counter.py \
+    --work /fast/scratch/hyaku/souji-r90/<empty> --only r89,r90 --expect-killed 31
+Target: `killed_total=31` with `killed_r89=15`, `killed_r90=16`, both pristine arms green, EXIT 0.
+
+KILL RULE (frozen). A kill is a non-zero HARNESS exit for that mutant on that scored population
+(a row mismatch, a harness error, or a counter crash); the mutant text must apply exactly once to
+the counter or the run is INVALID (exit 2). `killed_<set>` counts kills on that population; the
+total is their sum. The claim is judged on this counter, this kill rule and this predicate.
+
+DO-NOTHING CONTROL (executed and committed before this file, receipt
+census/round-90/records/prefreeze-c1-control.txt): the SAME battery, SAME mutants, the r89 57-row
+population alone:
+  python3 -B census/round-90/c1-clause-battery.py \
+    --counter census/round-87/c1-pointer-counter.py \
+    --work /fast/scratch/hyaku/souji-r90/<empty> --only r89 --expect-killed 15
+reads `killed_r89=15` with `MUTANT-PAIR m17c-no-malformed pop=r89 killed=no` and EXIT 0: no work
+at all reaches 16/16 or 31; the delta is the row LD2b and nothing else. A no-work arm that reached
+the target would have falsified the counter or the target before data.
+
+MECHANISM (what makes the row load-bearing, stated as a prediction). Pristine `_ledger` refuses a
+row with fewer than 3 columns, so `ZZ9` lands in `bad` and the counter prints
+`LEDGER-REFUSED id=ZZ9` with exit 1. `m17c` drops only `len(r) < 3`, so it executes
+`ledger[r[0]] = (r[1], r[2])` on a 2-column row and raises IndexError with no marker: the harness
+scores the row red. `m17` (duplicate half dropped, length guard kept) and `m17b` (target-keyed
+duplicate, length guard kept) still refuse on the length guard and stay green.
+
+STATED LIMITS. (i) The counter, mutant texts and kill rule are unchanged from r89; this round
+changes the population and its harness only. (ii) The row binds the length guard through ONE
+malformed shape (2 columns, absent id); a 1-column row, a 4+-column row, a CRLF-wrapped row, a
+header row and a blank-line-only row are unrowed. (iii) The marker `LEDGER-REFUSED id=ZZ9` proves
+the reader refused the id, not which branch refused it; the branch is attributed by the four
+mutants' behaviour, as r89 A1 did. (iv) The population is a fixture population, not a census of
+the lane's ledgers; the r77 ledger is frozen. (v) The r89 arm is the do-nothing control, not a
+second target.
+
+================================================================================
+C2 — axis operability 8
+================================================================================
+CLAIM. The K4 FLAGFAIL detail's escaping rule is injective on the byte/character pair the r89
+repair left colliding: the raw byte 0x85 (arriving as the surrogate U+DC85 through
+`surrogateescape`) keeps the `\x85` spelling, and the CHARACTER U+0085 (NEL), whose UTF-8 encoding
+the r89 tool also rendered `\x85`, now takes the `\u0085` spelling; the dead escape-first helper
+`_one_line` (zero callers) is deleted. On the r90 fixture `tests/fixtures/r90-k4-flagfail.py`
+(sha256 d44172132f0a0c707d47e9522df8502f8d84859eb3e82d13e09809450c94aeaa) with
+`--tool tools/souji-record-agreement.py` (filed sha256
+d095b52fa5d90e3e563542eb6cea309e82ace59bde36e5992ede847059968561) and
+`--before census/round-90/controls/c2-before-tool.py` (the r89 filed bytes, sha256
+f6fce6d147165d1baf3d8d0343f46c1ab913b23947f3edaa28b61cdd6caa18dd):
+
+  SUMMARY cases=12 tool_pass=12 before_pass=10
+  EXIT 0
+
+COUNTER (one command):
+  python3 -B tests/fixtures/r90-k4-flagfail.py --tool tools/souji-record-agreement.py \
+    --before census/round-90/controls/c2-before-tool.py \
+    --work /fast/scratch/hyaku/souji-r90/<empty>
+Target: `cases=12 tool_pass=12 before_pass=10`, EXIT 0.
+
+KILL RULE (frozen, enumerated). The r89 fixture's ten cases and their checks are unchanged
+(KFF1-KFF8, KFC1, KFC2). KFF9 (nelchar) requires the detail to carry exactly one `\u0085` spelling
+and no `\x85` spelling for a stderr carrying the UTF-8 encoding of U+0085; KFF10 (nelbyte) requires
+exactly one `\x85` spelling and no `\u0085` spelling for a stderr carrying the raw byte 0x85. Both
+cases are additionally bound to the pair check: the KFF9 detail and the KFF10 detail must be
+DIFFERENT cells and each one physical line, and the pair check runs on BOTH arms with the same rule
+(z90's change, disclosed). A case passes only when its own check AND (for KFF6/KFF7/KFF9/KFF10) its
+pair check pass.
+
+DO-NOTHING CONTROL (executed and committed before this file, receipt
+census/round-90/records/prefreeze-c2-control.txt): the r89 tool bytes as BOTH arms read
+`SUMMARY cases=12 tool_pass=10 before_pass=10`, KFF9 and KFF10 fail on both arms (their details are
+identical), EXIT 1. The control cannot reach `tool_pass=12`.
+
+REGRESSION (not part of the target, stated so the repair is not a trade). The r87 12-row K4 counter
+on the filed tool must read `SUMMARY rows=12 mismatches=0 errors=0`, EXIT 0 (pre-freeze receipt
+census/round-90/records/prefreeze-c2-k4-regression.txt). The ten r89 fixture cases must all still
+pass on the filed tool (they do: KFF1-KFF8, KFC1, KFC2 tool=pass in the after arm).
+
+DEAD-CODE DELETION (the same claim's operability half). `grep -c 'def _one_line('
+tools/souji-record-agreement.py` reads 0 and no call to `_one_line(` remains; the module still
+imports cleanly (ast.parse + load in the fixture's 12 public-path runs). A dynamically generated
+caller (getattr/string lookup) is outside the grep; none is claimed.
+
+SOURCE (frontier step; opened this round). S353 — Unicode Standard Annex #14, Line Breaking
+Properties, Unicode 18.0.0 rev 57, § NL: Next Line — capture census/round-90/srcs/tr14.html (HTTP
+200, 226166 bytes, sha256 296df5332aefe695b4951b511288b118bc6a7b43db7fadfd60f6062096acc7c0, opened
+2026-11-08), located quote "The NL class acts like BK in all respects (there is a mandatory break
+after any NEL character)." (18 words, tag-stripped offset 82360). C2's spelling rule rests on this
+row: U+0085 is a character whose line-break class is NL and after which a break is mandatory, so it
+cannot be left to collide with the byte 0x85 in a one-line record cell.
+
+STATED LIMITS. (i) The repair covers `_escape_text` (the delegated stderr cell) only;
+`_escape_record` (path bytes) is unchanged and byte-based, so a path's U+0085 bytes already print
+`\xc2\x85` and were never ambiguous. (ii) The injectivity measured is the enumerated KFF9/KFF10
+pair; no universal injectivity is claimed, and a stderr that differs from another only inside the
+elided middle still renders identically. (iii) The pair check's binding to KFF10 is this round's
+rule; the r89 fixture bound only KFF6/KFF7 to a pair. (iv) The `_one_line` deletion is dead-code
+removal by static grep plus import; runtime dispatch is not exhaustively excluded. (v) The before
+tool is the r89 filed bytes; the r88 and older bytes are not arms of this claim.
+
+================================================================================
+FREEZE DISCIPLINE
+================================================================================
+- P (instruments, controls, pre-freeze receipts, captures) is committed before this file; F is this
+  file alone. After F, the only allowed edits to the instruments are the plan amendments in
+  plans/round-90.md (narrowing or honest stop), each citing the wave artifact that forced it.
+- The after receipts are measured on the COMMITTED tool bytes and the COMMITTED instruments; the
+  report cites the landed lane hash for each.
+- The pre-freeze feasibility runs (receipts named prefreeze-*) are disclosed as instrument
+  validation, not as after-data; the report's after arms are re-run after F.
