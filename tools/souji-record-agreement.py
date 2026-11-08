@@ -213,22 +213,73 @@ def _decode_record(raw: bytes) -> str:
     return raw.decode("utf-8", "surrogateescape")
 
 
+def _utf8_seq_need(b: int) -> int:
+    """The octet count of a UTF-8 sequence whose initial octet is `b`, or 0 when `b` cannot start one."""
+    if 0xC0 <= b < 0xE0:
+        return 2
+    if 0xE0 <= b < 0xF0:
+        return 3
+    if 0xF0 <= b < 0xF8:
+        return 4
+    return 0
+
+
+def _cut_head(raw: bytes, h: int) -> str:
+    """r91 (S354): move a head cut back off a UTF-8 sequence it would split, so an elided sequence never leaves a
+    lone continuation byte behind to be printed like the raw byte of the same value. Only a VALID split (every
+    remaining byte of the sequence is a continuation) is moved; an invalid lead byte stays and escapes as itself."""
+    i = h
+    while i > 0 and 0x80 <= raw[i - 1] <= 0xBF:
+        i -= 1
+    if i > 0:
+        need = _utf8_seq_need(raw[i - 1])
+        end = i - 1 + need
+        if need and end > h and len(raw) >= end and all(0x80 <= b <= 0xBF for b in raw[i:end]):
+            return i - 1
+    return h
+
+
+def _cut_tail(raw: bytes, t: int) -> int:
+    """r91 (S354): move a tail start forward past the continuation bytes of a sequence the elided middle began, so
+    the tail starts on a sequence boundary. A continuation byte that belongs to no lead byte stays (it is invalid
+    data and must keep its raw-byte spelling)."""
+    if t <= 0 or t >= len(raw) or not 0x80 <= raw[t] <= 0xBF:
+        return t
+    i = t
+    while i > 0 and 0x80 <= raw[i - 1] <= 0xBF:
+        i -= 1
+    if i > 0:
+        need = _utf8_seq_need(raw[i - 1])
+        end = i - 1 + need
+        if need and end > t:
+            return min(end, len(raw))
+    return t
+
+
 def _one_line_bytes(raw: bytes, limit: int = 200) -> str:
     """r89: bound the RAW bytes first, then escape the window (S88Sentinel F2). The r88 escape-first helper
     (`_one_line`, deleted in r90 as dead code) kept head-100/tail-99 of the ESCAPED text, so 25 leading control
     bytes (`\\x01` each, four chars) consumed the whole head and an exception's type name fell outside both ends.
     The excerpt is measured in raw
     bytes here: keep the first and last N raw bytes, then escape. A raw window that cuts a UTF-8 continuation is
-    decoded with `surrogateescape` and each cut byte escapes separately."""
+    decoded with `surrogateescape` and each cut byte escapes separately.
+
+    r91 (S354): both cuts move to a UTF-8 sequence boundary before decoding. A cut inside U+0085's two-octet
+    encoding used to elide the lead octet and print the trailing 0x85 as `\\x85` — the raw byte's spelling — so two
+    materially different delegated failures shared one cell (S90Reviewer2 F1 / A4). RFC 3629 §3 defines a sequence
+    as initial octet + continuation octets; the excerpt keeps whole sequences only, and the byte bound is still
+    202 octets (head-100 plus a three-octet ellipsis plus tail-99, shortened only)."""
     if not raw:
         return "no stderr"
-    if len(raw) > limit:
-        head = limit // 2
-        keep = limit - head - 1
-        window = raw[:head] + "\u2026".encode("utf-8") + raw[-keep:]
-    else:
-        window = raw
-    return _escape_text(_decode_record(window))
+    if len(raw) <= limit:
+        return _escape_text(_decode_record(raw))
+    head = limit // 2
+    keep = limit - head - 1
+    h = _cut_head(raw, head)
+    t = _cut_tail(raw, len(raw) - keep)
+    if t < h:
+        t = h
+    return _escape_text(_decode_record(raw[:h]) + "\u2026" + _decode_record(raw[t:]))
 
 
 def git_bytes(root: str, *args: str) -> subprocess.CompletedProcess:

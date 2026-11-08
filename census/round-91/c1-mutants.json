@@ -1,0 +1,149 @@
+{
+ "note": "souji r91 C1 mutants: the SIXTEEN members of census/round-90/c1-mutants.json, byte-identical, plus SIX that survive the r90 population: the four r90 Q162 probes (S90MutCounter q162-probes.json) and the two reachable ledger spellings (S90MutCounter spellings.json s1/s3; s2 is logically equivalent to the frozen guard and s4/s5/s6 are killed by LD2/LD2b on r90). Each edit must apply exactly once to census/round-87/c1-pointer-counter.py. Kills are counted by census/round-91/c1-clause-battery.py over the pinned populations: r90 (58 rows, the do-nothing control: the six new members must survive there) and r91 (63 rows = r90 plus five rows: all twenty-two must be killed).",
+ "members": [
+  {
+   "id": "m6-digest-blind",
+   "clause": "the MOVED target's bytes must equal the token's frozen digest",
+   "old": "        elif rev_digest(root, rev, target) != frozen:\n            why = \"target absent at rev or digest differs\"\n",
+   "new": "        elif False:\n            why = \"digest-blind mutant (m6)\"\n"
+  },
+  {
+   "id": "m7-round-blind",
+   "clause": "the MOVED target must name the token's own round-<N>",
+   "old": "        elif kr and (not tr or tr.group(1) != kr.group(1)):\n            why = \"target names a different round than the token\"\n",
+   "new": "        elif False:\n            why = \"round-blind mutant (m7)\"\n"
+  },
+  {
+   "id": "m8-w-only-shapes",
+   "clause": "the own-tree wave directory set includes a2w1/ and assimilation/, not w[0-9]+/ alone",
+   "old": "OWNTREE_WAVE = re.compile(r\"^(?:w[0-9]+|a2w1|assimilation)/\")",
+   "new": "OWNTREE_WAVE = re.compile(r\"^(?:w[0-9]+)/\")"
+  },
+  {
+   "id": "m9-basename-only",
+   "clause": "the own-tree comparison keeps the token's whole remaining path, not a two-component shape ending in its last component",
+   "old": "    return bool(m) and got[1:] == want[1:]",
+   "new": "    return bool(m) and len(got) == 2 and got[1] == want[-1]",
+   "note": "the r83 critic's A2 basename rule; killed by TF8 and NF-P on the r84 population."
+  },
+  {
+   "id": "m10-records-as-wave",
+   "clause": "a non-wave own-tree directory (records/) is not a capture shape",
+   "old": "OWNTREE_WAVE = re.compile(r\"^(?:w[0-9]+|a2w1|assimilation)/\")",
+   "new": "OWNTREE_WAVE = re.compile(r\"^(?:w[0-9]+|a2w1|assimilation|records)/\")"
+  },
+  {
+   "id": "m11-class-enum",
+   "clause": "a ledger class outside the frozen enum is refused, never resolved as its own class name",
+   "old": "    if cls not in CLASSES:\n        why = f\"unknown class {cls}\"\n",
+   "new": "    if False:  # m11: the class-enum guard is dropped\n        why = f\"unknown class {cls}\"\n",
+   "note": "S84MutCounter survivor class (token-on-line / unknown-class refusals). On item I85T (no frozen digest, token absent) a dropped guard returns the bogus class name as the resolved status, so NF-S goes red; on the r84 population no row reaches the guard with a non-enum class, so m11 survives there."
+  },
+  {
+   "id": "c7-census-in-tree",
+   "clause": "a census-rooted token moved into census/round-<N>/ must be a wave capture keeping the token's full path suffix",
+   "old": "        elif kr and target[:tr.start(0)] == \"census\" and token[:kr.start(0)] == \"census\" \\\n                and not _capture_ok(token, kr, target, tr):\n",
+   "new": "        elif False:  # c7: the census-in-tree branch is dropped\n",
+   "note": "r85 A1 / S85Scribe F1: reachable and discriminating, but no r85 row reached it (NF-R is refused by the own-tree belt first, TF11 is accepted as a capture). NF-W (I85R, target census/round-84/w1/c1-after.txt) is its row; on the r85 population this mutant survives, on r86 NF-W turns it red."
+  },
+  {
+   "id": "m14-short-shape",
+   "clause": "an own-tree comparison needs a token and a target each at least two components below their round",
+   "old": "    if len(want) < 2 or len(got) < 2:\n",
+   "new": "    if False:  # m14: the short-shape guard is dropped\n",
+   "note": "r85 A4 / S85MutCounter m14: both r85 MOVED tokens have >=2 components below their round, so the guard never fires there. NF-Y (I86S, a round-root token moved into a wave capture under its own round) is its row; dropping the guard lets _capture_ok accept the one-component remainder, so NF-Y resolves as MOVED."
+  },
+  {
+   "id": "m12-token-on-line",
+   "clause": "the R0 guard refuses an item whose token is not on its declared base line (the token-on-line half)",
+   "old": "    if not (line.isdigit() and 0 < int(line) <= len(blob) and token in blob[int(line) - 1]):\n",
+   "new": "    if not (line.isdigit() and 0 < int(line) <= len(blob)):  # m12: token-on-line half dropped\n",
+   "note": "S85MutCounter m12 (reachable, unexercised). NE1 is its row: item I87E declares line 3166 of LOG.md at base 705fa138, where its token is absent (it is on 3165), so pristine reports ERROR and this mutant falls through to UNRESOLVED."
+  },
+  {
+   "id": "m16-nf6b-punct",
+   "clause": "a path at a sentence end is whole when the following byte is one of . , ; : and the byte after it is not a path character",
+   "old": "        after_ok = (not after or after[0] not in PATHCH\n                    or (after[:1] in (b\".\", b\",\", b\";\", b\":\") and (len(after) < 2 or after[1] not in PATHCH)))\n",
+   "new": "        after_ok = (not after or after[0] not in PATHCH)  # m16: punctuation disjunct dropped\n",
+   "note": "S85MutCounter m16 (reachable, unexercised). TQ1 is its row: the R10 declaration names the L06 token followed by a sentence-final period, so only this disjunct makes the token whole."
+  },
+  {
+   "id": "m17-duplicate-id",
+   "clause": "the ledger reader refuses a duplicate id instead of letting the last row win",
+   "old": "            if len(r) < 3 or r[0] in ledger:\n",
+   "new": "            if len(r) < 3:  # m17: the duplicate-id refusal is dropped\n",
+   "note": "S88 row LD1: the harness appends a second P01 row to the frozen r77 ledger. Pristine prints LEDGER-REFUSED id=P01 and exits 1; with the duplicate check dropped the last row wins and the counter exits 0, so the row goes red. The edit applies once, in `_ledger`."
+  },
+  {
+   "id": "m18-whole-before",
+   "clause": "a declared path is whole only when the byte before it is not a path character (the `_whole` before-byte half)",
+   "old": "        before_ok = i == 0 or line[i - 1] not in PATHCH\n",
+   "new": "        before_ok = True  # m18: the before-byte half is dropped\n",
+   "note": "S88 row NF6g: the R11 declaration names the L06 token only as the suffix of `xtests/vault/.../.git`, so the byte before it is `x`. Pristine refuses the row; with the before-byte half dropped the token is whole and the row resolves QUARANTINED."
+  },
+  {
+   "id": "m18b-alnum-before",
+   "clause": "the `_whole` before-byte half checks the PATHCH set, not just letters+digits (word-boundary spelling)",
+   "old": "        before_ok = i == 0 or line[i - 1] not in PATHCH\n",
+   "new": "        before_ok = i == 0 or not chr(line[i - 1]).isalnum()  # m18b: alnum-only before guard\n",
+   "note": "S88MutCounter F1: NF6g's predecessor is `x` (alnum), so the filed m18 kills on NF6g but m18b survives both populations; NF6h (`/` predecessor) kills it."
+  },
+  {
+   "id": "m17b-target-keyed",
+   "clause": "the ledger reader refuses a duplicate id regardless of whether the target repeats (id-only refusal)",
+   "old": "            if len(r) < 3 or r[0] in ledger:\n",
+   "new": "            if len(r) < 3 or (r[0] in ledger and ledger[r[0]][1] == r[2]):  # m17b: target-keyed duplicate\n",
+   "note": "S88MutCounter F2: LD1's appended duplicate is class-different but target-equal, so m17b survives; LD1b (different target) kills it."
+  },
+  {
+   "id": "m17c-no-malformed",
+   "clause": "the ledger reader refuses a malformed row (fewer than 3 columns) instead of crashing or accepting it",
+   "old": "            if len(r) < 3 or r[0] in ledger:\n",
+   "new": "            if r[0] in ledger:  # m17c: malformed-row guard dropped\n",
+   "note": "S88MutCounter F3: LD2 appends a 2-column row; pristine prints LEDGER-REFUSED, this mutant raises IndexError (fail-closed by crash)."
+  },
+  {
+   "id": "m18d-first-only",
+   "clause": "_whole examines EVERY occurrence of the needle in the line, not just the first",
+   "old": "        i = line.find(needle, i + 1)\n",
+   "new": "        i = -1  # m18d: only the first occurrence is examined\n",
+   "note": "S88MutCounter F4: NF6i carries the token twice (first as a non-whole suffix, later whole); this mutant refuses it, pristine accepts."
+  },
+  {
+   "id": "ld1c-class-keyed",
+   "clause": "refuse a duplicate id whose CLASS differs only (an identical duplicate is accepted)",
+   "old": "            if len(r) < 3 or r[0] in ledger:\n",
+   "new": "            if len(r) < 3 or (r[0] in ledger and ledger[r[0]][0] != r[1]):  # q162 l2: refuse class-CONFLICTING duplicate\n"
+  },
+  {
+   "id": "ld1d-conflict-keyed",
+   "clause": "refuse only a duplicate whose class-or-target conflicts (an identical duplicate is accepted)",
+   "old": "            if len(r) < 3 or r[0] in ledger:\n",
+   "new": "            if len(r) < 3 or (r[0] in ledger and (ledger[r[0]][0] != r[1] or ledger[r[0]][1] != r[2])):  # q162 l1: conflict-keyed\n"
+  },
+  {
+   "id": "nf6i2-last-occurrence",
+   "clause": "_whole examines every occurrence of the token in the line (left to right)",
+   "old": "    i = line.find(needle)\n",
+   "new": "    i = line.rfind(needle)  # q162 h4: last occurrence only\n"
+  },
+  {
+   "id": "nf6j-pathch-narrow",
+   "clause": "PATHCH is the full path-byte set (. _ @ + ~ - as well as alnum and /)",
+   "old": "PATHCH = frozenset(b\"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._/@+~-\")\n",
+   "new": "PATHCH = frozenset(b\"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789./\")  # q162 h1: alnum+slash\n"
+  },
+  {
+   "id": "s1-exact-width",
+   "clause": "the ledger accepts its 4-column rows (only malformed rows are refused)",
+   "old": "            if len(r) < 3 or r[0] in ledger:\n",
+   "new": "            if len(r) != 3 or r[0] in ledger:  # s1 spelling: exact width, 2-col and 4+-col\n"
+  },
+  {
+   "id": "s3-equal-two",
+   "clause": "the malformed guard refuses every row shorter than 3 columns, not exactly 2",
+   "old": "            if len(r) < 3 or r[0] in ledger:\n",
+   "new": "            if len(r) == 2 or r[0] in ledger:  # s3 spelling: refuse exactly 2 columns (1-col unrowed)\n"
+  }
+ ]
+}
