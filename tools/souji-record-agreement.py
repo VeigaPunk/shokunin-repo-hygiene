@@ -109,9 +109,16 @@ def paragraphs(lines: list[str], offset: int) -> list[tuple[int, str]]:
     return out
 
 
-def git(root: str, *args: str, check: bool = False) -> subprocess.CompletedProcess:
+# r86 (S86Sentinel §2, probe I1/F5/K1): a caller can point git at another index or object store, or bend the
+# config view through the environment, so the read-only view this tool pins must not inherit those routes. The
+# child process that loads the writer gets the same environment, so both halves of one K4 measurement agree.
+ENV_ROUTES = ("GIT_DIR", "GIT_WORK_TREE", "GIT_COMMON_DIR", "GIT_INDEX_FILE", "GIT_OBJECT_DIRECTORY",
+              "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_REPLACE_REF_BASE")
+
+
+def git_env() -> dict:
     env = {k: v for k, v in os.environ.items()
-           if k not in ("GIT_DIR", "GIT_WORK_TREE") and not k.startswith("GIT_CONFIG_")}
+           if k not in ENV_ROUTES and not k.startswith("GIT_CONFIG_")}
     # r85 (S85Sentinel F1/F6): K4's status read and the writer's pinned status must agree, or a path clean to
     # one and listed by the other is neither reported nor re-hashed. Same pins the writer's helper uses.
     pins = [("core.fsmonitor", "false"), ("core.fileMode", "true"), ("core.checkStat", "default"),
@@ -124,8 +131,12 @@ def git(root: str, *args: str, check: bool = False) -> subprocess.CompletedProce
     env["GIT_CONFIG_NOSYSTEM"] = "1"
     # a read-only instrument must not refresh the lane's index on `git status`
     env["GIT_OPTIONAL_LOCKS"] = "0"
+    return env
+
+
+def git(root: str, *args: str, check: bool = False) -> subprocess.CompletedProcess:
     cmd = ["git", "-C", root, "-c", "maintenance.auto=false", *args]
-    return subprocess.run(cmd, capture_output=True, text=True, env=env, check=check)
+    return subprocess.run(cmd, capture_output=True, text=True, env=git_env(), check=check)
 
 
 def read_at(root: str, rev: str, path: str) -> str | None:
@@ -197,7 +208,7 @@ def truth_refusal(root: str) -> "str | None":
         "except SystemExit as exc:\n"
         "    print('REFUSED %s' % exc.code); raise SystemExit(0)\n"
         "if not msg:\n"
-        "    fl = mod.git(root, 'ls-files', '-v', '-z', ':(top)')\n"
+        "    fl = mod.git(root, '-c', 'core.sparseCheckout=false', 'ls-files', '-v', '-z', ':(top)')\n"
         "    if fl.returncode != 0:\n"
         "        print('FLAGFAIL ' + fl.stderr.decode('utf-8', 'replace').strip()[:200])\n"
         "        raise SystemExit(0)\n"
@@ -211,8 +222,10 @@ def truth_refusal(root: str) -> "str | None":
         "print('CLEAN' if not msg else 'FORGED ' + msg)\n"
     )
     try:
+        # r86: the same pinned environment the parent's reads use, so a caller cannot give the sweep a different
+        # config, index or object store from the one the status read saw (S86Sentinel §2.5).
         proc = subprocess.run([sys.executable, "-I", "-B", "-c", bootstrap, K4_TRUTH_WRITER, root],
-                              capture_output=True, text=True, timeout=600)
+                              capture_output=True, text=True, timeout=600, env=git_env())
     except (OSError, subprocess.SubprocessError) as exc:
         return f"the receipt writer could not be run ({type(exc).__name__}: {exc}); tracked bytes are unverified"
     out = proc.stdout.strip()
