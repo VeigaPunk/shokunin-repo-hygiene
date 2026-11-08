@@ -266,10 +266,11 @@ def _stderr_tail(text: str, limit: int = 200) -> str:
 
 
 def _one_line(text: str, limit: int = 200) -> str:
-    """r88: one escaped line for a delegated failure detail. `_escape_text` first, so a CR/LF, a C0/C1 control byte,
-    NEL or U+2028 cannot split the MISMATCH record a reader parses (Q159/Q163); then the same both-ends bound
-    `_stderr_tail` uses, so a long exception line keeps its type name and its message. Empty input prints `no
-    stderr`, never an empty parenthesis."""
+    """r88: one escaped line for a delegated failure detail. `_escape_text` first, so an LF/TAB/CR, a C0 control
+    byte, DEL, NEL or U+2028/U+2029 cannot split the MISMATCH record a reader parses (Q159/Q163; the C1 block
+    beyond NEL is not escaped, and the round limits say so); then the same both-ends bound `_stderr_tail` uses, so a
+    long exception line keeps its type name and its message. Empty input prints `no stderr`, never an empty
+    parenthesis."""
     boxed = _escape_text(text or "")
     if not boxed:
         return "no stderr"
