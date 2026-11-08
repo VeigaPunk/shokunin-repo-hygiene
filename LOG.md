@@ -3071,3 +3071,13 @@ addendum, appended to the prereg, commits 8a793e7ae9131578bdec393982760217f62095
 - **Wave w1:** 13 seats under policy v1 (band 8-16), 0 dead; verdicts and dispositions in `corpus/lessons/round-81.md` `## Wave`. Both claims reproduced by non-author seats; qualified on launch mode (C2: `SHELLOPTS=monitor` leaves the CLI's job-controlled grandchild, lesson M4, S81ExecC2) and on the built decoys (C1, S81CriticClaims); S81MutCounter found a decoy class in the token's own round tree the rule never sees.
 - **Repair after the wave:** probe D `398e568c` (the private CLI file lands under a vault path when TMPDIR is inside it; 3/4 arms fail at W2, 3 of 3 runs; base 4/4) → R `ef76a14f` (`cli_tmp_ok`); at R probe D 4/4, frozen C2 counter 12/0/0, selftest 57/0, r17 37/0/0, trial identical (`census/round-81/records/repair/`).
 - **Tools:** none installed; no pacman, sysctl, sudo or kernel change.
+
+## Round 82 (2026-11-07, attempted 1, L1 SoujiR82)
+
+Claims: C1 calibration (pointer counter binds the token's own round tree and the full path suffix) and C2 operability
+(vault tool kills the CLI's whole descendant tree — `cli_kill_tree` snapshot before the group kill — and drops the
+stale `$!`).
+
+- C1: frozen 32-row harness `SUMMARY rows=32 mismatches=0 accepted=0 refused_true=0` (`census/round-82/records/c1-after.txt`), before K-a `mismatches=2 accepted=2 [NF-F, NF-G]`; regressions r78 22/22 + 12/12, r77 35/35 + 7/7, r79 9/9, r80 18/18, r81 25/25. Committed at `f5bc4197d426527adc6f5d52f2d7834c0f021f2e` (W1).
+- C2: frozen 16-row counter, default and `SHELLOPTS=monitor` launches, `rows=16 mismatches=0 errors=0 orphans=0` (`census/round-82/records/c2-after.txt`, `c2-after-monitor.txt`); before (Base under monitor) `mismatches=4 orphans=4`; selftest 57/0, r17 37/0/0, probe D successor 6/6 (`census/round-82/records/probe-d-successor.txt`). Committed at `73110f6fe56f2a8383baed0ea7dc77f8b7f6ba5e` (W2).
+- Domain trial: the no-signal path on real lane targets is unchanged by construction (the trap arms only during the async call); the selftest + r17 fixture + probe D give the no-signal and rail coverage. No new tool. Tool installs: none.

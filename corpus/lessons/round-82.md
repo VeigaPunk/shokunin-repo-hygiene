@@ -25,11 +25,34 @@ No inherited lane leftovers (`jj-lane.sh state` at start: `local=remote=488956c4
 
 ## Measured
 
-(to be filled at A.)
+Staged commits in the order the preregistration binds: P `1cb7c7d11aaac36a1ac757f339d77875ea4b192b` (instruments,
+controls, preregistration, lesson skeleton, census-before; freeze-check findings=3 — M1), F corrective `d302b4f330766f9297b8d97ff8968eae84aa1dbe` / F2 `28fd32c031ac0e87efbddb6c26da7827c9873ccd` / F3 `1ec433c6905cff283fdebbc663a5adf575b4a439`
+(Control path parse fixes; freeze-check re-run in `records/freeze-check-at-P.txt`), W1 `f5bc4197d426527adc6f5d52f2d7834c0f021f2e` (C1
+counter), W2 `73110f6fe56f2a8383baed0ea7dc77f8b7f6ba5e` (C2 tool), A (records), I (integration).
+
+- C1 (frozen harness `census/round-82/c1-false-row-harness.py`, 32 rows): K-a r81 counter mismatches=2 accepted=2
+  (NF-F, NF-G), K-b owntree-dropped 2/2, K-c suffix-last-component 2/2 [NF12c, NF-I] → `records/c1-after.txt`
+  mismatches=0 accepted=0 refused_true=0 EXIT=0. Regressions at W1: r78 22/22 + 12/12, r77 35/35 + 7/7, r79 harness
+  9/9, r80 harness 18/18, r81 harness 25/25.
+- C2 (frozen counter `census/round-82/c2-vault-signal-counter.py`, 16 rows, both launches): K-a Base under
+  `env SHELLOPTS=monitor` mismatches=4 orphans=4 (v7/v8 + m1/m2 `survivors=1`), K-b trap-only 12/12, K-c no-`<&0` 1
+  (p3) → `records/c2-after.txt` (default) and `records/c2-after-monitor.txt` (monitor) both mismatches=0 orphans=0
+  EXIT=0. Base under the default launch is 16/16 (`records/prefreeze/c2-base-default.txt`) — the bounded baseline the
+  claim is deltas against. Regressions at W2: selftest 57/0, r17 37/0/0, probe D successor 6/6
+  (`records/probe-d-successor.txt`).
+- V1/Regressions carried: the spot-check section 5 item 6 list (carried items) stays named in the preregistration's
+  V1 section; none is a row this round.
+
 
 ## Registry agreement
 
-(to be measured at A.)
+`tools/souji-registry-agreement.py` (frozen r29 instrument, `--list-rev b8cb4b31…`): at W2 `73110f6f` `k1=1 k2=1`
+(`census/round-82/records/registry-agreement-at-W2.txt`). The two left are recorded accepted-red, with the r81
+reasons carried: K1 `cited-no-row S146` (provenance prose, not a citation; rewriting would game the instrument) and
+K2 `rewrote-not-appended SCORECARD.md` (history; not repairable without rewriting history). Flip: a successor
+instrument parsing citations by `S### —` lead position, or an operator ruling on K2. K1/K2 pre-date this round
+(`k1=1 k2=1` at r81 I as well).
+
 
 ## Mistakes
 

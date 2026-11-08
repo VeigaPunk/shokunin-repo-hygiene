@@ -131,3 +131,17 @@ caused.
   LOW-1; probe `census/round-81/probes/tmpdir-in-vault.py` fails 3 of 4 arms at W2). Repair R `ef76a14f`: the
   asynchronous path runs only when TMPDIR and every vault directory (the row's, the `--vault` hint) are disjoint;
   otherwise the call runs in the foreground as before (`census/round-81/records/repair/`, 4/4, counter still 12/0).
+
+## A descendant-tree kill for a job-controlled grandchild (r82, `tools/souji-vault-verify.sh`)
+
+- With job control in the tool's environment (an exported `SHELLOPTS=monitor`), the CLI's own `sleep 600 &` starts in a
+  process group of its own, outside timeout's group, and the r81 trap's group kill misses it: 4 orphan rows under the
+  monitor launch (`census/round-82/controls/c2-K-a-do-nothing.txt` under `env SHELLOPTS=monitor`: v7/v8 + m1/m2
+  `survivors=1`, `mismatches=4`) while the Base tool passes the default launch (16/16,
+  `records/prefreeze/c2-base-default.txt`).
+- r82 kills the whole CLI subtree first: `cli_kill_tree` snapshots `pgrep -P` recursion from the timeout pid and
+  sends TERM then KILL to each pgrep descendant, before the group kill and the KILL fallback. Measured 16/16 under
+  both launches (`census/round-82/records/c2-after.txt`, `c2-after-monitor.txt`), the stale `${!}` fallback dropped,
+  the private file never under a vault path (probe D successor: 6/6 arms, `records/probe-d-successor.txt`).
+- Limits unchanged from the r81 section (SIGKILL, a CLI descendant re-parented beyond pgrep's tree, a SIGINT
+  ignored on entry, signals while the tool runs its other short children, the foreground fallback path).
