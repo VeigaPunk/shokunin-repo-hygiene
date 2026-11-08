@@ -10,6 +10,11 @@ Rows (each on a fresh clone of a hermetic seed repository):
   KB3 rename     a staged rename whose SOURCE name starts `ab ` (two characters and a space): one row naming the
                  destination (the change) and NO row for the source (the second NUL field is a name, not a status
                  record; a content test for "status pair" reads `ab src.txt` as status `ab`)
+  KB4 longline   a delegated writer whose exception message is 400 characters: the no-verdict detail must still name
+                 the exception TYPE (first 200 characters of a traceback are its frame list, a tail-only cut is the
+                 message's end)
+  KB5 injective  two untracked names, one holding a real LF and one holding the two bytes `\\` `n`: their K4 records
+                 must differ (a backslash-doubling escape), so the record can be read back to the exact bytes
 
 Output: `ROW <id> expect=<one|escaped> k4=<n> named=<yes|no> counts=<yes|no> rc=<n> match=<yes|no>` then
 `SUMMARY rows=3 mismatches=<M>` and `EXIT=<0|1>`. Exit 2 on usage or a fixture failure. `--work` must be absent or
@@ -28,7 +33,12 @@ ENV.update({"GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": os.devnull, "LC_ALL
             "GIT_AUTHOR_NAME": "r87 fixture", "GIT_AUTHOR_EMAIL": "fixture@r87.invalid",
             "GIT_COMMITTER_NAME": "r87 fixture", "GIT_COMMITTER_EMAIL": "fixture@r87.invalid",
             "GIT_AUTHOR_DATE": "2026-11-08T00:00:00Z", "GIT_COMMITTER_DATE": "2026-11-08T00:00:00Z"})
-ROWS = ("KB1", "KB2", "KB3")
+ROWS = ("KB1", "KB2", "KB3", "KB4", "KB5")
+STUB = ("# r87 KB4 stub writer: one long exception message\n"
+        "def git(*a, **k):\n"
+        "    raise AttributeError('stub')\n\n\n"
+        "def _truth_refusal(root):\n"
+        "    raise AttributeError('r87 KB4 ' + 'x' * 400)\n")
 
 
 class FixtureError(Exception):
@@ -67,6 +77,13 @@ def apply_row(clone, row):
     elif row == "KB2":
         with open(os.path.join(clone, "cr\rname.txt"), "wb") as f:
             f.write(b"carriage return\n")
+    elif row == "KB4":
+        pass  # the shape is the tool copy, not the repository
+    elif row == "KB5":
+        with open(os.path.join(clone, "x\nname.txt"), "wb") as f:   # a real LF in the name
+            f.write(b"lf\n")
+        with open(os.path.join(clone, "x\\nname.txt"), "wb") as f:  # a literal backslash and an n
+            f.write(b"backslash-n\n")
     elif row == "KB3":
         with open(os.path.join(clone, "ab src.txt"), "wb") as f:
             f.write(b"source\n")
@@ -106,25 +123,45 @@ def main(argv):
             mism += 1
             print(f"ROW {row} expect=- k4=- named=- counts=- rc=- match=error detail={type(exc).__name__}: {exc}")
             continue
-        p = subprocess.run([sys.executable, "-B", tool, "--root", clone, "--rev", rev],
+        tool_row = tool
+        if row == "KB4":
+            kit = os.path.join(work, "kit-kb4")
+            os.makedirs(kit, exist_ok=True)
+            shutil.copyfile(tool, os.path.join(kit, "souji-record-agreement.py"))
+            with open(os.path.join(kit, "souji-receipt-write.py"), "w", encoding="utf-8") as f:
+                f.write(STUB)
+            tool_row = os.path.join(kit, "souji-record-agreement.py")
+        p = subprocess.run([sys.executable, "-B", tool_row, "--root", clone, "--rev", rev],
                            stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=ENV, timeout=600)
         out, err = p.stdout, p.stderr
         lines = [l.split(b"\t") for l in out.split(b"\n") if l.startswith(K4)]
-        records = [(c[0], c[1] if len(c) > 1 else b"") for c in (l[2:] for l in lines)]
+        records = [(c[0], c[1] if len(c) > 1 else b"", c[2] if len(c) > 2 else b"")
+                   for c in (l[2:] for l in lines)]
         counts = b"keys=" in out
         if row == "KB1":
             expect = b"\\xff-name.txt"
-            named = any(expect in a or expect in b for a, b in records)
-            detail = f"records={[a[:40] for a, _ in records]} stderr={err[:80]!r}"
+            named = any(expect in a or expect in b for a, b, _ in records)
+            detail = f"records={[a[:40] for a, _, _ in records]} stderr={err[:80]!r}"
         elif row == "KB2":
             expect = b"cr\\rname.txt"
-            named = any(expect in a or expect in b for a, b in records)
-            detail = f"records={[a[:40] for a, _ in records]}"
+            named = any(expect in a or expect in b for a, b, _ in records)
+            detail = f"records={[a[:40] for a, _, _ in records]}"
+        elif row == "KB5":
+            expect = b"x\\nname.txt"
+            recs = [a for a, _b, _c in records]
+            named = (len(recs) == 2 and recs[0] != recs[1]
+                     and any(r == b"x\\nname.txt" for r in recs)
+                     and any(r == b"x\\\\nname.txt" for r in recs))
+            detail = f"records={[a[:40] for a in recs]}"
+        elif row == "KB4":
+            expect = b"AttributeError"
+            named = any(expect in c for _a, _b, c in records)
+            detail = f"details={[c[:40] for _a, _b, c in records]}"
         else:
             expect = b"dst.txt"
-            named = (any(a == b"dst.txt" for a, _ in records)
-                     and not any(a == b"src.txt" for a, _ in records))
-            detail = f"records={[a[:40] for a, _ in records]}"
+            named = (any(a == b"dst.txt" for a, _b, _c in records)
+                     and not any(a == b"src.txt" for a, _b, _c in records))
+            detail = f"records={[a[:40] for a, _, _ in records]}"
         ok = bool(counts) and named
         mism += 0 if ok else 1
         print(f"ROW {row} expect={expect.decode('utf-8', 'replace')} k4={len(lines)} named={'yes' if named else 'no'} "

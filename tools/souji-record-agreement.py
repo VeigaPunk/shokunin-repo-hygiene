@@ -139,6 +139,28 @@ def git(root: str, *args: str, check: bool = False) -> subprocess.CompletedProce
     return subprocess.run(cmd, capture_output=True, text=True, env=git_env(), check=check)
 
 
+def _escape_record(raw: bytes) -> str:
+    """r87 wave repair (S87ExecC2 advisory 1): one injective spelling for a path's bytes. A manual escape that leaves a
+    literal backslash alone is ambiguous — a name holding LF and a name holding `\\` + `n` both print `x\\nname` — so
+    the backslash is doubled first, and every byte outside printable ASCII becomes `\\xNN`. A reader can recover the
+    exact bytes; the record is a byte spelling, not a display name."""
+    out: list[str] = []
+    for b in raw:
+        if b == 0x5C:
+            out.append("\\\\")
+        elif b == 0x0A:
+            out.append("\\n")
+        elif b == 0x09:
+            out.append("\\t")
+        elif b == 0x0D:
+            out.append("\\r")
+        elif 0x20 <= b < 0x7F:
+            out.append(chr(b))
+        else:
+            out.append("\\x%02x" % b)
+    return "".join(out)
+
+
 def git_bytes(root: str, *args: str) -> subprocess.CompletedProcess:
     """r87 wave repair (S87ExecC2 HIGH-1): the same pinned environment and argv as git(), with the stream left as
     bytes. A path name is not UTF-8 by contract, so a text-mode read of the NUL status stream raises
@@ -199,7 +221,11 @@ def _stderr_tail(text: str, limit: int = 200) -> str:
         return ""
     tail = lines[-1]
     if len(tail) > limit:
-        tail = "\u2026" + tail[-(limit - 1):]
+        # r87 wave repair (S87Critic): a long exception line carries its type name FIRST ("AttributeError: ...") and
+        # its message last, so a tail-only cut loses the name the detail exists for. Keep both ends.
+        head = limit // 2
+        keep = limit - head - 1
+        tail = tail[:head] + "\u2026" + tail[-keep:]
     return tail
 
 
@@ -261,7 +287,11 @@ def truth_refusal(root: str) -> "str | None":
         # r86: the same pinned environment the parent's reads use, so a caller cannot give the sweep a different
         # config, index or object store from the one the status read saw (S86Sentinel §2.5).
         proc = subprocess.run([sys.executable, "-I", "-B", "-c", bootstrap, K4_TRUTH_WRITER, root],
-                              capture_output=True, text=True, timeout=600, env=git_env())
+                              capture_output=True, timeout=600, env=git_env())
+        # r87 wave repair (S87ExecC2 advisory 2): the delegated read is bytes too, so the FORGED detail spells a CR
+        # as a CR and one path has one spelling in both arms.
+        proc.stdout = proc.stdout.decode("utf-8", "backslashreplace")
+        proc.stderr = proc.stderr.decode("utf-8", "backslashreplace")
     except (OSError, subprocess.SubprocessError) as exc:
         return f"the receipt writer could not be run ({type(exc).__name__}: {exc}); tracked bytes are unverified"
     out = proc.stdout.strip()
@@ -498,8 +528,7 @@ class Report:
                 skip_next = True
             # r87 wave repair (S87ExecC2 MEDIUM-2): decoded as bytes, so a CR in the name is still a CR here and is
             # escaped as such; the text-mode read translated it to LF first and the record said `\n`.
-            path = (rec[3:].decode("utf-8", "backslashreplace")
-                    .replace("\n", "\\n").replace("\t", "\\t").replace("\r", "\\r"))
+            path = _escape_record(rec[3:])
             if any(path == e or path.startswith(e if e.endswith("/") else e + "/") for e in exempt):
                 continue
             self.bad("K4", path, "uncommitted-path",
