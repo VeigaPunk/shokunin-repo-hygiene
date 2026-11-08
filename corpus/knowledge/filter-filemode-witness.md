@@ -384,3 +384,60 @@ What the repair does not cover: an attacker who also forges the object store or 
 K4's two reads (the writer's wrapped-command path reads twice, K4 reads once); the exit contract shifts from 0 to 1
 for a concealed forgery, which is the correct reading for a caller that treats a non-zero exit as "mismatch found"
 and is stated rather than widened. The synthetic fixture is not the lane, so this is a 7-row fixture claim.
+
+## r86: an inherited check is only the code path it calls (appended 2026-11-08)
+
+r85 applied "the lane's own existing rule through the lane's own existing implementation", and its sentinel measured
+where that inheritance stops: `_truth_refusal` skips every index entry whose stage is not 0 and every gitlink
+(`mode == b"160000"`, `tools/souji-receipt-write.py:283`), and the writer's `_flag_refusal` — the only code that names
+a concealed gitlink — is reached from the writer's own entry point (`write_receipt`, the `git ls-files -v -z :(top)`
+sweep at `:587`), a path K4 never called. So a nested repository whose commit moved, with `skip-worktree` set on its
+gitlink entry, left `git status --porcelain` empty and K4 emitting no row at all (S85ExecK4 §2d probe-d2b).
+
+The rule that closes it is the tag the index itself reports: `git ls-files -t` prints a one-character status tag per
+record, and its legend says `H` is a "tracked file that is not either unmerged or skip-worktree" while `S` is a
+"tracked file that is skip-worktree" (S341), with `-v` lowering the letters for the assume-unchanged bit. The bit's
+own contract is to "treat the file as unchanged when it is not" (S342), so the classes it hides are exactly the ones
+no status comparison can report. A gitlink cannot be decided by hashing either: its entry "contains the object name
+of the commit that the superproject expects the submodule's working directory to be at" (S343), which is why the
+writer refuses it by class (`RECEIPT-GITLINK-CONCEALED`) rather than by bytes.
+
+K4 now runs that sweep too, through the writer's own functions: after its `_truth_refusal` returns clean it reads
+`git ls-files -v -z :(top)` in the same isolated interpreter and hands any non-`H` record to `_flag_refusal`, reporting
+`K4 . index-flag-concealed` with the writer's class text. The second half of the repair is the record format: a path
+name is not a safe detail string, so a detail that carries one is C-escaped (`\n`, `\t`, `\r`) before it is printed,
+and one K4 record stays one physical line that still names the path a reader must act on.
+
+Correction to this file's r85 section (append-only; the r85 text stands): its §2e description says the emitted row
+"embeds a literal LF inside the detail". Measured on the lane-base bytes, it does not — r85's repair already replaced
+the newline with a SPACE in the bootstrap (`msg.replace(chr(10), ' ')`, `census/round-86/controls/c2-before-base-tool.py:199`),
+so the row is one line whose detail reads `bad name.txt` for a file named `bad\nname.txt`. The space-join is the
+quieter defect and the worse one: the record keeps its shape while making the name unrecoverable, and two different
+paths render identically. The r86 escape exists because of the space-join, not because of a raw LF (S86Scribe F4).
+
+Measured (`census/round-86/c2-k4-counter.py`, 9 frozen rows; the fixture adds a nested repository bound as a gitlink
+and a same-size forge of a file whose name carries a newline):
+
+- lane-base tool bytes (`0ade0751…`, `census/round-86/controls/c2-before-base-tool.py`): `SUMMARY rows=9
+  mismatches=2 errors=0` — KG1 `k4=0` (no row at all for the concealed gitlink commit) and KG2 `named=no` (a row that
+  fired but whose detail does not name the path), the seven r85 rows unchanged
+  (`census/round-86/controls/c2-before-base-tool.txt`);
+- filed tool (`4cc3b945…`): `SUMMARY rows=9 mismatches=0 errors=0`, KG1 `k4rows=['.|index-flag-concealed']` and
+  KG2 `named=yes`, the honest and dirty rows unchanged (`census/round-86/records/c2-after.txt`).
+
+**Wave repair after the sentinel's env route (`census/round-86/records/c2-env-route.txt`, A11).** The sweep's first
+version ran the *writer's* `git()` helper, and the writer's helper inherits `GIT_CONFIG_*`, `GIT_INDEX_FILE`,
+`GIT_OBJECT_DIRECTORY` and friends — the writer refuses those at its own entry point (`RECEIPT-ENV-CONFIG-SET`,
+`RECEIPT-INDEX-ENV-SET`), a guard the `exec()`-the-source bootstrap never reaches. With `core.sparseCheckout` set —
+by the caller's environment (`GIT_CONFIG_PARAMETERS`/`GIT_CONFIG_COUNT`) or by the repository's own config —
+`git ls-files -v` prints `H` for a skip-worktree entry, so the sweep saw nothing and K4 certified the KG1 tree clean.
+The repair factors the tool's pinned environment into `git_env()` (now also excluding the index/object-store
+redirection variables), runs the embedded writer subprocess with it, and pins `core.sparseCheckout=false` on the
+sweep call. Measured: base tool `k4_rows_with_env=0` (no sweep at all), filed tool `k4_rows_with_env=1` with
+`RECEIPT-GITLINK-CONCEALED` naming `nest`, under both the env route and a repo-local `core.sparseCheckout=true`.
+
+What this does not cover: K4 still does not read submodule state, so a gitlink whose entry is flagged `H` while the
+nested repository moved is invisible (the writer's own limit, unchanged); the sweep inherits the writer's classes but
+not its filter/attribute witnesses (`_witness_refusal`, the content snapshot); a forged writer inside the audited
+tree stays outside the claim (S85Sentinel F5); only `\n`, `\t` and `\r` are escaped, and other control bytes are
+printed raw; and the fixture is synthetic, so this is a 9-row fixture claim, not a lane measurement.

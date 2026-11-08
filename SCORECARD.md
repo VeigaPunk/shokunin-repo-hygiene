@@ -2021,3 +2021,39 @@ run), and the own-tree belt is bound (7/7). No clause the round examined is shad
   backstop, r76 K03/K04, the remaining status-trusting tools (`souji-verify.sh:713,883`, `souji-census.sh`,
   `souji-idx-repair.py`), r17 240 s runners, `souji-freeze-check.py` prereg grammar (Q99).
 
+
+### Round 86 measurements (2026-11-08, Linux; lane base `89d02c907d40cc09fedc9d420cf9509df685e143`; instruments P `47602fa6`, freeze F `d77b4258`, C2 repair `2acbbfc8`)
+
+| claim | axis | before | after | counting command | measured commit |
+|---|---|---|---|---|---|
+| C1 the two r85-measured reachable-and-unrowed clauses get their rows | calibration 7 | `census/round-86/controls/c1-before-r85-population.txt` (same counter, same eight mutants, the r85 47-row population) `ARM pristine pop=r85 rows=47 mismatches=0 errors=0 exit=0`, `c7-census-in-tree killed=no`, `m14-short-shape killed=no`, `SUMMARY mutants=8 sets=r85 pristine_r85=ok killed_r85=6 killed_total=6`, EXIT 0 | `census/round-86/records/c1-after.txt` `ARM pristine pop=r85 rows=47 mismatches=0 errors=0 exit=0`, `ARM pristine pop=r86 rows=49 mismatches=0 errors=0 exit=0`, eight `killed=yes` on r86, `SUMMARY mutants=8 sets=r85,r86 pristine_r85=ok pristine_r86=ok killed_r85=6 killed_r86=8 killed_total=14`, EXIT 0 | `python3 -B census/round-86/c1-clause-battery.py --counter census/round-86/c1-pointer-counter.py --work WORK --only r85,r86 --expect-killed 14` (after) and `--only r85 --expect-killed 6` (before) | counter `census/round-86/c1-pointer-counter.py`, harness `census/round-86/c1-false-row-harness.py`, population `census/round-86/c1-false-rows.tsv` sha256 `79db70f6…`, items `census/round-86/c1-items.tsv` sha256 `5abf3b01…`, mutants `census/round-86/c1-mutants.json`; all at P `47602fa6` |
+| C2 K4 carries the writer's index-flag sweep and keeps a record path on one line | operability 8 | `census/round-86/controls/c2-before-base-tool.txt` on the lane-base tool bytes `0ade0751…`: `SUMMARY rows=9 mismatches=2 errors=0`, KG1 `k4=0` (a gitlink commit concealed under skip-worktree emits no row), KG2 `named=no` (newline path space-joined out of the record), EXIT 1 | `census/round-86/records/c2-after.txt` on the filed tool sha256 `cf875367…` (the sentinel's env route repaired in `f5e196a2`, `records/c2-env-route.txt` `k4_rows_with_env` 0 → 1): `SUMMARY rows=9 mismatches=0 errors=0`, KG1 `k4rows=['.|index-flag-concealed']`, KG2 `named=yes`, the seven r85 rows unchanged, EXIT 0 | `python3 -B census/round-86/c2-k4-counter.py --tool tools/souji-record-agreement.py --work WORK` (after) and `--tool census/round-86/controls/c2-before-base-tool.py` (before) | repair commit `2acbbfc8`; counter `census/round-86/c2-k4-counter.py` |
+
+No owned axis score changed (calibration 7, coverage 8, operability 8 — the lane still has no reproducible 0–10
+mapping); both rows carry the verdict, the counting command and the measured commit instead. The wave narrowed five
+sentences before filing (`plans/round-86.md` A1–A5): a flagged regular file with changed bytes is refused by the truth
+check first; the sweep reads a gitlink entry, not submodule state; each new row binds one arm of its clause, not the
+whole clause (S86Critic C1-c measured two strictly weaker counters scoring 8/8); the lane's own record-agreement run
+still carries the inherited K3 tally row; and the `FLAGFAIL` branch is not the corrupt-index row.
+
+### Round 86 capability rows
+
+| name | what it can now do | evidence pointer | first-working round |
+|---|---|---|---|
+| clause-grounding with a row pair | turn a clause a population leaves unrowed into certified coverage: one frozen row per clause plus one single-edit mutant, with the do-nothing control (same mutants, old population) proving the delta is the row and not the rule | `python3 -B census/round-86/c1-clause-battery.py --counter census/round-86/c1-pointer-counter.py --work WORK --only r85,r86 --expect-killed 14` → `killed_r85=6 killed_r86=8` (`census/round-86/records/c1-after.txt`, control `controls/c1-before-r85-population.txt`) | r86 |
+| index-flag sweep in an audit verdict | answer for the index-flag classes a status-based truth check cannot see (a gitlink entry, an unmerged entry, a flagged path) by running the receipt writer's own `ls-files -v -z` sweep, and keep a record's path name on one physical line | `python3 -B census/round-86/c2-k4-counter.py --tool tools/souji-record-agreement.py --work WORK` → `rows=9 mismatches=0` (`census/round-86/records/c2-after.txt`; before arm `mismatches=2`) | r86 |
+
+### Planned (r87)
+
+- C1 (calibration): the arms A3 leaves unrowed — the `len(got) < 2` half of the short-shape guard, a non-wave target
+  under a census root reaching the census-in-tree `_capture_ok` suffix rule, and the four r85-measured survivors
+  (m12 token-on-line, m16 punctuation, m17 duplicate id, plus a positive QUARANTINED row); then the basename clause,
+  which S86Critic's trace shows cannot flip a verdict while the suffix rules stand (shadowed-for-verdict), recorded
+  as a definition rather than a row.
+- C2 (operability): the r85 A2/T-item residuals the wave left open — the writer's 200-character stderr truncation
+  that hides `AttributeError` (S86ExecK4 §2b), a pinned writer digest so the delegation limit stops being
+  load-bearing (S86ExecK4 §3b2), and the `status --porcelain -z` switch that would make the status arm's quoting
+  depend on the tool.
+- Carried: the r85 list's C2 items (pid-reuse row, parent-before-child, termign-fork/p5-late-term, strace-robust
+  settle), `_regular` pathspec framing, the quarantine intro-blob digest row, the r79 gate re-measurement, check-4
+  300 s backstop, r76 K03/K04, the r17 240 s runners, the inherited K3 tally row (A4).

@@ -3272,3 +3272,49 @@ receipts in P `5bd5a0ce`. Amendments in `plans/round-85.md` (A0-A1 so far); the 
   `corpus/QUALITY.md` Q156/Q157 under `## Round 85 criteria`, `corpus/README.md` r85 frontier block,
   `plans/round-85.md`, `corpus/lessons/round-85.md`, `SCORECARD.md` r85 rows + two capability rows + planned r86.
 - **Tool installs: none.** No pacman (paused host-wide), no uv/npx/binary fetch, no sysctl, sudo or kernel change.
+
+## Round 86 (2026-11-08) — two clauses r85 measured reachable-but-unrowed get their rows (C1 calibration); record-agreement K4 carries the writer's index-flag sweep and keeps record paths on one line (C2 operability)
+
+- **Claims.** C1 (calibration 7, the lane's lowest owned non-retired axis): the false-row population certifies a
+  clause only when a frozen row turns a clause-dropping mutant red. r85 bound six clauses and measured two more
+  reachable and unrowed (A1 census-in-tree, A4 m14 short-shape). This round adds NF-W (item I85R, target
+  `census/round-84/w1/c1-after.txt`) and NF-Y (new item I86S, `SCORECARD.md:1924`, token
+  `census/round-83/c1-pointer-counter.py` moved into a wave capture under its own round) at fixture revision R9, and
+  two frozen mutants `c7-census-in-tree` / `m14-short-shape`. C2 (operability 8): r85's K4 applied the writer's
+  `_truth_refusal` and stopped where that function stops — stage≠0 and gitlinks are skipped, and `_flag_refusal` is
+  only reached from the writer's own entry point (r85 A2, S85ExecK4 d2b). K4 now runs the writer's
+  `git ls-files -v -z :(top)` sweep in the same isolated interpreter and C-escapes `\n`/`\t`/`\r` in a record's
+  detail, so a concealed gitlink entry is classed and a path name stays on one physical line. The wave's sentinel then
+  showed the sweep read the writer's config view: `core.sparseCheckout` (from `GIT_CONFIG_PARAMETERS`/`GIT_CONFIG_COUNT`
+  or the repository's own config) renders a skip-worktree entry as `H`, and the bootstrap never reaches the writer's
+  entry-point env refusals; repaired in-round (`f5e196a2`): `git_env()` also strips `GIT_INDEX_FILE`,
+  `GIT_OBJECT_DIRECTORY`, `GIT_ALTERNATE_OBJECT_DIRECTORIES` and `GIT_REPLACE_REF_BASE`, the embedded writer subprocess
+  runs with that environment, and the sweep pins `core.sparseCheckout=false`. Receipt
+  `census/round-86/records/c2-env-route.txt`: `k4_rows_with_env` 0 on the base bytes (no sweep), 1 on the filed bytes.
+- **Measured.** C1: `census/round-86/controls/c1-before-r85-population.txt` reads the do-nothing control —
+  `SUMMARY mutants=8 sets=r85 pristine_r85=ok killed_r85=6`, c7 and m14 `killed=no`, EXIT 0; the after arm
+  `census/round-86/records/c1-after.txt` reads `pristine pop=r85 rows=47 mismatches=0` and
+  `pristine pop=r86 rows=49 mismatches=0`, `killed_r86=8`, EXIT 0. C2:
+  `census/round-86/controls/c2-before-base-tool.txt` `SUMMARY rows=9 mismatches=2 errors=0` (KG1 `k4=0` no row for a
+  concealed gitlink commit, KG2 `named=no` for a newline path), EXIT 1; `census/round-86/records/c2-after.txt`
+  `SUMMARY rows=9 mismatches=0 errors=0`, EXIT 0 on tool sha256 `4cc3b945…`, with the seven r85 rows unchanged.
+- **Narrowed before filing (plans/round-86.md A1-A5).** A1: a flagged regular file with changed bytes is refused by
+  the truth check as `stat-cache-concealed`, so the flag row's class is claimed only for the records the truth check
+  passes (S86ExecK4 §2e). A2: the sweep reads a gitlink ENTRY and its flag, not submodule state (S86Critic C2-b,
+  S86ExecK4 §3h/§2m). A3: NF-Y binds the `len(want)<2` arm and NF-W the `w[0-9]+` shape, not whole clauses
+  (S86Critic C1-c). A4: the lane's own record-agreement run still carries the inherited K3 tally row on
+  `corpus/README.md:1017`, identical under both tools (S86ExecK4 §4). A5: the `FLAGFAIL` branch is not the
+  corrupt-index row; K4's own status read fails first (S86ExecK4 §2c).
+- **Sources/registry.** S341 (git-ls-files(1) as installed, `-t` tag legend, quote "tracked file that is not either
+  unmerged or skip-worktree", capture `census/round-86/srcs/git-ls-files.1.gz`), S342 (git-update-index(1),
+  "Skip-worktree bit", "treat the file as unchanged when it is not", capture `…/git-update-index.1.gz`) and S343
+  (gitsubmodules(7), "The gitlink entry contains the object name of the commit…", capture `…/gitsubmodules.7.gz`)
+  are admitted `docs` tier A, `mined`; S344 (the same git-ls-files page, `--stage`) is REJECTED as restating S317 +
+  S327, with its flip. Registry `263 → 268` (`grep -cE '^\| *S[0-9]{3,}\|' corpus/SOURCES.md`); five rows added, one rejected; census before
+  `souji ok` EXIT 0 (`census/round-86/records/sources-census-before.txt`), after `souji ok` EXIT 0
+  (`…-after.txt`).
+- **Docs.** `corpus/knowledge/filter-filemode-witness.md` r86 section (an inherited check is only the code path it
+  calls), `corpus/knowledge/own-tree-pointer-binding.md` r86 section (grounding an unbound clause), `corpus/QUALITY.md`
+  Q158/Q159, `plans/round-86.md`, `corpus/lessons/round-86.md`, `SCORECARD.md` r86 rows, two capability rows and the
+  r87 planned block.
+- **Tool installs: none.** No pacman (paused host-wide), no uv/npx/binary fetch, no sysctl, sudo or kernel change.

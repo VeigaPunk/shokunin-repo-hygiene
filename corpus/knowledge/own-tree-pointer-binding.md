@@ -142,3 +142,49 @@ round), not for every shape the branch admits; the basename result rests on one 
 seven-row kill, neither of which is a committed population row yet; nothing the round examined turned out to be
 shadowed, so the term is defined here from principle (a guard above that refuses every pair the branch admits) and
 rests on one separate probe (`…/S85MutK4.md` m4: no conflict-while-status-clean state is constructible).
+
+## Grounding an unbound clause: the row is the work (r86)
+
+source: S335 (own-work clause-kill receipts), S337/S340 (mutation adequacy); census/round-86/c1-false-rows.tsv,
+census/round-86/c1-mutants.json, census/round-86/c1-clause-battery.py
+verified-at: 47602fa690d19bd320fc0053fbeed46a1270ff09 (2026-11-08)
+recheck: python3 -B census/round-86/c1-clause-battery.py --counter census/round-86/c1-pointer-counter.py --work <empty dir outside /tmp> --only r85,r86 --expect-killed 14
+
+r85 defined the difference between an unbound clause and a shadowed one and measured two clauses of `judge()` that
+are reachable and deciding but have no row (census-in-tree at `:417-425`, the own-tree short-shape guard in
+`_owntree_ok` at `:351`). r86 does the work the definition implies: each clause gets one frozen row and one
+single-edit mutant that drops ONLY it, and the delta is measured on the old population as the control.
+
+| clause | row | target (fixture rev R9) | mutant | killed on r85 47 rows | killed on r86 49 rows |
+|---|---|---|---|---|---|
+| census-in-tree branch | NF-W (item I85R, `census/round-84/records/c1-after.txt`) | `census/round-84/w1/c1-after.txt` | `c7-census-in-tree` | no | **yes** |
+| own-tree short-shape guard | NF-Y (item I86S, `census/round-83/c1-pointer-counter.py`) | `census/round-83/waves/c1-pointer-counter.py` | `m14-short-shape` | no | **yes** |
+
+Both rows are FALSE rows (expect REFUSED) and each is refused by exactly one clause: NF-W's target keeps the token's
+last component, its round and its frozen bytes, and the own-tree belt passes it because `_owntree_ok` accepts a real
+wave directory, so control reaches the census-in-tree branch; NF-Y's token sits one component below its round, so
+`len(want) < 2` decides before `_capture_ok` is consulted, and dropping the guard lets `_capture_ok` accept the
+one-component remainder as a suffix. Item I86S is the first population item in the lane whose token is that shallow,
+which is why a new item population (and one POPS entry) was needed at all.
+
+Measured: `census/round-86/controls/c1-before-r85-population.txt` — the same eight mutants on the r85 47 rows:
+`SUMMARY mutants=8 sets=r85 pristine_r85=ok killed_r85=6`, `c7` and `m14` `killed=no`, EXIT 0.
+`census/round-86/records/c1-after.txt` — `pristine pop=r85 rows=47 mismatches=0`, `pristine pop=r86 rows=49
+mismatches=0`, `killed_r86=8`, EXIT 0. The six r85 mutants stay killed on both populations, so the new rows add
+coverage without replacing any.
+
+What the two rows do NOT certify (measured by the round's critic, `plans/round-86.md` A3): NF-Y exercises only the
+`len(want) < 2` arm — a counter that keeps only that arm still scores 8/8 on both populations; NF-W's target is a
+`w[0-9]+/` shape, so a rule that narrows the census-rooted branch to that shape also survives.
+
+The `len(got) < 2` disjunct is not merely unrowed, it is **dead** (measured this round,
+`census/round-86/records/a6-len-got.txt`): the mutant `if len(want) < 2 or len(got) < 2:` -> `if len(want) < 2:`
+survives both pinned populations (`killed_r85=0 killed_r86=0`, both pristine arms green), and by construction no
+(token, target) pair can flip. After the guard the expression reaches `_capture_ok`, whose `CAPTURE` needs a
+non-empty remainder (so a target needs at least two components below its round), and `OWNTREE_WAVE.match(tt + "/")`
+followed by `got[1:] == want[1:]`, where `want[1:]` is non-empty because the other disjunct requires
+`len(want) >= 2`. A row cannot bind it, which is the third disposition this file now distinguishes: BOUND (a row kills
+the mutant), UNBOUND-and-reachable (a hand-built row decides and a row is missing), and DEAD (no input flips the
+verdict). The basename clause at `:387` is a fourth case with a different verdict: a row CAN make it the first
+refusal (a renamed target), but no row can make its removal flip a verdict while the suffix comparisons stand, so it
+is shadowed-for-verdict and a row would count coverage it does not give.
