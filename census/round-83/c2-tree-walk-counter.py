@@ -107,8 +107,11 @@ STUBS = {
     "honest": "#!/bin/bash\nlast=; for last in \"$@\"; do :; done\n"
               "h=$(sha256sum -- \"$last\" | cut -d' ' -f1)\nprintf '{\"ok\":true,\"sha256\":\"%s\"}\\n' \"$h\"\n",
     "termign": "#!/bin/bash\n" + MARK_FN + 'r81_mark "$@"\ntrap "" TERM INT HUP\nexec sleep 600\n',
-    "deep": "#!/bin/bash\n" + MARK_FN + 'r81_mark "$@"\nn=${SOUJI_R83_CHILDREN:-0}\n'
-            'i=0; while [ "$i" -lt "$n" ]; do sleep 600 & i=$((i+1)); done\nexec sleep 600\n',
+    # r83 instrument correction (before any candidate score): the mark is written AFTER the fan-out, so the
+    # hang point the counter waits for is a tree that already exists; with the mark first the row raced the
+    # stub's own 24 forks and read survivors on a tool that had found every child present at the signal.
+    "deep": "#!/bin/bash\n" + MARK_FN + 'n=${SOUJI_R83_CHILDREN:-0}\n'
+            'i=0; while [ "$i" -lt "$n" ]; do sleep 600 & i=$((i+1)); done\nr81_mark "$@"\nexec sleep 600\n',
     "stdin": "#!/bin/bash\nlast=; for last in \"$@\"; do :; done\nIFS= read -r l || l=\n"
              "[ \"$l\" = r81-stdin ] || exit 0\n"
              "h=$(sha256sum -- \"$last\" | cut -d' ' -f1)\nprintf '{\"ok\":true,\"sha256\":\"%s\"}\\n' \"$h\"\n",
