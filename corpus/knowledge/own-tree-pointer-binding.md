@@ -97,3 +97,40 @@ only census-token items name no round). Limits: a population proves discriminati
 correctness; the NF rows are byte-equal copies by construction (location binding, not content identity); the five
 mutants are hand-written single edits, not a generated battery; a "kill" is a non-zero harness exit, which does not
 by itself separate a row mismatch from a harness error (every observed kill was a real `match=no`, `errors=0`).
+
+## A shadowed clause is not an unbound clause (r85)
+
+r84 read the sentinel's per-clause battery as "the census-in-census and last-component clauses are unbound by the
+population" and routed a row for each. r85 measured that the sentence is wrong in a way that matters: an UNBOUND
+clause is one a row could bind; a SHADOWED clause is one no row can bind, because another belt refuses every input
+the clause would refuse.
+
+The census-in-tree branch of `judge()` in `census/round-85/c1-pointer-counter.py` (the branch
+`elif kr and target[:tr.start(0)] == "census" and token[:kr.start(0)] == "census" and not _capture_ok(...)`) is
+shadowed, not unbound. To reach it a call must have `target[:tr.start(0)] == "census"` and
+`token[:kr.start(0)] == "census"`; the branch immediately above it fires on `target[:tr.start(0)] ==
+token[:kr.start(0)]` and refuses the same input through `_owntree_ok`. When the token's root is not `census`, the
+branch's second condition is false and the `target[:tr] == "census" and token[:kr] != "census"` belt above it
+applies. The branch therefore cannot be the first refusing branch for any pair.
+
+How to tell the two apart, measured rather than argued: author a single-edit mutant that drops ONLY the clause in
+question and score it on every pinned population (S337: a suite is judged by the mutants it kills, not by the rows
+it carries).
+
+- Survives everywhere, and the branch order shows a belt above catches every input it would catch → **shadowed**:
+  delete it (dead code that reads like protection) or leave it as a documented belt; a row cannot bind it.
+  `census/round-85/records/a1-c7-shadow.txt` reads `killed_r84=0 killed_r85=0` with both pristine arms green.
+- Survives everywhere but the branch IS reachable → **unbound**: a row is missing (r84's five clauses, closed by the
+  44-row population).
+- Killed by some population → bound; the killing row is the clause's row.
+
+Consequences for the claim language. "The population certifies five clauses" is a claim about rows; "the counter's
+rule is certified" is a claim about the rule, and it is false whenever a branch is shadowed — the belt is what
+protects, and the dead branch is a reader trap. The r85 round therefore reports the census-in-tree branch as
+shadowed with its probe, adopts r84's routed "ground it or delete it" as "delete" (landed in a later round; a
+claim's rule is never changed after a seat has scored), and does not count it as coverage.
+
+Limits: the shadow argument is branch-order reasoning over one function, checked by one mutant pair, not a proof
+over all inputs; a second belt can be shadowed by a third (this round only shows the first-order pair); the
+last-component basename check is shadowed in the same way for every MOVED row measured (a basename change fails the
+suffix comparisons that follow), and no probe was run for it.

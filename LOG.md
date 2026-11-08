@@ -3208,3 +3208,54 @@ stale `$!`).
   populations, and a census-in-census-dropping mutant resolves a wrong file while both stay green — the round
   certifies five named clauses and says so).
 - **Tool installs: none.** No pacman (paused host-wide), no uv/npx/binary fetch, no sysctl, sudo or kernel change.
+
+## Round 85 (2026-11-08) — the population binds the counter's class-enum guard (C1 calibration); record-agreement K4 re-derives tracked bytes instead of trusting `git status` (C2 operability)
+
+Lane base `705fa1385c4ccec23811cfa57104046ec6587258` (r84 closed admitted). Frozen claims in
+`census/round-85/preregistration.txt` (F `43c630eb`); instruments, populations, mutants, controls and the before
+receipts in P `5bd5a0ce`. Amendments in `plans/round-85.md` (A0-A1 so far); the pre-file ledger is
+`.ufo/waves/round-85/claim-falsification.tsv`.
+
+- **C1 (calibration 7, the lowest owned non-retired axis).** The r85 population
+  `census/round-85/c1-false-rows.tsv` (47 rows = the r84 44 byte-for-byte, same order, plus NF-R and TF11 at the new
+  fixture revision R8 and NF-S, an unknown ledger class on item I85T) binds the counter's ledger-class enum guard,
+  which no r83/r84 row reached. Battery on the r84 population (do-nothing control):
+  `ARM pristine pop=r84 rows=44 mismatches=0`, `m11-class-enum killed=no`, `SUMMARY ... killed_r84=5`, EXIT 0
+  (`census/round-85/controls/c1-before-r84-population.txt`). On the r85 population:
+  `ARM pristine pop=r85 rows=47 mismatches=0 errors=0`, all six mutants `killed=yes`, `SUMMARY ... killed_r85=6`,
+  EXIT 0 (`census/round-85/records/c1-after.txt`). The counter's only change from r84 is one added POPS entry (the
+  r85 census-token population pin, needed because the counter refuses an unpinned population) plus the docstring
+  naming it; no resolution rule, guard or message changed.
+- **A1 finding (not a claim).** r84 read the sentinel's battery as "the census-in-census clause is unbound"; r85
+  measures that the census-in-tree branch is SHADOWED: a single-edit mutant dropping only that branch survives both
+  pinned populations (`killed_r84=0 killed_r85=0`, both pristine arms green,
+  `census/round-85/records/a1-c7-shadow.txt`), because the own-tree belt above it refuses every input it would
+  refuse. r84's routed "ground it or delete it" therefore answers "delete" (r86 item). The claim says "guard", not
+  "clause", and the population's NF-R/TF11 pair is the demonstration, not a binding row.
+- **C2 (operability 8).** `tools/souji-record-agreement.py` key K4 answered "no uncommitted round work" from
+  `git status --porcelain` alone, so an index stat-cache forgery read clean (the class S315/S317 name and the writer
+  and pre-report gate have refused since r73/r74). K4 now calls its own `truth_refusal`, which compiles
+  `tools/souji-receipt-write.py` from its source beside the tool and runs its `_truth_refusal` over every
+  status-clean stage-0 path and symlink, then reports `K4 . stat-cache-concealed` naming the paths; it fails closed
+  on a missing/unrunnable writer. Frozen 7-row counter: base blob `ec5b809d` `SUMMARY rows=7 mismatches=3 errors=0`
+  (KF1 same-size, KF2 symlink retarget, KF3 size-changing forgery all read clean), EXIT 1
+  (`census/round-85/controls/c2-before-base-tool.txt`); filed tool `ed1ada73` `mismatches=0`, three forged rows
+  `k4=1 named=yes`, honest clean/stale/plain-edit/untracked rows unchanged, EXIT 0
+  (`census/round-85/records/c2-after.txt`).
+- **Instrument corrections (A0).** A0.1: the C2 counter leaked a forged index entry across rows because
+  `git reset --hard` does not rewrite a stat entry that matches the checked-out path; `reset()` now deletes
+  `.git/index` first (the before receipt above is from the corrected counter; no after arm existed when it changed).
+  A0.2: the r85 row pin was 48 for a 47-row file and was corrected before any battery used it (the sha never
+  changed). A0.3: the first C1 target (bind the census-in-tree clause) was not bindable and moved to the class-enum
+  guard before F; the measurement of the wrong target is kept as A1.
+- **Sources/registry.** S337 (PIT, pitest.org, quote "mutation testing is the gold standard against which all other
+  types of coverage are measured", capture `census/round-85/srcs/pitest-org.html`) admitted (`docs`, B, mined,
+  used-by the r85 knowledge section). S315 (racy-git), S316 (git-hash-object), S317 (gitformat-index) and S335
+  (own-work clause-kill receipts) were re-opened this round for the C2/C1 ground; their cells are unchanged. Registry
+  `259 → 260` (`grep -cE '^\| *S[0-9]{3,}' corpus/SOURCES.md`); census before `souji ok`, EXIT 0
+  (`census/round-85/records/sources-census-before.txt`).
+- **Docs.** `corpus/knowledge/own-tree-pointer-binding.md` r85 section (shadowed vs unbound, with the probe),
+  `corpus/knowledge/filter-filemode-witness.md` r85 section (record-agreement K4 and its fixture rows),
+  `corpus/QUALITY.md` Q156/Q157 under `## Round 85 criteria`, `corpus/README.md` r85 frontier block,
+  `plans/round-85.md`, `corpus/lessons/round-85.md`, `SCORECARD.md` r85 rows + two capability rows + planned r86.
+- **Tool installs: none.** No pacman (paused host-wide), no uv/npx/binary fetch, no sysctl, sudo or kernel change.

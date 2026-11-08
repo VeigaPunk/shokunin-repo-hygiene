@@ -71,6 +71,11 @@ K3_CLASSES = ("accepted", "present", "unverifiable", "refused")
 
 K4_EXEMPT_FILE = "census/round-23/records/uncommitted-exemptions.tsv"
 K4_ALLOWED = frozenset({"census/operator-sweep-20261019/"})
+# r85 (S315 racy-git, S316 git-hash-object(1), S317 gitformat-index(5)): an index entry carries stat(2) data beside
+# the object name, so rewritten bytes over a rewritten stat entry read clean in `git status`. K4 therefore re-hashes
+# every status-clean stage-0 tracked path against the object id its index entry records, through the receipt
+# writer's own byte-truth check (the r73/r74 rule this lane already runs in the writer and the pre-report gate).
+K4_TRUTH_WRITER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "souji-receipt-write.py")
 REV_TOKEN_RE = re.compile(r"\b[0-9a-f]{40}\b")
 K2_FILED = ("assertions=56 resolved=53 skipped=33 mismatches=3", "1 present", "1 refused")
 
@@ -152,6 +157,28 @@ def tally_of(text: str) -> dict[str, int]:
         if len(cells) >= 2 and cells[1].strip() in tally:
             tally[cells[1].strip()] += 1
     return tally
+
+
+def truth_refusal(root: str) -> "str | None":
+    """r85: the refusal message when a tracked path git status reports clean does not hash to the object id the
+    index records. The check is the receipt writer's `_truth_refusal`, compiled from its source bytes beside this
+    tool (one rule, one implementation; the r74 gate does the same). Fails closed: a missing writer, a compile error
+    or the writer's own refusal (it exits 2 on an unreadable tree) returns a message, never a clean verdict."""
+    if not os.path.isfile(K4_TRUTH_WRITER):
+        return f"the receipt writer is not beside this tool ({K4_TRUTH_WRITER}); tracked bytes are unverified"
+    import types
+    mod = types.ModuleType("souji_receipt_write")
+    mod.__file__ = K4_TRUTH_WRITER
+    sys.modules[mod.__name__] = mod
+    try:
+        with open(K4_TRUTH_WRITER, "rb") as f:
+            src = f.read()
+        exec(compile(src, K4_TRUTH_WRITER, "exec"), mod.__dict__)
+        return mod._truth_refusal(root)
+    except SystemExit as exc:
+        return f"the receipt writer refused the tree (exit {exc.code}); tracked bytes are unverified"
+    except Exception as exc:  # noqa: BLE001 — any failure here is a fail-closed verdict, named
+        return f"the receipt writer could not be run ({type(exc).__name__}: {exc}); tracked bytes are unverified"
 
 
 class Report:
@@ -359,6 +386,9 @@ class Report:
             if any(path == e or path.startswith(e if e.endswith("/") else e + "/") for e in exempt):
                 continue
             self.bad("K4", path, "uncommitted-path", line[:2].strip() or "??")
+        msg = truth_refusal(self.root)
+        if msg:
+            self.bad("K4", ".", "stat-cache-concealed", msg)
 
     def emit(self, as_json: str | None) -> int:
         for key, record, cls, detail in self.rows:

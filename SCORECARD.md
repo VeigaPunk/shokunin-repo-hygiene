@@ -1986,3 +1986,34 @@ unrowed; the STOP→KILL pair widens the pid-reuse window the r83 tool disclosed
 - Carried unchanged: the r81 list (`_regular` pathspec framing, quarantine intro-blob digest row, fork-tail row, r79
   gate re-measurement, check-4 300 s backstop, r76 K03/K04, status-trusting lane tools, r17 240 s runners) and the
   r83 list's C2 items not built this round.
+
+### Round 85 measurements (2026-11-08, Linux; lane base `705fa1385c4ccec23811cfa57104046ec6587258`; controls `5bd5a0ce`; freeze `43c630eb`; C1 counter `91b4ffde`; after-arms `43c630eb` + the wave commit)
+
+| claim | axis | before | after | counting command | measured commit |
+|---|---|---|---|---|---|
+| C1 class-enum guard bound by the population | calibration 7 | `census/round-85/controls/c1-before-r84-population.txt` `ARM pristine pop=r84 rows=44 mismatches=0`, `m11-class-enum killed=no`, `SUMMARY mutants=6 sets=r84 pristine_r84=ok killed_r84=5`, EXIT 0 | `census/round-85/records/c1-after.txt` `ARM pristine pop=r85 rows=47 mismatches=0 errors=0 exit=0`, six `killed=yes`, `SUMMARY mutants=6 sets=r85 pristine_r85=ok killed_r85=6`, EXIT 0; shadow probe `census/round-85/records/a1-c7-shadow.txt` `killed_r84=0 killed_r85=0` with both arms green | `python3 -B census/round-85/c1-clause-battery.py --counter census/round-85/c1-pointer-counter.py --work WORK --only r85 --expect-killed 6` (after) and `--only r84 --expect-killed 5` (before) | `91b4ffdea534acdc23683a8dd8d0f698e4672f739bcc31cee53286425ddd7304` (counter), measured at the P commit `5bd5a0ce` |
+| C2 record-agreement K4 byte truth | operability 8 | `census/round-85/controls/c2-before-base-tool.txt` (base blob `ec5b809d`) `SUMMARY rows=7 mismatches=3 errors=0`, KF1/KF2/KF3 `k4=0 match=no`, EXIT 1 | `census/round-85/records/c2-after.txt` `SUMMARY rows=7 mismatches=0 errors=0`, three forged rows `k4=1 named=yes`, honest rows unchanged, EXIT 0 | `python3 -B census/round-85/c2-k4-counter.py --tool tools/souji-record-agreement.py --work WORK` | filed tool `ed1ada73…d382` at the C2 commit |
+
+No owned axis score changed (calibration 7, coverage 8, operability 8 — the lane has no reproducible 0–10 mapping);
+both rows carry the verdict, the counting command and the measured commit instead. The census-in-tree branch is
+reported as SHADOWED with its probe (`records/a1-c7-shadow.txt`), not as coverage; its deletion is routed to r86.
+
+### Capabilities (round 85 rows)
+
+| name | what it can now do | evidence pointer | first-working round |
+|---|---|---|---|
+| clause-shadow classification | tell an unbound clause from a shadowed branch by scoring a single-edit mutant of ONLY that clause on every pinned population and attributing its survival (reachable → unbound, needs a row; a belt above refuses every input → shadowed, no row can bind it) | `python3 -B census/round-85/c1-clause-battery.py --counter census/round-85/c1-pointer-counter.py --mutants census/round-85/probes/c7-shadow.json --work WORK --only r84,r85 --expect-killed 0` → `killed_r84=0 killed_r85=0` (`census/round-85/records/a1-c7-shadow.txt`) | r85 |
+| stat-cache-forgery counter over a tool's clean verdict | score any lane tool that reports a clean/unchanged verdict against seven frozen rows (same-size file forge, symlink retarget, size-changing forge, honest stale stat, plain edit, untracked, clean), running the tool as a subprocess on its public CLI path | `python3 -B census/round-85/c2-k4-counter.py --tool TOOL --work WORK` → `rows=7 mismatches=0` on the filed bytes, `mismatches=3` on the base blob | r85 |
+
+### Planned (r86)
+
+- C1 (calibration/operability): delete the shadowed census-in-tree branch (r85 A1 measured it unreachable) with both
+  pinned populations green and the six mutants still killed; carry the r84 C1 list the wave left open (NF-L3, the
+  token-on-line / unknown-class rows the S85MutCounter survivors name, the last-component shadow probe).
+- C2 (operability): the S85ExecK4 / S85Sentinel escapes (stage-2 and intent-to-add entries, gitlinks, newline paths,
+  a stub writer beside a copied tool) become frozen rows; the r83/r84 C2 carried list (pid-reuse row,
+  parent-before-child, termign-fork/p5-late-term, strace-robust settle) unchanged.
+- Carried: `_regular` pathspec framing, quarantine intro-blob digest row, r79 gate re-measurement, check-4 300 s
+  backstop, r76 K03/K04, the remaining status-trusting tools (`souji-verify.sh:713,883`, `souji-census.sh`,
+  `souji-idx-repair.py`), r17 240 s runners, `souji-freeze-check.py` prereg grammar (Q99).
+

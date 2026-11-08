@@ -355,3 +355,31 @@ repaired gate resolves every git-dir path with `rev-parse --git-path`, scans fro
 `-xtype f`, fails closed on a scan error, passes `/dev/null`, times its own git calls and pins
 `core.fsmonitor=false`. `census/round-77/records/wave-repair/repair-probes.txt`: 10 of 10 arms as expected
 (W vs R); the frozen counters at the repair: 16/16, r76 30/30, r36 21/21, r27 4/4.
+
+## r85: the lane's own audit instrument was the last one trusting the stat-cache verdict (appended 2026-11-08)
+
+`tools/souji-record-agreement.py` key K4 answers "does this lane still carry un-authored round work" and answered it
+from `git status --porcelain` alone. git's status compares the index to the worktree through the entry's cached
+stat(2) data (S317: the entry carries 32-bit ctime/mtime seconds and nanoseconds, dev, ino, mode and size beside the
+object name, "this is stat(2) data"), so a rewritten file whose index entry was then rewritten from the forged
+file's own lstat reads clean — the class S315 names directly ("Git can incorrectly think files in the working tree
+are unmodified even though they actually are"), and the class the receipt writer has refused since r73 and the
+pre-report gate since r74 (`_truth_refusal`: re-hash every status-clean stage-0 path with `git hash-object
+--stdin-paths`, S316 for the conversion it applies, and compare to the object id the index records).
+
+r85 closed the same gap in record-agreement, through the same implementation rather than a second one: K4 calls its
+own `truth_refusal`, which compiles `tools/souji-receipt-write.py` from its source bytes beside the tool and runs its
+`_truth_refusal`, then reports one `K4 . stat-cache-concealed` row naming the paths. It fails closed — a missing
+writer, a compile error or the writer's own refusal becomes a reported row, never a clean verdict.
+
+Measured (fixture rows, hermetic synthetic repository; `census/round-85/c2-k4-counter.py`):
+
+- base tool blob `ec5b809d…`: `SUMMARY rows=7 mismatches=3 errors=0` — KF1 (same-size file forge), KF2 (symlink
+  retarget) and KF3 (size-changing forge) all read clean, `census/round-85/controls/c2-before-base-tool.txt`;
+- filed tool: `SUMMARY rows=7 mismatches=0 errors=0`, each forged row `k4=1 named=yes`, the honest clean, honest
+  stale-stat, plain-edit and untracked rows unchanged (`census/round-85/records/c2-after.txt`).
+
+What the repair does not cover: an attacker who also forges the object store or the writer itself; a change between
+K4's two reads (the writer's wrapped-command path reads twice, K4 reads once); the exit contract shifts from 0 to 1
+for a concealed forgery, which is the correct reading for a caller that treats a non-zero exit as "mismatch found"
+and is stated rather than widened. The synthetic fixture is not the lane, so this is a 7-row fixture claim.
