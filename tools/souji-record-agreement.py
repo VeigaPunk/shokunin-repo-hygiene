@@ -305,8 +305,11 @@ def truth_refusal(root: str) -> "str | None":
         return (out[len("FORGED "):].replace("\n", "\\n").replace("\t", "\\t").replace("\r", "\\r"))
     if out == "CLEAN":
         return None
+    # r87 (S87Reviewer F4): a stub that prints to stdout and then raises left the exception unnamed, because stdout
+    # was preferred. stderr wins when it carries anything.
+    detail = _stderr_tail(proc.stderr if proc.stderr.strip() else out)
     return (f"the receipt writer produced no verdict (exit {proc.returncode}: "
-            f"{_stderr_tail(out or proc.stderr)}); tracked bytes are unverified")
+            f"{detail}); tracked bytes are unverified")
 
 
 class Report:
@@ -505,9 +508,9 @@ class Report:
             exempt.append(path)
         # r87: `--porcelain -z` (S86ExecK4 §2e). The line form C-quotes a path that carries a newline or a tab, so
         # the record named git's quoted spelling instead of the path a reader must act on. The NUL form carries the
-        # raw bytes: each record is "XY <path>", and a rename's second NUL field (the new name, no status pair) is
-        # skipped - the rename record itself already reaches this key. Each path is C-escaped here so one K4 record
-        # stays one physical line.
+        # raw bytes: each record is "XY <path>", and a rename's second NUL field (the ORIGINAL name, no status pair;
+        # git puts the destination first) is skipped - the rename record itself already reaches this key. Each path is
+        # escaped here so one K4 record stays one physical line.
         proc = git_bytes(self.root, "status", "--porcelain", "-z")
         if proc.returncode != 0:
             self.bad("K4", ".", "status-failed",
