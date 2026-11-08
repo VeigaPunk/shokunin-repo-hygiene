@@ -1,0 +1,21 @@
+{
+ "lane": "souji",
+ "round": 89,
+ "frozen": "census/round-89/preregistration.txt (the F commit d8bc7484, alone)",
+ "claims": {
+  "C1": {
+   "axis": "calibration 7",
+   "wording": "On the frozen 57-row population census/round-89/c1-false-rows.tsv (the r88 53 rows byte-for-byte, in order, plus NF6h/NF6i at fixture revision R12 and LD1b/LD2) the r89 clause battery reports the unchanged r87 counter census/round-87/c1-pointer-counter.py green on both pinned populations and kills all sixteen frozen single-edit mutants of census/round-89/c1-mutants.json (killed_r88=12, killed_r89=16, killed_total=28, EXIT 0). Measured: killed_r89=15, killed_total=27, EXIT 1 \u2014 m17c-no-malformed survives because LD2's appended P02 is already in the frozen ledger. Target NOT met (plans/round-89.md A1).",
+   "instrument": "census/round-89/c1-clause-battery.py + census/round-89/c1-false-row-harness.py + census/round-89/c1-mutants.json",
+   "counter": "python3 -B census/round-89/c1-clause-battery.py --counter census/round-87/c1-pointer-counter.py --work WORK --only r88,r89 --expect-killed 28",
+   "target": "frozen target killed_r88=12 killed_r89=16 killed_total=28 EXIT 0; MEASURED killed_r88=12 killed_r89=15 killed_total=27 EXIT 1 (not met)"
+  },
+  "C2": {
+   "axis": "operability 8",
+   "wording": "In tools/souji-record-agreement.py, the FLAGFAIL branch decodes base64 with surrogateescape and bounds RAW bytes first (head-100 / ellipsis / tail-99) before escaping, so the detail is injective on the bytes for the KFF6/KFF7 pair and the head carries content. The frozen 10-case fixture tests/fixtures/r89-k4-flagfail.py reports cases=10 tool_pass=10 before_pass=8, EXIT 0; the r88 tool bytes pass eight (failing KFF6/KFF8). Narrowed: the raw 0x85/U+0085 pair collides and the raw window is 202 bytes (plans/round-89.md A2).",
+   "instrument": "tests/fixtures/r89-k4-flagfail.py + census/round-89/controls/c2-before-tool.py",
+   "counter": "python3 -B tests/fixtures/r89-k4-flagfail.py --tool tools/souji-record-agreement.py --before census/round-89/controls/c2-before-tool.py --work WORK",
+   "target": "SUMMARY cases=10 tool_pass=10 before_pass=8, EXIT 0 after; before arm tool_pass=8 before_pass=8, EXIT 1"
+  }
+ }
+}
