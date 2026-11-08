@@ -197,3 +197,10 @@ variant sha256 exactly: `d1 a30d3f3b…`, `d2 e1c653a3…`, `d2b 6e656498…`, `
 - `variants/` — v0 and the five patched counters + the adapted mutant file, byte-identical to what was measured.
 
 Scratch `/fast/scratch/hyaku/souji-r87/S87Simplifier/` was deleted before yield; nothing was left behind.
+
+## Disposition (L1, at wrap-up)
+
+The L1 held all six candidates to r88: the counter's filed bytes are the ones the round's receipts and
+instrument-hash line name, so a deletion now would invalidate them. D2's dead-code finding and D1's
+m14-retargeting requirement are recorded in `plans/round-87.md` and carried. That hold does not change any
+measurement here: the diffs, the patches and the kill vectors remain valid for the r88 re-freeze.
