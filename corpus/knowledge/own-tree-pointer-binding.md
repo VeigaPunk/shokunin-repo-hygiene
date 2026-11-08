@@ -115,7 +115,7 @@ applies. The branch therefore cannot be the first refusing branch for any pair.
 
 How to tell the two apart, measured rather than argued: author a single-edit mutant that drops ONLY the clause in
 question and score it on every pinned population (S337: a suite is judged by the mutants it kills, not by the rows
-it carries).
+it carries; S340 is the paper-backed form of the same criterion).
 
 - Survives everywhere, and the branch order shows a belt above catches every input it would catch → **shadowed**:
   delete it (dead code that reads like protection) or leave it as a documented belt; a row cannot bind it.

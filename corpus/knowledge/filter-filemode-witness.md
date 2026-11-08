@@ -362,7 +362,8 @@ repaired gate resolves every git-dir path with `rev-parse --git-path`, scans fro
 from `git status --porcelain` alone. git's status compares the index to the worktree through the entry's cached
 stat(2) data (S317: the entry carries 32-bit ctime/mtime seconds and nanoseconds, dev, ino, mode and size beside the
 object name, "this is stat(2) data"), so a rewritten file whose index entry was then rewritten from the forged
-file's own lstat reads clean — the class S315 names directly ("Git can incorrectly think files in the working tree
+file's own lstat reads clean — the forge must also re-checksum the index file, whose trailing hash covers its own
+content (S339) — the class S315 names directly ("Git can incorrectly think files in the working tree
 are unmodified even though they actually are"), and the class the receipt writer has refused since r73 and the
 pre-report gate since r74 (`_truth_refusal`: re-hash every status-clean stage-0 path with `git hash-object
 --stdin-paths`, S316 for the conversion it applies, and compare to the object id the index records).

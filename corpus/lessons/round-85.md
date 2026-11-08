@@ -52,9 +52,27 @@ Sources opened this round (each opened by fetching/reading it here; ids continue
   and S315's racy-git sentence ("Git can incorrectly think files in the working tree are unmodified even though they
   actually are") is the class K4 now refuses rather than trusts.
 
-Census before the append: `souji ok`, EXIT 0 (`census/round-85/records/sources-census-before.txt`); after:
-`souji ok`, EXIT 0 (`…-after.txt`), 87 pre-existing `W04` cross-scope duplicate-URL lines. Registry `259 → 260`
-(`grep -cE '^\| *S[0-9]{3,}' corpus/SOURCES.md`), zero removed.
+- **S338 — git-status(1) as installed** (git 2.56.0-1, capture `.ufo/waves/round-85/w1/S85ScoutSources/
+  git-status.1.gz`, roff line 40; opened 2026-11-08 by S85ScoutSources and re-read here). Quote: "paths that have
+  differences between the working tree and the index file". **REJECTED** — the sentence restates ground S317 (the
+  index entry's stat data) and S315 (the stat shortcut) already carry; a third row on one comparison is registry
+  weight, not knowledge. **Flip:** a scoped teaching the existing rows do not carry (the porcelain format's own
+  contract, or its background-refresh behaviour).
+- **S339 — gitformat-index(5) as installed** (git 2.56.0-1, capture `…/S85ScoutSources/gitformat-index.5.gz`, roff
+  line 172; opened 2026-11-08). Quote: "Hash checksum over the content of the index file before this checksum."
+  **ADMIT**, `docs`, tier A, `mined` — it grounds why the C2 fixture's forgery must re-checksum the index and why an
+  index rewrite is a whole-file act.
+- **S340 — "Practical Mutation Testing at Scale", arXiv:2102.11378** (`https://arxiv.org/abs/2102.11378`, HTTP 200,
+  43870 bytes, sha256 `38551f5c…cc2f8`; capture `…/S85ScoutSources/arxiv-2102.11378-abs.html`; opened 2026-11-08).
+  Quote, abstract: "Mutation analysis assesses a test suite's adequacy by measuring its ability to detect small
+  artificial faults, systematically seeded into the tested program." **ADMIT**, `paper`, tier B, `mined` — the
+  paper-backed form of S337's vendor sentence, and the quote the C1 criterion actually needs.
+
+Census before the appends: `souji ok`, EXIT 0 (`census/round-85/records/sources-census-before.txt`); after them:
+`souji ok`, EXIT 0 (`…-after.txt`), 87 pre-existing `W04` cross-scope duplicate-URL lines plus the first attempt's
+`E09` (the S338 flip text sat in the `recheck` cell instead of `teaches`) — corrected before the green run, which is
+M5 below. Registry `259 → 263` (`grep -cE '^\| *S[0-9]{3,}' corpus/SOURCES.md`): four rows added, one rejected,
+zero removed.
 
 ## Measured
 
@@ -83,6 +101,7 @@ Census before the append: `souji ok`, EXIT 0 (`census/round-85/records/sources-c
 | M1 | survivor/leak: the C2 counter's `reset()` did not rebuild the index, so a forged stat entry survived `git reset --hard` and the NEXT row read the previous row's forgery red (`k4=1 named=no` on KF2/KF3) | first `census/round-85/controls/c2-before-base-tool.txt` run; the counter printed `k4rows=['a.txt|uncommitted-path']` on KF2 and `['ln|…']` on KF3, naming the wrong row's path | the counter's own per-row `k4rows` diagnostics (added after the first run) | `reset()` deletes `.git/index` before the reset, so every tracked path is checked out again; re-run reads `mismatches=3` with the three forgeries missed — the frozen before (A0.1) |
 | M2 | substrate (the r84 M5 class repeating): the C2 counter was edited after two seats had scored it — the m5 mutant made it die with `KeyError` because the `named` predicate indexed `FORGED` for honest rows | `.ufo/waves/round-85/w1/S85MutK4.md` § m5, which prints the traceback and the counter sha it ran (`ae482f07…`) | S85MutK4's report (its sha line is what makes the edit visible) | fixed pre-file (`0a7b801d…`) and both arms re-run on the filed bytes; A0.4 binds every seat finding to the counter sha it attacked |
 | M3 | number-drift: the r85 row pin declared 48 rows for a 48-line file that holds 47 rows (one header comment) | harness/battery `FATAL: population is not 48 well-formed rows` before any score | the pin check in `c1-false-row-harness.py` / `c1-clause-battery.py` | pin corrected to 47 before data; the sha256 never changed (A0.2) |
+| M5 | reference-drift: the first S338 row put the rejection's flip condition in the `recheck` column, which the census reads as a cadence (`E09 recheck=…`) | `census/round-85/records/sources-census-after.txt` first run, `E09` on S338 | the source census (E09 is the rule's own detector) | the reason and flip moved into `teaches` (`REJECTED: …; flip: …`) and `recheck` set to `180d`; census re-run green |
 | M4 | stale-premise: the round's first C1 target ("bind the census-in-tree clause with a census-token row") was not bindable — the clause is shadowed, so no row can kill it | the first r85 battery arm: `m11-census-in-tree killed=no` on BOTH populations | the before arm itself (a target that cannot move) and the shadow probe `records/a1-c7-shadow.txt` | retargeted to the class-enum guard before F; the measurement kept as A1, and Q156 added so the next round tests shadow-vs-unbound before naming a clause unbound |
 
 ## Wave
