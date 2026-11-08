@@ -15,6 +15,10 @@ Rows (each on a fresh clone of a hermetic seed repository):
                  message's end)
   KB5 injective  two untracked names, one holding a real LF and one holding the two bytes `\\` `n`: their K4 records
                  must differ (a backslash-doubling escape), so the record can be read back to the exact bytes
+  KB6 quote      an untracked name holding a `"`: git's line form quotes it as `\\"`, the -z arm records the raw
+                 quote, so a tool that keeps the line form and strips only the wrapping quotes fails this row
+  KB7 type       a delegated writer whose last line is `ValueError` with a 400-character message: the detail must name
+                 ValueError, so a hard-coded `AttributeError` string fails it
 
 Output: `ROW <id> expect=<one|escaped> k4=<n> named=<yes|no> counts=<yes|no> rc=<n> match=<yes|no>` then
 `SUMMARY rows=3 mismatches=<M>` and `EXIT=<0|1>`. Exit 2 on usage or a fixture failure. `--work` must be absent or
@@ -33,12 +37,17 @@ ENV.update({"GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": os.devnull, "LC_ALL
             "GIT_AUTHOR_NAME": "r87 fixture", "GIT_AUTHOR_EMAIL": "fixture@r87.invalid",
             "GIT_COMMITTER_NAME": "r87 fixture", "GIT_COMMITTER_EMAIL": "fixture@r87.invalid",
             "GIT_AUTHOR_DATE": "2026-11-08T00:00:00Z", "GIT_COMMITTER_DATE": "2026-11-08T00:00:00Z"})
-ROWS = ("KB1", "KB2", "KB3", "KB4", "KB5")
+ROWS = ("KB1", "KB2", "KB3", "KB4", "KB5", "KB6", "KB7")
 STUB = ("# r87 KB4 stub writer: one long exception message\n"
         "def git(*a, **k):\n"
         "    raise AttributeError('stub')\n\n\n"
         "def _truth_refusal(root):\n"
         "    raise AttributeError('r87 KB4 ' + 'x' * 400)\n")
+STUB7 = ("# r87 KB7 stub writer: a different exception type\n"
+         "def git(*a, **k):\n"
+         "    raise AttributeError('stub')\n\n\n"
+         "def _truth_refusal(root):\n"
+         "    raise ValueError('r87 KB7 ' + 'y' * 400)\n")
 
 
 class FixtureError(Exception):
@@ -77,8 +86,11 @@ def apply_row(clone, row):
     elif row == "KB2":
         with open(os.path.join(clone, "cr\rname.txt"), "wb") as f:
             f.write(b"carriage return\n")
-    elif row == "KB4":
+    elif row in ("KB4", "KB7"):
         pass  # the shape is the tool copy, not the repository
+    elif row == "KB6":
+        with open(os.path.join(clone, 'quo"te.txt'), "wb") as f:
+            f.write(b"a quote in the name\n")
     elif row == "KB5":
         with open(os.path.join(clone, "x\nname.txt"), "wb") as f:   # a real LF in the name
             f.write(b"lf\n")
@@ -124,12 +136,12 @@ def main(argv):
             print(f"ROW {row} expect=- k4=- named=- counts=- rc=- match=error detail={type(exc).__name__}: {exc}")
             continue
         tool_row = tool
-        if row == "KB4":
-            kit = os.path.join(work, "kit-kb4")
+        if row in ("KB4", "KB7"):
+            kit = os.path.join(work, "kit-" + row.lower())
             os.makedirs(kit, exist_ok=True)
             shutil.copyfile(tool, os.path.join(kit, "souji-record-agreement.py"))
             with open(os.path.join(kit, "souji-receipt-write.py"), "w", encoding="utf-8") as f:
-                f.write(STUB)
+                f.write(STUB if row == "KB4" else STUB7)
             tool_row = os.path.join(kit, "souji-record-agreement.py")
         p = subprocess.run([sys.executable, "-B", tool_row, "--root", clone, "--rev", rev],
                            stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=ENV, timeout=600)
@@ -146,6 +158,14 @@ def main(argv):
             expect = b"cr\\rname.txt"
             named = any(expect in a or expect in b for a, b, _ in records)
             detail = f"records={[a[:40] for a, _, _ in records]}"
+        elif row == "KB6":
+            expect = b'quo"te.txt'
+            named = any(a == b'quo"te.txt' for a, _b, _c in records)
+            detail = f"records={[a[:40] for a, _, _ in records]}"
+        elif row == "KB7":
+            expect = b"ValueError"
+            named = any(expect in c for _a, _b, c in records)
+            detail = f"details={[c[:40] for _a, _b, c in records]}"
         elif row == "KB5":
             expect = b"x\\nname.txt"
             recs = [a for a, _b, _c in records]
