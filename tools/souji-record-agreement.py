@@ -213,47 +213,39 @@ def _decode_record(raw: bytes) -> str:
     return raw.decode("utf-8", "surrogateescape")
 
 
-def _utf8_seq_need(b: int) -> int:
-    """The octet count of a UTF-8 sequence whose initial octet is `b`, or 0 when `b` cannot start one."""
-    if 0xC0 <= b < 0xE0:
-        return 2
-    if 0xE0 <= b < 0xF0:
-        return 3
-    if 0xF0 <= b < 0xF8:
-        return 4
-    return 0
+def _straddling_sequence(raw: bytes, cut: int) -> tuple[int, int] | None:
+    """r92 (S355): the (start, end) of the one WELL-FORMED UTF-8 sequence that a cut at `cut` would split
+    (start < cut < end), or None. Well-formedness is the whole sequence, not its lead's bit pattern: the candidate
+    bytes must decode strictly to exactly one character, which applies every row of Unicode Table 3-7 (no C0/C1/
+    F5..FF lead, no E0 80..9F overlong, no ED A0..BF surrogate, no F4 90..BF beyond U+10FFFF, every continuation
+    present). The r91 helpers trusted the lead's structural length (C0-DF/2, E0-EF/3, F0-F7/4) and checked only that
+    the bytes were continuations (or, for the tail, not even that), so a truncated or ill-formed lead just before
+    the tail cut moved the cut INTO a later valid sequence and printed its continuation as a raw byte (R91ExecC2Tool
+    repro, payloads A/B)."""
+    for start in range(cut - 1, max(cut - 4, 0) - 1, -1):
+        for end in range(cut + 1, min(start + 4, len(raw)) + 1):
+            try:
+                if len(raw[start:end].decode("utf-8", "strict")) == 1:
+                    return start, end
+            except UnicodeDecodeError:
+                continue
+    return None
 
 
-def _cut_head(raw: bytes, h: int) -> str:
-    """r91 (S354): move a head cut back off a UTF-8 sequence it would split, so an elided sequence never leaves a
-    lone continuation byte behind to be printed like the raw byte of the same value. Only a VALID split (every
-    remaining byte of the sequence is a continuation) is moved; an invalid lead byte stays and escapes as itself."""
-    i = h
-    while i > 0 and 0x80 <= raw[i - 1] <= 0xBF:
-        i -= 1
-    if i > 0:
-        need = _utf8_seq_need(raw[i - 1])
-        end = i - 1 + need
-        if need and end > h and len(raw) >= end and all(0x80 <= b <= 0xBF for b in raw[i:end]):
-            return i - 1
-    return h
+def _cut_head(raw: bytes, h: int) -> int:
+    """r91 (S354), r92 (S355): move a head cut back to the start of a well-formed UTF-8 sequence it would split, so
+    an elided sequence never leaves a lone lead or continuation byte behind to be printed like a raw byte. A cut
+    inside ill-formed bytes stays: those bytes escape as themselves either way."""
+    seq = _straddling_sequence(raw, h)
+    return seq[0] if seq else h
 
 
 def _cut_tail(raw: bytes, t: int) -> int:
-    """r91 (S354): move a tail start forward past the continuation bytes of a sequence the elided middle began, so
-    the tail starts on a sequence boundary. A continuation byte that belongs to no lead byte stays (it is invalid
-    data and must keep its raw-byte spelling)."""
-    if t <= 0 or t >= len(raw) or not 0x80 <= raw[t] <= 0xBF:
-        return t
-    i = t
-    while i > 0 and 0x80 <= raw[i - 1] <= 0xBF:
-        i -= 1
-    if i > 0:
-        need = _utf8_seq_need(raw[i - 1])
-        end = i - 1 + need
-        if need and end > t:
-            return min(end, len(raw))
-    return t
+    """r91 (S354), r92 (S355): move a tail start forward to the end of a well-formed UTF-8 sequence the elided
+    middle began, so the tail starts on a sequence boundary. A cut inside ill-formed bytes stays (each such byte
+    keeps its raw-byte spelling), so the tail is always a suffix of the whole payload's own rendering."""
+    seq = _straddling_sequence(raw, t)
+    return seq[1] if seq else t
 
 
 def _one_line_bytes(raw: bytes, limit: int = 200) -> str:
@@ -268,7 +260,11 @@ def _one_line_bytes(raw: bytes, limit: int = 200) -> str:
     encoding used to elide the lead octet and print the trailing 0x85 as `\\x85` — the raw byte's spelling — so two
     materially different delegated failures shared one cell (S90Reviewer2 F1 / A4). RFC 3629 §3 defines a sequence
     as initial octet + continuation octets; the excerpt keeps whole sequences only, and the byte bound is still
-    202 octets (head-100 plus a three-octet ellipsis plus tail-99, shortened only)."""
+    202 octets (head-100 plus a three-octet ellipsis plus tail-99, shortened only).
+
+    r92 (S355): a cut moves only across a WELL-FORMED sequence (strict decode of the candidate bytes, Unicode
+    Table 3-7). The excerpt's head is then a prefix, and its tail a suffix, of the whole payload's own rendering
+    `_escape_text(_decode_record(raw))`: no byte is respelled by where the window happens to fall."""
     if not raw:
         return "no stderr"
     if len(raw) <= limit:
