@@ -242,7 +242,7 @@ cli_kill_tree() {
 }
 cli_on_signal() { # $1 signal name, $2 signal number
   trap '' TERM INT HUP
-  local pid=${CLI_PID:-} i
+  local pid=${CLI_PID:-${!:-}} i
   if [ -n "$pid" ]; then
     # r82: kill the CLI subtree FIRST (the descendant snapshot is taken before the job-controlled grandchild can
     # leave the group), then the group kill, then the KILL fallback.

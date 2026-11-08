@@ -1,0 +1,34 @@
+# S82Sentinel — security/safety review of the W2 change to tools/souji-vault-verify.sh
+Scope: W2 73110f6fe56f2a8383baed0ea7dc77f8b7f6ba5e (tool sha256=556ad94a…c032). Lane base 488956c4.
+
+## Frozen C2 re-derivation — PASS on this host
+`python3 -B census/round-82/c2-vault-signal-counter.py --tool tools/souji-vault-verify.sh --work <S>` → `SUMMARY rows=16 mismatches=0 errors=0 orphans=0` EXIT=0 (S82Sentinel/c2def.receipt); same under `env SHELLOPTS=monitor` (c2mon.receipt); `python3 -B census/round-82/probes/tmpdir-in-vault.py --tool … --work <S>` → `SUMMARY arms=6 failed=0` EXIT=0 (pd.receipt). The frozen claim holds as its own instrument measures it; my findings are about the mechanism.
+
+## Check 1 — can cli_kill_tree signal a non-descendant? FAIL (MEDIUM, F-1)
+`cli_kill_tree` starts at `CLI_PID` = the timeout pid (:290/:291). Two defects.
+(1) **Empty-`CLI_PID` window — a regression W2 introduced.** `CLI_PID` is empty between `timeout … &` (:290) and `CLI_PID=$!` (:291). W2 replaced the pre-W2 `local pid=${CLI_PID:-${!:-}}` with `local pid=${CLI_PID:-}` (73110f6f, tools/souji-vault-verify.sh:246). With `CLI_PID` empty the whole `if [ -n "$pid" ]` block is skipped — no tree kill, no group kill, no wait — yet the tool prints `souji-vault-verify: SIGTERM received …; stopped it, no verdict` and exits 143 while the CLI subtree lives on.
+  - A/B on the committed bytes, same script, only the W2 diff applied: **base ⇒ `cli killed`; W2 ⇒ `ORPHAN SURVIVED`** (ab.sh). Committed handler with `CLI_PID=""` reproduces it directly (e1c.sh).
+  - 150-iteration alternating A/B, orphans detected by the counter's own sound method (per-iteration nonce in `/proc/<pid>/environ`): **base 0/150, W2 1/150** (bigab4.py). Instrumented copy: `handler_calls=60 handler_with_EMPTY_CLI_PID=6 cmdline_orphans=1` (reach4.sh).
+  - The window is real bash semantics: with a slowed fork a pending TERM dispatches between `cmd &` and the next command with `CLI_PID` unset 110/120 times (bsem4.sh); on the real tool ARMED→ASSIGNED spans 4.07 ms (instr2.sh log).
+  - **The prereg's stated reason for the removal is false.** preregistration.txt:75-77 says `$!` "is never the timeout pid here", but :290 is the tool's *only* background launch (`grep -cE '[[:space:]]&[[:space:]]*$'` → 1) and the handler runs only from the traps armed at :287-289, so `$!` **is** the timeout pid there (runtime: `at trap time: dollar_bang=[864424]` / `HANDLER CLI_PID=[<EMPTY>] dollar_bang=[864424]`). The base's fallback was correct exactly where it mattered; timeout's pgid == its pid (measured `timeout pid=700596 pgid=700596`), so the group kill reaches the CLI.
+  - The prereg's stated limits exclude "the windows before the traps arm and after `wait`"; this window is after the traps arm and before `wait` — not excluded.
+(2) **Stale-pid reuse (F-3, MEDIUM).** The tree is snapshotted first, then TERM to all, then 0.1 s later KILL to all: measured snapshot→KILL gap **up to 6.11 s** (19-node tree, gap2.py). A recycled pid in that snapshot gets KILLed by the tool; `pid_max=4194304`, highest live pid 4164736 (~29.6k allocations from wrap).
+
+## Check 2 — does the pgrep recursion finish within the 5 s settle? FAIL (MEDIUM, F-2)
+`cli_kill_tree` runs one `pgrep -P` **per tree node**, and each is a fork+exec scanning **all** of `/proc`: measured **0.53-0.80 s/call** at ~4-5k processes, **2.15 s** at 7.3k (e2d.py). Cost is `nodes × O(all processes)`: 1 grand → 2.53 s, 10 → 6.58 s, 50 → 36.9 s, 200 → 141.5 s (e2_time.py). Real tool signal→exit: N=8 → 4.28 s, **N=12 → 5.74 s**, N=16 → 6.02 s, **N=24 → 9.64 s** — past the counter's 5.0 s settle (settle.sh). The frozen `fork` stub has one grandchild so the rows never reach this; a CLI with a dozen descendants breaks the settle. The r80 lesson (per-`/proc`-entry fork cost) re-entering as per-*node* fork.
+
+## Check 3 — private output file: removal and shared-path exposure
+Removal **PASS** (normal :297; signal path) — leak2.sh 15+ runs and leak4.sh 15 runs (40 MB CLI output widening the `cat` window) → `no leak (file removed)`, `LEAKS=0`. But **W2 made the file outlive the signal**: `rm` runs *after* `cli_kill_tree`, lifetime after the signal = the tree walk, measured **8.58 s** (lifetime.sh). Shared path **FAIL (LOW/MEDIUM, F-4)**: with no caller `TMPDIR` the file lands in **`/var/tmp`** (the tool exports `TMPDIR="${TMPDIR:-/var/tmp}"` at :830) — world-writable and shared; measured `CLI_TMPDIR=[/var/tmp]`, `-rw------- … souji-vault-cli.swcFQe` (defaultloc.sh). Mode 0600 limits cross-user reads; the risk is existence + lifetime in a shared dir. The `setsid`/double-fork escape still holds (stated limit): `sleep before=3 after=2` (dblfork.sh).
+
+## Findings by severity
+- **MEDIUM F-1** empty-`CLI_PID` window: tool prints "stopped it" while orphaning the CLI subtree; regression vs base (base 0/150, W2 1/150); not covered by the prereg's stated limits; the prereg's rationale for the removal is false (:290 is the only background launch, so `$!` *is* the timeout pid).
+- **MEDIUM F-2** per-node `pgrep -P` (each a full `/proc` scan) makes signal→exit scale with host process count × CLI fan-out; ≥12 descendants exceeds the 5 s settle. Frozen rows do not exercise it.
+- **MEDIUM F-3** snapshot→KILL gap up to 6.11 s: a recycled pid can be KILLed by the tool.
+- **LOW F-4** private file lands in shared `/var/tmp`; after W2 it outlives the signal by the tree walk (8.58 s).
+- **LOW F-5** `cli_kill_tree` uses `c` as a loop variable without `local` (:231) → global leak (scope.sh: `global c is now: [999999]`); harmless today, its only reader declares its own local `c` (:524).
+
+## Smallest remediations — candidate built and verified, NOT landed
+On a scratch copy (rem4.sh, `bash -n` clean): **F-1** restore `local pid=${CLI_PID:-${!:-}}` (:246) — verified by the same A/B that showed base=killed/W2=orphaned: `w2 => ORPHAN SURVIVED`, `rem4 => CLI killed` (f1test.sh). **F-2/F-3** replace the per-node `pgrep -P` with one fork-free `/proc` pass building a ppid map, then a DFS in bash, killing each pid as discovered (reuse window → ~0) — verified frozen counter 16/16/0 EXIT=0 on the default launch **and** under `env SHELLOPTS=monitor` (c2r4.receipt, c2r4Mon.receipt), N=12 → 3.44 s vs the committed tool's 5.74-14.22 s. Caveat: my first two rewrite drafts FAILED the monitor launch (4 mismatches — the ppid map must be complete before the DFS, and `/proc/<pid>/stat` field 4 is ppid only after skipping the `comm` field, which may contain spaces and `)`); the third passes. Do not take the naive rewrite.
+
+## Files written by this seat
+`.ufo/waves/round-82/w1/S82Sentinel.md` (this file) and `.ufo/waves/round-82/w1/S82Sentinel/{c2def,c2mon,pd,c2load,c2r4,c2r4Mon}.receipt`. No lane tracked file touched (`git diff --stat HEAD -- tools/ census/ tests/ corpus/` empty); all probes lived under `/fast/scratch/hyaku/souji-r82/S82Sentinel/` (removed at yield; no stray processes).

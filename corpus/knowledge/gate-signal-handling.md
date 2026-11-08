@@ -141,7 +141,23 @@ caused.
   `records/prefreeze/c2-base-default.txt`).
 - r82 kills the whole CLI subtree first: `cli_kill_tree` snapshots `pgrep -P` recursion from the timeout pid and
   sends TERM then KILL to each pgrep descendant, before the group kill and the KILL fallback. Measured 16/16 under
-  both launches (`census/round-82/records/c2-after.txt`, `c2-after-monitor.txt`), the stale `${!}` fallback dropped,
-  the private file never under a vault path (probe D successor: 6/6 arms, `records/probe-d-successor.txt`).
+  both launches (`census/round-82/records/c2-after.txt`, `c2-after-monitor.txt`), the private file never under a
+  vault path (probe D successor: 6/6 arms, `records/probe-d-successor.txt`).
+- **The monitor matrix is the counter's two launches, not the row labels.** The counter's `rid.startswith("m-")`
+  test (`census/round-82/c2-vault-signal-counter.py:217`) never matches the ids `m1-monitor-term-fork` /
+  `m2-monitor-hup-fork`, so those rows carry no monitor of their own; the launch that puts job control into every
+  row's tool environment is `env SHELLOPTS=monitor python3 …`, inherited at `:216` (S82MutTool MEDIUM).
+- **A handler that reads a pid from a variable must not narrow the variable's fallback.** W2 replaced the base's
+  `local pid=${CLI_PID:-${!:-}}` with `local pid=${CLI_PID:-}`, and the window between `timeout … &` and
+  `CLI_PID=$!` (4.07 ms on the real tool) then ran the handler with an empty pid: it printed
+  `souji-vault-verify: SIG<name> … stopped it, no verdict` and exited 143 with the CLI subtree still alive
+  (A/B 150 iterations: base 0 orphans, W2 1). `$!` *is* the timeout pid there — `:290` is the tool's only
+  background launch — so the base fallback was correct exactly where it mattered. Repair R1 restored it and the
+  frozen 16 rows, the selftest, the r17 fixture and probe D re-pass on the repaired bytes
+  (`census/round-82/records/repair-w3/`; S82Sentinel F-1).
 - Limits unchanged from the r81 section (SIGKILL, a CLI descendant re-parented beyond pgrep's tree, a SIGINT
-  ignored on entry, signals while the tool runs its other short children, the foreground fallback path).
+  ignored on entry, signals while the tool runs its other short children, the foreground fallback path). Added by
+  the r82 wave: the walk forks one `pgrep -P` per tree node and each scans all of `/proc` (≥12 descendants exceeds
+  the counter's 5 s settle), the snapshot→KILL gap reaches 6.11 s so a recycled pid in the snapshot can be KILLed,
+  `pgrep` is called unguarded (a `pgrep` that fails degrades silently to the group kill), and with no caller
+  `TMPDIR` the private CLI file lands in shared `/var/tmp` (S82Sentinel F-2/F-3/F-4/F-5, S82Connector2 F3).

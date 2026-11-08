@@ -1895,3 +1895,24 @@ controls), F corrective `d302b4f33`, `28fd32c03`, W1 C1 counter `f5bc4197`, W2 C
 No owned axis score changed (calibration 7, coverage 8, operability 8). Registry agreement at W2 `k1=1 k2=1`
 (`census/round-82/records/registry-agreement-at-W2.txt`); the two remaining findings are K1 `cited-no-row S146` and K2
 `rewrote-not-appended SCORECARD.md`, both accepted-red with the r81 reasons (append-only discipline).
+
+**Append-only addendum after wave `w1` (Amendment 59, before filing).** Both rows above were frozen and re-derived
+by non-author seats (`S82ExecC1`, `S82Connector` §0, `S82Sentinel`, `S82MutTool`, `S82Connector2`,
+`S82MutCounter`: 32/0/0/0 and 16/0/0/0 both launches, all five C1 regressions, selftest/r17/probe D). The wave then
+falsified six sentences of the frozen wording, and the round files the narrowed claims, not the wider ones:
+
+- C1: the own-tree binding runs **after** the last-component test (`c1-pointer-counter.py:349` then `:353`), the
+  own-tree rule binds only the identity path and a `waves/`/`wave/`/`records/wave-<w>/` capture shape — so a genuine
+  own-tree move into a real `wN/` dir is **refused** while the harness's planted shape is kept — and the
+  census-in-tree full-suffix branch changes no frozen verdict. `plans/round-82.md` A1/A2/A3/A5; Q150, Q151.
+- C2: the `m1/m2` row ids carry no monitor of their own (the counter's `m-` prefix test is dead code); the monitor
+  matrix is the counter's second launch. The empty-`CLI_PID` window W2 opened (signal between `timeout … &` and
+  `CLI_PID=$!` → "stopped it, no verdict" with the subtree alive; base 0/150 vs W2 1/150) is **repaired** by R1
+  before filing. `plans/round-82.md` A6/A7/A8/A9.
+- Repair re-measurement on the filed bytes (tool sha256 `dd6d440e…`, `census/round-82/records/repair-w3/`):
+  `rows=16 mismatches=0 errors=0 orphans=0` EXIT=0 under the default **and** the monitor launch,
+  `selftest: 57 checks, 0 failed`, r17 `total=37 failed=0 skipped=0`, probe D `arms=6 failed=0`.
+- Stated limits carried, not claimed: own-tree `wN/` over-refusal; identity clause inseparable from a suffix-only
+  rule on this population; per-node `pgrep -P` cost (≥12 descendants exceeds the 5 s settle); snapshot→KILL reuse
+  window; `before = 4` is the modal value of a noisy control; every C2 receipt reproduces only untraced.
+  Ledger: `.ufo/waves/round-82/claim-falsification.tsv` (8 attack seats reconciled, 2 claims).

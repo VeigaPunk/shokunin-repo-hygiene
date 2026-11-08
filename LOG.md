@@ -3081,3 +3081,24 @@ stale `$!`).
 - C1: frozen 32-row harness `SUMMARY rows=32 mismatches=0 accepted=0 refused_true=0` (`census/round-82/records/c1-after.txt`), before K-a `mismatches=2 accepted=2 [NF-F, NF-G]`; regressions r78 22/22 + 12/12, r77 35/35 + 7/7, r79 9/9, r80 18/18, r81 25/25. Committed at `f5bc4197d426527adc6f5d52f2d7834c0f021f2e` (W1).
 - C2: frozen 16-row counter, default and `SHELLOPTS=monitor` launches, `rows=16 mismatches=0 errors=0 orphans=0` (`census/round-82/records/c2-after.txt`, `c2-after-monitor.txt`); before (Base under monitor) `mismatches=4 orphans=4`; selftest 57/0, r17 37/0/0, probe D successor 6/6 (`census/round-82/records/probe-d-successor.txt`). Committed at `73110f6fe56f2a8383baed0ea7dc77f8b7f6ba5e` (W2).
 - Domain trial: the no-signal path on real lane targets is unchanged by construction (the trap arms only during the async call); the selftest + r17 fixture + probe D give the no-signal and rail coverage. No new tool. Tool installs: none.
+- **Wave w1 (14 seats, policy v1, 8 attack seats = 57%, 1 dead seat S82ExecC2 — C2 independently re-derived by three
+  other seats):** both claims reproduced by non-author seats (`S82ExecC1` 32/32 rows + 5 regressions + 3 controls
+  byte-for-byte; `S82Connector` §0 separation SEPARABLE both ways; `S82Sentinel`/`S82MutTool`/`S82Connector2` C2
+  16/0/0 both launches). The wave then falsified six sentences of the frozen wording — branch order, own-tree scope,
+  census-branch attribution, the `m1/m2` monitor label and the C2 handler's `$!` rationale — and found one **harm
+  this round introduced**: W2's narrower pid source left the CLI subtree orphaned in the empty-`CLI_PID` window while
+  the handler printed `stopped it, no verdict` (base 0/150, W2 1/150; S82Sentinel F-1).
+- **Amendments (`plans/round-82.md` A1-A9) and the pre-file ledger (`.ufo/waves/round-82/claim-falsification.tsv`,
+  8 attack seats reconciled) were written before filing**: the round files the narrower sentences its counters
+  enforce, not the wider ones. Q150/Q151 record the two criteria mined from the wave; lesson M3-M6 record the harm,
+  the dead branch, the fixture-only shapes and the near-adoption of a seat's un-re-derived MEDIUM.
+- **Repair R1 (W3) after the wave, not the claim's measurement:** restore `local pid=${CLI_PID:-${!:-}}` in
+  `cli_kill_tree`'s caller, closing F-1. Re-measured on the filed bytes (`census/round-82/records/repair-w3/`, tool
+  sha256 `dd6d440e…`): frozen counter `rows=16 mismatches=0 errors=0 orphans=0` under the default **and** monitor
+  launch, `selftest: 57 checks, 0 failed`, r17 `total=37 failed=0 skipped=0`, probe D `arms=6 failed=0`. Not landed:
+  F-2/F-3 (tree-walk cost and pid-reuse window) and F-4/F-5 — routed with the seat's verified remediation, because a
+  post-freeze rewrite of the walk would carry no row.
+- **Corrected after the wave (falsified wording in tracked files):** `SKILL.md:954` (the `m1/m2` monitor clause),
+  `corpus/knowledge/gate-signal-handling.md` r82 section (the `$!` drop and the limits), `corpus/QUALITY.md` Q150
+  (Q148's order clause, Q149's row clause) and Q151 (real-shape grounding); `SCORECARD.md` round-82 addendum.
+- **Tool installs: none.** No pacman (paused host-wide), no sysctl, sudo or kernel change.
