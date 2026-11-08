@@ -96,9 +96,10 @@ regenerated receipts.
 
 One v1 wave, 12 seats, policy `scripts/hyaku/ufo-wave-policy.json` (band 8-16): 3 executor, 1 scribe, 2 scout,
 1 connector, 1 reviewer, 1 critic, 2 mutation-tester, 1 sentinel. Attack seats 6/12 (50 %, over the 25 % floor).
-Spawned 02:06:37 after a host-gate deferral; 9 seats delivered substantive reports, **3 seats left a skeleton only**
-(S83ExecC2, S83Sentinel, S83ScoutDirs) and are reported dead-in-effect; C2 was independently re-derived by
-S83ExecC1's sibling work, S83MutTool, S83ExecEvade, S83CriticClaims and S83Reviewer, so no conjunct lost its check.
+Spawned 02:06:37 after a host-gate deferral; **all 12 seats delivered substantive reports, 0 dead**; three
+(S83ExecC2, S83ScoutDirs, S83Sentinel) delivered after a first read that left a skeleton, and their findings are
+the round's two repairs (A9/A10). C2 was independently re-derived by S83ExecC2, S83MutTool, S83ExecEvade,
+S83CriticClaims, S83Reviewer and S83Sentinel, so no conjunct lost its check.
 
 | seat | verdict |
 |---|---|
