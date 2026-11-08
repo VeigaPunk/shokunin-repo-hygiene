@@ -103,14 +103,16 @@ by itself separate a row mismatch from a harness error (every observed kill was 
 A rule with more than one guard per decision can leave a clause with no row for two different reasons, and the
 difference decides what to do: an UNBOUND clause is one a row could bind and the population lacks that row; a
 SHADOWED clause is one no row can bind, because another guard refuses every input the clause would refuse. r84
-called the census-in-tree and last-component clauses "unbound by the population"; r85 measured them and found the
-first unbound (it needs a row) and the second bound (a row already exercises it, indirectly, on every row).
+called the census-in-tree and last-component clauses "unbound by the population"; r85 measured them and found both
+unbound AND reachable — each decides a row the pinned populations do not carry, so each is missing a row, not dead.
 
 How to tell them apart, measured rather than argued (S337/S340: a suite is judged by the mutants it kills):
 
 1. Author a single-edit mutant that drops ONLY the clause in question, and score it on every pinned population.
-2. If it is killed, the clause is **bound** — the killing row is its row (the last-component basename check at
-   `census/round-85/c1-pointer-counter.py:387` is bound this way: dropping it makes every row error).
+2. If it is killed, the clause is **bound** — the killing row is its row (the own-tree belt at
+   `census/round-85/c1-pointer-counter.py:391` is bound this way: dropping it turns 7 rows red on both populations).
+   A mutant that makes the counter *raise* is not a kill: the r85 wave's first basename mutant replaced the clause
+   and its body and scored "killed" on an `IndentationError` — a crash, not evidence (Q133).
 3. If it survives everywhere, ask whether the branch is REACHABLE: drive the branch directly through the counter's
    own `--forge` path with a hand-built row (r85: item I85R, target under `census/round-84/w1/`). If the pristine
    counter refuses with that branch's own reason and the mutant resolves the row, the clause is reachable and the
@@ -118,7 +120,10 @@ How to tell them apart, measured rather than argued (S337/S340: a suite is judge
 4. If no input reaches the branch — a guard above it refuses every pair the branch's guard admits — the clause is
    **shadowed**: a row cannot bind it, and it is either deleted or documented as a belt, never counted as coverage.
 
-The census-in-tree branch is the r85 case of (3), and this section's first version got it wrong: it read the
+The last-component basename check (`:387`) and the census-in-tree branch are the r85 cases of (3): a forge row
+whose target keeps the frozen bytes under a different basename is refused by the basename clause with its own
+reason, and the same row falls through to the own-tree belt when the clause is dropped — reachable, deciding, and
+unrowed. This section's first version got the census-in-tree branch wrong: it read the
 prefix-equal own-tree belt as refusing every pair that reaches the branch. It does not — `_owntree_ok` returns True
 when the target sits under a real wave directory (`OWNTREE_WAVE`), so a census-rooted token whose target is
 `census/round-<N>/w1/…` passes the belt and reaches the branch, which refuses it with its own reason. The lesson is
@@ -133,7 +138,7 @@ r84's routed "ground it or delete it" for this branch answers "ground it" — th
 deleted on a reading that a seat falsified.
 
 Limits: reachability was shown for one shape (a census-rooted token landing in a wave directory under its own
-round), not for every shape the branch admits; the basename and own-tree-belt results come from mutants that make
-the counter raise or go red on the existing populations, which shows they are load-bearing without producing the
-standalone row a reader can point at; and "shadowed" for the writer-side stage-0 filter rests on a separate probe
-(`.ufo/waves/round-85/w1/S85MutK4.md` m4, conflict stages always listed by porcelain).
+round), not for every shape the branch admits; the basename result rests on one forge row and the belt's on a
+seven-row kill, neither of which is a committed population row yet; nothing the round examined turned out to be
+shadowed, so the term is defined here from principle (a guard above that refuses every pair the branch admits) and
+rests on one separate probe (`…/S85MutK4.md` m4: no conflict-while-status-clean state is constructible).

@@ -3254,9 +3254,12 @@ receipts in P `5bd5a0ce`. Amendments in `plans/round-85.md` (A0-A1 so far); the 
   token landing in `census/round-<N>/w1/…` passes the belt and the branch refuses it with its own reason (driven
   through the counter's `--forge` path on `91b4ffde`), and one added row (NF-W) in a 48-row probe population kills
   the dropped branch. The branch is REACHABLE and UNBOUND, r84's "ground it or delete it" answers "ground it", and
-  NF-W plus the 48-row population are routed to r86; nothing was deleted. The same seat measured the last-component
-  basename check and the own-tree belt: both are bound (the first makes every row error when dropped, the second is
-  killed 7/7), so the section's "shadowed in the same way" sentence was corrected too. The two frozen claims are
+  NF-W plus the 48-row population are routed to r86; nothing was deleted. The same seat then corrected itself on the
+  last-component basename check (F4 second run): its first mutant replaced the clause AND its body and scored
+  "killed" on an `IndentationError` — a crash, not a kill (Q133) — and the corrected mutant survives both
+  populations (`killed=no`), so the basename clause is UNBOUND and reachable too (a renamed-target forge row is
+  refused by it with its own reason), while the own-tree belt is the bound one (killed 7/7, `mismatches=7`). Of the
+  three clauses the round examined none is shadowed; two need a row, one is bound. The two frozen claims are
   untouched: C1 is the class-enum guard and its kill, C2 is K4.
 - **Sources/registry.** S337 (PIT, pitest.org, quote "mutation testing is the gold standard against which all other
   types of coverage are measured", capture `census/round-85/srcs/pitest-org.html`) admitted (`docs`, B, mined,

@@ -41,10 +41,17 @@ Wave evidence root: `.ufo/waves/round-85/w1/`.
   census-in-tree branch. The shadow probe's `killed_r84=0 killed_r85=0` (`records/a1-c7-shadow.txt`) is explained by
   the POPULATION, not by unreachability: no pinned row carries that shape — NF-R's `records/copy/` target is refused
   by the belt first, TF11's `waves/` target is accepted as a capture.
-- **Same bytes, two more clauses measured (S85Scribe F4):** dropping the last-component basename check
-  (`c1-pointer-counter.py:387`) makes every row error on both populations — it is bound, and it is the only clause
-  between the population and an exception; dropping the own-tree belt (`:391`) is killed 7 of 7 rows on both
-  populations — bound, and it is what refuses NF-R. Neither is shadowed.
+- **Same bytes, two more clauses measured (S85Scribe F4, itself corrected in the seat):** the own-tree belt
+  (`c1-pointer-counter.py:391`) is BOUND — dropping it is killed 7 of 7 rows on both populations, and it is what
+  refuses NF-R. The last-component basename check (`:387`) is UNBOUND and REACHABLE, not bound: a forge row for item
+  I85R carrying the frozen bytes under a different basename (`census/round-84/records/other-name.txt`) is refused by
+  the basename clause with its own reason, and with the clause dropped the same row falls through to the own-tree
+  belt. The seat's first probe replaced the clause *and* its body, so the counter raised `IndentationError` on every
+  row — a crash, not a kill (Q133: a counter that crashes on its own rows is not evidence) — and its corrected run
+  reads `MUTANT p1-no-basename pop=r84 killed=no | pop=r85 killed=no`, `MUTANT p2-no-owntree-belt killed=yes
+  mismatches=7` on both (`…/S85Scribe/receipts/f4-clause-bindings.txt`, which states the crash run is not quoted).
+  Of the three clauses the round examined, none is shadowed: one is bound, two are unbound-and-reachable and both
+  are missing a row.
 - **Frozen wording falsified:** the preregistration's round non-claim ("the branch is shadowed by the prefix-equal
   own-tree belt … the routed decision … is answered as 'delete'") and the r85 knowledge section's shadow
   paragraph — both were written from the first reading. The two frozen CLAIMS are untouched: C1 is about the
@@ -107,3 +114,18 @@ Wave evidence root: `.ufo/waves/round-85/w1/`.
 - **Disposition:** `neutral` in the ledger with this pointer; the five unbound guards and the dead clause are
   routed to r86 (a row each, or a deletion for m15). Q156 now requires the shadow-vs-unbound test before a clause is
   named, so m15 (dead) is filed as dead rather than "unbound".
+
+## A5 — evidence binding: two receipts named bytes a reader could not obtain (S85Scribe F2; fixed in-round)
+
+- **Artifact:** `.ufo/waves/round-85/w1/S85Scribe.md` § F2: `records/c2-after.txt` and
+  `controls/c2-before-base-tool.txt` printed counter `0a7b801d…`, but the counter committed at `5d3dd78d` was
+  `ae482f07…` (my A0.4 fix was still only in the working tree), and
+  `controls/c1-before-r84-population.txt` as committed at `5d3dd78d` printed harness `d88afd83…` / `rows=48`.
+  The seat re-ran the committed bytes and reproduced every verdict, so the numbers were right and the binding was
+  broken.
+- **Fix (landed):** the counter fix is committed (`1d4b515b`, counter sha `0a7b801d…` = the sha both C2 receipts
+  print) and the C1 before receipt was re-stamped on the filed harness (`1ff0eb58`, harness `d49aeb32…`, rows=47).
+  Every receipt a claim cites now names bytes a reader obtains from the commit it cites.
+- **Class:** landing/evidence-binding, the same class as r84's A5 substrate finding. The rule that would have caught
+  it at write time is "a receipt is filed only after the instrument it names is committed"; Q157 does not cover it,
+  so it is recorded here and carried as a r86 process item, not as a new criterion this round.

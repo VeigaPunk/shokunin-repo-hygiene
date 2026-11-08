@@ -1998,7 +1998,9 @@ No owned axis score changed (calibration 7, coverage 8, operability 8 — the la
 both rows carry the verdict, the counting command and the measured commit instead. The census-in-tree branch is
 reported as REACHABLE and unbound: its mutant survives both populations (`records/a1-c7-shadow.txt`) but the branch
 refuses a directly driven row and one added row (NF-W) kills it (`.ufo/waves/round-85/w1/S85Scribe.md` F1); the row
-and the 48-row population are routed to r86 and nothing was deleted.
+and the 48-row population are routed to r86 and nothing was deleted. The same measurement on the last-component
+basename check gives the same verdict (unbound, reachable; its first probe crashed rather than killed, F4 second
+run), and the own-tree belt is bound (7/7). No clause the round examined is shadowed.
 
 ### Capabilities (round 85 rows)
 
