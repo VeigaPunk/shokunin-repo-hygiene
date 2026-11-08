@@ -2139,17 +2139,6 @@ C1 carries the falsification verdict and C2 the kill-rule pass with a narrowed h
 | a malformed-row binding whose id is absent from the ledger (measured, not landed) | bind the `_ledger` `len(r) < 3` guard by appending a 2-column row under a NEW id (`ZZ9`), so the guard is the only leg that can refuse it | `python3 -B .ufo/waves/round-89/w1/S89Sentinel/probe_ld1.py --work WORK` (ZZ9 control: pristine marker rc 1, `m17c` IndexError) + `S89MutCounter.md` F1 | r89 (design) |
 | a raw-first excerpt that keeps the type name on control-heavy input | bound the raw bytes before escaping so 25 leading control bytes no longer consume the head | `python3 -B tests/fixtures/r89-k4-flagfail.py --tool tools/souji-record-agreement.py --before census/round-89/controls/c2-before-tool.py --work WORK` → KFF8 pass, tool_pass=10 (`records/c2-after.txt`; before arm KFF8 fail) | r89 |
 
-### Planned (r90)
-
-- C1 (calibration): `LD2b` (append `ZZ9\tABSENT`) binds `m17c`; `LD1c` (same-class duplicate) and `LD1d` (identical
-  duplicate) bind the class-conflict readers; `NF6i2` binds the other occurrence order; `NF6j` binds the six
-  remaining PATHCH predecessors.
-- C2 (operability): spell U+0085 as `\u0085` in `_escape_text` (the 0x85/NEL collision) or add a KFF9 row;
-  delete the dead `_one_line` (zero-risk, S89Simplifier #5); the forged-`CLEAN` fail-open (S88Sentinel F3)
-  stays carried.
-- Carried: p2 basename granularity, p3 the punctuation lookahead, p7 `_regular`'s symlink leg, p8 `token_ok`'s
-  hyphen marker, the `fleet:` symlink leg, the battery `--only`/`--expect-killed` stale defaults.
-
 ### Planned (r89)
 
 - C1 (calibration): the four carried single-spelling survivors (p2 basename granularity, p3 the punctuation
@@ -2160,3 +2149,56 @@ C1 carries the falsification verdict and C2 the kill-rule pass with a narrowed h
 - Carried: the r85/r86 C2 list (pid-reuse row, parent-before-child, termign-fork/p5-late-term, strace-robust
   settle), `_regular` pathspec framing, the quarantine intro-blob digest row, the r79 gate re-measurement, check-4
   300 s backstop, r76 K03/K04, the r17 240 s runners, the inherited K3 tally row (r86 A4).
+
+### Planned (r90, as filed in r89 — historical)
+
+- C1 (calibration): `LD2b` (append `ZZ9\tABSENT`) binds `m17c`; `LD1c` (same-class duplicate) and `LD1d` (identical
+  duplicate) bind the class-conflict readers; `NF6i2` binds the other occurrence order; `NF6j` binds the six
+  remaining PATHCH predecessors.
+- C2 (operability): spell U+0085 as `\u0085` in `_escape_text` (the 0x85/NEL collision) or add a KFF9 row;
+  delete the dead `_one_line` (zero-risk, S89Simplifier #5); the forged-`CLEAN` fail-open (S88Sentinel F3)
+  stays carried.
+- Carried: p2 basename granularity, p3 the punctuation lookahead, p7 `_regular`'s symlink leg, p8 `token_ok`'s
+  hyphen marker, the `fleet:` symlink leg, the battery `--only`/`--expect-killed` stale defaults.
+
+### Round 90 measurements (2026-11-08; lane base `bd760432df2cc3ba6c5f1ccc540b050fe2ac09e2`; instruments P1 `1952c1c7`, P2 `e2a11c73`, freeze F `fd25bfc5`, C2 repair `4cb3a06f`)
+
+| claim | axis | before | after | counting command | measured commit |
+|---|---|---|---|---|---|
+| C1 the last unrowed clause of the r89 mutant set gets its row | calibration 7 (no reproducible 0–10 mapping; verdict calibration improved) | `census/round-90/controls/c1-before-r89-population.txt` (the same battery and 16 mutants on the r89 57-row population alone): `SUMMARY mutants=16 sets=r89 pristine_r89=ok killed_r89=15 killed_total=15`, `m17c-no-malformed pop=r89 killed=no`, EXIT 0 — no work reaches 16/31 | `census/round-90/records/c1-after.txt`: both pristine arms green (`pop=r89 rows=57`, `pop=r90 rows=58`, 0 mismatches), `m17c-no-malformed pop=r89 killed=no … pop=r90 killed=yes`, `SUMMARY … killed_r89=15 killed_r90=16 killed_total=31`, EXIT 0 | `python3 -B census/round-90/c1-clause-battery.py --counter census/round-87/c1-pointer-counter.py --work WORK --only r89,r90 --expect-killed 31` | `census/round-90/records/c1-after.txt`; row `LD2b` in `census/round-90/c1-false-rows.tsv` (58 rows, sha `d64d7695…`); measured at the C1 after run on F `fd25bfc5`, filed at the r90 round commit |
+| C2 the byte/character pair gets distinct spellings and the dead helper is deleted | operability 8 (no reproducible 0–10 mapping; verdict operability improved) | `census/round-90/records/prefreeze-c2-control.txt` (the r89 tool bytes as BOTH arms): `SUMMARY cases=12 tool_pass=10 before_pass=10`, KFF9/KFF10 fail, EXIT 1 | `census/round-90/records/c2-after.txt` on the filed tool `d095b52f…`: `SUMMARY cases=12 tool_pass=12 before_pass=10`, EXIT 0; the r87 12-row K4 counter `rows=12 mismatches=0 errors=0`, EXIT 0; `grep -c 'def _one_line('` = 0 | `python3 -B tests/fixtures/r90-k4-flagfail.py --tool tools/souji-record-agreement.py --before census/round-90/controls/c2-before-tool.py --work WORK` | `census/round-90/records/c2-after.txt`, `prefreeze-c2-k4-regression.txt`; tool commit `4cb3a06f`; filed at the r90 round commit |
+
+No owned axis score changed (calibration 7, coverage 8, operability 8 — the lane still has no reproducible 0–10
+mapping): both rows carry the verdict, the counting command and the measured commit instead. The wave narrowed four
+C2 sentences before filing and one C1 evidence sentence (`plans/round-90.md` A1, A4, A5): the fixture's substring
+counts do not bind the word "injective" (a doubled-backslash mutant survives 12/12, S90Sentinel H1); a window cut
+inside U+0085's encoding renders the surviving byte `\x85` (S90Reviewer2); the "one physical line" clause is not
+enforced; the deletion is measured by grep+load, not by the fixture; and the battery does not print its own hash.
+The C2 tool wording stands (probe6 brute force: zero collisions among single characters and 2-char strings); what
+was narrowed is the instrument's certifying power. The r89 capability row "a malformed-row binding whose id is
+absent from the ledger (measured, not landed)" is superseded by the landed r90 row below. The L1 held the planner
+seat (validator-frozen); the wave carries 3 executors and no planner seat, recorded here per the r89 spot-check's
+role-split defect.
+
+### Round 90 capability rows
+
+| name | what it can now do | evidence pointer | first-working round |
+|---|---|---|---|
+| a malformed-ledger guard bound by an absent-id population row | bind the `_ledger` `len(r) < 3` guard through a 2-column row under an id the frozen ledger does not know (`ZZ9<TAB>ABSENT`), so the duplicate leg cannot mask the malformed leg; the sole surviving clause of a 16-member mutant set is killed and the row is shown to bind the dropped-guard spelling only | `python3 -B census/round-90/c1-clause-battery.py --counter census/round-87/c1-pointer-counter.py --work WORK --only r89,r90 --expect-killed 31` → `killed_r89=15 killed_r90=16 killed_total=31` (`census/round-90/records/c1-after.txt`; control `controls/c1-before-r89-population.txt` red on m17c) | r90 |
+| a byte/character spelling pair measured through the public path with a symmetric pair check | spell the character U+0085 `\u0085` and the raw byte `0x85` `\x85`, and score the pair on BOTH fixture arms so a repair that merely swaps spellings still fails | `python3 -B tests/fixtures/r90-k4-flagfail.py --tool tools/souji-record-agreement.py --before census/round-90/controls/c2-before-tool.py --work WORK` → `cases=12 tool_pass=12 before_pass=10` (`census/round-90/records/c2-after.txt`; control 10/10 red) | r90 |
+
+### Planned (r91)
+
+- C1 (calibration): the Q162 probes the r90 wave measured alive on all eight pinned populations — `ld1c-class-keyed`,
+  `ld1d-conflict-keyed` (one identical-duplicate row binds both spellings), `nf6i2-last-occurrence` (a fixture R13
+  line with the whole occurrence FIRST), `nf6j-pathch-narrow` (a declaration with the token after each of `. _ @ + ~ -`);
+  plus the 1-column ledger row and the `!=3` grammar (S90MutCounter §3–§5).
+- C2 (operability): the missing doubled-spelling conjuncts in KFF9/KFF10 (`count(bs*2+"u0085")==0`,
+  `count(bs*2+"x85")==0`), a boundary row for the raw-window cut (A4), a "one physical line" row, a fixture row for
+  the `_one_line` deletion (A5c), the battery self-pin (A5b), the forged-`CLEAN` fail-open (S88Sentinel F3) and the
+  K4-record-level arms H2a–H2c (FORGED/REFUSED/no-verdict) as a readability debt.
+- Carried: p2 basename granularity, p3 the punctuation lookahead, p7 `_regular`'s symlink leg, p8 `token_ok`'s
+  hyphen marker, the `fleet:` symlink leg, the battery `--only`/`--expect-killed` stale defaults, the r85/r86 C2
+  list (pid-reuse row, parent-before-child, termign-fork/p5-late-term, strace-robust settle), `_regular` pathspec
+  framing, the quarantine intro-blob digest row, the r79 gate re-measurement, check-4 300 s backstop, r76 K03/K04,
+  the r17 240 s runners.

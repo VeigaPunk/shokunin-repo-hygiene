@@ -1,0 +1,264 @@
+S90Connector — command log and exact output tails (read-only; measured 2026-11-08 11:44–11:56 -03)
+Lane: /home/vgpnk/Projects/shokunin/souji-shokunin
+HEAD fd25bfc5430cf27c1af5e4c8b8f6d5899e91a20f (F); base bd760432df2cc3ba6c5f1ccc540b050fe2ac09e2 (ancestor)
+Python 3.14.8; git 2.56.0-1. No installs, no pacman, no git/jj mutation, no scratch retained.
+
+================================================================================
+1. instrument pins
+================================================================================
+$ sha256sum census/round-90/c1-false-rows.tsv census/round-87/c1-pointer-counter.py census/round-90/c1-clause-battery.py census/round-90/c1-false-row-harness.py census/round-90/c1-mutants.json tests/fixtures/r90-k4-flagfail.py tools/souji-record-agreement.py census/round-90/controls/c2-before-tool.py
+d64d76954daea7da5d36e6f5eda96ae343bdd37db5071ea50bd55b30a1844b45  census/round-90/c1-false-rows.tsv
+fd0a8e244a5e0afe58f9e8bfa85d314722b77a1bcbe6837298683f74a755220b  census/round-87/c1-pointer-counter.py
+e7265335e4458e68d2277dd0ad4f36e68999a7ba70363d60dc2155bd9cfa2d39  census/round-90/c1-clause-battery.py
+c3664747ffe712fde8f61c34562df2f0e92f2a0378b151bd0b4d74e91d629cbe  census/round-90/c1-false-row-harness.py
+392522489bc6f22a9747f64d311dbde7528dd0e8b481159db15d3eb038066dd5  census/round-90/c1-mutants.json
+d44172132f0a0c707d47e9522df8502f8d84859eb3e82d13e09809450c94aeaa  tests/fixtures/r90-k4-flagfail.py
+d095b52fa5d90e3e563542eb6cea309e82ace59bde36e5992ede847059968561  tools/souji-record-agreement.py
+f6fce6d147165d1baf3d8d0343f46c1ab913b23947f3edaa28b61cdd6caa18dd  census/round-90/controls/c2-before-tool.py
+(All eight equal the prereg pins verbatim.)
+
+$ python3 -c "...compare r89 vs r90 mutants members..."
+members_equal= True n= 16
+old_sha= bc7e6bb1983a19ab6781dba10b3b6c0be9085a7a1ed01d67d8eedec10aeb56ec
+r89_pop_sha= 04570a64855978bf697af71c161fe215945da5849f2f393fee15bb0d9f21e093
+
+================================================================================
+2. population prefix, LD2b premise
+================================================================================
+$ wc -l census/round-89/c1-false-rows.tsv census/round-90/c1-false-rows.tsv
+   59 census/round-89/c1-false-rows.tsv
+   60 census/round-90/c1-false-rows.tsv
+$ head -n 59 census/round-90/c1-false-rows.tsv | diff - census/round-89/c1-false-rows.tsv && echo PREFIX59_IDENTICAL=yes
+PREFIX59_IDENTICAL=yes
+$ head -2 census/round-90/c1-false-rows.tsv | cut -c1-120
+# souji r87 C1 population: the r86 49-row population byte-for-byte, in order, plus two rows that bind clauses r86 measur
+# souji r82 C1 population: the r81 population (25 rows, census/round-81/c1-false-rows.tsv: the 18 r80 rows (F0-R3, BASE)
+$ grep -n "^ZZ9\|^P02" census/round-77/c2-pointer-ledger.tsv
+3:P02	ABSENT	-	sentence names a deliberately absent scratch path (r33 control example)
+$ wc -l < census/round-77/c2-pointer-ledger.tsv
+32
+$ tail -2 census/round-90/c1-false-rows.tsv | cut -c1-130
+LD2	ledger	BASE	r77	P02	-	-	LEDGER-REFUSED	1	r89 C1: the `_ledger` malformed-row guard `len(r) < 3` (S88MutCounter F3 kills m17c).
+LD2b	ledger	BASE	r77	ZZ9	-	-	LEDGER-REFUSED	1	r90 C1: the SAME malformed-row guard reached under an id ABSENT from the frozen r77
+
+================================================================================
+3. first-record provenance (read-only git)
+================================================================================
+$ git log --reverse --format='%h %ad %s' --date=short -S'0x85' -- tools/souji-record-agreement.py
+f36fcf55 2026-11-08 round-87: C2 sentinel repairs - the header digest is the one verified against the compiled bytes (TOCTOU), CLEAN needs a zero exit, the REFUSED payload is escaped, and U+2028/U+2029 cannot tear a detail; receipts and byte arm re-filed on e1b00e8a
+4cb3a06f 2026-11-08 round-90: C2 repair — U+0085 takes the \u0085 spelling and the dead escape-first _one_line is deleted
+$ git log --reverse --format='%h %ad %s' --date=short -S'len(r) < 3' -- .
+43822328 2026-11-06 round-77: P — C1 non-regular-source counter + population, C2 pointer-resolution counter + population, controls (C1 K-a..K-d, C2 K-a..K-e), rec.sh, S321/S322 captures, census-before
+(a0dcfa8d r78, 723295a4 r78 wave, d7f40f76 r79, 17009fa1 r79, 515d57c8 r80, bd263c3f r80, 499f7415 r80, 804f132e r81, 308bc77b r81 follow; omitted here)
+$ git log --reverse --format='%h %ad %s' --date=short -S'm17c' -- .
+ac61ca1e 2026-11-08 round-88: wave evidence (10 seat reports and receipts), plan amendments A1-A9, lesson, SCORECARD/LOG/QUALITY, pre-file ledger
+c9329534 2026-11-08 round-89: instruments and controls (P)
+d8bc7484 2026-11-08 round-89: preregistration (F)
+755a46cb … 4864129b … c2ee31ae … bd760432 …
+1952c1c7 2026-11-08 round-90: instruments (P1) — …
+e2a11c73 2026-11-08 round-90: instruments (P2) — …
+fd25bfc5 2026-11-08 round-90: preregistration (F) — …
+$ git grep -l 'len(r) < 3' 43822328
+43822328:census/round-77/c2-pointer-counter.py
+$ for f in census/round-77/c2-pointer-counter.py census/round-79/c2-pointer-counter.py census/round-85/c1-pointer-counter.py census/round-86/c1-pointer-counter.py census/round-87/c1-pointer-counter.py; do … grep -c 'len(r) < 3'; done
+1 / 1 / 1 / 1 / 1
+$ git log --reverse --format='%h %ad %s' --date=short -S'0x85' -- .
+095af0e3 2026-10-21 round-22 (unrelated population text), 6cb22dc2 r27, de874ee8 r29, 8fb6fbc6 r54, f36fcf55 r87, e60ea25f r88, ac61ca1e r88, c9329534 r89, 755a46cb r89, 4864129b r89
+$ git log --reverse --format='%h %ad %s' --date=short -S'NEL' -- corpus plans SCORECARD.md LOG.md
+913fa479 r55 (S278 splitlines entry), f9da665e r55 wave, e60ea25f r88, ac61ca1e r88, a2cef94a r88 spot-check, 755a46cb r89, 4864129b r89, bd760432 r89 spot-check
+$ git show f36fcf55 -- tools/souji-record-agreement.py | grep -n -B4 -A6 '0x85'
++        elif o < 0x20 or o == 0x7F or o == 0x85:
++            out.append("\\x%02x" % o)
++        elif o in (0x2028, 0x2029):
++            out.append("\\u%04x" % o)
+$ grep -n -A24 "def _escape_text" census/round-90/controls/c2-before-tool.py | sed -n '14,24p'
+189-        elif o < 0x20 or o == 0x7F or o == 0x85:
+190-            out.append("\\x%02x" % o)
+191-        elif o in (0x2028, 0x2029):
+194-            out.append("\\u%04x" % o)
+$ sed -n '189,205p' tools/souji-record-agreement.py
+        elif o < 0x20 or o == 0x7F:
+            out.append("\\x%02x" % o)
+        elif o in (0x85, 0x2028, 0x2029):
+            … r90 comment (4 lines) …
+            out.append("\\u%04x" % o)
+        elif 0xDC80 <= o <= 0xDCFF:
+            out.append("\\x%02x" % (o - 0xDC00))
+
+================================================================================
+4. durability, SCORECARD order, receipts
+================================================================================
+$ git rev-parse HEAD ; git merge-base --is-ancestor bd760432… HEAD && echo BASE_IS_ANCESTOR=yes
+fd25bfc5430cf27c1af5e4c8b8f6d5899e91a20f
+BASE_IS_ANCESTOR=yes
+$ git status --porcelain
+ M SCORECARD.md
+ M corpus/README.md
+ M corpus/SOURCES.md
+?? census/round-90/records/c1-after.txt
+?? census/round-90/records/c2-after.txt
+?? census/round-90/records/prefreeze-c1-both.txt
+?? census/round-90/srcs/tr13.html
+?? corpus/knowledge/nel-byte-character-pair.md
+?? plans/round-90.md
+$ cat .gitignore
+.ufo/waves/
+census/operator-sweep-*/
+__pycache__/
+/.jj/
+/.ruff_cache/
+$ git ls-files .ufo/waves/round-90
+.ufo/waves/round-90/build-spec.py
+$ git status --porcelain --ignored .ufo/waves/round-90
+!! .ufo/waves/round-90/w1-dispatch.json
+!! .ufo/waves/round-90/w1-run.err
+!! .ufo/waves/round-90/w1-spec.json
+!! .ufo/waves/round-90/w1.ready
+!! .ufo/waves/round-90/w1.ready.dispatched
+!! .ufo/waves/round-90/w1/
+$ git ls-files .ufo/waves/round-89
+.ufo/waves/round-89/build-spec.py
+.ufo/waves/round-89/claim-falsification.tsv
+.ufo/waves/round-89/claims.json
+.ufo/waves/round-89/w1-dispatch.json
+.ufo/waves/round-89/w1-results.json
+.ufo/waves/round-89/w1-spec.json
+.ufo/waves/round-89/w1.ready
+$ git check-ignore census/round-90/srcs/tr13.html corpus/knowledge/nel-byte-character-pair.md plans/round-90.md ; echo ignore_rc=$?
+ignore_rc=1
+$ grep -n "^### " SCORECARD.md | tail -6
+2096:### Round 88 measurements …
+2110:### Round 88 capability rows
+2117:### Round 89 measurements …
+2135:### Round 89 capability rows
+2142:### Planned (r89)
+2153:### Planned (r90, as filed in r89 — historical)
+$ git show bd760432:SCORECARD.md | grep -n "^### " | tail -3
+2135:### Round 89 capability rows
+2142:### Planned (r90)
+2153:### Planned (r89)
+$ ls -la census/round-90/records/ census/round-90/controls/
+c1-after.txt 2874→3220 B (growing), c2-after.txt 847 B, prefreeze-c1-both.txt 5386 B, prefreeze-c1-control.txt 4466 B,
+prefreeze-c2-after.txt 847 B, prefreeze-c2-control.txt 921 B, prefreeze-c2-k4-regression.txt 1538 B, sources-census-before.txt 7121 B;
+controls/c1-before-r89-population.txt 4466 B, controls/c2-before-tool.py 36382 B
+$ wc -l census/round-90/records/c1-after.txt ; grep -c SUMMARY census/round-90/records/c1-after.txt
+26 census/round-90/records/c1-after.txt
+census/round-90/records/c1-after.txt:0
+$ stat -c '%y %s' census/round-90/records/c1-after.txt
+2026-11-08 11:53:55.000000000 -0300 3220
+$ tail -1 census/round-90/records/c1-after.txt
+MUTANT-PAIR m8-w-only-shapes pop=r89 killed=yes mismatches=2 errors=0 exit=1 | pop=r90 killed=yes mismatches=2 errors=0 exit=1
+$ tail -4 census/round-90/records/prefreeze-c1-both.txt
+MUTANT-PAIR m18-whole-before pop=r89 killed=yes mismatches=2 errors=0 exit=1 | pop=r90 killed=yes mismatches=2 errors=0 exit=1
+MUTANT m18b-alnum-before pop=r89 killed=yes mismatches=1 errors=0 exit=1
+MUTANT m18b-alnum-before pop=r90 killed=yes mismatches=1 errors=0 exit=1
+MUTANT-PAIR m18b-alnum-before pop=r89 killed=yes mismatches=1 errors=0 exit=1 | pop=r90 killed=yes mismatches=1 errors=0 exit=1
+$ grep SUMMARY census/round-90/records/prefreeze-c1-both.txt census/round-90/records/prefreeze-c1-control.txt
+census/round-90/records/prefreeze-c1-control.txt:SUMMARY mutants=16 sets=r89 pristine_r89=ok killed_r89=15 killed_total=15
+(c1-both: no SUMMARY line at measurement time)
+$ cat census/round-90/records/c2-after.txt
+# tool path=… sha256=d095b52fa5d90e3e563542eb6cea309e82ace59bde36e5992ede847059968561
+# before path=… sha256=f6fce6d147165d1baf3d8d0343f46c1ab913b23947f3edaa28b61cdd6caa18dd
+# fixture sha256=d44172132f0a0c707d47e9522df8502f8d84859eb3e82d13e09809450c94aeaa
+CASE KFF1..KFF8, KFC1, KFC2 tool=pass before=pass
+CASE KFF9 tool=pass before=fail
+CASE KFF10 tool=pass before=fail
+SUMMARY cases=12 tool_pass=12 before_pass=10
+$ tail -6 census/round-90/controls/c1-before-r89-population.txt
+MUTANT-PAIR m17b-target-keyed pop=r89 killed=yes mismatches=1 errors=0 exit=1
+MUTANT m17c-no-malformed pop=r89 killed=no mismatches=0 errors=0 exit=0
+MUTANT-PAIR m17c-no-malformed pop=r89 killed=no mismatches=0 errors=0 exit=0
+MUTANT m18d-first-only pop=r89 killed=yes mismatches=1 errors=0 exit=1
+MUTANT-PAIR m18d-first-only pop=r89 killed=yes mismatches=1 errors=0 exit=1
+SUMMARY mutants=16 sets=r89 pristine_r89=ok killed_r89=15 killed_total=15
+$ ps -eo pid,etimes,cmd | grep -E "c1-clause-battery" | grep -v grep   # excerpt, 11:52
+ 760429  846 python3 -B census/round-90/c1-clause-battery.py … --work /fast/scratch/hyaku/souji-r90/l1-both --only r89,r90 --expect-killed 31
+2241197  288 … --work /fast/scratch/hyaku/souji-r90/l1-after --only r89,r90 --expect-killed 31
+2673699  242 … --work /fast/scratch/hyaku/souji-r90/S90ExecC1/control --only r89 --expect-killed 15
+2673701  242 … --work /fast/scratch/hyaku/souji-r90/S90ExecC1/after --only r89,r90 --expect-killed 31
+2694469  240 … --work /fast/scratch/hyaku/souji-r90/S90Reviewer/c1c --only r89 --expect-killed 15
+2694471  240 … --work /fast/scratch/hyaku/souji-r90/S90Reviewer/c1a --only r89,r90 --expect-killed 31
+2851894  225 … --work /fast/scratch/hyaku/souji-r90/S90Critic/c1w1 --only r89,r90 --expect-killed 31
+2999950  213 … --work /fast/scratch/hyaku/souji-r90/S90MutCounter/after --only r89,r90 --expect-killed 31
+3272949  190 … --work /fast/scratch/hyaku/souji-r90/S90ExecC3/work-battery-r89 --only r89 --expect-killed 15
+3760320  158 … --work /fast/scratch/hyaku/souji-r90/S90Reviewer2/target-c1 --only r89,r90 --expect-killed 31
+3760321  158 … --work /fast/scratch/hyaku/souji-r90/S90Reviewer2/control-c1 --only r89 --expect-killed 15
+(plus /usr/bin/time wrappers for two of them)
+
+================================================================================
+5. battery defaults
+================================================================================
+$ sed -n '108,120p;165,177p' census/round-90/c1-clause-battery.py
+    ap.add_argument("--only", default="r85,r86", …)
+    ap.add_argument("--expect-killed", type=int, default=None, …)
+    if ns.expect_killed is not None:
+        return 0 if tot == ns.expect_killed else 1
+    return 0
+
+================================================================================
+6. escape feeders (labrat limit)
+================================================================================
+$ grep -n "backslashreplace\|surrogateescape\|decode(" tools/souji-record-agreement.py | head -20
+213:    return raw.decode("utf-8", "surrogateescape")
+372:        proc.stdout = proc.stdout.decode("utf-8", "backslashreplace")
+373:        proc.stderr = proc.stderr.decode("utf-8", "backslashreplace")
+$ grep -n "_escape_text(" tools/souji-record-agreement.py
+231:    return _escape_text(_decode_record(window))
+396:        return (f"the receipt writer refused the tree (exit {_escape_text(out.split(' ', 1)[-1].splitlines()[0])}); "
+411:        return _escape_text(out[len("FORGED "):])
+
+================================================================================
+7. QUALITY / SOURCES state
+================================================================================
+$ grep -n "^| Q159\|^| Q161\|^| Q165" corpus/QUALITY.md
+395:| Q159 | … ; 397:| Q161 | … ; (Q165 absent: rc 1)
+$ read corpus/QUALITY.md:410:raw
+| Q164 | … "And the decode must be injective on the bytes: …" … "The window is 202 raw bytes (100 + a three-byte U+2026 + 99) …"
+$ awk -F'|' '/^\| S351 /{print $2"|"$3}' corpus/SOURCES.md | cut -c1-300
+ S351 | Python 3.14 `codecs` § Error Handlers, the `surrogateescape` entry — …
+$ grep -n "S353" corpus/SOURCES.md
+292:| S353 | Unicode Standard Annex #14, Line Breaking Properties, Unicode 18.0.0 rev 57, § NL: Next Line — …
+$ grep -c "r90\|round-90" corpus/README.md
+4
+
+================================================================================
+8. sibling ownership greps
+================================================================================
+$ for d in *-shokunin; do … corpus/QUALITY.md Q-count / corpus/SOURCES.md S-count …; done
+audio 22/15; chousa 0/219; game-2d 23/31; game-3d 18/36; kagi 0/158; kaidoku 0/233; kake 0/224; kama 0/363;
+kasegi 10/153; kengaku 0/341; kotoba 90/211; kotodama 0/951; kumitate 0/219; lore 13/32; mado 0/469;
+mori 0/416; revenger 17/509; souji 164/275; tabi 0/224; tameshi 0/183; tsukuroi 0/395
+$ grep -n "NEL (U+0085)" kumitate-shokunin/corpus/knowledge/row-id-reader-class.md
+148:- **NEL (U+0085) is not JS white space.** A NEL pad or NEL-prefixed row is invisible to both JS
+150:  different mechanism. Do not "fix" NEL into the pad class.
+$ sed -n '47p' kumitate-shokunin/corpus/knowledge/sources-check-cell-trim-class.md
+| `NEL` | U+0085 | 1 | — | — | strips |
+$ grep -n "splitlines\|one physical line\|physical line" */corpus/QUALITY.md */corpus/SOURCES.md
+souji Q91/Q159/Q163/Q164; kotodama criterion 22 scope line ("the record is one physical line"); no sibling
+holds a splitlines/one-line diagnostic-cell criterion.
+$ grep -l "malformed.*ledger\|ledger.*malformed\|len(r) < 3" */corpus/QUALITY.md */corpus/SOURCES.md */corpus/knowledge/
+kagi claim-ledger.md; lore 2026-10-12-malformed-error-patterns.md; kumitate row-id-reader-class.md; revenger … ;
+none is souji's _ledger 2-column guard.
+
+================================================================================
+9. wave seat state at 11:56 (reports)
+================================================================================
+S90Connector.md 11:56 (this); S90ExecC2.md 13500 B 11:50; S90ExecC3.md 22635 B 11:54;
+S90Labrat.md 18030 B 11:53; S90ScoutSources.md 17210 B 11:54;
+skeletons: S90Critic 64 B, S90ExecC1 83 B, S90MutCounter 93 B, S90Reviewer 64 B, S90Reviewer2 110 B,
+S90Sentinel 157 B, S90Scribe 88 B (all 11:47).
+Artifacts: S90ExecC2/ 7 files; S90ExecC3/ 7 receipts; S90Labrat/ 13 files; S90MutCounter/ 2 JSON;
+S90ScoutSources/ 2 receipts. S90MutCounter/q162-probes.json ids: ld1c-class-keyed, ld1d-conflict-keyed,
+nf6i2-last-occurrence, nf6j-pathch-narrow. S90MutCounter/spellings.json ids: s1-exact-width,
+s2-equivalent-le2, s3-equal-two, s4-sub2, s5-bad-but-store, s6-silent-skip.
+
+================================================================================
+10. state at yield (2026-11-08 12:00)
+================================================================================
+census/round-90/records/c1-after.txt: 41 lines at 11:59:40, no SUMMARY, mtime 11:59:33,
+sha256 prefix 62601ed5…; the completed pre-freeze feasibility arm reads
+SUMMARY mutants=16 sets=r89,r90 pristine_r89=ok pristine_r90=ok killed_r89=15 killed_r90=16 killed_total=31.
+Seat reports at 11:59: ExecC3 24542 B, Reviewer 21636 B, Labrat 18030 B, ScoutSources 17210 B,
+ExecC1 6401 B, MutCounter 5475 B (placeholders), ExecC2 13500 B; skeletons: Critic 64 B,
+Reviewer2 110 B, Sentinel 157 B, Scribe 88 B.
+S90Reviewer/ at 11:57: 7 files, no c1-after-official.txt (its report cites it; seat still running).

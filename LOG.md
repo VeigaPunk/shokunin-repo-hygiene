@@ -3426,3 +3426,34 @@ receipts in P `5bd5a0ce`. Amendments in `plans/round-85.md` (A0-A1 so far); the 
 - **Docs.** `corpus/knowledge/decode-escape-order.md`, `corpus/QUALITY.md` Q164, `plans/round-89.md`,
   `corpus/lessons/round-89.md`, `SCORECARD.md` r89 rows, two capability rows and the r90 planned block.
 - **Tool installs: none.** No pacman (paused host-wide), no uv/npx/binary fetch, no sysctl, sudo or kernel change.
+
+## Round 90 (2026-11-08) — the last unrowed clause gets its row (C1 calibration); the byte/character pair gets distinct spellings and the dead helper is deleted (C2 operability)
+
+- **Claims.** C1 (calibration 7, the lane's lowest owned non-retired axis): the r89 16-member mutant set had exactly one
+  survivor, `m17c-no-malformed` (the `_ledger` `len(r) < 3` guard). The r90 population adds LD2b, a 2-column ledger
+  row under the id `ZZ9`, absent from the frozen r77 ledger, so the length guard — not the duplicate leg — is the only
+  refusal left. C2 (operability 8): the r89 repair left raw byte `0x85` and the character U+0085 rendering the same
+  `\x85`; the r90 tool spells the character `\u0085` (S353: U+0085 is line-break class NL, a mandatory break after
+  NEL) and deletes the dead escape-first `_one_line` (zero callers).
+- **Measured.** C1: control `controls/c1-before-r89-population.txt` (same battery and 16 mutants, the r89 57-row
+  population alone) `SUMMARY … killed_r89=15 killed_total=15`, `m17c killed=no`, EXIT 0; after
+  `records/c1-after.txt` both pristine arms green (57/0, 58/0), `killed_r89=15 killed_r90=16 killed_total=31`, EXIT 0,
+  with m17c killed only by LD2b (S90ExecC1, S90MutCounter). C2: control `prefreeze-c2-control.txt` (r89 bytes as both
+  arms) `cases=12 tool_pass=10 before_pass=10`, EXIT 1; after `records/c2-after.txt` on tool `d095b52f…`
+  `cases=12 tool_pass=12 before_pass=10`, EXIT 0; r87 12-row K4 counter `rows=12 mismatches=0 errors=0`; deletion
+  `grep -c 'def _one_line('` = 0.
+- **Narrowed before filing (plans/round-90.md A1, A4, A5).** The fixture's substring counts do not bind the word
+  "injective" (a doubled-backslash mutant survives 12/12, S90Sentinel H1); a raw-window cut inside U+0085's encoding
+  renders the surviving byte `\x85` (S90Reviewer2); the "one physical line" clause is not enforced; the deletion is
+  measured by grep+load, not the fixture; the battery does not print its own hash; the mutant FILE differs from r89
+  in its note while the sixteen MEMBERS are identical. The tool's injectivity on the pair stands (probe6: zero
+  collisions among single characters and 2-char strings).
+- **Sources.** S353 (Unicode UAX #14, NL class for U+0085, 18-word quote, capture `census/round-90/srcs/tr14.html`)
+  admitted `mined`, cited by `corpus/knowledge/nel-byte-character-pair.md`; UAX #13 is the reject sample (tombstone
+  URL, archived tr13-9 opened and read). Registry 274 → 275; `sources-census.sh validate` EXIT 0 both ends.
+  `corpus/README.md` gains the r87–r90 frontier rows the r89 spot-check routed. QUALITY Q165 added.
+- **Wave.** One v1 wave, 12 seats (3 executor, 2 reviewer, critic, mutation-tester, sentinel, connector, scout, scribe;
+  the labrat duty rides a revenger-role seat because the validator refuses `labrat`; the L1 holds the planner seat).
+  Attack share 7/12; connector 1; residual 0. All twelve seat reports are committed under `.ufo/waves/round-90/w1/`
+  (named explicitly, so the pushed tip resolves them — the r89 durability defect).
+- **Tool installs: none.** No pacman (paused host-wide), no uv/npx/binary fetch, no sysctl, sudo or kernel change.

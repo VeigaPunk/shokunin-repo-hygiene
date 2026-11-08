@@ -1,0 +1,325 @@
+===== population r89->r90
+--- /fast/scratch/hyaku/souji-r90/S90ExecC3/r89-c1-false-rows.tsv	2026-11-08 11:47:26.327619473 -0300
++++ /fast/scratch/hyaku/souji-r90/S90ExecC3/r90-c1-false-rows.tsv	2026-11-08 11:47:26.329619482 -0300
+@@ -57,3 +57,4 @@
+ NF6i	fixture	R12	r78	L06	QUARANTINED	.ufo/quarantine/round-17/tests/vault/vadv54-run/p/p6repo/twice-stub	QUARANTINED	-	r89 C1: `_whole` examines every occurrence (S88MutCounter F4 kills m18d). R12 carries the token twice — first as a suffix, later whole — so only the full loop resolves it.
+ LD1b	ledger	BASE	r77	P01	-	-	LEDGER-REFUSED	1	r89 C1: the `_ledger` duplicate-id refusal with a DIFFERENT target (S88MutCounter F2 kills m17b). Same row type as LD1, only the appended target differs (`census/nowhere/ld1b`).
+ LD2	ledger	BASE	r77	P02	-	-	LEDGER-REFUSED	1	r89 C1: the `_ledger` malformed-row guard `len(r) < 3` (S88MutCounter F3 kills m17c). The harness appends a 2-column row; pristine refuses it, the mutant raises IndexError.
++LD2b	ledger	BASE	r77	ZZ9	-	-	LEDGER-REFUSED	1	r90 C1: the SAME malformed-row guard reached under an id ABSENT from the frozen r77 ledger. The appended row is `ZZ9<TAB>ABSENT` (2 columns); pristine refuses it on len(r)<3 and prints `LEDGER-REFUSED id=ZZ9`, while m17c (len guard dropped) writes ledger[ZZ9]=(r[1], r[2]) and raises IndexError with no marker. LD2 could not bind this guard because its id P02 is already in the ledger (r89 A1).
+===== harness r89->r90
+--- /fast/scratch/hyaku/souji-r90/S90ExecC3/r89-c1-false-row-harness.py	2026-11-08 11:47:26.331619492 -0300
++++ /fast/scratch/hyaku/souji-r90/S90ExecC3/r90-c1-false-row-harness.py	2026-11-08 11:47:26.333619501 -0300
+@@ -1,5 +1,12 @@
+ #!/usr/bin/env python3
+-"""souji r89 C1 counter: the r88 harness plus ONE pinned population (census/round-89/c1-false-rows.tsv, 57 rows =
++"""souji r90 C1 counter: the r89 harness plus ONE pinned population (census/round-90/c1-false-rows.tsv, 58 rows =
++the r89 57 byte-for-byte plus LD2b at the `where=ledger` row type) and one mechanical extension. LD2b appends the
++same 2-column malformed row under an id ABSENT from the frozen ledger (`ZZ9`), so the malformed guard `len(r) < 3`
++is the only refusal left for it; the r89 LD2 row could not reach that guard because its id `P02` is already in the
++ledger (r89 A1). No judgement code changed for lane/fixture rows; the counter under test
++(census/round-87/c1-pointer-counter.py) is unchanged.
++
++souji r89 C1 counter: the r88 harness plus ONE pinned population (census/round-89/c1-false-rows.tsv, 57 rows =
+ the r88 53 byte-for-byte plus NF6h/NF6i at fixture revision R12 and LD1b/LD2) and three mechanical extensions. NF6g needs R11,
+ a declaration that names the L06 token only as the suffix of a longer path (the `_whole` before-byte half), so R11
+ joins the accepted rev labels and the fixture builder. NF6h/NF6i need R12 (the slash predecessor + the twice-token line). LD1b/LD2 extend the `where=ledger` row TYPE: LD1b appends the same item with a different target, LD2 a 2-column malformed row. No judgement code changed for lane/fixture rows; the counter under test is unchanged.
+@@ -115,7 +122,8 @@
+             "79db70f6740de41a326dc4193bf80c5394fe126d636cc98d4e26e4b5e140f561": 49,
+             "b066fa0fc686efdf96c8ebf21a32764070661796c3b4d6e5e99f8aad18669220": 51,
+             "b710e368de862a72bc430610003d3cdf1499bea1b6e4ff2325417a1d388a68c3": 53,
+-            "04570a64855978bf697af71c161fe215945da5849f2f393fee15bb0d9f21e093": 57}
++            "04570a64855978bf697af71c161fe215945da5849f2f393fee15bb0d9f21e093": 57,
++            "d64d76954daea7da5d36e6f5eda96ae343bdd37db5071ea50bd55b30a1844b45": 58}
+ P04_PIN = "d0693448c0895860ebe7ece2549d3f70f694247ddb717d1fa2c66a4518d5aa89"
+ P07_PIN = "5212878dc0e8156e5cf27bd639a732a51d33473547b7e03ddf1a17ad6baddaaa"
+ # r86: the r83 counter's bytes are the NF-Y row's content source (a round-root token moved into a capture)
+@@ -393,9 +401,11 @@
+                 base += b"\n"
+             # r89: LD1b appends the SAME item with a DIFFERENT target (kills the target-keyed m17b);
+             # LD2 appends a 2-column malformed row (kills the dropped-guard m17c). LD1 is unchanged.
++            # r90: LD2b appends the same 2-column shape under an id ABSENT from the frozen ledger, so the
++            # malformed guard (not the duplicate leg) is the only refusal left for it.
+             if rid == "LD1b":
+                 appended = f"{item}\tABSENT\tcensus/nowhere/ld1b\tr89 {rid} different-target duplicate\n"
+-            elif rid == "LD2":
++            elif rid in ("LD2", "LD2b"):
+                 appended = f"{item}\tABSENT\n"
+             else:
+                 appended = f"{item}\tABSENT\t-\tr88 {rid} duplicate-id control\n"
+===== battery r89->r90
+--- /fast/scratch/hyaku/souji-r90/S90ExecC3/r89-c1-clause-battery.py	2026-11-08 11:47:26.335619511 -0300
++++ /fast/scratch/hyaku/souji-r90/S90ExecC3/r90-c1-clause-battery.py	2026-11-08 11:47:26.337619520 -0300
+@@ -1,5 +1,12 @@
+ #!/usr/bin/env python3
+-"""souji r89 C1 clause battery: the r88 battery plus ONE pinned population (census/round-89/c1-false-rows.tsv, 57
++"""souji r90 C1 clause battery: the r89 battery plus ONE pinned population (census/round-90/c1-false-rows.tsv, 58
++rows = the r89 57 byte-for-byte plus LD2b, a 2-column malformed ledger row appended under an id ABSENT from the
++frozen ledger) and therefore one more PINS entry. The counter under test is the frozen r87 counter
++(census/round-87/c1-pointer-counter.py, unchanged bytes); this round changes the population and its harness, not
++the counter. No arm, kill rule or summary line changed: a kill is still a non-zero harness exit on the scored
++population. The r89 population is the do-nothing control: on it the sixteen mutants must still leave m17c alive.
++
++souji r89 C1 clause battery: the r88 battery plus ONE pinned population (census/round-89/c1-false-rows.tsv, 57
+ rows = the r88 53 byte-for-byte plus NF6h/NF6i at fixture revision R12 and LD1b/LD2) and therefore one more PINS entry. The
+ counter under test is the frozen r87 counter (census/round-87/c1-pointer-counter.py, unchanged bytes); this round
+ changes the population and its harness, not the counter. No arm, kill rule or summary line changed: a kill is still a
+@@ -71,8 +78,10 @@
+                 "b066fa0fc686efdf96c8ebf21a32764070661796c3b4d6e5e99f8aad18669220", 51),
+         "r88": (os.path.join(FLEET, "souji-shokunin/census/round-88/c1-false-rows.tsv"),
+                 "b710e368de862a72bc430610003d3cdf1499bea1b6e4ff2325417a1d388a68c3", 53),
+-        "r89": (os.path.join(HERE, "c1-false-rows.tsv"),
+-                "04570a64855978bf697af71c161fe215945da5849f2f393fee15bb0d9f21e093", 57)}
++        "r89": (os.path.join(FLEET, "souji-shokunin/census/round-89/c1-false-rows.tsv"),
++                "04570a64855978bf697af71c161fe215945da5849f2f393fee15bb0d9f21e093", 57),
++        "r90": (os.path.join(HERE, "c1-false-rows.tsv"),
++                "d64d76954daea7da5d36e6f5eda96ae343bdd37db5071ea50bd55b30a1844b45", 58)}
+ 
+ 
+ def sha(path):
+===== mutants r89->r90
+--- /fast/scratch/hyaku/souji-r90/S90ExecC3/r89-c1-mutants.json	2026-11-08 11:47:26.339619529 -0300
++++ /fast/scratch/hyaku/souji-r90/S90ExecC3/r90-c1-mutants.json	2026-11-08 11:47:26.340619534 -0300
+@@ -1,5 +1,5 @@
+ {
+- "note": "souji r88 C1 mutants (12 members, byte-identical to census/round-88/c1-mutants.json) plus four r89 members that drop clauses r88 measured reachable and unrowed (S88MutCounter F1-F4). Each edit must apply exactly once to census/round-87/c1-pointer-counter.py. Kills are counted by census/round-89/c1-clause-battery.py over the pinned populations: r88 (53 rows, the do-nothing control: the four new mutants must survive there, the twelve must be killed) and r89 (57 rows: all sixteen must be killed).",
++ "note": "souji r90 C1 mutants: the SIXTEEN members of census/round-89/c1-mutants.json, byte-identical (the round adds no mutant; per Q162 a row is added only when a clause-dropping mutant survives every already-pinned population, and on the r89 57-row population m17c is the sole survivor). Each edit must apply exactly once to census/round-87/c1-pointer-counter.py. Kills are counted by census/round-90/c1-clause-battery.py over the pinned populations: r89 (57 rows, the do-nothing control: m17c must survive there) and r90 (58 rows = r89 plus LD2b: all sixteen must be killed).",
+  "members": [
+   {
+    "id": "m6-digest-blind",
+===== fixture r89->r90
+--- /fast/scratch/hyaku/souji-r90/S90ExecC3/r89-fixture.py	2026-11-08 11:47:43.438699988 -0300
++++ /fast/scratch/hyaku/souji-r90/S90ExecC3/r90-fixture.py	2026-11-08 11:47:43.441260972 -0300
+@@ -1,6 +1,11 @@
+ #!/usr/bin/env python3
+-"""souji r89 C2 fixture: the K4 delegation's index-flag failure detail is ONE escaped line that keeps both ends of
+-the writer's stderr, measured through the tool's public path.
++"""souji r90 C2 fixture: the K4 delegation's index-flag failure detail is ONE escaped line that keeps both ends of
++the writer's stderr AND spells a raw byte distinctly from the character that decodes to it, measured through the
++tool's public path.
++
++r90 change: the r89 tool renders both the raw byte 0x85 and the UTF-8 encoding of U+0085 (NEL) as `\\x85`, so two
++materially different delegated failures share one cell. The r90 tool spells U+0085 as `\\u0085`; KFF9 and KFF10
++measure the pair and main() additionally requires the two details to differ.
+ 
+ Each case runs a copy of the tool under test beside a fake receipt writer in a hermetic scratch repository. The fake
+ writer's `git()` fails the delegated `ls-files -v -z` read with a chosen stderr, so the bootstrap's FLAGFAIL branch
+@@ -21,8 +26,10 @@
+   KFF6 badbyte   stderr carrying an invalid UTF-8 byte: one escaped line, surrounding text kept (S88Sentinel F1).
+   KFF7 literal   stderr carrying the literal escape spelling: the detail differs from KFF6 (injectivity).
+   KFF8 headctl   25 leading SOH bytes then `AttributeError: boom`: the type name stays in the head (S88Sentinel F2).
++  KFF9 nelchar   stderr carrying the UTF-8 encoding of U+0085: the cell spells it `\\u0085`, never `\\x85` (r90).
++  KFF10 nelbyte  stderr carrying the raw byte 0x85: the cell spells it `\\x85`, never `\\u0085`; the pair differs.
+ 
+-The same table runs on `--before` (the r87 tool bytes): every case the before tool fails is the do-nothing control.
++The same table runs on `--before` (the r89 tool bytes): every case the before tool fails is the do-nothing control.
+ Exit 0 iff every case passes on `--tool` and the before tool passes strictly fewer; 1 otherwise; 2 on usage or a
+ fixture failure. Writes only under --work (never /tmp), removes what it builds, and reads the lane read-only.
+ 
+@@ -37,7 +44,7 @@
+ 
+ sys.dont_write_bytecode = True
+ 
+-FAKE_WRITER = '''# r89 fake receipt writer for the K4 delegation fixture (one rule: no file, no network)
++FAKE_WRITER = '''# r90 fake receipt writer for the K4 delegation fixture (one rule: no file, no network)
+ import os
+ 
+ 
+@@ -47,7 +54,7 @@
+ 
+ 
+ def git(*args, **kwargs):
+-    mode = os.environ.get("R89_STDERR_MODE", "short")
++    mode = os.environ.get("R90_STDERR_MODE", "short")
+     if mode == "clean":
+         return P(0, b"H a.txt\\0")
+     err = {
+@@ -59,12 +66,14 @@
+         "badbyte": b"bad \\xff tail\\n",
+         "literal": b"literal \\\\xff tail\\n",
+         "headctl": b"\\x01" * 25 + b"AttributeError: boom" + b"y" * 240 + b"\\n",
++        "nelchar": b"fatal: nel \\xc2\\x85 marker\\n",
++        "nelbyte": b"fatal: nel \\x85 marker\\n",
+     }[mode]
+     return P(1, b"", err)
+ 
+ 
+ def _truth_refusal(root):
+-    if os.environ.get("R89_REFUSED") == "1":
++    if os.environ.get("R90_REFUSED") == "1":
+         raise SystemExit("r89 refused: bad\\nMISMATCH\\tK4\\t.\\tforged\\tinjected")
+     return ""
+ 
+@@ -75,8 +84,8 @@
+ 
+ ENV = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+ ENV.update({"GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": os.devnull, "LC_ALL": "C",
+-            "GIT_AUTHOR_NAME": "r89 fixture", "GIT_AUTHOR_EMAIL": "fixture@r89.invalid",
+-            "GIT_COMMITTER_NAME": "r89 fixture", "GIT_COMMITTER_EMAIL": "fixture@r89.invalid",
++            "GIT_AUTHOR_NAME": "r90 fixture", "GIT_AUTHOR_EMAIL": "fixture@r90.invalid",
++            "GIT_COMMITTER_NAME": "r90 fixture", "GIT_COMMITTER_EMAIL": "fixture@r90.invalid",
+             "GIT_AUTHOR_DATE": "2026-11-08T00:00:00Z", "GIT_COMMITTER_DATE": "2026-11-08T00:00:00Z"})
+ 
+ 
+@@ -113,15 +122,15 @@
+     with open(os.path.join(repo, "a.txt"), "w", encoding="utf-8") as f:
+         f.write("seed\n")
+     git(repo, "add", "--", "a.txt")
+-    git(repo, "commit", "-q", "--no-verify", "-m", "r89 fixture seed")
++    git(repo, "commit", "-q", "--no-verify", "-m", "r90 fixture seed")
+     return copy, repo, git(repo, "rev-parse", "HEAD")
+ 
+ 
+ def run_case(kit, mode, refused=False):
+     toolcopy, repo, rev = kit
+     env = dict(ENV)
+-    env["R89_STDERR_MODE"] = mode
+-    env["R89_REFUSED"] = "1" if refused else "0"
++    env["R90_STDERR_MODE"] = mode
++    env["R90_REFUSED"] = "1" if refused else "0"
+     p = subprocess.run([sys.executable, "-B", toolcopy, "--root", repo, "--rev", rev],
+                        stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
+     out = p.stdout.decode("utf-8", "backslashreplace")
+@@ -179,6 +188,21 @@
+     return len(rows) == 1 and "AttributeError" in rows[0] and "boom" in rows[0]
+ 
+ 
++def case_nelchar(out, rows):
++    # KFF9 (r90): the character U+0085, encoded UTF-8, is spelled `\\u0085`; the raw-byte spelling `\\x85` is the
++    # OTHER member of the pair and must not appear. The row stays one physical line with its text.
++    bs = chr(92)
++    return (len(rows) == 1 and "fatal: nel" in rows[0] and "marker" in rows[0]
++            and rows[0].count(bs + "u0085") == 1 and rows[0].count(bs + "x85") == 0)
++
++
++def case_nelbyte(out, rows):
++    # KFF10 (r90): the raw byte 0x85 (invalid UTF-8) is spelled `\\x85`; the character spelling must not appear.
++    bs = chr(92)
++    return (len(rows) == 1 and "fatal: nel" in rows[0] and "marker" in rows[0]
++            and rows[0].count(bs + "x85") == 1 and rows[0].count(bs + "u0085") == 0)
++
++
+ 
+ def case_refused(out, rows):
+     return len(rows) == 1 and "the receipt writer refused the tree" in rows[0] and "injected" not in out
+@@ -195,6 +219,8 @@
+     ("KFF6", "badbyte", False, case_badbyte),
+     ("KFF7", "literal", False, case_literal),
+     ("KFF8", "headctl", False, case_headctl),
++    ("KFF9", "nelchar", False, case_nelchar),
++    ("KFF10", "nelbyte", False, case_nelbyte),
+ )
+ 
+ 
+@@ -218,10 +244,10 @@
+     ns = ap.parse_args(argv)
+     work = os.path.abspath(ns.work)
+     if os.path.realpath(work).startswith(("/tmp/", "/var/tmp/", "/dev/shm/")):
+-        print("R89-FIXTURE-FATAL: --work under /tmp, /var/tmp or /dev/shm", file=sys.stderr)
++        print("R90-FIXTURE-FATAL: --work under /tmp, /var/tmp or /dev/shm", file=sys.stderr)
+         return 2
+     if os.path.exists(work) and os.listdir(work):
+-        print(f"R89-FIXTURE-FATAL: --work {work} is not empty", file=sys.stderr)
++        print(f"R90-FIXTURE-FATAL: --work {work} is not empty", file=sys.stderr)
+         return 2
+     os.makedirs(work, exist_ok=True)
+     tool, before = os.path.abspath(ns.tool), os.path.abspath(ns.before)
+@@ -232,23 +258,31 @@
+         after_kit = make_kit(os.path.join(work, "after"), tool)
+         before_kit = make_kit(os.path.join(work, "before"), before)
+     except (FixtureError, OSError, subprocess.SubprocessError) as exc:
+-        print(f"R89-FIXTURE-FATAL: fixture: {type(exc).__name__}: {exc}", file=sys.stderr)
++        print(f"R90-FIXTURE-FATAL: fixture: {type(exc).__name__}: {exc}", file=sys.stderr)
+         return 2
+     after, old = score(after_kit), score(before_kit)
+-    # KFF6/KFF7 injectivity pair: the bad-byte detail and the literal detail must differ on the tool under test.
+-    _o6, _r6 = run_case(after_kit, "badbyte", False)
+-    _o7, _r7 = run_case(after_kit, "literal", False)
+-    _pair_ok = _r6 != _r7 and len(_r6) == 1 and len(_r7) == 1
+-    after = dict(after, KFF6=bool(after["KFF6"] and _pair_ok), KFF7=bool(after["KFF7"] and _pair_ok))
++    # Pair checks run on BOTH arms (r90): a pair-bound case's verdict is the case check AND the pair check, so the
++    # do-nothing control is scored by the same rule as the tool under test.
++    for kit, arm in ((after_kit, after), (before_kit, old)):
++        # KFF6/KFF7 injectivity pair: the bad-byte detail and the literal detail must differ on this tool.
++        _o6, _r6 = run_case(kit, "badbyte", False)
++        _o7, _r7 = run_case(kit, "literal", False)
++        _pair_ok = _r6 != _r7 and len(_r6) == 1 and len(_r7) == 1
++        arm.update(KFF6=bool(arm["KFF6"] and _pair_ok), KFF7=bool(arm["KFF7"] and _pair_ok))
++        # KFF9/KFF10 pair (r90): the character detail and the raw-byte detail must be DIFFERENT cells.
++        _o9, _r9 = run_case(kit, "nelchar", False)
++        _o10, _r10 = run_case(kit, "nelbyte", False)
++        _nel_ok = _r9 != _r10 and len(_r9) == 1 and len(_r10) == 1
++        arm.update(KFF9=bool(arm["KFF9"] and _nel_ok), KFF10=bool(arm["KFF10"] and _nel_ok))
+     for cid, _mode, _refused, _check in CASES:
+         print(f"CASE {cid} tool={'pass' if after[cid] else 'fail'} before={'pass' if old[cid] else 'fail'}")
+     a, b = sum(after.values()), sum(old.values())
+     print(f"SUMMARY cases={len(CASES)} tool_pass={a} before_pass={b}")
+     if a != len(CASES):
+-        print("R89-FIXTURE-FAIL: the tool under test does not pass every case", file=sys.stderr)
++        print("R90-FIXTURE-FAIL: the tool under test does not pass every case", file=sys.stderr)
+         return 1
+     if b >= a:
+-        print("R89-FIXTURE-FAIL: the do-nothing control passes as many cases (no measured delta)",
++        print("R90-FIXTURE-FAIL: the do-nothing control passes as many cases (no measured delta)",
+               file=sys.stderr)
+         return 1
+     return 0
+===== tool base..master
+diff --git a/tools/souji-record-agreement.py b/tools/souji-record-agreement.py
+index bcde780f..f485265a 100755
+--- a/tools/souji-record-agreement.py
++++ b/tools/souji-record-agreement.py
+@@ -186,11 +186,15 @@ def _escape_text(text: str) -> str:
+             out.append("\\t")
+         elif ch == "\r":
+             out.append("\\r")
+-        elif o < 0x20 or o == 0x7F or o == 0x85:
++        elif o < 0x20 or o == 0x7F:
+             out.append("\\x%02x" % o)
+-        elif o in (0x2028, 0x2029):
++        elif o in (0x85, 0x2028, 0x2029):
+             # r87 wave repair (S87Sentinel F4): Python's str.splitlines() splits on these too, so a path holding one
+             # would tear a line-oriented record in half even though no C control byte is present.
++            # r90 (r89 A2): U+0085 is a CHARACTER, and the raw byte 0x85 above arrives as the surrogate U+DC85; both
++            # used to print `\x85`, so two materially different delegated failures shared one cell. The character now
++            # takes the `\uNNNN` spelling (Unicode UAX #14 classes U+0085 as NL, a mandatory break after NEL, S353) and
++            # the byte keeps its `\xNN` spelling, so the pair is injective.
+             out.append("\\u%04x" % o)
+         elif 0xDC80 <= o <= 0xDCFF:
+             # r89 (S88Sentinel F1): a byte that was not valid UTF-8, carried through `surrogateescape`. Print its
+@@ -210,9 +214,10 @@ def _decode_record(raw: bytes) -> str:
+ 
+ 
+ def _one_line_bytes(raw: bytes, limit: int = 200) -> str:
+-    """r89: bound the RAW bytes first, then escape the window (S88Sentinel F2). The r88 `_one_line` escaped first
+-    and then kept head-100/tail-99 of the escaped text, so 25 leading control bytes (`\\x01` each, four chars)
+-    consumed the whole head and an exception's type name fell outside both ends. The excerpt is measured in raw
++    """r89: bound the RAW bytes first, then escape the window (S88Sentinel F2). The r88 escape-first helper
++    (`_one_line`, deleted in r90 as dead code) kept head-100/tail-99 of the ESCAPED text, so 25 leading control
++    bytes (`\\x01` each, four chars) consumed the whole head and an exception's type name fell outside both ends.
++    The excerpt is measured in raw
+     bytes here: keep the first and last N raw bytes, then escape. A raw window that cuts a UTF-8 continuation is
+     decoded with `surrogateescape` and each cut byte escapes separately."""
+     if not raw:
+@@ -294,22 +299,6 @@ def _stderr_tail(text: str, limit: int = 200) -> str:
+     return tail
+ 
+ 
+-def _one_line(text: str, limit: int = 200) -> str:
+-    """r88: one escaped line for a delegated failure detail. `_escape_text` first, so an LF/TAB/CR, a C0 control
+-    byte, DEL, NEL or U+2028/U+2029 cannot split the MISMATCH record a reader parses (Q159/Q163; the C1 block
+-    beyond NEL is not escaped, and the round limits say so); then the same both-ends bound `_stderr_tail` uses, so a
+-    long exception line keeps its type name and its message. Empty input prints `no stderr`, never an empty
+-    parenthesis."""
+-    boxed = _escape_text(text or "")
+-    if not boxed:
+-        return "no stderr"
+-    if len(boxed) > limit:
+-        head = limit // 2
+-        keep = limit - head - 1
+-        boxed = boxed[:head] + "\u2026" + boxed[-keep:]
+-    return boxed
+-
+-
+ _HEADER_DIGEST: "str | None" = None
+ 
+ 
