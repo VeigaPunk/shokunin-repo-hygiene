@@ -145,7 +145,11 @@ def _escape_record(raw: bytes) -> str:
     the backslash is doubled first, and every byte outside printable ASCII becomes `\\xNN`. A reader can recover the
     exact bytes; the record is a byte spelling, not a display name."""
     out: list[str] = []
-    for b in raw:
+    n_skip = 0
+    for i, b in enumerate(raw):
+        if n_skip:
+            n_skip -= 1
+            continue
         if b == 0x5C:
             out.append("\\\\")
         elif b == 0x0A:
@@ -156,8 +160,38 @@ def _escape_record(raw: bytes) -> str:
             out.append("\\r")
         elif 0x20 <= b < 0x7F:
             out.append(chr(b))
+        elif b >= 0x80 and raw[i:i + 3] in (b"\xe2\x80\xa8", b"\xe2\x80\xa9"):
+            out.append("\\u%04x" % (0x2028 if raw[i + 2] == 0xA8 else 0x2029))
+            n_skip = 2
         else:
             out.append("\\x%02x" % b)
+    return "".join(out)
+
+
+def _escape_text(text: str) -> str:
+    """r87 wave repair (S87Scribe F8/F9): the same injective spelling as `_escape_record`, for a message that arrives
+    as text. Doubling the backslash FIRST is what makes the spelling reversible — without it a name holding a real LF
+    and a name holding `\\` + `n` print the same. Every character below 0x20 or equal to 0x7f becomes `\\xNN`, so a
+    VT cannot split a line-oriented record (Q159)."""
+    out: list[str] = []
+    for ch in text:
+        o = ord(ch)
+        if ch == "\\":
+            out.append("\\\\")
+        elif ch == "\n":
+            out.append("\\n")
+        elif ch == "\t":
+            out.append("\\t")
+        elif ch == "\r":
+            out.append("\\r")
+        elif o < 0x20 or o == 0x7F or o == 0x85:
+            out.append("\\x%02x" % o)
+        elif o in (0x2028, 0x2029):
+            # r87 wave repair (S87Sentinel F4): Python's str.splitlines() splits on these too, so a path holding one
+            # would tear a line-oriented record in half even though no C control byte is present.
+            out.append("\\u%04x" % o)
+        else:
+            out.append(ch)
     return "".join(out)
 
 
@@ -229,15 +263,22 @@ def _stderr_tail(text: str, limit: int = 200) -> str:
     return tail
 
 
+_HEADER_DIGEST: "str | None" = None
+
+
 def writer_binding() -> str:
     """r87: one header line naming the writer this run delegates to — path and the sha256 of the bytes it will
     compile. A K4 verdict is then bound to the delegation it used instead of leaving a reader to guess which
     writer sat beside the tool (S86ExecK4 §3b2). Absent writer prints `sha256=absent`, which truth_refusal refuses."""
+    global _HEADER_DIGEST
     try:
         with open(K4_TRUTH_WRITER, "rb") as f:
             digest = hashlib.sha256(f.read()).hexdigest()
     except OSError:
         digest = "absent"
+    # r87 wave repair (S87Sentinel F1): the digest printed here is the one the verification compares against, so a
+    # writer swapped AFTER this read cannot be named by this header and run.
+    _HEADER_DIGEST = digest
     return f"# writer path={K4_TRUTH_WRITER} sha256={digest}"
 
 
@@ -254,9 +295,10 @@ def truth_refusal(root: str) -> "str | None":
     if not os.path.isfile(K4_TRUTH_WRITER):
         return f"the receipt writer is not beside this tool ({K4_TRUTH_WRITER}); tracked bytes are unverified"
     bootstrap = (
-        "import sys, types\n"
+        "import sys, types, hashlib\n"
         "path, root = sys.argv[1], sys.argv[2]\n"
         "src = open(path, 'rb').read()\n"
+        "print('WRITER %s' % hashlib.sha256(src).hexdigest())\n"
         "mod = types.ModuleType('souji_receipt_write')\n"
         "mod.__file__ = path\n"
         "sys.modules[mod.__name__] = mod\n"
@@ -295,16 +337,39 @@ def truth_refusal(root: str) -> "str | None":
     except (OSError, subprocess.SubprocessError) as exc:
         return f"the receipt writer could not be run ({type(exc).__name__}: {exc}); tracked bytes are unverified"
     out = proc.stdout.strip()
+    # r87 wave repair (S87Sentinel F1): the header digest is read before the compile, so the two reads can disagree.
+    # The bootstrap now reports the digest of the bytes it compiled; a disagreement is a swap, not a verdict.
+    lines = out.splitlines()
+    if lines and lines[0].startswith("WRITER "):
+        compiled = lines[0][len("WRITER "):].strip()
+        named = _HEADER_DIGEST
+        if named is None:
+            try:
+                with open(K4_TRUTH_WRITER, "rb") as f:
+                    named = hashlib.sha256(f.read()).hexdigest()
+            except OSError:
+                named = "absent"
+        if compiled != named:
+            return (f"RECEIPT-WRITER-SWAPPED: the header named {named[:12]} and the delegated compile read "
+                    f"{compiled[:12]}; tracked bytes are unverified")
+        out = "\n".join(lines[1:]).strip()
     if out.startswith("REFUSED"):
-        return f"the receipt writer refused the tree (exit {out.split(' ', 1)[-1]}); tracked bytes are unverified"
+        # r87 wave repair (S87Sentinel F3): the writer's SystemExit code was interpolated raw, so a code carrying a
+        # newline and a `MISMATCH\tK4\t...` line injected a forged row into the record stream.
+        return (f"the receipt writer refused the tree (exit {_escape_text(out.split(' ', 1)[-1].splitlines()[0])}); "
+                f"tracked bytes are unverified")
     if out.startswith("FLAGFAIL"):
         return (f"the index-flag read failed ({out[len('FLAGFAIL '):].strip()}); tracked bytes are unverified")
     if out.startswith("FORGED "):
-        # r86: a path may carry a newline or a tab (S85ExecK4 §2e). C-escape them so one K4 record stays one
-        # physical line and still names the path a reader must act on.
-        return (out[len("FORGED "):].replace("\n", "\\n").replace("\t", "\\t").replace("\r", "\\r"))
-    if out == "CLEAN":
-        return None
+        # r86: a path may carry a newline or a tab (S85ExecK4 §2e); r87 (S87Scribe F8/F9): the escape is the same
+        # injective one the status arm uses, so two names cannot share a spelling and no control byte splits the row.
+        return _escape_text(out[len("FORGED "):])
+    if out.startswith("CLEAN"):
+        # r87 wave repair (S87Sentinel F2): a delegated writer that printed the token and then died was read as a
+        # clean verdict (fail-open). The token counts only with a zero exit from the process that printed it.
+        if proc.returncode == 0:
+            return None
+        return (f"the receipt writer printed CLEAN but exited {proc.returncode}; tracked bytes are unverified")
     # r87 (S87Reviewer F4): a stub that prints to stdout and then raises left the exception unnamed, because stdout
     # was preferred. stderr wins when it carries anything.
     detail = _stderr_tail(proc.stderr if proc.stderr.strip() else out)

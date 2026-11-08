@@ -19,6 +19,12 @@ Rows (each on a fresh clone of a hermetic seed repository):
                  quote, so a tool that keeps the line form and strips only the wrapping quotes fails this row
   KB7 type       a delegated writer whose last line is `ValueError` with a 400-character message: the detail must name
                  ValueError, so a hard-coded `AttributeError` string fails it
+  KB8 vtab       an untracked name holding a VT (0x0b): the status arm spells it `\\x0b`, so the record is one
+                 physical line even for a consumer that splits on str.splitlines() separators
+  KB9 forged-lf  a TRACKED name holding a real LF, marked skip-worktree so the delegated flag sweep names it in a
+                 FORGED detail: the detail must spell it `x\\ny.txt` (one escape, so no doubled backslash)
+  KB10 forged-bs the same shape with a name holding `\\` + `n`: the detail must spell it `x\\\\ny.txt`, so the two
+                 names cannot share a spelling (the status arm's injectivity, now on the FORGED arm too)
 
 Output: `ROW <id> expect=<one|escaped> k4=<n> named=<yes|no> counts=<yes|no> rc=<n> match=<yes|no>` then
 `SUMMARY rows=3 mismatches=<M>` and `EXIT=<0|1>`. Exit 2 on usage or a fixture failure. `--work` must be absent or
@@ -37,7 +43,7 @@ ENV.update({"GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": os.devnull, "LC_ALL
             "GIT_AUTHOR_NAME": "r87 fixture", "GIT_AUTHOR_EMAIL": "fixture@r87.invalid",
             "GIT_COMMITTER_NAME": "r87 fixture", "GIT_COMMITTER_EMAIL": "fixture@r87.invalid",
             "GIT_AUTHOR_DATE": "2026-11-08T00:00:00Z", "GIT_COMMITTER_DATE": "2026-11-08T00:00:00Z"})
-ROWS = ("KB1", "KB2", "KB3", "KB4", "KB5", "KB6", "KB7")
+ROWS = ("KB1", "KB2", "KB3", "KB4", "KB5", "KB6", "KB7", "KB8", "KB9", "KB10")
 STUB = ("# r87 KB4 stub writer: one long exception message\n"
         "def git(*a, **k):\n"
         "    raise AttributeError('stub')\n\n\n"
@@ -88,6 +94,17 @@ def apply_row(clone, row):
             f.write(b"carriage return\n")
     elif row in ("KB4", "KB7"):
         pass  # the shape is the tool copy, not the repository
+    elif row == "KB8":
+        with open(os.path.join(clone, "vt\x0bname.txt"), "wb") as f:
+            f.write(b"a vertical tab in the name\n")
+    elif row in ("KB9", "KB10"):
+        # staged, not committed: a commit would leak this row's name into the next row's fixture (measured: KB10 saw
+        # KB9's LF-named file and the sweep named it first). `ls-files -v` lists index entries, so staging is enough.
+        name = "x\ny.txt" if row == "KB9" else "x\\ny.txt"
+        with open(os.path.join(clone, name), "wb") as f:
+            f.write(b"tracked\n")
+        git(clone, "add", "-f", "--", name)
+        git(clone, "update-index", "--skip-worktree", name)
     elif row == "KB6":
         with open(os.path.join(clone, 'quo"te.txt'), "wb") as f:
             f.write(b"a quote in the name\n")
@@ -158,6 +175,20 @@ def main(argv):
             expect = b"cr\\rname.txt"
             named = any(expect in a or expect in b for a, b, _ in records)
             detail = f"records={[a[:40] for a, _, _ in records]}"
+        elif row == "KB8":
+            expect = b"vt\\x0bname.txt"
+            named = any(a == b"vt\\x0bname.txt" for a, _b, _c in records)
+            detail = f"records={[a[:40] for a, _, _ in records]}"
+        elif row == "KB9":
+            expect = b"x\\ny.txt"
+            details = [c for _a, _b, c in records]
+            named = any(b"x\\ny.txt" in c and b"x\\\\ny.txt" not in c for c in details)
+            detail = f"details={[c[:90] for c in details]}"
+        elif row == "KB10":
+            expect = b"x\\\\ny.txt"
+            details = [c for _a, _b, c in records]
+            named = any(b"x\\\\ny.txt" in c for c in details)
+            detail = f"details={[c[:90] for c in details]}"
         elif row == "KB6":
             expect = b'quo"te.txt'
             named = any(a == b'quo"te.txt' for a, _b, _c in records)
