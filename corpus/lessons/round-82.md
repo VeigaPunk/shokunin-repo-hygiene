@@ -33,7 +33,11 @@ No inherited lane leftovers (`jj-lane.sh state` at start: `local=remote=488956c4
 
 ## Mistakes
 
-(to be filled at A.)
+| # | class | evidence pointer | captured-by | fix |
+|---|---|---|---|---|
+| M1 | freeze chronology slip: the P commit (1cb7c7d) carried the preregistration file together with the controls, so the freeze-check's strict-ancestor test reports CONTROL-ADDED-NOT-BEFORE-FREEZE for both controls and FROZEN-EDITED for the prereg after F3 fixes the Control path parse | `census/round-82/records/freeze-check-at-P.txt` (SUMMARY claims=2 findings=3) | the freeze-check itself fired, but only after P landed; Q99's pre-freeze feasibility is not the same check | disclosed here and in the report; the round proceeds with digest-bound counters (every receipt binds its instrument digest), and the closure judges the chronology defect rather than a re-dated freeze; next round P holds controls only and F holds the prereg file alone |
+| M2 | C2 control baseline mis-stated: the r82 counter's m1/m2 rows were expected to fail on the Base tool under the default launch, but the Base (R) tool passed them there (`records/prefreeze/c2-base-default.txt` 16/16); the leak reproduces only when the caller's environment carries job control (`SHELLOPTS=monitor` exported into the tool's shell) | `records/prefreeze/c2-base-default.txt` (mismatches=0) vs `controls/c2-K-a-do-nothing.txt` under `env SHELLOPTS=monitor` (mismatches=4) | Q70's feasibility leg (run the do-nothing candidate on the new rows before freeze) — fired | C2's target now requires green under BOTH launches; the default launch is the bounded baseline, monitor is the delta |
+
 
 ## Wave
 
