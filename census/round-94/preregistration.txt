@@ -1,0 +1,86 @@
+souji round 94 — PREREGISTRATION (frozen before any after-data)
+Lane: souji-shokunin (id souji). Lane base eddb1be6c34c2e0bef8c1e8ae6ea2f4b381c5536 (r93 closed admitted; its non-author
+spot-check is corpus/lessons/round-93-verifier-spotcheck.md, routed defects §5 items 1-5). Date: 2026-11-09. Attempt 1.
+Author: L1 SoujiR94. Instrument commit P1 24cd67b0eff2cf3ec98cbfe74e3f4ef3fdaab88a; control commit P2 39d4163a66c350f219287530a5aed6ac9d5e7224. This file is commit F: it is the only file in
+F. No sentence below may be widened after this point. A wave artifact that falsifies a sentence is recorded in
+plans/round-94.md as a narrowing amendment or an honest stop — never repaired silently (Amendment 59). Pre-freeze
+feasibility is disclosed in census/round-94/controls/prefreeze-feasibility-note.txt: neither after arm (the r94 search
+on its targets, the arms counter on the r94 probe) was run before F.
+
+ROUND SHAPE. One v1 wave of 12 seats (policy band 8-16): 3 executor, 2 reviewer, 1 critic, 2 mutation-tester,
+1 sentinel, 1 connector, 1 scout, 1 scribe. Attack seats under the addendum's four-role definition (reviewer, critic,
+mutation-tester, labrat): 5/12 = 42 %. The L1 holds the canonical planner seat (the validator rejects `planner`); the
+planning data-walk rides the connector seat. Residual calls: none planned. Sources rows S357 (Stryker Mutator, Mutant
+states and metrics) and S358 (sysexits(3) EX_SOFTWARE), opened 2026-11-09; the knowledge entry they ground is
+corpus/knowledge/mutant-crash-is-not-a-kill.md; C1 rests on them (sourced claim).
+
+================================================================================
+C1 — axis calibration 7 (the lane's lowest owned, non-retired axis)
+================================================================================
+CLAIM. The r93 survivor search's kill rule scores a mutant whose counter raises an uncaught exception as killed (r93
+closure routed defect 2; R93Sentinel M1): on the five r94 targets it reports both crash fixtures `killed=yes`. The r94
+search census/round-94/c1-survivor-search.py (a crash sentinel: a sitecustomize `sys.excepthook` that exits 70, S358,
+inherited by the harness and the counter it spawns; and the r94 rule: a harness exit 70 or any ROW `rc=70` is
+`errored`, S357) scores both crash fixtures `errored` while keeping the two semantic kills killed and the survivor
+surviving. Counted quantity: crash fixtures the search scores killed — before 2, after 0 — with the three non-crash
+verdicts unchanged.
+TARGETS. census/round-94/c1-targets.json (5 ids): h-crash-late (the counter's final `return 0 if ok else 1` raises
+RuntimeError after every ITEM line is printed), h-crash-index (`_ledger` builds `(r[1], r[2], r[3])[:2]`: an
+IndexError on a three-column ledger row only, same value otherwise), h-ok-admits-one and a491c22-<-to-<= (the r93 C1
+semantic kills), a127c26-True-to-False (an r92/r93 residual survivor).
+INSTRUMENTS. Search census/round-94/c1-survivor-search.py (the r93 search plus the sentinel, the r94 rule and the two
+crash hand edits); harness census/round-93/c1-false-row-harness.py and population census/round-93/c1-false-rows.tsv
+unchanged (r93 pins 1868a570... and d6439f65...); counter census/round-87/c1-pointer-counter.py unchanged (fd0a8e24...).
+Pins (sha256): search 97b8defa5c3c007c..., targets 0117cad7fce69d27..., control wrapper b733032f..., forgery
+runner bee948af...; every receipt prints its instruments' full sha256.
+PREDICATE (after). `python3 -B census/round-94/c1-survivor-search.py --counter census/round-87/c1-pointer-counter.py
+--harness census/round-93/c1-false-row-harness.py --population census/round-93/c1-false-rows.tsv --lane .
+--fleet-root /home/vgpnk/Projects/shokunin --work <empty> --jobs 5 --ids census/round-94/c1-targets.json` prints
+`# crash-sentinel rc=70 check=pass`, `SEARCH-SUMMARY generated=5 ambiguous=0 uncompiled=0 hung=0 scored=5 errored=2
+killed=2 survived=1`, the SEARCH lines for h-crash-late and h-crash-index read `killed=errored`, those for
+h-ok-admits-one and a491c22-<-to-<= read `killed=yes`, that for a127c26-True-to-False reads `killed=no`, and it exits 0.
+CONTROL — do nothing (P2, census/round-94/controls/c1-control-r93-rule.txt). census/round-94/c1-control-r93-rule.py
+runs the frozen r93 search (its own verdict/score/main, search sha256 6089260b...) with only its HAND tuple extended by
+the two crash edits; same arguments: `SEARCH-SUMMARY generated=5 ambiguous=0 uncompiled=0 hung=0 scored=5 errored=0
+killed=4 survived=1`, both crash fixtures `killed=yes`, EXIT 0. No work does not reach errored=2.
+CONTROL — forgeries (P2, census/round-94/controls/c1-forgery-controls.txt). Two one-edit copies of the r94 search:
+FA (verdict never returns "yes": every non-zero exit errored) prints `errored=4 killed=0 survived=1`; FB (no sentinel
+on PYTHONPATH) prints `errored=0 killed=4 survived=1`. Both differ from the predicate: `C1-FORGERY-SUMMARY forgeries=2
+refused=2`, EXIT 0. Blanket refusal and a rule without the sentinel do not meet the predicate.
+STATED LIMITS. (i) Two crash fixtures, hand-written; the claim is about these five verdicts, not a census of every
+generated mutant (a full re-score is reported, not claimed, if the wave runs it). (ii) The sentinel covers an uncaught
+exception in the main thread of a Python process started with site enabled; os._exit, signals, thread exceptions and
+a counter that legitimately exits 70 are not distinguished. (iii) The harness, population and counter are unchanged;
+the r93 routed defects 1 (reproducibility from committed bytes) and 3 (clauses, not spellings) are not addressed.
+
+================================================================================
+C2 — axis operability 8
+================================================================================
+CLAIM. The r93 forgery probe census/round-93/c2-forgery-probe.py exits 1 — its "a forgery was not rejected" code — on
+7 of the 8 setup arms of census/round-94/c2-setup-arms.py (an existing empty --work aborts with a FileExistsError
+traceback; a --work that is a regular file, a missing --fixture/--tool/--before, a fixture that prints nothing, and a
+fixture that crashes on forgeries all end in exit 1), so a setup failure is indistinguishable from a surviving forgery
+(r93 closure routed defect 5). The r94 probe census/round-94/c2-forgery-probe.py (same eight forgeries and verdict)
+runs on an existing empty --work and refuses every other setup arm with exit 2 and a `C2-FORGERY-FATAL:` line, while
+its two verdict arms keep exit 0 (all eight rejected, r93 fixture) and exit 1 (five rejected, r92 fixture). Counted
+quantity: conforming arms of 10 — before 3, after 10.
+INSTRUMENTS. Probe census/round-94/c2-forgery-probe.py; arms counter census/round-94/c2-setup-arms.py (10 arms: P1, P2
+verdict; S1-S8 setup; its S7/S8 synthetic fixtures are written under --work and their sha256 printed); fixtures
+tests/fixtures/r93-k4-flagfail.py (ed15094e...) and tests/fixtures/r92-k4-flagfail.py (2c9bd76c...), tool
+tools/souji-record-agreement.py (fc0e35c2...), before census/round-92/controls/c2-before-tool.py (21e5c740...), all
+unchanged. Pins (sha256): probe e3ebe6e9318a9a55..., arms counter 3bb8c1b9c128c135..., forgery runner 5f2e8916....
+PREDICATE (after). `python3 -B census/round-94/c2-setup-arms.py --probe census/round-94/c2-forgery-probe.py
+--fixture-pass tests/fixtures/r93-k4-flagfail.py --fixture-fail tests/fixtures/r92-k4-flagfail.py --tool
+tools/souji-record-agreement.py --before census/round-92/controls/c2-before-tool.py --work <empty>` prints
+`ARMS-SUMMARY arms=10 conform=10` and exits 0.
+CONTROL — do nothing (P2, census/round-94/controls/c2-control-r93-probe.txt). The same command with `--probe
+census/round-93/c2-forgery-probe.py` printed `ARMS-SUMMARY arms=10 conform=3` (P1, P2, S2 conform; S1, S3-S8 exit 1),
+EXIT 1. No work does not reach 10.
+CONTROL — forgeries (P2, census/round-94/controls/c2-forgery-controls.txt). Two one-edit copies of the r94 probe: GA
+(the verdict exit is 2 instead of 1) and GB (an existing empty --work is refused) each score conform < 10 under the
+arms counter: `C2-FORGERY-CTL-SUMMARY forgeries=2 refused=2`, EXIT 0. Turning every failure into exit 2, or refusing
+the empty directory, does not meet the predicate.
+STATED LIMITS. (i) Ten arms, chosen by the L1; other setup failures (unreadable-but-present files, a fixture that
+hangs, disk full mid-run, a --work symlink) are the wave's to try. (ii) The probe's forgery verdicts are the r93 ones;
+this claim is about exit-code discipline, not forgery coverage (routed defect 4, KFF19's second length/filler, is not
+addressed). (iii) S7/S8 are synthetic fixtures written by the counter.
