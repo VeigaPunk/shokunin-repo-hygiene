@@ -1,0 +1,22 @@
+souji round 96 — pre-freeze feasibility note (P1 identical bytes, L1 scratch, before F)
+
+C1 (calibration): the r96 search (census/round-96/c1-survivor-search.py, built byte-identical to the P1 copy
+/fast/scratch/hyaku/souji-r96/L1/build/c1-r96.py) on the ten r95 targets prints
+  # crash-sentinel rc=70 check=pass excepthook=70 sysexit=70 atexit=70 thread=70 osexit=70 declared=1 argparse=2
+  SEARCH-SUMMARY generated=10 ambiguous=0 uncompiled=0 hung=0 scored=10 errored=7 killed=2 survived=1  EXIT 0
+and the declared-shape table (census/round-96/declared-shapes.py, scripts census/round-96/shapes/) prints
+  SHAPES-SUMMARY shapes=12 mismatched=0  EXIT 0
+(p1 scratch: shape run /fast/scratch/hyaku/souji-r96/L1/build/shape96-run; a1..a12 ok; v3/w1/w2/a3b crash 70; t1/t4
+0/0). The r95 hook on the same scripts prints mismatched=2 (t1/t4 70), the r94-rule control mismatched=6
+(census/round-95/records/declared-shapes.txt).
+
+C2 (operability): the pipe-holder trial (fixture-pipe-holder.py forking a new-session child that keeps the pipes
+open, fixture exits 0 at once) with --timeout 5 prints
+  C2-FORGERY-FATAL: the fixture run for the positive control exceeded --timeout 5s; its process group was killed
+  EXIT 2  (5 s wall)
+and the full twenty-arm counter (census/round-96/c2-setup-arms.py, fresh --work, --jobs 4) prints
+  ARM T1 exit=2 want=2 line=yes conform=yes
+  ARMS-SUMMARY arms=20 conform=20  EXIT 0  (164 s wall, S12 and T1 on the 120 s probe timeout)
+The r95 probe on the same counter prints ARMS-SUMMARY arms=20 conform=19 (T1 exit=hung; the counter kills the arm
+at 300 s), EXIT 1. The after receipts (A) are re-run after F on committed bytes; no after receipt was written
+before F.

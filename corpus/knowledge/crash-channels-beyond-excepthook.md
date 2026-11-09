@@ -2,14 +2,16 @@
 
 source: S360 (Python `sys.monitoring`, the RAISE event); S361 (Python `threading.excepthook`); S362 (Python
 `os._exit`); S363 (Python `subprocess` returncode, negative = killed by a signal); S364 (Python `atexit`, exceptions
-in exit handlers); with S358 (sysexits EX_SOFTWARE 70) and S359 (`sys.excepthook` never sees SystemExit) from r94;
-scored against census/round-95/c1-survivor-search.py, census/round-93/c1-false-row-harness.py and the frozen r87
-counter census/round-87/c1-pointer-counter.py at round 95.
-verified-at: all five pages opened 2026-11-09 from docs.python.org/3 (Python 3.15 documentation), captures
-census/round-95/srcs/{monitoring,threading,os,subprocess,atexit}.html with their tag-stripped text beside them; each
-quoted sentence's occurrence count in the whitespace-normalized tag-stripped text is in its SOURCES row.
-recheck: 365d, or when a quoted entry changes, or when the host Python changes minor version (the RAISE event and the
-atexit-to-unraisablehook routing are CPython behaviour observed on 3.14.8).
+in exit handlers); S365 (Python `sys.monitoring`, the EXCEPTION_HANDLED event); S366 (Python `os.set_blocking`);
+with S358 (sysexits EX_SOFTWARE 70) and S359 (`sys.excepthook` never sees SystemExit) from r94; scored against
+census/round-96/c1-survivor-search.py, census/round-93/c1-false-row-harness.py and the frozen r87 counter
+census/round-87/c1-pointer-counter.py (r95 instruments at round 95, r96 at round 96).
+verified-at: S360–S364 and S365–S367 opened 2026-11-09 from docs.python.org/3 (Python 3.15 documentation); S360–S364
+captures census/round-95/srcs/, S365–S367 captures census/round-96/srcs/ (monitoring, os, subprocess), each with its
+tag-stripped text beside it; each quoted sentence's occurrence count in the whitespace-normalized tag-stripped text
+is in its SOURCES row.
+recheck: 365d, or when a quoted entry changes, or when the host Python changes minor version (the RAISE event,
+EXCEPTION_HANDLED and the atexit-to-unraisablehook routing are CPython behaviour observed on 3.14.8).
 
 Round 95 (C1, calibration of the survivor search's verdicts). Ground: the r94 closure's routed defects 1 and 2
 (corpus/lessons/round-94-verifier-spotcheck.md §5), R94ScoutSources FW1, R94Sentinel F1/F2, plans/round-94.md A1.
@@ -84,3 +86,26 @@ channels and keeps status 1 for a declared exit and 2 for argparse (`# crash-sen
   per channel would bind them.
 - S360's page does not name SystemExit and S361's does not state that the main thread keeps its status: both are
   observations on CPython 3.14.8, now disclosed in the rows (A7).
+
+
+## r96 audit (C1, calibration): the SystemExit leg learns to tell a catch from a release
+
+Round 96 (C1, calibration 7, the lane's lowest owned non-retired axis). Ground: r95 closure §7 (SystemExit-leg
+rewrite for declared `sys.exit` in `main`, Q172 precondition `mismatched=0`), plans/round-95.md A1, R95Sentinel F1/F3
+and Q172.
+
+- **Terminating audit.** The r95 leg marked any SystemExit first raised inside a main-script function foreign on
+  arrival at `<module>` and never cleared it, so a SystemExit caught at the top level (t1/t4: plain 0, r95-hooked 70)
+  was scored errored. The r96 hook registers an `EXCEPTION_HANDLED` callback (S365) that clears the mark only when
+  the same exception is handled at `<module>`; a `finally` also fires `EXCEPTION_HANDLED` (observed: RAISE, EH,
+  finally, EH, RAISE) but does not stop the exception terminating, so the clear is scoped to `<module>` and a3b
+  (try/finally, still terminating) stays errored. The declared-shape table (Q172, `census/round-96/declared-shapes.py`,
+  twelve shapes from R95Labrat) now reads `mismatched=0` (r95: 6, r95-hook: 2, t1/t4).
+- **Signal-safe crash path.** The marker write is now a raw `os.write` on a momentarily non-blocking fd 2 (S366):
+  from a signal handler it no longer deadlocks on the TextIOWrapper lock (E3c: plain `rc=0`, r95-hooked `HUNG` at 12 s,
+  r96-hooked `rc=70` in 1 s), and on a full undrained pipe it cannot block the exit (E16/E18: `rc=70`, no marker).
+  The marker is best-effort; the exit code is the verdict.
+- **Per-channel CHECK reasons.** The precondition asserts each channel's `SOUJI-R96-CRASH` reason string, so the
+  cross-wired legs m02/m03 (r95: surviving) now fail the CHECK instead of passing it.
+- **Counts.** The ten r95 targets are unchanged (`errored=7 killed=2 survived=1`); the wave re-scores the full
+  population (reported, not claimed).
