@@ -5,12 +5,17 @@ Generates single-token operator mutants of the frozen r87 counter (census/round-
 `tokenize` (comparison flips, boolean-operator swaps, `not` deletion, True/False swaps, integer 0/1 swaps), plus
 named hand edits, applies each EXACTLY ONCE to a scratch copy, and scores it with a pinned harness on a pinned
 population. Kill rule (the battery's, unchanged): a kill is a non-zero harness exit on that population. A mutant
-that does not compile is skipped and counted (`uncompiled`), never scored as killed.
+whose source line occurs more than once is skipped (`ambiguous`); one that does not compile is skipped
+(`uncompiled`); one whose harness run exceeds --timeout seconds is stopped (its whole process group is killed) and
+counted `hung` — none of the three is scored killed or survived. (r92: mutant a272c34 makes `line.find` loop
+forever; without the timeout the census never finished.) Each per-mutant harness work tree (a lane clone) is deleted
+once scored; harness.out stays.
 
-Output: one `SEARCH <id> line=<n> killed=<yes|no> rc=<n>` line per scored mutant and
-`SEARCH-SUMMARY generated=<G> uncompiled=<U> scored=<S> killed=<K> survived=<V>`; `--emit` writes the survivors'
-{id, clause, old, new} records as JSON (same schema as c1-mutants.json members; `old` is the whole source line).
-Scratch only under --work (never /tmp); exit 0 when the search ran, 2 on setup error.
+Output: one `SEARCH <id> line=<n> killed=<yes|no> rc=<n>` line per scored mutant, printed as it is scored, and
+`SEARCH-SUMMARY generated=<G> ambiguous=<A> uncompiled=<U> hung=<H> scored=<S> killed=<K> survived=<V>`; `--emit`
+writes the survivors' {id, clause, old, new} records as JSON (`old` is the whole source line). `--ids` restricts
+the run to named generated ids. Scratch only under --work (never /tmp); exit 0 when the search ran, 2 on setup
+error.
 """
 import argparse
 import concurrent.futures as cf
@@ -18,6 +23,7 @@ import hashlib
 import io
 import json
 import os
+import signal
 import shutil
 import subprocess
 import sys
@@ -80,14 +86,23 @@ def score(m, src, counter_name, ns, idx):
     mc = os.path.join(d, counter_name)
     with open(mc, "w", encoding="utf-8") as f:
         f.write(msrc)
-    p = subprocess.run([sys.executable, "-B", ns.harness, "--counter", mc, "--lane", ns.lane,
-                        "--fleet-root", ns.fleet_root, "--work", os.path.join(d, "w"),
-                        "--population", ns.population], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    p = subprocess.Popen([sys.executable, "-B", ns.harness, "--counter", mc, "--lane", ns.lane,
+                          "--fleet-root", ns.fleet_root, "--work", os.path.join(d, "w"),
+                          "--population", ns.population], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                         start_new_session=True)
+    try:
+        out, err = p.communicate(timeout=ns.timeout)
+        state = "scored"
+    except subprocess.TimeoutExpired:
+        # the harness and the counter it spawns share one session: kill the whole group (r92: a272c34 loops)
+        os.killpg(p.pid, signal.SIGKILL)
+        out, err = p.communicate()
+        state = "hung"
     with open(os.path.join(d, "harness.out"), "wb") as f:
-        f.write(p.stdout + b"\n--stderr--\n" + p.stderr)
+        f.write(out + b"\n--stderr--\n" + err + (b"\n--hung: killed after --timeout--\n" if state == "hung" else b""))
     # each harness work tree is a lane clone (~0.7 GB): drop it once scored, keep harness.out (fleet disk, r92)
     shutil.rmtree(os.path.join(d, "w"), ignore_errors=True)
-    return m, "scored", p.returncode
+    return m, state, p.returncode
 
 
 def main(argv):
@@ -99,6 +114,7 @@ def main(argv):
     ap.add_argument("--fleet-root", required=True)
     ap.add_argument("--work", required=True)
     ap.add_argument("--jobs", type=int, default=6)
+    ap.add_argument("--timeout", type=int, default=300, help="seconds per harness run before the mutant is `hung`")
     ap.add_argument("--emit", default=None)
     ap.add_argument("--ids", default=None,
                     help="JSON list of mutant ids (or of objects with an `id`) to score; every id must be generated")
@@ -133,14 +149,18 @@ def main(argv):
     with cf.ThreadPoolExecutor(max_workers=ns.jobs) as ex:
         futs = [ex.submit(score, m, src, name, ns, i) for i, m in enumerate(muts)]
         for fu in futs:
-            res.append(fu.result())
+            m, s, rc = fu.result()
+            res.append((m, s, rc))
+            if s == "scored":
+                print(f"SEARCH {m['id']} line={m['line']} killed={'no' if rc == 0 else 'yes'} rc={rc}", flush=True)
+            else:
+                print(f"SKIP {m['id']} line={m['line']} state={s}", flush=True)
     amb = sum(1 for _m, s, _rc in res if s == "ambiguous")
     unc = sum(1 for _m, s, _rc in res if s == "uncompiled")
+    hung = sum(1 for _m, s, _rc in res if s == "hung")
     scored = [(m, rc) for m, s, rc in res if s == "scored"]
     surv = [m for m, rc in scored if rc == 0]
-    for m, rc in scored:
-        print(f"SEARCH {m['id']} line={m['line']} killed={'no' if rc == 0 else 'yes'} rc={rc}")
-    print(f"SEARCH-SUMMARY generated={len(muts)} ambiguous={amb} uncompiled={unc} scored={len(scored)} "
+    print(f"SEARCH-SUMMARY generated={len(muts)} ambiguous={amb} uncompiled={unc} hung={hung} scored={len(scored)} "
           f"killed={len(scored) - len(surv)} survived={len(surv)}")
     if ns.emit:
         with open(ns.emit, "w", encoding="utf-8") as f:
