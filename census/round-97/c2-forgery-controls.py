@@ -70,6 +70,11 @@ def main(argv):
         # (conform=20 AND survivors=0) is the refusal test below, not the runner's own print.
         arm_t1 = re.search(r"^ARM T1 .*survivors=(\d+)$", out, re.M)
         surv = int(arm_t1.group(1)) if arm_t1 else None
+        # A-04 class: the GB decode-replace forgery can make a S9 exit 1 look like a verdict exit (exit 1,
+        # conform=yes) while the arm's expected FATAL line is missing (line=no). Read S9 by its own line so a
+        # legit exit-code sum cannot hide a forged line. Likewise GC (no cap) turns S12/T1 into hung runs under
+        # the probe's new selector wait, whose per-arm wall is the probe's own 120 s timeout, not a full
+        # communicate() block: a GC run therefore ends hung on S12/T1 (line=no) inside 300 s.
         rej = (p.returncode == 1 and m is not None and summ != "arms=20 conform=20") or (fid == "GD" and surv != 0)
         refused += rej
         print(f"FORGERY {fid} sha256={hashlib.sha256(text.encode()).hexdigest()} arms_exit={p.returncode} "

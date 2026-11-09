@@ -82,3 +82,38 @@ it survive a cold restart. This decision is recorded in the wave spec context so
 
 Amendments below never widen a frozen sentence. Each falsifying artifact is named with its seat and the line
 it falsifies; the ledger `.ufo/waves/round-97/claim-falsification.tsv` points at these amendment ids.
+
+### A7 — C2 CONTROL surivor-expectation correction: the r96-probe `survivors=1` number is wrong (frozen number, corrected)
+
+Artifact: census/round-97/controls/c2-control-r96-probe.txt line `ARM T1 exit=2 want=2 line=yes conform=yes
+survivors=0` under the r97 counter with the r96 probe as `--probe` (full receipt: conform=20, EXIT 0, no
+`--survivors` detail). The prereg CONTROL paragraph's sentence "Against the r96 probe: conform=20 with
+`survivors=1` on T1" claims an observed 1; the receipt says 0, twice (the detached run's T1.out
+`--survivors 0 planted-killed 1` and the final receipt). The counter's snapshot reaper counts only the planted
+identity, and r96's probe kills its own fixture grandchild-side via the timeout group kill once it stops
+waiting on pipe EOF: the survivor is probe-owned, not counter-owned, so 0 is the correct number under the
+snapshot counter. The C2 measured quantity (conform=20 with survivors=0) is therefore NOT discriminated by
+the r96-probe control; the r95 probe (T1 hung, conform=19, EXIT 1, census/round-97/controls/
+c2-control-r95-probe.txt) is the discriminating control. Amendment 59 (i): the claim does NOT depend on the
+r96 control's survivor number; the counting predicate is the same (20/20 + survivors=0), the control that
+shows the move is the r95 per-arm hang, and the survivor count is disclosed as a probe-owned count. No number
+in the predicate or summary changes; only the control sentence is corrected. The gauge the wave re-derives is
+the r95 hang; GD's failure (survivor) is unaffected.
+
+### A8 — GD forgery survives as label-only (same shape as A7): no forgery-refusal gain, reported honestly
+
+Artifact: census/round-97/controls/c2-forgery-controls.txt GD line: `arms_exit=0 summary=arms=20,conform=20
+refused=no` (survivors=0 by the counter's snapshot count; planted-killed absent for this probe because the
+probe's timeout group kill reaps its planted grandchild before the counter's reap pass). GD's ONE-edit family
+(the probe claims setup refusal without reaping by identity) does not bind the counterexample it named: the
+counter's snapshot counts a survivor only when it is caller-visible at reap time, and the GD probe already
+removed it via the probe session kill. Per Amendment 59 the honest-offering is option (ii): C2's counted
+quantity — "the counter reaps the T1 grandchild by identity (the fixture's per-arm absolute path)" — is NOT
+proved on the planted-vs-recycled distinction by this control set, and the forgery-refusal number is
+GA/GB/GC-refused 3/3 plus GD label-only (survivors=0 reported with a planted-killed count of 0/1 in the arm
+.out, which the counter does not bind). The claim's falsifiable numbered predicate (conform=20 with
+survivors=0, exit 0) stands; the capability sentence is narrowed. GC `conform=0` (every arm exit=1, line=no,
+survivors variable) is refused by a different mechanism than the prereg's "no fixture timeout" wording — the
+prereg's GC mechanism (S12/T1 exit 2 hung arms) is superseded by this measured one: removing the output cap
+makes the probe's --max-output refusal (C2-FORGERY-FATAL, exit 2) unreachable and the probe verdict exits 1
+on every arm (GA-adjacent behaviour).

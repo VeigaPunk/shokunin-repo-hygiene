@@ -252,6 +252,29 @@ def main(argv):
     def one(arm):
         aid, fx, tl, bf, wk, want, line = arm
         extra = ["--timeout", "0"] if aid == "T3" else []
+        # A4: snapshot the planted identity set BEFORE starting the arm (the fixture path token), so the reap
+        # after the arm can distinguish processes the arm planted from processes already on the host carrying
+        # a recycled token. The counter and this worker pid are never targets.
+        boot = open("/proc/sys/kernel/random/boot_id").read().strip()
+        def _snapshot():
+            found = set()
+            for name in os.listdir("/proc"):
+                if not name.isdigit():
+                    continue
+                pid = int(name)
+                if pid in (os.getpid(),):
+                    continue
+                try:
+                    with open(f"/proc/{pid}/cmdline", "rb") as f:
+                        argv = f.read().split(b"\x00")
+                except OSError:
+                    continue
+                if any(a == fx.encode() for a in argv):
+                    st = _proc_starttime(pid)
+                    if st is not None:
+                        found.add((pid, st, boot))
+            return found
+        before = _snapshot() if aid == "T1" else set()
         p = subprocess.Popen([sys.executable, "-B", probe, "--fixture", fx, "--tool", tl, "--before", bf,
                               "--work", wk] + extra, stdout=subprocess.PIPE, stderr=subprocess.PIPE, start_new_session=True)
         try:
@@ -269,15 +292,50 @@ def main(argv):
             f.write(text + (f"\n--hung: killed after --arm-timeout {ns.arm_timeout}s--\n" if rc == "hung" else ""))
         stream = se if line == FATAL else so
         has = any(l.startswith(line) for l in stream.decode("utf-8", "replace").splitlines())
-        # A4: on the T1 arm, reap the escaped grandchild by argv identity (the fixture path) and count
-        # survivors. A8: a signal exit (rc < 0) prints as exit=<rc> (never coerced to "hung").
+        # A4: on the T1 arm, reap the escaped grandchild by its planted (pid, starttime, boot_id) identity and
+        # count survivors that are NOT in the before set. A8: a signal exit (rc < 0) prints as exit=<rc>.
         survivors = None
         if aid == "T1":
-            exclude = {os.getpid(), p.pid}
-            _reap_by_identity(fx, exclude)
-            survivors = _survivors(fx, exclude)
+            killed = 0
+            for name in os.listdir("/proc"):
+                if not name.isdigit():
+                    continue
+                pid = int(name)
+                if pid in (os.getpid(), p.pid):
+                    continue
+                try:
+                    with open(f"/proc/{pid}/cmdline", "rb") as f:
+                        argv = f.read().split(b"\x00")
+                except OSError:
+                    continue
+                if not any(x == fx.encode() for x in argv):
+                    continue
+                st = _proc_starttime(pid)
+                if st is None or (pid, st, boot) in before:
+                    continue
+                try:
+                    os.kill(pid, signal.SIGKILL)
+                    killed += 1
+                except (ProcessLookupError, PermissionError):
+                    pass
+            survivors = 0
+            for name in os.listdir("/proc"):
+                if not name.isdigit():
+                    continue
+                pid = int(name)
+                if pid in (os.getpid(), p.pid):
+                    continue
+                try:
+                    with open(f"/proc/{pid}/cmdline", "rb") as f:
+                        argv = f.read().split(b"\x00")
+                except OSError:
+                    continue
+                if any(x == fx.encode() for x in argv):
+                    st = _proc_starttime(pid)
+                    if st is not None and (pid, st, boot) not in before:
+                        survivors += 1
             with open(a(f"{aid}.out"), "a", encoding="utf-8") as f:
-                f.write(f"\n--survivors {survivors}--\n")
+                f.write(f"\n--survivors {survivors} planted-killed {killed}--\n")
         return aid, rc, want, has, survivors
 
     with cf.ThreadPoolExecutor(max_workers=ns.jobs) as ex:
