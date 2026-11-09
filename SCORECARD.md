@@ -2470,3 +2470,30 @@ latch is a trade (A9). `capabilities:` table unchanged.
   (L0 question).
 - Operator decision needed (L0): whether the lane's counter may keep the reap in any form before r98 lands.
 - Routed: ExecC1 docstring `mismatched=4` → `2` (A17); the lesson's QUALITY criteria Q173/Q174 are the r98 gates.
+
+### Round 98 measurements (2026-11-09; lane base `ff254387005e35ff442555451374ff079dafc2db`; instruments `census/round-98/` e8ba780a/0886271b/12e6ddcb/a7760a76)
+
+| claim | axis | before | after | counting command | verdict |
+|---|---|---|---|---|---|
+| C1 object-keyed latch, 17-shape table | calibration 7 (no 0–10 mapping; unchanged) | r95/r97 hooks on the 17-shape table `SHAPES-SUMMARY shapes=17 mismatched=3` (q1o/q1q at 1 under r97, q1i at 70 under both) — `python3 -B census/round-98/declared-shapes.py --search census/round-98/controls/c1-r97-search.py --scripts census/round-98/shapes --work <empty>` | r98 hook `SHAPES-SUMMARY shapes=17 mismatched=0`, EXIT 0 (`census/round-98/records/shapes-r98.txt`) | `python3 -B census/round-98/declared-shapes.py --search census/round-98/c1-survivor-search.py --scripts census/round-98/shapes --work <empty>` | **admitted** (L1 measurement; non-author closure pending). q1i pinned declared at A0.1 freeze (supersedes r97 limit (i)); q1o/q1q at 70. |
+| C1 no-harm on the 278-mutant population | calibration 7 (not re-scored) | r97 search `errored=53 killed=139 survived=76` | r98 search identical summary, survivor sets byte-identical (76 ids, empty symmetric difference) (`census/round-98/records/search-r98.log`) | `python3 -B census/round-98/c1-survivor-search.py --counter census/round-87/c1-pointer-counter.py --harness census/round-93/c1-false-row-harness.py --population census/round-93/c1-false-rows.tsv --lane . --fleet-root /home/vgpnk/Projects/shokunin --work <empty> --jobs 5` | no-harm holds on the population |
+| C2 ownership reap + decoy predicate | operability 8 (no 0–10 mapping; unchanged) | r97 counter kills foreign decoys (A12, 30 of 42); `ARM T1 survivors=0` vacuous (C-5); conform does not bind survivors (C-3) | `ARM T1 exit=2 want=2 line=yes conform=yes survivors=0` with the descendant-relation count; `ARMS-SUMMARY arms=20 conform=20` binds survivors=0 on T1; decoy spared by r98, killed by r97; CM8 (argv-only) fails the decoy predicate | `python3 -B census/round-98/c2-setup-arms.py --probe census/round-98/c2-forgery-probe.py --fixture-pass tests/fixtures/r93-k4-flagfail.py --fixture-fail tests/fixtures/r92-k4-flagfail.py --tool tools/souji-record-agreement.py --before census/round-92/controls/c2-before-tool.py --work <empty> --jobs 4`; `python3 -B census/round-98/c2-decoy-test.py --counter census/round-98/c2-setup-arms.py --probe census/round-98/c2-forgery-probe.py --tool tools/souji-record-agreement.py --before census/round-92/controls/c2-before-tool.py --work <empty>` | **admitted in its binding (survivors byte fixed)**; under host pressure a P1/P2/S1 arm can time out (exit 2) — recorded as end-of-arm outcome, not folded into the survivors binding |
+
+No owned axis score changed (calibration 7, operability 8, coverage 8). Sources re-opened live this round
+(S075/S372/S368, each byte-identical to its committed capture, occurrence 1); no registry row added, so the
+registry stays 294. Routed to r99: M6 (kind labels frozen in a file the runner reads), Q175, Q176.
+
+### Round 98 capability rows
+
+No capability row enters the table: the r98 latch and ownership reap are repaired instruments on existing
+verdicts (declared-exit classification, arm-forgery verdict discipline), not new repertoire; `capabilities:`
+table unchanged.
+
+### Planned (r99)
+
+- C1 (calibration): freeze the kind label and plain exit code per shape in a file the runner reads (M6); make the
+  count itself movable by a relabelling test (Q173 gate) before any new hook is claimed.
+- C2 (operability): run the arms counter under unaudited host load and record the P1/P2/S1 timeout arms as a
+  sub-tick discipline check (M8); re-close the R97 basename-cheat class on the probe side (K5) or record it as a
+  known probe-side limit.
+- Neither claim repeats r98 bytes unchanged: a claim that would pass with no work is rejected, never re-declared.

@@ -3658,3 +3658,20 @@ receipts in P `5bd5a0ce`. Amendments in `plans/round-85.md` (A0-A1 so far); the 
 - Withdrawn sentences (not repaired silently; A9–A15): C1 "closes the trade"; C1 limit (i); C1 A2 "reorder"; C2 "signals
   only processes it planted"; C2 A8 "recording a signal exit distinctly"; C2 control survivors=1 (A7-correction).
 - Frozen counter, probe and instruments are NOT edited after freeze F. Repairs route to r98.
+
+## Round 98 (2026-11-09; lane base `ff254387005e35ff442555451374ff079dafc2db`)
+
+- Claims: C1 calibration 7 (object-keyed latch; **admitted** — 17-shape mismatched=3 → 0, q1o/q1q at 70,
+  q1i pinned declared at A0.1; 278-mutant no-harm with byte-identical survivor sets); C2 operability 8
+  (ownership reap; **admitted in its binding** — survivors byte fixed, decoy spared by r98/killed by r97,
+  CM8 argv-only fails the predicate). Evidence: `census/round-98/`, `plans/round-98.md`, `.ufo/waves/round-98/w1/`
+  (12 seats, attempt 2, SoujiR98a2; inherited from attempt 1, SoujiR98, whose seats were still running at
+  attempt-1 end), `corpus/lessons/round-98.md`.
+- Landed: knowledge corrections (crash-channels-beyond-excepthook, deadline-owned-reaping); QUALITY Q175, Q176;
+  lesson round-98 with M6–M8; SCORECARD r98 rows, planned r99; this LOG entry. No registry row added (294).
+- Withdrawn sentences (not repaired silently): the r97 "closes the trade" and "signals only processes it planted"
+  sentences (superseded by the r98 corrections); the S075 field-4 attribution (kernel-side, S332); the r97
+  prereg "stays errored" limit (i) for q1i (superseded at the A0.1 freeze).
+- Wave incident: R98Connector's cleanup SIGKILLed 26 processes of sibling seats at ~12:33:50Z; any `rc=-9`
+  results from that time are void (recorded in the reports; the L1's own measurements are from post-incident runs).
+- Tool installs: none. No pacman (paused), no uv/npx/binary fetch, no sysctl or sudo.

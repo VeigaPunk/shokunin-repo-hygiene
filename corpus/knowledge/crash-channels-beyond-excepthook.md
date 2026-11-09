@@ -151,3 +151,16 @@ plans/round-97.md A0. Amendments: plans/round-97.md A0.
   only the fourteen shapes listed.
 - The excepthook and thread channels no longer print a traceback. The r97 hook removes the print, it does not reorder it
   before the marker. The crash marker and exit 70 remain.
+
+### r98 correction (appended after the wave; plans/round-98.md A0.1, A9, A11)
+
+- The latch is now keyed on the exception object itself (`exc._souji98_last`, a per-object event stamp;
+  `WeakKeyDictionary` is unavailable for `SystemExit` on CPython 3.14.8). A declared exit is read at atexit as
+  the LIVE foreign object's last stamp being EXCEPTION_HANDLED. q1q closes by construction: object 1's caught
+  stamp can never clear object 2's live mark. q1o closes because a bare `raise saved` fires RAISE (not RERAISE),
+  so the last stamp is RAISE. Measured: `SHAPES-SUMMARY shapes=17 mismatched=0`, with the r95 and r97 hooks on
+  the same table at `mismatched=3` (census/round-98/records/shapes-r98.txt).
+- q1i (module `finally` unwind caught by an outer `except`) is pinned DECLARED at the A0.1 freeze: it is
+  genuinely caught (plain 0), and the r97 prereg "stays errored" limit (i) is superseded, not reinterpreted.
+- A11 restored: `_souji_crash` prints the traceback after the raw marker write (marker stays first, A2) before
+  `os._exit(70)`. A3 kept: the no-free-tool-id fallback still restores fd 2 blocking mode.

@@ -1,0 +1,26 @@
+# souji r98 declared-shapes.expected (written BEFORE running declared-shapes.py; one sentence per shape)
+# Semantics: expected=declared means plain rc must equal hooked rc (a SystemExit caught and not re-raised gives
+# declared; a SystemExit that terminates gives 70). expected=errored means hooked rc must be 70.
+# Shapes: kind, expected hooked outcome.
+a1-sys-exit-helper          declared  # sys.exit(main()) with main returning helper() value: first RAISE at <module>, foreign=None, plain 3 stays declared.
+a5-exit-builtin             declared  # exit(3) inside main(): SystemExit propagates through main to sys.exit() wrap; no foreign helper-raise at <module>, plain 3 stays declared.
+a5b-quit-builtin            declared  # quit(3) inside main(): same as a5, plain 3 stays declared.
+a4-caught-then-return       declared  # SystemExit(9) raised and caught inside main(), then main returns 3: never foreign at <module>, plain 3 stays declared.
+a12-module-raise            declared  # raise SystemExit(main()) at <module>: first RAISE at <module> itself, foreign=None, plain 3 stays declared.
+v1-module-raise             declared  # raise SystemExit(3) at <module>: same as a12, plain 3 stays declared.
+v3-func-args-pattern        errored   # sys.exit(func()) inside main() called bare at <module>: SystemExit first raised in main propagates to <module> terminating (last <module> event RAISE), hooked 70.
+w1-init-helper              errored   # sys.exit(helper()) inside main() called bare at <module>: same terminating shape as v3, hooked 70.
+w2-main-raise-helper        errored   # raise SystemExit(helper()) inside main() called bare at <module>: first-raise in main reaching <module> terminating, hooked 70.
+a3b-try-finally-sysexit     errored   # raise SystemExit inside main() with finally, then sys.exit(main()): EH/RR inside main do not clear; final RAISE at <module> terminates, hooked 70.
+t1-catch-module-falloff     declared  # helper() raises; sys.exit(main()) at <module> caught by except SystemExit: pass: last <module> event for that object is EH, plain 0 stays declared.
+t4-reraise-at-module        declared  # helper() caught, saved, re-raised inside try/except at <module> and caught: last <module> event is EH (second raise caught), plain 0 stays declared.
+x1-module-finally-term      errored   # try: helper() finally: pass at <module> with no catch: EH/RR pairs unwind terminating; last <module> event is RR, hooked 70.
+x2-module-reraise-term      errored   # try: helper() except SystemExit: raise at <module> terminating: same event order as x1 ending in RR, hooked 70.
+q1o-save-then-bare-raise    errored   # except as e: saved=e then bare raise saved outside except: bare raise fires RAISE but not RR; last <module> event is RAISE (after EH), hooked 70.
+q1q-caught-then-direct      errored   # try/helper/except-pass catches object 1, then direct helper() raises object 2 terminating: object 2 last event RAISE with no EH, hooked 70.
+q1i-finally-then-catch      declared  # try/try-helper/finally/except-pass at <module>: finally-unwind EH/RR pairs then outer except catches; last <module> event EH, plain 0 stays declared.
+
+### Freeze note (L1, A0.1): q1i pinned DECLARED at freeze.
+### R98Reviewer1 F3 + R98Critic K1 + R98MutC1 F3 disagree on the r97 "stays errored" limit (i);
+### the L1 freeze pins q1i=declared: it is genuinely caught at <module> (plain 0), so Python
+### semantics give declared, and the r98 latch agrees (last stamp EH). t1/t4/q1i all declare.

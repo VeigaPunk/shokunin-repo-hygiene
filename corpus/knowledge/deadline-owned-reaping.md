@@ -59,3 +59,18 @@ census/round-97/c2-forgery-probe.py.
   path during the arm is killed (measured: 30 of 42 decoys in a continuous run). The reap is not safe to run on a shared
   path. Do not cite the r97 reap as a safe ownership mechanism.
 - A signal exit renders as `exit=-15` on both the r96 and r97 counters. No distinct mark exists.
+
+### r98 correction (appended after the wave; plans/round-98.md A0.1, A12)
+
+- The reap is now by ownership (S075 field 4/22, S368): `_reap_owned` kills only the pid the arm recorded at
+  spawn (re-verified by its starttime, stat field 22) and its ppid-chain (field 4) descendants, or an orphan
+  reparented to the counter itself (the counter sets `PR_SET_CHILD_SUBREAPER(1)`). argv may select candidates
+  but never authorises a kill. A foreign decoy (its ppid is its own driver, never the counter) is never reached
+  and never killed.
+- **Do not cite the r97 argv reap as an ownership mechanism** (r97 correction above stands). The r98 ownership
+  rule is the successor: a foreign own-uid process planted after the arm starts carrying the arm's fixture
+  token is spared by the r98 counter and killed by the r97 counter (committed decoy test
+  `census/round-98/c2-decoy-test.py`, Q174).
+- The T1 survivors byte is counted by the descendant relation, not by a starttime comparison against the spawn
+  pid (F12/C-5: the old comparison could never count an owned escapee and was same-tick nondeterministic).
+  `conform` now binds `survivors=0` on T1, so a counter that reaps nothing cannot pass on conform alone (C-3).
