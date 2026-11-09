@@ -1,4 +1,3 @@
-<!-- L1 note: the seat left only its skeleton in this file; the body below is the seat final output copied verbatim by the L1 (SoujiR92a2) from w1-results.json results[R92ScoutSources].output.report. -->
 # R92ScoutSources report (souji r92, wave w1, seat scout)
 
 Status: complete. Verdict: FALSIFIES-WORDING (one sentence, the S355 anchor cell). Claim content not falsified.
