@@ -3560,3 +3560,29 @@ receipts in P `5bd5a0ce`. Amendments in `plans/round-85.md` (A0-A1 so far); the 
   scribe; the L1 holds the planner seat). Attack share under the addendum's four roles 6/13 = 46 %; all 13 settled
   with a report (`.ufo/waves/round-93/w1-results.json`); no dead seats; no residual call.
 - **Tool installs: none.** No pacman (paused), no uv/npx/binary fetch, no sysctl or sudo.
+
+## Round 94 (2026-11-09) — a crash sentinel (exit 70) scores crashing mutants errored, not killed (C1 calibration); the forgery probe keeps setup failures off its verdict exit code (C2 operability)
+
+- **Motivating evidence.** The r93 spot-check (`corpus/lessons/round-93-verifier-spotcheck.md` §5) routed the kill
+  rule that scores an uncaught counter exception as killed (item 2; R93Sentinel M1: a Python crash exits 1) and the
+  forgery probe's FileExistsError exit 1 on an existing `--work` (item 5).
+- **Claims.** C1 (calibration 7): on five targets the r93 rule scores both crash fixtures killed (`errored=0 killed=4
+  survived=1`); the r94 search (sitecustomize excepthook → exit 70, S358; any `rc=70` row → `errored`, S357) reads
+  `errored=2 killed=2 survived=1`; forgeries FA/FB refused. C2 (operability 8): the arms counter scores the r93 probe
+  `conform=3` of 10 and the r94 probe `conform=10`; forgeries GA/GB refused (conform=9 each).
+- **Narrowed before filing (`plans/round-94.md` A1-A5).** A1: SystemExit and atexit/`__del__` exceptions are not seen
+  by the sentinel (limit (ii) list was not exhaustive). A2: the exit-1 premise is observed, not sourced; S359 added.
+  A3: a fitted no-sentinel rule also meets the five-target number; mechanism evidence is the `rc=70` rows and the
+  census. A4: the probe docstring's "every setup failure exits 2" is false for non-UTF-8 inputs, a file-parent
+  `--work` and a mid-run write failure. A5: arm-name fitting reaches 10/10; two guards unbound by the arms.
+- **Reported, not claimed.** Full census (R94ExecCensus): 28 of the r93 rule's 167 kills on the r93 population were
+  crashes; survivors identical (76).
+- **Sources.** S357 (Stryker mutant states), S358 (sysexits EX_SOFTWARE), S359 (Python `sys.excepthook`) admitted
+  `mined`, cited by `corpus/knowledge/mutant-crash-is-not-a-kill.md`; PIT `DetectionStatus` is the reject sample.
+  Registry 278 → 281; census EXIT 0 both ends. QUALITY Q171.
+- **Mistakes.** M1 the crash exit-code assumption; M2 an overloaded exit 1; M3 a non-exhaustive limits list
+  (`corpus/lessons/round-94.md`).
+- **Wave.** One v1 wave, 12 seats (3 executor, 2 reviewer, critic, 2 mutation-tester, sentinel, connector, scout,
+  scribe; the L1 holds the planner seat). Attack share 5/12 = 42 %; all 12 settled with a report
+  (`.ufo/waves/round-94/w1-results.json`); no dead seats; no residual call.
+- **Tool installs: none.** No pacman (paused), no uv/npx/binary fetch, no sysctl or sudo.

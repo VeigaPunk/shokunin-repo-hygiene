@@ -1,6 +1,7 @@
 # A mutant whose counter crashes is a runtime error, not a kill — and the search must be able to see the crash
 
 source: S357 (Stryker Mutator, Mutant states and metrics: the Runtime error state); S358 (sysexits(3), EX_SOFTWARE 70);
+S359 (Python `sys.excepthook` / `sys.unraisablehook`, added after the r94 wave);
 scored against census/round-94/c1-survivor-search.py, census/round-93/c1-false-row-harness.py and the frozen r87
 counter census/round-87/c1-pointer-counter.py at round 94.
 verified-at: Stryker docs page opened 2026-11-09, capture census/round-94/srcs/stryker.html sha256
@@ -53,3 +54,24 @@ the crash fixtures stay `killed`; refusing every non-zero exit (forgery FA) turn
 - `python -I`/`-S` or an earlier `sitecustomize` on the path would disable the hook; the precondition check runs the
   hook the way the harness runs the counter, but a harness that changed how it starts the counter would need its own
   check.
+
+## r94 wave corrections (after WAVE-DONE; plans/round-94.md A1-A3)
+
+- **The exit-1 premise is observed, not sourced.** "A Python program that raises an uncaught exception exits 1" has
+  no source row (R94ScoutSources FW2). It is grounded here by own-work receipts: the r93 rule's run of both crash
+  fixtures reads `rc=1` (`census/round-94/controls/c1-control-r93-rule.txt`), and so does forgery FB (no sentinel,
+  `controls/c1-forgery-out/FB.out`).
+- **Two more channels the sentinel does not see** (Limits, first bullet, was not exhaustive). S359: "When an
+  exception other than SystemExit is raised and uncaught, the interpreter calls sys.excepthook with three
+  arguments" — so `raise SystemExit(1)` exits 1 with no hook (R94ScoutSources `repro-sysexit-gap.out`); and an
+  exception in an `atexit` callback or a `__del__` finalizer goes to `sys.unraisablehook` ("Called when an exception
+  has occurred but there is no way for Python to handle it"), the process keeps its exit status, and a counter that
+  finished cleanly then raised at shutdown is scored a SURVIVOR (R94Sentinel F1, `receipts/out-F.txt`).
+- **The five-target number does not by itself prove the sentinel is needed.** A no-sentinel rule fitted to the two
+  fixtures (`got=-` present OR every row `rc=1`) also reads `errored=2 killed=2 survived=1` (R94Critic
+  `receipts/offline-rule-eval.out`). The mechanism's evidence is the `rc=70` ROW lines themselves (66 for
+  `h-crash-late`, 1 for `h-crash-index`, `census/round-94/records/c1-after-harness/`) and the full census below.
+- **Full census, reported not claimed** (R94ExecCensus): over all 273 generated-plus-hand mutants on the r93
+  population the r93 rule reads `errored=20 killed=167 survived=76`, the r94 search `errored=48 killed=139
+  survived=76`; the 28 changed verdicts are all `yes` → `errored` and all carry `rc=70` rows — 26 generated
+  mutants plus the two fixtures. Of the r93 rule's 167 kills, 28 (16.8 %) were crashes.
