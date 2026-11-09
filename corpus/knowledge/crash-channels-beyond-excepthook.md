@@ -3,9 +3,10 @@
 source: S360 (Python `sys.monitoring`, the RAISE event); S361 (Python `threading.excepthook`); S362 (Python
 `os._exit`); S363 (Python `subprocess` returncode, negative = killed by a signal); S364 (Python `atexit`, exceptions
 in exit handlers); S365 (Python `sys.monitoring`, the EXCEPTION_HANDLED event); S366 (Python `os.set_blocking`);
-with S358 (sysexits EX_SOFTWARE 70) and S359 (`sys.excepthook` never sees SystemExit) from r94; scored against
+with S358 (sysexits EX_SOFTWARE 70) and S359 (`sys.excepthook` never sees SystemExit) from r94; S372
+(Python `sys.monitoring`, the RERAISE event) from r97; scored against
 census/round-96/c1-survivor-search.py, census/round-93/c1-false-row-harness.py and the frozen r87 counter
-census/round-87/c1-pointer-counter.py (r95 instruments at round 95, r96 at round 96).
+census/round-87/c1-pointer-counter.py (r95 instruments at round 95, r96 at round 96, r97 at round 97).
 verified-at: S360–S364 and S365–S367 opened 2026-11-09 from docs.python.org/3 (Python 3.15 documentation); S360–S364
 captures census/round-95/srcs/, S365–S367 captures census/round-96/srcs/ (monitoring, os, subprocess), each with its
 tag-stripped text beside it; each quoted sentence's occurrence count in the whitespace-normalized tag-stripped text
@@ -118,3 +119,26 @@ A1, R95Sentinel F1/F3, Q172. Amendments: plans/round-96.md A1–A3, A9.
   every reason. Routed to r97.
 - **Scope note.** This entry's teaches cells for S365–S367 are superseded by S369–S371 (SOURCES.md). S368 (setsid(2))
   is the source for the process-group claim in deadline-owned-reaping.md.
+
+## r97 (C1, calibration): the pending-clear latch closes the trade
+
+Round 97 (C1, calibration 7). Ground: plans/round-96.md A1 (the r96 trade), the r96 spot-check §7 routed item 1,
+plans/round-97.md A0. Amendments: plans/round-97.md A0.
+
+- **What r97 changed.** The r96 clear-on-any-EH became a pending-clear latch (S372): the foreign mark latches at
+  RAISE-`<module>`; a module-level EXCEPTION_HANDLED records a pending candidate for the same exception object;
+  a RERAISE of the same object cancels the candidate (S372: "An exception is re-raised, for example at the end of
+  a finally block."); atexit flushes a still-pending candidate. Measured ordering on CPython 3.14.8 (scratch
+  trace, nine shapes): a terminating module-level `finally` fires EH, RERAISE, EH, RERAISE; a caught-at-top-level
+  exit fires a single EH and no RERAISE. The latch keeps t1/t4 declared and x1/x2 (terminating module `finally`
+  and re-raise) errored: `SHAPES-SUMMARY shapes=14 mismatched=0` (census/round-97/records/shapes-r97.txt), where
+  the r96 hook mismatched=2 (x1/x2 at 1) and the r95 hook mismatched=2 (t1/t4 at 70). The ten-target summary is
+  unchanged (errored=7 killed=2 survived=1), which the prereg states is not discriminating for this claim.
+- **What else r97 repaired in the same instrument file.** A2: `_souji_excepthook`/`_souji_thread` now call the raw
+  signal-safe `_souji_crash` before the traceback print, so the blocking TextIOWrapper print cannot hold the exit
+  hostage on a full undrained pipe on those channels either. A3: the no-free-tool-id fallback restores fd 2's
+  blocking mode (`os.set_blocking(2, True)`) instead of leaving it permanently non-blocking.
+- **Limit carried as a stated limit (prereg (iii)).** The interleaving is an observation on CPython 3.14.8, not a
+  documented guarantee. S369 rules finally/re-raise firing out of the EH entry's scope and S372 states only that a
+  re-raise fires RERAISE; neither states the ordering the latch relies on. The shape table is a precondition, not
+  a census of every exit shape the lane will meet.

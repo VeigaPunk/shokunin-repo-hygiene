@@ -1,0 +1,27 @@
+souji round 97 — pre-freeze feasibility note (L1 SoujiR97, 2026-11-09)
+
+Both after arms were trial-run in scratch (/fast/scratch/hyaku/souji-r97/p1-*) BEFORE F on bytes identical to
+the P1 instruments:
+
+C1 shape table (r97 hook, 14 shapes): `SHAPES-SUMMARY shapes=14 mismatched=0`, EXIT 0 (p1-pending; final-r97
+re-confirmed mismatched=0 on the completed table including a3b). The r96 hook on the same fourteen scores
+`mismatched=2` (x1/x2 at 1, wrongly declared); the r95 hook scores `mismatched=2` (t1/t4 at 70). Neither
+do-nothing control reaches 0. The ten-target search summary is unchanged across r95/r96/r97 (errored=7
+killed=2 survived=1), so it does not discriminate the latch; the r97 SEARCH-SUMMARY is the same
+errored=7 killed=2 survived=1 measured at p1-c1-after EXIT 0.
+
+An earlier draft of the latch (immediate EH-clear with a RERAISE spend-set) FAILED pre-freeze: x1/x2 printed
+hooked=1 (mismatched=2) because the finally-unwind EH fires before its RERAISE, so the EH leg cleared the mark
+before the RERAISE could spend the object. The pending-clear model (EH records a pending candidate, RERAISE
+cancels it, atexit flushes a still-pending candidate) passes the same trials (mismatched=0). That failed draft
+is disclosed here, not repaired silently: the shipped predicate relies on the pending-clear ordering (EH,
+RERAISE, EH, RERAISE on a terminating module-level finally; a single EH with no RERAISE on a catch), measured
+on CPython 3.14.8, not on S372's one sentence (stated as limit (iii) in the prereg).
+
+C2 twenty-arm counter: conform=20 and survivors=0 on T1 under the r97 probe+caps (p1-c2-after, backgrounded
+~5 min); the r95 probe control hung T1 (conform=19). The T1 identity reaper is the counter's own planted fixture
+path; no process the counter did not plant is signalled (stated as limit (i)).
+
+Fork note: p1-c2-after was backgrounded at trial time and its wall-clock result is carried in the P2 control
+receipt rather than quoted here; the L1 re-ran the twenty-arm after arm after F on committed bytes for the A
+receipt (census/round-97/records/c2-after.txt).

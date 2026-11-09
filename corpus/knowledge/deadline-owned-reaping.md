@@ -32,3 +32,22 @@ returncode — never for pipe EOF. The probe names the timeout and exits 2 withi
   refused cleanly.
 - `--timeout 0` and a read-only `--work` refused with exit 2 and their own arms (T2/T3) are setup refusals, not
   deadline semantics; the abort fixture (T4) is a no-SUMMARY setup failure, never the probe's verdict.
+
+## r97 fix (counter-owned reaping by identity; survivors counted)
+
+Round 97 (C2, operability 8). Ground: plans/round-96.md A4/A5/A8, census/round-97/c2-setup-arms.py,
+census/round-97/c2-forgery-probe.py.
+
+- **Reaping by argv identity.** The counter now reaps the T1 grandchild itself: `_reap_by_identity` signals
+  exactly the own-uid processes whose argv carries the arm's absolute fixture path byte-exactly, skipping the
+  counter and the probe, and re-verifies starttime at act time. A new session is a new process group (S368), so
+  the group kill cannot reach the grandchild; argv identity is the counter-owned key. The run prints
+  `survivors=<n>` on every T1 ARM line. Measured: `ARM T1 exit=2 want=2 line=yes conform=yes survivors=0`
+  (census/round-97/records/c2-after.txt); the r96 probe leaves survivors=1 on the same arm. The counter never
+  signals a process it did not plant (limit (i) in the prereg).
+- **Output cap.** The probe drains the pipes with selectors and refuses output over `--max-output` (8 MiB
+  default) as a setup failure (exit 2, `C2-FORGERY-FATAL:`), instead of draining into its own memory and ending
+  with SIGTERM before the timeout (the r96 A5 limit: 27.3 GB RSS, SIGTERM at 36 s, no FATAL).
+- **Signal exits.** A killed-by-signal child prints as `exit=-15` in the ARM line (A8): it never reads as a
+  verdict exit. The counter only ever SIGKILLs its own sessions and records the resulting status instead of
+  coercing it.
