@@ -1,0 +1,34 @@
+2c2,3
+< """souji r92 C2 forgery probe: does the r92 fixture refuse tools that fake the r92 cut repair?
+---
+> """souji r93 C2 forgery probe (the r92 probe's five forgeries plus the three R92MutC2 survivors): does a fixture
+> refuse tools that fake the r92 cut repair?
+4,7c5,10
+< Each forgery is ONE text edit (applied exactly once) to a pinned tool's bytes, run through the committed fixture
+< (tests/fixtures/r92-k4-flagfail.py) as `--tool`, with the r91 tool as `--before`. A forgery is REJECTED iff the
+< fixture exits 1 with tool_pass < cases. The positive control is the filed tool, which must exit 0 at cases/cases;
+< the negative control is the unmodified r91 tool, which must be rejected too.
+---
+> Each forgery is ONE text edit (applied exactly once) to a pinned tool's bytes, run through the fixture named by
+> --fixture as `--tool`, with the r91 tool as `--before`. A forgery is REJECTED iff the fixture exits 1 with
+> tool_pass < cases. The positive control is the filed tool, which must exit 0 at cases/cases; the negative control
+> is the unmodified r91 tool, which must be rejected too. Run against tests/fixtures/r92-k4-flagfail.py it is the r93
+> C2 do-nothing control (F5-F7 pass that fixture 20/20, R92MutC2); against tests/fixtures/r93-k4-flagfail.py it is
+> the C2 after arm.
+15a19,22
+>   F5 surrpass     filed tool deciding a straddling sequence with the `surrogatepass` decoder (R92MutC2 C): an
+>                   ED A0..BF surrogate encoding, ill-formed per Table 3-7, is moved across as one sequence
+>   F6 multichar    filed tool accepting `len(...) >= 1` (R92MutC2 D): a span of several characters moves the cut
+>   F7 head-fwd     filed tool moving the head cut FORWARD to the straddling sequence's end (R92MutC2 E)
+18c25
+< `FORGERY-SUMMARY forgeries=5 rejected=<k> positive=<pass|fail>`. Exit 0 iff all five are rejected and the positive
+---
+> `FORGERY-SUMMARY forgeries=8 rejected=<k> positive=<pass|fail>`. Exit 0 iff all eight are rejected and the positive
+45a53,58
+>     ("F5", "tool", '                if len(raw[start:end].decode("utf-8", "strict")) == 1:\n',
+>      '                if len(raw[start:end].decode("utf-8", "surrogatepass")) == 1:  # F5 forgery\n'),
+>     ("F6", "tool", '                if len(raw[start:end].decode("utf-8", "strict")) == 1:\n',
+>      '                if len(raw[start:end].decode("utf-8", "strict")) >= 1:  # F6 forgery\n'),
+>     ("F7", "tool", "    seq = _straddling_sequence(raw, h)\n    return seq[0] if seq else h\n",
+>      "    seq = _straddling_sequence(raw, h)\n    return seq[1] if seq else h  # F7 forgery\n"),
+diff exit=1

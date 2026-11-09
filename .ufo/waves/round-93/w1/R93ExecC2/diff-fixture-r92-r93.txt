@@ -1,0 +1,149 @@
+2c2,3
+< """souji r92 C2 fixture (the r91 fixture plus five cases and an AST-based KFF13). r90 C2 fixture: the K4 delegation's index-flag failure detail is ONE escaped line that keeps both ends of
+---
+> """souji r93 C2 fixture (the r92 fixture plus KFF19, an exact-window reference sweep, and KFF20, an ill-formed lead
+> across the HEAD cut). r92 C2 fixture (the r91 fixture plus five cases and an AST-based KFF13). r90 C2 fixture: the K4 delegation's index-flag failure detail is ONE escaped line that keeps both ends of
+30a32,41
+> r93 change (r92 A1, spot-check routed item 1): KFF18 checks only that the head is SOME prefix and the tail SOME
+> suffix of the full rendering, so three one-edit forgeries of the filed tool passed the r92 fixture 20/20 (R92MutC2:
+> C surrogatepass decode, D `len(...) >= 1`, E head cut moved forward). KFF19 pins the cut POSITION: an independent
+> reference cut written from the WHATWG Encoding Standard's UTF-8 decoder (S356, §8.1.1: per-lead bytes needed and
+> lower/upper boundaries 0xA0/0x9F/0x90/0x8F, never Python's codec) finds the one well-formed sequence a cut would
+> split, and the excerpt must EQUAL the cell built from the reference cuts on a boundary-class sweep (every Table 3-7
+> boundary encoding and its ill-formed neighbours, pairwise, at every byte offset across both cuts). KFF20 is the
+> mirror of KFF16 on the HEAD cut (R92Connector §3): an overlong E0 80 80 straddles the head cut, so a cut that trusts
+> the lead's length elides E0 80 instead of keeping both escapes.
+> 
+61a73,74
+>   KFF19 exact    in-process: the excerpt equals the reference-cut cell on the boundary-class sweep (r93).
+>   KFF20 headill  211-byte payload with E0 80 80 across the head cut: exactly one xe0 and one x80 spelling (r93).
+63c76
+< The same table runs on `--before` (the r91 tool bytes in r92): every case the before tool fails is the do-nothing control.
+---
+> The same table runs on `--before` (the r91 tool bytes since r92): every case the before tool fails is the do-nothing control.
+108a122
+>         "headill": b"fatal: hil " + b"h" * 87 + b"\\xe0\\x80\\x80" + b"t" * 110,
+352a367,457
+> # KFF19 (r93): the reference cut. Written from the WHATWG Encoding Standard's UTF-8 decoder (S356, §8.1.1), not from
+> # Python's codec: bytes needed and the first continuation's lower/upper boundary per lead byte; every later
+> # continuation is 0x80..0xBF. A lead outside 0xC2..0xF4 (and every bare continuation) begins no sequence.
+> def _ref_len(raw, s):
+>     b = raw[s]
+>     if b <= 0x7F:
+>         return 1
+>     if 0xC2 <= b <= 0xDF:
+>         need, lo, hi = 1, 0x80, 0xBF
+>     elif 0xE0 <= b <= 0xEF:
+>         need, lo, hi = 2, (0xA0 if b == 0xE0 else 0x80), (0x9F if b == 0xED else 0xBF)
+>     elif 0xF0 <= b <= 0xF4:
+>         need, lo, hi = 3, (0x90 if b == 0xF0 else 0x80), (0x8F if b == 0xF4 else 0xBF)
+>     else:
+>         return None
+>     for k in range(1, need + 1):
+>         if s + k >= len(raw) or not lo <= raw[s + k] <= hi:
+>             return None
+>         lo, hi = 0x80, 0xBF
+>     return need + 1
+> 
+> 
+> def _ref_straddle(raw, cut):
+>     """(start, end) of the one well-formed sequence with start < cut < end, or None. A well-formed sequence starts on
+>     a byte that is never a continuation, so at most one can straddle a cut."""
+>     for s in range(cut - 1, max(cut - 4, -1), -1):
+>         n = _ref_len(raw, s)
+>         if n is not None and s + n > cut:
+>             return s, s + n
+>     return None
+> 
+> 
+> def ref_cuts(raw, limit=200):
+>     head = limit // 2
+>     keep = limit - head - 1
+>     hs = _ref_straddle(raw, head)
+>     h = hs[0] if hs else head
+>     ts = _ref_straddle(raw, len(raw) - keep)
+>     t = ts[1] if ts else len(raw) - keep
+>     return h, max(t, h)
+> 
+> 
+> EXACT_TOKENS = (
+>     # well-formed: every Table 3-7 row at its low and high second byte, plus 1-byte ASCII
+>     b"a", b"\x7f", b"\xc2\x80", b"\xdf\xbf", b"\xe0\xa0\x80", b"\xe0\xbf\xbf", b"\xe1\x80\x80", b"\xec\xbf\xbf",
+>     b"\xed\x80\x80", b"\xed\x9f\xbf", b"\xee\x80\x80", b"\xef\xbf\xbf", b"\xf0\x90\x80\x80", b"\xf0\xbf\xbf\xbf",
+>     b"\xf1\x80\x80\x80", b"\xf3\xbf\xbf\xbf", b"\xf4\x80\x80\x80", b"\xf4\x8f\xbf\xbf",
+>     # ill-formed neighbours: C0/C1 leads, E0 overlong, ED surrogate, F0 overlong, F4 beyond U+10FFFF, F5.., bare
+>     # continuations, truncated sequences
+>     b"\xc0\x80", b"\xc1\xbf", b"\xe0\x80\x80", b"\xe0\x9f\xbf", b"\xed\xa0\x80", b"\xed\xbf\xbf",
+>     b"\xf0\x80\x80\x80", b"\xf0\x8f\xbf\xbf", b"\xf4\x90\x80\x80", b"\xf5\x80\x80\x80", b"\xff", b"\x80", b"\xbf",
+>     b"\xe2\x82", b"\xf0\x9d\x84",
+> )
+> EXACT_LEN = 230
+> EXACT_N = 14586  # 33 tokens, pairwise, at every offset that puts a cut inside or at the edge of the pair, both cuts
+> 
+> 
+> def exact_payloads():
+>     head, tail = 100, EXACT_LEN - 99
+>     for cut in (head, tail):
+>         for a in EXACT_TOKENS:
+>             for b in EXACT_TOKENS:
+>                 pair = a + b
+>                 for s in range(cut - len(pair), cut + 1):
+>                     yield b"a" * s + pair + b"a" * (EXACT_LEN - s - len(pair))
+> 
+> 
+> def case_exact(tool):
+>     # KFF19 (r93): the excerpt is exactly the cell the reference cuts give, so a cut that moves too far, not far
+>     # enough or across bytes that are not one well-formed sequence goes red even when it stays prefix/suffix-faithful.
+>     spec = importlib.util.spec_from_file_location("tool_exact_%d" % abs(hash(tool)), tool)
+>     mod = importlib.util.module_from_spec(spec)
+>     spec.loader.exec_module(mod)
+>     n = bad = 0
+>     for raw in exact_payloads():
+>         n += 1
+>         h, t = ref_cuts(raw)
+>         want = mod._escape_text(mod._decode_record(raw[:h]) + "\u2026" + mod._decode_record(raw[t:]))
+>         bad += mod._one_line_bytes(raw) != want
+>     print(f"# KFF19 tool={tool} payloads={n} inexact={bad}")
+>     return n == EXACT_N and bad == 0
+> 
+> 
+> def case_headill(out, rows):
+>     # KFF20 (r93): E0 80 80 is ill-formed (Table 3-7; S356 lower boundary 0xA0), so the head cut between the two
+>     # 0x80 bytes stays: E0 and the first 0x80 keep their escapes, the second 0x80 is elided.
+>     bs = chr(92)
+>     return (len(rows) == 1 and "fatal: hil" in rows[0] and rows[0].count(bs + "xe0") == 1
+>             and rows[0].count(bs + "x80") == 1)
+> 
+> 
+377a483,484
+>     ("KFF19", "exact", False, None),
+>     ("KFF20", "headill", False, case_headill),
+390a498,500
+>             if mode == "exact":
+>                 result[cid] = bool(case_exact(tool))
+>                 continue
+407c517
+<         print("R92-FIXTURE-FATAL: --work under /tmp, /var/tmp or /dev/shm", file=sys.stderr)
+---
+>         print("R93-FIXTURE-FATAL: --work under /tmp, /var/tmp or /dev/shm", file=sys.stderr)
+410c520
+<         print(f"R92-FIXTURE-FATAL: --work {work} is not empty", file=sys.stderr)
+---
+>         print(f"R93-FIXTURE-FATAL: --work {work} is not empty", file=sys.stderr)
+413c523
+<         print("R92-FIXTURE-FATAL: the KFF13 ast check does not detect a spaced definition/call or flags a docstring",
+---
+>         print("R93-FIXTURE-FATAL: the KFF13 ast check does not detect a spaced definition/call or flags a docstring",
+426c536
+<         print(f"R92-FIXTURE-FATAL: fixture: {type(exc).__name__}: {exc}", file=sys.stderr)
+---
+>         print(f"R93-FIXTURE-FATAL: fixture: {type(exc).__name__}: {exc}", file=sys.stderr)
+452c562
+<         print("R92-FIXTURE-FAIL: the tool under test does not pass every case", file=sys.stderr)
+---
+>         print("R93-FIXTURE-FAIL: the tool under test does not pass every case", file=sys.stderr)
+455c565
+<         print("R92-FIXTURE-FAIL: the do-nothing control passes as many cases (no measured delta)",
+---
+>         print("R93-FIXTURE-FAIL: the do-nothing control passes as many cases (no measured delta)",
+diff exit=1

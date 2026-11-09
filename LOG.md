@@ -3530,3 +3530,33 @@ receipts in P `5bd5a0ce`. Amendments in `plans/round-85.md` (A0-A1 so far); the 
   scribe; the L1 holds the planner seat). Attack share under the addendum's four roles 5/13 = 38.5 %; all 13 settled
   with an artifact (`.ufo/waves/round-92/w1-results.json`); no dead seats; no residual call.
 - **Tool installs: none.** No pacman (paused), no uv/npx/binary fetch, no sysctl or sudo.
+
+## Round 93 (2026-11-09) — two ledger-edit rows bind two counter edits no r92 row asserted (C1 calibration); a reference cut written from the WHATWG decoder pins where the excerpt cut lands (C2 coverage)
+
+- **Motivating evidence.** The r92 spot-check (`corpus/lessons/round-92-verifier-spotcheck.md` §7) routed the C2
+  maximality case (R92MutC2: surrogatepass, multi-character span and forward-head forgeries pass the r92 fixture
+  20/20), the E1 binding row (R92MutC1 §2: `resolved >= len(pop) - 1` survives r91 and r92), survivor-search
+  robustness, SOURCES rule 2 and seat write scope. R92MutC1 §3c named a491c22 (`len(r) <= 3`) as bindable by a
+  three-column ledger row.
+- **Claims.** C1 (calibration 7): LD5 (`ledger-drop`) and LD6 (`ledger-trim`), two new harness row types, make the
+  harness exit 1 with a row mismatch on `h-ok-admits-one` and `a491c22-<-to-<=` (`killed=2 survived=0`; control on
+  the r92 population `killed=0 survived=2`; pristine 66/0, LD5 `rc=1`, LD6 `rc=0`); targets predicted in P1
+  (`census/round-93/c1-prediction.txt`). C2 (coverage 8): KFF19 exact equality with a reference cut written from S356
+  (14,586 payloads) and KFF20 reject the three forgeries (probe `rejected=8` vs `rejected=5` on the r92 fixture;
+  fixture 22/22 vs 16; K4 12/0/0). Tool unchanged.
+- **Narrowed before filing (`plans/round-93.md` A1-A6).** A1: "because no r92 run reaches their clause" → "no r92
+  row asserts an outcome either edit changes" (R93ReviewerC1: h-ok flips three r92 exits on rows asserting no rc).
+  A2: the edits, not the clauses (m5/m6/g2 survive). A3: an uncaught counter exception still scores killed under the
+  r93 rule; both kills are semantic. A4: the harness reads two gitignored lane-disk inputs. A5: KFF18 is the r92
+  cut-position case; the reference is independent of tool code and codec, not of excerpt constants. A6: no coverage
+  score change.
+- **Sources.** S356 (WHATWG Encoding Standard §8.1.1 UTF-8 decoder) admitted `mined`, cited by
+  `corpus/knowledge/utf8-cut-position-reference.md`; BOM precedence is the reject sample. Registry 277 → 278; census
+  EXIT 0 both ends. QUALITY Q169, Q170.
+- **Mistakes.** M1 three controls in one shell call lost two receipts; M2 a prereg role the validator refuses; M3
+  a faithfulness property cited as a position check; M4 the kill-rule fix wider than its test; M5 a causal clause
+  written from reading (`corpus/lessons/round-93.md`).
+- **Wave.** One v1 wave, 13 seats (3 executor, 2 reviewer, critic, 3 mutation-tester, sentinel, connector, scout,
+  scribe; the L1 holds the planner seat). Attack share under the addendum's four roles 6/13 = 46 %; all 13 settled
+  with a report (`.ufo/waves/round-93/w1-results.json`); no dead seats; no residual call.
+- **Tool installs: none.** No pacman (paused), no uv/npx/binary fetch, no sysctl or sudo.

@@ -2277,3 +2277,40 @@ the planner seat (validator-frozen); the planning data-walk rode R92Connector.
   list (pid-reuse row, parent-before-child, termign-fork/p5-late-term, strace-robust settle), `_regular` pathspec
   framing, the quarantine intro-blob digest row, the r79 gate re-measurement, check-4 300 s backstop, r76 K03/K04,
   the r17 240 s runners, the r85-r87 K4 counters' print-only `rc=`.
+
+### Round 93 measurements (2026-11-09; lane base `91c9bcb1041b18be154ca466ac3c047ac7862fe1`; instruments P1 `2c82d362`, controls P2 `0d6442cc`, freeze F `9a4ab88f`, after receipts A `7bdb96b7`)
+
+| claim | axis | before | after | counting command | measured commit |
+|---|---|---|---|---|---|
+| C1 two ledger-edit rows (LD5 `ledger-drop`, LD6 `ledger-trim`) make the harness exit 1 with a row mismatch on two counter edits that survive every r92 row: `h-ok-admits-one` and `a491c22-<-to-<=` (narrowed A1-A3: no r92 row asserts an outcome either edit changes; the edits, not their clauses; an uncaught counter exception would also score killed — both kills read `got=UNRESOLVED` on their own target row) | calibration 7 (no reproducible 0–10 mapping; verdict calibration improved) | `census/round-93/controls/c1-control-r92-population.txt` (r92 population, r93 harness and search): `SEARCH-SUMMARY generated=2 ambiguous=0 uncompiled=0 hung=0 scored=2 errored=0 killed=0 survived=2`, EXIT 0 | `census/round-93/records/c1-after.txt`: `… scored=2 errored=0 killed=2 survived=0`, EXIT 0; `records/c1-pristine-after.txt`: `SUMMARY rows=66 mismatches=0 accepted=0 refused_true=0 errors=0`, LD5 `rc=1 match=yes`, LD6 `rc=0 match=yes`, EXIT 0 | `python3 -B census/round-93/c1-survivor-search.py --counter census/round-87/c1-pointer-counter.py --harness census/round-93/c1-false-row-harness.py --population <POP> --lane . --fleet-root /home/vgpnk/Projects/shokunin --work WORK --jobs 2 --ids census/round-93/c1-targets.json` | `7bdb96b74401d75b459d026c079a3e6e7bb209ff` |
+| C2 the K4 excerpt's cut-POSITION edge class: KFF19 (exact equality with a reference cut written from the WHATWG UTF-8 decoder, S356, on 14,586 boundary-class payloads) and KFF20 (overlong across the head cut) reject the three one-edit forgeries the r92 fixture passed 20/20 (narrowed A5: KFF18 was the r92 cut-position case; the reference is independent of the tool's code and Python's codec, not of the excerpt constants) | coverage 8 (edge class moved; 8/8 is a count over a chosen forgery set, not a fraction — no score change, A6) | `census/round-93/controls/c2-control-r92-fixture-probe.txt`: `FORGERY-SUMMARY forgeries=8 rejected=5 positive=pass` (F5/F6/F7 20/20), EXIT 1 | `census/round-93/records/c2-forgery-after.txt`: `FORGERY-SUMMARY forgeries=8 rejected=8 positive=pass`, EXIT 0; `records/c2-after.txt`: `SUMMARY cases=22 tool_pass=22 before_pass=16`, EXIT 0; K4 `records/c2-k4-regression.txt` `rows=12 mismatches=0 errors=0` | `python3 -B census/round-93/c2-forgery-probe.py --fixture <FIXTURE> --tool tools/souji-record-agreement.py --before census/round-92/controls/c2-before-tool.py --work WORK` | `7bdb96b74401d75b459d026c079a3e6e7bb209ff` |
+
+No owned axis score changed (calibration 7, coverage 8, operability 8 — the lane still has no reproducible 0–10
+mapping). The wave narrowed four sentences before filing (`plans/round-93.md` A1, A3, A5; A2/A4/A6 are readings and a
+stated limit): see `.ufo/waves/round-93/claim-falsification.tsv`. Reported, not claimed: the 78-id residual set
+(the 77 r92 residual survivors, a491c22 among them, plus h-ok-admits-one; `census/round-93/c1-residual-plus-e1.json`) reads `killed=0
+survived=78` on the r92 population and `killed=2 survived=76` on r93 — only the two targets differ
+(`.ufo/waves/round-93/w1/R93ExecResidual/receipt-r92.txt`, `receipt-r93.txt`).
+
+### Round 93 capability rows
+
+| name | what it can now do | evidence pointer | first-working round |
+|---|---|---|---|
+| ledger-edit false rows | build a scratch copy of a population's frozen ledger with ONE item's own row removed (`ledger-drop`) or cut to three columns (`ledger-trim`), run the counter on it and assert that item's status and the exit code, so a success test's equality and a width guard's lower edge are asserted | `python3 -B census/round-93/c1-false-row-harness.py --counter census/round-87/c1-pointer-counter.py --lane . --fleet-root /home/vgpnk/Projects/shokunin --work WORK --population census/round-93/c1-false-rows.tsv` → `rows=66 mismatches=0`, LD5 `rc=1 match=yes`, LD6 `rc=0 match=yes` (`census/round-93/records/c1-pristine-after.txt`) | r93 |
+| exact-position excerpt check | compare the K4 excerpt with the cell from a reference cut written from the WHATWG UTF-8 decoder (no codec call) on a 14,586-payload boundary-class sweep, so a cut that lands in the wrong place is refused even when it stays prefix/suffix-faithful | `python3 -B tests/fixtures/r93-k4-flagfail.py --tool tools/souji-record-agreement.py --before census/round-92/controls/c2-before-tool.py --work WORK` → `cases=22 tool_pass=22 before_pass=16` (`census/round-93/records/c2-after.txt`); forgery probe 8/8 vs 5/8 on the r92 fixture | r93 |
+| interruptible survivor search | stop a running mutation search on SIGINT/SIGTERM with exit 130, killing every live harness process group and deleting every per-mutant work tree | `.ufo/waves/round-93/w1/R93Labrat.md` (4/4 arms: exit 130 in ~0.5 s, 0 `m*/w` trees, no live process; SIGKILL still strands) | r93 |
+
+### Planned (r94)
+
+- C1 (calibration): kill rule scores a `got=-` row or a counter traceback as `errored` (A3, Q170) and re-scores the
+  r93 targets under it; bind the clauses rather than two spellings — m5/m6 (`len(pop) - len(unknown)` forms) and g2
+  (`len(r) not in (3, 4)`) survive (R93MutC1 R1/R2 row shapes); assert LD5's `SUMMARY unresolved=1`; make the harness
+  reproducible from committed bytes (two gitignored lane-disk inputs, A4).
+- C2 (coverage): KFF19 at a second payload length and a non-`a` filler (h_filler_a survives); catch in-process
+  exceptions in the fixture's scorer (R93Sentinel M2); KFF20 mirrors for `ED A0 80` / `F4 90 80 80` across the head
+  cut; retire or re-point the r91 variant tools.
+- Carried: the forge-return channel (r92 limit ii), the 76 residual survivors' classification, p2 basename
+  granularity, p3 the punctuation lookahead, p7 `_regular`'s symlink leg, p8 `token_ok`'s hyphen marker, the `fleet:`
+  symlink leg, the battery `--only`/`--expect-killed` stale defaults, the r85/r86 C2 list, `_regular` pathspec
+  framing, the quarantine intro-blob digest row, the r79 gate re-measurement, check-4 300 s backstop, r76 K03/K04,
+  the r17 240 s runners, the r85-r87 K4 counters' print-only `rc=`.
