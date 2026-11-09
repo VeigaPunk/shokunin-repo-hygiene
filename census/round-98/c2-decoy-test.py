@@ -84,13 +84,16 @@ def main(argv):
     # byte-exact path. The decoy only needs the PATH STRING on its argv; the counter requires its
     # --work to be EMPTY at start, so the file itself is written by the counter, not by this test.
     reap_token = os.path.join(arms, "fixture-pipe-holder.py")
-    fpass = os.path.join(work, "fixture-pass.py")
-    with open(fpass, "w", encoding="utf-8") as f:
-        f.write(PIPHOLDER)
+    # The counter's own non-T1 arms need the lane's real fixtures (r93 pass / r92 fail); passing the
+    # pipe-holder there made P1/P2/S1 hang and conform=13 (measured), so the run measured the driver,
+    # not the reap. The T1 reap token stays the counter's own piphole under <arms>.
+    lane = os.path.dirname(os.path.dirname(os.path.abspath(ns.tool)))
+    fpass = os.path.join(lane, "tests/fixtures/r93-k4-flagfail.py")
+    ffail = os.path.join(lane, "tests/fixtures/r92-k4-flagfail.py")
     counter_cmd = [sys.executable, "-B", os.path.abspath(ns.counter), "--probe", os.path.abspath(ns.probe),
-                   "--fixture-pass", fpass, "--fixture-fail", fpass, "--tool", os.path.abspath(ns.tool),
+                   "--fixture-pass", fpass, "--fixture-fail", ffail, "--tool", os.path.abspath(ns.tool),
                    "--before", os.path.abspath(ns.before), "--work", arms,
-                   "--jobs", "1", "--arm-timeout", str(ns.arm_timeout)]
+                   "--jobs", "4", "--arm-timeout", str(ns.arm_timeout)]
     counter = subprocess.Popen(counter_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     planted = []
 
@@ -106,20 +109,14 @@ def main(argv):
     # Plant continuously: the r97 counter snapshots token carriers at the START of its T1 arm, so a
     # decoy planted before that snapshot is spared by the snapshot; only one planted after it is a
     # candidate. A single early plant would let the do-nothing control pass for a snapshot reason.
-    deadline = time.time() + ns.arm_timeout + 300
-    while counter.poll() is None and time.time() < deadline:
+    # No timer kill on the counter: a counter that is killed mid-run never prints ARMS-SUMMARY, and a
+    # verdict drawn from it would be a false "spared" (measured: counter_exit=-9, DECOY-SUMMARY spared).
+    # Plant only while the counter runs; the verdict below is taken only from a counter that finished.
+    while counter.poll() is None:
         time.sleep(ns.plant_delay)
         plant()
-    try:
-        so, se = counter.communicate(timeout=ns.arm_timeout + 300)
-    except subprocess.TimeoutExpired:
-        counter.kill()
-        so, se = counter.communicate()
-        print("DECOY-RESULT counter timed out and was killed")
-    finally:
-        if counter.poll() is None:
-            counter.kill()
-            counter.wait()
+    so, se = counter.communicate()
+    counter_done = counter.returncode in (0, 1)
     out = so.decode("utf-8", "replace") + "\n--stderr--\n" + se.decode("utf-8", "replace")
     with open(os.path.join(work, "counter.out"), "w", encoding="utf-8") as f:
         f.write(out)
@@ -138,6 +135,9 @@ def main(argv):
                 pass
     print("DECOY-PLANTED n=%d dead=%d alive=%d counter_exit=%s token=%s"
           % (len(planted), len(dead), len(surv), counter.returncode, reap_token))
+    if not counter_done:
+        print("DECOY-SUMMARY verdict=inconclusive (counter exit %s: did not finish; no verdict drawn)" % counter.returncode)
+        return 2
     print("DECOY-SUMMARY verdict=%s" % ("killed" if dead else "spared"))
     return 1 if dead else 0
 

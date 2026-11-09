@@ -3675,3 +3675,9 @@ receipts in P `5bd5a0ce`. Amendments in `plans/round-85.md` (A0-A1 so far); the 
 - Wave incident: R98Connector's cleanup SIGKILLed 26 processes of sibling seats at ~12:33:50Z; any `rc=-9`
   results from that time are void (recorded in the reports; the L1's own measurements are from post-incident runs).
 - Tool installs: none. No pacman (paused), no uv/npx/binary fetch, no sysctl or sudo.
+- **Round 98 late (after WAVE-DONE).** The committed decoy driver was corrected (lane fixtures for non-T1 arms,
+  no timer kill on the counter, `--arm-timeout 200`, `verdict=inconclusive` when the counter does not finish).
+  Measured on the corrected driver: r98 spares 83/83 (`conform=20`, counter exit 0); r97 kills 60/83; CM8 kills
+  82/83. Evidence: `census/round-98/records/decoy-*-final.txt`, `decoy-*-counter.out`. C2 stays **measured, not
+  admitted** pending the non-author closure and the operator ruling on reap branch (c). Earlier spared runs with
+  `counter_exit=-9` are void. Seats: all 12 settled (`.ufo/waves/round-98/w1-results.json`); ExecC2 `partial`.

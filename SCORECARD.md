@@ -2497,3 +2497,12 @@ table unchanged.
   sub-tick discipline check (M8); re-close the R97 basename-cheat class on the probe side (K5) or record it as a
   known probe-side limit.
 - Neither claim repeats r98 bytes unchanged: a claim that would pass with no work is rejected, never re-declared.
+
+### Round 98 late measurement — C2 decoy predicate (2026-11-09, after WAVE-DONE)
+
+| claim | axis | before | after | counting command | verdict |
+|---|---|---|---|---|---|
+| C2 decoy predicate on the corrected driver | operability 8 (no 0–10 mapping; unchanged) | r97 counter: `dead=60 alive=23 verdict=killed` (`census/round-98/records/decoy-r97-final.txt`); CM8 mutant: `dead=82 alive=1 verdict=killed` | r98 counter: `conform=20`, T1 `exit=2 survivors=0`, `dead=0 alive=83 verdict=spared` (`census/round-98/records/decoy-r98-final.txt`) | `python3 -B census/round-98/c2-decoy-test.py --counter census/round-98/c2-setup-arms.py --probe census/round-98/c2-forgery-probe.py --tool tools/souji-record-agreement.py --before census/round-92/controls/c2-before-tool.py --work <empty> --arm-timeout 200 --plant-delay 2` (r97/CM8 with `--counter` swapped) | **measured, not admitted**: the decoy predicate discriminates in all three directions; admission waits for the non-author closure and for the operator's ruling on reap branch (c) (counter-descendant kill, R98Sentinel F4). Earlier "spared" runs with `counter_exit=-9` and the pipe-holder driver are void. |
+
+Planned (r99) additions: name reap branch (c) in the C2 sentence or remove it; the survivors count is an accessory
+and is not a C2 witness (R98ScoutSources F3).

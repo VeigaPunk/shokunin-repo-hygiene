@@ -123,3 +123,32 @@ Assimilation: none this round (no `merge/souji/` theme taken). considerthese: th
 No `merge/souji/` theme was assimilated this round (Assimilation: none). `considerthese/`: the lane has no
 `considerthese/` dir. The one sourced claim is C1 (S372 RERAISE, object-keyed stamp) and C2 (S075 ppid/starttime
 ownership, S368 new-session escape); each rests on a row re-opened this round.
+
+## Late evidence and corrections (after WAVE-DONE, 2026-11-09)
+
+- **C2 decoy predicate, measured on the corrected driver.** `census/round-98/c2-decoy-test.py` was corrected after
+  the lane commit `ca98ad08`: (i) the counter's non-T1 arms now receive the lane's real fixtures
+  (`tests/fixtures/r93-k4-flagfail.py` / `r92-k4-flagfail.py`), not the pipe-holder (the pipe-holder made
+  P1/P2/S1 hang and `conform=13`, so the earlier runs measured the driver, not the reap); (ii) the counter is
+  no longer killed on the test's own timer (an early run was killed at `counter_exit=-9` and printed a false
+  `verdict=spared`; the driver now prints `verdict=inconclusive` and exits 2 when the counter did not finish);
+  (iii) `--arm-timeout 200`, above the probe's own 120 s, so the T1 arm cannot race the probe's timeout.
+  Measured (`census/round-98/records/decoy-*-final.txt`, `decoy-*-counter.out`):
+  - r98 counter: `ARMS-SUMMARY arms=20 conform=20`, T1 `exit=2 want=2 survivors=0`, counter exit 0,
+    `DECOY-PLANTED n=83 dead=0 alive=83`, `DECOY-SUMMARY verdict=spared`.
+  - r97 counter (argv-only): `conform=20`, counter exit 0, `dead=60 alive=23`, `verdict=killed`.
+  - CM8 mutant (ownership removed): `conform=20`, counter exit 0, `dead=82 alive=1`, `verdict=killed`.
+  These three directions are the C2 after-state and both do-nothing controls. The earlier "spared" under the
+  r98 counter with `counter_exit=-9` (and the old-driver `conform=13` runs) are void and are not evidence.
+- **M7 status.** The token and pid defects are repaired and measured above; the decoy now discriminates.
+- **Limits carried, not admitted silently.** (a) Branch (c) of the reap (any counter descendant carrying the
+  token, `census/round-98/c2-setup-arms.py` `_reap_owned`) is wider than the frozen claim wording, which names
+  only the spawn pid and its ppid-chain descendants (R98Sentinel FINDING 4, MEDIUM; `cross_arm_probe.py`). Branch
+  (c) is the subreaper net that keeps the T1 escapee owned, so it is needed for `survivors=0`; the claim wording
+  must name it, and the non-author closure decides whether a counter-descendant kill is in-claim.
+  (b) The survivors count keys on the spawn-pid chain, so `survivors=0` cannot witness the escapee's reap by
+  itself (R98ScoutSources F3; R98ExecC2 F-2). The decoy predicate, not `survivors`, is the C2 witness.
+  (c) A timeout-driven arm (P1/S1/T1 at 120 s) can still print `hung` on an overloaded host; the measured runs
+  above were at load 0.1–3.
+- **Frontier correction.** The C2 sentence "`survivors` keyed on the descendant relation" in `## Gate` above is
+  superseded by the measured decoy predicate; the survivor count is an accessory, not the binding.
