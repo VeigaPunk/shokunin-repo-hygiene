@@ -3504,3 +3504,29 @@ receipts in P `5bd5a0ce`. Amendments in `plans/round-85.md` (A0-A1 so far); the 
   under `w1/dead-seats/` and never replaced, so the live attack share is 2/13 (two reviewers). Attempt 1's L1 died
   after the after receipts (`lane-dead-no-report`); attempt 2 (SoujiR91a2) re-verified and landed the rest.
 - **Tool installs: none.** No pacman (paused host-wide), no uv/npx/binary fetch, no sysctl, sudo or kernel change.
+
+## Round 92 (2026-11-08/09) — a survivor census finds that no row asserted exit 0 on success (C1 calibration); the excerpt cut moves only across a well-formed UTF-8 sequence (C2 operability)
+
+- **Motivating evidence.** The r91 spot-check (`corpus/lessons/round-91-verifier-spotcheck.md` §7) routed five items:
+  the `_cut_tail` invalid-lead collision (payloads A/B, `R91ExecC2Tool`), KFF13 by `ast`, the alternative-edit survivor
+  search R91MutCounter never ran plus LD4's `rc=0`, a re-gate before any validity claim, and population header
+  hygiene. Attempt 1 (SoujiR92) died before any wave; attempt 2 adopted its uncommitted instruments after re-running
+  them (`plans/round-92.md` A0.1).
+- **Claims.** C1 (calibration 7): census 270/9 ambiguous/1 hung/260 scored/124 survive on the r91 population; one
+  row LD4r (LD4 + expect_rc 0) makes the harness exit 1 on 47 of them (`killed=47 survived=0`; control `killed=0
+  survived=47`; pristine 64/0, LD4r `rc=0`). C2 (operability 8): the filed tool moves a cut only across one strictly
+  decodable sequence (Table 3-7, S355); fixture `cases=20 tool_pass=20 before_pass=16`, forgery 5/5, K4 12/0/0;
+  control the r91 tool 16/20, EXIT 1.
+- **Narrowed before filing (plans/round-92.md A1, A3, A4).** A1: three over-moving forgeries pass the frozen fixture
+  20/20, so "only across ONE well-formed sequence" rests on source reading and a 200,000-payload wave sweep. A3:
+  "kills" means the harness exits 1 (row mismatch, no crash) on the 47 listed edits; an alternative line-552 edit
+  survives. A4: S355's anchor id corrected `G7404` → `G27506`.
+- **Sources.** S355 (Unicode 18.0.0 ch. 3 §3.9 D86 / Table 3-7) admitted `mined`, cited by
+  `corpus/knowledge/utf8-window-well-formed-cut.md`; D93b is the reject sample. Registry 276 → 277; census EXIT 0
+  both ends. QUALITY Q167, Q168.
+- **Mistakes.** M1 the survivor search's clone farm (185 GB on /fast); M2 the NF1r draft row; M3 the hung mutant;
+  M4 sentences wider than their instruments (`corpus/lessons/round-92.md`).
+- **Wave.** One v1 wave, 13 seats (4 executor, 2 reviewer, critic, 2 mutation-tester, sentinel, connector, scout,
+  scribe; the L1 holds the planner seat). Attack share under the addendum's four roles 5/13 = 38.5 %; all 13 settled
+  with an artifact (`.ufo/waves/round-92/w1-results.json`); no dead seats; no residual call.
+- **Tool installs: none.** No pacman (paused), no uv/npx/binary fetch, no sysctl or sudo.

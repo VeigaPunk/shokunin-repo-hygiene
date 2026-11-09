@@ -2240,3 +2240,40 @@ numbers re-derive exactly on committed bytes.
   list (pid-reuse row, parent-before-child, termign-fork/p5-late-term, strace-robust settle), `_regular` pathspec
   framing, the quarantine intro-blob digest row, the r79 gate re-measurement, check-4 300 s backstop, r76 K03/K04,
   the r17 240 s runners.
+
+### Round 92 measurements (2026-11-08/09; lane base `5339b2ac79f81aa446f6a2cd4700321cf4982fd3`; instruments P1 `44d45b44`, P2 `1d015a2d`, freeze F `e8d31f06`, after receipts `e5059168`)
+
+| claim | axis | before | after | counting command | measured commit |
+|---|---|---|---|---|---|
+| C1 one exit-polarity row (LD4r = LD4 + expect_rc 0) makes the harness exit 1 (row mismatch, no crash) on 47 of the 124 single-token survivors of the frozen r87 counter (narrowed A3: the edits, not their clauses) | calibration 7 (no reproducible 0–10 mapping; verdict calibration improved) | `census/round-92/controls/c1-control-r91-population.txt` (the 47 targets on the r91 63-row population, r92 harness): `SEARCH-SUMMARY generated=47 ambiguous=0 uncompiled=0 hung=0 scored=47 killed=0 survived=47`, EXIT 0 — no work reaches 47; census `records/c1-search-r91-full.txt`: `generated=270 ambiguous=9 uncompiled=0 hung=1 scored=260 killed=136 survived=124` | `census/round-92/records/c1-after.txt`: `SEARCH-SUMMARY generated=47 ambiguous=0 uncompiled=0 hung=0 scored=47 killed=47 survived=0`, EXIT 0; `records/c1-pristine-after.txt`: `SUMMARY rows=64 mismatches=0 accepted=0 refused_true=0 errors=0`, LD4r `rc=0 match=yes`, EXIT 0 | `python3 -B census/round-92/c1-survivor-search.py --counter census/round-87/c1-pointer-counter.py --harness census/round-92/c1-false-row-harness.py --population census/round-92/c1-false-rows.tsv --lane . --fleet-root /home/vgpnk/Projects/shokunin --work WORK --jobs 8 --ids census/round-92/c1-targets.json` | `e5059168` (instruments `44d45b44`/`1d015a2d`, F `e8d31f06`) |
+| C2 the excerpt cut moves only across a well-formed UTF-8 sequence (Table 3-7, S355); the fixture certifies the A/B pair, the overlong and head cases and a 29,700-payload prefix/suffix sweep (narrowed A1: over-moving forgeries pass) | operability 8 (no reproducible 0–10 mapping; verdict operability improved) | `census/round-92/controls/c2-control-r91-tool-both-arms.txt` (the r91 tool as both arms): `SUMMARY cases=20 tool_pass=16 before_pass=16`, KFF14/15/16/18 red, EXIT 1 | `census/round-92/records/c2-after.txt` on the filed tool `fc0e35c2…`: `SUMMARY cases=20 tool_pass=20 before_pass=16`, EXIT 0; `records/c2-forgery-after.txt`: `FORGERY-SUMMARY forgeries=5 rejected=5 positive=pass`, EXIT 0; `records/c2-k4-regression.txt`: `SUMMARY rows=12 mismatches=0 errors=0`, EXIT 0 | `python3 -B tests/fixtures/r92-k4-flagfail.py --tool tools/souji-record-agreement.py --before census/round-92/controls/c2-before-tool.py --work WORK` | `e5059168` |
+
+No owned axis score changed (calibration 7, coverage 8, operability 8 — the lane still has no reproducible 0–10
+mapping): both rows carry the verdict, the counting command and the measured commit instead. The wave narrowed one C2
+sentence before filing (`plans/round-92.md` A1): three one-edit forgeries that move a cut too far (surrogatepass, a
+multi-character span, a forward head move) pass the frozen fixture 20/20, so "moves a cut only across ONE well-formed
+sequence" rests on source reading and a 200,000-payload wave sweep, not on the frozen predicate. C1's "kills" is
+narrowed to the 47 listed edits (A3: an alternative edit of line 552 survives; the kill rule cannot tell a crash from a
+verdict change, and none of the 47 is a crash); R92ExecC1Cause attributes 14/14 sampled kills to LD4r alone (7 exit-polarity, 7 resolution). The L1 held
+the planner seat (validator-frozen); the planning data-walk rode R92Connector.
+
+### Round 92 capability rows
+
+| name | what it can now do | evidence pointer | first-working round |
+|---|---|---|---|
+| a bounded single-token mutation census of a frozen counter | enumerate every comparison flip, and/or swap, `not` deletion, True/False and 0/1 swap of a counter (plus hand edits), score each once on a pinned population with per-mutant cleanup and a process-group timeout, and print killed/survived/ambiguous/hung per mutant, so unbound clauses are found by search instead of by hand | `python3 -B census/round-92/c1-survivor-search.py --counter census/round-87/c1-pointer-counter.py --harness census/round-91/c1-false-row-harness.py --population census/round-91/c1-false-rows.tsv --lane . --fleet-root /home/vgpnk/Projects/shokunin --work WORK --jobs 10 --timeout 240` → `generated=270 ambiguous=9 uncompiled=0 hung=1 scored=260 killed=136 survived=124` (`census/round-92/records/c1-search-r91-full.txt`); cleanup able to fail (`records/m1-cleanup-fail-check.txt`: 44 KB vs 369,072 KB without it) | r92 |
+| a well-formed-sequence excerpt cut | move the K4 excerpt's head/tail cut only across a single strictly-decodable UTF-8 sequence (every Unicode Table 3-7 row), so an ill-formed lead never absorbs a later well-formed sequence and the excerpt's head/tail stay a prefix/suffix of the whole rendering | `python3 -B tests/fixtures/r92-k4-flagfail.py --tool tools/souji-record-agreement.py --before census/round-92/controls/c2-before-tool.py --work WORK` → `cases=20 tool_pass=20 before_pass=16` (`records/c2-after.txt`); forgery probe 5/5; wave sweep 0/200,000 (`.ufo/waves/round-92/w1/R92ExecC2Sweep.md`) | r92 |
+
+### Planned (r93)
+
+- C1 (calibration): classify or bind the 77 residual survivors (`census/round-92/records/c1-residual-survivors.json`)
+  and name the equivalent mutants; bind the forge return (stated limit ii) through a separate exit-expectation
+  channel, not a row; make exit polarity a required field of resolving rows (R92Connector §6); search robustness:
+  try/finally cleanup on kill, SIGINT cancel, the bare-`/tmp` guard (R92Sentinel M1/L1/L2).
+- C2 (operability): a maximality case so a cut that moves too far goes red (R92MutC2 C/D/E, A1); an ill-formed lead
+  before the HEAD cut (R92Connector §3); retire or re-point the r91 variant tools (R92Connector §2 C).
+- Carried: p2 basename granularity, p3 the punctuation lookahead, p7 `_regular`'s symlink leg, p8 `token_ok`'s
+  hyphen marker, the `fleet:` symlink leg, the battery `--only`/`--expect-killed` stale defaults, the r85/r86 C2
+  list (pid-reuse row, parent-before-child, termign-fork/p5-late-term, strace-robust settle), `_regular` pathspec
+  framing, the quarantine intro-blob digest row, the r79 gate re-measurement, check-4 300 s backstop, r76 K03/K04,
+  the r17 240 s runners, the r85-r87 K4 counters' print-only `rc=`.
