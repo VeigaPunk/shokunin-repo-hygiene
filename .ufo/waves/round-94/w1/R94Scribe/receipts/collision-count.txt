@@ -1,0 +1,28 @@
+# R94Scribe: the collision counter — a verdict exit code reachable by a non-verdict.
+# date: 2026-11-09   lane: /home/vgpnk/Projects/shokunin/souji-shokunin
+#
+# The counting command (one line, reads only committed receipts):
+#   awk '/^SEARCH h-crash/ && /killed=yes/{c++} /^ARM S/ && ($3=="exit=0"||$3=="exit=1") && $5=="line=no"{c++} END{print c+0}' A B
+#
+# C1 half (a crash fixture scored killed by the rule): SEARCH lines of a crash fixture that read killed=yes.
+# C2 half (a setup failure that carries a verdict exit code): an ARM S* line whose exit is 0 or 1 while the
+#   arm's required marker line is absent (line=no) — the arm failed for a reason the exit code does not say.
+
+--- after (the two instruments the round ships) ---
+collisions=0
+  files: census/round-94/records/c1-after.txt census/round-94/records/c2-after.txt
+
+--- before (the two do-nothing controls) ---
+collisions=9
+  files: census/round-94/controls/c1-control-r93-rule.txt census/round-94/controls/c2-control-r93-probe.txt
+
+--- breakdown of the 9 before-collisions ---
+SEARCH h-crash-late line=574 killed=yes rc=1
+SEARCH h-crash-index line=494 killed=yes rc=1
+ARM S1 exit=1 want=0 line=no conform=no
+ARM S3 exit=1 want=2 line=no conform=no
+ARM S4 exit=1 want=2 line=no conform=no
+ARM S5 exit=1 want=2 line=no conform=no
+ARM S6 exit=1 want=2 line=no conform=no
+ARM S7 exit=1 want=2 line=no conform=no
+ARM S8 exit=1 want=2 line=no conform=no

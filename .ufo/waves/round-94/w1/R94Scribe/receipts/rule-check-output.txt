@@ -1,0 +1,45 @@
+# R94Scribe: rule-check.py applied to the two crash fixtures under BOTH rules.
+# date: 2026-11-09
+#
+# R-A  the r93 rule as shipped: killed iff harness rc==1 and at least one ROW ... match=no
+# R-B  the r93-ROUND-94-ROUTED fix (r93 lesson 'Routed to round 94' item 1; QUALITY Q170):
+#        errored iff any ROW reads got=- (the counter printed no verdict for that row)
+# R-C  the r94 rule as shipped: errored iff the harness exited 70 or any ROW reads rc=70
+
+########## BEFORE: the frozen r93 search with the r94 crash hand edits (census/round-94/c1-control-r93-rule.py)
+# receipt: census/round-94/controls/c1-control-r93-rule.txt (SEARCH h-crash-late killed=yes rc=1,
+#          SEARCH h-crash-index killed=yes rc=1; SEARCH-SUMMARY errored=0 killed=4 survived=1)
+# harness outputs: my own re-run, .ufo/waves/round-94/w1/R94Scribe/receipts/h-crash-*.r93rule-harness.out
+
+.ufo/waves/round-94/w1/R94Scribe/receipts/h-crash-late.r93rule-harness.out
+  harness_rc=1 rows=66 got=-=0 rc=70=0 match=no=2
+  R-A (r93 rule as shipped)               -> killed
+  R-B (r93-routed fix: got=- => errored)  -> killed
+  R-C (r94 rule: rc=70 => errored)         -> killed
+.ufo/waves/round-94/w1/R94Scribe/receipts/h-crash-index.r93rule-harness.out
+  harness_rc=1 rows=66 got=-=1 rc=70=0 match=no=1
+  R-A (r93 rule as shipped)               -> killed
+  R-B (r93-routed fix: got=- => errored)  -> errored
+  R-C (r94 rule: rc=70 => errored)         -> killed
+
+########## AFTER: the r94 search with its crash sentinel
+# receipt: census/round-94/records/c1-after.txt (SEARCH h-crash-late killed=errored rc=1,
+#          SEARCH h-crash-index killed=errored rc=1; SEARCH-SUMMARY errored=2 killed=2 survived=1)
+# harness outputs: census/round-94/records/c1-after-harness/m0003.out (h-crash-late, 66 ROWs all rc=70)
+#                   census/round-94/records/c1-after-harness/m0004.out (h-crash-index, 1 ROW rc=70)
+
+census/round-94/records/c1-after-harness/m0003.out
+  harness_rc=1 rows=66 got=-=0 rc=70=66 match=no=10
+  R-A (r93 rule as shipped)               -> killed
+  R-B (r93-routed fix: got=- => errored)  -> killed
+  R-C (r94 rule: rc=70 => errored)         -> errored
+census/round-94/records/c1-after-harness/m0004.out
+  harness_rc=1 rows=66 got=-=1 rc=70=1 match=no=1
+  R-A (r93 rule as shipped)               -> killed
+  R-B (r93-routed fix: got=- => errored)  -> errored
+  R-C (r94 rule: rc=70 => errored)         -> errored
+
+########## VERDICT
+# h-crash-late (crash AFTER every ITEM line is printed): no ROW reads got=-, so R-B cannot see it -> killed.
+# h-crash-index (crash on ONE three-column ledger row): 1 ROW reads got=-, so R-B sees it -> errored.
+# Only R-C (an exit status no verdict uses) separates BOTH fixtures from a semantic kill.

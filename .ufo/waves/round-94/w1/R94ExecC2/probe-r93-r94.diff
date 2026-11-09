@@ -1,0 +1,43 @@
+2,3c2,3
+< """souji r93 C2 forgery probe (the r92 probe's five forgeries plus the three R92MutC2 survivors): does a fixture
+< refuse tools that fake the r92 cut repair?
+---
+> """souji r94 C2 forgery probe: the r93 probe (census/round-93/c2-forgery-probe.py; same eight forgeries, same verdict)
+> with its setup failures moved off the verdict exit code (r93 routed defect 5).
+4a5,13
+> r94 setup discipline: exit 1 means only "a forgery was not rejected or the positive control failed". Every setup
+> failure exits 2 with one `C2-FORGERY-FATAL:` line on stderr: --fixture/--tool/--before not a readable regular file;
+> --work under /tmp, an existing non-directory, or a non-empty directory (an EXISTING EMPTY directory is used as is —
+> r93 aborted on it with a FileExistsError traceback, exit 1); a fixture run that prints no `SUMMARY cases=...` line
+> (the fixture itself failed, for the positive control or for any forgery — r93 scored such a forgery `rejected=no`
+> and exited 1). Verdicts and output lines are otherwise the r93 ones.
+> 
+> r93 docstring follows. Does a fixture refuse tools that fake the r92 cut repair?
+> 
+86c95,98
+<     if os.path.exists(work) and os.listdir(work):
+---
+>     if os.path.lexists(work) and not os.path.isdir(work):
+>         print(f"C2-FORGERY-FATAL: --work {work} exists and is not a directory", file=sys.stderr)
+>         return 2
+>     if os.path.isdir(work) and os.listdir(work):
+89d100
+<     os.makedirs(work)
+90a102,106
+>     for k, v in (("fixture", fixture), ("tool", tool), ("before", before)):
+>         if not os.path.isfile(v) or not os.access(v, os.R_OK):
+>             print(f"C2-FORGERY-FATAL: --{k} {v} is not a readable regular file", file=sys.stderr)
+>             return 2
+>     os.makedirs(work, exist_ok=True)
+94a111,114
+>     if res is None:
+>         print(f"C2-FORGERY-FATAL: the fixture printed no SUMMARY line for the positive control (exit {rc})",
+>               file=sys.stderr)
+>         return 2
+109a130,135
+>         if res is None:
+>             with open(os.path.join(work, f"{fid}.out"), "w", encoding="utf-8") as f:
+>                 f.write(out)
+>             print(f"C2-FORGERY-FATAL: the fixture printed no SUMMARY line for forgery {fid} (exit {rc}); "
+>                   f"its verdict is unknown", file=sys.stderr)
+>             return 2

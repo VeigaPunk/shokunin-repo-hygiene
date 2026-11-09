@@ -1,0 +1,86 @@
+2c2,15
+< """souji r93 C1 survivor search: the r92 search (census/round-92/c1-survivor-search.py) with three changes.
+---
+> """souji r94 C1 survivor search: the r93 search (census/round-93/c1-survivor-search.py) with three changes.
+> 
+> 1. Crash sentinel (r93 A3, R93Sentinel M1: a counter that raises an uncaught exception exits 1, the harness prints
+>    `match=no` on the rows whose asserted exit code or status it misses, and the r93 rule scored the mutant KILLED).
+>    Every harness run gets a `sitecustomize.py` on PYTHONPATH (written under --work/hook) whose `sys.excepthook`
+>    prints the traceback, flushes stdout/stderr and ends the process with exit 70 (sysexits EX_SOFTWARE). The harness
+>    inherits it, and so does every counter run the harness spawns (they inherit the environment), so an uncaught
+>    exception in the mutant counter surfaces as `rc=70` on the harness's `ROW` lines (or as harness exit 70).
+> 2. r94 kill rule: a mutant is ERRORED when the harness exits 70 or any `ROW` line reads `rc=70` (a crash, whatever
+>    the row's match); otherwise KILLED only on a harness exit 1 with at least one `ROW ... match=no` line; a harness
+>    exit 0 is a survivor; anything else is errored.
+> 3. Two hand edits that crash the counter: `h-crash-late` (the final `return 0 if ok else 1` raises after every ITEM
+>    line is printed) and `h-crash-index` (`_ledger` reads `r[3]`, an IndexError on a three-column ledger row only).
+>    The r93 rule scores both killed on the r93 population (census/round-94/controls).
+4,11c17,18
+< 1. Kill rule (r92 A3: the r92 rule scored ANY non-zero harness exit, so a crashing counter counted as killed): a
+<    mutant is KILLED only when the harness exits 1 AND prints at least one `ROW ... match=no` line (a row's asserted
+<    verdict or exit code differs). A harness exit 2, or an exit 1 whose only failing rows are `match=error` (the
+<    counter crashed, rc 2), is `errored` -- neither killed nor survived.
+< 2. One more hand edit, `h-ok-admits-one` (R92MutC1 E1): the success test `resolved == len(pop)` slackened to
+<    `resolved >= len(pop) - 1`, which survived the r91 and r92 populations.
+< 3. Robustness (R92Sentinel M1/L1): SIGINT/SIGTERM stop the search, kill every live harness process group and delete
+<    every per-mutant work tree before exit (exit 130); the bare-/tmp guard covers --work and --emit.
+---
+> Inherited from r93: SIGINT/SIGTERM stop the search, kill every live harness process group and delete every per-mutant
+> work tree before exit (exit 130); the bare-/tmp guard covers --work and --emit.
+47a55,57
+>     ("h-crash-late", "    return 0 if ok else 1\n", '    raise RuntimeError("h-crash-late")  # h-crash-late\n'),
+>     ("h-crash-index", "            ledger[r[0]] = (r[1], r[2])\n",
+>      "            ledger[r[0]] = (r[1], r[2], r[3])[:2]  # h-crash-index\n"),
+48a59,75
+> CRASH_RC = 70  # sysexits(3) EX_SOFTWARE: "An internal software error has been detected."
+> HOOK = f'''# souji r94 crash sentinel (census/round-94/c1-survivor-search.py): an uncaught exception exits {CRASH_RC}
+> import os, sys
+> 
+> 
+> def _souji_r94_crash(t, v, tb):
+>     sys.__excepthook__(t, v, tb)
+>     for s in (sys.stdout, sys.stderr):
+>         try:
+>             s.flush()
+>         except Exception:
+>             pass
+>     os._exit({CRASH_RC})
+> 
+> 
+> sys.excepthook = _souji_r94_crash
+> '''
+87c114,118
+<     """r93 kill rule: killed only on a harness exit 1 with at least one asserted row mismatch (`match=no`)."""
+---
+>     """r94 kill rule: a crash (harness exit 70 or any ROW `rc=70`) is errored; otherwise killed only on a harness
+>     exit 1 with at least one asserted row mismatch (`match=no`); exit 0 survives; anything else is errored."""
+>     rows = [l for l in out.decode("utf-8", "replace").splitlines() if l.startswith("ROW ")]
+>     if rc == CRASH_RC or any(f" rc={CRASH_RC} match=" in l for l in rows):
+>         return "errored"
+90,91c121
+<     if rc == 1 and any(l.startswith("ROW ") and l.endswith(" match=no") for l in out.decode("utf-8", "replace")
+<                        .splitlines()):
+---
+>     if rc == 1 and any(l.endswith(" match=no") for l in rows):
+108a139,140
+>     env = dict(os.environ)
+>     env["PYTHONPATH"] = ns.hook + (os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else "")
+112c144
+<                          start_new_session=True)
+---
+>                          start_new_session=True, env=env)
+172a205,218
+>     ns.hook = os.path.join(ns.work, "hook")
+>     os.makedirs(ns.hook)
+>     with open(os.path.join(ns.hook, "sitecustomize.py"), "w", encoding="utf-8") as f:
+>         f.write(HOOK)
+>     # precondition: the sentinel must fire in a child started the way the harness starts the counter
+>     env = dict(os.environ, PYTHONPATH=ns.hook + (os.pathsep + os.environ["PYTHONPATH"]
+>                                                  if os.environ.get("PYTHONPATH") else ""))
+>     chk = subprocess.run([sys.executable, "-B", "-c", "raise RuntimeError('souji-r94-sentinel-check')"],
+>                          stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
+>     if chk.returncode != CRASH_RC:
+>         print(f"C1-SEARCH-FATAL: crash sentinel did not fire (child exit {chk.returncode}, want {CRASH_RC})",
+>               file=sys.stderr)
+>         return 2
+>     print(f"# crash-sentinel rc={CRASH_RC} check=pass")

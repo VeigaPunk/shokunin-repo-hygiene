@@ -1,0 +1,33 @@
+# R94MutC1 — Mutation test of the r94 search's crash sentinel and kill rule (C1)
+
+Seat: R94MutC1 (mutation-tester). Target: `census/round-94/c1-survivor-search.py` (sha256 `97b8defa5c3c007cc10814483fe6dae6fe0f0a0bdb066b0f14169561b9f374ae`, verified before and after; never modified, mutants live in `mutants/`).
+Predicate (prereg): `python3 -B <search> --counter census/round-87/c1-pointer-counter.py --harness census/round-93/c1-false-row-harness.py --population census/round-93/c1-false-rows.tsv --lane . --fleet-root /home/vgpnk/Projects/shokunin --work <empty> --jobs 5 --ids census/round-94/c1-targets.json` must print `SEARCH-SUMMARY generated=5 ambiguous=0 uncompiled=0 hung=0 scored=5 errored=2 killed=2 survived=1`, crash fixtures `killed=errored`, kills `killed=yes`, survivor `killed=no`, EXIT 0. A mutant SURVIVES if it still prints that summary + per-id verdicts with EXIT 0.
+Pristine baseline (receipts/pristine.txt): exact predicate summary, EXIT 0. Each run clones the lane per mutant (~17 s, --jobs 5).
+
+## Mutant table
+
+| Mutant | One edit (vs pristine) | Summary | Verdict | Classification |
+|---|---|---|---|---|
+| M1 `M1_hook_rc_71.py` | `CRASH_RC = 70` → `CRASH_RC = 71` (hook, verdict, precondition all follow the constant) | `generated=5 ambiguous=0 uncompiled=0 hung=0 scored=5 errored=2 killed=2 survived=1`, EXIT 0 | **survived** | **equivalent** — single source of truth: hook exits 71, precondition checks 71, verdict tests 71. No observable difference on any input. |
+| M2 `M2_verdict_rc_71.py` | verdict `if rc == CRASH_RC` → `if rc == 71` (harness-exit disjunct only) | same exact summary, EXIT 0 | **survived** | **equivalent under C1** — the two crash fixtures surface only via ROW `rc=70` (harness exits 1, see below), so the harness-exit disjunct is dead code for these five targets. The predicate cannot bind it; a harness-crash target would. |
+| M3 `M3_row_substring_space.py` | `f" rc={CRASH_RC} match="` → `f" rc={CRASH_RC}match="` | `errored=0 killed=4 survived=1`, crashes `killed=yes`, EXIT 0 | **killed** (predicate fails it, as required) | detection proof: the ` rc=70 match=` spelling is bound. |
+| M4 `M4_drop_row_disjunct.py` | verdict crash test → `if rc == CRASH_RC:` (ROW disjunct dropped) | `errored=0 killed=4 survived=1`, crashes `killed=yes`, EXIT 0 | **killed** | detection proof: the ROW `rc=70` disjunct carries the entire C1 verdict on these targets (harness exits 1, never 70, on both crash fixtures — receipts show `rc=1` for h-crash-late/h-crash-index). |
+| M5 `M5_rc0_branch_first.py` | `rc==0` branch moved before the crash test | same exact summary, EXIT 0 | **survived** | **equivalent** — `rc==0` excludes 70, so branch order is unobservable for any input. |
+| M6 `M6_match_endswith.py` | `l.endswith(" match=no")` → `" match=no" in l` | same exact summary, EXIT 0 | **survived** | **unbound** — killed=yes on both semantic targets still holds, but a target whose ROW line carries `match=no` mid-line would mis-score as killed instead of errored. Same marker, weaker position; the predicate's two positive kills both end with `match=no`. |
+| M7 `M7_pythonpath_no_prepend.py` | harness/counter `PYTHONPATH` hook prepend removed | `errored=0 killed=4 survived=1`, crashes `killed=yes`, EXIT 0 | **killed** | detection proof: sentinel inheritance via PYTHONPATH is bound (equivalent to forgery FB). |
+| M8 `M8_no_precondition.py` | precondition `if chk.returncode != CRASH_RC:` → `if False:` | same exact summary, EXIT 0, still prints `# crash-sentinel rc=70 check=pass` | **survived** | **unbound** — the precondition is a no-op guard on a healthy machine; it only changes behavior when the sentinel is broken, which the five targets cannot express. The *printed* pass line is nevertheless unconditional on the child result after this edit, so a future sentinel regression would print `check=pass`. |
+| M9 `M9_hook_no_flush.py` | hook's stdout/stderr flush loop → `pass` | same exact summary, EXIT 0 | **survived** | **equivalent** — the hook's observables (`os._exit(70)`, traceback via `sys.__excepthook__`) are unchanged; the flush matters only for buffered output racing `os._exit`, and nothing in the five targets reads that output. |
+| M10 `M10_hook_rc_literal.py` | hook `os._exit({CRASH_RC})` → `os._exit(70)` (literal) | same exact summary, EXIT 0 | **survived** | **equivalent** — `CRASH_RC` is a compile-time constant `70`; the f-string always rendered `70`, so the mutant is byte-identical in behavior. (It only diverges if someone edits `CRASH_RC` without editing the literal — the same latent hazard as M1's consistency assumption, not a current behavioral difference.) |
+
+## Findings
+- **3 killed, 7 survived.** Killed: M3, M4, M7 — the predicate binds the ROW-substring spelling, the ROW disjunct, and the PYTHONPATH prepend. These three are the load-bearing parts of the C1 mechanism on these five targets.
+- **2 survivals require attention (unbound, not equivalent):**
+  - **M6** — `match=no` position test (endswith vs substring). A mutant whose harness output carries an asserted row carrying `match=no` non-finally would flip. Worth a synthetic harness target if the L1 wants the kill rule's spelling bound.
+  - **M8** — the sentinel precondition prints `check=pass` unconditionally after the edit; on a host where the sentinel is broken the search would *report* a pass and then score crashes as killed (M7's failure mode, silently). Consider making the pass line truthful or treating a dead sentinel as a setup error even in the steady state — the check exists for exactly this, but the predicate cannot distinguish "checked and passed" from "never checked".
+- The remaining 5 survivals (M1, M2, M5, M9, M10) are equivalent under the stated wording: no behavioral input distinguishes them. M2 shows the harness-exit-70 disjunct is untested by the five targets (masked by the ROW disjunct), which is a coverage note for future claim wording, not a defect in the frozen predicate.
+
+## FALSIFIES-WORDING / FALSIFIES-NUMBER
+`NO-FALSIFICATION` — no artifact falsifies a sentence of C1. Ten one-edit mutants were tried: the exact predicate summary, per-id verdicts and EXIT 0 were reproduced on the pristine byte copy; every deviation found (M3/M4/M7) correctly broke the predicate. The unbound survivals above are coverage findings about parts of the mechanism the five targets do not exercise, not contradictions of the claimed five verdicts.
+Reproducers: `mutants/*.py`, `receipts/*.txt` (this seat dir). Original search untouched: sha256 before = after = `97b8defa…374ae`. Scratch `/fast/scratch/hyaku/souji-r94/R94MutC1/` deleted after copying receipts. No tool installs (none needed).
+
+Report: .ufo/waves/round-94/w1/R94MutC1.md
