@@ -1,7 +1,7 @@
 # The timeout owner owns the pipes: a child that escapes its process group still holds them
 
-source: S367 (Python `subprocess`, the `start_new_session` parameter); scored against census/round-96/c2-forgery-probe.py and census/round-96/c2-setup-arms.py at round 96.
-verified-at: page opened 2026-11-09 from docs.python.org/3 (Python 3.15 documentation), capture census/round-96/srcs/subprocess.html with its tag-stripped text beside it; quoted sentence occurrence count in its SOURCES row.
+source: S367 (Python `subprocess`, the `start_new_session` parameter; that the child calls setsid()); S368 (Linux man-pages `setsid(2)` DESCRIPTION; that the new session is a new process group); scored against census/round-96/c2-forgery-probe.py and census/round-96/c2-setup-arms.py at round 96.
+verified-at: S367 page opened 2026-11-09 from docs.python.org/3 (capture census/round-96/srcs/subprocess.html); S368 page opened 2026-11-09 from man7.org (capture census/round-96/srcs/setsid.2.html, sha256 52cbc190…, man-pages 6.19). Quoted sentence occurrence counts are in the SOURCES rows. Gate: S368 quote "The calling process also becomes the process group leader of a new process group in the session" (17 words, occurrence 1, access 2026-11-09). S369–S371 correct the teaches cells of S365–S367 (see the amendments in plans/round-96.md A11).
 recheck: 365d, or when the quoted sentence changes.
 
 Round 96 (C2, operability of the forgery probe's exit-code discipline). Ground: r95 closure A6 (plans/round-95.md A6), R95ReviewerC2 Q1-pipe-holder, R95Sentinel F2.
@@ -12,18 +12,23 @@ The r95 probe killed a timed-out fixture's process group but then called `p.comm
 child's stdout/stderr pipes to reach EOF. A fixture whose `setsid()` grandchild keeps those pipes open therefore hangs
 the probe past its own `--timeout` (r95 T1: `ARM T1 exit=hung`). S367: "`start_new_session` is true the `setsid()`
 system call will be made in the child process prior to the execution of the subprocess." A new session is a new
-process group; a group kill cannot reach it.
+process group (S368); a group kill directed at the probe's group cannot reach a grandchild that called setsid().
 
 ## The r96 fix
 
 `_wait_output` waits for the fixture's own output, and on timeout kills the group, then waits only for the integer
-returncode — never for pipe EOF. The pipe-holding grandchild is left to the arm counter's own kill; the probe names
-the timeout and exits 2 within its `--timeout` (~120 s, T1 `conform=yes`).
+returncode — never for pipe EOF. The probe names the timeout and exits 2 within its `--timeout` (~120 s, T1
+`conform=yes`). The pipe-holding grandchild is NOT reaped by the probe or by the arm counter (plans/round-96.md A4).
 
 ## Limits
 
-- The probe does not reap the escaped grandchild; it only stops being held by it (the arms counter kills it).
-- A fixture that writes unbounded output still blocks on a full pipe before the timeout fires; only the post-kill
-  wait is now bounded.
+- The probe does not reap the escaped grandchild; it only stops being held by it. The arm counter's group kill
+  (`killpg` of the probe's session) does not reach the `setsid()` grandchild either, so one T1 grandchild survives every
+  T1 arm run, re-parented to init (measured: plans/round-96.md A4; R96Sentinel F-4 E6a–E6c; reapcheck.out B/C).
+  The earlier sentence "the arms counter kills it" was false and is withdrawn.
+- A fixture that writes unbounded output in unbounded time is not refused by the timeout: the probe drains the pipes
+  into its own memory (27.3 GB RSS observed at --timeout 8, SIGTERM at 36 s, no FATAL line; plans/round-96.md A5).
+  The earlier sentence "still blocks on a full pipe" was false and is withdrawn. Rate-limited and finite floods are
+  refused cleanly.
 - `--timeout 0` and a read-only `--work` refused with exit 2 and their own arms (T2/T3) are setup refusals, not
   deadline semantics; the abort fixture (T4) is a no-SUMMARY setup failure, never the probe's verdict.

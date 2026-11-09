@@ -88,24 +88,33 @@ channels and keeps status 1 for a declared exit and 2 for argparse (`# crash-sen
   observations on CPython 3.14.8, now disclosed in the rows (A7).
 
 
-## r96 audit (C1, calibration): the SystemExit leg learns to tell a catch from a release
+## r96 audit (C1, calibration): the EH clear is a TRADE, not an improvement (verdict: harmed)
 
-Round 96 (C1, calibration 7, the lane's lowest owned non-retired axis). Ground: r95 closure §7 (SystemExit-leg
-rewrite for declared `sys.exit` in `main`, Q172 precondition `mismatched=0`), plans/round-95.md A1, R95Sentinel F1/F3
-and Q172.
+Round 96 (C1, calibration 7). Ground: r95 closure §7 (SystemExit-leg rewrite, Q172 precondition), plans/round-95.md
+A1, R95Sentinel F1/F3, Q172. Amendments: plans/round-96.md A1–A3, A9.
 
-- **Terminating audit.** The r95 leg marked any SystemExit first raised inside a main-script function foreign on
-  arrival at `<module>` and never cleared it, so a SystemExit caught at the top level (t1/t4: plain 0, r95-hooked 70)
-  was scored errored. The r96 hook registers an `EXCEPTION_HANDLED` callback (S365) that clears the mark only when
-  the same exception is handled at `<module>`; a `finally` also fires `EXCEPTION_HANDLED` (observed: RAISE, EH,
-  finally, EH, RAISE) but does not stop the exception terminating, so the clear is scoped to `<module>` and a3b
-  (try/finally, still terminating) stays errored. The declared-shape table (Q172, `census/round-96/declared-shapes.py`,
-  twelve shapes from R95Labrat) now reads `mismatched=0` (r95: 6, r95-hook: 2, t1/t4).
-- **Signal-safe crash path.** The marker write is now a raw `os.write` on a momentarily non-blocking fd 2 (S366):
-  from a signal handler it no longer deadlocks on the TextIOWrapper lock (E3c: plain `rc=0`, r95-hooked `HUNG` at 12 s,
-  r96-hooked `rc=70` in 1 s), and on a full undrained pipe it cannot block the exit (E16/E18: `rc=70`, no marker).
-  The marker is best-effort; the exit code is the verdict.
-- **Per-channel CHECK reasons.** The precondition asserts each channel's `SOUJI-R96-CRASH` reason string, so the
-  cross-wired legs m02/m03 (r95: surviving) now fail the CHECK instead of passing it.
-- **Counts.** The ten r95 targets are unchanged (`errored=7 killed=2 survived=1`); the wave re-scores the full
-  population (reported, not claimed).
+- **What r96 changed.** The r95 leg marked a SystemExit first raised inside a main-script function foreign and never
+  cleared it, so a SystemExit caught at the top level (t1/t4: plain 0) was scored errored (r95 hook `mismatched=2`).
+  The r96 hook adds an EXCEPTION_HANDLED callback (S365) that clears the mark when the callback's frame is `<module>`.
+- **What it gets right.** t1 and t4 (caught at top level, plain 0) now score declared: `mismatched=0` on the twelve-shape
+  table (re-derived by the L1 and four seats).
+- **What it gets wrong (measured by the L1 under the frozen hooks).** The same frame-name test also clears a terminating
+  exit that passes through a module-level `finally` or a module-level re-raising `except`: CPython fires
+  EXCEPTION_HANDLED in the frame that owns the `finally` and at the re-raise. Plain rc 1 (terminating): r95 hook 70
+  (errored, correct), r96 hook **1 (declared, wrong)**. The twelve-shape table has no such shape, which is why its
+  `mismatched=0` does not see it. The earlier sentence in this entry that a `finally` "does not stop the exception
+  terminating, so the clear is scoped to `<module>`" describes the cause, not a protection: a module-level `finally`
+  is in `<module>`, so the clear still applies.
+- **Verdict.** A gain on one shape class and a loss on another, both measured: a trade. The admission rule (no axis
+  harmed) does not admit it as an improvement. The calibration score stays 7. The operator rules.
+- **Crash path.** The marker write is a raw `os.write` on a momentarily non-blocking fd 2 (S366, S370). It does not
+  block, and the exit code is not affected by it (E16/E18/E3c measured). Two limits, both measured by R96Sentinel:
+  (1) the excepthook and thread channels print their traceback through the blocking TextIOWrapper before the crash path,
+  so they can still block on a full undrained pipe (E10, faulthandler stack); (2) the no-free-tool-id fallback leaves fd 2
+  non-blocking for the rest of the process (E5, E9). The earlier wording "cannot block the exit" was wrong for (1) and
+  "momentarily" was wrong for (2).
+- **Per-channel CHECK reasons** assert `SOUJI-R96-CRASH <channel>` for each channel the search runs. The mutants that
+  drop a reason assertion survive the predicate for some channels (R96MutC1 M04, M14): the predicate does not bind
+  every reason. Routed to r97.
+- **Scope note.** This entry's teaches cells for S365–S367 are superseded by S369–S371 (SOURCES.md). S368 (setsid(2))
+  is the source for the process-group claim in deadline-owned-reaping.md.

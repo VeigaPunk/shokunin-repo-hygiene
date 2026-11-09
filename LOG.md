@@ -3614,3 +3614,36 @@ receipts in P `5bd5a0ce`. Amendments in `plans/round-85.md` (A0-A1 so far); the 
   mutation-tester, sentinel, connector, scout, scribe; the L1 holds the planner seat). Attack share 6/13 = 46 %; all 13
   settled with a report (`.ufo/waves/round-95/w1-results.json`); no dead seats; no residual call.
 - **Tool installs: none.** No pacman (paused), no uv/npx/binary fetch, no sysctl or sudo.
+
+## Round 96 (2026-11-09) — souji
+
+- **Motivating evidence.** The r95 spot-check (`corpus/lessons/round-95-verifier-spotcheck.md` §7) routed the SystemExit
+  leg's declared-exit shapes (`mismatched=6`, Q172) and the probe's pipe-EOF hang (T1 `exit=hung`, `conform=19`).
+- **Claims.** C1 (calibration 7): the r96 EH clear makes the twelve-shape table `mismatched=0` (r95 hook `mismatched=2`)
+  and the ten targets unchanged. C2 (operability 8): the r96 probe refuses T1 with exit 2 + FATAL, `ARMS-SUMMARY arms=20
+  conform=20` on rerun 2 (r95 probe `conform=19`).
+- **Verdicts.** C1 **harmed (trade)**: the same frame-name clear turns terminating module-level `finally` and re-raise
+  exits from errored (r95 70) to declared (r96 1), reproduced by the L1; not admitted (`plans/round-96.md` A1; SCORECARD
+  r96 row). C2 **verified, narrowed**: counted quantity certifies exit-code discipline (A7); the grandchild is not reaped
+  (A4); a first-run unattributed S12 SIGTERM stays on the record (A8).
+- **Narrowed before filing (`plans/round-96.md`).** A1 C1 EH clear trade; A2 "a full undrained pipe cannot block the exit"
+  false for the excepthook/thread channels (E10); A3 "momentarily" false for the no-free-id fallback (E5/E9); A4 limit (iv)
+  "the counter kills it" false (F-4 E6, scribe reapcheck); A5 limit (i) unbounded-output mechanism is memory, not a
+  blocked pipe (27.3 GB RSS, reviewer Q1a); A6 arm docstring and label gaps; A7 counted quantity is exit-code discipline
+  (basename cheat reaches 20/20, critic); A8 S12 -15 first-run anomaly; A9 the "r94-rule mismatched=6" label is the r95
+  receipt; A10 census and survivors (neutral); A11 S365-S367 teaches over-claims, superseded by S369-S371.
+- **Reported, not claimed.** Full population (R96ExecCensus): killed 139, survived 76, errored 53; identical verdicts to the
+  frozen r95 search on all 268 scored ids.
+- **Sources.** S368 setsid(2) (opened and quote-verified by the L1, sha256 52cbc190…) admitted `mined`, cited by
+  `corpus/knowledge/deadline-owned-reaping.md`; S369–S371 supersede the teaches of S365–S367 (CORPUS rule 2). Registry
+  286 → 293; census EXIT 0.
+- **Mistakes (mined, `corpus/lessons/round-96.md`).** M1 the module-level `finally` shape absent from the table and the
+  clear scoped by frame name, not by "handled" (captured-by: none; fix: r97 RERAISE-aware rule + shapes); M2 the
+  "cannot block" and "momentarily" wording written from the fix's intent, not measured (captured-by: none before the
+  wave; caught by the sentinel F-1/F-2); M3 the counter's kill sentence written without measuring the kill's reach
+  (captured-by: none; caught by F-4 and the scribe relay); M4 the basename-cheat counted-quantity gap (captured-by: the
+  critic seat).
+- **Wave.** One v1 wave, 13 seats (3 executor, 3 reviewer, 1 critic, 2 mutation-tester, 1 sentinel, 1 connector, 1 scout,
+  1 scribe; the L1 holds the planner seat). Attack share 8/13 with the reviewer, critic, mutation-tester, sentinel and
+  connector roles.
+- **Tool installs: none.** No pacman (paused), no uv/npx/binary fetch, no sysctl or sudo.

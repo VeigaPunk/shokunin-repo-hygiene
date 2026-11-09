@@ -2402,3 +2402,40 @@ ids, killed 139, survived 76; errored 48 → 53 = the five new fixtures). The L1
   `--expect-killed` stale defaults, the r85/r86 C2 list, `_regular` pathspec framing, the quarantine intro-blob digest
   row, the r79 gate re-measurement, check-4 300 s backstop, r76 K03/K04, the r17 240 s runners, the r85-r87 K4
   counters' print-only `rc=`.
+
+### Round 96 measurements (2026-11-09; lane base `689d1c9570a5df2344e16a5916c49e24b46823ab`; instruments P1 `0656de3f`, controls P2 `4dd8a103`, freeze F `c1209623`, after receipts A = the r96 census/controls re-run, see the report)
+
+| claim | axis | before | after | counting command | verdict |
+|---|---|---|---|---|---|
+| C1 SystemExit leg: a top-level-caught SystemExit scores declared (t1/t4) | calibration 7 (no 0–10 mapping; unchanged) | `census/round-96/controls/` r95-hook shape table `SHAPES-SUMMARY shapes=12 mismatched=2` (t1/t4 70) | r96 hook `SHAPES-SUMMARY shapes=12 mismatched=0` (`python3 -B census/round-96/declared-shapes.py --search census/round-96/c1-survivor-search.py --scripts census/round-96/shapes --work <empty>`) | as left; measured commit `0656de3f` | **harmed (trade).** The same frame-name clear turns two terminating module-level shapes from errored (r95 70) to declared (r96 1): plans/round-96.md A1. Not admitted; score stays 7; operator rules. |
+| C1 check line and the ten r95 targets | calibration 7 | frozen r95 search on the r96 ids `errored=7 killed=2 survived=1` | r96 search `errored=7 killed=2 survived=1`, check line `check=pass … declared=1 argparse=2` (`census/round-96/records`) | `python3 -B census/round-96/c1-survivor-search.py --counter census/round-87/c1-pointer-counter.py --harness census/round-93/c1-false-row-harness.py --population census/round-93/c1-false-rows.tsv --lane . --fleet-root /home/vgpnk/Projects/shokunin --work <empty> --jobs 5 --ids census/round-96/c1-targets.json` | unchanged (no target moves; the ten targets do not discriminate the EH fix) |
+| C2 T1 pipe-holder arm: exit 2 + FATAL within the probe timeout, not `hung` | operability 8 (no 0–10 mapping; unchanged) | r95 probe under the twenty-arm counter `ARM T1 exit=hung`, `ARMS-SUMMARY arms=20 conform=19`, EXIT 1 | r96 probe `ARM T1 exit=2 want=2 line=yes conform=yes`, `ARMS-SUMMARY arms=20 conform=20`, EXIT 0 (on rerun 2; run 1 had an unattributed S12 SIGTERM, plans/round-96.md A8) | `python3 -B census/round-96/c2-setup-arms.py --probe census/round-96/c2-forgery-probe.py --fixture-pass tests/fixtures/r93-k4-flagfail.py --fixture-fail tests/fixtures/r92-k4-flagfail.py --tool tools/souji-record-agreement.py --before census/round-92/controls/c2-before-tool.py --work <empty>` | **verified, narrowed.** Counted quantity certifies exit-code discipline, not the mechanism (A7); grandchild not reaped (A4). |
+
+No owned axis score changed (calibration 7, operability 8, coverage 8). The C1 row is a harm verdict and is reported as
+such; the C2 row is an improvement on a narrowed reading.
+
+### Round 96 capability rows
+
+| name | what it can now do | evidence pointer | first-working round |
+|---|---|---|---|
+| pipe-holder refusal within the timeout | refuse a fixture whose escaped `setsid()` grandchild holds the probe's pipes: the probe exits 2 with one `C2-FORGERY-FATAL:` line at its own `--timeout`, not `hung` (the grandchild is not reaped; plans/round-96.md A4) | `python3 -B census/round-96/c2-setup-arms.py --probe census/round-96/c2-forgery-probe.py …` → `ARM T1 exit=2 … conform=yes` (`census/round-96/controls/` and `.ufo/waves/round-96/w1/R96ExecC2/c2-after-arms-rerun2.txt`) | r96 |
+
+### Planned (r97)
+
+- C1 (calibration, trade to resolve): distinguish "handled at the top level" from "passed through a module-level frame"
+  (a RERAISE-aware rule, or the exception's own state after the frame) so t1/t4 stay declared AND the module-level
+  `finally` and re-raise shapes stay errored (plans/round-96.md A1, measured both ways). Add those two shapes and the
+  module-level `finally` to the declared-shape table before any calibration claim on the EH leg is re-attempted.
+  Fix the no-free-id fallback to restore fd 2's blocking mode (A3); route the excepthook and thread channels' blocking
+  traceback print past the raw crash write (A2, E10). Predicate binding for the per-channel reason assertion (MutC1
+  M04/M14).
+- C2 (operability): reap the T1 grandchild by an identity other than the process group (per-arm absolute fixture path,
+  verified at act time) and report the surviving-grandchild count per run as a number (A4). Cap the captured fixture
+  output so an unbounded flood is refused within the timeout (A5). Record a signal exit (-15) distinctly in the counter
+  (A8). Correct the counter's docstrings (sixteen-arm line; the non-integer `--timeout` class; T2's mechanism) (A6).
+- Sources: supersede S365–S367 teaches with S369–S371 (done here); S368 (setsid(2)) supports the process-group claim.
+- Carried: the forge-return channel (r92 limit ii), p2 basename granularity, p3 the punctuation lookahead, p7
+  `_regular`'s symlink leg, p8 `token_ok`'s hyphen marker, the `fleet:` symlink leg, the battery `--only`/
+  `--expect-killed` stale defaults, the r85/r86 C2 list, `_regular` pathspec framing, the quarantine intro-blob digest
+  row, the r79 gate re-measurement, check-4 300 s backstop, r76 K03/K04, the r17 240 s runners, the r85-r87 K4
+  counters' print-only `rc=`.
