@@ -1,0 +1,93 @@
+# R95Connector — sibling-lane overlap scan receipts (read-only greps, cwd /home/vgpnk/Projects/shokunin)
+# Every command below was run under `cd /home/vgpnk/Projects/shokunin`; no sibling file was written.
+# The decisive channel scans include each repo's .ufo/ tree (the earlier per-channel pass excluded it and was
+# superseded; this file is the final scan).
+
+## 1. crash-sentinel channels (full scan, .ufo included)
+
+$ grep -rIl --exclude-dir=.git -e 'sys\.excepthook' ./*-shokunin/ | grep -v '/souji-shokunin/'
+count: 17
+kagi-shokunin/.ufo/waves/round-26/build/ClockS027-artifacts/chlog.body                       (CPython changelog HTML)
+kagi-shokunin/.ufo/waves/round-27/sandboxes/KagiR26.MutKnowledgeBase-17/base/.../chlog.body  (copy)
+kama-shokunin/.ufo/waves/round-20/build/advice/KnowErrorVerdict.md                          (prose)
+kama-shokunin/.ufo/waves/round-20/build/out/KnowErrorVerdict/error-is-not-a-verdict.md       (prose)
+mado-shokunin/.ufo/waves/round-22/w1/sources/SourceThread/threading-v3.14.8.py               (CPython stdlib capture)
+mado-shokunin/.ufo/waves/round-22/w2/receipts/ReopenS122/threading-v3.14.8-reopen.py         (CPython stdlib capture)
+tameshi-shokunin/.ufo/evidence/round-79/sources/sys.html                                     (docs capture)
+tameshi-shokunin/.ufo/evidence/round-80/sources/sys315.html                                  (docs capture)
+tsukuroi-shokunin/.ufo/waves/round-32/w1/ScribeSrcCoredump/systemd-coredump.xml              (docs capture)
+tsukuroi-shokunin/.ufo/waves/round-32/w2/RevSourcesRows/S177-systemd-coredump.xml            (docs capture)
+tsukuroi-shokunin/.ufo/waves/round-34/w1/SrcCoredumpCode/systemd-coredump.xml                (docs capture)
+tsukuroi-shokunin/.ufo/waves/round-96/w1/ScoutSources/pins/python-3-sys.html                 (docs capture)
+tsukuroi-shokunin/.ufo/waves/round-96/w1/ScribeKnowledge/receipts/s390-page.html             (docs capture)
+tsukuroi-shokunin/.ufo/waves/round-96/w1/ScribeLesson/pins/https___docs_python_org_3_library_sys_html (docs capture)
+tsukuroi-shokunin/.ufo/waves/round-97/after/gate/page-b1b43819.html                          (docs capture)
+tsukuroi-shokunin/.ufo/waves/round-97/w1/ScoutSources/pins/sys315.html                       (docs capture)
+tsukuroi-shokunin/.ufo/waves/round-97/w1/ScribeLesson/pins/sys315.html                       (docs capture)
+  -> no sibling instrument replaces sys.excepthook.
+
+$ grep -rIl --exclude-dir=.git -e 'threading\.excepthook' ./*-shokunin/ | grep -v souji
+(the two kagi changelog copies, the two mado CPython stdlib captures, the six tameshi/tsukuroi docs captures)
+  -> no instrument.
+
+$ grep -rIl --exclude-dir=.git -e 'unraisablehook' ./*-shokunin/ | grep -v souji
+(the two kagi changelog copies, tameshi round-79/80 sys.html, the six tsukuroi docs captures)
+  -> no instrument.
+
+$ grep -rIl --exclude-dir=.git -e 'sys\.monitoring' ./*-shokunin/ | grep -v souji
+count: 24
+kake-shokunin/scripts/cache_key_conformance.py:418                    -> DENY-LIST entry (sandbox forbids it)
+kake-shokunin/.ufo/waves/round-90/w1/ExecSandbox/receipts/gate_worktree_snapshot.py:370 -> snapshot of that list
+kama-shokunin/.ufo/waves/round-58/w1/out/Q02SourcePyTrace.md:8,12     -> source assessment: "complementary" to
+                                                                        sys.setprofile for execution observation;
+                                                                        explicitly not a crash sentinel
+kama-shokunin/.ufo/waves/round-58/{build_spec.py:100,w1-dispatch.json,w1-results.json,w1-spec.json,
+  w1/out/W05LogDraft.md,w1/out/swarm-registry.json}                   -> the same assessment's plumbing
+kagi-shokunin/.ufo/waves/round-26/.../chlog*.html|chlog.body          -> CPython changelog captures
+tameshi-shokunin/.ufo/evidence/round-79|80/sources/sys*.html           -> docs captures
+tsukuroi-shokunin/.ufo/waves/round-96|97/...sys*.html                  -> docs captures
+  -> no sibling instrument uses it as a sentinel; kake treats it as a hazard, kama assessed it as a profiling source.
+
+$ grep -rIn --exclude-dir=.git -E 'os\._exit[[:space:]]*=' ./*-shokunin/ | grep -v souji
+(no output: no lane replaces os._exit)
+
+$ grep -rIln --exclude-dir=.git -e 'faulthandler' --include='*.py' ./*-shokunin/ | grep -v souji
+kake-shokunin/scripts/cache_key_conformance.py   (deny list)
+
+$ grep -rIl --exclude-dir=.git -e 'sitecustomize' ./*-shokunin/ | grep -v souji
+audio-shokunin/corpus/live/r72-reviewer/ldstub/sitecustomize.py   (19 lines; replaces ctypes.CDLL to simulate a host
+                                                                   without libsndfile; no exception hook)
+  -> hook-on-PYTHONPATH mechanism exists in a sibling, but for an import/loader stub, not a crash channel.
+
+$ grep -rIn 'crash sentinel\|crash-sentinel' game-dev-2d-shokunin/reports/round-97|100|101
+game-dev-2d-shokunin/reports/round-97/r97-verifier.md:53  "dedupe crash sentinel CASES rows (509/509 unique)"
+game-dev-2d-shokunin/reports/round-100/r100-critic.md:13,196  same integration fix
+game-dev-2d-shokunin/reports/round-101/mutations/ver9_extract_baseline.py:56  same
+  -> their "crash sentinel" is a CASES-row dedupe in a Godot battery, not an exception-channel sentinel.
+
+$ find ./*-shokunin -path '*/souji-shokunin' -prune -o -name '*sentinel*' -print
+audio-shokunin/corpus/live/r77-boundary/p6_sentinel.py   -> "split sentinel": rotation-counter probe, unrelated
+audio-shokunin/corpus/live/r77-boundary/probe-p6-sentinel.json
+chousa-shokunin/.ufo/waves/round-8*/.../R8*SentinelScope/sentinel.md  -> seat notes
+game-dev-2d-shokunin/reports/r19-scope-sentinel.md                    -> seat report
+game-dev-3d-shokunin/corpus/live/r101-sentinel/                       -> run directory
+
+## 2. probe fixture timeout (generic prior art, for comparison only)
+
+audio-shokunin/corpus/live/r96-simplifier/probe_c4.py:46-49   subprocess.run([...pactl...], timeout=12)
+audio-shokunin/corpus/live/r96-simplifier/probe_c4.py:143      mal.wait(timeout=10)   (forgery-control child)
+audio-shokunin/corpus/fixtures/measure_audio.py:414,521,1052   process-group SIGKILL supervisor deadlines
+chousa-shokunin/corpus/evidence/round29/c1-count.py:266        timeout=opts.timeout
+chousa-shokunin/corpus/evidence/round45/c1-count.py:62         timeout=120
+chousa-shokunin/corpus/evidence/round49/c1-count.py:183        timeout=120
+chousa-shokunin/corpus/evidence/round50/c1-count.py:61         timeout=120
+game-dev-2d-shokunin/corpus/fixtures/run_battery.py:935,951    subprocess.run(..., timeout=timeout_seconds)
+game-dev-2d-shokunin/corpus/fixtures/run_battery.py:2751       timeout_seconds = 60 if script.startswith("__godot_export") else 8
+
+## 3. counts used in the report
+
+$ grep -rIl ... 'sys.excepthook' | wc -l    -> 17 files, all captures/prose (none an instrument)
+$ grep -rIl ... 'sys.monitoring' | wc -l    -> 24 files: 1 deny-list instrument (+1 snapshot), 1 kama source
+                                               assessment (+6 plumbing), the rest docs/changelog captures
+$ grep -rIn ... 'os._exit *='              -> 0
+$ grep -rIl ... 'unraisablehook'            -> 8 captures

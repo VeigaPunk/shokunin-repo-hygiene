@@ -1,0 +1,15 @@
+Cheap C2 probe edit (cheapest reaching 16/16 without real setup discipline).
+Reproducer:
+  python3 -B census/round-95/c2-setup-arms.py --probe .ufo/waves/round-95/w1/R95Critic/c2-cheap-catchall.py --fixture-pass tests/fixtures/r93-k4-flagfail.py --fixture-fail tests/fixtures/r92-k4-flagfail.py --tool tools/souji-record-agreement.py --before census/round-92/controls/c2-before-tool.py --work <empty>
+Receipt: c2-cheap-probe-receipt.txt — ARMS-SUMMARY arms=16 conform=16, EXIT 0, wall 55s (vs 122s for the real probe; skips the 120s S12 timeout entirely).
+
+The edit (c2-cheap-catchall.py): the ONLY change from the frozen r95 probe is a hard-coded special-case at the head of run():
+  if "fixture-hang" in fixture or "fixture-mute" in fixture or "fixture-crash" in fixture:
+      raise Fatal("critic-cheap: hardcoded hang/mute/crash fixture -> exit 2 without running anything")
+Every other arm is handled by the probe's pre-existing catch-all (except Exception -> exit 2) plus its real checks
+(read_utf8/makedirs). So a "copies the arm names and returns 2" probe + catch-all reaches 16/16 with NO fixture timeout discipline, NO tmp guard discipline (that one already existed in r94), and NO verdict-verification beyond what P1/P2 need.
+
+What this implies for the counted quantity ("conforming arms of 16"):
+- 16/16 counts only exit-code conformance; the arms check exactly one required stderr line (C2-FORGERY-FATAL:) and never that setup was refused for the RIGHT reason. GA (verdict exit 2) is refused only via P2, GB (errors=replace) only via S9/S10 matching the literal, GC (no timeout) only via S12 hanging — but a probe that maps filename substrings to exits passes all three while doing nothing general.
+- The prereg does NOT claim the probe's discipline is general: STATED LIMITS (i) names "a write failure after the checks, a --work made read-only mid-run, a fixture that escapes its process group ... the wave's to try", and (iii) says S12 "measures only that the probe ends with exit 2 before the counter's 300 s". The claim is explicitly "refuses each of S9-S12 with exit 2 and conforms on the twelve arms the r94 probe conforms on" — a 16-arm count, not a setup-correctness proof. The cheap copy satisfies the COUNTED QUANTITY while violating the spirit; that is exactly what the forgery controls exist to show is NOT enough (they test the predicate, not the spirit).
+- Consequence for the critic verdict: the counted quantity is BINDABLE but not ROBUST; the same criticism applies to any 16-arm exit-code claim, and the prereg's own limits already disclose it. Not a wording falsification — the claim never says "the probe's setup discipline is correct for all setup failures", only "conforming arms of 16 — before 12, after 16".

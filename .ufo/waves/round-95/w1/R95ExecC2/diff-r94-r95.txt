@@ -1,0 +1,141 @@
+2,3c2,13
+< """souji r94 C2 forgery probe: the r93 probe (census/round-93/c2-forgery-probe.py; same eight forgeries, same verdict)
+< with its setup failures moved off the verdict exit code (r93 routed defect 5).
+---
+> """souji r95 C2 forgery probe: the r94 probe (census/round-94/c2-forgery-probe.py; same eight forgeries, same verdict,
+> same r94 setup refusals) with the setup failures the r94 wave found still exiting 1 moved to exit 2 (r94 closure
+> routed defect 3; plans/round-94.md A4).
+> 
+> r95 additions, each exit 2 with one `C2-FORGERY-FATAL:` line on stderr: a --tool or --before whose bytes are not
+> UTF-8 (r94: UnicodeDecodeError traceback, exit 1); a --work that cannot be created, e.g. one whose parent is a
+> regular file (r94: NotADirectoryError, exit 1); a write under --work that fails after the checks (r94: traceback,
+> exit 1); a fixture run that outlives --timeout seconds (default 120): its process group is killed and the probe names
+> the run (r94: no timeout, the probe waited forever); and any other exception escaping main() (r94: exit 1). Exit 1
+> still means only "a forgery was not rejected or the positive control failed".
+> 
+> r94 docstring follows (its "every setup failure exits 2" sentence was false for the cases above; A4).
+40a51
+> import signal
+45a57,60
+> 
+> class Fatal(Exception):
+>     """A setup failure: printed as one `C2-FORGERY-FATAL:` line, exit 2."""
+> 
+76,79c91,103
+< def run(fixture, tool, before, work):
+<     p = subprocess.run([sys.executable, "-B", fixture, "--tool", tool, "--before", before, "--work", work],
+<                        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+<     out = p.stdout.decode("utf-8", "replace")
+---
+> def run(fixture, tool, before, work, timeout, label):
+>     p = subprocess.Popen([sys.executable, "-B", fixture, "--tool", tool, "--before", before, "--work", work],
+>                          stdout=subprocess.PIPE, stderr=subprocess.PIPE, start_new_session=True)
+>     try:
+>         so, _se = p.communicate(timeout=timeout)
+>     except subprocess.TimeoutExpired:
+>         try:
+>             os.killpg(p.pid, signal.SIGKILL)
+>         except ProcessLookupError:
+>             pass
+>         p.communicate()
+>         raise Fatal(f"the fixture run for {label} exceeded --timeout {timeout}s; its process group was killed")
+>     out = so.decode("utf-8", "replace")
+83a108,124
+> def read_utf8(k, path):
+>     with open(path, "rb") as f:
+>         data = f.read()
+>     try:
+>         return data.decode("utf-8")
+>     except UnicodeDecodeError as exc:
+>         raise Fatal(f"--{k} {path} is not UTF-8 ({exc.reason} at byte {exc.start})")
+> 
+> 
+> def write(path, text):
+>     try:
+>         with open(path, "w", encoding="utf-8") as f:
+>             f.write(text)
+>     except OSError as exc:
+>         raise Fatal(f"cannot write {path}: {exc.strerror or exc}")
+> 
+> 
+89a131
+>     ap.add_argument("--timeout", type=int, default=120, help="seconds per fixture run before the probe gives up")
+93,94c135
+<         print("C2-FORGERY-FATAL: --work under /tmp, /var/tmp or /dev/shm", file=sys.stderr)
+<         return 2
+---
+>         raise Fatal("--work under /tmp, /var/tmp or /dev/shm")
+96,97c137
+<         print(f"C2-FORGERY-FATAL: --work {work} exists and is not a directory", file=sys.stderr)
+<         return 2
+---
+>         raise Fatal(f"--work {work} exists and is not a directory")
+99,100c139,141
+<         print(f"C2-FORGERY-FATAL: --work {work} is not empty", file=sys.stderr)
+<         return 2
+---
+>         raise Fatal(f"--work {work} is not empty")
+>     if ns.timeout <= 0:
+>         raise Fatal("--timeout must be a positive number of seconds")
+104,106c145,150
+<             print(f"C2-FORGERY-FATAL: --{k} {v} is not a readable regular file", file=sys.stderr)
+<             return 2
+<     os.makedirs(work, exist_ok=True)
+---
+>             raise Fatal(f"--{k} {v} is not a readable regular file")
+>     src = {"tool": read_utf8("tool", tool), "before": read_utf8("before", before)}
+>     try:
+>         os.makedirs(work, exist_ok=True)
+>     except OSError as exc:
+>         raise Fatal(f"--work {work} cannot be created: {exc.strerror or exc}")
+109,110c153
+<     src = {"tool": open(tool, encoding="utf-8").read(), "before": open(before, encoding="utf-8").read()}
+<     rc, res, _out = run(fixture, tool, before, os.path.join(work, "positive"))
+---
+>     rc, res, _out = run(fixture, tool, before, os.path.join(work, "positive"), ns.timeout, "the positive control")
+112,114c155
+<         print(f"C2-FORGERY-FATAL: the fixture printed no SUMMARY line for the positive control (exit {rc})",
+<               file=sys.stderr)
+<         return 2
+---
+>         raise Fatal(f"the fixture printed no SUMMARY line for the positive control (exit {rc})")
+123,124c164
+<                 print(f"C2-FORGERY-FATAL: {fid} edit does not apply exactly once", file=sys.stderr)
+<                 return 2
+---
+>                 raise Fatal(f"{fid} edit does not apply exactly once")
+127,129c167,169
+<         with open(path, "w", encoding="utf-8") as f:
+<             f.write(text)
+<         rc, res, out = run(fixture, path, before, os.path.join(work, fid))
+---
+>         write(path, text)
+>         rc, res, out = run(fixture, path, before, os.path.join(work, fid), ns.timeout, f"forgery {fid}")
+>         write(os.path.join(work, f"{fid}.out"), out)
+131,137c171
+<             with open(os.path.join(work, f"{fid}.out"), "w", encoding="utf-8") as f:
+<                 f.write(out)
+<             print(f"C2-FORGERY-FATAL: the fixture printed no SUMMARY line for forgery {fid} (exit {rc}); "
+<                   f"its verdict is unknown", file=sys.stderr)
+<             return 2
+<         with open(os.path.join(work, f"{fid}.out"), "w", encoding="utf-8") as f:
+<             f.write(out)
+---
+>             raise Fatal(f"the fixture printed no SUMMARY line for forgery {fid} (exit {rc}); its verdict is unknown")
+146a181,192
+> def cli(argv):
+>     try:
+>         return main(argv)
+>     except Fatal as exc:
+>         print(f"C2-FORGERY-FATAL: {exc}", file=sys.stderr)
+>     except OSError as exc:
+>         print(f"C2-FORGERY-FATAL: I/O error: {exc}", file=sys.stderr)
+>     except Exception as exc:  # an internal error is not a verdict: never exit 1 for it
+>         print(f"C2-FORGERY-FATAL: internal error {type(exc).__name__}: {exc}", file=sys.stderr)
+>     return 2
+> 
+> 
+148c194
+<     sys.exit(main(sys.argv[1:]))
+---
+>     sys.exit(cli(sys.argv[1:]))

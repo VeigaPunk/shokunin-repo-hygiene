@@ -1,0 +1,230 @@
+--- census/round-94/c1-survivor-search.py	2026-11-09 01:18:32.231536548 -0300
++++ census/round-95/c1-survivor-search.py	2026-11-09 02:25:22.162304295 -0300
+@@ -1,21 +1,30 @@
+ #!/usr/bin/env python3
+-"""souji r94 C1 survivor search: the r93 search (census/round-93/c1-survivor-search.py) with three changes.
++"""souji r95 C1 survivor search: the r94 search (census/round-94/c1-survivor-search.py) with three changes.
+ 
+-1. Crash sentinel (r93 A3, R93Sentinel M1: a counter that raises an uncaught exception exits 1, the harness prints
+-   `match=no` on the rows whose asserted exit code or status it misses, and the r93 rule scored the mutant KILLED).
+-   Every harness run gets a `sitecustomize.py` on PYTHONPATH (written under --work/hook) whose `sys.excepthook`
+-   prints the traceback, flushes stdout/stderr and ends the process with exit 70 (sysexits EX_SOFTWARE). The harness
+-   inherits it, and so does every counter run the harness spawns (they inherit the environment), so an uncaught
+-   exception in the mutant counter surfaces as `rc=70` on the harness's `ROW` lines (or as harness exit 70).
+-2. r94 kill rule: a mutant is ERRORED when the harness exits 70 or any `ROW` line reads `rc=70` (a crash, whatever
+-   the row's match); otherwise KILLED only on a harness exit 1 with at least one `ROW ... match=no` line; a harness
+-   exit 0 is a survivor; anything else is errored.
+-3. Two hand edits that crash the counter: `h-crash-late` (the final `return 0 if ok else 1` raises after every ITEM
+-   line is printed) and `h-crash-index` (`_ledger` reads `r[3]`, an IndexError on a three-column ledger row only).
+-   The r93 rule scores both killed on the r93 population (census/round-94/controls).
++1. Wider crash sentinel (r94 closure routed defects 1 and 2; R94ScoutSources FW1, R94Sentinel F1/F2). The r94
++   `sitecustomize.py` only replaced `sys.excepthook`, which never sees SystemExit (S359), an exception raised in an
++   atexit callback or a finalizer (routed to `sys.unraisablehook`), an exception in a thread (`threading.excepthook`,
++   S361) or `os._exit` (S362). The r95 sentinel ends the process with exit 70 (S358) on each of these channels:
++     - an uncaught exception other than SystemExit                       (`sys.excepthook`, as r94)
++     - an exception reported to `sys.unraisablehook` (atexit callbacks, `__del__`)
++     - an exception escaping a thread's run(), SystemExit included          (`threading.excepthook`)
++     - any call of `os._exit` from Python code                             (`os._exit` replaced)
++     - a SystemExit that reaches the main module's top level after being first raised inside a function DEFINED IN
++       THE MAIN SCRIPT (seen with a `sys.monitoring` RAISE callback, S360; checked by an atexit callback registered
++       first, so it runs after every callback the program registers). The counter's declared exit path is the
++       top-level `sys.exit(main(...))`; a SystemExit first raised in another module (argparse's usage error) or at
++       the top level itself is declared and keeps its status.
++2. r95 kill rule: a mutant is ERRORED when the harness exits 70 or below 0, or any `ROW` line reads `rc=70` or a
++   negative `rc` (the counter was killed by a signal, S363); otherwise KILLED only on a harness exit 1 with at least
++   one `ROW ... match=no` line; a harness exit 0 is a survivor; anything else is errored.
++3. Five hand edits, one per channel the r94 sentinel misses: `h-sysexit` (`raise SystemExit("h-sysexit")` in place of
++   the ledger read), `h-atexit` (an atexit callback that divides by zero), `h-thread` (a joined thread that divides by
++   zero), `h-osexit` (`os._exit(1)` in place of the ledger read), `h-sigkill` (`os.kill(os.getpid(), 9)` in place of
++   the ledger read). The r94 search scores each of them killed or survived (census/round-95/controls).
+ 
+-Inherited from r93: SIGINT/SIGTERM stop the search, kill every live harness process group and delete every per-mutant
+-work tree before exit (exit 130); the bare-/tmp guard covers --work and --emit.
++Inherited from r94 and r93: SIGINT/SIGTERM stop the search, kill every live harness process group and delete every
++per-mutant work tree before exit (exit 130); the bare-/tmp guard covers --work and --emit; the precondition now runs a
++check script per channel plus two declared exits (status 1 and argparse's 2) before scoring.
+ 
+ Generates single-token operator mutants of the frozen r87 counter (census/round-87/c1-pointer-counter.py) with
+ `tokenize` (comparison flips, boolean-operator swaps, `not` deletion, True/False swaps, integer 0/1 swaps), plus
+@@ -37,6 +46,7 @@
+ import io
+ import json
+ import os
++import re
+ import signal
+ import shutil
+ import subprocess
+@@ -55,24 +65,117 @@
+     ("h-crash-late", "    return 0 if ok else 1\n", '    raise RuntimeError("h-crash-late")  # h-crash-late\n'),
+     ("h-crash-index", "            ledger[r[0]] = (r[1], r[2])\n",
+      "            ledger[r[0]] = (r[1], r[2], r[3])[:2]  # h-crash-index\n"),
++    ("h-sysexit", "    ledger, bad_ledger = _ledger(ns.ledger) if ns.ledger else ({}, [])\n",
++     '    raise SystemExit("h-sysexit")  # h-sysexit\n'),
++    ("h-atexit", "    return 0 if ok else 1\n",
++     '    __import__("atexit").register(lambda: 1 / 0)  # h-atexit\n    return 0 if ok else 1\n'),
++    ("h-thread", "    return 0 if ok else 1\n",
++     '    t = __import__("threading").Thread(target=lambda: 1 / 0); t.start(); t.join()  # h-thread\n'
++     "    return 0 if ok else 1\n"),
++    ("h-osexit", "    ledger, bad_ledger = _ledger(ns.ledger) if ns.ledger else ({}, [])\n",
++     "    os._exit(1)  # h-osexit\n"),
++    ("h-sigkill", "    ledger, bad_ledger = _ledger(ns.ledger) if ns.ledger else ({}, [])\n",
++     "    os.kill(os.getpid(), 9)  # h-sigkill\n"),
+ )
+ CRASH_RC = 70  # sysexits(3) EX_SOFTWARE: "An internal software error has been detected."
+-HOOK = f'''# souji r94 crash sentinel (census/round-94/c1-survivor-search.py): an uncaught exception exits {CRASH_RC}
+-import os, sys
++HOOK = '''# souji r95 crash sentinel (census/round-95/c1-survivor-search.py): every crash channel below exits @RC@
++import atexit, os, sys, threading
++
++_SOUJI_EXIT = os._exit
++_SOUJI_SEEN = {}
++_SOUJI_STATE = {"foreign": None}
+ 
+ 
+-def _souji_r94_crash(t, v, tb):
+-    sys.__excepthook__(t, v, tb)
++def _souji_crash(why):
++    try:
++        sys.stderr.write("SOUJI-R95-CRASH " + why + "\\n")
++    except Exception:
++        pass
+     for s in (sys.stdout, sys.stderr):
+         try:
+             s.flush()
+         except Exception:
+             pass
+-    os._exit({CRASH_RC})
++    _SOUJI_EXIT(@RC@)
++
++
++def _souji_excepthook(t, v, tb):
++    sys.__excepthook__(t, v, tb)
++    _souji_crash("uncaught " + getattr(t, "__name__", "?"))
++
++
++def _souji_unraisable(u):
++    sys.__unraisablehook__(u)
++    _souji_crash("unraisable " + getattr(u.exc_type, "__name__", "?"))
++
++
++def _souji_thread(a):
++    threading.__excepthook__(a)
++    _souji_crash("thread " + getattr(a.exc_type, "__name__", "?"))
++
++
++def _souji_os_exit(n):
++    _souji_crash("os._exit(%r)" % (n,))
++
++
++def _souji_raise(code, _offset, exc):
++    if not isinstance(exc, SystemExit):
++        return
++    main = getattr(sys.modules.get("__main__"), "__file__", None)
++    seen = _SOUJI_SEEN.get(id(exc))
++    if seen is None or seen[0] is not exc:
++        seen = _SOUJI_SEEN[id(exc)] = (exc, code.co_filename, code.co_name)
++    if main is not None and code.co_filename == main and code.co_name == "<module>":
++        _SOUJI_STATE["foreign"] = seen[2] if (seen[1] == main and seen[2] != "<module>") else None
+ 
+ 
+-sys.excepthook = _souji_r94_crash
++def _souji_atexit():
++    if _SOUJI_STATE["foreign"] is not None:
++        _souji_crash("SystemExit first raised in " + _SOUJI_STATE["foreign"] + "() of the main script")
++
++
++atexit.register(_souji_atexit)
++sys.excepthook = _souji_excepthook
++sys.unraisablehook = _souji_unraisable
++threading.excepthook = _souji_thread
++os._exit = _souji_os_exit
++for _souji_id in range(3, 6):
++    try:
++        sys.monitoring.use_tool_id(_souji_id, "souji-r95-sentinel")
++    except ValueError:
++        continue
++    sys.monitoring.register_callback(_souji_id, sys.monitoring.events.RAISE, _souji_raise)
++    sys.monitoring.set_events(_souji_id, sys.monitoring.events.RAISE)
++    break
++else:
++    sys.stderr.write("SOUJI-R95-SENTINEL no free sys.monitoring tool id\\n")
++'''.replace("@RC@", str(CRASH_RC))
++CHECK = '''import argparse, atexit, os, sys, threading
++
++
++def main(mode):
++    if mode == "excepthook":
++        raise RuntimeError("souji-r95-sentinel-check")
++    if mode == "sysexit":
++        raise SystemExit("souji-r95-sentinel-check")
++    if mode == "atexit":
++        atexit.register(lambda: 1 / 0)
++    if mode == "thread":
++        t = threading.Thread(target=lambda: 1 / 0)
++        t.start()
++        t.join()
++    if mode == "osexit":
++        os._exit(1)
++    if mode == "argparse":
++        argparse.ArgumentParser().parse_args(["--souji-r95-unknown"])
++    return 1
++
++
++if __name__ == "__main__":
++    sys.exit(main(sys.argv[1]))
+ '''
++CHECKS = (("excepthook", CRASH_RC), ("sysexit", CRASH_RC), ("atexit", CRASH_RC), ("thread", CRASH_RC),
++          ("osexit", CRASH_RC), ("declared", 1), ("argparse", 2))
+ LIVE = set()
+ 
+ 
+@@ -111,10 +214,12 @@
+ 
+ 
+ def verdict(rc, out):
+-    """r94 kill rule: a crash (harness exit 70 or any ROW `rc=70`) is errored; otherwise killed only on a harness
+-    exit 1 with at least one asserted row mismatch (`match=no`); exit 0 survives; anything else is errored."""
++    """r95 kill rule: a crash (harness exit 70 or below 0, or any ROW `rc=70` or negative `rc`) is errored; otherwise
++    killed only on a harness exit 1 with at least one asserted row mismatch (`match=no`); exit 0 survives; anything
++    else is errored."""
+     rows = [l for l in out.decode("utf-8", "replace").splitlines() if l.startswith("ROW ")]
+-    if rc == CRASH_RC or any(f" rc={CRASH_RC} match=" in l for l in rows):
++    rcs = [int(m.group(1)) for m in (re.search(r" rc=(-?\d+) match=", l) for l in rows) if m]
++    if rc == CRASH_RC or rc < 0 or any(r == CRASH_RC or r < 0 for r in rcs):
+         return "errored"
+     if rc == 0:
+         return "no"
+@@ -206,16 +311,25 @@
+     os.makedirs(ns.hook)
+     with open(os.path.join(ns.hook, "sitecustomize.py"), "w", encoding="utf-8") as f:
+         f.write(HOOK)
+-    # precondition: the sentinel must fire in a child started the way the harness starts the counter
++    # precondition: every sentinel channel must fire, and both declared exits keep their status, in a child started
++    # the way the harness starts the counter (`python -B <script>`, the hook on PYTHONPATH)
+     env = dict(os.environ, PYTHONPATH=ns.hook + (os.pathsep + os.environ["PYTHONPATH"]
+                                                  if os.environ.get("PYTHONPATH") else ""))
+-    chk = subprocess.run([sys.executable, "-B", "-c", "raise RuntimeError('souji-r94-sentinel-check')"],
+-                         stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
+-    if chk.returncode != CRASH_RC:
+-        print(f"C1-SEARCH-FATAL: crash sentinel did not fire (child exit {chk.returncode}, want {CRASH_RC})",
+-              file=sys.stderr)
+-        return 2
+-    print(f"# crash-sentinel rc={CRASH_RC} check=pass")
++    chk_dir = os.path.join(ns.work, "check")
++    os.makedirs(chk_dir)
++    chk_py = os.path.join(chk_dir, "souji_r95_check.py")
++    with open(chk_py, "w", encoding="utf-8") as f:
++        f.write(CHECK)
++    got = []
++    for mode, want_rc in CHECKS:
++        chk = subprocess.run([sys.executable, "-B", chk_py, mode], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
++                             env=env, timeout=60)
++        got.append(f"{mode}={chk.returncode}")
++        if chk.returncode != want_rc:
++            print(f"C1-SEARCH-FATAL: crash sentinel check {mode}: child exit {chk.returncode}, want {want_rc}",
++                  file=sys.stderr)
++            return 2
++    print(f"# crash-sentinel rc={CRASH_RC} check=pass {' '.join(got)}")
+     with open(ns.counter, encoding="utf-8") as f:
+         src = f.read()
+     for k in ("counter", "harness", "population"):

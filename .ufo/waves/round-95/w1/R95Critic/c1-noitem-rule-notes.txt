@@ -1,0 +1,6 @@
+Cheap C1 rule R1 ("no ROW line printed") — verdict replaced; sentinel HOOK+CHECK untouched (check line still passes).
+Reproducer:
+  python3 -B .ufo/waves/round-95/w1/R95Critic/c1-noitem-rule.py --counter census/round-87/c1-pointer-counter.py --harness census/round-93/c1-false-row-harness.py --population census/round-93/c1-false-rows.tsv --lane . --fleet-root /home/vgpnk/Projects/shokunin --work <empty> --jobs 5 --ids census/round-95/c1-targets.json
+Receipt: c1-cheap-rule-receipt.txt — SEARCH-SUMMARY generated=10 ... errored=0 killed=9 survived=1 (h-sysexit/h-atexit/h-thread/h-osexit/h-sigkill all killed=yes).
+Predicate requires errored=7 killed=2 survived=1 => cheap rule FAILS the predicate.
+Why: harness prints a ROW per population row even when the counter crashed on a row (got=- rc=70 / rc=-9), so "no ROW" never fires on these fixtures. The discriminator is ROW rc=-9/70, which is exactly the negative-rc leg (FC forgery: without it, errored=6 killed=3).
