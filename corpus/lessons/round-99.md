@@ -80,6 +80,7 @@ Assimilation: none this round (no `merge/souji/` theme taken). considerthese: th
   by re-deriving the one token that the counter's own `piphole` joins. Captured-by: none. Fix: `escapee()` takes the
   counter `--work` and appends the file name once; the valid receipt `records/c2-escapee-r99.txt` and the superseding
   note `records/c2-escapee-NOTE.txt` are committed; the void lines are kept, not deleted.
+- **M13 — the plan was written to the fleet root and the amendments to the lane (class: landing / misroot; L1-authored).** Evidence: the first `write` of `plans/round-99.md` used a relative path and landed at `/home/vgpnk/Projects/shokunin/plans/round-99.md` (fleet root). The amendment `cat >>` then created a lane file holding only A99.1/A99.2 (2870 bytes). Found by the §3 misroot sweep (`git status --porcelain` at the fleet root). Captured-by: none. Fix: the fleet copy (4595 bytes, the A0.x frozen predicates) was concatenated byte-exact before the lane amendments (7465 bytes; `cmp` verified; `head -c 4595` equals the fleet bytes), committed as `118e5b7d`, and the fleet copy and its `plans/` directory were deleted (one fleet-root deletion, by the sweep rule).
 
 Sweep for further mistakes: `grep -c '^- \*\*M' corpus/lessons/round-99.md` after the report; no other defect found in the
 wave outputs beyond the seats' own findings (R99Sentinel FINDING 1 is M10; R99Connector `EXPECTED_LEAK` is M10).
