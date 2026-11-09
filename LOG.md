@@ -3681,3 +3681,11 @@ receipts in P `5bd5a0ce`. Amendments in `plans/round-85.md` (A0-A1 so far); the 
   82/83. Evidence: `census/round-98/records/decoy-*-final.txt`, `decoy-*-counter.out`. C2 stays **measured, not
   admitted** pending the non-author closure and the operator ruling on reap branch (c). Earlier spared runs with
   `counter_exit=-9` are void. Seats: all 12 settled (`.ufo/waves/round-98/w1-results.json`); ExecC2 `partial`.
+
+## Round 99 (2026-11-09) — C1 shape labels frozen and pinned (admitted-candidate); C2 spawn-chain reap harmed (escapee leak), not admitted
+
+- Evidence: `corpus/lessons/round-99.md`; plan `plans/round-99.md` (A0.1 frozen; A99.1 pin after scoring; A99.2 C2 harm record).
+- C1 measurements: `census/round-99/records/c1-r99.txt` (pinned `shapes=17 mismatched=0`; relabel refused rc 2; unpinned relabel 3; r95/r97 controls 3).
+- C2 measurements: `census/round-99/records/c2-decoy-{r99,r98,r97,cm8}.txt`, `c2-counter-{r99,r98,r97}.txt` (ESCAPEE-ALIVE 1/0/0). Escapee measurement is the decisive leg.
+- Routed r100: escapee ownership key, positive escapee-reap predicate; L0 question on reap authority.
+- Mistakes: M9 (unchecked freeze hash), M10 (ppid-chain escapee assumption), M11 (storm-confounded cross-arm runs).

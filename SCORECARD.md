@@ -2506,3 +2506,28 @@ table unchanged.
 
 Planned (r99) additions: name reap branch (c) in the C2 sentence or remove it; the survivors count is an accessory
 and is not a C2 witness (R98ScoutSources F3).
+
+### Round 99 measurements (2026-11-09; lane base `c94d678c8a76f3f87f73b49a11a9d4e2aff73e3b`; plan `plans/round-99.md` A0.1 + A99.1/A99.2)
+
+| claim | axis | before | after | counting command | verdict |
+|---|---|---|---|---|---|
+| C1 shape-label binding (Q173) | calibration 7 (no 0–10 mapping; unchanged) | r98 runner: labels hard-coded; relabelling the labels moves the count to 0 (r98 M6 receipt, `.ufo/waves/round-98/w1/R98Scribe/repro/do-nothing-control-movability.py`) | pinned freeze file: M1 `SHAPES-SUMMARY shapes=17 mismatched=0` EXIT 0; M2 relabelled copy refused `SHAPES-FATAL` EXIT 2; M3 relabelled copy with its own hash `mismatched=3` EXIT 1; controls r95 `mismatched=3`, r97 `mismatched=3` (`census/round-99/records/c1-r99.txt`) | `python3 -B census/round-99/declared-shapes.py --freeze census/round-99/shapes.tsv --expect-sha256 8bc642c44e0c1f6414fb4b07aaf922c01bf2d2ea8b91bda7bac81f60a05a8a14 --search census/round-98/c1-survivor-search.py --scripts census/round-98/shapes --work <empty scratch>` | **admitted-candidate** (non-author closure pending; the pin A99.1 was added after seats scored, disclosed) |
+| C2 reap ownership (spawn-chain, branch (c) removed) | operability 8 (no 0–10 mapping; unchanged) | r98 counter: decoy spared (`c2-decoy-r98.txt`), T1 escapee alive=0 (`c2-counter-r98.txt`), cross-arm carrier killed by branch (c) (Sentinel r98 receipts) | r99 counter: decoy spared 83/83 alive (`c2-decoy-r99.txt`), T1 escapee alive=1 (`c2-counter-r99.txt`), cross-arm carrier spared 30/30 (MutC2 pristine; R99Sentinel §3.1) | `python3 -B census/round-99/c2-decoy-test.py --counter census/round-99/c2-setup-arms.py --probe census/round-98/c2-forgery-probe.py --tool tools/souji-record-agreement.py --before census/round-92/controls/c2-before-tool.py --work <empty> --arm-timeout 200 --plant-delay 2`; escapee: `census/round-99/c2-measure.sh` | **harmed (trade); not admitted.** Decoy and CM8 legs met; the reap leg (escapee) lost; no frozen row measures it (A99.2) |
+| C2 do-nothing (r97 counter, same decoy test) | operability 8 | — | `verdict=killed`, dead 60 (`c2-decoy-r97.txt`) | as above with `--counter census/round-97/c2-setup-arms.py` | do-nothing red as frozen |
+
+No owned score moved (calibration 7, operability 8, coverage 8). Trend: calibration improved (C1), operability harmed (C2).
+No capability row enters the table (the C2 counter does not reap the escapee; `capabilities:` unchanged).
+
+### Round 99 capability rows
+
+No capability row enters the table: C2's spawn-chain counter loses the escapee reap (harm), and C1 is a binding on an
+existing verdict (not a new repertoire).
+
+### Planned (r100)
+
+- C2 (operability, successor): an escapee ownership key that is not the ppid chain. Candidate: the arm records the
+  fixture's own session id at spawn (verified by starttime, S075 field 6), so a setsid escapee is owned by its session,
+  not by its parent. Frozen predicate: a positive escapee-reap predicate (`ESCAPEE-ALIVE alive=0` under the successor
+  counter; `alive=1` under r99 = the do-nothing) plus the r99 decoy spare and CM8 kill. The mutant m_noppid must FAIL it.
+- L0 (operator): whether the escapee reap is authorised (the r97 and r98 reap-authority questions remain open).
+- Routed: the M11 cross-arm runs must be taken with no concurrent decoy storm (a quiet-host gate).
