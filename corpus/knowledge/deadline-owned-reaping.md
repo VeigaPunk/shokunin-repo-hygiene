@@ -74,3 +74,8 @@ census/round-97/c2-forgery-probe.py.
 - The T1 survivors byte is counted by the descendant relation, not by a starttime comparison against the spawn
   pid (F12/C-5: the old comparison could never count an owned escapee and was same-tick nondeterministic).
   `conform` now binds `survivors=0` on T1, so a counter that reaps nothing cannot pass on conform alone (C-3).
+
+## Round-100 correction (append-only; S075 field-4 attribution withdrawn)
+
+- The in-body "S075 field 4" attribution (in the r98 correction paragraph above, "The reap is now by ownership (S075 field 4/22, S368)") is withdrawn in favour of S332 (kernel emission order). S332 is the Linux kernel `fs/proc/array.c` `do_task_stat()` writer at tag v6.17, captured under census/round-83/srcs/ (SOURCES row S332); the field-4 ppid wording follows from the kernel's emission order, not from the proc_pid_stat(5) man page.
+- The field-22 starttime attribution to S075 stands (S075 § DESCRIPTION fields 5, 6, 22; field 22 is starttime in clock ticks used for PID identity revalidation). No other attribution in the body changes.

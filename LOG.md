@@ -3689,3 +3689,11 @@ receipts in P `5bd5a0ce`. Amendments in `plans/round-85.md` (A0-A1 so far); the 
 - C2 measurements: `census/round-99/records/c2-decoy-{r99,r98,r97,cm8}.txt`, `c2-counter-{r99,r98,r97}.txt` (ESCAPEE-ALIVE 1/0/0). Escapee measurement is the decisive leg.
 - Routed r100: escapee ownership key, positive escapee-reap predicate; L0 question on reap authority.
 - Mistakes: M9 (unchecked freeze hash), M10 (ppid-chain escapee assumption), M11 (storm-confounded cross-arm runs).
+
+## Round 100 (2026-11-09; lane base `a662bb0d7e033cc5ceccd70b52eb234404300845`; attempt 2 `SoujiR100a2`, inherited from attempt 1 `SoujiR100`)
+
+- Claims: C1 operability 8 (session-owned escapee reap; **harmed (trade), not admitted** — the session branch never fires, alive=1 both r100 and r99); C2 calibration 7 (S075/S332 attribution repair; **improved, verifies under the frozen predicate** — bidirectional grep 1/1). Evidence: `census/round-100/`, `plans/round-100.md`, `.ufo/waves/round-100/w1/` (14 seats, 12 with evidence, 2 dead), `corpus/lessons/round-100.md`.
+- Landed: C1 counter successor (`census/round-100/c2-setup-arms.py` with branch (b) — measured, not admitted); C2 knowledge correction + S075 used-by; lesson round-100 with M14/M15; SCORECARD r100 rows; this LOG entry. No registry row added (294 rows, census exit 0 before/after). No capability row.
+- Withdrawn sentences (not repaired silently): the frozen C1 sentence's "by session ownership (alive=0)" (three independent falsifications: ReviewerC1Predicate, CriticC1Scope, SentinelEscapee); the in-body "S075 field 4" attribution (replaced by S332 in the C2 correction block).
+- Inherited state: census/round-100/*.py + uncommitted C2 edits + 11 seat dirs from attempt 1 (all re-verified; the live C1 measurements re-run L1-side). The attempt-1 armed seat set was never WAVE-DONE; no results.json exists.
+- Operator L0 (still open): reap authority / escapee ownership key (round-97/98/99 lines; round-100 line appended). Routed around; C1 not admitted.

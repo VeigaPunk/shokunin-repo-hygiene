@@ -1,0 +1,29 @@
+Scoped grep reproductions (read-only):
+
+1) _proc_sid is never fed a decoy pid; its only call is the candidate branch:
+   r100:106  def _proc_sid(pid):                # field 6 (session id, S075)
+   r100:202  elif _proc_sid(pid) is not None and _proc_sid(pid) == spawn_sid and st[1] >= spawn_st:
+   `grep -n "_proc_sid" census/round-100/c2-setup-arms.py` -> lines 106, 202 only.
+   No line reads the decoy's session id; "in a different session" is never compared
+   against a decoy reference. The only reference sid is spawn_sid, which line 349
+   never records (2-tuple), so the branch is unreachable.
+
+2) Survivors byte is spawn-chain (ppid) only, no session:
+   r100:375-390 survivors scan uses `if pid != spawn[0] and not _is_descendant(pid, spawn[0]): continue`
+   plus `survivors += 1`. `_proc_sid` does not appear in 375-390. `alive=0` as printed
+   by the counter therefore certifies spawn-chain emptiness, not session-owned reap.
+
+3) Candidate filter is byte-exact argv (unstated by the sentence):
+   r100:192  `if argv is None or not any(a == ident.encode() for a in argv): continue`
+   r100:200  starttime gate for pid==spawn_pid (`if st[1] != spawn_st: continue`)
+   r100:202  starttime >= spawn_st gate for branch (b)
+   r100:403-404 conform binds `ok = ok and survivors == 0` (C-3/F12).
+   None of (byte-exact, starttime, conform=survivors==0) appears in the frozen sentence.
+
+4) Decoy session and escapee session are both NEW sessions, never numerically
+   compared by the instrument:
+   - decoy: census/round-100/c2-decoy-test.py:104-105  start_new_session=True
+   - escapee: census/round-100/c2-setup-arms.py:82-85 PIPHOLDER child os.setsid()
+   - probe spawn: census/round-100/c2-setup-arms.py:347-348 start_new_session=True
+   The decoy test verdict is liveness only (c2-decoy-test.py:127-142, _alive poll);
+   it never reads /proc/<decoy>/stat field 6.

@@ -1,0 +1,59 @@
+--- /home/vgpnk/Projects/shokunin/souji-shokunin/census/round-100/c2-setup-arms.py	2026-11-09 12:21:35.288063577 -0300
++++ m_wide.py	2026-11-09 12:20:43.682051537 -0300
+@@ -103,17 +103,6 @@
+         return None
+ 
+ 
+-def _proc_sid(pid):
+-    """Return /proc/<pid>/stat field 6 (session id, S075), or None if unreadable."""
+-    try:
+-        with open(f"/proc/{pid}/stat", "rb") as f:
+-            data = f.read()
+-        fields = data.rsplit(b")", 1)[1].split()
+-        return int(fields[3])
+-    except (OSError, ValueError, IndexError):
+-        return None
+-
+-
+ def _proc_starttime(pid):
+     """Return /proc/<pid>/stat field 22 (starttime), or None if unreadable."""
+     st = _proc_stat(pid)
+@@ -173,14 +162,10 @@
+ 
+ 
+ def _reap_owned(ident, exclude, spawn):
+-    """r100 ownership reap (C2 operability, S075/S368): kill ONLY token-carrying pids that are owned under
+-    (a) pid == spawn pid with starttime matching the recorded spawn starttime (field 22), OR
+-    (b) the candidate's session id (field 6) equals the spawn pid's recorded session id AND its starttime
+-    is >= the spawn starttime, re-read at act time.
+-    Branch (b) is the session key that recovers the setsid escapee (S368) whose ppid chain no longer reaches
+-    the spawn pid. A foreign decoy (different session id) is never owned under (b). argv selects candidates
+-    but never alone authorises a kill. `spawn` is (spawn_pid, spawn_starttime, spawn_sid). Returns how many
+-    were signalled."""
++    """r99 ownership reap (C2 operability, S075): kill ONLY pids that are the recorded spawn pid itself
++    (re-verified by its starttime, stat field 22) or a ppid-chain descendant of that spawn pid.
++    argv may select candidates, but argv alone never authorises a kill; a counter-descendant carrier that
++    is not a spawn-chain member is NEVER killed (r98 branch (c) removed). Returns how many were signalled."""
+     killed = 0
+     for name in os.listdir("/proc"):
+         if not name.isdigit():
+@@ -195,17 +180,9 @@
+         if st is None:
+             continue
+         if spawn is not None:
+-            spawn_pid, spawn_st, spawn_sid = spawn
+-            if pid == spawn_pid:
+-                if st[1] != spawn_st:
+-                    continue
+-            elif _proc_sid(pid) is not None and _proc_sid(pid) == spawn_sid and st[1] >= spawn_st:
+-                pass  # session-owned (b); fresh starttime re-read above, sid re-read at act time
+-            else:
+-                continue
++            pass  # m_wide: r97 argv-only — no session/ownership test at all
+         else:
+-            # No spawn record (compat path): never kill on argv alone.
+-            continue
++            pass  # m_wide: r97 argv-only — any own-uid token-carrying pid authorized
+         try:
+             os.kill(pid, signal.SIGKILL)
+             killed += 1

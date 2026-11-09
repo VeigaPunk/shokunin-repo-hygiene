@@ -1,0 +1,11 @@
+r100 arity: _reap_owned unpacks a 3-tuple; one() builds a 2-tuple.
+- census/round-100/c2-setup-arms.py:349  spawn = (p.pid, _proc_starttime(p.pid)) if aid == "T1" else None
+- census/round-100/c2-setup-arms.py:198  spawn_pid, spawn_st, spawn_sid = spawn
+- census/round-100/c2-setup-arms.py:182  docstring says spawn is (spawn_pid, spawn_starttime, spawn_sid)
+
+Inline proof (no counter run, no kills):
+    spawn=(12345, 67890)
+    try: spawn_pid, spawn_st, spawn_sid = spawn
+    except Exception as e: print(f"CRASH {type(e).__name__}: {e}")
+Observed: CRASH ValueError: not enough values to unpack (expected 3, got 2) [exit 0 for the print wrapper]
+Consequence: any T1 call to _reap_owned crashes before branch (a)/(b) is evaluated.

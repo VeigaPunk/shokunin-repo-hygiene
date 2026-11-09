@@ -2531,3 +2531,17 @@ existing verdict (not a new repertoire).
   counter; `alive=1` under r99 = the do-nothing) plus the r99 decoy spare and CM8 kill. The mutant m_noppid must FAIL it.
 - L0 (operator): whether the escapee reap is authorised (the r97 and r98 reap-authority questions remain open).
 - Routed: the M11 cross-arm runs must be taken with no concurrent decoy storm (a quiet-host gate).
+
+### Round 100 measurements (2026-11-09; lane base `a662bb0d7e033cc5ceccd70b52eb234404300845`; plan `plans/round-100.md` A0.1 frozen predicates; attempt 2 `SoujiR100a2`, inherited from attempt 1 `SoujiR100`)
+
+| claim | axis | before | after | counting command | verdict |
+|---|---|---|---|---|---|
+| C1 session-owned escapee reap (Q177) | operability 8 (no 0–10 mapping; unchanged) | r99 counter: T1 escapee alive=1 (`census/round-99/records/c2-escapee-r99.txt`), decoy spared 83/83 | r100 counter: T1 escapee alive=1 (live `/proc` argv scan, pid 3418284, ppid 1525, session == own pid; `census/round-100/records/c2-escapee-r100.txt`), decoy spared 83/83 (fresh-work run); r99 counter in the same decoy test alive=1 spared 84/84 | `python3 -B census/round-100/c2-decoy-test.py --counter census/round-100/c2-setup-arms.py --probe census/round-98/c2-forgery-probe.py --tool tools/souji-record-agreement.py --before census/round-92/controls/c2-before-tool.py --work <fresh> --arm-timeout 200 --plant-delay 2` + live `/proc` argv scan of `<work>/arms/fixture-pipe-holder.py` | **harmed (trade); not admitted**. The session branch never fires: probe `start_new_session=True` makes spawn_sid == spawn pid, fixture `os.setsid()` makes escapee_sid == escapee pid, `escapee_sid == spawn_sid` False by construction (4 independent measurements: ReviewerC1Predicate, CriticC1Scope, SentinelEscapee dry probe owned_count=0, ConnectorOverlap live scan). The r97 argv-only mutant kills the decoy (non-vacuous leg); the escapee leg is the do-nothing (alive=1 both). |
+| C2 S075/S332 attribution repair (correction-class) | calibration 7 (no 0–10 mapping; unchanged) | `grep -c 'S332' corpus/knowledge/deadline-owned-reaping.md` = 0; S075 row used-by = 0/then entry absent | leg1 = 1 (`grep -c 'S332'`), leg2 = 1 (S075 used-by names the entry); registry 294 rows before/after; sources-census exit 0 before/after | `grep -c 'S332' corpus/knowledge/deadline-owned-reaping.md` AND `awk '/^\| S075 /' corpus/SOURCES.md \| grep -c 'deadline-owned-reaping'`; `/home/vgpnk/Projects/shokunin/scripts/sources-census.sh validate --root /home/vgpnk/Projects/shokunin souji` | **improved (verifies under the frozen predicate)**. Q62 graded gaps carried (body-only cite, no S332 located quote; ReviewerC2Attribution F1/F2). |
+
+No owned score moved (calibration 7, operability 8, coverage 8). Trend: operability harmed (C1), calibration improved (C2).
+No capability row enters the table (the counter does not reap the escapee; `capabilities:` unchanged).
+Round shape: one v1 wave, 14 seats substituted: 2 executor, 2 reviewer, 1 critic, 1 mutation-tester, 1 sentinel,
+1 connector, 1 scout, 1 scribe, 1 revenger, 1 labrat — 12 seats produced evidence; 2 dead
+(MutC1SessionKey: no dir produced; ExecC1SessionApplier/ExecC1SessionNoReap: dirs empty at attempt-1 end,
+build verified in the worktree instead).

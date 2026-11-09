@@ -1,0 +1,64 @@
+--- /fast/scratch/hyaku/souji-r100/RevengerR98Rule/r98.py	2026-11-09 12:20:51.828788125 -0300
++++ /fast/scratch/hyaku/souji-r100/RevengerR98Rule/r99.py	2026-11-09 12:20:51.829801096 -0300
+@@ -162,10 +162,10 @@
+ 
+ 
+ def _reap_owned(ident, exclude, spawn):
+-    """r98 ownership reap (C2 operability, S075): kill ONLY pids that are (a) the recorded spawn pid itself
+-    (re-verified by its starttime, stat field 22), or (b) a descendant of it found by walking field 4 (ppid)
+-    up to that pid, with a freshly re-read starttime. argv may select candidates, but argv alone never
+-    authorises a kill. Returns how many were signalled."""
++    """r99 ownership reap (C2 operability, S075): kill ONLY pids that are the recorded spawn pid itself
++    (re-verified by its starttime, stat field 22) or a ppid-chain descendant of that spawn pid.
++    argv may select candidates, but argv alone never authorises a kill; a counter-descendant carrier that
++    is not a spawn-chain member is NEVER killed (r98 branch (c) removed). Returns how many were signalled."""
+     killed = 0
+     for name in os.listdir("/proc"):
+         if not name.isdigit():
+@@ -186,9 +186,6 @@
+                     continue
+             elif _is_descendant(pid, spawn_pid):
+                 pass  # fresh starttime re-read above; chain walked at act time
+-            elif _is_descendant(pid, os.getpid()):
+-                # orphaned into the counter (subreaper net): a counter child not under another arm is owned
+-                pass
+             else:
+                 continue
+         else:
+@@ -351,15 +348,15 @@
+             f.write(text + (f"\n--hung: killed after --arm-timeout {ns.arm_timeout}s--\n" if rc == "hung" else ""))
+         stream = se if line == FATAL else so
+         has = any(l.startswith(line) for l in stream.decode("utf-8", "replace").splitlines())
+-        # r98: on the T1 arm, reap the escaped grandchild by ownership (spawn pid + ppid chain, starttime
+-        # verified) and count survivors that are NOT owned descendants of the spawn pid. A8: a signal exit
+-        # (rc < 0) prints as exit=<rc>.
++        # r99: on the T1 arm, reap the escaped grandchild by ownership (spawn pid + ppid chain only,
++        # starttime verified) and count survivors that are spawn-chain members NOT killed. A counter-
++        # descendant carrier outside the spawn chain is NEVER killed and is NOT counted here either.
++        # A8: a signal exit (rc < 0) prints as exit=<rc>.
+         survivors = None
+         if aid == "T1":
+-            # With the subreaper net the escapee reparents to the counter (ppid == counter), so _reap_owned's
+-            # ppid-chain walk reaches it; a foreign decoy (ppid == its driver) is never reached and never killed.
+-            # Survivors counts still-owned processes; conform counts exit+line only, so the decoy test is the
+-            # binding check that this reap neither over- nor under-kills.
++            # Spawn-chain rule: a pid is owned iff it equals the spawn pid or its ppid chain reaches the
++            # spawn pid. After the fixture parent exits, the setsid escapee's ppid chain may no longer
++            # reach the spawn pid (open limit, reported with observed evidence); it is then NOT killed.
+             killed = _reap_owned(fx, (os.getpid(), p.pid), spawn) if spawn else 0
+             survivors = 0
+             for name in os.listdir("/proc"):
+@@ -371,10 +368,9 @@
+                 st = _proc_stat(pid)
+                 if st is None or spawn is None:
+                     continue
+-                # r98 F12 fix: a descendant is counted iff it is a ppid-chain descendant of the spawn pid;
+-                # comparing its starttime to the SPAWN's starttime (different process, different tick)
+-                # skipped it, making survivors=0 vacuous. Only the spawn pid itself must match its own
+-                # recorded starttime (re-verified above).
++                # Spawn-chain only: a descendant is counted iff it is the spawn pid or a ppid-chain
++                # descendant of the spawn pid; no subreaper/counter branch. Only the spawn pid itself
++                # must match its own recorded starttime (re-verified above).
+                 if pid != spawn[0] and not _is_descendant(pid, spawn[0]):
+                     continue
+                 survivors += 1
