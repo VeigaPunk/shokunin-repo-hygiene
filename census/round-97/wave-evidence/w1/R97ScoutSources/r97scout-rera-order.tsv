@@ -1,0 +1,83 @@
+# R97ScoutSources — CPython 3.14.8 event-order measurement (round 97)
+# date: 2026-11-09T11:30:37Z ; interpreter: Python 3.14.8 (main, Oct  2 2026, 10:23:31) [GCC 16.2.1 20260810]
+# method: sys.monitoring callbacks for RAISE / EXCEPTION_HANDLED / RERAISE; each callback records
+#         the event name, the frame co_name, id(exc) and type(exc).
+
+=== the four shapes the preregistration's C1 wording and stated limits depend on ===
+
+--- x1-module-finally-term ---
+   RAISE   frame=_get_module_lock id=140487717194240 KeyError
+   EH      frame=_get_module_lock id=140487717194240 KeyError
+   RAISE   frame=setdefault   id=140487717194528 KeyError
+   EH      frame=setdefault   id=140487717194528 KeyError
+   RAISE   frame=helper       id=140487717194240 SystemExit
+   RAISE   frame=<module>     id=140487717194240 SystemExit
+   EH      frame=<module>     id=140487717194240 SystemExit
+   RERAISE frame=<module>     id=140487717194240 SystemExit
+   EH      frame=<module>     id=140487717194240 SystemExit
+   RERAISE frame=<module>     id=140487717194240 SystemExit
+   RAISE   frame=<module>     id=140487717194240 SystemExit
+   SUMMARY events=11 distinct_ids=2
+    rc=1
+
+--- x2-module-reraise-term ---
+   RAISE   frame=_get_module_lock id=139897899485696 KeyError
+   EH      frame=_get_module_lock id=139897899485696 KeyError
+   RAISE   frame=setdefault   id=139897899485984 KeyError
+   EH      frame=setdefault   id=139897899485984 KeyError
+   RAISE   frame=helper       id=139897899485696 SystemExit
+   RAISE   frame=<module>     id=139897899485696 SystemExit
+   EH      frame=<module>     id=139897899485696 SystemExit
+   RERAISE frame=<module>     id=139897899485696 SystemExit
+   EH      frame=<module>     id=139897899485696 SystemExit
+   RERAISE frame=<module>     id=139897899485696 SystemExit
+   RAISE   frame=<module>     id=139897899485696 SystemExit
+   SUMMARY events=11 distinct_ids=2
+    rc=1
+
+--- t1-catch-module-falloff ---
+   RAISE   frame=_get_module_lock id=140009977580032 KeyError
+   EH      frame=_get_module_lock id=140009977580032 KeyError
+   RAISE   frame=setdefault   id=140009977580320 KeyError
+   EH      frame=setdefault   id=140009977580320 KeyError
+   RAISE   frame=helper       id=140009977580032 SystemExit
+   RAISE   frame=main         id=140009977580032 SystemExit
+   RAISE   frame=<module>     id=140009977580032 SystemExit
+   EH      frame=<module>     id=140009977580032 SystemExit
+   SUMMARY events=8 distinct_ids=2
+    rc=0
+
+--- t4-reraise-at-module ---
+   RAISE   frame=_get_module_lock id=140223226481152 KeyError
+   EH      frame=_get_module_lock id=140223226481152 KeyError
+   RAISE   frame=setdefault   id=140223226481440 KeyError
+   EH      frame=setdefault   id=140223226481440 KeyError
+   RAISE   frame=helper       id=140223226481152 SystemExit
+   RAISE   frame=<module>     id=140223226481152 SystemExit
+   EH      frame=<module>     id=140223226481152 SystemExit
+   RAISE   frame=<module>     id=140223226481152 SystemExit
+   EH      frame=<module>     id=140223226481152 SystemExit
+   SUMMARY events=9 distinct_ids=2
+    rc=0
+
+=== module-level finally whose exception is caught by the enclosing except (elig_fin_then_caught) ===
+--- preregistration stated limit (i): 'keeps the mark by the same latch (it stays errored)' ---
+   RAISE   frame=raiser       id=140072430766592 SystemExit
+   RAISE   frame=<module>     id=140072430766592 SystemExit
+   EH      frame=<module>     id=140072430766592 SystemExit
+   RERAISE frame=<module>     id=140072430766592 SystemExit
+   EH      frame=<module>     id=140072430766592 SystemExit
+   RERAISE frame=<module>     id=140072430766592 SystemExit
+   EH      frame=<module>     id=140072430766592 SystemExit
+   SUMMARY shape=elig_fin_then_caught events=7 distinct_ids=1
+
+=== under the COMMITTED r97 hook ===
+  elig.py    rc=70   stderr='SOUJI-R97-CRASH SystemExit first raised in raiser() of the main script\n'  traceback_present=False   [elig_fin_then_caught -> must stay errored (70)]
+  thread.py  rc=70   stderr='SOUJI-R97-CRASH thread RuntimeError\n'  traceback_present=False   [thread crash channel]
+  boom.py    rc=70   stderr='SOUJI-R97-CRASH uncaught RuntimeError\n'  traceback_present=False   [uncaught exception channel]
+
+=== r96 vs r97 hook on the same uncaught exception (the traceback print is gone in r97) ===
+  r96: rc=70 traceback_printed=True
+       stderr='Traceback (most recent call last):\n  File "/fast/scratch/hyaku/souji-r97/R97ScoutSources/hooktest/boom.py", line 4, in <module>\n    f()\n    ~^^\n  File "/fast/scratch/hyaku/souji-r97/R97ScoutSources/hooktest/boom.py", line 2, in f\n    raise RuntimeError(\'boom\')\nRuntimeError: boom\nSOUJI-R96-CRASH uncaught RuntimeError\n'
+  r97: rc=70 traceback_printed=False
+       stderr='SOUJI-R97-CRASH uncaught RuntimeError\n'

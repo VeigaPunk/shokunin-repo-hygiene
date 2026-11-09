@@ -1,0 +1,56 @@
+# R97ScoutSources — candidate source adjudication (round 97)
+# date: 2026-11-09T11:30:30Z
+
+=== CANDIDATE: write(2) §ERRORS (first EAGAIN entry) ===
+URL:        https://man7.org/linux/man-pages/man2/write.2.html
+accessed:   2026-11-09  (curl -sSL, HTTP 200)
+bytes:      23203
+sha256:     82dd6ad3e998940915d9a9dc92d42afdb64ccb75121d350ae5ee42279d684ccc
+revision:   man-pages 6.19 (COLOPHON); host man-pages 6.19-1 carries the same clause
+
+--- located quote (25 words, §ERRORS -> first EAGAIN entry) ---
+  "The file descriptor fd refers to a file other than a socket and has been marked nonblocking ( O_NONBLOCK ), and the write would block."
+--- occurrence count in the whitespace-normalized tag-stripped capture: 1 ---
+--- the socket clause (EAGAIN or EWOULDBLOCK) is a DIFFERENT clause and is out of scope ---
+
+--- VERDICT: ADMIT (tier A, docs), scope limited to the errno clause ---
+    Reason 1: S370's teaches cell names the gap explicitly -- 'the full-pipe EAGAIN consequence
+               is write(2) semantics (not in the corpus)'. C1's wording and the r97 knowledge entry
+               both rest on the marker being dropped rather than blocking; that consequence has no
+               source row today.
+    Reason 2: the mechanism is measurable on this host (below), so the row's scope is backed by
+               installed behaviour, not prose alone (QUALITY Q2).
+    Reason 3: the page cannot widen any claim -- it says nothing about pipe capacity, nothing about
+               Python, and (scoped to the non-socket clause) nothing about sockets.
+    Reason 4: contract rule 1 satisfied -- URL + access date + <=25-word located quote + location.
+    Reason 5: no duplicate-URL collision -- no corpus row cites man2/write.2.html today.
+    Reason 6: PROVINCE fit -- a documented-OS-semantics source of the same family as the existing
+               kill(2)/open(2)/setsid(2) rows; no deletion authority, no credentials, no new surface.
+    FLIP CONDITION: flip to rejected if a later man-pages revision drops or rewords the EAGAIN clause
+               for non-socket descriptors, or if the row is ever cited for pipe capacity (pipe(7)'s
+               clause; pipe(7) already carries two rejected rows in this registry).
+
+--- host measurement: a write to a full non-blocking pipe fails EAGAIN instead of blocking ---
+  fill raised after 65536 bytes: errno=11 (EAGAIN) BlockingIOError=True
+  write on full nonblocking pipe -> errno=11 (EAGAIN) BlockingIOError=True
+
+--- installed man page carries the same clause ---
+     a failure status if one of the errors below is detected.  If no errors are
+     detected, or error detection is not performed, 0 is returned without caus‐
+     ing any other effect.  If count is zero and fd refers to a file other than
+     a regular file, the results are not specified.
+
+
+=== SCREENED, NOT ADJUDICATED (leads for the L1) ===
+proc_pid_cmdline(5): https://man7.org/linux/man-pages/man5/proc_pid_cmdline.5.html
+  HTTP 200, 7918 bytes, sha256 1fc6816805fa28c1fe015700e7c40efc21d9bbc032e02c35a447004075a91f15
+  No corpus row cites this page (grep -c proc_pid_cmdline corpus/SOURCES.md -> 0), while sibling
+  /proc/pid/* pages have rows. Located quote (17 words, §DESCRIPTION):
+  "This read-only file holds the complete command line for the process, unless the process is a zombie."
+  Its zombie clause is a real limit on an argv-identity key: measured here, an unreaped zombie child
+  reads /proc/<pid>/cmdline as 0 bytes (state Z), so an argv-identity scan misses it.
+  Left as a lead: a new proc row needs its own scope discipline and must not be read as a licence to
+  signal processes the lane did not spawn (PROVINCE).
+prctl(2) PR_SET_CHILD_SUBREAPER: HTTP 200, 26266 bytes, sha256 ef698f6c5aab0224e9bf238ea1820160797c15d0adcee8b37fcaac7297866810.
+  Not a candidate: a subreaper changes the lane's process topology and PROVINCE constrains the lane
+  to signalling only workers it spawned.

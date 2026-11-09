@@ -1,0 +1,27 @@
+Per-target ROW table (after search, census/round-97/c1-survivor-search.py; work mNNNN mapping via gen() order)
+mapping (re-derived locally by importing gen() over census/round-87/c1-pointer-counter.py and filtering c1-targets.json):
+  m0000 a127c26-True-to-False line=127 killed=no  rc=0
+  m0001 a491c22-<-to-<=       line=491 killed=yes rc=1
+  m0002 h-ok-admits-one       line=552 killed=yes rc=1
+  m0003 h-crash-late          line=574 killed=errored rc=1
+  m0004 h-crash-index         line=494 killed=errored rc=1
+  m0005 h-sysexit             line=524 killed=errored rc=1
+  m0006 h-atexit              line=574 killed=errored rc=1
+  m0007 h-thread              line=574 killed=errored rc=1
+  m0008 h-osexit              line=524 killed=errored rc=1
+  m0009 h-sigkill             line=524 killed=errored rc=1
+
+Rows per harness.out: 66 each. rc distribution and SOUJI-R97-CRASH stderr evidence kept in ROW detail:
+  a127c26-True-to-False: rc {0:5, 1:61}          errors=0  crash-marker=0   SUMMARY mismatches=0 -> no (survived)
+  a491c22-<-to-<=:       rc {0:4, 1:62}          errors=0  crash-marker=0   mismatches=1 (1 match=no) -> yes
+  h-ok-admits-one:       rc {0:9, 1:57}          errors=0  crash-marker=0   mismatches=1 (1 match=no) -> yes
+  h-crash-late:          rc {70:66}              errors=0  crash-marker=0   mismatches=10 -> errored (rc=70 leg)
+  h-crash-index:         rc {0:4, 1:61, 70:1}    errors=0  crash-marker=0   mismatches=1 -> errored (any rc=70 leg; the single rc=70 ROW is LD6 ledger-trim)
+  h-sysexit:             rc {70:66}              errors=56 crash-marker=56  mismatches=10 -> errored; detail 'h-sysexit\nSOUJI-R97-CRASH SystemExit first raised in main() of the main script\n'
+  h-atexit:              rc {70:66}              errors=0  crash-marker=0   mismatches=10 -> errored (rc=70 leg only; no marker kept in ROW detail)
+  h-thread:              rc {70:66}              errors=0  crash-marker=0   mismatches=10 -> errored (rc=70 leg only)
+  h-osexit:              rc {70:66}              errors=56 crash-marker=56  mismatches=10 -> errored; detail 'SOUJI-R97-CRASH os._exit(1)\n'
+  h-sigkill:             rc {-9:66}              errors=56 crash-marker=0   mismatches=10 -> errored (negative-rc leg)
+
+Semantic kills: a491c22 and h-ok-admits-one have NO rc=70 and NO negative-rc ROW (rc in {0,1} only) — verdict "yes" is the rc=1 + match=no leg exactly. Confirmed.
+Crash stderr evidence: only h-sysexit and h-osexit keep the SOUJI-R97-CRASH marker in ROW detail (56 rows each); h-atexit/h-thread/h-crash-late show rc=70 without a kept marker. The harness keeps stderr only for match=error rows; for h-atexit/h-thread the (10) match=no rows carry no detail marker. Stated-limit (ii) covers marker-drop on full pipe; here the marker absence is by the harness detail rule, not necessarily pipe-full. The per-channel reason assertion lives in the sentinel check=pass line instead.

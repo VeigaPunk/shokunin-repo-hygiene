@@ -1,0 +1,105 @@
+--- census/round-96/c2-forgery-probe.py	2026-11-09 03:56:54.871489622 -0300
++++ census/round-97/c2-forgery-probe.py	2026-11-09 06:10:45.934966830 -0300
+@@ -87,28 +87,63 @@
+         return hashlib.sha256(f.read()).hexdigest()
+ 
+ 
+-def _wait_output(p, timeout):
++def _wait_output(p, timeout, max_output, label="the fixture run"):
+     """Wait for the fixture's own stdout/stderr pipes, but stop waiting on pipe EOF once the process group is killed.
+ 
+     A descendant that leaves the fixture's process group but keeps the pipes open would otherwise block
+     communicate() forever even after killpg.  On timeout: kill the group, then wait only for the integer
+-    returncode (never for pipe EOF)."""
+-    try:
+-        so, _se = p.communicate(timeout=timeout)
+-        return so, p.returncode, False
+-    except subprocess.TimeoutExpired:
+-        try:
+-            os.killpg(p.pid, signal.SIGKILL)
+-        except ProcessLookupError:
+-            pass
+-        p.wait()
++    returncode (never for pipe EOF).
++
++    r97 (A5): the pipes are drained with selectors; a fixture whose captured output exceeds max_output bytes is
++    a setup failure (Fatal) — the probe refuses it within the run instead of exhausting its own memory (the
++    r96 probe was driven to 27.3 GB RSS by an unbounded-rate fixture, plans/round-96.md A5)."""
++    import selectors, time
++    bufs = {id(p.stdout): [p.stdout, bytearray()], id(p.stderr): [p.stderr, bytearray()]}
++    sel = selectors.DefaultSelector()
++    for f, pair in bufs.values():
++        os.set_blocking(f.fileno(), False)
++        sel.register(f, selectors.EVENT_READ)
++    deadline = time.monotonic() + timeout
++    total = 0
++    timed_out = False
++    while sel.get_map():
++        remaining = deadline - time.monotonic()
++        if remaining <= 0:
++            timed_out = True
++            try:
++                os.killpg(p.pid, signal.SIGKILL)
++            except ProcessLookupError:
++                pass
++            break
++        for key, _mask in sel.select(timeout=min(remaining, 0.25)):
++            try:
++                chunk = os.read(key.fileobj.fileno(), 65536)
++            except BlockingIOError:
++                continue
++            if not chunk:
++                sel.unregister(key.fileobj)
++                continue
++            bufs[id(key.fileobj)][1].extend(chunk)
++            total += len(chunk)
++            if total > max_output:
++                sel.close()
++                try:
++                    os.killpg(p.pid, signal.SIGKILL)
++                except ProcessLookupError:
++                    pass
++                raise Fatal(f"{label} exceeded --max-output {max_output} bytes; its process group was killed")
++    sel.close()
++    p.wait()
++    if timed_out:
+         return b"", p.returncode, True
++    out = bytes(bufs[id(p.stdout)][1])
++    return out, p.returncode, False
+ 
+ 
+-def run(fixture, tool, before, work, timeout, label):
++def run(fixture, tool, before, work, timeout, label, max_output=8388608):
+     p = subprocess.Popen([sys.executable, "-B", fixture, "--tool", tool, "--before", before, "--work", work],
+                          stdout=subprocess.PIPE, stderr=subprocess.PIPE, start_new_session=True)
+-    so, rc, killed = _wait_output(p, timeout)
++    so, rc, killed = _wait_output(p, timeout, max_output, label)
+     if killed:
+         raise Fatal(f"the fixture run for {label} exceeded --timeout {timeout}s; its process group was killed")
+     out = so.decode("utf-8", "replace")
+@@ -140,6 +175,7 @@
+     ap.add_argument("--before", required=True, help="the r91 tool bytes")
+     ap.add_argument("--work", required=True)
+     ap.add_argument("--timeout", type=int, default=120, help="seconds per fixture run before the probe gives up")
++    ap.add_argument("--max-output", type=int, default=8388608, help="bytes of fixture output before the probe refuses")
+     ns = ap.parse_args(argv)
+     work = os.path.abspath(ns.work)
+     if os.path.realpath(work).startswith(("/tmp/", "/var/tmp/", "/dev/shm/")):
+@@ -161,7 +197,7 @@
+         raise Fatal(f"--work {work} cannot be created: {exc.strerror or exc}")
+     for k, v in (("fixture", fixture), ("tool", tool), ("before", before), ("probe", os.path.abspath(__file__))):
+         print(f"# {k} path={v} sha256={sha(v)}")
+-    rc, res, _out = run(fixture, tool, before, os.path.join(work, "positive"), ns.timeout, "the positive control")
++    rc, res, _out = run(fixture, tool, before, os.path.join(work, "positive"), ns.timeout, "the positive control", ns.max_output)
+     if res is None:
+         raise Fatal(f"the fixture printed no SUMMARY line for the positive control (exit {rc})")
+     positive = rc == 0 and res is not None and res[0] == res[1]
+@@ -176,7 +212,7 @@
+             text = text.replace(old, new, 1)
+         path = os.path.join(work, f"{fid}-souji-record-agreement.py")
+         write(path, text)
+-        rc, res, out = run(fixture, path, before, os.path.join(work, fid), ns.timeout, f"forgery {fid}")
++        rc, res, out = run(fixture, path, before, os.path.join(work, fid), ns.timeout, f"forgery {fid}", ns.max_output)
+         write(os.path.join(work, f"{fid}.out"), out)
+         if res is None:
+             raise Fatal(f"the fixture printed no SUMMARY line for forgery {fid} (exit {rc}); its verdict is unknown")

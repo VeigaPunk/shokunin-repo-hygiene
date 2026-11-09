@@ -142,3 +142,12 @@ plans/round-97.md A0. Amendments: plans/round-97.md A0.
   documented guarantee. S369 rules finally/re-raise firing out of the EH entry's scope and S372 states only that a
   re-raise fires RERAISE; neither states the ordering the latch relies on. The shape table is a precondition, not
   a census of every exit shape the lane will meet.
+
+### r97 correction (appended after the wave; plans/round-97.md A9, A11)
+
+- The latch does not close the EH-clear trade. A caught-at-module SystemExit followed by a direct terminating
+  `helper()` (q1q) now scores plain 1 / hooked 1 (r96 scored 70), so the r97 hook regresses that shape. A saved
+  exception re-raised by a bare `raise saved` (q1o) still escapes (plain 1 / hooked 1). The table's mismatched=0 covers
+  only the fourteen shapes listed.
+- The excepthook and thread channels no longer print a traceback. The r97 hook removes the print, it does not reorder it
+  before the marker. The crash marker and exit 70 remain.

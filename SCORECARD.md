@@ -2439,3 +2439,34 @@ such; the C2 row is an improvement on a narrowed reading.
   `--expect-killed` stale defaults, the r85/r86 C2 list, `_regular` pathspec framing, the quarantine intro-blob digest
   row, the r79 gate re-measurement, check-4 300 s backstop, r76 K03/K04, the r17 240 s runners, the r85-r87 K4
   counters' print-only `rc=`.
+
+### Round 97 measurements (2026-11-09; lane base `210084b24de1dd1f1fd499f49b0c70744f099f5f`; instruments P1 `053287d4`, controls P2 `677a6cbb`, freeze F `5314d01d`)
+
+| claim | axis | before | after | counting command | verdict |
+|---|---|---|---|---|---|
+| C1 declared-exit shapes the hook turns into 70 (x1/x2), over the 14-shape table | calibration 7 (no 0–10 mapping; unchanged) | r96 hook `SHAPES-SUMMARY shapes=14 mismatched=2` (x1/x2 at 1) — `python3 -B census/round-97/declared-shapes.py --search census/round-96/c1-survivor-search.py --scripts census/round-97/shapes --work <empty>` | r97 hook `SHAPES-SUMMARY shapes=14 mismatched=0`, EXIT 0 (`census/round-97/controls/shapes-r97.txt`) | as left; measured at `053287d4` | **harmed (trade).** The same latch makes q1q (caught-then-terminating) 70 → 1 (r96 → r97) and leaves q1o at 1 (`R97ReviewerC1.md` Q1). Not admitted (A9). |
+| C1 ten-target search (summary unchanged, non-discriminating) | calibration 7 | r96 search `SEARCH-SUMMARY … errored=7 killed=2 survived=1` | r97 search same, EXIT 0 (`census/round-97/controls/c1-control-r95-rule.txt`, `c1-forgery-controls.txt`) | `python3 -B census/round-97/c1-survivor-search.py --counter census/round-87/c1-pointer-counter.py --harness census/round-93/c1-false-row-harness.py --population census/round-93/c1-false-rows.tsv --lane . --fleet-root /home/vgpnk/Projects/shokunin --work <empty> --jobs 5 --ids census/round-97/c1-targets.json` | no discrimination (prereg limit v) |
+| C1 no-harm on the generated population (278 mutants) | calibration 7 (not re-scored) | r96 search `errored=53 killed=139 survived=76` | r97 search identical: 0 verdict changes, byte-identical survivor sets (`R97ExecCensus.md`) | `python3 -B census/round-97/c1-survivor-search.py …` (no `--ids`) | no-harm holds on the population |
+| C2 conform arms (hang → exit 2) | operability 8 (no 0–10 mapping; unchanged) | r95 probe under the 20-arm counter `ARM T1 exit=hung … ARMS-SUMMARY arms=20 conform=19`, EXIT 1 (`census/round-97/controls/c2-control-r95-probe.txt`) | r97 probe `ARM T1 exit=2 … conform=yes survivors=0`, `ARMS-SUMMARY arms=20 conform=20`, EXIT 0 (`census/round-97/records/…` run; `R97ExecC2.md` §1a) | `python3 -B census/round-97/c2-setup-arms.py --probe census/round-97/c2-forgery-probe.py --fixture-pass tests/fixtures/r93-k4-flagfail.py --fixture-fail tests/fixtures/r92-k4-flagfail.py --tool tools/souji-record-agreement.py --before census/round-92/controls/c2-before-tool.py --work <empty> --jobs 4` | hang leg measured (19 → 20); **reap leg harmed** (foreign decoys killed, A12). Not admitted. |
+| C2 survivor count on the r96 probe | operability 8 | r96 committed counter: `survivors=1` (r96 records, A4) | r97 committed counter with the r96 probe: `survivors=0`; reap-removed mutant: `survivors=1` (`R97Scribe.md` §1 M2) | `python3 -B census/round-97/c2-setup-arms.py --probe census/round-96/c2-forgery-probe.py …` | the counter's reap moves the number 1 → 0; the reap is the harmful part (A12) |
+| C2 forgery refusals (GA/GB/GC/GD) | operability 8 | prereg: `refused=4` | measured `refused=3`, EXIT 1; GD not refused; GC refused for a syntax reason (A14) | `python3 -B census/round-97/c2-forgery-controls.py …` | falsified number (A14) |
+
+No owned axis score changed (calibration 7, operability 8, coverage 8). Neither claim is admitted: C1 is a measured trade
+(q1q regression) and C2 carries a HIGH ownership harm (A12). The sources row S372 is added (tier A) and repaired in-round (A16).
+
+### Round 97 capability rows
+
+No capability row enters the table: the r97 counter's reap is harmful and was not demonstrated to be safe (A12), and the
+latch is a trade (A9). `capabilities:` table unchanged.
+
+### Planned (r98)
+
+- C1 (calibration, successor): a latch keyed on the exception object's own state (no global pending flag); add q1i, q1o,
+  q1q and the no-free-tool-id fallback to the shape table; restore a traceback print after the marker write (A11).
+  Predicate: `shapes=N+3 mismatched=0` with q1q and q1o at 70 and the r96 and r95 controls reported on the same table.
+- C2 (operability, successor): ownership by recorded spawn pid and its ppid chain, never argv-only; add a committed
+  decoy test (Q174) that plants a foreign token-carrier after the arm starts and asserts it survives; a counter-mutant
+  test for CM8 (a broken counter must not give the r96 probe 20/20). Until then the reap is disabled or operator-approved
+  (L0 question).
+- Operator decision needed (L0): whether the lane's counter may keep the reap in any form before r98 lands.
+- Routed: ExecC1 docstring `mismatched=4` → `2` (A17); the lesson's QUALITY criteria Q173/Q174 are the r98 gates.

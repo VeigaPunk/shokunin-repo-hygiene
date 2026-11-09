@@ -1,0 +1,157 @@
+1,2c1,3
+< #!/usr/bin/env python3
+< """souji r96 C1 survivor search: the r95 search (census/round-95/c1-survivor-search.py) with four changes.
+---
+> """souji r97 C1 survivor search: the r96 search (census/round-96/c1-survivor-search.py) with a RERAISE-aware
+> eligibility latch on the SystemExit leg (plans/round-96.md A1 trade) and the two r96 crash-path limits repaired
+> (plans/round-96.md A2/A3; r96 spot-check §7 routed item 1).
+22,27c23,41
+< 3. r96: the crash path writes its marker with a raw `os.write` on a momentarily non-blocking fd 2 (S366), so a crash
+<    reported from a signal handler cannot deadlock on the TextIOWrapper lock and a full undrained stderr pipe cannot
+<    block the exit; the per-channel CHECK asserts both the exit code and the `SOUJI-R96-CRASH` reason; the
+<    SystemExit leg clears only a SystemExit handled at the top level (S365), so a caught-at-`__main__` exit is
+<    declared while a terminating helper-raised exit stays errored; and the search's own `--counter`/`--ids` reads
+<    refuse non-UTF-8 inputs with exit 2.
+---
+> 3. r97 (three legs, one instrument file, one commit):
+>    (a) RERAISE-aware eligibility latch (A1 trade, S372: sys.monitoring.events.RERAISE, "An exception is re-raised,
+>        for example at the end of a finally block."). The r96 hook cleared the foreign mark on ANY EXCEPTION_HANDLED
+>        at `<module>` — including the EH CPython fires for a module-level `finally` unwind and for an explicit
+>        re-raise, both terminating. The r97 hook keeps per-exception state `_SOUJI_STATE["elig"]` (id -> "no" once
+>        any RERAISE for that exception object occurs at or after the first EH in `<module>`); the EH leg clears the
+>        mark only when the same exception object never re-raised after its first module-level EH. Observed on
+>        CPython 3.14.8 (scratch proto, 9 shapes): a terminally unwinding module `finally` and a terminal explicit
+>        re-raise fire RERAISE twice each; caught-at-top-level (t1/t4, naked except) fire none. Predicted: t1/t4
+>        stay declared (70→0 vs r95), the two new crash shapes (x1 x2, terminating) stay errored (70 vs the r96
+>        hook's 1) — a 14-shape table, mismatched=0.
+>    (b) Crash-path order (A2): `_souji_excepthook`/`_souji_thread` call the raw signal-safe `_souji_crash` BEFORE
+>        the traceback print, so a full undrained pipe cannot block the exit on those channels either (the marker
+>        write stays best-effort; the CHECK still asserts the reason).
+>    (c) No-free-tool-id fallback (A3): restores fd 2's blocking mode (`os.set_blocking(2, True)`) instead of
+>        leaving it permanently non-blocking for children.
+>    (d) Do-nothing control: the frozen r95 hook on the same 14 scripts scores mismatched=4 (t1/t4 and x1/x2 all
+>        errored); the r96 hook scores mismatched=2 (x1/x2 declared wrongly). Neither reaches 0.
+>    (The search's own `--counter`/`--ids` reads refuse non-UTF-8 inputs with exit 2.)
+31,33c45,48
+<    caught-at-`__main__` shape is covered by the declared-shape table (Q172), which the r94-rule control fails at
+<    mismatched=6 while the r95 hook drops to mismatched=2 (t1/t4 remain) — no counter HAND edit can express
+<    `<module>`-level catching on the frozen counter's one-line-replace generator.
+---
+>    caught-at-`__main__` shape is covered by the declared-shape table (Q172), which the r95-rule control fails at
+>    mismatched=4 (r97: 14 shapes) while the r96 hook drops to mismatched=2 (x1/x2 wrongly declared; A1 below) and
+>    the r97 hook reaches mismatched=0. No counter HAND edit can express `<module>`-level catching on the frozen
+>    counter's one-line-replace generator. The "r94-rule mismatched=6" label of r96 was the r95 receipt (A9).
+91c106
+< HOOK = '''# souji r96 crash sentinel (census/round-96/c1-survivor-search.py): every crash channel below exits @RC@
+---
+> HOOK = '''# souji r97 crash sentinel (census/round-97/c1-survivor-search.py): every crash channel below exits @RC@
+96a112
+> _SOUJI_ELIG = {}
+109c125
+<             os.write(2, ("SOUJI-R96-CRASH " + why + "\\n").encode("utf-8", "surrogateescape"))
+---
+>             os.write(2, ("SOUJI-R97-CRASH " + why + "\\n").encode("utf-8", "surrogateescape"))
+118c134,135
+<     sys.__excepthook__(t, v, tb)
+---
+>     # r97 (A2): crash FIRST on the raw write, then print — the blocking traceback print cannot hold the exit
+>     # hostage on a full undrained pipe on either the excepthook or the thread channel.
+131c148
+<     threading.__excepthook__(a)
+---
+>     # r97 (A2): same order as _souji_excepthook above.
+139a157,160
+>     # r97 (A1): LATCH the foreign mark at RAISE-<module> (the unfold point), not at unwind time. The EH leg
+>     # clears only a latched mark whose exception object is still eligibility-clean (no RERAISE after its first
+>     # module-level EH). This keeps a terminating module-level finally/explicit-re-raise ERRORed while a
+>     # caught-at-top-level SystemExit reads declared.
+147a169
+>         _SOUJI_STATE["latched"] = True
+150a173,176
+>     # r97 (A1) pending-clear: the module-level EH does NOT clear immediately (EH fires before RERAISE on a
+>     # finally/explicit-reraise unwind, so an immediate clear would take the terminating mark off in the same
+>     # ticks that re-list it). It records a pending candidate for THIS exception object; _souji_reraise cancels a
+>     # pending candidate when the same object re-raises; _souji_atexit flushes a still-pending candidate.
+155,157c181,187
+<     seen = _SOUJI_SEEN.pop(id(exc), None)
+<     if seen is not None and _SOUJI_STATE["foreign"] is not None and seen[2] == _SOUJI_STATE["foreign"]:
+<         _SOUJI_STATE["foreign"] = None
+---
+>     if not _SOUJI_STATE.get("latched"):
+>         return
+>     key = id(exc)
+>     _SOUJI_ELIG.setdefault(key, "pending")
+>     if _SOUJI_ELIG.get(key) != "pending":
+>         return
+>     _SOUJI_STATE["pending_key"] = key
+159a190,203
+> 
+> 
+> 
+> def _souji_reraise(code, _offset, exc):
+>     # r97 (A1): any RERAISE for a pending candidate spends its eligibility (the finally/explicit-reraise leg).
+>     if not isinstance(exc, SystemExit):
+>         return
+>     key = id(exc)
+>     if _SOUJI_ELIG.get(key) == "pending":
+>         _SOUJI_ELIG[key] = "no"
+>         if _SOUJI_STATE.get("pending_key") == key:
+>             _SOUJI_STATE["pending_key"] = None
+> 
+> 
+160a205,209
+>     # r97 (A1): flush a still-pending module-level EH (a catch that never re-raised) before judging the mark.
+>     if _SOUJI_STATE.get("pending_key") is not None and _SOUJI_ELIG.get(_SOUJI_STATE["pending_key"]) == "pending":
+>         seen = _SOUJI_SEEN.pop(_SOUJI_STATE["pending_key"], None)
+>         if seen is not None and _SOUJI_STATE["foreign"] is not None and seen[2] == _SOUJI_STATE["foreign"]:
+>             _SOUJI_STATE["foreign"] = None
+164a214
+> 
+172c222
+<         sys.monitoring.use_tool_id(_souji_id, "souji-r96-sentinel")
+---
+>         sys.monitoring.use_tool_id(_souji_id, "souji-r97-sentinel")
+177c227,229
+<     sys.monitoring.set_events(_souji_id, sys.monitoring.events.RAISE | sys.monitoring.events.EXCEPTION_HANDLED)
+---
+>     sys.monitoring.register_callback(_souji_id, sys.monitoring.events.RERAISE, _souji_reraise)
+>     sys.monitoring.set_events(_souji_id, sys.monitoring.events.RAISE | sys.monitoring.events.EXCEPTION_HANDLED
+>                               | sys.monitoring.events.RERAISE)
+181,182c233,234
+<         os.set_blocking(2, False)
+<         os.write(2, b"SOUJI-R96-SENTINEL no free sys.monitoring tool id\\n")
+---
+>         os.set_blocking(2, True)  # r97 (A3): restore blocking mode; the r96 fallback left fd 2 non-blocking
+>         os.write(2, b"SOUJI-R97-SENTINEL no free sys.monitoring tool id\\n")
+191c243
+<         raise RuntimeError("souji-r96-sentinel-check")
+---
+>         raise RuntimeError("souji-r97-sentinel-check")
+193c245
+<         raise SystemExit("souji-r96-sentinel-check")
+---
+>         raise SystemExit("souji-r97-sentinel-check")
+203c255
+<         argparse.ArgumentParser().parse_args(["--souji-r96-unknown"])
+---
+>         argparse.ArgumentParser().parse_args(["--souji-r97-unknown"])
+210,212c262,264
+< CHECKS = (("excepthook", CRASH_RC, "SOUJI-R96-CRASH uncaught"), ("sysexit", CRASH_RC, "SOUJI-R96-CRASH SystemExit"),
+<           ("atexit", CRASH_RC, "SOUJI-R96-CRASH unraisable"), ("thread", CRASH_RC, "SOUJI-R96-CRASH thread"),
+<           ("osexit", CRASH_RC, "SOUJI-R96-CRASH os._exit"), ("declared", 1, None), ("argparse", 2, None))
+---
+> CHECKS = (("excepthook", CRASH_RC, "SOUJI-R97-CRASH uncaught"), ("sysexit", CRASH_RC, "SOUJI-R97-CRASH SystemExit"),
+>           ("atexit", CRASH_RC, "SOUJI-R97-CRASH unraisable"), ("thread", CRASH_RC, "SOUJI-R97-CRASH thread"),
+>           ("osexit", CRASH_RC, "SOUJI-R97-CRASH os._exit"), ("declared", 1, None), ("argparse", 2, None))
+251,253c303,305
+<     """r95 kill rule: a crash (harness exit 70 or below 0, or any ROW `rc=70` or negative `rc`) is errored; otherwise
+<     killed only on a harness exit 1 with at least one asserted row mismatch (`match=no`); exit 0 survives; anything
+<     else is errored."""
+---
+>     """The r95 kill rule (unchanged): a crash (harness exit 70 or below 0, or any ROW `rc=70` or negative `rc`)
+>     is errored; otherwise killed only on a harness exit 1 with at least one asserted row mismatch (`match=no`);
+>     exit 0 survives; anything else is errored."""
+354c406
+<     chk_py = os.path.join(chk_dir, "souji_r95_check.py")
+---
+>     chk_py = os.path.join(chk_dir, "souji_r97_check.py")

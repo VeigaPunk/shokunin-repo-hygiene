@@ -3647,3 +3647,14 @@ receipts in P `5bd5a0ce`. Amendments in `plans/round-85.md` (A0-A1 so far); the 
   1 scribe; the L1 holds the planner seat). Attack share 8/13 with the reviewer, critic, mutation-tester, sentinel and
   connector roles.
 - **Tool installs: none.** No pacman (paused), no uv/npx/binary fetch, no sysctl or sudo.
+
+## Round 97 (2026-11-09; lane base `210084b24de1dd1f1fd499f49b0c70744f099f5f`)
+
+- Claims: C1 calibration 7 (RERAISE-aware latch; **harmed, trade** — q1q regression, A9); C2 operability 8 (output cap +
+  identity reap; **not admitted** — foreign-kill HIGH, A12). Evidence: `census/round-97/`, `plans/round-97.md`,
+  `.ufo/waves/round-97/w1/` (13 seats), `corpus/lessons/round-97.md`.
+- Landed: S372 registry row (tier A; repaired to 11 cells in-round, A16); knowledge corrections (crash-channels, reaping);
+  QUALITY Q173, Q174; SCORECARD round-97 rows and planned r98; this LOG entry.
+- Withdrawn sentences (not repaired silently; A9–A15): C1 "closes the trade"; C1 limit (i); C1 A2 "reorder"; C2 "signals
+  only processes it planted"; C2 A8 "recording a signal exit distinctly"; C2 control survivors=1 (A7-correction).
+- Frozen counter, probe and instruments are NOT edited after freeze F. Repairs route to r98.

@@ -1,0 +1,30 @@
+HUNK INVENTORY: diff census/round-96/c1-survivor-search.py census/round-97/c1-survivor-search.py
+(157 lines, full text in diff-r96-r97.txt; 431 -> 483 lines, +52). Classification per hunk:
+
+1. lines 1-2/1-3 — DOCSTRING: header round 96->97, three legs (a) RERAISE latch (b) crash-first order (c) fd-2 restore, S372 sentence, scratch-proto prediction. Class: docstring.
+2. lines 22-27/23-41 — DOCSTRING leg-3 rewrite (r96 four changes -> r97 three legs + control). Class: docstring.
+3. lines 31-33/45-48 — DOCSTRING Q172 numbers: r95-rule mismatched=6 -> 4 with 14 shapes; A9 relabel note. **NUMERIC DISCREPANCY: see below. Class: docstring.
+4. HOOK header marker (91/106), class: HOOK (marker prefix text).
+5. `_SOUJI_ELIG = {}` (96a112), class: HOOK (new state).
+6. marker SOUJI-R96-CRASH -> SOUJI-R97-CRASH (109/125), class: HOOK+CHECKS-adjacent (marker string).
+7. `_souji_excepthook` body: swap `sys.__excepthook__(t,v,tb)` before `_souji_crash` -> after, with A2 comment (118/134-135), class: HOOK.
+8. `_souji_thread` same order swap (131/148), class: HOOK.
+9. RAISE-<module> legend block + `_SOUJI_STATE["latched"] = True` (139a157-160, 147a169), class: HOOK.
+10. EH callback replace: `seen = _SOUJI_SEEN.pop(...)` + immediate foreign-clear -> latched-gate + pending-candidate record (155-157/181-187), class: HOOK (EH callback).
+11. New `def _souji_reraise(code, _offset, exc)` (159a190-203), class: HOOK.
+12. `if _SOUJI_STATE.get("latched") is not True: return` -> pending flush before atexit mark judging (160a205-209), class: HOOK.
+13. `if _SOUJI_STATE.get("latched") is not True: return` (164a214), class: HOOK (near-no-op context).
+14. tool id "souji-r96-sentinel" -> "souji-r97-sentinel" (172/222), class: HOOK.
+15. set_events: + register_callback RERAISE + events |= RERAISE (177/227-229), class: HOOK.
+16. A3 fallback: os.set_blocking(2, False) -> True + comment; SOUJI-R96-SENTINEL -> SOUJI-R97-SENTINEL marker (181-182/233-234), class: HOOK (fallback) + CHECK-adjacent marker.
+17. sentinel check strings RuntimeError/SystemExit/argparse "--souji-r96-unknown" (191,193,203 / 243,245,255), class: CHECK-adjacent (check script strings).
+18. CHECKS reasons SOUJI-R96-CRASH -> SOUJI-R97-CRASH (210-212/262-264), class: CHECKS.
+19. verdict docstring "r95 kill rule: ..." -> "The r95 kill rule (unchanged): ..." (251-253/303-305), class: rule (docstring only; body unchanged — verified lines 302-314 of r97 identical to r96 lines 251-263 besides docstring).
+20. chk_py filename "souji_r95_check.py" -> "souji_r97_check.py" (354/406), class: HAND (filename of the generated check script; HAND edits themselves unchanged — HAND tuple not in diff hunks except filename).
+
+UNEXPECTED: none. Every hunk is one of DOCSTRING / HOOK / CHECK(S) / HAND / rule-docstring. No HAND edit content change, no gen/verdict/score/main logic change, no precondition change (sentinel check loop unchanged as a code block).
+
+NUMERIC DISCREPANCY (docstring only):
+  census/round-97/c1-survivor-search.py line 39-40 (docstring leg (d)): "Do-nothing control: the frozen r95 hook on the same 14 scripts scores mismatched=4 (t1/t4 and x1/x2 all errored)". Line 45-46: "which the r95-rule control fails at mismatched=4 (r97: 14 shapes)".
+  Measured (P2 census/round-97/controls/shapes-r95.txt AND my re-run shapes-r95.txt): the frozen r95 hook on the same 14 scripts prints mismatched=2 (t1/t4 MISMATCH at hooked=70; x1/x2 ok at hooked=70 — errored by design for crash shapes, so "no work does not reach 0" still holds). Stale/inflated by 2; likely carried forward from the r96-era "r94-rule mismatched=6" after the 12->14 shape change (A9 note on line 48 mentions the old label).
+  The prereg's CONTROL sentence ("the r95 hook prints mismatched=2 (t1/t4 at 70); the r96 hook prints mismatched=2 (x1/x2 at 1)") is CORRECT — it does not cite the docstring. So this falsifies the docstring sentence, not any prereg predicate sentence. Reproducer: shapes-r95.txt vs c1-survivor-search.py:39-40.

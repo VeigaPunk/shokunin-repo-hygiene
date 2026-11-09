@@ -1,0 +1,41 @@
+# R97ScoutSources — A2 mechanism check (round 97)
+# date: 2026-11-09T11:32:03Z ; lane: /home/vgpnk/Projects/shokunin/souji-shokunin ; scratch: /fast/scratch/hyaku/souji-r97/R97ScoutSources
+
+=== the claim sentence (census/round-97/preregistration.txt:33-35) ===
+same exception object; a RERAISE of the same object cancels it; atexit flushes a still-pending candidate),
+reorders the excepthook/thread crash channels to write before the traceback print (A2), and restores fd 2's
+blocking mode in the no-free-tool-id fallback (A3). On the 14-shape declared-exit table (the twelve r96 shapes
+
+=== r96 hook: the excepthook/thread channels PRINT the traceback, then crash ===
+def _souji_excepthook(t, v, tb):
+    sys.__excepthook__(t, v, tb)
+    _souji_crash("uncaught " + getattr(t, "__name__", "?"))
+
+def _souji_thread(a):
+    threading.__excepthook__(a)
+    _souji_crash("thread " + getattr(a.exc_type, "__name__", "?"))
+
+
+=== r97 hook: NO print at all; _souji_crash ends in os._exit(70), so control never returns ===
+1:def _souji_crash(why):
+16:    _SOUJI_EXIT(@RC@)
+19:def _souji_excepthook(t, v, tb):
+20:    # r97 (A2): crash FIRST on the raw write, then print — the blocking traceback print cannot hold the exit
+21:    # hostage on a full undrained pipe on either the excepthook or the thread channel.
+25:def _souji_unraisable(u):
+27:        u.print_exception()
+33:def _souji_thread(a):
+34:    # r97 (A2): same order as _souji_excepthook above.
+38:def _souji_os_exit(n):
+
+=== measured stderr, same script, same hook bytes ===
+  r96: rc=70  traceback_printed=True
+       stderr='Traceback (most recent call last):\n  File "/fast/scratch/hyaku/souji-r97/R97ScoutSources/hooktest/boom.py", line 4, in <module>\n    f()\n    ~^^\n  File "/fast/scratch/hyaku/souji-r97/R97ScoutSources/hooktest/boom.py", line 2, in f\n    raise RuntimeError(\'boom\')\nRuntimeError: boom\nSOUJI-R96-CRASH uncaught RuntimeError\n'
+  r97: rc=70  traceback_printed=False
+       stderr='SOUJI-R97-CRASH uncaught RuntimeError\n'
+
+=== the unraisable channel still prints (outside the claim's A2 scope) ===
+141:        u.print_exception()
+
+=== does the removal move any counted quantity? the search rule reads stdout ROW lines and rc only ===
+22:   one `ROW ... match=no` line; a harness exit 0 is a survivor; anything else is errored.

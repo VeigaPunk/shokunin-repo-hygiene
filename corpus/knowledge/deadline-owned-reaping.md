@@ -51,3 +51,11 @@ census/round-97/c2-forgery-probe.py.
 - **Signal exits.** A killed-by-signal child prints as `exit=-15` in the ARM line (A8): it never reads as a
   verdict exit. The counter only ever SIGKILLs its own sessions and records the resulting status instead of
   coercing it.
+
+### r97 correction (appended after the wave; plans/round-97.md A12, A13)
+
+- The reap does NOT signal only processes the counter planted. It SIGKILLs every own-uid process whose argv carries the
+  arm's absolute fixture path and that was not in the snapshot taken at arm start. A foreign process that acquires the
+  path during the arm is killed (measured: 30 of 42 decoys in a continuous run). The reap is not safe to run on a shared
+  path. Do not cite the r97 reap as a safe ownership mechanism.
+- A signal exit renders as `exit=-15` on both the r96 and r97 counters. No distinct mark exists.
