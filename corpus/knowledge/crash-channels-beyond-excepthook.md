@@ -57,3 +57,30 @@ channels and keeps status 1 for a declared exit and 2 for argparse (`# crash-sen
   printed traceback, not the hook.
 - The five fixtures are hand edits; the rule's effect on the full generated population is reported by the wave, not
   claimed.
+
+## r95 wave corrections (after WAVE-DONE; plans/round-95.md A1-A4, A7)
+
+- **The SystemExit leg is wider than "a helper's sys.exit".** It scores errored ANY SystemExit first raised inside a
+  function defined in the main script — `sys.exit(...)` called in `main` itself, `raise SystemExit(helper())`, a raise
+  inside try/finally — and one first raised there that reaches the top level and is caught (R95Labrat v3/w1/w2/a3b,
+  t1/t4: plain rc 3 or 0, hooked 70). It does not track whether the exception ends the process. The frozen r87 counter
+  exits only through a top-level `sys.exit(main(...))`, so its verdicts are unaffected; a counter that exits from
+  `main` would need the leg rewritten (e.g. record the exit at the RAISE in `<module>` that the interpreter actually
+  terminates on, or an EXCEPTION_HANDLED event to clear a caught one).
+- **The unraisablehook leg stops at finalization.** A global object's `__del__` raising at interpreter shutdown after
+  `sys.exit(main())` keeps the process status (R95Labrat u1/u3/u5: 3→3, 0→0); the same `__del__` when the script
+  falls off the end exits 70 (u2). A `__del__` that raises during the run is caught (R95ReviewerC1 `del_raise.py`).
+- **`os._exit` replaced means every `os._exit`, and the crash path is not async-signal-safe.** `os._exit(0)` becomes
+  70 (R95Critic, R95Sentinel F3). The replacement writes to stderr and flushes; called from a signal handler or another
+  thread while the main thread holds the stderr lock, or with a full undrained stderr pipe, it hangs (R95Sentinel F1:
+  plain rc 0 in 1 s, hooked HUNG at 12 s). A safer crash path writes with `os.write(2, ...)` best-effort and calls the
+  real `os._exit(70)` without touching the text streams.
+- **Scope: the whole harness subtree.** The hook sits on PYTHONPATH, so every Python process under the harness carries
+  it: a forked child's `os._exit(0)` turns into status 70, `sys.monitoring` id 3 is taken in every process, and when ids
+  3 and 4 are busy the loop takes 5, the reserved OPTIMIZER_ID (R95Sentinel F3/F4). With no free id the sentinel only
+  prints a line; the search's CHECK then fails closed (`sysexit=1`, exit 2).
+- **The check line binds exit codes, not mechanisms.** Cross-wiring the thread or os._exit leg to the excepthook
+  function still passes every CHECK and target (R95MutC1 m02/m03); a CHECK that asserts the `SOUJI-R95-CRASH` reason
+  per channel would bind them.
+- S360's page does not name SystemExit and S361's does not state that the main thread keeps its status: both are
+  observations on CPython 3.14.8, now disclosed in the rows (A7).

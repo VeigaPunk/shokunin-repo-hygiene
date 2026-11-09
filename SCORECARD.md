@@ -2355,3 +2355,50 @@ R94Connector.
   `--expect-killed` stale defaults, the r85/r86 C2 list, `_regular` pathspec framing, the quarantine intro-blob
   digest row, the r79 gate re-measurement, check-4 300 s backstop, r76 K03/K04, the r17 240 s runners, the r85-r87 K4
   counters' print-only `rc=`.
+
+### Round 95 measurements (2026-11-09; lane base `93c3ef13a9eb9678483518562f3692124db714c2`; instruments P1 `d79bc3fe`, controls P2 `48c5efe9`, freeze F `59fd7be0`, after receipts A `dd520684`)
+
+| claim | axis | before | after | counting command | measured commit |
+|---|---|---|---|---|---|
+| C1 crash-channel fixtures the survivor search scores other than errored: the r94 sentinel replaces only `sys.excepthook`, so h-sysexit/h-osexit/h-sigkill read `killed=yes` and h-atexit/h-thread `killed=no`; the r95 search (exit 70 also on `sys.unraisablehook`, `threading.excepthook`, any `os._exit`, a SystemExit first raised in a main-script function via a `sys.monitoring` RAISE callback, S360-S362, S364; negative rc → errored, S363) scores all five `errored` and keeps the five r94 targets' verdicts | calibration 7 (no reproducible 0–10 mapping; verdict calibration improved) | `census/round-95/controls/c1-control-r94-rule.txt` (frozen r94 search, same ten targets): `SEARCH-SUMMARY generated=10 ambiguous=0 uncompiled=0 hung=0 scored=10 errored=2 killed=5 survived=3`, EXIT 0 — 5 mis-scored | `census/round-95/records/c1-after.txt`: check line `excepthook=70 sysexit=70 atexit=70 thread=70 osexit=70 declared=1 argparse=2`, `SEARCH-SUMMARY generated=10 ambiguous=0 uncompiled=0 hung=0 scored=10 errored=7 killed=2 survived=1`, EXIT 0 — 0 mis-scored; forgeries FA/FB/FC refused 3/3 (`controls/c1-forgery-controls.txt`) | `python3 -B census/round-95/c1-survivor-search.py --counter census/round-87/c1-pointer-counter.py --harness census/round-93/c1-false-row-harness.py --population census/round-93/c1-false-rows.tsv --lane . --fleet-root /home/vgpnk/Projects/shokunin --work WORK --jobs 5 --ids census/round-95/c1-targets.json`; mis-scored = `grep -cE '^SEARCH h-(sysexit\|atexit\|thread\|osexit\|sigkill) ' FILE` minus `grep -cE '^SEARCH h-(sysexit\|atexit\|thread\|osexit\|sigkill) .*killed=errored' FILE` | `dd5206842fcead3b1e7301d3dbaaec42b625dd54` |
+| C2 forgery-probe arms whose exit code matches its meaning, of 16: the r94 probe exits 1 on a non-UTF-8 `--tool`/`--before` and a file-parent `--work` and never ends on a hanging fixture; the r95 probe refuses all four with exit 2 + `C2-FORGERY-FATAL:` and conforms on the twelve arms the r94 probe conforms on | operability 8 (no reproducible 0–10 mapping; verdict operability improved) | `census/round-95/controls/c2-control-r94-probe.txt`: `ARMS-SUMMARY arms=16 conform=12` (S9-S11 exit=1, S12 exit=hung), EXIT 1 | `census/round-95/records/c2-after.txt`: `ARMS-SUMMARY arms=16 conform=16`, EXIT 0; forgeries GA/GB/GC conform 15/14/15, refused 3/3 (`controls/c2-forgery-controls.txt`) | `python3 -B census/round-95/c2-setup-arms.py --probe census/round-95/c2-forgery-probe.py --fixture-pass tests/fixtures/r93-k4-flagfail.py --fixture-fail tests/fixtures/r92-k4-flagfail.py --tool tools/souji-record-agreement.py --before census/round-92/controls/c2-before-tool.py --work WORK` | `dd5206842fcead3b1e7301d3dbaaec42b625dd54` |
+
+No owned axis score changed (calibration 7, coverage 8, operability 8 — the lane still has no reproducible 0–10
+mapping): both rows carry the verdict, the counting command and the measured commit. The wave narrowed sentences
+before filing (`plans/round-95.md` A1-A3, A5, A6; A4 a scope limit; A7 this round's own rows): the SystemExit leg also
+scores `sys.exit(...)` in `main` and a SystemExit caught at module level as errored (R95Labrat; declared-shape table
+`census/round-95/records/declared-shapes.txt` `mismatched=6`); a finalizer raising after a SystemExit exit is not seen;
+`os._exit(0)` reads 70 and the crash path can hang when the stderr lock is held; S13 does not isolate the /tmp guard;
+an escaping grandchild hangs the probe past `--timeout`; see `.ufo/waves/round-95/claim-falsification.tsv`. Reported,
+not claimed: the full generated population changes no verdict between the r94 and r95 searches (R95ExecCensus: 263
+ids, killed 139, survived 76; errored 48 → 53 = the five new fixtures). The L1 held the planner seat
+(validator-frozen); the planning data-walk rode R95Connector; the prereg's labrat seat ran as a reviewer (A0.2).
+
+### Round 95 capability rows
+
+| name | what it can now do | evidence pointer | first-working round |
+|---|---|---|---|
+| five-channel crash sentinel with a per-channel precondition | score a mutant whose counter dies through SystemExit raised in a main-script function, an atexit/unraisable exception, a thread exception, `os._exit` or a signal as `errored`; the search refuses to score unless a check script exits 70 on each channel and keeps status 1 and 2 for two declared exits | `python3 -B census/round-95/c1-survivor-search.py … --ids census/round-95/c1-targets.json` → check line + `errored=7 killed=2 survived=1` (`census/round-95/records/c1-after.txt`); frozen r94 search `errored=2 killed=5 survived=3` | r95 |
+| forgery-probe refusals for undecodable inputs, an uncreatable work dir and a hanging fixture, with a sixteen-arm counter | refuse a non-UTF-8 `--tool`/`--before`, a `--work` that cannot be created, a write failure after the checks, a fixture run past `--timeout` (process group killed) and any internal exception with exit 2 + a named FATAL line; the arms counter kills a hung arm at `--arm-timeout` and scores it | `python3 -B census/round-95/c2-setup-arms.py --probe census/round-95/c2-forgery-probe.py …` → `conform=16` (`census/round-95/records/c2-after.txt`); r94 probe `conform=12` | r95 |
+
+### Planned (r96)
+
+- C1 (calibration): decide the SystemExit leg on the terminating exception (EXCEPTION_HANDLED or a top-level record)
+  and make the declared-shape table (`census/round-95/records/declared-shapes.txt`, Q172) a precondition with
+  `mismatched=0`; a signal-safe crash path (`os.write(2, …)` + the real `os._exit(70)`, R95Sentinel F1); scope the
+  hook to the counter and use ids 3-4 only (F3/F4); a CHECK that asserts each channel's `SOUJI-R95-CRASH` reason
+  (R95MutC1 m02/m03); a finalization-time `__del__` fixture (A2); the harness-side crash target binding the harness
+  exit-70 disjunct (r94 routed 2); setup refusals for the search's own `--counter`/`--ids` reads; carried: r93 routed 1
+  (harness reproducibility from committed bytes), m5/m6/g2 clause shapes and LD5 `unresolved=1`, the 76 residual
+  survivors, the r84-r91 clause-battery docstring that calls a harness error a kill.
+- C2 (operability/coverage): arms that assert the FATAL reason text (S13, R95MutC2 PM9); reap escaped descendants and
+  stop waiting on held pipes (R95ReviewerC2 `Q1-pipe-holder`, R95Sentinel F2); arms for a write failure after the
+  checks, an internal exception, `--timeout 0` and the positive-control conjunct (PM3/PM5/PM6/PM7); `--work` TOCTOU;
+  randomized arm names; per-run deadlines in the forgery runners and the c1-false-row-harness family; setup-refusal
+  reads in the older probes and the counter (R95Connector §2); KFF19 second length/filler, fixture scorer exceptions,
+  KFF20 mirrors, the r91 variant tools (r93 routed 4).
+- Carried: the forge-return channel (r92 limit ii), p2 basename granularity, p3 the punctuation lookahead, p7
+  `_regular`'s symlink leg, p8 `token_ok`'s hyphen marker, the `fleet:` symlink leg, the battery `--only`/
+  `--expect-killed` stale defaults, the r85/r86 C2 list, `_regular` pathspec framing, the quarantine intro-blob digest
+  row, the r79 gate re-measurement, check-4 300 s backstop, r76 K03/K04, the r17 240 s runners, the r85-r87 K4
+  counters' print-only `rc=`.

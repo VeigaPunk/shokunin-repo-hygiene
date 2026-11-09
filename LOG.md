@@ -3586,3 +3586,31 @@ receipts in P `5bd5a0ce`. Amendments in `plans/round-85.md` (A0-A1 so far); the 
   scribe; the L1 holds the planner seat). Attack share 5/12 = 42 %; all 12 settled with a report
   (`.ufo/waves/round-94/w1-results.json`); no dead seats; no residual call.
 - **Tool installs: none.** No pacman (paused), no uv/npx/binary fetch, no sysctl or sudo.
+
+## Round 95 (2026-11-09) — the crash sentinel watches SystemExit, atexit/unraisable, thread, os._exit and signal deaths (C1 calibration); the forgery probe refuses undecodable inputs, an uncreatable work dir and a hanging fixture (C2 operability)
+
+- **Motivating evidence.** The r94 spot-check (`corpus/lessons/round-94-verifier-spotcheck.md` §5) routed the
+  sentinel's blind spots (item 1: SystemExit, `os._exit`, atexit/`__del__`, threads still scored `yes`/`no`;
+  R94ScoutSources FW1, R94Sentinel F1/F2) and the probe's remaining exit-1 setup shapes and missing fixture timeout
+  (item 3; plans/round-94.md A4).
+- **Claims.** C1 (calibration 7): on ten targets the frozen r94 search reads `errored=2 killed=5 survived=3` — five
+  crash-channel fixtures scored as verdicts; the r95 search reads `errored=7 killed=2 survived=1` with a per-channel
+  check line; forgeries FA/FB/FC refused. C2 (operability 8): the sixteen-arm counter scores the r94 probe `conform=12`
+  and the r95 probe `conform=16`; forgeries GA/GB/GC refused (15/14/15).
+- **Narrowed before filing (`plans/round-95.md` A1-A7).** A1 the SystemExit leg's false positives (`sys.exit` in
+  `main`, a caught SystemExit; declared-shape table `mismatched=6`); A2 no unraisablehook at finalization after a
+  SystemExit exit; A3 `os._exit(0)` → 70 and a crash path that can hang; A4 hook scope is the whole harness subtree;
+  A5 S13 does not isolate the /tmp guard; A6 an escaping grandchild hangs the probe past `--timeout`; A7 S360/S361
+  cell corrections.
+- **Reported, not claimed.** Full population (R95ExecCensus): no verdict changes between the r94 and r95 searches on
+  263 generated ids; errored 48 → 53 = the five new fixtures.
+- **Sources.** S360-S364 (Python docs: `sys.monitoring` RAISE, `threading.excepthook`, `os._exit`, subprocess
+  returncode, atexit) admitted `mined`, cited by `corpus/knowledge/crash-channels-beyond-excepthook.md`; `faulthandler`
+  is the reject sample (PEP 669 rejected alongside). Registry 281 → 286; census EXIT 0 both ends. QUALITY Q172.
+- **Mistakes.** M1 the r94 M3 class recurring (limits written from reading); M2 a docstring arm count; M3 an arm
+  credited with binding a guard it does not isolate; M4 two control attempts lost to a shell construct
+  (`corpus/lessons/round-95.md`).
+- **Wave.** One v1 wave, 13 seats (3 executor, 3 reviewer — one running the prereg's labrat task — critic, 2
+  mutation-tester, sentinel, connector, scout, scribe; the L1 holds the planner seat). Attack share 6/13 = 46 %; all 13
+  settled with a report (`.ufo/waves/round-95/w1-results.json`); no dead seats; no residual call.
+- **Tool installs: none.** No pacman (paused), no uv/npx/binary fetch, no sysctl or sudo.
